@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1998/02/09 19:56:37 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1998/05/19 19:00:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -583,6 +583,8 @@ vm_offset_t pmap_extract __P((pmap_t, vm_offset_t));
 int    pmap_page_index __P((vm_offset_t));
 u_int  pmap_free_pages __P((void));
 #endif /* INCLUDED_IN_PMAP_H */
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /********************************** CODE ********************************
  * Functions that are called from other parts of the kernel are labeled *

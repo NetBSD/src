@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 1996/10/13 11:39:52 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 1998/05/19 19:00:17 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -171,6 +171,9 @@ u_int		tlbpid_gen = 1;		/* TLB PID generation count */
 int		tlbpid_cnt = 2;		/* next available TLB PID */
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
+
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /*
  *	Bootstrap the system enough to run with virtual memory.

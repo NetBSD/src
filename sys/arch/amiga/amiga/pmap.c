@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1998/03/22 23:12:50 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 1998/05/19 19:00:13 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -258,13 +258,14 @@ extern vm_offset_t z2mem_start;
 boolean_t	pmap_testbit __P((register vm_offset_t, int));
 void		pmap_enter_ptpage __P((register pmap_t, register vm_offset_t)); 
 void		pmap_collect1	__P((pmap_t, vm_offset_t, vm_offset_t));
-
 extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 static void amiga_protection_init __P((void));
 void pmap_check_wiring __P((char *, vm_offset_t));
 static void pmap_changebit __P((register vm_offset_t, int, boolean_t));
 struct pv_entry * pmap_alloc_pv __P((void));
 void pmap_free_pv __P((struct pv_entry *));
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 #ifdef DEBUG            
 void pmap_pvdump __P((vm_offset_t));  

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1998/05/08 23:34:00 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1998/05/19 19:00:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -172,6 +172,8 @@ int pmap_page_index __P((vm_offset_t pa));
 void map_pagetable __P((vm_offset_t pagetable, vm_offset_t va,
     vm_offset_t pa, unsigned int flags));
 void pmap_copy_on_write __P((vm_offset_t pa));
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 void bzero_page __P((vm_offset_t));
 void bcopy_page __P((vm_offset_t, vm_offset_t));

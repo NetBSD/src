@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1998/04/26 21:24:28 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1998/05/19 19:00:15 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -331,6 +331,8 @@ boolean_t pmap_testbit	__P((vm_offset_t, int));
 void	pmap_changebit	__P((vm_offset_t, int, boolean_t));
 void	pmap_enter_ptpage	__P((pmap_t, vm_offset_t));
 void	pmap_collect1	__P((pmap_t, vm_offset_t, vm_offset_t));
+void	pmap_pinit __P((pmap_t));
+void	pmap_release __P((pmap_t));
 
 #ifdef DEBUG
 void pmap_pvdump	__P((vm_offset_t));

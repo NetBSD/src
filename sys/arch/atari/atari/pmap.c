@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1998/05/11 07:46:18 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1998/05/19 19:00:14 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -269,6 +269,8 @@ static struct pv_entry* pmap_alloc_pv __P((void));
 static void		pmap_free_pv __P((struct pv_entry *));
 static void		atari_protection_init __P((void));
 static void		pmap_collect1 __P((pmap_t, vm_offset_t, vm_offset_t));  
+void			pmap_pinit __P((pmap_t));
+void			pmap_release __P((pmap_t));
 
 /*
  * All those kernel PT submaps that BSD is so fond of

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 1998/05/19 09:17:32 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -359,6 +359,8 @@ int	npmemarr;		/* number of entries in pmemarr */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
 
 static void pmap_page_upload __P((void));
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 int mmu_has_hole;
 

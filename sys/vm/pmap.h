@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 1998/05/19 18:12:27 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 1998/05/19 19:00:11 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -187,11 +187,9 @@ void		 pmap_pageable __P((pmap_t,
 #if !defined(pmap_phys_address)
 vm_offset_t	 pmap_phys_address __P((int));
 #endif
-void		 pmap_pinit __P((pmap_t));
 void		 pmap_protect __P((pmap_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
-void		 pmap_release __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vm_offset_t, vm_offset_t));
 void		 pmap_update __P((void));
 void		 pmap_zero_page __P((vm_offset_t));

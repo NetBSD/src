@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1998/04/26 21:20:26 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1998/05/19 19:00:16 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -301,6 +301,8 @@ int		protostfree;	/* prototype (default) free ST map */
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
+void	pmap_pinit __P((pmap_t));
+void	pmap_release __P((pmap_t));
 
 #define	pa_to_pvh(pa)							\
 ({									\

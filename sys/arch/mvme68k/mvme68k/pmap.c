@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1998/03/18 07:12:49 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.17 1998/05/19 19:00:16 thorpej Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -327,6 +327,8 @@ void pmap_collect1	__P((pmap_t, vm_offset_t, vm_offset_t));
 void pmap_pvdump	__P((vm_offset_t));
 void pmap_check_wiring	__P((char *, vm_offset_t));
 #endif
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 /* pmap_remove_mapping flags */
 #define	PRM_TFLUSH	1

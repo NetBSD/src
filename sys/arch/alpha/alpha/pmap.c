@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.43 1998/05/19 05:21:34 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.44 1998/05/19 19:00:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 1998/05/19 05:21:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 1998/05/19 19:00:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,6 +396,8 @@ pa_to_pvh(pa)
 void	alpha_protection_init __P((void));
 void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *));
 void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
+void	pmap_pinit __P((pmap_t));
+void	pmap_release __P((pmap_t));
 
 /*
  * PT page management functions.
@@ -816,7 +818,7 @@ pmap_uses_prom_console()
 #endif _PMAP_MAY_USE_PROM_CONSOLE
 
 /*
- * pmap_steal_memory:
+ * pmap_steal_memory:		[ INTERFACE ]
  *
  *	Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
  *	This function allows for early dynamic memory allocation until the
@@ -899,7 +901,7 @@ pmap_steal_memory(size, vstartp, vendp)
 }
 
 /*
- * pmap_init:
+ * pmap_init:			[ INTERFACE ]
  *
  *	Initialize the pmap module.  Called by vm_init(), to initialize any
  *	structures that the pmap system needs to map virtual memory.
@@ -961,7 +963,7 @@ pmap_init()
 }
 
 /*
- * pmap_create:
+ * pmap_create:			[ INTERFACE ]
  *
  *	Create and return a physical map.
  */
@@ -1034,7 +1036,7 @@ pmap_pinit(pmap)
 }
 
 /*
- * pmap_destroy:
+ * pmap_destroy:		[ INTERFACE ]
  *
  *	Drop the reference count on the specified pmap, releasing
  *	all resources if the reference count drops to zero.
@@ -1109,7 +1111,7 @@ pmap_release(pmap)
 }
 
 /*
- * pmap_reference:
+ * pmap_reference:		[ INTERFACE ]
  *
  *	Add a reference to the specified pmap.
  */
@@ -1129,7 +1131,7 @@ pmap_reference(pmap)
 }
 
 /*
- * pmap_remove:
+ * pmap_remove:			[ INTERFACE ]
  *
  *	Remove the given range of addresses from the specified map.
  *
@@ -1188,7 +1190,7 @@ pmap_remove(pmap, sva, eva)
 }
 
 /*
- * pmap_page_protect:
+ * pmap_page_protect:		[ INTERFACE ]
  *
  *	Lower the permission for all mappings to a given page to
  *	the permissions specified.
@@ -1280,7 +1282,7 @@ pmap_page_protect(pa, prot)
 }
 
 /*
- * pmap_protect:
+ * pmap_protect:		[ INTERFACE ]
  *
  *	Set the physical protection on the specified range of this map
  *	as requested.
@@ -1368,7 +1370,7 @@ pmap_protect(pmap, sva, eva, prot)
 }
 
 /*
- * pmap_enter:
+ * pmap_enter:			[ INTERFACE ]
  *
  *	Insert the given physical page (p) at
  *	the specified virtual address (v) in the
@@ -1640,7 +1642,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 #if defined(PMAP_NEW)
 /*
- * pmap_kenter_pa:
+ * pmap_kenter_pa:		[ INTERFACE ]
  *
  *	Enter a va -> pa mapping into the kernel pmap without any
  *	physical->virtual tracking.
@@ -1689,7 +1691,7 @@ pmap_kenter_pa(va, pa, prot)
 }
 
 /*
- * pmap_kenter_pgs:
+ * pmap_kenter_pgs:		[ INTERFACE ]
  *
  *	Enter a va -> pa mapping for the array of vm_page's into the
  *	kernel pmap without any physical->virtual tracking, starting
@@ -1716,7 +1718,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 }
 
 /*
- * pmap_kremove:
+ * pmap_kremove:		[ INTERFACE ]
  *
  *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
  *	starting at va, for size bytes (assumed to be page rounded).
@@ -1743,7 +1745,7 @@ pmap_kremove(va, size)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_change_wiring:
+ * pmap_change_wiring:		[ INTERFACE ]
  *
  *	Change the wiring attribute for a map/virtual-address pair.
  *
@@ -1800,7 +1802,7 @@ pmap_change_wiring(pmap, va, wired)
 }
 
 /*
- * pmap_extract:
+ * pmap_extract:		[ INTERFACE ]
  *
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
@@ -1842,7 +1844,7 @@ pmap_extract(pmap, va)
 }
 
 /*
- * pmap_copy:
+ * pmap_copy:			[ INTERFACE ]
  *
  *	Copy the mapping range specified by src_addr/len
  *	from the source map to the range dst_addr/len
@@ -1866,7 +1868,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 }
 
 /*
- * pmap_update:
+ * pmap_update:			[ INTERFACE ]
  *
  *	Require that all active physical maps contain no
  *	incorrect entries NOW, by processing any deferred
@@ -1887,7 +1889,7 @@ pmap_update()
 }
 
 /*
- * pmap_collect:
+ * pmap_collect:		[ INTERFACE ]
  *
  *	Garbage collects the physical map system for pages which are no
  *	longer used.  Success need not be guaranteed -- that is, there
@@ -1920,7 +1922,7 @@ pmap_collect(pmap)
 }
 
 /*
- * pmap_activate:
+ * pmap_activate:		[ INTERFACE ]
  *
  *	Activate the pmap used by the specified process.  This includes
  *	reloading the MMU context if the current process, and marking
@@ -1959,7 +1961,7 @@ pmap_activate(p)
 }
 
 /*
- * pmap_deactivate:
+ * pmap_deactivate:		[ INTERFACE ]
  *
  *	Mark that the pmap used by the specified process is no longer
  *	in use by the processor.
@@ -1985,7 +1987,7 @@ pmap_deactivate(p)
 }
 
 /*
- * pmap_zero_page:
+ * pmap_zero_page:		[ INTERFACE ]
  *
  *	Zero the specified (machine independent) page by mapping the page
  *	into virtual memory and using bzero to clear its contents, one
@@ -2006,7 +2008,7 @@ pmap_zero_page(phys)
 }
 
 /*
- * pmap_copy_page:
+ * pmap_copy_page:		[ INTERFACE ]
  *
  *	Copy the specified (machine independent) page by mapping the page
  *	into virtual memory and using bcopy to copy the page, one machine
@@ -2028,7 +2030,7 @@ pmap_copy_page(src, dst)
 }
 
 /*
- * pmap_pageable:
+ * pmap_pageable:		[ INTERFACE ]
  *
  *	Make the specified pages (by pmap, offset) pageable (or not) as
  *	requested.
@@ -2054,7 +2056,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 }
 
 /*
- * pmap_clear_modify:
+ * pmap_clear_modify:		[ INTERFACE ]
  *
  *	Clear the modify bits on the specified physical page.
  */
@@ -2103,7 +2105,7 @@ pmap_clear_modify(pa)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_clear_reference:
+ * pmap_clear_reference:	[ INTERFACE ]
  *
  *	Clear the reference bit on the specified physical page.
  */
@@ -2152,7 +2154,7 @@ pmap_clear_reference(pa)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_is_referenced:
+ * pmap_is_referenced:		[ INTERFACE ]
  *
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
@@ -2198,7 +2200,7 @@ pmap_is_referenced(pa)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_is_modified:
+ * pmap_is_modified:		[ INTERFACE ]
  *
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
@@ -2244,7 +2246,7 @@ pmap_is_modified(pa)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_phys_address:
+ * pmap_phys_address:		[ INTERFACE ]
  *
  *	Return the physical address corresponding to the specified
  *	cookie.  Used by the device pager to decode a device driver's
@@ -3121,9 +3123,14 @@ pmap_physpage_delref(kva)
 /******************** page table page management ********************/
 
 #if defined(PMAP_NEW)
-
-	/* Implement pmap_growkernel() */
-
+/*
+ * pmap_growkernel:		[ INTERFACE ]
+ *
+ *	Grow the kernel address space.  This is a hint from the
+ *	upper layer to pre-allocate more kernel PT pages.
+ *
+ *	XXX Implement XXX
+ */
 #endif /* PMAP_NEW */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 1998/02/10 14:11:11 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 1998/05/19 19:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -197,6 +197,8 @@ void pmap_collect_pv __P((void));
 __inline void pmap_remove_pv __P((pmap_t, vm_offset_t, struct pv_entry *));
 __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, struct pv_entry *));
 void pmap_remove_all __P((vm_offset_t));
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 #ifdef	NKPDE
 int	nkpde = NKPDE;
