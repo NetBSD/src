@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.13 1998/01/03 01:13:00 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.14 1998/01/09 06:54:19 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -111,17 +111,13 @@ struct pv_page {
 };
 
 /*
- * bits of pmap_attributes[]
+ * Physical page attributes.
  */
+typedef	int		pmap_attr_t;
 #define	PMAP_ATTR_MOD	0x01			/* modified */
 #define	PMAP_ATTR_REF	0x02			/* referenced */
 
 #ifdef _KERNEL
-pv_entry_t	pv_table;		/* array of entries, one per page */
-
-#define pa_index(pa)		atop(pa - vm_first_phys)
-#define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
-
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

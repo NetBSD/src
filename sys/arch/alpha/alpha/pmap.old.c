@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.26 1997/11/17 00:11:24 ross Exp $ */
+/* $NetBSD: pmap.old.c,v 1.27 1998/01/09 06:54:17 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.26 1997/11/17 00:11:24 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.27 1998/01/09 06:54:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ extern vm_offset_t pager_sva, pager_eva;
 
 /*
  * Given a map and a machine independent protection code,
- * convert to an hp300 protection code.
+ * convert to an alpha protection code.
  */
 #define pte_prot(m, p)	(protection_codes[m == pmap_kernel() ? 0 : 1][p])
 int	protection_codes[2][8];
@@ -254,15 +254,36 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
-vm_offset_t	vm_first_phys;	/* PA of first managed page */
-vm_offset_t	vm_last_phys;	/* PA just past last managed page */
-int		pv_table_npages;
 
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+
+/*
+ * Storage for physical->virtual entries and page attributes.
+ */
 struct pv_entry	*pv_table;
-char		*pmap_attributes; /* reference and modify bits */
+int		pv_table_npages;
+
+pmap_attr_t	*pmap_attributes;	/* reference and modify bits */
+
+/*
+ * Free list of pages for use by the physical->virtual entry memory allocator.
+ */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
+
+#if defined(MACHINE_NEW_NONCONTIG)
+XXX
+#else
+vm_offset_t	vm_first_phys;	/* PA of first managed page */
+vm_offset_t	vm_last_phys;	/* PA just past last managed page */
+
+#define	pa_index(pa)		atop(pa - vm_first_phys)
+
+#define	pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
+#define	pa_to_attribute(pa)	(&pmap_attributes[pa_index(pa)])
+
+#define	PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
+#endif
 
 /*
  * Internal routines
@@ -279,8 +300,6 @@ void pmap_check_wiring	__P((char *, vm_offset_t));
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
-
-#define PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
 
 /* pmap_remove_mapping flags */
 #define	PRM_TFLUSH	1
@@ -380,7 +399,8 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * Allocate memory for page attributes.
 	 * allocates a few more entries than we need, but that's safe.
 	 */
-	valloc(pmap_attributes, char, 1 + lastusablepage - firstusablepage);
+	valloc(pmap_attributes, pmap_attr_t,
+	    1 + lastusablepage - firstusablepage);
 
 	/*
 	 * Allocate memory for pv_table.
@@ -1156,9 +1176,11 @@ validate:
 	 */
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap, prot) | PG_V;
 	if (PAGE_IS_MANAGED(pa)) {
-		if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) == 0)
+		pmap_attr_t *attr = pa_to_attribute(pa);
+
+		if ((*attr & PMAP_ATTR_REF) == 0)
 			npte |= PG_FOR | PG_FOW | PG_FOE;
-		else if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) == 0)
+		else if ((*attr & PMAP_ATTR_MOD) == 0)
 			npte |= PG_FOW;
 	}
 	if (wired)
@@ -1608,15 +1630,18 @@ void
 pmap_clear_modify(pa)
 	vm_offset_t	pa;
 {
+	pmap_attr_t *attr;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return;
-	if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) != 0) {
-		pmap_changebit(pa, PG_FOW, TRUE);
-		pmap_attributes[pa_index(pa)] &= ~PMAP_ATTR_MOD;
+	attr = pa_to_attribute(pa);
+	if (*attr & PMAP_ATTR_MOD) {
+		pmap_changebit(pa, PG_FOW, TRUE); 
+		*attr &= ~PMAP_ATTR_MOD;
 	}
 }
 
@@ -1629,15 +1654,18 @@ pmap_clear_modify(pa)
 void pmap_clear_reference(pa)
 	vm_offset_t	pa;
 {
+	pmap_attr_t *attr;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return;
-	if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) != 0) {
+	attr = pa_to_attribute(pa);
+	if (*attr & PMAP_ATTR_REF) {
 		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
-		pmap_attributes[pa_index(pa)] &= ~PMAP_ATTR_REF;
+		*attr = PMAP_ATTR_REF;
 	}
 }
 
@@ -1652,11 +1680,13 @@ boolean_t
 pmap_is_referenced(pa)
 	vm_offset_t	pa;
 {
+	pmap_attr_t *attr;
 	boolean_t rv;
 
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return 0;
-	rv = (pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) != 0;
+	attr = pa_to_attribute(pa);
+	rv = ((*attr & PMAP_ATTR_REF) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_referenced(%lx) -> %c\n", pa, "FT"[rv]);
@@ -1676,11 +1706,13 @@ boolean_t
 pmap_is_modified(pa)
 	vm_offset_t	pa;
 {
+	pmap_attr_t *attr;
 	boolean_t rv;
 
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return 0;
-	rv = (pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) != 0;
+	attr = pa_to_attribute(pa);
+	rv = ((*attr & PMAP_ATTR_MOD) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_modified(%lx) -> %c\n", pa, "FT"[rv]);
@@ -2203,7 +2235,7 @@ pmap_emulate_reference(p, v, user, write)
 {
 	pt_entry_t faultoff, *pte;
 	vm_offset_t pa;
-	char attr;
+	pmap_attr_t attr;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2280,7 +2312,7 @@ pmap_emulate_reference(p, v, user, write)
 		attr |= PMAP_ATTR_MOD;
 		faultoff |= PG_FOW;
 	}
-	pmap_attributes[pa_index(pa)] |= attr;
+	*(pa_to_attribute(pa)) |= attr;
 	pmap_changebit(pa, faultoff, FALSE);
 	if ((*pte & faultoff) != 0) {
 #if 0
