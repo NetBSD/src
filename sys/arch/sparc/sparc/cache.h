@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.28 2003/01/20 21:43:38 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.29 2004/04/15 10:07:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -156,66 +156,58 @@ extern u_long dvma_cachealign;
 /*
  * Routines for dealing with the cache.
  */
-void	sun4_cache_enable __P((void));		/* turn it on */
-void	ms1_cache_enable __P((void));		/* turn it on */
-void	viking_cache_enable __P((void));	/* turn it on */
-void	hypersparc_cache_enable __P((void));	/* turn it on */
-void	swift_cache_enable __P((void));		/* turn it on */
-void	cypress_cache_enable __P((void));	/* turn it on */
-void	turbosparc_cache_enable __P((void));	/* turn it on */
+void	sun4_cache_enable(void);
+void	ms1_cache_enable(void);	
+void	viking_cache_enable(void);
+void	hypersparc_cache_enable(void);
+void	swift_cache_enable(void);
+void	cypress_cache_enable(void);
+void	turbosparc_cache_enable(void);
 
-void	sun4_vcache_flush_context __P((int));	/* flush current context */
-void	sun4_vcache_flush_region __P((int, int));	/* flush region in cur ctx */
-void	sun4_vcache_flush_segment __P((int, int, int));/* flush seg in cur ctx */
-void	sun4_vcache_flush_page __P((int va, int));	/* flush page in cur ctx */
-void	sun4_vcache_flush_page_hw __P((int va, int));/* flush page in cur ctx */
-void	sun4_cache_flush __P((caddr_t, u_int, int));/* flush region */
+void	sun4_vcache_flush_context(int);		/* flush current context */
+void	sun4_vcache_flush_region(int, int);	/* flush region in cur ctx */
+void	sun4_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
+void	sun4_vcache_flush_page(int va, int);	/* flush page in cur ctx */
+void	sun4_vcache_flush_page_hw(int va, int);	/* flush page in cur ctx */
+void	sun4_cache_flush(caddr_t, u_int, int);	/* flush region */
 
-void	srmmu_vcache_flush_context __P((int));	/* flush current context */
-void	srmmu_vcache_flush_region __P((int, int));	/* flush region in cur ctx */
-void	srmmu_vcache_flush_segment __P((int, int, int));/* flush seg in cur ctx */
-void	srmmu_vcache_flush_page __P((int va, int));	/* flush page in cur ctx */
-void	srmmu_cache_flush __P((caddr_t, u_int, int));/* flush region */
+void	srmmu_vcache_flush_context(int);	/* flush current context */
+void	srmmu_vcache_flush_region(int, int);	/* flush region in cur ctx */
+void	srmmu_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
+void	srmmu_vcache_flush_page(int va, int);	/* flush page in cur ctx */
+void	srmmu_cache_flush(caddr_t, u_int, int);	/* flush region */
 
-void	ms1_cache_flush __P((caddr_t, u_int, int));
-void	viking_cache_flush __P((caddr_t, u_int, int));
-void	viking_pcache_flush_page __P((paddr_t, int));
-void	srmmu_pcache_flush_line __P((int, int));
-void	hypersparc_pure_vcache_flush __P((void));
+void	ms1_cache_flush(caddr_t, u_int, int);
+void	viking_cache_flush(caddr_t, u_int, int);
+void	viking_pcache_flush_page(paddr_t, int);
+void	srmmu_pcache_flush_line(int, int);
+void	hypersparc_pure_vcache_flush(void);
 
-void	ms1_cache_flush_all __P((void));
-void	srmmu_cache_flush_all __P((void));
-void	cypress_cache_flush_all __P((void));
-void	hypersparc_cache_flush_all __P((void));
+void	ms1_cache_flush_all(void);
+void	srmmu_cache_flush_all(void);
+void	cypress_cache_flush_all(void);
+void	hypersparc_cache_flush_all(void);
 
-extern void sparc_noop __P((void));
+extern void sparc_noop(void);
 
-#define noop_vcache_flush_context \
-	(void (*)__P((int))) sparc_noop
-#define noop_vcache_flush_region \
-	(void (*)__P((int,int))) sparc_noop
-#define noop_vcache_flush_segment \
-	(void (*)__P((int,int,int))) sparc_noop
-#define noop_vcache_flush_page \
-	(void (*)__P((int,int))) sparc_noop
-#define noop_cache_flush \
-	(void (*)__P((caddr_t, u_int, int))) sparc_noop
-#define noop_pcache_flush_page \
-	(void (*)__P((paddr_t, int))) sparc_noop
-#define noop_pure_vcache_flush \
-	(void (*)__P((void))) sparc_noop
-#define noop_cache_flush_all \
-	(void (*)__P((void))) sparc_noop
+#define noop_vcache_flush_context	(void (*)(int))sparc_noop
+#define noop_vcache_flush_region	(void (*)(int,int))sparc_noop
+#define noop_vcache_flush_segment	(void (*)(int,int,int))sparc_noop
+#define noop_vcache_flush_page		(void (*)(int,int))sparc_noop
+#define noop_cache_flush		(void (*)(caddr_t,u_int,int))sparc_noop
+#define noop_pcache_flush_page		(void (*)(paddr_t,int))sparc_noop
+#define noop_pure_vcache_flush		(void (*)(void))sparc_noop
+#define noop_cache_flush_all		(void (*)(void))sparc_noop
 
 /*
  * The SMP versions of the cache flush functions. These functions
  * send a "cache flush" message to each processor.
  */
-void	smp_vcache_flush_context __P((int));	/* flush current context */
-void	smp_vcache_flush_region __P((int,int));	/* flush region in cur ctx */
-void	smp_vcache_flush_segment __P((int, int, int));/* flush seg in cur ctx */
-void	smp_vcache_flush_page __P((int va,int));	/* flush page in cur ctx */
-void	smp_cache_flush __P((caddr_t, u_int, int));	/* flush region */
+void	smp_vcache_flush_context(int);		/* flush current context */
+void	smp_vcache_flush_region(int,int);	/* flush region in cur ctx */
+void	smp_vcache_flush_segment(int, int, int);/* flush seg in cur ctx */
+void	smp_vcache_flush_page(int va,int);	/* flush page in cur ctx */
+void	smp_cache_flush(caddr_t, u_int, int);	/* flush region */
 
 
 #define cache_flush_page(va,ctx)	cpuinfo.vcache_flush_page(va,ctx)
