@@ -1,7 +1,5 @@
-#	$Id: Makefile,v 1.11 1995/01/12 19:27:15 jtc Exp $
+#	$Id: Makefile,v 1.12 1995/01/12 19:39:43 jtc Exp $
 
-RPCDIR=		${.CURDIR}/src
-.PATH:		${RPCDIR}
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
@@ -21,13 +19,13 @@ beforeinstall:
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
-	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i > /dev/null 2>&1 || \
+	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
 		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc; \
 	done
 	@for i in $(RPCSRCS); do \
-	    cmp -s ${RPCDIR}/$$i ${DESTDIR}/usr/include/rpcsvc/$$i > /dev/null 2>&1 || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${RPCDIR}/$$i \
+	    cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/$$i \
 		${DESTDIR}/usr/include/rpcsvc; \
 	done
 
