@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.59 1998/03/26 23:33:12 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.60 1998/05/12 21:22:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -179,9 +179,10 @@ static int		__dlclose __P((void *));
 static void		*__dlsym __P((void *, const char *));
 static int		__dlctl __P((void *, int, void *));
 static void		__dlexit __P((void));
+static int		__dladdr __P((void *, Dl_info *));
 
 static struct ld_entry	ld_entry = {
-	__dlopen, __dlclose, __dlsym, __dlctl, __dlexit
+	__dlopen, __dlclose, __dlsym, __dlctl, __dlexit, __dladdr
 };
 
        void		xprintf __P((char *, ...));
@@ -1173,6 +1174,123 @@ xprintf("Allocating common: %s size %d at %#x\n", name, common_size, rtsp->rt_sp
 	return rtsp->rt_sp;
 }
 
+/*
+ * Find the symbol in any mapped object that is closest to, but not
+ * exceeds, the given address.
+ */
+static int
+__dladdr(addr, dli)
+	void	*addr;
+	Dl_info	*dli;
+{
+	struct so_map		*smp;
+	struct rt_symbol	*rtsp;
+	int			i, found = 0;
+
+	/*
+	 * First look for an exact match in the commons table.
+	 */
+	for (i = 0; i < RTC_TABSIZE; i++) {
+		for (rtsp = rt_symtab[i]; rtsp; rtsp = rtsp->rt_link)
+			if (rtsp->rt_sp->nz_value == (long)addr) {
+				dli->dli_fname = 0;
+				dli->dli_fbase = 0;
+				dli->dli_sname = rtsp->rt_sp->nz_name;
+				dli->dli_saddr = addr;
+				return (1);
+			}
+	}
+
+	/*
+	 * Search all symbols tables for a ADDR
+	 */
+	for (smp = link_map_head; smp; smp = smp->som_next) {
+		struct so_map	*src_map = smp;
+		int		buckets;
+		struct rrs_hash	*hp;
+		char		*cp;
+		struct	nzlist	*np;
+		caddr_t		cur = 0;
+
+		/* Some local caching */
+		long		symbolbase;
+		struct rrs_hash	*hashbase;
+		char		*stringbase;
+		int		symsize;
+
+#if 0
+		if ((LM_PRIVATE(smp)->spd_flags & _RTLD_GLOBAL) == 0)
+			continue;
+#endif
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
+			continue;
+
+		if ((caddr_t)addr < smp->som_addr)
+			continue;
+
+		np = lookup("_end", smp, &src_map, 1);
+		if ((caddr_t)addr > np->nz_value + smp->som_addr)
+			continue;
+
+		if ((buckets = LD_BUCKETS(smp->som_dynamic)) == 0)
+			continue; 
+
+		/* 
+		 * Walk the entire symbol table of this object
+		 * in search for the nearest symbol.
+		 */
+		hashbase = LM_HASH(smp);
+		symbolbase = (long)LM_SYMBOL(smp, 0);
+		stringbase = LM_STRINGS(smp);
+		symsize	= LD_VERSION_NZLIST_P(smp->som_dynamic->d_version)?
+				sizeof(struct nzlist) :
+				sizeof(struct nlist);
+
+		for (i = 0; i < buckets; i++) {
+			hp = hashbase + i;
+			if (hp->rh_symbolnum == -1)
+				/* Nothing in this bucket */
+				continue;
+
+			while (hp) {
+				caddr_t v;
+				np = (struct nzlist *)
+				     (symbolbase + hp->rh_symbolnum * symsize);
+
+				hp = (hp->rh_next == 0)
+					? NULL
+					: hashbase + hp->rh_next;
+
+				/* Skip any undefined symbol */
+				if (np->nz_type == N_UNDF+N_EXT)
+					continue;
+
+				/* Compute absolute address */
+				v = np->nz_value + src_map->som_addr;
+
+				/*
+				 * Make this symbol the new candidate if it
+				 * is closer to, but not exceeding, ADDR.
+				 */
+				if (v >= cur && v <= (caddr_t)addr) {
+					dli->dli_fname = smp->som_path;
+					dli->dli_fbase = LM_LDBASE(smp);
+					dli->dli_sname = stringbase +
+								np->nz_strx;
+					dli->dli_saddr = v;
+					if (v == addr)
+						return (1);
+					cur = v;
+					found = 1;
+				}
+			}
+		}
+		if (found)
+			return (1);
+	}
+
+	return (0);
+}
 
 /*
  * This routine is called from the jumptable to resolve
@@ -1667,18 +1785,20 @@ __dlsym(fd, sym)
 
 static int
 __dlctl(fd, cmd, arg)
-	void	*fd, *arg;
-	int	cmd;
+	void *fd;
+	int cmd;
+	void *arg;
 {
+
 	switch (cmd) {
 	case DL_GETERRNO:
 		*(int *)arg = dlerrno;
-		return 0;
+		return (0);
 	default:
 		dlerrno = EOPNOTSUPP;
-		return -1;
+		return (-1);
 	}
-	return 0;
+	return (-1);
 }
 
 static void
