@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1983, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fcntl.h	5.14 (Berkeley) 7/1/91
- *	$Id: fcntl.h,v 1.4 1994/05/17 04:25:00 cgd Exp $
+ *	from: @(#)fcntl.h	8.3 (Berkeley) 1/21/94
+ *	$Id: fcntl.h,v 1.5 1994/06/08 11:38:38 mycroft Exp $
  */
 
 #ifndef _SYS_FCNTL_H_
@@ -65,11 +65,15 @@
 #define	O_RDWR		0x0002		/* open for reading and writing */
 #define	O_ACCMODE	0x0003		/* mask for above modes */
 
-#ifdef KERNEL
 /*
- * Kernel encoding of open mode; separate read and write bits
- * that are independently testable: 1 greater than the above.
+ * Kernel encoding of open mode; separate read and write bits that are
+ * independently testable: 1 greater than the above.
+ *
+ * XXX
+ * FREAD and FWRITE are excluded from the #ifdef KERNEL so that TIOCFLUSH,
+ * which was documented to use FREAD/FWRITE, continues to work.
  */
+#ifndef _POSIX_SOURCE
 #define	FREAD		0x0001
 #define	FWRITE		0x0002
 #endif
@@ -154,11 +158,11 @@
  * information passed to system by user
  */
 struct flock {
-	short	l_type;		/* lock type: read/write, etc. */
-	short	l_whence;	/* type of l_start */
 	off_t	l_start;	/* starting offset */
 	off_t	l_len;		/* len = 0 means until end of file */
 	pid_t	l_pid;		/* lock owner */
+	short	l_type;		/* lock type: read/write, etc. */
+	short	l_whence;	/* type of l_start */
 };
 
 
