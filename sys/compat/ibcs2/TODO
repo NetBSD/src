@@ -1,21 +1,7 @@
-$NetBSD: TODO,v 1.2 1994/10/26 02:52:50 cgd Exp $
+$NetBSD: TODO,v 1.3 1995/03/14 15:12:17 scottb Exp $
 
-* reading directories: can we emulate reading a directory?
-
-* finish testing POSIX sig* calls
-
-* re-map signal numbers before delivery
-
-* re-map errno
-
-* terminfo
-
-* implement sysfs, stime, utime, nice, pgrpsys, plock, uadmin, poll,
-	select
-
-* wrap msgsys, shmsys, semsys: need to map the "which" arg to NetBSD
+* handle directory reads for filenames > 14 char
 
 * finish implementing ioctl()'s:
 
-	IBCS2_TCSBRK, IBCS2_TCXONC, IBCS2_TCFLSH, IBCS2_TIOCGWINSZ,
-	IBCS2_TIOCSWINSZ
+	IBCS2_TCSBRK, IBCS2_TCXONC, IBCS2_TCFLSH

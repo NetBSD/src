@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.3 1994/10/26 02:52:52 cgd Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.4 1995/03/14 15:12:21 scottb Exp $	*/
 
 /*
- * Copyright (c) 1994 Scott Bartram
+ * Copyright (c) 1994, 1995 Scott Bartram
  * Copyright (c) 1994 Adam Glass
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -39,18 +39,13 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
-#include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <sys/namei.h>
 #include <vm/vm.h>
 
+#include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
-
-#ifdef DEBUG_IBCS2
-#define DPRINTF(s)	printf s
-#else
-#define DPRINTF(s)
-#endif
+#include <compat/ibcs2/ibcs2_util.h>
 
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
@@ -450,12 +445,14 @@ coff_load_shlib(p, path, epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
+	caddr_t sg = stackgap_init();
 
 	/*
 	 * 1. open shlib file
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
+	CHECKALTEXIST(p, &sg, path);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if (error = namei(&nd)) {
