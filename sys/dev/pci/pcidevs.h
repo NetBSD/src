@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.585 2003/10/22 11:31:18 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.586 2003/10/23 00:47:45 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.587 2003/10/22 11:30:52 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.588 2003/10/23 00:46:56 briggs Exp 
  */
 
 /*
@@ -1301,7 +1301,12 @@
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* \"Light Pulse\" FibreChannel adapter */
 
 /* ENE Technology, Inc. products */
+#define	PCI_PRODUCT_ENE_CB710	0x710		/* CB710 Cardbus Controller */
+#define	PCI_PRODUCT_ENE_CB720	0x720		/* CB720 Cardbus Controller */
+#define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB1211 Cardbus Controller */
+#define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB1225 Cardbus Controller */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB1410 Cardbus Controller */
+#define	PCI_PRODUCT_ENE_CB1420	0x1420		/* CB1420 Cardbus Controller */
 
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
