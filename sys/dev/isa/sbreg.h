@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.12 1995/05/08 22:02:29 brezak Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.13 1996/02/18 16:36:56 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -96,9 +96,10 @@
 #define	SBP_RECORD_FROM(src, filteron, high) ((src) | (filteron) | (high))
 #define		SBP_FILTER_ON		0x0
 #define		SBP_FILTER_OFF		0x20
-#define		SBP_FILTER_MASK		0x20
-#define		SBP_FILTER_LOW		0
-#define		SBP_FILTER_HIGH		0x08
+#define		SBP_IFILTER_MASK	0x28
+#define		SBP_OFILTER_MASK	0x20
+#define		SBP_IFILTER_LOW		0
+#define		SBP_IFILTER_HIGH	0x08
 #define		SBP_FROM_MIC		0x00
 #define		SBP_FROM_CD		0x02
 #define		SBP_FROM_LINE		0x06
