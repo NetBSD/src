@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.7 1997/05/08 10:57:24 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.8 1997/05/08 16:19:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -262,13 +262,8 @@ ibcs2_sys_eaccess(p, v, retval)
                         flags |= VREAD;
                 if (SCARG(uap, flags) & IBCS2_W_OK)
                         flags |= VWRITE;
-		if (vp->v_type != VDIR) {
-	                if (SCARG(uap, flags) & IBCS2_X_OK)
-				flags |= VEXEC;
-		} else {
-	                if (SCARG(uap, flags) & IBCS2_X_OK)
-				flags |= VLOOKUP;
-		}
+                if (SCARG(uap, flags) & IBCS2_X_OK)
+			flags |= VEXEC;
                 if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
                         error = VOP_ACCESS(vp, flags, cred, p);
         }

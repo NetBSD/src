@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.41 1997/03/27 20:40:09 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.42 1997/05/08 16:20:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1314,7 +1314,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	}
 	vap = &np->n_vattr;
 	vap->va_type = vtyp;
-	vap->va_mode = (vmode & 07777);
+	vap->va_mode = vmode & ALLPERMS;
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];

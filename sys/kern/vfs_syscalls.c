@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.88 1997/05/08 10:57:35 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.89 1997/05/08 16:20:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -635,7 +635,7 @@ sys_fchdir(p, v, retval)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VLOOKUP, p->p_ucred, p);
+		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (mp->mnt_flag & MNT_MLOCK) {
 			mp->mnt_flag |= MNT_MWAIT;
@@ -729,7 +729,7 @@ change_dir(ndp, p)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VLOOKUP, p->p_ucred, p);
+		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 	VOP_UNLOCK(vp);
 	if (error)
 		vrele(vp);
@@ -1199,13 +1199,8 @@ sys_access(p, v, retval)
 			flags |= VREAD;
 		if (SCARG(uap, flags) & W_OK)
 			flags |= VWRITE;
-		if (vp->v_type != VDIR) {
-			if (SCARG(uap, flags) & X_OK)
-				flags |= VEXEC;
-		} else {
-			if (SCARG(uap, flags) & X_OK)
-				flags |= VLOOKUP;
-		}
+		if (SCARG(uap, flags) & X_OK)
+			flags |= VEXEC;
 		if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
 			error = VOP_ACCESS(vp, flags, cred, p);
 	}

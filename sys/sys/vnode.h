@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.41 1997/05/08 10:21:38 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.42 1997/05/08 16:20:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -163,10 +163,9 @@ struct vattr {
 /*
  *  Modes.
  */
-#define	VLOOKUP	01000		/* directory lookup permissions */
-#define	VREAD	00400		/* read, write, execute permissions */
-#define	VWRITE	00200
-#define	VEXEC	00100
+#define	VREAD	00004		/* read, write, execute permissions */
+#define	VWRITE	00002
+#define	VEXEC	00001
 
 /*
  * Token indicating no attribute value yet assigned.
@@ -400,7 +399,7 @@ struct vnode *
 void 	vput __P((struct vnode *vp));
 void 	vref __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
-int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid,
+int	vaccess __P((enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));
 #endif /* _KERNEL */
 

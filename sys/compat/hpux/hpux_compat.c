@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.34 1997/05/08 10:57:20 mycroft Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1190,13 +1190,8 @@ hpux_sys_getaccess(p, v, retval)
 		*retval |= R_OK;
 	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, p) == 0)
 		*retval |= W_OK;
-	if (vp->v_type != VDIR) {
-		if (VOP_ACCESS(vp, VEXEC, cred, p) == 0)
-			*retval |= X_OK;
-	} else {
-		if (VOP_ACCESS(vp, VLOOKUP, cred, p) == 0)
-			*retval |= X_OK;
-	}
+	if (VOP_ACCESS(vp, VEXEC, cred, p) == 0)
+		*retval |= X_OK;
 	vput(vp);
 	crfree(cred);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.48 1996/10/25 21:58:00 cgd Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.49 1997/05/08 16:20:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -402,10 +402,17 @@ kernfs_access(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	mode_t fmode =
-	    (vp->v_flag & VROOT) ? DIR_MODE : VTOKERN(vp)->kf_kt->kt_mode;
+	mode_t mode;
 
-	return (vaccess(fmode, (uid_t)0, (gid_t)0, ap->a_mode, ap->a_cred));
+	if (vp->v_flag & VROOT) {
+		mode = DIR_MODE;
+	} else {
+		struct kern_target *kt = VTOKERN(vp)->kf_kt;
+		mode = kt->kt_mode;
+	}
+
+	return (vaccess(vp->v_type, mode, (uid_t)0, (gid_t)0, ap->a_mode,
+	    ap->a_cred));
 }
 
 int

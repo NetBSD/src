@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.48 1997/05/05 07:34:09 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.49 1997/05/08 16:20:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -638,8 +638,8 @@ procfs_access(v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_p)) != 0)
 		return (error);
 
-	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
-			ap->a_cred));
+	return (vaccess(va.va_type, va.va_mode,
+	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.33 1997/04/11 21:52:00 kleink Exp $	*/
+/*	$NetBSD: advnops.c,v 1.34 1997/05/08 16:19:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -181,7 +181,7 @@ adosfs_getattr(v)
 	vap->va_rdev = NODEV;
 	vap->va_fileid = ap->block;
 	vap->va_type = sp->a_vp->v_type;
-	vap->va_mode = amp->mask & adunixprot(ap->adprot);
+	vap->va_mode = adunixprot(ap->adprot) & amp->mask;
 	if (sp->a_vp->v_type == VDIR) {
 		vap->va_nlink = 1;	/* XXX bogus, oh well */
 		vap->va_bytes = amp->bsize;
@@ -852,8 +852,8 @@ adosfs_access(v)
 #endif
 #ifdef QUOTA
 #endif
-	error = vaccess(adunixprot(ap->adprot) & ap->amp->mask, ap->uid,
-	    ap->gid, sp->a_mode, sp->a_cred);
+	error = vaccess(vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
+	    ap->uid, ap->gid, sp->a_mode, sp->a_cred);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.24 1997/04/23 05:47:54 mikel Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.25 1997/05/08 16:20:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -247,7 +247,8 @@ ufs_access(v)
 	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
 		return (EPERM);
 
-	return (vaccess(ip->i_mode, ip->i_uid, ip->i_gid, mode, ap->a_cred));
+	return (vaccess(vp->v_type, ip->i_mode & ALLPERMS,
+	    ip->i_uid, ip->i_gid, mode, ap->a_cred));
 }
 
 /* ARGSUSED */
@@ -273,7 +274,7 @@ ufs_getattr(v)
 	 */
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mode & ~IFMT;
+	vap->va_mode = ip->i_mode & ALLPERMS;
 	vap->va_nlink = ip->i_nlink;
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;
@@ -1170,7 +1171,7 @@ ufs_mkdir(v)
 		error = EMLINK;
 		goto out;
 	}
-	dmode = vap->va_mode & 0777;
+	dmode = vap->va_mode & ACCESSPERMS;
 	dmode |= IFDIR;
 	/*
 	 * Must simulate part of ufs_makeinode here to acquire the inode,

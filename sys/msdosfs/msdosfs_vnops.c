@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.55 1996/11/08 15:51:49 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.56 1997/05/08 16:20:28 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -144,7 +144,7 @@ msdosfs_create(v)
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
 		
-	ndirent.de_Attributes = (ap->a_vap->va_mode & VWRITE) ?
+	ndirent.de_Attributes = (ap->a_vap->va_mode & S_IWUSR) ?
 				ATTR_ARCHIVE : ATTR_ARCHIVE | ATTR_READONLY;
 	ndirent.de_StartCluster = 0;
 	ndirent.de_FileSize = 0;
@@ -245,15 +245,14 @@ msdosfs_access(v)
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
-	mode_t dosmode;
-	
-	dosmode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH);
-	if ((dep->de_Attributes & ATTR_READONLY) == 0)
-		dosmode |= (S_IWUSR|S_IWGRP|S_IWOTH);
-	dosmode &= pmp->pm_mask;
+	mode_t mode;
 
-	return (vaccess(dosmode, pmp->pm_uid, pmp->pm_gid, ap->a_mode,
-	    ap->a_cred));
+	if ((dep->de_Attributes & ATTR_READONLY) == 0)
+		mode = S_IRWXU|S_IRWXG|S_IRWXO;
+	else
+		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+	return (vaccess(mode & pmp->pm_mask,
+	    pmp->pm_uid, pmp->pm_gid, ap->a_mode, ap->a_cred));
 }
 
 int
@@ -268,7 +267,9 @@ msdosfs_getattr(v)
 	} */ *ap = v;
 	u_int cn;
 	struct denode *dep = VTODE(ap->a_vp);
+	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vattr *vap = ap->a_vap;
+	mode_t mode;
 	struct timespec ts;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
@@ -289,14 +290,14 @@ msdosfs_getattr(v)
 		    | ((dep->de_diroffset / sizeof(struct direntry)) & 0xffff);
 	}
 	vap->va_fileid = cn;
-	vap->va_mode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH) |
-		((dep->de_Attributes & ATTR_READONLY) ? 0 : (S_IWUSR|S_IWGRP|S_IWOTH));
-	vap->va_mode &= dep->de_pmp->pm_mask;
-	if (dep->de_Attributes & ATTR_DIRECTORY)
-		vap->va_mode |= S_IFDIR;
+	if ((dep->de_Attributes & ATTR_READONLY) == 0)
+		mode = S_IRWXU|S_IRWXG|S_IRWXO;
+	else
+		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+	vap->va_mode = mode & pmp->pm_mask;
+	vap->va_uid = pmp->pm_uid;
+	vap->va_gid = pmp->pm_gid;
 	vap->va_nlink = 1;
-	vap->va_gid = dep->de_pmp->pm_gid;
-	vap->va_uid = dep->de_pmp->pm_uid;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
 	dos2unixtime(dep->de_MDate, dep->de_MTime, &vap->va_mtime);
@@ -311,9 +312,9 @@ msdosfs_getattr(v)
 	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0)
 		vap->va_flags |= SF_ARCHIVED;
 	vap->va_gen = 0;
-	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
-	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
-	    			~(dep->de_pmp->pm_crbomask);
+	vap->va_blocksize = pmp->pm_bpcluster;
+	vap->va_bytes =
+	    (dep->de_FileSize + pmp->pm_crbomask) & ~pmp->pm_crbomask;
 	vap->va_type = ap->a_vp->v_type;
 	return (0);
 }
@@ -330,6 +331,7 @@ msdosfs_setattr(v)
 	} */ *ap = v;
 	int error = 0;
 	struct denode *dep = VTODE(ap->a_vp);
+	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vattr *vap = ap->a_vap;
 	struct ucred *cred = ap->a_cred;
 	
@@ -365,13 +367,13 @@ msdosfs_setattr(v)
 			return (error);
 	}
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
-		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
-		if (!(dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-		    && vap->va_atime.tv_sec != VNOVAL)
+		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
+		    vap->va_atime.tv_sec != VNOVAL)
 			unix2dostime(&vap->va_atime, &dep->de_ADate, &dep->de_ATime);
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime);
@@ -384,11 +386,11 @@ msdosfs_setattr(v)
 	 * attribute.
 	 */
 	if (vap->va_mode != (mode_t)VNOVAL) {
-		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)))
 			return (error);
 		/* We ignore the read and execute bits. */
-		if (vap->va_mode & VWRITE)
+		if (vap->va_mode & S_IWUSR)
 			dep->de_Attributes &= ~ATTR_READONLY;
 		else
 			dep->de_Attributes |= ATTR_READONLY;
@@ -398,7 +400,7 @@ msdosfs_setattr(v)
 	 * Allow the `archived' bit to be toggled.
 	 */
 	if (vap->va_flags != VNOVAL) {
-		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)))
 			return (error);
 		if (vap->va_flags & SF_ARCHIVED)
