@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.10 2004/02/13 01:22:20 dyoung Exp $ */
+/* $NetBSD: am79c930.c,v 1.11 2004/03/08 06:52:44 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.10 2004/02/13 01:22:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.11 2004/03/08 06:52:44 dyoung Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
@@ -286,7 +286,7 @@ mem_write_2(struct am79c930_softc *sc, u_int32_t off, u_int16_t val)
 
 	/* could be unaligned */
 	if ((off & 0x1) == 0)
-		bus_space_write_2(t, h, off,    htole16(val));
+		bus_space_write_stream_2(t, h, off,    htole16(val));
 	else {
 		bus_space_write_1(t, h, off,    val        & 0xff);
 		bus_space_write_1(t, h, off+1, (val >>  8) & 0xff);
@@ -301,7 +301,7 @@ mem_write_4(struct am79c930_softc *sc, u_int32_t off, u_int32_t val)
 
 	/* could be unaligned */
 	if ((off & 0x3) == 0)
-		bus_space_write_4(t, h, off,    htole32(val));
+		bus_space_write_stream_4(t, h, off,    htole32(val));
 	else {
 		bus_space_write_1(t, h, off,    val        & 0xff);
 		bus_space_write_1(t, h, off+1, (val >>  8) & 0xff);
@@ -328,7 +328,8 @@ mem_read_2(struct am79c930_softc *sc, u_int32_t off)
 {
 	/* could be unaligned */
 	if ((off & 0x1) == 0)
-		return le16toh(bus_space_read_2(sc->sc_memt, sc->sc_memh, off));
+		return le16toh(bus_space_read_stream_2(sc->sc_memt,
+		    sc->sc_memh, off));
 	else
 		return
 		     bus_space_read_1(sc->sc_memt, sc->sc_memh, off  )       |
@@ -340,7 +341,8 @@ mem_read_4(struct am79c930_softc *sc, u_int32_t off)
 {
 	/* could be unaligned */
 	if ((off & 0x3) == 0)
-		return le32toh(bus_space_read_4(sc->sc_memt, sc->sc_memh, off));
+		return le32toh(bus_space_read_stream_4(sc->sc_memt, sc->sc_memh,
+		    off));
 	else
 		return
 		     bus_space_read_1(sc->sc_memt, sc->sc_memh, off  )       |
