@@ -1,23 +1,31 @@
+#include "systm.h"
 #include "param.h"
 #include "proc.h"
 #include "malloc.h"
 #include "user.h"
 
-#include "../include/pte.h"
-#include "../include/control.h"
-    
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
 #include "vm/vm_statistics.h"
 
-#include "../include/cpu.h"
-#include "../include/mon.h"
-#include "../include/vmparam.h"
-#include "../include/pmap.h"
+#include "machine/pte.h"
+#include "machine/control.h"
+    
+#include "machine/cpu.h"
+#include "machine/mon.h"
+#include "machine/vmparam.h"
+#include "machine/pmap.h"
 
 extern int memavail;
-extern vm_offset_t virtual_avail, virtual_end;
+/*
+ * globals needed by the vm system
+ *
+ * [frankly the stupid vm system should allocate these]
+ */
+
+vm_offset_t virtual_avail, virtual_end;
+vm_offset_t avail_start, avail_end;
 
 /* current_projects:
  * 
@@ -140,7 +148,7 @@ static struct context_state context_array[NCONTEXT];
 /* location to store virtual addresses
  * to be used in copy/zero operations
  */
-vm_offset_t vpage[2];		
+vm_offset_t tmp_vpages[2];		
 
 /* context support */
 
@@ -172,7 +180,7 @@ void pv_init __P((void));
 
 void sun3_protection_init __P((void));
 
-void pmap_bootstrap __P((vm_offset_t kernel_end, int hole));
+void pmap_bootstrap __P((void));
 void pmap_init __P((vm_offset_t phys_start, vm_offset_t phys_end));
 
 void pmap_common_init __P((pmap_t pmap));
@@ -475,7 +483,6 @@ unsigned char pv_compute_cache(head)
      pv_entry_t head;
 {
     pv_entry_t pv;
-    unsigned char cflags;
     int cread, cwrite, ccache, clen;
 
     cread = cwrite = ccache = clen = 0;
@@ -494,7 +501,7 @@ int pv_compute_modified(head)
      pv_entry_t head;
 {
     pv_entry_t pv;
-    int modified, saved_context;
+    int modified;
     vm_offset_t pte;
     unsigned int seg;
     
@@ -523,7 +530,6 @@ void pv_remove_all(pa)
      vm_offset_t pa;
 {
     pv_entry_t npv,head,last;
-    int saved_context;
 
     head = pa_to_pvp(pa);
     for (npv = head ; npv != NULL; last= npv, npv = npv->pv_next ) {
@@ -540,7 +546,6 @@ unsigned char pv_link(pmap, pa, va, flags)
     unsigned char nflags;
     pv_entry_t last,pv,head,npv;
 
-    if (flags
     head = pv = pa_to_pvp(pa);
     PMAP_LOCK();
     if (pv->pv_pmap == NULL) {	/* not currently "managed" */
@@ -616,8 +621,6 @@ void pv_unlink(pmap, pa, va)
      vm_offset_t pa, va;
 {
     pv_entry_t pv,pv_list,dead,last;
-    int context;
-    vm_offset_t pte;
     unsigned char saved_flags,nflags;
 
     pv_list = pa_to_pvp(pa);
@@ -721,36 +724,18 @@ void pmap_common_init(pmap)
     simple_lock_init(&pmap->pm_lock);
 }
 
-void pmap_bootstrap(firstaddr, loadaddr)
-     vm_offset_t firstaddr;
-     vm_offset_t loadaddr;
-     vm_offset_t msg
+void pmap_bootstrap()
 {
-    vm_offset_t seg_begin, seg_end,vmx;
-    int i;
     
-    virtual_avail = sun3_round_page(kernel_end);    /* set in sun3_init */
-    virtual_end = sun3_round_page(VM_MAX_KERNEL_ADDRESS);
-
     sun3_protection_init();
    /* after setting up some structures */
 
     kernel_pmap = &kernel_pmap_store;
     pmap_common_init(kernel_pmap);
 
-    pmeg_init();
+    /*    pmeg_init();*/
     context_init();
     
-    seg_begin  = sun3_trunc_seg(MONSTART);
-    seg_end = sun3_round_seg(MONEND);
-
-    /* protect MMU */
-    for (vmx = seg_begin; vmx < seg_end; vmx+=NBSEG) {
-	i = mmu_segment_to_pmeg(vmx); /* XXXX */
-	pmeg_steal(i);		/* XXXXX */
-    }
-    /* do something about MONSHORTPAGE/MONSHORTSEG */
-    /* do something about device pages in monitor space */
     /* unmap everything else, and copy into all contexts*/
 }
 /*
@@ -956,8 +941,8 @@ void pmap_remove_range_contextless(pmap, sva, eva,pmegp)
     int sp,ep,i;
     vm_offset_t pte,va;
 
-    sp = PTE_NUM(sva);
-    ep = PTE_NUM(eva);
+    sp = VA_PTE_NUM(sva);
+    ep = VA_PTE_NUM(eva);
     va = sva;
     for (i = sp; i < ep; i++) {
 	pte = get_pte_pmeg(pmegp->pmeg_index, i);
@@ -1333,15 +1318,15 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 void pmap_copy_page(src, dst)
 	 vm_offset_t	src, dst;
 {
-    vm_offset_t pte,v;
+    vm_offset_t pte;
 
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (src >>PGSHIFT);
-    set_pte(vpage[0], pte);
+    set_pte(tmp_vpages[0], pte);
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (dst >>PGSHIFT);
-    set_pte(vpage[1], pte);
-    bcopy(vpage[0], vpage[1], NBPG);
-    set_pte(vpage[0], PG_INVAL);
-    set_pte(vpage[0], PG_INVAL);
+    set_pte(tmp_vpages[1], pte);
+    bcopy((char *) tmp_vpages[0], (char *) tmp_vpages[1], NBPG);
+    set_pte(tmp_vpages[0], PG_INVAL);
+    set_pte(tmp_vpages[0], PG_INVAL);
 }
 /*
  *	Routine:	pmap_extract
@@ -1364,7 +1349,7 @@ pmap_extract(pmap, va)
 	    panic("pmap: pmap_extract() failed on kernel va");
 	pte = get_pte(va);
 	if (pte & PG_VALID)
-	    return PA_PTE(pte);
+	    return PG_PA(pte);
 	panic("pmap: pmap_extract() failed on invalid kernel va");
     }
     seg = VA_SEGNUM(va);
@@ -1372,7 +1357,7 @@ pmap_extract(pmap, va)
     	panic("pmap: pmap_extract() failed on user va");
     if (get_pte_val(pmap, va,&pte)) {
 	if (pte & PG_VALID)
-	    return PA_PTE(pte);
+	    return PG_PA(pte);
     }
     panic("pmap: pmap_extract() failed on invalid user va");
 }
@@ -1452,7 +1437,7 @@ void pmap_protect_range_mmu(pmap, sva, eva,pte_proto)
      vm_offset_t sva, eva;
      vm_offset_t pte_proto;
 {
-    int saved_context,i;
+    int saved_context;
     unsigned int sme,nflags;
     pmeg_t pmegp;
     vm_offset_t va,pte;
@@ -1566,9 +1551,9 @@ void pmap_zero_page(pa)
     vm_offset_t pte;
 
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (pa >>PGSHIFT);
-    set_pte(vpage[0], pte);
-    bzero(vpage[0], NBPG);
-    set_pte(vpage[0], PG_INVAL);
+    set_pte(tmp_vpages[0], pte);
+    bzero((char *) tmp_vpages[0], NBPG);
+    set_pte(tmp_vpages[0], PG_INVAL);
 }
 
 
