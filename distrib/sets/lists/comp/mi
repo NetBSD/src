@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.143 1999/05/11 21:49:58 veego Exp $
+# $NetBSD: mi,v 1.144 1999/05/18 13:23:17 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -683,6 +683,15 @@
 ./usr/include/nl_types.h
 ./usr/include/nlist.h
 ./usr/include/nsswitch.h
+./usr/include/ntfs
+./usr/include/ntfs/ntfs.h
+./usr/include/ntfs/ntfs_compr.h
+./usr/include/ntfs/ntfs_extern.h
+./usr/include/ntfs/ntfs_ihash.h
+./usr/include/ntfs/ntfs_inode.h
+./usr/include/ntfs/ntfs_subr.h
+./usr/include/ntfs/ntfs_vfsops.h
+./usr/include/ntfs/ntfsmount.h
 ./usr/include/objc/NXConstStr.h
 ./usr/include/objc/Object.h
 ./usr/include/objc/Protocol.h
