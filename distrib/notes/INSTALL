@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.57 1998/04/27 03:09:42 thorpej Exp $
+	$NetBSD: INSTALL,v 1.58 1998/07/05 14:20:03 ross Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -21,6 +21,7 @@ NetBSD is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
 possible, it's likely that this release wouldn't have come about.
 
+#if 0
 The NetBSD _VER release is a landmark. Building upon the successful
 NetBSD 1.2 release, we have provided numerous and significant
 functional enhancements, including support for many new devices,
@@ -153,6 +154,7 @@ Memory subsystem, kernel threads, and SMP support.
 
 #include "whatis"
 
+#endif
 
 The Future of NetBSD:
 --- ------ -- ------
@@ -613,7 +615,6 @@ Supporting cast:
 Steve Allen		<wormey@NetBSD.ORG>
 Lennart Augustsson	<augustss@NetBSD.ORG>
 Christoph Badura	<bad@NetBSD.ORG>
-John Birrell		<jb@NetBSD.ORG>
 Manuel Bouyer		<bouyer@NetBSD.ORG>
 John Brezak		<brezak@NetBSD.ORG>
 Allen Briggs		<briggs@NetBSD.ORG>
@@ -686,14 +687,15 @@ Steve Woodford		<scw@NetBSD.ORG>
 Dedication:
 ----------
 
-   The Release Engineering team would like to dedicate the NetBSD 1.3
-   release to the memory of the late Koji Imada, who was killed in a
-   motorcycle accident in August, 1997 at the age of 28.  A doctoral
-   student in Mathematical Science at Nagoya University, he was a user of
-   NetBSD and a contributor to the project since 1993. Well remembered by
-   his friends, he was also known as a connoisseur of gins, teas, and the
-   motorcycles he loved to ride. His death came as a shock, and he will
-   be greatly missed by all of us. May he rest in peace.
+   The current release of NetBSD was dedicated by the release
+   engineering team to the memory of the late Koji Imada, who was
+   killed in a motorcycle accident in August, 1997 at the age of
+   28.  A doctoral student in Mathematical Science at Nagoya
+   University, he was a user of NetBSD and a contributor to the
+   project since 1993. Well remembered by his friends, he was also
+   known as a connoisseur of gins, teas, and the motorcycles he
+   loved to ride. His death came as a shock, and he will be greatly
+   missed by all of us. May he rest in peace.
 
 
 Legal Mumbo-jumbo:
