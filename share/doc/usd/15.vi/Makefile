@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.3 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.5 1993/10/23 00:24:50 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/01/24 22:37:46 cgd Exp $
 
 DIR=	usd/15.vi
 DOC=	15.vi
@@ -10,11 +10,11 @@ CLEANFILES+=summary.* viapwh.*
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS} ${DOC}.summary.${PRINTER} ${DOC}.viapwh.${PRINTER}
+${DOC}.${PRINTER_TYPE}: ${SRCS} ${DOC}.summary.${PRINTER_TYPE} ${DOC}.viapwh.${PRINTER_TYPE}
 	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}
 
-${DOC}.summary.${PRINTER}: vi.summary
+${DOC}.summary.${PRINTER_TYPE}: vi.summary
 	( cd ${.CURDIR} ; ${TBL} vi.summary ) | ${ROFF}  > ${.TARGET}
 
-${DOC}.viapwh.${PRINTER}: vi.apwh.ms
+${DOC}.viapwh.${PRINTER_TYPE}: vi.apwh.ms
 	( cd ${.CURDIR} ; ${ROFF} vi.apwh.ms ) > ${.TARGET}
