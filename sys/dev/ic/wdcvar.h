@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.11 1998/12/02 15:53:35 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.12 1998/12/03 15:38:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 	u_int8_t      pio_mode; /* highest PIO mode supported */
 	u_int8_t      dma_mode; /* highest DMA mode supported */
+	u_int8_t      udma_mode; /* highest UDMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
 	struct channel_softc **channels;  /* channels-specific datas (array) */
 
