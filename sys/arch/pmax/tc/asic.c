@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.12 1996/09/09 21:32:20 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.13 1996/10/06 06:29:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -89,7 +89,7 @@ void    asic_intr_establish __P((struct confargs *, intr_handler_t,
 void    asic_intr_disestablish __P((struct confargs *));
 caddr_t ioasic_cvtaddr __P((struct confargs *));
 
-#ifdef notyet
+#ifndef pmax
 int	asic_intr __P((void *));
 #endif
 
@@ -103,6 +103,8 @@ struct asic_slot {
 };
 
 #ifdef	pmax
+/*#define IOASIC_DEBUG*/
+
 struct asic_slot *asic_slots;
 #include "ds-asic-conf.c"
 #endif	/*pmax*/
