@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.67 1998/06/06 01:30:45 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.68 1998/08/04 16:38:39 minoura Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -934,6 +934,11 @@ amiga
 # ./usr/share/keymaps/atari
 atari
 # ./usr/share/keymaps/atari
+..
+
+# ./usr/share/keymaps/x68k
+x68k
+# ./usr/share/keymaps/x68k
 ..
 
 # ./usr/share/keymaps
