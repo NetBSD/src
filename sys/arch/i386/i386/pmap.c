@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.15 2001/01/01 19:24:27 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.16 2001/01/01 20:34:24 thorpej Exp $	*/
 
 /*
  *
@@ -453,7 +453,7 @@ static void		 pmap_free_pv_doit __P((struct pv_entry *));
 static void		 pmap_free_pvpage __P((void));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
 static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static boolean_t	 pmap_is_active __P((struct pmap *));
+static boolean_t	 pmap_is_active __P((struct pmap *, int));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 					     vaddr_t));
@@ -509,14 +509,14 @@ pmap_is_curpmap(pmap)
 }
 
 /*
- * pmap_is_active: is this pmap loaded into any processor's %cr3?
+ * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
 __inline static boolean_t
-pmap_is_active(pmap)
+pmap_is_active(pmap, cpu_id)
 	struct pmap *pmap;
+	int cpu_id;
 {
-	int cpu_id = cpu_number();
 
 	return (pmap == pmap_kernel() ||
 	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
@@ -2711,7 +2711,7 @@ pmap_remove(pmap, sva, eva)
 	 * of the VAs we unload so that we can flush them out of the tlb.
 	 */
 
-	if (pmap_is_active(pmap)) {
+	if (pmap_is_active(pmap, cpu_number())) {
 		prr = &pmap_rr;
 		prr->prr_npages = 0;
 	} else {
@@ -3123,7 +3123,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 #if 0
 	/* need to worry about TLB? [TLB stores protection bits] */
-	if (pmap_is_active(pmap)) {
+	if (pmap_is_active(pmap, cpu_number())) {
 		prr = &pmap_rr;
 		prr->prr_npages = 0;
 	} else {
