@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.138 1999/07/01 08:12:47 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.139 1999/07/12 15:04:41 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.133 1999/06/30 16:52:52 fair Exp 
+ *	NetBSD: pcidevs,v 1.134 1999/07/12 15:02:46 kleink Exp 
  */
 
 /*
@@ -1321,7 +1321,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
 	    0,
 	    "ESS Technology Inc",
-	    "SOLO-1 AudioDrive",
+	    "Solo-1 PCI AudioDrive",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
