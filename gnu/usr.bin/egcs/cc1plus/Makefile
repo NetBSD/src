@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/10/14 12:32:37 christos Exp $
+#	$NetBSD: Makefile,v 1.12 1998/10/14 20:46:36 tv Exp $
 
 
 PROG=		cc1plus
@@ -17,6 +17,10 @@ parse-h: parse.h
 
 # Needs to be before dist/gcc or tree.c comes from the wrong place.
 .PATH: ${.CURDIR}/../../../dist/gcc/cp
+
+.NOPATH: parse.c parse.h
+.BEGIN:
+	@rm -f ${DIST}/cp/parse.c ${DIST}/cp/parse.h
 
 .include "../Makefile.cc1"
 
