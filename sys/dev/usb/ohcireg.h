@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.3 1998/08/06 12:23:39 augustss Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.4 1998/08/06 12:26:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_PCI_UHCIREG_H_
-#define _DEV_PCI_UHCIREG_H_
+#ifndef _DEV_PCI_OHCIREG_H_
+#define _DEV_PCI_OHCIREG_H_
 
 /*** PCI config registers ***/
 
@@ -201,4 +201,4 @@ typedef struct {
 #define OHCI_CC_BUFFER_UNDERRUN		13
 #define OHCI_CC_NOT_ACCESSED		15
 
-#endif /* _DEV_PCI_UHCIREG_H_ */
+#endif /* _DEV_PCI_OHCIREG_H_ */
