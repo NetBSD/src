@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.20 1998/08/24 02:34:44 tv Exp $	*/
+/*	$NetBSD: pdq.c,v 1.21 1998/09/20 02:36:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -751,7 +751,7 @@ pdq_process_received_data(
 	     * the real length.
 	     */
 	    pdulen = datalen - 4 /* CRC */;
-	    segcnt = (pdulen + PDQ_RX_FC_OFFSET + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE; 
+	    segcnt = (pdulen + PDQ_OS_HDR_OFFSET + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE; 
 	    PDQ_OS_DATABUF_ALLOC(pdq, npdu);
 	    if (npdu == NULL) {
 		PDQ_PRINTF(("discard: no databuf #0\n"));
@@ -775,11 +775,11 @@ pdq_process_received_data(
 		    buffers[(completion + idx) & ring_mask];
 		buffers[(completion + idx) & ring_mask] = NULL;
 	    }
-	    PDQ_OS_DATABUF_ADJ(fpdu, PDQ_RX_FC_OFFSET);
+	    PDQ_OS_DATABUF_ADJ(fpdu, PDQ_OS_HDR_OFFSET);
 	    if (segcnt == 1) {
 		PDQ_OS_DATABUF_LEN_SET(fpdu, pdulen);
 	    } else {
-		PDQ_OS_DATABUF_LEN_SET(lpdu, pdulen + PDQ_RX_FC_OFFSET - (segcnt - 1) * PDQ_OS_DATABUF_SIZE);
+		PDQ_OS_DATABUF_LEN_SET(lpdu, pdulen + PDQ_OS_HDR_OFFSET - (segcnt - 1) * PDQ_OS_DATABUF_SIZE);
 	    }
 	    /*
 	     * Do not pass to protocol if packet was received promiscuously
