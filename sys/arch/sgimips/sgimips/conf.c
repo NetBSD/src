@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2001/01/08 21:46:38 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2001/01/09 20:51:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -261,6 +261,11 @@ static int chrtoblktbl[] =  {
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
 };
 
 dev_t
