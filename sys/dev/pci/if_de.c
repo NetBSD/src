@@ -1,7 +1,7 @@
-/*	$NetBSD: if_de.c,v 1.32.4.2 1997/03/09 21:05:43 is Exp $	*/
+/*	$NetBSD: if_de.c,v 1.32.4.3 1997/03/12 16:20:03 is Exp $	*/
 
 /*-
- * Copyright (c) 1994, 1995, 1996 Matt Thomas (matt@3am-software.com)
+ * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_de.c,v 1.67 1996/11/25 20:42:35 thomas Exp thomas
+ * Id: if_de.c,v 1.71 1997/02/19 16:42:41 thomas Exp
  *
  */
 
@@ -3244,24 +3244,21 @@ tulip_intr_handler(
 	if (csr & (TULIP_STS_RXINTR|TULIP_STS_RXNOBUF)) {
 	    u_int32_t misses = TULIP_CSR_READ(sc, csr_missed_frames);
 	    if (csr & TULIP_STS_RXNOBUF)
-		sc->tulip_dot3stats.dot3StatsMissedFrames += misses & 0x7FFF;
+		sc->tulip_dot3stats.dot3StatsMissedFrames += misses & 0xFFFF;
 	    /*
-	     * Pass 2.0 and 2.1 of the 21140A may hang and/or corrupt data
+	     * Pass 2.[012] of the 21140A-A[CDE] may hang and/or corrupt data
 	     * on receive overflows.
 	     */
-	    if (sc->tulip_features & TULIP_HAVE_RXBUGGY) {
-		misses >>= 16;
-		if (misses) {
-		    /*
-		     * Stop the receiver process and spin until it's stopped.
-		     * Tell rx_intr to drop the packets it dequeues.
-		     */
-		    TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode & ~TULIP_CMD_RXRUN);
-		    while ((TULIP_CSR_READ(sc, csr_status) & TULIP_STS_RXSTOPPED) == 0)
-			;
-		    TULIP_CSR_WRITE(sc, csr_status, TULIP_STS_RXSTOPPED);
-		    sc->tulip_flags |= TULIP_RXBAD;
-		}
+	   if ((misses & 0x0FFE0000) && (sc->tulip_features & TULIP_HAVE_RXBUGGY)) {
+		/*
+		 * Stop the receiver process and spin until it's stopped.
+		 * Tell rx_intr to drop the packets it dequeues.
+		 */
+		TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode & ~TULIP_CMD_RXRUN);
+		while ((TULIP_CSR_READ(sc, csr_status) & TULIP_STS_RXSTOPPED) == 0)
+		    ;
+		TULIP_CSR_WRITE(sc, csr_status, TULIP_STS_RXSTOPPED);
+		sc->tulip_flags |= TULIP_RXBAD;
 	    }
 	    tulip_rx_intr(sc);
 	    if (sc->tulip_flags & TULIP_RXBAD) {
@@ -4429,7 +4426,7 @@ tulip_pci_attach(
     sc->tulip_chipid = chipid;
     if (chipid == TULIP_21140 || chipid == TULIP_21140A)
 	sc->tulip_features |= TULIP_HAVE_GPR;
-    if (chipid == TULIP_21140A && (revinfo & ~1) == 0x20)
+    if (chipid == TULIP_21140A && revinfo <= 0x22)
 	sc->tulip_features |= TULIP_HAVE_RXBUGGY;
     if (chipid != TULIP_21040 && chipid != TULIP_DE425 && chipid != TULIP_21140)
 	sc->tulip_features |= TULIP_HAVE_POWERMGMT;
