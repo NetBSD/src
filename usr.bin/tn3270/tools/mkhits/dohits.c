@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.6 1998/04/04 01:02:09 cgd Exp $	*/
+/*	$NetBSD: dohits.c,v 1.7 1998/09/06 02:54:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.6 1998/04/04 01:02:09 cgd Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.7 1998/09/06 02:54:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,7 @@ __RCSID("$NetBSD: dohits.c,v 1.6 1998/04/04 01:02:09 cgd Exp $");
  */
 
 #include <stdio.h>
-#if	defined(unix)
-#include <strings.h>
-#else	/* defined(unix) */
 #include <string.h>
-#endif	/* defined(unix) */
 #include <err.h>
 #include <ctype.h>
 #ifdef __STDC__
