@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.27 2003/04/19 21:41:15 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.28 2003/06/03 20:09:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.27 2003/04/19 21:41:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.28 2003/06/03 20:09:37 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.27 2003/04/19 21:41:15 manu Exp $");
 
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_map.h>
+#include <uvm/uvm_extern.h>
 
 /* Too much debug output from here, but we might need it later...  */
 #undef DEBUG_MACH
@@ -589,6 +590,58 @@ mach_vm_msync(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_retval = error;	
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_vm_copy(args)
+	struct mach_trap_args *args;
+{
+	mach_vm_copy_request_t *req = args->smsg;
+	mach_vm_copy_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	char tmpbuf[PAGE_SIZE];
+	int error;
+	caddr_t src, dst;
+
+#ifdef DEBUG_MACH
+	printf("mach_vm_copy: src = 0x%08x, size = 0x%08x, addr = 0x%08x\n",
+	    req->req_src, req->req_size, req->req_addr);
+#endif
+	if ((req->req_src & (PAGE_SIZE - 1)) ||
+	    (req->req_addr & (PAGE_SIZE - 1)) ||
+	    (req->req_size & (PAGE_SIZE - 1)))
+		return mach_msg_error(args, EINVAL);
+
+	src = (caddr_t)req->req_src;
+	dst = (caddr_t)req->req_addr;
+
+	if ((uvm_useracc(src, req->req_size, B_READ) == 0) ||
+	    (uvm_useracc(dst, req->req_size, B_WRITE) == 0))
+		return mach_msg_error(args, EPERM);
+
+	/* Is there an easy way of dealing with that efficiently? */
+	do {
+		if ((error = copyin(src, tmpbuf, PAGE_SIZE)) != 0)
+			return mach_msg_error(args, error);
+
+		if ((error = copyout(tmpbuf, dst, PAGE_SIZE)) != 0)
+			return mach_msg_error(args, error);
+
+		req->req_src += PAGE_SIZE;
+		req->req_addr += PAGE_SIZE;
+		req->req_size -= PAGE_SIZE;
+	} while (req->req_size != 0);
+	
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
