@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.21 2001/04/24 09:07:43 joda Exp $	*/
+/*	$NetBSD: getopt.c,v 1.22 2002/06/13 20:49:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.21 2001/04/24 09:07:43 joda Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.22 2002/06/13 20:49:00 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,12 +96,6 @@ getopt(nargc, nargv, ostr)
 	}					/* option letter okay? */
 	if ((optopt = (int)*place++) == (int)':' ||
 	    !(oli = strchr(ostr, optopt))) {
-		/*
-		 * if the user didn't specify '-' as an option,
-		 * assume it means -1.
-		 */
-		if (optopt == (int)'-')
-			return (-1);
 		if (!*place)
 			++optind;
 		if (opterr && *ostr != ':')
