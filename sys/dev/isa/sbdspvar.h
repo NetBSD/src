@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.42 1999/03/22 07:37:36 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.43 1999/08/01 18:05:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include "midi.h"
 #if NMIDI > 0
-#include <dev/isa/mpuvar.h>
+#include <dev/ic/mpuvar.h>
 #endif
 
 #define SB_MASTER_VOL	0

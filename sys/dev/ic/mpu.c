@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.3 1999/08/01 17:53:39 augustss Exp $	*/
+/*	$NetBSD: mpu.c,v 1.1 1999/08/01 18:05:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <dev/midi_if.h>
 
-#include <dev/isa/mpuvar.h>
+#include <dev/ic/mpuvar.h>
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (mpudebug) printf x

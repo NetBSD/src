@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.2 1999/08/01 17:53:40 augustss Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.1 1999/08/01 18:05:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
