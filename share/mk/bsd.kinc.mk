@@ -1,23 +1,11 @@
-#	$NetBSD: bsd.kinc.mk,v 1.24 2002/10/22 18:48:27 perry Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.25 2002/11/26 23:15:54 lukem Exp $
 
-# System configuration variables:
-#
-# SYS_INCLUDE	"symlinks": symlinks to include directories are created.
-#		This may not work 100% properly for all headers.
-#
-#		"copies": directories are made, if necessary, and headers
-#		are installed into them.
-#
 # Variables:
 #
 # INCSDIR	Directory to install includes into (and/or make, and/or
 #		symlink, depending on what's going on).
 #
-# KDIR		Kernel directory to symlink to, if SYS_INCLUDE is symlinks.
-#		If unspecified, no action will be taken when making include
-#		for the directory if SYS_INCLUDE is symlinks.
-#
-# INCS		Headers to install, if SYS_INCLUDE is copies.
+# INCS		Headers to install.
 #
 # DEPINCS	Headers to install which are built dynamically.
 #
@@ -35,27 +23,8 @@
 .PHONY:		incinstall
 includes:	${INCS} incinstall
 
-##### Default values
-# Change SYS_INCLUDE in bsd.own.mk or /etc/mk.conf to "symlinks" if you
-# don't want copies
-SYS_INCLUDE?=	copies
-
-# If DESTDIR is set, we're probably building a release, so force "copies".
-.if defined(DESTDIR) && (${DESTDIR} != "/" && !empty(DESTDIR))
-SYS_INCLUDE=	copies
-.endif
-
 ##### Install rules
 incinstall::	# ensure existence
-
-.if ${SYS_INCLUDE} == "symlinks"
-
-# don't install includes, just make symlinks.
-.if defined(KDIR)
-SYMLINKS+=	${KDIR} ${INCSDIR}
-.endif
-
-.else # ${SYS_INCLUDE} != "symlinks"
 
 # make sure the directory is OK, and install includes.
 incinstall::	${DESTDIR}${INCSDIR}
@@ -92,8 +61,6 @@ incinstall::	${_F}
 .endfor
 
 .undef _F
-
-.endif # ${SYS_INCLUDE} ?= "symlinks"
 
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 incinstall::

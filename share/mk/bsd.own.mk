@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.318 2002/11/26 19:51:16 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.319 2002/11/26 23:15:53 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -311,11 +311,6 @@ INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK} ${RENAME}
 INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK} ${RENAME}
 HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 .endif
-
-# Define SYS_INCLUDE to indicate whether you want symbolic links to the system
-# source (``symlinks''), or a separate copy (``copies''); (latter useful
-# in environments where it's not possible to keep /sys publicly readable)
-#SYS_INCLUDE= 	symlinks
 
 # Data-driven table using make variables to control how 
 # toolchain-dependent targets and shared libraries are built
