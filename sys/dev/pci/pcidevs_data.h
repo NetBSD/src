@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.314 2001/03/20 00:41:19 mrg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.315 2001/03/21 01:10:07 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.310 2001/03/20 00:39:12 mrg Exp 
+ *	NetBSD: pcidevs,v 1.311 2001/03/21 01:09:36 hubertf Exp 
  */
 
 /*
@@ -4094,6 +4094,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "Trio32/64",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE,
+	    0,
+	    "Trident Microsystems",
+	    "CyberBlade",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_AURORA64P,
