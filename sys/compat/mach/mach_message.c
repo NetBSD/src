@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.1 2002/11/28 21:21:32 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.2 2002/12/09 21:29:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.1 2002/11/28 21:21:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2 2002/12/09 21:29:24 manu Exp $");
+
+#include "opt_ktrace.h"
+#include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif 
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -115,6 +121,14 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	int error;
 	struct mach_subsystem_namemap *namemap;
 
+	if ((SCARG(uap, send_size) > MACH_MAX_MSG_LEN)
+	    || (SCARG(uap, rcv_size) > MACH_MAX_MSG_LEN))
+		return E2BIG;
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_MMSG))
+		ktrmmsg(p, (char *)SCARG(uap, msg), SCARG(uap, send_size)); 
+#endif
+
 	switch (SCARG(uap, option)) {
 	case MACH_SEND_MSG|MACH_RCV_MSG:
 		if (SCARG(uap, msg)) {
@@ -132,6 +146,9 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 #endif /* DEBUG_MACH */
 				break;
 			}
+#ifdef KTRACE
+			ktruser(p, namemap->map_name, NULL, 0, 0);
+#endif
 			return (*namemap->map_handler)(p, SCARG(uap, msg), 
 			    SCARG(uap, rcv_size), SCARG(uap, rcv_msg));
 		}
@@ -162,6 +179,14 @@ mach_sys_msg_trap(p, v, retval)
 	int error;
 	struct mach_subsystem_namemap *namemap;
 
+	if ((SCARG(uap, send_size) > MACH_MAX_MSG_LEN)
+	    || (SCARG(uap, rcv_size) > MACH_MAX_MSG_LEN))
+		return E2BIG;
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_MMSG))
+		ktrmmsg(p, (char *)SCARG(uap, msg), SCARG(uap, send_size)); 
+#endif
+
 	switch (SCARG(uap, option)) {
 	case MACH_SEND_MSG|MACH_RCV_MSG:
 		if (SCARG(uap, msg)) {
@@ -179,6 +204,9 @@ mach_sys_msg_trap(p, v, retval)
 #endif /* DEBUG_MACH */
 				break;
 			}
+#ifdef KTRACE
+			ktruser(p, namemap->map_name, NULL, 0, 0);
+#endif
 			return (*namemap->map_handler)(p, SCARG(uap, msg),
 			    SCARG(uap, rcv_size), NULL);
 		}
@@ -191,3 +219,28 @@ mach_sys_msg_trap(p, v, retval)
 	return 0;
 }
 
+int 
+mach_msg_return(p, rep, msgh, msglen, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *rep;
+	mach_msg_header_t *msgh;  
+	size_t msglen;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	int error;
+
+	if (msglen > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
+	if ((error = copyout(rep, msgh, msglen)) != 0)
+		return error;
+
+#ifdef KTRACE
+	ktrmmsg(p, (char *)msgh, msglen); 
+#endif
+
+	return 0;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.7 2002/11/28 21:21:33 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.8 2002/12/09 21:29:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.7 2002/11/28 21:21:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.8 2002/12/09 21:29:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,14 +83,7 @@ mach_task_get_special_port(p, msgh, maxlen, dst)
 	rep.rep_special_port.disposition = 0x11; /* XXX why? */
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 int 
@@ -117,7 +110,7 @@ mach_ports_lookup(p, msgh, maxlen, dst)
 	evc.ev_proc = *vmcmd_map_zero;
  
 	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
 
 	bzero(&rep, sizeof(rep));
 
@@ -136,14 +129,7 @@ mach_ports_lookup(p, msgh, maxlen, dst)
 	rep.rep_init_port_set_count = 3; /* XXX why? */
 	rep.rep_trailer.msgh_trailer_size = 8;
 
-	if (sizeof(rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
 
 
