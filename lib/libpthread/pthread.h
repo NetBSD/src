@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.11 2002/05/02 16:49:24 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.12 2002/06/24 20:48:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _LIB_PTHREAD_H
 #define _LIB_PTHREAD_H
 
+#include <sys/cdefs.h>
 
 #include <time.h>	/* For timespec */
 #include <sched.h>
@@ -48,6 +49,7 @@
 #include "pthread_types.h"
 #include "sched.h"
 
+__BEGIN_DECLS
 int	pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
 	    void *(*startfunc)(void *), void *arg);
 void	pthread_exit(void *retval) __attribute__((__noreturn__));
@@ -123,6 +125,7 @@ int	pthread_spin_trylock(pthread_spinlock_t *lock);
 int	pthread_spin_unlock(pthread_spinlock_t *lock);
 
 int 	*pthread__errno(void);
+__END_DECLS
 
 #define	PTHREAD_CREATE_JOINABLE	0
 #define	PTHREAD_CREATE_DETACHED	1
