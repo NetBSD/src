@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.booters,v 1.15 1999/01/30 12:39:28 simonb Exp $
+#	$NetBSD: Makefile.booters,v 1.16 1999/02/22 11:53:57 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 # RELOC=80200000 allows for boot prog up to 1D0000 (1900544) bytes long
-RELOC=	80200000
+RELOC=	80700000	# XXX
 
 BOOTDEFS=-D_STANDALONE -DSMALL
 AINC+=	 -D_LOCORE
