@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.27 1998/06/25 21:17:17 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.28 1998/08/04 04:03:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -206,7 +206,7 @@ namei(ndp)
 			goto badlink;
 		}
 		if (ndp->ni_pathlen > 1) {
-			bcopy(ndp->ni_next, cp + linklen, ndp->ni_pathlen);
+			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
 			FREE(cnp->cn_pnbuf, M_NAMEI);
 			cnp->cn_pnbuf = cp;
 		} else

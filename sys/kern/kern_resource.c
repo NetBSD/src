@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.46 1998/07/31 22:50:50 perry Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.47 1998/08/04 04:03:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -461,7 +461,7 @@ limcopy(lim)
 
 	MALLOC(newlim, struct plimit *, sizeof(struct plimit),
 	    M_SUBPROC, M_WAITOK);
-	bcopy(lim->pl_rlimit, newlim->pl_rlimit,
+	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
 	newlim->p_lflags = 0;
 	newlim->p_refcnt = 1;

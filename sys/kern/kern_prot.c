@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.48 1998/07/31 22:50:50 perry Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.49 1998/08/04 04:03:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -575,7 +575,7 @@ crget()
 	register struct ucred *cr;
 
 	MALLOC(cr, struct ucred *, sizeof(*cr), M_CRED, M_WAITOK);
-	bzero((caddr_t)cr, sizeof(*cr));
+	memset((caddr_t)cr, 0, sizeof(*cr));
 	cr->cr_ref = 1;
 	return (cr);
 }

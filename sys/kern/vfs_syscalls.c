@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.122 1998/07/31 22:50:54 perry Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.123 1998/08/04 04:03:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -261,7 +261,7 @@ sys_mount(p, v, retval)
 	 */
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 		M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
+	memset((char *)mp, 0, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	mp->mnt_op = vfs;
@@ -2303,7 +2303,7 @@ rename_files(from, to, p, retain)
 			error = -1;
 		else if (fromnd.ni_dvp == tdvp &&
 		    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
-		    !bcmp(fromnd.ni_cnd.cn_nameptr,
+		    !memcmp(fromnd.ni_cnd.cn_nameptr,
 		          tond.ni_cnd.cn_nameptr,
 		          fromnd.ni_cnd.cn_namelen))
 		error = -1;

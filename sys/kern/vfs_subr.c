@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.90 1998/07/31 22:50:54 perry Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.91 1998/08/04 04:03:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
 	if (vfsp == NULL)
 		return (ENODEV);
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
+	memset((char *)mp, 0, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	LIST_INIT(&mp->mnt_vnodelist);
@@ -401,7 +401,7 @@ getnewvnode(tag, mp, vops, vpp)
 		simple_unlock(&vnode_free_list_slock);
 		vp = (struct vnode *)malloc((u_long)sizeof(*vp),
 		    M_VNODE, M_WAITOK);
-		bzero((char *)vp, sizeof(*vp));
+		memset((char *)vp, 0, sizeof(*vp));
 		numvnodes++;
 	} else {
 		for (vp = vnode_free_list.tqh_first;
@@ -1646,7 +1646,7 @@ vfs_hang_addrlist(mp, nep, argp)
 	}
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
 	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
-	bzero((caddr_t)np, i);
+	memset((caddr_t)np, 0, i);
 	saddr = (struct sockaddr *)(np + 1);
 	error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen);
 	if (error)
@@ -1695,7 +1695,7 @@ vfs_hang_addrlist(mp, nep, argp)
 		    enp->netc_anon.cr_uid != argp->ex_anon.cr_uid ||
 		    enp->netc_anon.cr_gid != argp->ex_anon.cr_gid ||
 		    enp->netc_anon.cr_ngroups != argp->ex_anon.cr_ngroups ||
-		    bcmp(&enp->netc_anon.cr_groups, &argp->ex_anon.cr_groups,
+		    memcmp(&enp->netc_anon.cr_groups, &argp->ex_anon.cr_groups,
 			enp->netc_anon.cr_ngroups))
 				error = EPERM;
 		else
@@ -1810,7 +1810,7 @@ vfs_setpublicfs(mp, nep, argp)
 	/*
 	 * Get real filehandle for root of exported FS.
 	 */
-	bzero((caddr_t)&nfs_pub.np_handle, sizeof(nfs_pub.np_handle));
+	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
 	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsid;
 
 	if ((error = VFS_ROOT(mp, &rvp)))

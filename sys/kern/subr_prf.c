@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.49 1998/07/04 22:18:52 jonathan Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.50 1998/08/04 04:03:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -574,7 +574,7 @@ bitmask_snprintf(ul, p, buf, buflen)
 	char snbuf[KPRINTF_BUFSIZE];
 
 	bp = buf;
-	bzero(buf, buflen);
+	memset(buf, 0, buflen);
 
 	/*
 	 * Always leave room for the trailing NULL.

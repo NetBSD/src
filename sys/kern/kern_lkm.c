@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.43 1998/02/18 07:11:21 thorpej Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.44 1998/08/04 04:03:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -340,7 +340,7 @@ lkmioctl(dev, cmd, data, flag, p)
 			break;
 		case LKMS_LOADING:
 			/* The remainder must be bss, so we clear it */
-			bzero((caddr_t)curp->area + curp->offset,
+			memset((caddr_t)curp->area + curp->offset, 0,
 			      curp->size - curp->offset);
 			break;
 		default:
@@ -607,10 +607,10 @@ _lkm_syscall(lkmtp, cmd)
 		}
 
 		/* save old */
-		bcopy(&sysent[i], &args->lkm_oldent, sizeof(struct sysent));
+		memcpy(&args->lkm_oldent, &sysent[i], sizeof(struct sysent));
 
 		/* replace with new */
-		bcopy(args->lkm_sysent, &sysent[i], sizeof(struct sysent));
+		memcpy(&sysent[i], args->lkm_sysent, sizeof(struct sysent));
 
 		/* done! */
 		args->lkm_offset = i;	/* slot in sysent[] */
@@ -622,7 +622,7 @@ _lkm_syscall(lkmtp, cmd)
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents */
-		bcopy(&args->lkm_oldent, &sysent[i], sizeof(struct sysent));
+		memcpy(&sysent[i], &args->lkm_oldent, sizeof(struct sysent));
 
 		break;
 
@@ -714,10 +714,10 @@ _lkm_dev(lkmtp, cmd)
 			}
 
 			/* save old */
-			bcopy(&bdevsw[i], &args->lkm_olddev.bdev, sizeof(struct bdevsw));
+			memcpy(&args->lkm_olddev.bdev, &bdevsw[i], sizeof(struct bdevsw));
 
 			/* replace with new */
-			bcopy(args->lkm_dev.bdev, &bdevsw[i], sizeof(struct bdevsw));
+			memcpy(&bdevsw[i], args->lkm_dev.bdev, sizeof(struct bdevsw));
 
 			/* done! */
 			args->lkm_offset = i;	/* slot in bdevsw[] */
@@ -745,10 +745,10 @@ _lkm_dev(lkmtp, cmd)
 			}
 
 			/* save old */
-			bcopy(&cdevsw[i], &args->lkm_olddev.cdev, sizeof(struct cdevsw));
+			memcpy(&args->lkm_olddev.cdev, &cdevsw[i], sizeof(struct cdevsw));
 
 			/* replace with new */
-			bcopy(args->lkm_dev.cdev, &cdevsw[i], sizeof(struct cdevsw));
+			memcpy(&cdevsw[i], args->lkm_dev.cdev, sizeof(struct cdevsw));
 
 			/* done! */
 			args->lkm_offset = i;	/* slot in cdevsw[] */
@@ -768,12 +768,12 @@ _lkm_dev(lkmtp, cmd)
 		switch(args->lkm_devtype) {
 		case LM_DT_BLOCK:
 			/* replace current slot contents with old contents */
-			bcopy(&args->lkm_olddev.bdev, &bdevsw[i], sizeof(struct bdevsw));
+			memcpy(&bdevsw[i], &args->lkm_olddev.bdev, sizeof(struct bdevsw));
 			break;
 
 		case LM_DT_CHAR:
 			/* replace current slot contents with old contents */
-			bcopy(&args->lkm_olddev.cdev, &cdevsw[i], sizeof(struct cdevsw));
+			memcpy(&cdevsw[i], &args->lkm_olddev.cdev, sizeof(struct cdevsw));
 			break;
 
 		default:
@@ -860,10 +860,10 @@ _lkm_exec(lkmtp, cmd)
 		}
 
 		/* save old */
-		bcopy(&execsw[i], &args->lkm_oldexec, sizeof(struct execsw));
+		memcpy(&args->lkm_oldexec, &execsw[i], sizeof(struct execsw));
 
 		/* replace with new */
-		bcopy(args->lkm_exec, &execsw[i], sizeof(struct execsw));
+		memcpy(&execsw[i], args->lkm_exec, sizeof(struct execsw));
 
 		/* realize need to recompute max header size */
 		exec_maxhdrsz = 0;
@@ -878,7 +878,7 @@ _lkm_exec(lkmtp, cmd)
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents */
-		bcopy(&args->lkm_oldexec, &execsw[i], sizeof(struct execsw));
+		memcpy(&execsw[i], &args->lkm_oldexec, sizeof(struct execsw));
 
 		/* realize need to recompute max header size */
 		exec_maxhdrsz = 0;

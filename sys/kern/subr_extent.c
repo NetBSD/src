@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.15 1998/07/24 06:40:45 sommerfe Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.16 1998/08/04 04:03:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	if (fixed_extent) {
 		struct extent_fixed *fex;
 
-		bzero(storage, storagesize);
+		memset(storage, 0, storagesize);
 
 		/*
 		 * Align all descriptors on "long" boundaries.

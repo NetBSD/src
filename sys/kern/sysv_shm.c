@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.45 1998/07/24 20:47:59 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.46 1998/08/04 04:03:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -551,7 +551,7 @@ shmfork(vm1, vm2)
 
 	size = shminfo.shmseg * sizeof(struct shmmap_state);
 	shmmap_s = malloc(size, M_SHM, M_WAITOK);
-	bcopy(vm1->vm_shm, shmmap_s, size);
+	memcpy(shmmap_s, vm1->vm_shm, size);
 	vm2->vm_shm = (caddr_t)shmmap_s;
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1)

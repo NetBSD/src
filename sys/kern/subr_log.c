@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.15 1998/03/01 02:22:31 fvdl Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.16 1998/08/04 04:03:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -92,7 +92,7 @@ initmsgbuf(buf, bufsize)
 		 * internally inconsistent, initialize it.
 		 */
 
-		bzero(buf, bufsize);
+		memset(buf, 0, bufsize);
 		mbp->msg_magic = MSG_MAGIC;
 		mbp->msg_bufs = new_bufs;
 	}

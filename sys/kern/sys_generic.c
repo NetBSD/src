@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.43 1998/08/03 15:01:00 kleink Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.44 1998/08/04 04:03:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -239,7 +239,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -440,7 +440,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -538,7 +538,7 @@ sys_ioctl(p, v, retval)
 		 * Zero the buffer so the user always
 		 * gets back something deterministic.
 		 */
-		bzero(data, size);
+		memset(data, 0, size);
 	else if (com&IOC_VOID)
 		*(caddr_t *)data = SCARG(uap, data);
 
@@ -648,7 +648,7 @@ sys_select(p, v, retval)
 		if (error) \
 			goto done; \
 	} else \
-		bzero(bits + ni * x, ni);
+		memset(bits + ni * x, 0, ni);
 	getbits(in, 0);
 	getbits(ou, 1);
 	getbits(ex, 2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.29 1998/05/07 18:00:49 kleink Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.30 1998/08/04 04:03:16 perry Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -524,7 +524,7 @@ sys_semget(p, v, retval)
 		sema[semid].sem_ctime = time.tv_sec;
 		sema[semid].sem_base = &sem[semtot];
 		semtot += nsems;
-		bzero(sema[semid].sem_base,
+		memset(sema[semid].sem_base, 0,
 		    sizeof(sema[semid].sem_base[0])*nsems);
 		SEM_PRINTF(("sembase = %p, next = %p\n", sema[semid].sem_base,
 		    &sem[semtot]));

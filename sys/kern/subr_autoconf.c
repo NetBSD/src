@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.30 1998/07/31 22:50:51 perry Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.31 1998/08/04 04:03:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -453,12 +453,12 @@ config_make_softc(parent, cf)
 	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
-	bzero(dev, ca->ca_devsize);
+	memset(dev, 0, ca->ca_devsize);
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_unit = cf->cf_unit;
-	bcopy(cd->cd_name, dev->dv_xname, lname);
-	bcopy(xunit, dev->dv_xname + lname, lunit);
+	memcpy(dev->dv_xname, cd->cd_name, lname);
+	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 
 	/* put this device in the devices array */
@@ -480,9 +480,9 @@ config_make_softc(parent, cf)
 		if (nsp == 0)
 			panic("config_attach: %sing dev array",
 			    old != 0 ? "expand" : "creat");
-		bzero(nsp + old, (new - old) * sizeof(void *));
+		memset(nsp + old, 0, (new - old) * sizeof(void *));
 		if (old != 0) {
-			bcopy(cd->cd_devs, nsp, old * sizeof(void *));
+			memcpy(nsp, cd->cd_devs, old * sizeof(void *));
 			free(cd->cd_devs, M_DEVBUF);
 		}
 		cd->cd_devs = nsp;
@@ -531,13 +531,13 @@ config_attach(parent, cf, aux, print)
 	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
-	bzero(dev, ca->ca_devsize);
+	memset(dev, 0, ca->ca_devsize);
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_unit = myunit;
-	bcopy(cd->cd_name, dev->dv_xname, lname);
-	bcopy(xunit, dev->dv_xname + lname, lunit);
+	memcpy(dev->dv_xname, cd->cd_name, lname);
+	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
 
 	if (parent == ROOT)
@@ -567,9 +567,9 @@ config_attach(parent, cf, aux, print)
 		if (nsp == 0)
 			panic("config_attach: %sing dev array",
 			    old != 0 ? "expand" : "creat");
-		bzero(nsp + old, (new - old) * sizeof(void *));
+		memset(nsp + old, 0, (new - old) * sizeof(void *));
 		if (old != 0) {
-			bcopy(cd->cd_devs, nsp, old * sizeof(void *));
+			memcpy(nsp, cd->cd_devs, old * sizeof(void *));
 			free(cd->cd_devs, M_DEVBUF);
 		}
 		cd->cd_devs = nsp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.40 1998/07/31 22:50:50 perry Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.41 1998/08/04 04:03:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,9 +163,9 @@ uiomove(buf, n, uio)
 				return(error);
 #else
 			if (uio->uio_rw == UIO_READ)
-				bcopy(cp, iov->iov_base, cnt);
+				memcpy(iov->iov_base, cp, cnt);
 			else
-				bcopy(iov->iov_base, cp, cnt);
+				memcpy(cp, iov->iov_base, cnt);
 #endif
 			break;
 		}
@@ -653,7 +653,7 @@ setroot(bootdv, bootpartition, nam2blk)
 			boothowto |= RB_ASKNAME;
 			goto top;
 		}
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
 
 		for (dv = alldevs.tqh_first; dv != NULL;
@@ -742,7 +742,7 @@ setroot(bootdv, bootpartition, nam2blk)
 		dumpdevname = findblkname(major(dumpdev), nam2blk);
 		if (dumpdevname == NULL)
 			goto nodumpdev;
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "%s%d", dumpdevname, DISKUNIT(dumpdev));
 
 		for (dv = alldevs.tqh_first; dv != NULL;

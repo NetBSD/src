@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.33 1998/05/20 01:32:30 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.34 1998/08/04 04:03:13 perry Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -600,7 +600,7 @@ realloc(curaddr, newsize, type, flags)
 		 */
 		return NULL;
 	}
-	bcopy(curaddr, newaddr, cursize);
+	memcpy(newaddr, curaddr, cursize);
 
 	/*
 	 * We were successful: free the old allocation and return

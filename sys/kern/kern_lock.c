@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.7 1998/05/20 01:32:29 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.8 1998/08/04 04:03:12 perry Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -122,7 +122,7 @@ lockinit(lkp, prio, wmesg, timo, flags)
 	int flags;
 {
 
-	bzero(lkp, sizeof(struct lock));
+	memset(lkp, 0, sizeof(struct lock));
 	simple_lock_init(&lkp->lk_interlock);
 	lkp->lk_flags = flags & LK_EXTFLG_MASK;
 	lkp->lk_prio = prio;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.34 1998/07/31 22:50:48 perry Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.35 1998/08/04 04:03:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -207,7 +207,7 @@ ELFNAME(check_header)(eh, type)
 	int type;
 {
 
-	if (bcmp(eh->e_ident, Elf_e_ident, Elf_e_siz) != 0)
+	if (memcmp(eh->e_ident, Elf_e_ident, Elf_e_siz) != 0)
 		return ENOEXEC;
 
 	switch (eh->e_machine) {
