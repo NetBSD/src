@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.8 2000/04/29 03:46:25 thorpej Exp $
+# $NetBSD: ad.powerpc,v 1.9 2000/06/03 05:31:23 matt Exp $
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
 ./usr/include/powerpc/aout_machdep.h	comp-c-include
@@ -36,6 +36,4 @@
 ./usr/include/powerpc/stdarg.h	comp-c-include
 ./usr/include/powerpc/trap.h	comp-c-include
 ./usr/include/powerpc/types.h	comp-c-include
-./usr/include/powerpc/va-ppc.h	comp-c-include
 ./usr/include/powerpc/varargs.h	comp-c-include
-./usr/include/powerpc/vmparam.h	comp-c-include
