@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.38.4.4 2001/11/25 19:36:24 he Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.38.4.5 2001/11/25 19:56:41 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.38.4.4 2001/11/25 19:36:24 he Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.38.4.5 2001/11/25 19:56:41 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,17 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 		printf("preposterous ntrak %d\n", sblock.fs_ntrak), exit(14);
 	if (sblock.fs_nsect <= 0)
 		printf("preposterous nsect %d\n", sblock.fs_nsect), exit(15);
+	/*
+	 * collect and verify the filesystem density info
+	 */
+	sblock.fs_avgfilesize = avgfilesize;
+	sblock.fs_avgfpdir = avgfpdir;
+	if (sblock.fs_avgfilesize <= 0)
+		printf("illegal expected average file size %d\n",
+		    sblock.fs_avgfilesize), exit(14);
+	if (sblock.fs_avgfpdir <= 0)
+		printf("illegal expected number of files per directory %d\n",
+		    sblock.fs_avgfpdir), exit(15);
 	/*
 	 * collect and verify the block and fragment sizes
 	 */
