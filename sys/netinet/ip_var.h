@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.61 2003/11/25 14:44:13 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.62 2003/11/26 21:15:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -254,18 +254,14 @@ void	ipflow_slowtimo __P((void));
 extern uint16_t	ip_id;
 static __inline uint16_t ip_newid __P((void));
 
-#ifdef RANDOM_IP_ID
 u_int16_t ip_randomid __P((void));
 extern int ip_do_randomid;
-#endif
 
 static __inline uint16_t
 ip_newid(void)
 {
-#ifdef RANDOM_IP_ID
 	if (ip_do_randomid)
 		return ip_randomid();
-#endif	/* RANDOM_IP_ID */
 
 	return htons(ip_id++);
 }
