@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.31 2001/04/25 17:53:30 bouyer Exp $	*/
+/*	$NetBSD: aha.c,v 1.32 2001/05/02 10:31:41 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -279,6 +279,7 @@ aha_attach(sc, apd)
 	 */
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
 	chan->chan_ntargets = 8;
 	chan->chan_nluns = 8;
