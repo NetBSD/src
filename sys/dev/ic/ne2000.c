@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.1.2.1 1997/10/14 01:01:53 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.1.2.2 1997/10/14 01:04:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -288,12 +288,8 @@ ne2000_detect(nict, nich, asict, asich)
 
 	tmp = bus_space_read_1(nict, nich, ED_P0_CR);
 	if ((tmp & (ED_CR_RD2 | ED_CR_TXP | ED_CR_STA | ED_CR_STP)) !=
-	    (ED_CR_RD2 | ED_CR_STP)) {
-printf("ne2000_detect: 0x%x (0x%x) != 0x%x\n",
-    (tmp & (ED_CR_RD2 | ED_CR_TXP | ED_CR_STA | ED_CR_STP)), tmp,
-    (ED_CR_RD2 | ED_CR_STP));
+	    (ED_CR_RD2 | ED_CR_STP))
 		goto out;
-	}
 
 	bus_space_write_1(nict, nich,
 	    ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
