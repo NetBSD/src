@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.1 1998/10/20 14:59:16 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.2 1998/11/15 19:41:33 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -871,10 +871,10 @@ pm_intr_pm2()
 			pmdata.s_buf = pmdata.data;
 			pmdata.r_buf = pmdata.data;
 			pm_LCD_brightness = 0x7f - pm_LCD_brightness / 2;
-			if (pm_LCD_brightness < 0x25)
-				pm_LCD_brightness = 0x25;
-			if (pm_LCD_brightness > 0x5a)
-				pm_LCD_brightness = 0x7f;
+			if (pm_LCD_brightness < 0x08)
+				pm_LCD_brightness = 0x08;
+			if (pm_LCD_brightness > 0x78)
+				pm_LCD_brightness = 0x78;
 			pmdata.data[0] = pm_LCD_brightness;
 			rval = pm_pmgrop_pm2(&pmdata);
 			break;
@@ -1170,4 +1170,19 @@ pm_adb_restart()
 	p.s_buf = p.data;
 	p.r_buf = p.data;
 	pmgrop(&p);
+}
+
+void
+pm_read_date_time(time)
+	u_long *time;
+{
+	PMData p;
+
+	p.command = 0x38;	/* read time */
+	p.num_data = 0;
+	p.s_buf = p.data;
+	p.r_buf = p.data;
+	pmgrop(&p);
+
+	bcopy(p.data, &time, 4);
 }
