@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.1 2002/06/17 16:29:10 christos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.2 2002/06/04 19:09:45 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace-translate.c,v 1.1 2002/06/17 16:29:10 christos Exp $");
+__RCSID("$NetBSD: systrace-translate.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -67,7 +67,7 @@ static int
 print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
-	int flags = (int)tl->trans_addr;
+	int flags = (intptr_t) tl->trans_addr;
 
 	p = str;
 	switch (flags & O_ACCMODE) {
@@ -139,7 +139,7 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 static int
 print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	int mode = (int)tl->trans_addr;
+	int mode = (intptr_t) tl->trans_addr;
 
 	mode &= 00007777;
 	snprintf(buf, buflen, "%o", mode);
@@ -150,7 +150,7 @@ print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 static int
 print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	int number = (int)tl->trans_addr;
+	int number = (intptr_t) tl->trans_addr;
 
 	snprintf(buf, buflen, "%d", number);
 
