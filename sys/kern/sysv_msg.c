@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.11 1994/10/23 23:11:27 cgd Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.12 1994/12/05 06:53:13 mycroft Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -778,9 +778,9 @@ msgrcv(p, uap, retval)
 			struct msg *previous;
 			struct msg **prev;
 
-			previous = NULL;
-			prev = &(msqptr->msg_first);
-			while ((msghdr = *prev) != NULL) {
+			for (previous = NULL, prev = &msqptr->msg_first;
+			     (msghdr = *prev) != NULL;
+			     previous = msghdr, prev = &msghdr->msg_next) {
 				/*
 				 * Is this message's type an exact match or is
 				 * this message's type less than or equal to
@@ -824,8 +824,6 @@ msgrcv(p, uap, retval)
 					}
 					break;
 				}
-				previous = msghdr;
-				prev = &(msghdr->msg_next);
 			}
 		}
 
@@ -923,7 +921,7 @@ msgrcv(p, uap, retval)
 	 * Return the type to the user.
 	 */
 
-	eval = copyout((caddr_t)&(msghdr->msg_type), user_msgp,
+	eval = copyout((caddr_t)&msghdr->msg_type, user_msgp,
 	    sizeof(msghdr->msg_type));
 	if (eval != 0) {
 #ifdef MSG_DEBUG_OK
