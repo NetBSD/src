@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.3 1994/01/29 02:03:46 jtc Exp $
+ *	$Id: mdprologue.S,v 1.4 1994/12/04 08:26:25 mycroft Exp $
  */
 
 /*
@@ -56,7 +56,7 @@ L.2B:
 	add	%i1, %fp, %i1		! if so, adjust to absolute address
 1:
 	ld	[%i1], %o3		! load base address (crtp->crt_ba)
-	ld	[%l7], %o2		! get rtld's __DYNAMIC address
+	ld	[%l7], %o2		! get __DYNAMIC address
 					!   from 1st GOT entry
 	add	%o2, %o3, %o2		! relocate and make it 3rd arg.
 
@@ -94,7 +94,7 @@ _binder_entry:
 
 	restore				! get rid of our context
 	jmp	%g1			! and go.
-	restore				! and the jmpslot's
+	restore				! and the jmpslot context
 	nop
 
 	.seg	"data"			! [internal]
