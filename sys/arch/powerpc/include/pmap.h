@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1999/03/05 06:10:48 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1999/04/16 21:45:19 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,6 +80,16 @@ int ptebits __P((paddr_t, int));
 
 #define PMAP_NEED_PROCWR
 void pmap_procwr __P((struct proc *, vaddr_t, size_t));
+
+/*
+ * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
+ *
+ * Note: This won't work if we have more memory than can be direct-mapped
+ * VA==PA all at once.  But pmap_copy_page() and pmap_zero_page() will have
+ * this problem, too.
+ */
+#define	PMAP_MAP_POOLPAGE(pa)	(pa)
+#define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
 
 static __inline paddr_t
 vtophys(va)
