@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.73 2003/02/18 08:37:41 dsl Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.74 2003/02/18 19:26:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.73 2003/02/18 08:37:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.74 2003/02/18 19:26:23 wiz Exp $");
 
 #include "opt_compat_43.h"
 
@@ -730,8 +730,9 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 
 	if (s->s_flags & S_LOGIN_SET && p->p_pid != s->s_sid &&
 	    strncmp(newname, s->s_login, sizeof s->s_login) != 0)
-		log(LOG_WARNING, "%s (pid %d) changing logname from %.*s to %s",
-			p->p_comm, p->p_pid, (int)sizeof s->s_login, s->s_login, newname);
+		log(LOG_WARNING, "%s (pid %d) changing logname from "
+		    "%.*s to %s\n", p->p_comm, p->p_pid,
+		    (int)sizeof s->s_login, s->s_login, newname);
 	s->s_flags |= S_LOGIN_SET;
 	strncpy(s->s_login, newname, sizeof s->s_login);
 	return 0;
