@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/02/07 15:29:21 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/02/09 19:54:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include "opt_syscall_debug.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
+#include "biconsdev.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +60,15 @@
 #include <machine/platid_mask.h>
 
 #include <sh3/intcreg.h>
+
+#if NBICONSDEV > 0
+#include <dev/hpc/biconsvar.h>
+#include <dev/hpc/bicons.h>
+#define DPRINTF(arg) printf arg
+#else
+#define DPRINTF(arg)
+#endif
+
 /* 
  * D-RAM location (Windows CE machine specific)
  *
@@ -151,7 +161,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	pd_entry_t *pagedir;
 	pt_entry_t *pagetab, pte;
 	int i;
-	char *cp, *p;
+	char *p;
 
 	/* clear BSS */
 	memset(edata, 0, end - edata);
@@ -162,65 +172,38 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_IPRC = 0;
 	SHREG_IPRD = 0;
 	SHREG_IPRE = 0;
+	
+	/* start to determine heap area */
+	kernend = (vaddr_t)sh3_round_page(end);
 
-	/* setup console */
+	/* setup bootinfo */
 	bootinfo = &__bootinfo;
 	memcpy(bootinfo, bi, sizeof(struct bootinfo));
 
-	consinit();
-
-	/* start to determine heap area */
-	kernend = (vaddr_t)sh3_round_page(end);
-	printf("heap start=0x%08lx\n", kernend);
-
-	/*
-	 *  Arguments are set up by boot loader.
-	 */
-	if (bi && bi->magic == BOOTINFO_MAGIC) {
-		if (bootinfo->platid_cpu != 0) {
-			platid.dw.dw0 = bootinfo->platid_cpu;
-		}
-		if (bootinfo->platid_machine != 0) {
-			platid.dw.dw1 = bootinfo->platid_machine;
-		}
-		printf("platid(cpu/machine) = %08lx/%08lx\n",
-		       bootinfo->platid_cpu, bootinfo->platid_machine);
-		printf("display=%dx%d-(%d) %p type=%d \n",
-		       bootinfo->fb_width, bootinfo->fb_height,
-		       bootinfo->fb_line_bytes, bootinfo->fb_addr,
-		       bootinfo->fb_type);
-	}
-
-	/* parse additional options */
-	for (i = 0; i < argc; i++) {
-		printf("option [%d]: %s\n", i, argv[i]);
-	}
+	/* setup bootstrap options */
 	makebootdev("wd0"); /* default boot device */
 	boothowto = 0;
-	for (i = 1; i < argc; i++) {
-		for (cp = argv[i]; *cp; cp++) {
-			switch (*cp) {
-			case 'h':
-				bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
-				break;
-
-			case 'b':
-				/* boot device: -b=sd0 etc. */
-				p = cp + 2;
+	for (i = 1; i < argc; i++) { // skip 1st arg (kernel name).
+		char *cp = argv[i];
+		switch (*cp) {
+		case 'h':
+			bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
+			break;
+		case 'b':
+			/* boot device: -b=sd0 etc. */
+			p = cp + 2;
 #ifdef NFS
-				if (strcmp(p, "nfs") == 0)
-					mountroot = nfs_mountroot;
-				else
-					makebootdev(p);
-#else
+			if (strcmp(p, "nfs") == 0)
+				mountroot = nfs_mountroot;
+			else
 				makebootdev(p);
+#else
+			makebootdev(p);
 #endif
-				cp += strlen(cp);
-				break;
-			default:
-				BOOT_FLAG(*cp, boothowto);
-				break;
-			}
+			break;
+		default:
+			BOOT_FLAG(*cp, boothowto);
+			break;
 		}
 	}
 #ifdef MFS
@@ -238,10 +221,34 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif
 
+	/* start console */
+	consinit();
+	
+	/* print kernel option */
+	for (i = 0; i < argc; i++) {
+		DPRINTF(("option [%d]: %s\n", i, argv[i]));
+	}
+	if (bootinfo->magic == BOOTINFO_MAGIC) {
+		if (bootinfo->platid_cpu != 0) {
+			platid.dw.dw0 = bootinfo->platid_cpu;
+		}
+		if (bootinfo->platid_machine != 0) {
+			platid.dw.dw1 = bootinfo->platid_machine;
+		}
+	} else {
+		panic("invalid boot info magic. use lates bootloader.\n");
+	}
+	DPRINTF(("platid(cpu/machine) = %08lx/%08lx\n",
+		 bootinfo->platid_cpu, bootinfo->platid_machine));
+	DPRINTF(("display=%dx%d-(%d) %p type=%d \n",
+		 bootinfo->fb_width, bootinfo->fb_height,
+		 bootinfo->fb_line_bytes, bootinfo->fb_addr,
+		 bootinfo->fb_type));
+
 	/* find memory cluster */
 	sz = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
 	nkpde = sz >> (PDSHIFT - 1);
-	printf("nkpde = %d\n", nkpde);
+	DPRINTF(("nkpde = %d\n", nkpde));
 
 	/* steal page dir area, process0 stack, page table area */
 	sz = NBPG + USPACE + NBPG * (1 + nkpde);
@@ -306,7 +313,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	/* setup proc0 stack */
 	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
-	printf("proc0 stack: 0x%08lx\n", proc0_sp);
+	DPRINTF(("proc0 stack: 0x%08lx\n", proc0_sp));
 
 	/* Set proc0paddr */
 	proc0paddr = (void *)(p + NBPG);
@@ -349,7 +356,7 @@ cpu_startup()
 	else
 		sprintf(cpu_model, "%s (Hitachi SH product unknown)",
 			platid_name(&platid));
-	printf("%s\n", cpu_model);
+	DPRINTF(("%s\n", cpu_model));
 
 #ifdef SYSCALL_DEBUG
 	scdebug |= SCDEBUG_ALL;
@@ -421,7 +428,7 @@ haltsys:
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	DPRINTF(("%s\n\n", howto & RB_HALT ? "halted." : "rebooting..."));
 
 	goto *(u_int32_t *)0xa0000000;
 	while (1)
@@ -466,26 +473,26 @@ mem_cluster_init(paddr_t addr)
 #if notyet //XXX bank 0 only
 	__find_dram_shadow(DRAM_BANK1_START, DRAM_BANK1_END);
 #endif
-	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
+	DPRINTF(("mem_cluster_cnt = %d\n", mem_cluster_cnt));
 	sz = 0;
 	for (i = 0, seg = mem_clusters; i < mem_cluster_cnt; i++, seg++) {
-		printf("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
-		       (paddr_t)seg->start, (paddr_t)seg->size,
-		       (paddr_t)seg->start + (paddr_t)seg->size);
+		DPRINTF(("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
+			 (paddr_t)seg->start, (paddr_t)seg->size,
+			 (paddr_t)seg->start + (paddr_t)seg->size));
 		sz += atop(seg->size);
 #ifdef NARLY_MEMORY_PROBE
 		if (i == 0) {
-			printf(" don't check.\n");
+			DPRINTF((" don't check.\n"));
 			continue;
 		}
 		if (__check_dram((paddr_t)seg->start, (paddr_t)seg->start +
 				 (paddr_t)seg->size) != 0)
 			panic("D-RAM check failed.");
 #else
-		printf("\n");
+		DPRINTF(("\n"));
 #endif /* NARLY_MEMORY_PROBE */
 	}
-	printf("total memory = %dMbyte\n", (int)(sz >> 20));
+	DPRINTF(("total memory = %dMbyte\n", (int)(sz >> 20)));
 	physmem = btoc(sz);
 
 	return sz;
@@ -504,7 +511,7 @@ mem_cluster_load()
 		start = (paddr_t)mem_clusters[i].start;
 		size = (psize_t)mem_clusters[i].size;
 
-		printf("loading 0x%lx,0x%lx\n", start, size);
+		DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
 		start = SH3_PHYS_TO_P1SEG(start);
 		memset((void *)start, 0, size);
 		cacheflush();
@@ -516,7 +523,7 @@ mem_cluster_load()
 	/* load cluster 1 only. */
 	start = (paddr_t)mem_clusters[1].start;
 	size = (psize_t)mem_clusters[1].size;
-	printf("loading 0x%lx,0x%lx\n", start, size);
+	DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
 
 	start = SH3_PHYS_TO_P1SEG(start);
 	end = start + size;
@@ -535,7 +542,7 @@ __check_dram(paddr_t start, paddr_t end)
 	u_int8_t *page;
 	int i, x;
 
-	printf(" checking...");
+	DPRINTF((" checking..."));
 	for (; start < end; start += NBPG) {
 		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
 		x = random();
@@ -551,10 +558,10 @@ __check_dram(paddr_t start, paddr_t end)
 			if (*(volatile int *)(page + i) != (x ^ i))
 				goto bad;
 	}
-	printf("success.\n");
+	DPRINTF(("success.\n"));
 	return 0;
  bad:
-	printf("failed.\n");
+	DPRINTF(("failed.\n"));
 	return 1;
 }
 #endif /* NARLY_MEMORY_PROBE */
@@ -565,7 +572,7 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	vaddr_t page, startaddr, endaddr;
 	int x;
 
-	printf("search D-RAM from 0x%08lx for 0x%08lx\n", start, end);
+	DPRINTF(("search D-RAM from 0x%08lx for 0x%08lx\n", start, end));
 	startaddr = SH3_PHYS_TO_P2SEG(start);
 	endaddr = SH3_PHYS_TO_P2SEG(end);
 
@@ -607,20 +614,12 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	mem_cluster_cnt++;
 }
 
-cons_decl(scif);
 void
 consinit()
 {
-	static struct consdev scif_cons = cons_init(scif);
-	static int called;
-
-	switch (called++) {
-	case 0:
-		cn_tab = &scif_cons;
-		break;
-	case 1:
-		cninit();
-		scif_cons.cn_probe (cn_tab);
-		break;
-	}
+#if NBICONSDEV > 0
+	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL))
+		bicons_set_priority(CN_REMOTE + 1); /* set highest */
+#endif
+	cninit();
 }
