@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)printf.c	8.1 (Berkeley) 6/11/93
- *	     $Id: printf.c,v 1.1 1994/01/26 02:03:53 brezak Exp $
+ *	     $Id: printf.c,v 1.2 1994/07/27 07:37:25 cgd Exp $
  */
 
 /*
@@ -74,7 +74,7 @@ void
 #if __STDC__
 printf(const char *fmt, ...)
 #else
-printf(fmt /* , va_alist */)
+printf(fmt, va_alist)
 	char *fmt;
 #endif
 {
