@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.9 1995/01/13 19:59:13 mycroft Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.10 1995/06/24 15:47:49 pk Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -185,7 +185,9 @@ getidle(tty, display)
 }
 	
 int *
-rusers_num()
+rusers_num_svc(arg, rqstp)
+	void *arg;
+	struct svc_req *rqstp;
 {
 	static int num_users = 0;
 	struct utmp usr;
@@ -258,13 +260,17 @@ do_names_3(int all)
 }
 
 utmp_array *
-rusersproc_names_3()
+rusersproc_names_3_svc(arg, rqstp)
+	void *arg;
+	struct svc_req *rqstp;
 {
 	return (do_names_3(0));
 }
 
 utmp_array *
-rusersproc_allnames_3()
+rusersproc_allnames_3_svc(arg, rqstp)
+	void *arg;
+	struct svc_req *rqstp;
 {
 	return (do_names_3(1));
 }
@@ -313,13 +319,17 @@ do_names_2(int all)
 }
 
 struct utmpidlearr *
-rusersproc_names_2()
+rusersproc_names_2_svc(arg, rqstp)
+	void *arg;
+	struct svc_req *rqstp;
 {
 	return (do_names_2(0));
 }
 
 struct utmpidlearr *
-rusersproc_allnames_2()
+rusersproc_allnames_2_svc(arg, rqstp)
+	void *arg;
+	struct svc_req *rqstp;
 {
 	return (do_names_2(1));
 }
@@ -333,8 +343,8 @@ rusers_service(rqstp, transp)
 		int fill;
 	} argument;
 	char *result;
-	bool_t (*xdr_argument)(), (*xdr_result)();
-	char *(*local)();
+	bool_t (*xdr_argument) __P((...)), (*xdr_result) __P((...));
+	char *(*local) __P((void *, struct svc_req *));
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -347,7 +357,8 @@ rusers_service(rqstp, transp)
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
 		case RUSERSVERS_IDLE:
-			local = (char *(*)()) rusers_num;
+			local = (char *(*) __P((void *, struct svc_req *)))
+					rusers_num_svc;
 			break;
 		default:
 			svcerr_progvers(transp, RUSERSVERS_IDLE, RUSERSVERS_3);
@@ -361,12 +372,14 @@ rusers_service(rqstp, transp)
 		xdr_result = xdr_utmp_array;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
-			local = (char *(*)()) rusersproc_names_3;
+			local = (char *(*) __P((void *, struct svc_req *)))
+					rusersproc_names_3_svc;
 			break;
 
 		case RUSERSVERS_IDLE:
 			xdr_result = xdr_utmpidlearr;
-			local = (char *(*)()) rusersproc_names_2;
+			local = (char *(*) __P((void *, struct svc_req *)))
+					rusersproc_names_2_svc;
 			break;
 
 		default:
@@ -381,12 +394,14 @@ rusers_service(rqstp, transp)
 		xdr_result = xdr_utmp_array;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
-			local = (char *(*)()) rusersproc_allnames_3;
+			local = (char *(*) __P((void *, struct svc_req *)))
+					rusersproc_allnames_3_svc;
 			break;
 
 		case RUSERSVERS_IDLE:
 			xdr_result = xdr_utmpidlearr;
-			local = (char *(*)()) rusersproc_allnames_2;
+			local = (char *(*) __P((void *, struct svc_req *)))
+					rusersproc_allnames_2_svc;
 			break;
 
 		default:
