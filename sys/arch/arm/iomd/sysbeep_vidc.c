@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_vidc.c,v 1.7 2002/10/02 15:45:13 thorpej Exp $	*/
+/*	$NetBSD: sysbeep_vidc.c,v 1.8 2004/01/01 19:12:13 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.7 2002/10/02 15:45:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.8 2004/01/01 19:12:13 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,14 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.7 2002/10/02 15:45:13 thorpej Exp
 
 #include "beep.h"
 #include "vidcaudio.h"
-#include "lmcaudio.h"
 
 /* Prototypes */
 int sysbeep_vidc_match(struct device *, struct cfdata *, void *);
 void sysbeep_vidc_attach(struct device *, struct device *, void *);
 void sysbeep(int, int);
-
-void lmcaudio_beep_generate(void);
 
 /* device attach structure */
 CFATTACH_DECL(sysbeep_vidc, sizeof(struct device),
@@ -81,8 +78,6 @@ sysbeep(int pitch, int period)
 
 #if NVIDCAUDIO > 0
 	vidcaudio_beep_generate();
-#elif NLMCAUDIO > 0
-	lmcaudio_beep_generate();
 #elif NBEEP > 0
 	beep_generate();
 #endif /* NVIDCAUDIO */
