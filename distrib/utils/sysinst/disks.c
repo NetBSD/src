@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.85 2004/05/15 21:53:29 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.86 2004/05/18 14:07:06 cube Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,8 +104,10 @@ get_disks(struct disk_desc *dd)
 			cp = strchr(dd->dd_name, ':');
 			if (cp != NULL)
 				dd->dd_no_mbr = ~strcmp(cp, ":no_mbr");
-			else
+			else {
+				dd->dd_no_mbr = 0;
 				cp = strchr(dd->dd_name, 0);
+			}
 
 			snprintf(cp, 2 + 1, "%d", i);
 			if (!get_geom(dd->dd_name, &l)) {
