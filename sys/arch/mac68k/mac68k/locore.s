@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 1996/05/17 02:11:47 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 1996/06/09 01:53:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -312,6 +312,10 @@ _fpfault:
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
 	fsave	a0@		| save state
+#if defined(M68040) || defined(M68040)
+	cmpl	#MMU_68040, _mmutype	| if 68040, (060 ha!), etc...
+	jle	Lfptnull
+#endif
 	tstb	a0@		| null state frame?
 	jeq	Lfptnull	| yes, safe
 	clrw	d0		| no, need to tweak BIU
