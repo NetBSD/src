@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
+/*	$NetBSD: print.c,v 1.3 2000/01/16 03:07:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
