@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.34 1999/05/18 23:52:54 thorpej Exp $ */
+/*	$NetBSD: if_qe.c,v 1.35 1999/05/23 23:06:24 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -1037,10 +1037,10 @@ if (m) {
 	 * XXX I'll let ragge make this sane.  I'm not entirely
 	 * XXX sure what's going on in if_ubaget().
 	 */
-	M_PREPEND(m, sizeof(struct ether_header), M_DONTWWAIT);
+	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
 		return;
-	*mtod(m, struct ether_header) = *eh;
+	bcopy(eh, mtod(m, caddr_t), sizeof(struct ether_header));
 
 #if NBPFILTER > 0
 	/*
