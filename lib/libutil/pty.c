@@ -1,3 +1,5 @@
+/*	$NetBSD: pty.c,v 1.8 1997/06/29 18:44:09 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pty.c,v 1.7 1996/11/12 16:39:38 mycroft Exp $";
+__RCSID("$NetBSD: pty.c,v 1.8 1997/06/29 18:44:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
