@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 2001/06/20 02:40:14 briggs Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 2001/12/30 20:50:53 dbj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,7 +63,6 @@ kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t   last_va;
 	paddr_t   pa;
-	boolean_t v;
 
 	last_va = va + len;
 	va  &= ~PGOFSET;
