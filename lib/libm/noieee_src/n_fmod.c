@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.3 1998/10/20 02:26:11 matt Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.3.12.1 2002/06/18 13:39:21 lukem Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,12 +72,11 @@ extern int isnan(),finite();
 
 #ifdef TEST_FMOD
 static double
-_fmod(x,y)
+_fmod(double x, double y)
 #else	/* TEST_FMOD */
 double
-fmod(x,y)
+fmod(double x, double y)
 #endif	/* TEST_FMOD */
-double x,y;
 {
 	int ir,iy;
 	double r,w;
@@ -110,8 +109,7 @@ extern double fmod();
 static int nfail = 0;
 
 static void
-doit(x,y)
-double x,y;
+doit(double x, double y)
 {
 	double ro = fmod(x,y),rn = _fmod(x,y);
 	if (ro != rn) {
@@ -123,9 +121,10 @@ double x,y;
 	}
 }
 
-main()
+int
+main(int argc, char **argv)
 {
-	register int i,cases;
+	int i,cases;
 	double x,y;
 
 	srandom(12345);
