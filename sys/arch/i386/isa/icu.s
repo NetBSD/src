@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.16 1993/07/03 13:13:34 cgd Exp $
+ *	$Id: icu.s,v 1.17 1993/07/11 06:09:48 cgd Exp $
  */
 
 /*
@@ -63,7 +63,7 @@
 _cpl:	.long	0xffff			# current priority (all off)
 	.globl	_imen
 _imen:	.long	0xffff			# interrupt mask enable (all off)
-#	.globl	_highmask
+	.globl	_highmask
 _highmask:	.long	HIGHMASK
 	.globl	_ttymask
 _ttymask:	.long	0
