@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.4 2001/09/14 12:09:14 drochner Exp $	*/
+/*	$NetBSD: agp.c,v 1.5 2001/09/15 00:24:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -106,30 +106,93 @@ static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
 
+const struct agp_product {
+	uint32_t	ap_vendor;
+	uint32_t	ap_product;
+	int		(*ap_match)(const struct pci_attach_args *);
+	int		(*ap_attach)(struct device *, struct device *, void *);
+} agp_products[] = {
+	{ PCI_VENDOR_ALI,	-1,
+	  NULL,			agp_ali_attach },
+
+	{ PCI_VENDOR_AMD,	-1,
+	  agp_amd_match,	agp_amd_attach },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810_DC100_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810E_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82815_FULL_HUB,
+	  NULL,			agp_i810_attach },
+
+	{ PCI_VENDOR_INTEL,	-1,
+	  NULL,			agp_intel_attach },
+
+	{ PCI_VENDOR_SIS,	-1,
+	  NULL,			agp_sis_attach },
+
+	{ PCI_VENDOR_VIATECH,	-1,
+	  NULL,			agp_via_attach },
+
+	{ 0,			0,
+	  NULL,			NULL },
+};
+
+static const struct agp_product *
+agp_lookup(const struct pci_attach_args *pa)
+{
+	const struct agp_product *ap;
+
+	/* First find the vendor. */
+	for (ap = agp_products; ap->ap_attach != NULL; ap++) {
+		if (PCI_VENDOR(pa->pa_id) == ap->ap_vendor)
+			break;
+	}
+
+	if (ap->ap_attach == NULL)
+		return (NULL);
+
+	/* Now find the product within the vendor's domain. */
+	for (; ap->ap_attach != NULL; ap++) {
+		if (PCI_VENDOR(pa->pa_id) != ap->ap_vendor) {
+			/* Ran out of this vendor's section of the table. */
+			return (NULL);
+		}
+		if (ap->ap_product == PCI_PRODUCT(pa->pa_id)) {
+			/* Exact match. */
+			break;
+		}
+		if (ap->ap_product == (uint32_t) -1) {
+			/* Wildcard match. */
+			break;
+		}
+	}
+
+	if (ap->ap_attach == NULL)
+		return (NULL);
+
+	/* Now let the product-specific driver filter the match. */
+	if (ap->ap_match != NULL && (*ap->ap_match)(pa) == 0)
+		return (NULL);
+
+	return (ap);
+}
+
 int
 agpmatch(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct agp_phcb_attach_args *apa = aux;
+	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 
-	switch (PCI_VENDOR(pa->pa_id)) {
-		case PCI_VENDOR_ALI:
-			return agp_ali_match(parent, match, pa);
-		case PCI_VENDOR_AMD:
-			return agp_amd_match(parent, match, pa);
-		case PCI_VENDOR_INTEL:
-			if (agp_i810_bridgematch(pa))
-				return agp_i810_match(parent, match, pa);
-			return agp_intel_match(parent, match, pa);
-		case PCI_VENDOR_SIS:
-			return agp_sis_match(parent, match, pa);
-		case PCI_VENDOR_VIATECH:
-			return agp_via_match(parent, match, pa);
-		default:
-			return 0;
-	}
+	if (strcmp(apa->apa_busname, "agp") != 0)
+		return (0);
 
-	return (0);
+	if (agp_lookup(pa) == NULL)
+		return (0);
+
+	return (1);
 }
 
 static int agp_max[][2] = {
@@ -148,11 +211,17 @@ static int agp_max[][2] = {
 void
 agpattach(struct device *parent, struct device *self, void *aux)
 {
-	struct agp_phcb_attach_args *apa = aux;
+	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 	struct agp_softc *sc = (void *)self;
+	const struct agp_product *ap;
 	int memsize, i, ret;
 
+	ap = agp_lookup(pa);
+	if (ap == NULL) {
+		printf("\n");
+		panic("agpattach: impossible");
+	}
 
 	sc->as_dmat = pa->pa_dmat;
 	sc->as_pc = pa->pa_pc;
@@ -180,28 +249,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->as_memory);
 
-	switch (PCI_VENDOR(pa->pa_id)) {
-		case PCI_VENDOR_ALI:
-			ret = agp_ali_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_AMD:
-			ret = agp_amd_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_INTEL:
-			if (agp_i810_bridgematch(pa))
-				ret = agp_i810_attach(parent, self, pa);
-			else
-				ret = agp_intel_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_SIS:
-			ret = agp_sis_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_VIATECH:
-			ret = agp_via_attach(parent, self, pa);
-			break;
-		default:
-			panic("agpattach: bad chipset detection");
-	}
+	ret = (*ap->ap_attach)(parent, self, pa);
 	if (ret == 0)
 		printf(": aperture at 0x%lx, size 0x%lx\n",
 		    (unsigned long)sc->as_apaddr,

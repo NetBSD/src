@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.5 2001/09/14 12:05:03 drochner Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.6 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -87,65 +87,24 @@ struct agp_methods agp_i810_methods = {
 	agp_i810_unbind_memory,
 };
 
+/* XXXthorpej -- duplicated code (see arch/i386/pci/pchb.c) */
 static int
 agp_i810_vgamatch(struct pci_attach_args *pa)
 {
+
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
-		return 0;
+		return (0);
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_82810_GC:
 	case PCI_PRODUCT_INTEL_82810_DC100_GC:
 	case PCI_PRODUCT_INTEL_82810E_GC:
 	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
-		return 1;
-	};
-
-	return 0;
-}
-
-/*
- * Find bridge device.
- */
-int
-agp_i810_bridgematch(struct pci_attach_args *pa)
-{
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82810_MCH:
-	case PCI_PRODUCT_INTEL_82810_DC100_MCH:
-	case PCI_PRODUCT_INTEL_82810E_MCH:
-	case PCI_PRODUCT_INTEL_82815_FULL_HUB:
-		return 1;
+		return (1);
 	}
 
-	return 0;
-}
-
-int
-agp_i810_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args vga_pa, *pa = aux;
-	pcireg_t ramreg;
-
-	if (agp_i810_bridgematch(pa) == 0)
-		return 0;
-	/*
-	 * XXXXfvdl
-	 * this relies on the 'memory hub' and the VGA controller
-	 * being on the same bus, which is bad. Fortunately, we
-	 * know this to be the case with the i810.
-	 *
-	 * Could just have the attach fail later, leave as_chipc NULL
-	 * and fail any open() call.
-	 */
-	if (pci_find_device(&vga_pa, agp_i810_vgamatch) == 0)
-		return 0;
-
-	ramreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_I810_SMRAM);
-	if ((ramreg & 0xff) == 0)
-		return 0;
-	
-	return 1;
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.26 2001/09/12 08:25:17 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.27 2001/09/15 00:25:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/agpreg.h>
 #include <dev/pci/agpvar.h>
 
 #include <arch/i386/pci/pchbvar.h>
 
 #include "rnd.h"
-#include "agp.h"
 
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
@@ -77,6 +77,8 @@
 
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
+
+int	pchb_i810_vgamatch(struct pci_attach_args *);
 
 int	pchb_print __P((void *, const char *));
 int	agp_print __P((void *, const char *));
@@ -107,16 +109,15 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
-#if NAGP > 0
-	struct agp_phcb_attach_args apa;
-#endif
+	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int doattach, attachflags;
+	int doattach, attachflags, has_agp;
 
 	printf("\n");
 	doattach = 0;
+	has_agp = 0;
 	attachflags = pa->pa_flags;
 
 	/*
@@ -251,6 +252,48 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 		break;
+
+	case PCI_PRODUCT_INTEL_82810_MCH:
+	case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+	case PCI_PRODUCT_INTEL_82810E_MCH:
+	case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+	    {
+		struct pci_attach_args vga_pa;
+		pcireg_t ramreg;
+
+		/*
+		 * XXXfvdl
+		 * This relies on the "memory hub" and the VGA controller
+		 * being on the same bus, which is kind of gross.  Fortunately,
+		 * we know this is always the case on the i810.
+		 */
+		if (pci_find_device(&vga_pa, pchb_i810_vgamatch) != 0) {
+			ramreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    AGP_I810_SMRAM);
+			if (ramreg & 0xff)
+				has_agp = 1;
+		}
+		break;
+	    }
+	}
+
+#if NRND > 0
+	/*
+	 * Attach a random number generator, if there is one.
+	 */
+	pchb_attach_rnd(sc, pa);
+#endif
+
+	/*
+	 * If we haven't detected AGP yet (via a product ID),
+	 * then check for AGP capability on the device.
+	 */
+	if (has_agp ||
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
+		apa.apa_busname = "agp";
+		apa.apa_pci_args = *pa;
+		config_found(self, &apa, agp_print);
 	}
 
 	if (doattach) {
@@ -263,23 +306,25 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}
+}
 
-#if NAGP > 0
-	/*
-	 * XXX re-use of pci attach args for pchb, but it's probably
-	 * the best thing to do.
-	 */
-	apa.apa_busname = "agp";
-	apa.apa_pci_args = *pa;
-	config_found(self, &apa, agp_print);
-#endif
+int
+pchb_i810_vgamatch(struct pci_attach_args *pa)
+{
 
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_attach_rnd(sc, pa);
-#endif
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
+	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
+		return (0);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_82810_GC:
+	case PCI_PRODUCT_INTEL_82810_DC100_GC: 
+	case PCI_PRODUCT_INTEL_82810E_GC:
+	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
+		return (1);
+	}
+
+	return (0);
 }
 
 int
@@ -296,7 +341,7 @@ pchb_print(void *aux, const char *pnp)
 int
 agp_print(void *aux, const char *pnp)
 {
-	struct agp_phcb_attach_args *apa = aux;
+	struct agpbus_attach_args *apa = aux;
 	if (pnp)
 		printf("%s at %s", apa->apa_busname, pnp);
 	return (UNCONF);
