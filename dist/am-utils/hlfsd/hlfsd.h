@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+/*	$NetBSD: hlfsd.h,v 1.2 2001/07/14 06:01:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -149,7 +149,6 @@ extern gid_t hlfs_gid;
 extern int cache_interval;
 extern int noverify;
 extern int serverpid;
-extern int sys_nerr;
 extern int untab_index(char *username);
 extern am_nfs_fh *root_fhp;
 extern am_nfs_fh root;

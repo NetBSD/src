@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.c,v 1.2 2001/07/14 04:49:57 mrg Exp $	*/
+/*	$NetBSD: amq.c,v 1.3 2001/07/14 06:01:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -253,7 +253,6 @@ show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid, int *dwid, int *twi
 	       mi->mi_up > 0 ? "up" :
 	       mi->mi_up < 0 ? "starting" : "down");
 	if (mi->mi_error > 0) {
-	  extern const int sys_nerr;
 	  if (mi->mi_error < sys_nerr)
 #ifdef HAVE_STRERROR
 	    printf(" (%s)", strerror(mi->mi_error));
