@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.66 2003/05/17 01:36:03 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.67 2004/04/14 04:37:06 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.66 2003/05/17 01:36:03 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.67 2004/04/14 04:37:06 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -212,7 +212,7 @@ struct res_target {
 	int n;			/* result length */
 };
 
-static int str_isnumber __P((const char *));
+static int str2number __P((const char *));
 static int explore_fqdn __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
 static int explore_null __P((const struct addrinfo *,
@@ -340,22 +340,23 @@ freeaddrinfo(ai)
 }
 
 static int
-str_isnumber(p)
+str2number(p)
 	const char *p;
 {
 	char *ep;
+	unsigned long v;
 
 	_DIAGASSERT(p != NULL);
 
 	if (*p == '\0')
-		return NO;
+		return -1;
 	ep = NULL;
 	errno = 0;
-	(void)strtoul(p, &ep, 10);
-	if (errno == 0 && ep && *ep == '\0')
-		return YES;
+	v = strtoul(p, &ep, 10);
+	if (errno == 0 && ep && *ep == '\0' && v <= UINT_MAX)
+		return v;
 	else
-		return NO;
+		return -1;
 }
 
 int
@@ -837,18 +838,6 @@ explore_numeric_scope(pai, hostname, servname, res)
 	if (cp == NULL)
 		return explore_numeric(pai, hostname, servname, res, hostname);
 
-#if 0
-	/*
-	 * Handle special case of <scope id><delimiter><scoped_address>
-	 */
-	hostname2 = strdup(hostname);
-	if (hostname2 == NULL)
-		return EAI_MEMORY;
-	/* terminate at the delimiter */
-	hostname2[cp - hostname] = '\0';
-	scope = hostname2;
-	addr = cp + 1;
-#else
 	/*
 	 * Handle special case of <scoped_address><delimiter><scope id>
 	 */
@@ -859,7 +848,6 @@ explore_numeric_scope(pai, hostname, servname, res)
 	hostname2[cp - hostname] = '\0';
 	addr = hostname2;
 	scope = cp + 1;
-#endif
 
 	error = explore_numeric(pai, addr, servname, res, hostname);
 	if (error == 0) {
@@ -943,7 +931,7 @@ get_portmatch(ai, servname)
 	_DIAGASSERT(ai != NULL);
 	/* servname may be NULL */
 
-	/* get_port does not touch first argument. when matchonly == 1. */
+	/* get_port does not touch first argument when matchonly == 1. */
 	/* LINTED const cast */
 	return get_port((struct addrinfo *)ai, servname, 1);
 }
@@ -988,14 +976,17 @@ get_port(ai, servname, matchonly)
 		return EAI_SOCKTYPE;
 	}
 
-	if (str_isnumber(servname)) {
+	port = str2number(servname);
+	if (port >= 0) {
 		if (!allownumeric)
 			return EAI_SERVICE;
-		port = atoi(servname);
 		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
 		port = htons(port);
 	} else {
+		if (ai->ai_flags & AI_NUMERICSERV)
+			return EAI_NONAME;
+
 		switch (ai->ai_socktype) {
 		case SOCK_DGRAM:
 			proto = "udp";
@@ -1045,30 +1036,6 @@ find_afd(af)
 	}
 	return NULL;
 }
-
-#if 0
-/*
- * post-2553: AI_ADDRCONFIG check.  if we use getipnodeby* as backend, backend
- * will take care of it.
- * the semantics of AI_ADDRCONFIG is not defined well.  we are not sure
- * if the code is right or not.
- */
-static int
-addrconfig(pai)
-	const struct addrinfo *pai;
-{
-	int s;
-
-	_DIAGASSERT(pai != NULL);
-
-	/* XXX errno */
-	s = socket(pai->ai_family, SOCK_DGRAM, 0);
-	if (s < 0)
-		return 0;
-	close(s);
-	return 1;
-}
-#endif
 
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
