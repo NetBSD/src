@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.47 2003/11/25 07:47:29 pk Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.48 2003/11/25 08:52:40 pk Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -90,15 +90,15 @@ COPTS.${j}+=-g
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
-NORMAL_C?=	${_MKTARGET_COMPILE}; \
+NORMAL_C?=	@${_MKSHMSG} "compile ${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<; \
 		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NOPROF_C?=	${_MKTARGET_COMPILE}; \
+NOPROF_C?=	@${_MKSHMSG} "compile ${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${CFLAGS} ${CPPFLAGS} -c $<; \
 		${CC} ${CFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S?=	${_MKTARGET_COMPILE}; \
+NORMAL_S?=	@${_MKSHMSG} "compile ${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<; \
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
