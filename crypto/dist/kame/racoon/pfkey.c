@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.104 2001/02/02 12:14:02 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.105 2001/03/05 18:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -336,12 +336,26 @@ pfkey_flush_sadb(proto)
 }
 
 /*
+ * These are the SATYPEs that we manage.  We register to get
+ * PF_KEY messages related to these SATYPEs, and we also use
+ * this list to determine which SATYPEs to delete SAs for when
+ * we receive an INITIAL-CONTACT.
+ */
+const struct pfkey_satype pfkey_satypes[] = {
+	{ SADB_SATYPE_AH,	"AH" },
+	{ SADB_SATYPE_ESP,	"ESP" },
+	{ SADB_X_SATYPE_IPCOMP,	"IPCOMP" },
+};
+const int pfkey_nsatypes =
+    sizeof(pfkey_satypes) / sizeof(pfkey_satypes[0]);
+
+/*
  * PF_KEY initialization
  */
 int
 pfkey_init()
 {
-	int reg_fail = 0;
+	int i, reg_fail;
 
 	if ((lcconf->sock_pfkey = pfkey_open()) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -349,34 +363,22 @@ pfkey_init()
 		return -1;
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_register\n");
-	if (pfkey_send_register(lcconf->sock_pfkey, SADB_SATYPE_ESP) < 0
-	 || pfkey_recv_register(lcconf->sock_pfkey) < 0) {
-		plog(LLV_WARNING, LOCATION, NULL,
-			"failed to regist esp (%s)", ipsec_strerror());
-		reg_fail++;
-		/*FALLTHROUGH*/
+	for (i = 0, reg_fail = 0; i < pfkey_nsatypes; i++) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		    "call pfkey_send_register for %s\n",
+		    pfkey_satypes[i].ps_name);
+		if (pfkey_send_register(lcconf->sock_pfkey,
+					pfkey_satypes[i].ps_satype) < 0 ||
+		    pfkey_recv_register(lcconf->sock_pfkey) < 0) {
+			plog(LLV_WARNING, LOCATION, NULL,
+			    "failed to register %s (%s)",
+			    pfkey_satypes[i].ps_name,
+			    ipsec_strerror());
+			reg_fail++;
+		}
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_register\n");
-	if (pfkey_send_register(lcconf->sock_pfkey, SADB_SATYPE_AH) < 0
-	 || pfkey_recv_register(lcconf->sock_pfkey) < 0) {
-		plog(LLV_WARNING, LOCATION, NULL,
-			"failed to regist ah (%s)", ipsec_strerror());
-		reg_fail++;
-		/*FALLTHROUGH*/
-	}
-
-	plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_register\n");
-	if (pfkey_send_register(lcconf->sock_pfkey, SADB_X_SATYPE_IPCOMP) < 0
-	 || pfkey_recv_register(lcconf->sock_pfkey) < 0) {
-		plog(LLV_WARNING, LOCATION, NULL,
-			"failed to regist ipcomp (%s)", ipsec_strerror());
-		reg_fail++;
-		/*FALLTHROUGH*/
-	}
-
-	if (reg_fail == 3) {
+	if (reg_fail == pfkey_nsatypes) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to regist any protocol.");
 		pfkey_close(lcconf->sock_pfkey);

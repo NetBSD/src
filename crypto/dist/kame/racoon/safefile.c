@@ -1,6 +1,4 @@
-/*	$KAME: safefile.c,v 1.4 2000/12/15 13:43:57 sakane Exp $	*/
-
-/*	$KAME: safefile.c,v 1.4 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: safefile.c,v 1.5 2001/03/05 19:54:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.

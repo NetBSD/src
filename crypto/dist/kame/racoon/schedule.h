@@ -1,4 +1,4 @@
-/*	$KAME: schedule.h,v 1.11 2000/10/04 17:41:03 itojun Exp $	*/
+/*	$KAME: schedule.h,v 1.12 2001/03/06 20:41:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,4 +72,4 @@ struct sched *sched_new __P((time_t, void (*func) __P((void *)), void *));
 void sched_kill __P((struct sched *));
 int sched_dump __P((caddr_t *, int *));
 void sched_init __P((void));
-
+void sched_scrub_param __P((void *));

@@ -1,4 +1,4 @@
-/*	$KAME: handler.h,v 1.37 2001/02/06 16:28:17 thorpej Exp $	*/
+/*	$KAME: handler.h,v 1.38 2001/03/05 18:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -391,6 +391,7 @@ extern void delph2 __P((struct ph2handle *));
 extern int insph2 __P((struct ph2handle *));
 extern void remph2 __P((struct ph2handle *));
 extern void flushph2 __P((void));
+extern void deleteallph2 __P((struct sockaddr *, struct sockaddr *, u_int));
 extern void initph2tree __P((void));
 
 extern void bindph12 __P((struct ph1handle *, struct ph2handle *));

@@ -1,4 +1,4 @@
-/*	$KAME: libpfkey.h,v 1.5 2001/01/29 10:29:58 sakane Exp $	*/
+/*	$KAME: libpfkey.h,v 1.6 2001/03/05 18:22:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -52,6 +52,8 @@ int pfkey_send_add __P((int, u_int, u_int, struct sockaddr *,
 	u_int64_t, u_int64_t, u_int32_t));
 int pfkey_send_delete __P((int, u_int, u_int,
 	struct sockaddr *, struct sockaddr *, u_int32_t));
+int pfkey_send_delete_all __P((int, u_int, u_int,
+	struct sockaddr *, struct sockaddr *));
 int pfkey_send_get __P((int, u_int, u_int,
 	struct sockaddr *, struct sockaddr *, u_int32_t));
 int pfkey_send_register __P((int, u_int));

@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_inf.c,v 1.64 2001/02/06 16:27:52 thorpej Exp $	*/
+/*	$KAME: isakmp_inf.c,v 1.67 2001/03/08 22:07:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -946,13 +946,67 @@ info_recv_initialcontact(iph1)
 	struct sadb_sa *sa;
 	struct sockaddr *src, *dst;
 	caddr_t mhp[SADB_EXT_MAX + 1];
-	int proto_id;
+	int proto_id, i;
 	struct ph2handle *iph2;
+#if 0
+	char *loc, *rem;
+#endif
 
 	if (f_local)
 		return;
 
-	/* purge IPsec-SA(s) */
+#if 0
+	loc = strdup(saddrwop2str(iph1->local));
+	rem = strdup(saddrwop2str(iph1->remote));
+
+	/*
+	 * Purge all IPSEC-SAs for the peer.  We can do this
+	 * the easy way (using a PF_KEY SADB_DELETE extension)
+	 * or we can do it the hard way.
+	 */
+	for (i = 0; i < pfkey_nsatypes; i++) {
+		proto_id = pfkey2ipsecdoi_proto(pfkey_satypes[i].ps_satype);
+
+		plog(LLV_INFO, LOCATION, NULL,
+		    "purging %s SAs for %s -> %s\n",
+		    pfkey_satypes[i].ps_name, loc, rem);
+		if (pfkey_send_delete_all(lcconf->sock_pfkey,
+		    pfkey_satypes[i].ps_satype, IPSEC_MODE_ANY,
+		    iph1->local, iph1->remote) == -1) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "delete_all %s -> %s failed for %s (%s)\n",
+			    loc, rem,
+			    pfkey_satypes[i].ps_name, ipsec_strerror());
+			goto the_hard_way;
+		}
+
+		deleteallph2(iph1->local, iph1->remote, proto_id);
+
+		plog(LLV_INFO, LOCATION, NULL,
+		    "purging %s SAs for %s -> %s\n",
+		    pfkey_satypes[i].ps_name, rem, loc);
+		if (pfkey_send_delete_all(lcconf->sock_pfkey,
+		    pfkey_satypes[i].ps_satype, IPSEC_MODE_ANY,
+		    iph1->remote, iph1->local) == -1) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "delete_all %s -> %s failed for %s (%s)\n",
+			    rem, loc,
+			    pfkey_satypes[i].ps_name, ipsec_strerror());
+			goto the_hard_way;
+		}
+
+		deleteallph2(iph1->remote, iph1->local, proto_id);
+	}
+
+	free(loc);
+	free(rem);
+	return;
+
+ the_hard_way:
+	free(loc);
+	free(rem);
+#endif
+
 	buf = pfkey_dump_sadb(SADB_SATYPE_UNSPEC);
 	if (buf == NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL,
@@ -1004,6 +1058,19 @@ info_recv_initialcontact(iph1)
 			msg = next;
 			continue;
 		}
+
+		/*
+		 * Make sure this is an SATYPE that we manage.
+		 * This is gross; too bad we couldn't do it the
+		 * easy way.
+		 */
+		for (i = 0; i < pfkey_nsatypes; i++) {
+			if (pfkey_satypes[i].ps_satype ==
+			    msg->sadb_msg_satype)
+				break;
+		}
+		if (i == pfkey_nsatypes)
+			continue;
 
 		plog(LLV_INFO, LOCATION, NULL,
 			"purging spi=%u.\n", ntohl(sa->sadb_sa_spi));
