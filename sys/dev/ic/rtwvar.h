@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.18 2005/01/03 03:25:06 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.19 2005/01/16 11:50:43 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -58,7 +58,9 @@
 #define	RTW_DEBUG_PHYBITIO	0x040000
 #define	RTW_DEBUG_TIMEOUT	0x080000
 #define	RTW_DEBUG_BUGS		0x100000
-#define	RTW_DEBUG_MAX		0x1fffff
+#define	RTW_DEBUG_BEACON	0x200000
+#define	RTW_DEBUG_LED		0x400000
+#define	RTW_DEBUG_MAX		0x7fffff
 
 extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)	\
@@ -101,9 +103,14 @@ enum rtw_rfchipid {
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
 
+enum rtw_access {RTW_ACCESS_NONE = 0,
+		 RTW_ACCESS_CONFIG = 1,
+		 RTW_ACCESS_ANAPARM = 2};
+
 struct rtw_regs {
 	bus_space_tag_t		r_bt;
 	bus_space_handle_t	r_bh;
+	enum rtw_access		r_access;
 };
 
 #define RTW_SR_GET(sr, ofs) \
@@ -196,6 +203,7 @@ struct rtw_txsoft_blk {
 	u_int			tsb_ndesc;
 	int			tsb_tx_timer;
 	struct rtw_txsoft	*tsb_desc;
+	uint8_t			tsb_poll;
 };
 
 struct rtw_descs {
@@ -368,9 +376,28 @@ struct rtw_sa2400 {
 
 typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int, int);
 
-enum rtw_access {RTW_ACCESS_NONE = 0,
-		 RTW_ACCESS_CONFIG = 1,
-		 RTW_ACCESS_ANAPARM = 2};
+union rtw_keys {
+	uint8_t		rk_keys[4][16];
+	uint32_t	rk_words[16];
+};
+
+#define	RTW_LED_SLOW_TICKS	MAX(1, hz/2)
+#define	RTW_LED_FAST_TICKS	MAX(1, hz/10)
+
+struct rtw_led_state {
+#define	RTW_LED0	0x1
+#define	RTW_LED1	0x2
+	uint8_t		ls_slowblink:2;
+	uint8_t		ls_actblink:2;
+	uint8_t		ls_default:2;
+	uint8_t		ls_state;
+	uint8_t		ls_event;
+#define	RTW_LED_S_RX	0x1
+#define	RTW_LED_S_TX	0x2
+#define	RTW_LED_S_SLOW	0x4
+	struct callout	ls_slow_ch;
+	struct callout	ls_fast_ch;
+};
 
 struct rtw_softc {
 	struct device		sc_dev;
@@ -441,7 +468,11 @@ struct rtw_softc {
 		struct rtw_tx_radiotap_header	tap;
 		uint8_t			pad[64];
 	} sc_txtapu;
-	enum rtw_access		sc_access;
+	union rtw_keys		sc_keys;
+	int			sc_txkey;
+	struct ifqueue		sc_beaconq;
+	struct rtw_led_state	sc_led_state;
+	int			sc_hwverid;
 };
 
 #define	sc_if		sc_ic.ic_if
@@ -454,7 +485,7 @@ void rtw_txdac_enable(struct rtw_softc *, int);
 void rtw_anaparm_enable(struct rtw_regs *, int);
 void rtw_config0123_enable(struct rtw_regs *, int);
 void rtw_continuous_tx_enable(struct rtw_softc *, int);
-void rtw_set_access(struct rtw_softc *, enum rtw_access);
+void rtw_set_access(struct rtw_regs *, enum rtw_access);
 
 void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);

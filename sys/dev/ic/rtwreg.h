@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.11 2005/01/14 10:13:55 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -193,8 +193,9 @@
 /* Convenient interrupt conjunctions. */
 #define RTW_INTR_RX	(RTW_INTR_RER|RTW_INTR_ROK)
 #define RTW_INTR_TX	(RTW_INTR_TLPDER|RTW_INTR_TLPDOK|RTW_INTR_THPDER|\
-			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK)
-#define RTW_INTR_BEACON	(RTW_INTR_TBDER|RTW_INTR_TBDOK|RTW_INTR_BCNINT)
+			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK|\
+			 RTW_INTR_TBDER|RTW_INTR_TBDOK)
+#define RTW_INTR_BEACON	(RTW_INTR_BCNINT)
 #define RTW_INTR_IOERROR	(RTW_INTR_TXFOVW|RTW_INTR_RXFOVW|RTW_INTR_RDU)
 
 #define	RTW_TCR		0x40	/* Transmit Configuration Register, 32b */
@@ -774,10 +775,13 @@
 #define RTW_TPPOLL_SLPQ	BIT(0)	/* Host writes 1 to tell RTL8180 to
 				 * stop low-priority DMA.
 				 */
-#define RTW_TPPOLL_FSWINT	BIT(0)	/* Force software interrupt. From
-				 	 * reference driver.
-					 */
 
+/* Start all queues. */
+#define	RTW_TPPOLL_ALL	(RTW_TPPOLL_BQ | RTW_TPPOLL_HPQ | \
+			 RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ)
+/* Stop all queues. */
+#define	RTW_TPPOLL_SALL	(RTW_TPPOLL_SBQ | RTW_TPPOLL_SHPQ | \
+			 RTW_TPPOLL_SNPQ | RTW_TPPOLL_SLPQ)
 
 #define	RTW_CWR		0xdc	/* Contention Window Register, 16b, read-only */
 /* Contention Window: indicates number of contention windows before Tx
