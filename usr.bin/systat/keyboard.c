@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.18 2004/07/03 18:54:47 mycroft Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.19 2004/07/03 19:00:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.18 2004/07/03 18:54:47 mycroft Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.19 2004/07/03 19:00:25 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ keyboard(void)
 			refresh();
 			ch = getch();
 			if (ch == ERR) {
-				display(0);
+				display(SIGALRM);
 				continue;
 			}
 			if (ch == KEY_RESIZE) {
