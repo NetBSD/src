@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: wall.c,v 1.4 1993/08/01 18:03:08 mycroft Exp $";
+static char rcsid[] = "$Id: wall.c,v 1.5 1993/08/27 22:31:02 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -55,15 +55,19 @@ static char rcsid[] = "$Id: wall.c,v 1.4 1993/08/01 18:03:08 mycroft Exp $";
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <paths.h>
+#include <unistd.h>
 
 #define	IGNOREUSER	"sleeper"
 
+void makemsg();
 int nobanner;
 int mbufsize;
 char *mbuf;
 
 /* ARGSUSED */
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -113,6 +117,7 @@ usage:
 	exit(0);
 }
 
+void
 makemsg(fname)
 	char *fname;
 {
