@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 1996/02/23 12:40:37 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 1996/03/12 04:34:46 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -388,7 +388,7 @@ inittodr(time_t base)
 void 
 resettodr(void)
 {
-	if (0 && mac68k_trust_pram)
+	if (mac68k_trust_pram)
 		/*
 		 * GMT bias is passed in from the Booter.
 		 * To get *our* time, add GMTBIAS to GMT.
