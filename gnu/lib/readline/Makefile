@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 1997/09/26 02:53:21 gwr Exp $
+# $NetBSD: Makefile,v 1.2 1997/09/26 15:05:10 gwr Exp $
 
 LIB=	readline
 
@@ -24,22 +24,12 @@ OBJS=     readline.o vi_mode.o funmap.o keymaps.o parens.o search.o \
 	  nls.o history.o histexpand.o histfile.o histsearch.o \
 	  shell.o tilde.o xmalloc.o
 
-all: lib${LIB}.a
+# This libraray is used only while building (not installed).
+libinstall:
 
-lib${LIB}.a: ${OBJS}
-	-rm -f lib${LIB}.a
-	${AR} cq lib${LIB}.a ${OBJS}
-	${RANLIB} lib${LIB}.a
-
-clean:
-	-rm -f lib$(LIB).a
-	-rm -f $(OBJS)
+.include <bsd.lib.mk>
 
 # This is for ../gdb/Makefile
 echo_objdir:
 	@echo ${.OBJDIR}
-
-depend:
-
-install:
 
