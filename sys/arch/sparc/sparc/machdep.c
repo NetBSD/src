@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1996/12/21 06:21:56 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.73 1997/01/27 21:18:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,6 +277,14 @@ cpu_startup()
 	 * Configure the system.  The cpu code will turn on the cache.
 	 */
 	configure();
+
+	/*
+	 * Re-zero proc0's user area, to nullify the effect of the
+	 * stack running into it during auto-configuration.
+	 * XXX - should fix stack usage.
+	 * XXX - there's a race here, as interrupts are enabled
+	 */
+	bzero(proc0paddr, sizeof(struct user));
 
 	/*
 	 * fix message buffer mapping, note phys addr of msgbuf is 0
