@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.25 2003/04/08 17:13:59 jdolecek Exp $
+#	$NetBSD: RESPONSIBLE,v 1.26 2003/04/23 17:32:09 mycroft Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -14,7 +14,7 @@ Userland Programs:
 amd		christos
 bc		phil, simonb
 csh		christos
-cvs		christos, wiz
+cvs		christos, wiz, mycroft
 dhcp		mellon
 etcupdate	martti
 file		christos, pooka
@@ -41,7 +41,7 @@ sendmail	atatat
 sh		christos, dsl
 tcpdump		itojun
 texinfo		wiz
-toolchain	thorpej, mrg
+toolchain	thorpej, mrg, mycroft
 top		simonb
 user		agc
 vi		aymeric
@@ -81,13 +81,13 @@ device support:
 acpi		thorpej, kanaoka, kochi
 audio		augustss, mycroft, jmcneill
 cgd		elric
-ide/atapi	bouyer
+ide/atapi	bouyer, mycroft
 irda		augustss, kenh
 isdn		martin
 firewire	jmc
 mca		jdolecek
 podulebus	bjh21
-scsi		bouyer, thorpej
+scsi		bouyer, thorpej, mycroft
 raid(hard)	ad
 raidframe	oster
 usb		augustss
@@ -125,12 +125,12 @@ msdosfs		jdolecek
 nfs		fvdl
 ntfs		jdolecek
 smbfs		jdolecek
-ufs		fvdl
+ufs		fvdl, mycroft
 ufs2		fvdl
 
 kern/general:
 
-ddb		jhawk, ?
+ddb		jhawk, mycroft
 emulation	christos, fvdl, manu, jdolecek
 lwp/pthread	nathanw
 kevents		jdolecek
@@ -151,7 +151,7 @@ networking:
 
 ipfilter	darrenr, ?
 kame/ipv6	itojun
-general net	thorpej, matt
+general net	thorpej, matt, mycroft
 ppp(async)	christos
 ppp(sync)	martin
 
