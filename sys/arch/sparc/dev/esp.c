@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.70 1997/10/05 18:24:35 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.71 1998/01/12 20:23:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -140,10 +140,6 @@ int	espmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-struct cfdriver esp_cd = {
-	NULL, "esp", DV_DULL
 };
 
 struct scsipi_adapter esp_switch = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.60 1997/11/22 03:13:57 tv Exp $ */
+/*	$NetBSD: cpu.c,v 1.61 1998/01/12 20:24:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -85,10 +85,6 @@ int  cpu_match __P((struct device *, struct cfdata *, void *));
 
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
-};
-
-struct cfdriver cpu_cd = {
-	NULL, "cpu", DV_CPU
 };
 
 static char *fsrtoname __P((int, int, int, char *));

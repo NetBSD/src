@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.46 1997/12/23 23:57:20 tv Exp $
+#	$NetBSD: files.sparc,v 1.47 1998/01/12 20:23:38 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -8,67 +8,67 @@ maxpartitions 8
 
 maxusers 2 8 1024
 
-device mainbus {}
+device mainbus class dull {}
 attach mainbus at root
 
-device obio { [addr = -1], [level = -1] }
+device obio class dull { [addr = -1], [level = -1] }
 attach obio at mainbus
 
-device iommu {}
+device iommu class dull {}
 attach iommu at mainbus
 file	arch/sparc/sparc/iommu.c		iommu
 
-device vme {}
+device vme class dull {}
 attach vme at iommu
 
-device vmel { [addr = -1], [level = -1], [vect = -1] }
+device vmel class dull { [addr = -1], [level = -1], [vect = -1] }
 attach vmel at mainbus, vme
-device vmes { [addr = -1], [level = -1], [vect = -1] }
+device vmes class dull { [addr = -1], [level = -1], [vect = -1] }
 attach vmes at mainbus, vme
 file	arch/sparc/dev/obio.c		obio | vmel | vmes | vme
 
-device auxreg
+device auxreg class dull
 attach auxreg at mainbus, obio
 file	arch/sparc/sparc/auxreg.c
 
-device clock
+device clock class dull
 attach clock at mainbus, obio
 
-device oclock
+device oclock class dull
 attach oclock at obio
 
-device timer
+device timer class dull
 attach timer at mainbus, obio
 
-device eeprom
+device eeprom class dull
 attach eeprom at obio
 file	arch/sparc/sparc/clock.c
 
-device power
+device power class dull
 attach power at obio
 file	arch/sparc/dev/power.c			power
 
-device cpu
+device cpu class cpu
 attach cpu at mainbus
 file	arch/sparc/sparc/cpu.c
 
-device memreg
+device memreg class dull
 attach memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
-device zs {channel = -1}
+device zs class dull {channel = -1}
 attach zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-count
 file	dev/ic/z8530sc.c			zs
 
-device fdc {}
+device fdc class dull {}
 attach fdc at mainbus, obio
-device fd: disk
+device fd class disk: disk
 attach fd at fdc
 file	arch/sparc/dev/fd.c			fdc | fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
-device sbus { slot = -1, offset = -1 }
+device sbus class dull { slot = -1, offset = -1 }
 attach sbus at mainbus, iommu
 file	arch/sparc/dev/sbus.c			sbus
 
@@ -76,7 +76,7 @@ file	arch/sparc/dev/sbus.c			sbus
 # Console (zs) related stuff
 #
 
-device zstty: tty
+device zstty class tty: tty
 attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sparc/dev/zs_kgdb.c		kgdb
@@ -84,13 +84,13 @@ file arch/sparc/dev/zs_kgdb.c		kgdb
 define zsevent
 file dev/sun/event.c			zsevent
 
-device kbd: zsevent
+device kbd class dull: zsevent
 attach kbd at zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sparc/dev/kd.c 		kbd
 
-device ms: zsevent
+device ms class dull: zsevent
 attach ms at zs
 file dev/sun/ms.c			ms needs-flag
 
@@ -104,20 +104,20 @@ major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
 
-device dma {}
+device dma class dull {}
 attach dma at sbus, obio
-device ledma {}
+device ledma class dull {}
 attach ledma at sbus
 file	arch/sparc/dev/dma.c		dma | ledma
-device lebuffer {}
+device lebuffer class dull {}
 attach lebuffer at sbus
 file	arch/sparc/dev/lebuffer.c	lebuffer
 
-device esp: scsi, ncr53c9x
+device esp class dull: scsi, ncr53c9x
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 
-device audioamd: audio
+device audioamd class dull: audio
 attach audioamd at mainbus, obio, sbus
 file	arch/sparc/dev/amd7930.c		audio
 file	arch/sparc/sparc/amd7930intr.s		audio
@@ -128,35 +128,35 @@ define bt_dac
 # Include /dev/fb driver only if a framebuffer card is included
 define fb
 
-device bwtwo: fb
+device bwtwo class dull: fb
 attach bwtwo at sbus, obio, vmes, vmel
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
-device cgtwo: fb
+device cgtwo class dull: fb
 attach cgtwo at sbus, obio, vmes
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree: bt_dac, fb
+device cgthree class dull: bt_dac, fb
 attach cgthree at sbus
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
-device cgfour: bt_dac, fb
+device cgfour class dull: bt_dac, fb
 attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
-device cgsix: bt_dac, fb
+device cgsix class dull: bt_dac, fb
 attach cgsix at sbus, obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
-device cgeight: bt_dac, fb
+device cgeight class dull: bt_dac, fb
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device tcx: bt_dac, fb
+device tcx class dull: bt_dac, fb
 attach tcx at sbus
 file	arch/sparc/dev/tcx.c		tcx needs-flag
 
-device cgfourteen: fb
+device cgfourteen class dull: fb
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
@@ -167,27 +167,27 @@ file	arch/sparc/dev/fb.c		fb needs-flag
 attach le at sbus, ledma, lebuffer, obio
 file	arch/sparc/dev/if_le.c		le
 
-device ie: ifnet, ether, arp
+device ie class ifnet: ifnet, ether, arp
 attach ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 
-device xdc {drive = -1}
+device xdc class dull {drive = -1}
 attach xdc at vmel
-device xd: disk
+device xd class disk: disk
 attach xd at xdc
 file	arch/sparc/dev/xd.c		xd needs-flag
 major	{xd = 10}
 
-device xyc {drive = -1}
+device xyc class dull {drive = -1}
 attach xyc at vmes
-device xy: disk
+device xy class disk: disk
 attach xy at xyc
 file	arch/sparc/dev/xy.c		xy needs-flag
 major	{xy = 3}
 
-device si: scsi, ncr5380sbc
+device si class dull: scsi, ncr5380sbc
 attach si at vmes
-device sw: scsi, ncr5380sbc
+device sw class dull: scsi, ncr5380sbc
 attach sw at obio
 file	arch/sparc/dev/si.c		si | sw
 

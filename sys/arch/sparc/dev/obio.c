@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
+/*	$NetBSD: obio.c,v 1.38 1998/01/12 20:23:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -92,32 +92,16 @@ struct cfattach obio_ca = {
 	sizeof(struct bus_softc), busmatch, obioattach
 };
 
-struct cfdriver obio_cd = {
-	NULL, "obio", DV_DULL
-};
-
 struct cfattach vmel_ca = {
 	sizeof(struct bus_softc), busmatch, vmelattach
-};
-
-struct cfdriver vmel_cd = {
-	NULL, "vmel", DV_DULL
 };
 
 struct cfattach vmes_ca = {
 	sizeof(struct bus_softc), busmatch, vmesattach
 };
 
-struct cfdriver vmes_cd = {
-	NULL, "vmes", DV_DULL
-};
-
 struct cfattach vme_ca = {
 	sizeof(struct bus_softc), busmatch, vmeattach
-};
-
-struct cfdriver vme_cd = {
-	NULL, "vme", DV_DULL
 };
 
 struct intrhand **vmeints;

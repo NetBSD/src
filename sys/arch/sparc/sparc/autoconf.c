@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.81 1998/01/08 01:13:58 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.82 1998/01/12 20:24:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -787,8 +787,9 @@ configure()
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
+		extern struct cfdriver memreg_cd;
+		extern struct cfdriver obio_cd;
 		extern struct cfdata cfdata[];
-		extern struct cfdriver memreg_cd, obio_cd;
 		struct cfdata *cf, *memregcf = NULL;
 		register short *p;
 		struct rom_reg rr;
@@ -1252,10 +1253,6 @@ mainbus_attach(parent, dev, aux)
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
 };
 
 /*

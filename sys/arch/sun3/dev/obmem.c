@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.13 1997/01/27 19:40:52 gwr Exp $	*/
+/*	$NetBSD: obmem.c,v 1.14 1998/01/12 20:32:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,10 +53,6 @@ static void obmem_attach __P((struct device *, struct device *, void *));
 
 struct cfattach obmem_ca = {
 	sizeof(struct device), obmem_match, obmem_attach
-};
-
-struct cfdriver obmem_cd = {
-	NULL, "obmem", DV_DULL
 };
 
 static int

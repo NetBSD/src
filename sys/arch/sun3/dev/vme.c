@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.8 1997/01/27 19:40:57 gwr Exp $	*/
+/*	$NetBSD: vme.c,v 1.9 1998/01/12 20:32:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,18 +52,9 @@ struct cfattach vmes_ca = {
 	sizeof(struct device), vmes_match, vme_attach
 };
 
-struct cfdriver vmes_cd = {
-	NULL, "vmes", DV_DULL
-};
-
 struct cfattach vmel_ca = {
 	sizeof(struct device), vmel_match, vme_attach
 };
-
-struct cfdriver vmel_cd = {
-	NULL, "vmel", DV_DULL
-};
-
 
 /* Does this machine have a VME bus? */
 extern int cpu_has_vme;

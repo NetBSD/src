@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.42 1997/10/17 02:59:10 gwr Exp $
+#	$NetBSD: files.sun3,v 1.43 1998/01/12 20:32:16 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -52,26 +52,26 @@ file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 # Bus types
 #
 
-device mainbus {}
+device mainbus class dull {}
 attach mainbus at root
 file	arch/sun3/sun3/mainbus.c	mainbus
 
 # On-board I/O space
-device obio {addr = -1, [level = -1]}
+device obio class dull {addr = -1, [level = -1]}
 attach obio at mainbus
 file arch/sun3/dev/obio.c		obio
 
 # On-board MEMory space
-device obmem {addr = -1, [level = -1]}
+device obmem class dull {addr = -1, [level = -1]}
 attach obmem at mainbus
 file arch/sun3/dev/obmem.c		obmem
 
 # VME Short space (D16)
-device vmes {addr = -1, [level = -1], [vect = -1]}
+device vmes class dull {addr = -1, [level = -1], [vect = -1]}
 attach vmes at mainbus
 
 # VME Long space (D32)
-device vmel {addr = -1, [level = -1], [vect = -1]}
+device vmel class dull {addr = -1, [level = -1], [vect = -1]}
 attach vmel at mainbus
 
 file arch/sun3/dev/vme.c		vmes | vmel
@@ -84,10 +84,10 @@ include "../../../dev/scsipi/files.scsipi"
 #
 # Devices and attributes needed below
 #
-device ie: ifnet, ether, arp
+device ie class ifnet: ifnet, ether, arp
 file arch/sun3/dev/if_ie.c		ie
 
-device si: scsi, ncr5380sbc
+device si class dull: scsi, ncr5380sbc
 file	arch/sun3/dev/si.c		si
 
 define sunfb
@@ -96,25 +96,25 @@ file arch/sun3/dev/fb.c			# sunfb needs-flag
 #
 # On-Board I/O (OBIO)
 #
-device zsc {channel = -1}
+device zsc class dull {channel = -1}
 attach zsc at obio
 file arch/sun3/dev/zs.c 		zsc needs-flag
 file dev/ic/z8530sc.c			zsc
 
-device eeprom
+device eeprom class dull
 attach eeprom at obio
 file arch/sun3/dev/eeprom.c		eeprom
 
-device clock
+device clock class dull
 attach clock at obio
 file arch/sun3/sun3/clock.c		clock
 file dev/clock_subr.c			clock
 
-device memerr
+device memerr class dull
 attach memerr at obio
 file arch/sun3/dev/memerr.c		memerr
 
-device intreg
+device intreg class dull
 attach intreg at obio
 file arch/sun3/sun3/intreg.c		intreg
 
@@ -131,11 +131,11 @@ file	arch/sun3/dev/si_obio.c		si_obio
 #
 # On-Board MEMory (OBMEM)
 #
-device bwtwo: sunfb
+device bwtwo class dull: sunfb
 attach bwtwo at obmem
 file arch/sun3/dev/bw2.c		bwtwo needs-flag
 
-device cgfour: sunfb
+device cgfour class dull: sunfb
 attach cgfour at obmem
 file arch/sun3/dev/cg4.c		cgfour needs-flag
 
@@ -148,7 +148,7 @@ file arch/sun3/dev/if_ie_vmes.c		ie_vmes
 attach si at vmes with si_vmes
 file	arch/sun3/dev/si_vme.c		si_vmes
 
-device sebuf {}
+device sebuf class dull {}
 attach sebuf at vmes
 file	arch/sun3/dev/sebuf.c		sebuf
 
@@ -158,22 +158,22 @@ file arch/sun3/dev/if_ie_sebuf.c	ie_sebuf
 attach si at sebuf with si_sebuf
 file	arch/sun3/dev/si_sebuf.c	si_sebuf
 
-device cgtwo: sunfb
+device cgtwo class dull: sunfb
 attach cgtwo at vmes
 file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
-device	xyc {drive = -1}
+device	xyc class dull {drive = -1}
 attach	xyc at vmes
-device	xy: disk
+device	xy class disk: disk
 attach	xy at xyc
 file	arch/sun3/dev/xy.c		xy needs-flag
 
 #
 # VME A32 (vmel)
 #
-device	xdc {drive = -1}
+device	xdc class dull {drive = -1}
 attach	xdc at vmel
-device	xd: disk
+device	xd class disk: disk
 attach	xd at xdc
 file	arch/sun3/dev/xd.c		xd needs-flag
 
@@ -183,7 +183,7 @@ file	arch/sun3/dev/xd.c		xd needs-flag
 # Console (zs) related stuff
 #
 
-device zstty: tty
+device zstty class tty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sun3/dev/zs_kgdb.c		kgdb
@@ -191,13 +191,13 @@ file arch/sun3/dev/zs_kgdb.c		kgdb
 define zsevent
 file dev/sun/event.c			zsevent
 
-device kbd: zsevent
+device kbd class dull: zsevent
 attach kbd at zsc
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sun3/dev/kd.c 		kbd
 
-device ms: zsevent
+device ms class dull: zsevent
 attach ms at zsc
 file dev/sun/ms.c			ms needs-flag
 

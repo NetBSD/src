@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.27 1998/01/12 20:24:00 thorpej Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $
+ * id: $NetBSD: xy.c,v 1.27 1998/01/12 20:24:00 thorpej Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -181,24 +181,18 @@ static	void xydummystrat __P((struct buf *));
 int	xygetdisklabel __P((struct xy_softc *, void *));
 
 /*
- * cfdrivers: device driver interface to autoconfig
+ * cfattach's: device driver interface to autoconfig
  */
 
 struct cfattach xyc_ca = {
 	sizeof(struct xyc_softc), xycmatch, xycattach
 };
 
-struct cfdriver xyc_cd = {
-	NULL, "xyc", DV_DULL
-};
-
 struct cfattach xy_ca = {
 	sizeof(struct xy_softc), xymatch, xyattach
 };
 
-struct cfdriver xy_cd = {
-	NULL, "xy", DV_DISK
-};
+extern struct cfdriver xy_cd;
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	driveno;	/* unit number */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.54 1997/11/12 22:18:54 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.55 1998/01/12 20:24:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -200,9 +200,7 @@ struct cfattach zs_ca = {
 	sizeof(struct zsc_softc), zs_match, zs_attach
 };
 
-struct cfdriver zs_cd = {
-	NULL, "zs", DV_DULL
-};
+extern struct cfdriver zs_cd;
 
 /* Interrupt handlers. */
 static int zshard __P((void *));

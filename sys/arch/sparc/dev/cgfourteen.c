@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.8 1998/01/12 20:23:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -111,9 +111,7 @@ struct cfattach cgfourteen_ca = {
 	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach
 };
 
-struct cfdriver cgfourteen_cd = {
-	NULL, "cgfourteen", DV_DULL
-};
+extern struct cfdriver cgfourteen_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {

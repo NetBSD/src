@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.34 1998/01/12 20:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -345,10 +345,6 @@ void ieattach __P((struct device *, struct device *, void *));
 
 struct cfattach ie_ca = {
 	sizeof(struct ie_softc), iematch, ieattach
-};
-
-struct cfdriver ie_cd = {
-	NULL, "ie", DV_IFNET
 };
 
 /*

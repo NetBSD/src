@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.4 1998/01/12 20:23:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -53,10 +53,6 @@ void	lebufattach __P((struct device *, struct device *, void *));
 
 struct cfattach lebuffer_ca = {
 	sizeof(struct lebuf_softc), matchbyname, lebufattach
-};
-
-struct cfdriver lebuffer_cd = {
-	NULL, "lebuffer", DV_DULL
 };
 
 int

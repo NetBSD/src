@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.34 1998/01/12 20:23:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -130,9 +130,7 @@ struct cfattach cgsix_ca = {
 	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach
 };
 
-struct cfdriver cgsix_cd = {
-	NULL, "cgsix", DV_DULL
-};
+extern struct cfdriver cgsix_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {

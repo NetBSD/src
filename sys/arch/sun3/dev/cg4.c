@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.12 1996/12/17 21:10:39 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.13 1998/01/12 20:32:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,9 +117,7 @@ struct cfattach cgfour_ca = {
 	sizeof(struct cg4_softc), cg4match, cg4attach
 };
 
-struct cfdriver cgfour_cd = {
-	NULL, "cgfour", DV_DULL
-};
+extern struct cfdriver cgfour_cd;
 
 static int	cg4gattr   __P((struct fbdevice *, void *));
 static int	cg4gvideo  __P((struct fbdevice *, void *));

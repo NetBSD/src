@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 1997/10/17 03:22:18 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.42 1998/01/12 20:32:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -89,10 +89,6 @@ static void clock_attach __P((struct device *, struct device *, void *));
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clock_match, clock_attach
-};
-
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL
 };
 
 static int

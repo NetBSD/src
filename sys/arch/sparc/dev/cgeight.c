@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.14 1997/10/05 18:24:32 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.15 1998/01/12 20:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -136,9 +136,7 @@ struct cfattach cgeight_ca = {
 	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
 };
 
-struct cfdriver cgeight_cd = {
-	NULL, "cgeight", DV_DULL
-};
+extern struct cfdriver cgeight_cd;
 
 #if defined(SUN4)
 /* frame buffer generic driver */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.23 1998/01/12 20:23:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,9 +102,7 @@ struct cfattach cgtwo_ca = {
 	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
 };
 
-struct cfdriver cgtwo_cd = {
-	NULL, "cgtwo", DV_DULL
-};
+extern struct cfdriver cgtwo_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cgtwofbdriver = {

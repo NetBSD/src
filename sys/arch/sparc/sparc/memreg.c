@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
+/*	$NetBSD: memreg.c,v 1.22 1998/01/12 20:24:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,10 +66,6 @@ static void memregattach __P((struct device *, struct device *, void *));
 
 struct cfattach memreg_ca = {
 	sizeof(struct device), memregmatch, memregattach
-};
-
-struct cfdriver memreg_cd = {
-	0, "memreg", DV_DULL
 };
 
 void memerr __P((int, u_int, u_int, u_int, u_int));

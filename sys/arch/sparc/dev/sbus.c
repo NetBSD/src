@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.18 1998/01/12 20:23:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,9 +70,7 @@ struct cfattach sbus_ca = {
 	sizeof(struct sbus_softc), sbus_match, sbus_attach
 };
 
-struct cfdriver sbus_cd = {
-	NULL, "sbus", DV_DULL
-};
+extern struct cfdriver sbus_cd;
 
 /*
  * Print the location of some sbus-attached device (called just

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.14 1997/09/18 20:44:43 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.15 1998/01/12 20:24:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -68,10 +68,6 @@ int	iommu_match __P((struct device *, struct cfdata *, void *));
 
 struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
-};
-
-struct cfdriver iommu_cd = {
-	NULL, "iommu", DV_DULL
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.38 1997/10/28 21:12:58 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.39 1998/01/12 20:32:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,11 +138,6 @@ static struct scsipi_device si_dev = {
  * New-style autoconfig attachment. The cfattach
  * structures are in si_obio.c and si_vme.c
  */
-
-struct cfdriver si_cd = {
-	NULL, "si", DV_DULL
-};
-
 
 void
 si_attach(sc)
