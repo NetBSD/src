@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.3 1997/10/01 01:19:07 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.4 1997/10/18 19:51:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -161,7 +161,7 @@ scsipi_size(sc_link, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *)&scsipi_cmd,
+	if (scsipi_command(sc_link, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
 	    2, 20000, NULL, flags | SCSI_DATA_IN) != 0) {
 		sc_link->sc_print_addr(sc_link);
@@ -189,7 +189,7 @@ scsipi_test_unit_ready(sc_link, flags)
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = TEST_UNIT_READY;
 
-	return ((*sc_link->scsipi_cmd)(sc_link,
+	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, 2, 10000, NULL, flags));
 }
@@ -213,7 +213,7 @@ scsipi_inquire(sc_link, inqbuf, flags)
 	scsipi_cmd.opcode = INQUIRY;
 	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
-	return ((*sc_link->scsipi_cmd)(sc_link,
+	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
 	    2, 10000, NULL, SCSI_DATA_IN | flags));
@@ -235,7 +235,7 @@ scsipi_prevent(sc_link, type, flags)
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PREVENT_ALLOW;
 	scsipi_cmd.how = type;
-	return ((*sc_link->scsipi_cmd)(sc_link,
+	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, 2, 5000, NULL, flags));
 }
@@ -254,7 +254,7 @@ scsipi_start(sc_link, type, flags)
 	scsipi_cmd.opcode = START_STOP;
 	scsipi_cmd.byte2 = 0x00;
 	scsipi_cmd.how = type;
-	return ((*sc_link->scsipi_cmd)(sc_link,
+	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, 2, type == SSS_START ? 30000 : 10000, NULL, flags));
 }
@@ -310,7 +310,7 @@ scsipi_done(xs)
 retry:
 	error = sc_err1(xs, 1);
 	if (error == ERESTART)
-		switch ((*(sc_link->adapter->scsipi_cmd))(xs)) {
+		switch (scsipi_command_direct(xs)) {
 		case SUCCESSFULLY_QUEUED:
 			return;
 
@@ -379,7 +379,7 @@ retry:
 		printf("\n");
 	}
 #endif
-	switch ((*(xs->sc_link->adapter->scsipi_cmd))(xs)) {
+	switch (scsipi_command_direct(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 			return (EJUSTRETURN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.8 1997/10/01 01:19:20 enami Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.9 1997/10/18 19:51:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -326,7 +326,7 @@ mustek_trigger_scanner(ss)
 
 	/* send the set window command to the scanner */
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_set_parms: set_window\n"));
-	error = (*sc_link->scsipi_cmd)(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *) &window_cmd,
 	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
 	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
@@ -366,7 +366,7 @@ mustek_trigger_scanner(ss)
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
-	error = (*sc_link->scsipi_cmd)(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *) &mode_cmd,
 	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
 	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
@@ -404,7 +404,7 @@ mustek_trigger_scanner(ss)
 
 	/* send the command to the scanner */
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: start_scan\n"));
-	error = (*sc_link->scsipi_cmd)(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *) &start_scan_cmd,
 	    sizeof(start_scan_cmd), NULL, 0,
 	    MUSTEK_RETRIES, 5000, NULL, 0);
@@ -448,7 +448,7 @@ mustek_rewind_scanner(ss)
 		/* send the command to the scanner */
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("mustek_rewind_scanner: stop_scan\n"));
-		error = (*sc_link->scsipi_cmd)(sc_link,
+		error = scsipi_command(sc_link,
 		    (struct scsipi_generic *) &cmd,
 		    sizeof(cmd), NULL, 0, MUSTEK_RETRIES, 5000, NULL, 0);
 		if (error)
@@ -487,7 +487,7 @@ mustek_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if ((*sc_link->scsipi_cmd)(sc_link,
+	if (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, MUSTEK_RETRIES, 10000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
@@ -523,7 +523,7 @@ mustek_get_status(ss, timeout, update)
 
 	while (1) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("mustek_get_status: stat_cmd\n"));
-		error = (*sc_link->scsipi_cmd)(sc_link,
+		error = scsipi_command(sc_link,
 		    (struct scsipi_generic *) &cmd, sizeof(cmd),
 		    (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
 		    5000, NULL, SCSI_DATA_IN);

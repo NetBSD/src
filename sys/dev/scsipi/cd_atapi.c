@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.5 1997/10/13 00:47:52 explorer Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.6 1997/10/18 19:50:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -162,7 +162,7 @@ cd_atapibus_get_mode(cd, data, page, len, flags)
 	scsipi_cmd.opcode = ATAPI_MODE_SENSE;
 	scsipi_cmd.page = page;
 	_lto2b(len, scsipi_cmd.length);
-	error = cd->sc_link->scsipi_cmd(cd->sc_link,
+	error = scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
 	    SCSI_DATA_IN);
@@ -186,7 +186,7 @@ cd_atapibus_set_mode(cd, data, len)
 	scsipi_cmd.byte2 = AMS_PF;
 	scsipi_cmd.page  = data->page.page_code;
 	_lto2b(len, scsipi_cmd.length);
-	error = cd->sc_link->scsipi_cmd(cd->sc_link,
+	error = scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
 	    SCSI_DATA_OUT);

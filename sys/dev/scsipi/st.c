@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.83 1997/10/16 03:16:44 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.84 1997/10/18 19:51:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1067,7 +1067,7 @@ ststart(v)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		if ((*sc_link->scsipi_cmd)(sc_link,
+		if (scsipi_command(sc_link,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    0, 100000, bp, flags | SCSI_NOSLEEP))
@@ -1349,7 +1349,7 @@ st_read(st, buf, size, flags)
 		    cmd.len);
 	} else
 		_lto3b(size, cmd.len);
-	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)buf, size, 0, 100000, NULL, flags | SCSI_DATA_IN));
 }
@@ -1382,7 +1382,7 @@ st_read_block_limits(st, flags)
 	/*
 	 * do the command, update the global values
 	 */
-	error = (*sc_link->scsipi_cmd)(sc_link, (struct scsipi_generic *)&cmd,
+	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
 	if (error)
@@ -1436,7 +1436,7 @@ st_mode_sense(st, flags)
 	 * or if we need it as a template for the mode select
 	 * store it away.
 	 */
-	error = (*sc_link->scsipi_cmd)(sc_link, (struct scsipi_generic *)&cmd,
+	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsipi_sense, scsipi_sense_len,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
 	if (error)
@@ -1516,7 +1516,7 @@ st_mode_select(st, flags)
 	/*
 	 * do the command
 	 */
-	return ((*sc_link->scsipi_cmd)(sc_link, (struct scsipi_generic *)&cmd,
+	return (scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsi_select, scsi_select_len,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT));
 }
@@ -1558,7 +1558,7 @@ st_cmprss(st, onoff)
 	 * Do the MODE SENSE command...
 	 */
 again:
-	error = (*sc_link->scsipi_cmd)(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
 	    (u_char *)&scsi_pdata, scsi_dlen,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
@@ -1625,7 +1625,7 @@ again:
 	/*
 	 * Do the command
 	 */
-	error = (*sc_link->scsipi_cmd)(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&mcmd, sizeof(mcmd),
 	    (u_char *)&scsi_pdata, scsi_dlen,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
@@ -1665,7 +1665,7 @@ st_erase(st, full, flags)
 	 * XXX We always do this asynchronously, for now.  How long should
 	 * we wait if we want to (eventually) to it synchronously?
 	 */
-	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, 5000, NULL, flags));
 }
@@ -1748,7 +1748,7 @@ st_space(st, number, what, flags)
 	cmd.byte2 = what;
 	_lto3b(number, cmd.number);
 
-	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, 900000, NULL, flags));
 }
@@ -1788,7 +1788,7 @@ st_write_filemarks(st, number, flags)
 	cmd.opcode = WRITE_FILEMARKS;
 	_lto3b(number, cmd.number);
 
-	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, 100000, NULL, flags));
 }
@@ -1853,7 +1853,7 @@ st_load(st, type, flags)
 	cmd.opcode = LOAD;
 	cmd.how = type;
 
-	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, 300000, NULL, flags));
 }
@@ -1880,7 +1880,7 @@ st_rewind(st, immediate, flags)
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	return (scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL, flags));
 }
@@ -1914,7 +1914,7 @@ st_rdpos(st, hard, blkptr)
 	if (hard)
 		cmd.byte1 = 1;
 
-	error = (*st->sc_link->scsipi_cmd)(st->sc_link,
+	error = scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, 30000, NULL,
 	    SCSI_SILENT | SCSI_DATA_IN);
@@ -1963,7 +1963,7 @@ st_setpos(st, hard, blkptr)
 	if (hard)
 		cmd.bytes[0] = 1 << 2;
 	_lto4b(*blkptr, &cmd.bytes[2]);
-	error = (*st->sc_link->scsipi_cmd)(st->sc_link, &cmd, sizeof(cmd),
+	error = scsipi_command(st->sc_link, &cmd, sizeof(cmd),
 	    NULL, 0, ST_RETRIES, 900000, NULL, 0);
 	/*
 	 * XXX: Note file && block number position now unknown (if
