@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.22.10.4 2000/10/20 17:25:01 tv Exp $	*/
+/*	$NetBSD: target.c,v 1.22.10.5 2003/08/11 18:43:40 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.22.10.4 2000/10/20 17:25:01 tv Exp $");
+__RCSID("$NetBSD: target.c,v 1.22.10.5 2003/08/11 18:43:40 msaitoh Exp $");
 #endif
 
 /*
@@ -908,7 +908,8 @@ loop:
 		rootd = 0;
 
 	if (*wbuf) {
-		if (strlen(resolved) + strlen(wbuf) + rootd + 1 > MAXPATHLEN) {
+		if (strlen(resolved) + strlen(wbuf) + (rootd ? 0 : 1) + 1 >
+		    MAXPATHLEN) {
 			errno = ENAMETOOLONG;
 			goto err1;
 		}
