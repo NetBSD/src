@@ -1,4 +1,4 @@
-.\" 	$NetBSD: kcont.9,v 1.4 2004/03/23 11:46:59 wiz Exp $
+.\" 	$NetBSD: kcont.9,v 1.5 2004/03/24 01:29:37 snj Exp $
 .\"
 .\" The author of this man page is Jonathan Stone (jonathan@dsg.stanford.edu)
 .\"
@@ -153,7 +153,7 @@ creator) on completion of an asynchronous operation.
 .Sh DATA TYPES
 .Ss Deferral Priorities
 Arguments shown above with the name
-.Ar desired_ipl
+.Ar continue_ipl
 are drawn from the following namespace:
 .Bl -tag -offset indent -width KC_IPL_DEFER_SOFTSERIALXX
 .It Dv KCL_IPL_IMMEDIATE
@@ -175,7 +175,7 @@ Defer execution of the continuation to process context.
 .El
 .Sh NOTES
 The
-.Dq desired IPL
+.Ar continue_ipl
 argument should be interpreted as an upper-bound:
 the continuation will not be executed before interrupt priority drops
 to, or below, the requested level.
