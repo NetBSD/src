@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.68 2002/09/24 13:30:41 ad Exp $
+# $NetBSD: INSTALL,v 1.69 2002/11/30 07:06:42 itohy Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -74,9 +74,9 @@ options 	COMPAT_14
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
 options 	USERCONF		# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
-options		FONT_GALLANT12x22	# Console font for TC devices
+options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -126,8 +126,8 @@ tc*	at	tcasic?
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
-zsc0    at      ioasic? offset 0x100000   
-zsc1    at      ioasic? offset 0x180000
+zsc0	at	ioasic? offset 0x100000
+zsc1	at	ioasic? offset 0x180000
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 le*	at	tc? slot ? offset ?
