@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34 2002/12/10 13:44:51 pk Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35 2003/03/22 06:33:09 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -114,14 +114,28 @@ pci_make_tag(pc, b, d, f)
 	int d;
 	int f;
 {
+	struct psycho_pbm *pp = pc->cookie;
 	struct ofw_pci_register reg;
 	pcitag_t tag;
+	int (*valid) __P((void *));
 	int busrange[2];
 	int node, len;
 #ifdef DEBUG
 	char name[80];
 	bzero(name, sizeof(name));
 #endif
+
+	/*
+	 * Refer to the PCI/CardBus bus node first.
+	 * It returns a tag if node is present and bus is valid.
+	 */
+	if (0 <= b && b < 256) {
+		node = (*pp->pp_busnode)[b].node;
+		valid = (*pp->pp_busnode)[b].valid;
+		if (node != 0 && d == 0 &&
+		    (valid == NULL || (*valid)((*pp->pp_busnode)[b].arg)))
+			return ofpci_make_tag(pc, node, b, d, f);
+	}
 
 	/* 
 	 * Hunt for the node that corresponds to this device 
@@ -247,8 +261,9 @@ pci_enumerate_bus(struct pci_softc *sc,
 	struct ofw_pci_register reg;
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag;
-	pcireg_t class, csr;
+	pcireg_t class, csr, bhlc, ic;
 	int node, b, d, f, ret;
+	int len, bus_frequency, lt, cl;
 	char name[30];
 	extern int pci_config_dump;
 
@@ -257,11 +272,35 @@ pci_enumerate_bus(struct pci_softc *sc,
 	else
 		node = pc->rootnode;
 
+	len = OF_getproplen(node, "clock-frequency");
+	if (len < sizeof(bus_frequency)) {
+		DPRINTF(SPDB_PROBE,
+		    ("pci_enumerate_bus: clock-frequency len %d too small\n",
+		     len));
+		return 0;
+	}
+	if (OF_getprop(node, "clock-frequency", &bus_frequency,
+		       sizeof(bus_frequency)) != len) {
+		DPRINTF(SPDB_PROBE,
+		    ("pci_enumerate_bus: could not read clock-frequency\n"));
+		return 0;
+	}
+	bus_frequency /= 1000000;
+
 	/* Turn on parity for the bus. */
 	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_PARITY_ENABLE;
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/*
+	 * Initialize the latency timer register.
+	 * The value 0x40 is from Solaris.
+	 */
+	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+	bhlc |= 0x40 << PCI_LATTIMER_SHIFT;
+	pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 
 	if (pci_config_dump) pci_conf_print(pc, tag, NULL);
 
@@ -296,6 +335,30 @@ pci_enumerate_bus(struct pci_softc *sc,
 			csr |= PCI_COMMAND_BACKTOBACK_ENABLE;
 		csr |= PCI_COMMAND_PARITY_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+		/*
+		 * Initialize the latency timer register for busmaster
+		 * devices to work properly.
+		 *   latency-timer = min-grant * bus-freq / 4  (from FreeBSD)
+		 * Also initialize the cache line size register.
+		 * Solaris anytime sets this register to the value 0x10.
+		 */
+		bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		ic = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
+		lt = min(PCI_MIN_GNT(ic) * bus_frequency / 4, 255);
+		if (lt == 0 || lt < PCI_LATTIMER(bhlc))
+			lt = PCI_LATTIMER(bhlc);
+
+		cl = PCI_CACHELINE(bhlc);
+		if (cl == 0)
+			cl = 0x10;
+
+		bhlc &= ~((PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT) |
+			  (PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT));
+		bhlc |= (lt << PCI_LATTIMER_SHIFT) |
+			(cl << PCI_CACHELINE_SHIFT);
+		pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 
 		ret = pci_probe_device(sc, tag, match, pap);
 		if (match != NULL && ret != 0)
@@ -373,25 +436,9 @@ pci_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pcitag_t tag = pa->pa_tag;
-	pcireg_t bhlc, ic;
-	int bus_frequency, val, bus_node;
 	int interrupts;
 	int len, node = PCITAG_NODE(tag);
 	char devtype[30];
-
-	bus_node = OF_parent(node);
-	len = OF_getproplen(bus_node, "clock-frequency");
-	if (len < sizeof(bus_frequency)) {
-		DPRINTF(SPDB_INTMAP,
-			("pci_intr_map: clock-frequency len %d too small\n", len));
-		return (ENODEV);
-	}
-	if (OF_getprop(bus_node, "clock-frequency", (void *)&bus_frequency, 
-		sizeof(bus_frequency)) != len) {
-		DPRINTF(SPDB_INTMAP,
-			("pci_intr_map: could not read bus_frequency\n"));
-		return (ENODEV);
-	}
 
 	len = OF_getproplen(node, "interrupts");
 	if (len < sizeof(interrupts)) {
@@ -417,23 +464,6 @@ pci_intr_map(pa, ihp)
 				interrupts |= INTLEVENCODE(intrmap[len].in_lev);
 				break;
 			}
-	}
-
-	/*
-	 * Initialize the latency timer register for busmaster devices
-	 * to work properly.
-	 *   latency-timer = min-grant * bus-freq / 4  (from FreeBSD)
-	 */
-	ic = pci_conf_read(pa->pa_pc, tag, PCI_INTERRUPT_REG);
-	bus_frequency /= 1000000;
-	val = min(PCI_MIN_GNT(ic) * bus_frequency / 4, 255);
-	if (val > 0) {
-		bhlc = pci_conf_read(pa->pa_pc, tag, PCI_BHLC_REG);
-		if (PCI_LATTIMER(bhlc) < val) {
-			bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-			bhlc |= (val << PCI_LATTIMER_SHIFT);
-			pci_conf_write(pa->pa_pc, tag, PCI_BHLC_REG, bhlc);
-		}
 	}
 
 	/* XXXX -- we use the ino.  What if there is a valid IGN? */
