@@ -320,21 +320,7 @@ find_active_thread (void)
 	val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
     }
 
-  val = td_map_lwp2thr (main_ta, pl.pl_lwpid, &thread);
-  if (val != 0)
-    {
-      warning ("find_active_thread: td_map_lwp2thr: %s\n",
-	       td_err_string (val));
-      return minus_one_ptid;
-    }
-  val = td_thr_info (thread, &ti);
-  if (val != 0)
-    {
-      warning ("find_active_thread: td_thr_info: %s\n", td_err_string (val));
-      return minus_one_ptid;
-    }
-
-  cached_thread = BUILD_THREAD (ti.thread_id, main_ptid);
+  cached_thread = BUILD_LWP (pl.pl_lwpid, main_ptid);
   return cached_thread;
 }
 
@@ -629,6 +615,7 @@ nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
 
   ptid = BUILD_THREAD (ti.thread_id, main_ptid);
   if (ti.thread_type == TD_TYPE_USER &&
+      ti.thread_state != TD_STATE_BLOCKED &&
       ti.thread_state != TD_STATE_ZOMBIE &&
       !in_thread_list (ptid))
     add_thread (ptid);
