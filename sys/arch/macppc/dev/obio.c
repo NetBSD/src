@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 1998/06/21 15:06:19 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 1998/07/13 19:37:28 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -69,8 +69,9 @@ obio_match(parent, cf, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 
-		case 2:		/* gc */
-		case 7:		/* ohare */
+		case 0x02:	/* gc */
+		case 0x07:	/* ohare */
+		case 0x10:	/* mac-io */
 			return 1;
 		}
 
@@ -95,12 +96,16 @@ obio_attach(parent, self, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
-	case 2:
+	case 0x02:
 		node = OF_finddevice("/bandit/gc");
 		break;
 
-	case 7:
+	case 0x07:
 		node = OF_finddevice("/bandit/ohare");
+		break;
+
+	case 0x10:
+		node = OF_finddevice("/pci/mac-io");
 		break;
 
 	default:

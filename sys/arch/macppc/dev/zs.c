@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 1998/07/04 22:18:29 jonathan Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 1998/07/13 19:37:28 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -283,21 +283,10 @@ zsc_attach(parent, self, aux)
 	if (zsaddr[zsc_unit] == NULL)
 		panic("zs_attach: zs%d not mapped\n", zsc_unit);
 
-	if (zsc_unit == 0) {
-		struct consdev cd;
-
-		cd.cn_pri = CN_DEAD;
-		zscnprobe(&cd);
-		if (cd.cn_pri != CN_DEAD)
-			zscninit(cn_tab);
-	}
-
 	if ((zs_hwflags[zsc_unit][0] | zs_hwflags[zsc_unit][1]) &
 		ZS_HWFLAG_CONSOLE) {
 
 		zs_conschan = zs_get_chan_addr(zsc_unit, minor(cn_tab->cn_dev));
-		cn_tab->cn_getc = zscngetc;
-		cn_tab->cn_putc = zscnputc;
 	}
 
 	/*
@@ -948,6 +937,8 @@ static void	zs_putc __P((register volatile struct zschan *, int));
 static int	zs_getc __P((register volatile struct zschan *));
 extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
 
+static int stdin, stdout;
+
 /*
  * Console functions.
  */
@@ -1029,8 +1020,14 @@ zscngetc(dev)
 	register volatile struct zschan *zc = zs_conschan;
 	register int c;
 
-	c = zs_getc(zc);
-	return (c);
+	if (zc) {
+		c = zs_getc(zc);
+	} else {
+		char ch = 0;
+		OF_read(stdin, &ch, 1);
+		c = ch;
+	}
+	return c;
 }
 
 /*
@@ -1043,7 +1040,12 @@ zscnputc(dev, c)
 {
 	register volatile struct zschan *zc = zs_conschan;
 
-	zs_putc(zc, c);
+	if (zc) {
+		zs_putc(zc, c);
+	} else {
+		char ch = c;
+		OF_write(stdout, &ch, 1);
+	}
 }
 
 /*
@@ -1082,55 +1084,65 @@ extern void ofccnputc __P((dev_t, int));
 struct consdev consdev_zs = {
 	zscnprobe,
 	zscninit,
-	ofccngetc,
-	ofccnputc,
+	zscngetc,
+	zscnputc,
 	zscnpollc,
 };
 
 void
-zscnprobe(struct consdev * cp)
+zscnprobe(cp)
+	struct consdev *cp;
 {
-	int l;
-	char type[32];
-	extern int console_node;
-
-	if (console_node == -1)
-		return;
-
-	bzero(type, sizeof(type));
-	l = OF_getprop(console_node, "device_type", type, sizeof(type));
-	if (l == -1 || l >= sizeof(type) - 1)
-		return;
-
-	if (strcmp(type, "serial") == 0)
-		cp->cn_pri = CN_REMOTE;
-}
-
-void
-zscninit(cd)
-	struct consdev *cd;
-{
-	int chosen;
-	int sz;
+	int chosen, pkg;
 	int unit = 0;
-	int stdout;
-	char name[32];
-
-	chosen = OF_finddevice("/chosen");
-	if (chosen == -1)
+	char name[16];
+	
+	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
 
-	sz = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	if (sz != sizeof(stdout))
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) == -1)
+		return;
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) == -1)
+		return;
+	
+	if ((pkg = OF_instance_to_package(stdin)) == -1)
 		return;
 
 	bzero(name, sizeof(name));
-	OF_getprop(stdout, "name", name, sizeof(name));
+	if (OF_getprop(pkg, "device_type", name, sizeof(name)) == -1)
+		return;
+
+	if (strcmp(name, "serial") != 0)
+		return;
+
+	bzero(name, sizeof(name));
+	if (OF_getprop(pkg, "name", name, sizeof(name)) == -1)
+		return;
+
+	if (strcmp(name, "ch-b") == 0)
+		unit = 1;
+
+	cp->cn_dev = makedev(zs_major, unit);
+	cp->cn_pri = CN_REMOTE;
+}
+
+void
+zscninit(cp)
+	struct consdev *cp;
+{
+	int pkg;
+	int unit = 0;
+	char name[16];
+
+	if ((pkg = OF_instance_to_package(stdin)) == -1)
+		return;
+
+	bzero(name, sizeof(name));
+	if (OF_getprop(pkg, "name", name, sizeof(name)) == -1)
+		return;
 
 	if (strcmp(name, "ch-b") == 0)
 		unit = 1;
 
 	zs_hwflags[0][unit] = ZS_HWFLAG_CONSOLE;
-
-	cd->cn_dev = makedev(zs_major, unit);
 }

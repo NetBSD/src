@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1998/07/03 11:50:32 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1998/07/13 19:37:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -119,7 +119,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),	/* 4: pseudo tty master */
 	cdev_log_init(1,log),		/* 5: /dev/klog */
 	cdev_swap_init(1,sw),		/* 6: /dev/drum pseudo device */
-	cdev_tty_init(1,ofc),		/* 7: Openfirmware console */
+	cdev_notdef(),			/* 7: Openfirmware console */
 	cdev_notdef(),			/* 8: Openfirmware disk */
 	cdev_notdef(),			/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1998/06/24 15:13:43 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1998/07/13 19:37:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@ struct devnametobdevmaj powermac_nam2blk[] = {
 	{ "ofdisk",	0 },
 	{ "sd",		4 },
 	{ "md",		9 },
+	{ "wd",		10 },
 	{ NULL,		0 },
 };
 
@@ -138,4 +139,49 @@ findroot()
 
 out:
 	dk_cleanup();
+}
+
+#include <machine/stdarg.h>
+
+int
+#ifdef __STDC__
+OF_interpret(char *cmd, int nreturns, ...)
+#else
+OF_interpret(cmd, nreturns, va_alist)
+	char *cmd;
+	int nreturns;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int i;
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		char *cmd;
+		int status;
+		int results[8];
+	} args = {
+		"interpret",
+		1,
+		2,
+	};
+
+	ofw_stack();
+	if (nreturns > 8)
+		return -1;
+	if ((i = strlen(cmd)) >= NBPG)
+		return -1;
+	ofbcopy(cmd, OF_buf, i + 1);
+	args.cmd = OF_buf;
+	args.nargs = 1;
+	args.nreturns = nreturns + 1;
+	if (openfirmware(&args) == -1)
+		return -1;
+	va_start(ap, nreturns);
+	for (i = 0; i < nreturns; i++)
+		*va_arg(ap, int *) = args.results[i];
+	va_end(ap);
+	return args.status;
 }
