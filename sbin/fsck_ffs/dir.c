@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.40 2004/07/20 15:05:32 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.41 2004/10/08 17:29:29 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.40 2004/07/20 15:05:32 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.41 2004/10/08 17:29:29 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -793,6 +793,8 @@ allocdir(parent, request, mode)
 	daddr_t dirblk;
 
 	ino = allocino(request, IFDIR|mode);
+	if (ino < ROOTINO)
+		return 0;
 	dirhead.dot_reclen = iswap16(12);
 	dirhead.dotdot_reclen = iswap16(dirblksiz - 12);
 	odirhead.dot_reclen = iswap16(12);
