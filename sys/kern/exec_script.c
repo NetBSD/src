@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.24 2000/06/27 17:41:11 mrg Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.25 2000/08/01 04:57:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -63,9 +63,7 @@
  * into the exec package.
  */
 int
-exec_script_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_script_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;
