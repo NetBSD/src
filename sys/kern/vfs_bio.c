@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.94 2003/09/07 11:57:43 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.95 2003/09/07 11:59:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.94 2003/09/07 11:57:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.95 2003/09/07 11:59:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,6 +536,7 @@ brelse(bp)
 	int s;
 
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
+	KASSERT(!ISSET(bp->b_flags, B_CALL));
 
 	/* Block disk interrupts. */
 	s = splbio();
