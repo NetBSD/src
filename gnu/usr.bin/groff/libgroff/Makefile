@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1997/05/30 13:43:24 cjs Exp $
+#	$Id: Makefile,v 1.9 1997/05/31 21:21:36 cjs Exp $
 
 LIB=		groff
 SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\
@@ -13,13 +13,13 @@ NOMAN=		noman
 NOPROFILE=	noprofile	
 NOPIC=		nopic
 
-# this library is used only for the build
-NOINSTALL=1
-
 CLEANFILES+=	version.cc
 version.cc: $(.CURDIR)/../VERSION
 	@echo Making version.cc
 	@echo const char \*version_string = \"`cat $(.CURDIR)/../VERSION`\"\; >$@
+
+# only needed during build
+libinstall::
 
 .include "../Makefile.cfg"
 .include <bsd.lib.mk>

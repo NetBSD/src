@@ -1,5 +1,5 @@
 # This subdirectory contains Unix specific support functions.
-# $Id: Makefile,v 1.7 1997/05/30 13:43:06 cjs Exp $
+# $Id: Makefile,v 1.8 1997/05/31 21:21:26 cjs Exp $
 
 LIB=		unix
 SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
@@ -19,7 +19,7 @@ NOMAN=		noman
 NOPROFILE=	noprofile
 NOPIC=		nopic
 
-# this library is used only for the build
-NOINSTALL=1
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

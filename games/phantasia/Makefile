@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/05/26 03:55:49 cjs Exp $
+#	$NetBSD: Makefile,v 1.9 1997/05/31 21:21:17 cjs Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -20,8 +20,8 @@ host_phantglobs.o: ${.CURDIR}/phantglobs.c
 setup.o: ${.CURDIR}/setup.c
 	${HOST_COMPILE.c} ${.CURDIR}/setup.c
 
-beforeinstall: 
-	DESTDIR=${DESTDIR} ./setup -m ${.CURDIR}/monsters.asc
+afterinstall: 
+	./setup -m ${.CURDIR}/monsters.asc
 	chown games:bin ${DESTDIR}/var/games/phantasia/*
 
 # Make Phantasia map.  Change the map commands reflect your installation.
