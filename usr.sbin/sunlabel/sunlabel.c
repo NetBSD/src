@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.5.2.1 2002/12/26 07:43:41 tron Exp $ */
+/* $NetBSD: sunlabel.c,v 1.5.2.2 2002/12/26 07:44:35 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.5.2.1 2002/12/26 07:43:41 tron Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.5.2.2 2002/12/26 07:44:35 tron Exp $");
 
 #include <stdio.h>
 #include <errno.h>
@@ -205,13 +205,15 @@ static struct field fields[] =
 	{"obs4", &label.obs4, print_int, chval_int, 0},
 	{NULL, NULL, NULL, NULL, 0}
 };
+
 /*
  * We'd _like_ to use howmany() from the include files, but can't count
  *  on its being present or working.
  */
 static __inline__ uint32_t how_many(uint32_t amt, uint32_t unit)
     __attribute__((__const__));
-static __inline__ uint32_t how_many(uint32_t amt, uint32_t unit)
+static __inline__ uint32_t
+how_many(uint32_t amt, uint32_t unit)
 {
 	return ((amt + unit - 1) / unit);
 }
@@ -310,7 +312,8 @@ usage(void)
  *		and other irrelevant chatter.  If you're trying to use
  *		sunlabel in an automated way, you probably want this.
  */
-static void handleargs(int ac, char **av)
+static void
+handleargs(int ac, char **av)
 {
 	int c;
 
@@ -1211,18 +1214,18 @@ setlabel(void)
 #endif
 
 static const char *help[] = {
-	"? - print this help",
-	"L - print label, except for partition table",
-	"P - print partition table",
-	"PP - print partition table including size=0 offset=0 entries",
+	"?\t- print this help",
+	"L\t- print label, except for partition table",
+	"P\t- print partition table",
+	"PP\t- print partition table including size=0 offset=0 entries",
 	"[abcdefghijklmnop] <cylno> <size> - change partition",
 	"V <name> <value> - change a non-partition label value",
-	"W - write (possibly modified) label out",
+	"W\t- write (possibly modified) label out",
 #ifdef S_COMMAND
-	"S - set label in the kernel (orthogonal to W)",
+	"S\t- set label in the kernel (orthogonal to W)",
 #endif
-	"Q - quit program (error if no write since last change)",
-	"Q! - quit program (unconditionally) [EOF also quits]",
+	"Q\t- quit program (error if no write since last change)",
+	"Q!\t- quit program (unconditionally) [EOF also quits]",
 	NULL
 };
 
@@ -1295,6 +1298,7 @@ docmd(void)
 		break;
 	}
 }
+
 /*
  * main() (duh!).  Pretty boring.
  */
