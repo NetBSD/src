@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.11 2001/07/13 20:30:21 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.12 2001/07/18 05:46:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -151,7 +151,7 @@ int	 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
 int	 fs_getmntinfo(struct statfs **, char *, const char *);
 void	 get(int, off_t, void *, size_t);
 FS_INFO	*get_fs_info(struct statfs *, int);
-int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
+int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO_15 **, int *);
 int	 mmap_segment(FS_INFO *, int, caddr_t *, int);
 void	 munmap_segment(FS_INFO *, caddr_t, int);
 void	 reread_fs_info(FS_INFO *, int);
