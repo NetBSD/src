@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.3 2004/06/24 22:18:11 nathanw Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.4 2004/07/18 21:24:52 chs Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.3 2004/06/24 22:18:11 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.4 2004/07/18 21:24:52 chs Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -59,7 +59,7 @@ extern int pthread__started;
 
 /* Queue of threads in nanosleep() */
 struct pthread_queue_t pthread__nanosleeping;
-static pthread_spin_t pt_nanosleep_lock;
+static pthread_spin_t pt_nanosleep_lock = __SIMPLELOCK_UNLOCKED;
 /*
  * Nothing actually signals or waits on this lock, but the sleepobj
  * needs to point to something.
@@ -136,8 +136,8 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 		}
 	} else if (rmtp)
 		timespecclear(rmtp);
-	       
 	
+
 	return retval;
 }
 
