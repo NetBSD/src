@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.7 2001/11/13 07:11:17 lukem Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.8 2002/08/08 02:54:29 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.7 2001/11/13 07:11:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.8 2002/08/08 02:54:29 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -85,6 +85,30 @@ RF_DECLARE_MUTEX(*m)
 	if (rc) {
 		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
 		rc1 = rf_mutex_destroy(m);
+		if (rc1) {
+			RF_ERRORMSG1("RAIDFRAME: Error %d destroying mutex\n", rc1);
+		}
+	}
+	return (rc);
+}
+
+
+int 
+_rf_create_managed_lkmgr_mutex(listp, m, file, line)
+	RF_ShutdownList_t **listp;
+RF_DECLARE_LKMGR_MUTEX(*m)
+	char   *file;
+	int     line;
+{
+	int     rc, rc1;
+
+	rc = rf_lkmgr_mutex_init(m);
+	if (rc)
+		return (rc);
+	rc = _rf_ShutdownCreate(listp, mutex_destroyer, (void *) m, file, line);
+	if (rc) {
+		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
+		rc1 = rf_lkmgr_mutex_destroy(m);
 		if (rc1) {
 			RF_ERRORMSG1("RAIDFRAME: Error %d destroying mutex\n", rc1);
 		}
@@ -187,6 +211,22 @@ decl_simple_lock_data(, *m)
 {
 	return (0);
 }
+
+int
+rf_lkmgr_mutex_init(m)
+decl_lock_data(, *m)
+{
+	lockinit(m,PRIBIO,"RAIDframe lock",0,0);
+	return(0);
+}
+
+int
+rf_lkmgr_mutex_destroy(m)
+decl_lock_data(, *m)
+{
+	return(0);
+}
+
 
 int 
 rf_cond_init(c)
