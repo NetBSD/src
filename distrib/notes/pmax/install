@@ -164,7 +164,22 @@ a single-user shell;
 	Enter pathname of shell or RETURN for sh: 
 
 At this point, press the RETURN key.
-then when you get a standalone root prompt, set your terminal type
+
+NOTE: If you see the message:
+
+	WARNING: clock gained 365 days -- CHECK AND RESET THE DATE!
+
+you will need to manually set the clock back to the current date with
+the `date' command.  The argument to the `date' command is one string
+with the format of "YYMMDDhhmm".  For example, to set the date to
+November 30th, 1998 at 11:34pm, type
+
+	date 9811302334
+
+This problem will be fixed in NetBSD 1.4
+
+
+When you get a standalone root prompt, set your terminal type
 
 	TERM=pmax; export TERM;
 
