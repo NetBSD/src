@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.2 2001/06/26 02:12:00 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.3 2001/06/26 02:28:52 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,31 +105,31 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . It Ar sd#
 ATAPI and SCSI disks, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar vnd#
 File pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . It Ar wd#
 IDE disks, see
-.Xr w\&d 4
+.Xr \&wd 4
 . El
 .It Terminals:
 . Bl -tag -width 0123456789 -compact
@@ -142,7 +142,7 @@ Zilog 8530 (``zstty'') serial ports
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It ISDN devices:
 . Bl -tag -width 0123456789 -compact
@@ -161,10 +161,10 @@ Trace device
 . Bl -tag -width 0123456789 -compact
 . It Ar bpf#
 Berkeley packet filter devices, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar ch#
 SCSI media changer, see
-.Xr c\&h 4
+.Xr \&ch 4
 . It Ar fd
 File descriptors (/dev/fd/*)
 . It Ar ipl
@@ -173,17 +173,17 @@ IP filter
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr s\&csictl 8 ,
-.Xr s\&csi 4
+.Xr \&scsictl 8 ,
+.Xr \&scsi 4
 . It Ar ss#
 SCSI scanner, see
-.Xr s\&s 4
+.Xr \&ss 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar uk#
 SCSI unknown, see
-.Xr u\&k 4
+.Xr \&uk 4
 . El
 .El
 .Sh FILES
