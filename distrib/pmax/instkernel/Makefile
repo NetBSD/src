@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/11/10 19:06:17 mhitch Exp $
+#	$NetBSD: Makefile,v 1.19 2001/03/24 15:31:23 simonb Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -23,12 +23,6 @@ VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
 MOUNT_POINT?=	/mnt
 
-#
-# install bootblock, so that we can boot from there
-#
-BOOTINSTALL= ${DESTDIR}/usr/mdec/installboot ${VND_RDEV} \
-	${DESTDIR}/usr/mdec/bootxx_ffs
-
 all:	netbsd.gz ${IMAGE}.gz
 
 netbsd.gz: ${KERN} ${RAMDISK}
@@ -47,7 +41,6 @@ ${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
 	newfs -B le -m 0 -o space ${NEWFSOPTS} ${VND_RDEV}
 	${DESTDIR}/usr/mdec/installboot ${VND_RDEV} \
 	    ${DESTDIR}/usr/mdec/bootxx_ffs
-	${BOOTINSTALL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp -p ${DESTDIR}/usr/mdec/boot.pmax ${MOUNT_POINT}
 	cp -p netbsd.gz ${MOUNT_POINT}/netbsd
@@ -78,6 +71,7 @@ clean cleandir distclean:
 
 # XXX!
 depend:
+dependall: depend all
 
 .include <bsd.obj.mk>
 .include "../Makefile.inc"
