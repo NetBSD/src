@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2410,v 1.2 2003/08/05 11:29:00 bsh Exp $
+#	$NetBSD: files.s3c2410,v 1.3 2003/08/29 12:57:50 bsh Exp $
 #
 # Configuration info for Samsung S3C2410
 #
@@ -10,6 +10,13 @@ include arch/arm/s3c2xx0/files.s3c2xx0
 file	arch/arm/s3c2xx0/s3c2410_intr.c
 file	arch/arm/s3c2xx0/s3c24x0_clk.c
 file	arch/arm/s3c2xx0/s3c2410.c
+
+device ssextio { [index=-1], [addr=0], [size=0], [intr=-1] } : bus_space_generic
+attach ssextio at ssio
+# maximum external interrupt. defaults to 23 to allow all external
+# interrupts. valid values are 4..23.
+defparam opt_s3c2410.h S3C2410_MAX_EXTINT
+file	arch/arm/s3c2xx0/s3c2410_extint.c	ssextio
 
 # UART
 file	arch/arm/s3c2xx0/sscom_s3c2410.c	sscom

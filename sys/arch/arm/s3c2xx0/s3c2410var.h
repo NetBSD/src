@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410var.h,v 1.1 2003/07/31 19:49:43 bsh Exp $ */
+/* $NetBSD: s3c2410var.h,v 1.2 2003/08/29 12:57:50 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -42,4 +42,6 @@ void	s3c2410_softreset(void);
 void	s3c2410_mask_subinterrupts(int);
 void	s3c2410_unmask_subinterrupts(int);
 
+void	*s3c2410_extint_establish(int, int, int, int (*)(void *), void *);
+void	s3c2410_setup_extint(int, int);
 #endif /* _ARM_S3C2410VAR_H_ */
