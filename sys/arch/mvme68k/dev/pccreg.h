@@ -1,4 +1,4 @@
-/*	$NetBSD: pccreg.h,v 1.4 1996/05/08 05:55:08 thorpej Exp $	*/
+/*	$NetBSD: pccreg.h,v 1.5 1996/09/12 04:54:19 thorpej Exp $	*/
 
 /*
  *
@@ -97,8 +97,7 @@ struct pcc {
 extern struct pcc *sys_pcc;
 
 /*
- * we lock off our interrupt vector at 0x40.  if this is changed 
- * we'll need to change vector.s
+ * we lock off our interrupt vector at 0x40.
  */
 
 #define PCC_VECBASE 0x40
@@ -143,6 +142,9 @@ extern struct pcc *sys_pcc;
 #define PCC_TIMERCLEAR 0x0	/* reset and clear timer */
 #define PCC_TIMERSTOP  0x1	/* stop clock, but don't clear it */
 #define PCC_TIMERSTART 0x3      /* start timer */
+
+#define pcc_timer_hz2lim(hz)	(65536 - (160000/(hz)))
+#define pcc_timer_us2lim(us)	(65536 - (160000/(1000000/(us))))
 
 /*
  * serial control
