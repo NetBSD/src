@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4 2000/06/19 17:08:05 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.5 2000/07/09 14:26:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.4 2000/06/19 17:08:05 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.5 2000/07/09 14:26:34 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -533,23 +533,25 @@ ack(const char *s)
 static void
 base64_encode(const char *clear, size_t len, char *encoded, int nulterm)
 {
-	static const char enc[] =
+	static const char base64[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	char	*cp;
+	const char *c;
+	char	*e, termchar;
 	int	 i;
 
-	cp = encoded;
-	for (i = 0; i < len; i += 3) {
-		*(cp++) = enc[((clear[i + 0] >> 2))];
-		*(cp++) = enc[((clear[i + 0] << 4) & 0x30)
-			    | ((clear[i + 1] >> 4) & 0x0f)];
-		*(cp++) = enc[((clear[i + 1] << 2) & 0x3c)
-			    | ((clear[i + 2] >> 6) & 0x03)];
-		*(cp++) = enc[((clear[i + 2]     ) & 0x3f)];
+	termchar = nulterm ? '\0' : '=';
+	c = clear;
+	e = encoded;
+	for (i = len; i > 0; i -= 3, c += 3) {
+		*e++ = base64[c[0] >> 2];
+		*e++ = base64[((c[0] << 4) & 0x30) |
+				(i < 2 ? 0 : ((c[1] >> 4) & 0x0f))];
+		*e++ = i < 2 ? termchar :
+			base64[((c[1] << 2) & 0x3c) |
+				(i < 3 ? 0 : ((c[2] >> 6) & 0x03))];
+		*e++ = i < 3 ? termchar : base64[(c[2]) & 0x3f];
 	}
-	*cp = '\0';
-	while (i-- > len)
-		*(--cp) = nulterm ? '\0' : '=';
+	*e = '\0';
 }
 
 static void
@@ -740,12 +742,15 @@ fact_type(const char *fact, FILE *fd, factelem *fe)
 static void
 fact_unique(const char *fact, FILE *fd, factelem *fe)
 {
-	char obuf[(MAX(sizeof(dev_t),sizeof(ino_t)) + 2) * 4 / 3 + 2];
+	char obuf[(sizeof(dev_t) + sizeof(ino_t) + 2) * 4 / 3 + 2];
+	char tbuf[sizeof(dev_t) + sizeof(ino_t)];
 
-	base64_encode((char *)&(fe->stat->st_dev), sizeof(dev_t), obuf, 1);
-	cprintf(fd, "%s=%s", fact, obuf);
-	base64_encode((char *)&(fe->stat->st_ino), sizeof(ino_t), obuf, 1);
-	cprintf(fd, "%s;", obuf);
+	memcpy(tbuf,
+	    (char *)&(fe->stat->st_dev), sizeof(dev_t));
+	memcpy(tbuf + sizeof(dev_t),
+	    (char *)&(fe->stat->st_ino), sizeof(ino_t));
+	base64_encode(tbuf, sizeof(dev_t) + sizeof(ino_t), obuf, 1);
+	cprintf(fd, "%s=%s;", fact, obuf);
 }
 
 static int
