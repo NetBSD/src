@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.223 2000/05/18 13:04:27 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.224 2000/05/26 05:07:02 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.218 2000/05/18 13:03:31 drochner Exp 
+ *	NetBSD: pcidevs,v 1.219 2000/05/26 05:06:27 matt Exp 
  */
 
 /*
@@ -2540,6 +2540,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NEC",
 	    "PowerVR PCX2",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872,
+	    0,
+	    "NEC",
+	    "uPD72872 IEEE 1394 OHCI PCI Controller",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
+	    0,
+	    "NEC",
+	    "uPD72870 IEEE 1394 OHCI PCI Controller",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871,
+	    0,
+	    "NEC",
+	    "uPD72871 IEEE 1394 OHCI PCI Controller",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
