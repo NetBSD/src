@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.35 2004/05/25 14:54:59 hannken Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.36 2004/08/14 01:30:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.35 2004/05/25 14:54:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.36 2004/08/14 01:30:56 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -486,8 +486,8 @@ fail:
 				brelse(bp);
 			}
 		}
-		if (unwindidx == 0) {
-			ip->i_flag |= IN_MODIFIED | IN_CHANGE | IN_UPDATE;
+		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
+			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 		}
 
@@ -498,8 +498,9 @@ fail:
 
 		if (unwindidx == 0) {
 			*allocib = 0;
-			ip->i_flag |= IN_MODIFIED | IN_CHANGE | IN_UPDATE;
-			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			if (DOINGSOFTDEP(vp))
+				VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 
@@ -1043,8 +1044,8 @@ fail:
 				brelse(bp);
 			}
 		}
-		if (unwindidx == 0) {
-			ip->i_flag |= IN_MODIFIED | IN_CHANGE | IN_UPDATE;
+		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
+			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 		}
 
@@ -1055,8 +1056,9 @@ fail:
 
 		if (unwindidx == 0) {
 			*allocib = 0;
-			ip->i_flag |= IN_MODIFIED | IN_CHANGE | IN_UPDATE;
-			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			if (DOINGSOFTDEP(vp))
+				VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
 
