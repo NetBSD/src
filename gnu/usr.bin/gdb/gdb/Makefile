@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 1994/05/17 14:01:44 pk Exp $
+# $Id: Makefile,v 1.6 1994/09/19 01:38:55 mycroft Exp $
 
 # Paths to libraries
 #
@@ -20,7 +20,7 @@ CFLAGS+=	-I$(.CURDIR)/arch/$(MACHINE_ARCH) -I$(.CURDIR)/../bfd \
 		-DHOST_CANONICAL=\"$(MACHINE_ARCH)-netbsd\" \
 		-DTARGET_CANONICAL=\"$(MACHINE_ARCH)-netbsd\"
 
-CFLAGS+=	-DNO_MMALLOC -DKERNEL_DEBUG
+CFLAGS+=	-DNO_MMALLOC -DKERNEL_DEBUG -DHAVE_TERMIOS
 YFLAGS+=	-p $(.PREFIX:S/-exp/_/:S/ch_/chill_/)
 
 .PATH:		$(.CURDIR)/arch/$(MACHINE_ARCH)
