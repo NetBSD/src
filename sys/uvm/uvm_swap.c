@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.3 1998/02/07 11:09:45 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.4 1998/02/08 07:52:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -206,7 +206,6 @@ struct vndbuf {
 /*
  * local variables
  */
-UVMHIST_DECL(pdhist);
 static struct extent *swapmap;		/* controls the mapping of /dev/drum */
 SIMPLEQ_HEAD(swapbufhead, swapbuf);
 static struct swapbufhead freesbufs;	/* list of free swapbufs */
@@ -263,12 +262,8 @@ uvm_swap_init()
 	struct swapbuf *sp;
 	struct proc *p = &proc0;	/* XXX */
 	int i;
-#if defined(UVMHIST)
-	static char histbuf[sizeof(struct uvm_history_ent) * 100];
-#endif
 	UVMHIST_FUNC("uvm_swap_init");
 
-	UVMHIST_INIT_STATIC(pdhist, histbuf);
 	UVMHIST_CALLED(pdhist);
 	/*
 	 * first, init the swap list, its counter, and its lock.
