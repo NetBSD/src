@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.7 1997/10/19 01:46:54 fvdl Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.8 1998/08/06 19:44:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,7 +50,7 @@
  * Constants as defined in the Sun NFS Version 2 and 3 specs.
  * "NFS: Network File System Protocol Specification" RFC1094
  * and in the "NFS: Network File System Version 3 Protocol
- * Specification"
+ * Specification" RFC1813.
  */
 
 #define NFS_PORT	2049
