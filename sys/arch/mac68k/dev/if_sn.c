@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.28 2000/11/15 01:02:13 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.29 2001/06/19 12:59:15 wiz Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -430,7 +430,7 @@ sninit(sc)
 
 	s = splnet();
 
-	NIC_PUT(sc, SNR_CR, CR_RST);	/* DCR only accessable in reset mode! */
+	NIC_PUT(sc, SNR_CR, CR_RST);	/* DCR only accessible in reset mode! */
 
 	/* config it */
 	NIC_PUT(sc, SNR_DCR, (sc->snr_dcr |

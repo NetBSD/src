@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.5 1999/12/30 23:59:29 pk Exp $ */
+/*	$NetBSD: reg.h,v 1.6 2001/06/19 12:59:15 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ struct fpstate {
 };
 
 /*
- * The actual FP registers are made accessable (c.f. ptrace(2)) through
+ * The actual FP registers are made accessible (c.f. ptrace(2)) through
  * a `struct fpreg'; <arch/sparc/sparc/process_machdep.c> relies on the
  * fact that `fpreg' is a prefix of `fpstate'.
  */

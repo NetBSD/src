@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.2 2001/06/09 10:44:11 chris Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.3 2001/06/19 12:59:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -404,7 +404,7 @@ initarm(bootinfo)
 	 *
 	 * This means that the kernel is mapped suitably for continuing
 	 * execution, all I/O is mapped 1:1 virtual to physical and
-	 * physical memory is accessable.
+	 * physical memory is accessible.
 	 *
 	 * The initarm() has the responcibility for creating the kernel
 	 * page tables.
