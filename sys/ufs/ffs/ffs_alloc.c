@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.7 1995/03/24 15:33:23 cgd Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.8 1995/07/19 15:47:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1101,7 +1101,7 @@ ffs_clusteralloc(ip, cg, bpref, len)
 	for (i = 0; i < len; i += fs->fs_frag)
 		if (ffs_alloccgblk(fs, cgp, bno + i) != bno + i)
 			panic("ffs_clusteralloc: lost block");
-	brelse(bp);
+	bdwrite(bp);
 	return (bno);
 
 fail:
