@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: getopt
- *              $Revision: 4 $
+ *              $Revision: 6 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -143,24 +143,24 @@ char  *AcpiGbl_Optarg;
 
 int
 AcpiGetopt(
-    int                     argc, 
-    char                    **argv, 
+    int                     argc,
+    char                    **argv,
     char                    *opts)
 {
     static int              CurrentCharPtr = 1;
-	int				        CurrentChar;
-	char                    *OptsPtr;
+    int                     CurrentChar;
+    char                    *OptsPtr;
 
 
     if (CurrentCharPtr == 1)
     {
         if (AcpiGbl_Optind >= argc ||
-            argv[AcpiGbl_Optind][0] != '-' || 
+            argv[AcpiGbl_Optind][0] != '-' ||
             argv[AcpiGbl_Optind][1] == '\0')
         {
             return(EOF);
         }
-        else if (strcmp (argv[AcpiGbl_Optind], "--") == 0) 
+        else if (strcmp (argv[AcpiGbl_Optind], "--") == 0)
         {
             AcpiGbl_Optind++;
             return(EOF);
@@ -169,18 +169,18 @@ AcpiGetopt(
 
     /* Get the option */
 
-    CurrentChar = 
-    AcpiGbl_Optopt = 
+    CurrentChar =
+    AcpiGbl_Optopt =
     argv[AcpiGbl_Optind][CurrentCharPtr];
 
     /* Make sure that the option is legal */
 
-    if (CurrentChar == ':' || 
-       (OptsPtr = strchr (opts, CurrentChar)) == NULL) 
+    if (CurrentChar == ':' ||
+       (OptsPtr = strchr (opts, CurrentChar)) == NULL)
     {
         ERR (": illegal option -- ", CurrentChar);
 
-        if (argv[AcpiGbl_Optind][++CurrentCharPtr] == '\0') 
+        if (argv[AcpiGbl_Optind][++CurrentCharPtr] == '\0')
         {
             AcpiGbl_Optind++;
             CurrentCharPtr = 1;
@@ -191,30 +191,30 @@ AcpiGetopt(
 
     /* Option requires an argument? */
 
-    if (*++OptsPtr == ':') 
+    if (*++OptsPtr == ':')
     {
         if (argv[AcpiGbl_Optind][CurrentCharPtr+1] != '\0')
         {
             AcpiGbl_Optarg = &argv[AcpiGbl_Optind++][CurrentCharPtr+1];
         }
-        else if (++AcpiGbl_Optind >= argc) 
+        else if (++AcpiGbl_Optind >= argc)
         {
             ERR (": option requires an argument -- ", CurrentChar);
 
             CurrentCharPtr = 1;
             return ('?');
-        } 
+        }
         else
         {
             AcpiGbl_Optarg = argv[AcpiGbl_Optind++];
         }
 
         CurrentCharPtr = 1;
-    } 
+    }
 
     /* Option has optional single-char arguments? */
 
-    else if (*OptsPtr == '^') 
+    else if (*OptsPtr == '^')
     {
         if (argv[AcpiGbl_Optind][CurrentCharPtr+1] != '\0')
         {
@@ -231,9 +231,9 @@ AcpiGetopt(
 
     /* Option with no arguments */
 
-    else 
+    else
     {
-        if (argv[AcpiGbl_Optind][++CurrentCharPtr] == '\0') 
+        if (argv[AcpiGbl_Optind][++CurrentCharPtr] == '\0')
         {
             CurrentCharPtr = 1;
             AcpiGbl_Optind++;
