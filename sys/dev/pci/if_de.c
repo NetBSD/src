@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.44 1997/06/08 18:49:43 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4793,6 +4793,9 @@ tulip_pci_attach(
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     const int unit = sc->tulip_dev.dv_unit;
+    bus_space_tag_t iot, memt;  
+    bus_space_handle_t ioh, memh;
+    int ioh_valid, memh_valid;
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
@@ -4955,12 +4958,31 @@ tulip_pci_attach(
 
 #if defined(__NetBSD__)
     csr_base = 0;
-    if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		       &sc->tulip_bustag, &sc->tulip_bushandle, NULL, NULL)
-	&& pci_mapreg_map(pa, PCI_CBMA,
-			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			  &sc->tulip_bustag, &sc->tulip_bushandle,
-			  NULL, NULL) == 0) {
+
+    ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+		 &iot, &ioh, NULL, NULL) == 0);
+    memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+    		  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+		  &memt, &memh, NULL, NULL) == 0);
+
+#if defined(TULIP_IOMAPPED)
+    if (ioh_valid) {
+	sc->tulip_bustag = iot;
+	sc->tulip_bushandle = ioh;
+    } else if (memh_valid) {
+	sc->tulip_bustag = memt;
+	sc->tulip_bushandle = memh;
+    }
+#else /* defined(TULIP_IOMAPPED) */
+    if (memh_valid) {
+	sc->tulip_bustag = memt;
+	sc->tulip_bushandle = memh;
+    } else if (ioh_valid) {
+	sc->tulip_bustag = iot;
+	sc->tulip_bushandle = ioh;
+    }
+#endif /* TULIP_IOMAPPED */
+    else {
         printf(": unable to map device registers\n");
         return;
     }
