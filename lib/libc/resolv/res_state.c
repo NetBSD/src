@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.3 2004/05/22 15:44:26 christos Exp $	*/
+/*	$NetBSD: res_state.c,v 1.4 2004/05/23 16:55:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,12 +38,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.3 2004/05/22 15:44:26 christos Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.4 2004/05/23 16:55:09 christos Exp $");
 #endif
 
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <netdb.h>
 #include <resolv.h>
 
 #undef _res
@@ -64,6 +65,10 @@ __weak_alias(__res_state, __res_get_state_nothread)
 res_state
 __res_get_state_nothread(void)
 {
+	if ((_res.options & RES_INIT) == 0 && res_ninit(&_res) == -1) {
+		h_errno = NETDB_INTERNAL;
+		return NULL;
+	}
 	return &_res;
 }
 
