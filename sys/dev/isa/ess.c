@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.61 2004/08/04 18:53:55 drochner Exp $	*/
+/*	$NetBSD: ess.c,v 1.62 2004/08/06 15:11:48 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.61 2004/08/04 18:53:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.62 2004/08/06 15:11:48 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,14 +188,17 @@ void	ess_read_multi_mix_reg __P((struct ess_softc *, u_char, u_int8_t *, bus_siz
 
 static char *essmodel[] = {
 	"unsupported",
-	"1888",
-	"1887",
-	"888",
+
+	"1688",
 	"1788",
-	"1869",
-	"1879",
 	"1868",
+	"1869",
 	"1878",
+	"1879",
+
+	"888",
+	"1887",
+	"1888",
 };
 
 struct audio_device ess_device = {
@@ -665,8 +668,16 @@ ess_identify(sc)
 	ess_write_mix_reg(sc, ESS_MREG_VOLUME_CTRL, reg2);
 	
 	if (ess_read_mix_reg(sc, ESS_MREG_VOLUME_CTRL) != reg2) {
-		printf("ess: Hardware error (unable to toggle bit 2 of mixer register 0x64)\n");
-		return 1;
+		switch (sc->sc_version) {
+		case 0x688b:
+			sc->sc_model = ESS_1688;
+			break;
+		default:
+			printf("ess: Hardware error (unable to toggle bit 2 of mixer register 0x64)\n");
+			return 1;
+		}
+			
+		return 0;
 	}
 
 	/*
@@ -704,73 +715,77 @@ ess_identify(sc)
 				break;
 			}
 		}
-	} else {
-		/*
-		 * 4. Determine if we can change bit 5 in mixer register 0x64.
-		 *    This determines whether we have an ES1887:
-		 *
-		 *    - can change indicates ES1887
-		 *    - can't change indicates ES1888 or ES888
-		 */
-		reg1 = ess_read_mix_reg(sc, ESS_MREG_VOLUME_CTRL);
-		reg2 = reg1 ^ 0x20;  /* toggle bit 5 */
-	
-		ess_write_mix_reg(sc, ESS_MREG_VOLUME_CTRL, reg2);
-	
-		if (ess_read_mix_reg(sc, ESS_MREG_VOLUME_CTRL) == reg2) {
-			sc->sc_model = ESS_1887;
 
-			/*
-			 * Restore the original value of mixer register 0x64.
-			 */
-			ess_write_mix_reg(sc, ESS_MREG_VOLUME_CTRL, reg1);
-
-			/*
-			 * Identify ESS model for ES18[67]9.
-			 */
-			ess_read_multi_mix_reg(sc, 0x40, ident, sizeof(ident));
-			if(ident[0] == 0x18) {
-				switch(ident[1]) {
-				case 0x69:
-					sc->sc_model = ESS_1869;
-					break;
-				case 0x79:
-					sc->sc_model = ESS_1879;
-					break;
-				}
-			}
-		} else {
-			/*
-			 * 5. Determine if we can change the value of mixer
-			 *    register 0x69 independently of mixer register
-			 *    0x68. This determines which chip we have:
-			 *
-			 *    - can modify idependently indicates ES888
-			 *    - register 0x69 is an alias of 0x68 indicates ES1888
-			 */
-			reg1 = ess_read_mix_reg(sc, 0x68);
-			reg2 = ess_read_mix_reg(sc, 0x69);
-			reg3 = reg2 ^ 0xff;  /* toggle all bits */
-
-			/*
-			 * Write different values to each register.
-			 */
-			ess_write_mix_reg(sc, 0x68, reg2);
-			ess_write_mix_reg(sc, 0x69, reg3);
-
-			if (ess_read_mix_reg(sc, 0x68) == reg2 &&
-			    ess_read_mix_reg(sc, 0x69) == reg3)
-				sc->sc_model = ESS_888;
-			else
-				sc->sc_model = ESS_1888;
-		
-			/*
-			 * Restore the original value of the registers.
-			 */
-			ess_write_mix_reg(sc, 0x68, reg1);
-			ess_write_mix_reg(sc, 0x69, reg2);
-		}
+		return 0;
 	}
+
+	/*
+	 * 4. Determine if we can change bit 5 in mixer register 0x64.
+	 *    This determines whether we have an ES1887:
+	 *
+	 *    - can change indicates ES1887
+	 *    - can't change indicates ES1888 or ES888
+	 */
+	reg1 = ess_read_mix_reg(sc, ESS_MREG_VOLUME_CTRL);
+	reg2 = reg1 ^ 0x20;  /* toggle bit 5 */
+	
+	ess_write_mix_reg(sc, ESS_MREG_VOLUME_CTRL, reg2);
+	
+	if (ess_read_mix_reg(sc, ESS_MREG_VOLUME_CTRL) == reg2) {
+		sc->sc_model = ESS_1887;
+
+		/*
+		 * Restore the original value of mixer register 0x64.
+		 */
+		ess_write_mix_reg(sc, ESS_MREG_VOLUME_CTRL, reg1);
+
+		/*
+		 * Identify ESS model for ES18[67]9.
+		 */
+		ess_read_multi_mix_reg(sc, 0x40, ident, sizeof(ident));
+		if(ident[0] == 0x18) {
+			switch(ident[1]) {
+			case 0x69:
+				sc->sc_model = ESS_1869;
+				break;
+			case 0x79:
+				sc->sc_model = ESS_1879;
+				break;
+			}
+		}
+
+		return 0;
+	}
+
+	/*
+	 * 5. Determine if we can change the value of mixer
+	 *    register 0x69 independently of mixer register
+	 *    0x68. This determines which chip we have:
+	 *
+	 *    - can modify idependently indicates ES888
+	 *    - register 0x69 is an alias of 0x68 indicates ES1888
+	 */
+	reg1 = ess_read_mix_reg(sc, 0x68);
+	reg2 = ess_read_mix_reg(sc, 0x69);
+	reg3 = reg2 ^ 0xff;  /* toggle all bits */
+
+	/*
+	 * Write different values to each register.
+	 */
+	ess_write_mix_reg(sc, 0x68, reg2);
+	ess_write_mix_reg(sc, 0x69, reg3);
+
+	if (ess_read_mix_reg(sc, 0x68) == reg2 &&
+	    ess_read_mix_reg(sc, 0x69) == reg3)
+		sc->sc_model = ESS_888;
+	else
+		sc->sc_model = ESS_1888;
+	
+	/*
+	 * Restore the original value of the registers.
+	 */
+	ess_write_mix_reg(sc, 0x68, reg1);
+	ess_write_mix_reg(sc, 0x69, reg2);
 
 	return 0;
 }
