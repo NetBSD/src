@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.15 1995/03/18 15:01:14 cgd Exp $	*/
+/*	$NetBSD: slattach.c,v 1.16 1995/03/21 18:48:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: slattach.c,v 1.15 1995/03/18 15:01:14 cgd Exp $";
+static char rcsid[] = "$NetBSD: slattach.c,v 1.16 1995/03/21 18:48:59 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ main(argc, argv)
 	struct termios tty;
 	tcflag_t cflag = HUPCL;
 	int ch;
+	sigset_t sigset;
 
 	while ((ch = getopt(argc, argv, "hms:")) != -1) {
 		switch (ch) {
@@ -135,8 +136,9 @@ main(argc, argv)
 
 	if (fork() > 0)
 		exit(0);
+	sigemptyset(&sigset);
 	for (;;)
-		sigpause(0L);
+		sigsuspend(&sigset);
 }
 
 void

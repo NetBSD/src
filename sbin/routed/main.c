@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1995/03/21 14:05:36 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1995/03/21 18:48:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.9 1995/03/21 14:05:36 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.10 1995/03/21 18:48:54 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,11 +75,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int n, nfd, omask, tflags = 0;
+	int n, nfd, flags = 0;
 	struct timeval *tvp, waittime;
 	struct itimerval itval;
 	register struct rip *query = msg;
 	fd_set ibits;
+	sigset_t sigset, osigset;
 	
 	argv0 = argv;
 #if BSD >= 43
@@ -227,7 +228,9 @@ main(argc, argv)
 					continue;
 				syslog(LOG_ERR, "select: %m");
 			}
-			omask = sigblock(sigmask(SIGALRM));
+			sigemptyset(&sigset);
+			sigaddset(&sigset, SIGALRM);
+			sigprocmask(SIG_BLOCK, &sigset, &osigset);
 			if (n == 0 && needupdate) {
 				if (traceactions)
 					fprintf(ftrace,
@@ -240,11 +243,13 @@ main(argc, argv)
 				needupdate = 0;
 				nextbcast.tv_sec = 0;
 			}
-			sigsetmask(omask);
+			sigprocmask(SIG_SETMASK, &osigset, NULL);
 			continue;
 		}
 		(void) gettimeofday(&now, (struct timezone *)NULL);
-		omask = sigblock(sigmask(SIGALRM));
+		sigemptyset(&sigset);
+		sigaddset(&sigset, SIGALRM);
+		sigprocmask(SIG_BLOCK, &sigset, &osigset);
 #ifdef doesntwork
 /*
 printf("s %d, ibits %x index %d, mod %d, sh %x, or %x &ibits %x\n",
@@ -263,7 +268,7 @@ printf("s %d, ibits %x index %d, mod %d, sh %x, or %x &ibits %x\n",
 #endif
 			process(s);
 		/* handle ICMP redirects */
-		sigsetmask(omask);
+		sigprocmask(SIG_SETMASK, &osigset, NULL);
 	}
 }
 
