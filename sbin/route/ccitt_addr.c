@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_addr.c,v 1.10 1997/09/15 09:15:26 lukem Exp $	*/
+/*	$NetBSD: ccitt_addr.c,v 1.11 1997/09/15 09:34:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -173,7 +173,8 @@ copychar (from, to)
 		int n1;
 
 		n = n*8 + *from++ - '0';
-		if (*from >= '0' && *from <= '7' && (n1 = n*8 + *from-'0') < 256) {
+		if (*from >= '0' && *from <= '7' &&
+		    (n1 = n*8 + *from-'0') < 256) {
 			n = n1;
 			from++;
 		}
