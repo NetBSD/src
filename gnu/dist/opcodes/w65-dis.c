@@ -1,5 +1,5 @@
 /* Disassemble WDC 65816 instructions.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ print_operand (lookup, format, args)
 {
   int val;
   int c;
-  char *name;
+
   while (*format)
     {
       switch ( c = *format++) 

@@ -1,5 +1,6 @@
 
-/*  A Bison parser, made from ./arparse.y with Bison version GNU Bison version 1.24
+/*  A Bison parser, made from /5g/ian/binutils/release/copy/binutils/arparse.y
+ by  GNU Bison version 1.25
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -23,7 +24,7 @@
 #define	SAVE	274
 #define	OPEN	275
 
-#line 1 "./arparse.y"
+#line 1 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 
 /* arparse.y - Stange script language parser */
 
@@ -57,29 +58,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 extern int verbose;
 static int yyerror PARAMS ((const char *));
 
-#line 35 "./arparse.y"
+#line 35 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 typedef union {
   char *name;
 struct list *list ;
 
 } YYSTYPE;
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -159,6 +143,10 @@ static const short yyrline[] = { 0,
    144,   148,   155,   158,   161,   164,   168,   175,   179,   181,
    185
 };
+#endif
+
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
 
 static const char * const yytname[] = {   "$","error","$undefined.","NEWLINE",
 "VERBOSE","FILENAME","ADDLIB","LIST","ADDMOD","CLEAR","CREATE","DELETE","DIRECTORY",
@@ -166,7 +154,7 @@ static const char * const yytname[] = {   "$","error","$undefined.","NEWLINE",
 "','","start","@1","session","command_line","command","extract_command","replace_command",
 "clear_command","delete_command","addmod_command","list_command","save_command",
 "open_command","create_command","addlib_command","directory_command","optional_filename",
-"modulelist","modulename","optcomma","verbose_command",""
+"modulelist","modulename","optcomma","verbose_command", NULL
 };
 #endif
 
@@ -232,7 +220,7 @@ static const short yycheck[] = {    11,
      5,     5,     0,     0,    -1,    36
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/unsupported/share/bison.simple"
+#line 3 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -387,16 +375,16 @@ int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
+     char *from;
      int count;
 {
   register char *f = from;
@@ -412,7 +400,7 @@ __yy_memcpy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, int count)
 {
   register char *f = from;
   register char *t = to;
@@ -425,7 +413,7 @@ __yy_memcpy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 192 "/usr/unsupported/share/bison.simple"
+#line 196 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -434,14 +422,20 @@ __yy_memcpy (char *from, char *to, int count)
    to the proper pointer type.  */
 
 #ifdef YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#else
-#define YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
 #define YYPARSE_PARAM_DECL
-#endif
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
 
 int
-yyparse(YYPARSE_PARAM)
+yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
   register int yystate;
@@ -558,12 +552,12 @@ yynewstate:
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
       yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
       yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
       yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -724,83 +718,83 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 66 "./arparse.y"
+#line 66 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { prompt(); ;
     break;}
 case 5:
-#line 75 "./arparse.y"
+#line 75 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { prompt(); ;
     break;}
 case 18:
-#line 90 "./arparse.y"
+#line 90 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_end(); return 0; ;
     break;}
 case 20:
-#line 92 "./arparse.y"
+#line 92 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { yyerror("foo"); ;
     break;}
 case 22:
-#line 99 "./arparse.y"
+#line 99 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_extract(yyvsp[0].list); ;
     break;}
 case 23:
-#line 104 "./arparse.y"
+#line 104 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_replace(yyvsp[0].list); ;
     break;}
 case 24:
-#line 109 "./arparse.y"
+#line 109 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_clear(); ;
     break;}
 case 25:
-#line 114 "./arparse.y"
+#line 114 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_delete(yyvsp[0].list); ;
     break;}
 case 26:
-#line 118 "./arparse.y"
+#line 118 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_addmod(yyvsp[0].list); ;
     break;}
 case 27:
-#line 123 "./arparse.y"
+#line 123 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_list(); ;
     break;}
 case 28:
-#line 128 "./arparse.y"
+#line 128 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_save(); ;
     break;}
 case 29:
-#line 135 "./arparse.y"
+#line 135 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_open(yyvsp[0].name,0); ;
     break;}
 case 30:
-#line 140 "./arparse.y"
+#line 140 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_open(yyvsp[0].name,1); ;
     break;}
 case 31:
-#line 146 "./arparse.y"
+#line 146 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_addlib(yyvsp[-1].name,yyvsp[0].list); ;
     break;}
 case 32:
-#line 150 "./arparse.y"
+#line 150 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { ar_directory(yyvsp[-2].name, yyvsp[-1].list, yyvsp[0].name); ;
     break;}
 case 33:
-#line 157 "./arparse.y"
+#line 157 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { yyval.name = yyvsp[0].name; ;
     break;}
 case 34:
-#line 158 "./arparse.y"
+#line 158 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { yyval.name = 0; ;
     break;}
 case 35:
-#line 163 "./arparse.y"
+#line 163 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { yyval.list = yyvsp[-1].list; ;
     break;}
 case 36:
-#line 165 "./arparse.y"
+#line 165 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { yyval.list = 0; ;
     break;}
 case 37:
-#line 170 "./arparse.y"
+#line 170 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { 	struct list *n  = (struct list *) malloc(sizeof(struct list));
 			n->next = yyvsp[-2].list; 
 			n->name = yyvsp[0].name;
@@ -808,16 +802,16 @@ case 37:
 		 ;
     break;}
 case 38:
-#line 175 "./arparse.y"
+#line 175 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { yyval.list = 0; ;
     break;}
 case 41:
-#line 187 "./arparse.y"
+#line 187 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 { verbose = !verbose; ;
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 487 "/usr/unsupported/share/bison.simple"
+#line 498 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1013,7 +1007,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 191 "./arparse.y"
+#line 191 "/5g/ian/binutils/release/copy/binutils/arparse.y"
 
 
 static int

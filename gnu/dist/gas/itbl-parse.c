@@ -1,5 +1,6 @@
 
-/*  A Bison parser, made from ./itbl-parse.y with Bison version GNU Bison version 1.24
+/*  A Bison parser, made from /5g/ian/binutils/release/copy/gas/./itbl-parse.y
+ by  GNU Bison version 1.25
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -15,7 +16,7 @@
 #define	NL	266
 #define	PNUM	267
 
-#line 21 "./itbl-parse.y"
+#line 21 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 
 
 /* 
@@ -277,7 +278,7 @@ int yylex PARAMS ((void));
 static int yyerror PARAMS ((const char *));
 
 
-#line 283 "./itbl-parse.y"
+#line 283 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 typedef union 
   {
     char *str;
@@ -285,23 +286,6 @@ typedef union
     int processor;
     unsigned long val;
   } YYSTYPE;
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -374,11 +358,15 @@ static const short yyrline[] = { 0,
    331,   334,   340,   345,   352,   361,   366,   370,   376,   382,
    388,   395,   402,   410,   416,   421,   428,   436,   444
 };
+#endif
+
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
 
 static const char * const yytname[] = {   "$","error","$undefined.","DREG","CREG",
 "GREG","IMMED","ADDR","INSN","NUM","ID","NL","PNUM","','","'|'","'['","']'",
 "'*'","':'","'-'","insntbl","entrys","entry","@1","fieldspecs","ftype","fieldspec",
-"flagexpr","flags","range","pnum","regtype","name","value","value"
+"flagexpr","flags","range","pnum","regtype","name","value", NULL
 };
 #endif
 
@@ -442,7 +430,7 @@ static const short yycheck[] = {     0,
     45,     6,    38,    13,    16
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/unsupported/share/bison.simple"
+#line 3 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -597,16 +585,16 @@ int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
+     char *from;
      int count;
 {
   register char *f = from;
@@ -622,7 +610,7 @@ __yy_memcpy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, int count)
 {
   register char *f = from;
   register char *t = to;
@@ -635,7 +623,7 @@ __yy_memcpy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 192 "/usr/unsupported/share/bison.simple"
+#line 196 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -644,14 +632,20 @@ __yy_memcpy (char *from, char *to, int count)
    to the proper pointer type.  */
 
 #ifdef YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#else
-#define YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
 #define YYPARSE_PARAM_DECL
-#endif
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
 
 int
-yyparse(YYPARSE_PARAM)
+yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
   register int yystate;
@@ -768,12 +762,12 @@ yynewstate:
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
       yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
       yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
       yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -934,7 +928,7 @@ yyreduce:
   switch (yyn) {
 
 case 4:
-#line 311 "./itbl-parse.y"
+#line 311 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBG (("line %d: entry pnum=%d type=%d name=%s value=x%x\n", 
 	    	    insntbl_line, yyvsp[-4].num, yyvsp[-3].num, yyvsp[-2].str, yyvsp[-1].val));
@@ -942,7 +936,7 @@ case 4:
 	  ;
     break;}
 case 5:
-#line 317 "./itbl-parse.y"
+#line 317 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBG (("line %d: entry pnum=%d type=INSN name=%s value=x%x",
 	    	    insntbl_line, yyvsp[-5].num, yyvsp[-3].str, yyvsp[-2].val));
@@ -951,28 +945,28 @@ case 5:
 	  ;
     break;}
 case 12:
-#line 336 "./itbl-parse.y"
+#line 336 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("ftype\n"));
 	    yyval.num = yyvsp[0].num;
 	  ;
     break;}
 case 13:
-#line 341 "./itbl-parse.y"
+#line 341 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("addr\n"));
 	    yyval.num = ADDR;
 	  ;
     break;}
 case 14:
-#line 346 "./itbl-parse.y"
+#line 346 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("immed\n"));
 	    yyval.num = IMMED;
 	  ;
     break;}
 case 15:
-#line 354 "./itbl-parse.y"
+#line 354 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBG (("line %d: field type=%d sbit=%d ebit=%d, flags=0x%x\n", 
 	    	    insntbl_line, yyvsp[-2].num, sbit, ebit, yyvsp[0].val));
@@ -980,38 +974,38 @@ case 15:
 	  ;
     break;}
 case 16:
-#line 363 "./itbl-parse.y"
+#line 363 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    yyval.val = yyvsp[-2].num | yyvsp[0].val;
 	  ;
     break;}
 case 17:
-#line 367 "./itbl-parse.y"
+#line 367 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    yyval.val = yyvsp[-1].val;
 	  ;
     break;}
 case 18:
-#line 371 "./itbl-parse.y"
+#line 371 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    yyval.val = yyvsp[0].num;
 	  ;
     break;}
 case 19:
-#line 378 "./itbl-parse.y"
+#line 378 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("flags=%d\n", yyvsp[0].val));
 	    yyval.val = yyvsp[0].val;
 	  ;
     break;}
 case 20:
-#line 383 "./itbl-parse.y"
+#line 383 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    yyval.val = 0;
 	  ;
     break;}
 case 21:
-#line 390 "./itbl-parse.y"
+#line 390 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("range %d %d\n", yyvsp[-2].num, yyvsp[0].num));
 	    sbit = yyvsp[-2].num;
@@ -1019,56 +1013,56 @@ case 21:
 	  ;
     break;}
 case 22:
-#line 396 "./itbl-parse.y"
+#line 396 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    sbit = 31;
 	    ebit = 0;
 	  ;
     break;}
 case 23:
-#line 404 "./itbl-parse.y"
+#line 404 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("pnum=%d\n",yyvsp[0].num));
 	    yyval.num = yyvsp[0].num;
 	  ;
     break;}
 case 24:
-#line 412 "./itbl-parse.y"
+#line 412 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("dreg\n"));
 	    yyval.num = DREG;
 	  ;
     break;}
 case 25:
-#line 417 "./itbl-parse.y"
+#line 417 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("creg\n"));
 	    yyval.num = CREG;
 	  ;
     break;}
 case 26:
-#line 422 "./itbl-parse.y"
+#line 422 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("greg\n"));
 	    yyval.num = GREG;
 	  ;
     break;}
 case 27:
-#line 430 "./itbl-parse.y"
+#line 430 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("name=%s\n",yyvsp[0].str));
 	    yyval.str = yyvsp[0].str; 
 	  ;
     break;}
 case 28:
-#line 438 "./itbl-parse.y"
+#line 438 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("num=%d\n",yyvsp[0].num));
 	    yyval.num = yyvsp[0].num;
 	  ;
     break;}
 case 29:
-#line 446 "./itbl-parse.y"
+#line 446 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 {
 	    DBGL2 (("val=x%x\n",yyvsp[0].num));
 	    yyval.val = yyvsp[0].num;
@@ -1076,7 +1070,7 @@ case 29:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 487 "/usr/unsupported/share/bison.simple"
+#line 498 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1272,7 +1266,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 451 "./itbl-parse.y"
+#line 451 "/5g/ian/binutils/release/copy/gas/./itbl-parse.y"
 
 
 static int

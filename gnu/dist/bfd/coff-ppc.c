@@ -1,5 +1,6 @@
 /* BFD back-end for PowerPC Microsoft Portable Executable files.
-   Copyright 1990, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 1998
+   Free Software Foundation, Inc.
 
    Original version pieced together by Kim Knuttila (krk@cygnus.com)
 
@@ -927,7 +928,7 @@ ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
       local_syms = obj_coff_local_toc_table(abfd);
       if (local_syms == 0)
 	{
-	  int i;
+	  unsigned int i;
 	  /* allocate a table */
 	  local_syms = 
 	    (int *) bfd_zalloc (abfd, 
@@ -1174,8 +1175,9 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 	      sec = sections[symndx];
 	      val = (sec->output_section->vma
 		     + sec->output_offset
-		     + sym->n_value
-		     - sec->vma);
+		     + sym->n_value);
+	      if (! obj_pe (output_bfd))
+		val -= sec->vma;
 	    }
 	}
       else
@@ -1653,7 +1655,7 @@ void
 dump_toc (vfile)
      PTR vfile;
 {
-  FILE *file = vfile;
+  FILE *file = (FILE *) vfile;
   struct list_ele *t;
 
   fprintf(file, h1);
@@ -1662,7 +1664,7 @@ dump_toc (vfile)
 
   for(t = head; t != 0; t=t->next)
     {
-      char *cat;
+      const char *cat = "";
 
       if (t->cat == priv)
 	cat = "private       ";

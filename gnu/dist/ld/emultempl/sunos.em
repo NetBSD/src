@@ -27,8 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_IS_${EMULATION_NAME}
 
 #include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -152,7 +150,7 @@ gld${EMULATION_NAME}_find_so (inp)
      lang_input_statement_type *inp;
 {
   search_dirs_type *search;
-  char *found;
+  char *found = NULL;
   char *alc;
   struct stat st;
 
@@ -291,13 +289,13 @@ gld${EMULATION_NAME}_search_dir (dirname, filename, found_static)
       if (entry->d_name[6 + len] == '\0')
 	;
       else if (entry->d_name[6 + len] == '.'
-	       && isdigit (entry->d_name[7 + len]))
+	       && isdigit ((unsigned char) entry->d_name[7 + len]))
 	;
       else
 	continue;
 
       for (s = entry->d_name + 6 + len; *s != '\0'; s++)
-	if (*s != '.' && ! isdigit (*s))
+	if (*s != '.' && ! isdigit ((unsigned char) *s))
 	  break;
       if (*s != '\0')
 	continue;

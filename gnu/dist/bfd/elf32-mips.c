@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright 1993, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -695,7 +695,9 @@ static reloc_howto_type elf_mips_howto_table[] =
 	 true,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 false)			/* pcrel_offset */
+	 false),		/* pcrel_offset */
+
+
 };
 
 /* The reloc used for BFD_RELOC_CTOR when doing a 64 bit link.  This
@@ -707,7 +709,7 @@ static reloc_howto_type elf_mips_ctor64_howto =
 	 32,			/* bitsize */
 	 false,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
+	 complain_overflow_signed, /* complain_on_overflow */
 	 mips32_64bit_reloc,	/* special_function */
 	 "R_MIPS_64",		/* name */
 	 true,			/* partial_inplace */
@@ -752,6 +754,7 @@ static reloc_howto_type elf_mips16_gprel_howto =
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false);		/* pcrel_offset */
+
 
 /* Do a R_MIPS_HI16 relocation.  This has to be done in combination
    with a R_MIPS_LO16 reloc, because there is a carry from the LO16 to
@@ -1515,7 +1518,7 @@ static CONST struct elf_reloc_map mips_reloc_map[] =
   { BFD_RELOC_MIPS_GOT_HI16, R_MIPS_GOT_HI16 },
   { BFD_RELOC_MIPS_GOT_LO16, R_MIPS_GOT_LO16 },
   { BFD_RELOC_MIPS_CALL_HI16, R_MIPS_CALL_HI16 },
-  { BFD_RELOC_MIPS_CALL_LO16, R_MIPS_CALL_LO16 }
+  { BFD_RELOC_MIPS_CALL_LO16, R_MIPS_CALL_LO16 },
 };
 
 /* Given a BFD reloc type, return a howto structure.  */
@@ -1533,12 +1536,13 @@ bfd_elf32_bfd_reloc_type_lookup (abfd, code)
 	return &elf_mips_howto_table[(int) mips_reloc_map[i].elf_reloc_val];
     }
 
-  /* We need to handle BFD_RELOC_CTOR specially.  If this is a mips3
-     file, then we assume that we are using 64 bit addresses, and use
-     R_MIPS_64.  Otherwise, we use R_MIPS_32.  */
+  /* We need to handle BFD_RELOC_CTOR specially.
+
+     Select the right relocation (R_MIPS_32 or R_MIPS_64) based on the
+     size of addresses on this architecture.  */
   if (code == BFD_RELOC_CTOR)
     {
-      if (elf_mips_isa (elf_elfheader (abfd)->e_flags) < 3)
+      if (bfd_arch_bits_per_address (abfd) == 32)
 	return &elf_mips_howto_table[(int) R_MIPS_32];
       else
 	return &elf_mips_ctor64_howto;
@@ -2414,7 +2418,7 @@ _bfd_mips_elf_set_section_contents (abfd, section, location, offset, count)
 	    size = section->_cooked_size;
 	  else
 	    size = section->_raw_size;
-	  c = (PTR) bfd_zalloc (abfd, size);
+	  c = (bfd_byte *) bfd_zalloc (abfd, size);
 	  if (c == NULL)
 	    return false;
 	  elf_section_data (section)->tdata = (PTR) c;
@@ -3012,6 +3016,11 @@ _bfd_mips_elf_find_nearest_line (abfd, section, symbols, offset, filename_ptr,
      unsigned int *line_ptr;
 {
   asection *msec;
+
+  if (_bfd_dwarf2_find_nearest_line (abfd, section, symbols, offset,
+				     filename_ptr, functionname_ptr, 
+				     line_ptr))
+    return true;
 
   msec = bfd_get_section_by_name (abfd, ".mdebug");
   if (msec != NULL)
@@ -3711,7 +3720,7 @@ mips_elf_create_procedure_table (handle, abfd, info, s, debug)
 
   /* Set the size and contents of .rtproc section.  */
   s->_raw_size = size;
-  s->contents = rtproc;
+  s->contents = (bfd_byte *) rtproc;
 
   /* Skip this section later on (I don't think this currently
      matters, but someday it might).  */
@@ -3964,6 +3973,7 @@ mips_elf_final_link (abfd, info)
 	      esym.asym.st = stLocal;
 	      esym.asym.reserved = 0;
 	      esym.asym.index = indexNil;
+	      last = 0;
 	      for (i = 0; i < 8; i++)
 		{
 		  esym.asym.sc = sc[i];
@@ -5026,10 +5036,10 @@ mips_elf_relocate_section (output_bfd, info, input_bfd, input_section,
                  next reloc must be the corresponding LO16 reloc.  */
 	      BFD_ASSERT (h != NULL && h->got_offset != (bfd_vma) -1);
 	      BFD_ASSERT ((rel + 1) < relend);
-	      BFD_ASSERT (ELF32_R_TYPE ((rel + 1)->r_info)
+	      BFD_ASSERT ((int) ELF32_R_TYPE ((rel + 1)->r_info)
 			  == (r_type == R_MIPS_CALL_HI16
-			      ? R_MIPS_CALL_LO16
-			      : R_MIPS_GOT_LO16));
+			      ? (int) R_MIPS_CALL_LO16
+			      : (int) R_MIPS_GOT_LO16));
 
 	      offset = (h->dynindx - g->global_gotsym + g->local_gotno) * 4;
 	      BFD_ASSERT (g->local_gotno <= offset
@@ -5412,8 +5422,8 @@ mips_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 }
 
 /* This hook function is called before the linker writes out a global
-   symbol.  This is where we undo the increment of the value for a
-   mips16 symbol.  */
+   symbol.  We mark symbols as small common if appropriate.  This is
+   also where we undo the increment of the value for a mips16 symbol.  */
 
 /*ARGSIGNORED*/
 static boolean
@@ -5424,9 +5434,17 @@ mips_elf_link_output_symbol_hook (abfd, info, name, sym, input_sec)
      Elf_Internal_Sym *sym;
      asection *input_sec;
 {
+  /* If we see a common symbol, which implies a relocatable link, then
+     if a symbol was small common in an input file, mark it as small
+     common in the output file.  */
+  if (sym->st_shndx == SHN_COMMON
+      && strcmp (input_sec->name, ".scommon") == 0)
+    sym->st_shndx = SHN_MIPS_SCOMMON;
+
   if (sym->st_other == STO_MIPS16
       && (sym->st_value & 1) != 0)
     --sym->st_value;
+
   return true;
 }
 
@@ -6362,7 +6380,9 @@ mips_elf_size_dynamic_sections (output_bfd, info)
 	      outname = bfd_get_section_name (output_bfd,
 					      s->output_section);
 	      target = bfd_get_section_by_name (output_bfd, outname + 4);
-	      if ((target != NULL && (target->flags & SEC_READONLY) != 0)
+	      if ((target != NULL
+		   && (target->flags & SEC_READONLY) != 0
+		   && (target->flags & SEC_ALLOC) != 0)
 		  || strcmp (outname, ".rel.dyn") == 0)
 		reltext = true;
 
@@ -7003,6 +7023,8 @@ mips_elf_finish_dynamic_sections (output_bfd, info)
 	    sym.st_other = 0;
 
 	    i = 0;
+	    last = 0;
+	    dindx = 0;
 	    while ((name = *namep++) != NULL)
 	      {
 		s = bfd_get_section_by_name (output_bfd, name);

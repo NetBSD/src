@@ -51,13 +51,7 @@ static boolean elf32_sparc_object_p
 static void elf32_sparc_final_write_processing
   PARAMS ((bfd *, boolean));
 
-/* The howto table and associated functions.
-   ??? elf64-sparc.c has its own copy for the moment to ease transition
-   since some of the relocation values have changed.  At some point we'll
-   want elf64-sparc.c to switch over and use this table.
-   ??? Do we want to recognize (or flag as errors) some of the 64 bit entries
-   if the target is elf32-sparc.
-*/
+/* The relocation "howto" table.  */
 
 static bfd_reloc_status_type sparc_elf_notsupported_reloc
   PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
@@ -98,38 +92,24 @@ reloc_howto_type _bfd_sparc_elf_howto_table[] =
   HOWTO(R_SPARC_PCPLT10,   0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_PCPLT10",  false,0,0x00000000,true),
   HOWTO(R_SPARC_10,        0,2,10,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_10",      false,0,0x000003ff,true),
   HOWTO(R_SPARC_11,        0,2,11,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_11",      false,0,0x000007ff,true),
-  /* ??? If we need to handle R_SPARC_64 then we need (figuratively)
-     --enable-64-bit-bfd.  That causes objdump to print address as 64 bits
-     which we really don't want on an elf32-sparc system.  There may be other
-     consequences which we may not want (at least not until it's proven they're
-     necessary) so for now these are only enabled ifdef BFD64.  */
-#ifdef BFD64
-  HOWTO(R_SPARC_64,        0,4,00,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_64",      false,0,~ (bfd_vma) 0, true),
-  /* ??? These don't make sense except in 64 bit systems so they're disabled
-     ifndef BFD64 too (for now).  */
-  HOWTO(R_SPARC_OLO10,     0,2,10,false,0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_OLO10",   false,0,0x000003ff,true),
-  HOWTO(R_SPARC_HH22,     42,2,22,false,0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_HH22",    false,0,0x003fffff,true),
-  HOWTO(R_SPARC_HM10,     32,2,10,false,0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_HM10",    false,0,0x000003ff,true),
-  HOWTO(R_SPARC_LM22,     10,2,22,false,0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_LM22",    false,0,0x003fffff,true),
-  HOWTO(R_SPARC_PC_HH22,  42,2,22,true, 0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_HH22",    false,0,0x003fffff,true),
-  HOWTO(R_SPARC_PC_HM10,  32,2,10,true, 0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_HM10",    false,0,0x000003ff,true),
-  HOWTO(R_SPARC_PC_LM22,  10,2,22,true, 0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_LM22",    false,0,0x003fffff,true),
-#else
-  HOWTO(R_SPARC_64,      0,0,00,false,0,complain_overflow_dont,      sparc_elf_notsupported_reloc,  "R_SPARC_64",      false,0,0x00000000,true),
-  HOWTO(R_SPARC_OLO10,      0,0,00,false,0,complain_overflow_dont,   sparc_elf_notsupported_reloc,  "R_SPARC_OLO10",   false,0,0x00000000,true),
+  /* These are for sparc64 in a 64 bit environment.
+     Values need to be here because the table is indexed by reloc number.  */
+  HOWTO(R_SPARC_64,        0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_64",      false,0,0x00000000,true),
+  HOWTO(R_SPARC_OLO10,     0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_OLO10",   false,0,0x00000000,true),
   HOWTO(R_SPARC_HH22,      0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_HH22",    false,0,0x00000000,true),
   HOWTO(R_SPARC_HM10,      0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_HM10",    false,0,0x00000000,true),
   HOWTO(R_SPARC_LM22,      0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_LM22",    false,0,0x00000000,true),
-  HOWTO(R_SPARC_PC_HH22,      0,0,00,false,0,complain_overflow_dont, sparc_elf_notsupported_reloc,  "R_SPARC_PC_HH22", false,0,0x00000000,true),
-  HOWTO(R_SPARC_PC_HM10,      0,0,00,false,0,complain_overflow_dont, sparc_elf_notsupported_reloc,  "R_SPARC_PC_HM10", false,0,0x00000000,true),
-  HOWTO(R_SPARC_PC_LM22,      0,0,00,false,0,complain_overflow_dont, sparc_elf_notsupported_reloc,  "R_SPARC_PC_LM22", false,0,0x00000000,true),
-#endif
+  HOWTO(R_SPARC_PC_HH22,   0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_PC_HH22", false,0,0x00000000,true),
+  HOWTO(R_SPARC_PC_HM10,   0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_PC_HM10", false,0,0x00000000,true),
+  HOWTO(R_SPARC_PC_LM22,   0,0,00,false,0,complain_overflow_dont,    sparc_elf_notsupported_reloc,  "R_SPARC_PC_LM22", false,0,0x00000000,true),
+  /* End sparc64 in 64 bit environment values.
+     The following are for sparc64 in a 32 bit environment.  */
   HOWTO(R_SPARC_WDISP16,   2,2,16,true, 0,complain_overflow_signed,  sparc_elf_wdisp16_reloc,"R_SPARC_WDISP16", false,0,0x00000000,true),
-  HOWTO(R_SPARC_WDISP19,   2,2,22,true, 0,complain_overflow_signed,  bfd_elf_generic_reloc,  "R_SPARC_WDISP19", false,0,0x0007ffff,true),
-  HOWTO(R_SPARC_GLOB_JMP,  0,0,00,false,0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_GLOB_JMP",false,0,0x00000000,true),
+  HOWTO(R_SPARC_WDISP19,   2,2,19,true, 0,complain_overflow_signed,  bfd_elf_generic_reloc,  "R_SPARC_WDISP19", false,0,0x0007ffff,true),
+  HOWTO(R_SPARC_UNUSED_42, 0,0, 0,false,0,complain_overflow_dont,    bfd_elf_generic_reloc,  "R_SPARC_UNUSED_42",false,0,0x00000000,true),
   HOWTO(R_SPARC_7,         0,2, 7,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_7",       false,0,0x0000007f,true),
   HOWTO(R_SPARC_5,         0,2, 5,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_5",       false,0,0x0000001f,true),
-  HOWTO(R_SPARC_6,         0,2, 6,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_6",       false,0,0x0000003f,true),
+  HOWTO(R_SPARC_6,         0,2, 6,false,0,complain_overflow_bitfield,bfd_elf_generic_reloc,  "R_SPARC_6",       false,0,0x0000003f,true)
 };
 
 struct elf_reloc_map {
@@ -143,9 +123,7 @@ static CONST struct elf_reloc_map sparc_reloc_map[] =
   { BFD_RELOC_16, R_SPARC_16, },
   { BFD_RELOC_8, R_SPARC_8 },
   { BFD_RELOC_8_PCREL, R_SPARC_DISP8 },
-  /* ??? This might cause us to need separate functions in elf{32,64}-sparc.c
-     (we could still have just one table), but is this reloc ever used?  */
-  { BFD_RELOC_CTOR, R_SPARC_32 }, /* @@ Assumes 32 bits.  */
+  { BFD_RELOC_CTOR, R_SPARC_32 },
   { BFD_RELOC_32, R_SPARC_32 },
   { BFD_RELOC_32_PCREL, R_SPARC_DISP32 },
   { BFD_RELOC_HI22, R_SPARC_HI22 },
@@ -178,10 +156,9 @@ static CONST struct elf_reloc_map sparc_reloc_map[] =
   {BFD_RELOC_SPARC_PC_LM22, R_SPARC_PC_LM22},
   {BFD_RELOC_SPARC_WDISP16, R_SPARC_WDISP16},
   {BFD_RELOC_SPARC_WDISP19, R_SPARC_WDISP19},
-  {BFD_RELOC_SPARC_GLOB_JMP, R_SPARC_GLOB_JMP},
   {BFD_RELOC_SPARC_7, R_SPARC_7},
   {BFD_RELOC_SPARC_5, R_SPARC_5},
-  {BFD_RELOC_SPARC_6, R_SPARC_6},
+  {BFD_RELOC_SPARC_6, R_SPARC_6}
 };
 
 static reloc_howto_type *
@@ -276,10 +253,10 @@ sparc_elf_wdisp16_reloc (abfd,
 		 + input_section->output_offset);
   relocation -= reloc_entry->address;
 
-  x = bfd_get_32 (abfd, (char *) data + reloc_entry->address);
+  x = bfd_get_32 (abfd, (bfd_byte *) data + reloc_entry->address);
   x |= ((((relocation >> 2) & 0xc000) << 6)
 	| ((relocation >> 2) & 0x3fff));
-  bfd_put_32 (abfd, x, (char *) data + reloc_entry->address);
+  bfd_put_32 (abfd, x, (bfd_byte *) data + reloc_entry->address);
 
   if ((bfd_signed_vma) relocation < - 0x40000
       || (bfd_signed_vma) relocation > 0x3ffff)
@@ -502,7 +479,18 @@ elf32_sparc_check_relocs (abfd, info, sec, relocs)
 	case R_SPARC_WDISP22:
 	case R_SPARC_WDISP19:
 	case R_SPARC_WDISP16:
-	  if (h == NULL)
+	  /* If we are linking with -Bsymbolic, we do not need to copy
+             a PC relative reloc against a global symbol which is
+             defined in an object we are including in the link (i.e.,
+             DEF_REGULAR is set).  FIXME: At this point we have not
+             seen all the input files, so it is possible that
+             DEF_REGULAR is not set now but will be set later (it is
+             never cleared).  This needs to be handled as in
+             elf32-i386.c.  */
+	  if (h == NULL
+	      || (info->symbolic
+		  && (h->elf_link_hash_flags
+		      & ELF_LINK_HASH_DEF_REGULAR) != 0))
 	    break;
 	  /* Fall through.  */
 	case R_SPARC_8:
@@ -605,14 +593,22 @@ elf32_sparc_adjust_dynamic_symbol (info, h)
 	      || h->root.type == bfd_link_hash_defweak)
 	  && (h->root.u.def.section->flags & SEC_CODE) != 0))
     {
-      if (! elf_hash_table (info)->dynamic_sections_created)
+      if (! elf_hash_table (info)->dynamic_sections_created
+	  || ((!info->shared || info->symbolic || h->dynindx == -1)
+	      && (h->elf_link_hash_flags
+		  & ELF_LINK_HASH_DEF_REGULAR) != 0))
 	{
 	  /* This case can occur if we saw a WPLT30 reloc in an input
-             file, but none of the input files were dynamic objects.
-             In such a case, we don't actually need to build a
-             procedure linkage table, and we can just do a WDISP30
-             reloc instead.  */
-	  BFD_ASSERT ((h->elf_link_hash_flags & ELF_LINK_HASH_NEEDS_PLT) != 0);
+	     file, but none of the input files were dynamic objects.
+	     Or, when linking the main application or a -Bsymbolic
+	     shared library against PIC code.  Or when a global symbol
+	     has been made private, e.g. via versioning.
+
+	     In these cases we know what value the symbol will resolve
+	     to, so we don't actually need to build a procedure linkage
+	     table, and we can just do a WDISP30 reloc instead.  */
+
+	  h->elf_link_hash_flags &= ~ELF_LINK_HASH_NEEDS_PLT;
 	  return true;
 	}
 
@@ -630,17 +626,17 @@ elf32_sparc_adjust_dynamic_symbol (info, h)
 	  return false;
 	}
 
-      /* If this symbol is not defined in a regular file, and we are
-	 not generating a shared library, then set the symbol to this
-	 location in the .plt.  This is required to make function
-	 pointers compare as equal between the normal executable and
-	 the shared library.  */
-      if (! info->shared
-	  && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR) == 0)
-	{
-	  h->root.u.def.section = s;
-	  h->root.u.def.value = s->_raw_size;
-	}
+     /* If this symbol is not defined in a regular file, and we are
+       not generating a shared library, then set the symbol to this
+       location in the .plt.  This is required to make function
+       pointers compare as equal between the normal executable and
+       the shared library.  */
+     if (! info->shared
+	&& (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR) == 0)
+      {
+	h->root.u.def.section = s;
+	h->root.u.def.value = s->_raw_size;
+      }
 
       h->plt_offset = s->_raw_size;
 
@@ -819,7 +815,8 @@ elf32_sparc_size_dynamic_sections (output_bfd, info)
 					      s->output_section);
 	      target = bfd_get_section_by_name (output_bfd, outname + 5);
 	      if (target != NULL
-		  && (target->flags & SEC_READONLY) != 0)
+		  && (target->flags & SEC_READONLY) != 0
+		  && (target->flags & SEC_ALLOC) != 0)
 		reltext = true;
 
 	      if (strcmp (name, ".rela.plt") == 0)
@@ -905,8 +902,7 @@ elf32_sparc_size_dynamic_sections (output_bfd, info)
       for (s = output_bfd->sections; s != NULL; s = s->next)
 	{
 	  if ((s->flags & SEC_LINKER_CREATED) != 0
-	      || (s->flags & SEC_ALLOC) == 0
-	      || (s->flags & SEC_LOAD) == 0)
+	      || (s->flags & SEC_ALLOC) == 0)
 	    continue;
 
 	  elf_section_data (s)->dynindx = c + 1;
@@ -1051,11 +1047,11 @@ elf32_sparc_relocate_section (output_bfd, info, input_bfd, input_section,
 		       || r_type == R_SPARC_GOT22)
 		      && elf_hash_table (info)->dynamic_sections_created
 		      && (! info->shared
-			  || ! info->symbolic
+			  || (! info->symbolic && h->dynindx != -1)
 			  || (h->elf_link_hash_flags
 			      & ELF_LINK_HASH_DEF_REGULAR) == 0))
 		  || (info->shared
-		      && (! info->symbolic
+		      && ((! info->symbolic && h->dynindx != -1)
 			  || (h->elf_link_hash_flags
 			      & ELF_LINK_HASH_DEF_REGULAR) == 0)
 		      && (r_type == R_SPARC_8
@@ -1124,15 +1120,16 @@ elf32_sparc_relocate_section (output_bfd, info, input_bfd, input_section,
 
 	      if (! elf_hash_table (info)->dynamic_sections_created
 		  || (info->shared
-		      && info->symbolic
+		      && (info->symbolic || h->dynindx == -1)
 		      && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)))
 		{
 		  /* This is actually a static link, or it is a
                      -Bsymbolic link and the symbol is defined
-                     locally.  We must initialize this entry in the
-                     global offset table.  Since the offset must
-                     always be a multiple of 4, we use the least
-                     significant bit to record whether we have
+                     locally, or the symbol was forced to be local
+                     because of a version file.  We must initialize
+                     this entry in the global offset table.  Since the
+                     offset must always be a multiple of 4, we use the
+                     least significant bit to record whether we have
                      initialized it already.
 
 		     When doing a dynamic link, we create a .rela.got
@@ -1235,7 +1232,10 @@ elf32_sparc_relocate_section (output_bfd, info, input_bfd, input_section,
 	case R_SPARC_WDISP22:
 	case R_SPARC_WDISP19:
 	case R_SPARC_WDISP16:
-	  if (h == NULL)
+	  if (h == NULL
+	      || (info->symbolic
+		  && (h->elf_link_hash_flags
+		      & ELF_LINK_HASH_DEF_REGULAR) != 0))
 	    break;
 	  /* Fall through.  */
 	case R_SPARC_8:
@@ -1342,8 +1342,18 @@ elf32_sparc_relocate_section (output_bfd, info, input_bfd, input_section,
 
 			  osec = sec->output_section;
 			  indx = elf_section_data (osec)->dynindx;
+
+			  /* FIXME: we really should be able to link non-pic
+			     shared libraries.  */
 			  if (indx == 0)
-			    abort ();
+			    {
+			      BFD_FAIL ();
+			      (*_bfd_error_handler)
+				("%s: probably compiled without -fPIC?",
+				 bfd_get_filename (input_bfd));
+			      bfd_set_error (bfd_error_bad_value);
+			      return false;
+			    }
 			}
 
 		      outrel.r_info = ELF32_R_INFO (indx, r_type);
@@ -1499,8 +1509,6 @@ elf32_sparc_finish_dynamic_symbol (output_bfd, info, h, sym)
       /* This symbol has an entry in the global offset table.  Set it
          up.  */
 
-      BFD_ASSERT (h->dynindx != -1);
-
       sgot = bfd_get_section_by_name (dynobj, ".got");
       srela = bfd_get_section_by_name (dynobj, ".rela.got");
       BFD_ASSERT (sgot != NULL && srela != NULL);
@@ -1510,11 +1518,12 @@ elf32_sparc_finish_dynamic_symbol (output_bfd, info, h, sym)
 		       + (h->got_offset &~ 1));
 
       /* If this is a -Bsymbolic link, and the symbol is defined
-	 locally, we just want to emit a RELATIVE reloc.  The entry in
-	 the global offset table will already have been initialized in
-	 the relocate_section function.  */
+	 locally, we just want to emit a RELATIVE reloc.  Likewise if
+	 the symbol was forced to be local because of a version file.
+	 The entry in the global offset table will already have been
+	 initialized in the relocate_section function.  */
       if (info->shared
-	  && info->symbolic
+	  && (info->symbolic || h->dynindx == -1)
 	  && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))
 	rela.r_info = ELF32_R_INFO (0, R_SPARC_RELATIVE);
       else

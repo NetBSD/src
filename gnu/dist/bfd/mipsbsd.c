@@ -1,5 +1,5 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright (C) 1993, 1994, 1995, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 97, 1998 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -127,11 +127,11 @@ MY(write_object_contents) (abfd)
   switch (bfd_get_arch(abfd)) {
   case bfd_arch_m68k:
     switch (bfd_get_mach(abfd)) {
-    case 68010:
+    case bfd_mach_m68010:
       N_SET_MACHTYPE(*execp, M_68010);
       break;
     default:
-    case 68020:
+    case bfd_mach_m68020:
       N_SET_MACHTYPE(*execp, M_68020);
       break;
     }
@@ -398,7 +398,7 @@ const bfd_target aout_mips_little_vec =
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */
@@ -437,7 +437,7 @@ const bfd_target aout_mips_big_vec =
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */

@@ -1,5 +1,6 @@
 
-/*  A Bison parser, made from ./nlmheader.y with Bison version GNU Bison version 1.24
+/*  A Bison parser, made from /5g/ian/binutils/release/copy/binutils/nlmheader.y
+ by  GNU Bison version 1.25
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -35,14 +36,14 @@
 #define	THREADNAME	286
 #define	TYPE	287
 #define	VERBOSE	288
-#define	VERSION	289
+#define	VERSIONK	289
 #define	XDCDATA	290
 #define	STRING	291
 #define	QUOTED_STRING	292
 
-#line 1 "./nlmheader.y"
+#line 1 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 /* nlmheader.y - parse NLM header specification keywords.
-     Copyright (C) 1993 Free Software Foundation, Inc.
+     Copyright (C) 1993, 94, 95, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -151,29 +152,12 @@ static struct string_list * string_list_append1 PARAMS ((struct string_list *,
 static char *xstrdup PARAMS ((const char *));
 
 
-#line 112 "./nlmheader.y"
+#line 112 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 typedef union
 {
   char *string;
   struct string_list *list;
 } YYSTYPE;
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -261,15 +245,18 @@ static const short yyrline[] = { 0,
    410,   418,   423,   433,   438,   442,   446,   454,   465,   481,
    486
 };
+#endif
+
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
 
 static const char * const yytname[] = {   "$","error","$undefined.","CHECK",
 "CODESTART","COPYRIGHT","CUSTOM","DATE","DEBUG","DESCRIPTION","EXIT","EXPORT",
 "FLAG_ON","FLAG_OFF","FULLMAP","HELP","IMPORT","INPUT","MAP","MESSAGES","MODULE",
 "MULTIPLE","OS_DOMAIN","OUTPUT","PSEUDOPREEMPTION","REENTRANT","SCREENNAME",
-"SHARELIB","STACK","START","SYNCHRONIZE","THREADNAME","TYPE","VERBOSE","VERSION",
+"SHARELIB","STACK","START","SYNCHRONIZE","THREADNAME","TYPE","VERBOSE","VERSIONK",
 "XDCDATA","STRING","QUOTED_STRING","'('","')'","file","commands","command","@1",
-"@2","symbol_list_opt","symbol_list","symbol_prefix","symbol","string_list",
-""
+"@2","symbol_list_opt","symbol_list","symbol_prefix","symbol","string_list", NULL
 };
 #endif
 
@@ -349,7 +336,7 @@ static const short yycheck[] = {     3,
     -1,    48,    -1,    -1,    68
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/unsupported/share/bison.simple"
+#line 3 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -504,16 +491,16 @@ int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
+     char *from;
      int count;
 {
   register char *f = from;
@@ -529,7 +516,7 @@ __yy_memcpy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, int count)
 {
   register char *f = from;
   register char *t = to;
@@ -542,7 +529,7 @@ __yy_memcpy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 192 "/usr/unsupported/share/bison.simple"
+#line 196 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -551,14 +538,20 @@ __yy_memcpy (char *from, char *to, int count)
    to the proper pointer type.  */
 
 #ifdef YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#else
-#define YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
 #define YYPARSE_PARAM_DECL
-#endif
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
 
 int
-yyparse(YYPARSE_PARAM)
+yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
   register int yystate;
@@ -675,12 +668,12 @@ yynewstate:
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
       yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
       yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
       yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -841,20 +834,20 @@ yyreduce:
   switch (yyn) {
 
 case 4:
-#line 158 "./nlmheader.y"
+#line 158 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    check_procedure = yyvsp[0].string;
 	  ;
     break;}
 case 5:
-#line 162 "./nlmheader.y"
+#line 162 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    nlmheader_warn ("CODESTART is not implemented; sorry", -1);
 	    free (yyvsp[0].string);
 	  ;
     break;}
 case 6:
-#line 167 "./nlmheader.y"
+#line 167 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    int len;
 
@@ -873,13 +866,13 @@ case 6:
 	  ;
     break;}
 case 7:
-#line 184 "./nlmheader.y"
+#line 184 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    custom_file = yyvsp[0].string;
 	  ;
     break;}
 case 8:
-#line 188 "./nlmheader.y"
+#line 188 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    /* We don't set the version stamp here, because we use the
 	       version stamp to detect whether the required VERSION
@@ -899,13 +892,13 @@ case 8:
 	  ;
     break;}
 case 9:
-#line 206 "./nlmheader.y"
+#line 206 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    debug_info = true;
 	  ;
     break;}
 case 10:
-#line 210 "./nlmheader.y"
+#line 210 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    int len;
 
@@ -923,113 +916,113 @@ case 10:
 	  ;
     break;}
 case 11:
-#line 226 "./nlmheader.y"
+#line 226 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    exit_procedure = yyvsp[0].string;
 	  ;
     break;}
 case 12:
-#line 230 "./nlmheader.y"
+#line 230 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    symbol_prefix = NULL;
 	  ;
     break;}
 case 13:
-#line 234 "./nlmheader.y"
+#line 234 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    export_symbols = string_list_append (export_symbols, yyvsp[0].list);
 	  ;
     break;}
 case 14:
-#line 238 "./nlmheader.y"
+#line 238 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags |= nlmlex_get_number (yyvsp[0].string);
 	    free (yyvsp[0].string);
 	  ;
     break;}
 case 15:
-#line 243 "./nlmheader.y"
+#line 243 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags &=~ nlmlex_get_number (yyvsp[0].string);
 	    free (yyvsp[0].string);
 	  ;
     break;}
 case 16:
-#line 248 "./nlmheader.y"
+#line 248 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    map_file = "";
 	    full_map = true;
 	  ;
     break;}
 case 17:
-#line 253 "./nlmheader.y"
+#line 253 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    map_file = yyvsp[0].string;
 	    full_map = true;
 	  ;
     break;}
 case 18:
-#line 258 "./nlmheader.y"
+#line 258 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    help_file = yyvsp[0].string;
 	  ;
     break;}
 case 19:
-#line 262 "./nlmheader.y"
+#line 262 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    symbol_prefix = NULL;
 	  ;
     break;}
 case 20:
-#line 266 "./nlmheader.y"
+#line 266 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    import_symbols = string_list_append (import_symbols, yyvsp[0].list);
 	  ;
     break;}
 case 21:
-#line 270 "./nlmheader.y"
+#line 270 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    input_files = string_list_append (input_files, yyvsp[0].list);
 	  ;
     break;}
 case 22:
-#line 274 "./nlmheader.y"
+#line 274 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    map_file = "";
 	  ;
     break;}
 case 23:
-#line 278 "./nlmheader.y"
+#line 278 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    map_file = yyvsp[0].string;
 	  ;
     break;}
 case 24:
-#line 282 "./nlmheader.y"
+#line 282 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    message_file = yyvsp[0].string;
 	  ;
     break;}
 case 25:
-#line 286 "./nlmheader.y"
+#line 286 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    modules = string_list_append (modules, yyvsp[0].list);
 	  ;
     break;}
 case 26:
-#line 290 "./nlmheader.y"
+#line 290 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags |= 0x2;
 	  ;
     break;}
 case 27:
-#line 294 "./nlmheader.y"
+#line 294 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags |= 0x10;
 	  ;
     break;}
 case 28:
-#line 298 "./nlmheader.y"
+#line 298 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    if (output_file == NULL)
 	      output_file = yyvsp[0].string;
@@ -1038,19 +1031,19 @@ case 28:
 	  ;
     break;}
 case 29:
-#line 305 "./nlmheader.y"
+#line 305 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags |= 0x8;
 	  ;
     break;}
 case 30:
-#line 309 "./nlmheader.y"
+#line 309 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags |= 0x1;
 	  ;
     break;}
 case 31:
-#line 313 "./nlmheader.y"
+#line 313 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    int len;
 
@@ -1068,32 +1061,32 @@ case 31:
 	  ;
     break;}
 case 32:
-#line 329 "./nlmheader.y"
+#line 329 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    sharelib_file = yyvsp[0].string;
 	  ;
     break;}
 case 33:
-#line 333 "./nlmheader.y"
+#line 333 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    var_hdr->stackSize = nlmlex_get_number (yyvsp[0].string);
 	    free (yyvsp[0].string);
 	  ;
     break;}
 case 34:
-#line 338 "./nlmheader.y"
+#line 338 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    start_procedure = yyvsp[0].string;
 	  ;
     break;}
 case 35:
-#line 342 "./nlmheader.y"
+#line 342 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->flags |= 0x4;
 	  ;
     break;}
 case 36:
-#line 346 "./nlmheader.y"
+#line 346 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    int len;
 
@@ -1111,20 +1104,20 @@ case 36:
 	  ;
     break;}
 case 37:
-#line 362 "./nlmheader.y"
+#line 362 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    fixed_hdr->moduleType = nlmlex_get_number (yyvsp[0].string);
 	    free (yyvsp[0].string);
 	  ;
     break;}
 case 38:
-#line 367 "./nlmheader.y"
+#line 367 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    verbose = true;
 	  ;
     break;}
 case 39:
-#line 371 "./nlmheader.y"
+#line 371 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    long val;
 
@@ -1150,7 +1143,7 @@ case 39:
 	  ;
     break;}
 case 40:
-#line 395 "./nlmheader.y"
+#line 395 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    long val;
 
@@ -1168,49 +1161,49 @@ case 40:
 	  ;
     break;}
 case 41:
-#line 411 "./nlmheader.y"
+#line 411 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    rpc_file = yyvsp[0].string;
 	  ;
     break;}
 case 42:
-#line 420 "./nlmheader.y"
+#line 420 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = NULL;
 	  ;
     break;}
 case 43:
-#line 424 "./nlmheader.y"
+#line 424 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = yyvsp[0].list;
 	  ;
     break;}
 case 44:
-#line 435 "./nlmheader.y"
+#line 435 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = string_list_cons (yyvsp[0].string, NULL);
 	  ;
     break;}
 case 45:
-#line 439 "./nlmheader.y"
+#line 439 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = NULL;
 	  ;
     break;}
 case 46:
-#line 443 "./nlmheader.y"
+#line 443 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = string_list_append1 (yyvsp[-1].list, yyvsp[0].string);
 	  ;
     break;}
 case 47:
-#line 447 "./nlmheader.y"
+#line 447 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = yyvsp[-1].list;
 	  ;
     break;}
 case 48:
-#line 456 "./nlmheader.y"
+#line 456 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    if (symbol_prefix != NULL)
 	      free (symbol_prefix);
@@ -1218,7 +1211,7 @@ case 48:
 	  ;
     break;}
 case 49:
-#line 467 "./nlmheader.y"
+#line 467 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    if (symbol_prefix == NULL)
 	      yyval.string = yyvsp[0].string;
@@ -1231,20 +1224,20 @@ case 49:
 	  ;
     break;}
 case 50:
-#line 483 "./nlmheader.y"
+#line 483 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = NULL;
 	  ;
     break;}
 case 51:
-#line 487 "./nlmheader.y"
+#line 487 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 {
 	    yyval.list = string_list_cons (yyvsp[-1].string, yyvsp[0].list);
 	  ;
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 487 "/usr/unsupported/share/bison.simple"
+#line 498 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1440,7 +1433,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 492 "./nlmheader.y"
+#line 492 "/5g/ian/binutils/release/copy/binutils/nlmheader.y"
 
 
 /* If strerror is just a macro, we want to use the one from libiberty
@@ -1575,7 +1568,7 @@ struct keyword_tokens_struct keyword_tokens[] =
   { "THREADNAME", THREADNAME },
   { "TYPE", TYPE },
   { "VERBOSE", VERBOSE },
-  { "VERSION", VERSION },
+  { "VERSION", VERSIONK },
   { "XDCDATA", XDCDATA }
 };
 
@@ -1725,7 +1718,7 @@ tail_recurse:
 	}
       else
 	{
-	  int i;
+	  unsigned int i;
 
 	  for (i = 0; i < KEYWORD_COUNT; i++)
 	    {

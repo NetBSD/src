@@ -442,7 +442,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
@@ -499,7 +499,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
@@ -545,7 +545,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
@@ -581,7 +581,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
@@ -610,8 +610,8 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 5] = fragP->fr_literal[offset + 3];
       fragP->fr_literal[offset + 6] = fragP->fr_literal[offset + 4];
 
-      fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_32_PCREL);
+      fix_new (fragP, fragP->fr_fix + 1, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_32_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 7;
     }
@@ -818,7 +818,7 @@ md_assemble (str)
 	      char *start = input_line_pointer;
 	      char c = get_symbol_end ();
 
-	      if (strcmp (start, "sp") != 0)
+	      if (strcasecmp (start, "sp") != 0)
 		{
 		  *input_line_pointer = c;
 		  input_line_pointer = hold;
@@ -833,7 +833,7 @@ md_assemble (str)
 	      char *start = input_line_pointer;
 	      char c = get_symbol_end ();
 
-	      if (strcmp (start, "psw") != 0)
+	      if (strcasecmp (start, "psw") != 0)
 		{
 		  *input_line_pointer = c;
 		  input_line_pointer = hold;
@@ -848,7 +848,7 @@ md_assemble (str)
 	      char *start = input_line_pointer;
 	      char c = get_symbol_end ();
 
-	      if (strcmp (start, "mdr") != 0)
+	      if (strcasecmp (start, "mdr") != 0)
 		{
 		  *input_line_pointer = c;
 		  input_line_pointer = hold;
@@ -871,14 +871,13 @@ md_assemble (str)
 	      /* Eat the '['.  */
 	      input_line_pointer++;
 	     
-	      /* A null register list can not be specified.  */
-	      if (*input_line_pointer == ']')
-		{
-		  input_line_pointer = hold;
-		  str = hold;
-		  goto error;
-		}
+	      /* We used to reject a null register list here; however,
+		 we accept it now so the compiler can emit "call" instructions
+		 for all calls to named functions.
 
+		 The linker can then fill in the appropriate bits for the
+		 register list and stack size or change the instruction
+		 into a "calls" if using "call" is not profitable.  */
 	      while (*input_line_pointer != ']')
 		{
 		  char *start;
@@ -890,27 +889,27 @@ md_assemble (str)
 		  start = input_line_pointer;
 		  c = get_symbol_end ();
 
-		  if (strcmp (start, "d2") == 0)
+		  if (strcasecmp (start, "d2") == 0)
 		    {
 		      value |= 0x80;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "d3") == 0)
+		  else if (strcasecmp (start, "d3") == 0)
 		    {
 		      value |= 0x40;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "a2") == 0)
+		  else if (strcasecmp (start, "a2") == 0)
 		    {
 		      value |= 0x20;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "a3") == 0)
+		  else if (strcasecmp (start, "a3") == 0)
 		    {
 		      value |= 0x10;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "other") == 0)
+		  else if (strcasecmp (start, "other") == 0)
 		    {
 		      value |= 0x08;
 		      *input_line_pointer = c;

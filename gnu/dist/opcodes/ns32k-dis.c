@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright 1986, 1988, 1991, 1992, 1994 Free Software Foundation, Inc.
+   Copyright 1986, 88, 91, 92, 94, 95, 1998 Free Software Foundation, Inc.
 
 This file is part of opcodes library.
 
@@ -33,6 +33,11 @@ static disassemble_info *dis_info;
  */
 #define CORE_ADDR unsigned long
 #define INVALID_FLOAT(val, size) invalid_float((char *)val, size)
+
+static int print_insn_arg
+  PARAMS ((int, int, int *, char *, CORE_ADDR, char *, int));
+static int get_displacement PARAMS ((char *, int *));
+static int invalid_float PARAMS ((char *, int));
 
 static long read_memory_integer(addr, nr)
      unsigned char *addr;
@@ -244,7 +249,8 @@ optlist(options, optionP, result)
     strcat(result, "]");
 }
 
-static list_search(reg_value, optionP, result)
+static void
+list_search (reg_value, optionP, result)
      int reg_value;
      const struct ns32k_option *optionP;
      char *result;
@@ -270,7 +276,6 @@ bit_extract (buffer, offset, count)
      int count;
 {
   int result;
-  int mask;
   int bit;
 
   buffer += offset >> 3;
@@ -305,7 +310,8 @@ bit_copy (buffer, offset, count, to)
 }
 
 
-static sign_extend (value, bits)
+static int
+sign_extend (value, bits)
      int value, bits;
 {
   value = value & ((1 << bits) - 1);
@@ -314,7 +320,8 @@ static sign_extend (value, bits)
 	  : value);
 }
 
-static flip_bytes (ptr, count)
+static void
+flip_bytes (ptr, count)
      char *ptr;
      int count;
 {
@@ -357,11 +364,9 @@ print_insn_ns32k (memaddr, info)
      bfd_vma memaddr;
      disassemble_info *info;
 {
-  register int i;
-  register unsigned char *p;
+  register unsigned int i;
   register char *d;
   unsigned short first_word;
-  int gen, disp;
   int ioffset;		/* bits into instruction */
   int aoffset;		/* bits into arguments */
   char arg_bufs[MAX_ARGS+1][ARG_LEN];
@@ -384,7 +389,8 @@ print_insn_ns32k (memaddr, info)
   FETCH_DATA(info, buffer + 1);
   for (i = 0; i < NOPCODES; i++)
     if (ns32k_opcodes[i].opcode_id_size <= 8
-	&& ((buffer[0] & ((1 << ns32k_opcodes[i].opcode_id_size) - 1))
+	&& ((buffer[0]
+	     & (((unsigned long) 1 << ns32k_opcodes[i].opcode_id_size) - 1))
 	    == ns32k_opcodes[i].opcode_seed))
       break;
   if (i == NOPCODES) {
@@ -393,7 +399,8 @@ print_insn_ns32k (memaddr, info)
     first_word = read_memory_integer(buffer, 2);
 
     for (i = 0; i < NOPCODES; i++)
-      if ((first_word & ((1 << ns32k_opcodes[i].opcode_id_size) - 1))
+      if ((first_word
+	   & (((unsigned long) 1 << ns32k_opcodes[i].opcode_id_size) - 1))
 	  == ns32k_opcodes[i].opcode_seed)
 	break;
 
@@ -499,8 +506,9 @@ print_insn_ns32k (memaddr, info)
    of the index byte (it contains garbage if this operand is not a
    general operand using scaled indexed addressing mode).  */
 
+static int
 print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
-     char d;
+     int d;
      int ioffset, *aoffsetp;
      char *buffer;
      CORE_ADDR addr;
@@ -651,7 +659,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
 	case 0x1b:
 	  /* Memory space disp(PC) */
 	  disp1 = get_displacement (buffer, aoffsetp);
-	  sprintf (result, "|%d|", addr + disp1);
+	  sprintf (result, "|%ld|", addr + disp1);
 	  break;
 	case 0x1c:
 	case 0x1d:
@@ -709,7 +717,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
       sprintf (result, "%d", (Ivalue / size) + 1);
       break;
     case 'p':
-      sprintf (result, "%c%d%c", NEXT_IS_ADDR,
+      sprintf (result, "%c%ld%c", NEXT_IS_ADDR,
 	       addr + get_displacement (buffer, aoffsetp),
 	       NEXT_IS_ADDR);
       break;
@@ -767,6 +775,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
   return ioffset;
 }
 
+static int
 get_displacement (buffer, aoffsetp)
      char *buffer;
      int *aoffsetp;
@@ -800,11 +809,12 @@ get_displacement (buffer, aoffsetp)
 
 
 #if 1 /* a version that should work on ns32k f's&d's on any machine */
-int invalid_float(p, len)
+static int
+invalid_float (p, len)
      register char *p;
      register int len;
 {
-  register val;
+  register int val;
 
   if ( len == 4 )
     val = (bit_extract(p, 23, 8)/*exponent*/ == 0xff
@@ -828,7 +838,8 @@ typedef union { double d;
 		struct { unsigned lm; unsigned m:20, e:11, :1;} sd;
 	      } float_type_u;
 
-int invalid_float(p, len)
+static int
+invalid_float (p, len)
      register float_type_u *p;
      register int len;
 {

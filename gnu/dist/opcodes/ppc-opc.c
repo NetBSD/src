@@ -1,5 +1,5 @@
 /* ppc-opc.c -- PowerPC opcode list
-   Copyright 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -83,7 +83,7 @@ const struct powerpc_operand powerpc_operands[] =
 {
   /* The zero index is used to indicate the end of the list of
      operands.  */
-#define UNUSED (0)
+#define UNUSED 0
   { 0, 0, 0, 0, 0 },
 
   /* The BA field in an XL form instruction.  */
@@ -821,9 +821,9 @@ extract_nsi (insn, invalid)
   if (invalid != (int *) NULL)
     *invalid = 1;
   if ((insn & 0x8000) != 0)
-    return - ((insn & 0xffff) - 0x10000);
+    return - ((long)(insn & 0xffff) - 0x10000);
   else
-    return - (insn & 0xffff);
+    return - (long)(insn & 0xffff);
 }
 
 /* The RA field in a D or X form instruction which is an updating
@@ -837,7 +837,7 @@ insert_ral (insn, value, errmsg)
      const char **errmsg;
 {
   if (value == 0
-      || value == ((insn >> 21) & 0x1f))
+      || (unsigned long) value == ((insn >> 21) & 0x1f))
     *errmsg = "invalid register operand when updating";
   return insn | ((value & 0x1f) << 16);
 }
@@ -851,7 +851,7 @@ insert_ram (insn, value, errmsg)
      long value;
      const char **errmsg;
 {
-  if (value >= ((insn >> 21) & 0x1f))
+  if ((unsigned long) value >= ((insn >> 21) & 0x1f))
     *errmsg = "index register in load range";
   return insn | ((value & 0x1f) << 16);
 }

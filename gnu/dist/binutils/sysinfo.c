@@ -1,5 +1,6 @@
 
-/*  A Bison parser, made from ./sysinfo.y with Bison version GNU Bison version 1.24
+/*  A Bison parser, made from /5g/ian/binutils/release/copy/binutils/sysinfo.y
+ by  GNU Bison version 1.25
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -11,7 +12,7 @@
 #define	NUMBER	262
 #define	UNIT	263
 
-#line 1 "./sysinfo.y"
+#line 1 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,32 +34,11 @@ char *loop [] = {"","n","m","/*BAD*/"};
 char *names[] = {" ","[n]","[n][m]"};
 char *pnames[]= {"","*","**"};
 
-#line 24 "./sysinfo.y"
+#line 24 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 typedef union {
  int i;
  char *s;
 } YYSTYPE;
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
-#ifndef YYDEBUG
-#define YYDEBUG 1
-#endif
-
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -131,11 +111,15 @@ static const short yyrline[] = { 0,
    157,   186,   204,   217,   230,   233,   338,   340,   343,   348,
    354,   356,   359,   360,   362,   363
 };
+#endif
+
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
 
 static const char * const yytname[] = {   "$","error","$undefined.","COND","REPEAT",
 "'('","')'","TYPE","NAME","NUMBER","UNIT","top","@1","it_list","it","@2","it_field_list",
 "repeat_it_field","@3","cond_it_field","@4","it_field","@5","attr_type","attr_desc",
-"attr_size","attr_id","enums","enum_list",""
+"attr_size","attr_id","enums","enum_list", NULL
 };
 #endif
 
@@ -197,7 +181,7 @@ static const short yycheck[] = {    11,
      0,     0,     8,     8,     6,    -1,     4
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/unsupported/share/bison.simple"
+#line 3 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -352,16 +336,16 @@ int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
+     char *from;
      int count;
 {
   register char *f = from;
@@ -377,7 +361,7 @@ __yy_memcpy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, int count)
 {
   register char *f = from;
   register char *t = to;
@@ -390,7 +374,7 @@ __yy_memcpy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 192 "/usr/unsupported/share/bison.simple"
+#line 196 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -399,14 +383,20 @@ __yy_memcpy (char *from, char *to, int count)
    to the proper pointer type.  */
 
 #ifdef YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#else
-#define YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
 #define YYPARSE_PARAM_DECL
-#endif
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
 
 int
-yyparse(YYPARSE_PARAM)
+yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
   register int yystate;
@@ -523,12 +513,12 @@ yynewstate:
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
       yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
       yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
       yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -689,7 +679,7 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 38 "./sysinfo.y"
+#line 38 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
   switch (writecode)
     {
@@ -713,7 +703,7 @@ case 1:
  ;
     break;}
 case 2:
-#line 59 "./sysinfo.y"
+#line 59 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
   switch (writecode) {
   case 'i':
@@ -728,7 +718,7 @@ case 2:
 ;
     break;}
 case 5:
-#line 81 "./sysinfo.y"
+#line 81 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
 	it = yyvsp[-1].s; code = yyvsp[0].i;
 	switch (writecode) 
@@ -779,7 +769,7 @@ case 5:
       ;
     break;}
 case 6:
-#line 131 "./sysinfo.y"
+#line 131 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
   switch (writecode) {
   case 'd': 
@@ -797,7 +787,7 @@ case 6:
 ;
     break;}
 case 11:
-#line 158 "./sysinfo.y"
+#line 158 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
 	  rdepth++;
 	  switch (writecode) 
@@ -827,7 +817,7 @@ case 11:
 	;
     break;}
 case 12:
-#line 188 "./sysinfo.y"
+#line 188 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
 	  repeat = oldrepeat;
 	  oldrepeat =0;
@@ -843,7 +833,7 @@ case 12:
 	;
     break;}
 case 13:
-#line 205 "./sysinfo.y"
+#line 205 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
 	  switch (writecode) 
 	    {
@@ -857,7 +847,7 @@ case 13:
 	;
     break;}
 case 14:
-#line 218 "./sysinfo.y"
+#line 218 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
 	  switch (writecode)
 	    {
@@ -870,11 +860,11 @@ case 14:
 	;
     break;}
 case 15:
-#line 232 "./sysinfo.y"
+#line 232 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {name = yyvsp[0].s; ;
     break;}
 case 16:
-#line 234 "./sysinfo.y"
+#line 234 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 {
 	  char *desc = yyvsp[-8].s;
 	  char *type = yyvsp[-6].s;
@@ -977,31 +967,31 @@ char *ptr = pnames[rdepth];
 	;
     break;}
 case 17:
-#line 339 "./sysinfo.y"
+#line 339 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { yyval.s = yyvsp[0].s; ;
     break;}
 case 18:
-#line 340 "./sysinfo.y"
+#line 340 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { yyval.s = "INT";;
     break;}
 case 19:
-#line 345 "./sysinfo.y"
+#line 345 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { yyval.s = yyvsp[-1].s; ;
     break;}
 case 20:
-#line 350 "./sysinfo.y"
+#line 350 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { yyval.i = yyvsp[-1].i * yyvsp[0].i; ;
     break;}
 case 21:
-#line 355 "./sysinfo.y"
+#line 355 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { yyval.s = yyvsp[-1].s; ;
     break;}
 case 22:
-#line 356 "./sysinfo.y"
+#line 356 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { yyval.s = "dummy";;
     break;}
 case 26:
-#line 364 "./sysinfo.y"
+#line 364 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 { 
 	  switch (writecode) 
 	    {
@@ -1015,7 +1005,7 @@ case 26:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 487 "/usr/unsupported/share/bison.simple"
+#line 498 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1211,7 +1201,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 379 "./sysinfo.y"
+#line 379 "/5g/ian/binutils/release/copy/binutils/sysinfo.y"
 
 /* four modes
 
@@ -1242,8 +1232,10 @@ if (writecode == 'd')
 return 0;
 }
 
-int yyerror(s)
+int
+yyerror(s)
      char *s;
 {
   fprintf(stderr, "%s\n" , s);
+  return 0;
 }

@@ -1,5 +1,6 @@
 
-/*  A Bison parser, made from ./config/m68k-parse.y with Bison version GNU Bison version 1.24
+/*  A Bison parser, made from /5g/ian/binutils/release/copy/gas/./config/m68k-parse.y
+ by  GNU Bison version 1.25
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -16,7 +17,7 @@
 #define	INDEXREG	267
 #define	EXPR	268
 
-#line 27 "./config/m68k-parse.y"
+#line 27 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 
 
 #include "as.h"
@@ -82,7 +83,7 @@ static void yyerror PARAMS ((const char *));
 static struct m68k_op *op;
 
 
-#line 93 "./config/m68k-parse.y"
+#line 93 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 typedef union
 {
   struct m68k_indexreg indexreg;
@@ -91,23 +92,6 @@ typedef union
   unsigned long mask;
   int onereg;
 } YYSTYPE;
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -218,15 +202,19 @@ static const short yyrline[] = { 0,
    478,   480,   491,   493,   494,   499,   501,   506,   508,   514,
    516,   517,   522,   527,   532,   534,   539,   544,   552,   558,
    566,   572,   580,   582,   586,   597,   602,   603,   607,   613,
-   620,   625,   629,   633
+   623,   628,   632,   636
 };
+#endif
+
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
 
 static const char * const yytname[] = {   "$","error","$undefined.","DR","AR",
 "FPR","FPCR","LPC","ZAR","ZDR","LZPC","CREG","INDEXREG","EXPR","'#'","'&'","'('",
 "')'","'+'","'-'","','","'['","']'","'@'","'/'","operand","generic_operand",
 "motorola_operand","mit_operand","zireg","zdireg","zadr","zdr","apc","zapc",
 "optzapc","zpc","optczapc","optcexpr","optexprc","reglist","ireglist","reglistpair",
-"reglistreg",""
+"reglistreg", NULL
 };
 #endif
 
@@ -358,7 +346,7 @@ static const short yycheck[] = {    58,
     16,     0,    17,    17,    17,    17,    17
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/unsupported/share/bison.simple"
+#line 3 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -513,16 +501,16 @@ int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
+     char *from;
      int count;
 {
   register char *f = from;
@@ -538,7 +526,7 @@ __yy_memcpy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, int count)
 {
   register char *f = from;
   register char *t = to;
@@ -551,7 +539,7 @@ __yy_memcpy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 192 "/usr/unsupported/share/bison.simple"
+#line 196 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -560,14 +548,20 @@ __yy_memcpy (char *from, char *to, int count)
    to the proper pointer type.  */
 
 #ifdef YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#else
-#define YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
 #define YYPARSE_PARAM_DECL
-#endif
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
 
 int
-yyparse(YYPARSE_PARAM)
+yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
   register int yystate;
@@ -684,12 +678,12 @@ yynewstate:
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
       yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
       yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
       yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -850,91 +844,91 @@ yyreduce:
   switch (yyn) {
 
 case 4:
-#line 126 "./config/m68k-parse.y"
+#line 126 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = DREG;
 		  op->reg = yyvsp[0].reg;
 		;
     break;}
 case 5:
-#line 131 "./config/m68k-parse.y"
+#line 131 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = AREG;
 		  op->reg = yyvsp[0].reg;
 		;
     break;}
 case 6:
-#line 136 "./config/m68k-parse.y"
+#line 136 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = FPREG;
 		  op->reg = yyvsp[0].reg;
 		;
     break;}
 case 7:
-#line 141 "./config/m68k-parse.y"
+#line 141 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = CONTROL;
 		  op->reg = yyvsp[0].reg;
 		;
     break;}
 case 8:
-#line 146 "./config/m68k-parse.y"
+#line 146 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = CONTROL;
 		  op->reg = yyvsp[0].reg;
 		;
     break;}
 case 9:
-#line 151 "./config/m68k-parse.y"
+#line 151 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = ABSL;
 		  op->disp = yyvsp[0].exp;
 		;
     break;}
 case 10:
-#line 156 "./config/m68k-parse.y"
+#line 156 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = IMMED;
 		  op->disp = yyvsp[0].exp;
 		;
     break;}
 case 11:
-#line 161 "./config/m68k-parse.y"
+#line 161 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = IMMED;
 		  op->disp = yyvsp[0].exp;
 		;
     break;}
 case 12:
-#line 166 "./config/m68k-parse.y"
+#line 166 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = REGLST;
 		  op->mask = yyvsp[0].mask;
 		;
     break;}
 case 13:
-#line 179 "./config/m68k-parse.y"
+#line 179 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = AINDR;
 		  op->reg = yyvsp[-1].reg;
 		;
     break;}
 case 14:
-#line 184 "./config/m68k-parse.y"
+#line 184 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = AINC;
 		  op->reg = yyvsp[-2].reg;
 		;
     break;}
 case 15:
-#line 189 "./config/m68k-parse.y"
+#line 189 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = ADEC;
 		  op->reg = yyvsp[-1].reg;
 		;
     break;}
 case 16:
-#line 194 "./config/m68k-parse.y"
+#line 194 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-1].reg;
 		  op->disp = yyvsp[-3].exp;
@@ -946,7 +940,7 @@ case 16:
 		;
     break;}
 case 17:
-#line 204 "./config/m68k-parse.y"
+#line 204 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-3].reg;
 		  op->disp = yyvsp[-1].exp;
@@ -958,7 +952,7 @@ case 17:
 		;
     break;}
 case 18:
-#line 214 "./config/m68k-parse.y"
+#line 214 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-1].reg;
 		  op->disp = yyvsp[-3].exp;
@@ -970,28 +964,28 @@ case 18:
 		;
     break;}
 case 19:
-#line 224 "./config/m68k-parse.y"
+#line 224 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = DISP;
 		  op->reg = yyvsp[-1].reg;
 		;
     break;}
 case 20:
-#line 229 "./config/m68k-parse.y"
+#line 229 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
 		;
     break;}
 case 21:
-#line 234 "./config/m68k-parse.y"
+#line 234 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
 		;
     break;}
 case 22:
-#line 239 "./config/m68k-parse.y"
+#line 239 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-3].reg;
@@ -1000,7 +994,7 @@ case 22:
 		;
     break;}
 case 23:
-#line 246 "./config/m68k-parse.y"
+#line 246 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
 		    yyerror ("syntax error");
@@ -1013,7 +1007,7 @@ case 23:
 		;
     break;}
 case 24:
-#line 257 "./config/m68k-parse.y"
+#line 257 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
@@ -1022,7 +1016,7 @@ case 24:
 		;
     break;}
 case 25:
-#line 264 "./config/m68k-parse.y"
+#line 264 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->disp = yyvsp[-1].exp;
@@ -1030,7 +1024,7 @@ case 25:
 		;
     break;}
 case 26:
-#line 270 "./config/m68k-parse.y"
+#line 270 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-3].reg;
@@ -1039,7 +1033,7 @@ case 26:
 		;
     break;}
 case 27:
-#line 277 "./config/m68k-parse.y"
+#line 277 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-3].reg;
@@ -1047,7 +1041,7 @@ case 27:
 		;
     break;}
 case 28:
-#line 283 "./config/m68k-parse.y"
+#line 283 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
 		    yyerror ("syntax error");
@@ -1060,7 +1054,7 @@ case 28:
 		;
     break;}
 case 29:
-#line 294 "./config/m68k-parse.y"
+#line 294 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  if (yyvsp[-3].reg == PC || yyvsp[-3].reg == ZPC)
 		    yyerror ("syntax error");
@@ -1072,7 +1066,7 @@ case 29:
 		;
     break;}
 case 30:
-#line 304 "./config/m68k-parse.y"
+#line 304 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
@@ -1081,7 +1075,7 @@ case 30:
 		;
     break;}
 case 31:
-#line 311 "./config/m68k-parse.y"
+#line 311 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-1].reg;
@@ -1089,7 +1083,7 @@ case 31:
 		;
     break;}
 case 32:
-#line 317 "./config/m68k-parse.y"
+#line 317 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-5].reg;
@@ -1099,7 +1093,7 @@ case 32:
 		;
     break;}
 case 33:
-#line 325 "./config/m68k-parse.y"
+#line 325 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-3].reg;
@@ -1108,7 +1102,7 @@ case 33:
 		;
     break;}
 case 34:
-#line 332 "./config/m68k-parse.y"
+#line 332 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-5].reg;
@@ -1117,7 +1111,7 @@ case 34:
 		;
     break;}
 case 35:
-#line 339 "./config/m68k-parse.y"
+#line 339 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-3].reg;
@@ -1125,7 +1119,7 @@ case 35:
 		;
     break;}
 case 36:
-#line 345 "./config/m68k-parse.y"
+#line 345 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = PRE;
 		  op->reg = yyvsp[-5].reg;
@@ -1135,7 +1129,7 @@ case 36:
 		;
     break;}
 case 37:
-#line 353 "./config/m68k-parse.y"
+#line 353 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = PRE;
 		  op->reg = yyvsp[-5].reg;
@@ -1144,7 +1138,7 @@ case 37:
 		;
     break;}
 case 38:
-#line 360 "./config/m68k-parse.y"
+#line 360 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  if (yyvsp[-5].reg == PC || yyvsp[-5].reg == ZPC)
 		    yyerror ("syntax error");
@@ -1158,7 +1152,7 @@ case 38:
 		;
     break;}
 case 39:
-#line 372 "./config/m68k-parse.y"
+#line 372 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  if (yyvsp[-5].reg == PC || yyvsp[-5].reg == ZPC)
 		    yyerror ("syntax error");
@@ -1171,7 +1165,7 @@ case 39:
 		;
     break;}
 case 40:
-#line 383 "./config/m68k-parse.y"
+#line 383 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = PRE;
 		  op->reg = yyvsp[-3].reg;
@@ -1181,7 +1175,7 @@ case 40:
 		;
     break;}
 case 41:
-#line 396 "./config/m68k-parse.y"
+#line 396 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if (yyvsp[-1].reg < ADDR0 || yyvsp[-1].reg > ADDR7)
@@ -1191,7 +1185,7 @@ case 41:
 		;
     break;}
 case 42:
-#line 404 "./config/m68k-parse.y"
+#line 404 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if (yyvsp[-2].reg < ADDR0 || yyvsp[-2].reg > ADDR7)
@@ -1201,7 +1195,7 @@ case 42:
 		;
     break;}
 case 43:
-#line 412 "./config/m68k-parse.y"
+#line 412 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if (yyvsp[-2].reg < ADDR0 || yyvsp[-2].reg > ADDR7)
@@ -1211,7 +1205,7 @@ case 43:
 		;
     break;}
 case 44:
-#line 420 "./config/m68k-parse.y"
+#line 420 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->reg = yyvsp[-4].reg;
 		  op->disp = yyvsp[-1].exp;
@@ -1223,7 +1217,7 @@ case 44:
 		;
     break;}
 case 45:
-#line 430 "./config/m68k-parse.y"
+#line 430 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = BASE;
 		  op->reg = yyvsp[-5].reg;
@@ -1232,7 +1226,7 @@ case 45:
 		;
     break;}
 case 46:
-#line 437 "./config/m68k-parse.y"
+#line 437 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-9].reg;
@@ -1242,7 +1236,7 @@ case 46:
 		;
     break;}
 case 47:
-#line 445 "./config/m68k-parse.y"
+#line 445 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = POST;
 		  op->reg = yyvsp[-8].reg;
@@ -1251,7 +1245,7 @@ case 47:
 		;
     break;}
 case 48:
-#line 452 "./config/m68k-parse.y"
+#line 452 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  op->mode = PRE;
 		  op->reg = yyvsp[-9].reg;
@@ -1261,7 +1255,7 @@ case 48:
 		;
     break;}
 case 50:
-#line 467 "./config/m68k-parse.y"
+#line 467 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.indexreg.reg = yyvsp[0].reg;
 		  yyval.indexreg.size = SIZE_UNSPEC;
@@ -1269,7 +1263,7 @@ case 50:
 		;
     break;}
 case 52:
-#line 481 "./config/m68k-parse.y"
+#line 481 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.indexreg.reg = yyvsp[0].reg;
 		  yyval.indexreg.size = SIZE_UNSPEC;
@@ -1277,105 +1271,108 @@ case 52:
 		;
     break;}
 case 63:
-#line 524 "./config/m68k-parse.y"
+#line 524 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.reg = ZADDR0;
 		;
     break;}
 case 67:
-#line 541 "./config/m68k-parse.y"
+#line 541 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.reg = ZADDR0;
 		;
     break;}
 case 68:
-#line 545 "./config/m68k-parse.y"
+#line 545 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.reg = yyvsp[0].reg;
 		;
     break;}
 case 69:
-#line 554 "./config/m68k-parse.y"
+#line 554 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.exp.exp.X_op = O_absent;
 		  yyval.exp.size = SIZE_UNSPEC;
 		;
     break;}
 case 70:
-#line 559 "./config/m68k-parse.y"
+#line 559 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.exp = yyvsp[0].exp;
 		;
     break;}
 case 71:
-#line 568 "./config/m68k-parse.y"
+#line 568 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.exp.exp.X_op = O_absent;
 		  yyval.exp.size = SIZE_UNSPEC;
 		;
     break;}
 case 72:
-#line 573 "./config/m68k-parse.y"
+#line 573 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.exp = yyvsp[-1].exp;
 		;
     break;}
 case 74:
-#line 583 "./config/m68k-parse.y"
+#line 583 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.mask = yyvsp[-2].mask | yyvsp[0].mask;
 		;
     break;}
 case 75:
-#line 587 "./config/m68k-parse.y"
+#line 587 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.mask = (1 << yyvsp[-2].onereg) | yyvsp[0].mask;
 		;
     break;}
 case 76:
-#line 599 "./config/m68k-parse.y"
+#line 599 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.mask = 1 << yyvsp[0].onereg;
 		;
     break;}
 case 78:
-#line 604 "./config/m68k-parse.y"
+#line 604 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.mask = yyvsp[-2].mask | yyvsp[0].mask;
 		;
     break;}
 case 79:
-#line 608 "./config/m68k-parse.y"
+#line 608 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.mask = (1 << yyvsp[-2].onereg) | yyvsp[0].mask;
 		;
     break;}
 case 80:
-#line 615 "./config/m68k-parse.y"
+#line 615 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
-		  yyval.mask = (1 << (yyvsp[0].onereg + 1)) - 1 - ((1 << yyvsp[-2].onereg) - 1);
+		  if (yyvsp[-2].onereg <= yyvsp[0].onereg)
+		    yyval.mask = (1 << (yyvsp[0].onereg + 1)) - 1 - ((1 << yyvsp[-2].onereg) - 1);
+		  else
+		    yyval.mask = (1 << (yyvsp[-2].onereg + 1)) - 1 - ((1 << yyvsp[0].onereg) - 1);
 		;
     break;}
 case 81:
-#line 622 "./config/m68k-parse.y"
+#line 625 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.onereg = yyvsp[0].reg - DATA0;
 		;
     break;}
 case 82:
-#line 626 "./config/m68k-parse.y"
+#line 629 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.onereg = yyvsp[0].reg - ADDR0 + 8;
 		;
     break;}
 case 83:
-#line 630 "./config/m68k-parse.y"
+#line 633 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  yyval.onereg = yyvsp[0].reg - FP0 + 16;
 		;
     break;}
 case 84:
-#line 634 "./config/m68k-parse.y"
+#line 637 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 {
 		  if (yyvsp[0].reg == FPI)
 		    yyval.onereg = 24;
@@ -1387,7 +1384,7 @@ case 84:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 487 "/usr/unsupported/share/bison.simple"
+#line 498 "/usr/cygnus/progressive-97r2/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1583,7 +1580,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 644 "./config/m68k-parse.y"
+#line 647 "/5g/ian/binutils/release/copy/gas/./config/m68k-parse.y"
 
 
 /* The string to parse is stored here, and modified by yylex.  */
@@ -1817,24 +1814,36 @@ yylex ()
 	    }
 	}
 
-      if (*s != '*' && *s != ':')
-	yylval.indexreg.scale = 1;
-      else
+      yylval.indexreg.scale = 1;
+
+      if (*s == '*' || *s == ':')
 	{
+	  expressionS scale;
+
 	  ++s;
-	  switch (*s)
+
+	  hold = input_line_pointer;
+	  input_line_pointer = s;
+	  expression (&scale);
+	  s = input_line_pointer;
+	  input_line_pointer = hold;
+
+	  if (scale.X_op != O_constant)
+	    yyerror ("scale specification must resolve to a number");
+	  else
 	    {
-	    case '1':
-	    case '2':
-	    case '4':
-	    case '8':
-	      yylval.indexreg.scale = *s - '0';
-	      ++s;
-	      break;
-	    default:
-	      yyerror ("illegal scale specification");
-	      yylval.indexreg.scale = 1;
-	      break;
+	      switch (scale.X_add_number)
+		{
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+		  yylval.indexreg.scale = scale.X_add_number;
+		  break;
+		default:
+		  yyerror ("invalid scale value");
+		  break;
+		}
 	    }
 	}
 
