@@ -1,14 +1,16 @@
-#	$NetBSD: bsd.prog.mk,v 1.73 1997/05/07 08:42:21 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.74 1997/05/07 15:53:34 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
-.MAIN:		all
-.PHONY:		cleanprog proginstall
-
 .include <bsd.own.mk>
+
+.MAIN:		all
+.PHONY:		cleanprog proginstall scriptsinstall
+install:	proginstall scriptsinstall
+clean:		cleanprog
 
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
@@ -104,16 +106,9 @@ MAN=	${PROG}.1
 
 all: ${PROG} _SUBDIRUSE
 
-.if !target(clean)
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-
-clean: _SUBDIRUSE cleanprog
-cleandir: _SUBDIRUSE cleanprog
-.else
-cleandir: _SUBDIRUSE clean
-.endif
 
 .if defined(SRCS)
 afterdepend: .depend
@@ -123,17 +118,7 @@ afterdepend: .depend
 	    mv $$TMP .depend)
 .endif
 
-.if !target(install)
-.if !target(beforeinstall)
-beforeinstall:
-.endif
-.if !target(afterinstall)
-afterinstall:
-.endif
-
-.if !target(realinstall)
-
-.if defined(PROG)
+.if defined(PROG) && !target(proginstall)
 PROGNAME?= ${PROG}
 proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .if !defined(UPDATE)
@@ -149,7 +134,11 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
 	    -m ${BINMODE} ${.ALLSRC} ${.TARGET}
 .endif
 
-.if defined(SCRIPTS)
+.if !target(proginstall)
+proginstall::
+.endif
+
+.if defined(SCRIPTS) && !target(scriptsinstall)
 SCRIPTSDIR?=${BINDIR}
 SCRIPTSOWN?=${BINOWN}
 SCRIPTSGRP?=${BINGRP}
@@ -165,7 +154,7 @@ SCRIPTSNAME_${S} ?= ${SCRIPTSNAME}
 SCRIPTSNAME_${S} ?= ${S:T:R}
 .endif
 SCRIPTSDIR_${S} ?= ${SCRIPTSDIR}
-proginstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
+scriptsinstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 .endif
@@ -180,18 +169,8 @@ ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
 .endfor
 .endif
 
-.if target(proginstall)
-realinstall: proginstall filesinstall
-.else
-realinstall: filesinstall
-.endif
-.endif
-
-install: ${MANINSTALL} _SUBDIRUSE linksinstall
-
-${MANINSTALL}: afterinstall
-afterinstall: realinstall
-realinstall: beforeinstall
+.if !target(scriptsinstall)
+scriptsinstall::
 .endif
 
 .if !target(lint)

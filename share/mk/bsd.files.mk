@@ -1,6 +1,7 @@
-#	$NetBSD: bsd.files.mk,v 1.3 1997/05/06 21:29:35 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.4 1997/05/07 15:53:28 mycroft Exp $
 
 .PHONY:		filesinstall
+install:	filesinstall
 
 .if defined(FILES)
 FILESDIR?=${BINDIR}
@@ -31,6 +32,8 @@ ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
 	${INSTALL} ${COPY} -o ${FILESOWN_${F}} -g ${FILESGRP_${F}} \
 		-m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
 .endfor
-.else
+.endif
+
+.if !target(filesinstall)
 filesinstall::
 .endif

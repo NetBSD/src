@@ -1,10 +1,11 @@
-#	$NetBSD: bsd.inc.mk,v 1.4 1997/05/06 21:29:36 mycroft Exp $
+#	$NetBSD: bsd.inc.mk,v 1.5 1997/05/07 15:53:29 mycroft Exp $
 
-.PHONY:		inclinstall
+.PHONY:		incinstall
+includes:	incinstall
 
-.if defined(INCS) && !empty(INCS)
+.if defined(INCS)
 .for I in ${INCS}
-inclinstall:: ${DESTDIR}${INCSDIR}/$I
+incinstall:: ${DESTDIR}${INCSDIR}/$I
 
 .PRECIOUS: ${DESTDIR}${INCSDIR}/$I
 ${DESTDIR}${INCSDIR}/$I: $I
@@ -14,5 +15,8 @@ ${DESTDIR}${INCSDIR}/$I: $I
 	     ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.ALLSRC} ${.TARGET})
 .endfor
-includes: inclinstall
+.endif
+
+.if !target(incinstall)
+incinstall::
 .endif
