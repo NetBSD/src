@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.50 2000/05/15 16:59:37 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.51 2000/07/02 00:20:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -114,6 +114,22 @@ struct proc;
 struct rtentry;
 struct socket;
 struct ether_header;
+struct ifnet;
+
+/*
+ * Structure describing a `cloning' interface.
+ */
+struct if_clone {
+	LIST_ENTRY(if_clone) ifc_list;	/* on list of cloners */
+	const char *ifc_name;		/* name of device, e.g. `gif' */
+	size_t ifc_namelen;		/* length of name */
+
+	int	(*ifc_create)(struct if_clone *, int);
+	void	(*ifc_destroy)(struct ifnet *);
+};
+
+#define	IF_CLONE_INITIALIZER(name, create, destroy)			\
+	{ { 0 }, name, sizeof(name) - 1, create, destroy }
 
 /*
  * Structure defining statistics and other data kept regarding a network
@@ -581,6 +597,12 @@ struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
 struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
 void	ifafree __P((struct ifaddr *));
 void	link_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+
+void	if_clone_attach __P((struct if_clone *));
+void	if_clone_detach __P((struct if_clone *));
+
+int	if_clone_create __P((const char *));
+int	if_clone_destroy __P((const char *));
 
 int	loioctl __P((struct ifnet *, u_long, caddr_t));
 void	loopattach __P((int));
