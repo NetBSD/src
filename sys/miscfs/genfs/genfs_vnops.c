@@ -1,3 +1,5 @@
+/*	$NetBSD: genfs_vnops.c,v 1.5 1998/01/05 19:20:11 perry Exp $	*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
