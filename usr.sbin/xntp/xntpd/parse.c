@@ -384,7 +384,7 @@ parse_ioread(parseio, ch, ctime)
       break;
     }
 
-  parseprintf(DD_PARSE, ("parse_ioread(0x%x, char=0x%x, ..., ...)\n", (unsigned int)parseio, ch & 0xFF));
+  parseprintf(DD_PARSE, ("parse_ioread(%p, char=0x%x, ..., ...)\n", parseio, ch & 0xFF));
 
   if (parseio->parse_flags & PARSE_FIXED_FMT)
     {
