@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.2 1996/05/28 18:14:24 chuck Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.3 1996/05/28 19:07:32 chuck Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -178,7 +178,7 @@ exec_mvme(file, flag)
 
 	printf("Start @ 0x%x ...\n", (int)entry);
 	(*entry)(flag, bugargs.ctrl_addr, 
-				bugargs.ctrl_lun, bugargs.dev_lun, cp);
+				bugargs.ctrl_lun, bugargs.dev_lun, 0, cp);
 	printf("exec: kernel returned!\n");
 	return;
 
