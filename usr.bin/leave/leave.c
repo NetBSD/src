@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.6 1997/07/15 02:31:13 mikel Exp $	*/
+/*	$NetBSD: leave.c,v 1.7 1998/04/02 10:23:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: leave.c,v 1.6 1997/07/15 02:31:13 mikel Exp $");
+__RCSID("$NetBSD: leave.c,v 1.7 1998/04/02 10:23:01 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: leave.c,v 1.6 1997/07/15 02:31:13 mikel Exp $");
 #include <sys/time.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 
 /*
