@@ -1,4 +1,4 @@
-/*	$NetBSD: sccreg.h,v 1.2 1995/04/11 03:41:10 mycroft Exp $	*/
+/* $NetBSD: sccreg.h,v 1.3 1997/04/06 22:30:30 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University

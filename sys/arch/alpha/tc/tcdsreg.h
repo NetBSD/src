@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdsreg.h,v 1.2 1996/07/09 00:55:42 cgd Exp $	*/
+/* $NetBSD: tcdsreg.h,v 1.3 1997/04/06 22:30:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
