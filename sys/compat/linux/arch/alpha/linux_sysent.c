@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysent.c,v 1.5 1998/10/19 22:25:55 tron Exp $	*/
+/*	$NetBSD: linux_sysent.c,v 1.6 1998/12/08 21:02:18 erh Exp $	*/
 
 /*
  * System call switch table.
@@ -20,6 +20,7 @@
 #include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_shm.h>
+#include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #define	s(type)	sizeof(type)
