@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.71 2004/02/01 02:34:03 christos Exp $
+# $NetBSD: postinstall,v 1.72 2004/02/03 08:02:41 lukem Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -578,40 +578,6 @@ do_ssh()
 	fi
 
 	return ${failed}
-}
-
-#
-#
-#
-additem ssh_known_hosts "ssh known_hosts file update"
-do_ssh_known_hosts()
-{
-	failed=0
-
-	fs="${SRC_DIR}/etc/ssh/ssh_known_hosts"
-	fd="${DEST_DIR}/etc/ssh/ssh_known_hosts"
-
-	if [ ! -e "${fd}" ]; then
-		if [ "${op}" = "check" ]; then 
-			msg "${fd} is missing"
-			failed=1 
-		else
-			if ! cp "${fs}" "${fd}"; then
-				failed=1
-			else
-				msg "Copied ${fs} to ${fd}"
-			fi
-		fi
-	else
-		src_vers=`awk '/\\$NetBSD/ {print $4}' "${fs}"`
-		dst_vers=`awk '/\\$NetBSD/ {print $4}' "${fd}"`
-		if [ "${src_vers}" != "${dst_vers}" ]; then
-			msg "${fd} version: ${dest_vers}"
-			msg "${fs} version: ${src_vers}"
-			failed=1
-		fi
-	fi
-	return  ${failed}
 }
 
 #
