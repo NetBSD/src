@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.3 2001/12/04 20:53:21 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.4 2001/12/04 21:50:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ struct irframet_softc {
 #endif
 
 	int sc_ebofs;
+	int sc_speed;
 
 	u_char* sc_inbuf;
 	int sc_maxsize;
@@ -442,6 +443,7 @@ irframet_open(void *h, int flag, int mode, struct proc *p)
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
+	sc->sc_speed = 0;
 	sc->sc_ebofs = IRDA_DEFAULT_EBOFS;
 	sc->sc_maxsize = 0;
 	sc->sc_framestate = FRAME_OUTSIDE;
@@ -665,19 +667,21 @@ irframet_set_params(void *h, struct irda_params *p)
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
-	switch (p->speed) {
-	case   2400:
-	case   9600:
-	case  19200:
-	case  38400:
-	case  57600:
-	case 115200:
-		break;
-	default: return (EINVAL);
+	if (p->speed != sc->sc_speed) {
+		switch (p->speed) {
+		case   2400:
+		case   9600:
+		case  19200:
+		case  38400:
+		case  57600:
+		case 115200:
+			break;
+		default: return (EINVAL);
+		}
+		ttioctl(tp, TIOCGETA,  (caddr_t)&tt, 0, curproc);
+		sc->sc_speed = tt.c_ispeed = tt.c_ospeed = p->speed;
+		ttioctl(tp, TIOCSETAF, (caddr_t)&tt, 0, curproc);
 	}
-	ttioctl(tp, TIOCGETA,  (caddr_t)&tt, 0, curproc);
-	tt.c_ispeed = tt.c_ospeed = p->speed;
-	ttioctl(tp, TIOCSETAF, (caddr_t)&tt, 0, curproc);
 
 	sc->sc_ebofs = p->ebofs;
 	if (sc->sc_maxsize != p->maxsize) {
