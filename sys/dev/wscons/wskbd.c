@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.23 1999/05/16 19:21:31 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.24 1999/06/30 06:21:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.23 1999/05/16 19:21:31 thorpej Exp $";
+    "$NetBSD: wskbd.c,v 1.24 1999/06/30 06:21:21 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,6 +102,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <sys/signalvar.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -156,6 +157,10 @@ struct wskbd_softc {
 	int	sc_maplen;		/* number of entries in sc_map */
 	struct wscons_keymap *sc_map;	/* current translation map */
 	kbd_t sc_layout; /* current layout */
+
+	int		sc_refcnt;
+	u_char		sc_dying;	/* device is being detached */
+
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -183,6 +188,9 @@ struct wskbd_softc {
 
 int	wskbd_match __P((struct device *, struct cfdata *, void *));
 void	wskbd_attach __P((struct device *, struct device *, void *));
+int	wskbd_detach __P((struct device *, int));
+int	wskbd_activate __P((struct device *, enum devact));
+
 static inline void update_leds __P((struct wskbd_internal *));
 static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
 static int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
@@ -191,6 +199,9 @@ static int wskbd_enable __P((struct wskbd_softc *, int));
 #if NWSDISPLAY > 0
 static void wskbd_holdscreen __P((struct wskbd_softc *, int));
 #endif
+
+int	wskbd_do_ioctl __P((struct wskbd_softc *, u_long, caddr_t, 
+			    int, struct proc *));
 
 struct cfattach wskbd_ca = {
 	sizeof (struct wskbd_softc), wskbd_match, wskbd_attach,
@@ -384,6 +395,62 @@ wskbd_repeat(v)
 }
 #endif
 
+int
+wskbd_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	/* XXX should we do something more? */
+	return (0);
+}
+
+/*
+ * Detach a keyboard.  To keep track of users of the softc we keep
+ * a reference count that's incremented while inside, e.g., read.
+ * If the mouse is active and the reference count is > 0 (0 is the
+ * normal state) we post an event and then wait for the process
+ * that had the reference to wake us up again.  Then we blow away the
+ * vnode and return (which will deallocate the softc).
+ * XXX what should we do if we are connected to a display?
+ */
+int
+wskbd_detach(self, flags)
+	struct device  *self;
+	int flags;
+{
+	struct wskbd_softc *sc = (struct wskbd_softc *)self;
+	struct wseventvar *evar;
+	int maj, mn;
+	int s;
+
+	evar = &sc->sc_events;
+	if (evar->io) {
+		s = spltty();
+		if (--sc->sc_refcnt >= 0) {
+			/* Wake everyone by generating a dummy event. */
+			if (++evar->put >= WSEVENT_QSIZE)
+				evar->put = 0;
+			WSEVENT_WAKEUP(evar);
+			/* Wait for processes to go away. */
+			if (tsleep(sc, PZERO, "wskdet", hz * 60))
+				printf("wskbd_detach: %s didn't detach\n",
+				       sc->sc_dv.dv_xname);
+		}
+		splx(s);
+	}
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == wskbdopen)
+			break;
+
+	/* Nuke the vnodes for any open instances. */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	return (0);
+}
+
 void
 wskbd_input(dev, type, value)
 	struct device *dev;
@@ -392,6 +459,7 @@ wskbd_input(dev, type, value)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
 	struct wscons_event *ev;
+	struct wseventvar *evar;
 	struct timeval xxxtime;
 #if NWSDISPLAY > 0
 	keysym_t ks;
@@ -405,7 +473,7 @@ wskbd_input(dev, type, value)
 	}
 
 	/*
-	 * If /dev/kbd is not connected in event mode translate and
+	 * If /dev/wskbd is not connected in event mode translate and
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
@@ -434,10 +502,12 @@ wskbd_input(dev, type, value)
 	if (!sc->sc_ready)
 		return;
 
-	put = sc->sc_events.put;
-	ev = &sc->sc_events.q[put];
+	evar = &sc->sc_events;
+
+	put = evar->put;
+	ev = &evar->q[put];
 	put = (put + 1) % WSEVENT_QSIZE;
-	if (put == sc->sc_events.get) {
+	if (put == evar->get) {
 		log(LOG_WARNING, "%s: event queue overflow\n",
 		    sc->sc_dv.dv_xname);
 		return;
@@ -446,8 +516,8 @@ wskbd_input(dev, type, value)
 	ev->value = value;
 	microtime(&xxxtime);
 	TIMEVAL_TO_TIMESPEC(&xxxtime, &ev->time);
-	sc->sc_events.put = put;
-	WSEVENT_WAKEUP(&sc->sc_events);
+	evar->put = put;
+	WSEVENT_WAKEUP(evar);
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -525,6 +595,9 @@ wskbdopen(dev, flags, mode, p)
 	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
+	if (sc->sc_dying)
+		return (EIO);
+
 	if (sc->sc_events.io)			/* and that it's not in use */
 		return (EBUSY);
 
@@ -563,8 +636,18 @@ wskbdread(dev, uio, flags)
 	int flags;
 {
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+	int error;
 
-	return (wsevent_read(&sc->sc_events, uio, flags));
+	if (sc->sc_dying)
+		return (EIO);
+
+	sc->sc_refcnt++;
+	error = wsevent_read(&sc->sc_events, uio, flags);
+	if (--sc->sc_refcnt < 0) {
+		wakeup(sc);
+		error = EIO;
+	}
+	return (error);
 }
 
 int
@@ -576,6 +659,23 @@ wskbdioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+	int error;
+
+	sc->sc_refcnt++;
+	error = wskbd_do_ioctl(sc, cmd, data, flag, p);
+	if (--sc->sc_refcnt < 0)
+		wakeup(sc);
+	return (error);
+}
+
+int
+wskbd_do_ioctl(sc, cmd, data, flag, p)
+	struct wskbd_softc *sc;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
 	int error;
 
 	/*      
