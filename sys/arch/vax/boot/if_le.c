@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1998/07/26 09:01:23 ragge Exp $ */
+/*	$NetBSD: if_le.c,v 1.5 1998/08/08 16:10:41 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -164,7 +164,6 @@ le_init(desc, machdep_hint)
 		addoff = 0x28000000;
 	else
 		addoff = 0;
-
 igen:
 	LEWRCSR(LE_CSR0, LE_C0_STOP);
 	while (to--)
@@ -251,6 +250,7 @@ retry:
 	rdesc[next_rdesc].bd_adrflg |= BR_OWN;
 	if (++next_rdesc >= NRBUF)
 		next_rdesc = 0;
+
 
 	if (len == 0)
 		goto retry;
