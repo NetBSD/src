@@ -1,6 +1,8 @@
 #!/bin/sh -
 #
-#	@(#)daily	5.12 (Berkeley) 5/24/91
+#	$NetBSD: daily,v 1.16 1996/03/26 04:21:27 mrg Exp $
+#
+# form: @(#)daily	5.12 (Berkeley) 5/24/91
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -29,12 +31,6 @@ fi
 #	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
 #	    >/dev/null 2>&1; }
 #fi
-
-# XXX should go away/be replaced by nvi version
-if [ -d /var/preserve -a ! -h /var/preserve ]; then
-	cd /var/preserve && {
-	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
-fi
 
 if [ -d /var/rwho -a ! -h /var/rwho ] ; then
 	cd /var/rwho && {
