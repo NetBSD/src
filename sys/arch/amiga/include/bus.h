@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2002/09/27 21:08:34 jdolecek Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 2004/08/16 10:23:43 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -227,6 +227,12 @@ struct amiga_bus_space_methods {
 
 #define bus_space_write_multi_stream_4(t, h, o, p, c) \
 	panic("bus_space_write_multi_stream_4 not implemented")
+
+#define bus_space_read_region_stream_4(t, h, o, p, c) \
+	panic("bus_space_read_region_stream_4 not implemented")
+
+#define bus_space_write_region_stream_4(t, h, o, p, c) \
+	panic("bus_space_write_region_stream_4 not implemented")
 
 /* 
  * Bus read/write barrier methods.
