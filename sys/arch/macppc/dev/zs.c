@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 2003/01/28 12:35:32 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 2003/02/15 02:28:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -523,7 +523,6 @@ zs_txdma_int(arg)
 	struct zsc_softc *zsc;
 	struct zs_chanstate *cs;
 	int unit = 0;			/* XXX */
-	extern int zstty_txdma_int();
 
 	zsc = zsc_cd.cd_devs[unit];
 	if (zsc == NULL)
