@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.45 2002/07/14 00:58:30 wiz Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.46 2002/10/17 19:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.45 2002/07/14 00:58:30 wiz Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.46 2002/10/17 19:13:51 thorpej Exp $");
 #endif
 
 
@@ -136,7 +136,6 @@ int
 main(int argc, char **argv)
 {
 	int     op;
-	char   *ifname, *hostname;
 
 	/* All error reporting is done through syslogs. */
 	openlog("rarpd", LOG_PID, LOG_DAEMON);
@@ -165,9 +164,10 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 		}
 	}
-	ifname = argv[optind++];
-	hostname = ifname ? argv[optind] : 0;
-	if ((aflag && ifname) || (!aflag && ifname == 0))
+	argc -= optind;
+	argv += optind;
+
+	if ((aflag && argc != 0) || (!aflag && argc == 0))
 		usage();
 
 	if ((!fflag) && (!dflag)) {
@@ -178,8 +178,10 @@ main(int argc, char **argv)
 
 	if (aflag)
 		init_all();
-	else
-		init_one(ifname, INADDR_ANY);
+	else {
+		while (argc--)
+			init_one(*argv++, INADDR_ANY);
+	}
 
 	rarp_loop();
 	/* NOTREACHED */
