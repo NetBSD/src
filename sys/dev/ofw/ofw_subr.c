@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.3 1998/02/02 21:56:16 cgd Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.4 1998/02/03 16:58:26 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -142,7 +142,7 @@ out:
 }
 
 /*
- * int of_nodename(phandle, buf, bufsize)
+ * int of_packagename(phandle, buf, bufsize)
  *
  * This routine places the last component of an OFW node's name
  * into a user-provided buffer.
@@ -172,7 +172,7 @@ out:
  *	either case, the contents of 'buf' will be NUL-terminated.
  */
 int
-of_nodename(phandle, buf, bufsize)
+of_packagename(phandle, buf, bufsize)
 	int phandle;
 	char *buf;
 	int bufsize;
@@ -193,7 +193,8 @@ of_nodename(phandle, buf, bufsize)
 		else if (bufsize >= 4)
 			strcpy(buf, "???");
 		else
-			panic("of_nodename: bufsize = %d is silly", bufsize);
+			panic("of_packagename: bufsize = %d is silly",
+			    bufsize);
 		rv = -1;
 	} else {
 		lastslash = strrchr(pbuf, '/');

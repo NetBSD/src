@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.8 1998/02/03 00:43:46 cgd Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.9 1998/02/03 16:58:25 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,7 +57,7 @@ ofbprint(aux, pnp)
 	struct ofprobe *ofp = aux;
 	char name[64];
 
-	(void)of_nodename(ofp->phandle, name, sizeof name);
+	(void)of_packagename(ofp->phandle, name, sizeof name);
 	if (pnp)
 		printf("%s at %s", name, pnp);
 	else
