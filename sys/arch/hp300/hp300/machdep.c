@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.15 1994/01/06 16:50:13 mycroft Exp $
+ *	$Id: machdep.c,v 1.16 1994/01/06 17:16:34 mycroft Exp $
  */
 
 #include "param.h"
@@ -1628,7 +1628,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 int
 ptrace_set_pc (p, addr)
 	struct proc *p;
-	int *addr;
+	int addr;
 {
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
@@ -1660,7 +1660,7 @@ ptrace_getregs (p, addr)
 	bcopy(frame->f_regs, ipcreg, sizeof(frame->f_regs));
 	ipcreg.r_sr = frame->f_sr;
 	ipcreg.r_pc = frame->f_pc;
-	return copyout(reg, addr, sizeof(reg));
+	return copyout(ipcreg, addr, sizeof(reg));
 }
 
 int
@@ -1673,7 +1673,7 @@ ptrace_setregs (p, addr)
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
 
-	if (error = copyin(addr, reg, sizeof(reg)))
+	if (error = copyin(addr, ipcreg, sizeof(reg)))
 		return error;
 
 	bcopy(ipcreg, frame->f_regs, sizeof(frame->f_regs));
