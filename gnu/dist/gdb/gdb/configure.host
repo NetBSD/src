@@ -99,6 +99,7 @@ m68*-bull*-sysv*)	gdb_host=dpx2 ;;
 # OBSOLETE m68*-hp-hpux*)		gdb_host=hp300hpux ;;
 m68*-*-linux*)		gdb_host=linux ;;
 m68*-*-lynxos*)		gdb_host=m68klynx ;;
+m68*-*-netbsdelf*)	gdb_host=nbsd ;;
 m68*-*-netbsd*)		gdb_host=nbsdaout ;;
 m68*-*-sysv4*)		gdb_host=m68kv4 ;;
 m68*-motorola-*)	gdb_host=delta68 ;;

@@ -157,6 +157,7 @@ m68*-*-linux*)		gdb_target=linux
 			build_gdbserver=yes
 			;;
 m68*-*-lynxos*)		gdb_target=m68klynx ;;
+m68*-*-netbsdelf*)	gdb_target=nbsd ;;
 m68*-*-netbsd*)		gdb_target=nbsdaout ;;
 m68*-*-os68k*)		gdb_target=os68k ;;
 m68*-*-sunos3*)		gdb_target=sun3os3 ;;
