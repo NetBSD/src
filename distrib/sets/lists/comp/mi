@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.414 2001/12/07 11:56:14 yamt Exp $
+#	$NetBSD: mi,v 1.415 2001/12/14 05:48:34 explorer Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -5925,6 +5925,7 @@
 ./usr/share/mk/bsd.README		comp-util-share
 ./usr/share/mk/bsd.dep.mk		comp-util-share
 ./usr/share/mk/bsd.doc.mk		comp-util-share
+./usr/share/mk/bsd.files.mk		comp-util-share
 ./usr/share/mk/bsd.files.mk		comp-util-share
 ./usr/share/mk/bsd.hostprog.mk		comp-util-share
 ./usr/share/mk/bsd.inc.mk		comp-util-share
