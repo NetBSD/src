@@ -1,4 +1,4 @@
-/* $NetBSD: copyinoutstr.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $ */
+/* $NetBSD: copyinoutstr.c,v 1.2 2000/06/26 14:59:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,13 +33,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: copyinoutstr.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $");
+__RCSID("$NetBSD: copyinoutstr.c,v 1.2 2000/06/26 14:59:03 mrg Exp $");
 
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <machine/pcb.h>
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 
 /*
  * FIXME: These are bogus.  They should use LDRT and friends for user

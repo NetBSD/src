@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.h,v 1.13 2000/03/29 03:41:07 simonb Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.1 2000/06/26 14:59:04 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_kern.h	8.1 (Berkeley) 6/11/93
+ *	@(#)vm_param.h	8.2 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -64,15 +64,101 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_VM_KERN_H_
-#define _VM_VM_KERN_H_
+/*
+ *	Machine independent virtual memory parameters.
+ */
 
-/* Kernel memory management definitions. */
+#ifndef	_VM_PARAM_
+#define	_VM_PARAM_
 
-extern vm_map_t	buffer_map;
-extern vm_map_t	exec_map;
-extern vm_map_t	kernel_map;
-extern vm_map_t	kmem_map;
-extern vm_map_t	mb_map;
-extern vm_map_t	phys_map;
-#endif /* !_VM_VM_KERN_H_ */
+#include <machine/vmparam.h>
+
+/*
+ * This belongs in types.h, but breaks too many existing programs.
+ */
+typedef int	boolean_t;
+#ifndef TRUE
+#define	TRUE	1
+#endif
+#ifndef FALSE
+#define	FALSE	0
+#endif
+
+/*
+ *	The machine independent pages are refered to as PAGES.  A page
+ *	is some number of hardware pages, depending on the target machine.
+ */
+#define	DEFAULT_PAGE_SIZE	4096
+
+#if defined(_KERNEL) && !defined(PAGE_SIZE)
+/*
+ *	All references to the size of a page should be done with PAGE_SIZE
+ *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
+ *	we can easily make them constant if we so desire.
+ */
+#define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
+#define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
+#define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
+#endif /* _KERNEL */
+
+/*
+ * CTL_VM identifiers
+ */
+#define	VM_METER	1		/* struct vmmeter */
+#define	VM_LOADAVG	2		/* struct loadavg */
+#define VM_UVMEXP	3		/* struct uvmexp */
+#define	VM_NKMEMPAGES	4		/* kmem_map pages */
+#define	VM_MAXID	5		/* number of valid vm ids */
+
+#define	CTL_VM_NAMES { \
+	{ 0, 0 }, \
+	{ "vmmeter", CTLTYPE_STRUCT }, \
+	{ "loadavg", CTLTYPE_STRUCT }, \
+	{ "uvmexp", CTLTYPE_STRUCT }, \
+	{ "nkmempages", CTLTYPE_INT }, \
+}
+
+
+/* 
+ *	Return values from the VM routines.
+ */
+#define	KERN_SUCCESS		0
+#define	KERN_INVALID_ADDRESS	1
+#define	KERN_PROTECTION_FAILURE	2
+#define	KERN_NO_SPACE		3
+#define	KERN_INVALID_ARGUMENT	4
+#define	KERN_FAILURE		5
+#define	KERN_RESOURCE_SHORTAGE	6
+#define	KERN_NOT_RECEIVER	7
+#define	KERN_NO_ACCESS		8
+#define	KERN_PAGES_LOCKED	9
+
+#ifndef ASSEMBLER
+/*
+ *	Convert addresses to pages and vice versa.
+ *	No rounding is used.
+ */
+#ifdef _KERNEL
+#define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
+#define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
+
+/*
+ * Round off or truncate to the nearest page.  These will work
+ * for either addresses or counts (i.e., 1 byte rounds to 1 page).
+ */
+#define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
+#define	trunc_page(x)	((x) & ~PAGE_MASK)
+
+extern psize_t		mem_size;	/* size of physical memory (bytes) */
+
+#else
+/* out-of-kernel versions of round_page and trunc_page */
+#define	round_page(x) \
+	((((vaddr_t)(x) + (vm_page_size - 1)) / vm_page_size) * \
+	    vm_page_size)
+#define	trunc_page(x) \
+	((((vaddr_t)(x)) / vm_page_size) * vm_page_size)
+
+#endif /* _KERNEL */
+#endif /* ASSEMBLER */
+#endif /* _VM_PARAM_ */
