@@ -32,35 +32,34 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.11 1993/10/16 06:39:45 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.12 1993/10/17 05:34:20 mycroft Exp $
  */
 
 /*
  * COM driver, based originally on HP dca driver
  * uses National Semiconductor NS16450/NS16550AF UART
  */
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "select.h"
-#include "tty.h"
-#include "proc.h"
-#include "user.h"
-#include "conf.h"
-#include "file.h"
-#include "uio.h"
-#include "kernel.h"
-#include "syslog.h"
-#include "types.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/types.h>
+#include <sys/device.h>
 
-#include "machine/cpu.h"
-#include "machine/pio.h"
+#include <machine/cpu.h>
+#include <machine/pio.h>
 
-#include "i386/isa/isavar.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/comreg.h"
-#include "i386/isa/ic/ns16550.h"
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/comreg.h>
 
 struct com_softc {
 	struct	device sc_dev;

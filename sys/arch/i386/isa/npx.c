@@ -33,27 +33,27 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.8 1993/10/16 06:39:40 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.9 1993/10/17 05:34:31 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/device.h>
 
-#include "machine/cpu.h"
-#include "machine/cpufunc.h"
-#include "machine/pio.h"
-#include "machine/pcb.h"
-#include "machine/specialreg.h"
-#include "machine/trap.h"
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/pio.h>
+#include <machine/pcb.h>
+#include <machine/specialreg.h>
+#include <machine/trap.h>
 
-#include "i386/isa/isavar.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/icu.h"
+#include <i386/isa/isavar.h>
+#include <i386/isa/isa.h>
+#include <i386/isa/icu.h>
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.

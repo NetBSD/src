@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.12 1993/10/16 21:27:45 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.13 1993/10/17 05:34:26 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -81,24 +81,6 @@ enum fdc_state {
 	MOTORWAIT,
 	IOTIMEDOUT
 };
-
-#ifdef	DEBUG
-char *fdc_states[] = {
-	"DEVIDLE",
-	"FINDWORK",
-	"DOSEEK",
-	"DOREAD",
-	"SEEKCOMPLETE",
-	"IOCOMPLETE",
-	"RECALCOMPLETE",
-	"STARTRECAL",
-	"RESETCTLR",
-	"SEEKWAIT",
-	"RECALWAIT",
-	"MOTORWAIT",
-	"IOTIMEDOUT"
-};
-#endif	DEBUG
 
 /* software state, per controller */
 struct fdc_softc {
@@ -174,15 +156,6 @@ struct fd_softc {
 	int	sc_track;		/* where we think the head is */
 };
 
-#ifdef	DEBUG
-int	fd_debug = 1;
-#define TRACE0(arg) if (fd_debug) printf(arg)
-#define TRACE1(arg1,arg2) if (fd_debug) printf(arg1,arg2)
-#else	DEBUG
-#define TRACE0(arg)
-#define TRACE1(arg1,arg2)
-#endif	DEBUG
-
 /* floppy driver configuration */
 static int fdmatch __P((struct device *, struct cfdata *, void *));
 static void fdattach __P((struct device *, struct device *, void *));
@@ -196,9 +169,8 @@ static struct dkdriver fddkdriver = { fdstrategy };
 
 static struct fd_type *fd_nvtotype __P((char *, int, int));
 static void set_motor __P((struct fd_softc *fd, int reset));
-static void fd_turnoff __P((struct fd_softc *fd));
+static void fd_motor_off __P((struct fd_softc *fd));
 static void fd_motor_on __P((struct fd_softc *fd));
-static void fd_turnon __P((struct fd_softc *fd));
 static int in_fdc __P((u_short iobase));
 static int out_fdc __P((u_short iobase, u_char x));
 static void fdstart __P((struct fdc_softc *fdc));
@@ -417,8 +389,8 @@ fdstrategy(bp)
 	daddr_t	blkno;
  	int	s;
 
-#ifdef DEBUG
-	if (bp->b_blkno < 0 || fdu < 0 || fdu > fdcd.ndevs)
+#ifdef DIAGNOSTIC
+	if (bp->b_blkno < 0 || fdu < 0 || fdu > fdcd.cd_ndevs)
 		panic("fdstrategy: fdu=%d, blkno=%d, bcount=%d\n", fdu,
 			bp->b_blkno, bp->b_bcount);
 #endif
@@ -438,7 +410,7 @@ fdstrategy(bp)
 	dp = &(fdc->sc_head);
 	s = splbio();
 	disksort(dp, bp);
-	untimeout((timeout_t)fd_turnoff, (caddr_t)fd); /* a good idea */
+	untimeout((timeout_t)fd_motor_off, (caddr_t)fd); /* a good idea */
 	fdstart(fdc);
 	splx(s);
 	return;
@@ -460,11 +432,10 @@ set_motor(fd, reset)
 	if ((fd = fdc->sc_fd[1]) && (fd->sc_flags & FD_MOTOR))
 		status |= FDO_MOEN1;
 	outb(fdc->sc_iobase + fdout, status);
-	TRACE1("[0x%x->fdout]", status);
 }
 
 static void
-fd_turnoff(fd)
+fd_motor_off(fd)
 	struct fd_softc *fd;
 {
 	int s = splbio();
@@ -487,20 +458,6 @@ fd_motor_on(fd)
 	splx(s);
 }
 
-static void
-fd_turnon(fd)
-	struct fd_softc *fd;
-{
-
-	if (!(fd->sc_flags & FD_MOTOR)) {
-		fd->sc_flags |= FD_MOTOR;
-		set_motor(fd, 0);
-		fd->sc_flags |= FD_MOTOR_WAIT;
-		/* allow 1 second for motor to stabilize */
-		timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz);
-	}
-}
-
 static int
 in_fdc(iobase)
 	u_short iobase;
@@ -515,7 +472,6 @@ in_fdc(iobase)
 	if (j <= 0)
 		return -1;
 	i = inb(iobase + fddata);
-	TRACE1("[fddata->0x%x]", i);
 	return i;
 }
 
@@ -533,7 +489,6 @@ out_fdc(iobase, x)
 	if (i <= 0)
 		return -1;
 	outb(iobase + fddata, x);
-	TRACE1("[0x%x->fddata]", x);
 	return 0;
 }
 
@@ -691,9 +646,9 @@ fdcstate(fdc)
 		printf("%s: confused fd pointers\n", fdc->sc_dev.dv_xname);
 #endif
 	read = bp->b_flags & B_READ;
-	untimeout((timeout_t)fd_turnoff, (caddr_t)fd);
+	untimeout((timeout_t)fd_motor_off, (caddr_t)fd);
 	/* turn off motor 4 seconds from now */
-	timeout((timeout_t)fd_turnoff, (caddr_t)fd, 4 * hz);
+	timeout((timeout_t)fd_motor_off, (caddr_t)fd, 4 * hz);
 	switch (fdc->sc_state) {
 	    case DEVIDLE:
 	    case FINDWORK:			/* we have found new work */
@@ -705,8 +660,11 @@ fdcstate(fdc)
 			return 0;
 		}
 		if (!(fd->sc_flags & FD_MOTOR)) {
+			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
+			set_motor(fd, 0);
 			fdc->sc_state = MOTORWAIT;
-			fd_turnon(fd);
+			/* allow 1 second for motor to stabilize */
+			timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz);
 			return 0;
 		}
 		/* at least make sure we are selected */
@@ -806,7 +764,6 @@ fdcstate(fdc)
 		delay(100);
 		set_motor(fd, 0);
 		outb(iobase + fdctl, fd->sc_type->rate);
-		TRACE1("[0x%x->fdctl]", fd->sc_type->rate);
 		fdc->sc_retry++;
 		fdc->sc_state = STARTRECAL;
 		return 1;			/* will return immediately */
