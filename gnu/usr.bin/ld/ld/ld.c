@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.37 1994/11/30 18:24:56 pk Exp $
+ *	$Id: ld.c,v 1.38 1994/12/17 16:22:57 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -383,7 +383,7 @@ main(argc, argv)
 	 * Print error messages for any missing symbols, for any warning
 	 * symbols, and possibly multiple definitions
 	 */
-	make_executable = do_warnings(stderr);
+	make_executable &= do_warnings(stderr);
 
 	/* Print a map, if requested.  */
 	if (write_map)
@@ -1341,7 +1341,7 @@ enter_global_ref(lsp, name, entry)
 	int olddef = sp->defined;
 	int com = sp->defined && sp->common_size;
 
-	if (type == (N_INDR | N_EXT)) {
+	if (type == (N_INDR | N_EXT) && !olddef) {
 		sp->alias = getsym(entry->strings + (lsp + 1)->nzlist.nz_strx);
 		if (sp == sp->alias) {
 			warnx("%s: %s is alias for itself",
