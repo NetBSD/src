@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.17 2000/03/14 14:11:06 soren Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18 2000/06/29 08:11:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,8 @@
 #include <mips/sysarch.h>
 #include <mips/cachectl.h>
 #include <mips/locore.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef TRACE
 int	nvualarm;

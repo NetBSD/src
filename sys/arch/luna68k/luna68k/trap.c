@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.8 2000/06/27 04:18:57 mrg Exp $ */
+/* $NetBSD: trap.c,v 1.9 2000/06/29 08:17:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2000/06/27 04:18:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2000/06/29 08:17:26 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2000/06/27 04:18:57 mrg Exp $");
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/db_machdep.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

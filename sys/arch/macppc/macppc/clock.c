@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2000/01/19 02:52:19 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,8 +34,6 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
