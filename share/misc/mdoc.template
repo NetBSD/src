@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.template,v 1.5 2002/01/12 02:24:29 wiz Exp $
+.\"	$NetBSD: mdoc.template,v 1.6 2002/07/10 09:45:18 yamt Exp $
 .\"
 .\" Copyright notice
 .\"
@@ -33,3 +33,4 @@
 .\" .Sh AUTHORS
 .\" .Sh BUGS
 .\" .Sh SECURITY CONSIDERATIONS
+.\" .Sh CAVEATS
