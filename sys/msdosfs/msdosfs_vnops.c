@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.28 1994/12/27 18:36:31 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.29 1994/12/27 18:49:09 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -223,52 +223,15 @@ msdosfs_access(ap)
 {
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
-	struct ucred *cred = ap->a_cred;
-	mode_t dosmode, mask, mode = ap->a_mode;
-	register gid_t *gp;
-	int i;
+	mode_t dosmode;
 	
-	dosmode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH) |
-	    ((dep->de_Attributes & ATTR_READONLY) ? 0 : (S_IWUSR|S_IWGRP|S_IWOTH));
+	dosmode = (S_IXUSR|S_IXGRP|S_IXOTH) | (S_IRUSR|S_IRGRP|S_IROTH);
+	if ((dep->de_Attributes & ATTR_READONLY) == 0)
+		dosmode |= (S_IWUSR|S_IWGRP|S_IWOTH);
 	dosmode &= pmp->pm_mask;
-	
-	/* User id 0 always gets access. */
-	if (cred->cr_uid == 0)
-		return (0);
-	
-	mask = 0;
-	
-	/* Otherwise, check the owner. */
-	if (cred->cr_uid == pmp->pm_uid) {
-		if (mode & VEXEC)
-			mask |= S_IXUSR;
-		if (mode & VREAD)
-			mask |= S_IRUSR;
-		if (mode & VWRITE)
-			mask |= S_IWUSR;
-		return ((dosmode & mask) == mask ? 0 : EACCES);
-	}
-	
-	/* Otherwise, check the groups. */
-	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (pmp->pm_gid == *gp) {
-			if (mode & VEXEC)
-				mask |= S_IXGRP;
-			if (mode & VREAD)
-				mask |= S_IRGRP;
-			if (mode & VWRITE)
-				mask |= S_IWGRP;
-			return ((dosmode & mask) == mask ? 0 : EACCES);
-		}
-	
-	/* Otherwise, check everyone else. */
-	if (mode & VEXEC)
-		mask |= S_IXOTH;
-	if (mode & VREAD)
-		mask |= S_IROTH;
-	if (mode & VWRITE)
-		mask |= S_IWOTH;
-	return ((dosmode & mask) == mask ? 0 : EACCES);
+
+	return (vaccess(dosmode, pmp->pm_uid, pmp->pm_gid, ap->a_mode,
+	    ap->a_cred));
 }
 
 int
