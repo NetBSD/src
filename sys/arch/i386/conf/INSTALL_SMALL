@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.1 1997/11/05 03:25:52 perry Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.2 1997/11/05 19:24:27 thorpej Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -344,9 +344,7 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 # ISA network interfaces
-ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
-ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
@@ -358,6 +356,9 @@ lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
+sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # MII bus support
 #mii*	at tl?
