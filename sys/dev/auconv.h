@@ -1,8 +1,11 @@
-/*	$NetBSD: auconv.h,v 1.3 1997/10/09 07:47:49 jtc Exp $	*/
+/*	$NetBSD: auconv.h,v 1.3.10.1 1999/04/16 20:26:52 augustss Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
