@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73.2.7 2003/08/27 08:41:14 msaitoh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.8 2003/10/08 08:23:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -549,8 +549,10 @@ debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* all sysctl names at this level are name and field */
 	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
+	if (name[0] < 0 || name[0] >= CTL_DEBUG_MAXID)
+		return (EOPNOTSUPP);
 	cdp = debugvars[name[0]];
-	if (name[0] >= CTL_DEBUG_MAXID || cdp->debugname == 0)
+	if (cdp->debugname == 0)
 		return (EOPNOTSUPP);
 	switch (name[1]) {
 	case CTL_DEBUG_NAME:
