@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.46 2002/06/07 22:07:38 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.47 2002/06/07 22:08:41 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.46 2002/06/07 22:07:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.47 2002/06/07 22:08:41 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -124,6 +124,7 @@ struct rip6stat rip6stat;
 void
 rip6_init()
 {
+
 	rawin6pcb.in6p_next = rawin6pcb.in6p_prev = &rawin6pcb;
 }
 
