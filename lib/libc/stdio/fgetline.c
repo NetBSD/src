@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fgetline.c,v 1.4 1993/12/22 07:11:10 cgd Exp $";
+static char *rcsid = "$Id: fgetline.c,v 1.5 1993/12/31 19:14:04 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ static char *rcsid = "$Id: fgetline.c,v 1.4 1993/12/22 07:11:10 cgd Exp $";
  * so we add 1 here.
 #endif
  */
+int
 __slbexpand(fp, newsize)
 	FILE *fp;
 	size_t newsize;
