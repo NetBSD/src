@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.35 1999/04/01 08:14:11 chopps Exp $	*/
+/*	$NetBSD: route.c,v 1.36 1999/04/01 23:12:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.35 1999/04/01 08:14:11 chopps Exp $");
+__RCSID("$NetBSD: route.c,v 1.36 1999/04/01 23:12:30 chopps Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ sockdup(sp)
 	else
 		len = sp->sa_len;
 	if ((dp = malloc(len)) == 0)
-		errx(1, "sockdup");
+		err(1, "sockdup");
 	if (salen)
 		memcpy(dp, sp, salen);
 	if (len > salen)
