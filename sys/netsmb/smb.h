@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.11 2003/03/24 08:56:21 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.12 2003/04/07 11:13:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -166,6 +166,18 @@ enum smb_dialects {
 #define	SMB_SM_DENYNONE		0x0040
 
 /*
+ * Request flag defines - CIFS spec 3.1.1 via Samba
+ */
+#define	SMB_FL_SUPPORT_LOCKREAD		0x01
+#define SMB_FL_CLIENT_BUF_AVAIL		0x02
+#define SMB_FL_RESERVED			0x04
+#define SMB_FL_CASELESS_PATHNAMES	0x08
+#define SMB_FL_CANONICAL_PATHNAMES	0x10
+#define SMB_FL_REQUEST_OPLOCK		0x20
+#define SMB_FL_REQUEST_BATCH_OPLOCK	0x40
+#define SMB_FL_REPLY			0x80
+
+/*
  * SMB commands
  */
 #define	SMB_COM_CREATE_DIRECTORY        0x00
@@ -245,6 +257,51 @@ enum smb_dialects {
 #define SMB_NTTRANS_NOTIFY_CHANGE	0x04	/* Directory Change Notify */
 #define SMB_NTTRANS_RENAME		0x05
 #define SMB_NTTRANS_QUERY_SEC_DESC	0x06	/* Query Security Descriptor */
+
+/*
+ * NT TRANSACT NOTIFY CHANGE CompletionFilter flags
+ */
+#define	FILE_NOTIFY_CHANGE_FILE_NAME	0x00000001
+#define	FILE_NOTIFY_CHANGE_DIR_NAME	0x00000002
+#define	FILE_NOTIFY_CHANGE_NAME		0x00000003
+#define	FILE_NOTIFY_CHANGE_ATTRIBUTES	0x00000004
+#define	FILE_NOTIFY_CHANGE_SIZE		0x00000008
+#define	FILE_NOTIFY_CHANGE_LAST_WRITE	0x00000010
+#define	FILE_NOTIFY_CHANGE_LAST_ACCESS	0x00000020
+#define	FILE_NOTIFY_CHANGE_CREATION	0x00000040
+#define	FILE_NOTIFY_CHANGE_EA		0x00000080
+#define	FILE_NOTIFY_CHANGE_SECURITY	0x00000100
+#define	FILE_NOTIFY_CHANGE_STREAM_NAME	0x00000200
+#define	FILE_NOTIFY_CHANGE_STREAM_SIZE	0x00000400
+#define	FILE_NOTIFY_CHANGE_STREAM_WRITE	0x00000800
+
+/*
+ * NT TRANSACT NOTIFY CHANGE Action
+ */
+#define FILE_ACTION_ADDED		0x00000001
+#define FILE_ACTION_REMOVED		0x00000002
+#define FILE_ACTION_MODIFIED		0x00000003
+#define FILE_ACTION_RENAMED_OLD_NAME	0x00000004
+#define FILE_ACTION_RENAMED_NEW_NAME	0x00000005
+#define FILE_ACTION_ADDED_STREAM	0x00000006
+#define FILE_ACTION_REMOVED_STREAM	0x00000007
+#define FILE_ACTION_MODIFIED_STREAM	0x00000008
+
+/*
+ * Some contansts for NT CREATE AND X
+ */
+#define NT_FILE_DIRECTORY_FILE		0x0001
+
+/* perms */
+#define NT_FILE_LIST_DIRECTORY		0x0001
+
+/* share types */
+#define NT_FILE_SHARE_READ		0x0001
+#define NT_FILE_SHARE_WRITE		0x0002
+#define NT_FILE_SHARE_DELETE		0x0004
+
+/* open types */
+#define NT_OPEN_EXISTING		0x0003
 
 /*
  * TRANS2 commands
@@ -458,6 +515,13 @@ enum smb_dialects {
 #define	SMB_ERROR_ACCESS_DENIED		5
 #define	SMB_ERROR_NETWORK_ACCESS_DENIED	65
 #define	SMB_ERROR_MORE_DATA		234
+
+/*
+ * Error message returned from NT Directory Change Notify if
+ * where are too many directory notifications and directory should
+ * be just enumerated.
+ */
+#define	NT_STATUS_NOTIFY_ENUM_DIR	1022
 
 typedef u_int16_t	smbfh;
 
