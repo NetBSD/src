@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2001/03/23 08:58:14 toshii Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2001/06/01 14:04:29 toshii Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -51,6 +51,18 @@
 ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
+	/* Put the processer in SVC mode */
+	mov	r5, sp
+	mrs	r4, cpsr_all
+	bic	r4, r4, #31
+	orr	r4, r4, #(PSR_SVC32_MODE)
+	msr	cpsr_all, r4
+	mov	sp, r5
+
+	/* Disable PID virtual address mapping */
+	mov	r4, #0
+	mcr	15, 0, r4, c13, c0, 0
+
 	mov	fp, #0x00000000			/* trace back starts here */
 	bl	_C_LABEL(initarm)		/* Off we go */
 
