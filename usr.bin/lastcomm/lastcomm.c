@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.15 2003/08/07 11:14:18 agc Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.16 2004/10/30 19:34:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.15 2003/08/07 11:14:18 agc Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.16 2004/10/30 19:34:01 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ main(argc, argv)
 		} else
 			for (p = &ab.ac_comm[0];
 			    p < &ab.ac_comm[fldsiz(acct, ac_comm)] && *p; ++p)
-				if (!isprint(*p))
+				if (!isprint((unsigned char)*p))
 					*p = '?';
 		if (!*argv || requested(argv, &ab)) {
 
