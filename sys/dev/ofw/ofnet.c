@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.4.6.1 1997/03/03 18:56:57 is Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.4.6.2 1997/03/09 21:17:44 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <dev/ofw/openfirm.h>
