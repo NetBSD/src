@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.121 2001/05/20 23:24:35 jhawk Exp $
+.\"	$NetBSD: main,v 1.122 2001/05/21 00:44:42 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,11 +136,199 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
+.Ss Upgrade path to NetBSD 1.5.1
+If you are not installing your system ``from scratch'' but instead
+are going to upgrade an existing system already running
+.Nx
+you need to know which versions you can upgrade with
+.Nx
+1.5.1.
+.Pp
+.Nx
+1.5.1 is an upgrade of
+.Nx
+1.5 and earlier major and patch releases of
+.Nx .
+.Pp
+The intermediate development versions of code available on the main trunk
+in our CVS repository (also known as ``NetBSD-current'') from
+.Em after
+the point where the release cycle for 1.5 was started are designated
+by version identifiers such as 1.5A, 1.5B, etc.
+These identifisers do not designate releases, but indicate major changes
+in internal kernel APIs.
+Note that the kernel from
+.Nx
+1.5.1 can
+.Em not
+be used to upgrade a system running one of those intermediate development
+versions.
+Trying to use the
+.Nx
+1.5.1 kernel on such a system
+.Em will
+probably result in problems.
+.Pp
+Please also note that it is not possible to do a direct ``version''
+comparison between any of the intermediate development versions mentioned
+above and 1.5.1 to determine if a given feature is present or absent
+in 1.5.1.  The development of 1.5 and the subsequent ``point'' releases
+is done on a separate branch in the CVS repository which was created when
+the release cycle for 1.5 was started, and during the release cycle of
+1.5 and its patch releases, selective fixes and enhancements have been
+imported from the main development trunk.
+So there are features in 1.5.1 which were not in e.g. 1.5B, but the
+reverse is most probably also true.
+.Ss Major Changes Between 1.5 and 1.5.1
+The complete list of changes between
+.Nx
+1.5 and 1.5.1 can be found in the file CHANGES-1.5.1 in the top directory
+of the source tree.
+The following are highlights only:
+.Bl -bullet
+.It
+A driver for the Aironet/Cisco wireless PCMCIA cards has been added;
+see
+.Xr an 4 .
+.It
+NFS client performance has been improved, typically by 40% for
+writes but possibly up to 100% in certain setups.
+.It
+The
+.Xr siop 4
+driver has improved in performance and robustness.
+.It
+Support for cloning pseudo-interfaces has been added.
+.It
+Support for 802.1Q virtual LANs has been added.
+See
+.Xr vlan 4 .
+.It
+The
+.Xr isp 4
+driver has been upgraded to (among other things) work on MacPPC.
+.It
+BIND has been upgraded to version 8.2.3.
+This fixes SA2001-001.
+.It
+Support for booting from RAIDframe RAID1 mirrors on i386 added.
+.It
+The
+.Xr lfs 4
+file system has again been substantially updated, but is still
+experimental.
+.It
+Ultra/66 support has been added for capable VIA chipsets, and
+Ultra/100 support has been added for the HPT370, Promise and Intel
+ICH2 controllers in the
+.Xr pciide 4
+driver.
+Support for Intel 82801BAM controllers has also been added, and
+handling of Ali controllers has been improved.
+.It
+OpenSSH has been updated to deal with a security issue (SA2001-003).
+.It
+Sendmail has been upgraded to version 8.11.3.
+.It
+The
+.Xr ex 4
+driver has added support for 3Com 3c555, 3c556 and 3c556B MiniPCI Ethernet
+cards.
+.It
+A driver for the on-board audio hardware found on many Apple
+PowerMacs has been added; see
+.Xr awacs 4 .
+.It
+The
+.Xr sip 4
+driver has been fixed to properly support the dp83815, as found in
+current Netgear FA311 10/100 cards.
+.It
+.Xr ftpd 8
+has been updated to deal with two security issues (SA2000-018 and
+SA2001-005).
+.It
+.Xr ntpd 8
+has been updated to deal with a security issue (SA2001-004).
+.It
+.Xr telnetd 8
+has been updated to deal with a security issue (SA2000-017).
+.It
+A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
+.It
+The Linux emulation has been enhanced to prepare for the
+support of using the Linux version of VMware.
+.It
+IP checksumming speed has been improved on i386 compared to
+.Nx 1.5
+by about 10%.
+.It
+Support for the Socket Communications LP-E Type II PCMCIA NE2000
+clone card has been added to
+.Xr ne 4 .
+.It
+The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
+to fix among many other things core dumps in
+.Xr dhclient 8 .
+Please note that the new
+.Xr dhcpd 8
+forces you to configure a "ddns-update-style" of either
+"ad-hoc", "interim" or "none".
+.It
+Various fixes and enhancements to INET6 and IPSEC code;
+among them improved interaction between IPF/Nat and IPSEC.
+.It
+The Heimdal
+.Xr kerberos 8
+implementation has been upgraded to version 0.3e.
+.It
+Support for Accton EN2242 and other AmdTek AN985 cards added
+to the
+.Xr tlp 4
+driver.
+.It
+Several country-specific keyboard mappings have been added for USB
+keyboards.
+.It
+A driver for Yamaha YMF724/740/744/745-based sound cards has
+been added, see
+.Xr yds 4 .
+.It
+The maximum number of BSD disklabel partitions on the i386 port
+has been increased from 8 to 16.
+.It
+Drivers for the AC'97 based audio sound chips
+ESS Technology Maestro 1, 2, and 2E (see
+.Xr esm 4 ),
+NeoMagic 256 (see
+.Xr neo 4 ),
+and Cirrus Logic CrystalClear PCI Audio CS4281 (see
+.Xr clct 4 ) have been added.
+.El
+.Pp
+In addition, many bugs have been fixed -- more than 95 problems
+reported through our problem tracking system have been fixed,
+and some other non-reported problems have also been found and fixed.
+See the CHANGES-1.5.1 file for the complete list.
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Since The NetBSD 1.4 Release
+.if r_i386 \{
+.Ss New Compatibility Issues Introduced With NetBSD 1.5.1
+.Pp
+With the increase of the maximum number of partitions from 8 to 16
+on the i386 port, it is worth noting:
+.Bl -bullet
+.It
+Once you start using more than 8 partitions, you can no longer
+downgrade to a 1.5 kernel.
+.It
+The user-land tools which handle disklabels in 1.5.1 can not be
+used together with a 1.5 kernel.
+.El
+.\}
+.Ss Changes Between The NetBSD 1.4 and 1.5 Releases
 .Pp
 The
-.Nx \*V
+.Nx 1.5
 release 
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
@@ -509,7 +697,7 @@ This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
 .br
-.Em 5.6 MB gzipped, 57.0 MB uncompressed
+.Em 7.4 MB gzipped, 73.0 MB uncompressed
 .It Sy sharesrc
 This set contains the
 .Dq share
@@ -527,7 +715,7 @@ sources which are not in
 or
 .Sy syssrc .
 .br
-.Em 24.2 MB gzipped, 120.6 MB uncompressed
+.Em 24.8 MB gzipped, 123.1 MB uncompressed
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
@@ -536,11 +724,11 @@ kernel for all architectures;
 and
 .Xr dbsym 8 .
 .br
-.Em 17.6 MB gzipped, 88.6 MB uncompressed
+.Em 18.0 MB gzipped, 90.9 MB uncompressed
 .It Sy xsrc
 This set contains the sources to the X Window System.
 .br
-.Em 35.2 MB gzipped, 176.8 MB uncompressed
+.Em 78.1 MB gzipped, 393.6 MB uncompressed
 .tag)
 .Pp
 All the above source sets are located in the
