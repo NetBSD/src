@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.8 2003/02/11 00:02:45 ichiro Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -223,6 +223,8 @@ static const struct usb_devno uvscom_devs [] = {
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_PS64P1 },
 	/* SUNTAC Slipper U  */
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_VS10U },
+	/* SUNTAC Ir-Trinity */
+	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_IS96U },
 };
 #define uvscom_lookup(v, p) usb_lookup(uvscom_devs, v, p)
 
