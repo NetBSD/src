@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.1 1998/05/01 21:54:33 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.2 1998/05/02 02:34:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,11 +214,9 @@ struct        cfdriver eap_cd = {
 #define AK_NPORTS 16
 
 #define VOL_TO_ATT5(v) (0x1f - ((v) >> 3))
-#define VOL_TO_ATT3(v) (0x07 - ((v) >> 5))
 /*#define VOL_TO_GAIN5(v) ((v) >> 3)*/
 #define VOL_TO_GAIN5(v) VOL_TO_ATT5(v)/* why is it called gain? */
 #define ATT5_TO_VOL(v) ((0x1f - (v)) << 3)
-#define ATT3_TO_VOL(v) ((0x07 - (v)) << 5)
 /*#define GAIN5_TO_VOL(v) ((v) << 3)*/
 #define GAIN5_TO_VOL(v) ATT5_TO_VOL(v)
 #define VOL_0DB 200
@@ -719,7 +717,7 @@ eap_set_params(addr, setmode, usemode, p, r)
 
         /* Set the encoding */
         mode |= EREAD4(sc, EAP_SIC) & ~(EAP_R1P2_BITS | EAP_INC_BITS);
-	mode |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(sc->sc_sampsize);
+	mode |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(sc->sc_precision / 8);
         EWRITE4(sc, EAP_SIC, mode);
 	DPRINTFN(2, ("eap_set_params: set SIC = 0x%08x\n", mode));
 
@@ -1011,8 +1009,8 @@ eap_mixer_get_port(addr, cp)
 		cp->un.mask = sc->sc_record_source;
 		return (0);
 	case EAP_MASTER_VOL:
-		l = ATT3_TO_VOL(sc->sc_port[AK_MASTER_L]);
-		r = ATT3_TO_VOL(sc->sc_port[AK_MASTER_R]);
+		l = ATT5_TO_VOL(sc->sc_port[AK_MASTER_L]);
+		r = ATT5_TO_VOL(sc->sc_port[AK_MASTER_R]);
 		break;
 	case EAP_MIC_VOL:
 		if (cp->un.value.num_channels != 1)
