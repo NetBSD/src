@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm_extern.h,v 1.1 1994/04/15 08:14:27 cgd Exp $
+ *	$Id: vm_extern.h,v 1.2 1994/04/25 23:53:51 cgd Exp $
  */
 
 struct	vmspace *vmspace_alloc __P((vm_offset_t min, vm_offset_t max,
@@ -46,3 +46,7 @@ void	vm_fault_copy_entry __P((vm_map_t, vm_map_t, vm_map_entry_t, vm_map_entry_t
 
 void	vslock __P((caddr_t, u_int));
 void	vsunlock __P((caddr_t, u_int, int));
+
+void		swapinit __P((void));
+int		swfree __P((struct proc *, int));
+void		swstrategy __P((struct buf *));

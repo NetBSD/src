@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.17 1994/04/21 07:49:35 cgd Exp $
+ *	from: @(#)vm_swap.c	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_swap.c,v 1.18 1994/04/25 23:53:53 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -42,17 +42,21 @@
 #include <sys/namei.h>
 #include <sys/dmap.h>		/* XXX */
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h>
 #include <sys/map.h>
 #include <sys/file.h>
+
+#include <miscfs/specfs/specdev.h>
+#include <vm/vm.h>
 
 /*
  * Indirect driver for multi-controller paging.
  */
 
 int	nswap, nswdev;
-
-static int swfree __P((struct proc *, int));
+#ifdef SEQSWAP
+int	niswdev;		/* number of interleaved swap devices */
+int	niswap;			/* size of interleaved swap area */
+#endif
 
 /*
  * Set up swap devices.
@@ -72,12 +76,52 @@ swapinit()
 
 	/*
 	 * Count swap devices, and adjust total swap space available.
-	 * Some of this space will not be available until a swapon()
-	 * system is issued, usually when the system goes multi-user.
+	 * Some of the space will not be countable until later (dynamically
+	 * configurable devices) and some of the counted space will not be
+	 * available until a swapon() system call is issued, both usually
+	 * happen when the system goes multi-user.
+	 *
+	 * If using NFS for swap, swdevt[0] will already be bdevvp'd.	XXX
 	 */
+#ifdef SEQSWAP
+	nswdev = niswdev = 0;
+	nswap = niswap = 0;
+	/*
+	 * All interleaved devices must come first
+	 */
+	for (swp = swdevt; swp->sw_dev != NODEV || swp->sw_vp != NULL; swp++) {
+		if (swp->sw_flags & SW_SEQUENTIAL)
+			break;
+		niswdev++;
+		if (swp->sw_nblks > niswap)
+			niswap = swp->sw_nblks;
+	}
+	niswap = roundup(niswap, dmmax);
+	niswap *= niswdev;
+	if (swdevt[0].sw_vp == NULL &&
+	    bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
+		panic("swapvp");
+	/*
+	 * The remainder must be sequential
+	 */
+	for ( ; swp->sw_dev != NODEV; swp++) {
+		if ((swp->sw_flags & SW_SEQUENTIAL) == 0)
+			panic("binit: mis-ordered swap devices");
+		nswdev++;
+		if (swp->sw_nblks > 0) {
+			if (swp->sw_nblks % dmmax)
+				swp->sw_nblks -= (swp->sw_nblks % dmmax);
+			nswap += swp->sw_nblks;
+		}
+	}
+	nswdev += niswdev;
+	if (nswdev == 0)
+		panic("swapinit");
+	nswap += niswap;
+#else
 	nswdev = 0;
 	nswap = 0;
-	for (swp = swdevt; swp->sw_dev; swp++) {
+	for (swp = swdevt; swp->sw_dev != NODEV || swp->sw_vp != NULL; swp++) {
 		nswdev++;
 		if (swp->sw_nblks > nswap)
 			nswap = swp->sw_nblks;
@@ -87,14 +131,15 @@ swapinit()
 	if (nswdev > 1)
 		nswap = ((nswap + dmmax - 1) / dmmax) * dmmax;
 	nswap *= nswdev;
-	if (bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
+	if (swdevt[0].sw_vp == NULL &&
+	    bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
 		panic("swapvp");
-	if (error = swfree(&proc0, 0)) {
-#ifdef notdef
+#endif
+	if (nswap == 0)
+		printf("WARNING: no swap space found\n");
+	else if (error = swfree(p, 0)) {
 		printf("swfree errno %d\n", error);	/* XXX */
 		panic("swapinit swfree 0");
-#endif
-		printf("WARNING: no swap space present.\n");
 	}
 
 	/*
@@ -106,9 +151,9 @@ swapinit()
 		sp->b_rcred = sp->b_wcred = p->p_ucred;
 		sp->b_vnbufs.le_next = NOLIST;
 	}
-	sp->b_actf = NULL;
 	sp->b_rcred = sp->b_wcred = p->p_ucred;
 	sp->b_vnbufs.le_next = NOLIST;
+	sp->b_actf = NULL;
 }
 
 void
@@ -132,16 +177,53 @@ swstrategy(bp)
 #endif
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	if (bp->b_blkno + sz > nswap) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
 	if (nswdev > 1) {
+#ifdef SEQSWAP
+		if (bp->b_blkno < niswap) {
+			if (niswdev > 1) {
+				off = bp->b_blkno % dmmax;
+				if (off+sz > dmmax) {
+					bp->b_error = EINVAL;
+					bp->b_flags |= B_ERROR;
+					biodone(bp);
+					return;
+				}
+				seg = bp->b_blkno / dmmax;
+				index = seg % niswdev;
+				seg /= niswdev;
+				bp->b_blkno = seg*dmmax + off;
+			} else
+				index = 0;
+		} else {
+			register struct swdevt *swp;
+
+			bp->b_blkno -= niswap;
+			for (index = niswdev, swp = &swdevt[niswdev];
+			     swp->sw_dev != NODEV;
+			     swp++, index++) {
+				if (bp->b_blkno < swp->sw_nblks)
+					break;
+				bp->b_blkno -= swp->sw_nblks;
+			}
+			if (swp->sw_dev == NODEV ||
+			    bp->b_blkno+sz > swp->sw_nblks) {
+				bp->b_error = swp->sw_dev == NODEV ?
+					ENODEV : EINVAL;
+				bp->b_flags |= B_ERROR;
+				biodone(bp);
+				return;
+			}
+		}
+#else
 		off = bp->b_blkno % dmmax;
 		if (off+sz > dmmax) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EINVAL;
+			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return;
 		}
@@ -149,14 +231,15 @@ swstrategy(bp)
 		index = seg % nswdev;
 		seg /= nswdev;
 		bp->b_blkno = seg*dmmax + off;
+#endif
 	} else
 		index = 0;
 	sp = &swdevt[index];
-	if ((bp->b_dev = sp->sw_dev) == 0)
+	if ((bp->b_dev = sp->sw_dev) == NODEV)
 		panic("swstrategy");
 	if (sp->sw_vp == NULL) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = ENODEV;
+		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
@@ -174,7 +257,6 @@ swstrategy(bp)
 	if (bp->b_vp != NULL)
 		brelvp(bp);
 	bp->b_vp = sp->sw_vp;
-
 	VOP_STRATEGY(bp);
 }
 
@@ -186,7 +268,6 @@ swstrategy(bp)
 struct swapon_args {
 	char	*name;
 };
-
 /* ARGSUSED */
 int
 swapon(p, uap, retval)
@@ -196,13 +277,21 @@ swapon(p, uap, retval)
 {
 	register struct vnode *vp;
 	register struct swdevt *sp;
+#ifndef notdef
 	register struct nameidata *ndp;
+#endif
 	dev_t dev;
 	int error;
 	struct nameidata nd;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
+#ifdef notdef
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->name, p);
+	if (error = namei(&nd))
+                return (error);
+	vp = nd.ni_vp;
+#else
 	ndp = &nd;
 	ndp->ni_nameiop = LOOKUP | FOLLOW;
 	ndp->ni_segflg = UIO_USERSPACE;
@@ -210,6 +299,7 @@ swapon(p, uap, retval)
 	if (error = namei(ndp, p))
 		return (error);
 	vp = ndp->ni_vp;
+#endif
 	if (vp->v_type != VBLK) {
 		vrele(vp);
 		return (ENOTBLK);
@@ -219,9 +309,9 @@ swapon(p, uap, retval)
 		vrele(vp);
 		return (ENXIO);
 	}
-	for (sp = &swdevt[0]; sp->sw_dev; sp++)
+	for (sp = &swdevt[0]; sp->sw_dev != NODEV; sp++) {
 		if (sp->sw_dev == dev) {
-			if (sp->sw_freed) {
+			if (sp->sw_flags & SW_FREED) {
 				vrele(vp);
 				return (EBUSY);
 			}
@@ -232,6 +322,17 @@ swapon(p, uap, retval)
 			}
 			return (0);
 		}
+#ifdef SEQSWAP
+		/*
+		 * If we have reached a non-freed sequential device without
+		 * finding what we are looking for, it is an error.
+		 * That is because all interleaved devices must come first
+		 * and sequential devices must be freed in order.
+		 */
+		if ((sp->sw_flags & (SW_SEQUENTIAL|SW_FREED)) == SW_SEQUENTIAL)
+			break;
+#endif
+	}
 	vrele(vp);
 	return (EINVAL);
 }
@@ -242,7 +343,7 @@ swapon(p, uap, retval)
  * space, which is laid out with blocks of dmmax pages circularly
  * among the devices.
  */
-static int
+int
 swfree(p, index)
 	struct proc *p;
 	int index;
@@ -259,12 +360,64 @@ swfree(p, index)
 	vp = sp->sw_vp;
 	if (error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p))
 		return (error);
-	sp->sw_freed = 1;
+	sp->sw_flags |= SW_FREED;
 	nblks = sp->sw_nblks;
+	/*
+	 * Some devices may not exist til after boot time.
+	 * If so, their nblk count will be 0.
+	 */
+	if (nblks <= 0) {
+		int perdev;
+		dev_t dev = sp->sw_dev;
+
+		if (bdevsw[major(dev)].d_psize == 0 ||
+		    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
+			(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+			sp->sw_flags &= ~SW_FREED;
+			return (ENXIO);
+		}
+#ifdef SEQSWAP
+		if (index < niswdev) {
+			perdev = niswap / niswdev;
+			if (nblks > perdev)
+				nblks = perdev;
+		} else {
+			if (nblks % dmmax)
+				nblks -= (nblks % dmmax);
+			nswap += nblks;
+		}
+#else
+		perdev = nswap / nswdev;
+		if (nblks > perdev)
+			nblks = perdev;
+#endif
+		sp->sw_nblks = nblks;
+	}
+	if (nblks == 0) {
+		(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+		sp->sw_flags &= ~SW_FREED;
+		return (0);	/* XXX error? */
+	}
+#ifdef SEQSWAP
+	if (sp->sw_flags & SW_SEQUENTIAL) {
+		register struct swdevt *swp;
+
+		blk = niswap;
+		for (swp = &swdevt[niswdev]; swp != sp; swp++)
+			blk += swp->sw_nblks;
+		rmfree(swapmap, nblks, blk);
+		return (0);
+	}
+#endif
 	for (dvbase = 0; dvbase < nblks; dvbase += dmmax) {
 		blk = nblks - dvbase;
+#ifdef SEQSWAP
+		if ((vsbase = index*dmmax + dvbase*niswdev) >= niswap)
+			panic("swfree");
+#else
 		if ((vsbase = index*dmmax + dvbase*nswdev) >= nswap)
 			panic("swfree");
+#endif
 		if (blk > dmmax)
 			blk = dmmax;
 		if (vsbase == 0) {
@@ -274,7 +427,7 @@ swfree(p, index)
 			 * in case it starts with a label or boot block.
 			 */
 			rminit(swapmap, blk - ctod(CLSIZE),
-				vsbase + ctod(CLSIZE), "swap", nswapmap);
+			    vsbase + ctod(CLSIZE), "swap", nswapmap);
 		} else if (dvbase == 0) {
 			/*
 			 * Don't use the first cluster of the device
