@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 1999/01/23 16:10:47 drochner Exp $
+# $NetBSD: GENERIC,v 1.110 1999/01/25 07:55:32 ross Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -173,6 +173,7 @@ tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
+ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #audio*	at	eap?
 #sv*	at	pci? dev ? function ?		# S3 SonicVibes
