@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.72 1999/01/28 23:58:49 fvdl Exp $	*/
+/*	$NetBSD: rtld.c,v 1.73 1999/02/27 03:34:05 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -875,6 +875,10 @@ reloc_map(smp)
 
 			sym = stringbase + p->nz_strx;
 
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+			if (r->r_baserel && r->r_length == 2)
+				relocation = 0;
+#endif
 			np = lookup(sym, smp, &src_map, 0/*XXX-jumpslots!*/);
 			if (np == NULL)
 				errx(1, "Undefined symbol \"%s\" in %s:%s\n",
@@ -962,7 +966,11 @@ call_map(smp, sym)
 #if DEBUG
 xprintf("call_map: %s at %#x+%#x enter\n", sym, src_map->som_addr, np->nz_value);
 #endif
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+	(*(void (*) __P((u_int)))(src_map->som_addr + np->nz_value))((u_int)src_map->som_addr);
+#else
 		(*(void (*) __P((void)))(src_map->som_addr + np->nz_value))();
+#endif
 #if DEBUG
 xprintf("call_map: %s at %#x+%#x exit\n", sym, src_map->som_addr, np->nz_value);
 #endif
