@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15 1996/11/23 04:02:41 mark Exp $ */
+/* $NetBSD: locore.S,v 1.16 1997/01/06 02:15:17 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -102,8 +102,8 @@ pc	.req	r15
  * of the kernel text segment (not necessarily the same as kernbase).
  */
 
-	.global kernel_text
-kernel_text:
+	.global _kernel_text
+_kernel_text:
 
 	.global	start
 start:
