@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exec.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: exec.c,v 1.11 1994/09/23 11:28:40 mycroft Exp $";
+static char *rcsid = "$Id: exec.c,v 1.12 1994/12/05 19:07:39 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -118,7 +118,8 @@ void
 shellexec(argv, envp, path, index)
 	char **argv, **envp;
 	char *path;
-	{
+	int index;
+{
 	char *cmdname;
 	int e;
 
@@ -308,7 +309,11 @@ padvance(path, name)
 /*** Command hashing code ***/
 
 
-hashcmd(argc, argv)  char **argv; {
+int
+hashcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	struct tblentry **pp;
 	struct tblentry *cmdp;
 	int c;
@@ -401,7 +406,8 @@ void
 find_command(name, entry, printerr)
 	char *name;
 	struct cmdentry *entry;
-	{
+	int printerr;
+{
 	struct tblentry *cmdp;
 	int index;
 	int prev;
@@ -535,8 +541,8 @@ success:
 int
 find_builtin(name)
 	char *name;
-	{
-	const register struct builtincmd *bp;
+{
+	register const struct builtincmd *bp;
 
 	for (bp = builtincmd ; bp->name ; bp++) {
 		if (*bp->name == *name && equal(bp->name, name))
@@ -630,7 +636,9 @@ changepath(newval)
  */
 
 STATIC void
-clearcmdentry(firstchange) {
+clearcmdentry(firstchange)
+	int firstchange;
+{
 	struct tblentry **tblp;
 	struct tblentry **pp;
 	struct tblentry *cmdp;
@@ -702,7 +710,8 @@ struct tblentry **lastcmdentry;
 STATIC struct tblentry *
 cmdlookup(name, add)
 	char *name;
-	{
+	int add;
+{
 	int hashval;
 	register char *p;
 	struct tblentry *cmdp;

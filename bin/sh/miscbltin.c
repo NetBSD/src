@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)miscbltin.c	8.2 (Berkeley) 4/16/94";*/
-static char *rcsid = "$Id: miscbltin.c,v 1.11 1994/06/11 16:12:11 mycroft Exp $";
+static char *rcsid = "$Id: miscbltin.c,v 1.12 1994/12/05 19:07:45 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -67,7 +67,11 @@ extern char **argptr;		/* argument list for builtin command */
  * This uses unbuffered input, which may be avoidable in some cases.
  */
 
-readcmd(argc, argv)  char **argv; {
+int
+readcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	char **ap;
 	int backslash;
 	char c;
@@ -147,7 +151,11 @@ readcmd(argc, argv)  char **argv; {
 
 
 
-umaskcmd(argc, argv)  char **argv; {
+int
+umaskcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	char *ap;
 	int mask;
 	int i;

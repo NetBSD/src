@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.21 1994/09/23 11:28:45 mycroft Exp $";
+static char *rcsid = "$Id: parser.c,v 1.22 1994/12/05 19:07:50 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -111,9 +111,11 @@ STATIC int readtoken __P((void));
 STATIC int readtoken1 __P((int, char const *, char *, int));
 STATIC void attyline __P((void));
 STATIC int noexpand __P((char *));
+STATIC int peektoken __P((void));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
 STATIC void setprompt __P((int));
+
 
 /*
  * Read and parse a command.  Returns NEOF on end of file.  (NULL is a
@@ -121,7 +123,9 @@ STATIC void setprompt __P((int));
  */
 
 union node *
-parsecmd(interact) {
+parsecmd(interact) 
+	int interact;
+{
 	int t;
 
 	doprompt = interact;
@@ -141,7 +145,9 @@ parsecmd(interact) {
 
 
 STATIC union node *
-list(nlflag) {
+list(nlflag) 
+	int nlflag;
+{
 	union node *n1, *n2, *n3;
 	int tok;
 
@@ -687,11 +693,13 @@ readtoken() {
 		/*
 		 * check for keywords and aliases
 		 */
-		if (t == TWORD && !quoteflag) {
-			register char * const *pp, *s;
+		if (t == TWORD && !quoteflag) 
+		{
+			register char * const *pp;
 
 			for (pp = (char **)parsekwd; *pp; pp++) {
-				if (**pp == *wordtext && equal(*pp, wordtext)) {
+				if (**pp == *wordtext && equal(*pp, wordtext)) 
+				{
 					lasttoken = t = pp - parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
 					goto out;
@@ -1344,7 +1352,9 @@ goodname(name)
  */
 
 STATIC void
-synexpect(token) {
+synexpect(token) 
+	int token;
+{
 	char msg[64];
 
 	if (token >= 0) {

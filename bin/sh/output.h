@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)output.h	8.1 (Berkeley) 5/31/93
- *	$Id: output.h,v 1.8 1994/06/11 16:12:27 mycroft Exp $
+ *	$Id: output.h,v 1.9 1994/12/05 19:07:49 cgd Exp $
  */
 
 #ifndef OUTPUT_INCL
@@ -69,7 +69,7 @@ void flushall(void);
 void flushout(struct output *);
 void freestdout(void);
 int xwrite(int, char *, int);
-int xioctl(int, int, int);
+int xioctl(int, unsigned long, char *);
 #else
 void outstr();
 void out1str();

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: eval.c,v 1.16 1994/12/04 07:12:10 cgd Exp $";
+static char *rcsid = "$Id: eval.c,v 1.17 1994/12/05 19:07:37 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -198,7 +198,8 @@ evalstring(s)
 void
 evaltree(n, flags)
 	union node *n;
-	{
+	int flags;
+{
 	if (n == NULL) {
 		TRACE(("evaltree(NULL) called\n"));
 		exitstatus = 0;

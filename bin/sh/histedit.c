@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)histedit.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: histedit.c,v 1.4 1994/12/04 07:12:13 cgd Exp $";
+static char *rcsid = "$Id: histedit.c,v 1.5 1994/12/05 19:07:42 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,7 @@ static char *rcsid = "$Id: histedit.c,v 1.4 1994/12/04 07:12:13 cgd Exp $";
 #include "output.h"
 #include "mystring.h"
 #include "error.h"
+#include "eval.h"
 #include "histedit.h"
 #include "memalloc.h"
 #include "extern.h"
@@ -74,6 +75,7 @@ int str_to_event __P((char *, int));
  * Set history and editing status.  Called whenever the status may
  * have changed (figures out what to do).
  */
+void
 histedit() 
 {
 

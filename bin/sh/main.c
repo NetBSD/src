@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: main.c,v 1.15 1994/12/04 07:12:18 cgd Exp $";
+static char *rcsid = "$Id: main.c,v 1.16 1994/12/05 19:07:43 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -264,7 +264,7 @@ read_profile(name)
 void
 readcmdfile(name)
 	char *name;
-	{
+{
 	int fd;
 
 	INTOFF;

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)redir.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: redir.c,v 1.8 1994/06/11 16:12:30 mycroft Exp $";
+static char *rcsid = "$Id: redir.c,v 1.9 1994/12/05 19:07:52 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -334,7 +334,10 @@ clearredir() {
  */
 
 int
-copyfd(from, to) {
+copyfd(from, to) 
+	int from;
+	int to;
+{
 	int newfd;
 
 	newfd = fcntl(from, F_DUPFD, to);

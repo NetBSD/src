@@ -36,12 +36,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)var.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: var.c,v 1.9 1994/09/23 11:28:46 mycroft Exp $";
+static char *rcsid = "$Id: var.c,v 1.10 1994/12/05 19:07:58 cgd Exp $";
 #endif /* not lint */
 
 /*
  * Shell variables.
  */
+
+#include <unistd.h>
 
 #include "shell.h"
 #include "output.h"
@@ -56,7 +58,7 @@ static char *rcsid = "$Id: var.c,v 1.9 1994/09/23 11:28:46 mycroft Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include <unistd.h>
+#include "extern.h"
 
 
 #define VTABSIZE 39
@@ -173,7 +175,8 @@ initvar() {
 void
 setvar(name, val, flags)
 	char *name, *val;
-	{
+	int flags;
+{
 	char *p, *q;
 	int len;
 	int namelen;
@@ -224,7 +227,8 @@ setvar(name, val, flags)
 void
 setvareq(s, flags)
 	char *s;
-	{
+	int flags;
+{
 	struct var *vp, **vpp;
 
 	vpp = hashvar(s);
@@ -312,7 +316,8 @@ lookupvar(name)
 char *
 bltinlookup(name, doall)
 	char *name;
-	{
+	int doall;
+{
 	struct strlist *sp;
 	struct var *v;
 
@@ -410,7 +415,10 @@ shprocvar() {
  */
 
 int
-showvarscmd(argc, argv)  char **argv; {
+showvarscmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	struct var **vpp;
 	struct var *vp;
 
@@ -430,7 +438,10 @@ showvarscmd(argc, argv)  char **argv; {
  */
 
 int
-exportcmd(argc, argv)  char **argv; {
+exportcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	struct var **vpp;
 	struct var *vp;
 	char *name;
@@ -473,7 +484,11 @@ found:;
  * The "local" command.
  */
 
-localcmd(argc, argv)  char **argv; {
+int
+localcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	char *name;
 
 	if (! in_function())
@@ -560,7 +575,11 @@ poplocalvars() {
 }
 
 
-setvarcmd(argc, argv)  char **argv; {
+int
+setvarcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	if (argc <= 2)
 		return unsetcmd(argc, argv);
 	else if (argc == 3)
@@ -577,7 +596,11 @@ setvarcmd(argc, argv)  char **argv; {
  * with the same name.
  */
 
-unsetcmd(argc, argv)  char **argv; {
+int
+unsetcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	char **ap;
 	int i;
 	int flg_func = 0;

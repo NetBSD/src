@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)output.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: output.c,v 1.10 1994/06/11 16:12:26 mycroft Exp $";
+static char *rcsid = "$Id: output.c,v 1.11 1994/12/05 19:07:47 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -49,6 +49,8 @@ static char *rcsid = "$Id: output.c,v 1.10 1994/06/11 16:12:26 mycroft Exp $";
  *		output of the command via a pipe.
  *	Our output routines may be smaller than the stdio routines.
  */
+
+#include <sys/ioctl.h>
 
 #include <stdio.h>	/* defines BUFSIZ */
 #include "shell.h"
@@ -133,7 +135,7 @@ out2str(p)
 
 void
 outstr(p, file)
-	const register char *p;
+	register const char *p;
 	register struct output *file;
 	{
 	while (*p)
@@ -545,10 +547,15 @@ xwrite(fd, buf, nbytes)
 
 /*
  * Version of ioctl that retries after a signal is caught.
+ * XXX unused function
  */
 
 int
-xioctl(fd, request, arg) {
+xioctl(fd, request, arg) 
+	int fd;
+	unsigned long request;
+	char * arg;
+{
 	int i;
 
 	while ((i = ioctl(fd, request, arg)) == -1 && errno == EINTR);
