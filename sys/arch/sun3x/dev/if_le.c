@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1997/01/17 16:15:44 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1997/01/27 22:14:19 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -145,9 +145,8 @@ le_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
 
-	lesc->sc_r1 = (struct lereg1 *)
-	    bus_mapin(ca->ca_bustype, ca->ca_paddr,
-	              sizeof(struct lereg1));
+	lesc->sc_r1 = bus_mapin(ca->ca_bustype,
+	    ca->ca_paddr, sizeof(struct lereg1));
 
 	lesc->sc_kmem = malloc(LE_MEMSIZE, M_DEVBUF, M_NOWAIT);
 	sc->sc_memsize = LE_MEMSIZE;
