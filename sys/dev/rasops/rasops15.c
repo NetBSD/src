@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.5 1999/10/23 23:14:13 ad Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.6 2000/02/12 21:58:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.5 1999/10/23 23:14:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.6 2000/02/12 21:58:58 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -288,10 +288,10 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = STAMP_READ(30);
-		rp[1] = STAMP_READ(30);
-		rp[2] = STAMP_READ(30);
-		rp[3] = STAMP_READ(30);
+		rp[0] = STAMP_READ(28);
+		rp[1] = STAMP_READ(28);
+		rp[2] = STAMP_READ(28);
+		rp[3] = STAMP_READ(28);
 	}	
 	
 	stamp_mutex--;
@@ -376,12 +376,12 @@ rasops15_putchar12(cookie, row, col, uc, attr)
 	/* Do underline */
 	if (attr & 1) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = STAMP_READ(30);
-		rp[1] = STAMP_READ(30);
-		rp[2] = STAMP_READ(30);
-		rp[3] = STAMP_READ(30);
-		rp[4] = STAMP_READ(30);
-		rp[5] = STAMP_READ(30);
+		rp[0] = STAMP_READ(28);
+		rp[1] = STAMP_READ(28);
+		rp[2] = STAMP_READ(28);
+		rp[3] = STAMP_READ(28);
+		rp[4] = STAMP_READ(28);
+		rp[5] = STAMP_READ(28);
 	}	
 	
 	stamp_mutex--;
@@ -472,14 +472,14 @@ rasops15_putchar16(cookie, row, col, uc, attr)
 	/* Do underline */
 	if (attr & 1) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = STAMP_READ(30);
-		rp[1] = STAMP_READ(30);
-		rp[2] = STAMP_READ(30);
-		rp[3] = STAMP_READ(30);
-		rp[4] = STAMP_READ(30);
-		rp[5] = STAMP_READ(30);
-		rp[6] = STAMP_READ(30);
-		rp[7] = STAMP_READ(30);
+		rp[0] = STAMP_READ(28);
+		rp[1] = STAMP_READ(28);
+		rp[2] = STAMP_READ(28);
+		rp[3] = STAMP_READ(28);
+		rp[4] = STAMP_READ(28);
+		rp[5] = STAMP_READ(28);
+		rp[6] = STAMP_READ(28);
+		rp[7] = STAMP_READ(28);
 	}	
 	
 	stamp_mutex--;

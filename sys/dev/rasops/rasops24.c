@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.9 1999/10/23 23:14:14 ad Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.10 2000/02/12 21:58:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.9 1999/10/23 23:14:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.10 2000/02/12 21:58:58 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,12 +322,12 @@ rasops24_putchar8(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = STAMP_READ(30);
-		rp[1] = STAMP_READ(30);
-		rp[2] = STAMP_READ(30);
-		rp[3] = STAMP_READ(30);
-		rp[4] = STAMP_READ(30);
-		rp[5] = STAMP_READ(30);
+		rp[0] = STAMP_READ(52);
+		rp[1] = STAMP_READ(52);
+		rp[2] = STAMP_READ(52);
+		rp[3] = STAMP_READ(52);
+		rp[4] = STAMP_READ(52);
+		rp[5] = STAMP_READ(52);
 	}	
 	
 	stamp_mutex--;
@@ -418,15 +418,15 @@ rasops24_putchar12(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = STAMP_READ(30);
-		rp[1] = STAMP_READ(30);
-		rp[2] = STAMP_READ(30);
-		rp[3] = STAMP_READ(30);
-		rp[4] = STAMP_READ(30);
-		rp[5] = STAMP_READ(30);
-		rp[6] = STAMP_READ(30);
-		rp[7] = STAMP_READ(30);
-		rp[8] = STAMP_READ(30);
+		rp[0] = STAMP_READ(52);
+		rp[1] = STAMP_READ(52);
+		rp[2] = STAMP_READ(52);
+		rp[3] = STAMP_READ(52);
+		rp[4] = STAMP_READ(52);
+		rp[5] = STAMP_READ(52);
+		rp[6] = STAMP_READ(52);
+		rp[7] = STAMP_READ(52);
+		rp[8] = STAMP_READ(52);
 	}	
 	
 	stamp_mutex--;
@@ -525,18 +525,18 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = STAMP_READ(30);
-		rp[1] = STAMP_READ(30);
-		rp[2] = STAMP_READ(30);
-		rp[3] = STAMP_READ(30);
-		rp[4] = STAMP_READ(30);
-		rp[5] = STAMP_READ(30);
-		rp[6] = STAMP_READ(30);
-		rp[7] = STAMP_READ(30);
-		rp[8] = STAMP_READ(30);
-		rp[9] = STAMP_READ(30);
-		rp[10] = STAMP_READ(30);
-		rp[11] = STAMP_READ(30);
+		rp[0] = STAMP_READ(52);
+		rp[1] = STAMP_READ(52);
+		rp[2] = STAMP_READ(52);
+		rp[3] = STAMP_READ(52);
+		rp[4] = STAMP_READ(52);
+		rp[5] = STAMP_READ(52);
+		rp[6] = STAMP_READ(52);
+		rp[7] = STAMP_READ(52);
+		rp[8] = STAMP_READ(52);
+		rp[9] = STAMP_READ(52);
+		rp[10] = STAMP_READ(52);
+		rp[11] = STAMP_READ(52);
 	}	
 	
 	stamp_mutex--;
