@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.3 1998/08/08 23:39:39 mycroft Exp $	*/
+/* 	$NetBSD: intr.h,v 1.4 1998/09/05 03:47:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -37,17 +38,19 @@
 
 /* Define the various Interrupt Priority Levels */
 
-/* Interrupt Priority Levels are not mutually exclusive. */
+/* Hardware Interrupt Priority Levels are not mutually exclusive. */
 
 #define IPL_BIO		0	/* block I/O */
 #define IPL_NET		1	/* network */
 #define IPL_TTY		2	/* terminal */
 #define IPL_IMP		3	/* memory allocation */
-#define	IPL_AUDIO	4	/* audio */
+#define IPL_AUDIO	4	/* audio */
 #define IPL_CLOCK	5	/* clock */
-#define IPL_NONE	6
+#define IPL_HIGH	6	/*  */
+#define IPL_SERIAL	7	/* serial */
+#define IPL_NONE	8
 
-#define IPL_LEVELS	7
+#define IPL_LEVELS	8
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -55,8 +58,14 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#include <machine/irqhandler.h>
+/* Software interrupt priority levels */
 
-#define spllpt() spltty()
+#define SOFTIRQ_CLOCK	0
+#define SOFTIRQ_NET	1
+#define SOFTIRQ_SERIAL	2
+
+#define SOFTIRQ_BIT(x)	(1 << x)
+
+#include <machine/irqhandler.h>
 
 #endif	/* _ARM32_INTR_H */
