@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 1999/02/28 04:52:07 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 1999/06/15 15:26:34 kleink Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -129,9 +129,9 @@ extern volatile u_int8_t ssir;
 #define SIR_ADB		0x10
 
 #define	siron(mask)	\
-	__asm __volatile ( "orb %0,_ssir" : : "i" (mask))
+	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
 #define	siroff(mask)	\
-	__asm __volatile ( "andb %0,_ssir" : : "ir" (~(mask)));
+	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
 
 #define	setsoftnet()	siron(SIR_NET)
 #define	setsoftclock()	siron(SIR_CLOCK)
