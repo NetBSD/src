@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.43 2004/09/25 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.44 2004/10/31 12:52:55 he Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,10 +81,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.43 2004/09/25 16:44:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.44 2004/10/31 12:52:55 he Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>

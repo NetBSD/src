@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.81 2004/10/23 17:12:23 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.82 2004/10/31 12:52:55 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.81 2004/10/23 17:12:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82 2004/10/31 12:52:55 he Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.81 2004/10/23 17:12:23 thorpej Exp $"
 #include <sys/reboot.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
