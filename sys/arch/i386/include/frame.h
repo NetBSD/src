@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.23 2003/09/10 16:48:16 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.24 2003/09/10 19:49:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,6 +188,9 @@ struct saframe {
 #ifdef _KERNEL
 void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, int, void *, void *);
+#ifdef COMPAT_16
+void sendsig_sigcontext(ksiginfo_t *, sigset_t *);
+#endif
 #endif
 
 #endif  /* _I386_FRAME_H_ */
