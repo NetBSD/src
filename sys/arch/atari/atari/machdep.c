@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1997/01/27 07:53:29 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37.4.1 1997/03/12 14:46:40 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -436,17 +436,33 @@ identifycpu()
 	fputype = fpu_probe();
 	fpu     = fpu_describe(fputype);
 
-	if (machineid & ATARI_68040) {
+	switch (cputype) {
+ 
+	    case CPU_68060:
+		{
+			u_int32_t	pcr;
+			char		cputxt[30];
+
+			asm(".word 0x4e7a,0x0808;"
+			    "movl d0,%0" : "=d"(pcr) : : "d0");
+			sprintf(cputxt, "68%s060 rev.%d",
+				pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
+			cpu = cputxt;
+			mmu = "/MMU";
+		}
+		break;
+	    case CPU_68040:
 		cpu     = "m68040";
 		mmu     = "/MMU";
-	} else if (machineid & ATARI_68030) {
+		break;
+	    case CPU_68030:
 		cpu = "m68030";
 		mmu = "/MMU";
-	} else {
+	    default: /* XXX */
 		cpu = "m68020";
 		mmu = " m68851 MMU";
 	}
-	sprintf(cpu_model, "%s (%s CPU%s%s FPU)", mach, cpu, mmu, fpu);
+	sprintf(cpu_model, "%s (%s CPU%s%sFPU)", mach, cpu, mmu, fpu);
 	printf("%s\n", cpu_model);
 }
 

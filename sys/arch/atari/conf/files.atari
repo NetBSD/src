@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.29 1997/01/21 09:39:20 thorpej Exp $
+#	$NetBSD: files.atari,v 1.29.4.1 1997/03/12 14:46:47 is Exp $
 #
 
 maxpartitions 16
@@ -17,6 +17,7 @@ file	arch/atari/dev/event.c		event
 
 device	clock
 attach	clock at mainbus
+file	dev/clock_subr.c
 file	arch/atari/dev/clock.c
 
 # keyboard
@@ -58,6 +59,24 @@ attach	hdfd at fdc
 file	arch/atari/dev/hdfd.c		hdfd needs-flag
 file	arch/atari/dev/hdfd_intr.s	hdfd
 major	{hdfd = 2}
+
+# The generic VME-bus driver
+device	vmebus {}
+attach	vmebus at mainbus
+
+device	vme {[ioport = -1], [iosize = 0], [mem = -1], [memsiz = 0], [irq = -1] }
+attach	vme at vmebus
+file	arch/atari/vme/vme.c		vme
+file	arch/atari/vme/vme_machdep.c	vme
+
+#
+# Devices on the VME-bus
+#
+
+# Lance ethernet (Riebl/PAM)
+# device defined in sys/conf/files
+attach	le at vme with le_vme
+file	arch/atari/vme/if_le_vme.c	le_vme
 
 # graphic devices
 define	grfb {}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1996/11/06 13:55:38 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17.6.1 1997/03/12 14:46:42 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -475,6 +475,18 @@ pmap_init(phys_start, phys_end)
 	Segtabzero   = (u_int *) addr;
 	Segtabzeropa = (u_int *) pmap_extract(pmap_kernel(), addr);
 
+#ifdef M68060
+	if (cputype == CPU_68060) {
+		addr2 = addr;
+		while (addr2 < addr + ATARI_STSIZE) {
+			pmap_changebit(addr2, PG_CCB, 0);
+			pmap_changebit(addr2, PG_CI, 1);
+			addr2 += NBPG;
+		}
+		DCIS();
+	}
+#endif
+
 	addr += ATARI_STSIZE;
 	pv_table = (pv_entry_t) addr;
 	addr += sizeof(struct pv_entry) * npg;
@@ -519,6 +531,14 @@ pmap_init(phys_start, phys_end)
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
 		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
+
+#ifdef M68060
+		if (cputype == CPU_68060) {
+			pmap_changebit(kpt_pages->kpt_pa, PG_CCB, 0);
+			pmap_changebit(kpt_pages->kpt_pa, PG_CI, 1);
+			DCIS();
+		}
+#endif
 	} while (addr != addr2);
 #ifdef DEBUG
 	kpt_stats.kpttotal = atop(s);
@@ -1625,6 +1645,10 @@ void pmap_update()
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_update()\n");
 #endif
+#if defined(M68060)
+	if (cputype == CPU_68060)
+		DCIA();
+#endif
 	TBIA();
 }
 
@@ -2102,6 +2126,9 @@ pmap_enter_ptpage(pmap, va)
 {
 	register vm_offset_t ptpa;
 	register pv_entry_t pv;
+#ifdef M68060
+	u_int stpa;
+#endif /* M68060 */
 	u_int *ste;
 	int s;
 
@@ -2124,6 +2151,18 @@ pmap_enter_ptpage(pmap, va)
 		    pmap_kernel(), (vm_offset_t)pmap->pm_stab);
 #if defined(M68040) || defined(M68060)
 		if (mmutype == MMU_68040) {
+#if defined(M68060)
+			stpa = (u_int)pmap->pm_stpa;
+			if (cputype == CPU_68060) {
+				while (stpa < (u_int)pmap->pm_stpa + 
+				    ATARI_STSIZE) {
+					pmap_changebit(stpa, PG_CCB, 0);
+					pmap_changebit(stpa, PG_CI, 1);
+					stpa += NBPG;
+				}
+				DCIS(); /* XXX */
+	 		}
+#endif
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2217,6 +2256,13 @@ pmap_enter_ptpage(pmap, va)
 		ptpa = kpt->kpt_pa;
 		bzero((char *)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
+#if defined(M68060)
+		if (cputype == CPU_68060) {
+			pmap_changebit(ptpa, PG_CCB, 0);
+			pmap_changebit(ptpa, PG_CI, 1);
+			DCIS();
+	 	}
+#endif
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: add &Sysptmap[%d]: %x (KPT page %lx)\n",
@@ -2249,6 +2295,13 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	}
 
+#ifdef M68060
+	if (cputype == CPU_68060) {
+		pmap_changebit(ptpa, PG_CCB, 0);
+		pmap_changebit(ptpa, PG_CI, 1);
+		DCIS();
+	}
+#endif
 	/*
 	 * Locate the PV entry in the kernel for this PT page and
 	 * record the STE address.  This is so that we can invalidate
