@@ -46,7 +46,7 @@
  * SUCH DAMAGE.
  *
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.2 1993/03/24 23:55:29 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.3 1993/04/22 07:49:18 mycroft Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -57,6 +57,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.2 199
 /*
  * XXX - put this in tty.h someday.
  */
+size_t rb_read __P((struct ringb *from, char *bf, size_t nto));
 size_t rb_write __P((struct ringb *to, char *buf, size_t nfrom));
 
 putc(c, rbp) struct ringb *rbp;
@@ -170,6 +171,45 @@ catb(from, to)
 	nfromleft = RB_CONTIGGET(from);
 	rb_write(to, from->rb_hd, nfromleft);
 	from->rb_hd += nfromleft;
+}
+
+/*
+ * Copy from ring buffer to ordinary buffer, returning count of characters
+ * read.
+ */
+size_t rb_read(from, buf, nto)
+	struct ringb *from;
+	char *buf;
+	size_t nto;
+{
+	size_t nright, nleft;
+
+	if (from->rb_tl >= from->rb_hd) {
+		nright = from->rb_tl - from->rb_hd;
+		if (!nright)
+			return (0);
+		nleft = 0;
+	} else {
+		nleft = from->rb_tl - from->rb_buf;
+		nright = RBSZ - (from->rb_hd - from->rb_buf);
+	}
+	if (nright >= nto) {
+		noleft:
+		bcopy(from->rb_hd, buf, nto);
+		from->rb_hd = RB_ROLLOVER(from, from->rb_hd + nto);
+		return (nto);
+	}
+	if (!nleft) {
+		nto = nright;
+		goto noleft;
+	}
+	bcopy(from->rb_hd, buf, (size_t)nright);
+	nto -= nright;
+	if (nto > nleft)
+		nto = nleft;
+	bcopy(from->rb_buf, buf+nright, nto);
+	from->rb_hd = from->rb_buf + nto;
+	return (nright + nto);
 }
 
 /*
