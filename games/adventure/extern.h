@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1997/10/11 01:53:25 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -76,7 +76,6 @@ int restore __P((char *));
 
 /* setup.c */
 int main __P((int, char *[]));
-void fatal __P((char *, int));
 
 /* subr.c */
 int toting __P((int));
