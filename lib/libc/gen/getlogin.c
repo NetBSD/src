@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.6 1995/02/27 04:12:47 cgd Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.6.4.1 1996/09/19 20:02:53 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,16 +37,21 @@
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getlogin.c,v 1.6 1995/02/27 04:12:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: getlogin.c,v 1.6.4.1 1996/09/19 20:02:53 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <pwd.h>
 #include <utmp.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(getlogin,_getlogin);
+#endif
 
 int	__logname_valid;		/* known to setlogin() */
 
@@ -56,7 +61,7 @@ getlogin()
 	static char logname[MAXLOGNAME + 1];
 
 	if (__logname_valid == 0) {
-		if (_getlogin(logname, sizeof(logname) - 1) < 0)
+		if (__getlogin(logname, sizeof(logname) - 1) < 0)
 			return ((char *)NULL);
 		__logname_valid = 1;
 	}

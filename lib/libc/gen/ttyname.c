@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.9.4.1 1996/09/16 18:40:39 jtc Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.9.4.2 1996/09/19 20:04:11 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-static char rcsid[] = "$NetBSD: ttyname.c,v 1.9.4.1 1996/09/16 18:40:39 jtc Exp $";
+static char rcsid[] = "$NetBSD: ttyname.c,v 1.9.4.2 1996/09/19 20:04:11 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,10 @@ static char rcsid[] = "$NetBSD: ttyname.c,v 1.9.4.1 1996/09/16 18:40:39 jtc Exp 
 #include <string.h>
 #include <unistd.h>
 #include <paths.h>
+
+#ifdef __weak_alias
+__weak_alias(ttyname,_ttyname);
+#endif
 
 static char buf[sizeof(_PATH_DEV) + MAXNAMLEN] = _PATH_DEV;
 static char *oldttyname __P((int, struct stat *));

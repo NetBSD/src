@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.11.4.1 1996/09/19 20:02:25 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.11.4.1 1996/09/19 20:02:25 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
@@ -53,6 +54,10 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(getdiskbyname,_getdiskbyname);
+#endif
 
 static void	error __P((int));
 static int	gettype __P((char *, char **));

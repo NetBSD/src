@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.7 1995/03/04 01:56:04 cgd Exp $	*/
+/*	$NetBSD: signal.c,v 1.7.4.1 1996/09/19 20:03:47 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: signal.c,v 1.7 1995/03/04 01:56:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: signal.c,v 1.7.4.1 1996/09/19 20:03:47 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Almost backwards compatible signal.
  */
+#include "namespace.h"
 #include <signal.h>
 
 sigset_t __sigintr;		/* shared with siginterrupt */

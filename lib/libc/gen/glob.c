@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.5.4.1 1996/09/16 18:40:29 jtc Exp $	*/
+/*	$NetBSD: glob.c,v 1.5.4.2 1996/09/19 20:03:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$NetBSD: glob.c,v 1.5.4.1 1996/09/16 18:40:29 jtc Exp $";
+static char rcsid[] = "$NetBSD: glob.c,v 1.5.4.2 1996/09/19 20:03:12 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,6 +82,11 @@ static char rcsid[] = "$NetBSD: glob.c,v 1.5.4.1 1996/09/16 18:40:29 jtc Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(glob,_glob);
+__weak_alias(globfree,_globfree);
+#endif
 
 #define	DOLLAR		'$'
 #define	DOT		'.'

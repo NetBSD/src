@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.3.4.1 1996/09/19 20:03:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,10 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: sysconf.c,v 1.3.4.1 1996/09/19 20:03:56 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
@@ -51,6 +52,10 @@ static char rcsid[] = "$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $";
 
 #include <errno.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(sysconf,_sysconf);
+#endif
 
 /*
  * sysconf --

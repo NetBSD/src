@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
+/*	$NetBSD: nlist.c,v 1.7.2.1 1996/09/19 20:03:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist.c,v 1.7.2.1 1996/09/19 20:03:23 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $";
 	ERROR: NOT PROPERLY CONFIGURED
 #endif
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -64,6 +65,10 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(nlist,_nlist);
+#endif
 
 int
 nlist(name, list)

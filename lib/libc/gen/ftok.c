@@ -1,4 +1,4 @@
-/*	$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $	*/
+/*	$NetBSD: ftok.c,v 1.3.4.1 1996/09/19 20:02:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -28,12 +28,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $";
+static char *rcsid = "$NetBSD: ftok.c,v 1.3.4.1 1996/09/19 20:02:36 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ipc.h>
+
+#ifdef __weak_alias
+__weak_alias(ftok,_ftok);
+#endif
 
 key_t
 ftok(path, id)
@@ -48,3 +53,5 @@ ftok(path, id)
 	return (key_t)
 	    (id << 24 | (st.st_dev & 0xff) << 16 | (st.st_ino & 0xffff));
 }
+
+

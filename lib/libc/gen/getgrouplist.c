@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.5.4.1 1996/09/19 20:02:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,16 +37,21 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.5.4.1 1996/09/19 20:02:45 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * get credential
  */
+#include "namespace.h"
 #include <sys/types.h>
 #include <string.h>
 #include <grp.h>
+
+#ifdef __weak_alias
+__weak_alias(getgrouplist,_getgrouplist);
+#endif
 
 int
 getgrouplist(uname, agroup, groups, grpcnt)

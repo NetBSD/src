@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.5 1995/02/25 08:51:15 cgd Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.5.4.1 1996/09/19 20:02:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,17 +37,21 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getloadavg.c,v 1.5 1995/02/25 08:51:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: getloadavg.c,v 1.5.4.1 1996/09/19 20:02:51 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <vm/vm_param.h>
-
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(getloadavg,_getloadavg);
+#endif
 
 /*
  * getloadavg() -- Get system load averages.

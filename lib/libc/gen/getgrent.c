@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.13.4.1 1996/09/19 20:02:44 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.13.4.1 1996/09/19 20:02:44 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,15 @@ static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(endgrent,_endgrent);
+__weak_alias(getgrent,_getgrent);
+__weak_alias(getgrgid,_getgrgid);
+__weak_alias(getgrnam,_getgrnam);
+__weak_alias(setgrent,_setgrent);
+__weak_alias(setgroupent,_setgroupent);
 #endif
 
 static FILE *_gr_fp;

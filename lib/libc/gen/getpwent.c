@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.14.4.1 1996/09/16 18:40:27 jtc Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.14.4.2 1996/09/19 20:03:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.14.4.1 1996/09/16 18:40:27 jtc Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.14.4.2 1996/09/19 20:03:04 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,15 @@ static char rcsid[] = "$NetBSD: getpwent.c,v 1.14.4.1 1996/09/16 18:40:27 jtc Ex
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(endpwent,_endpwent);
+__weak_alias(getpwent,_getpwent);
+__weak_alias(getpwnam,_getpwnam);
+__weak_alias(getpwuid,_getpwuid);
+__weak_alias(setpassent,_setpassent);
+__weak_alias(setpwent,_setpwent);
 #endif
 
 static struct passwd _pw_passwd;	/* password structure */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.c,v 1.4 1995/02/25 15:40:11 cgd Exp $	*/
+/*	$NetBSD: wait.c,v 1.4.4.1 1996/09/19 20:04:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)wait.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: wait.c,v 1.4 1995/02/25 15:40:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: wait.c,v 1.4.4.1 1996/09/19 20:04:29 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+
+#ifdef __weak_alias
+__weak_alias(wait,_wait);
+#endif
 
 pid_t
 wait(istat)

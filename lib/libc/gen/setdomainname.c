@@ -1,4 +1,4 @@
-/*	$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $	*/
+/*	$NetBSD: setdomainname.c,v 1.4.4.1 1996/09/19 20:03:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,12 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $";
+static char rcsid[] = "$NetBSD: setdomainname.c,v 1.4.4.1 1996/09/19 20:03:33 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
+
+#ifdef __weak_alias
+__weak_alias(setdomainname,_setdomainname);
+#endif
 
 #if __STDC__
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: signame.c,v 1.6 1995/03/04 01:56:05 cgd Exp $	*/
+/*	$NetBSD: signame.c,v 1.6.4.1 1996/09/19 20:03:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,12 +37,17 @@
 #if 0
 static char sccsid[] = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
 #else
-static char rcsid[] = "$NetBSD: signame.c,v 1.6 1995/03/04 01:56:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: signame.c,v 1.6.4.1 1996/09/19 20:03:50 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h" 
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(sys_signame,_sys_signame);
+#endif
 
 const char *const sys_signame[NSIG] = {
 	"Signal 0",
