@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.20 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.21 2005/01/22 02:22:44 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@ struct RF_Pools_s {
 	struct pool pss;         /* Parity Stripe Status */
 	struct pool pss_issued;  /* Parity Stripe Status Issued */
 	struct pool rad;         /* Raid Access Descriptors */
-	struct pool recond;      /* reconstruction descriptors */
 	struct pool reconbuffer; /* reconstruction buffer (header) pool */
 	struct pool revent;      /* reconstruct events */
 	struct pool stripelock;  /* StripeLock */
