@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.13 1999/01/09 12:58:03 simonb Exp $
+#	$NetBSD: TODO,v 1.14 1999/01/10 00:52:33 simonb Exp $
 
 Things to do ....  in no specific order.
 
@@ -59,7 +59,7 @@ Things to do ....  in no specific order.
 	    to mount the active system's /usr. Could happen when a
 	    real upgrade aborts, even running from ramdisk root.)
 
-	-- Handle ccd's during an upgrade.
+	-- Handle ccd's and raid's during an upgrade.
 
         -- Use bootp or dhcp to get network info (hostname, domain name,
            name servers, ...)
