@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.3 2001/10/15 16:07:20 minoura Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.4 2001/10/15 16:13:40 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -37,6 +37,14 @@
 static int current_id = -1;
 static int current_blklen, current_devsize, current_npart;
 static struct boot_partinfo partitions[MAXPARTITIONS];
+
+int sdopen(struct open_file *, int, int);
+int sdclose(struct open_file*);
+int sdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
+int sd_getbsdpartition(int, int);
+int cdopen(struct open_file *, int, int);
+int cdclose(struct open_file*);
+int cdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
 
 static int readdisklabel(int);
 static int check_unit(int);
@@ -279,7 +287,7 @@ sdstrategy (void *arg, int rw, daddr_t dblk, size_t size,
 	}
 	nblks = howmany (size, 256 << current_blklen);
 
-	if (dblk & 0x1fffff == 0x1fffff && (nblks & 0xff) == nblks) {
+	if ((dblk & 0x1fffff) == 0x1fffff && (nblks & 0xff) == nblks) {
 		if (rw & F_WRITE)
 			error = IOCS_S_WRITE (start, nblks, current_id,
 					      current_blklen, buf);
