@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkeyv2.h,v 1.5 2000/06/12 10:40:37 itojun Exp $	*/
-/*	$KAME: pfkeyv2.h,v 1.16 2000/06/10 06:39:54 sakane Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.5.2.1 2000/07/01 23:45:20 itojun Exp $	*/
+/*	$KAME: pfkeyv2.h,v 1.17 2000/06/22 08:38:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -134,15 +134,6 @@ struct sadb_ident {
   u_int16_t sadb_ident_type;
   u_int16_t sadb_ident_reserved;
   u_int64_t sadb_ident_id;
-};
-/* in order to use to divide sadb_ident.sadb_ident_id */
-union sadb_x_ident_id {
-  u_int64_t sadb_x_ident_id;
-  struct _sadb_x_ident_id_addr {
-    u_int16_t prefix;
-    u_int16_t ul_proto;
-    u_int32_t reserved;
-  } sadb_x_ident_id_addr;
 };
 
 struct sadb_sens {

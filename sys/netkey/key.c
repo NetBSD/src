@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.23.2.1 2000/06/24 18:05:09 thorpej Exp $	*/
-/*	$KAME: key.c,v 1.132 2000/06/15 13:41:49 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.23.2.2 2000/07/01 23:45:21 itojun Exp $	*/
+/*	$KAME: key.c,v 1.137 2000/06/24 00:47:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -292,7 +292,7 @@ do { \
 	bzero((idx), sizeof(struct secasindex));                             \
 	(idx)->proto = (p);                                                  \
 	(idx)->mode = (m);                                                   \
-	(idx)->reqid = (r);                  ;                               \
+	(idx)->reqid = (r);                                                  \
 	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
 	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
 } while (0)
@@ -352,8 +352,10 @@ static struct mbuf *key_setsadbmsg __P((u_int8_t, u_int16_t, u_int8_t,
 static struct mbuf *key_setsadbsa __P((struct secasvar *));
 static struct mbuf *key_setsadbaddr __P((u_int16_t,
 	struct sockaddr *, u_int8_t, u_int16_t));
+#if 0
 static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
+#endif
 static struct mbuf *key_setsadbxsa2(u_int8_t, u_int32_t);
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
@@ -364,6 +366,8 @@ static int key_ismyaddr6 __P((struct sockaddr_in6 *));
 static int key_cmpsaidx_exactly
 	__P((struct secasindex *, struct secasindex *));
 static int key_cmpsaidx_withmode
+	__P((struct secasindex *, struct secasindex *));
+static int key_cmpsaidx_withoutmode
 	__P((struct secasindex *, struct secasindex *));
 static int key_cmpspidx_exactly
 	__P((struct secpolicyindex *, struct secpolicyindex *));
@@ -2012,7 +2016,6 @@ int
 key_spdacquire(sp)
 	struct secpolicy *sp;
 {
-	union sadb_x_ident_id id;
 	struct mbuf *result = NULL, *m;
 	struct secspacq *newspacq;
 	int error;
@@ -2051,29 +2054,6 @@ key_spdacquire(sp)
 		goto fail;
 	}
 	result = m;
-
-	/* set sadb_address for spidx's. */
-	bzero(&id, sizeof(id));
-	id.sadb_x_ident_id_addr.prefix = sp->spidx.prefs;
-	id.sadb_x_ident_id_addr.ul_proto = sp->spidx.ul_proto;
-	m = key_setsadbident(SADB_EXT_IDENTITY_SRC, SADB_X_IDENTTYPE_ADDR,
-	    (caddr_t)&sp->spidx.src, sp->spidx.src.ss_len, *(u_int64_t *)&id);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	m_cat(result, m);
-
-	bzero(&id, sizeof(id));
-	id.sadb_x_ident_id_addr.prefix = sp->spidx.prefd;
-	id.sadb_x_ident_id_addr.ul_proto = sp->spidx.ul_proto;
-	m = key_setsadbident(SADB_EXT_IDENTITY_DST, SADB_X_IDENTTYPE_ADDR,
-	    (caddr_t)&sp->spidx.dst, sp->spidx.dst.ss_len, *(u_int64_t *)&id);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	m_cat(result, m);
 
 	result->m_pkthdr.len = 0;
 	for (m = result; m; m = m->m_next)
@@ -3432,6 +3412,7 @@ key_setsadbaddr(exttype, saddr, prefixlen, ul_proto)
 	return m;
 }
 
+#if 0
 /*
  * set data into sadb_ident.
  */
@@ -3469,6 +3450,7 @@ key_setsadbident(exttype, idtype, string, stringlen, id)
 
 	return m;
 }
+#endif
 
 /*
  * set data into sadb_x_sa2.
@@ -3710,6 +3692,42 @@ key_cmpsaidx_withmode(saidx0, saidx1)
 		return 0;
 
 	if (saidx0->mode != IPSEC_MODE_ANY && saidx0->mode != saidx1->mode)
+		return 0;
+
+	if (key_sockaddrcmp((struct sockaddr *)&saidx0->src,
+	    (struct sockaddr *)&saidx1->src, 0) != 0) {
+		return 0;
+	}
+	if (key_sockaddrcmp((struct sockaddr *)&saidx0->dst,
+	    (struct sockaddr *)&saidx1->dst, 0) != 0) {
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
+ * compare two secasindex structure without mode.
+ * don't compare port.
+ * IN:
+ *	saidx0: source, it is often in SAD.
+ *	saidx1: object, it is often from user.
+ * OUT:
+ *	1 : equal
+ *	0 : not equal
+ */
+static int
+key_cmpsaidx_withoutmode(saidx0, saidx1)
+	struct secasindex *saidx0, *saidx1;
+{
+	/* sanity */
+	if (saidx0 == NULL && saidx1 == NULL)
+		return 1;
+
+	if (saidx0 == NULL || saidx1 == NULL)
+		return 0;
+
+	if (saidx0->proto != saidx1->proto)
 		return 0;
 
 	if (key_sockaddrcmp((struct sockaddr *)&saidx0->src,
@@ -4987,16 +5005,6 @@ key_setident(sah, m, mhp)
 	}
 
 	switch (idsrc->sadb_ident_type) {
-	case SADB_X_IDENTTYPE_ADDR:
-#define IDENTXID(a) (((union sadb_x_ident_id *)(a))->sadb_x_ident_id_addr)
-		if (IDENTXID(idsrc).ul_proto != IDENTXID(iddst).ul_proto) {
-#ifdef IPSEC_DEBUG
-			printf("key_setident: ul_proto mismatch.\n");
-#endif
-			return EINVAL;
-		}
-#undef IDENTXID
-		break;
 	case SADB_IDENTTYPE_PREFIX:
 	case SADB_IDENTTYPE_FQDN:
 	case SADB_IDENTTYPE_USERFQDN:
@@ -5086,7 +5094,7 @@ key_delete(so, m, mhp)
 	struct sadb_address *src0, *dst0;
 	struct secasindex saidx;
 	struct secashead *sah;
-	struct secasvar *sav;
+	struct secasvar *sav = NULL;
 	u_int16_t proto;
 
 	/* sanity check */
@@ -5129,21 +5137,17 @@ key_delete(so, m, mhp)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx_withmode(&sah->saidx, &saidx))
+		if (key_cmpsaidx_withoutmode(&sah->saidx, &saidx) == 0)
+			continue;
+
+		/* get a SA with SPI. */
+		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
+		if (sav)
 			break;
 	}
 	if (sah == NULL) {
 #ifdef IPSEC_DEBUG
 		printf("key_delete: no SA found.\n");
-#endif
-		return key_senderror(so, m, ENOENT);
-	}
-
-	/* get a SA with SPI. */
-	sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
-	if (sav == NULL) {
-#ifdef IPSEC_DEBUG
-		printf("key_delete: no alive SA found.\n");
 #endif
 		return key_senderror(so, m, ENOENT);
 	}
@@ -5198,7 +5202,7 @@ key_get(so, m, mhp)
 	struct sadb_address *src0, *dst0;
 	struct secasindex saidx;
 	struct secashead *sah;
-	struct secasvar *sav;
+	struct secasvar *sav = NULL;
 	u_int16_t proto;
 
 	/* sanity check */
@@ -5241,21 +5245,17 @@ key_get(so, m, mhp)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx_withmode(&sah->saidx, &saidx))
+		if (key_cmpsaidx_withoutmode(&sah->saidx, &saidx) == 0)
+			continue;
+
+		/* get a SA with SPI. */
+		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
+		if (sav)
 			break;
 	}
 	if (sah == NULL) {
 #ifdef IPSEC_DEBUG
 		printf("key_get: no SA found.\n");
-#endif
-		return key_senderror(so, m, ENOENT);
-	}
-
-	/* get a SA with SPI. */
-	sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
-	if (sav == NULL) {
-#ifdef IPSEC_DEBUG
-		printf("key_get: no SA with state of mature found.\n");
 #endif
 		return key_senderror(so, m, ENOENT);
 	}
@@ -5496,7 +5496,6 @@ key_acquire(saidx, sp)
 	u_int8_t satype;
 	int error = -1;
 	u_int32_t seq;
-	union sadb_x_ident_id id;
 
 	/* sanity check */
 	if (saidx == NULL || sp == NULL)
@@ -5575,39 +5574,7 @@ key_acquire(saidx, sp)
 	}
 	m_cat(result, m);
 
-	/* set sadb_address for spidx's. */
-	bzero(&id, sizeof(id));
-	id.sadb_x_ident_id_addr.prefix = spidx->prefs;
-	id.sadb_x_ident_id_addr.ul_proto = spidx->ul_proto;
-	m = key_setsadbident(SADB_EXT_IDENTITY_SRC, SADB_X_IDENTTYPE_ADDR,
-	    (caddr_t)&spidx->src, spidx->src.ss_len, *(u_int64_t *)&id);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	m_cat(result, m);
-
-	bzero(&id, sizeof(id));
-	id.sadb_x_ident_id_addr.prefix = spidx->prefd;
-	id.sadb_x_ident_id_addr.ul_proto = spidx->ul_proto;
-	m = key_setsadbident(SADB_EXT_IDENTITY_DST, SADB_X_IDENTTYPE_ADDR,
-	    (caddr_t)&spidx->dst, spidx->dst.ss_len, *(u_int64_t *)&id);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	m_cat(result, m);
-
-	/* XXX sensitivity (optional) */
-
-	/* create proposal/combination extension */
-	m = key_getprop(saidx);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	m_cat(result, m);
-
+	/* XXX identity (optional) */
 #if 0
 	if (idexttype && fqdn) {
 		/* create identity extension (FQDN) */
@@ -5647,6 +5614,16 @@ key_acquire(saidx, sp)
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);
 	}
 #endif
+
+	/* XXX sensitivity (optional) */
+
+	/* create proposal/combination extension */
+	m = key_getprop(saidx);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
 	if ((result->m_flags & M_PKTHDR) == 0) {
 		error = EINVAL;
