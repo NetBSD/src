@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.25 2000/06/18 19:30:21 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.26 2000/06/25 13:07:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,12 @@ static void	sparc_vme4m_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 /*
  * DMA functions.
  */
+static void	sparc_vct_dmamap_destroy __P((void *, bus_dmamap_t));
+
 #if defined(SUN4)
+static int	sparc_vct4_dmamap_create __P((void *, vme_size_t, vme_am_t,
+		    vme_datasize_t, vme_swap_t, int, vme_size_t, vme_addr_t,
+		    int, bus_dmamap_t *));
 static int	sparc_vme4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 		    bus_size_t, struct proc *, int));
 static void	sparc_vme4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
@@ -129,6 +134,9 @@ static void	sparc_vme4_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
 #endif
 
 #if defined(SUN4M)
+static int	sparc_vct4m_dmamap_create __P((void *, vme_size_t, vme_am_t,
+		    vme_datasize_t, vme_swap_t, int, vme_size_t, vme_addr_t,
+		    int, bus_dmamap_t *));
 static int	sparc_vme4m_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 
@@ -291,6 +299,8 @@ vmeattach_mainbus(parent, self, aux)
 	sc->sc_vmeintr = vmeintr4;
 
 /*XXX*/	sparc_vme_chipset_tag.cookie = self;
+/*XXX*/	sparc_vme_chipset_tag.vct_dmamap_create = sparc_vct4_dmamap_create;
+/*XXX*/	sparc_vme_chipset_tag.vct_dmamap_destroy = sparc_vct_dmamap_destroy;
 /*XXX*/	sparc_vme4_dma_tag._cookie = self;
 
 #if 0
@@ -344,6 +354,8 @@ vmeattach_iommu(parent, self, aux)
 	sc->sc_vmeintr = vmeintr4m;
 
 /*XXX*/	sparc_vme_chipset_tag.cookie = self;
+/*XXX*/	sparc_vme_chipset_tag.vct_dmamap_create = sparc_vct4m_dmamap_create;
+/*XXX*/	sparc_vme_chipset_tag.vct_dmamap_destroy = sparc_vct_dmamap_destroy;
 /*XXX*/	sparc_vme4m_dma_tag._cookie = self;
 	sparc_vme_bus_tag.sparc_bus_barrier = sparc_vme4m_barrier;
 
@@ -546,6 +558,7 @@ sparc_vme_map(cookie, addr, size, mod, datasize, swap, tp, hp, rp)
 	vme_size_t size;
 	vme_am_t mod;
 	vme_datasize_t datasize;
+	vme_swap_t swap;
 	bus_space_tag_t *tp;
 	bus_space_handle_t *hp;
 	vme_mapresc_t *rp;
@@ -818,7 +831,37 @@ sparc_vme_intr_disestablish(cookie, a)
  * VME DMA functions.
  */
 
+static void
+sparc_vct_dmamap_destroy(cookie, map)
+	void *cookie;
+	bus_dmamap_t map;
+{
+	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
+	bus_dmamap_destroy(sc->sc_dmatag, map);
+}
+
 #if defined(SUN4)
+static int
+sparc_vct4_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
+			  boundary, flags, dmamp)
+	void *cookie;
+	vme_size_t size;
+	vme_am_t am;
+	vme_datasize_t datasize;
+	vme_swap_t swap;
+	int nsegments;
+	vme_size_t maxsegsz;
+	vme_addr_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
+
+	/* Allocate a base map through parent bus ops */
+	return (bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
+				  boundary, flags, dmamp));
+}
+
 int
 sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
@@ -947,21 +990,57 @@ sparc_vme4m_dmamap_create (t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct sparcvme_softc *sc = (struct sparcvme_softc *)t->_cookie;
+
+	printf("sparc_vme4m_dmamap_create: please use `vme_dmamap_create'\n");
+	return (EINVAL);
+}
+
+static int
+sparc_vct4m_dmamap_create(cookie, size, am, datasize, swap, nsegments, maxsegsz,
+			  boundary, flags, dmamp)
+	void *cookie;
+	vme_size_t size;
+	vme_am_t am;
+	vme_datasize_t datasize;
+	vme_swap_t swap;
+	int nsegments;
+	vme_size_t maxsegsz;
+	vme_addr_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	struct sparcvme_softc *sc = (struct sparcvme_softc *)cookie;
+	bus_dmamap_t map;
 	int error;
 
-	/* XXX - todo: allocate DVMA addresses from assigned ranges:
-		 upper 8MB for A32 space; upper 1MB for A24 space */
+	/* Allocate a base map through parent bus ops */
 	error = bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
-				  boundary, flags, dmamp);
+				  boundary, flags, &map);
 	if (error != 0)
 		return (error);
 
-#if 0
-	/* VME DVMA addresses must always be 8K aligned */
-	(*dmamp)->_dm_align = 8192;
-#endif
+	/*
+	 * Each I/O cache line maps to a 8K section of VME DVMA space, so
+	 * we must ensure that DVMA alloctions are always 8K aligned.
+	 */
+	map->_dm_align = VME_IOC_PAGESZ;
 
+	/* Set map region based on Address Modifier */
+	switch ((am & VME_AM_ADRSIZEMASK)) {
+	case VME_AM_A16:
+	case VME_AM_A24:
+		/* 1 MB of DVMA space */
+		map->_dm_ex_start = 0xff800000;
+		map->_dm_ex_end   = 0xff900000;
+		break;
+	case VME_AM_A32:
+		/* 8 MB of DVMA space */
+		map->_dm_ex_start = 0xff800000;
+		map->_dm_ex_end   = IOMMU_DVMA_END;
+		break;
+	}
+
+	*dmamp = map;
 	return (0);
 }
 
@@ -978,14 +1057,15 @@ sparc_vme4m_dmamap_load(t, map, buf, buflen, p, flags)
 	volatile u_int32_t	*ioctags;
 	int			error;
 
+	/* Round request to a multiple of the I/O cache size */
 	buflen = (buflen + VME_IOC_PAGESZ - 1) & -VME_IOC_PAGESZ;
 	error = bus_dmamap_load(sc->sc_dmatag, map, buf, buflen, p, flags);
 	if (error != 0)
 		return (error);
 
-	/* allocate IO cache entries for this range */
+	/* Allocate I/O cache entries for this range */
 	ioctags = sc->sc_ioctags + VME_IOC_LINE(map->dm_segs[0].ds_addr);
-	for (;buflen > 0;) {
+	while (buflen > 0) {
 		*ioctags = VME_IOC_IC | VME_IOC_W;
 		ioctags += VME_IOC_LINESZ/sizeof(*ioctags);
 		buflen -= VME_IOC_PAGESZ;
@@ -1003,15 +1083,19 @@ sparc_vme4m_dmamap_unload(t, map)
 	volatile u_int32_t	*flushregs;
 	int			len;
 
-	/* Flush VME IO cache */
-	len = map->dm_segs[0].ds_len;
+	/* Flush VME I/O cache */
+	len = map->dm_segs[0]._ds_sgsize;
 	flushregs = sc->sc_iocflush + VME_IOC_LINE(map->dm_segs[0].ds_addr);
-	for (;len > 0;) {
+	while (len > 0) {
 		*flushregs = 0;
 		flushregs += VME_IOC_LINESZ/sizeof(*flushregs);
 		len -= VME_IOC_PAGESZ;
 	}
-	/* Read a tag to synchronize the IOC flushes */
+
+	/*
+	 * Start a read from `tag space' which will not complete until
+	 * all cache flushes have finished
+	 */
 	(*sc->sc_ioctags);
 
 	bus_dmamap_unload(sc->sc_dmatag, map);
