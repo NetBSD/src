@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisapc.c,v 1.4 1998/07/07 00:48:11 mark Exp $	*/
+/*	$NetBSD: ofisapc.c,v 1.5 1999/03/19 04:58:45 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -42,7 +42,6 @@
 #include <sys/systm.h>
 
 #include <machine/intr.h>
-#include <arm32/isa/isa_machdep.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>

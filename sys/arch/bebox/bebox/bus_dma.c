@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 1998/10/03 21:38:48 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 1999/03/19 04:58:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/mc146818reg.h>
-#include <bebox/isa/isa_machdep.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int));
