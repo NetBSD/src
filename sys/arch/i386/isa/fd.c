@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.37 1994/04/08 18:22:23 mycroft Exp $
+ *	$Id: fd.c,v 1.38 1994/04/08 18:51:19 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -195,8 +195,8 @@ void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((struct fdc_softc *fdc));
 void fdcpseudointr __P((struct fdc_softc *fdc));
-int fdcstate __P((struct fdc_softc *fdc));
-int fdcretry __P((struct fdc_softc *fdc));
+int fdcintr __P((struct fdc_softc *fdc));
+void fdcretry __P((struct fdc_softc *fdc));
 
 int
 fdcprobe(parent, self, aux)
@@ -746,17 +746,6 @@ int
 fdcintr(fdc)
 	struct fdc_softc *fdc;
 {
-
-	/* call the state machine until it returns 0 */
-	while (fdcstate(fdc));
-	/* XXX need a more useful return value */
-	return -1;
-}
-
-int
-fdcstate(fdc)
-	struct fdc_softc *fdc;
-{
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;
@@ -765,6 +754,7 @@ fdcstate(fdc)
 	int read, head, trac, sec, i, s, sectrac, blkno, nblks;
 	struct fd_type *type;
 
+again:
 	dp = fdc->sc_q.b_forw;
 	if (!dp) {
 		/* no drives waiting; end */
@@ -777,14 +767,14 @@ fdcstate(fdc)
 			fdc->sc_afd = NULL;
 		}
 #endif
- 		return 0;
+ 		return 1;
 	}
 	bp = dp->b_actf;
 	if (!bp) {
 		/* nothing queued on this drive; try next */
 		fdc->sc_q.b_forw = dp->b_forw;
 		dp->b_active = 0;
-		return 1;
+		goto again;
 	}
 	fd = fdcd.cd_devs[FDUNIT(bp->b_dev)];
 #ifdef DIAGNOSTIC
@@ -801,7 +791,7 @@ fdcstate(fdc)
 		untimeout((timeout_t)fd_motor_off, (caddr_t)fd);
 		if (fd->sc_flags & FD_MOTOR_WAIT) {
 			fdc->sc_state = MOTORWAIT;
-			return 0;
+			return 1;
 		}
 		if (!(fd->sc_flags & FD_MOTOR)) {
 			/* lame controller */
@@ -815,7 +805,7 @@ fdcstate(fdc)
 			fdc->sc_state = MOTORWAIT;
 			/* allow .25s for motor to stabilize */
 			timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz/4);
-			return 0;
+			return 1;
 		}
 		/* at least make sure we are selected */
 		fd_set_motor(fdc, 0);
@@ -841,7 +831,7 @@ fdcstate(fdc)
 		fd->sc_track = -1;
 		fdc->sc_state = SEEKWAIT;
 		timeout((timeout_t)fdctimeout, (caddr_t)fdc, hz*4);
-		return 0;
+		return 1;
 
 	case DOIO:
 	doio:
@@ -862,7 +852,7 @@ fdcstate(fdc)
 		{int block;
 		 block = (fd->sc_track * type->heads / type->step + head) * sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcstate: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
 			 Debugger();
 		 }}
 #endif
@@ -876,7 +866,7 @@ fdcstate(fdc)
 #endif
 		outb(iobase + fdctl, type->rate);
 #ifdef DEBUG
-		printf("fdcstate: %s drive %d track %d head %d sec %d nblks %d\n",
+		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 		       read ? "read" : "write", fd->sc_drive, fd->sc_track, head,
 		       sec, nblks);
 #endif
@@ -895,21 +885,22 @@ fdcstate(fdc)
 		fdc->sc_state = IOCOMPLETE;
 		/* allow 2 seconds for operation */
 		timeout((timeout_t)fdctimeout, (caddr_t)fdc, 2 * hz);
-		return 0;				/* will return later */
+		return 1;				/* will return later */
 
 	case SEEKWAIT:
 		untimeout((timeout_t)fdctimeout, (caddr_t)fdc);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
 		timeout((timeout_t)fdcpseudointr, (caddr_t)fdc, hz/50);
-		return 0;
+		return 1;
 		
 	case SEEKCOMPLETE:
 		/* make sure seek really happened */
 		out_fdc(iobase, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != bp->b_cylin) {
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
-			return fdcretry(fdc);
+			fdcretry(fdc);
+			goto again;
 		}
 		fd->sc_track = bp->b_cylin;
 		goto doio;
@@ -923,7 +914,8 @@ fdcstate(fdc)
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
-		return fdcretry(fdc);
+		fdcretry(fdc);
+		goto again;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		untimeout((timeout_t)fdctimeout, (caddr_t)fdc);
@@ -937,7 +929,8 @@ fdcstate(fdc)
 				  "read failed" : "write failed");
 			printf("blkno %d skip %d cylin %d status %x\n", bp->b_blkno,
 			       fd->sc_skip, bp->b_cylin, fdc->sc_status[0]);
-			return fdcretry(fdc);
+			fdcretry(fdc);
+			goto again;
 		}
 		nblks = fd->sc_nblks;
 #ifdef NEWCONFIG
@@ -966,7 +959,7 @@ fdcstate(fdc)
 			fd->sc_skip = 0;
 			fdc->sc_afd = NULL;
 			fdc->sc_state = DEVIDLE;
-			return 1;
+			goto again;
 		}
 
 	case DORESET:
@@ -976,7 +969,7 @@ fdcstate(fdc)
 		fd_set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
 		timeout((timeout_t)fdctimeout, (caddr_t)fdc, hz/2);
-		return 0;			/* will return later */
+		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
 		untimeout((timeout_t)fdctimeout, (caddr_t)fdc);
@@ -992,42 +985,42 @@ fdcstate(fdc)
 		out_fdc(iobase, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
 		timeout((timeout_t)fdctimeout, (caddr_t)fdc, 5 * hz);
-		return 0;			/* will return later */
+		return 1;			/* will return later */
 
 	case RECALWAIT:
 		untimeout((timeout_t)fdctimeout, (caddr_t)fdc);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
 		timeout((timeout_t)fdcpseudointr, (caddr_t)fdc, hz/30);
-		return 0;			/* will return later */
+		return 1;			/* will return later */
 
 	case RECALCOMPLETE:
 		out_fdc(iobase, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");
-			return fdcretry(fdc);
+			fdcretry(fdc);
+			goto again;
 		}
 		fd->sc_track = 0;
 		goto doseek;
 
 	case MOTORWAIT:
 		if (fd->sc_flags & FD_MOTOR_WAIT)
-			return 0;		/* time's not up yet */
+			return 1;		/* time's not up yet */
 		goto doseek;
 
 	default:
 		fdcstatus(&fd->sc_dev, 0, "stray interrupt");
-		return 0;
+		return 1;
 	}
 #ifdef DIAGNOSTIC
-	printf("fdcstate: impossible");
-	return 0;
+	panic("fdcintr: impossible");
 #endif
 #undef	st0
 #undef	cyl
 }
 
-int
+void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
@@ -1073,10 +1066,8 @@ fdcretry(fdc)
 		fd->sc_skip = 0;
 		fdc->sc_afd = NULL;
 		fdc->sc_state = DEVIDLE;
-		return 1;
 	}
 	fdc->sc_retry++;
-	return 1;
 }
 
 int
