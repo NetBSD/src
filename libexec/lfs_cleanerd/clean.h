@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.8 1999/11/09 01:06:39 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.9 1999/11/09 20:33:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,6 +72,9 @@
 #define	ONE_MIN		0
 #define	FIVE_MIN	1
 #define	FIFTEEN_MIN	2
+
+#define TIME_THRESHOLD	5	/* Time to tell looping from running */
+#define LOOP_THRESHOLD	5	/* Number of looping respawns before exit */
 
 #include <sys/time.h>
 
