@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.104 1998/10/10 02:00:53 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.105 1998/11/07 17:28:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ cdev_decl(scsibus);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
 	(dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write */
 #define	cdev_i4btel_init(c,n) { \
