@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.28 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: dvma.c,v 1.28.2.1 2005/02/12 12:26:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.28 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.28.2.1 2005/02/12 12:26:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ dvma_malloc(size_t bytes)
 	if (!bytes)
 		return NULL;
 	new_size = m68k_round_page(bytes);
-	new_mem = (void*)uvm_km_alloc(kernel_map, new_size);
+	new_mem = (void*)uvm_km_alloc(kernel_map, new_size, 0, UVM_KMF_WIRED);
 	if (!new_mem)
 		return NULL;
 	dvma_mem = dvma_mapin(new_mem, new_size, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.2.1 2005/02/12 12:26:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2005/01/22 15:36:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.1 2005/02/12 12:26:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -251,7 +251,8 @@ cpu_startup(void)
 	/*
 	 * Get scratch page for dumpsys().
 	 */
-	if ((dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE)) == 0)
+	dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE, UVM_KMF_WIRED);
+	if (dumppage == 0)
 		panic("startup: alloc dumppage");
 
 	minaddr = 0;
@@ -283,7 +284,8 @@ cpu_startup(void)
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
+	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 
 	/*
 	 * Create the DVMA maps.
