@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.60 2003/01/03 11:57:45 mrg Exp $	*/
+/*	$NetBSD: obio.c,v 1.61 2003/04/02 04:35:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -328,14 +328,14 @@ obio_find_rom_map(ba, len, hp)
 	int	pgtype;
 	u_long	va, pte;
 
-	if (len > NBPG)
+	if (len > PAGE_SIZE)
 		return (EINVAL);
 
 	pa = BUS_ADDR_PADDR(ba);
 	pf = pa >> PGSHIFT;
 	pgtype = PMAP_T2PTE_4(PMAP_OBIO);
 
-	for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += NBPG) {
+	for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += PAGE_SIZE) {
 		pte = getpte(va);
 		if ((pte & PG_V) == 0 || (pte & PG_TYPE) != pgtype ||
 		    (pte & PG_PFNUM) != pf)

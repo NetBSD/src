@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.42 2002/12/05 18:05:33 fredette Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.43 2003/04/02 04:35:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,8 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 
@@ -170,7 +172,7 @@ cgtwoattach(parent, self, aux)
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
 	fb->fb_type.fb_cmsize = 256;
-	fb->fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
+	fb->fb_type.fb_size = roundup(CG2_MAPPED_SIZE, PAGE_SIZE);
 	printf(": cgtwo, %d x %d",
 	       fb->fb_type.fb_width, fb->fb_type.fb_height);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.31 2002/10/23 09:12:05 jdolecek Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.32 2003/04/02 04:35:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
@@ -393,8 +394,8 @@ cgeightioctl(dev, cmd, data, flags, p)
  *
  * The cg8 maps it's overlay plane at 0 for 128K, followed by the
  * enable plane for 128K, followed by the colour for as long as it
- * goes. Starting at 8MB, it maps the ramdac for NBPG, then the p4
- * register for NBPG, then the bootrom for 0x40000.
+ * goes. Starting at 8MB, it maps the ramdac for PAGE_SIZE, then the p4
+ * register for PAGE_SIZE, then the bootrom for 0x40000.
  */
 paddr_t
 cgeightmmap(dev, off, prot)
@@ -456,17 +457,17 @@ cgeightmmap(dev, off, prot)
 		 * colour map (Brooktree)
 		 */
 		poff = PFOUR_COLOR_OFF_CMAP;
-	} else if ((u_int)off == START_SPECIAL + NBPG) {
+	} else if ((u_int)off == START_SPECIAL + PAGE_SIZE) {
 		/*
 		 * p4 register
 		 */
 		poff = 0;
-	} else if ((u_int)off > (START_SPECIAL + (NBPG * 2)) &&
-	    (u_int) off < (START_SPECIAL + (NBPG * 2) + PROMSIZE)) {
+	} else if ((u_int)off > (START_SPECIAL + (PAGE_SIZE * 2)) &&
+	    (u_int) off < (START_SPECIAL + (PAGE_SIZE * 2) + PROMSIZE)) {
 		/*
 		 * rom
 		 */
-		poff = 0x8000 + (off - (START_SPECIAL + (NBPG * 2)));
+		poff = 0x8000 + (off - (START_SPECIAL + (PAGE_SIZE * 2)));
 	} else
 		return (-1);
 
