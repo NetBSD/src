@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.27 2004/08/19 14:50:52 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.28 2004/08/23 17:52:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -190,7 +190,7 @@ struct cardbus_softc {
 #define PCCARD_XXV  0x04
 #define PCCARD_YYV  0x08
 	int sc_poweron_func;
-  struct cardbus_devfunc *sc_funcs;	/* list of cardbus device functions */
+  struct cardbus_devfunc *sc_funcs[8];	/* list of cardbus device functions */
 };
 
 
@@ -219,8 +219,6 @@ typedef struct cardbus_devfunc {
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
 	struct device *ct_device;	/* pointer to the device */
-
-	struct cardbus_devfunc *ct_next;
 
 	/* some data structure needed for tuple??? */
 } *cardbus_devfunc_t;
