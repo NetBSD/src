@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.28 2004/02/10 01:30:49 matt Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.29 2005/01/01 21:00:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,6 +120,8 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 	simple_lock_init(&map->flags_lock);
+	LIST_INIT(&map->kentry_free);
+	map->merged_entries = NULL;
 }
 
 
@@ -138,6 +140,7 @@ MAP_INLINE void
 uvm_unmap(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	struct vm_map_entry *dead_entries;
+	struct uvm_mapent_reservation umr;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x)",
@@ -146,9 +149,11 @@ uvm_unmap(struct vm_map *map, vaddr_t start, vaddr_t end)
 	 * work now done by helper functions.   wipe the pmap's and then
 	 * detach from the dead entries...
 	 */
+	uvm_mapent_reserve(map, &umr, 2, 0);
 	vm_map_lock(map);
-	uvm_unmap_remove(map, start, end, &dead_entries);
+	uvm_unmap_remove(map, start, end, &dead_entries, &umr);
 	vm_map_unlock(map);
+	uvm_mapent_unreserve(map, &umr);
 
 	if (dead_entries != NULL)
 		uvm_unmap_detach(dead_entries, 0);
