@@ -1,0 +1,3 @@
+#
+arch/sun3/dev/obio.c		optional obio device-driver
+arch/sun3/dev/obmem.c		optional obmem device-driver
