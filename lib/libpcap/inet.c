@@ -1,7 +1,7 @@
-/*	$NetBSD: inet.c,v 1.3 1996/05/26 23:50:40 cgd Exp $	*/
+/*	$NetBSD: inet.c,v 1.4 1996/12/13 08:26:06 mikel Exp $	*/
 
 /*
- * Copyright (c) 1994
+ * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,15 +35,21 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: inet.c,v 1.4 94/06/07 01:16:50 leres Exp (LBL)";
+    "@(#) Header: inet.c,v 1.18 96/07/15 00:48:49 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#ifdef SOLARIS
+#ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
+#endif
+#include <sys/time.h>				/* concession to AIX */
+
+#if __STDC__
+struct mbuf;
+struct rtentry;
 #endif
 
 #include <net/if.h>
@@ -51,11 +57,18 @@ static char rcsid[] =
 
 #include <ctype.h>
 #include <errno.h>
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pcap.h>
+
+#include "pcap-int.h"
+
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
 /* Not all systems have IFF_LOOPBACK */
 #ifdef IFF_LOOPBACK
@@ -100,7 +113,7 @@ pcap_lookupdev(errbuf)
 	mp = NULL;
 	minunit = 666;
 	for (; ifrp < ifend; ifrp = ifnext) {
-#if BSD - 0 >= 199006
+#ifdef HAVE_SOCKADDR_SA_LEN
 		n = ifrp->ifr_addr.sa_len + sizeof(ifrp->ifr_name);
 		if (n < sizeof(*ifrp))
 			ifnext = ifrp + 1;
@@ -151,7 +164,7 @@ pcap_lookupdev(errbuf)
 int
 pcap_lookupnet(device, netp, maskp, errbuf)
 	register char *device;
-	register u_int32_t *netp, *maskp;
+	register bpf_u_int32 *netp, *maskp;
 	register char *errbuf;
 {
 	register int fd;
@@ -163,6 +176,11 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 		(void)sprintf(errbuf, "socket: %s", pcap_strerror(errno));
 		return (-1);
 	}
+	memset(&ifr, 0, sizeof(ifr));
+#ifdef linux
+	/* XXX Work around Linux kernel bug */
+	ifr.ifr_addr.sa_family = AF_INET;
+#endif
 	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
 		(void)sprintf(errbuf, "SIOCGIFADDR: %s: %s",

@@ -1,7 +1,7 @@
-/*	$NetBSD: bpf_image.c,v 1.2 1995/03/06 11:38:11 mycroft Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.3 1996/12/13 08:25:58 mikel Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1994
+ * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,17 +23,21 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) Header: bpf_image.c,v 1.12 94/01/31 03:22:34 leres Exp (LBL)";
+    "@(#) Header: bpf_image.c,v 1.21 96/07/15 00:48:36 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include <net/bpf.h>
-
-#include <pcap.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "pcap-int.h"
+
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
 char *
 bpf_image(p, n)
@@ -137,7 +141,7 @@ bpf_image(p, n)
 	case BPF_JMP|BPF_JA:
 		op = "ja";
 		fmt = "%d";
-		v = n + p->k;
+		v = n + 1 + p->k;
 		break;
 
 	case BPF_JMP|BPF_JGT|BPF_K:
@@ -242,12 +246,12 @@ bpf_image(p, n)
 
 	case BPF_ALU|BPF_AND|BPF_K:
 		op = "and";
-		fmt = "#%d";
+		fmt = "#0x%x";
 		break;
 
 	case BPF_ALU|BPF_OR|BPF_K:
 		op = "or";
-		fmt = "#%d";
+		fmt = "#0x%x";
 		break;
 
 	case BPF_ALU|BPF_LSH|BPF_K:

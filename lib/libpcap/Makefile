@@ -1,9 +1,16 @@
-#	$NetBSD: Makefile,v 1.5 1996/10/18 05:45:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 1996/12/13 08:25:56 mikel Exp $
 
 LIB=	pcap
 MAN=	pcap.3
 
-CFLAGS+=-I. -I${.CURDIR} -DFDDI
+LEX=	flex
+
+CFLAGS+=-I. -I${.CURDIR} -DYYBISON
+CFLAGS+=-DHAVE_MALLOC_H=1 -DHAVE_SYS_IOCCOM_H=1 -DHAVE_SYS_SOCKIO_H=1
+CFLAGS+=-DHAVE_ETHER_HOSTTON=1 -DHAVE_STRERROR=1 -DHAVE_SOCKADDR_SA_LEN=1
+CFLAGS+=-DLBL_ALIGN=1 
+LFLAGS+=-olex.yy.c -Ppcap_
+YFLAGS+=-ppcap_
 
 HDRS=	pcap.h pcap-namedb.h
 SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
@@ -23,3 +30,5 @@ includes:
 	done
 
 .include <bsd.lib.mk>
+
+.depend: grammar.c scanner.c
