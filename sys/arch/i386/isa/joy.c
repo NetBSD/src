@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.6 1997/01/16 23:17:45 christos Exp $	*/
+/*	$NetBSD: joy.c,v 1.7 1997/06/14 11:38:30 mycroft Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -116,8 +116,9 @@ joyopen(dev, flag, mode, p)
 
 	if (unit >= joy_cd.cd_ndevs)
 		return (ENXIO);
-
 	sc = joy_cd.cd_devs[unit];
+	if (sc == 0)
+		return (ENXIO);
 
 	if (sc->timeout[i])
 		return EBUSY;
