@@ -1,4 +1,4 @@
-.\"	$NetBSD: uu.4,v 1.6 1999/12/15 23:44:56 abs Exp $
+.\"	$NetBSD: uu.4,v 1.7 2001/04/11 19:23:02 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm uu
 .Nd
 .Tn TU58 Ns / Tn DECtape II UNIBUS
-cassette interface 
+cassette interface
 .Sh SYNOPSIS
 .Cd "options UUDMA"
 .Cd "uu0 at uba0 csr 0176500 vector uurintr uuxintr"
@@ -67,7 +67,7 @@ The drives are normally manipulated with the
 .Xr arff 8
 program using the ``m'' and ``f'' options.
 .Pp
-The driver provides for an optional write and verify 
+The driver provides for an optional write and verify
 (read after write) mode that is activated by specifying the
 ``a'' device.
 .Pp
@@ -78,7 +78,7 @@ though it has two separate drives,
 .Sq Li uu0
 and
 .Sq Li uu1 .
-If there is 
+If there is
 more than one
 .Tn TU58
 unit on a system, the extra drives
@@ -106,7 +106,7 @@ request. This indicates a hardware problem.
 .Pp
 .It uu%d protocol error, state=%s, op=%x, cnt=%d, block=%d.
 The driver entered an illegal state.  The information printed
-indicates the illegal state, the 
+indicates the illegal state, the
 operation currently being executed,
 the
 .Tn I/O
@@ -139,7 +139,7 @@ by the driver.
 The following errors may be returned:
 .Bl -tag -width [ENXIO]
 .It Bq Er ENXIO
-Nonexistent drive (on open); 
+Nonexistent drive (on open);
 offset is too large or bad (undefined)
 .Xr ioctl 2
 code.
