@@ -1,4 +1,4 @@
-.\" $NetBSD: ppbus.4,v 1.6 2004/01/28 17:21:15 jdolecek Exp $
+.\" $NetBSD: ppbus.4,v 1.7 2004/01/28 17:26:45 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Nicolas Souchu
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Cd "lp* at ppbus?"
 .Cd "ppi* at ppbus?"
 .Cd "pps* at ppbus?"
-.Cd "lpbb* at ppbus?"
+.\" Cd "lpbb* at ppbus?"
 .\" Cd "vpo* at ppbus?"
 .Sh DESCRIPTION
 The
@@ -77,7 +77,7 @@ and non-standard software:
 It uses standard and non-standard parallel port accesses.
 .It Sy ppi Ta "Parallel port interface for general I/O"
 .It Sy pps Ta "Pulse per second Timing Interface"
-.It Sy lpbb Ta "Philips official parallel port I2C bit-banging interface"
+.\" It Sy lpbb Ta "Philips official parallel port I2C bit-banging interface"
 .El
 .Ss Porting existing drivers
 Another approach to the
