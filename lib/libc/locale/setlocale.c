@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.20 2000/09/08 20:56:36 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.21 2000/09/09 20:50:33 veego Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.20 2000/09/08 20:56:36 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.21 2000/09/09 20:50:33 veego Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: setlocale.c,v 1.20 2000/09/08 20:56:36 tshiozak Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "ctypeio.h"
 
 /*
