@@ -191,8 +191,8 @@ struct sysent freebsd_sysent[] = {
 	    sys_setitimer },			/* 83 = setitimer */
 	{ 0, 0,
 	    compat_43_sys_wait },		/* 84 = owait */
-	{ 1, s(struct sys_swapon_args),
-	    sys_swapon },			/* 85 = swapon */
+	{ 1, s(struct compat_12_sys_swapon_args),
+	    compat_12_sys_swapon },		/* 85 = swapon */
 	{ 2, s(struct sys_getitimer_args),
 	    sys_getitimer },			/* 86 = getitimer */
 	{ 2, s(struct compat_43_sys_gethostname_args),

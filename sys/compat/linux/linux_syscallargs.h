@@ -401,7 +401,7 @@ int	linux_sys_symlink	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_lstat	__P((struct proc *, void *, register_t *));
 int	linux_sys_readlink	__P((struct proc *, void *, register_t *));
 int	linux_sys_uselib	__P((struct proc *, void *, register_t *));
-int	sys_swapon	__P((struct proc *, void *, register_t *));
+int	compat_12_sys_swapon	__P((struct proc *, void *, register_t *));
 int	sys_reboot	__P((struct proc *, void *, register_t *));
 int	linux_sys_readdir	__P((struct proc *, void *, register_t *));
 int	linux_sys_mmap	__P((struct proc *, void *, register_t *));

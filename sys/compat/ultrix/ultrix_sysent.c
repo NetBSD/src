@@ -203,8 +203,8 @@ struct sysent ultrix_sysent[] = {
 	    sys_setitimer },			/* 83 = setitimer */
 	{ 3, s(struct ultrix_sys_wait3_args),
 	    ultrix_sys_wait3 },			/* 84 = wait3 */
-	{ 1, s(struct sys_swapon_args),
-	    sys_swapon },			/* 85 = swapon */
+	{ 1, s(struct compat_12_sys_swapon_args),
+	    compat_12_sys_swapon },		/* 85 = swapon */
 	{ 2, s(struct sys_getitimer_args),
 	    sys_getitimer },			/* 86 = getitimer */
 	{ 2, s(struct compat_43_sys_gethostname_args),

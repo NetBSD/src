@@ -284,7 +284,7 @@ int	sys_getpgrp	__P((struct proc *, void *, register_t *));
 int	sys_setpgid	__P((struct proc *, void *, register_t *));
 int	sys_setitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_wait	__P((struct proc *, void *, register_t *));
-int	sys_swapon	__P((struct proc *, void *, register_t *));
+int	compat_12_sys_swapon	__P((struct proc *, void *, register_t *));
 int	sys_getitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_gethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
