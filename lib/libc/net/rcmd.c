@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rcmd.c	5.24 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: rcmd.c,v 1.3 1993/08/26 00:46:13 jtc Exp $";
+static char *rcsid = "$Id: rcmd.c,v 1.4 1993/12/05 14:42:26 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 {
 	int s, timo = 1, pid;
 	long oldmask;
-	struct sockaddr_in sin, sin2, from;
+	struct sockaddr_in sin, from;
 	char c;
 	int lport = IPPORT_RESERVED - 1;
 	struct hostent *hp;
@@ -84,6 +84,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			return (-1);
 		}
 		fcntl(s, F_SETOWN, pid);
+		bzero((char *)&sin, sizeof sin);
 		sin.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr_list[0], (caddr_t)&sin.sin_addr, hp->h_length);
 		sin.sin_port = rport;
