@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resource.h	7.5 (Berkeley) 3/17/91
- *	$Id: resource.h,v 1.3 1993/05/20 16:22:57 cgd Exp $
+ *	$Id: resource.h,v 1.4 1993/08/23 16:01:56 mycroft Exp $
  */
 
 #ifndef _SYS_RESOURCE_H_
@@ -86,7 +86,7 @@ struct	rusage {
 #define	RLIMIT_RSS	5		/* resident set size */
 #define	RLIMIT_MEMLOCK	6		/* locked-in-memory address space */
 #define	RLIMIT_NPROC	7		/* number of processes */
-#define	RLIMIT_OFILE	8		/* number of open files */
+#define	RLIMIT_NOFILE	8		/* number of open files */
 
 #define	RLIM_NLIMITS	9		/* number of resource limits */
 

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)func.c	5.20 (Berkeley) 6/27/91";*/
-static char rcsid[] = "$Id: func.c,v 1.4 1993/08/01 19:00:43 mycroft Exp $";
+static char rcsid[] = "$Id: func.c,v 1.5 1993/08/23 16:04:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1045,7 +1045,7 @@ static struct limits {
     RLIMIT_RSS,		"memoryuse", 	1024,	"kbytes",
     RLIMIT_MEMLOCK,	"memorylocked",	1024,	"kbytes",
     RLIMIT_NPROC,	"maxproc",	1,	"",
-    RLIMIT_OFILE,	"openfiles",	1,	"",
+    RLIMIT_NOFILE,	"openfiles",	1,	"",
     -1, 		NULL, 		0,	NULL
 };
 
