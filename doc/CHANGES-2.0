@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.473 2004/10/01 03:41:16 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.474 2004/10/01 03:42:09 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7658,3 +7658,9 @@ distrib/notes/common/main			patch
 
 	Updates for some wording changes and troff fixes
 	[wiz, ticket #878]
+
+share/man/man4/raid.4				1.30
+
+	Minor update to note a few other archs for which booting directly from
+	a RAID-1 set is supported. PR#27045.
+	[wiz, ticket #879]
