@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.17 1999/07/25 05:52:16 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.18 1999/10/05 20:37:23 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.17 1999/07/25 05:52:16 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.18 1999/10/05 20:37:23 is Exp $");
 #endif
 #endif
 
@@ -491,6 +491,11 @@ init_linktype(type)
 
 	switch (type) {
 
+	case DLT_ARCNET:
+		off_linktype = 3;
+		off_nl = 6;	/* XXX in reality, variable! */
+		return;
+
 	case DLT_EN10MB:
 		off_linktype = 12;
 		off_nl = 14;
@@ -582,7 +587,7 @@ init_linktype(type)
 		off_nl = 0;
 		return;
 	}
-	bpf_error("unknown data link type 0x%x", linktype);
+	bpf_error("libpcap: unknown data link type 0x%x", linktype);
 	/* NOTREACHED */
 }
 
