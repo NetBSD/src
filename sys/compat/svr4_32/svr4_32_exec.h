@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.2.4.1 2001/08/24 00:08:57 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.2.4.2 2002/08/23 02:39:15 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ int svr4_32_copyargs __P((struct exec_package *, struct ps_strings *,
 
 extern const struct emul emul_svr4_32;
 
-void svr4_32_setregs __P((struct proc *, struct exec_package *, u_long));
+void svr4_32_setregs __P((struct lwp *, struct exec_package *, u_long));
 int svr4_32_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 

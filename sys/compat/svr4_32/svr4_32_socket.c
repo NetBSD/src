@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.1.4.3 2002/08/01 02:44:28 nathanw Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.1.4.4 2002/08/23 02:39:16 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.1.4.3 2002/08/01 02:44:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.1.4.4 2002/08/23 02:39:16 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -188,8 +188,8 @@ svr4_32_add_socket(p, path, st)
 #endif
 
 int
-svr4_32_sys_socket(p, v, retval)
-	struct proc *p;
+svr4_32_sys_socket(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -225,5 +225,5 @@ svr4_32_sys_socket(p, v, retval)
 	default:
 		return EINVAL;
 	}
-	return sys_socket(p, &uap0, retval);
+	return sys_socket(l, &uap0, retval);
 }

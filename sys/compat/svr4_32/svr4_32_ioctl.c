@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.4.2.4 2002/08/01 02:44:26 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.4.2.5 2002/08/23 02:39:15 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.4.2.4 2002/08/01 02:44:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.4.2.5 2002/08/23 02:39:15 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -98,16 +98,17 @@ svr4_32_decode_cmd(cmd, dir, c, num, argsiz)
 #endif
 
 int
-svr4_32_sys_ioctl(p, v, retval)
-	struct proc *p;
+svr4_32_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_ioctl_args *uap = v;
+	struct proc 	*p = l->l_proc;
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
-	int (*fun) __P((struct file *, struct proc *, register_t *,
+	int (*fun) __P((struct file *, struct lwp *, register_t *,
 			int, u_long, caddr_t));
 #ifdef DEBUG_SVR4
 	char		 dir[4];
@@ -158,6 +159,6 @@ svr4_32_sys_ioctl(p, v, retval)
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
 		return 0;	/* XXX: really ENOSYS */
 	}
-	return (*fun)(fp, p, retval, SCARG(uap, fd), cmd, 
+	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd, 
 		      (caddr_t)(u_long)SCARG(uap, data));
 }
