@@ -1,11 +1,12 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: create.c,v 1.3 1995/03/23 08:33:14 cgd Exp $";
+static char rcsid[] = "$NetBSD: create.c,v 1.4 1997/03/29 20:42:17 thorpej Exp $";
 #endif /* not lint */
 
 /*	create.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include "header.h"
 extern char spelknow[],larnlevels[];
-extern char beenhere[],wizard,level;
+extern char beenhere[],wizard;
+extern short level;
 extern short oldx,oldy;
 /*
 	makeplayer()

@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.4 1995/04/24 12:24:23 cgd Exp $	*/
+/*	$NetBSD: monop.h,v 1.5 1997/03/29 20:42:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,11 @@
 # include	<string.h>
 
 # define	reg	register
+#ifdef __CHAR_UNSIGNED__
+# define	shrt	short
+#else
 # define	shrt	char
+#endif
 # define	bool	char
 # define	unsgn	unsigned
 

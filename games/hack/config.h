@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  *
- *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $
+ *	$NetBSD: config.h,v 1.4 1997/03/29 20:42:16 thorpej Exp $
  */
 
 #include "pathnames.h"
@@ -107,7 +107,11 @@
  * will do when you have signed characters; otherwise use
  *	typedef	short int schar;
  */
-typedef	char	schar;
+#ifdef __CHAR_UNSIGNED__
+typedef	short int	schar;
+#else
+typedef	char		schar;
+#endif
 
 /*
  * small unsigned integers (8 bits suffice - but 7 bits do not)

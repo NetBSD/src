@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.4 1997/03/29 20:42:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $";
+static char rcsid[] = "$NetBSD: initdeck.c,v 1.4 1997/03/29 20:42:23 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ count() {
 
 	reg bool	newline;
 	reg DECK	*in_deck;
-	reg char	c;
+	reg int		c;
 
 	newline = TRUE;
 	in_deck = &CC_D;
@@ -152,7 +152,7 @@ putem() {
 
 	reg bool	newline;
 	reg DECK	*in_deck;
-	reg char	c;
+	reg int		c;
 	reg int		num;
 
 	in_deck = &CC_D;
