@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.37 2003/10/13 21:44:27 scw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.38 2003/10/23 08:59:10 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -195,28 +195,45 @@ ASENTRY_NP(idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
-	ldr	r3, .Lcpu_do_powersave
 
 	/* Enable interrupts */
 	IRQenable
 
+	ldr	r6, .Lcpu_do_powersave
+
+	/* Lower the spl level to spl0 and get the current spl level. */
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
+	mov	r0, #(_SPL_0)
+	bl	_C_LABEL(splx)
+#endif /* __NEWINTR */
+
+	/* Old interrupt level in r0 */
+
 	/* If we don't want to sleep, use a simpler loop. */
-	ldr	r3, [r3]		/* r3 = cpu_do_powersave */
-	teq	r3, #0
+	ldr	r6, [r6]		/* r6 = cpu_do_powersave */
+	teq	r6, #0
 	bne	2f
 
 	/* Non-powersave idle. */
 1:	/* should maybe do uvm pageidlezero stuff here */
 	ldr	r3, [r7]		/* r3 = whichqs */
 	teq	r3, #0x00000000
-	bne	.Lswitch_search
-	b	1b
+	beq	1b
+	adr	lr, .Lswitch_search
+	b	_C_LABEL(splx)	    /* Restore ipl, return to switch_search */
 
 2:	/* Powersave idle. */
 	ldr	r4, .Lcpufuncs
+	mov	r6, r0			/* Preserve old interrupt level */
+
 3:	ldr	r3, [r7]		/* r3 = whichqs */
 	teq	r3, #0x00000000
-	bne	.Lswitch_search
+	moveq	r0, r6
+	adreq	lr, .Lswitch_search
+	beq	_C_LABEL(splx)	    /* Restore ipl, return to switch_search */
 
 	/* if saving power, don't want to pageidlezero */
 	mov	r0, #0
@@ -259,25 +276,7 @@ ENTRY(cpu_switch)
 	/* stash the old proc while we call functions */
 	mov	r5, r0
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* release the sched_lock before handling interrupts */
-	bl	_C_LABEL(sched_unlock_idle)
-#endif
-
-	/* Lower the spl level to spl0 and get the current spl level. */
-#ifdef __NEWINTR
-	mov	r0, #(IPL_NONE)
-	bl	_C_LABEL(_spllower)
-#else /* ! __NEWINTR */
-	mov	r0, #(_SPL_0)
-	bl	_C_LABEL(splx)
-#endif /* __NEWINTR */
-
-	/* Push the old spl level onto the stack */
-	str	r0, [sp, #-0x0004]!
-
 	/* First phase : find a new lwp */
-
 	ldr	r7, .Lwhichqs
 
 	/* rem: r5 = old lwp */
@@ -285,9 +284,6 @@ ENTRY(cpu_switch)
 
 .Lswitch_search:
 	IRQdisable
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	bl	_C_LABEL(sched_lock_idle)
-#endif
 
 	/* Do we have any active queues  */
 	ldr	r3, [r7]
@@ -369,8 +365,8 @@ ENTRY(cpu_switch)
 	str	r0, [r7, #(L_BACK)]
 
 	/* Update the RAM copy of the queue not empty flags word. */
-	ldr	r7, .Lwhichqs
-	str	r3, [r7]
+	ldreq	r7, .Lwhichqs
+	streq	r3, [r7]
 
 	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs - NOT NEEDED ANY MORE */
@@ -398,7 +394,13 @@ ENTRY(cpu_switch)
 	mov	r1, r7
 #endif
 
+
 .Lswitch_resume:
+	/* rem: r1 = old lwp */
+	/* rem: r4 = return value [not used if came from cpu_switchto()] */
+	/* rem: r6 = new process */
+	/* rem: interrupts are disabled */
+
 #ifdef MULTIPROCESSOR
 	/* XXX use curcpu() */
 	ldr	r0, .Lcpu_info_store
@@ -745,16 +747,11 @@ ENTRY(cpu_switch)
 	 */
 
 	ldr	r2, [r5, #(P_NRAS)]
-	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
+	ldr	r1, [r7, #(PCB_TF)]	/* r1 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
 	bne	.Lswitch_do_ras		/* no, check for one */
 
 .Lswitch_return:
-
-	/* Get the spl level from the stack and update the current spl level */
-	ldr	r0, [sp], #0x0004
-	bl	_C_LABEL(splx)
-
 	/* cpu_switch returns 1 == switched, 0 == didn't switch */
 	mov	r0, r4
 
@@ -765,11 +762,12 @@ ENTRY(cpu_switch)
 	ldmfd	sp!, {r4-r7, pc}
 
 .Lswitch_do_ras:
-	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
+	ldr	r1, [r1, #(TF_PC)]	/* second ras_lookup() arg */
 	mov	r0, r5			/* first ras_lookup() arg */
 	bl	_C_LABEL(ras_lookup)
 	cmn	r0, #1			/* -1 means "not in a RAS" */
-	strne	r0, [r4, #(TF_PC)]
+	ldrne	r1, [r7, #(PCB_TF)]
+	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
 .Lswitch_exited:
@@ -798,55 +796,25 @@ ENTRY(cpu_switch)
 ENTRY(cpu_switchto)
 	stmfd	sp!, {r4-r7, lr}
 
-	/* Lower the spl level to spl0 and get the current spl level. */
-	mov	r6, r0		/* save old lwp */
-	mov	r5, r1		/* save new lwp */
+	mov	r6, r1		/* save new lwp */
 
 #if defined(LOCKDEBUG)
-	/* release the sched_lock before handling interrupts */
+	mov	r5, r0		/* save old lwp */
 	bl	_C_LABEL(sched_unlock_idle)
-#endif
-
-#ifdef __NEWINTR
-	mov	r0, #(IPL_NONE)
-	bl	_C_LABEL(_spllower)
-#else /* ! __NEWINTR */
-#ifdef spl0
-	mov	r0, #(_SPL_0)
-	bl	_C_LABEL(splx)
+	mov	r1, r5
 #else
-	bl	_C_LABEL(spl0)
-#endif /* spl0 */
-#endif /* __NEWINTR */
-
-	/* Push the old spl level onto the stack */
-	str	r0, [sp, #-0x0004]!
+	mov	r1, r0
+#endif
 
 	IRQdisable
-#if defined(LOCKDEBUG)
-	bl	_C_LABEL(sched_lock_idle)
-#endif
-
-	mov	r0, r6		/* restore old lwp */
-	mov	r1, r5		/* restore new lwp */
-
-	/* rem: r0 = old lwp */
-	/* rem: r1 = new lwp */
-	/* rem: interrupts are disabled */
 
 	/*
 	 * Okay, set up registers the way cpu_switch() wants them,
 	 * and jump into the middle of it (where we bring up the
 	 * new process).
+	 *
+	 * r1 = old lwp (r6 = new lwp)
 	 */
-	mov	r6, r1			/* r6 = new lwp */
-#if defined(LOCKDEBUG)
-	mov	r5, r0			/* preserve old lwp */
-	bl	_C_LABEL(sched_unlock_idle)
-	mov	r1, r5			/* r1 = old lwp */
-#else
-	mov	r1, r0			/* r1 = old lwp */
-#endif
 	b	.Lswitch_resume
 
 /*
@@ -1007,6 +975,14 @@ ENTRY(savectx)
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
+	mov	r0, #(_SPL_0)
+	bl	_C_LABEL(splx)
+#endif /* __NEWINTR */
+
 #ifdef MULTIPROCESSOR
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif
