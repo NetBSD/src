@@ -1,4 +1,4 @@
-.\"	$NetBSD: daily.conf.5,v 1.6 2000/08/25 01:11:43 hubertf Exp $
+.\"	$NetBSD: daily.conf.5,v 1.7 2000/11/17 10:14:17 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -52,7 +52,9 @@ over the entire local filesystem, looking for core files.
 .It Sy run_msgs
 This runs
 .Xr msgs 1
-with the ``-c'' argument.
+with the
+.Fl c
+argument.
 .It Sy expire_news
 This runs the
 .Pa /etc/expire.news
@@ -63,13 +65,17 @@ This ages accounting files in
 .It Sy run_calendar
 This runs
 .Xr calendar 1
-with the ``-a'' argument.
+with the
+.Fl a
+argument.
 .It Sy check_uucp
 This runs the
 .Pa /etc/uuclean.daily
 script, as the daemon user, and runs
 .Xr uustat 1
-with the ``-a'' argument.
+with the
+.Fl a
+argument.
 .It Sy check_disks
 This uses the
 .Xr df 1
@@ -82,7 +88,9 @@ This runs
 .It Sy check_network
 This runs
 .Xr netstat 1
-with the ``-i'' argument, and also checks the
+with the
+.Fl i
+argument, and also checks the
 .Xr rwhod 8
 database, and runs
 .Xr ruptime 1
@@ -91,7 +99,9 @@ if there are hosts in
 .It Sy run_fsck
 This runs
 .Xr fsck 8
-with the ``-n'' option.
+with the
+.Fl n
+option.
 .It Sy run_rdist
 This runs
 .Xr rdist 1

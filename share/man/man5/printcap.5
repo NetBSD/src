@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.9 1999/03/17 20:19:47 garbled Exp $
+.\"	$NetBSD: printcap.5,v 1.10 2000/11/17 10:14:19 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -181,8 +181,7 @@ flag (pass control characters literally)
 is specified to
 .Xr lpr 1 .
 The
-.Ar Width
-function
+.Ar width
 and
 .Ar length
 specify the page width and length
@@ -198,9 +197,8 @@ and
 parameters specify the login name and host name of the owner
 of the job respectively.
 The
-.Ar Acct-file
-function
-is passed from the
+.Ar acct-file
+option is passed from the
 .Cm af
 .Nm printcap
 entry.
