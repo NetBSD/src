@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/04/26 15:50:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2002/04/26 17:30:00 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/Makefile.inc"
@@ -19,7 +19,7 @@ release: check_RELEASEDIR
 	${RELINSTALL} ${CDHDTAPEOBJ}/cdhdtape ${ITARGET}/diskimage/.
 	${RELINSTALL} ${FDSETOBJ}/disk1of2 ${ITARGET}/floppy/.
 	${RELINSTALL} ${FDSETOBJ}/disk2of2 ${ITARGET}/floppy/.
-	${RELINSTALL} ${INSTKERNOBJ}/netbsd.gz ${ITARGET}/instkernel/.
+	${RELINSTALL} ${INSTKERNOBJ}/netbsd.INSTALL.gz ${ITARGET}/instkernel/netbsd.gz
 #	${RELINSTALL} ${GENERICOBJ}/GENERIC.fs ${ITARGET}/misc/.
 
 .include <bsd.subdir.mk>
