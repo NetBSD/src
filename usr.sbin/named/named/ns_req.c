@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_req.c,v 1.5 1998/04/07 04:51:36 mrg Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.6 1998/04/07 14:05:07 mrg Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
@@ -1024,7 +1024,10 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 	dprintf(1, (ddt, "req: IQuery class %d type %d\n", class, type));
 
 	fname = (char *)msg + HFIXEDSZ;
-	bcopy(fname, anbuf, alen = (char *)*cpp - fname);
+	alen = (char *)*cpp - fname;
+	if ((size_t)alen > sizeof anbuf)
+		return (Refuse);
+	bcopy(fname, anbuf, alen);
 	data = anbuf + alen - dlen;
 	*cpp = (u_char *)fname;
 	*buflenp -= HFIXEDSZ;
