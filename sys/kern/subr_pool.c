@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.30 1999/08/29 00:26:01 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.31 2000/02/14 19:28:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -449,9 +449,10 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_nout = 0;
 	pp->pr_hardlimit = UINT_MAX;
 	pp->pr_hardlimit_warning = NULL;
-	pp->pr_hardlimit_ratecap = 0;
-	memset(&pp->pr_hardlimit_warning_last, 0,
-	    sizeof(pp->pr_hardlimit_warning_last));
+	pp->pr_hardlimit_ratecap.tv_sec = 0;
+	pp->pr_hardlimit_ratecap.tv_usec = 0;
+	pp->pr_hardlimit_warning_last.tv_sec = 0;
+	pp->pr_hardlimit_warning_last.tv_usec = 0;
 
 	/*
 	 * Decide whether to put the page header off page to avoid
@@ -620,21 +621,14 @@ _pool_get(pp, flags, file, line)
 			pr_enter(pp, file, line);
 			goto startover;
 		}
-		if (pp->pr_hardlimit_warning != NULL) {
-			/*
-			 * Log a message that the hard limit has been hit.
-			 */
-			struct timeval curtime, logdiff;
-			int s = splclock();
-			curtime = mono_time;
-			splx(s);
-			timersub(&curtime, &pp->pr_hardlimit_warning_last,
-			    &logdiff);
-			if (logdiff.tv_sec >= pp->pr_hardlimit_ratecap) {
-				pp->pr_hardlimit_warning_last = curtime;
-				log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
-			}
-		}
+
+		/*
+		 * Log a message that the hard limit has been hit.
+		 */
+		if (pp->pr_hardlimit_warning != NULL &&
+		    ratecheck(&pp->pr_hardlimit_warning_last,
+			      &pp->pr_hardlimit_ratecap))
+			log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
 
 		if (flags & PR_URGENT)
 			panic("pool_get: urgent");
@@ -1182,9 +1176,9 @@ pool_sethardlimit(pp, n, warnmess, ratecap)
 
 	pp->pr_hardlimit = n;
 	pp->pr_hardlimit_warning = warnmess;
-	pp->pr_hardlimit_ratecap = ratecap;
-	memset(&pp->pr_hardlimit_warning_last, 0,
-	    sizeof(pp->pr_hardlimit_warning_last));
+	pp->pr_hardlimit_ratecap.tv_sec = ratecap;
+	pp->pr_hardlimit_warning_last.tv_sec = 0;
+	pp->pr_hardlimit_warning_last.tv_usec = 0;
 
 	/*
 	 * In-line version of pool_sethiwat(), because we don't want to
