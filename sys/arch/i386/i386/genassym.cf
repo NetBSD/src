@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.6 2000/08/18 03:30:53 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.7 2000/08/25 03:56:27 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -223,6 +223,8 @@ define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
+define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+
 ifdef MULTIPROCESSOR
 
 define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
@@ -232,7 +234,6 @@ define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
-define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.7 2000/08/18 13:30:08 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.8 2000/08/25 03:56:24 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -542,7 +542,7 @@ npxsave_proc(struct proc *p, int save)
 		}
 	}
 #else
-	KASSERT(fpcurproc == p);
+	KASSERT(ci->ci_fpcurproc == p);
 	npxsave_cpu(ci, save);
 #endif
 }

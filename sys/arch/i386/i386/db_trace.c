@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28.4.2 2000/08/18 13:28:28 sommerfeld Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28.4.3 2000/08/25 03:56:26 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -69,7 +69,7 @@ static int
 db_i386_regop (struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	db_expr_t *regaddr =
-	    (db_expr_t *)(((uint8_t *)ddb_regp) + ((size_t)vp->valuep));
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
 	
 	switch (opcode) {
 	case DB_VAR_GET:

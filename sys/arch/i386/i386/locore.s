@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.13 2000/08/24 02:33:11 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.14 2000/08/25 03:56:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
 	
 #define CLEAR_RESCHED(treg)				 \
 	xorl	%eax,%eax				;\
-	movl	%eax,_C_LABEL(want_resched)		; 
+	movl	%eax,_C_LABEL(cpu_info_store)+CPU_INFO_RESCHED		; 
 	
 #endif
 
