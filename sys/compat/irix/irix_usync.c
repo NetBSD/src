@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usync.c,v 1.1 2002/04/29 14:40:23 manu Exp $ */
+/*	$NetBSD: irix_usync.c,v 1.2 2002/05/22 21:32:21 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usync.c,v 1.1 2002/04/29 14:40:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usync.c,v 1.2 2002/05/22 21:32:21 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_usema.h>
 #include <compat/irix/irix_usync.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
+
+static TAILQ_HEAD(irix_usync_reclist, irix_usync_rec) irix_usync_reclist =
+	{ NULL, NULL };
 
 int
 irix_sys_usync_cntl(p, v, retval)
@@ -62,8 +67,91 @@ irix_sys_usync_cntl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
+	int error;
+	struct irix_usync_arg iua;
+	struct irix_semaphore is;
+	struct irix_usync_rec *iur;
+
+	/* 
+	 * Initialize irix_usync_reclist if it has not 
+	 * been initialized yet. Not sure it is the best 
+	 * place to do this...
+	 */
+	if (irix_usync_reclist.tqh_last == NULL)
+		TAILQ_INIT(&irix_usync_reclist);
 
 	switch (SCARG(uap, cmd)) {
+	case IRIX_USYNC_BLOCK:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		iur = malloc(sizeof(*iur), M_DEVBUF, M_WAITOK);
+		iur->iur_sem = iua.iua_sem;
+		iur->iur_p = p;
+		TAILQ_INSERT_TAIL(&irix_usync_reclist, iur, iur_list);
+
+		(void)tsleep(iur, PZERO, "irix_usema", 0);
+		break;	
+
+	case IRIX_USYNC_INTR_BLOCK:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		iur = malloc(sizeof(*iur), M_DEVBUF, M_WAITOK|M_ZERO);
+		iur->iur_sem = iua.iua_sem;
+		iur->iur_p = p;
+		TAILQ_INSERT_TAIL(&irix_usync_reclist, iur, iur_list);
+
+		(void)tsleep(iur, PZERO|PCATCH, "irix_usema", 0);
+		break;	
+
+	case IRIX_USYNC_UNBLOCK_ALL: {
+		int found = 0;
+
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		TAILQ_FOREACH(iur, &irix_usync_reclist, iur_list) {
+			if (iur->iur_sem == iua.iua_sem) {
+				found = 1;
+				wakeup(iur);
+				TAILQ_REMOVE(&irix_usync_reclist, 
+				    iur, iur_list);
+				free(iur, M_DEVBUF);
+			}
+		}
+		if (found == 0)
+			return EINVAL;
+		break;
+	}
+
+	case IRIX_USYNC_UNBLOCK: 
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		TAILQ_FOREACH(iur, &irix_usync_reclist, iur_list) {
+			if (iur->iur_sem == iua.iua_sem) {
+				wakeup(iur);
+				TAILQ_REMOVE(&irix_usync_reclist, 
+				    iur, iur_list);
+				free(iur, M_DEVBUF);
+				break;
+			}
+		}
+		if (iur == NULL) /* Nothing was found */
+			return EINVAL; 
+		break;
+
+	case IRIX_USYNC_GET_STATE:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+		if ((error = copyin(iua.iua_sem, &is, sizeof(is))) != 0)
+			return error;
+		if (is.is_val < 0)
+			*retval = -1;
+		else
+			*retval = 0;
+		break;
 	default:
 		printf("Warning: unimplemented IRIX usync_cntl command %d\n",
 		    SCARG(uap, cmd));
