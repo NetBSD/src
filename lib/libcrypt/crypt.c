@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.21 2003/08/07 16:44:17 agc Exp $	*/
+/*	$NetBSD: crypt.c,v 1.22 2004/07/02 00:05:23 sjg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.21 2003/08/07 16:44:17 agc Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.22 2004/07/02 00:05:23 sjg Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: crypt.c,v 1.21 2003/08/07 16:44:17 agc Exp $");
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "crypt.h"
 
 /*
  * UNIX password, and DES, encryption.
@@ -467,9 +469,6 @@ static C_block	CF6464[64/CHUNKBITS][1<<CHUNKBITS];
 static C_block	constdatablock;			/* encryption constant */
 static char	cryptresult[1+4+4+11+1];	/* encrypted result */
 
-extern char *__md5crypt(const char *, const char *);	/* XXX */
-extern char *__bcrypt(const char *, const char *);	/* XXX */
-
 
 /*
  * Return a pointer to static data consisting of the "setting"
@@ -492,6 +491,8 @@ crypt(key, setting)
 		switch (setting[1]) {
 		case '2':
 			return (__bcrypt(key, setting));
+		case 's':
+			return (__crypt_sha1(key, setting));
 		case '1':
 		default:
 			return (__md5crypt(key, setting));
@@ -982,5 +983,20 @@ prtab(s, t, num_rows)
 		(void)printf("\n");
 	}
 	(void)printf("\n");
+}
+#endif
+
+#if defined(MAIN) || defined(UNIT_TEST)
+#include <stdio.h>
+#include <err.h>
+
+int
+main (int argc, char *argv[])
+{
+    if (argc < 2)
+	errx(1, "Usage: %s password [salt]\n", argv[0]);
+
+    printf("%s\n", crypt(argv[1], (argc > 2) ? argv[2] : argv[1]));
+    exit(0);
 }
 #endif
