@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.6 1998/01/26 21:48:07 cgd Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.7 1998/02/02 22:00:07 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/ofw/openfirm.h>
@@ -49,24 +50,18 @@ struct cfattach ofroot_ca = {
 };
  
 static int
-ofbprint(aux, name)
+ofbprint(aux, pnp)
 	void *aux;
-	const char *name;
+	const char *pnp;
 {
 	struct ofprobe *ofp = aux;
-	char child[64];
-	int l;
-	
-	if ((l = OF_getprop(ofp->phandle, "name", child, sizeof child - 1)) < 0)
-		panic("device without name?");
-	if (l >= sizeof child)
-		l = sizeof child - 1;
-	child[l] = 0;
-	
-	if (name)
-		printf("%s at %s", child, name);
+	char name[64];
+
+	(void)of_nodename(ofp->phandle, name, sizeof name);
+	if (pnp)
+		printf("%s at %s", name, pnp);
 	else
-		printf(" (%s)", child);
+		printf(" (%s)", name);
 	return UNCONF;
 }
 
@@ -93,10 +88,10 @@ ofbattach(parent, dev, aux)
 	struct ofprobe *ofp = aux;
 	struct ofprobe probe;
 	int units;
-	
+
 	if (!parent)
 		ofbprint(aux, 0);
-		
+
 	printf("\n");
 
 	/*
