@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1998/01/22 21:48:44 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1998/01/22 22:00:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1019,15 +1019,18 @@ pmap_bootstrap_copyprom()
 	/*
 	 * Copy the mappings at MON_DVMA_BASE (to the end).
 	 * Note, in here, mon_ctbl[0] maps MON_DVMA_BASE.
-	 * XXX - This does not appear to be necessary, but
-	 * I'm not sure yet if it is or not. -gwr
+	 * Actually, we only want the last page, which the
+	 * PROM has set up for use by the "ie" driver.
+	 * (The i82686 needs its SCP there.)
+	 * If we copy all the mappings, pmap_enter_kernel
+	 * may complain about finding valid PTEs that are
+	 * not recorded in our PV lists...
 	 */
 	mon_ctbl = *romp->shadowpteaddr;
 	i = m68k_btop(MON_DVMA_BASE - KERNBASE);
 	kpte = &kernCbase[i];
 	len = m68k_btop(MON_DVMA_SIZE);
-
-	for (i = 0; i < len; i++) {
+	for (i = (len-1); i < len; i++) {
 		kpte[i].attr.raw = mon_ctbl[i];
 	}
 }
@@ -1582,23 +1585,28 @@ pmap_remove_pte(pte)
 			pv->pv_idx = pvebase[targ_idx].pve_next;
 		} else {
 			/*
-			 * Find the PV element which points to the target
-			 * element.
+			 * Find the PV element pointing to the target
+			 * element.  Note: may have pv_idx==PVE_EOL
 			 */
-			while (pvebase[pv_idx].pve_next != targ_idx) {
-				pv_idx = pvebase[pv_idx].pve_next;
-#ifdef	DIAGNOSTIC
-				if (pv_idx == PVE_EOL)
-					panic("pmap_remove_pte: pv list end!");
+			for (;;) {
+				if (pv_idx == PVE_EOL) {
+#ifdef	PMAP_DEBUG
+					printf("pmap_remove_pte: PVE_EOL\n");
+					Debugger();
 #endif
+					goto pv_not_found;
+				}
+				if (pvebase[pv_idx].pve_next == targ_idx)
+					break;
+				pv_idx = pvebase[pv_idx].pve_next;
 			}
-
 			/*
 			 * At this point, pv_idx is the index of the PV
 			 * element just before the target element in the list.
 			 * Unlink the target.
 			 */
 			pvebase[pv_idx].pve_next = pvebase[targ_idx].pve_next;
+		pv_not_found:
 		}
 		/*
 		 * Save the mod/ref bits of the pte by simply
@@ -2062,14 +2070,19 @@ pmap_enter_kernel(va, pa, prot)
 	vm_prot_t   prot;
 {
 	boolean_t       was_valid, insert;
-	u_short         pte_idx, pv_idx;
+	u_short         pte_idx;
 	int             s, flags;
 	mmu_short_pte_t *pte;
 	pv_t            *pv;
 	vm_offset_t     old_pa;
 
-	flags  = (pa & ~MMU_PAGE_MASK);
-	pa    &= MMU_PAGE_MASK;
+	flags = (pa & ~MMU_PAGE_MASK);
+	pa &= MMU_PAGE_MASK;
+
+	if (is_managed(pa))
+		insert = TRUE; 
+	else
+		insert = FALSE;
 
 	/*
 	 * Calculate the index of the PTE being modified.
@@ -2083,38 +2096,16 @@ pmap_enter_kernel(va, pa, prot)
 	if (MMU_VALID_DT(*pte)) {
 		was_valid = TRUE;
 		/*
-		 * If the PTE is already mapped to an address and it differs
-		 * from the address requested, unlink it from the PV list.
+		 * If the PTE already maps a different
+		 * physical address, umap and pv_unlink.
 		 */
 		old_pa = MMU_PTE_PA(*pte);
-		if (pa != old_pa) {
-		    if (is_managed(old_pa)) {
-		        /* XXX - Make this into a function call? */
-		        pv = pa2pv(old_pa);
-		        pv_idx = pv->pv_idx;
-		        if (pv_idx == pte_idx) {
-		            pv->pv_idx = pvebase[pte_idx].pve_next;
-		        } else {
-		            while (pvebase[pv_idx].pve_next != pte_idx)
-		                pv_idx = pvebase[pv_idx].pve_next;
-		            pvebase[pv_idx].pve_next =
-		                pvebase[pte_idx].pve_next;
-		        }
-		        /* Save modified/reference bits */
-		        pv->pv_flags |= (u_short) pte->attr.raw;
-		    }
-		    if (is_managed(pa))
-		        insert = TRUE;
-		    else
-		        insert = FALSE;
+		if (pa != old_pa)
+			pmap_remove_pte(pte);
+		else {
 		    /*
-		     * Clear out any old bits in the PTE.
-		     */
-		    pte->attr.raw = MMU_DT_INVALID;
-		} else {
-		    /*
-		     * Old PA and new PA are the same.  No need to relink
-		     * the mapping within the PV list.
+		     * Old PA and new PA are the same.  No need to
+		     * relink the mapping within the PV list.
 		     */
 		     insert = FALSE;
 
@@ -2126,10 +2117,6 @@ pmap_enter_kernel(va, pa, prot)
 	} else {
 		pte->attr.raw = MMU_DT_INVALID;
 		was_valid = FALSE;
-		if (is_managed(pa))
-			insert = TRUE; 
-		else
-			insert = FALSE;
 	}
 
 	/*
@@ -2680,20 +2667,22 @@ pmap_is_referenced(pa)
 	 */
 	if (pv->pv_flags & PV_FLAGS_USED)
 		return TRUE;
-	else {
-		s = splimp();
-		/*
-		 * Search through all pv elements pointing
-		 * to this page and query their reference bits
-		 */
-		for (idx = pv->pv_idx; idx != PVE_EOL; idx =
-			pvebase[idx].pve_next)
-			if (MMU_PTE_USED(kernCbase[idx])) {
-				splx(s);
-				return TRUE;
-			}
-		splx(s);
+
+	s = splimp();
+	/*
+	 * Search through all pv elements pointing
+	 * to this page and query their reference bits
+	 */
+	for (idx = pv->pv_idx;
+		 idx != PVE_EOL;
+		 idx = pvebase[idx].pve_next) {
+
+		if (MMU_PTE_USED(kernCbase[idx])) {
+			splx(s);
+			return TRUE;
+		}
 	}
+	splx(s);
 
 	return FALSE;
 }
@@ -2718,18 +2707,20 @@ pmap_is_modified(pa)
 
 	/* see comments in pmap_is_referenced() */
 	pv = pa2pv(pa);
-	if (pv->pv_flags & PV_FLAGS_MDFY) {
+	if (pv->pv_flags & PV_FLAGS_MDFY)
 		return TRUE;
-	} else {
-		s = splimp();
-		for (idx = pv->pv_idx; idx != PVE_EOL; idx =
-			pvebase[idx].pve_next)
-			if (MMU_PTE_MODIFIED(kernCbase[idx])) {
-				splx(s);
-				return TRUE;
-			}
-		splx(s);
+
+	s = splimp();
+	for (idx = pv->pv_idx;
+		 idx != PVE_EOL;
+		 idx = pvebase[idx].pve_next) {
+
+		if (MMU_PTE_MODIFIED(kernCbase[idx])) {
+			splx(s);
+			return TRUE;
+		}
 	}
+	splx(s);
 
 	return FALSE;
 }
@@ -2757,7 +2748,11 @@ pmap_page_protect(pa, prot)
 	curpmap = current_pmap();
 	pv = pa2pv(pa);
 	s = splimp();
-	for (idx = pv->pv_idx; idx != PVE_EOL; idx = pvebase[idx].pve_next) {
+
+	for (idx = pv->pv_idx;
+		 idx != PVE_EOL;
+		 idx = pvebase[idx].pve_next) {
+
 		pte = &kernCbase[idx];
 		switch (prot) {
 			case VM_PROT_ALL:
@@ -2928,7 +2923,11 @@ pmap_clear_pv(pa, flag)
 
 	s = splimp();
 	pv->pv_flags &= ~(flag);
-	for (idx = pv->pv_idx; idx != PVE_EOL; idx = pvebase[idx].pve_next) {
+
+	for (idx = pv->pv_idx;
+		 idx != PVE_EOL;
+		 idx = pvebase[idx].pve_next) {
+
 		pte = &kernCbase[idx];
 		pte->attr.raw &= ~(flag);
 		/*
@@ -3856,7 +3855,9 @@ pv_list(pa, n)
 	pv = pa2pv(pa);
 	idx = pv->pv_idx;
 
-	for (;idx != PVE_EOL && n > 0; idx=pvebase[idx].pve_next, n--) {
+	for (;idx != PVE_EOL && n > 0;
+		 idx=pvebase[idx].pve_next, n--) {
+
 		va = pmap_get_pteinfo(idx, &pmap, &c_tbl);
 		printf("idx %d, pmap 0x%x, va 0x%x, c_tbl %x\n",
 			idx, (u_int) pmap, (u_int) va, (u_int) c_tbl);
