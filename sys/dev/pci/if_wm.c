@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.45 2003/10/20 05:40:03 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.46 2003/10/20 05:56:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.45 2003/10/20 05:40:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.46 2003/10/20 05:56:17 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2339,6 +2339,33 @@ wm_release_eeprom(struct wm_softc *sc)
 }
 
 /*
+ * wm_eeprom_sendbits:
+ *
+ *	Send a series of bits to the EEPROM.
+ */
+static void
+wm_eeprom_sendbits(struct wm_softc *sc, uint32_t bits, int nbits)
+{
+	uint32_t reg;
+	int x;
+
+	reg = CSR_READ(sc, WMREG_EECD);
+
+	for (x = nbits; x > 0; x--) {
+		if (bits & (1U << (x - 1)))
+			reg |= EECD_DI;
+		else
+			reg &= ~EECD_DI;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
+		CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
+		delay(2);
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
+	}
+}
+
+/*
  * wm_read_eeprom:
  *
  *	Read data from the serial EEPROM.
@@ -2368,35 +2395,13 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		delay(2);
 
 		/* Shift in the READ command. */
-		for (x = 3; x > 0; x--) {
-			if (UWIRE_OPC_READ & (1 << (x - 1)))
-				reg |= EECD_DI;
-			else
-				reg &= ~EECD_DI;
-			CSR_WRITE(sc, WMREG_EECD, reg);
-			delay(2);
-			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
-			delay(2);
-			CSR_WRITE(sc, WMREG_EECD, reg);
-			delay(2);
-		}
+		wm_eeprom_sendbits(sc, UWIRE_OPC_READ, 3);
 
 		/* Shift in address. */
-		for (x = sc->sc_ee_addrbits; x > 0; x--) {
-			if ((word + i) & (1 << (x - 1)))
-				reg |= EECD_DI;
-			else
-				reg &= ~EECD_DI;
-			CSR_WRITE(sc, WMREG_EECD, reg);
-			delay(2);
-			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
-			delay(2);
-			CSR_WRITE(sc, WMREG_EECD, reg);
-			delay(2);
-		}
+		wm_eeprom_sendbits(sc, word + i, sc->sc_ee_addrbits);
 
 		/* Shift out the data. */
-		reg &= ~EECD_DI;
+		reg = CSR_READ(sc, WMREG_EECD) & ~EECD_DI;
 		data[i] = 0;
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
