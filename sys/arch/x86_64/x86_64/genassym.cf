@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 2003/03/15 23:41:26 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.14 2003/04/17 20:00:03 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ define		L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define		L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define		L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define		L_CPU			offsetof(struct lwp, l_cpu)
+
+define		PAGE_SIZE		PAGE_SIZE
 
 define		MDP_IRET		MDP_IRET
 
