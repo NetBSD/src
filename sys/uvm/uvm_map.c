@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.19 1998/05/09 15:05:50 kleink Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.20 1998/05/22 02:01:54 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -1361,6 +1361,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	vm_offset_t dstaddr, end, newend, oldoffset, fudge, orig_fudge,
 	    oldstart;
 	vm_map_entry_t chain, endchain, entry, orig_entry, newentry, deadentry;
+	vm_map_entry_t oldentry;
 	vm_size_t elen;
 	int nchain, error, copy_ok;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
@@ -1600,15 +1601,21 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		  elen, entry->start + fudge);
 			}
 
+      /* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
-	pmap_remove(srcmap->pmap, entry->start, entry->end);
-	uvm_map_entry_unlink(srcmap, entry);
-	entry->next = deadentry;
-	deadentry = entry;
+				pmap_remove(srcmap->pmap, entry->start, 
+						entry->end);
+        			oldentry = entry;	/* save entry */
+        			entry = entry->next;	/* advance */
+				uvm_map_entry_unlink(srcmap, oldentry);
+							/* add to dead list */
+				oldentry->next = deadentry;
+				deadentry = oldentry;
+      			} else {
+        			entry = entry->next;		/* advance */
 			}
 
 			/* end of 'while' loop */
-			entry = entry->next;
 			fudge = 0;
 		}
 
