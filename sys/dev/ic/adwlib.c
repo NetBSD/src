@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.25 2003/02/21 17:14:06 tsutsui Exp $        */
+/* $NetBSD: adwlib.c,v 1.26 2003/10/21 00:57:47 fvdl Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.25 2003/02/21 17:14:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.26 2003/10/21 00:57:47 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2098,7 +2098,7 @@ ADW_SOFTC	*sc;
 		free_carrp = sc->irq_sp;
 		sc->irq_sp = ADW_CARRIER_VADDR(sc, ASC_GET_CARRP(irq_next_pa));
 
-		free_carrp->next_ba = (sc->carr_freelist == NULL)? NULL
+		free_carrp->next_ba = (sc->carr_freelist == NULL) ? 0
 					: sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
