@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.62.2.12 2000/12/26 06:36:07 jhawk Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.62.2.13 2001/02/26 22:42:34 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,8 @@ message pleasemountroot
 Your selected target disk %s also holds the current root device.  I
 need to know whether I'm currently running out of the target root
 (%sa), or out of an alternate root (say, in %sb, your swap partition).
-I can't tell unless you mount the root.
+I can't tell unless you mount the root from which you booted read/write
+(eg 'mount /dev/%sb /').
 
 I'm aborting back to the main menu so you can fork a subshell.
 }
