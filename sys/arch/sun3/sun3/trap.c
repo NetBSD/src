@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 1995/06/27 14:42:40 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 1995/08/08 21:11:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -650,6 +650,7 @@ syscall(code, frame)
 		/*
 		 * Reinitialize proc pointer `p' as it may be different
 		 * if this is a child returning from fork syscall.
+		 * XXX - Still needed?  Not in hp300... -gwr
 		 */
 		p = curproc;
 		frame.f_regs[D0] = rval[0];
@@ -668,6 +669,8 @@ syscall(code, frame)
 		break;
 	default:
 	bad:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		frame.f_regs[D0] = error;
 		frame.f_sr |= PSL_C;	/* carry bit */
 		break;
