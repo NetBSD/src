@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.23 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.24 2000/04/16 21:39:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -336,7 +336,7 @@ cache_enter(dvp, vp, cnp)
 	/*
 	 * Free the cache slot at head of lru chain.
 	 */
-	if (numcache < desiredvnodes) {
+	if (numcache < numvnodes) {
 		ncp = pool_get(&namecache_pool, PR_WAITOK);
 		memset((char *)ncp, 0, sizeof(*ncp));
 		numcache++;

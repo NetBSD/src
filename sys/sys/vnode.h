@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.73 2000/04/11 04:37:51 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.74 2000/04/16 21:39:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -322,6 +322,7 @@ vref(vp)
  */
 extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	int desiredvnodes;		/* number of vnodes desired */
+extern	long numvnodes;			/* current number of vnodes */
 extern	time_t syncdelay;		/* max time to delay syncing data */
 extern	time_t filedelay;		/* time to delay syncing files */
 extern	time_t dirdelay;		/* time to delay syncing directories */
