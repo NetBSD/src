@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.10 1999/02/24 18:54:03 jwise Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.11 2000/03/30 00:00:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ asc2ascii(asc, ascq, result)
 	unsigned char asc, ascq;
 	char *result;
 {
-	register int i = 0;
+	int i = 0;
 
 	while (adesc[i].description != NULL) {
 		if (adesc[i].asc == asc && adesc[i].ascq == ascq)
@@ -303,7 +303,7 @@ scsipi_print_sense_data(sense, verbosity)
 	int verbosity;
 {
 	int32_t info;
-	register int i, j, k;
+	int i, j, k;
 	char *sbs, *s = (char *) sense;
 
 	/*
