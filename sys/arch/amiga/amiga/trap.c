@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1995/03/08 06:46:03 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 1995/03/08 06:50:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -708,6 +708,10 @@ syscall(code, frame)
 		} else
 			p->p_md.md_flags &= ~MDP_STACKADJ;
 		break;
+#endif
+#ifdef DIAGNOSTIC
+	default:
+		panic("invalid p_emul %d", p->p_emul);
 #endif
 	}
 
