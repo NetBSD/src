@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.46 2002/08/23 02:53:11 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.47 2002/08/25 16:05:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,14 +92,13 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <sparc/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/xboxvar.h>
 
 #include <sparc/sparc/iommuvar.h>
-#include <machine/autoconf.h>
-
 
 void sbusreset __P((int));
 
@@ -554,23 +553,14 @@ _sbus_bus_map(t, ba, size, flags, va, hp)
 	bus_space_handle_t *hp;
 {
 	struct sbus_softc *sc = t->cookie;
-	int slot = BUS_ADDR_IOSPACE(ba);
-	int i;
+	bus_addr_t addr;
+	int error;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		struct openprom_range *rp = &sc->sc_range[i];
-
-		if (rp->or_child_space != slot)
-			continue;
-
-		/* We've found the connection to the parent bus */
-		return (bus_space_map2(sc->sc_bustag,
-		    BUS_ADDR(rp->or_parent_space,
-		    	     rp->or_parent_base + BUS_ADDR_PADDR(ba)),
-		    size, flags, va, hp));
-	}
-
-	return (EINVAL);
+	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
+	    ba, &addr);
+	if (error)
+		return (error);
+	return (bus_space_map2(sc->sc_bustag, addr, size, flags, va, hp));
 }
 
 static paddr_t
@@ -582,22 +572,14 @@ sbus_bus_mmap(t, ba, off, prot, flags)
 	int flags;
 {
 	struct sbus_softc *sc = t->cookie;
-	int slot = BUS_ADDR_IOSPACE(ba);
-	int i;
+	bus_addr_t addr;
+	int error;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		struct openprom_range *rp = &sc->sc_range[i];
-
-		if (rp->or_child_space != slot)
-			continue;
-
-		return (bus_space_mmap(sc->sc_bustag,
-		    BUS_ADDR(rp->or_parent_space,
-		    	     rp->or_parent_base + BUS_ADDR_PADDR(ba)),
-		    off, prot, flags));
-	}
-
-	return (-1);
+	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
+	    ba, &addr);
+	if (error)
+		return (-1);
+	return (bus_space_mmap(sc->sc_bustag, addr, off, prot, flags));
 }
 
 bus_addr_t
