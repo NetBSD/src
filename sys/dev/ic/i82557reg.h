@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.3 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.4 2001/05/21 23:58:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -238,6 +238,11 @@ struct fxp_cb_tx {
 	volatile u_int16_t byte_count;
 	volatile u_int8_t tx_threshold;
 	volatile u_int8_t tbd_number;
+	/*
+	 * If using the extended TxCB feature, there is a
+	 * single TBD right here.  We handle this in the
+	 * fxp_control_data in i82557var.h.
+	 */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.19 2001/05/21 22:20:31 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.20 2001/05/21 23:58:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -102,17 +102,14 @@
  */
 struct fxp_control_data {
 	/*
-	 * The transmit control blocks.  The first if these
-	 * is also used as the config CB.
+	 * The transmit control blocks and transmit buffer descriptors.
+	 * We arrange them like this so that everything is all lined
+	 * up to use the extended TxCB feature.
 	 */
-	struct fxp_cb_tx fcd_txcbs[FXP_NTXCB];
-
-	/*
-	 * The transmit buffer descriptors.
-	 */
-	struct fxp_tbdlist {
-		struct fxp_tbd tbd_d[FXP_NTXSEG];
-	} fcd_tbdl[FXP_NTXCB];
+	struct fxp_txdesc {
+		struct fxp_cb_tx txd_txcb;
+		struct fxp_tbd txd_tbd[FXP_NTXSEG];
+	} fcd_txdescs[FXP_NTXCB];
 
 	/*
 	 * The configuration CB.
@@ -136,8 +133,8 @@ struct fxp_control_data {
 };
 
 #define	FXP_CDOFF(x)	offsetof(struct fxp_control_data, x)
-#define	FXP_CDTXOFF(x)	FXP_CDOFF(fcd_txcbs[(x)])
-#define	FXP_CDTBDOFF(x)	FXP_CDOFF(fcd_tbdl[(x)])
+#define	FXP_CDTXOFF(x)	FXP_CDOFF(fcd_txdescs[(x)].txd_txcb)
+#define	FXP_CDTBDOFF(x)	FXP_CDOFF(fcd_txdescs[(x)].txd_tbd)
 #define	FXP_CDCONFIGOFF	FXP_CDOFF(fcd_configcb)
 #define	FXP_CDIASOFF	FXP_CDOFF(fcd_iascb)
 #define	FXP_CDMCSOFF	FXP_CDOFF(fcd_mcscb)
@@ -227,18 +224,13 @@ struct fxp_softc {
 #define	FXP_CDTXADDR(sc, x)	((sc)->sc_cddma + FXP_CDTXOFF((x)))
 #define	FXP_CDTBDADDR(sc, x)	((sc)->sc_cddma + FXP_CDTBDOFF((x)))
 
-#define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txcbs[(x)])
-#define	FXP_CDTBD(sc, x)	(&(sc)->sc_control_data->fcd_tbdl[(x)])
+#define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txdescs[(x)])
 
 #define	FXP_DSTX(sc, x)		(&(sc)->sc_txsoft[(x)])
 
 #define	FXP_CDTXSYNC(sc, x, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
-	    FXP_CDTXOFF((x)), sizeof(struct fxp_cb_tx), (ops))
-
-#define	FXP_CDTBDSYNC(sc, x, ops)					\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
-	    FXP_CDTBDOFF((x)), sizeof(struct fxp_tbdlist), (ops))
+	    FXP_CDTXOFF((x)), sizeof(struct fxp_txdesc), (ops))
 
 #define	FXP_CDCONFIGSYNC(sc, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
