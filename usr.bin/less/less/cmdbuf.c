@@ -1,5 +1,3 @@
-/*	$NetBSD: cmdbuf.c,v 1.1.1.5 2001/07/26 12:00:24 mrg Exp $	*/
-
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
  *
@@ -157,7 +155,7 @@ cmd_repaint(old_cp)
 	for ( ;  *cp != '\0';  cp++)
 	{
 		p = prchar(*cp);
-		if (cmd_col + strlen(p) >= sc_width)
+		if (cmd_col + (int)strlen(p) >= sc_width)
 			break;
 		putstr(p);
 		cmd_col += strlen(p);
@@ -257,9 +255,9 @@ cmd_right()
 		return (CC_OK);
 	}
 	p = prchar(*cp);
-	if (cmd_col + strlen(p) >= sc_width)
+	if (cmd_col + (int)strlen(p) >= sc_width)
 		cmd_lshift();
-	else if (cmd_col + strlen(p) == sc_width - 1 && cp[1] != '\0')
+	else if (cmd_col + (int)strlen(p) == sc_width - 1 && cp[1] != '\0')
 		cmd_lshift();
 	cp++;
 	putstr(p);
@@ -281,7 +279,7 @@ cmd_left()
 		return (CC_OK);
 	}
 	p = prchar(cp[-1]);
-	if (cmd_col < prompt_col + strlen(p))
+	if (cmd_col < prompt_col + (int)strlen(p))
 		cmd_rshift();
 	cp--;
 	cmd_col -= strlen(p);
@@ -732,7 +730,10 @@ delimit_word()
 	char *word;
 #if SPACES_IN_FILENAMES
 	char *p;
-	int quoted;
+	int delim_quoted = 0;
+	int meta_quoted = 0;
+	char *esc = get_meta_escape();
+	int esclen = strlen(esc);
 #endif
 	
 	/*
@@ -753,6 +754,7 @@ delimit_word()
 		 * We're already at the end of the word.
 		 */
 		;
+#if 0
 	} else
 	{
 		/*
@@ -760,9 +762,10 @@ delimit_word()
 		 * Huh? There's no word here.
 		 */
 		return (NULL);
+#endif
 	}
 	/*
-	 * Search backwards for beginning of the word.
+	 * Find the beginning of the word which the cursor is in.
 	 */
 	if (cp == cmdbuf)
 		return (NULL);
@@ -772,24 +775,34 @@ delimit_word()
 	 * without a corresponding close quote), we return everything
 	 * from the open quote, including spaces.
 	 */
-	quoted = 0;
+	for (word = cmdbuf;  word < cp;  word++)
+		if (*word != ' ')
+			break;
+	if (word >= cp)
+		return (cp);
 	for (p = cmdbuf;  p < cp;  p++)
 	{
-		if (!quoted && *p == openquote)
+		if (meta_quoted)
 		{
-			quoted = 1;
-			word = p;
-		} else if (quoted && *p == closequote)
+			meta_quoted = 0;
+		} else if (esclen > 0 && p + esclen < cp &&
+		           strncmp(p, esc, esclen) == 0)
 		{
-			quoted = 0;
+			meta_quoted = 1;
+			p += esclen - 1;
+		} else if (delim_quoted)
+		{
+			if (*p == closequote)
+				delim_quoted = 0;
+		} else /* (!delim_quoted) */
+		{
+			if (*p == openquote)
+				delim_quoted = 1;
+			else if (*p == ' ')
+				word = p+1;
 		}
 	}
-	if (quoted)
-		return (word);
 #endif
-	for (word = cp-1;  word > cmdbuf;  word--)
-		if (word[-1] == ' ')
-			break;
 	return (word);
 }
 
@@ -837,11 +850,20 @@ init_compl()
 	 */
 	c = *cp;
 	*cp = '\0';
-#if SPACES_IN_FILENAMES
-	if (*word == openquote)
-		word++;
-#endif
-	tk_text = fcomplete(word);
+	if (*word != openquote)
+	{
+		tk_text = fcomplete(word);
+	} else
+	{
+		char *qword = shell_quote(word+1);
+		if (qword == NULL)
+			tk_text = fcomplete(word+1);
+		else
+		{
+			tk_text = fcomplete(qword);
+			free(qword);
+		}
+	}
 	*cp = c;
 }
 
