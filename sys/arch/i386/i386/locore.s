@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.191 1998/05/08 10:05:47 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.192 1998/05/20 16:30:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1071,6 +1071,17 @@ ENTRY(copyout)
 	 * doesn't do it for us.
 	 */
 
+#if defined(PMAP_NEW)
+	pushl	%eax
+	pushl	%eax
+	pushl	%edi
+	call	_C_LABEL(i386_writecheck)
+	addl	$8,%esp			# pop arguments
+	testl	%eax,%eax		# if not ok, return EFAULT
+	popl	%eax
+	jz	3f
+	jmp	_copy_fault
+#else
 	/* Compute number of pages. */
 	movl	%edi,%ecx
 	andl	$PGOFSET,%ecx
@@ -1105,6 +1116,7 @@ ENTRY(copyout)
 	popl	%eax
 	jz	4b
 	jmp	_copy_fault
+#endif /* PMAP_NEW */
 #endif /* I386_CPU */
 
 3:	/* bcopy(%esi, %edi, %eax); */
@@ -1205,10 +1217,6 @@ ENTRY(copyoutstr)
 	movl	$NBPG,%ecx
 	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
 
-	/* Compute PTE offset for start address. */
-	movl	%edi,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
 	 * space, and check for a write fault.
@@ -1216,27 +1224,40 @@ ENTRY(copyoutstr)
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
 	jae	_copystr_fault
 
+#if defined(PMAP_NEW)
+	pushl	%edx
+	pushl	$1
+	pushl	%edi
+	call	_C_LABEL(i386_writecheck)
+	addl	$8,%esp
+	popl	%edx
+	testl	%eax,%eax
+	jnz	_copystr_fault
+#else
+	/* Compute PTE offset. */
+	movl	%edi,%eax
+	shrl	$PGSHIFT,%eax		# calculate pte address
+
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	2f
 
 	/* Simulate a trap. */
-	pushl	%eax
 	pushl	%edx
 	pushl	%edi
 	call	_trapwrite		# trapwrite(addr)
 	addl	$4,%esp			# clear argument from stack
 	popl	%edx
 	testl	%eax,%eax
-	popl	%eax
 	jnz	_copystr_fault
+2:
+#endif
 
-2:	/* Copy up to end of this page. */
+	/* Copy up to end of this page. */
 	subl	%ecx,%edx		# predecrement total count
-	jnc	6f
+	jnc	3f
 	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
 	xorl	%edx,%edx
 
-6:	pushl	%eax			# save PT index
 3:	decl	%ecx
 	js	4f
 	lodsb
@@ -1245,15 +1266,12 @@ ENTRY(copyoutstr)
 	jnz	3b
 
 	/* Success -- 0 byte reached. */
-	addl	$4,%esp			# discard PT index
 	addl	%ecx,%edx		# add back residual for this page
 	xorl	%eax,%eax
 	jmp	copystr_return
 
 4:	/* Go to next page, if any. */
-	popl	%eax			# restore PT index
 	movl	$NBPG,%ecx
-	incl	%eax
 	testl	%edx,%edx
 	jnz	1b
 
@@ -1503,6 +1521,17 @@ ENTRY(suword)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
+#if defined(PMAP_NEW)
+	pushl	%edx
+	pushl	$4
+	pushl	%edx
+	call	_C_LABEL(i386_writecheck)
+	addl	$8,%esp
+	popl	%edx
+	movl	_curpcb,%ecx
+	testl	%eax,%eax
+	jnz	_fusufault
+#else
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
@@ -1519,7 +1548,8 @@ ENTRY(suword)
 	jnz	_fusufault
 
 1:	/* XXX also need to check the following 3 bytes for validity! */
-#endif
+#endif /* PMAP_NEW */
+#endif /* I386_CPU */
 
 2:	movl	8(%esp),%eax
 	movl	%eax,(%edx)
@@ -1544,6 +1574,17 @@ ENTRY(susword)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
+#if defined(PMAP_NEW)
+	pushl	%edx
+	pushl	$2
+	pushl	%edx
+	call	_C_LABEL(i386_writecheck)
+	addl	$8,%esp
+	popl	%edx
+	movl	_curpcb,%ecx
+	testl	%eax,%eax
+	jnz	_fusufault
+#else
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
@@ -1560,7 +1601,8 @@ ENTRY(susword)
 	jnz	_fusufault
 
 1:	/* XXX also need to check the following byte for validity! */
-#endif
+#endif /* PMAP_NEW */
+#endif /* I386_CPU */
 
 2:	movl	8(%esp),%eax
 	movw	%ax,(%edx)
@@ -1586,6 +1628,19 @@ ENTRY(suswintr)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
+#if defined(PMAP_NEW)
+	movl	%edx,%eax
+	shrl	$PDSHIFT,%eax		# calculate pde address
+	testb	$PG_V,_PTD(,%eax,4)
+	jz	3f
+	movl	%edx,%eax
+	shrl	$PGSHIFT,%eax		# calculate pte address
+	testb	$PG_RW,_PTmap(,%eax,4)
+	jnz	1f
+
+3:	/* Simulate a trap. */
+	jmp	_fusubail
+#else
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
@@ -1593,6 +1648,7 @@ ENTRY(suswintr)
 
 	/* Simulate a trap. */
 	jmp	_fusubail
+#endif /* PMAP_NEW */
 
 1:	/* XXX also need to check the following byte for validity! */
 #endif
@@ -1620,6 +1676,17 @@ ENTRY(subyte)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
+#if defined(PMAP_NEW)
+	pushl	%edx
+	pushl	$1
+	pushl	%edx
+	call	_C_LABEL(i386_writecheck)
+	addl	$8,%esp
+	popl	%edx
+	movl	_curpcb,%ecx
+	testl	%eax,%eax
+	jnz	_fusufault
+#else
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
@@ -1636,7 +1703,8 @@ ENTRY(subyte)
 	jnz	_fusufault
 
 1:
-#endif
+#endif /* PMAP_NEW */
+#endif /* I386_CPU */
 
 2:	movb	8(%esp),%al
 	movb	%al,(%edx)
