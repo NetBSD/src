@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.17 2004/05/18 23:29:30 gavan Exp $	*/
+/*	$NetBSD: boot32.c,v 1.18 2004/05/19 23:37:41 abs Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -133,7 +133,7 @@ void	 get_memory_configuration(void);
 void	 get_memory_map(void);
 void	 create_initial_page_tables(void);
 void	 add_pagetables_at_top(void);
-void	 sort_memory_map(void);
+int	 page_info_cmp(const void *a, const void *);
 void	 add_initvectors(void);
 void	 create_configuration(int argc, char **argv, int start_args);
 void	 prepare_and_check_relocation_system(void);
@@ -516,7 +516,8 @@ void get_memory_map(void) {
 	osmemory_page_op(inout, mem_pages_info, totalpages);
 
 	printf(" ; sorting ");
-	sort_memory_map();
+	qsort(mem_pages_info, totalpages, sizeof(struct page_info),
+	    &page_info_cmp);
 	printf(".\n");
 
 	/* get the first DRAM index and show the physical memory fragments we got */
@@ -850,25 +851,11 @@ void *boot32_memset(void *dst, int c, size_t size) {
 }
 
 
-/* This sort routine needs to be re-implemented in either assembler or use other algorithm one day; its slow */
-void sort_memory_map(void) {
-	int out, in, count;
-	struct page_info *out_page, *in_page, temp_page;
-
-	count = 0;
-	for (out = 0, out_page = mem_pages_info; out < totalpages; out++, out_page++) {
-		for (in = out+1, in_page = out_page+1; in < totalpages; in++, in_page++) {
-			if (in_page->physical < out_page->physical) {
-				memcpy(&temp_page, in_page,    sizeof(struct page_info));
-				memcpy(in_page,    out_page,   sizeof(struct page_info));
-				memcpy(out_page,   &temp_page, sizeof(struct page_info));
-			};
-			count++;
-			if ((count & 0x3ffff) == 0) twirl();
-		};
-	};
+/* We can rely on the fact that two entries never have identical ->physical */
+int page_info_cmp(const void *a, const void *b) {
+	return (((struct page_info *)a)->physical <
+	    ((struct page_info *)b)->physical) ? -1 : 1;
 }
-
 
 struct page_info *get_relocated_page(u_long destination, int size) {
 	struct page_info *page;
