@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.h,v 1.5 2000/09/21 10:13:15 ad Exp $	*/
+/*	$NetBSD: login_cap.h,v 1.6 2004/12/11 06:41:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -62,16 +62,16 @@ typedef struct {
 __BEGIN_DECLS
 struct passwd;
 
-login_cap_t *login_getclass(char *);
+login_cap_t *login_getclass(const char *);
 login_cap_t *login_getpwclass(const struct passwd *);
 void	 login_close(login_cap_t *);
-int	 login_getcapbool(login_cap_t *, char *, u_int);
-quad_t	 login_getcapnum(login_cap_t *, char *, quad_t, quad_t);
-quad_t	 login_getcapsize(login_cap_t *, char *, quad_t, quad_t);
-char	*login_getcapstr(login_cap_t *, char *, char *, char *);
-quad_t	 login_getcaptime(login_cap_t *, char *, quad_t, quad_t);
+int	 login_getcapbool(login_cap_t *, const char *, u_int);
+quad_t	 login_getcapnum(login_cap_t *, const char *, quad_t, quad_t);
+quad_t	 login_getcapsize(login_cap_t *, const char *, quad_t, quad_t);
+char	*login_getcapstr(login_cap_t *, const char *, char *, char *);
+quad_t	 login_getcaptime(login_cap_t *, const char *, quad_t, quad_t);
 
-int	setclasscontext(char *, u_int);
+int	setclasscontext(const char *, u_int);
 int	setusercontext(login_cap_t *, struct passwd *, uid_t, u_int);
 
 __END_DECLS
