@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtworeg.h,v 1.2 1994/11/20 20:52:56 deraadt Exp $ */
+/*	$NetBSD: cgtworeg.h,v 1.3 1995/10/04 00:21:27 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -44,6 +44,20 @@
 /* Screen dimensions */
 #define	CG2_WIDTH	1152
 #define	CG2_HEIGHT	900
+
+/* Colourmap size */
+#define CG2_CMSIZE	256
+
+#define CG2_BITPLANE_OFF	0
+#define CG2_BITPLANE_SIZE	0x100000
+#define CG2_PIXMAP_OFF		(CG2_BITPLANE_OFF + CG2_BITPLANE_SIZE)
+#define CG2_PIXMAP_SIZE		0x100000
+#define CG2_ROPMEM_OFF		(CG2_PIXMAP_OFF + CG2_PIXMAP_SIZE)
+#define CG2_ROPMEM_SIZE		0x100000
+#define CG2_CTLREG_OFF		(CG2_ROPMEM_OFF + CG2_ROPMEM_SIZE)
+#define CG2_CTLREG_SIZE		0x010600
+#define CG2_MAPPED_SIZE		(CG2_CTLREG_OFF + CG2_CTLREG_SIZE)
+
 
 /* arrangement of bit plane mode memory */
 union bitplane {
@@ -246,7 +260,7 @@ struct cg2fb {
 		u_short reg;
 		u_char reg_pad[4032];
 	} ropmode;
-	u_short redmap[256];	/* shadow colour maps */
-	u_short greenmap[256];
-	u_short bluemap[256];
+	u_short redmap[CG2_CMSIZE];	/* shadow colour maps */
+	u_short greenmap[CG2_CMSIZE];
+	u_short bluemap[CG2_CMSIZE];
 };
