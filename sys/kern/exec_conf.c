@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.68 2002/03/20 00:27:25 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.69 2002/03/23 09:40:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.68 2002/03/20 00:27:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.69 2002/03/23 09:40:55 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -379,7 +379,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 
-#ifdef EXEC_ELF_CATCHALL
+#ifdef EXEC_ELF_NOTELESS
 	/* Generic Elf32 -- run at NetBSD Elf32 */
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
@@ -432,7 +432,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf64 },
 #endif
 
-#ifdef EXEC_ELF_CATCHALL
+#ifdef EXEC_ELF_NOTELESS
 	/* Generic Elf64 -- run at NetBSD Elf64 */
 	{ sizeof (Elf64_Ehdr),
 	  exec_elf64_makecmds,

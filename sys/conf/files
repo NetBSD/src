@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.502 2002/03/16 16:56:02 martin Exp $
+#	$NetBSD: files,v 1.503 2002/03/23 09:40:55 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -43,7 +43,7 @@ defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
-				EXEC_ELF_CATCHALL
+				EXEC_ELF_NOTELESS
 
 # compatibility options
 #
