@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_ieee.h,v 1.6 2000/08/10 11:48:46 ad Exp $	*/
+/*	$NetBSD: if_wi_ieee.h,v 1.7 2000/08/14 00:44:22 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -310,7 +310,7 @@ struct wi_ltv_keys {
 #define WI_RID_MAX_RX_LIFE	0xFD4B /* max rx frame handling duration */
 #define WI_RID_CF_POLL		0xFD4C /* contention free pollable ind */
 #define WI_RID_AUTH_ALGS	0xFD4D /* auth algorithms available */
-#define WI_RID_AUTH_TYPE	0xFD4E /* availanle auth types */
+#define WI_RID_AUTH_TYPE	0xFD4E /* available auth types */
 #define WI_RID_WEP_AVAIL	0xFD4F /* WEP privacy option available */
 #define WI_RID_CUR_TX_RATE1	0xFD80
 #define WI_RID_CUR_TX_RATE2	0xFD81
