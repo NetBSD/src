@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.18 2001/10/22 22:03:49 augustss Exp $ */
+/*      $NetBSD: usbhid.c,v 1.19 2001/12/22 12:34:41 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -570,9 +570,11 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 		ssize_t readlen;
 
 		readlen = read(hidfd, dbuf, dlen);
-		if (readlen < 0 || dlen != (size_t)readlen)
-			err(1, "bad read %ld != %ld",
-			    (long)readlen, (long)dlen);
+		if (readlen < 0)
+			err(1, "Device read error");
+		if (dlen != (size_t)readlen)
+			errx(1, "Unexpected response length: %lu != %lu",
+			     (unsigned long)readlen, (unsigned long)dlen);
 
 		collind = 0;
 		hdata = hid_start_parse(rd, 1 << hid_input);
