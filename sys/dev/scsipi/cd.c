@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.198 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: cd.c,v 1.199 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.198 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.199 2004/01/10 14:39:50 yamt Exp $");
 
 #include "rnd.h"
 
@@ -722,6 +722,9 @@ cdstrategy(bp)
 
 			/* Put ptr to orig buf in b_private and use new buf */
 			nbp->b_private = bp;
+
+			BIO_COPYPRIO(nbp, bp);
+
 			bp = nbp;
 
 		} else {

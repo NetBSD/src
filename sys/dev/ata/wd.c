@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.272 2003/12/14 05:38:20 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.273 2004/01/10 14:39:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.272 2003/12/14 05:38:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.273 2004/01/10 14:39:50 yamt Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -684,6 +684,9 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 
 		/* Put ptr to orig buf in b_private and use new buf */
 		nbp->b_private = bp;
+
+		BIO_COPYPRIO(nbp, bp);
+
 		bp = nbp;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.12 2003/06/29 22:29:58 fvdl Exp $ */
+/* $NetBSD: cgd.c,v 1.13 2004/01/10 14:39:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12 2003/06/29 22:29:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.13 2004/01/10 14:39:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -319,6 +319,8 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	/* context for cgdiodone */
 	cbp->cb_obp = bp;
 	cbp->cb_sc = cs;
+
+	BIO_COPYPRIO(&cbp->cb_buf, bp);
 
 	if ((cbp->cb_buf.b_flags & B_READ) == 0)
 		cbp->cb_buf.b_vp->v_numoutput++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.68 2003/12/30 20:44:16 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.69 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ struct buf {
 	struct simplelock b_interlock;	/* Lock for b_flags changes */
 	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
+	int	b_prio;			/* Hint for buffer queue discipline. */
 	long	b_bufsize;		/* Allocated buffer size. */
 	long	b_bcount;		/* Valid bytes in buffer. */
 	long	b_resid;		/* Remaining I/O. */
@@ -197,6 +198,7 @@ struct buf {
 do {									\
 	LIST_INIT(&(bp)->b_dep);					\
 	simple_lock_init(&(bp)->b_interlock);				\
+	BIO_SETPRIO((bp), BPRIO_DEFAULT);				\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -264,6 +266,16 @@ do {									\
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
 #ifdef _KERNEL
+
+#define	BIO_GETPRIO(bp)		((bp)->b_prio)
+#define	BIO_SETPRIO(bp, prio)	(bp)->b_prio = (prio)
+#define	BIO_COPYPRIO(bp1, bp2)	BIO_SETPRIO(bp1, BIO_GETPRIO(bp2))
+
+#define	BPRIO_NPRIO		3
+#define	BPRIO_TIMECRITICAL	2
+#define	BPRIO_TIMELIMITED	1
+#define	BPRIO_TIMENONCRITICAL	0
+#define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
 extern	struct bio_ops bioops;
 extern	u_int nbuf;		/* The number of buffer headers */

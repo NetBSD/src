@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.104 2003/10/19 07:41:19 scw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.105 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.104 2003/10/19 07:41:19 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.105 2004/01/10 14:39:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -562,6 +562,8 @@ vndstrategy(bp)
 		nbp->vb_buf.b_vp = NULLVP;
 
 		nbp->vb_xfer = vnx;
+
+		BIO_COPYPRIO(&nbp->vb_buf, bp);
 
 		/*
 		 * Just sort by block number
