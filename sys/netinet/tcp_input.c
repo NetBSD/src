@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.158 2002/10/22 04:24:50 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.159 2002/11/02 07:28:14 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.158 2002/10/22 04:24:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.159 2002/11/02 07:28:14 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -245,7 +245,7 @@ do { \
 	 && tp->t_in6pcb->in6p_route.ro_rt) { \
 		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL, 0); \
 	} \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define ND6_HINT(tp)
 #endif
@@ -263,7 +263,7 @@ do { \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Convert TCP protocol fields to host order for easier processing.
@@ -274,7 +274,7 @@ do {									\
 	NTOHL((th)->th_ack);						\
 	NTOHS((th)->th_win);						\
 	NTOHS((th)->th_urp);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * ... and reverse the above.
@@ -285,7 +285,7 @@ do {									\
 	HTONL((th)->th_ack);						\
 	HTONS((th)->th_win);						\
 	HTONS((th)->th_urp);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -2828,7 +2828,7 @@ do {									\
 	hash = SYN_HASH(&((struct sockaddr_in *)(src))->sin_addr,	\
 		((struct sockaddr_in *)(src))->sin_port,		\
 		((struct sockaddr_in *)(dst))->sin_port);		\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define SYN_HASH6(sa, sp, dp) \
 	((((sa)->s6_addr32[0] ^ (sa)->s6_addr32[3] ^ syn_hash1) * \

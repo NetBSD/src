@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.89 2002/06/25 04:16:31 enami Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.90 2002/11/02 07:28:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.89 2002/06/25 04:16:31 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.90 2002/11/02 07:28:11 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -286,14 +286,14 @@ do {									\
 		printf("%s:%d: arp already locked\n", __FILE__, __LINE__); \
 		panic("arp_lock");					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	ARP_LOCK_CHECK()						\
 do {									\
 	if (arp_locked == 0) {						\
 		printf("%s:%d: arp lock not held\n", __FILE__, __LINE__); \
 		panic("arp lock check");				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	ARP_LOCK(x)		(void) arp_lock_try(x)
 #define	ARP_LOCK_CHECK()	/* nothing */

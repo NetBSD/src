@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.113 2002/09/04 01:32:40 matt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.114 2002/11/02 07:25:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.113 2002/09/04 01:32:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.114 2002/11/02 07:25:21 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1161,7 +1161,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 		(dst).cgid = (src).cgid; \
 		(dst).mode = (src).mode; \
 		(dst)._seq = (src)._seq; \
-	} while (0);
+	} while (/*CONSTCOND*/ 0);
 #define	FILL_MSG(src, dst) do { \
 	FILL_PERM((src).msg_perm, (dst).msg_perm); \
 	(dst).msg_qnum = (src).msg_qnum; \
@@ -1172,13 +1172,13 @@ sysctl_file(void *vwhere, size_t *sizep)
 	(dst).msg_stime = (src).msg_stime; \
 	(dst).msg_rtime = (src).msg_rtime; \
 	(dst).msg_ctime = (src).msg_ctime; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define	FILL_SEM(src, dst) do { \
 	FILL_PERM((src).sem_perm, (dst).sem_perm); \
 	(dst).sem_nsems = (src).sem_nsems; \
 	(dst).sem_otime = (src).sem_otime; \
 	(dst).sem_ctime = (src).sem_ctime; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define	FILL_SHM(src, dst) do { \
 	FILL_PERM((src).shm_perm, (dst).shm_perm); \
 	(dst).shm_segsz = (src).shm_segsz; \
@@ -1188,7 +1188,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 	(dst).shm_dtime = (src).shm_dtime; \
 	(dst).shm_ctime = (src).shm_ctime; \
 	(dst).shm_nattch = (src).shm_nattch; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 static int
 sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
