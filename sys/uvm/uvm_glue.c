@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.59 2002/07/02 20:27:48 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.60 2002/09/22 07:20:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.59 2002/07/02 20:27:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.60 2002/09/22 07:20:32 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -97,6 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.59 2002/07/02 20:27:48 yamt Exp $");
  */
 
 static void uvm_swapout __P((struct proc *));
+
+#define UVM_NUAREA_MAX 16
+void *uvm_uareas;
+int uvm_nuarea;
 
 /*
  * XXXCDC: do these really belong here?
@@ -333,6 +337,7 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
  * - we must run in a separate thread because freeing the vmspace
  *   of the dead process may block.
  */
+
 void
 uvm_exit(p)
 	struct proc *p;
@@ -341,8 +346,48 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	p->p_flag &= ~P_INMEM;
-	uvm_km_free(kernel_map, va, USPACE);
+	uvm_uarea_free(va);
 	p->p_addr = NULL;
+}
+
+/*
+ * uvm_uarea_alloc: allocate a u-area
+ */
+
+vaddr_t
+uvm_uarea_alloc(void)
+{
+	vaddr_t uaddr;
+
+#ifndef USPACE_ALIGN
+#define USPACE_ALIGN    0
+#endif
+
+	uaddr = (vaddr_t)uvm_uareas;
+	if (uaddr) {
+		uvm_uareas = *(void **)uvm_uareas;
+		uvm_nuarea--;
+	} else {
+		uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
+	}
+	return uaddr;
+}
+
+/*
+ * uvm_uarea_free: free a u-area
+ */
+
+void
+uvm_uarea_free(vaddr_t uaddr)
+{
+
+	if (uvm_nuarea < UVM_NUAREA_MAX) {
+		*(void **)uaddr = uvm_uareas;
+		uvm_uareas = (void *)uaddr;
+		uvm_nuarea++;
+	} else {
+		uvm_km_free(kernel_map, uaddr, USPACE);
+	}
 }
 
 /*
@@ -350,6 +395,7 @@ uvm_exit(p)
  *
  * - called for process 0 and then inherited by all others.
  */
+
 void
 uvm_init_limits(p)
 	struct proc *p;
@@ -515,6 +561,7 @@ loop:
  *   are swapped... otherwise the longest-sleeping or stopped process
  *   is swapped, otherwise the longest resident process...
  */
+
 void
 uvm_swapout_threads()
 {
