@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $	*/
+/*	$NetBSD: du.c,v 1.17.2.1 2003/06/19 00:21:50 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $");
+__RCSID("$NetBSD: du.c,v 1.17.2.1 2003/06/19 00:21:50 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,11 +74,10 @@ main(argc, argv)
 	FTS *fts;
 	FTSENT *p;
 	long blocksize, totalblocks;
-	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, Pflag, aflag, ch, cflag, kmflag, notused, rval, sflag;
-	char **save;
+	int ftsoptions, listdirs, listfiles, notused;
+	int Hflag, Lflag, Pflag, aflag, ch, cflag, kmflag, rval, sflag;
+	char *noargv[2];
 
-	save = argv;
 	Hflag = Lflag = Pflag = aflag = cflag = kmflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
@@ -156,9 +155,9 @@ main(argc, argv)
 	}
 
 	if (!*argv) {
-		argv = save;
-		argv[0] = ".";
-		argv[1] = NULL;
+		noargv[0] = ".";
+		noargv[1] = NULL;
+		argv = noargv;
 	}
 
 	if (!kmflag)
