@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.17 2004/07/19 17:04:36 msaitoh Exp $	*/
+/*	$NetBSD: satalink.c,v 1.18 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -469,12 +469,10 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if ((reg44 & 0x7) < cls)
 		ba5_write_4(sc, 0x44, (reg44 & ~0x07) | cls);
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.DMA_cap = 2;
 		sc->sc_wdcdev.UDMA_cap = 6;
@@ -710,12 +708,10 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sii3114_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.DMA_cap = 2;
 		sc->sc_wdcdev.UDMA_cap = 6;

@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.1 2003/12/14 01:32:02 thorpej Exp $	*/
+/*	$NetBSD: artsata.c,v 1.2 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,12 +115,10 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * XXX Configure LEDs to show activity.
 	 */
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.DMA_cap = 2;
 		sc->sc_wdcdev.UDMA_cap = 6;
