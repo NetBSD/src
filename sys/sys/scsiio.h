@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiio.h,v 1.5 1997/09/19 00:58:44 enami Exp $	*/
+/*	$NetBSD: scsiio.h,v 1.6 1998/10/10 02:37:28 thorpej Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -67,13 +67,25 @@ struct	scsi_addr {
 	} addr;
 };
 
-#define SCIOCREPROBE	_IOW('Q', 3, struct scsi_addr) /* look for new devs */
-#define  OSCIOCREPROBE	_IOW('Q', 3, struct oscsi_addr)
+/*
+ * SCSI device ioctls
+ */
+
 #define SCIOCIDENTIFY	_IOR('Q', 4, struct scsi_addr) /* where are you? */
 #define  OSCIOCIDENTIFY	_IOR('Q', 4, struct oscsi_addr)
 #define SCIOCDECONFIG	_IO('Q', 5)	/* please dissappear */
 #define SCIOCRECONFIG	_IO('Q', 6)	/* please check again */
 #define SCIOCRESET	_IO('Q', 7)	/* reset the device */
 
+/*
+ * SCSI bus ioctls
+ */
+
+/* Scan bus for new devices. */
+struct scbusioscan_args {
+	int	sa_target;	/* target to scan; -1 for wildcard */
+	int	sa_lun;		/* lun to scan; -1 for wildcard */
+};
+#define	SCBUSIOSCAN	_IOW('U', 0, struct scbusioscan_args)
 
 #endif /* _SYS_SCSIIO_H_ */
