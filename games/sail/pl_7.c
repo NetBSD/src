@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.13.2.2 2000/02/05 13:48:27 jdc Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.13.2.3 2000/02/06 09:21:57 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.13.2.2 2000/02/05 13:48:27 jdc Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.13.2.3 2000/02/06 09:21:57 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ newturn(n)
 /*VARARGS2*/
 void
 #ifdef __STDC__
-Signal(const char *fmt, struct ship *ship, ...)
+Signal(char *fmt, struct ship *ship, ...)
 #else
 Signal(va_alist)
 	va_dcl
