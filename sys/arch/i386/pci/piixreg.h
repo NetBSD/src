@@ -1,4 +1,4 @@
-/*	$NetBSD: piixreg.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: piixreg.h,v 1.1.36.1 2004/04/28 05:19:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -26,22 +26,26 @@
  */
 
 /*
- * Register definitions for the Intel PIIX PCI-ISA bridge interrupt controller.
+ * Register definitions for the Intel PIIX PCI-ISA bridge interrupt controller
+ * and ICHn I/O controller hub
  */
 
 /*
- * PIRQ[3:0]# - PIRQ ROUTE CONTROL REGISTERS
- *
+ * PIRQ[A-D]# - PIRQ ROUTE CONTROL REGISTERS
  * PCI Configuration registers 0x60, 0x61, 0x62, 0x63
+ *
+ * PIRQ[E-H]# - PIRQ ROUTE CONTROL REGISTERS (ICH2 and later only)
+ * PCI Configuration registers 0x68, 0x69, 0x6a, 0x6b
  */
 
-#define	PIIX_LEGAL_LINK(link)	((link) >= 0 && (link) <= 3)
+#define	PIIX_LEGAL_LINK(link)	((link) >= 0 && (link) <= piix_max_link)
 
 #define	PIIX_PIRQ_MASK		0xdef8
 #define	PIIX_LEGAL_IRQ(irq)	((irq) >= 0 && (irq) <= 15 &&		\
 				 ((1 << (irq)) & PIIX_PIRQ_MASK) != 0)
 
 #define	PIIX_CFG_PIRQ		0x60	/* PCI configuration space */
+#define	PIIX_CFG_PIRQ2		0x68	/* PCI configuration space */
 #define	PIIX_CFG_PIRQ_NONE	0x80
 #define	PIIX_CFG_PIRQ_MASK	0x0f
 #define	PIIX_PIRQ(reg, x)	(((reg) >> ((x) << 3)) & 0xff)
