@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.14 2003/08/07 11:17:12 agc Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.15 2004/11/19 13:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.14 2003/08/07 11:17:12 agc Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.15 2004/11/19 13:17:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,14 @@ pr_attime(time_t *started, time_t *now)
 void
 pr_idle(time_t idle)
 {
-	int days = idle / SECSPERDAY;
+	int days;
+
+	if (idle == (time_t)-1) {
+		(void)printf("     ? ");
+		return;
+	}
+
+	days = idle / SECSPERDAY;
 
 	/* If idle more than 36 hours, print as a number of days. */
 	if (idle >= 36 * SECSPERHOUR)
