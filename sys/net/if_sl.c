@@ -207,7 +207,11 @@ slattach()
 		sc->sc_if.if_name = "sl";
 		sc->sc_if.if_unit = i++;
 		sc->sc_if.if_mtu = SLMTU;
+#ifdef MULTICAST
+		sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
+#else
 		sc->sc_if.if_flags = IFF_POINTOPOINT;
+#endif
 		sc->sc_if.if_type = IFT_SLIP;
 		sc->sc_if.if_ioctl = slioctl;
 		sc->sc_if.if_output = sloutput;
@@ -809,6 +813,9 @@ slioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
+#ifdef MULTICAST
+	register struct ifreq *ifr;
+#endif
 	int s = splimp(), error = 0;
 
 	switch (cmd) {
@@ -824,7 +831,27 @@ slioctl(ifp, cmd, data)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			error = EAFNOSUPPORT;
 		break;
+  
+#ifdef MULTICAST
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		ifr = (struct ifreq *)data;
+		if (ifr == 0) {
+			error = EAFNOSUPPORT;		/* XXX */
+			break;
+		}
+		switch (ifr->ifr_addr.sa_family) {
 
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
+		default:
+			error = EAFNOSUPPORT;
+			break;
+		}
+		break;
+#endif
 	default:
 		error = EINVAL;
 	}
