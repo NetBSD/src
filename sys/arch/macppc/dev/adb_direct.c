@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.25 2003/07/15 02:43:26 lukem Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.26 2003/10/26 16:34:07 mycroft Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.25 2003/07/15 02:43:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.26 2003/10/26 16:34:07 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -1894,9 +1894,6 @@ adb_read_date_time(unsigned long *time)
 
 		while (0 == flag)	/* wait for result */
 			;
-
-		/* XXX to avoid wrong reordering by gcc 2.95.x with -fgcse */
-		__asm volatile ("" ::: "memory");
 
 		memcpy(time, output + 1, 4);
 		return 0;
