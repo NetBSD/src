@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.26 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.27 2000/01/17 11:25:31 abs Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -497,8 +497,6 @@ ssioctl(dev, cmd, addr, flag, p)
 		break;
 #endif
 	default:
-		if (SSMODE(dev) != MODE_CONTROL)
-			return (ENOTTY);
 		return (scsipi_do_ioctl(ss->sc_link, dev, cmd, addr, flag, p));
 	}
 	return (error);
