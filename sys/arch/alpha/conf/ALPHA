@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.124 2000/05/25 16:33:13 mycroft Exp $
+# $NetBSD: ALPHA,v 1.125 2000/05/28 23:06:39 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.124 $"
+ident		"ALPHA-$Revision: 1.125 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -221,6 +221,7 @@ ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
+cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
