@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.11 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: DR-EVIL,v 1.12 2000/04/03 00:03:30 augustss Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -576,6 +576,7 @@ ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio
