@@ -1,11 +1,11 @@
-/*	$NetBSD: i82586var.h,v 1.9 1998/08/15 03:02:45 mycroft Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,6 @@
  */
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
  *  Agricultural College.
  * Copyright (c) 1992, 1993, Garrett A. Wollman.
@@ -59,10 +58,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum, by the
- *	University of Vermont and State Agricultural College and Garrett A.
- *	Wollman, by William F. Jolitz, and by the University of California,
- *	Berkeley, Lawrence Berkeley Laboratory, and its contributors.
+ *	This product includes software developed by the University of Vermont
+ *	and State Agricultural College and Garrett A. Wollman, by William F.
+ *	Jolitz, and by the University of California, Berkeley, Lawrence
+ *	Berkeley Laboratory, and its contributors.
  * 4. Neither the names of the Universities nor the names of the authors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

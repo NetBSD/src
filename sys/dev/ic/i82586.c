@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.17 1998/08/15 04:16:56 mycroft Exp $	*/
+/*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,10 +59,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum, by the
- *	University of Vermont and State Agricultural College and Garrett A.
- *	Wollman, by William F. Jolitz, and by the University of California,
- *	Berkeley, Lawrence Berkeley Laboratory, and its contributors.
+ *	This product includes software developed by the University of Vermont
+ *	and State Agricultural College and Garrett A. Wollman, by William F.
+ *	Jolitz, and by the University of California, Berkeley, Lawrence
+ *	Berkeley Laboratory, and its contributors.
  * 4. Neither the names of the Universities nor the names of the authors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
