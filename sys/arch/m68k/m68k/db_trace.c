@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29 2000/08/10 08:02:36 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.30 2001/01/18 09:49:02 scw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,7 +44,7 @@ extern label_t	*db_recover;
 /*
  * Register list
  */
-static int db_var_short __P((struct db_variable *, db_expr_t *, int));
+static int db_var_short __P((const struct db_variable *, db_expr_t *, int));
 
 struct db_variable db_regs[] = {
 	/* D0-D7 */
@@ -73,7 +73,7 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 static int
 db_var_short(varp, valp, op)
-    struct db_variable *varp;
+    const struct db_variable *varp;
     db_expr_t *valp;
     int op;
 {
