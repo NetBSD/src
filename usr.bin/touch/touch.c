@@ -1,6 +1,8 @@
+/*	$NetBSD: touch.c,v 1.9 1994/12/07 09:19:50 jtc Exp $	*/
+
 /*
- * Copyright (c) 1993 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,20 +34,23 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1993 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)touch.c	5.5 (Berkeley) 3/7/93";*/
-static char rcsid[] = "$Id: touch.c,v 1.8 1993/12/31 19:33:02 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: touch.c,v 1.9 1994/12/07 09:19:50 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -54,17 +59,12 @@ static char rcsid[] = "$Id: touch.c,v 1.8 1993/12/31 19:33:02 jtc Exp $";
 #include <locale.h>
 #include <time.h>
 #include <unistd.h>
-#include <err.h>
 
 int	rw __P((char *, struct stat *, int));
 void	stime_arg1 __P((char *, struct timeval *));
 void	stime_arg2 __P((char *, int, struct timeval *));
 void	stime_file __P((char *, struct timeval *));
 void	usage __P((void));
-
-#ifndef notyet
-#define TIMET_TO_TIMEVAL(timevalp, tp) (timevalp)->tv_sec = *(tp);
-#endif
 
 int
 main(argc, argv)
@@ -124,8 +124,7 @@ main(argc, argv)
 		len = p - argv[0];
 		if (*p == '\0' && (len == 8 || len == 10)) {
 			timeset = 1;
-			stime_arg2(argv[0], len == 10, tv);
-			argv++;
+			stime_arg2(*argv++, len == 10, tv);
 		}
 	}
 
@@ -156,18 +155,9 @@ main(argc, argv)
 				continue;
 
 		if (!aflag)
-#ifdef notyet
 			TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
-#else
-			TIMET_TO_TIMEVAL(&tv[0], &sb.st_atime);
-#endif
 		if (!mflag)
-#ifdef notyet
 			TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
-#else
-			TIMET_TO_TIMEVAL(&tv[1], &sb.st_mtime);
-#endif
-
 
 		/* Try utimes(2). */
 		if (!utimes(*argv, tv))
@@ -177,7 +167,6 @@ main(argc, argv)
 		if (timeset) {
 			rval = 1;
 			warn("%s", *argv);
-			continue;
 		}
 
 		/*
@@ -296,16 +285,8 @@ stime_file(fname, tvp)
 
 	if (stat(fname, &sb))
 		err(1, "%s", fname);
-#ifdef notyet
 	TIMESPEC_TO_TIMEVAL(tvp, &sb.st_atimespec);
-#else
-	TIMET_TO_TIMEVAL(tvp, &sb.st_atime);
-#endif
-#ifdef notyet
 	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);
-#else
-	TIMET_TO_TIMEVAL(tvp + 1, &sb.st_mtime);
-#endif
 }
 
 int
@@ -360,7 +341,7 @@ err:			rval = 1;
 	return (rval);
 }
 
-volatile void
+__dead void
 usage()
 {
 	(void)fprintf(stderr,
