@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.73 2004/02/26 11:29:41 junyoung Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.74 2004/02/27 02:43:25 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.73 2004/02/26 11:29:41 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.74 2004/02/27 02:43:25 junyoung Exp $");
 
 #include "opt_kstack.h"
 
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.73 2004/02/26 11:29:41 junyoung Exp 
 #include <sys/savar.h>
 
 /*
- * Structure associated with user cacheing.
+ * Structure associated with user caching.
  */
 struct uidinfo {
 	LIST_ENTRY(uidinfo) ui_hash;
@@ -356,7 +356,7 @@ chgproccnt(uid_t uid, int diff)
 }
 
 /*
- * Check that the specifies process group in in the session of the
+ * Check that the specified process group is in the session of the
  * specified process.
  * Treats -ve ids as process ids.
  * Used to validate TIOCSPGRP requests.
@@ -510,7 +510,7 @@ expand_pid_table(void)
 	 * fixup the reference to them.
 	 * We stuff free items on the front of the freelist
 	 * because we can't write to unmodified entries.
-	 * Processing the table backwards maintians a semblance
+	 * Processing the table backwards maintains a semblance
 	 * of issueing pid numbers that increase with time.
 	 */
 	i = pt_size - 1;
