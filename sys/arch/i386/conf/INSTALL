@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.209 2003/01/20 01:39:02 lukem Exp $
+#	$NetBSD: INSTALL,v 1.210 2003/01/27 22:31:13 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -426,6 +426,10 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0000 means "use whatever the drive claims to support".
 wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
+
+# ATA RAID configuration support, as found on some Promise controllers.
+pseudo-device	ataraid
+ld*	at ataraid? vendtype ? unit ?
 
 # ATAPI bus support
 atapibus* at atapi?
