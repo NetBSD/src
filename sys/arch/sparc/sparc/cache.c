@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.25 1997/03/27 16:02:10 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.26 1997/04/11 20:06:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -660,17 +660,24 @@ viking_pcache_flush_line(va, pa)
 	int i;
 	char *v;
 
+	/*
+	 * Construct a virtual address that hits the same cache line
+	 * as VA, then read from 2*ASSOCIATIVITY-1 different physical
+	 * locations (all different from PA).
+	 */
+
 	if (CACHEINFO.c_enabled == 0) {
 		/*XXX - consult PROM early in autoconf? */
 		cshift = 5;
-		cmask = (4096 << cshift) - 1;
+		cmask = (128 << cshift) - 1;
 		v = (char *)roundup((int)etext, NBPG) +
 		    (((va & cmask) >> cshift) << cshift);
-		i = 5;
+		i = 7;
 		while (i--) {
 			(*(volatile int *)v);
 			v += NBPG;
 		}
+		return;
 	}
 
 	if (base == 0) {
@@ -679,14 +686,8 @@ viking_pcache_flush_line(va, pa)
 		base = (char *)roundup((int)etext, NBPG);
 	}
 
-
-	/*
-	 * Construct a virtual address that hits the same cache line
-	 * as VA, then read from ASSOCIATIVITY different physical
-	 * locations (all different from PA).
-	 */
 	v = base + (((va & cmask) >> cshift) << cshift);
-	i = CACHEINFO.dc_associativity;
+	i = CACHEINFO.dc_associativity * 2 - 1;
 
 	while (i--) {
 		(*(volatile int *)v);
@@ -705,6 +706,6 @@ cypress_pcache_flush_line(va, pa)
 	 */
 
 	/* NOT YET IMPLEMENTED */
-	/*srmmu_vcache_flush_page(va & ~(NBPG - 1));*/
+	sta(va, ASI_IDCACHELFP, 0);
 }
 #endif /* SUN4M */
