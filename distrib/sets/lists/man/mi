@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.489 2002/06/11 13:33:48 grant Exp $
+# $NetBSD: mi,v 1.490 2002/06/18 00:37:06 enami Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -482,6 +482,7 @@
 ./usr/share/man/cat4/alpha/tsp.0		man-sys-catman
 ./usr/share/man/cat4/alpha/ttwoga.0		man-sys-catman
 ./usr/share/man/cat4/alpha/ttwopci.0		man-sys-catman
+./usr/share/man/cat4/amdpm.0			man-sys-catman
 ./usr/share/man/cat4/amhphy.0			man-sys-catman
 ./usr/share/man/cat4/amiga/afsc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/ahsc.0		man-sys-catman
@@ -2201,6 +2202,7 @@
 ./usr/share/man/man4/alpha/tsp.4		man-sys-man
 ./usr/share/man/man4/alpha/ttwoga.4		man-sys-man
 ./usr/share/man/man4/alpha/ttwopci.4		man-sys-man
+./usr/share/man/man4/amdpm.4			man-sys-man
 ./usr/share/man/man4/amhphy.4			man-sys-man
 ./usr/share/man/man4/amiga/afsc.4		man-sys-man
 ./usr/share/man/man4/amiga/ahsc.4		man-sys-man
