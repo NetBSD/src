@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.96 2000/12/04 20:25:40 fvdl Exp $	*/
+/*	$NetBSD: pciide.c,v 1.97 2000/12/17 21:50:14 pk Exp $	*/
 
 
 /*
@@ -956,7 +956,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 #ifdef DIAGNOSTIC
 	if (dma_maps->dmamap_table->dm_segs[0].ds_addr & ~IDEDMA_TBL_MASK) {
 		printf("pciide_dma_init: addr 0x%lx not properly aligned\n",
-		    dma_maps->dmamap_table->dm_segs[0].ds_addr);
+		    (u_long)dma_maps->dmamap_table->dm_segs[0].ds_addr);
 		panic("pciide_dma_init: table align");
 	}
 #endif
