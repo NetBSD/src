@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.10 2003/12/03 18:40:07 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.11 2003/12/06 15:16:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.10 2003/12/03 18:40:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.11 2003/12/06 15:16:38 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -272,12 +272,22 @@ mach_exception(l, exc, code)
 	struct mach_port *exc_port;
 	int error;
 
+#ifdef DEBUG_MACH
+	printf("mach_exception: pid %d, exc %d, code (%d, %d)\n",
+	    l->l_proc->p_pid, exc, code[0], code[1]);
+#endif
 	/* 
 	 * No exception if there is no exception port or if it has no receiver
 	 */
 	med = l->l_proc->p_emuldata;
 	if (((exc_port = med->med_exc[exc]) == NULL) ||
 	    (exc_port->mp_recv == NULL))
+		return EINVAL;
+
+	/*
+	 * Don't send exceptions to dying processes
+	 */
+	if (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc))
 		return EINVAL;
 
 	/* 
