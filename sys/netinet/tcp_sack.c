@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.2 2005/03/06 23:05:20 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.3 2005/03/06 23:05:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.2 2005/03/06 23:05:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.3 2005/03/06 23:05:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -253,8 +253,10 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	num_sack_blks = optlen / 8;
 	acked = (SEQ_GT(th->th_ack, tp->snd_una)) ? th->th_ack : tp->snd_una;
 	for (i = 0; i < num_sack_blks; i++, lp += 2) {
-		left = ntohl(*lp);
-		right = ntohl(*(lp + 1));
+		memcpy(&left, lp, sizeof(*lp));
+		memcpy(&right, lp + 1, sizeof(*lp));
+		left = ntohl(left);
+		right = ntohl(right);
 
 		if ((SEQ_LEQ(right, acked)) ||
 				SEQ_GEQ(left, tp->snd_max) ||
