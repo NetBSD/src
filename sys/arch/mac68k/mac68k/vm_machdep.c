@@ -1,9 +1,9 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 1995/04/20 15:25:41 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 1995/06/21 03:45:10 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -40,7 +40,7 @@
 /*
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
- *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
 #include <sys/param.h>
@@ -73,74 +73,83 @@ extern int fpu_type;
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+int
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	register struct user *up = p2->p_addr;
-	int offset;
-	extern caddr_t getsp();
-	extern char kstack[];
+	register struct pcb *pcb = &p2->p_addr->u_pcb;
+	register struct trapframe *tf;
+	register struct switchframe *sf;
+	extern struct pcb *curpcb;
+	extern void proc_trampoline(), child_return();
 
-	/* copy over machdep part of struct proc so we don't lose
-	   any emulator properties of processes */
-	bcopy(&p1->p_md, &p2->p_md, sizeof(struct mdproc));
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* need to copy current frame pointer */
-	p2->p_md.md_regs = p1->p_md.md_regs;
+	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
+	savectx(curpcb);
+	*pcb = p1->p_addr->u_pcb;
 
-	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 * this is tricky, as the final pcb is constructed by savectx,
-	 * but its frame isn't yet on the stack when the stack is copied.
-	 * swtch compensates for this when the child eventually runs.
-	 * This should be done differently, with a single call
-	 * that copies and updates the pcb+stack,
-	 * replacing the bcopy and savectx.
-	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = getsp() - kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
-
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
 
 	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
+	 * Copy the trap frame and arrange for the child to return directly
+	 * through return_to_user().
 	 */
-	if (savectx(up, 1)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
+	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) -1;
+	p2->p_md.md_regs = (int *)tf;
+
+	*tf = *(struct trapframe *)p1->p_md.md_regs;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_pc = (u_int)proc_trampoline;
+
+	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
+	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[11] = (int)sf;		/* SSP */
+
 	return (0);
+}
+
+/*
+ * cpu_set_kpc
+ *	Arrange for in-kernel execution of a process to continue at the
+ * named PC as if the code at that address had been called as a function
+ * with one argument--the named process's process pointer.
+ *
+ * Note that it's assumed that whne the named process returns, rei()
+ * should be invoked to return to user mode.
+ */
+void
+cpu_set_kpc(p, pc)
+	struct proc	*p;
+	u_int32_t	pc;
+{
+	struct pcb *pcbp;
+	struct switchframe *sf;
+	extern void proc_trampoline();
+
+	pcbp = &p->p_addr->u_pcb;
+	sf = (struct switchframe *) pcbp->pcb_regs[11];
+	sf->sf_pc = (u_int) proc_trampoline;
+	pcbp->pcb_regs[6] = pc;		/* A2 */
+	pcbp->pcb_regs[7] = (int)p;	/* A3 */
 }
 
 /*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ * block context switches and then call switch_exit() which will
+ * free our stack and user area and switch to another process.
+ * Thus, we never return.
  */
-
 volatile void
 cpu_exit(p)
 	struct proc *p;
 {
-	static struct pcb nullpcb;	/* pcb to overwrite on last swtch */
-	int ii;
-
 	vmspace_free(p->p_vmspace);
 
-	(void) splimp();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-
-	switch_exit();
+	(void) splhigh();
+	cnt.v_swtch++;
+	switch_exit(p);
 	for(;;); /* Get rid of a compile warning */
 	/* NOTREACHED */
 }
@@ -244,14 +253,13 @@ pagemove(from, to, size)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
-				(vm_offset_t) from, (vm_offset_t) from + PAGE_SIZE);
+			   (vm_offset_t)from, (vm_offset_t) from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-				(vm_offset_t) to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	DCIS();
 }
 
 /*
@@ -263,16 +271,13 @@ physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;
 {
-	register struct pte *pte;
+	register pt_entry_t *pte;
 	register u_int page;
-	extern u_int	cache_copyback;
 
-	if (cpu040 && (prot & PG_CI) == 0)	/* if cache not inhibited */
-		prot |= cache_copyback;		/*   set cacheable, copyback */
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
-		*(int *)pte++ = PG_V | prot | page;
+		*pte++ = PG_V | prot | page;
 		page += NBPG;
 	}
 	TBIAS();
@@ -282,11 +287,11 @@ physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
 {
-	register struct pte *pte;
+	register pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
-		*(int *)pte++ = PG_NV;
+		*pte++ = PG_NV;
 	TBIAS();
 }
 
