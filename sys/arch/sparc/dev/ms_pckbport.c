@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,10 +27,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
 
 /*
- * Attach PS/2 mouse at pckbc aux port
+ * Attach PS/2 mouse at pckbport aux port
  * and convert PS/2 mouse protocol to Sun firm events.
  */
 
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: ms_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/ic/pckbcvar.h>
-#include <dev/pckbc/pmsreg.h>
+#include <dev/pckbport/pckbportvar.h>
+#include <dev/pckbport/pmsreg.h>
 
 #include <machine/vuid_event.h>
 #include <dev/sun/event_var.h>
@@ -59,92 +59,92 @@ __KERNEL_RCSID(0, "$NetBSD: ms_pckbc.c,v 1.1 2002/10/03 16:27:04 uwe Exp $");
  * NB: we {re,ab}use ms_softc input translator state and ignore its
  * zs-related members.  Not quite clean, but what the heck.
  */
-struct ms_pckbc_softc {
+struct ms_pckbport_softc {
 	struct ms_softc sc_ms;
 
-	/* pckbc attachment */
-	pckbc_tag_t		sc_kbctag;
-	pckbc_slot_t		sc_kbcslot;
+	/* pckbport attachment */
+	pckbport_tag_t		sc_kbctag;
+	pckbport_slot_t		sc_kbcslot;
 
 	int sc_enabled;			/* input enabled? */
 };
 
-static int	ms_pckbc_match(struct device *, struct cfdata *, void *);
-static void	ms_pckbc_attach(struct device *, struct device *, void *);
+static int	ms_pckbport_match(struct device *, struct cfdata *, void *);
+static void	ms_pckbport_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(ms_pckbc, sizeof(struct ms_pckbc_softc),
-    ms_pckbc_match, ms_pckbc_attach, NULL, NULL);
+CFATTACH_DECL(ms_pckbport, sizeof(struct ms_pckbport_softc),
+    ms_pckbport_match, ms_pckbport_attach, NULL, NULL);
 
 
-static int	ms_pckbc_iopen(struct device *, int);
-static int	ms_pckbc_iclose(struct device *, int);
-static void	ms_pckbc_input(void *, int);
+static int	ms_pckbport_iopen(struct device *, int);
+static int	ms_pckbport_iclose(struct device *, int);
+static void	ms_pckbport_input(void *, int);
 
 
 static int
-ms_pckbc_match(parent, cf, aux)
+ms_pckbport_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void   *aux;
 {
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 	
-	return (pa->pa_slot == PCKBC_AUX_SLOT);
+	return (pa->pa_slot == PCKBPORT_AUX_SLOT);
 }
 
 
 static void
-ms_pckbc_attach(parent, self, aux)
+ms_pckbport_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct ms_pckbc_softc *sc = (struct ms_pckbc_softc *)self;
+	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
 	struct ms_softc *ms = &sc->sc_ms;
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 
 	u_char cmd[1], resp[2];
 	int res;
 
-	/* save our pckbc attachment */
+	/* save our pckbport attachment */
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
 	/* Hooks called by upper layer on device open/close */
-	ms->ms_deviopen = ms_pckbc_iopen;
-	ms->ms_deviclose = ms_pckbc_iclose;
+	ms->ms_deviopen = ms_pckbport_iopen;
+	ms->ms_deviclose = ms_pckbport_iclose;
 
 	printf("\n");
 
 	/* reset the device */
 	cmd[0] = PMS_RESET;
-	res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+	res = pckbport_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 			     cmd, 1, 2, resp, 1);
 #ifdef DIAGNOSTIC
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		printf("ms_pckbc_attach: reset error\n");
+		printf("ms_pckbport_attach: reset error\n");
 		/* return; */
 	}
 #endif
 
-	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       ms_pckbc_input, sc, ms->ms_dev.dv_xname);
+	pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
+			       ms_pckbport_input, sc, ms->ms_dev.dv_xname);
 
 	/* no interrupts until device is actually opened */
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
+	res = pckbport_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 			     1, 0, 0, 0);
 	if (res)
-		printf("ms_pckbc_attach: failed to disable interrupts\n");
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+		printf("ms_pckbport_attach: failed to disable interrupts\n");
+	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 }
 
 
 static int
-ms_pckbc_iopen(self, flags)
+ms_pckbport_iopen(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct ms_pckbc_softc *sc = (struct ms_pckbc_softc *)self;
+	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
 	struct ms_softc *ms = &sc->sc_ms;
 	u_char cmd[1];
 	int res;
@@ -153,10 +153,10 @@ ms_pckbc_iopen(self, flags)
 	ms->ms_dx = ms->ms_dy = 0;
 	ms->ms_ub = ms->ms_mb = 0;
 
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
+	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
 	cmd[0] = PMS_DEV_ENABLE;
-	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				cmd, 1, 0, 1, NULL);
 	if (res) {
 		printf("pms_enable: command error\n");
@@ -169,21 +169,21 @@ ms_pckbc_iopen(self, flags)
 
 
 static int
-ms_pckbc_iclose(self, flags)
+ms_pckbport_iclose(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct ms_pckbc_softc *sc = (struct ms_pckbc_softc *)self;
+	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
 	u_char cmd[1];
 	int res;
 
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				cmd, 1, 0, 1, NULL);
 	if (res)
 		printf("pms_disable: command error\n");
 
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
 	sc->sc_enabled = 0;
 	return (0);
@@ -196,14 +196,14 @@ ms_pckbc_iclose(self, flags)
 #define PS2MBUTMASK 0x04
 
 /*
- * Got a receive interrupt - pckbc wants to give us a byte.
+ * Got a receive interrupt - pckbport wants to give us a byte.
  */
 static void
-ms_pckbc_input(vsc, data)
+ms_pckbport_input(vsc, data)
 	void *vsc;
 	int data;
 {
-	struct ms_pckbc_softc *sc = vsc;
+	struct ms_pckbport_softc *sc = vsc;
 	struct ms_softc *ms = &sc->sc_ms;
 	struct firm_event *fe;
 	int mb, ub, d, get, put, any;

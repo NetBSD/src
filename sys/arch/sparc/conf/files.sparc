@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.125 2004/02/14 14:33:29 bjh21 Exp $
+#	$NetBSD: files.sparc,v 1.126 2004/03/13 17:31:34 bjh21 Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -162,8 +162,8 @@ include "dev/ata/files.ata"
 
 file	arch/sparc/dev/kd.c				# console
 
-attach pckbc at obio with pckbc_obio: pckbc_machdep_cnattach
-attach pckbc at ebus with pckbc_ebus: pckbc_machdep_cnattach
+attach pckbc at obio with pckbc_obio: pckbport_machdep_cnattach
+attach pckbc at ebus with pckbc_ebus: pckbport_machdep_cnattach
 file	arch/sparc/dev/pckbc_js.c	pckbc_obio | pckbc_ebus
 
 
@@ -180,8 +180,8 @@ file dev/sun/kbd_zs.c			kbd_zs		# kbd lower layer
 file	dev/sun/kbdsun.c		kbd_zs | kbd_tty # kbd middle layer
 
 # PC/AT keyboard at 8042 (pckbc) for Mr.Coffee
-attach kbd at pckbc with kbd_pckbc
-file	arch/sparc/dev/kbd_pckbc.c	kbd_pckbc	# kbd mid/lower layers
+attach kbd at pckbport with kbd_pckbport
+file	arch/sparc/dev/kbd_pckbport.c	kbd_pckbort	# kbd mid/lower layers
 
 
 # sun (mouse systems) mouse at a serial port
@@ -197,8 +197,8 @@ file	dev/sun/ms_zs.c			ms_zs		# mouse lower layer
 # just one function in dev/sun/ms.c (upper layer).  Split it out?
 
 # PS/2 mouse at 8042 (pckbc) for Mr.Coffee
-attach ms at pckbc with ms_pckbc
-file	arch/sparc/dev/ms_pckbc.c	ms_pckbc	# lower/middle layers
+attach ms at pckbport with ms_pckbport
+file	arch/sparc/dev/ms_pckbport.c	ms_pckbport	# lower/middle layers
 
 
 #
@@ -312,7 +312,7 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 include "dev/wscons/files.wscons"	# includes rcons as well
 include "dev/wsfont/files.wsfont"	# both rcons and wscons need it
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 
 #
