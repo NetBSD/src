@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi.c,v 1.5 1994/01/30 01:08:50 briggs Exp $
+ * $Id: scsi.c,v 1.6 1994/06/26 13:00:32 briggs Exp $
  *
  */
 
@@ -113,6 +113,7 @@ struct ncr5380_data {
 } *ncr5380data[NNCR5380];
 
 /* From Guide to Mac II family hardware, p. 137 */
+/* These are "adjusted" in the init routine. */
 static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x50F10000;
 static volatile long			*sci_4byte_addr=  (long *) 0x50F06000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0x50F12000;
@@ -138,7 +139,7 @@ static int	scsi_group0(int adapter, int id, int lun,
 			    int opcode, int addr, int len,
 			    int flags, caddr_t databuf, int datalen);
 
-static char scsi_name[] = "ncr5380";
+static char scsi_name[] = "ncrscsi";
 
 struct scsi_adapter	ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
@@ -152,7 +153,7 @@ struct scsi_adapter	ncr5380_switch = {
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
-struct scsi_device ncr_dev = {
+struct scsi_device ncr5380_dev = {
 	NULL,		/* Use default error handler.	    */
 	NULL,		/* have a queue, served by this (?) */
 	NULL,		/* have no async handler.	    */
@@ -166,8 +167,8 @@ extern int	matchbyname();
 static int	ncrprobe();
 static void	ncrattach();
 
-struct cfdriver ncrcd =
-      {	NULL, "ncr", ncrprobe, ncrattach,
+struct cfdriver ncrscsicd =
+      {	NULL, "ncrscsi", ncrprobe, ncrattach,
 	DV_DULL, sizeof(struct ncr5380_data), NULL, 0 };
 
 static int
@@ -185,10 +186,16 @@ ncrprobe(parent, cf, aux)
 	struct cfdata	*cf;
 	void		*aux;
 {
+extern	int			has5380scsi;
+static	int			probed = 0;
 	int			unit = cf->cf_unit;
 	struct ncr5380_data	*ncr5380;
 
-	if (strcmp(*((char **) aux), ncrcd.cd_name)) {
+	if (!has5380scsi) {
+		return 0;
+	}
+
+	if (strcmp(*((char **) aux), ncrscsicd.cd_name)) {
 		return 0;
 	}
 
@@ -205,6 +212,20 @@ ncrprobe(parent, cf, aux)
 
 	bzero(ncr5380, sizeof(*ncr5380));
 	ncr5380data[unit] = ncr5380;
+
+	if (!probed) {
+		extern unsigned long	IOBase;
+		/*
+		 * Adjust values based on IOBase.
+		 */
+ 		ncr = (volatile sci_regmap_t *)
+			((u_int) ncr - INTIOBASE + IOBase);
+ 		sci_4byte_addr = (volatile long *)
+			((u_int) sci_4byte_addr - INTIOBASE + IOBase);
+ 		sci_1byte_addr = (volatile u_char *)
+			((u_int) sci_1byte_addr - INTIOBASE + IOBase);
+		probed = 1;
+	}
 
 	return 1;
 }
@@ -229,7 +250,7 @@ register volatile sci_padded_regmap_t	*regs = ncr;
 	ncr5380->sc_link.scsibus = unit;
 	ncr5380->sc_link.adapter_targ = 7;
 	ncr5380->sc_link.adapter = &ncr5380_switch;
-	ncr5380->sc_link.device = &ncr_dev;
+	ncr5380->sc_link.device = &ncr5380_dev;
 
 	printf("\n");
 
@@ -371,7 +392,7 @@ ncr5380_intr(int adapter)
 }
 
 extern int
-scsi_irq_intr(void)
+ncr5380_irq_intr(void)
 {
 	register volatile sci_padded_regmap_t *regs = ncr;
 
@@ -384,7 +405,7 @@ scsi_irq_intr(void)
 }
 
 extern int
-scsi_drq_intr(void)
+ncr5380_drq_intr(void)
 {
 /*	printf("scsi_drq_intr called.\n"); */
 /*	ncr5380_intr(0); */
@@ -559,6 +580,7 @@ lost:
 	return ret;
 }
 
+static int
 sci_data_out(regs, phase, count, data)
 	register sci_padded_regmap_t	*regs;
 	unsigned char		*data;
@@ -590,6 +612,7 @@ scsi_timeout_error:
 	return cnt;
 }
 
+static int
 sci_data_in(regs, phase, count, data)
 	register sci_padded_regmap_t	*regs;
 	unsigned char		*data;
