@@ -16,8 +16,6 @@ void setstatclockrate (int);
 
 #ifdef __BROKEN_DK_ESTABLISH
 void dk_cleanup(void);
-
-extern char platform_name[];
 #endif
 
 #endif /* _KERNEL */
