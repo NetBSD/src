@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.15 1994/10/27 04:17:37 cgd Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.16 1994/10/30 21:43:57 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -252,7 +252,7 @@ struct ie_softc {
 int iewatchdog __P((/* short */));
 int ieintr __P((struct ie_softc *));
 int ieinit __P((struct ie_softc *sc));
-int ieioctl __P((struct ifnet *ifp, int command, caddr_t data));
+int ieioctl __P((struct ifnet *ifp, u_long command, caddr_t data));
 int iestart __P((struct ifnet *ifp));
 static void el_reset_586 __P((struct ie_softc *));
 static void sl_reset_586 __P((struct ie_softc *));
@@ -1821,7 +1821,7 @@ iestop(sc)
 int
 ieioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.17 1994/07/26 18:56:57 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.18 1994/10/30 21:48:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -443,7 +443,7 @@ ifunit(name)
 int
 ifioctl(so, cmd, data, p)
 	struct socket *so;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	struct proc *p;
 {

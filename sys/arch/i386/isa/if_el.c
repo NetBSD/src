@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.14 1994/10/27 04:17:28 cgd Exp $	*/
+/*	$NetBSD: if_el.c,v 1.15 1994/10/30 21:43:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -85,7 +85,7 @@ struct el_softc {
  */
 int elintr __P((struct el_softc *));
 static int el_init __P((struct el_softc *));
-static int el_ioctl __P((struct ifnet *, int, caddr_t));
+static int el_ioctl __P((struct ifnet *, u_long, caddr_t));
 static int el_start __P((struct ifnet *));
 static int el_watchdog __P((int));
 static void el_reset __P((struct el_softc *));
@@ -668,7 +668,7 @@ elget(buf, totlen, ifp)
 static int
 el_ioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.24 1994/10/20 04:26:43 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.25 1994/10/30 21:48:39 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -701,7 +701,7 @@ int
 msdosfs_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int a_command;
+		u_long a_command;
 		caddr_t a_data;
 		int a_fflag;
 		struct ucred *a_cred;

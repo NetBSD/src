@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.7 1994/06/29 06:43:55 cgd Exp $	*/
+/*	$NetBSD: disk.h,v 1.8 1994/10/30 21:49:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@ struct dkdriver {
 #ifdef notyet
 	int	(*d_open) __P((dev_t dev, int ifmt, int, struct proc *));
 	int	(*d_close) __P((dev_t dev, int, int ifmt, struct proc *));
-	int	(*d_ioctl) __P((dev_t dev, int cmd, caddr_t data, int fflag,
+	int	(*d_ioctl) __P((dev_t dev, u_long cmd, caddr_t data, int fflag,
 				struct proc *));
 	int	(*d_dump) __P((dev_t));
 	void	(*d_start) __P((struct buf *, daddr_t));

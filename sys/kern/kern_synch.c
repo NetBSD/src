@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.29 1994/08/30 06:22:10 mycroft Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.30 1994/10/30 21:47:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -251,7 +251,7 @@ updatepri(p)
  * of 2.  Shift right by 8, i.e. drop the bottom 256 worth.
  */
 #define TABLESIZE	128
-#define LOOKUP(x)	(((int)(x) >> 8) & (TABLESIZE - 1))
+#define LOOKUP(x)	(((long)(x) >> 8) & (TABLESIZE - 1))
 struct slpque {
 	struct proc *sq_head;
 	struct proc **sq_tailp;

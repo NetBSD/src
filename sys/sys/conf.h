@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.14 1994/06/29 06:43:46 cgd Exp $	*/
+/*	$NetBSD: conf.h,v 1.15 1994/10/30 21:49:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,7 +56,7 @@ struct bdevsw {
 	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
 				     struct proc *p));
 	void	(*d_strategy)	__P((struct buf *bp));
-	int	(*d_ioctl)	__P((dev_t dev, int cmd, caddr_t data,
+	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
 	int	(*d_dump)	();	/* parameters vary by architecture */
 	int	(*d_psize)	__P((dev_t dev));
@@ -74,7 +74,7 @@ struct cdevsw {
 				     struct proc *));
 	int	(*d_read)	__P((dev_t dev, struct uio *uio, int ioflag));
 	int	(*d_write)	__P((dev_t dev, struct uio *uio, int ioflag));
-	int	(*d_ioctl)	__P((dev_t dev, int cmd, caddr_t data,
+	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
 	int	(*d_stop)	__P((struct tty *tp, int rw));
 	int	(*d_reset)	__P((int uban));	/* XXX */
@@ -99,7 +99,7 @@ struct linesw {
 				     int flag));
 	int	(*l_write)	__P((struct tty *tp, struct uio *uio,
 				     int flag));
-	int	(*l_ioctl)	__P((struct tty *tp, int cmd, caddr_t data,
+	int	(*l_ioctl)	__P((struct tty *tp, u_long cmd, caddr_t data,
 				     int flag, struct proc *p));
 	int	(*l_rint)	__P((int c, struct tty *tp));
 	int	(*l_start)	__P((struct tty *tp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.42 1994/10/20 20:31:31 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.43 1994/10/30 21:49:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -534,7 +534,7 @@ sdstart(unit)
 int 
 sdioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {
@@ -548,7 +548,7 @@ sdioctl(dev, cmd, addr, flag)
 	unit = SDUNIT(dev);
 	part = SDPART(dev);
 	sd = sdcd.cd_devs[unit];
-	SC_DEBUG(sd->sc_link, SDEV_DB1, ("sdioctl (0x%x)", cmd));
+	SC_DEBUG(sd->sc_link, SDEV_DB1, ("sdioctl (0x%lx)", cmd));
 
 	/*
 	 * If the device is not valid.. abandon ship

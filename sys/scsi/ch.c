@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.9 1994/10/20 20:31:26 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.10 1994/10/30 21:49:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -212,7 +212,7 @@ chclose(dev)
 int 
 chioctl(dev, cmd, arg, mode)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t arg;
 	int mode;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.20 1994/10/21 01:12:13 mycroft Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.21 1994/10/30 21:47:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -412,15 +412,15 @@ compat_43_setreuid(p, uap, retval)
 	 */
 	if (SCARG(uap, ruid) == (uid_t)-1) {
 		if (SCARG(uap, euid) == (uid_t)-1)
-			return (0);			/* -1, -1 */
-		seuidargs.euid = SCARG(uap, euid);	/* -1,  N */
+			return (0);				/* -1, -1 */
+		SCARG(&seuidargs, euid) = SCARG(uap, euid);	/* -1,  N */
 		return (seteuid(p, &seuidargs, retval));
 	}
 	if (SCARG(uap, euid) == (uid_t)-1) {
-		seuidargs.euid = SCARG(uap, ruid);	/* N, -1 */
+		SCARG(&seuidargs, euid) = SCARG(uap, ruid);	/* N, -1 */
 		return (seteuid(p, &seuidargs, retval));
 	}
-	suidargs.uid = SCARG(uap, ruid);		/* N, N and N, M */
+	SCARG(&suidargs, uid) = SCARG(uap, ruid);	/* N, N and N, M */
 	return (setuid(p, &suidargs, retval));
 }
 
@@ -441,15 +441,15 @@ compat_43_setregid(p, uap, retval)
 	 */
 	if (SCARG(uap, rgid) == (gid_t)-1) {
 		if (SCARG(uap, egid) == (gid_t)-1)
-			return (0);			/* -1, -1 */
-		segidargs.egid = SCARG(uap, egid);	/* -1,  N */
+			return (0);				/* -1, -1 */
+		SCARG(&segidargs, egid) = SCARG(uap, egid);	/* -1,  N */
 		return (setegid(p, &segidargs, retval));
 	}
 	if (SCARG(uap, egid) == (gid_t)-1) {
-		segidargs.egid = SCARG(uap, rgid);	/* N, -1 */
+		SCARG(&segidargs, egid) = SCARG(uap, rgid);	/* N, -1 */
 		return (setegid(p, &segidargs, retval));
 	}
-	sgidargs.gid = SCARG(uap, rgid);		/* N, N and N, M */
+	SCARG(&sgidargs, gid) = SCARG(uap, rgid);	/* N, N and N, M */
 	return (setgid(p, &sgidargs, retval));
 }
 #endif /* defined(COMPAT_43) || defined(COMPAT_SUNOS) */
