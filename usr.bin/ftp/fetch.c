@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.153 2004/10/30 17:36:31 dsl Exp $	*/
+/*	$NetBSD: fetch.c,v 1.154 2004/12/10 06:44:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.153 2004/10/30 17:36:31 dsl Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.154 2004/12/10 06:44:15 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -84,11 +84,12 @@ typedef enum {
 void		aborthttp(int);
 #ifndef NO_AUTH
 static int	auth_url(const char *, char **, const char *, const char *);
-static void	base64_encode(const u_char *, size_t, u_char *);
+static void	base64_encode(const unsigned char *, size_t, unsigned char *);
 #endif
 static int	go_fetch(const char *);
 static int	fetch_ftp(const char *);
 static int	fetch_url(const char *, const char *, char *, char *);
+static const char *match_token(const char **, const char *);
 static int	parse_url(const char *, const char *, url_t *, char **,
 			    char **, char **, char **, in_port_t *, char **);
 static void	url_decode(char *);
@@ -107,6 +108,34 @@ static int	redirect_loop;
 #define	HTTP_URL	"http://"	/* http URL prefix */
 
 
+/*
+ * Determine if token is the next word in buf (case insensitive).
+ * If so, advance buf past the token and any trailing LWS, and
+ * return a pointer to the token (in buf).  Otherwise, return NULL.
+ * token may be preceeded by LWS.
+ * token must be followed by LWS or NUL.  (I.e, don't partial match).
+ */
+static const char *
+match_token(const char **buf, const char *token)
+{
+	const char	*p, *orig;
+	size_t		tlen;
+
+	tlen = strlen(token);
+	p = *buf;
+	SKIPLWS(p);
+	orig = p;
+	if (strncasecmp(p, token, tlen) != 0)
+		return NULL;
+	p += tlen;
+	if (*p != '\0' && !ISLWS(*p))
+		return NULL;
+	SKIPLWS(p);
+	orig = *buf;
+	*buf = p;
+	return orig;
+}
+
 #ifndef NO_AUTH
 /*
  * Generate authorization response based on given authentication challenge.
@@ -117,51 +146,52 @@ static int
 auth_url(const char *challenge, char **response, const char *guser,
 	const char *gpass)
 {
-	char		*cp, *ep, *clear, *line, *realm, *scheme;
+	const char	*cp, *scheme;
+	char		*ep, *clear, *realm;
 	char		 user[BUFSIZ], *pass;
 	int		 rval;
 	size_t		 len, clen, rlen;
 
 	*response = NULL;
-	clear = realm = scheme = NULL;
+	clear = realm = NULL;
 	rval = -1;
-	line = xstrdup(challenge);
-	cp = line;
+	cp = challenge;
+	scheme = "Basic";	/* only support Basic authentication */
 
 	if (debug)
 		fprintf(ttyout, "auth_url: challenge `%s'\n", challenge);
 
-	scheme = strsep(&cp, " ");
-	if (! STRNEQUAL(scheme, "Basic")) {
-		warnx("Unsupported WWW Authentication challenge - `%s'",
+	if (! match_token(&cp, scheme)) {
+		warnx("Unsupported authentication challenge - `%s'",
 		    challenge);
 		goto cleanup_auth_url;
 	}
-	cp += strspn(cp, " ");
 
 #define	REALM "realm=\""
 	if (STRNEQUAL(cp, REALM))
 		cp += sizeof(REALM) - 1;
 	else {
-		warnx("Unsupported WWW Authentication challenge - `%s'",
+		warnx("Unsupported authentication challenge - `%s'",
 		    challenge);
 		goto cleanup_auth_url;
 	}
+/* XXX: need to improve quoted-string parsing to support \ quoting, etc. */
 	if ((ep = strchr(cp, '\"')) != NULL) {
 		size_t len = ep - cp;
 
 		realm = (char *)xmalloc(len + 1);
 		(void)strlcpy(realm, cp, len + 1);
 	} else {
-		warnx("Unsupported WWW Authentication challenge - `%s'",
+		warnx("Unsupported authentication challenge - `%s'",
 		    challenge);
 		goto cleanup_auth_url;
 	}
 
-	if (guser != NULL)
+	fprintf(ttyout, "Username for `%s': ", realm);
+	if (guser != NULL) {
 		(void)strlcpy(user, guser, sizeof(user));
-	else {
-		fprintf(ttyout, "Username for `%s': ", realm);
+		fprintf(ttyout, "%s\n", user);
+	} else {
 		(void)fflush(ttyout);
 		if (fgets(user, sizeof(user) - 1, stdin) == NULL) {
 			clearerr(stdin);
@@ -188,13 +218,12 @@ auth_url(const char *challenge, char **response, const char *guser,
 	(void)strlcpy(*response, scheme, rlen);
 	len = strlcat(*response, " ", rlen);
 			/* use  `clen - 1'  to not encode the trailing NUL */
-	base64_encode(clear, clen - 1, (u_char *)*response + len);
+	base64_encode(clear, clen - 1, (unsigned char *)*response + len);
 	memset(clear, 0, clen);
 	rval = 0;
 
  cleanup_auth_url:
 	FREEPTR(clear);
-	FREEPTR(line);
 	FREEPTR(realm);
 	return (rval);
 }
@@ -204,11 +233,11 @@ auth_url(const char *challenge, char **response, const char *guser,
  * which should be at least ((len + 2) * 4 / 3 + 1) in size.
  */
 static void
-base64_encode(const u_char *clear, size_t len, u_char *encoded)
+base64_encode(const unsigned char *clear, size_t len, unsigned char *encoded)
 {
-	static const u_char enc[] =
+	static const unsigned char enc[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	u_char	*cp;
+	unsigned char	*cp;
 	int	 i;
 
 	cp = encoded;
@@ -355,6 +384,9 @@ parse_url(const char *url, const char *desc, url_t *type,
 			*cp = '\0';
 			*pass = xstrdup(cp + 1);
 		}
+		url_decode(*user);
+		if (*pass)
+			url_decode(*pass);
 	}
 
 #ifdef INET6
@@ -443,7 +475,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	size_t			len;
 	static size_t		bufsize;
 	static char		*xferbuf;
-	char			*cp, *ep, *buf, *savefile;
+	const char		*cp, *token;
+	char			*ep, *buf, *savefile;
 	char			*auth, *location, *message;
 	char			*user, *pass, *host, *port, *path, *decodedpath;
 	char			*puser, *ppass, *useragent;
@@ -827,13 +860,13 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (debug)
 				fprintf(ttyout, "received `%s'\n", buf);
 
-				/* Look for some headers */
+		/*
+		 * Look for some headers
+		 */
+
 			cp = buf;
 
-#define	CONTENTLEN "Content-Length:"
-			if (STRNEQUAL(cp, CONTENTLEN)) {
-				cp += sizeof(CONTENTLEN) - 1;
-				SKIPLWS(cp);
+			if (match_token(&cp, "Content-Length:")) {
 				filesize = STRTOLL(cp, &ep, 10);
 				if (filesize < 0 || *ep != '\0')
 					goto improper;
@@ -842,17 +875,12 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					    "parsed len as: " LLF "\n",
 					    (LLT)filesize);
 
-#define	CONTENTRANGE "Content-Range:"
-			} else if (STRNEQUAL(cp, CONTENTRANGE)) {
-				cp += sizeof(CONTENTRANGE) - 1;
-				SKIPLWS(cp);
-#define	BYTES "bytes "
-				if (! STRNEQUAL(cp, BYTES))
+			} else if (match_token(&cp, "Content-Range:")) {
+				if (! match_token(&cp, "bytes"))
 					goto improper;
-				cp += sizeof(BYTES) - 1;
-				if (*cp == '*') {
-					ep = cp + 1;
-				}
+
+				if (*cp == '*')
+					cp++;
 				else {
 					rangestart = STRTOLL(cp, &ep, 10);
 					if (rangestart < 0 || *ep != '-')
@@ -861,19 +889,20 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					rangeend = STRTOLL(cp, &ep, 10);
 					if (rangeend < 0 || rangeend < rangestart)
 						goto improper;
+					cp = ep;
 				}
-				if (*ep != '/')
+				if (*cp != '/')
 					goto improper;
-				cp = ep + 1;
-				if (*cp == '*') {
-					ep = cp + 1;
-				}
+				cp++;
+				if (*cp == '*')
+					cp++;
 				else {
 					entitylen = STRTOLL(cp, &ep, 10);
 					if (entitylen < 0)
 						goto improper;
+					cp = ep;
 				}
-				if (*ep != '\0')
+				if (*cp != '\0')
 					goto improper;
 
 				if (debug) {
@@ -892,13 +921,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					goto cleanup_fetch_url;
 				}
 
-#define	LASTMOD "Last-Modified:"
-			} else if (STRNEQUAL(cp, LASTMOD)) {
+			} else if (match_token(&cp, "Last-Modified:")) {
 				struct tm parsed;
 				char *t;
 
-				cp += sizeof(LASTMOD) - 1;
-				SKIPLWS(cp);
 							/* RFC 1123 */
 				if ((t = strptime(cp,
 						"%a, %d %b %Y %H:%M:%S GMT",
@@ -921,29 +947,22 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					}
 				}
 
-#define	LOCATION "Location:"
-			} else if (STRNEQUAL(cp, LOCATION)) {
-				cp += sizeof(LOCATION) - 1;
-				SKIPLWS(cp);
+			} else if (match_token(&cp, "Location:")) {
 				location = xstrdup(cp);
 				if (debug)
 					fprintf(ttyout,
 					    "parsed location as `%s'\n", cp);
 
-#define	TRANSENC "Transfer-Encoding:"
-			} else if (STRNEQUAL(cp, TRANSENC)) {
-				cp += sizeof(TRANSENC) - 1;
-				SKIPLWS(cp);
-				if (strcasecmp(cp, "binary") == 0) {
+			} else if (match_token(&cp, "Transfer-Encoding:")) {
+				if (match_token(&cp, "binary")) {
 					warnx(
-			"Bogus transfer encoding - `%s' (fetching anyway)",
-					    cp);
+			"Bogus transfer encoding - `binary' (fetching anyway)");
 					continue;
 				}
-				if (strcasecmp(cp, "chunked") != 0) {
+				if (! (token = match_token(&cp, "chunked"))) {
 					warnx(
 				    "Unsupported transfer encoding - `%s'",
-					    cp);
+					    token);
 					goto cleanup_fetch_url;
 				}
 				ischunked++;
@@ -951,26 +970,20 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					fprintf(ttyout,
 					    "using chunked encoding\n");
 
-#define	PROXYAUTH "Proxy-Authenticate:"
-			} else if (STRNEQUAL(cp, PROXYAUTH)) {
-				cp += sizeof(PROXYAUTH) - 1;
-				SKIPLWS(cp);
+			} else if (match_token(&cp, "Proxy-Authenticate:")
+				|| match_token(&cp, "WWW-Authenticate:")) {
+				if (! (token = match_token(&cp, "Basic"))) {
+					if (debug)
+					 	fprintf(ttyout,
+				"skipping unknown auth scheme `%s'\n",
+						    token);
+					continue;
+				}
 				FREEPTR(auth);
-				auth = xstrdup(cp);
+				auth = xstrdup(token);
 				if (debug)
 					fprintf(ttyout,
-					    "parsed proxy-auth as `%s'\n", cp);
-
-#define	WWWAUTH	"WWW-Authenticate:"
-			} else if (STRNEQUAL(cp, WWWAUTH)) {
-				cp += sizeof(WWWAUTH) - 1;
-				SKIPLWS(cp);
-				FREEPTR(auth);
-				auth = xstrdup(cp);
-				if (debug)
-					fprintf(ttyout,
-					    "parsed www-auth as `%s'\n", cp);
-
+					    "parsed auth as `%s'\n", cp);
 			}
 
 		}
@@ -1322,8 +1335,6 @@ fetch_ftp(const char *url)
 			warnx("Invalid URL `%s'", url);
 			goto cleanup_fetch_ftp;
 		}
-		url_decode(user);
-		url_decode(pass);
 		/*
 		 * Note: Don't url_decode(path) here.  We need to keep the
 		 * distinction between "/" and "%2F" until later.
