@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.39 2000/12/15 02:12:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.40 2001/07/18 06:45:33 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -607,7 +607,7 @@ rf_AllocRaidAccDesc(
 	desc->state = 0;
 
 	desc->status = 0;
-	bzero((char *) &desc->tracerec, sizeof(RF_AccTraceEntry_t));
+	memset((char *) &desc->tracerec, 0, sizeof(RF_AccTraceEntry_t));
 	desc->callbackFunc = (void (*) (RF_CBParam_t)) cbF;	/* XXX */
 	desc->callbackArg = cbA;
 	desc->next = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.5 2000/01/08 22:57:31 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.6 2001/07/18 06:45:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -303,7 +303,7 @@ rf_AllocPSStatus(raidPtr)
 
 	RF_FREELIST_GET_INIT_ARG(raidPtr->pss_freelist, p, next, (RF_ReconParityStripeStatus_t *), init_pss, raidPtr);
 	if (p) {
-		bzero(p->issued, raidPtr->numCol);
+		memset(p->issued, 0, raidPtr->numCol);
 	}
 	p->next = NULL;
 	/* no need to initialize here b/c the only place we're called from is
