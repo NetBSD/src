@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.44 1996/01/07 22:03:37 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.45 1996/01/30 18:28:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -617,12 +617,16 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return EINVAL;
 	case CDIOCSTOP:
 		return mcd_stop(sc);
-	case CDIOCEJECT:
+	case CDIOCEJECT: /* FALLTHROUGH */
+	case DIOCEJECT:
 		return mcd_eject(sc);
 	case CDIOCALLOW:
 		return mcd_setlock(sc, MCD_LK_UNLOCK);
 	case CDIOCPREVENT:
 		return mcd_setlock(sc, MCD_LK_LOCK);
+	case DIOCLOCK:
+		return mcd_setlock(sc,
+		    (*(int *)addr) ? MCD_LK_LOCK : MCD_LK_UNLOCK);
 	case CDIOCSETDEBUG:
 		sc->debug = 1;
 		return 0;
