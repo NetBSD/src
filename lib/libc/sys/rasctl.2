@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasctl.2,v 1.1 2002/08/28 09:31:27 gmcgarry Exp $
+.\"     $NetBSD: rasctl.2,v 1.2 2002/08/29 12:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include  \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/types.h\*[Gt]
 .Fd #include \*[Lt]sys/ras.h\*[Gt]
 .Ft int
 .Fn rasctl "void *addr" "size_t len" "int op"
@@ -69,8 +69,8 @@ then the process is resumed at
 .Pp
 As the process execution can be rolled-back, the code in the sequence
 should have no side effects other than a final store at
-.Fa addr Ns + Ns Fa len Ns -1 .
-The kernel does not guarantee that the sequences is successfully
+.Fa addr Ns + Ns Fa len Ns \-1 .
+The kernel does not guarantee that the sequences are successfully
 restartable.  It assumes that the application knows what it is doing.
 Restartable atomic sequences should adhere to the following guidelines:
 .Pp
@@ -88,14 +88,14 @@ child during the
 .Xr fork 2
 operation.  Restartable atomic sequences for a process are removed
 during
-.Xr exec 2 .
+.Xr exec 3 .
 .Pp
 The operations that can be applied to a restartable atomic sequence
 are specified by the
 .Fa op
 argument.  Possible operations are:
 .Pp
-.Bl -tag -compact -width RAS_PURGE_ALL
+.Bl -tag -compact -width RAS_PURGE_ALLXXX
 .It RAS_INSTALL
 Install this sequence.
 .It RAS_PURGE
@@ -111,7 +111,7 @@ facility.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn rasctl
-returns zero.  Otherwise, value of -1 is returned and
+returns zero.  Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
