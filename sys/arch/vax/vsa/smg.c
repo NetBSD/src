@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.11 1999/01/11 21:54:23 drochner Exp $ */
+/*	$NetBSD: smg.c,v 1.12 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,6 +46,7 @@
 
 #include <machine/vsbus.h>
 #include <machine/sid.h>
+#include <machine/cpu.h>
 
 #include "lkc.h"
 
@@ -101,6 +102,8 @@ const struct wsscreen_list smg_screenlist = {
 	_smg_scrlist,
 };
 
+static	caddr_t	sm_addr;
+
 extern char q_font[];
 #define QCHAR(c) (c < 32 ? 32 : (c > 127 ? c - 66 : c - 32))
 #define QFONT(c,line)	q_font[QCHAR(c) * 15 + line]
@@ -145,10 +148,11 @@ smg_match(parent, match, aux)
 
 	if (va->va_type != inr_vf)
 		return 0;
-#ifdef DIAGNOSTIC
+
 	if (sm_addr == 0)
-		panic("smg: inconsistency in smg address mapping");
-#endif
+		sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
+	if (sm_addr == 0)
+		return 0;
 	return 1;
 }
 
@@ -465,8 +469,9 @@ smgprobe()
 	case VAX_BTYP_43:
 		if (vax_confdata & 0x20) /* doesn't use graphics console */
 			break;
-		if (sm_addr == 0) /* Haven't mapped graphic area */
-			break;
+		sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
+		if (sm_addr == 0)
+			return 0;
 
 		return 1;
 

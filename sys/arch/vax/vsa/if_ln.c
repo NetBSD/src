@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.8 1998/08/15 10:51:17 mycroft Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.9 1999/02/02 18:37:21 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -215,6 +215,9 @@ static	inline void ln_tint __P((struct ln_softc *));
 static	inline void ln_read __P((struct ln_softc *, caddr_t, int)); 
 void	ln_reset __P((struct ln_softc *));
 
+static	short *lance_csr; /* LANCE CSR virtual address */
+static	int *lance_addr; /* Ethernet address */
+
 struct cfattach ln_ca = {
 	sizeof(struct ln_softc), lnmatch, lnattach
 };
@@ -232,10 +235,12 @@ lnmatch(parent, cf, aux)
 {
 	struct	vsbus_attach_args *va = aux;
 
-#ifdef DIAGNOSTIC
+	if (lance_csr == 0)
+		lance_csr = (short *)vax_map_physmem(NI_BASE, 1);
 	if (lance_csr == 0)
 		return 0;
-#endif
+	if (lance_addr == 0)
+		lance_addr = (int *)vax_map_physmem(NI_ADDR, 1);
 	if (va->va_type == inr_ni)
 		return 2;
 	return 0;

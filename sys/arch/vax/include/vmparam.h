@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22 1999/01/16 20:49:12 chuck Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23 1999/02/02 18:37:22 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,10 +41,6 @@
  */
 #ifndef _VMPARAM_H_
 #define _VMPARAM_H_
-
-#ifndef _LOCORE
-#include <vm/vm_param.h>
-#endif
 
 /*
  * Machine dependent constants for VAX.
@@ -133,7 +129,6 @@
 
 #define SAFERSS		8		/* nominal ``small'' resident set size
 					   protected against replacement */
-
 #if defined(UVM)
 
 #define VM_PHYSSEG_MAX		1

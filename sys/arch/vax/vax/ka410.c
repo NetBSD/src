@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.15 1999/01/19 21:04:49 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.16 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,10 +53,6 @@
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
-#include "smg.h"
-#include "ry.h"
-#include "ncr.h"
-
 static	void	ka410_conf __P((struct device*, struct device*, void*));
 static	void	ka410_steal_pages __P((void));
 static	void	ka410_memerr __P((void));
@@ -64,6 +60,7 @@ static	int	ka410_mchk __P((caddr_t));
 static	void	ka410_halt __P((void));
 static	void	ka410_reboot __P((int));
 static	void	ka41_cache_enable __P((void));
+static	void	ka410_clrf __P((void));
 
 static	caddr_t	l2cache;	/* mapped in address */
 static	long 	*cacr;		/* l2csche ctlr reg */
@@ -85,6 +82,7 @@ struct	cpu_dep ka410_calls = {
 	2,	/* SCB pages */
 	ka410_halt,
 	ka410_reboot,
+	ka410_clrf,
 };
 
 
@@ -93,21 +91,40 @@ ka410_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
+        extern  int clk_adrshift, clk_tweak;
+	struct vs_cpu *ka410_cpu;
+
+	ka410_cpu = (struct vs_cpu *)vax_map_physmem(VS_REGS, 1);
+
 	switch (vax_cputype) {
 	case VAX_TYP_UV2:
+		ka410_cpu->vc_410mser = 1;
 		printf(": KA410\n");
 		break;
 
 	case VAX_TYP_CVAX:
 		printf(": KA41/42\n");
+		ka410_cpu->vc_vdcorg = 0; /* XXX */
+		ka410_cpu->vc_parctl = PARCTL_CPEN | PARCTL_DPEN ;
 		printf("%s: Enabling primary cache, ", self->dv_xname);
 mtpr(KA420_CADR_S2E|KA420_CADR_S1E|KA420_CADR_ISE|KA420_CADR_DSE, PR_CADR);
 		if (vax_confdata & KA420_CFG_CACHPR) {
+			l2cache = (void *)vax_map_physmem(KA420_CH2_BASE,
+			    (KA420_CH2_SIZE / VAX_NBPG));
+			cacr = (void *)vax_map_physmem(KA420_CACR, 1);
 			printf("secondary cache\n");
 			ka41_cache_enable();
 		} else
 			printf("no secondary cache present\n");
 	}
+	/* Done with ka410_cpu - release it */
+	vax_unmap_physmem((vaddr_t)ka410_cpu, 1);
+	/*
+	 * Setup parameters necessary to read time from clock chip.
+	 */
+	clk_adrshift = 1;       /* Addressed at long's... */
+	clk_tweak = 2;          /* ...and shift two */
+	clk_page = (short *)vax_map_physmem(KA420_WAT_BASE, 1);
 }
 
 void
@@ -135,110 +152,15 @@ ka410_mchk(addr)
 void
 ka410_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail;
-        extern  int clk_adrshift, clk_tweak;
-	int	junk, parctl = 0;
+	extern	vaddr_t avail_start;
 
 	/* Interrupt vector number in interrupt mask table */
 	inr_ni = VS3100_NI;
 	inr_sr = VS3100_SR;
 	inr_st = VS3100_ST;
 	inr_vf = VS3100_VF;
-	/* 
-	 * SCB is already copied/initialized at addr avail_start
-	 * by pmap_bootstrap(), but it's not yet mapped. Thus we use
-	 * the MAPPHYS() macro to reserve these two pages and to
-	 * perform the mapping. The mapped address is assigned to junk.
-	 */
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
-
-	/*
-	 * Setup parameters necessary to read time from clock chip.
-	 */
-	clk_adrshift = 1;       /* Addressed at long's... */
-	clk_tweak = 2;          /* ...and shift two */
-	MAPVIRT(clk_page, 1);
-	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
-	    (vm_offset_t)KA410_WAT_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/* LANCE CSR & DMA memory */
-	MAPVIRT(lance_csr, 1);
-	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
-	    (vm_offset_t)NI_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(vs_cpu, 1);
-	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
-	    (vm_offset_t)VS_REGS + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(dz_regs, 2);
-	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
-	    (vm_offset_t)DZ_CSR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(lance_addr, 1);
-	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
-	    (vm_offset_t)NI_ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
-
-	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
-		parctl = PARCTL_DMA;
-
-#if NSMG > 0
-	if ((vax_confdata & KA420_CFG_MULTU) == 0) {
-		MAPVIRT(sm_addr, (SMSIZE / VAX_NBPG));
-		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
-		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
-		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
-	}
-#endif
-#if NRD || NRX || NNCR
-	MAPVIRT(sca_regs, 1);
-	pmap_map((vm_offset_t)sca_regs, (vm_offset_t)KA410_DKC_BASE,
-	    (vm_offset_t)KA410_DKC_BASE + VAX_NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-	if (vax_boardtype == VAX_BTYP_410) {
-		MAPVIRT(dma_area, (KA410_DMA_SIZE / VAX_NBPG));
-		pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA410_DMA_BASE,
-		    (vm_offset_t)KA410_DMA_BASE + KA410_DMA_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-	} else {
-		MAPVIRT(dma_area, (KA420_DMA_SIZE / VAX_NBPG));
-		pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA420_DMA_BASE,
-		    (vm_offset_t)KA420_DMA_BASE + KA420_DMA_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-	}
-#endif
-	if ((vax_cputype == VAX_TYP_CVAX) &&
-	    (vax_confdata & KA420_CFG_CACHPR)) {
-		MAPVIRT(l2cache, (KA420_CH2_SIZE / VAX_NBPG));
-		pmap_map((vm_offset_t)l2cache, (vm_offset_t)KA420_CH2_BASE,
-		    (vm_offset_t)KA420_CH2_BASE + KA420_CH2_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-		MAPVIRT(cacr, 1);
-		pmap_map((vm_offset_t)cacr, (vm_offset_t)KA420_CACR,
-		    (vm_offset_t)KA420_CACR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-	}
-		
-	/*
-	 * Clear restart and boot in progress flags
-	 * in the CPMBX. (ie. clear bits 4 and 5)
-	 */
-	KA410_WAT_BASE->cpmbx = (KA410_WAT_BASE->cpmbx & ~0x30);
-
-	/*
-	 * Enable memory parity error detection and clear error bits.
-	 */
-        switch (vax_cputype) {
-        case VAX_TYP_UV2:
-		KA410_CPU_BASE->ka410_mser = 1;
-                break;
-
-        case VAX_TYP_CVAX:
-		((struct vs_cpu *)VS_REGS)->vc_parctl =
-		    parctl | PARCTL_CPEN | PARCTL_DPEN ;
-		break;
-        }
 }
 
 static void
@@ -254,4 +176,16 @@ ka410_reboot(arg)
 {
 	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
 	asm("halt");
+}
+
+static void
+ka410_clrf()
+{
+	struct ka410_clock *clk = (void *)clk_page;
+
+	/*
+	 * Clear restart and boot in progress flags
+	 * in the CPMBX. (ie. clear bits 4 and 5)
+	 */
+	clk->cpmbx = (clk->cpmbx & ~0x30);
 }
