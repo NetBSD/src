@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.16 2003/02/11 08:18:35 tron Exp $
+.\"	$NetBSD: pppoe.4,v 1.17 2003/02/11 14:58:12 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ map pppoe0 x.x.x.x/24 -> 0/0 mssclamp 1440
 .Ed
 .Pp
 The above examples assume a MTU of 1492 bytes. If the MTU on your PPPoE
-connection is smaller use the MTU - 52 bytes for clamping e.g. 1408 bytes
+connection is smaller use the MTU \- 52 bytes for clamping e.g. 1408 bytes
 for a MTU of 1460 bytes.
 .Em Note :
 The theoretically correct value for the above example would be 1452 bytes
