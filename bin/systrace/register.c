@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.3 2002/08/28 03:52:46 itojun Exp $	*/
+/*	$NetBSD: register.c,v 1.4 2002/10/11 04:40:11 provos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -157,6 +157,10 @@ systrace_initcb(void)
 	intercept_register_translation("netbsd", "setgid", 0, &gidt);
 	X(intercept_register_sccb("netbsd", "setegid", trans_cb, NULL));
 	intercept_register_translation("netbsd", "setegid", 0, &gidt);
+
+ 	X(intercept_register_sccb("netbsd", "socket", trans_cb, NULL));
+ 	intercept_register_translation("netbsd", "socket", 0, &sockdom);
+ 	intercept_register_translation("netbsd", "socket", 1, &socktype);
 #else
 	X(intercept_register_gencb(gen_cb, NULL));
 	X(intercept_register_sccb("native", "open", trans_cb, NULL));
@@ -252,6 +256,10 @@ systrace_initcb(void)
 	intercept_register_translation("native", "setgid", 0, &gidt);
 	X(intercept_register_sccb("native", "setegid", trans_cb, NULL));
 	intercept_register_translation("native", "setegid", 0, &gidt);
+
+ 	X(intercept_register_sccb("native", "socket", trans_cb, NULL));
+ 	intercept_register_translation("native", "socket", 0, &sockdom);
+ 	intercept_register_translation("native", "socket", 1, &socktype);
 #endif
 
 #if !(defined(__NetBSD__) && !defined(HAVE_LINUX_FCNTL_H))

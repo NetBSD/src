@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.6 2002/10/08 14:49:24 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.7 2002/10/11 04:40:11 provos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -217,6 +217,8 @@ extern struct intercept_translate uidt;
 extern struct intercept_translate uname;
 extern struct intercept_translate gidt;
 extern struct intercept_translate trargv;
+extern struct intercept_translate sockdom;
+extern struct intercept_translate socktype;
 
 extern struct intercept_translate linux_oflags;
 
