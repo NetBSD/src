@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 atatat Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.8 2004/07/23 06:44:56 mycroft Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -94,9 +94,6 @@ sysctl_ieee80211_rssadapt_debug(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	IEEE80211_DPRINTF(("%s: t = %d, nodenum = %d, rnodenum = %d\n",
-	    __func__, t, node.sysctl_num, rnode->sysctl_num));
-
 	if (t < 0 || t > 2)
 		return (EINVAL);
 	*(int*)rnode->sysctl_data = t;
@@ -119,13 +116,6 @@ sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
-
-	IEEE80211_DPRINTF(("%s: decay = %d/%d, thresh = %d/%d, "
-	    "avgrssi = %d/%d, nodenum = %d, rnodenum = %d\n",
-	    __func__, rc.rc_decay_old, rc.rc_decay_denom,
-	    rc.rc_thresh_old, rc.rc_thresh_denom,
-	    rc.rc_avgrssi_old, rc.rc_avgrssi_denom,
-	    node.sysctl_num, rnode->sysctl_num));
 
 	if (rc.rc_decay_old < 0 ||
 	    rc.rc_decay_denom < rc.rc_decay_old)

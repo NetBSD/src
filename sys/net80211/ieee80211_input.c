@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.25 2004/07/23 06:44:55 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.25 2004/07/23 06:44:55 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -137,9 +137,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((wh->i_fc[0] & IEEE80211_FC0_VERSION_MASK) !=
 	    IEEE80211_FC0_VERSION_0) {
-		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "receive packet with wrong version: %x\n",
-			    wh->i_fc[0]);
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("receive packet with wrong version: %x\n",
+			wh->i_fc[0]));
 		ic->ic_stats.is_rx_badversion++;
 		goto err;
 	}
@@ -152,18 +152,19 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	 *     them to go through bpf tapping at the 802.11 layer.
 	 */
 	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
-		/* XXX statistic */
-		IEEE80211_DPRINTF2(("%s: frame too short, len %u\n",
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: frame too short, len %u\n",
 			__func__, m->m_pkthdr.len));
 		ic->ic_stats.is_rx_tooshort++;
-		goto out;		/* XXX */
+		goto out;
 	}
 	if (ic->ic_state != IEEE80211_S_SCAN) {
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			if (!IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid)) {
 				/* not interested in */
-				IEEE80211_DPRINTF2(("%s: discard frame from "
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
+					("%s: discard frame from "
 					"bss %s\n", __func__,
 					ether_sprintf(wh->i_addr2)));
 				ic->ic_stats.is_rx_wrongbss++;
@@ -182,9 +183,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 			    IEEE80211_FC0_TYPE_DATA) {
 				/* not interested in */
-				IEEE80211_DPRINTF2(("%s: discard frame from "
-					"bss %s\n", __func__,
-					ether_sprintf(bssid)));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
+					("%s: discard data frame from bss %s\n",
+					__func__, ether_sprintf(bssid)));
 				ic->ic_stats.is_rx_wrongbss++;
 				goto out;
 			}
@@ -277,9 +278,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			}
 			/* check if source STA is associated */
 			if (ni == ic->ic_bss) {
-				IEEE80211_DPRINTF(("%s: data from unknown src "
-					"%s\n", __func__,
-					ether_sprintf(wh->i_addr2)));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
+					("%s: data from unknown src %s\n",
+					__func__, ether_sprintf(wh->i_addr2)));
 				/* NB: caller deals with reference */
 				ni = ieee80211_dup_bss(ic, wh->i_addr2);
 				if (ni != NULL) {
@@ -292,9 +293,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				goto err;
 			}
 			if (ni->ni_associd == 0) {
-				IEEE80211_DPRINTF(("ieee80211_input: "
-				    "data from unassoc src %s\n",
-				    ether_sprintf(wh->i_addr2)));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
+					("%s: data from unassoc src %s\n",
+					__func__, ether_sprintf(wh->i_addr2)));
 				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_DISASSOC,
 				    IEEE80211_REASON_NOT_ASSOCED);
@@ -326,9 +327,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #endif
 		m = ieee80211_decap(ifp, m);
 		if (m == NULL) {
-			IEEE80211_DPRINTF(("ieee80211_input: "
-			    "decapsulation error for src %s\n",
-			    ether_sprintf(wh->i_addr2)));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_INPUT,
+				("%s: decapsulation error for src %s\n",
+				__func__, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_decap++;
 			goto err;
 		}
@@ -455,9 +456,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ieee80211_recv_pspoll(ic, m, rssi, rstamp);
 		}
 		goto out;
-
 	default:
-		IEEE80211_DPRINTF(("%s: bad type %x\n", __func__, type));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: bad frame type %x\n", __func__, type));
 		/* should not come here */
 		break;
 	}
@@ -511,7 +512,8 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		/* not yet supported */
-		IEEE80211_DPRINTF(("%s: DS to DS\n", __func__));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: discard DS to DS frame\n", __func__));
 		m_freem(m);
 		return NULL;
 	}
@@ -597,7 +599,8 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 		nxrates = xrates[1];
 		if (rs->rs_nrates + nxrates > IEEE80211_RATE_MAXSIZE) {
 			nxrates = IEEE80211_RATE_MAXSIZE - rs->rs_nrates;
-			IEEE80211_DPRINTF(("%s: extended rate set too large;"
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_XRATE,
+				("%s: extended rate set too large;"
 				" only using %u of %u rates\n",
 				__func__, nxrates, xrates[1]));
 			ic->ic_stats.is_rx_rstoobig++;
@@ -611,15 +614,17 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 /* Verify the existence and length of __elem or get out. */
 #define IEEE80211_VERIFY_ELEMENT(__elem, __maxlen) do {			\
 	if ((__elem) == NULL) {						\
-		IEEE80211_DPRINTF(("%s: no " #__elem "in %s frame\n",	\
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ELEMID,		\
+			("%s: no " #__elem "in %s frame\n",		\
 			__func__, ieee80211_mgt_subtype_name[subtype >>	\
 				IEEE80211_FC0_SUBTYPE_SHIFT]));		\
 		ic->ic_stats.is_rx_elem_missing++;			\
 		return;							\
 	}								\
 	if ((__elem)[1] > (__maxlen)) {					\
-		IEEE80211_DPRINTF(("%s: bad " #__elem " len %d in %s "	\
-			"frame from %s\n", __func__, (__elem)[1],	\
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ELEMID,		\
+			("%s: bad " #__elem " len %d in %s frame from %s\n",\
+			__func__, (__elem)[1],				\
 			ieee80211_mgt_subtype_name[subtype >>		\
 				IEEE80211_FC0_SUBTYPE_SHIFT],		\
 			ether_sprintf(wh->i_addr2)));			\
@@ -630,7 +635,8 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 #define	IEEE80211_VERIFY_LENGTH(_len, _minlen) do {			\
 	if ((_len) < (_minlen)) {					\
-		IEEE80211_DPRINTF(("%s: %s frame too short from %s\n",	\
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ELEMID,		\
+			("%s: %s frame too short from %s\n",		\
 			__func__,					\
 			ieee80211_mgt_subtype_name[subtype >>		\
 				IEEE80211_FC0_SUBTYPE_SHIFT],		\
@@ -651,9 +657,9 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-				"state %u, seq %u\n", __func__,
-				ether_sprintf(wh->i_addr2),
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: discard auth from %s; state %u, seq %u\n",
+				__func__, ether_sprintf(wh->i_addr2),
 				ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
@@ -669,9 +675,9 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	case IEEE80211_M_HOSTAP:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-				"state %u, seq %u\n", __func__,
-				ether_sprintf(wh->i_addr2),
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: discard auth from %s; state %u, seq %u\n",
+				__func__, ether_sprintf(wh->i_addr2),
 				ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
@@ -700,9 +706,9 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		if (ic->ic_state != IEEE80211_S_AUTH ||
 		    seq != IEEE80211_AUTH_OPEN_RESPONSE) {
 			ic->ic_stats.is_rx_bad_auth++;
-			IEEE80211_DPRINTF(("%s: discard auth from %s; "
-				"state %u, seq %u\n", __func__,
-				ether_sprintf(wh->i_addr2),
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: discard auth from %s; state %u, seq %u\n",
+				__func__, ether_sprintf(wh->i_addr2),
 				ic->ic_state, seq));
 			return;
 		}
@@ -730,19 +736,20 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
     u_int8_t *frm, u_int8_t *efrm, struct ieee80211_node *ni, int rssi,
     u_int32_t rstamp, u_int16_t seq, u_int16_t status)
 {
-	struct ifnet *ifp = &ic->ic_if;
 	u_int8_t *challenge = NULL;
 	int allocbs, i;
 
 	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0) {
-		IEEE80211_DPRINTF(("%s: WEP is off\n", __func__));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+			("%s: WEP is off\n", __func__));
 		return;
 	}
 
 	if (frm + 1 < efrm) {
 		if (frm[1] + 2 > efrm - frm) {
-			IEEE80211_DPRINTF(("elt %d %d bytes too long\n",
-			    frm[0], (frm[1] + 2) - (int)(efrm - frm)));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: elt %d %d bytes too long\n", __func__,
+				frm[0], (frm[1] + 2) - (int)(efrm - frm)));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
@@ -754,14 +761,15 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	case IEEE80211_AUTH_SHARED_CHALLENGE:
 	case IEEE80211_AUTH_SHARED_RESPONSE:
 		if (challenge == NULL) {
-			IEEE80211_DPRINTF(("%s: no challenge sent\n",
-			    __func__));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: no challenge sent\n", __func__));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
 		if (challenge[1] != IEEE80211_CHALLENGE_LEN) {
-			IEEE80211_DPRINTF(("%s: bad challenge len %d\n",
-			    __func__, challenge[1]));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: bad challenge len %d\n",
+				__func__, challenge[1]));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
@@ -772,12 +780,13 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	case IEEE80211_M_MONITOR:
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_IBSS:
-		IEEE80211_DPRINTF(("%s: unexpected operating mode\n",
-		    __func__));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+			("%s: unexpected operating mode\n", __func__));
 		return;
 	case IEEE80211_M_HOSTAP:
 		if (ic->ic_state != IEEE80211_S_RUN) {
-			IEEE80211_DPRINTF(("%s: not running\n", __func__));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: not running\n", __func__));
 			return;
 		}
 		switch (seq) {
@@ -801,46 +810,50 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				    IEEE80211_CHALLENGE_LEN, M_DEVBUF,
 				    M_NOWAIT);
 			if (ni->ni_challenge == NULL) {
-				IEEE80211_DPRINTF(("challenge alloc failed\n"));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+					("%s: challenge alloc failed\n",
+					__func__));
 				/* XXX statistic */
 				return;
 			}
 			for (i = IEEE80211_CHALLENGE_LEN / sizeof(u_int32_t);
 			     --i >= 0; )
 				ni->ni_challenge[i] = arc4random();
-			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp, "station %s shared key "
-					"%sauthentication\n",
-					ether_sprintf(ni->ni_macaddr),
-					allocbs ? "" : "re");
+			IEEE80211_DPRINTF(ic,
+				IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
+				("shared key %sauth request from station %s\n",
+				(allocbs ? "" : "re"),
+				ether_sprintf(ni->ni_macaddr)));
 			break;
 		case IEEE80211_AUTH_SHARED_RESPONSE:
 			if (ni == ic->ic_bss) {
-				IEEE80211_DPRINTF(("%s: unknown STA\n",
-				    __func__));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+					("%s: unknown STA\n", __func__));
 				return;
 			}
 			if (ni->ni_challenge == NULL) {
-				IEEE80211_DPRINTF((
-				    "%s: no challenge recorded\n", __func__));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+					("%s: no challenge recorded\n",
+					__func__));
 				ic->ic_stats.is_rx_bad_auth++;
 				return;
 			}
 			if (memcmp(ni->ni_challenge, &challenge[2],
-			           challenge[1]) != 0) {
-				IEEE80211_DPRINTF(("%s: challenge mismatch\n",
-				    __func__));
+				   challenge[1]) != 0) {
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+					("%s: challenge mismatch\n", __func__));
 				ic->ic_stats.is_rx_auth_fail++;
 				return;
 			}
-			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp, "station %s authenticated "
-					"(shared key)\n",
-					ether_sprintf(ni->ni_macaddr));
+			IEEE80211_DPRINTF(ic,
+				IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
+				("station %s authenticated (shared key)\n",
+				ether_sprintf(ni->ni_macaddr)));
 			break;
 		default:
-			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
-			    __func__, seq, ether_sprintf(wh->i_addr2)));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: bad shared key auth seq %d from %s\n",
+				__func__, seq, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
@@ -858,11 +871,11 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				ni->ni_challenge = NULL;
 			}
 			if (status != 0) {
-				if_printf(&ic->ic_if,
-				    "%s: shared authentication failed "
-				    "(reason %d) for %s\n",
+				IEEE80211_DPRINTF(ic,
+				    IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
+				    ("%s: auth failed (reason %d) for %s\n",
 				    __func__, status,
-				    ether_sprintf(wh->i_addr3));
+				    ether_sprintf(wh->i_addr3)));
 				if (ni != ic->ic_bss)
 					ni->ni_fails++;
 				ic->ic_stats.is_rx_auth_fail++;
@@ -876,8 +889,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				ni->ni_challenge = (u_int32_t*)malloc(
 				    challenge[1], M_DEVBUF, M_NOWAIT);
 			if (ni->ni_challenge == NULL) {
-				IEEE80211_DPRINTF((
-				    "%s: challenge alloc failed\n", __func__));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				    ("%s: challenge alloc failed\n", __func__));
 				/* XXX statistic */
 				return;
 			}
@@ -886,8 +899,9 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
 			break;
 		default:
-			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
-			    __func__, seq, ether_sprintf(wh->i_addr2)));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				("%s: bad seq %d from %s\n", __func__, seq,
+				ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
@@ -981,17 +995,20 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				break;
 			case IEEE80211_ELEMID_ERP:
 				if (frm[1] != 1) {
-					IEEE80211_DPRINTF(("%s: invalid ERP "
-						"element; length %u, expecting "
-						"1\n", __func__, frm[1]));
+					IEEE80211_DPRINTF(ic,
+						IEEE80211_MSG_ELEMID,
+						("%s: invalid ERP element; "
+						"length %u, expecting 1\n",
+						__func__, frm[1]));
 					ic->ic_stats.is_rx_elem_toobig++;
 					break;
 				}
 				erp = frm[2];
 				break;
 			default:
-				IEEE80211_DPRINTF2(("%s: element id %u/len %u "
-					"ignored\n", __func__, *frm, frm[1]));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ELEMID,
+					("%s: element id %u/len %u ignored\n",
+					__func__, *frm, frm[1]));
 				ic->ic_stats.is_rx_elem_unknown++;
 				break;
 			}
@@ -1004,8 +1021,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    chan > IEEE80211_CHAN_MAX ||
 #endif
 		    isclr(ic->ic_chan_active, chan)) {
-			IEEE80211_DPRINTF(("%s: ignore %s with invalid channel "
-				"%u\n", __func__,
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ELEMID,
+				("%s: ignore %s with invalid channel %u\n",
+				__func__,
 				isprobe ? "probe response" : "beacon",
 				chan));
 			ic->ic_stats.is_rx_badchan++;
@@ -1022,7 +1040,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			 *     the rssi value should be correct even for
 			 *     different hop pattern in FH.
 			 */
-			IEEE80211_DPRINTF(("%s: ignore %s on channel %u marked "
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ELEMID,
+				("%s: ignore %s on channel %u marked "
 				"for channel %u\n", __func__,
 				isprobe ? "probe response" : "beacon",
 				bchan, chan));
@@ -1170,7 +1189,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ni = ieee80211_dup_bss(ic, wh->i_addr2);
 			if (ni == NULL)
 				return;
-			IEEE80211_DPRINTF(("%s: new req from %s\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+				("%s: new probe req from %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
 			allocbs = 1;
 		} else
@@ -1181,7 +1201,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE
 				| IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 		if (rate & IEEE80211_RATE_BASIC) {
-			IEEE80211_DPRINTF(("%s: rate negotiation failed: %s\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_XRATE,
+				("%s: rate negotiation failed: %s\n",
 				__func__,ether_sprintf(wh->i_addr2)));
 		} else {
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -1205,8 +1226,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		algo   = le16toh(*(u_int16_t *)frm);
 		seq    = le16toh(*(u_int16_t *)(frm + 2));
 		status = le16toh(*(u_int16_t *)(frm + 4));
-		IEEE80211_DPRINTF(("%s: auth %d seq %d from %s\n",
-		    __func__, algo, seq, ether_sprintf(wh->i_addr2)));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+			("%s: algorithm %d seq %d from %s\n",
+			__func__, algo, seq, ether_sprintf(wh->i_addr2)));
 
 		if (algo == IEEE80211_AUTH_ALG_SHARED)
 			ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
@@ -1215,8 +1237,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
 			    status);
 		else {
-			IEEE80211_DPRINTF(("%s: unsupported authentication "
-				"algorithm %d from %s\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: unsupported auth algorithm %d from %s\n",
 				__func__, algo, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_auth_unsupported++;
 			return;
@@ -1250,7 +1272,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 */
 		IEEE80211_VERIFY_LENGTH(efrm - frm, (reassoc ? 10 : 4));
 		if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
-			IEEE80211_DPRINTF(("%s: ignore other bss from %s\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: ignore assoc request with bss %s not "
+				"our own\n",
 				__func__, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_assoc_bss++;
 			return;
@@ -1289,8 +1313,10 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			return;
 		}
 		if (ni == ic->ic_bss) {
-			IEEE80211_DPRINTF(("%s: not authenticated for %s\n",
-				__func__, ether_sprintf(wh->i_addr2)));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: deny %sassoc from %s, not authenticated\n",
+				__func__, reassoc ? "re" : "",
+				ether_sprintf(wh->i_addr2)));
 			ni = ieee80211_dup_bss(ic, wh->i_addr2);
 			if (ni != NULL) {
 				IEEE80211_SEND_MGMT(ic, ni,
@@ -1313,7 +1339,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    (capinfo & IEEE80211_CAPINFO_PRIVACY) !=
 		    ((ic->ic_flags & IEEE80211_F_WEPON) ?
 		     IEEE80211_CAPINFO_PRIVACY : 0)) {
-			IEEE80211_DPRINTF(("%s: capability mismatch %x for %s\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: capability mismatch %x for %s\n",
 				__func__, capinfo, ether_sprintf(wh->i_addr2)));
 			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 			ni->ni_associd = 0;
@@ -1326,7 +1353,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
 				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 		if (ni->ni_rates.rs_nrates == 0) {
-			IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: rate mismatch for %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
 			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 			ni->ni_associd = 0;
@@ -1368,7 +1396,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		} else
 			newassoc = 0;
 		/* XXX for 11g must turn off short slot time if long
-	           slot time sta associates */
+		   slot time sta associates */
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
 		if (ifp->if_flags & IFF_DEBUG)
 			if_printf(ifp, "station %s %s associated at aid %d\n",
@@ -1456,10 +1484,10 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_M_HOSTAP:
 			if (ni != ic->ic_bss) {
-				if (ifp->if_flags & IFF_DEBUG)
-					if_printf(ifp, "station %s deauthenticated"
-					    " by peer (reason %d)\n",
-					    ether_sprintf(ni->ni_macaddr), reason);
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+					("station %s deauthenticated by "
+					"peer (reason %d)\n",
+					ether_sprintf(ni->ni_macaddr), reason));
 				/* node will be free'd on return */
 				ieee80211_unref_node(&ni);
 			}
@@ -1486,10 +1514,10 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_M_HOSTAP:
 			if (ni != ic->ic_bss) {
-				if (ifp->if_flags & IFF_DEBUG)
-					if_printf(ifp, "station %s disassociated"
-					    " by peer (reason %d)\n",
-					    ether_sprintf(ni->ni_macaddr), reason);
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+					("station %s disassociated by "
+					"peer (reason %d)\n",
+					ether_sprintf(ni->ni_macaddr), reason));
 				IEEE80211_AID_CLR(ni->ni_associd,
 				    ic->ic_aid_bitmap);
 				ni->ni_associd = 0;
@@ -1502,8 +1530,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	}
 	default:
-		IEEE80211_DPRINTF(("%s: mgmt frame with subtype 0x%x not "
-			"handled\n", __func__, subtype));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: mgmt frame with subtype 0x%x not handled\n",
+			__func__, subtype));
 		ic->ic_stats.is_rx_badsubtype++;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.10 2004/07/23 05:33:41 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.11 2004/07/23 06:44:56 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -251,13 +251,52 @@ int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		struct ieee80211_channel *);
 
+#define	IEEE80211_MSG_DEBUG	0x40000000	/* IFF_DEBUG equivalent */
+#define	IEEE80211_MSG_DUMPPKTS	0x20000000	/* IFF_LINK2 equivalant */
+#define	IEEE80211_MSG_CRYPTO	0x10000000	/* crypto work */
+#define	IEEE80211_MSG_INPUT	0x08000000	/* input handling */
+#define	IEEE80211_MSG_XRATE	0x04000000	/* rate set handling */
+#define	IEEE80211_MSG_ELEMID	0x02000000	/* element id parsing */
+#define	IEEE80211_MSG_NODE	0x01000000	/* node handling */
+#define	IEEE80211_MSG_ASSOC	0x00800000	/* association handling */
+#define	IEEE80211_MSG_AUTH	0x00400000	/* authentication handling */
+#define	IEEE80211_MSG_SCAN	0x00200000	/* scanning */
+#define	IEEE80211_MSG_OUTPUT	0x00100000	/* output handling */
+#define	IEEE80211_MSG_STATE	0x00080000	/* state machine */
+#define	IEEE80211_MSG_POWER	0x00040000	/* power save handling */
+#define	IEEE80211_MSG_DOT1X	0x00020000	/* 802.1x authenticator */
+#define	IEEE80211_MSG_DOT1XSM	0x00010000	/* 802.1x state machine */
+#define	IEEE80211_MSG_RADIUS	0x00008000	/* 802.1x radius client */
+#define	IEEE80211_MSG_RADDUMP	0x00004000	/* dump 802.1x radius packets */
+#define	IEEE80211_MSG_RADKEYS	0x00002000	/* dump 802.1x keys */
+#define	IEEE80211_MSG_WPA	0x00001000	/* WPA/RSN protocol */
+#define	IEEE80211_MSG_ACL	0x00000800	/* ACL handling */
+
+#define	IEEE80211_MSG_ANY	0xffffffff	/* anything */
+
+#define	IEEE80211_DEBUG
 #ifdef IEEE80211_DEBUG
-extern	int ieee80211_debug;
-#define	IEEE80211_DPRINTF(X)	if (ieee80211_debug) printf X
-#define	IEEE80211_DPRINTF2(X)	if (ieee80211_debug>1) printf X
+extern int ieee80211_debug;
+#define	IEEE80211_DPRINTF(_ic, _m, _args) do {		\
+	if (ieee80211_debug & (_m))			\
+		printf _args;				\
+} while (0)
+#define	ieee80211_msg_debug(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_DEBUG)
+#define	ieee80211_msg_dumppkts(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_DUMPPKTS)
+#define	ieee80211_msg_input(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_INPUT)
+#define	ieee80211_msg_radius(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_RADIUS)
+#define	ieee80211_msg_dumpradius(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_RADDUMP)
+#define	ieee80211_msg_dumpradkeys(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_RADKEYS)
+#define	ieee80211_msg_scan(_ic) \
+	(ieee80211_debug & IEEE80211_MSG_SCAN)
 #else
-#define	IEEE80211_DPRINTF(X)
-#define	IEEE80211_DPRINTF2(X)
+#define	IEEE80211_DPRINTF(_ic, _fmt, ...)
 #endif
 
 extern	int ieee80211_inact_max;

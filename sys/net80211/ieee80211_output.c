@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.14 2004/07/23 06:44:55 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.14 2004/07/23 06:44:55 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -140,8 +140,9 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 
 	if ((m->m_flags & M_LINK0) != 0 && ni->ni_challenge != NULL) {
 		m->m_flags &= ~M_LINK0;
-		IEEE80211_DPRINTF(("%s: encrypting frame for %s\n", __func__,
-		    ether_sprintf(wh->i_addr1)));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+			("%s: encrypting frame for %s\n",
+			__func__, ether_sprintf(wh->i_addr1)));
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
 	}
 
@@ -196,7 +197,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 
 	ni = ieee80211_find_txnode(ic, eh.ether_dhost);
 	if (ni == NULL) {
-		IEEE80211_DPRINTF(("%s: no node for dst %s, discard frame\n",
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_OUTPUT,
+			("%s: no node for dst %s, discard frame\n",
 			__func__, ether_sprintf(eh.ether_dhost)));
 		ic->ic_stats.is_tx_nonode++; 
 		goto bad;
@@ -488,8 +490,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			memcpy(&((u_int16_t *)frm)[4], ni->ni_challenge,
 			    IEEE80211_CHALLENGE_LEN);
 			if (arg == IEEE80211_AUTH_SHARED_RESPONSE) {
-				IEEE80211_DPRINTF((
-				    "%s: request encrypt frame\n", __func__));
+				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+				    ("%s: request encrypt frame\n", __func__));
 				m->m_flags |= M_LINK0; /* WEP-encrypt, please */
 			}
 		}
@@ -622,8 +624,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 
 	default:
-		IEEE80211_DPRINTF(("%s: invalid mgmt frame type %u\n",
-			__func__, type));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: invalid mgmt frame type %u\n", __func__, type));
 		senderr(EINVAL, is_tx_unknownmgt);
 		/* NOTREACHED */
 	}

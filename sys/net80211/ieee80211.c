@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.24 2004/07/23 05:33:41 mycroft Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.25 2004/07/23 06:44:55 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.24 2004/07/23 05:33:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.25 2004/07/23 06:44:55 mycroft Exp $");
 #endif
 
 /*
@@ -706,7 +706,8 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 
 	/* validate new mode */
 	if ((ic->ic_modecaps & (1<<mode)) == 0) {
-		IEEE80211_DPRINTF(("%s: mode %u not supported (caps 0x%x)\n",
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: mode %u not supported (caps 0x%x)\n",
 			__func__, mode, ic->ic_modecaps));
 		return EINVAL;
 	}
@@ -729,8 +730,8 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 		}
 	}
 	if (i > IEEE80211_CHAN_MAX) {
-		IEEE80211_DPRINTF(("%s: no channels found for mode %u\n",
-			__func__, mode));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			("%s: no channels found for mode %u\n", __func__, mode));
 		return EINVAL;
 	}
 
@@ -946,9 +947,6 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	IEEE80211_DPRINTF(("%s: t = %d, nodenum = %d, rnodenum = %d\n",
-	    __func__, t, node.sysctl_num, rnode->sysctl_num));
-
 	if (node.sysctl_num == ieee80211_inact_max_nodenum) {
 		if (t < 1)
 			return (EINVAL);
@@ -985,18 +983,12 @@ ieee80211_node_walkfirst(struct ieee80211_node_walk *nw,
 	nw->nw_ifindex = if_index;
 
 	LIST_FOREACH(ic, &ieee80211com_head, ic_list) {
-		IEEE80211_DPRINTF(("%s: visiting ic %p\n", __func__, ic));
-		if (if_index != 0 && ic->ic_if.if_index != if_index) {
-			IEEE80211_DPRINTF(("%s: wrong ifindex, "
-			    "skipping ic %p\n", __func__, ic));
+		if (if_index != 0 && ic->ic_if.if_index != if_index)
 			continue;
-		}
 		nw->nw_ic = ic;
 		nw->nw_ni = ic->ic_bss;
 		break;
 	}
-	IEEE80211_DPRINTF(("%s: ic %p ni %p\n", __func__, nw->nw_ic,
-	    nw->nw_ni));
 
 	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
 
@@ -1026,9 +1018,6 @@ ieee80211_node_walknext(struct ieee80211_node_walk *nw)
 
 		nw->nw_ni = nw->nw_ic->ic_bss;
 	}
-
-	IEEE80211_DPRINTF(("%s: ic %p bss %p ni %p\n", __func__, nw->nw_ic,
-	    nw->nw_ic->ic_bss, nw->nw_ni));
 
 	KASSERT(LOGICALLY_EQUAL(nw->nw_ni == NULL, nw->nw_ic == NULL));
 
@@ -1105,10 +1094,6 @@ sysctl_ieee80211_node(SYSCTLFN_ARGS)
 	nelt = name[IEEE80211_SYSCTL_NODENAME_ELTCOUNT];
 	out_size = MIN(sizeof(ns), eltsize);
 
-	IEEE80211_DPRINTF(("%s: ifindex %u op %u arg %u hdr_type %u eltsize %u "
-	    "nelt %d out_size %u\n", __func__, ifindex, op, arg, hdr_type,
-	    eltsize, nelt, out_size));
-
 	if (op != IEEE80211_SYSCTL_OP_ALL || arg != 0 ||
 	    hdr_type != IEEE80211_SYSCTL_T_NODE || eltsize < 1 || nelt < 0)
 		return (EINVAL);
@@ -1127,16 +1112,10 @@ sysctl_ieee80211_node(SYSCTLFN_ARGS)
 		ic = nw.nw_ic;
 		cur_ifindex = ic->ic_if.if_index;
 
-		IEEE80211_DPRINTF(("%s: visit ic %p idx %u\n", __func__, ic,
-		    cur_ifindex));
-
 		if (cur_ifindex != last_ifindex) {
 			ifcount++;
 			last_ifindex = cur_ifindex;
 		}
-
-		IEEE80211_DPRINTF(("%s: ni %p dp %p len %u nelt %d\n",
-		    __func__, ni, dp, len, nelt));
 
 		if (nelt <= 0)
 			continue;
@@ -1153,9 +1132,7 @@ sysctl_ieee80211_node(SYSCTLFN_ARGS)
 		needed += eltsize;
 		if (nelt != INT_MAX)
 			nelt--;
-		IEEE80211_DPRINTF(("%s: needed %u\n", __func__, needed));
 	}
-	IEEE80211_DPRINTF(("%s: %u interfaces\n", __func__, ifcount)); 
 cleanup:
 	splx(s);
 

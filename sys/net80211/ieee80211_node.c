@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.17 2004/07/23 05:54:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.18 2004/07/23 06:44:55 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.17 2004/07/23 05:54:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.18 2004/07/23 06:44:55 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -224,9 +224,10 @@ ieee80211_next_scan(struct ifnet *ifp)
 		}
 	}
 	clrbit(ic->ic_chan_scan, ieee80211_chan2ieee(ic, chan));
-	IEEE80211_DPRINTF(("ieee80211_next_scan: chan %d->%d\n",
-	    ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
-	    ieee80211_chan2ieee(ic, chan)));
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN,
+		("%s: chan %d->%d\n", __func__,
+		ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
+		ieee80211_chan2ieee(ic, chan)));
 	ic->ic_bss->ni_chan = chan;
 	ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 }
@@ -373,7 +374,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		return;
 	}
 	if (ni == NULL) {
-		IEEE80211_DPRINTF(("%s: no scan candidate\n", __func__));
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN,
+			("%s: no scan candidate\n", __func__));
   notfound:
 		if (ic->ic_opmode == IEEE80211_M_IBSS &&
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
@@ -727,8 +729,9 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 	if (ic->ic_newassoc)
 		(*ic->ic_newassoc)(ic, ni, 1);
 
-	IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n", __func__, ni,
-	    ether_sprintf(wh->i_addr2)));
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+		("%s: faked-up node %p for %s\n", __func__, ni,
+		ether_sprintf(wh->i_addr2)));
 
 	return ieee80211_ref_node(ni);
 }
@@ -824,8 +827,8 @@ restart:
 			continue;
 		ni->ni_scangen = gen;
 		if (++ni->ni_inact > ieee80211_inact_max) {
-			IEEE80211_DPRINTF(("station %s timed out "
-			    "due to inactivity (%u secs)\n",
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+			    ("station %s timed out due to inactivity (%u secs)\n",
 			    ether_sprintf(ni->ni_macaddr),
 			    ni->ni_inact));
 			/*
