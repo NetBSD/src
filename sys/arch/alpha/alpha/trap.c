@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.43 1999/04/19 23:24:14 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.44 1999/04/20 21:16:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 1999/04/19 23:24:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 1999/04/20 21:16:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,9 @@ trap(a0, a1, a2, entry, framep)
 	u_int64_t ucode;
 	u_quad_t sticks;
 	int user;
+#if defined(DDB)
+	int call_debugger = 1;
+#endif
 
 	uvmexp.traps++;
 	p = curproc;
@@ -284,8 +287,23 @@ trap(a0, a1, a2, entry, framep)
 		 * These are always fatal in kernel, and should never
 		 * happen.  (Debugger entry is handled in XentIF.)
 		 */
-		if (!user)
+		if (!user) {
+#if defined(DDB)
+			/*
+			 * ...unless a debugger is configured.  It will
+			 * inform us if the trap was handled.
+			 */
+			if (alpha_debug(a0, a1, a2, entry, framep))
+				goto out;
+
+			/*
+			 * Debugger did NOT handle the trap, don't
+			 * call the debugger again!
+			 */
+			call_debugger = 0;
+#endif
 			goto dopanic;
+		}
 		i = 0;
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
@@ -475,21 +493,13 @@ dopanic:
 
 	/* XXX dump registers */
 
-#ifdef DDB
-	/* XXX
-	 * Really would like to be able to indicate that the
-	 * kernel should _not_ panic, here.  However, two problems
-	 * exist:
-	 *
-	 *	(a) There is not currently a way for DDB to distinguish
-	 *	    between "continue and panic" and "continue, and
-	 *	    don't panic".
-	 *
-	 *	(b) panic() will again invoke the debugger, so calling
-	 *	    it here is silly.
-	 *
-	 * For now, we just do nothing.
-	 */
+#if defined(DDB)
+	if (call_debugger && alpha_debug(a0, a1, a2, entry, framep)) {
+		/*
+		 * The debugger has handled the trap; just return.
+		 */
+		goto out;
+	}
 #endif
 
 	panic("trap");
