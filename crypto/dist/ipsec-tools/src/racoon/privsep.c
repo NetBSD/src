@@ -1,6 +1,6 @@
-/*	$NetBSD: privsep.c,v 1.1.1.3 2005/02/24 20:53:50 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.1.1.4 2005/03/16 23:53:12 manu Exp $	*/
 
-/* Id: privsep.c,v 1.6.2.2 2005/02/24 18:31:56 manubsd Exp */
+/* Id: privsep.c,v 1.6.2.4 2005/03/16 23:18:43 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -73,6 +73,8 @@ static int port_check(int);
 static int unsafe_env(char *const *);
 static int unknown_name(int);
 static int unknown_script(int);
+static int unsafe_path(char *, int);
+static char *script_name2path(int);
 
 static int
 privsep_send(sock, buf, len)
@@ -168,6 +170,18 @@ privsep_init(void)
 	/* If running as root, we don't use the privsep code path */
 	if (lcconf->uid == 0)
 		return 0;
+
+	/*
+	 * When running privsep, certificate and script paths
+	 * are mandatory, as they enable us to check path safety
+	 * in the privilegied instance
+	 */
+	if ((lcconf->pathinfo[LC_PATHTYPE_CERT] == NULL) ||
+	    (lcconf->pathinfo[LC_PATHTYPE_SCRIPT] == NULL)) {
+		plog(LLV_ERROR, LOCATION, NULL, "privilege separation "
+		    "require path cert and path script in the config file\n");
+		return -1;
+	}
 
 	if (socketpair(PF_LOCAL, SOCK_DGRAM, 0, privsep_sock) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -329,6 +343,13 @@ privsep_init(void)
 			if (safety_check(combuf, 0) != 0)
 				break;
 			bufs[0][combuf->bufs.buflen[0] - 1] = '\0';
+
+			if (unsafe_path(bufs[0], LC_PATHTYPE_CERT) != 0) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "privsep_eay_get_pkcs1privkey: "
+				    "unsafe key \"%s\"\n", bufs[0]);
+			}
+
 			if ((privkey = eay_get_pkcs1privkey(bufs[0])) == NULL){
 				reply->hdr.ac_errno = errno;
 				break;
@@ -427,8 +448,15 @@ privsep_init(void)
 			 */
 			if ((unsafe_env(envp) == 0) &&
 			    (unknown_name(name) == 0) &&
-			    (unknown_script(script) == 0))
+			    (unknown_script(script) == 0) &&
+			    (unsafe_path(script_name2path(script), 
+			    LC_PATHTYPE_SCRIPT) == 0))
 				(void)script_exec(script, name, envp);
+			else
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "privsep_script_exec: "
+				    "unsafe script \"%s\"\n", 
+				    script_name2path(script));
 
 			racoon_free(envp);
 			break;
@@ -937,6 +965,57 @@ found:
 	return -1;
 }
 
+/*                       
+ * Check path safety     
+ */                     
+static int                  
+unsafe_path(script, pathtype)
+	char *script;
+	int pathtype;
+{
+	char *path;
+	char rpath[MAXPATHLEN + 1];
+	size_t len;
+
+	if (script == NULL)
+		return -1; 
+
+	path = lcconf->pathinfo[pathtype];
+
+	/* No path was given for scripts: skip the check */
+	if (path == NULL)
+		return 0;
+
+	if (realpath(script, rpath) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "script path \"%s\" is invalid\n", script);
+		return -1;
+	}
+
+	len = strlen(path);
+	if (strncmp(path, rpath, len) != 0)
+		return -1;
+
+	return 0;
+}
+
+static char *
+script_name2path(name)
+	int name;
+{
+	vchar_t **sp;
+
+	if (script_paths == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "script_name2path: script_paths was not initialized\n");
+		return NULL;
+	}
+
+	sp = (vchar_t **)(script_paths->v);
+
+	return sp[name]->v;
+}
+
 /*
  * Check the script path index is correct
  */
@@ -1107,7 +1186,7 @@ privsep_cleanup_pam(port)
 		return;
 	}
 	bzero(msg, len);
-	msg->hdr.ac_cmd = PRIVSEP_XAUTH_LOGIN_PAM;
+	msg->hdr.ac_cmd = PRIVSEP_CLEANUP_PAM;
 	msg->hdr.ac_len = len;
 	msg->bufs.buflen[0] = sizeof(port);
 
