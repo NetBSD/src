@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.9 2001/04/05 19:55:01 tsubai Exp $	*/
+/*	$NetBSD: awacs.c,v 1.10 2001/06/08 00:32:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -40,6 +40,8 @@
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
+
+#include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
 
 #ifdef AWACS_DEBUG
