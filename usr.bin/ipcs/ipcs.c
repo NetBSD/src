@@ -1,14 +1,17 @@
 /*
- *	Simplified implementation of SYSV ipcs.
+ *	A fairly close approximation of ipcs with some extensions
  *
- *	$Id: ipcs.c,v 1.3 1994/05/11 07:41:12 cgd Exp $
+ *	$Id: ipcs.c,v 1.4 1994/06/18 21:09:43 cgd Exp $
  */
 
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <paths.h>
+#include <nlist.h>
+#include <kvm.h>
+#include <err.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -16,77 +19,36 @@
 #define KERNEL
 #include <sys/ipc.h>
 #include <sys/sem.h>
-#ifndef NOSHM
 #include <sys/shm.h>
-#endif
 #include <sys/msg.h>
 
-static kmem_fd;
+char   *user_from_uid __P((uid_t, int));
+char   *group_from_gid __P((gid_t, int));
+int semconfig __P((int,...));
 
-getsymbol(struct nlist * symbols, char *symname, void *dptr, int len)
-{
-	int i, rlen;
+static struct nlist symbols[] = {
+	{"_sema"},
+#define X_SEMA		0
+	{"_seminfo"},
+#define X_SEMINFO	1
+	{"_semu"},
+#define X_SEMU		2
+	{"_msginfo"},
+#define X_MSGINFO	3
+	{"_msqids"},
+#define X_MSQIDS	4
+	{"_shminfo"},
+#define X_SHMINFO	5
+	{"_shmsegs"},
+#define X_SHMSEGS	6
+	{NULL}
+};
 
-	for (i = 0; symbols[i].n_name != NULL; i += 1) {
-		if (strcmp(symbols[i].n_name, symname) == 0) {
-			break;
-		}
-	}
+static kvm_t *kd;
 
-	if (symbols[i].n_name == NULL) {
-		fprintf(stderr,
-		    "ipcs(getsymbol):  symbol %s not in local symbols list\n",
-		    symname);
-		exit(1);
-	}
-
-	if (symbols[i].n_value == NULL) {
-		fprintf(stderr, "ipcs(getsymbol):  symbol %s not in %s\n",
-		    symname, _PATH_UNIX);
-		return (0);
-	}
-
-	if (kmem_fd == 0) {
-		kmem_fd = open("/dev/kmem", 0);
-		if (kmem_fd < 0) {
-			perror("ipcs(getsymbol(open /dev/kmem))");
-			exit(1);
-		}
-	}
-
-	lseek(kmem_fd, symbols[i].n_value, SEEK_SET);
-	if ((rlen = read(kmem_fd, dptr, len)) != len) {
-		fprintf(stderr,
-		    "ipcs(getsymbol):  can't fetch symbol %s from /dev/kmem\n",
-		    symname);
-		exit(1);
-	}
-	return (1);
-}
-
-void
-getlocation(void *addr, void *dptr, int len)
-{
-	int i, rlen;
-
-	if (kmem_fd == 0) {
-		kmem_fd = open("/dev/kmem", 0);
-		if (kmem_fd < 0) {
-			perror("ipcs(getlocation(open /dev/kmem))");
-			exit(1);
-		}
-	}
-
-	lseek(kmem_fd, (off_t)(long) addr, SEEK_SET);
-	if ((rlen = read(kmem_fd, dptr, len)) != len) {
-		fprintf(stderr,"ipcs(getlocation):  can't fetch location %08x from /dev/kmem\n",
-		    addr);
-		exit(1);
-	}
-}
-
-char *
-fmt_perm(ushort mode)
+char   *
+fmt_perm(mode)
+	u_short mode;
 {
 	static char buffer[100];
 
@@ -106,271 +68,378 @@ fmt_perm(ushort mode)
 }
 
 void
-cvt_time(time_t t, char *buf)
+cvt_time(t, buf)
+	time_t  t;
+	char   *buf;
 {
-	struct tm tms;
-	static char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	struct tm *tm;
 
 	if (t == 0) {
-		strcpy(buf, "<not set>");
-	}
-	else {
-		tms = *localtime(&t);
-		if (t > time(0) - 6 * 30 * 24 * 3600) {	/* less than about 6
-							   months ago? */
-			sprintf(buf, "%s %2d %2d:%2d",
-			    months[tms.tm_mon], tms.tm_mday, tms.tm_hour,
-			    tms.tm_min);
-		}
-		else {
-			sprintf(buf, "%s %2d %5d",
-			    months[tms.tm_mon], tms.tm_mday,
-			    tms.tm_year + 1900);
-		}
+		strcpy(buf, "no-entry");
+	} else {
+		tm = localtime(&t);
+		sprintf(buf, "%2d:%02d:%02d",
+			tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 }
+#define	SHMINFO		1
+#define	SHMTOTAL	2
+#define	MSGINFO		4
+#define	MSGTOTAL	8
+#define	SEMINFO		16
+#define	SEMTOTAL	32
 
-main()
+#define BIGGEST		1
+#define CREATOR		2
+#define OUTSTANDING	4
+#define PID		8
+#define TIME		16
+
+int
+main(argc, argv)
+	int     argc;
+	char   *argv[];
 {
-	static struct nlist symbols[] = {
-		{"_sema"},
-		{"_seminfo"},
-		{"_semu"},
-		{"_msginfo"},
-		{"_msqids"},
-		{NULL}
-	};
-	int i;
-	int show_sem_values = 1;
-	int show_undo_values = 1;
+	int     display = SHMINFO | MSGINFO | SEMINFO;
+	int     option = 0;
+	char   *core = NULL, *namelist = NULL;
+	int     i;
 
-	switch (nlist(_PATH_UNIX, &symbols[0])) {
+	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != EOF)
+		switch (i) {
+		case 'M':
+			display = SHMTOTAL;
+			break;
+		case 'm':
+			display = SHMINFO;
+			break;
+		case 'Q':
+			display = MSGTOTAL;
+			break;
+		case 'q':
+			display = MSGINFO;
+			break;
+		case 'S':
+			display = SEMTOTAL;
+			break;
+		case 's':
+			display = SEMINFO;
+			break;
+		case 'T':
+			display = SHMTOTAL | MSGTOTAL | SEMTOTAL;
+			break;
+		case 'a':
+			option |= BIGGEST | CREATOR | OUTSTANDING | PID | TIME;
+			break;
+		case 'b':
+			option |= BIGGEST;
+			break;
+		case 'C':
+			core = optarg;
+			break;
+		case 'c':
+			option |= CREATOR;
+			break;
+		case 'N':
+			namelist = optarg;
+			break;
+		case 'o':
+			option |= OUTSTANDING;
+			break;
+		case 'p':
+			option |= PID;
+			break;
+		case 't':
+			option |= TIME;
+			break;
+		default:
+			errx(1, "usage:  ipcs [-abcmopqst] [-C corefile] [-N namelist]\n");
+		}
+	if ((kd = kvm_open(namelist, core, NULL, O_RDONLY, "ipcs")) == NULL)
+		exit(1);
+
+	switch (kvm_nlist(kd, symbols)) {
 	case 0:
 		break;
 	case -1:
-		fprintf(stderr, "ipcs:  can't open %s - bye!\n", _PATH_UNIX);
-		exit(1);
+		errx(1, "ipcs:  unable to read kernel symbol table!\n");
 	default:
-		fprintf(stderr, "ipcs:  nlist failed\n");
-		for (i = 0; symbols[i].n_name != NULL; i += 1) {
+		warnx("ipcs:  nlist failed\n");
+		for (i = 0; symbols[i].n_name != NULL; i++) {
 			if (symbols[i].n_value == 0) {
-				fprintf(stderr, "\tsymbol %s not found\n",
-				    symbols[i].n_name);
+				warnx("\tsymbol %s not found\n", symbols[i].n_name);
 			}
 		}
 		break;
 	}
 
-#ifdef notdef
-        for ( i = 0; symbols[i].n_name != NULL; i += 1 ) {
-		fprintf(stderr,"\t%s : %08x\n",symbols[i].n_name,
-		    symbols[i].n_value);
-        }
-#endif
+	if ((display & (MSGINFO | MSGTOTAL)) &&
+	    kvm_read(kd, symbols[X_MSGINFO].n_value, &msginfo, sizeof(msginfo))) {
 
-	if (getsymbol(symbols, "_seminfo", &seminfo, sizeof(seminfo))) {
+		if (display & MSGTOTAL) {
+			printf("msginfo:\n");
+			printf("\tmsgmax: %6d\t(max characters in a message)\n",
+			    msginfo.msgmax);
+			printf("\tmsgmni: %6d\t(# of message queues)\n",
+			    msginfo.msgmni);
+			printf("\tmsgmnb: %6d\t(max characters in a message queue)\n",
+			    msginfo.msgmnb);
+			printf("\tmsgtql: %6d\t(max # of messages in system)\n",
+			    msginfo.msgtql);
+			printf("\tmsgssz: %6d\t(size of a message segment)\n",
+			    msginfo.msgssz);
+			printf("\tmsgseg: %6d\t(# of message segments in system)\n\n",
+			    msginfo.msgseg);
+		}
+		if (display & MSGINFO) {
+			struct msqid_ds *xmsqids;
+
+			kvm_read(kd, symbols[X_MSQIDS].n_value, &msqids, sizeof(msqids));
+			xmsqids = malloc(sizeof(struct msqid_ds) * msginfo.msgmni);
+			kvm_read(kd, (u_long) msqids, xmsqids, sizeof(struct msqid_ds) * msginfo.msgmni);
+
+			printf("Message Queues:\n");
+			printf("T     ID     KEY        MODE       OWNER    GROUP");
+			if (option & CREATOR)
+				printf("  CREATOR   CGROUP");
+			if (option & OUTSTANDING)
+				printf(" CBYTES  QNUM");
+			if (option & BIGGEST)
+				printf(" QBYTES");
+			if (option & PID)
+				printf(" LSPID LRPID");
+			if (option & TIME)
+				printf("   STIME    RTIME    CTIME");
+			printf("\n");
+			for (i = 0; i < msginfo.msgmni; i += 1) {
+				if (xmsqids[i].msg_qbytes != 0) {
+					char    stime_buf[100], rtime_buf[100],
+					        ctime_buf[100];
+					struct msqid_ds *msqptr = &xmsqids[i];
+
+					cvt_time(msqptr->msg_stime, stime_buf);
+					cvt_time(msqptr->msg_rtime, rtime_buf);
+					cvt_time(msqptr->msg_ctime, ctime_buf);
+
+					printf("q %6d %10d %s %8s %8s",
+					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
+					    msqptr->msg_perm.key,
+					    fmt_perm(msqptr->msg_perm.mode),
+					    user_from_uid(msqptr->msg_perm.uid, 0),
+					    group_from_gid(msqptr->msg_perm.gid, 0));
+
+					if (option & CREATOR)
+						printf(" %8s %8s",
+						    user_from_uid(msqptr->msg_perm.cuid, 0),
+						    group_from_gid(msqptr->msg_perm.cgid, 0));
+
+					if (option & OUTSTANDING)
+						printf(" %6d %6d",
+						    msqptr->msg_cbytes,
+						    msqptr->msg_qnum);
+
+					if (option & BIGGEST)
+						printf(" %6d",
+						    msqptr->msg_qbytes);
+
+					if (option & PID)
+						printf(" %6d %6d",
+						    msqptr->msg_lspid,
+						    msqptr->msg_lrpid);
+
+					if (option & TIME)
+						printf("%s %s %s",
+						    stime_buf,
+						    rtime_buf,
+						    ctime_buf);
+
+					printf("\n");
+				}
+			}
+			printf("\n");
+		}
+	} else
+		if (display & (MSGINFO | MSGTOTAL)) {
+			fprintf(stderr,
+			    "SVID messages facility not configured in the system\n");
+		}
+	if ((display & (SHMINFO | SHMTOTAL)) &&
+	    kvm_read(kd, symbols[X_SHMINFO].n_value, &shminfo, sizeof(shminfo))) {
+		if (display & SHMTOTAL) {
+			printf("shminfo:\n");
+			printf("\tshmmax: %7d\t(max shared memory segment size)\n",
+			    shminfo.shmmax);
+			printf("\tshmmin: %7d\t(min shared memory segment size)\n",
+			    shminfo.shmmin);
+			printf("\tshmmni: %7d\t(max number of shared memory identifiers)\n",
+			    shminfo.shmmni);
+			printf("\tshmseg: %7d\t(max shared memory segments per process)\n",
+			    shminfo.shmseg);
+			printf("\tshmall: %7d\t(max amount of shared memory in pages)\n\n",
+			    shminfo.shmall);
+		}
+		if (display & SHMINFO) {
+			struct shmid_ds *xshmids;
+
+			kvm_read(kd, symbols[X_SHMSEGS].n_value, &shmsegs, sizeof(shmsegs));
+			xshmids = malloc(sizeof(struct shmid_ds) * msginfo.msgmni);
+			kvm_read(kd, (u_long) shmsegs, xshmids, sizeof(struct shmid_ds) *
+			    shminfo.shmmni);
+
+			printf("Shared Memory:\n");
+			printf("T     ID     KEY        MODE       OWNER    GROUP");
+			if (option & CREATOR)
+				printf("  CREATOR   CGROUP");
+			if (option & OUTSTANDING)
+				printf(" NATTCH");
+			if (option & BIGGEST)
+				printf("  SEGSZ");
+			if (option & PID)
+				printf("  CPID  LPID");
+			if (option & TIME)
+				printf("   ATIME    DTIME    CTIME");
+			printf("\n");
+			for (i = 0; i < shminfo.shmmni; i += 1) {
+				if (xshmids[i].shm_perm.mode & 0x0800) {
+					char    atime_buf[100], dtime_buf[100],
+					        ctime_buf[100];
+					struct shmid_ds *shmptr = &xshmids[i];
+
+					cvt_time(shmptr->shm_atime, atime_buf);
+					cvt_time(shmptr->shm_dtime, dtime_buf);
+					cvt_time(shmptr->shm_ctime, ctime_buf);
+
+					printf("q %6d %10d %s %8s %8s",
+					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
+					    shmptr->shm_perm.key,
+					    fmt_perm(shmptr->shm_perm.mode),
+					    user_from_uid(shmptr->shm_perm.uid, 0),
+					    group_from_gid(shmptr->shm_perm.gid, 0));
+
+					if (option & CREATOR)
+						printf(" %8s %8s",
+						    user_from_uid(shmptr->shm_perm.cuid, 0),
+						    group_from_gid(shmptr->shm_perm.cgid, 0));
+
+					if (option & OUTSTANDING)
+						printf(" %6d",
+						    shmptr->shm_nattch);
+
+					if (option & BIGGEST)
+						printf(" %6d",
+						    shmptr->shm_segsz);
+
+					if (option & PID)
+						printf(" %6d %6d",
+						    shmptr->shm_cpid,
+						    shmptr->shm_lpid);
+
+					if (option & TIME)
+						printf("%s %s %s",
+						    atime_buf,
+						    dtime_buf,
+						    ctime_buf);
+
+					printf("\n");
+				}
+			}
+			printf("\n");
+		}
+	} else
+		if (display & (SHMINFO | SHMTOTAL)) {
+			fprintf(stderr,
+			    "SVID shared memory facility not configured in the system\n");
+		}
+	if ((display & (SEMINFO | SEMTOTAL)) &&
+	    kvm_read(kd, symbols[X_SEMINFO].n_value, &seminfo, sizeof(seminfo))) {
 		struct semid_ds *xsema;
 
-		printf("seminfo:\n");
-		printf("\tsemmap: %6d\t(# of entries in semaphore map)\n",
-		    seminfo.semmap);
-		printf("\tsemmni: %6d\t(# of semaphore identifiers)\n",
-		    seminfo.semmni);
-		printf("\tsemmns: %6d\t(# of semaphores in system)\n",
-		    seminfo.semmns);
-		printf("\tsemmnu: %6d\t(# of undo structures in system)\n",
-		    seminfo.semmnu);
-		printf("\tsemmsl: %6d\t(max # of semaphores per id)\n",
-		    seminfo.semmsl);
-		printf("\tsemopm: %6d\t(max # of operations per semop call)\n",
-		    seminfo.semopm);
-		printf("\tsemume: %6d\t(max # of undo entries per process)\n",
-		    seminfo.semume);
-		printf("\tsemusz: %6d\t(size in bytes of undo structure)\n",
-		    seminfo.semusz);
-		printf("\tsemvmx: %6d\t(semaphore maximum value)\n",
-		    seminfo.semvmx);
-		printf("\tsemaem: %6d\t(adjust on exit max value)\n",
-		    seminfo.semaem);
-
-		/*
-		 * Lock out other users of the semaphore facility
-		 */
-
-		if (semconfig(SEM_CONFIG_FREEZE) != 0) {
-			perror("semconfig");
-			fprintf(stderr,
-			    "Can't lock semaphore facility - winging it...\n");
+		if (display & SEMTOTAL) {
+			printf("seminfo:\n");
+			printf("\tsemmap: %6d\t(# of entries in semaphore map)\n",
+			    seminfo.semmap);
+			printf("\tsemmni: %6d\t(# of semaphore identifiers)\n",
+			    seminfo.semmni);
+			printf("\tsemmns: %6d\t(# of semaphores in system)\n",
+			    seminfo.semmns);
+			printf("\tsemmnu: %6d\t(# of undo structures in system)\n",
+			    seminfo.semmnu);
+			printf("\tsemmsl: %6d\t(max # of semaphores per id)\n",
+			    seminfo.semmsl);
+			printf("\tsemopm: %6d\t(max # of operations per semop call)\n",
+			    seminfo.semopm);
+			printf("\tsemume: %6d\t(max # of undo entries per process)\n",
+			    seminfo.semume);
+			printf("\tsemusz: %6d\t(size in bytes of undo structure)\n",
+			    seminfo.semusz);
+			printf("\tsemvmx: %6d\t(semaphore maximum value)\n",
+			    seminfo.semvmx);
+			printf("\tsemaem: %6d\t(adjust on exit max value)\n\n",
+			    seminfo.semaem);
 		}
+		if (display & SEMINFO) {
+			if (semconfig(SEM_CONFIG_FREEZE) != 0) {
+				perror("semconfig");
+				fprintf(stderr,
+				    "Can't lock semaphore facility - winging it...\n");
+			}
+			kvm_read(kd, symbols[X_SEMA].n_value, &sema, sizeof(sema));
+			xsema = malloc(sizeof(struct semid_ds) * seminfo.semmni);
+			kvm_read(kd, (u_long) sema, xsema, sizeof(struct semid_ds) * seminfo.semmni);
 
-		getsymbol(symbols, "_sema", &sema, sizeof(sema));
-		xsema = malloc(sizeof(struct semid_ds) * seminfo.semmni);
-		getlocation(sema, xsema, sizeof(struct semid_ds) *
-		    seminfo.semmni);
-
-		for (i = 0; i < seminfo.semmni; i += 1) {
-			if ((xsema[i].sem_perm.mode & SEM_ALLOC) != 0) {
-				char ctime_buf[100], otime_buf[100];
-				struct semid_ds *semaptr = &xsema[i];
-
-				cvt_time(semaptr->sem_ctime, ctime_buf);
-				cvt_time(semaptr->sem_otime, otime_buf);
-
-				printf("\nsema id:  %d  key:  0x%08x:\n",
-				    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
-				    semaptr->sem_perm.key);
-
-				printf("     cuid:  %6d    cgid:  %6d    ctime:  %s\n",
-				    semaptr->sem_perm.cuid,
-				    semaptr->sem_perm.cgid, ctime_buf);
-
-				printf("     uid:   %6d    gid:   %6d    otime:  %s\n",
-				    semaptr->sem_perm.uid,
-				    semaptr->sem_perm.gid, otime_buf);
-
-				printf("     nsems: %6d                     perm:   %s\n",
-				    semaptr->sem_nsems,
-				    fmt_perm(semaptr->sem_perm.mode));
-
-				if (show_sem_values) {
-					int j, value;
+			printf("Semaphores:\n");
+			printf("T     ID     KEY        MODE       OWNER    GROUP");
+			if (option & CREATOR)
+				printf("  CREATOR   CGROUP");
+			if (option & BIGGEST)
+				printf(" NSEMS");
+			if (option & TIME)
+				printf("   OTIME    CTIME");
+			printf("\n");
+			for (i = 0; i < seminfo.semmni; i += 1) {
+				if ((xsema[i].sem_perm.mode & SEM_ALLOC) != 0) {
+					char    ctime_buf[100], otime_buf[100];
+					struct semid_ds *semaptr = &xsema[i];
+					int     j, value;
 					union semun junk;
 
-					for (j = 0; j < semaptr->sem_nsems;
-					    j += 1) {
-						if ((value = semctl(IXSEQ_TO_IPCID(i, semaptr->sem_perm), j, GETVAL, junk)) < 0) {
-							printf("can't get semaphore values\n");
-							break;
-						}
-						if (j % 5 == 0) {
-							if (j == 0) {
-								printf("     values: {");
-							}
-							else {
-								printf("\n");
-								printf("              ");
-							}
-						}
-						printf(" %d", value);
-						if (j == semaptr->sem_nsems - 1) {
-							printf(" }\n");
-						}
-						else {
-							printf(", ");
-						}
-					}
+					cvt_time(semaptr->sem_otime, otime_buf);
+					cvt_time(semaptr->sem_ctime, ctime_buf);
+
+					printf("q %6d %10d %s %8s %8s",
+					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
+					    semaptr->sem_perm.key,
+					    fmt_perm(semaptr->sem_perm.mode),
+					    user_from_uid(semaptr->sem_perm.uid, 0),
+					    group_from_gid(semaptr->sem_perm.gid, 0));
+
+					if (option & CREATOR)
+						printf(" %8s %8s",
+						    user_from_uid(semaptr->sem_perm.cuid, 0),
+						    group_from_gid(semaptr->sem_perm.cgid, 0));
+
+					if (option & BIGGEST)
+						printf(" %6d",
+						    semaptr->sem_nsems);
+
+					if (option & TIME)
+						printf("%s %s",
+						    otime_buf,
+						    ctime_buf);
+
+					printf("\n");
 				}
 			}
+
+			(void) semconfig(SEM_CONFIG_THAW);
+
+			printf("\n");
 		}
-
-		if (show_undo_values) {
-			int j;
-			int *ksemu, *semu;
-			int semu_size;
-			int got_one_undo = 0;
-
-			semu = 0;
-			semu_size = (int) SEMU(seminfo.semmnu);
-			semu = (int *) malloc(semu_size);
-			getsymbol(symbols, "_semu", &ksemu, sizeof(ksemu));
-			getlocation(ksemu, semu, semu_size);
-
-			printf("\nsem undos:\n");
-			for (j = 0; j < seminfo.semmnu; j += 1) {
-				struct sem_undo *suptr;
-				int k;
-
-				suptr = SEMU(j);
-				if (suptr->un_proc != NULL) {
-					struct proc proc;
-
-					getlocation(suptr->un_proc, &proc,
-					    sizeof(proc));
-					got_one_undo = 1;
-					printf("     pid %d:  semid  semnum  adjval\n",
-					    proc.p_pid);
-					for (k = 0; k < suptr->un_cnt; k += 1) {
-						printf("          %10d   %5d  %6d\n",
-						    IXSEQ_TO_IPCID(suptr->un_ent[k].un_id, xsema[suptr->un_ent[k].un_id].sem_perm),
-						    suptr->un_ent[k].un_num,
-						    suptr->un_ent[k].un_adjval);
-					}
-				}
-			}
-			if (!got_one_undo) {
-				printf("     none allocated\n");
-			}
+	} else
+		if (display & (SEMINFO | SEMTOTAL)) {
+			fprintf(stderr, "SVID semaphores facility not configured in the system\n");
 		}
-
-		(void) semconfig(SEM_CONFIG_THAW);
-
-	}
-	else {
-		fprintf(stderr, "SVID semaphores facility not configured in the system\n");
-	}
-
-	if (getsymbol(symbols, "_msginfo", &msginfo, sizeof(msginfo))) {
-		struct msqid_ds *xmsqids;
-
-		printf("\nmsginfo:\n");
-		printf("\tmsgmax: %6d\t(max characters in a message)\n",
-		    msginfo.msgmax);
-		printf("\tmsgmni: %6d\t(# of message queues)\n",
-		    msginfo.msgmni);
-		printf("\tmsgmnb: %6d\t(max characters in a message queue)\n",
-		    msginfo.msgmnb);
-		printf("\tmsgtql: %6d\t(max # of messages in system)\n",
-		    msginfo.msgtql);
-		printf("\tmsgssz: %6d\t(size of a message segment)\n",
-		    msginfo.msgssz);
-		printf("\tmsgseg: %6d\t(# of message segments in system)\n",
-		    msginfo.msgseg);
-
-		getsymbol(symbols, "_msqids", &msqids, sizeof(msqids));
-		xmsqids = malloc(sizeof(struct msqid_ds) * msginfo.msgmni);
-		getlocation(msqids, xmsqids, sizeof(struct msqid_ds) *
-		    msginfo.msgmni);
-
-		for (i = 0; i < msginfo.msgmni; i += 1) {
-			if (xmsqids[i].msg_qbytes != 0) {
-				char stime_buf[100], rtime_buf[100],
-				     ctime_buf[100];
-				struct msqid_ds *msqptr = &xmsqids[i];
-
-				cvt_time(msqptr->msg_stime, stime_buf);
-				cvt_time(msqptr->msg_rtime, rtime_buf);
-				cvt_time(msqptr->msg_ctime, ctime_buf);
-
-				printf("\nmsgq id:  %d  key:  0x%08x\n",
-				    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
-				    msqptr->msg_perm.key);
-
-				printf("     cuid:  %6d    cgid:  %6d    ctime:  %s\n",
-				    msqptr->msg_perm.cuid,
-				    msqptr->msg_perm.cgid, ctime_buf);
-
-				printf("     uid:   %6d    gid:   %6d\n",
-				    msqptr->msg_perm.uid,
-				    msqptr->msg_perm.gid);
-
-				printf("     lspid: %6d                     stime:  %s\n",
-				    msqptr->msg_lspid, stime_buf);
-
-				printf("     lrpid: %6d    qnum:  %6d    rtime:  %s\n",
-				    msqptr->msg_lrpid, msqptr->msg_qnum,
-				    rtime_buf);
-
-				printf("     cbytes:%6d    qbytes:%6d    perm:   %s\n",
-				    msqptr->msg_cbytes, msqptr->msg_qbytes,
-				    fmt_perm(msqptr->msg_perm.mode));
-			}
-		}
-	}
-	else {
-		fprintf(stderr,
-		    "SVID messages facility not configured in the system\n");
-	}
+	kvm_close(kd);
 
 	exit(0);
 }
