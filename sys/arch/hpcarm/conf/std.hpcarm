@@ -1,0 +1,9 @@
+#	$NetBSD: std.hpcarm,v 1.1 2001/02/23 03:48:08 ichiro Exp $
+#
+# standard NetBSD/hpcarm options
+
+machine	hpcarm arm
+
+options 	EXEC_AOUT
+options		EXEC_ELF32
+options 	EXEC_SCRIPT
