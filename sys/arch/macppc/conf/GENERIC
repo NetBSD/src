@@ -1,22 +1,16 @@
-#	$NetBSD: GENERIC,v 1.10 1998/07/28 23:43:33 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.11 1998/07/29 00:19:20 thorpej Exp $
 #
 # POWERMAC config file
 #
 
-machine		macppc powerpc
+include		"arch/macppc/conf/std.macppc"
 
 maxusers	32
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER
-options 	EXEC_AOUT
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
-
-options 	HTABENTS=8192
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
