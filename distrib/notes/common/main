@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.106 2001/02/28 17:32:39 atatat Exp $
+.\"	$NetBSD: main,v 1.107 2001/03/10 18:14:18 kent Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1213,6 +1213,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Kevin Sullivan Ta Mt sullivan@netbsd.org
 .It Ta SUNAGAWA Keiki Ta Mt kei@netbsd.org
 .It Ta Kimmo Suominen Ta Mt kim@netbsd.org
+.It Ta TAMURA Kent Ta Mt kent@netbsd.org
 .It Ta Shin'ichiro TAYA Ta Mt taya@netbsd.org
 .It Ta Matt Thomas Ta Mt matt@netbsd.org
 .It Ta Christoph Toshok Ta Mt toshok@netbsd.org
