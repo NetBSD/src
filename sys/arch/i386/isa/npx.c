@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.21 1994/06/28 07:55:25 deraadt Exp $
+ *	$Id: npx.c,v 1.22 1994/10/26 01:31:01 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -196,8 +196,8 @@ npxprobe(parent, self, aux)
 	save_idt_npxtrap = idt[16];
 	outb(IO_ICU1 + 1, ~(IRQ_SLAVE | ia->ia_irq));
 	outb(IO_ICU2 + 1, ~(ia->ia_irq >> 8));
-	setidt(16, probetrap, SDT_SYS386TGT, SEL_KPL);
-	setidt(npx_intrno, probeintr, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[npx_intrno], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
 	npx_idt_probeintr = idt[npx_intrno];
 	enable_intr();
 	result = npxprobe1(ia);
