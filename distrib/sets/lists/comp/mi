@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.280 2000/12/11 09:18:03 jdolecek Exp $
+#	$NetBSD: mi,v 1.281 2000/12/11 13:44:00 jdolecek Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1382,21 +1382,6 @@
 ./usr/share/ldscripts/sun4.xn	comp-util-share
 ./usr/share/ldscripts/sun4.xr	comp-util-share
 ./usr/share/ldscripts/sun4.xu	comp-util-share
-./usr/share/lkm/README		comp-lkm-share
-./usr/share/lkm/misc/Makefile	comp-lkm-share
-./usr/share/lkm/misc/README	comp-lkm-share
-./usr/share/lkm/misc/module/Makefile	comp-lkm-share
-./usr/share/lkm/misc/module/misccall.c	comp-lkm-share
-./usr/share/lkm/misc/module/miscmod.c	comp-lkm-share
-./usr/share/lkm/misc/test/Makefile	comp-lkm-share
-./usr/share/lkm/misc/test/testmisc.c	comp-lkm-share
-./usr/share/lkm/syscall/Makefile	comp-lkm-share
-./usr/share/lkm/syscall/README	comp-lkm-share
-./usr/share/lkm/syscall/module/Makefile	comp-lkm-share
-./usr/share/lkm/syscall/module/mycall.c	comp-lkm-share
-./usr/share/lkm/syscall/module/newsyscall.c	comp-lkm-share
-./usr/share/lkm/syscall/test/Makefile	comp-lkm-share
-./usr/share/lkm/syscall/test/testsyscall.c	comp-lkm-share
 ./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-miscutil-bin
 ./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-miscutil-bin
 ./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-miscutil-bin
