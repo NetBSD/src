@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.10 1995/04/12 15:35:00 ragge Exp $  */
+/*      $NetBSD: machdep.c,v 1.11 1995/05/03 19:20:15 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -468,44 +468,15 @@ boot(howto)
 	extern char *panicstr;
 
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
 		waittime = 0;
-		(void) spl0();
-		if(panicstr&&curproc) showstate(curproc);
-
-		printf("syncing disks... ");
+		vfs_shutdown();
 		/*
-		 * Release vnodes held by texts before sync.
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
 		 */
-		if (panicstr == 0)
-		        vnode_pager_umount(NULL);
-
-		sync(&proc0, (void *)NULL, (int *)NULL);
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-                        for (bp = &buf[nbuf]; --bp >= buf; )
-                                if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-                                        nbusy++;
-                        if (nbusy == 0)
-                                break;
-                        printf("%d ", nbusy);
-			{register int m;
-				m=mfpr(PR_TODR)+iter*4;
-				while(m!=mfpr(PR_TODR));}
-                /*      DELAY(400000 * iter); */
-                }
-                if (nbusy)
-                        printf("giving up\n");
-                else
-                        printf("done\n");
-                /*
-                 * If we've been adjusting the clock, the todr
-                 * will be out of synch; adjust it now.
-                 */
-                resettodr();
+		resettodr();
         }
+
         splhigh();                      /* extreme priority */
 	if (howto&RB_HALT) {
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
@@ -625,14 +596,12 @@ process_read_regs(p, regs)
 	regs->r3=tf->r3;
 	regs->r4=tf->r4;
 	regs->r5=tf->r5;
-#ifdef notyet
 	regs->r6=tf->r6;
 	regs->r7=tf->r7;
 	regs->r8=tf->r8;
 	regs->r9=tf->r9;
 	regs->r10=tf->r10;
 	regs->r11=tf->r11;
-#endif
 	regs->ap=tf->ap;
 	regs->fp=tf->fp;
 	regs->sp=mfpr(PR_USP);
@@ -654,14 +623,12 @@ process_write_regs(p, regs)
 	tf->r3=regs->r3;
 	tf->r4=regs->r4;
 	tf->r5=regs->r5;
-#ifdef notyet
 	tf->r6=regs->r6;
 	tf->r7=regs->r7;
 	tf->r8=regs->r8;
 	tf->r9=regs->r9;
 	tf->r10=regs->r10;
 	tf->r11=regs->r11;
-#endif
 	tf->ap=regs->ap;
 	tf->fp=regs->fp;
 	mtpr(regs->sp,PR_USP);

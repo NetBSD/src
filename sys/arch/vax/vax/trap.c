@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.9 1995/04/22 20:29:09 christos Exp $     */
+/*      $NetBSD: trap.c,v 1.10 1995/05/03 19:20:17 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,6 +41,7 @@
 #include "sys/syscall.h"
 #include "sys/systm.h"
 #include "sys/signalvar.h"
+#include "sys/exec.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
@@ -116,6 +117,10 @@ arithflt(frame)
 		type|=T_USER;
 
 	type&=~(T_WRITE|T_PTEFETCH);
+if(frame->trap==7) goto fram;
+if(faultdebug)printf("Trap: type %x, code %x, pc %x, psl %x\n",
+		frame->trap, frame->code, frame->pc, frame->psl);
+fram:
 	switch(type){
 
 	default:
@@ -249,7 +254,7 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		if (rv != KERN_SUCCESS) {
 			if(frame->pc>(u_int)0x80000000){
 				if(p->p_addr->u_pcb.iftrap){
-					frame->pc=p->p_addr->u_pcb.iftrap;
+					frame->pc=(int)p->p_addr->u_pcb.iftrap;
 					return;
 				}
 				printf("Segv in kernel mode: rv %d\n",rv);
@@ -330,15 +335,16 @@ if(p){
 void
 setregs(p, pack, stack, retval)
         struct proc *p;
-        struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
+	struct exec_package *pack;
+        u_long stack;
+        register_t retval[2];
 {
 	struct trapframe *exptr;
 
 	exptr = p->p_addr->u_pcb.framep;
 	exptr->pc = pack->ep_entry + 2;
 	mtpr(stack, PR_USP);
+	retval[0] = retval[1] = 0;
 }
 
 syscall(frame)
@@ -350,24 +356,20 @@ syscall(frame)
 	struct trapframe *exptr;
 	struct proc *p=curproc;
 
-if(startsysc)printf("trap syscall %s pc %x, psl %x, ap %x, pid %d\n",
+if(startsysc)printf("trap syscall %s pc %x, psl %x, ap %x, pid %d, frame %x\n",
                syscallnames[frame->code], frame->pc, frame->psl,frame->ap,
-		curproc->p_pid);
+		curproc->p_pid,frame);
 
-	p->p_addr->u_pcb.framep=frame;
+	p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
 
-	if(frame->code==SYS___syscall){
-		int g=*(int *)(frame->ap);
+	if(frame->code == SYS___syscall){
+		int g = *(int *)(frame->ap);
 
 		frame->code=*(int *)(frame->ap+4);
 		frame->ap+=8;
 		*(int *)(frame->ap)=g-2;
-if(startsysc){
-		printf("SYS___syscall: ap %x\n",frame->ap);
-		asm("halt");
-		}
 	}
 
 	if(frame->code<0||frame->code>=nsys)
@@ -384,9 +386,9 @@ if(startsysc){
 	exptr=curproc->p_addr->u_pcb.framep;
 
 if(startsysc)
-	printf("retur %s pc %x, psl %x, ap %x, pid %d, v{rde %d r0 %d, r1 %d\n",
+	printf("retur %s pc %x, psl %x, ap %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
                syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->ap,
-                curproc->p_pid,err,rval[0],rval[1]);
+                curproc->p_pid,err,rval[0],rval[1],exptr);
 
 	switch(err){
 	case 0:
