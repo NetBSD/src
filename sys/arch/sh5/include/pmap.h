@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2002/08/30 10:50:07 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2002/09/04 15:26:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,17 +38,7 @@
 #ifndef	_SH5_PMAP_H
 #define	_SH5_PMAP_H
 
-#include "opt_kernel_ipt.h"
-
 #include <sh5/pte.h>
-
-/*
- * Assume 512MB of KSEG1 KVA, but allow this to be over-ridden
- * if necessary.
- */
-#ifndef	KERNEL_IPT_SIZE
-#define	KERNEL_IPT_SIZE	(SH5_KSEG1_SIZE / NBPG)
-#endif
 
 
 #if defined(_KERNEL)
@@ -64,6 +54,14 @@
 #endif
 
 #if defined(_KERNEL)
+/*
+ * Assume 512MB of KSEG1 KVA, but allow this to be over-ridden
+ * if necessary.
+ */
+#ifndef	KERNEL_IPT_SIZE
+#define	KERNEL_IPT_SIZE	(SH5_KSEG1_SIZE / NBPG)
+#endif
+
 struct pmap {
 	int pm_refs;		/* pmap reference count */
 	u_int pm_asid;		/* ASID for this pmap */
@@ -104,6 +102,7 @@ extern paddr_t pmap_unmap_poolpage(vaddr_t);
 extern int	pmap_initialized;
 extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
+extern void	pmap_unmap_device(vaddr_t, u_int);
 
 extern void (*__cpu_tlbinv)(pteh_t, pteh_t);
 extern void (*__cpu_tlbinv_cookie)(pteh_t, u_int);
