@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.13 1994/05/04 04:07:19 mycroft Exp $
+ *	$Id: trap.c,v 1.14 1994/05/05 10:11:33 mycroft Exp $
  */
 
 #include "param.h"
@@ -122,7 +122,7 @@ userret(p, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		psig(sig);
-	p->p_pri = p->p_usrpri;
+	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
 		 * Since we are curproc, clock will normally just change
@@ -160,7 +160,7 @@ userret(p, pc, oticks)
 		}
 	}
 
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 }
 
 /*
@@ -186,7 +186,7 @@ trap(type, code, v, frame)
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		sticks = p->p_stime;
-		p->p_regs = frame.f_regs;
+		p->p_md.md_regs = frame.f_regs;
 	}
 
 #ifdef DDB
@@ -500,7 +500,7 @@ syscall(code, frame)
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_stime;
-	p->p_regs = frame.f_regs;
+	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 #ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX)
