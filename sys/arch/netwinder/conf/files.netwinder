@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.16 2001/11/20 12:56:34 lukem Exp $
+#	$NetBSD: files.netwinder,v 1.17 2001/11/24 01:44:53 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -82,11 +82,6 @@ file	arch/arm/arm/disksubr_mbr.c		disk
 
 file	arch/arm/arm32/conf.c
 file	dev/cninit.c				!footbridge
-
-# ARM FPE
-file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
-file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
-file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # ISA support.
 file	arch/netwinder/isa/isa_machdep.c	isa & netwinder
