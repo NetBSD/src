@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/04/27 12:03:40 simonb Exp $
+#	$NetBSD: Makefile,v 1.6 1999/05/04 02:44:22 simonb Exp $
 
 BINDIR=		/installation/netboot
 
@@ -65,6 +65,10 @@ realinstall:
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
+# XXX!
+depend:
+
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include <bsd.sys.mk>
 .include "../Makefile.inc"
