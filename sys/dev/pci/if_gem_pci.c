@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.14 2003/01/31 00:07:43 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.15 2004/03/17 13:54:09 martin Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.14 2003/01/31 00:07:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.15 2004/03/17 13:54:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.14 2003/01/31 00:07:43 thorpej Exp 
 #ifdef macppc
 #include <dev/ofw/openfirm.h>
 #endif /* macppc */
+#ifdef __sparc__
+#include <machine/promlib.h>
+#endif
 
 struct gem_pci_softc {
 	struct	gem_softc	gsc_gem;	/* GEM device */
@@ -164,8 +167,7 @@ gem_attach_pci(parent, self, aux)
 	 */
 #ifdef __sparc__
 	{
-		extern void myetheraddr __P((u_char *));
-		myetheraddr(enaddr);
+		prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
 	}
 #endif /* __sparc__ */
 #ifdef macppc
