@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.7 1999/11/21 15:01:51 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.8 2000/01/13 10:03:25 joda Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -678,6 +678,17 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	bus_addr_t offset;
 	int win, v;
+
+	int mem8 = (kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
+	kind &= ~PCMCIA_WIDTH_MEM_MASK;
+
+	if(mem8) {
+	    /* XXX Fix 8-bit memory accesses (can this be done at all?) */
+#ifdef DIAGNOSTIC
+	    printf("stp4020_chip_mem_map: can't handle 8-bit memory\n");
+#endif
+	    return (-1);
+	}
 
 	win = pcmhp->mhandle;
 	*windowp = win;
