@@ -1,5 +1,4 @@
 <html> <head> </head> <body> <pre>
-
 TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
 <b>NAME</b>
@@ -80,6 +79,14 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
               The domain that locally-posted mail appears to come
               from.
 
+       <b>resolve</b><i>_</i><b>unquoted</b><i>_</i><b>address</b>
+              When resolving an address, do not quote the address
+              localpart as per <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a>, so that additional  <b>@</b>,  <b>%</b>
+              or  <b>!</b>   characters  remain visible. This is techni-
+              cally  incorrect,  but  allows  us  to  stop  relay
+              attacks  when forwarding mail to a Sendmail primary
+              MX host.
+
 <b>Rewriting</b>
        <b>allow</b><i>_</i><b>percent</b><i>_</i><b>hack</b>
               Rewrite <i>user</i>%<i>domain</i> to <i>user</i>@<i>domain</i>.
@@ -95,11 +102,11 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
 <b>Routing</b>
        <b>local</b><i>_</i><b>transport</b>
-              Where  to  deliver mail for destinations that match
-              $<b>mydestination</b> or  $<b>inet</b><i>_</i><b>interfaces</b>.   The  default
+              Where to deliver mail for destinations  that  match
+              $<b>mydestination</b>  or  $<b>inet</b><i>_</i><b>interfaces</b>.   The default
               transport is <b>local</b>.
 
-              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
               details. The :<i>nexthop</i> part is optional.
 
        <b>default</b><i>_</i><b>transport</b>
@@ -107,23 +114,23 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
               is explicitly given in the <a href="transport.5.html"><b>transport</b>(5)</a> table.  The
               default transport is <b>smtp</b>.
 
-              Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
+              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
               details. The :<i>nexthop</i> part is optional.
 
        <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>
-              List  of Postfix features that use <i>domain.name</i> pat-
-              terns  to  match  <i>sub.domain.name</i>  (as  opposed  to
-              requiring <i>.domain.name</i> patterns).
+              List of Postfix features that use  <i>domain.tld</i>  pat-
+              terns   to  match  <i>sub.domain.tld</i>  (as  opposed  to
+              requiring <i>.domain.tld</i> patterns).
 
        <b>relayhost</b>
-              The  default host to send non-local mail to when no
+              The default host to send non-local mail to when  no
               entry is matched in the <a href="transport.5.html"><b>transport</b>(5)</a> table.
 
-              When no <b>relayhost</b>  is  specified,  mail  is  routed
+              When  no  <b>relayhost</b>  is  specified,  mail is routed
               directly to the destination's mail exchanger.
 
        <b>transport</b><i>_</i><b>maps</b>
-              List  of tables with <i>domain</i> to (<i>transport,</i> <i>nexthop</i>)
+              List of tables with <i>domain</i> to (<i>transport,</i>  <i>nexthop</i>)
               mappings.
 
 <b>SEE</b> <b>ALSO</b>
@@ -132,7 +139,7 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
        <a href="transport.5.html">transport(5)</a> transport table format
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -141,6 +148,5 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                                1
-
+                                               TRIVIAL-REWRITE(8)
 </pre> </body> </html>

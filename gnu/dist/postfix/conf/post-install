@@ -487,12 +487,12 @@ EOF
 
     for name in cleanup flush
     do
-	grep "^$name[ 	]*unix[ 	]*-" \
+	grep "^$name[ 	]*unix[ 	]*[-y]" \
 	    $config_directory/master.cf >/dev/null && {
 		echo Editing $config_directory/master.cf, making the $name service public
 	    ed $config_directory/master.cf <<EOF || exit 1
-/^$name[ 	]*unix[ 	]*-/
-s/-/n/
+/^$name[ 	]*unix[ 	]*[-y]/
+s/[-y]/n/
 p
 w
 q

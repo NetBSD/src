@@ -91,6 +91,12 @@ int     bounce_append_service(char *service, char *queue_id,
      * file format because we do not need anything more complicated. As a
      * benefit, we can still recover some data when the file is a little
      * garbled.
+     * 
+     * XXX addresses in defer logfiles are in printable quoted form, while
+     * addresses in message envelope records are in raw unquoted form. This
+     * may change once we replace the present ad-hoc bounce/defer logfile
+     * format by one that is transparent for control etc. characters. See
+     * also: showq/showq.c.
      */
     if ((orig_length = vstream_fseek(log, 0L, SEEK_END)) < 0)
 	msg_fatal("seek file %s %s: %m", service, queue_id);
@@ -98,6 +104,8 @@ int     bounce_append_service(char *service, char *queue_id,
     if (*recipient)
 	vstream_fprintf(log, "<%s>: ",
 	   printable(vstring_str(quote_822_local(in_buf, recipient)), '?'));
+    else
+	vstream_fprintf(log, "<>: ");
     vstream_fputs(printable(why, '?'), log);
     vstream_fputs("\n\n", log);
 

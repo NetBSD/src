@@ -9,16 +9,33 @@
 /*	VSTRING	*quote_821_local(dst, src)
 /*	VSTRING	*dst;
 /*	char	*src;
+/*
+/*	VSTRING	*quote_821_local_flags(dst, src, flags)
+/*	VSTRING	*dst;
+/*	char	*src;
+/*	int	flags;
 /* DESCRIPTION
 /*	quote_821_local() quotes the local part of a mailbox address and
 /*	returns a result that can be used in SMTP commands as specified
-/*	by RFC 821.
+/*	by RFC 821. It implements an 8-bit clean version of RFC 821.
+/*
+/*	quote_821_local_flags() provides finer control.
 /*
 /*	Arguments:
 /* .IP dst
 /*	The result.
 /* .IP src
 /*	The input address.
+/* .IP flags
+/*	Bit-wise OR of zero or more of the following.
+/* .RS
+/* .IP QUOTE_FLAG_8BITCLEAN
+/*	In violation with RFCs, treat 8-bit text as ordinary text.
+/* .IP QUOTE_FLAG_EXPOSE_AT
+/*	In violation with RFCs, treat `@' as an ordinary character.
+/* .IP QUOTE_FLAG_APPEND
+/*	Append to the result buffer, instead of overwriting it.
+/* .RE
 /* STANDARDS
 /*	RFC 821 (SMTP protocol)
 /* BUGS
@@ -55,7 +72,7 @@
 
 /* is_821_dot_string - is this local-part an rfc 821 dot-string? */
 
-static int is_821_dot_string(char *local_part, char *end)
+static int is_821_dot_string(char *local_part, char *end, int flags)
 {
     char   *cp;
     int     ch;
@@ -70,7 +87,7 @@ static int is_821_dot_string(char *local_part, char *end)
     for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
 	if (ch == '.' && cp[1] == '.')
 	    return (NO);
-	if (ch > 127)
+	if (ch > 127 && !(flags & QUOTE_FLAG_8BITCLEAN))
 	    return (NO);
 	if (ch == ' ')
 	    return (NO);
@@ -81,7 +98,7 @@ static int is_821_dot_string(char *local_part, char *end)
 	    || ch == '[' || ch == ']'
 	    || ch == '\\' || ch == ','
 	    || ch == ';' || ch == ':'
-	    /* || ch == '@' */ || ch == '"')
+	    || (ch == '@' && !(flags & QUOTE_FLAG_EXPOSE_AT)) || ch == '"')
 	    return (NO);
     }
     if (cp[-1] == '.')
@@ -91,7 +108,8 @@ static int is_821_dot_string(char *local_part, char *end)
 
 /* make_821_quoted_string - make quoted-string from local-part */
 
-static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part, char *end)
+static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part,
+				               char *end, int flags)
 {
     char   *cp;
     int     ch;
@@ -100,10 +118,10 @@ static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part, char *end
      * Put quotes around the result, and prepend a backslash to characters
      * that need quoting when they occur in a quoted-string.
      */
-    VSTRING_RESET(dst);
     VSTRING_ADDCH(dst, '"');
     for (cp = local_part; cp < end && (ch = *cp) != 0; cp++) {
-	if (ch > 127 || ch == '\r' || ch == '\n' || ch == '"' || ch == '\\')
+	if ((ch > 127 && !(flags & QUOTE_FLAG_8BITCLEAN))
+	    || ch == '\r' || ch == '\n' || ch == '"' || ch == '\\')
 	    VSTRING_ADDCH(dst, '\\');
 	VSTRING_ADDCH(dst, ch);
     }
@@ -112,9 +130,9 @@ static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part, char *end
     return (dst);
 }
 
-/* quote_821_local - quote local part of address according to rfc 821 */
+/* quote_821_local_flags - quote local part of address according to rfc 821 */
 
-VSTRING *quote_821_local(VSTRING *dst, char *addr)
+VSTRING *quote_821_local_flags(VSTRING *dst, char *addr, int flags)
 {
     char   *at;
 
@@ -125,10 +143,12 @@ VSTRING *quote_821_local(VSTRING *dst, char *addr)
      */
     if ((at = strrchr(addr, '@')) == 0)		/* just in case */
 	at = addr + strlen(addr);		/* should not happen */
-    if (is_821_dot_string(addr, at)) {
-	return (vstring_strcpy(dst, addr));
+    if ((flags & QUOTE_FLAG_APPEND) == 0)
+	VSTRING_RESET(dst);
+    if (is_821_dot_string(addr, at, flags)) {
+	return (vstring_strcat(dst, addr));
     } else {
-	make_821_quoted_string(dst, addr, at);
+	make_821_quoted_string(dst, addr, at, flags & QUOTE_FLAG_8BITCLEAN);
 	return (vstring_strcat(dst, at));
     }
 }

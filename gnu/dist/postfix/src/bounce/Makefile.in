@@ -83,6 +83,7 @@ bounce_append_service.o: ../../include/vstream.h
 bounce_append_service.o: ../../include/stringops.h
 bounce_append_service.o: ../../include/mail_queue.h
 bounce_append_service.o: ../../include/quote_822_local.h
+bounce_append_service.o: ../../include/quote_flags.h
 bounce_append_service.o: ../../include/deliver_flock.h
 bounce_append_service.o: ../../include/myflock.h
 bounce_append_service.o: bounce_service.h
@@ -123,6 +124,7 @@ bounce_notify_util.o: ../../include/vstream.h
 bounce_notify_util.o: ../../include/line_wrap.h
 bounce_notify_util.o: ../../include/mail_queue.h
 bounce_notify_util.o: ../../include/quote_822_local.h
+bounce_notify_util.o: ../../include/quote_flags.h
 bounce_notify_util.o: ../../include/mail_params.h
 bounce_notify_util.o: ../../include/is_header.h
 bounce_notify_util.o: ../../include/record.h
