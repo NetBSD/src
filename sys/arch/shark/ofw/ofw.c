@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.2 2002/02/20 00:10:20 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.3 2002/02/20 02:32:59 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -94,9 +94,6 @@ extern int ofw_handleticks;
  *  Imported routines
  */
 extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-extern void map_entry	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-extern void map_entry_nc    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-extern void map_entry_ro    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vm_offset_t));
@@ -1327,10 +1324,10 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			}
 
 			/* Make the entry. */
-			if ((tp->mode & 0xC) == 0xC)
-				map_entry(L2pagetable, va, pa);
-			else
-				map_entry_nc(L2pagetable, va, pa);
+			pmap_map_entry(L2pagetable, va, pa,
+			    VM_PROT_READ|VM_PROT_WRITE,
+			    (tp->mode & 0xC) == 0xC ? PTE_CACHE
+						    : PTE_NOCACHE);
 		}
 	}
 
@@ -1362,12 +1359,14 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * cached ...
 	 * Really these should be uncached when allocated.
 	 */
-	map_entry_nc(proc0_pt_kernel.pv_va, proc0_pt_pte.pv_va,
-	    proc0_pt_pte.pv_pa);
+	pmap_map_entry(proc0_pt_kernel.pv_va, proc0_pt_pte.pv_va,
+	    proc0_pt_pte.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < (PD_SIZE / NBPG); ++i)
-		map_entry_nc(proc0_pt_kernel.pv_va,
+		pmap_map_entry(proc0_pt_kernel.pv_va,
 		    proc0_pagedir.pv_va + NBPG * i,
-		    proc0_pagedir.pv_pa + NBPG * i);
+		    proc0_pagedir.pv_pa + NBPG * i,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
@@ -1375,21 +1374,27 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/* Map entries in the L2pagetable used to map L2PTs. */
 	L2pagetable = proc0_pt_pte.pv_va;
-	map_entry_nc(L2pagetable, (0x00000000 >> (PGSHIFT-2)),
-	    proc0_pt_sys.pv_pa);
-	map_entry_nc(L2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
-	    proc0_pt_kernel.pv_pa);
-	map_entry_nc(L2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
-	    proc0_pt_pte.pv_pa);
+	pmap_map_entry(L2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	    proc0_pt_sys.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(L2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
+	    proc0_pt_kernel.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(L2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    proc0_pt_pte.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		map_entry_nc(L2pagetable, ((KERNEL_VM_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa);
+		pmap_map_entry(L2pagetable, ((KERNEL_VM_BASE + i * 0x00400000)
+		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		map_entry_nc(L2pagetable, ((OFW_VIRT_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa);
+		pmap_map_entry(L2pagetable, ((OFW_VIRT_BASE + i * 0x00400000)
+		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
-		map_entry_nc(L2pagetable, ((IO_VIRT_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa);
+		pmap_map_entry(L2pagetable, ((IO_VIRT_BASE + i * 0x00400000)
+		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Construct the proc0 L1 pagetable. */
 	L1pagetable = proc0_pagedir.pv_va;

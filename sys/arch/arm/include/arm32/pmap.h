@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 2002/02/20 00:10:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 2002/02/20 02:32:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -187,6 +187,7 @@ pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
 
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
+void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
