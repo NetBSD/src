@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.16 1999/05/18 23:52:56 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.17 1999/06/18 17:44:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -708,7 +708,7 @@ epic_intr(arg)
 				continue;
 			}
 
-			len = rxd->er_buflength;
+			len = rxd->er_rxlength;
 			if (len < sizeof(struct ether_header)) {
 				m_freem(m);
 				continue;
@@ -738,6 +738,7 @@ epic_intr(arg)
 			
 			/* Pass it on. */
 			(*ifp->if_input)(ifp, m);
+			ifp->if_ipackets++;
 		}
 
 		/* Update the recieve pointer. */
