@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.96 1996/12/14 10:46:38 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.97 1997/01/30 19:42:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -1401,7 +1401,6 @@ cominit(iot, ioh, rate)
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
-	bus_space_write_1(iot, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS);
