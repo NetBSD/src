@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.20 2001/04/06 11:13:55 wiz Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.21 2001/07/24 16:43:02 wiz Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -355,7 +355,7 @@ static void trapped(int sig)
 	fputs("^C\n", stderr);
 	fflush(stderr);
 
-	/* Turn on echo if necesary */
+	/* Turn on echo if necessary */
 	skey_echo(1);
 
 	exit(1);
