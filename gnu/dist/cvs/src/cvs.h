@@ -471,6 +471,8 @@ void *xrealloc PROTO((void *ptr, size_t bytes));
 void expand_string PROTO ((char **, size_t *, size_t));
 void xrealloc_and_strcat PROTO ((char **, size_t *, const char *));
 char *xstrdup PROTO((const char *str));
+int xasprintf PROTO((char ** __restrict, const char * __restrict, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 void strip_trailing_newlines PROTO((char *str));
 int pathname_levels PROTO ((char *path));
 

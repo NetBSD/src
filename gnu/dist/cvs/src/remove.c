@@ -197,7 +197,7 @@ remove_fileproc (callerdat, finfo)
 	 * remove the ,t file for it and scratch it from the
 	 * entries file.  */
 	Scratch_Entry (finfo->entries, finfo->file);
-	(void) asprintf (&fname, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
+	(void) xasprintf (&fname, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
 	if (unlink_file (fname) < 0
 	    && !existence_error (errno))
 	    error (0, errno, "cannot remove %s", CVSEXT_LOG);

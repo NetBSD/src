@@ -42,8 +42,8 @@ Name_Root (dir, update_dir)
 
     if (dir != NULL)
     {
-	(void) asprintf (&cvsadm, "%s/%s", dir, CVSADM);
-	(void) asprintf (&tmp, "%s/%s", dir, CVSADM_ROOT);
+	(void) xasprintf (&cvsadm, "%s/%s", dir, CVSADM);
+	(void) xasprintf (&tmp, "%s/%s", dir, CVSADM_ROOT);
     }
     else
     {
@@ -150,7 +150,7 @@ Create_Root (dir, rootdir)
     if (rootdir != NULL)
     {
         if (dir != NULL)
-	    (void) asprintf (&tmp, "%s/%s", dir, CVSADM_ROOT);
+	    (void) xasprintf (&tmp, "%s/%s", dir, CVSADM_ROOT);
         else
 	    tmp = xstrdup (CVSADM_ROOT);
 
