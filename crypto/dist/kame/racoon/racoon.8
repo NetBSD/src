@@ -1,3 +1,4 @@
+.\"	$NetBSD: racoon.8,v 1.7 2002/04/26 02:31:10 wiz Exp $
 .\"	$KAME: racoon.8,v 1.29 2001/10/19 08:13:40 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -114,21 +115,21 @@ You have to configure
 .Xr syslog.conf 5
 if you want to see them in a logging file.
 .\"
+.Sh RETURN VALUES
+The command exits with 0 on success, and non-zero on errors.
+.\"
 .Sh FILES
 .Bl -tag -width /etc/racoon.conf -compact
 .It Pa /etc/racoon.conf
 default configuration file.
 .El
 .\"
-.Sh RETURN VALUES
-The command exits with 0 on success, and non-zero on errors.
-.\"
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr racoon.conf 5 ,
+.Xr syslog.conf 5 ,
 .Xr setkey 8 ,
 .Xr syslogd 8
-.Xr syslog.conf 5
 .\"
 .Sh HISTORY
 The
