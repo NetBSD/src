@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.40 2000/07/07 21:26:22 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.41 2000/07/08 19:02:05 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -874,3 +874,15 @@ distrib/notes/common/main			patch
 
   Note that we support several new PCI IDE controllers in
   the "notable changes" section.
+
+distrib/sets/lists/base/md.sparc		patch
+
+  Remove erroneous whitespace for the boot.* entries.
+
+libexec/ftpd/ftpd.c				1.97
+
+  Do not use user-supplied data as format string to setproctitle().
+
+sys/arch/macppc/pci/pciide_machdep.c		patch
+
+  Include pciidereg.h so that this file compiles again.
