@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.6.4.1 1996/05/30 03:55:55 mhitch Exp $
+# 	$NetBSD: NEWCONF,v 1.6.4.2 1996/06/17 05:14:26 jonathan Exp $
 #
 include		"std.pmax"
 
@@ -17,7 +17,6 @@ maxusers	8
 options		CPU_R3000		# R2000/R3000 support
 
 # replaces "cpu ds5k/240"
-options		DS5000			# generic TC support and 3MAX support
 options		DS5000_240		# 3MAXPLUS (kn03) support
 options		DS5000_100		# 3MIN (kn02ba/kmin) support
 options		DS5000_25		# MAXINE (kn02ca/xine) support
@@ -137,7 +136,7 @@ le*	at tc? #slot ?  offset ?		# TC ether option
 clock0	at mainbus0			# RTC
 pm0	at mainbus0			# 3100 onboard fb
 dc0	at mainbus0			# dc7083 four-port DZ device
-le*	at mainbus0			# 3100 onboard lance
+le0	at mainbus0			# 3100 onboard lance
 sii0	at mainbus0			# onboard scsi
 
 
