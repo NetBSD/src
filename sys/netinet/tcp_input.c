@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.33.2.2 1997/11/21 06:22:24 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.33.2.3 1997/11/21 06:42:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -471,9 +471,10 @@ findpcb:
 					/*
 					 * LISTEN socket received a SYN
 					 * from itself?  This can't possibly
-					 * be valid; send an RST.
+					 * be valid; drop the packet.
 					 */
-					goto badsyn;
+					tcpstat.tcps_badsyn++;
+					goto drop;
 				}
 				/*
 				 * SYN looks ok; create compressed TCP
