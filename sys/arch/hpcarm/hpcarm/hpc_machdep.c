@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.9 2001/04/06 05:38:01 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.10 2001/04/17 15:33:39 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -86,6 +86,7 @@
 #include <machine/bootinfo.h>
 #include <machine/undefined.h>
 #include <machine/rtc.h>
+#include <hpc/hpc/platid.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 
 #include <dev/hpc/bicons.h>
@@ -731,6 +732,11 @@ initarm(argc, argv, bi)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif	/* DDB */
+
+	if (bootinfo->magic == BOOTINFO_MAGIC) {
+		platid.dw.dw0 = bootinfo->platid_cpu;
+		platid.dw.dw1 = bootinfo->platid_machine;
+	}
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
