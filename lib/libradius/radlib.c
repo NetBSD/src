@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.4 2005/02/20 23:59:31 he Exp $ */
+/* $NetBSD: radlib.c,v 1.5 2005/03/16 10:34:25 he Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.4 2005/02/20 23:59:31 he Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.5 2005/03/16 10:34:25 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -788,7 +788,7 @@ rad_auth_open(void)
 
 	h = (struct rad_handle *)malloc(sizeof(struct rad_handle));
 	if (h != NULL) {
-		srandomdev();
+		srandomdev(0);
 		h->fd = -1;
 		h->num_servers = 0;
 		h->ident = random();
