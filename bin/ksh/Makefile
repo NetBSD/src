@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/09 13:28:39 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 1997/06/30 19:30:04 phil Exp $
 
 CFLAGS+=	-DHAVE_CONFIG_H -I.
 
@@ -8,6 +8,9 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	main.c misc.c path.c shf.c sigact.c syn.c table.c trap.c \
 	tree.c tty.c var.c version.c vi.c
 DPSRCS=	emacs.out siglist.out
+
+# needs tbl for the man page.
+USETBL= 
 
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
