@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.90 2004/04/16 22:30:16 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.91 2004/04/16 22:50:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -944,3 +944,16 @@ sys/kern/kern_systrace.c			1.38
 
 	Check process flags.
 	[provos, ticket #151]
+
+lib/libc/time/strftime.3			1.22
+
+	Add documentation for %v. PR#25180
+	[kleink, ticket #141]
+
+gnu/dist/gcc/gcc/ChangeLog			1.7
+gnu/dist/gcc/gcc/expr.c				1.2
+gnu/dist/gcc/gcc/fold-const.c			1.2
+gnu/dist/gcc/gcc/tree.h				1.2
+
+	Apply changes from PR#22489
+	[mrg, ticket #142]
