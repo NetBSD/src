@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.18 1995/03/23 19:47:27 jtc Exp $
+# 	$NetBSD: Makefile.sparc,v 1.19 1995/05/08 18:02:12 pk Exp $
 
 # @(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
 # Makefile for 4.4 BSD
@@ -116,7 +116,7 @@ genassym: genassym.o
 	${CC} -static -o $@ genassym.o
 
 genassym.o: ${SPARC}/sparc/genassym.c
-	${CC} -c ${CFLAGS} -I/usr/include ${PARAM} $<
+	${CC} -c ${CFLAGS} ${PARAM} $<
 
 SRCS= ${CFILES} ioconf.c param.c vnode_if.c
 depend: .depend
