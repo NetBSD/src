@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/03/24 15:31:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.20 2001/10/21 23:23:22 jmc Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -22,12 +22,13 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
 MOUNT_POINT?=	/mnt
+MDSETIMAGE?=	mdsetimage
 
 all:	netbsd.gz ${IMAGE}.gz
 
 netbsd.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd
-	mdsetimage -v netbsd ${RAMDISK}
+	${MDSETIMAGE} -v netbsd ${RAMDISK}
 	elf2ecoff netbsd netbsd.ecoff
 	rm -f netbsd.ecoff.gz
 	gzip -9 netbsd.ecoff

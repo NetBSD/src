@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/15 16:22:50 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/21 23:23:22 jmc Exp $
 
 .include "../Makefile.inc"
 
@@ -19,11 +19,12 @@ release:
 .else
 MINIROOTDIR = ${.CURDIR}/../miniroot
 MINIROOTOBJ != cd ${MINIROOTDIR}; ${MAKE} print-objdir
+MDSETIMAGE?=	mdsetimage
 
 release:
 	rm -f netbsd netbsd.gz
 	cp ${KERNOBJDIR}/RAMDISK/netbsd .
-	mdsetimage netbsd ${MINIROOTOBJ}/miniroot.fs
+	${MDSETIMAGE} netbsd ${MINIROOTOBJ}/miniroot.fs
 	gzip -9 netbsd
 	${IINST} netbsd.gz ${ITARGET}/.
 	${.CURDIR}/../sets/makesums -t ${ITARGET} '*.gz'

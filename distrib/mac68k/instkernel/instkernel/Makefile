@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/09/23 13:53:42 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 2001/10/21 23:23:20 jmc Exp $
 
 .include "../../../Makefile.inc"
 
@@ -7,11 +7,12 @@ RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	${MAKE} -s -f-
 
 INSTALL_KERNEL?=INSTALL
+MDSETIMAGE?=	mdsetimage
 KERNEL=${KERNOBJDIR}/${INSTALL_KERNEL}/netbsd
 
 all:
 	cp ${KERNEL} netbsd-${INSTALL_KERNEL}
-	mdsetimage -T 0x0 -v netbsd-${INSTALL_KERNEL} ${RAMDISK}
+	${MDSETIMAGE} -T 0x0 -v netbsd-${INSTALL_KERNEL} ${RAMDISK}
 # XXX Doesn't boot with this. Why?
 #	strip netbsd-${INSTALL_KERNEL}
 # XXX Reported not to boot on some machines.

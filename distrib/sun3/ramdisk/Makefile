@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.19 2001/10/13 06:15:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2001/10/21 23:23:23 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
 # This include just sets REV=XX
 .include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
 
 IMAGE=	ramdisk
 CBIN=	rd_bin
@@ -26,6 +27,7 @@ DISKTYPE=	rdroot
 SIZE=		400k
 # bigendian, minfree, opt, b/i , cpg
 NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
+MDSETIMAGE?=	mdsetimage
 MTREE?=		mtree
 
 KERNELS= netbsd.RAMDISK netbsd.RAMDISK3X
@@ -35,12 +37,12 @@ all: $(KERNELS)
 
 netbsd.RAMDISK : ${IMAGE}.fs
 	cp ${KERNEL3} netbsd-tmp
-	mdsetimage -v netbsd-tmp ${IMAGE}.fs
+	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
 netbsd.RAMDISK3X : ${IMAGE}.fs
 	cp ${KERNEL3X} netbsd-tmp
-	mdsetimage -v netbsd-tmp ${IMAGE}.fs
+	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
 ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/07/21 14:46:09 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/21 23:23:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,6 +8,7 @@ TOP=		${.CURDIR}/..
 
 MDEC=		${DESTDIR}/usr/mdec
 STRIP?=		strip
+MDSETIMAGE?=	${DESTDIR}/usr/sbin/mdsetimage
 
 #COMMONDIR=	${TOP}/bootfloppy-common
 #LISTS=		${COMMONDIR}/list
@@ -23,7 +24,7 @@ RAMDISK_S!=	cd ${.CURDIR}/../ramdisk-small/; \
 
 netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
 	cp ${KERNOBJDIR}/INSTALL/netbsd netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	nm netbsd.tmp > netbsd.INSTALL.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
@@ -31,7 +32,7 @@ netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
 
 netbsd.INSTALL_LAPTOP.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_LAPTOP/netbsd ${RAMDISK}
 	cp ${KERNOBJDIR}/INSTALL_LAPTOP/netbsd netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	nm netbsd.tmp > netbsd.INSTALL_LAPTOP.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
@@ -40,7 +41,7 @@ netbsd.INSTALL_LAPTOP.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_LAPTOP/netbsd ${RAMDISK
 netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
 	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_T}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_T}
 	nm netbsd.tmp > netbsd.INSTALL_TINY.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
@@ -48,7 +49,7 @@ netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 
 netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S}
 	cp ${KERNOBJDIR}/INSTALL_SMALL/netbsd netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_S}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_S}
 	nm netbsd.tmp > netbsd.INSTALL_SMALL.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
@@ -57,7 +58,7 @@ netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S
 netbsd.INSTALL_PS2.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_PS2/netbsd ${RAMDISK_S}
 	cp ${KERNOBJDIR}/INSTALL_PS2/netbsd netbsd.tmp
 	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_S}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_S}
 	nm netbsd.tmp > netbsd.INSTALL_PS2.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp

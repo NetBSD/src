@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/13 06:15:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/21 23:23:23 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
 # This include just sets REV=XX
 .include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
 
 IMAGE=	ramdisk
 CBIN=	rd_bin
@@ -14,6 +15,7 @@ LISTS=	${TOP}/common/${CBIN}.list \
 	${TOP}/common/${IMAGE}.list
 
 KERNEL  = ${KERNOBJDIR}/RAMDISK/netbsd
+MDSETIMAGE?=	mdsetimage
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd1
@@ -34,7 +36,7 @@ all: $(KERNELS)
 
 netbsd.RAMDISK : ${IMAGE}.fs
 	cp ${KERNEL} netbsd-tmp
-	mdsetimage -v netbsd-tmp ${IMAGE}.fs
+	${MDSETIMAGE} -v netbsd-tmp ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
 ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}

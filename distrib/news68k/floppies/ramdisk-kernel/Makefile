@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/07 08:39:34 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/21 23:23:21 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 .include <bsd.subdir.mk>
 
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
@@ -12,12 +13,13 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 KERNEL=		netbsd.INSTALL.gz
 
 CLEANFILES+=	${KERNEL} netbsd.tmp netbsd.tmp.gz
+MDSETIMAGE?=	mdsetimage
 
 all:	${KERNEL}
 
 ${KERNEL}: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
