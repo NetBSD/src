@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.44 2003/07/17 19:44:53 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.45 2003/07/18 09:34:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,7 @@
 #include <fcntl.h>
 #include <curses.h>
 #include <termios.h>
+#include <dirent.h>
 #include <util.h>
 #include <err.h>
 #include <sys/ioctl.h>
@@ -240,6 +241,71 @@ do_system(const char *execstr)
 	ret = Xsystem(execstr);
 	return (ret);
 
+}
+
+static char **
+make_argv(const char *cmd)
+{
+	char **argv = 0;
+	int argc = 0;
+	const char *cp;
+	char *dp, *fn;
+	DIR *dir;
+	struct dirent *dirent;
+	int l;
+
+	for (; *cmd != 0; cmd = cp + strspn(cp, " "), argc++) {
+		cp = strchr(cmd, ' ');
+		if (cp == NULL)
+			cp = strchr(cmd, 0);
+		argv = realloc(argv, (argc + 2) * sizeof *argv);
+		if (argv == NULL)
+			err(1, "realloc(argv) for %s", cmd);
+		asprintf(argv + argc, "%.*s", (int)(cp - cmd), cmd);
+		if (cp[-1] != '*')
+			continue;
+		/* do limited filename globbing */
+		dp = argv[argc];
+		fn = strrchr(dp, '/');
+		if (fn != NULL)
+			*fn = 0;
+		dir = opendir(dp);
+		if (fn != NULL)
+			*fn++ = '/';
+		else
+			fn = dp;
+		if (dir == NULL)
+			continue;
+		l = strlen(fn) - 1;
+		while ((dirent = readdir(dir))) {
+			if (dirent->d_name[0] == '.')
+				continue;
+			if (strncmp(dirent->d_name, fn, l) != 0)
+				continue;
+			if (dp != argv[argc])
+				argc++;
+			argv = realloc(argv, (argc + 2) * sizeof *argv);
+			if (argv == NULL)
+				err(1, "realloc(argv) for %s", cmd);
+			asprintf(argv + argc, "%.*s%s", (int)(fn - dp), dp,
+				dirent->d_name);
+		}
+		if (dp != argv[argc])
+			free(dp);
+		closedir(dir);
+	}
+	argv[argc] = NULL;
+	return argv;
+}
+
+static void
+free_argv(char **argv)
+{
+	char **n, *a;
+
+	for (n = argv; (a = *n++);)
+		free(a);
+	free(argv);
 }
 
 /*
@@ -460,20 +526,16 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	struct winsize win;
 	int ret;
 	WINDOW *actionwin, *statuswin, *boxwin;
-	char buf2[MAXBUF], scmd[MAXBUF];
-	char *p, *args[256], **aps;
+	char *scmd;
+	char **args;
 	const char *errstr;
 
-	va_start(ap,cmd);
-	vsnprintf(buf2, sizeof(buf2), cmd, ap);
-	strcpy(scmd, buf2);
-	p = buf2;
+	va_start(ap, cmd);
+	vasprintf(&scmd, cmd, ap);
+	if (scmd == NULL)
+		err(1, "vasprintf(&scmd, \"%s\", ...)", cmd);
 
-	/* 51 strings and it's blown! */
-	for (aps = args; aps < &args[sizeof(args) / sizeof(args[0])] &&
-	    (*aps = strsep(&p, " ")) != NULL;)
-		if (**aps != '\0')
-			++aps;
+	args = make_argv(scmd);
 
 	/* Make curses save tty settings */
 	def_prog_mode();
@@ -591,5 +653,7 @@ done:
 		msg_display(errmsg, scmd);
 		process_menu(MENU_ok, NULL);
 	}
+	free(scmd);
+	free_argv(args);
 	return (ret);
 }
