@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1999/11/08 05:05:26 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.24 1999/11/21 11:47:51 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -198,7 +198,9 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
+#if defined(DDB) && defined(DB_ELF_SYMBOLS)
 	extern void *ssym, *esym;
+#endif
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
