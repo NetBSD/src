@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/12/08 10:28:05 pk Exp $
+#	$Id: Makefile,v 1.6 1993/12/08 11:47:31 mycroft Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c sbrk.c shlib.c etc.c md.c
@@ -11,7 +11,7 @@ LDFLAGS = -Bshareable -Bsymbolic -assert nosymbolic
 LIBS =  -lc_pic
 BINDIR= /usr/libexec
 
-.PATH: $(LDDIR) $(LDDIR)/$(MACHINE)
+.PATH: $(LDDIR) $(LDDIR)/$(MACHINE_ARCH)
 
 .SUFFIXES: .S
 

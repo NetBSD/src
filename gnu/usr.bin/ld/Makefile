@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 1993/12/08 10:13:47 pk Exp $
+# $Id: Makefile,v 1.11 1993/12/08 11:47:17 mycroft Exp $
 #
 
 PROG=	ld
@@ -13,6 +13,6 @@ SUBDIR=	ldconfig ldd
 SUBDIR+= rtld
 .endif
 
-.PATH: $(.CURDIR)/$(MACHINE)
+.PATH: $(.CURDIR)/$(MACHINE_ARCH)
 
 .include <bsd.prog.mk>
