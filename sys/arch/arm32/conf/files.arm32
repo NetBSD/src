@@ -249,7 +249,6 @@ file	arch/arm32/arm32/setstack.S
 file	arch/arm32/kshell/shell_input.c		kshell
 file	arch/arm32/kshell/shell_shell.c		kshell
 file	arch/arm32/kshell/shell_disassem.c	kshell
-file	arch/arm32/kshell/strchr.c		kshell
 file	arch/arm32/kshell/dumphex.c		kshell
 
 # files related to debugging
