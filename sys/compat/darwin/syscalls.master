@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 2004/07/28 22:24:06 manu Exp $
+	$NetBSD: syscalls.master,v 1.27 2004/08/02 18:45:53 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -60,6 +60,7 @@
 #include <compat/mach/mach_vm.h>
 
 #include <compat/darwin/darwin_signal.h>
+#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 %%
