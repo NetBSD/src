@@ -33,11 +33,15 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)genget.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: genget.c,v 1.3 1994/02/25 02:52:59 cgd Exp $";
+static char *rcsid = "$Id: genget.c,v 1.4 1995/06/05 19:46:58 pk Exp $";
 #endif /* not lint */
 
-
 #include <ctype.h>
+#include "misc-proto.h"
+
+int isprefix __P((char *, char *));
+char **genget __P((char *, char **, int));
+int Ambiguous __P((char *));
 
 #define	LOWER(x) (isupper(x) ? tolower(x) : (x))
 /*
@@ -50,8 +54,7 @@ static char *rcsid = "$Id: genget.c,v 1.3 1994/02/25 02:52:59 cgd Exp $";
 isprefix(s1, s2)
 	register char *s1, *s2;
 {
-        register int n = 0;
-        char *os1;
+	char *os1;
 	register char c1, c2;
 
         if (*s1 == '\0')
