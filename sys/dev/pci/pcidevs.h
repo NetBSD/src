@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.597 2003/12/08 17:05:27 pooka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.598 2003/12/09 18:58:49 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.599 2003/12/08 17:00:48 pooka Exp 
+ *	NetBSD: pcidevs,v 1.600 2003/12/09 18:58:16 ad Exp 
  */
 
 /*
@@ -1579,6 +1579,7 @@
 #define	PCI_PRODUCT_INTEL_82870P2_IOxAPIC	0x1461		/* 82870P2 P64H2 IOxAPIC */
 #define	PCI_PRODUCT_INTEL_82870P2_HPLUG	0x1462		/* 82870P2 P64H2 Hot Plug Controller */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
+#define	PCI_PRODUCT_INTEL_80960RM_2	0x1962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
 #define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */

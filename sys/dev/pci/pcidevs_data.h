@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.595 2003/12/08 17:05:27 pooka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.596 2003/12/09 18:58:49 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.599 2003/12/08 17:00:48 pooka Exp 
+ *	NetBSD: pcidevs,v 1.600 2003/12/09 18:58:16 ad Exp 
  */
 
 /*
@@ -4586,6 +4586,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "ROB-in i960RP Microprocessor",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM_2,
+	    0,
+	    "Intel",
+	    "i960 RM PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
