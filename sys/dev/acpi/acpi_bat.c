@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.28 2003/11/01 09:49:45 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.29 2003/11/01 10:24:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.28 2003/11/01 09:49:45 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.29 2003/11/01 10:24:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,11 +107,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.28 2003/11/01 09:49:45 mycroft Exp $"
 #define ACPIBAT_WCAPACITY	5
 #define ACPIBAT_LCAPACITY	6
 #define ACPIBAT_VOLTAGE		7
-#define ACPIBAT_LOAD		8
-#define ACPIBAT_CAPACITY	9
-#define ACPIBAT_CHARGING       10
-#define ACPIBAT_DISCHARGING    11
-#define ACPIBAT_NSENSORS       12  /* number of sensors */
+#define ACPIBAT_CHARGERATE	8
+#define ACPIBAT_DISCHARGERATE	9
+#define ACPIBAT_CAPACITY	10
+#define ACPIBAT_CHARGING	11
+#define ACPIBAT_DISCHARGING	12
+#define ACPIBAT_NSENSORS	13  /* number of sensors */
 
 const struct envsys_range acpibat_range_amp[] = {
 	{ 0, 1,		ENVSYS_SVOLTS_DC },
@@ -331,12 +332,13 @@ acpibat_clear_stat(struct acpibat_softc *sc)
 
 	if (sc->sc_available>ABAT_ALV_INFO)
 		sc->sc_available = ABAT_ALV_INFO;
-	sc->sc_data[ACPIBAT_LOAD].validflags &= ~ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_CHARGERATE].validflags &= ~ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_DISCHARGERATE].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FFRACVALID);
 	sc->sc_data[ACPIBAT_CAPACITY].warnflags = 0;
 	sc->sc_data[ACPIBAT_VOLTAGE].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_DISCHARGING].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CHARGING].validflags &= ~ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_DISCHARGING].validflags &= ~ENVSYS_FCURVALID;
 }
 
 
@@ -385,7 +387,6 @@ acpibat_get_info(struct acpibat_softc *sc)
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
 	int capunit, rateunit, s;
-	const char *capstring, *ratestring;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BIF", &buf);
 	if (rv != AE_OK) {
@@ -421,23 +422,20 @@ acpibat_get_info(struct acpibat_softc *sc)
 		ABAT_SET(sc, ABAT_F_PWRUNIT_MA);
 		sc->sc_sysmon.sme_ranges = acpibat_range_amp;
 		capunit = ENVSYS_SAMPHOUR;
-		capstring = "charge";
 		rateunit = ENVSYS_SAMPS;
-		ratestring = "current";
 	} else {
 		ABAT_CLEAR(sc, ABAT_F_PWRUNIT_MA);
 		sc->sc_sysmon.sme_ranges = acpibat_range_watt;
 		capunit = ENVSYS_SWATTHOUR;
-		capstring = "energy";
 		rateunit = ENVSYS_SWATTS;
-		ratestring = "power";
 	}
 	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
 	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "last full cap");
 	INITDATA(ACPIBAT_WCAPACITY, capunit, "warn cap");
 	INITDATA(ACPIBAT_LCAPACITY, capunit, "low cap");
-	INITDATA(ACPIBAT_LOAD, rateunit, ratestring);
-	INITDATA(ACPIBAT_CAPACITY, capunit, capstring);
+	INITDATA(ACPIBAT_CHARGERATE, rateunit, "charge rate");
+	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
+	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
 
 	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = p2[1].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DCAPACITY].validflags |= ENVSYS_FCURVALID;
@@ -503,13 +501,21 @@ acpibat_get_status(struct acpibat_softc *sc)
 
 	ABAT_LOCK(sc, s);
 	status = p2[0].Integer.Value;
-	sc->sc_data[ACPIBAT_LOAD].cur.data_s = p2[1].Integer.Value * 1000;
-	sc->sc_data[ACPIBAT_LOAD].validflags |= ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_CHARGERATE].validflags &= ~ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_DISCHARGERATE].validflags &= ~ENVSYS_FCURVALID;
+	if (p2[1].Integer.Value != -1) {
+		if (status & ACPIBAT_CHARGING) {
+			sc->sc_data[ACPIBAT_CHARGERATE].cur.data_s = p2[1].Integer.Value * 1000;
+			sc->sc_data[ACPIBAT_CHARGERATE].validflags |= ENVSYS_FCURVALID;
+		} else if (status & ACPIBAT_DISCHARGING) {
+			sc->sc_data[ACPIBAT_DISCHARGERATE].cur.data_s = p2[1].Integer.Value * 1000;
+			sc->sc_data[ACPIBAT_DISCHARGERATE].validflags |= ENVSYS_FCURVALID;
+		}
+	}
 	sc->sc_data[ACPIBAT_CAPACITY].cur.data_s = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_CAPACITY].validflags |= ENVSYS_FCURVALID | ENVSYS_FFRACVALID;
 	sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s = p2[3].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_VOLTAGE].validflags |= ENVSYS_FCURVALID;
-
 	flags = 0;
 	if (sc->sc_data[ACPIBAT_CAPACITY].cur.data_s <
 	    sc->sc_data[ACPIBAT_WCAPACITY].cur.data_s)
@@ -517,12 +523,12 @@ acpibat_get_status(struct acpibat_softc *sc)
 	if (status & ACPIBAT_ST_CRITICAL)
 		flags |= ENVSYS_WARN_CRITUNDER;
 	sc->sc_data[ACPIBAT_CAPACITY].warnflags = flags;
-	sc->sc_data[ACPIBAT_DISCHARGING].cur.data_s =
-	    ((status & ACPIBAT_ST_DISCHARGING) != 0);
-	sc->sc_data[ACPIBAT_DISCHARGING].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CHARGING].cur.data_s =
 	    ((status & ACPIBAT_ST_CHARGING) != 0);
 	sc->sc_data[ACPIBAT_CHARGING].validflags |= ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_DISCHARGING].cur.data_s =
+	    ((status & ACPIBAT_ST_DISCHARGING) != 0);
+	sc->sc_data[ACPIBAT_DISCHARGING].validflags |= ENVSYS_FCURVALID;
 	sc->sc_available = ABAT_ALV_STAT;
 	ABAT_UNLOCK(sc, s);
 
@@ -583,7 +589,11 @@ acpibat_print_stat(struct acpibat_softc *sc)
 	       SCALE(sc->sc_data[ACPIBAT_VOLTAGE].cur.data_s),
 	       SCALE(sc->sc_data[ACPIBAT_CAPACITY].cur.data_s), CAPUNITS(sc),
 	       percent,
-	       SCALE(sc->sc_data[ACPIBAT_LOAD].cur.data_s), RATEUNITS(sc));
+	       SCALE(sc->sc_data[ACPIBAT_CHARGING].cur.data_s ?
+		     sc->sc_data[ACPIBAT_CHARGERATE].cur.data_s :
+		     sc->sc_data[ACPIBAT_DISCHARGING].cur.data_s ?
+		     sc->sc_data[ACPIBAT_DISCHARGERATE].cur.data_s : 0),
+		     RATEUNITS(sc));
 }
 
 static void
@@ -691,7 +701,6 @@ void
 acpibat_init_envsys(struct acpibat_softc *sc)
 {
 	int capunit, rateunit, i;
-	const char *capstring, *ratestring;
 
 #if 0
 	if (sc->sc_flags & ABAT_F_PWRUNIT_MA) {
@@ -699,16 +708,12 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 		/* XXX */
 		sc->sc_sysmon.sme_ranges = acpibat_range_amp;
 		capunit = ENVSYS_SAMPHOUR;
-		capstring = "charge";
 		rateunit = ENVSYS_SAMPS;
-		ratestring = "current";
 #if 0
 	} else {
 		sc->sc_sysmon.sme_ranges = acpibat_range_watt;
 		capunit = ENVSYS_SWATTHOUR;
-		capstring = "energy";
 		rateunit = ENVSYS_SWATTS;
-		ratestring = "power";
 	}
 #endif
 
@@ -726,8 +731,9 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_WCAPACITY, capunit, "warn cap");
 	INITDATA(ACPIBAT_LCAPACITY, capunit, "low cap");
 	INITDATA(ACPIBAT_VOLTAGE, ENVSYS_SVOLTS_DC, "voltage");
-	INITDATA(ACPIBAT_LOAD, rateunit, ratestring);
-	INITDATA(ACPIBAT_CAPACITY, capunit, capstring);
+	INITDATA(ACPIBAT_CHARGERATE, rateunit, "charge rate");
+	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
+	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
 	INITDATA(ACPIBAT_DISCHARGING, ENVSYS_INDICATOR, "discharging");
 
