@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.14.2.1 1999/12/20 21:07:13 he Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.14.2.2 2001/04/14 21:14:26 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.14.2.1 1999/12/20 21:07:13 he Exp $";
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.14.2.2 2001/04/14 21:14:26 he Exp $";
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.4.2.3 1999/09/18 15:03:54 darrenr Exp ";
@@ -141,8 +141,11 @@ fr_info_t *fin;
 u_int pass;
 ipfr_t *table[];
 {
-	ipfr_t	**fp, *fra, frag;
-	u_int	idx;
+	ipfr_t **fp, *fra, frag;
+	u_int idx, off;
+
+	if (!(fin->fin_fi.fi_fl & FI_FRAG))
+		return NULL;
 
 	frag.ipfr_p = ip->ip_p;
 	idx = ip->ip_p;
@@ -196,7 +199,10 @@ ipfr_t *table[];
 	/*
 	 * Compute the offset of the expected start of the next packet.
 	 */
-	fra->ipfr_off = (ip->ip_off & IP_OFFMASK) + (fin->fin_dlen >> 3);
+	off = ip->ip_off & IP_OFFMASK;
+	if (!off)
+		fra->ipfr_seen0 = 1;
+	fra->ipfr_off = off + (fin->fin_dlen >> 3);
 	ATOMIC_INC(ipfr_stats.ifs_new);
 	ATOMIC_INC(ipfr_inuse);
 	return fra;
@@ -248,6 +254,9 @@ ipfr_t *table[];
 	ipfr_t	*f, frag;
 	u_int	idx;
 
+	if (!(fin->fin_fi.fi_fl & FI_FRAG))
+		return NULL;
+
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
 	 * (these should all be the same for all fragments of a packet).
@@ -274,6 +283,19 @@ ipfr_t *table[];
 			  IPFR_CMPSZ)) {
 			u_short	atoff, off;
 
+			/*
+			 * XXX - We really need to be guarding against the
+			 * retransmission of (src,dst,id,offset-range) here
+			 * because a fragmented packet is never resent with
+			 * the same IP ID#.
+			 */
+			off = ip->ip_off & IP_OFFMASK;
+			if (f->ipfr_seen0) {
+				if (!off || (fin->fin_fi.fi_fl & FI_SHORT))
+					continue;
+			} else if (!off)
+				f->ipfr_seen0 = 1;
+
 			if (f != table[idx]) {
 				/*
 				 * move fragment info. to the top of the list
@@ -286,7 +308,6 @@ ipfr_t *table[];
 				f->ipfr_prev = NULL;
 				table[idx] = f;
 			}
-			off = ip->ip_off & IP_OFFMASK;
 			atoff = off + (fin->fin_dlen >> 3);
 			/*
 			 * If we've follwed the fragments, and this is the
