@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.680 2004/03/22 00:48:04 groo Exp $
+#	$NetBSD: mi,v 1.681 2004/03/22 10:28:55 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2247,7 +2247,7 @@
 ./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OpenSSL_add_all_algorithms.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_config.0		comp-c-man		crypto,.cat
-./usr/share/man/cat3/OPENSSL_load_built_modules.0	comp-c-man		crypto,.cat
+./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		crypto,.cat
 ./usr/share/man/cat3/PKCS12_create.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_parse.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_decrypt.0		comp-c-catman		crypto,.cat
@@ -5886,7 +5886,7 @@
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_config.3		comp-c-man		crypto,.man
-./usr/share/man/man3/OPENSSL_load_built_modules.3	comp-c-man		crypto,.man
+./usr/share/man/man3/OPENSSL_load_builtin_modules.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS12_create.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS12_parse.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS7_decrypt.3		comp-c-man		crypto,.man
