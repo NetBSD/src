@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.25 1995/01/11 20:37:12 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.26 1995/01/24 05:45:54 gwr Exp $
 
 #
 # Makefile for NetBSD
@@ -150,8 +150,8 @@ genassym:
 	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dsun3 -o genassym \
 	    ${SUN3}/sun3/genassym.c
 
-depend: assym.s param.c vnode_if.h
-	mkdep ${COPTS} ${CFILES} ioconf.c param.c
+depend: assym.s ioconf.c param.c vnode_if.c
+	mkdep ${COPTS} ${CFILES} ioconf.c param.c vnode_if.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${SUN3}/sun3/genassym.c 
 
 links:
