@@ -1,3 +1,4 @@
+/*	$NetBSD$	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
@@ -46,7 +47,12 @@
  * follow must call back into the HAL through interface, supplying the
  * reference as the first parameter.
  */
+#ifdef __FreeBSD__
 #include "ah_osdep.h"
+#endif
+#ifdef __NetBSD__
+#include <../contrib/sys/dev/ic/athhal_osdep.h>
+#endif
 
 /*
  * Status codes that may be returned by the HAL.  Note that
@@ -71,6 +77,30 @@ typedef enum {
 	HAL_ESELFTEST,		/* Hardware self-test failed */
 	HAL_EINPROGRESS,	/* Operation incomplete */
 } HAL_STATUS;
+
+#define HAL_STATUS_STRING(code, message) { code, message "(" #code ")" }
+#define HAL_STATUS_SENTINEL { 0, NULL }
+
+#define HAL_STATUS_STRINGS { \
+	HAL_STATUS_STRING(HAL_OK, "No error"), \
+	HAL_STATUS_STRING(HAL_ENXIO, "No hardware present"), \
+	HAL_STATUS_STRING(HAL_ENOMEM, "Memory allocation failed"), \
+	HAL_STATUS_STRING(HAL_EIO, "Hardware didn't respond as expected"), \
+	HAL_STATUS_STRING(HAL_EEMAGIC, "EEPROM magic number invalid"), \
+	HAL_STATUS_STRING(HAL_EEVERSION, "EEPROM version invalid"), \
+	HAL_STATUS_STRING(HAL_EELOCKED, "EEPROM unreadable"), \
+	HAL_STATUS_STRING(HAL_EEBADSUM, "EEPROM checksum invalid"), \
+	HAL_STATUS_STRING(HAL_EEREAD, "EEPROM read problem"), \
+	HAL_STATUS_STRING(HAL_EEBADMAC, "EEPROM mac address invalid"), \
+	HAL_STATUS_STRING(HAL_EESIZE, "EEPROM size not supported"), \
+	HAL_STATUS_STRING(HAL_EEWRITE, \
+	    "Attempt to change write-locked EEPROM"), \
+	HAL_STATUS_STRING(HAL_EINVAL, "Invalid parameter to function"), \
+	HAL_STATUS_STRING(HAL_ENOTSUPP, "Hardware revision not supported"), \
+	HAL_STATUS_STRING(HAL_ESELFTEST, "Hardware self-test failed"), \
+	HAL_STATUS_STRING(HAL_EINPROGRESS, "Operation incomplete"), \
+	HAL_STATUS_SENTINEL \
+}
 
 typedef enum {
 	AH_FALSE = 0,		/* NB: lots of code assumes false is zero */
