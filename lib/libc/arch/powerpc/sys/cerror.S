@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.5 2000/01/27 14:58:48 kleink Exp $	*/
+/*	$NetBSD: cerror.S,v 1.6 2002/07/30 06:07:59 matt Exp $	*/
 
 #include <machine/asm.h>
 #include "SYS.h"
@@ -9,30 +9,30 @@
 
 ENTRY(__cerror)
 #ifdef _REENTRANT
-	mflr	0
-	stwu	1,-16(1)		# allocate new stack frame
-	stw	0,20(1)
-	stw	31,8(1)
-	mr	31,3			# stash away in callee-saved register
+	mflr	%r0
+	stwu	%r1,-16(%r1)		# allocate new stack frame
+	stw	%r0,20(%r1)
+	stw	%r31,8(%r1)
+	mr	%r31,%r3		# stash away in callee-saved register
 	bl	PIC_PLT(_C_LABEL(__errno))
-	stw	31,0(3)
-	lwz	0,20(1)
-	lwz	31,8(1)
-	mtlr	0
-	la	1,16(1)
+	stw	%r31,0(%r3)
+	lwz	%r0,20(%r1)
+	lwz	%r31,8(%r1)
+	mtlr	%r0
+	la	%r1,16(%r1)
 #else
 #ifdef PIC
-	mflr	10
+	mflr	%r10
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	4
-	lwz	4,_C_LABEL(errno)@got(4)
-	stw	3,0(4)
-	mtlr	10
+	mflr	%r4
+	lwz	%r4,_C_LABEL(errno)@got(%r4)
+	stw	%r3,0(%r4)
+	mtlr	%r10
 #else
-	lis	4,_C_LABEL(errno)@ha
-	stw	3,_C_LABEL(errno)@l(4)
+	lis	%r4,_C_LABEL(errno)@ha
+	stw	%r3,_C_LABEL(errno)@l(%r4)
 #endif /* PIC */
 #endif /* _REENTRANT */
-	li	3,-1
-	li	4,-1
+	li	%r3,-1
+	li	%r4,-1
 	blr
