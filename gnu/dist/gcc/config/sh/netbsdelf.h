@@ -120,7 +120,7 @@ do {									\
 
 #undef LINK_SPEC
 #define	LINK_SPEC \
- "%{ml:-m shlelf} %{mrelax:-relax} \
+ "%{ml:-m elf32shlunx} %{mrelax:-relax} \
   %{assert*} \
   %{shared:-shared} \
   %{!shared: \
