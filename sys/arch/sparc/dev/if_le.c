@@ -1,6 +1,7 @@
-/*	$NetBSD: if_le.c,v 1.44 1997/03/15 18:10:38 is Exp $	*/
+/*	$NetBSD: if_le.c,v 1.45 1997/03/17 03:24:26 thorpej Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -22,6 +23,8 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by Aaron Brown and
  *	Harvard University.
+ *	This product includes software developed for the NetBSD Project
+ *	by Jason R. Thorpe.
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -55,6 +58,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -94,6 +98,24 @@ myleintr(arg)
 	return (am7990_intr(arg));
 }
 #endif
+
+#if defined(SUN4M)
+/*
+ * Media types supported by the Sun4m.
+ */
+int lemediasun4m[] = {
+	IFM_ETHER|IFM_10_T,
+	IFM_ETHER|IFM_10_5,
+	IFM_ETHER|IFM_AUTO,
+};
+#define NLEMEDIASUN4M	(sizeof(lemediasun4m) / sizeof(lemediasun4m[0]))
+
+void	lesetutp __P((struct am7990_softc *));
+void	lesetaui __P((struct am7990_softc *));
+
+int	lemediachange __P((struct am7990_softc *));
+void	lemediastatus __P((struct am7990_softc *, struct ifmediareq *));
+#endif /* SUN4M */
 
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
@@ -140,6 +162,78 @@ lerdcsr(sc, port)
 	return (val);
 }
 
+#if defined(SUN4M)
+void
+lesetutp(sc)
+	struct am7990_softc *sc;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
+	delay(20000);	/* must not touch le for 20ms */
+}
+
+void
+lesetaui(sc)
+	struct am7990_softc *sc;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
+	delay(20000);	/* must not touch le for 20ms */
+}
+
+int
+lemediachange(sc)
+	struct am7990_softc *sc;
+{
+	struct ifmedia *ifm = &sc->sc_media;
+
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	/*
+	 * Switch to the selected media.  If autoselect is
+	 * set, we don't really have to do anything.  We'll
+	 * switch to the other media when we detect loss of
+	 * carrier.
+	 */
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_10_T:
+		lesetutp(sc);
+		break;
+
+	case IFM_10_5:
+		lesetaui(sc);
+		break;
+
+	case IFM_AUTO:
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+void
+lemediastatus(sc, ifmr)
+	struct am7990_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	/*
+	 * Notify the world which media we're currently using.
+	 */
+	if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
+		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
+	else
+		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
+}
+#endif /* SUN4M */
+
 hide void
 lehwinit(sc)
 	struct am7990_softc *sc;
@@ -147,15 +241,20 @@ lehwinit(sc)
 #if defined(SUN4M) 
 	struct le_softc *lesc = (struct le_softc *)sc;
 
+	/*
+	 * Make sure we're using the currently-enabled media type.
+	 * XXX Actually, this is probably unnecessary, now.
+	 */
 	if (CPU_ISSUN4M && lesc->sc_dma) {
-		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+		switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
+		case IFM_10_T:
+			lesetutp(sc);
+			break;
 
-		if (ifp->if_flags & IFF_LINK0)
-			lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
-		else if (ifp->if_flags & IFF_LINK1)
-			lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
-
-		delay(20000);	/* must not touch le for 20ms */
+		case IFM_10_5:
+			lesetaui(sc);
+			break;
+		}
 	}
 #endif
 }
@@ -168,39 +267,32 @@ lenocarrier(sc)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	if (CPU_ISSUN4M && lesc->sc_dma) {
-		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
 		/* 
 		 * Check if the user has requested a certain cable type, and
 		 * if so, honor that request.
 		 */
-		if (ifp->if_flags & IFF_LINK0)
-			printf("%s: lost carrier on UTP port\n",
-			       sc->sc_dev.dv_xname);
-		else if (ifp->if_flags & IFF_LINK1)
-			printf("%s: lost carrier on AUI port\n",
-			       sc->sc_dev.dv_xname);
-		else {
-			/*
-			 * Switch cable type and inform the user that
-			 * we have done so
-			 */
-			if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP) {
-				printf("%s: no carrier on UTP port, "
-				       "switching to AUI port\n",
-				       sc->sc_dev.dv_xname);
-				lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
-			} else {
-				printf("%s: no carrier on AUI port, "
-				       "switching to UTP port\n",
-				       sc->sc_dev.dv_xname);
-				lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
+		printf("%s: lost carrier on ", sc->sc_dev.dv_xname);
+		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP) {
+			printf("UTP port");
+			switch (IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+			case IFM_10_5:
+			case IFM_AUTO:
+				printf(", switching to AUI port");
+				lesetaui(sc);
 			}
-			delay(20000); /* make cable selection stick */
+		} else {
+			printf("AUI port");
+			switch (IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+			case IFM_10_T:
+			case IFM_AUTO:
+				printf(", switching to UTP port");
+				lesetutp(sc);
+			}
 		}
+		printf("\n");
 	} else
 #endif
-		printf("%s: lost carrier\n",sc->sc_dev.dv_xname);
+		printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -345,6 +437,16 @@ leattach(parent, self, aux)
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = lehwinit;
 	sc->sc_nocarrier = lenocarrier;
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M) {
+		sc->sc_mediachange = lemediachange;
+		sc->sc_mediastatus = lemediastatus;
+		sc->sc_supmedia = lemediasun4m;
+		sc->sc_nsupmedia = NLEMEDIASUN4M;
+		sc->sc_defaultmedia = IFM_ETHER|IFM_AUTO;
+	}
+#endif
 
 	am7990_config(sc);
 
