@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.98 2003/07/09 08:09:04 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.99 2003/07/31 05:24:00 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd January 20, 2003
+.Dd July 31, 2003
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -2186,6 +2186,11 @@ Default is port returned by a
 .Fn getservbyname
 lookup of
 .Dq ftpgate/tcp .
+.It Ev FTPUSERAGENT
+The value to send for the
+.Tn HTTP
+User-Agent
+header.
 .It Ev HOME
 For default location of a
 .Pa .netrc

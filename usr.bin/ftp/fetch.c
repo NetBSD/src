@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.143 2003/07/26 20:34:13 salo Exp $	*/
+/*	$NetBSD: fetch.c,v 1.144 2003/07/31 05:23:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.143 2003/07/26 20:34:13 salo Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.144 2003/07/31 05:23:59 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -437,7 +437,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	char			*cp, *ep, *buf, *savefile;
 	char			*auth, *location, *message;
 	char			*user, *pass, *host, *port, *path, *decodedpath;
-	char			*puser, *ppass;
+	char			*puser, *ppass, *useragent;
 	off_t			hashbytes, rangestart, rangeend, entitylen;
 	int			 (*closefunc)(FILE *);
 	FILE			*fin, *fout;
@@ -750,7 +750,12 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (flushcache)
 				fprintf(fin, "Cache-Control: no-cache\r\n");
 		}
-		fprintf(fin, "User-Agent: %s/%s\r\n", FTP_PRODUCT, FTP_VERSION);
+		if ((useragent=getenv("FTPUSERAGENT")) != NULL) {
+			fprintf(fin, "User-Agent: %s\r\n", useragent);
+		} else {
+			fprintf(fin, "User-Agent: %s/%s\r\n",
+			    FTP_PRODUCT, FTP_VERSION);
+		}
 		if (wwwauth) {
 			if (verbose) {
 				fprintf(ttyout, "%swith authorization",
@@ -1618,7 +1623,8 @@ go_fetch(const char *url)
 	 */
 	if (strncasecmp(url, ABOUT_URL, sizeof(ABOUT_URL) - 1) == 0) {
 		url += sizeof(ABOUT_URL) -1;
-		if (strcasecmp(url, "ftp") == 0) {
+		if (strcasecmp(url, "ftp") == 0 ||
+		    strcasecmp(url, "tnftp") == 0) {
 			fputs(
 "This version of ftp has been enhanced by Luke Mewburn <lukem@NetBSD.org>\n"
 "for the NetBSD project.  Execute `man ftp' for more details.\n", ttyout);
@@ -1629,7 +1635,7 @@ go_fetch(const char *url)
 		} else if (strcasecmp(url, "netbsd") == 0) {
 			fputs(
 "NetBSD is a freely available and redistributable UNIX-like operating system.\n"
-"For more information, see http://www.NetBSD.org/index.html\n", ttyout);
+"For more information, see http://www.NetBSD.org/\n", ttyout);
 		} else if (strcasecmp(url, "version") == 0) {
 			fprintf(ttyout, "Version: %s %s%s\n",
 			    FTP_PRODUCT, FTP_VERSION,
