@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.14 1999/03/22 18:44:14 garbled Exp $
+.\"	$NetBSD: vnconfig.8,v 1.14.10.1 2000/10/01 11:12:27 bjh21 Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,22 +114,29 @@ If successful, references to
 .Ar vnode_disk
 will access the contents of
 .Ar regular_file .
+.Pp
 If
-.Op Ar geomspec
+.Ar geomspec
 is specified, the vnode device will emulate the specified disk geometry.
 The format of the
-.Op Ar geomspec
-argument is
-.Dq secsize/nsectors/ntracks/ncylinders .
+.Ar geomspec
+argument is:
+.Bd -ragged -offset indent
+.Sm off
+.Xo Ar secsize Li / Ar nsectors Li /
+.Ar ntracks Li / Ar ncylinders Xc
+.Sm on
+.Ed
+.Pp
 If geometry is not specified, the kernel will choose a default based on 1MB
 cylinders.
-.Dq secsize
+.Ar secsize
 is the number of bytes per sector.  It must be an even multiple of 512.
-.Dq nsectors
+.Ar nsectors
 is the number of sectors per track.
-.Dq ntracks
+.Ar ntracks
 is the number of tracks per cylinder.
-.Dq ncylinders
+.Ar ncylinders
 is the number of cylinders in the device.
 .It Fl t Ar typename
 If configuring the device, look up
