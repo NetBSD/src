@@ -451,9 +451,9 @@ bad:
 #else
 		strncpy(buf[0],X509_get_default_cert_area(),
 			sizeof(buf[0])-2-sizeof(CONFIG_FILE));
-		strcat(buf[0],"/");
+		strlcat(buf[0], "/", sizeof(buf[0]));
 #endif
-		strcat(buf[0],CONFIG_FILE);
+		strlcat(buf[0], CONFIG_FILE, sizeof(buf[0]));
 		configfile=buf[0];
 		}
 
@@ -951,9 +951,9 @@ bad:
 			strncpy(buf[0],serialfile,BSIZE-4);
 
 #ifdef VMS
-			strcat(buf[0],"-new");
+			strlcat(buf[0], "-new", sizeof(buf[0]));
 #else
-			strcat(buf[0],".new");
+			strlcat(buf[0], ".new", sizeof(buf[0]));
 #endif
 
 			if (!save_serial(buf[0],serial)) goto err;
@@ -961,9 +961,9 @@ bad:
 			strncpy(buf[1],dbfile,BSIZE-4);
 
 #ifdef VMS
-			strcat(buf[1],"-new");
+			strlcat(buf[1], "-new", sizeof(buf[1]));
 #else
-			strcat(buf[1],".new");
+			strlcat(buf[1], ".new", sizeof(buf[1]));
 #endif
 
 			if (BIO_write_filename(out,buf[1]) <= 0)
@@ -991,7 +991,7 @@ bad:
 			strncpy(buf[2],outdir,BSIZE-(j*2)-6);
 
 #ifndef VMS
-			strcat(buf[2],"/");
+			strlcat(buf[2], "/", sizeof(buf[2]));
 #endif
 
 			n=(unsigned char *)&(buf[2][strlen(buf[2])]);
@@ -999,7 +999,9 @@ bad:
 				{
 				for (k=0; k<j; k++)
 					{
-					sprintf((char *)n,"%02X",(unsigned char)*(p++));
+					snprintf((char *)n,
+					    sizeof(buf[2]) - (n - buf[2]),
+					    "%02X",(unsigned char)*(p++));
 					n+=2;
 					}
 				}

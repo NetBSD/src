@@ -297,7 +297,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 		break;
 		}
 
-	sprintf(pidbuf, "[%d] ", pid);
+	snprintf(pidbuf, sizeof(pidbuf), "[%d] ", pid);
 	lpszStrings[0] = pidbuf;
 	lpszStrings[1] = string;
 

@@ -129,7 +129,7 @@ static char *pt(unsigned char *md)
 	static char buf[80];
 
 	for (i=0; i<MD2_DIGEST_LENGTH; i++)
-		sprintf(&(buf[i*2]),"%02x",md[i]);
+		snprintf(&(buf[i * 2]), sizeof(buf) - i * 2, "%02x", md[i]);
 	return(buf);
 	}
 #endif

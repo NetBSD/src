@@ -206,7 +206,7 @@ static int def_load(CONF *conf, BIO *in, long *line)
 		CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	strcpy(section,"default");
+	strlcpy(section, "default", 10);
 
 	if (_CONF_new_data(conf) == 0)
 		{
@@ -354,7 +354,7 @@ again:
 				goto err;
 				}
 			if (psection == NULL) psection=section;
-			v->name=(char *)OPENSSL_malloc(strlen(pname)+1);
+			v->name = BUF_strdup(pname);
 			v->value=NULL;
 			if (v->name == NULL)
 				{
@@ -362,7 +362,6 @@ again:
 							ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			strcpy(v->name,pname);
 			if (!str_copy(conf,psection,&(v->value),start)) goto err;
 
 			if (strcmp(psection,section) != 0)
@@ -417,7 +416,7 @@ err:
 	if (buff != NULL) BUF_MEM_free(buff);
 	if (section != NULL) OPENSSL_free(section);
 	if (line != NULL) *line=eline;
-	sprintf(btmp,"%ld",eline);
+	snprintf(btmp, sizeof(btmp), "%ld", eline);
 	ERR_add_error_data(2,"line ",btmp);
 	if ((h != conf->data) && (conf->data != NULL)) CONF_free(conf->data);
 	if (v != NULL)
