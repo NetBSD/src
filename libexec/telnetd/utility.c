@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.18 2001/07/19 04:57:50 itojun Exp $	*/
+/*	$NetBSD: utility.c,v 1.19 2002/08/12 09:19:00 abs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.18 2001/07/19 04:57:50 itojun Exp $");
+__RCSID("$NetBSD: utility.c,v 1.19 2002/08/12 09:19:00 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ ttloop()
 	syslog(LOG_ERR, "ttloop:  read: %m");
 	exit(1);
     } else if (ncc == 0) {
-	syslog(LOG_ERR, "ttloop:  peer died: %m");
+	syslog(LOG_INFO, "ttloop:  peer died: %m");
 	exit(1);
     }
     DIAG(TD_REPORT, {output_data("td: ttloop read %d chars\r\n", ncc);});
