@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.371 2001/11/07 18:55:30 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.372 2001/11/07 21:13:27 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.368 2001/11/07 18:53:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.369 2001/11/07 21:12:49 thorpej Exp 
  */
 
 /*
@@ -2731,7 +2731,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
 	    0,
 	    "Intel",
-	    "80310 I/O Companion Chip",
+	    "80312 I/O Companion Chip",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
