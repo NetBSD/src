@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.26 2000/05/15 17:06:05 itojun Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.27 2000/05/15 17:11:29 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.26 2000/05/15 17:06:05 itojun Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.27 2000/05/15 17:11:29 itojun Exp $");
 #endif
 #endif
 
@@ -208,7 +208,6 @@ getbroadcastnets(addrs, naddrs)
 	struct sockaddr_in *sin;
 
 	_DIAGASSERT(addrs != NULL);
-	_DIAGASSERT(buf != NULL);
 
 	if (getifaddrs(&ifap) != 0) {
                 warn("getbroadcastnets: getifaddrs");
