@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.2.2.3 1993/11/14 22:27:19 mycroft Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.2.2.4 1993/11/27 01:40:51 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -227,6 +227,10 @@ mountmsdosfs(devvp, mp, p)
 	 */
 	pmp->pm_BytesPerSec = getushort(b50->bpbBytesPerSec);
 	pmp->pm_SectPerClust = b50->bpbSecPerClust;
+	if (!pmp->pm_BytesPerSec || !pmp->pm_SectPerClust) {
+		error = EINVAL;
+		goto error_exit;
+	}
 	pmp->pm_ResSectors = getushort(b50->bpbResSectors);
 	pmp->pm_FATs = b50->bpbFATs;
 	pmp->pm_RootDirEnts = getushort(b50->bpbRootDirEnts);
@@ -247,8 +251,7 @@ mountmsdosfs(devvp, mp, p)
 	pmp->pm_rootdirblk = pmp->pm_fatblk +
 	    (pmp->pm_FATs * pmp->pm_FATsecs);
 	pmp->pm_rootdirsize = (pmp->pm_RootDirEnts * sizeof(struct direntry))
-	    /
-	    pmp->pm_BytesPerSec;/* in sectors */
+	    / pmp->pm_BytesPerSec;/* in sectors */
 	pmp->pm_firstcluster = pmp->pm_rootdirblk + pmp->pm_rootdirsize;
 	pmp->pm_nmbrofclusters = (pmp->pm_HugeSectors - pmp->pm_firstcluster) /
 	    pmp->pm_SectPerClust;
