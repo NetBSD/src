@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.307 2003/02/24 13:06:45 nakayama Exp $
+$NetBSD: usbdevs,v 1.308 2003/03/19 16:22:24 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -352,6 +352,7 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
+vendor NHJ		0x2770  NHJ
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
@@ -1054,6 +1055,9 @@ product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
 product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
 product NIKON E885		0x0105	Digital Camera E885
+
+/* NHJ product */
+product NHJ CAM2		0x9120	Camera
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
