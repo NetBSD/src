@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.174 2002/07/23 10:35:06 mjl Exp $
+$NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -62,6 +62,7 @@ vendor MEGAHERTZ2		0x0128	Megahertz Corporation
 vendor ADAPTEC			0x012f	Adaptec Corporation
 vendor QUATECH			0x0137	Quatech
 vendor COMPAQ			0x0138	Compaq
+vendor OSITECH			0x0140	Ositech
 vendor DLINK_2			0x0143	D-Link
 vendor DLINK_3			0x0149	D-Link
 vendor LINKSYS			0x0149	Linksys Corporation
@@ -275,6 +276,7 @@ product NEWMEDIA WAVJAMMER	0xe005 NewMedia .WAVjammer
 product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 
 /* Netgear */
+product NETGEAR FA410TX		0x0230 Netgear FA410TX
 product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
 product NETGEAR FA411		0x0411 Netgear FA411
 
@@ -286,6 +288,9 @@ product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
 
 /* Olicom Products */
 product OLICOM TR		0x2132 GoCard Token Ring 16/4
+
+/* Ositech Products */
+product OSITECH TRUMPCARD_SOD	0x0008 Ositech Seven of Diamonds Ethernet Card
 
 /* Panasonic Products */
 product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface Card
