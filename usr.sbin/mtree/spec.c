@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.16 1998/12/19 15:38:45 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.17 1999/11/07 20:23:01 wennmach Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.16 1998/12/19 15:38:45 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.17 1999/11/07 20:23:01 wennmach Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ noparent:		mtree_err("no parent node");
 		if ((centry = calloc(1, sizeof(NODE) + strlen(p))) == NULL)
 			mtree_err("%s", strerror(errno));
 		*centry = ginfo;
-		(void)strcpy(centry->name, p);
+                (void)decode(centry->name, p);
 #define	MAGIC	"?*["
 		if (strpbrk(p, MAGIC))
 			centry->flags |= F_MAGIC;
