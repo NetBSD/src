@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.55 2004/02/13 11:36:10 wiz Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2004/02/13 11:36:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -225,9 +225,20 @@ static const char * const i80321_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+/* Steppings for PXA2[15]0 */
 static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"step B-2",	"step C-0",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+/* Steppings for PXA255/26x.
+ * rev 5: PXA26x B0, rev 6: PXA255 A0  
+ */
+static const char * const pxa255_steppings[16] = {
+	"rev 0",	"rev 1",	"rev 2",	"step A-0",
+	"rev 4",	"step B-0",	"step A-0",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
@@ -334,8 +345,8 @@ const struct cpuidtab cpuids[] = {
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA210B,	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
-	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA250",
-	  pxa2x0_steppings },
+	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA255/26x",
+	  pxa255_steppings },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
 
