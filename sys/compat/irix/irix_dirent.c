@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.6 2002/03/09 13:13:09 manu Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.7 2002/03/09 13:32:12 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.6 2002/03/09 13:13:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.7 2002/03/09 13:32:12 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -247,7 +247,7 @@ irix_sys_ngetdents64(p, v, retval)
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
-	struct irix_dirent idb;
+	struct irix_dirent64 idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
