@@ -63,10 +63,11 @@ into the NetBSD _VER release. Some of the significant changes include:
 	libsa based two stage boot system. This has permitted
 	integration of compressed boot support (see below).
 
-	Many ports NetBSD/i386) now support booting of compressed
-	kernels, and feature new "Single Floppy" install systems that
-	boot compressed install kernels and ramdisks. We intend to do
-	substantial work on improving ease of installation in the future.
+	Many ports now support booting of compressed kernels, and
+	feature new "Single Floppy" install systems that boot
+	compressed install kernels and ramdisks. We intend to do
+	substantial work on improving ease of installation in the
+	future.
 
 	"ypserv" has been added, thus completing our support for the
 	"yp" network information system suite.
@@ -132,7 +133,7 @@ As has been noted, there have also been innumerable bug fixes.
 
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
-for this trend to continue to continue.
+for this trend to continue.
 
 NetBSD _VER also includes some refinement to the NetBSD binary emulation
 system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
