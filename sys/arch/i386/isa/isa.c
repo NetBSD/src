@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.2 1993/09/24 08:49:13 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.3 1993/09/30 20:21:17 mycroft Exp $
  */
 
 /*
@@ -221,7 +221,12 @@ isaprint(aux, isaname)
 		printf(" port 0x%x", ia->ia_iobase);
 	if (ia->ia_iosize > 1)
 		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
-	if (ia->ia_irq != IRQUNK)
+#ifdef DIAGNOSTIC
+	if (ia->ia_irq == IRQUNK)
+		printf(" XXX");
+	else
+#endif
+	if (ia->ia_irq != IRQNONE)
 		printf(" irq %d", ffs(ia->ia_irq) - 1);
 	if (ia->ia_drq != DRQUNK)
 		printf(" drq %d", ia->ia_drq);
