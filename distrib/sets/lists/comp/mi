@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.381 2001/10/05 16:26:01 bjh21 Exp $
+#	$NetBSD: mi,v 1.382 2001/10/06 01:45:09 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -890,7 +890,7 @@
 ./usr/include/sys/poll.h		comp-c-include
 ./usr/include/sys/pool.h		comp-c-include
 ./usr/include/sys/proc.h		comp-c-include
-./usr/include/sys/property.h		comp-c-include
+./usr/include/sys/properties.h		comp-c-include
 ./usr/include/sys/protosw.h		comp-c-include
 ./usr/include/sys/ptrace.h		comp-c-include
 ./usr/include/sys/queue.h		comp-c-include
@@ -1016,7 +1016,6 @@
 ./usr/lib/gcrt0.o		comp-c-lib
 ./usr/lib/libasn1.a		comp-c-lib
 ./usr/lib/libasn1_p.a		comp-c-proflib
-./usr/lib/libbfd.a		comp-c-lib
 ./usr/lib/libbz2.a		comp-c-lib
 ./usr/lib/libbz2_p.a		comp-c-proflib
 ./usr/lib/libc.a		comp-c-lib
