@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.133 2001/01/06 13:47:44 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.134 2001/01/08 06:21:19 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -38,6 +38,7 @@
 #	std	standard devices
 #	local	configuration specific devices
 #	usbs	make USB devices
+#	isdn	make ISDN devices
 #
 # Tapes:
 #	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
@@ -157,6 +158,7 @@ all)
 	sh $0 speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0 iop0
 	sh $0 audio
 	sh $0 usbs
+	sh $0 isdn
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
@@ -164,7 +166,6 @@ all)
 	sh $0 sysmon
 	sh $0 bktr
 	sh $0 ttyCZ0 ttyCY0
-	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 audio)
@@ -192,6 +193,10 @@ usbs)
 	sh $0 urio0
 	sh $0 uscanner0 uscanner1
 	sh $0 ugen0
+	;;
+
+isdn)
+	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
