@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/05/08 19:08:18 chopps Exp $
+#	$NetBSD: Makefile,v 1.15 1998/11/13 22:12:35 is Exp $
 
 ### what we need:
 
@@ -17,7 +17,7 @@ DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
 FILES= xxboot 				# XXX fdboot
 BINDIR=/usr/mdec
 
-COBJS = configure.o main.o console.o xd.o twiddle.o bzero.o gets.o
+COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o
 COBJS+=  ufs.o
 

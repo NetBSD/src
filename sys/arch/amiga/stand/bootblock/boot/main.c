@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.9 1998/10/31 22:40:27 is Exp $
+ * $NetBSD: main.c,v 1.10 1998/11/13 22:12:35 is Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -78,11 +78,13 @@ int get_cpuid __P((u_int32_t *));
 
 static long get_number(char **);
 
-const char version[] = "2.0";
+#define VERSION "2.1"
+
 char default_command[] = "netbsd -ASn2";
 
 int
-pain()
+pain(aio)
+	void *aio;	
 {
 	long int io = 0;
 	char linebuf[128];
@@ -128,6 +130,11 @@ pain()
 
 	extern u_int32_t aio_base;
 
+	xdinit(aio);
+
+	if (consinit())
+		return(1);
+
 	/*
 	 * we need V36 for: EClock, RDB Bootblocks, CacheClearU
 	 */
@@ -138,8 +145,8 @@ pain()
 		goto out;
 	}
 
-	printf("\2337mNetBSD/Amiga bootblock %s\2330m\n%s :- ",
-		version, kernel_name);
+	printf("\2337mNetBSD/Amiga bootblock " VERSION "\2330m\n%s :- ",
+		kernel_name);
 
 	timelimit = 3;
 	gets(linebuf);
