@@ -208,11 +208,11 @@ static int ipl_load()
 	int error, fmode = S_IFCHR|0600;
 
 	error = ipfilterattach();
+	if (error)
+		return error;
 #ifdef NETBSD_PF
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #endif
-	if (error)
-		return error;
 	(void) ipl_remove();
 	error = 0;
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAME, curproc);
