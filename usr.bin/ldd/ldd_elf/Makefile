@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/06/26 11:28:26 hannken Exp $
+#	$NetBSD: Makefile,v 1.9 1999/07/06 08:04:31 thorpej Exp $
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -18,6 +18,7 @@ CPPFLAGS+= -DVARPSZ
 
 LDELFSO=${.CURDIR}/../../../libexec/ld.elf_so
 CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
+CPPFLAGS+= -D_RTLD_SOURCE
 .PATH: ${LDELFSO}
 
 LDFLAGS+= -static
