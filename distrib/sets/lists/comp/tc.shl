@@ -1,6 +1,6 @@
-#	$NetBSD: tc.shl,v 1.8 2004/08/13 01:06:18 lukem Exp $
-./usr/lib/libbfd.so.6				comp-c-shlib		bfd
-./usr/lib/libbfd.so.6.0				comp-c-shlib		bfd
+#	$NetBSD: tc.shl,v 1.9 2004/12/12 14:31:45 he Exp $
+./usr/lib/libbfd.so.7				comp-c-shlib		bfd
+./usr/lib/libbfd.so.7.0				comp-c-shlib		bfd
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
 ./usr/lib/libgcc_pic.a				comp-c-piclib
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
