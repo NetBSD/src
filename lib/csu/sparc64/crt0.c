@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 1999/07/02 15:53:56 simonb Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 1999/11/02 10:03:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,8 +37,8 @@
  * __start needs to gather up argc, argv, env_p, ps_strings, the termination
  * routine passed in %g1 and call ___start to finish up the startup processing.
  *
- * NB: We are violating the ELF spec by passing a pointer to the ps strings in %g1
- *	instead of a termination routine.
+ * NB:	We are violating the ELF spec by passing a pointer to the ps strings in
+ * 	%g1 instead of a termination routine.
  */
 
 __asm__("
@@ -109,7 +109,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.8 1999/07/02 15:53:56 simonb Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.9 1999/11/02 10:03:44 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
