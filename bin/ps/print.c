@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.28 1996/07/13 06:58:33 explorer Exp $	*/
+/*	$NetBSD: print.c,v 1.29 1996/08/15 01:41:23 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.28 1996/07/13 06:58:33 explorer Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.29 1996/08/15 01:41:23 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -557,7 +557,8 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_swtime == 0 || (p->p_flag & P_INMEM) == 0)
+	if (p->p_swtime == 0 || (p->p_flag & P_INMEM) == 0
+	    || p->p_stat == SZOMB)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
