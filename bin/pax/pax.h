@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.4 1997/07/20 20:32:41 christos Exp $	*/
+/*	$NetBSD: pax.h,v 1.5 1998/03/26 02:14:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -234,9 +234,9 @@ typedef struct oplist {
 #ifndef MIN
 #define        MIN(a,b) (((a)<(b))?(a):(b))
 #endif
-#define MAJOR(x)        (((unsigned)(x) >> 8) & 0xff)
-#define MINOR(x)        ((x) & 0xff)
-#define TODEV(x, y)	(((unsigned)(x) << 8) | ((unsigned)(y)))
+#define MAJOR(x)        major(x)
+#define MINOR(x)        minor(x)
+#define TODEV(x, y)	makedev(x, y)
 
 /*
  * General Defines
