@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.21.4.1 1996/12/06 02:29:04 rat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -423,7 +423,7 @@ restart:
 				} else
 					len = min(MCLBYTES, resid);
 #endif
-				space -= MCLBYTES;
+				space -= len;
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
