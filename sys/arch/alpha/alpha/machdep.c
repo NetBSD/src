@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.87 1997/09/19 14:47:33 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.88 1997/09/19 22:00:34 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 1997/09/19 14:47:33 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 1997/09/19 22:00:34 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,6 +377,15 @@ alpha_init(pfn, ptb, bim, bip)
 	}
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
+#ifdef        LIMITMEM
+	if (totalphysmem >= btoc(LIMITMEM << 20)) {
+		u_int64_t ovf = totalphysmem - btoc(LIMITMEM << 20);
+		printf("********LIMITING MEMORY TO %dMB**********\n", LIMITMEM);
+		physmem = totalphysmem = btoc(LIMITMEM << 20);
+		unusedmem += ovf;
+		lastusablepage = firstusablepage + physmem - 1;
+	}
+#endif
 	maxmem = physmem;
 
 #if 0
@@ -726,7 +735,7 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d (%d reserved for PROM, %d used by NetBSD)\n",
+	printf("real mem = %u (%u reserved for PROM, %u used by NetBSD)\n",
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
 	if (unusedmem)
 		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
