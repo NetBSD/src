@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.28 2000/01/22 22:40:58 mycroft Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.29 2002/05/26 14:03:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.28 2000/01/22 22:40:58 mycroft Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.29 2002/05/26 14:03:20 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: getnetgrent.c,v 1.28 2000/01/22 22:40:58 mycroft Exp $");
 #define _NETGROUP_PRIVATE
 #include <netgroup.h>
 #include <nsswitch.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,12 +59,6 @@ __RCSID("$NetBSD: getnetgrent.c,v 1.28 2000/01/22 22:40:58 mycroft Exp $");
 #include <rpcsvc/yp_prot.h>
 #endif
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
- 
 #ifdef __weak_alias
 __weak_alias(endnetgrent,_endnetgrent)
 __weak_alias(getnetgrent,_getnetgrent)
