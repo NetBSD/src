@@ -1,10 +1,12 @@
-.\"	$NetBSD: hardware,v 1.5 2003/10/11 00:54:29 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.6 2004/01/01 13:58:15 sekiya Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
 .Tn SGI.
 .Ss2 Supported machines
 .(bullet -offset indent
+IP20 R4000 - Indigo
+.It
 IP22 R4000/R4400/R4600 \- Challenge M, Challenge S, Indigo 2 and Indy
 .It
 IP22 R5000 \- Challenge S, Indy
@@ -17,8 +19,6 @@ IP32 R10000 - O2
 .Ss2 Unsupported machines
 .(bullet -offset indent
 IP19 R4000 - Challenge Onyx
-.It
-IP20 R4000 - Indigo
 .It
 IP21 R8000 - Power Challenge / Power Onyx
 .It
@@ -39,7 +39,7 @@ IP35 R12000A - Origin 3000 / Onyx 3000
 .(bullet -offset indent
 Serial ports
 .(bullet -compact
-On-board Zilog Z8530 Dual Uart
+On-board Zilog Z8530 Dual Uart (IP2x class)
 .Pq Em ttyz ,
 .bullet)
 .It
@@ -50,7 +50,7 @@ On-board 16C550 Serial ports (IP32).
 .It
 Ethernet
 .(bullet -compact
-On-board SGI Seeq 80c03 ethernet controller (IP22 class)
+On-board SGI Seeq 80c03 ethernet controller (IP2x class)
 .Pq Em sq ,
 .bullet)
 .(bullet -compact
@@ -61,7 +61,7 @@ SCSI
 .(bullet -compact
 On-board
 .Tn Western Digital
-WD33C93 SCSI controller(s) (IP22 class)
+WD33C93 SCSI controller(s) (IP2x class)
 .Pq Em wdsc ,
 .bullet)
 .(bullet -compact
@@ -73,7 +73,7 @@ AIC-7889 SCSI controller (IP32)
 .It
 Audio
 .(bullet -compact
-On-board HAL2 controller (IP22 class)
+On-board HAL2 controller (IP22/24)
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent
