@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.28 2000/02/03 08:13:45 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.29 2000/03/15 03:07:46 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.28 2000/02/03 08:13:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.29 2000/03/15 03:07:46 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,7 +177,6 @@ ioasicattach(parent, self, aux)
 		return;
 	}
 	sc->sc_dmat = ta->ta_dmat;
-	sc->sc_cookie = ta->ta_cookie;
 
 	ioasic_base = sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
 
@@ -207,7 +206,7 @@ ioasicattach(parent, self, aux)
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
 	}
-	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_NONE, ioasic_intr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, ioasic_intr, sc);
 
 	/*
 	 * Try to configure each device.

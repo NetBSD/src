@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.11 2000/02/29 07:20:22 nisimura Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.12 2000/03/15 03:07:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.11 2000/02/29 07:20:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.12 2000/03/15 03:07:47 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,6 @@ ioasicattach(parent, self, aux)
 		return;
 	}
 	sc->sc_dmat = ta->ta_dmat;
-	sc->sc_cookie = ta->ta_cookie;
 
 	sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
 
