@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.9 1999/03/15 05:37:24 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.10 1999/03/29 06:55:04 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -43,8 +43,9 @@ file	arch/pmax/pmax/dec_maxine.c	dec_maxine
 file	arch/pmax/pmax/dec_kn02_subr.c	dec_3min|dec_maxine
 file	arch/pmax/pmax/dec_3max_subr.c	dec_3max|dec_3maxplus
 
-# Bus-independent support for DEC devices
-include "dev/dec/files.dec"
+#include "dev/dec/files.dec"
+define	le_dec_subr					# XXX
+file	dev/dec/if_le_dec.c		le_dec_subr	# XXX
 
 # "ibus" for PMAX, MIPSMATE and 3MAX
 device	ibus {}
@@ -106,15 +107,12 @@ major { st = 18 }
 file	arch/pmax/pmax/md_root.c	memory_disk_hooks
 major { md = 17 }
 
-# LANCE ethernet driver.
-#   device defined in sys/conf/files.
-#   TC and ioasic attachment and files in sys/dev/tc/files.tc
-
+# LANCE ethernet driver
 attach	le at ibus with le_pmax:	le24, le_dec_subr
 file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
-# DC7085 Quad line serial controller
-device	dc: tty
+# DC7085 Quad asynchronous serial driver
+device	dc {}: tty
 attach	dc at ibus with dc_ibus
 file	arch/pmax/ibus/dc_ibus.c	dc needs-flag
 file	arch/pmax/ibus/dc.c		dc
@@ -129,15 +127,10 @@ device	zstty: tty
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
 
-device	zskbd: wskbddev
-attach	zskbd at zsc
-file	dev/dec/zskbd.c			zskbd needs-flag
-
 # ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
-device	dtop: tty
+device	dtop {}
 attach	dtop at ioasic
 file	arch/pmax/tc/dtop.c		dtop needs-flag
-
 
 include "dev/wscons/files.wscons"
 
@@ -159,11 +152,30 @@ file	dev/tc/tfb.c			tfb needs-flag
 
 device	xcfb: wsemuldisplaydev, wsrasteremulops
 attach	xcfb at tc
-file	dev/tc/xcfb.c	 		xcfb needs-flag
+file	dev/tc/xcfb.c 			xcfb needs-flag
 
 device	pm: wsemuldisplaydev, wsrasteremulops
 attach	pm at ibus
 file	arch/pmax/ibus/pm.c 		pm needs-flag
+
+device	lkkbd: wskbddev
+file	dev/dec/lk201_ws.c		lkkbd
+file	dev/dec/wskbdmap_lk201.c	lkkbd
+device	vsms: wsmousedev
+file	dev/dec/vsxxx.c			vsms
+
+attach	lkkbd at zsc with zskbd
+file	dev/dec/zskbd.c			zskbd needs-flag
+attach	vsms at zsc with zsms
+file	dev/dec/zsms.c			zsms
+
+attach	lkkbd at dc with dckbd
+file	arch/pmax/ibus/dckbd.c		dckbd
+attach	vsms at dc with dcms
+file	arch/pmax/ibus/dcms.c		dcms
+
+#attach	wskbd at dtop with wskbd	###
+#attach	wsmouse at dtop with wsmouse	###
 
 file	arch/pmax/pmax/autoconf.c
 file	arch/pmax/pmax/bus_dma.c
@@ -176,7 +188,7 @@ file	arch/pmax/stand/libsa/callvec.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/sysconf.c
 
-file	arch/pmax/pmax/memcpy.c		# XXX temporary hack XXX
+#file	arch/pmax/pmax/memcpy.c		# XXX temporary hack XXX
 #file	arch/pmax/pmax/memset.c		# XXX temporary hack XXX
 
 # Console code.
