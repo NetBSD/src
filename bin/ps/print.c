@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.18 1995/03/21 09:08:06 cgd Exp $	*/
+/*	$NetBSD: print.c,v 1.19 1995/05/08 22:39:24 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.18 1995/03/21 09:08:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.19 1995/05/08 22:39:24 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -683,6 +683,12 @@ printval(bp, v)
 		break;
 	case USHORT:
 		(void)printf(ofmt, v->width, *(u_short *)bp);
+		break;
+	case INT:
+		(void)printf(ofmt, v->width, *(int *)bp);
+		break;
+	case UINT:
+		(void)printf(ofmt, v->width, *(u_int *)bp);
 		break;
 	case LONG:
 		(void)printf(ofmt, v->width, *(long *)bp);

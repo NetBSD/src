@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.6 1995/03/21 09:08:12 cgd Exp $	*/
+/*	$NetBSD: ps.h,v 1.7 1995/05/08 22:39:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #define	UNLIMITED	0	/* unlimited terminal width */
-enum type { CHAR, UCHAR, SHORT, USHORT, LONG, ULONG, KPTR };
+enum type { CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR };
 
 struct usave {
 	struct	timeval u_start;
