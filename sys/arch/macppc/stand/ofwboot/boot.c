@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2001/08/13 15:38:11 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2001/08/23 14:17:27 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ chain(entry, args, ssym, esym)
 	l += sizeof(ssym);
 	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
+	l += sizeof(int);	/* XXX */
 
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
