@@ -1,4 +1,4 @@
-/*	$NetBSD: path.h,v 1.1 2002/07/19 19:04:41 yamt Exp $	*/
+/*	$NetBSD: path.h,v 1.2 2002/08/27 17:27:31 abs Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -35,4 +35,6 @@ TAILQ_HEAD(pathhead, path);
 extern struct pathhead PkgPath;
 void path_create(const char *);
 void path_free(void);
+void path_prepend_from_pkgname(const char *);
+void path_remove_first(void);
 void path_setenv(const char *);
