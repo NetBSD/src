@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.19 1998/10/08 20:43:42 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.20 1998/10/27 00:55:30 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,9 @@ product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 /* TDK Products */
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
+
+/* TDK Vendor ID also used by Xircom! */
+product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
 
 /* NewMedia Products */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
