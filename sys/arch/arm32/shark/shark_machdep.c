@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.12 1999/01/03 02:23:28 mark Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.13 1999/01/09 22:56:06 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -281,7 +281,7 @@ initarm(ofw_handle)
 
 	/* Now for the SHARK-specific part of the FIQ set-up */
 	fiqhandler.fh_func = shark_fiq;
-	fiqhandler.fh_size = shark_fiq_end - shark_fiq;
+	fiqhandler.fh_size = (char *)shark_fiq_end - (char *)shark_fiq;
 	fiqhandler.fh_mask = 0x01; /* XXX ??? */
 	fiqhandler.fh_r8   = isa_io_virtaddr;
 	fiqhandler.fh_r9   = 0; /* no routine right now */
