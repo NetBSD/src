@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.3 1997/02/13 20:26:27 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.4 1997/02/17 20:09:56 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -677,11 +677,11 @@ in_revarpinput(m)
 	struct mbuf *m;
 {
 	struct ifnet *ifp;
-	struct ether_arp *ar;
+	struct arphdr *ah;
 	int op;
 
-	ar = mtod(m, struct ether_arp *);
-	op = ntohs(ar->arp_op);
+	ah = mtod(m, struct arphdr *);
+	op = ntohs(ah->ar_op);
 	switch (op) {
 	case ARPOP_REQUEST:
 	case ARPOP_REPLY:	/* per RFC */
@@ -700,11 +700,10 @@ in_revarpinput(m)
 		goto out;
 	if (myip_initialized)
 		goto wake;
-	if (bcmp(ar->arp_tha, LLADDR(ifp->if_sadl),
-	    sizeof(ar->arp_tha)))
+	if (bcmp(ar_tha(ah), LLADDR(ifp->if_sadl), ah->ar_hln))
 		goto out;
-	bcopy((caddr_t)ar->arp_spa, (caddr_t)&srv_ip, sizeof(srv_ip));
-	bcopy((caddr_t)ar->arp_tpa, (caddr_t)&myip, sizeof(myip));
+	bcopy((caddr_t)ar_spa(ah), (caddr_t)&srv_ip, sizeof(srv_ip));
+	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&myip, sizeof(myip));
 	myip_initialized = 1;
 wake:	/* Do wakeup every time in case it was missed. */
 	wakeup((caddr_t)&myip);
