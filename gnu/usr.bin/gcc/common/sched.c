@@ -3799,19 +3799,8 @@ schedule_block (b, file)
 		     for those mentioned in the call pattern which will be
 		     made live again later.  */
 		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-#ifdef GCC_27_ARM32_PIC_SUPPORT
-		    /*
-		     * This is a patch for a bug found when implementing arm32 PIC support
-		     * that has been fixed in 2.8
-		     */
-		    if (call_used_regs[i] && !global_regs[i]
-#if defined (PIC_OFFSET_TABLE_REGNUM) && !defined (PIC_OFFSET_TABLE_REG_CALL_CLOBBERED)
-                        &&  (i != PIC_OFFSET_TABLE_REGNUM || !flag_pic)
-#endif
-                        )
-#else
-		    if (call_used_regs[i] || global_regs[i])
-#endif
+		    if (call_used_regs[i] && ! global_regs[i]
+                        && ! fixed_regs[i])
 		      {
 			register int offset = i / REGSET_ELT_BITS;
 			register REGSET_ELT_TYPE bit
