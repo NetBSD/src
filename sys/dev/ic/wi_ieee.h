@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.7 2002/01/05 20:10:53 explorer Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.8 2002/01/20 04:37:04 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -272,8 +272,6 @@ struct wi_scan_results {
 #define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
 #define WI_RID_TX_CRYPT_KEY	0xFCB1
 #define WI_RID_TICK_TIME	0xFCE0 	/* Auxiliary Timer tick interval */
-#define WI_RID_SCAN_REQ		0xFCE1
-#define WI_RID_JOIN_REQ		0xFCE2
 
 struct wi_key {
 	u_int16_t		wi_keylen;
@@ -336,6 +334,15 @@ struct wi_ltv_keys {
 #define WI_RID_CUR_TX_RATE6	0xFD85
 #define WI_RID_OWN_MAC		0xFD86 /* unique local MAC addr */
 #define WI_RID_PCI_INFO		0xFD87 /* point coordination func cap */
+
+/*
+ * Scan Information
+ */
+#define WI_RID_SCAN_REQ		0xFCE1
+#define WI_RID_JOIN_REQ		0xFCE2
+#define	WI_RID_AUTH_STATION	0xFCE3 /* Authenticates Station (AP) */
+#define	WI_RID_CHANNEL_REQ	0xFCE4 /* Channel Information Request (AP) */
+#define WI_RID_SCAN_RESULTS	0xFD88 /* Scan Results Table */
 
 /*
  * Modem information
