@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.41 1999/07/01 08:12:49 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.42 1999/07/02 08:46:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -268,7 +268,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_ESP + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_AH + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -294,6 +294,7 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "idp", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
