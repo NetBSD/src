@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.2.2.1 1998/11/07 04:09:44 cgd Exp $	
+	$NetBSD: hardware,v 1.2.2.2 1998/12/05 07:33:14 cgd Exp $	
 
 NetBSD/x68k _VER runs on the Sharp X68030 series PCs with TRUE
 MC68030 MPU (not MC68EC030) and FPU.  Since the processor of
@@ -49,3 +49,10 @@ Supported devices include:
 
 Hopefully, the AD-PCM sound device will be supported on the next
 release.
+
+IMPORTANT NOTE: Xellent users *MUST* change the address map setting
+for it from the default ($ECC000 - $ECFFFF) before installation.  This
+is because the default address conflicts with the Neptune-X ethernet
+interface, and the Neptune driver is confused by it.  All the settings
+other than the default are ok.  Once you installed NetBSD, and configured
+your own kernel, you can restore the setting.
