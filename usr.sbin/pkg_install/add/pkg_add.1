@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.15 1999/06/15 06:32:00 cgd Exp $
+.\" $NetBSD: pkg_add.1,v 1.16 1999/07/02 19:05:45 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -363,6 +363,10 @@ period.
 .Ss PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
+.Ss PKG_TMPDIR
+Staging directory for installing packages, defaults to /tmp.
+Set to directory with lots of free disk if you run out of
+space when installing a binary package.
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
