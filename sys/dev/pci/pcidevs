@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.262 2000/09/27 02:14:54 augustss Exp $
+$NetBSD: pcidevs,v 1.263 2000/10/03 02:58:30 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -668,6 +668,7 @@ product ADDTRON 8139	0x1360	8139 Ethernet
 
 /* ADMtek products */
 product ADMTEK AL981	0x0981	ADMtek AL981 10/100 Ethernet
+product	ADMTEK AN985	0x0985	ADMtek AN985 10/100 Ethernet
 
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
