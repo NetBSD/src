@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.3 2002/02/13 05:31:18 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.4 2002/02/13 19:25:26 gmcgarry Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ WARNS=		1
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
-IMAGEENDIAN=	le
+IMAGEENDIAN=	be
 IMAGEDEPENDS+=	${CRUNCHBIN} dot.profile termcap.mini \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
