@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.24 1999/07/08 14:32:28 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.25 2000/01/23 16:44:18 mycroft Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -19,15 +19,16 @@ CPPFLAGS+= -D_STANDALONE
 
 CLEANFILES+= vers.c vers.o ${BASE}.list
 
-.BEGIN: ${.OBJDIR}/machine
-depend all: ${.OBJDIR}/machine
-CLEANFILES+= ${.OBJDIR}/machine
+.BEGIN: machine
+.NOPATH: machine
+realdepend realall: machine
+CLEANFILES+= machine
 
-${.OBJDIR}/machine::
+machine::
 	-rm -f $@
 	ln -s $S/arch/i386/include $@
 
-${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART}: ${.OBJDIR}/machine
+${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART}: machine
 
 ### find out what to use for libkern
 KERN_AS=	library
