@@ -32,7 +32,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)sed.test	8.1 (Berkeley) 6/6/93
+#	from: @(#)sed.test	8.1 (Berkeley) 6/6/93
+#	$Id: sed.test,v 1.2 1994/02/03 23:45:04 cgd Exp $
 #
 
 # sed Regression Tests
