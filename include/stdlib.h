@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.50 2000/11/15 15:44:05 briggs Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.51 2000/12/20 18:35:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -105,8 +105,12 @@ int	 atexit __P((void (*)(void)));
 double	 atof __P((const char *));
 int	 atoi __P((const char *));
 long	 atol __P((const char *));
-void	*bsearch __P((const void *, const void *, size_t,
-	    size_t, int (*)(const void *, const void *)));
+#ifndef __BSEARCH_DECLARED
+#define __BSEARCH_DECLARED
+/* also in search.h */
+void	*bsearch __P((const void *, const void *, size_t, size_t,
+    int (*)(const void *, const void *)));
+#endif /* __BSEARCH_DECLARED */
 void	*calloc __P((size_t, size_t));
 div_t	 div __P((int, int));
 __dead	 void exit __P((int)) __attribute__((__noreturn__));
