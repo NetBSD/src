@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.9 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.10 1999/11/15 22:04:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -323,7 +323,8 @@ USB_MATCH(uaudio)
 	/* Trigger on the control interface. */
 	if (id == NULL || 
 	    id->bInterfaceClass != UCLASS_AUDIO ||
-	    id->bInterfaceSubClass != USUBCLASS_AUDIOCONTROL)
+	    id->bInterfaceSubClass != USUBCLASS_AUDIOCONTROL ||
+	    (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_AUDIO))
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS_IFACESUBCLASS);
