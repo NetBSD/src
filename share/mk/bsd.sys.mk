@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.21 1998/07/27 13:16:52 mycroft Exp $
+#	$NetBSD: bsd.sys.mk,v 1.22 1998/08/16 23:55:04 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -32,7 +32,10 @@ HOST_LDFLAGS?=
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
 #  used for Objective C source)
-.SUFFIXES:	.m .o .ln
+.SUFFIXES:	.m .o .ln .lo
+
+.c.lo:
+	${HOST_COMPILE.c} ${.IMPSRC}
 
 .m:
 	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
@@ -53,6 +56,10 @@ HOST_LDFLAGS?=
 	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
 	rm -f ${.TARGET:R}.yy.c
+.l.lo:
+	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
+	rm -f ${.TARGET:R}.yy.c
 .endif
 
 # Yacc
@@ -70,6 +77,10 @@ YFLAGS+=-d
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
 	rm -f ${.TARGET:R}.tab.c ${TARGET:R}.tab.h
+.y.lo:
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
+	rm -f ${.TARGET:R}.tab.c ${TARGET:R}.tab.h
 .elif defined(PARALLEL)
 .y:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
@@ -81,5 +92,9 @@ YFLAGS+=-d
 .y.o:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
+	rm -f ${.TARGET:R}.tab.c
+.y.lo:
+	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
 	rm -f ${.TARGET:R}.tab.c
 .endif
