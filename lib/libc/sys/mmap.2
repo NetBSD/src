@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.36 2004/03/24 16:14:36 wiz Exp $
+.\"	$NetBSD: mmap.2,v 1.37 2004/10/04 18:14:48 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,6 +136,7 @@ Map anonymous memory not associated with any specific file.
 The file descriptor is not used for creating
 .Dv MAP_ANON
 regions, and must be specified as \-1.
+The mapped memory will be zero filled.
 .It Dv MAP_FILE
 Mapped from a regular file or character-special device memory.
 .It Dv MAP_FIXED
