@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.13 1996/05/30 21:16:32 cgd Exp $	*/
+/*	$NetBSD: keyword.c,v 1.14 1996/10/02 18:07:23 ws Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: keyword.c,v 1.13 1996/05/30 21:16:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: keyword.c,v 1.14 1996/10/02 18:07:23 ws Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ VAR var[] = {
 	{"msgrcv", "MSGRCV", NULL, USER, rvar, 4, ROFF(ru_msgrcv), LONG, "d"},
 	{"msgsnd", "MSGSND", NULL, USER, rvar, 4, ROFF(ru_msgsnd), LONG, "d"},
 	{"ni", "", "nice"},
-	{"nice", "NI", NULL, 0, pvar, 2, POFF(p_nice), CHAR, "d"},
+	{"nice", "NI", NULL, 0, pnice, 2},
 	{"nivcsw", "NIVCSW", NULL, USER, rvar, 5, ROFF(ru_nivcsw), LONG, "d"},
 	{"nsignals", "", "nsigs"},
 	{"nsigs", "NSIGS", NULL, USER, rvar, 4, ROFF(ru_nsignals), LONG, "d"},
@@ -210,7 +210,7 @@ VAR var[] = {
 	{"msgrcv", "MSGRCV", NULL, USER, rvar, 4, ROFF(ru_msgrcv), LONG, "d"},
 	{"msgsnd", "MSGSND", NULL, USER, rvar, 4, ROFF(ru_msgsnd), LONG, "d"},
 	{"ni", "", "nice"},
-	{"nice", "NI", NULL, 0, pvar, 2, POFF(p_nice), CHAR, "d"},
+	{"nice", "NI", NULL, 0, pnice, 2},
 	{"nivcsw", "NIVCSW", NULL, USER, rvar, 5, ROFF(ru_nivcsw), LONG, "d"},
 	{"nsignals", "", "nsigs"},
 	{"nsigs", "NSIGS", NULL, USER, rvar, 4, ROFF(ru_nsignals), LONG, "d"},

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
+/*	$NetBSD: ps.h,v 1.12 1996/10/02 18:07:27 ws Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,7 +83,6 @@ typedef struct var {
 	int	off;		/* offset in structure */
 	enum	type type;	/* type of element */
 	char	*fmt;		/* printf format */
-	char	*time;		/* time format */
 	/*
 	 * glue to link selected fields together
 	 */
