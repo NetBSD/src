@@ -1,4 +1,4 @@
-ED=	../ed
+ED=	../obj/ed
 
 all: build test
 	@echo done

@@ -88,7 +88,7 @@ optpat()
 	/* initialize pattern buffer */
 	exp->buffer = NULL;
 	exp->allocated = 0L;
-	exp->fastmap = (char *) malloc(FASTMAP_SIZE);
+	exp->fastmap = 0;		/* not used by GNU regex after 0.12 */
 	exp->translate = 0;
 #endif
 	if (n = regcomp(exp, exps, 0)) {

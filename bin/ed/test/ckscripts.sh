@@ -5,7 +5,7 @@
 
 PATH="/bin:/usr/bin:/usr/local/bin/:."
 ED=$1
-[ X"$ED" = X ] && ED="../ed"
+[ X"$ED" = X -o ! -x $ED ] && ED="../ed"
 [ ! -x $ED ] && { echo "$ED: cannot execute"; exit 1; }
 
 # Run the *-err.ed scripts first, since these don't generate output;

@@ -66,10 +66,6 @@
 
 typedef regex_t pattern_t;
 
-#ifdef GNU_REGEX
-# define FASTMAP_SIZE 256	/* size of fasmap for 8 bit character set */
-#endif
-
 /* Line node */
 typedef struct	line {
 	struct line	*next;
