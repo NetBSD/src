@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/05 10:01:49 scw Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2003/10/05 10:46:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * When we get here, callee-saved register r28 points to the ucontext_t
  * structure on the stack (this was arranged for us by the kernel).
  */
-ENTRY_NOPROFILE(__sigtramp_sigcontext_2)
+ENTRY_NOPROFILE(__sigtramp_siginfo_2)
 	or	r28, r63, r2
 	SYSTRAP(setcontext)
 	SYSTRAP(exit)
