@@ -92,7 +92,7 @@ telldir(dirp)
  * Only values returned by "telldir" should be passed to seekdir.
  */
 void
-_seekdir(dirp, loc)
+__seekdir(dirp, loc)
 	register DIR *dirp;
 	long loc;
 {
