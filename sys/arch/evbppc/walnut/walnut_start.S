@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.2 2002/12/19 19:37:26 thorpej Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.3 2003/01/04 18:14:22 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #undef PPC_4XX_NOCACHE
 
 #include "opt_ddb.h"
-#include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -190,7 +189,7 @@ __start_cpu0:
 /* compute end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
-#if defined(DDB) || defined(KERNFS)
+#if defined(DDB)
 	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
