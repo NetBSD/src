@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.10 1996/09/21 08:45:41 jonathan Exp $	*/
+/*	$NetBSD: device.h,v 1.11 1996/10/01 01:04:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,6 @@ struct pmax_scsi_device {
 	int		sd_ctlr;	/* SCSI interface number */
 	int		sd_drive;	/* SCSI address number */
 	int		sd_slave;	/* LUN if device has multiple units */
-	int		sd_dk;		/* used for disk statistics */
 	int		sd_flags;	/* flags */
 
 	int		sd_alive;	/* true if init routine succeeded */
