@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.194 2000/02/03 13:58:55 joda Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.195 2000/02/03 16:56:23 dante Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.189 2000/02/03 13:58:28 joda Exp 
+ *	NetBSD: pcidevs,v 1.190 2000/02/03 16:51:42 dante Exp 
  */
 
 /*
@@ -542,6 +542,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced System Products",
 	    "ABP-940UW",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U2W,
+	    0,
+	    "Advanced System Products",
+	    "ASB-3940U2W",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
