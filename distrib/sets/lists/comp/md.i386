@@ -1,5 +1,5 @@
-# $NetBSD: md.i386,v 1.73 2003/05/15 18:51:19 wiz Exp $
-./lib/libm387.so			base-sys-shlib
+# $NetBSD: md.i386,v 1.74 2003/06/05 15:45:17 jwise Exp $
+./lib/libm387.so			comp-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -89,11 +89,11 @@
 ./usr/include/x86/specialreg.h	comp-c-include
 ./usr/include/x86/trap.h	comp-c-include
 ./usr/lib/libi386.a		comp-c-lib
-./usr/lib/libi386.so			base-sys-shlib
+./usr/lib/libi386.so			comp-sys-shlib
 ./usr/lib/libi386_p.a		comp-c-proflib
 ./usr/lib/libi386_pic.a		comp-c-piclib
 ./usr/lib/libm387.a		comp-c-lib
-./usr/lib/libm387.so			base-sys-shlib
+./usr/lib/libm387.so			comp-sys-shlib
 ./usr/lib/libm387_p.a		comp-c-proflib
 ./usr/lib/libm387_pic.a		comp-c-piclib
 ./usr/lib/libpmc.a		comp-c-lib
