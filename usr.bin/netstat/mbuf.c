@@ -33,10 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mbuf.c	5.10 (Berkeley) 1/30/91";*/
-static char rcsid[] = "$Id: mbuf.c,v 1.2 1993/08/01 18:10:50 mycroft Exp $";
+static char rcsid[] = "$Id: mbuf.c,v 1.3 1994/03/28 10:29:48 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <nlist.h>
+#include <kvm.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #define	YES	1
@@ -86,7 +88,7 @@ mbpr(mbaddr)
 		printf("mbstat: symbol not in namelist\n");
 		return;
 	}
-	if (kvm_read(mbaddr, (char *)&mbstat, sizeof (mbstat))
+	if (kvm_read((void *)(long)mbaddr, (char *)&mbstat, sizeof (mbstat))
 						!= sizeof (mbstat)) {
 		printf("mbstat: bad read\n");
 		return;

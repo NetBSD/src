@@ -66,6 +66,8 @@ static char rcsid[] = "inet.c,v 1.4 1993/05/20 12:03:49 cgd Exp";
 
 #include <stdio.h>
 #include <string.h>
+#include <nlist.h>
+#include <kvm.h>
 
 struct	inpcb inpcb;
 struct	tcpcb tcpcb;
@@ -95,15 +97,15 @@ protopr(off, name)
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
-	kvm_read(off, (char *)&cb, sizeof (struct inpcb));
+	kvm_read((void *)(long)off, (char *)&cb, sizeof (struct inpcb));
 	inpcb = cb;
-	prev = (struct inpcb *)off;
-	if (inpcb.inp_next == (struct inpcb *)off)
+	prev = (struct inpcb *)(long)off;
+	if (inpcb.inp_next == (struct inpcb *)(long)off)
 		return;
-	while (inpcb.inp_next != (struct inpcb *)off) {
+	while (inpcb.inp_next != (struct inpcb *)(long)off) {
 
 		next = inpcb.inp_next;
-		kvm_read((off_t)next, (char *)&inpcb, sizeof (inpcb));
+		kvm_read(next, (char *)&inpcb, sizeof (inpcb));
 		if (inpcb.inp_prev != prev) {
 			printf("???\n");
 			break;
@@ -113,11 +115,10 @@ protopr(off, name)
 			prev = next;
 			continue;
 		}
-		kvm_read((off_t)inpcb.inp_socket,
-				(char *)&sockb, sizeof (sockb));
+		kvm_read(inpcb.inp_socket, (char *)&sockb, sizeof (sockb));
 		if (istcp) {
-			kvm_read((off_t)inpcb.inp_ppcb,
-				(char *)&tcpcb, sizeof (tcpcb));
+			kvm_read(inpcb.inp_ppcb, (char *)&tcpcb,
+			    sizeof (tcpcb));
 		}
 		if (first) {
 			printf("Active Internet connections");
@@ -165,7 +166,7 @@ tcp_stats(off, name)
 	if (off == 0)
 		return;
 	printf ("%s:\n", name);
-	kvm_read(off, (char *)&tcpstat, sizeof (tcpstat));
+	kvm_read((void *)(long)off, (char *)&tcpstat, sizeof (tcpstat));
 
 #define	p(f, m)		printf(m, tcpstat.f, plural(tcpstat.f))
 #define	p2(f1, f2, m)	printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2, plural(tcpstat.f2))
@@ -230,7 +231,7 @@ udp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&udpstat, sizeof (udpstat));
+	kvm_read((void *)(long)off, (char *)&udpstat, sizeof (udpstat));
 	printf("%s:\n\t%u packet%s sent\n", name,
 		udpstat.udps_opackets, plural(udpstat.udps_opackets));
 	printf("\t%u packet%s received\n",
@@ -262,7 +263,7 @@ ip_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&ipstat, sizeof (ipstat));
+	kvm_read((void *)(long)off, (char *)&ipstat, sizeof (ipstat));
 	printf("%s:\n\t%u total packets received\n", name,
 		ipstat.ips_total);
 	printf("\t%u bad header checksum%s\n",
@@ -319,7 +320,7 @@ icmp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&icmpstat, sizeof (icmpstat));
+	kvm_read((void *)(long)off, (char *)&icmpstat, sizeof (icmpstat));
 	printf("%s:\n\t%u call%s to icmp_error\n", name,
 		icmpstat.icps_error, plural(icmpstat.icps_error));
 	printf("\t%u error%s not generated 'cuz old message was icmp\n",
@@ -373,7 +374,7 @@ igmp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&igmpstat, sizeof (igmpstat));
+	kvm_read((void *)(long)off, (char *)&igmpstat, sizeof (igmpstat));
 	printf("%s:\n", name );
 	printf("\t%u message%s received\n",
 	  igmpstat.igps_rcv_total, plural(igmpstat.igps_rcv_total));

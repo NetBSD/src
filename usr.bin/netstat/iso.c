@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)iso.c	5.6 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: iso.c,v 1.6 1994/03/26 04:08:45 glass Exp $";
+static char rcsid[] = "$Id: iso.c,v 1.7 1994/03/28 10:29:43 cgd Exp $";
 #endif /* not lint */
 
 /*******************************************************************************
@@ -93,6 +93,8 @@ SOFTWARE.
 #endif
 #include <netiso/cons_pcb.h>
 #include <netdb.h>
+#include <nlist.h>
+#include <kvm.h>
 
 char *tp_sstring[] = {
     "ST_ERROR(0x0)",
@@ -145,7 +147,8 @@ esis_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&esis_stat, sizeof (struct esis_stat));
+	kvm_read((void *)(long)off, (char *)&esis_stat,
+	    sizeof (struct esis_stat));
 	printf("%s:\n", name);
 	printf("\t%d esh sent, %d esh received\n", esis_stat.es_eshsent,
 		esis_stat.es_eshrcvd);
@@ -173,7 +176,7 @@ clnp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&clnp_stat, sizeof (clnp_stat));
+	kvm_read((void *)(long)off, (char *)&clnp_stat, sizeof (clnp_stat));
 
 	printf("%s:\n\t%d total packets sent\n", name, clnp_stat.cns_sent);
 	printf("\t%d total fragments sent\n", clnp_stat.cns_fragments);
@@ -207,7 +210,7 @@ cltp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read(off, (char *)&cltpstat, sizeof (cltpstat));
+	kvm_read((void *)(long)off, (char *)&cltpstat, sizeof (cltpstat));
 	printf("%s:\n\t%u incomplete header%s\n", name,
 		cltpstat.cltps_hdrops, plural(cltpstat.cltps_hdrops));
 	printf("\t%u bad data length field%s\n",
@@ -224,7 +227,7 @@ struct sockaddr_iso	siso;
 char	data[128];
 } laddr, faddr;
 #define kget(o, p) \
-	(kvm_read((off_t)(o), (char *)&p, sizeof (p)))
+	(kvm_read((void *)(long)(o), (char *)&p, sizeof (p)))
 extern	int Aflag;
 extern	int aflag;
 extern	int nflag;
@@ -253,10 +256,10 @@ iso_protopr(off, name)
 	}
 	kget(off, cb);
 	isopcb = cb;
-	prev = (struct isopcb *)off;
-	if (isopcb.isop_next == (struct isopcb *)off)
+	prev = (struct isopcb *)(long)off;
+	if (isopcb.isop_next == (struct isopcb *)(long)off)
 		return;
-	while (isopcb.isop_next != (struct isopcb *)off) {
+	while (isopcb.isop_next != (struct isopcb *)(long)off) {
 		next = isopcb.isop_next;
 		kget(next, isopcb);
 		if (isopcb.isop_prev != prev) {
@@ -293,7 +296,7 @@ iso_protopr(off, name)
 		}
 		if (Aflag)
 			printf("%8x ",
-				(istp ? (off_t)sockb.so_tpcb : (off_t)next));
+			    (istp ? (long)sockb.so_tpcb : (long)next));
 		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		if (isopcb.isop_laddr == 0)
