@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.63 2002/07/04 23:32:04 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.64 2002/11/26 18:40:46 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.63 2002/07/04 23:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.64 2002/11/26 18:40:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -375,6 +375,7 @@ svr4_sendsig(sig, mask, code)
 	struct svr4_sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
 	tf = p->p_md.md_regs;
 
@@ -385,8 +386,8 @@ svr4_sendsig(sig, mask, code)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct svr4_sigframe *)((caddr_t)sas->ss_sp +
+		    sas->ss_size);
 	else
 		fp = (struct svr4_sigframe *)tf->tf_esp;
 	fp--;
@@ -438,7 +439,7 @@ svr4_sendsig(sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		sas->ss_flags |= SS_ONSTACK;
 }
 
 /*
