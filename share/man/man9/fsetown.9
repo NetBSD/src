@@ -1,0 +1,148 @@
+.\"     $NetBSD: fsetown.9,v 1.1 2003/09/21 19:35:47 jdolecek Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jaromir Dolecek.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 21, 2003
+.Dt FSETOWN 9
+.Os
+.Sh NAME
+.Nm fsetown ,
+.Nm fgetown ,
+.Nm fownsignal
+.Nd file descriptor owner handling functions
+.Sh SYNOPSIS
+.In sys/file.h
+.Ft int
+.Fn fsetown "struct proc *p" "pid_t *pgid" "int cmd" "const void *data"
+.Ft int
+.Fn fgetown "struct proc *p" "pid_t pgid" "int cmd" "void *data"
+.Ft void
+.Fn fownsignal "pid_t pgid" "int code" "int band" "void *fdescdata"
+.Sh DESCRIPTION
+These functions handle file descriptor owner related ioctls, and
+related signal
+delivery. Device drivers and other parts of kernel call these functions from
+ioctl entry functions or I/O notification functions.
+.Pp
+.Fn fsetown
+sets the owner of file.
+.Fa cmd
+is a ioctl command, one of
+.Dv SIOCSPGRP ,
+.Dv FIOSETOWN ,
+.Dv TIOCSPGRP .
+.Fa data
+is interpreted as pointer to signed integer, the integer being ID of owner.
+The
+.Fa cmd
+determines how exactly would
+.Fa data
+be interpreted. If
+.Fa cmd
+is
+.Dv TIOCSPGRP ,
+the ID needs to be positive and is interpreted as process group ID. For
+.Dv SIOCSPGRP
+and
+.Dv FIOSETOWN ,
+passed ID is process ID if positive, or process group ID
+if negative.
+.Pp
+.Fn fgetown
+returns the current owner of file.
+.Fa cmd
+is ioctl command, one of
+.Dv SIOCGPGRP ,
+.Dv FIOGETOWN ,
+.Dv TIOCGPGRP .
+.Fa data
+is interpreted as pointer to signed integer,
+and the value is set according to passed
+.Fa cmd .
+For
+.Dv TIOCGPGRP ,
+the returned
+.Fa data
+value is positive process group ID if owner is process group,
+or negative process ID if the owner is a process.
+For other ioctls,
+returned value is positive process ID if owner is a process,
+or negative process group ID if the owner is a process group.
+.Pp
+.Fn fownsignal
+schedules the
+.Dv SIGIO
+signal to be sent to current file descriptor owner.
+.Fa code
+and
+.Fa band
+is sent along the signal as additional signal specific information,
+if
+.Dv SA_SIGINFO
+is activated. If the information is not available from context
+of
+.Fn fownsignal
+call, these should be passed as zero.
+.Fa fdescdata
+is used to lookup file descriptor for
+.Sa SA_SIGINFO
+signals. If it's specified, the file descriptor number
+is sent along the signal as additional signal
+specific information. If file descriptor data pointer
+is not available in the context of
+.Fn fownsignal
+call,
+.Dv NULL
+should be used instead.
+.Pp
+Note that
+.Xr fcntl 3
+.Dv F_SETOWN request
+is translated by kernel to
+.Dv FIOSETOWN
+ioctl, and
+.Dv F_GETOWN
+is translated to
+.Dv FIOGETOWN .
+This is done transparently by generic code, before the device- or
+subsystem-specific ioctl entry function is called.
+.Sh SEE ALSO
+.Xr fcntl 3 ,
+.Xr signal 7 ,
+.Xr ioctl 9 ,
+.Xr signal 9
+.Sh HISTORY
+These kernel functions appeared in
+.Nx 2.0 .

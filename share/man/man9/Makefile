@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.145 2003/09/07 21:14:22 seb Exp $
+#       $NetBSD: Makefile,v 1.146 2003/09/21 19:35:46 jdolecek Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -14,6 +14,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	ctxsw.9 curproc.9 delay.9 disk.9 disklabel.9 dofileread.9 \
 	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
 	extent.9 fetch.9 file.9 filedesc.9 fork1.9 \
+	fsetown.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
 	isapnp.9 itimerfix.9 kcopy.9 \
@@ -200,6 +201,8 @@ MLINKS+=filedesc.9 falloc.9 \
 	filedesc.9 fdremove.9 \
 	filedesc.9 fdshare.9 \
 	filedesc.9 fdunshare.9
+MLINKS+=fsetown.9 fgetown.9 \
+	fsetown.9 fownsignal.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=humanize_number.9 format_bytes.9
 MLINKS+=in4_cksum.9 in_cksum.9 \

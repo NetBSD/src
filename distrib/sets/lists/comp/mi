@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.618 2003/09/18 09:16:27 jdolecek Exp $
+#	$NetBSD: mi,v 1.619 2003/09/21 19:35:42 jdolecek Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4014,6 +4014,9 @@
 ./usr/share/man/cat9/fork1.0		comp-sys-catman
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman
 ./usr/share/man/cat9/free.0		comp-sys-catman
+./usr/share/man/cat9/fgetown.0		comp-sys-catman
+./usr/share/man/cat9/fownsignal.0	comp-sys-catman
+./usr/share/man/cat9/fsetown.0		comp-sys-catman
 ./usr/share/man/cat9/fubyte.0		comp-sys-catman
 ./usr/share/man/cat9/fuibyte.0		comp-sys-catman
 ./usr/share/man/cat9/fuiword.0		comp-sys-catman
@@ -7472,6 +7475,9 @@
 ./usr/share/man/man9/fork1.9		comp-sys-man
 ./usr/share/man/man9/format_bytes.9		comp-sys-man
 ./usr/share/man/man9/free.9		comp-sys-man
+./usr/share/man/man9/fgetown.9		comp-sys-man
+./usr/share/man/man9/fownsignal.9	comp-sys-man
+./usr/share/man/man9/fsetown.9		comp-sys-man
 ./usr/share/man/man9/fubyte.9		comp-sys-man
 ./usr/share/man/man9/fuibyte.9		comp-sys-man
 ./usr/share/man/man9/fuiword.9		comp-sys-man
