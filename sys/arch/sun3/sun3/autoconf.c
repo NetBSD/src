@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57 2002/05/16 02:50:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ scsi_find(name, ctlr, unit)
 
 	/* Find the device at this target/LUN */
 	sbsc = (struct scsibus_softc *)scsibus;
-	periph = sbsc->sc_channel->chan_periphs[target][lun];
+	periph = scsipi_lookup_periph(sbsc->sc_channel, target, lun);
 	if (periph == NULL)
 		return (NULL);
 
