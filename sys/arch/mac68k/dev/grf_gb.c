@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf_gb.c 1.16 91/04/02$
  *
  *	from: @(#)grf_gb.c	7.4 (Berkeley) 5/7/91
- *	$Id: grf_gb.c,v 1.4 1994/06/26 13:02:43 briggs Exp $
+ *	$Id: grf_gb.c,v 1.5 1994/07/30 04:21:45 lkestel Exp $
  */
 
 #include "grf.h"
@@ -54,7 +54,7 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 
-#include "grfioctl.h"
+#include <machine/grfioctl.h>
 #include "grfvar.h"
 #include "grf_gbreg.h"
 

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.8 1994/07/09 06:49:34 briggs Exp $
+ *	$Id: grf.c,v 1.9 1994/07/30 04:21:44 lkestel Exp $
  */
 
 /*
@@ -61,7 +61,7 @@
 
 #include <sys/device.h>
 #include "nubus.h"
-#include "grfioctl.h"
+#include <machine/grfioctl.h>
 #include "grfvar.h"
 
 #include <machine/cpu.h>
