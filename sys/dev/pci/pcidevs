@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.151 1999/09/08 21:33:59 thorpej Exp $
+$NetBSD: pcidevs,v 1.152 1999/09/08 21:39:24 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -503,6 +503,7 @@ vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
+vendor DAVICOM		0x1282	Davicom Semiconductor
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor ALTEON		0x12ae	Alteon
@@ -809,6 +810,9 @@ product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
 product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+
+/* Davicom Semiconductor products */
+product DAVICOM DM9102	0x9102	Davicom DM9102 10/100 Ethernet
 
 /* DEC products */
 product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
