@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.6 2002/06/07 08:22:37 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.7 2002/06/26 20:42:48 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -189,17 +189,17 @@ struct proc;
 
 void		kqueue_init(void);
 
-extern void	knote(struct klist *list, long hint);
-extern void	knote_remove(struct proc *p, struct klist *list);
-extern void	knote_fdclose(struct proc *p, int fd);
-extern int 	kqueue_register(struct kqueue *kq,
+void	knote(struct klist *list, long hint);
+void	knote_remove(struct proc *p, struct klist *list);
+void	knote_fdclose(struct proc *p, int fd);
+int 	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
 
-extern int	kfilter_register(const char *name,
+int	kfilter_register(const char *name,
 		    const struct filterops *filtops, int *retfilter);
-extern int	kfilter_unregister(const char *name);
+int	kfilter_unregister(const char *name);
 
-extern int	filt_seltrue(struct knote *kn, long hint);
+int	filt_seltrue(struct knote *kn, long hint);
 
 #else 	/* !_KERNEL */
 
