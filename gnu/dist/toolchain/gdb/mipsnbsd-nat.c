@@ -29,7 +29,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "gdbcore.h"
 
+/* NOTE: This file works only with the o32 ABI. */
+
 #define JB_ELEMENT_SIZE 4
+
+static char zerobuf[MAX_REGISTER_RAW_SIZE] = {0};
+
+/* Determine if PT_GETREGS fetches this register.  */
+#define GETREGS_SUPPLIES(regno) \
+  ((regno) >= ZERO_REGNUM && (regno) <= PC_REGNUM)
+
+static void
+supply_regs (regs)
+     char *regs;
+{
+  int i;
+
+  /* Conveniently, GDB's register indices map directly to the NetBSD
+     "reg" structure.  */
+  for (i = 1 /* $at */; i <= PC_REGNUM; i++)
+    supply_register (i, regs + (i * 4));
+  supply_register (ZERO_REGNUM, zerobuf);
+}
+
+static void
+supply_fpregs (fregs)
+     char *fregs;
+{
+  int i;
+
+  for (i = FP0_REGNUM; i <= FCRCS_REGNUM; i++)
+    supply_register (i, fregs + ((i - FP0_REGNUM) * 4));
+
+  /* FIXME: how can we supply FCRIR_REGNUM?  NetBSD doesn't tell us.  */
+  supply_register (FCRIR_REGNUM, zerobuf);
+}
 
 void
 fetch_inferior_registers (regno)
@@ -38,21 +72,19 @@ fetch_inferior_registers (regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
-  bzero(&inferior_registers, sizeof(inferior_registers));
-  ptrace (PT_GETREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  if (regno == -1 || GETREGS_SUPPLIES (regno))
+    {
+      ptrace (PT_GETREGS, inferior_pid,
+              (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+      supply_regs ((char *) &inferior_registers);
 
-  memcpy (&registers[REGISTER_BYTE (0)], 
-	  &inferior_registers, sizeof(inferior_registers));
+      if (regno != -1)
+	return;
+    }
 
-  bzero(&inferior_fp_registers, sizeof(inferior_fp_registers));
   ptrace (PT_GETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
-
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
-	  &inferior_fp_registers, sizeof(struct fpreg));
-
-  registers_fetched ();
+  supply_fpregs ((char *) &inferior_fp_registers);
 }
 
 void
@@ -73,8 +105,6 @@ store_inferior_registers (regno)
 
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
-
-  registers_fetched ();
 }
 
 
@@ -121,12 +151,12 @@ struct md_core {
 	    locate the registers in a large upage-plus-stack ".reg" section.
 	    Original upage address X is at location core_reg_sect+x+reg_addr.
  */
-void
+static void
 fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
   char *core_reg_sect;
   unsigned core_reg_size;
   int which;
-  unsigned int ignore;	/* reg addr, unused in this version */
+  CORE_ADDR ignore;	/* reg addr, unused in this version */
 {
   struct md_core *core_reg;
 
@@ -137,14 +167,39 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
     return;
 
   /* Integer registers */
-  memcpy(&registers[REGISTER_BYTE (0)],
-	 &core_reg->intreg, sizeof(struct reg));
-  
-  /* Floating point registers */
-  memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)],
-	 &core_reg->freg, sizeof(struct fpreg));
+  supply_regs ((char *) &core_reg->intreg);
 
-  registers_fetched ();
+  /* Floating point registers */
+  supply_fpregs ((char *) &core_reg->freg);
+}
+
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size != sizeof (struct reg))
+	warning ("Wrong size register set in core file.");
+      else
+	supply_regs (core_reg_sect);
+      break;
+
+    case 2:  /* Floating point registers */
+      if (core_reg_size != sizeof (struct fpreg))
+	warning ("Wrong size FP register set in core file.");
+      else
+	supply_fpregs (core_reg_sect);
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it.  */
+      break;
+    }
 }
 
 #ifdef	FETCH_KCORE_REGISTERS
@@ -178,10 +233,9 @@ struct pcb *pcb;
 #endif	/* FETCH_KCORE_REGISTERS */
 
 
-/* Register that we are able to handle core file formats.
-   FIXME: is this really bfd_target_unknown_flavour? */
+/* Register that we are able to handle core file formats.  */
 
-static struct core_fns netbsd_core_fns =
+static struct core_fns mipsnbsd_core_fns =
 {
   bfd_target_unknown_flavour,           /* core_flavour */
   default_check_format,                 /* check_format */
@@ -190,10 +244,20 @@ static struct core_fns netbsd_core_fns =
   NULL                                  /* next */
 };
 
+static struct core_fns mipsnbsd_elfcore_fns =
+{
+  bfd_target_elf_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,		/* core_read_registers */
+  NULL					/* next */
+};
+
 void
 _initialize_mipsbsd_nat ()
 {
-  add_core_fns (&netbsd_core_fns);
+  add_core_fns (&mipsnbsd_core_fns);
+  add_core_fns (&mipsnbsd_elfcore_fns);
 }
 
 int one_stepped;
