@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.40 1999/03/26 22:50:22 mhitch Exp $	*/
+/*	$NetBSD: siop.c,v 1.41 1999/03/28 19:30:07 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1055,7 +1055,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			printf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",
 			    rp->siop_sbcl, rp->siop_dsp);
 #if defined(DEBUG) && defined(DDB)
-			Debugger();
+			/*Debugger(); XXX is*/
 #endif
 		}
 		switch (rp->siop_sbcl & 7) {
