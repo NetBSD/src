@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.9 1995/09/14 01:39:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.10 1995/09/15 00:32:33 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -320,13 +320,27 @@ makeargv()
 {
 	char **argp;
 
-	margc = 0;
 	argp = margv;
 	stringbase = line;		/* scan from first of buffer */
 	argbase = argbuf;		/* store from first of buffer */
 	slrflag = 0;
-	while (*argp++ = slurpstring())
-		margc++;
+	for (margc = 0; ; margc++) {
+		/* Expand array if necessary */
+		if (margc == margvlen) {
+			margv = (margvlen == 0)
+				? (char **)malloc(20 * sizeof(char *))
+				: (char **)realloc(margv,
+					(margvlen + 20)*sizeof(char *));
+			if (margv == NULL)
+				errx(1, "cannot realloc argv array");
+			margvlen += 20;
+			argp = margv + margc;
+		}
+
+		if ((*argp++ = slurpstring()) == NULL)
+			break;
+	}
+
 }
 
 /*
