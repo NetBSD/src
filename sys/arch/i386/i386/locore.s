@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.18 1993/10/26 12:00:48 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.19 1993/10/27 05:38:55 mycroft Exp $
  */
 
 
@@ -215,6 +215,12 @@ start:	movw	$0x1234,0x472	# warm boot
 /* physical address of Idle Address space */
 	movl	%esi,_IdlePTD-KERNBASE
 
+/*
+ * fillkpt
+ *	eax = pte (page frame | control | status)
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ */
 #define	fillkpt		\
 1:	movl	%eax,(%ebx)	; \
 	addl	$(NBPG),%eax	; /* increment physical address */ \
