@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.23 2002/03/17 22:22:40 christos Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.24 2002/10/21 12:52:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -243,10 +243,11 @@ struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						  
 void nfs_invaldircache __P((struct vnode *, int));
 void nfs_init __P((void));
 int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
-			   struct vattr *));
+			   struct vattr *, int flags));
 int nfs_loadattrcache __P((struct vnode **, struct nfs_fattr *,
-			   struct vattr *));
+			   struct vattr *, int flags));
 int nfs_getattrcache __P((struct vnode *, struct vattr *));
+void nfs_delayedtruncate __P((struct vnode *));
 int nfs_namei __P((struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
 		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
 		   struct proc *, int, int));
@@ -263,6 +264,9 @@ int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
 			   struct export_args *));
 int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
+
+/* flags for nfs_loadattrcache and friends */
+#define	NAC_NOTRUNC	1	/* don't truncate file size */
 
 void nfs_clearcommit __P((struct mount *));
 void nfs_merge_commit_ranges __P((struct vnode *));
