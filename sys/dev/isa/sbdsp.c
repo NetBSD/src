@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.1 1995/02/21 02:28:08 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.2 1995/03/08 18:27:38 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.1 1995/02/21 02:28:08 brezak Exp $
+ *	$Id: sbdsp.c,v 1.2 1995/03/08 18:27:38 brezak Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -192,10 +192,8 @@ sbdsp_attach(sc)
 	}
 	printf(": dsp v%d.%d\n",
 	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
-	sb_device.version[0] = '0' + SBVER_MAJOR(sc->sc_model);
-	sb_device.version[1] = '.';
-	sb_device.version[2] = '0' + SBVER_MINOR(sc->sc_model);
-	sb_device.version[3] = '\0';
+	sprintf(sb_device.version, "%d.%d", 
+		SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
 }
 
 /*
