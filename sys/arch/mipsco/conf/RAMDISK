@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.1 2000/10/02 07:54:34 wdk Exp $
+# 	$NetBSD: RAMDISK,v 1.2 2002/03/10 19:56:43 lukem Exp $
 #
 # Install kernel with ramdisk added.
 #
@@ -10,7 +10,7 @@ include	"arch/mipsco/conf/INSTALL"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=6144	# size of memory disk, in blocks (3MB)
+options 	MEMORY_DISK_SIZE=6144	# size of memory disk, in blocks (3MB)
 
 # File systems: need MFS
 file-system 	MFS		# memory file system

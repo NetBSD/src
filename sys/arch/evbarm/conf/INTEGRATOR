@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.5 2002/01/27 13:23:15 jdolecek Exp $
+#	$NetBSD: INTEGRATOR,v 1.6 2002/03/10 19:56:40 lukem Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -102,8 +102,7 @@ options 	COMPAT_15	# NetBSD 1.5 compatibility.
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOTSIZE=4000	# Size in blocks
+#options 	MEMORY_DISK_SIZE=4000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options

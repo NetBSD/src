@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.16 2002/02/21 02:52:20 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.17 2002/03/10 19:56:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -65,7 +65,6 @@
 #include <machine/bootconfig.h>
 
 #include "opt_ipkdb.h"
-#include "opt_mdsize.h"
 #include "md.h"
 
 struct vm_map *exec_map = NULL;
@@ -77,9 +76,9 @@ extern int physmem;
 #ifndef PMAP_STATIC_L1S
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
 
 pv_addr_t systempage;
 pv_addr_t kernelstack;
@@ -427,7 +426,7 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		memory_disc_size = integer;
@@ -437,7 +436,7 @@ parse_mi_bootargs(args)
 		if (memory_disc_size > 2048*1024)
 			memory_disc_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))
