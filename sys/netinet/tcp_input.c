@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.62 1998/07/17 22:58:56 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.63 1998/08/02 00:35:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -1774,6 +1775,8 @@ do {									\
 	syn_cache_count--;						\
 } while (0)
 
+struct pool syn_cache_pool;
+
 void
 syn_cache_init()
 {
@@ -1785,6 +1788,10 @@ syn_cache_init()
 
 	/* Initialize the active hash bucket cache. */
 	LIST_INIT(&tcp_syn_cache_queue);
+
+	/* Initialize the syn cache pool. */
+	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
+	    "synpl", 0, NULL, NULL, M_PCB);
 }
 
 void
@@ -1824,7 +1831,7 @@ syn_cache_insert(sc)
 		SYN_CACHE_RM(sc2, scp);
 		if (sc2->sc_ipopts)
 			(void) m_free(sc2->sc_ipopts);
-		FREE(sc2, M_PCB);
+		pool_put(&syn_cache_pool, sc2);
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		tcpstat.tcps_sc_overflowed++;
 		/*
@@ -1845,13 +1852,13 @@ syn_cache_insert(sc)
 		if (sc2 == NULL) {
 			if (sc->sc_ipopts)
 				(void) m_free(sc->sc_ipopts);
-			FREE(sc, M_PCB);
+			pool_put(&syn_cache_pool, sc);
 			return;
 		}
 		SYN_CACHE_RM(sc2, scp2);
 		if (sc2->sc_ipopts)
 			(void) m_free(sc2->sc_ipopts);
-		FREE(sc2, M_PCB);
+		pool_put(&syn_cache_pool, sc2);
 	}
 
 	/* Set entry's timer. */
@@ -1892,7 +1899,7 @@ syn_cache_timer()
 			SYN_CACHE_RM(sc, scp);
 			if (sc->sc_ipopts)
 				(void) m_free(sc->sc_ipopts);
-			FREE(sc, M_PCB);
+			pool_put(&syn_cache_pool, sc);
 		}
 	}
 	splx(s);
@@ -2091,7 +2098,7 @@ syn_cache_get(so, m)
 	tcpstat.tcps_sc_completed++;
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
-	FREE(sc, M_PCB);
+	pool_put(&syn_cache_pool, sc);
 	return (so);
 
 resetandabort:
@@ -2102,7 +2109,7 @@ abort:
 		(void) soabort(so);
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
-	FREE(sc, M_PCB);
+	pool_put(&syn_cache_pool, sc);
 	tcpstat.tcps_sc_aborted++;
 	return ((struct socket *)(-1));
 }
@@ -2135,7 +2142,7 @@ syn_cache_reset(ti)
 	tcpstat.tcps_sc_reset++;
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
-	FREE(sc, M_PCB);
+	pool_put(&syn_cache_pool, sc);
 }
 
 void
@@ -2168,7 +2175,7 @@ syn_cache_unreach(ip, th)
 	tcpstat.tcps_sc_unreach++;
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
-	FREE(sc, M_PCB);
+	pool_put(&syn_cache_pool, sc);
 }
 
 /*
@@ -2258,7 +2265,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 		return (1);
 	}
 
-	MALLOC(sc, struct syn_cache *, sizeof(*sc), M_PCB, M_NOWAIT);
+	sc = pool_get(&syn_cache_pool, PR_NOWAIT);
 	if (sc == NULL) {	
 		if (ipopts)
 			(void) m_free(ipopts);
@@ -2301,7 +2308,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	} else {
 		if (sc->sc_ipopts)
 			(void) m_free(sc->sc_ipopts);
-		FREE(sc, M_PCB);
+		pool_put(&syn_cache_pool, sc);
 		tcpstat.tcps_sc_dropped++;
 	}
 	return (1);
