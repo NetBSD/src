@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.8 2003/08/07 10:04:28 agc Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.9 2004/06/25 14:48:01 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -195,6 +195,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: mount_filecore [-o options] special node\n");
+		"usage: mount_filecore [-afnR] [-g gid] [-o options] [-u uid] special node\n");
 	exit(1);
 }
