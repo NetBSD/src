@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.h,v 1.3 1996/09/13 00:30:48 cgd Exp $	*/
+/*	$NetBSD: zlib.h,v 1.4 1997/05/13 22:57:10 gwr Exp $	*/
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.0.4, Jul 24th, 1996.
@@ -33,6 +33,12 @@
 #ifndef _ZLIB_H
 #define _ZLIB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "zconf.h"
+
 #define ZLIB_VERSION "1.0.4"
 
 /* 
@@ -59,41 +65,33 @@
   for some forms of corrupted input.
 */
 
-#include <sys/types.h>
-
-#ifdef	_ZLIB_PRIVATE
-#include "zconf.h"
-#endif
-
-__BEGIN_DECLS
-
-typedef void *((*alloc_func) __P((void *opaque, u_int items, u_int size)));
-typedef void   (*free_func)  __P((void *opaque, void *address));
+typedef voidpf (*alloc_func) OF((voidpf opaque, uInt items, uInt size));
+typedef void   (*free_func)  OF((voidpf opaque, voidpf address));
 
 struct internal_state;
 
 typedef struct z_stream_s {
-    u_char    *next_in;  /* next input byte */
-    u_int     avail_in;  /* number of bytes available at next_in */
-    u_long    total_in;  /* total nb of input bytes read so far */
+    Bytef    *next_in;  /* next input byte */
+    uInt     avail_in;  /* number of bytes available at next_in */
+    uLong    total_in;  /* total nb of input bytes read so far */
 
-    u_char    *next_out; /* next output byte should be put there */
-    u_int     avail_out; /* remaining free space at next_out */
-    u_long    total_out; /* total nb of bytes output so far */
+    Bytef    *next_out; /* next output byte should be put there */
+    uInt     avail_out; /* remaining free space at next_out */
+    uLong    total_out; /* total nb of bytes output so far */
 
     char     *msg;      /* last error message, NULL if no error */
-    struct internal_state *state; /* not visible by applications */
+    struct internal_state FAR *state; /* not visible by applications */
 
     alloc_func zalloc;  /* used to allocate the internal state */
     free_func  zfree;   /* used to free the internal state */
-    void     *opaque;  /* private data object passed to zalloc and zfree */
+    voidpf     opaque;  /* private data object passed to zalloc and zfree */
 
     int     data_type;  /* best guess about the data type: ascii or binary */
-    u_long   adler;      /* adler32 value of the uncompressed data */
-    u_long   reserved;   /* reserved for future use */
+    uLong   adler;      /* adler32 value of the uncompressed data */
+    uLong   reserved;   /* reserved for future use */
 } z_stream;
 
-typedef z_stream *z_streamp;
+typedef z_stream FAR *z_streamp;
 
 /*
    The application must update next_in and avail_in when avail_in has
@@ -172,7 +170,7 @@ typedef z_stream *z_streamp;
 
                         /* basic functions */
 
-extern __const char * zlibVersion __P((void));
+extern const char * EXPORT zlibVersion OF((void));
 /* The application can compare zlibVersion and ZLIB_VERSION for consistency.
    If the first character differs, the library code actually used is
    not compatible with the zlib.h header file used by the application.
@@ -180,7 +178,7 @@ extern __const char * zlibVersion __P((void));
  */
 
 /* 
-extern int deflateInit __P((z_streamp strm, int level));
+extern int EXPORT deflateInit OF((z_streamp strm, int level));
 
      Initializes the internal stream state for compression. The fields
    zalloc, zfree and opaque must be initialized before by the caller.
@@ -202,7 +200,7 @@ extern int deflateInit __P((z_streamp strm, int level));
 */
 
 
-extern int deflate __P((z_streamp strm, int flush));
+extern int EXPORT deflate OF((z_streamp strm, int flush));
 /*
   Performs one or both of the following actions:
 
@@ -271,7 +269,7 @@ extern int deflate __P((z_streamp strm, int flush));
 */
 
 
-extern int deflateEnd __P((z_streamp strm));
+extern int EXPORT deflateEnd OF((z_streamp strm));
 /*
      All dynamically allocated data structures for this stream are freed.
    This function discards any unprocessed input and does not flush any
@@ -286,7 +284,7 @@ extern int deflateEnd __P((z_streamp strm));
 
 
 /* 
-extern int inflateInit __P((z_streamp strm));
+extern int EXPORT inflateInit OF((z_streamp strm));
 
      Initializes the internal stream state for decompression. The fields
    zalloc, zfree and opaque must be initialized before by the caller.  If
@@ -301,7 +299,7 @@ extern int inflateInit __P((z_streamp strm));
 */
 
 
-extern int inflate __P((z_streamp strm, int flush));
+extern int EXPORT inflate OF((z_streamp strm, int flush));
 /*
   Performs one or both of the following actions:
 
@@ -356,7 +354,7 @@ extern int inflate __P((z_streamp strm, int flush));
 */
 
 
-extern int inflateEnd __P((z_streamp strm));
+extern int EXPORT inflateEnd OF((z_streamp strm));
 /*
      All dynamically allocated data structures for this stream are freed.
    This function discards any unprocessed input and does not flush any
@@ -374,7 +372,7 @@ extern int inflateEnd __P((z_streamp strm));
 */
 
 /*   
-extern int deflateInit2 __P((z_streamp strm,
+extern int EXPORT deflateInit2 OF((z_streamp strm,
                                    int  level,
                                    int  method,
                                    int  windowBits,
@@ -432,9 +430,9 @@ extern int deflateInit2 __P((z_streamp strm,
    deflate(). 
 */
                             
-extern int deflateSetDictionary __P((z_streamp strm,
-                                           __const u_char *dictionary,
-				           u_int  dictLength));
+extern int EXPORT deflateSetDictionary OF((z_streamp strm,
+                                           const Bytef *dictionary,
+				           uInt  dictLength));
 /*
      Initializes the compression dictionary (history buffer) from the given
    byte sequence without producing any compressed output. This function must
@@ -461,7 +459,7 @@ extern int deflateSetDictionary __P((z_streamp strm,
    be done by deflate(). 
 */
 
-extern int deflateCopy __P((z_streamp dest,
+extern int EXPORT deflateCopy OF((z_streamp dest,
                                   z_streamp source));
 /*
      Sets the destination stream as a complete copy of the source stream.  If
@@ -484,7 +482,7 @@ extern int deflateCopy __P((z_streamp dest,
    destination.
 */
 
-extern int deflateReset __P((z_streamp strm));
+extern int EXPORT deflateReset OF((z_streamp strm));
 /*
      This function is equivalent to deflateEnd followed by deflateInit,
    but does not free and reallocate all the internal compression state.
@@ -495,7 +493,7 @@ extern int deflateReset __P((z_streamp strm));
    stream state was inconsistent (such as zalloc or state being NULL).
 */
 
-extern int deflateParams __P((z_streamp strm, int level, int strategy));
+extern int EXPORT deflateParams OF((z_streamp strm, int level, int strategy));
 /*
      Dynamically update the compression level and compression strategy.
    This can be used to switch between compression and straight copy of
@@ -514,7 +512,7 @@ extern int deflateParams __P((z_streamp strm, int level, int strategy));
 */
 
 /*   
-extern int inflateInit2 __P((z_streamp strm,
+extern int EXPORT inflateInit2 OF((z_streamp strm,
                                    int  windowBits));
 
      This is another version of inflateInit with more compression options. The
@@ -548,9 +546,9 @@ extern int inflateInit2 __P((z_streamp strm,
    inflate().
 */
 
-extern int inflateSetDictionary __P((z_streamp strm,
-				           __const u_char *dictionary,
-					   u_int  dictLength));
+extern int EXPORT inflateSetDictionary OF((z_streamp strm,
+				           const Bytef *dictionary,
+					   uInt  dictLength));
 /*
      Initializes the decompression dictionary (history buffer) from the given
    uncompressed byte sequence. This function must be called immediately after
@@ -567,7 +565,7 @@ extern int inflateSetDictionary __P((z_streamp strm,
    inflate().
 */
 
-extern int inflateSync __P((z_streamp strm));
+extern int EXPORT inflateSync OF((z_streamp strm));
 /* 
     Skips invalid compressed data until the special marker (see deflate()
   above) can be found, or until all available input is skipped. No output
@@ -582,7 +580,7 @@ extern int inflateSync __P((z_streamp strm));
   until success or end of the input data.
 */
 
-extern int inflateReset __P((z_streamp strm));
+extern int EXPORT inflateReset OF((z_streamp strm));
 /*
      This function is equivalent to inflateEnd followed by inflateInit,
    but does not free and reallocate all the internal decompression state.
@@ -603,8 +601,8 @@ extern int inflateReset __P((z_streamp strm));
    utility functions can easily be modified if you need special options.
 */
 
-extern int compress __P((u_char *dest,   u_long *destLen,
-			       __const u_char *source, u_long sourceLen));
+extern int EXPORT compress OF((Bytef *dest,   uLongf *destLen,
+			       const Bytef *source, uLong sourceLen));
 /*
      Compresses the source buffer into the destination buffer.  sourceLen is
    the byte length of the source buffer. Upon entry, destLen is the total
@@ -618,8 +616,8 @@ extern int compress __P((u_char *dest,   u_long *destLen,
    buffer.
 */
 
-extern int uncompress __P((u_char *dest,   u_long *destLen,
-				 __const u_char *source, u_long sourceLen));
+extern int EXPORT uncompress OF((Bytef *dest,   uLongf *destLen,
+				 const Bytef *source, uLong sourceLen));
 /*
      Decompresses the source buffer into the destination buffer.  sourceLen is
    the byte length of the source buffer. Upon entry, destLen is the total
@@ -637,9 +635,9 @@ extern int uncompress __P((u_char *dest,   u_long *destLen,
 */
 
 
-typedef void *gzFile;
+typedef voidp gzFile;
 
-extern gzFile gzopen  __P((__const char *path, __const char *mode));
+extern gzFile EXPORT gzopen  OF((const char *path, const char *mode));
 /*
      Opens a gzip (.gz) file for reading or writing. The mode parameter
    is as in fopen ("rb" or "wb") but can also include a compression level
@@ -651,7 +649,7 @@ extern gzFile gzopen  __P((__const char *path, __const char *mode));
    zlib error is Z_MEM_ERROR).
 */
 
-extern gzFile gzdopen  __P((int fd, __const char *mode));
+extern gzFile EXPORT gzdopen  OF((int fd, const char *mode));
 /*
      gzdopen() associates a gzFile with the file descriptor fd.  File
    descriptors are obtained from calls like open, dup, creat, pipe or
@@ -664,7 +662,7 @@ extern gzFile gzdopen  __P((int fd, __const char *mode));
    the (de)compression state.
 */
 
-extern int    gzread  __P((gzFile file, void *buf, unsigned len));
+extern int EXPORT    gzread  OF((gzFile file, voidp buf, unsigned len));
 /*
      Reads the given number of uncompressed bytes from the compressed file.
    If the input file was not in gzip format, gzread copies the given number
@@ -672,14 +670,14 @@ extern int    gzread  __P((gzFile file, void *buf, unsigned len));
      gzread returns the number of uncompressed bytes actually read (0 for
    end of file, -1 for error). */
 
-extern int    gzwrite __P((gzFile file, __const void *buf, unsigned len));
+extern int EXPORT    gzwrite OF((gzFile file, const voidp buf, unsigned len));
 /*
      Writes the given number of uncompressed bytes into the compressed file.
    gzwrite returns the number of uncompressed bytes actually written
    (0 in case of error).
 */
 
-extern int    gzflush __P((gzFile file, int flush));
+extern int EXPORT    gzflush OF((gzFile file, int flush));
 /*
      Flushes all pending output into the compressed file. The parameter
    flush is as in the deflate() function. The return value is the zlib
@@ -689,14 +687,14 @@ extern int    gzflush __P((gzFile file, int flush));
    degrade compression.
 */
 
-extern int    gzclose __P((gzFile file));
+extern int EXPORT    gzclose OF((gzFile file));
 /*
      Flushes all pending output if necessary, closes the compressed file
    and deallocates all the (de)compression state. The return value is the zlib
    error number (see function gzerror below).
 */
 
-extern __const char * gzerror __P((gzFile file, int *errnum));
+extern const char * EXPORT gzerror OF((gzFile file, int *errnum));
 /*
      Returns the error message for the last error which occurred on the
    given compressed file. errnum is set to zlib error number. If an
@@ -713,7 +711,7 @@ extern __const char * gzerror __P((gzFile file, int *errnum));
    compression library.
 */
 
-extern u_long adler32 __P((u_long adler, __const u_char *buf, u_int len));
+extern uLong EXPORT adler32 OF((uLong adler, const Bytef *buf, uInt len));
 
 /*
      Update a running Adler-32 checksum with the bytes buf[0..len-1] and
@@ -722,7 +720,7 @@ extern u_long adler32 __P((u_long adler, __const u_char *buf, u_int len));
    An Adler-32 checksum is almost as reliable as a CRC32 but can be computed
    much faster. Usage example:
 
-     u_long adler = adler32(0L, Z_NULL, 0);
+     uLong adler = adler32(0L, Z_NULL, 0);
 
      while (read_buffer(buffer, length) != EOF) {
        adler = adler32(adler, buffer, length);
@@ -730,7 +728,7 @@ extern u_long adler32 __P((u_long adler, __const u_char *buf, u_int len));
      if (adler != original_adler) error();
 */
 
-extern u_long crc32   __P((u_long crc, __const u_char *buf, u_int len));
+extern uLong EXPORT crc32   OF((uLong crc, const Bytef *buf, uInt len));
 /*
      Update a running crc with the bytes buf[0..len-1] and return the updated
    crc. If buf is NULL, this function returns the required initial value
@@ -738,7 +736,7 @@ extern u_long crc32   __P((u_long crc, __const u_char *buf, u_int len));
    within this function so it shouldn't be done by the application.
    Usage example:
 
-     u_long crc = crc32(0L, Z_NULL, 0);
+     uLong crc = crc32(0L, Z_NULL, 0);
 
      while (read_buffer(buffer, length) != EOF) {
        crc = crc32(crc, buffer, length);
@@ -752,15 +750,15 @@ extern u_long crc32   __P((u_long crc, __const u_char *buf, u_int len));
 /* deflateInit and inflateInit are macros to allow checking the zlib version
  * and the compiler's view of z_stream:
  */
-extern int deflateInit_ __P((z_streamp strm, int level,
-			           __const char *version, int stream_size));
-extern int inflateInit_ __P((z_streamp strm,
-				   __const char *version, int stream_size));
-extern int deflateInit2_ __P((z_streamp strm, int  level, int  method,
+extern int EXPORT deflateInit_ OF((z_streamp strm, int level,
+			           const char *version, int stream_size));
+extern int EXPORT inflateInit_ OF((z_streamp strm,
+				   const char *version, int stream_size));
+extern int EXPORT deflateInit2_ OF((z_streamp strm, int  level, int  method,
 				    int windowBits, int memLevel, int strategy,
-				    __const char *version, int stream_size));
-extern int inflateInit2_ __P((z_streamp strm, int  windowBits,
-				    __const char *version, int stream_size));
+				    const char *version, int stream_size));
+extern int EXPORT inflateInit2_ OF((z_streamp strm, int  windowBits,
+				    const char *version, int stream_size));
 #define deflateInit(strm, level) \
         deflateInit_((strm), (level),       ZLIB_VERSION, sizeof(z_stream))
 #define inflateInit(strm) \
@@ -771,8 +769,10 @@ extern int inflateInit2_ __P((z_streamp strm, int  windowBits,
 #define inflateInit2(strm, windowBits) \
         inflateInit2_((strm), (windowBits), ZLIB_VERSION, sizeof(z_stream))
 
-u_long *get_crc_table __P((void)); /* can be used by asm versions of crc32() */
+uLongf *get_crc_table OF((void)); /* can be used by asm versions of crc32() */
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ZLIB_H */
