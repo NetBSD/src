@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.62 1997/02/10 23:42:05 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.63 1997/02/18 15:30:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@ int mmutype = 2;	/* MMU_SUN */
 /*
  * Now our own stuff.
  */
-int cold = 1;
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
