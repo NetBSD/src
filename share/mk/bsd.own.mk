@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.14 1994/12/28 04:32:45 phil Exp $
+#	$NetBSD: bsd.own.mk,v 1.15 1995/02/20 21:26:33 jtc Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
@@ -31,6 +31,11 @@ DOCDIR?=        /usr/share/doc
 DOCGRP?=	bin
 DOCOWN?=	bin
 DOCMODE?=       ${NONBINMODE}
+
+NLSDIR?=	/usr/share/nls
+NLSGRP?=	bin
+NLSOWN?=	bin
+NLSMODE?=	${NONBINMODE}
 
 COPY?=		-c
 STRIP?=		-s
