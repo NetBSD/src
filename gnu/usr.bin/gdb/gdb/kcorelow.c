@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: kcorelow.c,v 1.2 1994/05/18 12:42:15 pk Exp $
+	$Id: kcorelow.c,v 1.3 1995/01/12 10:17:52 pk Exp $
 */
 
 #ifdef KERNEL_DEBUG
@@ -68,7 +68,7 @@ static CORE_ADDR	kernel_start;
 	(target_read_memory((CORE_ADDR)(addr), (char *)(p), sizeof(*(p))))
 
 
-static CORE_ADDR
+CORE_ADDR
 ksym_lookup(name)
 const char *name;
 {
@@ -151,6 +151,11 @@ kcore_open (filename, from_tty)
 	int ontop;
 	CORE_ADDR addr;
 
+	if (exec_bfd == NULL)
+		error("No kernel image specified");
+
+	kernel_start = bfd_get_start_address (exec_bfd); /* XXX */
+
 	target_preopen (from_tty);
 	if (!filename) {
 		error (core_kd?
@@ -178,8 +183,6 @@ kcore_open (filename, from_tty)
 	core_file = filename;
 	unpush_target (&kcore_ops);
 	ontop = !push_target (&kcore_ops);
-
-	kernel_start = bfd_get_start_address (exec_bfd); /* XXX */
 
 	/* print out the panic string if there is one */
 	if (kvread(ksym_lookup("panicstr"), &addr) == 0 &&
