@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.316 2004/07/06 05:50:57 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.317 2004/07/07 17:20:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4408,7 +4408,6 @@ lib/libc/stdio/fparseln.c			patch
 	Fix build problems caused by changes for ticket #527.
 	[jmc, ticket #538]
 
-
 tools/compat/compat_defs.h			1.43
 
 	Define "_ISOC99_SOURCE" when building under NetBSD to get the
@@ -5125,3 +5124,26 @@ sys/arch/alpha/alpha/dec_kn300.c		1.29
 	Fixes PR#9432, PR#12225, PR#25830 and multiple long-standing
 	bugs, and the code is smaller too.
 	[mycroft, ticket #607]
+
+sys/dev/usb/ehci.c				1.67
+
+	Fix a byte order error.
+	[mycroft, ticket #609]
+
+sys/dev/ic/cs89x0.c				1.13
+
+	Don't set M_HASFCS. Rather than just print we got a bad packet length,
+	actually print out the length that was bad.
+	[mycroft, ticket #610]
+
+sys/arch/i386/isa/npx.c				1.105-1.106
+
+	Back out part of the changes in rev 1.86. Remove npxdna_notset(), and
+	instead have the DNA trap handler point to npxdna_empty() by default.
+	This way, if there are no npx devices found and MATH_EMULATE is not
+	configured, we go back to the old behavior of issuing a SIGKILL and
+	printing:
+	pid XXX killed due to lack of floating point
+	rather than panicking.
+	[mycroft, ticket #611]
+
