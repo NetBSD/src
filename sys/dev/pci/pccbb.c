@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.23 2000/02/06 08:14:13 cgd Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.24 2000/02/21 01:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -2395,7 +2395,8 @@ pccbb_pcmcia_do_mem_map(ph, win)
 
 	int kind = ph->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
 	int mem8 =
-	    (ph->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
+	    (ph->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8
+	    || (kind == PCMCIA_MEM_ATTR);
 
 	regbase_win = 0x10 + win * 0x08;
 
