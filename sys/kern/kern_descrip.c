@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.29 1994/12/14 19:38:48 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.30 1995/01/12 05:40:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -198,7 +198,7 @@ fcntl(p, uap, retval)
 	switch (SCARG(uap, cmd)) {
 
 	case F_DUPFD:
-		newmin = (int)SCARG(uap, arg);
+		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    (u_int)newmin >= maxfiles)
 			return (EINVAL);
