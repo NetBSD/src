@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.331 2000/04/30 22:00:54 augustss Exp $
+#	$NetBSD: GENERIC,v 1.332 2000/05/02 11:00:56 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.331 $"
+#ident 		"GENERIC-$Revision: 1.332 $"
 
 maxusers	32		# estimated number of users
 
@@ -710,6 +710,8 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+#cms0	at isa? port 0x220			# Creative Music System
+
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at eso?
@@ -748,6 +750,7 @@ mpu*	at sb?
 mpu*	at ym?
 
 # MIDI support
+#midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
