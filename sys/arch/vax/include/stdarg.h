@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.3 1994/10/26 08:02:29 cgd Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 1995/01/28 01:52:27 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -57,6 +57,6 @@ typedef _BSD_VA_LIST_	va_list;
                 (abort(), 0) : sizeof(type)))[-1]
 #endif
 
-#define va_end(ap)
+#define va_end(ap)	((void) 0)
 
 #endif /* !_VAX_STDARG_H_ */

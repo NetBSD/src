@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.8 1994/12/28 22:45:47 cgd Exp $	*/
+/*	$NetBSD: varargs.h,v 1.9 1995/01/28 01:52:03 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,6 +66,6 @@ typedef _BSD_VA_LIST_	va_list;
 		    sizeof(type) : __va_promote(type))))[0]
 #endif
 
-#define	va_end(ap)
+#define	va_end(ap)	((void) 0)
 
 #endif /* !_M68K_VARARGS_H_ */
