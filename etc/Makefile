@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.39 1994/02/19 08:08:30 cgd Exp $
+#	$Id: Makefile,v 1.40 1994/02/19 11:04:45 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -14,17 +14,14 @@ NOOBJ=	oobj
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	aliases csh.cshrc csh.login csh.logout dm.conf \
+BIN1=	aliases csh.cshrc csh.login csh.logout daily dm.conf \
 	ftpusers gettytab group hosts hosts.equiv hosts.lpd inetd.conf \
-	man.conf motd myname netstart newsyslog.conf phones \
-	printcap protocols rc rc.local remote security services shells \
-	syslog.conf etc.${MACHINE}/ttys etc.${MACHINE}/disktab rpc
+	man.conf monthly motd myname netstart newsyslog.conf phones \
+	printcap protocols rc rc.local remote rpc security services shells \
+	syslog.conf weekly etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
 # -rw-rw-rw-
 BIN2=	motd
-
-# -rwxr-xr-x root.wheel, for the new f***ing cron root.wheel
-BIN3=	daily weekly monthly
 
 MTREE=	BSD.root.dist BSD.usr.dist BSD.var.dist
 NAMEDB=	localhost.rev named.boot root.cache
@@ -43,7 +40,6 @@ distribution: distrib-dirs
 	(cd ..; ${MAKE} install)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
-	install -c -o root -g wheel -m 755 ${BIN3} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	chroot ${DESTDIR}/ pwd_mkdb -p /etc/master.passwd

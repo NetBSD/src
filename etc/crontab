@@ -1,5 +1,5 @@
 # /var/cron/tabs/root - root's crontab for NetBSD
-# $Id: crontab,v 1.7 1993/12/05 11:43:54 cgd Exp $
+# $Id: crontab,v 1.8 1994/02/19 11:04:48 cgd Exp $
 #
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
@@ -13,6 +13,6 @@ HOME=/var/log
 0	*	*	*	*	/usr/bin/newsyslog
 #
 # do daily/weekly/monthly maintenance
-0	2	*	*	*	/etc/daily
-30	3	*	*	6	/etc/weekly
-30	5	1	*	*	/etc/monthly
+0	2	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "daily output" root
+30	3	*	*	6	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "weekly output" root
+30	5	1	*	*	/bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "monthly output" root
