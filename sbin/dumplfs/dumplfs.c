@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.5 1995/03/18 14:55:21 cgd Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.6 1995/06/07 17:16:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumplfs.c,v 1.5 1995/03/18 14:55:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: dumplfs.c,v 1.6 1995/06/07 17:16:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -363,9 +363,9 @@ dump_dinode(dip)
 		"gid   ", dip->di_gid,
 		"size  ", dip->di_size);
 	(void)printf("%s%s%s%s%s%s",
-		"atime ", ctime(&dip->di_atime.ts_sec),
-		"mtime ", ctime(&dip->di_mtime.ts_sec),
-		"ctime ", ctime(&dip->di_ctime.ts_sec));
+		"atime ", ctime(&dip->di_atime),
+		"mtime ", ctime(&dip->di_mtime),
+		"ctime ", ctime(&dip->di_ctime));
 	(void)printf("inum  %d\n", dip->di_inumber);
 	(void)printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
