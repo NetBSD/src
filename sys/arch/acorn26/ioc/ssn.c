@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.1 2002/03/24 15:47:22 bjh21 Exp $	*/
+/*	$NetBSD: ssn.c,v 1.2 2002/03/24 23:17:36 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,15 +29,15 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ssn.c,v 1.1 2002/03/24 15:47:22 bjh21 Exp $");
+__RCSID("$NetBSD: ssn.c,v 1.2 2002/03/24 23:17:36 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
 
-#include <arm26/iobus/iocreg.h>
-#include <arm26/iobus/iocvar.h>
+#include <acorn26/iobus/iocreg.h>
+#include <acorn26/iobus/iocvar.h>
 
 #include <dev/ic/ds.h>
 
