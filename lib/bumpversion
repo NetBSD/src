@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: bumpversion,v 1.1 1993/11/07 09:00:33 cgd Exp $
+#	$Id: bumpversion,v 1.2 1993/11/07 11:14:53 cgd Exp $
 #
 
 PATH=/bin:/usr/bin
@@ -57,7 +57,7 @@ while :
 done
 
 if [ $# = 0 ] ; then
-	echo 'usage: $0 [-c] [-m] [-n] dir ...'
+	echo "usage: $0 [-c] [-m] [-n] dir ..."
 	exit 2
 fi
 
