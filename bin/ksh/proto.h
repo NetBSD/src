@@ -1,9 +1,9 @@
-/*	$NetBSD: proto.h,v 1.4 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: proto.h,v 1.5 2002/09/25 02:41:11 provos Exp $	*/
 
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $Id: proto.h,v 1.4 1999/10/20 15:10:00 hubertf Exp $
+ * $Id: proto.h,v 1.5 2002/09/25 02:41:11 provos Exp $
  */
 
 /* alloc.c */
@@ -78,6 +78,7 @@ char *	search		ARGS((const char *name, const char *path, int mode,
 			      int *errnop));
 int	search_access	ARGS((const char *path, int mode, int *errnop));
 int	pr_menu		ARGS((char *const *ap));
+int	pr_list		ARGS((char *const *ap));
 /* expr.c */
 int 	evaluate	ARGS((const char *expr, long *rval, int error_ok));
 int	v_evaluate	ARGS((struct tbl *vp, const char *expr, volatile int error_ok));
@@ -199,7 +200,7 @@ int	ksh_getopt	ARGS((char **argv, Getopt *go, const char *options));
 void	print_value_quoted ARGS((const char *s));
 void	print_columns	ARGS((struct shf *shf, int n,
 			      char *(*func)(void *, int, char *, int),
-			      void *arg, int max_width));
+			      void *arg, int max_width, int prefcol));
 int	strip_nuls	ARGS((char *buf, int nbytes));
 char	*str_zcpy	ARGS((char *dst, const char *src, int dsize));
 int	blocking_read	ARGS((int fd, char *buf, int nbytes));
