@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 1996/10/20 20:26:52 pk Exp $ */
+/*	$NetBSD: param.h,v 1.27 1996/10/22 19:11:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -284,12 +284,12 @@ extern int mmumod;
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4_PGSHIFT
 #elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(0)
-#	define CPU_ISSUN4COR4M	(0)
-#	define NBPG		(0)
-#	define PGOFSET		(0)
-#	define PGSHIFT		(0)
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
+#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#	define NBPG		nbpg
+#	define PGOFSET		pgofset
+#	define PGSHIFT		pgshift
 #endif
