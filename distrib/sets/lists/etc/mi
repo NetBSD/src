@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.48 2000/04/26 01:33:27 itojun Exp $
+# $NetBSD: mi,v 1.49 2000/05/01 05:31:14 thorpej Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -50,6 +50,9 @@
 ./etc/passwd
 ./etc/phones
 ./etc/postfix
+./etc/postfix/README
+./etc/postfix/main.cf
+./etc/postfix/master.cf
 ./etc/printcap
 ./etc/profile
 ./etc/protocols
@@ -98,6 +101,7 @@
 ./etc/rc.d/nfslocking
 ./etc/rc.d/ntpdate
 ./etc/rc.d/portmap
+./etc/rc.d/postfix
 ./etc/rc.d/ppp
 ./etc/rc.d/pwcheck
 ./etc/rc.d/quota
