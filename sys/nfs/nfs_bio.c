@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.67 2001/05/26 21:27:19 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.68 2001/06/27 17:33:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1025,6 +1025,10 @@ nfs_getpages(v)
 	}
 
 	/* vnode is VOP_LOCKed, uobj is locked */
+
+	if (write && (vp->v_flag & VONWORKLST) == 0) {
+		vn_syncer_add_to_worklist(vp, filedelay);
+	}
 
 	bsize = nmp->nm_rsize;
 	orignpages = MIN(*ap->a_count,
