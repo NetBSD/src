@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.14 2002/09/12 22:56:29 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.15 2002/09/26 20:42:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -321,9 +321,8 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self)
+_rtld_relocate_nonplt_objects(obj)
 	const Obj_Entry *obj;
-	bool self;
 {
 	const Elf_Rela *rela;
 
