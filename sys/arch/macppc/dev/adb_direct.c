@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.14.2.1 2001/04/01 16:59:02 he Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1281,6 +1281,7 @@ adb_reinit(void)
 
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
+	delay(200000);
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine
