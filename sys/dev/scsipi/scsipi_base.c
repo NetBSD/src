@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.104 2004/03/16 19:10:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.104.2.1 2004/04/29 04:24:41 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.104 2004/03/16 19:10:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.104.2.1 2004/04/29 04:24:41 jmc Exp $");
 
 #include "opt_scsi.h"
 
@@ -938,12 +938,7 @@ scsipi_interpret_sense(xs)
 			if (sense->add_sense_code == 0x29 &&
 			    sense->add_sense_code_qual == 0x00) {
 				/* device or bus reset */
-				if (xs->xs_retries != 0) {
-					xs->xs_retries--;
-					error = ERESTART;
-				} else
-					error = EIO;
-				return (error);
+				return (ERESTART);
 			}
 			if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
