@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1 2001/02/21 16:28:03 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.2 2001/06/28 18:59:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  */
 
 #ifdef DEBUG
+//#define INTERRUPT_MONITOR
+
 #define __bitdisp(a, s, e, m, c)					\
 ({									\
 	u_int32_t __j, __j1;						\
@@ -71,10 +73,29 @@ __BEGIN_DECLS
 void	dbg_bit_print(u_int32_t, u_int32_t, const char *);
 void	dbg_banner_start(const char *, size_t);
 void	dbg_banner_end(void);
+
+#ifdef INTERRUPT_MONITOR
+enum heart_beat {
+	HEART_BEAT_CYAN = 0,
+	HEART_BEAT_MAGENTA,
+	HEART_BEAT_BLUE,
+	HEART_BEAT_YELLOW,
+	HEART_BEAT_GREEN,
+	HEART_BEAT_RED,
+	HEART_BEAT_WHITE,
+	HEART_BEAT_BLACK
+};
+void	__dbg_heart_beat(enum heart_beat);
+#else
+#define __dbg_heart_beat(x)	((void)0)
+#endif /* INTERRUPT_MONITOR */
 __END_DECLS
+
 #else /* DEBUG */
+
 #define bitdisp(...)		((void)0)
 #define dbg_bit_print(...)	((void)0)
 #define dbg_banner_start(...)	((void)0)
 #define dbg_banner_end(...)	((void)0)
+#define __dbg_heart_beat(...)	((void)0)
 #endif /* DEBUG */
