@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.7 1997/07/09 14:31:13 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.8 1998/12/01 15:30:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -47,6 +47,7 @@
 #include <kvm.h>
 
 #define	DKTYPENAMES
+#define	FSTYPENAMES
 #include <sys/disklabel.h>
 #include <machine/ahdilabel.h>
 
