@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.20 1998/07/28 11:41:55 mycroft Exp $	*/
+/*	$NetBSD: histedit.c,v 1.21 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.20 1998/07/28 11:41:55 mycroft Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.21 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ EditLine *el;	/* editline cookie */
 int displayhist;
 static FILE *el_in, *el_out;
 
-STATIC char *fc_replace __P((const char *, char *, char *));
+STATIC const char *fc_replace __P((const char *, char *, char *));
 
 /*
  * Set history and editing status.  Called whenever the status may
@@ -186,11 +186,11 @@ histcmd(argc, argv)
 	extern char *optarg;
 	extern int optind, optopt, optreset;
 	int ch;
-	char *editor = NULL;
+	const char *editor = NULL;
 	HistEvent he;
 	int lflg = 0, nflg = 0, rflg = 0, sflg = 0;
 	int i, retval;
-	char *firststr, *laststr;
+	const char *firststr, *laststr;
 	int first, last, direction;
 	char *pat = NULL, *repl;	/* ksh "fc old=new" crap */
 	static int active = 0;
@@ -366,14 +366,17 @@ histcmd(argc, argv)
 				out1fmt("%5d ", he.num);
 			out1str(he.str);
 		} else {
-			char *s = pat ?
-			   fc_replace(he.str, pat, repl) : (char *)he.str;
+			const char *s = pat ?
+			   fc_replace(he.str, pat, repl) : he.str;
+			char *sp;
 
 			if (sflg) {
 				if (displayhist) {
 					out2str(s);
 				}
-				evalstring(s);
+
+				evalstring(strcpy(stalloc(strlen(s) + 1), s));
+				free(sp);
 				if (displayhist && hist) {
 					/*
 					 *  XXX what about recursive and
@@ -410,7 +413,7 @@ histcmd(argc, argv)
 	return 0;
 }
 
-STATIC char *
+STATIC const char *
 fc_replace(s, p, r)
 	const char *s;
 	char *p, *r;
@@ -447,11 +450,11 @@ not_fcnumber(s)
 
 int
 str_to_event(str, last)
-	char *str;
+	const char *str;
 	int last;
 {
 	HistEvent he;
-	char *s = str;
+	const char *s = str;
 	int relative = 0;
 	int i, retval;
 

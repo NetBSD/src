@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 1999/03/27 13:46:19 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 1999/03/27 13:46:19 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ short profile_buf[16384];
 extern int etext();
 #endif
 
-STATIC void read_profile __P((char *));
+STATIC void read_profile __P((const char *));
 STATIC char *find_dot_file __P((char *));
 int main __P((int, char **));
 
@@ -282,7 +282,7 @@ cmdloop(top)
 
 STATIC void
 read_profile(name)
-	char *name;
+	const char *name;
 {
 	int fd;
 	int xflag_set = 0;
@@ -346,7 +346,7 @@ find_dot_file(basename)
 	char *basename;
 {
 	char *fullname;
-	char *path = pathval();
+	const char *path = pathval();
 	struct stat statb;
 
 	/* don't try this for absolute or relative paths */

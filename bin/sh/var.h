@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.15 1999/01/25 14:20:56 mycroft Exp $	*/
+/*	$NetBSD: var.h,v 1.16 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -112,12 +112,12 @@ extern struct var vhistsize;
 #define mpathset()	((vmpath.flags & VUNSET) == 0)
 
 void initvar __P((void));
-void setvar __P((char *, char *, int));
+void setvar __P((const char *, const char *, int));
 void setvareq __P((char *, int));
 struct strlist;
 void listsetvar __P((struct strlist *));
-char *lookupvar __P((char *));
-char *bltinlookup __P((char *, int));
+char *lookupvar __P((const char *));
+char *bltinlookup __P((const char *, int));
 char **environment __P((void));
 void shprocvar __P((void));
 int showvarscmd __P((int, char **));
@@ -127,5 +127,5 @@ void mklocal __P((char *));
 void poplocalvars __P((void));
 int setvarcmd __P((int, char **));
 int unsetcmd __P((int, char **));
-int unsetvar __P((char *));
-int setvarsafe __P((char *, char *, int));
+int unsetvar __P((const char *));
+int setvarsafe __P((const char *, const char *, int));

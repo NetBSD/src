@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.46 1999/06/26 16:31:47 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.47 1999/07/09 03:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.46 1999/06/26 16:31:47 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.47 1999/07/09 03:05:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -684,7 +684,7 @@ evalcommand(cmd, flags, backcmd)
 		cmdentry.u.index = BLTINCMD;
 	} else {
 		static const char PATH[] = "PATH=";
-		char *path = pathval();
+		const char *path = pathval();
 
 		/*
 		 * Modify the command lookup path, if a PATH= assignment
@@ -764,9 +764,10 @@ evalcommand(cmd, flags, backcmd)
 		localvars = NULL;
 		INTON;
 		if (setjmp(jmploc.loc)) {
-			if (exception == EXSHELLPROC)
-				freeparam((struct shparam *)&saveparam);
-			else {
+			if (exception == EXSHELLPROC) {
+				freeparam((volatile struct shparam *)
+				    &saveparam);
+			} else {
 				freeparam(&shellparam);
 				shellparam = saveparam;
 			}

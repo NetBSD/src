@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.26 1998/07/28 11:41:52 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.27 1999/07/09 03:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.26 1998/07/28 11:41:52 mycroft Exp $");
+__RCSID("$NetBSD: cd.c,v 1.27 1999/07/09 03:05:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,8 +83,8 @@ cdcmd(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *dest;
-	char *path;
+	const char *dest;
+	const char *path;
 	char *p;
 	struct stat statb;
 	int print = 0;

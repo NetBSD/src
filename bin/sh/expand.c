@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.47 1999/04/30 17:54:17 he Exp $	*/
+/*	$NetBSD: expand.c,v 1.48 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.47 1999/04/30 17:54:17 he Exp $");
+__RCSID("$NetBSD: expand.c,v 1.48 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -954,7 +954,7 @@ ifsbreakup(string, arglist)
 	char *start;
 	char *p;
 	char *q;
-	char *ifs;
+	const char *ifs;
 	int ifsspc;
 	int nulonly;
 
@@ -1119,6 +1119,7 @@ expmeta(enddir, name)
 	char *name;
 	{
 	char *p;
+	const char *cp;
 	char *q;
 	char *start;
 	char *endname;
@@ -1192,14 +1193,14 @@ expmeta(enddir, name)
 		}
 	}
 	if (enddir == expdir) {
-		p = ".";
+		cp = ".";
 	} else if (enddir == expdir + 1 && *expdir == '/') {
-		p = "/";
+		cp = "/";
 	} else {
-		p = expdir;
+		cp = expdir;
 		enddir[-1] = '\0';
 	}
-	if ((dirp = opendir(p)) == NULL)
+	if ((dirp = opendir(cp)) == NULL)
 		return;
 	if (enddir != expdir)
 		enddir[-1] = '/';
@@ -1225,9 +1226,8 @@ expmeta(enddir, name)
 				scopy(dp->d_name, enddir);
 				addfname(expdir);
 			} else {
-				char *q;
-				for (p = enddir, q = dp->d_name;
-				     (*p++ = *q++) != '\0';)
+				for (p = enddir, cp = dp->d_name;
+				     (*p++ = *cp++) != '\0';)
 					continue;
 				p[-1] = '/';
 				expmeta(p, endname);

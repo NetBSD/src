@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.30 1999/04/05 14:59:35 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.31 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.30 1999/04/05 14:59:35 mycroft Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.31 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ STATIC int dowait __P((int, struct job *));
 STATIC int onsigchild __P((void));
 STATIC int waitproc __P((int, int *));
 STATIC void cmdtxt __P((union node *));
-STATIC void cmdputs __P((char *));
+STATIC void cmdputs __P((const char *));
 
 
 /*
@@ -575,7 +575,7 @@ forkshell(jp, n, mode)
 	int pid;
 	int pgrp;
 	const char *devnull = _PATH_DEVNULL;
-	/* const */ char *nullerr = "Can't open %s";
+	const char *nullerr = "Can't open %s";
 
 	TRACE(("forkshell(%%%d, 0x%lx, %d) called\n", jp - jobtab, (long)n,
 	    mode));
@@ -975,7 +975,7 @@ cmdtxt(n)
 	{
 	union node *np;
 	struct nodelist *lp;
-	char *p;
+	const char *p;
 	int i;
 	char s[2];
 
@@ -1100,9 +1100,10 @@ redir:
 
 STATIC void
 cmdputs(s)
-	char *s;
+	const char *s;
 	{
-	char *p, *q;
+	const char *p;
+	char *q;
 	char c;
 	int subtype = 0;
 

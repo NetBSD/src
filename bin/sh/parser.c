@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.42 1999/02/04 16:17:39 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.43 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.42 1999/02/04 16:17:39 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.43 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,14 +101,6 @@ int quoteflag;			/* set if (part of) last token was quoted */
 int startlinno;			/* line # where last token started */
 
 
-#define GDB_HACK 1 /* avoid local declarations which gdb can't handle */
-#ifdef GDB_HACK
-static const char argvars[5] = {(char)CTLVAR, (char)(VSNORMAL|VSQUOTE),
-    '@', '=', '\0'};
-static const char types[] = "}-+?=";
-#endif
-
-
 STATIC union node *list __P((int));
 STATIC union node *andor __P((void));
 STATIC union node *pipeline __P((void));
@@ -123,7 +115,7 @@ STATIC int xxreadtoken __P((void));
 STATIC int readtoken1 __P((int, char const *, char *, int));
 STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int)) __attribute__((noreturn));
-STATIC void synerror __P((char *)) __attribute__((noreturn));
+STATIC void synerror __P((const char *)) __attribute__((noreturn));
 STATIC void setprompt __P((int));
 
 
@@ -372,13 +364,11 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			if (lasttoken != TNL && lasttoken != TSEMI)
 				synexpect(-1);
 		} else {
-#ifndef GDB_HACK
-			static const char argvars[5] = {CTLVAR, VSNORMAL|VSQUOTE,
+			static char argvars[5] = {CTLVAR, VSNORMAL|VSQUOTE,
 								   '@', '=', '\0'};
-#endif
 			n2 = (union node *)stalloc(sizeof (struct narg));
 			n2->type = NARG;
-			n2->narg.text = (char *)argvars;
+			n2->narg.text = argvars;
 			n2->narg.backquote = NULL;
 			n2->narg.next = NULL;
 			n1->nfor.args = n2;
@@ -728,12 +718,13 @@ readtoken() {
 		 */
 		if (t == TWORD && !quoteflag)
 		{
-			char * const *pp;
+			const char *const *pp;
 
-			for (pp = (char **)parsekwd; *pp; pp++) {
+			for (pp = parsekwd; *pp; pp++) {
 				if (**pp == *wordtext && equal(*pp, wordtext))
 				{
-					lasttoken = t = pp - parsekwd + KWDOFFSET;
+					lasttoken = t = pp - 
+					    parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
 					goto out;
 				}
@@ -1181,9 +1172,7 @@ parsesub: {
 	int typeloc;
 	int flags;
 	char *p;
-#ifndef GDB_HACK
 	static const char types[] = "}-+?=";
-#endif
 
 	c = pgetc();
 	if (c != '(' && c != '{' && !is_name(c) && !is_special(c)) {
@@ -1313,24 +1302,24 @@ parsebackq: {
                 /* We must read until the closing backquote, giving special
                    treatment to some slashes, and then push the string and
                    reread it as input, interpreting it normally.  */
-                char *out;
-                int c;
-                int savelen;
-                char *str;
+                char *pout;
+                int pc;
+                int psavelen;
+                char *pstr;
 
 
-                STARTSTACKSTR(out);
+                STARTSTACKSTR(pout);
 		for (;;) {
 			if (needprompt) {
 				setprompt(2);
 				needprompt = 0;
 			}
-			switch (c = pgetc()) {
+			switch (pc = pgetc()) {
 			case '`':
 				goto done;
 
 			case '\\':
-                                if ((c = pgetc()) == '\n') {
+                                if ((pc = pgetc()) == '\n') {
 					plinno++;
 					if (doprompt)
 						setprompt(2);
@@ -1344,9 +1333,9 @@ parsebackq: {
 					 */
 					continue;
 				}
-                                if (c != '\\' && c != '`' && c != '$'
-                                    && (!dblquote || c != '"'))
-                                        STPUTC('\\', out);
+                                if (pc != '\\' && pc != '`' && pc != '$'
+                                    && (!dblquote || pc != '"'))
+                                        STPUTC('\\', pout);
 				break;
 
 			case '\n':
@@ -1362,14 +1351,14 @@ parsebackq: {
 			default:
 				break;
 			}
-			STPUTC(c, out);
+			STPUTC(pc, pout);
                 }
 done:
-                STPUTC('\0', out);
-                savelen = out - stackblock();
-                if (savelen > 0) {
-			str = grabstackstr(out);
-			setinputstring(str, 1);
+                STPUTC('\0', pout);
+                psavelen = pout - stackblock();
+                if (psavelen > 0) {
+			pstr = grabstackstr(pout);
+			setinputstring(pstr, 1);
                 }
         }
 	nlpp = &bqlist;
@@ -1531,7 +1520,7 @@ synexpect(token)
 
 STATIC void
 synerror(msg)
-	char *msg;
+	const char *msg;
 	{
 	if (commandname)
 		outfmt(&errout, "%s: %d: ", commandname, startlinno);
@@ -1556,7 +1545,7 @@ setprompt(which)
  * called by editline -- any expansions to the prompt
  *    should be added here.
  */
-char *
+const char *
 getprompt(unused)
 	void *unused;
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.12 1999/02/04 00:27:07 cjs Exp $	*/
+/*	$NetBSD: options.h,v 1.13 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -108,9 +108,9 @@ extern char *optptr;		/* used by nextopt */
 void procargs __P((int, char **));
 void optschanged __P((void));
 void setparam __P((char **));
-void freeparam __P((struct shparam *));
+void freeparam __P((volatile struct shparam *));
 int shiftcmd __P((int, char **));
 int setcmd __P((int, char **));
 int getoptscmd __P((int, char **));
-int nextopt __P((char *));
+int nextopt __P((const char *));
 void getoptsreset __P((const char *));

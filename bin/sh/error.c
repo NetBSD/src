@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.21 1999/04/05 15:00:28 mycroft Exp $	*/
+/*	$NetBSD: error.c,v 1.22 1999/07/09 03:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.21 1999/04/05 15:00:28 mycroft Exp $");
+__RCSID("$NetBSD: error.c,v 1.22 1999/07/09 03:05:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ volatile int intpending;
 char *commandname;
 
 
-static void exverror __P((int, char *, va_list)) __attribute__((__noreturn__));
+static void exverror __P((int, const char *, va_list))
+    __attribute__((__noreturn__));
 
 /*
  * Called to raise an exception.  Since C doesn't include exceptions, we
@@ -130,7 +131,7 @@ onint() {
 static void
 exverror(cond, msg, ap)
 	int cond;
-	char *msg;
+	const char *msg;
 	va_list ap;
 {
 	CLEAR_PENDING_INT;
@@ -156,7 +157,7 @@ exverror(cond, msg, ap)
 
 #ifdef __STDC__
 void
-error(char *msg, ...)
+error(const char *msg, ...)
 #else
 void
 error(va_alist)
@@ -164,14 +165,14 @@ error(va_alist)
 #endif
 {
 #ifndef __STDC__
-	char *msg;
+	const char *msg;
 #endif
 	va_list ap;
 #ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);
-	msg = va_arg(ap, char *);
+	msg = va_arg(ap, const char *);
 #endif
 	exverror(EXERROR, msg, ap);
 	/* NOTREACHED */
@@ -181,7 +182,7 @@ error(va_alist)
 
 #ifdef __STDC__
 void
-exerror(int cond, char *msg, ...)
+exerror(int cond, const char *msg, ...)
 #else
 void
 exerror(va_alist)
@@ -190,7 +191,7 @@ exerror(va_alist)
 {
 #ifndef __STDC__
 	int cond;
-	char *msg;
+	const char *msg;
 #endif
 	va_list ap;
 #ifdef __STDC__
@@ -198,7 +199,7 @@ exerror(va_alist)
 #else
 	va_start(ap);
 	cond = va_arg(ap, int);
-	msg = va_arg(ap, char *);
+	msg = va_arg(ap, const char *);
 #endif
 	exverror(cond, msg, ap);
 	/* NOTREACHED */
@@ -214,7 +215,7 @@ exerror(va_alist)
 struct errname {
 	short errcode;		/* error number */
 	short action;		/* operation which encountered the error */
-	char *msg;		/* text describing the error */
+	const char *msg;	/* text describing the error */
 };
 
 
@@ -281,7 +282,7 @@ STATIC const struct errname errormsg[] = {
  * Action describes the operation that got the error.
  */
 
-char *
+const char *
 errmsg(e, action)
 	int e;
 	int action;

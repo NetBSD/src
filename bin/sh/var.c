@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.22 1999/01/28 18:11:51 kleink Exp $	*/
+/*	$NetBSD: var.c,v 1.23 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.22 1999/01/28 18:11:51 kleink Exp $");
+__RCSID("$NetBSD: var.c,v 1.23 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: var.c,v 1.22 1999/01/28 18:11:51 kleink Exp $");
 struct varinit {
 	struct var *var;
 	int flags;
-	char *text;
+	const char *text;
 	void (*func) __P((const char *));
 };
 
@@ -133,8 +133,8 @@ const struct varinit varinit[] = {
 
 struct var *vartab[VTABSIZE];
 
-STATIC struct var **hashvar __P((char *));
-STATIC int varequal __P((char *, char *));
+STATIC struct var **hashvar __P((const char *));
+STATIC int varequal __P((const char *, const char *));
 
 /*
  * Initialize the varable symbol tables and import the environment
@@ -172,7 +172,7 @@ initvar() {
 			vpp = hashvar(ip->text);
 			vp->next = *vpp;
 			*vpp = vp;
-			vp->text = ip->text;
+			vp->text = strdup(ip->text);
 			vp->flags = ip->flags;
 			vp->func = ip->func;
 		}
@@ -184,7 +184,7 @@ initvar() {
 		vpp = hashvar("PS1=");
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.text = geteuid() ? "PS1=$ " : "PS1=# ";
+		vps1.text = strdup(geteuid() ? "PS1=$ " : "PS1=# ");
 		vps1.flags = VSTRFIXED|VTEXTFIXED;
 	}
 }
@@ -195,7 +195,7 @@ initvar() {
 
 int
 setvarsafe(name, val, flags)
-	char *name, *val;
+	const char *name, *val;
 	int flags;
 {
 	struct jmploc jmploc;
@@ -222,10 +222,12 @@ setvarsafe(name, val, flags)
 
 void
 setvar(name, val, flags)
-	char *name, *val;
+	const char *name, *val;
 	int flags;
 {
-	char *p, *q;
+	const char *p;
+	const char *q;
+	char *d;
 	int len;
 	int namelen;
 	char *nameeq;
@@ -253,14 +255,14 @@ setvar(name, val, flags)
 	} else {
 		len += strlen(val);
 	}
-	p = nameeq = ckmalloc(len);
+	d = nameeq = ckmalloc(len);
 	q = name;
 	while (--namelen >= 0)
-		*p++ = *q++;
-	*p++ = '=';
-	*p = '\0';
+		*d++ = *q++;
+	*d++ = '=';
+	*d = '\0';
 	if (val)
-		scopy(val, p);
+		scopy(val, d);
 	setvareq(nameeq, flags);
 }
 
@@ -345,7 +347,7 @@ listsetvar(list)
 
 char *
 lookupvar(name)
-	char *name;
+	const char *name;
 	{
 	struct var *v;
 
@@ -369,7 +371,7 @@ lookupvar(name)
 
 char *
 bltinlookup(name, doall)
-	char *name;
+	const char *name;
 	int doall;
 {
 	struct strlist *sp;
@@ -402,7 +404,8 @@ environment() {
 	int nenv;
 	struct var **vpp;
 	struct var *vp;
-	char **env, **ep;
+	char **env;
+	char **ep;
 
 	nenv = 0;
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
@@ -499,7 +502,7 @@ exportcmd(argc, argv)
 	struct var **vpp;
 	struct var *vp;
 	char *name;
-	char *p;
+	const char *p;
 	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
 	int pflag;
 
@@ -578,8 +581,9 @@ mklocal(name)
 	INTOFF;
 	lvp = ckmalloc(sizeof (struct localvar));
 	if (name[0] == '-' && name[1] == '\0') {
-		lvp->text = ckmalloc(sizeof optlist);
-		memcpy(lvp->text, optlist, sizeof optlist);
+		char *p;
+		p = ckmalloc(sizeof optlist);
+		lvp->text = memcpy(p, optlist, sizeof optlist);
 		vp = NULL;
 	} else {
 		vpp = hashvar(name);
@@ -692,7 +696,7 @@ unsetcmd(argc, argv)
 
 int
 unsetvar(s)
-	char *s;
+	const char *s;
 	{
 	struct var **vpp;
 	struct var *vp;
@@ -729,7 +733,7 @@ unsetvar(s)
 
 STATIC struct var **
 hashvar(p)
-	char *p;
+	const char *p;
 	{
 	unsigned int hashval;
 
@@ -749,7 +753,7 @@ hashvar(p)
 
 STATIC int
 varequal(p, q)
-	char *p, *q;
+	const char *p, *q;
 	{
 	while (*p == *q++) {
 		if (*p++ == '=')

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.12 1998/07/28 11:41:53 mycroft Exp $	*/
+/*	$NetBSD: error.h,v 1.13 1999/07/09 03:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -92,9 +92,9 @@ extern char *commandname;	/* name of command--printed on error */
 
 void exraise __P((int)) __attribute__((__noreturn__));
 void onint __P((void));
-void error __P((char *, ...)) __attribute__((__noreturn__));
-void exerror __P((int, char *, ...)) __attribute__((__noreturn__));
-char *errmsg __P((int, int));
+void error __P((const char *, ...)) __attribute__((__noreturn__));
+void exerror __P((int, const char *, ...)) __attribute__((__noreturn__));
+const char *errmsg __P((int, int));
 
 
 /*

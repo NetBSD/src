@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.12 1999/02/05 07:52:52 christos Exp $	*/
+/*	$NetBSD: arith.y,v 1.13 1999/07/09 03:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.12 1999/02/05 07:52:52 christos Exp $");
+__RCSID("$NetBSD: arith.y,v 1.13 1999/07/09 03:05:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,9 @@ __RCSID("$NetBSD: arith.y,v 1.12 1999/02/05 07:52:52 christos Exp $");
 #include "output.h"
 #include "memalloc.h"
 
-char *arith_buf, *arith_startbuf;
+const char *arith_buf, *arith_startbuf;
 
-void yyerror __P((char *));
+void yyerror __P((const char *));
 int yyparse __P((void));
 #ifdef TESTARITH
 int main __P((int , char *[]));
@@ -64,7 +64,7 @@ int error __P((char *));
 
 int
 arith(s)
-	char *s;
+	const char *s;
 {
 	long result;
 
@@ -87,7 +87,7 @@ expcmd(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *p;
+	const char *p;
 	char *concat;
 	char **ap;
 	long i;
@@ -192,7 +192,7 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 %%
 void
 yyerror(s)
-	char *s;
+	const char *s;
 {
 
 	yyerrok;

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.28 1998/07/28 11:41:57 mycroft Exp $	*/
+/*	$NetBSD: options.c,v 1.29 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.28 1998/07/28 11:41:57 mycroft Exp $");
+__RCSID("$NetBSD: options.c,v 1.29 1999/07/09 03:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,7 @@ setparam(argv)
 
 void
 freeparam(param)
-	struct shparam *param;
+	volatile struct shparam *param;
 	{
 	char **ap;
 
@@ -401,12 +401,12 @@ getoptscmd(argc, argv)
 }
 
 STATIC int
-getopts(optstr, optvar, optfirst, optnext, optptr)
+getopts(optstr, optvar, optfirst, optnext, optpptr)
 	char *optstr;
 	char *optvar;
 	char **optfirst;
 	char ***optnext;
-	char **optptr;
+	char **optpptr;
 {
 	char *p, *q;
 	char c = '?';
@@ -415,7 +415,7 @@ getopts(optstr, optvar, optfirst, optnext, optptr)
 	int err = 0;
 	char s[10];
 
-	if ((p = *optptr) == NULL || *p == '\0') {
+	if ((p = *optpptr) == NULL || *p == '\0') {
 		/* Current word is done, advance */
 		if (*optnext == NULL)
 			return 1;
@@ -483,7 +483,7 @@ bad:
 	*optnext = NULL;
 	p = NULL;
 out:
-	*optptr = p;
+	*optpptr = p;
 	fmtstr(s, sizeof(s), "%d", ind);
 	err |= setvarsafe("OPTIND", s, VNOFUNC);
 	s[0] = c;
@@ -491,7 +491,7 @@ out:
 	err |= setvarsafe(optvar, s, 0);
 	if (err) {
 		*optnext = NULL;
-		*optptr = NULL;
+		*optpptr = NULL;
 		flushall();
 		exraise(EXERROR);
 	}
@@ -511,9 +511,10 @@ out:
 
 int
 nextopt(optstring)
-	char *optstring;
+	const char *optstring;
 	{
-	char *p, *q;
+	char *p;
+	const char *q;
 	char c;
 
 	if ((p = optptr) == NULL || *p == '\0') {
