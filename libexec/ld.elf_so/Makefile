@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2000/03/26 21:55:55 mycroft Exp $
+#	$NetBSD: Makefile,v 1.32 2000/07/03 03:30:52 matt Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -11,7 +11,8 @@ M= ${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") ||	\
      (${MACHINE_ARCH} == "powerpc") ||					\
      (${MACHINE_ARCH} == "sparc") ||					\
-     (${MACHINE_ARCH} == "sparc64")) &&					\
+     (${MACHINE_ARCH} == "sparc64") ||					\
+     (${MACHINE_ARCH} == "vax")) &&					\
     ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
 
 PROG=	ld.elf_so
