@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_out.c,v 1.5 1995/04/21 04:55:12 mycroft Exp $	*/
+/*	$NetBSD: pcvt_out.c,v 1.6 1995/05/05 22:28:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -888,12 +888,14 @@ vt_coldinit(void)
 
 	do_initialization = 0;
 	
-	equipment = ((rtcin(RTC_EQUIPMENT)) >> 4) & 0x03;
+	equipment = mc146818_read(NULL, NVRAM_EQUIPMENT);
 	
-	switch(equipment)
+	switch(equipment & NVRAM_EQUIPMENT_MONITOR)
 	{
 		default:
-		case EQ_EGAVGA:
+			panic("vt_coldinit: impossible");
+
+		case NVRAM_EQUIPMENT_EGAVGA:
 
 			/* set memory start to CGA == B8000 */
 			
@@ -993,15 +995,15 @@ vt_coldinit(void)
 
 			break;
 
-		case EQ_40COLOR:
-		case EQ_80COLOR:
+		case NVRAM_EQUIPMENT_COLOR40:
+		case NVRAM_EQUIPMENT_COLOR80:
 			Crtat = ISA_HOLE_VADDR(CGA_BUF);
 			addr_6845 = CGA_BASE;
 			adaptor_type = CGA_ADAPTOR;
 			totalfonts = 0;
 			break;
 
-		case EQ_80MONO:
+		case NVRAM_EQUIPMENT_MONO80:
 			Crtat = ISA_HOLE_VADDR(MONO_BUF);
 			addr_6845 = MONO_BASE;
 			adaptor_type = MDA_ADAPTOR;
