@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1999/06/17 19:23:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1999/06/18 14:27:09 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1565,7 +1565,7 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	*pte = npte;
-	pmap_update();
+	TBIS (va);
 }
 
 
