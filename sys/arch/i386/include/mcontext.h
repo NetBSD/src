@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.5 2003/09/06 22:05:49 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6 2003/10/08 22:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,9 +119,15 @@ typedef struct {
 #define _UC_MACHINE_SP(uc) ((uc)->uc_mcontext.__gregs[_REG_UESP] + \
 	((uc)->uc_mcontext.__gregs[_REG_EFL] & PSL_VM ? \
 	 ((uc)->uc_mcontext.__gregs[_REG_SS] << 4) : 0))
-#else
+#endif /* VM86 */
+#endif /* _KERNEL_OPT */
+
+#ifndef _UC_MACHINE_SP
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_UESP])
 #endif
-#endif
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EIP])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_EAX])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif	/* !_I386_MCONTEXT_H_ */
