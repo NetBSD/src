@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.161 2005/03/19 23:32:55 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.162 2005/03/19 23:46:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.161 2005/03/19 23:32:55 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.162 2005/03/19 23:46:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,6 @@ __RCSID("$NetBSD: ifconfig.c,v 1.161 2005/03/19 23:32:55 thorpej Exp $");
 #endif
 #include <arpa/inet.h>
 
-#define	NSIP
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #include <netdb.h>
 
 #define EON
@@ -120,6 +117,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.161 2005/03/19 23:32:55 thorpej Exp $");
 
 #ifndef INET_ONLY
 #include "af_atalk.h"
+#include "af_ns.h"
 #endif /* ! INET_ONLY */
 
 #include "agr.h"
@@ -342,8 +340,6 @@ void	in6_status(int);
 void 	in6_getaddr(const char *, int);
 void 	in6_getprefix(const char *, int);
 #endif
-void 	xns_status(int);
-void 	xns_getaddr(const char *, int);
 void 	iso_status(int);
 void 	iso_getaddr(const char *, int);
 
@@ -615,17 +611,8 @@ main(int argc, char *argv[])
 	if (af == AF_APPLETALK)
 		checkatrange(&addreq.ifra_addr);
 
-	if (setipdst && af==AF_NS) {
-		struct nsip_req rq;
-		int size = sizeof(rq);
-
-		rq.rq_ns = addreq.ifra_addr;
-		rq.rq_ip = addreq.ifra_dstaddr;
-
-		if (setsockopt(s, 0, SO_NSIP_ROUTE, &rq, size) < 0)
-			warn("encapsulation routing");
-	}
-
+	if (setipdst && af == AF_NS)
+		xns_set_nsip_route(&addreq.ifra_addr, &addreq.ifra_dstaddr);
 #endif	/* INET_ONLY */
 
 	if (clearaddr) {
@@ -1840,44 +1827,6 @@ in6_status(int force)
 #ifndef INET_ONLY
 
 void
-xns_status(int force)
-{
-	struct sockaddr_ns *sns;
-
-	getsock(AF_NS);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
-		err(EXIT_FAILURE, "socket");
-	}
-	(void) memset(&ifr, 0, sizeof(ifr));
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
-	}
-	(void) strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
-	sns = (struct sockaddr_ns *)&ifr.ifr_addr;
-	printf("\tns %s ", ns_ntoa(sns->sns_addr));
-	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
-		if (ioctl(s, SIOCGIFDSTADDR, &ifr) == -1) {
-			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			else
-			    warn("SIOCGIFDSTADDR");
-		}
-		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-		sns = (struct sockaddr_ns *)&ifr.ifr_dstaddr;
-		printf("--> %s ", ns_ntoa(sns->sns_addr));
-	}
-	printf("\n");
-}
-
-void
 iso_status(int force)
 {
 	struct sockaddr_iso *siso;
@@ -2108,23 +2057,6 @@ prefix(void *val, int size)
 #endif /*INET6*/
 
 #ifndef INET_ONLY
-#define SNS(x) ((struct sockaddr_ns *) &(x))
-struct sockaddr_ns *snstab[] = {
-    SNS(ridreq.ifr_addr), SNS(addreq.ifra_addr),
-    SNS(addreq.ifra_mask), SNS(addreq.ifra_broadaddr)};
-
-void
-xns_getaddr(const char *addr, int which)
-{
-	struct sockaddr_ns *sns = snstab[which];
-
-	sns->sns_family = AF_NS;
-	sns->sns_len = sizeof(*sns);
-	sns->sns_addr = ns_addr(addr);
-	if (which == MASK)
-		puts("Attempt to set XNS netmask will be ineffectual");
-}
-
 #define SISO(x) ((struct sockaddr_iso *) &(x))
 struct sockaddr_iso *sisotab[] = {
     SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
