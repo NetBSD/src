@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.16 2003/11/16 09:32:01 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.17 2003/12/07 05:09:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.16 2003/11/16 09:32:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.17 2003/12/07 05:09:02 dyoung Exp $");
 #endif
 
 /*
@@ -665,8 +665,8 @@ ath_bmiss_proc(void *arg, int pending)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	DPRINTF(("ath_bmiss_proc: pending %u\n", pending));
-	KASSERT(ic->ic_opmode == IEEE80211_M_STA,
-		("unexpect operating mode %u", ic->ic_opmode));
+	if (ic->ic_opmode != IEEE80211_M_STA)
+		return;
 	if (ic->ic_state == IEEE80211_S_RUN)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 }
