@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC3X,v 1.4 1997/03/24 17:39:05 gwr Exp $
+#	$NetBSD: GENERIC3X,v 1.5 1997/04/09 04:36:56 jeremy Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -17,6 +17,7 @@ options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either these:
 options 	DDB
+#options 	SYMTAB_SPACE=0x1C000
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
@@ -26,6 +27,7 @@ options 	DDB
 file-system 	FFS		# ufs file system
 file-system 	NFS		# nfs client support
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS FAT file system
 file-system 	FDESC		# /dev/fd/*
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -81,6 +83,10 @@ le0 at obio0 addr 0x65002000 ipl 3
 
 # Emulex SCSI (3/80 only)
 esp0 at obio0 addr 0x66000000 ipl 2
+
+# Floppy drive
+fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
+fd0  at fdc0	# First (and only) floppy drive.
 
 #
 # Frame buffer devices
