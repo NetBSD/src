@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.23 1996/10/13 04:11:14 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.24 1996/11/10 21:52:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -82,6 +82,7 @@
 #if NZS > 0
 
 #define PCLK	(8053976)	/* PCLK pin input clock rate */
+#define PCLK_HD	(14745600)	/* PCLK on Hades pin input clock rate */
 
 #define splzs	spl5
 
@@ -139,6 +140,7 @@ static u_long zs_freqs_tt[] = {
 	 307200,	/* RTxCB, from TT-MFP TCO	*/
 	2457600		/* TRxCB, from BCLK		*/
 };
+
 static u_long zs_freqs_falcon[] = {
 	/*
 	 * Atari Falcon, XXX no specs available, this might be wrong
@@ -153,6 +155,22 @@ static u_long zs_freqs_falcon[] = {
 	3672000,	/* RTxCB, ???			*/
 	2457600		/* TRxCB, ???			*/
 };
+
+static u_long zs_freqs_hades[] = {
+	/*
+	 * XXX: Channel-A unchecked!!!!!
+	 */
+     PCLK_HD/16,	/* BRgen, PCLK,  divisor 16	*/
+	 229500,	/* BRgen, RTxCA, divisor 16	*/
+	3672000,	/* RTxCA, from PCLK4		*/
+	      0,	/* TRxCA, external		*/
+
+     PCLK_HD/16,	/* BRgen, PCLK,  divisor 16	*/
+	 235550,	/* BRgen, RTxCB, divisor 16	*/
+	3768800,	/* RTxCB, 3.7688MHz		*/
+	3768800		/* TRxCB, 3.7688MHz		*/
+};
+
 static u_long zs_freqs_generic[] = {
 	/*
 	 * other machines, assume only PCLK is available
@@ -283,6 +301,8 @@ void		*aux;
 		zs_frequencies = zs_freqs_tt;
 	} else if (machineid & ATARI_FALCON) {
 		zs_frequencies = zs_freqs_falcon;
+	} else if (machineid & ATARI_HADES) {
+		zs_frequencies = zs_freqs_hades;
 	} else {
 		zs_frequencies = zs_freqs_generic;
 	}
