@@ -1,4 +1,4 @@
-.\"	$NetBSD: lptctl.8,v 1.8 2004/02/03 21:50:27 jdolecek Exp $
+.\"	$NetBSD: lptctl.8,v 1.9 2004/02/04 14:25:13 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,8 @@ parallel port mode (epp).
 .Cm dma
 .Ar yes | no
 .Pp
-Enables or disables DMA. Note DMA is only used in some advanced
+Enables or disables DMA.
+Note DMA is only used in some advanced
 modes such as ECP, and only if interrupts are enabled too.
 .It
 .Cm ieee
@@ -86,7 +87,8 @@ Default setting depends on device, but polling is commonly preferred.
 .Ar yes | no
 .Pp
 Enables (default) or disables printer initialization sequence
-on device open. Note the initialization sequence is never done
+on device open.
+Note the initialization sequence is never done
 on open of control lpt device.
 .It
 .Cm autolf
