@@ -1,4 +1,4 @@
-/* $NetBSD: dctty.c,v 1.1.2.3 1999/11/19 09:39:37 nisimura Exp $ */
+/* $NetBSD: dctty.c,v 1.1.2.4 1999/11/20 06:28:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -34,11 +34,9 @@
  * DC7085 (DZ-11 look alike) tty interface
  */
 
-#include "opt_ddb.h"			/* XXX TBD XXX */
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.3 1999/11/19 09:39:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.4 1999/11/20 06:28:21 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +132,7 @@ dcopen(dev, flag, mode, p)
 
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
-	if (unit >= dc_cd.cd_ndevs || line >= 4)
+	if (unit >= dc_cd.cd_ndevs)
 		return ENXIO;
 	sc = dc_cd.cd_devs[unit];
 	tp = sc->sc_tty[line];
@@ -179,9 +177,9 @@ dcopen(dev, flag, mode, p)
 	}
 	splx(s);
 	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+		return error;
 
-	return error;
+	return (*linesw[tp->t_line].l_open)(dev, tp);
 }
 
 /*ARGSUSED*/
@@ -205,15 +203,15 @@ dcclose(dev, flag, mode, p)
 		ttyoutput(0, tp);
 	}
 	splx(s);
+
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	ttyclose(tp);
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0
 			&& (tp->t_cflag & HUPCL)) {
 		dcmodem(sc, line, 0);
 		(void)tsleep(sc, TTIPRI, ttclos, hz);
 	}
-	return 0;
+	return ttyclose(tp);
 }
 
 int
@@ -328,30 +326,28 @@ dcstart(tp)
 	struct tty *tp;
 {
 	struct dc_softc *sc;
-	int s, cc, line, tcr;
+	struct clist *cl;
+	int s, line, tcr;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
+	cl = &tp->t_outq;
+	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup(&tp->t_outq);
-			if (tp->t_outq.c_cc == 0)
+			if (cl->c_cc == 0)
 				goto out;
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	cc = ndqb(&tp->t_outq, 0);
-	if (cc == 0)
+	if (cl->c_cc == 0)
 		goto out;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-	line = DCLINE(tp->t_dev);
-	sc->sc_xmit[line].p = tp->t_outq.c_cf;
-	sc->sc_xmit[line].e = sc->sc_xmit[line].p + cc;
-
 	tp->t_state |= TS_BUSY;
+
+	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
 	tcr = bus_space_read_2(sc->sc_bst, sc->sc_bsh, DCTCR);
 	tcr |= 1 << line;
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, DCTCR, tcr);
@@ -365,12 +361,8 @@ dcstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	int s;
-
-	s = spltty();
 	if ((tp->t_state & (TS_BUSY|TS_TTSTOP)) == TS_BUSY)
 		tp->t_state |= TS_FLUSH;
-	splx(s);
 }
 
 int
@@ -423,8 +415,10 @@ dcparam(tp, t)
 		return 0;
 	}
 
-	val = DC_RE | ospeed | (1 << line);
+	val = DC_RE | ospeed | line;
 	val |= ((t->c_cflag & CSIZE) == CS7) ? DC_BITS7 : DC_BITS8;
+	if (t->c_cflag & PARENB)
+		val |= DC_PENABLE;
 	if (t->c_cflag & PARODD)
 		val |= DC_OPAR;
 	if (t->c_cflag & CSTOPB)

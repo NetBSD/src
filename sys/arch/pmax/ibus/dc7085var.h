@@ -1,4 +1,4 @@
-/* $NetBSD: dc7085var.h,v 1.1.2.4 1999/11/19 09:39:37 nisimura Exp $ */
+/* $NetBSD: dc7085var.h,v 1.1.2.5 1999/11/20 06:28:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -54,10 +54,6 @@ struct dc_softc {
 
 #define	DC_CHIP_BREAK	0x010
 	int dc_flags[4];
-
-	struct {
-		u_char *p, *e;
-	} sc_xmit[4];
 };
 
 struct dc_attach_args {
