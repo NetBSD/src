@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.38 2004/01/02 05:08:57 dbj Exp $	*/
+/*	$NetBSD: fs.h,v 1.39 2004/01/02 06:57:46 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -613,14 +613,16 @@ struct ocg {
 struct appleufslabel {
 	u_int32_t	ul_magic;
 	u_int16_t	ul_checksum;
+	u_int16_t	ul_unused0;
 	u_int32_t	ul_version;
 	u_int32_t	ul_time;
 	u_int16_t	ul_namelen;
 	u_char	ul_name[APPLEUFS_MAX_LABEL_NAME]; /* Warning: may not be null terminated */
-	u_int64_t ul_uuid;
+	u_int16_t	ul_unused1;
+	u_int64_t	ul_uuid;	/* Note this is only 4 byte aligned */
 	u_char	ul_reserved[24];
 	u_char	ul_unused[460];
-};
+} __attribute__((__packed__));
 
 
 #endif /* !_UFS_FFS_FS_H_ */
