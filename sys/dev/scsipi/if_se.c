@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.22 1998/12/08 00:19:27 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.23 1998/12/12 17:08:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -582,49 +582,53 @@ se_get(sc, data, totlen)
 	char *data;
 	int totlen;
 {
-	struct mbuf *m;
-	struct mbuf *top, **mp;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int len, pad;
+	struct mbuf *m, *m0, *newm;
+	int len;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == 0)
 		return (0);
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	m->m_data += pad;
-	len = MHLEN - pad;
-	top = 0;
-	mp = &top;
+	m0->m_pkthdr.rcvif = ifp;
+	m0->m_pkthdr.len = totlen;
+	len = MHLEN;
+	m = m0;
 
 	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
-				m_freem(top);
-				return (0);
-			}
-			len = MLEN;
-		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_free(m);
-				m_freem(top);
-				return (0);
-			}
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
 			len = MCLBYTES;
 		}
+
+		if (m == m0) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data;
+			m->m_data = newdata;
+		}
+
 		m->m_len = len = min(totlen, len);
 		bcopy(data, mtod(m, caddr_t), len);
 		data += len;
+
 		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+		if (totlen > 0) {
+			MGET(newm, M_DONTWAIT, MT_DATA);
+			if (newm == 0)
+				goto bad;
+			len = MLEN;
+			m = m->m_next = newm;
+		}
 	}
 
-	return (top);
+	return (m0);
+
+bad:
+	m_freem(m0);
+	return (0);
 }
 
 /*
