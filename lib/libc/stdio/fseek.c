@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.14 1998/02/03 18:41:14 perry Exp $	*/
+/*	$NetBSD: fseek.c,v 1.15 1998/09/06 16:37:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.14 1998/02/03 18:41:14 perry Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.15 1998/09/06 16:37:27 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +88,7 @@ fseek(fp, offset, whence)
 	 */
 	if ((seekfn = fp->_seek) == NULL) {
 		errno = ESPIPE;			/* historic practice */
+		FUNLOCKFILE(fp);
 		return (-1);
 	}
 
