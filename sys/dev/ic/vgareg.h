@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.3 2001/12/29 17:44:35 junyoung Exp $ */
+/* $NetBSD: vgareg.h,v 1.4 2001/12/30 13:13:04 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,9 +33,9 @@
  */
 
 struct reg_vgaattr { /* indexed via port 0x3c0 */
-	char palette[16];
-	char mode, overscan, colplen, horpixpan;
-	char colreset, misc;
+	u_int8_t palette[16];
+	u_int8_t mode, overscan, colplen, horpixpan;
+	u_int8_t colreset, misc;
 };
 #define VGA_ATC_NREGS	21
 #define VGA_ATC_INDEX	0
@@ -43,23 +43,23 @@ struct reg_vgaattr { /* indexed via port 0x3c0 */
 #define VGA_ATC_DATAR	1
 
 struct reg_vgats { /* indexed via port 0x3c4 */
-	char syncreset, mode, wrplmask, fontsel, memmode;
+	u_int8_t syncreset, mode, wrplmask, fontsel, memmode;
 };
 #define VGA_TS_NREGS	5 
 #define VGA_TS_INDEX 	4
 #define VGA_TS_DATA	5
 
 struct reg_vgagdc { /* indexed via port 0x3ce */
-	char setres, ensetres, colorcomp, rotfunc;
-	char rdplanesel, mode, misc, colorcare;
-	char bitmask;
+	u_int8_t setres, ensetres, colorcomp, rotfunc;
+	u_int8_t rdplanesel, mode, misc, colorcare;
+	u_int8_t bitmask;
 };
 #define VGA_GDC_NREGS	9
 #define VGA_GDC_INDEX	0xe
 #define VGA_GDC_DATA	0xf
 
 struct reg_vgacrtc { /* indexed via port 0x3d4 */
-	char index[25];
+	u_int8_t index[25];
 };
 #define VGA_CRTC_NREGS	25
 #define VGA_CRTC_INDEX	0x14
