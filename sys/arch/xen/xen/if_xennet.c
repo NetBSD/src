@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.2 2004/04/11 00:00:43 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.2 2004/04/11 00:00:43 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -121,8 +121,6 @@ static int xennet_mediachange (struct ifnet *);
 static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
 #endif
 
-void		 pmap_kenter_ma __P((vaddr_t, paddr_t, vm_prot_t));
-
 CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
     xennet_match, xennet_attach, NULL, NULL);
 
@@ -184,7 +182,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int idx;
 
-	aprint_normal(": Xen Virtual Network Driver\n");
+	aprint_normal(": Xen Virtual Network Interface\n");
 
 	sc->sc_ifno = xneta->xa_netop.vif;
 
