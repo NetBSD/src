@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.49 2003/02/21 22:35:46 jhawk Exp $
+#	$NetBSD: daily,v 1.50 2003/10/01 05:34:50 jhawk Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -123,7 +123,7 @@ if checkyesno purge_accounting && [ -f /var/account/acct ]; then
 fi
 
 if checkyesno run_calendar; then
-	calendar -a > $TMP
+	calendar -a > $TMP 2>&1
 	if [ -s $TMP ]; then
 		echo ""
 		echo "Running calendar:"
