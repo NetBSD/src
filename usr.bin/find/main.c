@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1993/12/30 21:15:27 jtc Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 1994/01/24 23:08:15 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,7 +107,7 @@ main(argc, argv)
 	 */
 	while (*argv) {
 		if (**argv == '-' ||
-		    ((*argv)[1] == '\0' && (**argv == '!' || **argv == '(')))
+		    ((**argv == '!' || **argv == '(') && (*argv)[1] == '\0'))
 			break;
 		*p++ = *argv++;
 	}
