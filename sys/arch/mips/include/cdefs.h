@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1 1995/01/19 01:42:21 jtc Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2 1995/03/23 20:10:43 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -12,14 +12,14 @@
 
 #ifdef __GNUC__
 #ifdef __STDC__
-#define __weak_reference(sym,alias)	\
+#define __indr_reference(sym,alias)	\
 	__asm__(".stabs \"_" #alias "\",11,0,0,0");	\
 	__asm__(".stabs \"_" #sym "\",1,0,0,0")
 #define __warn_references(sym,msg)	\
 	__asm__(".stabs \"" msg "\",30,0,0,0");		\
 	__asm__(".stabs \"_" #sym "\",1,0,0,0")
 #else
-#define __weak_reference(sym,alias)	\
+#define __indr_reference(sym,alias)	\
 	__asm__(".stabs \"_/**/alias\",11,0,0,0");	\
 	__asm__(".stabs \"_/**/sym\",1,0,0,0")
 #define __warn_references(sym,msg)	\

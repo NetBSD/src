@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.5 1995/03/01 08:00:12 jtc Exp $	*/
+/*	$NetBSD: catclose.c,v 1.6 1995/03/23 19:59:03 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -7,8 +7,8 @@
 
 #include <sys/cdefs.h>
 
-#ifdef __weak_reference
-__weak_reference(_catclose,catclose);
+#ifdef __indr_reference
+__indr_reference(_catclose,catclose);
 #else
 
 #include <nl_types.h>

@@ -5,6 +5,6 @@
 
 #include <sys/cdefs.h>
 
-#ifdef __weak_reference
-__weak_reference(_errx, errx);
+#ifdef __indr_reference
+__indr_reference(_errx, errx);
 #endif

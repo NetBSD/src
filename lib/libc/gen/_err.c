@@ -5,8 +5,8 @@
 
 #include <sys/cdefs.h>
 
-#ifdef __weak_reference
-__weak_reference(_err, err);
+#ifdef __indr_reference
+__indr_reference(_err, err);
 #else
 
 #define	_err	err
