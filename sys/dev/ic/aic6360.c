@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.63.2.2 1999/10/19 23:15:30 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63.2.3 1999/10/20 22:06:14 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -308,8 +308,11 @@ aic_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
+		if (sc->sc_child != NULL && !sc->sc_dying) {
 			rv = config_deactivate(sc->sc_child);
+			if (rv == 0)
+				sc->sc_dying = 1;
+		}
 		break;
 	}
 	splx(s);
@@ -529,6 +532,12 @@ aic_scsipi_request(chan, req, arg)
 
 		AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 		    periph->periph_target));
+
+		if (sc->sc_dying) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsipi_done(xs);
+			return;
+		}
 
 		flags = xs->xs_control;
 		acb = aic_get_acb(sc);
@@ -831,6 +840,9 @@ aic_sched(sc)
 	struct aic_tinfo *ti;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+
+	if (sc->sc_dying)
+		return;
 
 	/*
 	 * Find first acb in ready queue that is for a target/lunit pair that
@@ -1739,6 +1751,9 @@ aicintr(arg)
 	register struct scsipi_periph *periph;
 	struct aic_tinfo *ti;
 	int n;
+
+	if (sc->sc_dying)
+		return (0);
 
 	/*
 	 * Clear INTEN.  We enable it again before returning.  This makes the
