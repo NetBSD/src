@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.8 1997/10/16 23:28:17 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.9 1997/10/19 07:46:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,6 +130,8 @@ prfield(p, sep, prvalset)
 		else
 			fprintf(out, "%d,%d", m->un.value.level[0], 
 			       m->un.value.level[1]);
+		if (prvalset)
+			fprintf(out, " %s", p->infp->un.v.units.name);
 		break;
 	default:
 		printf("\n");
