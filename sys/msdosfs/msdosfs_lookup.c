@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.48 2000/03/24 14:37:46 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.49 2000/03/27 09:44:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -603,6 +603,7 @@ createde(dep, ddep, depp, cnp)
 	struct buf *bp;
 	daddr_t bn;
 	int blsize, i;
+	int async = ddep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
 
 #ifdef MSDOSFS_DEBUG
 	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
@@ -669,7 +670,9 @@ createde(dep, ddep, depp, cnp)
 				/* we should never get here if ddep is root
 				 * directory */
 
-				if ((error = bwrite(bp)) != 0)
+				if (async)
+					(void) bdwrite(bp);
+				else if ((error = bwrite(bp)) != 0)
 					goto rollback;
 
 				fndoffset -= sizeof(struct direntry);
@@ -697,7 +700,9 @@ createde(dep, ddep, depp, cnp)
 		}
 	}
 
-	if ((error = bwrite(bp)) != 0)
+	if (async)
+		bdwrite(bp);
+	else if ((error = bwrite(bp)) != 0)
 		goto rollback;
 
 	/*
@@ -745,7 +750,9 @@ createde(dep, ddep, depp, cnp)
 			/* we should never get here if ddep is root
 			 * directory */
 
-			if ((rberror = bwrite(bp)) != 0)
+			if (async)
+				bdwrite(bp);
+			else if ((rberror = bwrite(bp)) != 0)
 				goto err_norollback;
 
 			fndoffset -= sizeof(struct direntry);
@@ -769,7 +776,10 @@ createde(dep, ddep, depp, cnp)
 	}
 
 	/* ignore any further error */
-	(void) bwrite(bp);
+	if (async)
+		(void) bdwrite(bp);
+	else
+		(void) bwrite(bp);
 
     err_norollback:
 	return error;
@@ -1009,6 +1019,7 @@ removede(pdep, dep)
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	u_long offset = pdep->de_fndoffset;
+	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
 
 #ifdef MSDOSFS_DEBUG
 	printf("removede(): filename %s, dep %p, offset %08lx\n",
@@ -1053,7 +1064,9 @@ removede(pdep, dep)
 			    || ep->deAttributes != ATTR_WIN95)
 				break;
 		}
-		if ((error = bwrite(bp)) != 0)
+		if (async)
+			bdwrite(bp);
+		else if ((error = bwrite(bp)) != 0)
 			return error;
 	} while (!(pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 	    && !(offset & pmp->pm_crbomask)
