@@ -168,3 +168,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #undef STRUCTURE_SIZE_BOUNDARY
 #define STRUCTURE_SIZE_BOUNDARY 8
+
+#undef ASM_WEAKEN_LABEL
+#define ASM_WEAKEN_LABEL(FILE,NAME) \
+   do { fputs ("\t.global\t", FILE); assemble_name (FILE, NAME); \
+	fputs ("\n\t.weak\t", FILE); assemble_name (FILE, NAME); \
+	fputc ('\n', FILE); } while (0)
