@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.8 1996/09/27 23:22:52 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.9 1997/09/08 14:05:30 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.8 1996/09/27 23:22:52 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.9 1997/09/08 14:05:30 ws Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -187,6 +187,8 @@ fullpath(dir)
 	} while ((dir = dir->parent) != NULL);
 	if (dir)
 		*--cp = '?';
+	else
+		cp++;
 	return cp;
 }
 
@@ -654,6 +656,8 @@ readDosDirSection(f, boot, fat, dir)
 			}
 			vallfn = NULL; /* not used any longer */
 			invlfn = NULL;
+			dirent.parent = dir;
+			dirent.next = dir->child;
 			
 			if (dirent.size == 0 && !(dirent.flags & ATTR_DIRECTORY)) {
 				if (dirent.head != 0) {
@@ -715,8 +719,6 @@ readDosDirSection(f, boot, fat, dir)
 				}
 			}
 			
-			dirent.parent = dir;
-			dirent.next = dir->child;
 			if (dirent.head >= CLUST_FIRST && dirent.head < boot->NumClusters)
 				fat[dirent.head].flags |= FAT_USED;
 			
@@ -769,14 +771,11 @@ readDosDirSection(f, boot, fat, dir)
 					continue;
 				}
 				
-				boot->NumFiles++;
-
 				/* create directory tree node */
 				if (!(d = newDosDirEntry())) {
 					perror("No space for directory");
 					return FSFATAL;
 				}
-				
 				memcpy(d, &dirent, sizeof(struct dosDirEntry));
 				/* link it into the tree */
 				dir->child = d;
@@ -793,8 +792,8 @@ readDosDirSection(f, boot, fat, dir)
 				mod |= k = checksize(boot, fat, p, &dirent);
 				if (k & FSDIRMOD)
 					mod |= THISMOD;
-				boot->NumFiles++;
 			}
+			boot->NumFiles++;
 		}
 		if (mod & THISMOD) {
 			last *= 32;
@@ -902,7 +901,7 @@ reconnect(dosfs, boot, fat, head)
 		p = lfbuf;
 	while (1) {
 		if (p)
-			while (p < lfbuf + boot->ClusterSize)
+			for (; p < lfbuf + boot->ClusterSize; p += 32)
 				if (*p == SLOT_EMPTY
 				    || *p == SLOT_DELETED)
 					break;
@@ -917,7 +916,7 @@ reconnect(dosfs, boot, fat, head)
 		lfoff = lfcl * boot->ClusterSize
 		    + boot->ClusterOffset * boot->BytesPerSec;
 		if (lseek(dosfs, lfoff, SEEK_SET) != lfoff
-		    || read(dosfs, buffer, boot->ClusterSize) != boot->ClusterSize) {
+		    || read(dosfs, lfbuf, boot->ClusterSize) != boot->ClusterSize) {
 			perror("could not read LOST.DIR");
 			return FSFATAL;
 		}
@@ -946,7 +945,7 @@ reconnect(dosfs, boot, fat, head)
 	p[31] = (u_char)(d.size >> 24);
 	fat[head].flags |= FAT_USED;
 	if (lseek(dosfs, lfoff, SEEK_SET) != lfoff
-	    || write(dosfs, buffer, boot->ClusterSize) != boot->ClusterSize) {
+	    || write(dosfs, lfbuf, boot->ClusterSize) != boot->ClusterSize) {
 		perror("could not write LOST.DIR");
 		return FSFATAL;
 	}
