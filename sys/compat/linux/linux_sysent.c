@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysent.c,v 1.30 1998/02/20 18:09:30 mycroft Exp $	*/
+/*	$NetBSD: linux_sysent.c,v 1.31 1998/08/05 00:44:33 perry Exp $	*/
 
 /*
  * System call switch table.
@@ -359,8 +359,8 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 160 = unimplemented sched_get_priority_min */
 	{ 0, 0,
 	    sys_nosys },			/* 161 = unimplemented sched_rr_get_interval */
-	{ 0, 0,
-	    sys_nosys },			/* 162 = unimplemented nanosleep */
+	{ 2, s(struct sys_nanosleep_args),
+	    sys_nanosleep },			/* 162 = nanosleep */
 	{ 4, s(struct linux_sys_mremap_args),
 	    linux_sys_mremap },			/* 163 = mremap */
 };

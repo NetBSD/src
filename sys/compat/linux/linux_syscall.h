@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.29 1998/02/20 18:09:29 mycroft Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.30 1998/08/05 00:44:32 perry Exp $	*/
 
 /*
  * System call numbers.
@@ -365,6 +365,9 @@
 
 /* syscall: "munlock" ret: "int" args: "caddr_t" "size_t" */
 #define	LINUX_SYS_munlock	151
+
+/* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
+#define	LINUX_SYS_nanosleep	162
 
 /* syscall: "mremap" ret: "void *" args: "void *" "size_t" "size_t" "u_long" */
 #define	LINUX_SYS_mremap	163

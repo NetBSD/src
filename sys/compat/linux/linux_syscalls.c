@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.27 1998/02/20 18:09:29 mycroft Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.28 1998/08/05 00:44:33 perry Exp $	*/
 
 /*
  * System call names.
@@ -194,6 +194,6 @@ char *linux_syscallnames[] = {
 	"#159 (unimplemented sched_get_priority_max)",		/* 159 = unimplemented sched_get_priority_max */
 	"#160 (unimplemented sched_get_priority_min)",		/* 160 = unimplemented sched_get_priority_min */
 	"#161 (unimplemented sched_rr_get_interval)",		/* 161 = unimplemented sched_rr_get_interval */
-	"#162 (unimplemented nanosleep)",		/* 162 = unimplemented nanosleep */
+	"nanosleep",			/* 162 = nanosleep */
 	"mremap",			/* 163 = mremap */
 };
