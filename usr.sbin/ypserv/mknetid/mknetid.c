@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.2 1997/07/18 21:57:07 thorpej Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.3 1997/10/07 14:46:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -160,7 +160,7 @@ main(argc, argv)
 
 	if (domain == NULL)
 		if (yp_get_default_domain(&domain))
-			errx(1, "can't get YP domain name");
+			errx(1, "Can't get YP domain name");
 
 	if ((pfile = fopen(PasswdFile, "r")) == NULL)
 		err(1, "%s", PasswdFile);
@@ -267,11 +267,7 @@ read_passwd(pfile, fname)
 		line_no++;
 		len = strlen(line);
 
-		if (len > 1) {
-			if (line[0] == '#') {
-				continue;
-			}
-		} else
+		if (len <= 1 || data_line[0] == '#')
 			continue;
 
 		/*
