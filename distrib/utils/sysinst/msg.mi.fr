@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.34.2.3 2000/12/26 06:36:29 jhawk Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.34.2.4 2002/02/26 20:19:15 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -650,6 +650,11 @@ message netnotup
 {Il y'a eu un problème lors de la configuration de votre réseau. Ou votre
 serveur de noms, ou bien votre gateway ne peuvent être atteint par un ping
 Voulez vous configurer de nouveau votre réseau ? (Non arrêtera l'installation)
+}
+
+message netnotup_continueanyway
+{Would you like to continue the install process anyway, and assume
+that the network is working?  (No aborts the install process.)
 }
 
 message makedev
