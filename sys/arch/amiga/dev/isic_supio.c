@@ -1,4 +1,4 @@
-/* $NetBSD: isic_supio.c,v 1.5 2001/03/24 12:45:15 martin Exp $ */
+/* $NetBSD: isic_supio.c,v 1.6 2001/03/25 16:14:00 is Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -73,6 +73,9 @@
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/hscx.h>
 #include <dev/ic/isac.h>
+
+/* XXX I think the following line should be elsewhere ... -is */
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 /*static*/ int isic_supio_match __P((struct device *, struct cfdata *, void *));
 /*static*/ void isic_supio_attach __P((struct device *, struct device *, void *));
@@ -317,9 +320,8 @@ supio_isicattach(struct l1_softc *sc)
 
 	/* HSCX setup */
 
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
-	
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
 
