@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.11 1994/07/20 22:12:50 jtc Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.12 1994/07/22 01:44:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -136,7 +136,6 @@ __asm__(".stabs msg,30,0,0,0\n.stabs \"_/**/sym\",1,0,0,0")
 #endif
 #else
 #define __warn_references(sym,msg)
-#endif
 #endif
 
 #endif /* !_CDEFS_H_ */
