@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.96 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.97 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -244,7 +244,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	cvs(1): upgraded to 1.11.4 [wiz 20030116]
 	auich(4): Added support for nForce2 MCP-T.  [gendalia 20030116]
 	ex(4): Added support for 3c905CX-TX.  [gendalia 20030116]
-	texinfo(1): upgraded to 4.3 [wiz 20030117]
+	texinfo(1): upgraded to 4.3.  [wiz 20030117]
 	pthreads: Merge nathanw_sa branch, implementing p1003.1 POSIX thread
 		and Scheduler Activation thread interface.  [thorpej 20030117]
 	cpio(1): removed GNU cpio (replaced by pax frontend).  [wiz 20030118]
@@ -257,7 +257,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		displays.  [jhawk 20030122]
 	build.sh: Rework command line into command line options followed
 		by a list of operations to perform.  [lukem 20030123]
-	gcore(1): Add it back [christos 20030123]
+	gcore(1): Add it back.  [christos 20030123]
 	semaphores: Fix kernel implementation, and add non-pthreads
 		version in new librt.  [thorpej 20030123]
 	diff(1), diff3(1), sdiff(1): upgraded to diffutils-2.8.1 [wiz 20030126]
@@ -277,3 +277,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	/etc/security, security.conf(5): Allow more flexibility in warnings
 		from check_passwd and check_mtree.  [jhawk 20030213]
 	grep(1): upgraded to 2.5.1.  [wiz 20030213]
+	texinfo(1): upgraded to 4.5.  [wiz 20030213]
