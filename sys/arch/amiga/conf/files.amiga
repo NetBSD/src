@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.60 1997/07/19 00:01:47 is Exp $
+#	$NetBSD: files.amiga,v 1.60.2.1 1997/08/27 21:45:09 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -177,7 +177,7 @@ device	drcom: tty
 attach	drcom at mainbus
 file	arch/amiga/dev/drcom.c		drcom needs-count
 
-include "../../../scsi/files.scsi"
+include "../../../dev/scsipi/files.scsipi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 7}

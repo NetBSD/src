@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60.2.1 1997/08/23 07:06:34 thorpej Exp $
+# $NetBSD: GENERIC,v 1.60.2.2 1997/08/27 21:42:02 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -29,11 +29,11 @@ options 	KTRACE			# System call tracing support
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 
 # File systems
-file-system 	FFS		# Fast file system
-file-system 	MFS		# Memory-based file system
-file-system 	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
-file-system 	MSDOSFS		# MS-DOS-compatible file system
-file-system 	NFS		# Sun NFS-compatible file system client
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system	MSDOSFS		# MS-DOS-compatible file system
+file-system	NFS		# Sun NFS-compatible file system client
 
 # File system options
 options 	FIFO		# POSIX fifo support (in all file systems)
@@ -64,9 +64,9 @@ options 	LKM
 # Misc. options
 options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
-#options	SCSIVERBOSE		# Verbose SCSI errors
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs
@@ -148,8 +148,8 @@ pms*	at	pcppi?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
-#le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
+#le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 awdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
