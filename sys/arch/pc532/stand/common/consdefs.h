@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.2 2003/08/07 16:29:04 agc Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -33,8 +33,8 @@
  * Console routine prototypes.
  */
 #ifdef SCNCONSOLE
-void	scnprobe __P((struct consdev *));
-void	scninit __P((struct consdev *));
-int	scngetchar __P((dev_t));
-void	scnputchar __P((dev_t, int));
+void	scnprobe(struct consdev *);
+void	scninit(struct consdev *);
+int	scngetchar(dev_t);
+void	scnputchar(dev_t, int);
 #endif

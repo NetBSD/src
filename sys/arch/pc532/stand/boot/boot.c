@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2003/08/07 16:29:03 agc Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2003/12/06 13:09:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,8 +39,8 @@
 
 #include <pc532/stand/common/samachdep.h>
 
-void		main __P((void));
-static void	getbootdev __P((int *));
+void		main(void);
+static void	getbootdev(int *);
 
 /*
  * Boot program... bits in `howto' determine whether boot stops to
@@ -63,17 +63,17 @@ char *names[] = {
 	"onetbsd",		"onetbsd.gz",
 	NULL
 };
-#define NUMNAMES	(sizeof(names) / sizeof(char *))
+#define	NUMNAMES	(sizeof(names) / sizeof(char *))
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
 void
-main()
+main(void)
 {
 	int currname = 0;
 
 	printf("\n");
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);  
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	bdev   = B_TYPE(bootdev);
@@ -99,8 +99,7 @@ main()
 }
 
 void
-getbootdev(howto)
-	int *howto;
+getbootdev(int *howto)
 {
 	char c, *ptr = line;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.2 2003/08/07 16:29:04 agc Exp $	*/
+/*	$NetBSD: prf.c,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,13 +36,13 @@
 #include <pc532/stand/common/samachdep.h>
 
 int
-tgetchar()
+tgetchar(void)
 {
 	int c;
 
 	if ((c = cngetc()) == 0)
 		return(0);
-	
+
 	if (c == '\r')
 		c = '\n';
 	else if (c == ('c' & 037)) {
@@ -55,7 +55,7 @@ tgetchar()
 }
 
 int
-getchar()
+getchar(void)
 {
 	int c;
 
@@ -65,9 +65,9 @@ getchar()
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
+
 	cnputc(c);
 	if (c == '\n')
 		cnputc('\r');
