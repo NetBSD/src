@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107.2.2 1998/01/27 19:51:07 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107.2.3 1998/01/27 22:40:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -452,9 +452,9 @@ identifycpu()
 	extern char *cpu_string;	/* XXX */
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
-	sprintf(cpu_model, "Sun 3/%s", cpu_string);
+	sprintf(cpu_model, "Sun-3 (3/%s)", cpu_string);
 
-	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
+	printf("Model: %s\n", cpu_model);
 }
 
 /*
@@ -730,7 +730,7 @@ dumpsys()
 	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(*kseg_p));
 
 	/* Fill in cpu_kcore_hdr_t part. */
-	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
+	strncpy(chdr_p->name, "sun3", sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
 
