@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.8 1995/07/07 16:01:22 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.9 1995/08/08 20:51:26 gwr Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -13,15 +13,15 @@ options 	HAVECACHE		# Sun3/260 VAC
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
-options		TIMEZONE=300		# minutes west of GMT (for param.c)
-options 	DST=2			# daylight savings rules (for param.c)
+
+# These are used ONLY when reading the hardware time/date clock.
+options		TIMEZONE=0		# minutes west of GMT (for param.c)
+options 	DST=0			# daylight savings rules (for param.c)
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		KTRACE				# system call tracing support
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
-options		DDB
-options		SYMTAB_SPACE=98400
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
