@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 1998/08/14 03:38:51 mark Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/14 14:36:52 mark Exp $
 #
 #	Makefile	1.0	1998/6/26
 
 PROG=	mount_filecore
 SRCS=	mount_filecore.c getmntopts.c
-#MAN=	mount_filecore.8
-NOMAN=
+MAN=	mount_filecore.8
 
 MOUNT=	${.CURDIR}/../mount
 CPPFLAGS+= -I${MOUNT}
