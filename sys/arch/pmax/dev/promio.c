@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.17 1997/05/24 08:19:48 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.18 1997/06/15 16:18:29 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -332,7 +332,7 @@ remcons:
 		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
 		dc_ioasic_consinit(cd.cn_dev);
 		return;
-#endif /* NDC */
+#endif /* NDC_IOASIC */
 		break;
 
 	}
