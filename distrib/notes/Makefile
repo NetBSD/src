@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 1999/01/13 07:30:01 ross Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2000/03/29 22:38:45 he Exp $
+
+TARGETS+=release
 
 .ifndef ALLNOTES
 SUBDIR = ${MACHINE}
