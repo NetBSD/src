@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.81 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.82 2000/12/31 17:43:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -305,7 +305,7 @@ retry:
 	 * tend to include daemons that don't exit.
 	 */
 	if (nextpid >= PID_MAX) {
-		nextpid = 100;
+		nextpid = 500;
 		pidchecked = 0;
 	}
 	if (nextpid >= pidchecked) {
