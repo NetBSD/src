@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.6 2000/09/26 11:38:47 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.7 2000/10/19 15:31:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
 
 #include <machine/endian.h>
 #include <machine/bus.h>
