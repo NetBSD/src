@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.50 1998/06/26 01:53:59 lukem Exp $
+#	$NetBSD: KICKME,v 1.51 1998/06/26 18:20:13 cgd Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -50,6 +50,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	PPP_BSDCOMP
 options 	PPP_DEFLATE
 
+#options	IPFILTER_LOG
+
 config		netbsd	root on ? type ?
 
 mainbus0 at root
@@ -75,11 +77,12 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-ed0	at isa? port 0x280 iomem 0xd0000 irq 3	# WD/SMC, 3C503, and NE[12]000
-ed1	at isa? port 0x300 iomem 0xcc000 irq 10
+we0	at isa? port 0x280 iomem 0xd0000 irq 3	# WD/SMC
+we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
 pseudo-device	ppp	2		# PPP
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	vnd	16		# vnode-disk driver
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
