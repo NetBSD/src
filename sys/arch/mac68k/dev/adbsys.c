@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.13 1995/09/03 14:37:53 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.14 1995/09/03 20:59:55 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -87,6 +87,56 @@ adb_complete(buffer, data_area, adb_command)
 	adb_processevent(&event);
 }
 
+static int extdms_done;
+
+/*
+ * initialize extended mouse - probes devices as
+ * described in _Inside Macintosh, Devices_.
+ */
+void
+extdms_init()
+{
+	ADBDataBlock adbdata;
+	int totaladbs;
+	int adbindex, adbaddr;
+	short cmd;
+	char buffer[9];
+	void extdms_complete();
+
+	totaladbs = CountADBs();
+	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
+		/* Get the ADB information */
+		adbaddr = GetIndADB(&adbdata, adbindex);
+		if (adbdata.origADBAddr == ADBADDR_MS &&
+		    (adbdata.devType == 1 || adbdata.devType == 2)) {
+			/* found a mouse */
+			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+
+			extdms_done = 0;
+			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
+			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+			      (Ptr)&extdms_done, cmd);
+			while (!extdms_done)
+				/* busy wait until done */;
+
+			buffer[2] = '\004'; /* make handler ID 4 */
+			extdms_done = 0;
+			cmd = (cmd & 0xf3) | 0x08; /* listen command */
+			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+			      (Ptr)&extdms_done, cmd);
+			while (!extdms_done)
+				/* busy wait until done */;
+
+			extdms_done = 0;
+			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
+			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+			      (Ptr)&extdms_done, cmd);
+			while (!extdms_done)
+				/* busy wait until done */;
+		}
+	}
+}
+
 void 
 adb_init()
 {
@@ -96,6 +146,8 @@ adb_init()
 	int totaladbs;
 	int adbindex, adbaddr;
 	int error;
+	char buffer[9];
+	void extdms_complete();
 
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
@@ -125,6 +177,8 @@ adb_init()
 	printf("adb: done with ADBReInit\n");
 #endif
 
+	extdms_init();
+
 	totaladbs = CountADBs();
 
 	/* for each ADB device */
@@ -153,12 +207,39 @@ adb_init()
 			}
 			break;
 		case 3:
-			switch (adbdata.devType) {
+			extdms_done = 0;
+			/* talk register 3 */
+			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+			      (Ptr)&extdms_done, (adbaddr << 4) | 0xf);
+			while (!extdms_done)
+				/* busy-wait until done */;
+			switch (buffer[2]) {
 			case 1:
 				printf("100 dpi mouse");
 				break;
 			case 2:
 				printf("200 dpi mouse");
+				break;
+			case 4:
+				extdms_done = 0;
+				/* talk register 1 */
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done,
+				      (adbaddr << 4) | 0xd);
+				while (!extdms_done)
+					/* busy-wait until done */;
+				printf("extended mouse "
+				       "<%c%c%c%c> %d-button %d dpi ",
+				       buffer[1], buffer[2],
+				       buffer[3], buffer[4],
+				       (int)buffer[8],
+				       (int)*(short *)&buffer[5]);
+				if (buffer[7] == 1)
+					printf("mouse");
+				else if (buffer[7] == 2)
+					printf("trackball");
+				else
+					printf("unknown device");
 				break;
 			default:
 				printf("relative positioning device (mouse?) (%d)", adbdata.devType);

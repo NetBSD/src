@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.1 1994/12/03 23:34:14 briggs Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.2 1995/09/03 20:59:56 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -64,4 +64,10 @@ _adb_jadbproc:
 	moveml	sp@+, #0x0303	| restore scratch regs
 #endif
 		/* Don't do anything; adb_init fixes dev info for us. */
+	rts
+
+	/* ADBOp's completion routine used by extdms_init() in adbsys.c. */
+	.global	_extdms_complete
+_extdms_complete:
+	movl	#-1,a2@		| set done flag
 	rts
