@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.51 1998/12/03 17:30:32 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.52 1998/12/03 18:24:30 bouyer Exp $ */
 
 
 /*
@@ -791,7 +791,7 @@ wdc_probe_caps(drvp)
 			 * get the highter one for the drive.
 			 */
 			if ((wdc->cap & WDC_CAPABILITY_MODE) == 0 ||
-			    wdc->pio_mode >= i + 3) {
+			    wdc->PIO_cap >= i + 3) {
 				drvp->PIO_mode = i + 3;
 				drvp->PIO_cap = i + 3;
 				break;
@@ -821,7 +821,7 @@ wdc_probe_caps(drvp)
 			}
 			if (wdc->cap & WDC_CAPABILITY_DMA) {
 				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
-				    wdc->dma_mode < i)
+				    wdc->DMA_cap < i)
 					continue;
 				drvp->DMA_mode = i;
 				drvp->DMA_cap = i;
@@ -843,7 +843,7 @@ wdc_probe_caps(drvp)
 				sep = ",";
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
-					    wdc->udma_mode < i)
+					    wdc->UDMA_cap < i)
 						continue;
 					drvp->UDMA_mode = i;
 					drvp->UDMA_cap = i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.9 1998/11/21 15:41:42 drochner Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.10 1998/12/03 18:24:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ wdc_isapnp_attach(parent, self, aux)
 	}
 #endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;

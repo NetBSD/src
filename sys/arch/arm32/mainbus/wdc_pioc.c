@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.8 1998/11/22 14:36:38 drochner Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.9 1998/12/03 18:24:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -149,7 +149,7 @@ wdc_pioc_attach(parent, self, aux)
 	if (!sc->sc_ih)
 		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
