@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.16.2.1.2.1 1999/06/07 04:25:30 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.16.2.1.2.2 1999/07/04 01:35:32 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -505,6 +505,8 @@ _simple_lock(alp, id, l)
 
 	if (simplelockrecurse)
 		return;
+
+	s = splhigh();
 	if (alp->lock_data != SLOCK_UNLOCKED) {
 		printf("simple_lock: lock held\n");
 		printf("currently at: %s:%d\n", id, l);
@@ -522,18 +524,20 @@ _simple_lock(alp, id, l)
 		if (simple_lock_debugger) {
 			Debugger();
 		}
+
+		splx(s);
 		return;
 	}
 
-	s = splhigh();
 	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
-	splx(s);
-
 	alp->lock_data = SLOCK_LOCKED;
 	alp->lock_file = id;
 	alp->lock_line = l;
+
 	if (curproc)
 		curproc->p_simple_locks++;
+
+	splx(s);
 }
 
 int
@@ -544,6 +548,10 @@ _simple_lock_try(alp, id, l)
 {
 	int s;
 
+	if (simplelockrecurse)
+		return (1);
+
+	s = splhigh();
 	if (alp->lock_data != SLOCK_UNLOCKED) {
 		printf("simple_lock_try: lock held\n");
 		printf("currently at: %s:%d\n", id, l);
@@ -561,20 +569,20 @@ _simple_lock_try(alp, id, l)
 		if (simple_lock_debugger) {
 			Debugger();
 		}
+
+		splx(s);
 		return (0);
 	}
-	if (simplelockrecurse)
-		return (1);
+
+	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
 	alp->lock_data = SLOCK_LOCKED;
 	alp->lock_file = id;
 	alp->lock_line = l;
 
-	s = splhigh();
-	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
-	splx(s);
-
 	if (curproc)
 		curproc->p_simple_locks++;
+
+	splx(s);
 	return (1);
 }
 
@@ -588,6 +596,8 @@ _simple_unlock(alp, id, l)
 
 	if (simplelockrecurse)
 		return;
+
+	s = splhigh();
 	if (alp->lock_data == SLOCK_UNLOCKED) {
 		printf("simple_unlock: lock not held\n");
 		printf("currently at: %s:%d\n", id, l);
@@ -605,20 +615,21 @@ _simple_unlock(alp, id, l)
 		if (simple_lock_debugger) {
 			Debugger();
 		}
+		splx(s);
 		return;
 	}
 
-	s = splhigh();
 	LIST_REMOVE(alp, list);
 	alp->list.le_next = NULL;
 	alp->list.le_prev = NULL;
-	splx(s);
-
 	alp->lock_data = SLOCK_UNLOCKED;
 	alp->unlock_file = id;
 	alp->unlock_line = l;
+
 	if (curproc)
 		curproc->p_simple_locks--;
+
+	splx(s);
 }
 
 void
