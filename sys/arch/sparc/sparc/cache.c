@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.90 2004/04/27 16:37:43 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.91 2005/02/06 20:22:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.90 2004/04/27 16:37:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.91 2005/02/06 20:22:15 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -320,6 +320,8 @@ turbosparc_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr, pcf;
+	/* External cache sizes in KB; see Turbo sparc manual */
+	static const int ts_ecache_table[8] = {0,256,512,1024,512,1024,1024,0};
 
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
@@ -345,6 +347,16 @@ turbosparc_cache_enable()
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 
 	pcf = lda(SRMMU_PCFG, ASI_SRMMU);
+	if (pcf & TURBOSPARC_PCFG_SE) {
+		/*
+		 * Record external cache info. The Turbosparc's second-
+		 * level cache is physically addressed/tagged and is
+		 * not exposed by the PROM.
+		 */
+		CACHEINFO.ec_totalsize = 1024 *
+			ts_ecache_table[(pcf & TURBOSPARC_PCFG_SCC)];
+		CACHEINFO.ec_linesize = 32;
+	}
 	if (pcf & TURBOSPARC_PCFG_SNP)
 		printf(": DVMA coherent ");
 
