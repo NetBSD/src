@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1996/07/10 23:51:53 ragge Exp $
+#	$NetBSD: GENERIC,v 1.16 1996/07/20 18:56:58 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -7,10 +7,13 @@ include "std.vax"
 
 # Here are all different supported CPU types listed.
 options         "VAX8600"
+options         "VAX8200"
 options         "VAX780"
 options         "VAX750"
-options         "VAX630"
-options         "VAX650"
+options         "VAX630"	# MV II
+options         "VAX650"	# MV III, 3600, 3800, 3900
+options		"VAX410"	# VS 2000
+options		"VAX43"		# VS 3100/76
 
 # Kernel identification
 options         GENERIC
@@ -69,6 +72,15 @@ config          netbsd          swap generic
 cpu0		at backplane0	# Only one CPU so far.
 sbi*		at backplane0	# SBI's are always at backplane (Abus).
 mem*		at backplane0	# Some machines have memory at backplane.
+vsbus0		at backplane0	# Internal "virtual" VAXstation bus
+bi*		at backplane0	# VAXBI bus
+
+# Devices connected at VAXBI
+cpu0		at bi? node?	# KA820/KA825 cpu
+mem*		at bi? node?	# MS820 memory
+kdb*		at bi? node?	# KDB50 MSCP disk ctlr
+mscpbus*	at kdb?
+#ni*		at bi? node?	# DEBNA/DEBNK ethernet adapter
 
 # Devices connected at sbi
 mem*		at sbi? tr?	# Memory subsystems
@@ -84,7 +96,7 @@ uda1		at uba?	csr 0160334
 mscpbus*	at uda?
 
 # Tape drivers
-mtc0		at uba? csr 0174500	# TMSCP ctlr
+mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 mscpbus*	at mtc?
 
 # MSCP devices
@@ -92,15 +104,32 @@ ra*		at mscpbus? drive?	# MSCP disk
 mt*		at mscpbus? drive?	# MSCP tape
 
 # Unibus tapes
-#ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+
+# VS2000 builtin MFM controller (HDC9224)
+hdc0		at vsbus0		# The strange builtin MFM controller
+rd0		at hdc0 drive 0		# first RD??-disk in system cabinet
+rd1		at hdc0 drive 1		# second RD??-disk in external box
+rd2		at hdc0 drive 2		# RX33-floppy
+
+# VAXstation builtin SCSI-controller (NCR5380)
+ncr0		at vsbus0		# 1st built-in SCSI interface
+ncr1		at vsbus0		# 2nd built-in SCSI interface
+scsibus*	at ncr?
+
+sd*		at scsibus? target? lun?
+st*		at scsibus? target? lun?
+
 
 # Ethernet cards
 de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
+le0		at vsbus0		# LANCE
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
+dc0		at vsbus0		# VAXstation 4-line serial controller
 
 pseudo-device   loop	1
 pseudo-device   pty	48
