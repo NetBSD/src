@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.300 2001/01/31 07:24:59 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.301 2001/02/02 03:56:21 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.296 2001/01/31 07:24:32 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.297 2001/02/02 03:51:52 hubertf Exp 
  */
 
 /*
@@ -428,6 +428,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M5237 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
+	    0,
+	    "Acer Labs",
+	    "M5243 PCI-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
