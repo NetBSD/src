@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.26 1999/02/24 19:22:17 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.27 1999/04/15 22:15:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,16 +184,14 @@ struct pv_page {
 #include "opt_dec_3000_300.h"			/* XXX */
 #include "opt_dec_3000_500.h"			/* XXX */
 #include "opt_dec_kn8ae.h"			/* XXX */
-#include "opt_dec_kn300.h"			/* XXX */
 
 #if defined(NEW_SCC_DRIVER)
-#if defined(DEC_KN8AE) || defined(DEC_KN300)
+#if defined(DEC_KN8AE)
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
 #else /* ! NEW_SCC_DRIVER */
 #if defined(DEC_3000_300)		\
  || defined(DEC_3000_500)		\
- || defined(DEC_KN300)			\
  || defined(DEC_KN8AE) 				/* XXX */
 #define _PMAP_MAY_USE_PROM_CONSOLE		/* XXX */
 #endif						/* XXX */
