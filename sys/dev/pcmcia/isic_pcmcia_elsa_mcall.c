@@ -33,7 +33,7 @@
  *	ELSA MicroLink MC/all card specific routines
  *	--------------------------------------------
  *
- *	$Id: i4b_elsa_mcall.c,v 1.3 2001/02/17 15:00:49 martin Exp $
+ *	$Id: isic_pcmcia_elsa_mcall.c,v 1.1 2001/02/18 10:36:43 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -85,7 +85,7 @@
 #include <dev/ic/i4b_hscx.h>
 #include <dev/ic/i4b_ipac.h>
 
-#include <dev/pcmcia/i4b_isic_pcmcia.h>
+#include <dev/pcmcia/isic_pcmcia.h>
 
 #ifndef __FreeBSD__
 /* PCMCIA support routines */

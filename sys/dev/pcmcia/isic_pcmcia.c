@@ -30,10 +30,10 @@
  *
  *---------------------------------------------------------------------------
  *
- *	i4b_isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
+ *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: i4b_isic_pcmcia.c,v 1.1 2001/02/17 15:00:49 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.1 2001/02/18 10:36:43 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -79,7 +79,7 @@
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_global.h>
 
-#include <dev/pcmcia/i4b_isic_pcmcia.h>
+#include <dev/pcmcia/isic_pcmcia.h>
 
 #include "opt_isicpcmcia.h"
 
