@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *	$Id: autoconf.c,v 1.7 1993/08/10 08:42:25 deraadt Exp $
+ *	$Id: autoconf.c,v 1.8 1993/12/15 09:31:29 mycroft Exp $
  */
 
 /*
@@ -96,7 +96,6 @@ swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks;
-extern int Maxmem;
 
 	for (swp = swdevt; swp->sw_dev > 0; swp++)
 	{
@@ -116,7 +115,7 @@ extern int Maxmem;
 	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
 	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
 		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			Maxmem*NBPG/512;
+			ctob(physmem)/DEV_BSIZE;
 	if (dumplo < 0)
 		dumplo = 0;
 }
