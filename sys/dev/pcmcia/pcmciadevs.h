@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.104 2000/12/19 17:11:38 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.105 2000/12/20 05:03:37 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.105 2000/12/19 17:11:22 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.106 2000/12/20 04:32:48 jhawk Exp 
  */
 
 /*-
@@ -559,9 +559,9 @@
 #define	PCMCIA_CIS_NDC_ND5100_E	{ "NDC", "Ethernet", "A", NULL }
 #define	PCMCIA_PRODUCT_NDC_ND5100_E	-1
 #define	PCMCIA_STR_NDC_ND5100_E	"Sohoware ND5100E NE2000 Compatible Card"
-#define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL} Intersil
+#define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_INTERSIL_PRISM2	-1
-#define	PCMCIA_STR_INTERSIL_PRISM2	"Prism II"
+#define	PCMCIA_STR_INTERSIL_PRISM2	"Intersil Prism II"
 #define	PCMCIA_CIS_MELCO_LPC2_TX	{ "MELCO", "LPC2-TX", NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC2_TX	-1
 #define	PCMCIA_STR_MELCO_LPC2_TX	"Melco LPC2-TX"
