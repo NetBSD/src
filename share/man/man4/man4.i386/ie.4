@@ -1,4 +1,4 @@
-.\"	$NetBSD: ie.4,v 1.4 1999/12/17 16:23:24 abs Exp $
+.\"	$NetBSD: ie.4,v 1.4.4.1 2001/04/04 16:00:57 he Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -11,7 +11,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -27,7 +27,7 @@
 .Dt IE 4 i386
 .Os
 .Sh NAME
-.Nm ie 
+.Nm ie
 .Nd Ethernet driver for Intel 82586 Ethernet chip
 .Sh SYNOPSIS
 .Cd "ie0 at isa? port 0x360 irq 7 iomem 0xd0000"
@@ -48,10 +48,9 @@ interface are:
 .It 3Com 3c507
 .El
 .Sh SEE ALSO
+.Xr arp 4 ,
 .Xr ifconfig 8 ,
+.Xr ifmedia 4 ,
+.Xr inet 4 ,
 .Xr intro 4 ,
-.Xr ed 4 ,
-.Xr eg 4 ,
-.Xr el 4 ,
-.Xr ep 4 ,
-.Xr le 4
+.Xr netintro 4
