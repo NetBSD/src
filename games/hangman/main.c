@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1999/09/12 09:02:21 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/09/17 20:45:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1999/09/12 09:02:21 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1999/09/17 20:45:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,26 @@ __RCSID("$NetBSD: main.c,v 1.7 1999/09/12 09:02:21 jsm Exp $");
  * This game written by Ken Arnold.
  */
 int
-main(void)
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
+	int ch;
+
 	/* Revoke setgid privileges */
 	setregid(getgid(), getgid());
+
+	while ((ch = getopt(argc, argv, "d:")) != -1) {
+		switch (ch) {
+		case 'd':
+			Dict_name = optarg;
+			break;
+		case '?':
+		default:
+			(void)fprintf(stderr, "usage: hangman [-d wordlist]\n");
+			exit(1);
+		}
+	}
 
 	initscr();
 	signal(SIGINT, die);

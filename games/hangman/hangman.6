@@ -1,4 +1,4 @@
-.\"	$NetBSD: hangman.6,v 1.6 1997/10/11 01:16:32 lukem Exp $
+.\"	$NetBSD: hangman.6,v 1.7 1999/09/17 20:45:49 jsm Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd Computer version of the game hangman
 .Sh SYNOPSIS
 .Nm
+.Op Fl d Ar wordlist
 .Sh DESCRIPTION
 In
 .Nm "" ,
@@ -48,6 +49,13 @@ the computer picks a word from the on-line word list
 and you must try to guess it.
 The computer keeps track of which letters have been guessed
 and how many wrong guesses you have made on the screen in a graphic fashion.
+.Sh OPTIONS
+.Bl -tag -width flag
+.It Fl d
+Use the specified
+.Ar wordlist
+instead of the default one named below.
+.El
 .Sh FILES
 .Bl -tag -width /usr/share/dict/words -compact
 .It Pa /usr/share/dict/words

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.5 1999/09/08 21:17:50 jsm Exp $	*/
+/*	$NetBSD: extern.c,v 1.6 1999/09/17 20:45:48 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.5 1999/09/08 21:17:50 jsm Exp $");
+__RCSID("$NetBSD: extern.c,v 1.6 1999/09/17 20:45:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ const ERR_POS Err_pos[MAXERRS] = {
 	{3, 11, '\\'},
 	{5, 11, '\\'}
 };
+
+const char *Dict_name = _PATH_DICT;
 
 FILE   *Dict = NULL;
 
