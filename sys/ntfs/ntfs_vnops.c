@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.32 2001/02/13 19:53:52 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.33 2001/06/20 09:14:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -653,7 +653,7 @@ ntfs_readdir(ap)
 			dprintf(("ntfs_readdir: elem: %d, fname:[%s] type: %d, flag: %d, ",
 				num, cde.d_name, iep->ie_fnametype,
 				iep->ie_flag));
-			cde.d_namlen = fname - (char *) cde.d_name + 1;
+			cde.d_namlen = fname - (char *) cde.d_name;
 			cde.d_fileno = iep->ie_number;
 			cde.d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
 			cde.d_reclen = sizeof(struct dirent);
