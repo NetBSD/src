@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: e_gamma.c,v 1.4 1994/08/10 20:30:51 jtc Exp $";
+#if defined(LIBM_SCCS) && !defined(lint)
+static char rcsid[] = "$Id: e_gamma.c,v 1.5 1994/09/22 16:39:31 jtc Exp $";
 #endif
 
 /* __ieee754_gamma(x)

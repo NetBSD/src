@@ -13,8 +13,8 @@
  * ====================================================
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: e_gammaf_r.c,v 1.1 1994/08/10 20:30:54 jtc Exp $";
+#if defined(LIBM_SCCS) && !defined(lint)
+static char rcsid[] = "$Id: e_gammaf_r.c,v 1.2 1994/09/22 16:39:35 jtc Exp $";
 #endif
 
 /* __ieee754_gammaf_r(x, signgamp)
