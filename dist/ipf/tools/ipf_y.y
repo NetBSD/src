@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.3 2004/04/09 20:39:22 jwise Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.4 2004/05/09 03:53:23 christos Exp $	*/
 
 %{
 #include "ipf.h"
@@ -477,11 +477,22 @@ dup:	IPFY_DUPTO name
 	{ strncpy(fr->fr_dif.fd_ifname, $2, sizeof(fr->fr_dif.fd_ifname));
 	  free($2);
 	}
-	| IPFY_DUPTO name ':' hostname
+	| IPFY_DUPTO name duptoseparator hostname
 	{ strncpy(fr->fr_dif.fd_ifname, $2, sizeof(fr->fr_dif.fd_ifname));
 	  fr->fr_dif.fd_ip = $4;
+	  yyexpectaddr = 0;
 	  free($2);
 	}
+	| IPFY_DUPTO name duptoseparator YY_IPV6
+	{ strncpy(fr->fr_dif.fd_ifname, $2, sizeof(fr->fr_dif.fd_ifname));
+	  bcopy(&$4, &fr->fr_dif.fd_ip6, sizeof(fr->fr_dif.fd_ip6));
+	  yyexpectaddr = 0;
+	  free($2);
+	}
+	;
+
+duptoseparator:
+	':'	{ yyexpectaddr = 1; yycont = &yyexpectaddr; resetaddr(); }
 	;
 
 froute:	IPFY_FROUTE			{ fr->fr_flags |= FR_FASTROUTE; }
@@ -491,9 +502,16 @@ proute:	routeto name
 	{ strncpy(fr->fr_tif.fd_ifname, $2, sizeof(fr->fr_tif.fd_ifname));
 	  free($2);
 	}
-	| routeto name ':' hostname
+	| routeto name duptoseparator hostname
 	{ strncpy(fr->fr_tif.fd_ifname, $2, sizeof(fr->fr_tif.fd_ifname));
 	  fr->fr_tif.fd_ip = $4;
+	  yyexpectaddr = 0;
+	  free($2);
+	}
+	| routeto name duptoseparator YY_IPV6
+	{ strncpy(fr->fr_tif.fd_ifname, $2, sizeof(fr->fr_tif.fd_ifname));
+	  bcopy(&$4, &fr->fr_tif.fd_ip6, sizeof(fr->fr_tif.fd_ip6));
+	  yyexpectaddr = 0;
 	  free($2);
 	}
 	;
@@ -508,7 +526,7 @@ replyto:
 	{ strncpy(fr->fr_rif.fd_ifname, $2, sizeof(fr->fr_rif.fd_ifname));
 	  free($2);
 	}
-	| IPFY_REPLY_TO name ':' hostname
+	| IPFY_REPLY_TO name duptoseparator hostname
 	{ strncpy(fr->fr_rif.fd_ifname, $2, sizeof(fr->fr_rif.fd_ifname));
 	  fr->fr_rif.fd_ip = $4;
 	  free($2);
@@ -756,6 +774,7 @@ addr:	IPFY_ANY			{ bzero(&($$), sizeof($$)); }
 					  fill6bits(128, (u_32_t *)&$$.m); }
 	| YY_IPV6 maskspace ipv6mask	{ bcopy(&$1, &$$.a, sizeof($$.a));
 					  bcopy(&$3, &$$.m, sizeof($$.m)); }
+	;
 
 maskspace:
 	'/'
