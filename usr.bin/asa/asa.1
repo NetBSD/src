@@ -1,4 +1,4 @@
-.\"	$NetBSD: asa.1,v 1.9 2001/06/05 11:37:20 wiz Exp $
+.\"	$NetBSD: asa.1,v 1.10 2001/09/17 18:47:58 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -61,6 +61,10 @@ before printing the rest of the line.
 .Pp
 Lines beginning with characters other than the above are treated as if they
 begin with <space>.
+.Sh EXIT STATUS
+The
+.Nm
+utility exit 0 on success, and >0 if an error occurs.
 .Sh EXAMPLES
 To view a file containing the output of a
 .Tn FORTRAN
@@ -69,12 +73,8 @@ program:
 .Pp
 To format the output of a
 .Tn FORTRAN
-program and redirect it to a line-printer.
+program and redirect it to a line-printer:
 .Dl a.out | asa | lpr
-.Sh EXIT STATUS
-The
-.Nm
-utility exit 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr f77 1
 .Sh STANDARDS
