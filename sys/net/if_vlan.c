@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.18 2000/11/10 02:27:19 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.19 2000/11/10 02:29:44 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -661,13 +661,9 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
-		LIST_REMOVE(mc->mc_enm, enm_list);
-		free(mc->mc_enm, M_IFMADDR);
 		LIST_REMOVE(mc, mc_entries);
 		FREE(mc, M_DEVBUF);
 	}
-
-	KASSERT(LIST_FIRST(&ifv->ifv_ec.ec_multiaddrs) == NULL);
 }
 
 static void
