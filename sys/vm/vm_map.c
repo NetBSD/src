@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.31 1998/01/03 02:53:04 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.32 1998/01/06 08:36:26 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -196,12 +196,7 @@ vmspace_alloc(min, max, pageable)
 	/* Just clear the whole struct.  It is not large anyway. */
 	bzero(vm, sizeof(*vm));
 	vm_map_init(&vm->vm_map, min, max, pageable);
-#ifdef	__VM_PMAP_HACK
-	pmap_pinit(&vm->vm_pmap);		/* XXX */
-	vm->vm_map.pmap = &vm->vm_pmap;		/* XXX */
-#else	/* __VM_PMAP_HACK */
 	vm->vm_map.pmap = pmap_create(0);
-#endif	/* __VM_PMAP_HACK */
 	vm->vm_refcnt = 1;
 	return (vm);
 }
@@ -302,12 +297,8 @@ vmspace_free(vm)
 		vm_map_lock(&vm->vm_map);
 		(void) vm_map_delete(&vm->vm_map, vm->vm_map.min_offset,
 		    vm->vm_map.max_offset);
-#ifdef	__VM_PMAP_HACK
-		pmap_release(&vm->vm_pmap); 	/* XXX */
-#else	/* __VM_PMAP_HACK */
 		pmap_destroy(vm->vm_map.pmap);
 		vm->vm_map.pmap = NULL;
-#endif	/* __VM_PMAP_HACK */
 		FREE(vm, M_VMMAP);
 	}
 }
