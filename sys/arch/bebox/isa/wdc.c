@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.1 1997/12/15 08:00:32 sakamoto Exp $ */
+/*	$NetBSD: wdc.c,v 1.2 1998/01/12 06:08:41 sakamoto Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -181,6 +181,7 @@ wdcprobe(parent, match, aux)
 				return 0;
 		}
 	}
+	delay(1000);
 	/* reset succeeded. Test registers */
 	if (inb(iobase + wd_cyl_lo) == 0x14 &&
 		inb(iobase + wd_cyl_hi) == 0xeb)
@@ -310,14 +311,14 @@ wdcattach(parent, self, aux)
 		}
 	}
 #endif /* NWD > 0 */
-	/* explicitely select an existing drive, to avoid spurious interrupts */
+	/* explicitly select an existing drive, to avoid spurious interrupts */
 	if (wdc->sc_flags & WDCF_ONESLAVE)
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
 	else
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM); /* master */
 	/*
 	 * Reset controller. The probe, with some combinations of ATA/ATAPI
-	 * device keep it in a mostly working, but strange state (with busy
+	 * devices keep it in a mostly working, but strange state (with busy
 	 * led on)
 	 */
 	wdcreset(wdc, VERBOSE);
@@ -507,7 +508,7 @@ wdc_ata_start(wdc, xfer)
 				}
 				break;
 			}
-			/* Tranfer is okay now. */
+			/* Transfer is okay now. */
 		}
 
 		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
@@ -579,8 +580,8 @@ wdc_ata_start(wdc, xfer)
 			return;
 		}
 
-		WDDEBUG_PRINT(("sector %d cylin %d head %d addr %x sts %x\n",
-		    sector, cylin, head, xfer->databuf,
+		WDDEBUG_PRINT(("sector %lu cylin %lu head %lu addr %x sts %x\n",
+		    sector, cylin, head, (unsigned int)xfer->databuf,
 		    inb(wdc->sc_iobase + wd_altsts)));
 
 	} else if (xfer->c_nblks > 1) {
@@ -643,7 +644,7 @@ wdc_ata_intr(wdc,xfer)
 			return 1;
 		}
 		WDDEBUG_PRINT(("wdc_ata_start from wdc_ata_intr(open) flags 0x%x\n",
-		    dc->sc_flags));
+		    wdc->sc_flags));
 		wdc_ata_start(wdc,xfer);
 		return 1;
 	}
@@ -1250,7 +1251,7 @@ wdc_exec_xfer(wdc, d_link, xfer)
 	s = splbio();
 
 	/* insert at the end of command list */
-	TAILQ_INSERT_TAIL(&wdc->sc_xfer,xfer , c_xferchain)
+	TAILQ_INSERT_TAIL(&wdc->sc_xfer,xfer , c_xferchain);
 	WDDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    wdc->sc_flags));
 	wdcstart(wdc);
@@ -1398,7 +1399,7 @@ wdc_atapi_start(wdc, xfer)
 	if (wdccommand(wdc, (struct wd_link*)xfer->d_link, ATAPI_PACKET_COMMAND,
 	    sc_xfer->sc_link->scsipi_atapi.drive, sc_xfer->datalen,
 		0, 0, 0) != 0) {
-		printf("wdc_atapi_start: can't send atapi paket command\n");
+		printf("wdc_atapi_start: can't send atapi packet command\n");
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		wdc_atapi_done(wdc, xfer);
 		return;
@@ -1414,7 +1415,7 @@ wdc_atapi_start(wdc, xfer)
 			delay(10);
 		}
 		if (phase != PHASE_CMDOUT ) {
-			printf("wdc_atapi_start: timout waiting PHASE_CMDOUT");
+			printf("wdc_atapi_start: timeout waiting PHASE_CMDOUT");
 			sc_xfer->error = XS_SELTIMEOUT;
 			wdc_atapi_done(wdc, xfer);
 			return;
@@ -1582,7 +1583,7 @@ wdc_atapi_send_command_packet(sc_xfer)
 		if (wdccommand(wdc, (struct wd_link*)(&sc_link->scsipi_atapi),
 		    ATAPI_PACKET_COMMAND, sc_link->scsipi_atapi.drive, sc_xfer->datalen,
 		    0, 0, 0) != 0) {
-			printf("can't send atapi paket command\n");
+			printf("can't send atapi packet command\n");
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return COMPLETE;
