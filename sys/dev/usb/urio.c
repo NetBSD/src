@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.5.6.5 2002/10/10 18:42:43 jdolecek Exp $	*/
+/*	$NetBSD: urio.c,v 1.5.6.6 2002/10/11 21:05:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.5.6.5 2002/10/10 18:42:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.5.6.6 2002/10/11 21:05:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,10 @@ dev_type_close(urioclose);
 dev_type_read(urioread);
 dev_type_write(uriowrite);
 dev_type_ioctl(urioioctl);
-dev_type_poll(uriopoll);
-dev_type_kqfilter(uriokqfilter);
 
 const struct cdevsw urio_cdevsw = {
 	urioopen, urioclose, urioread, uriowrite, urioioctl,
-	nostop, notty, uriopoll, nommap, uriokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(urio);
@@ -581,18 +579,13 @@ ret:
 	return (error);
 }
 
+#if defined(__OpenBSD__)
 int
-uriopoll(dev_t dev, int events, usb_proc_ptr p)
+urioselect(dev_t dev, int events, usb_proc_ptr p)
 {
 	return (0);
 }
-
-int
-uriokqfilter(dev_t dev, struct knote *kn)
-{
-
-	return (1);
-}
+#endif
 
 #if defined(__FreeBSD__)
 DRIVER_MODULE(urio, uhub, urio_driver, urio_devclass, usbd_driver_load, 0);
