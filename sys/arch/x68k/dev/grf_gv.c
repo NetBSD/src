@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.2 1996/05/20 14:53:07 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,13 +59,12 @@
  * Must fill in the grfinfo structure in g_softc.
  * Returns 0 if hardware not present, non-zero ow.
  */
+int
 gv_init(gp, addr)
 	struct grf_softc *gp;
 	caddr_t addr;
 {
 	struct grfinfo *gi = &gp->g_display;
-	int rc;
-	long start, off;
 
 	gi->gd_fbwidth  = 1024;
 	gi->gd_fbheight = 1024;
@@ -110,6 +109,7 @@ gv_init(gp, addr)
  * Return a UNIX error number or 0 for success.
  */
 /*ARGSUSED*/
+int
 gv_mode(gp, cmd, data)
 	register struct grf_softc *gp;
 	u_long cmd;
