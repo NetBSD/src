@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.12 1994/01/09 01:06:18 mycroft Exp $
+ *	$Id: ip_output.c,v 1.13 1994/01/10 20:14:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -68,18 +68,12 @@ static void ip_mloopback
  * The mbuf opt, if present, will not be freed.
  */
 int
-ip_output(m0, opt, ro, flags
-#ifdef MULTICAST
-	,imo
-#endif
-	)
+ip_output(m0, opt, ro, flags, imo)
 	struct mbuf *m0;
 	struct mbuf *opt;
 	struct route *ro;
 	int flags;
-#ifdef MULTICAST
 	struct ip_moptions *imo;
-#endif
 {
 	register struct ip *ip, *mhip;
 	register struct ifnet *ifp;
@@ -177,7 +171,7 @@ ip_output(m0, opt, ro, flags
 		/*
 		 * See if the caller provided any multicast options
 		 */
-		if ((flags & IP_MULTICASTOPTS) && imo != NULL) {
+		if (imo != NULL) {
 			ip->ip_ttl = imo->imo_multicast_ttl;
 			if (imo->imo_multicast_ifp != NULL)
 				ifp = imo->imo_multicast_ifp;

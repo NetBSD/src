@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_var.h	7.7 (Berkeley) 6/28/90
- *	$Id: ip_var.h,v 1.6 1994/01/09 01:06:19 mycroft Exp $
+ *	$Id: ip_var.h,v 1.7 1994/01/10 20:14:26 mycroft Exp $
  */
 
 #ifndef _NETINET_IP_VAR_H_
@@ -141,7 +141,6 @@ struct	ipstat {
 #ifdef KERNEL
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
-#define	IP_MULTICASTOPTS	0x2		/* multicast opts present */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
@@ -160,13 +159,9 @@ int	ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
 void	ip_init __P((void));
 void	ip_intr __P((void));
 int	ip_optcopy __P((struct ip *, struct ip *));
-#ifndef MULTICAST
-int	ip_output __P((struct mbuf *, struct mbuf *, struct route *, int));
-#else
 int	ip_output
 	   __P((struct mbuf *, struct mbuf *, struct route *, int,
 		struct ip_moptions *));
-#endif
 int	ip_pcbopts __P((struct mbuf **, struct mbuf *));
 struct ip *
 	ip_reass __P((struct ipasfrag *, struct ipq *));
