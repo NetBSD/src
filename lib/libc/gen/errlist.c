@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.12 1999/08/17 03:50:56 mycroft Exp $	*/
+/*	$NetBSD: errlist.c,v 1.13 2003/04/09 21:36:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.12 1999/08/17 03:50:56 mycroft Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.13 2003/04/09 21:36:28 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,7 @@ const char *const _sys_errlist[] = {
 
 /* math software */
 	"Numerical argument out of domain",	/* 33 - EDOM */
-	"Result too large",			/* 34 - ERANGE */
+	"Result too large or too small",	/* 34 - ERANGE */
 
 /* non-blocking and interrupt i/o */
 	"Resource temporarily unavailable",	/* 35 - EAGAIN */
