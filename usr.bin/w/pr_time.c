@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.11 2000/12/20 01:20:38 cgd Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.12 2001/01/05 04:59:21 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.11 2000/12/20 01:20:38 cgd Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.12 2001/01/05 04:59:21 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ __RCSID("$NetBSD: pr_time.c,v 1.11 2000/12/20 01:20:38 cgd Exp $");
  *	%I% get replaced in the source code.
  */
 void
-pr_attime(started, now)
-	time_t *started, *now;
+pr_attime(time_t *started, time_t *now)
 {
 	static char buf[256];
 	int tnow_yday;
@@ -95,8 +94,7 @@ pr_attime(started, now)
  *	Display the idle time.
  */
 void
-pr_idle(idle)
-	time_t idle;
+pr_idle(time_t idle)
 {
 	int days = idle / SECSPERDAY;
 
