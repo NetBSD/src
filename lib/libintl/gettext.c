@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.5 2000/11/03 14:29:22 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.6 2000/12/14 02:06:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.5 2000/11/03 14:29:22 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.6 2000/12/14 02:06:12 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -407,6 +407,8 @@ mapit(path)
 		v = NULL;
 	if (v) {
 		mohandle.mo.mo_charset = strdup(v + 8);
+		if (!mohandle.mo.mo_charset)
+			goto fail;
 		v = strchr(mohandle.mo.mo_charset, '\n');
 		if (v)
 			*v = '\0';
@@ -517,10 +519,10 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	static char olpath[PATH_MAX];
 	const char *locale;
 	const char *language;
-	const char *cname;
+	const char *cname = NULL;
 	const char *v;
-	char *ocname = NULL;
-	char *odomainname = NULL;
+	static char *ocname = NULL;
+	static char *odomainname = NULL;
 	struct domainbinding *db;
 
 	msgid = (n == 1) ? msgid1 : msgid2;
@@ -568,10 +570,18 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 
 	if (odomainname)
 		free(odomainname);
-	odomainname = strdup(domainname);
 	if (ocname)
 		free(ocname);
+	odomainname = strdup(domainname);
 	ocname = strdup(cname);
+	if (!odomainname || !ocname) {
+		if (odomainname)
+			free(odomainname);
+		if (ocname)
+			free(ocname);
+		odomainname = ocname = NULL;
+		goto fail;
+	}
 
 	strlcpy(olpath, lpath, sizeof(olpath));
 
