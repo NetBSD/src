@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.2 1997/01/12 22:15:24 leo Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.3 1997/06/29 20:30:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -67,6 +67,8 @@ struct kbd_softc {
 #ifdef _KERNEL
 extern	u_char	kbd_modifier;
 
+void	kbd_bell_gparms __P((u_int *, u_int *, u_int *));
+void	kbd_bell_sparms __P((u_int, u_int, u_int));
 void	kbd_write __P((u_char *, int));
 int	kbdgetcn __P((void));
 void	kbdbell __P((void));

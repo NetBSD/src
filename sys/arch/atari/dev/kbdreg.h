@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.1.1.1 1995/03/26 07:12:12 leo Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.2 1997/06/29 20:30:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,9 +46,16 @@
  * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
 
+struct kbdbell {
+	u_int volume;		/* volume of bell (0-64) */
+	u_int pitch;		/* pitch of bell (10-20000) */
+	u_int duration;		/* duration of bell */
+};
+
 #define	KIOCTRANS	_IOW('k', 0, int)	/* set translation mode */
 			/* (we only accept TR_UNTRANS_EVENT) */
 #define	KIOCGTRANS	_IOR('k', 5, int)	/* get translation mode */
 #define	KIOCSDIRECT	_IOW('k', 10, int)	/* keys to console? */
+#define	KIOCRINGBELL	_IOW('k', 15, struct kbdbell) /* ring bell */
 
 #define	TR_UNTRANS_EVENT	3

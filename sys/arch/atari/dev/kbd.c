@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.15 1997/01/10 21:24:26 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.16 1997/06/29 20:30:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -212,6 +212,7 @@ int
 kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
 {
 	register struct kbd_softc *k = &kbd_softc;
+	struct kbdbell	*kb;
 
 	switch (cmd) {
 		case KIOCTRANS:
@@ -228,6 +229,14 @@ kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
 
 		case KIOCSDIRECT:
 			k->k_event_mode = *(int *)data;
+			return 0;
+		
+		case KIOCRINGBELL:
+			kb = (struct kbdbell *)data;
+			if (kb)
+				kbd_bell_sparms(kb->volume, kb->pitch,
+							kb->duration);
+			kbdbell();
 			return 0;
 
 		case FIONBIO:	/* we will remove this someday (soon???) */
@@ -410,7 +419,7 @@ void	*junk1, *junk2;
 	}
 }
 
-static	char sound[] = {
+static	u_char sound[] = {
 	0xA8,0x01,0xA9,0x01,0xAA,0x01,0x00,
 	0xF8,0x10,0x10,0x10,0x00,0x20,0x03
 };
@@ -426,6 +435,58 @@ kbdbell()
 		YM2149->sd_wdat = sound[i];
 	}
 	splx(sps);
+}
+
+
+/*
+ * Set the parameters of the 'default' beep.
+ */
+
+#define KBDBELLCLOCK	125000	/* 2MHz / 16 */
+#define KBDBELLDURATION	128	/* 256 / 2MHz */
+
+void
+kbd_bell_gparms(volume, pitch, duration)
+	u_int	*volume, *pitch, *duration;
+{
+	u_int	tmp;
+
+	tmp = sound[11] | (sound[12] << 8);
+	*duration = (tmp * KBDBELLDURATION) / 1000;
+
+	tmp = sound[0] | (sound[1] << 8);
+	*pitch = KBDBELLCLOCK / tmp;
+	
+	*volume = 0;
+}
+
+void
+kbd_bell_sparms(volume, pitch, duration)
+	u_int	volume, pitch, duration;
+{
+	u_int	f, t;
+
+	f = pitch > 10 ? pitch : 10;	/* minimum pitch */
+	if (f > 20000)
+		f = 20000;		/* maximum pitch */
+
+	f = KBDBELLCLOCK / f;
+
+	t = (duration * 1000) / KBDBELLDURATION;
+
+	sound[ 0] = f & 0xff;
+	sound[ 1] = (f >> 8) & 0xf;
+	f -= 1;
+	sound[ 2] = f & 0xff;
+	sound[ 3] = (f >> 8) & 0xf;
+	f += 2;
+	sound[ 4] = f & 0xff;
+	sound[ 5] = (f >> 8) & 0xf;
+	
+	sound[11] = t & 0xff;
+	sound[12] = (t >> 8) & 0xff;
+
+	sound[13] = 0x03;
 }
 
 int
