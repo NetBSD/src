@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.41 1999/09/02 19:17:57 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.42 1999/09/02 22:07:43 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -218,6 +218,7 @@
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
+#define	USB_PRODUCT_LOGITECH_QUICKCAM	0x0801		/* QuickCam */
 #define	USB_PRODUCT_LOGITECH_USBPS2	0xc001		/* USB-PS/2 mouse */
 
 /* P.I. Engineering products */
