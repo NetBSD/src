@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2002/08/19 09:41:31 lukem Exp $
+# $NetBSD: Makefile,v 1.16 2002/08/19 13:35:07 lukem Exp $
 
 NOLINT=		# defined
 
@@ -12,7 +12,7 @@ WARNS?=		1
 LIB=		kadm5clnt
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
@@ -46,9 +46,9 @@ SRCS	 =		\
 INCS=		kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h
 INCSDIR=	/usr/include/kadm5
 
-ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
-HDB!=		cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
+ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${NETBSDSRCDIR}/lib/libkrb5 && ${PRINTOBJDIR}
+HDB!=		cd ${NETBSDSRCDIR}/lib/libhdb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${ASN1}				\

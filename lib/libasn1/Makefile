@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2002/08/19 09:41:27 lukem Exp $
+# $NetBSD: Makefile,v 1.21 2002/08/19 13:35:05 lukem Exp $
 
 NOLINT=		# defined
 
@@ -11,7 +11,7 @@ WARNS?=		1
 LIB=		asn1
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET?=	${COMPILEETOBJ}/compile_et
 
 ASN1COMPILEOBJ!=cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}

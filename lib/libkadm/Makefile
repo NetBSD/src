@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2002/08/19 09:41:31 lukem Exp $
+# $NetBSD: Makefile,v 1.12 2002/08/19 13:35:07 lukem Exp $
 
 NOLINT=		# defined
 
@@ -12,7 +12,7 @@ WARNS?=		1
 LIB=		kadm
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
@@ -32,7 +32,7 @@ SRCS=						\
 INCS=		kadm.h kadm_err.h
 INCSDIR=	/usr/include/kerberosIV
 
-LIBKRBINC!=	cd ${.CURDIR}/../libkrb && ${PRINTOBJDIR}
+LIBKRBINC!=	cd ${NETBSDSRCDIR}/lib/libkrb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/kadm			\

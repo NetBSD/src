@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2002/08/19 09:41:27 lukem Exp $
+# $NetBSD: Makefile,v 1.16 2002/08/19 13:35:06 lukem Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -38,7 +38,7 @@ SRCS=	$(asn1_compile_SRCS)			\
 
 YHEADER=	# defined
 
-#LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
+#LIBROKEN!=	cd ${NETBSDSRCDIR}/lib/libroken && ${PRINTOBJDIR}
 #	 -I${LIBROKEN}				\
 
 HOST_CPPFLAGS+= -I.				\
