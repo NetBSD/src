@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.47 2000/12/29 01:24:57 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.48 2001/01/06 12:14:39 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -585,6 +585,8 @@ Static int umass_cam_detach(struct umass_softc *sc);
 
 #define UMASS_SCSIID_HOST	0x00
 #define UMASS_SCSIID_DEVICE	0x01
+
+#define UMASS_ATAPI_DRIVE	0
 
 #define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE
 
@@ -3140,9 +3142,9 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 	}
 
 #ifdef UMASS_DEBUG
-	if ((sc_link->type == BUS_ATAPI ? 
-	     sc_link->scsipi_atapi.drive : sc_link->scsipi_scsi.target) 
-	    != UMASS_SCSIID_DEVICE) {
+	if (sc_link->type == BUS_ATAPI ? 
+	    sc_link->scsipi_atapi.drive != UMASS_ATAPI_DRIVE : 
+	    sc_link->scsipi_scsi.target != UMASS_SCSIID_DEVICE) {
 		DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
 		    USBDEVNAME(sc->sc_dev),
 		    sc_link->scsipi_scsi.target));
@@ -3487,7 +3489,7 @@ umass_atapi_probedev(struct atapibus_softc *atapi, int target)
 	DPRINTF(UDMASS_SCSI,("umass_atapi_probedev: atapi=%p target=%d\n",
 			     atapi, target));
 
-	if (target != 0)	/* only probe drive 0 */
+	if (target != UMASS_ATAPI_DRIVE)	/* only probe drive 0 */
 		return;
 
 	if (atapi->sc_link[target])
@@ -3512,8 +3514,12 @@ umass_atapi_probedev(struct atapibus_softc *atapi, int target)
 	DPRINTF(UDMASS_SCSI, ("umass_atapi_probedev: doing inquiry\n"));
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
-	if (scsipi_inquire(sc_link, &inqbuf, XS_CTL_DISCOVERY) != 0)
-		goto bad;
+	if (scsipi_inquire(sc_link, &inqbuf, XS_CTL_DISCOVERY) != 0) {
+		DPRINTF(UDMASS_SCSI, ("umass_atapi_probedev: scsipi_inquire "
+				      "failed\n"));
+		free(sc_link, M_DEVBUF);
+		return;
+	}
 
 	scsipi_strvis(vendor, 33, inqbuf.vendor, 8);
 	scsipi_strvis(product, 65, inqbuf.product, 16);
@@ -3531,13 +3537,10 @@ umass_atapi_probedev(struct atapibus_softc *atapi, int target)
 	sa.sa_inqbuf.revision = revision;
 	sa.sa_inqptr = NULL;
 
+	DPRINTF(UDMASS_SCSI, ("umass_atapi_probedev: doing atapi_probedev on "
+			      "'%s' '%s' '%s'\n", vendor, product, revision));
 	drvp->drv_softc = atapi_probedev(atapi, target, sc_link, &sa);
 	/* atapi_probedev() frees the scsipi_link when there is no device. */
-	return;
-
-bad:
-	free(sc_link, M_DEVBUF);
-	return;
 }
 #endif
 #endif
