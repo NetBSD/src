@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.430 2003/10/05 01:38:47 chuck Exp $
+# $NetBSD: mi,v 1.431 2003/10/10 06:24:39 grog Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -160,6 +160,7 @@
 ./sbin/tunefs		base-sysutil-root
 ./sbin/umount		base-sysutil-root
 ./sbin/veriexecctl	base-sysutil-root
+./sbin/vinum		base-sysutil-root
 ./sbin/wdogctl		base-sysutil-root
 ./sbin/wsconsctl	base-sysutil-root
 ./stand			base-sys-root
