@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.12 1997/09/17 01:35:34 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.13 1997/10/27 01:08:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -126,6 +126,8 @@
 #define		CNFG_MWEN		0x00000010
 #define		CNFG_DWEN		0x00000020
 #define		CNFG_WLEN		0x00000100
+
+#define	CIA_CSR_CNFG_BITS	"\20\11WLEN\6DWEN\5MWEN\1BWEN"
 
 #define	CIA_CSR_HAE_MEM	(CIA_CSRS + 0x400)
 
