@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.3 2003/10/08 04:25:46 lukem Exp $ */
+/* $NetBSD: disklabel.h,v 1.4 2003/10/25 13:06:03 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -115,13 +115,13 @@ struct cpu_disklabel {
 
 
 struct boot_block {
-	uint64_t bb_data[64];		/* data (disklabel, also as below) */
+	uint64_t cfe_bb_data[64];	/* data (disklabel, also as below) */
 };
-#define	bb_magic	bb_data[59]	/* magic number */
-#define	bb_hdrinfo	bb_data[60]	/* header checksum, ver, flags */
-#define	bb_secstart	bb_data[61]	/* secondary start (bytes) */
-#define	bb_secsize	bb_data[62]	/* secondary size (bytes) */
-#define	bb_archinfo	bb_data[63]	/* architecture info */
+#define	cfe_bb_magic	cfe_bb_data[59]	/* magic number */
+#define	cfe_bb_hdrinfo	cfe_bb_data[60]	/* header checksum, ver, flags */
+#define	cfe_bb_secstart	cfe_bb_data[61]	/* secondary start (bytes) */
+#define	cfe_bb_secsize	cfe_bb_data[62]	/* secondary size (bytes) */
+#define	cfe_bb_archinfo	cfe_bb_data[63]	/* architecture info */
 
 #define	BOOT_BLOCK_OFFSET	0	/* offset of boot block. */
 #define	BOOT_BLOCK_BLOCKSIZE	512	/* block size for sec. size/start,
