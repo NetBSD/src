@@ -1,3 +1,0 @@
-| $NetBSD: KillUnixfs,v 1.2 2002/02/11 19:02:37 reinoud Exp $
-
-rmkill unixfs
