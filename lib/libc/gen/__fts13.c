@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.2 1997/10/22 00:54:57 fvdl Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.3 1997/10/22 06:37:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.2 1997/10/22 00:54:57 fvdl Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.3 1997/10/22 06:37:42 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,11 +55,26 @@ __RCSID("$NetBSD: __fts13.c,v 1.2 1997/10/22 00:54:57 fvdl Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
+#ifdef __LIBC12_SOURCE__
+__weak_alias(fts_children,_fts_children);
+__weak_alias(fts_close,_fts_close);
+__weak_alias(fts_open,_fts_open);
+__weak_alias(fts_read,_fts_read);
+__weak_alias(fts_set,_fts_set);
+#else
+#error "XXX THESE ARE NOT RIGHT!"
 __weak_alias(__fts_children13,____fts_children13);
 __weak_alias(__fts_close13,____fts_close13);
 __weak_alias(__fts_open13,____fts_open13);
 __weak_alias(__fts_read13,____fts_read13);
 __weak_alias(__fts_set13,____fts_set13);
+#endif /* __LIBC12_SOURCE__ */
+#endif /* __weak_alias */
+
+#ifdef __LIBC12_SOURCE__
+#define	STAT	stat12
+#else
+#define	STAT	stat
 #endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, int));
@@ -799,7 +814,7 @@ fts_stat(sp, p, follow)
 	register FTSENT *t;
 	register dev_t dev;
 	register ino_t ino;
-	struct stat *sbp, sb;
+	struct STAT *sbp, sb;
 	int saved_errno;
 
 	/* If user needs stat info, stat buffer already allocated. */
@@ -833,7 +848,7 @@ fts_stat(sp, p, follow)
 		}
 	} else if (lstat(p->fts_accpath, sbp)) {
 		p->fts_errno = errno;
-err:		memset(sbp, 0, sizeof(struct stat));
+err:		memset(sbp, 0, sizeof(struct STAT));
 		return (FTS_NS);
 	}
 
@@ -924,7 +939,7 @@ fts_alloc(sp, name, namelen)
 	 */
 	len = sizeof(FTSENT) + namelen;
 	if (!ISSET(FTS_NOSTAT))
-		len += sizeof(struct stat) + ALIGNBYTES;
+		len += sizeof(struct STAT) + ALIGNBYTES;
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
@@ -932,7 +947,7 @@ fts_alloc(sp, name, namelen)
 	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
-		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
+		p->fts_statp = (struct STAT *)ALIGN(p->fts_name + namelen + 2);
 	p->fts_namelen = namelen;
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;

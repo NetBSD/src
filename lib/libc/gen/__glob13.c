@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.2 1997/10/22 00:55:08 fvdl Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.3 1997/10/22 06:37:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.2 1997/10/22 00:55:08 fvdl Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.3 1997/10/22 06:37:46 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,8 +85,20 @@ __RCSID("$NetBSD: __glob13.c,v 1.2 1997/10/22 00:55:08 fvdl Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
+#ifdef __LIBC12_SOURCE__
+__weak_alias(glob,_glob);
+__weak_alias(globfree,_globfree);
+#else
+#error "XXX THESE ARE NOT RIGHT!"
 __weak_alias(__glob13,___glob13);
 __weak_alias(__globfree13,___globfree13);
+#endif /* __LIBC12_SOURCE__ */
+#endif /* __weak_alias */
+
+#ifdef __LIBC12_SOURCE__
+#define	STAT	stat12
+#else
+#define	STAT	stat
 #endif
 
 #define	DOLLAR		'$'
@@ -141,13 +153,13 @@ typedef char Char;
 
 static int	 compare __P((const void *, const void *));
 static void	 g_Ctoc __P((const Char *, char *));
-static int	 g_lstat __P((Char *, struct stat *, glob_t *));
+static int	 g_lstat __P((Char *, struct STAT *, glob_t *));
 static DIR	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((Char *, int));
 #ifdef notdef
 static Char	*g_strcat __P((Char *, const Char *));
 #endif
-static int	 g_stat __P((Char *, struct stat *, glob_t *));
+static int	 g_stat __P((Char *, struct STAT *, glob_t *));
 static int	 glob0 __P((const Char *, glob_t *));
 static int	 glob1 __P((Char *, glob_t *));
 static int	 glob2 __P((Char *, Char *, Char *, glob_t *));
@@ -519,7 +531,7 @@ glob2(pathbuf, pathend, pattern, pglob)
 	Char *pathbuf, *pathend, *pattern;
 	glob_t *pglob;
 {
-	struct stat sb;
+	struct STAT sb;
 	Char *p, *q;
 	int anymeta;
 
@@ -771,7 +783,7 @@ g_opendir(str, pglob)
 static int
 g_lstat(fn, sb, pglob)
 	register Char *fn;
-	struct stat *sb;
+	struct STAT *sb;
 	glob_t *pglob;
 {
 	char buf[MAXPATHLEN];
@@ -785,7 +797,7 @@ g_lstat(fn, sb, pglob)
 static int
 g_stat(fn, sb, pglob)
 	register Char *fn;
-	struct stat *sb;
+	struct STAT *sb;
 	glob_t *pglob;
 {
 	char buf[MAXPATHLEN];
