@@ -20,6 +20,22 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+/* This defines which switch letters take arguments.  On NetBSD, most
+   of the normal cases (defined by gcc.c) apply, and we also have -h*
+   and -z* options (for the linker) (coming from SVR4).
+   Copied from ../netbsd-elf.h and re{undef,defined} here to
+   override the powerpc sysv4.h definition.
+   netbsd-elf.h defines the default list + 'h' + 'z' + 'R'.
+   rs6000/sysv4.h defines the default list + 'G'. */
+
+#undef SWITCH_TAKES_ARG
+#define SWITCH_TAKES_ARG(CHAR)			\
+  (DEFAULT_SWITCH_TAKES_ARG (CHAR)		\
+   || (CHAR) == 'h'				\
+   || (CHAR) == 'z'				\
+   || (CHAR) == 'R'				\
+   || (CHAR) == 'G')
+
 #undef TARGET_OS_CPP_BUILTINS	/* FIXME: sysv4.h should not define this! */
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
