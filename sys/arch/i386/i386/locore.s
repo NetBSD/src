@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.269 2002/11/01 06:06:17 enami Exp $	*/
+/*	$NetBSD: locore.s,v 1.270 2002/11/02 07:41:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1854,7 +1854,7 @@ ENTRY(cpu_switch)
 
 #ifdef DEBUG
 	cmpl	$IPL_SCHED,CPL
-	je	1f
+	jae	1f
 	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
