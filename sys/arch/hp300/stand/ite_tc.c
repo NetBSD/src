@@ -37,18 +37,18 @@
  *
  *	from: Utah Hdr: ite_tc.c 1.9 89/02/20
  *	from: @(#)ite_tc.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_tc.c,v 1.4 1994/01/26 02:38:48 brezak Exp $
+ *	$Id: ite_tc.c,v 1.5 1994/02/19 17:55:12 hpeyerl Exp $
  */
 
 #include "samachdep.h"
 
 #ifdef ITECONSOLE
 
-#include "sys/param.h"
-#include "../dev/itevar.h"
-#include "../dev/itereg.h"
-#include "../dev/grfvar.h"
-#include "../dev/grf_tcreg.h"
+#include <sys/param.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grf_tcreg.h>
 
 #define REGBASE		((struct tcboxfb *)(ip->regbase))
 #define WINDOWMOVER	topcat_windowmove
