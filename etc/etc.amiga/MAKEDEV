@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.43 1998/05/02 20:37:30 is Exp $
+#	$NetBSD: MAKEDEV,v 1.44 1998/10/15 21:22:52 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@
 #	random	Random number generator
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
+#	scsibus* SCSI busses
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
@@ -115,6 +116,7 @@ all)
 	sh $0 vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm ipl random local
 	sh $0 audio0 audio1 audio2 audio3
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
 floppy)
@@ -504,6 +506,14 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+scsibus*)
+	unit=${i#scsibus};
+	rm -f scsibus$unit
+	mknod scsibus$unit c 44 $unit
+	chown root:wheel scsibus$unit
+	chmod 644 scsibus$unit
 	;;
 
 local)

@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.1 1998/06/09 09:10:38 dbj Exp $
+#	$NetBSD: MAKEDEV,v 1.2 1998/10/15 21:22:53 thorpej Exp $
 # @@@ This was taken from the mac68k port.  It works, but still should
 # be reviewed for next68k device #'s --dbj
 #
@@ -60,6 +60,7 @@
 #	lkm	loadable kernel modules interface
 #	ipl	ip filter
 #	random	Random number generator
+#	scsibus* SCSI busses
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
@@ -81,6 +82,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11 random
 	sh $0 tun0 tun1 tun2 tun3 asc0 lkm ipl local
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
 std)
@@ -330,6 +332,13 @@ random)
 	chmod 644 urandom
 	;;
 
+scsibus*)
+	unit=${i#scsibus}; 
+	rm -f scsibus$unit
+	mknod scsibus$unit c 39 $unit
+	chown root:wheel scsibus$unit
+	chmod 644 scsibus$unit
+	;;
 
 local)
 	umask 0
