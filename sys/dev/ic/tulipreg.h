@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.27 2002/04/04 05:45:54 chs Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.28 2002/04/05 04:48:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -639,7 +639,7 @@ struct tulip_desc {
 #define	OPMODE_WINB_REIO	0x80000000	/* receive early intr on */
 
 /* Shorthand for media-related OPMODE bits */
-#define	OPMODE_MEDIA_BITS	(OPMODE_FD|OPMODE_PS|OPMODE_PCS|OPMODE_SCR)
+#define	OPMODE_MEDIA_BITS	(OPMODE_FD|OPMODE_PS|OPMODE_TTM|OPMODE_PCS|OPMODE_SCR)
 
 /* CSR7 - Interrupt Enable */
 #define	CSR_INTEN		TULIP_CSR7
