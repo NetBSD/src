@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.23 1998/10/24 19:04:51 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.24 1999/08/06 00:11:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.23 1998/10/24 19:04:51 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.24 1999/08/06 00:11:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,7 +399,7 @@ void
 ktrsysret(ktr)
 	struct ktr_sysret *ktr;
 {
-	int ret = ktr->ktr_retval;
+	register_t ret = ktr->ktr_retval;
 	int error = ktr->ktr_error;
 	int code = ktr->ktr_code;
 
@@ -411,14 +411,14 @@ ktrsysret(ktr)
 	switch (error) {
 	case 0:
 		if (fancy) {
-			(void)printf("%d", ret);
+			(void)printf("%ld", (long)ret);
 			if (ret < 0 || ret > 9)
-				(void)printf("/%#x", ret);
+				(void)printf("/%#lx", (long)ret);
 		} else {
 			if (decimal)
-				(void)printf("%d", ret);
+				(void)printf("%ld", (long)ret);
 			else
-				(void)printf("%#x", ret);
+				(void)printf("%#lx", (long)ret);
 		}
 		break;
 
