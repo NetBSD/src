@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.11 1999/02/28 14:26:38 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.12 1999/03/05 10:40:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -422,6 +422,11 @@ pckbc_attach(parent, self, aux)
 		return;
 	}
 
+/*
+ * XXX Don't check the keyboard port. There are broken keyboard controllers
+ * which don't pass the test but work normally otherwise.
+ */
+#if 0
 	/*
 	 * check kbd port ok
 	 */
@@ -433,7 +438,7 @@ pckbc_attach(parent, self, aux)
 	 * Normally, we should get a "0" here.
 	 * But there are keyboard controllers behaving differently.
 	 */
-	if (res == 0 || res == 0xfa || res == 0x01) {
+	if (res == 0 || res == 0xfa || res == 0x01 || res == 0xab) {
 #ifdef PCKBCDEBUG
 		if (res != 0)
 			printf("kbc: returned %x on kbd slot test\n", res);
@@ -444,6 +449,10 @@ pckbc_attach(parent, self, aux)
 		printf("kbc: kbd port test: %x\n", res);
 		return;
 	}
+#else
+	if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT))
+		cmdbits |= KC8_KENABLE;
+#endif /* 0 */
 
 	/*
 	 * check aux port ok
