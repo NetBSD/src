@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.120 2003/02/23 14:37:32 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.121 2003/05/16 14:36:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.120 2003/02/23 14:37:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.121 2003/05/16 14:36:33 itojun Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -577,7 +577,7 @@ again:
 		idb.d_off = off;
 		idb.d_reclen = sunos_reclen;
 		idb.d_namlen = bdp->d_namlen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		if ((error = copyout((caddr_t)&idb, outp, sunos_reclen)) != 0)
 			goto out;
 		/* advance past this real entry */

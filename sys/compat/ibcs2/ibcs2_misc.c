@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.63 2003/01/29 07:00:35 atatat Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.64 2003/05/16 14:36:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.63 2003/01/29 07:00:35 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.64 2003/05/16 14:36:30 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ again:
 		idb.d_ino = (ibcs2_ino_t)bdp->d_fileno;
 		idb.d_off = (ibcs2_off_t)off;
 		idb.d_reclen = (u_short)ibcs2_reclen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		error = copyout(&idb, outp, ibcs2_reclen);
 		if (error)
 			goto out;
