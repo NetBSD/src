@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1.2.3 1997/12/15 06:05:22 mellon Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.1.2.4 1997/12/15 13:21:21 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -196,3 +196,8 @@ message askfspart
 disque.
 Taille de la partition ? }
 
+message cyl1024
+{ Le label (liste des partitions) que vous avez entré a une partition racine
+qui se termine après la limite du BIOS de 1024 cylindres. pour être sur que
+le système puisse etre toujours démaré, cette partition doit etre entièrement
+en dessous de cette limite. Vous pouvez: }
