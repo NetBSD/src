@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_dummy.c,v 1.5 2001/08/22 08:52:37 itojun Exp $	*/
+/*	$NetBSD: qop_dummy.c,v 1.6 2001/12/31 19:31:23 thorpej Exp $	*/
 /*	$KAME: qop_dummy.c,v 1.4 2001/08/16 10:39:14 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <syslog.h>
+#include <string.h>
 
 #include <altq/altq.h>
 #include "altq_qop.h"
