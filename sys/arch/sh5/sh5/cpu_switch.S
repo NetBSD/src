@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.18 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.19 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -394,7 +394,7 @@ Lsw3:
 	 */
 	pta/l	2f, tr0
 	LDPTR	r31, L_PROC, r2
-	ld.l	r2, P_NRAS, r0
+	LDPTR	r2, P_RASLIST, r0
 	beq/l	r0, r63, tr0		/* Skip if no RAS registered for proc */
 	LEAF(_C_LABEL(ras_lookup), r0)
 	ptabs/l	r0, tr0

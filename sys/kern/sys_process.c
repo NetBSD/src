@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.84 2003/08/07 16:31:55 agc Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.85 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.84 2003/08/07 16:31:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.85 2003/11/04 10:33:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ sys_ptrace(l, v, retval)
 		/*
 		 * Can't write to a RAS
 		 */
-		if ((t->p_nras != 0) &&
+		if (!LIST_EMPTY(&t->p_raslist) &&
 		    (ras_lookup(t, SCARG(uap, addr)) != (caddr_t)-1)) {
 			return (EACCES);
 		}
