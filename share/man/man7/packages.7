@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.81 2003/09/15 12:32:02 agc Exp $
+.\"	$NetBSD: packages.7,v 1.82 2003/09/15 13:10:27 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd January 18, 2003
+.Dd September 15, 2003
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -142,18 +142,13 @@ Primary location(s) for distribution patch files (see
 below) if not found locally.
 .It PKG_DEBUG_LEVEL
 The level of debugging output which is displayed whilst making and
-installing the package. The default value for this is
-.Pa 0 ,
-which will not display the commands as they are executed
-(normal, default, quiet operation);
-the value
-.Pa 1
-will display all shell commands before their invocation,
-and the value
-.Pa 2
-will display both the shell commands before their invocation, and
-their actual execution progress with
-.Pa set -x
+installing the package.
+The default value for this is 0, which will not display the commands
+as they are executed (normal, default, quiet operation); the value
+1 will display all shell commands before their invocation, and the
+value 2 will display both the shell commands before their invocation,
+and their actual execution progress with
+.Ic set -x
 will be displayed.
 .It WRKDIR
 A temporary working directory that gets *clobbered* on clean.  The default is
