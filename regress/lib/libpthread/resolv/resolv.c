@@ -1,3 +1,5 @@
+/*	$NetBSD: resolv.c,v 1.4 2004/05/13 19:27:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: resolv.c,v 1.4 2004/05/13 19:27:47 christos Exp $");
+
 #include <pthread.h>
 #include <stdio.h>
 #include <netdb.h>
