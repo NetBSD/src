@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.1 1995/11/23 02:33:55 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.2 1996/04/12 02:09:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,6 +34,8 @@
 #include <machine/rpb.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -79,24 +81,23 @@ dec_axppci_33_consinit(constype)
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comdefaultrate, comconsole;
-			extern int comconsaddr, comconsinit;
+			extern bus_chipset_tag_t comconsbc;	/* set */
+			extern bus_io_handle_t comcomsioh;	/* set */
+			extern int comconsaddr, comconsinit;	/* set */
+			extern int comdefaultrate;
 			extern int comcngetc __P((dev_t));
 			extern void comcnputc __P((dev_t, int));
 			extern void comcnpollc __P((dev_t, int));
-			extern __const struct isa_pio_fns *comconsipf;
-			extern __const void *comconsipfa;
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
-
-			cominit(lcp->lc_piofns, lcp->lc_pioarg, 0,
-			    comdefaultrate);
-			comconsole = 0;				/* XXX */
-			comconsaddr = 0x3f8;			/* XXX */
+			comconsaddr = 0x3f8;
 			comconsinit = 0;
-			comconsipf = lcp->lc_piofns;
-			comconsipfa = lcp->lc_pioarg;
+			comconsbc = &lcp->lc_bc;
+			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
+			    &comconsioh))
+				panic("can't map serial console I/O ports");
+			cominit(comconsbc, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -106,9 +107,9 @@ dec_axppci_33_consinit(constype)
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(lcp->lc_conffns, lcp->lc_confarg,
-		    lcp->lc_memfns, lcp->lc_memarg, lcp->lc_piofns,
-		    lcp->lc_pioarg, 0, ctb->ctb_turboslot & 0xffff, 0);
+		pci_display_console(&lcp->lc_bc, &lcp->lc_pc,
+		    (ctb->ctb_turboslot >> 8) & 0xff,
+		    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
