@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdict.c,v 1.5 1999/09/18 20:50:28 jsm Exp $	*/
+/*	$NetBSD: mkdict.c,v 1.6 1999/09/19 18:10:48 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mkdict.c,v 1.5 1999/09/18 20:50:28 jsm Exp $");
+__RCSID("$NetBSD: mkdict.c,v 1.6 1999/09/19 18:10:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,15 +74,13 @@ main(argc, argv)
 	char *argv[];
 {
 	char *p, *q;
-	int ch, common, n, nwords;
+	int ch, common, nwords;
 	int current, len, prev, qcount;
 	char buf[2][MAXWORDLEN + 1];
 
 	prev = 0;
 	current = 1;
 	buf[prev][0] = '\0';
-	if (argc == 2)
-		n = atoi(argv[1]);
 
 	for (nwords = 1;
 	    fgets(buf[current], MAXWORDLEN + 1, stdin) != NULL; ++nwords) {
@@ -112,7 +110,7 @@ main(argc, argv)
 		}
 		if (*p != '\n' || len < 3 || len > MAXWORDLEN)
 			continue;
-		if (argc == 2 && nwords % n)
+		if (argc == 2 && nwords % atoi(argv[1]))
 			continue;
 
 		*p = '\0';
