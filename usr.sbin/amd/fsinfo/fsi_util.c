@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_util.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_util.c,v 1.3 1994/06/13 20:50:16 mycroft Exp $
+ *	$Id: fsi_util.c,v 1.4 1995/05/21 16:59:39 mycroft Exp $
  */
 
 #include "../fsinfo/fsinfo.h"
@@ -414,9 +414,7 @@ char *v;
 
 	switch (k) {
 	case EF_INADDR: {
-		extern u_long inet_addr();
-		ep->e_inaddr.s_addr = inet_addr(v);
-		if (ep->e_inaddr.s_addr == (u_long) -1)
+		if (inet_aton(v, &ep->e_inaddr) == 0)
 			yyerror("malformed IP dotted quad: %s", v);
 		free(v);
 	} break;
