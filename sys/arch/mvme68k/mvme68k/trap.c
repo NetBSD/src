@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1997/07/08 16:56:38 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 1997/07/20 10:57:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -432,7 +432,7 @@ copyfault:
 		if (p->p_emul == &emul_sunos) {
 			ICIA();
 			DCIA();
-			return();
+			return;
 		}
 #endif COMPAT_SUNOS
 		frame.f_sr &= ~PSL_T;
