@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.14 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: esl.c,v 1.15 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.14 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.15 2005/01/15 15:19:52 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ void	esl_write_mix_reg(struct esl_pcmcia_softc *, u_char, u_char);
 void	esl_clear_mreg_bits(struct esl_pcmcia_softc *, u_char, u_char);
 void	esl_set_mreg_bits(struct esl_pcmcia_softc *, u_char, u_char);
 void	esl_read_multi_mix_reg(struct esl_pcmcia_softc *, u_char,
-				    u_int8_t *, bus_size_t);
+				    uint8_t *, bus_size_t);
 u_int	esl_srtotc(u_int);
 u_int	esl_srtofc(u_int);
 
@@ -146,17 +146,17 @@ static char *eslmodel[] = {
 int
 esl_open(void *hdl, int flags)
 {
-
-	struct esl_pcmcia_softc *sc = hdl;
+	struct esl_pcmcia_softc *sc;
 	int i;
 
+	sc = hdl;
 	if ((*sc->sc_enable)(sc))
-		return (ENXIO);
+		return ENXIO;
 
 	if (esl_reset(sc) != 0) {
 		printf("%s: esl_open: esl_reset failed\n",
 		    sc->sc_esl.sc_dev.dv_xname);
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	/* because we did a reset */
@@ -169,19 +169,18 @@ esl_open(void *hdl, int flags)
 	/* XXX: Delay a bit */
 	delay(10000);
 
-	return (0);
+	return 0;
 }
 
 
 void
 esl_close(void *hdl)
 {
-	struct esl_pcmcia_softc *sc = hdl;
+	struct esl_pcmcia_softc *sc;
 
+	sc = hdl;
 	esl_speaker_off(sc);
-
 	(*sc->sc_disable)(sc);
-
 	return;
 }
 
@@ -195,53 +194,53 @@ esl_query_encoding(void *hdl, struct audio_encoding *ae)
 		ae->encoding = AUDIO_ENCODING_ULINEAR;
 		ae->precision = 8;
 		ae->flags = 0;
-		return (0);
+		return 0;
 	case 1:
 		strcpy(ae->name, AudioEmulaw);
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		return 0;
 	case 2:
 		strcpy(ae->name, AudioEalaw);
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		return 0;
 	case 3:
 		strcpy(ae->name, AudioEslinear);
 		ae->encoding = AUDIO_ENCODING_SLINEAR;
 		ae->precision = 8;
 		ae->flags = 0;
-		return (0);
+		return 0;
 	case 4:
 		strcpy(ae->name, AudioEslinear_le);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		ae->precision = 16;
 		ae->flags = 0;
-		return (0);
+		return 0;
 	case 5:
 		strcpy(ae->name, AudioEulinear_le);
 		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		ae->precision = 16;
 		ae->flags = 0;
-		return (0);
+		return 0;
 	case 6:
 		strcpy(ae->name, AudioEslinear_be);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->precision = 16;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		return 0;
 	case 7:
 		strcpy(ae->name, AudioEulinear_be);
 		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		ae->precision = 16;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
+		return 0;
 	default:
 		return EINVAL;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -250,14 +249,15 @@ esl_set_params(void *hdl, int setmode, int usemode,
 	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct esl_pcmcia_softc *sc = hdl;
+	struct esl_pcmcia_softc *sc;
 	int rate;
 
+	sc = hdl;
 	if (play->sample_rate < ESS_MINRATE ||
 	    play->sample_rate > ESS_MAXRATE ||
 	    (play->precision != 8 && play->precision != 16) ||
 	    (play->channels != 1 && play->channels != 2))
-		return (EINVAL);
+		return EINVAL;
 
 	hw = *play;
 	switch (play->encoding) {
@@ -285,7 +285,7 @@ esl_set_params(void *hdl, int setmode, int usemode,
 		pfil->append(pfil, alaw_to_linear16, &hw);
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	rate = play->sample_rate;
@@ -293,43 +293,44 @@ esl_set_params(void *hdl, int setmode, int usemode,
 	esl_write_x_reg(sc, ESS_XCMD_SAMPLE_RATE, esl_srtotc(rate));
 	esl_write_x_reg(sc, ESS_XCMD_FILTER_CLOCK, esl_srtofc(rate));
 
-	return (0);
+	return 0;
 }
 
 int
 esl_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 
-	return ((bs / 128) * 128);
+	return (bs / 128) * 128;
 }
 
 
 int
 esl_halt_output(void *hdl)
 {
-	struct esl_pcmcia_softc *sc = hdl;
+	struct esl_pcmcia_softc *sc;
 
+	sc = hdl;
 	if (sc->sc_esl.active) {
 		esl_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
 		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
 		sc->sc_esl.active = 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
 esl_halt_input(void *hdl)
 {
 
-	return (0);
+	return 0;
 }
 
 int
 esl_speaker_ctl(void *hdl, int on)
 {
 
-	return (0);
+	return 0;
 }
 
 int
@@ -337,21 +338,22 @@ esl_getdev(void *hdl, struct audio_device *ret)
 {
 
 	*ret = esl_device;
-	return (0);
+	return 0;
 }
 
 int
 esl_set_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct esl_pcmcia_softc *sc = hdl;
+	struct esl_pcmcia_softc *sc;
 	int lgain, rgain;
 
+	sc = hdl;
 	switch(mc->dev) {
 	case ESS_MASTER_VOL:
 	case ESS_DAC_PLAY_VOL:
 	case ESS_SYNTH_PLAY_VOL:
 		if (mc->type != AUDIO_MIXER_VALUE)
-			return (EINVAL);
+			return EINVAL;
 
 		switch(mc->un.value.num_channels) {
 		case 1:
@@ -365,25 +367,25 @@ esl_set_port(void *hdl, mixer_ctrl_t *mc)
 			    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]);
 			break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		sc->sc_esl.gain[mc->dev][ESS_LEFT] = lgain;
 		sc->sc_esl.gain[mc->dev][ESS_RIGHT] = rgain;
 		esl_set_gain(sc, mc->dev, 1);
-		return (0);
-		break;
+		return 0;
 	default:
 		break;
 	}
 
-	return (EINVAL);
+	return EINVAL;
 }
 
 int
 esl_get_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct esl_pcmcia_softc *sc = hdl;
+	struct esl_pcmcia_softc *sc;
 
+	sc = hdl;
 	switch(mc->dev) {
 	case ESS_MASTER_VOL:
 	case ESS_DAC_PLAY_VOL:
@@ -400,14 +402,14 @@ esl_get_port(void *hdl, mixer_ctrl_t *mc)
 			    sc->sc_esl.gain[mc->dev][ESS_RIGHT];
 			break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
-		return (0);
+		return 0;
 	default:
 		break;
 	}
 
-	return (EINVAL);
+	return EINVAL;
 }
 
 int
@@ -422,7 +424,7 @@ esl_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->type = AUDIO_MIXER_VALUE;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
-		return (0);
+		return 0;
 	case ESS_SYNTH_PLAY_VOL:
 		di->mixer_class = ESS_INPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
@@ -430,13 +432,13 @@ esl_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->type = AUDIO_MIXER_VALUE;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
-		return (0);
+		return 0;
 	case ESS_INPUT_CLASS:
 		di->mixer_class = ESS_INPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioCinputs);
 		di->type = AUDIO_MIXER_CLASS;
-		return (0);
+		return 0;
 	case ESS_MASTER_VOL:
 		di->mixer_class = ESS_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
@@ -444,25 +446,25 @@ esl_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->type = AUDIO_MIXER_VALUE;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
-		return (0);
+		return 0;
 	case ESS_OUTPUT_CLASS:
 		di->mixer_class = ESS_OUTPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioCoutputs);
 		di->type = AUDIO_MIXER_CLASS;
-		return (0);
+		return 0;
 	default:
 		break;
 	}
 
-	return (ENXIO);
+	return ENXIO;
 }
 
 int
 esl_get_props(void *hdl)
 {
 
-	return (AUDIO_PROP_MMAP);
+	return AUDIO_PROP_MMAP;
 }
 
 int
@@ -470,17 +472,20 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 		   void (*intr)(void *), void *intrarg,
 		   const audio_params_t *param)
 {
-	struct esl_pcmcia_softc *sc = hdl;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct esl_pcmcia_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int bs;
 	int cnt;
-	u_int8_t reg;
+	uint8_t reg;
 
+	sc = hdl;
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	if (sc->sc_esl.active) {
 		printf("%s: esl_trigger_output: already running\n",
 		    sc->sc_esl.sc_dev.dv_xname);
-		return (1);
+		return 1;
 	}
 
 	sc->sc_esl.active = 1;
@@ -543,7 +548,7 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 	sc->sc_esl.sc_dmaaddr += ESS_FIFO_SIZE;
 	sc->sc_esl.sc_blkpos += ESS_FIFO_SIZE;
 
-	return (0);
+	return 0;
 }
 
 /* Additional subroutines used by the above (NOT required by audio(9)) */
@@ -551,31 +556,33 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 int
 esl_init(struct esl_pcmcia_softc *sc)
 {
-	const int ENABLE[] = { 0x0, 0x9, 0xb };
-	const int ENABLE_ORDER[] = { 1, 1, 1, 2, 1, 2, 1, 1, 2, 1, 0, -1 };
+	static const int ENABLE[] = { 0x0, 0x9, 0xb };
+	static const int ENABLE_ORDER[] = { 1, 1, 1, 2, 1, 2, 1, 1, 2, 1, 0, -1 };
 	struct audio_attach_args aa;
 	int i;
 	int model;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	/* Initialization sequence */
 	for (i = 0; ENABLE_ORDER[i] != -1; i++)
 		bus_space_read_1(iot, ioh, ENABLE[i]);
 	if (esl_reset(sc)) {
 		printf("%s: esl_init: esl_reset failed\n",
 		    sc->sc_esl.sc_dev.dv_xname);
-		return (1);
+		return 1;
 	}
 
 	if (esl_identify(sc)) {
 		printf("%s: esl_init: esl_identify failed\n",
 		    sc->sc_esl.sc_dev.dv_xname);
-		return (1);
+		return 1;
 	}
 
 	if (!sc->sc_esl.sc_version)
-		return (1);	/* Probably a Sound Blaster */
+		return 1;	/* Probably a Sound Blaster */
 
 	model = ESS_UNSUPPORTED;
 
@@ -592,7 +599,7 @@ esl_init(struct esl_pcmcia_softc *sc)
 	if (model == ESS_UNSUPPORTED) {
 		printf("%s: unknown model 0x%04x\n",
 		    sc->sc_esl.sc_dev.dv_xname, sc->sc_esl.sc_version);
-		return (1);
+		return 1;
 	}
 
 	printf("%s: ESS AudioDrive %s [version 0x%04x]\n",
@@ -619,18 +626,21 @@ esl_init(struct esl_pcmcia_softc *sc)
 	/* Disable speaker until device is opened */
 	esl_speaker_off(sc);
 
-	return (0);
+	return 0;
 }
 
 int
 esl_intr(void *hdl)
 {
-	struct esl_pcmcia_softc *sc = hdl;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t reg;
+	struct esl_pcmcia_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	uint8_t reg;
 	u_char *pos;
 
+	sc = hdl;
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	/* Clear interrupt */
 	reg = bus_space_read_1(iot, ioh, ESS_CLEAR_INTR);
 
@@ -655,25 +665,27 @@ esl_intr(void *hdl)
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 int
 esl_reset(struct esl_pcmcia_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
 	delay(10000);	/* XXX: Ugly, but ess.c does this too */
 	bus_space_write_1(iot, ioh, ESS_DSP_RESET, 0);
 	if (esl_rdsp(sc) != ESS_MAGIC)
-		return (1);
+		return 1;
 
 	/* Enable access to the extended command set */
 	esl_wdsp(sc, ESS_ACMD_ENABLE_EXT);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -764,51 +776,55 @@ esl_identify(struct esl_pcmcia_softc *sc)
 				reg1 = esl_rdsp(sc);
 			else
 				reg2 = esl_rdsp(sc);
-		}	
+		}
 
 	sc->sc_esl.sc_version = (reg1 << 8) + reg2;
 
-	return (0);
+	return 0;
 }
 
 /* Read a byte from the DSP */
 int
 esl_rdsp(struct esl_pcmcia_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int i;
 
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	for (i = ESS_READ_TIMEOUT; i > 0; --i) {
 		if (esl_dsp_read_ready(sc)) {
 			i = bus_space_read_1(iot, ioh, ESS_DSP_READ);
-			return (i);
+			return i;
 		} else
 			delay(10);
 	}
 
 	printf("esl_rdsp: timed out\n");
-	return (-1);
+	return -1;
 }
 
 /* Write a byte to the DSP */
 int
 esl_wdsp(struct esl_pcmcia_softc *sc, u_char v)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int i;
 
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	for (i = ESS_WRITE_TIMEOUT; i > 0; --i) {
 		if (esl_dsp_write_ready(sc)) {
 			bus_space_write_1(iot, ioh, ESS_DSP_WRITE, v);
-			return (0);
+			return 0;
 		} else
 			delay(10);
 	}
 
 	printf("esl_wdsp(0x%02x): timed out\n", v);
-	return (-1);
+	return -1;
 }
 
 /* Get the read status of the DSP: 1 == Ready, 0 == Not Ready */
@@ -816,7 +832,7 @@ u_char
 esl_dsp_read_ready(struct esl_pcmcia_softc *sc)
 {
 
-	return ((esl_get_dsp_status(sc) & ESS_DSP_READ_READY) ? 1 : 0);
+	return (esl_get_dsp_status(sc) & ESS_DSP_READ_READY) ? 1 : 0;
 }
 
 /* Get the write status of the DSP: 1 == Ready, 0 == Not Ready */
@@ -824,7 +840,7 @@ u_char
 esl_dsp_write_ready(struct esl_pcmcia_softc *sc)
 {
 
-	return ((esl_get_dsp_status(sc) & ESS_DSP_WRITE_BUSY) ? 0 : 1);
+	return (esl_get_dsp_status(sc) & ESS_DSP_WRITE_BUSY) ? 0 : 1;
 }
 
 /* Return the status of the DSP */
@@ -832,8 +848,8 @@ u_char
 esl_get_dsp_status(struct esl_pcmcia_softc *sc)
 {
 
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    ESS_DSP_RW_STATUS));
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+	    ESS_DSP_RW_STATUS);
 }
 
 /* Read a value from one of the extended registers */
@@ -846,7 +862,7 @@ esl_read_x_reg(struct esl_pcmcia_softc *sc, u_char reg)
 		error = esl_wdsp(sc, reg);
 	if (error)
 		printf("esl_read_x_reg: error reading 0x%02x\n", reg);
-	return (esl_rdsp(sc));
+	return esl_rdsp(sc);
 }
 
 /* Write a value to one of the extended registers */
@@ -858,7 +874,7 @@ esl_write_x_reg(struct esl_pcmcia_softc *sc, u_char reg, u_char val)
 	if ((error = esl_wdsp(sc, reg)) == 0)
 		error = esl_wdsp(sc, val);
 
-	return (error);
+	return error;
 }
 
 void
@@ -880,37 +896,37 @@ esl_set_xreg_bits(struct esl_pcmcia_softc *sc, u_char reg, u_char mask)
 u_char
 esl_read_mix_reg(struct esl_pcmcia_softc *sc, u_char reg)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_char val;
 #if 0
 	int s;
-#endif
-	u_char val;
 
-#if 0
 	s = splaudio();
 #endif
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 	val = bus_space_read_1(iot, ioh, ESS_MIX_REG_DATA);
 #if 0
 	splx(s);
 #endif
 
-	return (val);
+	return val;
 }
 
 void
 esl_write_mix_reg(struct esl_pcmcia_softc *sc, u_char reg, u_char val)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 #if 0
 	int s;
-#endif
 
-#if 0
 	s = splaudio();
 #endif
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_DATA, val);
 #if 0
@@ -940,17 +956,17 @@ esl_set_mreg_bits(struct esl_pcmcia_softc *sc, u_char reg, u_char mask)
 
 void
 esl_read_multi_mix_reg(struct esl_pcmcia_softc *sc, u_char reg,
-		u_int8_t *datap, bus_size_t count)
+		uint8_t *datap, bus_size_t count)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 #if 0
 	int s;
-#endif
 
-#if 0
 	s = splaudio();
 #endif
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 	bus_space_read_multi_1(iot, ioh, ESS_MIX_REG_DATA, datap, count);
 #if 0
@@ -972,7 +988,7 @@ esl_srtotc(u_int rate)
 	else
 		tc = 256 - 795500L / rate;
 
-	return (tc);
+	return tc;
 }
 
 /* Calculate the filter constant for the requested sampling rate */
@@ -981,5 +997,5 @@ esl_srtofc(u_int rate)
 {
 
 	/* From dev/isa/ess.c:ess_srtofc() rev 1.53 */
-	return (256 - 200279L / rate);
+	return 256 - 200279L / rate;
 }

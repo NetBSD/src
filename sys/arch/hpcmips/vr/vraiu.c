@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.9 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.10 2005/01/15 15:19:51 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.9 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.10 2005/01/15 15:19:51 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,11 +171,13 @@ vraiu_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 vraiu_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vrip_attach_args *va = aux;
-	struct vraiu_softc *sc = (void*)self;
+	struct vrip_attach_args *va;
+	struct vraiu_softc *sc;
 	bus_dma_segment_t segs;
 	int rsegs;
 
+	va = aux;
+	sc = (void *)self;
 	sc->sc_status = ENXIO;
 	sc->sc_intr = NULL;
 	sc->sc_iot = va->va_iot;
@@ -206,8 +208,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* install interrupt handler and enable interrupt */
 	if (!(sc->sc_handler = vrip_intr_establish(va->va_vc, va->va_unit,
-						   0, IPL_AUDIO,
-						   vraiu_intr, sc))) {
+	    0, IPL_AUDIO, vraiu_intr, sc))) {
 		printf(": can't map interrupt line.\n");
 		return;
 	}
@@ -274,10 +275,10 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 int
 vraiu_open(void *self, int flags)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 
 	DPRINTFN(1, ("vraiu_open\n"));
-
+	sc = self;
 	if (sc->sc_status) {
 		DPRINTFN(0, ("vraiu_open: device error\n"));
 		return sc->sc_status;
@@ -289,10 +290,10 @@ vraiu_open(void *self, int flags)
 void
 vraiu_close(void *self)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 
 	DPRINTFN(1, ("vraiu_close\n"));
-
+	sc = self;
 	vraiu_halt_output(self);
 	sc->sc_status = 0;
 }
@@ -303,64 +304,64 @@ vraiu_query_encoding(void *self, struct audio_encoding *ae)
 	DPRINTFN(3, ("vraiu_query_encoding\n"));
 
 	switch (ae->index) {
-		case 0:
-			strcpy(ae->name, AudioEslinear);
-			ae->encoding = AUDIO_ENCODING_SLINEAR;
-			ae->precision = 8;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 1:
-			strcpy(ae->name, AudioEmulaw);
-			ae->encoding = AUDIO_ENCODING_ULAW;
-			ae->precision = 8;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 2:
-			strcpy(ae->name, AudioEulinear);
-			ae->encoding = AUDIO_ENCODING_ULINEAR;
-			ae->precision = 8;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 3:
-			strcpy(ae->name, AudioEslinear);
-			ae->encoding = AUDIO_ENCODING_SLINEAR;
-			ae->precision = 16;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 4:
-			strcpy(ae->name, AudioEslinear_be);
-			ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-			ae->precision = 16;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 5:
-			strcpy(ae->name, AudioEslinear_le);
-			ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-			ae->precision = 16;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 6:
-			strcpy(ae->name, AudioEslinear);
-			ae->encoding = AUDIO_ENCODING_ULINEAR;
-			ae->precision = 16;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 7:
-			strcpy(ae->name, AudioEslinear_be);
-			ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-			ae->precision = 16;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 8:
-			strcpy(ae->name, AudioEslinear_le);
-			ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-			ae->precision = 16;
-			ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		default:
-			DPRINTFN(0, ("vraiu_query_encoding: param error"
-				     " (%d)\n", ae->index));
-			return EINVAL;
+	case 0:
+		strcpy(ae->name, AudioEslinear);
+		ae->encoding = AUDIO_ENCODING_SLINEAR;
+		ae->precision = 8;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 1:
+		strcpy(ae->name, AudioEmulaw);
+		ae->encoding = AUDIO_ENCODING_ULAW;
+		ae->precision = 8;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 2:
+		strcpy(ae->name, AudioEulinear);
+		ae->encoding = AUDIO_ENCODING_ULINEAR;
+		ae->precision = 8;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 3:
+		strcpy(ae->name, AudioEslinear);
+		ae->encoding = AUDIO_ENCODING_SLINEAR;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 4:
+		strcpy(ae->name, AudioEslinear_be);
+		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 5:
+		strcpy(ae->name, AudioEslinear_le);
+		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 6:
+		strcpy(ae->name, AudioEslinear);
+		ae->encoding = AUDIO_ENCODING_ULINEAR;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 7:
+		strcpy(ae->name, AudioEslinear_be);
+		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 8:
+		strcpy(ae->name, AudioEslinear_le);
+		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	default:
+		DPRINTFN(0, ("vraiu_query_encoding: param error"
+			     " (%d)\n", ae->index));
+		return EINVAL;
 	}
 	return 0;
 }
@@ -370,12 +371,12 @@ vraiu_set_params(void *self, int setmode, int usemode,
 		 audio_params_t *play, audio_params_t *rec,
 		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 
 	DPRINTFN(1, ("vraiu_set_params: %ubit, %uch, %uHz, encoding %u\n",
 		     play->precision, play->channels, play->sample_rate,
 		     play->encoding));
-
+	sc = self;
 	switch (play->sample_rate) {
 	case 8000:
 		sc->sc_rate = SPS8000;
@@ -523,9 +524,11 @@ vraiu_set_params(void *self, int setmode, int usemode,
 int
 vraiu_round_blocksize(void *self, int bs, int mode, const audio_params_t *param)
 {
-	struct vraiu_softc *sc = (void*)self;
-	int n = AUDIO_BUF_SIZE;
+	struct vraiu_softc *sc;
+	int n;
 
+	sc = self;
+	n = AUDIO_BUF_SIZE;
 	if (sc->sc_precision == 8)
 		n /= 2;
 	n *= sc->sc_channels;
@@ -539,11 +542,11 @@ vraiu_round_blocksize(void *self, int bs, int mode, const audio_params_t *param)
 int
 vraiu_commit_settings(void *self)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 	int err;
 
 	DPRINTFN(1, ("vraiu_commit_settings\n"));
-
+	sc = self;
 	if (sc->sc_status != EBUSY)
 		return sc->sc_status;
 
@@ -569,10 +572,10 @@ vraiu_commit_settings(void *self)
 int
 vraiu_init_output(void *self, void *buffer, int size)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 
 	DPRINTFN(1, ("vraiu_init_output: buffer %p, size %d\n", buffer, size));
-
+	sc = self;
 	sc->sc_intr = NULL;
 	DPRINTFN(1, ("vraiu_init_output: speaker power on\n"))
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
@@ -586,10 +589,11 @@ int
 vraiu_start_output(void *self, void *block, int bsize,
 		   void (*intr)(void *), void *intrarg)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 
 	DPRINTFN(2, ("vraiu_start_output: block %p, bsize %d\n",
 		     block, bsize));
+	sc = self;
 	sc->sc_decodefunc(sc, sc->sc_buf, block, bsize);
 	vraiu_volume(sc, sc->sc_buf, block, bsize);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, AUDIO_BUF_SIZE,
@@ -605,11 +609,11 @@ vraiu_start_output(void *self, void *block, int bsize,
 }
 
 int
-vraiu_start_input(void *self, void *block, int bsize, 
+vraiu_start_input(void *self, void *block, int bsize,
 		  void (*intr)(void *), void *intrarg)
 {
-	DPRINTFN(3, ("vraiu_start_input\n"));
 
+	DPRINTFN(3, ("vraiu_start_input\n"));
 	/* no input */
 	return ENXIO;
 }
@@ -617,17 +621,18 @@ vraiu_start_input(void *self, void *block, int bsize,
 int
 vraiu_intr(void* self)
 {
-	struct vraiu_softc *sc = (void*)self;
-	u_int32_t reg;
+	struct vraiu_softc *sc;
+	uint32_t reg;
 
 	DPRINTFN(2, ("vraiu_intr"));
-
+	sc = self;
 	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, AIUINT_INTSEND, 0);
 	vrip_intr_getstatus2(sc->sc_vrip, sc->sc_handler, &reg);
 	if (reg & AIUINT_INTSEND) {
 		DPRINTFN(2, (": AIUINT_INTSEND"));
 		if (sc->sc_intr) {
-			void (*intr)(void *) = sc->sc_intr;
+			void (*intr)(void *);
+			intr = sc->sc_intr;
 			sc->sc_intr = NULL;
 			(*(intr))(sc->sc_intrdata);
 		}
@@ -640,10 +645,10 @@ vraiu_intr(void* self)
 int
 vraiu_halt_output(void *self)
 {
-	struct vraiu_softc *sc = (void*)self;
+	struct vraiu_softc *sc;
 
 	DPRINTFN(1, ("vraiu_halt_output\n"));
-
+	sc =self;
 	DPRINTFN(1, ("vraiu_halt_output: disable interrupt\n"))
 	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, AIUINT_INTSEND, 0);
 	DPRINTFN(1, ("vraiu_halt_output: stop output\n"))
@@ -664,8 +669,8 @@ vraiu_halt_output(void *self)
 int
 vraiu_halt_input(void *self)
 {
-	DPRINTFN(3, ("vraiu_halt_input\n"));
 
+	DPRINTFN(3, ("vraiu_halt_input\n"));
 	/* no input */
 	return ENXIO;
 }
@@ -674,8 +679,8 @@ vraiu_halt_input(void *self)
 int
 vraiu_getdev(void *self, struct audio_device *ret)
 {
-	DPRINTFN(3, ("vraiu_getdev\n"));
 
+	DPRINTFN(3, ("vraiu_getdev\n"));
 	*ret = aiu_device;
 	return 0;
 }
@@ -683,9 +688,10 @@ vraiu_getdev(void *self, struct audio_device *ret)
 int
 vraiu_set_port(void *self, mixer_ctrl_t *mc)
 {
-	struct vraiu_softc *sc = (struct vraiu_softc *)self;
-	DPRINTFN(3, ("vraiu_set_port\n"));
+	struct vraiu_softc *sc;
 
+	DPRINTFN(3, ("vraiu_set_port\n"));
+	sc = self;
 	/* software mixer, 1ch */
 	if (mc->dev == 0) {
 		if (mc->type != AUDIO_MIXER_VALUE)
@@ -702,9 +708,10 @@ vraiu_set_port(void *self, mixer_ctrl_t *mc)
 int
 vraiu_get_port(void *self, mixer_ctrl_t *mc)
 {
-	struct vraiu_softc *sc = (struct vraiu_softc *)self;
-	DPRINTFN(3, ("vraiu_get_port\n"));
+	struct vraiu_softc *sc;
 
+	DPRINTFN(3, ("vraiu_get_port\n"));
+	sc = self;
 	/* software mixer, 1ch */
 	if (mc->dev == 0) {
 		if (mc->un.value.num_channels != 1)
@@ -712,15 +719,15 @@ vraiu_get_port(void *self, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_volume;
 		return 0;
 	}
-	
+
 	return EINVAL;
 }
 
 int
 vraiu_query_devinfo(void *self, mixer_devinfo_t *di)
 {
-	DPRINTFN(3, ("vraiu_query_devinfo\n"));
 
+	DPRINTFN(3, ("vraiu_query_devinfo\n"));
 	/* software mixer, 1ch */
 	switch (di->index) {
 	case 0: /* inputs.dac mixer value */
@@ -782,16 +789,16 @@ unsigned char mulaw_to_lin[] = {
 	0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81,
 	0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
 	0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-	0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 
+	0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
 };
 
 static void
 vraiu_slinear8_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	char *q = (char*)p;
+	char *q;
 
 	DPRINTFN(3, ("vraiu_slinear8_1\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE/2) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -808,10 +815,10 @@ vraiu_slinear8_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_slinear8_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	char *q = (char*)p;
+	char *q;
 
 	DPRINTFN(3, ("vraiu_slinear8_2\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -830,10 +837,10 @@ vraiu_slinear8_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_ulinear8_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	u_char *q = (u_char*)p;
+	u_char *q;
 
 	DPRINTFN(3, ("vraiu_ulinear8_1\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE/2) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -850,10 +857,10 @@ vraiu_ulinear8_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_ulinear8_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	u_char *q = (u_char*)p;
+	u_char *q;
 
 	DPRINTFN(3, ("vraiu_ulinear8_2\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -872,10 +879,10 @@ vraiu_ulinear8_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_mulaw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	u_char *q = (u_char*)p;
+	u_char *q;
 
 	DPRINTFN(3, ("vraiu_mulaw_1\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE/2) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -892,10 +899,10 @@ vraiu_mulaw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_mulaw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	u_char *q = (u_char*)p;
+	u_char *q;
 
 	DPRINTFN(3, ("vraiu_mulaw_2\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -914,10 +921,10 @@ vraiu_mulaw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_slinear16_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	short *q = (short*)p;
+	short *q;
 
 	DPRINTFN(3, ("vraiu_slinear16_1\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -935,10 +942,10 @@ vraiu_slinear16_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_slinear16_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	short *q = (short*)p;
+	short *q;
 
 	DPRINTFN(3, ("vraiu_slinear16_2\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE*2) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -957,10 +964,10 @@ vraiu_slinear16_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_slinear16sw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	short *q = (short*)p;
+	short *q;
 
 	DPRINTFN(3, ("vraiu_slinear16sw_1\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -978,10 +985,10 @@ vraiu_slinear16sw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_slinear16sw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	short *q = (short*)p;
+	short *q;
 
 	DPRINTFN(3, ("vraiu_slinear16sw_2\n"));
-
+	q = p;
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE*2) {
 		printf("%s: output data too large (%d > %d)\n",
@@ -1000,11 +1007,13 @@ vraiu_slinear16sw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 static void
 vraiu_volume(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
-	int16_t *x = (int16_t *)dmap;
+	int16_t *x;
 	int i;
 	short j;
-	int vol = sc->sc_volume;
+	int vol;
 
+	x = (int16_t *)dmap;
+	vol = sc->sc_volume;
 	for (i = 0; i < n / 2; i++) {
 		j = x[i] - 512;
 		x[i] = ((j * vol) / 255) + 512;

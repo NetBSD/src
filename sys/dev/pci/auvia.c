@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.50 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.51 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.50 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.51 2005/01/15 15:19:52 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ struct auvia_dma {
 };
 
 struct auvia_dma_op {
-	u_int32_t ptr;
-	u_int32_t flags;
+	uint32_t ptr;
+	uint32_t flags;
 #define AUVIA_DMAOP_EOL		0x80000000
 #define AUVIA_DMAOP_FLAG	0x40000000
 #define AUVIA_DMAOP_STOP	0x20000000
@@ -246,8 +246,8 @@ static const struct audio_format auvia_formats[AUVIA_NFORMATS] = {
 };
 
 int	auvia_attach_codec(void *, struct ac97_codec_if *);
-int	auvia_write_codec(void *, u_int8_t, u_int16_t);
-int	auvia_read_codec(void *, u_int8_t, u_int16_t *);
+int	auvia_write_codec(void *, uint8_t, uint16_t);
+int	auvia_read_codec(void *, uint8_t, uint16_t *);
 int	auvia_reset_codec(void *);
 int	auvia_waitready_codec(struct auvia_softc *sc);
 int	auvia_waitvalid_codec(struct auvia_softc *sc);
@@ -256,8 +256,9 @@ int	auvia_waitvalid_codec(struct auvia_softc *sc);
 int
 auvia_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa;
 
+	pa = (struct pci_attach_args *) aux;
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_VIATECH)
 		return 0;
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -271,20 +272,26 @@ auvia_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-
 void
 auvia_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct auvia_softc *sc = (struct auvia_softc *) self;
-	const char *intrstr = NULL;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t pt = pa->pa_tag;
+	struct pci_attach_args *pa;
+	struct auvia_softc *sc;
+	const char *intrstr;
+	pci_chipset_tag_t pc;
+	pcitag_t pt;
 	pci_intr_handle_t ih;
 	bus_size_t iosize;
 	pcireg_t pr;
 	int r;
-	const char *revnum = NULL; /* VT823xx revision number */
+	const char *revnum;	/* VT823xx revision number */
+
+	pa = aux;
+	sc = (struct auvia_softc *)self;
+	intrstr = NULL;
+	pc = pa->pa_pc;
+	pt = pa->pa_tag;
+	revnum = NULL;
 
 	aprint_naive(": Audio controller\n");
 
@@ -425,27 +432,25 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
-
 int
 auvia_attach_codec(void *addr, struct ac97_codec_if *cif)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
+	sc = addr;
 	sc->codec_if = cif;
-
 	return 0;
 }
-
 
 int
 auvia_reset_codec(void *addr)
 {
-	int i;
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 	pcireg_t r;
+	int i;
 
 	/* perform a codec cold reset */
-
+	sc = addr;
 	r = pci_conf_read(sc->sc_pc, sc->sc_pt, AUVIA_PCICONF_JUNK);
 
 	r &= ~AUVIA_PCICONF_ACNOTRST;	/* enable RESET (active low) */
@@ -466,7 +471,6 @@ auvia_reset_codec(void *addr)
 	return 0;
 }
 
-
 int
 auvia_waitready_codec(struct auvia_softc *sc)
 {
@@ -483,7 +487,6 @@ auvia_waitready_codec(struct auvia_softc *sc)
 
 	return 0;
 }
-
 
 int
 auvia_waitvalid_codec(struct auvia_softc *sc)
@@ -502,12 +505,12 @@ auvia_waitvalid_codec(struct auvia_softc *sc)
 	return 0;
 }
 
-
 int
 auvia_write_codec(void *addr, u_int8_t reg, u_int16_t val)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
+	sc = addr;
 	if (auvia_waitready_codec(sc))
 		return 1;
 
@@ -517,12 +520,12 @@ auvia_write_codec(void *addr, u_int8_t reg, u_int16_t val)
 	return 0;
 }
 
-
 int
 auvia_read_codec(void *addr, u_int8_t reg, u_int16_t *val)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
+	sc = addr;
 	if (auvia_waitready_codec(sc))
 		return 1;
 
@@ -553,8 +556,8 @@ void
 auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 		     const audio_params_t *p)
 {
-	u_int32_t v;
-	u_int16_t regval;
+	uint32_t v;
+	uint16_t regval;
 
 	if (!(sc->sc_flags & AUVIA_FLAGS_VT8233)) {
 		regval = (p->channels == 2 ? AUVIA_RPMODE_STEREO : 0)
@@ -594,7 +597,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		 audio_params_t *play, audio_params_t *rec,
 		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 	struct auvia_softc_chan *ch;
 	struct audio_params *p;
 	struct ac97_codec_if* codec;
@@ -602,6 +605,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 	int reg, mode;
 	int index;
 
+	sc = addr;
 	codec = sc->codec_if;
 	/* for mode in (RECORD, PLAY) */
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -650,13 +654,13 @@ auvia_set_params(void *addr, int setmode, int usemode,
 	return 0;
 }
 
-
 int
 auvia_round_blocksize(void *addr, int blk,
 		      int mode, const audio_params_t *param)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
+	sc = addr;
 	/* XXX VT823x might have the limitation of dma_ops size */
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233 && blk < 288)
 		blk = 288;
@@ -664,37 +668,39 @@ auvia_round_blocksize(void *addr, int blk,
 	return (blk & -32);
 }
 
-
 int
 auvia_halt_output(void *addr)
 {
-	struct auvia_softc *sc = addr;
-	struct auvia_softc_chan *ch = &(sc->sc_play);
+	struct auvia_softc *sc;
+	struct auvia_softc_chan *ch;
 
+	sc = addr;
+	ch = &(sc->sc_play);
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
 	ch->sc_intr = NULL;
 	return 0;
 }
-
 
 int
 auvia_halt_input(void *addr)
 {
-	struct auvia_softc *sc = addr;
-	struct auvia_softc_chan *ch = &(sc->sc_record);
+	struct auvia_softc *sc;
+	struct auvia_softc_chan *ch;
 
+	sc = addr;
+	ch = &(sc->sc_record);
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
 	ch->sc_intr = NULL;
 	return 0;
 }
 
-
 int
 auvia_getdev(void *addr, struct audio_device *retp)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
 	if (retp) {
+		sc = addr;
 		if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 			strncpy(retp->name, "VIA VT823x",
 				sizeof(retp->name));
@@ -709,39 +715,38 @@ auvia_getdev(void *addr, struct audio_device *retp)
 	return 0;
 }
 
-
 int
 auvia_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
-	return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp));
+	sc = addr;
+	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
 }
-
 
 int
 auvia_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
-	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
+	sc = addr;
+	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp);
 }
-
 
 int
 auvia_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 
-	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, dip));
+	sc = addr;
+	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, dip);
 }
-
 
 void *
 auvia_malloc(void *addr, int direction, size_t size, struct malloc_type * pool,
     int flags)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 	struct auvia_dma *p;
 	int error;
 	int rseg;
@@ -749,7 +754,7 @@ auvia_malloc(void *addr, int direction, size_t size, struct malloc_type * pool,
 	p = malloc(sizeof(*p), pool, flags);
 	if (!p)
 		return 0;
-
+	sc = addr;
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
 				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
@@ -793,16 +798,16 @@ fail_map:
 	bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 fail_alloc:
 	free(p, pool);
-	return 0;
+	return NULL;
 }
-
 
 void
 auvia_free(void *addr, void *ptr, struct malloc_type *pool)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 	struct auvia_dma **pp, *p;
 
+	sc = addr;
 	for (pp = &(sc->sc_dmas); (p = *pp) != NULL; pp = &p->next)
 		if (p->addr == ptr) {
 			bus_dmamap_unload(sc->sc_dmat, p->map);
@@ -818,41 +823,40 @@ auvia_free(void *addr, void *ptr, struct malloc_type *pool)
 	panic("auvia_free: trying to free unallocated memory");
 }
 
-
 size_t
 auvia_round_buffersize(void *addr, int direction, size_t size)
 {
+
 	return size;
 }
-
 
 paddr_t
 auvia_mappage(void *addr, void *mem, off_t off, int prot)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 	struct auvia_dma *p;
 
 	if (off < 0)
 		return -1;
-
+	sc = addr;
 	for (p = sc->sc_dmas; p && p->addr != mem; p = p->next)
-		;
+		continue;
 
 	if (!p)
 		return -1;
 
 	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
-	       BUS_DMA_WAITOK);
+	    BUS_DMA_WAITOK);
 }
-
 
 int
 auvia_get_props(void *addr)
 {
-	struct auvia_softc *sc = addr;
+	struct auvia_softc *sc;
 	int props;
 
 	props = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	sc = addr;
 	/*
 	 * Even if the codec is fixed-rate, set_param() succeeds for any sample
 	 * rate because of aurateconv.  Applications can't know what rate the
@@ -862,7 +866,6 @@ auvia_get_props(void *addr)
 		props |= AUDIO_PROP_MMAP;
 	return props;
 }
-
 
 int
 auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
@@ -893,9 +896,9 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 		}
 
 		for (dp = sc->sc_dmas;
-			dp && dp->addr != (void *)(ch->sc_dma_ops);
-			dp = dp->next)
-				;
+		     dp && dp->addr != (void *)(ch->sc_dma_ops);
+		     dp = dp->next)
+			continue;
 
 		if (!dp)
 			panic("%s: build_dma_ops: where'd my memory go??? "
@@ -931,12 +934,14 @@ auvia_trigger_output(void *addr, void *start, void *end,
 	int blksize, void (*intr)(void *), void *arg,
 	const audio_params_t *param)
 {
-	struct auvia_softc *sc = addr;
-	struct auvia_softc_chan *ch = &(sc->sc_play);
+	struct auvia_softc *sc;
+	struct auvia_softc_chan *ch;
 	struct auvia_dma *p;
 
+	sc = addr;
+	ch = &(sc->sc_play);
 	for (p = sc->sc_dmas; p && p->addr != start; p = p->next)
-		;
+		continue;
 
 	if (!p)
 		panic("auvia_trigger_output: request with bad start "
@@ -968,18 +973,19 @@ auvia_trigger_output(void *addr, void *start, void *end,
 	return 0;
 }
 
-
 int
 auvia_trigger_input(void *addr, void *start, void *end,
 	int blksize, void (*intr)(void *), void *arg,
 	const audio_params_t *param)
 {
-	struct auvia_softc *sc = addr;
-	struct auvia_softc_chan *ch = &(sc->sc_record);
+	struct auvia_softc *sc;
+	struct auvia_softc_chan *ch;
 	struct auvia_dma *p;
 
+	sc = addr;
+	ch = &(sc->sc_record);
 	for (p = sc->sc_dmas; p && p->addr != start; p = p->next)
-		;
+		continue;
 
 	if (!p)
 		panic("auvia_trigger_input: request with bad start "
@@ -1009,15 +1015,15 @@ auvia_trigger_input(void *addr, void *start, void *end,
 	return 0;
 }
 
-
 int
 auvia_intr(void *arg)
 {
-	struct auvia_softc *sc = arg;
+	struct auvia_softc *sc;
 	struct auvia_softc_chan *ch;
 	u_int8_t r;
 	int rval;
 
+	sc = arg;
 	rval = 0;
 
 	ch = &sc->sc_record;
@@ -1048,8 +1054,9 @@ auvia_intr(void *arg)
 void
 auvia_powerhook(int why, void *addr)
 {
-	struct auvia_softc *sc = (struct auvia_softc *)addr;
+	struct auvia_softc *sc;
 
+	sc = addr;
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:

@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.3 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: harmony.c,v 1.4 2005/01/15 15:19:51 kent Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -146,27 +146,30 @@ void harmony_acc_tmo(void *);
 int
 harmony_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga;
 
+	ga = aux;
 	if (ga->ga_type.iodc_type == HPPA_TYPE_FIO) {
 		if (ga->ga_type.iodc_sv_model == HPPA_FIO_A1 ||
 		    ga->ga_type.iodc_sv_model == HPPA_FIO_A2NB ||
 		    ga->ga_type.iodc_sv_model == HPPA_FIO_A1NB ||
 		    ga->ga_type.iodc_sv_model == HPPA_FIO_A2)
-			return (1);
+			return 1;
 	}
-	return (0);
+	return 0;
 }
 
 void
 harmony_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct harmony_softc *sc = (struct harmony_softc *)self;
-	struct gsc_attach_args *ga = aux;
+	struct harmony_softc *sc;
+	struct gsc_attach_args *ga;
 	uint8_t rev;
 	uint32_t cntl;
 	int i;
 
+	sc = (struct harmony_softc *)self;
+	ga = aux;
 	sc->sc_bt = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
 
@@ -290,6 +293,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 void
 harmony_reset_codec(struct harmony_softc *sc)
 {
+
 	/* silence */
 	WRITE_REG(sc, HARMONY_GAINCTL, GAINCTL_OUTPUT_LEFT_M |
 	    GAINCTL_OUTPUT_RIGHT_M | GAINCTL_MONITOR_M);
@@ -307,8 +311,9 @@ harmony_reset_codec(struct harmony_softc *sc)
 void
 harmony_acc_tmo(void *v)
 {
-	struct harmony_softc *sc = v;
+	struct harmony_softc *sc;
 
+	sc = v;
 	ADD_CLKALLICA(sc);
 	callout_schedule(&sc->sc_acc_tmo, 1);
 }
@@ -320,11 +325,13 @@ harmony_acc_tmo(void *v)
 int
 harmony_intr(void *vsc)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 	struct harmony_channel *c;
 	uint32_t dstatus;
-	int r = 0;
+	int r;
 
+	sc = vsc;
+	r = 0;
 #if NRND > 0
 	ADD_CLKALLICA(sc);
 #endif
@@ -380,12 +387,13 @@ harmony_intr(void *vsc)
 
 	harmony_intr_enable(sc);
 
-	return (r);
+	return r;
 }
 
 void
 harmony_intr_enable(struct harmony_softc *sc)
 {
+
 	WRITE_REG(sc, HARMONY_DSTATUS, DSTATUS_IE);
 	SYNC_REG(sc, HARMONY_DSTATUS, BUS_SPACE_BARRIER_WRITE);
 }
@@ -393,6 +401,7 @@ harmony_intr_enable(struct harmony_softc *sc)
 void
 harmony_intr_disable(struct harmony_softc *sc)
 {
+
 	WRITE_REG(sc, HARMONY_DSTATUS, 0);
 	SYNC_REG(sc, HARMONY_DSTATUS, BUS_SPACE_BARRIER_WRITE);
 }
@@ -400,19 +409,21 @@ harmony_intr_disable(struct harmony_softc *sc)
 int
 harmony_open(void *vsc, int flags)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 
+	sc = vsc;
 	if (sc->sc_open)
-		return (EBUSY);
+		return EBUSY;
 	sc->sc_open = 1;
-	return (0);
+	return 0;
 }
 
 void
 harmony_close(void *vsc)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 
+	sc = vsc;
 	harmony_halt_input(sc);
 	harmony_halt_output(sc);
 	harmony_intr_disable(sc);
@@ -422,9 +433,11 @@ harmony_close(void *vsc)
 int
 harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 {
-	struct harmony_softc *sc = vsc;
-	int err = 0;
+	struct harmony_softc *sc;
+	int err;
 
+	sc = vsc;
+	err = 0;
 	switch (fp->index) {
 	case 0:
 		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
@@ -483,7 +496,7 @@ harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 	default:
 		err = EINVAL;
 	}
-	return (err);
+	return err;
 }
 
 int
@@ -492,22 +505,23 @@ harmony_set_params(void *vsc, int setmode, int usemode,
     stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 	uint32_t bits;
 	stream_filter_factory_t *pswcode = NULL;
 	stream_filter_factory_t *rswcode = NULL;
 
+	sc = vsc;
 	/* assume p.equals(r) */
 	hw = *p;
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (p->precision != 8)
-			return (EINVAL);
+			return EINVAL;
 		bits = CNTL_FORMAT_ULAW;
 		break;
 	case AUDIO_ENCODING_ALAW:
 		if (p->precision != 8)
-			return (EINVAL);
+			return EINVAL;
 		bits = CNTL_FORMAT_ALAW;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
@@ -521,15 +535,15 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 			bits = CNTL_FORMAT_SLINEAR16BE;
 			break;
 		}
-		return (EINVAL);
+		return EINVAL;
 	case AUDIO_ENCODING_ULINEAR:
 		if (p->precision != 8)
-			return (EINVAL);
+			return EINVAL;
 		bits = CNTL_FORMAT_ULINEAR8;
 		break;
 	case AUDIO_ENCODING_SLINEAR:
 		if (p->precision != 8)
-			return (EINVAL);
+			return EINVAL;
 		bits = CNTL_FORMAT_ULINEAR8;
 		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 		rswcode = pswcode = change_sign8;
@@ -547,7 +561,7 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 			rswcode = pswcode = swap_bytes;
 			break;
 		}
-		return (EINVAL);
+		return EINVAL;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 8) {
 			bits = CNTL_FORMAT_ULINEAR8;
@@ -558,7 +572,7 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 			rswcode = pswcode = change_sign16;
 			break;
 		}
-		return (EINVAL);
+		return EINVAL;
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 8) {
 			bits = CNTL_FORMAT_ULINEAR8;
@@ -570,9 +584,9 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 			rswcode = pswcode = swap_bytes_change_sign16;
 			break;
 		}
-		return (EINVAL);
+		return EINVAL;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	if (sc->sc_outputgain)
@@ -583,7 +597,7 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 	else if (p->channels == 2)
 		bits |= CNTL_CHANS_STEREO;
 	else
-		return (EINVAL);
+		return EINVAL;
 
 	bits |= harmony_speed_bits(sc, &p->sample_rate);
 	if (pswcode != NULL)
@@ -593,26 +607,28 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 	sc->sc_cntlbits = bits;
 	sc->sc_need_commit = 1;
 
-	return (0);
+	return 0;
 }
 
 int
 harmony_round_blocksize(void *vsc, int blk,
-			int mode, const audio_params_t *param)
+    int mode, const audio_params_t *param)
 {
-	return (HARMONY_BUFSIZE);
+
+	return HARMONY_BUFSIZE;
 }
 
 int
 harmony_commit_settings(void *vsc)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 	uint32_t reg;
 	uint8_t quietchar;
 	int i;
 
+	sc = vsc;
 	if (sc->sc_need_commit == 0)
-		return (0);
+		return 0;
 
 	harmony_intr_disable(sc);
 
@@ -671,43 +687,47 @@ harmony_commit_settings(void *vsc)
 	if (sc->sc_playing || sc->sc_capturing)
 		harmony_intr_enable(sc);
 
-	return (0);
+	return 0;
 }
 
 int
 harmony_halt_output(void *vsc)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 
+	sc = vsc;
 	sc->sc_playing = 0;
-	return (0);
+	return 0;
 }
 
 int
 harmony_halt_input(void *vsc)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 
+	sc = vsc;
 	sc->sc_capturing = 0;
-	return (0);
+	return 0;
 }
 
 int
 harmony_getdev(void *vsc, struct audio_device *retp)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 
+	sc = vsc;
 	*retp = sc->sc_audev;
-
-	return (0);
+	return 0;
 }
 
 int
 harmony_set_port(void *vsc, mixer_ctrl_t *cp)
 {
-	struct harmony_softc *sc = vsc;
-	int err = EINVAL;
+	struct harmony_softc *sc;
+	int err;
 
+	sc = vsc;
+	err = EINVAL;
 	switch (cp->dev) {
 	case HARMONY_PORT_INPUT_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
@@ -780,15 +800,17 @@ harmony_set_port(void *vsc, mixer_ctrl_t *cp)
 		break;
 	}
 
-	return (err);
+	return err;
 }
 
 int
 harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 {
-	struct harmony_softc *sc = vsc;
-	int err = EINVAL;
+	struct harmony_softc *sc;
+	int err;
 
+	sc = vsc;
+	err = EINVAL;
 	switch (cp->dev) {
 	case HARMONY_PORT_INPUT_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
@@ -854,14 +876,15 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 		err = 0;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 int
 harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 {
-	int err = 0;
+	int err;
 
+	err = 0;
 	switch (dip->index) {
 	case HARMONY_PORT_INPUT_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
@@ -974,17 +997,18 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 		break;
 	}
 
-	return (err);
+	return err;
 }
 
 void *
 harmony_allocm(void *vsc, int dir, size_t size, struct malloc_type *pool,
     int flags)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 	struct harmony_dma *d;
 	int rseg;
 
+	sc = vsc;
 	d = malloc(sizeof(struct harmony_dma), pool, flags);
 	if (d == NULL)
 		goto fail;
@@ -1025,9 +1049,10 @@ fail:
 void
 harmony_freem(void *vsc, void *ptr, struct malloc_type *pool)
 {
-	struct harmony_softc *sc = vsc;
+	struct harmony_softc *sc;
 	struct harmony_dma *d, **dd;
 
+	sc = vsc;
 	for (dd = &sc->sc_dmas; (d = *dd) != NULL; dd = &(*dd)->d_next) {
 		if (d->d_kva != ptr)
 			continue;
@@ -1044,31 +1069,35 @@ harmony_freem(void *vsc, void *ptr, struct malloc_type *pool)
 size_t
 harmony_round_buffersize(void *vsc, int direction, size_t size)
 {
+
 	return (size & (size_t)(-HARMONY_BUFSIZE));
 }
 
 int
 harmony_get_props(void *vsc)
 {
-	return (AUDIO_PROP_FULLDUPLEX);
+
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int
 harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
-	struct harmony_softc *sc = vsc;
-	struct harmony_channel *c = &sc->sc_playback;
+	struct harmony_softc *sc;
+	struct harmony_channel *c;
 	struct harmony_dma *d;
 	bus_addr_t nextaddr;
 	bus_size_t togo;
 
+	sc = vsc;
+	c = &sc->sc_playback;
 	for (d = sc->sc_dmas; d->d_kva != start; d = d->d_next)
-		/*EMPTY*/;
+		continue;
 	if (d == NULL) {
 		printf("%s: trigger_output: bad addr: %p\n",
 		    sc->sc_dv.dv_xname, start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	c->c_intr = intr;
@@ -1104,17 +1133,18 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	harmony_start_cp(sc);
 	harmony_intr_enable(sc);
 
-	return (0);
+	return 0;
 }
 
 void
 harmony_start_cp(struct harmony_softc *sc)
 {
-	struct harmony_channel *c = &sc->sc_capture;
+	struct harmony_channel *c;
 	struct harmony_dma *d;
 	bus_addr_t nextaddr;
 	bus_size_t togo;
 
+	c = &sc->sc_capture;
 	if (sc->sc_capturing == 0) {
 		WRITE_REG(sc, HARMONY_RNXTADD,
 		    sc->sc_capture_paddrs[sc->sc_capture_empty]);
@@ -1151,16 +1181,18 @@ int
 harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
-	struct harmony_softc *sc = vsc;
-	struct harmony_channel *c = &sc->sc_capture;
+	struct harmony_softc *sc;
+	struct harmony_channel *c;
 	struct harmony_dma *d;
 
+	sc = vsc;
+	c = &sc->sc_capture;
 	for (d = sc->sc_dmas; d->d_kva != start; d = d->d_next)
-		/*EMPTY*/;
+		continue;
 	if (d == NULL) {
 		printf("%s: trigger_input: bad addr: %p\n",
 		    sc->sc_dv.dv_xname, start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	c->c_intr = intr;
@@ -1174,7 +1206,7 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 	sc->sc_capturing = 1;
 	harmony_start_cp(sc);
 	harmony_intr_enable(sc);
-	return (0);
+	return 0;
 }
 
 static const struct speed_struct {
@@ -1200,8 +1232,9 @@ static const struct speed_struct {
 uint32_t
 harmony_speed_bits(struct harmony_softc *sc, u_int *speedp)
 {
-	int i, n, selected = -1;
+	int i, n, selected;
 
+	selected = -1;
 	n = sizeof(harmony_speeds) / sizeof(harmony_speeds[0]);
 
 	if ((*speedp) <= harmony_speeds[0].speed)
@@ -1229,7 +1262,7 @@ harmony_speed_bits(struct harmony_softc *sc, u_int *speedp)
 		selected = 2;
 
 	*speedp = harmony_speeds[selected].speed;
-	return (harmony_speeds[selected].bits);
+	return harmony_speeds[selected].bits;
 }
 
 int
@@ -1278,18 +1311,20 @@ harmony_set_gainctl(struct harmony_softc *sc)
 	old = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_GAINCTL);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_GAINCTL, bits);
 	if ((old & mask) != (bits & mask))
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 void
 harmony_try_more(struct harmony_softc *sc)
 {
-	struct harmony_channel *c = &sc->sc_playback;
-	struct harmony_dma *d = c->c_current;
+	struct harmony_channel *c;
+	struct harmony_dma *d;
 	uint32_t cur;
 	int i, nsegs;
 
+	c = &sc->sc_playback;
+	d = c->c_current;
 	cur = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_PCURADD);
 	cur &= PCURADD_BUFMASK;
 	nsegs = 0;

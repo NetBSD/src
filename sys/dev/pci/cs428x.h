@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.7 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.8 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -35,12 +35,12 @@
 #ifndef _CS428X_H_
 #define _CS428X_H_
 
-#define PCI_BA0               (0x10)
-#define PCI_BA1               (0x14)
+#define PCI_BA0		      (0x10)
+#define PCI_BA1		      (0x14)
 
 #define CS428X_SAVE_REG_MAX   (0x10)
-#define TYPE_CS4280           (0x4280)
-#define TYPE_CS4281           (0x4281)
+#define TYPE_CS4280	      (0x4280)
+#define TYPE_CS4281	      (0x4281)
 
 #define BA0READ4(sc, r) bus_space_read_4((sc)->ba0t, (sc)->ba0h, (r))
 #define BA0WRITE4(sc, r, x) bus_space_write_4((sc)->ba0t, (sc)->ba0h, (r), (x))
@@ -70,19 +70,19 @@ struct cs428x_softc {
 	/* I/O (BA0) */
 	bus_space_tag_t	      ba0t;
 	bus_space_handle_t    ba0h;
-	
+
 	/* BA1 */
 	bus_space_tag_t	      ba1t;
 	bus_space_handle_t    ba1h;
-	
+
 	/* DMA */
 	bus_dma_tag_t	 sc_dmatag;
 	struct cs428x_dma *sc_dmas;
 	size_t dma_size;
 	size_t dma_align;
 
-	int     hw_blocksize;
-	int     type;
+	int	hw_blocksize;
+	int	type;
 
 	/* playback */
 	void	(*sc_pintr)(void *);	/* DMA completion intr handler */
@@ -92,9 +92,9 @@ struct cs428x_softc {
 	int	sc_pi;
 	struct	cs428x_dma *sc_pdma;
 	char	*sc_pbuf;
-	int     (*halt_output)__P((void *));
-	char	sc_prun;                /* playback status */
-	int     sc_prate;               /* playback sample rate */
+	int	(*halt_output)(void *);
+	char	sc_prun;		/* playback status */
+	int	sc_prate;		/* playback sample rate */
 
 	/* capturing */
 	void	(*sc_rintr)(void *);	/* DMA completion intr handler */
@@ -105,9 +105,9 @@ struct cs428x_softc {
 	struct	cs428x_dma *sc_rdma;
 	char	*sc_rbuf;
 	int	sc_rparam;		/* record format */
-	int     (*halt_input)__P((void *));
-	char	sc_rrun;                /* recording status */
-	int     sc_rrate;               /* recording sample rate */
+	int	(*halt_input)(void *);
+	char	sc_rrun;		/* recording status */
+	int	sc_rrate;		/* recording sample rate */
 
 	/* Although cs4281 does not support midi (yet),
 	 * don't remove these definition.
@@ -120,12 +120,12 @@ struct cs428x_softc {
 	 * XXX
 	 * Actually thease 2 variables are needed only for CS4280.
 	 */
-	u_int32_t pctl;
-	u_int32_t cctl;
+	uint32_t pctl;
+	uint32_t cctl;
 
 	/* AC97 CODEC */
 	struct ac97_codec_if *codec_if;
-	struct ac97_host_if host_if;	
+	struct ac97_host_if host_if;
 
 	/* Power Management */
 	char	sc_suspend;
