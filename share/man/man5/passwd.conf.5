@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.conf.5,v 1.4 2002/02/13 08:18:15 ross Exp $
+.\"	$NetBSD: passwd.conf.5,v 1.4.4.1 2004/03/26 22:53:16 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -60,11 +60,16 @@ The cipher to use for local passwords.
 Possible values are:
 .Dq old ,
 .Dq newsalt,\*[Lt]rounds\*[Gt] ,
+.Dq md5 ,
 and
-.Dq md5 .
+.Dq blowfish,\*[Lt]rounds\*[Gt] .
 For
 .Dq newsalt
 the value of rounds is a 24-bit integer with a minimum of 7250 rounds.
+For
+.Dq blowfish
+the value can be between 4 and 31.
+It specifies the base 2 logarithm of the number of rounds.
 .It Sy ypcipher
 The cipher to use for YP passwords.
 The possible values are the same as for localcipher.
@@ -77,11 +82,15 @@ To retrieve information from this file use
 .It Pa /etc/passwd.conf
 .El
 .Sh EXAMPLES
-Use MD5 as the local cipher and old-style DES as the YP cipher:
+Use MD5 as the local cipher and old-style DES as the YP cipher.
+Use blowfish with 2^5 rounds for root:
 .Bd -literal
  default:
       localcipher = md5
       ypcipher = old
+
+ root:
+      localcipher = blowfish,5
 .Ed
 .Sh SEE ALSO
 .Xr passwd 1 ,
