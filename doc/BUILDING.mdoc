@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.19 2003/05/10 07:15:52 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.20 2003/05/17 08:10:39 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd May 10, 2003
+.Dd May 17, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -1036,11 +1036,35 @@ in the process environment with a value deduced from
 .Ar mach ,
 unless
 .Fl a
-is specified.
+is specified, or
+.Ar mach
+is a special case listed below.
 All cross builds require
 .Fl m ,
 but if unset on a NetBSD host, the host's value of MACHINE will be
 detected and used automatically.
+.Pp
+Some machines support multiple values for
+.Sy MACHINE_ARCH .
+For a given value of
+.Ar mach ,
+the following
+.Sy MACHINE
+and
+.Sy MACHINE_ARCH
+values will result:
+.Bl -column "evbmips-el" "MACHINE" "MACHINE_ARCH" -offset indent
+.It Sy Ar mach Ta Sy "MACHINE" Ta Sy "MACHINE_ARCH"
+.It evbmips Ta evbmips Ta (not set)
+.It evbmips-eb Ta evbmips Ta mipseb
+.It evbmips-el Ta evbmips Ta mipsel
+.It evbsh3 Ta evbsh3 Ta (not set)
+.It evbsh3-eb Ta evbsh3 Ta sh3eb
+.It evbsh3-el Ta evbsh3 Ta sh3el
+.It sbmips Ta sbmips Ta (not set)
+.It sbmips-eb Ta sbmips Ta mipseb
+.It sbmips-el Ta sbmips Ta mipsel
+.El
 .
 .It Fl n
 Show the commands that would be executed by
