@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.10 1999/04/28 17:34:01 dean Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.11 1999/05/12 15:33:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1356,7 +1356,6 @@ ex_getstats(sc)
 	ifp->if_opackets += bus_space_read_1(iot, ioh, TX_FRAMES_OK);
 	ifp->if_opackets += (upperok & 0x30) << 4;
 	ifp->if_ierrors += bus_space_read_1(iot, ioh, RX_OVERRUNS);
-	ifp->if_oerrors += bus_space_read_1(iot, ioh, TX_DEFERRALS);
 	ifp->if_collisions += bus_space_read_1(iot, ioh, TX_COLLISIONS);
 	/*
 	 * There seems to be no way to get the exact number of collisions,
