@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.9 2001/01/01 22:23:29 jwise Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.10 2001/01/04 01:13:34 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.9 2001/01/01 22:23:29 jwise Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.10 2001/01/04 01:13:34 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,12 +62,12 @@ pl_main(void)
 void
 initialize(void)
 {
-	register struct File *fp;
-	register struct ship *sp;
+	struct File *fp;
+	struct ship *sp;
 	char captain[80];
 	char message[60];
 	int load;
-	register int n;
+	int n;
 	char *nameptr;
 	int nat[NNATION];
 
