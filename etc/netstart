@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.30 1997/03/10 09:42:24 mycroft Exp $
+#	$NetBSD: netstart,v 1.31 1997/03/30 19:08:14 veego Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 # /etc/myname contains my symbolic name
@@ -11,10 +11,10 @@ if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
 
-# install and enable packet filter rules before configuring interfaces.
+# enable, flush and install packet filter rules before configuring interfaces.
 if [ "$ipfilter" != NO ] && [ -f /etc/ipf.conf ]; then
 	echo 'installing packet filter rules ... '
-	ipf -f /etc/ipf.conf
+	ipf -E -Fa -f /etc/ipf.conf
 fi
 
 # configure all of the interfaces which we know about.
