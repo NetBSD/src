@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.8 1997/10/20 22:05:22 thorpej Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.9 1998/08/29 17:01:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/mount.h>		/* needed for next include! */
 #include <sys/syscallargs.h>
 
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 #include <sys/mman.h>
 
 int

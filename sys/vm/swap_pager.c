@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.36 1998/08/13 02:11:04 eeh Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.37 1998/08/29 17:01:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -56,7 +56,7 @@
 #include <sys/map.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 
 #include <miscfs/specfs/specdev.h>
 

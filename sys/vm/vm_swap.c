@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.59 1998/08/29 13:27:50 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.60 1998/08/29 17:01:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -48,7 +48,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/extent.h>
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
