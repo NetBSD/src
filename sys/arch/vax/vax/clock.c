@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1994/11/25 19:09:49 ragge Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1995/02/13 00:46:04 ragge Exp $	*/
 
 /******************************************************************************
 
@@ -6,9 +6,9 @@
 
 ******************************************************************************/
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include "vax/include/mtpr.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include "machine/mtpr.h"
 
 #define SEC_PER_DAY (60*60*24)
 
@@ -51,7 +51,7 @@ void microtime(struct timeval *tod) {
 
 void inittodr(time_t fs_time) {
 
-  unsigned long tmp_year;
+  unsigned long tmp_year,sluttid=fs_time;
 
   year=(fs_time/SEC_PER_DAY/365)*365*SEC_PER_DAY;
   tmp_year=year/SEC_PER_DAY/365+2;
@@ -64,9 +64,11 @@ void inittodr(time_t fs_time) {
   } else if(mfpr(PR_TODR)/100>fs_time-year+SEC_PER_DAY*3) {
     printf("WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
 	   (mfpr(PR_TODR)/100-(fs_time-year))/SEC_PER_DAY);
+    sluttid=year+(mfpr(PR_TODR)/100);
   } else if(mfpr(PR_TODR)/100<fs_time-year) {
     printf("WARNING: Clock has lost time! CHECK AND RESET THE DATE.\n");
-  }
+  } else sluttid=year+(mfpr(PR_TODR)/100);
+  time.tv_sec=sluttid;
 }
 
 /*   
@@ -75,13 +77,12 @@ void inittodr(time_t fs_time) {
 
 void resettodr(void) {
 
-  extern time_t time;
   unsigned long tmp_year;
 
-  year=(time/SEC_PER_DAY/365)*365*SEC_PER_DAY;
+  year=(time.tv_sec/SEC_PER_DAY/365)*365*SEC_PER_DAY;
   tmp_year=year/SEC_PER_DAY/365+2;
   year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
-  mtpr((time-year)*100+1, PR_TODR);
+  mtpr((time.tv_sec-year)*100+1, PR_TODR);
   todrstopped=0;
 }
 

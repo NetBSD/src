@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.1 1994/11/25 19:09:56 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.2 1995/02/13 00:46:10 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,11 +33,11 @@
  /* All bugs are subject to removal without further notice */
 		
 
+#include "sys/param.h"
+#include "sys/types.h"
 #include "machine/cpu.h"
 #include "machine/sid.h"
-#include "machine/param.h"
 #include "machine/loconf.h"
-#include "sys/types.h"
 #include "machine/param.h"
 #include "machine/vmparam.h"
 #include "vm/vm.h"
@@ -45,57 +45,75 @@
 #define ROUND_PAGE(x)   (((uint)(x)+PAGE_SIZE-1)& ~(PAGE_SIZE-1))
 
 u_int	proc0paddr;
+volatile int	cpunumber, *Sysmap, boothowto, cpu_type;
+extern volatile int bootdev;
 
-start()
+/*
+ * Start is called from boot; the first routine that is called
+ * in kernel. Kernel stack is setup somewhere in a safe place;
+ * but we need to move it to a better known place. Memory
+ * management is disabled, and no interrupt system is active.
+ * We shall be at kernel stack when called; not interrupt stack.
+ */
+
+start(how, dev)
 {
-	extern u_int *end, v_cmap, p_cmap;
-	register curtop,i,maxmem;
-	extern struct cpu_dep cpu_calls[];
+	extern u_int *end;
+	register curtop;
 
 	mtpr(0x1f,PR_IPL); /* No interrupts before istack is ok, please */
+#ifdef COMPAT_RENO
+	asm("
+	movl	r10,_bootdev
+	movl	r11,_boothowto
+	jsb	ett
+ett:	cmpl	(sp)+,$0x80000000
+	bleq	tvo	# New boot
+	pushl	$0x001f0000
+	pushl	$to_kmem
+	rei
+tvo:	movl	(sp)+,_boothowto
+	movl	(sp)+,_bootdev
+to_kmem:
+	");
+#else
+	bootdev=dev;
+	boothowto=how;
+#endif
 
-	asm("movl r10,_bootdev");   /* XXX stack should have been setup */
-	asm("movl r11,_boothowto"); /* in boot, easier to transfer args */
+/*
+ * FIRST we must set up kernel stack, directly after end.
+ * This is the only thing we have to setup here, rest in pmap.
+ */
 
-	/* FIRST we must set up kernel stack, directly after end */
-	/* This is the only thing we have to setup here, rest in pmap */
 	PAGE_SIZE = NBPG*2; /* Set logical page size */
 	proc0paddr=ROUND_PAGE(&end);
-	mtpr(proc0paddr+UPAGES*NBPG,PR_KSP);
+	mtpr(proc0paddr+UPAGES*NBPG,PR_KSP); /* new kernel stack */
 
 /*
  * Set logical page size and put Sysmap on its place.
  */
-	Sysmap=(struct pte *)ROUND_PAGE(mfpr(PR_KSP));
-
-
-	/* Be sure we are in system space. XXX should be done in boot */
-	asm("	pushl   $0x001f0000
-		pushl   $to_kmem
-		rei
-to_kmem:
-	");
+	Sysmap=(u_int *)ROUND_PAGE(mfpr(PR_KSP));
 
 	/* Be sure some important internal registers have safe values */
+asm("	movw	$0xfff,_arithflt
+	movw	$0xfff,_syscall
+");
 	mtpr(0,PR_P0LR);
 	mtpr(0,PR_P0BR);
 	mtpr(0,PR_P1LR);
 	mtpr(0x80000000,PR_P1BR);
 
-	mtpr(0,PR_MAPEN); /* No memory mapping yet */
 	mtpr(0,PR_SCBB); /* SCB at physical addr 0 */
 	mtpr(0,PR_ESP); /* Must be zero, used in page fault routine */
+	mtpr(AST_NO,PR_ASTLVL);
 	
 	cninit();
-printf("proc0paddr %x, end %x\n",proc0paddr,&end);
 
 	/* Count up memory etc... early machine dependent routines */
-	if((i=MACHID(mfpr(PR_SID)))>VAX_MAX) i=0;
-	maxmem=(cpu_calls[i].cpu_loinit)();
+	if((cpunumber=MACHID(mfpr(PR_SID)))>VAX_MAX) cpunumber=0;
+	pmap_bootstrap();
 
-	pmap_bootstrap(0,maxmem);
-
-/*	mtpr(0x80000000,PR_KSP); /* Change ksp to new value :) */
 	cpu_type=mfpr(PR_SID);
 	main();
 	/* XXX det {r dumt att fastna vid att init startar p} 2 */

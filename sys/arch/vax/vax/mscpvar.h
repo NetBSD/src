@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.3 1994/10/26 08:03:20 cgd Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.4 1995/02/13 00:46:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -113,7 +113,7 @@ struct mscp_ri {
 	int	mri_size;		/* ring size */
 	int	mri_next;		/* next (expected|free) */
 	long	*mri_desc;		/* base address of descriptors */
-	struct	mscp *mri_ring;		/* base address of packets */
+	volatile struct	mscp *mri_ring;		/* base address of packets */
 };
 
 /*
@@ -131,7 +131,7 @@ struct mscp_ri {
  * been handed out; mi_wtab is that place.
  */
 struct mscp_info {
-	struct	mscp_driver *mi_md;	/* pointer to driver info */
+	volatile struct	mscp_driver *mi_md;	/* pointer to driver info */
 	int	mi_ctlr;		/* controller index */
 	struct	buf *mi_tab;		/* pointer to ctlr's drive queue */
 	struct	uba_device **mi_ip;	/* pointer to inverting pointers */
@@ -143,7 +143,7 @@ struct mscp_info {
 	struct	buf mi_wtab;		/* transfer wait queue */
 #ifdef AVOID_EMULEX_BUG
 #define	AEB_MAX_BP	32		/* max pend xfers (power of 2) XXX */
-	struct	buf *mi_bp[AEB_MAX_BP];	/* xfer no. to buffer */
+	volatile struct	buf *mi_bp[AEB_MAX_BP];	/* xfer no. to buffer */
 	u_int	mi_nextbp;		/* generates unique xfer no's */
 	int	mi_ok;			/* for error rate statistics */
 #endif AVOID_EMULEX_BUG

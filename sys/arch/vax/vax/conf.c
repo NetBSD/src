@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1994/10/26 08:02:58 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1995/02/13 00:46:05 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -35,15 +35,45 @@
  *	@(#)conf.c	7.18 (Berkeley) 5/9/91
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "conf.h"
+#include "sys/param.h"
+#include "sys/systm.h"
+#include "sys/buf.h"
+#include "sys/ioctl.h"
+#include "sys/tty.h"
+#include "sys/conf.h"
+#include "sys/vnode.h"
 
 int nullop(), enxio(), enodev(), rawread(), rawwrite(), swstrategy();
 int rawread(), rawwrite(), swstrategy();
+
+#define	BLOCKDEV(open,close,strat,ioctl,dump,size,type)	\
+	{(int(*)(dev_t, int, int, struct proc *))open,  \
+	 (int(*)(dev_t, int, int, struct proc *))close, \
+	 (void(*)(struct buf *))strat, \
+	 (int(*)(dev_t, u_long, caddr_t, int, struct proc *))ioctl, \
+	 (int(*)())dump, \
+	 (int(*)(dev_t))size, type}
+
+#define	CHARDEV(open,close,read,write,ioctl,stop,reset,ttys,select,mmap,strat)\
+	{(int(*)(dev_t, int, int, struct proc *))open, \
+	 (int(*)(dev_t, int, int, struct proc *))close, \
+	 (int(*)(dev_t, struct uio *, int))read, \
+	 (int(*)(dev_t, struct uio *, int))write, \
+	 (int(*)(dev_t, u_long, caddr_t, int, struct proc *))ioctl, \
+	 (int(*)(struct tty *, int))stop, \
+	 (int(*)(int))reset, \
+	 (struct  tty **)ttys, \
+	 (int(*)(dev_t, int, struct proc *))select, \
+	 (int(*)())mmap, \
+	 (void(*)(struct buf *))strat }
+
+
+
+
+
+
+
+
 
 #include "hp.h"
 #if NHP > 0
@@ -136,7 +166,6 @@ extern int	udaopen(),udaclose();
 extern int	udaioctl(),udareset(),udadump(),udasize();
 extern void	udastrategy();
 #else
-jkdfhgskdfjgsadfjhgasdjfh
 #define	udaopen		enxio
 #define	udaclose	enxio
 #define	udastrategy	enxio
@@ -248,40 +277,25 @@ int	npreset(),npioctl();
 
 struct bdevsw	bdevsw[] =
 {
-	{ hpopen,	hpclose,	hpstrategy,	hpioctl,/*0*/
-	  hpdump,	hpsize,		0 },
-	{ htopen,	htclose,	htstrategy,	htioctl,/*1*/
-	  htdump,	0,		B_TAPE },
-	{ upopen,	nullop,	upstrategy,	enodev,		/*2*/
-	  updump,	upsize,		0 },
-	{ rkopen,	nullop,	rkstrategy,	enodev,		/*3*/
-	  rkdump,	rksize,		0 },
-	{ enodev,	enodev,		swstrategy,	enodev,		/*4*/
-	  enodev,	0,		0 },
-	{ tmopen,	tmclose,	tmstrategy,	tmioctl,	/*5*/
-	  tmdump,	0,		B_TAPE },
-	{ tsopen,	tsclose,	tsstrategy,	tsioctl,	/*6*/
-	  tsdump,	0,		B_TAPE },
-	{ mtopen,	mtclose,	mtstrategy,	mtioctl,	/*7*/
-	  mtdump,	0,		B_TAPE },
-	{ tuopen,	tuclose,	tustrategy,	enodev,		/*8*/
-	  enodev,	0,		B_TAPE },
-	{ udaopen,	udaclose,	udastrategy,	udaioctl,	/*9*/
-	  udadump,	udasize,	0 },
-	{ utopen,	utclose,	utstrategy,	utioctl,	/*10*/
-	  utdump,	0,		B_TAPE },
-	{ idcopen,	nullop,	idcstrategy,	enodev,		/*11*/
-	  idcdump,	idcsize,	0 },
-	{ rxopen,	rxclose,	rxstrategy,	enodev,		/*12*/
-	  enodev,	0,		0 },
-	{ uuopen,	uuclose,	uustrategy,	enodev,		/*13*/
-	  enodev,	0,		0 },
-	{ rlopen,	nullop,	rlstrategy,	enodev,		/*14*/
-	  rldump,	rlsize,		0 },
-	{ tmscpopen,	tmscpclose,	tmscpstrategy,	tmscpioctl,	/*15*/
-	  tmscpdump,	0,		B_TAPE },
-	{ kdbopen,	nullop,	kdbstrategy,	enodev,		/*16*/
-	  kdbdump,	kdbsize,	0 },
+	BLOCKDEV(hpopen,hpclose,hpstrategy,hpioctl,hpdump,hpsize,0),	/* 0 */
+	BLOCKDEV(htopen,htclose,htstrategy,htioctl,htdump,0,B_TAPE),	/* 1 */
+	BLOCKDEV(upopen,nullop,upstrategy,enodev,updump,upsize,0),	/* 2 */
+	BLOCKDEV(rkopen,nullop,rkstrategy,enodev,rkdump,rksize,0),	/* 3 */
+	BLOCKDEV(enodev,enodev,swstrategy,enodev,enodev,0,0),		/* 4 */
+	BLOCKDEV(tmopen,tmclose,tmstrategy,tmioctl,tmdump,0,B_TAPE),	/* 5 */
+	BLOCKDEV(tsopen,tsclose,tsstrategy,tsioctl,tsdump,0,B_TAPE),	/* 6 */
+	BLOCKDEV(mtopen,mtclose,mtstrategy,mtioctl,mtdump,0,B_TAPE),	/* 7 */
+	BLOCKDEV(tuopen,tuclose,tustrategy,enodev,enodev,0,B_TAPE),	/* 8 */
+	BLOCKDEV(udaopen,udaclose,udastrategy,udaioctl,udadump,
+		udasize,0),						/* 9 */
+	BLOCKDEV(utopen,utclose,utstrategy,utioctl,utdump,0,B_TAPE),	/* 10 */
+	BLOCKDEV(idcopen,nullop,idcstrategy,enodev,idcdump,idcsize,0),	/* 11 */
+	BLOCKDEV(rxopen,rxclose,rxstrategy,enodev,enodev,0,0),		/* 12 */
+	BLOCKDEV(uuopen,uuclose,uustrategy,enodev,enodev,0,0),		/* 13 */
+	BLOCKDEV(rlopen,nullop,rlstrategy,enodev,rldump,rlsize,0),	/* 14 */
+	BLOCKDEV(tmscpopen,tmscpclose,tmscpstrategy,tmscpioctl,
+		tmscpdump,0,B_TAPE),					/* 15 */
+	BLOCKDEV(kdbopen,nullop,kdbstrategy,enodev,kdbdump,kdbsize,0),	/* 16 */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -650,228 +664,156 @@ int	ttselect(), seltrue();
 
 struct cdevsw	cdevsw[] =
 {
-/* /dev/console */
-	cnopen,		cnclose,	cnread,		cnwrite,	/*0*/
-	cnioctl,	nullop,		nullop,		NULL,
-	cnselect,	enodev,		NULL,
-
-/* DZ11 */
-	dzopen,		dzclose,	dzread,		dzwrite,	/*1*/
-	dzioctl,	dzstop,		dzreset,	dz_tty,
-	ttselect,	enodev,		NULL,
-
-/* Controlling tty */
-	cttyopen,	nullop,		cttyread,	cttywrite,	/*2*/
-	cttyioctl,	nullop,		nullop,		NULL,
-	cttyselect,	enodev,		NULL,
-
-/* /dev/null, dev/kmem, /dev/kUmem etc... */
-	nullop,	nullop,	mmrw,		mmrw,		/*3*/
-	enodev,		nullop,	nullop,	NULL,
-	mmselect,	enodev,		NULL,
-
-/* RP06/07, RM03/05/80 */
-	hpopen,		hpclose,	rawread,	rawwrite,	/*4*/
-	hpioctl,	enodev,		nullop,	NULL,
-	seltrue,	enodev,		hpstrategy,
-
-	htopen,		htclose,	rawread,	rawwrite,	/*5*/
-	htioctl,	enodev,		nullop,	NULL,
-	seltrue,	enodev,		htstrategy,
-
-	vpopen,		vpclose,	enodev,		vpwrite,	/*6*/
-	vpioctl,	nullop,	vpreset,	NULL,
-	vpselect,	enodev,		NULL,
-
-	nullop,	nullop,	rawread,	rawwrite,	/*7*/
-	enodev,		enodev,		nullop,	NULL,
-	enodev,		enodev,		swstrategy,
-
-	flopen,		flclose,	flrw,		flrw,		/*8*/
-	enodev,		enodev,		nullop,	NULL,
-	seltrue,	enodev,		NULL,
-
-	udaopen,	udaclose,	rawread,	rawwrite,	/*9*/
-	udaioctl,	enodev,		udareset,	NULL,
-	seltrue,	enodev,		udastrategy,
-
-	vaopen,		vaclose,	enodev,		vawrite,	/*10*/
-	vaioctl,	nullop,	vareset,	NULL,
-	vaselect,	enodev,		NULL,
-
-	rkopen,		nullop,	rawread,	rawwrite,	/*11*/
-	enodev,		enodev,		rkreset,	NULL,
-	seltrue,	enodev,		rkstrategy,
-
-	dhopen,		dhclose,	dhread,		dhwrite,	/*12*/
-	dhioctl,	dhstop,		dhreset,	dh11,
-	ttselect,	enodev,		NULL,
-
-	upopen,		nullop,	rawread,	rawwrite,	/*13*/
-	enodev,		enodev,		upreset,	NULL,
-	seltrue,	enodev,		upstrategy,
-
-	tmopen,		tmclose,	rawread,	rawwrite,	/*14*/
-	tmioctl,	enodev,		tmreset,	NULL,
-	seltrue,	enodev,		tmstrategy,
-
-	lpopen,		lpclose,	enodev,		lpwrite,	/*15*/
-	enodev,		enodev,		lpreset,	NULL,
-	seltrue,	enodev,		NULL,
-
-	tsopen,		tsclose,	rawread,	rawwrite,	/*16*/
-	tsioctl,	enodev,		tsreset,	NULL,
-	seltrue,	enodev,		tsstrategy,
-
-	utopen,		utclose,	rawread,	rawwrite,	/*17*/
-	utioctl,	enodev,		utreset,	NULL,
-	seltrue,	enodev,		utstrategy,
-
-	ctopen,		ctclose,	enodev,		ctwrite,	/*18*/
-	enodev,		enodev,		nullop,	NULL,
-	seltrue,	enodev,		NULL,
-
-	mtopen,		mtclose,	rawread,	rawwrite,	/*19*/
-	mtioctl,	enodev,		enodev,		NULL,
-	seltrue,	enodev,		mtstrategy,
-
-	ptsopen,	ptsclose,	ptsread,	ptswrite,	/*20*/
-	ptyioctl,	ptsstop,	nullop,	pt_tty,
-	ttselect,	enodev,		NULL,
-
-	ptcopen,	ptcclose,	ptcread,	ptcwrite,	/*21*/
-	ptyioctl,	nullop,	nullop,	pt_tty,
-	ptcselect,	enodev,		NULL,
-
-	dmfopen,	dmfclose,	dmfread,	dmfwrite,	/*22*/
-	dmfioctl,	dmfstop,	dmfreset,	dmf_tty,
-	ttselect,	enodev,		NULL,
-
-	idcopen,	nullop,	rawread,	rawwrite,	/*23*/
-	enodev,		enodev,		idcreset,	NULL,
-	seltrue,	enodev,		idcstrategy,
-
-	dnopen,		dnclose,	enodev,		dnwrite,	/*24*/
-	enodev,		enodev,		nullop,	NULL,
-	seltrue,	enodev,		NULL,
-
-/* Generic console on VAXen */
-	gencnopen,	gencnclose,	gencnread,	gencnwrite,	/*25*/
-	gencnioctl,	nullop,		nullop,		gencntty,
-	ttselect,	enodev,		NULL,
-
-	lpaopen,	lpaclose,	lparead,	lpawrite,	/*26*/
-	lpaioctl,	enodev,		nullop,	NULL,
-	seltrue,	enodev,		NULL,
-
-	psopen,		psclose,	psread,		pswrite,	/*27*/
-	psioctl,	enodev,		psreset,	NULL,
-	seltrue,	enodev,		NULL,
-
-	enodev,		enodev,		enodev,		enodev,		/*28*/
-	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
-
-	adopen,		adclose,	enodev,		enodev,		/*29*/
-	adioctl,	enodev,		adreset,	NULL,
-	seltrue,	enodev,		NULL,
-
-	rxopen,		rxclose,	rxread,		rxwrite,	/*30*/
-	rxioctl,	enodev,		rxreset,	NULL,
-	seltrue,	enodev,		NULL,
-
-	ikopen,		ikclose,	ikread,		ikwrite,	/*31*/
-	ikioctl,	enodev,		ikreset,	NULL,
-	seltrue,	enodev,		NULL,
-
-	rlopen,		enodev,		rawread,	rawwrite,	/*32*/
-	enodev,		enodev,		rlreset,	NULL,
-	seltrue,	enodev,		rlstrategy,
-
-	logopen,	logclose,	logread,	enodev,		/*33*/
+	CHARDEV(cnopen,cnclose,cnread,cnwrite,cnioctl,nullop,nullop,NULL,
+		cnselect,enodev,NULL),					/* 0 */
+	CHARDEV(dzopen,dzclose,dzread,dzwrite,dzioctl,dzstop,dzreset,
+		dz_tty,ttselect,enodev,NULL),				/* 1 */
+	CHARDEV(cttyopen,nullop,cttyread,cttywrite,cttyioctl,nullop,
+		nullop,NULL,cttyselect,enodev,NULL),			/* 2 */
+	CHARDEV(nullop,nullop,mmrw,mmrw,enodev,nullop,nullop,NULL,
+		mmselect,enodev,NULL),					/* 3 */
+	CHARDEV(hpopen,hpclose,rawread,rawwrite,hpioctl,enodev,
+		nullop,NULL,seltrue,enodev,htstrategy),			/* 4 */
+	CHARDEV(htopen,htclose,rawread,rawwrite,htioctl,enodev,
+		nullop,NULL,seltrue,enodev,htstrategy),			/* 5 */
+	CHARDEV(vpopen,vpclose,enodev,vpwrite,vpioctl,nullop,
+		vpreset,NULL,vpselect,enodev,NULL),			/* 6 */
+	CHARDEV(nullop,nullop,rawread,rawwrite,enodev,enodev,
+		nullop,NULL,enodev,enodev,swstrategy),			/* 7 */
+	CHARDEV(flopen,flclose,flrw,flrw,enodev,enodev,nullop,
+		NULL,seltrue,enodev,NULL),				/* 8 */
+	CHARDEV(udaopen,udaclose,rawread,rawwrite,udaioctl,
+		enodev,udareset,NULL,seltrue,enodev,udastrategy),	/* 9 */
+	CHARDEV(vaopen,vaclose,enodev,vawrite,vaioctl,nullop,
+		vareset,NULL,vaselect,enodev,NULL),			/* 10 */
+	CHARDEV(rkopen,nullop,rawread,rawwrite,enodev,enodev,
+		rkreset,NULL,seltrue,enodev,rkstrategy),		/* 11 */
+	CHARDEV(dhopen,dhclose,dhread,dhwrite,dhioctl,dhstop,
+		dhreset,dh11,ttselect,enodev,NULL),			/* 12 */
+	CHARDEV(upopen,nullop,rawread,rawwrite,enodev,enodev,
+		upreset,NULL,seltrue,enodev,upstrategy),		/* 13 */
+	CHARDEV(tmopen,tmclose,rawread,rawwrite,tmioctl,enodev,tmreset,
+		NULL,seltrue,enodev,tmstrategy),			/* 14 */
+	CHARDEV(lpopen,lpclose,enodev,lpwrite,enodev,enodev,lpreset,
+		NULL,seltrue,enodev,NULL),				/* 15 */
+	CHARDEV(tsopen,tsclose,rawread,rawwrite,tsioctl,enodev,
+		tsreset,NULL,seltrue,enodev,tsstrategy),		/* 16 */
+	CHARDEV(utopen,utclose,rawread,rawwrite,utioctl,enodev,
+		utreset,NULL,seltrue,enodev,utstrategy),		/* 17 */
+	CHARDEV(ctopen,ctclose,enodev,ctwrite, enodev, enodev, nullop, NULL,
+		seltrue,enodev, NULL),				/*18*/
+	CHARDEV(mtopen,	 mtclose,rawread,rawwrite, /*19*/ mtioctl,enodev,
+		 enodev, NULL, seltrue,	enodev,	 mtstrategy),
+	CHARDEV(ptsopen,ptsclose, ptsread,ptswrite, /*20*/ ptyioctl,
+	       ptsstop,	nullop, pt_tty, ttselect,enodev, NULL),
+	CHARDEV(ptcopen,ptcclose,ptcread,ptcwrite,/*21*/ ptyioctl,
+	       nullop, nullop, pt_tty, ptcselect,enodev,NULL),
+	CHARDEV(dmfopen,dmfclose,dmfread,dmfwrite,/*22*/ dmfioctl,
+		dmfstop,dmfreset, dmf_tty, ttselect,enodev,NULL),
+	CHARDEV(idcopen,nullop, rawread,rawwrite, /*23*/ enodev, enodev,
+		 idcreset,NULL,seltrue,	enodev,	 idcstrategy),
+	CHARDEV(dnopen,	 dnclose,enodev, dnwrite,/*24*/ enodev,	 enodev,
+		 nullop, NULL, seltrue,	enodev,	 NULL),
+	CHARDEV(gencnopen,gencnclose,gencnread, gencnwrite,/*25*/ gencnioctl,
+	     nullop,nullop, gencntty, ttselect, enodev,	 NULL),
+	CHARDEV(lpaopen,lpaclose,lparead,lpawrite, /*26*/ lpaioctl,
+	       enodev,	 nullop, NULL, seltrue,	enodev,	 NULL),
+	CHARDEV(psopen,psclose,	psread,	pswrite,/*27*/ psioctl,	enodev,
+		psreset,NULL, seltrue,	enodev,	NULL),
+	CHARDEV(enodev,	enodev,	enodev,	enodev,	/*28*/ enodev,nullop,
+		nullop,	NULL, enodev,enodev,NULL),
+	CHARDEV(adopen,	adclose,enodev,	enodev,	/*29*/ adioctl,	enodev,
+		adreset,NULL, seltrue,	enodev,	NULL),
+	CHARDEV(rxopen,	rxclose,rxread,	rxwrite,/*30*/ rxioctl,	enodev,
+		rxreset,NULL, seltrue,	enodev,	NULL),
+	CHARDEV(ikopen,	ikclose,ikread,	ikwrite,/*31*/ ikioctl,	enodev,
+		ikreset,NULL, seltrue,	enodev,	NULL),
+	CHARDEV(rlopen,	enodev,	rawread,rawwrite,/*32*/ enodev,	enodev,
+		rlreset,NULL, seltrue,	enodev,	rlstrategy),
+	CHARDEV(logopen,logclose,logread,enodev,		/*33*/
 	logioctl,	enodev,		nullop,	NULL,
-	logselect,	enodev,		NULL,
+	logselect,	enodev,		NULL),
 
-	dhuopen,	dhuclose,	dhuread,	dhuwrite,	/*34*/
+	CHARDEV(dhuopen,dhuclose,	dhuread,	dhuwrite,	/*34*/
 	dhuioctl,	dhustop,	dhureset,	dhu_tty,
-	ttselect,	enodev,		NULL,
+	ttselect,	enodev,		NULL),
 
- 	crlopen,	crlclose,	crlrw,		crlrw,		/*35*/
+ 	CHARDEV(crlopen,crlclose,	crlrw,		crlrw,		/*35*/
  	enodev,		enodev,		nullop,	NULL,
- 	seltrue,	enodev,		NULL,
+ 	seltrue,	enodev,		NULL),
 
-	vsopen,		vsclose,	enodev,		enodev,		/*36*/
+	CHARDEV(vsopen,	vsclose,	enodev,		enodev,		/*36*/
 	vsioctl,	enodev,		vsreset,	NULL,
-	vsselect,	enodev,		NULL,
+	vsselect,	enodev,		NULL),
 
-	dmzopen,	dmzclose,	dmzread,	dmzwrite,	/*37*/
+	CHARDEV(dmzopen,dmzclose,	dmzread,	dmzwrite,	/*37*/
 	dmzioctl,	dmzstop,	dmzreset,	dmz_tty,
-	ttselect,	enodev,		NULL,
+	ttselect,	enodev,		NULL),
 
-	tmscpopen,	tmscpclose,	rawread,	rawwrite,	/*38*/
+	CHARDEV(tmscpopen,tmscpclose,	rawread,	rawwrite,	/*38*/
 	tmscpioctl,	enodev,		tmscpreset,	NULL,
-	seltrue,	enodev,		tmscpstrategy,
+	seltrue,	enodev,		tmscpstrategy),
 
-	npopen,		npclose,	npread,		npwrite,	/*39*/
+	CHARDEV(npopen,	npclose,	npread,		npwrite,	/*39*/
 	npioctl,	enodev,		npreset,	NULL,
-	seltrue,	enodev,		NULL,
+	seltrue,	enodev,		NULL),
 
-	qvopen,		qvclose,	qvread,		qvwrite,	/*40*/
+	CHARDEV(qvopen,	qvclose,	qvread,		qvwrite,	/*40*/
 	qvioctl,	qvstop,		qvreset,	NULL,
-	qvselect,	enodev,		NULL,
+	qvselect,	enodev,		NULL),
 
-	qdopen,		qdclose,	qdread,		qdwrite,	/*41*/
+	CHARDEV(qdopen,	qdclose,	qdread,		qdwrite,	/*41*/
 	qdioctl,	qdstop,		qdreset,	NULL,
-	qdselect,	enodev,		NULL,
+	qdselect,	enodev,		NULL),
 
-	enodev,		enodev,		enodev,		enodev,		/*42*/
+	CHARDEV(enodev,	enodev,		enodev,		enodev,		/*42*/
 	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
+	enodev,		enodev,		NULL),
 
-	iiopen,		iiclose,	nullop,	nullop,	/*43*/
+	CHARDEV(iiopen,	iiclose,	nullop,	nullop,	/*43*/
 	iiioctl,	nullop,	nullop,	NULL,
-	seltrue,	enodev,		NULL,
+	seltrue,	enodev,		NULL),
 
-	dkopen, 	dkclose,	dkread, 	dkwrite,	/*44*/
+	CHARDEV(dkopen, dkclose,	dkread, 	dkwrite,	/*44*/
 	dkioctl,	nullop,	nullop,	NULL,
-	seltrue,	enodev,		NULL,
+	seltrue,	enodev,		NULL),
 
-	dktopen, 	dktclose,	dktread, 	dktwrite,	/*45*/
+	CHARDEV(dktopen,dktclose,	dktread, 	dktwrite,	/*45*/
 	dktioctl,	dktstop,	nullop,	dkt,
-	ttselect,	enodev,		NULL,
+	ttselect,	enodev,		NULL),
 
-	kmcopen,	kmcclose,	kmcread,	kmcwrite,	/*46*/
+	CHARDEV(kmcopen,kmcclose,	kmcread,	kmcwrite,	/*46*/
 	kmcioctl,	nullop,	kmcdclr,	NULL,
-	seltrue,	enodev,		NULL,
+	seltrue,	enodev,		NULL),
 
-	enodev,		enodev,		enodev,		enodev,		/*47*/
+	CHARDEV(enodev,	enodev,		enodev,		enodev,		/*47*/
 	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
+	enodev,		enodev,		NULL),
 
-	enodev,		enodev,		enodev,		enodev,		/*48*/
+	CHARDEV(enodev,	enodev,		enodev,		enodev,		/*48*/
 	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
+	enodev,		enodev,		NULL),
 
-	enodev,		enodev,		enodev,		enodev,		/*49*/
+	CHARDEV(enodev,	enodev,		enodev,		enodev,		/*49*/
 	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
+	enodev,		enodev,		NULL),
 
-	enodev,		enodev,		enodev,		enodev,		/*50*/
+	CHARDEV(enodev,	enodev,		enodev,		enodev,		/*50*/
 	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
+	enodev,		enodev,		NULL),
 
-	rx50open,	rx50close,	rx50rw,		rx50rw,		/*51*/
+	CHARDEV(rx50open,rx50close,	rx50rw,		rx50rw,		/*51*/
 	enodev,		enodev,		nullop,	0,
-	seltrue,	enodev,		NULL,
+	seltrue,	enodev,		NULL),
 
 /* kdb50 ra */
-	kdbopen,	nullop/*XXX*/,	rawread,	rawwrite,	/*52*/
+	CHARDEV(kdbopen,nullop/*XXX*/,	rawread,	rawwrite,	/*52*/
 	enodev,		enodev,		nullop,	0,
-	seltrue,	enodev,		kdbstrategy,
+	seltrue,	enodev,		kdbstrategy),
 
-	fdopen,		enodev,		enodev,		enodev,		/*53*/
+	CHARDEV(fdopen,	enodev,		enodev,		enodev,		/*53*/
 	enodev,		enodev,		enodev,		NULL,
-	enodev,		enodev,		NULL,
+	enodev,		enodev,		NULL),
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -887,3 +829,130 @@ int	mem_no = 3; 	/* major device number of memory special file */
  * provided as a character (raw) device.
  */
 dev_t	swapdev = makedev(4, 0);
+
+int	chrtoblktbl[]={
+	NODEV,	/* 0 */
+	NODEV,	/* 1 */
+	NODEV,	/* 2 */
+	NODEV,	/* 3 */
+	0,    	/* 4 */
+	1,    	/* 5 */
+	NODEV,	/* 6 */
+	NODEV,	/* 7 */
+	NODEV,	/* 8 */
+	9,   	/* 9 */
+	NODEV,	/* 10 */
+	3,    	/* 11 */
+	NODEV,	/* 12 */
+	2,    	/* 13 */
+	5,	/* 14 */
+	NODEV,	/* 15 */
+	6,	/* 16 */
+	10,	/* 17 */
+	NODEV,	/* 18 */
+	7,	/* 19 */
+	NODEV,	/* 20 */
+	NODEV,	/* 21 */
+	NODEV,	/* 22 */
+	11,	/* 23 */
+	NODEV,	/* 24 */
+	NODEV,	/* 25 */
+	NODEV,	/* 26 */
+	NODEV,	/* 27 */
+	NODEV,	/* 28 */
+	NODEV,	/* 29 */
+	12,	/* 30 */
+	NODEV,	/* 31 */
+	14,	/* 32 */
+	NODEV,	/* 33 */
+	NODEV,	/* 34 */
+	NODEV,	/* 35 */
+	NODEV,	/* 36 */
+	NODEV,	/* 37 */
+	15,	/* 38 */
+	NODEV,	/* 39 */
+	NODEV,	/* 40 */
+	NODEV,	/* 41 */
+	NODEV,	/* 42 */
+	NODEV,	/* 43 */
+	NODEV,	/* 44 */
+	NODEV,	/* 45 */
+	NODEV,	/* 46 */
+	NODEV,	/* 47 */
+	NODEV,	/* 48 */
+	NODEV,	/* 49 */
+	NODEV,	/* 50 */
+	NODEV, 	/* 51 */
+	16,	/* 52 */
+	NODEV,	/* 53 */
+};
+
+chrtoblk(dev)
+	dev_t dev;
+{
+	if(major(dev)>=nchrdev) return(NODEV);
+	return chrtoblktbl[major(dev)]==NODEV?NODEV:
+		makedev(chrtoblktbl[major(dev)],minor(dev));
+}
+
+isdisk(dev, type)
+	dev_t dev;
+	int type;
+{
+	switch(major(dev)){
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 6:
+	case 7:
+	case 10:
+	case 12:
+	case 15:
+		return type==VBLK;
+
+	case 4:
+	case 13:
+	case 17:
+	case 19:
+	case 23:
+	case 30:
+	case 32:
+	case 38:
+	case 52:
+		return type==VCHR;
+
+	/* Both char and block */
+	case 5:
+	case 9:
+	case 11:
+	case 14:
+	case 16:
+		return 1;
+
+	default:
+		return 0;
+	}
+}
+
+/*
+ * Returns true if dev is /dev/mem or /dev/kmem.
+ */
+iskmemdev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == 2 && minor(dev) < 2);
+}
+
+/*
+ * Returns true if dev is /dev/zero.
+ * ?? Shall I use 12 as /dev/zero?
+ */
+iszerodev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == 2 && minor(dev) == 12);
+}
+
