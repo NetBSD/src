@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.77 2003/08/15 03:42:03 jonathan Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.78 2003/08/22 21:53:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.77 2003/08/15 03:42:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.78 2003/08/22 21:53:04 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1852,7 +1852,8 @@ tbf_send_packet(vifp, m)
 		(void)ipsec_setsocket(m, NULL);
 #endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
-		    IP_FORWARDING, (struct ip_moptions *)0, (struct inpcb *)0);
+		    IP_FORWARDING, (struct ip_moptions *)NULL,
+		    (struct socket *)NULL);
 	} else {
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
@@ -1869,7 +1870,8 @@ tbf_send_packet(vifp, m)
 		(void)ipsec_setsocket(m, NULL);
 #endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
-		    IP_FORWARDING|IP_MULTICASTOPTS, &imo, (struct inpcb *)0);
+		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
+		    (struct socket *)NULL);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
