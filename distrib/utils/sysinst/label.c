@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.12 1999/06/20 06:08:14 cgd Exp $	*/
+/*	$NetBSD: label.c,v 1.13 1999/07/04 21:32:48 cgd Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.12 1999/06/20 06:08:14 cgd Exp $");
+__RCSID("$NetBSD: label.c,v 1.13 1999/07/04 21:32:48 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -351,7 +351,7 @@ incorelabel(dkname, lp)
 /* Ask for a partition offser, check bounds and does the needed roudups */
 int
 getpartoff(msg_no, defpartstart)
-	int msg_no;
+	msg msg_no;
 	int defpartstart;
 {
 	char isize[20];
@@ -384,7 +384,7 @@ getpartoff(msg_no, defpartstart)
 /* Ask for a partition size, check bounds and does the needed roudups */
 int
 getpartsize(msg_no, partstart, defpartsize)
-	int msg_no;
+	msg msg_no;
 	int partstart;
 	int defpartsize;
 {
