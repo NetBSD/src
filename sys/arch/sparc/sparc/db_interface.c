@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.32 2000/11/21 08:14:17 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.33 2001/01/18 10:54:29 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -113,7 +113,7 @@ cpu_Debugger()
 
 static int nil;
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "psr", (long *)&DDB_TF->tf_psr, FCN_NULL, },
 	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
@@ -152,7 +152,7 @@ struct db_variable db_regs[] = {
 	{ "i6", (long *)&DDB_FR->fr_arg[6], FCN_NULL, },
 	{ "i7", (long *)&DDB_FR->fr_arg[7], FCN_NULL, },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 

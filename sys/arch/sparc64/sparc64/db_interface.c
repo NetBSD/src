@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.53 2000/12/29 17:08:54 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.54 2001/01/18 10:54:29 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -76,7 +76,7 @@ extern struct traptrace {
 
 static int nil;
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "tstate", (long *)&DDB_TF->tf_tstate, FCN_NULL, },
 	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
@@ -115,7 +115,7 @@ struct db_variable db_regs[] = {
 	{ "i6", (long *)&DDB_FR->fr_arg[6], FCN_NULL, },
 	{ "i7", (long *)&DDB_FR->fr_arg[7], FCN_NULL, },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 
