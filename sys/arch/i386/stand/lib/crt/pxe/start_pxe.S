@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.3 2003/02/01 14:48:19 dsl Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.4 2003/02/25 11:17:37 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -167,6 +167,11 @@ bootdataseg = . - gdt
 bootrealseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x9e, 0x00, 0
+
+	/* limits (etc) for data segment in real mode */
+bootrealdata = . - gdt
+	.word	0xffff, 0
+	.byte	0, 0x92, 0x00, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__
@@ -232,6 +237,16 @@ ENTRY(prot_to_real)
 
 	movl	_C_LABEL(ourseg), %eax
 	movw	%ax, xreal-2
+
+	/*
+	 * Load the segment registers while still in protected mode.
+	 * Otherwise the control bits don't get changed.
+	 * The correct values are loaded later.
+	 */
+	movw	$bootrealdata, %ax
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %ss
 
 	# Change to use16 mode.
 	ljmp	 $bootrealseg, $x16
