@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 1999/11/10 16:49:38 drochner Exp $ */
+/*	$NetBSD: util.c,v 1.6 1999/12/21 16:54:16 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -265,7 +265,6 @@ rd_field(f, val, merge)
 				errx(1, "%s: not a valid variant", val);
 			*((u_int *) f->valp) |= i;
 		}
-		printf("enc: %x\n", *((u_int *) f->valp));
 		break;
 	case FMT_KBMAP:
 		if (! merge)
