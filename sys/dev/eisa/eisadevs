@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.16 1999/08/19 08:06:31 tron Exp $
+$NetBSD: eisadevs,v 1.17 1999/09/29 17:40:18 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -37,14 +37,17 @@ $NetBSD: eisadevs,v 1.16 1999/08/19 08:06:31 tron Exp $
 
 vendor ADP		Adaptec
 vendor AMI		AMI
+vendor ATT		AT&T
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
+vendor DPT		Distributed Processing Technology
 vendor FSI		FORE Systems
 vendor HWP		Hewlett-Packard
 vendor INP		Interphase
 vendor INT		Intel
 vendor ETI		Microdyne
 vendor MLX		Mylex
+vendor NEC		NEC
 vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
@@ -66,6 +69,9 @@ product ADP 7757	AHA-284x SCSI (BIOS disabled)
 /* AMI products */
 product AMI 4801	Series 48 SCSI
 
+/* AT&T products */
+product ATT 2408	EATA SCSI controller
+
 /* BusLogic products */
 product BUS 4201	Bt74xB SCSI
 product BUS 4202	Bt74xC SCSI
@@ -76,6 +82,19 @@ product DEC 3001	DEFEA FDDI Controller
 product DEC 3002	DEFEA FDDI Controller
 product DEC 3003	DEFEA FDDI Controller
 product DEC 3004	DEFEA FDDI Controller
+
+/* DPT products */
+product DPT 2402	PM2012A/9X EATA SCSI controller
+product DPT A401	PM2012B/9X EATA SCSI controller
+product DPT A402	PM2012B2/9X EATA SCSI controller
+product DPT A410	PM2x22A/9X EATA SCSI controller
+product DPT A411	Spectre EATA SCSI controller
+product DPT A412	PM2021A/9X EATA SCSI controller
+product DPT A420	PM2042 EATA SCSI controller
+product DPT A501	PM2012B1/9X EATA SCSI controller
+product DPT A502	PM2012Bx/9X EATA SCSI controller
+product DPT A701	PM2011B1/9X EATA SCSI controller
+product DPT BC01	PM3011/7X ESDI controller
 
 /* FORE Systems products */
 product FSI 2001	ESA-200 ATM
@@ -90,6 +109,9 @@ product INT 1010	EtherExpress 32 Flash Ethernet
 
 /* ETI products */
 product ETI 1001	NE3300 Ethernet Rev. C & D
+
+/* NEC products */
+product NEC 8200	EATA SCSI controller
 
 /* 3Com products */
 product TCM 5091	3C509 Ethernet
