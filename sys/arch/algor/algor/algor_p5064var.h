@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064var.h,v 1.3 2001/06/10 09:13:07 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064var.h,v 1.4 2001/06/15 04:01:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,21 +72,7 @@ struct p5064_config {
 #define	P5064_IRQ_IDE0		14
 #define	P5064_IRQ_IDE1		15
 
-struct p5064_irqmap {
-	int		irqidx;
-	int		cpuintr;
-	int		irqreg;
-	int		irqbit;
-	int		xbarreg;
-	int		xbarshift;
-};
-
-void	algor_p5064_intr_disestablish(void *, void *);
-void	*algor_p5064_intr_establish(const struct p5064_irqmap *,
-	    int (*)(void *), void *);
-
 extern struct p5064_config p5064_configuration;
-extern const struct p5064_irqmap p5064_irqmap[];
 
 void	algor_p5064_bus_io_init(bus_space_tag_t, void *);
 void	algor_p5064_bus_mem_init(bus_space_tag_t, void *);

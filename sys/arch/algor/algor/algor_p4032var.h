@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032var.h,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,21 +68,7 @@ struct p4032_config {
 #define	P4032_IRQ_GPIO		10
 #define	P4032_IRQ_RTC		11
 
-struct p4032_irqmap {
-	int		irqidx;
-	int		cpuintr;
-	int		irqreg;
-	int		irqbit;
-	int		xbarreg;
-	int		xbarshift;
-};
-
-void	algor_p4032_intr_disestablish(void *, void *);
-void	*algor_p4032_intr_establish(const struct p4032_irqmap *,
-	    int (*)(void *), void *);
-
 extern struct p4032_config p4032_configuration;
-extern const struct p4032_irqmap p4032_irqmap[];
 
 void	algor_p4032loc_bus_io_init(bus_space_tag_t, void *);
 void	algor_p4032_bus_io_init(bus_space_tag_t, void *);
