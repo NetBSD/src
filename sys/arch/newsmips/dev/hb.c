@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.9 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.10 2003/01/01 01:55:42 thorpej Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ hb_print(args, name)
 		return QUIET;
 
 	if (ca->ca_addr != -1)
-		printf(" addr 0x%x", ca->ca_addr);
+		aprint_normal(" addr 0x%x", ca->ca_addr);
 
 	return UNCONF;
 }

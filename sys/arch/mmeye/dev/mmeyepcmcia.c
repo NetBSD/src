@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.5 2002/10/02 05:39:05 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.6 2003/01/01 01:50:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -516,7 +516,7 @@ mmeyepcmcia_print(void *arg, const char *pnp)
 {
 
 	if (pnp)
-		printf("pcmcia at %s", pnp);
+		aprint_normal("pcmcia at %s", pnp);
 
 	return (UNCONF);
 }

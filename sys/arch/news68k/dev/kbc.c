@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.4 2002/12/20 16:23:47 tsutsui Exp $	*/
+/*	$NetBSD: kbc.c,v 1.5 2003/01/01 01:54:44 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -115,7 +115,7 @@ kbc_print(aux, name)
 {
 
 	if (name != NULL)
-		printf("%s: ", name);
+		aprint_normal("%s: ", name);
 
 	return UNCONF;
 }

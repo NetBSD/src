@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.5 2002/10/02 05:30:41 thorpej Exp $	*/
+/*	$NetBSD: gpio.c,v 1.6 2003/01/01 01:47:30 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -126,10 +126,10 @@ gpio_obio_print(void *aux, const char *gpio)
 	struct confargs *ca = aux;
 
 	if (gpio)
-		printf("%s at %s", ca->ca_name, gpio);
+		aprint_normal("%s at %s", ca->ca_name, gpio);
 
 	if (ca->ca_nreg > 0)
-		printf(" offset 0x%x", ca->ca_reg[0]);
+		aprint_normal(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
 }

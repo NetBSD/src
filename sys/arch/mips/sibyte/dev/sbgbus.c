@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.4 2002/10/02 15:52:25 thorpej Exp $ */
+/* $NetBSD: sbgbus.c,v 1.5 2003/01/01 01:48:55 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -79,13 +79,13 @@ sbgbusprint(void *aux, const char *pnp)
 	struct sbgbus_attach_args *sga = aux;
 
 	if (sga->sga_chipsel != SBGBUS_CHIPSEL_NONE)
-		printf(" chipsel %u", sga->sga_chipsel);
+		aprint_normal(" chipsel %u", sga->sga_chipsel);
 	if (sga->sga_offset != 0)
-		printf(" offset 0x%x", sga->sga_offset);
+		aprint_normal(" offset 0x%x", sga->sga_offset);
 	if (sga->sga_intr[0] != SBGBUS_INTR_NONE) {
-		printf(" intr %u", sga->sga_intr[0]);
+		aprint_normal(" intr %u", sga->sga_intr[0]);
 		if (sga->sga_intr[1] != SBGBUS_INTR_NONE) {
-			printf(",%u", sga->sga_intr[1]);
+			aprint_normal(",%u", sga->sga_intr[1]);
 		}
 	}
 	return (UNCONF);

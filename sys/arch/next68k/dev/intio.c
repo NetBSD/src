@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.6 2002/10/02 04:22:53 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.7 2003/01/01 01:57:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -99,8 +99,8 @@ intioprint(aux, pnp)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (bootverbose && ia->ia_addr)
-		printf(" addr %p", ia->ia_addr);
+	if (ia->ia_addr)
+		aprint_normal(" addr %p", ia->ia_addr);
 
 	return (UNCONF);
 }

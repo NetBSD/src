@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.10 2002/12/20 16:23:46 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.11 2003/01/01 01:54:44 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -115,11 +115,11 @@ hb_print(args, name)
 #if 0
 	if (ha->ha_addr > 0)
 #endif
-		printf (" addr 0x%08lx", ha->ha_address);
+		aprint_normal (" addr 0x%08lx", ha->ha_address);
 	if (ha->ha_ipl > 0)
-		printf (" ipl %d", ha->ha_ipl);
+		aprint_normal (" ipl %d", ha->ha_ipl);
 	if (ha->ha_vect > 0) {
-		printf (" vect %d", ha->ha_vect);
+		aprint_normal (" vect %d", ha->ha_vect);
 	}
 
 	return (QUIET);
