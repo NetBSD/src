@@ -58,7 +58,7 @@ static char sccsid[] = "from:@(#)boot.c	7.3 (Berkeley) 5/4/91";
  * or if an error is encounter, try alternate files.
  */
 
-char *files[] = { "bsd", "obsd", "bsd.old",
+char *files[] = { "netbsd", "onetbsd", "netbsd.old",
 		  "386bsd", "o386bsd", "386bsd.old",
 		  "vmunix", "ovmunix", "vmunix.old",
 		  "boot", 0};

@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)savecore.8	6.6 (Berkeley) 3/16/91
 .\"
-.\"	$Header: /cvsroot/src/sbin/savecore/savecore.8,v 1.4 1993/04/28 05:43:16 cgd Exp $
+.\"	$Header: /cvsroot/src/sbin/savecore/savecore.8,v 1.5 1993/04/28 06:40:21 cgd Exp $
 .\"
 .Dd March 16, 1991
 .Dt SAVECORE 8
@@ -67,7 +67,7 @@ Operands supported by
 The directory name where the core dump will be written.
 .It Ar system
 If the core dump was from a system other than
-.Pa /bsd ,
+.Pa /netbsd ,
 the name
 of that system must be supplied as
 .Ar system .
@@ -105,8 +105,8 @@ If the system crashed as a result of a panic,
 .Nm savecore
 logs the panic string too.
 .Sh FILES
-.Bl -tag -width /bsd -compact
-.It Pa /bsd
+.Bl -tag -width /netbsd -compact
+.It Pa /netbsd
 current
 .Tn system executable file
 .El
