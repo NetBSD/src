@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.2 2001/03/19 15:01:44 fvdl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.3 2001/03/19 17:45:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ uiomove(buf, n, uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
-#if 0	/* XXX NJWLWP */
+#ifdef DIAGNOSTIC
 	struct proc *p = uio->uio_procp;
 #endif
 
