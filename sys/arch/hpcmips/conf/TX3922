@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.52.2.1 2004/04/18 02:19:37 jmc Exp $
+#	$NetBSD: TX3922,v 1.52.2.2 2004/07/15 20:17:43 he Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -43,6 +43,7 @@ options 	NTP			# network time protocol
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # File systems
 file-system 	FFS		# UFS
