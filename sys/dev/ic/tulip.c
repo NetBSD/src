@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.9 1999/09/14 22:25:50 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.10 1999/09/14 23:23:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1205,12 +1205,20 @@ tlp_txintr(sc)
 		/*
 		 * Check for errors and collisions.
 		 */
-		if (txstat & TDSTAT_ES) {
+		if (txstat &
+		    (TDSTAT_Tx_UF|TDSTAT_Tx_NC|TDSTAT_Tx_LO|TDSTAT_Tx_TO)) {
 			ifp->if_oerrors++;
+#if 0
+			/*
+			 * XXX Can't check for late or excessive collisions;
+			 * XXX Some 21040s seem to register those even on
+			 * XXX successful transmissions!
+			 */
 			if (txstat & TDSTAT_Tx_EC)
 				ifp->if_collisions += 16;
 			if (txstat & TDSTAT_Tx_LC)
 				ifp->if_collisions++;
+#endif
 		} else {
 			/* Packet was transmitted successfully. */
 			ifp->if_opackets++;
