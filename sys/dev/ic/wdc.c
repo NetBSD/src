@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.126 2003/09/20 02:19:36 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.127 2003/09/20 07:07:39 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.126 2003/09/20 02:19:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.127 2003/09/20 07:07:39 christos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -297,7 +297,8 @@ wdcprobe(chp)
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 			    WDSD_IBM | 0x10);
 			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector) == 0x02) {
-				printf("ghost detected\n");
+				printf("%s: ghost detected\n",
+				    chp->wdc->sc_dev.dv_xname);
 				ret_value = 0x01;
 			}
 		}
