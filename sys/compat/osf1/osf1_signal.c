@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.9 1999/04/24 07:13:23 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.10 1999/04/26 01:21:43 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -14,6 +14,7 @@
 
 #include <sys/syscallargs.h>
 
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_signal.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
