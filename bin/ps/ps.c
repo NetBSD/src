@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.16 1996/09/27 02:59:53 thorpej Exp $	*/
+/*	$NetBSD: ps.c,v 1.17 1997/02/28 13:34:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ps.c,v 1.16 1996/09/27 02:59:53 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ps.c,v 1.17 1997/02/28 13:34:50 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$NetBSD: ps.c,v 1.16 1996/09/27 02:59:53 thorpej Exp $";
 #include <errno.h>
 #include <fcntl.h>
 #include <kvm.h>
+#include <limits.h>
 #include <nlist.h>
 #include <paths.h>
 #include <stdio.h>
@@ -116,7 +117,7 @@ main(argc, argv)
 	uid_t uid;
 	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
-	char *nlistf, *memf, *swapf, errbuf[256];
+	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
