@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.12 2002/07/13 11:35:35 itojun Exp $	*/
+/*	$NetBSD: process.c,v 1.13 2002/07/19 10:05:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.12 2002/07/13 11:35:35 itojun Exp $");
+__RCSID("$NetBSD: process.c,v 1.13 2002/07/19 10:05:34 mrg Exp $");
 #endif
 
 #include "os.h"
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: process.c,v 1.12 2002/07/13 11:35:35 itojun Exp $");
 
 extern u_char	buf[];
 extern int	DebugFlag;
+extern char 	*MopdDir;
 
 struct dllist dllist[MAXDL];		/* dump/load list		*/
 extern char	dl_mcst[];		/* Dump/Load Multicast		*/
@@ -533,7 +534,7 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 		mopProcessInfo(pkt,index,moplen,dl_rpr,trans);
 
 		snprintf(filename, sizeof(filename), "%s/%s.SYS",
-		    MOP_FILE_PATH, pfile);
+		    MopdDir, pfile);
 		if ((mopCmpEAddr(dst,dl_mcst) == 0)) {
 			if ((nfd = open(filename, O_RDONLY, 0)) != -1) {
 				close(nfd);
