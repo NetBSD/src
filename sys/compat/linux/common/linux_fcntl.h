@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.6 2001/01/19 01:40:39 manu Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.7 2001/09/22 21:24:16 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@ struct linux_flock {
 #include <compat/linux/arch/alpha/linux_fcntl.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/powerpc/linux_fcntl.h>
+#elif defined(__mips__)
+#include <compat/linux/arch/mips/linux_fcntl.h>
 #else
 #error Undefined linux_fcntl.h machine type.
 #endif
