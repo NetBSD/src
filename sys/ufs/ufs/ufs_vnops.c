@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.70 2000/06/28 14:16:43 mrg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.71 2000/07/05 22:25:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -287,7 +287,7 @@ ufs_getattr(v)
 	struct timespec ts;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	FFS_ITIMES(ip, &ts, &ts, &ts);
+	ITIMES(ip, &ts, &ts, &ts);
 	/*
 	 * Copy from inode table
 	 */
