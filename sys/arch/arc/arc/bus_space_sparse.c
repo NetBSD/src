@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.7 2003/01/19 10:06:12 tsutsui Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.8 2003/04/01 22:37:26 thorpej Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@ arc_kseg2_make_cacheable(vaddr, size)
 	start = mips_trunc_page(vaddr);
 	end = mips_round_page(vaddr + size);
 	mask = ~(CPUISMIPS3 ? MIPS3_PG_UNCACHED : MIPS1_PG_N);
-	for (; start < end; start += NBPG) {
+	for (; start < end; start += PAGE_SIZE) {
 		pte = kvtopte(start);
 		entry = pte->pt_entry & mask;
 		pte->pt_entry &= entry;
@@ -131,7 +131,8 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 			panic("arc_sparse_bus_space_compose_handle: "
 			      "cannot allocate KVA 0x%llx..0x%llx",
 			      start, end);
-		for (va = vaddr; start < end; start += NBPG, va += NBPG)
+		for (va = vaddr; start < end;
+		     start += PAGE_SIZE, va += PAGE_SIZE)
 			pmap_kenter_pa(va, start, VM_PROT_READ|VM_PROT_WRITE);
 		pmap_update(pmap_kernel());
 		vaddr += (offset & PGOFSET);
