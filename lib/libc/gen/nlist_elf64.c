@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf64.c,v 1.1 1996/09/27 22:23:06 cgd Exp $	*/
+/*	$NetBSD: nlist_elf64.c,v 1.2 1996/09/27 22:38:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: nlist_elf64.c,v 1.1 1996/09/27 22:23:06 cgd Exp $";
+static char e64rcsid[] = "$NetBSD: nlist_elf64.c,v 1.2 1996/09/27 22:38:06 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define	ELFSIZE		64
