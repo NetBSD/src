@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.33 2000/07/08 14:57:57 sommerfeld Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.34 2000/12/23 13:19:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.33 2000/07/08 14:57:57 sommerfeld Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.34 2000/12/23 13:19:31 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: vfprintf.c,v 1.33 2000/07/08 14:57:57 sommerfeld Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #if __STDC__
 #include <stdarg.h>
@@ -205,6 +206,7 @@ vfprintf(fp, fmt0, ap)
 	int prec;		/* precision from format (%.3d), or -1 */
 	char sign;		/* sign prefix (' ', '+', '-', or \0) */
 	wchar_t wc;
+	mbstate_t ps;
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
 	char softsign;		/* temporary negative sign for floats */
@@ -314,12 +316,14 @@ vfprintf(fp, fmt0, ap)
 	uio.uio_iovcnt = 0;
 	ret = 0;
 
+	(void)mbrtowc(NULL, "", 1, &ps);
+
 	/*
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
 		cp = fmt;
-		while ((n = mbtowc(&wc, fmt, MB_CUR_MAX)) > 0) {
+		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
 			fmt += n;
 			if (wc == '%') {
 				fmt--;
