@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.14 1996/07/04 06:57:21 leo Exp $
+#	$NetBSD: install.sub,v 1.15 1996/10/10 19:58:34 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -175,24 +175,6 @@ twiddle() {
 	done > /dev/tty & echo $!
 }
 
-do_mfs_mount() {
-	# $1 is the mount point
-	# $2 is the size in DEV_BIZE blocks
-
-	umount $1 > /dev/null 2>&1
-	if ! mount_mfs -s $2 swap $1 ; then
-		cat << \__mfs_failed_1
-
-FATAL ERROR: Can't mount the memory filesystem.
-
-__mfs_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
-}
-
 get_localdir() {
 	# $1 is relative mountpoint
 	local _mp
@@ -314,9 +296,10 @@ addifconfig() {
 	# $2 - interface symbolic name
 	# $3 - interface IP address
 	# $4 - interface netmask
+	# $5 - (optional) interface link-layer directives
 
 	# Create a hostname.* file for the interface.
-	echo "inet $2 $4" > /tmp/hostname.$1
+	echo "inet $2 $4 NONE $5" > /tmp/hostname.$1
 
 	addhostent $3 $2
 }
@@ -371,6 +354,7 @@ configure_ifs() {
 	local _interface_ip
 	local _interface_mask
 	local _interface_symname
+	local _interface_extra
 
 	_interface_name=$1
 
@@ -411,6 +395,16 @@ configure_ifs() {
 		_interface_mask=$resp
 	done
 
+	echo "Your network interface might require additional link-layer"
+	echo "directives (like \`link0'). If this is the case you can enter"
+	echo "these at the next prompt."
+	echo ""
+	echo -n "Additional link-layer arguments? [$_interface_extra] "
+	getresp "$_interface_extra"
+	if [ "X${resp}" != X"" ]; then
+		_interface_extra=$resp
+	fi
+
 	# Configure the interface.  If it
 	# succeeds, add it to the permanent
 	# network configuration info.
@@ -418,12 +412,12 @@ configure_ifs() {
 		ifconfig ${_interface_name} down
 		if ifconfig ${_interface_name} inet \
 		    ${_interface_ip} \
-		    netmask ${_interface_mask} up ; then
+		    netmask ${_interface_mask} ${_interface_extra} up ; then
 			addifconfig \
 			    ${_interface_name} \
 			    ${_interface_symname} \
 			    ${_interface_ip} \
-			    ${_interface_mask}
+			    ${_interface_mask} ${_interface_extra}
 			return 0
 		fi
 	else
@@ -433,7 +427,7 @@ configure_ifs() {
 		    ${_interface_name} \
 		    ${_interface_symname} \
 		    ${_interface_ip} \
-		    ${_interface_mask}
+		    ${_interface_mask} ${_interface_extra}
 	fi
 	return 1
 }
