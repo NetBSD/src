@@ -1,10 +1,11 @@
-/*	$NetBSD: inp.c,v 1.6 1999/02/09 05:15:45 sommerfe Exp $	*/
+/*	$NetBSD: inp.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.6 1999/02/09 05:15:45 sommerfe Exp $");
+__RCSID("$NetBSD: inp.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
+#include "backupfile.h"
 #include "common.h"
 #include "util.h"
 #include "pch.h"
@@ -30,14 +31,13 @@ static int tireclen;			/* length of records in tmp file */
 /* New patch--prepare to edit another file. */
 
 void
-re_input()
+re_input(void)
 {
     if (using_plan_a) {
 	i_size = 0;
-#ifndef lint
-	if (i_ptr != Null(char**))
-	    free((char *)i_ptr);
-#endif
+
+	if (i_ptr != NULL)
+	    free(i_ptr);
 	if (i_womp != Nullch)
 	    free(i_womp);
 	i_womp = Nullch;
@@ -58,8 +58,7 @@ re_input()
 /* Constuct the line index, somehow or other. */
 
 void
-scan_input(filename)
-char *filename;
+scan_input(char *filename)
 {
     if (!plan_a(filename))
 	plan_b(filename);
@@ -72,12 +71,11 @@ char *filename;
 /* Try keeping everything in memory. */
 
 bool
-plan_a(filename)
-char *filename;
+plan_a(char *filename)
 {
     int ifd, statfailed;
-    Reg1 char *s;
-    Reg2 LINENUM iline;
+    char *s;
+    LINENUM iline;
     char lbuf[MAXLINELEN];
 
     statfailed = stat(filename, &filestat);
@@ -159,23 +157,17 @@ char *filename;
 	out_of_mem = FALSE;
 	return FALSE;			/* force plan b because plan a bombed */
     }
-#ifdef lint
-    i_womp = Nullch;
-#else
-    i_womp = malloc((MEM)(i_size+2));	/* lint says this may alloc less than */
-					/* i_size, but that's okay, I think. */
-#endif
+
+    i_womp = malloc((MEM)(i_size+2));
     if (i_womp == Nullch)
 	return FALSE;
     if ((ifd = open(filename, 0)) < 0)
 	pfatal2("can't open file %s", filename);
-#ifndef lint
-    if (read(ifd, i_womp, (int)i_size) != i_size) {
+    if (read(ifd, i_womp, i_size) != i_size) {
 	Close(ifd);	/* probably means i_size > 15 or 16 bits worth */
 	free(i_womp);	/* at this point it doesn't matter if i_womp was */
 	return FALSE;	/*   undersized. */
     }
-#endif
     Close(ifd);
     if (i_size && i_womp[i_size-1] != '\n')
 	i_womp[i_size++] = '\n';
@@ -188,11 +180,7 @@ char *filename;
 	if (*s == '\n')
 	    iline++;
     }
-#ifdef lint
-    i_ptr = Null(char**);
-#else
     i_ptr = (char **)malloc((MEM)((iline + 2) * sizeof(char *)));
-#endif
     if (i_ptr == Null(char **)) {	/* shucks, it was a near thing */
 	free((char *)i_womp);
 	return FALSE;
@@ -240,13 +228,12 @@ char *filename;
 /* Keep (virtually) nothing in memory. */
 
 void
-plan_b(filename)
-char *filename;
+plan_b(char *filename)
 {
-    Reg3 FILE *ifp;
-    Reg1 int i = 0;
-    Reg2 int maxlen = 1;
-    Reg4 bool found_revision = (revision == Nullch);
+    FILE *ifp;
+    int i = 0;
+    int maxlen = 1;
+    bool found_revision = (revision == Nullch);
 
     using_plan_a = FALSE;
     if ((ifp = fopen(filename, "r")) == Nullfp)
@@ -313,9 +300,7 @@ char *filename;
 /* Fetch a line from the input file, \n terminated, not necessarily \0. */
 
 char *
-ifetch(line,whichbuf)
-Reg1 LINENUM line;
-int whichbuf;				/* ignored when file in memory */
+ifetch(LINENUM line, int whichbuf)
 {
     if (line < 1 || line > input_lines)
 	return "";
@@ -331,9 +316,7 @@ int whichbuf;				/* ignored when file in memory */
 	    whichbuf = 1;
 	else {
 	    tiline[whichbuf] = baseline;
-#ifndef lint		/* complains of long accuracy */
 	    Lseek(tifd, (long)baseline / lines_per_buf * BUFFERSIZE, 0);
-#endif
 	    if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
 		pfatal2("error reading tmp file %s", TMPINNAME);
 	}
@@ -344,11 +327,10 @@ int whichbuf;				/* ignored when file in memory */
 /* True if the string argument contains the revision number we want. */
 
 bool
-rev_in_string(string)
-char *string;
+rev_in_string(char *string)
 {
-    Reg1 char *s;
-    Reg2 int patlen;
+    char *s;
+    int patlen;
 
     if (revision == Nullch)
 	return TRUE;

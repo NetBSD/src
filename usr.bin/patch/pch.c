@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $	*/
+/*	$NetBSD: pch.c,v 1.8 2002/03/08 21:57:33 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.7 1999/02/09 05:15:45 sommerfe Exp $");
+__RCSID("$NetBSD: pch.c,v 1.8 2002/03/08 21:57:33 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -38,10 +38,10 @@ static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
 
 /* Prepare to look for the next patch in the patch file. */
-static void malformed __P((void));
+static void malformed(void);
 
 void
-re_patch()
+re_patch(void)
 {
     p_first = Nulline;
     p_newfirst = Nulline;
@@ -55,8 +55,7 @@ re_patch()
 /* Open the patch file at the beginning of time. */
 
 void
-open_patch_file(filename)
-char *filename;
+open_patch_file(char *filename)
 {
     if (filename == Nullch || !*filename || strEQ(filename, "-")) {
 	pfp = fopen(TMPPATNAME, "w");
@@ -79,22 +78,20 @@ char *filename;
 /* Make sure our dynamically realloced tables are malloced to begin with. */
 
 void
-set_hunkmax()
+set_hunkmax(void)
 {
-#ifndef lint
-    if (p_line == Null(char**))
+    if (p_line == NULL)
 	p_line = (char**) malloc((MEM)hunkmax * sizeof(char *));
-    if (p_len == Null(short*))
+    if (p_len == NULL)
 	p_len  = (short*) malloc((MEM)hunkmax * sizeof(short));
-#endif
-    if (p_char == Nullch)
+    if (p_char == NULL)
 	p_char = (char*)  malloc((MEM)hunkmax * sizeof(char));
 }
 
 /* Enlarge the arrays containing the current hunk of patch. */
 
 void
-grow_hunkmax()
+grow_hunkmax(void)
 {
     hunkmax *= 2;
     /* 
@@ -103,11 +100,9 @@ grow_hunkmax()
      * p_len's old space.  Not on PDP-11's however.  But it doesn't matter.
      */
     assert(p_line != Null(char**) && p_len != Null(short*) && p_char != Nullch);
-#ifndef lint
-    p_line = (char**) realloc((char*)p_line, (MEM)hunkmax * sizeof(char *));
-    p_len  = (short*) realloc((char*)p_len,  (MEM)hunkmax * sizeof(short));
-    p_char = (char*)  realloc((char*)p_char, (MEM)hunkmax * sizeof(char));
-#endif
+    p_line = (char**) realloc(p_line, (MEM)hunkmax * sizeof(char *));
+    p_len  = (short*) realloc(p_len,  (MEM)hunkmax * sizeof(short));
+    p_char = (char*)  realloc(p_char, (MEM)hunkmax * sizeof(char));
     if (p_line != Null(char**) && p_len != Null(short*) && p_char != Nullch)
 	return;
     if (!using_plan_a)
@@ -119,7 +114,7 @@ grow_hunkmax()
 /* True if the remainder of the patch file contains a diff of some sort. */
 
 bool
-there_is_another_patch()
+there_is_another_patch(void)
 {
     if (p_base != 0L && p_base >= p_filesize) {
 	if (verbose)
@@ -181,26 +176,26 @@ there_is_another_patch()
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 int
-intuit_diff_type()
+intuit_diff_type(void)
 {
-    Reg4 long this_line = 0;
-    Reg5 long previous_line;
-    Reg6 long first_command_line = -1;
+    long this_line = 0;
+    long previous_line;
+    long first_command_line = -1;
     long fcl_line = -1;
-    Reg7 bool last_line_was_command = FALSE;
-    Reg8 bool this_is_a_command = FALSE;
-    Reg9 bool stars_last_line = FALSE;
-    Reg10 bool stars_this_line = FALSE;
-    Reg3 int indent;
-    Reg1 char *s;
-    Reg2 char *t;
+    bool last_line_was_command = FALSE;
+    bool this_is_a_command = FALSE;
+    bool stars_last_line = FALSE;
+    bool stars_this_line = FALSE;
+    int indent;
+    char *s;
+    char *t;
     char *indtmp = Nullch;
     char *oldtmp = Nullch;
     char *newtmp = Nullch;
     char *indname = Nullch;
     char *oldname = Nullch;
     char *newname = Nullch;
-    Reg11 int retval;
+    int retval;
     bool no_filearg = (filearg[0] == Nullch);
 
     ok_to_create_file = FALSE;
@@ -371,9 +366,7 @@ intuit_diff_type()
 /* Remember where this patch ends so we know where to start up again. */
 
 void
-next_intuit_at(file_pos,file_line)
-long file_pos;
-long file_line;
+next_intuit_at(long file_pos, long file_line)
 {
     p_base = file_pos;
     p_bline = file_line;
@@ -382,9 +375,7 @@ long file_line;
 /* Basically a verbose fseek() to the actual diff listing. */
 
 void
-skip_to(file_pos,file_line)
-long file_pos;
-long file_line;
+skip_to(long file_pos, long file_line)
 {
     char *ret;
 
@@ -406,7 +397,7 @@ long file_line;
 
 /* Make this a function for better debugging.  */
 static void
-malformed ()
+malformed(void)
 {
     fatal3("malformed patch at line %ld: %s", p_input_line, buf);
 		/* about as informative as "Syntax error" in C */
@@ -415,11 +406,11 @@ malformed ()
 /* True if there is more of the current diff listing to process. */
 
 bool
-another_hunk()
+another_hunk(void)
 {
-    Reg1 char *s;
-    Reg8 char *ret;
-    Reg2 int context = 0;
+    char *s;
+    char *ret;
+    int context = 0;
 
     while (p_end >= 0) {
 	if (p_end == p_efake)
@@ -436,18 +427,17 @@ another_hunk()
 	long line_beginning = ftell(pfp);
 					/* file pos of the current line */
 	LINENUM repl_beginning = 0;	/* index of --- line */
-	Reg4 LINENUM fillcnt = 0;	/* #lines of missing ptrn or repl */
-	Reg5 LINENUM fillsrc = 0;	/* index of first line to copy */
-	Reg6 LINENUM filldst = 0;	/* index of first missing line */
+	LINENUM fillcnt = 0;		/* #lines of missing ptrn or repl */
+	LINENUM fillsrc = 0;		/* index of first line to copy */
+	LINENUM filldst = 0;		/* index of first missing line */
 	bool ptrn_spaces_eaten = FALSE;	/* ptrn was slightly misformed */
-	Reg9 bool repl_could_be_missing = TRUE;
+	bool repl_could_be_missing = TRUE;
 					/* no + or ! lines in this hunk */
 	bool repl_missing = FALSE;	/* we are now backtracking */
 	long repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	LINENUM repl_patch_line = 0;	/* input line number for same */
-	Reg7 LINENUM ptrn_copiable = 0;
-					/* # of copiable lines in ptrn */
+	LINENUM ptrn_copiable = 0;	/* # of copiable lines in ptrn */
 
 	ret = pgets(buf, sizeof buf, pfp);
 	p_input_line++;
@@ -750,8 +740,8 @@ another_hunk()
     else if (diff_type == UNI_DIFF) {
 	long line_beginning = ftell(pfp);
 					/* file pos of the current line */
-	Reg4 LINENUM fillsrc;		/* index of old lines */
-	Reg5 LINENUM filldst;		/* index of new lines */
+	LINENUM fillsrc;		/* index of old lines */
+	LINENUM filldst;		/* index of new lines */
 	char ch;
 
 	ret = pgets(buf, sizeof buf, pfp);
@@ -892,7 +882,7 @@ another_hunk()
     }
     else {				/* normal diff--fake it up */
 	char hunk_type;
-	Reg3 int i;
+	int i;
 	LINENUM min, max;
 	long line_beginning = ftell(pfp);
 
@@ -1012,14 +1002,11 @@ another_hunk()
 /* Input a line from the patch file, worrying about indentation. */
 
 char *
-pgets(bf,sz,fp)
-char *bf;
-int sz;
-FILE *fp;
+pgets(char *bf, int sz, FILE *fp)
 {
     char *ret = fgets(bf, sz, fp);
-    Reg1 char *s;
-    Reg2 int indent = 0;
+    char *s;
+    int indent = 0;
 
     if (p_indent && ret != Nullch) {
 	for (s=buf;
@@ -1038,15 +1025,15 @@ FILE *fp;
 /* Reverse the old and new portions of the current hunk. */
 
 bool
-pch_swap()
+pch_swap(void)
 {
     char **tp_line;		/* the text of the hunk */
     short *tp_len;		/* length of each line */
     char *tp_char;		/* +, -, and ! */
-    Reg1 LINENUM i;
-    Reg2 LINENUM n;
+    LINENUM i;
+    LINENUM n;
     bool blankline = FALSE;
-    Reg3 char *s;
+    char *s;
 
     i = p_first;
     p_first = p_newfirst;
@@ -1062,16 +1049,14 @@ pch_swap()
     p_char = Nullch;
     set_hunkmax();
     if (p_line == Null(char**) || p_len == Null(short*) || p_char == Nullch) {
-#ifndef lint
 	if (p_line == Null(char**))
-	    free((char*)p_line);
+	    free(p_line);
 	p_line = tp_line;
 	if (p_len == Null(short*))
-	    free((char*)p_len);
+	    free(p_len);
 	p_len = tp_len;
-#endif
 	if (p_char == Nullch)
-	    free((char*)p_char);
+	    free(p_char);
 	p_char = tp_char;
 	return FALSE;		/* not enough memory to swap hunk! */
     }
@@ -1129,21 +1114,19 @@ pch_swap()
     i = p_ptrn_lines;
     p_ptrn_lines = p_repl_lines;
     p_repl_lines = i;
-#ifndef lint
     if (tp_line == Null(char**))
-	free((char*)tp_line);
+	free(tp_line);
     if (tp_len == Null(short*))
-	free((char*)tp_len);
-#endif
+	free(tp_len);
     if (tp_char == Nullch)
-	free((char*)tp_char);
+	free(tp_char);
     return TRUE;
 }
 
 /* Return the specified line position in the old file of the old context. */
 
 LINENUM
-pch_first()
+pch_first(void)
 {
     return p_first;
 }
@@ -1151,7 +1134,7 @@ pch_first()
 /* Return the number of lines of old context. */
 
 LINENUM
-pch_ptrn_lines()
+pch_ptrn_lines(void)
 {
     return p_ptrn_lines;
 }
@@ -1159,7 +1142,7 @@ pch_ptrn_lines()
 /* Return the probable line position in the new file of the first line. */
 
 LINENUM
-pch_newfirst()
+pch_newfirst(void)
 {
     return p_newfirst;
 }
@@ -1167,7 +1150,7 @@ pch_newfirst()
 /* Return the number of lines in the replacement text including context. */
 
 LINENUM
-pch_repl_lines()
+pch_repl_lines(void)
 {
     return p_repl_lines;
 }
@@ -1175,7 +1158,7 @@ pch_repl_lines()
 /* Return the number of lines in the whole hunk. */
 
 LINENUM
-pch_end()
+pch_end(void)
 {
     return p_end;
 }
@@ -1183,7 +1166,7 @@ pch_end()
 /* Return the number of context lines before the first changed line. */
 
 LINENUM
-pch_context()
+pch_context(void)
 {
     return p_context;
 }
@@ -1191,8 +1174,7 @@ pch_context()
 /* Return the length of a particular patch line. */
 
 short
-pch_line_len(line)
-LINENUM line;
+pch_line_len(LINENUM line)
 {
     return p_len[line];
 }
@@ -1200,8 +1182,7 @@ LINENUM line;
 /* Return the control character (+, -, *, !, etc) for a patch line. */
 
 char
-pch_char(line)
-LINENUM line;
+pch_char(LINENUM line)
 {
     return p_char[line];
 }
@@ -1209,8 +1190,7 @@ LINENUM line;
 /* Return a pointer to a particular patch line. */
 
 char *
-pfetch(line)
-LINENUM line;
+pfetch(LINENUM line)
 {
     return p_line[line];
 }
@@ -1218,7 +1198,7 @@ LINENUM line;
 /* Return where in the patch file this hunk began, for error messages. */
 
 LINENUM
-pch_hunk_beg()
+pch_hunk_beg(void)
 {
     return p_hunk_beg;
 }
@@ -1226,12 +1206,12 @@ pch_hunk_beg()
 /* Apply an ed script by feeding ed itself. */
 
 void
-do_ed_script()
+do_ed_script(void)
 {
-    Reg1 char *t;
-    Reg2 long beginning_of_this_line;
-    Reg3 bool this_line_is_command = FALSE;
-    Reg4 FILE *pipefp = NULL;
+    char *t;
+    long beginning_of_this_line;
+    bool this_line_is_command = FALSE;
+    FILE *pipefp = NULL;
 
     if (!skip_rest_of_patch) {
 	Unlink(TMPOUTNAME);
