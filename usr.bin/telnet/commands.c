@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.51 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.52 2003/07/12 13:33:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.51 2003/06/18 20:51:00 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.52 2003/07/12 13:33:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2343,10 +2343,8 @@ tn(int argc, char *argv[])
 	    getnameinfo(res0->ai_addr, res0->ai_addrlen,
 		_hostname, sizeof(_hostname), NULL, 0, NI_NAMEREQD) == 0)
 	    ; /* okay */
-	else {
-	    strncpy(_hostname, hostname, sizeof(_hostname) - 1);
-	    _hostname[sizeof(_hostname) - 1] = '\0';
-	}
+	else
+	    strlcpy(_hostname, hostname, sizeof(_hostname));
     } else {
 	/* FQDN - try again with forward DNS lookup */
 	memset(&hints, 0, sizeof(hints));
@@ -2362,12 +2360,10 @@ tn(int argc, char *argv[])
 	    fprintf(stderr, "%s: %s\n", hostname, gai_strerror(error));
 	    return 0;
 	}
-	if (res0->ai_canonname) {
-	    (void) strncpy(_hostname, res0->ai_canonname,
-	        sizeof(_hostname) - 1);
-	} else
-	    (void) strncpy(_hostname, hostname, sizeof(_hostname) - 1);
-	_hostname[sizeof(_hostname) - 1] = '\0';
+	if (res0->ai_canonname)
+	    (void)strlcpy(_hostname, res0->ai_canonname, sizeof(_hostname));
+	else
+	    (void)strlcpy(_hostname, hostname, sizeof(_hostname));
     }
     hostname = _hostname;
 

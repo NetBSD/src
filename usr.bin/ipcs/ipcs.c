@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.29 2003/04/07 01:42:37 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.30 2003/07/12 13:29:15 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -133,10 +133,9 @@ cvt_time(time_t t, char *buf, size_t buflen)
 {
 	struct tm *tm;
 
-	if (t == 0) {
-		(void)strncpy(buf, "no-entry", buflen - 1);
-		buf[buflen - 1] = '\0';
-	} else {
+	if (t == 0)
+		(void)strlcpy(buf, "no-entry", buflen);
+	else {
 		tm = localtime(&t);
 		(void)snprintf(buf, buflen, "%2d:%02d:%02d",
 			tm->tm_hour, tm->tm_min, tm->tm_sec);

@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.21 2003/01/16 09:38:41 kleink Exp $ */
+/* $NetBSD: sem.c,v 1.22 2003/07/12 13:24:52 itojun Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.21 2003/01/16 09:38:41 kleink Exp $");
+__RCSID("$NetBSD: sem.c,v 1.22 2003/07/12 13:24:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,8 +542,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	    (void)dcopy(SHOUT, 1);
 	    (void)dcopy(SHERR, 2);
 	    cp = splicepipe(t, t->t_dlef);
-	    (void)strncpy(tmp, short2str(cp), MAXPATHLEN);
-	    tmp[MAXPATHLEN] = '\0';
+	    (void)strlcpy(tmp, short2str(cp), sizeof(tmp));
 	    xfree((ptr_t) cp);
 	    if ((fd = open(tmp, O_RDONLY)) < 0) {
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
@@ -571,8 +570,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	char    tmp[MAXPATHLEN+1];
 
 	cp = splicepipe(t, t->t_drit);
-	(void)strncpy(tmp, short2str(cp), MAXPATHLEN);
-	tmp[MAXPATHLEN] = '\0';
+	(void)strlcpy(tmp, short2str(cp), sizeof(tmp));
 	xfree((ptr_t) cp);
 	/*
 	 * so > /dev/std{out,err} work

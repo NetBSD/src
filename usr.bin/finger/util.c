@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2003/01/20 05:30:11 simonb Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2003/07/12 13:28:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.19 2003/01/20 05:30:11 simonb Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 2003/07/12 13:28:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ match(pw, user)
 	if (!strcasecmp(pw->pw_name, user))
 		return(1);
 
-	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
+	(void)strlcpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
 
 	/* Ampersands get replaced by the login name. */
 	if (!(p = strsep(&bp, ",")))
@@ -365,8 +365,7 @@ userinfo(pn, pw)
 	pn->dir = strdup(pw->pw_dir);
 	pn->shell = strdup(pw->pw_shell);
 
-	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
-	tbuf[sizeof(tbuf) - 1] = '\0';
+	(void)strlcpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strsep(&bp, ",")))

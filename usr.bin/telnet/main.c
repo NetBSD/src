@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2003/07/12 13:33:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2003/06/18 20:51:00 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2003/07/12 13:33:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,7 @@ main(int argc, char *argv[])
 		    {
 			extern char *dest_realm, dst_realm_buf[], dst_realm_sz;
 			dest_realm = dst_realm_buf;
-			(void)strncpy(dest_realm, optarg, dst_realm_sz);
+			(void)strlcpy(dest_realm, optarg, dst_realm_sz);
 		    }
 #else
 			fprintf(stderr,

@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.22 2002/09/21 18:15:57 mycroft Exp $ */
+/* $NetBSD: netdate.c,v 1.23 2003/07/12 13:23:55 itojun Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.22 2002/09/21 18:15:57 mycroft Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.23 2003/07/12 13:23:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ netsettime(time_t tval)
 		goto bad;
 	}
 	hostname[sizeof(hostname) - 1] = '\0';
-	(void)strncpy(msg.tsp_name, hostname, sizeof(hostname));
+	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
 	msg.tsp_seq = htons((u_short)0);
 	msg.tsp_time.tv_sec = htonl((u_long)tval);
 	msg.tsp_time.tv_usec = htonl((u_long)0);
