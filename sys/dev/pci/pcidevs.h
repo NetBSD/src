@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.183 1999/12/17 01:03:45 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.184 1999/12/17 01:04:47 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.176 1999/12/17 01:02:03 soren Exp 
+ *	NetBSD: pcidevs,v 1.177 1999/12/17 01:04:29 soren Exp 
  */
 
 /*
@@ -934,7 +934,7 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
 
-/* Galileo Technology */
+/* Galileo Technology products */
 #define	PCI_PRODUCT_GALILEO_0x0146	GT-64010A		/* System Controller */
 #define	PCI_PRODUCT_GALILEO_0x4111	GT-64115		/* System Controller */
 #define	PCI_PRODUCT_GALILEO_0x4146	GT-64011/GT-64111		/* System Controller */
