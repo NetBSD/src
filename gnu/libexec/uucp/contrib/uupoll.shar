@@ -493,12 +493,12 @@ X                  not scan the uucico log.
 X
 X
 #if !defined(lint)
-static char rcsid[] = "$Id: uupoll.shar,v 1.1 1994/10/24 22:17:53 jtc Exp $";
+static char rcsid[] = "$Id: uupoll.shar,v 1.2 1995/08/24 05:19:19 jtc Exp $";
 #endif /* not lint */
 X
 /* $Log: uupoll.shar,v $
-/* Revision 1.1  1994/10/24 22:17:53  jtc
-/* Upgraded to Taylor UUCP 1.05 (Thanks to John Kohl).
+/* Revision 1.2  1995/08/24 05:19:19  jtc
+/* Upgraded to Taylor UUCP 1.06.1 (Thanks to John Kohl).
 /*
 X * Revision 2.8  1994/04/14  17:22:54  kdburg
 X * corrected misspelled AT_OPTION
@@ -1631,10 +1631,10 @@ sed 's/^X//' << 'SHAR_EOF' > 'uupoll/conf.h' &&
 #ifndef CONF
 X  #define CONF
 X
-/* $Id: uupoll.shar,v 1.1 1994/10/24 22:17:53 jtc Exp $ */
+/* $Id: uupoll.shar,v 1.2 1995/08/24 05:19:19 jtc Exp $ */
 /* $Log: uupoll.shar,v $
-/* Revision 1.1  1994/10/24 22:17:53  jtc
-/* Upgraded to Taylor UUCP 1.05 (Thanks to John Kohl).
+/* Revision 1.2  1995/08/24 05:19:19  jtc
+/* Upgraded to Taylor UUCP 1.06.1 (Thanks to John Kohl).
 /*
 X * Revision 1.9  1994/04/14  17:24:58  kdburg
 X * added comment to the AT_OPTION
@@ -1992,12 +1992,12 @@ X                - No alias expansion is done on the given names.
 */
 X
 #if !defined(lint)
-static char rcsid[] = "$Id: uupoll.shar,v 1.1 1994/10/24 22:17:53 jtc Exp $";
+static char rcsid[] = "$Id: uupoll.shar,v 1.2 1995/08/24 05:19:19 jtc Exp $";
 #endif /* not lint */
 X
 /* $Log: uupoll.shar,v $
-/* Revision 1.1  1994/10/24 22:17:53  jtc
-/* Upgraded to Taylor UUCP 1.05 (Thanks to John Kohl).
+/* Revision 1.2  1995/08/24 05:19:19  jtc
+/* Upgraded to Taylor UUCP 1.06.1 (Thanks to John Kohl).
 /*
 X * Revision 2.7  1994/04/14  17:22:04  kdburg
 X * major rework done
