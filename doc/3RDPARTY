@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.77 2003/03/27 17:45:59 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.78 2003/03/28 01:33:02 enami Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -71,7 +71,7 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
 Version:	8.3.4
-Current Vers:	4.9.11/8.3.4/9.2.1
+Current Vers:	4.9.11/8.3.4/9.2.2
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
@@ -129,7 +129,7 @@ Notes:
 
 Package:	bsd-family-tree
 Version:	1.68
-Current Vers:	1.68
+Current Vers:	1.69
 Maintainer:	
 Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
@@ -246,7 +246,7 @@ Notes:
 
 Package:	flex
 Version:	2.5.4
-Current Vers:	2.5.4a
+Current Vers:	2.5.4a/2.5.27
 Maintainer:	Vern Paxson <vern@ee.lbl.gov>
 Archive Site:	ftp://ftp.gnu.org/gnu/non-gnu/flex/
 Mailing List:
@@ -254,6 +254,8 @@ Responsible:	mikel
 Notes:
 flex 2.5.4a contains only copyright notice changes over version 2.5.4;
 internally not even the version number changed.
+Newer flex will be found in:
+	http://sourceforge.net/projects/lex/
 
 Package:	gawk
 Version:	3.0.3
@@ -265,7 +267,7 @@ Mailing List:	bug-gawk@gnu.org
 Responsible:
 Notes:
 Should look at ATT awk as a replacement for this. A download link
-is available at http://cm.bell-labs.com/cm/cs/awkbook/
+is available at http://cm.bell-labs.com/who/bwk/
 See also nawk entry below.
 
 Package:	gcc
@@ -335,7 +337,7 @@ Notes:
 
 Package:	heimdal
 Version:	0.5
-Current Vers:	0.5.1
+Current Vers:	0.5.2
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Mailing List:	heimdal-discuss@pdc.kth.se
@@ -392,7 +394,7 @@ repository.  Please contact itojun if you want to put changes.
 
 Package:	krb4
 Version:	1.2
-Current Vers:	1.2.1
+Current Vers:	1.2.2
 Maintainer:	kth-krb@pdc.kth.se
 Archive Site:	ftp://ftp.pdc.kth.se/pub/krb/src/
 Mailing List:	krb4@sics.se
@@ -458,7 +460,7 @@ Delete the otherOS directory before importing.
 
 Package:	nawk
 Version:	2000-11-15
-Current Vers:	2002-12-13
+Current Vers:	2003-03-14
 Maintainer:	Brian Kernighan <bwk@bell-labs.com> (Lucent Technologies)
 Archive Site:	http://cm.bell-labs.com/who/bwk/
 Mailing List:
@@ -493,7 +495,7 @@ X11 support and other things we don't want.
 
 Package:	ntp
 Version:	4.0.99i
-Current Vers:	4.1.1c-rc1/4.1.73
+Current Vers:	4.1.1c-rc1/4.1.74
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
 Mailing List:	
@@ -737,7 +739,7 @@ Notes:
 
 Package:	tz
 Version:	tzcode2002b / tzdata2002d
-Current Vers:	tzcode2002d / tzdata2002d
+Current Vers:	tzcode2003a / tzdata2003a
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Mailing List:	tz@elsie.nci.nih.gov
