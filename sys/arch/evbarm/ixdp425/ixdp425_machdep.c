@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.3 2003/05/31 23:57:46 ichiro Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.4 2003/06/01 01:49:57 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -774,21 +774,6 @@ initarm(void *arg)
 /*
  * consinit
  */
-static const struct uart_info {
-        const char      *name;
-        u_int32_t       hw_addr;
-        u_int32_t       v_addr;
-} comcn_config[] = {
-	{ "HighSpeed Serial (UART0)",
-	  IXP425_UART0_HWBASE,
-	  IXP425_UART0_VBASE,
-	},
-	{ "Console (UART1)",
-	  IXP425_UART1_HWBASE,
-	  IXP425_UART1_VBASE,
-	},
-};
-
 void
 consinit(void)
 {
@@ -799,9 +784,7 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
-
-	if (ixp4xx_comcnattach(&ixpsip_bs_tag, comcn_config[comcnunit].hw_addr,
-		comcn_config[comcnunit].v_addr, comcnspeed, FREQ, comcnmode,
-		(char *)comcn_config[comcnunit].name))
-		panic("can't init serial console (%s)", comcn_config[comcnunit].name);
+	if (ixdp_ixp4xx_comcnattach(&ixpsip_bs_tag, comcnunit,
+				comcnspeed, FREQ, comcnmode))
+		panic("can't init serial console (UART%d)", comcnunit);
 }
