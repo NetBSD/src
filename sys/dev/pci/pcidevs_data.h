@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.530 2003/06/07 04:17:10 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.531 2003/06/07 04:29:49 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.531 2003/06/07 04:16:25 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.532 2003/06/07 04:28:09 ichiro Exp 
  */
 
 /*
@@ -4432,19 +4432,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82855GM Host-to-Hub Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD,
 	    0,
 	    "Intel",
 	    "82855PM GMCH Integrated Graphics Device",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MC,
 	    0,
 	    "Intel",
 	    "82855PM GMCH Memory Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_CP,
 	    0,
 	    "Intel",
 	    "82855PM GMCH Configuration Process",
