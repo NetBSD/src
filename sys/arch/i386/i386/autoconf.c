@@ -1,5 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67 2003/03/21 23:11:19 dsl Exp $	*/
-#define GEOM_DEBUG
+/*	$NetBSD: autoconf.c,v 1.68 2003/03/22 13:05:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2003/03/21 23:11:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2003/03/22 13:05:26 dsl Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -227,9 +226,11 @@ matchbiosdisks()
 		i386_alldisks->dl_biosdisks[i].bi_lbasecs = big->disk[i].totsec;
 		i386_alldisks->dl_biosdisks[i].bi_flags = big->disk[i].flags;
 #ifdef GEOM_DEBUG
+#ifdef NOTYET
 		printf("disk %x: flags %x, interface %x, device %llx\n",
 			big->disk[i].dev, big->disk[i].flags,
 			big->disk[i].interface_path, big->disk[i].device_path);
+#endif
 #endif
 	}
 
