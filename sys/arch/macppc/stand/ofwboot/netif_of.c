@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.5 2002/03/29 15:15:07 tsutsui Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.6 2003/03/13 11:35:55 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -50,14 +50,13 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 
 #include "ofdev.h"
 #include "openfirm.h"
 
-static struct netif netif_of;
+#include "netif_of.h"
 
-struct iodesc sockets[SOPEN_MAX];
+struct iodesc sockets[1];
 
 struct iodesc *
 socktodesc(sock)
@@ -69,10 +68,9 @@ socktodesc(sock)
 }
 
 int
-netif_open(machdep_hint)
-	void *machdep_hint;
+netif_of_open(op)
+	struct of_dev *op;
 {
-	struct of_dev *op = machdep_hint;
 	struct iodesc *io;
 	int fd, error;
 	char addr[32];
@@ -91,8 +89,7 @@ netif_open(machdep_hint)
 	}
 	memset(io, 0, sizeof *io);
 
-	netif_of.nif_devdata = op;
-	io->io_netif = &netif_of;
+	io->io_netif = op;
 
 	/* Put our ethernet address in io->myea */
 	OF_getprop(OF_instance_to_package(op->handle),
@@ -107,11 +104,10 @@ netif_open(machdep_hint)
 }
 
 int
-netif_close(fd)
+netif_of_close(fd)
 	int fd;
 {
 	struct iodesc *io;
-	struct netif *ni;
 
 #ifdef	NETIF_DEBUG
 	printf("netif_close(%x)...", fd);
@@ -125,11 +121,8 @@ netif_close(fd)
 	}
 
 	io = &sockets[fd];
-	ni = io->io_netif;
-	if (ni != NULL) {
-		ni->nif_devdata = NULL;
-		io->io_netif = NULL;
-	}
+	io->io_netif = NULL;
+
 #ifdef	NETIF_DEBUG
 	printf("OK\n");
 #endif
@@ -150,7 +143,7 @@ netif_put(desc, pkt, len)
 	ssize_t rv;
 	size_t sendlen;
 
-	op = desc->io_netif->nif_devdata;
+	op = desc->io_netif;
 
 #ifdef	NETIF_DEBUG
 	{
@@ -201,7 +194,7 @@ netif_get(desc, pkt, maxlen, timo)
 	int tick0, tmo_ms;
 	int len;
 
-	op = desc->io_netif->nif_devdata;
+	op = desc->io_netif;
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 2002/03/29 15:15:07 tsutsui Exp $	*/
+/*	$NetBSD: net.c,v 1.4 2003/03/13 11:35:54 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
  *
  * At open time, this does:
  *
- * find interface	- netif_open()
+ * find interface	- netif_of_open()
  * BOOTP		- bootp()
  * RPC/mountd		- nfs_mount()
  *
@@ -59,9 +59,11 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 
 #include <lib/libkern/libkern.h>
+
+#include "ofdev.h"
+#include "netif_of.h"
 
 char	rootpath[FNAME_SIZE];
 
@@ -83,7 +85,7 @@ net_open(op)
 	 */
 	if (open_count == 0) {
 		/* Find network interface. */
-		if ((netdev_sock = netif_open(op)) < 0) {
+		if ((netdev_sock = netif_of_open(op)) < 0) {
 			error = errno;
 			goto bad;
 		}
@@ -93,7 +95,7 @@ net_open(op)
 	open_count++;
 bad:
 	if (netdev_sock >= 0 && open_count == 0) {
-		netif_close(netdev_sock);
+		netif_of_close(netdev_sock);
 		netdev_sock = -1;
 	}
 	return error;
@@ -108,7 +110,7 @@ net_close(op)
 	 */
 	if (open_count > 0)
 		if (--open_count == 0) {
-			netif_close(netdev_sock);
+			netif_of_close(netdev_sock);
 			netdev_sock = -1;
 		}
 }
