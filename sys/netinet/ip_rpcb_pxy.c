@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.1.1 2004/03/28 08:56:49 martti Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.1.1.2.1 2004/08/13 03:56:01 jmc Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -39,7 +39,7 @@
  *   o The enclosed hack of STREAMS support is pretty sick and most likely
  *     broken.
  *
- *	Id: ip_rpcb_pxy.c,v 2.25 2004/01/31 14:48:46 darrenr Exp
+ *	Id: ip_rpcb_pxy.c,v 2.25.2.1 2004/05/04 03:47:49 darrenr Exp
  */
 
 #define	IPF_RPCB_PROXY
@@ -222,7 +222,8 @@ ippr_rpcb_in(fin, aps, nat)
 	rs = (rpcb_session_t *)aps->aps_data;
 
 	m = fin->fin_m;
-	off = (char *)fin->fin_dp - MTOD(m, char *) + sizeof(udphdr_t);
+	off = (char *)fin->fin_dp - (char *)fin->fin_ip;
+	off += sizeof(udphdr_t) + fin->fin_ipoff;
 	dlen = fin->fin_dlen - sizeof(udphdr_t);
 
 	/* Disallow packets outside legal range for supported requests. */
@@ -293,7 +294,8 @@ ippr_rpcb_out(fin, aps, nat)
 	rs = (rpcb_session_t *)aps->aps_data;
 
 	m = fin->fin_m;
-	off = (char *)fin->fin_dp - MTOD(m, char *) + sizeof(udphdr_t);
+	off = (char *)fin->fin_dp - (char *)fin->fin_ip;
+	off += sizeof(udphdr_t) + fin->fin_ipoff;
 	dlen = fin->fin_dlen - sizeof(udphdr_t);
 	diff = 0;
 
