@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.92 2001/04/19 17:48:46 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.93 2001/04/21 22:03:21 ross Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.92 2001/04/19 17:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.93 2001/04/21 22:03:21 ross Exp $");
 
 #include "assym.h"
 
@@ -106,18 +106,18 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.92 2001/04/19 17:48:46 thorpej Exp $");
 
 #else	/* if not MULTIPROCESSOR... */
 
-IMPORT(cpu_info_store, CPU_INFO_SIZEOF)
+IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 
-#define	GET_CPUINFO		lda v0, cpu_info_store
+#define	GET_CPUINFO		lda v0, cpu_info_primary
 
-#define	GET_CURPROC		lda v0, cpu_info_store + CPU_INFO_CURPROC
+#define	GET_CURPROC		lda v0, cpu_info_primary + CPU_INFO_CURPROC
 
-#define	GET_FPCURPROC		lda v0, cpu_info_store + CPU_INFO_FPCURPROC
+#define	GET_FPCURPROC		lda v0, cpu_info_primary + CPU_INFO_FPCURPROC
 
-#define	GET_CURPCB		lda v0, cpu_info_store + CPU_INFO_CURPCB
+#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
 
 #define	GET_IDLE_PCB(reg)						\
-	lda	reg, cpu_info_store				;	\
+	lda	reg, cpu_info_primary				;	\
 	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(reg)
 #endif
 
