@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_error.c,v 1.2 1995/04/22 19:48:32 christos Exp $	*/
+/*	$NetBSD: linux_error.c,v 1.3 1998/02/06 08:26:02 mikel Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -116,7 +116,7 @@ int linux_error[] = {
 	-LINUX_ENOSYS,		/* not mapped (EFTYPE) */
 	-LINUX_ENOSYS,		/* not mapped (EAUTH) */
 	-LINUX_ENOSYS,		/* not mapped (ENEEDAUTH) */
-	-LINUX_ENOSYS,		/* not mapped (ELAST) */
+	-LINUX_EIDRM,
 
 	/*
 	 * The rest of the list consists of errors that only
@@ -126,7 +126,6 @@ int linux_error[] = {
 	 */
 
 	-LINUX_ENOMSG,
-	-LINUX_EIDRM,
 	-LINUX_ECHRNG,
 	-LINUX_EL2NSYNC,
 	-LINUX_EL3HLT,
