@@ -1,11 +1,10 @@
 #	from: @(#)Makefile	5.12 (Berkeley) 7/1/90
-#	$NetBSD: Makefile,v 1.5 1997/10/17 08:00:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 1997/11/08 15:11:47 lukem Exp $
 
 PROG=	htable
 SRCS=	htable.c parse.c scan.c
 MAN=	htable.8
-CFLAGS+=-I. -I${.CURDIR}
-CPPFLAGS+=-DYY_NO_UNPUT
+CPPFLAGS+=-DYY_NO_UNPUT -I. -I${.CURDIR}
 LDADD+=	-ll
 DPADD+=	${LIBL}
 CLEANFILES+=parse.c scan.c y.tab.h

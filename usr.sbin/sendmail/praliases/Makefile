@@ -2,6 +2,6 @@
 
 PROG=	praliases
 MAN=	praliases.8
-CFLAGS+=-I${.CURDIR}/../src
+CPPFLAGS+=-I${.CURDIR}/../src
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/07/14 08:33:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 1997/11/08 15:12:20 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 SRCS=	pstat.c swaplist.c
@@ -9,7 +9,7 @@ BINMODE=2555
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 
-CFLAGS+=-I${.CURDIR}/../../sbin/swapctl
+CPPFLAGS+=-I${.CURDIR}/../../sbin/swapctl
 
 .PATH: ${.CURDIR}/../../sbin/swapctl
 
