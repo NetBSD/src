@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.25 2001/12/18 03:04:03 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.26 2002/03/04 15:18:32 sommerfeld Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.25 2001/12/18 03:04:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.26 2002/03/04 15:18:32 sommerfeld Exp $");
 
 #include "opt_inet.h"
 
@@ -151,11 +151,6 @@ static mifi_t nummifs = 0;
 static mifi_t reg_mif_num = (mifi_t)-1;
 
 static struct pim6stat pim6stat;
-
-/*
- * one-back cache used by ipip_input to locate a tunnel's mif
- * given a datagram's src ip address.
- */
 static int pim6;
 
 /*
@@ -770,7 +765,7 @@ add_m6fc(mfccp)
 #endif
 
 		for (rt = mf6ctable[hash]; rt; rt = rt->mf6c_next) {
-	
+
 			if (IN6_ARE_ADDR_EQUAL(&rt->mf6c_origin.sin6_addr,
 					       &mfccp->mf6cc_origin.sin6_addr)&&
 			    IN6_ARE_ADDR_EQUAL(&rt->mf6c_mcastgrp.sin6_addr,
@@ -798,7 +793,7 @@ add_m6fc(mfccp)
 				splx(s);
 				return ENOBUFS;
 			}
-	
+
 			/* insert new entry at head of hash chain */
 			rt->mf6c_origin     = mfccp->mf6cc_origin;
 			rt->mf6c_mcastgrp   = mfccp->mf6cc_mcastgrp;
@@ -810,7 +805,7 @@ add_m6fc(mfccp)
 			rt->mf6c_wrong_if   = 0;
 			rt->mf6c_expire     = 0;
 			rt->mf6c_stall = NULL;
-	
+
 			/* link into table */
 			rt->mf6c_next  = mf6ctable[hash];
 			mf6ctable[hash] = rt;
@@ -837,11 +832,11 @@ collate(t)
 	if (TV_LT(*t, tp))
 	{
 		TV_DELTA(tp, *t, delta);
-	
+
 		d = delta >> 10;
 		if (d > UPCALL_MAX)
 			d = UPCALL_MAX;
-	
+
 		++upcall_data[d];
 	}
 }
@@ -1037,7 +1032,7 @@ ip6_mforward(ip6, ifp, m)
 			splx(s);
 			return ENOBUFS;
 		}
-	
+
 		/* is there an upcall waiting for this packet? */
 		hash = MF6CHASH(ip6->ip6_src, ip6->ip6_dst);
 		for (rt = mf6ctable[hash]; rt; rt = rt->mf6c_next) {
@@ -1080,7 +1075,7 @@ ip6_mforward(ip6, ifp, m)
 			 * Send message to routing daemon
 			 */
 			sin6.sin6_addr = ip6->ip6_src;
-	
+
 			im = NULL;
 			oim = NULL;
 			switch (ip6_mrouter_ver) {
@@ -1312,7 +1307,7 @@ ip6_mdq(m, ifp, rt)
 					mm = m_pullup(mm, sizeof(struct ip6_hdr));
 				if (mm == NULL)
 					return ENOBUFS;
-	
+
 				oim = NULL;
 				im = NULL;
 				switch (ip6_mrouter_ver) {
@@ -1699,7 +1694,7 @@ pim6_input(mp, offp, proto)
 		struct ip6_hdr *eip6;
 		u_int32_t *reghdr;
 		int rc;
-	
+
 		++pim6stat.pim6s_rcv_registers;
 
 		if ((reg_mif_num >= nummifs) || (reg_mif_num == (mifi_t) -1)) {
@@ -1712,9 +1707,9 @@ pim6_input(mp, offp, proto)
 			m_freem(m);
 			return(IPPROTO_DONE);
 		}
-	
+
 		reghdr = (u_int32_t *)(pim + 1);
-	
+
 		if ((ntohl(*reghdr) & PIM_NULL_REGISTER))
 			goto pim6_input_to_daemon;
 
@@ -1733,9 +1728,9 @@ pim6_input(mp, offp, proto)
 			m_freem(m);
 			return(IPPROTO_DONE);
 		}
-	
+
 		eip6 = (struct ip6_hdr *) (reghdr + 1);
-#ifdef MRT6DEBUG	
+#ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_PIM)
 			log(LOG_DEBUG,
 			    "pim6_input[register], eip6: %s -> %s, "
@@ -1756,7 +1751,7 @@ pim6_input(mp, offp, proto)
 			m_freem(m);
 			return(IPPROTO_NONE);
 		}
-	
+
 		/* verify the inner packet is destined to a mcast group */
 		if (!IN6_IS_ADDR_MULTICAST(&eip6->ip6_dst)) {
 			++pim6stat.pim6s_rcv_badregisters;
@@ -1770,7 +1765,7 @@ pim6_input(mp, offp, proto)
 			m_freem(m);
 			return(IPPROTO_DONE);
 		}
-	
+
 		/*
 		 * make a copy of the whole header to pass to the daemon later.
 		 */
@@ -1784,7 +1779,7 @@ pim6_input(mp, offp, proto)
 			m_freem(m);
 			return(IPPROTO_DONE);
 		}
-	
+
 		/*
 		 * forward the inner ip6 packet; point m_data at the inner ip6.
 		 */
@@ -1803,7 +1798,7 @@ pim6_input(mp, offp, proto)
  		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
 			      (struct sockaddr *) &dst,
 			      (struct rtentry *) NULL);
-	
+
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;
 	}
