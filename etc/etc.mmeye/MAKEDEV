@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.23 2002/06/18 13:54:40 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.24 2002/07/18 15:07:50 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -180,9 +180,9 @@ md*)
 	unit=${i#md};	chr=24;	blk=17
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
-	mknod md${unit}d  b $blk $(($unit * 8 + 3))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
 #	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
-#	mknod rmd${unit}d c $chr $(($unit * 8 + 3))
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
@@ -337,9 +337,9 @@ cd*|mcd*)
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
 	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
