@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.18 1998/08/15 10:18:16 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.19 1998/08/22 10:55:33 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ le_pcc_wrcsr(sc, port, val)
 	struct lance_softc *sc;
 	u_int16_t port, val;
 {
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
@@ -152,7 +152,7 @@ le_pcc_rdcsr(sc, port)
 	struct lance_softc *sc;
 	u_int16_t port;
 {
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	ler1->ler1_rap = port;

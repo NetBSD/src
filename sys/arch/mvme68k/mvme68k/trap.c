@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 1998/08/16 15:33:48 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 1998/08/22 10:55:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,8 +154,8 @@ int next_sir;
  */
 static inline void
 userret(p, fp, oticks, faultaddr, fromtrap)
-	register struct proc *p;
-	register struct frame *fp;
+	struct proc *p;
+	struct frame *fp;
 	u_quad_t oticks;
 	u_int faultaddr;
 	int fromtrap;
@@ -235,15 +235,15 @@ again:
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
-	register unsigned v;
+	unsigned v;
 	struct frame frame;
 {
 	extern char fubail[], subail[];
 #ifdef DDB
 	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
 #endif
-	register struct proc *p;
-	register int i;
+	struct proc *p;
+	int i;
 	u_int ucode;
 	u_quad_t sticks;
 #ifdef COMPAT_HPUX
@@ -513,9 +513,9 @@ copyfault:
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		vaddr_t va;
+		struct vmspace *vm = p->p_vmspace;
+		vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
@@ -542,7 +542,7 @@ copyfault:
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		va = trunc_page((vm_offset_t)v);
+		va = trunc_page((vaddr_t)v);
 #ifdef DEBUG
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", v);
@@ -551,7 +551,7 @@ copyfault:
 #endif
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
-			vm_offset_t bva;
+			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != KERN_SUCCESS) {
@@ -656,8 +656,8 @@ writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
 {
-	register struct fmt7 *f = &fp->f_fmt7;
-	register struct proc *p = curproc;
+	struct fmt7 *f = &fp->f_fmt7;
+	struct proc *p = curproc;
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
@@ -697,13 +697,13 @@ writeback(fp, docachepush)
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 				   trunc_page(f->f_fa), VM_PROT_WRITE, TRUE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(pmap_kernel(), (vm_offset_t)fa));
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-				    (vm_offset_t)&vmmap[NBPG]);
+			DCFL(pmap_extract(pmap_kernel(), (vaddr_t)fa));
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+				    (vaddr_t)&vmmap[NBPG]);
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
@@ -740,8 +740,8 @@ writeback(fp, docachepush)
 		 * Writeback #1.
 		 * Position the "memory-aligned" data and write it out.
 		 */
-		register u_int wb1d = f->f_wb1d;
-		register int off;
+		u_int wb1d = f->f_wb1d;
+		int off;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -884,7 +884,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 dumpssw(ssw)
-	register u_short ssw;
+	u_short ssw;
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -914,14 +914,14 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	register struct proc *p = curproc;
-	vm_offset_t pa;
+	struct proc *p = curproc;
+	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("	       PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a);
+	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a);
 	if (pa == 0)
 		printf("<invalid address>");
 	else
@@ -935,15 +935,15 @@ dumpwb(num, s, a, d)
  * Process a system call.
  */
 syscall(code, frame)
-	register_t code;
+	int code;
 	struct frame frame;
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
-	register_t args[8], rval[2];
+	int args[8], rval[2];
 	u_quad_t sticks;
 
 #if defined(UVM)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.14 1998/01/12 19:51:14 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.15 1998/08/22 10:55:33 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -232,8 +232,8 @@ int
 zshard(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit, rval;
+	struct zsc_softc *zsc;
+	int unit, rval;
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
@@ -262,8 +262,8 @@ int
 zssoft(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit;
+	struct zsc_softc *zsc;
+	int unit;
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
@@ -406,7 +406,7 @@ zs_write_reg(cs, reg, val)
 u_char zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
@@ -424,7 +424,7 @@ void  zs_write_csr(cs, val)
 u_char zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_data;
 	ZS_DELAY();
@@ -450,8 +450,8 @@ int
 zs_getc(arg)
 	void *arg;
 {
-	register struct zs_chanstate *cs = arg;
-	register int s, c, rr0, stat;
+	struct zs_chanstate *cs = arg;
+	int s, c, rr0, stat;
 
 	s = splhigh();
  top:
@@ -484,8 +484,8 @@ zs_putc(arg, c)
 	void *arg;
 	int c;
 {
-	register struct zs_chanstate *cs = arg;
-	register int s, rr0;
+	struct zs_chanstate *cs = arg;
+	int s, rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */
@@ -547,8 +547,8 @@ int
 zscngetc(dev)
 	dev_t dev;
 {
-	register struct zs_chanstate *cs = zs_conschan;
-	register int c;
+	struct zs_chanstate *cs = zs_conschan;
+	int c;
 
 	c = zs_getc(cs);
 	return (c);
@@ -562,7 +562,7 @@ zscnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	register struct zs_chanstate *cs = zs_conschan;
+	struct zs_chanstate *cs = zs_conschan;
 
 	zs_putc(cs, c);
 }
