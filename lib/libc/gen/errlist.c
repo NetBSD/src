@@ -19,5 +19,5 @@ __weak_reference(__sys_nerr, sys_nerr);
 
 #define __sys_errlist	sys_errlist
 #define __sys_nerr	sys_nerr
-#include "_errlst.c"
+#include "_errlist.c"
 #endif
