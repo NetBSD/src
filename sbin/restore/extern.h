@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.2 (Berkeley) 1/7/94
- *	$Id: extern.h,v 1.3 1995/02/20 19:43:52 mycroft Exp $
+ *	@(#)extern.h	8.2 (Berkeley) 1/7/94
  */
 
 struct entry	*addentry __P((char *, ino_t, int));

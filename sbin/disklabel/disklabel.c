@@ -1,3 +1,5 @@
+/*	$NetBSD: disklabel.c,v 1.23 1995/03/18 14:54:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,9 +43,12 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
-/* from static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.22 1995/02/10 23:24:19 cgd Exp $";
+static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
+#else
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.23 1995/03/18 14:54:40 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

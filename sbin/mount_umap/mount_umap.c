@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_umap.c,v 1.3 1995/03/18 14:58:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mount_umap.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_umap.c,v 1.2 1994/10/31 04:29:39 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
+#else
+static char rcsid[] = "$NetBSD: mount_umap.c,v 1.3 1995/03/18 14:58:17 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$Id: Makefile,v 1.8 1994/12/22 10:47:10 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1995/03/18 14:58:37 cgd Exp $
+#	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c

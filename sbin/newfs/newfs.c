@@ -1,3 +1,5 @@
+/*	$NetBSD: newfs.c,v 1.18 1995/03/18 14:58:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)newfs.c	8.8 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: newfs.c,v 1.17 1995/03/18 07:02:38 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
+#else
+static char rcsid[] = "$NetBSD: newfs.c,v 1.18 1995/03/18 14:58:43 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

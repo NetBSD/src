@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1995/01/18 08:37:48 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1995/03/18 14:57:08 cgd Exp $
 
 PROG=	mount_ados
 SRCS=	mount_ados.c getmntopts.c

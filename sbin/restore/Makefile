@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.13 1994/12/22 10:48:16 cgd Exp $
+#	$NetBSD: Makefile,v 1.14 1995/03/18 14:59:39 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	restore
 LINKS=	${BINDIR}/restore ${BINDIR}/rrestore

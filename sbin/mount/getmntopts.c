@@ -1,3 +1,5 @@
+/*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)getmntopts.c	8.1 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: getmntopts.c,v 1.2 1994/06/24 07:32:01 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
+#else
+static char rcsid[] = "$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

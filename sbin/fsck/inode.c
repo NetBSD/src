@@ -1,3 +1,5 @@
+/*	$NetBSD: inode.c,v 1.13 1995/03/18 14:55:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)inode.c	8.4 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: inode.c,v 1.12 1994/12/05 20:15:50 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)inode.c	8.4 (Berkeley) 4/18/94";
+#else
+static char rcsid[] = "$NetBSD: inode.c,v 1.13 1995/03/18 14:55:46 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

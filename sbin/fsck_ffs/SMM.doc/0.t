@@ -1,5 +1,7 @@
+.\"	$NetBSD: 0.t,v 1.2 1995/03/18 14:56:05 cgd Exp $
+.\"
 .\" Copyright (c) 1986, 1993
-.\"  The Regents of the University of California.  All rights reserved.
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions

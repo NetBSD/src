@@ -1,3 +1,5 @@
+/*	$NetBSD: ccitt_addr.c,v 1.7 1995/03/18 15:00:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ccitt_addr.c	8.1 (Berkeley) 6/5/93
- *	$Id: ccitt_addr.c,v 1.6 1994/09/23 14:28:01 mycroft Exp $
+ *	@(#)ccitt_addr.c	8.1 (Berkeley) 6/5/93
  */
 /*
  * parse CCITT addresses

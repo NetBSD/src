@@ -1,3 +1,4 @@
+%	$NetBSD: umap_manual,v 1.2 1995/03/18 14:58:19 cgd Exp $
 
 \appendix
 \section{The umap Layer} \label{sect:umap}

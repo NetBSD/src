@@ -1,3 +1,5 @@
+/*	$NetBSD: interface.h,v 1.7 1995/03/18 15:00:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)interface.h	8.1 (Berkeley) 6/5/93
- *	$Id: interface.h,v 1.6 1994/05/13 08:04:41 mycroft Exp $
+ *	@(#)interface.h	8.1 (Berkeley) 6/5/93
  */
 
 /*

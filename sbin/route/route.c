@@ -1,3 +1,5 @@
+/*	$NetBSD: route.c,v 1.11 1995/03/18 15:00:15 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/19/94";*/
-static char *rcsid = "$Id: route.c,v 1.10 1994/12/24 11:07:28 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
+#else
+static char rcsid[] = "$NetBSD: route.c,v 1.11 1995/03/18 15:00:15 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: modload.c,v 1.12 1995/03/18 14:56:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
@@ -28,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: modload.c,v 1.11 1994/12/18 00:16:11 cgd Exp $
  */
 
 #include <sys/param.h>

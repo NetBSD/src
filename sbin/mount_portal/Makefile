@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.3 (Berkeley) 3/27/94
-#	$Id: Makefile,v 1.9 1994/12/22 10:46:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 1995/03/18 14:57:50 cgd Exp $
+#	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 PROG=	mount_portal
 SRCS=	mount_portal.c activate.c conf.c getmntopts.c pt_conf.c \

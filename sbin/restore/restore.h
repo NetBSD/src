@@ -1,3 +1,5 @@
+/*	$NetBSD: restore.h,v 1.7 1995/03/18 14:59:53 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)restore.h	8.3 (Berkeley) 9/13/94
- *	$Id: restore.h,v 1.6 1994/12/28 02:21:50 mycroft Exp $
+ *	@(#)restore.h	8.3 (Berkeley) 9/13/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: activate.c,v 1.4 1995/03/18 14:57:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: activate.c,v 1.2 1992/05/27 07:09:27 jsp Exp
- *	from: @(#)activate.c	8.2 (Berkeley) 3/27/94
- *	$Id: activate.c,v 1.3 1994/09/23 14:27:33 mycroft Exp $
+ *	@(#)activate.c	8.2 (Berkeley) 3/27/94
  */
 
 #include <stdio.h>

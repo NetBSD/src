@@ -1,3 +1,5 @@
+/*	$NetBSD: dump.h,v 1.9 1995/03/18 14:54:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dump.h	8.1 (Berkeley) 6/5/93
- *	$Id: dump.h,v 1.8 1994/09/23 14:27:02 mycroft Exp $
+ *	@(#)dump.h	8.1 (Berkeley) 6/5/93
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))

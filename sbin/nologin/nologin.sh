@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: nologin.sh,v 1.3 1995/03/18 14:59:11 cgd Exp $
+#
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -31,8 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	from: @(#)nologin.sh	8.1 (Berkeley) 6/5/93
-#	$Id: nologin.sh,v 1.2 1994/09/23 01:47:34 mycroft Exp $
+#	@(#)nologin.sh	8.1 (Berkeley) 6/5/93
 #
 
 echo 'This account is currently not available.'

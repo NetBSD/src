@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.6 1995/03/18 14:57:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	8.2 (Berkeley) 3/27/94
- *	$Id: pathnames.h,v 1.5 1994/06/08 19:02:46 mycroft Exp $
+ *	@(#)pathnames.h	8.2 (Berkeley) 3/27/94
  */
 
 #define _PATH_SBIN	"/sbin"

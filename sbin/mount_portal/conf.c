@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.3 1995/03/18 14:57:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: conf.c,v 1.2 1992/05/27 07:09:27 jsp Exp
- *	from: @(#)conf.c	8.2 (Berkeley) 3/27/94
- *	$Id: conf.c,v 1.2 1994/06/08 19:24:46 mycroft Exp $
+ *	@(#)conf.c	8.2 (Berkeley) 3/27/94
  */
 
 #include <stdio.h>

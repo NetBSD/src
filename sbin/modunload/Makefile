@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.6 1995/03/18 14:56:48 cgd Exp $
 #
 # Makefile for modunload
 #
@@ -32,9 +33,6 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-#
-#	$Id: Makefile,v 1.5 1994/12/22 10:45:39 cgd Exp $
-#
 
 PROG=	modunload
 MAN=	modunload.8

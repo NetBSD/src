@@ -1,3 +1,5 @@
+/*	$NetBSD: mkfs.c,v 1.19 1995/03/18 14:58:39 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkfs.c	8.3 (Berkeley) 2/3/94";*/
-static char *rcsid = "$Id: mkfs.c,v 1.18 1995/03/18 07:02:29 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
+#else
+static char rcsid[] = "$NetBSD: mkfs.c,v 1.19 1995/03/18 14:58:39 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

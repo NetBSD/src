@@ -1,3 +1,5 @@
+/*	$NetBSD: traverse.c,v 1.9 1995/03/18 14:55:09 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)traverse.c	8.2 (Berkeley) 9/23/93";*/
-static char *rcsid = "$Id: traverse.c,v 1.8 1995/01/30 20:32:01 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
+#else
+static char rcsid[] = "$NetBSD: traverse.c,v 1.9 1995/03/18 14:55:09 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

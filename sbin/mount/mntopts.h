@@ -1,3 +1,5 @@
+/*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *      The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mntopts.h	8.3 (Berkeley) 3/27/94
- *	$Id: mntopts.h,v 1.2 1994/06/24 07:32:05 deraadt Exp $
+ *	@(#)mntopts.h	8.3 (Berkeley) 3/27/94
  */
 
 struct mntopt {

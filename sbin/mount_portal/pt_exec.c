@@ -1,3 +1,5 @@
+/*	$NetBSD: pt_exec.c,v 1.3 1995/03/18 14:58:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: pt_exec.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	from: @(#)pt_exec.c	8.1 (Berkeley) 6/5/93
- *	$Id: pt_exec.c,v 1.2 1994/06/08 19:24:54 mycroft Exp $
+ *	@(#)pt_exec.c	8.1 (Berkeley) 6/5/93
  */
 
 #include <stdio.h>

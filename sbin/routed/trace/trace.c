@@ -1,3 +1,5 @@
+/*	$NetBSD: trace.c,v 1.7 1995/03/18 15:00:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)trace.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: trace.c,v 1.6 1994/09/23 14:28:14 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: trace.c,v 1.7 1995/03/18 15:00:57 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

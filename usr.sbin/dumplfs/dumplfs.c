@@ -1,3 +1,5 @@
+/*	$NetBSD: dumplfs.c,v 1.5 1995/03/18 14:55:21 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dumplfs.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dumplfs.c,v 1.4 1994/12/05 20:15:39 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)dumplfs.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: dumplfs.c,v 1.5 1995/03/18 14:55:21 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

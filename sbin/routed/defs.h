@@ -1,3 +1,5 @@
+/*	$NetBSD: defs.h,v 1.9 1995/03/18 15:00:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)defs.h	8.1 (Berkeley) 6/5/93
- *	$Id: defs.h,v 1.8 1994/12/18 05:43:51 cgd Exp $
+ *	@(#)defs.h	8.1 (Berkeley) 6/5/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: modunload.c,v 1.8 1995/03/18 14:56:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
@@ -28,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: modunload.c,v 1.7 1994/12/18 00:17:49 cgd Exp $
  */
 
 #include <sys/param.h>

@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.3 (Berkeley) 3/27/94
-#	$Id: Makefile,v 1.4 1995/01/09 10:20:11 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1995/03/18 14:58:21 cgd Exp $
+#	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 PROG=	mount_union
 SRCS=	mount_union.c getmntopts.c
