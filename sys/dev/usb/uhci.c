@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.64 1999/11/13 23:58:01 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.65 1999/11/16 22:19:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1014,7 +1014,8 @@ uhci_idone(ii)
 	}
 
 #ifdef UHCI_DEBUG
-	DPRINTFN(10, ("uhci_idone: ii=%p ready\n", ii));
+	DPRINTFN(10, ("uhci_idone: ii=%p, xfer=%p, pipe=%p ready\n",
+		      ii, xfer, upipe));
 	if (uhcidebug > 10)
 		uhci_dump_tds(ii->stdstart);
 #endif
@@ -1495,6 +1496,8 @@ uhci_abort_req(xfer, status)
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 	uhci_intr_info_t *ii = upipe->iinfo;
 	uhci_soft_td_t *std;
+
+	DPRINTFN(1,("uhci_abort_req: xfer=%p, status=%d\n", xfer, status));
 
 	/* Make interrupt routine ignore it, */
 	xfer->status = status;
