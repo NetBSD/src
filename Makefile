@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.95 1999/04/01 02:49:12 cjs Exp $
+#	$NetBSD: Makefile,v 1.95.2.1 2000/08/26 19:00:36 he Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
+.PHONY: release
+
+TARGETS+=      release
+
 # information, see http://www.netbsd.org/developers/releng/index.html
 #
 # Not everything you can set or do is documented in this makefile. In
@@ -45,6 +49,10 @@ _J= -j${NBUILDJOBS}
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
 SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share sys
+
+.if make(cleandir) || make(obj)
+SUBDIR+= distrib
+.endif
 
 .if exists(games)
 SUBDIR+= games
