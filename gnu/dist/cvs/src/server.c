@@ -772,8 +772,7 @@ E Protocol error: Root says \"%s\" but pserver says \"%s\"",
        nothing.  But for rsh, we need to do it now.  */
     parse_config (current_parsed_root->directory);
 
-    if (!nolock)
-    {
+    if (!nolock) {
     path = xmalloc (strlen (current_parsed_root->directory)
 		   + sizeof (CVSROOTADM)
 		   + 2);
@@ -5247,6 +5246,7 @@ switch_to_user (username)
     const char *username;
 {
     struct passwd *pw;
+    int rc;
 
     pw = getpwnam (username);
     if (pw == NULL)
@@ -5306,7 +5306,15 @@ error 0 %s: no such user\n", username);
 	}
     }
 
-    if (setuid (pw->pw_uid) < 0)
+#ifdef SETXID_SUPPORT
+    /* Honor the setuid bit iff set. */
+    if (getuid() != geteuid())
+	rc = setuid (geteuid ());
+    else
+#else
+	rc = setuid (pw->pw_uid);
+#endif
+    if (rc < 0)
     {
 	/* Note that this means that if run as a non-root user,
 	   CVSROOT/passwd must contain the user we are running as

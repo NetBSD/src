@@ -303,7 +303,7 @@ do_editor (dir, messagep, repository, changes)
     run_setup (editinfo_editor ? editinfo_editor : Editor);
     run_arg (fname);
     if ((retcode = run_exec (RUN_TTY, RUN_TTY, RUN_TTY,
-			     RUN_NORMAL | RUN_SIGIGNORE)) != 0)
+			     RUN_NORMAL | RUN_SIGIGNORE | RUN_UNSETXID)) != 0)
 	error (editinfo_editor ? 1 : 0, retcode == -1 ? errno : 0,
 	       editinfo_editor ? "Logfile verification failed" :
 	       "warning: editor session failed");
