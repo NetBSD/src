@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.50 2000/10/20 17:48:05 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.51 2000/10/21 13:53:25 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1035,6 +1035,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 		brelse(bp);
 	}
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
+	ip->i_lfs_effnblks = ip->i_ffs_blocks;
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all
