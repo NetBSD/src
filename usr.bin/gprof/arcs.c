@@ -45,7 +45,6 @@ addarc( parentp , childp , count )
     nltype	*childp;
     long	count;
 {
-    arctype		*calloc();
     arctype		*arcp;
 
 #   ifdef DEBUG
