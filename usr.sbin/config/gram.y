@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.6 1996/03/17 11:50:11 cgd Exp $	*/
+/*	$NetBSD: gram.y,v 1.7 1996/03/17 13:18:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,11 @@ static	int	adepth;
 #define	new_p(p)	new0(NULL, NULL, p, 0, NULL)
 #define	new_px(p, x)	new0(NULL, NULL, p, 0, x)
 
+#define	fx_atom(s)	new0(s, NULL, NULL, FX_ATOM, NULL)
+#define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
+#define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
+#define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
+
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
 static	void	setmaxpartitions __P((int));
@@ -100,7 +105,7 @@ static	void	setmaxpartitions __P((int));
 %token	<val> FFLAG NUMBER
 %token	<str> PATHNAME WORD
 
-%type	<list>	fopts
+%type	<list>	fopts fexpr fatom
 %type	<val>	fflgs
 %type	<str>	rule
 %type	<attr>	attr
@@ -167,8 +172,18 @@ file:
 
 /* order of options is important, must use right recursion */
 fopts:
-	WORD fopts			= { $$ = new_nx($1, $2); } |
+	fexpr				= { $$ = $1; } |
 	/* empty */			= { $$ = NULL; };
+
+fexpr:
+	fatom				= { $$ = $1; } |
+	'!' fatom			= { $$ = fx_not($2); } |
+	fexpr '&' fexpr			= { $$ = fx_and($1, $3); } |
+	fexpr '|' fexpr			= { $$ = fx_or($1, $3); } |
+	'(' fexpr ')'			= { $$ = $2; };
+
+fatom:
+	WORD				= { $$ = fx_atom($1); };
 
 fflgs:
 	fflgs FFLAG			= { $$ = $1 | $2; } |

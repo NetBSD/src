@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.2 1996/03/03 17:28:15 thorpej Exp $	*/
+/*	$NetBSD: hash.c,v 1.3 1996/03/17 13:18:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -261,6 +261,8 @@ ht_insrep(ht, nam, val, replace)
 	}
 	*hpp = hp = newhashent(nam, h);
 	hp->h_value = val;
+	if (++ht->ht_used > ht->ht_lim)
+		ht_expand(ht);
 	return (0);
 }
 
