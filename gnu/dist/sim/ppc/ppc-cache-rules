@@ -1,0 +1,100 @@
+#
+#   This file is part of the program psim.
+#
+#   Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# Instruction unpacking:
+#
+#   Once the instruction has been decoded, the register (and other)
+#   fields within the instruction need to be extracted.
+#
+#   The table that follows determines how each field should be treated.
+#   Importantly it considers the case where the extracted field is to
+#   be used immediatly or stored in an instruction cache.
+#
+#   <valid>
+#
+#   Zero marks the end of the table.  More importantly 1. indicates
+#   that the entry is valid and can be cached. 2. indicates that that
+#   the entry is valid but can not be cached.
+#
+#   <old_name>
+#
+#   The field name as given in the instruction spec.
+#
+#   <new_name>
+#
+#   A name for <old_name> once it has been extracted from the
+#   instructioin (and possibly stored in the instruction cache).
+#
+#   <type>
+#
+#   String specifying the storage type for <new_name> (the extracted
+#   field>.
+#
+#   <expression>
+#
+#   Specifies how to get <new_name> from <old_name>.  If null, old and
+#   new name had better be the same. */
+#
+#
+1:RA:RA::
+1:RA:rA:signed_word *:(cpu_registers(processor)->gpr + RA)
+1:RA:RA_BITMASK:unsigned32:(1 << RA)
+1:RT:RT::
+1:RT:rT:signed_word *:(cpu_registers(processor)->gpr + RT)
+1:RT:RT_BITMASK:unsigned32:(1 << RT)
+2:RS:RS::
+1:RS:rS:signed_word *:(cpu_registers(processor)->gpr + RS)
+1:RS:RS_BITMASK:unsigned32:(1 << RS)
+2:RB:RB::
+1:RB:rB:signed_word *:(cpu_registers(processor)->gpr + RB)
+1:RB:RB_BITMASK:unsigned32:(1 << RB)
+2:FRA:FRA::
+1:FRA:frA:unsigned64 *:(cpu_registers(processor)->fpr + FRA)
+1:FRA:FRA_BITMASK:unsigned32:(1 << FRA)
+2:FRB:FRB::
+1:FRB:frB:unsigned64 *:(cpu_registers(processor)->fpr + FRB)
+1:FRB:FRB_BITMASK:unsigned32:(1 << FRB)
+2:FRC:FRC::
+1:FRC:frC:unsigned64 *:(cpu_registers(processor)->fpr + FRC)
+1:FRC:FRC_BITMASK:unsigned32:(1 << FRC)
+2:FRS:FRS::
+1:FRS:frS:unsigned64 *:(cpu_registers(processor)->fpr + FRS)
+1:FRS:FRS_BITMASK:unsigned32:(1 << FRS)
+2:FRT:FRT::
+1:FRT:frT:unsigned64 *:(cpu_registers(processor)->fpr + FRT)
+1:FRT:FRT_BITMASK:unsigned32:(1 << FRT)
+1:SI:EXTS_SI:unsigned_word:((signed_word)(signed16)instruction)
+2:BI:BI::
+1:BI:BIT32_BI::BIT32(BI)
+1:BF:BF::
+1:BF:BF_BITMASK:unsigned32:(1 << BF)
+2:BA:BA::
+1:BA:BIT32_BA::BIT32(BA)
+1:BA:BA_BITMASK:unsigned32:(1 << BA)
+2:BB:BB::
+1:BB:BIT32_BB::BIT32(BB)
+1:BB:BB_BITMASK:unsigned32:(1 << BB)
+1:BT:BT::
+1:BT:BT_BITMASK:unsigned32:(1 << BT)
+1:BD:EXTS_BD_0b00:unsigned_word:(((signed_word)(signed16)instruction) & ~3)
+#1:BD:CIA_plus_EXTS_BD_0b00:unsigned_word:CIA + EXTS(BD_0b00)
+1:LI:EXTS_LI_0b00:unsigned_word:((((signed_word)(signed32)(instruction << 6)) >> 6) & ~0x3)
+1:D:EXTS_D:unsigned_word:((signed_word)(signed16)(instruction))
+1:DS:EXTS_DS_0b00:unsigned_word:(((signed_word)(signed16)instruction) & ~0x3)
