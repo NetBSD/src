@@ -33,7 +33,7 @@
 
 #include "hprop.h"
 
-RCSID("$Id: v4_dump.c,v 1.1.1.2 2001/02/11 13:51:32 assar Exp $");
+RCSID("$Id: v4_dump.c,v 1.2 2001/04/07 21:03:51 thorpej Exp $");
 
 static time_t
 time_parse(const char *cp)

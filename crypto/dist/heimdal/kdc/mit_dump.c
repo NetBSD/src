@@ -33,7 +33,7 @@
 
 #include "hprop.h"
 
-RCSID("$Id: mit_dump.c,v 1.1.1.2 2001/02/11 13:51:31 assar Exp $");
+RCSID("$Id: mit_dump.c,v 1.2 2001/04/07 21:03:51 thorpej Exp $");
 
 /*
 can have any number of princ stanzas.
