@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.36 2002/10/16 21:49:08 christos Exp $
+.\"	$NetBSD: pax.1,v 1.37 2002/12/19 22:54:44 kleink Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -705,8 +705,6 @@ option.
 For pathnames representing a hard link to a previous member of the archive,
 the output has the format:
 .Dl Ao "ls -l listing" Ac == Ao "link name" Ac
-For pathnames representing a symbolic link, the output has the format:
-.Dl Ao "ls -l listing" Ac =\*[Gt] Ao "link name" Ac
 Where
 .Aq "ls -l listing"
 is the output format specified by the
