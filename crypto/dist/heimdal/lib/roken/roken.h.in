@@ -33,7 +33,7 @@
  */
 
 /* $Heimdal: roken.h.in,v 1.169 2002/08/26 21:43:38 assar Exp $
-   $NetBSD: roken.h.in,v 1.3 2003/01/26 22:06:40 elric Exp $ */
+   $NetBSD: roken.h.in,v 1.4 2003/01/27 06:19:41 elric Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,7 +148,7 @@ struct sockaddr_dl;
 typedef int ssize_t;
 #endif
 
-#include <krb5/roken-common.h>
+#include <roken-common.h>
 
 ROKEN_CPP_START
 
