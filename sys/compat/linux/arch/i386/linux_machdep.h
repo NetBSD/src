@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.13 2000/12/02 16:05:04 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.14 2000/12/09 19:51:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -130,6 +130,5 @@ __END_DECLS
  * Does the port have separated linux_syscall() ?
  */
 #define	LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
-void linux_syscall __P((struct trapframe *));
 
 #endif /* _I386_LINUX_MACHDEP_H */
