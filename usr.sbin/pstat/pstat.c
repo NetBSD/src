@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.12 1995/06/18 11:01:24 cgd Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.13 1995/06/22 11:15:14 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -555,7 +555,7 @@ mount_print(mp)
 
 #define ST	mp->mnt_stat
 	(void)printf("*** MOUNT ");
-	(void)printf("%*s %s on %s", MFSNAMELEN, ST.f_fstypename,
+	(void)printf("%.*s %s on %s", MFSNAMELEN, ST.f_fstypename,
 	    ST.f_mntfromname, ST.f_mntonname);
 	if (flags = mp->mnt_flag) {
 		char *comma = "(";
