@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEach.c,v 1.8 1997/09/28 03:31:25 lukem Exp $	*/
+/*	$NetBSD: lstForEach.c,v 1.9 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstForEach.c,v 1.8 1997/09/28 03:31:25 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstForEach.c,v 1.9 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEach.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstForEach.c,v 1.8 1997/09/28 03:31:25 lukem Exp $");
+__RCSID("$NetBSD: lstForEach.c,v 1.9 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -73,10 +73,7 @@ __RCSID("$NetBSD: lstForEach.c,v 1.8 1997/09/28 03:31:25 lukem Exp $");
  */
 /*VARARGS2*/
 void
-Lst_ForEach (l, proc, d)
-    Lst	    	  	l;
-    register int	(*proc) __P((ClientData, ClientData));
-    register ClientData	d;
+Lst_ForEach(Lst l, int (*proc)(ClientData, ClientData), ClientData d)
 {
     Lst_ForEachFrom(l, Lst_First(l), proc, d);
 }

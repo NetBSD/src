@@ -1,4 +1,4 @@
-/*	$NetBSD: lstAtEnd.c,v 1.7 1997/09/28 03:31:16 lukem Exp $	*/
+/*	$NetBSD: lstAtEnd.c,v 1.8 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstAtEnd.c,v 1.7 1997/09/28 03:31:16 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstAtEnd.c,v 1.8 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstAtEnd.c,v 1.7 1997/09/28 03:31:16 lukem Exp $");
+__RCSID("$NetBSD: lstAtEnd.c,v 1.8 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -61,6 +61,10 @@ __RCSID("$NetBSD: lstAtEnd.c,v 1.7 1997/09/28 03:31:16 lukem Exp $");
  * Lst_AtEnd --
  *	Add a node to the end of the given list
  *
+ * Input:
+ *	l		List to which to add the datum
+ *	d		Datum to add
+ *
  * Results:
  *	SUCCESS if life is good.
  *
@@ -70,11 +74,9 @@ __RCSID("$NetBSD: lstAtEnd.c,v 1.7 1997/09/28 03:31:16 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_AtEnd (l, d)
-    Lst		l;	/* List to which to add the datum */
-    ClientData	d;	/* Datum to add */
+Lst_AtEnd(Lst l, ClientData d)
 {
-    register LstNode	end;
+    LstNode	end;
 
     end = Lst_Last (l);
     return (Lst_Append (l, end, d));

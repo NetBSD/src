@@ -1,4 +1,4 @@
-/*	$NetBSD: lstAtFront.c,v 1.7 1997/09/28 03:31:17 lukem Exp $	*/
+/*	$NetBSD: lstAtFront.c,v 1.8 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstAtFront.c,v 1.7 1997/09/28 03:31:17 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstAtFront.c,v 1.8 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstAtFront.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstAtFront.c,v 1.7 1997/09/28 03:31:17 lukem Exp $");
+__RCSID("$NetBSD: lstAtFront.c,v 1.8 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -71,11 +71,9 @@ __RCSID("$NetBSD: lstAtFront.c,v 1.7 1997/09/28 03:31:17 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_AtFront (l, d)
-    Lst		l;
-    ClientData	d;
+Lst_AtFront(Lst l, ClientData d)
 {
-    register LstNode	front;
+    LstNode	front;
 
     front = Lst_First (l);
     return (Lst_Insert (l, front, d));

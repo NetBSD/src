@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.26 2002/03/14 16:08:39 pk Exp $	*/
+/*	$NetBSD: nonints.h,v 1.27 2002/06/15 18:24:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -46,114 +46,112 @@
 #endif
 
 /* arch.c */
-ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
-void Arch_Touch __P((GNode *));
-void Arch_TouchLib __P((GNode *));
-time_t Arch_MTime __P((GNode *));
-time_t Arch_MemMTime __P((GNode *));
-void Arch_FindLib __P((GNode *, Lst));
-Boolean Arch_LibOODate __P((GNode *));
-void Arch_Init __P((void));
-void Arch_End __P((void));
-int Arch_IsLib __P((GNode *));
+ReturnStatus Arch_ParseArchive(char **, Lst, GNode *);
+void Arch_Touch(GNode *);
+void Arch_TouchLib(GNode *);
+time_t Arch_MTime(GNode *);
+time_t Arch_MemMTime(GNode *);
+void Arch_FindLib(GNode *, Lst);
+Boolean Arch_LibOODate(GNode *);
+void Arch_Init(void);
+void Arch_End(void);
+int Arch_IsLib(GNode *);
 
 /* compat.c */
-void Compat_Run __P((Lst));
+void Compat_Run(Lst);
 
 /* cond.c */
-int Cond_EvalExpression __P((int, char *, Boolean *, int));
-int Cond_Eval __P((char *));
-void Cond_End __P((void));
+int Cond_EvalExpression(int, char *, Boolean *, int);
+int Cond_Eval(char *);
+void Cond_End(void);
 
 /* for.c */
-int For_Eval __P((char *));
-void For_Run  __P((void));
+int For_Eval(char *);
+void For_Run(void);
 
 /* main.c */
-void Main_ParseArgLine __P((char *));
-int main __P((int, char **));
-char *Cmd_Exec __P((char *, char **));
-void Error __P((char *, ...))
-    __attribute__((__format__(__printf__, 1, 2)));
-void Fatal __P((char *, ...))
+void Main_ParseArgLine(char *);
+int main(int, char **);
+char *Cmd_Exec(char *, char **);
+void Error(char *, ...) __attribute__((__format__(__printf__, 1, 2)));
+void Fatal(char *, ...)
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
-void Punt __P((char *, ...))
+void Punt(char *, ...)
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
-void DieHorribly __P((void))
-    __attribute__((__noreturn__));
-int PrintAddr __P((ClientData, ClientData));
-void Finish __P((int));
-char *estrdup __P((const char *));
-void *emalloc __P((size_t));
-void *erealloc __P((void *, size_t));
-void enomem __P((void));
-int eunlink __P((const char *));
-void execError __P((const char *, const char *));
+void DieHorribly(void) __attribute__((__noreturn__));
+int PrintAddr(ClientData, ClientData);
+void Finish(int);
+char *estrdup(const char *);
+void *emalloc(size_t);
+void *erealloc(void *, size_t);
+void enomem(void);
+int eunlink(const char *);
+void execError(const char *, const char *);
 
 /* parse.c */
-void Parse_Error __P((int, char *, ...))
+void Parse_Error(int, char *, ...)
      __attribute__((__format__(__printf__, 2, 3)));
-Boolean Parse_AnyExport __P((void));
-Boolean Parse_IsVar __P((char *));
-void Parse_DoVar __P((char *, GNode *));
-void Parse_AddIncludeDir __P((char *));
-void Parse_File __P((char *, FILE *));
-void Parse_Init __P((void));
-void Parse_End __P((void));
-void Parse_FromString __P((char *));
-Lst Parse_MainName __P((void));
+Boolean Parse_AnyExport(void);
+Boolean Parse_IsVar(char *);
+void Parse_DoVar(char *, GNode *);
+void Parse_AddIncludeDir(char *);
+void Parse_File(char *, FILE *);
+void Parse_Init(void);
+void Parse_End(void);
+void Parse_FromString(char *);
+Lst Parse_MainName(void);
 
 /* str.c */
-char *str_concat __P((char *, char *, int));
-char **brk_string __P((char *, int *, Boolean, char **));
-char *Str_FindSubstring __P((char *, char *));
-int Str_Match __P((char *, char *));
-char *Str_SYSVMatch __P((char *, char *, int *len));
-void Str_SYSVSubst __P((Buffer, char *, char *, int));
+char *str_concat(char *, char *, int);
+char **brk_string(char *, int *, Boolean, char **);
+char *Str_FindSubstring(char *, char *);
+int Str_Match(char *, char *);
+char *Str_SYSVMatch(char *, char *, int *len);
+void Str_SYSVSubst(Buffer, char *, char *, int);
 
 /* suff.c */
-void Suff_ClearSuffixes __P((void));
-Boolean Suff_IsTransform __P((char *));
-GNode *Suff_AddTransform __P((char *));
-int Suff_EndTransform __P((ClientData, ClientData));
-void Suff_AddSuffix __P((char *, GNode **));
-Lst Suff_GetPath __P((char *));
-void Suff_DoPaths __P((void));
-void Suff_AddInclude __P((char *));
-void Suff_AddLib __P((char *));
-void Suff_FindDeps __P((GNode *));
-void Suff_SetNull __P((char *));
-void Suff_Init __P((void));
-void Suff_End __P((void));
-void Suff_PrintAll __P((void));
+void Suff_ClearSuffixes(void);
+Boolean Suff_IsTransform(char *);
+GNode *Suff_AddTransform(char *);
+int Suff_EndTransform(ClientData, ClientData);
+void Suff_AddSuffix(char *, GNode **);
+Lst Suff_GetPath(char *);
+void Suff_DoPaths(void);
+void Suff_AddInclude(char *);
+void Suff_AddLib(char *);
+void Suff_FindDeps(GNode *);
+void Suff_SetNull(char *);
+void Suff_Init(void);
+void Suff_End(void);
+void Suff_PrintAll(void);
 
 /* targ.c */
-void Targ_Init __P((void));
-void Targ_End __P((void));
-Lst Targ_List __P((void));
-GNode *Targ_NewGN __P((char *));
-GNode *Targ_FindNode __P((char *, int));
-Lst Targ_FindList __P((Lst, int));
-Boolean Targ_Ignore __P((GNode *));
-Boolean Targ_Silent __P((GNode *));
-Boolean Targ_Precious __P((GNode *));
-void Targ_SetMain __P((GNode *));
-int Targ_PrintCmd __P((ClientData, ClientData));
-char *Targ_FmtTime __P((time_t));
-void Targ_PrintType __P((int));
-void Targ_PrintGraph __P((int));
-void Targ_Propagate __P((void));
+void Targ_Init(void);
+void Targ_End(void);
+Lst Targ_List(void);
+GNode *Targ_NewGN(char *);
+GNode *Targ_FindNode(char *, int);
+Lst Targ_FindList(Lst, int);
+Boolean Targ_Ignore(GNode *);
+Boolean Targ_Silent(GNode *);
+Boolean Targ_Precious(GNode *);
+void Targ_SetMain(GNode *);
+int Targ_PrintCmd(ClientData, ClientData);
+char *Targ_FmtTime(time_t);
+void Targ_PrintType(int);
+void Targ_PrintGraph(int);
+void Targ_Propagate(void);
 
 /* var.c */
-void Var_Delete __P((char *, GNode *));
-void Var_Set __P((char *, char *, GNode *, int));
-void Var_Append __P((char *, char *, GNode *));
-Boolean Var_Exists __P((char *, GNode *));
-char *Var_Value __P((char *, GNode *, char **));
-char *Var_Parse __P((char *, GNode *, Boolean, int *, Boolean *));
-char *Var_Subst __P((char *, char *, GNode *, Boolean));
-char *Var_GetTail __P((char *));
-char *Var_GetHead __P((char *));
-void Var_Init __P((void));
-void Var_End __P((void));
-void Var_Dump __P((GNode *));
+void Var_Delete(char *, GNode *);
+void Var_Set(char *, char *, GNode *, int);
+void Var_Append(char *, char *, GNode *);
+Boolean Var_Exists(char *, GNode *);
+char *Var_Value(char *, GNode *, char **);
+char *Var_Parse(char *, GNode *, Boolean, int *, Boolean *);
+char *Var_Subst(char *, char *, GNode *, Boolean);
+char *Var_GetTail(char *);
+char *Var_GetHead(char *);
+void Var_Init(void);
+void Var_End(void);
+void Var_Dump(GNode *);
