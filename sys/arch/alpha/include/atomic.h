@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.6 2001/04/16 17:05:22 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,8 +65,9 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_setbits_ulong"
-		: "=r" (t0), "+m" (*ulp)
-		: "r" (v), "1" (*ulp));
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -90,8 +91,9 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_clearbits_ulong"
-		: "=r" (t0), "+m" (*ulp)
-		: "r" (~v), "1" (*ulp));
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (~v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -115,8 +117,9 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_add_ulong"
-		: "=r" (t0), "+m" (*ulp)
-		: "r" (v), "1" (*ulp));
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -140,8 +143,9 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_sub_ulong"
-		: "=r" (t0), "+m" (*ulp)
-		: "r" (v), "1" (*ulp));
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -165,8 +169,9 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_loadlatch_ulong"
-		: "=r" (t0), "=r" (v0), "+m" (*ulp)
-		: "r" (v), "2" (*ulp));
+		: "=&r" (t0), "=r" (v0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 
 	return (v0);
 }
