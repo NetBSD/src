@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.33 1998/06/24 01:32:06 ross Exp $ */
+/* $NetBSD: apecs.c,v 1.34 1998/06/26 21:45:56 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,10 +29,12 @@
 
 #include "opt_dec_2100_a50.h"
 #include "opt_dec_eb64plus.h"
+#include "opt_dec_1000a.h"
+#include "opt_dec_1000.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.33 1998/06/24 01:32:06 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.34 1998/06/26 21:45:56 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.33 1998/06/24 01:32:06 ross Exp $");
 #endif
 #ifdef DEC_1000A
 #include <alpha/pci/pci_1000a.h>
+#endif
+#ifdef DEC_1000
+#include <alpha/pci/pci_1000.h>
 #endif
 
 int	apecsmatch __P((struct device *, struct cfdata *, void *));
@@ -172,6 +177,13 @@ apecsattach(parent, self, aux)
 #ifdef DEC_1000A
 	case ST_DEC_1000A:
 		pci_1000a_pickintr(acp, &acp->ac_iot, &acp->ac_memt,
+			&acp->ac_pc);
+		break;
+#endif
+
+#ifdef DEC_1000
+	case ST_DEC_1000:
+		pci_1000_pickintr(acp, &acp->ac_iot, &acp->ac_memt,
 			&acp->ac_pc);
 		break;
 #endif
