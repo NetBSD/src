@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: message.c,v 1.8 2000/07/10 10:19:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $");
+__RCSID("$NetBSD: message.c,v 1.8 2000/07/10 10:19:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ rgetchar()
 			break;
 #ifdef UNIX_BSD4_2
 		case '\032':
-			printf(CL);
+			printf("%s", CL);
 			fflush(stdout);
 			tstp();
 			break;

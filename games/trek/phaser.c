@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.7 1999/09/08 21:45:33 jsm Exp $	*/
+/*	$NetBSD: phaser.c,v 1.8 2000/07/10 10:19:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: phaser.c,v 1.7 1999/09/08 21:45:33 jsm Exp $");
+__RCSID("$NetBSD: phaser.c,v 1.8 2000/07/10 10:19:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,13 +140,13 @@ phaser(v)
 	{
 		if (damaged(COMPUTER))
 		{
-			printf(Device[COMPUTER].name);
+			printf("%s", Device[COMPUTER].name);
 			manual++;
 		}
 		else
 			if (damaged(SRSCAN))
 			{
-				printf(Device[SRSCAN].name);
+				printf("%s", Device[SRSCAN].name);
 				manual++;
 			}
 		if (manual)
