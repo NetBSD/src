@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.1 1999/09/13 10:31:22 itojun Exp $	*/
+/*	$NetBSD: segments.h,v 1.2 2001/06/24 05:34:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -57,11 +57,8 @@
 #define PSL_USERMODE 0 /* User mode */
 #define PSL_SVMODE   PSL_MD /* SuperVisor Mode */
 
-#define	USERMODE(c, f)		((f & PSL_MD) == PSL_USERMODE)
-#if 1
-#define	KERNELMODE(sp)	(sp & 0x80000000)
-#else
-#define	KERNELMODE(c, f)	((f & PSL_MD) == PSL_SVMODE)
-#endif
+#define	KERNELMODE(sp, f)	((sp & 0x80000000) \
+				 && ((f & PSL_MD) == PSL_SVMODE))
+#define	USERMODE(sp, f)		(!KERNELMODE(sp, f))
 
 #endif /* !_SH3_SEGMENTS_H_ */
