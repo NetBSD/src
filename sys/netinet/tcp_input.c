@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.77 1999/02/05 22:37:24 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.78 1999/04/09 22:01:07 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1104,8 +1104,12 @@ after_listen:
 	/*
 	 * If the ACK bit is off we drop the segment and return.
 	 */
-	if ((tiflags & TH_ACK) == 0)
-		goto drop;
+	if ((tiflags & TH_ACK) == 0) {
+		if (tp->t_flags & TF_ACKNOW)
+			goto dropafterack;
+		else
+			goto drop;
+	}
 	
 	/*
 	 * Ack processing.
