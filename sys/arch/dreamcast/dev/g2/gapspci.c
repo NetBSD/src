@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.3 2002/05/16 01:01:35 thorpej Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.4 2002/09/27 02:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -70,9 +70,6 @@ gaps_match(struct device *parent, struct cfdata *match, void *aux)
   	struct g2bus_attach_args *ga = aux;
 	char idbuf[16];
 	bus_space_handle_t tmp_memh;
-
-	if(strcmp("gapspci", match->cf_driver->cd_name))
-		return 0;
 
 	if (bus_space_map(ga->ga_memt, 0x01001400, 0x100, 0, &tmp_memh) != 0)
 		return 0;
