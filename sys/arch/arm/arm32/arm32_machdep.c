@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.34 2003/06/04 13:30:05 simonb Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.35 2003/06/29 10:51:30 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -349,14 +349,14 @@ cpu_startup()
  */
 
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
