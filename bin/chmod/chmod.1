@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)chmod.1	6.15 (Berkeley) 7/23/91
-.\"	$Id: chmod.1,v 1.5 1994/01/11 02:12:20 jtc Exp $
+.\"	$Id: chmod.1,v 1.6 1994/02/10 23:23:08 cgd Exp $
 .\"
 .Dd July 23, 1991
 .Dt CHMOD 1
@@ -108,7 +108,7 @@ action       ::= op [perm ...]
 last_action  ::= op [perm ...]
 who          ::= a | u | g | o
 op           ::= + | \- | =
-perm         ::= r | s | t | w | X | x | u | g | o
+perm         ::= r | s | t | w | x | X | u | g | o
 .Ed
 .Pp
 The
@@ -142,6 +142,12 @@ Operations with the
 symbol ``X'' are only meaningful in conjunction with the
 .Ar op
 symbol ``+'', and it is ignored in all other cases.
+.It u
+The user permission bits in the mode of the original file.
+.It g
+The group permission bits in the mode of the original file.
+.It o
+The other permission bits in the mode of the original file.
 .El
 .Pp
 The
