@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.3 2003/09/10 03:42:07 itojun Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.4 2003/09/26 03:08:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.3 2003/09/10 03:42:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.4 2003/09/26 03:08:18 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -160,7 +160,7 @@ kernfs_allocvp(mp, vpp, kfs_type, kt, value)
 			return (0);
 	} while (lockmgr(&kfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
-	if (kfs_type == Pdevice) {
+	if (kfs_type == Kdevice) {
 			/* /kern/rootdev = look for device and obey */
 			/* /kern/rrootdev = look for device and obey */
 		dev_t *dp;
@@ -168,7 +168,7 @@ kernfs_allocvp(mp, vpp, kfs_type, kt, value)
 
 #ifdef DIAGNOSTIC
 		if (!kt)
-			panic("kernfs: kt == NULL for Pdevice");
+			panic("kernfs: kt == NULL for Kdevice");
 #endif
 		dp = kt->kt_data;
 	loop:
@@ -227,35 +227,35 @@ again:
 	kfs->kfs_kt = kt;
 
 	switch (kfs_type) {
-	case Pkern:	/* /kern = dr-xr-xr-x */
+	case Kern:	/* /kern = dr-xr-xr-x */
 		kfs->kfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VDIR;
 		vp->v_flag = VROOT;
 		break;
 
-	case Pnull:	/* /kern/?? = -r--r--r-- */
-	case Ptime:	/* /kern/time = -r--r--r-- */
-	case Pint:	/* /kern/?? = -r--r--r-- */
-	case Pstring:	/* /kern/?? = -r--r--r-- */
-	case Pavenrun:	/* /kern/loadavg = -r--r--r-- */
-	case Pmsgbuf:	/* /kern/msgbuf = -r--r--r-- */
+	case Knull:	/* /kern/?? = -r--r--r-- */
+	case Ktime:	/* /kern/time = -r--r--r-- */
+	case Kint:	/* /kern/?? = -r--r--r-- */
+	case Kstring:	/* /kern/?? = -r--r--r-- */
+	case Kavenrun:	/* /kern/loadavg = -r--r--r-- */
+	case Kmsgbuf:	/* /kern/msgbuf = -r--r--r-- */
 		kfs->kfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
 
-	case Pipsecsadir:	/* /kern/ipsecsa = dr-x------ */
-	case Pipsecspdir:	/* /kern/ipsecsp = dr-x------ */
+	case Kipsecsadir:	/* /kern/ipsecsa = dr-x------ */
+	case Kipsecspdir:	/* /kern/ipsecsp = dr-x------ */
 		kfs->kfs_mode = S_IRUSR|S_IXUSR;
 		vp->v_type = VDIR;
 		break;
 
-	case Pipsecsa:	/* /kern/ipsecsa/N = -r-------- */
-	case Pipsecsp:	/* /kern/ipsecsp/N = -r-------- */
+	case Kipsecsa:	/* /kern/ipsecsa/N = -r-------- */
+	case Kipsecsp:	/* /kern/ipsecsp/N = -r-------- */
 		kfs->kfs_mode = S_IRUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Phostname: /* /kern/hostname = -rw-r-r--- */
+	case Khostname: /* /kern/hostname = -rw-r-r--- */
 		kfs->kfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -408,7 +408,7 @@ kernfs_revoke_sa(sav)
 	for (kfs = LIST_FIRST(ppp); kfs; kfs = pnext) {
 		vp = KERNFSTOV(kfs);
 		pnext = LIST_NEXT(kfs, kfs_hash);
-		if (vp->v_usecount > 0 && kfs->kfs_type == Pipsecsa &&
+		if (vp->v_usecount > 0 && kfs->kfs_type == Kipsecsa &&
 		    kfs->kfs_value == ntohl(sav->spi)) {
 			m = key_setdumpsa_spi(sav->spi);
 			if (!m)
@@ -432,7 +432,7 @@ kernfs_revoke_sp(sp)
 	for (kfs = LIST_FIRST(ppp); kfs; kfs = pnext) {
 		vp = KERNFSTOV(kfs);
 		pnext = LIST_NEXT(kfs, kfs_hash);
-		if (vp->v_usecount > 0 && kfs->kfs_type == Pipsecsa &&
+		if (vp->v_usecount > 0 && kfs->kfs_type == Kipsecsa &&
 		    kfs->kfs_value == sp->id)
 			VOP_REVOKE(vp, REVOKEALL);
 	}
