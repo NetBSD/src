@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.18 1998/09/10 15:58:39 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.19 1998/09/13 16:26:14 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.66";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.18 1998/09/10 15:58:39 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.19 1998/09/13 16:26:14 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -28,6 +28,7 @@ __RCSID("$NetBSD: localtime.c,v 1.18 1998/09/10 15:58:39 kleink Exp $");
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(ctime_r,_ctime_r);
@@ -169,6 +170,8 @@ static time_t		transtime P((time_t janfirst, int year,
 static int		tzload P((const char * name, struct state * sp));
 static int		tzparse P((const char * name, struct state * sp,
 				int lastditch));
+static void		tzset_unlocked P((void));
+static void		tzsetwall_unlocked P((void));
 #ifdef STD_INSPIRED
 static long		leapcorr P((time_t * timep));
 #endif
@@ -197,6 +200,10 @@ __aconst char *		tzname[2] = {
 	(__aconst char *)wildabbr,
 	(__aconst char *)wildabbr
 };
+
+#ifdef _REENT
+static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
+#endif
 
 /*
 ** Section 4.12.3 of X3.159-1989 requires that
@@ -950,15 +957,8 @@ struct state * const	sp;
 		(void) tzparse(gmt, sp, TRUE);
 }
 
-#ifndef STD_INSPIRED
-/*
-** A non-static declaration of tzsetwall in a system header file
-** may cause a warning about this upcoming static declaration...
-*/
-static
-#endif /* !defined STD_INSPIRED */
-void
-tzsetwall P((void))
+static void
+tzsetwall_unlocked P((void))
 {
 	if (lcl_is_set < 0)
 		return;
@@ -978,14 +978,29 @@ tzsetwall P((void))
 	settzname();
 }
 
+#ifndef STD_INSPIRED
+/*
+** A non-static declaration of tzsetwall in a system header file
+** may cause a warning about this upcoming static declaration...
+*/
+static
+#endif /* !defined STD_INSPIRED */
 void
-tzset P((void))
+tzsetwall P((void))
+{
+	rwlock_wrlock(&lcl_lock);
+	tzsetwall_unlocked();
+	rwlock_unlock(&lcl_lock);
+}
+
+static void
+tzset_unlocked P((void))
 {
 	register const char *	name;
 
 	name = getenv("TZ");
 	if (name == NULL) {
-		tzsetwall();
+		tzsetwall_unlocked();
 		return;
 	}
 
@@ -1017,6 +1032,14 @@ tzset P((void))
 		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
 			(void) gmtload(lclptr);
 	settzname();
+}
+
+void
+tzset P((void))
+{
+	rwlock_wrlock(&lcl_lock);
+	tzset_unlocked();
+	rwlock_unlock(&lcl_lock);
 }
 
 /*
@@ -1079,8 +1102,10 @@ struct tm *
 localtime(timep)
 const time_t * const	timep;
 {
-	tzset();
+	rwlock_wrlock(&lcl_lock);
+	tzset_unlocked();
 	localsub(timep, 0L, &tm);
+	rwlock_unlock(&lcl_lock);
 	return &tm;
 }
 
@@ -1092,7 +1117,9 @@ localtime_r(timep, tm)
 const time_t * const	timep;
 struct tm *		tm;
 {
+	rwlock_rdlock(&lcl_lock);
 	localsub(timep, 0L, tm);
+	rwlock_unlock(&lcl_lock);
 	return tm;
 }
 
@@ -1106,6 +1133,11 @@ const time_t * const	timep;
 const long		offset;
 struct tm * const	tmp;
 {
+#ifdef _REENT
+	static mutex_t gmt_mutex = MUTEX_INITIALIZER;
+#endif
+
+	mutex_lock(&gmt_mutex);
 	if (!gmt_is_set) {
 		gmt_is_set = TRUE;
 #ifdef ALL_STATE
@@ -1114,6 +1146,7 @@ struct tm * const	tmp;
 #endif /* defined ALL_STATE */
 			gmtload(gmtptr);
 	}
+	mutex_unlock(&gmt_mutex);
 	timesub(timep, offset, gmtptr, tmp);
 #ifdef TM_ZONE
 	/*
@@ -1590,8 +1623,13 @@ time_t
 mktime(tmp)
 struct tm * const	tmp;
 {
-	tzset();
-	return time1(tmp, localsub, 0L);
+	time_t result;
+
+	rwlock_wrlock(&lcl_lock);
+	tzset_unlocked();
+	result = time1(tmp, localsub, 0L);
+	rwlock_unlock(&lcl_lock);
+	return (result);
 }
 
 #ifdef STD_INSPIRED
@@ -1679,8 +1717,13 @@ time_t
 time2posix(t)
 time_t	t;
 {
-	tzset();
-	return t - leapcorr(&t);
+	time_t result;
+
+	rwlock_wrlock(&lcl_lock);
+	tzset_unlocked();
+	result = t - leapcorr(&t);
+	rwlock_unlock(&lcl_lock);
+	return (result);
 }
 
 time_t
@@ -1690,7 +1733,8 @@ time_t	t;
 	time_t	x;
 	time_t	y;
 
-	tzset();
+	rwlock_wrlock(&lcl_lock);
+	tzset_unlocked();
 	/*
 	** For a positive leap second hit, the result
 	** is not unique.  For a negative leap second
@@ -1704,16 +1748,21 @@ time_t	t;
 			x++;
 			y = x - leapcorr(&x);
 		} while (y < t);
-		if (t != y)
+		if (t != y) {
+			rwlock_unlock(&lcl_lock);
 			return x - 1;
+		}
 	} else if (y > t) {
 		do {
 			--x;
 			y = x - leapcorr(&x);
 		} while (y > t);
-		if (t != y)
+		if (t != y) {
+			rwlock_unlock(&lcl_lock);
 			return x + 1;
+		}
 	}
+	rwlock_unlock(&lcl_lock);
 	return x;
 }
 
