@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.15 1997/03/29 02:11:09 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.16 1997/05/01 20:10:57 marc Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -849,11 +849,11 @@ wds_find(iot, ioh, sc)
 		delay(100);
 	}
 	if (!i)
-		return 1;
+		return 0;
 
 	bus_space_write_1(iot, ioh, WDS_CMD, WDSC_NOOP);
 	if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY) != 0)
-		return 1;
+		return 0;
 
 	bus_space_write_1(iot, ioh, WDS_HCR, WDSH_SCSIRESET|WDSH_ASCRESET);
 	delay(10000);
@@ -862,7 +862,7 @@ wds_find(iot, ioh, sc)
 	wds_wait(iot, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
 	if (bus_space_read_1(iot, ioh, WDS_IRQSTAT) != 1)
 		if (bus_space_read_1(iot, ioh, WDS_IRQSTAT) != 7)
-			return 1;
+			return 0;
 
 	for (i = 2000; i; i--) {
 		if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY) != 0)
@@ -870,7 +870,7 @@ wds_find(iot, ioh, sc)
 		delay(100);
 	}
 	if (!i)
-		return 1;
+		return 0;
 
 	if (sc) {
 #ifdef notyet
@@ -881,7 +881,7 @@ wds_find(iot, ioh, sc)
 		sc->sc_scsi_dev = 7;
 	}
 
-	return 0;
+	return 1;
 }
 
 /*
