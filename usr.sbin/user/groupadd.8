@@ -1,4 +1,4 @@
-.\" $NetBSD: groupadd.8,v 1.9 2003/02/14 16:11:37 grant Exp $ */
+.\" $NetBSD: groupadd.8,v 1.10 2005/02/05 10:43:14 jmmv Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd February 5, 2005
 .Dt GROUPADD 8
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nm
 .Op Fl ov
 .Op Fl g Ar gid
+.Op Fl r Ar low Ns Li .. Ns Ar high
 .Ar group
 .Sh DESCRIPTION
 The
@@ -52,6 +53,10 @@ The options are as follows:
 gives the numeric group identifier to be used for the new group.
 .It Fl o
 allow the new group to have a gid which is already in use for another group.
+.It Fl r Ar low Ns Li .. Ns Ar high
+sets the low and high bounds of a gid range for new groups.
+A new group can only be created if there are gids which can be assigned
+inside the range.
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
