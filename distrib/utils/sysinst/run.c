@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.35 2001/09/13 18:07:26 jdolecek Exp $	*/
+/*	$NetBSD: run.c,v 1.35.2.1 2003/08/19 14:40:31 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -288,6 +288,7 @@ launch_subwin(actionwin, args, win, flags, errstr)
 	origargs = args;
 
 	command = (char *)malloc(MAXBUF * sizeof(char));
+	command[0] = 0;
 	for (p = *args; p != NULL; p = *++args) {
 		strcat(command, p);
 		strcat(command, " ");
