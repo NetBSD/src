@@ -1,9 +1,9 @@
-.\"	$NetBSD: expr.1,v 1.13 2000/09/04 07:30:08 kleink Exp $
+.\"	$NetBSD: expr.1,v 1.14 2000/09/19 17:20:00 jdolecek Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd July 3, 1993
+.Dd September 18, 2000
 .Dt EXPR 1
 .Os
 .Sh NAME
@@ -79,9 +79,8 @@ The following example adds one to the variable a.
 .Dl a=`expr $a + 1`
 .It
 The following example returns the filename portion of a pathname stored
-in variable a.  The // characters act to eliminate ambiguity with the
-division operator.
-.Dl expr "//$a" Li : '.*/\e(.*\e)'
+in variable a.
+.Dl expr "/$a" Li : '.*/\e(.*\e)'
 .It
 The following example returns the number of characters in variable a.
 .Dl expr $a Li : '.*'
@@ -105,3 +104,41 @@ The
 .Nm
 utility conforms to
 .St -p1003.2 .
+.Sh AUTHOR
+Original implementation was written by
+.An J.T. Conklin Aq jtc@netbsd.org .
+It was rewritten in
+.Nx 1.6
+by
+.An Jaromir Dolecek Aq jdolecek@netbsd.org .
+.Sh BUGS
+This implementation of
+.Nm
+internally uses 64 bit represenation of integers and checks for
+over- and underflows. It also treats / (division mark)
+correctly depending upon context.
+.Pp
+.Nm
+on other systems (including
+.Nx
+up to and including
+.Nx 1.5 )
+might be not so graceful. Arithmetic results might be arbitrarily
+limited on such systems, most commonly to 32 bit quantities.
+This means such
+.Nm
+can only process values between -2147483648 and +2147483647.
+.Pp
+On other systems,
+.Nm
+might also not work correctly for regular expressions where
+either side contains single forward slash, like this:
+.Bd -literal -offset indent
+expr / : '.*/\e(.*\e)'
+.Ed
+.Pp
+If this is the case, you might use // (double forward slash)
+to avoid abiquity with the division operator:
+.Bd -literal -offset indent
+expr "//$a" : '.*/\e(.*\e)'
+.Ed

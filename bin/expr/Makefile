@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 1997/07/20 22:37:03 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2000/09/19 17:20:00 jdolecek Exp $
 
 PROG=		expr
-SRCS=		expr.c
+SRCS=		expr.y
 
 .include <bsd.prog.mk>
