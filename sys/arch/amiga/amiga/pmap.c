@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2003/09/27 19:34:17 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2004/09/23 21:10:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2003/09/27 19:34:17 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2004/09/23 21:10:31 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1563,7 +1563,7 @@ pmap_extract(pmap, va, pap)
 	paddr_t *pap;
 {
 	boolean_t rv = FALSE;
-	paddr_t pa;
+	paddr_t pa = NULL;
 	u_int pte;
 
 #ifdef DEBUG
