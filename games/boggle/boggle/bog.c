@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.17 2003/08/07 09:37:05 agc Exp $	*/
+/*	$NetBSD: bog.c,v 1.18 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.17 2003/08/07 09:37:05 agc Exp $");
+__RCSID("$NetBSD: bog.c,v 1.18 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ __RCSID("$NetBSD: bog.c,v 1.17 2003/08/07 09:37:05 agc Exp $");
 #include "bog.h"
 #include "extern.h"
 
-static	int	compar __P((const void *, const void *));
-	int	main __P((int, char *[]));
+static	int	compar(const void *, const void *);
+	int	main(int, char *[]);
 
 struct dictindex dictindex[26];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2003/08/07 09:37:05 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,39 +33,39 @@
 
 #include <time.h>
 
-void	 addword __P((const char *));
-void	 badword __P((void));
-char	*batchword __P((FILE *));
-void	 checkdict __P((void));
-int	 checkword __P((const char *, int, int *));
-void	 cleanup __P((void));
-void	 delay __P((int));
-long	 dictseek __P((FILE *, long, int));
-void	 findword __P((void));
-void	 flushin __P((FILE *));
-char	*getline __P((char *));
-void	 getword __P((char *));
-int	 help __P((void));
-int	 inputch __P((void));
-int	 loaddict __P((FILE *));
-int	 loadindex __P((const char *));
-void	 newgame __P((const char *));
-char	*nextword __P((FILE *));
-FILE	*opendict __P((const char *));
-void	 playgame __P((void));
-void	 prompt __P((const char *));
-void	 prtable __P((const char *const [],
-	    int, int, int, void (*)(const char *const [], int), int (*)(const char *const [], int)));
-void	 putstr __P((const char *));
-void	 redraw __P((void));
-void	 results __P((void));
-int	 setup __P((int, time_t));
-void	 showboard __P((const char *));
-void	 showstr __P((const char *, int));
-void	 showword __P((int));
-void	 starttime __P((void));
-void	 startwords __P((void));
-void	 stoptime __P((void));
-int	 timerch __P((void));
-void	 usage __P((void)) __attribute__((__noreturn__));
-int	 validword __P((const char *));
+void	 addword(const char *);
+void	 badword(void);
+char	*batchword(FILE *);
+void	 checkdict(void);
+int	 checkword(const char *, int, int *);
+void	 cleanup(void);
+void	 delay(int);
+long	 dictseek(FILE *, long, int);
+void	 findword(void);
+void	 flushin(FILE *);
+char	*getline(char *);
+void	 getword(char *);
+int	 help(void);
+int	 inputch(void);
+int	 loaddict(FILE *);
+int	 loadindex(const char *);
+void	 newgame(const char *);
+char	*nextword(FILE *);
+FILE	*opendict(const char *);
+void	 playgame(void);
+void	 prompt(const char *);
+void	 prtable(const char *const [],
+	    int, int, int, void (*)(const char *const [], int), int (*)(const char *const [], int));
+void	 putstr(const char *);
+void	 redraw(void);
+void	 results(void);
+int	 setup(int, time_t);
+void	 showboard(const char *);
+void	 showstr(const char *, int);
+void	 showword(int);
+void	 starttime(void);
+void	 startwords(void);
+void	 stoptime(void);
+int	 timerch(void);
+void	 usage(void) __attribute__((__noreturn__));
+int	 validword(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.9 2003/04/02 18:36:37 jsm Exp $	*/
+/*	$NetBSD: hack.h,v 1.10 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -110,7 +110,7 @@ struct prop {
 #define	RIGHT_SIDE	RIGHT_RING
 #define	BOTH_SIDES	(LEFT_SIDE | RIGHT_SIDE)
 	long p_flgs;
-	void (*p_tofn) __P((void));	/* called after timeout */
+	void (*p_tofn)(void);	/* called after timeout */
 };
 
 struct you {
@@ -212,8 +212,8 @@ extern char sdir[]; /* defined in hack.c */
 extern const char shtypes[]; /* = "=/)%?!["; 8 types: 7 specialized, 1 mixed */
 extern const char vowels[];
 extern coord bhitpos;	/* place where thrown weapon falls to the ground */
-extern int (*afternmv) __P((void));
-extern int (*occupation) __P((void));
+extern int (*afternmv)(void);
+extern int (*occupation)(void);
 extern int CO, LI; /* usually COLNO and ROWNO+2 */
 extern int bases[];
 extern int doorindex;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.15 2003/08/07 09:37:33 agc Exp $	*/
+/*	$NetBSD: ppt.c,v 1.16 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.15 2003/08/07 09:37:33 agc Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.16 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,10 +51,10 @@ __RCSID("$NetBSD: ppt.c,v 1.15 2003/08/07 09:37:33 agc Exp $");
 
 #define	EDGE	"___________"
 
-       void	usage __P((void));
-	int	main __P((int, char *[]));
-static void	putppt __P((int));
-	int	getppt __P((const char *));
+       void	usage(void);
+	int	main(int, char *[]);
+static void	putppt(int);
+	int	getppt(const char *);
 
 void
 usage(void)

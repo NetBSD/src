@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.18 2004/01/26 09:58:35 jsm Exp $	*/
+/*	$NetBSD: crib.c,v 1.19 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.18 2004/01/26 09:58:35 jsm Exp $");
+__RCSID("$NetBSD: crib.c,v 1.19 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: crib.c,v 1.18 2004/01/26 09:58:35 jsm Exp $");
 #include "cribcur.h"
 #include "pathnames.h"
 
-int	main __P((int, char *[]));
+int	main(int, char *[]);
 
 int
 main(argc, argv)

@@ -1,16 +1,16 @@
-/* $NetBSD: create.c,v 1.6 1997/10/18 20:03:09 christos Exp $	 */
+/* $NetBSD: create.c,v 1.7 2004/01/27 20:30:30 jsm Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.6 1997/10/18 20:03:09 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.7 2004/01/27 20:30:30 jsm Exp $");
 #endif				/* not lint */
 
 #include "header.h"
 #include "extern.h"
 #include <unistd.h>
-static void fillroom __P((int, int));
+static void fillroom(int, int);
 
 /*
 	makeplayer()

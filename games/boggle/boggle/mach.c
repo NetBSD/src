@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.12 2003/08/07 09:37:05 agc Exp $	*/
+/*	$NetBSD: mach.c,v 1.13 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.12 2003/08/07 09:37:05 agc Exp $");
+__RCSID("$NetBSD: mach.c,v 1.13 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,14 +73,14 @@ extern int usedbits, wordpath[];
 extern time_t start_t;
 extern int debug;
 
-static void	cont_catcher __P((int));
-static int	prwidth __P((const char *const [], int));
-static void	prword __P((const char *const [], int));
-static void	stop_catcher __P((int));
-static void	tty_cleanup __P((void));
-static int	tty_setup __P((void));
-static void	tty_showboard __P((const char *));
-static void	winch_catcher __P((int));
+static void	cont_catcher(int);
+static int	prwidth(const char *const [], int);
+static void	prword(const char *const [], int);
+static void	stop_catcher(int);
+static void	tty_cleanup(void);
+static int	tty_setup(void);
+static void	tty_showboard(const char *);
+static void	winch_catcher(int);
 
 /*
  * Do system dependent initialization

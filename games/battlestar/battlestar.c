@@ -1,4 +1,4 @@
-/*	$NetBSD: battlestar.c,v 1.13 2003/08/07 09:37:00 agc Exp $	*/
+/*	$NetBSD: battlestar.c,v 1.14 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: battlestar.c,v 1.13 2003/08/07 09:37:00 agc Exp $");
+__RCSID("$NetBSD: battlestar.c,v 1.14 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: battlestar.c,v 1.13 2003/08/07 09:37:00 agc Exp $");
 
 #include "extern.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)

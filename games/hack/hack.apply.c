@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.apply.c,v 1.7 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: hack.apply.c,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.apply.c,v 1.7 2003/04/02 18:36:35 jsm Exp $");
+__RCSID("$NetBSD: hack.apply.c,v 1.8 2004/01/27 20:30:29 jsm Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -71,16 +71,16 @@ __RCSID("$NetBSD: hack.apply.c,v 1.7 2003/04/02 18:36:35 jsm Exp $");
 #include	"def.edog.h"
 #include	"def.mkroom.h"
 
-static void use_camera __P((struct obj *));
-static int in_ice_box __P((struct obj *));
-static int ck_ice_box __P((struct obj *));
-static int out_ice_box __P((struct obj *));
-static void use_ice_box __P((struct obj *));
-static struct monst *bchit __P((int, int , int , int));
-static void use_whistle __P((struct obj *));
-static void use_magic_whistle __P((struct obj *));
-static int dig __P((void));
-static int use_pick_axe __P((struct obj *));
+static void use_camera(struct obj *);
+static int in_ice_box(struct obj *);
+static int ck_ice_box(struct obj *);
+static int out_ice_box(struct obj *);
+static void use_ice_box(struct obj *);
+static struct monst *bchit(int, int , int , int);
+static void use_whistle(struct obj *);
+static void use_magic_whistle(struct obj *);
+static int dig(void);
+static int use_pick_axe(struct obj *);
 
 int
 doapply()

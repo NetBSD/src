@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.11 2003/08/07 09:36:59 agc Exp $	*/
+/*	$NetBSD: banner.c,v 1.12 2004/01/27 20:30:28 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.11 2003/08/07 09:36:59 agc Exp $");
+__RCSID("$NetBSD: banner.c,v 1.12 2004/01/27 20:30:28 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -1026,7 +1026,7 @@ int	debug, i, j, linen, max, nchars, pc, term, trace, x, y;
 int	width = DWIDTH;	/* -w option: scrunch letters to 80 columns */
 
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.5 2002/01/31 17:35:52 christos Exp $	*/
+/*	$NetBSD: auto.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,16 +67,16 @@
 
 #define CONSDEBUG(a)
 
-static int distance __P((int, int, int, int));
-static int xinc __P((int));
-static int yinc __P((int));
-static const char *find_moves __P((void));
-static COORD *closest_robot __P((int *));
-static COORD *closest_heap __P((int *));
-static char move_towards __P((int, int));
-static char move_away __P((COORD *));
-static char move_between __P((COORD *, COORD *));
-static int between __P((COORD *, COORD *));
+static int distance(int, int, int, int);
+static int xinc(int);
+static int yinc(int);
+static const char *find_moves(void);
+static COORD *closest_robot(int *);
+static COORD *closest_heap(int *);
+static char move_towards(int, int);
+static char move_away(COORD *);
+static char move_between(COORD *, COORD *);
+static int between(COORD *, COORD *);
 
 /* distance():
  * 	return "move" number distance of the two coordinates

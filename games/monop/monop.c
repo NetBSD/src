@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.14 2003/08/07 09:37:28 agc Exp $	*/
+/*	$NetBSD: monop.c,v 1.15 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.14 2003/08/07 09:37:28 agc Exp $");
+__RCSID("$NetBSD: monop.c,v 1.15 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,11 +49,11 @@ __RCSID("$NetBSD: monop.c,v 1.14 2003/08/07 09:37:28 agc Exp $");
 #include <unistd.h>
 #include "monop.def"
 
-int main __P((int, char *[]));
-static void getplayers __P((void));
-static void init_players __P((void));
-static void init_monops __P((void));
-static void do_quit __P((int));
+int main(int, char *[]);
+static void getplayers(void);
+static void init_players(void);
+static void init_monops(void);
+static void do_quit(int);
 void *heapstart;
 
 /*

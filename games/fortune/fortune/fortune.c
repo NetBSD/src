@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.42 2004/01/27 20:24:32 jsm Exp $	*/
+/*	$NetBSD: fortune.c,v 1.43 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.42 2004/01/27 20:24:32 jsm Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.43 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,46 +126,46 @@ FILEDESC	*Fortfile;		/* Fortune file to use */
 
 STRFILE		Noprob_tbl;		/* sum of data for all no prob files */
 
-int	 add_dir __P((FILEDESC *));
-int	 add_file __P((int,
-	    const char *, const char *, FILEDESC **, FILEDESC **, FILEDESC *));
-void	 all_forts __P((FILEDESC *, const char *));
-char	*copy __P((const char *, u_int));
-void	 rot13 __P((char *line, int len));
-void	 display __P((FILEDESC *));
-void	 do_free __P((void *));
-void	*do_malloc __P((u_int));
-int	 form_file_list __P((char **, int));
-int	 fortlen __P((void));
-void	 get_fort __P((void));
-void	 get_pos __P((FILEDESC *));
-void	 get_tbl __P((FILEDESC *));
-void	 getargs __P((int, char *[]));
-void	 init_prob __P((void));
-int	 is_dir __P((const char *));
-int	 is_fortfile __P((const char *, char **, char **, int));
-int	 is_off_name __P((const char *));
-int	 main __P((int, char *[]));
-int	 max __P((int, int));
+int	 add_dir(FILEDESC *);
+int	 add_file(int,
+	    const char *, const char *, FILEDESC **, FILEDESC **, FILEDESC *);
+void	 all_forts(FILEDESC *, const char *);
+char	*copy(const char *, u_int);
+void	 rot13(char *line, int len);
+void	 display(FILEDESC *);
+void	 do_free(void *);
+void	*do_malloc(u_int);
+int	 form_file_list(char **, int);
+int	 fortlen(void);
+void	 get_fort(void);
+void	 get_pos(FILEDESC *);
+void	 get_tbl(FILEDESC *);
+void	 getargs(int, char *[]);
+void	 init_prob(void);
+int	 is_dir(const char *);
+int	 is_fortfile(const char *, char **, char **, int);
+int	 is_off_name(const char *);
+int	 main(int, char *[]);
+int	 max(int, int);
 FILEDESC *
-	 new_fp __P((void));
-char	*off_name __P((const char *));
-void	 open_dat __P((FILEDESC *));
-void	 open_fp __P((FILEDESC *));
+	 new_fp(void);
+char	*off_name(const char *);
+void	 open_dat(FILEDESC *);
+void	 open_fp(FILEDESC *);
 FILEDESC *
-	 pick_child __P((FILEDESC *));
-void	 print_file_list __P((void));
-void	 print_list __P((FILEDESC *, int));
-void	 sum_noprobs __P((FILEDESC *));
-void	 sum_tbl __P((STRFILE *, STRFILE *));
-void	 usage __P((void)) __attribute__((__noreturn__));
-void	 zero_tbl __P((STRFILE *));
+	 pick_child(FILEDESC *);
+void	 print_file_list(void);
+void	 print_list(FILEDESC *, int);
+void	 sum_noprobs(FILEDESC *);
+void	 sum_tbl(STRFILE *, STRFILE *);
+void	 usage(void) __attribute__((__noreturn__));
+void	 zero_tbl(STRFILE *);
 
 #ifndef	NO_REGEX
-char	*conv_pat __P((char *));
-int	 find_matches __P((void));
-void	 matches_in_list __P((FILEDESC *));
-int	 maxlen_in_list __P((FILEDESC *));
+char	*conv_pat(char *);
+int	 find_matches(void);
+void	 matches_in_list(FILEDESC *);
+int	 maxlen_in_list(FILEDESC *);
 #endif
 
 #ifndef NO_REGEX

@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.13 2003/08/07 09:37:27 agc Exp $	*/
+/*	$NetBSD: cards.c,v 1.14 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.13 2003/08/07 09:37:27 agc Exp $");
+__RCSID("$NetBSD: cards.c,v 1.14 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ static const char	*cardfile	= "cards.pck";
 
 static FILE	*deckf;
 
-static void set_up __P((DECK *));
-static void printmes __P((void));
+static void set_up(DECK *);
+static void printmes(void);
 
 /*
  *	This routine initializes the decks from the data file,

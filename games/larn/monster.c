@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.7 2001/02/05 00:57:33 christos Exp $	*/
+/*	$NetBSD: monster.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.7 2001/02/05 00:57:33 christos Exp $");
+__RCSID("$NetBSD: monster.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -114,7 +114,7 @@ struct isave {			/* used for altar reality */
 	short           arg;	/* the type of item or hitpoints of monster */
 };
 
-static int dirsub __P((int *, int *));
+static int dirsub(int *, int *);
 /*
  * createmonster(monstno)	Function to create a monster next to the player
  * 	int monstno;

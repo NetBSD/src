@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.9 2003/08/07 09:37:50 agc Exp $	*/
+/*	$NetBSD: computer.c,v 1.10 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.9 2003/08/07 09:37:50 agc Exp $");
+__RCSID("$NetBSD: computer.c,v 1.10 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,8 +104,8 @@ struct cvntab	Cputab[] =
 	{ NULL,		NULL,			NULL,			0 }
 };
 
-static int kalc __P((int, int, int, int, double *));
-static void prkalc __P((int, double));
+static int kalc(int, int, int, int, double *);
+static void prkalc(int, double);
 
 /*ARGSUSED*/
 void

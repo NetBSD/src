@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.13 2004/01/01 16:00:34 jsm Exp $	*/
+/*	$NetBSD: caesar.c,v 1.14 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.13 2004/01/01 16:00:34 jsm Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.14 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,8 @@ double stdf[26] = {
 };
 
 
-int	main __P((int, char *[]));
-void	printit __P((const char *)) __attribute__((__noreturn__));
+int	main(int, char *[]);
+void	printit(const char *) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

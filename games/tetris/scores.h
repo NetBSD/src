@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.h,v 1.3 2003/08/07 09:37:48 agc Exp $	*/
+/*	$NetBSD: scores.h,v 1.4 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,5 +48,5 @@ struct highscore {
 #define MAXSCORES	9	/* maximum high score entries per person */
 #define	EXPIRATION	(5L * 365 * 24 * 60 * 60)
 
-void	savescore __P((int));
-void	showscores __P((int));
+void	savescore(int);
+void	showscores(int);

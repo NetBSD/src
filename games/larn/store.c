@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.9 2003/08/07 09:37:23 agc Exp $	 */
+/*	$NetBSD: store.c,v 1.10 2004/01/27 20:30:30 jsm Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.9 2003/08/07 09:37:23 agc Exp $");
+__RCSID("$NetBSD: store.c,v 1.10 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -42,12 +42,12 @@ __RCSID("$NetBSD: store.c,v 1.9 2003/08/07 09:37:23 agc Exp $");
 #include "header.h"
 #include "extern.h"
 
-static void handsfull __P((void));
-static void outofstock __P((void));
-static void nogold __P((void));
-static void dnditem __P((int));
-static void banktitle __P((char *));
-static void otradhead __P((void));
+static void handsfull(void);
+static void outofstock(void);
+static void nogold(void);
+static void dnditem(int);
+static void banktitle(char *);
+static void otradhead(void);
 
 static int      dndcount = 0, dnditm = 0;
 

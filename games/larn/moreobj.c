@@ -1,4 +1,4 @@
-/*	$NetBSD: moreobj.c,v 1.5 2001/02/05 00:57:34 christos Exp $	*/
+/*	$NetBSD: moreobj.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -9,15 +9,15 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moreobj.c,v 1.5 2001/02/05 00:57:34 christos Exp $");
+__RCSID("$NetBSD: moreobj.c,v 1.6 2004/01/27 20:30:30 jsm Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>
 #include "header.h"
 #include "extern.h"
 
-static void ohear __P((void));
-static void fch __P((int, long *));
+static void ohear(void);
+static void fch(int, long *);
 
 /*
  *	******

@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.24 2003/08/07 09:37:56 agc Exp $	*/
+/*	$NetBSD: worm.c,v 1.25 2004/01/27 20:30:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.24 2003/08/07 09:37:56 agc Exp $");
+__RCSID("$NetBSD: worm.c,v 1.25 2004/01/27 20:30:31 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,17 +80,17 @@ int visible_len;
 int lastch;
 char outbuf[BUFSIZ];
 
-void	crash __P((void)) __attribute__((__noreturn__));
-void	display __P((const struct body *, char));
-int	main __P((int, char **));
-void	leave __P((int)) __attribute__((__noreturn__));
-void	life __P((void));
-void	newpos __P((struct body *));
-void	process __P((int));
-void	prize __P((void));
-int	rnd __P((int));
-void	setup __P((void));
-void	wake __P((int));
+void	crash(void) __attribute__((__noreturn__));
+void	display(const struct body *, char);
+int	main(int, char **);
+void	leave(int) __attribute__((__noreturn__));
+void	life(void);
+void	newpos(struct body *);
+void	process(int);
+void	prize(void);
+int	rnd(int);
+void	setup(void);
+void	wake(int);
 
 int
 main(argc, argv)

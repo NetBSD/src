@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.14 2003/08/07 09:37:47 agc Exp $	*/
+/*	$NetBSD: snscore.c,v 1.15 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: snscore.c,v 1.14 2003/08/07 09:37:47 agc Exp $");
+__RCSID("$NetBSD: snscore.c,v 1.15 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ struct	player	{
 	char	*name;
 } players[MAXPLAYERS], temp;
 
-int	main __P((void));
+int	main(void);
 
 int
 main()

@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.12 2003/08/07 09:37:48 agc Exp $	*/
+/*	$NetBSD: scores.c,v 1.13 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,11 +74,11 @@ static int nscores;
 static int gotscores;
 static struct highscore scores[NUMSPOTS];
 
-static int checkscores __P((struct highscore *, int));
-static int cmpscores __P((const void *, const void *));
-static void getscores __P((FILE **));
-static void printem __P((int, int, struct highscore *, int, const char *));
-static char *thisuser __P((void));
+static int checkscores(struct highscore *, int);
+static int cmpscores(const void *, const void *);
+static void getscores(FILE **);
+static void printem(int, int, struct highscore *, int, const char *);
+static char *thisuser(void);
 
 /*
  * Read the score file.  Can be called from savescore (before showscores)

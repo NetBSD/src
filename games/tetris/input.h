@@ -1,4 +1,4 @@
-/*	$NetBSD: input.h,v 1.4 2003/08/07 09:37:48 agc Exp $	*/
+/*	$NetBSD: input.h,v 1.5 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,6 +34,6 @@
  *	@(#)input.h	8.1 (Berkeley) 5/31/93
  */
 
-int	rwait __P((struct timeval *));
-int	tgetchar __P((void));
-void	tsleep __P((void));
+int	rwait(struct timeval *);
+int	tgetchar(void);
+void	tsleep(void);

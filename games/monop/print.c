@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7 2003/08/07 09:37:29 agc Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.7 2003/08/07 09:37:29 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: print.c,v 1.7 2003/08/07 09:37:29 agc Exp $");
 
 static const char *header = "Name      Own      Price Mg # Rent";
 
-static void printmorg __P((const SQUARE *));
+static void printmorg(const SQUARE *);
 
 /*
  *	This routine prints out the current board

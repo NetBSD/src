@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.19 2003/08/07 09:37:34 agc Exp $	*/
+/*	$NetBSD: quiz.c,v 1.20 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.19 2003/08/07 09:37:34 agc Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.20 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,16 +65,16 @@ static QE qlist;
 static int catone, cattwo, tflag;
 static u_int qsize;
 
-char	*appdstr __P((char *, const char *, size_t));
-void	 downcase __P((char *));
-void	 get_cats __P((char *, char *));
-void	 get_file __P((const char *));
-int	 main __P((int, char *[]));
-const char	*next_cat __P((const char *));
-void	 quiz __P((void));
-void	 score __P((u_int, u_int, u_int));
-void	 show_index __P((void));
-void	 usage __P((void)) __attribute__((__noreturn__));
+char	*appdstr(char *, const char *, size_t);
+void	 downcase(char *);
+void	 get_cats(char *, char *);
+void	 get_file(const char *);
+int	 main(int, char *[]);
+const char	*next_cat(const char *);
+void	 quiz(void);
+void	 score(u_int, u_int, u_int);
+void	 show_index(void);
+void	 usage(void) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.8 2003/08/07 09:37:29 agc Exp $	*/
+/*	$NetBSD: prop.c,v 1.9 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.8 2003/08/07 09:37:29 agc Exp $");
+__RCSID("$NetBSD: prop.c,v 1.9 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include "monop.ext"
 
-static int value __P((SQUARE *));
+static int value(SQUARE *);
 
 /*
  *	This routine deals with buying property, setting all the

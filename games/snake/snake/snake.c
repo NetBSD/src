@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.18 2003/08/07 09:37:45 agc Exp $	*/
+/*	$NetBSD: snake.c,v 1.19 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.18 2003/08/07 09:37:45 agc Exp $");
+__RCSID("$NetBSD: snake.c,v 1.19 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -115,29 +115,29 @@ FILE *logfile;
 int	lcnt, ccnt;	/* user's idea of screen size */
 int	chunk;		/* amount of money given at a time */
 
-void		chase __P((struct point *, struct point *));
-int		chk __P((const struct point *));
-void		drawbox __P((void));
-void		flushi __P((void));
-void		home __P((void));
-void		length __P((int));
-void		logit __P((const char *));
-int		main __P((int, char **));
-void		mainloop __P((void)) __attribute__((__noreturn__));
-struct point   *point __P((struct point *, int, int));
-int		post __P((int, int));
-int		pushsnake __P((void));
-void		right __P((const struct point *));
-void		setup __P((void));
-void		snap __P((void));
-void		snrand __P((struct point *));
-void		spacewarp __P((int));
-void		stop __P((int)) __attribute__((__noreturn__));
-int		stretch __P((const struct point *));
-void		surround __P((struct point *));
-void		suspend __P((void));
-void		win __P((const struct point *));
-void		winnings __P((int));
+void		chase(struct point *, struct point *);
+int		chk(const struct point *);
+void		drawbox(void);
+void		flushi(void);
+void		home(void);
+void		length(int);
+void		logit(const char *);
+int		main(int, char **);
+void		mainloop(void) __attribute__((__noreturn__));
+struct point   *point(struct point *, int, int);
+int		post(int, int);
+int		pushsnake(void);
+void		right(const struct point *);
+void		setup(void);
+void		snap(void);
+void		snrand(struct point *);
+void		spacewarp(int);
+void		stop(int) __attribute__((__noreturn__));
+int		stretch(const struct point *);
+void		surround(struct point *);
+void		suspend(void);
+void		win(const struct point *);
+void		winnings(int);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.9 2003/08/07 09:37:32 agc Exp $	*/
+/*	$NetBSD: pig.c,v 1.10 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: pig.c,v 1.9 2003/08/07 09:37:32 agc Exp $");
+__RCSID("$NetBSD: pig.c,v 1.10 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: pig.c,v 1.9 2003/08/07 09:37:32 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int main __P((int, char *[]));
-void pigout __P((char *, int));
-void usage __P((void)) __attribute__((__noreturn__));
+int main(int, char *[]);
+void pigout(char *, int);
+void usage(void) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

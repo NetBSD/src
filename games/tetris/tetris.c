@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.16 2003/08/07 09:37:48 agc Exp $	*/
+/*	$NetBSD: tetris.c,v 1.17 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,11 +74,11 @@ gid_t	gid, egid;
 char	key_msg[100];
 int	showpreview;
 
-static	void	elide __P((void));
-static	void	setup_board __P((void));
-	int	main __P((int, char **));
-	void	onintr __P((int)) __attribute__((__noreturn__));
-	void	usage __P((void)) __attribute__((__noreturn__));
+static	void	elide(void);
+static	void	setup_board(void);
+	int	main(int, char **);
+	void	onintr(int) __attribute__((__noreturn__));
+	void	usage(void) __attribute__((__noreturn__));
 
 /*
  * Set up the initial board.  The bottom display row is completely set,

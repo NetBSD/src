@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.8 2003/08/07 09:37:51 agc Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.9 2004/01/27 20:30:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.8 2003/08/07 09:37:51 agc Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.9 2004/01/27 20:30:31 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ struct dump
 	int	count;
 };
 
-static int readdump __P((int));
+static int readdump(int);
 
 
 struct dump	Dump_template[] =

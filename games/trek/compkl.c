@@ -1,4 +1,4 @@
-/*	$NetBSD: compkl.c,v 1.5 2003/08/07 09:37:50 agc Exp $	*/
+/*	$NetBSD: compkl.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)compkl.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: compkl.c,v 1.5 2003/08/07 09:37:50 agc Exp $");
+__RCSID("$NetBSD: compkl.c,v 1.6 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: compkl.c,v 1.5 2003/08/07 09:37:50 agc Exp $");
 **	move.
 */
 
-static void sortkl __P((void));
+static void sortkl(void);
 
 void
 compkldist(f)

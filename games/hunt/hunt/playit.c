@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.7 2003/06/11 12:00:21 wiz Exp $	*/
+/*	$NetBSD: playit.c,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.7 2003/06/11 12:00:21 wiz Exp $");
+__RCSID("$NetBSD: playit.c,v 1.8 2004/01/27 20:30:29 jsm Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
@@ -94,8 +94,8 @@ static unsigned char	ibuf[256], *iptr = ibuf;
 extern int	_putchar();
 #endif
 
-static	unsigned char	getchr __P((void));
-static	void		send_stuff __P((void));
+static	unsigned char	getchr(void);
+static	void		send_stuff(void);
 
 /*
  * playit:
