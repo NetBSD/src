@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.23 2000/02/19 15:13:07 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.24 2000/05/09 23:16:19 pk Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -86,6 +86,8 @@ struct isp_sbussoftc {
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
 	bus_dmamap_t	*sbus_dmamap;
+	bus_dmamap_t	sbus_request_dmamap;
+	bus_dmamap_t	sbus_result_dmamap;
 	int16_t		sbus_poff[_NREG_BLKS];
 };
 
@@ -266,6 +268,7 @@ isp_sbus_mbxdma(isp)
 	struct ispsoftc *isp;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	bus_dma_tag_t dmatag = sbc->sbus_dmatag;
 	bus_dma_segment_t seg;
 	int rseg;
 	size_t n;
@@ -292,39 +295,74 @@ isp_sbus_mbxdma(isp)
 	 * Allocate and map the request queue.
 	 */
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
-	if (bus_dmamem_alloc(sbc->sbus_dmatag, len, NBPG, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		free(sbc->sbus_dmamap, M_DEVBUF);
-		free(isp->isp_xflist, M_DEVBUF);
-		return (1);
+	/* Allocate DMA map */
+	if (bus_dmamap_create(dmatag, len, 1, len, NBPG, BUS_DMA_NOWAIT,
+				&sbc->sbus_request_dmamap) != 0) {
+		goto dmafail;
 	}
 
-	if (bus_dmamem_map(sbc->sbus_dmatag, &seg, rseg, len,
-	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		free(sbc->sbus_dmamap, M_DEVBUF);
-		free(isp->isp_xflist, M_DEVBUF);
-		return (1);
+	/* Allocate DMA buffer */
+	if (bus_dmamem_alloc(dmatag, len, NBPG, 0,
+				&seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		goto dmafail;
 	}
-	isp->isp_rquest_dma = seg.ds_addr;
+
+	/* Load the buffer */
+	if (bus_dmamap_load_raw(dmatag, sbc->sbus_request_dmamap,
+				&seg, rseg, len, BUS_DMA_NOWAIT) != 0) {
+		bus_dmamem_free(dmatag, &seg, rseg);
+		goto dmafail;
+	}
+	isp->isp_rquest_dma = sbc->sbus_request_dmamap->dm_segs[0].ds_addr;
+
+	/* Map DMA buffer in CPU addressable space */
+	if (bus_dmamem_map(dmatag, &seg, rseg, len,
+			   (caddr_t *)&isp->isp_rquest,
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+		bus_dmamap_unload(dmatag, sbc->sbus_request_dmamap);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		goto dmafail;
+	}
 
 	/*
 	 * Allocate and map the result queue.
 	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
-	if (bus_dmamem_alloc(sbc->sbus_dmatag, len, NBPG, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		free(sbc->sbus_dmamap, M_DEVBUF);
-		free(isp->isp_xflist, M_DEVBUF);
-		return (1);
+	/* Allocate DMA map */
+	if (bus_dmamap_create(dmatag, len, 1, len, NBPG, BUS_DMA_NOWAIT,
+				&sbc->sbus_result_dmamap) != 0) {
+		goto dmafail;
 	}
-	if (bus_dmamem_map(sbc->sbus_dmatag, &seg, rseg, len,
-	    (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		free(sbc->sbus_dmamap, M_DEVBUF);
-		free(isp->isp_xflist, M_DEVBUF);
-		return (1);
+
+	/* Allocate DMA buffer */
+	if (bus_dmamem_alloc(dmatag, len, NBPG, 0,
+				&seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		goto dmafail;
 	}
-	isp->isp_result_dma = seg.ds_addr;
+
+	/* Load the buffer */
+	if (bus_dmamap_load_raw(dmatag, sbc->sbus_result_dmamap,
+				&seg, rseg, len, BUS_DMA_NOWAIT) != 0) {
+		bus_dmamem_free(dmatag, &seg, rseg);
+		goto dmafail;
+	}
+
+	/* Map DMA buffer in CPU addressable space */
+	if (bus_dmamem_map(dmatag, &seg, rseg, len,
+			   (caddr_t *)&isp->isp_result,
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+		bus_dmamap_unload(dmatag, sbc->sbus_result_dmamap);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		goto dmafail;
+	}
+	isp->isp_result_dma = sbc->sbus_result_dmamap->dm_segs[0].ds_addr;
+
 	return (0);
+
+dmafail:
+	free(sbc->sbus_dmamap, M_DEVBUF);
+	free(isp->isp_xflist, M_DEVBUF);
+	return (1);
 }
 
 /*
