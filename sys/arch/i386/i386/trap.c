@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 1995/04/22 20:49:54 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 1995/04/26 00:00:23 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -513,7 +513,7 @@ syscall(frame)
 	code = frame.tf_eax;
 
 	nsys = p->p_emul->e_nsysent;
-	callp = e_sysent;
+	callp = p->p_emul->e_sysent;
 
 #ifdef COMPAT_IBCS2
 	if (p->p_emul == &emul_ibcs2)
