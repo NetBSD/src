@@ -23,42 +23,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_disasm.c,v 1.3 1993/07/17 12:28:47 cgd Exp $
- */
-/*
- * HISTORY
- * $Log: db_disasm.c,v $
- * Revision 1.3  1993/07/17 12:28:47  cgd
- * Fixed two occarances of ldos which should have been lods.
- * (From Christoph Robitschko)
- *
- * Revision 1.2  1993/05/22  07:59:42  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.1.1.1  1993/03/21  09:45:52  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:42:01  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:11:03  mrt
- * 	Changed to new Mach copyright
- * 	[91/02/01  17:31:03  mrt]
- * 
- * Revision 2.2  90/08/27  21:55:56  dbg
- * 	Fix register operand for move to/from control/test/debug
- * 	register instructions.  Add i486 instructions.
- * 	[90/08/27            dbg]
- * 
- * 	Import db_sym.h.  Print instruction displacements in
- * 	current radix (signed).  Change calling sequence of
- * 	db_disasm.
- * 	[90/08/21            dbg]
- * 	Fix includes.
- * 	[90/08/08            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
+ *	From: Id: db_disasm.c,v 2.3 91/02/05 17:11:03 mrt (CMU)
+ *	$Id: db_disasm.c,v 1.4 1993/12/19 03:41:30 mycroft Exp $
  */
 
 /*
@@ -882,8 +848,10 @@ int db_lengths[] = {
 };
 
 #define	get_value_inc(result, loc, size, is_signed) \
-	result = db_get_value((loc), (size), (is_signed)); \
-	(loc) += (size);
+	do { \
+		result = db_get_value((loc), (size), (is_signed)); \
+		(loc) += (size); \
+	} while (0)
 
 /*
  * Read address at location and return updated location.
@@ -901,74 +869,69 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 	rm  = f_rm(regmodrm);
 
 	if (mod == 3) {
-	    addrp->is_reg = TRUE;
-	    addrp->disp = rm;
-	    return (loc);
+		addrp->is_reg = TRUE;
+		addrp->disp = rm;
+		return (loc);
 	}
 	addrp->is_reg = FALSE;
 	addrp->index = 0;
 
 	if (short_addr) {
-	    addrp->index = 0;
-	    addrp->ss = 0;
-	    switch (mod) {
-		case 0:
-		    if (rm == 6) {
+		addrp->index = 0;
+		addrp->ss = 0;
+		switch (mod) {
+		    case 0:
+			if (rm == 6) {
+				get_value_inc(disp, loc, 2, TRUE);
+				addrp->disp = disp;
+				addrp->base = 0;
+			} else {
+				addrp->disp = 0;
+				addrp->base = db_index_reg_16[rm];
+			}
+			break;
+		    case 1:
+			get_value_inc(disp, loc, 1, TRUE);
+			addrp->disp = disp;
+			addrp->base = db_index_reg_16[rm];
+			break;
+		    case 2:
 			get_value_inc(disp, loc, 2, TRUE);
 			addrp->disp = disp;
-			addrp->base = 0;
-		    }
-		    else {
-			addrp->disp = 0;
 			addrp->base = db_index_reg_16[rm];
-		    }
-		    break;
-		case 1:
-		    get_value_inc(disp, loc, 1, TRUE);
-		    addrp->disp = disp;
-		    addrp->base = db_index_reg_16[rm];
-		    break;
-		case 2:
-		    get_value_inc(disp, loc, 2, TRUE);
-		    addrp->disp = disp;
-		    addrp->base = db_index_reg_16[rm];
-		    break;
-	    }
-	}
-	else {
-	    if (mod != 3 && rm == 4) {
-		get_value_inc(sib, loc, 1, FALSE);
-		rm = sib_base(sib);
-		index = sib_index(sib);
-		if (index != 4)
-		    addrp->index = db_reg[LONG][index];
-		addrp->ss = sib_ss(sib);
-	    }
+			break;
+		}
+	} else {
+		if (mod != 3 && rm == 4) {
+			get_value_inc(sib, loc, 1, FALSE);
+			rm = sib_base(sib);
+			index = sib_index(sib);
+			if (index != 4)
+				addrp->index = db_reg[LONG][index];
+			addrp->ss = sib_ss(sib);
+		}
 
-	    switch (mod) {
-		case 0:
-		    if (rm == 5) {
-			get_value_inc(addrp->disp, loc, 4, FALSE);
-			addrp->base = 0;
-		    }
-		    else {
-			addrp->disp = 0;
+		switch (mod) {
+		    case 0:
+			if (rm == 5) {
+				get_value_inc(addrp->disp, loc, 4, FALSE);
+				addrp->base = 0;
+			} else {
+				addrp->disp = 0;
+				addrp->base = db_reg[LONG][rm];
+			}
+			break;
+		    case 1:
+			get_value_inc(disp, loc, 1, TRUE);
+			addrp->disp = disp;
 			addrp->base = db_reg[LONG][rm];
-		    }
-		    break;
-
-		case 1:
-		    get_value_inc(disp, loc, 1, TRUE);
-		    addrp->disp = disp;
-		    addrp->base = db_reg[LONG][rm];
-		    break;
-
-		case 2:
-		    get_value_inc(disp, loc, 4, FALSE);
-		    addrp->disp = disp;
-		    addrp->base = db_reg[LONG][rm];
-		    break;
-	    }
+			break;
+		    case 2:
+			get_value_inc(disp, loc, 4, FALSE);
+			addrp->disp = disp;
+			addrp->base = db_reg[LONG][rm];
+			break;
+		}
 	}
 	return (loc);
 }
@@ -980,22 +943,21 @@ db_print_address(seg, size, addrp)
 	struct i_addr	*addrp;
 {
 	if (addrp->is_reg) {
-	    db_printf("%s", db_reg[size][addrp->disp]);
-	    return;
+		db_printf("%s", db_reg[size][addrp->disp]);
+		return;
 	}
 
-	if (seg) {
-	    db_printf("%s:", seg);
-	}
+	if (seg)
+		db_printf("%s:", seg);
 
 	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY);
 	if (addrp->base != 0 || addrp->index != 0) {
-	    db_printf("(");
-	    if (addrp->base)
-		db_printf("%s", addrp->base);
-	    if (addrp->index)
-		db_printf(",%s,%d", addrp->index, 1<<addrp->ss);
-	    db_printf(")");
+		db_printf("(");
+		if (addrp->base)
+			db_printf("%s", addrp->base);
+		if (addrp->index)
+			db_printf(",%s,%d", addrp->index, 1<<addrp->ss);
+		db_printf(")");
 	}
 }
 
@@ -1021,64 +983,63 @@ db_disasm_esc(loc, inst, short_addr, size, seg)
 	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
-	    /*
-	     * Normal address modes.
-	     */
-	    loc = db_read_address(loc, short_addr, regmodrm, &address);
-	    db_printf(fp->f_name);
-	    switch(fp->f_size) {
-		case SNGL:
-		    db_printf("s");
-		    break;
-		case DBLR:
-		    db_printf("l");
-		    break;
-		case EXTR:
-		    db_printf("t");
-		    break;
-		case WORD:
-		    db_printf("s");
-		    break;
-		case LONG:
-		    db_printf("l");
-		    break;
-		case QUAD:
-		    db_printf("q");
-		    break;
-		default:
-		    break;
-	    }
-	    db_printf("\t");
-	    db_print_address(seg, BYTE, &address);
-	}
-	else {
-	    /*
-	     * 'reg-reg' - special formats
-	     */
-	    switch (fp->f_rrmode) {
-		case op2(ST,STI):
-		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    db_printf("%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
-		    break;
-		case op2(STI,ST):
-		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    db_printf("%s\t%%st(%d),%%st",name, f_rm(regmodrm));
-		    break;
-		case op1(STI):
-		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    db_printf("%s\t%%st(%d)",name, f_rm(regmodrm));
-		    break;
-		case op1(X):
-		    db_printf("%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
-		    break;
-		case op1(XA):
-		    db_printf("%s\t%%ax",
-				 ((char **)fp->f_rrname)[f_rm(regmodrm)]);
-		    break;
-		default:
-		    db_printf("<bad instruction>");
-		    break;
-	    }
+		/*
+		 * Normal address modes.
+		 */
+		loc = db_read_address(loc, short_addr, regmodrm, &address);
+		db_printf(fp->f_name);
+		switch(fp->f_size) {
+		    case SNGL:
+			db_printf("s");
+			break;
+		    case DBLR:
+			db_printf("l");
+			break;
+		    case EXTR:
+			db_printf("t");
+			break;
+		    case WORD:
+			db_printf("s");
+			break;
+		    case LONG:
+			db_printf("l");
+			break;
+		    case QUAD:
+			db_printf("q");
+			break;
+		    default:
+			break;
+		}
+		db_printf("\t");
+		db_print_address(seg, BYTE, &address);
+	} else {
+		/*
+		 * 'reg-reg' - special formats
+		 */
+		switch (fp->f_rrmode) {
+		    case op2(ST,STI):
+			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
+			db_printf("%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
+			break;
+		    case op2(STI,ST):
+			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
+			db_printf("%s\t%%st(%d),%%st",name, f_rm(regmodrm));
+			break;
+		    case op1(STI):
+			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
+			db_printf("%s\t%%st(%d)",name, f_rm(regmodrm));
+			break;
+		    case op1(X):
+			db_printf("%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+			break;
+		    case op1(XA):
+			db_printf("%s\t%%ax",
+				  ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+			break;
+		    default:
+			db_printf("<bad instruction>");
+			break;
+		}
 	}
 
 	return (loc);
@@ -1121,71 +1082,68 @@ db_disasm(loc, altfmt)
 	 */
 	prefix = TRUE;
 	do {
-	    switch (inst) {
-		case 0x66:		/* data16 */
-		    size = WORD;
-		    break;
-		case 0x67:
-		    short_addr = TRUE;
-		    break;
-		case 0x26:
-		    seg = "%es";
-		    break;
-		case 0x36:
-		    seg = "%ss";
-		    break;
-		case 0x2e:
-		    seg = "%cs";
-		    break;
-		case 0x3e:
-		    seg = "%ds";
-		    break;
-		case 0x64:
-		    seg = "%fs";
-		    break;
-		case 0x65:
-		    seg = "%gs";
-		    break;
-		case 0xf0:
-		    db_printf("lock ");
-		    break;
-		case 0xf2:
-		    db_printf("repne ");
-		    break;
-		case 0xf3:
-		    db_printf("repe ");	/* XXX repe VS rep */
-		    break;
-		default:
-		    prefix = FALSE;
-		    break;
-	    }
-	    if (prefix) {
-		get_value_inc(inst, loc, 1, FALSE);
-	    }
+		switch (inst) {
+		    case 0x66:		/* data16 */
+			size = WORD;
+			break;
+		    case 0x67:
+			short_addr = TRUE;
+			break;
+		    case 0x26:
+			seg = "%es";
+			break;
+		    case 0x36:
+			seg = "%ss";
+			break;
+		    case 0x2e:
+			seg = "%cs";
+			break;
+		    case 0x3e:
+			seg = "%ds";
+			break;
+		    case 0x64:
+			seg = "%fs";
+			break;
+		    case 0x65:
+			seg = "%gs";
+			break;
+		    case 0xf0:
+			db_printf("lock ");
+			break;
+		    case 0xf2:
+			db_printf("repne ");
+			break;
+		    case 0xf3:
+			db_printf("repe ");	/* XXX repe VS rep */
+			break;
+		    default:
+			prefix = FALSE;
+			break;
+		}
+		if (prefix)
+			get_value_inc(inst, loc, 1, FALSE);
 	} while (prefix);
 
 	if (inst >= 0xd8 && inst <= 0xdf) {
-	    loc = db_disasm_esc(loc, inst, short_addr, size, seg);
-	    db_printf("\n");
-	    return (loc);
+		loc = db_disasm_esc(loc, inst, short_addr, size, seg);
+		db_printf("\n");
+		return (loc);
 	}
 
 	if (inst == 0x0f) {
-	    get_value_inc(inst, loc, 1, FALSE);
-	    ip = db_inst_0f[inst>>4];
-	    if (ip == 0) {
-		ip = &db_bad_inst;
-	    }
-	    else {
-		ip = &ip[inst&0xf];
-	    }
+		get_value_inc(inst, loc, 1, FALSE);
+		ip = db_inst_0f[inst>>4];
+		if (ip == 0)
+			ip = &db_bad_inst;
+		else
+			ip = &ip[inst&0xf];
+	} else {
+		ip = &db_inst_table[inst];
 	}
-	else
-	    ip = &db_inst_table[inst];
 
 	if (ip->i_has_modrm) {
-	    get_value_inc(regmodrm, loc, 1, FALSE);
-	    loc = db_read_address(loc, short_addr, regmodrm, &address);
+		get_value_inc(regmodrm, loc, 1, FALSE);
+		loc = db_read_address(loc, short_addr, regmodrm, &address);
 	}
 
 	i_name = ip->i_name;
@@ -1197,213 +1155,173 @@ db_disasm(loc, altfmt)
 	    ip->i_extra == (char *)db_Grp6 ||
 	    ip->i_extra == (char *)db_Grp7 ||
 	    ip->i_extra == (char *)db_Grp8) {
-	    i_name = ((char **)ip->i_extra)[f_reg(regmodrm)];
-	}
-	else if (ip->i_extra == (char *)db_Grp3) {
-	    ip = (struct inst *)ip->i_extra;
-	    ip = &ip[f_reg(regmodrm)];
-	    i_name = ip->i_name;
-	    i_mode = ip->i_mode;
-	}
-	else if (ip->i_extra == (char *)db_Grp4 ||
-		 ip->i_extra == (char *)db_Grp5) {
-	    ip = (struct inst *)ip->i_extra;
-	    ip = &ip[f_reg(regmodrm)];
-	    i_name = ip->i_name;
-	    i_mode = ip->i_mode;
-	    i_size = ip->i_size;
+		i_name = ((char **)ip->i_extra)[f_reg(regmodrm)];
+	} else if (ip->i_extra == (char *)db_Grp3) {
+		ip = (struct inst *)ip->i_extra;
+		ip = &ip[f_reg(regmodrm)];
+		i_name = ip->i_name;
+		i_mode = ip->i_mode;
+	} else if (ip->i_extra == (char *)db_Grp4 ||
+		   ip->i_extra == (char *)db_Grp5) {
+		ip = (struct inst *)ip->i_extra;
+		ip = &ip[f_reg(regmodrm)];
+		i_name = ip->i_name;
+		i_mode = ip->i_mode;
+		i_size = ip->i_size;
 	}
 
 	if (i_size == SDEP) {
-	    if (size == WORD)
-		db_printf(i_name);
-	    else
-		db_printf(ip->i_extra);
-	}
-	else {
-	    db_printf(i_name);
-	    if (i_size != NONE) {
-		if (i_size == BYTE) {
-		    db_printf("b");
-		    size = BYTE;
-		}
-		else if (i_size == WORD) {
-		    db_printf("w");
-		    size = WORD;
-		}
-		else if (size == WORD)
-		    db_printf("w");
+		if (size == WORD)
+			db_printf(i_name);
 		else
-		    db_printf("l");
-	    }
+			db_printf(ip->i_extra);
+	} else {
+		db_printf(i_name);
+		if (i_size != NONE) {
+			if (i_size == BYTE) {
+				db_printf("b");
+				size = BYTE;
+			} else if (i_size == WORD) {
+				db_printf("w");
+				size = WORD;
+			} else if (size == WORD) {
+				db_printf("w");
+			} else {
+				db_printf("l");
+			}
+		}
 	}
 	db_printf("\t");
 	for (first = TRUE;
 	     i_mode != 0;
-	     i_mode >>= 8, first = FALSE)
-	{
-	    if (!first)
-		db_printf(",");
+	     i_mode >>= 8, first = FALSE) {
+		if (!first)
+			db_printf(",");
 
-	    switch (i_mode & 0xFF) {
-
-		case E:
-		    db_print_address(seg, size, &address);
-		    break;
-
-		case Eind:
-		    db_printf("*");
-		    db_print_address(seg, size, &address);
-		    break;
-
-		case Ew:
-		    db_print_address(seg, WORD, &address);
-		    break;
-
-		case Eb:
-		    db_print_address(seg, BYTE, &address);
-		    break;
-
-		case R:
-		    db_printf("%s", db_reg[size][f_reg(regmodrm)]);
-		    break;
-
-		case Rw:
-		    db_printf("%s", db_reg[WORD][f_reg(regmodrm)]);
-		    break;
-
-		case Ri:
-		    db_printf("%s", db_reg[size][f_rm(inst)]);
-		    break;
-
-		case S:
-		    db_printf("%s", db_seg_reg[f_reg(regmodrm)]);
-		    break;
-
-		case Si:
-		    db_printf("%s", db_seg_reg[f_reg(inst)]);
-		    break;
-
-		case A:
-		    db_printf("%s", db_reg[size][0]);	/* acc */
-		    break;
-
-		case BX:
-		    if (seg)
-			db_printf("%s:", seg);
-		    db_printf("(%s)", short_addr ? "%bx" : "%ebx");
-		    break;
-
-		case CL:
-		    db_printf("%%cl");
-		    break;
-
-		case DX:
-		    db_printf("%%dx");
-		    break;
-
-		case SI:
-		    if (seg)
-			db_printf("%s:", seg);
-		    db_printf("(%s)", short_addr ? "%si" : "%esi");
-		    break;
-
-		case DI:
-		    db_printf("%%es:(%s)", short_addr ? "%di" : "%edi");
-		    break;
-
-		case CR:
-		    db_printf("%%cr%d", f_reg(regmodrm));
-		    break;
-
-		case DR:
-		    db_printf("%%dr%d", f_reg(regmodrm));
-		    break;
-
-		case TR:
-		    db_printf("%%tr%d", f_reg(regmodrm));
-		    break;
-
-		case I:
-		    len = db_lengths[size];
-		    get_value_inc(imm, loc, len, FALSE);/* unsigned */
-		    db_printf("$%#n", imm);
-		    break;
-
-		case Is:
-		    len = db_lengths[size];
-		    get_value_inc(imm, loc, len, TRUE);	/* signed */
-		    db_printf("$%#r", imm);
-		    break;
-
-		case Ib:
-		    get_value_inc(imm, loc, 1, FALSE);	/* unsigned */
-		    db_printf("$%#n", imm);
-		    break;
-
-		case Ibs:
-		    get_value_inc(imm, loc, 1, TRUE);	/* signed */
-		    db_printf("$%#r", imm);
-		    break;
-
-		case Iw:
-		    get_value_inc(imm, loc, 2, FALSE);	/* unsigned */
-		    db_printf("$%#n", imm);
-		    break;
-
-		case Il:
-		    get_value_inc(imm, loc, 4, FALSE);
-		    db_printf("$%#n", imm);
-		    break;
-
-		case O:
-		    if (short_addr) {
-			get_value_inc(displ, loc, 2, TRUE);
-		    }
-		    else {
+		switch (i_mode & 0xFF) {
+		    case E:
+			db_print_address(seg, size, &address);
+			break;
+		    case Eind:
+			db_printf("*");
+			db_print_address(seg, size, &address);
+			break;
+		    case Ew:
+			db_print_address(seg, WORD, &address);
+			break;
+		    case Eb:
+			db_print_address(seg, BYTE, &address);
+			break;
+		    case R:
+			db_printf("%s", db_reg[size][f_reg(regmodrm)]);
+			break;
+		    case Rw:
+			db_printf("%s", db_reg[WORD][f_reg(regmodrm)]);
+			break;
+		    case Ri:
+			db_printf("%s", db_reg[size][f_rm(inst)]);
+			break;
+		    case S:
+			db_printf("%s", db_seg_reg[f_reg(regmodrm)]);
+			break;
+		    case Si:
+			db_printf("%s", db_seg_reg[f_reg(inst)]);
+			break;
+		    case A:
+			db_printf("%s", db_reg[size][0]);	/* acc */
+			break;
+		    case BX:
+			if (seg)
+				db_printf("%s:", seg);
+			db_printf("(%s)", short_addr ? "%bx" : "%ebx");
+			break;
+		    case CL:
+			db_printf("%%cl");
+			break;
+		    case DX:
+			db_printf("%%dx");
+			break;
+		    case SI:
+			if (seg)
+				db_printf("%s:", seg);
+			db_printf("(%s)", short_addr ? "%si" : "%esi");
+			break;
+		    case DI:
+			db_printf("%%es:(%s)", short_addr ? "%di" : "%edi");
+			break;
+		    case CR:
+			db_printf("%%cr%d", f_reg(regmodrm));
+			break;
+		    case DR:
+			db_printf("%%dr%d", f_reg(regmodrm));
+			break;
+		    case TR:
+			db_printf("%%tr%d", f_reg(regmodrm));
+			break;
+		    case I:
+			len = db_lengths[size];
+			get_value_inc(imm, loc, len, FALSE);/* unsigned */
+			db_printf("$%#n", imm);
+			break;
+		    case Is:
+			len = db_lengths[size];
+			get_value_inc(imm, loc, len, TRUE);	/* signed */
+			db_printf("$%#r", imm);
+			break;
+		    case Ib:
+			get_value_inc(imm, loc, 1, FALSE);	/* unsigned */
+			db_printf("$%#n", imm);
+			break;
+		    case Ibs:
+			get_value_inc(imm, loc, 1, TRUE);	/* signed */
+			db_printf("$%#r", imm);
+			break;
+		    case Iw:
+			get_value_inc(imm, loc, 2, FALSE);	/* unsigned */
+			db_printf("$%#n", imm);
+			break;
+		    case Il:
+			get_value_inc(imm, loc, 4, FALSE);
+			db_printf("$%#n", imm);
+			break;
+		    case O:
+			if (short_addr)
+				get_value_inc(displ, loc, 2, TRUE);
+			else
+				get_value_inc(displ, loc, 4, TRUE);
+			if (seg)
+				db_printf("%s:%#r",seg, displ);
+			else
+				db_printsym((db_addr_t)displ, DB_STGY_ANY);
+			break;
+		    case Db:
+			get_value_inc(displ, loc, 1, TRUE);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			break;
+		    case Dl:
 			get_value_inc(displ, loc, 4, TRUE);
-		    }
-		    if (seg)
-			db_printf("%s:%#r",seg, displ);
-		    else
-			db_printsym((db_addr_t)displ, DB_STGY_ANY);
-		    break;
-
-		case Db:
-		    get_value_inc(displ, loc, 1, TRUE);
-		    db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
-		    break;
-
-		case Dl:
-		    get_value_inc(displ, loc, 4, TRUE);
-		    db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
-		    break;
-
-		case o1:
-		    db_printf("$1");
-		    break;
-
-		case o3:
-		    db_printf("$3");
-		    break;
-
-		case OS:
-		    get_value_inc(imm, loc, 4, FALSE);	/* offset */
-		    get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-		    db_printf("$%#n,%#n", imm2, imm);
-		    break;
-	    }
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			break;
+		    case o1:
+			db_printf("$1");
+			break;
+		    case o3:
+			db_printf("$3");
+			break;
+		    case OS:
+			get_value_inc(imm, loc, 4, FALSE);	/* offset */
+			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
+			db_printf("$%#n,%#n", imm2, imm);
+			break;
+		}
 	}
 
-	if (altfmt == 0) {
-	    if (inst == 0xe9 || inst == 0xeb) {
+	if (altfmt == 0 && (inst == 0xe9 || inst == 0xeb)) {
 		/*
 		 * GAS pads to longword boundary after unconditional jumps.
 		 */
 		loc = (loc + (4-1)) & ~(4-1);
-	    }
 	}
 	db_printf("\n");
 	return (loc);
 }
-
