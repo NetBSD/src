@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.16 2000/06/06 09:53:29 mycroft Exp $
+#	$NetBSD: bsd.inc.mk,v 1.17 2001/05/08 03:19:52 sommerfeld Exp $
 
 .PHONY:		incinstall
 includes:	${INCS} incinstall
@@ -18,7 +18,7 @@ __incinstall: .USE
 	     ${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${BINOWN} \
 		 -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
-.for I in ${INCS}
+.for I in ${INCS:O:u}
 ${DESTDIR}${INCSDIR}/$I: $I __incinstall
 .endfor
 .endif
