@@ -1,7 +1,7 @@
 #! /bin/sed -f
 #
-# Copyright (c) 1988 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1988, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)strip.sed	5.3 (Berkeley) 4/17/91
+#	@(#)strip.sed	8.1 (Berkeley) 6/5/93
 #
 
 /%beginstrip%/{
