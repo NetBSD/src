@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.25 2003/11/16 01:12:30 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.26 2003/11/24 14:31:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.25 2003/11/16 01:12:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.26 2003/11/24 14:31:40 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.25 2003/11/16 01:12:30 manu Exp $"
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_port.h>
+#include <compat/mach/mach_task.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_services.h>
@@ -153,8 +154,6 @@ mach_sys_swtch(l, v, retval)
 
 	return mach_sys_swtch_pri(l, &cup, retval);
 }
-
-
 
 
 int 
@@ -266,11 +265,19 @@ mach_thread_info(args)
 	mach_thread_info_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
-	struct proc *p = l->l_proc;
+	struct proc *tp;
+	struct lwp *tl;
+	mach_port_t mn;
+	int error;
 
 	/* Sanity check req->req_count */
 	if (req->req_count > 12)
 		return mach_msg_error(args, EINVAL);
+
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, &tl)) != 0)
+		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -286,13 +293,13 @@ mach_thread_info(args)
 			return mach_msg_error(args, EINVAL);
 
 		tbi = (struct mach_thread_basic_info *)rep->rep_out;
-		tbi->user_time.seconds = p->p_uticks * hz / 1000000;
+		tbi->user_time.seconds = tp->p_uticks * hz / 1000000;
 		tbi->user_time.microseconds = 
-		    (p->p_uticks) * hz - tbi->user_time.seconds;
-		tbi->system_time.seconds = p->p_sticks * hz / 1000000;
+		    (tp->p_uticks) * hz - tbi->user_time.seconds;
+		tbi->system_time.seconds = tp->p_sticks * hz / 1000000;
 		tbi->system_time.microseconds = 
-		    (p->p_sticks) * hz - tbi->system_time.seconds;
-		tbi->cpu_usage = p->p_pctcpu;
+		    (tp->p_sticks) * hz - tbi->system_time.seconds;
+		tbi->cpu_usage = tp->p_pctcpu;
 		tbi->policy = MACH_THREAD_STANDARD_POLICY;
 
 		/* XXX this is not very accurate */
@@ -316,8 +323,8 @@ mach_thread_info(args)
 			break;
 		}
 
-		tbi->suspend_count = l->l_swtime;
-		tbi->sleep_time = l->l_slptime;
+		tbi->suspend_count = tl->l_swtime;
+		tbi->sleep_time = tl->l_slptime;
 		break;
 	}
 
@@ -329,11 +336,11 @@ mach_thread_info(args)
 
 		pti = (struct mach_policy_timeshare_info *)rep->rep_out;
 
-		pti->max_priority = l->l_usrpri;
-		pti->base_priority = l->l_usrpri;
-		pti->cur_priority = l->l_usrpri;
+		pti->max_priority = tl->l_usrpri;
+		pti->base_priority = tl->l_usrpri;
+		pti->cur_priority = tl->l_usrpri;
 		pti->depressed = 0;
-		pti->depress_priority = l->l_usrpri;
+		pti->depress_priority = tl->l_usrpri;
 		break;
 	}
 
@@ -362,6 +369,8 @@ mach_thread_get_state(args)
 	mach_thread_get_state_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct lwp *tl;
 	int error;
 	int size;
 
@@ -369,7 +378,12 @@ mach_thread_get_state(args)
 	if (req->req_count > 144)
 		return mach_msg_error(args, EINVAL);
 
-	if ((error = mach_thread_get_state_machdep(l, 
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, NULL, &tl)) != 0)
+		return mach_msg_error(args, error);
+
+	if ((error = mach_thread_get_state_machdep(tl, 
 	    req->req_flavor, &rep->rep_state, &size)) != 0)
 		return mach_msg_error(args, error);
 
@@ -394,6 +408,8 @@ mach_thread_set_state(args)
 	mach_thread_set_state_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl;
+	mach_port_t mn;
 	int error;
 	int end_offset;
 
@@ -402,7 +418,12 @@ mach_thread_set_state(args)
 	if (MACH_REQMSG_OVERFLOW(args, req->req_state[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
-	if ((error = mach_thread_set_state_machdep(l, 
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, NULL, &tl)) != 0)
+		return mach_msg_error(args, error);
+		
+	if ((error = mach_thread_set_state_machdep(tl, 
 	    req->req_flavor, &req->req_state)) != 0)
 		return mach_msg_error(args, error);
 
