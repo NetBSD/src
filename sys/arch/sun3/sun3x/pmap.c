@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1997/02/22 03:18:30 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1997/03/02 07:59:21 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2227,12 +2227,33 @@ pmap_protect(pmap, startva, endva, prot)
 	}
 
 	/*
-	 * A request to apply the protection code of 'VM_PROT_NONE' is
-	 * a synonym for pmap_remove().
+	 * In this particular pmap implementation, there are only three
+	 * types of memory protection: 'all' (read/write/execute),
+	 * 'read-only' (read/execute) and 'none' (no mapping.)
+	 * It is not possible for us to treat 'executable' as a separate
+	 * protection type.  Therefore, protection requests that seek to
+	 * remove execute permission while retaining read or write, and those
+	 * that make little sense (write-only for example) are ignored.
 	 */
-	if (prot == VM_PROT_NONE) {
-		pmap_remove(pmap, startva, endva);
-		return;
+	switch (prot) {
+		case VM_PROT_NONE:
+			/*
+			 * A request to apply the protection code of
+			 * 'VM_PROT_NONE' is a synonym for pmap_remove().
+			 */
+			pmap_remove(pmap, startva, endva);
+			return;
+		case	VM_PROT_EXECUTE:
+		case	VM_PROT_READ:
+		case	VM_PROT_READ|VM_PROT_EXECUTE:
+			/* continue */
+			break;
+		case	VM_PROT_WRITE:
+		case	VM_PROT_WRITE|VM_PROT_READ:
+		case	VM_PROT_WRITE|VM_PROT_EXECUTE:
+		case	VM_PROT_ALL:
+			/* None of these should happen in a sane system. */
+			return;
 	}
 
 	/*
@@ -2263,19 +2284,8 @@ pmap_protect(pmap, startva, endva, prot)
 		    }
 		    if (MMU_VALID_DT(c_tbl->ct_dtbl[c_idx])) {
 		      pte = &c_tbl->ct_dtbl[c_idx];
-		      switch (prot) {
-		      case VM_PROT_ALL:
-		          /* this should never happen in a sane system */
-		          break;
-		      case VM_PROT_EXECUTE:
-		      case VM_PROT_READ:
-		      case VM_PROT_READ|VM_PROT_EXECUTE:
-		          /* make the mapping read-only */
-		          pte->attr.raw |= MMU_SHORT_PTE_WP;
-		          break;
-		      default:
-		          break;
-		      }
+		      /* make the mapping read-only */
+		      pte->attr.raw |= MMU_SHORT_PTE_WP;
 		      /*
 		       * If we just modified the current address space,
 		       * flush any translations for the modified page from
