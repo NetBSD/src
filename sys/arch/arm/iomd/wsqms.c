@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.5 2002/06/19 23:02:58 bjh21 Exp $ */
+/* $NetBSD: wsqms.c,v 1.6 2002/06/19 23:12:14 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -69,14 +69,12 @@
 #define QMS_MOUSEY	1		/* 16 bits Y register */
 #define QMS_BUTTONS	0 		/* mouse buttons in bits 4,5,6 */
 
-#define MAX_XYREG	4096
-
 /* forward declarations */
 
-static int wsqms_enable		__P((void *cookie));
-static int wsqms_ioctl		__P((void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p));
-static void wsqms_disable	__P((void *cookie));
-static void wsqms_intr		__P((void *arg));
+static int wsqms_enable(void *);
+static int wsqms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void wsqms_disable(void *cookie);
+static void wsqms_intr(void *arg);
 
 
 static struct wsmouse_accessops wsqms_accessops = {
@@ -85,9 +83,7 @@ static struct wsmouse_accessops wsqms_accessops = {
 
 
 void
-wsqms_attach(sc, self)
-	struct wsqms_softc *sc;
-	struct device *self;
+wsqms_attach(struct wsqms_softc *sc, struct device *self)
 {
 	struct wsmousedev_attach_args wsmouseargs;
 
@@ -104,8 +100,7 @@ wsqms_attach(sc, self)
 
 
 static int
-wsqms_enable(cookie)
-	void *cookie;
+wsqms_enable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
 
@@ -117,8 +112,7 @@ wsqms_enable(cookie)
 
 
 static void
-wsqms_disable(cookie)
-	void *cookie;
+wsqms_disable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
 
@@ -129,13 +123,9 @@ wsqms_disable(cookie)
 
 
 static int
-wsqms_ioctl(cookie, cmd, data, flag, p)
-	void *cookie;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsqms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(int *)data = WSMOUSE_TYPE_ARCHIMEDES;
@@ -147,8 +137,7 @@ wsqms_ioctl(cookie, cmd, data, flag, p)
 
 
 static void
-wsqms_intr(arg)
-	void *arg;
+wsqms_intr(void *arg)
 {
 	struct wsqms_softc *sc = arg;
 	int x, y, b;
