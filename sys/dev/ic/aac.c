@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.1 2002/04/26 02:05:11 ad Exp $	*/
+/*	$NetBSD: aac.c,v 1.2 2002/05/31 17:36:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.1 2002/04/26 02:05:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.2 2002/05/31 17:36:29 thorpej Exp $");
 
 #include "locators.h"
 
@@ -357,8 +357,7 @@ aac_describe_controller(struct aac_softc *sc)
 	    le32toh(info->ClockSpeed),
 	    le32toh(info->BufferMem) / (1024 * 1024),
 	    aac_describe_code(aac_battery_platform,
-	    le32toh(info->batteryPlatform)),
-	    le32toh(info->batteryPlatform),
+			      le32toh(info->batteryPlatform)),
 	    info->KernelRevision.external.comp.major,
 	    info->KernelRevision.external.comp.minor,
 	    info->KernelRevision.external.comp.dash);
