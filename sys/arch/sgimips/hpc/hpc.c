@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.25 2004/01/02 01:04:46 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.26 2004/02/28 00:53:56 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,12 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.25 2004/01/02 01:04:46 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.26 2004/02/28 00:53:56 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/callout.h>
 
 #include <machine/machtype.h>
 
@@ -289,6 +291,11 @@ int	hpc_submatch(struct device *, struct cfdata *, void *);
 
 int	hpc_power_intr(void *);
 
+#if defined(BLINK)
+static struct callout hpc_blink_ch = CALLOUT_INITIALIZER;
+static void	hpc_blink(void *);
+#endif
+
 CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
     hpc_match, hpc_attach, NULL, NULL);
 
@@ -389,6 +396,11 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
 		powerintr_established++;
 	}
+
+#if defined(BLINK)
+	if (mach_type == MACH_SGI_IP20)
+		hpc_blink(sc);
+#endif
 }
 
 int
@@ -431,3 +443,31 @@ hpc_power_intr(void *arg)
 
 	return 1;
 }
+
+#if defined(BLINK)
+static void
+hpc_blink(void *self)
+{
+	struct hpc_softc *sc = (struct hpc_softc *) self;
+	register int	s;
+	int	value;
+
+	s = splhigh();
+
+	value = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(HPC1_AUX_REGS);
+	value ^= HPC1_AUX_CONSLED;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(HPC1_AUX_REGS) = value;
+	splx(s);
+
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	callout_reset(&hpc_blink_ch, s, hpc_blink, sc);
+}
+#endif
+
