@@ -1,4 +1,4 @@
-.\"	$NetBSD: isp.4,v 1.6 2001/06/12 12:00:20 wiz Exp $
+.\"	$NetBSD: isp.4,v 1.7 2001/09/01 07:20:13 mjacob Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -100,6 +100,12 @@ Qlogic Dual Loop 2100A Optical Fibre Channel Arbitrated Loop PCI cards.
 Qlogic 2200 Copper and Optical Fibre Channel Arbitrated Loop PCI cards.
 .It Qlogic 2202
 Qlogic 2200 Dual Bus Optical Fibre Channel Arbitrated Loop PCI cards.
+.It Qlogic 2204
+Qlogic 2200 Quad Bus Optical Fibre Channel Arbitrated Loop PCI cards.
+.It Qlogic 2300
+Qlogic 2300 2-Gigabit Optical Fibre Channel PCI cards.
+.It Qlogic 2312
+Qlogic 2300 2-Gigabit Dual Channel Optical Fibre Channel PCI cards.
 .It PTI SBS470
 Performance Technology ISP2100 variants.
 .It Antares P-0033
@@ -110,8 +116,6 @@ The driver currently ignores some NVRAM settings.
 .Pp
 The driver currently doesn't do error recovery for timed out commands
 very gracefully.
-.Pp
-Fabric (public loop) support isn't very well debugged yet.
 .Pp
 Sometimes, when booting, the driver gets stuck waiting for the Fibre Channel
 f/w to tell it that the loop port database is ready. In this case you'll
