@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.77 2001/03/09 02:42:23 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.78 2001/04/05 20:04:03 jhawk Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.77 2001/03/09 02:42:23 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.78 2001/04/05 20:04:03 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,24 +330,39 @@ main(int argc, char *argv[])
 	} else if (reps)
 		interval = 1;
 
-	if (todo & (HISTLIST|HISTDUMP)) {
-		if ((todo & (HISTLIST|HISTDUMP)) == (HISTLIST|HISTDUMP))
-			errx(1, "you may list or dump, but not both!");
-		hist_traverse(todo, histname);
-	}
-	if (todo & FORKSTAT)
-		doforkst();
-	if (todo & MEMSTAT) {
-		domem();
-		dopool();
-	}
-	if (todo & SUMSTAT)
-		dosum();
-	if (todo & INTRSTAT)
-		dointr(verbose);
-	if (todo & EVCNTSTAT)
-		doevcnt(verbose);
-	if (todo & VMSTAT)
+
+	/*
+	 * Statistics dumping is incompatible with the default
+	 * VMSTAT/dovmstat() output. So perform the interval/reps handling
+	 * for it here.
+	 */
+	if ((todo & VMSTAT) == 0)
+	    for (;;) {
+	    	if (todo & (HISTLIST|HISTDUMP)) {
+	    		if ((todo & (HISTLIST|HISTDUMP)) ==
+			    (HISTLIST|HISTDUMP))
+	    			errx(1, "you may list or dump, but not both!");
+	    		hist_traverse(todo, histname);
+	    	}
+	    	if (todo & FORKSTAT)
+	    		doforkst();
+	    	if (todo & MEMSTAT) {
+	    		domem();
+	    		dopool();
+	    	}
+	    	if (todo & SUMSTAT)
+	    		dosum();
+	    	if (todo & INTRSTAT)
+	    		dointr(verbose);
+	    	if (todo & EVCNTSTAT)
+	    		doevcnt(verbose);
+	    	
+	    	if (reps >= 0 && --reps <=0) 
+	    	    break;
+	    	sleep(interval);
+	    	puts("");
+	    }
+	else
 		dovmstat(interval, reps);
 	exit(0);
 }
