@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 1996/09/11 00:19:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 1996/10/12 07:35:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,6 +195,7 @@ extern unsigned char ssir;
 #define MACH_MACPB270		77
 #define MACH_MACQ840AV		78
 #define MACH_MACP550		80
+#define MACH_MACCCLASSICII	83
 #define MACH_MACPB165		84
 #define MACH_MACTV		88
 #define MACH_MACLC475		89
