@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.7 1997/10/17 08:10:22 enami Exp $
+.\"	$NetBSD: chgrp.1,v 1.8 1997/10/18 04:08:12 lukem Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHGRP 1
@@ -42,7 +42,7 @@
 .Nm chgrp
 .Nd change group
 .Sh SYNOPSIS
-.Nm chgrp
+.Nm
 .Oo
 .Fl R
 .Op Fl H | Fl L | Fl P
@@ -51,7 +51,9 @@
 .Ar group
 .Ar files ...
 .Sh DESCRIPTION
-The chgrp utility sets the group ID of the file named by each
+The
+.Nm
+utility sets the group ID of the file named by each
 .Ar file
 operand to the
 .Ar group
@@ -91,7 +93,7 @@ is not given, unless the
 or
 .Fl L
 option is set,
-.Nm chgrp
+.Nm
 on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
@@ -112,16 +114,16 @@ If a group name is also a numeric group ID, the operand is used as a
 group name.
 .Pp
 The user invoking
-.Nm chgrp
+.Nm
 must belong to the specified group and be the owner of the file,
 or be the super-user.
 .Pp
 The
-.Nm chgrp
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh COMPATIBILITY
 Previous versions of the
-.Nm chgrp
+.Nm
 utility changed the group of symbolic links specified on the command
 line.
 In this system, symbolic links do not have groups.
@@ -139,5 +141,5 @@ Group ID file
 .Xr chown 8
 .Sh STANDARDS
 The
-.Nm chgrp
+.Nm
 utility is expected to be POSIX 1003.2 compatible.
