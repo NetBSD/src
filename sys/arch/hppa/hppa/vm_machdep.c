@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 2002/07/01 16:10:03 fredette Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -139,7 +139,7 @@ cpu_swapin(p)
 
 #ifdef HPPA_REDZONE
 	/* Create the kernel stack red zone. */
-	pmap_redzone((vaddr_t)p->p_addr + HPPA_REDZONE
+	pmap_redzone((vaddr_t)p->p_addr + HPPA_REDZONE,
 		(vaddr_t)p->p_addr + USPACE, 1);
 #endif
 }
