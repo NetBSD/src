@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.24 1996/02/13 21:59:53 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.25 1996/03/30 21:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -51,6 +51,7 @@
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/map.h>
+#include <sys/conf.h>
 
 #include <sys/file.h>
 #if defined(sparc) && BSD < 199103
@@ -65,7 +66,6 @@
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#include <net/net_conf.h>
 
 #include <sys/errno.h>
 
