@@ -247,6 +247,13 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 			to.tv_usec += 1000000;
 			to.tv_sec--;
 		}
+
+		/* It is possible for the timeout to get set larger than
+		   the largest time select() is willing to accept.
+		   Restricting the timeout to a maximum of one day should
+		   work around this.  -DPN.  (Ref: Bug #416) */
+		if (to.tv_sec > (60 * 60 * 24))
+			to.tv_sec = 60 * 60 * 24;
 	}
 	
 	/* If the object we're waiting on has reached completion,
