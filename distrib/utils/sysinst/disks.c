@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.29 1999/07/04 21:39:33 cgd Exp $ */
+/*	$NetBSD: disks.c,v 1.30 1999/07/04 21:52:11 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -212,7 +212,7 @@ void disp_cur_fspart(int disp, int showall)
 				msg_table_add(MSG_fspart_row_end_other);
 		}
 	}
-	msg_printf_add("\n");
+	msg_display_add(MSG_newline);
 }
 
 
