@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.56 2001/05/13 17:06:59 sommerfeld Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.57 2001/05/13 17:17:35 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -952,8 +952,9 @@ _pool_put(struct pool *pp, void *v, const char *file, long line)
 	pr_leave(pp);
 	simple_unlock(&pp->pr_slock);
 }
+#undef pool_put
+#endif
 
-#else
 void
 pool_put(struct pool *pp, void *v)
 {
@@ -964,6 +965,9 @@ pool_put(struct pool *pp, void *v)
 
 	simple_unlock(&pp->pr_slock);
 }
+
+#ifdef DIAGNOSTIC
+#define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #endif
 
 /*
