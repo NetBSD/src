@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.5 1999/07/18 00:43:22 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.6 1999/07/21 21:46:17 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>	/* for memset declaration (?) */
 
 int	main __P((int, char *[]));
 void	usage __P((void));
