@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 1998/04/09 00:32:35 tv Exp $
+# $NetBSD: Makefile,v 1.15 1998/05/07 00:31:51 mycroft Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -6,7 +6,7 @@ srcdir= $(dist)/gdb
 
 .PATH:	$(srcdir)
 
-.if	(${MACHINE_ARCH} != "arm32")	# XXX arm32 doesn't use in-tree gdb yet
+.if	(${MACHINE_ARCH} != "arm32") && (${MACHINE_ARCH} != "powerpc")
 
 PROG=	gdb
 
