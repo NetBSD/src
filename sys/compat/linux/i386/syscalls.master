@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1995/08/21 03:42:12 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.10 1995/08/23 20:17:30 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -130,7 +130,7 @@
 				struct timezone *tzp); }
 80	NOARGS		{ int getgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int setgroups(u_int gidsetsize, gid_t *gidset); }
-82	STD		{ int linux_select(struct linux_select *lsp); }
+82	STD		{ int linux_oldselect(struct linux_select *lsp); }
 83	STD		{ int linux_symlink(char *path, char *to); }
 84	NOARGS		{ int compat_43_lstat(char *path, struct ostat *up); }
 85	STD		{ int linux_readlink(char *name, char *buf, int count); }
@@ -201,3 +201,9 @@
 139	UNIMPL		linux_getfsuid
 140	STD		{ int linux_llseek(int fd, u_int32_t ohigh, \
 				u_int32_t olow, caddr_t res, int whence); }
+141	STD		{ int linux_getdents(int fd, void *dirent, \
+				unsigned count); }
+142	STD		{ int linux_select(int nfds, fd_set *readfds, \
+				fd_set *writefds, fd_set *exceptfds, \
+				struct timeval *timeout); }
+143	NOARGS		{ int flock(int fd, int how); }
