@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.18 2003/09/22 18:31:11 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.19 2003/09/23 23:08:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct twe_softc {
 };
 #define	TWEF_OPEN	0x01	/* control device is opened */
 #define	TWEF_AENQ_WAIT	0x02	/* someone waiting for AENs */
+#define	TWEF_AEN	0x04	/* AEN fetch in progress */
 
 /* Optional per-command context. */
 struct twe_context {
@@ -112,7 +113,7 @@ struct twe_ccb {
 #define	TWE_CCB_DATA_OUT	0x02	/* Map describes outbound xfer */
 #define	TWE_CCB_COMPLETE	0x04	/* Command completed */
 #define	TWE_CCB_ACTIVE		0x08	/* Command active */
-#define	TWE_CCB_PARAM		0x10	/* For parameter retrieval */
+#define	TWE_CCB_AEN		0x10	/* For AEN retrieval */
 #define	TWE_CCB_ALLOCED		0x20	/* CCB allocated */
 
 struct twe_attach_args {
