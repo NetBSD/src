@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.52 2002/03/17 19:40:47 atatat Exp $ */
+/*	$NetBSD: scn.c,v 1.53 2002/05/25 03:45:12 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1620,7 +1620,7 @@ scnsoft(arg)
 			}
 			sc->sc_rbget = get;
 		}
-	done:
+	done: ;
 	}
 }
 
