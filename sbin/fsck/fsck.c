@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.13 1997/10/13 09:44:18 bouyer Exp $	*/
+/*	$NetBSD: fsck.c,v 1.13.2.1 1997/10/31 21:18:29 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.13 1997/10/13 09:44:18 bouyer Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.13.2.1 1997/10/31 21:18:29 mellon Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ static void addoption __P((char *));
 static const char *getoptions __P((const char *));
 static void addentry __P((struct fstypelist *, const char *, const char *));
 static void maketypelist __P((char *));
-static char *catopt __P((char *, const char *, int));
+static void catopt __P((char **, const char *));
 static void mangle __P((char *, int *, const char ***, int *));
 static char *getfslab __P((const char *));
 static void usage __P((void));
@@ -126,7 +126,7 @@ main(argc, argv)
 		case 'f':
 		case 'y':
 			globopt[1] = i;
-			options = catopt(options, globopt, 1);
+			catopt(&options, globopt);
 			break;
 
 		case 'l':
@@ -217,13 +217,11 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 		_PATH_USRSBIN,
 		NULL
 	};
-	char execbase[MAXPATHLEN];
 	const char **argv, **edir;
 	pid_t pid;
-	int argc = 1, i, status, maxargc;
-	char *optbuf = NULL, execname[MAXPATHLEN + 1];
+	int argc, i, status, maxargc;
+	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN];
 	const char *extra = getoptions(vfstype);
-
 
 #ifdef __GNUC__
 	/* Avoid vfork clobbering */
@@ -231,28 +229,23 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	(void) &vfstype;
 #endif
 
-	if (strcmp(vfstype, "ufs") == 0)
+	if (!strcmp(vfstype, "ufs"))
 		vfstype = MOUNT_UFS;
 
-	maxargc = 100;
+	optbuf = NULL;
+	if (options)
+		catopt(&optbuf, options);
+	if (extra)
+		catopt(&optbuf, extra);
+
+	maxargc = 64;
 	argv = emalloc(sizeof(char *) * maxargc);
 
-	/* construct basename of executable and argv[0] simultaneously */
 	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
-	argv[0] = vfstype;
-
-	if (options) {
-		if (extra != NULL)
-			optbuf = catopt(options, extra, 0);
-		else
-			optbuf = estrdup(options);
-	}
-	else if (extra)
-		optbuf = estrdup(extra);
-
+	argc = 0;
+	argv[argc++] = execbase;
 	if (optbuf)
 		mangle(optbuf, &argc, &argv, &maxargc);
-
 	argv[argc++] = spec;
 	argv[argc] = NULL;
 
@@ -367,7 +360,7 @@ addoption(optstr)
 
 	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
 		if (!strncmp(e->type, optstr, MFSNAMELEN)) {
-			e->options = catopt(e->options, newoptions, 1);
+			catopt(&e->options, newoptions);
 			return;
 		}
 	addentry(&opthead, optstr, newoptions);
@@ -411,47 +404,44 @@ maketypelist(fslist)
 }
 
 
-static char *
-catopt(s0, s1, fr)
-	char *s0;
-	const char *s1;
-	int fr;
+static void
+catopt(sp, o)
+	char **sp;
+	const char *o;
 {
-	size_t i;
-	char *cp;
+	char *s;
+	size_t i, j;
 
-	if (s0 && *s0) {
-		i = strlen(s0) + strlen(s1) + 1 + 1;
-		cp = emalloc(i);
-		(void)snprintf(cp, i, "%s,%s", s0, s1);
-	}
-	else
-		cp = estrdup(s1);
-
-	if (s0 && fr)
-		free(s0);
-	return (cp);
+	s = *sp;
+	if (s) {
+		i = strlen(s);
+		j = i + 1 + strlen(o) + 1;
+		s = erealloc(s, j);
+		(void)snprintf(s + i, j, ",%s", o);
+	} else
+		s = estrdup(o);
+	*sp = s;
 }
 
 
 static void
-mangle(opts, argcp, argvp, maxargcp)
-	char *opts;
-	int *argcp;
+mangle(options, argcp, argvp, maxargcp)
+	char *options;
+	int *argcp, *maxargcp;
 	const char ***argvp;
-	int *maxargcp;
 {
 	char *p, *s;
-	int argc = *argcp, maxargc = *maxargcp;
-	const char **argv = *argvp;
+	int argc, maxargc;
+	const char **argv;
 
 	argc = *argcp;
+	argv = *argvp;
 	maxargc = *maxargcp;
 
-	for (s = opts; (p = strsep(&s, ",")) != NULL;) {
-		/* always leave space for one more argument and the NULL */
+	for (s = options; (p = strsep(&s, ",")) != NULL;) {
+		/* Always leave space for one more argument and the NULL. */
 		if (argc >= maxargc - 3) {
-			maxargc += 50;
+			maxargc <<= 1;
 			argv = erealloc(argv, maxargc * sizeof(char *));
 		}
 		if (*p != '\0')
@@ -462,8 +452,7 @@ mangle(opts, argcp, argvp, maxargcp)
 					*p = '\0';
 					argv[argc++] = p+1;
 				}
-			}
-			else {
+			} else {
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
