@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 2001/10/14 00:17:26 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 2001/10/18 14:10:07 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -242,13 +242,43 @@ void	arm8_setup		__P((char *string));
 u_int	arm8_clock_config	__P((u_int, u_int));
 #endif
 
+#ifdef CPU_ARM9
+void	arm9_setttb		__P((u_int));
+
+void	arm9_tlb_flushID_SE	__P((u_int va));
+
+void	arm9_cache_flushID	__P((void));
+void	arm9_cache_flushID_SE	__P((u_int));
+void	arm9_cache_flushI	__P((void));
+void	arm9_cache_flushI_SE	__P((u_int));
+void	arm9_cache_flushD	__P((void));
+void	arm9_cache_flushD_SE	__P((u_int));
+
+void	arm9_cache_cleanID	__P((void));
+
+void	arm9_cache_syncI	__P((void));
+void	arm9_cache_flushID_rng	__P((u_int, u_int));
+void	arm9_cache_flushD_rng	__P((u_int, u_int));
+void	arm9_cache_syncI_rng	__P((u_int, u_int));
+
+void	arm9_context_switch	__P((void));
+
+void	arm9_setup		__P((char *string));
+#endif
+
+#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE)
+void	armv4_tlb_flushID	__P((void));
+void	armv4_tlb_flushI	__P((void));
+void	armv4_tlb_flushD	__P((void));
+void	armv4_tlb_flushD_SE	__P((u_int va));
+
+void	armv4_drain_writebuf	__P((void));
+#endif
+
 #ifdef CPU_SA110
 void	sa110_setttb		__P((u_int ttb));
-void	sa110_tlb_flushID	__P((void));
+
 void	sa110_tlb_flushID_SE	__P((u_int va));
-void	sa110_tlb_flushI	__P((void));
-void	sa110_tlb_flushD	__P((void));
-void	sa110_tlb_flushD_SE	__P((u_int va));
 
 void	sa110_cache_flushID	__P((void));
 void	sa110_cache_flushI	__P((void));
@@ -264,8 +294,6 @@ void	sa110_cache_purgeID_E	__P((u_int entry));
 void	sa110_cache_purgeD	__P((void));
 void	sa110_cache_purgeD_E	__P((u_int entry));
 
-void	sa110_drain_writebuf	__P((void));
-
 void	sa110_cache_syncI	__P((void));
 void	sa110_cache_cleanID_rng	__P((u_int start, u_int end));
 void	sa110_cache_cleanD_rng	__P((u_int start, u_int end));
@@ -280,11 +308,8 @@ void	sa110_setup		__P((char *string));
 
 #ifdef CPU_XSCALE
 void	xscale_setttb		__P((u_int ttb));
-void	xscale_tlb_flushID	__P((void));
+
 void	xscale_tlb_flushID_SE	__P((u_int va));
-void	xscale_tlb_flushI	__P((void));
-void	xscale_tlb_flushD	__P((void));
-void	xscale_tlb_flushD_SE	__P((u_int va));
 
 void	xscale_cache_flushID	__P((void));
 void	xscale_cache_flushI	__P((void));
@@ -299,8 +324,6 @@ void	xscale_cache_purgeID	__P((void));
 void	xscale_cache_purgeID_E	__P((u_int entry));
 void	xscale_cache_purgeD	__P((void));
 void	xscale_cache_purgeD_E	__P((u_int entry));
-
-void	xscale_drain_writebuf	__P((void));
 
 void	xscale_cache_syncI	__P((void));
 void	xscale_cache_cleanID_rng	__P((u_int start, u_int end));

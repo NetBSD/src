@@ -1,10 +1,11 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.9 2001/10/18 10:30:34 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.10 2001/10/18 14:10:07 rearnsha Exp $	*/
 
 /*
  * xscale support code Copyright (c) 2001 Matt Thomas
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
  * arm8 support code Copyright (c) 1997 ARM Limited
  * arm8 support code Copyright (c) 1997 Causality Limited
+ * arm9 support code Copyright (C) 2001 ARM Limited
  * Copyright (c) 1997,1998 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -238,6 +239,20 @@ ENTRY(arm8_setttb)
 	mov	pc, lr
 #endif	/* CPU_ARM8 */
 
+#ifdef CPU_ARM9
+ENTRY(arm9_setttb)
+	/* 
+	 * Since we use the caches in write-through mode, we only have to 
+	 * drain the write buffers and flush the caches.
+	 */
+	mcr	p15, 0, r0, c7, c7, 0	/* Flush I+D Caches */
+	mcr	p15, 0, r0, c7, c10, 4	/* Drain write buffer */
+
+	mcr	p15, 0, r0, c2, c0, 0	/* Load new ttb */
+
+	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate I+D TLBs */
+	mov	pc, lr
+#endif /* CPU_ARM9 */
 
 #if defined(CPU_SA110) || defined(CPU_XSCALE)
 Lblock_userspace_access:
@@ -358,9 +373,8 @@ ENTRY(arm8_tlb_flushID_SE)
 	mov	pc, lr
 #endif	/* CPU_ARM8 */
 
-#if defined(CPU_SA110) || defined(CPU_XSCALE)
-ENTRY_NP(xscale_tlb_flushID)
-ENTRY(sa110_tlb_flushID)
+#if defined (CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE)
+ENTRY(armv4_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0		/* flush I+D tlb */
 	mov	pc, lr
 
@@ -371,6 +385,13 @@ ENTRY(sa110_tlb_flushID_SE)
 	mov	pc, lr
 #endif	/* CPU_SA110 */
 
+#if defined(CPU_ARM9)
+ENTRY(arm9_tlb_flushID_SE)
+	mcr	p15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c5, 1		/* flush I tlb single entry */
+	mov	pc, lr
+#endif
+	
 #if defined(CPU_XSCALE)
 ENTRY(xscale_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
@@ -379,21 +400,18 @@ ENTRY(xscale_tlb_flushID_SE)
 	mov	pc, lr
 #endif	/* CPU_XSCALE */
 
-ENTRY_NP(xscale_tlb_flushI)
-ENTRY(sa110_tlb_flushI)
+ENTRY(armv4_tlb_flushI)
 	mcr	p15, 0, r0, c8, c5, 0		/* flush I tlb */
 	mov	pc, lr
 
-ENTRY_NP(xscale_tlb_flushD)
-ENTRY(sa110_tlb_flushD)
+ENTRY(armv4_tlb_flushD)
 	mcr	p15, 0, r0, c8, c6, 0		/* flush D tlb */
 	mov	pc, lr
 
-ENTRY_NP(xscale_tlb_flushD_SE)
-ENTRY(sa110_tlb_flushD_SE)
+ENTRY(armv4_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
 	mov	pc, lr
-#endif	/* CPU_SA110 || CPU_XSCALE */
+#endif	/* CPU_ARM9 || CPU_SA110 || CPU_XSCALE */
 
 /*
  * Cache functions
@@ -575,6 +593,38 @@ ENTRY(arm8_cache_purgeID_E)
 	msr	cpsr_all , r3
 	mov	pc, lr
 #endif	/* CPU_ARM8 */
+
+#ifdef CPU_ARM9
+ENTRY(arm9_cache_flushID)
+	mcr	p15, 0, r0, c7, c7, 0	/* Flush I+D cache */
+	mov	pc, lr
+
+ENTRY(arm9_cache_flushID_SE)
+	mcr	p15, 0, r0, c7, c5, 1	/* Flush one entry from I cache */
+	mcr	p15, 0, r0, c7, c6, 1	/* Flush one entry from D cache */
+	mov	pc, lr
+
+ENTRY(arm9_cache_flushI)
+	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
+	mov	pc, lr
+
+ENTRY(arm9_cache_flushI_SE)
+	mcr	p15, 0, r0, c7, c5, 1	/* Flush one entry from I cache */
+	mov	pc, lr
+
+ENTRY(arm9_cache_flushD)
+	mcr	p15, 0, r0, c7, c6, 0	/* Flush D cache */
+	mov	pc, lr
+
+ENTRY(arm9_cache_flushD_SE)
+	mcr	p15, 0, r0, c7, c6, 1	/* Flush one entry from D cache */
+	mov	pc, lr
+
+ENTRY(arm9_cache_cleanID)
+	mcr	p15, 0, r0, c7, c10, 4
+	mov	pc, lr
+
+#endif /* CPU_ARM9 */
 
 #if defined(CPU_SA110) || defined(CPU_XSCALE)
 ENTRY_NP(xscale_cache_flushID)
@@ -835,15 +885,33 @@ ENTRY(sa110_cache_purgeD_E)
  * Other functions
  */
 
-#if defined(CPU_SA110) || defined(CPU_XSCALE)
-ENTRY(sa110_drain_writebuf)
+#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE)
+ENTRY(armv4_drain_writebuf)
 	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
-#endif	/* CPU_SA110 */
+#endif	/* CPU_ARM9 || CPU_SA110 || CPU_XSCALE */
 
 /*
  * Soft functions
  */
+
+#ifdef CPU_ARM9
+ENTRY(arm9_cache_syncI)
+	mcr	p15, 0, r0, c7, c7, 0	/* Flush I+D caches */
+	mov	pc, lr
+
+ENTRY_NP(arm9_cache_flushID_rng)
+	b	_C_LABEL(arm9_cache_flushID)
+
+ENTRY_NP(arm9_cache_flushD_rng)
+	/* Same as above, but D cache only */
+	b	_C_LABEL(arm9_cache_flushD)
+
+ENTRY_NP(arm9_cache_syncI_rng)
+	/* Similarly, for I cache sync  */
+	b	_C_LABEL(arm9_cache_syncI)
+
+#endif /* CPU_ARM1020 */
 
 #ifdef CPU_SA110
 ENTRY(sa110_cache_syncI)
@@ -1125,6 +1193,25 @@ ENTRY(arm8_context_switch)
 	mov     r0, r0
 	mov     pc, lr
 #endif	/* CPU_ARM8 */
+
+#ifdef CPU_ARM9
+ENTRY(arm9_context_switch)
+	/* Switch the memory to the new process */
+
+	/*
+	 * We can assume that the caches will only contain kernel addresses
+	 * at this point.  So no need to flush them again.
+	 */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c2, c0, 0	/* Set the new ttb */
+	mcr	p15, 0, r0, c8, c7, 0	/* And flush the I+D tlbs */
+
+	/* Paranoia -- make sure pipeline is empty. */
+	nop
+	nop
+	nop
+	mov	pc, lr
+#endif /* CPU_ARM9 */
 
 #if defined(CPU_SA110)
 ENTRY(sa110_context_switch)
