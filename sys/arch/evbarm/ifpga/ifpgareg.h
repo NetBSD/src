@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgareg.h,v 1.1 2001/10/27 16:19:09 rearnsha Exp $ */
+/*	$NetBSD: ifpgareg.h,v 1.2 2003/09/06 11:27:01 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -150,8 +150,8 @@
 /* SC_LBFCODE reg */
 #define IFPGA_SC_LBFCODE_BEN3		0x80		/* Byte enable 3 */
 #define IFPGA_SC_LBFCODE_BEN2		0x40		/* Byte enable 2 */
-#define IFPGA_SC_LBFCODE_BEN1		0x10		/* Byte enable 1 */
-#define IFPGA_SC_LBFCODE_BEN1		0x10		/* Byte enable 0 */
+#define IFPGA_SC_LBFCODE_BEN1		0x20		/* Byte enable 1 */
+#define IFPGA_SC_LBFCODE_BEN0		0x10		/* Byte enable 0 */
 #define IFPGA_SC_LBFCODE_LBURST		0x08		/* Burst */
 #define IFPGA_SC_LBFCODE_LREAD		0x04		/* Read */
 #define IFPGA_SC_LBFCODE_MASTER		0x02		/* Master */
@@ -175,6 +175,17 @@
 
 /* Interrupt registers */
 /* Bit positions...  */
+#define IFPGA_INTR_bit31		0x80000000
+#define IFPGA_INTR_bit30		0x40000000
+#define IFPGA_INTR_bit29		0x20000000
+#define IFPGA_INTR_bit28		0x10000000
+#define IFPGA_INTR_bit27		0x08000000
+#define IFPGA_INTR_bit26		0x04000000
+#define IFPGA_INTR_bit25		0x02000000
+#define IFPGA_INTR_bit24		0x01000000
+#define IFPGA_INTR_bit23		0x00800000
+#define IFPGA_INTR_bit22		0x00400000
+
 #define IFPGA_INTR_APCINT		0x00200000
 #define IFPGA_INTR_PCILBINT		0x00100000
 #define IFPGA_INTR_ENUMINT		0x00080000
@@ -197,6 +208,9 @@
 #define IFPGA_INTR_UARTINT1		0x00000004
 #define IFPGA_INTR_UARTINT0		0x00000002
 #define IFPGA_INTR_SOFTINT		0x00000001
+
+#define IFPGA_INTR_HWMASK		0x003fffff
+
 /* ... and the corresponding numbers.  */
 #define IFPGA_INTRNUM_APCINT		21
 #define IFPGA_INTRNUM_PCILBINT		20
