@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 1998/02/19 02:17:05 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1998/03/16 18:30:44 cgd Exp $
+
+.if	(${MACHINE_ARCH} != "arm32")	# XXX arm32 doesn't use in-tree gdb yet
 
 LIB=	bfd
 
@@ -113,3 +115,8 @@ elf64-mips.o  : elf64-target.h
 elf64-sparc.o : elf64-target.h
 
 
+.else					# XXX arm32 doesn't use in-tree gdb yet
+
+.include <bsd.prog.mk>
+
+.endif					# XXX arm32 doesn't use in-tree gdb yet
