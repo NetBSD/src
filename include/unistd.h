@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.20 1994/06/08 11:59:55 mycroft Exp $
+ *	$Id: unistd.h,v 1.21 1994/10/19 03:45:20 cgd Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -50,7 +50,7 @@
 #endif
 
 __BEGIN_DECLS
-__dead void	 _exit __P((int));
+__dead void	 _exit __P((int)) __attribute__((noreturn));
 int	 access __P((const char *, int));
 unsigned alarm __P((unsigned));
 int	 chdir __P((const char *));

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)err.h	8.1 (Berkeley) 6/2/93
- *	$Id: err.h,v 1.9 1994/05/22 23:14:07 cgd Exp $
+ *	$Id: err.h,v 1.10 1994/10/19 03:44:57 cgd Exp $
  */
 
 #ifndef _ERR_H_
@@ -49,13 +49,13 @@
 
 __BEGIN_DECLS
 __dead void	err __P((int, const char *, ...))
-			__attribute__((format (printf, 2, 3)));
+			__attribute__((noreturn, format (printf, 2, 3)));
 __dead void	verr __P((int, const char *, _BSD_VA_LIST_))
-			__attribute__((format (printf, 2, 0)));
+			__attribute__((noreturn, format (printf, 2, 0)));
 __dead void	errx __P((int, const char *, ...))
-			__attribute__((format (printf, 2, 3)));
+			__attribute__((noreturn, format (printf, 2, 3)));
 __dead void	verrx __P((int, const char *, _BSD_VA_LIST_))
-			__attribute__((format (printf, 2, 0)));
+			__attribute__((noreturn, format (printf, 2, 0)));
 void		warn __P((const char *, ...))
 			__attribute__((format (printf, 1, 2)));
 void		vwarn __P((const char *, _BSD_VA_LIST_))
