@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.66.4.2 2000/12/13 21:24:57 he Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.66.4.3 2000/12/15 03:29:16 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -703,7 +703,7 @@ udp6_realinput(af, src, dst, m, off)
 	u_int16_t *sport, *dport;
 	int rcvcnt;
 	struct in6_addr *src6, *dst6;
-	struct in_addr *src4;
+	struct in_addr *dst4;
 	struct in6pcb *in6p;
 
 	rcvcnt = 0;
@@ -718,7 +718,7 @@ udp6_realinput(af, src, dst, m, off)
 	sport = &src->sin6_port;
 	dst6 = &dst->sin6_addr;
 	dport = &dst->sin6_port;
-	src4 = (struct in_addr *)&src->sin6_addr.s6_addr32[12];
+	dst4 = (struct in_addr *)&dst->sin6_addr.s6_addr32[12];
 
 	if (IN6_IS_ADDR_MULTICAST(dst6)
 	 || (af == AF_INET && IN_MULTICAST(dst4->s_addr))) {
