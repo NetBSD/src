@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.8 1999/03/16 16:30:24 minoura Exp $
+|	$NetBSD: vectors.s,v 1.9 1999/08/05 15:58:17 minoura Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -35,173 +35,162 @@
 |	@(#)vectors.s	8.2 (Berkeley) 1/21/94
 |
 
-#define _mfptrap	_badtrap
-#define _scctrap	_badtrap
-
 	.data
-	.globl	_vectab,_buserr,_addrerr
-	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
-	.globl	_badtrap
-	.globl	_spurintr,_lev1intr,_lev2intr,_lev3intr
-	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
-	.globl	_trap0
-#ifdef COMPAT_13
-	.globl	_trap1
-#endif
-	.globl	_trap2,_trap15
-	.globl	_fpfline, _fpunsupp, _fpfault
-	.globl	_trap12
-
-_vectab:
+GLOBAL(vectab)
 	.long	0x4ef80000	/* 0: jmp 0x0000:w (unused reset SSP) */
-	.long	0		/* 1: NOT USED (reset PC) */
-	.long	_buserr		/* 2: bus error */
-	.long	_addrerr	/* 3: address error */
-	.long	_illinst	/* 4: illegal instruction */
-	.long	_zerodiv	/* 5: zero divide */
-	.long	_chkinst	/* 6: CHK instruction */
-	.long	_trapvinst	/* 7: TRAPV instruction */
-	.long	_privinst	/* 8: privilege violation */
-	.long	_trace		/* 9: trace */
-	.long	_illinst	/* 10: line 1010 emulator */
-	.long	_fpfline	/* 11: line 1111 emulator */
-	.long	_badtrap	/* 12: unassigned, reserved */
-	.long	_coperr		/* 13: coprocessor protocol violation */
-	.long	_fmterr		/* 14: format error */
-	.long	_badtrap	/* 15: uninitialized interrupt vector */
-	.long	_intiotrap	/* 16: unassigned, reserved */
-	.long	_intiotrap	/* 17: unassigned, reserved */
-	.long	_intiotrap	/* 18: unassigned, reserved */
-	.long	_intiotrap	/* 19: unassigned, reserved */
-	.long	_intiotrap	/* 20: unassigned, reserved */
-	.long	_intiotrap	/* 21: unassigned, reserved */
-	.long	_intiotrap	/* 22: unassigned, reserved */
-	.long	_intiotrap	/* 23: unassigned, reserved */
-	.long	_spurintr	/* 24: spurious interrupt */
-	.long	_lev1intr	/* 25: level 1 interrupt autovector */
-	.long	_lev2intr	/* 26: level 2 interrupt autovector */
-	.long	_lev3intr	/* 27: level 3 interrupt autovector */
-	.long	_lev4intr	/* 28: level 4 interrupt autovector */
-	.long	_lev5intr	/* 29: level 5 interrupt autovector */
-	.long	_lev6intr	/* 30: level 6 interrupt autovector */
-	.long	_lev7intr	/* 31: level 7 interrupt autovector */
-	.long	_trap0		/* 32: syscalls */
+	VECTOR_UNUSED		/* 1: NOT USED (reset PC) */
+	VECTOR(buserr)		/* 2: bus error */
+	VECTOR(addrerr)		/* 3: address error */
+	VECTOR(illinst)		/* 4: illegal instruction */
+	VECTOR(zerodiv)		/* 5: zero divide */
+	VECTOR(chkinst)		/* 6: CHK instruction */
+	VECTOR(trapvinst)	/* 7: TRAPV instruction */
+	VECTOR(privinst)	/* 8: privilege violation */
+	VECTOR(trace)		/* 9: trace */
+	VECTOR(illinst)		/* 10: line 1010 emulator */
+	VECTOR(fpfline)		/* 11: line 1111 emulator */
+	VECTOR(badtrap)		/* 12: unassigned, reserved */
+	VECTOR(coperr)		/* 13: coprocessor protocol violation */
+	VECTOR(fmterr)		/* 14: format error */
+	VECTOR(badtrap)		/* 15: uninitialized interrupt vector */
+	VECTOR(intiotrap)	/* 16: unassigned, reserved */
+	VECTOR(intiotrap)	/* 17: unassigned, reserved */
+	VECTOR(intiotrap)	/* 18: unassigned, reserved */
+	VECTOR(intiotrap)	/* 19: unassigned, reserved */
+	VECTOR(intiotrap)	/* 20: unassigned, reserved */
+	VECTOR(intiotrap)	/* 21: unassigned, reserved */
+	VECTOR(intiotrap)	/* 22: unassigned, reserved */
+	VECTOR(intiotrap)	/* 23: unassigned, reserved */
+	VECTOR(spurintr)	/* 24: spurious interrupt */
+	VECTOR(lev1intr)	/* 25: level 1 interrupt autovector */
+	VECTOR(lev2intr)	/* 26: level 2 interrupt autovector */
+	VECTOR(lev3intr)	/* 27: level 3 interrupt autovector */
+	VECTOR(lev4intr)	/* 28: level 4 interrupt autovector */
+	VECTOR(lev5intr)	/* 29: level 5 interrupt autovector */
+	VECTOR(lev6intr)	/* 30: level 6 interrupt autovector */
+	VECTOR(lev7intr)	/* 31: level 7 interrupt autovector */
+	VECTOR(trap0)		/* 32: syscalls */
 #ifdef COMPAT_13
-	.long	_trap1		/* 33: compat_13_sigreturn */
+	VECTOR(trap1)		/* 33: compat_13_sigreturn */
 #else
-	.long	_illinst
+	VECTOR(illinst)
 #endif
-	.long	_trap2		/* 34: trace */
-	.long	_trap3		/* 35: sigreturn special syscall */
-	.long	_illinst	/* 36: TRAP instruction vector */
-	.long	_illinst	/* 37: TRAP instruction vector */
-	.long	_illinst	/* 38: TRAP instruction vector */
-	.long	_illinst	/* 39: TRAP instruction vector */
-	.long	_illinst	/* 40: TRAP instruction vector */
-	.long	_illinst	/* 41: TRAP instruction vector */
-	.long	_illinst	/* 42: TRAP instruction vector */
-	.long	_illinst	/* 43: TRAP instruction vector */
-	.long	_trap12		/* 44: TRAP instruction vector */
-	.long	_illinst	/* 45: TRAP instruction vector */
-	.long	_illinst	/* 46: TRAP instruction vector */
-	.long	_trap15		/* 47: TRAP instruction vector */
+	VECTOR(trap2)		/* 34: trace */
+	VECTOR(trap3)		/* 35: sigreturn special syscall */
+	VECTOR(illinst)		/* 36: TRAP instruction vector */
+	VECTOR(illinst)		/* 37: TRAP instruction vector */
+	VECTOR(illinst)		/* 38: TRAP instruction vector */
+	VECTOR(illinst)		/* 39: TRAP instruction vector */
+	VECTOR(illinst)		/* 40: TRAP instruction vector */
+	VECTOR(illinst)		/* 41: TRAP instruction vector */
+	VECTOR(illinst)		/* 42: TRAP instruction vector */
+	VECTOR(illinst)		/* 43: TRAP instruction vector */
+	VECTOR(trap12)		/* 44: TRAP instruction vector */
+	VECTOR(illinst)		/* 45: TRAP instruction vector */
+	VECTOR(illinst)		/* 46: TRAP instruction vector */
+	VECTOR(trap15)		/* 47: TRAP instruction vector */
 #ifdef FPSP
-	.globl	bsun, inex, dz, unfl, operr, ovfl, snan
-	.long	bsun		/* 48: FPCP branch/set on unordered cond */
-	.long	inex		/* 49: FPCP inexact result */
-	.long	dz		/* 50: FPCP divide by zero */
-	.long	unfl		/* 51: FPCP underflow */
-	.long	operr		/* 52: FPCP operand error */
-	.long	ovfl		/* 53: FPCP overflow */
-	.long	snan		/* 54: FPCP signalling NAN */
+	ASVECTOR(bsun)		/* 48: FPCP branch/set on unordered cond */
+	ASVECTOR(inex)		/* 49: FPCP inexact result */
+	ASVECTOR(dz)		/* 50: FPCP divide by zero */
+	ASVECTOR(unfl)		/* 51: FPCP underflow */
+	ASVECTOR(operr)		/* 52: FPCP operand error */
+	ASVECTOR(ovfl)		/* 53: FPCP overflow */
+	ASVECTOR(snan)		/* 54: FPCP signalling NAN */
 #else
-	.globl	_fpfault
-	.long	_fpfault	/* 48: FPCP branch/set on unordered cond */
-	.long	_fpfault	/* 49: FPCP inexact result */
-	.long	_fpfault	/* 50: FPCP divide by zero */
-	.long	_fpfault	/* 51: FPCP underflow */
-	.long	_fpfault	/* 52: FPCP operand error */
-	.long	_fpfault	/* 53: FPCP overflow */
-	.long	_fpfault	/* 54: FPCP signalling NAN */
+	VECTOR(fpfault)		/* 48: FPCP branch/set on unordered cond */
+	VECTOR(fpfault)		/* 49: FPCP inexact result */
+	VECTOR(fpfault)		/* 50: FPCP divide by zero */
+	VECTOR(fpfault)		/* 51: FPCP underflow */
+	VECTOR(fpfault)		/* 52: FPCP operand error */
+	VECTOR(fpfault)		/* 53: FPCP overflow */
+	VECTOR(fpfault)		/* 54: FPCP signalling NAN */
 #endif
 
-	.long	_fpunsupp	/* 55: FPCP unimplemented data type */
-	.long	_badtrap	/* 56: MMU configuration error */
-	.long	_intiotrap	/* 57: unassigned, reserved */
-	.long	_intiotrap	/* 58: unassigned, reserved */
-	.long	_intiotrap	/* 59: unassigned, reserved */
-	.long	_intiotrap	/* 60: unassigned, reserved */
-	.long	_intiotrap	/* 61: unassigned, reserved */
-	.long	_intiotrap	/* 62: unassigned, reserved */
-	.long	_intiotrap	/* 63: unassigned, reserved */
-	.long	_intiotrap	/* 64: MFP GPIP0 RTC alarm */
-	.long	_powtrap	/* 65: MFP GPIP1 ext. power switch */
-	.long	_powtrap	/* 66: MFP GPIP2 front power switch */
-	.long	_intiotrap	/* 67: MFP GPIP3 FM sound generator */
-	.long	_intiotrap	/* 68: MFP timer-D */
-	.long	_timertrap	/* 69: MFP timer-C */
-	.long	_intiotrap	/* 70: MFP GPIP4 VBL */
-	.long	_intiotrap	/* 71: MFP GPIP5 unassigned */
-	.long	_kbdtimer	/* 72: MFP timer-B */
-	.long	_intiotrap	/* 73: MFP MPSC send error */
-	.long	_intiotrap	/* 74: MFP MPSC transmit buffer empty */
-	.long	_intiotrap	/* 75: MFP MPSC receive error */
-	.long	_intiotrap	/* 76: MFP MPSC receive buffer full */
-	.long	_intiotrap	/* 77: MFP timer-A */
-	.long	_intiotrap	/* 78: MFP CRTC raster */
-	.long	_intiotrap	/* 79: MFP H-SYNC */
-	.long	_intiotrap	/* 80: unassigned, reserved */
-	.long	_intiotrap	/* 81: unassigned, reserved */
-	.long	_intiotrap	/* 82: unassigned, reserved */
-	.long	_intiotrap	/* 83: unassigned, reserved */
-	.long	_intiotrap	/* 84: unassigned, reserved */
-	.long	_intiotrap	/* 85: unassigned, reserved */
-	.long	_intiotrap	/* 86: unassigned, reserved */
-	.long	_intiotrap	/* 87: unassigned, reserved */
-	.long	_intiotrap	/* 88: unassigned, reserved */
-	.long	_intiotrap	/* 89: unassigned, reserved */
-	.long	_intiotrap	/* 90: unassigned, reserved */
-	.long	_intiotrap	/* 91: unassigned, reserved */
-	.long	_intiotrap	/* 92: unassigned, reserved */
-	.long	_intiotrap	/* 93: unassigned, reserved */
-	.long	_intiotrap	/* 94: unassigned, reserved */
-	.long	_intiotrap	/* 95: unassigned, reserved */
-	.long	_intiotrap	/* 96: FDC */
-	.long	_fdeject	/* 97: floppy ejection */
-	.long	_intiotrap	/* 98: unassigned, reserved */
-	.long	_partrap	/* 99: parallel port */
-	.long	_intiotrap	/* 100: FDC DMA */
-	.long	_intiotrap	/* 101: FDC DMA (error) */
-	.long	_intiotrap	/* 102: unassigned, reserved */
-	.long	_intiotrap	/* 103: unassigned, reserved */
-	.long	_intiotrap	/* 104: unassigned, reserved */
-	.long	_intiotrap	/* 105: unassigned, reserved */
-	.long	_intiotrap	/* 106: ADPCM DMA */
-	.long	_intiotrap	/* 107: ADPCM DMA */
-	.long	_intiotrap	/* 108: internal SPC */
-	.long	_intiotrap	/* 109: unassigned, reserved */
-	.long	_intiotrap	/* 110: unassigned, reserved */
-	.long	_intiotrap	/* 111: unassigned, reserved */
-	.long	_intiotrap	/* 112: Z8530 SCC (onboard) */
-	.long	_intiotrap	/* 113: Z8530 SCC */
-	.long	_intiotrap	/* 114: Z8530 SCC */; 
-	.long	_intiotrap	/* 115: unassigned, reserved */
-	.long	_intiotrap	/* 116: unassigned, reserved */
-	.long	_intiotrap	/* 117: unassigned, reserved */
-	.long	_intiotrap	/* 118: unassigned, reserved */
-	.long	_intiotrap	/* 119: unassigned, reserved */
-	.long	_intiotrap	/* 129: unassigned, reserved */
-	.long	_intiotrap	/* 121: unassigned, reserved */
-	.long	_intiotrap	/* 122: unassigned, reserved */
-	.long	_intiotrap	/* 123: unassigned, reserved */
-	.long	_intiotrap	/* 124: unassigned, reserved */
-	.long	_intiotrap	/* 125: unassigned, reserved */
-	.long	_intiotrap	/* 126: unassigned, reserved */
-	.long	_intiotrap	/* 127: unassigned, reserved */
-#define BADTRAP16	.long	_intiotrap,_intiotrap,_intiotrap,_intiotrap,\
-				_intiotrap,_intiotrap,_intiotrap,_intiotrap,\
-				_intiotrap,_intiotrap,_intiotrap,_intiotrap,\
-				_intiotrap,_intiotrap,_intiotrap,_intiotrap
+	VECTOR(fpunsupp)	/* 55: FPCP unimplemented data type */
+	VECTOR(badtrap)		/* 56: MMU configuration error */
+	VECTOR(intiotrap)	/* 57: unassigned, reserved */
+	VECTOR(intiotrap)	/* 58: unassigned, reserved */
+	VECTOR(intiotrap)	/* 59: unassigned, reserved */
+	VECTOR(intiotrap)	/* 60: unassigned, reserved */
+	VECTOR(intiotrap)	/* 61: unassigned, reserved */
+	VECTOR(intiotrap)	/* 62: unassigned, reserved */
+	VECTOR(intiotrap)	/* 63: unassigned, reserved */
+	VECTOR(intiotrap)	/* 64: MFP GPIP0 RTC alarm */
+	VECTOR(powtrap)		/* 65: MFP GPIP1 ext. power switch */
+	VECTOR(powtrap)		/* 66: MFP GPIP2 front power switch */
+	VECTOR(intiotrap)	/* 67: MFP GPIP3 FM sound generator */
+	VECTOR(intiotrap)	/* 68: MFP timer-D */
+	VECTOR(timertrap)	/* 69: MFP timer-C */
+	VECTOR(intiotrap)	/* 70: MFP GPIP4 VBL */
+	VECTOR(intiotrap)	/* 71: MFP GPIP5 unassigned */
+	VECTOR(kbdtimer)	/* 72: MFP timer-B */
+	VECTOR(intiotrap)	/* 73: MFP MPSC send error */
+	VECTOR(intiotrap)	/* 74: MFP MPSC transmit buffer empty */
+	VECTOR(intiotrap)	/* 75: MFP MPSC receive error */
+	VECTOR(intiotrap)	/* 76: MFP MPSC receive buffer full */
+	VECTOR(intiotrap)	/* 77: MFP timer-A */
+	VECTOR(intiotrap)	/* 78: MFP CRTC raster */
+	VECTOR(intiotrap)	/* 79: MFP H-SYNC */
+	VECTOR(intiotrap)	/* 80: unassigned, reserved */
+	VECTOR(intiotrap)	/* 81: unassigned, reserved */
+	VECTOR(intiotrap)	/* 82: unassigned, reserved */
+	VECTOR(intiotrap)	/* 83: unassigned, reserved */
+	VECTOR(intiotrap)	/* 84: unassigned, reserved */
+	VECTOR(intiotrap)	/* 85: unassigned, reserved */
+	VECTOR(intiotrap)	/* 86: unassigned, reserved */
+	VECTOR(intiotrap)	/* 87: unassigned, reserved */
+	VECTOR(intiotrap)	/* 88: unassigned, reserved */
+	VECTOR(intiotrap)	/* 89: unassigned, reserved */
+	VECTOR(intiotrap)	/* 90: unassigned, reserved */
+	VECTOR(intiotrap)	/* 91: unassigned, reserved */
+	VECTOR(intiotrap)	/* 92: unassigned, reserved */
+	VECTOR(intiotrap)	/* 93: unassigned, reserved */
+	VECTOR(intiotrap)	/* 94: unassigned, reserved */
+	VECTOR(intiotrap)	/* 95: unassigned, reserved */
+	VECTOR(intiotrap)	/* 96: FDC */
+	VECTOR(fdeject)		/* 97: floppy ejection */
+	VECTOR(intiotrap)	/* 98: unassigned, reserved */
+	VECTOR(partrap)		/* 99: parallel port */
+	VECTOR(intiotrap)	/* 100: FDC DMA */
+	VECTOR(intiotrap)	/* 101: FDC DMA (error) */
+	VECTOR(intiotrap)	/* 102: unassigned, reserved */
+	VECTOR(intiotrap)	/* 103: unassigned, reserved */
+	VECTOR(intiotrap)	/* 104: unassigned, reserved */
+	VECTOR(intiotrap)	/* 105: unassigned, reserved */
+	VECTOR(intiotrap)	/* 106: ADPCM DMA */
+	VECTOR(intiotrap)	/* 107: ADPCM DMA */
+	VECTOR(intiotrap)	/* 108: internal SPC */
+	VECTOR(intiotrap)	/* 109: unassigned, reserved */
+	VECTOR(intiotrap)	/* 110: unassigned, reserved */
+	VECTOR(intiotrap)	/* 111: unassigned, reserved */
+	VECTOR(intiotrap)	/* 112: Z8530 SCC (onboard) */
+	VECTOR(intiotrap)	/* 113: Z8530 SCC */
+	VECTOR(intiotrap)	/* 114: Z8530 SCC */; 
+	VECTOR(intiotrap)	/* 115: unassigned, reserved */
+	VECTOR(intiotrap)	/* 116: unassigned, reserved */
+	VECTOR(intiotrap)	/* 117: unassigned, reserved */
+	VECTOR(intiotrap)	/* 118: unassigned, reserved */
+	VECTOR(intiotrap)	/* 119: unassigned, reserved */
+	VECTOR(intiotrap)	/* 129: unassigned, reserved */
+	VECTOR(intiotrap)	/* 121: unassigned, reserved */
+	VECTOR(intiotrap)	/* 122: unassigned, reserved */
+	VECTOR(intiotrap)	/* 123: unassigned, reserved */
+	VECTOR(intiotrap)	/* 124: unassigned, reserved */
+	VECTOR(intiotrap)	/* 125: unassigned, reserved */
+	VECTOR(intiotrap)	/* 126: unassigned, reserved */
+	VECTOR(intiotrap)	/* 127: unassigned, reserved */
+
+#define BADTRAP16	\
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ; \
+	VECTOR(intiotrap) ; VECTOR(intiotrap) ;
+
 	BADTRAP16		/* 128-143: user interrupt vectors */
 	BADTRAP16		/* 144-159: user interrupt vectors */
 	BADTRAP16		/* 160-175: user interrupt vectors */
@@ -209,19 +198,19 @@ _vectab:
 	BADTRAP16		/* 192-207: user interrupt vectors */
 	BADTRAP16		/* 208-223: user interrupt vectors */
 	BADTRAP16		/* 224-239: user interrupt vectors */
-	.long	_com0trap	/* 240: unassigned, reserved */
-	.long	_com1trap	/* 241: unassigned, reserved */
-	.long	_intiotrap	/* 242: unassigned, reserved */
-	.long	_intiotrap	/* 243: unassigned, reserved */
-	.long	_intiotrap	/* 244: unassigned, reserved */
-	.long	_intiotrap	/* 245: unassigned, reserved */
-	.long	_intiotrap	/* 246: external SPC */
-	.long	_intiotrap	/* 247: unassigned, reserved */
-	.long	_intiotrap	/* 248: unassigned, reserved */
-	.long	_intiotrap	/* 249: Neptune-X */
-	.long	_intiotrap	/* 250: unassigned, reserved */
-	.long	_intiotrap	/* 251: unassigned, reserved */
-	.long	_intiotrap	/* 252: unassigned, reserved */
-	.long	_intiotrap	/* 253: unassigned, reserved */
-	.long	_intiotrap	/* 254: unassigned, reserved */
-	.long	_intiotrap	/* 255: unassigned, reserved */
+	VECTOR(com0trap)	/* 240: unassigned, reserved */
+	VECTOR(com1trap)	/* 241: unassigned, reserved */
+	VECTOR(intiotrap)	/* 242: unassigned, reserved */
+	VECTOR(intiotrap)	/* 243: unassigned, reserved */
+	VECTOR(intiotrap)	/* 244: unassigned, reserved */
+	VECTOR(intiotrap)	/* 245: unassigned, reserved */
+	VECTOR(intiotrap)	/* 246: external SPC */
+	VECTOR(intiotrap)	/* 247: unassigned, reserved */
+	VECTOR(intiotrap)	/* 248: unassigned, reserved */
+	VECTOR(intiotrap)	/* 249: Neptune-X */
+	VECTOR(intiotrap)	/* 250: unassigned, reserved */
+	VECTOR(intiotrap)	/* 251: unassigned, reserved */
+	VECTOR(intiotrap)	/* 252: unassigned, reserved */
+	VECTOR(intiotrap)	/* 253: unassigned, reserved */
+	VECTOR(intiotrap)	/* 254: unassigned, reserved */
+	VECTOR(intiotrap)	/* 255: unassigned, reserved */
