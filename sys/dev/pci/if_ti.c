@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.12 2000/11/12 18:32:43 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.13 2000/11/14 18:42:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -94,6 +94,8 @@
 #include <sys/queue.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -587,7 +589,7 @@ static int ti_alloc_jumbo_mem(sc)
 
 	/* Grab a big chunk o' storage. */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    TI_JMEM, NBPG, 0, &dmaseg, 1, &dmanseg,
+	    TI_JMEM, PAGE_SIZE, 0, &dmaseg, 1, &dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate jumbo buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -1743,7 +1745,7 @@ static void ti_attach(parent, self, aux)
 
 	/* Allocate the general information block and ring buffers. */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct ti_ring_data), NBPG, 0, &dmaseg, 1, &dmanseg,
+	    sizeof(struct ti_ring_data), PAGE_SIZE, 0, &dmaseg, 1, &dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate ring buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.3 2000/11/08 19:23:50 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.4 2000/11/14 18:42:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #define	TWE_MAX_PU_QUEUECNT	32	/* Maximum per-unit queue count */
 #endif
 
+/* XXX NBPG */
 #if TWE_SG_SIZE > (((MAXPHYS + NBPG - 1) / NBPG) + 1)
 #define	TWE_MAX_SEGS	(((MAXPHYS + NBPG - 1) / NBPG) + 1)
 #else

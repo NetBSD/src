@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.28 2000/06/28 16:08:44 mrg Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.29 2000/11/14 18:42:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,8 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -309,7 +311,7 @@ le_pci_attach(parent, self, aux)
 	/*
 	 * Allocate a DMA area for the card.
 	 */
-	if (bus_dmamem_alloc(dmat, LE_PCI_MEMSIZE, NBPG, 0, &seg, 1,
+	if (bus_dmamem_alloc(dmat, LE_PCI_MEMSIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: couldn't allocate memory for card\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.91 2000/11/08 18:22:27 matt Exp $	*/
+/*	$NetBSD: pciide.c,v 1.92 2000/11/14 18:42:58 thorpej Exp $	*/
 
 
 /*
@@ -95,6 +95,8 @@ int wdcdebug_pciide_mask = 0;
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 

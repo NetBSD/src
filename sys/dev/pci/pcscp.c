@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.10 2000/06/05 15:08:00 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/endian.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -298,7 +300,7 @@ pcscp_attach(parent, self, aux)
 	 */
 
 	if ((error = bus_dmamem_alloc(esc->sc_dmat,
-	    sizeof(u_int32_t) * MDL_SIZE, NBPG, 0, &seg, 1, &rseg,
+	    sizeof(u_int32_t) * MDL_SIZE, PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate memory for the MDL, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);

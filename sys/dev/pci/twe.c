@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.3 2000/11/08 19:23:50 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.4 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	 */
         size = sizeof(struct twe_cmd) * TWE_REAL_MAX_QUEUECNT;
 
-	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, 
+	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1, 
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate commands, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
@@ -268,7 +268,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		ccb->ccb_cmdid = i;
 		ccb->ccb_flags = 0;
 		rv = bus_dmamap_create(sc->sc_dmat, TWE_MAX_XFER,
-		    TWE_MAX_SEGS, NBPG, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    TWE_MAX_SEGS, PAGE_SIZE, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap_xfer);
 		if (rv != 0)
 			break;

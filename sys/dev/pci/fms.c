@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.6 2000/06/26 04:56:24 simonb Exp $	*/
+/*	$NetBSD: fms.c,v 1.7 2000/11/14 18:42:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -763,8 +765,8 @@ fms_malloc(addr, direction, size, pool, flags)
 		return 0;
 	
 	p->size = size;
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, 
-				      &rseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
+				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate dma, error = %d\n", 
 		       sc->sc_dev.dv_xname, error);
 		goto fail_alloc;
