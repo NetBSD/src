@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.5 2001/07/27 22:46:20 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.6 2001/07/30 20:12:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1533,10 +1533,12 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
 	 * request an interrupt after every incoming packet, but
-	 * defer it for 32us (64 * 512 ns).
+	 * defer it for 32us (64 * 512 ns).  When the number of
+	 * interrupts pending reaches 8, we stop deferring the
+	 * interrupt, and signal it immediately.
 	 */
 	bus_space_write_4(st, sh, STGE_RxDMAIntCtrl,
-	    RDIC_RxFrameCount(1) | RDIC_RxDMAWaitTime(512));
+	    RDIC_RxFrameCount(8) | RDIC_RxDMAWaitTime(512));
 
 	/*
 	 * Initialize the interrupt mask.
