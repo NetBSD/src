@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.7 1994/05/16 16:51:48 gwr Exp $
+ *	$Id: db_disasm.c,v 1.8 1994/06/16 14:32:05 chopps Exp $
  */
 /*
  * Notes:
@@ -163,9 +163,9 @@ static char asm_buffer[256];
 static char info_buffer[256];
 
 vm_offset_t 
-db_disasm(loc,mit_syntax)
+db_disasm(loc, moto_syntax)
 	vm_offset_t loc;
-	boolean_t mit_syntax;
+	boolean_t moto_syntax;
 {
 	u_short opc;
 	dis_func_t *func;
@@ -179,7 +179,7 @@ db_disasm(loc,mit_syntax)
 	dbuf.cinfo = dbuf.info = info_buffer;
 	dbuf.used = 0;
 	dbuf.val = (short *)loc;
-	dbuf.mit = mit_syntax;
+	dbuf.mit = moto_syntax ? 0 : 1;
 	
 	dbuf.dasm[0] = 0;
 	dbuf.info[0] = 0;
