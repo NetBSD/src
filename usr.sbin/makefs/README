@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 2004/05/31 22:21:12 lukem Exp $
+$NetBSD: README,v 1.3 2004/12/20 20:51:42 jmc Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -76,8 +76,14 @@ The main program will:
 
 Each fs-specific module should have the following external interfaces:
 
+    prepare_options	optional file system specific defaults that need to be
+			setup before parsing fs-specific options.
+
     parse_options	parse the string for fs-specific options, feeding
 			errors back to the user as appropriate
+
+    cleanup_options	optional file system specific data that need to be
+			cleaned up when done with this filesystem.
 
     make_fs		take the data structures representing the
 			directory tree and fs parameters,
@@ -86,6 +92,17 @@ Each fs-specific module should have the following external interfaces:
 			create the image, and
 			populate the image
 
+prepare_options and cleanup_options are optional and can be NULL.
+
+NOTE: All file system specific options are referenced via the fs_specific
+pointer from the fsinfo_t strucutre. It is up to the filesystem to allocate
+and free any data needed for this via the prepare and cleanup callbacks.
+
+Each fs-specific module will need to add it's routines to the dispatch array
+in makefs.c and add prototypes for these to makefs.h
+
+All other implementation details should not need to change any of the
+generic code.
 
 ffs implementation
 ------------------

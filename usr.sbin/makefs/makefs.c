@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.20 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: makefs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.20 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -61,13 +61,15 @@ __RCSID("$NetBSD: makefs.c,v 1.20 2004/06/20 22:20:18 jmc Exp $");
  */
 typedef struct {
 	const char	*type;
+	void		(*prepare_options)(fsinfo_t *);
 	int		(*parse_options)(const char *, fsinfo_t *);
+	void		(*cleanup_options)(fsinfo_t *);
 	void		(*make_fs)(const char *, const char *, fsnode *,
 				fsinfo_t *);
 } fstype_t;
 
 static fstype_t fstypes[] = {
-	{ "ffs",	ffs_parse_opts,		ffs_makefs },
+	{ "ffs", ffs_prep_opts,	ffs_parse_opts,	ffs_cleanup_opts, ffs_makefs },
 	{ NULL	},
 };
 
@@ -98,17 +100,9 @@ main(int argc, char *argv[])
 	(void)memset(&fsoptions, 0, sizeof(fsoptions));
 	fsoptions.fd = -1;
 	fsoptions.sectorsize = -1;
-	fsoptions.bsize= -1;
-	fsoptions.fsize= -1;
-	fsoptions.cpg= -1;
-	fsoptions.density= -1;
-	fsoptions.minfree= -1;
-	fsoptions.optimization= -1;
-	fsoptions.maxcontig= -1;
-	fsoptions.maxbpg= -1;
-	fsoptions.avgfilesize= -1;
-	fsoptions.avgfpdir= -1;
-	fsoptions.version = 1;
+
+	if (fstype->prepare_options)
+		fstype->prepare_options(&fsoptions);
 
 	specfile = NULL;
 	if (gettimeofday(&start, NULL) == -1)
@@ -218,8 +212,13 @@ main(int argc, char *argv[])
 			break;
 
 		case 't':
+			/* Check current one and cleanup if necessary. */
+			if (fstype->cleanup_options)
+				fstype->cleanup_options(&fsoptions);
+			fsoptions.fs_specific = NULL;
 			if ((fstype = get_fstype(optarg)) == NULL)
 				errx(1, "Unknown fs type `%s'.", optarg);
+			fstype->prepare_options(&fsoptions);
 			break;
 
 		case 'x':

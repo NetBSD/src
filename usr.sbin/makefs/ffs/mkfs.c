@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.20 2004/06/24 22:30:13 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.20 2004/06/24 22:30:13 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.20 2004/06/24 22:30:13 lukem Exp $");
 #include <errno.h>
 
 #include "makefs.h"
+#include "ffs.h"
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
@@ -128,21 +129,22 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	void *space;
 	int size, blks;
 	int nprintcols, printcolwidth;
+	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
-	Oflag =		fsopts->version;
+	Oflag =		ffs_opts->version;
 	fssize =        fsopts->size / fsopts->sectorsize;
 	sectorsize =    fsopts->sectorsize;
-	fsize =         fsopts->fsize;
-	bsize =         fsopts->bsize;
-	maxbsize =      fsopts->maxbsize;
-	maxblkspercg =  fsopts->maxblkspercg;
-	minfree =       fsopts->minfree;
-	opt =           fsopts->optimization;
-	density =       fsopts->density;
-	maxcontig =     fsopts->maxcontig;
-	maxbpg =        fsopts->maxbpg;
-	avgfilesize =   fsopts->avgfilesize;
-	avgfpdir =      fsopts->avgfpdir;
+	fsize =         ffs_opts->fsize;
+	bsize =         ffs_opts->bsize;
+	maxbsize =      ffs_opts->maxbsize;
+	maxblkspercg =  ffs_opts->maxblkspercg;
+	minfree =       ffs_opts->minfree;
+	opt =           ffs_opts->optimization;
+	density =       ffs_opts->density;
+	maxcontig =     ffs_opts->maxcontig;
+	maxbpg =        ffs_opts->maxbpg;
+	avgfilesize =   ffs_opts->avgfilesize;
+	avgfpdir =      ffs_opts->avgfpdir;
 	bbsize =        BBSIZE;
 	sbsize =        SBLOCKSIZE;
 	
