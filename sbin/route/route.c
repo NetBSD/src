@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.34 1999/11/01 13:32:38 sommerfeld Exp $	*/
+/*	$NetBSD: route.c,v 1.35 1999/12/03 05:43:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.34 1999/11/01 13:32:38 sommerfeld Exp $");
+__RCSID("$NetBSD: route.c,v 1.35 1999/12/03 05:43:00 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,9 +130,6 @@ int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_int32_t  rtm_inits;
-#ifdef INET6
-char ntop_buf[INET6_ADDRSTRLEN];	/*for inet_ntop()*/
-#endif
 
 static void
 usage(cp)
@@ -384,6 +381,9 @@ routename(sa)
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
 	struct in_addr in;
+#ifdef INET6
+	static char ntop_buf[NI_MAXHOST];
+#endif
 
 	if (first) {
 		first = 0;
@@ -479,6 +479,9 @@ netname(sa)
 	u_int32_t i;
 	int subnetshift;
 	struct in_addr in;
+#ifdef INET6
+	static char ntop_buf[NI_MAXHOST];
+#endif
 
 	switch (sa->sa_family) {
 
@@ -643,13 +646,6 @@ newroute(argc, argv)
 			case K_INET6:
 				af = AF_INET6;
 				aflen = sizeof(struct sockaddr_in6);
-				if (prefixlen("64") != 64) {
-					fprintf(stderr, "internal error:"
-						"setting prefixlen=64\n");
-					exit(1);
-				}
-				forcenet = 0;
-				ishost = 1;
 				break;
 #endif
 
@@ -974,7 +970,7 @@ getaddr(which, s, hpp)
 #ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
-		if (inet_pton(AF_INET6, s, (void *)&su->sin6.sin6_addr) == -1) {
+		if (inet_pton(AF_INET6, s, (void *)&su->sin6.sin6_addr) != 1) {
 			(void) fprintf(stderr, "%s: bad value\n", s);
 			exit(1);
 		}
@@ -1587,6 +1583,10 @@ sodump(su, which)
 	sup su;
 	char *which;
 {
+#ifdef INET6
+	char ntop_buf[NI_MAXHOST];
+#endif
+
 	switch (su->sa.sa_family) {
 	case AF_INET:
 		(void) printf("%s: inet %s; ",
