@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.110 2002/08/07 05:16:25 briggs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.111 2002/08/07 11:13:40 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.110 2002/08/07 05:16:25 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.111 2002/08/07 11:13:40 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -93,7 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.110 2002/08/07 05:16:25 briggs Exp 
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#if defined(PERFCTRS)
 #include <sys/pmc.h>
+#endif
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
