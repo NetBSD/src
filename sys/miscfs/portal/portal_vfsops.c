@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.31 2002/09/21 18:09:30 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.32 2003/02/23 14:37:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.31 2002/09/21 18:09:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.32 2003/02/23 14:37:37 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -156,7 +156,10 @@ portal_mount(mp, path, data, ndp, p)
 	VTOPORTAL(rvp)->pt_size = 0;
 	VTOPORTAL(rvp)->pt_fileid = PORTAL_ROOTFILEID;
 	fmp->pm_root = rvp;
-	fmp->pm_server = fp; fp->f_count++;
+	fmp->pm_server = fp;
+	simple_lock(&fp->f_slock);
+	fp->f_count++;
+	simple_unlock(&fp->f_slock);
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = fmp;
@@ -220,6 +223,7 @@ portal_unmount(mp, mntflags, p)
 	 * daemon to wake up, and then the accept will get ECONNABORTED
 	 * which it interprets as a request to go and bury itself.
 	 */
+	simple_lock(&VFSTOPORTAL(mp)->pm_server->f_slock);
 	FILE_USE(VFSTOPORTAL(mp)->pm_server);
 	soshutdown((struct socket *) VFSTOPORTAL(mp)->pm_server->f_data, 2);
 	/*
