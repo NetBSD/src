@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.14 1996/02/02 13:38:29 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.15 1996/02/02 19:08:36 mycroft Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -29,7 +29,7 @@ VAX=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -D_VAX_INLINE_
-AOPTS=  ${COPTS} -DASSEMBLER
+AOPTS=  ${COPTS} -D_LOCORE
 CFLAGS=	-Werror -fno-builtin ${COPTS}
 LOAD_ADDRESS=80000000
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.8 1996/02/02 18:08:28 mycroft Exp $      */
+/*      $NetBSD: pte.h,v 1.9 1996/02/02 19:08:41 mycroft Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,7 @@
 
 #include <machine/param.h>
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 
 /*
  * VAX page table entries
@@ -52,7 +52,7 @@ struct pte {
 
 typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
-#endif ASSEMBLER
+#endif _LOCORE
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
@@ -73,7 +73,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_FRAME        0x001fffff
 #define	PG_PFNUM(x)	((x) >> PGSHIFT)
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 extern pt_entry_t *Sysmap;
 /*
  * Kernel virtual address to page table entry and to physical address.

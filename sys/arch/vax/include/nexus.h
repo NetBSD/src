@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.8 1996/02/02 18:08:24 mycroft Exp $	*/
+/*	$NetBSD: nexus.h,v 1.9 1996/02/02 19:08:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -75,7 +75,7 @@
 #define	MAXNNEXUS NNEXSBI
 #endif
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 
 #include <sys/types.h>
 
@@ -173,7 +173,7 @@ extern caddr_t *nex_vec;
 #define	NEX_MEM256UI	0x73		/* 256K chips, ext-interleaved, upper */
 #define	NEX_MEM256I	0x74		/* 256K chips, interleaved */
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 struct	nexus *nexus;
 #endif
 
