@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: key_debug.c,v 1.1.2.1 1999/06/28 06:37:09 itojun Exp $ */
+/* KAME @(#)$Id: key_debug.c,v 1.1.2.2 1999/07/06 11:03:06 itojun Exp $ */
 
 #ifdef _KERNEL
 # define KERNEL
@@ -360,9 +360,9 @@ kdebug_sadb_key(ext)
 	/* sanity check 2 */
 	if ((key->sadb_key_bits >> 3) >
 		(PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key))) {
-		printf("kdebug_sadb_key: key length mismatch, bit:%d len:%d.\n",
+		printf("kdebug_sadb_key: key length mismatch, bit:%d len:%ld.\n",
 			key->sadb_key_bits >> 3,
-			PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key));
+			(long)PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key));
 	}
 
 	ipsec_hexdump((caddr_t)key + sizeof(struct sadb_key),

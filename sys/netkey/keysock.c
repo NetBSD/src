@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: keysock.c,v 1.1.2.1 1999/06/28 06:37:10 itojun Exp $ */
+/* KAME @(#)$Id: keysock.c,v 1.1.2.2 1999/07/06 11:03:07 itojun Exp $ */
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"
@@ -123,7 +123,11 @@ key_usrreq(so, req, m, nam, control, p)
 	register struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
+#ifdef __NetBSD__
+	s = splsoftnet();
+#else
 	s = splnet();
+#endif
 	if (req == PRU_ATTACH) {
 		MALLOC(kp, struct keycb *, sizeof(*kp), M_PCB, M_WAITOK);
 		so->so_pcb = (caddr_t)kp;
@@ -266,7 +270,12 @@ key_output(m, va_alist)
 	}
 	m_copydata(m, 0, len, (caddr_t)msg);
 
-	s = splnet();	/*XXX giant lock*/
+	/*XXX giant lock*/
+#ifdef __NetBSD__
+	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	if ((len = key_parse(&msg, so, &target)) == 0) {
 		/* discard. i.e. no need to reply. */
 		error = 0;

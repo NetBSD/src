@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.44.6.1 1999/06/28 06:36:53 itojun Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.44.6.2 1999/07/06 11:02:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -168,17 +168,7 @@ sofree(so)
 	register struct socket *so;
 {
 
-	if (so->so_pcb
-#ifdef MAPPED_ADDR_ENABLED
-	    /*
-	     * MAPPED_ADDR implementation spec:
-	     *  Check so_pcb2 despite the ip6_mapped_addr value. 
-	     *  Because the sysctl value may be changed to 0
-	     *  after connection establishment.
-	     */
-	    || so->so_pcb2
-#endif /* MAPPED_ADDR_ENABLED */
-	    || (so->so_state & SS_NOFDREF) == 0)
+	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
 	if (so->so_head) {
 		/*
@@ -217,11 +207,7 @@ soclose(so)
 			(void) soabort(so2);
 		}
 	}
-	if (so->so_pcb == 0
-#ifdef MAPPED_ADDR_ENABLED
-	    && so->so_pcb2 == 0
-#endif /* MAPPED_ADDR_ENABLED */
-	    )
+	if (so->so_pcb == 0)
 		goto discard;
 	if (so->so_state & SS_ISCONNECTED) {
 		if ((so->so_state & SS_ISDISCONNECTING) == 0) {
@@ -243,11 +229,7 @@ soclose(so)
 		}
 	}
 drop:
-	if (so->so_pcb
-#ifdef MAPPED_ADDR_ENABLED
-	    || so->so_pcb2
-#endif /* MAPPED_ADDR_ENABLED */
-	    ) {
+	if (so->so_pcb) {
 		int error2 = (*so->so_proto->pr_usrreq)(so, PRU_DETACH,
 		    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
 		    (struct proc *)0);
@@ -844,13 +826,7 @@ dontblock:
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == 0)
 			so->so_rcv.sb_mb = nextrecord;
-		if (pr->pr_flags & PR_WANTRCVD &&
-		    (so->so_pcb
-#ifdef MAPPED_ADDR_ENABLED
-		     || so->so_pcb2
-#endif /* MAPPED_ADDR_ENABLED */
-		     )
-		    )
+		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
 			    (struct mbuf *)(long)flags, (struct mbuf *)0,
 			    (struct proc *)0);

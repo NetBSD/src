@@ -74,11 +74,7 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#ifdef RADISH
-#include <net/radish.h>
-#else /* RADISH */
 #include <net/radix.h>
-#endif /* RADISH */
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -248,20 +244,12 @@ struct ip6protosw inet6sw[] = {
 },
 };
 
-#ifdef RADISH
-struct domain inet6domain =
-    { AF_INET6, "internet6", 0, 0, 0, 
-      inet6sw, &inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
-      rn_inithead, sizeof(struct sockaddr_in6), 8, 16,
-      in6_rd_match};
-#else /* RADISH */
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0, 
       (struct protosw *)inet6sw,
       (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
       rn_inithead, offsetof(struct sockaddr_in6, sin6_addr) << 3,
       sizeof(struct sockaddr_in6) };
-#endif /* RADISH */
 
 #ifdef __FreeBSD__
 DOMAIN_SET(inet6);
@@ -302,10 +290,6 @@ int	ip6_gif_hlim = 0;
 u_long	ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
-
-#ifdef MAPPED_ADDR_ENABLED
-int	ip6_mapped_addr_on = 0;
-#endif /* MAPPED_ADDR_ENABLED */
 
 /* icmp6 */
 int pmtu_expire = 60*10;
@@ -441,10 +425,6 @@ SYSCTL_INT(_net_inet6_ip6, IPV6CTL_HDRNESTLIMIT,
 	hdrnestlimit, CTLFLAG_RW,	&ip6_hdrnestlimit,	0, "");
 SYSCTL_INT(_net_inet6_ip6, IPV6CTL_DAD_COUNT,
 	dad_count, CTLFLAG_RW,	&ip6_dad_count,	0, "");
-#ifdef MAPPED_ADDR_ENABLED
-SYSCTL_INT(_net_inet6_ip6, IPV6CTL_MAPPED_ADDR,
-	mapped_addr, CTLFLAG_RW,	&ip6_mapped_addr_on,	0, "");
-#endif /* MAPPED_ADDR_ENABLED */
 SYSCTL_INT(_net_inet6_ip6, IPV6CTL_AUTO_FLOWLABEL,
 	auto_flowlabel, CTLFLAG_RW,	&ip6_auto_flowlabel,	0, "");
 SYSCTL_INT(_net_inet6_ip6, IPV6CTL_DEFMCASTHLIM,

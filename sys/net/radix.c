@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.13.12.1 1999/06/28 06:36:57 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.13.12.2 1999/07/06 11:02:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -35,7 +35,6 @@
  *	@(#)radix.c	8.6 (Berkeley) 10/17/95
  */
 
-#ifndef RADISH
 /*
  * Routines to build and maintain radix trees for routing lookups.
  */
@@ -919,4 +918,3 @@ rn_init()
 	if (rn_inithead((void **)&mask_rnhead, 0) == 0)
 		panic("rn_init 2");
 }
-#endif /* !RADISH */

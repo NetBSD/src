@@ -194,9 +194,6 @@ extern time_t	ip6_log_time;
 extern int	ip6_hdrnestlimit; /* upper limit of # of extension headers */
 extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 
-#ifdef MAPPED_ADDR_ENABLED
-extern int	ip6_mapped_addr_on;
-#endif /* MAPPED_ADDR_ENABLED */
 extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
 

@@ -373,7 +373,7 @@ nd6_timer(ignored_arg)
 	register struct nd_defrouter *dr;
 	register struct nd_prefix *pr;
 	
-	s = splnet();
+	s = splsoftnet();
 	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
 
 	ln = llinfo_nd6.ln_next;
@@ -618,6 +618,60 @@ nd6_lookup(addr6, create, ifp)
 }
 
 /*
+ * Detect if a given IPv6 address identifies a neighbor on a given link.
+ * XXX: should take care of the destination of a p2p link? 
+ */
+int
+nd6_is_addr_neighbor(addr, ifp)
+	struct in6_addr *addr;
+	struct ifnet *ifp;
+{
+	register struct ifaddr *ifa;
+	int i;
+
+#define IFADDR6(a) ((((struct in6_ifaddr *)(a))->ia_addr).sin6_addr)
+#define IFMASK6(a) ((((struct in6_ifaddr *)(a))->ia_prefixmask).sin6_addr)
+
+	/* A link-local address is always a neighbor. */
+	if (IN6_IS_ADDR_LINKLOCAL(addr))
+		return(1);
+
+	/*
+	 * If the address matches one of our addresses,
+	 * it should be a neighbor.
+	 */
+#ifdef __bsdi__
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+#else
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
+#endif
+	{
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			next: continue;
+
+		for (i = 0; i < 4; i++) {
+			if ((IFADDR6(ifa).s6_addr32[i] ^ addr->s6_addr32[i]) &
+			    IFMASK6(ifa).s6_addr32[i])
+				goto next;
+		}
+		return(1);
+	}
+
+	/*
+	 * Even if the address matches none of our addresses, it might be
+	 * in the neighbor cache.
+	 */
+	if (nd6_lookup(addr, 0, ifp))
+		return(1);
+
+	return(0);
+#undef IFADDR6
+#undef IFMASK6
+}
+
+/*
  * Free an nd6 llinfo entry.
  */
 void
@@ -634,7 +688,7 @@ nd6_free(rt)
 		int s;
 		in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 
-		s = splnet();
+		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->
 				      sin6_addr,
 				      rt->rt_ifp);
@@ -1031,7 +1085,7 @@ nd6_ioctl(cmd, data, ifp)
 	switch (cmd) {
 	case SIOCGDRLST_IN6:
 		bzero(drl, sizeof(*drl));
-		s = splnet();
+		s = splsoftnet();
 		dr = nd_defrouter.lh_first;
 		while (dr && i < DRLSTSIZ) {
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1056,7 +1110,7 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case SIOCGPRLST_IN6:
 		bzero(prl, sizeof(*prl));
-		s = splnet();
+		s = splsoftnet();
 		pr = nd_prefix.lh_first;
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
@@ -1116,7 +1170,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			next = pr->ndpr_next;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
@@ -1131,7 +1185,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		if ((dr = nd_defrouter.lh_first) != NULL) {
 			/*
 			 * The first entry of the list may be stored in
@@ -1150,7 +1204,7 @@ nd6_ioctl(cmd, data, ifp)
 	    {
 		  struct llinfo_nd6 *ln;
 
-		  s = splnet();
+		  s = splsoftnet();
 		  if ((rt = nd6_lookup(&nbi->addr, 0, ifp)) == NULL) {
 			  error = EINVAL;
 			  break;
@@ -1361,7 +1415,7 @@ static void
 nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	register int i;
 	register struct nd_ifinfo *nd6if;
 

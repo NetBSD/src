@@ -535,7 +535,7 @@ void
 frag6_slowtimo()
 {
 	struct ip6q *q6;
-	int s = splnet();
+	int s = splsoftnet();
 #if 0
 	extern struct	route_in6 ip6_forward_rt;
 #endif

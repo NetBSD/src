@@ -461,7 +461,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EACCES;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
 		    (error = in6_pcballoc(so, &rawin6pcb))) {
 			splx(s);

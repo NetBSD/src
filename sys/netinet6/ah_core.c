@@ -77,7 +77,9 @@
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
+#ifdef IPSEC_ESP
 #include <netinet6/esp.h>
+#endif
 #include <netkey/keyv2.h>
 #include <netkey/keydb.h>
 #ifdef HAVE_MD5
@@ -866,7 +868,11 @@ ah4_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	s = splnet();	/*XXX crypt algorithms need splnet() */
+#ifdef __NetBSD__
+	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
+#else
+	s = splnet();	/*XXX crypt algorithms need splsoftnet() */
+#endif
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/
@@ -1080,7 +1086,11 @@ ah6_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	s = splnet();	/*XXX crypt algorithms need splnet() */
+#ifdef __NetBSD__
+	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
+#else
+	s = splnet();	/*XXX crypt algorithms need splsoftnet() */
+#endif
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/

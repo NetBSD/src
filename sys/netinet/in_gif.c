@@ -77,9 +77,9 @@
 #endif
 
 #if NGIF > 0
-int gif_ttl = GIF_TTL;
+int ip_gif_ttl = GIF_TTL;
 #else
-int gif_ttl = 0;
+int ip_gif_ttl = 0;
 #endif
 
 int
@@ -169,7 +169,7 @@ in_gif_output(ifp, family, m, rt)
 	}
 	iphdr.ip_p = proto;
 	/* version will be set in ip_output() */
-	iphdr.ip_ttl = gif_ttl;
+	iphdr.ip_ttl = ip_gif_ttl;
 	iphdr.ip_len = m->m_pkthdr.len + sizeof(struct ip);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &iphdr.ip_tos, &tos);

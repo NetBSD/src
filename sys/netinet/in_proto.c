@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.29.2.1.4.1 1999/06/28 06:36:59 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.29.2.1.4.2 1999/07/06 11:02:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,11 +77,7 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#ifdef RADISH
-#include <net/radish.h>
-#else /* RADISH */
 #include <net/radix.h>
-#endif /* RADISH */
 #include <net/route.h>
 
 #include <netinet/in.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_usrreq.c,v 1.39.10.2 1999/07/06 11:02:50 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	$NetBSD: tcp_usrreq.c,v 1.39.10.1 1999/06/28 06:37:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

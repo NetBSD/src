@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.v6,v 1.1.2.1 1999/06/28 06:36:47 itojun Exp $
+#	$NetBSD: GENERIC.v6,v 1.1.2.2 1999/07/06 11:02:34 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -115,8 +115,6 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options 	TCP6		# separate TCP-over-IPv6 code
-#options 	MAPPED_ADDR_ENABLED	#enable IPv4 on IPv6 socket (use only with TCP6)
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

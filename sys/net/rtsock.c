@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.28.2.1.4.1 1999/06/28 06:36:57 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.28.2.1.4.2 1999/07/06 11:02:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,12 +205,7 @@ route_output(m, va_alist)
 	register struct rt_msghdr *rtm = 0;
 	register struct rtentry *rt = 0;
 	struct rtentry *saved_nrt = 0;
-#ifdef RADISH
-	struct radish_head *rdh;
-	extern u_char rd_deleted_km[];
-#else /* RADISH */
 	struct radix_node_head *rnh;
-#endif /* RADISH */
 	struct rt_addrinfo info;
 	int len, error = 0;
 	struct ifnet *ifp = 0;
@@ -251,12 +246,6 @@ route_output(m, va_alist)
 		senderr(EINVAL);
 	if (gate != 0 && (gate->sa_family >= AF_MAX))
 		senderr(EINVAL);
-#ifdef RADISH
-	if (genmask) {
-		int dummy;
-		genmask = rd_mask(genmask, rt_tables[dst->sa_family], &dummy);
-	}
-#else /* RADISH */	
 	if (genmask) {
 		struct radix_node *t;
 		t = rn_addmask((caddr_t)genmask, 0, 1);
@@ -265,7 +254,6 @@ route_output(m, va_alist)
 		else
 			senderr(ENOBUFS);
 	}
-#endif /* RADISH */
 
 	/*
 	 * Verify that the caller has the appropriate privilege; RTM_GET
@@ -283,33 +271,33 @@ route_output(m, va_alist)
 		error = rtrequest(RTM_ADD, dst, gate, netmask,
 		    rtm->rtm_flags, &saved_nrt);
 		if (error == 0 && saved_nrt) {
-		    /* 
-		     * If the route request specified an interface with
-		     * IFA and/or IFP, we set the requested interface on
-		     * the route with rt_setif.  It would be much better
-		     * to do this inside rtrequest, but that would
-		     * require passing the desired interface, in some
-		     * form, to rtrequest.  Since rtrequest is called in
-		     * so many places (roughly 40 in our source), adding
-		     * a parameter is to much for us to swallow; this is
-		     * something for the FreeBSD developers to tackle.
-		     * Instead, we let rtrequest compute whatever
-		     * interface it wants, then come in behind it and
-		     * stick in the interface that we really want.  This
-		     * works reasonably well except when rtrequest can't
-		     * figure out what interface to use (with
-		     * ifa_withroute) and returns ENETUNREACH.  Ideally
-		     * it shouldn't matter if rtrequest can't figure out
-		     * the interface if we're going to explicitly set it
-		     * ourselves anyway.  But practically we can't
-		     * recover here because rtrequest will not do any of
-		     * the work necessary to add the route if it can't
-		     * find an interface.  As long as there is a default
-		     * route that leads to some interface, rtrequest will
-		     * find an interface, so this problem should be
-		     * rarely encountered.
-		     * dwiggins@bbn.com
-		     */
+			/* 
+			 * If the route request specified an interface with
+			 * IFA and/or IFP, we set the requested interface on
+			 * the route with rt_setif.  It would be much better
+			 * to do this inside rtrequest, but that would
+			 * require passing the desired interface, in some
+			 * form, to rtrequest.  Since rtrequest is called in
+			 * so many places (roughly 40 in our source), adding
+			 * a parameter is to much for us to swallow; this is
+			 * something for the FreeBSD developers to tackle.
+			 * Instead, we let rtrequest compute whatever
+			 * interface it wants, then come in behind it and
+			 * stick in the interface that we really want.  This
+			 * works reasonably well except when rtrequest can't
+			 * figure out what interface to use (with
+			 * ifa_withroute) and returns ENETUNREACH.  Ideally
+			 * it shouldn't matter if rtrequest can't figure out
+			 * the interface if we're going to explicitly set it
+			 * ourselves anyway.  But practically we can't
+			 * recover here because rtrequest will not do any of
+			 * the work necessary to add the route if it can't
+			 * find an interface.  As long as there is a default
+			 * route that leads to some interface, rtrequest will
+			 * find an interface, so this problem should be
+			 * rarely encountered.
+			 * dwiggins@bbn.com
+			 */
 
 			rt_setif(saved_nrt, ifpaddr, ifaaddr, gate);
 			rt_setmetrics(rtm->rtm_inits,
@@ -324,11 +312,6 @@ route_output(m, va_alist)
 		    rtm->rtm_flags, &saved_nrt);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
-#ifdef RADISH
-			dst = (struct sockaddr *)rd_deleted_km;
-			netmask = (struct sockaddr *)
-				(rd_deleted_km + *rd_deleted_km);
-#endif /* RADISH */
 			goto report;
 		}
 		break;
@@ -336,14 +319,6 @@ route_output(m, va_alist)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-#ifdef RADISH
-		if ((rdh = rt_tables[dst->sa_family]) == 0) {
-			senderr(EAFNOSUPPORT);
-		} else if (rt = rd_lookup(dst, netmask, rdh))
-			rt->rt_refcnt++;
-		else
-			senderr(ESRCH);
-#else /* RADISH */		
 		if ((rnh = rt_tables[dst->sa_family]) == 0) {
 			senderr(EAFNOSUPPORT);
 		} else if ((rt = (struct rtentry *)
@@ -351,23 +326,14 @@ route_output(m, va_alist)
 			rt->rt_refcnt++;
 		else
 			senderr(ESRCH);
-#endif /* RADISH */
 		switch(rtm->rtm_type) {
 
 		case RTM_GET:
-#ifdef RADISH
-			dst = rt_key(rt);
-			netmask = rt_mask(rt);
-		report:
-			gate = rt->rt_gateway;
-			genmask = rt->rt_genmask;
-#else /* RADISH */
 		report:
 			dst = rt_key(rt);
 			gate = rt->rt_gateway;
 			netmask = rt_mask(rt);
 			genmask = rt->rt_genmask;
-#endif /* RADISH */
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 				if ((ifp = rt->rt_ifp) != NULL) {
 					ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
@@ -817,19 +783,11 @@ rt_newaddrmsg(cmd, ifa, error, rt)
  */
 int
 sysctl_dumpentry(rn, v)
-#ifdef RADISH
-	struct radish *rd;
-#else /* RADISH */
 	struct radix_node *rn;
-#endif /* RADISH */
 	register void *v;
 {
 	register struct walkarg *w = v;
-#ifdef RADISH
-	register struct rtentry *rt = rd->rd_rtent;
-#else /* RADISH */
 	register struct rtentry *rt = (struct rtentry *)rn;
-#endif /* RADISH */
 	int error = 0, size;
 	struct rt_addrinfo info;
 
@@ -933,11 +891,7 @@ sysctl_rtable(name, namelen, where, given, new, newlen)
 	void	*new;
 	size_t	newlen;
 {
-#ifdef RADISH
-	register struct radish_head *rdh;
-#else
 	register struct radix_node_head *rnh;
-#endif
 	int	i, s, error = EINVAL;
 	u_char  af;
 	struct	walkarg w;
@@ -966,15 +920,6 @@ again:
 	s = splsoftnet();
 	switch (w.w_op) {
 
-#ifdef RADISH
-	case NET_RT_DUMP:
-	case NET_RT_FLAGS:
-		for (i = 1; i < AF_MAX; i++)
-			if ((rdh = rt_tables[i]) && (af == 0 || af == i) &&
-			    (error = rd_walktree(rdh, sysctl_dumpentry, &w)))
-				break;
-		break;
-#else /* RADISH */		
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
 		for (i = 1; i <= AF_MAX; i++)
@@ -983,7 +928,6 @@ again:
 			    sysctl_dumpentry, &w)))
 				break;
 		break;
-#endif /* RADISH */
 
 	case NET_RT_IFLIST:
 		error = sysctl_iflist(af, &w);

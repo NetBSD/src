@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.1.2.1 1999/06/28 06:37:09 itojun Exp $ */
+/* KAME $Id: key.c,v 1.1.2.2 1999/07/06 11:03:05 itojun Exp $ */
 
 /*
  * This code is referd to RFC 2367,
@@ -84,7 +84,9 @@
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
+#ifdef IPSEC_ESP
 #include <netinet6/esp.h>
+#endif
 #include <netinet6/ipcomp.h>
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -611,6 +613,10 @@ key_do_allocsa_policy(saidx, proto, mode, state)
 		}
 
 		if (sa->type != proto)
+			continue;
+
+		/* check transport mode */
+		if (mode == IPSEC_MODE_TRANSPORT && sa->proxy != NULL)
 			continue;
 
 		/* check proxy address for tunnel mode */
@@ -1764,7 +1770,11 @@ key_delsaidx(saidx)
 	if (saidx == NULL)
 		panic("key_delsaidx: NULL pointer is passed.\n");
 
+#ifdef __NetBSD__
+	s = splsoftnet();	/*called from softclock()*/
+#else
 	s = splnet();	/*called from softclock()*/
+#endif
 
 	/* searching all SA registerd in the secindex. */
 	for (stateidx = 0;
@@ -2282,10 +2292,8 @@ key_setsaval(sa, mhp)
 #ifdef IPSEC_ESP
 	    {
 		struct esp_algorithm *algo;
-		int siz;
 
 		algo = &esp_algorithms[sa->alg_enc];
-		siz = (sa->flags & SADB_X_EXT_IV4B) ? 4 : 0;
 		if (algo && algo->ivlen)
 			sa->ivlen = (*algo->ivlen)(sa);
 		KMALLOC(sa->iv, caddr_t, sa->ivlen);
@@ -3417,7 +3425,11 @@ key_timehandler(void)
 	u_int diridx, dir;
 	int s;
 
+#ifdef __NetBSD__
+	s = splsoftnet();	/*called from softclock()*/
+#else
 	s = splnet();	/*called from softclock()*/
+#endif
 
 	/* SPD */
     {
@@ -5184,7 +5196,11 @@ key_expire(sa)
 {
 	int s;
 
+#ifdef __NetBSD__
+	s = splsoftnet();	/*called from softclock()*/
+#else
 	s = splnet();	/*called from softclock()*/
+#endif
 
 	/* sanity check */
 	if (sa == NULL)
@@ -5938,7 +5954,7 @@ key_init()
 	/* initialize key statistics */
 	keystat.getspi_count = 1;
 
-	printf("IPsec: Initialized Security Assocciation Processing.\n");
+	printf("IPsec: Initialized Security Association Processing.\n");
 
 	return;
 }

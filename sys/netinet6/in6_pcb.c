@@ -116,11 +116,7 @@ in6_pcballoc(so, head)
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
 	insque(in6p, head);
-#ifdef MAPPED_ADDR_ENABLED
-	(caddr_t)sotoin6pcb(so) = (caddr_t)in6p;
-#else /* MAPPED_ADDR_ENABLED */
 	so->so_pcb = (caddr_t)in6p;
-#endif /* MAPPED_ADDR_ENABLED */
 	return(0);
 }
 
@@ -264,6 +260,7 @@ in6_pcbbind(in6p, nam)
 		else if (head->in6p_lport > IPV6PORT_ANONMAX)
 			head->in6p_lport = IPV6PORT_ANONMIN;
 		last_port = head->in6p_lport;
+		goto startover;
 		for (;;) {
 			lport = htons(head->in6p_lport);
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
@@ -280,6 +277,7 @@ in6_pcbbind(in6p, nam)
 			}
 			if (t == 0)
 				break;
+startover:
 			if (head->in6p_lport >= IPV6PORT_ANONMAX)
 				head->in6p_lport = IPV6PORT_ANONMIN;
 			else
@@ -710,7 +708,7 @@ in6_setpeeraddr(in6p, nam)
  * Call the protocol specific routine (if any) to report
  * any errors for each matching socket.
  *
- * Must be called at splnet.
+ * Must be called at splsoftnet.
  */
 int
 in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
