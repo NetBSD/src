@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.4 1998/01/23 01:04:54 mycroft Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.5 1998/01/27 19:14:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
 
 #define	WDC_ISA_REG_NPORTS	8
 #define	WDC_ISA_AUXREG_OFFSET	0x206
-#define	WDC_ISA_AUXREG_NPORTS	2
+#define	WDC_ISA_AUXREG_NPORTS	1 /* XXX "fdc" owns ports 0x3f7/0x377 */
 
 /*
  * XXX This code currently doesn't even try to allow 32-bit data port use.
