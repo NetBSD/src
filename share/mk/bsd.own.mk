@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.219 2001/11/15 19:24:07 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.220 2001/11/15 21:43:54 atatat Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -106,6 +106,7 @@ MTREE=		${TOOLDIR}/bin/nbmtree
 NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
+OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
 PIC=		${TOOLDIR}/bin/nbpic
 RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 REFER=		${TOOLDIR}/bin/nbrefer
