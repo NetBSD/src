@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.12 2003/04/07 11:13:24 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.13 2004/02/17 19:22:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -300,8 +300,9 @@ enum smb_dialects {
 #define NT_FILE_SHARE_WRITE		0x0002
 #define NT_FILE_SHARE_DELETE		0x0004
 
-/* open types */
-#define NT_OPEN_EXISTING		0x0003
+/* open types - create disposition */
+#define NT_OPEN_EXISTING		0x0001
+#define NT_OPEN_CREATE			0x0002
 
 /*
  * TRANS2 commands
