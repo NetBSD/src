@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.5 1995/03/10 01:57:02 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.6 1995/10/08 23:40:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -243,6 +243,25 @@ msopen(dev, flags, mode, p)
 	int s, error;
 	struct tty *tp;
 
+#if 1	/* XXX - temporary hack */
+	/* XXX - Should make login chown devices in /etc/fbtab */
+	/* Require root or same UID as the kd session leader. */
+	if (p->p_ucred->cr_uid) {
+		struct tty *kd_tp;
+		struct proc *kd_p;
+		extern struct tty *kdtty();
+
+		/* Make sure kd is attached and open. */
+		kd_tp = kdtty(0);
+		if ((kd_tp == NULL) || (kd_tp->t_session == NULL))
+			return (EPERM);
+		kd_p = kd_tp->t_session->s_leader;
+		if (p->p_ucred->cr_uid != kd_p->p_ucred->cr_uid)
+			return (EACCES);
+	}
+#endif
+
+	/* This is an exclusive open device. */
 	if (ms_softc.ms_events.ev_io)
 		return (EBUSY);
 	ms_softc.ms_events.ev_io = p;
