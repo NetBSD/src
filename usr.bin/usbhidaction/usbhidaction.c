@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.12 2004/10/10 01:16:17 mrg Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.12 2004/10/10 01:16:17 mrg Exp $");
 #endif
 
 #include <stdio.h>
@@ -357,12 +357,12 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		}
 		if (isdemon) {
 			syslog(LOG_WARNING, "config file `%s', line %d, HID "
-			       "item not found: `%s'\n", conf, line, name);
+			       "item not found: `%s'", conf, line, name);
 			freecommands(cmds);
 			return (NULL);
 		} else {
 			errx(1, "config file `%s', line %d, HID item "
-			     "not found: `%s'\n", conf, line, name);
+			     "not found: `%s'", conf, line, name);
 		}
 
 	foundhid:
