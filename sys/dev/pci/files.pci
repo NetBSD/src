@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
+#	$NetBSD: files.pci,v 1.21 1996/11/12 23:58:03 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -25,11 +25,10 @@ device	de: ether, ifnet
 attach	de at pci
 file	dev/pci/if_de.c			de
 
-# ENI ATM driver
-device	en: atm, ifnet
+# Efficient Networks, Inc. ATM interface
+# device declaration in sys/conf/files
 attach	en at pci with en_pci
-file    dev/pci/if_en_pci.c		en
-file    dev/ic/midway.c			en
+file    dev/pci/if_en_pci.c		en_pci
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files
