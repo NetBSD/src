@@ -633,6 +633,16 @@ extern boolean bfd_sunos_size_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *, struct sec **, struct sec **,
 	   struct sec **));
 
+/* NetBSD shared library support routines for the linker.  */
+
+extern struct bfd_link_needed_list *bfd_netbsd_get_needed_list
+  PARAMS ((bfd *, struct bfd_link_info *));
+extern boolean bfd_netbsd_record_link_assignment
+  PARAMS ((bfd *, struct bfd_link_info *, const char *));
+extern boolean bfd_netbsd_size_dynamic_sections
+  PARAMS ((bfd *, struct bfd_link_info *, struct sec **, struct sec **,
+	   struct sec **));
+
 /* Linux shared library support routines for the linker.  */
 
 extern boolean bfd_i386linux_size_dynamic_sections
