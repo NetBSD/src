@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.13 1998/12/29 14:27:33 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.14 1998/12/29 15:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -426,16 +426,18 @@ struct usb_ctl_report_desc {
 };
 
 struct usb_device_info {
-	uByte	addr;		/* device address */
-	char	product[USB_MAX_STRING_LEN];
-	char	vendor[USB_MAX_STRING_LEN];
-	char	revision[8];
-	uByte	class;
-	uByte	config;
-	uByte	lowspeed;
-	int	power;		/* power consumption in mA, 0 if selfpowered */
-	int	nports;
-	uByte	ports[16];	/* hub only: addresses of devices on ports */
+	u_int8_t	addr;	/* device address */
+	char		product[USB_MAX_STRING_LEN];
+	char		vendor[USB_MAX_STRING_LEN];
+	char		revision[8];
+	u_int16_t	productNo;
+	u_int16_t	vendorNo;
+	u_int8_t	class;
+	u_int8_t	config;
+	u_int8_t	lowspeed;
+	int		power;	/* power consumption in mA, 0 if selfpowered */
+	int		nports;
+	u_int8_t	ports[16];/* hub only: addresses of devices on ports */
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
 #define USB_PORT_POWERED 0xfd
