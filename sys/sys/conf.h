@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.110.2.2 2004/08/03 10:56:25 skrll Exp $	*/
+/*	$NetBSD: conf.h,v 1.110.2.3 2004/09/02 21:14:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
 
 struct buf;
 struct knote;
-struct proc;
+struct lwp;
 struct tty;
 struct uio;
 struct vnode;
