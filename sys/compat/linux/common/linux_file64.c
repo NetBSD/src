@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.9 2002/03/22 14:54:49 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.10 2002/03/22 17:14:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.9 2002/03/22 14:54:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.10 2002/03/22 17:14:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,8 +295,6 @@ linux_sys_fcntl64(p, v, retval)
 	void *arg = SCARG(uap, arg);
 	int cmd = SCARG(uap, cmd);
 	int fd = SCARG(uap, fd);
-
-	printf("fcntl(%d, %d, %p)\n", fd, cmd, arg);
 
 	switch (cmd) {
 	case LINUX_F_GETLK64:

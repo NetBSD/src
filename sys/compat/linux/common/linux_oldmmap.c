@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.56 2002/02/15 20:02:56 christos Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.57 2002/03/22 17:14:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.56 2002/02/15 20:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.57 2002/03/22 17:14:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.56 2002/02/15 20:02:56 christos 
 
 /* Used on: arm, i386, m68k */
 /* Not used on: alpha, mips, pcc, sparc, sparc64 */
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 /*
  * Linux wants to pass everything to a syscall in registers.
@@ -82,11 +88,9 @@ linux_sys_old_mmap(p, v, retval)
 	SCARG(&nlmap,flags) = lmap.lm_flags;
 	SCARG(&nlmap,fd) = lmap.lm_fd;
 	SCARG(&nlmap,offset) = (unsigned)lmap.lm_pos;
-#ifdef DEBUG_LINUX
-	uprintf("old_mmap(%p, %d, %d, %d, %d, %d)\n",
-		lmap.lm_addr, lmap.lm_len, lmap.lm_prot, lmap.lm_flags,
-		lmap.lm_fd, lmap.lm_pos);
-#endif
+	DPRINTF(("old_mmap(%p, %d, %d, %d, %d, %d)\n",
+	    lmap.lm_addr, lmap.lm_len, lmap.lm_prot, lmap.lm_flags,
+	    lmap.lm_fd, lmap.lm_pos));
 	return linux_sys_mmap(p, &nlmap, retval);
 }
 
