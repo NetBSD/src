@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,26 +30,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dma.c	7.5 (Berkeley) 5/4/91
- *	$Id: dma.c,v 1.3 1994/05/05 10:10:21 mycroft Exp $
+ *	from: @(#)dma.c	8.1 (Berkeley) 6/10/93
+ *	$Id: dma.c,v 1.4 1994/05/23 05:58:46 mycroft Exp $
  */
 
 /*
  * DMA driver
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
-#include "dmareg.h"
-#include "dmavar.h"
-#include "device.h"
+#include <machine/cpu.h>
 
-#include "../include/cpu.h"
-#include "../hp300/isr.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/dmareg.h>
+#include <hp300/dev/dmavar.h>
+
+#include <hp300/hp300/isr.h>
 
 extern void isrlink();
 extern void _insque();
@@ -144,7 +145,7 @@ dmainit()
 	dmachan[i].dq_forw = dmachan[i].dq_back = &dmachan[i];
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(dmatimeout, NULL, 30 * hz);
+	timeout(dmatimeout, (void *)0, 30 * hz);
 #endif
 
 	printf("dma: 98620%c with 2 channels, %d bit DMA\n",
@@ -190,10 +191,10 @@ dmafree(dq)
 	dmatimo[unit] = 0;
 #endif
 	DMA_CLEAR(dc);
+#if defined(HP360) || defined(HP370) || defined(HP380)
 	/*
 	 * XXX we may not always go thru the flush code in dmastop()
 	 */
-#if defined(HP360) || defined(HP370)
 	if (dc->sc_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->sc_flags &= ~DMAF_PCFLUSH;
@@ -264,6 +265,13 @@ dmago(unit, addr, count, flags)
 	 */
 	for (dcp = dc->sc_chain; count > 0; dcp++) {
 		dcp->dc_addr = (char *) kvtop(addr);
+#if defined(HP380)
+		/*
+		 * Push back dirty cache lines
+		 */
+		if (mmutype == MMU_68040)
+			DCFP(dcp->dc_addr);
+#endif
 		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
 			tcount = count;
 		dcp->dc_count = tcount;
@@ -308,6 +316,17 @@ dmago(unit, addr, count, flags)
 		dc->sc_cmd |= DMA_WORD;
 	if (flags & DMAGO_PRI)
 		dc->sc_cmd |= DMA_PRI;
+#if defined(HP380)
+	/*
+	 * On the 68040 we need to flush (push) the data cache before a
+	 * DMA (already done above) and flush again after DMA completes.
+	 * In theory we should only need to flush prior to a write DMA
+	 * and purge after a read DMA but if the entire page is not
+	 * involved in the DMA we might purge some valid data.
+	 */
+	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
+		dc->sc_flags |= DMAF_PCFLUSH;
+#endif
 #if defined(HP360) || defined(HP370)
 	/*
 	 * Remember if we need to flush external physical cache when
@@ -358,7 +377,7 @@ dmastop(unit)
 	dmatimo[unit] = 0;
 #endif
 	DMA_CLEAR(dc);
-#if defined(HP360) || defined(HP370)
+#if defined(HP360) || defined(HP370) || defined(HP380)
 	if (dc->sc_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->sc_flags &= ~DMAF_PCFLUSH;
@@ -450,6 +469,6 @@ dmatimeout(arg)
 		}
 		splx(s);
 	}
-	timeout(dmatimeout, NULL, 30 * hz);
+	timeout(dmatimeout, (void *)0, 30 * hz);
 }
 #endif

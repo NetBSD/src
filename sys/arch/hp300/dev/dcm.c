@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: dcm.c 1.26 91/01/21
- *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.13 1994/02/10 13:59:30 mycroft Exp $
+ * from Utah: $Hdr: dcm.c 1.29 92/01/21$
+ *
+ *	from: @(#)dcm.c	8.4 (Berkeley) 1/12/94
+ *	$Id: dcm.c,v 1.14 1994/05/23 05:58:40 mycroft Exp $
  */
 
 /*
@@ -63,10 +64,10 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 
+#include <machine/cpu.h>
+
 #include <hp300/dev/device.h>
 #include <hp300/dev/dcmreg.h>
-
-#include <machine/cpu.h>
 #include <hp300/hp300/isr.h>
 
 #ifndef DEFAULT_BAUD_RATE
@@ -75,7 +76,6 @@
 
 int	dcmprobe(), dcmintr(), dcmparam();
 void	dcmstart();
-
 struct	driver dcmdriver = {
 	dcmprobe, "dcm",
 };
@@ -148,14 +148,14 @@ int	dcmmajor;
 /*
  * Kernel GDB support
  */
-#include "machine/remote-sl.h"
+#include <machine/remote-sl.h>
 
 extern dev_t kgdb_dev;
 extern int kgdb_rate;
 extern int kgdb_debug_init;
 #endif
 
-/* #define IOSTATS */
+/* #define DCMSTATS */
 
 #ifdef DEBUG
 int	dcmdebug = 0x0;
@@ -170,7 +170,7 @@ int	dcmdebug = 0x0;
 #define DDB_OPENCLOSE	0x100
 #endif
 
-#ifdef IOSTATS
+#ifdef DCMSTATS
 #define	DCMRBSIZE	94
 #define DCMXBSIZE	24
 
@@ -427,7 +427,7 @@ dcmclose(dev, flag, mode, p)
 	ttyclose(tp);
 #if 0
 	ttyfree(tp);
-	dcm_tty[unit] = (struct tty *)NULL;
+	dcm_tty[unit] = (struct tty *)0;
 #endif
 	return (0);
 }
@@ -435,18 +435,20 @@ dcmclose(dev, flag, mode, p)
 dcmread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp = dcm_tty[UNIT(dev)];
- 
+
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
 dcmwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp = dcm_tty[UNIT(dev)];
- 
+
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
  
@@ -593,7 +595,7 @@ dcmreadbuf(unit, dcm, tp)
 	register int c, stat;
 	register unsigned head;
 	int nch = 0;
-#ifdef IOSTATS
+#ifdef DCMSTATS
 	struct dcmstats *dsp = &dcmstats[BOARD(unit)];
 
 	dsp->rints++;
@@ -602,7 +604,7 @@ dcmreadbuf(unit, dcm, tp)
 #ifdef KGDB
 		if ((makedev(dcmmajor, unit) == kgdb_dev) &&
 		    (head = pp->r_head & RX_MASK) != (pp->r_tail & RX_MASK) &&
-		    dcm->dcm_rfifos[3-port][head>>1].data_char == FRAME_END) {
+		    dcm->dcm_rfifos[3-port][head>>1].data_char == FRAME_START) {
 			pp->r_head = (head + 2) & RX_MASK;
 			kgdb_connect(0);	/* trap into kgdb */
 			return;
@@ -658,7 +660,7 @@ dcmreadbuf(unit, dcm, tp)
 		(*linesw[tp->t_line].l_rint)(c, tp);
 	}
 	dcmischeme[BOARD(unit)].dis_char += nch;
-#ifdef IOSTATS
+#ifdef DCMSTATS
 	dsp->rchars += nch;
 	if (nch <= DCMRBSIZE)
 		dsp->rsilo[nch]++;
@@ -882,13 +884,13 @@ dcmstart(tp)
 	unsigned head;
 	char buf[16];
 	int s;
-#ifdef IOSTATS
+#ifdef DCMSTATS
 	struct dcmstats *dsp = &dcmstats[BOARD(tp->t_dev)];
 	int tch = 0;
 #endif
 
 	s = spltty();
-#ifdef IOSTATS
+#ifdef DCMSTATS
 	dsp->xints++;
 #endif
 #ifdef DEBUG
@@ -907,7 +909,7 @@ dcmstart(tp)
 		selwakeup(&tp->t_wsel);
 	}
 	if (tp->t_outq.c_cc == 0) {
-#ifdef IOSTATS
+#ifdef DCMSTATS
 		dsp->xempty++;
 #endif
 		goto out;
@@ -924,7 +926,7 @@ dcmstart(tp)
 	fifo = &dcm->dcm_tfifos[3-port][tail];
 again:
 	nch = q_to_b(&tp->t_outq, buf, (head - next) & TX_MASK);
-#ifdef IOSTATS
+#ifdef DCMSTATS
 	tch += nch;
 #endif
 #ifdef DEBUG
@@ -957,7 +959,7 @@ again:
 	 * go back and load some more if we can.
 	 */
 	if (tp->t_outq.c_cc && head != (pp->t_head & TX_MASK)) {
-#ifdef IOSTATS
+#ifdef DCMSTATS
 		dsp->xrestarts++;
 #endif
 		head = pp->t_head & TX_MASK;
@@ -981,7 +983,7 @@ again:
 		       UNIT(tp->t_dev), head, tail, tp->t_outq.c_cc);
 #endif
 out:
-#ifdef IOSTATS
+#ifdef DCMSTATS
 	dsp->xchars += tch;
 	if (tch <= DCMXBSIZE)
 		dsp->xsilo[tch]++;
@@ -996,6 +998,7 @@ out:
  */
 dcmstop(tp, flag)
 	register struct tty *tp;
+	int flag;
 {
 	int s;
 

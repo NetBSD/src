@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)scsireg.h	7.3 (Berkeley) 2/5/91
- *	$Id: scsireg.h,v 1.2 1993/05/22 07:56:50 cgd Exp $
+ *	from: @(#)scsireg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: scsireg.h,v 1.3 1994/05/23 05:59:21 mycroft Exp $
  */
 
 /*
@@ -177,6 +177,7 @@ struct scsidevice {
 #define CMD_SEND_DIAGNOSTIC	0x1D
 
 #define CMD_REWIND		0x01
+#define CMD_REZERO		0x01
 #define CMD_FORMAT_UNIT		0x04
 #define CMD_READ_BLOCK_LIMITS	0x05
 #define CMD_REASSIGN_BLOCKS	0x07
@@ -444,13 +445,6 @@ struct scsi_cache {
 	u_char	minimum_prefetch_multiplier;
 	u_char	reserved[8];
 };
-
-/*
- * Driver ioctl's for various scsi operations.
- */
-#ifndef _IOCTL_
-#include "ioctl.h"
-#endif
 
 /*
  * Control for SCSI "format" mode.

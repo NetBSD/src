@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nhpibreg.h	7.1 (Berkeley) 5/8/90
- *	$Id: nhpibreg.h,v 1.2 1993/05/22 07:56:40 cgd Exp $
+ *	from: @(#)nhpibreg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: nhpibreg.h,v 1.3 1994/05/23 05:59:12 mycroft Exp $
  */
 
-#define	vu_char	volatile u_char
+#include <hp300/dev/iotypes.h>	/* XXX */
+
+struct	nhpibdevice {
+	u_char	hpib_pad0;
+	vu_char	hpib_cid;
+	u_char	hpib_pad1;
+#define	hpib_ie		hpib_ids
+	vu_char	hpib_ids;
+	u_char	hpib_pad2;
+	vu_char	hpib_csa;
+	u_char	hpib_pad3[11];
+#define	hpib_mim	hpib_mis
+	vu_char	hpib_mis;
+	u_char	hpib_pad4;
+#define	hpib_lim	hpib_lis
+	vu_char	hpib_lis;
+	u_char	hpib_pad5;
+	vu_char	hpib_is;
+	u_char	hpib_pad6;
+#define	hpib_acr	hpib_cls
+	vu_char	hpib_cls;
+	u_char	hpib_pad7;
+	vu_char	hpib_ar;
+	u_char	hpib_pad8;
+	vu_char	hpib_sprb;
+	u_char	hpib_pad9;
+#define	hpib_ppr	hpib_cpt
+	vu_char	hpib_cpt;
+	u_char	hpib_pad10;
+	vu_char	hpib_data;
+};
 
 #define	LIS_SRQ		0x02
 #define	LIS_ERR		0x40
@@ -69,32 +99,3 @@
 #define	AUX_SSTD1	149
 #define	AUX_SVSTD1	151
 
-struct	nhpibdevice {
-	u_char	hpib_pad0;
-	vu_char	hpib_cid;
-	u_char	hpib_pad1;
-#define	hpib_ie		hpib_ids
-	vu_char	hpib_ids;
-	u_char	hpib_pad2;
-	vu_char	hpib_csa;
-	u_char	hpib_pad3[11];
-#define	hpib_mim	hpib_mis
-	vu_char	hpib_mis;
-	u_char	hpib_pad4;
-#define	hpib_lim	hpib_lis
-	vu_char	hpib_lis;
-	u_char	hpib_pad5;
-	vu_char	hpib_is;
-	u_char	hpib_pad6;
-#define	hpib_acr	hpib_cls
-	vu_char	hpib_cls;
-	u_char	hpib_pad7;
-	vu_char	hpib_ar;
-	u_char	hpib_pad8;
-	vu_char	hpib_sprb;
-	u_char	hpib_pad9;
-#define	hpib_ppr	hpib_cpt
-	vu_char	hpib_cpt;
-	u_char	hpib_pad10;
-	vu_char	hpib_data;
-};

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fhpib.c	7.3 (Berkeley) 12/16/90
- *	$Id: fhpib.c,v 1.3 1994/05/05 10:10:25 mycroft Exp $
+ *	from: @(#)fhpib.c	8.2 (Berkeley) 1/12/94
+ *	$Id: fhpib.c,v 1.4 1994/05/23 05:58:53 mycroft Exp $
  */
 
 /*
@@ -40,13 +40,14 @@
 #include "hpib.h"
 #if NHPIB > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "device.h"
-#include "fhpibreg.h"
-#include "hpibvar.h"
-#include "dmavar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+
+#include <hp300/dev/device.h>
+#include <hp300/dev/fhpibreg.h>
+#include <hp300/dev/hpibvar.h>
+#include <hp300/dev/dmavar.h>
 
 /*
  * Inline version of fhpibwait to be used in places where
@@ -65,11 +66,13 @@ int	fhpibdebug = 0;
 int	dopriodma = 0;	/* use high priority DMA */
 int	doworddma = 1;	/* non-zero if we should attempt word dma */
 int	doppollint = 1;	/* use ppoll interrupts instead of watchdog */
+int	fhpibppolldelay = 50;
 
 long	fhpibbadint[2] = { 0 };
 long	fhpibtransfer[NHPIB] = { 0 };
 long	fhpibnondma[NHPIB] = { 0 };
 long	fhpibworddma[NHPIB] = { 0 };
+long	fhpibppollfail[NHPIB] = { 0 };
 #endif
 
 int	fhpibcmd[NHPIB];
@@ -89,6 +92,7 @@ fhpibtype(hc)
 }
 
 fhpibreset(unit)
+	int unit;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct fhpibdevice *hd;
@@ -130,6 +134,7 @@ fhpibifc(hd)
 }
 
 fhpibsend(unit, slave, sec, addr, origcnt)
+	int unit, slave, sec, origcnt;
 	register char *addr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -187,6 +192,7 @@ senderr:
 }
 
 fhpibrecv(unit, slave, sec, addr, origcnt)
+	int unit, slave, sec, origcnt;
 	register char *addr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -243,6 +249,7 @@ recvbyteserror:
 
 fhpibgo(unit, slave, sec, addr, count, rw)
 	register int unit;
+	int slave, sec, count, rw;
 	char *addr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -328,6 +335,7 @@ fhpibgo(unit, slave, sec, addr, count, rw)
 }
 
 fhpibdone(unit)
+	int unit;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct fhpibdevice *hd;
@@ -422,9 +430,16 @@ fhpibintr(unit)
 		if ((fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
 			printf("fhpibintr: got PPOLL status %x\n", stat0);
 		if ((stat0 & (0x80 >> dq->dq_slave)) == 0) {
-			printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
-			       unit, dq->dq_slave, stat0);
-			return(1);
+			/*
+			 * XXX give it another shot (68040)
+			 */
+			fhpibppollfail[unit]++;
+			DELAY(fhpibppolldelay);
+			stat0 = fhpibppoll(unit);
+			if ((stat0 & (0x80 >> dq->dq_slave)) == 0 &&
+			    (fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
+				printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
+				       unit, dq->dq_slave, stat0);
 		}
 #endif
 		hs->sc_flags &= ~HPIBF_PPOLL;
@@ -434,6 +449,7 @@ fhpibintr(unit)
 }
 
 fhpibppoll(unit)
+	int unit;
 {
 	register struct fhpibdevice *hd;
 	register int ppoll;
@@ -456,6 +472,7 @@ fhpibppoll(unit)
 
 fhpibwait(hd, x)
 	register struct fhpibdevice *hd;
+	int x;
 {
 	register int timo = hpibtimeout;
 
@@ -472,17 +489,20 @@ fhpibwait(hd, x)
 }
 
 /*
- * XXX: this will have to change if we every allow more than one
+ * XXX: this will have to change if we ever allow more than one
  * pending operation per HP-IB.
  */
+void
 fhpibppwatch(arg)
 	void *arg;
 {
-	int unit = (int)arg;
-	register struct hpib_softc *hs = &hpib_softc[unit];
+	register int unit;
+	register struct hpib_softc *hs;
 	register struct fhpibdevice *hd;
 	register int slave;
 
+	unit = (int)arg;
+	hs = &hpib_softc[unit];
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,43 +30,80 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dcareg.h	7.3 (Berkeley) 5/7/91
- *	$Id: dcareg.h,v 1.2 1993/08/01 19:23:57 mycroft Exp $
+ *	from: @(#)dcareg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: dcareg.h,v 1.3 1994/05/23 05:58:38 mycroft Exp $
  */
 
-struct dcadevice {
-	u_char	dca_pad0;
-	volatile u_char	dca_irid;
-	volatile short	dca_ic;
-	volatile short	dca_ocbrc;
-	volatile short	dca_lcsm;
-	short	dca_pad1[4];
-	u_char	dca_pad2;
-	volatile u_char	dca_data;
-	volatile short	dca_ier;
-	u_char	dca_pad4;
-	volatile u_char	dca_iir;			/* read-only */
-#define			dca_fifo	dca_iir		/* write-only */
-	volatile short	dca_cfcr;
-	volatile short	dca_mcr;
-	volatile short	dca_lsr;
-	u_char	dca_pad3;
-	volatile u_char	dca_msr;
-};
+#include <hp300/dev/iotypes.h>			/* XXX */
 
-/* interface reset/id */
+#ifdef hp700
+struct dcadevice {
+	vu_char	dca_reset;
+	vu_char dca_pad[0x800-1];
+	vu_char	dca_data;			/* receive buf or xmit hold */
+	vu_char	dca_ier;			/* interrupt enable */
+	vu_char	dca_iir;			/* (RO) interrupt identify */
+#define		dca_fifo	dca_iir		/* (WO) FIFO control */
+	vu_char	dca_cfcr;			/* line control */
+	vu_char	dca_mcr;			/* modem control */
+	vu_char	dca_lsr;			/* line status */
+	vu_char	dca_msr;			/* modem status */
+	vu_char	dca_scr;			/* scratch pad */
+};
+#else
+struct dcadevice {
+	/* card registers */
+	u_char	dca_pad0;
+	vu_char	dca_id;				/* 0x01 (read) */
+#define		dca_reset	dca_id		/* 0x01 (write) */
+	u_char	dca_pad1;
+	vu_char	dca_ic;				/* 0x03 */
+	u_char	dca_pad2;
+	vu_char	dca_ocbrc;			/* 0x05 */
+	u_char	dca_pad3;
+	vu_char	dca_lcsm;			/* 0x07 */
+	u_char	dca_pad4[8];
+	/* chip registers */
+	u_char	dca_pad5;
+	vu_char	dca_data;			/* 0x11 */
+	u_char	dca_pad6;
+	vu_char	dca_ier;			/* 0x13 */
+	u_char	dca_pad7;
+	vu_char	dca_iir;			/* 0x15 (read) */
+#define		dca_fifo	dca_iir		/* 0x15 (write) */
+	u_char	dca_pad8;
+	vu_char	dca_cfcr;			/* 0x17 */
+	u_char	dca_pad9;
+	vu_char	dca_mcr;			/* 0x19 */
+	u_char	dca_padA;
+	vu_char	dca_lsr;			/* 0x1B */
+	u_char	dca_padB;
+	vu_char	dca_msr;			/* 0x1D */
+};
+#endif
+
+/* interface reset/id (300 only) */
 #define	DCAID0		0x02
 #define DCAREMID0	0x82
 #define	DCAID1		0x42
 #define DCAREMID1	0xC2
 
-/* interrupt control */
+/* interrupt control (300 only) */
 #define	DCAIPL(x)	((((x) >> 4) & 3) + 3)
 #define	IC_IR		0x40
 #define	IC_IE		0x80
 
-/* 16 bit baud rate divisor (lower byte in dca_data, upper in dca_ier) */
+/*
+ * 16 bit baud rate divisor (lower byte in dca_data, upper in dca_ier)
+ * NB: This constant is for a 7.3728 clock frequency. The 300 clock
+ *     frequency is 2.4576, giving a constant of 153600.
+ */
+#ifdef hp300
 #define	DCABRD(x)	(153600 / (x))
+#endif
+#ifdef hp700
+#define	DCABRD(x)	(460800 / (x))
+#endif
 
 /* interrupt enable register */
 #define	IER_ERXRDY	0x1
@@ -110,7 +147,7 @@ struct dcadevice {
 
 /* modem control register */
 #define	MCR_LOOPBACK	0x10
-#define	MCR_SRTS	0x08
+#define	MCR_IEN		0x08
 #define	MCR_DRS		0x04
 #define	MCR_RTS		0x02
 #define	MCR_DTR		0x01
@@ -136,9 +173,14 @@ struct dcadevice {
 #define	MSR_DDSR	0x02
 #define	MSR_DCTS	0x01
 
-/*
- * WARNING: Serial console is assumed to be at SC9
- * and CONUNIT must be 0.
- */
+#ifdef hp300
+/* WARNING: Serial console is assumed to be at SC9 */
 #define CONSCODE	(9)
+#endif
+#ifdef hp700
+/* hardwired port addresses */
+#define PORT1		((struct dcadevice *)CORE_RS232_1)
+#define PORT2		((struct dcadevice *)CORE_RS232_2)
+#define CONPORT		PORT1
+#endif
 #define CONUNIT		(0)

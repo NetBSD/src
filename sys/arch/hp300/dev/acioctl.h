@@ -1,9 +1,11 @@
 /*
+ * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Van Jacobson of Lawrence Berkeley Laboratory.
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,26 +35,53 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)scsivar.h	8.1 (Berkeley) 6/10/93
- *	$Id: scsivar.h,v 1.3 1994/05/23 05:59:23 mycroft Exp $
+ * from: Utah $Hdr: acioctl.h 1.1 91/06/19$
+ *
+ *	from: @(#)acioctl.h	8.1 (Berkeley) 6/10/93
+ *	$Id: acioctl.h,v 1.1 1994/05/23 05:58:20 mycroft Exp $
  */
 
-struct	scsi_softc {
-	struct	hp_ctlr *sc_hc;
-	struct	devqueue sc_dq;
-	struct	devqueue sc_sq;
-	u_char	sc_flags;
-	u_char	sc_sync;
-	u_char	sc_scsi_addr;
-	u_char	sc_stat[2];
-	u_char	sc_msg[7];
+struct acinfo {
+	short	fmte;		/* 1st medium transport elt (picker) */
+	short	nmte;		/* # medium transport elts */
+	short	fse;		/* 1st storage elt (slot) */
+	short	nse;		/* # storage elts */
+	short	fiee;		/* 1st import/export elt (mailslot) */
+	short	niee;		/* # import/export elts */
+	short	fdte;		/* 1st data transport elt (drive) */
+	short	ndte;		/* # data transport elts */
 };
 
-/* sc_flags */
-#define	SCSI_IO		0x80	/* DMA I/O in progress */
-#define	SCSI_DMA32	0x40	/* 32-bit DMA should be used */
-#define	SCSI_HAVEDMA	0x04	/* controller has DMA channel */
-#ifdef DEBUG
-#define	SCSI_PAD	0x02	/* 'padded' transfer in progress */
-#endif
-#define	SCSI_ALIVE	0x01	/* controller initialized */
+struct aceltstat {
+	short	eaddr;		/* element adress */
+	char	type;		/* type of element */
+	char	flags;		/* flags */
+};
+
+/* types */
+#define AC_MTE		0x01	/* picker */
+#define AC_SE		0x02	/* slot */
+#define AC_IEE		0x03	/* mailslot */
+#define AC_DTE		0x04	/* drive */
+/* flags */
+#define AC_FULL		0x01	/* media present */
+#define	AC_ERROR	0x04	/* error accessing element */
+#define AC_ACCESS	0x08	/* element accessible */
+#define AC_INVERT	0x80	/* media inverted prior to insertion */
+
+struct acmove {
+	short	srcelem;
+	short	dstelem;
+	short	flags;
+};
+
+struct acbuffer {
+	char	*bufptr;
+	int	buflen;
+};
+
+#define ACIOCINIT	_IO('A', 0x1)			/* init elt status */
+#define ACIOCGINFO	_IOR('A', 0x2, struct acinfo)	/* mode sense */
+#define ACIOCGSTAT	_IOW('A', 0x3, struct acbuffer)	/* read elem status */
+#define ACIOCMOVE	_IOW('A', 0x4, struct acmove)	/* move elem */
+#define ACIOCRAWES	_IOW('A', 0x5, struct acbuffer)	/* raw element stat */

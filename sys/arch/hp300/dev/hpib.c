@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hpib.c	7.3 (Berkeley) 12/16/90
- *	$Id: hpib.c,v 1.2 1993/05/22 07:56:20 cgd Exp $
+ *	from: @(#)hpib.c	8.2 (Berkeley) 1/12/94
+ *	$Id: hpib.c,v 1.3 1994/05/23 05:58:56 mycroft Exp $
  */
 
 /*
@@ -40,15 +40,16 @@
 #include "hpib.h"
 #if NHPIB > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "device.h"
-#include "hpibvar.h"
-#include "dmavar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
 
-#include "../include/cpu.h"
-#include "../hp300/isr.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/hpibvar.h>
+#include <hp300/dev/dmavar.h>
+
+#include <machine/cpu.h>
+#include <hp300/hp300/isr.h>
 
 int	hpibinit(), hpibstart(), hpibgo(), hpibintr(), hpibdone();
 struct	driver hpibdriver = {
@@ -60,7 +61,7 @@ struct	isr hpib_isr[NHPIB];
 int	nhpibppoll(), fhpibppoll();
 
 int	hpibtimeout = 100000;	/* # of status tests before we give up */
-int	hpibidtimeout = 20000;	/* # of status tests for hpibid() calls */
+int	hpibidtimeout = 10000;	/* # of status tests for hpibid() calls */
 int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
 
 hpibinit(hc)
@@ -115,15 +116,17 @@ hpibfree(dq)
 }
 
 hpibid(unit, slave)
+	int unit, slave;
 {
 	short id;
 	int ohpibtimeout;
 
 	/*
-	 * XXX: shorten timeout value (so autoconfig doesn't take forever)
+	 * XXX shorten timeout value so autoconfig doesn't
+	 * take forever on slow CPUs.
 	 */
 	ohpibtimeout = hpibtimeout;
-	hpibtimeout = hpibidtimeout;
+	hpibtimeout = hpibidtimeout * cpuspeed;
 	if (hpibrecv(unit, 31, slave, &id, 2) != 2)
 		id = 0;
 	hpibtimeout = ohpibtimeout;
@@ -132,6 +135,7 @@ hpibid(unit, slave)
 
 hpibsend(unit, slave, sec, addr, cnt)
 	register int unit;
+	int slave, sec, addr, cnt;
 {
 	if (hpib_softc[unit].sc_type == HPIBC)
 		return(fhpibsend(unit, slave, sec, addr, cnt));
@@ -141,6 +145,7 @@ hpibsend(unit, slave, sec, addr, cnt)
 
 hpibrecv(unit, slave, sec, addr, cnt)
 	register int unit;
+	int slave, sec, addr, cnt;
 {
 	if (hpib_softc[unit].sc_type == HPIBC)
 		return(fhpibrecv(unit, slave, sec, addr, cnt));
@@ -150,6 +155,7 @@ hpibrecv(unit, slave, sec, addr, cnt)
 
 hpibpptest(unit, slave)
 	register int unit;
+	int slave;
 {
 	int (*ppoll)();
 
@@ -158,18 +164,20 @@ hpibpptest(unit, slave)
 }
 
 hpibawait(unit)
+	int unit;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 
 	hs->sc_flags |= HPIBF_PPOLL;
 	if (hs->sc_type == HPIBC)
-		fhpibppwatch(unit);
+		fhpibppwatch((void *)unit);
 	else
-		nhpibppwatch(unit);
+		nhpibppwatch((void *)unit);
 }
 
 hpibswait(unit, slave)
 	register int unit;
+	int slave;
 {
 	register int timo = hpibtimeout;
 	register int mask, (*ppoll)();
@@ -185,6 +193,7 @@ hpibswait(unit, slave)
 }
 
 hpibustart(unit)
+	int unit;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 
@@ -198,6 +207,7 @@ hpibustart(unit)
 }
 
 hpibstart(unit)
+	int unit;
 {
 	register struct devqueue *dq;
 	
@@ -207,6 +217,7 @@ hpibstart(unit)
 
 hpibgo(unit, slave, sec, addr, count, rw)
 	register int unit;
+	int slave, sec, addr, count, rw;
 {
 	if (hpib_softc[unit].sc_type == HPIBC)
 		fhpibgo(unit, slave, sec, addr, count, rw);
