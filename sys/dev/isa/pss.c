@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.23 1997/04/05 23:50:25 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.24 1997/04/06 00:54:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -844,9 +844,11 @@ spprobe(parent, match, aux)
     struct ad1848_softc *sc = match;
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    struct isa_attach_args *ia = aux;
     u_char bits;
     int i;
 
+    sc->sc_iot = ia->ia_iot;
     sc->sc_iobase = cf->cf_iobase + WSS_CODEC;
     
     /* Set WSS io address */

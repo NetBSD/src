@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.21 1997/03/20 06:48:53 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.22 1997/04/06 00:54:22 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,6 +178,8 @@ struct gus_softc {
 	struct device sc_dev;		/* base device */
 	struct isadev sc_id;		/* ISA device */
 	void *sc_ih;			/* interrupt vector */
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
 
 	int sc_iobase;			/* I/O base address */
 	int sc_irq;			/* IRQ used */
@@ -681,6 +683,7 @@ gusprobe(parent, match, aux)
 	register int iobase = ia->ia_iobase;
 	int recdrq = cf->cf_flags;
 
+	sc->sc_iot = ia->ia_iot;
 	/*
 	 * Before we do anything else, make sure requested IRQ and DRQ are
 	 * valid for this card.
@@ -2952,6 +2955,7 @@ gus_init_cs4231(sc)
 
 	outb(port+GUS_MAX_CTRL, ctrl);
 
+	sc->sc_codec.sc_iot = sc->sc_iot;
 	sc->sc_codec.sc_iobase = port+GUS_MAX_CODEC_BASE;
 
 	if (ad1848_probe(&sc->sc_codec) == 0) {
