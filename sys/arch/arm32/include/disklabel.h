@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 1999/01/27 20:43:26 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 1999/10/04 19:31:05 ross Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,8 +43,8 @@
  * Created      : 04/10/94
  */
 
-#ifndef _ARM32_DISKLABEL_H_
-#define _ARM32_DISKLABEL_H_
+#ifndef _MACHINE_DISKLABEL_H_
+#define _MACHINE_DISKLABEL_H_
 
 #define LABELSECTOR	1		/* sector containing label */
 #define LABELOFFSET	0		/* offset of label in sector */
@@ -79,6 +79,6 @@ int	mbr_label_locate __P((dev_t, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif /* _KERNEL */
 
-#endif /* _ARM32_DISKLABEL_H_ */
+#endif /* _MACHINE_DISKLABEL_H_ */
 
 /* End of disklabel.h */
