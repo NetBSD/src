@@ -1,7 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2001/04/30 11:10:23 blymn Exp $
+#	$NetBSD: Makefile,v 1.7 2002/07/29 12:58:10 blymn Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
+.if defined(DEBUG_MENUS)
+CFLAGS+=-g
+CPPFLAGS+=-DDEBUG
+LDFLAGS+=-g
+.endif
 LIB=	menu
 SRCS=	menu.c item.c userptr.c internals.c driver.c post.c attributes.c
 MAN=	menu_attributes.3 menu_item_name.3 menu_items.3 menu_userptr.3 \
@@ -11,7 +16,6 @@ MAN=	menu_attributes.3 menu_item_name.3 menu_items.3 menu_userptr.3 \
         menu_item_current.3 menu_item_visible.3 menu_post.3
 INCS=	menu.h eti.h
 INCSDIR=/usr/include
-#LDFLAGS += -g
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
