@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.19 2000/05/02 18:00:54 uch Exp $
+#	$NetBSD: TX3912,v 1.20 2000/05/04 10:25:45 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -167,6 +167,11 @@ wskbd*		at btnmgr0 mux 1
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x10
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # PCMCIA bus support
 pcmcia* at it8368e? controller ? socket ?
