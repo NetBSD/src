@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.32 1994/01/12 22:56:29 cgd Exp $
+#	$Id: Makefile,v 1.33 1994/02/10 02:09:31 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -60,7 +60,7 @@ realinstall:
 	@chmod -R a-w ${DESTDIR}/usr/include
 
 beforeinstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/include
+	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include
 
 copies:
 	@echo copies: ${LDIRS}
