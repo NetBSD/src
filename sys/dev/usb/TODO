@@ -3,10 +3,6 @@ Some things that need to be done in no particular order:
 
 Add lots of bus_dmamap_sync().
 
-Implement isochronous transfer mode.
-
-Implement audio driver.
-
 Do bandwidth accounting.
 
 Use lock manager locks.
@@ -17,9 +13,6 @@ Throw out more USBDI gunk.
 
 Make hub driver notice transition between self and bus powered state.
 Handle overcurrent conditions.
-
-Make it possible to preallocate DMA buffers to avoid calling the
-memory allocator from an interrupt context.
 
 Move memory allocation and copying to HC independent code.
 
@@ -38,6 +31,14 @@ Change HC drivers to queue multiple request for an endpoint
 to get better performance.
 
 Add generic ucom layer for serial adapters.
+
+Add isoc to OHCI driver.
+
+uaudio problems:
+	mixer names are awful, use some heuristics.
+	implement selector units
+	implement input
+	test with more devices
 
 Document device driver API.
 
