@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.144 2000/06/20 06:00:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.145 2000/06/23 06:01:18 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
+
+.include <bsd.own.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	chown chroot chrtbl cnwctl config cron dbsym dev_mkdb \
@@ -25,6 +27,8 @@ SUBDIR+=faithd gifconfig ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
 # ATM PVC
 SUBDIR+=pvcsif pvctxctl
 
+.if (${MKCRYPTO} != "no")
 SUBDIR+= kadmin kstash ktutil
+.endif
 
 .include <bsd.subdir.mk>

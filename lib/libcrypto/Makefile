@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/06/20 21:49:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2000/06/23 06:01:13 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,6 +16,8 @@
 #	sjg@quick.com.au
 #
 
+.include <bsd.own.mk>
+
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
 
@@ -28,6 +30,9 @@ CRYPTODIST=	${.CURDIR}/../../crypto/dist
 .PATH: ${OPENSSLSRC}
 
 .include "srcs.inc"
+
+# NetBSD local addition to des library.
+SRCS+=  rnd_keys.c
 
 # XXX
 .if ${OBJECT_FMT} == "ELF"
@@ -56,18 +61,24 @@ INCS+=	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h
 INCS+=	ripemd.h safestack.h sha.h stack.h tmdiff.h
 INCS+=	txt_db.h x509.h x509_vfy.h x509v3.h
 
-.if !defined(USELESS_CRYPTO)
-INCS+=	rsa.h rc5.h idea.h
-INCS+=	rsaref.h
-
+.if (${MKCRYPTO_RSA} != "no")
+INCS+=	rsa.h rsaref.h
 .PATH: ${OPENSSLSRC}/rsaref
+.endif
+
+.if (${MKCRYPTO_IDEA} != "no")
+INCS+=	idea.h
+.endif
+
+.if (${MKCRYPTO_RC5} != "no")
+INCS+=	rc5.h
 .endif
 
 INCSDIR=/usr/include/openssl
 
 # this rebuilds the `srcs.inc' and the .inc files it reads.
-# note that we have no idea, rc5 or rsa here so we include
-# them explicitely above if we are using these ciphers.
+# note that the resulting `srcs.inc' file needs to be modified
+# to deal with our MKCRYPTO_* configuration variables.
 
 update_inc:
 	(cd ${.CURDIR}; find ${OPENSSLSRC}/crypto \
@@ -78,8 +89,6 @@ DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && make print-shlib-major
 DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && make print-shlib-minor
 
 LINKS+= ${LIBDIR}/libcrypto.a ${LIBDIR}/libdes.a
-
-.include <bsd.own.mk>
 
 .if ${MKPROFILE} != "no"
 LINKS+= ${LIBDIR}/libcrypto_p.a ${LIBDIR}/libdes_p.a

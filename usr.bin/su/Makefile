@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2000/06/20 06:00:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2000/06/23 06:01:17 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
+
+.include <bsd.own.mk>
 
 PROG=	su
 DPADD+=	${LIBCRYPT}
@@ -13,6 +15,7 @@ CPPFLAGS+=-DLOGIN_CAP
 #
 #CPPFLAGS+=-DSUGROUP=\"sugroup\"
 
+.if (${MKKERBEROS} != "no")
 .ifdef AFS
 DPADD+= ${LIBKAFS}
 LDADD+= -lkafs
@@ -21,6 +24,7 @@ LDADD+= -lkafs
 CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
 DPADD+= ${LIBKRB} ${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
 LDADD+= -lkrb -ldes -lcom_err -lroken
+.endif
 
 .include <bsd.prog.mk>
 
