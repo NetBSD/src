@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.7 2000/10/01 23:32:42 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.8 2000/10/14 20:06:02 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -409,7 +409,6 @@ sgec_intr(sc)
 {
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh;
 	struct mbuf *m;
 	int csr, len;
 
@@ -428,9 +427,9 @@ sgec_intr(sc)
 			ze_add_rxbuf(sc, sc->sc_nextrx);
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
+			m->m_flags |= M_HASFCS;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
-			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
