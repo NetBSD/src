@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.8 1998/09/11 14:13:46 hubertf Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.9 1999/02/10 00:45:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.8 1998/09/11 14:13:46 hubertf Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.9 1999/02/10 00:45:45 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,8 @@ checkup()
 			continue;
 		if (die() < 5)
 			continue;
-		Write(sink == 1 ? W_SINK : W_EXPLODE, sp, 0, 2, 0, 0, 0);
-		Write(W_DIR, sp, 0, 0, 0, 0, 0);
+		Write(sink == 1 ? W_SINK : W_EXPLODE, sp, 2, 0, 0, 0);
+		Write(W_DIR, sp, 0, 0, 0, 0);
 		if (snagged(sp))
 			foreachship(sq)
 				cleansnag(sp, sq, 1);
@@ -120,10 +120,9 @@ prizecheck()
 		if (sp->file->struck || sp->file->dir == 0)
 			continue;
 		if (sp->specs->crew1 + sp->specs->crew2 + sp->specs->crew3 > sp->file->pcrew * 6) {
-			Write(W_SIGNAL, sp, 1,
-				(long)"prize crew overthrown", 0, 0, 0);
-			Write(W_POINTS, sp->file->captured, 0, sp->file->captured->file->points - 2 * sp->specs->pts, 0, 0, 0);
-			Write(W_CAPTURED, sp, 0, -1, 0, 0, 0);
+			Writestr(W_SIGNAL, sp, "prize crew overthrown");
+			Write(W_POINTS, sp->file->captured, sp->file->captured->file->points - 2 * sp->specs->pts, 0, 0, 0);
+			Write(W_CAPTURED, sp, -1, 0, 0, 0);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.7 1998/08/30 09:19:40 veego Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.8 1999/02/10 00:45:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.7 1998/08/30 09:19:40 veego Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.8 1999/02/10 00:45:45 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ int key;
 		makemsg(from, "boarders from %s repelled", to->shipname);
 		(void) sprintf(message, "killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
-		Write(W_SIGNAL, to, 1, (long) message, 0, 0, 0);
+		Writestr(W_SIGNAL, to, message);
 		if (key)
 			return 1;
 	} else if (strengthto >= fromstrength * 3) {
@@ -201,7 +201,7 @@ int key;
 		subtract(to, totalto, crewto, tocap, pcto);
 		if (key) {
 			if (fromcap != from)
-				Write(W_POINTS, fromcap, 0,
+				Write(W_POINTS, fromcap,
 					fromcap->file->points -
 						from->file->struck
 						? from->specs->pts
@@ -212,11 +212,11 @@ int key;
    I guess that what is going on here is that the pointer is multiplied
    or something. */
 
-			Write(W_CAPTURED, from, 0, to->file->index, 0, 0, 0);
+			Write(W_CAPTURED, from, to->file->index, 0, 0, 0);
 			topoints = 2 * from->specs->pts + to->file->points;
 			if (from->file->struck)
 				topoints -= from->specs->pts;
-			Write(W_POINTS, to, 0, topoints, 0, 0, 0);
+			Write(W_POINTS, to, topoints, 0, 0, 0);
 			mento = crewto[0] ? crewto[0] : crewto[1];
 			if (mento) {
 				subtract(to, mento, crewto, tocap, pcto);
@@ -224,10 +224,10 @@ int key;
 			}
 			(void) sprintf(message, "captured by the %s!",
 				to->shipname);
-			Write(W_SIGNAL, from, 1, (long) message, 0, 0, 0);
+			Writestr(W_SIGNAL, from, message);
 			(void) sprintf(message, "killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
-			Write(W_SIGNAL, to, 1, (long) message, 0, 0, 0);
+			Writestr(W_SIGNAL, to, message);
 			mento = 0;
 			return 0;
 		}
@@ -434,7 +434,7 @@ next()
 		}
 		return -1;
 	}
-	Write(W_TURN, SHIP(0), 0, turn, 0, 0, 0);
+	Write(W_TURN, SHIP(0), turn, 0, 0, 0);
 	if (turn % 7 == 0 && (die() >= cc->windchange || !windspeed)) {
 		switch (die()) {
 		case 1:
@@ -472,7 +472,7 @@ next()
 			}
 		else
 			windspeed++;
-		Write(W_WIND, SHIP(0), 0, winddir, windspeed, 0, 0);
+		Write(W_WIND, SHIP(0), winddir, windspeed, 0, 0);
 	}
 	return 0;
 }

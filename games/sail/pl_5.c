@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.6 1997/10/13 21:04:24 christos Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.6 1997/10/13 21:04:24 christos Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ acceptmove()
 		Msg("Movement error.");
 		if (ta < 0 && moved) {
 			if (mf->FS == 1) {
-				Write(W_FS, ms, 0, 0, 0, 0, 0);
+				Write(W_FS, ms, 0, 0, 0, 0);
 				Msg("No hands to set full sails.");
 			}
 		} else if (ma >= 0)
@@ -135,7 +135,7 @@ acceptmove()
 	}
 	if (af && !moved) {
 		if (mf->FS == 1) {
-			Write(W_FS, ms, 0, 0, 0, 0, 0);
+			Write(W_FS, ms, 0, 0, 0, 0);
 			Msg("No hands to set full sails.");
 		}
 	}
@@ -143,7 +143,7 @@ acceptmove()
 		(void) strcpy(movebuf, buf);
 	else
 		(void) strcpy(movebuf, "d");
-	Write(W_MOVE, ms, 1, (long)movebuf, 0, 0, 0);
+	Writestr(W_MOVE, ms, movebuf);
 	Msg("Helm: %s.", movebuf);
 }
 
@@ -228,7 +228,7 @@ char buf;
 			}
 			if (buf > '0')
 				Msg("Sending all crew sections.");
-			Write(isdefense ? W_DBP : W_OBP, ms, 0,
+			Write(isdefense ? W_DBP : W_OBP, ms,
 				j, turn, to->file->index, men);
 			if (isdefense) {
 				(void) wmove(slot_w, 2, 0);
