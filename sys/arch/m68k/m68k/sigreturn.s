@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.s,v 1.2 1997/04/25 02:22:04 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.s,v 1.3 1998/10/01 00:11:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@
  * The sigreturn() syscall comes here.  It requires special handling
  * because we must open a hole in the stack to fill in the (possibly much
  * larger) original stack frame.
+ *
+ * NOTE: The target syscall number is in register d0!
  */
 ASENTRY_NOPROFILE(sigreturn)
 	lea	sp@(-84),sp		| leave enough space for largest frame
@@ -62,7 +64,7 @@ ASENTRY_NOPROFILE(sigreturn)
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
-	movl	#SYS_sigreturn,sp@-	| push syscall number
+	movl	d0,sp@-			| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,sp			| pop syscall#
 	movl	sp@(FR_SP),a0		| grab and restore
