@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.16 1995/10/09 01:45:34 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.17 1995/10/09 05:21:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -630,8 +630,7 @@ ccdstrategy(bp)
 	lp = &cs->sc_dkdev.dk_label;
 
 	/*
-	 * Do bounds checking, adjust transfer, and translate the
-	 * partition-relative block to an absolute.  If there's an
+	 * Do bounds checking and adjust transfer.  If there's an
 	 * error, the bounds check will flag that for us.
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
@@ -680,10 +679,14 @@ ccdstart(cs, bp)
 #endif
 
 	/*
-	 * Allocate component buffers and fire off the requests
+	 * Translate the partition-relative block number to an absolute.
 	 */
 	bn = (bp->b_blkno +
 	    cs->sc_dkdev.dk_label.d_partitions[DISKPART(bp->b_dev)].p_offset);
+
+	/*
+	 * Allocate component buffers and fire off the requests
+	 */
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
