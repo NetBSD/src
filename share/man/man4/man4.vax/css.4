@@ -1,4 +1,4 @@
-.\"	$NetBSD: css.4,v 1.8 2001/04/11 19:23:00 wiz Exp $
+.\"	$NetBSD: css.4,v 1.9 2001/08/18 12:05:25 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,12 @@ network interface
 .Sh SYNOPSIS
 .Cd "pseudo-device imp device css0 \&at uba0 csr 167600 flags 10 vector cssrint cssxint"
 .Sh DESCRIPTION
+NOTE: At the moment,
+.Nx
+does not support
+.Tn IMP ,
+so this manual page is not relevant.
+.Pp
 The
 .Nm css
 device provides a Local Host/Distant Host
