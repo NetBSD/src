@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.13 2001/10/04 11:20:39 wiz Exp $
+.\"	$NetBSD: crunchgen.1,v 1.14 2001/12/01 19:02:07 wiz Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -271,17 +271,17 @@ Here is an example
 input conf file, named
 .Dq Pa kcopy.conf :
 .Pp
-.nf
-	srcdirs /usr/src/bin /usr/src/sbin
+.Bd -literal -offset indent
+srcdirs /usr/src/bin /usr/src/sbin
 
-	progs test cp echo sh fsck halt init mount umount myinstall
-	ln test [       # test can be invoked via [
-	ln sh -sh       # init invokes the shell with "-sh" in argv[0]
+progs test cp echo sh fsck halt init mount umount myinstall
+ln test [       # test can be invoked via [
+ln sh -sh       # init invokes the shell with "-sh" in argv[0]
 
-	special myprog objpaths /homes/leroy/src/myinstall.o # no sources
+special myprog objpaths /homes/leroy/src/myinstall.o # no sources
 
-	libs -lutil -lcrypt
-.fi
+libs -lutil -lcrypt
+.Ed
 .Pp
 This conf file specifies a small crunched binary consisting of some
 basic system utilities plus a homegrown install program ``myinstall'',
@@ -292,13 +292,13 @@ line.
 .Pp
 The crunched binary ``kcopy'' can be built as follows:
 .Pp
-.nf
-	% crunchgen -m Makefile kcopy.conf    # gen Makefile and kcopy.c
-	% make objs             # build the component progams' .o files
-	% make                  # build the crunched binary kcopy
-	% kcopy sh              # test that this invokes a sh shell
-	$			# it works!
-.fi
+.Bd -literal -offset indent
+% crunchgen -m Makefile kcopy.conf    # gen Makefile and kcopy.c
+% make objs             # build the component progams' .o files
+% make                  # build the crunched binary kcopy
+% kcopy sh              # test that this invokes a sh shell
+$			# it works!
+.Ed
 .Pp
 At this point the binary ``kcopy'' can be copied onto an install floppy
 and hard-linked to the names of the component programs.
@@ -331,10 +331,10 @@ If a program directory being searched for is found, but contains
 no objects, other directories are not searched.  This causes the
 following directive to fail:
 .Pp
-.nf
-	srcdirs /usr/src/usr.bin /usr/src/usr.bin/less
-	progs less gzip
-.fi
+.Bd -literal -offset indent
+srcdirs /usr/src/usr.bin /usr/src/usr.bin/less
+progs less gzip
+.Ed
 .Pp
 as the
 .Pa /usr/src/usr.bin/less
@@ -348,9 +348,9 @@ fails to find objects for the
 program.  To avoid this problem, list specific srcdirs first, and
 the more general ones later, for eg:
 .Pp
-.nf
-	srcdirs /usr/src/usr.bin/less /usr/src/usr.bin
-	progs less gzip
-.fi
+.Bd -literal -offset indent
+srcdirs /usr/src/usr.bin/less /usr/src/usr.bin
+progs less gzip
+.Ed
 .Pp
 will not have the above problem.
