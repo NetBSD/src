@@ -28,10 +28,14 @@
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
+./usr/mdec/xxboot
+./usr/mdec/fdboot
 ./usr/share/keymaps/amiga/din.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/sbin/installboot
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap
+./usr/sbin/screenblank
 ./usr/sbin/videomode
