@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)prf.c	8.1 (Berkeley) 6/10/93
- *	$Id: prf.c,v 1.3 1994/01/26 02:38:53 brezak Exp $
+ *      $Id: prf.c,v 1.4 1994/08/22 21:41:23 brezak Exp $
  */
 
 getchar()
@@ -46,8 +46,6 @@ getchar()
 		panic("^C");
 		/* NOTREACHED */
 	}
-	if (c != '\b' && c != '\177')
-		putchar(c);
 	return(c);
 }
 
@@ -56,16 +54,14 @@ tgetchar()
 	register int c;
 
 	if ((c = cngetc()) == 0)
-		return(0);
-	
+        	return(0);
+        
 	if (c == '\r')
 		c = '\n';
 	else if (c == ('c'&037)) {
 		panic("^C");
 		/* NOTREACHED */
 	}
-	if (c != '\b' && c != '\177')
-		putchar(c);
 	return(c);
 }
 
