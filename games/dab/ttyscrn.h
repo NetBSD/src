@@ -1,4 +1,5 @@
-/*	$NetBSD: ttyscrn.h,v 1.1.1.1 2003/12/26 17:57:04 christos Exp $	*/
+/*	$NetBSD: ttyscrn.h,v 1.2 2003/12/28 17:49:10 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
