@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.83 2003/11/27 07:58:02 pk Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.84 2004/01/10 14:39:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.83 2003/11/27 07:58:02 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.84 2004/01/10 14:39:50 yamt Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -822,6 +822,10 @@ genfs_getpages(void *v)
 		    "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
 		    bp, offset, iobytes, bp->b_blkno);
 
+		if (async)
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		VOP_STRATEGY(bp);
 	}
 
@@ -1489,6 +1493,12 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		UVMHIST_LOG(ubchist,
 		    "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
 		    vp, offset, bp->b_bcount, bp->b_blkno);
+		if (curproc == uvm.pagedaemon_proc)
+			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
+		else if (async)
+			BIO_SETPRIO(bp, BPRIO_TIMENONCRITICAL);
+		else
+			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		VOP_STRATEGY(bp);
 	}
 	if (skipbytes) {

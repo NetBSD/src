@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.60 2003/08/07 16:34:30 agc Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.61 2004/01/10 14:39:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.60 2003/08/07 16:34:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.61 2004/01/10 14:39:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -563,6 +563,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ffs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
+		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		VOP_STRATEGY(bp);
 		error = biowait(bp);
 	}
