@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.12 1999/09/08 21:45:25 jsm Exp $	*/
+/*	$NetBSD: com6.c,v 1.13 1999/09/13 17:15:42 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.12 1999/09/08 21:45:25 jsm Exp $");
+__RCSID("$NetBSD: com6.c,v 1.13 1999/09/13 17:15:42 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -113,6 +113,8 @@ open_score_file()
 	score_fp = fopen(_PATH_SCORE, "a");
 	if (score_fp == NULL)
 		warn("open %s for append", _PATH_SCORE);
+	if (score_fp != NULL && fileno(score_fp) < 3)
+		exit(1);
 }
 
 void
