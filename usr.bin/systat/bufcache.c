@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.16 2004/02/19 03:56:30 atatat Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.17 2004/05/11 21:56:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.16 2004/02/19 03:56:30 atatat Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.17 2004/05/11 21:56:20 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,8 @@ static struct nlist namelist[] = {
 static struct vcache vcache[VCACHE_SIZE];
 static LIST_HEAD(mount_list, ml_entry) mount_list;
 
-static u_int nbuf, bufmem, pgwidth, kbwidth;
+static u_long bufmem;
+static u_int nbuf, pgwidth, kbwidth;
 static struct uvmexp_sysctl uvmexp;
 
 static void	vc_init(void);
@@ -142,7 +143,7 @@ showbufcache(void)
 	NREAD(X_BUFMEM, &bufmem, sizeof(bufmem));
 
 	mvwprintw(wnd, 0, 0,
-	    "There are %*d metadata buffers using           %*d kBytes of memory.",
+	    "There are %*d metadata buffers using           %*ld kBytes of memory.",
 	    pgwidth, nbuf, kbwidth, bufmem/1024);
 	wclrtoeol(wnd);
 	mvwprintw(wnd, 1, 0,
@@ -366,10 +367,10 @@ vc_lookup(struct vnode *vaddr)
 
 	ret = NULL;
 	oldest = 0;
-	for (i = 0; i < VCACHE_SIZE || vcache[i].vc_addr == NULL; i++) {
-		vcache[i].vc_age++;
+	for (i = 0; i < VCACHE_SIZE; i++) {
 		if (vcache[i].vc_addr == NULL)
 			break;
+		vcache[i].vc_age++;
 		if (vcache[i].vc_age < vcache[oldest].vc_age)
 			oldest = i;
 		if (vcache[i].vc_addr == vaddr) {
