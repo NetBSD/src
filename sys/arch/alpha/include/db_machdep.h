@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.9 1999/04/20 21:30:15 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.10 2000/06/08 02:57:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -63,14 +63,14 @@ db_regs_t		ddb_regs;	/* register state */
  * Functions needed for software single-stepping.
  */
 
-boolean_t	db_inst_trap_return __P((int inst));
-boolean_t	db_inst_return __P((int inst));
-boolean_t	db_inst_call __P((int inst));
-boolean_t	db_inst_branch __P((int inst));
-boolean_t	db_inst_load __P((int inst));
-boolean_t	db_inst_store __P((int inst));
-boolean_t	db_inst_unconditional_flow_transfer __P((int inst));
-db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
+boolean_t	db_inst_trap_return(int inst);
+boolean_t	db_inst_return(int inst);
+boolean_t	db_inst_call(int inst);
+boolean_t	db_inst_branch(int inst);
+boolean_t	db_inst_load(int inst);
+boolean_t	db_inst_store(int inst);
+boolean_t	db_inst_unconditional_flow_transfer(int inst);
+db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 #define	inst_trap_return(ins)	db_inst_trap_return(ins)
 #define	inst_return(ins)	db_inst_return(ins)
@@ -86,12 +86,12 @@ db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
 /* No delay slots on Alpha. */
 #define	next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
 
-u_long	db_register_value __P((db_regs_t *, int));
-int	ddb_trap __P((unsigned long, unsigned long, unsigned long,
-	    unsigned long, struct trapframe *));
+u_long	db_register_value(db_regs_t *, int);
+int	ddb_trap(unsigned long, unsigned long, unsigned long,
+	    unsigned long, struct trapframe *);
 
-int	alpha_debug __P((unsigned long, unsigned long, unsigned long,
-	    unsigned long, struct trapframe *));
+int	alpha_debug(unsigned long, unsigned long, unsigned long,
+	    unsigned long, struct trapframe *);
 
 /*
  * We define some of our own commands.
