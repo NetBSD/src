@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.53 2002/08/26 01:42:28 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.54 2002/11/12 01:37:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.53 2002/08/26 01:42:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.54 2002/11/12 01:37:30 itojun Exp $");
 
 #include "opt_ns.h"
 
@@ -251,7 +251,7 @@ rtfree(rt)
 			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
-		rt_timer_remove_all(rt);
+		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		IFAFREE(ifa);
 		Free(rt_key(rt));
@@ -952,14 +952,17 @@ rt_timer_count(rtq)
 }
 
 void     
-rt_timer_remove_all(rt)
+rt_timer_remove_all(rt, destroy)
 	struct rtentry *rt;
+	int destroy;
 {
 	struct rttimer *r;
 
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		if (destroy)
+			RTTIMER_CALLOUT(r);
 		if (r->rtt_queue->rtq_count > 0)
 			r->rtt_queue->rtq_count--;
 		else
