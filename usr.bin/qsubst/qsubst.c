@@ -1,4 +1,4 @@
-/*	$NetBSD: qsubst.c,v 1.7 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: qsubst.c,v 1.8 2004/11/01 21:36:11 dsl Exp $	*/
 
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
@@ -100,7 +100,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: qsubst.c,v 1.7 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: qsubst.c,v 1.8 2004/11/01 21:36:11 dsl Exp $");
 #endif
 
 #include <sys/file.h>
@@ -190,7 +190,7 @@ limit_above_below(void)
 }
 
 static int 
-issymchar(char c)
+issymchar(unsigned char c)
 {
 	return (isascii(c) && (isalnum(c) || (c == '_') || (c == '$')));
 }
