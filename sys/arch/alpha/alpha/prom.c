@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.26 1998/09/24 03:39:24 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.27 1998/09/24 21:12:43 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.26 1998/09/24 03:39:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.27 1998/09/24 21:12:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ console_restart(ra, ai, pv)
 	struct pcs *p;
 
 	/* Clear restart-capable flag, since we can no longer restart. */
-	p = LOCATE_PCS(hwrpb, 0);
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~PCS_RC;
 
 	panic("user requested console halt");
