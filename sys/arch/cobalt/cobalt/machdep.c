@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2000/05/26 21:19:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2000/05/27 02:16:25 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -100,11 +100,6 @@ int mem_cluster_cnt;
 
 void	configure(void);
 void	mach_init(unsigned int);
-
-#ifdef DEBUG
-/* Stack trace code violates prototypes to get callee's registers. */
-extern void	stacktrace(void);
-#endif
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
