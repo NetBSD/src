@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.16 1997/04/14 02:33:21 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -177,8 +177,7 @@ nhpibattach(parent, self, aux)
 	printf(" ipl %d: %s\n", ipl, desc);
 
 	/* Establish the interrupt handler. */
-	(void) intr_establish(nhpibintr, sc, ipl, IPL_BIO);
-	dmacomputeipl();
+	(void) dio_intr_establish(nhpibintr, sc, ipl, IPL_BIO);
 
 	ha.ha_ops = &nhpib_controller;
 	ha.ha_type = type;			/* XXX */
