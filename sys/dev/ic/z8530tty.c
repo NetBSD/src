@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.85 2002/10/23 09:13:19 jdolecek Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.86 2002/11/09 19:22:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.85 2002/10/23 09:13:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.86 2002/11/09 19:22:54 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1028,7 +1028,8 @@ zsparam(tp, t)
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
-	int ospeed, cflag;
+	int ospeed;
+	tcflag_t cflag;
 	u_char tmp3, tmp4, tmp5;
 	int s, error;
 

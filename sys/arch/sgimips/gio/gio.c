@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.7 2002/10/02 15:52:33 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.8 2002/11/09 18:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -94,7 +94,7 @@ gio_print(aux, pnp)
 
 	if (ga->ga_slot != GIOCF_SLOT_DEFAULT)
 		printf(" slot %d", ga->ga_slot);
-	if (ga->ga_addr != GIOCF_ADDR_DEFAULT)
+	if (ga->ga_addr != (uint32_t) GIOCF_ADDR_DEFAULT)
 		printf(" addr 0x%x", ga->ga_addr);
 
 	return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.10 2002/09/27 15:36:40 provos Exp $	*/
+/*	$NetBSD: sbic.c,v 1.11 2002/11/09 18:52:20 thorpej Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -405,7 +405,8 @@ void
 wd33c93_dma_stop(dev)
 	struct wd33c93_softc *dev;
 {
- 	int	count, asr;
+	size_t count;
+ 	int asr;
 
 	/* Wait until WD chip is idle */
 	do {
@@ -757,12 +758,12 @@ wd33c93_dequeue(dev, acb)
 {
 	struct wd33c93_tinfo *ti = &dev->sc_tinfo[acb->xs->xs_periph->periph_target];
 	struct wd33c93_linfo *li;
-	u_int32_t lun = acb->xs->xs_periph->periph_lun;
+	int lun = acb->xs->xs_periph->periph_lun;
 
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
-		panic("wd33c93_dequeue: lun %x for ecb %p does not exist",
+		panic("wd33c93_dequeue: lun %d for ecb %p does not exist",
 		      lun, acb);
 #endif
 	if (li->untagged == acb) {
@@ -773,7 +774,7 @@ wd33c93_dequeue(dev, acb)
 #ifdef DIAGNOSTIC
 		if (li->queued[acb->tag_id] != NULL &&
 		    (li->queued[acb->tag_id] != acb))
-			panic("wd33c93_dequeue: slot %d for lun %x has %p "
+			panic("wd33c93_dequeue: slot %d for lun %d has %p "
 			    "instead of acb %p\n", acb->tag_id,
 			    lun, li->queued[acb->tag_id], acb);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2002/10/02 15:52:34 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2002/11/09 19:24:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -110,7 +110,7 @@ mainbus_print(aux, pnp)
 	if (pnp != 0)
 		return QUIET;
 
-	if (ma->ma_addr != MAINBUSCF_ADDR_DEFAULT)
+	if (ma->ma_addr != (u_long) MAINBUSCF_ADDR_DEFAULT)
 		printf(" addr 0x%lx", ma->ma_addr);
 
 	return UNCONF;
