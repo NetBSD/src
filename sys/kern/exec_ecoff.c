@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.10 1999/04/27 05:36:43 cgd Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.11 2000/04/11 04:37:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -260,7 +260,7 @@ exec_ecoff_prep_zmagic(p, epp, execp, vp)
 #endif
 		return ETXTBSY;
 	}
-	vp->v_flag |= VTEXT;
+	vn_marktext(vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, eap->tsize,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.22 1999/11/15 02:00:08 kleink Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.23 2000/04/11 04:37:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_text,
@@ -221,7 +221,7 @@ mips_elf_makecmds (p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = 0;
