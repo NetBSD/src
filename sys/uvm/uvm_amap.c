@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.46 2002/11/14 17:58:49 atatat Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.47 2002/11/15 17:30:35 atatat Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.46 2002/11/14 17:58:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.47 2002/11/15 17:30:35 atatat Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -460,14 +460,9 @@ amap_extend(entry, addsize, forwards)
 	slotalloc = malloc_roundup(slotneed * sizeof(int)) / sizeof(int);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
-	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		newppref = malloc(slotalloc * sizeof(int), M_UVMAMAP,
 		    M_WAITOK | M_CANFAIL);
-		if (newppref == NULL) {
-			free(amap->am_ppref, M_UVMAMAP);
-			amap->am_ppref = PPREF_NONE;
-		}
-	}
 #endif
 	newsl = malloc(slotalloc * sizeof(int), M_UVMAMAP,
 	    M_WAITOK | M_CANFAIL);
@@ -478,7 +473,7 @@ amap_extend(entry, addsize, forwards)
 	if (newsl == NULL || newbck == NULL || newover == NULL) {
 #ifdef UVM_AMAP_PPREF
 		if (newppref != NULL) {
-			free(amap->am_ppref, M_UVMAMAP);
+			free(newppref, M_UVMAMAP);
 		}
 #endif
 		if (newsl != NULL) {
@@ -562,6 +557,9 @@ amap_extend(entry, addsize, forwards)
 			pp_setreflen(newppref, slotalloc - slotneed, 1,
 			    slotneed - slotmapped);
 		}
+	} else {
+		if (amap->am_ppref)
+			amap->am_ppref = PPREF_NONE;
 	}
 #endif
 
