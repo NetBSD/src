@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.18 2000/12/11 23:51:58 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.19 2000/12/16 16:45:11 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.18 2000/12/11 23:51:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.19 2000/12/16 16:45:11 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -70,6 +70,9 @@ static vm_prot_t data_abort_atype(struct trapframe *);
 #ifdef DEBUG
 static void printregs(struct trapframe *tf);
 #endif
+#ifdef DIAGNOSTIC
+void checkvectors();
+#endif
 
 int want_resched;
 
@@ -82,7 +85,6 @@ static void
 userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 {
 	int sig;
-	u_int32_t *ptr;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -109,12 +111,23 @@ userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 #ifdef DIAGNOSTIC
 	/* Mark trapframe as invalid. */
 	p->p_addr->u_pcb.pcb_tf = (void *)-1;
+	checkvectors();
+#endif
+}
+
+#ifdef DIAGNOSTIC
+void
+checkvectors()
+{
+	u_int32_t *ptr;
+
 	/* Check that the vectors are valid */
 	for (ptr = (u_int32_t *)0; ptr < (u_int32_t *)0x1c; ptr++)
 		if (*ptr != 0xe59ff114)
 			panic("CPU vectors mangled");
-#endif
 }
+#endif
+
 
 void
 undefined_handler(struct trapframe *tf)
