@@ -115,9 +115,6 @@ struct hp_softc
 #define	ns_addr	ns_ac.ac_enaddr	/* hardware Ethernet address */
     int ns_flags;
 #define	DSF_LOCK	1	/* block re-entering enstart */
-#if NBPFILTER > 0
-#define	DSF_ATTACHED	2
-#endif
     int ns_oactive;
     int ns_mask;
     struct prhdr ns_ph;		/* hardware header of incoming packet*/
@@ -417,9 +414,8 @@ hpattach (dvp)
   ifp->if_watchdog = 0;
   if_attach (ifp);
 
-#if NBPFILTER > 0
-  ns->ns_flags &= ~DSF_ATTACHED;
-#endif
+  bpfattach (&ns->ns_bpf, ifp, DLT_EN10MB,
+	     sizeof (struct ether_header));
 }
 
 /*
@@ -435,15 +431,6 @@ hpinit (unit)
   int i;
   char *cp;
   register hpc = ns->ns_port;
-
-#if NBPFILTER > 0
-  if ((ns->ns_flags & DSF_ATTACHED) == 0)
-    {
-      bpfattach (&ns->ns_bpf, ifp, DLT_EN10MB,
-		 sizeof (struct ether_header));
-      ns->ns_flags |= DSF_ATTACHED;
-    }
-#endif
 
   if (ifp->if_addrlist == (struct ifaddr *) 0)
     return;
