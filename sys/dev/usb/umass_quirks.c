@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.53 2003/09/10 03:13:53 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.54 2003/09/10 05:25:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.53 2003/09/10 03:13:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.54 2003/09/10 05:25:44 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,15 +92,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
-
-	{ { USB_VENDOR_MELCO, USB_PRODUCT_MELCO_DUBPXXG },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  UMASS_QUIRK_FORCE_SHORT_INQUIRY,
-	  0,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, NULL
-	},
-
 	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C1 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_WRONG_CSWSIG,
@@ -143,17 +134,9 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	{ { USB_VENDOR_YANO, USB_PRODUCT_YANO_U640MO },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
-	  UMASS_QUIRK_FORCE_SHORT_INQUIRY,
+	  0,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
-	},
-
-	{ { USB_VENDOR_GENESYS,USB_PRODUCT_GENESYS_GL641USB },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  UMASS_QUIRK_FORCE_SHORT_INQUIRY,
-	  0,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
 };
