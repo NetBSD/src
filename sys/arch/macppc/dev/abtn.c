@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.6 2003/03/05 16:18:24 soren Exp $	*/
+/*	$NetBSD: abtn.c,v 1.7 2003/03/05 16:52:16 soren Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -88,6 +88,8 @@ abtn_attach(parent, self, aux)
 	struct adb_attach_args *aa = aux;
 	ADBSetInfoBlock adbinfo;
 	int bright;
+
+	printf("buttons\n");
 
 	bright = pm_read_nvram(NVRAM_BRIGHTNESS);
 	if (bright != 0)
