@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.15 1999/04/05 05:01:44 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.16 1999/06/14 23:55:29 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -145,7 +145,7 @@ clr_bootstrap(const char *disk)
 		    (unsigned long long)bb.bb_secsize);
 	}
 
-	bb.bb_secstart = bb.bb_secsize = 0;
+	bb.bb_secstart = bb.bb_secsize = bb.bb_flags = 0;
 	CHECKSUM_BOOT_BLOCK(&bb, &bb.bb_cksum);
 
 	fprintf(stderr, "new boot block checksum: %#llx\n",
@@ -224,6 +224,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	/* fill in the updated boot block fields, and checksum boot block */
 	bb.bb_secsize = howmany(bootstrapsb.st_size, BOOT_BLOCK_BLOCKSIZE);
 	bb.bb_secstart = 1;
+	bb.bb_flags = 0;
 	CHECKSUM_BOOT_BLOCK(&bb, &bb.bb_cksum);
 
 	if (verbose) {
