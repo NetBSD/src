@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 1997/07/06 23:52:52 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.88 1997/07/08 20:02:47 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1867,8 +1867,11 @@ ctx_free(pm)
 		setcontext(0);
 	} else {
 #if defined(SUN4M)
-		if (CPU_ISSUN4M)
+		if (CPU_ISSUN4M) {
+			newc = pm->pm_ctxnum;
+			CHANGE_CONTEXTS(oldc, newc);
 			tlb_flush_context();
+		}
 #endif
 		CHANGE_CONTEXTS(oldc, 0);
 	}
@@ -1975,8 +1978,12 @@ pv_changepte4_4c(pv0, bis, bic)
 				setcontext4(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
 				tpte = getpte4(va);
-				if (tpte & PG_M)
-					cache_flush_page(va);
+				/*
+				 * XXX: always flush cache; conservative, but
+				 * needed to invalidate cache tag protection
+				 * bits and when disabling caching.
+				 */
+				cache_flush_page(va);
 			} else {
 				/* XXX per-cpu va? */
 				setcontext4(0);
@@ -2255,9 +2262,18 @@ pv_changepte4m(pv0, bis, bic)
 			    va >= DVMA_BASE && va < DVMA_END)
 				continue;
 
-			/* Flush TLB so memory copy is up-to-date */
 			setcontext4m(pm->pm_ctxnum);
+
+			/*
+			 * XXX: always flush cache; conservative, but
+			 * needed to invalidate cache tag protection
+			 * bits and when disabling caching.
+			 */
+			cache_flush_page(va);
+
+			/* Flush TLB so memory copy is up-to-date */
 			tlb_flush_page(va);
+
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
@@ -2269,12 +2285,6 @@ pv_changepte4m(pv0, bis, bic)
 		flags |= (tpte >> PG_M_SHIFT4M) & (PV_MOD4M|PV_REF4M|PV_C4M);
 		tpte = (tpte | bis) & ~bic;
 
-		if (pm->pm_ctx) {
-			if (flags & PV_MOD4M)
-				/* XXX: Do we need to always flush? */
-				cache_flush_page(va);
-			tlb_flush_page(va);
-		}
 		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
 	}
 	pv0->pv_flags = flags;
@@ -4205,16 +4215,19 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 #endif
 		va = VSTOVA(vr,vs);		/* retract */
 
-		tlb_flush_segment(vr, vs); 	/* Paranoia? */
+		if (pm->pm_ctx)
+			tlb_flush_segment(vr, vs); 	/* Paranoia? */
 		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
 		free(pte0, M_VMPMAP);
 		sp->sg_pte = NULL;
 
 		if (--rp->rg_nsegmap == 0) {
+			if (pm->pm_ctx)
+				tlb_flush_context(); 	/* Paranoia? */
+			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
 			free(rp->rg_seg_ptps, M_VMPMAP);
-			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 		}
 	}
 }
@@ -4578,15 +4591,18 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 		/* update in hardware */
 		ctx = getcontext4();
 		if (CTX_USABLE(pm,rp)) {
-			/* use current context; flush writeback cache */
+			/*
+			 * Use current context.
+			 * Flush cache if page has been referenced to
+			 * avoid stale protection bits in the cache tags.
+			 */
 			setcontext4(pm->pm_ctxnum);
 			tpte = getpte4(va);
 			if ((tpte & PG_PROT) == newprot) {
 				setcontext4(ctx);
 				goto useless;
 			}
-			if (CACHEINFO.c_vactype == VAC_WRITEBACK &&
-			    (tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
+			if ((tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
 				cache_flush_page((int)va);
 		} else {
 			setcontext4(0);
@@ -4730,10 +4746,12 @@ pmap_page_protect4m(pa, prot)
 			sp->sg_pte = NULL;
 
 			if (--rp->rg_nsegmap == 0) {
+				if (pm->pm_ctx)
+					tlb_flush_context();
+				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
 				free(rp->rg_seg_ptps, M_VMPMAP);
-				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			}
 		}
 
@@ -4873,11 +4891,16 @@ pmap_changeprot4m(pm, va, prot, wired)
 	s = splpmap();		/* conservative */
 	ctx = getcontext4m();
 	if (pm->pm_ctx) {
+		/*
+		 * Use current context.
+		 * Flush cache if page has been referenced to
+		 * avoid stale protection bits in the cache tags.
+		 */
 		setcontext4m(pm->pm_ctxnum);
 		tpte = getpte4m(va);
-		if (CACHEINFO.c_vactype == VAC_WRITEBACK &&
-		    (tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
-			cache_flush_page(va); /* XXX: paranoia? */
+		if ((tpte & (SRMMU_PG_C|SRMMU_PGTYPE)) ==
+		    (SRMMU_PG_C|PG_SUN4M_OBMEM))
+			cache_flush_page(va);
 	} else {
 		tpte = getptesw4m(pm, va);
 	}
@@ -6116,6 +6139,7 @@ kvm_uncache(va, npages)
 	register int npages;
 {
 	register int pte;
+
 	if (CPU_ISSUN4M) {
 #if defined(SUN4M)
 		for (; --npages >= 0; va += NBPG) {
@@ -6124,7 +6148,7 @@ kvm_uncache(va, npages)
 				panic("kvm_uncache: table entry not pte");
 			pte &= ~SRMMU_PG_C;
 			setpte4m((vm_offset_t) va, pte);
-			if ((pte & PG_TYPE) == PG_OBMEM)
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
 				cache_flush_page((int)va);
 		}
 #endif
