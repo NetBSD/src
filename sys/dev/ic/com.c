@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.141 1998/03/21 04:05:49 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.142 1998/03/21 04:27:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -634,12 +634,12 @@ comopen(dev, flag, mode, p)
 	struct com_softc *sc;
 	struct tty *tp;
 	int s, s2;
-	int error = 0;
+	int error;
  
 	if (unit >= com_cd.cd_ndevs)
 		return (ENXIO);
 	sc = com_cd.cd_devs[unit];
-	if (!sc || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
+	if (sc == 0 || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
 		return (ENXIO);
 
 #ifdef KGDB
