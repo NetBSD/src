@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.122 2003/08/25 17:54:01 msaitoh Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.123 2003/08/26 06:49:08 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1356,3 +1356,17 @@ distrib/utils/sysinst/target.c			1.40
 
 	Fix realpath vuln, just like SA2003-011.
 	[itojun, ticket #1400]
+
+sys/dev/ic/aic7xxx.c				1.103 (via patch)
+sys/miscfs/genfs/genfs_vnops.c			1.76
+sys/ufs/ufs/ufs_bmap.c				1.22
+sys/uvm/uvm_io.c				1.18
+sys/uvm/uvm_pager.c				1.60
+sys/uvm/uvm_pdaemon.c				1.51
+
+	Correct use of MAXBSIZE where MAXPHYS was intended. This is a necessary
+	first step towards per-device MAXPHYS, and has the beneficial side
+	effect of allowing clustering to MAXPHYS even on systems that need to
+	run with a reduced MAXBSIZE to get more metadata buffers.
+	[tls, ticket #1434]
+
