@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.9 1997/07/25 06:46:23 phil Exp $	*/
+/*	$NetBSD: args.c,v 1.10 1998/02/28 04:20:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.9 1997/07/25 06:46:23 phil Exp $");
+__RCSID("$NetBSD: args.c,v 1.10 1998/02/28 04:20:02 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ get_bsz(val)
 	if (expr == val)			/* No digits. */
 		errx(1, "%s: illegal numeric value", oper);
 
-	switch(*expr) {
+	switch (*expr) {
 	case 'b':
 		t = num;
 		num *= 512;
@@ -393,7 +393,7 @@ get_bsz(val)
 		break;
 	}
 
-	switch(*expr) {
+	switch (*expr) {
 		case '\0':
 			break;
 		case '*':			/* Backward compatible. */
