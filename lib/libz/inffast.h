@@ -1,7 +1,7 @@
-/* $NetBSD: inffast.h,v 1.5 1999/07/03 12:30:56 simonb Exp $ */
+/* $NetBSD: inffast.h,v 1.5.8.1 2002/03/20 23:18:07 he Exp $ */
 
 /* inffast.h -- header to use inffast.c
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
