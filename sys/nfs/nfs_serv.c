@@ -64,6 +64,8 @@
 #include "mount.h"
 #include "mbuf.h"
 
+#include "machine/cpu.h"
+
 #include "../ufs/quota.h"
 #include "../ufs/inode.h"
 #include "../ufs/dir.h"

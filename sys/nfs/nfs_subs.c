@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.8 1993/09/07 15:41:45 ws Exp $
+ *	$Id: nfs_subs.c,v 1.8.2.1 1993/09/24 08:56:40 mycroft Exp $
  */
 
 /*
@@ -52,6 +52,8 @@
 #include "vnode.h"
 #include "namei.h"
 #include "mbuf.h"
+
+#include "machine/cpu.h"
 
 #include "../ufs/quota.h"
 #include "../ufs/inode.h"

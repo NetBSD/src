@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.8 1993/09/07 15:41:41 ws Exp $
+ *	$Id: nfs_socket.c,v 1.8.2.1 1993/09/24 08:56:37 mycroft Exp $
  */
 
 /*
@@ -56,6 +56,9 @@
 #include "socketvar.h"
 #include "syslog.h"
 #include "tprintf.h"
+
+#include "machine/cpu.h"
+
 #include "../netinet/in.h"
 #include "../netinet/tcp.h"
 

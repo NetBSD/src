@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.4 1993/07/13 10:04:29 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.4.4.1 1993/09/24 08:56:42 mycroft Exp $
  */
 
 #include "param.h"
@@ -597,7 +597,7 @@ nfs_start(mp, flags, p)
 nfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
-	uid_t uid;
+	int uid;
 	caddr_t arg;
 	struct proc *p;
 {
