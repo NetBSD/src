@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.12 2000/07/16 12:34:06 enami Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.13 2000/08/19 15:59:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.12 2000/07/16 12:34:06 enami Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.13 2000/08/19 15:59:43 fvdl Exp $");
 #endif
 #endif
 
@@ -1118,7 +1118,7 @@ parsestatfs(const u_int32_t *dp, int v3)
 			return (0);
 	}
 
-	TCHECK2(dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
+	TCHECK2(dp[0], (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
 
 	sfsp = (const struct nfs_statfs *)dp;
 
@@ -1196,7 +1196,7 @@ parse_pre_op_attr(const u_int32_t *dp, int verbose)
 	if (!ntohl(dp[0]))
 		return (dp + 1);
 	dp++;
-	TCHECK2(dp, 24);
+	TCHECK2(dp[0], 24);
 	if (verbose > 1) {
 		return parse_wcc_attr(dp);
 	} else {
