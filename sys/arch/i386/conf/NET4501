@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.12 2002/08/10 20:20:22 thorpej Exp $
+# $NetBSD: NET4501,v 1.13 2002/08/11 16:22:09 itojun Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.12 $"
+#ident 		"NET4501-$Revision: 1.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,6 +195,14 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 # ISA bus support
 isa0	at mainbus?
 
+# CardBus bridge support
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
+
+# CardBus bus support
+cardbus*	at cardslot?
+pcmcia* 	at cardslot?
+
 # Coprocessor Support
 
 # Math Coprocessor support
@@ -230,6 +238,9 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 # PCI network interfaces
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+
+# PCMCIA network interfaces
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 
 # MII/PHY support
 nsphyter* at mii? phy ?			# NS83843 PHYs
