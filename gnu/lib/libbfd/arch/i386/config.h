@@ -387,7 +387,7 @@
 /* Name of package */
 
 /* Version number of package */
-#define VERSION "2.11.2"
+#define VERSION "2.11.2nb1"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */
