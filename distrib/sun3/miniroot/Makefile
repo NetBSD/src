@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/05/21 04:06:20 gwr Exp $
+#	$NetBSD: Makefile,v 1.16 2000/06/09 14:58:32 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -18,22 +18,27 @@ KERNEL3  = ${KERNOBJDIR}/INSTALL/netbsd
 KERNEL3X = ${KERNOBJDIR}/INSTALL3X/netbsd
 
 MOUNT_POINT?=	/mnt
-BDEV?=		/dev/sd1b
-CDEV?=		/dev/rsd1b
+VND?=		vnd1
+VND_DEV?=	/dev/${VND}a
+VND_RDEV?=	/dev/r${VND}a
+VND_CRDEV?=	/dev/r${VND}c
 
-# These are all the parameters for the miniroot: (8MB)
+# These are all the parameters for the miniroot: (10MB)
 DISKTYPE=	miniroot
-NBLKS=		20480
-# bigendian, old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -B be -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
+SIZE=		10
+# bigendian, old format, minfree, opt, b/i, cpg
+NEWFSARGS= -B be -O -m 0 -o space -i 8192 -c 16
 
-CLEANFILES= ${IMAGE}.gz install.sub
+CLEANFILES= ${IMAGE}.gz ${IMAGE} ${IMAGE}.tmp install.sub
 
 all: ${IMAGE}.gz
 
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
-	mount ${BDEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${IMAGE} bs=1024k count=${SIZE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
+	disklabel -rw ${VND} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	cp ${KERNEL3}  ${MOUNT_POINT}/netbsd.sun3
 	cp ${KERNEL3X} ${MOUNT_POINT}/netbsd.sun3x
@@ -42,14 +47,14 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	  sh ${TOP}/common/RunList.sh ${LISTS}
 	sync ; sleep 1 ; sync
 	cd ${MOUNT_POINT} ;\
-	  usr/mdec/installboot -v ufsboot usr/mdec/bootxx ${CDEV}
+	  usr/mdec/installboot -v ufsboot usr/mdec/bootxx ${VND_CRDEV}
 	sync
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	-umount ${MOUNT_POINT}
-	dd if=${CDEV} bs=16b count=`expr ${NBLKS} / 16` |\
-	  gzip > ${IMAGE}.tmp
+	vnconfig -u ${VND}
+	gzip -9 -c ${IMAGE} > ${IMAGE}.tmp
 	-mv -f ${IMAGE}.tmp ${IMAGE}.gz
 
 # Do not delete this if I change my mind and kill make...
