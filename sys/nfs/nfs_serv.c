@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.35 1997/06/24 23:32:45 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.36 1997/07/15 01:07:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2827,6 +2827,22 @@ again:
 #else
 	VOP_UNLOCK(vp);
 #endif
+
+	/*
+	 * If the VGET operation doesn't work for this filesystem,
+	 * we can't support readdirplus. Returning NOTSUPP should
+	 * make clients fall back to plain readdir.
+	 * There's no need to check for VPTOFH as well, we wouldn't
+	 * even be here otherwise.
+	 */
+	if (!getret) {
+		if ((getret = VFS_VGET(vp->v_mount, at.va_fileid, &nvp)))
+			getret = (getret == EOPNOTSUPP) ?
+				NFSERR_NOTSUPP : NFSERR_IO;
+		else
+			vput(nvp);
+	}
+
 	if (!cookies && !error)
 		error = NFSERR_PERM;
 	if (!error)
