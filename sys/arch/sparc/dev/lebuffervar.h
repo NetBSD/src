@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffervar.h,v 1.2 1997/03/10 22:56:54 pk Exp $ */
+/*	$NetBSD: lebuffervar.h,v 1.3 1998/03/21 20:23:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -30,6 +30,8 @@
 
 struct lebuf_softc {
 	struct device sc_dev;		/* us as a device */
+	bus_space_tag_t	sc_bustag;
+	bus_dma_tag_t	sc_dmatag;
 	struct sbusdev sc_sd;		/* sbus device */
 	u_int	sc_rev;			/* revision */
 	int	sc_node;		/* PROM node ID */

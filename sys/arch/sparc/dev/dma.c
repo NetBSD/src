@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.49 1998/02/07 22:41:27 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.50 1998/03/21 20:23:09 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -44,6 +44,7 @@
 
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
@@ -61,91 +62,156 @@
 #include <sparc/dev/dmavar.h>
 #include <sparc/dev/espvar.h>
 
-int dmaprint		__P((void *, const char *));
-void dmaattach		__P((struct device *, struct device *, void *));
-int dmamatch		__P((struct device *, struct cfdata *, void *));
-void dma_reset		__P((struct dma_softc *, int));
-void espdma_reset	__P((struct dma_softc *));
-void ledma_reset	__P((struct dma_softc *));
-void dma_enintr		__P((struct dma_softc *));
-int dma_isintr		__P((struct dma_softc *));
-int espdmaintr		__P((struct dma_softc *));
-int ledmaintr		__P((struct dma_softc *));
-int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *,
-			     int, size_t *));
-void dma_go		__P((struct dma_softc *));
+int	dmamatch_sbus	__P((struct device *, struct cfdata *, void *));
+void	dmaattach_sbus	__P((struct device *, struct device *, void *));
+int	dmamatch_obio	__P((struct device *, struct cfdata *, void *));
+void	dmaattach_obio	__P((struct device *, struct device *, void *));
 
-struct cfattach dma_ca = {
-	sizeof(struct dma_softc), dmamatch, dmaattach
+void	dma_identify	__P((struct dma_softc *));
+
+int	dmaprint	__P((void *, const char *));
+void	dma_reset	__P((struct dma_softc *, int));
+void	espdma_reset	__P((struct dma_softc *));
+void	ledma_reset	__P((struct dma_softc *));
+void	dma_enintr	__P((struct dma_softc *));
+int	dma_isintr	__P((struct dma_softc *));
+int	espdmaintr	__P((void *));
+int	ledmaintr	__P((void *));
+int	dma_setup	__P((struct dma_softc *, caddr_t *, size_t *,
+			     int, size_t *));
+void	dma_go		__P((struct dma_softc *));
+
+int	dma_bus_map __P((
+		void *,			/*cookie*/
+		bus_type_t,		/*slot*/
+		bus_addr_t,		/*offset*/
+		bus_size_t,		/*size*/
+		int,			/*flags*/
+		vm_offset_t,		/*preferred virtual address */
+		bus_space_handle_t *));
+
+void	*dmabus_intr_establish __P((
+		void *,			/*cookie*/
+		int,			/*level*/
+		int,			/*flags*/
+		int (*) __P((void *)),	/*handler*/
+		void *));		/*handler arg*/
+
+static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
+
+struct cfattach dma_sbus_ca = {
+	sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus
 };
 
 struct cfattach ledma_ca = {
-	sizeof(struct dma_softc), matchbyname, dmaattach
+	sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus
+};
+
+struct cfattach dma_obio_ca = {
+	sizeof(struct dma_softc), dmamatch_obio, dmaattach_obio
 };
 
 int
-dmaprint(aux, name)
+dmaprint(aux, busname)
 	void *aux;
-	const char *name;
+	const char *busname;
 {
-	register struct confargs *ca = aux;
+	struct sbus_attach_args *sa = aux;
+	bus_space_tag_t t = sa->sa_bustag;
+	struct dma_softc *sc = t->cookie;
 
-	if (name)
-		printf("[%s at %s]", ca->ca_ra.ra_name, name);
-	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
+	sa->sa_bustag = sc->sc_bustag;	/* XXX */
+	sbus_print(aux, busname);	/* XXX */
+	sa->sa_bustag = t;		/* XXX */
 	return (UNCONF);
 }
 
 int
-dmamatch(parent, cf, aux)
+dmamatch_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
-	    strcmp("espdma", ra->ra_name))
-		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
-	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 4) != -1);
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+		strcmp("espdma", sa->sa_name) == 0);
 }
 
-/*
- * Attach all the sub-devices we can find
- */
+int
+dmamatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0)
+		return (0);
+
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 4, NULL, NULL));
+}
+
 void
-dmaattach(parent, self, aux)
+dmaattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct sbus_attach_args *sa = aux;
 	struct dma_softc *sc = (void *)self;
-#if defined(SUN4C) || defined(SUN4M)
+	bus_space_handle_t bh;
+	struct bootpath *bp;
+	bus_space_tag_t sbt;
+	int sbusburst;
 	int node;
-	struct confargs oca;
-	char *name;
-#endif
 
-	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
-		ca->ca_ra.ra_vaddr =
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_dmatag = sa->sa_dmatag;
 
-	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
+	/* Map registers */
+	if (sa->sa_promvaddr != 0)
+		sc->sc_regs = (struct dma_regs *)sa->sa_promvaddr;
+	else {
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset,
+				 sizeof(struct dma_regs),
+				 0, 0, &bh) != 0) {
+			printf("dmaattach_sbus: cannot map registers\n");
+			return;
+		}
+		sc->sc_regs = (struct dma_regs *)bh;
+	}
 
 	/*
-	 * If we're a ledma, check to see what cable type is currently 
-	 * active and set the appropriate bit in the ledma csr so that
-	 * it gets used. If we didn't netboot, the PROM won't have the
-	 * "cable-selection" property; default to TP and then the user
-	 * can change it via a "link0" option to ifconfig.
+	 * Get transfer burst size from PROM and plug it into the
+	 * controller registers. This is needed on the Sun4m; do
+	 * others need it too?
 	 */
-	if (strcmp(ca->ca_ra.ra_name, "ledma") == 0) {
-		char *cabletype = getpropstring(ca->ca_ra.ra_node,
-						"cable-selection");
+	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	if (sbusburst == 0)
+		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
+
+	sc->sc_burst = getpropint(sa->sa_node,"burst-sizes", -1);
+	if (sc->sc_burst == -1)
+		/* take SBus burst sizes */
+		sc->sc_burst = sbusburst;
+
+	/* Clamp at parent's burst sizes */
+	sc->sc_burst &= sbusburst;
+
+	if (sc->sc_dev.dv_cfdata->cf_attach == &ledma_ca) {
+		char *cabletype;
+		/*
+		 * Check to see which cable type is currently active and set the
+		 * appropriate bit in the ledma csr so that it gets used. If we
+		 * didn't netboot, the PROM won't have the "cable-selection"
+		 * property; default to TP and then the user can change it via
+		 * a "media" option to ifconfig.
+		 */
+		cabletype = getpropstring(sa->sa_node, "cable-selection");
 		if (strcmp(cabletype, "tpe") == 0) {
 			sc->sc_regs->csr |= DE_AUI_TP;
 		} else if (strcmp(cabletype, "aui") == 0) {
@@ -157,24 +223,64 @@ dmaattach(parent, self, aux)
 		delay(20000);	/* manual says we need 20ms delay */
 	}
 
-	/*
-	 * Get transfer burst size from PROM and plug it into the
-	 * controller registers. This is needed on the Sun4m; do
-	 * others need it too?
-	 */
-	if (CPU_ISSUN4M) {
-		int sbusburst = ((struct sbus_softc *)parent)->sc_burst;
-		if (sbusburst == 0)
-			sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-		sc->sc_burst = getpropint(ca->ca_ra.ra_node,"burst-sizes", -1);
-		if (sc->sc_burst == -1)
-			/* take SBus burst sizes */
-			sc->sc_burst = sbusburst;
+	/* Propagate bootpath */
+	bp = NULL;
+	if (sa->sa_bp != NULL) {
+		char *bpname = sa->sa_bp->name;
+		if (strcmp(bpname, "espdma") == 0)
+			/* We call everything "dma" */
+			bpname = "dma";
 
-		/* Clamp at parent's burst sizes */
-		sc->sc_burst &= sbusburst;
+		if (strcmp(bpname, self->dv_cfdata->cf_driver->cd_name) == 0)
+			bp = sa->sa_bp + 1;
 	}
+
+	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbt = dma_alloc_bustag(sc);
+	dma_identify(sc);
+
+	/* Attach children */
+	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {
+		struct sbus_attach_args sa;
+		sbus_setup_attach_args((struct sbus_softc *)parent,
+				       sbt, sc->sc_dmatag, node, bp, &sa);
+		(void) config_found(&sc->sc_dev, (void *)&sa, dmaprint);
+	}
+}
+
+void
+dmaattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	struct dma_softc *sc = (void *)self;
+	bus_space_handle_t bh;
+
+	sc->sc_bustag = oba->oba_bustag;
+	sc->sc_dmatag = oba->oba_dmatag;
+
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0, sizeof(struct dma_regs),
+			 0, 0,
+			 &bh) != 0) {
+		printf("dmaattach_obio: cannot map registers\n");
+		return;
+	}
+	sc->sc_regs = (struct dma_regs *)bh;
+
+	dma_identify(sc);
+}
+
+/*
+ * Attach all the sub-devices we can find
+ */
+void
+dma_identify(sc)
+	struct dma_softc *sc;
+{
 
 	printf(": rev ");
 	sc->sc_rev = sc->sc_regs->csr & D_DEV_ID;
@@ -200,18 +306,19 @@ dmaattach(parent, self, aux)
 	printf("\n");
 
 	/* indirect functions */
-	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
-		sc->reset = espdma_reset;
-		sc->intr = espdmaintr;
-	} else {
+	if (sc->sc_dev.dv_cfdata->cf_attach == &ledma_ca) {
 		sc->reset = ledma_reset;
 		sc->intr = ledmaintr;
+	} else {
+		sc->reset = espdma_reset;
+		sc->intr = espdmaintr;
 	}
 	sc->enintr = dma_enintr;
 	sc->isintr = dma_isintr;
 	sc->setup = dma_setup;
 	sc->go = dma_go;
 
+#if 000
 	sc->sc_node = ca->ca_ra.ra_node;
 	if (CPU_ISSUN4)
 		goto espsearch;
@@ -263,7 +370,45 @@ espsearch:
 		if (sc->sc_esp)
 			sc->sc_esp->sc_dma = sc;
 	}
+#endif
 }
+
+int
+dma_bus_map(cookie, slot, offset, size, flags, vaddr, hp)
+	void *cookie;
+	bus_type_t slot;
+	bus_addr_t offset;
+	bus_size_t size;
+	int flags;
+	vm_offset_t vaddr;
+	bus_space_handle_t *hp;
+{
+	struct dma_softc *sc = cookie;
+	return (sbus_bus_map(sc->sc_bustag, slot, offset, size,
+			     flags, vaddr, hp));
+}
+
+void *
+dmabus_intr_establish(cookie, level, flags, handler, arg)
+        void *cookie;
+	int level;
+	int flags;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	struct dma_softc *sc = cookie;
+
+	if (sc->intr == ledmaintr) { /* XXX - for now; do esp later */
+		sc->sc_intrchain = handler;
+		sc->sc_intrchainarg = arg;
+		handler = ledmaintr;
+		arg = sc;
+	}
+	return (bus_intr_establish(sc->sc_bustag, level, flags, handler, arg));
+}
+
+
+
 
 #define DMAWAIT(SC, COND, MSG, DONTPANIC) do if (COND) {		\
 	int count = 500000;						\
@@ -471,9 +616,10 @@ dma_go(sc)
  * return 1 if it was a DMA continue.
  */
 int
-espdmaintr(sc)
-	struct dma_softc *sc;
+espdmaintr(arg)
+	void *arg;
 {
+	struct dma_softc *sc = arg;
 	struct ncr53c9x_softc *nsc = &sc->sc_esp->sc_ncr53c9x;
 	char bits[64];
 	int trans, resid;
@@ -585,11 +731,9 @@ espdmaintr(sc)
 }
 
 /*
- * Pseudo (chained) interrupt from the le driver to handle DMA
- * errors.
- *
- * XXX: untested
+ * Pseudo (chained) interrupt to le driver to handle DMA errors.
  */
+#if 0
 int
 ledmaintr(sc)
 	struct dma_softc *sc;
@@ -607,4 +751,52 @@ ledmaintr(sc)
 		DMA_RESET(sc);
 	}
 	return 1;
+}
+#endif
+int
+ledmaintr(arg)
+	void	*arg;
+{
+	struct dma_softc *sc = arg;
+	char bits[64];
+	u_long csr;
+static int dodrain=0;
+
+	csr = DMACSR(sc);
+
+	if (csr & D_ERR_PEND) {
+		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
+		DMACSR(sc) |= D_INVALIDATE;
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+		DMA_RESET(sc);
+		dodrain = 1;
+	}
+
+	if (dodrain) {	/* XXX - is this necessary with D_DSBL_WRINVAL on? */
+#define E_DRAIN 0x400 /* XXX: fix dmareg.h */
+		int i = 10;
+		while (i-- > 0 && (sc->sc_regs->csr & D_DRAINING))
+			delay(1);
+	}
+
+	return (*sc->sc_intrchain)(sc->sc_intrchainarg);
+}
+
+bus_space_tag_t
+dma_alloc_bustag(sc)
+	struct dma_softc *sc;
+{
+	bus_space_tag_t sbt;
+
+	sbt = (bus_space_tag_t)
+		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	if (sbt == NULL)
+		return (NULL);
+
+	bzero(sbt, sizeof *sbt);
+	sbt->cookie = sc;
+	sbt->sparc_bus_map = dma_bus_map;
+	sbt->sparc_intr_establish = dmabus_intr_establish;
+	return (sbt);
 }
