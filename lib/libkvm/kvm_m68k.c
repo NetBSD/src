@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.12 1997/08/12 16:34:09 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.13 1997/10/28 16:52:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Run-time kvm dispatcher for m68k machines.
  * The actual MD code is in the files:
  * kvm_m68k_cmn.c kvm_sun3.c ...
+ *
+ * Note: This file has to build on ALL m68k machines,
+ * so do NOT include any <machine/*.h> files here.
  */
 
 #include <sys/param.h>
@@ -57,7 +60,7 @@
 #include <kvm.h>
 #include <db.h>
 
-#include <machine/kcore.h>
+#include <m68k/kcore.h>
 
 #include "kvm_private.h"
 #include "kvm_m68k.h"
