@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/30 23:02:21 reinoud Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/06 12:39:10 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGEDIR=	${.OBJDIR}/ramdisk-image
-IMAGE=		${.OBJDIR}/ramdisk-${REV}.fs
+IMAGE=		${.OBJDIR}/ramdisk-${DISTRIBREV}.fs
 
 CBIN=		ramdiskbin
 
