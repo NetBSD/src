@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.2 1995/10/02 09:07:04 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.3 1995/10/02 21:44:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@
 #include <machine/eeprom.h>
 #endif
 
-#include <sparc/dev/cgtworeg.h>
+#include <machine/cgtworeg.h>
 #include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
@@ -79,7 +79,11 @@ struct cgtwo_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	caddr_t	sc_phys;		/* display RAM (phys addr) */
-	volatile struct cg2reg *sc_reg;	/* CG2 control registers */
+	volatile struct cg2statusreg *sc_reg;	/* CG2 control registers */
+	volatile u_short *sc_cmap;
+#define sc_redmap(sc)	((sc)->sc_cmap)
+#define sc_greenmap(sc)	((sc)->sc_cmap + CG2_CMSIZE)
+#define sc_bluemap(sc)	((sc)->sc_cmap + 2 * CG2_CMSIZE)
 };
 
 /* autoconfiguration driver */
@@ -260,9 +264,19 @@ cgtwoattach(parent, self, args)
 					       CG2_PIXMAP_SIZE,
 					       ca->ca_bustype);
 	}
-	sc->sc_reg = (volatile struct cg2reg *)
-	    mapiodev((caddr_t)sc->sc_phys + CG2_CTLREG_OFF, CG2_CTLREG_SIZE,
-		     ca->ca_bustype);
+#ifndef offsetof
+#define	offsetof(type, member)  ((size_t)(&((type *)0)->member))
+#endif
+
+	sc->sc_reg = (volatile struct cg2statusreg *)
+	    mapiodev((caddr_t)sc->sc_phys +
+		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
+		     CG2_CTLREG_SIZE, ca->ca_bustype);
+
+	sc->sc_cmap = (volatile u_short *)
+	    mapiodev((caddr_t)sc->sc_phys +
+		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
+		     3 * CG2_CMSIZE, ca->ca_bustype);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -337,11 +351,11 @@ cgtwoioctl(dev, cmd, data, flags, p)
 		return cgtwoputcmap(sc, data);
 
 	case FBIOGVIDEO:
-		*(int *)data = sc->sc_reg->status.video_enab;
+		*(int *)data = sc->sc_reg->video_enab;
 		break;
 
 	case FBIOSVIDEO:
-		sc->sc_reg->status.video_enab = (*(int*)data) & 1;
+		sc->sc_reg->video_enab = (*(int*)data) & 1;
 		break;
 
 	default:
@@ -358,7 +372,7 @@ cgtwounblank(dev)
 	struct device *dev;
 {
 	struct cgtwo_softc *sc = (struct cgtwo_softc *)dev;
-	sc->sc_reg->status.video_enab = 1;
+	sc->sc_reg->video_enab = 1;
 }
 
 /*
@@ -371,7 +385,7 @@ cgtwogetcmap(sc, cmap)
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
 	int error, start, count, ecount;
 	register u_int i;
-	register u_short *p;
+	register volatile u_short *p;
 
 	start = cmap->index;
 	count = cmap->count;
@@ -382,13 +396,13 @@ cgtwogetcmap(sc, cmap)
 	/* XXX - Wait for retrace? */
 
 	/* Copy hardware to local arrays. */
-	p = &sc->sc_reg->redmap[start];
+	p = &sc_redmap(sc)[start];
 	for (i = start; i < ecount; i++)
 		red[i] = *p++;
-	p = &sc->sc_reg->greenmap[start];
+	p = &sc_greenmap(sc)[start];
 	for (i = start; i < ecount; i++)
 		green[i] = *p++;
-	p = &sc->sc_reg->bluemap[start];
+	p = &sc_bluemap(sc)[start];
 	for (i = start; i < ecount; i++)
 		blue[i] = *p++;
 
@@ -413,7 +427,7 @@ cgtwoputcmap(sc, cmap)
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
 	int error, start, count, ecount;
 	register u_int i;
-	register u_short *p;
+	register volatile u_short *p;
 
 	start = cmap->index;
 	count = cmap->count;
@@ -432,13 +446,13 @@ cgtwoputcmap(sc, cmap)
 	/* XXX - Wait for retrace? */
 
 	/* Copy from local arrays to hardware. */
-	p = &sc->sc_reg->redmap[start];
+	p = &sc_redmap(sc)[start];
 	for (i = start; i < ecount; i++)
 		*p++ = red[i];
-	p = &sc->sc_reg->greenmap[start];
+	p = &sc_greenmap(sc)[start];
 	for (i = start; i < ecount; i++)
 		*p++ = green[i];
-	p = &sc->sc_reg->bluemap[start];
+	p = &sc_bluemap(sc)[start];
 	for (i = start; i < ecount; i++)
 		*p++ = blue[i];
 
