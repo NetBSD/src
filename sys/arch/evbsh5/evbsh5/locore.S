@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2002/07/12 15:42:30 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2002/08/26 10:52:13 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -46,7 +46,9 @@
  */
 ASENTRY_NOPROFILE(text)
 ASENTRY_NOPROFILE(start)
+	getcon	sr, r1
 	LDC32(SH5_CONREG_SR_IMASK_ALL|SH5_CONREG_SR_BL|SH5_CONREG_SR_MD, r0)
+	or	r0, r1, r0
 	putcon	r0, ssr
 	pta/u	1f, tr0			/* PC-Relative */
 	pta/u	1f, tr1
@@ -78,7 +80,7 @@ ASENTRY_NOPROFILE(start)
  * We are now running mapped in KSEG0, with the MMU enabled.
  */
 Lmapped_start:
-	LDC32(0x02000000, r56)
+	LDC32(0x08000000, r56)		/* RAM size. XXX: Can we probe this? */
 	LEA(_C_LABEL(edata), r0)
 	LEA(_C_LABEL(end), r1)
 	pta/u	1f, tr0
