@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.30 2002/09/29 23:24:00 wiz Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.31 2003/05/26 16:14:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 #define	FXP_NTXCB_MASK		(FXP_NTXCB - 1)
 #define	FXP_NEXTTX(x)		((x + 1) & FXP_NTXCB_MASK)
 #define	FXP_NTXSEG		16
+#define	FXP_IPCB_NTXSEG		(FXP_NTXSEG - 1)
 
 /*
  * Number of receive frame area buffers.  These are large, so
@@ -108,7 +109,10 @@ struct fxp_control_data {
 	 */
 	struct fxp_txdesc {
 		struct fxp_cb_tx txd_txcb;
-		struct fxp_tbd txd_tbd[FXP_NTXSEG];
+		union {
+			struct fxp_ipcb txdu_ipcb;
+			struct fxp_tbd txdu_tbd[FXP_NTXSEG];
+		} txd_u;
 	} fcd_txdescs[FXP_NTXCB];
 
 	/*
@@ -136,6 +140,8 @@ struct fxp_control_data {
 	 */
 	struct fxp_stats fcd_stats;
 };
+
+#define	txd_tbd	txd_u.txdu_tbd
 
 #define	FXP_CDOFF(x)	offsetof(struct fxp_control_data, x)
 #define	FXP_CDTXOFF(x)	FXP_CDOFF(fcd_txdescs[(x)].txd_txcb)
@@ -188,6 +194,7 @@ struct fxp_softc {
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
 	int	sc_rxfree;		/* free map index */
 	int	sc_rxidle;		/* # of seconds RX has been idle */
+	u_int16_t sc_txcmd;		/* transmit command (LITTLE ENDIAN) */
 
 	/*
 	 * Control data structures.
@@ -215,6 +222,8 @@ struct fxp_softc {
 #define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
 #define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
 #define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
+#define	FXPF_EXT_RFA		0x0200	/* enable extended RFD */
+#define	FXPF_IPCB		0x0400	/* use IPCB */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */
