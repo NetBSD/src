@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2003/01/20 20:12:17 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2003/01/24 01:56:47 thorpej Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= csu libc libposix libpthread libutil
+SUBDIR+= csu libc libposix libpthread librt libutil
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey
