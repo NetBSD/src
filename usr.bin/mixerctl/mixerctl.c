@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.15 2000/12/29 13:30:26 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.16 2002/01/27 10:09:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -324,7 +324,7 @@ main(int argc, char **argv)
 
 	prog = *argv;
 
-	while ((ch = getopt(argc, argv, "af:nvw")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:f:nvw")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -338,15 +338,16 @@ main(int argc, char **argv)
 		case 'n':
 			sep = 0;
 			break;
-		case 'f':
+		case 'f': /* compatibility */
+		case 'd':
 			file = optarg;
 			break;
 		case '?':
 		default:
 		usage:
-		fprintf(out, "%s [-f file] [-v] [-n] name ...\n", prog);
-		fprintf(out, "%s [-f file] [-v] [-n] -w name=value ...\n",prog);
-		fprintf(out, "%s [-f file] [-v] [-n] -a\n", prog);
+		fprintf(out, "%s [-d file] [-v] [-n] name ...\n", prog);
+		fprintf(out, "%s [-d file] [-v] [-n] -w name=value ...\n",prog);
+		fprintf(out, "%s [-d file] [-v] [-n] -a\n", prog);
 		exit(0);
 		}
 	}

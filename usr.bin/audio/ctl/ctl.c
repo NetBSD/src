@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.28 2002/01/15 23:48:52 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.29 2002/01/27 10:09:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -330,9 +330,9 @@ usage()
 {
 	const char *prog = getprogname();
 
-	fprintf(stderr, "Usage: %s [-f file] [-n] name ...\n", prog);
-	fprintf(stderr, "Usage: %s [-f file] [-n] -w name=value ...\n", prog);
-	fprintf(stderr, "Usage: %s [-f file] [-n] -a\n", prog);
+	fprintf(stderr, "Usage: %s [-d file] [-n] name ...\n", prog);
+	fprintf(stderr, "Usage: %s [-d file] [-n] -w name=value ...\n", prog);
+	fprintf(stderr, "Usage: %s [-d file] [-n] -a\n", prog);
 	exit(1);
 }
 
@@ -351,7 +351,7 @@ main(argc, argv)
 	if (file == 0)
 		file = _PATH_AUDIOCTL;
 
-	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:f:nw")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -362,7 +362,8 @@ main(argc, argv)
 		case 'n':
 			sep = 0;
 			break;
-		case 'f':
+		case 'f': /* compatiblity */
+		case 'd':
 			file = optarg;
 			break;
 		case '?':
