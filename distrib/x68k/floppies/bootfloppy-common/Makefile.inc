@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2000/06/18 10:33:18 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.1 2000/12/15 05:31:44 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -20,7 +20,9 @@ GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list
+.if ${RAMDISKDIR} != ""
 RAMDISK	!=cd ${RAMDISKDIR}; ${MAKE} echoimage
+.endif
 
 DISKTYPE=	floppy5
 
@@ -55,11 +57,16 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
+.if defined(RAMDISK)
 ${KERNNAME}: ${KERN} ${RAMDISK}
 	-/bin/rm -f netbsd.tmp*
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	mv -f netbsd.tmp ${.TARGET}
+.else
+${KERNNAME}: ${KERN}
+	cp ${KERN} ${.TARGET}
+.endif
 
 ${GZNAME}: ${KERNNAME}
 	gzip -cv9 ${KERNNAME} > ${.TARGET}
@@ -71,8 +78,10 @@ release:
 	-mkdir -p ${RELEASEDIR}/installation/misc
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
 	gzip <${IMAGE} >${RELEASEDIR}/installation/floppy/${IMAGE}.gz
+.ifndef NOKERNCOPY
 	cp -p ${KERNNAME} ${RELEASEDIR}/installation/misc
 	cp -p ${GZNAME} ${RELEASEDIR}/installation/misc
+.endif
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
