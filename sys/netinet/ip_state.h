@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.24 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.25 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68 2003/09/24 16:04:58 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.1 2004/06/30 11:26:12 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -244,7 +244,7 @@ extern	void	fr_timeoutstate __P((void));
 extern	int	fr_tcp_age __P((struct ipftqent *, struct fr_info *,
 				struct ipftq *, int));
 extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
-				    struct tcpdata *, struct tcphdr *, int));
+				    struct tcpdata *, tcphdr_t *, int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_int));
 extern	int	fr_state_ioctl __P((caddr_t, ioctlcmd_t, int));

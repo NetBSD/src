@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.33 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.34 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -121,9 +121,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.33 2004/03/28 09:00:56 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.34 2004/07/23 05:39:04 martti Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73 2004/02/11 14:18:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.2 2004/06/08 13:14:12 darrenr Exp";
 #endif
 #endif
 
@@ -161,7 +161,7 @@ int fr_authinit()
 	if (fr_authpkts != NULL)
 		bzero((char *)fr_authpkts, fr_authsize * sizeof(*fr_authpkts));
 	else
-		return -1;
+		return -2;
 
 	MUTEX_INIT(&ipf_authmx, "ipf auth log mutex");
 	RWLOCK_INIT(&ipf_auth, "ipf IP User-Auth rwlock");
@@ -388,7 +388,7 @@ int mode;
 			error = EPERM;
 			break;
 		}
-		error = fr_lock(data, &fr_auth_lock);
+		fr_lock(data, &fr_auth_lock);
 		break;
 
 	case SIOCATHST:

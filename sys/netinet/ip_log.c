@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_log.c,v 1.24 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.25 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.75.2.3 2004/03/23 12:03:45 darrenr Exp
+ * Id: ip_log.c,v 2.75.2.5 2004/07/13 14:25:36 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.24 2004/03/28 09:00:57 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.25 2004/07/23 05:39:04 martti Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -324,7 +324,7 @@ u_int flags;
 	 * currently associated.
 	 */
 # if (SOLARIS || defined(__hpux)) && defined(_KERNEL)
-	ipfl.fl_unit = (u_char)ifp->qf_ppa;
+	ipfl.fl_unit = (u_int)ifp->qf_ppa;
 	COPYIFNAME(ifp, ipfl.fl_ifname);
 # else
 #  if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
@@ -332,7 +332,7 @@ u_int flags;
       (defined(__FreeBSD__) && (__FreeBSD_version >= 501113))
 	COPYIFNAME(ifp, ipfl.fl_ifname);
 #  else
-	ipfl.fl_unit = (u_char)ifp->if_unit;
+	ipfl.fl_unit = (u_int)ifp->if_unit;
 #   if defined(_KERNEL)
 	if ((ipfl.fl_ifname[0] = ifp->if_name[0]))
 		if ((ipfl.fl_ifname[1] = ifp->if_name[1]))
@@ -415,10 +415,13 @@ void **items;
 size_t *itemsz;
 int *types, cnt;
 {
-	caddr_t buf, s;
+	caddr_t buf, ptr;
 	iplog_t *ipl;
 	size_t len;
 	int i;
+# if defined(_KERNEL) && !defined(MENTAT) && defined(USE_SPL)
+	int s;
+# endif
 
 	/*
 	 * Check to see if this log record has a CRC which matches the last
@@ -454,14 +457,17 @@ int *types, cnt;
 	KMALLOCS(buf, caddr_t, len);
 	if (buf == NULL)
 		return -1;
+	SPL_NET(s);
 	MUTEX_ENTER(&ipl_mutex);
 	if ((iplused[dev] + len) > IPFILTER_LOGSIZE) {
 		MUTEX_EXIT(&ipl_mutex);
+		SPL_X(s);
 		KFREES(buf, len);
 		return -1;
 	}
 	iplused[dev] += len;
 	MUTEX_EXIT(&ipl_mutex);
+	SPL_X(s);
 
 	/*
 	 * advance the log pointer to the next empty record and deduct the
@@ -483,14 +489,15 @@ int *types, cnt;
 	 * Loop through all the items to be logged, copying each one to the
 	 * buffer.  Use bcopy for normal data or the mb_t copyout routine.
 	 */
-	for (i = 0, s = buf + sizeof(*ipl); i < cnt; i++) {
+	for (i = 0, ptr = buf + sizeof(*ipl); i < cnt; i++) {
 		if (types[i] == 0) {
-			bcopy(items[i], s, itemsz[i]);
+			bcopy(items[i], ptr, itemsz[i]);
 		} else if (types[i] == 1) {
-			COPYDATA(items[i], 0, itemsz[i], s);
+			COPYDATA(items[i], 0, itemsz[i], ptr);
 		}
-		s += itemsz[i];
+		ptr += itemsz[i];
 	}
+	SPL_NET(s);
 	MUTEX_ENTER(&ipl_mutex);
 	ipll[dev] = ipl;
 	*iplh[dev] = ipl;
@@ -507,6 +514,7 @@ int *types, cnt;
 	MUTEX_EXIT(&ipl_mutex);
 	WAKEUP(iplh,dev);
 # endif
+	SPL_X(s);
 # ifdef	IPL_SELECT
 	iplog_input_ready(dev);
 # endif
@@ -647,7 +655,11 @@ minor_t unit;
 {
 	iplog_t *ipl;
 	int used;
+# if defined(_KERNEL) && !defined(MENTAT) && defined(USE_SPL)
+	int s;
+# endif
 
+	SPL_NET(s);
 	MUTEX_ENTER(&ipl_mutex);
 	while ((ipl = iplt[unit]) != NULL) {
 		iplt[unit] = ipl->ipl_next;
@@ -659,6 +671,7 @@ minor_t unit;
 	iplused[unit] = 0;
 	bzero((char *)&iplcrc[unit], FI_CSIZE);
 	MUTEX_EXIT(&ipl_mutex);
+	SPL_X(s);
 	return used;
 }
 #endif /* IPFILTER_LOG */
