@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.19.2.4 1997/02/16 14:14:15 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.19.2.5 1997/03/19 07:23:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.4 1997/02/16 14:14:15 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.5 1997/03/19 07:23:16 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,9 +85,8 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	struct servent *sp;
 
 	/*
-	 * XXX
-	 * 
-	 * Concanicalise hostname.  Should we really do this?
+	 * Canonicalise hostname.
+	 * XXX: Should we really do this?
 	 */
 	hp = gethostbyname(*ahost);
 	if (hp == NULL) {
@@ -153,7 +152,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			if (errno == EAGAIN)
 				warnx("rcmd: socket: All ports in use");
 			else
-				warn("socket");
+				warn("rcmd: socket");
 			sigsetmask(oldmask);
 			return (-1);
 		}
@@ -161,7 +160,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_family = hp->h_addrtype;
 		sin.sin_port = rport;
-		bcopy(hp->h_addr_list[0], &sin.sin_addr, hp->h_length);
+		memmove(&sin.sin_addr, hp->h_addr_list[0], hp->h_length);
 		if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
 			break;
 		(void)close(s);
@@ -177,11 +176,13 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 		if (hp->h_addr_list[1] != NULL) {
 			int oerrno = errno;
 
-			warnx("connect to address %s: ", inet_ntoa(sin.sin_addr));
+			warnx("rcmd: connect to address %s",
+			    inet_ntoa(sin.sin_addr));
 			errno = oerrno;
 			perror(0);
 			hp->h_addr_list++;
-			bcopy(hp->h_addr_list[0], &sin.sin_addr, hp->h_length);
+			memmove(&sin.sin_addr, hp->h_addr_list[0],
+			    hp->h_length);
 			(void)fprintf(stderr, "Trying %s...\n",
 			    inet_ntoa(sin.sin_addr));
 			continue;
@@ -204,7 +205,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
 		if (write(s, num, strlen(num) + 1) != strlen(num) + 1) {
-			warn("write (setting up stderr): %s");
+			warn("rcmd: write (setting up stderr)");
 			(void)close(s2);
 			goto bad;
 		}
@@ -225,7 +226,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 		s3 = accept(s2, (struct sockaddr *)&from, &len);
 		(void)close(s2);
 		if (s3 < 0) {
-			warn("accept");
+			warn("rcmd: accept");
 			lport = 0;
 			goto bad;
 		}
@@ -234,7 +235,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 		if (from.sin_family != AF_INET ||
 		    from.sin_port >= IPPORT_RESERVED ||
 		    from.sin_port < IPPORT_RESERVED / 2) {
-			warnx("socket: protocol failure in circuit setup.");
+			warnx("rcmd: protocol failure in circuit setup.");
 			goto bad2;
 		}
 	}
@@ -278,22 +279,37 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 {
 	int             pid;
 	int             sp[2], ep[2];
+	char		*p;
+	struct passwd	*pw;
+
+
+	/* What rsh/shell to use. */
+	if (rshcmd == NULL)
+		rshcmd = _PATH_BIN_RCMD;
+
+	/* locuser must exist on this host. */
+	if ((pw = getpwnam(locuser)) == NULL) {
+		warnx("rshrcmd: unknown user: %s", locuser);
+		return(-1);
+	}
 
 	/* get a socketpair we'll use for stdin and stdout. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) < 0) {
-		warn("socketpair");
+		warn("rshrcmd: socketpair");
 		return (-1);
 	}
 	/* we will use this for the fd2 pointer */
-	if (fd2p && socketpair(AF_UNIX, SOCK_STREAM, 0, ep) < 0)  {
-		warn("socketpair");
-		return (-1);
+	if (fd2p) {
+		if (socketpair(AF_UNIX, SOCK_STREAM, 0, ep) < 0) {
+			warn("rshrcmd: socketpair");
+			return (-1);
+		}
 		*fd2p = ep[0];
 	}
 	
 	pid = fork();
 	if (pid < 0) {
-		warn("fork");
+		warn("rshrcmd: fork");
 		return (-1);
 	}
 	if (pid == 0) {
@@ -304,29 +320,34 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 		 */
 		(void)close(sp[0]);
 		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0) {
-			warn("dup2");
+			warn("rshrcmd: dup2");
 			_exit(1);
 		}
 		if (fd2p) {
 			if (dup2(ep[1], 2) < 0) {
-				warn("dup2");
+				warn("rshrcmd: dup2");
 				_exit(1);
 			}
 			(void)close(ep[0]);
 			(void)close(ep[1]);
 		} else if (dup2(0, 2) < 0) {
-			warn("dup2");
+			warn("rshrcmd: dup2");
 			_exit(1);
 		}
 		/* fork again to lose parent. */
 		pid = fork();
 		if (pid < 0) {
-			warn("second fork");
+			warn("rshrcmd: second fork");
 			_exit(1);
 		}
 		if (pid > 0)
 			_exit(0);
-		/* Orphan */
+
+		/* Orphan.  Become local user for rshprog. */
+		if (setuid(pw->pw_uid)) {
+			warn("rshrcmd: setuid(%u)", pw->pw_uid);
+			_exit(1);
+		}
 
 		/*
 		 * If we are rcmd'ing to "localhost" as the same user as we are,
@@ -334,18 +355,18 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 		 */
 		if (strcmp(*ahost, "localhost") == 0 &&
 		    strcmp(locuser, remuser) == 0) {
-			execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", cmd, NULL);
-			warn("exec %s", _PATH_BSHELL);
-		} else {
-			if (rshcmd == NULL)
-				execlp(_PATH_BIN_RCMD, _PATH_BIN_RCMD,
-				   *ahost, "-l", remuser, "-u", locuser, cmd,
-				   NULL);
+			if (pw->pw_shell[0] == '\0')
+				rshcmd = _PATH_BSHELL;
 			else
-				execlp(rshcmd, rshcmd, *ahost, "-l", remuser,
-				    cmd, NULL);
-			warn("exec %s", rshcmd);
+				rshcmd = pw->pw_shell;
+			p = strrchr(rshcmd, '/');
+			execlp(rshcmd, p ? p + 1 : rshcmd, "-c", cmd, NULL);
+		} else {
+			p = strrchr(rshcmd, '/');
+			execlp(rshcmd, p ? p + 1 : rshcmd, *ahost, "-l",
+			    remuser, cmd, NULL);
 		}
+		warn("rshrcmd: exec %s", rshcmd);
 		_exit(1);
 	}
 	/* Parent */
@@ -353,7 +374,7 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	if (fd2p)
 		(void)close(ep[1]);
 
-	(void)wait(0);
+	(void)wait(NULL);
 	return (sp[0]);
 }
 
@@ -404,7 +425,7 @@ ruserok(rhost, superuser, ruser, luser)
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
 	for (i = 0, ap = hp->h_addr_list; *ap && i < MAXADDRS; ++ap, ++i)
-		bcopy(*ap, &addrs[i], sizeof(addrs[i]));
+		memmove(&addrs[i], *ap, sizeof(addrs[i]));
 	addrs[i] = 0;
 
 	for (i = 0; i < MAXADDRS && addrs[i]; i++)
@@ -667,7 +688,7 @@ __icheckhost(raddr, lhost)
 
 	/* Spin through ip addresses. */
 	for (pp = hp->h_addr_list; *pp; ++pp)
-		if (!bcmp(&raddr, *pp, sizeof(u_int32_t)))
+		if (!memcmp(&raddr, *pp, sizeof(u_int32_t)))
 			return (1);
 
 	/* No match. */
@@ -702,7 +723,7 @@ __gethostloop(raddr)
 		return (NULL);
 
 	for (; hp->h_addr_list[0] != NULL; hp->h_addr_list++)
-		if (!bcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
+		if (!memcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
 			return (remotehost);
 
 	/*
