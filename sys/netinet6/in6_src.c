@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.7 2001/06/06 06:07:06 mrg Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.8 2001/10/16 06:24:44 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -458,7 +458,7 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 			if (scopeid < 0 || if_index < scopeid)
 				return ENXIO;  /* XXX EINVAL? */
 			ifp = ifindex2ifnet[scopeid];
-			/*XXX assignment to 16bit from 32bit variable */
+			/* XXX assignment to 16bit from 32bit variable */
 			in6->s6_addr16[1] = htons(scopeid & 0xffff);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.13 2001/02/10 04:14:29 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.14 2001/10/16 06:24:45 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -435,7 +435,8 @@ mld6_sendpkt(in6m, type, dst)
 	mldh->mld6_addr = in6m->in6m_addr;
 	if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
 		mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
-	mldh->mld6_cksum = in6_cksum(mh, IPPROTO_ICMPV6, sizeof(struct ip6_hdr),
+	mldh->mld6_cksum = in6_cksum(mh, IPPROTO_ICMPV6,
+				     sizeof(struct ip6_hdr),
 				     sizeof(struct mld6_hdr));
 
 	/* construct multicast option */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.22 2001/07/25 09:23:46 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.23 2001/10/16 06:24:44 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -240,15 +240,15 @@ ip6_mrouter_set(cmd, so, m)
 		return EACCES;
 
 	switch (cmd) {
-	 case MRT6_OINIT:     return ip6_mrouter_init(so, m, cmd);
-	 case MRT6_INIT:      return ip6_mrouter_init(so, m, cmd);
-	 case MRT6_DONE:      return ip6_mrouter_done();
-	 case MRT6_ADD_MIF:   return add_m6if(mtod(m, struct mif6ctl *));
-	 case MRT6_DEL_MIF:   return del_m6if(mtod(m, mifi_t *));
-	 case MRT6_ADD_MFC:   return add_m6fc(mtod(m, struct mf6cctl *));
-	 case MRT6_DEL_MFC:   return del_m6fc(mtod(m, struct mf6cctl *));
-	 case MRT6_PIM:       return set_pim6(mtod(m, int *));
-	 default:            return EOPNOTSUPP;
+	case MRT6_OINIT:	return ip6_mrouter_init(so, m, cmd);
+	case MRT6_INIT:		return ip6_mrouter_init(so, m, cmd);
+	case MRT6_DONE:		return ip6_mrouter_done();
+	case MRT6_ADD_MIF:	return add_m6if(mtod(m, struct mif6ctl *));
+	case MRT6_DEL_MIF:	return del_m6if(mtod(m, mifi_t *));
+	case MRT6_ADD_MFC:	return add_m6fc(mtod(m, struct mf6cctl *));
+	case MRT6_DEL_MFC:	return del_m6fc(mtod(m, struct mf6cctl *));
+	case MRT6_PIM:		return set_pim6(mtod(m, int *));
+	default:		return EOPNOTSUPP;
 	}
 }
 
@@ -268,10 +268,11 @@ ip6_mrouter_get(cmd, so, m)
 	*m = mb = m_get(M_WAIT, MT_SOOPTS);
 
 	switch (cmd) {
-	 case MRT6_PIM:       return get_pim6(mb);
-	 default:
-		 m_free(mb);
-		 return EOPNOTSUPP;
+	case MRT6_PIM:
+		return get_pim6(mb);
+	default:
+		m_free(mb);
+		return EOPNOTSUPP;
 	}
 }
 
@@ -283,20 +284,20 @@ mrt6_ioctl(cmd, data)
 	int cmd;
 	caddr_t data;
 {
-    int error = 0;
+	int error = 0;
 
-    switch (cmd) {
-     case SIOCGETSGCNT_IN6:
-	     return(get_sg_cnt((struct sioc_sg_req6 *)data));
-	     break;		/* for safety */
-     case SIOCGETMIFCNT_IN6:
-	     return(get_mif6_cnt((struct sioc_mif_req6 *)data));
-	     break;		/* for safety */
-     default:
-	     return (EINVAL);
-	     break;
-    }
-    return error;
+	switch (cmd) {
+	case SIOCGETSGCNT_IN6:
+		return(get_sg_cnt((struct sioc_sg_req6 *)data));
+		break;		/* for safety */
+	case SIOCGETMIFCNT_IN6:
+		return(get_mif6_cnt((struct sioc_mif_req6 *)data));
+		break;		/* for safety */
+	default:
+		return (EINVAL);
+		break;
+	}
+	return error;
 }
 
 /*
