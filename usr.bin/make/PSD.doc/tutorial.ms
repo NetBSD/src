@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.8 2003/08/07 11:15:00 agc Exp $
+.\"	$NetBSD: tutorial.ms,v 1.9 2004/06/27 19:04:54 uwe Exp $
 .\" Copyright (c) 1988, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1453,7 +1453,7 @@ the screen from being filled with garbage even more indecipherable
 than you usually see. PMake has two ways of doing this, one of which
 provides for much cleaner output and a clear separation between the
 output of different jobs, the other of which provides a more immediate
-response so one can tell what is really happpening. The former is done
+response so one can tell what is really happening. The former is done
 by notifying you when the creation of a target starts, capturing the
 output and transferring it to the screen all at once when the job
 finishes. The latter is done by catching the output of the shell (and
@@ -1623,7 +1623,7 @@ suffix is usually a text file to be processed by Troff with the \-ms
 macro package, and so on.
 One of the best aspects of both Make and PMake comes from their
 understanding of how the suffix of a file pertains to its contents and
-their ability to do things with a file based soley on its suffix. This
+their ability to do things with a file based solely on its suffix. This
 ability comes from something known as a transformation rule. A
 transformation rule specifies how to change a file with one suffix
 into a file with another suffix.
@@ -2970,7 +2970,7 @@ looks like this:
 # Rules for making libraries. The object files that make up the library are
 # removed once they are archived.
 #
-# To make several libararies in parallel, you should define the variable
+# To make several libraries in parallel, you should define the variable
 # "many_libraries". This will serialize the invocations of ranlib.
 #
 # To use, do something like this:
@@ -3208,7 +3208,7 @@ FORMATTER	= ditroff -Plaser_printer
 FORMATTER	= nroff -Pdot_matrix_printer
 #endif
 .DE
-would wreak havok if you tried
+would wreak havoc if you tried
 .CW "pmake draft print" '' ``
 since you would use the same formatter for each target. As I said,
 this all gets somewhat complicated.
@@ -3329,7 +3329,7 @@ within that loop will be printed, etc. The specification runs like
 this:
 .DS
 #
-# This is a shell specification to have the bourne shell echo
+# This is a shell specification to have the Bourne shell echo
 # the commands just before executing them, rather than when it reads
 # them. Useful if you want to see how variables are being expanded, etc.
 #
