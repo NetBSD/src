@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.7 1999/10/13 17:48:04 drochner Exp $	*/
+/*	$NetBSD: descr.c,v 1.8 2000/08/20 15:57:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -41,8 +41,7 @@
 #include "usbvar.h"
 
 report_desc_t
-hid_get_report_desc(fd)
-	int fd;
+hid_get_report_desc(int fd)
 {
 	struct usb_ctl_report_desc rep;
 	report_desc_t r;
@@ -63,8 +62,7 @@ hid_get_report_desc(fd)
 }
 
 void
-hid_dispose_report_desc(r)
-	report_desc_t r;
+hid_dispose_report_desc(report_desc_t r)
 {
 
 	free(r);
