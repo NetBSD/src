@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.6 2000/02/14 07:01:46 scottr Exp $	*/
+/*	$NetBSD: ams.c,v 1.7 2000/03/19 07:37:58 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -230,7 +230,7 @@ ems_init(sc)
 	if (sc->handler_id == ADBMS_USPEED ||
 	    sc->handler_id == ADBMS_UCONTOUR) {
 		/* Found MicroSpeed Mouse Deluxe Mac or Contour Mouse */
-		cmd = ((adbaddr<<4)&0xF0)|0x9;	/* listen 1 */
+		cmd = ADBLISTEN(adbaddr, 1);
 
 		/*
 		 * To setup the MicroSpeed or the Contour, it appears
@@ -269,10 +269,8 @@ ems_init(sc)
 	if ((sc->handler_id == ADBMS_100DPI) || 
 	    (sc->handler_id == ADBMS_200DPI)) {
 		/* found a mouse */
-		cmd = ((adbaddr << 4) & 0xf0) | 0x3;
-
+		cmd = ADBTALK(adbaddr, 3);
 		extdms_done = 0;
-		cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 		    (Ptr)&extdms_done, cmd);
 
@@ -292,7 +290,7 @@ ems_init(sc)
 		/* Attempt to initialize Extended Mouse Protocol */
 		buffer[2] = '\004'; /* make handler ID 4 */
 		extdms_done = 0;
-		cmd = (cmd & 0xf3) | 0x08; /* listen command */
+		cmd = ADBLISTEN(adbaddr, 3);
 		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 		    (Ptr)&extdms_done, cmd);
 		while (!extdms_done)
@@ -302,9 +300,8 @@ ems_init(sc)
 		 * Check to see if successful, if not
 		 * try to initialize it as other types
 		 */
-		cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+		cmd = ADBTALK(adbaddr, 3);
 		extdms_done = 0;
-		cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 		    (Ptr)&extdms_done, cmd);
 		while (!extdms_done)
@@ -379,7 +376,7 @@ ems_init(sc)
 			/* Attempt to initialize as an A3 mouse */
 			buffer[2] = 0x03; /* make handler ID 3 */
 			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x08; /* listen command */
+			cmd = ADBLISTEN(adbaddr, 3);
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			    (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
@@ -389,9 +386,8 @@ ems_init(sc)
 			 * Check to see if successful, if not
 			 * try to initialize it as other types
 			 */
-			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+			cmd = ADBTALK(adbaddr, 3);
 			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			    (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
@@ -400,7 +396,7 @@ ems_init(sc)
 			if (buffer[2] == ADBMS_MSA3) {
 				sc->handler_id = ADBMS_MSA3;
 				/* Initialize as above */
-				cmd = ((adbaddr << 4) & 0xF0) | 0xA;
+				cmd = ADBLISTEN(adbaddr, 2);
 				/* listen 2 */
 				buffer[0] = 3;
 				buffer[1] = 0x00;
@@ -444,7 +440,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
+	adbaddr = ADB_CMDADDR(adb_command);
 	amsc = (struct ams_softc *)data_area;
 
 	if ((amsc->handler_id == ADBMS_EXTENDED) && (amsc->sc_devid[0] == 0)) {
