@@ -454,7 +454,7 @@ struct isa_dev *dev;
 		 && ((byte3 == 0 ) || (byte3 == 1)))
 		{
 			dev->dev_addr = port;
-			return(ahbprobe1(dev));
+			return(ahbprobe1(dev) ? 0x1000 : 0);
 		}
 		ahb_slot++;
 	}
