@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.8 1996/06/10 15:33:43 cgd Exp $	*/
+/*	$NetBSD: libkern.h,v 1.9 1996/08/27 00:44:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -111,7 +111,44 @@ abs(j)
 }
 #endif
 
+#ifdef NDEBUG						/* tradition! */
+#define	assert(e)	((void)0)
+#ifdef __STDC__
+#define	assert(e)	((e) ? (void)0 :				    \
+			    __assert("", __FILE__, __LINE__, #e))
+#else
+#define	assert(e)	((e) ? (void)0 :				    \
+			    __assert("", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
+#ifndef DIAGNOSTIC
+#define	KASSERT(e)	((void)0)
+#else
+#ifdef __STDC__
+#define	KASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("diagnostic ", __FILE__, __LINE__, #e))
+#else
+#define	KASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("diagnostic ", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
+#ifndef DEBUG
+#define	KDASSERT(e)	((void)0)
+#else
+#ifdef __STDC__
+#define	KDASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("debugging ", __FILE__, __LINE__, #e))
+#else
+#define	KDASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("debugging ", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
 /* Prototypes for non-quad routines. */
+void	 __assert __P((const char *, const char *, int, const char *))
+	    __attribute__((__noreturn__));
 int	 bcmp __P((const void *, const void *, size_t));
 int	 ffs __P((int));
 u_long	 random __P((void));
