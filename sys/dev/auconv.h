@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.11.2.2 2004/12/30 15:15:52 kent Exp $	*/
+/*	$NetBSD: auconv.h,v 1.11.2.3 2004/12/30 15:22:17 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,15 +85,15 @@ struct audio_format {
 
 	/**
 	 * The size of valid bits in one sample.
-	 * It must be <= subframe_size.
+	 * It must be <= precision.
 	 */
-	u_int precision;
+	u_int validbits;
 
 	/**
 	 * The bit size of one sample.
-	 * It must be >= precision, and is usualy a multiple of 8.
+	 * It must be >= validbits, and is usualy a multiple of 8.
 	 */
-	u_int subframe_size;
+	u_int precision;
 
 	/**
 	 * The number of channels.  >= 1
@@ -138,7 +138,7 @@ struct audio_format {
 	/**
 	 * sampling rates
 	 */
-	u_long frequency[AUFMT_MAX_FREQUENCIES];
+	u_int frequency[AUFMT_MAX_FREQUENCIES];
 };
 
 #define	AUFMT_INVALIDATE(fmt)	(fmt)->mode |= 0x80000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.2 2004/12/30 15:15:52 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.3 2004/12/30 15:22:17 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.2 2004/12/30 15:15:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.3 2004/12/30 15:22:17 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -771,7 +771,7 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 			    audio_params_t *hw_param, stream_filter_list_t *list)
 {
 	int ind, i, j, enc, f_enc;
-	u_long rate, minrate, maxrate, orig_rate;;
+	u_int rate, minrate, maxrate, orig_rate;;
 
 	/* exact match */
 	ind = auconv_exact_match(formats, nformats, mode, hw_param);
@@ -792,9 +792,9 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 						  formats[i].precision);
 		if (f_enc != enc)
 			continue;
-		if (formats[i].precision != hw_param->validbits)
+		if (formats[i].validbits != hw_param->validbits)
 			continue;
-		if (formats[i].subframe_size != hw_param->precision)
+		if (formats[i].precision != hw_param->precision)
 			continue;
 		if (formats[i].channels != hw_param->channels)
 			continue;
@@ -872,7 +872,7 @@ auconv_dump_formats(const struct audio_format *formats, int nformats)
 			printf("0x%x", f->mode);
 		}
 		printf(" enc=%s", encoding_names[f->encoding]);
-		printf(" %u/%ubit", f->precision, f->subframe_size);
+		printf(" %u/%ubit", f->validbits, f->precision);
 		printf(" %uch", f->channels);
 
 		printf(" channel_mask=");
@@ -926,9 +926,9 @@ auconv_exact_match(const struct audio_format *formats, int nformats,
 		 * XXX	Is to check precision/channels meaningful for
 		 *	MPEG encodings?
 		 */
-		if (formats[i].precision != param->validbits)
+		if (formats[i].validbits != param->validbits)
 			continue;
-		if (formats[i].subframe_size != param->precision)
+		if (formats[i].precision != param->precision)
 			continue;
 		if (formats[i].channels != param->channels)
 			continue;
