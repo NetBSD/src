@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccvar.h,v 1.2 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: vme_pccvar.h,v 1.3 2000/06/04 19:14:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ int _vme_pcc_probe __P((void *, vme_addr_t, vme_size_t, vme_am_t,vme_datasize_t,
     int (*)(void *, bus_space_tag_t, bus_space_handle_t), void *));
 
 int _vme_pcc_intmap __P((void *, int, int, vme_intr_handle_t *));
+
+const struct evcnt *_vme_pcc_intr_evcnt __P((void *, vme_intr_handle_t));
 
 void *_vme_pcc_intr_establish __P((void *, vme_intr_handle_t, int,
     int (*)(void *), void *));

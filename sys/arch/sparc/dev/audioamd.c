@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.3 2000/05/08 03:09:56 mycroft Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.4 2000/06/04 19:15:01 cgd Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -295,7 +295,8 @@ audioamd_attach(sc, pri)
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 am7930swintr, sc);
 
-	evcnt_attach(&sc->sc_am7930.sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_am7930.sc_dev.dv_xname, "intr");
 
 	audio_attach_mi(&sa_hw_if, sc, &sc->sc_am7930.sc_dev);
 }

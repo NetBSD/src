@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.27 1999/11/12 22:07:28 lukem Exp $ */
+/* $NetBSD: sio.c,v 1.28 2000/06/04 19:14:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.27 1999/11/12 22:07:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.28 2000/06/04 19:14:25 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,8 @@ sioattach(parent, self, aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_82C693);
 
 #ifdef EVCNT_COUNTERS
-	evcnt_attach(&sc->sc_dv, "intr", &sio_intr_evcnt);
+	evcnt_attach_dynamic(&sio_intr_evcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dv.dv_xname, "intr");
 #endif
 
 	config_defer(self, sio_bridge_callback);
@@ -175,6 +176,7 @@ sio_bridge_callback(self)
 		ec.ec_maxslots = sio_eisa_maxslots;
 		ec.ec_intr_map = sio_eisa_intr_map;
 		ec.ec_intr_string = sio_intr_string;
+		ec.ec_intr_evcnt = sio_intr_evcnt;
 		ec.ec_intr_establish = sio_intr_establish;
 		ec.ec_intr_disestablish = sio_intr_disestablish;
 
@@ -189,6 +191,7 @@ sio_bridge_callback(self)
 
 	sc->sc_isa_chipset.ic_v = NULL;
 	sc->sc_isa_chipset.ic_attach_hook = sio_isa_attach_hook;
+	sc->sc_isa_chipset.ic_intr_evcnt = sio_intr_evcnt;
 	sc->sc_isa_chipset.ic_intr_establish = sio_intr_establish;
 	sc->sc_isa_chipset.ic_intr_disestablish = sio_intr_disestablish;
 	sc->sc_isa_chipset.ic_intr_alloc = sio_intr_alloc;

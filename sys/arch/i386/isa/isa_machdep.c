@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.46 2000/05/11 16:38:13 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.47 2000/06/04 19:14:46 cgd Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -438,6 +438,14 @@ isa_intr_alloc(ic, mask, type, irq)
 	*irq = bestirq;
 
 	return (0);
+}
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*

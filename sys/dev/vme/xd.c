@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.25 2000/05/27 04:52:36 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.26 2000/06/04 19:15:17 cgd Exp $	*/
 
 /*
  *
@@ -646,7 +646,8 @@ xdcattach(parent, self, aux)
 	/* link in interrupt with higher level software */
 	vme_intr_map(ct, va->ivector, va->ilevel, &ih);
 	vme_intr_establish(ct, ih, IPL_BIO, xdcintr, xdc);
-	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
+	evcnt_attach_dynamic(&xdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    xdc->sc_dev.dv_xname, "intr");
 
 
 	/* now we must look for disks using autoconfig */

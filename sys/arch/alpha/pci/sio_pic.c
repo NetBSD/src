@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $ */
+/* $NetBSD: sio_pic.c,v 1.26 2000/06/04 19:14:26 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.26 2000/06/04 19:14:26 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,6 +442,16 @@ sio_intr_string(v, irq)
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
+}
+
+const struct evcnt *
+sio_intr_evcnt(v, irq)
+	void *v;
+	int irq;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *
