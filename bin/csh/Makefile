@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1997/05/06 20:44:56 gwr Exp $
+#	$NetBSD: Makefile,v 1.12 1997/05/08 21:11:01 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -14,9 +14,7 @@ CFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c printf.c proc.c \
 	sem.c set.c str.c time.c
-
-# printf.c
-.PATH.c: ${.CURDIR}/../../usr.bin/printf
+.PATH:	${.CURDIR}/../../usr.bin/printf
 
 MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
 	csh.1 foreach.1 csh.1 history.1 csh.1 jobs.1 csh.1 popd.1 \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/05/06 20:45:26 gwr Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/08 21:11:32 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	restore
@@ -11,6 +11,6 @@ BINGRP=	tty
 BINMODE=6555
 MAN=	restore.8
 MLINKS+=restore.8 rrestore.8
-.PATH.c: ${.CURDIR}/../dump
+.PATH:	${.CURDIR}/../dump
 
 .include <bsd.prog.mk>
