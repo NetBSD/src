@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.6 2000/09/04 22:06:33 lukem Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.7 2001/01/04 15:56:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.6 2000/09/04 22:06:33 lukem Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.7 2001/01/04 15:56:32 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -114,8 +114,12 @@ tok_init(const char *ifs)
 	tok->argc = 0;
 	tok->amax = AINCR;
 	tok->argv = (char **) tok_malloc(sizeof(char *) * tok->amax);
+	if (tok->argv == NULL)
+		return (NULL);
 	tok->argv[0] = NULL;
 	tok->wspace = (char *) tok_malloc(WINCR);
+	if (tok->wspace == NULL)
+		return (NULL);
 	tok->wmax = tok->wspace + WINCR;
 	tok->wstart = tok->wspace;
 	tok->wptr = tok->wspace;
@@ -368,6 +372,8 @@ tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
 			char *s = (char *) tok_realloc(tok->wspace, size);
 			/* SUPPRESS 22 */
 			int offs = s - tok->wspace;
+			if (s == NULL)
+				return (-1);
 
 			if (offs != 0) {
 				int i;
@@ -380,9 +386,13 @@ tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
 			}
 		}
 		if (tok->argc >= tok->amax - 4) {
+			char **p;
 			tok->amax += AINCR;
-			tok->argv = (char **) tok_realloc(tok->argv,
+			p = (char **) tok_realloc(tok->argv,
 			    tok->amax * sizeof(char *));
+			if (p == NULL)
+				return (-1);
+			tok->argv = p;
 		}
 	}
 }
