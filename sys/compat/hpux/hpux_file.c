@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.1 1995/11/28 08:39:58 thorpej Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.2 1995/12/08 07:54:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -116,14 +116,6 @@ hpux_sys_creat(p, v, retval)
 }
 
 /*
- * XXX extensions to the fd_ofileflags flags.
- * Hate to put this there, but they do need to be per-file.
- */
-#define	UF_NONBLOCK_ON		0x10
-#define	UF_FNDELAY_ON		0x20
-#define	UF_FIONBIO_ON		0x40
-
-/*
  * HP-UX open(2) system call.
  *
  * We need to remap some of the bits in the mode mask:
@@ -196,7 +188,8 @@ hpux_sys_open(p, v, retval)
 	 */
 	if ((error == 0) && (nflags & O_NDELAY))
 		p->p_fd->fd_ofileflags[*retval] |=
-		    (flags & HPUXNONBLOCK) ? UF_NONBLOCK_ON : UF_FNDELAY_ON;
+		    (flags & HPUXNONBLOCK) ?
+		        HPUX_UF_NONBLOCK_ON : HPUX_UF_FNDELAY_ON;
 
 	return (error);
 }
@@ -233,16 +226,16 @@ hpux_sys_fcntl(p, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case F_SETFL:
 		if (arg & HPUXNONBLOCK)
-			*pop |= UF_NONBLOCK_ON;
+			*pop |= HPUX_UF_NONBLOCK_ON;
 		else
-			*pop &= ~UF_NONBLOCK_ON;
+			*pop &= ~HPUX_UF_NONBLOCK_ON;
 
 		if (arg & HPUXNDELAY)
-			*pop |= UF_FNDELAY_ON;
+			*pop |= HPUX_UF_FNDELAY_ON;
 		else
-			*pop &= ~UF_FNDELAY_ON;
+			*pop &= ~HPUX_UF_FNDELAY_ON;
 		
-		if (*pop & (UF_NONBLOCK_ON|UF_FNDELAY_ON|UF_FIONBIO_ON))
+		if (*pop & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON|HPUX_UF_FIONBIO_ON))
 			arg |= FNONBLOCK;
 		else
 			arg &= ~FNONBLOCK;
@@ -351,10 +344,10 @@ hpux_sys_fcntl(p, v, retval)
 		mode = *retval;
 		*retval &= ~(O_CREAT|O_TRUNC|O_EXCL);
 		if (mode & FNONBLOCK) {
-			if (*pop & UF_NONBLOCK_ON)
+			if (*pop & HPUX_UF_NONBLOCK_ON)
 				*retval |= HPUXNONBLOCK;
 
-			if ((*pop & UF_FNDELAY_ON) == 0)
+			if ((*pop & HPUX_UF_FNDELAY_ON) == 0)
 				*retval &= ~HPUXNDELAY;
 		}
 		if (mode & O_CREAT)

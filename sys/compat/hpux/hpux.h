@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.9 1995/11/28 08:39:47 thorpej Exp $	*/
+/*	$NetBSD: hpux.h,v 1.10 1995/12/08 07:54:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -321,3 +321,10 @@ struct hpux_sigaction {
  * code to the HP-UX EAGAIN value.
  */
 #define OEAGAIN	82
+
+/*
+ * Extensions to the fd_ofileflags flags.
+ */
+#define	HPUX_UF_NONBLOCK_ON	0x10
+#define	HPUX_UF_FNDELAY_ON	0x20
+#define	HPUX_UF_FIONBIO_ON	0x40 
