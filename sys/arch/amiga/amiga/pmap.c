@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.10 1994/04/29 10:50:08 chopps Exp $
+ *	$Id: pmap.c,v 1.11 1994/05/08 05:52:27 chopps Exp $
  */
 
 /*
@@ -86,7 +86,7 @@
 #include <vm/vm_page.h>
 
 #include <machine/cpu.h>
-
+#include <amiga/dev/ztwobusvar.h>
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
  * and not yet converted.  XXX.
@@ -327,7 +327,6 @@ pmap_init(phys_start, phys_end)
 	int		rv;
 	extern char kstack[];
 	extern caddr_t CHIPMEMADDR;
-	extern u_int Z2MEMSIZE;		/* XXX */
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -342,7 +341,7 @@ pmap_init(phys_start, phys_end)
 #if 0
 			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + CUSTOMSIZE + SCSISIZE), FALSE);
 #else
-			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + ZORRO2SIZE) + Z2MEMSIZE, FALSE);
+			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + ZTWOROMSIZE) + ZTWOMEMSIZE, FALSE);
 #endif
 	if (addr != (vm_offset_t)CHIPMEMADDR)
 		goto bogons;
