@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.231 2003/04/26 21:59:43 fvdl Exp $
+#	$NetBSD: NetBSD.dist,v 1.232 2003/04/30 09:01:41 bjh21 Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -418,7 +418,9 @@
 ./usr/share/man/cat4/acorn32
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/amiga
+./usr/share/man/cat4/arc
 ./usr/share/man/cat4/atari
+./usr/share/man/cat4/cobalt
 ./usr/share/man/cat4/dreamcast
 ./usr/share/man/cat4/evbarm
 ./usr/share/man/cat4/hp300
@@ -514,7 +516,9 @@
 ./usr/share/man/man4/acorn32
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
+./usr/share/man/man4/arc
 ./usr/share/man/man4/atari
+./usr/share/man/man4/cobalt
 ./usr/share/man/man4/dreamcast
 ./usr/share/man/man4/evbarm
 ./usr/share/man/man4/hp300
