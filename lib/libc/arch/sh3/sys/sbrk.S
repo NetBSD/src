@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2000/03/27 16:27:16 msaitoh Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 2000/06/23 15:40:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.2 2000/03/27 16:27:16 msaitoh Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.3 2000/06/23 15:40:39 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -48,11 +48,19 @@
 	.globl	_end
 	.globl	curbrk
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
+
 	.data
 curbrk:	.long	_end
 	.text
 
+#ifdef WEAK_ALIAS
+ENTRY(_sbrk)
+#else
 ENTRY(sbrk)
+#endif
 	mov	r4, r2
 	mov.l	Lcurbrk, r0
 	mov.l	@r0, r0	

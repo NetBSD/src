@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.52 2000/06/02 23:11:06 fvdl Exp $	*/
+/*	$NetBSD: namespace.h,v 1.53 2000/06/23 15:40:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/cdefs.h>
 
+#define brk		_brk
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
@@ -45,6 +46,7 @@
 #define errx		_errx
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
+#define sbrk		_sbrk
 #define strtoll		_strtoll
 #define strtoull	_strtoull
 #define sys_errlist	_sys_errlist

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.10 1999/03/31 11:53:07 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.11 2000/06/23 15:40:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sbrk.S,v 1.10 1999/03/31 11:53:07 kleink Exp $")
+	ASMSTR("$NetBSD: sbrk.S,v 1.11 2000/06/23 15:40:38 kleink Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -50,12 +50,20 @@
 	.globl	_C_LABEL(__curbrk)
 	.globl	_C_LABEL(_end)
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
+
 	.data
 _C_LABEL(__curbrk):
 	.word	_C_LABEL(_end)
 	.text
 
+#ifdef WEAK_ALIAS
+LEAF(_sbrk)
+#else
 LEAF(sbrk)
+#endif
 #ifdef ABICALLS
 	.set	noreorder
 	.cpload	t9
