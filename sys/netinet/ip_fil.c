@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.89 2003/06/23 11:02:13 martin Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.90 2003/06/26 00:43:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -124,7 +124,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.89 2003/06/23 11:02:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.90 2003/06/26 00:43:32 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
@@ -390,7 +390,7 @@ int iplattach()
 #    ifdef USE_INET6
 	    && ph_inet6 == NULL
 #    endif
-           )
+	   )
 		return ENODEV;
 
 	if (ph_inet != NULL)
@@ -509,9 +509,9 @@ int ipldetach()
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
-        struct pfil_head *ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	struct pfil_head *ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 #  ifdef USE_INET6
-        struct pfil_head *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	struct pfil_head *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
 #  endif
 # endif
 #endif
@@ -1892,7 +1892,7 @@ void *ifp;
 	dst->sin_family = AF_INET;
 	dst->sin_addr = ipa;
 # if    (BSD >= 199306) && !defined(__NetBSD__) && !defined(__bsdi__) && \
-        !defined(__OpenBSD__)
+	!defined(__OpenBSD__)
 #  ifdef        RTF_CLONING
 	rtalloc_ign(&iproute, RTF_CLONING);
 #  else
