@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28.2.8 2002/12/11 06:50:08 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28.2.9 2003/01/17 16:38:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,7 +82,6 @@ struct	sigctx {
 
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*) __P((int)))2
-#define	SIG_HOLD	(void (*) __P((int)))3
 
 /*
  * get signal action for process and signal; currently only for current process

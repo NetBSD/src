@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.30.2.7 2002/07/12 01:40:31 nathanw Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.30.2.8 2003/01/17 16:37:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.7 2002/07/12 01:40:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.8 2003/01/17 16:37:17 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -730,15 +730,16 @@ vlan_start(struct ifnet *ifp)
 		 * the tag in the mbuf header.
 		 */
 		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
-			struct mbuf *n;
-			n = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
-			if (n == NULL) {
+			struct m_tag *mtag;
+
+			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+			    M_NOWAIT);
+			if (mtag == NULL) {
 				ifp->if_oerrors++;
 				m_freem(m);
 				continue;
 			}
-			*mtod(n, int *) = ifv->ifv_tag;
-			n->m_len = sizeof(int);
+			*(u_int *)(mtag + 1) = ifv->ifv_tag;
 		} else {
 			/*
 			 * insert the tag ourselves
@@ -816,13 +817,13 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifvlan *ifv;
 	u_int tag;
-	struct mbuf *n;
+	struct m_tag *mtag;
 
-	n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN);
-	if (n) {
-		/* m contains a normal ethernet frame, the tag is in m_aux */
-		tag = *mtod(n, int *);
-		m_aux_delete(m, n);
+	mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
+	if (mtag != NULL) {
+		/* m contains a normal ethernet frame, the tag is in mtag */
+		tag = *(u_int *)(mtag + 1);
+		m_tag_delete(m, mtag);
 		for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
 		    ifv = LIST_NEXT(ifv, ifv_list))
 			if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)

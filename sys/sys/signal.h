@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.8 2003/01/16 03:07:48 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.9 2003/01/17 16:38:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -118,6 +118,7 @@
 #define	SIG_DFL		((void (*) __P((int)))  0)
 #define	SIG_IGN		((void (*) __P((int)))  1)
 #define	SIG_ERR		((void (*) __P((int))) -1)
+#define	SIG_HOLD	((void (*) __P((int)))  3)
 
 #ifndef _ANSI_SOURCE
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
