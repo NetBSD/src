@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.6 2000/03/07 19:33:00 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.7 2000/08/08 22:31:14 tshiozak Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* bits per char		*/
-#define	MB_LEN_MAX	1		/* no multibyte characters	*/
+#define	MB_LEN_MAX	32		/* no multibyte characters	*/
 #define	CHAR_MIN	0		/* min value in char		*/
 #define	CHAR_MAX	0xff		/* max value in char		*/
 #define	UCHAR_MAX	0xff		/* max value in unsigned char	*/
