@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.4 1998/07/23 01:46:27 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.5 1998/07/23 09:18:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1781,17 +1781,26 @@ uhci_open(pipe)
 			pipe->methods = &uhci_device_ctrl_methods;
 			upipe->u.ctl.sqh = uhci_alloc_sqh(sc);
 			if (upipe->u.ctl.sqh == 0)
-				return (USBD_NOMEM);
+				goto bad;
 			upipe->u.ctl.setup = uhci_alloc_std(sc);
-			if (upipe->u.ctl.setup == 0)
-				return (USBD_NOMEM);
+			if (upipe->u.ctl.setup == 0) {
+				uhci_free_sqh(sc, upipe->u.ctl.sqh);
+				goto bad;
+			}
 			upipe->u.ctl.stat = uhci_alloc_std(sc);
-			if (upipe->u.ctl.stat == 0)
-				return (USBD_NOMEM);
+			if (upipe->u.ctl.stat == 0) {
+				uhci_free_sqh(sc, upipe->u.ctl.sqh);
+				uhci_free_std(sc, upipe->u.ctl.setup);
+				goto bad;
+			}
 			r = uhci_allocmem(sc, sizeof(uhci_dma_t), 0, 
 					  &upipe->u.ctl.reqdma);
-			if (r != USBD_NORMAL_COMPLETION)
-				return (r);
+			if (r != USBD_NORMAL_COMPLETION) {
+				uhci_free_sqh(sc, upipe->u.ctl.sqh);
+				uhci_free_std(sc, upipe->u.ctl.setup);
+				uhci_free_std(sc, upipe->u.ctl.stat);
+				goto bad;
+			}
 			break;
 		case UE_INTERRUPT:
 			pipe->methods = &uhci_device_intr_methods;
@@ -1803,11 +1812,15 @@ uhci_open(pipe)
 			pipe->methods = &uhci_device_bulk_methods;
 			upipe->u.bulk.sqh = uhci_alloc_sqh(sc);
 			if (upipe->u.bulk.sqh == 0)
-				return (USBD_NOMEM);
+				goto bad;
 			break;
 		}
 	}
 	return (USBD_NORMAL_COMPLETION);
+
+ bad:
+	uhci_free_intr_info(upipe->iinfo);
+	return (USBD_NOMEM);
 }
 
 /*
