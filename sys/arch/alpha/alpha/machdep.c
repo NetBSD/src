@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.114 1998/03/18 19:02:50 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.115 1998/03/26 02:21:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 1998/03/18 19:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 1998/03/26 02:21:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,13 +772,6 @@ nobootinfo:
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
-
-#ifdef NEW_PMAP
-	/*
-	 * Set up the kernel address space in proc0's hwpcb.
-	 */
-	PMAP_ACTIVATE(kernel_pmap, &proc0paddr->u_pcb.pcb_hw, 0);
-#endif
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
