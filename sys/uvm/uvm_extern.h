@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.51 2000/09/28 19:05:06 eeh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.52 2000/11/27 04:36:40 nisimura Exp $	*/
 
 /*
  *
@@ -454,6 +454,7 @@ struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
 				vaddr_t *, vsize_t, int,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
+vaddr_t			uvm_km_valloc_align __P((vm_map_t, vsize_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_prefer_wait __P((vm_map_t, vsize_t,
 					voff_t));
