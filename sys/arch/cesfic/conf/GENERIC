@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20 2003/09/22 14:11:17 cl Exp $
+# $NetBSD: GENERIC,v 1.21 2004/06/16 15:07:40 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -109,6 +109,7 @@ zstty*		at zsc? channel ?
 le*		at mainbus0		# LANCE ethernet interfaces
 
 pseudo-device	pty		64	# pseudo ptys
+pseudo-device	ptm			# pseudo-terminal multiplexor
 #pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	ppp		4	# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
