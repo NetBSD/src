@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.19 1996/12/10 18:20:26 mycroft Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.20 1997/07/23 21:26:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -129,6 +129,45 @@ struct tcpcb {
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 };
 
+/*
+ * Handy way of passing around TCP option info.
+ */
+struct tcp_opt_info {
+	int		ts_present;
+	u_int32_t	ts_val;
+	u_int32_t	ts_ecr;
+	u_int16_t	maxseg;
+};
+
+/*
+ * This structure should not exceed 32 bytes.
+ * XXX On the Alpha, it's already 36-bytes, which rounds to 40.
+ * XXX Need to eliminate the pointer.
+ */
+struct syn_cache {
+	struct syn_cache *sc_next;
+	u_int32_t sc_tstmp		: 1,
+		  sc_hash		: 31;
+	struct in_addr sc_src;
+	struct in_addr sc_dst;
+	tcp_seq sc_irs;
+	tcp_seq sc_iss;
+	u_int16_t sc_sport;
+	u_int16_t sc_dport;
+	u_int16_t sc_peermaxseg;
+	u_int8_t sc_timer;
+	u_int8_t sc_request_r_scale	: 4,
+		 sc_requested_s_scale	: 4;
+};
+
+struct syn_cache_head {
+	struct syn_cache *sch_first;		/* First entry in the bucket */
+	struct syn_cache *sch_last;		/* Last entry in the bucket */
+	struct syn_cache_head *sch_headq;	/* The next non-empty bucket */
+	int16_t sch_timer_sum;			/* Total time in this bucket */
+	u_int16_t sch_length;			/* @ # elements in bucket */
+};
+
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
 
@@ -221,6 +260,21 @@ struct	tcpstat {
 
 	u_long	tcps_pcbhashmiss;	/* input packets missing pcb hash */
 	u_long	tcps_noport;		/* no socket on port */
+	u_long	tcps_badsyn;		/* received ack for which we have
+					   no SYN in compressed state */
+
+	/* These statistics deal with the SYN cache. */
+	u_long	tcps_sc_added;		/* # of entries added */
+	u_long	tcps_sc_completed;	/* # of connections completed */
+	u_long	tcps_sc_timed_out;	/* # of entries timed out */
+	u_long	tcps_sc_overflowed;	/* # dropped due to overflow */
+	u_long	tcps_sc_reset;		/* # dropped due to RST */
+	u_long	tcps_sc_unreach;	/* # dropped due to ICMP unreach */
+	u_long	tcps_sc_bucketoverflow;	/* # dropped due to bucket overflow */
+	u_long	tcps_sc_aborted;	/* # of entries aborted (no mem) */
+	u_long	tcps_sc_dupesyn;	/* # of duplicate SYNs received */
+	u_long	tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
+	u_long	tcps_sc_collisions;	/* # of hash collisions */
 };
 
 /*
@@ -241,6 +295,11 @@ struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 
+int	tcp_syn_cache_size;
+int	tcp_syn_cache_timeo;
+struct	syn_cache_head tcp_syn_cache[], *tcp_syn_cache_first;
+u_long	syn_cache_count;
+
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
 struct tcpcb *
@@ -252,7 +311,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop __P((struct tcpcb *, int));
 void	 tcp_dooptions __P((struct tcpcb *,
-	    u_char *, int, struct tcpiphdr *, int *, u_int32_t *, u_int32_t *));
+	    u_char *, int, struct tcpiphdr *, struct tcp_opt_info *));
 void	 tcp_drain __P((void));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
@@ -266,7 +325,7 @@ void	 tcp_pulloutofband __P((struct socket *,
 	    struct tcpiphdr *, struct mbuf *));
 void	 tcp_quench __P((struct inpcb *, int));
 int	 tcp_reass __P((struct tcpcb *, struct tcpiphdr *, struct mbuf *));
-void	 tcp_respond __P((struct tcpcb *,
+int	 tcp_respond __P((struct tcpcb *,
 	    struct tcpiphdr *, struct mbuf *, tcp_seq, tcp_seq, int));
 void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
@@ -281,4 +340,20 @@ int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
+
+int	 syn_cache_add __P((struct socket *, struct mbuf *, u_char *,
+	    int, struct tcp_opt_info *));
+void	 syn_cache_unreach __P((struct ip *, struct tcphdr *));
+struct socket *
+	 syn_cache_get __P((struct socket *so, struct mbuf *));
+void	 syn_cache_insert __P((struct syn_cache *, struct syn_cache ***,
+	    struct syn_cache_head **));
+struct syn_cache *
+	 syn_cache_lookup __P((struct tcpiphdr *, struct syn_cache ***,
+	    struct syn_cache_head **));
+void	 syn_cache_reset __P((struct tcpiphdr *));
+int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *,
+	    register struct tcpiphdr *, long, u_long));
+void	 syn_cache_timer __P((int));
+
 #endif

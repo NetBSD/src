@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.26 1997/06/24 02:26:06 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.27 1997/07/23 21:26:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -44,6 +44,7 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -136,7 +137,7 @@ tcp_template(tp)
  * In any case the ack and sequence number of the transmitted
  * segment are as specified by the parameters.
  */
-void
+int
 tcp_respond(tp, ti, m, ack, seq, flags)
 	struct tcpcb *tp;
 	register struct tcpiphdr *ti;
@@ -155,7 +156,7 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	if (m == 0) {
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
-			return;
+			return (ENOBUFS);
 #ifdef TCP_COMPAT_42
 		tlen = 1;
 #else
@@ -176,27 +177,31 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 		xchg(ti->ti_dport, ti->ti_sport, u_int16_t);
 #undef xchg
 	}
-	ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) + tlen));
-	tlen += sizeof (struct tcpiphdr);
-	m->m_len = tlen;
-	m->m_pkthdr.len = tlen;
-	m->m_pkthdr.rcvif = (struct ifnet *) 0;
 	bzero(ti->ti_x1, sizeof ti->ti_x1);
 	ti->ti_seq = htonl(seq);
 	ti->ti_ack = htonl(ack);
 	ti->ti_x2 = 0;
-	ti->ti_off = sizeof (struct tcphdr) >> 2;
+	if ((flags & TH_SYN) == 0) {
+		if (tp)
+			ti->ti_win = htons((u_int16_t) (win >> tp->rcv_scale));
+		else
+			ti->ti_win = htons((u_int16_t)win);
+		ti->ti_off = sizeof (struct tcphdr) >> 2;
+		tlen += sizeof (struct tcphdr);
+	} else
+		tlen += ti->ti_off << 2;
+	ti->ti_len = htons((u_int16_t)tlen);
+	tlen += sizeof (struct ip);
+	m->m_len = tlen;
+	m->m_pkthdr.len = tlen;
+	m->m_pkthdr.rcvif = (struct ifnet *) 0;
 	ti->ti_flags = flags;
-	if (tp)
-		ti->ti_win = htons((u_int16_t) (win >> tp->rcv_scale));
-	else
-		ti->ti_win = htons((u_int16_t)win);
 	ti->ti_urp = 0;
 	ti->ti_sum = 0;
 	ti->ti_sum = in_cksum(m, tlen);
 	((struct ip *)ti)->ip_len = tlen;
 	((struct ip *)ti)->ip_ttl = ip_defttl;
-	(void) ip_output(m, NULL, ro, 0, NULL);
+	return ip_output(m, NULL, ro, 0, NULL);
 }
 
 /*
@@ -410,6 +415,7 @@ tcp_ctlinput(cmd, sa, v)
 	extern int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
+	int nmatch;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
@@ -424,10 +430,15 @@ tcp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&tcbtable, satosin(sa)->sin_addr, th->th_dport,
-		    ip->ip_src, th->th_sport, errno, notify);
+		nmatch = in_pcbnotify(&tcbtable, satosin(sa)->sin_addr,
+		    th->th_dport, ip->ip_src, th->th_sport, errno, notify);
+		if (nmatch == 0 && syn_cache_count &&
+		    (inetctlerrmap[cmd] == EHOSTUNREACH ||
+		    inetctlerrmap[cmd] == ENETUNREACH ||
+		    inetctlerrmap[cmd] == EHOSTDOWN))
+			syn_cache_unreach(ip, th);
 	} else
-		in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
+		(void)in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
 		    notify);
 	return NULL;
 }
