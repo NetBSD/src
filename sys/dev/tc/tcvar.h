@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.3 1996/02/27 01:37:33 cgd Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.4 1996/03/17 21:37:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -127,6 +127,6 @@ void	tc_intr_disestablish __P((struct device *, void *));
  * The TurboChannel bus cfdriver, so that subdevices can more
  * easily tell what bus they're on.
  */
-extern struct cfdriver tccd;
+extern struct cfdriver tc_cd;
 
 #endif /* __DEV_TC_TCVAR_H__ */
