@@ -1,0 +1,129 @@
+#	$NetBSD: HP620LX,v 1.1 2001/06/28 19:07:13 uch Exp $
+#
+#	HP620LX
+#
+
+include "arch/hpcsh/conf/std.hpcsh.el"
+
+maxusers	32			# estimated number of users
+
+options		SH7709A			# 133MHz
+options		SH7709A_BROKEN_IPR
+options		PCLOCK=18432000		# 18MHz
+
+options 	DDB			# in-kernel debugger
+options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DEBUG			# extra kernel debugging support
+options 	KTRACE			# system call tracing support
+options		MSGBUFSIZE=65534
+
+# Standard system options
+options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
+
+options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+
+# Executable format options
+options 	EXEC_COFF	# 32-bit COFF executables
+options 	EXEC_ELF32	# 32-bit ELF executables
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	MFS		# memory file system
+file-system	NFS		# Sun NFS-compatible filesystem client
+file-system 	UNION		# union file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	PROCFS		# /proc
+
+# File system options
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	NFS_BOOT_DHCP
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+options 	WSEMUL_VT100
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_VT220L8x10
+options 	WS_KERNEL_FG=WSCOL_BROWN
+options 	WS_KERNEL_BG=WSCOL_BLUE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+#
+# Device configuration
+#
+mainbus0 at root
+
+shb* at mainbus?
+
+#
+# Workstation Console attachments
+#
+hpcfb*		at hd64461video?
+wsdisplay*	at hpcfb?
+pfckbd*		at mainbus?
+hpckbd*		at pfckbd?
+wskbd*		at hpckbd? mux 1
+
+options SCIFCN_SPEED=19200
+scif* at shb? port 0xa4000008 irq 12
+
+hd64461if* at shb? irq 4
+hd64461pcmcia*	at hd64461if?
+hd64461video*	at hd64461if?
+
+#
+# machine independent part
+#
+# PCMCIA bus support
+pcmcia0 at hd64461pcmcia? controller 0 socket ?	# I/O card, memory card
+pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
+
+# PCMCIA network interfaces
+ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
+ep*	at pcmcia0 function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
+wi*	at pcmcia0 function ?		# Lucent WaveLan IEEE (802.11)
+mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
+com*	at mhzc?
+sm*	at mhzc?
+
+# PCMCIA SCSI interfaces
+aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
+
+scsibus* at aic?
+
+# PCMCIA IDE disk
+# PC-Card slot
+wdc1	at pcmcia0 function ?
+wd*	at wdc1 channel ? drive ? flags 0x0000
+# Compact Flash slot (only memory mapped mode CF can attach) 
+wdc0	at pcmcia1 function ?
+wd*	at wdc0 channel ? drive ? flags 0x0000
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+# Network Interfaces
+
+# Pseudo-Devices
+pseudo-device	biconsdev	1	# build-in console device
+
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
