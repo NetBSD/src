@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.13 1999/08/03 20:19:19 wrstuden Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.14 1999/10/23 19:34:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -311,7 +311,6 @@ genfs_lock(v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -328,7 +327,6 @@ genfs_unlock(v)
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
