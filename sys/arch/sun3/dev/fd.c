@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 1998/01/12 20:35:07 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.6 1998/01/22 21:26:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -134,6 +134,8 @@ void	fdcattach __P((struct device *, struct device *, void *));
 struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcmatch, fdcattach
 };
+
+extern struct cfdriver fdc_cd;
 
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
