@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.55 2001/07/05 08:38:27 toshii Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.56 2001/07/07 14:53:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -147,6 +147,7 @@ cd9660_mountroot()
 	simple_unlock(&mountlist_slock);
 	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
+	inittodr(0);
 	return (0);
 }
 
