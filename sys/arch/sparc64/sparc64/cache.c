@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.2 1998/09/05 23:57:26 eeh Exp $ */
+/*	$NetBSD: cache.c,v 1.3 2000/08/01 00:28:03 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,6 +54,8 @@
 /*
  * Cache routines.
  *
+ * UltraSPARC has VIPT D$ and PIPT I$.
+ *
  * TODO:
  *	- rework range flush
  */
@@ -91,8 +93,8 @@ cache_enable()
  * To get the E$ we read to each cache line.  
  */
 int
-cache_flush_page(va)
-	vaddr_t va;
+cache_flush_page(pa)
+	paddr_t pa;
 {
 	register int i, j, ls;
 	register char *p;
@@ -100,20 +102,20 @@ cache_flush_page(va)
 
 #ifdef DEBUG
 	if (cachedebug)
-		printf("cache_flush_page %p\n", va);
-	if (va & PGOFSET)
-		panic("cache_flush_page: asked to flush misaligned va %x",va);
+		printf("cache_flush_page %llx\n", pa);
+	if (pa & PGOFSET)
+		panic("cache_flush_page: asked to flush misaligned pa %llx", pa);
 #endif
 
 	/* Don't flush if not enabled or not probed. */
 	if (!cacheinfo.c_enabled) return 0;
 
 	cachestats.cs_npgflush++;
-	p = (char *)va;
+	p = (char *)(u_long)pa;
 	ls = cacheinfo.c_linesize;
 	i = NBPG >> cacheinfo.dc_l2linesize;
 	/* Assume E$ takes care of itself*/
-	kp = (int *)((va & (cacheinfo.ec_totalsize - 1)) + KERNBASE);
+	kp = (int *)((pa & (cacheinfo.ec_totalsize - 1)) + KERNBASE);
 	j = 0; /* defeat optimizer? */
 	for (; --i >= 0; p += ls) {
 		flush(p);	/* Take care of I$. */
@@ -136,7 +138,7 @@ cache_flush_page(va)
 
 int
 cache_flush(base, len)
-	caddr_t base;
+	vaddr_t base;
 	size_t len;
 {
 	int i, j, ls;
