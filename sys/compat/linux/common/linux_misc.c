@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.100 2002/02/18 22:24:18 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.101 2002/02/20 17:03:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.100 2002/02/18 22:24:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.101 2002/02/20 17:03:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,35 @@ const int linux_ptrace_request_map[] = {
 #endif
 	-1
 };
+
+const static struct mnttypes {
+	char *bsd;
+	int linux;
+} fstypes[] = {
+	{ MOUNT_FFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_NFS,		LINUX_NFS_SUPER_MAGIC 		},
+	{ MOUNT_MFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_MSDOS,		LINUX_MSDOS_SUPER_MAGIC		},
+	{ MOUNT_LFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_FDESC,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_PORTAL,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_NULL,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_OVERLAY,	LINUX_DEFAULT_SUPER_MAGIC	},	
+	{ MOUNT_UMAP,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_KERNFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_PROCFS,		LINUX_PROC_SUPER_MAGIC		},
+	{ MOUNT_AFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_CD9660,		LINUX_ISOFS_SUPER_MAGIC		},
+	{ MOUNT_UNION,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_ADOSFS,		LINUX_ADFS_SUPER_MAGIC		},
+	{ MOUNT_EXT2FS,		LINUX_EXT2_SUPER_MAGIC		},
+	{ MOUNT_CFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_CODA,		LINUX_CODA_SUPER_MAGIC		},
+	{ MOUNT_FILECORE,	LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		}
+};
+#define FSTYPESSIZE (sizeof(fstypes) / sizeof(fstypes[0]))
 
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
@@ -261,17 +290,33 @@ bsd_to_linux_statfs(bsp, lsp)
 	struct statfs *bsp;
 	struct linux_statfs *lsp;
 {
+	int i;
 
-	lsp->l_ftype = bsp->f_type;
+	for (i = 0; i < FSTYPESSIZE; i++)
+		if (strcmp(bsp->f_fstypename, fstypes[i].bsd) == 0)
+			break;
+
+	if (i == FSTYPESSIZE) {
+#ifdef DIAGNOSTIC
+		printf("unhandled fstype in linux emulation: %s\n",
+		    bsp->f_fstypename);
+#endif
+		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
+	} else {
+		lsp->l_ftype = fstypes[i].linux;
+	}
+
 	lsp->l_fbsize = bsp->f_bsize;
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;
 	lsp->l_fbavail = bsp->f_bavail;
 	lsp->l_ffiles = bsp->f_files;
 	lsp->l_fffree = bsp->f_ffree;
+	/* Linux sets the fsid to 0..., we don't */
 	lsp->l_ffsid.val[0] = bsp->f_fsid.val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsid.val[1];
 	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
+	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
 
 /*
@@ -344,18 +389,6 @@ linux_sys_fstatfs(p, v, retval)
 
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
-
-/*
- * NOTE: DO NOT CHANGE THIS
- * Linux makes assumptions about specific features being present with
- * more recent kernels. Specifically, LinuxThreads use RT queued
- * signals if the kernel release is bigger. Since we don't support them
- * yet, the version needs to stay this way until we'd have the RT queued
- * signals implemented.
- */
-char linux_sysname[] = "Linux";
-char linux_release[] = "2.0.38";
-char linux_version[] = "#0 Sun Apr 1 11:11:11 MET 2000";
 
 /*
  * uname(). Just copy the info from the various strings stored in the
