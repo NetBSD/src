@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.5 1998/05/05 08:36:56 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.6 1998/11/23 04:45:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -614,7 +614,7 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern u_long MacOSROMBase;
+	extern u_long maxaddr;
 	extern int cold;
 
 #if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
@@ -675,12 +675,9 @@ cpu_reboot(howto, bootstr)
 		(void)cngetc();
 	}
 
-	/*
-	 * Map ROM where the MacOS likes it, so we can reboot,
-	 * hopefully.
-	 */
-	pmap_map(MacOSROMBase, MacOSROMBase, MacOSROMBase + 4 * 1024 * 1024,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	/* Map the last physical page VA = PA for doboot() */
+	pmap_enter(pmap_kernel(), (vm_offset_t)maxaddr, (vm_offset_t)maxaddr,
+	    VM_PROT_ALL, TRUE);
 
 	printf("rebooting...\n");
 	DELAY(1000000);
