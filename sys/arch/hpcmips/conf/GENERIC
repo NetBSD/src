@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2002/01/27 13:23:16 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.106 2002/02/11 07:55:49 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 maxusers	16
 
@@ -129,20 +129,20 @@ apmdev0	at hpcapm0			# APM
 
 options 	MQ200_DEBUG
 #options 	MQ200_USECRT
-mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
+mqvideo0 at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video
 hpcfb*		at	mqvideo?
 
-ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
+ite8181video0 at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video
 hpcfb*		at	ite8181video?
 
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_510
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_520
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700
 
 #
 # hpcmips isa? bus irq locator means:
