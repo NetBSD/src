@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.12 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.13 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_host_get_io_master_reply_t;
 
-/* Theses are machine dependent functions */
+/* These are machine dependent functions */
 void mach_host_basic_info(struct mach_host_basic_info *);
 void mach_host_priority_info(struct mach_host_priority_info *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.25 2003/12/08 12:03:16 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.26 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -392,7 +392,7 @@ struct mach_memory_entry {
 	size_t mme_size;
 };
 
-/* Theses are machine dependent functions */
+/* These are machine dependent functions */
 int mach_vm_machine_attribute_machdep(struct lwp *, vaddr_t, size_t, int *);
 
 #endif /* _MACH_VM_H_ */
