@@ -1,4 +1,4 @@
-/*	$NetBSD: mopdef.h,v 1.2 1997/03/25 03:07:20 thorpej Exp $	*/
+/*	$NetBSD: mopdef.h,v 1.3 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: mopdef.h,v 1.2 1997/03/25 03:07:20 thorpej Exp $
+ *	$NetBSD: mopdef.h,v 1.3 2001/01/16 02:50:31 cgd Exp $
  *
  */
 
@@ -193,6 +193,6 @@ extern char rc_mcst[];
 extern char dl_802_proto[];
 extern char rc_802_proto[];
 extern char lp_802_proto[];
-#endif	MOPDEF_SUPRESS_EXTERN
+#endif	/* MOPDEF_SUPRESS_EXTERN */
 
-#endif _MOPDEF_H_
+#endif /* _MOPDEF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.44 2001/01/03 12:41:00 mjl Exp $	*/
+/*	$NetBSD: commands.c,v 1.45 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.44 2001/01/03 12:41:00 mjl Exp $");
+__RCSID("$NetBSD: commands.c,v 1.45 2001/01/16 02:50:31 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ __RCSID("$NetBSD: commands.c,v 1.44 2001/01/03 12:41:00 mjl Exp $");
 
 #ifndef	MAXHOSTNAMELEN
 #define	MAXHOSTNAMELEN 64
-#endif	MAXHOSTNAMELEN
+#endif	/* MAXHOSTNAMELEN */
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;

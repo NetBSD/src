@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.34 2001/01/11 07:58:04 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.35 2001/01/16 02:50:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,13 +40,13 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif not lint
+#endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.34 2001/01/11 07:58:04 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.35 2001/01/16 02:50:32 cgd Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.3 1997/10/16 23:24:29 lukem Exp $	*/
+/*	$NetBSD: device.h,v 1.4 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: device.h,v 1.3 1997/10/16 23:24:29 lukem Exp $
+ *	$NetBSD: device.h,v 1.4 2001/01/16 02:50:31 cgd Exp $
  *
  */
 
@@ -50,4 +50,4 @@ void	mopReadDL __P((void));
 void	mopReadRC __P((void));
 __END_DECLS
 
-#endif _DEVICE_H_
+#endif /* _DEVICE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.19 2000/01/21 17:08:38 mycroft Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.20 2001/01/16 02:50:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -245,10 +245,10 @@
 #include <sys/ttyloc.h>
 #include <access.h>
 #include <sys/viceioctl.h>
-#else	CMUCS
+#else	/* CMUCS */
 #define ACCESS_CODE_OK		0
 #define ACCESS_CODE_BADPASSWORD (-2)
-#endif  CMUCS
+#endif  /* CMUCS */
 
 #ifdef __SVR4
 # include <sys/mkdev.h>
