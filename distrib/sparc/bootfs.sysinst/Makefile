@@ -1,26 +1,26 @@
-#	$NetBSD: Makefile,v 1.10.2.3 2000/03/01 00:23:07 he Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2000/03/01 00:22:41 he Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
 
-KERN=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
+KERN=		${TOP}/../../sys/arch/${MACHINE}/compile/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
+VND_CDEV=	/dev/${VND}${RAW_PART}
+VND_CRDEV=	/dev/r${VND}${RAW_PART}
 FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
-IMAGE?=		boot-${REV}.fs
+IMAGE?=		syboot-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${.CURDIR}/list
-RAMDISK!=	cd ${TOP}/ramdisk/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" |\
+RAMDISK!=	cd ${TOP}/ramdisk.sysinst/; \
+		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/syramdisk-${REV}.fs\n" |\
 		${MAKE} -s -f-
 
 DISKTYPE=	floppy
@@ -48,7 +48,7 @@ all:	netbsd.ram.gz
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	/usr/mdec/binstall -v -b boot.700000 ffs ${MOUNT_POINT}
+	/usr/mdec/binstall -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
