@@ -1,4 +1,4 @@
-.\"	$NetBSD: sl.4,v 1.5 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: sl.4,v 1.6 2001/07/27 19:49:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 The
 .Nm
 interface allows asynchronous serial lines to be used as
-.Tn IP 
+.Tn IPv4
 network interfaces using the
 .Tn SLIP
 protocol.
@@ -60,7 +60,7 @@ filtering.
 However,
 .Tn SLIP
 can only transmit
-.Tn IP
+.Tn IPv4
 packets between preconfigured hosts on an asynchronous serial link.
 It has no provision for address negotiation,
 carriage of additional protocols (e.g.
