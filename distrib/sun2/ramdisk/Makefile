@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/03/25 07:43:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/03/26 23:09:40 fredette Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -78,6 +78,7 @@ HACKSRC=${TOP}/../utils/libhack
 CPPFLAGS+=-I${DESTDIR}/usr/include
 .include "${HACKSRC}/Makefile.inc"
 HACKOBJS+=	gethost.o
+libhack.o: gethost.o
 
 clean cleandir distclean:
 	-rm -f a.out core *.core *.o *.cro *.c
