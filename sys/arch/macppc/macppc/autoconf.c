@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1998/07/24 14:40:40 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 1998/10/14 12:18:20 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/pci/pcivar.h>
 
 #include <machine/powerpc.h>
 #include <machine/pio.h>
@@ -48,19 +49,10 @@
 
 extern int cold;
 
-void configure __P((void));
 void findroot __P((void));
 
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
-
-struct devnametobdevmaj powermac_nam2blk[] = {
-	{ "ofdisk",	0 },
-	{ "sd",		4 },
-	{ "md",		9 },
-	{ "wd",		10 },
-	{ NULL,		0 },
-};
 
 #define INT_ENABLE_REG (interrupt_reg + 0x24)
 #define INT_CLEAR_REG  (interrupt_reg + 0x28)
@@ -97,7 +89,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, powermac_nam2blk);
+	setroot(booted_device, booted_partition, dev_name2blk);
 }
 
 /*
@@ -186,4 +178,39 @@ OF_interpret(cmd, nreturns, va_alist)
 		*va_arg(ap, int *) = args.results[i];
 	va_end(ap);
 	return args.status;
+}
+
+/*
+ * Find OF-device corresponding to the PCI device.
+ */
+int
+pcidev_to_ofdev(pa)
+	struct pci_attach_args *pa;
+{
+	int bus, dev, func;
+	u_int reg[5];
+	int p, q;
+	int l, b, d, f;
+
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
+
+	for (q = OF_peer(0); q; q = p) {
+		l = OF_getprop(q, "assigned-addresses", reg, sizeof(reg));
+		if (l > 4) {
+			b = (reg[0] >> 16) & 0xff;
+			d = (reg[0] >> 11) & 0x1f;
+			f = (reg[0] >> 8) & 0x07;
+
+			if (b == bus && d == dev && f == func)
+				return q;
+		}
+		if ((p = OF_child(q)))
+			continue;
+		while (q) {
+			if ((p = OF_peer(q)))
+				break;
+			q = OF_parent(q);
+		}
+	}
+	return 0;
 }
