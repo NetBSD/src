@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.8 2000/09/08 17:22:02 jsm Exp $	*/
+/*	$NetBSD: room.c,v 1.9 2000/09/10 10:52:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: room.c,v 1.8 2000/09/08 17:22:02 jsm Exp $");
+__RCSID("$NetBSD: room.c,v 1.9 2000/09/10 10:52:56 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,9 +55,12 @@ writedes()
 	if (beenthere[position] < ROOMDESC) {
 		compass = NORTH;
 		for (p = location[position].desc; (c = *p++) != 0;)
-			if (c != '-' && c != '*' && c != '+')
-				putchar(c);
-			else {
+			if (c != '-' && c != '*' && c != '+') {
+				if (c == '=')
+					putchar('-');
+				else
+					putchar(c);
+			} else {
 				if (c != '*')
 					printf(truedirec(compass, c));
 				compass++;
