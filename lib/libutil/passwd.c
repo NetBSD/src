@@ -1,3 +1,5 @@
+/*	$NetBSD: passwd.c,v 1.8 1997/06/29 18:44:08 christos Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.7 1997/06/20 06:17:27 mikel Exp $";
+__RCSID("$NetBSD: passwd.c,v 1.8 1997/06/29 18:44:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -147,9 +150,12 @@ pw_edit(notsetuid, filename)
 	int notsetuid;
 	const char *filename;
 {
-	int i, j, xargc, pstat;
+	int i, xargc, pstat;
 	char *p, *editor;
 	char **xargv;
+#ifdef __GNUC__
+	(void) &editor;
+#endif
 
 	if (filename == NULL)
 		filename = _PATH_MASTERPASSWD_LOCK;

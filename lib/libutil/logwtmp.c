@@ -1,3 +1,5 @@
+/*	$NetBSD: logwtmp.c,v 1.6 1997/06/29 18:44:07 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: logwtmp.c,v 1.5 1996/05/15 21:42:29 jtc Exp $";
+__RCSID("$NetBSD: logwtmp.c,v 1.6 1997/06/29 18:44:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

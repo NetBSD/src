@@ -1,4 +1,4 @@
-/*	$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $	*/
+/*	$NetBSD: getrawpartition.c,v 1.2 1997/06/29 18:44:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $";
+__RCSID("$NetBSD: getrawpartition.c,v 1.2 1997/06/29 18:44:04 christos Exp $");
 #endif
 
 #include <sys/param.h>
