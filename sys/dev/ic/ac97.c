@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.46 2003/09/08 13:58:21 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.47 2003/09/11 09:21:29 jmmv Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.46 2003/09/08 13:58:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.47 2003/09/11 09:21:29 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1488,11 +1488,22 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 static void
 ac97_ad1980_init(struct ac97_softc *as)
 {
+	int i;
 	unsigned short misc;
 
 	ac97_read(as, AD1980_REG_MISC, &misc);
 	ac97_write(as, AD1980_REG_MISC,
 		   misc | AD1980_MISC_LOSEL | AD1980_MISC_HPSEL);
+
+	for (i = 0; i < as->num_source_info; i++) {
+		if (as->source_info[i].type != AUDIO_MIXER_VALUE)
+			continue;
+
+		if (as->source_info[i].reg == AC97_REG_MASTER_VOLUME)
+			as->source_info[i].reg = AC97_REG_SURR_MASTER;
+		else if (as->source_info[i].reg == AC97_REG_SURR_MASTER)
+			as->source_info[i].reg = AC97_REG_MASTER_VOLUME;
+	}
 }
 
 #define ALC650_REG_MULTI_CHANNEL_CONTROL	0x6a
