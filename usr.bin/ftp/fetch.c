@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.144 2003/07/31 05:23:59 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.145 2003/12/04 12:51:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.144 2003/07/31 05:23:59 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.145 2003/12/04 12:51:18 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -245,7 +245,7 @@ url_decode(char *url)
 
 /*
  * Parse URL of form:
- *	<type>://[<user>[:<password>@]]<host>[:<port>][/<path>]
+ *	<type>://[<user>[:<password>]@]<host>[:<port>][/<path>]
  * Returns -1 if a parse error occurred, otherwise 0.
  * It's the caller's responsibility to url_decode() the returned
  * user, pass and path.
