@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.4 2001/09/15 04:33:39 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.5 2001/09/15 04:50:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.4 2001/09/15 04:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.5 2001/09/15 04:50:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,18 +205,9 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 		    irongate_conf_read0(icp, tag, PCI_CLASS_REG);
 		apa.apa_pci_args.pa_flags = pba.pba_flags;
 
-		config_found(self, &apa, irongate_print);
+		(void) config_found(self, &apa, irongate_print);
 	}
 
-	pba.pba_busname = "pci";
-	pba.pba_iot = &icp->ic_iot;
-	pba.pba_memt = &icp->ic_memt;
-	pba.pba_dmat =
-	    alphabus_dma_get_tag(&icp->ic_dmat_pci, ALPHA_BUS_PCI);
-	pba.pba_pc = &icp->ic_pc;
-	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found(self, &pba, irongate_print);
 }
 
