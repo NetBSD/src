@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 1998/08/23 15:51:23 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 1998/08/26 07:55:10 mrg Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -319,8 +319,10 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	u_int64_t phys_msgbuf;
 	u_int firstaddr, newkp, ksize;
 	unsigned int *newkv;
+#ifdef DEBUG
 	int opmapdebug = pmapdebug;
 	pmapdebug = 0;
+#endif
 
 #ifdef BOOT_DEBUG
 	prom_printf("Entered pmap_bootstrap.\r\n");
@@ -996,7 +998,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	avail_start = nextavail;
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
+#ifdef DEBUG
 	pmapdebug = opmapdebug;
+#endif
 
 }
 
