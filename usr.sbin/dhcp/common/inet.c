@@ -106,6 +106,30 @@ struct iaddr ip_addr (subnet, mask, host_address)
 	return rv;
 }
 
+/* Given a subnet number and netmask, return the address on that subnet
+   for which the host portion of the address is all ones (the standard
+   broadcast address). */
+
+struct iaddr broadcast_addr (subnet, mask)
+	struct iaddr subnet;
+	struct iaddr mask;
+{
+	int i, j, k;
+	struct iaddr rv;
+
+	if (subnet.len != mask.len) {
+		rv.len = 0;
+		return rv;
+	}
+
+	for (i = 0; i < subnet.len; i++) {
+		rv.iabuf [i] = subnet.iabuf [i] | (~mask.iabuf [i] & 255);
+	}
+	rv.len = subnet.len;
+
+	return rv;
+}
+
 u_int32_t host_addr (addr, mask)
 	struct iaddr addr;
 	struct iaddr mask;

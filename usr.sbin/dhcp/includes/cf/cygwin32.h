@@ -91,6 +91,9 @@
 #ifndef _PATH_DHCLIENT_CONF
 #define _PATH_DHCLIENT_CONF "//e/etc/dhclient.conf"
 #endif
+#ifndef _PATH_DHCRELAY_PID
+#define _PATH_DHCRELAY_PID "//e/etc/dhcrelay.pid"
+#endif
 
 #ifndef _PATH_RESOLV_CONF
 #define _PATH_RESOLV_CONF "//e/etc/resolv.conf"
