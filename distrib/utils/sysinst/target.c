@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.2.2.4 1997/11/11 00:47:34 phil Exp $	*/
+/*	$NetBSD: target.c,v 1.2.2.5 1997/11/13 17:28:28 phil Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.2.2.4 1997/11/11 00:47:34 phil Exp $");
+__RCSID("$NetBSD: target.c,v 1.2.2.5 1997/11/13 17:28:28 phil Exp $");
 #endif
 
 
@@ -409,7 +409,7 @@ sprintf_to_target_file(const char *path, const char *format, ...)
 
 	trunc_target_file(path);
 
-	va_start(format, ap);
+	va_start(ap, format);
 	vsnprintf(lines, STRSIZE, format, ap);
 	va_end(ap);
 
