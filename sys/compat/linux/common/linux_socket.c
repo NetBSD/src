@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.23 2000/03/30 11:27:18 augustss Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.24 2000/05/03 21:41:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -584,7 +584,7 @@ out:
 	FILE_UNUSE(fp, p);
 	return error;
 }
-#undef IF_NAME_LEN 16
+#undef IF_NAME_LEN
 
 int
 linux_ioctl_socket(p, uap, retval)
