@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.3 2003/04/30 19:14:44 scw Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.4 2003/09/07 22:12:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -907,14 +907,10 @@ ENTRY_NOPROFILE(bsrr8rb)
 
 /* LINTSTUB: Func: void bssr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v); */
 /* LINTSTUB: Func: void bssr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v); */
-/* LINTSTUB: Func: void bssr1rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v); */
-/* LINTSTUB: Func: void bssr1rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v); */
 ENTRY_NOPROFILE(bssr1_s)
-ENTRY_NOPROFILE(bssr1rb_s)
 	lwz	0,0(3)
 	rotlw	5,5,0
 ENTRY_NOPROFILE(bssr1)
-ENTRY_NOPROFILE(bssr1rb)
 	trap
 
 /* LINTSTUB: Func: void bssr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v); */
