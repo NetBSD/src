@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.34 1998/07/26 20:32:43 mycroft Exp $	*/
+/*	$NetBSD: setup.c,v 1.35 1998/11/12 16:19:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.34 1998/07/26 20:32:43 mycroft Exp $");
+__RCSID("$NetBSD: setup.c,v 1.35 1998/11/12 16:19:48 christos Exp $");
 #endif
 #endif /* not lint */
 
-#define DKTYPENAMES
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/file.h>
 
