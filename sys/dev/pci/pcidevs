@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.182 2000/01/09 09:19:26 soren Exp $
+$NetBSD: pcidevs,v 1.183 2000/01/11 17:20:24 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1047,6 +1047,10 @@ product	LMC SSI		0x0005	SSI
 
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
+
+/* Linear Systems / CompuModules */
+product	LINEARSYS DVB_TX	0x7629	DVB Transmitter
+product	LINEARSYS DVB_RX	0x7630	DVB Receiver
 
 /* Lite-On products */
 product LITEON 82C168	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
