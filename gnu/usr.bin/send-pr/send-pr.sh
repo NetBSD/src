@@ -109,9 +109,9 @@ else
   ORIGINATOR=`$PASSWD | sed -e /"^${LOGNAME}:"/'{s/^[^:]*:[^:]*:[^:]*:[^:]*:\([^,:;]*\).*$/\1/' -e q -e } -e d`
   case "$ORIGINATOR" in
   *'&'*)
-    TEMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
-    TEMP=`echo $TEMP $LOGNAME | sed 's/^\(.\)[^ ]* ./\1/'`
-    ORIGINATOR=`echo "$ORIGINATOR" | sed "s/&/$TEMP/"`
+    AMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
+    AMP=`echo $AMP $LOGNAME | sed 's/^\(.\)[^ ]* ./\1/'`
+    ORIGINATOR=`echo "$ORIGINATOR" | sed "s/&/$AMP/"`
     ;;
   esac
 fi
