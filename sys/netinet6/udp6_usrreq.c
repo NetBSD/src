@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.34 2000/10/19 01:14:13 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.35 2000/11/06 00:50:13 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.62 2000/10/19 01:11:05 itojun Exp $	*/
 
 /*
@@ -750,7 +750,7 @@ udp6_output(in6p, m, addr6, control, p)
 
 		ip->ip_len = plen;
 		ip->ip_p = IPPROTO_UDP;
-		ip->ip_ttl = in6p->in6p_hops;	/*XXX*/
+		ip->ip_ttl = in6_selecthlim(in6p, NULL);	/*XXX*/
 		ip->ip_tos = 0;			/*XXX*/
 		bcopy(&laddr->s6_addr[12], &ip->ip_src, sizeof(ip->ip_src));
 		bcopy(&faddr->s6_addr[12], &ip->ip_dst, sizeof(ip->ip_dst));
