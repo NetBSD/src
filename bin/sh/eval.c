@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.44 1998/07/28 11:41:53 mycroft Exp $	*/
+/*	$NetBSD: eval.c,v 1.45 1999/02/04 16:17:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.44 1998/07/28 11:41:53 mycroft Exp $");
+__RCSID("$NetBSD: eval.c,v 1.45 1999/02/04 16:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -435,6 +435,7 @@ expredir(n)
 		fn.lastp = &fn.list;
 		oexitstatus = exitstatus;
 		switch (redir->type) {
+		case NFROMTO:
 		case NFROM:
 		case NTO:
 		case NAPPEND:
