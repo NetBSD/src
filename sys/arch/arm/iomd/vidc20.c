@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.3 2002/06/16 13:20:15 bjh21 Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.4 2002/06/16 13:25:02 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -61,19 +61,21 @@ struct vidc20_softc {
 	bus_space_tag_t	sc_iot;
 };
 
-static int  vidcmatch  __P((struct device *self, struct cfdata *cf, void *aux));
-static void vidcattach __P((struct device *parent, struct device *self, void *aux));
-static int  vidcsearch __P((struct device *, struct cfdata *, void *));
+static int  vidcmatch(struct device *, struct cfdata *, void *);
+static void vidcattach(struct device *, struct device *, void *);
+static int  vidcsearch(struct device *, struct cfdata *, void *);
 
 /*
- * vidc_base gives the base of the VIDC chip in memory; this is for the rest isnt
- * busspaceified yet. Initialised with VIDC_BASE for backwards compatibility.
+ * vidc_base gives the base of the VIDC chip in memory; this is for
+ * the rest isnt busspaceified yet. Initialised with VIDC_BASE for
+ * backwards compatibility.
  */
-int *vidc_base = (int *) VIDC_BASE;
+int *vidc_base = (int *)VIDC_BASE;
 
 
 /*
- * vidc_fref is the reference frequency in Mhz of the detected VIDC (dependent on IOMD/IOC)
+ * vidc_fref is the reference frequency in Mhz of the detected VIDC
+ * (dependent on IOMD/IOC)
  * XXX default is RPC600 ?
  */
 int  vidc_fref = 24000000;
@@ -90,12 +92,8 @@ struct cfattach vidc_ca = {
  * We must assume things are ok.
  */
 static int
-vidcmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vidcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-/*	struct mainbus_attach_args *mb = aux;*/
 
 	return(1);
 }
@@ -107,10 +105,7 @@ vidcmatch(parent, cf, aux)
  */
 
 static int
-vidcsearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vidcsearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	
 	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
@@ -125,10 +120,7 @@ vidcsearch(parent, cf, aux)
  * Configure all the child devices of the VIDC
  */
 static void
-vidcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vidcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vidc20_softc *sc = (struct vidc20_softc *)self;
 	struct mainbus_attach_args *mb = aux;
