@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.9 2000/02/26 18:53:13 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.10 2000/04/17 17:30:48 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -108,6 +108,9 @@ int		__C(CHIP,_mem_alloc) __P((void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *));
 void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 		    bus_size_t));
+
+/* get kernel virtual address */
+void *		__C(CHIP,_mem_vaddr) __P((void *, bus_space_handle_t));
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier) __P((void *, bus_space_handle_t,
@@ -235,6 +238,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
 	t->abs_free = 		__C(CHIP,_mem_free);
+
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
@@ -479,6 +485,18 @@ __C(CHIP,_mem_free)(v, bsh, size)
 
 	/* Unmap does all we need to do. */
 	__C(CHIP,_mem_unmap)(v, bsh, size, 1);
+}
+
+void *
+__C(CHIP,_mem_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+	/*
+	 * We get linear access only with BUS_SPACE_MAP_PREFETCHABLE,
+	 * so it should be OK if the caller doesn't use BWX instructions.
+	 */
+	return ((void *)bsh);
 }
 
 inline void
