@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.4.14.1 1997/08/23 07:14:12 thorpej Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.4.14.2 1997/08/28 00:21:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -51,8 +51,8 @@
 
 int
 procfs_dofpregs(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {

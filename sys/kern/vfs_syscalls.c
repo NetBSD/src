@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.91 1997/06/24 23:44:57 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.91.4.1 1997/08/28 00:12:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1146,16 +1146,16 @@ sys_lseek(p, v, retval)
 		return (ESPIPE);
 
 	switch (SCARG(uap, whence)) {
-	case L_INCR:
+	case SEEK_CUR:
 		newoff = fp->f_offset + SCARG(uap, offset);
 		break;
-	case L_XTND:
+	case SEEK_END:
 		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return (error);
 		newoff = SCARG(uap, offset) + vattr.va_size;
 		break;
-	case L_SET:
+	case SEEK_SET:
 		newoff = SCARG(uap, offset);
 		break;
 	default:
