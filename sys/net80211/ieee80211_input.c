@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.27 2004/07/23 08:25:25 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.28 2004/07/23 08:31:39 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.27 2004/07/23 08:25:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.28 2004/07/23 08:31:39 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -328,7 +328,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			break;
 		}
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-			if (ic->ic_flags & IEEE80211_F_WEPON) {
+			if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 				m = ieee80211_wep_crypt(ifp, m, 0);
 				if (m == NULL) {
 					ic->ic_stats.is_rx_wepfail++;
@@ -775,7 +775,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	u_int8_t *challenge = NULL;
 	int allocbs, i;
 
-	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0) {
+	if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 			("%s: WEP is off\n", __func__));
 		return;
@@ -1352,7 +1352,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		       that suport both encrypted and unencrypted traffic */
 		if ((capinfo & IEEE80211_CAPINFO_ESS) == 0 ||
 		    (capinfo & IEEE80211_CAPINFO_PRIVACY) !=
-		    ((ic->ic_flags & IEEE80211_F_WEPON) ?
+		    ((ic->ic_flags & IEEE80211_F_PRIVACY) ?
 		     IEEE80211_CAPINFO_PRIVACY : 0)) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 				("%s: capability mismatch %x for %s\n",
