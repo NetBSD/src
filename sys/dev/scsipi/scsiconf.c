@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.120 1998/12/05 20:52:47 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.121 1998/12/08 00:14:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -606,6 +606,7 @@ scsi_probedev(scsi, target, lun)
 	sc_link->scsipi_scsi.target = target;
 	sc_link->scsipi_scsi.lun = lun;
 	sc_link->device = &probe_switch;
+	TAILQ_INIT(&sc_link->pending_xfers);
 
 	/*
 	 * Ask the device what it is

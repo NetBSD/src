@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.15 1998/11/19 22:25:56 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.16 1998/12/08 00:14:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -262,6 +262,7 @@ atapi_probedev(atapi, target)
 		*sc_link = *atapi->adapter_link;
 		sc_link->scsipi_atapi.drive = target;
 		sc_link->device = NULL;
+		TAILQ_INIT(&sc_link->pending_xfers);
 #if defined(SCSIDEBUG) && DEBUGTYPE == BUS_ATAPI
 		if (DEBUGTARGET == -1 || target == DEBUGTARGET)
 			sc_link->flags |= DEBUGLEVEL;
