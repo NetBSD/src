@@ -1,13 +1,16 @@
-# $NetBSD: md.sandpoint,v 1.1 2001/08/30 20:55:54 briggs Exp $
+# $NetBSD: md.sandpoint,v 1.2 2002/04/12 13:33:42 briggs Exp $
 ./usr/include/sandpoint	comp-c-include
 ./usr/include/sandpoint/_G_config.h	comp-c-include
 ./usr/include/sandpoint/ansi.h	comp-c-include
 ./usr/include/sandpoint/aout_machdep.h	comp-c-include
 ./usr/include/sandpoint/asm.h	comp-c-include
+./usr/include/sandpoint/bootinfo.h	comp-c-include
 ./usr/include/sandpoint/bswap.h	comp-c-include
 ./usr/include/sandpoint/bus.h	comp-c-include
 ./usr/include/sandpoint/cdefs.h	comp-c-include
+./usr/include/sandpoint/conf.h	comp-c-include
 ./usr/include/sandpoint/cpu.h	comp-c-include
+./usr/include/sandpoint/cpufunc.h	comp-c-include
 ./usr/include/sandpoint/db_machdep.h	comp-c-include
 ./usr/include/sandpoint/disklabel.h	comp-c-include
 ./usr/include/sandpoint/elf_machdep.h	comp-c-include
@@ -18,10 +21,15 @@
 ./usr/include/sandpoint/frame.h	comp-c-include
 ./usr/include/sandpoint/ieee.h	comp-c-include
 ./usr/include/sandpoint/ieeefp.h	comp-c-include
+./usr/include/sandpoint/int_const.h	comp-c-include
+./usr/include/sandpoint/int_fmtio.h	comp-c-include
+./usr/include/sandpoint/int_limits.h	comp-c-include
+./usr/include/sandpoint/int_mwgwtypes.h	comp-c-include
 ./usr/include/sandpoint/int_types.h	comp-c-include
 ./usr/include/sandpoint/intr.h	comp-c-include
 ./usr/include/sandpoint/ipkdb.h	comp-c-include
 ./usr/include/sandpoint/kcore.h	comp-c-include
+./usr/include/sandpoint/kgdb.h	comp-c-include
 ./usr/include/sandpoint/limits.h	comp-c-include
 ./usr/include/sandpoint/lock.h	comp-c-include
 ./usr/include/sandpoint/math.h	comp-c-include
