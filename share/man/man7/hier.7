@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.28 2000/08/22 05:17:43 wdk Exp $
+.\"	$NetBSD: hier.7,v 1.29 2000/11/08 06:44:06 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd June 1, 1994
+.Dd November 8, 2000
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -68,6 +68,9 @@ home directories mount point; see
 .Xr amd 8
 .It Sy /bin/
 utilities used in both single and multi-user environments
+.It Sy boot
+second-stage boot loader for some platforms; see
+.Xr installboot 8
 .It Sy /dev/
 block, character and other special device files
 .Pp
@@ -136,10 +139,15 @@ system-wide scripts for
 .It Sy daily
 script run each day by
 .Xr cron 8
-.It Sy disklabels/
-backup disklabels;
+.It Sy daily.conf
+configuration file for
+.Sy daily ;
 see
-.Xr disklabel 8
+.Xr daily.conf 5
+.It Sy defaults/
+default configuration files read by various
+.Pa /etc/*.conf
+files
 .It Sy disktab
 disk description file, see
 .Xr disktab 5
@@ -224,6 +232,11 @@ variables, read by pkgsrc and the system sources.
 .It Sy monthly
 script run each month by
 .Xr cron 8
+.It Sy monthly.conf
+configuration file for
+.Sy monthly ;
+see
+.Xr monthly.conf 5
 .It Sy motd
 system message of the day
 .It Sy mtree/
@@ -260,12 +273,20 @@ system startup and shutdown scripts; see
 .Xr rc 8
 and
 .Xr rc.d 8
+.It Sy rc.conf
+configuration file for system startup and shutdown scripts; see
+.Xr rc.conf 5
 .It Sy remote
 remote host description file; see
 .Xr remote 5
 .It Sy security
 daily (in)security script run by
 .Xr cron 8
+.It Sy security.conf
+configuration file for
+.Sy security ;
+see
+.Xr security.conf 5
 .It Sy services
 service name data base; see
 .Xr services 5
@@ -294,6 +315,11 @@ and
 .It Sy weekly
 script run each week by
 .Xr cron 8
+.It Sy weekly.conf
+configuration file for
+.Sy weekly ;
+see
+.Xr weekly.conf 5
 .El
 .It Sy /home/
 mount point for the automounter; see
@@ -551,7 +577,7 @@ see
 .El
 .Pp
 .It Sy /usr/src/
-.Bx 4
+.Nx
 and local source files
 .Pp
 .Bl -tag -width "domestic/" -compact
@@ -560,14 +586,22 @@ source for utilities/files in
 .Pa /bin
 .It Sy distrib/
 tools and data-files for making distributions
-.It Sy domestic/
-source covered by US ITAR export restrictions
+.It Sy crypto/
+cryptographic source, which may have import or export restrictions
+.It Sy dist/
+third-party
+.Sq virgin
+source code, referenced by other parts of the source tree
 .It Sy etc/
 source (usually example files) for files in
 .Pa /etc
 .It Sy games/
 source for utilities/files in
 .Pa /usr/games
+.It Sy gnu/
+source for programs covered by the
+.Tn GNU
+license (or similar)
 .It Sy include/
 source for files in
 .Pa /usr/include
@@ -577,6 +611,8 @@ source for libraries in
 .It Sy libexec/
 source for utilities/files in
 .Pa /usr/libexec
+.It Sy regress/
+various regression tests
 .It Sy sbin/
 source for utilities/files in
 .Pa /sbin
@@ -608,11 +644,13 @@ AmigaDOS file-system support; see
 .Xr mount_ados 8
 .It Sy arch/
 .Pp
-.Bl -tag -width "powerpc/" -compact
+.Bl -tag -width "amigappc/" -compact
 .It Sy alpha/
 support for the Digital Equipment Corp. Alpha architecture
 .It Sy amiga/
 support for the Amiga architecture
+.It Sy amigappc/
+support for the PowerPC based Amiga architecture
 .It Sy arc/
 support for the ARC specification compliant systems.
 .It Sy arm26/
@@ -625,38 +663,60 @@ support for the Atari architecture
 support for the Be Inc. BeBox architecture
 .It Sy cobalt/
 support for the Cobalt Networks MIPS Microserver architecture
+.It Sy evbsh3/
+support for the SH3 based evaluation boards
 .It Sy hp300/
 support for the Hewlett-Packard 9000/300 68000-based workstations
+.It Sy hpcmips/
+support for the MIPS based WinCE hand-held devices
 .It Sy i386/
 support for the Intel 386/486/Pentium/etc. workstations
+.It Sy luna68k/
+support for the Omron LUNA 68000-based workstations
 .It Sy m68k/
 general support for the 68000 processor
 .It Sy mac68k/
 support for the Apple Computer 68000-based workstations
+.It Sy macppc/
+support for the Apple Computer PowerPC-based workstations
 .It Sy mips/
 general support for MIPS architectures
 .It Sy mipsco/
 support for Mips Computer Systems Inc. architecture
+.It Sy mmeye/
+support for the Brains Inc. SH3 based mmEye multimedia server
 .It Sy mvme68k/
 support for the VME 68000-based cards
+.It Sy news68k/
+support for the Sony NEWS 68000-based workstations
+.It Sy newsmips/
+support for the Sony NEWS MIPS-based workstations
+.It Sy next68k/
+support for the NeXT 68000-based workstations
+.It Sy ofppc/
+support for Open Firmware PowerPC workstations
 .It Sy pc532/
 support for the pc532 architecture
 .It Sy pmax/
 support for the MIPS-based DECstation architecture
 .It Sy powerpc/
-support for the PowerPC architecture
+general support for PowerPC architectures
+.It Sy prep/
+support for the PowerPC Reference Platform
 .It Sy sgimips/
 support for the SGI MIPS architecture
+.It Sy sh3/
+general support for SH3 architectures
 .It Sy sparc/
 support for the Sun Microsystems SPARC architecture
+.It Sy sparc64/
+support for the Sun Microsystems UltraSPARC architecture
 .It Sy sun3/
 support for the Sun Microsystems 68000-based architecture
-.It Sy sun3x/
-more support for the Sun Microsystems 68000-based architecture
 .It Sy vax/
 Digital Equipment Corp. VAX architecture
 .It Sy x68k/
-support for the x68k architecture
+support for the Sharp X680x0 68000-based workstations
 .El
 .Pp
 .It Sy compat/
@@ -683,6 +743,9 @@ support for Linux binaries; see
 .Xr compat_linux 8
 .It Sy m68k4k/
 support for 4Kb page 68000 binaries
+.It Sy netbsd32/
+support for NetBSD 32-bit binaries on 64 bit platforms with compatible
+CPU families
 .It Sy osf1/
 support for
 .Tn Digital
@@ -694,6 +757,11 @@ formerly
 binaries
 .It Sy ossaudio/
 support for OSS audio
+.It Sy pecoff/
+support for
+.Tn Win32
+binaries; see
+.Xr compat_pecoff 8
 .It Sy sunos/
 support for
 .Tn SunOS 4.x
@@ -706,14 +774,21 @@ support for System V Release 4 binaries; see
 support for
 .Tn Ultrix
 binaries
+.It Sy vax1k/
+support for older Vax binaries that started on a 1 KB boundary
 .El
 .Pp
 .It Sy conf/
 architecture independent configuration directory
+.It Sy crypto/
+cryptographic kernel source, which may have import or export restrictions
 .It Sy ddb/
 in kernel debugger
 .It Sy dev/
 architecture independent device support
+.It Sy filecorefs/
+support for the Acorn RISC OS filecore filesystem; see
+.Xr mount_filecore 8
 .It Sy gdbscripts/
 support for accessing kernel structures from within the debugger
 .Xr gdb 1 .
@@ -745,7 +820,7 @@ compression library
 .It Sy lkm/
 loadable kernel modules
 .Pp
-.Bl -tag -width "netinet/" -compact
+.Bl -tag -width "gdbscripts/" -compact
 .It Sy compat/
 LKM support compatibility modules;  currently unsupported.
 .It Sy netinet/
@@ -779,6 +854,9 @@ kernel namespace file system; see
 .It Sy nullfs/
 loop back file system; see
 .Xr mount_null 8
+.It Sy overlay/
+overlay file system; see
+.Xr mount_overlay 8
 .It Sy portal/
 portal file system; see
 .Xr mount_portal 8
@@ -787,6 +865,8 @@ process file system; see
 .Xr mount_procfs 8
 .It Sy specfs/
 kernel only special file system
+.It Sy syncfs/
+kernel trickle sync algorithm
 .It Sy umapfs/
 user and group re-mapping file system; see
 .Xr mount_umap 8
@@ -801,20 +881,26 @@ file system; see
 .Xr mount_msdos 8
 .It Sy net/
 miscellaneous networking support
+.It Sy netatalk/
+AppleTalk networking support
 .It Sy netccitt/
-CCITT
-networking support
+CCITT networking support
 .It Sy netinet/
-TCP/IP networking support
+IP networking support
+.It Sy netinet6/
+IPv6 networking support
 .It Sy netiso/
-ISO
-networking support
+ISO networking support
+.It Sy netkey/
+Key database for IPsec networking support
 .It Sy netnatm/
 ATM networking support
 .It Sy netns/
 XNS networking support
 .It Sy nfs/
 NFS support
+.It Sy ntfs/
+NTFS filesystem support
 .It Sy stand/
 kernel standalone support
 .It Sy sys/
@@ -834,6 +920,8 @@ shared
 .Ux
 file system support
 .El
+.It Sy uvm/
+UVM virtual memory system
 .It Sy vm/
 virtual memory support
 .El
@@ -868,10 +956,16 @@ miscellaneous backup files, largely of files found in
 .It Sy crash/
 system crash dumps; see
 .Xr savecore 8
+.It Sy cron/
+scheduled commands configuration files; see
+.Xr cron 8
 .It Sy db/
 miscellaneous automatically generated system-specific database files
 .It Sy games/
 miscellaneous game status and log files
+.It Sy heimdal/
+Kerberos 5 KDC database; see
+.Xr kdc 8
 .It Sy log/
 miscellaneous system log files
 .Pp
@@ -928,6 +1022,8 @@ user system mailboxes
 system messages; see
 .Xr msgs 1
 .\" since we use nvi (now called vi) this isn't the place any more, is it?
+.It Sy pkg/
+working files for third party packages
 .It Sy preserve/
 temporary home of files preserved after an accidental death of
 .Xr ex 1
@@ -984,6 +1080,9 @@ temporary files that are not discarded between system reboots
 recovery directory for new
 .Xr vi 1
 .El
+.It Sy yp/
+Databases and configuration for the NIS (YP) system; see
+.Xr nis 8 .
 .El
 .El
 .Sh SEE ALSO
