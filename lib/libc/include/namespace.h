@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.10 1998/09/27 18:14:14 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.11 1998/10/08 13:49:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@
 #define getbsize		_getbsize
 #define getcwd			_getcwd
 #define getdiskbyname		_getdiskbyname
+#define getdtablesize		_getdtablesize
 #define getfsent		_getfsent
 #define getfsfile		_getfsfile
 #define getfsspec		_getfsspec
