@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.18 2000/04/27 17:50:01 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.19 2000/05/01 12:30:30 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.18 2000/04/27 17:50:01 mycroft Exp $");
+__RCSID("$NetBSD: tty.c,v 1.19 2000/05/01 12:30:30 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -95,7 +95,7 @@ gettmode(void)
 
 	__baset = __orig_termios;
 	__baset.c_oflag &= ~OXTABS;
-
+	
 	GT = 0;			/* historical. was used before we wired OXTABS
 				 * off */
 	NONL = (__baset.c_oflag & ONLCR) == 0;
@@ -478,4 +478,25 @@ resetty(void)
 {
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &savedtty) ? ERR : OK);
+}
+
+/*
+ * erasechar --
+ *     Return the character of the erase key.
+ *
+ */
+char
+erasechar(void)
+{
+	return __baset.c_cc[VERASE];
+}
+
+/*
+ * killchar --
+ *     Return the character of the kill key.
+ */
+char
+killchar(void)
+{
+	return __baset.c_cc[VKILL];
 }
