@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.93 2003/04/19 21:55:48 christos Exp $
+.\"	$NetBSD: sysctl.8,v 1.94 2003/07/03 20:15:28 ragge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -245,6 +245,7 @@ privilege can change the value.
 .It kern.saved_ids	integer	no
 .It kern.sbmax	integer	yes
 .It kern.securelevel	integer	raise only
+.It kern.somaxkva	integer	yes
 .It kern.synchronized_io	integer	no
 .It kern.sysvipc_info	struct	no
 .It kern.sysvmsg	integer	no
