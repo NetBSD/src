@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2000/12/29 18:29:19 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 2000/12/30 07:42:42 mjacob Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3533,7 +3533,9 @@ pmap_enter_pv(pmap, va, pa)
 			if ((pv->pv_va^va)&VA_ALIAS_MASK) {
 				pv->pv_va |= PV_ALIAS;
 				pmap_page_cache(pmap, pa, 0);
+#ifdef DEBUG
 				enter_stats.ci++;
+#endif
 			}
 		}
 		/*
