@@ -128,3 +128,16 @@ do {									\
       %{rdynamic:-export-dynamic} \
       %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
     %{static:-static}}"
+
+/* XXX shouldn't use "1f"-style labels */
+#undef FUNCTION_PROFILER
+#define FUNCTION_PROFILER(STREAM,LABELNO)		\
+{							\
+	fprintf((STREAM), "\tmov.l\t11f,r1\n");		\
+	fprintf((STREAM), "\tmova\t12f,r0\n");		\
+	fprintf((STREAM), "\tjmp\t@r1\n");		\
+	fprintf((STREAM), "\tnop\n");			\
+	fprintf((STREAM), "\t.align\t2\n");		\
+	fprintf((STREAM), "11:\t.long\t__mcount\n");	\
+	fprintf((STREAM), "12:\n");			\
+}
