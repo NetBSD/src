@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.25 1993/10/29 04:35:51 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.26 1993/10/29 20:03:36 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -313,7 +313,10 @@ fdprobe(parent, cf, aux)
 	struct fdc_attach_args *fa = aux;
 	struct fdc_softc *fdc;
 	u_short iobase;
-	int n, i;
+	int n;
+#ifdef DEBUG
+	int i;
+#endif
 
 #define cf_drive cf_loc[0]
 	if (cf->cf_drive != -1 && cf->cf_drive != fa->fa_drive)
@@ -330,7 +333,7 @@ fdprobe(parent, cf, aux)
 	delay(2000000);
 	out_fdc(iobase, NE7CMD_SENSEI);
 	n = fdc_result(fdc);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	printf("fdprobe: status");
 	for (i = 0; i < n; i++)
 		printf(" %x", fdc->sc_status[i]);

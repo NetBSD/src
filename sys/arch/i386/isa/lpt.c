@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.13 1993/10/27 05:37:13 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.14 1993/10/29 20:03:39 mycroft Exp $
  */
 
 /*
@@ -189,29 +189,32 @@ lptprobe(parent, cf, aux)
 	if (iobase == IOBASEUNK)
 		return 0;
 
+#ifdef DEBUG
+#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
+		    return 0;} while (0)
+#else
+#define	ABORT	return 0
+#endif
+
 	for (;;) {
 		data = 0x55;				/* Alternating zeros */
 		if (!lpt_port_test(port, data, mask))
-			{printf("mask %x data %x failed\n", mask, data);
-			return 0;}
+			ABORT;
 
 		data = 0xaa;				/* Alternating ones */
 		if (!lpt_port_test(port, data, mask))
-			{printf("mask %x data %x failed\n", mask, data);
-			return 0;}
+			ABORT;
 
 		for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 			data = ~(1 << i);
 			if (!lpt_port_test(port, data, mask))
-				{printf("mask %x data %x failed\n", mask, data);
-				return 0;}
+				ABORT;
 		}
 
 		for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 			data = (1 << i);
 			if (!lpt_port_test(port, data, mask))
-				{printf("mask %x data %x failed\n", mask, data);
-				return 0;}
+				ABORT;
 		}
 
 		if (port == iobase + lpt_data) {
