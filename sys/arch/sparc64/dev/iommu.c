@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.70 2003/10/26 19:14:22 christos Exp $	*/
+/*	$NetBSD: iommu.c,v 1.71 2003/11/16 18:18:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.70 2003/10/26 19:14:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.71 2003/11/16 18:18:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -429,7 +429,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	bus_size_t sgsize;
 	paddr_t curaddr;
 	u_long dvmaddr, sgstart, sgend;
-	bus_size_t align, boundary;
+	bus_size_t align, boundary, len;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	struct pmap *pmap;
@@ -469,13 +469,12 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	 */
 	s = splhigh();
 	err = extent_alloc(is->is_dvmamap, sgsize, align,
-		(sgsize > boundary) ? 0 : boundary,
-		EX_NOWAIT|EX_BOUNDZERO, &dvmaddr);
+	    (sgsize > boundary) ? 0 : boundary,
+	    EX_NOWAIT|EX_BOUNDZERO, &dvmaddr);
 	splx(s);
 
 #ifdef DEBUG
-	if (err || (dvmaddr == (u_long)-1))
-	{
+	if (err || (dvmaddr == (u_long)-1)) {
 		printf("iommu_dvmamap_load(): extent_alloc(%d, %x) failed!\n",
 		    (int)sgsize, flags);
 #ifdef DDB
@@ -501,37 +500,38 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	sgstart = dvmaddr + (vaddr & PGOFSET);
 	sgend = sgstart + buflen - 1;
 	map->dm_segs[seg].ds_addr = sgstart;
-	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: boundary %lx boundary-1 %lx "
-		"~(boundary-1) %lx\n", (long)boundary, (long)(boundary-1), (long)~(boundary-1)));
+	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: boundary %lx boundary - 1 %lx "
+	    "~(boundary - 1) %lx\n", (long)boundary, (long)(boundary - 1),
+	    (long)~(boundary - 1)));
 	while ((sgstart & ~(boundary - 1)) != (sgend & ~(boundary - 1))) {
 		/* Oops.  We crossed a boundary.  Split the xfer. */
+		len = boundary - (sgstart & (boundary - 1));
+		map->dm_segs[seg].ds_len = len;
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
-			"seg %d start %lx size %lx\n", seg,
-			(long)map->dm_segs[seg].ds_addr,
-			(long)map->dm_segs[seg].ds_len));
-		map->dm_segs[seg].ds_len =
-		    boundary - (sgstart & (boundary - 1));
+		    "seg %d start %lx size %lx\n", seg,
+		    (long)map->dm_segs[seg].ds_addr,
+		    (long)map->dm_segs[seg].ds_len));
 		if (++seg >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
-				"too many segments %d\n", seg));
+			    "too many segments %d\n", seg));
 			s = splhigh();
 			/* How can this fail?  And if it does what can we do? */
 			err = extent_free(is->is_dvmamap,
-				dvmaddr, sgsize, EX_NOWAIT);
+			    dvmaddr, sgsize, EX_NOWAIT);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
 			splx(s);
 			return (E2BIG);
 		}
-		sgstart = roundup(sgstart, boundary);
+		sgstart += len;
 		map->dm_segs[seg].ds_addr = sgstart;
 	}
 	map->dm_segs[seg].ds_len = sgend - sgstart + 1;
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
-		"seg %d start %lx size %lx\n", seg,
-		(long)map->dm_segs[seg].ds_addr, (long)map->dm_segs[seg].ds_len));
-	map->dm_nsegs = seg+1;
+	    "seg %d start %lx size %lx\n", seg,
+	    (long)map->dm_segs[seg].ds_addr, (long)map->dm_segs[seg].ds_len));
+	map->dm_nsegs = seg + 1;
 	map->dm_mapsize = buflen;
 
 	if (p != NULL)
@@ -558,9 +558,9 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_load: map %p loading va %p "
-			    "dva %lx at pa %lx\n",
-			    map, (void *)vaddr, (long)dvmaddr,
-			    (long)(curaddr & ~(PAGE_SIZE-1))));
+		    "dva %lx at pa %lx\n",
+		    map, (void *)vaddr, (long)dvmaddr,
+		    (long)(curaddr & ~(PAGE_SIZE-1))));
 		iommu_enter(sb, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags|0x4000);
 
@@ -573,8 +573,8 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 		if (map->dm_segs[seg].ds_addr < is->is_dvmabase ||
 			map->dm_segs[seg].ds_addr > is->is_dvmaend) {
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
-				seg, (long)map->dm_segs[seg].ds_addr,
-				is->is_dvmabase, is->is_dvmaend);
+			    seg, (long)map->dm_segs[seg].ds_addr,
+			    is->is_dvmabase, is->is_dvmaend);
 #ifdef DDB
 			Debugger();
 #endif
