@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.80.2.5 1999/11/08 07:56:52 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.80.2.6 2000/04/02 19:21:54 he Exp $	*/
 
 /**************************************************************************
 **
@@ -1356,8 +1356,8 @@ struct script {
 	ncrcmd  msg_bad		[  6];
 	ncrcmd  complete	[ 13];
 	ncrcmd	cleanup		[ 12];
-	ncrcmd	cleanup0	[ 11];
-	ncrcmd	signal		[ 10];
+	ncrcmd	cleanup0	[ 9];
+	ncrcmd	signal		[ 12];
 	ncrcmd  save_dp		[  5];
 	ncrcmd  restore_dp	[  5];
 	ncrcmd  disconnect	[ 12];
@@ -1518,7 +1518,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.80.2.5 1999/11/08 07:56:52 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.80.2.6 2000/04/02 19:21:54 he Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -2287,20 +2287,20 @@ static	struct script script0 = {
 		0,
 	SCR_JUMP ^ IFTRUE (DATA (S_CHECK_COND)),
 		PADDRH(getcc2),
-	/*
-	**	And make the DSA register invalid.
-	*/
-/*>>>*/	SCR_LOAD_REG (dsa, 0xff), /* invalid */
-		0,
 }/*-------------------------< SIGNAL >----------------------*/,{
 	/*
 	**	if status = queue full,
 	**	reinsert in startqueue and stall queue.
 	*/
-	SCR_FROM_REG (SS_REG),
+/*>>>*/	SCR_FROM_REG (SS_REG),
 		0,
 	SCR_INT ^ IFTRUE (DATA (S_QUEUE_FULL)),
 		SIR_STALL_QUEUE,
+	/*
+	**	And make the DSA register invalid.
+	*/
+	SCR_LOAD_REG (dsa, 0xff), /* invalid */
+		0,
 	/*
 	**	if job completed ...
 	*/
@@ -7945,15 +7945,19 @@ struct table_entry {
 
 static struct table_entry device_tab[] =
 {
-#ifdef NCR_GETCC_WITHMSG
-	{"HP      ", "C372", "", QUIRK_NOTAGS|QUIRK_NOMSG},
-	{"", "", "", QUIRK_NOMSG},
-	{"SONY", "SDT-5000", "3.17", QUIRK_NOMSG},
-	{"WangDAT", "Model 2600", "01.7", QUIRK_NOMSG},
-	{"WangDAT", "Model 3200", "02.2", QUIRK_NOMSG},
-	{"WangDAT", "Model 1300", "02.4", QUIRK_NOMSG},
-#endif
-	{"", "", "", 0} /* catch all: must be last entry. */
+	/* XXX maybe doesn't need QUIRK_NOMSG? */
+	{"HP      ",	"C372",		"",	QUIRK_NOTAGS|QUIRK_NOMSG},
+
+	/* XXX maybe doesn't need QUIRK_NOMSG? */
+	{"QUANTUM",	"ATLAS IV",	"",	QUIRK_NOTAGS|QUIRK_NOMSG},
+
+	/*
+	 * XXX not clear what the value of NCR_GETCC_WITHMSG is if
+	 * XXX QUIRK_NOMSG is always turned on, but I am just an
+	 * XXX egg.  --cgd
+	 */
+	/* catch all: must be the last entry. */
+	{"",		"", 		"",	QUIRK_NOMSG},
 };
 
 static u_long ncr_lookup(char * id)
