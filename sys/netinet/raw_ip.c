@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.32 1996/09/09 14:51:19 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.33 1996/09/15 18:11:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -81,7 +81,7 @@ void
 rip_init()
 {
 
-	in_pcbinit(&rawcbtable, 1);
+	in_pcbinit(&rawcbtable, 1, 1);
 }
 
 /*

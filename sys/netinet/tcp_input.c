@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.25 1996/09/10 23:26:05 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.26 1996/09/15 18:11:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -348,12 +348,11 @@ tcp_input(m, va_alist)
 	 * Locate pcb for segment.
 	 */
 findpcb:
-	inp = in_pcbhashlookup(&tcbtable, ti->ti_src, ti->ti_sport,
+	inp = in_pcblookup_connect(&tcbtable, ti->ti_src, ti->ti_sport,
 	    ti->ti_dst, ti->ti_dport);
 	if (inp == 0) {
 		++tcpstat.tcps_pcbhashmiss;
-		inp = in_pcblookup(&tcbtable, ti->ti_src, ti->ti_sport,
-		    ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
+		inp = in_pcblookup_bind(&tcbtable, ti->ti_dst, ti->ti_dport);
 		if (inp == 0) {
 			++tcpstat.tcps_noport;
 			goto dropwithreset;
@@ -403,7 +402,7 @@ findpcb:
 			inp = (struct inpcb *)so->so_pcb;
 			inp->inp_laddr = ti->ti_dst;
 			inp->inp_lport = ti->ti_dport;
-			in_pcbrehash(inp);
+			in_pcbstate(inp, INP_BOUND);
 #if BSD>=43
 			inp->inp_options = ip_srcroute();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.34 1996/09/09 14:51:23 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.35 1996/09/15 18:11:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -86,7 +86,7 @@ void
 udp_init()
 {
 
-	in_pcbinit(&udbtable, udbhashsize);
+	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
 }
 
 void
@@ -266,12 +266,11 @@ udp_input(m, va_alist)
 	/*
 	 * Locate pcb for datagram.
 	 */
-	inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
+	inp = in_pcblookup_connect(&udbtable, ip->ip_src, uh->uh_sport,
 	    ip->ip_dst, uh->uh_dport);
 	if (inp == 0) {
 		++udpstat.udps_pcbhashmiss;
-		inp = in_pcblookup(&udbtable, ip->ip_src, uh->uh_sport,
-		    ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
+		inp = in_pcblookup_bind(&udbtable, ip->ip_dst, uh->uh_dport);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -554,6 +553,7 @@ udp_usrreq(so, req, m, nam, control, p)
 		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		in_pcbdisconnect(inp);
 		inp->inp_laddr = zeroin_addr;		/* XXX */
+		in_pcbstate(inp, INP_BOUND);		/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
@@ -572,10 +572,10 @@ udp_usrreq(so, req, m, nam, control, p)
 			break;
 		}
 	{
-		struct in_addr laddr;
+		struct in_addr laddr;			/* XXX */
 
 		if (nam) {
-			laddr = inp->inp_laddr;
+			laddr = inp->inp_laddr;		/* XXX */
 			if ((so->so_state & SS_ISCONNECTED) != 0) {
 				error = EISCONN;
 				goto die;
@@ -595,7 +595,8 @@ udp_usrreq(so, req, m, nam, control, p)
 		error = udp_output(m, inp);
 		if (nam) {
 			in_pcbdisconnect(inp);
-			inp->inp_laddr = laddr;
+			inp->inp_laddr = laddr;		/* XXX */
+			in_pcbstate(inp, INP_BOUND);	/* XXX */
 		}
 	}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.23 1996/09/09 14:51:21 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.24 1996/09/15 18:11:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -79,7 +79,7 @@ tcp_init()
 {
 
 	tcp_iss = 1;		/* XXX wrong */
-	in_pcbinit(&tcbtable, tcbhashsize);
+	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
