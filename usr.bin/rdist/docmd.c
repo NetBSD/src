@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.15 1997/10/19 14:34:07 mycroft Exp $	*/
+/*	$NetBSD: docmd.c,v 1.16 1997/10/19 14:50:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.15 1997/10/19 14:34:07 mycroft Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.16 1997/10/19 14:50:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,7 +402,7 @@ dodcolon(filev, files, stamp, cmds)
 		return;
 	}
 	if (debug)
-		printf("%s: %ld\n", stamp, stb.st_mtime);
+		printf("%s: %lu\n", stamp, (u_long)stb.st_mtime);
 
 	subcmds = cmds;
 	lastmod = stb.st_mtime;
