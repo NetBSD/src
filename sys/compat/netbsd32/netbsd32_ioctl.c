@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.11 2001/08/25 15:06:03 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.12 2001/09/19 18:10:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -51,7 +51,7 @@
 #include <sys/syscallargs.h>
 
 #ifdef __sparc__
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/openpromio.h>
 #endif
 

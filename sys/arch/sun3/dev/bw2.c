@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.16 2000/06/29 07:18:57 mrg Exp $	*/
+/*	$NetBSD: bw2.c,v 1.17 2001/09/19 18:10:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/idprom.h>
 #include <machine/pmap.h>
 

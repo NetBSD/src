@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37 2000/06/29 08:44:05 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.38 2001/09/19 18:10:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@
 #include <sys/poll.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>

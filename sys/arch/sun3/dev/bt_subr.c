@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.3 2001/09/05 13:27:53 tsutsui Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.4 2001/09/19 18:10:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -48,7 +48,7 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 
 #include "btreg.h"
 #include "btvar.h"
