@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.35 2005/01/08 03:13:09 yamt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.36 2005/01/08 03:18:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -168,9 +168,9 @@ struct	ethercom {
 #define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
 
 #ifdef	_KERNEL
-extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
-extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
-extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
+extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
 int	ether_ioctl(struct ifnet *, u_long, caddr_t);
 int	ether_addmulti (struct ifreq *, struct ethercom *);
