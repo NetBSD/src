@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: pcb.h 1.13 89/04/23
  *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.3 1993/08/01 19:25:05 mycroft Exp $
+ *	$Id: pcb.h,v 1.4 1994/05/04 03:47:26 mycroft Exp $
  */
 
 #include <machine/frame.h>
@@ -63,4 +63,4 @@ struct pcb
 #define PCB_HPUXMMAP	0x0010	/* VA space is multiple mapped */
 #define PCB_HPUXTRACE	0x0020	/* being traced by an HPUX process */
 #define PCB_HPUXBIN	0x0040	/* loaded from an HPUX format binary */
-				/* note: does NOT imply SHPUX */
+				/* note: does NOT imply EMUL_HPUX */

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.29 1994/04/24 06:14:02 mycroft Exp $
+ *	$Id: machdep.c,v 1.30 1994/05/04 03:47:18 mycroft Exp $
  */
 
 #include "param.h"
@@ -366,7 +366,7 @@ setregs(p, entry, stack, retval)
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
 #ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX) {
+	if (p->p_emul == EMUL_HPUX) {
 
 		p->p_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
@@ -386,8 +386,8 @@ setregs(p, entry, stack, retval)
 	 * I didn't want to muck up kern_exec.c with this code, so I
 	 * stuck it here.
 	 */
-	if ((p->p_pptr->p_flag & SHPUX) &&
-	    (p->p_flag & STRC)) {
+	if ((p->p_pptr->p_emul == EMUL_HPUX) &&
+	    (p->p_flag & P_TRACED)) {
 		tweaksigcode(1);
 		p->p_addr->u_pcb.pcb_flags |= PCB_HPUXTRACE;
 	} else if (p->p_addr->u_pcb.pcb_flags & PCB_HPUXTRACE) {
@@ -594,7 +594,7 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 #ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX)
+	if (p->p_emul == EMUL_HPUX)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
 #endif
@@ -698,7 +698,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
-	if (p->p_flag & SHPUX) {
+	if (p->p_emul == EMUL_HPUX) {
 		register struct hpuxsigframe *hkfp;
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
@@ -783,7 +783,7 @@ sigreturn(p, uap, retval)
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
 	 */
-	if (p->p_flag & SHPUX) {
+	if (p->p_emul == EMUL_HPUX) {
 		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
 		struct hpuxsigcontext htsigc;
 
