@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.10 1997/03/28 23:47:16 mycroft Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.11 1997/04/13 19:47:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -75,11 +75,9 @@ bha_pci_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_space_tag_t iot = pa->pa_iot;
-	bus_addr_t iobase;
-	bus_size_t iosize;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	pci_chipset_tag_t pc = pa->pa_pc;
+	bus_size_t iosize;
 	int rv;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_BUSLOGIC)
@@ -89,9 +87,8 @@ bha_pci_match(parent, match, aux)
 	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
 		return (0);
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
-		return (0);
-	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
+	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+	    NULL, &iosize))
 		return (0);
 
 	rv = bha_find(iot, ioh, NULL);
@@ -111,9 +108,7 @@ bha_pci_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct bha_softc *sc = (void *)self;
-	bus_space_tag_t iot = pa->pa_iot;
-	bus_addr_t iobase;
-	bus_size_t iosize;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct bha_probe_data bpd;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -129,10 +124,12 @@ bha_pci_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
-		panic("bha_pci_attach: pci_io_find failed");
-	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
-		panic("bha_pci_attach: bus_space_map failed");
+	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+	    NULL, NULL)) {
+		printf("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
