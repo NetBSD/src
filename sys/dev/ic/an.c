@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.13 2001/05/24 08:12:28 itojun Exp $	*/
+/*	$NetBSD: an.c,v 1.14 2001/05/28 00:46:35 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1040,6 +1040,12 @@ static int an_ioctl(ifp, command, data)
 
 	switch (command) {
 	case SIOCSIFFLAGS:
+		/*
+		 * Handle special case for IFF_PROMISC.  If only IFF_PROMISC
+		 * flag is changed, do not call an_init() to avoid initiating
+		 * reassociation to another access point.  It is really
+		 * helpful for tcpdump(8).
+		 */
 		if ((ifp->if_flags & sc->an_if_flags &
 		    (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
 			if (ifp->if_flags & IFF_PROMISC &&
