@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2002/12/10 05:14:24 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2003/03/31 21:30:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,6 +35,14 @@
 
 #ifndef	_ARM26_VMPARAM_H_
 #define	_ARM26_VMPARAM_H_
+
+/*
+ * Page size on the 26-bit ARM CPUs is not variable in the traditional
+ * sense.  We override the PAGE_* definitions to compile-time costants.
+ */
+#define	PAGE_SHIFT	15
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
