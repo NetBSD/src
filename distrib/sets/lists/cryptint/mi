@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.6 2000/02/06 17:02:32 assar Exp $
+#	$NetBSD: mi,v 1.7 2000/02/25 02:52:11 assar Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./usr/bin/compile_et
@@ -146,10 +146,20 @@
 ./usr/share/examples/openssl/CA.pl
 ./usr/share/examples/openssl/CA.sh
 ./usr/share/examples/openssl/der_chop
+./usr/share/info/heimdal.info
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
 ./usr/share/man/cat1/kpasswd.0
+./usr/share/man/cat3/krb5_warn.0
+./usr/share/man/cat3/krb5_openlog.0
+./usr/share/man/cat3/krb5_425_conv_principal.0
+./usr/share/man/cat3/krb5_build_principal.0
+./usr/share/man/cat3/krb5_free_principal.0
+./usr/share/man/cat3/krb5_parse_name.0
+./usr/share/man/cat3/krb5_sname_to_principal.0
+./usr/share/man/cat3/krb5_unparse_name.0
+./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/racoon.conf.0
 ./usr/share/man/cat8/hprop.0
 ./usr/share/man/cat8/hpropd.0
@@ -161,6 +171,15 @@
 ./usr/share/man/man1/kinit.1
 ./usr/share/man/man1/klist.1
 ./usr/share/man/man1/kpasswd.1
+./usr/share/man/man3/krb5_425_conv_principal.3
+./usr/share/man/man3/krb5_build_principal.3
+./usr/share/man/man3/krb5_free_principal.3
+./usr/share/man/man3/krb5_openlog.3
+./usr/share/man/man3/krb5_parse_name.3
+./usr/share/man/man3/krb5_sname_to_principal.3
+./usr/share/man/man3/krb5_unparse_name.3
+./usr/share/man/man3/krb5_warn.3
+./usr/share/man/man5/krb5.conf.5
 ./usr/share/man/man5/racoon.conf.5
 ./usr/share/man/man8/hprop.8
 ./usr/share/man/man8/hpropd.8
