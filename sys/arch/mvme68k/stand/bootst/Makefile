@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.5 1998/06/12 23:11:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.5.28.1 2000/06/26 18:13:13 scw Exp $
 
 RELOC=0x3F0000 
 
@@ -16,15 +16,10 @@ CLEANFILES+=stboot bootst bootst.bug
 .include "${S}/arch/mvme68k/stand/wrtvid/Makefile.inc"
 
 SRCS=   boot.c conf.c dev_tape.c rawfs.c version.c
-
 LIBS=	${LIBSA} ${LIBBUG}
+OBJS=   ${SRCS:S/.c/.o/g}
 
-OBJS= ${SRCS:N*.h:R:S/$/.o/g}
-
-BOOTS=	bootst stboot
-ALL=	${BOOTS} 
-
-all: ${ALL}
+realall:	bootst stboot
 
 bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
 	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
@@ -34,6 +29,13 @@ bootst stboot: bootst.bug ${WRTVID}
 	${WRTVID} bootst.bug
 
 install:
-	${INSTALL} -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
+	${INSTALL} -c -m 555 -g bin -o bin bootst ${DESTDIR}${MDEC_DIR}
+	${INSTALL} -c -m 555 -g bin -o bin stboot ${DESTDIR}${MDEC_DIR}
+
+afterdepend:	.depend
+	@(TMP=/tmp/_depend$$$$; \
+		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
+	< .depend > $$TMP; \
+	mv $$TMP .depend)
 
 .include <bsd.prog.mk>
