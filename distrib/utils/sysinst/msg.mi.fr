@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.37 2000/12/03 01:54:46 minoura Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.38 2000/12/18 09:18:46 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -266,6 +266,15 @@ message disksetupdone
 {Bien, la première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel,
 créé (newfs) et testé (fsck) vos nouvelles partitions.
+
+L'étape suivant consiste a recopier les différents composants.
+Appuyer sur <entrée> pour continuer.
+}
+
+message disksetupdoneupdate
+{Bien, la première partie de la procédure est terminée.
+Sysinst a écrit, sur votre disque de destination, un disklabel
+et testé (fsck) vos nouvelles partitions.
 
 L'étape suivant consiste a recopier les différents composants.
 Appuyer sur <entrée> pour continuer.

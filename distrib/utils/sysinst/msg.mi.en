@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.77 2000/12/03 01:54:46 minoura Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.78 2000/12/18 09:18:46 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -266,6 +266,15 @@ message disksetupdone
 {Okay, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
+
+The next step is to fetch and unpack the distribution filesets.
+Press <return> to proceed.
+}
+
+message disksetupdoneupdate
+{Okay, the first part of the procedure is finished.  Sysinst has
+written a disklabel to the target disk, and fsck'ed the new
+partitions you specified for the target disk.
 
 The next step is to fetch and unpack the distribution filesets.
 Press <return> to proceed.
