@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.9 2001/11/28 10:36:48 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.10 2001/12/02 16:18:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.9 2001/11/28 10:36:48 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.10 2001/12/02 16:18:01 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -123,9 +123,7 @@ __RCSID("$NetBSD: setemul.c,v 1.9 2001/11/28 10:36:48 manu Exp $");
 #include "../../sys/compat/hpux/hpux_errno.c"
 #include "../../sys/compat/svr4/svr4_errno.c"
 #include "../../sys/compat/ibcs2/ibcs2_errno.c"
-#ifdef notyet
 #include "../../sys/compat/irix/irix_errno.c"
-#endif
 #include "../../sys/compat/linux/common/linux_errno.c"
 #undef KTRACE
 
@@ -143,11 +141,7 @@ static const struct emulation emulations[] = {
 	{    "ibcs2",    ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL,
 	 native_to_ibcs2_errno,  NELEM(native_to_ibcs2_errno) },
 	{    "irix",    irix_syscallnames,   IRIX_SYS_MAXSYSCALL,
-#ifdef notyet
 	 native_to_irix_errno,  NELEM(native_to_irix_errno) },
-#else
-	 native_to_svr4_errno,  NELEM(native_to_svr4_errno) },
-#endif
 	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
 	 native_to_linux_errno,  NELEM(native_to_linux_errno) },
 	{     "osf1",     osf1_syscallnames,    OSF1_SYS_MAXSYSCALL,
