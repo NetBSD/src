@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.30 1996/03/24 01:26:57 mrg Exp $	*/
+/*	$NetBSD: ccd.c,v 1.31 1996/03/30 23:05:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
-#include <dev/dev_conf.h>
 #include <dev/ccdvar.h>
 
 #if defined(CCDDEBUG) && !defined(DEBUG)

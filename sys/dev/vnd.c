@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.25 1996/03/16 23:19:08 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,11 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/stat.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/uio.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -124,10 +124,6 @@ struct vnd_softc {
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
-
-/* {b,c}devsw[] function prototypes XXX: move them to dev_conf.h */
-bdev_decl(vnd);
-cdev_decl(vnd);
 
 /* called by main() at boot time */
 void	vndattach __P((int));
