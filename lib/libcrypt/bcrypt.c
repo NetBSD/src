@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.5 2005/01/11 23:02:16 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.6 2005/01/12 03:32:52 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -45,13 +45,8 @@
  * 6. RETURN Concatenate (salt, ctext);
  *
  */
-
-#if 0
-#include <stdio.h>
-#endif
-
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.5 2005/01/11 23:02:16 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.6 2005/01/12 03:32:52 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,7 +150,7 @@ encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
 }
 
 int
-__gensalt_blowfish(char *salt, size_t saltlen, size_t nrounds)
+__gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 {
 	size_t i;
 	u_int32_t seed = 0;
@@ -193,7 +188,10 @@ char *
 bcrypt_gensalt(u_int8_t log_rounds)
 {
 	static char gsalt[BCRYPT_MAXSALTLEN];
-	if (__gensalt_blowfish(gsalt, sizeof(gsalt), log_rounds) == -1)
+	char num[10];
+
+	(void)snprintf(num, sizeof(num), "%d", log_rounds);
+	if (__gensalt_blowfish(gsalt, sizeof(gsalt), num) == -1)
 		return NULL;
 	return gsalt;
 }
