@@ -1,5 +1,3 @@
-/* $Id: os-utx32.h,v 1.1.1.1 1994/06/13 19:56:07 mycroft Exp $ */
-
 /*
  * Gould UTX/32 definitions for Amd (automounter)
  *
@@ -39,7 +37,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-utx32.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)os-utx32.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-utx32.h,v 1.2 1994/06/13 20:49:51 mycroft Exp $
  */
 
 /*

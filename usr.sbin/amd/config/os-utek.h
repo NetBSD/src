@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-utek.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-utek.h,v 1.2 1994/06/13 19:49:16 mycroft Exp $
+ *	from: @(#)os-utek.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-utek.h,v 1.3 1994/06/13 20:49:50 mycroft Exp $
  *
  * Utek 4.0  definitions for Amd (automounter)
  *	from Bill Trost <trost%reed@cse.ogi.edu>

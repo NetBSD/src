@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-xinu43.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-xinu43.h,v 1.2 1994/06/13 19:49:17 mycroft Exp $
+ *	from: @(#)os-xinu43.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-xinu43.h,v 1.3 1994/06/13 20:49:55 mycroft Exp $
  *
  * mt Xinu 4.3 (MORE/bsd) definitions for Amd (automounter)
  * Should work on both Vax and HP ...
