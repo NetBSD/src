@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.127 2002/10/05 15:16:13 tsutsui Exp $
+#	$NetBSD: files.isa,v 1.128 2003/03/03 22:07:21 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -146,7 +146,7 @@ device	scd: disk
 attach	scd at isa
 file	dev/isa/scd.c			scd			needs-flag
 
-attach	wdc at isa with wdc_isa: isadma
+attach	wdc at isa with wdc_isa
 file	dev/isa/wdc_isa.c		wdc_isa
 
 # Wangtek- and Archive-compatible tape controller boards
