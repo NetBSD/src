@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of February 02, 1999.
+The following sites mirror NetBSD as of February 24, 1999.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -101,10 +101,6 @@ Norway
 * ftp.ntnu.no
   Norwegian University of Science and Technology
   ftp://ftp.ntnu.no/pub/NetBSD
-
-* skarven.itea.ntnu.no
-  Norwegian University of Science and Technology
-  ftp://skarven.itea.ntnu.no/pub/NetBSD
 
 Russia
 
@@ -210,11 +206,9 @@ Japan
 
 Norway
 
-* skarven.itea.ntnu.no
+* sup.no.netbsd.org
   Norwegian University of Science and Technology
-  Instructions: Use this line as your sup file to get /usr/README.supinfo-
-  skarven:current release=supinfo host=skarven.itea.ntnu.no use-rel-suffix
-  backup delete old base=/usr prefix=/usr hostbase=/supmirror
+  Instructions: See /usr/src/share/examples/supfiles/sup.no.netbsd.org
 
 UK
 
