@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.16 1996/04/12 23:21:37 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -178,7 +178,7 @@ long hostid;
 #ifdef INSECURE
 int securelevel = -1;
 #else
-int securelevel;
+int securelevel = 0;
 #endif
 
 /*
