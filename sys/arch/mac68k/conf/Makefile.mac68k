@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.46 1996/12/17 13:58:26 scottr Exp $
+#	$NetBSD: Makefile.mac68k,v 1.47 1997/01/13 07:06:51 scottr Exp $
 
 # Makefile for NetBSD
 #
@@ -25,8 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-#COPTS?= 	-O2
-COPTS?= 	-O
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
