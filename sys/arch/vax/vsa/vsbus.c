@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.23 2000/03/08 23:50:51 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.24 2000/04/23 16:38:54 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -132,7 +132,6 @@ vsbus_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	vsbus_softc *sc = (void *)self;
-	vaddr_t temp;
 
 	printf("\n");
 
@@ -141,28 +140,29 @@ vsbus_attach(parent, self, aux)
 	switch (vax_boardtype) {
 #if VAX49
 	case VAX_BTYP_49:
-		temp = vax_map_physmem(0x25c00000, 1);
-		sc->sc_intreq = (char *)temp + 12;
-		sc->sc_intclr = (char *)temp + 12;
-		sc->sc_intmsk = (char *)temp + 8;
-#if 0
-		vsbus_dma_init(sc);	/* not yet */
-#endif
+		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 12;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 8;
+		vsbus_dma_init(sc, 8192);
 		break;
 #endif
 
 #if VAX46 || VAX48
 	case VAX_BTYP_48:
 	case VAX_BTYP_46:
-		vsbus_dma_init(sc);
-		/* FALL THROUGH */
+		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+		vsbus_dma_init(sc, 32768);
 #endif
 
 	default:
-		temp = vax_map_physmem(VS_REGS, 1);
-		sc->sc_intreq = (char *)temp + 15;
-		sc->sc_intclr = (char *)temp + 15;
-		sc->sc_intmsk = (char *)temp + 12;
+		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
 		break;
 	}
 
