@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 1997/10/25 10:12:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1998/03/02 19:44:23 cgd Exp $
+
+.include <bsd.own.mk>
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -11,7 +13,7 @@ SRCS+=	match.S
 CPPFLAGS+=-DASMV
 .endif
 
-LDSTATIC= -static
+LDSTATIC?= -static
 LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
 
