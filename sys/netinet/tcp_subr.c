@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.56 1998/07/17 23:09:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.57 1998/08/02 00:36:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -128,6 +129,8 @@ int	tcbhashsize = TCBHASHSIZE;
 
 int	tcp_freeq __P((struct tcpcb *));
 
+struct pool tcpcb_pool;
+
 /*
  * Tcp initialization
  */
@@ -135,6 +138,8 @@ void
 tcp_init()
 {
 
+	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
+	    0, NULL, NULL, M_PCB);
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 	LIST_INIT(&tcp_delacks);
 	if (max_protohdr < sizeof(struct tcpiphdr))
@@ -275,9 +280,9 @@ tcp_newtcpcb(inp)
 {
 	register struct tcpcb *tp;
 
-	tp = malloc(sizeof(*tp), M_PCB, M_NOWAIT);
+	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
 	if (tp == NULL)
-		return ((struct tcpcb *)0);
+		return (NULL);
 	bzero((caddr_t)tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
 	LIST_INIT(&tp->timeq);
@@ -425,7 +430,7 @@ tcp_close(tp)
 
 	if (tp->t_template)
 		FREE(tp->t_template, M_MBUF);
-	free(tp, M_PCB);
+	pool_put(&tcpcb_pool, tp);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
 	in_pcbdetach(inp);
