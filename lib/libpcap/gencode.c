@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.15 1999/07/05 20:04:50 mjacob Exp $	*/
+/*	$NetBSD: gencode.c,v 1.16 1999/07/25 00:15:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.15 1999/07/05 20:04:50 mjacob Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.16 1999/07/25 00:15:22 itojun Exp $");
 #endif
 #endif
 
@@ -631,6 +631,10 @@ gen_linktype(proto)
 	case DLT_PPP:
 		if (proto == ETHERTYPE_IP)
 			proto = PPP_IP;			/* XXX was 0x21 */
+#ifdef INET6
+		else if (proto == ETHERTYPE_IPV6)
+			proto = PPP_IPV6;
+#endif /* INET6 */
 		break;
 
 	case DLT_PPP_BSDOS:
@@ -643,6 +647,12 @@ gen_linktype(proto)
 			b0 = gen_cmp(off_linktype, BPF_H, PPP_VJNC);
 			gen_or(b1, b0);
 			return b0;
+
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			proto = PPP_IPV6;
+			break;
+#endif /* INET6 */
 
 		case ETHERTYPE_DN:
 			proto = PPP_DECNET;
@@ -663,7 +673,7 @@ gen_linktype(proto)
 		if (proto == ETHERTYPE_IP)
 			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET)));
 #ifdef INET6
-		if (proto == ETHERTYPE_IPV6)
+		else if (proto == ETHERTYPE_IPV6)
 			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET6)));
 #endif /* INET6 */
 		else
