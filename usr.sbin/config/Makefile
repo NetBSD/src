@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.19 1998/04/09 00:32:39 tv Exp $
+#	$NetBSD: Makefile,v 1.20 1998/04/16 18:47:05 tv Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 PROG=	config
 BINDIR=	/usr/sbin
 SRCS=	files.c gram.y hash.c main.c mkheaders.c mkioconf.c mkmakefile.c \
 	mkswap.c pack.c scan.l sem.c util.c
-YHEADER=1
+YFLAGS=
 CPPFLAGS+=-I${.CURDIR} -I.
 
 # This program actually requires "flex" (not just any old lex).
@@ -13,5 +13,11 @@ CPPFLAGS+=-I${.CURDIR} -I.
 LEX=flex
 
 MAN=	config.8
+
+# XXX should use "YHEADER", but make this work on 1.3 as well as -current
+gram.c gram.h: gram.y
+	${YACC.y} -d ${.ALLSRC}
+	mv -f y.tab.c gram.c
+	mv -f y.tab.h gram.h
 
 .include <bsd.prog.mk>
