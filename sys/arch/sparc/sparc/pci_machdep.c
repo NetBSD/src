@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2002/03/28 19:50:21 uwe Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.5 2002/05/16 01:33:53 uwe Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -45,7 +45,10 @@
 #define SPDB_INTFIX	0x10
 #define SPDB_PROBE	0x20
 int sparc_pci_debug = 0;
-#define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
+#define DPRINTF(l, s)	do { 			\
+	if (sparc_pci_debug & (l))		\
+		printf s;			\
+} while (/* CONSTCOND */ 0)
 #else
 #define DPRINTF(l, s)
 #endif
@@ -272,11 +275,11 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 	pcitag_t tag;
 	int *bp, *dp, *fp;
 {
-	if (*bp != NULL)
+	if (bp != NULL)
 		*bp = PCITAG_BUS(tag);
-	if (*dp != NULL)
+	if (dp != NULL)
 		*dp = PCITAG_DEV(tag);
-	if (*fp != NULL)
+	if (fp != NULL)
 		*fp = PCITAG_FUN(tag);
 }
 
