@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.8 1994/07/04 19:30:24 deraadt Exp $";
+static char rcsid[] = "$Id: options.c,v 1.9 1994/07/08 09:20:06 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -222,7 +222,7 @@ static struct cmd {
 
 
 static char *usage_string = "\
-pppd version %s patch level %d%s\n\
+pppd version %s patch level %d\n\
 Usage: %s [ arguments ], where arguments are:\n\
 	<device>	Communicate over the named device\n\
 	<speed>		Set the baud rate to <speed>\n\
