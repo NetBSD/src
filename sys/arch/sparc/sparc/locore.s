@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 1997/09/19 13:55:31 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 1997/09/23 08:19:56 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -231,9 +231,11 @@ _pgofset:
 _trapbase:
 	.word	0
 
+#if 0
 #if defined(SUN4M)
 _mapme:
 	.asciz "0 0 f8000000 15c6a0 map-pages"
+#endif
 #endif
 
 #if !defined(SUN4M)
@@ -262,12 +264,13 @@ sun4_notsup:
  * 0x4000, it is far easier to start at KERNBASE+0x4000 than to
  * buck the trend.  This is two or four pages in (depending on if
  * pagesize is 8192 or 4096).    We place two items in this area:
- * the message buffer (phys addr 0) and the IE_reg (phys addr 0x2000).
- * because the message buffer is in our "red zone" between user and
+ * the message buffer (phys addr 0) and the cpu_softc structure for
+ * the first processor in the system (phys addr 0x2000).
+ * Because the message buffer is in our "red zone" between user and
  * kernel space we remap it in configure() to another location and
  * invalidate the mapping at KERNBASE.
  */
-	.globl _msgbufaddr
+!	.globl _msgbufaddr	/* This label no longer used in C code */
 _msgbufaddr = KERNBASE
 
 /*
