@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.13.2.1 2000/01/21 18:27:39 jdc Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.13.2.2 2000/02/05 13:48:27 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.13.2.1 2000/01/21 18:27:39 jdc Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.13.2.2 2000/02/05 13:48:27 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,10 @@ struct shipspecs *mc;		/* ms->specs */
 void
 initscreen()
 {
+	if (!SCREENTEST()) {
+		printf("Can't sail on this terminal.\n");
+		exit(1);
+	}
 	/* initscr() already done in SCREENTEST() */
 	view_w = newwin(VIEW_Y, VIEW_X, VIEW_T, VIEW_L);
 	slot_w = newwin(SLOT_Y, SLOT_X, SLOT_T, SLOT_L);
