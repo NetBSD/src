@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2001/01/23 20:31:28 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.101 2001/02/11 00:37:22 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -374,14 +374,6 @@ setregs(p, pack, stack)
 	 */
 #ifdef __arch64__
 	/* Check what memory model is requested */
-#define	EF_SPARCV9_MM		0x3
-#define	EF_SPARCV9_TSO		0x0
-#define	EF_SPARCV9_PSO		0x1
-#define	EF_SPARCV9_RMO		0x2
-#define	EF_SPARC_SUN_US1	0x000200
-#define	EF_SPARC_HAL_R1		0x000400
-#define	EF_SPARC_SUN_US3	0x000800
-
 	switch ((eh->e_flags & EF_SPARCV9_MM)) {
 	default:
 		printf("Unknown memory model %d\n", 
@@ -1246,6 +1238,10 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	int i;
 	size_t len;
 
+	/* Record mbuf for *_unload */
+	map->_dm_type = _DM_TYPE_MBUF;
+	map->_dm_source = (void *)m;
+
 	i = 0;
 	len = 0;
 	while (m) {
@@ -1276,10 +1272,12 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			i++;
 		}
 		m = m->m_next;
-		if (m && i >= MAX_DMA_SEGS) 
+		if (m && i >= MAX_DMA_SEGS) {
 			/* Exceeded the size of our dmamap */
+			map->_dm_type = 0;
+			map->_dm_source = NULL;
 			return E2BIG;
-
+		}
 	}
 
 	return (bus_dmamap_load_raw(t, map, segs, i,
@@ -1300,16 +1298,32 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-#if 1
+/* 
+ * XXXXXXX The problem with this routine is that it needs to 
+ * lock the user address space that is being loaded, but there
+ * is no real way for us to unlock it during the unload process.
+ */
+#if 0
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
 	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
 
-	if (uio->uio_segflg == UIO_USERSPACE) 
+	/*
+	 * Check user read/write access to the data buffer.
+	 */
+	if (uio->uio_segflg == UIO_USERSPACE) {
 		pm = p->p_vmspace->vm_map.pmap;
-	else
+		for (i = 0; i < uio->uio_iovcnt; i++) {
+			/* XXXCDC: map not locked, rethink */
+			if (__predict_false(!uvm_useracc(uio->uio_iov[i].iov_base,
+				     uio->uio_iov[i].iov_len,
+/* XXX is UIO_WRITE correct? */
+				     (uio->uio_rw == UIO_WRITE) ? B_WRITE : B_READ)))
+				return (EFAULT);
+		}
+	} else
 		pm = pmap_kernel();
 
 	i = 0;
@@ -1319,6 +1333,18 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		vaddr_t vaddr = (vaddr_t)iov->iov_base;
 		bus_size_t buflen = iov->iov_len;
 
+		/*
+		 * Lock the part of the user address space involved
+		 *    in the transfer.
+		 */
+		PHOLD(p);
+		if (__predict_false(uvm_vslock(p, vaddr, buflen,
+			    (uio->uio_rw == UIO_WRITE) ?
+			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
+			    != KERN_SUCCESS)) {
+				goto after_vsunlock;
+			}
+		
 		len += buflen;
 		while (buflen > 0 && i < MAX_DMA_SEGS) {
 			paddr_t pa;
@@ -1345,10 +1371,14 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 			segs[i]._ds_mlist = NULL;
 			i++;
 		}
-		if (buflen > 0 && i >= MAX_DMA_SEGS) 
+		uvm_vsunlock(p, bp->b_data, todo);
+		PRELE(p);
+ 		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return E2BIG;
 	}
+	map->_dm_type = DM_TYPE_UIO;
+	map->_dm_source = (void *)uio;
 	return (bus_dmamap_load_raw(t, map, segs, i, 
 				    (bus_size_t)len, flags));
 #endif
@@ -1385,11 +1415,6 @@ _bus_dmamap_unload(t, map)
 	vm_page_t m;
 	struct pglist *mlist;
 	paddr_t pa;
-
-#if 0	/* no longer valid */
-	if (map->dm_nsegs != 1)
-		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
-#endif
 
 	for (i=0; i<map->dm_nsegs; i++) {
 		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {
