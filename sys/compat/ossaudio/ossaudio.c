@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.4 1997/03/20 04:21:31 mycroft Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.5 1997/03/20 16:11:29 mycroft Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -150,7 +150,26 @@ linux_ioctl_audio(p, uap, retval)
 		error = (*fp->f_ops->fo_ioctl)(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			return error;
-		/*XXXX*/
+		switch (tmpinfo.play.encoding) {
+		case AUDIO_ENCODING_ULAW:
+			idat = LINUX_AFMT_MU_LAW;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			idat = LINUX_AFMT_A_LAW;
+			break;
+		case AUDIO_ENCODING_PCM16:
+			idat = LINUX_AFMT_S16_LE;
+			break;
+		case AUDIO_ENCODING_PCM8:
+			idat = LINUX_AFMT_U8;
+			break;
+		case AUDIO_ENCODING_ADPCM:
+			idat = LINUX_AFMT_IMA_ADPCM;
+			break;
+		}
+		error = copyout(&idat, SCARG(uap, data), sizeof idat);
+		if (error)
+			return error;
 		break;
 	case LINUX_SNDCTL_DSP_SETFRAGMENT:
 		AUDIO_INITINFO(&tmpinfo);
