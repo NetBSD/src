@@ -114,7 +114,7 @@ cgthree*)
 	;;
 
 cgfour*)
-	unit=`expr $i : '.......\(.*\)'`
+	unit=`expr $i : '......\(.*\)'`
 	mknod cgfour$unit	c 39 $unit; chmod 666 cgfour$unit
 	;;
 
