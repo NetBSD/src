@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.8 2001/01/22 22:28:46 bjh21 Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.9 2001/03/10 20:04:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ int eftp_media[] = {
 /* Routines required by the MI i82586 driver API */
 static void 	ef_reset __P((struct ie_softc *, int));
 static void 	ef_hwinit __P((struct ie_softc *));
-static void 	ef_atten __P((struct ie_softc *));
+static void 	ef_atten __P((struct ie_softc *, int));
 static int 	ef_intrhook __P((struct ie_softc *, int));
 
 static void	ef_copyin __P((struct ie_softc *, void *, int, size_t));
@@ -197,8 +197,9 @@ ef_reset(sc, why)
 }
 
 static void
-ef_atten(sc)
+ef_atten(sc, why)
 	struct ie_softc *sc;
+	int why;
 {
 	struct ef_softc* esc = (struct ef_softc *) sc;
 	bus_space_write_1(esc->sc_regt, esc->sc_regh, EF_ATTN, 1);
