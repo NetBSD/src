@@ -1,2 +1,6 @@
 ./usr/X11R6/bin/Xprt
+./usr/X11R6/bin/Xnest
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xserver.0
+./usr/X11R6/man/cat1/Xvfb.0
