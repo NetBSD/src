@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.9 2002/02/08 01:28:17 ross Exp $
+.\"	$NetBSD: getdents.2,v 1.10 2002/08/12 21:26:27 soren Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,9 +69,10 @@ The data in the buffer is a series of
 .Em dirent
 structures each containing the following entries:
 .Bd -literal -offset indent
-unsigned long	d_fileno;
-unsigned short	d_reclen;
-unsigned short	d_namlen;
+u_int32_t	d_fileno;
+u_int16_t	d_reclen;
+u_int8_t	d_type;
+u_int8_t	d_namlen;
 char    	d_name[MAXNAMLEN + 1]; /* see below */
 .Ed
 .Pp
@@ -92,8 +93,20 @@ The
 entry is the length, in bytes, of the directory record.
 .Pp
 The
-.Fa d_name
-entry contains a null terminated file name.
+.Fa d_type
+is the type of file, where the following are possible types:
+.Dv DT_UNKNOWN ,
+.Dv DT_FIFO ,
+.Dv DT_CHR ,
+.Dv DT_DIR ,
+.Dv DT_BLK ,
+.Dv DT_REG ,
+.Dv DT_LNK ,
+.Dv DT_SOCK ,
+.Dv DT_WHT ,
+.Dv DT_SOCK ,
+and
+.Dv DT_WHT .
 .Pp
 The
 .Fa d_namlen
@@ -103,6 +116,10 @@ Thus the actual size of
 may vary from 1 to
 .Dv MAXNAMLEN
 \&+ 1.
+.Pp
+The
+.Fa d_name
+entry contains a null terminated file name.
 .Pp
 Entries may be separated by extra space.
 The
@@ -151,7 +168,8 @@ it was being read.
 .El
 .Sh SEE ALSO
 .Xr lseek 2 ,
-.Xr open 2
+.Xr open 2 ,
+.Xr dirent 5
 .Sh HISTORY
 The
 .Fn getdents
