@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.9 2000/02/17 03:12:26 itohy Exp $	*/
+/*	$NetBSD: pax.h,v 1.10 2001/09/04 21:47:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -136,7 +136,7 @@ typedef struct {
  * The format specific routine table allows new archive formats to be quickly
  * added. Overall pax operation is independent of the actual format used to
  * form the archive. Only those routines which deal directly with the archive
- * are tailored to the oddities of the specifc format. All other routines are
+ * are tailored to the oddities of the specific format. All other routines are
  * independent of the archive format. Data flow in and out of the format
  * dependent routines pass pointers to ARCHD structure (described below).
  */
