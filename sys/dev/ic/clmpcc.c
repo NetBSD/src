@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.4 1999/02/21 14:01:50 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.4.2.1 1999/04/05 17:36:38 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -817,6 +817,7 @@ clmpcc_param(tp, t)
 	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_char cor;
+	u_char oldch;
 	int oclk, obpr;
 	int iclk, ibpr;
 	int s;
@@ -921,13 +922,22 @@ clmpcc_param(tp, t)
 		ch->ch_cor5 = 0;
 
 	s = splserial();
-	if ( ISCLR(ch->ch_tty->t_state, TS_BUSY) ) {
-		u_char oldch;
-		oldch = clmpcc_select_channel(sc, ch->ch_car);
+	oldch = clmpcc_select_channel(sc, ch->ch_car);
+
+	/*
+	 * COR2 needs to be set immediately otherwise we might never get
+	 * a Tx EMPTY interrupt to change the other parameters.
+	 */
+	if ( clmpcc_rdreg(sc, CLMPCC_REG_COR2) != ch->ch_cor2 )
+		clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
+
+	if ( ISCLR(ch->ch_tty->t_state, TS_BUSY) )
 		clmpcc_set_params(ch);
-		clmpcc_select_channel(sc, oldch);
-	} else
+	else
 		SET(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS);
+
+	clmpcc_select_channel(sc, oldch);
+
 	splx(s);
 
 	return 0;
@@ -966,9 +976,6 @@ clmpcc_set_params(ch)
 		/* Any change to COR1 requires an INIT command */
 		SET(ch->ch_flags, CLMPCC_FLG_NEED_INIT);
 	}
-
-	if ( clmpcc_rdreg(sc, CLMPCC_REG_COR2) != ch->ch_cor2 )
-		clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
 
 	if ( clmpcc_rdreg(sc, CLMPCC_REG_COR3) != ch->ch_cor3 )
 		clmpcc_wrreg(sc, CLMPCC_REG_COR3, ch->ch_cor3);
