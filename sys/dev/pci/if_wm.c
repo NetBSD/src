@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.21 2002/08/23 07:45:39 itojun Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.22 2002/08/23 16:30:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1441,7 +1441,7 @@ wm_intr(void *arg)
 		if ((icr & sc->sc_icr) == 0)
 			break;
 
-#if NRND > 0
+#if 0 /*NRND > 0*/
 		if (RND_ENABLED(&sc->rnd_source))
 			rnd_add_uint32(&sc->rnd_source, icr);
 #endif
