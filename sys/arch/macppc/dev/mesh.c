@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.9 2001/04/25 17:53:15 bouyer Exp $	*/
+/*	$NetBSD: mesh.c,v 1.10 2001/04/26 15:27:05 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -975,8 +975,8 @@ mesh_free_scb(sc, scb)
 
 void
 mesh_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan; 
-	scsipi_adapter_req_t req; 
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
 	void *arg;
 {
 	struct scsipi_xfer *xs;
