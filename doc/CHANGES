@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.314 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.315 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -49,3 +49,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	du(1): add a -n flag to not include "nodump" files.  [simonb 20040517]
 	bind:	Bind-9.3.0beta3 imported. [christos 20040517]
 	cvs:	cvs-1.11.16 via patch [christos 20040519]
+	resolver: The libc resolver has been updated to the bind9 one
+		[christos 20040521]
