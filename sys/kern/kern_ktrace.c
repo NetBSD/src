@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.17 1995/03/26 07:48:47 cgd Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.18 1995/07/19 15:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -133,6 +133,24 @@ ktrnamei(vp, path)
 	kth = ktrgetheader(KTR_NAMEI);
 	kth->ktr_len = strlen(path);
 	kth->ktr_buf = path;
+
+	ktrwrite(vp, kth);
+	FREE(kth, M_TEMP);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
+void
+ktremul(vp, emul)
+	struct vnode *vp;
+	char *emul;
+{
+	struct ktr_header *kth;
+	struct proc *p = curproc;       /* XXX */
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	kth = ktrgetheader(KTR_EMUL);
+	kth->ktr_len = strlen(emul);
+	kth->ktr_buf = emul;
 
 	ktrwrite(vp, kth);
 	FREE(kth, M_TEMP);
