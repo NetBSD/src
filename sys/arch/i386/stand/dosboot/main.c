@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/09/17 18:44:15 drochner Exp $	 */
+/*	$NetBSD: main.c,v 1.8 1997/09/17 19:39:40 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -268,7 +268,7 @@ main(argc, argv)
 	}
 
 	if (interactive) {
-		printf("\ntype \"?\" or \"help\" for help.\n");
+		printf("type \"?\" or \"help\" for help.\n");
 		bootmenu();
 	}
 
