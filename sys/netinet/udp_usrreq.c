@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.110 2003/09/12 09:55:22 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.111 2003/09/25 00:59:32 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.110 2003/09/12 09:55:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.111 2003/09/25 00:59:32 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -549,7 +549,7 @@ udp6_sendup(m, off, src, so)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		ipsec6stat.in_polvio++;
-		if ((n = m_copy(n, 0, M_COPYALL)) != NULL)
+		if ((n = m_copy(m, 0, M_COPYALL)) != NULL)
 			icmp6_error(n, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_ADMIN, 0);
 		return;
