@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.18 1998/03/01 02:22:33 fvdl Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.19 1998/05/06 01:11:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,6 +49,14 @@
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
+
+/*
+ * Current time values for fast and slow timeouts.  We can use u_int
+ * relatively safely.  The fast timer will roll over in 27 years and
+ * the slow timer in 68 years.
+ */
+u_int	pfslowtimo_now;
+u_int	pffasttimo_now;
 
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
@@ -211,6 +219,8 @@ pfslowtimo(arg)
 	register struct domain *dp;
 	register struct protosw *pr;
 
+	pfslowtimo_now++;
+
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
@@ -224,6 +234,8 @@ pffasttimo(arg)
 {
 	register struct domain *dp;
 	register struct protosw *pr;
+
+	pffasttimo_now++;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
