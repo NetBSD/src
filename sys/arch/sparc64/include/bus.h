@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1999/01/30 17:02:32 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 1999/01/31 11:15:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -394,21 +394,21 @@ int bus_space_probe __P((
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_int8_t *p = (u_int8_t *)a;					\
+	u_int16_t *p = (u_int16_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_2(t, h, o);			\
 } while (0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_int8_t *p = (u_int8_t *)a;					\
+	u_int32_t *p = (u_int32_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_4(t, h, o);			\
 } while (0)
 
 #define	bus_space_read_multi_8(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_int8_t *p = (u_int8_t *)a;					\
+	u_int64_t *p = (u_int64_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_8(t, h, o);			\
 } while (0)
@@ -469,21 +469,21 @@ int bus_space_probe __P((
 
 #define bus_space_write_multi_2(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_int8_t *p = (u_int8_t *)a;					\
+	u_int16_t *p = (u_int16_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_2(t, h, o, *p++);			\
 } while (0)
 
 #define bus_space_write_multi_4(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_int8_t *p = (u_int8_t *)a;					\
+	u_int32_t *p = (u_int32_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_4(t, h, o, *p++);			\
 } while (0)
 
 #define bus_space_write_multi_8(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_int8_t *p = (u_int8_t *)a;					\
+	u_int64_t *p = (u_int64_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_8(t, h, o, *p++);			\
 } while (0)
