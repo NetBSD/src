@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.2 2000/03/18 22:33:06 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.2.4.1 2000/06/25 17:10:25 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2000/03/18 22:33:06 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.4.1 2000/06/25 17:10:25 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,6 +452,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * @@@ should probably be fixed to use offset and len args.
 	 */
 
+#if defined(DIAGNOSTIC) || defined(M68040)	/* XXX: Until 030/060 catered for */
+
 	if (ops & BUS_DMASYNC_PREWRITE) {
 		int i;
 		for(i=0;i<map->dm_nsegs;i++) {
@@ -534,6 +536,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 		}
 	}
+#endif
 }
 
 /*
