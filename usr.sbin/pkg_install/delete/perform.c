@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.53 2004/12/29 11:35:00 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.54 2005/02/04 09:03:03 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.53 2004/12/29 11:35:00 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.54 2005/02/04 09:03:03 jlam Exp $");
 #endif
 #endif
 
@@ -647,6 +647,7 @@ pkg_do(char *pkg)
 
 		return 0;
 	}
+	setenv(PKG_REFCOUNT_DBDIR_VNAME, pkgdb_refcount_dir(), 1);
 	if (!getcwd(home, MaxPathSize)) {
 		cleanup(0);
 		errx(2, "unable to get current working directory!");
@@ -728,6 +729,7 @@ pkg_do(char *pkg)
 		return 1;
 	}
 	setenv(PKG_PREFIX_VNAME, p->name, 1);
+	setenv(PKG_METADATA_DIR_VNAME, LogDir, 1);
 	if (fexists(REQUIRE_FNAME)) {
 		if (Verbose)
 			printf("Executing 'require' script.\n");
