@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.93 2003/03/10 21:11:45 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.94 2003/03/15 18:16:21 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -33,7 +33,8 @@ crypto/dist/openssl/ssl/ssl_sess.c		patch
 
 lib/libc/rpc/xdr_array.c			1.13-1.14
 
-  Fix bounds checking, eliminating an overflow condition.  Fixes SA#2002-011.
+  Fix bounds checking, eliminating an overflow condition.  Fixes
+  SA#2002-011.
 
 crypto/Makefile.openssl				1.2.2.3 -> 1.7
 crypto/dist/openssl/CHANGES			1.1.1.1.2.2 -> 1.6
@@ -1251,6 +1252,7 @@ include/netdb.h					1.27 via patch
 sys/netinet6/esp_input.c			1.24
 
   Check packet length before fetching ESP crypto checksum.
+  Fixes SA#2002-016.
 
 sys/netinet6/esp.h				1.20
 sys/netinet6/esp_core.c				1.24
@@ -1305,84 +1307,39 @@ lib/libc/net/inet_ntop.c			1.11-1.12
   Be more picky about string buffer manipulation.  Correct snprintf
   return value handling.
 
-lib/libc/net/getaddrinfo.c			1.56
-lib/libc/net/res_mkquery.c			1.22
-
-  Correct bad practice in the code - it uses two changing variables
-  to manage buffer (buf and buflen).  Eliminate buflen and use
-  fixed point (ep) as the ending pointer.
-
 usr.sbin/pppd/pppd/tty.c			1.3
 
   Do not try to chmod if fchmod fails when restoring the original
   tty modes.  It could cause a symlink race.  Just report the fchmod
   failure.  Fixes SA#2002-010.
 
-lib/libc/net/getaddrinfo.c			1.50
+lib/libc/net/getaddrinfo.c		1.50,1.52,1.54,1.56-1.63
+lib/libc/net/res_mkquery.c		1.22
+lib/libc/net/gethnamaddr.c		1.37-1.39,1.41-1.43,1.45,1.48-1.52
+lib/libc/net/getnetnamadr.c		1.20,1.23-1.24
 
-  Remove redundant declarations of h_errno and __hostalias.
-
-lib/libc/net/getaddrinfo.c			1.52
-
-  Make sure "qname" argument to getanswer() is properly given.
-
-lib/libc/net/getaddrinfo.c			1.54
-lib/libc/net/gethnamaddr.c			1.43,1.49-1.50
-lib/libc/net/getnetnamadr.c			1.23
-
-  Use snprintf, string manipulation cleanups.
-
-lib/libc/net/getaddrinfo.c			1.57-1.59
-
-  Correct port range check and signed/unsigned mixup.
-
-lib/libc/net/getaddrinfo.c			1.60-1.61
-
-  Lint clean.
-
-lib/libc/net/getaddrinfo.c			1.62
-lib/libc/net/gethnamaddr.c			1.51
-
-  Drop AAAA reply with IPv4 mapped address.  This makes the code
-  consistent with draft-itojun-v6ops-v4mapped-harmful-00.txt
-
-lib/libc/net/getaddrinfo.c			1.63
-lib/libc/net/gethnamaddr.c			1.52
-lib/libc/net/getnetnamadr.c			1.24
-
-  Allocate 64K recieve buffer for DNS responses.
-
-lib/libc/net/gethnamaddr.c			1.37
-
-  On gethostby* with NIS backend, make a lookup against
-  ipnodes.{byname,byaddr} for non-IPv4 address.  Obeys solaris8
-  practice.
-
-lib/libc/net/gethnamaddr.c			1.38
-
-  Varargsify dprintf to allow for format string checking.
-
-lib/libc/net/gethnamaddr.c			1.39
-lib/libc/net/getnetnamadr.c			1.20
-
-  Remove redundant declarations.
-
-lib/libc/net/gethnamaddr.c			1.41
-
-  Do not reverse-lookup scoped IPv6 address.  It does not make sense as
-  there's no way to give scope identifier.
-
-lib/libc/net/gethnamaddr.c			1.42
-
-  Style.
-
-lib/libc/net/gethnamaddr.c			1.45
-
-  Do not pass uninitialized variable to nsdispatch().
-
-lib/libc/net/gethnamaddr.c			1.48
-
-  Query ip6.arpa then ip6.int for IPv6 reverse lookup.  Follows RFC 3152.
+  Several changes related to the DNS resolver code:
+   o Correct use of two changing variables to manage buffer, use only
+     one instead.
+   o Remove redundant declarations of h_errno and __hostalias.
+   o Make sure ``qname'' argument to getanswer() is properly given.
+   o Use snprintf, and various string manipulation cleanups.
+   o Correct port range check and signed/unsigned mixup.
+   o Lint cleanup.
+   o Drop AAAA reply with IPv4 mapped address.  This makes the code
+     consistent with draft-itojun-v6ops-v4mapped-harmful-00.txt.
+   o Allocate 64K receive buffer for DNS responses.
+   o On gethostby* with NIS backend, make a looup against
+     ipnodes.{byname,byaddr} for non-IPv4 address, following Solaris8
+     practice.
+   o Varargsify dprintf to allow for format string checking.
+   o Remove redundant declarations.
+   o Do not reverse-lookup scoped IPv6 address.  It does not make
+     sense as there's no way to give scope identifier.
+   o Do not pass uninitialized variable to nsdispatch().
+   o Query ip6.arpa then ip6.int for IPv6 reverse lookup.  Follows RFC
+     3152.
+  All together, these fix SA#2002-015.
 
 sys/dev/pckbc/wskbdmap_mfii.c			1.24
 
@@ -1511,7 +1468,7 @@ libexec/talkd/extern.h				1.3
 libexec/talkd/process.c				1.8 via patch
 libexec/talkd/talkd.c				1.13-1.14 via patch
 
-  Fix buffer overrun.
+  Fix buffer overrun.  Fixes SA#2002-019.
 
 lib/libkvm/kvm.c				1.72-1.75,1.77
 
@@ -1548,7 +1505,7 @@ usr.bin/openssl/Makefile			1.16-1.17
 gnu/usr.bin/groff/pic/pic.y			1.2
 
   Change argument handling to be like in groff-1.18, thus avoiding
-  a possible buffer overflow.
+  a possible buffer overflow.  Fixes SA#2002-022.
 
 sys/uvm/uvm_swap.c				1.68
 
@@ -1636,16 +1593,16 @@ games/rogue/save.c				1.8
 games/rogue/message.c				1.9
 games/rogue/rogue.h				1.13
 
-  Use correctly bounded strings when reloading a saved game.  In particular,
-  do not let the save game file "string length" exceed the amount of space
-  supplied.  As noted by <stanojr@iserver.sk> on bugtraq.  Fixes SA#2002-021.
+  Use correctly bounded strings when reloading a saved game.  In
+  particular, do not let the save game file ``string length'' exceed
+  the amount of space supplied.  Fixes SA#2002-021.
 
 gnu/dist/sendmail/smrsh/smrsh.c			1.9
 
   Plug smrsh vulnerability, as presented in
   http://www.sendmail.org/smrsh.adv.txt.  Fixes SA#2002-023.
 
-bin/ps/keywords.c				1.28 via patch
+bin/ps/keyword.c				1.28 via patch
   
   Correct printf format string.
 
@@ -1655,7 +1612,8 @@ sbin/route/route.c				1.60-1.61 via patch
 
 sys/netinet/tcp_input.c				1.156 via patch
 
-  Correct log_refused check (TH_SYN, !TH_RST and !TH_ACK).  Fixes PR#18669.
+  Correct log_refused check (TH_SYN, !TH_RST and !TH_ACK).  Fixes
+  PR#18669.
 
 dist/ipf/BNF					1.5
 dist/ipf/HISTORY				1.12-1.14
@@ -1733,9 +1691,9 @@ sys/netinet/ip_state.h				1.21-1.23
 sys/netinet/ipl.h				1.12-1.14
 usr.sbin/ipf/ipftest/Makefile			1.19
 
-  Upgrade IPFilter to 3.4.29.
+  Upgrade IPFilter to 3.4.29.  Fixes SA#2002-024.
 
-distrib/sets/lists/base/mi			1.266,1.289,1.301,1.317 via patch
+distrib/sets/lists/base/mi		1.266,1.289,1.301,1.317 via patch
 share/zoneinfo/africa				1.1.1.14-1.1.1.15
 share/zoneinfo/antarctica			1.1.1.10
 share/zoneinfo/asia				1.1.1.19-1.1.1.23
@@ -1757,7 +1715,7 @@ bin/ksh/main.c					1.8
 
 games/trek/getpar.c				1.10
   
-  Avoid buffer overrun.
+  Avoid buffer overrun.  Fixes SA#2002-025.
 
 crypto/dist/heimdal/kadmin/version4.c		1.2
 
@@ -1766,7 +1724,7 @@ crypto/dist/heimdal/kadmin/version4.c		1.2
 libexec/ftpd/cmds.c				1.19
 
   Correct RFC959 compliance in quoting lines starting with digits
-  (page 36).
+  (page 36).  Fixes SA#2002-027.
 
 sys/netinet6/esp_input.c			1.27
 
@@ -1788,11 +1746,11 @@ sys/netinet/ip_input.c				1.163
 sbin/sysctl/sysctl.c				1.59
 
   When printing out nodes of type "string", don't print anything if
-  sysctl() reports that 0 bytes were returned.  Reported by Matt Green.
+  sysctl() reports that 0 bytes were returned.
 
 lib/libc/net/getnetnamadr.c			1.25-1.26
 
-  Fix remote buffer overrun.
+  Fix remote buffer overrun.  Fixes SA#2002-028.
 
 dist/bind/README				1.7
 dist/bind/Version				1.3
@@ -1807,15 +1765,15 @@ dist/bind/lib/nameser/ns_samedomain.c		1.2
 dist/bind/man/named.conf.5			1.8
 
   Correct multiple DoS holes as well as remote code injection.
-  Upgrade to Version 8.3.4.
+  Upgrade to BIND Version 8.3.4.  Fixes SA#2002-029.
 
 sys/netinet6/ip6_forward.c			1.20 via patch
 
   Need opt_pfil_hooks.h for PFIL_HOOK.
 
-sys/netinet/ip_h323_pxy.c			via patch
-sys/netinet/ip_ipsec_pxy.c			via patch
-sys/netinet/ip_netbios_pxy.c			via patch
+sys/netinet/ip_h323_pxy.c			patch
+sys/netinet/ip_ipsec_pxy.c			patch
+sys/netinet/ip_netbios_pxy.c			patch
 
   Fix compilation on a.out systems.
 
@@ -1860,68 +1818,78 @@ sys/dev/ata/ata.c				1.17
 sys/dev/ata/atavar.h				1.24
 sys/dev/ic/wdc.c				1.114
 
-  read status after data commands in wdc_exec_command(). Mandatory for data out
-  commands (nonw are used for now), and doesn't hurt for data in. Also keep
-  track if we did transfer data. Makes the probe more robust and solves
-  kern/16159
+  Read status after data commands in wdc_exec_command().  Mandatory
+  for data out commands (nonw are used for now), and doesn't hurt
+  for data in.  Also keep track if we did transfer data.  Makes
+  the probe more robust and solves PR#16159.
 
 sys/netinet6/esp_rijndael.c			1.9
 sys/netinet6/ipcomp_core.c			patch
 sys/netkey/keydb.h				1.12
 sys/netkey/keysock.c				1.21
 
-  allocate route_in6 in struct secashead, to avoid mistakenly overrun
-  the end of secashead.  Fixes PR18751.
+  Allocate route_in6 in struct secashead, to avoid mistakenly
+  overrun the end of secashead.  Fixes PR#18751.
+
+crypto/dist/openssl/ssl/s3_pkt.c		1.2
+
+  Minimize information leaked via timing by performing a MAC
+  computation even if incorrect block cipher padding has been found.
+  Fixes SA#2003-001.
+  [wiz, ticket #25]
 
 gnu/dist/sendmail/sendmail/headers.c		1.8
 gnu/dist/sendmail/sendmail/main.c		1.10
 gnu/dist/sendmail/sendmail/parseaddr.c		1.9
 gnu/dist/sendmail/sendmail/sendmail.h		1.11
 
-  	Apply patch from sendmail.org, for critical buffer overrun in 
-	header parsing.
-  	[atatat, ticket #28]
+  Apply patch from sendmail.org, for critical buffer overrun in 
+  header parsing.  Fixes SA#2003-002.
+  [atatat, ticket #28]
 
 lib/libz/gzio.c                                 1.14
 
-        Fix for potential buffer overflow in snprintf() (from OpenBSD)
-        [groo, ticket #29]
+  Fix for potential buffer overflow in snprintf() (from OpenBSD)
+  [groo, ticket #29]
 
 lib/libz/gzio.c                                 1.15
 
-        Remove the HAS_* ifdefs which select [v]s{,n}printf.  Always choose 
-        the n version.
-        [groo, ticket #30]
+  Remove the HAS_* ifdefs which select [v]s{,n}printf.  Always choose 
+  the n version.
+  [groo, ticket #30]
 
 etc/services					1.63
 
-	Add ms-sql-{s,m} entries.
+  Add ms-sql-{s,m} entries.
 
 usr.bin/tftp/tftp.c				1.16
 
-	Fix sendto return value check (incomplete change in 1.14).
-	Noted by Brian Ginsbach in PR 19842.
+  Fix sendto return value check (incomplete change in 1.14).
+  Fixes PR#19842.
 
 sys/dev/scsipi/scsiconf.c			1.199 via patch
 
-	Add SDEV_NOLUNS quirk entry for "NEC     ", "CD-ROM DRIVE:502".
-	Fixes kern/18479 .
+  Add SDEV_NOLUNS quirk entry for "NEC     ", "CD-ROM DRIVE:502".
+  Fixes PR#18479.
 
 sys/netinet6/frag6.c				1.12-1.13
 
-	Properly lock IPv6 reassembly queue.  Correct reassembly queue
-	length monitoring. [itojun, ticket #20]
+  Properly lock IPv6 reassembly queue.  Correct reassembly queue
+  length monitoring.
+  [itojun, ticket #20]
 
 sys/netinet6/ip6_forward.c			1.22
 
-	do not forward packet back to point-to-point interface, if the packet
-	matches the ipv6 prefix assigned to the p2p interface
-	(= redirect case). this leads to pingpong, chews bandwidth.  bad thing
-	is that bad guy from remote can chew bandwidth. [itojun, ticket #21]
+  Do not forward packet back to point-to-point interface, if the
+  packet matches the ipv6 prefix assigned to the p2p interface (=
+  redirect case).  This leads to pingpong, chews bandwidth.  Bad
+  thing is that bad guy from remote can chew bandwidth.
+  [itojun, ticket #21]
 
 usr.bin/file/readelf.c				1.17
 usr.bin/file/softmagic.c			1.30-1.31 via patch
 
-	Don't blindly trust values coming from an ELF file, and fix
-	a memory allocation issue (compute the correct size to allocate).
-	[pooka, ticket #31]
+  Don't blindly trust values coming from an ELF file, and fix a
+  memory allocation issue (compute the correct size to allocate).
+  Fixes SA#2003-003.
+  [pooka, ticket #31]
