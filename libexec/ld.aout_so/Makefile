@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.35 2002/02/06 20:36:18 thorpej Exp $
+#	$NetBSD: Makefile,v 1.36 2002/03/05 21:53:56 thorpej Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c md.c vfprintf.c
 CLIB=	${.CURDIR}/../../lib/libc
-CLIBOBJ!=cd ${CLIB}; \
-	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+CLIBOBJ!=cd ${CLIB} && ${PRINTOBJDIR}
 PICFLAG=-fpic -fno-function-cse
 CPPFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS \
 	  -I${CLIB}/include -I$(.CURDIR)/arch/$(MACHINE_ARCH) -I$(.CURDIR)
