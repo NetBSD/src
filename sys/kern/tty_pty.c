@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.2.6 2002/09/24 10:45:23 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.2.7 2002/09/24 18:53:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.6 2002/09/24 10:45:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.7 2002/09/24 18:53:27 jdolecek Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -742,8 +742,9 @@ filt_ptcread(struct knote *kn, long hint)
 
 	if (canread) {
 		/*
-		 * XXXLUKEM - the below c_cc value is one more than
-		 * the actual amount of data in tty queue - why?
+		 * c_cc is number of characters after output post-processing;
+		 * the amount of data actually read(2) depends on 
+		 * setting of input flags for the terminal.
 		 */
 		kn->kn_data = tp->t_outq.c_cc;
 		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
