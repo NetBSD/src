@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.9 1998/07/26 22:07:26 mycroft Exp $	*/
+/*	$NetBSD: aux.c,v 1.10 1998/12/19 16:30:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: aux.c,v 1.9 1998/07/26 22:07:26 mycroft Exp $");
+__RCSID("$NetBSD: aux.c,v 1.10 1998/12/19 16:30:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ gethfield(f, linebuf, rem, colon)
 			return -1;
 		if ((c = readline(f, linebuf, LINESIZE)) <= 0)
 			return -1;
-		for (cp = linebuf; isprint(*cp) && *cp != ' ' && *cp != ':';
+		for (cp = linebuf; isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
 		     cp++)
 			;
 		if (*cp != ':' || cp == linebuf)
@@ -253,7 +253,7 @@ istrcpy(dest, src)
 {
 
 	do {
-		if (isupper(*src))
+		if (isupper((unsigned char)*src))
 			*dest++ = tolower(*src);
 		else
 			*dest++ = *src;
@@ -382,7 +382,7 @@ nameof(mp, reptype)
 	cp = skin(name1(mp, reptype));
 	if (reptype != 0 || charcount(cp, '!') < 2)
 		return(cp);
-	cp2 = rindex(cp, '!');
+	cp2 = strrchr(cp, '!');
 	cp2--;
 	while (cp2 > cp && *cp2 != '!')
 		cp2--;
@@ -434,8 +434,8 @@ skin(name)
 
 	if (name == NOSTR)
 		return(NOSTR);
-	if (index(name, '(') == NOSTR && index(name, '<') == NOSTR
-	    && index(name, ' ') == NOSTR)
+	if (strchr(name, '(') == NOSTR && strchr(name, '<') == NOSTR
+	    && strchr(name, ' ') == NOSTR)
 		return(name);
 	gotlt = 0;
 	lastsp = 0;
@@ -560,24 +560,24 @@ newname:
 	*cp2 = '\0';
 	if (readline(ibuf, linebuf, LINESIZE) < 0)
 		return(savestr(namebuf));
-	if ((cp = index(linebuf, 'F')) == NULL)
+	if ((cp = strchr(linebuf, 'F')) == NULL)
 		return(savestr(namebuf));
 	if (strncmp(cp, "From", 4) != 0)
 		return(savestr(namebuf));
-	while ((cp = index(cp, 'r')) != NULL) {
+	while ((cp = strchr(cp, 'r')) != NULL) {
 		if (strncmp(cp, "remote", 6) == 0) {
-			if ((cp = index(cp, 'f')) == NULL)
+			if ((cp = strchr(cp, 'f')) == NULL)
 				break;
 			if (strncmp(cp, "from", 4) != 0)
 				break;
-			if ((cp = index(cp, ' ')) == NULL)
+			if ((cp = strchr(cp, ' ')) == NULL)
 				break;
 			cp++;
 			if (first) {
 				cp2 = namebuf;
 				first = 0;
 			} else
-				cp2 = rindex(namebuf, '!') + 1;
+				cp2 = strrchr(namebuf, '!') + 1;
 			while (*cp && cp2 < namebuf + LINESIZE - 1)
 				*cp2++ = *cp++;
 			if (cp2 < namebuf + LINESIZE - 1)
@@ -619,7 +619,7 @@ anyof(s1, s2)
 {
 
 	while (*s1)
-		if (index(s2, *s1++))
+		if (strchr(s2, *s1++))
 			return 1;
 	return 0;
 }
