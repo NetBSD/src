@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.97 1999/01/22 20:51:04 kleink Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.98 1999/01/25 16:00:06 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -427,6 +427,7 @@ sys_execve(p, v, retval)
 
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
+	p->p_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
