@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nlist.h	8.2 (Berkeley) 1/21/94
- *	$Id: nlist.h,v 1.3 1994/05/16 10:58:58 cgd Exp $
+ *	$Id: nlist.h,v 1.4 1994/10/19 20:29:41 pk Exp $
  */
 
 #ifndef _NLIST_H_
@@ -61,8 +61,11 @@ struct nlist {
 #define	N_TEXT	0x04		/* text segment */
 #define	N_DATA	0x06		/* data segment */
 #define	N_BSS	0x08		/* bss segment */
+#define	N_INDR	0x0a		/* alias definition */
+#define	N_SIZE	0x0c		/* pseudo type, defines a symbol's size */
 #define	N_COMM	0x12		/* common reference */
-#define	N_FN	0x1e		/* file name */
+#define	N_FN	0x1e		/* file name (N_EXT on) */
+#define	N_WARN	0x1e		/* warning message (N_EXT off) */
 
 #define	N_EXT	0x01		/* external (global) bit, OR'ed in */
 #define	N_TYPE	0x1e		/* mask for all the type bits */
