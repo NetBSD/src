@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 2002/10/21 04:14:51 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.37 2002/10/23 22:56:29 jdolecek Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -169,7 +169,6 @@ std)
 	mknod mem		c 2 0	; chmod 640 mem	; chgrp kmem mem
 	mknod null		c 2 2	; chmod 666 null
 	mknod zero		c 2 12	; chmod 666 zero
-	mknod io		c 2 14	; chmod 640 io ; chgrp kmem io
 	mknod klog		c 7 0	; chmod 600 klog
 	if $nofdesc; then
 		rm -f tty stdin stdout stderr
