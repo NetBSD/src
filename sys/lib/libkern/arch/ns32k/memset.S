@@ -1,3 +1,5 @@
+/*	$NetBSD: memset.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $	*/
+
 /* 
  * Written by Matthias Pfaller, 1996
  * Public domain.
@@ -6,10 +8,13 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.1 1996/11/07 07:36:19 matthias Exp $")
+	RCSID("$NetBSD: memset.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $")
+# if defined(BZERO)
+	RCSID("$Masqueraded: as bzero $")
+# endif
 #endif
 
-#ifndef BZERO
+#if !defined(BZERO)
 /*
  * void *
  * memset (void *b, int c, size_t len)
