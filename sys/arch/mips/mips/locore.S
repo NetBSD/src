@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.89 2000/03/24 18:16:33 soren Exp $	*/
+/*	$NetBSD: locore.S,v 1.90 2000/03/27 04:52:11 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,7 +269,7 @@ LEAF(mips_idle)
 	nop
 	beq	t0, zero, 1b
 	nop
-	la	ra, sw1
+	la	ra, cpu_switch_queuescan
 	j	ra
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 END(mips_idle)
@@ -312,9 +312,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 /*
  * Entered here from idle() and switch_exit().
  */
-.global cpu_switch1;
-cpu_switch1:
-sw1:
+cpu_switch_queuescan:
 	nop					# wait for intrs disabled
 	nop
 	nop					# extra cycles on r4000
@@ -403,7 +401,7 @@ LEAF(switch_exit)
 	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	REG_EPILOGUE
-	la	ra, sw1				# rathole to cpu_switch()
+	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
