@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.19 2003/09/26 03:08:18 atatat Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.20 2003/09/27 13:29:02 darcy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,20 +43,20 @@
  * The different types of node in a kernfs filesystem
  */
 typedef enum {
-	Kern,		/* the filesystem itself (.) */
-	Kroot,		/* the filesystem root (..) */
-	Knull,		/* none aplicable */
-	Ktime,		/* boottime */
-	Kint,		/* integer */
-	Kstring,	/* string */
-	Khostname,	/* hostname */
-	Kavenrun,	/* loadavg */
-	Kdevice,	/* device file (rootdev/rrootdev) */
-	Kmsgbuf,	/* msgbuf */
-	Kipsecsadir,	/* ipsec security association (top dir) */
-	Kipsecspdir,	/* ipsec security policy (top dir) */
-	Kipsecsa,	/* ipsec security association entry */
-	Kipsecsp,	/* ipsec security policy entry */
+	KFSkern,		/* the filesystem itself (.) */
+	KFSroot,		/* the filesystem root (..) */
+	KFSnull,		/* none aplicable */
+	KFStime,		/* boottime */
+	KFSint,			/* integer */
+	KFSstring,		/* string */
+	KFShostname,	/* hostname */
+	KFSavenrun,		/* loadavg */
+	KFSdevice,		/* device file (rootdev/rrootdev) */
+	KFSmsgbuf,		/* msgbuf */
+	KFSipsecsadir,	/* ipsec security association (top dir) */
+	KFSipsecspdir,	/* ipsec security policy (top dir) */
+	KFSipsecsa,		/* ipsec security association entry */
+	KFSipsecsp,		/* ipsec security policy entry */
 } kfstype;
 
 /*
@@ -79,7 +79,7 @@ struct kernfs_node {
 	kfstype		kfs_type;	/* type of procfs node */
 	mode_t		kfs_mode;	/* mode bits for stat() */
 	long		kfs_fileno;	/* unique file id */
-	u_int32_t	kfs_value;	/* SA id or SP id (Kint) */
+	u_int32_t	kfs_value;	/* SA id or SP id (KFSint) */
 	const struct kern_target *kfs_kt;
 	void		*kfs_v;		/* pointer to secasvar/secpolicy/mbuf */
 	long		kfs_cookie;	/* fileno cookie */

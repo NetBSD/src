@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.57 2003/08/07 16:32:42 agc Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.58 2003/09/27 13:29:02 darcy Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.57 2003/08/07 16:32:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.58 2003/09/27 13:29:02 darcy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,20 +161,20 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	pfs->pfs_fd = fd;
 
 	switch (pfs_type) {
-	case Proot:	/* /proc = dr-xr-xr-x */
+	case PFSroot:	/* /proc = dr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VDIR;
 		vp->v_flag = VROOT;
 		break;
 
-	case Pcurproc:	/* /proc/curproc = lr-xr-xr-x */
-	case Pself:	/* /proc/self    = lr-xr-xr-x */
+	case PFScurproc:	/* /proc/curproc = lr-xr-xr-x */
+	case PFSself:	/* /proc/self    = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;
 
-	case Pproc:	/* /proc/N = dr-xr-xr-x */
-	case Pfd:
+	case PFSproc:	/* /proc/N = dr-xr-xr-x */
+	case PFSfd:
 		if (fd == -1) {	/* /proc/N/fd = dr-xr-xr-x */
 			pfs->pfs_mode = S_IRUSR|S_IXUSR;
 			vp->v_type = VDIR;
@@ -223,29 +223,29 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 		}
 		break;
 
-	case Pfile:	/* /proc/N/file = -rw------- */
-	case Pmem:	/* /proc/N/mem = -rw------- */
-	case Pregs:	/* /proc/N/regs = -rw------- */
-	case Pfpregs:	/* /proc/N/fpregs = -rw------- */
+	case PFSfile:	/* /proc/N/file = -rw------- */
+	case PFSmem:	/* /proc/N/mem = -rw------- */
+	case PFSregs:	/* /proc/N/regs = -rw------- */
+	case PFSfpregs:	/* /proc/N/fpregs = -rw------- */
 		pfs->pfs_mode = S_IRUSR|S_IWUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Pctl:	/* /proc/N/ctl = --w------ */
-	case Pnote:	/* /proc/N/note = --w------ */
-	case Pnotepg:	/* /proc/N/notepg = --w------ */
+	case PFSctl:	/* /proc/N/ctl = --w------ */
+	case PFSnote:	/* /proc/N/note = --w------ */
+	case PFSnotepg:	/* /proc/N/notepg = --w------ */
 		pfs->pfs_mode = S_IWUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Pmap:	/* /proc/N/map = -r--r--r-- */
-	case Pmaps:	/* /proc/N/maps = -r--r--r-- */
-	case Pstatus:	/* /proc/N/status = -r--r--r-- */
-	case Pstat:	/* /proc/N/stat = -r--r--r-- */
-	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
-	case Pmeminfo:	/* /proc/meminfo = -r--r--r-- */
-	case Pcpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
-	case Puptime:	/* /proc/uptime = -r--r--r-- */
+	case PFSmap:	/* /proc/N/map = -r--r--r-- */
+	case PFSmaps:	/* /proc/N/maps = -r--r--r-- */
+	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
+	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
+	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
+	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
+	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -311,9 +311,9 @@ procfs_rw(v)
 	l = proc_representative_lwp(p);
 	
 	switch (pfs->pfs_type) {
-	case Pregs:
-	case Pfpregs:
-	case Pmem:
+	case PFSregs:
+	case PFSfpregs:
+	case PFSmem:
 #if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
 	PROCFS_MACHDEP_PROTECT_CASES
 #endif
@@ -331,47 +331,47 @@ procfs_rw(v)
 	}
 
 	switch (pfs->pfs_type) {
-	case Pnote:
-	case Pnotepg:
+	case PFSnote:
+	case PFSnotepg:
 		return (procfs_donote(curp, p, pfs, uio));
 
-	case Pregs:
+	case PFSregs:
 		return (procfs_doregs(curp, l, pfs, uio));
 
-	case Pfpregs:
+	case PFSfpregs:
 		return (procfs_dofpregs(curp, l, pfs, uio));
 
-	case Pctl:
+	case PFSctl:
 		return (procfs_doctl(curp, l, pfs, uio));
 
-	case Pstatus:
+	case PFSstatus:
 		return (procfs_dostatus(curp, l, pfs, uio));
 
-	case Pstat:
+	case PFSstat:
 		return (procfs_do_pid_stat(curp, l, pfs, uio));
 
-	case Pmap:
+	case PFSmap:
 		return (procfs_domap(curp, p, pfs, uio, 0));
 
-	case Pmaps:
+	case PFSmaps:
 		return (procfs_domap(curp, p, pfs, uio, 1));
 
-	case Pmem:
+	case PFSmem:
 		return (procfs_domem(curp, p, pfs, uio));
 
-	case Pcmdline:
+	case PFScmdline:
 		return (procfs_docmdline(curp, p, pfs, uio));
 
-	case Pmeminfo:
+	case PFSmeminfo:
 		return (procfs_domeminfo(curp, p, pfs, uio));
 
-	case Pcpuinfo:
+	case PFScpuinfo:
 		return (procfs_docpuinfo(curp, p, pfs, uio));
 
-	case Pfd:
+	case PFSfd:
 		return (procfs_dofd(curp, p, pfs, uio));
 
-	case Puptime:
+	case PFSuptime:
 		return (procfs_douptime(curp, p, pfs, uio));
 
 #ifdef __HAVE_PROCFS_MACHDEP
