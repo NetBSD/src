@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.447 2001/07/14 02:02:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.448 2001/07/31 18:28:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1392,6 +1392,31 @@ identifycpu(struct cpu_info *ci)
 		panic("no appropriate CPU class available");
 #endif
 	default:
+		break;
+	}
+
+	/*
+	 * Now plug in optimized versions of various routines we
+	 * might have.
+	 */
+	switch (cpu_class) {
+#if defined(I686_CPU)
+	case CPUCLASS_686:
+		copyout_func = i486_copyout;
+		break;
+#endif
+#if defined(I586_CPU)
+	case CPUCLASS_586:
+		copyout_func = i486_copyout;
+		break;
+#endif
+#if defined(I486_CPU)
+	case CPUCLASS_486:
+		copyout_func = i486_copyout;
+		break;
+#endif
+	default:
+		/* We just inherit the default i386 versions. */
 		break;
 	}
 
