@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23 1998/01/12 19:22:22 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24 1998/04/20 06:46:16 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 int     fputype;
 
-extern int *nofault;
+extern label_t *nofault;
 
 static int  fpu_match __P((struct device *, struct cfdata *, void *));
 static void fpu_attach __P((struct device *, struct device *, void *));
@@ -111,13 +111,13 @@ fpu_probe()
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
 	 * We, of course, need to have enough room for either.
 	 */
-	int	fpframe[60 / sizeof(int)];
+	int fpframe[60 / sizeof(int)];
 	label_t	faultbuf;
-	u_char	b;
+	u_char b;
 
-	nofault = (int *) &faultbuf;
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf)) {
-		nofault = (int *) 0;
+		nofault = (label_t *)0;
 		return (FPU_NONE);
 	}
 
@@ -129,7 +129,7 @@ fpu_probe()
 	 */
 	asm("fnop");
 
-	nofault = (int *) 0;
+	nofault = 0;
 
 	/*
 	 * Presumably, if we're an 040 and did not take exception
@@ -145,13 +145,13 @@ fpu_probe()
 	 */
 	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
 
-	b = *((u_char *) fpframe + 1);
+	b = *((u_char *)fpframe + 1);
 
 	/*
 	 * Now, restore a NULL state to reset the FPU.
 	 */
 	fpframe[0] = fpframe[1] = 0;
-	m68881_restore((struct fpframe *) fpframe);
+	m68881_restore((struct fpframe *)fpframe);
 
 	/*
 	 * The size of a 68881 IDLE frame is 0x18
