@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.25 2001/12/08 04:10:00 lukem Exp $	*/
+/*	$NetBSD: namei.h,v 1.26 2002/05/12 23:06:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -214,4 +214,8 @@ struct	nchstats {
 	long	ncs_revhits;		/* reverse-cache hits */
 	long	ncs_revmiss;		/* reverse-cache misses */
 };
+
+#ifdef _KERNEL
+extern struct nchstats nchstats;
+#endif
 #endif /* !_SYS_NAMEI_H_ */

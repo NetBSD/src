@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.48 2001/09/15 20:36:40 chs Exp $	*/
+/*	$NetBSD: buf.h,v 1.49 2002/05/12 23:06:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ do {									\
 struct buf;
 struct mount;
 struct vnode;
-extern struct bio_ops {
+struct bio_ops {
  	void	(*io_start) __P((struct buf *));
  	void	(*io_complete) __P((struct buf *));
  	void	(*io_deallocate) __P((struct buf *));
@@ -163,7 +163,7 @@ extern struct bio_ops {
 	void	(*io_movedeps) __P((struct buf *, struct buf *));
 	int	(*io_countdeps) __P((struct buf *, int));
 	void	(*io_pageiodone) __P((struct buf *));
-} bioops;
+};
 
 /*
  * The buffer header describes an I/O operation in the kernel.
@@ -265,13 +265,14 @@ do {									\
 
 #ifdef _KERNEL
 
+extern	struct bio_ops bioops;
 extern	int nbuf;		/* The number of buffer headers */
 extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */
 extern	int bufpages;		/* Number of memory pages in the buffer pool. */
 extern	int nswbuf;		/* Number of swap I/O buffer headers. */
 
-extern struct pool bufpool;	/* I/O buf pool */
+extern	struct pool bufpool;	/* I/O buf pool */
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
