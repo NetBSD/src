@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.13 2001/11/12 23:08:57 lukem Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.14 2002/12/26 12:38:59 jdolecek Exp $	*/
 
 /*
  * 
@@ -55,13 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.13 2001/11/12 23:08:57 lukem Exp $");
-
-#ifdef	_LKM
-#define	NVCODA 4
-#else
-#include <vcoda.h>
-#endif
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.14 2002/12/26 12:38:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
