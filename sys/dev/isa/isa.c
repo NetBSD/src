@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.39 1994/03/06 17:19:09 mycroft Exp $
+ *	$Id: isa.c,v 1.40 1994/03/06 17:37:56 mycroft Exp $
  */
 
 /*
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/buf.h>
@@ -569,99 +570,81 @@ isa_strayintr(d) {
 
 /*
  * Wait "n" microseconds.
- * Relies on timer 1 counting down from (TIMER_FREQ / hz) at
- * (1 * TIMER_FREQ) Hz.
+ * Relies on timer 1 counting down from (TIMER_FREQ / hz) at TIMER_FREQ Hz.
  * Note: timer had better have been programmed before this is first used!
  * (Note that we use `rate generator' mode, which counts at 1:1; `square
  * wave' mode counts at 2:1).
  */
-#define       CF              (1 * TIMER_FREQ)
-
-extern int hz;                        /* XXX - should be elsewhere */
-
 void
 delay(n)
 	int n;
 {
-	int counter_limit;
-	int prev_tick;
-	int tick;
-	int ticks_left;
-	int sec;
-	int usec;
-
-#ifdef DELAYDEBUG
-	int gettick_calls = 1;
-	int n1;
-	static int state = 0;
-
-	if (state == 0) {
-		state = 1;
-		for (n1 = 1; n1 <= 10000000; n1 *= 10)
-			delay(n1);
-		state = 2;
-	}
-	if (state == 1)
-		printf("delay(%d)...", n);
-#endif
+	int limit, tick, otick;
 
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
-	 * counted.  Guess the initial overhead is 20 usec (on most systems it
-	 * takes about 1.5 usec for each of the i/o's in gettick().  The loop
-	 * takes about 6 usec on a 486/33 and 13 usec on a 386/20.  The
-	 * multiplications and divisions to scale the count take a while).
+	 * counted.
 	 */
-	prev_tick = gettick();
-	n -= 20;
+	otick = gettick();
 
+#ifdef __GNUC__
 	/*
-	 * Calculate (n * (CF / 1e6)) without using floating point and without
-	 * any avoidable overflows.
+	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
+	 * we can take advantage of the intermediate 64-bit quantity to prevent
+	 * loss of significance.
 	 */
-	sec = n / 1000000;
-	usec = n - sec * 1000000;
-	ticks_left = sec * CF
-		+ usec * (CF / 1000000)
-		+ usec * ((CF % 1000000) / 1000) / 1000
-		+ usec * (CF % 1000) / 1000000;
-
-	counter_limit = TIMER_FREQ / hz;
-	while (ticks_left > 0) {
-		tick = gettick();
-#ifdef DELAYDEBUG
-		++gettick_calls;
-#endif
-		if (tick > prev_tick)
-			ticks_left -= prev_tick - (tick - counter_limit);
-		else
-			ticks_left -= prev_tick - tick;
-		prev_tick = tick;
+	n -= 5;
+	if (n < 0)
+		return;
+	{register int m;
+	__asm __volatile("mul %3"
+			 : "=a" (n), "=d" (m)
+			 : "0" (n), "r" (TIMER_FREQ));
+	__asm __volatile("div %3"
+			 : "=a" (n)
+			 : "0" (n), "d" (m), "r" (1000000)
+			 : "%edx");}
+#else
+	/*
+	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
+	 * without any avoidable overflows.
+	 */
+	n -= 20;
+	{
+		int sec = n / 1000000,
+		    usec = n % 1000000;
+		n = sec * TIMER_FREQ +
+		    usec * (TIMER_FREQ / 1000000) +
+		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
+		    usec * (TIMER_FREQ % 1000) / 1000000;
 	}
-#ifdef DELAYDEBUG
-	if (state == 1)
-		printf(" %d calls to gettick() at %d usec each\n",
-			gettick_calls, (n + 5) / gettick_calls);
 #endif
+
+	limit = TIMER_FREQ / hz;
+
+	while (n > 0) {
+		tick = gettick();
+		if (tick > otick)
+			n -= limit - (tick - otick);
+		else
+			n -= otick - tick;
+		otick = tick;
+	}
 }
 
 int
-gettick() {
-	int high;
-	int low;
+gettick()
+{
+	u_char lo, hi;
 
-	/*
-	 * Protect ourself against interrupts.
-	 */
+	/* Don't want someone screwing with the counter while we're here. */
 	disable_intr();
-	/*
-	 * Latch the count for 'timer' (cc00xxxx, c = counter, x = any).
-	 */
+	/* Select counter 0 and latch it. */
 	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	low = inb(TIMER_CNTR0);
-	high = inb(TIMER_CNTR0);
+	lo = inb(TIMER_CNTR0);
+	hi = inb(TIMER_CNTR0);
 	enable_intr();
-	return ((high << 8) | low);
+	return ((hi << 8) | lo);
 }
 
 static beeping;
@@ -733,7 +716,7 @@ struct isa_device *find_isadev(table, driverp, unit)
 			return NULL;
     
 		table++;
-        }
+	}
 
 	return table;
 }
