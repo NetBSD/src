@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.12 2000/11/06 22:32:26 augustss Exp $
+$NetBSD: miidevs,v 1.13 2000/11/07 13:53:42 soren Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ oui XAQTI			0x00e0ae	XaQti Corp.
 oui xxAMD			0x00606e	Advanced Micro Devices
 
 /* Some Intel 82553's use an alternative OUI. */
-oui xxINTEL			0x00f800	Intel (alt)
+oui xxINTEL			0x00f800	Intel
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
