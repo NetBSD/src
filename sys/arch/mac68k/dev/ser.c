@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.32 1995/12/13 14:30:29 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.33 1996/01/11 15:23:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -103,7 +103,7 @@
 #undef	ZS_DELAY()
 #define ZS_DELAY()
 #define	mon_printf	printf
-#define	splzs		splhigh
+#define	splzs		spl4
 #define isr_soft_clear(x)
 #define	isr_soft_request(x) setsoftserial()
 #define isr_add_autovect(x, y, z)
