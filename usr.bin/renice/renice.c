@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.5 1997/10/19 14:01:38 lukem Exp $	*/
+/*	$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.5 1997/10/19 14:01:38 lukem Exp $");
+__RCSID("$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,8 +52,12 @@ __RCSID("$NetBSD: renice.c,v 1.5 1997/10/19 14:01:38 lukem Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
-int	donice __P((int, int, int));
+static int	getnum __P((const char *, const char *, int *));
+static int	donice __P((int, int, int, int));
+static void	usage __P((void)) __attribute__((__noreturn__));
+
 int	main __P((int, char **));
 
 /*
@@ -67,20 +71,20 @@ main(argc, argv)
 	char **argv;
 {
 	int which = PRIO_PROCESS;
-	int who = 0, prio, errs = 0;
+	int who = 0, prio, errs = 0, incr = 0;
 
 	argc--, argv++;
-	if (argc < 2) {
-		fprintf(stderr, "usage: renice priority [ [ -p ] pids ] ");
-		fprintf(stderr, "[ [ -g ] pgrps ] [ [ -u ] users ]\n");
-		exit(1);
+	if (argc < 2)
+		usage();
+	if (strcmp(*argv, "-n") == 0) {
+		incr = 1;
+		argc--, argv++;
+		if (argc == 0)
+			usage();
 	}
-	prio = atoi(*argv);
+	if (getnum("priority", *argv, &prio))
+		return 1;
 	argc--, argv++;
-	if (prio > PRIO_MAX)
-		prio = PRIO_MAX;
-	if (prio < PRIO_MIN)
-		prio = PRIO_MIN;
 	for (; argc > 0; argc--, argv++) {
 		if (strcmp(*argv, "-g") == 0) {
 			which = PRIO_PGRP;
@@ -95,7 +99,7 @@ main(argc, argv)
 			continue;
 		}
 		if (which == PRIO_USER) {
-			register struct passwd *pwd = getpwnam(*argv);
+			struct passwd *pwd = getpwnam(*argv);
 			
 			if (pwd == NULL) {
 				warnx("%s: unknown user", *argv);
@@ -103,33 +107,76 @@ main(argc, argv)
 			}
 			who = pwd->pw_uid;
 		} else {
-			who = atoi(*argv);
+			if (getnum("pid", *argv, &who))
+				continue;
 			if (who < 0) {
 				warnx("%s: bad value", *argv);
 				continue;
 			}
 		}
-		errs += donice(which, who, prio);
+		errs += donice(which, who, prio, incr);
 	}
 	exit(errs != 0);
 }
 
-int
-donice(which, who, prio)
-	int which, who, prio;
+static int
+getnum(com, str, val)
+	const char *com, *str;
+	int *val;
+{
+	long v;
+	char *ep;
+
+	v = strtol(str, &ep, NULL);
+
+	if (*ep) {
+		warnx("Bad %s argument: %s", com, str);
+		return 1;
+	}
+	if ((v == LONG_MIN || v == LONG_MAX) && errno == ERANGE) {
+		warn("Invalid %s argument: %s", com, str);
+		return 1;
+	}
+
+	*val = (int)v;
+	return 0;
+}
+
+static int
+donice(which, who, prio, incr)
+	int which, who, prio, incr;
 {
 	int oldprio;
-	extern int errno;
 
-	errno = 0, oldprio = getpriority(which, who);
-	if (oldprio == -1 && errno) {
+	if ((oldprio = getpriority(which, who)) == -1) {
 		warn("%d: getpriority", who);
 		return (1);
 	}
-	if (setpriority(which, who, prio) < 0) {
+
+	if (incr)
+		prio = oldprio + prio;
+
+	if (prio > PRIO_MAX)
+		prio = PRIO_MAX;
+	if (prio < PRIO_MIN)
+		prio = PRIO_MIN;
+
+	if (setpriority(which, who, prio) == -1) {
 		warn("%d: setpriority", who);
 		return (1);
 	}
 	printf("%d: old priority %d, new priority %d\n", who, oldprio, prio);
 	return (0);
+}
+
+static void
+usage()
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr, "Usage: %s [<priority> | -n <incr>] ",
+	    __progname);
+	(void)fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
+	(void)fprintf(stderr, "[-u <user>...]\n");
+	exit(1);
 }
