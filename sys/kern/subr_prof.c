@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.30 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.30.2.1 2004/04/21 04:27:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.30 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.30.2.1 2004/04/21 04:27:34 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,33 +166,42 @@ SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")
 		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "profiling", NULL,
+		       CTLTYPE_NODE, "profiling",
+		       SYSCTL_DESCR("Profiling information (available)"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "state", NULL,
+		       CTLTYPE_INT, "state",
+		       SYSCTL_DESCR("Profiling state"),
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_STATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "count", NULL,
+		       CTLTYPE_STRUCT, "count",
+		       SYSCTL_DESCR("Array of statistical program counters"),
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_COUNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "froms", NULL,
+		       CTLTYPE_STRUCT, "froms",
+		       SYSCTL_DESCR("Array indexed by program counter of "
+				    "call-from points"),
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_FROMS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "tos", NULL,
+		       CTLTYPE_STRUCT, "tos",
+		       SYSCTL_DESCR("Array of structures describing "
+				    "destination of calls and their counts"),
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_TOS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "gmonparam", NULL,
+		       CTLTYPE_STRUCT, "gmonparam",
+		       SYSCTL_DESCR("Structure giving the sizes of the above "
+				    "arrays"),
 		       sysctl_kern_profiling, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, GPROF_GMONPARAM, CTL_EOL);
 }
