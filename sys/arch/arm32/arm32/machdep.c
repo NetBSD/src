@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1998/08/04 16:25:28 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1998/08/26 14:51:57 tv Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -667,7 +667,7 @@ setregs(p, pack, stack)
 	tf->tf_r9 = 0;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;				/* bottom of the fp chain */
-#if (COMPAT_11 + COMPAT_12 + COMPAT_13) > 0
+#ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
 #else
 	tf->tf_r12 = 0;
