@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.35 2003/08/07 09:05:15 agc Exp $	*/
+/*	$NetBSD: print.c,v 1.36 2003/09/14 19:16:06 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.35 2003/08/07 09:05:15 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.36 2003/09/14 19:16:06 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,9 @@ printlong(DISPLAY *dp)
 			printtime(sp->st_ctime);
 		else
 			printtime(sp->st_mtime);
-		if (f_nonprint)
+		if (f_escape)
+			(void)safe_print(p->fts_name);
+		else if (f_nonprint)
 			(void)printescaped(p->fts_name);
 		else
 			(void)printf("%s", p->fts_name);
@@ -295,10 +297,12 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 	if (f_size)
 		chcnt += printf("%*llu ", sizefield,
 		    (long long)howmany(sp->st_blocks, blocksize));
-	if (f_nonprint)
-	    chcnt += printescaped(p->fts_name);
+	if (f_escape)
+		chcnt += safe_print(p->fts_name);
+	else if (f_nonprint)
+		chcnt += printescaped(p->fts_name);
 	else
-	    chcnt += printf("%s", p->fts_name);
+		chcnt += printf("%s", p->fts_name);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
@@ -373,8 +377,10 @@ printlink(FTSENT *p)
 	}
 	path[lnklen] = '\0';
 	(void)printf(" -> ");
-	if (f_nonprint)
-		printescaped(path);
+	if (f_escape)
+		(void)safe_print(path);
+	else if (f_nonprint)
+		(void)printescaped(path);
 	else
 		(void)printf("%s", path);
 }
