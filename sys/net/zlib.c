@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.1 1996/03/15 02:28:14 paulus Exp $	*/
+/*	$NetBSD: zlib.c,v 1.2 1996/03/16 23:55:40 christos Exp $	*/
 
 /*
  * This file is derived from various .h and .c files from the zlib-0.95
@@ -472,7 +472,9 @@ local void ct_stored_type_only OF((deflate_state *s));
 
 /* From: deflate.c,v 1.8 1995/05/03 17:27:08 jloup Exp */
 
+#if 0
 local char zlib_copyright[] = " deflate Copyright 1995 Jean-loup Gailly ";
+#endif
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
