@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.34.2.2 2000/06/28 22:27:22 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.34.2.3 2000/07/03 18:33:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -206,12 +206,13 @@ lfs_valloc(v)
 	
 	lfs_segunlock(fs);
 
-	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
-	/* Create a vnode to associate with the inode. */
-	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0) {
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	if ((error = getnewvnode(VT_LFS, ap->a_pvp->v_mount,
+	    lfs_vnodeop_p, &vp)) != 0)
 		return (error);
-	}
+
+	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
+	/* Create an inode to associate with the vnode. */
+	lfs_vcreate(ap->a_pvp->v_mount, new_ino, vp);
 	
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
@@ -251,33 +252,25 @@ lfs_valloc(v)
 }
 
 /* Create a new vnode/inode pair and initialize what fields we can. */
-int
-lfs_vcreate(mp, ino, vpp)
+void
+lfs_vcreate(mp, ino, vp)
 	struct mount *mp;
 	ino_t ino;
-	struct vnode **vpp;
+	struct vnode *vp;
 {
-	extern int (**lfs_vnodeop_p) __P((void *));
 	struct inode *ip;
 	struct ufsmount *ump;
-	int error;
 #ifdef QUOTA
 	int i;
 #endif
-	
-	/* Create the vnode. */
-	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) != 0) {
-		*vpp = NULL;
-		return (error);
-	}
 	
 	/* Get a pointer to the private mount structure. */
 	ump = VFSTOUFS(mp);
 	
 	/* Initialize the inode. */
 	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
-	(*vpp)->v_data = ip;
-	ip->i_vnode = *vpp;
+	vp->v_data = ip;
+	ip->i_vnode = vp;
 	ip->i_devvp = ump->um_devvp;
 	ip->i_flag = IN_MODIFIED;
 	ip->i_dev = ump->um_dev;
@@ -293,7 +286,6 @@ lfs_vcreate(mp, ino, vpp)
 	ip->i_ffs_size = 0;
 	ip->i_ffs_blocks = 0;
 	++ump->um_lfs->lfs_uinodes;
-	return (0);
 }
 
 /* Free an inode. */
