@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.16 1997/10/17 00:09:52 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.17 1998/01/21 22:25:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -682,8 +682,8 @@ nogo:
 /*			printf("Address is in the stack\n");*/
 			nss = clrnd(btoc(USRSTACK-(u_int)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				printf("Stack limit exceeded %08x %08x\n",
-				    nss, btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur));
+				printf("Stack limit exceeded %x %x\n",
+				    nss, (u_int)btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur));
 				rv = KERN_FAILURE;
 				goto nogo1;
 			}
@@ -926,9 +926,9 @@ prefetch_abort_handler(frame)
 	pte = pmap_pte(p->p_vmspace->vm_map.pmap, (vm_offset_t)fault_pc);
 	if (pte && *pte != 0) {
 		if (kernel_debug & 1) {
-			printf("prefetch_abort: page is already mapped - pte=%08x *pte=%08x\n",
+			printf("prefetch_abort: page is already mapped - pte=%p *pte=%08x\n",
 			    pte, *pte);
-			printf("prefetch_abort: pc=%08x proc=%08x process=%s\n", fault_pc, p, p->p_comm);
+			printf("prefetch_abort: pc=%08x proc=%p process=%s\n", fault_pc, p, p->p_comm);
 			printf("prefetch_abort: far=%08x fs=%x\n", cpu_faultaddress(), cpu_faultstatus());
 			printf("prefetch_abort: trapframe=%08x\n", (u_int)frame);
 		}
@@ -962,7 +962,7 @@ prefetch_abort_handler(frame)
 			pte = pmap_pte(p->p_vmspace->vm_map.pmap,
 			    (vm_offset_t)fault_pc);
 			if (pte)
-				printf(" pte=%08x *pte=%08x\n", pte, *pte);
+				printf(" pte=%p *pte=%08x\n", pte, *pte);
 			else
 				printf("\n");
 
