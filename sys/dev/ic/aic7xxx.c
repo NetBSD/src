@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.98 2003/04/20 18:31:16 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.99 2003/04/20 18:57:41 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -6525,22 +6525,22 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 	u_int	printed_mask;
 	char    line[1024];
 
-	memset(line, 0, sizeof line);
+	line[0] = 0;
 
 	if (cur_column != NULL && *cur_column >= wrap_point) {
 		printf("\n");
 		*cur_column = 0;
 	}
-	sprintf(line+strlen(line), "%s[0x%x]", name, value);
+	printed = snprintf(line, sizeof(line), "%s[0x%x]", name, value);
 	if (table == NULL) {
-		printed = snprintf(line, sizeof line, " ");
+		printed += snprintf(&line[printed], (sizeof line) - printed,
+		    " ");
 		printf("%s", line);
 		if (cur_column != NULL)
 			*cur_column += printed;
 		return (printed);
 	}
 	printed_mask = 0;
-	printed = 0;
 	while (printed_mask != 0xFF) {
 		int entry;
 
