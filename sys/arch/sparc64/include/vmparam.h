@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2001/02/11 00:09:45 eeh Exp $ */
+/*	$NetBSD: vmparam.h,v 1.16 2001/02/16 16:00:29 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,6 +146,7 @@
 #define VM_MIN_ADDRESS		((vaddr_t)0)
 #define VM_MAX_ADDRESS		((vaddr_t)-1)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-1)
+#define VM_MAXUSER_ADDRESS32	((vaddr_t)(0x00000000ffffffffL&~PGOFSET))
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
