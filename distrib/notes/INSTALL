@@ -49,7 +49,7 @@ The Future of NetBSD:
 --- ------ -- ------
 
 We hope to have regular releases of the full binary and source trees,
-but as these are difficult to coordinate, especially with all of the
+but these are difficult to coordinate, especially with all of the
 architectures which we now support!  We hope to support even _more_
 hardware in the future, and have a rather large number of other ideas
 about what can be done to improve NetBSD.  We intend to continue our
@@ -59,7 +59,7 @@ available on a daily or nearly-daily basis.
 We intend to integrate free, positive changes from whatever sources
 will provide them, providing that they are well thought-out and increase
 the usability of the system.  This includes integrating the remainder of
-the 4.4BSD-Lite tape, as quickly as we can insure that everything works
+the 4.4BSD-Lite tape, as quickly as we can ensure that everything works
 properly.
 
 Above all, we hope to create a stable and accessible system, and to be
@@ -72,8 +72,8 @@ Sources of NetBSD:
 
 #include "mirrors"
 
-(If you wish to become a distribution site for NetBSD,
-contact Chris Demetriou, cgd@NetBSD.ORG.)
+If you wish to become a distribution site for NetBSD, contact Chris
+Demetriou <cgd@NetBSD.ORG>.
 
 
 NetBSD 1.0 Release Contents:
@@ -214,15 +214,22 @@ questions about this release.  Please send comments to:
 
 	netbsd-comments@NetBSD.ORG
 
-and send bug reports, etc. to:
+To report bugs, use the 'send-pr' command shipped with NetBSD,
+and fill in as much information about the problem as you can.  Good
+bug reports include lots of details.  Additionally, bug reports can
+be sent by mail to:
 
 	netbsd-bugs@NetBSD.ORG
 
-(Bug reports may also be filed with the 'send-pr' program included
-in the base distribution.)
+Use of 'send-pr' is encouraged, however, because bugs reported with it
+are entered into the NetBSD bugs database, and thus can't slip through
+the cracks.
 
 There are also port-specific mailing lists, to discuss aspects of
-each port of NetBSD.  Use majordomo to find their addresses.
+each port of NetBSD.  Use majordomo to find their addresses.  If
+you're interested in doing a serious amount of work on a specific
+port, you probably should contact the "owner" of that port (listed
+below).
 
 If you'd like to help with this effort, and have an idea as to how
 you could be useful, send mail and/or subscribe to:
