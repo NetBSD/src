@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.33 2002/11/02 07:37:14 perry Exp $	*/
+/*	$NetBSD: uvm.h,v 1.34 2002/11/02 16:50:18 perry Exp $	*/
 
 /*
  *
@@ -151,7 +151,7 @@ extern struct uvm uvm;
  * historys
  */
 
-#ifndef UVMHIST
+#ifdef UVMHIST
 UVMHIST_DECL(maphist);
 UVMHIST_DECL(pdhist);
 UVMHIST_DECL(ubchist);
