@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)radixsort.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: radixsort.c,v 1.4 1994/06/16 05:26:44 mycroft Exp $";
+static char *rcsid = "$Id: radixsort.c,v 1.5 1995/02/28 01:46:48 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,7 +54,6 @@ static char *rcsid = "$Id: radixsort.c,v 1.4 1994/06/16 05:26:44 mycroft Exp $";
 
 #include <sys/types.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <errno.h>
 
 typedef struct {
