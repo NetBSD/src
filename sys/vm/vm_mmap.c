@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.16 1994/01/07 23:36:27 mycroft Exp $
+ *	$Id: vm_mmap.c,v 1.17 1994/01/08 03:24:19 mycroft Exp $
  */
 
 /*
@@ -165,7 +165,7 @@ smmap(p, uap, retval)
 		return(EINVAL);
 	size = (vm_size_t) round_page(uap->len);
 	if ((flags & MAP_FIXED) && (addr + size > VM_MAXUSER_ADDRESS))
-	    return EINVAL;
+	    return(EINVAL);
 	/*
 	 * XXX if no hint provided for a non-fixed mapping place it after
 	 * the end of the largest possible heap.
@@ -184,6 +184,16 @@ smmap(p, uap, retval)
 			return(EBADF);
 	}
 	/*
+	 * Map current protections to MACH style
+	 */
+	prot = VM_PROT_NONE;
+	if (uap->prot & PROT_READ)
+		prot |= VM_PROT_READ;
+	if (uap->prot & PROT_WRITE)
+		prot |= VM_PROT_WRITE;
+	if (uap->prot & PROT_EXEC)
+		prot |= VM_PROT_EXECUTE;
+	/*
 	 * If we are mapping a file we need to check various
 	 * file/vnode related things.
 	 */
@@ -197,45 +207,31 @@ smmap(p, uap, retval)
 		if (vp->v_type != VREG && vp->v_type != VCHR)
 			return(EINVAL);
 		/*
-		 * Ensure that file protection and desired protection
-		 * are compatible.  Note that we only worry about writability
-		 * if mapping is shared.  XXX (cgd) -- coalese access checks
-		 * and permissions setting.
+		 * Set the maximum protection according to the file
+		 * protection.
 		 */
-		if ((uap->prot & PROT_READ) && (fp->f_flag & FREAD) == 0 ||
-		    ((flags & MAP_SHARED) &&
-		     (uap->prot & PROT_WRITE) && (fp->f_flag & FWRITE) == 0))
-			return(EACCES);
-		handle = (caddr_t)vp;
-		/*
-		 * Map maximum protections to MACH style
-		 */
-		maxprot = VM_PROT_EXECUTE;	/* ??? */
+		maxprot = VM_PROT_NONE;
 		if (fp->f_flag & FREAD)
-			maxprot |= VM_PROT_READ;
-		if(uap->flags & MAP_SHARED) {
+			maxprot |= VM_PROT_READ|VM_PROT_EXECUTE;
+		if (uap->flags & MAP_SHARED) {
 			if (fp->f_flag & FWRITE)
 				maxprot |= VM_PROT_WRITE;
 		} else
 			maxprot |= VM_PROT_WRITE;
+		/*
+		 * Ensure that the maximum protection (based on the file
+		 * protection) and the desired protection are compatible.
+		 */
+		if ((maxprot & prot) != prot)
+			return(EACCES);
+		handle = (caddr_t)vp;
 	} else if (uap->fd != -1) {
-                maxprot = VM_PROT_ALL;
+		maxprot = VM_PROT_ALL;
 		handle = (caddr_t)fp;
 	} else {
-                maxprot = VM_PROT_ALL;
+		maxprot = VM_PROT_ALL;
 		handle = NULL;
 	}
-	/*
-	 * Map current protections to MACH style
-	 */
-	prot = VM_PROT_NONE;
-	if (uap->prot & PROT_READ)
-		prot |= VM_PROT_READ;
-	if (uap->prot & PROT_WRITE)
-		prot |= VM_PROT_WRITE;
-	if (uap->prot & PROT_EXEC)
-		prot |= VM_PROT_EXECUTE;
-
 	error = vm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 			flags, handle, (vm_offset_t)uap->pos);
 	if (error == 0)
@@ -337,7 +333,6 @@ munmap(p, uap, retval)
 		printf("munmap(%d): addr %x len %x\n",
 		       p->p_pid, uap->addr, uap->len);
 #endif
-
 	addr = (vm_offset_t) uap->addr;
 	if ((addr & page_mask) || uap->len < 0)
 		return(EINVAL);
@@ -345,7 +340,7 @@ munmap(p, uap, retval)
 	if (size == 0)
 		return(0);
 	if (addr + size >= VM_MAXUSER_ADDRESS)
-	    return EINVAL;
+	    return(EINVAL);
 	if (!vm_map_is_allocated(&p->p_vmspace->vm_map, addr, addr+size,
 	    FALSE))
 		return(EINVAL);
@@ -357,6 +352,7 @@ munmap(p, uap, retval)
 void
 munmapfd(p, fd)
 	register struct proc *p;
+	int fd;
 {
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
@@ -390,7 +386,6 @@ mprotect(p, uap, retval)
 		printf("mprotect(%d): addr %x len %x prot %d\n",
 		       p->p_pid, uap->addr, uap->len, uap->prot);
 #endif
-
 	addr = (vm_offset_t) uap->addr;
 	if ((addr & page_mask) || uap->len < 0)
 		return(EINVAL);
@@ -405,7 +400,6 @@ mprotect(p, uap, retval)
 		prot |= VM_PROT_WRITE;
 	if (uap->prot & PROT_EXEC)
 		prot |= VM_PROT_EXECUTE;
-
 	switch (vm_map_protect(&p->p_vmspace->vm_map, addr, addr+size, prot,
 	    FALSE)) {
 	case KERN_SUCCESS:
@@ -413,7 +407,7 @@ mprotect(p, uap, retval)
 	case KERN_PROTECTION_FAILURE:
 		return (EACCES);
 	}
-	return (EINVAL);
+	return(EINVAL);
 }
 
 struct madvise_args {
@@ -479,7 +473,6 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 
 	if (size == 0)
 		return (0);
-
 	if ((flags & MAP_FIXED) == 0) {
 		fitit = TRUE;
 		*addr = round_page(*addr);
@@ -487,7 +480,6 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		fitit = FALSE;
 		(void) vm_deallocate(map, *addr, size);
 	}
-
 	/*
 	 * Lookup/allocate pager.  All except an unnamed anonymous lookup
 	 * gain a reference to ensure continued existance of the object.
@@ -511,7 +503,6 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	 */
 	object = vm_object_lookup(pager);
 	vm_object_deallocate(object);
-
 	/*
 	 * Anonymous memory.
 	 */
@@ -531,7 +522,6 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		 */
 		if (handle == NULL)
 			object = vm_object_lookup(pager);
-
 		/*
 		 * Don't cache anonymous objects.
 		 * Loses the reference gained by vm_pager_allocate.
@@ -679,22 +669,23 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 #endif
 	}
 	/*
-	 * Correct protection (default is VM_PROT_ALL).
-	 * Note that we set the maximum protection.  This may not be
-	 * entirely correct.  The maximum protection is be based on
-	 * the object permissions where it makes sense (e.g. a vnode).
+	 * We only need to set max_protection in case it's
+	 * unequal to its default, which is VM_PROT_DEFAULT.
 	 */
-		rv = vm_map_protect(map, *addr, *addr+size, prot, FALSE);
+	if (maxprot != VM_PROT_DEFAULT) {
+		rv = vm_map_protect(map, *addr, *addr+size, maxprot, TRUE);
 		if (rv != KERN_SUCCESS) {
 			(void) vm_deallocate(map, *addr, size);
 			goto out;
 		}
+	}
 	/*
-	 * We only need to set max_protection in case it's
-	 * unequal to its default, which is VM_PROT_DEFAULT.
+	 * We only need to set the current protection if it's different
+	 * from the maximum.  If it is equal to the maximum, then the
+	 * vm_map_protect() above would have set it.
 	 */
-	if(maxprot != VM_PROT_DEFAULT) {
-		rv = vm_map_protect(map, *addr, *addr+size, maxprot, TRUE);
+	if (prot != maxprot) {
+		rv = vm_map_protect(map, *addr, *addr+size, prot, FALSE);
 		if (rv != KERN_SUCCESS) {
 			(void) vm_deallocate(map, *addr, size);
 			goto out;
