@@ -33,6 +33,9 @@
  *	@(#)sp.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_SP_H_
+#define _NETNS_SP_H_
+
 /*
  * Definitions for Xerox NS style sequenced packet protocol
  */
@@ -50,3 +53,5 @@ struct sphdr {
 	u_short	sp_ack;		/* acknowledge number */
 	u_short	sp_alo;		/* allocation number */
 };
+
+#endif /* !_NETNS_SP_H_ */
