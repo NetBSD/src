@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.4 2002/09/07 12:48:53 gehenna Exp $
+# $NetBSD: md.sgimips,v 1.5 2003/01/18 17:50:29 thorpej Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/sgimips			comp-c-include
 ./usr/include/sgimips/_G_config.h	comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/sgimips/lock.h		comp-c-include
 ./usr/include/sgimips/locore.h		comp-c-include
 ./usr/include/sgimips/math.h		comp-c-include
+./usr/include/sgimips/mcontext.h		comp-c-include
 ./usr/include/sgimips/mips_opcode.h	comp-c-include
 ./usr/include/sgimips/param.h		comp-c-include
 ./usr/include/sgimips/pcb.h		comp-c-include

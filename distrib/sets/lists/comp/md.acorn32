@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.10 2003/01/02 13:40:35 reinoud Exp $
+# $NetBSD: md.acorn32,v 1.11 2003/01/18 17:50:21 thorpej Exp $
 ./usr/include/acorn32			comp-c-include
 ./usr/include/acorn32/_G_config.h	comp-c-include
 ./usr/include/acorn32/ansi.h		comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/acorn32/limits.h		comp-c-include
 ./usr/include/acorn32/lock.h		comp-c-include
 ./usr/include/acorn32/math.h		comp-c-include
+./usr/include/acorn32/mcontext.h		comp-c-include
 ./usr/include/acorn32/mouse.h		comp-c-include
 ./usr/include/acorn32/param.h		comp-c-include
 ./usr/include/acorn32/pcb.h		comp-c-include

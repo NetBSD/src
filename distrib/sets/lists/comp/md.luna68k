@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.10 2002/08/07 21:20:56 briggs Exp $
+# $NetBSD: md.luna68k,v 1.11 2003/01/18 17:50:25 thorpej Exp $
 ./usr/include/luna68k	comp-c-include
 ./usr/include/luna68k/_G_config.h	comp-c-include
 ./usr/include/luna68k/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/luna68k/limits.h	comp-c-include
 ./usr/include/luna68k/lock.h	comp-c-include
 ./usr/include/luna68k/math.h	comp-c-include
+./usr/include/luna68k/mcontext.h	comp-c-include
 ./usr/include/luna68k/param.h	comp-c-include
 ./usr/include/luna68k/pcb.h	comp-c-include
 ./usr/include/luna68k/pmap.h	comp-c-include

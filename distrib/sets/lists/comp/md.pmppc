@@ -1,4 +1,4 @@
-# $NetBSD: md.pmppc,v 1.1 2002/09/25 21:32:58 augustss Exp $
+# $NetBSD: md.pmppc,v 1.2 2003/01/18 17:50:28 thorpej Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/pmppc			comp-c-include
 ./usr/include/pmppc/_G_config.h		comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/pmppc/limits.h		comp-c-include
 ./usr/include/pmppc/lock.h		comp-c-include
 ./usr/include/pmppc/math.h		comp-c-include
+./usr/include/pmppc/mcontext.h		comp-c-include
 ./usr/include/pmppc/param.h		comp-c-include
 ./usr/include/pmppc/pcb.h		comp-c-include
 ./usr/include/pmppc/pio.h		comp-c-include
