@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.2 1997/01/05 21:32:18 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.3 1997/01/07 10:51:01 mrg Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -140,13 +140,12 @@ int iplattach()
 
 	SPLNET(s);
 	if (ipl_inited || (fr_checkp == fr_check)) {
-		printf("ipl: already initialized\n");
+		printf("ipfilter: already initialized\n");
 		SPLX(s);
 		return EBUSY;
 	}
 #ifdef NETBSD_PF
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
-	printf("ipl: added fr_check as in/out hook\n");
 #endif
 	ipl_inited = 1;
 	fr_savep = fr_checkp;
@@ -165,7 +164,7 @@ int ipldetach()
 	SPLNET(s);
 	if (!ipl_inited)
 	{
-		printf("ipl: not initialized\n");
+		printf("ipfilter: not initialized\n");
 		SPLX(s);
 		return EBUSY;
 	}
@@ -176,7 +175,6 @@ int ipldetach()
 	ipl_inited = 0;
 
 #ifdef NETBSD_PF
-	printf("ipl: removed fr_check as in/out hook\n");
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #endif
 	ipfr_unload();
