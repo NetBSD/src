@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.34 2005/01/08 05:21:49 briggs Exp $
+.\"	$NetBSD: install,v 1.35 2005/01/08 05:33:42 briggs Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -803,6 +803,11 @@ Clean the floppy drive
 .It
 Use another boot method
 .bullet)
+.Pp
+As disk drives get older, especially with portables, they can get a
+little bit out of alignment so that they do not consistently read disks
+written on other floppy drives.  Strongly consider writing the floppies
+on the same machine that will be reading them.
 .It
 .To 2 "TFTP timeout"
 .Dq Li "TFTP timeout"
