@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: job.c,v 1.6 1994/06/06 22:45:29 jtc Exp $";
+static char *rcsid = "$Id: job.c,v 1.7 1994/06/16 18:50:08 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -2360,7 +2360,7 @@ Job_ParseShell (line)
     while (isspace (*line)) {
 	line++;
     }
-    words = brk_string (line, &wordCount);
+    words = brk_string (line, &wordCount, TRUE);
 
     memset ((Address)&newShell, 0, sizeof(newShell));
     
