@@ -6,3 +6,4 @@
 #include <sys/cdefs.h>
 
 __weak_reference(_sys_nerr, sys_nerr);
+__weak_reference(_sys_nerr, __sys_nerr); /* Backwards compat with v.12 */
