@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 2002/08/19 10:16:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2002/11/12 14:33:49 itohy Exp $
 
 .include <bsd.own.mk>   # For OBJECT_FMT
+.include <bsd.shlib.mk>
 
 .if (${OBJECT_FMT} == "a.out" ||	\
     (${OBJECT_FMT} == "ELF" &&		\
@@ -15,6 +16,10 @@ SRCS=	ldconfig.c shlib.c
 
 CPPFLAGS += -I${NETBSDSRCDIR}/libexec/ld.aout_so
 .PATH:	${NETBSDSRCDIR}/libexec/ld.aout_so
+
+.if ${SHLIBINSTALLDIR} != ${LIBDIR}
+CPPFLAGS+=-DSTANDARD_SEARCH_DIRS=\"${SHLIBINSTALLDIR}\",\"${LIBDIR}\"
+.endif
 
 .endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.12 2002/11/12 14:26:10 itohy Exp $	*/
+/*	$NetBSD: common.h,v 1.13 2002/11/12 14:33:49 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,9 @@ static int		_strncmp __P((char *, char *, int));
 #define LDSO	"/usr/lib/ld.so"
 #endif
 #ifdef __NetBSD__
+#ifndef LDSO
 #define LDSO	"/usr/libexec/ld.so"
+#endif
 #endif
 
 /*

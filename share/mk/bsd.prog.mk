@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.160 2002/10/22 18:48:29 perry Exp $
+#	$NetBSD: bsd.prog.mk,v 1.161 2002/11/12 14:33:49 itohy Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -105,7 +105,12 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
 _PROGLDOPTS=
 .if ${SHLINKDIR} != "/usr/libexec"	# XXX: change or remove if ld.so moves
+.if ${OBJECT_FMT} == "ELF"
 _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
+.endif
+.if ${OBJECT_FMT} == "a.out"
+LIBCRT0=	${DESTDIR}/lib/crt0.o
+.endif
 .endif
 .if ${SHLIBDIR} != ${LIBDIR}
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
