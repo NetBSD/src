@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.82 1999/07/26 23:00:58 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.83 1999/08/10 23:33:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -43,6 +43,13 @@
 #ifndef _SYS_PROC_H_
 #define	_SYS_PROC_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+
+#if defined(MULTIPROCESSOR)
+#include <machine/cpu.h>		/* curcpu() and cpu_info */
+#endif
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/lock.h>
 #include <sys/queue.h>
@@ -308,12 +315,17 @@ extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
 /*
- * Note: <machine/proc.h> may provide a definition of `curproc' while
- * transition to multi processor support is in progress.
+ * Allow machine-dependent code to override curproc in <machine/proc.h> for
+ * its own convenience.  Otherwise, we declare it as appropriate.
  */
-#ifndef curproc
+#if !defined(curproc)
+#if defined(MULTIPROCESSOR)
+#define	curproc	curcpu()->ci_curproc	/* Current running proc. */
+#else
 extern struct proc *curproc;		/* Current running proc. */
-#endif
+#endif /* MULTIPROCESSOR */
+#endif /* ! curproc */
+
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 
