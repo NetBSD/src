@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1996/12/28 23:18:24 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1997/01/06 02:44:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -112,7 +112,13 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 41: */
 	bdev_lkm_dummy(),		/* 42: */
 	bdev_lkm_dummy(),		/* 43: */
-  };
+	bdev_lkm_dummy(),		/* 44: */
+	bdev_lkm_dummy(),		/* 45: */
+	bdev_lkm_dummy(),		/* 46: */
+	bdev_lkm_dummy(),		/* 47: */
+	bdev_lkm_dummy(),		/* 48: */
+	bdev_lkm_dummy(),		/* 49: */
+};
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -211,6 +217,7 @@ cdev_decl(cpu);
 cdev_decl(iic);
 #include "rtc.h"
 cdev_decl(rtc);
+#include "ipl.h"
 
 /* Character devices */
 
@@ -259,6 +266,12 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 41: */
 	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
+	cdev_lkm_dummy(),		/* 44: */
+	cdev_lkm_dummy(),		/* 45: */
+	cdev_ipl_init(NIPL,ipl),	/* 46: ip-filter device */
+	cdev_lkm_dummy(),		/* 47: */
+	cdev_lkm_dummy(),		/* 48: */
+	cdev_lkm_dummy(),		/* 49: */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -344,6 +357,12 @@ static int chrtoblktbl[] = {
     /* 41 */        NODEV,
     /* 42 */        NODEV,
     /* 43 */        NODEV,
+    /* 44 */        NODEV,
+    /* 45 */        NODEV,
+    /* 46 */        NODEV,
+    /* 47 */        NODEV,
+    /* 48 */        NODEV,
+    /* 49 */        NODEV,
 };
 
 /*
@@ -382,9 +401,11 @@ struct consdev constab[] = {
 	cons_init(rpcconsole),
 #endif
 
-/*#if (NCOM > 0)
+#ifdef notyet
+#if (NCOM > 0)
 	cons_init(com),
-#endif*/
+#endif
+#endif
 	{ 0 },
 };
                            
