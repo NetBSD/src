@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.17 1996/05/09 20:31:25 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.17.4.1 1996/06/11 21:24:01 is Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -910,7 +910,7 @@ ul_blank(gp, onoff, dev)
 	gsp->ctrl = (gsp->ctrl & ~(INCR | INCW)) | LBL;
 	gsp->hstadrh = 0xC000;
 	gsp->hstadrl = 0x0080;
-	if (*onoff)
+	if (*onoff > 0)
 		gsp->data |= 0x9000;
 	else
 		gsp->data &= ~0x9000;
