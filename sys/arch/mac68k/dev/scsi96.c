@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.9 1995/04/21 02:48:04 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.10 1995/07/04 14:38:49 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -57,18 +57,17 @@ int     Debugger();
 #define Debugger() panic("Should call Debugger here (mac/dev/scsi96.c).")
 #endif
 
-#define NNCR53C96	1
-
+extern vm_offset_t SCSIBase;
 static volatile unsigned char *ncr53c96base =
 (volatile unsigned char *) 0xF000;	/* Offset from IOBase */
 
-struct ncr53c96_data {
+struct ncr53c96_softc {
 	struct device sc_dev;
 
 	void   *reg_base;
 	int     adapter_target;
 	struct scsi_link sc_link;
-}      *ncr53c96data[NNCR53C96];
+};
 #define WAIT_FOR(reg, val) { \
 	int	timeo=100000; \
 	while (!(reg & val)) { \
@@ -79,7 +78,7 @@ struct ncr53c96_data {
 	} \
 }
 
-static unsigned int ncr53c96_adapter_info(struct ncr53c96_data * ncr53c96);
+static unsigned int ncr53c96_adapter_info(struct ncr53c96_softc * ncr53c96);
 static void ncr53c96_minphys(struct buf * bp);
 static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 
@@ -109,7 +108,7 @@ static void ncr96attach();
 
 struct cfdriver ncr96scsicd =
 {NULL, "ncr96scsi", ncr96probe, ncr96attach,
-DV_DULL, sizeof(struct ncr53c96_data), NULL, 0};
+DV_DULL, sizeof(struct ncr53c96_softc), NULL, 0};
 
 static int
 ncr96_print(aux, name)
@@ -120,39 +119,25 @@ ncr96_print(aux, name)
 }
 
 static int
-ncr96probe(parent, cf, aux)
+ncr96probe(parent, match, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+	void *match;
+	void *aux;
 {
 	static int probed = 0;
-	int     unit = cf->cf_unit;
-	struct ncr53c96_data *ncr53c96;
+	struct ncr53c96_softc *ncr53c96;
 
 	if (!mac68k_machine.scsi96) {
 		return 0;
 	}
-	if (strcmp(*((char **) aux), ncr96scsicd.cd_name)) {
-		return 0;
-	}
-	if (unit >= NNCR53C96) {
-		printf("ncr53c96attach: unit %d more than %d configured.\n",
-		    unit + 1, NNCR53C96);
-		return 0;
-	}
-	ncr53c96 = malloc(sizeof(struct ncr53c96_data), M_TEMP, M_NOWAIT);
-	if (!ncr53c96) {
-		printf("ncr53c96attach: Can't malloc.\n");
-		return 0;
-	}
-	bzero(ncr53c96, sizeof(*ncr53c96));
-	ncr53c96data[unit] = ncr53c96;
+	ncr53c96 = (struct ncr53c96_softc *) match;
 
+	if (strcmp(*((char **) aux), ncr53c96->sc_dev.dv_xname)) {
+		return 0;
+	}
 	if (!probed) {
-		int     i;
-
 		probed = 1;
-		ncr53c96base += IOBase;
+		ncr53c96base += SCSIBase;
 	}
 	return 1;
 }
@@ -163,20 +148,19 @@ ncr96attach(parent, dev, aux)
 	void   *aux;
 {
 	int     unit = dev->dv_unit;
-	struct ncr53c96_data *ncr53c96 = ncr53c96data[unit];
+	struct ncr53c96_softc *ncr53c96;
 	int     r;
 
-	bcopy((char *) ncr53c96 + sizeof(struct device),
-	    (char *) dev + sizeof(struct device),
-	    sizeof(struct ncr53c96_data) - sizeof(struct device));
-	free(ncr53c96, M_TEMP);
-
-	ncr53c96data[unit] = ncr53c96 = (struct ncr53c96_data *) dev;
+	ncr53c96 = (struct ncr53c96_softc *) dev;
 
 	ncr53c96->sc_link.scsibus = unit;
 	ncr53c96->sc_link.adapter_target = 7;
 	ncr53c96->sc_link.adapter = &ncr53c96_switch;
 	ncr53c96->sc_link.device = &ncr53c96_dev;
+	ncr53c96->sc_link.openings = 1;
+#ifdef SCSIDEBUG
+	ncr53c96->sc_link.flags = SDEV_DB1 | SDEV_DB2 /* | SDEV_DB3 | SDEV_DB4 */ ;
+#endif
 
 	printf("\n");
 
@@ -188,11 +172,6 @@ ncr96attach(parent, dev, aux)
 	 */
 }
 
-static unsigned int
-ncr53c96_adapter_info(struct ncr53c96_data * ncr53c96)
-{
-	return 1;
-}
 #define MIN_PHYS	65536	/* BARF!!!! */
 static void
 ncr53c96_minphys(struct buf * bp)
