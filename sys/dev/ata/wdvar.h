@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.22 2003/12/14 05:03:28 thorpej Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.23 2003/12/14 05:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -29,31 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-/*
- * ata_bustype. The first field has to be compatible with scsipi_bustype,
- * as it's used for autoconfig by both ata and atapi drivers
- */
-  
-struct ata_bustype {
-	int bustype_type;	/* symbolic name of type */
-	int (*ata_bio) __P((struct ata_drive_datas*, struct ata_bio *));
-	void (*ata_reset_channel) __P((struct ata_drive_datas *, int));
-	int (*ata_exec_command) __P((struct ata_drive_datas *,
-					struct wdc_command *));
-#define WDC_COMPLETE 0x01
-#define WDC_QUEUED   0x02
-#define WDC_TRY_AGAIN 0x03
-	int (*ata_get_params) __P((struct ata_drive_datas*, u_int8_t,
-					struct ataparams *));
-	int (*ata_addref) __P((struct ata_drive_datas *));
-	void (*ata_delref) __P((struct ata_drive_datas *));
-	void (*ata_killpending) __P((struct ata_drive_datas *));
-};
-/* bustype_type */
-/* #define SCSIPI_BUSTYPE_SCSI	0 */
-/* #define SCSIPI_BUSTYPE_ATAPI	1 */
-#define SCSIPI_BUSTYPE_ATA	2
 
 /*
  * describe an ATA device. Has to be compatible with scsipi_channel, so start
