@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.33 2000/07/08 14:57:57 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.33 2000/07/08 14:57:57 sommerfeld Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,8 @@ __RCSID("$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $");
 #include "reentrant.h"
 
 static int __sprint __P((FILE *, struct __suio *));
-static int __sbprintf __P((FILE *, const char *, va_list));
+static int __sbprintf __P((FILE *, const char *, va_list)) 
+     __attribute__((__format__(__printf__, 2, 0)));
 
 /*
  * Flush out all the vectors defined by the given uio,
