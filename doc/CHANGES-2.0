@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.527 2004/11/12 06:37:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.528 2004/11/12 06:38:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8019,3 +8019,9 @@ usr.sbin/pppd/pppd/cbcp.c			1.8-1.10
 
 	If the cbcp option length is too long, stop parsing.
 	[christos, ticket #957]
+
+xfree/xc/programs/Xserver/hw/xfree86/loader/elfloader.c	1.3
+
+	Add __NetBSD__ to the list of systems which use mprotect() to mark 
+	dynamically loaded code as executable.
+	[aymeric, ticket #959]
