@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.35 2002/11/26 06:12:59 sjg Exp $	*/
+/*	$NetBSD: dir.c,v 1.36 2003/07/14 18:19:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.35 2002/11/26 06:12:59 sjg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.36 2003/07/14 18:19:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.35 2002/11/26 06:12:59 sjg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.36 2003/07/14 18:19:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -210,15 +210,15 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 
 
 static int DirFindName(ClientData, ClientData);
-static int DirMatchFiles(char *, Path *, Lst);
-static void DirExpandCurly(char *, char *, Lst, Lst);
-static void DirExpandInt(char *, Lst, Lst);
+static int DirMatchFiles(const char *, Path *, Lst);
+static void DirExpandCurly(const char *, const char *, Lst, Lst);
+static void DirExpandInt(const char *, Lst, Lst);
 static int DirPrintWord(ClientData, ClientData);
 static int DirPrintDir(ClientData, ClientData);
-static char *DirLookup(Path *, char *, char *, Boolean);
-static char *DirLookupSubdir(Path *, char *);
-static char *DirFindDot(Boolean, char *, char *);
-static char *DirLookupAbs(Path *, char *, char *);
+static char *DirLookup(Path *, const char *, const char *, Boolean);
+static char *DirLookupSubdir(Path *, const char *);
+static char *DirFindDot(Boolean, const char *, const char *);
+static char *DirLookupAbs(Path *, const char *, const char *);
 
 /*-
  *-----------------------------------------------------------------------
@@ -494,7 +494,7 @@ Dir_HasWildcards(char *name)
  *-----------------------------------------------------------------------
  */
 static int
-DirMatchFiles(char *pattern, Path *p, Lst expansions)
+DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 {
     Hash_Search	  search;   	/* Index into the directory's table */
     Hash_Entry	  *entry;   	/* Current entry in the table */
@@ -548,19 +548,19 @@ DirMatchFiles(char *pattern, Path *p, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static void
-DirExpandCurly(char *word, char *brace, Lst path, Lst expansions)
+DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 {
-    char    	  *end;	    	/* Character after the closing brace */
-    char    	  *cp;	    	/* Current position in brace clause */
-    char    	  *start;   	/* Start of current piece of brace clause */
+    const char   *end;	    	/* Character after the closing brace */
+    const char   *cp;	    	/* Current position in brace clause */
+    const char   *start;   	/* Start of current piece of brace clause */
     int	    	  bracelevel;	/* Number of braces we've seen. If we see a
 				 * right brace when this is 0, we've hit the
 				 * end of the clause. */
-    char    	  *file;    	/* Current expansion */
+    char    	 *file;    	/* Current expansion */
     int	    	  otherLen; 	/* The length of the other pieces of the
 				 * expansion (chars before and after the
 				 * clause in 'word') */
-    char    	  *cp2;	    	/* Pointer for checking for wildcards in
+    char    	 *cp2;	    	/* Pointer for checking for wildcards in
 				 * expansion before calling Dir_Expand */
 
     start = brace+1;
@@ -660,7 +660,7 @@ DirExpandCurly(char *word, char *brace, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static void
-DirExpandInt(char *word, Lst path, Lst expansions)
+DirExpandInt(const char *word, Lst path, Lst expansions)
 {
     LstNode 	  ln;	    	/* Current node */
     Path	  *p;	    	/* Directory in the node */
@@ -717,9 +717,9 @@ DirPrintWord(ClientData word, ClientData dummy)
  *-----------------------------------------------------------------------
  */
 void
-Dir_Expand(char *word, Lst path, Lst expansions)
+Dir_Expand(const char *word, Lst path, Lst expansions)
 {
-    char    	  *cp;
+    const char    	  *cp;
 
     if (DEBUG(DIR)) {
 	printf("expanding \"%s\"...", word);
@@ -762,9 +762,9 @@ Dir_Expand(char *word, Lst path, Lst expansions)
 		     * all the components up to the one with a wildcard.
 		     */
 		    sc = cp[1];
-		    cp[1] = '\0';
+		    ((char *)UNCONST(cp))[1] = '\0';
 		    dirpath = Dir_FindFile(word, path);
-		    cp[1] = sc;
+		    ((char *)UNCONST(cp))[1] = sc;
 		    /*
 		     * dirpath is null if can't find the leading component
 		     * XXX: Dir_FindFile won't find internal components.
@@ -825,7 +825,7 @@ Dir_Expand(char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static char *
-DirLookup(Path *p, char *name, char *cp, Boolean hasSlash)
+DirLookup(Path *p, const char *name, const char *cp, Boolean hasSlash)
 {
     char *file;		/* the current filename to check */
 
@@ -864,7 +864,7 @@ DirLookup(Path *p, char *name, char *cp, Boolean hasSlash)
  *-----------------------------------------------------------------------
  */
 static char *
-DirLookupSubdir(Path *p, char *name)
+DirLookupSubdir(Path *p, const char *name)
 {
     struct stat	  stb;		/* Buffer for stat, if necessary */
     Hash_Entry	 *entry;	/* Entry for mtimes table */
@@ -922,10 +922,10 @@ DirLookupSubdir(Path *p, char *name)
  *-----------------------------------------------------------------------
  */
 static char *
-DirLookupAbs(Path *p, char *name, char *cp)
+DirLookupAbs(Path *p, const char *name, const char *cp)
 {
 	char *p1;		/* pointer into p->name */
-	char *p2;		/* pointer into name */
+	const char *p2;		/* pointer into name */
 
 	if (DEBUG(DIR)) {
 		printf("%s...", p->name);
@@ -949,7 +949,7 @@ DirLookupAbs(Path *p, char *name, char *cp)
 			printf("must be here but isn't -- returning\n");
 		}
 		/* Return empty string: terminates search */
-		return "";
+		return estrdup("");
 	}
 
 	if (DEBUG(DIR)) {
@@ -977,7 +977,7 @@ DirLookupAbs(Path *p, char *name, char *cp)
  *-----------------------------------------------------------------------
  */
 static char *
-DirFindDot(Boolean hasSlash, char *name, char *cp)
+DirFindDot(Boolean hasSlash, const char *name, const char *cp)
 {
 
 	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
@@ -1024,12 +1024,12 @@ DirFindDot(Boolean hasSlash, char *name, char *cp)
  *-----------------------------------------------------------------------
  */
 char *
-Dir_FindFile(char *name, Lst path)
+Dir_FindFile(const char *name, Lst path)
 {
     LstNode       ln;			/* a list element */
     char	  *file;		/* the current filename to check */
     Path	  *p;			/* current path member */
-    char	  *cp;			/* index of first slash, if any */
+    const char	  *cp;			/* index of first slash, if any */
     Boolean	  hasLastDot = FALSE;	/* true we should search dot last */
     Boolean	  hasSlash;		/* true if 'name' contains a / */
     struct stat	  stb;			/* Buffer for stat, if necessary */
@@ -1398,7 +1398,7 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;	      /* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_Find (path, (ClientData)name, DirFindName);
+	ln = Lst_Find (path, (ClientData)UNCONST(name), DirFindName);
 	if (ln != NILLNODE)
 	    return (Path *) Lst_Datum(ln);
 	else {
@@ -1408,7 +1408,7 @@ Dir_AddDir(Lst path, const char *name)
     }
 
     if (path)
-	ln = Lst_Find (openDirectories, (ClientData)name, DirFindName);
+	ln = Lst_Find (openDirectories, (ClientData)UNCONST(name), DirFindName);
     if (ln != NILLNODE) {
 	p = (Path *)Lst_Datum (ln);
 	if (Lst_Member(path, (ClientData)p) == NILLNODE) {
@@ -1503,10 +1503,10 @@ Dir_CopyDir(ClientData p)
  *-----------------------------------------------------------------------
  */
 char *
-Dir_MakeFlags(char *flag, Lst path)
+Dir_MakeFlags(const char *flag, Lst path)
 {
     char	  *str;	  /* the string which will be returned */
-    char	  *tstr;  /* the current directory preceded by 'flag' */
+    char	  *s1, *s2;/* the current directory preceded by 'flag' */
     LstNode	  ln;	  /* the node of the current directory */
     Path	  *p;	  /* the structure describing the current directory */
 
@@ -1515,8 +1515,10 @@ Dir_MakeFlags(char *flag, Lst path)
     if (Lst_Open (path) == SUCCESS) {
 	while ((ln = Lst_Next (path)) != NILLNODE) {
 	    p = (Path *) Lst_Datum (ln);
-	    tstr = str_concat (flag, p->name, 0);
-	    str = str_concat (str, tstr, STR_ADDSPACE | STR_DOFREE);
+	    s2 = str_concat (flag, p->name, 0);
+	    str = str_concat (s1 = str, s2, STR_ADDSPACE);
+	    free(s1);
+	    free(s2);
 	}
 	Lst_Close (path);
     }

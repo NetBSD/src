@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.15 2003/04/17 15:57:52 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.16 2003/07/14 18:19:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.15 2003/04/17 15:57:52 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.16 2003/07/14 18:19:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.15 2003/04/17 15:57:52 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.16 2003/07/14 18:19:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -107,7 +107,7 @@ typedef enum {
  * last two fields are stored in condInvert and condDefProc, respectively.
  */
 static void CondPushBack(Token);
-static int CondGetArg(char **, char **, char *, Boolean);
+static int CondGetArg(char **, char **, const char *, Boolean);
 static Boolean CondDoDefined(int, char *);
 static int CondStrMatch(ClientData, ClientData);
 static Boolean CondDoMake(int, char *);
@@ -121,7 +121,7 @@ static Token CondF(Boolean);
 static Token CondE(Boolean);
 
 static struct If {
-    char	*form;	      /* Form of if */
+    const char	*form;	      /* Form of if */
     int		formlen;      /* Length of form */
     Boolean	doNot;	      /* TRUE if default function should be negated */
     Boolean	(*defProc)(int, char *); /* Default function to apply */
@@ -189,7 +189,7 @@ CondPushBack(Token t)
  *-----------------------------------------------------------------------
  */
 static int
-CondGetArg(char **linePtr, char **argPtr, char *func, Boolean parens)
+CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 {
     char	  *cp;
     int	    	  argLen;
@@ -618,8 +618,8 @@ CondToken(Boolean doEval)
 			}
 			break;
 		    default:
-			op = "!=";
-			rhs = "0";
+			op = UNCONST("!=");
+			rhs = UNCONST("0");
 
 			goto do_compare;
 		}
