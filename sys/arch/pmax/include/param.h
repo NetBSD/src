@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1995/07/23 20:11:55 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.13 1996/02/01 22:32:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,7 +143,7 @@
 #define pmax_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
 	   (*Mach_splimp) __P((void)), (*Mach_spltty) __P((void)),
 	   (*Mach_splclock) __P((void)), (*Mach_splstatclock) __P((void));

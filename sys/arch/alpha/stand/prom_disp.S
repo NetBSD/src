@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_disp.S,v 1.1 1995/11/23 02:39:10 cgd Exp $	*/
+/*	$NetBSD: prom_disp.S,v 1.2 1996/02/01 22:28:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include "include/asm.h"
 #include "include/prom.h"
 #include "include/rpb.h"

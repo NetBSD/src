@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1 1996/01/31 23:21:38 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.2 1996/02/01 22:29:34 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -45,13 +45,13 @@
  *
  * Based on kate/katelib/arm6.h
  *
- *    $Id: cpu.h,v 1.1 1996/01/31 23:21:38 mark Exp $
+ *    $Id: cpu.h,v 1.2 1996/02/01 22:29:34 mycroft Exp $
  */
 
 #ifndef _ARM_CPU_H
 #define _ARM_CPU_H
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #  include <machine/frame.h>
 #  include <machine/psl.h>
 #endif
@@ -142,7 +142,7 @@
 #define FAULT_PERM_S    0x0d
 #define FAULT_PERM_P    0x0f
 
-#ifdef LOCORE
+#ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr_all ; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.h,v 1.1 1995/02/23 17:51:45 ragge Exp $ */
+/*	$NetBSD: uvaxII.h,v 1.2 1996/02/01 22:33:33 mycroft Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -102,7 +102,7 @@ void uvaxII_settodr();
 #define	KA630CLK_RSTRT	010
 #define	KA630CLK_LANG	0360
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct ka630clock {
 	u_short	sec;
 	u_short	secalrm;

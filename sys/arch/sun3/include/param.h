@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 1995/11/10 22:04:48 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.31 1996/02/01 22:33:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -150,7 +150,7 @@
 #include <machine/psl.h>
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 #define	DELAY(n)	delay(n)
 extern int cpuspeed;
 static inline void delay2us()
@@ -159,7 +159,7 @@ static inline void delay2us()
 
 	__asm __volatile ("0: subql #4,%0; jgt 0b" : "=d" (n) : "0" (n));
 }
-#endif	/* !LOCORE */
+#endif	/* !_LOCORE */
 #endif	/* _KERNEL */
 
 #endif	/* MACHINE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.3 1995/06/25 21:34:28 pk Exp $ */
+/*	$NetBSD: intreg.h,v 1.4 1996/02/01 22:32:45 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@
 #define	IE_L1		0x02	/* request software level 1 interrupt */
 #define	IE_ALLIE	0x01	/* enable interrupts */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 void	ienab_bis __P((int bis));	/* set given bits */
 void	ienab_bic __P((int bic));	/* clear given bits */
 #endif
