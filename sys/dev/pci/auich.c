@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.50 2003/10/25 18:31:11 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.51 2003/10/28 22:56:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.50 2003/10/25 18:31:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.51 2003/10/28 22:56:19 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1420,7 +1420,7 @@ void
 auich_calibrate(struct auich_softc *sc)
 {
 	struct timeval t1, t2;
-	u_int8_t ociv, nciv = 0;
+	u_int8_t ociv, nciv;
 	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
@@ -1468,6 +1468,7 @@ auich_calibrate(struct auich_softc *sc)
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, ICH_RPBM);
 
 	/* wait */
+	nciv = ociv;
 	do {
 		microtime(&t2);
 		if (t2.tv_sec - t1.tv_sec > 1)
