@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.5 1997/04/07 23:40:13 cgd Exp $ */
+/* $NetBSD: vga.c,v 1.6 1997/07/23 07:56:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.5 1997/04/07 23:40:13 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.6 1997/07/23 07:56:05 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,6 @@ vga_copycols(id, row, srccol, dstcol, ncols)
 	srcoff = (row * vc->vc_ncol + srccol) * 2;
 	dstoff = (row * vc->vc_ncol + dstcol) * 2;
 
-	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
 	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
 	    ncols);
 }
@@ -338,7 +337,6 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	srcoff = (srcrow * vc->vc_ncol + 0) * 2;
 	dstoff = (dstrow * vc->vc_ncol + 0) * 2;
 
-	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
 	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
 	    nrows * vc->vc_ncol);
 }
