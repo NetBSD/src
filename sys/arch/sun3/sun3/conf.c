@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 1995/03/26 19:24:16 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 1995/04/07 02:58:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -521,6 +521,20 @@ decl_mmap(bw2map);
 #define bw2map  ndef_mmap
 #endif
 
+/* CG2 frame buffer (/dev/cgtwo) */
+#include "cgtwo.h"
+#if NCGFOUR > 0
+decl_open(cg2open);
+decl_close(cg2close);
+decl_ioctl(cg2ioctl);
+decl_mmap(cg2map);
+#else
+#define cg2open  ndef_open
+#define cg2close ndef_close
+#define cg2ioctl ndef_ioctl
+#define cg2map  ndef_mmap
+#endif
+
 /* CG4 frame buffer (/dev/cgfour) */
 #include "cgfour.h"
 #if NCGFOUR > 0
@@ -707,8 +721,10 @@ struct cdevsw	cdevsw[] =
 	/* 30: /dev/xt (Xylogics 472 tape controller) */
 	cdev_notdef,
 
-	/* 31: /dev/cgtwo */
-	cdev_notdef,
+	/* 31: /dev/cgtwo* (Sun cg2 board) */
+	{	cg2open, cg2close, nsup_read, nsup_write,
+		cg2ioctl, null_stop, null_reset, nsup_ttys,
+		seltrue, cg2map, nsup_strategy },
 
 	/* 32: /dev/gpone */
 	cdev_notdef,
