@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.15 1997/11/19 03:03:17 augustss Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.16 1998/04/22 19:44:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -311,6 +311,9 @@ scanjet_ctl_write(ss, buf, size, flags)
 {
 	struct scsi_rw_scanner cmd;
 
+	if ((ss->flags & SSF_AUTOCONF) != 0)
+		flags |= SCSI_AUTOCONF;
+
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
@@ -332,6 +335,9 @@ scanjet_ctl_read(ss, buf, size, flags)
 	int flags;
 {
 	struct scsi_rw_scanner cmd;
+
+	if ((ss->flags & SSF_AUTOCONF) != 0)
+		flags |= SCSI_AUTOCONF;
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;

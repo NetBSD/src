@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.5 1998/02/13 08:29:00 enami Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.6 1998/04/22 19:44:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -64,6 +64,7 @@ struct ss_softc {
 	int flags;
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
 #define	SSF_LOADED	0x02	/* parameters loaded */
+#define	SSF_AUTOCONF	0x04	/* set during auto-configuration */
 	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct scan_io sio;
 	struct buf buf_queue;		/* the queue of pending IO operations */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.19 1998/01/12 09:49:17 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.20 1998/04/22 19:44:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -139,6 +139,8 @@ ssattach(parent, self, aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach: "));
 
+	ss->flags |= SSF_AUTOCONF;
+
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -166,6 +168,7 @@ ssattach(parent, self, aux)
 	ss->buf_queue.b_active = 0;
 	ss->buf_queue.b_actf = 0;
 	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
+	ss->flags &= ~SSF_AUTOCONF;
 }
 
 /*
