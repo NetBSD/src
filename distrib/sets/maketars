@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.6 1997/11/05 22:08:25 scottr Exp $
+# $NetBSD: maketars,v 1.7 1997/11/09 20:47:32 chopps Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-arch arch] [-setd setsdir] [-dest destdir] \
@@ -23,6 +23,7 @@ do
 	-setd)	setd=$2; shift;;
 	-dest)	dest=$2; shift;;
 	-tars)	tars=$2; shift;;
+	-both)	lists="$xlists $lists";;
 	-x11)	lists=$xlists;;
 	-*)	echo "bad option"; exit 1;;
 	*)	break;;
