@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.5 1997/03/24 18:56:26 mycroft Exp $
+ * $NetBSD: main.c,v 1.6 1997/03/24 19:51:28 mycroft Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -258,6 +258,7 @@ pain()
 			vfrom += size;
 		} else {
 			from = vfrom;
+			mapped1to1 = 1;
 			vsize = 0;
 		}
 
