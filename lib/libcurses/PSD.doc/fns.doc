@@ -1646,5 +1646,12 @@ specification of a window, rather than the use of the default
 .Fn wunderend "WINDOW *win"
 .Fn wunderscore "WINDOW *win"
 .Fn wvline "WINDOW *win" "chtype ch" "int count"
+.Fn mvwaddch "WINDOW *win" "int y" "int x" "chtype ch"
+.Fn mvwaddnstr "WINDOW *win" "int y" "int x" "char *str" "int len"
+.Fn mvwaddstr "WINDOW *win" "int y" "int x" "char *str"
+.Fn mvwgetnstr "WINDOW *win" "int y" "int x" "char *str" "int len"
+.Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str"
+.Fn mvwhline "WINDOW *win" "int y" "int x" "chtype ch" "int count"
+.Fn mvwvline "WINDOW *win" "int y" "int x" "chtype ch" "int count"
 
 .Dg
