@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.12 1997/10/19 12:30:00 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.13 1998/07/11 15:55:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.12 1997/10/19 12:30:00 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.13 1998/07/11 15:55:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,6 @@ void	usage __P((void));
  * Note on configuration:
  *      Generally one would not use both Kerberos and YP
  *      to maintain passwords.
- *
  */
 
 int use_kerberos;
@@ -107,7 +106,6 @@ main(argc, argv)
 #endif
 	}
 
-	
 	while ((ch = getopt(argc, argv, "lkyi:r:u:")) != -1)
 		switch (ch) {
 		case 'l':		/* change local password file */
@@ -134,8 +132,12 @@ main(argc, argv)
 			use_kerberos = 1;
 			use_yp = 0;
 			break;
-#else
-			errx(1, "Kerberos support not compiled in.");
+#endif
+#ifndef KERBEROS
+		case 'i':
+		case 'r':
+		case 'u':
+			errx(1, "Kerberos4 support not compiled in.");
 #endif
 		case 'y':		/* change YP password */
 #ifdef	YP

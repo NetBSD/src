@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.15 1998/04/02 10:38:25 kleink Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.16 1998/07/11 15:55:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.15 1998/04/02 10:38:25 kleink Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.16 1998/07/11 15:55:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,7 @@ getnewpasswd(pw)
 			continue;
 		}
 		(void)strncpy(buf, p, sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = '\0';
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
@@ -161,10 +162,10 @@ local_passwd(uname)
 	pw->pw_passwd = getnewpasswd(pw);
 	pw->pw_change = 0;
 
-	/* Now that the user has given us a new password, let us
+	/*
+	 * Now that the user has given us a new password, let us
 	 * change the database.
 	 */
-
 	pw_init();
 	tfd = pw_lock(0);
 	if (tfd < 0) {
