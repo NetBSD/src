@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.2 2002/02/20 17:02:48 christos Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.3 2002/03/20 00:27:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2 2002/02/20 17:02:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.3 2002/03/20 00:27:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2 2002/02/20 17:02:48 christos Ex
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/common/linux_sysctl.h>
+#include <compat/linux/common/linux_exec.h>
 
 int linux_kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct proc *);
@@ -178,7 +179,7 @@ linux_sys___sysctl(struct proc *p, void *v, register_t *retval)
  */
 char linux_sysname[128] = "Linux";
 char linux_release[128] = "2.0.38";
-char linux_version[128] = "#0 Sun Apr 1 11:11:11 MET 2000";
+char linux_version[128] = "#0 Sun Nov 11 11:11:11 MET 2000";
 
 /*
  * kernel related system variables.
@@ -199,6 +200,35 @@ linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
 		return sysctl_string(oldp, oldlenp, newp, newlen,
 		    linux_release, sizeof(linux_release));
 	case LINUX_KERN_VERSION:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_version, sizeof(linux_version));
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+/*
+ * kernel related system variables.
+ */
+int
+sysctl_linux(int *name, u_int nlen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	if (nlen != 2 || name[0] != EMUL_LINUX_KERN)
+		return EOPNOTSUPP;
+
+	/*
+	 * Note that we allow writing into this, so that userland
+	 * programs can setup things as they see fit. This is suboptimal.
+	 */
+	switch (name[1]) {
+	case EMUL_LINUX_KERN_OSTYPE:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_sysname, sizeof(linux_sysname));
+	case EMUL_LINUX_KERN_OSRELEASE:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_release, sizeof(linux_release));
+	case EMUL_LINUX_KERN_VERSION:
 		return sysctl_string(oldp, oldlenp, newp, newlen,
 		    linux_version, sizeof(linux_version));
 	default:
