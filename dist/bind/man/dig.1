@@ -1,6 +1,6 @@
-.\"     $NetBSD: dig.1,v 1.2 2000/06/14 05:54:30 itojun Exp $
+.\"     $NetBSD: dig.1,v 1.2.2.1 2002/07/01 17:16:11 he Exp $
 .\"
-.\" Id: dig.1,v 8.4 1999/10/15 21:29:58 vixie Exp
+.\" Id: dig.1,v 8.9 2002/06/18 01:53:43 marka Exp
 .\"
 .\" ++Copyright++ 1993
 .\" -
@@ -62,7 +62,7 @@
 .\"
 .Dd August 30, 1990
 .Dt DIG 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm dig
 .Nd send domain name query packets to name servers
@@ -97,12 +97,12 @@ will take the form:
 where:
 .Bl -tag -width Fl
 .It Ar server
-may be either a domain name or a dot-notation
+may be either a domain name or a raw (IPv4 / IPv6)
 Internet address. If this optional field is omitted, 
 .Ic dig
 will attempt to use the default name server for your machine.
 .sp 1
-.Em Note:
+.Em Note :
 If a domain name is specified, this will be resolved
 using the domain name system resolver (i.e., BIND). If your
 system does not support DNS, you may 
@@ -118,7 +118,7 @@ itself can be resolved. See
 .Xr resolver 5
 for information on 
 .Pa /etc/resolv.conf .
-.Sy WARNING: 
+.Sy WARNING :
 Changing 
 .Pa /etc/resolv.conf 
 will affect both the standard resolver library and 
@@ -147,7 +147,7 @@ See the
 .Fl x 
 option (documented in the
 .Sx OTHER OPTIONS 
-subsection of this section) for convenient way to specify inverse address
+subsection of this section) for convenient way to specify reverse address
 query.
 .It Ar query-type
 is the type of information (DNS query type) that
@@ -192,7 +192,7 @@ all/any class information
 .Pp
 (See RFC 1035 for the complete list.)
 .Pp
-.Em Note:
+.Em Note :
 .Dq Ar Any
 can be used to specify a 
 .Em class 
@@ -242,9 +242,15 @@ available (although not guaranteed to be useful):
 .It Fl x Ar dot-notation-address
 Convenient form to specify inverse address mapping.
 Instead of 
-.Dq Ic dig 32.0.9.128.in-addr.arpa , 
+.Dq Ic dig 32.0.9.28.in-addr.arpa , 
 one can simply 
-.Dq Ic dig -x 128.9.0.32 .
+.Dq Ic dig -x 28.9.0.32 .
+.It Fl x Ar IPv6-address
+Convenient form to specify inverse address mapping.
+Instead of 
+.Dq Ic dig 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa ,
+one can simply 
+.Dq Ic dig -x ::1 .
 .It Fl f Ar file
 File for 
 .Ic dig
@@ -325,7 +331,7 @@ environment is saved.  If not, the file
 .Dq Pa DiG.env 
 is created in the current working directory.
 .Pp
-.Em Note: 
+.Em Note :
 .Ev LOCALDEF 
 is specific to the 
 .Ic dig
@@ -523,6 +529,13 @@ print TTLs
 .Bq Cm tt
 .It Xo
 .Op Cm no 
+.Ns Cm trunc\ \ \ \ 
+.Pq Cm tr
+.Xc
+truncate origin from names
+.Bq Cm tr
+.It Xo
+.Op Cm no 
 .Ns Cm cl
 .Xc
 print class info 
@@ -568,6 +581,13 @@ print authoritative section
 .Xc
 print additional section 
 .Bq Cm ad
+.It Xo
+.Op Cm no 
+.Ns Cm dnssec\ \ \ 
+.Pq Cm \ddn
+.Xc
+set the DNSSEC OK bit in the OPT pseudo record
+.Bq Cm nodn
 .It Cm pfdef 
 set to default print flags
 .It Cm pfmin 
@@ -643,7 +663,7 @@ and
 options, above.
 .Sh FILES
 .Bl -tag -width "/etc/resolv.conf  " -compact
-.It Pa /etc/resolv.conf	
+.It Pa /etc/resolv.conf
 initial domain name and name server addresses
 .It Pa \./DiG.env
 default save file for default options
@@ -674,7 +694,8 @@ rather ad hoc genesis.
 .Ic Dig
 does not consistently exit nicely (with appropriate status)
 when a problem occurs somewhere in the resolver 
-.Po Sy NOTE: 
+.Po
+.Sy NOTE :
 most of the common exit cases are handled
 .Pc .  
 This is particularly annoying when running in
@@ -683,10 +704,3 @@ batch aborts; when such an event is trapped,
 .Ic dig
 simply
 continues with the next query.
-.Pp
-.Nm
-does not support DNS queries/replies over IPv6 transport, and ignores
-IPv6 address on
-.Dq nameserver
-line in
-.Xr resolv.conf 5 .
