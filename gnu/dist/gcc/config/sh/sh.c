@@ -2053,26 +2053,31 @@ find_barrier (num_mova, mova, from)
 	      inc = XVECLEN (body, 1) * GET_MODE_SIZE (GET_MODE (body));
 	    }
 	}
+      /* For the SH1, we generate alignments even after jumps-around-jumps.  */
+      else if (GET_CODE (from) == JUMP_INSN
+	       && ! TARGET_SH2
+	       && ! TARGET_SMALLCODE)
+	new_align = 4;
 
       if (found_si)
 	{
+	  count_si += inc;
 	  if (new_align > si_align)
 	    {
-	      si_limit -= count_si - 1 & new_align - si_align;
+	      si_limit -= (count_si - 1) & (new_align - si_align);
 	      si_align = new_align;
 	    }
-	  count_si = count_si + new_align - 1 & -new_align;
-	  count_si += inc;
+	  count_si = (count_si + new_align - 1) & -new_align;
 	}
       if (found_hi)
 	{
+	  count_hi += inc;
 	  if (new_align > hi_align)
 	    {
-	      hi_limit -= count_hi - 1 & new_align - hi_align;
+	      hi_limit -= (count_hi - 1) & (new_align - hi_align);
 	      hi_align = new_align;
 	    }
-	  count_hi = count_hi + new_align - 1 & -new_align;
-	  count_hi += inc;
+	  count_hi = (count_hi + new_align - 1) & -new_align;
 	}
       from = NEXT_INSN (from);
     }
