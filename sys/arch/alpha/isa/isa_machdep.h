@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.6 1998/05/23 18:35:03 matt Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.7 1998/06/09 00:06:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,6 +27,8 @@
  * rights to redistribute these changes.
  */
 
+#include <dev/isa/isadmavar.h>
+
 /*
  * Types provided to machine-independent ISA code.
  */
@@ -34,6 +36,8 @@ typedef struct alpha_isa_chipset *isa_chipset_tag_t;
 
 struct alpha_isa_chipset {
 	void	*ic_v;
+
+	struct isa_dma_state ic_dmastate;
 
 	void	(*ic_attach_hook) __P((struct device *, struct device *,
 		    struct isabus_attach_args *));
@@ -55,6 +59,43 @@ struct alpha_isa_chipset {
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
 #define	isa_intr_alloc(c, m, t, i)					\
     (*(c)->ic_intr_alloc)((c)->ic_v, (m), (t), (i))
+
+#define	isa_dmainit(ic, bst, dmat, d)					\
+	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
+#define	isa_dmacascade(ic, c)						\
+	_isa_dmacascade(&(ic)->ic_dmastate, (c))
+#define	isa_dmamap_create(ic, c, s, f)					\
+	_isa_dmamap_create(&(ic)->ic_dmastate, (c), (s), (f))
+#define	isa_dmamap_destroy(ic, c)					\
+	_isa_dmamap_destroy(&(ic)->ic_dmastate, (c))
+#define	isa_dmastart(ic, c, a, n, p, f, bf)				\
+	_isa_dmastart(&(ic)->ic_dmastate, (c), (a), (n), (p), (f), (bf))
+#define	isa_dmaabort(ic, c)						\
+	_isa_dmaabort(&(ic)->ic_dmastate, (c))
+#define	isa_dmacount(ic, c)						\
+	_isa_dmacount(&(ic)->ic_dmastate, (c))
+#define	isa_dmafinished(ic, c)						\
+	_isa_dmafinished(&(ic)->ic_dmastate, (c))
+#define	isa_dmadone(ic, c)						\
+	_isa_dmadone(&(ic)->ic_dmastate, (c))
+#define	isa_dmamem_alloc(ic, c, s, ap, f)				\
+	_isa_dmamem_alloc(&(ic)->ic_dmastate, (c), (s), (ap), (f))
+#define	isa_dmamem_free(ic, c, a, s)					\
+	_isa_dmamem_free(&(ic)->ic_dmastate, (c), (a), (s))
+#define	isa_dmamem_map(ic, c, a, s, kp, f)				\
+	_isa_dmamem_map(&(ic)->ic_dmastate, (c), (a), (s), (kp), (f))
+#define	isa_dmamem_unmap(ic, c, k, s)					\
+	_isa_dmamem_unmap(&(ic)->ic_dmastate, (c), (k), (s))
+#define	isa_dmamem_mmap(ic, c, a, s, o, p, f)				\
+	_isa_dmamem_mmap(&(ic)->ic_dmastate, (c), (a), (s), (o), (p), (f))
+#define	isa_drq_isfree(ic, c)						\
+	_isa_drq_isfree(&(ic)->ic_dmastate, (c))
+#define	isa_malloc(ic, c, s, p, f)					\
+	_isa_malloc(&(ic)->ic_dmastate, (c), (s), (p), (f))
+#define	isa_free(a, p)							\
+	_isa_free((a), (p))
+#define	isa_mappage(m, o, p)						\
+	_isa_mappage((m), (o), (p))
 
 /*
  * alpha-specific ISA functions.
