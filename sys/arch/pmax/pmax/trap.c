@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 1995/08/01 06:58:57 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 1995/09/11 22:03:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
@@ -84,6 +85,8 @@
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
+
+#include <pmax/pmax/trap.h>
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
@@ -185,8 +188,6 @@ extern void MachSwitchFPState __P((struct proc *from, struct user *to));
 /* only called by locore */
 extern u_int trap __P((u_int status, u_int cause, u_int vaddr,  u_int pc,
 			 int args));
-/* (called by locore and kadb */
-extern u_int MachEmulateBranch  __P((u_int*, u_int, u_int, int));
 
 
 #ifdef DEBUG /* stack trace code, also useful to DDB one day */
@@ -198,6 +199,7 @@ extern void idle __P((void)),  cpu_switch __P(( struct proc *p));
 extern void MachEmptyWriteBuffer __P((void));
 extern void MachUTLBMiss __P((void));
 extern void setsoftclock __P((void));
+extern int main __P((void*));
 #endif	/* DEBUG */
 
 
@@ -895,7 +897,7 @@ interrupt(statusReg, causeReg, pc)
  * Handle pmax (DECstation 2100/3100) interrupts.
  */
 int
-pmax_intr(mask, pc, statusReg, causeReg)
+kn01_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
 	unsigned statusReg;
@@ -904,6 +906,8 @@ pmax_intr(mask, pc, statusReg, causeReg)
 	register volatile struct chiptime *c = Mach_clock_addr;
 	struct clockframe cf;
 	int temp;
+	extern struct cfdriver siicd;
+	extern struct cfdriver lecd;
 
 	/* handle clock interrupts ASAP */
 	if (mask & MACH_INT_MASK_3) {
@@ -921,13 +925,13 @@ pmax_intr(mask, pc, statusReg, causeReg)
 #if NSII > 0
 	if (mask & MACH_INT_MASK_0) {
 		intrcnt[2]++;
-		siiintr(0);
+		siiintr(siicd.cd_devs[0]);
 	}
 #endif
 #if NLE > 0
 	if (mask & MACH_INT_MASK_1) {
 		intrcnt[3]++;
-		leintr(0);
+		leintr(lecd.cd_devs[0]);
 	}
 #endif
 #if NDC > 0
@@ -999,7 +1003,7 @@ kn02_intr(mask, pc, statusReg, causeReg)
 				continue;
 			intrcnt[intr_map[i]]++;
 			if (tc_slot_info[i].intr)
-				(*tc_slot_info[i].intr)(tc_slot_info[i].unit);
+				(*tc_slot_info[i].intr)(tc_slot_info[i].sc);
 			else
 				printf("spurious interrupt %d\n", i);
 		}
@@ -1046,6 +1050,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 		(*callv->_halt)((int *)0, 0);
 	if (mask & MACH_INT_MASK_3) {
 		intr = *intrp;
+
 		/* masked interrupts are still observable */
 		intr &= old_mask;
 	
@@ -1075,22 +1080,22 @@ kmin_intr(mask, pc, statusReg, causeReg)
 		if ((intr & KMIN_INTR_SCC_0) &&
 			tc_slot_info[KMIN_SCC0_SLOT].intr)
 			(*(tc_slot_info[KMIN_SCC0_SLOT].intr))
-			(tc_slot_info[KMIN_SCC0_SLOT].unit);
+			(tc_slot_info[KMIN_SCC0_SLOT].sc);
 	
 		if ((intr & KMIN_INTR_SCC_1) &&
 			tc_slot_info[KMIN_SCC1_SLOT].intr)
 			(*(tc_slot_info[KMIN_SCC1_SLOT].intr))
-			(tc_slot_info[KMIN_SCC1_SLOT].unit);
+			(tc_slot_info[KMIN_SCC1_SLOT].sc);
 	
 		if ((intr & KMIN_INTR_SCSI) &&
 			tc_slot_info[KMIN_SCSI_SLOT].intr)
 			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
-			(tc_slot_info[KMIN_SCSI_SLOT].unit);
+			(tc_slot_info[KMIN_SCSI_SLOT].sc);
 	
 		if ((intr & KMIN_INTR_LANCE) &&
 			tc_slot_info[KMIN_LANCE_SLOT].intr)
 			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
-			(tc_slot_info[KMIN_LANCE_SLOT].unit);
+			(tc_slot_info[KMIN_LANCE_SLOT].sc);
 	
 		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
 			printf("%s\n", "Power supply ok now.");
@@ -1102,11 +1107,19 @@ kmin_intr(mask, pc, statusReg, causeReg)
 		}
 	}
 	if ((mask & MACH_INT_MASK_0) && tc_slot_info[0].intr)
-		(*tc_slot_info[0].intr)(tc_slot_info[0].unit);
+		(*tc_slot_info[0].intr)(tc_slot_info[0].sc);
 	if ((mask & MACH_INT_MASK_1) && tc_slot_info[1].intr)
-		(*tc_slot_info[1].intr)(tc_slot_info[1].unit);
+		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
 	if ((mask & MACH_INT_MASK_2) && tc_slot_info[2].intr)
-		(*tc_slot_info[2].intr)(tc_slot_info[2].unit);
+		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
+
+#if 0 /*XXX*/
+	if (mask & (MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0))
+		printf("kmin: slot intr, mask 0x%x\n",
+			mask &
+			(MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0));
+#endif
+	
 	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
 		MACH_SR_INT_ENA_CUR);
 }
@@ -1155,7 +1168,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if ((intr & XINE_INTR_SCC_0)) {
 			if (tc_slot_info[XINE_SCC0_SLOT].intr)
 				(*(tc_slot_info[XINE_SCC0_SLOT].intr))
-				(tc_slot_info[XINE_SCC0_SLOT].unit);
+				(tc_slot_info[XINE_SCC0_SLOT].sc);
 			else
 				printf ("can't handle scc interrupt\n");
 		}
@@ -1176,7 +1189,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_DTOP_RX) {
 			if (tc_slot_info[XINE_DTOP_SLOT].intr)
 				(*(tc_slot_info[XINE_DTOP_SLOT].intr))
-				(tc_slot_info[XINE_DTOP_SLOT].unit);
+				(tc_slot_info[XINE_DTOP_SLOT].sc);
 			else
 				printf ("can't handle dtop interrupt\n");
 		}
@@ -1184,7 +1197,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_FLOPPY) {
 			if (tc_slot_info[XINE_FLOPPY_SLOT].intr)
 				(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
-				(tc_slot_info[XINE_FLOPPY_SLOT].unit);
+				(tc_slot_info[XINE_FLOPPY_SLOT].sc);
 		else
 			printf ("can't handle floppy interrupt\n");
 		}
@@ -1192,7 +1205,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_TC_0) {
 			if (tc_slot_info[0].intr)
 				(*(tc_slot_info[0].intr))
-				(tc_slot_info[0].unit);
+				(tc_slot_info[0].sc);
 			else
 				printf ("can't handle tc0 interrupt\n");
 		}
@@ -1200,7 +1213,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_TC_1) {
 			if (tc_slot_info[1].intr)
 				(*(tc_slot_info[1].intr))
-				(tc_slot_info[1].unit);
+				(tc_slot_info[1].sc);
 			else
 				printf ("can't handle tc1 interrupt\n");
 		}
@@ -1208,7 +1221,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_ISDN) {
 			if (tc_slot_info[XINE_ISDN_SLOT].intr)
 				(*(tc_slot_info[XINE_ISDN_SLOT].intr))
-				(tc_slot_info[XINE_ISDN_SLOT].unit);
+				(tc_slot_info[XINE_ISDN_SLOT].sc);
 			else
 				printf ("can't handle isdn interrupt\n");
 		}
@@ -1216,7 +1229,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_SCSI) {
 			if (tc_slot_info[XINE_SCSI_SLOT].intr)
 				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
-				(tc_slot_info[XINE_SCSI_SLOT].unit);
+				(tc_slot_info[XINE_SCSI_SLOT].sc);
 			else
 				printf ("can't handle scsi interrupt\n");
 		}
@@ -1224,7 +1237,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		if (intr & XINE_INTR_LANCE) {
 			if (tc_slot_info[XINE_LANCE_SLOT].intr)
 				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
-				(tc_slot_info[XINE_LANCE_SLOT].unit);
+				(tc_slot_info[XINE_LANCE_SLOT].sc);
 			else
 				printf ("can't handle lance interrupt\n");
 	
@@ -1276,6 +1289,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		/* reenable clock interrupts */
 		splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
 	}
+
 	if (mask & MACH_INT_MASK_0) {
 		intr = *intrp;
 		/* masked interrupts are still observable */
@@ -1297,21 +1311,21 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		if ((intr & KN03_INTR_SCC_0) &&
 			tc_slot_info[KN03_SCC0_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCC0_SLOT].intr))
-			(tc_slot_info[KN03_SCC0_SLOT].unit);
+			(tc_slot_info[KN03_SCC0_SLOT].sc);
 			intrcnt[2]++;
 		}
 	
 		if ((intr & KN03_INTR_SCC_1) &&
 			tc_slot_info[KN03_SCC1_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCC1_SLOT].intr))
-			(tc_slot_info[KN03_SCC1_SLOT].unit);
+			(tc_slot_info[KN03_SCC1_SLOT].sc);
 			intrcnt[2]++;
 		}
 	
 		if ((intr & KN03_INTR_TC_0) &&
 			tc_slot_info[0].intr) {
 			(*(tc_slot_info[0].intr))
-			(tc_slot_info[0].unit);
+			(tc_slot_info[0].sc);
 			intrcnt[8]++;
 		}
 #ifdef DIAGNOSTIC
@@ -1322,7 +1336,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		if ((intr & KN03_INTR_TC_1) &&
 			tc_slot_info[1].intr) {
 			(*(tc_slot_info[1].intr))
-			(tc_slot_info[1].unit);
+			(tc_slot_info[1].sc);
 			intrcnt[9]++;
 		}
 #ifdef DIAGNOSTIC
@@ -1333,7 +1347,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		if ((intr & KN03_INTR_TC_2) &&
 			tc_slot_info[2].intr) {
 			(*(tc_slot_info[2].intr))
-			(tc_slot_info[2].unit);
+			(tc_slot_info[2].sc);
 			intrcnt[10]++;
 		}
 #ifdef DIAGNOSTIC
@@ -1344,14 +1358,14 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		if ((intr & KN03_INTR_SCSI) &&
 			tc_slot_info[KN03_SCSI_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
-			(tc_slot_info[KN03_SCSI_SLOT].unit);
+			(tc_slot_info[KN03_SCSI_SLOT].sc);
 			intrcnt[4]++;
 		}
 	
 		if ((intr & KN03_INTR_LANCE) &&
 			tc_slot_info[KN03_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KN03_LANCE_SLOT].intr))
-			(tc_slot_info[KN03_LANCE_SLOT].unit);
+			(tc_slot_info[KN03_LANCE_SLOT].sc);
 			intrcnt[3]++;
 		}
 	
@@ -2032,6 +2046,9 @@ finish:
 #define Name(_fn) { _fn, "_fn"}
 #endif
 static struct { void *addr; char *name;} names[] = {
+	Name(stacktrace),
+	Name(stacktrace_subr),
+	Name(main),
 	Name(interrupt),
 	Name(trap),
 	Name(MachKernGenException),
