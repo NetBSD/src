@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.4 2002/05/16 01:01:41 thorpej Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.5 2004/05/23 01:15:05 martin Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc64.  This script is based on
@@ -14,7 +14,7 @@ SEARCH_DIR(/usr/lib);
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  . = 0x100000 + SIZEOF_HEADERS;
+  . = 0x100000 + 1024 /*SIZEOF_HEADERS*/;
   .interp     : { *(.interp) 	}
   .hash          : { *(.hash)		}
   .dynsym        : { *(.dynsym)		}
