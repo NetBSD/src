@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.231 2002/10/23 20:35:45 perry Exp $
+#	$NetBSD: Makefile,v 1.232 2002/11/18 07:09:46 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -316,8 +316,9 @@ snap_pre: check_DESTDIR check_RELEASEDIR
 	${INSTALL} -d -m 755 ${RELEASEDIR}/${dir}
 .endfor
 
-# This target builds the kernels specified by each port.  A port may
-# specify the following kernels:
+# snap_kern --
+# This target builds the kernels specified by each port.
+# A port may specify the following kernels:
 #
 #	KERNEL_SETS		The list of kernels that will be
 #				packaged into sets, named
@@ -355,19 +356,32 @@ ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 #
-.if !target(snap_kern)
-snap_kern: check_DESTDIR check_RELEASEDIR
+.if !target(snap_kern)						# {
+
+# build_kernels --
+#	Configure & compile kernels listed in ${ALL_KERNELS}
+#
 .if !defined(KERNELS_DONE)						# {
-.for configfile in ${ALL_KERNELS}
-	cd ${KERNCONFDIR} && ${CONFIG} \
-		-b ${KERNOBJDIR}/${configfile:C/.*\///} -s ${KERNSRCDIR} ${configfile}
+.for configfile in ${ALL_KERNELS}					# {
+_KERNELS_TO_BUILD+=kern-${configfile}
+kern-${configfile}:
+	cd ${KERNCONFDIR} && ${CONFIG} -s ${KERNSRCDIR} \
+	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if !defined(UPDATE)
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE}
-.endfor # build kernels
-.endif # KERNELS_DONE							# }
-.for configfile in ${KERNEL_SETS}
+.endfor	# ALL_KERNELS							# }
+.endif	# KERNELS_DONE							# }
+
+build_kernels: ${_KERNELS_TO_BUILD}
+
+# build_kernelsets --
+#	Create kernel sets from ${KERNEL_SETS} into ${RELEASEDIR}/binary/sets
+#
+.for configfile in ${KERNEL_SETS}					# {
+_KERNELSETS_TO_BUILD+=kernset-${configfile}
+kernset-${configfile}:
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES}"; \
@@ -384,8 +398,17 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 		done ) | GZIP=-9 ${PAX} -zw \
 		    -M ${UNPRIVED:D-N${NETBSDSRCDIR}/etc} \
 		    -f ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
-.endfor # make kernel sets
-.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}
+.endfor	# KERNEL_SETS							# }
+
+build_kernelsets: ${_KERNELSETS_TO_BUILD}
+
+# build_releasekernels --
+#	Build kernel.gz from ${KERNEL_SETS} ${EXTRA_KERNELS} into
+#	${RELEASEDIR}/binary/kernel
+#
+.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
+_RELEASEKERNELS_TO_BUILD+=releasekern-${configfile}
+releasekern-${configfile}:
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES}"; \
@@ -401,8 +424,18 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 		for kernel in $${gziplist} ; do \
 		gzip -c -9 < $${kernel} > \
 		    ${RELEASEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
-.endfor # place KERNEL_SETS kernels + EXTRA_KERNELS in binary/kernel/...
-.endif # no target(snap_kern)
+.endfor	# KERNEL_SETS EXTRA_KERNELS					# }
+
+build_releasekernels: ${_RELEASEKERNELS_TO_BUILD}
+
+# snap_kern --
+#	build the kernels, then the sets & release kernels
+snap_kern: check_DESTDIR check_RELEASEDIR .WAIT \
+	    build_kernels .WAIT \
+	    build_kernelsets build_releasekernels
+
+.endif # !target(snap_kern)					# }
+
 
 snap_md_pre: check_DESTDIR check_RELEASEDIR
 # nothing here -- look in the machine-dependent Makefile.inc
