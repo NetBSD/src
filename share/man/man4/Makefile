@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 1997/04/11 05:26:25 mikel Exp $
+#	$NetBSD: Makefile,v 1.40 1997/04/27 09:09:51 jonathan Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 clnp.4 cltp.4 ddb.4 \
@@ -9,7 +9,7 @@ MAN=	ahb.4 ahc.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 clnp.4 cltp.4 ddb.4 \
 	unix.4 vnd.4
 
 # machine-independent buses
-MAN+=	eisa.4 isa.4 pci.4
+MAN+=	eisa.4 isa.4 isapnp.4 pci.4
 
 # machine-independent ISA devices
 MAN+=	aha.4 aic.4 ast.4 boca.4 cy.4 eg.4 el.4 gus.4 iy.4 mcd.4 pss.4	\
