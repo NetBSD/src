@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_j0.c,v 1.3 1994/02/18 02:25:19 jtc Exp $";
+static char rcsid[] = "$Id: e_j0.c,v 1.4 1994/03/03 17:04:13 jtc Exp $";
 #endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
@@ -60,6 +60,13 @@ static char rcsid[] = "$Id: e_j0.c,v 1.3 1994/02/18 02:25:19 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static double pzero(double), qzero(double);
@@ -96,9 +103,8 @@ static double zero = 0.0;
 #endif
 {
 	double z, s,c,ss,cc,r,u,v;
-	int n0,hx,ix;
+	int hx,ix;
 
-	n0 = ((*(int*)&one)>>29)^1;
 	hx = *(n0+(int*)&x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return one/(x*x);
@@ -166,9 +172,8 @@ v04  =  4.41110311332675467403e-10; /* 0x3DFE5018, 0x3BD6D9EF */
 #endif
 {
 	double z, s,c,ss,cc,u,v;
-	int n0,hx,ix,lx;
+	int hx,ix,lx;
 
-        n0 = 1^((*(int*)&one)>>29);
         hx = *(n0+(int*)&x);
         ix = 0x7fffffff&hx;
         lx = *(1-n0+(int*)&x);

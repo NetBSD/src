@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_modf.c,v 1.3 1994/02/18 02:26:49 jtc Exp $";
+static char rcsid[] = "$Id: s_modf.c,v 1.4 1994/03/03 17:04:42 jtc Exp $";
 #endif
 
 /*
@@ -25,6 +25,15 @@ static char rcsid[] = "$Id: s_modf.c,v 1.3 1994/02/18 02:26:49 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#define n1	0
+#else
+#define n0	0
+#define n1	1
+#endif
 
 #ifdef __STDC__
 static const double one = 1.0;
@@ -39,10 +48,8 @@ static double one = 1.0;
 	double x,*iptr;
 #endif
 {
-	int i0,i1,n0,n1,j0;
+	int i0,i1,j0;
 	unsigned i;
-	n0 = (*((int *)&one)>>29)^1;	/* high word index */
-	n1 = 1-n0;
 	i0 =  *(n0+(int*)&x);		/* high x */
 	i1 =  *(n1+(int*)&x);		/* low  x */
 	j0 = ((i0>>20)&0x7ff)-0x3ff;	/* exponent of x */

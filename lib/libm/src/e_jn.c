@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_jn.c,v 1.3 1994/02/18 02:25:25 jtc Exp $";
+static char rcsid[] = "$Id: e_jn.c,v 1.4 1994/03/03 17:04:16 jtc Exp $";
 #endif
 
 /*
@@ -41,6 +41,13 @@ static char rcsid[] = "$Id: e_jn.c,v 1.3 1994/02/18 02:25:25 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double
@@ -60,14 +67,13 @@ static double zero  =  0.00000000000000000000e+00;
 	int n; double x;
 #endif
 {
-	int i,n0,hx,ix,lx, sgn;
+	int i,hx,ix,lx, sgn;
 	double a, b, temp, di;
 	double z, w;
 
     /* J(-n,x) = (-1)^n * J(n, x), J(n, -x) = (-1)^n * J(n, x)
      * Thus, J(-n,x) = J(n,-x)
      */
-	n0 = 1^((*(int*)&one)>>29);
 	hx = *(n0+(int*)&x);
 	ix = 0x7fffffff&hx;
 	lx = *(1-n0+(int*)&x);
@@ -222,11 +228,10 @@ static double zero  =  0.00000000000000000000e+00;
 	int n; double x;
 #endif
 {
-	int i,n0,hx,ix,lx;
+	int i,hx,ix,lx;
 	int sign;
 	double a, b, temp;
 
-	n0 = 1^((*(int*)&one)>>29);
 	hx = *(n0+(int*)&x);
 	ix = 0x7fffffff&hx;
 	lx = *(1-n0+(int*)&x);

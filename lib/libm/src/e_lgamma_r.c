@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_lgamma_r.c,v 1.3 1994/02/18 02:25:30 jtc Exp $";
+static char rcsid[] = "$Id: e_lgamma_r.c,v 1.4 1994/03/03 17:04:17 jtc Exp $";
 #endif
 
 /* __ieee754_lgamma_r(x, signgamp)
@@ -82,6 +82,13 @@ static char rcsid[] = "$Id: e_lgamma_r.c,v 1.3 1994/02/18 02:25:30 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double 
@@ -165,9 +172,8 @@ static double zero=  0.00000000000000000000e+00;
 #endif
 {
 	double y,z;
-	int n,n0,ix;
+	int n,ix;
 
-	n0 = ((*(int*)&one)>>29)^1;
 	ix = 0x7fffffff&(*(n0+(int*)&x));
 
 	if(ix<0x3fd00000) return __kernel_sin(pi*x,zero,0);
@@ -214,9 +220,8 @@ static double zero=  0.00000000000000000000e+00;
 #endif
 {
 	double t,y,z,nadj,p,p1,p2,p3,q,r,w;
-	int n0,i,hx,lx,ix;
+	int i,hx,lx,ix;
 
-	n0 = ((*(int*)&one)>>29)^1;
 	hx = *(n0+(int*)&x);
 	lx = *(1-n0+(int*)&x);
 

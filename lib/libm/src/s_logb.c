@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_logb.c,v 1.3 1994/02/18 02:26:45 jtc Exp $";
+static char rcsid[] = "$Id: s_logb.c,v 1.4 1994/03/03 17:04:41 jtc Exp $";
 #endif
 
 /*
@@ -21,11 +21,12 @@ static char rcsid[] = "$Id: s_logb.c,v 1.3 1994/02/18 02:26:45 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
 
-#ifdef __STDC__
-static const double one = 1.0;
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
 #else
-static double one = 1.0;
+#define n0	0
 #endif
 
 #ifdef __STDC__
@@ -35,8 +36,7 @@ static double one = 1.0;
 	double x;
 #endif
 {
-	int n0,lx,ix;
-	n0 = ((*(int*)&one)>>29)^1;
+	int lx,ix;
 	ix = (*(n0+(int*)&x))&0x7fffffff;	/* high |x| */
 	lx = *(1-n0+(int*)&x);			/* low x */
 	if((ix|lx)==0) return -1.0/fabs(x);

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_rint.c,v 1.3 1994/02/18 02:26:53 jtc Exp $";
+static char rcsid[] = "$Id: s_rint.c,v 1.4 1994/03/03 17:04:45 jtc Exp $";
 #endif
 
 /*
@@ -25,13 +25,19 @@ static char rcsid[] = "$Id: s_rint.c,v 1.3 1994/02/18 02:26:53 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double
 #else
 static double 
 #endif
-one = 1.0,
 TWO52[2]={
   4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
  -4.50359962737049600000e+15, /* 0xC3300000, 0x00000000 */
@@ -44,10 +50,9 @@ TWO52[2]={
 	double x;
 #endif
 {
-	int i0,n0,j0,sx;
+	int i0,j0,sx;
 	unsigned i,i1;
 	double w,t;
-	n0 = (*((int *)&one)>>29)^1;
 	i0 =  *(n0+(int*)&x);
 	sx = (i0>>31)&1;
 	i1 =  *(1-n0+(int*)&x);

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_sqrt.c,v 1.3 1994/02/18 02:25:51 jtc Exp $";
+static char rcsid[] = "$Id: e_sqrt.c,v 1.4 1994/03/03 17:04:21 jtc Exp $";
 #endif
 
 /* __ieee754_sqrt(x)
@@ -85,6 +85,13 @@ static char rcsid[] = "$Id: e_sqrt.c,v 1.3 1994/02/18 02:25:51 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static	const double	one	= 1.0, tiny=1.0e-300;
@@ -99,14 +106,11 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	double x;
 #endif
 {
-	int	n0;
-
 	double z;
 	int 	sign = (int)0x80000000; 
 	unsigned r,t1,s1,ix1,q1;
 	int ix0,s0,q,m,t,i;
 
-	n0 = ((*(int*)&one)>>29)^1;		/* index of high word */
 	ix0 = *(n0+(int*)&x);			/* high word of x */
 	ix1 = *((1-n0)+(int*)&x);		/* low word of x */
 

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_asin.c,v 1.3 1994/02/18 02:24:50 jtc Exp $";
+static char rcsid[] = "$Id: e_asin.c,v 1.4 1994/03/03 17:04:06 jtc Exp $";
 #endif
 
 /* __ieee754_asin(x)
@@ -46,6 +46,13 @@ static char rcsid[] = "$Id: e_asin.c,v 1.3 1994/02/18 02:24:50 jtc Exp $";
 
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double 
@@ -77,8 +84,8 @@ qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 #endif
 {
 	double t,w,p,q,c,r,s;
-	int n0,hx,ix;
-	n0 = ((*(int*)&one)>>29)^1;
+	int hx,ix;
+
 	hx = *(n0+(int*)&x);
 	ix = hx&0x7fffffff;
 	if(ix>= 0x3ff00000) {		/* |x|>= 1 */

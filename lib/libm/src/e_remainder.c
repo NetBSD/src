@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_remainder.c,v 1.3 1994/02/18 02:25:44 jtc Exp $";
+static char rcsid[] = "$Id: e_remainder.c,v 1.4 1994/03/03 17:04:20 jtc Exp $";
 #endif
 
 /* __ieee754_remainder(x,p)
@@ -24,11 +24,20 @@ static char rcsid[] = "$Id: e_remainder.c,v 1.3 1994/02/18 02:25:44 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#define n1	0
+#else
+#define n0	0
+#define n1	1
+#endif
 
 #ifdef __STDC__
-static const double zero = 0.0, one  = 1.0;
+static const double zero = 0.0;
 #else
-static double zero = 0.0, one  = 1.0;
+static double zero = 0.0;
 #endif
 
 
@@ -39,12 +48,10 @@ static double zero = 0.0, one  = 1.0;
 	double x,p;
 #endif
 {
-	int hx,hp,n0,n1;
+	int hx,hp;
 	unsigned sx,lx,lp;
 	double p_half;
 
-	n0 = ((*(int*)&one)>>29)^1;	/* index of high word */
-	n1 = 1-n0;			/* index of low word */
 	hx = *( n0 + (int*)&x);		/* high word of x */
 	lx = *( n1 + (int*)&x);		/* low  word of x */
 	hp = *( n0 + (int*)&p);		/* high word of p */
