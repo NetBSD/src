@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1995/09/17 01:01:07 pk Exp $
+#	$NetBSD: Makefile,v 1.10 1995/10/01 06:00:32 phil Exp $
 
 LIB=	sa
 
@@ -18,8 +18,10 @@ SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
 SRCS+=	close.c dev.c disklabel.c ioctl.c lseek.c open.c read.c \
 	stat.c write.c
 
+.if !defined(NO_NET)
 # network routines
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
+.endif
 
 # network info services:
 SRCS+=	bootp.c rarp.c bootparam.c
