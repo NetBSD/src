@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.55 2004/07/01 04:39:30 jmc Exp $	*/
+/*	$NetBSD: compat.c,v 1.56 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.55 2004/07/01 04:39:30 jmc Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.56 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.55 2004/07/01 04:39:30 jmc Exp $");
+__RCSID("$NetBSD: compat.c,v 1.56 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -162,7 +162,7 @@ CompatInterrupt(int signo)
 
     if ((curTarg != NILGNODE) && !Targ_Precious (curTarg)) {
 	char	  *p1;
-	char 	  *file = Var_Value (TARGET, curTarg, &p1);
+	char 	  *file = Var_Value(TARGET, curTarg, &p1);
 
 	if (!noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed", file);
@@ -236,8 +236,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
     
-    cmdNode = Lst_Member (gn->commands, (ClientData)cmd);
-    cmdStart = Var_Subst (NULL, cmd, gn, FALSE);
+    cmdNode = Lst_Member(gn->commands, (ClientData)cmd);
+    cmdStart = Var_Subst(NULL, cmd, gn, FALSE);
 
     /*
      * brk_string will return an argv with a NULL in av[0], thus causing
@@ -253,7 +253,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     } else {
 	cmd = cmdStart;
     }
-    Lst_Replace (cmdNode, (ClientData)cmdStart);
+    Lst_Replace(cmdNode, (ClientData)cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
 	(void)Lst_AtEnd(ENDNode->commands, (ClientData)cmdStart);
@@ -359,7 +359,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	free(av);
 	free(bp);
     }
-    Lst_Replace (cmdNode, (ClientData) NULL);
+    Lst_Replace(cmdNode, (ClientData) NULL);
 
     /*
      * The child is off and running. Now all we can do is wait...
@@ -422,7 +422,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	    }
 	    break;
 	} else {
-	    Fatal ("error in wait: %d: %s", retstat, strerror(errno));
+	    Fatal("error in wait: %d: %s", retstat, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -466,17 +466,17 @@ CompatMake(ClientData gnp, ClientData pgnp)
 	gn->flags |= REMAKE;
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
-	    Suff_FindDeps (gn);
-	Lst_ForEach (gn->children, CompatMake, (ClientData)gn);
+	    Suff_FindDeps(gn);
+	Lst_ForEach(gn->children, CompatMake, (ClientData)gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~REMAKE;
 	    goto cohorts;
 	}
 
-	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
+	if (Lst_Member(gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
 	    if (p1)
 		free(p1);
 	}
@@ -519,24 +519,24 @@ CompatMake(ClientData gnp, ClientData pgnp)
 	 * Alter our type to tell if errors should be ignored or things
 	 * should not be printed so CompatRunCommand knows what to do.
 	 */
-	if (Targ_Ignore (gn)) {
+	if (Targ_Ignore(gn)) {
 	    gn->type |= OP_IGNORE;
 	}
-	if (Targ_Silent (gn)) {
+	if (Targ_Silent(gn)) {
 	    gn->type |= OP_SILENT;
 	}
 
-	if (Job_CheckCommands (gn, Fatal)) {
+	if (Job_CheckCommands(gn, Fatal)) {
 	    /*
 	     * Our commands are ok, but we still have to worry about the -t
 	     * flag...
 	     */
 	    if (!touchFlag || (gn->type & OP_MAKE)) {
 		curTarg = gn;
-		Lst_ForEach (gn->commands, CompatRunCommand, (ClientData)gn);
+		Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
 		curTarg = NILGNODE;
 	    } else {
-		Job_Touch (gn, gn->type & OP_SILENT);
+		Job_Touch(gn, gn->type & OP_SILENT);
 	    }
 	} else {
 	    gn->made = ERROR;
@@ -568,9 +568,9 @@ CompatMake(ClientData gnp, ClientData pgnp)
 	 */
 	pgn->flags &= ~REMAKE;
     } else {
-	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
+	if (Lst_Member(gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
 	    if (p1)
 		free(p1);
 	}
@@ -597,7 +597,7 @@ CompatMake(ClientData gnp, ClientData pgnp)
     }
 
 cohorts:
-    Lst_ForEach (gn->cohorts, CompatMake, pgnp);
+    Lst_ForEach(gn->cohorts, CompatMake, pgnp);
     return (0);
 }
 
@@ -672,8 +672,8 @@ Compat_Run(Lst targs)
      */
     errors = 0;
     while (!Lst_IsEmpty (targs)) {
-	gn = (GNode *) Lst_DeQueue (targs);
-	CompatMake (gn, gn);
+	gn = (GNode *) Lst_DeQueue(targs);
+	CompatMake(gn, gn);
 
 	if (gn->made == UPTODATE) {
 	    printf ("`%s' is up to date.\n", gn->name);
