@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.8 1995/03/18 15:00:35 cgd Exp $	*/
+/*	$NetBSD: output.c,v 1.9 1995/06/20 22:27:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.8 1995/03/18 15:00:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.9 1995/06/20 22:27:54 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$NetBSD: output.c,v 1.8 1995/03/18 15:00:35 cgd Exp $";
  */
 void
 toall(f, rtstate, skipif)
-	int (*f)();
+	void (*f) __P((struct sockaddr *, int, struct interface *, int));
 	int rtstate;
 	struct interface *skipif;
 {
@@ -78,7 +78,7 @@ toall(f, rtstate, skipif)
  * Output a preformed packet.
  */
 /*ARGSUSED*/
-int
+void
 sndmsg(dst, flags, ifp, rtstate)
 	struct sockaddr *dst;
 	int flags;
@@ -95,11 +95,11 @@ sndmsg(dst, flags, ifp, rtstate)
  * Supply dst with the contents of the routing tables.
  * If this won't fit in one packet, chop it up into several.
  */
-int
+void
 supply(dst, flags, ifp, rtstate)
 	struct sockaddr *dst;
 	int flags;
-	register struct interface *ifp;
+	struct interface *ifp;
 	int rtstate;
 {
 	register struct rt_entry *rt;
@@ -107,16 +107,18 @@ supply(dst, flags, ifp, rtstate)
 	register struct rthash *rh;
 	struct rthash *base = hosthash;
 	int doinghost = 1, size;
-	int (*output)() = afswitch[dst->sa_family].af_output;
-	int (*sendroute)() = afswitch[dst->sa_family].af_sendroute;
+	void (*output) __P((int, int, struct sockaddr *, int)) =
+		afswitch[dst->sa_family].af_output;
+	int (*sendroute) __P((struct rt_entry *, struct sockaddr *)) =
+		afswitch[dst->sa_family].af_sendroute;
 	int npackets = 0;
 
 	msg->rip_cmd = RIPCMD_RESPONSE;
-	msg->rip_vers = RIPVERSION;
+	msg->rip_vers = RIP_VERSION_1;
 	memset(msg->rip_res1, 0, sizeof(msg->rip_res1));
 again:
 	for (rh = base; rh < &base[ROUTEHASHSIZ]; rh++)
-	for (rt = rh->rt_forw; rt != (struct rt_entry *)rh; rt = rt->rt_forw) {
+	for (rt = rh->cqh_first; rt != (void *) rh; rt = rt->rt_entry.cqe_next) {
 		/*
 		 * Don't resend the information on the network
 		 * from which it was received (unless sending
@@ -157,14 +159,7 @@ again:
 			n = msg->rip_nets;
 			npackets++;
 		}
-		n->rip_dst = rt->rt_dst;
-#if BSD < 198810
-		if (sizeof(n->rip_dst.sa_family) > 1)	/* XXX */
-		n->rip_dst.sa_family = htons(n->rip_dst.sa_family);
-#else
-#define osa(x) ((struct osockaddr *)(&(x)))
-		osa(n->rip_dst)->sa_family = htons(n->rip_dst.sa_family);
-#endif
+		(*afswitch[rt->rt_dst.sa_family].af_put)(n, &rt->rt_dst);
 		n->rip_metric = htonl(rt->rt_metric);
 		n++;
 	}

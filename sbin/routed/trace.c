@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.12 1995/05/28 05:37:38 jtc Exp $	*/
+/*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: trace.c,v 1.12 1995/05/28 05:37:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,6 @@ void
 traceinit(ifp)
 	register struct interface *ifp;
 {
-	static int iftraceinit();
-
 	if (iftraceinit(ifp, &ifp->int_input) &&
 	    iftraceinit(ifp, &ifp->int_output))
 		return;
@@ -108,7 +106,7 @@ traceon(file)
 	if (stat(file, &stbuf) >= 0 && !S_ISREG(stbuf.st_mode))
 		return;
 	savetracename = file;
-	(void) gettimeofday(&now, (struct timezone *)NULL);
+	(void) gettimeofday(&now, NULL);
 	ftrace = fopen(file, "a");
 	if (ftrace == NULL)
 		return;
@@ -166,7 +164,7 @@ void
 bumploglevel()
 {
 
-	(void) gettimeofday(&now, (struct timezone *)NULL);
+	(void) gettimeofday(&now, NULL);
 	if (traceactions == 0) {
 		traceactions++;
 		if (ftrace)
@@ -235,7 +233,7 @@ traceaction(fd, action, rt)
 	char *action;
 	struct rt_entry *rt;
 {
-	struct sockaddr_in *dst, *gate;
+	struct sockaddr_in *dst, *gate, *netmask;
 	static struct bits {
 		int	t_bits;
 		char	*t_name;
@@ -267,9 +265,11 @@ traceaction(fd, action, rt)
 	fprintf(fd, "%s ", action);
 	dst = (struct sockaddr_in *)&rt->rt_dst;
 	gate = (struct sockaddr_in *)&rt->rt_router;
+	netmask = (struct sockaddr_in *)&rt->rt_netmask;
 	fprintf(fd, "dst %s, ", inet_ntoa(dst->sin_addr));
-	fprintf(fd, "router %s, metric %d, flags",
-	     inet_ntoa(gate->sin_addr), rt->rt_metric);
+	fprintf(fd, "router %s, ", inet_ntoa(gate->sin_addr));
+	fprintf(fd, " netmask %s, metric %d, flags",
+	        inet_ntoa(netmask->sin_addr), rt->rt_metric);
 	cp = " %s";
 	for (first = 1, p = flagbits; p->t_bits > 0; p++) {
 		if ((rt->rt_flags & p->t_bits) == 0)
@@ -387,10 +387,11 @@ dumppacket(fd, dir, who, cp, size, stamp)
 		    dir, inet_ntoa(who->sin_addr), ntohs(who->sin_port),
 		    ctime((time_t *)&stamp->tv_sec));
 	else {
-		fprintf(fd, "Bad cmd 0x%x %s %x.%d %.19s\n", msg->rip_cmd,
+		fprintf(fd, "Bad cmd 0x%x %s %s.%d %.19s\n", msg->rip_cmd,
 		    dir, inet_ntoa(who->sin_addr), ntohs(who->sin_port),
 		    ctime((time_t *)&stamp->tv_sec));
-		fprintf(fd, "size=%d cp=%x packet=%x\n", size, cp, packet);
+		fprintf(fd, "size=%d cp=%lx packet=%lx\n", size,
+			(u_long) cp, (u_long) packet);
 		fflush(fd);
 		return;
 	}
@@ -410,24 +411,30 @@ dumppacket(fd, dir, who, cp, size, stamp)
 				    size);
 				break;
 			}
-			if (sizeof(n->rip_dst.sa_family) > 1)
-			    n->rip_dst.sa_family = ntohs(n->rip_dst.sa_family);
-
-			switch ((int)n->rip_dst.sa_family) {
+			switch (n->rip_family) {
 
 			case AF_INET:
-				fprintf(fd, "\tdst %s metric %d\n",
-#define	satosin(sa)	((struct sockaddr_in *)&sa)
-				     inet_ntoa(satosin(n->rip_dst)->sin_addr),
-				     ntohl(n->rip_metric));
+				{
+					struct sockaddr_in sa;
+					sa.sin_addr.s_addr = n->rip_dst;
+					fprintf(fd, "\tdst %s",
+						inet_ntoa(sa.sin_addr));
+					if (msg->rip_vers > RIP_VERSION_1) {
+						fprintf(fd, ", mask 0x%.8x",
+							n->rip_netmask);
+						sa.sin_addr.s_addr =
+							n->rip_router;
+						fprintf(fd, ", router %s",
+							inet_ntoa(sa.sin_addr));
+					}
+				}
 				break;
 
 			default:
-				fprintf(fd, "\taf %d? metric %d\n",
-				     n->rip_dst.sa_family,
-				     ntohl(n->rip_metric));
+				fprintf(fd, "\taf %d?", n->rip_family);
 				break;
 			}
+			fprintf(fd, ", metric %d\n", ntohl(n->rip_metric));
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.7 1995/03/18 15:00:45 cgd Exp $	*/
+/*	$NetBSD: timer.c,v 1.8 1995/06/20 22:28:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: timer.c,v 1.7 1995/03/18 15:00:45 cgd Exp $";
+static char rcsid[] = "$NetBSD: timer.c,v 1.8 1995/06/20 22:28:02 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,22 +55,23 @@ int	faketime;
  * each time called.
  */
 void
-timer()
+timer(sig)
+	int sig;
 {
 	register struct rthash *rh;
 	register struct rt_entry *rt;
 	struct rthash *base = hosthash;
 	int doinghost = 1, timetobroadcast;
 
-	(void) gettimeofday(&now, (struct timezone *)NULL);
+	(void) gettimeofday(&now, NULL);
 	faketime += TIMER_RATE;
 	if (lookforinterfaces && (faketime % CHECK_INTERVAL) == 0)
 		ifinit();
 	timetobroadcast = supplier && (faketime % SUPPLY_INTERVAL) == 0;
 again:
 	for (rh = base; rh < &base[ROUTEHASHSIZ]; rh++) {
-		rt = rh->rt_forw;
-		for (; rt != (struct rt_entry *)rh; rt = rt->rt_forw) {
+		rt = rh->cqh_first;
+		for (; rt != (void *)rh; rt = rt->rt_entry.cqe_next) {
 			/*
 			 * We don't advance time on a routing entry for
 			 * a passive gateway, or any interface if we're
@@ -80,13 +81,14 @@ again:
 			    (supplier || !(rt->rt_state & RTS_INTERFACE)))
 				rt->rt_timer += TIMER_RATE;
 			if (rt->rt_timer >= GARBAGE_TIME) {
-				rt = rt->rt_back;
-				rtdelete(rt->rt_forw);
+				rt = rt->rt_entry.cqe_prev;
+				rtdelete(rt->rt_entry.cqe_next);
 				continue;
 			}
 			if (rt->rt_timer >= EXPIRE_TIME &&
 			    rt->rt_metric < HOPCNT_INFINITY)
-				rtchange(rt, &rt->rt_router, HOPCNT_INFINITY);
+				rtchange(rt, &rt->rt_router, 
+					 &rt->rt_netmask, HOPCNT_INFINITY);
 			rt->rt_state &= ~RTS_CHANGED;
 		}
 	}
@@ -96,7 +98,7 @@ again:
 		goto again;
 	}
 	if (timetobroadcast) {
-		toall(supply, 0, (struct interface *)NULL);
+		toall(supply, 0, NULL);
 		lastbcast = now;
 		lastfullupdate = now;
 		needupdate = 0;		/* cancel any pending dynamic update */
@@ -108,7 +110,8 @@ again:
  * On hangup, let everyone know we're going away.
  */
 void
-hup()
+hup(sig)
+	int sig;
 {
 	register struct rthash *rh;
 	register struct rt_entry *rt;
@@ -118,8 +121,8 @@ hup()
 	if (supplier) {
 again:
 		for (rh = base; rh < &base[ROUTEHASHSIZ]; rh++) {
-			rt = rh->rt_forw;
-			for (; rt != (struct rt_entry *)rh; rt = rt->rt_forw)
+			rt = rh->cqh_first;
+			for (; rt != (void *)rh; rt = rt->rt_entry.cqe_next)
 				rt->rt_metric = HOPCNT_INFINITY;
 		}
 		if (doinghost) {
@@ -127,7 +130,7 @@ again:
 			base = nethash;
 			goto again;
 		}
-		toall(supply, 0, (struct interface *)NULL);
+		toall(supply, 0, NULL);
 	}
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1995/05/28 05:37:34 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1995/06/20 22:27:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.12 1995/05/28 05:37:34 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.13 1995/06/20 22:27:53 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ main(argc, argv)
 	while (tflags-- > 0)
 		bumploglevel();
 
-	(void) gettimeofday(&now, (struct timezone *)NULL);
+	(void) gettimeofday(&now, NULL);
 	/*
 	 * Collect an initial view of the world by
 	 * checking the interface configuration and the gateway kludge
@@ -170,11 +170,11 @@ main(argc, argv)
 	if (supplier < 0)
 		supplier = 0;
 	query->rip_cmd = RIPCMD_REQUEST;
-	query->rip_vers = RIPVERSION;
-	if (sizeof(query->rip_nets[0].rip_dst.sa_family) > 1)	/* XXX */
-		query->rip_nets[0].rip_dst.sa_family = htons((u_short)AF_UNSPEC);
+	query->rip_vers = RIP_VERSION_1;
+	if (sizeof(query->rip_nets[0].rip_family) > 1)	/* XXX */
+		query->rip_nets[0].rip_family = htons((u_short)AF_UNSPEC);
 	else
-		query->rip_nets[0].rip_dst.sa_family = AF_UNSPEC;
+		query->rip_nets[0].rip_family = AF_UNSPEC;
 	query->rip_nets[0].rip_metric = htonl((u_long)HOPCNT_INFINITY);
 	toall(sndmsg, 0, NULL);
 	signal(SIGALRM, timer);
@@ -188,7 +188,7 @@ main(argc, argv)
 	itval.it_interval.tv_usec = 0;
 	itval.it_value.tv_usec = 0;
 	srandom(getpid());
-	if (setitimer(ITIMER_REAL, &itval, (struct itimerval *)NULL) < 0)
+	if (setitimer(ITIMER_REAL, &itval, NULL) < 0)
 		syslog(LOG_ERR, "setitimer: %m\n");
 
 	FD_ZERO(&ibits);
@@ -215,7 +215,7 @@ main(argc, argv)
 				    waittime.tv_sec, waittime.tv_usec);
 			tvp = &waittime;
 		} else
-			tvp = (struct timeval *)NULL;
+			tvp = NULL;
 		n = select(nfd, &ibits, 0, 0, tvp);
 		if (n <= 0) {
 			/*
@@ -235,10 +235,8 @@ main(argc, argv)
 				if (traceactions)
 					fprintf(ftrace,
 					    "send delayed dynamic update\n");
-				(void) gettimeofday(&now,
-					    (struct timezone *)NULL);
-				toall(supply, RTS_CHANGED,
-				    (struct interface *)NULL);
+				(void) gettimeofday(&now, NULL);
+				toall(supply, RTS_CHANGED, NULL);
 				lastbcast = now;
 				needupdate = 0;
 				nextbcast.tv_sec = 0;
@@ -246,7 +244,7 @@ main(argc, argv)
 			sigprocmask(SIG_SETMASK, &osigset, NULL);
 			continue;
 		}
-		(void) gettimeofday(&now, (struct timezone *)NULL);
+		(void) gettimeofday(&now, NULL);
 		sigemptyset(&sigset);
 		sigaddset(&sigset, SIGALRM);
 		sigprocmask(SIG_BLOCK, &sigset, &osigset);

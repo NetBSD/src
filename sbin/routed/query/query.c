@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.9 1995/05/21 14:22:25 mycroft Exp $	*/
+/*	$NetBSD: query.c,v 1.10 1995/06/20 22:28:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: query.c,v 1.9 1995/05/21 14:22:25 mycroft Exp $";
+static char rcsid[] = "$NetBSD: query.c,v 1.10 1995/06/20 22:28:08 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ query(host)
 	}
 	router.sin_port = sp->s_port;
 	msg->rip_cmd = RIPCMD_REQUEST;
-	msg->rip_vers = RIPVERSION;
+	msg->rip_vers = RIP_VERSION_1;
 	msg->rip_nets[0].rip_dst.sa_family = htons(AF_UNSPEC);
 	msg->rip_nets[0].rip_metric = htonl(HOPCNT_INFINITY);
 	if (sendto(s, packet, sizeof (struct rip), 0,

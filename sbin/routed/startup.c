@@ -1,4 +1,4 @@
-/*	$NetBSD: startup.c,v 1.13 1995/05/21 14:22:23 mycroft Exp $	*/
+/*	$NetBSD: startup.c,v 1.14 1995/06/20 22:27:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,8 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: startup.c,v 1.13 1995/05/21 14:22:23 mycroft Exp $";
+/*###40 [cc] warning: `rcsid' defined but not used%%%*/
+static char rcsid[] = "$NetBSD: startup.c,v 1.14 1995/06/20 22:27:56 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,7 +121,7 @@ ifinit()
 	char *buf, *cplim, *cp;
 	register struct if_msghdr *ifm;
 	register struct ifa_msghdr *ifam;
-	struct sockaddr_dl *sdl;
+	struct sockaddr_dl *sdl = NULL;
         struct sockaddr_in *sin;
 	u_long i;
 
@@ -152,8 +153,10 @@ ifinit()
 		}
 		if (ifm->ifm_type != RTM_NEWADDR)
 			quit("ifinit: out of sync");
-		if ((flags & IFF_UP) == 0)
+		if ((flags & IFF_UP) == 0) {
+			lookforinterfaces = 1;
 			continue;
+		}
 		ifam = (struct ifa_msghdr *)ifm;
 		info.rti_addrs = ifam->ifam_addrs;
 		rt_xaddrs((char *)(ifam + 1), cp + ifam->ifam_msglen, &info);
@@ -282,7 +285,9 @@ addrouteforif(ifp)
 	struct sockaddr *dst;
 	int state;
 	register struct rt_entry *rt;
+	struct sockaddr mask;
 
+	memset(&mask, 0, sizeof(mask));
 	if (ifp->int_flags & IFF_POINTOPOINT)
 		dst = &ifp->int_dstaddr;
 	else {
@@ -309,13 +314,13 @@ addrouteforif(ifp)
 		net.sin_addr = inet_makeaddr(ifp->int_net, INADDR_ANY);
 		rt = rtfind(dst);
 		if (rt == 0)
-			rtadd(dst, &ifp->int_addr, ifp->int_metric,
+			rtadd(dst, &ifp->int_addr, &mask, ifp->int_metric,
 			    ((ifp->int_flags & (IFF_INTERFACE|IFF_REMOTE)) |
 			    RTS_PASSIVE | RTS_INTERNAL | RTS_SUBNET));
 		else if ((rt->rt_state & (RTS_INTERNAL|RTS_SUBNET)) == 
 		    (RTS_INTERNAL|RTS_SUBNET) &&
 		    ifp->int_metric < rt->rt_metric)
-			rtchange(rt, &rt->rt_router, ifp->int_metric);
+			rtchange(rt, &rt->rt_router, &mask, ifp->int_metric);
 		net.sin_addr = subnet;
 	}
 	if (ifp->int_transitions++ > 0)
@@ -328,7 +333,7 @@ addrouteforif(ifp)
 		state &= ~RTS_SUBNET;
 	if (ifp->int_flags & IFF_LOOPBACK)
 		state |= RTS_EXTERNAL;
-	rtadd(dst, &ifp->int_addr, ifp->int_metric, state);
+	rtadd(dst, &ifp->int_addr, &mask, ifp->int_metric, state);
 	if (ifp->int_flags & IFF_POINTOPOINT && foundloopback)
 		add_ptopt_localrt(ifp);
 }
@@ -346,7 +351,9 @@ add_ptopt_localrt(ifp)
 	struct sockaddr *dst;
 	struct sockaddr_in net;
 	int state;
+	struct sockaddr mask;
 
+	memset(&mask, 0, sizeof(mask));
 	state = RTS_INTERFACE | RTS_PASSIVE;
 
 	/* look for route to logical network */
@@ -359,12 +366,12 @@ add_ptopt_localrt(ifp)
 		state |= RTS_SUBNET;
 
 	dst = &ifp->int_addr;
-	if (rt = rtfind(dst)) {
+	if ((rt = rtfind(dst)) != NULL) {
 		if (rt && rt->rt_state & RTS_INTERFACE)
 			return;
 		rtdelete(rt);
 	}
-	rtadd(dst, &loopaddr, 1, state);
+	rtadd(dst, &loopaddr, &mask, 1, state);
 }
 
 /*
@@ -391,6 +398,9 @@ gwkludge()
 	struct interface *ifp;
 	int metric, n;
 	struct rt_entry route;
+	struct sockaddr mask;
+	memset(&mask, 0, sizeof(mask));
+
 
 	fp = fopen(_PATH_GATEWAYS, "r");
 	if (fp == NULL)
@@ -442,7 +452,7 @@ gwkludge()
 			 * with something else.
 			 */
 			rtadd((struct sockaddr *)&dst,
-			    (struct sockaddr *)&gate, metric,
+			    (struct sockaddr *)&gate, &mask, metric,
 			    RTS_EXTERNAL|RTS_PASSIVE);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: table.h,v 1.6 1995/03/18 15:00:42 cgd Exp $	*/
+/*	$NetBSD: table.h,v 1.7 1995/06/20 22:27:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,30 +38,26 @@
 /*
  * Routing table management daemon.
  */
-
+#include <sys/queue.h>
 /*
  * Routing table structure; differs a bit from kernel tables.
  *
  * Note: the union below must agree in the first 4 members
  * so the ioctl's will work.
  */
-struct rthash {
-	struct	rt_entry *rt_forw;
-	struct	rt_entry *rt_back;
-};
 #ifdef RTM_ADD
 #define rtentry ortentry
 #endif
 
 struct rt_entry {
-	struct	rt_entry *rt_forw;
-	struct	rt_entry *rt_back;
+	CIRCLEQ_ENTRY(rt_entry) rt_entry;
 	union {
 		struct	rtentry rtu_rt;
 		struct rtuentry {
 			u_long	rtu_hash;
 			struct	sockaddr rtu_dst;
 			struct	sockaddr rtu_router;
+			struct	sockaddr rtu_netmask;
 			short	rtu_rtflags; /* used by rtioctl */
 			short	rtu_wasted[5];
 			int	rtu_flags;
@@ -78,6 +74,7 @@ struct rt_entry {
 #define	rt_hash		rt_rtu.rtu_entry.rtu_hash	/* for net or host */
 #define	rt_dst		rt_rtu.rtu_entry.rtu_dst	/* match value */
 #define	rt_router	rt_rtu.rtu_entry.rtu_router	/* who to forward to */
+#define	rt_netmask	rt_rtu.rtu_entry.rtu_netmask	/* mask for the route */
 #define	rt_flags	rt_rtu.rtu_entry.rtu_flags	/* kernel flags */
 #define	rt_timer	rt_rtu.rtu_entry.rtu_timer	/* for invalidation */
 #define	rt_state	rt_rtu.rtu_entry.rtu_state	/* see below */
@@ -104,7 +101,20 @@ struct rt_entry {
  */
 #define	RTF_SUBNET	0x80000		/* pseudo: route to subnet */
 
+CIRCLEQ_HEAD(rthash, rt_entry);
+
 struct	rthash nethash[ROUTEHASHSIZ];
 struct	rthash hosthash[ROUTEHASHSIZ];
-struct	rt_entry *rtlookup();
-struct	rt_entry *rtfind();
+
+struct rt_entry *rtlookup __P((struct sockaddr *));
+struct rt_entry *rtfind __P((struct sockaddr *));
+struct rthash *rthead __P((struct sockaddr *, u_int *, int *));
+void rtadd __P((struct sockaddr *, struct sockaddr *, struct sockaddr *,
+		int, int ));
+void rtchange __P((struct rt_entry *, struct sockaddr *, struct sockaddr *,
+		   int));
+void rtdelete __P((struct rt_entry *));
+void rtdeleteall __P((int));
+void rtdefault __P((void));
+void rtinit __P((void));
+int rtioctl __P((int, struct rtuentry *));

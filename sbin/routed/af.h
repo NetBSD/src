@@ -1,4 +1,4 @@
-/*	$NetBSD: af.h,v 1.7 1995/03/18 15:00:24 cgd Exp $	*/
+/*	$NetBSD: af.h,v 1.8 1995/06/20 22:26:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,27 +40,44 @@
  */
 
 /*
- * Per address family routines.
- */
-struct afswitch {
-	int	(*af_hash)();		/* returns keys based on address */
-	int	(*af_netmatch)();	/* verifies net # matching */
-	int	(*af_output)();		/* interprets address for sending */
-	int	(*af_portmatch)();	/* packet from some other router? */
-	int	(*af_portcheck)();	/* packet from privileged peer? */
-	int	(*af_checkhost)();	/* tells if address is valid */
-	int	(*af_rtflags)();	/* get flags for route (host or net) */
-	int	(*af_sendroute)();	/* check bounds of subnet broadcast */
-	int	(*af_canon)();		/* canonicalize address for compares */
-	char	*(*af_format)();	/* convert address to string */
-};
-
-/*
  * Structure returned by af_hash routines.
  */
 struct afhash {
 	u_int	afh_hosthash;		/* host based hash */
 	u_int	afh_nethash;		/* network based hash */
+};
+
+/*
+ * Per address family routines.
+ */
+struct afswitch {
+	/* returns keys based on address */
+	void	(*af_hash) __P((struct sockaddr *, struct afhash *));
+	/* verifies net # matching */
+	int	(*af_netmatch) __P((struct sockaddr *, struct sockaddr *));
+	/* interprets address for sending */
+	void	(*af_output) __P((int, int, struct sockaddr *, int));
+	/* packet from some other router? */
+	int	(*af_portmatch) __P((struct sockaddr *));
+	/* packet from privileged peer? */
+	int	(*af_portcheck) __P((struct sockaddr *));
+	/* tells if address is valid */
+	int	(*af_checkhost) __P((struct sockaddr *));
+	/* get flags for route (host or net) */
+	int	(*af_rtflags) __P((struct sockaddr *));
+	/* check bounds of subnet broadcast */
+	int	(*af_sendroute) __P((struct rt_entry *, struct sockaddr *));
+	/* canonicalize address for compares */
+	void	(*af_canon) __P((struct sockaddr *));
+	/* convert address to string */
+	char	*(*af_format) __P((struct sockaddr *, char *, size_t));
+	/* get address from packet */
+#define DESTINATION	0
+#define	GATEWAY		1
+#define NETMASK		2
+	int	(*af_get) __P((int, void *, struct sockaddr *));
+	/* put address to packet */
+	void	(*af_put) __P((void *, struct sockaddr *));
 };
 
 extern struct	afswitch afswitch[];	/* table proper */

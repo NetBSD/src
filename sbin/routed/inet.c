@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.8 1995/03/18 15:00:29 cgd Exp $	*/
+/*	$NetBSD: inet.c,v 1.9 1995/06/20 22:27:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.2 (Berkeley) 8/14/93";
 #else
-static char rcsid[] = "$NetBSD: inet.c,v 1.8 1995/03/18 15:00:29 cgd Exp $";
+static char rcsid[] = "$NetBSD: inet.c,v 1.9 1995/06/20 22:27:40 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,9 +175,10 @@ inet_maskof(inaddr)
  * 0 for a network.
  */
 int
-inet_rtflags(sin)
-	struct sockaddr_in *sin;
+inet_rtflags(sa)
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	register u_long i = ntohl(sin->sin_addr.s_addr);
 	register u_long net, host;
 	register struct interface *ifp;
@@ -218,10 +219,11 @@ inet_rtflags(sin)
  * otherwise only if the route is the "internal" route for the logical net.
  */
 int
-inet_sendroute(rt, dst)
+inet_sendroute(rt, sa)
 	struct rt_entry *rt;
-	struct sockaddr_in *dst;
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *dst = (struct sockaddr_in *) sa;
 	register u_long r =
 	    ntohl(((struct sockaddr_in *)&rt->rt_dst)->sin_addr.s_addr);
 	register u_long d = ntohl(dst->sin_addr.s_addr);

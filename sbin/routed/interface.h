@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.7 1995/03/18 15:00:32 cgd Exp $	*/
+/*	$NetBSD: interface.h,v 1.8 1995/06/20 22:27:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -86,7 +86,7 @@ struct interface {
 #define	IFF_INTERFACE	0x400000	/* hardware interface */
 #define	IFF_REMOTE	0x800000	/* interface isn't on this machine */
 
-struct	interface *if_ifwithaddr();
-struct	interface *if_ifwithdstaddr();
-struct	interface *if_ifwithnet();
-struct	interface *if_iflookup();
+struct interface *if_ifwithaddr __P((struct sockaddr *));
+struct interface *if_ifwithdstaddr __P((struct sockaddr *));
+struct interface *if_ifwithnet __P((struct sockaddr *));
+struct interface *if_iflookup __P((struct sockaddr *));
