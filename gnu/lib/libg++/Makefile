@@ -1,5 +1,43 @@
-#	%W% (Berkeley) %G%
+#	$NetBSD: Makefile,v 1.1.1.2 1996/03/09 00:00:54 phil Exp $
 
-SUBDIR=	libg++ g++-include genclass
+SUBDIR= libg++ libstdc++ # libio libiostream
+
+INCLUDEDIRS= include libg++/src 
+
+beforeinstall:
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/gen
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/std
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/stl
+	@-for i in ${INCLUDEDIRS}; do \
+		echo installing includes from $$i ; \
+		(cd $$i; for j in *.[ih]; do \
+			cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
+			install -c -o ${BINOWN} -g ${BINGRP} -m 644 $$j \
+				${DESTDIR}/usr/include/g++/$$j; \
+		done); \
+	done
+	@echo installing includes from include/gen
+	@(cd include/gen ; for j in *.*P; do \
+		cmp -s $$j ${DESTDIR}/usr/include/g++/gen/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/include/g++/gen/$$j; \
+	done)
+	@echo installing includes from libstdc++/std
+	@(cd libstdc++/std ; for j in *.h; do \
+		cmp -s $$j ${DESTDIR}/usr/libstdc++/g++/std/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/libstdc++/g++/std/$$j; \
+	done)
+	@echo installing includes from libstdc++/stl
+	@(cd libstdc++/stl ; for j in *.h; do \
+		cmp -s $$j ${DESTDIR}/usr/libstdc++/g++/stl/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/libstdc++/g++/stl/$$j; \
+	done)
 
 .include <bsd.subdir.mk>
