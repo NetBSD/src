@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.15 1996/11/23 03:37:36 mark Exp $ */
+/*	$NetBSD: kbd.c,v 1.16 1997/01/28 04:55:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -65,6 +65,7 @@
 #include <machine/vidc.h>
 #include <machine/katelib.h>
 #include <machine/kbd.h>
+#include <machine/conf.h>
 #include <arm32/mainbus/mainbus.h>
 #include "vt.h"
 #include "kbd.h"
@@ -599,12 +600,6 @@ struct kbd_softc {
 int	kbdprobe __P((struct device *, void *, void *));
 void	kbdattach __P((struct device *, struct device *, void *));
 
-int	kbdopen __P((dev_t, int, int, struct proc *));
-int	kbdclose __P((dev_t, int, int, struct proc *));
-int	kbdread __P((dev_t, struct uio *, int));
-int	kbdselect __P((dev_t, int, struct proc *));
-int	kbdioctl __P((dev_t, int, caddr_t, int, struct proc *));
-
 int	kbdreset __P((void));
 void	kbd_flush_input __P((void));
 int	kbdcmd __P((u_char cmd));
@@ -612,7 +607,7 @@ void	kbdsetleds __P((int /*leds*/));
 
 int PollKeyboard __P((int));
 int kbddecodekey __P((struct kbd_softc *, int));
-int kbdintr __P((struct kbd_softc *));
+int kbdintr __P((void *arg));
 
 void autorepeatstart __P((void *));
 void autorepeat __P((void *));
@@ -897,7 +892,7 @@ kbdpoll(dev, events, p)
 int
 kbdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -1217,9 +1212,10 @@ getkey_polled()
 /* Keyboard IRQ handler */
 
 int
-kbdintr(sc)
-	struct kbd_softc *sc;
+kbdintr(arg)
+	void *arg;
 {
+	struct kbd_softc *sc = arg;
 	int key;
 
 /* Read the IOMD keyboard register and process the key */
