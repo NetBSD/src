@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.4 2000/04/22 06:38:24 thorpej Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.5 2000/06/12 03:43:54 soren Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -66,6 +66,7 @@ struct wss_pnpbios_hint {
 struct wss_pnpbios_hint wss_pnpbios_hints[] = {
 	{ "NMX2210", 1, 2, WSS_CODEC },
 	{ "CSC0000", 0, 1, 0 },		/* Dell Latitude CPi */
+	{ "CSC0100", 0, 1, 0 },		/* CS4610 with CS4236 codec */
 	{ { 0 }, 0, 0, 0 }
 };
 
