@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.13 2001/01/13 20:10:52 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.14 2001/01/18 21:02:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.13 2001/01/13 20:10:52 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.14 2001/01/18 21:02:47 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -133,7 +133,8 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 	u_char *bufend;
 	struct field *dummy2;
 {
-	static char *opos;
+	static u_char *obufend;
+	static size_t osz;
 	char *pos;
 	static int fileno = 0, overflow = 0;
 	static FILE *fp = 0;
@@ -141,8 +142,19 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 
 	pos = (char *) buffer->data;
 	if (overflow) {
-		memmove(pos, opos, bufend - (u_char *) opos);
-		pos += ((char *)bufend - opos);
+		/*
+		 * Buffer shortage is solved by either of two ways:
+		 * o flush previous buffered data and start using the
+		 *   buffer from start (see fsort())
+		 * o realloc buffer and bump bufend
+		 * 
+		 * The former is preferred, realloc is only done when
+		 * there is exactly one item in buffer which does not fit. 
+		 */
+		if (bufend == obufend)
+			memmove(pos, bufend - osz, osz);
+
+		pos += osz;
 		overflow = 0;
 	}
 	for (;;) {
@@ -165,7 +177,8 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 		if (pos >= (char *)bufend) {
 			if (buffer->data < bufend) {
 				overflow = 1;
-				opos = (char *)buffer->data;
+				obufend = bufend;
+				osz = (pos - (char *) buffer->data);
 			}
 			return (BUFFEND);
 		} else if (c == EOF) {
