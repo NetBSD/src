@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.14 2002/11/17 03:04:53 lukem Exp $
+# $NetBSD: makeobsolete,v 1.15 2002/11/25 23:29:54 lukem Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -8,7 +8,7 @@
 #
 
 # set defaults
-MAKE="${MAKE:-make} -j 1"
+MAKE="${MAKE:-make} -j 1 -f `dirname $0`/Makefile"
 machine=`${MAKE} print_machine`
 arch=`${MAKE} print_machine_arch`
 setd=`pwd`
