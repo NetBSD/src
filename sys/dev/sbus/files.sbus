@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.17 2001/10/03 04:28:41 mrg Exp $
+#	$NetBSD: files.sbus,v 1.18 2002/09/13 14:03:53 ad Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -106,6 +106,10 @@ file	dev/sbus/cgthree_sbus.c		cgthree_sbus
 device	tcx: bt_dac, fb, rasops8, rasops24
 attach	tcx at sbus
 file	dev/sbus/tcx.c			tcx needs-flag
+
+device	zx: fb, rasops32
+attach	zx at sbus
+file	dev/sbus/zx.c			zx
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 device	pnozz: fb, bt_dac, rasops8, rasops16, rasops32
