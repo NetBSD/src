@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1997/09/12 09:25:36 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 1997/09/28 11:31:16 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1636,7 +1636,7 @@ _mmutype:
 _cputype:
 	.long	CPU_68030	| default to CPU_68030
 _fputype:
-	.long	FPU_68030	| default to FPU_68030
+	.long	FPU_68882	| default to FPU_68882
 _ectype:
 	.long	EC_NONE		| external cache type, default to none
 _protorp:
