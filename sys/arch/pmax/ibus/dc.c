@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.1.2.5 1999/01/07 06:32:04 nisimura Exp $ */
+/*	$NetBSD: dc.c,v 1.1.2.6 1999/03/15 08:40:31 nisimura Exp $ */
 
 /*
  * DC7085 (DZ-11 look alike) quad asynchronous serial interface
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.5 1999/01/07 06:32:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.6 1999/03/15 08:40:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ dcmctl(sc, line, bits, how)
 }
 #endif
 
-#if defined(__pmax__)
+#if defined(pmax)
 #include <pmax/pmax/pmaxtype.h>
 
 /*
@@ -655,7 +655,7 @@ dcputc(reg, line, c)
 	splx(s);
 }
 
-tc_addr_t dc_cons_addr;		/* XXX */
+caddr_t dc_cons_addr;		/* XXX */
 
 static int  dc_cngetc __P((dev_t));
 static void dc_cnputc __P((dev_t, int));
@@ -698,7 +698,7 @@ dc_cnattach(addr, line, rate, cflag)
 {
 	struct dc7085reg *reg;
 
-	dc_cons_addr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(addr); /* XXX */
+	dc_cons_addr = (caddr_t)MIPS_PHYS_TO_KSEG1(addr); /* XXX */
 
 	if (badaddr((caddr_t)dc_cons_addr, 2))
 		return 1;

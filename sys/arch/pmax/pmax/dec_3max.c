@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.4 1998/10/23 12:29:53 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.4 1998/10/23 12:29:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,8 @@ dec_3max_cons_init()
 			return;
 		}
 #endif
-		printf("No framebuffer device configured for slot %d\n", crt);
-		printf("Using serial console\n");
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -383,7 +383,7 @@ found:
 	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
-	tc_mb();
+	kn02_wbflush();
 }
 
 void

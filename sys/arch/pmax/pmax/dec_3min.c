@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.3 1998/10/21 11:24:29 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.4 1999/03/15 08:40:30 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.3 1998/10/21 11:24:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.4 1999/03/15 08:40:30 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,15 +193,25 @@ dec_3min_os_init()
 	 * since we don't know what kinds of devices are in the
 	 * TURBOchannel option slots, just splhigh().
 	 */
+#ifdef NEWSPL
+	__spl = &spl_3min;
+#else
 	splvec.splbio = MIPS_SPLHIGH;
 	splvec.splnet = MIPS_SPLHIGH;
 	splvec.spltty = MIPS_SPLHIGH;
 	splvec.splimp = MIPS_SPLHIGH;
 	splvec.splclock = MIPS_SPLHIGH;
 	splvec.splstatclock = MIPS_SPLHIGH;
-
+#endif
 	dec_3min_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 
+	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+#if 0
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+#endif
 	/*
 	 * Initialize interrupts.
 	 */
@@ -244,12 +254,12 @@ dec_3min_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		if (zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0) == 0
-		    && tc_fb_cnattach(crt) > 0)
+		zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
+		if (tc_fb_cnattach(crt) > 0)
 			return;
 #endif
-		printf("No framebuffer device configured for slot %d\n", crt);
-		printf("Using serial console\n");
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.4 1998/10/21 11:24:30 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.5 1999/03/15 08:40:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.4 1998/10/21 11:24:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.5 1999/03/15 08:40:29 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -174,16 +174,26 @@ dec_3maxplus_os_init()
 	 * clock interrupt does via INT 1.  splclock and splstatclock
 	 * should block IOASIC activities.
 	 */
+#ifdef NEWSPL
+	__spl = &spl_3maxplus;
+#else
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
 	splvec.splimp = MIPS_SPL0;
 	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
+#endif
 
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
-	ioasic_init(0);	/* revision dependent chip initialization? */
+	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+#if 0
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+#endif
 
 	/* XXX hard-reset LANCE */
 	*(volatile u_int *)(ioasic_base + IOASIC_CSR) |= 0x100;
@@ -233,12 +243,12 @@ dec_3maxplus_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		if ((zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0) == 0)
-		    && tc_fb_cnattach(crt) > 0)
+		zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
+		if (tc_fb_cnattach(crt) > 0)
 			return;
 #endif
-		printf("No framebuffer device configured for slot %d\n", crt);
-		printf("Using serial console\n");
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
