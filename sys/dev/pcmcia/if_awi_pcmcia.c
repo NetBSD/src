@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.9 2000/02/01 10:12:04 enami Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.10 2000/02/03 08:52:21 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,56 @@ struct awi_pcmcia_get_enaddr_args {
 };
 int	awi_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 
+struct awi_pcmcia_product {
+	u_int32_t	app_vendor;	/* vendor ID */
+	u_int32_t	app_product;	/* product ID */
+	const char	*app_cisinfo[4]; /* CIS information */
+	const char	*app_name;	/* product name */
+} awi_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_STACK_650,
+	  PCMCIA_CIS_BAY_STACK_650,	PCMCIA_STR_BAY_STACK_650 },
+
+#ifdef notyet
+	{ PCMCIA_VENDOR_MELCO,		PCMCIA_PRODUCT_MELCO_WLI_PCM,
+	  PCMCIA_CIS_MELCO_WLI_PCM,	PCMCIA_STR_MELCO_WLI_PCM },
+
+	{ PCMCIA_VENDOR_ICOM,		PCMCIA_PRODUCT_ICOM_SL200,
+	  PCMCIA_CIS_ICOM_SL200,	PCMCIA_STR_ICOM_SL200 },
+#endif
+
+	{ 0,				0,
+	  { NULL, NULL, NULL, NULL },	NULL },
+};
+
+struct awi_pcmcia_product *
+	awi_pcmcia_lookup __P((struct pcmcia_attach_args *));
+
+struct awi_pcmcia_product *
+awi_pcmcia_lookup(pa)
+	struct pcmcia_attach_args *pa;
+{
+	struct awi_pcmcia_product *app;
+
+	for (app = awi_pcmcia_products; app->app_name != NULL; app++) {
+		/* match by vendor/product id */
+		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
+		    pa->manufacturer == app->app_vendor &&
+		    pa->product != PCMCIA_PRODUCT_INVALID &&
+		    pa->product == app->app_product)
+			return (app);
+
+		/* match by CIS information */
+		if (pa->card->cis1_info[0] != NULL &&
+		    app->app_cisinfo[0] != NULL &&
+		    strcmp(pa->card->cis1_info[0], app->app_cisinfo[0]) == 0 &&
+		    pa->card->cis1_info[1] != NULL &&
+		    app->app_cisinfo[1] != NULL &&
+		    strcmp(pa->card->cis1_info[1], app->app_cisinfo[1]) == 0)
+			return (app);
+	}
+
+	return (NULL);
+}
 
 int
 awi_pcmcia_enable(sc)
@@ -171,8 +221,7 @@ awi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_VENDOR_BAY &&
-	    pa->product == PCMCIA_PRODUCT_BAY_STACK_650)
+	if (awi_pcmcia_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
@@ -242,6 +291,7 @@ awi_pcmcia_attach(parent, self, aux)
 {
 	struct awi_pcmcia_softc *psc = (void *)self;
 	struct awi_softc *sc = &psc->sc_awi;
+	struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_mem_handle memh;
@@ -277,6 +327,10 @@ awi_pcmcia_attach(parent, self, aux)
 	}
 #endif
 
+	app = awi_pcmcia_lookup(pa);
+	if (app == NULL)
+		panic("awi_pcmcia_attach: impossible");
+
 	psc->sc_pf = pa->pf;
 
 	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
@@ -298,7 +352,7 @@ awi_pcmcia_attach(parent, self, aux)
 
 	sc->sc_enabled = 1;
 	sc->sc_state = AWI_ST_SELFTEST;
-	printf(": BayStack 650 Wireless (802.11)\n");
+	printf(": %s\n", app->app_name);
 
 	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &memh) != 0) {
 		printf("%s: unable to allocate memory space; using i/o only\n",
