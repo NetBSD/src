@@ -33,21 +33,24 @@
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/conf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#ifdef BANKEDDEVPAGER
+#include <sys/bankeddev.h>
+#endif
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
-int	swstrategy	__P((struct buf *));
+void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_strategy(n)	int n __P((struct buf *))
+#define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
@@ -86,10 +89,31 @@ bdev_decl(no);	/* dummy declarations */
 
 #include "sd.h"
 #include "st.h"
+#include "rz.h"
+#include "tz.h"
 #include "vn.h"
+
+#ifdef LKM
+int lkmenodev();
+
+#define	LKM_BDEV() { \
+	lkmenodev, lkmenodev, \
+	lkmenodev, lkmenodev, \
+	lkmenodev, 0, 0 }
+
+#define	LKM_CDEV() { \
+	lkmenodev, lkmenodev, \
+	lkmenodev, lkmenodev, \
+	lkmenodev, lkmenodev, \
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
+	lkmenodev, 0 }
+
+#endif
 
 bdev_decl(sd);
 bdev_decl(st);
+bdev_decl(rz);
+bdev_decl(tz);
 bdev_decl(vn);
 
 
@@ -100,9 +124,22 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),		/* 2 */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
+#if 0
 	bdev_notdef(),		/* 5 */
+#else
+	bdev_disk_init(NRZ,rz),	/* 5: scsi disk */
+#endif
 	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
 	bdev_tape_init(NST,st),	/* 7: exabyte tape */
+	bdev_tape_init(NTZ,tz),	/* 8: scsi tape */
+#ifdef LKM
+	LKM_BDEV(),		/* 9: Empty slot for LKM */
+	LKM_BDEV(),		/* 10: Empty slot for LKM */
+	LKM_BDEV(),		/* 11: Empty slot for LKM */
+	LKM_BDEV(),		/* 12: Empty slot for LKM */
+	LKM_BDEV(),		/* 13: Empty slot for LKM */
+	LKM_BDEV(),		/* 14: Empty slot for LKM */
+#endif
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -208,6 +245,8 @@ cdev_decl(log);
 
 cdev_decl(st);
 cdev_decl(sd);
+cdev_decl(tz);
+cdev_decl(rz);
 
 /* XXX shouldn't this be optional? */
 cdev_decl(grf);
@@ -239,6 +278,23 @@ cdev_decl(ite);
 	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
 	(dev_type_map((*))) enodev, 0 }
 
+cdev_decl(kbd);
+/* open, close, read, write, ioctl, select */
+#define cdev_kbd_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
+	(dev_type_map((*))) enodev, 0 }
+
+#include "mouse.h"
+cdev_decl(ms);
+/* open, close, read, write, ioctl, select */
+#define cdev_mouse_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
+	(dev_type_map((*))) enodev, 0 }
+
 cdev_decl(vn);
 /* open, read, write, ioctl -- XXX should be a disk */
 #define	cdev_vn_init(c,n) { \
@@ -266,6 +322,20 @@ cdev_decl(bpf);
 	(dev_type_map((*))) enodev, 0 }
 
 
+#ifdef LKM
+
+dev_type_open(lkmopen);
+dev_type_close(lkmclose);
+dev_type_ioctl(lkmioctl);
+
+#define	cdev_lkm_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_map((*))) enodev, 0 }
+
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -277,13 +347,17 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_notdef(),			/* 7: */
 	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
+#if 0
 	cdev_notdef(),			/* 9: */
-	cdev_grf_init(1,grf),		/* 10: frame buffer */
+#else
+	cdev_disk_init(NRZ,rz),		/* 9: scsi disk */
+#endif
+	cdev_grf_init(NITE,grf),	/* 10: frame buffer */
 	cdev_par_init(NPAR,par),	/* 11: parallel interface */
 	cdev_tty_init(1,ser),		/* 12: built-in single-port serial */
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
-	cdev_notdef(),			/* 14: */
-	cdev_notdef(),			/* 15: */
+	cdev_kbd_init(1, kbd),		/* 14: /dev/kbd */
+	cdev_mouse_init(NMOUSE, ms),	/* 15: /dev/mouse0 /dev/mouse1 */
 	cdev_notdef(),			/* 16: */
 	cdev_notdef(),			/* 17: */
 	cdev_notdef(),			/* 18: */
@@ -291,9 +365,40 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
+	cdev_tape_init(NTZ,tz),		/* 23: scsi tape */
+#ifdef LKM
+	cdev_lkm_init(1,lkm),		/* 24: loadable kernel modules pseudo-dev */
+	LKM_CDEV(),			/* 25: Empty slot for LKM */
+	LKM_CDEV(),			/* 26: Empty slot for LKM */
+	LKM_CDEV(),			/* 27: Empty slot for LKM */
+	LKM_CDEV(),			/* 28: Empty slot for LKM */
+	LKM_CDEV(),			/* 29: Empty slot for LKM */
+	LKM_CDEV(),			/* 30: Empty slot for LKM */
+#endif
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
+
+#ifdef BANKEDDEVPAGER
+extern int grfbanked_get __P((int, int, int));
+extern int grfbanked_set __P((int, int));
+extern int grfbanked_cur __P((int));
+
+struct bankeddevsw bankeddevsw[sizeof (cdevsw) / sizeof (cdevsw[0])] = {
+  { 0, 0, 0 },						/* 0 */
+  { 0, 0, 0 },						/* 1 */
+  { 0, 0, 0 },						/* 2 */
+  { 0, 0, 0 },						/* 3 */
+  { 0, 0, 0 },						/* 4 */
+  { 0, 0, 0 },						/* 5 */
+  { 0, 0, 0 },						/* 6 */
+  { 0, 0, 0 },						/* 7 */
+  { 0, 0, 0 },						/* 8 */
+  { 0, 0, 0 },						/* 9 */
+  { grfbanked_get, grfbanked_cur, grfbanked_set },	/* 10 */
+  /* rest { 0, 0, 0 } */
+};
+#endif
 
 int	mem_no = 2; 	/* major device number of memory special file */
 
@@ -307,3 +412,5 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * provided as a character (raw) device.
  */
 dev_t	swapdev = makedev(3, 0);
+
+

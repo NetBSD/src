@@ -47,6 +47,7 @@
 #include "assym.s"
 #include "vectors.s"
 #include "custom.h"
+#include "zeusscsi.h"	/* needed for level 6 interrupt */
 
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
@@ -81,7 +82,7 @@ _doadump:
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 
 	.globl	_trap, _nofault, _longjmp
 _buserr:
@@ -95,6 +96,23 @@ _addrerr:
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(60)		|   in the savearea
 	lea	sp@(64),a1		| grab base of HW berr frame
+	tstl	_cpu040
+	jeq	Lbe030
+	movl	a1@(10),sp@-		| V = exception address
+	clrl	sp@-			| dummy code
+	moveq	#0,d0
+	movw	a1@(8),d0		| get vector offset
+	andw	#0x0fff,d0
+	cmpw	#12,d0			| is it address error
+	jeq	Lisaerr
+	movl	a1@(22),sp@(4)		| get fault address
+	moveq	#0,d0
+	movw	a1@(14),d0		| get SSW
+	movl	d0,sp@			| pass as code
+	btst	#10,d0			| test ATC
+	jeq	Lisberr			| it's a bus error
+	jra	Lismerr
+Lbe030:
 	moveq	#0,d0
 	movw	a1@(12),d0		| grab SSW for fault processing
 	btst	#12,d0			| RB set?
@@ -177,10 +195,74 @@ Lstkadj:
  * FP exceptions.
  */
 _fpfline:
+| check for unimplemented floating point instruction and emulate it
+	.globl	fpsp_unimp
+	btst	#5,sp@(6)		| is format == 2?
+	jne	fpsp_unimp
 	jra	_illinst
 
 _fpunsupp:
 	jra	_illinst
+
+| FPSP entry points and support routines
+	.globl	real_fline,real_bsun,real_unfl,real_operr,real_ovfl,real_snan
+	.globl	real_unsupp,real_inex
+	.globl	fpsp_done,fpsp_fmt_error,mem_read,mem_write,real_trace
+real_fline:
+	jra	_illinst
+real_trace:
+fpsp_done:
+	rte
+fpsp_fmt_error:
+	pea	LFP1
+	jbsr	_panic
+mem_read:
+	btst	#5,a6@(4)
+	jeq	user_read
+super_read:
+	movb	a0@+,a1@+
+	subl	#1,d0
+	jne	super_read
+	rts
+user_read:
+	movl	d1,sp@-
+	movl	d0,sp@-		| len
+	movl	a1,sp@-		| to
+	movl	a0,sp@-		| from
+	jsr	_copyin
+	addw	#12,sp
+	movl	sp@+,d1
+	rts
+mem_write:
+	btst	#5,a6@(4)
+	jeq	user_write
+super_write:
+	movb	a0@+,a1@+
+	subl	#1,d0
+	jne	super_write
+	rts
+user_write:
+	movl	d1,sp@-
+	movl	d0,sp@-		| len
+	movl	a1,sp@-		| to
+	movl	a0,sp@-		| from
+	jsr	_copyout
+	addw	#12,sp
+	movl	sp@+,d1
+	rts
+LFP1:	.asciz	"FPSP format error"
+	.even
+real_unsupp:
+	jra	_illinst
+
+real_bsun:
+real_inex:
+real_dz:
+real_unfl:
+real_operr:
+real_ovfl:
+real_snan:
+| Fall through into FP coprocessor exceptions
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -517,6 +599,11 @@ Lbomrip:
 Lstackok:
 #endif	/* DEBUG */
 #endif
+#if NZEUSSCSI > 0
+	jbsr	_siopintr6		| check for siop (53C710) interrupt
+	tstl	d0
+	jne	Lskipciab		| XXX skip CIAB processing
+#endif
 	CIABADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
 	INTREQWADDR(a0)
@@ -573,6 +660,7 @@ Ltimend:
 Ltimdone:
 #endif
 #endif
+Lskipciab:
 	moveml	sp@+,#0x0303		| restore scratch regs
 	addql	#2,sp			| pop pad word
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
@@ -731,16 +819,33 @@ start:
 	movel	d1,sp@-
 	movel	d0,sp@-
 	movel	a0,sp@-			| pass fastmem_start and _len and chipmem-len
-	pea	0			| pass fake machine id
+	movel	d5,sp@-			| pass machine id
 
-	movl	#CACHE_OFF,d0
+	movl	#CACHE_OFF,d0		| 68020/030 cache
+	movl	#AMIGA_68040,d1
+	andl	d1,d5
+	movl	d5,_cpu040		| set 68040 CPU flag
+	jeq	Lstartnot040		| it's not 68040
+	.word	0xf4f8		| cpusha bc - push and invalidate caches
+	lea	Lvectab+0xc0,a0		| set up 68040 floating point
+	movl	#fpsp_bsun,a0@+		|  exception vectors
+	movl	#real_inex,a0@+
+	movl	#real_dz,a0@+
+	movl	#fpsp_unfl,a0@+
+	movl	#fpsp_operr,a0@+
+	movl	#fpsp_ovfl,a0@+
+	movl	#fpsp_snan,a0@+
+	movl	#fpsp_unsupp,a0@+
+
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
+Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	moveq	#0,d0
 	movc	d0,vbr
 
 #if 1
 	| WHY THE @#$@#$@ DOESN'T THIS WORK????????
-	
+
 	| add code to determine MMU. This should be passed from
 	| AmigaOS really...
 	movl	#0x200,d0		| data freeze bit
@@ -749,14 +854,18 @@ start:
 	tstl	d0			| zero?
 	jeq	Lis68020		| yes, we have 68020
 	| movl	#-1,_mmutype		| no, we have 68030
-	bra	Lskip
+	jra	Lskip
 Lis68020:
 	| movl	#1,_mmutype		| hope we have 68851...
 Lskip:
 	movl	#CACHE_OFF,d0
+	tstl	d5			| running on 68040?
+	jeq	Lcacheoff		| no
+	movl	#CACHE40_OFF,d0		| 68040 cache enable
+Lcacheoff:
 	movc	d0,cacr
 #endif
-	
+
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
 	movc	d0,sfc			|   as source
@@ -784,12 +893,17 @@ Lskip:
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
 	movl	#CACHE_ON,d0
+	tstl	d5
+	jeq	Lcacheon
+| is this needed? MLH
+	.word	0xf4f8		| cpusha bc - push & invalidate caches
+	movl	#CACHE40_ON,d0
+Lcacheon:
 	movc	d0,cacr			| clear cache(s)
 /* final setup for C code */
 
-	
-	movw	#PSL_LOWIPL,sr		| lower SPL
 
+	movw	#PSL_LOWIPL,sr		| lower SPL
 
 	movl	d7,_boothowto		| save reboot flags
 /*
@@ -800,6 +914,11 @@ Lskip:
 /* proc[1] == init now running here;
  * create a null exception frame and return to user mode in icode
  */
+	tstl	d5
+	jeq	Lstartinit
+| icode was copied to location 0, so need to push caches
+	.word	0xf4f8		| cpusha bc
+Lstartinit:
 	clrw	sp@-			| vector offset/frame type
 	clrl	sp@-			| return to icode location 0
 	movw	#PSL_USER,sp@-		| in user mode
@@ -807,7 +926,7 @@ Lskip:
 
 /*
  * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
- * 
+ *
  * Stack looks like:
  *
  *	sp+0 ->	signal number
@@ -839,21 +958,45 @@ _esigcode:
 	.globl	_icode,_szicode
 	.text
 _icode:
-	clrl	sp@-
-	pea	pc@((argv-.)+2)
-	pea	pc@((init-.)+2)
+	jra	st1
+init:
+	.asciz	"/sbin/init"
+	.byte	0			| GNU ``as'' bug won't
+					| allow an .even directive 
+					| here, says something about
+					| non constant, which is crap.
+argv:
+	.long	init+6-_icode	| argv[0] = "init" ("/sbin/init" + 6)
+	.long	eicode-_icode	| argv[1] follows icode after copyout
+	.long	0
+
+st1:	clrl	sp@-
+	.set	argvrpc,argv-.-2	| avoids PCREL bugs in ``as''
+					| otherwise it assebles different
+					| depending on your version of
+					| GNU ``as''.  Markus' as has a 
+					| nice one:
+					| 	a:	pea pc@(0) 
+					|is equivelent to:
+					|	a:	pea pc@(a-.)
+					|is equivelent to!: 
+					|	a:	pea pc@(b-.)
+					|	b:	....
+					|---
+					| Mine (2.2.1) doesn't work right 
+					| for #3 mine puts out
+					|	a:	pea pc@(2)
+					| and it should be pc@(4). 
+					| cest la vie.
+	pea	pc@(argvrpc)
+	.set	initrpc,init-.-2	| avoids PCREL bugs in ``as''
+					| see above comment	
+	pea	pc@(initrpc)
 	clrl	sp@-
 	moveq	#SYS_execve,d0
 	trap	#0
 	moveq	#SYS_exit,d0
 	trap	#0
-init:
-	.asciz	"/sbin/init"
-	.even
-argv:
-	.long	init+6-_icode	| argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode	| argv[1] follows icode after copyout
-	.long	0
 eicode:
 
 _szicode:
@@ -861,7 +1004,7 @@ _szicode:
 
 /*
  * Primitives
- */ 
+ */
 
 #ifdef GPROF
 #define	ENTRY(name) \
@@ -925,8 +1068,13 @@ ENTRY(copyinstr)
 	movl	#Lcisflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	tstw	sp@(12)			| test for > 64k
+	jeq	Lcisllen		| no, just copy length
+	movl	#0x10000,d0		| yes, limit to max (64k)
+	jra	Lcisllen2
+Lcisllen:	
+	movl	sp@(12),d0		| d0 = maxlength
+Lcisllen2:	
 	jlt	Lcisflt1		| negative count, error
 	jeq	Lcisdone		| zero count, all done
 	subql	#1,d0			| set up for dbeq
@@ -951,7 +1099,7 @@ Lcisflt1:
 	jra	Lcisdone
 Lcisflt2:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
-	jra	Lcisdone	
+	jra	Lcisdone
 
 /*
  * copyinoutstr(fromaddr, toaddr, maxlength, &lencopied)
@@ -965,8 +1113,13 @@ ENTRY(copyinoutstr)
 	movl	#Lciosflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	tstw	sp@(12)			| test for > 64k
+	jeq	Lciosllen		| no, just copy length
+	movl	#0x10000,d0		| yes, limit to max (64k)
+	jra	Lciosllen2
+Lciosllen:	
+	movl	sp@(12),d0		| d0 = maxlength
+Lciosllen2:	
 	jlt	Lciosflt1		| negative count, error
 	jeq	Lciosdone		| zero count, all done
 	subql	#1,d0			| set up for dbeq
@@ -991,7 +1144,7 @@ Lciosflt1:
 	jra	Lciosdone
 Lciosflt2:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
-	jra	Lciosdone	
+	jra	Lciosdone
 
 /*
  * copyoutstr(fromaddr, toaddr, maxlength, &lencopied)
@@ -1005,8 +1158,13 @@ ENTRY(copyoutstr)
 	movl	#Lcosflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	tstw	sp@(12)			| test for > 64k
+	jeq	Lcosllen		| no, just copy length
+	movl	#0x10000,d0		| yes, limit to max (64k)
+	jra	Lcosllen2
+Lcosllen:	
+	movl	sp@(12),d0		| d0 = maxlength
+Lcosllen2:	
 	jlt	Lcosflt1		| negative count, error
 	jeq	Lcosdone		| zero count, all done
 	subql	#1,d0			| set up for dbeq
@@ -1031,7 +1189,7 @@ Lcosflt1:
 	jra	Lcosdone
 Lcosflt2:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
-	jra	Lcosdone	
+	jra	Lcosdone
 
 /*
  * copystr(fromaddr, toaddr, maxlength, &lencopied)
@@ -1043,8 +1201,13 @@ Lcosflt2:
 ENTRY(copystr)
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
-	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	tstw	sp@(12)			| test for > 64k
+	jeq	Lcsllen			| no, just copy length
+	movl	#0x10000,d0		| yes, limit to max (64k)
+	jra	Lcsllen2
+Lcsllen:	
+	movl	sp@(12),d0		| d0 = maxlength
+Lcsllen2:	
 	jlt	Lcsflt1			| negative count, error
 	jeq	Lcsdone			| zero count, all done
 	subql	#1,d0			| set up for dbeq
@@ -1066,9 +1229,9 @@ Lcsflt1:
 	jra	Lcsdone
 Lcsflt2:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
-	jra	Lcsdone	
+	jra	Lcsdone
 
-/* 
+/*
  * Copyin(from, to, len)
  *
  * Copy specified amount of data from user space into the kernel.
@@ -1121,7 +1284,7 @@ Lciflt:
 	moveq	#EFAULT,d0		| got a fault
 	jra	Lciexit
 
-/* 
+/*
  * Copyout(from, to, len)
  *
  * Copy specified amount of data from kernel to the user space
@@ -1482,15 +1645,30 @@ Lres1:
 	orl	#PG_RW+PG_V,d1		| ensure valid and writable
 	movl	d1,a2@+			| load it up
 	dbf	d0,Lres1		| til done
+	tstl	_cpu040
+	jne	Lres2
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
+	jra	Lres3
+Lres2:
+	.word	0xf4f8		| cpusha bc
+	.word	0xf518		| pflusha (68040)
+	movl	#CACHE40_ON,d0
+	movc	d0,cacr			| invalidate cache(s)
+Lres3:
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
+	tstl	_cpu040
+	jne	Lres4
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load new user root pointer
+	jra	Lres5
+Lres4:
+	.word	0x4e7b,0x0806	| movc d0,URP
+Lres5:
 	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
@@ -1709,12 +1887,18 @@ Lclrloop:
  */
 ENTRY(TBIA)
 __TBIA:
+	tstl	_cpu040
+	jne	Ltbia040
 	pflusha				| flush entire TLB
 	tstl	_mmutype
 	jpl	Lmc68851a		| 68851 implies no d-cache
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 Lmc68851a:
+	rts
+Ltbia040:
+	.word	0xf518		| pflusha
+	.word	0xf478		| cpush dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1726,6 +1910,8 @@ ENTRY(TBIS)
 	jne	__TBIA			| yes, flush entire TLB
 #endif
 	movl	sp@(4),a0		| get addr to flush
+	tstl	_cpu040
+	jne	Ltbis040
 	tstl	_mmutype
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,a0@		| flush address from both sides
@@ -1734,6 +1920,15 @@ ENTRY(TBIS)
 	rts
 Lmc68851b:
 	pflushs	#0,#0,a0@		| flush address from both sides
+	rts
+Ltbis040:
+	moveq	#FC_SUPERD,d0		| select supervisor
+	movc	d0,dfc
+	.word	0xf508		| pflush a0@
+	moveq	#FC_USERD,d0		| select user
+	movc	d0,dfc
+	.word	0xf508		| pflush a0@
+	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1744,6 +1939,8 @@ ENTRY(TBIAS)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
+	tstl	_cpu040
+	jne	Ltbias040
 	tstl	_mmutype
 	jpl	Lmc68851c		| 68851?
 	pflush #4,#4			| flush supervisor TLB entries
@@ -1752,6 +1949,11 @@ ENTRY(TBIAS)
 	rts
 Lmc68851c:
 	pflushs #4,#4			| flush supervisor TLB entries
+	rts
+Ltbias040:
+| 68040 can't specify supervisor/user on pflusha, so we flush all
+	.word	0xf518		| pflusha
+	.word	0xf478		| cpusha dc [cinv or cpush ??]
 	rts
 
 /*
@@ -1762,6 +1964,8 @@ ENTRY(TBIAU)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
+	tstl	_cpu040
+	jne	Ltbiau040
 	tstl	_mmutype
 	jpl	Lmc68851d		| 68851?
 	pflush	#0,#4			| flush user TLB entries
@@ -1771,13 +1975,23 @@ ENTRY(TBIAU)
 Lmc68851d:
 	pflushs	#0,#4			| flush user TLB entries
 	rts
+Ltbiau040:
+| 68040 can't specify supervisor/user on pflusha, so we flush all
+	.word	0xf518		| pflusha
+	.word	0xf478		| cpusha dc [cinv or cpush ??]
+	rts
 
 /*
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
+	tstl	_cpu040
+	jne	Licia040
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			| invalidate i-cache
+	rts
+Licia040:
+	.word	0xf498		| cinva ic
 	rts
 
 /*
@@ -1789,19 +2003,47 @@ ENTRY(ICIA)
  */
 ENTRY(DCIA)
 __DCIA:
+	tstl	_cpu040
+	jeq	Ldciax
+	.word	0xf478		| cpusha dc
+Ldciax:
 	rts
 
 ENTRY(DCIS)
 __DCIS:
+	tstl	_cpu040
+	jeq	Ldcisx
+	.word	0xf478		| cpusha dc
+	nop
+Ldcisx:
 	rts
 
 ENTRY(DCIU)
 __DCIU:
+	tstl	_cpu040
+	jeq	Ldciux
+	.word	0xf478		| cpusha dc
+Ldciux:
+	rts
+
+| Invalid single cache line
+ENTRY(DCIAS)
+__DCIAS:
+	tstl	_cpu040
+	jeq	Ldciasx
+	movl	sp@(4),a0
+	.word	0xf468		| cpushl dc,a0@
+Ldciasx:
 	rts
 
 ENTRY(PCIA)
+	tstl	_cpu040
+	jne	Lpcia040
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
+	rts
+Lpcia040:
+	.word	0xf478		| cpusha dc
 	rts
 
 ENTRY(ecacheon)
@@ -1831,18 +2073,40 @@ _getdfc:
 	rts
 
 /*
+ * Check out a virtual address to see if it's okay to write to.
+ *
+ * probeva(va, fc)
+ *
+ */
+ENTRY(probeva)
+	movl	sp@(8),d0
+	movec	d0,dfc
+	movl	sp@(4),a0
+	.word	0xf548		| ptestw (a0)
+	moveq	#FC_USERD,d0		| restore DFC to user space
+	movc	d0,dfc
+	.word	0x4e7a,0x0805	| movec  MMUSR,d0
+	rts
+
+/*
  * Load a new user segment table pointer.
  */
 ENTRY(loadustp)
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
+	tstl	_cpu040
+	jne	Lldustp040
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts				|   since pmove flushes TLB
+Lldustp040:
+	.word	0xf478		| cpush dc
+	.word	0x4e7b,0x0806	| movec d0,URP
+	rts
 
 /*
  * Flush any hardware context associated with given USTP.
@@ -1850,6 +2114,8 @@ ENTRY(loadustp)
  * and ATC entries in PMMU.
  */
 ENTRY(flushustp)
+	tstl	_cpu040
+	jne	Lnot68851
 	tstl	_mmutype		| 68851 PMMU?
 	jle	Lnot68851		| no, nothing to do
 	movl	sp@(4),d0		| get USTP to flush
@@ -1862,7 +2128,10 @@ Lnot68851:
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		| address to load
+	tstl	_cpu040
+	jne	Lploadw040
 	ploadw	#1,a0@			| pre-load translation
+Lploadw040:			| should 68040 do a ptest?
 	rts
 
 /*
@@ -1972,7 +2241,7 @@ Lcmploop:
 	addqw	#1,d0			| +1 gives zero on match
 Lcmpdone:
 	rts
-	
+
 /*
  * {ov}bcopy(from, to, len)
  *
@@ -2142,6 +2411,12 @@ Lm68881rdone:
 	.globl	_doboot
 _doboot:
 	movl	#CACHE_OFF,d0
+	tstl	_cpu040
+	jeq	Ldoboot0
+	.word	0xf4f8		| cpusha bc - push and invalidate caches
+	nop
+	movl	#CACHE40_OFF,d0
+Ldoboot0:
 	movc	d0,cacr			| disable on-chip cache(s)
 
 	movw	#0x2700,sr		| cut off any interrupts
@@ -2155,32 +2430,54 @@ Ldb1:
 	dbra	d0,Ldb1
 
 	| now, copy the following code over
-	lea	a1@(Ldoreboot),a0	| KVA starts at 0, CHIPMEM is phys 0
-	lea	a1@(Ldorebootend),a1
-	lea	pc@(Ldoreboot-.+2),a2
+|	lea	a1@(Ldoreboot),a0	| KVA starts at 0, CHIPMEM is phys 0
+|	lea	a1@(Ldorebootend),a1
+|	lea	pc@(Ldoreboot-.+2),a0
+|	addl	a1,a0
+|	lea	a0@(128),a1
+|	lea	pc@(Ldoreboot-.+2),a2
+	lea	Ldoreboot,a2
+	lea	Ldorebootend,a0
+	addl	a1,a0
+	addl	a2,a1
+	exg	a0,a1
 Ldb2:
 	movel	a2@+,a0@+
 	cmpl	a1,a0
-	bge	Ldb2
+	jle	Ldb2
 
-	| ok, turn off MMU.. 
+	| ok, turn off MMU..
 Ldoreboot:
-	lea	pc@(zero-.+2),a0
+	tstl	_cpu040
+	jne	Lmmuoff040
+	lea	zero,a0
 	pmove	a0@,tc			| Turn off MMU
-	lea	pc@(nullrp-.+2),a0
+	lea	nullrp,a0
 	pmove	a0@,crp			| Turn off MMU some more
 	pmove	a0@,srp			| Really, really, turn off MMU
+	jra	Ldoboot1
+Lmmuoff040:
+	movl	#0,d0
+	.word	0x4e7b,0x0003	| movc d0,TC
+	.word	0x4e7b,0x0806	| movc d0,URP
+	.word	0x4e7b,0x0807	| movc d0,SRP
+Ldoboot1:
 
 	| this weird code is the OFFICIAL way to reboot an Amiga ! ..
 	lea	0x1000000,a0
 	subl	a0@(-0x14),a0
 	movl	a0@(4),a0
 	subl	#2,a0
+	jra	Ldoreset
+	| reset needs to be on longword boundary
+	nop
+	.align	2
+Ldoreset:
 	| reset unconfigures all memory!
 	reset
 	| now rely on prefetch for next jmp
 	jmp	a0@
-	| NOTE REACHED
+	| NOT REACHED
 
 
 /*
@@ -2195,10 +2492,17 @@ _kernel_reload:
 	movew	#(1<<9),a5@(0x096)	| disable DMA (before clobbering chipmem)
 
 	movl	#CACHE_OFF,d0
+	tstl	_cpu040
+	jeq	Lreload1
+	.word	0xf4f8		| cpusha bc - push and invalidate caches
+	nop
+	movl	#CACHE40_OFF,d0
+Lreload1:
 	movc	d0,cacr			| disable on-chip cache(s)
 
 	movw	#0x2700,sr		| cut off any interrupts
 	movel	_boothowto,d7		| save boothowto
+	movel	_machineid,d5		| (and machineid)
 
 	movel	sp@(16),a0		| load memory parameters
 	movel	sp@(20),d0
@@ -2212,14 +2516,23 @@ _kernel_reload:
 Lreload_copy:
 	movel	a2@+,a3@+
 	subl	#4,d2
-	bcc	Lreload_copy
+	jcc	Lreload_copy
 
-	| ok, turn off MMU.. 
-	lea	pc@(zero-.+2),a3
+	| ok, turn off MMU..
+	tstl	_cpu040
+	jne	Lreload040
+	lea	zero,a3
 	pmove	a3@,tc			| Turn off MMU
-	lea	pc@(nullrp-.+2),a3
+	lea	nullrp,a3
 	pmove	a3@,crp			| Turn off MMU some more
 	pmove	a3@,srp			| Really, really, turn off MMU
+	jra	Lreload2
+Lreload040:
+	movl	#0,d3
+	.word	0x4e7b,0x3003	| movc d3,TC
+	.word	0x4e7b,0x3806	| movc d3,URP
+	.word	0x4e7b,0x3807	| movc d3,SRP
+Lreload2:
 
 	jmp	a4@			| start new kernel
 
@@ -2236,6 +2549,9 @@ tmpstk:
 	.globl	_machineid
 _machineid:
 	.long	0		| default to 320
+	.globl	_cpu040
+_cpu040:
+	.long	0
 	.globl	_mmutype,_protorp
 _mmutype:
 	.long	-1		| default to 68030 MMU
