@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.2 2002/03/12 23:57:35 rjs Exp $        */
+/*      $NetBSD: sa11x0_var.h,v 1.3 2002/12/18 04:20:36 bsh Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,6 +36,9 @@
  *
  */
 
+#ifndef _SA11X0_VAR_H
+#define _SA11X0_VAR_H
+
 #include <sys/conf.h>
 #include <sys/device.h>
 
@@ -72,3 +75,5 @@ struct sa11x0_attach_args {
 void *sa11x0_intr_establish(sa11x0_chipset_tag_t, int, int, int, 
 			    int (*)(void *), void *);
 void sa11x0_intr_disestablish(sa11x0_chipset_tag_t, void *);
+
+#endif /* _SA11X0_VAR_H */
