@@ -1,4 +1,4 @@
-/*	$NetBSD: com5.c,v 1.6 1997/10/11 02:07:06 lukem Exp $	*/
+/*	$NetBSD: com5.c,v 1.7 1998/08/28 00:44:31 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com5.c,v 1.6 1997/10/11 02:07:06 lukem Exp $");
+__RCSID("$NetBSD: com5.c,v 1.7 1998/08/28 00:44:31 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -258,6 +258,10 @@ give()
 	if (wordtype[wordnumber] == NOUNS) {
 		person = wordvalue[wordnumber];
 		last2 = wordnumber;
+	}
+	if (last1 == 0) {
+		puts("You didn't say what to give.");
+		return (0);
 	}
 	wordnumber = last1 - 1;
 	if (person && testbit(location[position].objects, person))
