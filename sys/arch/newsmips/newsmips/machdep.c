@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2003/10/26 14:52:52 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2003/11/23 00:09:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2003/10/26 14:52:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2003/11/23 00:09:11 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -264,6 +264,9 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	char *ssym, *esym;
 #endif
 
+	bi_arg = NULL;
+	ssym = esym = NULL;	/* XXX: gcc */
+
 	/* clear the BSS segment */
 	bzero(edata, end - edata);
 
@@ -296,6 +299,9 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	if (systype == NEWS5000) {
 		int i;
 		char *bootspec = (char *)x_bootdev;
+
+		if (bi_arg == NULL)
+			panic("news5000 requires BTINFO_BOOTARG to boot");
 
 		_sip = (void *)bi_arg->sip;
 		x_maxmem = _sip->apbsi_memsize;
