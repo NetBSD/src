@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2004/06/20 18:04:08 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2005/02/19 21:40:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2004/06/20 18:04:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2005/02/19 21:40:21 jdolecek Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1073,10 +1073,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  **********************************************************************/
 
 /*
- * Utility function to load a linear buffer.  lastaddrp holds state
- * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
- * first indicates if this is the first invocation of this function.
+ * Utility function to load a linear buffer.
  */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
