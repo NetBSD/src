@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/07/30 22:54:26 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/10/18 08:40:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.7 1997/07/30 22:54:26 jtc Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1997/10/18 08:40:49 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -229,7 +229,7 @@ getcputype()
 	int cputype;
 	kvm_t *kd;
 
-	bzero(errbuf, sizeof(errbuf));
+	memset(errbuf, 0, sizeof(errbuf));
 
 	if ((kd = kvm_openfiles(system, NULL, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "can't open kvm: %s", errbuf);

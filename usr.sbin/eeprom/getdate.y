@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: getdate.y,v 1.3 1997/07/23 21:02:39 thorpej Exp $	*/
+/*	$NetBSD: getdate.y,v 1.4 1997/10/18 08:40:46 lukem Exp $	*/
 
 /*
 **
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getdate.y,v 1.3 1997/07/23 21:02:39 thorpej Exp $");
+__RCSID("$NetBSD: getdate.y,v 1.4 1997/10/18 08:40:46 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -637,13 +637,13 @@ RelativeMonth(Start, RelMonth)
 
 static int
 LookupWord(buff)
-    char		*buff;
+    char	*buff;
 {
-    register char	*p;
-    register char	*q;
-    register const TABLE	*tp;
-    int			i;
-    int			abbrev;
+    char	*p;
+    char	*q;
+    const TABLE	*tp;
+    int		i;
+    int		abbrev;
 
     /* Make it lowercase. */
     for (p = buff; *p; p++)
@@ -745,11 +745,11 @@ LookupWord(buff)
 static int
 yylex()
 {
-    register char	c;
-    register char	*p;
-    char		buff[20];
-    int			Count;
-    int			sign;
+    char	c;
+    char	*p;
+    char	buff[20];
+    int		Count;
+    int		sign;
 
     for ( ; ; ) {
 	while (isspace(*yyInput))

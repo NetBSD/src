@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.5 1997/07/30 22:54:20 jtc Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.6 1997/10/18 08:40:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -407,7 +407,7 @@ ee_diagpath(ktent, arg)
 {
 	char path[40];
 
-	bzero(path, sizeof(path));
+	memset(path, 0, sizeof(path));
 	if (arg) {
 		if (strlen(arg) > sizeof(path))
 			BARF(ktent);
@@ -521,7 +521,7 @@ doio(ktent, buf, len, wr)
 	}
 
 	if (wr == IO_WRITE) {
-		if (bcmp(buf, buf2, len) == 0)
+		if (memcmp(buf, buf2, len) == 0)
 			goto done;
 
 		if (lseek(fd, (off_t)ktent->kt_offset, SEEK_SET) < (off_t)0) {
@@ -539,7 +539,7 @@ doio(ktent, buf, len, wr)
 			goto done;
 		}
 	} else
-		bcopy(buf2, buf, len);
+		memmove(buf, buf2, len);
 
  done:
 	free(buf2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.5 1997/07/30 22:54:31 jtc Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.6 1997/10/18 08:40:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -96,8 +96,8 @@ op_handler(keyword, arg)
 	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) < 0)
 		BARF("OPIOCGETOPTNODE", strerror(errno));
 
-	bzero(&opio_buf[0], sizeof(opio_buf));
-	bzero(&opio, sizeof(opio));
+	memset(&opio_buf[0], 0, sizeof(opio_buf));
+	memset(&opio, 0, sizeof(opio));
 	opio.op_nodeid = optnode;
 	opio.op_name = keyword;
 	opio.op_namelen = strlen(opio.op_name);
@@ -190,11 +190,11 @@ op_dump()
 	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) < 0)
 		err(1, "OPIOCGETOPTNODE");
 
-	bzero(&opio1, sizeof(opio1));
+	memset(&opio1, 0, sizeof(opio1));
 
 	/* This will grab the first property name from OPIOCNEXTPROP. */
-	bzero(buf1, sizeof(buf1));
-	bzero(buf2, sizeof(buf2));
+	memset(buf1, 0, sizeof(buf1));
+	memset(buf2, 0, sizeof(buf2));
 
 	opio1.op_nodeid = opio2.op_nodeid = optnode;
 
@@ -236,7 +236,7 @@ op_dump()
 			return;
 		}
 
-		bzero(opio2.op_buf, sizeof(buf4));
+		memset(opio2.op_buf, 0, sizeof(buf4));
 		opio2.op_buflen = sizeof(buf4);
 
 		if (ioctl(fd, OPIOCGET, (char *)&opio2) < 0)
@@ -255,8 +255,8 @@ op_dump()
 		 * Place the name of the last read value back into
 		 * opio1 so that we may obtain the next name.
 		 */
-		bzero(opio1.op_name, sizeof(buf1));
-		bzero(opio1.op_buf, sizeof(buf2));
+		memset(opio1.op_name, 0, sizeof(buf1));
+		memset(opio1.op_buf, 0, sizeof(buf2));
 		strcpy(opio1.op_name, opio2.op_name);	/* XXX strcpy is safe */
 	}
 	/* NOTREACHED */
