@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.4 2005/02/20 22:17:28 heas Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.5 2005/02/21 03:37:39 heas Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.4 2005/02/20 22:17:28 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.5 2005/02/21 03:37:39 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ kbd_sun_open(kbd)
 {
 	struct kbd_sun_softc *k = (struct kbd_sun_softc *)kbd;
 	struct kbd_state *ks;
-	int error, s;
+	int error, ntries, s;
 
 	if (kbd == NULL)
 		return (ENXIO);
@@ -134,9 +134,16 @@ kbd_sun_open(kbd)
 	kbd_sun_start_tx(k);
 	kbd_sun_drain_tx(k);
 
-	/* the wakeup for this is in kbd_was_reset(). */
-	error = tsleep((caddr_t)&ks->kbd_id, PZERO | PCATCH, devopn, hz);
-	if (error == EWOULDBLOCK) { /* no response */
+	/* the wakeup for this is in kbd_sun_was_reset(). */
+	for (ntries = 200; ntries; ntries--) {
+		error = tsleep((caddr_t)&ks->kbd_id, PZERO | PCATCH, devopn,
+				hz);
+		if (ks->kbd_id)
+			break;
+		DELAY(10000);
+	}
+
+	if (error == EWOULDBLOCK || ks->kbd_id == 0) { /* no response */
 		log(LOG_ERR, "%s: reset failed\n", kbd->k_dev.dv_xname);
 
 		/*
@@ -149,14 +156,22 @@ kbd_sun_open(kbd)
 
 	/* earlier than type 4 does not know "layout" */
 	if (ks->kbd_id >= KB_SUN4) {
+		ks->kbd_layout = 0xff;
+
 		/* ask for the layout */
 		kbd_sun_output(k, KBD_CMD_GETLAYOUT);
 		kbd_sun_start_tx(k);
 		kbd_sun_drain_tx(k);
 
-		/* the wakeup for this is in kbd_new_layout() */
-		error = tsleep((caddr_t)&ks->kbd_layout, PZERO | PCATCH, devopn, hz);
-		if (error == EWOULDBLOCK) { /* no response */
+		/* the wakeup for this is in kbd_sun_new_layout() */
+		for (ntries = 200; ntries; ntries--) {
+			error = tsleep((caddr_t)&ks->kbd_layout, PZERO | PCATCH,
+					devopn, hz);
+			if (ks->kbd_layout != 0xff || error)
+				break;
+			DELAY(10000);
+		}
+		if (error == EWOULDBLOCK || ks->kbd_layout == 0xff) {
 			log(LOG_ERR, "%s: no response to get_layout\n",
 			    kbd->k_dev.dv_xname);
 			error = 0;
