@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.6 2001/09/11 11:38:59 bjh21 Exp $ */
+/* $NetBSD: bus.h,v 1.7 2001/11/16 13:34:03 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -133,10 +133,10 @@ extern void bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
 				   bus_size_t, u_int16_t, bus_size_t);
 
 /* Copy operations. */
-extern void bus_space_copy_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-			     bus_space_handle_t, bus_size_t, bus_size_t);
-extern void bus_space_copy_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-			     bus_space_handle_t, bus_size_t, bus_size_t);
+extern void bus_space_copy_region_1(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+extern void bus_space_copy_region_2(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 /*
  * bus_dma stuff.  We don't support bus_dma yet, but some drivers need
