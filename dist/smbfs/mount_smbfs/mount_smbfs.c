@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.5 2003/02/24 09:13:08 jdolecek Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.6 2003/04/04 08:05:38 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -33,6 +33,10 @@
  *
  * from: Id: mount_smbfs.c,v 1.17 2002/04/10 04:17:51 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mount_smbfs.c,v 1.6 2003/04/04 08:05:38 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
