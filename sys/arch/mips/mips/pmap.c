@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41.2.4 1998/11/16 10:41:33 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41.2.5 1998/12/06 21:04:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.4 1998/11/16 10:41:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41.2.5 1998/12/06 21:04:00 drochner Exp $");
 
 /*
  *	Manages physical address maps.
@@ -250,12 +250,26 @@ pmap_bootstrap()
 
 	/*
 	 * Allocate a PTE table for the kernel.
-	 * The '1024' comes from PAGER_MAP_SIZE in vm_pager_init().
-	 * This should be kept in sync.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
 	Sysmapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
-		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 1024 + 256;
+		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG;
+	/*
+	 * Allocate PTE space space for u-areas (XXX)
+	 */
+	Sysmapsize += (maxproc * UPAGES);
+
+	/*
+	 * Allocate kernel virtual-address space for swap maps.
+	 * (This should be kept in sync with vm).
+	 */
+#if defined(UVM)
+	Sysmapsize += 2048;
+#else
+	/* the '1024' comes from PAGER_MAP_SIZE in vm_pager_init(). */
+	Sysmapsize += 1024;
+#endif
+
 #ifdef SYSVSHM
 	Sysmapsize += shminfo.shmall;
 #endif
@@ -728,9 +742,12 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
+
+#if !defined(UVM)
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
-				    ~PV_MODIFIED;
+				    ~(PV_MODIFIED|PV_REFERENCED);
+#endif
 
 
 			if (CPUISMIPS3)
@@ -784,9 +801,12 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
+
+#if !defined(UVM)
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
-				    ~PV_MODIFIED;
+				    ~(PV_MODIFIED|PV_REFERENCED);
+#endif
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -1649,22 +1669,6 @@ pmap_pageable(pmap, sva, eva, pageable)
 }
 
 /*
- *	Clear the modify bits on the specified physical page.
- */
-void
-pmap_clear_modify(pa)
-	paddr_t pa;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%lx)\n", pa);
-#endif
-	if (PAGE_IS_MANAGED(pa))
-		*pa_to_attribute(pa) &= ~PV_MODIFIED;
-}
-
-/*
  *	pmap_clear_reference:
  *
  *	Clear the reference bit on the specified physical page.
@@ -1678,9 +1682,8 @@ pmap_clear_reference(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
-#ifdef PMAP_REFERENCE
-	*pa_to_attribute(pa) &= ~PMAP_ATTR_REF;
-#endif
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) &= ~PV_REFERENCED;
 }
 
 /*
@@ -1693,11 +1696,43 @@ boolean_t
 pmap_is_referenced(pa)
 	paddr_t pa;
 {
-#ifdef PMAP_REFERENCE
-	return (*pa_to_attribute(pa) & PMAP_ATTR_REF);
-#else
-	return (FALSE);
+#if defined(UVM)
+	if (PAGE_IS_MANAGED(pa))
+		return (*pa_to_attribute(pa)  & PV_REFERENCED);
+#ifdef DEBUG
+	else
+		printf("pmap_is_referenced: pa %lx\n", pa);
 #endif
+#endif
+	return (FALSE);
+}
+
+void
+pmap_set_referenced(pa)
+	paddr_t pa;
+{
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) |= PV_MODIFIED;
+#ifdef DEBUG
+	else
+		printf("pmap_set_referenced(%lx)\n", pa);
+#endif
+}
+
+/*
+ *	Clear the modify bits on the specified physical page.
+ */
+void
+pmap_clear_modify(pa)
+	vm_offset_t pa;
+{
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_clear_modify(%lx)\n", pa);
+#endif
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) &= ~PV_MODIFIED;
 }
 
 /*
