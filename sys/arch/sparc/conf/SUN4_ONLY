@@ -1,11 +1,11 @@
-# $Id: TDR,v 1.18 1994/10/26 07:12:42 deraadt Exp $
+# $Id: SUN4_ONLY,v 1.1 1994/10/26 07:12:40 deraadt Exp $
 #
 # Kernel for Theo's wimpy sparcstation IPC
 
 include	"std.sparc"
-include	"std.sun4c"
+include	"std.sun4"
 
-options		"SUN4C"
+options		"SUN4"
 
 # obsolete timezone spec
 options               TIMEZONE=0, DST=0
@@ -48,7 +48,7 @@ options		LKM
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
 
-config		netbsd	root on sd0 swap on sd0
+config		netbsd	root nfs swap nfs
 
 scsibus* at esp?
 
@@ -56,6 +56,11 @@ scsibus* at esp?
 sd*	at scsibus? target ? drive ?
 st*	at scsibus? target ? drive ?
 cd*	at scsibus? target ? drive ?
+
+#ie0 at vmes0 addr 0xff31ff02 level 3 vector 0x74
+#ie1 at vmes0 addr 0xffe88000 level 3 vector 0x75
+#ie2 at vmes0 addr 0xff31ff02 level 3 vector 0x76
+#ie3 at vmes0 addr 0xff35ff02 level 3 vector 0x77
 
 pseudo-device	loop
 pseudo-device	pty	32
