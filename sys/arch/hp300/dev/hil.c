@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.36 1998/06/25 23:57:34 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.37 1998/11/09 15:53:51 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -881,12 +881,15 @@ hil_process_int(hilp, stat, c)
 	case HIL_DATA:
 		if (hilp->hl_actdev != 0)	/* Collecting poll data */
 			*hilp->hl_pollbp++ = c;
-		else if (hilp->hl_cmddev != 0)  /* Collecting cmd data */
-			if (hilp->hl_cmdending) {
+		else {
+			if (hilp->hl_cmddev != 0) {  /* Collecting cmd data */
+			   if (hilp->hl_cmdending) {
 				hilp->hl_cmddone = TRUE;
 				hilp->hl_cmdending = FALSE;
-			} else  
+			   } else  
 				*hilp->hl_cmdbp++ = c;
+		        }
+		}
 		return;
 		
 	case 0:		/* force full jump table */
