@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.2.6.3 2002/06/20 03:39:50 nathanw Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.2.6.4 2002/06/21 06:27:19 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -747,7 +747,10 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)
+	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	nop
+	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
+	nop
 	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
@@ -1965,16 +1968,16 @@ LEAF(MIPSX(proc_trampoline))
 END(MIPSX(proc_trampoline))
 
 /*
- * void mipsN_cpu_switch_resume(struct proc *newproc)
+ * void mipsN_cpu_switch_resume(struct lwp *newlwp)
  *
  * Wiredown the USPACE of newproc in TLB entry#0.  Check whether target
  * USPACE is already in another place of TLB before that, and make
  * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
-	lw	a2, P_MD_UPTE_1(a0)		# a2 = upte[1]
-	lw	v0, P_ADDR(a0)			# va = p->p_addr
+	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
+	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
+	lw	v0, L_ADDR(a0)			# va = l->l_addr
 	li	s0, MIPS_KSEG2_START
 	blt	v0, s0, resume
 	nop
