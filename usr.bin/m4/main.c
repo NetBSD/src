@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2001/11/14 06:16:09 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2001/11/14 14:57:04 tv Exp $	*/
 /*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2001/11/14 06:16:09 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2001/11/14 14:57:04 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ main(argc,argv)
 	/*
 	 * We need to know if -P is there before checking -D and -U.
 	 */
-	while ((c = getopt(argc, argv, "tPD:U:")) != -1)
+	while ((c = getopt(argc, argv, "D:I:PU:d:go:t:")) != -1)
 		if (c == 'P')
 			m4prefix = 1;
 	optind = 1;
@@ -234,7 +234,7 @@ main(argc,argv)
 			break;
 		case '?':
 		default:
-			usage();
+			usage(argv[0]);
 		}
 
         argc -= optind;

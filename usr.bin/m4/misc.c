@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2001/11/14 06:16:09 tv Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2001/11/14 14:57:04 tv Exp $	*/
 /*	$OpenBSD: misc.c,v 1.25 2001/10/10 11:17:37 espie Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.12 2001/11/14 06:16:09 tv Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2001/11/14 14:57:04 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,9 +298,11 @@ xstrdup(s)
 }
 
 void
-usage()
+usage(progname)
+	const char *progname;
 {
-	fprintf(stderr, "usage: m4 [-P] [-Dname[=val]] [-Uname] [-I dirname...]\n");
+	fprintf(stderr, "usage: %s [-Pg] [-Dname[=val]] [-I dirname] [-Uname]\n", progname);
+	fprintf(stderr, "\t[-d flags] [-o trfile] [-t macro]\n");
 	exit(1);
 }
 
