@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.9 2000/09/04 23:10:15 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.2 2000/10/11 20:23:50 is Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -4082,7 +4082,10 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 #endif
 	
 	va_start (list, fmt);
-	vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+
+	fmt = fbuf;
+	vsnprintf (mbuf, sizeof mbuf, fmt, list);
+	
 	va_end (list);
 
 	lix = 0;

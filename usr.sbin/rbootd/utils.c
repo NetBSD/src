@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.11 2000/03/27 17:07:23 kleink Exp $	*/
+/*	$NetBSD: utils.c,v 1.12 2000/10/11 20:23:56 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utils.c,v 1.11 2000/03/27 17:07:23 kleink Exp $");
+__RCSID("$NetBSD: utils.c,v 1.12 2000/10/11 20:23:56 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,8 @@ DispPkt(rconn, direct)
 	RMPCONN *rconn;
 	int direct;
 {
-	static char BootFmt[] = "\t\tRetCode:%u SeqNo:%lx SessID:%x Vers:%u";
-	static char ReadFmt[] = "\t\tRetCode:%u Offset:%lx SessID:%x\n";
+	static const char BootFmt[] = "\t\tRetCode:%u SeqNo:%lx SessID:%x Vers:%u";
+	static const char ReadFmt[] = "\t\tRetCode:%u Offset:%lx SessID:%x\n";
 
 	struct tm *tmp;
 	struct rmp_packet *rmp;
@@ -141,7 +141,7 @@ DispPkt(rconn, direct)
 			}
 			(void) fputc('\n', DbgFp);
 			(void) fprintf(DbgFp, BootFmt, rmp->r_brq.rmp_retcode,
-			        t, ntohs(rmp->r_brq.rmp_session),
+			        (unsigned long)t, ntohs(rmp->r_brq.rmp_session),
 			        ntohs(rmp->r_brq.rmp_version));
 			(void) fprintf(DbgFp, "\n\t\tMachine Type: ");
 			for (i = 0; i < RMP_MACHLEN; i++)
@@ -152,7 +152,7 @@ DispPkt(rconn, direct)
 			fprintf(DbgFp, "\tBoot Reply:\n");
 			GETWORD(rmp->r_brpl.rmp_seqno, t);
 			(void) fprintf(DbgFp, BootFmt, rmp->r_brpl.rmp_retcode,
-			        t, ntohs(rmp->r_brpl.rmp_session),
+			        (unsigned long)t, ntohs(rmp->r_brpl.rmp_session),
 			        ntohs(rmp->r_brpl.rmp_version));
 			DspFlnm(rmp->r_brpl.rmp_flnmsize,&rmp->r_brpl.rmp_flnm);
 			break;
@@ -160,7 +160,7 @@ DispPkt(rconn, direct)
 			(void) fprintf(DbgFp, "\tRead Request:\n");
 			GETWORD(rmp->r_rrq.rmp_offset, t);
 			(void) fprintf(DbgFp, ReadFmt, rmp->r_rrq.rmp_retcode,
-			        t, ntohs(rmp->r_rrq.rmp_session));
+			        (unsigned long)t, ntohs(rmp->r_rrq.rmp_session));
 			(void) fprintf(DbgFp, "\t\tNoOfBytes: %u\n",
 			        ntohs(rmp->r_rrq.rmp_size));
 			break;
@@ -168,7 +168,7 @@ DispPkt(rconn, direct)
 			(void) fprintf(DbgFp, "\tRead Reply:\n");
 			GETWORD(rmp->r_rrpl.rmp_offset, t);
 			(void) fprintf(DbgFp, ReadFmt, rmp->r_rrpl.rmp_retcode,
-			        t, ntohs(rmp->r_rrpl.rmp_session));
+			        (unsigned long)t, ntohs(rmp->r_rrpl.rmp_session));
 			(void) fprintf(DbgFp, "\t\tNoOfBytesSent: %ld\n",
 			        (long)(rconn->rmplen - RMPREADSIZE(0)));
 			break;
