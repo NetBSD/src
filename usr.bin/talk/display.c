@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.5 1997/10/20 00:23:17 lukem Exp $	*/
+/*	$NetBSD: display.c,v 1.6 1999/08/13 13:52:59 proff Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: display.c,v 1.5 1997/10/20 00:23:17 lukem Exp $");
+__RCSID("$NetBSD: display.c,v 1.6 1999/08/13 13:52:59 proff Exp $");
 #endif /* not lint */
 
 /*
@@ -136,6 +136,11 @@ display(win, text, size)
 		if (*text == '\f') {
 			if (win == &my_win)
 				wrefresh(curscr);
+			text++;
+			continue;
+		}
+		if (*text == '\07') {
+			beep();
 			text++;
 			continue;
 		}
