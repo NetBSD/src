@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.2 2001/07/27 18:38:55 scw Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.3 2001/07/31 02:17:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ vmetwo_probe(bus_space_tag_t bt, bus_addr_t offset)
 			 */
 			extern void pcctwosoftintrinit(void);
 			bus_space_unmap(bt, bh, VME2LCSR_SIZE);
-			vmetwo_not_presnt = 1;
+			vmetwo_not_present = 1;
 			pcctwosoftintrinit();
 			return (0);
 		}
