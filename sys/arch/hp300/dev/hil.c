@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.22 1996/02/14 02:44:24 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.23 1996/09/12 01:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
+#include <sys/poll.h>
 
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>
@@ -681,19 +682,24 @@ hilmmap(dev, off, prot)
 }
 
 /*ARGSUSED*/
-hilselect(dev, rw, p)
+int
+hilpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	register struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
 	register struct hilloopdev *dptr;
 	register struct hiliqueue *qp;
 	register int mask;
-	int s, device;
-	
-	if (rw == FWRITE)
-		return (1);
+	int s, device, revents;
+
+	revents = events & (POLLOUT | POLLWRNORM);
+
+	/* Attempt to safe some work. */
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
+		return (revents);
+
 	device = HILUNIT(dev);
 
 	/*
@@ -703,13 +709,12 @@ hilselect(dev, rw, p)
 	dptr = &hilp->hl_device[device];
 	if (dptr->hd_flags & HIL_READIN) {
 		s = splhil();
-		if (dptr->hd_queue.c_cc) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &dptr->hd_selr);
+		if (dptr->hd_queue.c_cc > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &dptr->hd_selr);
 		splx(s);
-		return (0);
+		return (revents);
 	}
 
 	/*
@@ -718,7 +723,7 @@ hilselect(dev, rw, p)
 	 * This is primarily to be consistant with HP-UX.
 	 */
 	if (device && (dptr->hd_flags & (HIL_ALIVE|HIL_PSEUDO)) != HIL_ALIVE)
-		return (1);
+		return (revents | (events & (POLLIN | POLLRDNORM)));
 
 	/*
 	 * Select on loop device is special.
@@ -738,12 +743,12 @@ hilselect(dev, rw, p)
 		    qp->hq_eventqueue->hil_evqueue.head !=
 		    qp->hq_eventqueue->hil_evqueue.tail) {
 			splx(s);
-			return (1);
+			return (revents | (events & (POLLIN | POLLRDNORM)));
 		}
 
 	selrecord(p, &dptr->hd_selr);
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 /*ARGSUSED*/
