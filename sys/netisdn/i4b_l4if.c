@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.14 2003/05/08 21:15:13 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.15 2003/09/25 14:17:57 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.14 2003/05/08 21:15:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.15 2003/09/25 14:17:57 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -291,7 +291,12 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		d->bch_state[cd->channelid] = chstate;
-		i4b_l2_channel_set_state(cd->l3drv, cd->channelid, chstate);
+		/*
+		 * XXX: don't call l2 function for active cards
+		 */
+		if (d->l3driver->N_DOWNLOAD == NULL)
+			i4b_l2_channel_set_state(cd->l3drv,
+			    cd->channelid, chstate);
 		update_controller_leds(d);
 	}
 	else
