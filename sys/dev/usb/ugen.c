@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.33 2000/02/02 13:20:59 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.34 2000/02/08 18:45:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -710,7 +710,7 @@ ugenintr(xfer, addr, status)
 		return;
 	}
 
-	usbd_get_xfer_status(xfer, 0, 0, &count, 0);
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	ibuf = sce->ibuf;
 
 	DPRINTFN(5, ("ugenintr: xfer=%p status=%d count=%d\n", 

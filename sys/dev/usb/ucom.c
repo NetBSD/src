@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.14 2000/02/08 09:18:01 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.15 2000/02/08 18:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -891,7 +891,7 @@ ucomwritecb(xfer, p, status)
 		return;
 	}
 
-	usbd_get_xfer_status(xfer, 0, 0, &cc, 0);
+	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 	DPRINTFN(5,("ucomwritecb: cc=%d\n", cc));
 
 	s = spltty();
@@ -948,7 +948,7 @@ ucomreadcb(xfer, p, status)
 		return;
 	}
 
-	usbd_get_xfer_status(xfer, 0, (void **)&cp, &cc, 0);
+	usbd_get_xfer_status(xfer, NULL, (void **)&cp, &cc, NULL);
 	DPRINTFN(5,("ucomreadcb: got %d chars, tp=%p\n", cc, tp));
 	s = spltty();
 	/* Give characters to tty layer. */

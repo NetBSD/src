@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.26 1999/11/28 22:49:53 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.27 2000/02/08 18:45:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -524,7 +524,7 @@ usbd_bulk_transfer(xfer, pipe, flags, timeout, buf, size, lbl)
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);
 	}
-	usbd_get_xfer_status(xfer, 0, 0, size, &err);
+	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
 	DPRINTFN(1,("usbd_bulk_transfer: transferred %d\n", *size));
 	if (err) {
 		DPRINTF(("usbd_bulk_transfer: error=%d\n", err));
