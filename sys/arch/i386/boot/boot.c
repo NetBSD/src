@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28 1995/03/12 00:10:57 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.29 1995/12/23 17:21:27 perry Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -67,11 +67,18 @@ char *names[] = {
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
-extern char *version;
+/* Number of seconds that prompt should wait during boot */
+#define PROMPTWAIT 5
 
+static void getbootdev __P((int *howto));
+static void loadprog __P((int howto));
+
+extern char *version;
 extern int end;
+
+void
 boot(drive)
-int drive;
+	int drive;
 {
 	int loadflags, currname = 0;
 	char *t;
@@ -106,8 +113,9 @@ loadstart:
 	goto loadstart;
 }
 
+static void
 loadprog(howto)
-	int		howto;
+	int howto;
 {
 	long int startaddr;
 	long int addr;	/* physical address.. not directly useable */
@@ -265,17 +273,18 @@ nosyms:
 	startprog((int)startaddr, argv);
 }
 
-char namebuf[100];
+static void
 getbootdev(howto)
 	int *howto;
 {
+	static char namebuf[100]; /* don't allocate on stack! */
 	char c, *ptr = namebuf;
 	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] :- ",
 	    devs[maj], unit, 'a'+part, name);
 #ifdef CHECKSUM
 	cflag = 0;
 #endif
-	if (gets(namebuf)) {
+	if (awaitkey(PROMPTWAIT) && gets(namebuf)) {
 		while (c = *ptr) {
 			while (c == ' ')
 				c = *++ptr;
