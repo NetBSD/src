@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.33 1999/02/24 19:25:56 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.34 1999/02/25 03:43:14 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,11 +27,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.33 1999/02/24 19:25:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.34 1999/02/25 03:43:14 thorpej Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <vm/vm.h>
+#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
@@ -55,23 +58,35 @@ extern struct prom_vec prom_dispatch_v;
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int		prom_mapped = 1;	/* Is PROM still mapped? */
-pt_entry_t	rom_pte, saved_pte[1];	/* XXX */
 
-static pt_entry_t *rom_lev1map __P((void));
+struct simplelock prom_slock;
+
+#if defined(MULTIPROCESSOR)
+pt_entry_t	*prom_lev1map, *saved_lev1map;
+static pt_entry_t *prom_swaplev1map __P((pt_entry_t *));
 
 static pt_entry_t *
-rom_lev1map()
+prom_swaplev1map(l1map)
+	pt_entry_t *l1map;
 {
 	struct alpha_pcb *apcb;
-	extern pt_entry_t *kernel_lev1map;
+	pt_entry_t *rl1map;
 
-	/*
-	 * We may be called before the first context switch
-	 * after alpha_init(), in which case we just need
-	 * to use the kernel kernel_lev1map.
-	 */
-	if (curpcb == 0)
-		return (kernel_lev1map);
+	apcb = (struct alpha_pcb *)ALPHA_PHYS_TO_K0SEG(curpcb);
+
+	rl1map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT);
+	apcb->apcb_ptbr = ALPHA_K0SEG_TO_PHYS((vaddr_t)l1map) >> PGSHIFT;
+	(void) alpha_pal_swpctx(curpcb);
+	return (rl1map);
+}
+#else /* ! MULTIPROCESSOR */
+pt_entry_t	prom_pte, saved_pte[1];	/* XXX */
+static pt_entry_t *prom_lev1map __P((void));
+
+static pt_entry_t *
+prom_lev1map()
+{
+	struct alpha_pcb *apcb;
 
 	/*
 	 * Find the level 1 map that we're currently running on.
@@ -80,6 +95,7 @@ rom_lev1map()
 
 	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
 }
+#endif /* MULTIPROCESSOR */
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 void
@@ -92,6 +108,8 @@ init_prom_interface(rpb)
 
         prom_dispatch_v.routine_arg = c->crb_v_dispatch;
         prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
+
+	simple_lock_init(&prom_slock);
 }
 
 void
@@ -115,21 +133,31 @@ static void prom_cache_sync __P((void));
 int
 prom_enter()
 {
-	int s = splhigh();
+	int s;
+
+	s = splhigh();
+	simple_lock(&prom_slock);
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	pt_entry_t *lev1map;
-
 	/*
-	 * XXX THIS IS COMPLETELY BROKEN ON MULTIPROCESSOR SYSTEMS!
+	 * If we have not yet switched out of the PROM's context
+	 * (i.e. the first one after alpha_init()), then the PROM
+	 * is still mapped, regardless of the `prom_mapped' setting.
 	 */
-
-	if (!prom_mapped) {
+	if (prom_mapped == 0 && curpcb != 0) {
 		if (!pmap_uses_prom_console())
 			panic("prom_enter");
-		lev1map = rom_lev1map();	/* XXX */
-		saved_pte[0] = lev1map[0];	/* XXX */
-		lev1map[0] = rom_pte;		/* XXX */
+#if defined(MULTIPROCESSOR)
+		saved_lev1map = prom_swaplev1map(prom_lev1map);
+#else
+		{
+			pt_entry_t *lev1map;
+
+			lev1map = prom_lev1map();	/* XXX */
+			saved_pte[0] = lev1map[0];	/* XXX */
+			lev1map[0] = prom_pte;		/* XXX */
+		}
+#endif
 		prom_cache_sync();		/* XXX */
 	}
 #endif
@@ -142,16 +170,26 @@ prom_leave(s)
 {
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	pt_entry_t *lev1map;
-
-	if (!prom_mapped) {
+	/*
+	 * See comment above.
+	 */
+	if (prom_mapped == 0 && curpcb != 0) {
 		if (!pmap_uses_prom_console())
 			panic("prom_leave");
-		lev1map = rom_lev1map();	/* XXX */
-		lev1map[0] = saved_pte[0];	/* XXX */
+#if defined(MULTIPROCESSOR)
+		(void) prom_swaplev1map(saved_lev1map);
+#else
+		{
+			pt_entry_t *lev1map;
+
+			lev1map = prom_lev1map();	/* XXX */
+			lev1map[0] = saved_pte[0];	/* XXX */
+		}
+#endif
 		prom_cache_sync();		/* XXX */
 	}
 #endif
+	simple_unlock(&prom_slock);
 	splx(s);
 }
 
