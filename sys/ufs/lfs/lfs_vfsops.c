@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.135 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.136 2003/10/25 18:26:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.135 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.136 2003/10/25 18:26:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -659,9 +659,9 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 {
 	struct vnode *devvp;
 	struct buf *bp, *dbp;
-	int error, nblocks, ninos, i, j;
+	int error, nblocks = 0, ninos, i, j; /* XXX: gcc */
 	SEGSUM *ssp;
-	u_long *dp, *datap; /* XXX u_int32_t */
+	u_long *dp = NULL, *datap = NULL; /* XXX u_int32_t */
 	daddr_t oldoffset;
 	int32_t *iaddr;	/* XXX ondisk32 */
 	FINFO *fip;
