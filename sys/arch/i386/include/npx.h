@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.18 2001/08/03 01:46:08 thorpej Exp $	*/
+/*	$NetBSD: npx.h,v 1.19 2002/10/01 12:57:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -179,10 +179,10 @@ struct emcsts {
 
 #ifdef _KERNEL
 
-void	probeintr __P((void));
-void	probetrap __P((void));
-int	npx586bug1 __P((int, int));
-
+void	probeintr(void);
+void	probetrap(void);
+int	npx586bug1(int, int);
+void 	npxinit(struct cpu_info *);
 void	process_xmm_to_s87(const struct savexmm *, struct save87 *);
 void	process_s87_to_xmm(const struct save87 *, struct savexmm *);
 

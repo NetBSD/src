@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.512 2002/09/25 11:49:51 martti Exp $
+# $NetBSD: GENERIC,v 1.513 2002/10/01 12:56:39 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.512 $"
+#ident 		"GENERIC-$Revision: 1.513 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,7 +40,8 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
-options 	PERFCTRS	# performance-monitoring counters support
+# doesn't work with MP just yet..
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -162,7 +163,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -220,6 +221,9 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+
+cpu* at mainbus?
+#ioapic* at mainbus?
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -289,6 +293,11 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
+
+#
+
+p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
+
 
 # EISA bus support
 eisa0	at mainbus?
@@ -990,8 +999,9 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
-options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# RAIDframe is broken with MULTIPROCESSOR / LOCKDEBUG
+#pseudo-device	raid		8	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1
@@ -1000,6 +1010,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
