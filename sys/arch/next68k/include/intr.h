@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1999/06/15 15:26:34 kleink Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1999/07/03 08:22:53 dbj Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -84,44 +84,19 @@
 
 /****************************************************************/
 
-#define spldma()        spl6()
-
-#define splscc()        spl5()
-
-#define splsched()      spl3()
-
-/* IPL used by soft interrupts: netintr(), softclock() */
-#define splsoftclock()  spl1()
-#define splsoftnet()    spl2()
-
-
-/* Highest block device (strategy) IPL. */
-#define splbio()        spl3()
-
-/* Highest tty device IPL. */
-#define spltty()        spl1()
-
-/* Highest network interface IPL. */
-#define splnet()        spl2()
-
-/*
- * Requirement: imp >= (highest network, tty, or disk IPL)
- * This is used mostly in the VM code. (Why not splvm?)
- * Note that the VM code runs at spl7 during kernel
- * initialization, and later at spl0, so we have to 
- * use splraise to avoid enabling interrupts early.
- */
-#if 0
-#define splimp()        _splraise(PSL_S|PSL_IPL3)
-#else
-#define splimp()        _splraise(PSL_S|PSL_IPL6)
-#endif
-
-#define splclock()      spl6()
-#define splstatclock()  splclock()
-
-/* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
+#define splserial()     _splraise(PSL_S|PSL_IPL5)
+#define splsched()      _splraise(PSL_S|PSL_IPL3)
+#define splclock()      _splraise(PSL_S|PSL_IPL6)
+#define splstatclock()  splclock()
+#define splimp()        _splraise(PSL_S|PSL_IPL6)
+#define spltty()        _splraise(PSL_S|PSL_IPL3)
+#define splbio()        _splraise(PSL_S|PSL_IPL3)
+#define splnet()        _splraise(PSL_S|PSL_IPL3)
+#define splsoftnet()    _splraise(PSL_S|PSL_IPL2)
+#define splsoftclock()  spl1()
+
+#define spldma()        _splraise(PSL_S|PSL_IPL6)
 
 /****************************************************************/
 
