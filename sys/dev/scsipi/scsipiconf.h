@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.13 2001/04/11 01:16:05 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.14 2001/04/22 16:40:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -337,6 +337,7 @@ struct scsipi_periph {
 							points */
 	int	periph_openings;	/* max # of outstanding commands */
 	int	periph_active;		/* current # of outstanding commands */
+	int	periph_sent;		/* current # of commands sent to adapt*/
 
 	int	periph_mode;		/* operation modes, CAP bits */
 	int	periph_period;		/* sync period (factor) */
