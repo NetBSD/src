@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.26 1998/05/14 20:55:51 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.27 1998/05/14 22:48:50 kml Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.26 1998/05/14 20:55:51 kml Exp $");
+__RCSID("$NetBSD: route.c,v 1.27 1998/05/14 22:48:50 kml Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,9 +495,9 @@ p_rtentry(rt)
 	p_sockaddr(&addr, &mask, rt->rt_flags, WID_DST);
 	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
+	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6ld", rt->rt_rmx.rmx_mtu); 
+		printf("%6lu", rt->rt_rmx.rmx_mtu); 
 	else
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
