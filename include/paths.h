@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.15.2.3 2002/03/11 21:07:50 nathanw Exp $	*/
+/*	$NetBSD: paths.h,v 1.15.2.4 2002/03/22 21:10:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,6 +65,7 @@
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
+#define	_PATH_I18NMODULE "/usr/lib/i18n"
 #define	_PATH_KMEM	"/dev/kmem"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
 #define	_PATH_LOCALE	"/usr/share/locale"
