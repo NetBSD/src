@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.8 2002/07/04 14:43:49 junyoung Exp $ */
+/* $NetBSD: lunafb.c,v 1.9 2002/08/06 22:48:13 itojun Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.8 2002/07/04 14:43:49 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.9 2002/08/06 22:48:13 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ omgetcmap(sc, p)
         int cmsize;
 
 	cmsize = sc->sc_dc->dc_cmsize;
-	if (index >= cmsize || (index + count) > cmsize)
+	if (index >= cmsize || count > cmsize - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
