@@ -1,4 +1,4 @@
-/*	$NetBSD: btvar.h,v 1.3 1999/08/26 22:53:42 thorpej Exp $ */
+/*	$NetBSD: btvar.h,v 1.4 2000/04/04 21:47:17 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -61,8 +61,8 @@ union bt_cmap {
 /*
  * Routines in bt_subr.c.
  */
-int	bt_getcmap __P((struct fbcmap *, union bt_cmap *, int));
-int	bt_putcmap __P((struct fbcmap *, union bt_cmap *, int));
+int	bt_getcmap __P((struct fbcmap *, union bt_cmap *, int, int));
+int	bt_putcmap __P((struct fbcmap *, union bt_cmap *, int, int));
 void	bt_initcmap __P((union bt_cmap *, int));
 
 /*

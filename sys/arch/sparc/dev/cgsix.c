@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.48 2000/03/31 12:58:54 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.49 2000/04/04 21:47:17 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -552,12 +552,12 @@ cgsixioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGETCMAP:
-		return (bt_getcmap((struct fbcmap *)data, &sc->sc_cmap, 256));
+#define	p ((struct fbcmap *)data)
+		return (bt_getcmap(p, &sc->sc_cmap, 256, 1));
 
 	case FBIOPUTCMAP:
 		/* copy to software map */
-#define	p ((struct fbcmap *)data)
-		error = bt_putcmap(p, &sc->sc_cmap, 256);
+		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
 		if (error)
 			return (error);
 		/* now blast them into the chip */
@@ -605,7 +605,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 		}
 		if (p->cmap.red != NULL) {
 			error = bt_getcmap(&p->cmap,
-			    (union bt_cmap *)&cc->cc_color, 2);
+			    (union bt_cmap *)&cc->cc_color, 2, 1);
 			if (error)
 				return (error);
 		} else {
@@ -629,7 +629,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 			 * copies are small (8 bytes)...
 			 */
 			tcm = cc->cc_color;
-			error = bt_putcmap(&p->cmap, (union bt_cmap *)&tcm, 2);
+			error = bt_putcmap(&p->cmap, (union bt_cmap *)&tcm, 2, 1);
 			if (error)
 				return (error);
 		}
