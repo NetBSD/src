@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.60 2003/03/21 06:26:36 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.61 2003/03/28 08:03:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,27 +76,66 @@
 /*
  * Compile-time options for LFS.
  */
-#define LFS_IFIND_RETRIES	16
-#define LFS_EAGAIN_FAIL		 /* markv fail with EAGAIN if ino is locked */
-#define LFS_DEBUG_RFW		 /* print roll-forward debugging info */
-#define LFS_LOGLENGTH 1024
+#define LFS_IFIND_RETRIES  16
+#define LFS_EAGAIN_FAIL		/* markv fail with EAGAIN if ino is locked */
+#define LFS_DEBUG_RFW		/* print roll-forward debugging info */
+#define LFS_LOGLENGTH      1024 /* size of debugging log */
+#define LFS_MAX_ACTIVE	   10	/* Dirty segments before ckp forced */
 
 /* #define DEBUG_LFS */		 /* Intensive debugging of LFS subsystem */
 
 /*
- * Parameters and generic definitions
+ * Fixed filesystem layout parameters
  */
-#define BW_CLEAN	1
-#define MIN_FREE_SEGS	2
-#define LFS_MAX_ACTIVE	10
-#ifndef LFS_ATIME_IFILE
-# define LFS_ATIME_IFILE 0
-#endif
-/* Max block count for lfs_markv() */
-#define LFS_MARKV_MAXBLKCNT		65536
+#define	LFS_LABELPAD	8192		/* LFS label size */
+#define	LFS_SBPAD	8192		/* LFS superblock size */
 
-/* Local definition for LFS's usage of PG_PAGER1 */
-#define PG_DELWRI	PG_PAGER1
+#define	LFS_UNUSED_INUM	0		/* 0: out of band inode number */
+#define	LFS_IFILE_INUM	1		/* 1: IFILE inode number */
+					/* 2: Root inode number */
+#define	LOSTFOUNDINO	3		/* 3: lost+found inode number */
+#define	LFS_FIRST_INUM	4		/* 4: first free inode number */
+
+#define	LFS_V1_SUMMARY_SIZE	512     /* V1 fixed summary size */
+#define	LFS_DFL_SUMMARY_SIZE	512	/* Default summary size */
+
+#define LFS_MAX_DADDR	0x7fffffff	/* Highest addressable fsb */
+
+/* Adjustable filesystem parameters */
+#define MIN_FREE_SEGS	2
+#ifndef LFS_ATIME_IFILE
+# define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
+#endif
+#define LFS_MARKV_MAXBLKCNT	65536	/* Max block count for lfs_markv() */
+
+/* Misc. definitions */
+#define BW_CLEAN	1		/* Flag for lfs_bwrite_ext() */
+#define PG_DELWRI	PG_PAGER1	/* Local def for delayed pageout */
+
+/* Resource limits */
+#define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
+#define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
+#define LFS_MAX_BYTES	    (((bufpages >> 2) - 10) * NBPG)
+#define LFS_WAIT_BYTES	    (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
+#define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
+#define LFS_MAX_PAGES \
+     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
+#define LFS_WAIT_PAGES \
+     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
+#define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
+
+
+/*
+ * Reserved blocks for lfs_malloc
+ */
+
+/* Structure to keep reserved blocks */
+typedef struct lfs_res_blk {
+	void *p;
+	LIST_ENTRY(lfs_res_blk) res;
+	int size;
+	char inuse;
+} res_t;
 
 /* Types for lfs_newbuf and lfs_malloc */
 #define LFS_NB_UNKNOWN -1
@@ -115,42 +154,29 @@
 #define LFS_N_CLEAN	0
 
 /* Total count of "large" (non-pool) types */
-#define LFS_N_TOTAL (LFS_N_SUMMARIES + LFS_N_SBLOCKS + LFS_N_IBLOCKS + LFS_N_CLUSTERS + LFS_N_CLEAN)
+#define LFS_N_TOTAL (LFS_N_SUMMARIES + LFS_N_SBLOCKS + LFS_N_IBLOCKS +	\
+		     LFS_N_CLUSTERS + LFS_N_CLEAN)
 
 /* Counts for pool types */
 #define LFS_N_CL	LFS_N_CLUSTERS
 #define LFS_N_BPP	2
 #define LFS_N_SEG	2
 
-/* Structure to keep reserved blocks */
-typedef struct lfs_res_blk {
-	void *p;
-	LIST_ENTRY(lfs_res_blk) res;
-	int size;
-	char inuse;
-} res_t;
-
 /*
- * #define WRITE_THRESHHOLD    ((nbuf >> 1) - 10)
- * #define WAIT_THRESHHOLD     (nbuf - (nbuf >> 2) - 10)
+ * "struct buf" associated definitions
  */
-#define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
-#define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
-/* These are new ... is LFS taking up too much memory in its buffers? */
-#define LFS_MAX_BYTES	    (((bufpages >> 2) - 10) * NBPG)
-#define LFS_WAIT_BYTES	    (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
-#define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define LFS_BUFWAIT	    2
 
-#define LFS_MAX_PAGES \
-     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
-#define LFS_WAIT_PAGES \
-     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
+/* Unassigned disk addresses. */
+#define	UNASSIGNED	-1
+#define UNWRITTEN	-2
 
-#define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
-     (bp)->b_iodone == lfs_callback)
+/* Unused logical block number */
+#define LFS_UNUSED_LBN	-1
 
-#define LFS_LOCK_BUF(bp) do {						\
+/* Determine if a buffer belongs to the ifile */
+#define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
+
+# define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
@@ -158,7 +184,7 @@ typedef struct lfs_res_blk {
 	(bp)->b_flags |= B_LOCKED;					\
 } while (0)
 
-#define LFS_UNLOCK_BUF(bp) do {						\
+# define LFS_UNLOCK_BUF(bp) do {					\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
@@ -169,8 +195,12 @@ typedef struct lfs_res_blk {
 	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
 
-#ifdef DEBUG_LOCKED_LIST
-# define LFS_DEBUG_COUNTLOCKED(m) do {					\
+#ifdef _KERNEL
+# define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
+     (bp)->b_iodone == lfs_callback)
+
+# ifdef DEBUG_LOCKED_LIST
+#  define LFS_DEBUG_COUNTLOCKED(m) do {					\
 	int _s;								\
 	extern int locked_queue_count;					\
 	extern long locked_queue_bytes;					\
@@ -179,9 +209,56 @@ typedef struct lfs_res_blk {
 	splx(_s);							\
 	wakeup(&locked_queue_count);					\
 } while (0)
-#else
-# define LFS_DEBUG_COUNTLOCKED(m)
-#endif
+# else
+#  define LFS_DEBUG_COUNTLOCKED(m)
+# endif
+
+/* log for debugging writes to the Ifile */
+# ifdef DEBUG
+struct lfs_log_entry {
+	char *op;
+	char *file;
+	int line;
+	daddr_t block;
+	unsigned long flags;
+};
+extern int lfs_lognum;
+extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
+#  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
+#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags) do {	\
+	int _s;								\
+									\
+	_s = splbio();							\
+	lfs_log[lfs_lognum].op = theop;					\
+	lfs_log[lfs_lognum].file = thefile;				\
+	lfs_log[lfs_lognum].line = (theline);				\
+	lfs_log[lfs_lognum].block = (lbn);				\
+	lfs_log[lfs_lognum].flags = (theflags);				\
+	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
+	splx(_s);							\
+} while (0)
+
+#  define LFS_BCLEAN_LOG(fs, bp) do {					\
+	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
+		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
+			      bp->b_lblkno, bp->b_flags);		\
+} while (0)
+# else /* ! DEBUG */
+#  define LFS_BCLEAN_LOG(fs, bp)
+#  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+# endif /* ! DEBUG */
+#else /* ! _KERNEL */
+# define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+#endif /* _KERNEL */
+	
+/*
+ * "struct inode" associated definitions
+ */
+
+/* Address calculations for metadata located in the inode */
+#define	S_INDIR(fs)	-NDADDR
+#define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
+#define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
@@ -213,39 +290,6 @@ typedef struct lfs_res_blk {
 	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
-#ifdef DEBUG
-struct lfs_log_entry {
-	char *op;
-	char *file;
-	int line;
-	daddr_t block;
-	unsigned long flags;
-};
-extern int lfs_lognum;
-extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
-# define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
-# define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags) do { \
-	int _s;							\
-								\
-	_s = splbio();						\
-	lfs_log[lfs_lognum].op = theop;				\
-	lfs_log[lfs_lognum].file = thefile;			\
-	lfs_log[lfs_lognum].line = (theline);			\
-	lfs_log[lfs_lognum].block = (lbn);			\
-	lfs_log[lfs_lognum].flags = (theflags);			\
-	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;		\
-	splx(_s);						\
-} while (0)
-
-# define LFS_BCLEAN_LOG(fs, bp) do {					\
-	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
-		LFS_ENTER_LOG("clear", __FILE__, __LINE__, bp->b_lblkno, bp->b_flags); \
-} while (0)
-#else
-# define LFS_BCLEAN_LOG(fs, bp)
-# define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
-#endif
-	
 #define LFS_ITIMES(ip, acc, mod, cre)  do {				\
 	struct lfs *_fs = (ip)->i_lfs;					\
 									\
@@ -253,13 +297,13 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 		(ip)->i_ffs_atime = (acc)->tv_sec;			\
 		(ip)->i_ffs_atimensec = (acc)->tv_nsec;			\
 		if ((ip)->i_lfs->lfs_version > 1) {			\
-			struct buf *ibp;				\
-			IFILE *ifp;					\
+			struct buf *_ibp;				\
+			IFILE *_ifp;					\
 									\
-			LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);	\
-			ifp->if_atime_sec = (acc)->tv_sec;		\
-			ifp->if_atime_nsec = (acc)->tv_nsec;		\
-			LFS_BWRITE_LOG(ibp);				\
+			LFS_IENTRY(_ifp, ip->i_lfs, ip->i_number, _ibp); \
+			_ifp->if_atime_sec = (acc)->tv_sec;		\
+			_ifp->if_atime_nsec = (acc)->tv_nsec;		\
+			LFS_BWRITE_LOG(_ibp);				\
 			_fs->lfs_flags |= LFS_IFDIRTY;			\
 		} else {						\
 			LFS_SET_UINO(ip, IN_ACCESSED);			\
@@ -281,25 +325,21 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 } while (0)
 
 /*
- * How to find out whether a vnode had dirty buffers or pages,
- * to know whether it needs to retain IN_MODIFIED after a write.
+ * "struct vnode" associated definitions
  */
+
+/* Heuristic emptiness measure */
 #define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
 			  !((vp)->v_flag & VONWORKLST))
 
-/*
- * WRITEINPROG does not use VPISEMPTY because any dirty pages will
- * have been given buffer headers, if they are "in progress".
- */
+/* XXX Shouldn't we use v_numoutput instead? */
 #define WRITEINPROG(vp) ((vp)->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & \
 				(IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
 
-/* Here begins the berkeley code */
 
-#define	LFS_LABELPAD	8192		/* LFS label size */
-#define	LFS_SBPAD	8192		/* LFS superblock size */
-
-/* On-disk and in-memory checkpoint segment usage structure. */
+/*
+ * On-disk and in-memory checkpoint segment usage structure.
+ */
 typedef struct segusage SEGUSE;
 struct segusage {
 	u_int32_t su_nbytes;		/* 0: number of live bytes */
@@ -329,7 +369,33 @@ struct segusage_v1 {
 #define	SEGTABSIZE_SU(fs)						\
 	(((fs)->lfs_nseg + SEGUPB(fs) - 1) / (fs)->lfs_sepb)
 
-/* On-disk file information.  One per file with data blocks in the segment. */
+/* Read in the block with a specific segment usage entry from the ifile. */
+#define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
+	int _e;								\
+	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
+	if ((_e = bread((F)->lfs_ivnode,				\
+	    ((IN) / (F)->lfs_sepb) + (F)->lfs_cleansz,			\
+	    (F)->lfs_bsize, NOCRED, &(BP))) != 0)			\
+		panic("lfs: ifile read: %d", _e);			\
+	if ((F)->lfs_version == 1)					\
+		(SP) = (SEGUSE *)((SEGUSE_V1 *)(BP)->b_data +		\
+			((IN) & ((F)->lfs_sepb - 1)));			\
+	else								\
+		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % (F)->lfs_sepb);	\
+} while (0)
+
+#define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
+	if ((SP)->su_nbytes == 0)					\
+		(SP)->su_flags |= SEGUSE_EMPTY;				\
+	else								\
+		(SP)->su_flags &= ~SEGUSE_EMPTY;			\
+	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
+	LFS_BWRITE_LOG(BP);						\
+} while (0)
+
+/*
+ * On-disk file information.  One per file with data blocks in the segment.
+ */
 typedef struct finfo FINFO;
 struct finfo {
 	u_int32_t fi_nblocks;		/* number of blocks */
@@ -338,11 +404,165 @@ struct finfo {
 	u_int32_t fi_lastlength;	/* length of last block in array */
 	int32_t	  fi_blocks[1];		/* array of logical block numbers */
 };
-
 /* sizeof FINFO except fi_blocks */
 #define	FINFOSIZE	(sizeof(FINFO) - sizeof(int32_t))
 
-/* On-disk super block. */
+/*
+ * Index file inode entries.
+ */
+typedef struct ifile IFILE;
+struct ifile {
+	u_int32_t if_version;		/* inode version number */
+#define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
+	int32_t	  if_daddr;		/* inode disk address */
+	ino_t	  if_nextfree;		/* next-unallocated inode */
+	u_int32_t if_atime_sec;		/* Last access time, seconds */
+	u_int32_t if_atime_nsec;	/* and nanoseconds */
+};
+
+typedef struct ifile_v1 IFILE_V1;
+struct ifile_v1 {
+	u_int32_t if_version;		/* inode version number */
+	int32_t	  if_daddr;		/* inode disk address */
+	ino_t	  if_nextfree;		/* next-unallocated inode */
+#if LFS_ATIME_IFILE
+	struct timespec if_atime;	/* Last access time */
+#endif
+};
+
+/*
+ * LFSv1 compatibility code is not allowed to touch if_atime, since it
+ * may not be mapped!
+ */
+/* Read in the block with a specific inode from the ifile. */
+#define	LFS_IENTRY(IP, F, IN, BP) do {					\
+	int _e;								\
+	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
+	if ((_e = bread((F)->lfs_ivnode,				\
+	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
+	(F)->lfs_bsize, NOCRED, &(BP))) != 0)				\
+		panic("lfs: ifile read %d", _e);			\
+	if ((F)->lfs_version == 1)					\
+		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
+				 (IN) % (F)->lfs_ifpb);			\
+	else								\
+		(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;	\
+} while (0)
+
+/*
+ * Cleaner information structure.  This resides in the ifile and is used
+ * to pass information from the kernel to the cleaner.
+ */
+typedef struct _cleanerinfo {
+	u_int32_t clean;		/* number of clean segments */
+	u_int32_t dirty;		/* number of dirty segments */
+	u_int32_t bfree;		/* disk blocks free */
+	int32_t	  avail;		/* disk blocks available */
+	u_int32_t free_head;		/* head of the inode free list */
+	u_int32_t free_tail;		/* tail of the inode free list */
+} CLEANERINFO;
+
+#define	CLEANSIZE_SU(fs)						\
+	((sizeof(CLEANERINFO) + (fs)->lfs_bsize - 1) >> (fs)->lfs_bshift)
+
+/* Read in the block with the cleaner info from the ifile. */
+#define LFS_CLEANERINFO(CP, F, BP) do {					\
+	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
+	if (bread((F)->lfs_ivnode,					\
+	    (daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))			\
+		panic("lfs: ifile read");				\
+	(CP) = (CLEANERINFO *)(BP)->b_data;				\
+} while (0)
+
+/* Synchronize the Ifile cleaner info with current avail and bfree */
+#define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 	\
+    if ((w) || (cip)->bfree != (fs)->lfs_bfree ||		 	\
+	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail) {	 	\
+	(cip)->bfree = (fs)->lfs_bfree;				 	\
+	(cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail;	 	\
+	if (((bp)->b_flags & B_GATHERED) == 0)			 	\
+		(fs)->lfs_flags |= LFS_IFDIRTY;			 	\
+	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
+    } else							 	\
+	brelse(bp);						 	\
+} while (0)
+
+#define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {			\
+	if ((FS)->lfs_version > 1) {					\
+		LFS_CLEANERINFO((CIP), (FS), (BP));			\
+		(FS)->lfs_freehd = (CIP)->free_head;			\
+		brelse(BP);						\
+	}								\
+	*(FREEP) = (FS)->lfs_freehd;					\
+} while (0)
+
+#define LFS_PUT_HEADFREE(FS, CIP, BP, VAL) do {				\
+	(FS)->lfs_freehd = (VAL);					\
+	if ((FS)->lfs_version > 1) {					\
+		LFS_CLEANERINFO((CIP), (FS), (BP));			\
+		(CIP)->free_head = (VAL);				\
+		LFS_BWRITE_LOG(BP);					\
+		(FS)->lfs_flags |= LFS_IFDIRTY;				\
+	}								\
+} while (0)
+
+#define LFS_GET_TAILFREE(FS, CIP, BP, FREEP) do {			\
+	LFS_CLEANERINFO((CIP), (FS), (BP));				\
+	*(FREEP) = (CIP)->free_tail;					\
+	brelse(BP);							\
+} while (0)
+
+#define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\
+	LFS_CLEANERINFO((CIP), (FS), (BP));				\
+	(CIP)->free_tail = (VAL);					\
+	LFS_BWRITE_LOG(BP);						\
+	(FS)->lfs_flags |= LFS_IFDIRTY;					\
+} while (0)
+
+/*
+ * On-disk segment summary information
+ */
+typedef struct segsum_v1 SEGSUM_V1;
+struct segsum_v1 {
+	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
+	u_int32_t ss_datasum;		/* 4: check sum of data */
+	u_int32_t ss_magic;		/* 8: segment summary magic number */
+#define SS_MAGIC	0x061561
+	int32_t	  ss_next;		/* 12: next segment */
+	u_int32_t ss_create;		/* 16: creation time stamp */
+	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
+	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
+
+#define	SS_DIROP	0x01		/* segment begins a dirop */
+#define	SS_CONT		0x02		/* more partials to finish this write*/
+	u_int16_t ss_flags;		/* 24: used for directory operations */
+	u_int16_t ss_pad;		/* 26: extra space */
+	/* FINFO's and inode daddr's... */
+};
+
+typedef struct segsum SEGSUM;
+struct segsum {
+	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
+	u_int32_t ss_datasum;		/* 4: check sum of data */
+	u_int32_t ss_magic;		/* 8: segment summary magic number */
+	int32_t	  ss_next;		/* 12: next segment */
+	u_int32_t ss_ident;		/* 16: roll-forward fsid */
+#define ss_ocreate ss_ident /* ident is where create was in v1 */
+	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
+	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
+	u_int16_t ss_flags;		/* 24: used for directory operations */
+	u_int8_t  ss_pad[6];		/* 26: extra space */
+	u_int64_t ss_serial;		/* 32: serial number */
+	u_int64_t ss_create;		/* 40: time stamp */
+	/* FINFO's and inode daddr's... */
+};
+
+#define SEGSUM_SIZE(fs) ((fs)->lfs_version == 1 ? sizeof(SEGSUM_V1) : sizeof(SEGSUM))
+
+
+/*
+ * On-disk super block.
+ */
 struct dlfs {
 #define	       LFS_MAGIC       0x070162
 	u_int32_t dlfs_magic;	  /* 0: magic number */
@@ -426,7 +646,9 @@ struct dlfs {
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
 
-/* In-memory super block. */
+/*
+ * In-memory super block.
+ */
 struct lfs {
 	struct dlfs lfs_dlfs;		/* on-disk parameters */
 #define lfs_magic lfs_dlfs.dlfs_magic
@@ -507,7 +729,7 @@ struct lfs {
 #define LFS_WARNED  0x04
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_int16_t lfs_activesb;		/* toggle between superblocks */
-	daddr_t	  lfs_sbactive;		/* disk address of in-progress sb write */
+	daddr_t	  lfs_sbactive;		/* disk address of current sb write */
 	struct vnode *lfs_flushvp;	/* vnode being flushed */
 	struct vnode *lfs_unlockvp;	/* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
@@ -528,117 +750,13 @@ struct lfs {
 	struct pool lfs_clpool;		/* Pool for struct lfs_cluster */
 	struct pool lfs_bpppool;	/* Pool for bpp */
 	struct pool lfs_segpool;	/* Pool for struct segment */
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #define LFS_MAX_CLEANIND 64
 	int32_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
 	int 	 lfs_cleanind;	/* Index into intervals */
 	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
+	int lfs_sleepers;		/* # procs sleeping this fs */
 };
-
-/*
- * Inode 0:	out-of-band inode number
- * Inode 1:	IFILE inode number
- * Inode 2:	root inode
- * Inode 3:	lost+found inode number
- */
-#define	LFS_UNUSED_INUM	0		/* out of band inode number */
-#define	LFS_IFILE_INUM	1		/* IFILE inode number */
-#define	LOSTFOUNDINO	3		/* lost+found inode number */
-#define	LFS_FIRST_INUM	4		/* first free inode number */
-
-/* Address calculations for metadata located in the inode */
-#define	S_INDIR(fs)	-NDADDR
-#define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
-#define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
-
-/* Unassigned disk addresses. */
-#define	UNASSIGNED	-1
-#define UNWRITTEN	-2
-
-/* Unused logical block number */
-#define LFS_UNUSED_LBN	-1
-
-typedef struct ifile IFILE;
-struct ifile {
-	u_int32_t if_version;		/* inode version number */
-#define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
-	int32_t	  if_daddr;		/* inode disk address */
-	ino_t	  if_nextfree;		/* next-unallocated inode */
-	/* XXX - when inode format changes, this changes too */
-	u_int32_t if_atime_sec;		/* Last access time, seconds */
-	u_int32_t if_atime_nsec;	/* and nanoseconds */
-};
-
-typedef struct ifile_v1 IFILE_V1;
-struct ifile_v1 {
-	u_int32_t if_version;		/* inode version number */
-	int32_t	  if_daddr;		/* inode disk address */
-	ino_t	  if_nextfree;		/* next-unallocated inode */
-#if LFS_ATIME_IFILE
-	struct timespec if_atime;	/* Last access time */
-#endif
-};
-
-/*
- * Cleaner information structure.  This resides in the ifile and is used
- * to pass information between the cleaner and the kernel.
- */
-typedef struct _cleanerinfo {
-	u_int32_t clean;		/* number of clean segments */
-	u_int32_t dirty;		/* number of dirty segments */
-	u_int32_t bfree;		/* disk blocks free */
-	int32_t	  avail;		/* disk blocks available */
-	u_int32_t free_head;		/* head of the inode free list */
-	u_int32_t free_tail;		/* tail of the inode free list */
-} CLEANERINFO;
-
-#define	CLEANSIZE_SU(fs)						\
-	((sizeof(CLEANERINFO) + (fs)->lfs_bsize - 1) >> (fs)->lfs_bshift)
-
-/*
- * All summary blocks are the same size, so we can always read a summary
- * block easily from a segment.
- */
-#define	LFS_V1_SUMMARY_SIZE	512
-#define	LFS_DFL_SUMMARY_SIZE	512
-
-/* On-disk segment summary information */
-typedef struct segsum_v1 SEGSUM_V1;
-struct segsum_v1 {
-	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
-	u_int32_t ss_datasum;		/* 4: check sum of data */
-	u_int32_t ss_magic;		/* 8: segment summary magic number */
-#define SS_MAGIC	0x061561
-	int32_t	  ss_next;		/* 12: next segment */
-	u_int32_t ss_create;		/* 16: creation time stamp */
-	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
-	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
-
-#define	SS_DIROP	0x01		/* segment begins a dirop */
-#define	SS_CONT		0x02		/* more partials to finish this write*/
-	u_int16_t ss_flags;		/* 24: used for directory operations */
-	u_int16_t ss_pad;		/* 26: extra space */
-	/* FINFO's and inode daddr's... */
-};
-
-typedef struct segsum SEGSUM;
-struct segsum {
-	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
-	u_int32_t ss_datasum;		/* 4: check sum of data */
-	u_int32_t ss_magic;		/* 8: segment summary magic number */
-	int32_t	  ss_next;		/* 12: next segment */
-	u_int32_t ss_ident;		/* 16: roll-forward fsid */
-#define ss_ocreate ss_ident /* ident is where create was in v1 */
-	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
-	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
-	u_int16_t ss_flags;		/* 24: used for directory operations */
-	u_int8_t  ss_pad[6];		/* 26: extra space */
-	u_int64_t ss_serial;		/* 32: serial number */
-	u_int64_t ss_create;		/* 40: time stamp */
-	/* FINFO's and inode daddr's... */
-};
-
-#define SEGSUM_SIZE(fs) ((fs)->lfs_version == 1 ? sizeof(SEGSUM_V1) : sizeof(SEGSUM))
 
 /* NINDIR is the number of indirects in a file system block. */
 #define	NINDIR(fs)	((fs)->lfs_nindir)
@@ -677,20 +795,20 @@ struct segsum {
 	((off_t)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
 #define fragroundup(fs, size)	/* calculates roundup(size, fs->lfs_fsize) */ \
 	((off_t)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
-#define fragstoblks(fs, frags)	/* calculates (frags / fs->lfs_frag) */ \
+#define fragstoblks(fs, frags)	/* calculates (frags / fs->lfs_frag) */	\
 	((frags) >> (fs)->lfs_fbshift)
-#define blkstofrags(fs, blks)	/* calculates (blks * fs->lfs_frag) */ \
+#define blkstofrags(fs, blks)	/* calculates (blks * fs->lfs_frag) */	\
 	((blks) << (fs)->lfs_fbshift)
-#define fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */ \
+#define fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */	\
 	((fsb) & ((fs)->lfs_frag - 1))
 #define blknum(fs, fsb)		/* calculates rounddown(fsb, fs->lfs_frag) */ \
 	((fsb) &~ ((fs)->lfs_frag - 1))
-#define dblksize(fs, dip, lbn) \
-	(((lbn) >= NDADDR || (dip)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
+#define dblksize(fs, dp, lbn) \
+	(((lbn) >= NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
 	    ? (fs)->lfs_bsize \
-	    : (fragroundup(fs, blkoff(fs, (dip)->di_size))))
+	    : (fragroundup(fs, blkoff(fs, (dp)->di_size))))
 
-#define segtod(fs, seg) (((fs)->lfs_version == 1     ?	     \
+#define segtod(fs, seg) (((fs)->lfs_version == 1     ?	     		\
 			   (fs)->lfs_ssize << (fs)->lfs_blktodb :	\
 			   btofsb((fs), (fs)->lfs_ssize)) * (seg))
 #define	dtosn(fs, daddr)	/* block address to segment number */	\
@@ -698,112 +816,12 @@ struct segsum {
 #define sntod(fs, sn)		/* segment number to disk address */	\
 	((daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
 
-/* Read in the block with the cleaner info from the ifile. */
-#define LFS_CLEANERINFO(CP, F, BP) do {					\
-	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
-	if (bread((F)->lfs_ivnode,					\
-	    (daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))		\
-		panic("lfs: ifile read");				\
-	(CP) = (CLEANERINFO *)(BP)->b_data;				\
-} while (0)
-
-/* Synchronize the Ifile cleaner info with current avail and bfree */
-#define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 \
-    if ((w) || (cip)->bfree != (fs)->lfs_bfree ||		 \
-	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail) {	 \
-	(cip)->bfree = (fs)->lfs_bfree;				 \
-	(cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail;	 \
-	if (((bp)->b_flags & B_GATHERED) == 0)			 \
-		(fs)->lfs_flags |= LFS_IFDIRTY;			 \
-	(void) LFS_BWRITE_LOG(bp); /* Ifile */			     \
-    } else							 \
-	brelse(bp);						 \
-} while (0)
-
-#define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {			\
-	if ((FS)->lfs_version > 1) {					\
-		LFS_CLEANERINFO((CIP), (FS), (BP));			\
-		(FS)->lfs_freehd = (CIP)->free_head;			\
-		brelse(BP);						\
-	}								\
-	*(FREEP) = (FS)->lfs_freehd;					\
-} while (0)
-
-#define LFS_PUT_HEADFREE(FS, CIP, BP, VAL) do {				\
-	(FS)->lfs_freehd = (VAL);						\
-	if ((FS)->lfs_version > 1) {					\
-		LFS_CLEANERINFO((CIP), (FS), (BP));			\
-		(CIP)->free_head = (VAL);				\
-		LFS_BWRITE_LOG(BP);					    \
-		(FS)->lfs_flags |= LFS_IFDIRTY;				 \
-	}								\
-} while (0)
-
-#define LFS_GET_TAILFREE(FS, CIP, BP, FREEP) do {			\
-	LFS_CLEANERINFO((CIP), (FS), (BP));				\
-	*(FREEP) = (CIP)->free_tail;					\
-	brelse(BP);							\
-} while (0)
-
-#define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\
-	LFS_CLEANERINFO((CIP), (FS), (BP));				\
-	(CIP)->free_tail = (VAL);					\
-	LFS_BWRITE_LOG(BP);						\
-	(FS)->lfs_flags |= LFS_IFDIRTY;				 \
-} while (0)
-
-/*
- * XXX - v1 compatibility code is not allowed to touch if_atime, since it
- * may not be mapped!
- */
-/* Read in the block with a specific inode from the ifile. */
-#define	LFS_IENTRY(IP, F, IN, BP) do {					\
-	int _e;								\
-	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
-	if ((_e = bread((F)->lfs_ivnode,				\
-	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
-	(F)->lfs_bsize, NOCRED, &(BP))) != 0)				\
-		panic("lfs: ifile read %d", _e);			\
-	if ((F)->lfs_version == 1)					\
-		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data + (IN) % (F)->lfs_ifpb); \
-	else								\
-		(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;	\
-} while (0)
-
-/* Read in the block with a specific segment usage entry from the ifile. */
-#define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
-	int _e;								\
-	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
-	if ((_e = bread((F)->lfs_ivnode,				\
-	    ((IN) / (F)->lfs_sepb) + (F)->lfs_cleansz,			\
-	    (F)->lfs_bsize, NOCRED, &(BP))) != 0)			\
-		panic("lfs: ifile read: %d", _e);			\
-	if ((F)->lfs_version == 1)					\
-		(SP) = (SEGUSE *)((SEGUSE_V1 *)(BP)->b_data +		\
-			((IN) & ((F)->lfs_sepb - 1)));			\
-	else								\
-		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % (F)->lfs_sepb);	\
-} while (0)
-
-#define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
-	if ((SP)->su_nbytes == 0)					\
-		(SP)->su_flags |= SEGUSE_EMPTY;				\
-	else								\
-		(SP)->su_flags &= ~SEGUSE_EMPTY;			\
-	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
-	LFS_BWRITE_LOG(BP);						\
-} while (0)
-
-/* Determine if a buffer belongs to the ifile */
-#define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
-
 /*
  * Structures used by lfs_bmapv and lfs_markv to communicate information
  * about inodes and data blocks.
  */
 typedef struct block_info {
 	ino_t	bi_inode;		/* inode # */
-	/* XXX ondisk32 */
 	int32_t bi_lbn;			/* logical block w/in file */
 	int32_t bi_daddr;		/* disk address of block */
 	u_int64_t   bi_segcreate;	/* origin segment create time */
@@ -815,7 +833,6 @@ typedef struct block_info {
 /* Compatibility for 1.5 binaries */
 typedef struct block_info_15 {
 	ino_t	bi_inode;		/* inode # */
-	/* XXX ondisk32 */
 	int32_t bi_lbn;			/* logical block w/in file */
 	int32_t bi_daddr;		/* disk address of block */
 	u_int32_t   bi_segcreate;	/* origin segment create time */
@@ -839,7 +856,6 @@ struct segment {
 	int32_t seg_bytes_left;		/* bytes left in segment */
 	int32_t sum_bytes_left;		/* bytes left in summary block */
 	u_int32_t seg_number;		/* number of this segment */
-	/* XXX ondisk32 */
 	int32_t *start_lbp;		/* beginning lbn for this set */
 
 #define	SEGM_CKP	0x01		/* doing a checkpoint */
@@ -854,6 +870,7 @@ struct segment {
 	int	  ndupino;		/* number of duplicate inodes */
 };
 
+#ifdef _KERNEL
 struct lfs_cluster {
 	size_t bufsize;	       /* Size of kept data */
 	struct buf **bpp;      /* Array of kept buffers */
@@ -867,6 +884,7 @@ struct lfs_cluster {
 	void *saveaddr;	       /* Original contents of saveaddr */
 	char *olddata;	       /* Original b_data, if LFS_CL_MALLOC */
 };
+#endif /* _KERNEL */
 
 /*
  * LFS inode extensions; moved from <ufs/ufs/inode.h> so that file didn't

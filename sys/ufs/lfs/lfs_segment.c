@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.115 2003/03/21 06:26:36 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.116 2003/03/28 08:03:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.115 2003/03/21 06:26:36 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.116 2003/03/28 08:03:38 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1219,6 +1219,8 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 	error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL);
 	if (error)
 		panic("lfs_updatemeta: ufs_bmaparray returned %d", error);
+
+	KASSERT(daddr <= LFS_MAX_DADDR);
 	if (daddr > 0)
 		daddr = dbtofsb(fs, daddr);
 	
@@ -1275,6 +1277,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 		int ndupino = (sp->seg_number == oldsn) ?
 			sp->ndupino : 0;
 #endif
+		KASSERT(oldsn >= 0 && oldsn < fs->lfs_nseg);
 		if (lbn >= 0 && lbn < NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
