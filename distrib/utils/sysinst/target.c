@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.43 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.44 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.43 2003/09/27 10:47:17 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.44 2003/10/19 20:17:32 dsl Exp $");
 #endif
 
 /*
@@ -453,7 +453,7 @@ target_fopen(const char *filename, const char *type)
  * unwind after completing or aborting a mount.
  */
 int
-mount_with_unwind(const char *fstype, const char *from, const char *on)
+mount_with_unwind(const char *opts, const char *from, const char *on)
 {
 	int error;
 	struct unwind_mount * m;
@@ -472,7 +472,8 @@ mount_with_unwind(const char *fstype, const char *from, const char *on)
 	backtowin();
 #endif
 
-	error = run_prog(0, NULL, "/sbin/mount %s %s %s", fstype, from, on);
+	error = run_prog(RUN_PROGRESS, NULL,
+			"/sbin/mount %s %s %s", opts, from, on);
 	return (error);
 }
 
