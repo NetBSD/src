@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.19 2005/01/11 02:09:54 chs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.20 2005/01/19 22:22:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.19 2005/01/11 02:09:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.20 2005/01/19 22:22:56 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -59,6 +59,7 @@ static void cpu_enable_l3cr(register_t);
 static void cpu_config_l2cr(int);
 static void cpu_config_l3cr(int);
 static void cpu_print_speed(void);
+static void cpu_idlespin(void);
 #if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
 static int cpu_tau_gtredata __P((struct sysmon_envsys *,
@@ -215,6 +216,24 @@ cpu_fmttab_print(const struct fmttab *fmt, register_t data)
 }
 
 void
+cpu_idlespin(void)
+{
+	register_t msr;
+
+	if (powersave <= 0)
+		return;
+
+	__asm __volatile(
+		"sync;"
+		"mfmsr	%0;"
+		"oris	%0,%0,%1@h;"	/* enter power saving mode */
+		"mtmsr	%0;"
+		"isync;"
+	    :	"=r"(msr)
+	    :	"J"(PSL_POW));
+}
+
+void
 cpu_probe_cache(void)
 {
 	u_int assoc, pvr, vers;
@@ -295,6 +314,7 @@ cpu_attach_common(struct device *self, int id)
 	ci->ci_cpuid = id;
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = self;
+	ci->ci_idlespin = cpu_idlespin;
 
 	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
