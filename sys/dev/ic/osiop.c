@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.14 2003/08/07 16:31:02 agc Exp $	*/
+/*	$NetBSD: osiop.c,v 1.15 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -103,12 +103,12 @@
  *
  * bus_space/bus_dma'fied by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  *
- * The 53c710 datasheet is avaliable at:
+ * The 53c710 datasheet is available at:
  * http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/index.html
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.14 2003/08/07 16:31:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.15 2003/09/29 09:50:22 wiz Exp $");
 
 /* #define OSIOP_DEBUG */
 

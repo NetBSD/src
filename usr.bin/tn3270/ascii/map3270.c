@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.10 2003/08/07 11:16:27 agc Exp $	*/
+/*	$NetBSD: map3270.c,v 1.11 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: map3270.c,v 1.10 2003/08/07 11:16:27 agc Exp $");
+__RCSID("$NetBSD: map3270.c,v 1.11 2003/09/29 09:50:22 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ static state firstentry = { 0, STATE_NULL, 0, 0 };
 static state *headOfQueue = &firstentry;
 
 /* the following is a primitive adm3a table, to be used when nothing
- * else seems to be avaliable.
+ * else seems to be available.
  */
 
 #ifdef	DEBUG
