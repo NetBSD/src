@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.1.2.1 2002/06/21 16:03:48 lukem Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.1.2.2 2002/10/13 23:08:57 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -170,7 +170,7 @@ message fsize
 {rozmiar frag}
 
 message mountpoint
-{punkt montazu}
+{mountpoint}
 
 message cylname
 {cyl}
@@ -227,7 +227,7 @@ message fspart
 }
 
 message fspart_header
-{   Rozmiar  Przesun.   Koniec   Typ SP Bsize Fsize  Ochrona Punkt mont.
+{   Rozmiar  Przesun.   Koniec   Typ SP Bsize Fsize  Ochrona Mountpoint 
    --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
@@ -319,8 +319,7 @@ nie powodzenie rozpakowywania pakietow.
 }
 
 message nomount
-{Typ partycji %c to nie 4.2BSD lub msdos i dlatego nie ma ona punktu
-montazu.}
+{Typ partycji %c to nie 4.2BSD lub msdos i dlatego nie ma ona swojego mountpoint.}
 
 message mountfail
 {zamontowanie urzadzenia %s na %s nie powiodlo sie.
@@ -872,7 +871,7 @@ message cur_fs
 }
 
 message cur_fs_header
-{   Punkt-montazu  Wybrane\n}
+{   Mountpoint Wybrane\n}
 
 message cur_fs_row
 {    %s         %s\n}
@@ -880,7 +879,7 @@ message cur_fs_row
 message no_root_fs
 {
 Nie zdefiniowano glownego systemu plikow. Musisz zdefiniowac przynajmniej
-jeden punkt montazu z "/".
+jeden mountpoint z "/".
 
 Nacisnij <enter> aby kontynuowac.
 }
