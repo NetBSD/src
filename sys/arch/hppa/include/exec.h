@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: exec.h,v 1.2 2002/12/10 17:14:10 thorpej Exp $	*/
 
 /*	$OpenBSD: exec.h,v 1.6 2001/01/22 14:51:03 art Exp $	*/
 
@@ -31,7 +31,7 @@
 #define cpu_exec_aout_makecmds(p, epp)  ENOEXEC
 
 /* Size of a page in an object file. */
-#define	__LDPGSZ	4096
+#define	AOUT_LDPGSZ	4096
 
 #define ARCH_ELFSIZE		32
 

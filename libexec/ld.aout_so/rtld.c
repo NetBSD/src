@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.85 2002/08/08 13:24:14 soren Exp $	*/
+/*	$NetBSD: rtld.c,v 1.86 2002/12/10 17:14:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #ifdef __m68k__
 /*
  * This is a slight hack to allow the same loader to be used on
- * 4k and 8k __LDPGSZ executables.
+ * 4k and 8k AOUT_LDPGSZ executables.
  */
 static int page_size = 0x2000;
 #undef PAGSIZ

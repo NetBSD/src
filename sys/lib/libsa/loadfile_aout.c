@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.3 2002/02/11 20:25:56 reinoud Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.4 2002/12/10 17:14:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ loadfile_aout(fd, x, marks, flags)
 	 * Provide alignment if required
 	 */
 	if (magic == ZMAGIC || magic == NMAGIC) {
-		int size = -(unsigned int)maxp & (__LDPGSZ - 1);
+		int size = -(unsigned int)maxp & (AOUT_LDPGSZ - 1);
 
 		if (flags & LOAD_TEXTA) {
 			PROGRESS(("/%d", size));
