@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.57 1997/12/19 22:53:10 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.58 1998/01/12 20:24:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,9 +136,7 @@ struct cfattach oclock_ca = {
 	sizeof(struct device), oclockmatch, oclockattach
 };
 
-struct cfdriver oclock_cd = {
-	NULL, "oclock", DV_DULL
-};
+extern struct cfdriver oclock_cd;
 
 static struct intrhand level10 = { clockintr };
 static struct intrhand level14 = { statintr };
@@ -169,9 +167,7 @@ struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
 };
 
-struct	cfdriver eeprom_cd = {
-	NULL, "eeprom", DV_DULL
-};
+extern struct cfdriver eeprom_cd;
 
 static int	clockmatch __P((struct device *, struct cfdata *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
@@ -180,9 +176,7 @@ struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
 };
 
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL
-};
+extern struct cfdriver clock_cd;
 
 static int	timermatch __P((struct device *, struct cfdata *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
@@ -195,10 +189,6 @@ struct timer_4m		*timerreg4m;
 
 struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
-};
-
-struct cfdriver timer_cd = {
-	NULL, "timer", DV_DULL
 };
 
 struct chiptime;

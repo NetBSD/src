@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.8 1997/04/28 21:59:22 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.9 1998/01/12 20:32:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,11 +81,6 @@ static void memerr_correctable __P((struct memerr_softc *));
 struct cfattach memerr_ca = {
 	sizeof(struct memerr_softc), memerr_match, memerr_attach
 };
-
-struct cfdriver memerr_cd = {
-	NULL, "memerr", DV_DULL
-};
-
 
 static int
 memerr_match(parent, cf, args)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.47 1997/10/16 10:49:00 mycroft Exp $ */
+/*	$NetBSD: dma.c,v 1.48 1998/01/12 20:23:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -79,16 +79,8 @@ struct cfattach dma_ca = {
 	sizeof(struct dma_softc), dmamatch, dmaattach
 };
 
-struct cfdriver dma_cd = {
-	NULL, "dma", DV_DULL
-};
-
 struct cfattach ledma_ca = {
 	sizeof(struct dma_softc), matchbyname, dmaattach
-};
-
-struct cfdriver ledma_cd = {
-	NULL, "ledma", DV_DULL
 };
 
 int

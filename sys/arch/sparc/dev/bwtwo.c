@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.34 1997/10/05 18:24:32 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.35 1998/01/12 20:23:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -150,9 +150,7 @@ struct cfattach bwtwo_ca = {
 	sizeof(struct bwtwo_softc), bwtwomatch, bwtwoattach
 };
 
-struct cfdriver bwtwo_cd = {
-	NULL, "bwtwo", DV_DULL
-};
+extern struct cfdriver bwtwo_cd;
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
 

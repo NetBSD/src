@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.16 1997/04/28 21:51:49 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.17 1998/01/12 20:32:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,10 +74,6 @@ static void eeprom_attach __P((struct device *, struct device *, void *));
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
-};
-
-struct cfdriver eeprom_cd = {
-	NULL, "eeprom", DV_DULL
 };
 
 static int

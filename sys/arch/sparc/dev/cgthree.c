@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.34 1998/01/12 20:23:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,9 +99,7 @@ struct cfattach cgthree_ca = {
 	sizeof(struct cgthree_softc), cgthreematch, cgthreeattach
 };
 
-struct cfdriver cgthree_cd = {
-	NULL, "cgthree", DV_DULL
-};
+extern struct cfdriver cgthree_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cgthreefbdriver = {

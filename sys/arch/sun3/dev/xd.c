@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.17 1997/10/17 03:47:52 gwr Exp $	*/
+/*	$NetBSD: xd.c,v 1.18 1998/01/12 20:32:27 thorpej Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.17 1997/10/17 03:47:52 gwr Exp $
+ * id: $NetBSD: xd.c,v 1.18 1998/01/12 20:32:27 thorpej Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -243,24 +243,18 @@ static	void xddummystrat __P((struct buf *));
 int	xdgetdisklabel __P((struct xd_softc *, void *));
 
 /*
- * cfdrivers: device driver interface to autoconfig
+ * cfattach's: device driver interface to autoconfig
  */
 
 struct cfattach xdc_ca = {
 	sizeof(struct xdc_softc), xdcmatch, xdcattach
 };
 
-struct cfdriver xdc_cd = {
-	NULL, "xdc", DV_DULL
-};
-
 struct cfattach xd_ca = {
 	sizeof(struct xd_softc), xdmatch, xdattach
 };
 
-struct cfdriver xd_cd = {
-	NULL, "xd", DV_DISK
-};
+extern struct cfdriver xd_cd;
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	driveno;	/* unit number */

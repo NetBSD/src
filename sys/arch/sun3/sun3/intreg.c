@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.9 1997/03/04 23:37:50 gwr Exp $	*/
+/*	$NetBSD: intreg.c,v 1.10 1998/01/12 20:32:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,10 +68,6 @@ static int soft1intr __P((void *));
 
 struct cfattach intreg_ca = {
 	sizeof(struct intreg_softc), intreg_match, intreg_attach
-};
-
-struct cfdriver intreg_cd = {
-	NULL, "intreg", DV_DULL
 };
 
 volatile u_char *interrupt_reg;
