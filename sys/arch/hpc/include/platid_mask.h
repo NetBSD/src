@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.5 2001/03/04 03:40:39 takemura Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.6 2001/03/22 18:16:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -270,11 +270,11 @@ extern platid_t platid_mask_MACH_EVEREX_FREESTYLE_A20;
 #  define EVEREX_FREESTYLE_A20 ((int)&platid_mask_MACH_EVEREX_FREESTYLE_A20)
 #endif
 #endif /* hpcmips */
-#ifdef hpcmips
 extern platid_t platid_mask_MACH_CASIO;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define CASIO ((int)&platid_mask_MACH_CASIO)
 #endif
+#ifdef hpcmips
 extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define CASIO_CASSIOPEIAE ((int)&platid_mask_MACH_CASIO_CASSIOPEIAE)
@@ -336,6 +336,20 @@ extern platid_t platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET;
 #  define CASIO_POCKETPOSTPET_POCKETPOSTPET ((int)&platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET)
 #endif
 #endif /* hpcmips */
+#ifdef hpcsh
+extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAA;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_CASSIOPEIAA ((int)&platid_mask_MACH_CASIO_CASSIOPEIAA)
+#endif
+extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAA_AXX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_CASSIOPEIAA_AXX ((int)&platid_mask_MACH_CASIO_CASSIOPEIAA_AXX)
+#endif
+extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAA_A55V;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_CASSIOPEIAA_A55V ((int)&platid_mask_MACH_CASIO_CASSIOPEIAA_A55V)
+#endif
+#endif /* hpcsh */
 #ifdef hpcmips
 extern platid_t platid_mask_MACH_SHARP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -603,6 +617,14 @@ extern platid_t platid_mask_MACH_HP_JORNADA_680JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_680JP ((int)&platid_mask_MACH_HP_JORNADA_680JP)
 #endif
+extern platid_t platid_mask_MACH_HP_JORNADA_680HU;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_680HU ((int)&platid_mask_MACH_HP_JORNADA_680HU)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_680DE;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_680DE ((int)&platid_mask_MACH_HP_JORNADA_680DE)
+#endif
 extern platid_t platid_mask_MACH_HP_JORNADA_690;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_690 ((int)&platid_mask_MACH_HP_JORNADA_690)
@@ -610,6 +632,14 @@ extern platid_t platid_mask_MACH_HP_JORNADA_690;
 extern platid_t platid_mask_MACH_HP_JORNADA_690JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_690JP ((int)&platid_mask_MACH_HP_JORNADA_690JP)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_690HU;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_690HU ((int)&platid_mask_MACH_HP_JORNADA_690HU)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_690DE;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_690DE ((int)&platid_mask_MACH_HP_JORNADA_690DE)
 #endif
 #endif /* hpcsh */
 #ifdef hpcarm
@@ -650,6 +680,14 @@ extern platid_t platid_mask_MACH_HITACHI_PERSONA;
 extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HITACHI_PERSONA_HPW230JC ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW230JC)
+#endif
+extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW50PAD;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI_PERSONA_HPW50PAD ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW50PAD)
+#endif
+extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW650PA;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI_PERSONA_HPW650PA ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW650PA)
 #endif
 #endif /* hpcsh */
 #ifdef hpcsh
