@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.743 2005/01/03 06:15:42 lukem Exp $
+# $NetBSD: mi,v 1.744 2005/01/04 16:22:58 spz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1942,8 +1942,8 @@
 ./usr/share/man/cat8/pam_ftpusers.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/pam_group.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/pam_guest.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/pam_krb5.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/pam_ksu.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/pam_krb5.0			man-sysutil-catman	kerberos,.cat
+./usr/share/man/cat8/pam_ksu.0			man-sysutil-catman	kerberos,.cat
 ./usr/share/man/cat8/pam_lastlog.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/pam_login_access.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/pam_nologin.0		man-sysutil-catman	.cat
@@ -4123,8 +4123,8 @@
 ./usr/share/man/man8/pam_ftpusers.8		man-sysutil-man		.man
 ./usr/share/man/man8/pam_group.8		man-sysutil-man		.man
 ./usr/share/man/man8/pam_guest.8		man-sysutil-man		.man
-./usr/share/man/man8/pam_krb5.8			man-sysutil-man		.man
-./usr/share/man/man8/pam_ksu.8			man-sysutil-man		.man
+./usr/share/man/man8/pam_krb5.8			man-sysutil-man		kerberos,.man
+./usr/share/man/man8/pam_ksu.8			man-sysutil-man		kerberos,.man
 ./usr/share/man/man8/pam_lastlog.8		man-sysutil-man		.man
 ./usr/share/man/man8/pam_login_access.8		man-sysutil-man		.man
 ./usr/share/man/man8/pam_nologin.8		man-sysutil-man		.man
