@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.20 2003/06/27 18:37:48 christos Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.21 2003/07/05 12:34:12 tsutsui Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -12,6 +12,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
