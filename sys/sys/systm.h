@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.54 1996/09/07 12:41:35 mycroft Exp $	*/
+/*	$NetBSD: systm.h,v 1.55 1996/09/08 02:09:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -95,6 +95,10 @@ extern struct vnode *rootvp;	/* vnode equivalent to above */
 
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
+
+struct proc;
+struct tty;
+struct uio;
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
