@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.24 2004/03/22 07:11:00 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.25 2004/04/23 04:14:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ struct mbr_bpbFAT12 {
 	uint16_t	bpbSecPerTrack;	/* sectors per track */
 	uint16_t	bpbHeads;	/* number of heads */
 	uint16_t	bpbHiddenSecs;	/* # of hidden sectors */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * (x86) BIOS Parameter Block for FAT16
@@ -289,7 +289,7 @@ struct mbr_bpbFAT16 {
 	uint8_t		bsVolLab[11];	/* Volume label */
 	uint8_t		bsFileSysType[8];
 					/* "FAT12   ", "FAT16   ", "FAT     " */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * (x86) BIOS Parameter Block for FAT32
@@ -323,7 +323,7 @@ struct mbr_bpbFAT32 {
 	uint8_t		bsVolID[4];	/* Volume serial number */
 	uint8_t		bsVolLab[11];	/* Volume label */
 	uint8_t		bsFileSysType[8]; /* "FAT32   " */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * (x86) MBR boot selector
@@ -333,7 +333,7 @@ struct mbr_bootsel {
 	uint8_t		mbrbs_flags;
 	uint16_t	mbrbs_timeo;
 	uint8_t		mbrbs_nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * MBR partition
@@ -349,7 +349,7 @@ struct mbr_partition {
 	uint8_t		mbrp_ecyl;	/* End cylinder */
 	uint32_t	mbrp_start;	/* Absolute starting sector number */
 	uint32_t	mbrp_size;	/* Partition size in sectors */
-} __attribute__((__packed__));
+} __packed;
 
 int xlat_mbr_fstype(int);	/* in sys/lib/libkern/xlat_mbr_fstype.c */
 
@@ -381,7 +381,7 @@ struct mbr_sector {
 	struct mbr_partition	mbr_parts[MBR_PART_COUNT];
 					/* MBR magic (0xaa55) */
 	uint16_t		mbr_magic;
-} __attribute__((__packed__));
+} __packed;
 
 #endif	/* !defined(__ASSEMBLER__) */				/* } */
 
@@ -473,7 +473,7 @@ struct apple_drvr_map {
 	uint16_t	sbDrvrCount;	/* number of driver descriptors */
 	struct apple_drvr_descriptor sb_dd[APPLE_DRVR_MAP_MAX_DESCRIPTORS];
 	uint16_t	pad[3];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  *	Partition map structure from Inside Macintosh: Devices, SCSI Manager
@@ -690,7 +690,7 @@ struct next68k_partition {
 	int8_t	cp_automnt;		/* auto-mount when inserted */
 	char	cp_type[NEXT68K_LABEL_MAXFSTLEN]; /* file system type name */
 	char	cp_pad2;
-} __attribute__ ((packed));
+} __packed;
 
 /* The disklabel the way it is on the disk */
 struct next68k_disklabel {
@@ -727,7 +727,7 @@ struct next68k_disklabel {
 					/* block number that is bad */
 	} cd_un;
 	uint16_t cd_checksum;		/* label version 1 or 2 checksum */
-} __attribute__ ((packed));
+} __packed;
 
 #define	NEXT68K_LABEL_cd_checksum	cd_checksum
 #define	NEXT68K_LABEL_cd_v3_checksum	cd_un.CD_v3_checksum
@@ -771,7 +771,7 @@ struct pmax_boot_block {
 	uint32_t	load_addr;		/* Address to start loading. */
 	uint32_t	exec_addr;		/* Address to start execing. */
 	struct		pmax_boot_map map[61];	/* boot program section(s). */
-} __attribute__((__packed__));
+} __packed;
 
 #define	PMAX_BOOT_MAGIC			0x0002757a
 #define	PMAX_BOOTMODE_CONTIGUOUS	0
@@ -847,7 +847,7 @@ struct vax_boot_block {
 	/* The rest is unused.
 	 */
 	uint8_t		pad2[148];
-} __attribute__((__packed__));
+} __packed;
 
 #define	VAX_BOOT_MAGIC1			0x18	/* size of BB info? */
 #define	VAX_BOOT_VOLINFO_NONE		0x00	/* no special info */
