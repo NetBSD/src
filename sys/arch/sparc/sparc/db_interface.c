@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.21 1998/01/08 11:03:13 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.22 1998/02/22 14:07:21 mycroft Exp $ */
 
 /*
  * Mach Operating System
@@ -183,10 +183,12 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
 {
+	int s;
 
 #if NFB > 0
 	fb_unblank();
 #endif
+
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
 	case -1:		/* keyboard interrupt */
@@ -204,11 +206,13 @@ kdb_trap(type, tf)
 	ddb_regs.db_tf = *tf;
 	ddb_regs.db_fr = *(struct frame *)tf->tf_out[6];
 
+	s = splhigh();
 	db_active++;
 	cnpollc(TRUE);
 	db_trap(type, 0/*code*/);
 	cnpollc(FALSE);
 	db_active--;
+	splx(s);
 
 	*(struct frame *)tf->tf_out[6] = ddb_regs.db_fr;
 	*tf = ddb_regs.db_tf;
