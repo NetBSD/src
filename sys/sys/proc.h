@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.92 2000/05/26 02:23:14 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.93 2000/05/26 21:20:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#if defined(MULTIPROCESSOR)
+#if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #endif
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
@@ -161,7 +161,6 @@ struct	proc {
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
-	int	p_schedflags;	 /* PSCHED_* flags */
 
 	struct	callout p_realit_ch;	/* real time callout */
 	struct	itimerval p_realtimer;	/* Alarm timer. */
@@ -263,15 +262,6 @@ struct	proc {
 #define	P_32		0x40000	/* 32-bit process -- only used on 64-bit kernels */
 
 /*
- * These flags are kept in p_schedflags.  p_schedflags may be modified
- * only at splstatclock().
- */
-#define	PSCHED_SEENRR		0x0001	/* process has been in roundrobin() */
-#define	PSCHED_SHOULDYIELD	0x0002	/* process should yield */
-
-#define	PSCHED_SWITCHCLEAR	(PSCHED_SEENRR|PSCHED_SHOULDYIELD)
-
-/*
  * Macro to compute the exit signal to be delivered.
  */
 #define	P_EXITSIG(p)	(((p)->p_flag & (P_TRACED|P_FSTRACE)) ? SIGCHLD : \
@@ -344,7 +334,7 @@ extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
 /*
- * Allow machine-dependent code to override curproc in <machine/proc.h> for
+ * Allow machine-dependent code to override curproc in <machine/cpu.h> for
  * its own convenience.  Otherwise, we declare it as appropriate.
  */
 #if !defined(curproc)
@@ -375,13 +365,6 @@ extern struct pool proc_pool;		/* memory pool for procs */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
 extern struct pool plimit_pool;		/* memory pool for plimits */
 extern struct pool rusage_pool;		/* memory pool for rusages */
-
-#define	NQS	32			/* 32 run queues. */
-__volatile int whichqs;			/* Bit mask summary of non-empty Q's. */
-struct	prochd {
-	struct	proc *ph_link;		/* Linked list of running processes. */
-	struct	proc *ph_rlink;
-} qs[NQS];
 
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */

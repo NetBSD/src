@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 1999/10/14 21:40:05 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2000/05/26 21:19:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,11 +48,29 @@
  * Exported definitions unique to amiga/68k cpu support.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
 #define	M68K_MMU_MOTOROLA
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -111,6 +129,7 @@ extern int want_resched;	/* resched() was called */
 extern int astpending;		/* need trap before returning to user mode */
 #define setsoftast()	(astpending = 1)
 
+#endif /* _KERNEL */
 
 /* include support for software interrupts */
 #include <machine/mtpr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2000/05/16 05:45:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2000/05/26 21:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,6 +113,9 @@ char bootinfo[BOOTINFO_MAXSIZE];
 
 char machine[] = MACHINE;		/* machine */
 char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
+
+/* Our exported CPU info; we have only one right now. */  
+struct cpu_info cpu_info_store;
 
 struct pcb *curpcb;
 struct pmap *curpm;

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.3 2000/05/24 17:29:41 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.4 2000/05/26 21:19:30 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.3 2000/05/24 17:29:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4 2000/05/26 21:19:30 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -102,7 +102,7 @@ userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 #ifdef DIAGNOSTIC
 	/* Mark trapframe as invalid. */
 	p->p_addr->u_pcb.pcb_tf = (void *)-1;

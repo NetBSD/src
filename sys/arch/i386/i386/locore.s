@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.219 2000/05/26 00:36:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.220 2000/05/26 21:19:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1762,7 +1762,8 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_C_LABEL(whichqs),_C_LABEL(qs),_C_LABEL(uvmexp),_C_LABEL(panic)
+	.globl	_C_LABEL(sched_whichqs),_C_LABEL(sched_qs)
+	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 /*
  * setrunqueue(struct proc *p);
@@ -1780,8 +1781,8 @@ NENTRY(setrunqueue)
 #endif /* DIAGNOSTIC */
 	movzbl	P_PRIORITY(%eax),%edx
 	shrl	$2,%edx
-	btsl	%edx,_C_LABEL(whichqs)		# set q full bit
-	leal	_C_LABEL(qs)(,%edx,8),%edx	# locate q hdr
+	btsl	%edx,_C_LABEL(sched_whichqs)	# set q full bit
+	leal	_C_LABEL(sched_qs)(,%edx,8),%edx # locate q hdr
 	movl	P_BACK(%edx),%ecx
 	movl	%edx,P_FORW(%eax)	# link process on tail of q
 	movl	%eax,P_BACK(%edx)
@@ -1804,7 +1805,7 @@ NENTRY(remrunqueue)
 	movzbl	P_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
 	shrl	$2,%eax
-	btl	%eax,_C_LABEL(whichqs)
+	btl	%eax,_C_LABEL(sched_whichqs)
 	jnc	1f
 #endif /* DIAGNOSTIC */
 	movl	P_BACK(%ecx),%edx	# unlink process
@@ -1817,7 +1818,7 @@ NENTRY(remrunqueue)
 #ifndef DIAGNOSTIC
 	shrl	$2,%eax
 #endif
-	btrl	%eax,_C_LABEL(whichqs)	# no; clear bit
+	btrl	%eax,_C_LABEL(sched_whichqs)	# no; clear bit
 2:	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$3f
@@ -1835,7 +1836,7 @@ NENTRY(remrunqueue)
  */
 ENTRY(idle)
 	cli
-	movl	_C_LABEL(whichqs),%ecx
+	movl	_C_LABEL(sched_whichqs),%ecx
 	testl	%ecx,%ecx
 	jnz	sw1
 	sti
@@ -1904,12 +1905,12 @@ switch_search:
 
 	/* Wait for new process. */
 	cli				# splhigh doesn't do a cli
-	movl	_C_LABEL(whichqs),%ecx
+	movl	_C_LABEL(sched_whichqs),%ecx
 
 sw1:	bsfl	%ecx,%ebx		# find a full q
 	jz	_C_LABEL(idle)		# if none, idle
 
-	leal	_C_LABEL(qs)(,%ebx,8),%eax	# select q
+	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
 
 	movl	P_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
@@ -1924,7 +1925,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	jne	3f
 
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
-	movl	%ecx,_C_LABEL(whichqs)	# update q status
+	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
 
 3:	/* We just did it. */
 	xorl	%eax,%eax

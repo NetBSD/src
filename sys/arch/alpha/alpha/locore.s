@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.73 2000/05/26 00:36:42 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.74 2000/05/26 21:19:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.73 2000/05/26 00:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.74 2000/05/26 21:19:22 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -766,7 +766,7 @@ LEAF(savectx, 1)
 
 /**************************************************************************/
 
-IMPORT(whichqs, 4)
+IMPORT(sched_whichqs, 4)
 IMPORT(want_resched, 8)
 IMPORT(kernel_lev1map, 8)
 
@@ -784,7 +784,7 @@ LEAF(idle, 0)
 	stq	zero, 0(t1)			/* curproc <- NULL for stats */
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
-2:	ldl	t0, whichqs			/* look for non-empty queue */
+2:	ldl	t0, sched_whichqs		/* look for non-empty queue */
 	beq	t0, 2b
 	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
@@ -819,7 +819,7 @@ LEAF(cpu_switch, 0)
 	mov	a0, s0				/* save old curproc */
 	mov	a1, s1				/* save old U-area */
 
-	ldl	t0, whichqs			/* look for non-empty queue */
+	ldl	t0, sched_whichqs		/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
 
 	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
@@ -827,7 +827,7 @@ LEAF(cpu_switch, 0)
 cpu_switch_queuescan:
 	br	pv, 1f
 1:	LDGP(pv)
-	ldl	t0, whichqs			/* look for non-empty queue */
+	ldl	t0, sched_whichqs		/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
 	mov	t0, t3				/* t3 = saved whichqs */
 	mov	zero, t2			/* t2 = lowest bit set */
@@ -840,7 +840,7 @@ cpu_switch_queuescan:
 3:	/*
 	 * Remove process from queue
 	 */
-	lda	t1, qs				/* get queues */
+	lda	t1, sched_qs			/* get queues */
 	sll	t2, 4, t0			/* queue head is 16 bytes */
 	addq	t1, t0, t0			/* t0 = qp = &qs[firstbit] */
 
@@ -859,7 +859,7 @@ cpu_switch_queuescan:
 	ldiq	t0, 1				/* compute bit in whichqs */
 	sll	t0, t2, t0
 	xor	t3, t0, t3			/* clear bit in whichqs */
-	stl	t3, whichqs
+	stl	t3, sched_whichqs
 
 5:
 	mov	t4, s2				/* save new proc */

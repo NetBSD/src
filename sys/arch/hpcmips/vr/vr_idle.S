@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.4 2000/05/09 13:23:57 shin Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.5 2000/05/26 21:19:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@ LEAF(vr_idle)
 	jal	_C_LABEL(uvm_pageidlezero)
 	nop
 1:
-	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	bne	t0, zero, 1f
 	nop
 	.word	VR_OPCODE_STANDBY

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.45 2000/05/26 21:19:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2000/05/26 21:19:19 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -102,6 +102,7 @@ void	cpu_boot_secondary __P((struct cpu_info *));
 #else
 paddr_t curpcb;				/* PA of our current context */
 struct	proc *fpcurproc;		/* current owner of FPU */
+struct	cpu_info cpu_info_store;
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -296,7 +297,6 @@ recognized:
 	}
 
 	ci = &cpu_info[ma->ma_slot];
-	simple_lock_init(&ci->ci_slock);
 	ci->ci_cpuid = ma->ma_slot;
 	ci->ci_dev = dev;
 #endif /* MULTIPROCESSOR */

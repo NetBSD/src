@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 1999/12/08 17:12:21 msaitoh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 2000/05/26 21:20:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/sched.h>
 
 #include <vm/vm.h>
 
@@ -604,7 +605,8 @@ setrunqueue(p)
 	int which = p->p_priority >> 2;
 
 #ifdef sh3_debug
-	printf("setrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("setrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 
 #define DIAGNOSTIC 1
@@ -612,9 +614,9 @@ setrunqueue(p)
 	if (p->p_back || which >= 32 || which < 0)
 		panic("setrunqueue");
 #endif
-	q = &qs[which];
-	whichqs |= 0x00000001 << which;
-	if (whichqs == 0) {
+	q = &sched_qs[which];
+	sched_whichqs |= 0x00000001 << which;
+	if (sched_whichqs == 0) {
 		panic("setrunqueue[whichqs == 0 ]");
 	}
 	p->p_forw = (struct proc *)q;
@@ -622,7 +624,8 @@ setrunqueue(p)
 	q->ph_rlink = p;
 	oldlast->p_forw = p;
 #ifdef sh3_debug
-	printf("setrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("setrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 }
 
@@ -639,20 +642,22 @@ remrunqueue(p)
 	struct prochd *q;
 
 #ifdef sh3_debug
-	printf("remrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("remrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 #ifdef DIAGNOSTIC
-	if (!(whichqs & (0x00000001 << which)))
+	if (!(sched_whichqs & (0x00000001 << which)))
 		panic("remrunqueue");
 #endif
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;
-	q = &qs[which];
+	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(0x00000001 << which);
+		sched_whichqs &= ~(0x00000001 << which);
 #ifdef sh3_debug
-	printf("remrunque[whichqs = 0x%x,which=%d]\n", whichqs, which);
+	printf("remrunque[whichqs = 0x%x,which=%d]\n",
+	    sched_whichqs, which);
 #endif
 }
 

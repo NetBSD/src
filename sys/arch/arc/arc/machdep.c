@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2000/04/29 21:45:27 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2000/05/26 21:19:28 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -139,6 +139,9 @@ extern void pccnattach __P((void));
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[30];
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 vm_map_t exec_map = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.250 2000/03/20 08:07:52 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.251 2000/05/26 21:19:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -214,6 +214,9 @@ int	safepri = PSL_LOWIPL;
 static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct extent *iomem_ex;
 int iomem_malloc_safe;
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
