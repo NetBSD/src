@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 1998/04/24 05:56:30 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.29 1998/08/13 08:55:59 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -88,6 +88,10 @@
 #	rtc	Atari RealTimeClock
 #	ipl	IP Filter devices
 #	random	Random number generator
+#
+# Video devices:
+#	etvme	Tseng et-compatible cards on VME
+#
 
 #
 # Separate dialin/dialout devices.
@@ -472,6 +476,13 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+etvme)
+	rm -f etvme
+	mknod etvme c 40 0
+	chown root.wheel etvme
+	chmod 600 etvme
 	;;
 
 local)
