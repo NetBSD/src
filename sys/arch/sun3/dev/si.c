@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.12 1994/12/31 01:04:00 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.13 1995/01/10 16:45:26 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -152,7 +152,6 @@ struct scsi_device ncr_dev = {
 	NULL,		/* Use default "done" routine.	    */
 };
 
-extern int	matchbyname();
 static int	si_match();
 static void	si_attach();
 
@@ -166,9 +165,6 @@ si_print(aux, name)
 	void *aux;
 	char *name;
 {
-	if (name)
-		printf("%s: (sc_link = 0x%x)", name, (int) aux);
-	return UNCONF;
 }
 
 static int
@@ -180,12 +176,24 @@ si_match(parent, vcf, args)
 	struct confargs *ca = args;
 	int x;
 
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = OBIO_NCR_SCSI;
+	/* Allow default address for OBIO only. */
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+		if (ca->ca_paddr == -1)
+			ca->ca_paddr = OBIO_NCR_SCSI;
+		break;
+	case BUS_VME16:
+		if (ca->ca_paddr == -1)
+			return (0);
+		break;
+	default:
+		return (0);
+	}
+
+	/* Default interrupt priority always splbio==2 */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
 
-	/* The peek returns non-zero on error. */
 	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
     return (x != -1);
 }
@@ -198,7 +206,6 @@ si_attach(parent, self, args)
 	struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
 	register volatile sci_regmap_t *regs;
 	struct confargs *ca = args;
-	int unit = self->dv_unit;
 
 	switch (ca->ca_bustype) {
 
@@ -209,14 +216,12 @@ si_attach(parent, self, args)
 						 ca->ca_intpri);
 		break;
 
-#ifdef	notyet	/* XXX */
 	case BUS_VME16:
 		regs = (sci_regmap_t *)
 			bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(*regs));
 		isr_add_vectored(ncr5380_intr, (void *)ncr5380,
 						 ca->ca_intpri, ca->ca_intvec);
 		break;
-#endif
 
 	default:
 		printf("unknown\n");
@@ -228,12 +233,14 @@ si_attach(parent, self, args)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
-    ncr5380->sc_link.scsibus = unit;	/* needed? */
     ncr5380->sc_link.adapter_softc = ncr5380;
     ncr5380->sc_link.adapter_target = 7;
     ncr5380->sc_link.adapter = &ncr5380_switch;
     ncr5380->sc_link.device = &ncr_dev;
     ncr5380->sc_link.openings = 1;
+#ifdef	DEBUG
+    ncr5380->sc_link.flags |= si_debug;
+#endif
 
     printf("\n");
 	config_found(self, &(ncr5380->sc_link), si_print);
@@ -431,33 +438,36 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
 	splx(s);
-	xs->error = XS_NOERROR;
-	if (sense) {
-		switch (sense) {
-			case 0x02:	/* Check condition */
+	switch (sense) {
+	case 0:	/* success */
+		xs->resid = 0;
+		xs->error = XS_NOERROR;
+		break;
+
+	case 0x02:	/* Check condition */
 #ifdef	DEBUG
-				printf("check cond. target %d.\n",
-					   xs->sc_link->target);
+		printf("check cond. target %d.\n",
+			   xs->sc_link->target);
 #endif
-				delay(10);	/* Phil's fix for slow devices. */
-				s = splbio();
-				si_group0(xs->sc_link->scsibus,
-					    xs->sc_link->target,
-					    xs->sc_link->lun,
-					    0x3, 0x0,
-					    sizeof(struct scsi_sense_data),
-					    0, (caddr_t) &(xs->sense),
-					    sizeof(struct scsi_sense_data));
-				splx(s);
-				xs->error = XS_SENSE;
-				break;
-			case 0x08:	/* Busy */
-				xs->error = XS_BUSY;
-				break;
-			default:
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-		}
+		delay(10);	/* Phil's fix for slow devices. */
+		s = splbio();
+		si_group0(xs->sc_link->scsibus,
+				  xs->sc_link->target,
+				  xs->sc_link->lun,
+				  0x3, 0x0,
+				  sizeof(struct scsi_sense_data),
+				  0, (caddr_t) &(xs->sense),
+				  sizeof(struct scsi_sense_data));
+		splx(s);
+		xs->error = XS_SENSE;
+		break;
+	case 0x08:	/* Busy */
+		xs->error = XS_BUSY;
+		break;
+	default:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+
 	}
 	return (COMPLETE);
 }
