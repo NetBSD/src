@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.13 1999/10/04 23:27:03 lukem Exp $	*/
+/*	$NetBSD: screen.c,v 1.14 2000/05/22 12:42:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,6 @@ static	void	stopset __P((int)) __attribute__((__noreturn__));
 /*
  * Capabilities from TERMCAP.
  */
-char	PC, *BC, *UP;		/* tgoto requires globals: ugh! */
 short	ospeed;
 
 static char
@@ -121,8 +120,8 @@ struct tcsinfo {	/* termcap string info; some abbrevs above */
 
 /* This is where we will actually stuff the information */
 
-static char combuf[1024], tbuf[1024];
-
+static char *combuf;
+static struct tinfo *info;
 
 /*
  * Routine used by tputs().
@@ -141,7 +140,15 @@ put(c)
  * count=1.  (See screen.h for putpad().)
  */
 #define	putstr(s)	(void)fputs(s, stdout)
-#define	moveto(r, c)	putpad(tgoto(CMstr, c, r))
+
+void
+moveto(int r, int c)
+{
+	char buf[256];
+
+	if (t_goto(info, CMstr, c, r, buf, 255) == 0)
+		putpad(buf);
+}
 
 /*
  * Set up from termcap.
@@ -174,22 +181,23 @@ scr_init()
 	
 	if ((term = getenv("TERM")) == NULL)
 		stop("you must set the TERM environment variable");
-	if (tgetent(tbuf, term) <= 0)
+	if (t_getent(&info, term) <= 0)
 		stop("cannot find your termcap");
-	fill = combuf;
+	*combuf = NULL;
 	{
 		register struct tcsinfo *p;
 
 		for (p = tcstrings; p->tcaddr; p++)
-			*p->tcaddr = tgetstr(p->tcname, &fill);
+			*p->tcaddr = t_agetstr(info, p->tcname, &combuf,
+					       &fill);
 	}
 	{
 		register struct tcninfo *p;
 
 		for (p = tcflags; p->tcaddr; p++)
-			*p->tcaddr = tgetflag(p->tcname);
+			*p->tcaddr = t_getflag(info, p->tcname);
 		for (p = tcnums; p->tcaddr; p++)
-			*p->tcaddr = tgetnum(p->tcname);
+			*p->tcaddr = t_getnum(info, p->tcname);
 	}
 	if (bsflag)
 		BC = "\b";
