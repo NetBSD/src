@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.1 2005/01/10 03:11:50 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.2 2005/01/10 23:33:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.1 2005/01/10 03:11:50 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.2 2005/01/10 23:33:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,17 +60,13 @@ __RCSID("$NetBSD: su_pam.c,v 1.1 2005/01/10 03:11:50 christos Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-
-#ifdef LOGIN_CAP
 #include <login_cap.h>
-#endif
 
 #include <security/pam_appl.h>
 #include <security/openpam.h>   /* for openpam_ttyconv() */
  
-
-static pam_handle_t *pamh = NULL;
 static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
+
 static int chshell(const char *);
 static char *ontty(void);
 
@@ -91,7 +87,7 @@ main(int argc, char **argv)
 	struct passwd *pwd;
 	char *p;
 	uid_t ruid;
-	int asme, ch, asthem, fastlogin, prio, gohome;
+	int asme, ch, asthem, fastlogin, prio, gohome, setwhat;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, **np;
 	char *class;
@@ -101,9 +97,8 @@ main(int argc, char **argv)
 	char *tty;
 	const char *func;
 	const void *newuser;
-#ifdef LOGIN_CAP
 	login_cap_t *lc;
-#endif
+	pam_handle_t *pamh = NULL;
 #ifdef PAM_DEBUG
 	extern int _openpam_debug;
 	_openpam_debug = 1;
@@ -114,11 +109,9 @@ main(int argc, char **argv)
 	shell = class = NULL;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
-#ifdef LOGIN_CAP
 		case 'c':
 			class = optarg;
 			break;
-#endif
 		case 'd':
 			asme = 0;
 			asthem = 1;
@@ -263,7 +256,6 @@ main(int argc, char **argv)
 	err args;				\
 } while (/* CONSTOCOND */0)
 	
-#ifdef LOGIN_CAP
 	/* force the usage of specified class */
 	if (class) {
 		if (ruid) 
@@ -271,9 +263,9 @@ main(int argc, char **argv)
 
 		pwd->pw_class = class;
 	}
+
 	if ((lc = login_getclass(pwd->pw_class)) == NULL)
 		ERRX_PAM_END((1, "Unknown class %s\n", pwd->pw_class));
-#endif
 
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
@@ -296,27 +288,16 @@ main(int argc, char **argv)
 	if (iscsh == UNSET)
 		iscsh = strstr(avshell, "csh") ? YES : NO;
 
-	/* 
-	 * Set permissions. We change the user credentials (UID) here 
-	 * XXX PAM should come before LOGIN_CAP so that the class
-	 * specified through -c can override PAM. But as we might drop
-	 * root UID on both operations, it is not possible to do that.
-	 * If a login class was specified, skip PAM. 
+	/*
+	 * Initialize the supplemental groups before pam gets to them,
+	 * so that other pam modules get a chance to add more when
+	 * we do setcred. Note, we don't relinguish our set-userid yet
 	 */
-#ifdef LOGIN_CAP
-	if (class) {
-		if (setusercontext(lc, pwd, pwd->pw_uid,
-		    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
-		    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
-			ERR_PAM_END((1, "setting user context"));
-		printf("%d %d\n", asthem, pwd->pw_uid);
-	} else 
-#endif
-	{
-		pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED);
-		if (pam_err != PAM_SUCCESS)
-			PAM_END("pam_setcred");
-	}
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) < 0)   
+		ERR_PAM_END((1, "setting user context"));
+
+	if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS)
+		PAM_END("pam_setcred");
 
 	/*
 	 * Manage session. 
@@ -432,12 +413,8 @@ main(int argc, char **argv)
 				free(pamenv);
 			}
 
-#ifdef LOGIN_CAP
 			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
 				err(1, "setting user context");
-#else
-			(void)setenv("PATH", _PATH_DEFPATH, 1);
-#endif
 			if (p)
 				(void)setenv("TERM", p, 1);
 			if (gohome && chdir(pwd->pw_dir) < 0)
@@ -477,10 +454,23 @@ main(int argc, char **argv)
 		syslog(LOG_NOTICE, "%s to %s%s",
 		    username, pwd->pw_name, ontty());
 
-	/* Raise our priority back to what we had before */
-	(void)setpriority(PRIO_PROCESS, 0, prio);
+	/*
+	 * Set user context, except for umask, and the stuff
+	 * we have done before.
+	 */
+	setwhat = LOGIN_SETALL & ~(LOGIN_SETENV|LOGIN_SETUMASK|
+	    LOGIN_SETLOGIN|LOGIN_SETPATH|LOGIN_SETGROUP);
 
-	printf("%d %d\n", geteuid(), getuid());
+	/*
+	 * Don't touch resource/priority settings if -m has been used
+	 * or -l and -c hasn't, and we're not su'ing to root.
+	 */
+	if ((asme || (!asthem && class == NULL)) && pwd->pw_uid)
+		setwhat &= ~(LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
+
+	if (setusercontext(lc, pwd, pwd->pw_uid, setwhat) == -1)
+		err(1, "setusercontext");
+
 	(void)execv(shell, np);
 	err(1, "%s", shell);
 done:
