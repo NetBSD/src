@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.11.4.1 1997/11/15 01:14:04 mellon Exp $	*/
+/*	$NetBSD: esp.c,v 1.11.4.2 1997/11/19 21:36:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -293,7 +293,7 @@ espattach(parent, self, aux)
 	 * to find out what rev the esp chip is, else the esp_reset
 	 * will not set up the defaults correctly.
 	 */
-	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
+	sc->sc_cfg1 = sc->sc_id; /* | NCRCFG1_PARENB; */
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
 	sc->sc_cfg3 = 0;
 	sc->sc_rev = NCR_VARIANT_NCR53C96;
@@ -572,14 +572,14 @@ esp_quick_dma_setup(sc, addr, len, datain, dmasize)
 	esc->sc_dmaaddr = addr;
 	esc->sc_dmalen = len;
 
-	if (((int) *addr) & 1)
-		panic("Implement odd-base transfers, now.");
-
 	esc->sc_pdmaddr = (u_int16_t *) *addr;
 	esc->sc_pdmalen = *len;
-
-	if (*len & 1)
-		panic("Implement odd-length transfers, now.");
+	if (esc->sc_pdmalen & 1) {
+		esc->sc_pdmalen--;
+		esc->sc_pad = 1;
+	} else {
+		esc->sc_pad = 0;
+	}
 
 	esc->sc_datain = datain;
 	esc->sc_prevdmasize = esc->sc_dmasize;
@@ -658,11 +658,27 @@ restart_dmago:
 			__spl4(); *pdma = *(esc->sc_pdmaddr)++; __spl2()
 			esc->sc_pdmalen -= 2;
 		}
+		if (esc->sc_pad) {
+			unsigned short	us;
+			unsigned char	*c;
+			c = (unsigned char *) esc->sc_pdmaddr;
+			us = *c;
+			WAIT;
+			__spl4(); *pdma = us; __spl2()
+		}
 	} else {
 		while (esc->sc_pdmalen) {
 			WAIT;
 			__spl4(); *(esc->sc_pdmaddr)++ = *pdma; __spl2()
 			esc->sc_pdmalen -= 2;
+		}
+		if (esc->sc_pad) {
+			unsigned short	us;
+			unsigned char	*c;
+			WAIT;
+			__spl4(); us = *pdma; __spl2()
+			c = (unsigned char *) esc->sc_pdmaddr;
+			*c = us & 0xff;
 		}
 	}
 #undef WAIT
