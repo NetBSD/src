@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2003/12/30 12:33:19 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2004/01/02 00:41:23 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2004/01/02 00:41:23 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -600,7 +600,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf(", %s free", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ctob(arcsmem));
-	printf(", %s for ARCS", pbuf);
+	printf(", %s for ARCS\n", pbuf);
 }
 
 int	waittime = -1;
