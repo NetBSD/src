@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.13 2001/12/01 14:10:04 kleink Exp $	*/
+/*	$NetBSD: find.h,v 1.14 2001/12/02 12:46:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,8 @@
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
-	N_AMIN, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME, N_DEPTH,
+	N_AMIN, N_ANEWER, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME,
+	N_DEPTH,
 	N_EXEC, N_EXPR, N_FLAGS, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_IREGEX,
 	N_LINKS, N_LS,
 	N_MMIN, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
