@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.4 1996/07/03 22:38:37 pk Exp $
+.\"	$NetBSD: disklabel.5,v 1.5 1997/03/08 13:49:40 mouse Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,7 +177,7 @@ struct disklabel {
 	u_int16_t d_sparespertrack;	/* # of spare sectors per track */
 	u_int16_t d_sparespercyl;	/* # of spare sectors per cylinder */
 	/*
-	 * Alternate cylinders include maintenance, replacement, configuration
+	 * Alternative cylinders include maintenance, replacement, configuration
 	 * description areas, etc.
 	 */
 	u_int32_t d_acylinders;		/* # of alt. cylinders per unit */
