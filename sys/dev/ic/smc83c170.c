@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.4 1998/07/20 20:45:06 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.5 1998/07/20 21:39:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -874,9 +874,19 @@ epic_init(sc)
 	epic_reset(sc);
 
 	/*
+	 * According to SMC Application Note 7-15, the EPIC's clock
+	 * source is incorrect following a reset.  This manifests itself
+	 * as failure to recognize when host software has written to
+	 * a register on the EPIC.  The appnote recommends issuing at
+	 * least 16 consecutive writes to the CLOCK TEST bit to correctly
+	 * configure the clock source.
+	 */
+	for (i = 0; i < 16; i++)
+		bus_space_write_4(st, sh, EPIC_TEST, TEST_CLOCKTEST);
+
+	/*
 	 * Magical mystery initialization.
 	 */
-	bus_space_write_4(st, sh, EPIC_TEST, TEST_CLOCKTEST);
 	bus_space_write_4(st, sh, EPIC_TXTEST, 0);
 
 	/*
