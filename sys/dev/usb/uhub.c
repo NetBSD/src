@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.11 1998/12/26 12:53:02 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.12 1998/12/28 02:23:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,10 +267,10 @@ uhub_init_port(up)
 		 port, pstatus, UGETW(up->status.wPortChange)));
 	if ((pstatus & UPS_PORT_POWER) == 0) {
 		/* Port lacks power, turn it on */
-#if 0
+
 		/* First let the device go through a good power cycle, */
-		usbd_delay_ms(dev->bus, USB_POWER_DOWN_TIME);
-#endif
+		usbd_delay_ms(dev->bus, USB_PORT_POWER_DOWN_TIME);
+
 		/* then turn the power on. */
 		r = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
 		if (r != USBD_NORMAL_COMPLETION)
