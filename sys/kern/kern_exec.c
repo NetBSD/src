@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.96 1998/09/11 12:50:10 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.96.2.1 1999/04/09 04:21:57 chs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -135,6 +135,9 @@ check_exec(p, epp)
 
 	/* unlock vp, since we don't need it locked from here on out. */
 	VOP_UNLOCK(vp, 0);
+
+	/* XXX i386 needs this, how did it ever work without it on sparc? */
+	uvn_attach(vp, VM_PROT_READ);
 
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
