@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179 2001/08/23 14:37:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.180 2001/10/04 16:46:22 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -274,7 +274,7 @@ distribution: distrib-dirs
 distrib-dirs:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${DESTDIR}
 	mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -U
-	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
+	cd ${DESTDIR}/; rm -f sys; ln -s usr/src/sys sys
 
 .if !defined(RELEASEDIR)
 __warnreleasedir: .USE
