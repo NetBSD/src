@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.10 1997/04/08 03:21:16 scottr Exp $	*/
+/*	$NetBSD: macrom.h,v 1.11 1997/05/12 07:53:04 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -77,6 +77,7 @@ extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
 extern u_int16_t	VBLQueue;	/* Vertical blanking Queue, unused ? */
 extern caddr_t		VBLQueue_head;	/* Vertical blanking Queue, head */
 extern caddr_t		VBLQueue_tail;	/* Vertical blanking Queue, tail */
+extern caddr_t		jDTInstall;	/* Deferred task mgr trap handler */
 
 extern u_int32_t	**InitEgretJTVec; /* pointer to a jump table for */
 					  /* InitEgret on AV machines */
@@ -206,6 +207,8 @@ long	mrg_adbintr __P((void));
 long	mrg_pmintr __P((void));
 void	mrg_fixupROMBase __P((caddr_t, caddr_t));
 int	mrg_Delay __P((void));
+void	mrg_DTInstall __P((void));
+void	mrg_execute_deferred __P((void));
 void	mrg_VBLQueue __P((void));
 void	mrg_init_stub_1 __P((void));
 void	mrg_init_stub_2 __P((void));
