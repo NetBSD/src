@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.4 2000/02/07 22:07:27 thorpej Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.5 2000/06/01 00:04:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -39,12 +39,12 @@ struct alpha_isa_chipset {
 
 	struct isa_dma_state ic_dmastate;
 
-	void	(*ic_attach_hook) __P((struct device *, struct device *,
-		    struct isabus_attach_args *));
-	void	*(*ic_intr_establish) __P((void *, int, int, int,
-		    int (*)(void *), void *));
-	void	(*ic_intr_disestablish) __P((void *, void *));
-	int	(*ic_intr_alloc) __P((void *, int, int, int *));
+	void	(*ic_attach_hook)(struct device *, struct device *,
+		    struct isabus_attach_args *);
+	void	*(*ic_intr_establish)(void *, int, int, int,
+		    int (*)(void *), void *);
+	void	(*ic_intr_disestablish)(void *, void *);
+	int	(*ic_intr_alloc)(void *, int, int, int *);
 };
 
 
@@ -107,6 +107,6 @@ struct alpha_isa_chipset {
  * alpha-specific ISA functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */ 
-int isa_display_console __P((bus_space_tag_t, bus_space_tag_t));
+int isa_display_console(bus_space_tag_t, bus_space_tag_t);
 
-void isabeep __P((int, int));
+void isabeep(int, int);

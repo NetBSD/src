@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.h,v 1.1 2000/02/29 15:21:30 nonaka Exp $	*/
+/*	$NetBSD: isapnp_machdep.h,v 1.2 2000/06/01 00:04:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 /*
  * Functions provided to machine-independent ISA PnP code.
  */
-int	isapnp_map __P((struct isapnp_softc *));
-void	isapnp_unmap __P((struct isapnp_softc *));
-int	isapnp_map_readport __P((struct isapnp_softc *));
-void	isapnp_unmap_readport __P((struct isapnp_softc *));
+int	isapnp_map(struct isapnp_softc *);
+void	isapnp_unmap(struct isapnp_softc *);
+int	isapnp_map_readport(struct isapnp_softc *);
+void	isapnp_unmap_readport(struct isapnp_softc *);
