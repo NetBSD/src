@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.16 1997/11/20 08:53:39 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.17 1997/11/30 15:13:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -58,7 +58,11 @@
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	sb_isapnp_match __P((struct device *, void *, void *));
+#else
+int	sb_isapnp_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	sb_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sb_isapnp_ca = {
@@ -76,7 +80,12 @@ struct cfattach sb_isapnp_ca = {
 int
 sb_isapnp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
 
