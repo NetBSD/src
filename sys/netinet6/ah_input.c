@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.38 2003/05/14 06:47:38 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.39 2003/07/09 04:05:59 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38 2003/05/14 06:47:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.39 2003/07/09 04:05:59 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -816,10 +816,6 @@ ah6_input(mp, offp, proto)
 		flowinfo = ip6->ip6_flow;
 		m_adj(m, off + stripsiz);
 		if (m->m_len < sizeof(*ip6)) {
-			/*
-			 * m_pullup is prohibited in KAME IPv6 input processing
-			 * but there's no other way!
-			 */
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m) {
 				ipsec6stat.in_inval++;
