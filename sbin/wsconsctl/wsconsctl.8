@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
+.\" $NetBSD: wsconsctl.8,v 1.6 2000/10/03 14:33:16 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,13 +56,13 @@
 .Op Fl f Ar file
 .Op Fl n
 .Fl w
-.Ar name=value ...
+.Ar name Ns Li = Ns Ar value ...
 .Nm ""
 .Op Fl kdm
 .Op Fl f Ar file
 .Op Fl n
 .Fl w
-.Ar name+=value ...
+.Ar name Ns Li += Ns Ar value ...
 .Sh DESCRIPTION
 The 
 .Nm
@@ -77,10 +77,10 @@ is used to specify all variables for the device.
 .Nm
 attempts to set or modify the specified variables to the given values.
 The value can be specified as either an absolute value, by using the
-.Ar =
+.Ql =
 symbol
 or as a relative value, by using the
-.Ar +=
+.Ql +=
 symbol. See the
 .Ar EXAMPLES
 section for more details.
@@ -114,17 +114,17 @@ to switch keys, should the user find a keyboard's default layout
 difficult to use.
 The keyboard types and other relevant definitions,
 can all be found in the
-.Ar /usr/include/dev/wscons/wsconsio.h
+.Pa /usr/include/dev/wscons/wsconsio.h
 file.
 .Pp
 The mouse types are defined in the
-.Ar /usr/include/dev/wscons/wsconsio.h
+.Pa /usr/include/dev/wscons/wsconsio.h
 file.
 .Pp
 The keyboard types, and the height, width,
 depth (bits per pixel), color map size, and colormap
 are defined in the
-.Ar /usr/include/dev/wscons/wsconsio.h
+.Pa /usr/include/dev/wscons/wsconsio.h
 file. There are also definitions relating to video
 control and cursor control, which are not applicable to
 all display types, and to text emulation and graphics
@@ -133,6 +133,15 @@ all display types, and to text emulation and graphics
 There are currently keyboard encodings for the following
 countries: user-defined, US, German, Danish, Italian,
 French, British and Japanese.
+.Sh FILES
+.Bl -tag -width /dev/wsmouse0
+.It Pa /dev/wskbd0
+keyboard control device
+.It Pa /dev/wsmouse0
+mouse control device
+.It Pa /dev/ttyE0
+display control device
+.El
 .Sh EXAMPLES
 The following are just a few examples of
 .Nm
@@ -151,7 +160,7 @@ key is pressed, the same encoding sequence as
 is sent.
 For a full list of keysyms, and keycodes, please refer
 to the
-.Ar /usr/include/dev/wscons/wsksymdef.h
+.Pa /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
 .Dl wsconsctl -w encoding=us.swapctrlcaps
@@ -175,15 +184,6 @@ Sets the bell pitch to be 1200, whilst
 .Dl wsconsctl -w bell.pitch+=200
 .Pp
 adds 200 to the current pitch of the bell.
-.Sh FILES
-.Bl -tag -width /dev/wsmouse0
-.It Pa /dev/wskbd0
-keyboard control device
-.It Pa /dev/wsmouse0
-mouse control device
-.It Pa /dev/ttyE0
-display control device
-.El
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
