@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 1998/09/09 00:07:49 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.100 1998/09/10 20:45:33 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -514,7 +514,7 @@ _DraCoLev2intr:
 	addql	#1,_intrcnt+32		| add another system clock interrupt
 
 Ldraciaend:
-	moveml	sp@+,d0/d1/a0/d1
+	moveml	sp@+,d0/d1/a0/a1
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -558,7 +558,7 @@ Ldrclockretry:
 #else
 	addql	#1,_C_LABEL(cnt)+V_INTR
 #endif
-	jra	rei
+	jra	rei		| XXXX: shouldn't we call the normal lev1?
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
 	.globl _DraCoIntr
