@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.4 1999/02/19 19:48:06 drochner Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.5 1999/08/23 08:24:38 kleink Exp $	*/
 	
 /*
  * ROM startup
@@ -245,7 +245,11 @@ _C_LABEL(exit):
 /**************************************************************************
 GLOBAL DESCRIPTOR TABLE
 **************************************************************************/
+#ifdef __ELF__
+	.align	16
+#else
 	.align	4
+#endif
 gdt:
 	.word	0, 0
 	.byte	0, 0x00, 0x00, 0
@@ -275,7 +279,11 @@ bootrealseg = . - gdt
 	.byte	0, 0x9b, 0x0f, 0
 gdtlen = . - gdt
 
+#ifdef __ELF__
+	.align	16
+#else
 	.align	4
+#endif
 gdtarg:
 	.word	gdtlen-1		/* limit */
 	.long	gdt			/* addr */

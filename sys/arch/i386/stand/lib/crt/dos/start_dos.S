@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.5 1999/02/28 11:45:44 drochner Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.6 1999/08/23 08:24:38 kleink Exp $	*/
 	
 /*
  * startup for DOS .COM programs
@@ -72,7 +72,11 @@ _C_LABEL(ourseg):
 /**************************************************************************
 GLOBAL DESCRIPTOR TABLE
 **************************************************************************/
+#ifdef __ELF__
+	.align	16
+#else
 	.align	4
+#endif
 gdt:
 	.word	0, 0
 	.byte	0, 0x00, 0x00, 0
@@ -115,7 +119,11 @@ bootrealseg = . - gdt
 	.byte	0, 0x9e, 0x00, 0
 gdtlen = . - gdt
 
+#ifdef __ELF__
+	.align	16
+#else
 	.align	4
+#endif
 gdtarg:
 	.word	gdtlen-1		/* limit */
 	.long	0			/* addr, will be inserted */

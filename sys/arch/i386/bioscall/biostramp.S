@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.7 1998/08/31 23:52:40 jtk Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.8 1999/08/23 08:24:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -331,7 +331,11 @@ x32:
 	leave
 	ret
 
+#ifdef __ELF__
+	.align 16
+#else
 	.align 4
+#endif
 IDT_bios:			# BIOS IDT descriptor (real-mode)
 	.word 1023
 	.long 0

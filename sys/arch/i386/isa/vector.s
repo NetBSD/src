@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.44 1999/03/24 05:51:02 mrg Exp $	*/
+/*	$NetBSD: vector.s,v 1.45 1999/08/23 08:24:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -324,7 +324,11 @@ _C_LABEL(eintrnames):
 
 	/* And counters */
 	.data
+#ifdef __ELF__
+	.align 16
+#else
 	.align 4
+#endif
 _C_LABEL(intrcnt):
 	.long	0, 0, 0, 0, 0, 0, 0, 0
 	.long	0, 0, 0, 0, 0, 0, 0, 0

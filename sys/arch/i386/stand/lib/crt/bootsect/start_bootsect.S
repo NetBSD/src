@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.15 1999/05/02 12:44:34 fvdl Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.16 1999/08/23 08:24:37 kleink Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -438,7 +438,11 @@ ENTRY(ourseg)
 /**************************************************************************
 GLOBAL DESCRIPTOR TABLE
 **************************************************************************/
+#ifdef __ELF__
+	.align	16
+#else
 	.align	4
+#endif
 gdt:
 	.word	0, 0
 	.byte	0, 0x00, 0x00, 0
@@ -476,7 +480,11 @@ bootrealseg = . - gdt
 	.byte	0, 0x9e, 0x00, 0
 gdtlen = . - gdt
 
+#ifdef __ELF__
+	.align	16
+#else
 	.align	4
+#endif
 gdtarg:
 	.word	gdtlen-1		/* limit */
 	.long	0			/* addr, will be inserted */
