@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.2 2003/11/23 15:24:20 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.3 2004/05/18 23:29:30 gavan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -81,6 +81,9 @@
 
 #define Cache_Control		0x000280
 #define XCache_Control		0x020280
+
+#define Wimp_SlotSize		0x0400ec
+#define XWimp_SlotSize		0x0600ec
 
 #ifndef __ASSEMBLER__
 typedef struct os_error {
