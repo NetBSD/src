@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2002/09/04 14:39:56 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2002/10/24 13:56:45 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -219,7 +219,7 @@ _bus_space_map(void *cookie, bus_addr_t addr, bus_size_t size,
 
 		if ((addr + size) >
 		    (bootmapping[i].bm_start + bootmapping[i].bm_size)) {
-			panic("bus_space_map: bootmap overlap: %lx:%lx",
+			panic("bus_space_map: bootmap overlap: %x:%x",
 			    addr, size);
 			/*NOTREACHED*/
 		}
