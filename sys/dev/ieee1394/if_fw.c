@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.7 2001/05/01 06:15:43 enami Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.8 2001/05/11 06:00:17 jmc Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -94,8 +94,6 @@ void fw_attach(struct device *, struct device *, void *);
 int  fw_detach(struct device *, int);
 int  fw_activate(struct device *, enum devact);
 
-int  fw_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-	struct rtentry *);
 void fw_input(struct device *, struct mbuf *);
 void fw_txint(struct device *, struct mbuf *);
 int  fw_ioctl(struct ifnet *, u_long, caddr_t);
