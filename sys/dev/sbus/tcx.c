@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.7 2002/03/27 10:14:17 darrenr Exp $ */
+/*	$NetBSD: tcx.c,v 1.7.2.1 2002/05/16 11:43:47 gehenna Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.7 2002/03/27 10:14:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.7.2.1 2002/05/16 11:43:47 gehenna Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.7 2002/03/27 10:14:17 darrenr Exp $");
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/tcxreg.h>
-
-#include <machine/conf.h>
 
 /* per-display variables */
 struct tcx_softc {
@@ -119,18 +117,25 @@ static void	tcxattach __P((struct device *, struct device *, void *));
 static int	tcxmatch __P((struct device *, struct cfdata *, void *));
 static void	tcx_unblank __P((struct device *));
 
-/* cdevsw prototypes */
-cdev_decl(tcx);
-
 struct cfattach tcx_ca = {
 	sizeof(struct tcx_softc), tcxmatch, tcxattach
 };
 
 extern struct cfdriver tcx_cd;
 
+dev_type_open(tcxopen);
+dev_type_close(tcxclose);
+dev_type_ioctl(tcxioctl);
+dev_type_mmap(tcxmmap);
+
+const struct cdevsw tcx_cdevsw = {
+	tcxopen, tcxclose, noread, nowrite, tcxioctl,
+	nostop, notty, nopoll, tcxmmap,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver tcx_fbdriver = {
-	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxpoll, tcxmmap
+	tcx_unblank, tcxopen, tcxclose, tcxioctl, nopoll, tcxmmap
 };
 
 static void tcx_reset __P((struct tcx_softc *));
@@ -497,16 +502,6 @@ tcxioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-int
-tcxpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*

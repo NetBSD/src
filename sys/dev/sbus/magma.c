@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.16 2002/03/21 00:18:36 eeh Exp $	*/
+/*	$NetBSD: magma.c,v 1.16.4.1 2002/05/16 11:43:47 gehenna Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.16 2002/03/21 00:18:36 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.16.4.1 2002/05/16 11:43:47 gehenna Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.16 2002/03/21 00:18:36 eeh Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -201,6 +200,30 @@ struct cfattach mbpp_ca = {
 
 extern struct cfdriver mtty_cd;
 extern struct cfdriver mbpp_cd;
+
+dev_type_open(mttyopen);
+dev_type_close(mttyclose);
+dev_type_read(mttyread);
+dev_type_write(mttywrite);
+dev_type_ioctl(mttyioctl);
+dev_type_stop(mttystop);
+dev_type_tty(mttytty);
+dev_type_poll(mttypoll);
+
+const struct cdevsw mtty_cdevsw = {
+	mttyopen, mttyclose, mttyread, mttywrite, mttyioctl,
+	mttystop, mttytty, mttypoll, nommap, D_TTY
+};
+
+dev_type_open(mbppopen);
+dev_type_close(mbppclose);
+dev_type_read(mbpp_rw);
+dev_type_ioctl(mbppioctl);
+
+const struct cdevsw mbpp_cdevsw = {
+	mbppopen, mbppclose, mbpp_rw, mbpp_rw, mbppioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /************************************************************************
  *
@@ -1451,10 +1474,7 @@ mtty_param(tp, t)
  *	mbpp_attach	attach mbpp devices
  *	mbppopen	open mbpp device
  *	mbppclose	close mbpp device
- *	mbppread	read from mbpp
- *	mbppwrite	write to mbpp
  *	mbppioctl	do ioctl on mbpp
- *	mbppselect	do select on mbpp
  *	mbpp_rw		general rw routine
  *	mbpp_timeout	rw timeout
  *	mbpp_start	rw start after delay
@@ -1574,32 +1594,6 @@ mbppclose(dev, flag, mode, p)
 }
 
 /*
- * Read routine
- */
-int
-mbppread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return( mbpp_rw(dev, uio) );
-}
-
-/*
- * Write routine
- */
-int
-mbppwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return( mbpp_rw(dev, uio) );
-}
-
-/*
  * ioctl routine
  */
 int
@@ -1648,23 +1642,11 @@ mbppioctl(dev, cmd, data, flags, p)
 	return(error);
 }
 
-/*
- * poll routine
- */
 int
-mbpppoll(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
-{
-
-	return(ENODEV);
-}
-
-int
-mbpp_rw(dev, uio)
+mbpp_rw(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	int card = MAGMA_CARD(dev);
 	int port = MAGMA_PORT(dev);

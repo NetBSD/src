@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.12 2002/03/20 20:39:15 eeh Exp $ */
+/*	$NetBSD: bpp.c,v 1.12.4.1 2002/05/16 11:43:47 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.12 2002/03/20 20:39:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.12.4.1 2002/05/16 11:43:47 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.12 2002/03/20 20:39:15 eeh Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -125,6 +124,18 @@ struct cfattach bpp_ca = {
 };
 
 extern struct cfdriver bpp_cd;
+
+dev_type_open(bppopen);
+dev_type_close(bppclose);
+dev_type_write(bppwrite);
+dev_type_ioctl(bppioctl);
+dev_type_poll(bpppoll);
+
+const struct cdevsw bpp_cdevsw = {
+	bppopen, bppclose, noread, bppwrite, bppioctl,
+	nostop, notty, bpppoll, nommap,
+};
+
 #define BPPUNIT(dev)	(minor(dev))
 
 
@@ -296,16 +307,6 @@ bppclose(dev, flags, mode, p)
 	sc->sc_asyncproc = NULL;
 	sc->sc_flags = 0;
 	return (0);
-}
-
-int
-bppread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (ENXIO);
 }
 
 int
