@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.21 2002/09/12 18:43:17 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.22 2002/09/12 20:21:00 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -36,6 +36,7 @@
 #include "debug.h"
 #include "rtld.h"
 
+void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind_mips(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 
