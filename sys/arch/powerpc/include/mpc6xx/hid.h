@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.1 2000/11/09 11:49:13 tsubai Exp $	*/
+/*	$NetBSD: hid.h,v 1.1 2001/06/06 17:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _MPC6XX_HID_H_
+#define _MPC6XX_HID_H_
 
 /* Hardware Implementation Dependent registers for the PowerPC */
 
@@ -104,3 +107,5 @@
  *  604: ECP = Enable cache parity checking
  *  604: SIE = Serial instruction execution disable
  */
+
+#endif /* _MPC6XX_HID_H_ */

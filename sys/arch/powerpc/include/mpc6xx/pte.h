@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 1998/08/31 14:43:40 tsubai Exp $	*/
+/*	$NetBSD: pte.h,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PTE_H_
-#define	_MACHINE_PTE_H_
+#ifndef	_MPC6XX_PTE_H_
+#define	_MPC6XX_PTE_H_
 
 #include <sys/queue.h>
 
@@ -52,6 +52,7 @@ struct pte {
 #define	PTE_API		0x0000003f
 /* Low word: */
 #define	PTE_RPGN	0xfffff000
+#define	PTE_RPGN_SHFT	12
 #define	PTE_REF		0x00000100
 #define	PTE_CHG		0x00000080
 #define	PTE_WIMG	0x00000078
@@ -62,6 +63,11 @@ struct pte {
 #define	PTE_PP		0x00000003
 #define	PTE_RO		0x00000003
 #define	PTE_RW		0x00000002
+
+#define	PTE_RSVD	0x00000e04
+#define	PTE_WIRED	0x00000004
+#define	PTE_GIDX_MASK	0x00000e00
+#define	PTE_GIDX_SHFT	9
 
 #ifndef	_LOCORE
 typedef	struct pte pte_t;
@@ -75,13 +81,6 @@ typedef	struct pte pte_t;
 #define	ADDR_PIDX_SHFT	12
 #define	ADDR_API_SHFT	22
 #define	ADDR_POFF	0x00000fff
-
-#ifndef	_LOCORE
-#ifdef	_KERNEL
-extern pte_t *ptable;
-extern int ptab_cnt;
-#endif	/* _KERNEL */
-#endif	/* _LOCORE */
 
 /*
  * Bits in DSISR:
@@ -108,4 +107,4 @@ extern int ptab_cnt;
 extern u_int dsisr __P((void));
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
-#endif	/* _MACHINE_PTE_H_ */
+#endif	/* _MPC6XX_PTE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 2001/06/02 18:09:19 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 2001/06/06 17:36:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -161,6 +161,10 @@ trap(frame)
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+#ifdef PMAPDEBUG
+		printf("trap: user ISI trap @ %#x (ssr1=%#x)\n",
+		    frame->srr0, frame->srr1);
+#endif
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    0, ftype);
 		if (rv == 0) {

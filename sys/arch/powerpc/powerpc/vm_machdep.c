@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 2001/04/24 04:31:07 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 2001/06/06 17:36:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,8 +105,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
-	    (paddr_t *)&pcb->pcb_pmreal);
+	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
 
 	/*
 	 * Setup the trap frame for the new process
@@ -157,8 +156,7 @@ cpu_swapin(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
-	    (paddr_t *)&pcb->pcb_pmreal);
+	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
 }
 
 /*
