@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.21 2003/09/01 04:24:55 mycroft Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.22 2003/09/01 04:34:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.21 2003/09/01 04:24:55 mycroft Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.22 2003/09/01 04:34:16 mycroft Exp $");
 #endif
 
 
@@ -89,6 +89,8 @@ void	device_release __P((int, char *[]));
 void	device_reserve __P((int, char *[]));
 void	device_reset __P((int, char *[]));
 void	device_debug __P((int, char *[]));
+void	device_prevent __P((int, char *[]));
+void	device_allow __P((int, char *[]));
 void	device_start __P((int, char *[]));
 void	device_stop __P((int, char *[]));
 void	device_tur __P((int, char *[]));
@@ -104,6 +106,8 @@ struct command device_commands[] = {
 	{ "reserve",	"",			device_reserve },
 	{ "reset",	"",			device_reset },
 	{ "debug",	"level",		device_debug },
+	{ "prevent",	"",			device_prevent },
+	{ "allow",	"",			device_allow },
 	{ "start",	"",			device_start },
 	{ "stop",	"",			device_stop },
 	{ "tur",	"",			device_tur },
@@ -724,6 +728,58 @@ device_flushcache(argc, argv)
 	memset(&cmd, 0, sizeof(cmd));
 
 	cmd.opcode = SCSI_FLUSHCACHE;
+
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
+
+	return;
+}
+
+/*
+ * device_prevent:
+ *
+ *      Issue a prevent to a SCSI device.
+ */
+void
+device_prevent(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct scsipi_prevent cmd;
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.opcode = PREVENT_ALLOW;
+	cmd.how = PR_PREVENT;
+
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
+
+	return;
+}
+
+/*
+ * device_allow:
+ *
+ *      Issue a stop to a SCSI device.
+ */
+void
+device_allow(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct scsipi_prevent cmd;
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.opcode = PREVENT_ALLOW;
+	cmd.how = PR_ALLOW;
 
 	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
 
