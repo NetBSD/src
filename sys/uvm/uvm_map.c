@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.180 2005/01/13 11:50:32 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.181 2005/01/14 14:25:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.180 2005/01/13 11:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.181 2005/01/14 14:25:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -182,13 +182,10 @@ vaddr_t uvm_maxkaddr;
 /*
  * VM_MAP_USE_KMAPENT: determine if uvm_kmapent_alloc/free is used
  * for the vm_map.
- *
- * we exclude pager_map because it needs pager_map_wanted handling
- * when doing map/unmap.
  */
 extern struct vm_map *pager_map; /* XXX */
 #define	VM_MAP_USE_KMAPENT(map) \
-	(vm_map_pmap(map) == pmap_kernel() && (map) != pager_map)
+	(((map)->flags & VM_MAP_INTRSAFE) || (map) == kernel_map)
 
 /*
  * uvm_map_entry_link: insert entry into a map
@@ -519,20 +516,22 @@ uvm_mapent_free(struct vm_map_entry *me)
  */
 
 static __inline void
-uvm_mapent_free_merged(struct vm_map_entry *me)
+uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
 {
+
+	KASSERT(!(me->flags & UVM_MAP_KERNEL) || uvm_kmapent_map(me) == map);
 
 	if (me->flags & UVM_MAP_QUANTUM) {
 		/*
 		 * keep this entry for later splitting.
 		 */
-		struct vm_map *map;
 		struct vm_map_kernel *vmk;
 		int s;
 
-		KASSERT(me->flags & UVM_MAP_KERNEL);
+		KASSERT(VM_MAP_IS_KERNEL(map));
+		KASSERT(!VM_MAP_USE_KMAPENT(map) ||
+		    (me->flags & UVM_MAP_KERNEL));
 
-		map = uvm_kmapent_map(me);
 		vmk = vm_map_to_kernel(map);
 		s = splvm();
 		simple_lock(&uvm.kentry_lock);
@@ -776,7 +775,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	struct vm_map_entry *new_entry;
 	int error;
 
-	KASSERT((flags & UVM_FLAG_QUANTUM) == 0 || VM_MAP_USE_KMAPENT(map));
+	KASSERT((flags & UVM_FLAG_QUANTUM) == 0 || VM_MAP_IS_KERNEL(map));
 
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping
@@ -788,7 +787,8 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	 */
 
 	new_entry = NULL;
-	if (VM_MAP_USE_KMAPENT(map) || map == pager_map) {
+	if (VM_MAP_USE_KMAPENT(map) || (flags & UVM_FLAG_QUANTUM) ||
+	    map == pager_map) {
 		new_entry = uvm_mapent_alloc(map, (flags & UVM_FLAG_NOWAIT));
 		if (__predict_false(new_entry == NULL))
 			return ENOMEM;
@@ -1289,14 +1289,14 @@ done:
 	if (new_entry) {
 		if (error == 0) {
 			KDASSERT(merged);
-			uvm_mapent_free_merged(new_entry);
+			uvm_mapent_free_merged(map, new_entry);
 		} else {
 			uvm_mapent_free(new_entry);
 		}
 	}
 	if (dead) {
 		KDASSERT(merged);
-		uvm_mapent_free_merged(dead);
+		uvm_mapent_free_merged(map, dead);
 	}
 	return error;
 }
