@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.16 2003/07/14 15:47:23 lukem Exp $	*/
+/*	$NetBSD: autri.c,v 1.17 2003/10/25 18:31:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.16 2003/07/14 15:47:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.17 2003/10/25 18:31:11 christos Exp $");
 
 #include "midi.h"
 
@@ -421,6 +421,10 @@ autri_reset_codec(void *sc_)
 
 		addr = AUTRI_ALI_SCTRL;
 		ready = AUTRI_ALI_SCTRL_CODEC_READY;
+		break;
+	default:
+		addr = 0;
+		ready = 0;
 		break;
 	}
 

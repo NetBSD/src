@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.85 2003/09/01 16:51:25 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.86 2003/10/25 18:29:12 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.85 2003/09/01 16:51:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.86 2003/10/25 18:29:12 christos Exp $");
 
 #include "ppp.h"
 
@@ -410,6 +410,7 @@ pppioctl(sc, cmd, data, flag, p)
     struct npioctl *npi;
     time_t t;
 #ifdef PPP_FILTER
+/*###413 [cc] warning: `bp' might be used uninitialized in this function%%%*/
     struct bpf_program *bp, *nbp;
     struct bpf_insn *newcode, *oldcode;
     int newcodelen;
@@ -630,6 +631,9 @@ pppioctl(sc, cmd, data, flag, p)
 
 	case PPPIOCSOACTIVE:
 	    bp = &sc->sc_active_filt_out;
+	    break;
+	default:
+	    return EINVAL;
 	    break;
 	}
 	oldcode = bp->bf_insns;
