@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.13.4.4 2001/04/24 22:27:19 he Exp $	*/
+/*	$NetBSD: main.c,v 1.13.4.5 2002/06/26 16:52:29 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13.4.4 2001/04/24 22:27:19 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.13.4.5 2002/06/26 16:52:29 he Exp $");
 #endif
 
 /*
@@ -51,6 +51,8 @@ void    usage(void);
 
 int     filecnt;
 int     pkgcnt;
+
+static int checkpattern_fn(const char *, void *);
 
 /*
  * Assumes CWD is in /var/db/pkg/<pkg>!
@@ -135,6 +137,7 @@ check1pkg(const char *pkgdir)
 		case PLIST_IGNORE_INST:
 		case PLIST_OPTION:
 		case PLIST_PKGCFL:
+		case PLIST_BLDDEP:
 			break;
 		}
 	}
@@ -245,6 +248,7 @@ rebuild(void)
 			case PLIST_IGNORE_INST:
 			case PLIST_OPTION:
 			case PLIST_PKGCFL:
+			case PLIST_BLDDEP:
 				break;
 			}
 		}
@@ -305,7 +309,7 @@ checkall(void)
 }
 
 static int
-checkpattern_fn(const char *pkg, char *data)
+checkpattern_fn(const char *pkg, void *vp)
 {
 	int     rc;
 
@@ -322,8 +326,9 @@ checkpattern_fn(const char *pkg, char *data)
 }
 
 static int
-lspattern_fn(const char *pkg, char *data)
+lspattern_fn(const char *pkg, void *vp)
 {
+	char *data = vp;
 	printf("%s/%s\n", data, pkg);
 	
 	return 0;
@@ -469,8 +474,10 @@ main(int argc, char *argv[])
 
 			cwd = getcwd(NULL, 0);
 			p = findbestmatchingname(cwd, base);
-			if (p)
+			if (p) {
 				printf("%s/%s\n", cwd, p);
+				free(p);
+			}
 			free(cwd);
 			
 			argv++;
