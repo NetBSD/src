@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.2 1994/01/25 05:00:14 hpeyerl Exp $
+ *	$Id: sb.c,v 1.3 1994/01/28 03:40:18 deraadt Exp $
  */
 
 #include "sb.h"
@@ -623,9 +623,10 @@ sbintr(int unit)
 	if (sc->sc_mintr != 0) {
 		int c = rdsp(sc->sc_base);
 		(*sc->sc_mintr)(sc->sc_arg, c);
-	} else
+	} else if(sc->sc_intr != 0) {
 		(*sc->sc_intr)(sc->sc_arg);
-
+	} else
+		return (0);
 	return (1);
 }
 
