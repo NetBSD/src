@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.27 1999/12/12 00:56:29 sommerfeld Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.28 2000/03/30 12:22:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -340,7 +340,7 @@ dead_print(v)
  */
 int
 chkvnlock(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 	int locked = 0;
 

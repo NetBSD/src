@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.46 1999/08/01 23:16:34 sommerfeld Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.47 2000/03/30 12:22:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1045,7 +1045,7 @@ union_lease(v)
 		struct ucred *a_cred;
 		int a_flag;
 	} */ *ap = v;
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = ovp;
 	return (VCALL(ovp, VOFFSET(vop_lease), ap));
@@ -1063,7 +1063,7 @@ union_ioctl(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = ovp;
 	return (VCALL(ovp, VOFFSET(vop_ioctl), ap));
@@ -1078,7 +1078,7 @@ union_poll(v)
 		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = ovp;
 	return (VCALL(ovp, VOFFSET(vop_poll), ap));
@@ -1113,7 +1113,7 @@ union_mmap(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = ovp;
 	return (VCALL(ovp, VOFFSET(vop_mmap), ap));
@@ -1171,7 +1171,7 @@ union_seek(v)
 		off_t  a_newoff;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = ovp;
 	return (VCALL(ovp, VOFFSET(vop_seek), ap));
@@ -1929,7 +1929,7 @@ union_advlock(v)
 		struct flock *a_fl;
 		int  a_flags;
 	} */ *ap = v;
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = ovp;
 	return (VCALL(ovp, VOFFSET(vop_advlock), ap));
