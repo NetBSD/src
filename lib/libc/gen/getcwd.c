@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.18 1999/05/03 14:33:50 christos Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.19 1999/06/11 15:38:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.18 1999/05/03 14:33:50 christos Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.19 1999/06/11 15:38:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -304,7 +304,7 @@ getcwd(pt, size)
 				if (!(dp = readdir(dir)))
 					goto notfound;
 				if (dp->d_fileno == ino) {
-#if defined(__SVR4) || defined(__svr4__)
+#if defined(__SVR4) || defined(__svr4__) || defined(__linux__)
 					dlen = strlen(dp->d_name);
 #else
 					dlen = dp->d_namlen;
@@ -318,7 +318,7 @@ getcwd(pt, size)
 					goto notfound;
 				if (ISDOT(dp))
 					continue;
-#if defined(__SVR4) || defined(__svr4__)
+#if defined(__SVR4) || defined(__svr4__) || defined(__linux__)
 				dlen = strlen(dp->d_name);
 #else
 				dlen = dp->d_namlen;
