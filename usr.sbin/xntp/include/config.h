@@ -634,6 +634,9 @@
 /* Define if you have the kvm library (-lkvm).  */
 #define HAVE_LIBKVM 1
 
+/* Define if you have sysctl() to get the clockrate */
+#define HAVE_SYSCTL_CLOCKRATE 1
+
 /* Define if you have the ld library (-lld).  */
 /* #undef HAVE_LIBLD */
 
