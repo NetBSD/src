@@ -1,4 +1,5 @@
-/* BSD $Id: boot.c,v 1.1 1995/02/13 23:08:25 cgd Exp $ */
+/*	$NetBSD: boot.c,v 1.2 1995/02/16 02:33:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
