@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.33 2000/09/21 23:27:32 eeh Exp $	*/
+/*	$NetBSD: comvar.h,v 1.34 2000/09/22 14:46:38 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -66,7 +66,7 @@ struct com_softc {
 
 	struct callout sc_diag_callout;
 
-	paddr_t sc_iobase;			/* XXX ISA-centric name */
+	bus_addr_t sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;
 
 	bus_space_tag_t sc_iot;

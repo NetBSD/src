@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.177 2000/09/21 23:27:32 eeh Exp $	*/
+/*	$NetBSD: com.c,v 1.178 2000/09/22 14:46:38 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ u_int com_rbuf_size = COM_RING_SIZE;
 u_int com_rbuf_hiwat = (COM_RING_SIZE * 1) / 4;
 u_int com_rbuf_lowat = (COM_RING_SIZE * 3) / 4;
 
-static paddr_t	comconsaddr;
+static bus_addr_t	comconsaddr;
 static bus_space_tag_t comconstag;
 static bus_space_handle_t comconsioh;
 static int	comconsattached;
@@ -211,7 +211,7 @@ volatile int	com_softintr_scheduled;
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-static paddr_t com_kgdb_addr;
+static bus_addr_t com_kgdb_addr;
 static bus_space_tag_t com_kgdb_iot;
 static bus_space_handle_t com_kgdb_ioh;
 static int com_kgdb_attached;
@@ -391,7 +391,7 @@ void
 com_attach_subr(sc)
 	struct com_softc *sc;
 {
-	paddr_t iobase = sc->sc_iobase;
+	bus_addr_t iobase = sc->sc_iobase;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
@@ -1608,21 +1608,19 @@ comstart(tp)
 		return;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP)) {
+	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-	}
-	if (sc->sc_tx_stopped) {
+	if (sc->sc_tx_stopped)
 		goto out;
-	}
+
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0) {
+		if (tp->t_outq.c_cc == 0)
 			goto out;
-		}
 	}
 
 	/* Grab the first contiguous region of buffer space. */
@@ -2266,7 +2264,7 @@ com_common_putc(iot, ioh, c)
 int
 cominit(iot, iobase, rate, frequency, cflag, iohp)
 	bus_space_tag_t iot;
-	paddr_t iobase;
+	bus_addr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 	bus_space_handle_t *iohp;
@@ -2304,7 +2302,7 @@ struct consdev comcons = {
 int
 comcnattach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	paddr_t iobase;
+	bus_addr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {
@@ -2356,7 +2354,7 @@ comcnpollc(dev, on)
 int
 com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	paddr_t iobase;
+	bus_addr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {
@@ -2403,7 +2401,7 @@ com_kgdb_putc(arg, c)
 int
 com_is_console(iot, iobase, ioh)
 	bus_space_tag_t iot;
-	paddr_t iobase;
+	bus_addr_t iobase;
 	bus_space_handle_t *ioh;
 {
 	bus_space_handle_t help;
