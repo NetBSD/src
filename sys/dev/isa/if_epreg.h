@@ -21,18 +21,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_epreg.h,v 1.3 1994/03/29 04:35:56 mycroft Exp $
+ *	$Id: if_epreg.h,v 1.4 1994/04/15 10:51:36 deraadt Exp $
  */
-/**************************************************************************
- *										  *
+
+/*
  * These define the EEPROM data structure.  They are used in the probe
  * function to verify the existance of the adapter after having sent
  * the ID_Sequence.
  *
  * There are others but only the ones we use are defined here.
- *
- **************************************************************************/
-
+ */
 #define EEPROM_NODE_ADDR_0	0x0	/* Word */
 #define EEPROM_NODE_ADDR_1	0x1	/* Word */
 #define EEPROM_NODE_ADDR_2	0x2	/* Word */
@@ -41,18 +39,16 @@
 #define EEPROM_ADDR_CFG		0x8	/* Base addr */
 #define EEPROM_RESOURCE_CFG	0x9     /* IRQ. Bits 12-15 */
 
-/**************************************************************************
- *										  *
- * These are the registers for the 3Com 3c509 and their bit patterns when *
- * applicable.  They have been taken out the the "EtherLink III Parallel  *
- * Tasking EISA and ISA Technical Reference" "Beta Draft 10/30/92" manual *
- * from 3com.								  *
- *										  *
- **************************************************************************/
-
+/*
+ * These are the registers for the 3Com 3c509 and their bit patterns when
+ * applicable.  They have been taken out the the "EtherLink III Parallel
+ * Tasking EISA and ISA Technical Reference" "Beta Draft 10/30/92" manual
+ * from 3com.
+ */
 #define EP_COMMAND		0x0e    /* Write. BASE+0x0e is always a command reg. */
 #define EP_STATUS		0x0e    /* Read. BASE+0x0e is always status reg. */
 #define EP_WINDOW		0x0f    /* Read. BASE+0x0f is always window reg. */
+
 /*
  * Window 0 registers. Setup.
  */
@@ -136,11 +132,9 @@
 #define TX_NO_SQE		0x01
 #define TX_CD_LOST		0x00
 
-/****************************************
- *
+/*
  * Register definitions.
- *
- ****************************************/
+ */
 
 /*
  * Command register. All windows.
@@ -164,26 +158,27 @@
 #define TX_DISABLE		(u_short) (0xa<<11)
 #define TX_RESET		(u_short) (0xb<<11)
 #define REQ_INTR		(u_short) (0xc<<11)
-   /*
-    * The following C_* acknowledge the various interrupts.
-    * Some of them don't do anything.  See the manual.
-    */
+
+/*
+ * The following C_* acknowledge the various interrupts.
+ * Some of them don't do anything.  See the manual.
+ */
 #define ACK_INTR		(u_short) (0x6800)
-#      define C_INTR_LATCH	(u_short) (ACK_INTR|0x1)
-#      define C_CARD_FAILURE	(u_short) (ACK_INTR|0x2)
-#      define C_TX_COMPLETE	(u_short) (ACK_INTR|0x4)
-#      define C_TX_AVAIL	(u_short) (ACK_INTR|0x8)
+#      define C_INTR_LATCH	(u_short) (ACK_INTR|0x01)
+#      define C_CARD_FAILURE	(u_short) (ACK_INTR|0x02)
+#      define C_TX_COMPLETE	(u_short) (ACK_INTR|0x04)
+#      define C_TX_AVAIL	(u_short) (ACK_INTR|0x08)
 #      define C_RX_COMPLETE	(u_short) (ACK_INTR|0x10)
 #      define C_RX_EARLY	(u_short) (ACK_INTR|0x20)
 #      define C_INT_RQD		(u_short) (ACK_INTR|0x40)
 #      define C_UPD_STATS	(u_short) (ACK_INTR|0x80)
-#define SET_INTR_MASK		(u_short) (0xe<<11)
-#define SET_RD_0_MASK		(u_short) (0xf<<11)
+#define SET_INTR_MASK		(u_short) (0x0e<<11)
+#define SET_RD_0_MASK		(u_short) (0x0f<<11)
 #define SET_RX_FILTER		(u_short) (0x10<<11)
-#      define FIL_INDIVIDUAL	(u_short) (0x1)
-#      define FIL_GROUP		(u_short) (0x2)
-#      define FIL_BRDCST	(u_short) (0x4)
-#      define FIL_ALL		(u_short) (0x8)
+#      define FIL_INDIVIDUAL	(u_short) (0x01)
+#      define FIL_MULTICAST	(u_short) (0x02)
+#      define FIL_BRDCST	(u_short) (0x04)
+#      define FIL_PROMISC	(u_short) (0x08)
 #define SET_RX_EARLY_THRESH	(u_short) (0x11<<11)
 #define SET_TX_AVAIL_THRESH	(u_short) (0x12<<11)
 #define SET_TX_START_THRESH	(u_short) (0x13<<11)
@@ -209,14 +204,14 @@
  *     1:      Adapter Failure.
  *     0:      Interrupt Latch.
  */
-#define S_INTR_LATCH		(u_short) (0x1)
-#define S_CARD_FAILURE		(u_short) (0x2)
-#define S_TX_COMPLETE		(u_short) (0x4)
-#define S_TX_AVAIL		(u_short) (0x8)
-#define S_RX_COMPLETE		(u_short) (0x10)
-#define S_RX_EARLY		(u_short) (0x20)
-#define S_INT_RQD		(u_short) (0x40)
-#define S_UPD_STATS		(u_short) (0x80)
+#define S_INTR_LATCH		(u_short) (0x0001)
+#define S_CARD_FAILURE		(u_short) (0x0002)
+#define S_TX_COMPLETE		(u_short) (0x0004)
+#define S_TX_AVAIL		(u_short) (0x0008)
+#define S_RX_COMPLETE		(u_short) (0x0010)
+#define S_RX_EARLY		(u_short) (0x0020)
+#define S_INT_RQD		(u_short) (0x0040)
+#define S_UPD_STATS		(u_short) (0x0080)
 #define S_COMMAND_IN_PROGRESS	(u_short) (0x1000)
 
 /*
@@ -243,7 +238,7 @@
 #define ERR_ALIGNMENT	(u_short) (0x1400)
 #define ERR_CRC		(u_short) (0x1500)
 #define ERR_OVERSIZE	(u_short) (0x1100)
-#define ERR_DRIBBLE	(u_short) (0x200)
+#define ERR_DRIBBLE	(u_short) (0x0200)
 
 /*
  * TX Status
@@ -266,8 +261,8 @@
 #define TXS_INTR_REQ		0x40
 #define TXS_JABBER		0x20
 #define TXS_UNDERRUN		0x10
-#define TXS_MAX_COLLISION	0x8
-#define TXS_STATUS_OVERFLOW	0x4
+#define TXS_MAX_COLLISION	0x08
+#define TXS_STATUS_OVERFLOW	0x04
 
 /*
  * Misc defines for various things.
@@ -288,8 +283,6 @@
 #define EEPROM_BUSY			(1<<15)
 #define EEPROM_TST_MODE			(1<<14)
 #define READ_EEPROM			(1<<7)
-#define ETHER_ADDR_LEN			6
-#define ETHER_MAX			1536
 #define ENABLE_UTP			0xc0
 #define DISABLE_UTP			0x0
 #define RX_BYTES_MASK			(u_short) (0x07ff)
