@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/01 15:20:12 soren Exp $
+#	$NetBSD: Makefile,v 1.3 2000/06/28 09:47:55 soren Exp $
 
 # Makefile for cobalt tags file
 
@@ -7,7 +7,7 @@
 
 TCOBALT=	../cobalt/tags
 SCOBALT=	../cobalt/cobalt/*.[ch] ../cobalt/include/*.h \
-		../cobalt/pci/*.[ch]
+		../cobalt/dev/*.[ch] ../cobalt/pci/*.[ch]
 ACOBALT=	../cobalt/cobalt/*.S
 
 # Directories in which to place tags links
