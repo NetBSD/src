@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2.2.2 2002/07/14 17:47:17 gehenna Exp $	*/
+/*	$NetBSD: asm.h,v 1.2.2.3 2002/07/16 08:13:49 gehenna Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -248,6 +248,11 @@ tf4	.reg	%fr8
 	.export	x, entry ! .label x ! .proc		!\
 	.callinfo frame=n,calls, save_rp, save_sp	!\
 	.entry ! _PROF_PROLOGUE
+
+#define	ENTRY_NOPROFILE(x,n) ! .text ! .align 4		!\
+	.export x, entry ! .label x ! .proc		!\
+	.callinfo frame=n,calls, save_rp, save_sp	!\
+	.entry
 
 #define ALTENTRY(x) ! .export x, entry ! .label  x
 #define EXIT(x) ! .exit ! .procend

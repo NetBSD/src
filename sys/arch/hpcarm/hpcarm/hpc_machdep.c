@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.47 2002/05/03 16:45:23 rjs Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.47.2.1 2002/07/16 08:07:29 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,6 +50,7 @@
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +96,14 @@
 /* XXX for consinit related hacks */
 #include <sys/conf.h>
 
+#ifdef NFS
+#include <sys/mount.h>
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+#endif
+
 /*
  * Address to call from cpu_reset() to reset the machine.
  * This is machine architecture dependant as it varies depending
@@ -137,7 +146,7 @@ pv_addr_t abtstack;
 pv_addr_t kernelstack;
 
 char *boot_args = NULL;
-char *boot_file = NULL;
+char boot_file[16];
 
 vaddr_t msgbufphys;
 
@@ -331,6 +340,7 @@ initarm(argc, argv, bi)
 	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
 
 	/* parse kernel args */
+	boot_file[0] = '\0';
 	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
 	for(argc--, argv++; argc; argc--, argv++)
 		switch(**argv) {
@@ -339,6 +349,18 @@ initarm(argc, argv, bi)
 			break;
 		case 's':
 			boothowto |= RB_SINGLE;
+			break;
+		case 'b':
+			/* boot device: -b=sd0 etc. */
+#ifdef NFS
+			if (strcmp(*argv + 2, "nfs") == 0)
+				mountroot = nfs_mountroot;
+			else
+				strncpy(boot_file, *argv + 2,
+				    sizeof(boot_file));
+#else /* NFS */
+			strncpy(boot_file, *argv + 2, sizeof(boot_file));
+#endif /* NFS */
 			break;
 		default:
 			break;
