@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.7 1998/09/16 21:30:59 is Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.8 2001/04/12 20:15:08 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 
 #include <machine/irqhandler.h>
 #include <machine/bus.h>
+#include <machine/io.h>
 
 #include <arm32/mainbus/piocvar.h>
 #include <dev/ic/comreg.h>
@@ -171,6 +172,9 @@ com_pioc_attach(parent, self, aux)
 	iot = sc->sc_iot = pa->pa_iot;
 	iobase = sc->sc_iobase = pa->pa_iobase + pa->pa_offset;
 
+/*
+	printf(" (iot = %p, iobase = 0x%08x) ", iot, iobase);
+*/
 	if (!com_is_console(iot, iobase, &sc->sc_ioh)
 		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
 			panic("comattach: io mapping failed");
@@ -244,6 +248,7 @@ void
 comcninit(cp)
 	struct consdev *cp;
 {
+	int result;
 
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
@@ -254,8 +259,12 @@ comcninit(cp)
 #ifndef CONADDR
 #define CONADDR	0x3f8
 #endif
-	if (comcnattach(comconstag, CONADDR << 2, CONSPEED, COM_FREQ, CONMODE))
-		panic("can't init serial console @%x", CONADDR << 2);
+
+	result = comcnattach(comconstag, (IO_CONF_BASE + CONADDR), CONSPEED, COM_FREQ, CONMODE);
+	if (result) {
+		printf("initialising serial; got errornr %d\n", result);
+		panic("can't init serial console @%x", CONADDR); 
+	};
 }
 
 
