@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.39 1997/02/05 08:09:47 mrg Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.40 1997/02/05 08:26:25 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1317,7 +1317,7 @@ vm_object_collapse_aux(object)
 					    "could not get paged out page");
 #endif
 					return KERN_FAILURE;
-				    }
+				}
 				cnt.v_pgpgin++;
 
 				/*
