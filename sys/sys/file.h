@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.39 2003/02/24 11:18:03 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.40 2003/03/21 21:13:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,9 +81,9 @@ struct file {
 					    struct uio *uio,
 					    struct ucred *cred, int flags);
 		int	(*fo_ioctl)	(struct file *fp, u_long com,
-					    caddr_t data, struct proc *p);
+					    void *data, struct proc *p);
 		int	(*fo_fcntl)	(struct file *fp, u_int com,
-					    caddr_t data, struct proc *p);
+					    void *data, struct proc *p);
 		int	(*fo_poll)	(struct file *fp, int events,
 					    struct proc *p);
 		int	(*fo_stat)	(struct file *fp, struct stat *sp,
@@ -92,7 +92,7 @@ struct file {
 		int	(*fo_kqfilter)	(struct file *fp, struct knote *kn);
 	} *f_ops;
 	off_t		f_offset;
-	caddr_t		f_data;		/* descriptor data, e.g. vnode/socket */
+	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	struct simplelock f_slock;
 };
 

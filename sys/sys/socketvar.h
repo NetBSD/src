@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.58 2003/02/26 06:31:21 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.59 2003/03/21 21:13:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -276,8 +276,8 @@ int	soo_read(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
 int	soo_write(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
-int	soo_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p);
-int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p);
+int	soo_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p);
+int	soo_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p);
 int	soo_poll(struct file *fp, int events, struct proc *p);
 int	soo_kqfilter(struct file *fp, struct knote *kn);
 int 	soo_close(struct file *fp, struct proc *p);

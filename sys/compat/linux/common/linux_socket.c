@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.43 2003/01/18 21:21:34 thorpej Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.44 2003/03/21 21:13:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.43 2003/01/18 21:21:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.44 2003/03/21 21:13:53 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -818,7 +818,7 @@ linux_ioctl_socket(p, uap, retval)
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
-	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
 	struct ioctl_pt pt;
 
         fdp = p->p_fd;

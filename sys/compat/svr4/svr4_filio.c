@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.9 2003/01/18 08:44:26 thorpej Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.10 2003/03/21 21:13:52 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.9 2003/01/18 08:44:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.10 2003/03/21 21:13:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -80,7 +80,7 @@ svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
 	int error;
 	int num;
 	struct filedesc *fdp = p->p_fd;
-	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+	int (*ctl)(struct file *, u_long, void *, struct proc *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;
