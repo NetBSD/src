@@ -25,10 +25,12 @@
 #define _SYS_PIPE_H_
 
 #ifndef _KERNEL
-#include <sys/time.h>			/* for struct timespec */
+#ifdef __FreeBSD__
+#include <sys/time.h>			/* for struct timeval */
 #include <sys/selinfo.h>		/* for struct selinfo */
 #include <vm/vm.h>			/* for vm_page_t */
 #include <machine/param.h>		/* for PAGE_SIZE */
+#endif
 #endif
 
 /*
@@ -43,14 +45,26 @@
 #endif
 
 /*
+ * Maximum size of kva for direct write transfer. If the amount
+ * of data in buffer is larger, it would be transferred in chunks of this
+ * size. This kva memory is freed after use if amount of pipe kva memory
+ * is bigger than limitpipekva.
+ */
+#ifndef PIPE_DIRECT_CHUNK
+#define PIPE_DIRECT_CHUNK	(1*1024*1024)
+#endif
+
+/*
  * PIPE_MINDIRECT MUST be smaller than PIPE_SIZE and MUST be bigger
  * than PIPE_BUF.
  */
 #ifndef PIPE_MINDIRECT
+#if defined(__FreeBSD__)
 #define PIPE_MINDIRECT	8192
+#elif defined(__NetBSD__)
+#define PIPE_MINDIRECT PAGE_SIZE
 #endif
-
-#define PIPENPAGES	(BIG_PIPE_SIZE / PAGE_SIZE + 1)
+#endif
 
 /*
  * Pipe buffer information.
@@ -58,17 +72,21 @@
  * Buffered write is active when the buffer.cnt field is set.
  */
 struct pipebuf {
-	u_int	cnt;		/* number of chars currently in buffer */
+	size_t	cnt;		/* number of chars currently in buffer */
 	u_int	in;		/* in pointer */
 	u_int	out;		/* out pointer */
-	u_int	size;		/* size of buffer */
+	size_t	size;		/* size of buffer */
 	caddr_t	buffer;		/* kva of buffer */
+#ifdef __FreeBSD__
 	struct	vm_object *object;	/* VM object containing buffer */
+#endif
 };
 
 /*
  * Information to support direct transfers between processes for pipes.
  */
+#if defined(__FreeBSD__)
+#define PIPENPAGES	(BIG_PIPE_SIZE / PAGE_SIZE + 1)
 struct pipemapping {
 	vm_offset_t	kva;		/* kernel virtual address */
 	vm_size_t	cnt;		/* number of chars in buffer */
@@ -76,6 +94,15 @@ struct pipemapping {
 	int		npages;		/* number of pages */
 	vm_page_t	ms[PIPENPAGES];	/* pages in source process */
 };
+#elif defined(__NetBSD__)
+struct pipemapping {
+	vaddr_t		kva;		/* kernel virtual address */
+	vsize_t		cnt;		/* number of chars in buffer */
+	voff_t		pos;		/* current position within page */
+	int		npages;		/* how many pages allocated */
+	struct vm_page **ms;
+};
+#endif
 
 /*
  * Bits in pipe_state.
@@ -83,13 +110,17 @@ struct pipemapping {
 #define PIPE_ASYNC	0x004	/* Async? I/O. */
 #define PIPE_WANTR	0x008	/* Reader wants some characters. */
 #define PIPE_WANTW	0x010	/* Writer wants space to put characters. */
-#define PIPE_WANT	0x020	/* Pipe is wanted to be run-down. */
+#define PIPE_WANTCLOSE	0x020	/* Pipe is wanted to be run-down. */
 #define PIPE_SEL	0x040	/* Pipe has a select active. */
 #define PIPE_EOF	0x080	/* Pipe is in EOF condition. */
 #define PIPE_LOCK	0x100	/* Process has exclusive access to pointers/data. */
 #define PIPE_LWANT	0x200	/* Process wants exclusive access to pointers/data. */
 #define PIPE_DIRECTW	0x400	/* Pipe direct write active. */
-#define PIPE_DIRECTOK	0x800	/* Direct mode ok. */
+#define PIPE_SIGNALR	0x800	/* Do selwakeup() on read(2) */
+
+#ifdef __NetBSD__
+#define PIPE_MOREW	0x2000	/* Writer has more data to write. */
+#endif
 
 /*
  * Per-pipe data structure.
@@ -99,13 +130,25 @@ struct pipe {
 	struct	pipebuf pipe_buffer;	/* data storage */
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
 	struct	selinfo pipe_sel;	/* for compat with select */
+#ifdef __FreeBSD__
 	struct	timespec pipe_atime;	/* time of last access */
 	struct	timespec pipe_mtime;	/* time of last modify */
 	struct	timespec pipe_ctime;	/* time of status change */
 	struct	sigio *pipe_sigio;	/* information for async I/O */
+#elif defined(__NetBSD__)
+	struct	timeval pipe_atime;	/* time of last access */
+	struct	timeval pipe_mtime;	/* time of last modify */
+	struct	timeval pipe_ctime;	/* time of status change */
+	gid_t	pipe_pgid;		/* process group for sigio */
+	struct	lock pipe_lock;		/* pipe lock */
+#endif
 	struct	pipe *pipe_peer;	/* link with other direction */
 	u_int	pipe_state;		/* pipe status info */
 	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */
 };
+
+#ifdef __NetBSD__
+void pipe_init __P((void));
+#endif
 
 #endif /* !_SYS_PIPE_H_ */

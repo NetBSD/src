@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.61 2001/05/04 15:50:13 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.62 2001/06/16 12:00:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,7 +173,8 @@ struct ctlname {
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
-#define	KERN_MAXID		56	/* number of valid kern ids */
+#define	KERN_PIPE		56	/* node: pipe limits */
+#define	KERN_MAXID		57	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -232,6 +233,7 @@ struct ctlname {
 	{ "msgbuf", CTLTYPE_STRUCT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "maxptys", CTLTYPE_INT }, \
+	{ "pipe", CTLTYPE_NODE }, \
 }
 
 /*
@@ -427,6 +429,25 @@ struct kinfo_proc2 {
 #define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
 #define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
 #define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
+
+/*
+ * KERN_PIPE subtypes
+ */
+#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size */
+#define	KERN_PIPE_LIMITKVA		2	/* */
+#define KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
+#define KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
+#define KERN_PIPE_KVASIZE		5	/* current pipe kva size */
+#define KERN_PIPE_MAXID			6
+
+#define	CTL_PIPE_NAMES { \
+	{ 0, 0 }, \
+	{ "maxkvasz", CTLTYPE_INT }, \
+	{ "maxloankvasz", CTLTYPE_INT }, \
+	{ "maxbigpipes", CTLTYPE_INT }, \
+	{ "nbigpipes", CTLTYPE_INT }, \
+	{ "kvasize", CTLTYPE_INT }, \
+}
 
 /*
  * CTL_HW identifiers
@@ -652,6 +673,9 @@ int sysctl_ntptime __P((void *, size_t *));
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
 int sysctl_dombuf __P((int *, u_int, void *, size_t *, void *, size_t));
+#ifdef NEW_PIPE
+int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
+#endif
 
 void fill_eproc __P((struct proc *, struct eproc *));
 
