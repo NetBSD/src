@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.40 1997/03/15 18:09:12 is Exp $
+#	$NetBSD: files.alpha,v 1.41 1997/03/21 01:09:02 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -222,6 +222,8 @@ file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 file	arch/alpha/pci/pci_eb164.c	dec_eb164
 file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
+file	arch/alpha/pci/pci_eb64plus.c	dec_eb64plus
+file	arch/alpha/pci/pci_eb64plus_intr.s dec_eb64plus
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
 device	dwlpx:	pcibus
@@ -311,6 +313,7 @@ file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
+file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae	needs-flag
 
