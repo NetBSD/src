@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.278 2005/03/21 14:45:19 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.279 2005/03/22 21:43:24 rtr Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -100,6 +100,7 @@
 ./usr/X11R6/lib/X11/fonts/local
 ./usr/X11R6/lib/X11/fonts/misc
 ./usr/X11R6/lib/X11/fonts/util
+./usr/X11R6/lib/X11/getconfig
 ./usr/X11R6/lib/X11/locale
 ./usr/X11R6/lib/X11/locale/C
 ./usr/X11R6/lib/X11/locale/armscii-8
