@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmax,v 1.1.2.2 2002/05/30 07:14:50 gehenna Exp $
+#	$NetBSD: majors.pmax,v 1.1.2.3 2002/06/08 09:14:01 gehenna Exp $
 #
 # Device majors for pmax
 #
@@ -24,7 +24,7 @@ device-major	scc		char 17			scc
 device-major	pts_ultrix	char 20			pty
 device-major	ptc_ultrix	char 21			pty
 
-device-major	mm_ultrix	char 43
+device-major	mem_ultrix	char 43
 
 device-major	st		char 46  block 18	st
 device-major	cd		char 47  block 25	cd
