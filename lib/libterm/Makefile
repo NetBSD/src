@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 1997/11/09 01:01:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 1998/03/09 22:31:50 mellon Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
@@ -21,4 +21,12 @@ LINKS+=	${LIBDIR}/libtermcap_p.a ${LIBDIR}/libtermlib_p.a
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+
+# Really XXX ELF toolchain.
+# ELF rules normally use symlinks but bsd.lib.mk makes symlinks before hard.
+.if (${MACHINE} == "alpha") || (${MACHINE_ARCH} == "mips") 
+LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR} \
+	${LIBDIR}/lib$termlib.so.${SHLIB_MAJOR}
+LINKS+=	${LIBDIR}/lib${LIB}.so ${LIBDIR}/libtermlib.so
+.endif
 .endif
