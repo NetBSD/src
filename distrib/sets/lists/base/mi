@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.294 2001/12/21 19:57:19 jwise Exp $
+# $NetBSD: mi,v 1.295 2002/01/01 22:28:57 augustss Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -323,6 +323,7 @@
 ./usr/bin/printf	base-util-bin
 ./usr/bin/purgestat	base-mailwrapper-bin
 ./usr/bin/quota		base-util-bin
+./usr/bin/radioctl	base-audio-bin
 ./usr/bin/rcs		base-rcs-bin
 ./usr/bin/rcsclean	base-rcs-bin
 ./usr/bin/rcsdiff	base-rcs-bin
