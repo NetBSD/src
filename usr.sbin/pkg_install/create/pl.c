@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.20 2001/05/18 13:21:38 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.21 2001/05/21 12:05:20 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.20 2001/05/18 13:21:38 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.21 2001/05/21 12:05:20 agc Exp $");
 #endif
 #endif
 
@@ -195,6 +195,9 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 					tmp->type = PLIST_COMMENT;	/* PLIST_MD5 - HF */
 					tmp->next = p->next;
 					tmp->prev = p;
+					if (p == pkg->tail) {
+						pkg->tail = tmp;
+					}
 					p->next = tmp;
 					p = tmp;
 				}
