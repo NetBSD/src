@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.7 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.8 2000/02/01 00:00:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -392,9 +392,11 @@ llc_ctlinput(prc, addr, info)
 	if (prc == PRC_IFUP || prc == PRC_IFDOWN) {
 		/* we use either this set ... */
 		ifa = ifa_ifwithaddr(addr);
-		ifp = ifa ? ifa->ifa_ifp : 0;
-		if (ifp == 0)
-			return 0;
+		if (ifa == NULL)
+			return (0);
+		ifp = ifa->ifa_ifp;
+		if (ifp == NULL)
+			return (0);
 
 		sap = ctlinfo->dlcti_lsap;
 		config = ctlinfo->dlcti_cfg;
