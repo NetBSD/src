@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.75 1999/12/17 05:37:46 garbled Exp $
+# $NetBSD: md_share,v 1.76 1999/12/21 08:09:43 fair Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -40,7 +40,6 @@
 ./usr/share/man/cat4/amiga/intro.0
 ./usr/share/man/cat4/amiga/ite.0
 ./usr/share/man/cat4/amiga/kmem.0
-./usr/share/man/cat4/amiga/le.0
 ./usr/share/man/cat4/amiga/mem.0
 ./usr/share/man/cat4/amiga/mfcs.0
 ./usr/share/man/cat4/amiga/mgnsc.0
@@ -88,7 +87,6 @@
 ./usr/share/man/cat4/hp300/intro.0
 ./usr/share/man/cat4/hp300/ite.0
 ./usr/share/man/cat4/hp300/kmem.0
-./usr/share/man/cat4/hp300/le.0
 ./usr/share/man/cat4/hp300/mem.0
 ./usr/share/man/cat4/hp300/ppi.0
 ./usr/share/man/cat4/hp300/rb.0
@@ -105,7 +103,6 @@
 ./usr/share/man/cat4/i386/intro.0
 ./usr/share/man/cat4/i386/joy.0
 ./usr/share/man/cat4/i386/kmem.0
-./usr/share/man/cat4/i386/le.0
 ./usr/share/man/cat4/i386/lms.0
 ./usr/share/man/cat4/i386/lpt.0
 ./usr/share/man/cat4/i386/mem.0
@@ -134,7 +131,6 @@
 ./usr/share/man/cat4/mvme68k/ie.0
 ./usr/share/man/cat4/mvme68k/intro.0
 ./usr/share/man/cat4/mvme68k/kmem.0
-./usr/share/man/cat4/mvme68k/le.0
 ./usr/share/man/cat4/mvme68k/lpt.0
 ./usr/share/man/cat4/mvme68k/mainbus.0
 ./usr/share/man/cat4/mvme68k/mem.0
@@ -153,7 +149,6 @@
 ./usr/share/man/cat4/pmax/dc.0
 ./usr/share/man/cat4/pmax/intro.0
 ./usr/share/man/cat4/pmax/ioasic.0
-./usr/share/man/cat4/pmax/le.0
 ./usr/share/man/cat4/pmax/lk201.0
 ./usr/share/man/cat4/pmax/scc.0
 ./usr/share/man/cat4/pmax/sii.0
@@ -170,7 +165,6 @@
 ./usr/share/man/cat4/sparc/intro.0
 ./usr/share/man/cat4/sparc/kbd.0
 ./usr/share/man/cat4/sparc/kmem.0
-./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/ms.0
@@ -184,7 +178,6 @@
 ./usr/share/man/cat4/sun3/intro.0
 ./usr/share/man/cat4/sun3/kbd.0
 ./usr/share/man/cat4/sun3/kmem.0
-./usr/share/man/cat4/sun3/le.0
 ./usr/share/man/cat4/sun3/leds.0
 ./usr/share/man/cat4/sun3/mem.0
 ./usr/share/man/cat4/sun3/ms.0
@@ -380,7 +373,6 @@
 ./usr/share/man/man4/amiga/intro.4
 ./usr/share/man/man4/amiga/ite.4
 ./usr/share/man/man4/amiga/kmem.4
-./usr/share/man/man4/amiga/le.4
 ./usr/share/man/man4/amiga/mem.4
 ./usr/share/man/man4/amiga/mfcs.4
 ./usr/share/man/man4/amiga/mgnsc.4
@@ -429,7 +421,6 @@
 ./usr/share/man/man4/hp300/intro.4
 ./usr/share/man/man4/hp300/ite.4
 ./usr/share/man/man4/hp300/kmem.4
-./usr/share/man/man4/hp300/le.4
 ./usr/share/man/man4/hp300/mem.4
 ./usr/share/man/man4/hp300/ppi.4
 ./usr/share/man/man4/hp300/rb.4
@@ -446,7 +437,6 @@
 ./usr/share/man/man4/i386/intro.4
 ./usr/share/man/man4/i386/joy.4
 ./usr/share/man/man4/i386/kmem.4
-./usr/share/man/man4/i386/le.4
 ./usr/share/man/man4/i386/lms.4
 ./usr/share/man/man4/i386/lpt.4
 ./usr/share/man/man4/i386/mem.4
@@ -475,7 +465,6 @@
 ./usr/share/man/man4/mvme68k/ie.4
 ./usr/share/man/man4/mvme68k/intro.4
 ./usr/share/man/man4/mvme68k/kmem.4
-./usr/share/man/man4/mvme68k/le.4
 ./usr/share/man/man4/mvme68k/lpt.4
 ./usr/share/man/man4/mvme68k/mainbus.4
 ./usr/share/man/man4/mvme68k/mem.4
@@ -494,7 +483,6 @@
 ./usr/share/man/man4/pmax/dc.4
 ./usr/share/man/man4/pmax/intro.4
 ./usr/share/man/man4/pmax/ioasic.4
-./usr/share/man/man4/pmax/le.4
 ./usr/share/man/man4/pmax/lk201.4
 ./usr/share/man/man4/pmax/scc.4
 ./usr/share/man/man4/pmax/sii.4
@@ -511,7 +499,6 @@
 ./usr/share/man/man4/sparc/intro.4
 ./usr/share/man/man4/sparc/kbd.4
 ./usr/share/man/man4/sparc/kmem.4
-./usr/share/man/man4/sparc/le.4
 ./usr/share/man/man4/sparc/magma.4
 ./usr/share/man/man4/sparc/mem.4
 ./usr/share/man/man4/sparc/ms.4
@@ -525,7 +512,6 @@
 ./usr/share/man/man4/sun3/intro.4
 ./usr/share/man/man4/sun3/kbd.4
 ./usr/share/man/man4/sun3/kmem.4
-./usr/share/man/man4/sun3/le.4
 ./usr/share/man/man4/sun3/leds.4
 ./usr/share/man/man4/sun3/mem.4
 ./usr/share/man/man4/sun3/ms.4
