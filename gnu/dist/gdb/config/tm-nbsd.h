@@ -1,6 +1,6 @@
 /* Target machine sub-description for NetBSD.
    This is included by other tm-*.h files to specify NetBSD-specific stuff.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -17,3 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+#include "solib.h"	/* Support for shared libraries. */
+
+/* Return non-zero if we are in a shared library trampoline code stub. */
+
+#define IN_SOLIB_CALL_TRAMPOLINE(pc, name) \
+  lookup_solib_trampoline_symbol_by_pc (pc)
+
+/* If PC is in a shared library trampoline code, return the PC
+   where the function itself actually starts.  If not, return 0.  */
+
+#define SKIP_TRAMPOLINE_CODE(pc)  find_solib_trampoline_target (pc)
