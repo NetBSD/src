@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.12 1994/06/14 00:59:10 chopps Exp $
+ *	$Id: siop.c,v 1.13 1994/06/14 01:01:56 chopps Exp $
  */
 
 /*
@@ -812,7 +812,7 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 #if 0
 		DCIAS(kvtop(&dev->sc_stat));	/* XXX */
 #else
-		dma_cachectl(&dev->sc_stat[0], 1);	/* XXXX correct ?*/
+		dma_cachectl(&dev->sc_stat[0], 1);
 #endif
 		*status = dev->sc_stat[0];
 		return 1;
