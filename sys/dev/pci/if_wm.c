@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.75 2004/08/05 19:11:11 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.76 2004/08/21 22:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.75 2004/08/05 19:11:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.76 2004/08/21 22:23:13 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -492,7 +492,7 @@ CFATTACH_DECL(wm, sizeof(struct wm_softc),
 /*
  * Devices supported by this driver.
  */
-const struct wm_product {
+static const struct wm_product {
 	pci_vendor_id_t		wmp_vendor;
 	pci_product_id_t	wmp_product;
 	const char		*wmp_name;
