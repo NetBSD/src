@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1997/08/02 10:04:44 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1997/08/27 06:21:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -219,6 +219,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NIDEC,wd),	/* 34: IDE disk driver	*/
 	cdev_tty_init(NSER,ser),	/* 35: 68901 UART	*/
 	cdev_ipf_init(NIPFILTER,ipl),	/* 36: ip-filter device */
+	cdev_disk_init(NMD,md),		/* 37: memory disk - for install disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -316,6 +317,9 @@ static int chrtoblktab[] = {
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
 	/* 34 */	14,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	1,
 };
 
 /*
