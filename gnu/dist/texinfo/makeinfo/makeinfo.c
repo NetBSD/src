@@ -1,5 +1,5 @@
 /* makeinfo -- convert Texinfo source into other formats.
-   $Id: makeinfo.c,v 1.4 2001/07/25 16:46:19 assar Exp $
+   $Id: makeinfo.c,v 1.5 2001/07/25 17:40:09 assar Exp $
 
    Copyright (C) 1987, 92, 93, 94, 95, 96, 97, 98, 99
    Free Software Foundation, Inc.
@@ -1392,9 +1392,6 @@ finished:
           if (!no_headers && !html)
             write_tag_table ();
         }
-
-      if (output_stream != stdout)
-        fclose (output_stream);
 
       if (html)
         {
@@ -3005,8 +3002,6 @@ cm_image (arg)
 
   if (arg == END)
     return;
-
-  temp_type = current_insertion_type ();
 
   name_arg = get_xref_token (1); /* expands all macros in image */
   /* We don't (yet) care about any other args, but read them so they
