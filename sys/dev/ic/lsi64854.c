@@ -1,5 +1,5 @@
-/*	$NetBSD: lsi64854.c,v 1.12 2000/10/31 06:32:06 eeh Exp $ */
-#define DEBUG
+/*	$NetBSD: lsi64854.c,v 1.13 2000/10/31 08:06:14 eeh Exp $ */
+
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
