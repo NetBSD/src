@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1997/06/10 07:04:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.22 1997/06/10 07:04:43 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $";
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -71,6 +72,7 @@ main(argc, argv)
 	int ch, top, port, rval;
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
+	int dumbterm;
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -102,15 +104,21 @@ main(argc, argv)
 	if (strcmp(cp, "pftp") == 0)
 		passivemode = 1;
 
+	cp = getenv("TERM");
+	if (cp == NULL || strcmp(cp, "dumb") == 0)
+		dumbterm = 1;
+	else
+		dumbterm = 0;
 	fromatty = isatty(fileno(stdin));
 	if (fromatty) {
 		verbose = 1;		/* verbose if from a tty */
 #ifndef SMALL
-		editing = 1;		/* editing mode on if from a tty */
+		if (! dumbterm)
+			editing = 1;	/* editing mode on if tty is usable */
 #endif
 	}
-	if (isatty(fileno(stdout)))
-		progress = 1;		/* progress bar on if going to a tty */
+	if (isatty(fileno(stdout)) && !dumbterm)
+		progress = 1;		/* progress bar on if tty is usable */
 
 	while ((ch = getopt(argc, argv, "adeginpP:tvV")) != -1) {
 		switch (ch) {
