@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.55 2000/10/11 11:10:46 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.56 2000/10/11 23:47:57 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -164,7 +164,7 @@ run_makedev()
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
-	run_prog(0, 0, NULL, "/bin/sh MAKEDEV all");
+	run_prog(0, NULL, "/bin/sh MAKEDEV all");
 
 	chdir(owd);
 	free(owd);
@@ -202,7 +202,7 @@ get_via_floppy()
 			first = 1;
 			while (!mounted || stat(fullname, &sb)) {
  				if (mounted) 
-				  run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+				  run_prog(0, NULL, "/sbin/umount /mnt2");
 				if (first)
 					msg_display(MSG_fdmount, fname);
 				else
@@ -210,7 +210,7 @@ get_via_floppy()
 				process_menu(MENU_fdok);
 				if (!yesno)
 					return 0;
-				while (run_prog(0, 0, NULL, 
+				while (run_prog(0, NULL, 
 				    "/sbin/mount -r -t %s %s /mnt2",
 				    fdtype, fddev)) {
 					msg_display(MSG_fdremount, fname);
@@ -233,7 +233,7 @@ get_via_floppy()
 			else
 				post[2] = 'a', post[1]++;
 		}
-		run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+		run_prog(0, NULL, "/sbin/umount /mnt2");
 		mounted = 0;
 		list++;
 	}
@@ -263,10 +263,10 @@ get_via_cdrom()
 	process_menu(MENU_cdromsource);
 
 again:
-	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+	run_prog(0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, 0, NULL,
+	if (run_prog(0, NULL,
 	    "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
 		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount);
@@ -309,10 +309,10 @@ get_via_localfs()
 	process_menu (MENU_localfssource);
 
 again:
-	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+	run_prog(0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, 0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
+	if (run_prog(0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
 	    localfs_fs, localfs_dev)) {
 
 		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
@@ -469,7 +469,7 @@ extract_file(path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	tarexit = run_prog(0, 1, NULL,
+	tarexit = run_prog(RUN_DISPLAY, NULL,
 	    "pax -zr%spe -f %s", verbose ? "v" : "", path);
 
 	/* Check tarexit for errors and give warning. */
@@ -776,11 +776,11 @@ get_and_unpack_sets(success_msg, failure_msg)
 		
 		/* Clean up dist dir (use absolute path name) */
 		if (clean_dist_dir)
-			run_prog(0, 0, NULL, "/bin/rm -rf %s", ext_dir);
+			run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
 
 		/* Mounted dist dir? */
 		if (mnt2_mounted)
-			run_prog(0, 0, NULL, "/sbin/umount /mnt2");
+			run_prog(0, NULL, "/sbin/umount /mnt2");
 
 		/* Install/Upgrade complete ... reboot or exit to script */
 		msg_display(success_msg);
@@ -1055,4 +1055,14 @@ set_timezone()
 	symlink(localtime_target, localtime_link);
 	
 	return 1;
+}
+
+int
+set_root_password()
+{
+	msg_display(MSG_rootpw);
+	process_menu(MENU_yesno);
+	if (yesno)
+		run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "passwd -l root");
+	return 0;
 }
