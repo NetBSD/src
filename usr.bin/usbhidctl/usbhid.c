@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.26 2004/10/31 07:36:19 dsainty Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.27 2004/11/05 22:44:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.26 2004/10/31 07:36:19 dsainty Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.27 2004/11/05 22:44:57 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -941,7 +941,7 @@ main(int argc, char **argv)
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
-			 isdigit(dev[0]) ? "uhid" : "", dev);
+			 isdigit((unsigned char)dev[0]) ? "uhid" : "", dev);
 		dev = devnamebuf;
 	}
 
