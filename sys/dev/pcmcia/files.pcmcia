@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.28 2000/06/09 05:31:19 onoe Exp $
+#	$NetBSD: files.pcmcia,v 1.29 2000/07/04 14:27:57 onoe Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -91,14 +91,8 @@ attach	ray at pcmcia
 file	dev/pcmcia/if_ray.c			ray
 
 # AMD 79c930-based 802.11 cards (including BayStack 650 FH card).
-device awi: arp, ether, ifnet
 attach awi at pcmcia with awi_pcmcia
-defopt	opt_awi.h		AWI_DEBUG
 file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
-file	dev/ic/awi.c				awi
-file	dev/ic/awi_wep.c			awi
-file	dev/ic/awi_wicfg.c			awi
-file	dev/ic/am79c930.c			awi
 
 # Xircom Ethernet cards
 device	xi: arp, ether, ifnet, mii
