@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.5 2003/06/26 01:45:31 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.6 2003/07/24 08:03:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ pthread__switch_away:
 	/*
 	 * If we're invoked from the switch-to-next provisions of
 	 * pthread__locked_switch() or pthread__upcall_switch(),
-	 * there may be a fake spinlock-count set.  If os, they will
+	 * there may be a fake spinlock-count set.  If so, they will
 	 * set r2 to let us know, and we decrement it now that we're
 	 * no longer using the old stack.
 	 */
