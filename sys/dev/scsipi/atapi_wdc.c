@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.51 2002/04/23 20:41:19 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.52 2002/05/18 14:49:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.51 2002/04/23 20:41:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.52 2002/05/18 14:49:55 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -363,6 +363,15 @@ wdc_atapi_scsipi_request(chan, req, arg)
 			 */
 			xfer->c_flags |= C_FORCEPIO;
 		}
+		/*
+		 * DMA can't deal with transfers which are not a multiple of
+		 * 2 bytes. It's a bug to request such transfers for ATAPI
+		 * but as the request can come from userland, we have to
+		 * protect against it.
+		 */
+		if (sc_xfer->datalen & 0x01)
+			xfer->c_flags |= C_FORCEPIO;
+
 		xfer->cmd = sc_xfer;
 		xfer->databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
