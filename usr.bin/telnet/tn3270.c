@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.18 2003/07/14 15:56:30 itojun Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.19 2003/07/14 16:06:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.18 2003/07/14 15:56:30 itojun Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.19 2003/07/14 16:06:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,11 +49,9 @@ __RCSID("$NetBSD: tn3270.c,v 1.18 2003/07/14 15:56:30 itojun Exp $");
 #include <poll.h>
 
 #include "general.h"
-
 #include "defines.h"
 #include "ring.h"
 #include "externs.h"
-#include "fdset.h"
 
 #ifdef TN3270
 
