@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1996/02/01 22:28:24 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1996/02/02 02:33:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
-#include "assym.s"
+#include "assym.h"
 
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
