@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.75 2002/11/21 18:05:59 thorpej Exp $
+$NetBSD: UPDATING,v 1.76 2002/11/22 15:48:33 thorpej Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,20 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20021121:
+	The C run-time support files crtbegin.o and crtend.o
+	(and their companions crtbeginS.o and crtendS.o) were
+	split up, with new crti.o and crtn.o files resulting.
+	This means that libtool needs to be rebuilt once the
+	new libraries are installed.  The process of rebuilding
+	libtool will cause it to automatically notice the new
+	required files, but it *must* be rebuilt in order to
+	do this.
+
+	An out-of-date libtool will result in shared libraries
+	which lack _init() and _fini() routines, which means that
+	their global contructors/destructors will not be invoked.
 
 20021121:
 	A bug related to how ARM ELF objects were tagged has been
