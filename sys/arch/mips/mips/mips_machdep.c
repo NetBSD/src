@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.174 2004/03/09 00:47:14 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.175 2004/03/24 15:34:50 atatat Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.174 2004/03/09 00:47:14 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.175 2004/03/24 15:34:50 atatat Exp $");
 
 #include "opt_cputype.h"
 
@@ -1139,26 +1139,31 @@ sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 #ifdef __HAVE_BOOTINFO_H
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_kernel", NULL,
 		       sysctl_machdep_booted_kernel, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
 #endif
-        sysctl_createv(SYSCTL_PERMANENT,
-                       CTLTYPE_STRING, "root_device", NULL,
-                       sysctl_root_device, 0, NULL, 0,
-                       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "root_device", NULL,
+		       sysctl_root_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
                        CTLTYPE_INT, "llsc", NULL,
                        NULL, MIPS_HAS_LLSC, NULL, 0,
                        CTL_MACHDEP, CPU_LLSC, CTL_EOL);

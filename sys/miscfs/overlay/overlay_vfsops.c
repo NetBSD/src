@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.20 2004/03/09 03:16:09 atatat Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.21 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.20 2004/03/09 03:16:09 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.21 2004/03/24 15:34:54 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,12 +266,12 @@ ov_unmount(mp, mntflags, p)
 SYSCTL_SETUP(sysctl_vfs_overlay_setup, "sysctl vfs.overlay subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "overlay", NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE, CTL_EOL);
 }

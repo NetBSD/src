@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.33 2004/03/21 13:43:46 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.34 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.33 2004/03/21 13:43:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.34 2004/03/24 15:34:52 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -70,19 +70,23 @@ SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 {
 	struct sysctlnode *smb = NULL;
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "samba", &smb,
+	sysctl_createv(clog, 0, NULL, &smb,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "samba", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_CREATE);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
-		       CTLTYPE_INT, "version", NULL,
-		       NULL, SMBFS_VERSION, NULL, 0,
-		       CTL_VFS, smb->sysctl_num, CTL_CREATE);
+	if (smb != NULL)
+		sysctl_createv(clog, 0, &smb, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+			       CTLTYPE_INT, "version", NULL,
+			       NULL, SMBFS_VERSION, NULL, 0,
+			       CTL_CREATE, CTL_EOL);
 }
 #endif
 

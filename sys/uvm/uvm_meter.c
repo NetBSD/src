@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.30 2004/03/24 07:50:49 junyoung Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.31 2004/03/24 15:34:56 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.30 2004/03/24 07:50:49 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.31 2004/03/24 15:34:56 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -309,59 +309,72 @@ sysctl_vm_updateminmax(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vmmeter", NULL,
 		       sysctl_vm_meter, 0, NULL, sizeof(struct vmtotal),
 		       CTL_VM, VM_METER, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "loadavg", NULL,
 		       NULL, 0, &averunnable, sizeof(averunnable),
 		       CTL_VM, VM_LOADAVG, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "uvmexp", NULL,
 		       sysctl_vm_uvmexp, 0, &uvmexp, sizeof(uvmexp),
 		       CTL_VM, VM_UVMEXP, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "nkmempages", NULL,
 		       NULL, 0, &nkmempages, 0,
 		       CTL_VM, VM_NKMEMPAGES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "uvmexp2", NULL,
 		       sysctl_vm_uvmexp2, 0, NULL, 0,
 		       CTL_VM, VM_UVMEXP2, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonmin", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.anonminpct, 0,
 		       CTL_VM, VM_ANONMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "execmin", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.execminpct, 0,
 		       CTL_VM, VM_EXECMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "filemin", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.fileminpct, 0,
 		       CTL_VM, VM_FILEMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_INT, "maxslp", NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_INT, "maxslp", NULL,
 		       NULL, 0, &maxslp, 0,
 		       CTL_VM, VM_MAXSLP, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "uspace", NULL,
 		       NULL, USPACE, NULL, 0,
 		       CTL_VM, VM_USPACE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonmax", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.anonmaxpct, 0,
 		       CTL_VM, VM_ANONMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "execmax", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.execmaxpct, 0,
 		       CTL_VM, VM_EXECMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "filemax", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.filemaxpct, 0,
 		       CTL_VM, VM_FILEMAX, CTL_EOL);

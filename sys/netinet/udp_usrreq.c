@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.115 2004/03/10 18:50:45 drochner Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.116 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.115 2004/03/10 18:50:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.116 2004/03/24 15:34:54 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1112,30 +1112,36 @@ release:
 SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "udp", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "checksum", NULL,
 		       NULL, 0, &udpcksum, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_CHECKSUM,
 		       CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sendspace", NULL,
 		       NULL, 0, &udp_sendspace, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_SENDSPACE,
 		       CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "recvspace", NULL,
 		       NULL, 0, &udp_recvspace, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_RECVSPACE,

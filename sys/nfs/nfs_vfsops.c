@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.134 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.135 2004/03/24 15:34:55 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.134 2003/12/04 19:38:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.135 2004/03/24 15:34:55 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -981,11 +981,13 @@ sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "nfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 2, CTL_EOL);
@@ -995,11 +997,13 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 	 * "2" is the order as taken from sys/mount.h
 	 */
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "nfsstats", NULL,
 		       NULL, 0, &nfsstats, sizeof(nfsstats), 
 		       CTL_VFS, 2, NFS_NFSSTATS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iothreads", NULL,
 		       sysctl_vfs_nfs_iothreads, 0, &nfs_niothreads, 0,
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
