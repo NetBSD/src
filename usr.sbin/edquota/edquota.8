@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)edquota.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: edquota.8,v 1.4 1994/06/13 21:55:04 mycroft Exp $
+.\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
+.\"	$NetBSD: edquota.8,v 1.5 1997/03/08 08:01:26 mikel Exp $
 .\"
-.Dd June 6, 1993
+.Dd "April 27, 1995"
 .Dt EDQUOTA 8
 .Os
 .Sh NAME
@@ -88,14 +88,14 @@ The current usage information in the file is for informational purposes;
 only the hard and soft limits can be changed.
 .Pp
 On leaving the editor,
-.Nm edquota
+.Nm
 reads the temporary file and modifies the binary
 quota files to reflect the changes made.
 .Pp
 If the 
 .Fl p
 flag is specified,
-.Nm edquota
+.Nm
 will duplicate the quotas of the prototypical user
 specified for each user specified.
 This is the normal mechanism used to
@@ -104,7 +104,7 @@ initialize quotas for groups of users.
 If the 
 .Fl g 
 flag is specified,
-.Nm edquota
+.Nm
 is invoked to edit the quotas of
 one or more groups specified on the command line.
 The 
