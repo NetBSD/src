@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.57 2004/08/15 16:24:41 mycroft Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.58 2004/08/15 16:46:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.57 2004/08/15 16:24:41 mycroft Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.58 2004/08/15 16:46:18 mycroft Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -341,18 +341,16 @@ WRITE(void *v)
 		if (!extending) {
 			error = ufs_balloc_range(vp, uio->uio_offset, bytelen,
 			    cred, aflag);
-			if (error) {
+			if (error)
 				break;
-			}
 			ubc_alloc_flags &= ~UBC_FAULTBUSY;
 		} else {
 			lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
 			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
 			    aflag, cred);
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-			if (error) {
+			if (error)
 				break;
-			}
 			ubc_alloc_flags |= UBC_FAULTBUSY;
 		}
 
