@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.11 1998/02/06 08:00:54 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.12 1998/03/28 02:12:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ pcibmatch(parent, match, aux)
 		case PCI_PRODUCT_INTEL_82426EX:
 		case PCI_PRODUCT_INTEL_82371MX:
 		case PCI_PRODUCT_INTEL_82380AB:
-		case PCI_PRODUCT_INTEL_82471FB_ISA:
+		case PCI_PRODUCT_INTEL_82371FB_ISA:
 		case PCI_PRODUCT_INTEL_82371SB_ISA:
 		case PCI_PRODUCT_INTEL_82371AB_ISA:
 			return (1);
