@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.3 2001/11/08 05:06:19 briggs Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.4 2001/11/13 20:00:30 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -201,6 +201,7 @@ cpu_upcall(struct lwp *lwp)
 	extern char sigcode[], upcallcode[];
 	struct proc *p = lwp->l_proc;
 	struct sadata *sd = p->p_sa;
+	struct saframe *sf, frame;
 	struct sa_t **sapp, *sap;
 	struct sa_t self_sa, e_sa, int_sa;
 	struct sa_t *sas[3];
@@ -282,10 +283,16 @@ cpu_upcall(struct lwp *lwp)
 		}
 	}
 
+	sf = (struct saframe *)sapp - 1;
+
+	frame.r1 = (int)sapp - 16;
+	frame.lr = 0; /* used by callee */
+	frame.fill[0] = frame.fill[1] = 0;
+
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->fixreg[1] = ((int)sapp) - 8;	/* save some callee space */
+	tf->fixreg[1] = frame.r1;
 	tf->lr = (int)sd->sa_upcall;
 	tf->fixreg[3] = (int)sau->sau_type;
 	tf->fixreg[4] = (int)sapp;
