@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 1995/08/06 05:33:03 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 1995/10/09 06:34:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -113,9 +113,8 @@ cpu_fork(p1, p2)
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
 		bcopy(pcb->pcb_ldt, new_ldt, len);
 		pcb->pcb_ldt = (caddr_t)new_ldt;
-		gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)new_ldt;
-		gdt_segs[GUSERLDT_SEL].ssd_limit = len - 1;
-		ssdtosd(gdt_segs + GUSERLDT_SEL, &pcb->pcb_ldt_desc);
+		setsegment(&pcb->pcb_ldt_desc, new_ldt, len - 1, SDT_SYSLDT,
+		    SEL_KPL, 0, 0);
 	}
 #endif
 
