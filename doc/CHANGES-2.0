@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.86 2004/04/12 05:20:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.87 2004/04/12 05:21:23 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -878,3 +878,9 @@ distrib/utils/sysinst/Makefile.inc		1.35
 
 	Use ${DISTRIBVER} for the version number, not ${VER}. PR#24995
 	[grant, ticket #131]
+
+usr.sbin/racoon/racoon/Makefile			1.20
+
+	Do not compile in print-isakmp.c, as src/dist/tcpdump contains ancient 
+	version which could be vulnerable to attacks.
+	[itojun, ticket #132]
