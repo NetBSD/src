@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.52 1997/10/02 16:03:42 mjacob Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.53 1997/10/08 17:17:09 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -733,7 +733,7 @@ scsi_decode_sense(sinfo, flag)
 				    "Error in %s, Offset %d, bit %d",
 				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
 				    (snsbuf[16] & 0xff) << 8 |
-				    (snsbuf[17] & 0xff), snsbuf[15] & 0xf);
+				    (snsbuf[17] & 0xff), snsbuf[15] & 0x7);
 			else
 				(void)sprintf(rqsbuf,
 				    "Error in %s, Offset %d",
