@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.16 1997/05/11 19:11:32 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.17 1997/07/26 08:28:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,9 +58,9 @@ struct grfbus_softc {
 
 	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
 	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
-	u_int32_t	cli_offset;	/* Offset of byte to clear intr */
-					/* for cards where that's suff.  */
-	unsigned char	cli_value;	/* Value to write at cli_offset */
+	bus_size_t	cli_offset;	/* Offset to clear interrupt	*/
+					/* for cards where that's suff.	*/
+	u_int32_t	cli_value;	/* Value to write at cli_offset */
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
 };
 
