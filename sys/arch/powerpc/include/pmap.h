@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1998/09/01 16:35:50 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 1999/02/26 14:40:45 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,9 @@ void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 paddr_t pmap_extract __P((struct pmap *, vaddr_t));
 void ptemodify __P((paddr_t, u_int, u_int));
 int ptebits __P((paddr_t, int));
+
+#define PMAP_NEED_PROCWR
+void pmap_procwr __P((struct proc *, vaddr_t, size_t));
 
 static __inline paddr_t
 vtophys(va)
