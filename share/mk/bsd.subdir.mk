@@ -1,5 +1,5 @@
-#	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
-#	$Id: bsd.subdir.mk,v 1.6 1994/06/30 05:21:33 cgd Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.7 1994/06/30 05:31:23 cgd Exp $
+#	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)
 .MAIN: all

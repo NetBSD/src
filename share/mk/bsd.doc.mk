@@ -1,5 +1,5 @@
-#	from: @(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
-#	$Id: bsd.doc.mk,v 1.18 1994/06/19 01:07:24 cgd Exp $
+#	$NetBSD: bsd.doc.mk,v 1.19 1994/06/30 05:31:11 cgd Exp $
+#	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
 EQN?=		eqn
@@ -8,7 +8,7 @@ GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic
 REFER?=		refer
-ROFF?=		groff -M/usr/share/tmac -M/usr/old/lib/tmac ${MACROS} ${PAGES}
+ROFF?=		groff -M/usr/share/tmac ${MACROS} ${PAGES}
 SOELIM?=	soelim
 TBL?=		tbl
 
