@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.8 1998/12/08 14:00:24 drochner Exp $	*/
+/*	$NetBSD: regex.h,v 1.9 1998/12/09 20:58:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992 Henry Spencer.
@@ -45,10 +45,8 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#define __LIBC12_SOURCE__
-
 /* types */
-#ifdef __LIBC12_SOURCE__
+#if 1  /* __LIBC12_SOURCE__ - should go away */
 typedef off_t regoff_t;
 #else
 typedef size_t regoff_t;
