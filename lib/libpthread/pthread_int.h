@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.30 2004/10/12 22:17:56 mycroft Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.31 2005/02/26 20:33:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -362,6 +362,7 @@ void	pthread__locked_switch(pthread_t self, pthread_t next,
     pthread_spin_t *lock);
 
 void	pthread__signal_init(void);
+void	pthread__signal_start(void);
 
 void	pthread__signal(pthread_t self, pthread_t t, siginfo_t *si);
 void	pthread__deliver_signal(pthread_t self, pthread_t t, siginfo_t *si);
