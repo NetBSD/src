@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.10 2001/04/14 19:22:44 reinoud Exp $	*/
+/*	$NetBSD: iomd.c,v 1.11 2001/05/13 14:30:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -184,7 +184,7 @@ iomdattach(parent, self, aux)
 		refresh = bus_space_read_1(iot, ioh, IOMD_REFCR) & 0x0f;
 		break;
 	case RPC600_IOMD_ID:
-		printf("RPC IOMD ");
+		printf("IOMD20 ");
 		refresh = bus_space_read_1(iot, ioh, IOMD_VREFCR) & 0x09;
 		break;
 	default:
