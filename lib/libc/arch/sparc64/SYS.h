@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.3 2000/06/26 06:31:39 kleink Exp $
+ *	$NetBSD: SYS.h,v 1.4 2000/07/18 22:39:25 eeh Exp $
  */
 
 #include <machine/asm.h>
@@ -57,7 +57,7 @@
 #ifdef PIC
 #define	ERROR() \
 	PIC_PROLOGUE(%g1,%g2); \
-	ld [%g1+_C_LABEL(__cerror)],%g2; jmp %g2; nop
+	ldx [%g1+_C_LABEL(__cerror)],%g2; jmp %g2; nop
 #else
 #define	ERROR() \
 	sethi %hi(_C_LABEL(__cerror)),%g1; or %lo(_C_LABEL(__cerror)),%g1,%g1; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2000/07/14 20:59:07 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.12 2000/07/18 22:38:11 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -69,9 +69,9 @@
  * to work without a stack frame (doing so requires saving %o7) .
  */
 #define PIC_PROLOGUE(dest,tmp) \
-	3: rd %pc, tmp; \
-	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
-	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
+	sethi %hi(_GLOBAL_OFFSET_TABLE_-4),dest; \
+	rd %pc, tmp; \
+	or dest,%lo(_GLOBAL_OFFSET_TABLE_+4),dest; \
 	add dest,tmp,dest
 
 /*
