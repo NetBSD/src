@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.2 1998/07/22 12:22:09 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.3 1998/07/24 21:02:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct usbd_pipe {
 	void		       *discoarg;
 
 	usbd_request_handle     intrreqh; /* used for repeating requests */
+	usbd_request_handle     curreqh; /* currently running request */
 
 	/* Filled by HC driver. */
 	struct usbd_methods    *methods;
