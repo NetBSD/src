@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.6 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.7 2002/12/20 04:58:44 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.6 2002/12/17 18:42:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.7 2002/12/20 04:58:44 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ mach_sys_syscall_thread_switch(p, v, retval)
 	 */
 	switch(SCARG(uap, option)) {
 	case MACH_SWITCH_OPTION_NONE:
-		yield();
+		need_resched();
 		break;
 
 	case MACH_SWITCH_OPTION_WAIT:
