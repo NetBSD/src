@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/01/30 01:10:35 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2001/03/20 18:46:26 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,8 +46,28 @@ int	csum1 __P((int, u_int32_t *, u_int32_t *));
 int	csum2 __P((int, u_int32_t *, u_int32_t *));
 int	md5 __P((int, u_int32_t *, u_int32_t *));
 
-void	MDString __P((const char *));
-void	MDTimeTrial __P((void));
-void	MDTestSuite __P((void));
-void	MDFilter __P((int));
+void	MD2String __P((const char *));
+void	MD2TimeTrial __P((void));
+void	MD2TestSuite __P((void));
+void	MD2Filter __P((int));
+
+void	MD4String __P((const char *));
+void	MD4TimeTrial __P((void));
+void	MD4TestSuite __P((void));
+void	MD4Filter __P((int));
+
+void	MD5String __P((const char *));
+void	MD5TimeTrial __P((void));
+void	MD5TestSuite __P((void));
+void	MD5Filter __P((int));
+
+void	SHA1String __P((const char *));
+void	SHA1TimeTrial __P((void));
+void	SHA1TestSuite __P((void));
+void	SHA1Filter __P((int));
+
+void	RMD160String __P((const char *));
+void	RMD160TimeTrial __P((void));
+void	RMD160TestSuite __P((void));
+void	RMD160Filter __P((int));
 __END_DECLS
