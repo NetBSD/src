@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.769 2005/03/05 18:05:14 tnozaki Exp $
+#	$NetBSD: mi,v 1.770 2005/03/13 15:20:09 perry Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3728,6 +3728,7 @@
 ./usr/share/man/cat3/memchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memcpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/memmem.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memmove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memory.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memset.0			comp-c-catman		.cat
@@ -7568,6 +7569,7 @@
 ./usr/share/man/man3/memchr.3			comp-c-man		.man
 ./usr/share/man/man3/memcmp.3			comp-c-man		.man
 ./usr/share/man/man3/memcpy.3			comp-c-man		.man
+./usr/share/man/man3/memmem.3			comp-c-man		.man
 ./usr/share/man/man3/memmove.3			comp-c-man		.man
 ./usr/share/man/man3/memory.3			comp-c-man		.man
 ./usr/share/man/man3/memset.3			comp-c-man		.man
