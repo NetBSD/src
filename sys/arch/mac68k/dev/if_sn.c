@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.15 1997/06/15 20:20:07 scottr Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.15.8.1 1997/11/15 01:11:48 mellon Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -1187,7 +1187,7 @@ sonic_get(sc, eh, datalen)
 				if (top) m_freem(top);
 				return (0);
 			}
-			len = MLEN;
+			len = MCLBYTES;
 		}
 		m->m_len = len = min(datalen, len);
 
