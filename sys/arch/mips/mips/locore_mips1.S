@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.40 2000/09/05 01:24:52 soren Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.41 2000/09/13 01:53:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,9 +76,8 @@ EXPORT(mips1_exceptionentry_start)
 VECTOR(mips1_UTLBMiss, unknown)
 	.set	noat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
-	lw	k1, _C_LABEL(curpcb)
+	lw	k1, _C_LABEL(segbase)		# get the current segment table
 	bltz	k0, 1f				# R3000 chip bug
-	lw	k1, U_PCB_SEGTAB(k1)		# get the current segment table
 	srl	k0, k0, SEGSHIFT		# compute segment table index
 	sll	k0, k0, 2
 	addu	k1, k1, k0
