@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/22 05:09:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1997/11/20 00:12:39 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
@@ -9,6 +9,7 @@ SRCS=	curses.c hit.c init.c inventory.c level.c machdep.c main.c \
 DPADD=	${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
+SETUIDGAME=yes
 MAN=	rogue.6
 
 .if make(install)
