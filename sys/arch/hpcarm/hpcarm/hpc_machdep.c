@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.47.2.1 2002/07/16 08:07:29 gehenna Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.47.2.2 2002/07/21 13:00:38 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -87,7 +87,8 @@
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/platid.h>
-#include <hpcarm/sa11x0/sa11x0_reg.h>
+
+#include <arm/sa11x0/sa11x0_reg.h>
 
 #include <dev/hpc/bicons.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.11.2.1 2002/07/16 01:38:08 gehenna Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.11.2.2 2002/07/21 13:00:33 gehenna Exp $
 
 SYSTEM_LD_TAIL_EXTRA=; \
 	echo "${DBSYM} $@ || true"; \
@@ -19,6 +19,15 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.srec@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
+.endif
+
+.if (${BOARDTYPE} == "ixm1200")
+SYSTEM_FIRST_OBJ=	ixm1200_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/ixm1200/ixm1200_start.S
+
+LINKFLAGS=	-T ${THISARM}/conf/ldscript.ixm1200
+
+SYSTEM_LD_TAIL_EXTRA=
 .endif
 
 .if (${BOARDTYPE} == "iq80310")

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.18.1 2002/07/16 13:10:00 gehenna Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.18.2 2002/07/21 13:00:48 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 
 	.data
 GLOBAL(powersave)
-	.long	0
+	.long	-1
 
 	.text
 /*
@@ -68,8 +68,8 @@ ASENTRY(Idle)
 	lis	8,_C_LABEL(powersave)@ha
 	lwz	9,_C_LABEL(powersave)@l(8)
 
-	or.	9,9,9
-	beq	1f
+	add.	9,9,9
+	ble	1f
 
 	sync
 	oris	3,3,PSL_POW@h		/* enter power saving mode */

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.1.2.4 2002/07/16 00:55:27 gehenna Exp $
+#	$NetBSD: majors.arm32,v 1.1.2.5 2002/07/21 13:00:28 gehenna Exp $
 #
 # Device majors for arm32
 #
@@ -65,6 +65,7 @@ device-major	usb		char 64			usb
 device-major	uhid		char 65			uhid
 device-major	ulpt		char 66			ulpt
 
+device-major	ixpcom		char 69			ixpcom
 device-major	scsibus		char 70			scsibus
 device-major	raid		char 71  block 71	raid
 device-major	ugen		char 72			ugen
