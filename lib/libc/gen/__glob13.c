@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.8 1998/11/13 10:25:42 christos Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.9 1998/12/01 20:14:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.8 1998/11/13 10:25:42 christos Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.9 1998/12/01 20:14:04 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,10 +85,6 @@ __RCSID("$NetBSD: __glob13.c,v 1.8 1998/11/13 10:25:42 christos Exp $");
 #ifdef __LIBC12_SOURCE__
 __weak_alias(glob,_glob);
 __weak_alias(globfree,_globfree);
-#else
-#error "XXX THESE ARE NOT RIGHT!"
-__weak_alias(__glob13,___glob13);
-__weak_alias(__globfree13,___globfree13);
 #endif /* __LIBC12_SOURCE__ */
 #endif /* __weak_alias */
 
@@ -96,6 +92,13 @@ __weak_alias(__globfree13,___globfree13);
 #define	STAT	stat12
 #else
 #define	STAT	stat
+#endif
+
+#ifdef __LIBC12_SOURCE__
+__warn_references(glob,
+    "warning: reference to compatibility glob(); include <glob.h> for correct reference")
+__warn_references(globfree,
+    "warning: reference to compatibility globfree(); include <glob.h> for correct reference")
 #endif
 
 #define	DOLLAR		'$'
