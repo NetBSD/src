@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.33 2000/02/25 00:45:04 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.34 2000/02/25 01:16:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #ifndef _ALPHA_BUS_H_
 #define	_ALPHA_BUS_H_
 
+#ifdef _KERNEL
 /*
  * Turn on BUS_SPACE_DEBUG if the global DEBUG option is enabled.
  */
@@ -99,6 +100,7 @@
 #define	__BUS_SPACE_ADDRESS_SANITY(p, t, d)	(void) 0
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* BUS_SPACE_DEBUG */
+#endif /* _KERNEL */
 
 struct alpha_bus_space_translation;
 
@@ -248,6 +250,7 @@ struct alpha_bus_space_translation {
 #define	ABST_BWX		0x01	/* use BWX to access the bus */
 #define	ABST_DENSE		0x02	/* space is dense */
 
+#ifdef _KERNEL
 /*
  * Utility macros; INTERNAL USE ONLY.
  */
@@ -302,11 +305,13 @@ do {									\
 #define	alpha_bus_space_translate(t, a, s, d, bs, be, ss, se, sh)	\
 	(*(t)->abs_translate)((t)->abs_cookie, (a), (s), (d), (bs), (be), \
 	    (ss), (se), (sh))
+#endif /* _KERNEL */
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
 #define	BUS_SPACE_MAP_PREFETCHABLE     	0x04
 
+#ifdef _KERNEL
 /*
  * Allocation and deallocation operations.
  */
@@ -685,5 +690,7 @@ void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, int off, int prot, int flags));
 #endif /* _ALPHA_BUS_DMA_PRIVATE */
+
+#endif /* _KERNEL */
 
 #endif /* _ALPHA_BUS_H_ */
