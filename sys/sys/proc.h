@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.139 2002/07/02 20:27:47 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.140 2002/07/04 23:32:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -102,7 +102,7 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	void		(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
+	void		(*e_sendsig) __P((int, sigset_t *, u_long));
 	void		(*e_trapsignal) __P((struct proc *, int, u_long));
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */

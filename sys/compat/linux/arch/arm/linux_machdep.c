@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8 2002/05/20 06:26:46 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.9 2002/07/04 23:32:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8 2002/05/20 06:26:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9 2002/07/04 23:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,7 @@ process_frame(struct proc *p)
 }
 
 void
-linux_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+linux_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -105,6 +104,7 @@ linux_sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = process_frame(p);
 

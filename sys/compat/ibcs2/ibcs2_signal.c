@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.15 2002/03/31 22:22:44 christos Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.16 2002/07/04 23:32:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.15 2002/03/31 22:22:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.16 2002/07/04 23:32:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ ibcs2_sys_sigaction(p, v, retval)
 		ibcs2_to_native_sigaction(&nisa, &nbsa);
 	}
 	error = sigaction1(p, ibcs2_to_native_signo[SCARG(uap, signum)],
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
@@ -271,7 +272,7 @@ ibcs2_sys_sigsys(p, v, retval)
 		nbsa.sa_handler = (sig_t)SCARG(uap, fp);
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		error = sigaction1(p, signum, &nbsa, &obsa);
+		error = sigaction1(p, signum, &nbsa, &obsa, NULL, 0);
 		if (error)
 			return (error);
 		*retval = (int)obsa.sa_handler;
@@ -292,7 +293,7 @@ ibcs2_sys_sigsys(p, v, retval)
 		nbsa.sa_handler = SIG_IGN;
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		return (sigaction1(p, signum, &nbsa, 0));
+		return (sigaction1(p, signum, &nbsa, 0, NULL, 0));
 		
 	case IBCS2_SIGPAUSE_MASK:
 		ss = p->p_sigctx.ps_sigmask;
