@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.513 2003/03/03 10:58:45 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.514 2003/03/06 22:10:26 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.510 2003/03/03 10:57:36 soren Exp 
+ *	NetBSD: pcidevs,v 1.511 2003/03/06 22:09:46 bouyer Exp 
  */
 
 /*
@@ -1994,15 +1994,38 @@
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host to PCI Bridge */
+#define	PCI_PRODUCT_SIS_540HB	0x0540		/* 540 Host to PCI Bridge */
+#define	PCI_PRODUCT_SIS_550HB	0x0550		/* 550 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
+#define	PCI_PRODUCT_SIS_620	0x0620		/* SiS 620 Host Bridge */
 #define	PCI_PRODUCT_SIS_630	0x0630		/* SiS 630 Host Bridge */
+#define	PCI_PRODUCT_SIS_633	0x0633		/* SiS 633 Host Bridge */
+#define	PCI_PRODUCT_SIS_635	0x0635		/* SiS 635 Host Bridge */
+#define	PCI_PRODUCT_SIS_640	0x0640		/* SiS 640 Host Bridge */
+#define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
+#define	PCI_PRODUCT_SIS_646	0x0646		/* SiS 646 Host Bridge */
+#define	PCI_PRODUCT_SIS_648	0x0648		/* SiS 648 Host Bridge */
 #define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
 #define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
 #define	PCI_PRODUCT_SIS_651	0x0651		/* SiS 651 Host Bridge */
+#define	PCI_PRODUCT_SIS_652	0x0652		/* SiS 652 Host Bridge */
+#define	PCI_PRODUCT_SIS_655	0x0655		/* SiS 655 Host Bridge */
+#define	PCI_PRODUCT_SIS_658	0x0658		/* SiS 658 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
+#define	PCI_PRODUCT_SIS_733	0x0733		/* SiS 733 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
+#define	PCI_PRODUCT_SIS_740	0x0740		/* SiS 740 Host Bridge */
 #define	PCI_PRODUCT_SIS_745	0x0745		/* SiS 745 Host Bridge */
+#define	PCI_PRODUCT_SIS_746	0x0746		/* SiS 746 Host Bridge */
+#define	PCI_PRODUCT_SIS_748	0x0748		/* SiS 748 Host Bridge */
+#define	PCI_PRODUCT_SIS_750	0x0750		/* SiS 750 Host Bridge */
+#define	PCI_PRODUCT_SIS_751	0x0751		/* SiS 751 Host Bridge */
+#define	PCI_PRODUCT_SIS_752	0x0752		/* SiS 752 Host Bridge */
+#define	PCI_PRODUCT_SIS_755	0x0755		/* SiS 755 Host Bridge */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* SiS 900 10/100 Ethernet */
+#define	PCI_PRODUCT_SIS_961	0x0961		/* SiS 961 Host Bridge */
+#define	PCI_PRODUCT_SIS_962	0x0962		/* SiS 962 Host Bridge */
+#define	PCI_PRODUCT_SIS_963	0x0963		/* SiS 963 Host Bridge */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
