@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.87 2003/08/24 17:52:46 chs Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.88 2003/10/27 09:58:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.87 2003/08/24 17:52:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.88 2003/10/27 09:58:42 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -855,7 +855,7 @@ ultrix_sys_fcntl(l, v, retval)
 	struct proc *p = l->l_proc;
 	int error;
 	struct ultrix_flock ufl;
-	struct flock fl, *flp;
+	struct flock fl, *flp = NULL;	/* XXX gcc */
 	caddr_t sg;
 	struct sys_fcntl_args *args, fca;
 
