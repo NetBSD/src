@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.3 2000/04/20 14:04:04 msaitoh Exp $ */
+/* $NetBSD: wdog.c,v 1.4 2000/10/31 02:04:12 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -40,6 +40,7 @@
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
+#include <sh3/frame.h>
 #include <sh3/shbvar.h>
 #include <sh3/wdtreg.h>
 #include <sh3/wdogvar.h>
@@ -52,6 +53,7 @@ struct wdog_softc {
 
 static int wdogmatch __P((struct device *, struct cfdata *, void *));
 static void wdogattach __P((struct device *, struct device *, void *));
+static int wdogintr __P((void *));
 
 struct cfattach wdog_ca = {
 	sizeof(struct wdog_softc), wdogmatch, wdogattach
@@ -106,6 +108,10 @@ wdogattach(parent, self, aux)
 	sc->iobase = sa->ia_iobase;
 	sc->flags = 0;
 
+	wdog_wr_csr(WTCSR_WT | WTCSR_CKS_4096);	/* default to wt mode */
+
+	shb_intr_establish(WDOG_IRQ, IST_EDGE, IPL_SOFTCLOCK, wdogintr, 0);
+
 	printf("\nwdog0: internal watchdog timer\n");
 }
 
@@ -156,6 +162,21 @@ wdogioctl (dev, cmd, data, flag, p)
 	int request;
 
 	switch (cmd) {
+	case SIOWDOGSETMODE:
+		request = *(int *)data;
+
+		switch (request) {
+		case WDOGM_RESET:
+			wdog_wr_csr(SHREG_WTCSR_R | WTCSR_WT);
+			break;
+		case WDOGM_INTR:
+			wdog_wr_csr(SHREG_WTCSR_R & ~WTCSR_WT);
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
+		break;
 	case SIORESETWDOG:
 		wdog_wr_cnt(0);		/* reset to zero */
 		break;
@@ -181,4 +202,17 @@ wdogioctl (dev, cmd, data, flag, p)
 	}
 
 	return (error);
+}
+
+int
+wdogintr(arg)
+	void *arg;
+{
+	struct trapframe *frame = arg;
+
+	wdog_wr_csr(SHREG_WTCSR_R & ~WTCSR_IOVF); /* clear overflow bit */
+	wdog_wr_cnt(0);			/* reset to zero */
+	printf("wdog trapped: spc = %x\n", frame->tf_spc);
+
+	return (0);
 }
