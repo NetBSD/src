@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.c,v 1.6 1997/03/12 20:17:29 christos Exp $	*/
+/*	$NetBSD: ccp.c,v 1.7 1997/05/17 22:14:15 christos Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ccp.c,v 1.19 1996/09/26 06:20:52 paulus Exp ";
+static char rcsid[] = "Id: ccp.c,v 1.20 1997/04/30 05:50:40 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: ccp.c,v 1.6 1997/03/12 20:17:29 christos Exp $";
+static char rcsid[] = "$NetBSD: ccp.c,v 1.7 1997/05/17 22:14:15 christos Exp $";
 #endif
 #endif
 
@@ -98,7 +98,7 @@ static int  ccp_reqci __P((fsm *, u_char *, int *, int));
 static void ccp_up __P((fsm *));
 static void ccp_down __P((fsm *));
 static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
-static void ccp_rack_timeout __P((caddr_t));
+static void ccp_rack_timeout __P((void *));
 static char *method_name __P((ccp_options *, ccp_options *));
 
 static fsm_callbacks ccp_callbacks = {
@@ -274,7 +274,7 @@ ccp_extcode(f, code, id, p, len)
     case CCP_RESETACK:
 	if (ccp_localstate[f->unit] & RACK_PENDING && id == f->reqid) {
 	    ccp_localstate[f->unit] &= ~(RACK_PENDING | RREQ_REPEAT);
-	    UNTIMEOUT(ccp_rack_timeout, (caddr_t) f);
+	    UNTIMEOUT(ccp_rack_timeout, f);
 	}
 	break;
 
@@ -875,7 +875,7 @@ ccp_down(f)
     fsm *f;
 {
     if (ccp_localstate[f->unit] & RACK_PENDING)
-	UNTIMEOUT(ccp_rack_timeout, (caddr_t) f);
+	UNTIMEOUT(ccp_rack_timeout, f);
     ccp_localstate[f->unit] = 0;
     ccp_flags_set(f->unit, 1, 0);
 }
@@ -1023,7 +1023,7 @@ ccp_datainput(unit, pkt, len)
 	     */
 	    if (!(ccp_localstate[f->unit] & RACK_PENDING)) {
 		fsm_sdata(f, CCP_RESETREQ, f->reqid = ++f->id, NULL, 0);
-		TIMEOUT(ccp_rack_timeout, (caddr_t) f, RACKTIMEOUT);
+		TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
 		ccp_localstate[f->unit] |= RACK_PENDING;
 	    } else
 		ccp_localstate[f->unit] |= RREQ_REPEAT;
@@ -1036,13 +1036,13 @@ ccp_datainput(unit, pkt, len)
  */
 static void
 ccp_rack_timeout(arg)
-    caddr_t arg;
+    void *arg;
 {
-    fsm *f = (fsm *) arg;
+    fsm *f = arg;
 
     if (f->state == OPENED && ccp_localstate[f->unit] & RREQ_REPEAT) {
 	fsm_sdata(f, CCP_RESETREQ, f->reqid, NULL, 0);
-	TIMEOUT(ccp_rack_timeout, (caddr_t) f, RACKTIMEOUT);
+	TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
 	ccp_localstate[f->unit] &= ~RREQ_REPEAT;
     } else
 	ccp_localstate[f->unit] &= ~RACK_PENDING;

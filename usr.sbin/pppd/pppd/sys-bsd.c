@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.18 1997/04/28 04:22:24 mrg Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.19 1997/05/17 22:14:28 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -24,9 +24,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.27 1997/03/04 03:43:53 paulus Exp ";
+static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.18 1997/04/28 04:22:24 mrg Exp $";
+static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.19 1997/05/17 22:14:28 christos Exp $";
 #endif
 #endif
 
@@ -43,12 +43,13 @@ static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.18 1997/04/28 04:22:24 mrg Exp $";
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
-#include <util.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/param.h>
+#include <util.h>
 #ifdef PPP_FILTER
 #include <net/bpf.h>
 #endif
@@ -64,7 +65,7 @@ static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.18 1997/04/28 04:22:24 mrg Exp $";
 #include <sys/param.h>
 #if defined(NetBSD) && (NetBSD >= 199703)
 #include <netinet/if_inarp.h>
-#else	/* NetBSD 1.2D or later */
+#else	/* NetBSD 1.2C or earlier */
 #include <netinet/if_ether.h>
 #endif
 #endif
@@ -180,9 +181,16 @@ ppp_available()
     ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) >= 0;
     close(s);
 
+#ifdef __NetBSD__
     no_ppp_msg = "\
 This system lacks kernel support for PPP.  To include PPP support\n\
 in the kernel, please read the ppp(4) manual page.\n";
+#else
+    no_ppp_msg = "\
+This system lacks kernel support for PPP.  To include PPP support\n\
+in the kernel, please follow the steps detailed in the README.bsd\n\
+file in the ppp-2.2 distribution.\n";
+#endif
     return ok;
 }
 
@@ -538,7 +546,7 @@ output(unit, p, len)
     int len;
 {
     if (debug)
-	log_packet(p, len, "sent ");
+	log_packet(p, len, "sent ", LOG_DEBUG);
 
     if (write(ttyfd, p, len) < 0) {
 	if (errno != EIO)
