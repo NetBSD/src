@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1998/03/12 05:45:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1998/03/12 06:26:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 1998/03/12 05:45:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 1998/03/12 06:26:26 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -227,11 +227,6 @@ void	pmap_zero_page __P((vm_offset_t phys));
 void pmap_zero_page __P((vm_offset_t));
 void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t, u_int *));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
-
-#if !defined(UVM)
-vm_page_t vm_page_alloc1 __P((void));
-void vm_page_free1 __P((vm_page_t));
-#endif
 
 #ifdef MIPS3
 void pmap_page_cache __P((vm_offset_t, int));
@@ -1965,93 +1960,6 @@ pmap_remove_pv(pmap, va, pa)
 	splx(s);
 	return(last);
 }
-
-#if !defined(UVM)
-/*
- *	vm_page_alloc1:
- *
- *	Allocate and return a memory cell with no associated object.
- */
-vm_page_t
-vm_page_alloc1()
-{
-	register vm_page_t	mem;
-	int		spl;
-
-	spl = splimp();				/* XXX */
-	simple_lock(&vm_page_queue_free_lock);
-	if (vm_page_queue_free.tqh_first == NULL) {
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-		return (NULL);
-	}
-
-	mem = vm_page_queue_free.tqh_first;
-	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
-
-	cnt.v_free_count--;
-	simple_unlock(&vm_page_queue_free_lock);
-	splx(spl);
-
-	mem->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
-	mem->wire_count = 0;
-
-	/*
-	 *	Decide if we should poke the pageout daemon.
-	 *	We do this if the free count is less than the low
-	 *	water mark, or if the free count is less than the high
-	 *	water mark (but above the low water mark) and the inactive
-	 *	count is less than its target.
-	 *
-	 *	We don't have the counts locked ... if they change a little,
-	 *	it doesn't really matter.
-	 */
-
-	if (cnt.v_free_count < cnt.v_free_min ||
-	    (cnt.v_free_count < cnt.v_free_target &&
-	     cnt.v_inactive_count < cnt.v_inactive_target))
-		thread_wakeup((void *)&vm_pages_needed);
-	return (mem);
-}
-
-/*
- *	vm_page_free1:
- *
- *	Returns the given page to the free list,
- *	disassociating it with any VM object.
- *
- *	Object and page must be locked prior to entry.
- */
-void
-vm_page_free1(mem)
-	register vm_page_t	mem;
-{
-
-	if (mem->flags & PG_ACTIVE) {
-		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
-		mem->flags &= ~PG_ACTIVE;
-		cnt.v_active_count--;
-	}
-
-	if (mem->flags & PG_INACTIVE) {
-		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
-		mem->flags &= ~PG_INACTIVE;
-		cnt.v_inactive_count--;
-	}
-
-	if (!(mem->flags & PG_FICTITIOUS)) {
-		int	spl;
-
-		spl = splimp();
-		simple_lock(&vm_page_queue_free_lock);
-		TAILQ_INSERT_TAIL(&vm_page_queue_free, mem, pageq);
-
-		cnt.v_free_count++;
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-	}
-}
-#endif /* ! UVM */
 
 pt_entry_t *
 pmap_pte(pmap, va)
