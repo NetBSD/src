@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.5 2000/07/05 15:45:34 msaitoh Exp $
+.\"	$NetBSD: eisa.4,v 1.6 2000/07/24 12:15:10 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -36,48 +36,91 @@
 .Nd Introduction to EISA bus machine-independent drivers and support
 .Sh SYNOPSIS
 .Pp
-Machine-dependent; depends on the bus topology and EISA-bus interface
-of your system. Typical EISA buses are either connected directly
-to the main system bus, or via an PCI-to-EISA bridge.
-See the
+Machine-dependent; depends on the bus topology and 
+.Tn EISA
+bus interface of your system.  Typical
+.Tn EISA 
+buses are either connected directly
+to the main system bus, or via an 
+.Tn PCI
+to
+.Tn EISA
+bridge.  See the
 .Xr intro 4
 documentation for your system for details.
 .Sh INTRODUCTION
-.Nx 1.2 
-and later versions include  machine-independent bus support and
-drivers for the following EISA bus devices.
+.Nx
+includes a machine-independent
+.Tn EISA
+bus subsystem and
+several machine-independent
+.Tn EISA
+device drivers.
+.Pp
+Your system may support additional
+.Tn EISA
+devices.
+Drivers for
+.Tn EISA
+devices not listed here are machine-dependent.
+Consult your system's
+.Xr intro 4
+for additional information.
 .Sh SUPPORTED DEVICES
 .Nx
-includes machine-independent EISA drivers, sorted by device type
+includes machine-independent
+.Tn EISA
+drivers, sorted by device type
 and driver name:
 .Pp
-SCSI adaptors:
-.Bl -tag -width speaker -offset indent -compact
+.Ss SCSI interfaces
+.Bl -tag -width pcdisplay -offset indent
 .It ahb
-Adaptec 174x EISA SCSI adaptor.
+Adaptec 174x
+.Tn SCSI
+interfaces.
 .It ahc
-Adaptec AIC 7770, 274x, and 284x EISA SCSI adaptor boards.
+Adaptec AIC 7770, 274x, and 284x
+.Tn SCSI
+interfaces.
 .It bha
-BusLogic  BT-74x SCSI boards.
+BusLogic BT-74x
+.Tn SCSI
+interfaces.
 .It dpt
-DPT SmartCache/SmartRAID III and IV SCSI adaptor boards.
+DPT SmartCache/SmartRAID III and IV
+.Tn SCSI 
+interfaces.
 .It uha
-Ulrastor 24f EISA SCSI adaptor.
+Ulrastor 24f
+.Tn SCSI
+interfaces.
 .El
-.\"
-.\"
-.\"
 .Pp
-Network interfaces:
-.Bl -tag -width speaker -offset indent -compact
+.Ss Network interfaces
+.Bl -tag -width pcdisplay -offset indent
 .It ep
-3Com 3c579 and 3c592 10Mbit Ethernet, and 3c597 10/100Mbit Ethernet interfaces.
+3Com 3c579 and 3c592 10Mbit
+.Tn Ethernet , 
+and 3c597 10/100Mbit 
+.Tn Ethernet
+interfaces.
 .It fea
-Digital DEFEA EISA FDDI adaptor.
+Digital DEFEA FDDI interfaces.
+.It tlp
+DECchip 21x4x and clone
+.Tn Ethernet
+interfaces.
 .El
 .Pp
-Note that most or all EISA devices also have PCI or ISA equivalents.
-variants. These are listed in 
+Note that most or all
+.Tn EISA
+devices also have
+.Tn PCI
+or
+.Tn ISA
+equivalents.
+These are listed in 
 .Xr pci 4 ,
 .Xr isa 4 ,
 or
@@ -92,10 +135,10 @@ supported bus variants.
 .Xr dpt 4 ,
 .Xr ep 4 ,
 .Xr fea 4 ,
+.Xr tlp 4 ,
 .Xr uha 4
 .Sh HISTORY
-The
-.Nm eisa
-introduction
-appeared in
-.Nx 1.3 .
+The machine-independent
+.Tn EISA
+subsystem appeared in
+.Nx 1.2 .
