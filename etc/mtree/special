@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.13 1997/09/20 04:02:01 mikel Exp $
+#	$NetBSD: special,v 1.14 1997/10/20 21:30:30 fair Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -124,7 +124,7 @@ log		type=dir mode=0755 uname=root gname=wheel
 authlog		type=file mode=0600 uname=root gname=wheel
 wtmp		type=file mode=0644 uname=root gname=wheel
 ..	#var/log
-mail		type=dir mode=0755 uname=root gname=wheel ignore
+mail		type=dir mode=1777 uname=root gname=wheel ignore
 ..	#var/mail
 preserve	type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/preserve
