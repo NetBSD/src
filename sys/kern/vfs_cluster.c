@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.4 1994/10/30 21:48:12 cgd Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.5 1994/11/26 04:18:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -48,11 +48,11 @@
 #ifdef DEBUG
 #include <vm/vm.h>
 #include <sys/sysctl.h>
-int doreallocblks = 1;
+int doreallocblks = 0;
 struct ctldebug debug13 = { "doreallocblks", &doreallocblks };
 #else
 /* XXX for cluster_write */
-#define doreallocblks 1
+#define doreallocblks 0
 #endif
 
 /*
