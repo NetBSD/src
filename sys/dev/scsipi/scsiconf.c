@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.137 2000/03/19 10:33:26 sjg Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.138 2000/03/27 11:45:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -429,7 +429,7 @@ scsibusprint(aux, pnp)
 	scsipi_strvis(product, 65, inqbuf->product, 16);
 	scsipi_strvis(revision, 17, inqbuf->revision, 4);
 
-	printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
+	printf(" target %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
 	    target, lun, vendor, product, revision,
 	    sa->scsipi_info.scsi_version & SID_ANSII, type, dtype,
 	    inqbuf->removable ? "removable" : "fixed", qtype);
