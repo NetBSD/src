@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.12 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.13 2003/10/23 09:29:36 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -147,6 +147,14 @@
 #define	OST_TIM1_INT		(1U << 1)
 #define	OST_TIM0_INT		(1U << 0)
 
+#define	IXP425_OST_WDOG		0x0014
+#define	IXP425_OST_WDOG_ENAB	0x0018
+#define	IXP425_OST_WDOG_KEY	0x001c
+#define	OST_WDOG_KEY_MAJICK	0x482e
+#define	OST_WDOG_ENAB_RST_ENA	(1u << 0)
+#define	OST_WDOG_ENAB_INT_ENA	(1u << 1)
+#define	OST_WDOG_ENAB_CNT_ENA	(1u << 2)
+
 /*
  * Interrupt Controller Unit.
  *  PA 0xc8003000
@@ -268,6 +276,8 @@
 #define	EXP_TIMING_CS5_OFFSET		0x0014
 #define	EXP_TIMING_CS6_OFFSET		0x0018
 #define	EXP_TIMING_CS7_OFFSET		0x001c
+#define EXP_CNFG0_OFFSET		0x0020
+#define EXP_CNFG1_OFFSET		0x0024
 
 #define IXP425_EXP_RECOVERY_SHIFT	16
 #define IXP425_EXP_HOLD_SHIFT		20
