@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.6 2003/08/19 22:17:03 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.13 2003/11/09 23:36:46 sam Exp $");
 
 #include "opt_inet.h"
 
@@ -70,10 +70,15 @@ static struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
 static void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
 static void ieee80211_node_copy(struct ieee80211com *,
 		struct ieee80211_node *, const struct ieee80211_node *);
+static u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
+		struct ieee80211_node *);
+
 static void ieee80211_setup_node(struct ieee80211com *ic,
 		struct ieee80211_node *ni, u_int8_t *macaddr);
 static void _ieee80211_free_node(struct ieee80211com *,
 		struct ieee80211_node *);
+
+MALLOC_DEFINE(M_80211_NODE, "node", "802.11 node state");
 
 void
 ieee80211_node_attach(struct ifnet *ifp)
@@ -81,11 +86,13 @@ ieee80211_node_attach(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 
 	/* XXX need unit */
-	mtx_init(&ic->ic_nodelock, ifp->if_name, "802.11 node table", MTX_DEF);
+	IEEE80211_NODE_LOCK_INIT(ic, ifp->if_xname);
 	TAILQ_INIT(&ic->ic_node);
 	ic->ic_node_alloc = ieee80211_node_alloc;
 	ic->ic_node_free = ieee80211_node_free;
 	ic->ic_node_copy = ieee80211_node_copy;
+	ic->ic_node_getrssi = ieee80211_node_getrssi;
+	ic->ic_scangen = 1;
 }
 
 void
@@ -106,7 +113,7 @@ ieee80211_node_detach(struct ifnet *ifp)
 	if (ic->ic_bss != NULL)
 		(*ic->ic_node_free)(ic, ic->ic_bss);
 	ieee80211_free_allnodes(ic);
-	mtx_destroy(&ic->ic_nodelock);
+	IEEE80211_NODE_LOCK_DESTROY(ic);
 }
 
 /*
@@ -141,8 +148,11 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	 * In all but hostap mode scanning starts off in
 	 * an active mode before switching to passive.
 	 */
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
 		ic->ic_flags |= IEEE80211_F_ASCAN;
+		ic->ic_stats.is_scan_active++;
+	} else
+		ic->ic_stats.is_scan_passive++;
 	if (ifp->if_flags & IFF_DEBUG)
 		if_printf(ifp, "begin %s scan\n",
 			(ic->ic_flags & IEEE80211_F_ASCAN) ?
@@ -327,8 +337,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 			fail |= 0x08;
 		if (ic->ic_des_esslen != 0 &&
 		    (ni->ni_esslen != ic->ic_des_esslen ||
-		     memcmp(ni->ni_essid, ic->ic_des_essid,
-		     ic->ic_des_esslen != 0)))
+		     memcmp(ni->ni_essid, ic->ic_des_essid, ic->ic_des_esslen) != 0))
 			fail |= 0x10;
 		if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
 		    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
@@ -389,14 +398,14 @@ ieee80211_end_scan(struct ifnet *ifp)
 static struct ieee80211_node *
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof(struct ieee80211_node), M_DEVBUF,
+	return malloc(sizeof(struct ieee80211_node), M_80211_NODE,
 		M_NOWAIT | M_ZERO);
 }
 
 static void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	free(ni, M_DEVBUF);
+	free(ni, M_80211_NODE);
 }
 
 static void
@@ -404,6 +413,12 @@ ieee80211_node_copy(struct ieee80211com *ic,
 	struct ieee80211_node *dst, const struct ieee80211_node *src)
 {
 	*dst = *src;
+}
+
+static u_int8_t
+ieee80211_node_getrssi(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	return ni->ni_rssi;
 }
 
 static void
@@ -415,7 +430,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
 	hash = IEEE80211_NODE_HASH(macaddr);
 	ni->ni_refcnt = 1;		/* mark referenced */
-	mtx_lock(&ic->ic_nodelock);
+	IEEE80211_NODE_LOCK(ic);
 	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
 	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
 	/* 
@@ -429,7 +444,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	 */
 	if (ic->ic_opmode != IEEE80211_M_STA)
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
-	mtx_unlock(&ic->ic_nodelock);
+	IEEE80211_NODE_UNLOCK(ic);
 }
 
 struct ieee80211_node *
@@ -459,14 +474,14 @@ ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 	int hash;
 
 	hash = IEEE80211_NODE_HASH(macaddr);
-	mtx_lock(&ic->ic_nodelock);
+	IEEE80211_NODE_LOCK(ic);
 	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
 		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr)) {
 			atomic_add_int(&ni->ni_refcnt, 1); /* mark referenced */
 			break;
 		}
 	}
-	mtx_unlock(&ic->ic_nodelock);
+	IEEE80211_NODE_UNLOCK(ic);
 	return ni;
 }
 
@@ -481,14 +496,14 @@ ieee80211_lookup_node(struct ieee80211com *ic,
 	int hash;
 
 	hash = IEEE80211_NODE_HASH(macaddr);
-	mtx_lock(&ic->ic_nodelock);
+	IEEE80211_NODE_LOCK(ic);
 	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
 		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) && ni->ni_chan == chan) {
 			atomic_add_int(&ni->ni_refcnt, 1);/* mark referenced */
 			break;
 		}
 	}
-	mtx_unlock(&ic->ic_nodelock);
+	IEEE80211_NODE_UNLOCK(ic);
 	return ni;
 }
 
@@ -512,9 +527,9 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* XXX need equivalent of atomic_dec_and_test */
 	atomic_subtract_int(&ni->ni_refcnt, 1);
 	if (atomic_cmpset_int(&ni->ni_refcnt, 0, 1)) {
-		mtx_lock(&ic->ic_nodelock);
+		IEEE80211_NODE_LOCK(ic);
 		_ieee80211_free_node(ic, ni);
-		mtx_unlock(&ic->ic_nodelock);
+		IEEE80211_NODE_UNLOCK(ic);
 	}
 }
 
@@ -523,39 +538,58 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni;
 
-	mtx_lock(&ic->ic_nodelock);
+	IEEE80211_NODE_LOCK(ic);
 	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
 		_ieee80211_free_node(ic, ni);  
-	mtx_unlock(&ic->ic_nodelock);
+	IEEE80211_NODE_UNLOCK(ic);
 }
 
+/*
+ * Timeout inactive nodes.  Note that we cannot hold the node
+ * lock while sending a frame as this would lead to a LOR.
+ * Instead we use a generation number to mark nodes that we've
+ * scanned and drop the lock and restart a scan if we have to
+ * time out a node.  Since we are single-threaded by virtue of
+ * controlling the inactivity timer we can be sure this will
+ * process each node only once.
+ */
 void
 ieee80211_timeout_nodes(struct ieee80211com *ic)
 {
-	struct ieee80211_node *ni, *nextbs;
+	struct ieee80211_node *ni;
+	u_int gen = ic->ic_scangen++;		/* NB: ok 'cuz single-threaded*/
 
-	mtx_lock(&ic->ic_nodelock);
-	for (ni = TAILQ_FIRST(&ic->ic_node); ni != NULL;) {
+restart:
+	IEEE80211_NODE_LOCK(ic);
+	TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
+		if (ni->ni_scangen == gen)	/* previously handled */
+			continue;
+		ni->ni_scangen = gen;
 		if (++ni->ni_inact > IEEE80211_INACT_MAX) {
 			IEEE80211_DPRINTF(("station %s timed out "
 			    "due to inactivity (%u secs)\n",
 			    ether_sprintf(ni->ni_macaddr),
 			    ni->ni_inact));
-			nextbs = TAILQ_NEXT(ni, ni_list);
 			/*
 			 * Send a deauthenticate frame.
+			 *
+			 * Drop the node lock before sending the
+			 * deauthentication frame in case the driver takes     
+			 * a lock, as this will result in a LOR between the     
+			 * node lock and the driver lock.
 			 */
+			IEEE80211_NODE_UNLOCK(ic);
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
 			    IEEE80211_REASON_AUTH_EXPIRE);
 			ieee80211_free_node(ic, ni);
-			ni = nextbs;
-		} else
-			ni = TAILQ_NEXT(ni, ni_list);
+			ic->ic_stats.is_node_timeout++;
+			goto restart;
+		}
 	}
 	if (!TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
-	mtx_unlock(&ic->ic_nodelock);
+	IEEE80211_NODE_UNLOCK(ic);
 }
 
 void
@@ -563,8 +597,8 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f, void *a
 {
 	struct ieee80211_node *ni;
 
-	mtx_lock(&ic->ic_nodelock);
+	IEEE80211_NODE_LOCK(ic);
 	TAILQ_FOREACH(ni, &ic->ic_node, ni_list)
 		(*f)(arg, ni);
-	mtx_unlock(&ic->ic_nodelock);
+	IEEE80211_NODE_UNLOCK(ic);
 }

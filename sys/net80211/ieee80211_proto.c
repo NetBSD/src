@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.3 2003/07/20 21:36:08 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.6 2003/10/31 18:32:09 brooks Exp $");
 
 /*
  * IEEE 802.11 protocol support.
@@ -103,7 +103,7 @@ ieee80211_proto_attach(struct ifnet *ifp)
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
 
-	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_name, "mgmt send q", MTX_DEF);
+	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_xname, "mgmt send q", MTX_DEF);
 
 	/* protocol state change handler */
 	ic->ic_newstate = ieee80211_newstate;
@@ -220,7 +220,7 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 	okrate = badrate = 0;
 	srs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 	nrs = &ni->ni_rates;
-	for (i = 0; i < ni->ni_rates.rs_nrates; ) {
+	for (i = 0; i < nrs->rs_nrates; ) {
 		ignore = 0;
 		if (flags & IEEE80211_F_DOSORT) {
 			/*
@@ -259,7 +259,16 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 					break;
 			}
 			if (j == srs->rs_nrates) {
-				if (nrs->rs_rates[i] & IEEE80211_RATE_BASIC)
+				/*
+				 * A rate in the node's rate set is not
+				 * supported.  If this is a basic rate and we
+				 * are operating as an AP then this is an error.
+				 * Otherwise we just discard/ignore the rate.
+				 * Note that this is important for 11b stations
+				 * when they want to associate with an 11g AP.
+				 */
+				if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+				    (nrs->rs_rates[i] & IEEE80211_RATE_BASIC))
 					error++;
 				ignore++;
 			}
@@ -312,7 +321,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				    IEEE80211_REASON_ASSOC_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
-				mtx_lock(&ic->ic_nodelock);
+				IEEE80211_NODE_LOCK(ic);
 				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 					if (ni->ni_associd == 0)
 						continue;
@@ -320,7 +329,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 					    IEEE80211_FC0_SUBTYPE_DISASSOC,
 					    IEEE80211_REASON_ASSOC_LEAVE);
 				}
-				mtx_unlock(&ic->ic_nodelock);
+				IEEE80211_NODE_UNLOCK(ic);
 				break;
 			default:
 				break;
@@ -334,13 +343,13 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				    IEEE80211_REASON_AUTH_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
-				mtx_lock(&ic->ic_nodelock);
+				IEEE80211_NODE_LOCK(ic);
 				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DEAUTH,
 					    IEEE80211_REASON_AUTH_LEAVE);
 				}
-				mtx_unlock(&ic->ic_nodelock);
+				IEEE80211_NODE_UNLOCK(ic);
 				break;
 			default:
 				break;

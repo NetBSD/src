@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.2 2003/06/27 05:13:52 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.3 2003/10/17 23:15:30 sam Exp $");
 
 #include "opt_inet.h"
 
@@ -113,16 +113,23 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	n0 = NULL;
 	if ((ctx = ic->ic_wep_ctx) == NULL) {
 		ctx = malloc(arc4_ctxlen(), M_DEVBUF, M_NOWAIT);
-		if (ctx == NULL)
+		if (ctx == NULL) {
+			ic->ic_stats.is_crypto_nomem++;
 			goto fail;
+		}
 		ic->ic_wep_ctx = ctx;
 	}
 	m = m0;
 	left = m->m_pkthdr.len;
 	MGET(n, M_DONTWAIT, m->m_type);
 	n0 = n;
-	if (n == NULL)
+	if (n == NULL) {
+		if (txflag)
+			ic->ic_stats.is_tx_nombuf++;
+		else
+			ic->ic_stats.is_rx_nombuf++;
 		goto fail;
+	}
 	M_MOVE_PKTHDR(n, m);
 	len = IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
 	if (txflag) {
@@ -188,8 +195,13 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 			len = n->m_len - noff;
 			if (len == 0) {
 				MGET(n->m_next, M_DONTWAIT, n->m_type);
-				if (n->m_next == NULL)
+				if (n->m_next == NULL) {
+					if (txflag)
+						ic->ic_stats.is_tx_nombuf++;
+					else
+						ic->ic_stats.is_rx_nombuf++;
 					goto fail;
+				}
 				n = n->m_next;
 				n->m_len = MLEN;
 				if (left >= MINCLSIZE) {
@@ -223,8 +235,10 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		else {
 			n->m_len = noff;
 			MGET(n->m_next, M_DONTWAIT, n->m_type);
-			if (n->m_next == NULL)
+			if (n->m_next == NULL) {
+				ic->ic_stats.is_tx_nombuf++;
 				goto fail;
+			}
 			n = n->m_next;
 			n->m_len = sizeof(crcbuf);
 			noff = 0;
@@ -252,6 +266,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 					    n0->m_len, -1, -1);
 			}
 #endif
+			ic->ic_stats.is_rx_decryptcrc++;
 			goto fail;
 		}
 	}

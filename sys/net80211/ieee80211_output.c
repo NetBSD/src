@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.9 2003/10/17 23:15:30 sam Exp $");
 
 #include "opt_inet.h"
 
@@ -155,7 +155,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	if (m->m_len < sizeof(struct ether_header)) {
 		m = m_pullup(m, sizeof(struct ether_header));
 		if (m == NULL) {
-			/* XXX statistic */
+			ic->ic_stats.is_tx_nombuf++;
 			goto bad;
 		}
 	}
@@ -165,13 +165,25 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		ni = ieee80211_find_node(ic, eh.ether_dhost);
 		if (ni == NULL) {
 			/*
-			 * When not in station mode the
-			 * destination address should always be
-			 * in the node table unless this is a
-			 * multicast/broadcast frame.
+			 * When not in station mode the destination
+			 * address should always be in the node table
+			 * if the device sends management frames to us;
+			 * unless this is a multicast/broadcast frame.
+			 * For devices that don't send management frames
+			 * to the host we have to cheat; use the bss
+			 * node instead; the card will/should clobber
+			 * the bssid address as necessary.
+			 *
+			 * XXX this handles AHDEMO because all devices
+			 *     that support it don't send mgmt frames;
+			 *     but it might be better to test explicitly
 			 */
-			if (!IEEE80211_IS_MULTICAST(eh.ether_dhost)) {
-				/* ic->ic_stats.st_tx_nonode++; XXX statistic */
+			if (!IEEE80211_IS_MULTICAST(eh.ether_dhost) &&
+			    (ic->ic_caps & IEEE80211_C_RCVMGT)) {
+				IEEE80211_DPRINTF(("%s: no node for dst %s, "
+					"discard frame\n", __func__,
+					ether_sprintf(eh.ether_dhost)));
+				ic->ic_stats.is_tx_nonode++; 
 				goto bad;
 			}
 			ni = ic->ic_bss;
@@ -189,8 +201,10 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	llc->llc_snap.org_code[2] = 0;
 	llc->llc_snap.ether_type = eh.ether_type;
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
-	if (m == NULL)
+	if (m == NULL) {
+		ic->ic_stats.is_tx_nombuf++;
 		goto bad;
+	}
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
 	*(u_int16_t *)wh->i_dur = 0;
@@ -301,7 +315,7 @@ int
 ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	int type, int arg)
 {
-#define	senderr(_x)	do { ret = _x; goto bad; } while (0)
+#define	senderr(_x, _v)	do { ic->ic_stats._v++; ret = _x; goto bad; } while (0)
 	struct ifnet *ifp = &ic->ic_if;
 	struct mbuf *m;
 	u_int8_t *frm;
@@ -332,7 +346,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		       + 2 + IEEE80211_RATE_SIZE
 		       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
 		frm = mtod(m, u_int8_t *);
 		frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
@@ -352,6 +366,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[2] cabability information
 		 *	[tlv] ssid
 		 *	[tlv] supported rates
+		 *	[tlv] parameter set (FH/DS)
 		 *	[tlv] parameter set (IBSS)
 		 *	[tlv] extended supported rates
 		 */
@@ -359,10 +374,11 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			 8 + 2 + 2 + 2
 		       + 2 + ni->ni_esslen
 		       + 2 + IEEE80211_RATE_SIZE
+		       + (ic->ic_phytype == IEEE80211_T_FH ? 7 : 3)
 		       + 6
 		       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
 		frm = mtod(m, u_int8_t *);
 
@@ -376,12 +392,31 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			capinfo = IEEE80211_CAPINFO_ESS;
 		if (ic->ic_flags & IEEE80211_F_WEPON)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
+		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 		*(u_int16_t *)frm = htole16(capinfo);
 		frm += 2;
 
 		frm = ieee80211_add_ssid(frm, ic->ic_bss->ni_essid,
 				ic->ic_bss->ni_esslen);
 		frm = ieee80211_add_rates(frm, &ic->ic_bss->ni_rates);
+
+		if (ic->ic_phytype == IEEE80211_T_FH) {
+                        *frm++ = IEEE80211_ELEMID_FHPARMS;
+                        *frm++ = 5;
+                        *frm++ = ni->ni_fhdwell & 0x00ff;
+                        *frm++ = (ni->ni_fhdwell >> 8) & 0x00ff;
+                        *frm++ = IEEE80211_FH_CHANSET(
+			    ieee80211_chan2ieee(ic, ni->ni_chan));
+                        *frm++ = IEEE80211_FH_CHANPAT(
+			    ieee80211_chan2ieee(ic, ni->ni_chan));
+                        *frm++ = ni->ni_fhindex;
+		} else {
+			*frm++ = IEEE80211_ELEMID_DSPARMS;
+			*frm++ = 1;
+			*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
+		}
 
 		if (ic->ic_opmode == IEEE80211_M_IBSS) {
 			*frm++ = IEEE80211_ELEMID_IBSSPARMS;
@@ -403,7 +438,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_AUTH:
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		MH_ALIGN(m, 2 * 3);
 		m->m_pkthdr.len = m->m_len = 6;
 		frm = mtod(m, u_int8_t *);
@@ -421,7 +456,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    ether_sprintf(ni->ni_macaddr), arg);
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		MH_ALIGN(m, 2);
 		m->m_pkthdr.len = m->m_len = 2;
 		*mtod(m, u_int16_t *) = htole16(arg);	/* reason */
@@ -446,7 +481,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		       + 2 + IEEE80211_RATE_SIZE
 		       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
 		frm = mtod(m, u_int8_t *);
 
@@ -457,7 +492,12 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			capinfo |= IEEE80211_CAPINFO_ESS;
 		if (ic->ic_flags & IEEE80211_F_WEPON)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
-		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+		/*
+		 * NB: Some 11a AP's reject the request when
+		 *     short premable is set.
+		 */
+		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 		if (ic->ic_flags & IEEE80211_F_SHSLOT)
 			capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
@@ -497,13 +537,16 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		       + 2 + IEEE80211_RATE_SIZE
 		       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
 		frm = mtod(m, u_int8_t *);
 
 		capinfo = IEEE80211_CAPINFO_ESS;
 		if (ic->ic_flags & IEEE80211_F_WEPON)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
+		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+			capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 		*(u_int16_t *)frm = htole16(capinfo);
 		frm += 2;
 
@@ -525,7 +568,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    ether_sprintf(ni->ni_macaddr), arg);
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
-			senderr(ENOMEM);
+			senderr(ENOMEM, is_tx_nombuf);
 		MH_ALIGN(m, 2);
 		m->m_pkthdr.len = m->m_len = 2;
 		*mtod(m, u_int16_t *) = htole16(arg);	/* reason */
@@ -534,7 +577,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	default:
 		IEEE80211_DPRINTF(("%s: invalid mgmt frame type %u\n",
 			__func__, type));
-		senderr(EINVAL);
+		senderr(EINVAL, is_tx_unknownmgt);
 		/* NOTREACHED */
 	}
 
