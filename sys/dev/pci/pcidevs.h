@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.305 2001/02/11 15:33:53 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.306 2001/02/12 14:45:05 tshiozak Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -923,6 +923,7 @@
 #define	PCI_PRODUCT_CMEDIA_CMI8338A	0x0100		/* CMI8338A PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_CMI8338B	0x0101		/* CMI8338B PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_CMI8738	0x0111		/* CMI8738/C3DX PCI Audio Device */
+#define	PCI_PRODUCT_CMEDIA_CMI8738B	0x0112		/* CMI8738B PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_HSP56	0x0211		/* HSP56 Audiomodem Riser */
 
 /* Cogent Data Technologies products */
