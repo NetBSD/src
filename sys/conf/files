@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.531 2002/05/22 05:49:57 simonb Exp $
+#	$NetBSD: files,v 1.532 2002/06/06 23:54:48 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -850,6 +850,7 @@ file	dev/ic/iic_cpcbus.c		iic_cpcbus
 # Attribute used by various things that need BPF's virtual machine
 #
 define	bpf_filter
+defparam opt_bpf.h	BPF_BUFSIZE
 
 # Attributes used by the ISDN subsystem
 #
