@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.24 1999/12/29 04:16:24 hubertf Exp $
+# $NetBSD: mi,v 1.25 2000/01/08 13:32:43 lukem Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -213,6 +213,7 @@
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf
 ./usr/share/examples/emul/ultrix/etc/svc.conf
 ./usr/share/examples/ftpd/ftpd.conf
+./usr/share/examples/ftpd/ftpusers
 ./usr/share/examples/ipf/BASIC.NAT
 ./usr/share/examples/ipf/BASIC_1.FW
 ./usr/share/examples/ipf/BASIC_2.FW
