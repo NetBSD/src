@@ -290,7 +290,7 @@ parse_name_expr(fp,seed, read_ahead)
 int is_simple(expr)
      struct name_expr *expr;
 {
-    return expr->type == T_IDENTIFIER;
+    return expr && expr->type == T_IDENTIFIER;
 }
 
 int f_not(expr,explain)
