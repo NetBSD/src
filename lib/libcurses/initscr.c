@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.12 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: initscr.c,v 1.13 2000/04/12 21:45:04 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.13 2000/04/12 21:45:04 jdc Exp $");
 #endif
 #endif	/* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: initscr.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
 #include <stdlib.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * initscr --
@@ -61,6 +62,7 @@ initscr()
 #endif
 	__echoit = 1;
         __pfast = __rawmode = __noqch = __endwin = 0;
+	__nca = A_NORMAL;
 
 	if (gettmode() == ERR)
 		return (NULL);
