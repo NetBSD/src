@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.8 2002/01/24 04:23:19 briggs Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.9 2002/01/24 06:18:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -73,6 +73,11 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+
+/*
+ * Size of the XScale core D-cache.
+ */
+#define	DCACHE_SIZE		0x00008000
 
 Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
@@ -230,7 +235,7 @@ _C_LABEL(xscale_cache_clean_addr):
 
 	.global	_C_LABEL(xscale_cache_clean_size)
 _C_LABEL(xscale_cache_clean_size):
-	.word	0x00008000
+	.word	DCACHE_SIZE
 
 	.global	_C_LABEL(xscale_minidata_clean_addr)
 _C_LABEL(xscale_minidata_clean_addr):
@@ -275,6 +280,19 @@ Lxscale_minidata_clean_size:
 	XSCALE_CACHE_CLEAN_BLOCK				;	\
 	ldr	r2, Lxscale_cache_clean_addr			;	\
 	ldmia	r2, {r0, r1}					;	\
+	/*								\
+	 * BUG ALERT!							\
+	 *								\
+	 * The XScale core has a strange cache eviction bug, which	\
+	 * requires us to use 2x the cache size for the cache clean	\
+	 * and for that area to be aligned to 2 * cache size.		\
+	 *								\
+	 * The work-around is to use 2 areas for cache clean, and to	\
+	 * alternate between them whenever this is done.  No one knows	\
+	 * why the work-around works (mmm!).				\
+	 */								\
+	eor	r0, r0, #(DCACHE_SIZE)				;	\
+	str	r0, [r2]					;	\
 	add	r0, r0, r1
 
 #define	XSCALE_CACHE_CLEAN_EPILOGUE					\
