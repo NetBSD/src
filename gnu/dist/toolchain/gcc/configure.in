@@ -2756,6 +2756,7 @@ changequote([,])dnl
 		;;
 	powerpc-*-netbsd*)
 		tmake_file="${tmake_file} rs6000/t-rs6000"
+		xm_file="rs6000/xm-sysv4.h xm-netbsd.h"
 		;;
 	powerpc-*-openbsd*)
 		tmake_file="${tmake_file} rs6000/t-rs6000 rs6000/t-openbsd"
