@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.49 1996/07/15 19:12:13 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -925,14 +925,6 @@ abortit:
 		return (error);
 	}
 
-	/*
-	 * Convert the filename in tcnp into a dos filename. We copy this
-	 * into the denode and directory entry for the destination
-	 * file/directory.
-	 */
-	if ((error = uniqdosname(VTODE(tdvp), tcnp, toname)) != 0)
-		goto abortit;
-
 	/* */
 	if ((error = VOP_LOCK(fvp)) != 0)
 		goto abortit;
@@ -1031,6 +1023,14 @@ abortit:
 		vput(tvp);
 		xp = NULL;
 	}
+
+	/*
+	 * Convert the filename in tcnp into a dos filename. We copy this
+	 * into the denode and directory entry for the destination
+	 * file/directory.
+	 */
+	if ((error = uniqdosname(VTODE(tdvp), tcnp, toname)) != 0)
+		goto abortit;
 
 	/*
 	 * Since from wasn't locked at various places above,
