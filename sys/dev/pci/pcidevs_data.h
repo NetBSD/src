@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.115 1999/03/16 22:32:59 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.116 1999/03/17 19:21:49 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.110 1999/03/16 21:24:46 mjacob Exp 
+ *	NetBSD: pcidevs,v 1.111 1999/03/17 19:20:51 thorpej Exp 
  */
 
 /*
@@ -2036,6 +2036,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "85C601",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS900 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
