@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.30 1998/11/21 23:38:11 fvdl Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.31 1999/01/10 10:23:24 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
+
+#include "wss_isapnp.h"		/* XXX part of disgusting CS chip hack */
 
 static void isapnp_init __P((struct isapnp_softc *));
 static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
@@ -636,6 +638,38 @@ isapnp_isa_attach_hook(isa_sc)
 
 	if (isapnp_map(&sc))
 		return;
+
+#if NWSS_ISAPNP > 0
+	/*
+	 * XXX XXX
+	 * This a totally disgusting hack, but I can't figure out another way.
+	 * It seems that many CS audio chips have a bug (as far as I can
+	 * understand).  The reset below does not really reset the chip, it
+	 * remains in a catatonic state and will not respond when probed.
+	 * The chip can be used both as a WSS and as a SB device, and a
+	 * single read at the WSS address (0x534) takes it out of this
+	 * non-responsive state.
+	 * The read has to happen at this point in time (or earlier) so
+	 * it cannot be moved to the wss_isapnp.c driver.
+	 * (BTW, We're not alone in having problems with these chips: 
+	 * Windoze 98 couldn't detect the sound chip on a Dell when I tried.)
+	 *
+	 *     Lennart Augustsson <augustss@netbsd.org>
+	 *
+	 * (Implementation from John Kohl <jtk@kolvir.arlington.ma.us>)
+	 */
+	{
+		bus_space_handle_t ioh;
+		int rv;
+		if ((rv = bus_space_map(sc.sc_iot, 0x534, 1, 0, &ioh)) == 0) {
+			DPRINTF(("wss probe kludge\n"));
+			(void)bus_space_read_1(sc.sc_iot, ioh, 0);
+			bus_space_unmap(sc.sc_iot, ioh, 1);
+		} else {
+			DPRINTF(("wss probe kludge failed to map: %d\n", rv));
+		}
+	}
+#endif
 
 	isapnp_init(&sc);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.20 1998/11/23 20:48:34 christos Exp $
+#	$NetBSD: files.isapnp,v 1.21 1999/01/10 10:23:24 augustss Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -53,7 +53,7 @@ file	dev/isapnp/ym_isapnp.c			ym_isapnp
 
 # WSS compatibles
 attach	wss at isapnp with wss_isapnp
-file	dev/isapnp/wss_isapnp.c			wss_isapnp
+file	dev/isapnp/wss_isapnp.c			wss_isapnp needs-flag
 
 # ESS compatibles
 attach	ess at isapnp with ess_isapnp
