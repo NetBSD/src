@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.19 2003/06/16 13:18:36 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.20 2003/06/16 13:21:44 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -319,3 +319,19 @@ usr.bin/chpass/Makefile				1.13
 	get the current passwd entry from NIS. Problem reported by Stephen M.
 	Jone on tech-net.
 	[bouyer, ticket #1245]
+
+sys/dev/pci/if_bge.c				1.34
+sys/dev/pci/if_bgereg.h				1.7
+
+	FreeBSD fix for problems reported (to FreeBSD) with 16-bit accesses
+	to 32-bit device registers. Add (untested) NetBSD fix for big-endian
+	hosts.  From FreeBSD versions:
+		if_bge.c:	1.26 and 1.27
+		if_bgereg.h: 1.12
+
+	FreeBSD (MFC) comment:
+
+	MFC:  Avoid 16-bit accesses to device memory.  Use volatile where
+	appropriate in referencing device memory.  Parenthesize BGE_HOSTADDR
+	define properly.
+	[tron, ticket #1249]
