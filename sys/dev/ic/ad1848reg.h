@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848reg.h,v 1.6 1998/08/27 19:53:03 pk Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.7 1998/08/27 20:05:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -103,6 +103,9 @@
 /* cpright is not left */
 #define CAPTURE_UPPER		0x80
 /* cplower is not upper */
+
+#define AD_R2_BITS	"\20\1INT\2PRDY\3PL/R\4PU/L\5SER\6CRDY\7CL/R\10CU/L"
+
 
 /* ADC Input control - registers I0 (left) and I1 (right) */
 #define LINE_INPUT		0x00

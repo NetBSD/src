@@ -1,4 +1,4 @@
-/* $NetBSD: cs4231reg.h,v 1.6 1998/08/27 19:53:02 pk Exp $ */
+/* $NetBSD: cs4231reg.h,v 1.7 1998/08/27 20:05:11 pk Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,6 +128,8 @@
 #define CS_IRQ_CI		0x20	/* Capture Interrupt */
 #define CS_IRQ_TI		0x40	/* Timer Interrupt */
 #define CS_IRQ_RES		0x80	/* reserved */
+
+#define CS_I24_BITS		"\20\1PU\2PO\3CO\4CU\5PI\6CI\7TI"
 
 /* VERSION - register I25 */
 #define CS_VERSION_NUMBER	0xe0	/* Version number:
