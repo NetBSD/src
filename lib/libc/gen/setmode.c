@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setmode.c	5.6 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: setmode.c,v 1.4 1993/12/23 23:14:43 jtc Exp $";
+static char *rcsid = "$Id: setmode.c,v 1.5 1994/01/04 05:05:36 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -322,7 +322,7 @@ setmode(p)
 				 * to flush out any partial mode that we have,
 				 * and then do the copying of the mode bits.
 				 */
-				if (perm) {
+				if (perm || op == '=') {
 					ADDCMD(op, who, perm, mask);
 					perm = 0;
 				}
@@ -338,7 +338,7 @@ setmode(p)
 				 * Add any permissions that we haven't already
 				 * done.
 				 */
-				if (perm) {
+				if (perm || op == '=') {
 					ADDCMD(op, who, perm, mask);
 					perm = 0;
 				}
