@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.469 2002/03/17 19:16:20 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.470 2002/03/20 15:59:27 joda Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.469 2002/03/17 19:16:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.470 2002/03/20 15:59:27 joda Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -449,6 +449,11 @@ cpu_startup()
 	}
 	if ((cpu_feature & CPUID_MASK2) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
+	}
+	if ((cpu_feature & CPUID_MASK3) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS3,
 		    buf, sizeof(buf));
 		printf("cpu0: features %s\n", buf);
 	}
