@@ -95,13 +95,13 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_4758_CCA
 	ENGINE_load_4758cca();
 #endif
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 	ENGINE_load_cryptodev();
 #endif
 #endif
 	}
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 void ENGINE_setup_bsd_cryptodev(void) {
 	static int bsd_cryptodev_default_loaded = 0;
 	if (!bsd_cryptodev_default_loaded) {
