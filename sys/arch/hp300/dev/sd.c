@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.47 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: sd.c,v 1.48 2002/02/23 21:55:25 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ void	sdstrategy __P((struct buf *));
 int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
 int	sdsize __P((dev_t));
 
+static void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
 static void 	sdgetgeom __P((struct sd_softc *));
 static void	sdlblkstrat __P((struct buf *, int));
 static int	sderror __P((struct sd_softc *, int));
@@ -1123,6 +1124,10 @@ sdioctl(dev, cmd, data, flag, p)
 		sc->sc_flags = flags;
 		return (error);
 
+	case DIOCGDEFLABEL:
+		sdgetdefaultlabel(sc, (struct disklabel *)data);
+		return (0);
+
 	case SDIOCSFORMAT:
 		/* take this device into or out of "format" mode */
 		if (suser(p->p_ucred, &p->p_acflag))
@@ -1163,6 +1168,43 @@ sdioctl(dev, cmd, data, flag, p)
 		
 	}
 	/*NOTREACHED*/
+}
+
+
+static void
+sdgetdefaultlabel(sc, lp)
+	struct sd_softc *sc;
+	struct disklabel *lp;
+{
+
+	memset((caddr_t)lp, 0, sizeof(struct disklabel));
+
+	lp->d_type = sc->sc_type;
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_ntracks = sc->sc_heads;
+	lp->d_nsectors = sc->sc_blks;
+	lp->d_ncylinders = sc->sc_cyls;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+
+	strncpy(lp->d_typename, sc->sc_dev.dv_xname, 16);
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+        if (sc->sc_flags & SDF_RMEDIA)
+                lp->d_flags |= D_REMOVABLE;
+
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 }
 
 int
