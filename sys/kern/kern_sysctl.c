@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.16 2002/04/24 04:22:57 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.17 2002/04/24 21:57:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.16 2002/04/24 04:22:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.17 2002/04/24 21:57:19 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1835,7 +1835,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_addr = PTRTOINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
-	kl->l_flag |= l->l_flag;
+	kl->l_flag = l->l_flag;
 
 	kl->l_swtime = l->l_swtime;
 	kl->l_slptime = l->l_slptime;
