@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.71 2002/08/03 00:12:49 itojun Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.72 2002/11/24 08:27:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.71 2002/08/03 00:12:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.72 2002/11/24 08:27:00 yamt Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -455,7 +455,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 * disk, so they should have the same size as their on-disk
 		 * counterparts.
 		 */
-		obsize = blksize(fs, ip, blkp->bi_lbn);
+		if (blkp->bi_lbn >= 0)
+			obsize = blksize(fs, ip, blkp->bi_lbn);
+		else
+			obsize = fs->lfs_bsize;
 		/* Check for fragment size change */
 		if (blkp->bi_lbn >= 0 && blkp->bi_lbn < NDADDR) {
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
@@ -484,6 +487,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			bp->b_blkno = fsbtodb(fs, blkp->bi_daddr);
 		} else {
 			/* Indirect block */
+			if (blkp->bi_size != fs->lfs_bsize)
+				panic("lfs_markv: partial indirect block?"
+				    " size=%d\n", blkp->bi_size);
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
 			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
 				/*
@@ -836,7 +842,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			}
 			blkp->bi_daddr = dbtofsb(fs, blkp->bi_daddr);
 			/* Fill in the block size, too */
-			blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
+			if (blkp->bi_lbn >= 0)
+				blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
+			else
+				blkp->bi_size = fs->lfs_bsize;
 		}
 	}
 	
