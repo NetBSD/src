@@ -1,5 +1,5 @@
-/* $NetBSD: isr.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
-/*	$NetBSD: isr.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $	*/
+/* $NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $ */
+/*	$NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -303,54 +303,15 @@ void	pppintr __P((void));
 void
 netintr()
 {
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
+#define DONETISR(bit, fn) do {		\
+	if (netisr & (1 << bit)) {	\
+		netisr &= ~(1 << bit);	\
+		fn();			\
+	}				\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 }

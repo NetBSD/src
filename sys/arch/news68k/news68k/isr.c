@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.2 2000/02/21 20:38:50 erh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -334,54 +334,16 @@ void pppintr __P((void));
 void
 netintr()
 {
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
+
+#define DONETISR(bit, fn) do {		\
+	if (netisr & (1 << bit)) {	\
+		netisr &= ~(1 << bit);	\
+		fn();			\
+	}				\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 }
