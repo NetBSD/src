@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.4 2004/05/21 23:34:31 wiz Exp $
+.\"     $NetBSD: named.conf.5,v 1.5 2004/06/03 15:05:45 heas Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -57,7 +57,7 @@ trusted
 sets certain configuration options for individual remote servers
 .It Ic controls
 declares control channels to be used by the
-.Nm ndc
+.Nm rndc
 utility
 .It Ic include
 includes another file
@@ -569,12 +569,12 @@ server with the
 flag followed by a positive integer, or by sending the running server the
 .Dv SIGUSR1
 signal (for example, by using
-.Ic ndc trace ) .
+.Ic rndc trace ) .
 The global debug level can be set to
 zero, and debugging mode turned off, by sending the server the
 .Dv SIGUSR2
 signal (as with
-.Ic ndc notrace ) .
+.Ic rndc notrace ) .
 All debugging messages in the server have a
 debug level, and higher debug levels give more more detailed output.
 Channels that specify a specific debug severity, e.g.
@@ -845,7 +845,7 @@ in class chaos to the anycast server and getting back a unique name.
 Setting
 the hostname to a empty string ("") will disable processing of the queries.
 .It Ic version
-The version the server should report via the ndc command or via a query of
+The version the server should report via the rndc command or via a query of
 name
 .Pa version.bind
 in class chaos.
@@ -878,7 +878,7 @@ The pathname of the file the server dumps the database to when it
 receives
 .Dv SIGINT
 signal (as sent by
-.Ic ndc dumpdb ) .
+.Ic rndc dumpdb ) .
 If not specified, the default is
 .Pa named_dump.db .
 .It Ic memstatistics-file
@@ -897,14 +897,14 @@ specified, the default is operating system dependent, but is usually
 or
 .Pa /etc/named.pid .
 The pid-file is used by programs like
-.Nm ndc
+.Nm rndc
 that want to send signals to the running nameserver.
 .It Ic statistics-file
 The pathname of the file the server appends statistics to when it
 receives
 .Dv SIGILL
 signal (from
-.Ic ndc stats ) .
+.Ic rndc stats ) .
 If not specified, the default is
 .Pa named.stats .
 .El
@@ -2152,7 +2152,7 @@ The
 statement declares control channels to be used by system
 administrators to affect the operation of the local name server.
 These control channels are used by the
-.Nm ndc
+.Nm rndc
 utility to send commands
 to and retrieve non-DNS results from a name server.
 .Pp
@@ -2291,7 +2291,7 @@ zone \&".\&" in {
 .Ed
 .Sh SEE ALSO
 .Xr named 8 ,
-.Xr ndc 8
+.Xr rndc 8
 .Rs
 .%A D. Eastlake 3rd
 .%T Domain Name System Security Extensions
