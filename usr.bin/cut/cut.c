@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.16 2003/08/07 11:13:32 agc Exp $	*/
+/*	$NetBSD: cut.c,v 1.17 2005/02/17 17:35:47 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.16 2003/08/07 11:13:32 agc Exp $");
+__RCSID("$NetBSD: cut.c,v 1.17 2005/02/17 17:35:47 xtraeme Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -61,19 +61,16 @@ int	dflag;
 int	fflag;
 int	sflag;
 
-void	c_cut __P((FILE *, char *));
-void	f_cut __P((FILE *, char *));
-void	get_list __P((char *));
-int	main __P((int, char **));
-void	usage __P((void));
+void	c_cut(FILE *, const char *);
+void	f_cut(FILE *, const char *);
+void	get_list(char *);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
-	void (*fcn) __P((FILE *, char *));
+	void (*fcn)(FILE *, const char *);
 	int ch;
 
 	fcn = NULL;
@@ -135,8 +132,7 @@ int autostart, autostop, maxval;
 char positions[_POSIX2_LINE_MAX + 1];
 
 void
-get_list(list)
-	char *list;
+get_list(char *list)
 {
 	int setautostart, start, stop;
 	char *pos;
@@ -193,9 +189,7 @@ get_list(list)
 
 /* ARGSUSED */
 void
-c_cut(fp, fname)
-	FILE *fp;
-	char *fname;
+c_cut(FILE *fp, const char *fname)
 {
 	int ch, col;
 	char *pos;
@@ -223,9 +217,7 @@ c_cut(fp, fname)
 }
 
 void
-f_cut(fp, fname)
-	FILE *fp;
-	char *fname;
+f_cut(FILE *fp, const char *fname)
 {
 	int ch, field, isdelim;
 	char *pos, *p, sep;
@@ -277,7 +269,7 @@ f_cut(fp, fname)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage:\tcut -b list [-n] [file ...]\n"
 	    "\tcut -c list [file1 ...]\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.25 2004/06/13 11:30:10 dbj Exp $	*/
+/*	$NetBSD: du.c,v 1.26 2005/02/17 17:40:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.25 2004/06/13 11:30:10 dbj Exp $");
+__RCSID("$NetBSD: du.c,v 1.26 2005/02/17 17:40:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,25 +60,22 @@ __RCSID("$NetBSD: du.c,v 1.25 2004/06/13 11:30:10 dbj Exp $");
 #include <unistd.h>
 #include <limits.h>
 
-int	linkchk __P((dev_t, ino_t));
-int	main __P((int, char **));
-void	prstat __P((const char *, int64_t));
-void	usage __P((void));
+int	linkchk(dev_t, ino_t);
+void	prstat(const char *, int64_t);
+void	usage(void);
 
 int hflag;
 long blocksize;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FTS *fts;
 	FTSENT *p;
 	int64_t totalblocks;
 	int ftsoptions, listdirs, listfiles;
 	int Hflag, Lflag, Pflag, aflag, ch, cflag, gkmflag, nflag, rval, sflag;
-	char *noargv[2];
+	const char *noargv[2];
 
 	Hflag = Lflag = Pflag = aflag = cflag = gkmflag = nflag = sflag = 0;
 	totalblocks = 0;
@@ -169,7 +166,7 @@ main(argc, argv)
 	if (!*argv) {
 		noargv[0] = ".";
 		noargv[1] = NULL;
-		argv = noargv;
+		(const char *)argv = noargv;
 	}
 
 	if (!gkmflag)
@@ -332,7 +329,7 @@ linkchk(dev_t dev, ino_t ino)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

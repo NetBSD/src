@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1995/09/28 06:24:35 perry Exp $
+#	$NetBSD: Makefile,v 1.8 2005/02/17 17:40:59 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	du
+WARNS=	3
 
 .include <bsd.prog.mk>
