@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkfarm.1,v 1.1.2.3 2003/07/29 06:57:34 jlam Exp $
+.\"	$NetBSD: linkfarm.1,v 1.1.2.4 2003/08/24 06:29:55 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,6 +84,13 @@ links and directories.
 .It Fl R
 Delete and re-create the linkfarm for
 .Ar package .
+.It Fl s Ar subdir
+The root of the package hierarchy for the linkfarm is the
+.Ar subdir
+sub-directory in the package.
+By default, assume the root of the package hierarchy is simply the
+.Ar package
+directory.
 .It Fl t Ar target
 Set
 .Ar target
