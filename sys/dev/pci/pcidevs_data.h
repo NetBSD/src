@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.542 2003/07/06 07:13:40 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.543 2003/07/06 07:19:59 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.543 2003/07/06 07:13:17 tron Exp 
+ *	NetBSD: pcidevs,v 1.544 2003/07/06 07:19:38 tron Exp 
  */
 
 /*
@@ -4714,16 +4714,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801EB Hub-to-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_DRAM,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_HB,
 	    0,
 	    "Intel",
-	    "82875P DRAM Controller / Host-Hub Bridge",
+	    "82875P Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_AGP,
 	    0,
 	    "Intel",
-	    "82875P Host-to-AGP Bridge",
+	    "82875P AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
