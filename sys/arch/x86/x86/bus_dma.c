@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2004/06/12 17:18:13 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 2004/06/12 17:22:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2004/06/12 17:18:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2004/06/12 17:22:04 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -404,8 +404,6 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 		if (m->m_len == 0)
 			continue;
-		/* XXX Could be better about coalescing. */
-		/* XXX Doesn't check boundaries. */
 		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER|M_EXT_PAGES)) {
 		case M_EXT|M_EXT_CLUSTER:
 			/* XXX KDASSERT */
