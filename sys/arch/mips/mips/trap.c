@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 1996/10/13 05:14:35 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 1996/10/13 07:09:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,7 +109,8 @@ extern void mips_r2000_KernIntr __P((void));
 extern void mips_r2000_UserIntr __P((void));
 extern void mips_r2000_TLBModException  __P((void));
 extern void mips_r2000_TLBMissException __P((void));
-
+/* marks end of vector code */
+extern void mips1_exceptionentry_end __P((void));
 
 extern void mips_r4000_KernGenException __P((void));
 extern void mips_r4000_UserGenException __P((void));
@@ -117,6 +118,9 @@ extern void mips_r4000_KernIntr __P((void));
 extern void mips_r4000_UserIntr __P((void));
 extern void mips_r4000_TLBModException  __P((void));
 extern void mips_r4000_TLBMissException __P((void));
+/* marks end of vector code */
+extern void mips3_exceptionentry_end __P((void));
+
 
 void (*mips_r2000_ExceptionTable[]) __P((void)) = {
 /*
@@ -1552,6 +1556,10 @@ specialframe:
 
 	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
 		subr = (unsigned) mips_r2000_UserIntr;
+	else if (pcbetween(mips_r2000_UTLBMiss, mips1_exceptionentry_end) {
+		(*printfn)("<<mips1 locore>>");
+		goto done;
+	}
 	else
 #endif /* MIPS1 */
 
@@ -1568,7 +1576,10 @@ specialframe:
 
 	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
 		subr = (unsigned) mips_r4000_UserIntr;
-	else
+	else if (pcbetween(mips_r4000_UTLBMiss, mips3_exceptionentry_end) {
+		(*printfn)("<<mips3 locore>>");
+		goto done;
+	} else
 #endif /* MIPS3 */
 
 
@@ -1581,14 +1592,9 @@ specialframe:
 		ra = 0;
 		goto done;
 	}
-#ifdef notyet /* XXX FIXME: the order changed with merged locore */
-	else if (pc >= (unsigned)MachUTLBMiss && pc < (unsigned)setsoftclock) {
-		(*printfn)("<<locore>>");
-		goto done;
-	}
-#endif	/* notyet */
 
-	/* check for bad PC */
+
+	/* Check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
 		(*printfn)("PC 0x%x: not in kernel space\n", pc);
 		ra = 0;
