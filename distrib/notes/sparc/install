@@ -71,13 +71,16 @@ mount /usr by hand now:
 
 netbsd# mount /usr
 
+If you are upgrading a NetBSD installation, start the upgrade script:
 
-Start the installation procedure:
+#netbsd ./upgrade.sh
+
+else, start the installation procedure:
 
 netbsd# ./install.sh
 
 
-This script will do most of the work of transferring the system from the
+These scripts will do most of the work of transferring the system from the
 tar files onto your disk. You will frequently be asked for confirmation
 before the script proceeds with each phase of the installation process.
 Occasionally, you'll have to provide a piece of information such as the
