@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.11 2000/02/09 13:08:36 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.12 2000/04/02 12:53:05 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -211,7 +211,8 @@ ofb_common_init(node, dc)
 
 	dc->dc_paddr = addr;		/* PA of the frame buffer */
 
-	/* change 0xff/0xff/0xff to white */
+	/* Make sure 0/0/0 is black and 255/255/255 is white. */
+	OF_call_method_1("color!", dc->dc_ih, 4, 0, 0, 0, 0);
 	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 255);
 
 	/* initialize rasops */
