@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.23 1999/01/15 23:15:50 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.24 1999/04/04 11:33:02 scw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -98,6 +98,8 @@ extern int curpcb;
 
 #define	get(addr, space) \
 		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
+
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 #define	NREGISTERS	16
 
@@ -475,6 +477,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	char *		name;
 	struct stackpos pos;
 	boolean_t	kernel_only = TRUE;
+	int		fault_pc = 0;
 
 	{
 		char *cp = modif;
@@ -535,6 +538,37 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				val = MAXINT;
 			}
 		}
+
+		/*
+		 * Since faultstkadj doesn't set up a valid stack frame,
+		 * we would assume it was the source of the fault. To
+		 * get around this we peek at the fourth argument of
+		 * "trap()" (the stack frame at the time of the fault)
+		 * to determine the _real_ value of PC when things wen
+		 * wrong.
+		 *
+		 * NOTE: If the argument list for 'trap()' ever changes,
+		 * we lose.
+		 */
+		if ( strcmp("_trap", name) == 0 ) {
+			/* Point to 'trap()'s argument list */
+			regp  = pos.k_fp + FR_SAVFP + 4;
+			/* Step over the arguments to the frame structure */
+			regp += (4 * 4) + offsetof(struct frame, f_pc);
+			/* Get the PC at the time of the fault */
+			fault_pc = get(regp, DSP);
+		} else
+		if ( fault_pc ) {
+			if ( strcmp("faultstkadj", name) == 0 ) {
+				db_find_sym_and_offset(fault_pc, &name, &val);
+				if (name == 0) {
+					name = "?";
+					val = MAXINT;
+				}
+			}
+			fault_pc = 0;
+		}
+
 		db_printf("%s", name);
 		if (pos.k_entry != MAXINT && name) {
 			char *	entry_name;
