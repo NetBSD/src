@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.6 2005/01/10 11:23:53 tron Exp $
-# $FreeBSD: src/etc/pam.d/Makefile,v 1.11 2004/10/24 15:32:24 ru Exp $
+# $NetBSD: Makefile,v 1.7 2005/02/27 03:40:14 thorpej Exp $
 
-CONFIGFILES=	README ftpd gdm imap kde login other passwd pop3 \
-		rexecd rsh sshd su system telnetd xdm
+CONFIGFILES=	README display_manager ftpd gdm imap kde login other passwd \
+		pop3 rexecd rsh sshd su system telnetd xdm
 FILESDIR=	/etc/pam.d
 FILESMODE=	644
 FILESMODE_README=444

@@ -1,5 +1,4 @@
-# $NetBSD: rsh,v 1.2 2004/12/12 08:54:34 christos Exp $
-# $FreeBSD: src/etc/pam.d/rsh,v 1.5 2003/02/10 00:50:03 des Exp $
+# $NetBSD: rsh,v 1.3 2005/02/27 03:40:14 thorpej Exp $
 #
 # PAM configuration for the "rsh" service
 #
