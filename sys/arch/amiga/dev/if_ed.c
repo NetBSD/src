@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.15 1995/08/20 02:52:48 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.16 1995/10/01 19:30:22 chopps Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -203,37 +203,35 @@ edattach(parent, self, aux)
 
 	if (zap->manid == HYDRA_MANID) {
 		sc->mem_start = zap->va;
+		sc->mem_size = 16384;
 		sc->nic_addr = sc->mem_start + HYDRA_NIC_BASE;
 		prom = (u_char *)sc->mem_start + HYDRA_ADDRPROM;
 	} else {
 		sc->mem_start = zap->va + 0x8000;
+		sc->mem_size = 16384;
 		sc->nic_addr = zap->va + ASDG_NIC_BASE;
 		prom = (u_char *)sc->nic_addr + ASDG_ADDRPROM;
 	}
 	sc->cr_proto = ED_CR_RD2;
 	sc->tx_page_start = 0;
 
-#define	memsize	16384
-
-	sc->mem_size = memsize;
-	sc->mem_end = sc->mem_start + memsize;
+	sc->mem_end = sc->mem_start + sc->mem_size;
 
 	/*
 	 * Use one xmit buffer if < 16k, two buffers otherwise (if not told
 	 * otherwise).
 	 */
-	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
+	if ((sc->mem_size < 16384) || zap->manid == ASDG_MANID
+	    || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
 		sc->txb_cnt = 1;
 	else
 		sc->txb_cnt = 2;
 
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + (memsize >> ED_PAGE_SHIFT);
+	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
 
 	sc->mem_ring =
 	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
-
-#undef	memsize
 
 	/*
 	 * read the ethernet address from the board
