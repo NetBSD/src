@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.33 2001/01/12 19:38:46 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.34 2001/01/15 16:33:31 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -114,6 +114,9 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <machine/intr.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -219,6 +222,10 @@ struct strip_softc strip_softc[NSTRIP];
 
 #define STRIP_FRAME_END		0x0D		/* carriage return */
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+void	stripnetisr(void);
+#endif
+void	stripintr(void *);
 
 static int stripinit __P((struct strip_softc *));
 static 	struct mbuf *strip_btom __P((struct strip_softc *, int));
@@ -267,9 +274,8 @@ int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
 void	strip_send __P((struct strip_softc *sc, struct mbuf *m0));
 
 void	strip_timeout __P((void *x));
-void	stripintr(void);
-
-
+void	stripnetisr(void);
+void	stripintr(void *);
 
 #ifdef DEBUG
 #define DPRINTF(x)	printf x
@@ -443,8 +449,16 @@ stripopen(dev, tp)
 
 	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++) {
 		if (sc->sc_ttyp == NULL) {
-			if (stripinit(sc) == 0)
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+			sc->sc_si = softintr_establish(IPL_SOFTNET,
+			    stripintr, sc);
+#endif
+			if (stripinit(sc) == 0) {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+				softintr_disestablish(sc->sc_si);
+#endif
 				return (ENOBUFS);
+			}
 			tp->t_sc = (caddr_t)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
@@ -467,6 +481,9 @@ stripopen(dev, tp)
 				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
 				if (error) {
 					splx(s);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+					softintr_disestablish(sc->sc_si);
+#endif
 					return(error);
 				}
 			} else
@@ -504,6 +521,9 @@ stripclose(tp)
 	sc = tp->t_sc;
 
 	if (sc != NULL) {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr_disestablish(sc->sc_si);
+#endif
 		s = splnet();
 		/*
 		 * Cancel watchdog timer, which stops the "probe-for-death"/
@@ -860,7 +880,7 @@ void
 stripstart(tp)
 	struct tty *tp;
 {
-	int s;
+	struct strip_softc *sc = tp->t_sc;
 
 	/*
 	 * If there is more in the output queue, just send it now.
@@ -876,12 +896,17 @@ stripstart(tp)
 	/*
 	 * This happens briefly when the line shuts down.
 	 */
-	if (tp->t_sc == NULL)
+	if (sc == NULL)
 		return;
-
-	s = splimp();
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softintr_schedule(sc->sc_si);
+#else
+    {
+	int s = splimp();
 	schednetisr(NETISR_STRIP);
 	splx(s);
+    }
+#endif
 }
 
 /*
@@ -935,7 +960,6 @@ stripinput(c, tp)
 	struct strip_softc *sc;
 	struct mbuf *m;
 	int len;
-	int s;
 
 	tk_nin++;
 	sc = (struct strip_softc *)tp->t_sc;
@@ -1016,9 +1040,15 @@ stripinput(c, tp)
 		goto error;
 
 	IF_ENQUEUE(&sc->sc_inq, m);
-	s = splimp();
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softintr_schedule(sc->sc_si);
+#else
+    {
+	int s = splimp();
 	schednetisr(NETISR_STRIP);
 	splx(s);
+    }
+#endif
 	goto newpack;
 
 error:
@@ -1029,249 +1059,259 @@ newpack:
 	    BUFOFFSET;
 }
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
-stripintr(void)
+stripnetisr(void)
 {
 	struct strip_softc *sc;
-	struct tty *tp;
+	int i;
+
+	for (i = 0; i < NSTRIP; i++) {
+		sc = &strip_softc[i];
+		if (sc->sc_ttyp == NULL)
+			continue;
+		stripintr(sc);
+	}
+}
+#endif
+
+void
+stripintr(void *arg)
+{
+	struct strip_softc *sc = arg;
+	struct tty *tp = sc->sc_ttyp;
 	struct mbuf *m;
-	int i, s, len;
+	int s, len;
 	u_char *pktstart, c;
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
 #endif
 
-	for (i = 0; i < NSTRIP; i++) {
-		sc = &strip_softc[i];
-		tp = sc->sc_ttyp;
+	KASSERT(tp != NULL);
 
-		if (tp == NULL)
-			continue;
+	/*
+	 * Output processing loop.
+	 */
+	for (;;) {
+		struct ip *ip;
+#if NBPFILTER > 0
+		struct mbuf *bpf_m;
+#endif
 
 		/*
-		 * Output processing loop.
+		 * Do not remove the packet from the queue if it
+		 * doesn't look like it will fit into the current
+		 * serial output queue (STRIP_MTU_ONWIRE, or
+		 * Starmode header + 20 bytes + 4 bytes in case we
+		 * have to probe the radio).
 		 */
-		for (;;) {
-			struct ip *ip;
-#if NBPFILTER > 0
-			struct mbuf *bpf_m;
-#endif
-
-			/*
-			 * Do not remove the packet from the queue if it
-			 * doesn't look like it will fit into the current
-			 * serial output queue (STRIP_MTU_ONWIRE, or
-			 * Starmode header + 20 bytes + 4 bytes in case we
-			 * have to probe the radio).
-			 */
-			s = spltty();
-			if (tp->t_outq.c_cn - tp->t_outq.c_cc <
-			    STRIP_MTU_ONWIRE + 4) {
-				splx(s);
-				break;
-			}
+		s = spltty();
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc <
+		    STRIP_MTU_ONWIRE + 4) {
 			splx(s);
-
-			/*
-			 * Get a packet and send it to the radio.
-			 */
-			s = splnet();
-			IF_DEQUEUE(&sc->sc_fastq, m);
-			if (m)
-				sc->sc_if.if_omcasts++;	/* XXX */
-			else
-				IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
-			splx(s);
-
-			if (m == NULL)
-				break;
-
-			/*
-			 * We do the header compression here rather than in
-			 * stripoutput() because the packets will be out of
-			 * order if we are using TOS queueing, and the
-			 * connection ID compression will get munged when
-			 * this happens.
-			 */
-#if NBPFILTER > 0
-			if (sc->sc_if.if_bpf) {
-				/*
-				 * We need to save the TCP/IP header before
-				 * it's compressed.  To avoid complicated
-				 * code, we just make a deep copy of the
-				 * entire packet (since this is a serial
-				 * line, packets should be short and/or the
-				 * copy should be negligible cost compared
-				 * to the packet transmission time).
-				 */
-				bpf_m = m_dup(m, 0, M_COPYALL, M_DONTWAIT);
-			} else
-				bpf_m = NULL;
-#endif
-			if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
-				if (sc->sc_if.if_flags & SC_COMPRESS)
-					*mtod(m, u_char *) |=
-					    sl_compress_tcp(m, ip,
-					    &sc->sc_comp, 1);
-			}
-#if NBPFILTER > 0
-			if (sc->sc_if.if_bpf && bpf_m != NULL) {
-				/*
-				 * Put the SLIP pseudo-"link header" in
-				 * place.  The compressed header is now
-				 * at the beginning of the mbuf.
-				 */
-				struct mbuf n;
-				u_char *hp;
-
-				n.m_next = bpf_m;
-				n.m_data = n.m_dat;
-				n.m_len = SLIP_HDRLEN;
-
-				hp = mtod(&n, u_char *);
-
-				hp[SLX_DIR] = SLIPDIR_OUT;
-				memcpy(&hp[SLX_CHDR], mtod(m, caddr_t),
-				    CHDR_LEN);
-
-				s = splnet();
-				bpf_mtap(sc->sc_if.if_bpf, &n);
-				splx(s);
-				m_freem(bpf_m);
-			}
-#endif
-			sc->sc_if.if_lastchange = time;
-
-			s = spltty();
-			strip_send(sc, m);
-
-			/*
-			 * We now have characters in the output queue,
-			 * kick the serial port.
-			 */
-			if (tp->t_outq.c_cc != 0)
-				(*tp->t_oproc)(tp);
-			splx(s);
+			break;
 		}
+		splx(s);
 
 		/*
-		 * Input processing loop.
+		 * Get a packet and send it to the radio.
 		 */
-		for (;;) {
-			s = spltty();
-			IF_DEQUEUE(&sc->sc_inq, m);
-			splx(s);
-			if (m == NULL)
-				break;
-			pktstart = mtod(m, u_char *);
-			len = m->m_pkthdr.len;
+		s = splnet();
+		IF_DEQUEUE(&sc->sc_fastq, m);
+		if (m)
+			sc->sc_if.if_omcasts++;	/* XXX */
+		else
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+		splx(s);
+
+		if (m == NULL)
+			break;
+
+		/*
+		 * We do the header compression here rather than in
+		 * stripoutput() because the packets will be out of
+		 * order if we are using TOS queueing, and the
+		 * connection ID compression will get munged when
+		 * this happens.
+		 */
 #if NBPFILTER > 0
-			if (sc->sc_if.if_bpf) {
-				/*
-				 * Save the compressed header, so we
-				 * can tack it on later.  Note that we
-				 * will end up copying garbage in come
-				 * cases but this is okay.  We remember
-				 * where the buffer started so we can
-				 * compute the new header length.
-				 */
-				memcpy(chdr, pktstart, CHDR_LEN);
-			}
+		if (sc->sc_if.if_bpf) {
+			/*
+			 * We need to save the TCP/IP header before
+			 * it's compressed.  To avoid complicated
+			 * code, we just make a deep copy of the
+			 * entire packet (since this is a serial
+			 * line, packets should be short and/or the
+			 * copy should be negligible cost compared
+			 * to the packet transmission time).
+			 */
+			bpf_m = m_dup(m, 0, M_COPYALL, M_DONTWAIT);
+		} else
+			bpf_m = NULL;
+#endif
+		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
+			if (sc->sc_if.if_flags & SC_COMPRESS)
+				*mtod(m, u_char *) |=
+				    sl_compress_tcp(m, ip,
+				    &sc->sc_comp, 1);
+		}
+#if NBPFILTER > 0
+		if (sc->sc_if.if_bpf && bpf_m != NULL) {
+			/*
+			 * Put the SLIP pseudo-"link header" in
+			 * place.  The compressed header is now
+			 * at the beginning of the mbuf.
+			 */
+			struct mbuf n;
+			u_char *hp;
+
+			n.m_next = bpf_m;
+			n.m_data = n.m_dat;
+			n.m_len = SLIP_HDRLEN;
+
+			hp = mtod(&n, u_char *);
+
+			hp[SLX_DIR] = SLIPDIR_OUT;
+			memcpy(&hp[SLX_CHDR], mtod(m, caddr_t),
+			    CHDR_LEN);
+
+			s = splnet();
+			bpf_mtap(sc->sc_if.if_bpf, &n);
+			splx(s);
+			m_freem(bpf_m);
+		}
+#endif
+		sc->sc_if.if_lastchange = time;
+
+		s = spltty();
+		strip_send(sc, m);
+
+		/*
+		 * We now have characters in the output queue,
+		 * kick the serial port.
+		 */
+		if (tp->t_outq.c_cc != 0)
+			(*tp->t_oproc)(tp);
+		splx(s);
+	}
+
+	/*
+	 * Input processing loop.
+	 */
+	for (;;) {
+		s = spltty();
+		IF_DEQUEUE(&sc->sc_inq, m);
+		splx(s);
+		if (m == NULL)
+			break;
+		pktstart = mtod(m, u_char *);
+		len = m->m_pkthdr.len;
+#if NBPFILTER > 0
+		if (sc->sc_if.if_bpf) {
+			/*
+			 * Save the compressed header, so we
+			 * can tack it on later.  Note that we
+			 * will end up copying garbage in come
+			 * cases but this is okay.  We remember
+			 * where the buffer started so we can
+			 * compute the new header length.
+			 */
+			memcpy(chdr, pktstart, CHDR_LEN);
+		}
 #endif /* NBPFILTER > 0 */
-			if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
-				if (c & 0x80)
-					c = TYPE_COMPRESSED_TCP;
-				else if (c == TYPE_UNCOMPRESSED_TCP)
-					*pktstart &= 0x4f; /* XXX */
-				/*
-				 * We've got something that's not an IP
-				 * packet.  If compression is enabled,
-				 * try to decompress it.  Otherwise, if
-				 * `auto-enable' compression is on and
-				 * it's a reasonable packet, decompress
-				 * it and then enable compression.
-				 * Otherwise, drop it.
-				 */
-				if (sc->sc_if.if_flags & SC_COMPRESS) {
-					len = sl_uncompress_tcp(&pktstart, len,
-					    (u_int)c, &sc->sc_comp);
-					if (len <= 0) {
-						m_freem(m);
-						continue;
-					}
-				} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
-				    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
-					len = sl_uncompress_tcp(&pktstart, len,
-					    (u_int)c, &sc->sc_comp);
-					if (len <= 0) {
-						m_freem(m);
-						continue;
-					}
-					sc->sc_if.if_flags |= SC_COMPRESS;
-				} else {
+		if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
+			if (c & 0x80)
+				c = TYPE_COMPRESSED_TCP;
+			else if (c == TYPE_UNCOMPRESSED_TCP)
+				*pktstart &= 0x4f; /* XXX */
+			/*
+			 * We've got something that's not an IP
+			 * packet.  If compression is enabled,
+			 * try to decompress it.  Otherwise, if
+			 * `auto-enable' compression is on and
+			 * it's a reasonable packet, decompress
+			 * it and then enable compression.
+			 * Otherwise, drop it.
+			 */
+			if (sc->sc_if.if_flags & SC_COMPRESS) {
+				len = sl_uncompress_tcp(&pktstart, len,
+				    (u_int)c, &sc->sc_comp);
+				if (len <= 0) {
 					m_freem(m);
 					continue;
 				}
-			}
-			m->m_data = (caddr_t) pktstart;
-			m->m_pkthdr.len = m->m_len = len;
-#if NPBFILTER > 0
-			if (sc->sc_if.if_bpf) {
-				/*
-				 * Put the SLIP pseudo-"link header" in place.
-				 * Note this M_PREPEND() should never fail,
-				 * swince we know we always have enough space
-				 * in the input buffer.
-				 */
-				u_char *hp;
-
-				M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
-				if (m == NULL)
+			} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
+			    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
+				len = sl_uncompress_tcp(&pktstart, len,
+				    (u_int)c, &sc->sc_comp);
+				if (len <= 0) {
+					m_freem(m);
 					continue;
-
-				hp = mtod(m, u_char *);
-				hp[SLX_DIR] = SLIPDIR_IN;
-				memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
-
-				s = splnet();
-				bpf_mtap(sc->sc_if.if_bpf, m);
-				splx(s);
-
-				m_adj(m, SLIP_HDRLEN);
-			}
-#endif
-			/*
-			 * If the packet will fit into a single
-			 * header mbuf, copy it into one, to save
-			 * memory.
-			 */
-			if (m->m_pkthdr.len < MHLEN) {
-				struct mbuf *n;
-
-				MGETHDR(n, M_DONTWAIT, MT_DATA);
-				M_COPY_PKTHDR(n, m);
-				memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
-				    m->m_pkthdr.len);
-				n->m_len = m->m_len;
-				m_freem(m);
-				m = n;
-			}
-
-			sc->sc_if.if_ipackets++;
-			sc->sc_if.if_lastchange = time;
-
-			s = splimp();
-			if (IF_QFULL(&ipintrq)) {
-				IF_DROP(&ipintrq);
-				sc->sc_if.if_ierrors++;
-				sc->sc_if.if_iqdrops++;
-				m_freem(m);
+				}
+				sc->sc_if.if_flags |= SC_COMPRESS;
 			} else {
-				IF_ENQUEUE(&ipintrq, m);
-				schednetisr(NETISR_IP);
+				m_freem(m);
+				continue;
 			}
-			splx(s);
 		}
+		m->m_data = (caddr_t) pktstart;
+		m->m_pkthdr.len = m->m_len = len;
+#if NPBFILTER > 0
+		if (sc->sc_if.if_bpf) {
+			/*
+			 * Put the SLIP pseudo-"link header" in place.
+			 * Note this M_PREPEND() should never fail,
+			 * swince we know we always have enough space
+			 * in the input buffer.
+			 */
+			u_char *hp;
+
+			M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
+			if (m == NULL)
+				continue;
+
+			hp = mtod(m, u_char *);
+			hp[SLX_DIR] = SLIPDIR_IN;
+			memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+			s = splnet();
+			bpf_mtap(sc->sc_if.if_bpf, m);
+			splx(s);
+
+			m_adj(m, SLIP_HDRLEN);
+		}
+#endif
+		/*
+		 * If the packet will fit into a single
+		 * header mbuf, copy it into one, to save
+		 * memory.
+		 */
+		if (m->m_pkthdr.len < MHLEN) {
+			struct mbuf *n;
+
+			MGETHDR(n, M_DONTWAIT, MT_DATA);
+			M_COPY_PKTHDR(n, m);
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
+			    m->m_pkthdr.len);
+			n->m_len = m->m_len;
+			m_freem(m);
+			m = n;
+		}
+
+		sc->sc_if.if_ipackets++;
+		sc->sc_if.if_lastchange = time;
+
+		s = splimp();
+		if (IF_QFULL(&ipintrq)) {
+			IF_DROP(&ipintrq);
+			sc->sc_if.if_ierrors++;
+			sc->sc_if.if_iqdrops++;
+			m_freem(m);
+		} else {
+			IF_ENQUEUE(&ipintrq, m);
+			schednetisr(NETISR_IP);
+		}
+		splx(s);
 	}
 }
 

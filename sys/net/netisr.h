@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.26 2001/01/11 22:32:21 thorpej Exp $ */
+/* $NetBSD: netisr.h,v 1.27 2001/01/15 16:33:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -60,9 +60,11 @@
 #include "opt_ns.h"
 #include "opt_natm.h" 
 #include "arp.h"
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include "sl.h"
 #include "strip.h"
 #include "ppp.h"
+#endif
 #endif /* !defined(_LKM) */
 
 #if !defined(_LOCORE)
@@ -106,16 +108,18 @@
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #endif
+
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS		/* XXX XXX XXX */
 #if NSL > 0
-extern void slintr(void);	/* XXX XXX XXX */
+extern void slnetisr(void);
 #endif
 #if NSTRIP > 0
-extern void stripintr(void);	/* XXX XXX XXX */
+extern void stripnetisr(void);
 #endif
 #if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
+extern void pppnetisr(void);
 #endif
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 #endif /* !defined(_LOCORE) */
 #endif /* defined(_KERNEL) */
@@ -137,9 +141,11 @@ extern void stripintr(void);	/* XXX XXX XXX */
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #define	NETISR_SLIP	29		/* for SLIP processing */
 #define	NETISR_STRIP	30		/* for STRIP processing */
 #define	NETISR_PPP	31		/* for PPP processing */
+#endif
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 

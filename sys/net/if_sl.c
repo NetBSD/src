@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.70 2001/01/12 19:27:32 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.71 2001/01/15 16:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -86,6 +86,9 @@
 #endif
 
 #include <machine/cpu.h>
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <machine/intr.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -183,6 +186,11 @@ struct sl_softc sl_softc[NSL];
 #define TRANS_FRAME_END	 	0xdc		/* transposed frame end */
 #define TRANS_FRAME_ESCAPE 	0xdd		/* transposed frame esc */
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+void	slnetisr(void);
+#endif
+void	slintr(void *);
+
 static int slinit __P((struct sl_softc *));
 static struct mbuf *sl_btom __P((struct sl_softc *, int));
 
@@ -258,8 +266,18 @@ slopen(dev, tp)
 
 	for (nsl = NSL, sc = sl_softc; --nsl >= 0; sc++)
 		if (sc->sc_ttyp == NULL) {
-			if (slinit(sc) == 0)
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+			sc->sc_si = softintr_establish(IPL_SOFTNET,
+			    slintr, sc);
+			if (sc->sc_si == NULL)
+				return (ENOMEM);
+#endif
+			if (slinit(sc) == 0) {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+				softintr_disestablish(sc->sc_si);
+#endif
 				return (ENOBUFS);
+			}
 			tp->t_sc = (caddr_t)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
@@ -285,6 +303,9 @@ slopen(dev, tp)
 				error = clalloc(&tp->t_outq, 2*SLMAX+2, 0);
 				if (error) {
 					splx(s);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+					softintr_disestablish(sc->sc_si);
+#endif
 					return(error);
 				}
 			} else
@@ -311,6 +332,9 @@ slclose(tp)
 	sc = tp->t_sc;
 
 	if (sc != NULL) {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr_disestablish(sc->sc_si);
+#endif
 		s = splnet();
 		if_down(&sc->sc_if);
 		IF_PURGE(&sc->sc_fastq);
@@ -468,7 +492,7 @@ void
 slstart(tp)
 	struct tty *tp;
 {
-	int s;
+	struct sl_softc *sc = tp->t_sc;
 
 	/*
 	 * If there is more in the output queue, just send it now.
@@ -484,12 +508,17 @@ slstart(tp)
 	/*
 	 * This happens briefly when the line shuts down.
 	 */
-	if (tp->t_sc == NULL)
+	if (sc == NULL)
 		return;
-
-	s = splimp();
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softintr_schedule(sc->sc_si);
+#else
+    {
+	int s = splimp();
 	schednetisr(NETISR_SLIP);
 	splx(s);
+    }
+#endif
 }
 
 /*
@@ -542,7 +571,6 @@ slinput(c, tp)
 	struct sl_softc *sc;
 	struct mbuf *m;
 	int len;
-	int s;
 
 	tk_nin++;
 	sc = (struct sl_softc *)tp->t_sc;
@@ -614,9 +642,15 @@ slinput(c, tp)
 			goto error;
 
 		IF_ENQUEUE(&sc->sc_inq, m);
-		s = splimp();
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		softintr_schedule(sc->sc_si);
+#else
+	    {
+		int s = splimp();
 		schednetisr(NETISR_SLIP);
 		splx(s);
+	    }
+#endif
 		goto newpack;
 	}
 	if (sc->sc_mp < sc->sc_ep) {
@@ -636,329 +670,339 @@ newpack:
 	sc->sc_escape = 0;
 }
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
-slintr(void)
+slnetisr(void)
 {
 	struct sl_softc *sc;
-	struct tty *tp;
+	int i;
+
+	for (i = 0; i < NSL; i++) {
+		sc = &sl_softc[i];
+		if (sc->sc_ttyp == NULL)
+			continue;
+		slintr(sc);
+	}
+}
+#endif
+
+void
+slintr(void *arg)
+{
+	struct sl_softc *sc = arg;
+	struct tty *tp = sc->sc_ttyp;
 	struct mbuf *m;
-	int i, s, len;
+	int s, len;
 	u_char *pktstart, c;
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
 #endif
 
-	for (i = 0; i < NSL; i++) {
-		sc = &sl_softc[i];
-		tp = sc->sc_ttyp;
+	KASSERT(tp != NULL);
 
-		if (tp == NULL)
-			continue;
+	/*
+	 * Output processing loop.
+	 */
+	for (;;) {
+		struct ip *ip;
+		struct mbuf *m2;
+#if NBPFILTER > 0
+		struct mbuf *bpf_m;
+#endif
 
 		/*
-		 * Output processing loop.
+		 * Do not remove the packet from the queue if it
+		 * doesn't look like it will fit into the current
+		 * serial output queue.  With a packet full of
+		 * escapes, this could be as bad as MTU*2+2.
 		 */
-		for (;;) {
-			struct ip *ip;
-			struct mbuf *m2;
-#if NBPFILTER > 0
-			struct mbuf *bpf_m;
-#endif
-
-			/*
-			 * Do not remove the packet from the queue if it
-			 * doesn't look like it will fit into the current
-			 * serial output queue.  With a packet full of
-			 * escapes, this could be as bad as MTU*2+2.
-			 */
-			s = spltty();
-			if (tp->t_outq.c_cn - tp->t_outq.c_cc <
-			    2*sc->sc_if.if_mtu+2) {
-				splx(s);
-				break;
-			}
+		s = spltty();
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc <
+		    2*sc->sc_if.if_mtu+2) {
 			splx(s);
+			break;
+		}
+		splx(s);
 
+		/*
+		 * Get a packet and send it to the interface.
+		 */
+		s = splnet();
+		IF_DEQUEUE(&sc->sc_fastq, m);
+		if (m)
+			sc->sc_if.if_omcasts++;	/* XXX */
+		else
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+		splx(s);
+
+		if (m == NULL)
+			break;
+
+		/*
+		 * We do the header compression here rather than in
+		 * sloutput() because the packets will be out of order
+		 * if we are using TOS queueing, and the connection
+		 * ID compression will get munged when this happens.
+		 */
+#if NBPFILTER > 0
+		if (sc->sc_if.if_bpf) {
 			/*
-			 * Get a packet and send it to the interface.
+			 * We need to save the TCP/IP header before
+			 * it's compressed.  To avoid complicated
+			 * code, we just make a deep copy of the
+			 * entire packet (since this is a serial
+			 * line, packets should be short and/or the
+			 * copy should be negligible cost compared
+			 * to the packet transmission time).
 			 */
+			bpf_m = m_dup(m, 0, M_COPYALL, M_DONTWAIT);
+		} else
+			bpf_m = NULL;
+#endif
+		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
+			if (sc->sc_if.if_flags & SC_COMPRESS)
+				*mtod(m, u_char *) |=
+				    sl_compress_tcp(m, ip,
+				    &sc->sc_comp, 1);
+		}
+#if NBPFILTER > 0
+		if (sc->sc_if.if_bpf && bpf_m != NULL) {
+			/*
+			 * Put the SLIP pseudo-"link header" in
+			 * place.  The compressed header is now
+			 * at the beginning of the mbuf.
+			 */
+			struct mbuf n;
+			u_char *hp;
+
+			n.m_next = bpf_m;
+			n.m_data = n.m_dat;
+			n.m_len = SLIP_HDRLEN;
+
+			hp = mtod(&n, u_char *);
+
+			hp[SLX_DIR] = SLIPDIR_OUT;
+			memcpy(&hp[SLX_CHDR], mtod(m, caddr_t),
+			    CHDR_LEN);
+
 			s = splnet();
-			IF_DEQUEUE(&sc->sc_fastq, m);
-			if (m)
-				sc->sc_if.if_omcasts++;	/* XXX */
-			else
-				IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+			bpf_mtap(sc->sc_if.if_bpf, &n);
 			splx(s);
-
-			if (m == NULL)
-				break;
-
-			/*
-			 * We do the header compression here rather than in
-			 * sloutput() because the packets will be out of order
-			 * if we are using TOS queueing, and the connection
-			 * ID compression will get munged when this happens.
-			 */
-#if NBPFILTER > 0
-			if (sc->sc_if.if_bpf) {
-				/*
-				 * We need to save the TCP/IP header before
-				 * it's compressed.  To avoid complicated
-				 * code, we just make a deep copy of the
-				 * entire packet (since this is a serial
-				 * line, packets should be short and/or the
-				 * copy should be negligible cost compared
-				 * to the packet transmission time).
-				 */
-				bpf_m = m_dup(m, 0, M_COPYALL, M_DONTWAIT);
-			} else
-				bpf_m = NULL;
+			m_freem(bpf_m);
+		}
 #endif
-			if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
-				if (sc->sc_if.if_flags & SC_COMPRESS)
-					*mtod(m, u_char *) |=
-					    sl_compress_tcp(m, ip,
-					    &sc->sc_comp, 1);
-			}
-#if NBPFILTER > 0
-			if (sc->sc_if.if_bpf && bpf_m != NULL) {
+		sc->sc_if.if_lastchange = time;
+
+		s = spltty();
+
+		/*
+		 * The extra FRAME_END will start up a new packet,
+		 * and thus will flush any accumulated garbage.  We
+		 * do this whenever the line may have been idle for
+		 * some time.
+		 */
+		if (tp->t_outq.c_cc == 0) {
+			sc->sc_if.if_obytes++;
+			(void) putc(FRAME_END, &tp->t_outq);
+		}
+
+		while (m) {
+			u_char *bp, *cp, *ep;
+
+			bp = cp = mtod(m, u_char *);
+			ep = cp + m->m_len;
+			while (cp < ep) {
 				/*
-				 * Put the SLIP pseudo-"link header" in
-				 * place.  The compressed header is now
-				 * at the beginning of the mbuf.
+				 * Find out how many bytes in the
+				 * string we can handle without
+				 * doing something special.
 				 */
-				struct mbuf n;
-				u_char *hp;
-
-				n.m_next = bpf_m;
-				n.m_data = n.m_dat;
-				n.m_len = SLIP_HDRLEN;
-
-				hp = mtod(&n, u_char *);
-
-				hp[SLX_DIR] = SLIPDIR_OUT;
-				memcpy(&hp[SLX_CHDR], mtod(m, caddr_t),
-				    CHDR_LEN);
-
-				s = splnet();
-				bpf_mtap(sc->sc_if.if_bpf, &n);
-				splx(s);
-				m_freem(bpf_m);
-			}
-#endif
-			sc->sc_if.if_lastchange = time;
-
-			s = spltty();
-
-			/*
-			 * The extra FRAME_END will start up a new packet,
-			 * and thus will flush any accumulated garbage.  We
-			 * do this whenever the line may have been idle for
-			 * some time.
-			 */
-			if (tp->t_outq.c_cc == 0) {
-				sc->sc_if.if_obytes++;
-				(void) putc(FRAME_END, &tp->t_outq);
-			}
-
-			while (m) {
-				u_char *bp, *cp, *ep;
-
-				bp = cp = mtod(m, u_char *);
-				ep = cp + m->m_len;
 				while (cp < ep) {
-					/*
-					 * Find out how many bytes in the
-					 * string we can handle without
-					 * doing something special.
-					 */
-					while (cp < ep) {
-						switch (*cp++) {
-						case FRAME_ESCAPE:
-						case FRAME_END:
-							cp--;
-							goto out;
-						}
-					}
-					out:
-					if (cp > bp) {
-						/*
-						 * Put N characters at once
-						 * into the tty output queue.
-						 */
-						if (b_to_q(bp, cp - bp,
-						    &tp->t_outq))
-							break;
-						sc->sc_if.if_obytes += cp - bp;
-					}
-					/*
-					 * If there are characters left in
-					 * the mbuf, the first one must be
-					 * special..  Put it out in a different
-					 * form.
-					 */
-					if (cp < ep) {
-						if (putc(FRAME_ESCAPE,
-						    &tp->t_outq))
-							break;
-						if (putc(*cp++ == FRAME_ESCAPE ?
-						    TRANS_FRAME_ESCAPE :
-						    TRANS_FRAME_END,
-						    &tp->t_outq)) {
-							(void)
-							   unputc(&tp->t_outq);
-							break;
-						}
-						sc->sc_if.if_obytes += 2;
+					switch (*cp++) {
+					case FRAME_ESCAPE:
+					case FRAME_END:
+						cp--;
+						goto out;
 					}
 				}
-				MFREE(m, m2);
-				m = m2;
-			}
-
-			if (putc(FRAME_END, &tp->t_outq)) {
+				out:
+				if (cp > bp) {
+					/*
+					 * Put N characters at once
+					 * into the tty output queue.
+					 */
+					if (b_to_q(bp, cp - bp,
+					    &tp->t_outq))
+						break;
+					sc->sc_if.if_obytes += cp - bp;
+				}
 				/*
-				 * Not enough room.  Remove a char to make
-				 * room and end the packet normally.  If
-				 * you get many collisions (more than one
-				 * or two a day), you probably do not have
-				 * enough clists and you should increase
-				 * "nclist" in param.c
+				 * If there are characters left in
+				 * the mbuf, the first one must be
+				 * special..  Put it out in a different
+				 * form.
 				 */
-				(void) unputc(&tp->t_outq);
-				(void) putc(FRAME_END, &tp->t_outq);
-				sc->sc_if.if_collisions++;
-			} else {
-				sc->sc_if.if_obytes++;
-				sc->sc_if.if_opackets++;
+				if (cp < ep) {
+					if (putc(FRAME_ESCAPE,
+					    &tp->t_outq))
+						break;
+					if (putc(*cp++ == FRAME_ESCAPE ?
+					    TRANS_FRAME_ESCAPE :
+					    TRANS_FRAME_END,
+					    &tp->t_outq)) {
+						(void)
+						   unputc(&tp->t_outq);
+						break;
+					}
+					sc->sc_if.if_obytes += 2;
+				}
 			}
+			MFREE(m, m2);
+			m = m2;
+		}
 
+		if (putc(FRAME_END, &tp->t_outq)) {
 			/*
-			 * We now have characters in the output queue,
-			 * kick the serial port.
+			 * Not enough room.  Remove a char to make
+			 * room and end the packet normally.  If
+			 * you get many collisions (more than one
+			 * or two a day), you probably do not have
+			 * enough clists and you should increase
+			 * "nclist" in param.c
 			 */
-			(*tp->t_oproc)(tp);
-			splx(s);
+			(void) unputc(&tp->t_outq);
+			(void) putc(FRAME_END, &tp->t_outq);
+			sc->sc_if.if_collisions++;
+		} else {
+			sc->sc_if.if_obytes++;
+			sc->sc_if.if_opackets++;
 		}
 
 		/*
-		 * Input processing loop.
+		 * We now have characters in the output queue,
+		 * kick the serial port.
 		 */
-		for (;;) {
-			s = spltty();
-			IF_DEQUEUE(&sc->sc_inq, m);
-			splx(s);
-			if (m == NULL)
-				break;
-			pktstart = mtod(m, u_char *);
-			len = m->m_pkthdr.len;
+		(*tp->t_oproc)(tp);
+		splx(s);
+	}
+
+	/*
+	 * Input processing loop.
+	 */
+	for (;;) {
+		s = spltty();
+		IF_DEQUEUE(&sc->sc_inq, m);
+		splx(s);
+		if (m == NULL)
+			break;
+		pktstart = mtod(m, u_char *);
+		len = m->m_pkthdr.len;
 #if NBPFILTER > 0
-			if (sc->sc_if.if_bpf) {
-				/*
-				 * Save the compressed header, so we
-				 * can tack it on later.  Note that we
-				 * will end up copying garbage in some
-				 * cases but this is okay.  We remember
-				 * where the buffer started so we can
-				 * compute the new header length.
-				 */
-				memcpy(chdr, pktstart, CHDR_LEN);
-			}
+		if (sc->sc_if.if_bpf) {
+			/*
+			 * Save the compressed header, so we
+			 * can tack it on later.  Note that we
+			 * will end up copying garbage in some
+			 * cases but this is okay.  We remember
+			 * where the buffer started so we can
+			 * compute the new header length.
+			 */
+			memcpy(chdr, pktstart, CHDR_LEN);
+		}
 #endif /* NBPFILTER > 0 */
-			if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
-				if (c & 0x80)
-					c = TYPE_COMPRESSED_TCP;
-				else if (c == TYPE_UNCOMPRESSED_TCP)
-					*pktstart &= 0x4f; /* XXX */
-				/*
-				 * We've got something that's not an IP
-				 * packet.  If compression is enabled,
-				 * try to decompress it.  Otherwise, if
-				 * `auto-enable' compression is on and
-				 * it's a reasonable packet, decompress
-				 * it and then enable compression.
-				 * Otherwise, drop it.
-				 */
-				if (sc->sc_if.if_flags & SC_COMPRESS) {
-					len = sl_uncompress_tcp(&pktstart, len,
-					    (u_int)c, &sc->sc_comp);
-					if (len <= 0) {
-						m_freem(m);
-						continue;
-					}
-				} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
-				    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
-					len = sl_uncompress_tcp(&pktstart, len,
-					    (u_int)c, &sc->sc_comp);
-					if (len <= 0) {
-						m_freem(m);
-						continue;
-					}
-					sc->sc_if.if_flags |= SC_COMPRESS;
-				} else {
+		if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
+			if (c & 0x80)
+				c = TYPE_COMPRESSED_TCP;
+			else if (c == TYPE_UNCOMPRESSED_TCP)
+				*pktstart &= 0x4f; /* XXX */
+			/*
+			 * We've got something that's not an IP
+			 * packet.  If compression is enabled,
+			 * try to decompress it.  Otherwise, if
+			 * `auto-enable' compression is on and
+			 * it's a reasonable packet, decompress
+			 * it and then enable compression.
+			 * Otherwise, drop it.
+			 */
+			if (sc->sc_if.if_flags & SC_COMPRESS) {
+				len = sl_uncompress_tcp(&pktstart, len,
+				    (u_int)c, &sc->sc_comp);
+				if (len <= 0) {
 					m_freem(m);
 					continue;
 				}
-			}
-			m->m_data = (caddr_t) pktstart;
-			m->m_pkthdr.len = m->m_len = len;
-#if NBPFILTER > 0
-			if (sc->sc_if.if_bpf) {
-				/*
-				 * Put the SLIP pseudo-"link header" in place.
-				 * Note this M_PREPEND() should bever fail,
-				 * since we know we always have enough space
-				 * in the input buffer.
-				 */
-				u_char *hp;
-
-				M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
-				if (m == NULL)
+			} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
+			    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
+				len = sl_uncompress_tcp(&pktstart, len,
+				    (u_int)c, &sc->sc_comp);
+				if (len <= 0) {
+					m_freem(m);
 					continue;
-
-				hp = mtod(m, u_char *);
-				hp[SLX_DIR] = SLIPDIR_IN;
-				memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
-
-				s = splnet();
-				bpf_mtap(sc->sc_if.if_bpf, m);
-				splx(s);
-
-				m_adj(m, SLIP_HDRLEN);
-			}
-#endif /* NBPFILTER > 0 */
-			/*
-			 * If the packet will fit into a single
-			 * header mbuf, copy it into one, to save
-			 * memory.
-			 */
-			if (m->m_pkthdr.len < MHLEN) {
-				struct mbuf *n;
-
-				MGETHDR(n, M_DONTWAIT, MT_DATA);
-				M_COPY_PKTHDR(n, m);
-				memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
-				    m->m_pkthdr.len);
-				n->m_len = m->m_len;
-				m_freem(m);
-				m = n;
-			}
-
-			sc->sc_if.if_ipackets++;
-			sc->sc_if.if_lastchange = time;
-
-			s = splimp();
-			if (IF_QFULL(&ipintrq)) {
-				IF_DROP(&ipintrq);
-				sc->sc_if.if_ierrors++;
-				sc->sc_if.if_iqdrops++;
-				m_freem(m);
+				}
+				sc->sc_if.if_flags |= SC_COMPRESS;
 			} else {
-				IF_ENQUEUE(&ipintrq, m);
-				schednetisr(NETISR_IP);
+				m_freem(m);
+				continue;
 			}
-			splx(s);
 		}
+		m->m_data = (caddr_t) pktstart;
+		m->m_pkthdr.len = m->m_len = len;
+#if NBPFILTER > 0
+		if (sc->sc_if.if_bpf) {
+			/*
+			 * Put the SLIP pseudo-"link header" in place.
+			 * Note this M_PREPEND() should bever fail,
+			 * since we know we always have enough space
+			 * in the input buffer.
+			 */
+			u_char *hp;
+
+			M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
+			if (m == NULL)
+				continue;
+
+			hp = mtod(m, u_char *);
+			hp[SLX_DIR] = SLIPDIR_IN;
+			memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+			s = splnet();
+			bpf_mtap(sc->sc_if.if_bpf, m);
+			splx(s);
+
+			m_adj(m, SLIP_HDRLEN);
+		}
+#endif /* NBPFILTER > 0 */
+		/*
+		 * If the packet will fit into a single
+		 * header mbuf, copy it into one, to save
+		 * memory.
+		 */
+		if (m->m_pkthdr.len < MHLEN) {
+			struct mbuf *n;
+
+			MGETHDR(n, M_DONTWAIT, MT_DATA);
+			M_COPY_PKTHDR(n, m);
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
+			    m->m_pkthdr.len);
+			n->m_len = m->m_len;
+			m_freem(m);
+			m = n;
+		}
+
+		sc->sc_if.if_ipackets++;
+		sc->sc_if.if_lastchange = time;
+
+		s = splimp();
+		if (IF_QFULL(&ipintrq)) {
+			IF_DROP(&ipintrq);
+			sc->sc_if.if_ierrors++;
+			sc->sc_if.if_iqdrops++;
+			m_freem(m);
+		} else {
+			IF_ENQUEUE(&ipintrq, m);
+			schednetisr(NETISR_IP);
+		}
+		splx(s);
 	}
 }
 

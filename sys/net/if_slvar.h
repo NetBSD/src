@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.22 2001/01/09 05:04:23 thorpej Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.23 2001/01/15 16:33:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ struct sl_softc {
 	long	sc_starttime;		/* time of first abort in window */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void	*sc_si;			/* softintr handle */
+#endif
 #ifdef __NetBSD__
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */
@@ -88,7 +91,6 @@ int	sloutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
 void	slstart __P((struct tty *));
 int	sltioctl __P((struct tty *, u_long, caddr_t, int));
-void	slintr __P((void));
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_SLVAR_H_ */
