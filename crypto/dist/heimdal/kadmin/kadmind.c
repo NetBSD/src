@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: kadmind.c,v 1.3 2000/12/19 21:31:11 nathanw Exp $");
+RCSID("$Id: kadmind.c,v 1.4 2001/02/04 22:55:26 christos Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -79,9 +79,6 @@ usage(int ret)
     arg_printusage (args, num_args, NULL, "");
     exit (ret);
 }
-
-krb5_error_code
-kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
 
 int
 main(int argc, char **argv)
