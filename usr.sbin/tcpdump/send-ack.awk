@@ -1,5 +1,4 @@
-#	$NetBSD: send-ack.awk,v 1.2 1995/03/06 19:11:42 mycroft Exp $
-
+#	$NetBSD: send-ack.awk,v 1.3 1997/10/03 19:55:54 christos Exp $
 BEGIN	{
 	# we need the number of bytes in a packet to do the output
 	# in packet numbers rather than byte numbers.

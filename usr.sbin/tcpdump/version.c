@@ -1,3 +1,2 @@
-/*	$NetBSD: version.c,v 1.3 1996/05/20 00:41:20 fvdl Exp $	*/
-
-char version[] = "3.0.4";
+/*	$NetBSD: version.c,v 1.4 1997/10/03 19:56:05 christos Exp $	*/
+char version[] = "3.4a5";
