@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.14 1996/08/12 00:51:48 mycroft Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.15 1996/08/31 21:41:25 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 MVME68K=$S/arch/mvme68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc

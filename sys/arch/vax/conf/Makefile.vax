@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.25 1996/08/12 00:52:16 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.26 1996/08/31 21:41:56 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -17,7 +17,6 @@
 #
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
-# -DUUDMA	compile in unibus tu58 pseudo-dma code
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
@@ -29,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 VAX=	$S/arch/vax
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
