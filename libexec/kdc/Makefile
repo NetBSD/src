@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:41 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2000/08/06 21:11:05 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
@@ -40,7 +40,8 @@ LDADD=	-lhdb					\
 	-lasn1					\
 	-lcom_err				\
 	-lroken					\
-	-lcrypt
+	-lcrypt					\
+	-lutil
 
 MAN=	kdc.8
 

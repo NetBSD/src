@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kdc_locl.h,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $ 
+ * $Id: kdc_locl.h,v 1.1.1.1.2.1 2000/08/06 21:11:07 thorpej Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -58,6 +58,7 @@ extern char *port_str;
 extern krb5_addresses explicit_addresses;
 
 extern int enable_http;
+extern int no_detach;
 extern krb5_boolean encode_as_rep_as_tgs_rep;
 extern krb5_boolean check_ticket_addresses;
 extern krb5_boolean allow_null_ticket_addresses;
