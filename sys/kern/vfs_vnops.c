@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.36 1999/03/31 18:30:13 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.37 1999/08/03 20:19:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
 #endif
 
 struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_closefile };
+	{ vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll, vn_closefile };
 
 /*
  * Common code for vnode open operations.
@@ -357,6 +357,8 @@ vn_read(fp, offset, uio, cred, flags)
 		ioflag |= IO_NDELAY;
 	if ((fp->f_flag & (FFSYNC | FRSYNC)) == (FFSYNC | FRSYNC))
 		ioflag |= IO_SYNC;
+	if (fp->f_flag & FALTIO)
+		ioflag |= IO_ALTSEMANTICS;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -390,6 +392,8 @@ vn_write(fp, offset, uio, cred, flags)
 		ioflag |= IO_SYNC;
 	else if (fp->f_flag & FDSYNC)
 		ioflag |= IO_DSYNC;
+	if (fp->f_flag & FALTIO)
+		ioflag |= IO_ALTSEMANTICS;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
@@ -466,6 +470,25 @@ vn_stat(vp, sb, p)
 	sb->st_gen = 0;
 	sb->st_blocks = va.va_bytes / S_BLKSIZE;
 	return (0);
+}
+
+/*
+ * File table vnode fcntl routine.
+ */
+int
+vn_fcntl(fp, com, data, p)
+	struct file *fp;
+	u_int com;
+	caddr_t data;
+	struct proc *p;
+{
+	register struct vnode *vp = ((struct vnode *)fp->f_data);
+	int error;
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_FCNTL(vp, com, data, fp->f_flag, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0);
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.64 1999/07/25 18:33:47 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.65 1999/08/03 20:19:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -111,6 +111,7 @@ int	procfs_getattr	__P((void *));
 int	procfs_setattr	__P((void *));
 #define	procfs_read	procfs_rw
 #define	procfs_write	procfs_rw
+#define	procfs_fcntl	genfs_fcntl
 #define	procfs_ioctl	genfs_enoioctl
 #define	procfs_poll	genfs_poll
 #define procfs_revoke	genfs_revoke
@@ -161,6 +162,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, procfs_setattr },		/* setattr */
 	{ &vop_read_desc, procfs_read },		/* read */
 	{ &vop_write_desc, procfs_write },		/* write */
+	{ &vop_fcntl_desc, procfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, procfs_poll },		/* poll */
 	{ &vop_revoke_desc, procfs_revoke },		/* revoke */
