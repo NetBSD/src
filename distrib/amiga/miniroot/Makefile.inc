@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/12/17 05:59:20 mhitch Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/02/12 11:20:38 is Exp $
 
 VND=		vnd0
-IMAGESIZE?=	8192 # 512 byte blocks
-NEWFSOPTS?=	-c 64 -B be
-DISKTYPE?=	miniroot
+IMAGESIZE?=	10240 # 512 byte blocks
+VND_GEOM?=	512/64/2/80
+NEWFSOPTS?=	-c 80 -B be
 
 #
 # install bootblock, so that we can boot from there
