@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 2003/10/23 08:59:10 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.7 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -106,6 +106,161 @@ void validate_trapframe __P((trapframe_t *, int));
 
 #else /* _LOCORE */
 
+#include "opt_compat_netbsd.h"
+#include "opt_execfmt.h"
+#include "opt_multiprocessor.h"
+
+/*
+ * AST_ALIGNMENT_FAULT_LOCALS and ENABLE_ALIGNMENT_FAULTS
+ * These are used in order to support dynamic enabling/disabling of
+ * alignment faults when executing old a.out ARM binaries.
+ */
+#if defined(COMPAT_15) && defined(EXEC_AOUT)
+#ifndef MULTIPROCESSOR
+
+/*
+ * Local variables needed by the AST/Alignment Fault macroes
+ */
+#define	AST_ALIGNMENT_FAULT_LOCALS					\
+.Laflt_astpending:							;\
+	.word	_C_LABEL(astpending)					;\
+.Laflt_cpufuncs:							;\
+	.word	_C_LABEL(cpufuncs)					;\
+.Laflt_curpcb:								;\
+	.word	_C_LABEL(curpcb)					;\
+.Laflt_cpu_info_store:							;\
+	.word	_C_LABEL(cpu_info_store)
+
+#define	GET_CURPCB_ENTER						\
+	ldr	r1, .Laflt_curpcb					;\
+	ldr	r1, [r1]
+
+#define	GET_CPUINFO_ENTER						\
+	ldr	r0, .Laflt_cpu_info_store
+
+#define	GET_CURPCB_EXIT							\
+	ldr	r1, .Laflt_curpcb					;\
+	ldr	r2, .Laflt_cpu_info_store				;\
+	ldr	r1, [r1]
+
+#else /* !MULTIPROCESSOR */
+
+#define	AST_ALIGNMENT_FAULT_LOCALS					\
+.Laflt_astpending:							;\
+	.word	_C_LABEL(astpending)					;\
+.Laflt_cpufuncs:							;\
+	.word	_C_LABEL(cpufuncs)					;\
+.Laflt_cpu_info:							;\
+	.word	_C_LABEL(cpu_info)
+
+#define	GET_CURPCB_ENTER						\
+	ldr	r4, .Laflt_cpu_info					;\
+	bl	_C_LABEL(cpu_number)					;\
+	ldr	r0, [r4, r0, lsl #2]					;\
+	ldr	r1, [r0, #CI_CURPCB]
+
+#define	GET_CPUINFO_ENTER	/* nothing to do */
+
+#define	GET_CURPCB_EXIT							\
+	ldr	r7, .Laflt_cpu_info					;\
+	bl	_C_LABEL(cpu_number)					;\
+	ldr	r2, [r7, r0, lsl #2]					;\
+	ldr	r1, [r2, #CI_CURPCB]
+#endif /* MULTIPROCESSOR */
+
+/*
+ * This macro must be invoked following PUSHFRAMEINSVC or PUSHFRAME at
+ * the top of interrupt/exception handlers.
+ *
+ * When invoked, r0 *must* contain the value of SPSR on the current
+ * trap/interrupt frame. This is always the case if ENABLE_ALIGNMENT_FAULTS
+ * is invoked immediately after PUSHFRAMEINSVC or PUSHFRAME.
+ */
+#define	ENABLE_ALIGNMENT_FAULTS						\
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
+	teq	r0, #(PSR_USR32_MODE)					;\
+	bne	1f			/* Not USR mode skip AFLT */	;\
+	GET_CURPCB_ENTER		/* r1 = curpcb */		;\
+	cmp	r1, #0x00		/* curpcb NULL? */		;\
+	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
+	tstne	r1, #PCB_NOALIGNFLT					;\
+	beq	1f			/* AFLTs already enabled */	;\
+	GET_CPUINFO_ENTER		/* r0 = cpuinfo */		;\
+	ldr	r2, .Laflt_cpufuncs					;\
+	ldr	r1, [r0, #CI_CTRL]	/* Fetch control register */	;\
+	mov	r0, #-1							;\
+	mov	lr, pc							;\
+	ldr	pc, [r2, #CF_CONTROL]	/* Enable alignment faults */	;\
+1:
+
+/*
+ * This macro must be invoked just before PULLFRAMEFROMSVCANDEXIT or
+ * PULLFRAME at the end of interrupt/exception handlers.
+ */
+#define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
+	mrs	r4, cpsr		/* save CPSR */			;\
+	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
+	orr	r4, r4, #(I32_bit)	/* Disable IRQs */		;\
+	msr	cpsr_c, r4						;\
+	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
+	teq	r0, #(PSR_USR32_MODE)					;\
+	ldreq	r5, .Laflt_astpending					;\
+	bne	3f			/* Nope, get out now */		;\
+1:	ldr	r1, [r5]		/* Pending AST? */		;\
+	teq	r1, #0x00000000						;\
+	bne	2f			/* Yup. Go deal with it */	;\
+	GET_CURPCB_EXIT			/* r1 = curpcb, r2 = cpuinfo */	;\
+	cmp	r1, #0x00		/* curpcb NULL? */		;\
+	ldrne	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
+	tstne	r1, #PCB_NOALIGNFLT					;\
+	beq	3f			/* Keep AFLTs enabled */	;\
+	ldr	r1, [r2, #CI_CTRL]	/* Fetch control register */	;\
+	ldr	r2, .Laflt_cpufuncs					;\
+	mov	r0, #-1							;\
+	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable AFLTs */	;\
+	adr	lr, 3f							;\
+	ldr	pc, [r2, #CF_CONTROL]	/* Set new CTRL reg value */	;\
+2:	mov	r1, #0x00000000						;\
+	str	r1, [r5]		/* Clear astpending */		;\
+	bic	r0, r4, #(I32_bit)	/* Enable IRQs */		;\
+	msr	cpsr_c, r0						;\
+	mov	r0, sp							;\
+	bl	_C_LABEL(ast)		/* ast(frame) */		;\
+	msr	cpsr_c, r4		/* Disable IRQs */		;\
+	b	1b			/* Check for more ASTs */	;\
+3:
+
+#else	/* !(COMPAT_15 && EXEC_AOUT) */
+
+#define	AST_ALIGNMENT_FAULT_LOCALS					;\
+.Laflt_astpending:							;\
+	.word	_C_LABEL(astpending)
+
+#define	ENABLE_ALIGNMENT_FAULTS		/* nothing */
+
+#define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
+	mrs	r4, cpsr		/* save CPSR */			;\
+	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
+	orr	r4, r4, #(I32_bit)	/* Disable IRQs */		;\
+	msr	cpsr_c, r4						;\
+	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
+	teq	r0, #(PSR_USR32_MODE)					;\
+	ldreq	r5, .Laflt_astpending					;\
+	bne	2f			/* Nope, get out now */		;\
+1:	ldr	r1, [r5]		/* Pending AST? */		;\
+	teq	r1, #0x00000000						;\
+	beq	2f			/* Nope. Just bail */		;\
+	mov	r1, #0x00000000						;\
+	str	r1, [r5]		/* Clear astpending */		;\
+	bic	r0, r4, #(I32_bit)	/* Enable IRQs */		;\
+	msr	cpsr_c, r0						;\
+	mov	r0, sp							;\
+	bl	_C_LABEL(ast)		/* ast(frame) */		;\
+	msr	cpsr_c, r4		/* Disable IRQs */		;\
+	b	1b			/* Check for more ASTs */	;\
+2:
+#endif /* COMPAT_15 && EXEC_AOUT */
+
 /*
  * ASM macros for pushing and pulling trapframes from the stack
  *
@@ -129,7 +284,7 @@ void validate_trapframe __P((trapframe_t *, int));
 	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
-	str	r0, [sp, #-4]!;
+	str	r0, [sp, #-4]!
 
 /*
  * PULLFRAME - macro to pull a trap frame from the stack in the current mode
@@ -142,7 +297,7 @@ void validate_trapframe __P((trapframe_t *, int));
         ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
 	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
- 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+ 	ldr	lr, [sp], #0x0004	/* Pull the return address */
 
 /*
  * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
