@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/01/31 01:07:44 reinoud Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/01/31 02:15:28 reinoud Exp $
 #
-#	etc.arm32/Makefile.inc -- arm32-specific etc Makefile targets
+#	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
 
 KERNEL_SETS=	GENERIC NC NC_WSCONS RPC_WSCONS
