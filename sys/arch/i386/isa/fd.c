@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.122 1998/07/04 22:18:25 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.123 1998/08/05 02:28:26 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -859,7 +859,7 @@ fdopen(dev, flags, mode, p)
 		return ENXIO;
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
-	    bcmp(fd->sc_type, type, sizeof(*type)))
+	    memcmp(fd->sc_type, type, sizeof(*type)))
 		return EBUSY;
 
 	fd->sc_type_copy = *type;
@@ -1364,7 +1364,7 @@ fdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(&buffer, sizeof(buffer));
+		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
@@ -1485,7 +1485,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd_formb.fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb.fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il,sizeof il);
+		memset(il, 0, sizeof il);
 		for (j = 0, i = 1; i <= fd_formb.fd_formb_nsecs; i++) {
 			while (il[(j%fd_formb.fd_formb_nsecs)+1])
 				j++;
@@ -1534,7 +1534,7 @@ fdformat(dev, finfo, p)
 	if(bp == 0)
 		return ENOBUFS;
 	PHOLD(p);
-	bzero((void *)bp, sizeof(struct buf));
+	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
