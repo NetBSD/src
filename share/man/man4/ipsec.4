@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.9 2000/06/14 13:06:30 itojun Exp $
+.\"	$NetBSD: ipsec.4,v 1.10 2000/06/15 05:01:06 itojun Exp $
 .\"	$KAME: ipsec.4,v 1.12 2000/06/14 13:05:29 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -179,21 +179,17 @@ The following variables are accessible via
 for tweaking kernel IPsec behavior:
 .Bl -column net.inet6.ipsec6.inbonud_call_ike integerxxx
 .It Sy Name	Type	Changeable
-.It net.inet.ipsec.inbound_call_ike	integer	yes
 .It net.inet.ipsec.ah_cleartos	integer	yes
 .It net.inet.ipsec.ah_offsetmask	integer	yes
 .It net.inet.ipsec.dfbit	integer	yes
 .It net.inet.ipsec.ecn	integer	yes
 .It net.inet.ipsec.debug	integer	yes
-.It net.inet6.ipsec6.inbound_call_ike	integer	yes
 .It net.inet6.ipsec6.ecn	integer	yes
 .It net.inet6.ipsec6.debug	integer	yes
 .El
 .Pp
 The variables are interpreted as follows:
 .Bl -tag -width "123456"
-.It Li ipsec.inbound_call_ike
-Obsolete.
 .It Li ipsec.ah_cleartos
 If set to non-zero, the kernel clears type-of-service field in the IPv4 header
 during AH authentication data computation.
