@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa.c,v 1.1 1998/02/07 00:46:45 cgd Exp $	*/
+/*	$NetBSD: com_ofisa.c,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/socket.h>
+#include <sys/systm.h>
 #include <sys/tty.h>
 
 #include <machine/intr.h>
@@ -76,7 +76,7 @@ com_ofisa_probe(parent, cf, aux)
 	const char *compatible_strings[] = { "pnpPNP,501", NULL };
 	int rv = 0;
 
-	if (of_compatible(aa->ofp.phandle, compatible_strings) != -1)
+	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
 		rv = 5;
 #ifdef _COM_OFISA_MD_MATCH
 	if (!rv)
@@ -106,7 +106,7 @@ com_ofisa_attach(parent, self, aux)
 	 * We expect exactly one register region and one interrupt.
 	 */
 
-	n = ofisa_reg_get(aa->ofp.phandle, &reg, 1);
+	n = ofisa_reg_get(aa->oba.oba_phandle, &reg, 1);
 #ifdef _COM_OFISA_MD_REG_FIXUP
 	n = com_ofisa_md_reg_fixup(parent, self, aux, &reg, 1, n);
 #endif
@@ -115,11 +115,12 @@ com_ofisa_attach(parent, self, aux)
 		return;
 	}
 	if (reg.len != 8) {
-		printf(": weird register size (%d, expected 8)\n", reg.len);
+		printf(": weird register size (%lu, expected 8)\n",
+		    (unsigned long)reg.len);
 		return;
 	}
 
-	n = ofisa_intr_get(aa->ofp.phandle, &intr, 1);
+	n = ofisa_intr_get(aa->oba.oba_phandle, &intr, 1);
 #ifdef _COM_OFISA_MD_INTR_FIXUP
 	n = com_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
@@ -128,8 +129,8 @@ com_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	if (OF_getproplen(aa->ofp.phandle, "clock-frequency") != 4 ||
-	    OF_getprop(aa->ofp.phandle, "clock-frequency", freqbuf,
+	if (OF_getproplen(aa->oba.oba_phandle, "clock-frequency") != 4 ||
+	    OF_getprop(aa->oba.oba_phandle, "clock-frequency", freqbuf,
 	      sizeof freqbuf) != 4)
 		freq = COM_FREQ;
 	else

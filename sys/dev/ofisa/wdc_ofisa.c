@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.1 1998/02/07 00:46:56 cgd Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/socket.h>
+#include <sys/systm.h>
 #include <sys/tty.h>
 
 #include <machine/intr.h>
@@ -76,7 +76,7 @@ wdc_ofisa_probe(parent, cf, aux)
 	const char *compatible_strings[] = { "pnpPNP,600", NULL };
 	int rv = 0;
 
-	if (of_compatible(aa->ofp.phandle, compatible_strings) != -1)
+	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
 		rv = 5;
 #ifdef _WDC_OFISA_MD_MATCH
 	if (!rv)
@@ -104,7 +104,7 @@ wdc_ofisa_attach(parent, self, aux)
 	 * We expect exactly two register regions and one interrupt.
 	 */
 
-	n = ofisa_reg_get(aa->ofp.phandle, reg, 2);
+	n = ofisa_reg_get(aa->oba.oba_phandle, reg, 2);
 #ifdef _WDC_OFISA_MD_REG_FIXUP
 	n = wdc_ofisa_md_reg_fixup(parent, self, aux, reg, 2, n);
 #endif
@@ -113,12 +113,12 @@ wdc_ofisa_attach(parent, self, aux)
 		return;
 	}
 	if (reg[0].len != 8 || reg[1].len != 2) {
-		printf(": weird register size (%d/%d, expected 8/2)\n",
-		    reg[0].len, reg[1].len);
+		printf(": weird register size (%lu/%lu, expected 8/2)\n",
+		    (unsigned long)reg[0].len, (unsigned long)reg[1].len);
 		return;
 	}
 
-	n = ofisa_intr_get(aa->ofp.phandle, &intr, 1);
+	n = ofisa_intr_get(aa->oba.oba_phandle, &intr, 1);
 #ifdef _WDC_OFISA_MD_INTR_FIXUP
 	n = wdc_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
