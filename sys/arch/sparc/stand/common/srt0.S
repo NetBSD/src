@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.3 1999/02/15 19:01:38 pk Exp $	*/
+/*	$NetBSD: srt0.S,v 1.4 1999/03/05 11:12:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,18 +39,19 @@
 #define _LOCORE		/* XXX - fix Makefile */
 
 #include <machine/param.h>
+#include <machine/asm.h>
 #include <machine/psl.h>
 
 #define	CCFSZ	96
 
 	.file	"str0.s"
 
-	.comm	_romp, 4
-	.comm	_opf_romp, 4
-	.comm	_cputyp, 4
-	.comm	_nbpg, 4
-	.comm	_pgofset, 4
-	.comm	_pgshift, 4
+	.comm	_C_LABEL(romp), 4
+	.comm	_C_LABEL(opf_romp), 4
+	.comm	_C_LABEL(cputyp), 4
+	.comm	_C_LABEL(nbpg), 4
+	.comm	_C_LABEL(pgofset), 4
+	.comm	_C_LABEL(pgshift), 4
 
 	.text	
 	.globl	start
@@ -127,7 +128,7 @@ start:
 	/*
 	 * Set CPU type that we are running on.
 	 */
-	sethi	%hi(_cputyp), %o0
+	sethi	%hi(_C_LABEL(cputyp)), %o0
 	set	0x4000, %g7
 	cmp	%i0, %g7
 	beq	is_sun4
@@ -139,12 +140,12 @@ start:
 	/*
 	 * Save address of PROM vector (passed in %i0).
 	 */
-	sethi	%hi(_romp), %o1
-	st	%i0, [%o1 + %lo(_romp)]
+	sethi	%hi(_C_LABEL(romp)), %o1
+	st	%i0, [%o1 + %lo(_C_LABEL(romp))]
 
 	/* Also save %i3, which is the Openfirmware entry, if any */
-	sethi	%hi(_opf_romp), %o1
-	st	%i3, [%o1 + %lo(_opf_romp)]
+	sethi	%hi(_C_LABEL(opf_romp)), %o1
+	st	%i3, [%o1 + %lo(_C_LABEL(opf_romp))]
 	b,a	is_sun4cm
 
 is_sun4:
@@ -152,20 +153,20 @@ is_sun4:
 	mov	SUN4_PGSHIFT, %g5
 
 is_sun4cm:
-	st	%g4, [%o0 + %lo(_cputyp)]
-	sethi	%hi(_pgshift), %o0	! pgshift = log2(nbpg)
-	st	%g5, [%o0 + %lo(_pgshift)]
+	st	%g4, [%o0 + %lo(_C_LABEL(cputyp))]
+	sethi	%hi(_C_LABEL(pgshift)), %o0	! pgshift = log2(nbpg)
+	st	%g5, [%o0 + %lo(_C_LABEL(pgshift))]
 
-	mov	1, %o0			! nbpg = 1 << pgshift
+	mov	1, %o0				! nbpg = 1 << pgshift
 	sll	%o0, %g5, %g5
-	sethi	%hi(_nbpg), %o0		! nbpg = bytes in a page
-	st	%g5, [%o0 + %lo(_nbpg)]
+	sethi	%hi(_C_LABEL(nbpg)), %o0	! nbpg = bytes in a page
+	st	%g5, [%o0 + %lo(_C_LABEL(nbpg))]
 
 	sub	%g5, 1, %g5
-	sethi	%hi(_pgofset), %o0	! page offset = bytes in a page - 1
-	st	%g5, [%o0 + %lo(_pgofset)]
+	sethi	%hi(_C_LABEL(pgofset)), %o0	! page offset = nbpg - 1
+	st	%g5, [%o0 + %lo(_C_LABEL(pgofset))]
 
-	call	_main
+	call	_C_LABEL(main)
 	 mov	%i0, %o0
 
 	ret
@@ -174,8 +175,7 @@ is_sun4cm:
 /*
  * NO-OP place holder function.
  */
-	.globl	_sparc_noop
-_sparc_noop:
+ENTRY(sparc_noop)
 	retl
 	 nop
 
