@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.43 2003/12/17 03:59:33 ad Exp $ */
+/* $NetBSD: tfb.c,v 1.44 2003/12/20 07:10:01 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.43 2003/12/17 03:59:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.44 2003/12/20 07:10:01 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.43 2003/12/17 03:59:33 ad Exp $");
 
 #if defined(pmax)
 #define	machine_btop(x) mips_btop(MIPS_KSEG1_TO_PHYS(x))
+#endif
+
+#if defined(alpha)
+#define	machine_btop(x) alpha_btop(ALPHA_K0SEG_TO_PHYS(x))
+#endif
 
 /*
  * struct bt463reg {
@@ -90,59 +95,32 @@ __KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.43 2003/12/17 03:59:33 ad Exp $");
  * };
  */
 
-#define	BYTE(base, index)	*((u_int8_t *)(base) + ((index)<<2))
-#define	HALF(base, index)	*((u_int16_t *)(base) + ((index)<<1))
+/* Bt463 hardware registers, memory-mapped in 32bit stride */
+#define	bt_lo	0x0
+#define	bt_hi	0x4
+#define	bt_reg	0x8
+#define	bt_cmap	0xc
 
-#endif
+/* Bt431 hardware registers, memory-mapped in 32bit stride */
+#define	bt_ram	0x8
+#define	bt_ctl	0xc
 
-#if defined(alpha)
-#define	machine_btop(x) alpha_btop(ALPHA_K0SEG_TO_PHYS(x))
+#define	REGWRITE32(p,i,v) do {					\
+	*(volatile u_int32_t *)((p) + (i)) = (v); tc_wmb();	\
+    } while (0)
 
-/*
- * struct bt463reg {
- * 	u_int32_t	bt_lo;
- * 	u_int32_t	bt_hi;
- * 	u_int32_t	bt_reg;
- * 	u_int32_t	bt_cmap;
- * };
- * 
- * struct bt431reg {
- * 	u_int32_t	bt_lo;
- * 	u_int32_t	bt_hi;
- * 	u_int32_t	bt_ram;
- * 	u_int32_t	bt_ctl;
- * };
- */
-
-#define	BYTE(base, index)	*((u_int32_t *)(base) + (index))
-#define	HALF(base, index)	*((u_int32_t *)(base) + (index))
-
-#endif
-
-/* Bt463 hardware registers */
-#define	bt_lo	0
-#define	bt_hi	1
-#define	bt_reg	2
-#define	bt_cmap	3
-
-/* Bt431 hardware registers */
-#define	bt_ram	2
-#define	bt_ctl	3
-
-#define	SELECT463(vdac, regno) do {			\
-	BYTE(vdac, bt_lo) = (regno) & 0x00ff;		\
-	BYTE(vdac, bt_hi) = ((regno)& 0xff00) >> 8;	\
-	tc_wmb();					\
+#define	SELECT463(p,r) do {					\
+	REGWRITE32((p), bt_lo, 0xff & (r));			\
+	REGWRITE32((p), bt_hi, 0xff & ((r)>>8));		\
    } while (0)
 
 #define	TWIN(x)	   ((x) | ((x) << 8))
 #define	TWIN_LO(x) (twin = (x) & 0x00ff, (twin << 8) | twin)
 #define	TWIN_HI(x) (twin = (x) & 0xff00, twin | (twin >> 8))
 
-#define	SELECT431(curs, regno) do {	\
-	HALF(curs, bt_lo) = TWIN(regno);\
-	HALF(curs, bt_hi) = 0;		\
-	tc_wmb();			\
+#define	SELECT431(p,r) do {					\
+	REGWRITE32((p), bt_lo, TWIN(r));			\
+	REGWRITE32((p), bt_hi, 0);				\
    } while (0)
 
 struct hwcmap256 {
@@ -198,14 +176,14 @@ struct tfb_softc {
 #define	TX_CTL_SEG_ENA	0x10
 #define	TX_CTL_SEG	0x0f
 
-static int  tfbmatch __P((struct device *, struct cfdata *, void *));
-static void tfbattach __P((struct device *, struct device *, void *));
+static int  tfbmatch(struct device *, struct cfdata *, void *);
+static void tfbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tfb, sizeof(struct tfb_softc),
     tfbmatch, tfbattach, NULL, NULL);
 
-static void tfb_common_init __P((struct rasops_info *));
-static void tfb_cmap_init __P((struct tfb_softc *));
+static void tfb_common_init(struct rasops_info *);
+static void tfb_cmap_init(struct tfb_softc *);
 static struct rasops_info tfb_console_ri;
 static tc_addr_t tfb_consaddr;
 
@@ -224,14 +202,14 @@ static const struct wsscreen_list tfb_screenlist = {
 	sizeof(_tfb_scrlist) / sizeof(struct wsscreen_descr *), _tfb_scrlist
 };
 
-static int	tfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	tfbmmap __P((void *, off_t, int));
+static int	tfbioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	tfbmmap(void *, off_t, int);
 
-static int	tfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void	tfb_free_screen __P((void *, void *));
-static int	tfb_show_screen __P((void *, void *, int,
-				     void (*) (void *, int, int), void *));
+static int	tfb_alloc_screen(void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *);
+static void	tfb_free_screen(void *, void *);
+static int	tfb_show_screen(void *, void *, int,
+				     void (*) (void *, int, int), void *);
 
 static const struct wsdisplay_accessops tfb_accessops = {
 	tfbioctl,
@@ -242,15 +220,15 @@ static const struct wsdisplay_accessops tfb_accessops = {
 	0 /* load_font */
 };
 
-int  tfb_cnattach __P((tc_addr_t));
-static int  tfbintr __P((void *));
-static void tfbhwinit __P((caddr_t));
+int  tfb_cnattach(tc_addr_t);
+static int  tfbintr(void *);
+static void tfbhwinit(caddr_t);
 
-static int  get_cmap __P((struct tfb_softc *, struct wsdisplay_cmap *));
-static int  set_cmap __P((struct tfb_softc *, struct wsdisplay_cmap *));
-static int  set_cursor __P((struct tfb_softc *, struct wsdisplay_cursor *));
-static int  get_cursor __P((struct tfb_softc *, struct wsdisplay_cursor *));
-static void set_curpos __P((struct tfb_softc *, struct wsdisplay_curpos *));
+static int  get_cmap(struct tfb_softc *, struct wsdisplay_cmap *);
+static int  set_cmap(struct tfb_softc *, struct wsdisplay_cmap *);
+static int  set_cursor(struct tfb_softc *, struct wsdisplay_cursor *);
+static int  get_cursor(struct tfb_softc *, struct wsdisplay_cursor *);
+static void set_curpos(struct tfb_softc *, struct wsdisplay_curpos *);
 
 /* bit order reverse */
 static const u_int8_t flip[256] = {
@@ -562,7 +540,7 @@ tfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 
@@ -602,12 +580,15 @@ tfbintr(arg)
 	curs = base + TX_BT431_OFFSET;
 	v = sc->sc_changed;
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
+		int onoff;
+
+		onoff = (sc->sc_curenb) ? 0x4444 : 0x0404;
 		SELECT431(curs, BT431_REG_COMMAND);
-		HALF(curs, bt_ctl) = (sc->sc_curenb) ? 0x4444 : 0x0404;
+		REGWRITE32(curs, bt_ctl, onoff);
 	}
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
 		int x, y;
-		u_int16_t twin;
+		u_int32_t twin;
 
 		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
 		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
@@ -616,30 +597,30 @@ tfbintr(arg)
 		y += sc->sc_cursor.cc_magic.y;
 
 		SELECT431(curs, BT431_REG_CURSOR_X_LOW);
-		HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
-		HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
-		HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
-		HALF(curs, bt_ctl) = TWIN_HI(y);	tc_wmb();
+		REGWRITE32(curs, bt_ctl, TWIN_LO(x));
+		REGWRITE32(curs, bt_ctl, TWIN_HI(x));
+		REGWRITE32(curs, bt_ctl, TWIN_LO(y));
+		REGWRITE32(curs, bt_ctl, TWIN_HI(y));
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		SELECT463(vdac, BT463_IREG_CURSOR_COLOR_0);
-		BYTE(vdac, bt_reg) = cp[1]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
+		REGWRITE32(vdac, bt_reg, cp[1]);
+		REGWRITE32(vdac, bt_reg, cp[3]);
+		REGWRITE32(vdac, bt_reg, cp[5]);
 
-		BYTE(vdac, bt_reg) = cp[0]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[2]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[4]; tc_wmb();
+		REGWRITE32(vdac, bt_reg, cp[0]);
+		REGWRITE32(vdac, bt_reg, cp[2]);
+		REGWRITE32(vdac, bt_reg, cp[4]);
 
-		BYTE(vdac, bt_reg) = cp[1]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
+		REGWRITE32(vdac, bt_reg, cp[1]);
+		REGWRITE32(vdac, bt_reg, cp[3]);
+		REGWRITE32(vdac, bt_reg, cp[5]);
 
-		BYTE(vdac, bt_reg) = cp[1]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
+		REGWRITE32(vdac, bt_reg, cp[1]);
+		REGWRITE32(vdac, bt_reg, cp[3]);
+		REGWRITE32(vdac, bt_reg, cp[5]);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		u_int8_t *ip, *mp, img, msk;
@@ -654,23 +635,21 @@ tfbintr(arg)
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
 			/* pad right half 32 pixel when smaller than 33 */
 			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
-				HALF(curs, bt_ram) = 0;
-				tc_wmb();
+				REGWRITE32(curs, bt_ram, 0);
 			}
 			else {
+				int half;
 				img = *ip++;
 				msk = *mp++;
 				img &= msk;	/* cookie off image */
-				HALF(curs, bt_ram)
-				    = (flip[img] << 8) | flip[msk];
-				tc_wmb();
+				half = (flip[img] << 8) | flip[msk]; 
+				REGWRITE32(curs, bt_ram, half);
 			}
 			bcnt += 2;
 		}
 		/* pad unoccupied scan lines */
 		while (bcnt < CURSOR_MAX_SIZE * 16) {
-			HALF(curs, bt_ram) = 0;
-			tc_wmb();
+			REGWRITE32(curs, bt_ram, 0);
 			bcnt += 2;
 		}
 	}
@@ -680,9 +659,9 @@ tfbintr(arg)
 
 		SELECT463(vdac, BT463_IREG_CPALETTE_RAM);
 		for (index = 0; index < CMAP_SIZE; index++) {
-			BYTE(vdac, bt_cmap) = cm->r[index];
-			BYTE(vdac, bt_cmap) = cm->g[index];
-			BYTE(vdac, bt_cmap) = cm->b[index];
+			REGWRITE32(vdac, bt_cmap, cm->r[index]);
+			REGWRITE32(vdac, bt_cmap, cm->g[index]);
+			REGWRITE32(vdac, bt_cmap, cm->b[index]);
 		}
 	}
 	sc->sc_changed = 0;
@@ -703,19 +682,19 @@ tfbhwinit(tfbbase)
 	vdac = tfbbase + TX_BT463_OFFSET;
 	curs = tfbbase + TX_BT431_OFFSET;
 	SELECT463(vdac, BT463_IREG_COMMAND_0);
-	BYTE(vdac, bt_reg) = 0x40;	tc_wmb();	/* CMD 0 */
-	BYTE(vdac, bt_reg) = 0x46;	tc_wmb();	/* CMD 1 */
-	BYTE(vdac, bt_reg) = 0xc0;	tc_wmb();	/* CMD 2 */
-	BYTE(vdac, bt_reg) = 0;		tc_wmb();	/* !? 204 !? */
-	BYTE(vdac, bt_reg) = 0xff;	tc_wmb();	/* plane  0:7  */
-	BYTE(vdac, bt_reg) = 0xff;	tc_wmb();	/* plane  8:15 */
-	BYTE(vdac, bt_reg) = 0xff;	tc_wmb();	/* plane 16:23 */
-	BYTE(vdac, bt_reg) = 0xff;	tc_wmb();	/* plane 24:27 */
-	BYTE(vdac, bt_reg) = 0x00;	tc_wmb();	/* blink  0:7  */
-	BYTE(vdac, bt_reg) = 0x00;	tc_wmb();	/* blink  8:15 */
-	BYTE(vdac, bt_reg) = 0x00;	tc_wmb();	/* blink 16:23 */
-	BYTE(vdac, bt_reg) = 0x00;	tc_wmb();	/* blink 24:27 */
-	BYTE(vdac, bt_reg) = 0x00;	tc_wmb();
+	REGWRITE32(vdac, bt_reg, 0x40);	/* CMD 0 */
+	REGWRITE32(vdac, bt_reg, 0x46);	/* CMD 1 */
+	REGWRITE32(vdac, bt_reg, 0xc0);	/* CMD 2 */
+	REGWRITE32(vdac, bt_reg, 0);	/* !? 204 !? */
+	REGWRITE32(vdac, bt_reg, 0xff);	/* plane  0:7  */
+	REGWRITE32(vdac, bt_reg, 0xff);	/* plane  8:15 */
+	REGWRITE32(vdac, bt_reg, 0xff);	/* plane 16:23 */
+	REGWRITE32(vdac, bt_reg, 0xff);	/* plane 24:27 */
+	REGWRITE32(vdac, bt_reg, 0x00);	/* blink  0:7  */
+	REGWRITE32(vdac, bt_reg, 0x00);	/* blink  8:15 */
+	REGWRITE32(vdac, bt_reg, 0x00);	/* blink 16:23 */
+	REGWRITE32(vdac, bt_reg, 0x00);	/* blink 24:27 */
+	REGWRITE32(vdac, bt_reg, 0x00);
 
 #if 0 /* XXX ULTRIX does initialize 16 entry window type here XXX */
   {
@@ -735,37 +714,37 @@ tfbhwinit(tfbbase)
 	SELECT463(vdac, BT463_IREG_CPALETTE_RAM);
 	p = rasops_cmap;
 	for (i = 0; i < 256; i++, p += 3) {
-		BYTE(vdac, bt_cmap) = p[0];	tc_wmb();
-		BYTE(vdac, bt_cmap) = p[1];	tc_wmb();
-		BYTE(vdac, bt_cmap) = p[2];	tc_wmb();
+		REGWRITE32(vdac, bt_cmap, p[0]);
+		REGWRITE32(vdac, bt_cmap, p[1]);
+		REGWRITE32(vdac, bt_cmap, p[2]);
 	}
 
 	/* !? Eeeh !? */
 	SELECT463(vdac, 0x0100 /* BT463_IREG_CURSOR_COLOR_0 */);
 	for (i = 0; i < 256; i++) {
-		BYTE(vdac, bt_cmap) = i;	tc_wmb();
-		BYTE(vdac, bt_cmap) = i;	tc_wmb();
-		BYTE(vdac, bt_cmap) = i;	tc_wmb();
+		REGWRITE32(vdac, bt_cmap, i);
+		REGWRITE32(vdac, bt_cmap, i);
+		REGWRITE32(vdac, bt_cmap, i);
 	}
 
 	SELECT431(curs, BT431_REG_COMMAND);
-	HALF(curs, bt_ctl) = 0x0404;		tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* XLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* XHI */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* YLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* YHI */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* XWLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* XWHI */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* WYLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* WYLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* WWLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* WWHI */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* WHLO */	tc_wmb();
-	HALF(curs, bt_ctl) = 0; /* WHHI */	tc_wmb();
+	REGWRITE32(curs, bt_ctl, 0x0404);	
+	REGWRITE32(curs, bt_ctl, 0); /* XLO */
+	REGWRITE32(curs, bt_ctl, 0); /* XHI */
+	REGWRITE32(curs, bt_ctl, 0); /* YLO */
+	REGWRITE32(curs, bt_ctl, 0); /* YHI */
+	REGWRITE32(curs, bt_ctl, 0); /* XWLO */
+	REGWRITE32(curs, bt_ctl, 0); /* XWHI */
+	REGWRITE32(curs, bt_ctl, 0); /* WYLO */
+	REGWRITE32(curs, bt_ctl, 0); /* WYLO */
+	REGWRITE32(curs, bt_ctl, 0); /* WWLO */
+	REGWRITE32(curs, bt_ctl, 0); /* WWHI */
+	REGWRITE32(curs, bt_ctl, 0); /* WHLO */
+	REGWRITE32(curs, bt_ctl, 0); /* WHHI */
 
 	SELECT431(curs, BT431_REG_CRAM_BASE);
 	for (i = 0; i < 512; i++) {
-		HALF(curs, bt_ram) = 0;	tc_wmb();
+		REGWRITE32(curs, bt_ram, 0);
 	}
 }
 

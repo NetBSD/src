@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.35 2003/12/17 03:59:33 ad Exp $ */
+/* $NetBSD: xcfb.c,v 1.36 2003/12/20 07:10:01 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.35 2003/12/17 03:59:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.36 2003/12/20 07:10:01 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,17 +96,17 @@ struct xcfb_softc {
 	int sc_csr;			/* software copy of IMS332 CSR A */
 };
 
-static int  xcfbmatch __P((struct device *, struct cfdata *, void *));
-static void xcfbattach __P((struct device *, struct device *, void *));
+static int  xcfbmatch(struct device *, struct cfdata *, void *);
+static void xcfbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(xcfb, sizeof(struct xcfb_softc),
     xcfbmatch, xcfbattach, NULL, NULL);
 
 static tc_addr_t xcfb_consaddr;
 static struct rasops_info xcfb_console_ri;
-static void xcfb_common_init __P((struct rasops_info *));
-static void xcfbhwinit __P((caddr_t));
-int xcfb_cnattach __P((void));
+static void xcfb_common_init(struct rasops_info *);
+static void xcfbhwinit(caddr_t);
+int xcfb_cnattach(void);
 
 struct wsscreen_descr xcfb_stdscreen = {
 	"std", 0, 0,
@@ -123,14 +123,14 @@ static const struct wsscreen_list xcfb_screenlist = {
 	sizeof(_xcfb_scrlist) / sizeof(struct wsscreen_descr *), _xcfb_scrlist
 };
 
-static int	xcfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	xcfbmmap __P((void *, off_t, int));
+static int	xcfbioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	xcfbmmap(void *, off_t, int);
 
-static int	xcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				       void **, int *, int *, long *));
-static void	xcfb_free_screen __P((void *, void *));
-static int	xcfb_show_screen __P((void *, void *, int,
-				      void (*) (void *, int, int), void *));
+static int	xcfb_alloc_screen(void *, const struct wsscreen_descr *,
+				       void **, int *, int *, long *);
+static void	xcfb_free_screen(void *, void *);
+static int	xcfb_show_screen(void *, void *, int,
+				      void (*) (void *, int, int), void *);
 
 static const struct wsdisplay_accessops xcfb_accessops = {
 	xcfbioctl,
@@ -141,21 +141,21 @@ static const struct wsdisplay_accessops xcfb_accessops = {
 	0 /* load_font */
 };
 
-static int  xcfbintr __P((void *));
-static void xcfb_screenblank __P((struct xcfb_softc *));
-static void xcfb_cmap_init __P((struct xcfb_softc *));
-static int  set_cmap __P((struct xcfb_softc *, struct wsdisplay_cmap *));
-static int  get_cmap __P((struct xcfb_softc *, struct wsdisplay_cmap *));
-static int  set_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
-static int  get_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
-static void set_curpos __P((struct xcfb_softc *, struct wsdisplay_curpos *));
-static void ims332_loadcmap __P((struct hwcmap256 *));
-static void ims332_set_curpos __P((struct xcfb_softc *));
-static void ims332_load_curcmap __P((struct xcfb_softc *));
-static void ims332_load_curshape __P((struct xcfb_softc *));
-static void ims332_write_reg __P((int, u_int32_t));
+static int  xcfbintr(void *);
+static void xcfb_screenblank(struct xcfb_softc *);
+static void xcfb_cmap_init(struct xcfb_softc *);
+static int  set_cmap(struct xcfb_softc *, struct wsdisplay_cmap *);
+static int  get_cmap(struct xcfb_softc *, struct wsdisplay_cmap *);
+static int  set_cursor(struct xcfb_softc *, struct wsdisplay_cursor *);
+static int  get_cursor(struct xcfb_softc *, struct wsdisplay_cursor *);
+static void set_curpos(struct xcfb_softc *, struct wsdisplay_curpos *);
+static void ims332_loadcmap(struct hwcmap256 *);
+static void ims332_set_curpos(struct xcfb_softc *);
+static void ims332_load_curcmap(struct xcfb_softc *);
+static void ims332_load_curshape(struct xcfb_softc *);
+static void ims332_write_reg(int, u_int32_t);
 #if 0
-static u_int32_t ims332_read_reg __P((int));
+static u_int32_t ims332_read_reg(int);
 #endif
 
 extern long ioasic_base;	/* XXX */
@@ -345,10 +345,11 @@ static void
 xcfbhwinit(base)
 	caddr_t base;
 {
-	u_int32_t *csr, i;
+	volatile u_int32_t *csr;
+	u_int32_t i;
 	const u_int8_t *p;
 
-	csr = (u_int32_t *)(base + IOASIC_CSR);
+	csr = (volatile u_int32_t *)(base + IOASIC_CSR);
 	i = *csr;
 	i &= ~XINE_CSR_VDAC_ENABLE;
 	*csr = i;
@@ -535,7 +536,7 @@ xcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 
