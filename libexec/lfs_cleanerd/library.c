@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.29 2002/06/14 05:21:21 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.30 2002/11/29 17:15:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.29 2002/06/14 05:21:21 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.30 2002/11/29 17:15:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,9 +63,9 @@ __RCSID("$NetBSD: library.c,v 1.29 2002/06/14 05:21:21 perseant Exp $");
 #include "clean.h"
 
 void	 add_blocks(FS_INFO *, BLOCK_INFO_15 *, int *, SEGSUM *, caddr_t,
-	     daddr_t, daddr_t);
+    daddr_t, daddr_t);
 void	 add_inodes(FS_INFO *, BLOCK_INFO_15 *, int *, SEGSUM *, caddr_t,
-	     daddr_t);
+    daddr_t);
 int	 bi_compare(const void *, const void *);
 int	 bi_toss(const void *, const void *, const void *);
 void	 get_ifile(FS_INFO *, int);
@@ -76,8 +76,8 @@ int      pseg_size(daddr_t, FS_INFO *, SEGSUM *);
 extern int debug;
 extern u_long cksum(void *, size_t);	/* XXX */
 
-static int ifile_fd;
-static int dev_fd;
+static int ifile_fd = -1;
+static int dev_fd = -1;
 
 /*
  * This function will get information on a a filesystem which matches
@@ -89,30 +89,25 @@ int
 fs_getmntinfo(struct statfs **buf, char *name, const char *type)
 {
 	/* allocate space for the filesystem info */
-	*buf = (struct statfs *)malloc(sizeof(struct statfs));
-	if (*buf == NULL)
+	if ((*buf = malloc(sizeof(struct statfs))) == NULL)
 		return 0;
 
 	/* grab the filesystem info */
-        if (ifile_fd <= 0) {
-		if (statfs(name, *buf) < 0) {
-			free(*buf);
-			return 0;
-		}
-        } else if(fstatfs(ifile_fd, *buf) < 0) {
-		free(*buf);
-		return 0;
-        }
+        if (ifile_fd == -1) {
+		if (statfs(name, *buf) == -1)
+			goto bad;
+        } else if(fstatfs(ifile_fd, *buf) == -1)
+		goto bad;
 
 	/* check to see if it's the one we want */
 	if (strncmp(type, (*buf)->f_fstypename, MFSNAMELEN) ||
-	    strncmp(name, (*buf)->f_mntonname, MNAMELEN)) {
-		/* "this is not the filesystem you're looking for" */
-		free(*buf);
-		return 0;
-	}
+	    strncmp(name, (*buf)->f_mntonname, MNAMELEN))
+		goto bad;
 
 	return 1;
+bad:
+	free(*buf);
+	return 0;
 }
 
 /*
@@ -120,21 +115,20 @@ fs_getmntinfo(struct statfs **buf, char *name, const char *type)
  * Returns an pointer to an FS_INFO structure, NULL on error.
  */
 FS_INFO *
-get_fs_info (struct statfs *lstatfsp, int use_mmap)
+get_fs_info(struct statfs *lstatfsp, int use_mmap)
 {
 	FS_INFO	*fsp;
 
-	fsp = (FS_INFO *)malloc(sizeof(FS_INFO));
-	if (fsp == NULL)
+	if ((fsp = malloc(sizeof(FS_INFO))) == NULL)
 		return NULL;
 	memset(fsp, 0, sizeof(FS_INFO));
 
 	fsp->fi_statfsp = lstatfsp;
-	if (get_superblock (fsp, &fsp->fi_lfs)) {
-		syslog(LOG_ERR, "Exiting: get_fs_info: get_superblock failed: %m");
+	if (get_superblock(fsp, &fsp->fi_lfs)) {
+		syslog(LOG_ERR, "get_fs_info: get_superblock failed (%m)");
                 exit(1);
         }
-	get_ifile (fsp, use_mmap);
+	get_ifile(fsp, use_mmap);
 	return (fsp);
 }
 
@@ -146,17 +140,36 @@ get_fs_info (struct statfs *lstatfsp, int use_mmap)
 void
 reread_fs_info(FS_INFO *fsp, int use_mmap)
 {
-	if (ifile_fd > 0) {
-		if (fstatfs(ifile_fd, fsp->fi_statfsp)) {
-			syslog(LOG_ERR, "Exiting: reread_fs_info: fstatfs failed: %m");
+	if (ifile_fd != -1) {
+		if (fstatfs(ifile_fd, fsp->fi_statfsp) == -1) {
+			syslog(LOG_ERR, "reread_fs_info: fstatfs failed (%m)");
                 	exit(1);
 		}
 	} else if (statfs(fsp->fi_statfsp->f_mntonname, fsp->fi_statfsp)) {
-		syslog(LOG_ERR, "Exiting: reread_fs_info: statfs failed: %m");
+		syslog(LOG_ERR, "reread_fs_info: statfs `%s' failed (%m)",
+		    fsp->fi_statfsp->f_mntonname);
                 exit(1);
         }
-	get_ifile (fsp, use_mmap);
+	get_ifile(fsp, use_mmap);
 }
+
+static int
+getdevfd(FS_INFO *fsp)
+{
+	char rdev[MNAMELEN];
+
+	if (dev_fd != -1)
+		return dev_fd;
+
+	(void)snprintf(rdev, sizeof(rdev), "/dev/r/%s",
+	    fsp->fi_statfsp->f_mntfromname + 5);
+	if ((dev_fd = open(rdev, O_RDONLY)) == -1) {
+		syslog(LOG_ERR, "Cannot open `%s' (%m)", rdev);
+		exit(1);
+	}
+	return dev_fd;
+}
+
 
 /*
  * Read a block from disk.
@@ -164,30 +177,19 @@ reread_fs_info(FS_INFO *fsp, int use_mmap)
 int
 get_rawblock(FS_INFO *fsp, char *buf, size_t size, ufs_daddr_t daddr)
 {
-	char rdev[MNAMELEN];
-
-	if (dev_fd <= 0) {
-		strcpy(rdev, "/dev/r"); /* XXX */
-		strcat(rdev + 6, fsp->fi_statfsp->f_mntfromname + 5);
-		dev_fd = open(rdev, O_RDONLY);
-	}
-	if (dev_fd < 0) {
-		syslog(LOG_ERR, "%s", rdev);
-		exit(1);
-	}
-	return pread(dev_fd, buf, size, fsbtob(&fsp->fi_lfs, (off_t)daddr));
+	return pread(getdevfd(fsp), buf, size, fsbtob(&fsp->fi_lfs,
+	    (off_t)daddr));
 }
 
 /*
  * Read an inode from disk.
  */
 struct dinode *
-get_dinode (FS_INFO *fsp, ino_t ino)
+get_dinode(FS_INFO *fsp, ino_t ino)
 {
         static struct dinode dino;
         struct dinode *dip, *dib;
         struct lfs *lfsp;
-	char rdev[MNAMELEN];
 	BLOCK_INFO_15 bi;
 
         lfsp = &fsp->fi_lfs;
@@ -206,23 +208,20 @@ get_dinode (FS_INFO *fsp, ino_t ino)
 	if (bi.bi_daddr <= 0)
 		return NULL;
 
-	if (dev_fd <= 0) {
-		strcpy(rdev, "/dev/r"); /* XXX */
-		strcat(rdev + 6, fsp->fi_statfsp->f_mntfromname + 5);
-		dev_fd = open(rdev, O_RDONLY);
+	lseek(getdevfd(fsp), (off_t)0, SEEK_SET);
+	if ((dib = malloc(lfsp->lfs_ibsize)) == NULL) {
+		syslog(LOG_WARNING, "lfs_bmapv: %m");
+		return NULL;
 	}
-	if (dev_fd < 0) {
-		syslog(LOG_ERR, "%s", rdev);
-		exit(1);
-	}
-	dib = (struct dinode *)malloc(lfsp->lfs_ibsize);
+
 	pread(dev_fd, dib, lfsp->lfs_ibsize, fsbtob(lfsp, (off_t)bi.bi_daddr));
 	for (dip = dib; dip != dib + lfsp->lfs_inopb; ++dip)
 		if (dip->di_u.inumber == ino)
 			break;
 	if (dip == dib + lfsp->lfs_inopb) {
 		free(dib);
-		syslog(LOG_WARNING, "dinode %d not found at fsb 0x%x", ino, bi.bi_daddr);
+		syslog(LOG_WARNING, "dinode %d not found at fsb 0x%x",
+		    ino, bi.bi_daddr);
 		return NULL;
 	}
         dino = *dip; /* structure copy */
@@ -235,34 +234,22 @@ get_dinode (FS_INFO *fsp, ino_t ino)
  * Gets the superblock from disk (possibly in face of errors)
  */
 int
-get_superblock (FS_INFO *fsp, struct lfs *sbp)
+get_superblock(FS_INFO *fsp, struct lfs *sbp)
 {
-	char mntfromname[MNAMELEN+1];
 	char buf[LFS_SBPAD];
 	static off_t sboff = LFS_LABELPAD;
 
-	strcpy(mntfromname, "/dev/r");
-	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);
-
-	if(dev_fd <= 0) {
-		if ((dev_fd = open(mntfromname, O_RDONLY, (mode_t)0)) < 0) {
-			syslog(LOG_WARNING,"get_superblock: bad open: %m");
-			return (-1);
-		}
-	} else
-		lseek(dev_fd, 0, SEEK_SET);
+	lseek(getdevfd(fsp), 0, SEEK_SET);
 		
-	do {
+	for (;;) {
 		get(dev_fd, sboff, buf, LFS_SBPAD);
 		memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
 		if (sboff == LFS_LABELPAD && fsbtob(sbp, 1) > LFS_LABELPAD)
 			sboff = fsbtob(sbp, (off_t)sbp->lfs_sboffs[0]);
 		else
 			break;
-	} while (1);
+	}
 	
-	/* close (fid); */
-
 	/* Compatibility */
 	if (sbp->lfs_version < 2) {
 		sbp->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
@@ -280,7 +267,7 @@ get_superblock (FS_INFO *fsp, struct lfs *sbp)
  * fatal error on failure.
  */
 void
-get_ifile (FS_INFO *fsp, int use_mmap)
+get_ifile(FS_INFO *fsp, int use_mmap)
 {
 	struct stat file_stat;
 	struct statfs statfsbuf;
@@ -294,24 +281,27 @@ get_ifile (FS_INFO *fsp, int use_mmap)
 	strcat(strcat(strcpy(ifile_name, fsp->fi_statfsp->f_mntonname), "/"),
 	    IFILE_NAME);
 
-	if(ifile_fd <= 0) {
+	if(ifile_fd == -1) {
 		/* XXX KS - Do we ever *write* to the ifile? */
-		if ((ifile_fd = open(ifile_name, O_RDONLY, (mode_t)0)) < 0) {
-			syslog(LOG_ERR, "Exiting: get_ifile: bad open: %m");
+		if ((ifile_fd = open(ifile_name, O_RDONLY)) == -1) {
+			syslog(LOG_ERR, "get_ifile: cannot open `%s': %m",
+			    ifile_name);
 			exit(1);
 		}
 	} else
-		lseek(ifile_fd, 0, SEEK_SET);
+		lseek(ifile_fd, (off_t)0, SEEK_SET);
 
-	if (fstat (ifile_fd, &file_stat)) {
+	if (fstat(ifile_fd, &file_stat) == -1) {
 		/* If the fs was unmounted, don't complain */
-		statfs(fsp->fi_statfsp->f_mntonname, &statfsbuf);
-		if(memcmp(&statfsbuf.f_fsid,&fsp->fi_statfsp->f_fsid,
-			  sizeof(statfsbuf.f_fsid))!=0)
-		{
-			/* Filesystem still mounted, this error is real */
-			syslog(LOG_ERR, "Exiting: get_ifile: fstat failed: %m");
-                	exit(1);
+		if (statfs(fsp->fi_statfsp->f_mntonname, &statfsbuf) != -1) {
+			if(memcmp(&statfsbuf.f_fsid, &fsp->fi_statfsp->f_fsid,
+			    sizeof(statfsbuf.f_fsid)) != 0) {
+				/* Filesystem still mounted, 
+				 * this error is real
+				 */
+				syslog(LOG_ERR, "get_ifile: fstat failed: %m");
+				exit(1);
+			}
 		}
 		exit(0);
         }
@@ -328,37 +318,37 @@ get_ifile (FS_INFO *fsp, int use_mmap)
 		if (fsp->fi_cip)
                     munmap((caddr_t)fsp->fi_cip, fsp->fi_ifile_length);
                 /* XXX KS - Do we ever *write* to the ifile? */
-		ifp = mmap ((caddr_t)0, file_stat.st_size,
+		ifp = mmap((caddr_t)0, file_stat.st_size,
 		    PROT_READ, MAP_FILE|MAP_PRIVATE, ifile_fd, (off_t)0);
-		if (ifp ==  (caddr_t)(-1)) {
-                    syslog(LOG_ERR, "Exiting: get_ifile: mmap failed: %m");
+		if (ifp == (caddr_t)(-1)) {
+                    syslog(LOG_ERR, "get_ifile: mmap failed (%m)");
                     exit(1);
                 }
 	} else {
 		if (fsp->fi_cip)
 			free(fsp->fi_cip);
-		if (!(ifp = malloc (file_stat.st_size))) {
-			syslog(LOG_ERR, "Exiting: get_ifile: malloc failed: %m");
+		if ((ifp = malloc(file_stat.st_size)) == NULL) {
+			syslog(LOG_ERR, "get_ifile: malloc failed (%m)");
                         exit(1);
                 }
 redo_read:
-		count = read (ifile_fd, ifp, (size_t) file_stat.st_size);
+		count = read(ifile_fd, ifp, (size_t)file_stat.st_size);
 
 		if (count < 0) {
-			syslog(LOG_ERR, "Exiting: get_ifile: bad ifile read: %m");
+			syslog(LOG_ERR, "get_ifile: bad ifile read (%m)");
                         exit(1);
                 }
 		else if (count < file_stat.st_size) {
-			syslog(LOG_WARNING, "get_ifile: %m");
+			syslog(LOG_WARNING, "get_ifile (%m)");
 			if (lseek(ifile_fd, 0, SEEK_SET) < 0) {
-                                syslog(LOG_ERR, "Exiting: get_ifile: bad ifile lseek: %m");
+                                syslog(LOG_ERR,
+				    "get_ifile: bad ifile lseek (%m)");
                                 exit(1);
                         }
 			goto redo_read;
 		}
 	}
 	fsp->fi_ifile_length = file_stat.st_size;
-	/* close (fid); */
 
 	fsp->fi_cip = (CLEANERINFO *)ifp;
 	fsp->fi_segusep = (SEGUSE *)(ifp + CLEANSIZE(fsp));
@@ -374,7 +364,7 @@ redo_read:
 	    - fsp->fi_lfs.lfs_cleansz - fsp->fi_lfs.lfs_segtabsz) *
 	    fsp->fi_lfs.lfs_ifpb;
 
-	free (ifile_name);
+	free(ifile_name);
 }
 
 
@@ -479,7 +469,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 		}
 		if (sumsize > lfsp->lfs_sumsize) {
                         syslog(LOG_ERR,
-			    "Exiting: Segment %d summary block too big: %d\n",
+			    "Segment %d summary block too big: %d",
 			    seg, sumsize);
 			exit(1);
 		}
@@ -487,7 +477,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 
 		if (*bcount + nblocks + sp->ss_ninos > nelem) {
 			nelem = *bcount + nblocks + sp->ss_ninos;
-			bip = realloc (bip, nelem * sizeof(BLOCK_INFO_15));
+			bip = realloc(bip, nelem * sizeof(BLOCK_INFO_15));
 			if (!bip)
 				goto err0;
 		}
@@ -529,8 +519,8 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
  * blocks or inodes from files with new version numbers.
  */
 void
-add_blocks (FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
-	    caddr_t seg_buf, daddr_t segaddr, daddr_t psegaddr)
+add_blocks(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
+    caddr_t seg_buf, daddr_t segaddr, daddr_t psegaddr)
 {
 	IFILE	*ifp;
 	FINFO	*fip;
@@ -621,7 +611,7 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
  * actually added.
  */
 void
-add_inodes (FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
+add_inodes(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
 	    caddr_t seg_buf, daddr_t seg_addr)
 {
 	struct dinode *di = NULL;	/* XXX gcc */
@@ -685,7 +675,7 @@ add_inodes (FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
  * the partial as well as whether or not the checksum is valid.
  */
 int
-pseg_valid (FS_INFO *fsp, SEGSUM *ssp, daddr_t addr)
+pseg_valid(FS_INFO *fsp, SEGSUM *ssp, daddr_t addr)
 {
 	int nblocks;
 #if 0
@@ -726,13 +716,12 @@ pseg_valid (FS_INFO *fsp, SEGSUM *ssp, daddr_t addr)
  * read a segment into a memory buffer
  */
 int
-mmap_segment (FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
+mmap_segment(FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
 {
 	struct lfs *lfsp;
 	daddr_t seg_daddr;	/* base disk address of segment */
 	off_t seg_byte;
 	size_t ssize;
-	char mntfromname[MNAMELEN+2];
 
 	lfsp = &fsp->fi_lfs;
 
@@ -741,19 +730,10 @@ mmap_segment (FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
 	seg_byte = fsbtob(lfsp, (off_t)seg_daddr);
 	ssize = seg_size(lfsp);
 
-	strcpy(mntfromname, "/dev/r");
-	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);
-
-	if(dev_fd <= 0) {
-		if ((dev_fd = open(mntfromname, O_RDONLY, (mode_t)0)) < 0) {
-			syslog(LOG_WARNING,"mmap_segment: bad open: %m");
-			return (-1);
-		}
-	} else
-		lseek(dev_fd, 0, SEEK_SET);
+	lseek(getdevfd(fsp), 0, SEEK_SET);
 
 	if (use_mmap) {
-		*segbuf = mmap ((caddr_t)0, seg_size(lfsp), PROT_READ,
+		*segbuf = mmap((caddr_t)0, seg_size(lfsp), PROT_READ,
 		    MAP_FILE|MAP_SHARED, dev_fd, seg_byte);
 		if (*(long *)segbuf < 0) {
                         syslog(LOG_WARNING,"mmap_segment: mmap failed: %m");
@@ -772,12 +752,12 @@ mmap_segment (FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
 		}
 
 		/* read the segment data into the buffer */
-		if (lseek (dev_fd, seg_byte, SEEK_SET) != seg_byte) {
+		if (lseek(dev_fd, seg_byte, SEEK_SET) != seg_byte) {
 			syslog(LOG_WARNING,"mmap_segment: bad lseek: %m");
 			free(*segbuf);
 			return (-1);
 		}
-		if (read (dev_fd, *segbuf, ssize) != ssize) {
+		if (read(dev_fd, *segbuf, ssize) != ssize) {
 			syslog(LOG_WARNING,"mmap_segment: bad read: %m");
 			free(*segbuf);
 			return (-1);
@@ -789,19 +769,19 @@ mmap_segment (FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
 }
 
 void
-munmap_segment (FS_INFO *fsp, caddr_t seg_buf, int use_mmap)
+munmap_segment(FS_INFO *fsp, caddr_t seg_buf, int use_mmap)
 {
 	if (use_mmap)
-		munmap (seg_buf, seg_size(&fsp->fi_lfs));
+		munmap(seg_buf, seg_size(&fsp->fi_lfs));
 	else
-		free (seg_buf);
+		free(seg_buf);
 }
 
 /*
  * USEFUL DEBUGGING TOOLS:
  */
 void
-print_SEGSUM (struct lfs *lfsp, SEGSUM *p, daddr_t addr)
+print_SEGSUM(struct lfs *lfsp, SEGSUM *p, daddr_t addr)
 {
 	if (p)
 		(void) dump_summary(lfsp, p, DUMP_ALL, NULL, addr);
