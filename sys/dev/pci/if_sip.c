@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.76 2003/01/17 08:11:50 itojun Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.77 2003/03/13 13:57:01 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.76 2003/01/17 08:11:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.77 2003/03/13 13:57:01 briggs Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -594,6 +594,9 @@ SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
 
 		/* Netgear GA-621 */
 		{ 0x1385,	0x621a },
+
+		/* SMC EZ Card */
+		{ 0x10b8,	0x9462 },
 
 		{ 0, 0}
 	};
