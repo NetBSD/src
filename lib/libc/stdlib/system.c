@@ -52,7 +52,7 @@ system(command)
 	pid_t pid;
 	int omask;
 	sig_t intsave, quitsave;
-	char **argp = {"sh", "-c", command, NULL};
+	char *argp[] = {"sh", "-c", command, NULL};
 
 	if (!command)		/* just checking... */
 		return(1);
