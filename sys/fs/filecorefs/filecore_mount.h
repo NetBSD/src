@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.2 2003/08/07 16:31:37 agc Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.3 2003/10/03 16:34:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 The Regents of the University of California.
@@ -85,4 +85,4 @@ struct filecore_args {
 
 #define FILECOREMNT_BITS "\177\20" \
     "b\00root\0b\01ownaccess\0b\02allaccess\0b\03ownread\0" \
-    "b\04useuid\0b\05filetype"
+    "b\04useuid\0b\05filetype\0"

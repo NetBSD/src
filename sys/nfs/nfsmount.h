@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.28 2003/08/07 16:33:56 agc Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.29 2003/10/03 16:34:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -91,7 +91,7 @@ struct nfs_args {
     "b\04retrans\0b\05maxgrps\0b\06intr\0b\07noconn\0" \
     "b\10nqnfs\0b\11nfsv3\0b\12kerb\0b\13dumbtimr\0" \
     "b\14leaseterm\0b\15readahead\0b\16deadthresh\0b\17resvport\0" \
-    "b\20rdirplus\0b\21readdirsize\0b\22xlatecookie"
+    "b\20rdirplus\0b\21readdirsize\0b\22xlatecookie\0"
 
 /*
  * NFS internal flags (nm_iflag) */

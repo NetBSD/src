@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.4 2003/09/07 22:09:11 itojun Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.5 2003/10/03 16:34:31 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -85,7 +85,7 @@ struct msdosfs_args {
 
 #define MSDOSFSMNT_BITS "\177\20" \
     "b\00shortname\0b\01longname\0b\02nowin95\0b\03gemdosfs\0b\04mntversioned\0" \
-    "b\037ronly\0b\036waitonfat\0b\035fatmirror"
+    "b\037ronly\0b\036waitonfat\0b\035fatmirror\0"
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
