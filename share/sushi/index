@@ -1,7 +1,7 @@
-# $NetBSD: index,v 1.5 2001/04/26 02:26:16 garbled Exp $
+# $NetBSD: index,v 1.6 2004/03/09 20:06:42 garbled Exp $
 install		install	Software Installation and Maintenance
 system		system	System Maintenance
-users		users	Security and Users
+users		users	Users and Groups
 procs		procs	Processes and Daemons
 network		network	Network related configuration
 BLANK		BLANK	BLANK

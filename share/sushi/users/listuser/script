@@ -1,9 +1,10 @@
 #!/bin/sh
-# $NetBSD: script,v 1.1 2001/01/05 02:07:01 garbled Exp $
+# $NetBSD: script,v 1.2 2004/03/09 20:06:42 garbled Exp $
 cat /etc/passwd | awk ' \
 	BEGIN { \
 	 	FS=":"; \
-		print "Username    Real name			      UID" \
+		print "Username    Real name	\
+				UID" \
 	} \
 	{ \
 		gsub("&", $1); \
@@ -11,7 +12,7 @@ cat /etc/passwd | awk ' \
 		for (x=length($1); x < 12; x++ ) \
 			printf(" "); \
 		printf("%s", $5); \
-		for (x=length($5); x < 30; x++ ) \
+		for (x=length($5); x < 40; x++ ) \
 			printf(" "); \
 		printf("%7d\n", $3); \
 	}'
