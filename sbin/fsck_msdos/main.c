@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2005/01/13 15:22:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -54,19 +54,16 @@ int alwaysyes;		/* assume "yes" for all questions */
 int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
-static void usage __P((void));
-int main __P((int, char **));
+static void usage(void);
 
 static void
-usage()
+usage(void)
 {
 	errexit("usage: fsck_msdos [-fnpy] filesystem ... \n");
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ret = 0, erg;
 	int ch;
