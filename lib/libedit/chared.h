@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.7 2002/02/03 23:37:53 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.8 2002/03/18 16:00:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

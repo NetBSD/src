@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.10 2001/01/10 07:45:41 jdolecek Exp $	*/
+/*	$NetBSD: common.c,v 1.11 2002/03/18 16:00:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,19 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.10 2001/01/10 07:45:41 jdolecek Exp $");
+__RCSID("$NetBSD: common.c,v 1.11 2002/03/18 16:00:51 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * common.c: Common Editor functions
  */
-#include "sys.h"
 #include "el.h"
 
 /* ed_end_of_file():

@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.10 2001/10/09 13:50:30 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.11 2002/03/18 16:00:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -134,7 +134,7 @@ struct editline {
 	el_read_t	  el_read;	/* Character reading stuff	*/
 };
 
-protected int	el_editmode(EditLine *, int, char **);
+protected int	el_editmode(EditLine *, int, const char **);
 
 #ifdef DEBUG
 #define EL_ABORT(a)	(void) (fprintf(el->el_errfile, "%s, %d: ", \

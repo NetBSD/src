@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.15 2001/05/17 01:02:17 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.16 2002/03/18 16:01:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,19 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.15 2001/05/17 01:02:17 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.16 2002/03/18 16:01:01 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * tty.c: tty interface stuff
  */
-#include "sys.h"
 #include "tty.h"
 #include "el.h"
 
@@ -61,7 +60,7 @@ typedef struct ttymodes_t {
 typedef struct ttymap_t {
 	int nch, och;		/* Internal and termio rep of chars */
 	el_action_t bind[3];	/* emacs, vi, and vi-cmd */
-}        ttymap_t;
+} ttymap_t;
 
 
 private const ttyperm_t ttyperm = {
@@ -1042,13 +1041,13 @@ tty_noquotemode(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-tty_stty(EditLine *el, int argc, char **argv)
+tty_stty(EditLine *el, int argc, const char **argv)
 {
 	const ttymodes_t *m;
-	char x, *d;
+	char x;
 	int aflag = 0;
-	char *s;
-	char *name;
+	const char *s, *d;
+	const char *name;
 	int z = EX_IO;
 
 	if (argv == NULL)
