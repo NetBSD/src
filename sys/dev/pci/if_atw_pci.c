@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.1 2003/07/06 22:58:10 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.2 2003/10/13 08:22:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.1 2003/07/06 22:58:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.2 2003/10/13 08:22:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -62,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.1 2003/07/06 22:58:10 dyoung Exp $"
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_var.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -135,7 +137,7 @@ atw_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (atw_pci_lookup(pa) != NULL)
-		return (1);	/* beat if_de.c */
+		return (1);
 
 	return (0);
 }
