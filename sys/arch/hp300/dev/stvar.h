@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.5 1997/03/31 07:40:09 scottr Exp $	*/
+/*	$NetBSD: stvar.h,v 1.6 1997/04/02 22:37:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -220,9 +220,4 @@ void	stintr __P((void *, int));
 
 void	stxsense __P((int, int, int, struct st_softc *));
 void	prtkey __P((struct st_softc *));
-#ifdef DEBUG
-void	dumpxsense __P((struct st_xsense *));
-void	ptrmodsel __P((struct mode_select_data *, int));
-void	ptrmodstat __P((struct mode_sense *));
-#endif /* DEBUG */
 #endif /* _KERNEL */

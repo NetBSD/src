@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.33 1997/04/01 19:29:09 scottr Exp $	*/
+/*	$NetBSD: hil.c,v 1.34 1997/04/02 22:37:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,7 +144,7 @@ hilsoftinit(unit, hilbase)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilsoftinit(%d, %x)\n", unit, hilbase);
+		printf("hilsoftinit(%d, %p)\n", unit, hilbase);
 #endif
 	/*
 	 * Initialize loop information
@@ -190,7 +190,7 @@ hilinit(unit, hilbase)
   	struct hil_softc *hilp = &hil_softc[unit];
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilinit(%d, %x)\n", unit, hilbase);
+		printf("hilinit(%d, %p)\n", unit, hilbase);
 #endif
 	/*
 	 * Initialize software (if not already done).
@@ -443,7 +443,7 @@ hilioctl(dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilioctl(%d): dev %x cmd %x\n",
+		printf("hilioctl(%d): dev %x cmd %lx\n",
 		       p->p_pid, device, cmd);
 #endif
 
@@ -1059,7 +1059,7 @@ hilqalloc(hilp, qip, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilqalloc(%d): addr %x\n", p->p_pid, qip->addr);
+		printf("hilqalloc(%d): addr %p\n", p->p_pid, qip->addr);
 #endif
 	return(EINVAL);
 }
@@ -1480,7 +1480,7 @@ hilreset(hilp)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilreset(%x)\n", hilp);
+		printf("hilreset(%p)\n", hilp);
 #endif
 	/*
 	 * Initialize the loop: reconfigure, don't report errors,
@@ -1535,7 +1535,7 @@ hiliddev(hilp)
 
 #ifdef DEBUG
 	if (hildebug & HDB_IDMODULE)
-		printf("hiliddev(%x): max %d, looking for idmodule...",
+		printf("hiliddev(%p): max %d, looking for idmodule...",
 		       hilp, hilp->hl_maxdev);
 #endif
 	for (i = 1; i <= hilp->hl_maxdev; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.36 1997/03/31 07:29:49 scottr Exp $	*/
+/*	$NetBSD: dcm.c,v 1.37 1997/04/02 22:37:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -911,7 +911,7 @@ dcmioctl(dev, cmd, data, flag, p)
  
 #ifdef DEBUG
 	if (dcmdebug & DDB_IOCTL)
-		printf("%s port %d: dcmioctl: cmd %x data %x flag %x\n",
+		printf("%s port %d: dcmioctl: cmd %lx data %x flag %x\n",
 		       sc->sc_dev.dv_xname, port, cmd, *data, flag);
 #endif
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -1198,7 +1198,7 @@ again:
 	}
 #ifdef DEBUG
 	if (dcmdebug & DDB_INTR)
-		printf("%s port %d: dcmstart(%d): head %x tail %x outqcc %d\n",
+		printf("%s port %d: dcmstart: head %x tail %x outqcc %d\n",
 		    sc->sc_dev.dv_xname, port, head, tail, tp->t_outq.c_cc);
 #endif
 out:
