@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.125 2004/01/18 16:25:59 dsl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.126 2004/01/18 22:34:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.125 2004/01/18 16:25:59 dsl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.126 2004/01/18 22:34:22 lukem Exp $");
 #endif
 #endif	/* not lint */
 
@@ -136,10 +136,6 @@ static int	debug;
 
 #ifdef USE_MBR
 static struct mbr_partition	*dosdp;	/* i386 DOS partition, if found */
-static int			 mbrpt_nobsd;	/*
-						 * MBR partition table exists,
-						 * but no BSD partition
-						 */
 static struct mbr_partition	*readmbr(int);
 #endif	/* USE_MBR */
 
@@ -496,9 +492,6 @@ writelabel(int f, char *boot, struct disklabel *lp)
 			}
 		        sectoffset = (off_t)pp->p_offset * lp->d_secsize;
 		} else {
-			if (mbrpt_nobsd)
-				confirm("Erase the previous contents"
-					" of the disk");
 			sectoffset = 0;
 		}
 #endif	/* USE_MBR */
@@ -712,14 +705,8 @@ readmbr(int f)
 		}
 	}
 
-	if (netbsd_part.mbrp_type == 0) {
-		/*
-		 * Table doesn't contain a partition for us. Keep a flag
-		 * remembering us to warn before it is destroyed.
-		 */
-		mbrpt_nobsd = 1;
+	if (netbsd_part.mbrp_type == 0)
 		return 0;
-	}
 
 	netbsd_part.mbrp_start += this_ext;
 	return &netbsd_part;
