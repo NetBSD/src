@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 1997/07/20 19:40:19 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 1997/07/20 20:48:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -376,7 +376,7 @@ extern void ast __P((unsigned pc));
  /*
   *  stack trace code, also useful to DDB one day
   */
-#if defined(DEBUG) || defined(MDB) || defined(DDB)
+#if defined(DEBUG) || defined(DDB)
 int	kdbpeek __P((vm_offset_t addr));
 extern void stacktrace __P((void)); /*XXX*/
 extern void logstacktrace __P((void)); /*XXX*/
@@ -389,11 +389,8 @@ extern void setsoftclock __P((void));
 extern int main __P((void*));
 extern void am7990_meminit __P((void*)); /* XXX */
 extern void savectx __P((struct user *));
-#endif	/* DEBUG || MDB */
+#endif	/* DEBUG || DDB */
 
-#ifdef MDB
-extern int mdb __P((int type, struct frame *frame));
-#endif
 
 /*
  * Index into intrcnt[], which is defined in locore
@@ -1340,7 +1337,7 @@ mips_singlestep(p)
         return 0;
 }
 
-#if defined(DEBUG) || defined(MDB) || defined(DDB)
+#if defined(DEBUG) || defined(DDB)
 int
 kdbpeek(addr)
 	vm_offset_t addr;
