@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.11 1994/02/20 23:24:03 chopps Exp $
+ * $Id: sun_misc.c,v 1.12 1994/03/03 14:08:25 deraadt Exp $
  */
 
 /*
@@ -76,6 +76,7 @@
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
+#include <sys/unistd.h>
 
 #include <netinet/in.h>
 
@@ -927,4 +928,51 @@ sun_mknod(p, uap, retval)
 		return mkfifo(p, uap, retval);
 
 	return mknod(p, uap, retval);
+}
+
+#define SUN_SC_ARG_MAX		1
+#define SUN_SC_CHILD_MAX	2
+#define SUN_SC_CLK_TCK		3
+#define SUN_SC_NGROUPS_MAX	4
+#define SUN_SC_OPEN_MAX		5
+#define SUN_SC_JOB_CONTROL	6
+#define SUN_SC_SAVED_IDS	7
+#define SUN_SC_VERSION		8
+
+struct sun_sysconf_args {
+	int	name;
+};
+
+sun_sysconf(p, uap, retval)
+	struct proc *p;
+	struct sun_sysconf_args *uap;
+	int *retval;
+{
+	extern int maxfdescs;
+
+	switch(uap->name) {
+	case SUN_SC_ARG_MAX:
+		*retval = ARG_MAX;
+	case SUN_SC_CHILD_MAX:
+		*retval = maxproc;
+	case SUN_SC_CLK_TCK:
+		*retval = 60;		/* should this be `hz', ie. 100? */
+	case SUN_SC_NGROUPS_MAX:
+		*retval = NGROUPS_MAX;
+	case SUN_SC_OPEN_MAX:
+		*retval = maxfdescs;
+	case SUN_SC_JOB_CONTROL:
+		*retval = 1;
+	case SUN_SC_SAVED_IDS:
+#ifdef _POSIX_SAVED_IDS
+		*retval = 1;
+#else
+		*retval = 0;
+#endif
+	case SUN_SC_VERSION:
+		*retval = 198808;
+	default:
+		return EINVAL;
+	}
+	return 0;
 }
