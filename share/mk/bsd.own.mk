@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.422 2004/07/30 04:18:48 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.423 2004/08/04 05:32:47 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -669,46 +669,6 @@ USE_${var}?= yes
 .for var in LIBSTDCXX
 USE_${var}?= yes
 .endfor
-
-
-#
-# Installed system library definitions.
-#
-#	E.g.
-#		LIBC?=${DESTDIR}/usr/lib/libc.a
-#		LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
-#	etc..
-
-.for _lib in \
-	bz2 c c_pic cdk com_err compat crypt crypto crypto_idea \
-	crypto_mdc2 crypto_rc5 curses dbm des edit event \
-	form gcc gnumalloc gssapi hdb intl ipsec \
-	kadm kadm5clnt kadm5srv kafs kdb krb krb5 kstream kvm l \
-	m magic menu objc ossaudio pcap pci pmc posix pthread pthread_dbg \
-	resolv rmt roken rpcsvc rt skey sl ss ssl termcap usbhid util \
-	wrap y z
-.ifndef LIB${_lib:tu}
-LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
-.MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
-.endif
-.endfor
-
-.ifndef LIBSTDCXX
-LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
-.MADE:		${LIBSTDCXX}
-.endif
-
-.for _lib in \
-	dps expat fntstubs fontcache fontconfig fontenc freetype FS \
-	GL GLU ICE lbxutil SM X11 Xau Xaw Xdmcp Xext Xfont Xft \
-	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
-	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
-.ifndef LIB${_lib:tu}
-LIB${_lib:tu}=	${DESTDIR}/usr/X11R6/lib/lib${_lib}.a
-.MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
-.endif
-.endfor
-
 
 #
 # Use XFree86 4.x as default version on:
