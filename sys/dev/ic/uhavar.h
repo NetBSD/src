@@ -1,7 +1,7 @@
-/*	$NetBSD: uhavar.h,v 1.3 1996/10/21 22:34:43 thorpej Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.4 1997/03/29 02:32:32 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,8 +39,6 @@ struct uha_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-
-	int sc_irq, sc_drq;
 	void *sc_ih;
 
 	void (*start_mbox) __P((struct uha_softc *, struct uha_mscp *));
@@ -50,11 +48,15 @@ struct uha_softc {
 	struct uha_mscp *sc_mscphash[MSCP_HASH_SIZE];
 	TAILQ_HEAD(, uha_mscp) sc_free_mscp;
 	int sc_nummscps;
-	int sc_scsi_dev;		/* our scsi id */
 	struct scsi_link sc_link;
 };
 
-void	uha_attach __P((struct uha_softc *));
+struct uha_probe_data {
+	int sc_irq, sc_drq;
+	int sc_scsi_dev;
+};
+
+void	uha_attach __P((struct uha_softc *, struct uha_probe_data *));
 void	uha_timeout __P((void *arg));
 struct	uha_mscp *uha_mscp_phys_kv __P((struct uha_softc *, u_long));
 void	uha_done __P((struct uha_softc *, struct uha_mscp *));
