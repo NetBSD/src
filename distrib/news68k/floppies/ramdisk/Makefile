@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/01/17 13:36:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17 2002/01/23 12:59:25 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,6 +61,7 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o localeconv.o \
 release:
 
 clean cleandir distclean:
+	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi;
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 	rm -f *.core *.o *.cro *.c
 
