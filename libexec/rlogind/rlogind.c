@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.23 2001/01/10 01:41:38 lukem Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.24 2001/02/04 22:14:13 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.23 2001/01/10 01:41:38 lukem Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.24 2001/02/04 22:14:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,12 +144,15 @@ int	local_domain __P((char *));
 char	*topdomain __P((char *));
 int	main __P((int, char *[]));
 
+extern int __check_rhosts_file;
+extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c */
+extern char **environ;
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int __check_rhosts_file;
 	struct sockaddr_storage from;
 	int ch, fromlen, on;
 
@@ -653,7 +656,6 @@ do_rlogin(dest, host)
 	struct sockaddr *dest;
 	char *host;
 {
-	extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c */
 	int retval;
 
 	getstr(rusername, sizeof(rusername), "remuser too long");
@@ -702,7 +704,6 @@ getstr(buf, cnt, errmsg)
 	} while (c != 0);
 }
 
-extern	char **environ;
 
 void
 setup_term(fd)

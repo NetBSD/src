@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.22 2001/01/11 01:32:34 lukem Exp $	*/
+/*	$NetBSD: rshd.c,v 1.23 2001/02/04 22:14:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.22 2001/01/11 01:32:34 lukem Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.23 2001/02/04 22:14:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,13 +123,14 @@ void	 usage __P((void));
 int	main __P((int, char *[]));
 
 #define	OPTIONS	"alnL"
+extern int __check_rhosts_file;
+extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int __check_rhosts_file;
 	struct linger linger;
 	int ch, on = 1, fromlen;
 	struct sockaddr_storage from;
@@ -224,7 +225,6 @@ void
 doit(fromp)
 	struct sockaddr *fromp;
 {
-	extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
 	struct passwd *pwd;
 	in_port_t port;
 	fd_set ready, readfrom;
