@@ -6,7 +6,7 @@
 
 /* -*- C -*- */
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,7 +38,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.6 2001/09/17 12:34:41 assar Exp $ */
+/* $Heimdal: roken.h.in,v 1.169 2002/08/26 21:43:38 assar Exp $ 
+   $NetBSD: roken.h,v 1.7 2002/09/12 13:32:38 joda Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,6 +58,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 #include <syslog.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -146,8 +149,6 @@ time_t tm2time (struct tm tm, int local);
 
 int unix_verify_user(char *user, char *password);
 
-void mini_inetd (int port);
-
 int roken_concat (char *s, size_t len, ...);
 
 size_t roken_mconcat (char **s, size_t max_len, ...);
@@ -166,8 +167,6 @@ int issuid(void);
 int get_window_size(int fd, struct winsize *);
 
 
-
-extern const char *__progname;
 
 extern char **environ;
 
@@ -223,10 +222,15 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 
 #define roken_getsockname(a,b,c) getsockname(a,b,c)
 
+
+
+void mini_inetd_addrinfo (struct addrinfo*);
+void mini_inetd (int port);
+
 void set_progname(char *argv0);
 const char *get_progname(void);
 
 ROKEN_CPP_END
-#define ROKEN_VERSION 0.4e
+#define ROKEN_VERSION 0.5
 
 #endif /* __ROKEN_H__ */
