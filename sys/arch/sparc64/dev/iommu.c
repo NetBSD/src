@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.45 2002/02/07 21:35:26 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.46 2002/02/08 00:47:04 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -896,9 +896,9 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 						map, (long)dvmaddr,
 						(long)(pa)));
 				/* Enter it if we haven't before. */
-				if (prev_va != dvmaddr) {
+				if (prev_va != dvmaddr)
 #ifdef DEBUG
-if (iommudebug & 0x10) printf("seg %d:%d entering dvma %lx, prev %lx pa %lx\n", i,j, dvmaddr, prev_va, pa);
+{ if (iommudebug & 0x10) printf("seg %d:%d entering dvma %lx, prev %lx pa %lx\n", i,j, dvmaddr, prev_va, pa);
 #endif
 					iommu_enter(is, prev_va = dvmaddr,
 						prev_pa = pa,
