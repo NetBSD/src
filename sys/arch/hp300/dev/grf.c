@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.28 1998/02/16 20:54:51 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.29 1998/06/25 23:57:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
