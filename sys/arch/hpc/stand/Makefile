@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/04/23 18:07:57 uch Exp $
+#	$NetBSD: Makefile,v 1.6 2001/05/16 14:26:40 uch Exp $
 #
 
 PROJECT_DIRS	= hpcboot libz libsa
@@ -10,11 +10,7 @@ all:
 #
 # generates project/work files for Embeded Visual C++ 3.0
 #
-make_option:
-	echo "/* option \`SPEC_PLATFORM' not defined */" >		\
-	hpcboot/opt_spec_platform.h
-
-evc3: make_option
+evc3:
 	cd dspgen && ${MAKE} evc3 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
 		sh dspgen/config.sh evc3 $$d;				\
@@ -24,7 +20,7 @@ evc3: make_option
 #
 # generates project/work files for Visual C++ 6.0 + Windows CE tool kit.
 #
-vc6: make_option
+vc6:
 	cd dspgen && ${MAKE} vc6 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
 		sh dspgen/config.sh vc6 $$d;				\
@@ -36,7 +32,7 @@ vc6: make_option
 # generates project/work files for Visual C++ 5.0 Windows CE Embeded tool kit.
 # (WCE100/101/200 binary for MIPS, SH3)
 #
-vc5: make_option
+vc5:
 	cd dspgen && ${MAKE} vc5 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
 		sh dspgen/config.sh vc5 $$d;				\
