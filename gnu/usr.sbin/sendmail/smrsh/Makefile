@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:36 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2000/02/13 21:32:01 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -9,5 +9,7 @@ PROG=		smrsh
 
 MAN=		smrsh.8
 CPPFLAGS+=	-I${DIST}/sendmail/src
+
+BINDIR=		/usr/libexec
 
 .include <bsd.prog.mk>
