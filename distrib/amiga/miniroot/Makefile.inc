@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.10 2002/05/02 18:02:24 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2002/05/25 03:22:51 mhitch Exp $
 
 IMAGESIZE=	5m
+MAKEFS_FLAGS=   -o density=8k
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	floppy
 IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
