@@ -7,9 +7,9 @@
 #
 #	ref: http://hamburg.de/Services/ferien/ferien.htm
 #
-#	$Id: holidays.D.SH,v 1.1.1.1 2001/01/06 13:26:27 martin Exp $
+#	$Id: holidays.D.SH,v 1.2 2001/04/22 22:10:54 wiz Exp $
 #
-# $FreeBSD$
+# $NetBSD: holidays.D.SH,v 1.2 2001/04/22 22:10:54 wiz Exp $
 #
 #---------------------------------------------------------------------------
 1.1		Neujahr

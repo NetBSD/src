@@ -3,9 +3,9 @@
 #	example of a configuration file for the isdn daemon
 #	---------------------------------------------------
 #
-#	$Id: isdnd.rc.sample,v 1.1.1.1 2001/01/06 13:26:27 martin Exp $
+#	$Id: isdnd.rc.sample,v 1.2 2001/04/22 22:10:55 wiz Exp $
 #
-# $FreeBSD$
+# $NetBSD: isdnd.rc.sample,v 1.2 2001/04/22 22:10:55 wiz Exp $
 #
 #	last edit-date: [Wed Jul 19 09:59:42 2000]
 #
