@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.68.8.4 2002/06/24 22:06:50 nathanw Exp $	*/
+/*	$NetBSD: dc.c,v 1.68.8.5 2002/07/03 20:20:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68.8.4 2002/06/24 22:06:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68.8.5 2002/07/03 20:20:22 nathanw Exp $");
 
 /*
  * devDC7085.c --
@@ -489,8 +489,7 @@ dcopen(dev, flag, mode, p)
 #endif
 		(void) dcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE)
-	    && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 #ifdef HW_FLOW_CONTROL
 	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);
