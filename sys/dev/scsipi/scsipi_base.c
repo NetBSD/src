@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.107 2004/08/18 11:50:59 drochner Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.108 2004/08/21 21:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.107 2004/08/18 11:50:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.108 2004/08/21 21:29:39 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -63,27 +63,26 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.107 2004/08/18 11:50:59 drochner E
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_message.h>
 
-int	scsipi_complete __P((struct scsipi_xfer *));
-void	scsipi_request_sense __P((struct scsipi_xfer *));
-int	scsipi_enqueue __P((struct scsipi_xfer *));
-void	scsipi_run_queue __P((struct scsipi_channel *chan));
+static int	scsipi_complete(struct scsipi_xfer *);
+static void	scsipi_request_sense(struct scsipi_xfer *);
+static int	scsipi_enqueue(struct scsipi_xfer *);
+static void	scsipi_run_queue(struct scsipi_channel *chan);
 
-void	scsipi_completion_thread __P((void *));
+static void	scsipi_completion_thread(void *);
 
-void	scsipi_get_tag __P((struct scsipi_xfer *));
-void	scsipi_put_tag __P((struct scsipi_xfer *));
+static void	scsipi_get_tag(struct scsipi_xfer *);
+static void	scsipi_put_tag(struct scsipi_xfer *);
 
-int	scsipi_get_resource __P((struct scsipi_channel *));
-void	scsipi_put_resource __P((struct scsipi_channel *));
-__inline int scsipi_grow_resources __P((struct scsipi_channel *));
+static int	scsipi_get_resource(struct scsipi_channel *);
+static void	scsipi_put_resource(struct scsipi_channel *);
 
-void	scsipi_async_event_max_openings __P((struct scsipi_channel *,
-	    struct scsipi_max_openings *));
-void	scsipi_async_event_xfer_mode __P((struct scsipi_channel *,
-	    struct scsipi_xfer_mode *));
-void	scsipi_async_event_channel_reset __P((struct scsipi_channel *));
+static void	scsipi_async_event_max_openings(struct scsipi_channel *,
+		    struct scsipi_max_openings *);
+static void	scsipi_async_event_xfer_mode(struct scsipi_channel *,
+		    struct scsipi_xfer_mode *);
+static void	scsipi_async_event_channel_reset(struct scsipi_channel *);
 
-struct pool scsipi_xfer_pool;
+static struct pool scsipi_xfer_pool;
 
 /*
  * scsipi_init:
@@ -92,7 +91,7 @@ struct pool scsipi_xfer_pool;
  *	to initialize shared data structures.
  */
 void
-scsipi_init()
+scsipi_init(void)
 {
 	static int scsipi_init_done;
 
@@ -111,8 +110,7 @@ scsipi_init()
  *	Initialize a scsipi_channel when it is attached.
  */
 int
-scsipi_channel_init(chan)
-	struct scsipi_channel *chan;
+scsipi_channel_init(struct scsipi_channel *chan)
 {
 	int i;
 
@@ -139,8 +137,7 @@ scsipi_channel_init(chan)
  *	Shutdown a scsipi_channel.
  */
 void
-scsipi_channel_shutdown(chan)
-	struct scsipi_channel *chan;
+scsipi_channel_shutdown(struct scsipi_channel *chan)
 {
 
 	/*
@@ -173,9 +170,7 @@ scsipi_chan_periph_hash(uint64_t t, uint64_t l)
  *	Insert a periph into the channel.
  */
 void
-scsipi_insert_periph(chan, periph)
-	struct scsipi_channel *chan;
-	struct scsipi_periph *periph;
+scsipi_insert_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
 {
 	uint32_t hash;
 	int s;
@@ -194,9 +189,7 @@ scsipi_insert_periph(chan, periph)
  *	Remove a periph from the channel.
  */
 void
-scsipi_remove_periph(chan, periph)
-	struct scsipi_channel *chan;
-	struct scsipi_periph *periph;
+scsipi_remove_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
 {
 	int s;
 
@@ -211,9 +204,7 @@ scsipi_remove_periph(chan, periph)
  *	Lookup a periph on the specified channel.
  */
 struct scsipi_periph *
-scsipi_lookup_periph(chan, target, lun)
-	struct scsipi_channel *chan;
-	int target, lun;
+scsipi_lookup_periph(struct scsipi_channel *chan, int target, int lun)
 {
 	struct scsipi_periph *periph;
 	uint32_t hash;
@@ -243,9 +234,8 @@ scsipi_lookup_periph(chan, target, lun)
  *
  *	NOTE: Must be called at splbio().
  */
-int
-scsipi_get_resource(chan)
-	struct scsipi_channel *chan;
+static int
+scsipi_get_resource(struct scsipi_channel *chan)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
@@ -272,9 +262,8 @@ scsipi_get_resource(chan)
  *
  *	NOTE: Must be called at splbio().
  */
-__inline int
-scsipi_grow_resources(chan)
-	struct scsipi_channel *chan;
+static __inline int
+scsipi_grow_resources(struct scsipi_channel *chan)
 {
 
 	if (chan->chan_flags & SCSIPI_CHAN_CANGROW) {
@@ -303,9 +292,8 @@ scsipi_grow_resources(chan)
  *
  *	NOTE: Must be called at splbio().
  */
-void
-scsipi_put_resource(chan)
-	struct scsipi_channel *chan;
+static void
+scsipi_put_resource(struct scsipi_channel *chan)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
@@ -322,9 +310,8 @@ scsipi_put_resource(chan)
  *
  *	NOTE: Must be called at splbio().
  */
-void
-scsipi_get_tag(xs)
-	struct scsipi_xfer *xs;
+static void
+scsipi_get_tag(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int bit, tag;
@@ -365,9 +352,8 @@ scsipi_get_tag(xs)
  *
  *	NOTE: Must be called at splbio().
  */
-void
-scsipi_put_tag(xs)
-	struct scsipi_xfer *xs;
+static void
+scsipi_put_tag(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int word, bit;
@@ -387,9 +373,7 @@ scsipi_put_tag(xs)
  *	one to become available, or fail.
  */
 struct scsipi_xfer *
-scsipi_get_xs(periph, flags)
-	struct scsipi_periph *periph;
-	int flags;
+scsipi_get_xs(struct scsipi_periph *periph, int flags)
 {
 	struct scsipi_xfer *xs;
 	int s;
@@ -503,8 +487,7 @@ scsipi_get_xs(periph, flags)
  *	NOTE: Must be called at splbio().
  */
 void
-scsipi_put_xs(xs)
-	struct scsipi_xfer *xs;
+scsipi_put_xs(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int flags = xs->xs_control;
@@ -553,9 +536,7 @@ scsipi_put_xs(xs)
  *	Freeze a channel's xfer queue.
  */
 void
-scsipi_channel_freeze(chan, count)
-	struct scsipi_channel *chan;
-	int count;
+scsipi_channel_freeze(struct scsipi_channel *chan, int count)
 {
 	int s;
 
@@ -570,9 +551,7 @@ scsipi_channel_freeze(chan, count)
  *	Thaw a channel's xfer queue.
  */
 void
-scsipi_channel_thaw(chan, count)
-	struct scsipi_channel *chan;
-	int count;
+scsipi_channel_thaw(struct scsipi_channel *chan, int count)
 {
 	int s;
 
@@ -605,8 +584,7 @@ scsipi_channel_thaw(chan, count)
  * 	run the channel's queue if the freeze count has reached 0.
  */
 void
-scsipi_channel_timed_thaw(arg)
-	void *arg;
+scsipi_channel_timed_thaw(void *arg)
 {
 	struct scsipi_channel *chan = arg;
 
@@ -619,9 +597,7 @@ scsipi_channel_timed_thaw(arg)
  *	Freeze a device's xfer queue.
  */
 void
-scsipi_periph_freeze(periph, count)
-	struct scsipi_periph *periph;
-	int count;
+scsipi_periph_freeze(struct scsipi_periph *periph, int count)
 {
 	int s;
 
@@ -636,9 +612,7 @@ scsipi_periph_freeze(periph, count)
  *	Thaw a device's xfer queue.
  */
 void
-scsipi_periph_thaw(periph, count)
-	struct scsipi_periph *periph;
-	int count;
+scsipi_periph_thaw(struct scsipi_periph *periph, int count)
 {
 	int s;
 
@@ -664,8 +638,7 @@ scsipi_periph_thaw(periph, count)
  *	Thaw a device after some time has expired.
  */
 void
-scsipi_periph_timed_thaw(arg)
-	void *arg;
+scsipi_periph_timed_thaw(void *arg)
 {
 	int s;
 	struct scsipi_periph *periph = arg;
@@ -697,8 +670,7 @@ scsipi_periph_timed_thaw(arg)
  *	Wait for a periph's pending xfers to drain.
  */
 void
-scsipi_wait_drain(periph)
-	struct scsipi_periph *periph;
+scsipi_wait_drain(struct scsipi_periph *periph)
 {
 	int s;
 
@@ -718,8 +690,7 @@ scsipi_wait_drain(periph)
  *	NOTE: Must be called at splbio().
  */
 void
-scsipi_kill_pending(periph)
-	struct scsipi_periph *periph;
+scsipi_kill_pending(struct scsipi_periph *periph)
 {
 
 	(*periph->periph_channel->chan_bustype->bustype_kill_pending)(periph);
@@ -732,8 +703,7 @@ scsipi_kill_pending(periph)
  * SCSIPI_VERBOSE, ...)
  */
 void
-scsipi_print_cdb(cmd)
-	struct scsipi_generic *cmd;
+scsipi_print_cdb(struct scsipi_generic *cmd)
 {
 	int i, j;
 
@@ -785,8 +755,7 @@ scsipi_print_cdb(cmd)
  *	THIS IS THE DEFAULT ERROR HANDLER FOR SCSI DEVICES.
  */
 int
-scsipi_interpret_sense(xs)
-	struct scsipi_xfer *xs;
+scsipi_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_sense_data *sense;
 	struct scsipi_periph *periph = xs->xs_periph;
@@ -1053,9 +1022,7 @@ scsipi_interpret_sense(xs)
  *	Find out from the device what its capacity is.
  */
 u_int64_t
-scsipi_size(periph, flags)
-	struct scsipi_periph *periph;
-	int flags;
+scsipi_size(struct scsipi_periph *periph, int flags)
 {
 	struct scsipi_read_cap_data rdcap;
 	struct scsipi_read_capacity scsipi_cmd;
@@ -1082,9 +1049,7 @@ scsipi_size(periph, flags)
  *	Issue a `test unit ready' request.
  */
 int
-scsipi_test_unit_ready(periph, flags)
-	struct scsipi_periph *periph;
-	int flags;
+scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 {
 	int retries;
 	struct scsipi_test_unit_ready scsipi_cmd;
@@ -1112,10 +1077,8 @@ scsipi_test_unit_ready(periph, flags)
  *	Ask the device about itself.
  */
 int
-scsipi_inquire(periph, inqbuf, flags)
-	struct scsipi_periph *periph;
-	struct scsipi_inquiry_data *inqbuf;
-	int flags;
+scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
+    int flags)
 {
 	int retries;
 	struct scsipi_inquiry scsipi_cmd;
@@ -1203,9 +1166,7 @@ scsipi_inquire(periph, inqbuf, flags)
  *	Prevent or allow the user to remove the media
  */
 int
-scsipi_prevent(periph, type, flags)
-	struct scsipi_periph *periph;
-	int type, flags;
+scsipi_prevent(struct scsipi_periph *periph, int type, int flags)
 {
 	struct scsipi_prevent scsipi_cmd;
 
@@ -1224,9 +1185,7 @@ scsipi_prevent(periph, type, flags)
  *	Send a START UNIT.
  */
 int
-scsipi_start(periph, type, flags)
-	struct scsipi_periph *periph;
-	int type, flags;
+scsipi_start(struct scsipi_periph *periph, int type, int flags)
 {
 	struct scsipi_start_stop scsipi_cmd;
 
@@ -1247,10 +1206,9 @@ scsipi_start(periph, type, flags)
  */
 
 int
-scsipi_mode_sense(periph, byte2, page, data, len, flags, retries, timeout)
-	struct scsipi_periph *periph;
-	int byte2, page, len, flags, retries, timeout;
-	struct scsipi_mode_header *data;
+scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
+    struct scsipi_mode_header *data, int len, int flags, int retries,
+    int timeout)
 {
 	struct scsipi_mode_sense scsipi_cmd;
 	int error;
@@ -1269,10 +1227,9 @@ scsipi_mode_sense(periph, byte2, page, data, len, flags, retries, timeout)
 }
 
 int
-scsipi_mode_sense_big(periph, byte2, page, data, len, flags, retries, timeout)
-	struct scsipi_periph *periph;
-	int byte2, page, len, flags, retries, timeout;
-	struct scsipi_mode_header_big *data;
+scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
+    struct scsipi_mode_header_big *data, int len, int flags, int retries,
+    int timeout)
 {
 	struct scsipi_mode_sense_big scsipi_cmd;
 	int error;
@@ -1291,10 +1248,9 @@ scsipi_mode_sense_big(periph, byte2, page, data, len, flags, retries, timeout)
 }
 
 int
-scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
-	struct scsipi_periph *periph;
-	int byte2, len, flags, retries, timeout;
-	struct scsipi_mode_header *data;
+scsipi_mode_select(struct scsipi_periph *periph, int byte2,
+    struct scsipi_mode_header *data, int len, int flags, int retries,
+    int timeout)
 {
 	struct scsipi_mode_select scsipi_cmd;
 	int error;
@@ -1312,10 +1268,9 @@ scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
 }
 
 int
-scsipi_mode_select_big(periph, byte2, data, len, flags, retries, timeout)
-	struct scsipi_periph *periph;
-	int byte2, len, flags, retries, timeout;
-	struct scsipi_mode_header_big *data;
+scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
+    struct scsipi_mode_header_big *data, int len, int flags, int retries,
+    int timeout)
 {
 	struct scsipi_mode_select_big scsipi_cmd;
 	int error;
@@ -1339,8 +1294,7 @@ scsipi_mode_select_big(periph, byte2, data, len, flags, retries, timeout)
  *	an xfer is completed.
  */
 void
-scsipi_done(xs)
-	struct scsipi_xfer *xs;
+scsipi_done(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
@@ -1475,9 +1429,8 @@ scsipi_done(xs)
  *		- If there is a buf associated with the xfer,
  *		  it has been biodone()'d.
  */
-int
-scsipi_complete(xs)
-	struct scsipi_xfer *xs;
+static int
+scsipi_complete(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
@@ -1709,9 +1662,8 @@ scsipi_complete(xs)
  * context and at splbio().
  */
 
-void
-scsipi_request_sense(xs)
-	struct scsipi_xfer *xs;
+static void
+scsipi_request_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int flags, error;
@@ -1769,9 +1721,8 @@ scsipi_request_sense(xs)
  *
  *	Enqueue an xfer on a channel.
  */
-int
-scsipi_enqueue(xs)
-	struct scsipi_xfer *xs;
+static int
+scsipi_enqueue(struct scsipi_xfer *xs)
 {
 	struct scsipi_channel *chan = xs->xs_periph->periph_channel;
 	struct scsipi_xfer *qxs;
@@ -1835,9 +1786,8 @@ scsipi_enqueue(xs)
  *
  *	Start as many xfers as possible running on the channel.
  */
-void
-scsipi_run_queue(chan)
-	struct scsipi_channel *chan;
+static void
+scsipi_run_queue(struct scsipi_channel *chan)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1949,8 +1899,7 @@ scsipi_run_queue(chan)
  *	Begin execution of an xfer, waiting for it to complete, if necessary.
  */
 int
-scsipi_execute_xs(xs)
-	struct scsipi_xfer *xs;
+scsipi_execute_xs(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
@@ -2128,9 +2077,8 @@ scsipi_execute_xs(xs)
  *	asynchronous xfers, and perform the error handling
  *	function, restarting the command, if necessary.
  */
-void
-scsipi_completion_thread(arg)
-	void *arg;
+static void
+scsipi_completion_thread(void *arg)
 {
 	struct scsipi_channel *chan = arg;
 	struct scsipi_xfer *xs;
@@ -2212,8 +2160,7 @@ scsipi_completion_thread(arg)
  *	Callback to actually create the completion thread.
  */
 void
-scsipi_create_completion_thread(arg)
-	void *arg;
+scsipi_create_completion_thread(void *arg)
 {
 	struct scsipi_channel *chan = arg;
 	struct scsipi_adapter *adapt = chan->chan_adapter;
@@ -2233,10 +2180,8 @@ scsipi_create_completion_thread(arg)
  * 	request to call a callback from the completion thread
  */
 int
-scsipi_thread_call_callback(chan, callback, arg)
-	struct scsipi_channel *chan;
-	void (*callback) __P((struct scsipi_channel *, void *));
-	void *arg;
+scsipi_thread_call_callback(struct scsipi_channel *chan,
+    void (*callback)(struct scsipi_channel *, void *), void *arg)
 {
 	int s;
 
@@ -2265,10 +2210,8 @@ scsipi_thread_call_callback(chan, callback, arg)
  *	Handle an asynchronous event from an adapter.
  */
 void
-scsipi_async_event(chan, event, arg)
-	struct scsipi_channel *chan;
-	scsipi_async_event_t event;
-	void *arg;
+scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
+    void *arg)
 {
 	int s;
 
@@ -2296,8 +2239,7 @@ scsipi_async_event(chan, event, arg)
  *	Print a periph's capabilities.
  */
 void
-scsipi_print_xfer_mode(periph)
-	struct scsipi_periph *periph;
+scsipi_print_xfer_mode(struct scsipi_periph *periph)
 {
 	int period, freq, speed, mbs;
 
@@ -2348,10 +2290,9 @@ scsipi_print_xfer_mode(periph)
  *	Update the maximum number of outstanding commands a
  *	device may have.
  */
-void
-scsipi_async_event_max_openings(chan, mo)
-	struct scsipi_channel *chan;
-	struct scsipi_max_openings *mo;
+static void
+scsipi_async_event_max_openings(struct scsipi_channel *chan,
+    struct scsipi_max_openings *mo)
 {
 	struct scsipi_periph *periph;
 	int minlun, maxlun;
@@ -2385,10 +2326,9 @@ scsipi_async_event_max_openings(chan, mo)
  *	Update the xfer mode for all periphs sharing the
  *	specified I_T Nexus.
  */
-void
-scsipi_async_event_xfer_mode(chan, xm)
-	struct scsipi_channel *chan;
-	struct scsipi_xfer_mode *xm;
+static void
+scsipi_async_event_xfer_mode(struct scsipi_channel *chan,
+    struct scsipi_xfer_mode *xm)
 {
 	struct scsipi_periph *periph;
 	int lun, announce, mode, period, offset;
@@ -2437,9 +2377,7 @@ scsipi_async_event_xfer_mode(chan, xm)
  *	Set the xfer mode for the specified I_T Nexus.
  */
 void
-scsipi_set_xfer_mode(chan, target, immed)
-	struct scsipi_channel *chan;
-	int target, immed;
+scsipi_set_xfer_mode(struct scsipi_channel *chan, int target, int immed)
 {
 	struct scsipi_xfer_mode xm;
 	struct scsipi_periph *itperiph;
@@ -2489,9 +2427,8 @@ scsipi_set_xfer_mode(chan, target, immed)
  *	handle scsi bus reset
  * called at splbio
  */
-void
-scsipi_async_event_channel_reset(chan)
-	struct scsipi_channel *chan;
+static void
+scsipi_async_event_channel_reset(struct scsipi_channel *chan)
 {
 	struct scsipi_xfer *xs, *xs_next;
 	struct scsipi_periph *periph;
@@ -2537,10 +2474,8 @@ scsipi_async_event_channel_reset(chan)
  * 	must be called from valid thread context
  */
 int
-scsipi_target_detach(chan, target, lun, flags)
-	struct scsipi_channel *chan;
-	int target, lun;
-	int flags;
+scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
+    int flags)
 {
 	struct scsipi_periph *periph;
 	int ctarget, mintarget, maxtarget;
@@ -2592,8 +2527,7 @@ scsipi_target_detach(chan, target, lun, flags)
  *	link, enabling the adapter if necessary.
  */
 int
-scsipi_adapter_addref(adapt)
-	struct scsipi_adapter *adapt;
+scsipi_adapter_addref(struct scsipi_adapter *adapt)
 {
 	int s, error = 0;
 
@@ -2614,8 +2548,7 @@ scsipi_adapter_addref(adapt)
  *	link, disabling the adapter if possible.
  */
 void
-scsipi_adapter_delref(adapt)
-	struct scsipi_adapter *adapt;
+scsipi_adapter_delref(struct scsipi_adapter *adapt)
 {
 	int s;
 
@@ -2625,7 +2558,7 @@ scsipi_adapter_delref(adapt)
 	splx(s);
 }
 
-struct scsipi_syncparam {
+static struct scsipi_syncparam {
 	int	ss_factor;
 	int	ss_period;	/* ns * 100 */
 } scsipi_syncparams[] = {
@@ -2635,12 +2568,11 @@ struct scsipi_syncparam {
 	{ 0x0b,		3030 },	/* FAST-40 33MHz (Ultra2) */
 	{ 0x0c,		5000 },	/* FAST-20 (Ultra) */
 };
-const int scsipi_nsyncparams =
+static const int scsipi_nsyncparams =
     sizeof(scsipi_syncparams) / sizeof(scsipi_syncparams[0]);
 
 int
-scsipi_sync_period_to_factor(period)
-	int period;		/* ns * 100 */
+scsipi_sync_period_to_factor(int period /* ns * 100 */)
 {
 	int i;
 
@@ -2653,8 +2585,7 @@ scsipi_sync_period_to_factor(period)
 }
 
 int
-scsipi_sync_factor_to_period(factor)
-	int factor;
+scsipi_sync_factor_to_period(int factor)
 {
 	int i;
 
@@ -2667,8 +2598,7 @@ scsipi_sync_factor_to_period(factor)
 }
 
 int
-scsipi_sync_factor_to_freq(factor)
-	int factor;
+scsipi_sync_factor_to_freq(int factor)
 {
 	int i;
 
@@ -2685,8 +2615,7 @@ scsipi_sync_factor_to_freq(factor)
  * Given a scsipi_xfer, dump the request, in all it's glory
  */
 void
-show_scsipi_xs(xs)
-	struct scsipi_xfer *xs;
+show_scsipi_xs(struct scsipi_xfer *xs)
 {
 
 	printf("xs(%p): ", xs);
@@ -2706,8 +2635,7 @@ show_scsipi_xs(xs)
 }
 
 void
-show_scsipi_cmd(xs)
-	struct scsipi_xfer *xs;
+show_scsipi_cmd(strict scsipi_xfer *xs)
 {
 	u_char *b = (u_char *) xs->cmd;
 	int i = 0;
@@ -2729,9 +2657,7 @@ show_scsipi_cmd(xs)
 }
 
 void
-show_mem(address, num)
-	u_char *address;
-	int num;
+show_mem(u_char *address, int num)
 {
 	int x;
 
