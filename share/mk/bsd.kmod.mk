@@ -1,18 +1,20 @@
-#	$NetBSD: bsd.kmod.mk,v 1.12 1997/05/06 21:29:37 mycroft Exp $
-
-S!=		cd ${.CURDIR}/..;pwd
-KERN=		$S/kern
+#	$NetBSD: bsd.kmod.mk,v 1.13 1997/05/07 15:53:30 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
+.include <bsd.own.mk>
+
 .MAIN:		all
-.PHONY:		cleankmod load unload
+.PHONY:		cleankmod kmodinstall load unload
+install:	kmodinstall
+clean:		cleankmod
+
+S!=		cd ${.CURDIR}/..;pwd
+KERN=		$S/kern
 
 .SUFFIXES: .out .o .c .cc .cxx .C .y .l .s .S
-
-.include <bsd.own.mk>
 
 CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
@@ -39,16 +41,9 @@ machine:
 	ln -s $S/arch/${MACHINE}/include machine
 	ln -s machine ${MACHINE}
 
-.if !target(clean)
 cleankmod:
 	rm -f a.out [Ee]rrs mklog core *.core \
 		${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-
-clean: _SUBDIRUSE cleankmod
-cleandir: _SUBDIRUSE cleankmod
-.else
-cleandir: _SUBDIRUSE clean
-.endif
 
 #
 # if no beforedepend target is defined, generate an empty target here
@@ -60,16 +55,8 @@ beforedepend: machine
 #
 # define various install targets
 #
-.if !target(install)
-.if !target(beforeinstall)
-beforeinstall:
-.endif
-.if !target(afterinstall)
-afterinstall:
-.endif
-
-.if !target(realinstall)
-realinstall: ${DESTDIR}${KMODDIR}/${PROG}
+if !target(kmodinstall)
+kmodinstall:: ${DESTDIR}${KMODDIR}/${PROG}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${KMODDIR}/${PROG}
 .endif
@@ -81,13 +68,6 @@ ${DESTDIR}${KMODDIR}/${PROG}: .MADE
 ${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
 	${INSTALL} ${COPY} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}
-.endif
-
-install: ${MANINSTALL} _SUBDIRUSE linksinstall
-
-${MANINSTALL}: afterinstall
-afterinstall: realinstall
-realinstall: beforeinstall
 .endif
 
 .if !target(lint)
@@ -106,8 +86,6 @@ load:	${PROG}
 unload: ${PROG}
 	/sbin/modunload -n ${KMOD}
 .endif
-
-.include <bsd.dep.mk>
 
 .if !defined(NOMAN)
 .include <bsd.man.mk>

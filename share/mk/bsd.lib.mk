@@ -1,14 +1,16 @@
-#	$NetBSD: bsd.lib.mk,v 1.96 1997/05/07 08:42:19 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.97 1997/05/07 15:53:30 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
+.include <bsd.own.mk>
+
 .MAIN:		all
 .PHONY:		cleanlib libinstall
-
-.include <bsd.own.mk>				# for 'NOPIC' definition
+install:	libinstall
+clean:		cleanlib
 
 .if exists(${.CURDIR}/shlib_version)
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
@@ -200,19 +202,12 @@ llib-l${LIB}.ln: ${LOBJS}
 	@rm -f llib-l${LIB}.ln
 	@${LINT} -C${LIB} ${LOBJS} ${LLIBS}
 
-.if !target(clean)
 cleanlib:
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
 	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${SOBJS}
 	rm -f llib-l${LIB}.ln ${LOBJS}
-
-clean: _SUBDIRUSE cleanlib
-cleandir: _SUBDIRUSE cleanlib
-.else
-cleandir: _SUBDIRUSE clean
-.endif
 
 .if defined(SRCS)
 afterdepend: .depend
@@ -222,11 +217,7 @@ afterdepend: .depend
 	    mv $$TMP .depend)
 .endif
 
-.if !target(install)
-.if !target(beforeinstall)
-beforeinstall:
-.endif
-
+.if !target(libinstall)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
@@ -301,14 +292,6 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .endif
-
-libinstall:: linksinstall
-realinstall: libinstall filesinstall
-
-install: ${MANINSTALL} _SUBDIRUSE
-${MANINSTALL}: afterinstall
-afterinstall: realinstall
-realinstall: beforeinstall
 .endif
 
 .if !defined(NOMAN)

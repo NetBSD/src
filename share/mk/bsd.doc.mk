@@ -1,10 +1,11 @@
-#	$NetBSD: bsd.doc.mk,v 1.27 1997/05/06 21:29:33 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.28 1997/05/07 15:53:28 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
+
+.include <bsd.own.mk>
 
 .MAIN:		all
 .PHONY:		print docinstall spell
-
-.include <bsd.own.mk>
+install:	docinstall
 
 BIB?=		bib
 EQN?=		eqn
@@ -36,14 +37,6 @@ print: paper.ps
 	lpr -P${PRINTER} paper.ps
 .endif
 
-.if !target(manpages)
-manpages:
-.endif
-
-.if !target(obj)
-obj:
-.endif
-
 clean cleandir:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
@@ -63,12 +56,11 @@ ${DESTDIR}${BINDIR}/${DIR}/${F}: ${F}
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} \
 		${.TARGET}
 .endfor
-.else
+.endif
+
+.if !target(docinstall)
 docinstall::
 .endif
 
-install: docinstall
-
 spell: ${SRCS}
 	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
-

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.18 1997/05/06 23:53:40 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.19 1997/05/07 15:53:35 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@
 _SUBDIRUSE: .USE ${SUBDIR:S/^/${.TARGET}-/}
 
 __SUBDIRINTERNALUSE: .USE
-	@(_maketarget_="${.TARGET:S/realinstall/install/}"; \
+	@(_maketarget_="${.TARGET}"; \
 	entry="$${_maketarget_#*-}";\
 	target="$${_maketarget_%%-*}";\
 	set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
@@ -42,19 +42,6 @@ ${targ}-${dir}: .MAKE __SUBDIRINTERNALUSE
 ${dir}: all-${dir}
 .endfor
 
-.if !target(install)
-.if !target(beforeinstall)
-beforeinstall:
-.endif
-.if !target(afterinstall)
-afterinstall:
-.endif
-install: ${MANINSTALL}
-${MANINSTALL}: afterinstall
-afterinstall: realinstall
-realinstall: beforeinstall _SUBDIRUSE
-.endif
-
 .if !target(all)
 all: _SUBDIRUSE
 .endif
@@ -67,12 +54,12 @@ clean: _SUBDIRUSE
 cleandir: _SUBDIRUSE
 .endif
 
-.if !target(includes)
-includes: _SUBDIRUSE
-.endif
-
 .if !target(depend)
 depend: _SUBDIRUSE
+.endif
+
+.if !target(includes)
+includes: _SUBDIRUSE
 .endif
 
 .if !target(lint)
