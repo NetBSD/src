@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3 2001/06/02 19:01:03 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4 2001/06/02 21:03:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -178,6 +178,8 @@ int	set_cpufuncs		__P((void));
 
 void	cpufunc_nullop		__P((void));
 int	cpufunc_null_fixup	__P((void *));
+int	early_abort_fixup	__P((void *));
+int	late_abort_fixup	__P((void *));
 u_int	cpufunc_id		__P((void));
 u_int	cpufunc_control		__P((u_int clear, u_int bic));
 void	cpufunc_domains		__P((u_int domains));
@@ -198,12 +200,10 @@ void	arm67_context_switch	__P((void));
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
 #ifdef CPU_ARM6
-int	arm6_dataabt_fixup	__P((void *arg));
 void	arm6_setup		__P((char *string));
 #endif	/* CPU_ARM6 */
 
 #ifdef CPU_ARM7
-int	arm7_dataabt_fixup	__P((void *arg));
 void	arm7_setup		__P((char *string));
 #endif	/* CPU_ARM7 */
 
