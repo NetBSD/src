@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.61 1995/06/22 21:27:45 fvdl Exp $
+#	$NetBSD: files,v 1.62 1995/07/04 06:42:19 paulus Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -177,6 +177,8 @@ file net/if_ethersubr.c	 	ether needs-flag
 file net/if_loop.c		loop needs-count
 file net/if_sl.c		sl needs-count
 file net/if_ppp.c		ppp needs-count
+file net/ppp_tty.c		ppp
+file net/bsd-comp.c		ppp
 file net/if_tun.c		tun needs-count
 file net/radix.c		
 file net/raw_cb.c		
