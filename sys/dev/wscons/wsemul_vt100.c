@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.10 1999/01/17 15:44:57 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.11 1999/03/10 19:54:52 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -394,8 +394,6 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 		} else {
 			n = edp->ccol + min(8 - (edp->ccol & 7), COLS_LEFT);
 		}
-		ERASECOLS(edp->ccol, n - edp->ccol,
-			  kernel ? edp->kernattr : edp->curattr);
 		edp->ccol = n;
 		break;
 	    case ASCII_SO: /* LS1 */
