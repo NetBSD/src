@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmt.8,v 1.5 1997/10/17 08:05:24 mrg Exp $
+.\"	$NetBSD: rmt.8,v 1.6 1997/10/17 13:03:15 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,13 +40,13 @@
 .Nm rmt
 .Nd remote magtape protocol module
 .Sh SYNOPSIS
-.Nm rmt
+.Nm
 .Sh DESCRIPTION
-.Nm Rmt
+.Nm
 is a program used by the remote dump and restore programs
 in manipulating a magnetic tape drive through an interprocess
 communication connection.
-.Nm Rmt
+.Nm
 is normally started up with an
 .Xr rexec 3
 or
@@ -54,7 +54,7 @@ or
 call.
 .Pp
 The 
-.Nm rmt
+.Nm
 program accepts requests specific to the manipulation of
 magnetic tapes, performs the commands, then responds with
 a status indication.  All responses are in
@@ -135,7 +135,7 @@ call.
 .It Sy W Ar count No \en
 .Sm on
 Write data onto the open device.
-.Nm Rmt
+.Nm
 reads
 .Ar count
 bytes from the connection, aborting if
@@ -154,7 +154,7 @@ If
 .Ar count
 exceeds the size of the data buffer (10 kilobytes), it is
 truncated to the data buffer size.
-.Nm rmt
+.Nm
 then performs the requested 
 .Xr read 2
 and responds with 
@@ -200,7 +200,7 @@ sent (in binary).
 .Sm on
 .Pp
 Any other command causes 
-.Nm rmt
+.Nm
 to exit.
 .Sh DIAGNOSTICS
 All responses are of the form described above.
