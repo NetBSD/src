@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.42 2001/12/07 11:47:40 yamt Exp $	*/
+/*	$NetBSD: stdio.h,v 1.42.2.1 2002/05/24 22:05:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -383,7 +383,7 @@ __END_DECLS
  * (unlike vfscanf) the name __svfscanf is guaranteed not to collide
  * with a user function when _ANSI_SOURCE or _POSIX_SOURCE is defined.
  */
-#define	 vfscanf	__svfscanf
+#define	 vfscanf(fp, fmt, va)	__svfscanf((fp), (fmt), (va))
 
 /*
  * Stdio function-access interface.
@@ -405,7 +405,8 @@ __END_DECLS
 __BEGIN_DECLS
 int	__srget __P((FILE *));
 int	__svfscanf __P((FILE * __restrict, const char * __restrict,
-	    _BSD_VA_LIST_));
+	    _BSD_VA_LIST_))
+	    __attribute__((__format__(__scanf__, 2, 0)));
 int	__swbuf __P((int, FILE *));
 __END_DECLS
 
