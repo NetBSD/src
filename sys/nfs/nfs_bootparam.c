@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.4 1997/12/12 21:09:49 gwr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.5 1998/01/09 15:16:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/socketvar.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/route.h>
 #include <net/if_ether.h>
 
@@ -66,6 +67,8 @@
 
 #include <nfs/nfsproto.h>
 #include <nfs/nfsdiskless.h>
+
+#include "arp.h"
 
 /*
  * There are two implementations of NFS diskless boot.
@@ -148,14 +151,22 @@ nfs_bootparam(ifp, nd, procp)
 		goto out;
 	}
 
-	/*
-	 * Do RARP for the interface address.
-	 */
-	error = revarpwhoami(&my_ip, ifp);
-	if (error) {
+	error = EADDRNOTAVAIL; /* ??? */
+#if NARP > 0
+	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
+		/*
+		 * Do RARP for the interface address.
+		 */
+		error = revarpwhoami(&my_ip, ifp);
+		if (!error)
+			goto ok;
 		printf("revarp failed, error=%d\n", error);
-		goto out;
 	}
+#endif
+	if (0) goto ok; /* XXX stupid gcc */
+	goto out;
+
+ok:
 	nd->nd_myip.s_addr = my_ip.s_addr;
 	printf("nfs_boot: client_addr=0x%x\n",
 	       (u_int32_t)ntohl(my_ip.s_addr));
