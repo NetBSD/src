@@ -1,8 +1,11 @@
-/*	$NetBSD: dev_net.c,v 1.5 1997/03/11 18:23:55 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.6 1997/03/14 20:34:48 gwr Exp $	*/
 
-/*
- * Copyright (c) 1995 Gordon W. Ross
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,22 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
+ * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Gordon W. Ross
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -59,6 +65,7 @@
 #include "stand.h"
 #include "net.h"
 #include "netif.h"
+#include "nfs.h"
 #include "bootparam.h"
 #include "dev_net.h"
 
@@ -66,6 +73,8 @@ extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
 static int netdev_sock = -1;
 static int netdev_opens;
+
+static int net_getparams __P((int sock));
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -167,62 +176,73 @@ net_strategy()
 	return EIO;
 }
 
-int
+
+/*
+ * Get info for NFS boot: our IP address, our hostname,
+ * server IP address, and our root path on the server.
+ * There are two ways to do this:  The old, Sun way,
+ * and the more modern, BOOTP way. (RFC951, RFC1048)
+ *
+ * The default is to use the Sun bootparams RPC
+ * (because that is what the kernel will do).
+ * MD code can make try_bootp initialied data,
+ * which will override this common definition.
+ */
+#ifdef	SUPPORT_BOOTP
+int try_bootp;
+#endif
+
+static int
 net_getparams(sock)
 	int sock;
 {
-	/*
-	 * Get info for NFS boot: our IP address, our hostname,
-	 * server IP address, and our root path on the server.
-	 * There are two ways to do this:  The old, Sun way,
-	 * and the more modern, BOOTP way. (RFC951, RFC1048)
-	 */
 
-#ifdef	SUN_BOOTPARAMS
-	/* Get our IP address.  (rarp.c) */
-	if (rarp_getipaddress(sock)) {
-		printf("net_open: RARP failed\n");
-		return (EIO);
-	}
-#else	/* BOOTPARAMS */
+#ifdef	SUPPORT_BOOTP
 	/*
-	 * Get boot info using BOOTP. (RFC951, RFC1048)
-	 * This also gets the server IP address, gateway,
-	 * root path, etc.
+	 * Try to get boot info using BOOTP.  If we succeed, then
+	 * the server IP address, gateway, and root path will all
+	 * be initialized.  If any remain uninitialized, we will
+	 * use RARP and RPC/bootparam (the Sun way) to get them.
 	 */
-	bootp(sock);
+	if (try_bootp) {
+		bootp(sock);
+		if ((myip.s_addr == 0) && debug)
+			printf("net_open: BOOTP failed, trying RARP/RPC...\n");
+	}
+#endif
+
+	/* Use RARP to get our IP address. (See rarp.c) */
 	if (myip.s_addr == 0) {
-		printf("net_open: BOOTP failed\n");
-		return (EIO);
+		if (rarp_getipaddress(sock)) {
+			printf("net_open: RARP failed\n");
+			return (EIO);
+		}
 	}
-#endif	/* BOOTPARAMS */
+	printf("net_open: client addr: %s\n", inet_ntoa(myip));
 
-	printf("boot: client addr: %s\n", inet_ntoa(myip));
-
-#ifdef	SUN_BOOTPARAMS
 	/* Get our hostname, server IP address, gateway. */
-	if (bp_whoami(sock)) {
-		printf("net_open: bootparam/whoami RPC failed\n");
-		return (EIO);
+	if (hostname[0] == '\0') {
+		if (bp_whoami(sock)) {
+			printf("net_open: bootparam/whoami RPC failed\n");
+			return (EIO);
+		}
 	}
-#endif	/* BOOTPARAMS */
-
-	printf("boot: client name: %s\n", hostname);
+	printf("net_open: client name: %s\n", hostname);
 	if (gateip.s_addr) {
-		printf("boot: subnet mask: %s\n", intoa(netmask));
-		printf("boot: net gateway: %s\n", inet_ntoa(gateip));
+		printf("net_open: subnet mask: %s\n", intoa(netmask));
+		printf("net_open: net gateway: %s\n", inet_ntoa(gateip));
 	}
 
-#ifdef	SUN_BOOTPARAMS
-	/* Get the root pathname. */
-	if (bp_getfile(sock, "root", &rootip, rootpath)) {
-		printf("net_open: bootparam/getfile RPC failed\n");
-		return (EIO);
+	/* Get the root server and pathname. */
+	if (rootip.s_addr == 0) {
+		if (bp_getfile(sock, "root", &rootip, rootpath)) {
+			printf("net_open: bootparam/getfile RPC failed\n");
+			return (EIO);
+		}
 	}
-#endif	/* BOOTPARAMS */
 
-	printf("boot: server addr: %s\n", inet_ntoa(rootip));
-	printf("boot: server path: %s\n", rootpath);
+	printf("net_open: server addr: %s\n", inet_ntoa(rootip));
+	printf("net_open: server path: %s\n", rootpath);
 
 	return (0);
 }
