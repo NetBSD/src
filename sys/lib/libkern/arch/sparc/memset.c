@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.4 1996/03/11 05:46:51 scottr Exp $	*/
+/*	$NetBSD: memset.c,v 1.5 1996/04/18 02:19:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,11 +40,15 @@
 #ifdef notdef
 static char *sccsid = "@(#)memset.c	5.6 (Berkeley) 1/26/91";
 #endif
-static char *rcsid = "$NetBSD: memset.c,v 1.4 1996/03/11 05:46:51 scottr Exp $";
+static char *rcsid = "$NetBSD: memset.c,v 1.5 1996/04/18 02:19:07 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 void *
 memset(dst, c, n)
