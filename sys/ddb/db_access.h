@@ -22,34 +22,12 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_access.h,v 1.2 1993/05/20 03:39:05 cgd Exp $
  *
- * HISTORY
- * $Log: db_access.h,v $
- * Revision 1.2  1993/05/20 03:39:05  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:44:53  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:05:49  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:16:37  mrt]
- * 
- * Revision 2.2  90/08/27  21:48:27  dbg
- * 	Created.
- * 	[90/08/07            dbg]
- * 
- */
-/*
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_access.h,v 1.3 1994/02/15 14:50:41 mycroft Exp $
  */
+
 /*
  * Data access functions for debugger.
  */

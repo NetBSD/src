@@ -22,38 +22,12 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_lex.h,v 1.2 1993/05/20 03:39:19 cgd Exp $
  *
- * HISTORY
- * $Log: db_lex.h,v $
- * Revision 1.2  1993/05/20 03:39:19  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:15  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:06:41  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:18:28  mrt]
- * 
- * Revision 2.2  90/08/27  21:51:16  dbg
- * 	Add 'dotdot' token.
- * 	[90/08/22            dbg]
- * 	Export db_flush_lex.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_lex.h,v 1.3 1994/02/15 14:50:44 mycroft Exp $
  */
+
 /*
  * Lexical analyzer.
  */
