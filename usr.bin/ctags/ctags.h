@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.h,v 1.7 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: ctags.h,v 1.8 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -79,14 +79,14 @@ extern char	lbuf[LINE_MAX];
 extern char    *lbp;
 extern char	searchar;		/* ex search character */
 
-extern int	cicmp __P((char *));
-extern void	getline __P((void));
-extern void	pfnote __P((char *, int));
-extern int	skip_key __P((int));
-extern void	put_entries __P((NODE *));
-extern void	toss_yysec __P((void));
-extern void	l_entries __P((void));
-extern void	y_entries __P((void));
-extern int	PF_funcs __P((void));
-extern void	c_entries __P((void));
-extern void	skip_comment __P((int));
+extern int	cicmp(const char *);
+extern void	getline(void);
+extern void	pfnote(const char *, int);
+extern int	skip_key(int);
+extern void	put_entries(NODE *);
+extern void	toss_yysec(void);
+extern void	l_entries(void);
+extern void	y_entries(void);
+extern int	PF_funcs(void);
+extern void	c_entries(void);
+extern void	skip_comment(int);

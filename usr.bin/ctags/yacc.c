@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.c,v 1.9 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: yacc.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yacc.c,v 1.9 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: yacc.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: yacc.c,v 1.9 2004/06/20 22:20:15 jmc Exp $");
  *	find the yacc tags and put them in.
  */
 void
-y_entries()
+y_entries(void)
 {
 	int	c;
 	char	*sp;
@@ -126,7 +126,7 @@ y_entries()
  *	throw away lines up to the next "\n%%\n"
  */
 void
-toss_yysec()
+toss_yysec(void)
 {
 	int	c;			/* read character */
 	int	state;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.10 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: tree.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: tree.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: tree.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,17 +50,15 @@ __RCSID("$NetBSD: tree.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
 
 #include "ctags.h"
 
-static void	add_node __P((NODE *, NODE *));
-static void	free_tree __P((NODE *));
+static void	add_node(NODE *, NODE *);
+static void	free_tree(NODE *);
 
 /*
  * pfnote --
  *	enter a new node in the tree
  */
 void
-pfnote(name, ln)
-	char	*name;
-	int	ln;
+pfnote(const char *name, int ln)
 {
 	NODE	*np;
 	char	*fp;
@@ -100,9 +98,7 @@ pfnote(name, ln)
 }
 
 static void
-add_node(node, cur_node)
-	NODE	*node,
-		*cur_node;
+add_node(NODE *node, NODE *cur_node)
 {
 	int	dif;
 
@@ -132,8 +128,7 @@ add_node(node, cur_node)
 }
 
 static void
-free_tree(node)
-	NODE	*node;
+free_tree(NODE *node)
 {
 	while (node) {
 		if (node->right)
