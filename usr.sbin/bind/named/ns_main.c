@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.3 1999/02/22 02:37:27 mrg Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.4 1999/02/23 15:54:26 mrg Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -233,7 +233,7 @@ main(int argc, char *argv[], char *envp[]) {
 
 	(void) umask(022);
 
-	while ((ch = getopt(argc, argv, "b:c:d:g:p:t:u:w:qrf")) != EOF) {
+	while ((ch = getopt(argc, argv, "b:c:d:g:p:t:u:w:qrf")) != -1) {
 		switch (ch) {
 		case 'b':
 		case 'c':
@@ -482,10 +482,15 @@ main(int argc, char *argv[], char *envp[]) {
 	 * Set user and group if desired.
 	 */
 	if (group_name != NULL) {
+		/* clear out group list first */
+		if (setgroups(0, NULL) < 0)
+			ns_panic(ns_log_security, 1, "setgroups(0, NULL): %s",
+				 strerror(errno));
 		if (setgid(group_id) < 0)
 			ns_panic(ns_log_security, 1, "setgid(%s): %s",
 				 group_name, strerror(errno));
-		ns_info(ns_log_security, "group = %s", group_name);
+		ns_info(ns_log_security, "group = %s, empty group list",
+			group_name);
 	}
 	if (user_name != NULL) {
 		if (getuid() == 0 && initgroups(user_name, group_id) < 0)
