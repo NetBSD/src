@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.46 1995/01/13 14:46:56 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.47 1995/02/10 01:37:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -120,19 +120,18 @@ typedef u_long physlen;
 #define UHA_OGMINTEN		0x01	/* outgoing mail interrupt enabled */
 
 /*
- * UHA_LINT bits (read/write)
+ * UHA_LINT bits (write only)
  */
-#define U14_OGMFULL		0x01	/* outgoing mailbox is full */
-#define U14_ABORT		0x10	/* abort MSCP */
-#define U14_SBRST		0x20	/* scsi bus reset */
-#define U14_ADRST		0x40	/* adapter soft reset */
-#define U14_ASRST		0x60	/* adapter and scsi reset */
+#define U14_LDIP		0x80	/* local doorbell int pending */
+#define	U24_LDIP		0x02	/* local doorbell int pending */
 
+#define U14_OGMFULL		0x01	/* outgoing mailbox is full */
 #define	U24_OGMFULL		0x02	/* outgoing mailbox is full */
-#define	U24_ABORT		0x10	/* abort MSCP */
-#define	U24_SBRST		0x40	/* scsi bus reset */
-#define	U24_ADRST		0x80	/* adapter soft reset */
-#define	U24_ASRST		0xc0	/* adapter and scsi reset */
+
+#define UHA_ABORT		0x10	/* abort MSCP */
+#define	UHA_SBRST		0x40	/* scsi bus reset */
+#define	UHA_ADRST		0x80	/* adapter soft reset */
+#define	UHA_ASRST		0xc0	/* adapter and scsi reset */
 
 /*
  * UHA_SMASK bits (read/write)
@@ -144,22 +143,19 @@ typedef u_long physlen;
 /*
  * UHA_SINT bits (read)
  */
-#define U14_ABORT_SUCC		0x10	/* abort MSCP successful */
-#define U14_ABORT_FAIL		0x18	/* abort MSCP failed */
-#define U14_SINTP		0x80	/* system doorbell int pending */
+#define U14_SDIP		0x80	/* system doorbell int pending */
+#define	U24_SDIP		0x02	/* system doorbell int pending */
 
-#define	U24_SINTP		0x02	/* system doorbell int pending */
-#define	U24_ABORT_SUCC		0x10	/* abort MSCP successful */
-#define	U24_ABORT_FAIL		0x18	/* abort MSCP failed */
+#define UHA_ABORT_SUCC		0x10	/* abort MSCP successful */
+#define UHA_ABORT_FAIL		0x18	/* abort MSCP failed */
 
 /*
  * UHA_SINT bits (write)
  */
 #define U14_ICM_ACK		0x01	/* acknowledge ICM and clear */
-#define U14_ABORT_ACK		0x18	/* acknowledge status and clear */
-
 #define	U24_ICM_ACK		0x02	/* acknowledge ICM and clear */
-#define	U24_ABORT_ACK		0x18	/* acknowledge status and clear */
+
+#define	UHA_ABORT_ACK		0x18	/* acknowledge status and clear */
 
 /* 
  * U14_CONFIG bits (read only)
@@ -348,7 +344,7 @@ u14_start_mbox(uha, opcode, mscp)
 	int spincount = 100000;	/* 1s should be enough */
 
 	while (--spincount) {
-		if ((inb(iobase + U14_LINT) & U14_OGMFULL) == 0)
+		if ((inb(iobase + U14_LINT) & U14_LDIP) == 0)
 			break;
 		delay(100);
 	}
@@ -381,7 +377,7 @@ u24_start_mbox(uha, opcode, mscp)
 	int spincount = 100000;	/* 1s should be enough */
 
 	while (--spincount) {
-		if ((inb(iobase + U24_LINT) & U24_OGMFULL) == 0)
+		if ((inb(iobase + U24_LINT) & U24_LDIP) == 0)
 			break;
 		delay(100);
 	}
@@ -417,10 +413,10 @@ u14_abort(uha, mscp)
 	int abortcount = 200000;	/* 2 secs */
 	int s = splbio();
 
-	u14_start_mbox(uha, U14_ABORT, mscp);
+	u14_start_mbox(uha, UHA_ABORT, mscp);
 
 	while (--abortcount) {
-		if (inb(iobase + U14_SINT) & U14_ABORT_FAIL)
+		if (inb(iobase + U14_SINT) & UHA_ABORT_FAIL)
 			break;
 		delay(10);
 	}
@@ -430,13 +426,13 @@ u14_abort(uha, mscp)
 		Debugger();
 	}
 
-	if ((inb(iobase + U14_SINT) & (U14_ABORT_FAIL | U14_ABORT_SUCC)) ==
-	    U14_ABORT_SUCC) {
-		outb(iobase + U14_SINT, U14_ABORT_ACK);
+	if ((inb(iobase + U14_SINT) & (UHA_ABORT_FAIL | UHA_ABORT_SUCC)) ==
+	    UHA_ABORT_SUCC) {
+		outb(iobase + U14_SINT, UHA_ABORT_ACK);
 		splx(s);
 		return 1;
 	} else {
-		outb(iobase + U14_SINT, U14_ABORT_ACK);
+		outb(iobase + U14_SINT, UHA_ABORT_ACK);
 		splx(s);
 		return 0;
 	}
@@ -451,10 +447,10 @@ u24_abort(uha, mscp)
 	int abortcount = 200000;	/* 2 secs */
 	int s = splbio();
 
-	u24_start_mbox(uha, U24_ABORT, mscp);
+	u24_start_mbox(uha, UHA_ABORT, mscp);
 
 	while (--abortcount) {
-		if (inb(iobase + U24_SINT) & U24_ABORT_FAIL)
+		if (inb(iobase + U24_SINT) & UHA_ABORT_FAIL)
 			break;
 		delay(10);
 	}
@@ -464,13 +460,13 @@ u24_abort(uha, mscp)
 		Debugger();
 	}
 
-	if ((inb(iobase + U24_SINT) & (U24_ABORT_FAIL | U24_ABORT_SUCC)) ==
-	    U24_ABORT_SUCC) {
-		outb(iobase + U24_SINT, U24_ABORT_ACK);
+	if ((inb(iobase + U24_SINT) & (UHA_ABORT_FAIL | UHA_ABORT_SUCC)) ==
+	    UHA_ABORT_SUCC) {
+		outb(iobase + U24_SINT, UHA_ABORT_ACK);
 		splx(s);
 		return 1;
 	} else {
-		outb(iobase + U24_SINT, U24_ABORT_ACK);
+		outb(iobase + U24_SINT, UHA_ABORT_ACK);
 		splx(s);
 		return 0;
 	}
@@ -494,7 +490,7 @@ u14_poll(uha, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(iobase + U14_SINT) & U14_SINTP)
+		if (inb(iobase + U14_SINT) & U14_SDIP)
 			u14intr(uha);
 		if (xs->flags & ITSDONE)
 			return 0;
@@ -517,7 +513,7 @@ u24_poll(uha, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(iobase + U24_SINT) & U24_SINTP)
+		if (inb(iobase + U24_SINT) & U24_SDIP)
 			u24intr(uha);
 		if (xs->flags & ITSDONE)
 			return 0;
@@ -635,7 +631,7 @@ u14intr(uha)
 	printf("%s: uhaintr ", uha->sc_dev.dv_xname);
 #endif /*UHADEBUG */
 
-	if ((inb(iobase + U14_SINT) & U14_SINTP) == 0)
+	if ((inb(iobase + U14_SINT) & U14_SDIP) == 0)
 		return 0;
 
 	for (;;) {
@@ -663,7 +659,7 @@ u14intr(uha)
 		untimeout(uha_timeout, mscp);
 		uha_done(uha, mscp);
 
-		if ((inb(iobase + U14_SINT) & U14_SINTP) == 0)
+		if ((inb(iobase + U14_SINT) & U14_SDIP) == 0)
 			return 1;
 	}
 }
@@ -681,7 +677,7 @@ u24intr(uha)
 	printf("%s: uhaintr ", uha->sc_dev.dv_xname);
 #endif /*UHADEBUG */
 
-	if ((inb(iobase + U24_SINT) & U24_SINTP) == 0)
+	if ((inb(iobase + U24_SINT) & U24_SDIP) == 0)
 		return 0;
 
 	for (;;) {
@@ -710,7 +706,7 @@ u24intr(uha)
 		untimeout(uha_timeout, mscp);
 		uha_done(uha, mscp);
 
-		if ((inb(iobase + U24_SINT) & U24_SINTP) == 0)
+		if ((inb(iobase + U24_SINT) & U24_SDIP) == 0)
 			return 1;
 	}
 }
@@ -946,7 +942,7 @@ u14_find(uha, ia)
 	/* who are we on the scsi bus */
 	uha->uha_scsi_dev = config & U14_HOSTID_MASK;
 
-	outb(iobase + U14_LINT, U14_ASRST);
+	outb(iobase + U14_LINT, UHA_ASRST);
 
 	while (--resetcount) {
 		if (inb(iobase + U14_LINT))
@@ -1041,7 +1037,7 @@ u24_find(uha, ia)
 		/* who are we on the scsi bus */
 		uha->uha_scsi_dev = uha_id;
 
-		outb(iobase + U24_LINT, U24_ASRST);
+		outb(iobase + U24_LINT, UHA_ASRST);
 
 		while (--resetcount) {
 			if (inb(iobase + U24_LINT))
@@ -1074,8 +1070,10 @@ u14_init(uha)
 	int iobase = uha->sc_iobase;
 
 	/* make sure interrupts are enabled */
-	outb(iobase + U14_SMASK,
-	    UHA_ENSINT | UHA_EN_ABORT_COMPLETE | UHA_ENICM);
+	printf("u14_init: lmask=%02x, smask=%02x\n",
+	    inb(iobase + U14_LMASK), inb(iobase + U14_SMASK));
+	outb(0xd1, iobase + U14_LMASK);	/* XXX */
+	outb(0x91, iobase + U14_SMASK);	/* XXX */
 }
 
 void
@@ -1088,7 +1086,10 @@ u24_init(uha)
 	outb(iobase + U24_OGMCMD, 0);
 	outb(iobase + U24_ICMCMD, 0);
 	/* make sure interrupts are enabled */
-	outb(iobase + U24_SMASK, 0xc2);		/* XXXX */
+	printf("u24_init: lmask=%02x, smask=%02x\n",
+	    inb(iobase + U24_LMASK), inb(iobase + U24_SMASK));
+	outb(0xd2, iobase + U24_LMASK);	/* XXX */
+	outb(0x92, iobase + U24_SMASK);	/* XXX */
 }
 
 void
