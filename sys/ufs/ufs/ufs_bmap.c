@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.18 2003/01/24 21:55:30 fvdl Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.19 2003/02/09 03:26:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.18 2003/01/24 21:55:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.19 2003/02/09 03:26:59 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	if (bp)
 		brelse(bp);
 
-	daddr = blkptrtodb(ump, daddr);
+	daddr = blkptrtodb(ump, (int32_t)daddr); /* XXX ondisk32 */
 	*bnp = daddr == 0 ? -1 : daddr;
 	return (0);
 }
