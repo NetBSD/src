@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2003/02/03 17:09:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 2003/04/19 13:56:04 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -198,7 +198,7 @@ void	ofppc_cnputc(dev_t, int);
 
 struct consdev ofppc_bootcons = {
 	ofcons_cnprobe, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
-	    makedev(0,0), 1,
+	    NULL, NULL, makedev(0,0), 1,
 };
 
 int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
