@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2000/08/27 14:14:50 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.88 2000/08/27 17:14:44 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -746,9 +746,11 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
+#ifdef DIAGNOSTIC
 	/* No mapping change. Not allowed to happen. */
 	if (newpte == oldpte)
 		panic("pmap_enter onto myself");
+#endif
 
 	pv = pv_table + (p >> PGSHIFT);
 
