@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_signal.h,v 1.3 2001/12/26 11:04:20 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.4 2002/02/17 20:50:06 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,12 +68,15 @@ typedef struct irix_sigcontext {
 	__uint64_t	isc_pad[31];
 } irix_sigcontext_t;
 
-struct irix_sigframe {
-	struct irix_sigcontext isf_sc;
-};
-
 #define IRIX_SS_ONSTACK	0x00000001
 #define IRIX_SS_DISABLE 0x00000002
+
+/* From IRIX sigreturn(2) man page */
+struct irix_sigreturna {
+	irix_sigcontext_t *scp;
+	void *ucp;
+	int signo;
+};
 
 /* From IRIX's <sys/ucontext.h> */
 #define IRIX_UC_SIGMASK	001
