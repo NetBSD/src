@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.c,v 1.6 1997/10/18 10:54:05 lukem Exp $	*/
+/*	$NetBSD: rpc_scan.c,v 1.7 1998/12/19 21:19:12 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_scan.c,v 1.6 1997/10/18 10:54:05 lukem Exp $");
+__RCSID("$NetBSD: rpc_scan.c,v 1.7 1998/12/19 21:19:12 christos Exp $");
 #endif
 #endif
 
@@ -188,8 +188,8 @@ get_token(tokp)
 			}
 			where = curline;
 		} else
-			if (isspace(*where)) {
-				while (isspace(*where)) {
+			if (isspace((unsigned char)*where)) {
+				while (isspace((unsigned char)*where)) {
 					where++;	/* eat */
 				}
 			} else
@@ -292,13 +292,13 @@ get_token(tokp)
 		break;
 
 	default:
-		if (!(isalpha(*where) || *where == '_')) {
+		if (!(isalpha((unsigned char)*where) || *where == '_')) {
 			char    buf[100];
 			char   *p;
 
 			s_print(buf, "illegal character in file: ");
 			p = buf + strlen(buf);
-			if (isprint(*where)) {
+			if (isprint((unsigned char)*where)) {
 				s_print(p, "%c", *where);
 			} else {
 				s_print(p, "%d", *where);
@@ -380,11 +380,11 @@ findconst(str, val)
 		p++;
 		do {
 			p++;
-		} while (isxdigit(*p));
+		} while (isxdigit((unsigned char)*p));
 	} else {
 		do {
 			p++;
-		} while (isdigit(*p));
+		} while (isdigit((unsigned char)*p));
 	}
 	size = p - *str;
 	*val = alloc(size + 1);
@@ -431,7 +431,8 @@ findkind(mark, tokp)
 	for (s = symbols; s->kind != TOK_EOF; s++) {
 		len = strlen(s->str);
 		if (strncmp(str, s->str, len) == 0) {
-			if (!isalnum(str[len]) && str[len] != '_') {
+			if (!isalnum((unsigned char)str[len]) &&
+			    str[len] != '_') {
 				tokp->kind = s->kind;
 				tokp->str = s->str;
 				*mark = str + len;
@@ -440,7 +441,8 @@ findkind(mark, tokp)
 		}
 	}
 	tokp->kind = TOK_IDENT;
-	for (len = 0; isalnum(str[len]) || str[len] == '_'; len++);
+	for (len = 0; isalnum((unsigned char)str[len]) ||
+	    str[len] == '_'; len++);
 	tokp->str = alloc(len + 1);
 	(void) strncpy(tokp->str, str, len);
 	tokp->str[len] = 0;
@@ -479,14 +481,14 @@ docppline(line, lineno, fname)
 	char   *p;
 
 	line++;
-	while (isspace(*line)) {
+	while (isspace((unsigned char)*line)) {
 		line++;
 	}
 	num = atoi(line);
-	while (isdigit(*line)) {
+	while (isdigit((unsigned char)*line)) {
 		line++;
 	}
-	while (isspace(*line)) {
+	while (isspace((unsigned char)*line)) {
 		line++;
 	}
 	if (*line != '"') {
