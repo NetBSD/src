@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.6 1999/01/03 02:00:18 hubertf Exp $	*/
+/*	$NetBSD: tetris.c,v 1.7 1999/01/03 17:13:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,10 +67,6 @@ static	void	setup_board __P((void));
 	void	onintr __P((int)) __attribute__((__noreturn__));
 	void	usage __P((void)) __attribute__((__noreturn__));
 
-struct shape *curshape;
-struct shape *nextshape;
-
-
 /*
  * Set up the initial board.  The bottom display row is completely set,
  * along with another (hidden) row underneath that.  Also, the left and
@@ -132,7 +128,7 @@ main(argc, argv)
 
 	keys = "jkl pq";
 
-	while ((ch = getopt(argc, argv, "k:l:s")) != -1)
+	while ((ch = getopt(argc, argv, "k:l:ps")) != -1)
 		switch(ch) {
 		case 'k':
 			if (strlen(keys = optarg) != 6)
@@ -146,6 +142,9 @@ main(argc, argv)
 				    MINLEVEL, MAXLEVEL);
 				exit(1);
 			}
+			break;
+		case 'p':
+			showpreview = 1;
 			break;
 		case 's':
 			showscores(0);
@@ -319,6 +318,6 @@ onintr(signo)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: tetris [-s] [-l level] [-keys]\n");
+	(void)fprintf(stderr, "usage: tetris [-ps] [-l level] [-keys]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.4 1999/01/03 02:00:18 hubertf Exp $	*/
+/*	$NetBSD: tetris.h,v 1.5 1999/01/03 17:13:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,8 +132,8 @@ struct shape {
 extern struct shape shapes[];
 #define	randshape() (&shapes[random() % 7])
 
-extern struct shape *curshape;
-extern struct shape *nextshape;
+struct shape *curshape;
+struct shape *nextshape;
 
 /*
  * Shapes fall at a rate faster than once per second.
@@ -168,6 +168,7 @@ long	fallrate;		/* less than 1 million; smaller => faster */
 int	score;			/* the obvious thing */
 
 char	key_msg[100];
+int	showpreview;
 
 int	fits_in __P((struct shape *, int));
 void	place __P((struct shape *, int, int));
