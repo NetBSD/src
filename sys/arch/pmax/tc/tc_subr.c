@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.11 1997/06/15 16:53:40 mhitch Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.12 1997/06/16 01:45:19 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -48,7 +48,6 @@ static int tc_consprobeslot __P((tc_addr_t slotaddr));
  *  TurboChannel autoconfiguration declarations and tables for DECstations.
  */
 
-#include <machine/machConst.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/trap.h>
 #include <pmax/pmax/asic.h>

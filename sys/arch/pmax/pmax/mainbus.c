@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 1996/10/13 03:39:51 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19 1997/06/16 01:45:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,7 +35,6 @@
 
 
 #include <machine/autoconf.h>
-#include <machine/machConst.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
