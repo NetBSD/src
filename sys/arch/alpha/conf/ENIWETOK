@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.21 2000/04/03 00:03:28 augustss Exp $
+# $NetBSD: ENIWETOK,v 1.22 2000/04/03 01:04:36 mycroft Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -189,7 +189,7 @@ pci*	at	apecs?
 #ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-#de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
