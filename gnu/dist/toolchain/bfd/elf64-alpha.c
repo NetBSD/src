@@ -1713,6 +1713,11 @@ elf64_alpha_relax_section (abfd, sec, link_info, again)
 #define PLT_ENTRY_WORD2		0
 #define PLT_ENTRY_WORD3		0
 
+/* ld --traditional-format uses this older format instead. */
+#define OLD_PLT_ENTRY_WORD1	0x279f0000	/* ldah $28, 0($31) */
+#define OLD_PLT_ENTRY_WORD2	0x239c0000	/* lda  $28, 0($28) */
+#define OLD_PLT_ENTRY_WORD3	0xc3e00000	/* br   $31, plt0   */
+
 #define MAX_GOT_ENTRIES		(64*1024 / 8)
 
 #define ELF_DYNAMIC_INTERPRETER "/usr/lib/ld.so"
@@ -3825,9 +3830,25 @@ elf64_alpha_finish_dynamic_symbol (output_bfd, info, h, sym)
       {
 	unsigned insn1, insn2, insn3;
 
-	insn1 = PLT_ENTRY_WORD1 | ((-(h->plt.offset + 4) >> 2) & 0x1fffff);
-	insn2 = PLT_ENTRY_WORD2;
-	insn3 = PLT_ENTRY_WORD3;
+	if ((output_bfd->flags & BFD_TRADITIONAL_FORMAT) != 0)
+	  {
+	    long hi, lo;
+
+	    /* decompose the reloc offset for the plt for ldah+lda */
+	    hi = plt_index * sizeof(Elf64_External_Rela);
+	    lo = ((hi & 0xffff) ^ 0x8000) - 0x8000;
+	    hi = (hi - lo) >> 16;
+
+	    insn1 = OLD_PLT_ENTRY_WORD1 | (hi & 0xffff);
+	    insn2 = OLD_PLT_ENTRY_WORD2 | (lo & 0xffff);
+	    insn3 = OLD_PLT_ENTRY_WORD3 | ((-(h->plt.offset + 12) >> 2) & 0x1fffff);
+	  }
+	else
+	  {
+	    insn1 = PLT_ENTRY_WORD1 | ((-(h->plt.offset + 4) >> 2) & 0x1fffff);
+	    insn2 = PLT_ENTRY_WORD2;
+	    insn3 = PLT_ENTRY_WORD3;
+	  }
 
 	bfd_put_32 (output_bfd, insn1, splt->contents + h->plt.offset);
 	bfd_put_32 (output_bfd, insn2, splt->contents + h->plt.offset + 4);
