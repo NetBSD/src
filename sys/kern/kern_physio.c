@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.38 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.39 2000/01/21 23:21:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -86,7 +86,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	int error, done, i, nobuf, s, todo;
 
 	error = 0;
-	flags &= B_READ | B_WRITE;
+	flags &= B_READ | B_WRITE | B_ORDERED;
 
 	/*
 	 * [check user read/write access to the data buffer]
