@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.25 2004/08/23 04:30:28 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.26 2004/10/28 06:59:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -213,7 +213,9 @@ struct ccd_softc {
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
 	struct lock	 sc_lock;		/* lock on this structure */
+#if defined(_KERNEL) /* XXX ccdconfig(8) refers softc directly using kvm */
 	struct bufq_state sc_bufq;		/* buffer queue */
+#endif
 };
 
 /* sc_flags */
