@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.2 2001/02/09 18:34:02 uch Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.3 2001/02/21 15:04:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -336,6 +336,18 @@ struct platid_name platid_name_table[] = {
 	 TEXT("HP Jornada 820") },
 	{ &platid_mask_MACH_HP_JORNADA_820JP,
 	 TEXT("HP Jornada 820 (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA_7XX,
+	 TEXT("HP Jornada 7XX") },
+	{ &platid_mask_MACH_HP_JORNADA_720,
+	 TEXT("HP Jornada 720") },
+	{ &platid_mask_MACH_HP_JORNADA_720JP,
+	 TEXT("HP Jornada 720 (Japanese)") },
+	{ &platid_mask_MACH_COMPAQ,
+	 TEXT("Compaq") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ,
+	 TEXT("Compaq iPAQ") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H3600,
+	 TEXT("Compaq iPAQ H3600") },
 #endif /* hpcarm */
 };
 int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);
