@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.3,v 1.1 1996/11/14 17:53:08 gwr Exp $
+.\" $NetBSD: ttyaction.3,v 1.2 1996/11/14 19:16:01 gwr Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,12 @@ The parameter
 .Fa username
 is the name of the new owner of the
 .Fa ttyname
-device.
+device.  Note that the
+.Fa ttyname
+parameter may be passed as a fully qualified pathname, and the
+.Fn ttyaction
+function will skip the leading "/dev/" part of the string.
+(This is a conveinence for login and getty.)
 .Sh RETURN VALUES
 .Fn ttyaction
 returns the status of the last command it executed,
