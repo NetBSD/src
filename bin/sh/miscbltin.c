@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.21 1998/01/15 19:39:11 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.22 1998/01/16 16:26:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.21 1998/01/15 19:39:11 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.22 1998/01/16 16:26:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ readcmd(argc, argv)
 	}
 	STACKSTRNUL(p);
 	/* Remove trailing blanks */
-	while (strchr(ifs, *--p) != NULL)
+	while (stackblock() <= --p && strchr(ifs, *p) != NULL)
 		*p = '\0';
 	setvar(*ap, stackblock(), 0);
 	while (*++ap != NULL)
