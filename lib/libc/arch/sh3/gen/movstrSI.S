@@ -1,4 +1,4 @@
-/*	$NetBSD: movstrSI.S,v 1.3 2001/02/14 21:04:17 msaitoh Exp $	*/
+/*	$NetBSD: movstrSI.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo.  All rights reserved.
@@ -29,51 +29,51 @@
 #include <machine/asm.h>
 
 NENTRY(__movstrSI64)
-	mov.l	@(60,r5),r0
-	mov.l	r0,@(60,r4)
+	mov.l	@(60, r5), r0
+	mov.l	r0, @(60, r4)
 ALTENTRY(__movstrSI60)
-	mov.l	@(56,r5),r0
-	mov.l	r0,@(56,r4)
+	mov.l	@(56, r5), r0
+	mov.l	r0, @(56, r4)
 ALTENTRY(__movstrSI56)
-	mov.l	@(52,r5),r0
-	mov.l	r0,@(52,r4)
+	mov.l	@(52, r5), r0
+	mov.l	r0, @(52, r4)
 ALTENTRY(__movstrSI52)
-	mov.l	@(48,r5),r0
-	mov.l	r0,@(48,r4)
+	mov.l	@(48, r5), r0
+	mov.l	r0, @(48, r4)
 ALTENTRY(__movstrSI48)
-	mov.l	@(44,r5),r0
-	mov.l	r0,@(44,r4)
+	mov.l	@(44, r5), r0
+	mov.l	r0, @(44, r4)
 ALTENTRY(__movstrSI44)
-	mov.l	@(40,r5),r0
-	mov.l	r0,@(40,r4)
+	mov.l	@(40, r5), r0
+	mov.l	r0, @(40, r4)
 ALTENTRY(__movstrSI40)
-	mov.l	@(36,r5),r0
-	mov.l	r0,@(36,r4)
+	mov.l	@(36, r5), r0
+	mov.l	r0, @(36, r4)
 ALTENTRY(__movstrSI36)
-	mov.l	@(32,r5),r0
-	mov.l	r0,@(32,r4)
+	mov.l	@(32, r5), r0
+	mov.l	r0, @(32, r4)
 ALTENTRY(__movstrSI32)
-	mov.l	@(28,r5),r0
-	mov.l	r0,@(28,r4)
+	mov.l	@(28, r5), r0
+	mov.l	r0, @(28, r4)
 ALTENTRY(__movstrSI28)
-	mov.l	@(24,r5),r0
-	mov.l	r0,@(24,r4)
+	mov.l	@(24, r5), r0
+	mov.l	r0, @(24, r4)
 ALTENTRY(__movstrSI24)
-	mov.l	@(20,r5),r0
-	mov.l	r0,@(20,r4)
+	mov.l	@(20, r5), r0
+	mov.l	r0, @(20, r4)
 ALTENTRY(__movstrSI20)
-	mov.l	@(16,r5),r0
-	mov.l	r0,@(16,r4)
+	mov.l	@(16, r5), r0
+	mov.l	r0, @(16, r4)
 ALTENTRY(__movstrSI16)
-	mov.l	@(12,r5),r0
-	mov.l	r0,@(12,r4)
+	mov.l	@(12, r5), r0
+	mov.l	r0, @(12, r4)
 ALTENTRY(__movstrSI12)
-	mov.l	@(8,r5),r0
-	mov.l	r0,@(8,r4)
+	mov.l	@(8, r5), r0
+	mov.l	r0, @(8, r4)
 ALTENTRY(__movstrSI8)
-	mov.l	@(4,r5),r0
-	mov.l	r0,@(4,r4)
+	mov.l	@(4, r5), r0
+	mov.l	r0, @(4, r4)
 ALTENTRY(__movstrSI4)
-	mov.l	@r5,r0
+	mov.l	@r5, r0
 	rts
-	mov.l	r0,@r4
+	mov.l	r0, @r4

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $")
 #endif
 
 /*
@@ -54,19 +54,19 @@
  */
 
 ENTRY(setjmp)
-	sts.l	pr,@-r15
-	mov.l	r4,@-r15
+	sts.l	pr, @-r15
+	mov.l	r4, @-r15
 	mov	#0, r4
 	mov.l	Lsigblock, r0
 	jsr	@r0
 	nop
 	mov.l	@r15+, r4
 	lds.l	@r15+, pr
-	
+
 	add	#4*11, r4
-	mov.l	r0, @-r4	! sigmask
+	mov.l	r0, @-r4	/* sigmask */
 	mov	#1, r0
-	mov.l	r0, @-r4	! savemask
+	mov.l	r0, @-r4	/* savemask */
 	mov.l	r15, @-r4
 	mov.l	r14, @-r4
 	mov.l	r13, @-r4
@@ -79,7 +79,7 @@ ENTRY(setjmp)
 	rts
 	xor	r0, r0
 
-	.align 2
+	.align	2
 Lsigblock:
 	.long	_C_LABEL(sigblock)
 
@@ -94,7 +94,7 @@ ENTRY(longjmp)
 	nop
 	mov.l	@r15+, r5
 	mov.l	@r15+, r4
-	
+
 	lds.l	@r4+, pr
 	mov.l	@r4+, r8
 	mov.l	@r4+, r9
