@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.4 2003/11/12 06:45:14 simonb Exp $	*/
+/*	$NetBSD: command.c,v 1.5 2005/01/12 09:04:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: command.c,v 1.4 2003/11/12 06:45:14 simonb Exp $");
+__RCSID("$NetBSD: command.c,v 1.5 2005/01/12 09:04:53 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -162,13 +162,14 @@ parse(cmdline, args)
 
 	/* Start looking for the commands */
 	while (*cmdline != 0) {
-		while (isspace(*cmdline))
+		while (isspace((unsigned char)*cmdline))
 			cmdline++;	/* skip blanks. */
 		if (*cmdline != 0) {
 			/* Start of new argument. */
 			if (argcnt < MAXARGS)
 				args[argcnt] = cmdline;
-			while (!isspace(*cmdline) && *cmdline != 0)
+			while (!isspace((unsigned char)*cmdline) &&
+			    *cmdline != 0)
 				cmdline++;
 			if (*cmdline != 0)
 				*cmdline++ = 0;
@@ -227,7 +228,7 @@ Str2Int(str, num)
 	char   *str;
 	int    *num;
 {
-	if (!isdigit(*str) && *str != '-')
+	if (!isdigit((unsigned char)*str) && *str != '-')
 		return FALSE;
 	*num = atoi(str);
 	return TRUE;
