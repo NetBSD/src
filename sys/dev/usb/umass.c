@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.15 1999/09/11 20:52:07 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.16 1999/09/11 21:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,8 +87,6 @@
  *	  a fair number of USB->SCSI dongles out there.
  *
  *	x Need to implement SCSI command timeout/abort handling.
- *
- *	x Need to handle hot-unplug.
  *
  *	x Add support for other than Bulk.
  *
