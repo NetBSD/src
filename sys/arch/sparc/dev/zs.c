@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.59 1998/03/30 02:41:21 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.60 1998/04/23 04:06:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -753,8 +753,17 @@ zs_putc(arg, c)
 		ZS_DELAY();
 	} while ((rr0 & ZSRR0_TX_READY) == 0);
 
+	/*
+	 * Send the next character.
+	 * Now you'd think that this could be followed by a ZS_DELAY()
+	 * just like all the other chip accesses, but it turns out that
+	 * the `transmit-ready' interrupt isn't de-asserted until
+	 * some period of time after the register write completes
+	 * (more than a couple instructions).  So to avoid stray
+	 * interrupts we put in the 2us delay regardless of cpu model.
+	 */
 	zc->zc_data = c;
-	ZS_DELAY();
+	delay(2);
 
 	splx(s);
 }
