@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.23 1996/12/22 10:16:54 cgd Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.24 1997/06/26 06:01:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -968,6 +968,10 @@ bad:
 	return (error);
 }
 
+/*
+ * XXX In a perfect world, we wouldn't pass around socket control
+ * XXX arguments in mbufs, and this could go away.
+ */
 int
 sockargs(mp, buf, buflen, type)
 	struct mbuf **mp;
@@ -978,15 +982,22 @@ sockargs(mp, buf, buflen, type)
 	register struct mbuf *m;
 	int error;
 
-	if ((u_int)buflen > MLEN) {
-#ifdef COMPAT_OLDSOCK
-		if (type == MT_SONAME && (u_int)buflen <= 112)
-			buflen = MLEN;		/* unix domain compat. hack */
-		else
-#endif
+	/*
+	 * We can't allow socket names > 255 in length, since that
+	 * will overflow sa_len.
+	 */
+	if (type == MT_SONAME && (u_int)buflen > 255)
 		return (EINVAL);
-	}
+
+	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
+	if ((u_int)buflen > MLEN) {
+		/*
+		 * Won't fit into a regular mbuf, so we allocate just
+		 * enough external storage to hold the argument.
+		 */
+		MEXTMALLOC(m, buflen, M_WAITOK);
+	}
 	m->m_len = buflen;
 	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
 	if (error) {
