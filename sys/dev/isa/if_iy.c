@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9.4.2 1997/02/17 20:05:17 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.3 1997/02/26 20:01:25 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -330,8 +330,7 @@ iyattach(parent, self, aux)
 	    ether_sprintf(sc->sc_enaddr),
 	    sc->hard_vers, sc->sram/1024);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, 
@@ -1197,11 +1196,11 @@ iyioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)
-				    LLADDR(sc->sc_ethercom.ec_if.if_sadl));
+				    LLADDR(sc->sc_ethercom.ec_if.if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
 				    LLADDR(sc->sc_ethercom.ec_if.if_sadl),
-				    6);
+				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			iyinit(sc);
 			break;
