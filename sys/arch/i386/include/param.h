@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.35 1998/04/29 23:11:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.36 1998/07/01 00:51:15 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,9 @@
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
+#ifndef	MAXPHYS
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#endif
 
 #define	CLSIZELOG2	0
 #define	CLSIZE		(1 << CLSIZELOG2)
