@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.60 1997/03/19 08:04:38 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.61 1997/04/14 16:28:34 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -241,8 +241,8 @@ aeinit(sc)
 	struct ae_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int     i;
-	u_char  mcaf[8];
+	u_int8_t mcaf[8];
+	int i;
 
 	/*
 	 * Initialize the NIC in the exact order outlined in the NS manual.
@@ -462,9 +462,9 @@ static inline void
 ae_rint(sc)
 	struct ae_softc *sc;
 {
-	u_char  boundary, current;
+	u_char boundary, current;
 	u_short len;
-	u_char  nlen;
+	u_char nlen;
 	u_int8_t *lenp;
 	struct ae_ring packet_hdr;
 	int packet_ptr;
@@ -746,12 +746,12 @@ aeintr(arg, slot)
  */
 int
 aeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
 	struct ae_softc *sc = ifp->if_softc;
-	register struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
 
@@ -773,7 +773,7 @@ aeioctl(ifp, cmd, data)
 			/* XXX - This code is probably wrong. */
 		case AF_NS:
 			{
-				register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+				struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 				if (ns_nullhost(*ina))
 					ina->x_host =
@@ -997,9 +997,9 @@ ae_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp, c;
-	register u_long crc;
-	register int i, len;
+	u_char *cp, c;
+	u_int32_t crc;
+	int i, len;
 	struct ether_multistep step;
 
 	/*
