@@ -1,8 +1,0 @@
-#	$Id: files.ofw,v 1.2 1998/05/29 10:04:22 sakamoto Exp $
-
-file	arch/powerpc/powerpc/ofw_machdep.c
-file	arch/powerpc/powerpc/ofwmagic.S
-file	arch/powerpc/powerpc/openfirm.c
-
-# Firmworks OpenFirmware Bug Workarounds
-file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs

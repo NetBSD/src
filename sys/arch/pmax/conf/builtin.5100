@@ -1,5 +1,0 @@
-#
-kn230bus* at	mainbus?
-ibus0	 at kn230bus?
-
-# must also include ibus builtins
