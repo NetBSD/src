@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.428 2005/01/06 00:42:58 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.429 2005/01/07 18:56:41 tron Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -676,15 +676,10 @@ USE_${var}?= yes
 .endfor
 
 #
-# Use XFree86 4.x as default version on:
-#	i386, amd64, macppc, cats, sgimips, sparc, sparc64.
+# Because XFree86 3.3.6 was EOLed all ports use XFree86 4.x now.
+# We keep this definition for backwards compatiblity.
 #
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
-    ${MACHINE} == "sgimips" || \
-    ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
-USE_XF86_4?=	yes
-.endif
+USE_XF86_4=	yes
 
 #
 # Where X11R6 sources are and where it is installed to.
