@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.47 1996/05/21 19:09:43 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.47.2.1 1996/06/12 20:46:52 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -149,7 +149,7 @@ espattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	struct esp_softc *sc = (void *)self;
 	struct bootpath *bp;
-	int dmachild = strncmp(parent->dv_xname, "sbus", 4) != 0;
+	int dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
 
 	/*
 	 * Make sure things are sane. I don't know if this is ever
@@ -230,7 +230,7 @@ espattach(parent, self, aux)
 		printf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
-		sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_FE;
+		sc->sc_cfg2 = ESPCFG2_SCSI2;
 		ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 		sc->sc_cfg3 = 0;
 		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
@@ -240,6 +240,8 @@ espattach(parent, self, aux)
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
+			/* ESPCFG2_FE enables > 64K transfers */
+			sc->sc_cfg2 |= ESPCFG2_FE;
 			sc->sc_cfg3 = 0;
 			ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 			printf(": ESP200");
@@ -1108,6 +1110,11 @@ sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 							      0);
 						ESP_WRITE_REG(sc, ESP_SYNCTP,
 							      0);
+						/* Clamp to our maxima */
+						if (ti->period < sc->sc_minsync)
+							ti->period = sc->sc_minsync;
+						if (ti->offset > 15)
+							ti->offset = 15;
 						esp_sched_msgout(SEND_SDTR);
 					} else {
 						/* we are sync */
@@ -1284,7 +1291,7 @@ esp_msgout(sc)
 	/* Program the SCSI counter */
 	ESP_WRITE_REG(sc, ESP_TCL, size);
 	ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
-	if (sc->sc_rev > ESP100A) {
+	if (sc->sc_cfg2 & ESPCFG2_FE) {
 		ESP_WRITE_REG(sc, ESP_TCH, size >> 16);
 	}
 	/* load the count in */
@@ -1857,7 +1864,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 			/* Program the SCSI counter */
 			ESP_WRITE_REG(sc, ESP_TCL, size);
 			ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
-			if (sc->sc_rev > ESP100A) {
+			if (sc->sc_cfg2 & ESPCFG2_FE) {
 				ESP_WRITE_REG(sc, ESP_TCH, size >> 16);
 			}
 			/* load the count in */
