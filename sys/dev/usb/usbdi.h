@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.5 1998/08/01 18:16:20 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.6 1998/08/02 22:30:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,6 +206,11 @@ usbd_status usbd_open_pipe_intr
 	     u_int8_t flags, usbd_pipe_handle *pipe,
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, usbd_callback));
+usbd_status usbd_open_pipe_iso
+	__P((usbd_interface_handle iface, u_int8_t address,
+	     u_int8_t flags, usbd_pipe_handle *pipe,
+	     usbd_private_handle priv, u_int32_t bufsize, u_int32_t nbuf,
+	     usbd_callback));
 usbd_status usbd_do_request 
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_async

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.3 1998/07/29 20:50:12 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.4 1998/08/02 22:30:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,17 @@ usbd_get_config_desc(dev, conf, d)
 }
 
 usbd_status
+usbd_get_config_desc_full(dev, conf, d, size)
+	usbd_device_handle dev;
+	int conf;
+	void *d;
+	int size;
+{
+	DPRINTFN(3,("usbd_get_config_desc_full: conf=%d\n", conf));
+	return (usbd_get_desc(dev, UDESC_CONFIG, conf, size, d));
+}
+
+usbd_status
 usbd_get_device_desc(dev, d)
 	usbd_device_handle dev;
 	usb_device_descriptor_t *d;
@@ -142,21 +153,6 @@ usbd_set_address(dev, addr)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 0);
 	return usbd_do_request(dev, &req, 0);
-}
-
-usbd_status
-usbd_set_config(dev, conf)
-	usbd_device_handle dev;
-	int conf;
-{
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_WRITE_DEVICE;
-	req.bRequest = UR_SET_CONFIG;
-	USETW(req.wValue, conf);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	return (usbd_do_request(dev, &req, 0));
 }
 
 usbd_status
