@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.47 1997/10/19 14:33:48 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.48 1997/11/02 14:07:27 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -53,7 +53,6 @@
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/kernel.h>
-#include <sys/reboot.h>
 #include <sys/msgbuf.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
@@ -122,16 +121,13 @@ extern int virtual_avail, virtual_end;
  * We do these external declarations here, maybe they should be done
  * somewhere else...
  */
-int		nmba, cold = 1;
-caddr_t		mcraddr[MAXNMCR];
-int		astpending;
+int		cold = 1;
 int		want_resched;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
 caddr_t		msgbufaddr;
 int		physmem;
-struct cfdriver nexuscd;
 int		todrstopped = 0;
 int		dumpsize = 0;
 
@@ -175,7 +171,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf("%s\n", version);
+	printf("%s\n%s\n", version, cpu_model);
 	printf("realmem = %d\n", avail_end);
 	physmem = btoc(avail_end);
 	panicstr = NULL;
@@ -270,7 +266,15 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
-	configure();
+	if (config_rootfound("backplane", NULL) == NULL)
+		panic("backplane not configured");
+
+	/*
+	 * We're ready to start up. Clear CPU and soft cold start flags.
+	 */
+	cold = 0;
+	if (dep_call->cpu_clrf)
+		(*dep_call->cpu_clrf)();
 }
 
 /*
@@ -588,27 +592,13 @@ cpu_reboot(howto, b)
 		if (dep_call->cpu_reboot)
 			(*dep_call->cpu_reboot)(showto);
 
-		switch (vax_cputype) {
-			int	state;
+		/* cpus that don't handle reboots get the standard reboot. */
+		while ((mfpr(PR_TXCS) & GC_RDY) == 0)
+			;
 
-#if VAX750 || VAX780
-		case VAX_780:
-		case VAX_750:
-			mtpr(GC_BOOT, PR_TXDB); /* boot command */
-			break;
-#endif
-#if VAX8600
-		case VAX_8600:
-			state = mfpr(PR_TXCS);
-			gencnputc(0, GC_LT | GC_WRT);
-			mtpr(0x2, PR_TXDB); /* XXX */
-			gencnputc(0, state | GC_WRT);
-			break;
-#endif
-		}
-
+		mtpr(GC_CONS|GC_BTFL, PR_TXDB);
 	}
-	asm("movl %0,r5":: "g" (showto)); /* How to boot */
+	asm("movl %0, r5":: "g" (showto)); /* How to boot */
 	asm("movl %0, r11":: "r"(showto)); /* ??? */
 	asm("halt");
 	panic("Halt sket sej");

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.21 1997/04/06 20:37:05 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.22 1997/11/02 14:07:25 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -98,6 +98,7 @@ start()
 	register __physmem asm ("r8");
 	extern vm_offset_t avail_end;
 	extern	u_int *end;
+	extern	char cpu_model[];
 	extern	void *scratch;
 	register tmpptr;
 
@@ -157,6 +158,7 @@ start()
 		vax_bustype = VAX_SBIBUS | VAX_CPUBUS;
 		vax_boardtype = VAX_BTYP_780;
 		dep_call = &ka780_calls;
+		avail_end = 0;
 		break;
 #endif
 #if VAX750
@@ -164,6 +166,7 @@ start()
 		vax_bustype = VAX_CMIBUS | VAX_CPUBUS;
 		vax_boardtype = VAX_BTYP_750;
 		dep_call = &ka750_calls;
+		strcpy(cpu_model, "VAX 11/750");
 		break;
 #endif
 #if VAX8600
@@ -171,6 +174,10 @@ start()
 		vax_bustype = VAX_CPUBUS | VAX_MEMBUS;
 		vax_boardtype = VAX_BTYP_790;
 		dep_call = &ka860_calls;
+		strcpy(cpu_model,"VAX 8600");
+		if (vax_cpudata & 0x100)
+			cpu_model[6] = '5';
+		avail_end = 0;
 		break;
 #endif
 #if VAX630 || VAX650 || VAX410 || VAX43
@@ -200,12 +207,23 @@ start()
 		case VAX_BTYP_630:
 			dep_call = &ka630_calls;
 			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
+			strcpy(cpu_model,"MicroVAX II");
 			break;
 #endif
 #if VAX650
 		case VAX_BTYP_650:
 			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
 			dep_call = &ka650_calls;
+			strcpy(cpu_model,"MicroVAX ");
+			tmpptr = (vax_siedata >> 8) & 255;
+			if (tmpptr == VAX_SIE_KA640)
+				strcat(cpu_model, "3300/3400");
+			else if (tmpptr == VAX_SIE_KA650)
+				strcat(cpu_model, "3500/3600");
+			else if (tmpptr == VAX_SIE_KA655)
+				strcat(cpu_model, "3800/3900");
+			else 
+				strcat(cpu_model, "III");
 			break;
 #endif
 		default:
