@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.10 1997/06/15 22:53:49 jonathan Exp $
+#	$NetBSD: Makefile.booters,v 1.11 1998/05/22 12:56:35 drochner Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 STAND=	../../stand
@@ -7,7 +7,7 @@ STAND=	../../stand
 # RELOC=80200000 allows for boot prog up to 1D0000 (1900544) bytes long
 RELOC=	80200000
 
-DEFS= -DSTANDALONE -DSMALL
+DEFS= -D_STANDALONE -DSMALL
 CFLAGS=	-O2 ${INCPATH} ${DEFS}
 AFLAGS=	-O2 ${INCPATH} ${DEFS} -D_LOCORE
 
