@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.18 1995/05/11 21:29:06 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.19 1995/05/15 02:47:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)expand.c	8.4 (Berkeley) 5/4/95";
+static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.18 1995/05/11 21:29:06 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.19 1995/05/15 02:47:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -715,7 +715,7 @@ varvalue(name, quoted, allow_split)
 	int num;
 	char *p;
 	int i;
-	extern int exitstatus;
+	extern int oexitstatus;
 	char sep;
 	char **ap;
 	char const *syntax;
@@ -740,7 +740,7 @@ varvalue(name, quoted, allow_split)
 		num = rootpid;
 		goto numvar;
 	case '?':
-		num = exitstatus;
+		num = oexitstatus;
 		goto numvar;
 	case '#':
 		num = shellparam.nparam;
