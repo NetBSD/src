@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.7 2001/01/18 20:28:20 jdolecek Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.8 2001/10/02 22:41:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,19 +64,19 @@ int	midisyndebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int	midisyn_findvoice __P((midisyn *, int, int));
-void	midisyn_freevoice __P((midisyn *, int));
-int	midisyn_allocvoice __P((midisyn *, u_int32_t, u_int32_t));
-u_int32_t midisyn_note_to_freq __P((int));
-u_int32_t midisyn_finetune __P((u_int32_t, int, int, int));
+int	midisyn_findvoice(midisyn *, int, int);
+void	midisyn_freevoice(midisyn *, int);
+int	midisyn_allocvoice(midisyn *, u_int32_t, u_int32_t);
+u_int32_t midisyn_note_to_freq(int);
+u_int32_t midisyn_finetune(u_int32_t, int, int, int);
 
-int	midisyn_open __P((void *, int, 
-			  void (*iintr)__P((void *, int)),
-			  void (*ointr)__P((void *)), void *arg));
-void	midisyn_close __P((void *));
-int	midisyn_output __P((void *, int));
-void	midisyn_getinfo __P((void *, struct midi_info *));
-int	midisyn_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	midisyn_open(void *, int, 
+		     void (*iintr)(void *, int),
+		     void (*ointr)(void *), void *arg);
+void	midisyn_close(void *);
+int	midisyn_output(void *, int);
+void	midisyn_getinfo(void *, struct midi_info *);
+int	midisyn_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct midi_hw_if midisyn_hw_if = {
 	midisyn_open,
@@ -91,12 +91,8 @@ static const int midi_lengths[] = { 3,3,3,3,2,2,3,1 };
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
 int
-midisyn_open(addr, flags, iintr, ointr, arg)
-	void *addr;
-	int flags;
-	void (*iintr)__P((void *, int));
-	void (*ointr)__P((void *));
-	void *arg;
+midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
+	     void (*ointr)(void *), void *arg)
 {
 	midisyn *ms = addr;
 
@@ -108,8 +104,7 @@ midisyn_open(addr, flags, iintr, ointr, arg)
 }
 
 void
-midisyn_close(addr)
-	void *addr;
+midisyn_close(void *addr)
 {
 	midisyn *ms = addr;
 	struct midisyn_methods *fs;
@@ -127,9 +122,7 @@ midisyn_close(addr)
 }
 
 void
-midisyn_getinfo(addr, mi)
-	void *addr;
-	struct midi_info *mi;
+midisyn_getinfo(void *addr, struct midi_info *mi)
 {
 	midisyn *ms = addr;
 
@@ -138,12 +131,7 @@ midisyn_getinfo(addr, mi)
 }
 
 int
-midisyn_ioctl(maddr, cmd, addr, flag, p)
-	void *maddr;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+midisyn_ioctl(void *maddr, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	midisyn *ms = maddr;
 
@@ -154,9 +142,7 @@ midisyn_ioctl(maddr, cmd, addr, flag, p)
 }
 
 int
-midisyn_findvoice(ms, chan, note)
-	midisyn *ms;
-	int chan, note;
+midisyn_findvoice(midisyn *ms, int chan, int note)
 {
 	u_int cn;
 	int v;
@@ -171,9 +157,7 @@ midisyn_findvoice(ms, chan, note)
 }
 
 void
-midisyn_attach(sc, ms)
-	struct midi_softc *sc;
-	midisyn *ms;
+midisyn_attach(struct midi_softc *sc, midisyn *ms)
 {
 	if (ms->flags & MS_DOALLOC) {
 		ms->voices = malloc(ms->nvoice * sizeof (struct voice), 
@@ -189,9 +173,7 @@ midisyn_attach(sc, ms)
 }
 
 void
-midisyn_freevoice(ms, voice)
-	midisyn *ms;
-	int voice;
+midisyn_freevoice(midisyn *ms, int voice)
 {
 	if (!(ms->flags & MS_DOALLOC))
 		return;
@@ -199,9 +181,7 @@ midisyn_freevoice(ms, voice)
 }
 
 int
-midisyn_allocvoice(ms, chan, note)
-	midisyn *ms;
-	u_int32_t chan, note;
+midisyn_allocvoice(midisyn *ms, u_int32_t chan, u_int32_t note)
 {
 	int bestv, v;
 	u_int bestseq, s;
@@ -236,9 +216,7 @@ midisyn_allocvoice(ms, chan, note)
 }
 
 int
-midisyn_output(addr, b)
-	void *addr;
-	int b;
+midisyn_output(void *addr, int b)
 {
 	midisyn *ms = addr;
 	u_int8_t status, chan;
@@ -325,8 +303,7 @@ midisyn_output(addr, b)
  * The frequency is scaled by 2^16.
  */
 u_int32_t
-midisyn_note_to_freq(note)
-	int note;
+midisyn_note_to_freq(int note)
 {
 	int o, n, f;
 #define BASE_OCTAVE 5
@@ -349,11 +326,7 @@ midisyn_note_to_freq(note)
 }
 
 u_int32_t
-midisyn_finetune(base_freq, bend, range, vibrato_cents)
-	u_int32_t base_freq;
-	int bend;
-	int range;
-	int vibrato_cents;
+midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
 {
 	static const u_int16_t semitone_tuning[24] = 
 	{
