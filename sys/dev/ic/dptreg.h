@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.3 1999/10/01 12:08:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -110,7 +110,7 @@
 
 #define HA_STATUS		(HA_BASE + 7)
 #define   HA_ST_ERROR		0x01
-#define   HA_ST_INDEX		0x02
+#define   HA_ST_MORE		0x02
 #define   HA_ST_CORRECTD	0x04
 #define   HA_ST_DRQ		0x08
 #define   HA_ST_SEEK_COMPLETE	0x10
