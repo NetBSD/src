@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.69 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.70 2004/03/21 12:50:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.69 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.70 2004/03/21 12:50:14 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -760,6 +760,7 @@ psycho_alloc_extent(pp, node, ss, name)
 	bsize = BUS_ADDR(pr->size_hi, pr->size_lo);
 
 	/* get available lists */
+	num = 0;
 	if (prom_getprop(node, "available", sizeof(*pa), &num, &pa)) {
 		printf("psycho_alloc_extent: prom_getprop failed\n");
 		return NULL;
@@ -819,10 +820,12 @@ psycho_get_bus_range(node, brp)
 	int node;
 	int *brp;
 {
-	int n;
+	int n, error;
 
-	if (prom_getprop(node, "bus-range", sizeof(*brp), &n, &brp))
-		panic("could not get psycho bus-range");
+	n = 2*sizeof(int);
+	error = prom_getprop(node, "bus-range", sizeof(*brp), &n, &brp);
+	if (error)
+		panic("could not get psycho bus-range, error %d", error);
 	if (n != 2)
 		panic("broken psycho bus-range");
 	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n",
@@ -992,6 +995,7 @@ psycho_iommu_init(sc, tsbsize)
 	 * We could query the `#virtual-dma-size-cells' and
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
+	nitem = 0;
 	if (!prom_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
 		&vdma)) {
 		/* Damn.  Gotta use these values. */

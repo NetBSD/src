@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.67 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.68 2004/03/21 12:50:14 martin Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.67 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.68 2004/03/21 12:50:14 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -334,6 +334,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n;
 
 	memset(sa, 0, sizeof(struct sbus_attach_args));
+	n = 0;
 	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
