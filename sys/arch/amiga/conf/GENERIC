@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 1995/10/05 12:41:02 chopps Exp $
+#	$NetBSD: GENERIC,v 1.45 1995/10/07 18:05:10 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -162,6 +162,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 le0		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
+qn0		at zbus0		# quicknet ethernet
 ae0		at zbus0		# Ariadne ethernet
 bah0		at zbus0		# C= arcnet
 

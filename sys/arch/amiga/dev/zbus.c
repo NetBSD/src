@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.10 1995/10/07 17:33:05 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.11 1995/10/07 18:04:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -118,7 +118,9 @@ static struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
 	{ "afsc",	514,	84},	/* A4091 SCSI HD Controller */
 	/* Hacker Inc. */
-	{ "mlhsc",	2011,	1 }
+	{ "mlhsc",	2011,	1 },
+	/* Resource Management Force */
+	{ "qn",		2011,	2 }	/* QuickNet Ethernet */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
