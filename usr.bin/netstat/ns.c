@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.10 1997/10/19 05:50:08 lukem Exp $	*/
+/*	$NetBSD: ns.c,v 1.11 1998/07/12 03:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ns.c,v 1.10 1997/10/19 05:50:08 lukem Exp $");
+__RCSID("$NetBSD: ns.c,v 1.11 1998/07/12 03:20:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,9 +122,11 @@ nsprotopr(off, name)
 		if (ppcb) {
 			if (isspp) {
 				kread(ppcb, (char *)&sppcb, sizeof (sppcb));
-			} else continue;
+			} else
+				continue;
 		} else
-			if (isspp) continue;
+			if (isspp)
+				continue;
 		if (first) {
 			printf("Active NS connections");
 			if (aflag)
@@ -330,18 +332,19 @@ ns_erputil(z, c)
 	char codebuf[30];
 	char *name, *where;
 
-	for(j = 0;; j ++) {
+	for (j = 0;; j ++) {
 		if ((name = ns_errnames[j].name) == 0)
 			break;
 		if (ns_errnames[j].code == c)
 			break;
 	}
-	if (name == 0)  {
+	if (name == 0) {
 		if (c > 01000)
 			where = "in transit";
 		else
 			where = "at destination";
-		sprintf(codebuf, "Unknown XNS error code 0%o", c);
+		(void)snprintf(codebuf, sizeof codebuf,
+		    "Unknown XNS error code 0%o", c);
 		name = codebuf;
 	} else
 		where =  ns_errnames[j].where;
@@ -357,5 +360,5 @@ char *ns_prpr(x)
 	struct sockaddr_ns *sns = &ssns;
 
 	sns->sns_addr = *x;
-	return(ns_print((struct sockaddr *)sns));
+	return (ns_print((struct sockaddr *)sns));
 }

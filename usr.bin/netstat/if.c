@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.27 1998/05/14 22:48:49 kml Exp $	*/
+/*	$NetBSD: if.c,v 1.28 1998/07/12 03:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.27 1998/05/14 22:48:49 kml Exp $");
+__RCSID("$NetBSD: if.c,v 1.28 1998/07/12 03:20:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,8 @@ intpr(interval, ifnetaddr)
 			case AF_INET:
 				sin = (struct sockaddr_in *)sa;
 #ifdef notdef
-				/* can't use inet_makeaddr because kernel
+				/*
+				 * can't use inet_makeaddr because kernel
 				 * keeps nets unshifted.
 				 */
 				in = inet_makeaddr(ifaddr.in.ia_subnet,
@@ -188,13 +189,16 @@ intpr(interval, ifnetaddr)
 					u_long multiaddr;
 					struct in_multi inm;
 		
-					multiaddr = (u_long)ifaddr.in.ia_multiaddrs.lh_first;
+					multiaddr = (u_long)
+					    ifaddr.in.ia_multiaddrs.lh_first;
 					while (multiaddr != 0) {
 						kread(multiaddr, (char *)&inm,
-						    sizeof inm);
+						   sizeof inm);
 						printf("\n%25s %-17.17s ", "",
-						    routename(inm.inm_addr.s_addr));
-						multiaddr = (u_long)inm.inm_list.le_next;
+						   routename(
+						      inm.inm_addr.s_addr));
+						multiaddr =
+						   (u_long)inm.inm_list.le_next;
 					}
 				}
 				break;
@@ -210,8 +214,9 @@ intpr(interval, ifnetaddr)
 				u_long net;
 				char netnum[8];
 
-				*(union ns_net *) &net = sns->sns_addr.x_net;
-				sprintf(netnum, "%xH", (u_int32_t) ntohl(net));
+				*(union ns_net *)&net = sns->sns_addr.x_net;
+				(void)sprintf(netnum, "%xH",
+				    (u_int32_t)ntohl(net));
 				upHex(netnum);
 				printf("ns:%-10s ", netnum);
 				printf("%-17.17s ",
@@ -463,5 +468,6 @@ static void
 catchalarm(signo)
 	int signo;
 {
+
 	signalled = YES;
 }
