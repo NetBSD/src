@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.22 2001/07/01 16:23:42 itojun Exp $
+.\"	$NetBSD: syslogd.8,v 1.23 2001/07/16 05:04:47 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,15 @@
 .Op Fl f Ar config_file
 .Ek
 .Bk -words
+.Op Fl u Ar user
+.Ek
+.Bk -words
+.Op Fl g Ar user
+.Ek
+.Bk -words
+.Op Fl t Ar chroot_dir
+.Ek
+.Bk -words
 .Op Fl m Ar mark_interval
 .Ek
 .Bk -words
@@ -70,6 +79,19 @@ and do not disassociate from the controlling terminal.
 Specify the pathname of an alternative configuration file;
 the default is
 .Pa /etc/syslog.conf .
+.It Fl u Ar user
+Set UID to 
+.Ar user 
+after the sockets and log files have been open.
+.It Fl g Ar group
+Set GID to 
+.Ar group 
+after the sockets and log files have been open.
+.It Fl t Ar chroot_dir
+.Xr chroot 2
+to
+.Ar chroot_dir
+after the sockets and log files 	have been open.
 .It Fl m
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
