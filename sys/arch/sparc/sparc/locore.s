@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.19 1994/09/25 20:51:51 deraadt Exp $
+ * $Id: locore.s,v 1.20 1994/10/02 22:00:48 deraadt Exp $
  */
 
 #define	LOCORE
@@ -209,33 +209,21 @@ _mapme:
 
 #if !defined(SUN4M)
 sun4m_notsup:
-	.asciz	"cr .( NetBSD/sparc: sun4m support not compiled into kernel) cr"
+	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4m) cr"
 #endif
 #if !defined(SUN4C)
 sun4c_notsup:
-	.asciz	"cr .( NetBSD/sparc: sun4c support not compiled into kernel) cr"
+	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4c) cr"
 #endif
 #if !defined(SUN4)
 sun4_notsup:
-	.asciz	"cr .( NetBSD/sparc: sun4 support not compiled into kernel) cr"
+	! the extra characters at the end are to ensure the zs fifo drains
+	! before we halt. Sick, eh?
+	.asciz	"NetBSD/sparc: this kernel does not support the sun4\n\r \b"
 #endif
 	ALIGN
 
 	.text
-
-/*
- * The first thing in the real text segment is the trap vector table,
- * which must be aligned on a 4096 byte boundary.  The text segment
- * starts beyond page 0 of KERNBASE so that there is a red zone
- * between user and kernel space.  Since the boot ROM loads us at
- * 0x4000, it is far easier to start at KERNBASE+0x4000 than to
- * buck the trend.  This is four pages in; we can stuff something
- * into the three pages left beneath us later ... like, oh, say, the
- * message buffer (1 page).
- */
-	.globl	_msgbuf
-msgbufsize = 4096			! 1 page for msg buffer
-_msgbuf	= KERNBASE + 4096
 
 /*
  * The remaining two physical pages are currently unused.  We need to
@@ -244,7 +232,7 @@ _msgbuf	= KERNBASE + 4096
  * boot.  We use virtual address f8002000 (`page 2') for this, wasting
  * 4096 bytes of physical memory.
  */
-IE_reg_addr = _msgbuf + msgbufsize	! this page not used; points to IEreg
+IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
 
 /*
  * Each trap has room for four instructions, of which one perforce must
@@ -579,6 +567,21 @@ _trapbase:
 	STRAP(0xfd)
 	STRAP(0xfe)
 	STRAP(0xff)
+
+/*
+ * put the message buffer after the trap table.
+ * trap table size is 0x100 * 4instr * 4byte/instr = 4096 bytes
+ * need to .skip 4096 to pad to page size
+ */
+	.skip	4096
+
+	.globl	_msgbuf
+msgbufsize = 4096			! 1 page for msg buffer
+_msgbuf:
+	.skip msgbufsize
+
+/* and let's not put anything else in that page, on a sun4 */
+	.skip	4096
 
 	/* the message buffer is always mapped */
 _msgbufmapped:
@@ -1088,8 +1091,8 @@ memfault:
 	 * buserr	= basically just like sun4c sync error reg but
 	 *		  no SER_WRITE bit (have to figure out from code).
 	 */
-	set     _par_err_reg, %o0       ! memerr ctrl addr -- XXX mapped?
-	ld      [%o0], %o0              ! get it
+	set	_par_err_reg, %o0	! memerr ctrl addr -- XXX mapped?
+	ld	[%o0], %o0		! get it
 	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
 	ld	[%o0], %o1		! memerr ctrl register
 	inc	4, %o0			! now VA of memerr vaddr register
@@ -1107,7 +1110,7 @@ memfault:
 	/* memory error = death for now XXX */
 	clr	%o3
 	clr	%o4
-	call 	_memerr	! (0, ser, sva, 0, 0)
+	call	_memerr			! (0, ser, sva, 0, 0)
 	 clr	%o0
 	call	_callrom
 	 nop
@@ -2448,6 +2451,7 @@ dostart:
 	beq	is_sun4
 	 nop
 
+#if defined(SUN4C) || defined(SUN4M)
 	mov	%o0, %g7		! save prom vector pointer
 
 	/*
@@ -2472,6 +2476,7 @@ dostart:
 	cmp	%o0, 'm'
 	beq	is_sun4m
 	 nop
+#endif /* SUN4C || SUN4M */
 
 	! ``on a sun4d?!  hell no!''
 	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
@@ -2525,7 +2530,7 @@ is_sun4:
 	set	PROM_BASE, %g7
 
 	set	sun4_notsup-KERNBASE, %o0
-	ld	[%g7 + 0x18], %o1
+	ld	[%g7 + 0x84], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4 architecture is not supported
 	ld	[%g7 + 0xc4], %o1	! by this kernel, then halt

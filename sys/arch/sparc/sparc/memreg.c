@@ -42,7 +42,7 @@
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: memreg.c,v 1.7 92/11/26 03:05:04 torek Exp  (LBL)
- * $Id: memreg.c,v 1.2 1994/09/18 00:02:19 deraadt Exp $
+ * $Id: memreg.c,v 1.3 1994/10/02 22:00:52 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@
 #include <machine/ctlreg.h>
 
 #include <sparc/sparc/memreg.h>
+#include <sparc/sparc/vaddrs.h>
 
 static int memregmatch __P((struct device *, struct cfdata *, void *));
 static void memregattach __P((struct device *, struct device *, void *));
@@ -69,6 +70,12 @@ memregmatch(parent, cf, aux)
 {
 	register struct confargs *ca = aux;
 
+	if (cputyp==CPU_SUN4) {
+		if (ca->ca_bustype==BUS_OBIO)
+			return (strcmp(cf->cf_driver->cd_name,
+			    ca->ca_ra.ra_name) == 0);
+		return (0);
+	}
 	return (strcmp("memory-error", ca->ca_ra.ra_name) == 0);
 }
 
@@ -81,8 +88,14 @@ memregattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
-	par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
-	    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int));
+	if (cputyp==CPU_SUN4) {
+		if (par_err_reg==NULL)
+			panic("memregattach");
+		ra->ra_vaddr = (caddr_t)par_err_reg;
+	} else {
+		par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
+		    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int));
+	}
 	printf("\n");
 }
 
@@ -97,10 +110,20 @@ memerr(issync, ser, sva, aer, ava)
 	int issync, ser, sva, aer, ava;
 {
 
-	printf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
-	    issync ? "" : "a", ser, SER_BITS, sva, aer & 0xff, AER_BITS, ava);
-	if (par_err_reg)
-		printf("parity error register = %b\n", *par_err_reg, PER_BITS);
+	if (cputyp==CPU_SUN4) {
+		if (par_err_reg) {
+			printf("mem err: ser=%b sva=%x\n", ser, SER_BITS, sva);
+			printf("parity error register = %b\n", *par_err_reg, PER_BITS);
+		} else {
+			printf("mem err: ser=? sva=?\n");
+			printf("parity error register not mapped yet!\n"); /* XXX */
+		}
+	} else {
+		printf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
+		    issync ? "" : "a", ser, SER_BITS, sva, aer & 0xff, AER_BITS, ava);
+		if (par_err_reg)
+			printf("parity error register = %b\n", *par_err_reg, PER_BITS);
+	}
 #ifdef DEBUG
 	callrom();
 #else

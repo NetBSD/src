@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dma.c,v 1.1 1994/09/17 23:48:32 deraadt Exp $
+ *	$Id: dma.c,v 1.2 1994/10/02 22:00:16 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@
 
 int dmaprint		__P((void *, char *));
 void dmaattach		__P((struct device *, struct device *, void *));
+int dmamatch		__P((struct device *, struct cfdata *, void *));
 void dma_reset		__P((struct dma_softc *));
 void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
@@ -61,7 +62,7 @@ void dma_start		__P((struct dma_softc *, caddr_t *, size_t *, int));
 int dmaintr		__P((struct dma_softc *));
 
 struct cfdriver dmacd = {
-	NULL, "dma", matchbyname, dmaattach,
+	NULL, "dma", dmamatch, dmaattach,
 	DV_DULL, sizeof(struct dma_softc)
 };
 
@@ -83,6 +84,24 @@ dmaprint(aux, name)
 	return -1;
 }
 
+int
+dmamatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
+	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
+		ra->ra_len = NBPG;
+		return (probeget(ra->ra_vaddr, 1) != -1);
+	}
+	return (1);
+}
+
 /*
  * Attach all the sub-devices we can find
  */
@@ -99,12 +118,12 @@ dmaattach(parent, self, aux)
 	/*
 	 * do basic sbus stuff (I think)
 	 */
-	if (ca->ca_ra.ra_vaddr)
-		sc->sc_reg = (volatile u_long *) ca->ca_ra.ra_vaddr;
-	else {
-		sc->sc_reg = (volatile u_long *)
-		    mapiodev(ca->ca_ra.ra_paddr, ca->ca_ra.ra_len);
-	}
+	if (ca->ca_ra.ra_vaddr == NULL)
+		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
+		    ca->ca_ra.ra_len);
+	if ((u_long)ca->ca_ra.ra_paddr & PGOFSET)
+		(u_long)ca->ca_ra.ra_vaddr |= ((u_long)ca->ca_ra.ra_paddr & PGOFSET);
+	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 
 	/*
 	 * find the ESP by poking around the esp device structures
@@ -126,7 +145,11 @@ dmaattach(parent, self, aux)
 		sc->sc_esp->sc_dma = sc;
 
 	printf(": rev ");
-	switch ((sc->sc_rev = sc->sc_reg[DMA_D_CSR]) & D_DEV_ID) {
+	sc->sc_rev = sc->sc_regs->csr & D_DEV_ID;
+	switch (sc->sc_rev) {
+	case DMAREV_0:
+		printf("0");
+		break;
 	case DMAREV_1:
 		printf("1");
 		break;
@@ -180,7 +203,7 @@ void
 dma_reset(sc)
 	struct dma_softc *sc;
 {
-	DMAWAIT1(sc->sc_reg);			/* let things drain */
+	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
@@ -195,14 +218,14 @@ void
 dma_enintr(sc)
 	struct dma_softc *sc;
 {
-	sc->sc_reg[DMA_D_CSR] |= D_INT_EN;
+	sc->sc_regs->csr |= D_INT_EN;
 }
 
 int
 dma_isintr(sc)
 	struct dma_softc *sc;
 {
-	return (sc->sc_reg[DMA_D_CSR] & (D_INT_PEND|D_ERR_PEND));
+	return (sc->sc_regs->csr & (D_INT_PEND|D_ERR_PEND));
 }
 
 #define ESPMAX		((sc->sc_esp->sc_rev > ESP100A) ? \
@@ -252,11 +275,11 @@ dma_start(sc, addr, len, datain)
 	/* load the count in */
 	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
 
-	DMAWAIT1(sc->sc_reg);
+	DMAWAIT1(sc);
 
 	/* clear errors and D_TC flag */
 	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc->sc_reg);
+	DMAWAIT1(sc);
 
 	DMADDR(sc) = *sc->sc_dmaaddr;
 	DMACSR(sc) |= datain|D_EN_DMA|D_INT_EN;

@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.5 1994/09/17 23:57:32 deraadt Exp $
+ * $Id: cgsix.c,v 1.6 1994/10/02 22:00:13 deraadt Exp $
  */
 
 /*
@@ -146,23 +146,16 @@ cgsixmatch(parent, cf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
 	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
 		struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;
 
-		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
-		    ra->ra_intr);
 		ra->ra_len = NBPG;
-
-		/*
-		 * On the VME or OBIO busses, if we don't bus error it
-		 * exists. The obio/vme functions will have mapped the 
-		 * first page for us, but we need to look at a register
-		 * much later on. So, map it instead.
-		 */
 		obio_tmp_map(&p->cg6_fhc_un.un_fhc);
 		return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
 	}
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (1);
 }
 
 /*
