@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/07/19 06:14:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2001/07/19 12:51:05 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ MKPROFILE=	no
 
 .if defined(USE_NEW_TOOLCHAIN)
 
-.include "${MACHINE_ARCH}.mk"
+.include "${.CURDIR}/${MACHINE_ARCH}.mk"
 
 MKPIC=no	# XXX to be fixed
 
