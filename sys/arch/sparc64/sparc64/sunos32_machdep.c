@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.4 2001/09/20 20:52:26 thorpej Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.5 2001/09/21 17:12:22 thorpej Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -34,6 +34,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/exec.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
@@ -45,6 +46,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/select.h>
 
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
@@ -52,9 +54,14 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscallargs.h>
+#include <compat/sunos32/sunos32_exec.h>
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/vuid_event.h>
+#include <machine/reg.h>
+
+#include <dev/sun/event_var.h>
 
 #ifdef DEBUG
 #include <sparc64/sparc64/sigdebug.h>
@@ -79,6 +86,8 @@ struct sunos32_sigframe {
 	u_int32_t	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	sunos32_sigcontext sf_sc;	/* actual sigcontext */
 };
+
+static int ev_out32 __P((struct firm_event *, int, struct uio *));
 
 /*
  * Set up registers on exec.
@@ -347,4 +356,27 @@ sunos32_sys_sigreturn(p, v, retval)
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
+}
+
+/*
+ * Write out a series of 32-bit firm_events.
+ */
+static int
+ev_out32(e, n, uio)
+	struct firm_event *e;  
+	int n;
+	struct uio *uio;
+{
+	struct firm_event32 e32;
+	int error = 0;
+
+	while (n-- && error == 0) {
+		e32.id = e->id;
+		e32.value = e->value;
+		e32.time.tv_sec = e->time.tv_sec;
+		e32.time.tv_usec = e->time.tv_usec;
+		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		e++;
+	}
+	return (error);
 }
