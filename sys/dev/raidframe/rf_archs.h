@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.20 2002/09/19 23:23:19 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.21 2004/02/29 21:38:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -138,6 +138,10 @@
 
 #ifndef RF_DEBUG_MAP
 #define RF_DEBUG_MAP 0
+#endif
+
+#ifndef RF_ACC_TRACE
+#define RF_ACC_TRACE 0
 #endif
 
 #include "rf_options.h"
