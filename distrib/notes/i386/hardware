@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.70 2000/04/21 18:20:53 explorer Exp $	
+.\"	$NetBSD: hardware,v 1.71 2000/06/12 21:27:12 bouyer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -22,6 +22,7 @@ Supported devices include:
                 -  Acer labs M5229 IDE Controller
                 -  CMD Tech PCI0643 and PCI0646 IDE Controllers
                 -  Contaq Microsystems/Cypress CY82C693 IDE Controller
+                -  HighPoint HPT366 IDE Controller
                 -  Intel PIIX, PIIX3 and PIIX4 IDE Controllers
                 -  Intel 82801 (ICH/ICH0) IDE Controllers
 		-  Promise PDC20246 (Ultra/33) and PDC20262 (Ultra/66) 
