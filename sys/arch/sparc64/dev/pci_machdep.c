@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.41 2004/01/21 07:16:07 petrov Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.42 2004/03/21 14:22:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2004/01/21 07:16:07 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2004/03/21 14:22:52 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,6 @@ struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
 
-static int pci_bus_frequency(int node);
 static int pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
 
 static pcitag_t
@@ -163,8 +162,8 @@ pci_make_tag(pc, b, d, f)
 	 */
 #ifdef DEBUG
 	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("curnode %x %s\n", node, name);
+		printf("curnode %x %s\n", node,
+			prom_getpropstringA(node, "name", name, sizeof(name)));
 	}
 #endif
 #if 0
@@ -175,8 +174,8 @@ pci_make_tag(pc, b, d, f)
 		node = OF_parent(node);
 #ifdef DEBUG
 		if (sparc_pci_debug & SPDB_PROBE) {
-			OF_getprop(node, "name", &name, sizeof(name));
-			printf("going up to node %x %s\n", node, name);
+			printf("going up to node %x %s\n", node,
+			prom_getpropstringA(node, "name", name, sizeof(name)));
 		}
 #endif
 	}
@@ -188,12 +187,13 @@ pci_make_tag(pc, b, d, f)
 	 * XXX We go up one and down one to make sure nobody's missed.
 	 * but this should not be necessary.
 	 */
-	for (node = ((node)); node; node = OF_peer(node)) {
+	for (node = ((node)); node; node = prom_nextsibling(node)) {
 
 #ifdef DEBUG
 		if (sparc_pci_debug & SPDB_PROBE) {
-			OF_getprop(node, "name", &name, sizeof(name));
-			printf("checking node %x %s\n", node, name);
+			printf("checking node %x %s\n", node
+			prom_getpropstringA(node, "name", name, sizeof(name)));
+			
 		}
 #endif
 
@@ -206,12 +206,14 @@ pci_make_tag(pc, b, d, f)
 			sizeof(busrange)) == sizeof(busrange)) &&
 			(b >= busrange[0] && b <= busrange[1])) {
 			/* Go down 1 level */
-			node = OF_child(node);
+			node = prom_firstchild(node);
 #ifdef DEBUG
 			if (sparc_pci_debug & SPDB_PROBE) {
 				OF_getprop(node, "name", &name, sizeof(name));
 				printf("going down to node %x %s\n",
-					node, name);
+					node
+					prom_getpropstringA(node, "name",
+							name, sizeof(name)));
 			}
 #endif
 		}
@@ -223,7 +225,7 @@ pci_make_tag(pc, b, d, f)
 		 * need it.  Otherwise we could malloc() it, but
 		 * that gets more complicated.
 		 */
-		len = OF_getproplen(node, "reg");
+		len = prom_getproplen(node, "reg");
 		if (len < sizeof(reg))
 			continue;
 		if (OF_getprop(node, "reg", (void *)&reg, sizeof(reg)) != len)
@@ -260,27 +262,6 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 		*fp = PCITAG_FUN(tag);
 }
 
-static int 
-pci_bus_frequency(int node)
-{
-	int len, bus_frequency;
-
-	len = OF_getproplen(node, "clock-frequency");
-	if (len < sizeof(bus_frequency)) {
-		DPRINTF(SPDB_PROBE,
-		    ("pci_bus_frequency: clock-frequency len %d too small\n",
-		     len));
-		return 33;
-	}
-	if (OF_getprop(node, "clock-frequency", &bus_frequency,
-		       sizeof(bus_frequency)) != len) {
-		DPRINTF(SPDB_PROBE,
-		    ("pci_bus_frequency: could not read clock-frequency\n"));
-		return 33;
-	}
-	return bus_frequency / 1000000;
-}
-
 int
 pci_enumerate_bus(struct pci_softc *sc,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
@@ -299,7 +280,8 @@ pci_enumerate_bus(struct pci_softc *sc,
 	else
 		node = pc->rootnode;
 
-	bus_frequency = pci_bus_frequency(node);
+	bus_frequency =
+		prom_getpropint(node, "clock-frequency", 33000000) / 1000000;
 
 	/*
 	 * Make sure the cache line size is at least as big as the
@@ -327,10 +309,10 @@ pci_enumerate_bus(struct pci_softc *sc,
 
 	if (pci_config_dump) pci_conf_print(pc, tag, NULL);
 
-	for (node = OF_child(node); node != 0 && node != -1;
-	     node = OF_peer(node)) {
+	for (node = prom_firstchild(node); node != 0 && node != -1;
+	     node = prom_nextsibling(node)) {
 		name[0] = name[29] = 0;
-		OF_getprop(node, "name", name, sizeof(name));
+		prom_getpropstringA(node, "name", name, sizeof(name));
 
 		if (OF_getprop(node, "class-code", &class, sizeof(class)) != 
 		    sizeof(class))
