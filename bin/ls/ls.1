@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ls.1	6.25 (Berkeley) 7/27/92
-.\"	$Id: ls.1,v 1.5 1993/08/07 03:56:55 mycroft Exp $
+.\"	$Id: ls.1,v 1.6 1993/12/05 21:35:25 mycroft Exp $
 .\"
 .Dd July 27, 1992
 .Dt LS 1
@@ -43,7 +43,7 @@
 .Nd list directory contents.
 .Sh SYNOPSIS
 .Nm ls
-.Op Fl CFRacdilqrstu1
+.Op Fl CFLRSTacdfiklqrstu1
 .Op Ar file ...
 .Sh DESCRIPTION
 For each operand that names a
@@ -90,6 +90,8 @@ If argument is a symbolic link, list the file or directory the link references
 rather than the link itself.
 .It Fl R
 Recursively list subdirectories encountered.
+.It Fl S
+Sort by size, largest file first.
 .It Fl T
 Display complete time information for the file, including
 month, day, hour, minute, second, and year.
@@ -122,7 +124,7 @@ Force printing of non-graphic characters in file names as
 the character `?'; this is the default when output is to a terminal.
 .It Fl r
 Reverse the order of the sort to get reverse
-lexicographical order or the oldest entries first.
+lexicographical order or the smallest or oldest entries first.
 .It Fl s
 Display the number of file system blocks actually used by each file, in units
 of 512 bytes, where partial units are rounded up to the next integer value.
