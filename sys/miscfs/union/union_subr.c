@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.34 1999/07/15 21:30:32 wrstuden Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.35 1999/08/01 23:16:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -779,6 +779,9 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
  * (cnp) is the componentname to be created.
  * (vpp) is the returned newly created shadow directory, which
  * is returned locked.
+ *
+ * N.B. We still attempt to create shadow directories even if the union
+ * is mounted read-only, which is a little nonintuitive.
  */
 int
 union_mkshadow(um, dvp, cnp, vpp)
