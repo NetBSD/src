@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.36 2002/11/17 01:04:46 lukem Exp $
+# $NetBSD: postinstall,v 1.37 2002/11/17 03:22:47 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,8 +47,6 @@
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
-#	- check obsolete file lists -- need to remove non obsolete files from
-#	  the sets first.
 #
 
 #
@@ -568,6 +566,53 @@ do_postfix()
 	compare_dir ${op} ${pfdir} \
 	    ${DEST_DIR}/etc/postfix 444 post-install postfix-files
 	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	obsolete
+#
+additem obsolete "obsolete file sets"
+do_obsolete()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
+	op=$1
+
+	setdir=${SRC_DIR}/distrib/sets
+	makeobs=${setdir}/makeobsolete
+	if [ ! -x "${makeobs}" ]; then
+		warn "Can't find program \"${makeobs}\""
+		return 1
+	fi
+
+	( cd ${setdir} && ./makeobsolete -s ${setdir} -t ${SCRATCHDIR} )
+	failed=0
+
+	for obssrcfile in ${SCRATCHDIR}/*_obsolete; do
+		while read ofile; do
+			ofile=${DEST_DIR}${ofile#.}
+			cmd="rm"
+			ftype="file"
+			if [ -h "${ofile}" ]; then
+				ftype="link"
+			elif [ -d "${ofile}" ]; then
+				ftype="directory"
+				cmd="rmdir"
+			elif [ ! -e "${ofile}" ]; then
+				continue
+			fi
+			if [ "${op}" = "check" ]; then
+				msg "Remove obsolete ${ftype} ${ofile}"
+				failed=1
+			elif ! eval ${cmd} ${ofile}; then
+				msg "Can't remove obsolete ${ftype} ${ofile}"
+				failed=1
+			else
+				msg "Removed obsolete ${ftype} ${ofile}"
+			fi
+		done < ${obssrcfile}
+	done
 
 	return ${failed}
 }
