@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.35 1998/01/05 05:16:28 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.36 1998/01/06 21:15:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -315,7 +315,9 @@ again:
 	 * Return child pid to parent process,
 	 * marking us as parent via retval[1].
 	 */
-	retval[0] = p2->p_pid;
-	retval[1] = 0;
+	if (retval != NULL) {
+		retval[0] = p2->p_pid;
+		retval[1] = 0;
+	}
 	return (0);
 }
