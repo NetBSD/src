@@ -1,3 +1,4 @@
+/*	$NetBSD: sdl.h,v 1.2 2004/06/22 16:04:40 itojun Exp $	*/
 /*	$OpenBSD: sdl.h,v 1.2 2004/02/26 08:18:56 deraadt Exp $ */
 
 /*
@@ -29,7 +30,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/ip_ipsp.h>
 
 /* spamd source list */
 struct sdlist {

@@ -1,3 +1,4 @@
+/*	$NetBSD: grey.h,v 1.2 2004/06/22 16:04:40 itojun Exp $	*/
 /*	$OpenBSD: grey.h,v 1.3 2004/02/26 08:30:01 beck Exp $	*/
 
 /*
