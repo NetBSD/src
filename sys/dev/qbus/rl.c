@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.6 2001/01/07 18:09:02 fvdl Exp $	*/
+/*	$NetBSD: rl.c,v 1.7 2001/01/08 02:03:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -392,7 +392,7 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case ODIOCGDINFO:
 		newlabel = *lp;
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		bcopy(&newlabel, addr, sizeof (struct olddisklabel));
 		break;
 #endif

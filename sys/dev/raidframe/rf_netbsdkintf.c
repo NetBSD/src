@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.102 2001/01/07 18:09:02 fvdl Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.103 2001/01/08 02:03:47 fvdl Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1459,7 +1459,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case ODIOCGDINFO:
 		newlabel = *(rs->sc_dkdev.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
@@ -1528,7 +1528,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case ODIOCGDEFLABEL:
 		raidgetdefaultlabel(raidPtr, rs, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
