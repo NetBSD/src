@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.20 2001/06/18 02:00:50 christos Exp $
+# $NetBSD: files.next68k,v 1.21 2001/11/20 06:03:17 lukem Exp $
 
 # next68k-specific configuration info
 
@@ -28,7 +28,7 @@ file	dev/ic/z8530sc.c		zsc
 device	zstty: tty
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
-file	arch/next68k/dev/zs_kgdb.c		kgdb
+file	arch/next68k/dev/zs_kgdb.c	kgdb
 
 #file	arch/m68k/m68k/db_memrw.c	ddb | kgdb
 file	arch/next68k/next68k/db_memrw.c	ddb | kgdb
