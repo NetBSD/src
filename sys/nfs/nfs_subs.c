@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.102 2002/03/11 22:56:47 jdolecek Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.103 2002/03/17 22:22:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.102 2002/03/11 22:56:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.103 2002/03/17 22:22:40 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1479,6 +1479,8 @@ nfs_init()
 		    M_WAITOK, &nqfhhash);
 	}
 #endif
+
+	exithook_establish(nfs_exit, NULL);
 
 	/*
 	 * Initialize reply list and start timer
