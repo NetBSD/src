@@ -1,6 +1,7 @@
-/*	$NetBSD: pcb.h,v 1.16 1995/05/01 04:49:28 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.17 1995/05/01 08:14:25 mycroft Exp $	*/
 
 /*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -51,13 +52,11 @@
 
 struct pcb {
 	struct	i386tss pcb_tss;
-#define	pcb_ksp	pcb_tss.tss_esp0
-#define	pcb_ptd	pcb_tss.tss_cr3
-#define	pcb_cr3	pcb_ptd
-#define	pcb_pc	pcb_tss.tss_eip
-#define	pcb_psl	pcb_tss.tss_eflags
-#define	pcb_usp	pcb_tss.tss_esp
-#define	pcb_fp	pcb_tss.tss_ebp
+#define	pcb_cr3	pcb_tss.tss_cr3
+#define	pcb_esp	pcb_tss.tss_esp
+#define	pcb_ebp	pcb_tss.tss_ebp
+#define	pcb_fs	pcb_tss.tss_fs
+#define	pcb_gs	pcb_tss.tss_gs
 #ifdef	notyet
 	u_char	pcb_iomap[NPORT/sizeof(u_char)]; /* i/o port bitmap */
 #endif
@@ -72,8 +71,6 @@ struct pcb {
  */
 	int	pcb_flags;
 #define	FP_USESEMC	0x08	/* process uses EMC memory-mapped mode */
-#define	FP_SOFTFP	0x20	/* process using software fltng pnt emulator */
-	int	pcb_iml;	/* interrupt mask level */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
 };
 
