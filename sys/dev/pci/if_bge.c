@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.79 2004/11/19 17:59:09 jmmv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.80 2005/01/08 16:00:03 fredb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.79 2004/11/19 17:59:09 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.80 2005/01/08 16:00:03 fredb Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2083,6 +2083,11 @@ static const struct bge_product {
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705M,
 	  "Broadcom BCM5705M Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5721,
+	  "Broadcom BCM5721 Gigabit Ethernet",
 	  },
 
 	{ PCI_VENDOR_BROADCOM,
