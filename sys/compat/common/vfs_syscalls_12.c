@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.7 2001/04/07 09:00:57 jdolecek Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.8 2001/04/09 10:22:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,7 +218,7 @@ compat_12_sys_fstat(p, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FILE_UNUSE(fp, p);
 
 	if (error == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.3 2001/04/09 09:39:10 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.4 2001/04/09 10:22:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -602,7 +602,7 @@ netbsd32___fstat13(p, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	FILE_UNUSE(fp, p);
 
 	if (error == 0) {
