@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.83 2001/11/13 07:26:33 lukem Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.84 2001/12/15 13:23:22 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.83 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.84 2001/12/15 13:23:22 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,7 +858,7 @@ ne_pcmcia_get_enaddr(psc, maddr, myea)
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	u_int8_t *enaddr = NULL;
 	int j, mwindow;
 
@@ -917,7 +917,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	int rv = 1, mwindow;
 	u_int last_liobase, new_liobase;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.27 2001/11/15 09:48:12 lukem Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.28 2001/12/15 13:23:22 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.27 2001/11/15 09:48:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.28 2001/12/15 13:23:22 soren Exp $");
 
 #include "opt_pcmciaverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>

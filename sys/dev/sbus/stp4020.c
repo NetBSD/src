@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.13 2001/11/15 09:48:15 lukem Exp $ */
+/*	$NetBSD: stp4020.c,v 1.14 2001/12/15 13:23:23 soren Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.13 2001/11/15 09:48:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.14 2001/12/15 13:23:23 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ void	stp4020_chip_mem_free __P((pcmcia_chipset_handle_t,
 				   struct pcmcia_mem_handle *));
 int	stp4020_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
 				  bus_size_t, struct pcmcia_mem_handle *,
-				  bus_addr_t *, int *));
+				  bus_size_t *, int *));
 void	stp4020_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int	stp4020_chip_io_alloc __P((pcmcia_chipset_handle_t,
@@ -664,7 +664,7 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.7 2001/10/08 15:34:24 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.8 2001/12/15 13:23:21 soren Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ static int _chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 static void _chip_mem_free(pcmcia_chipset_handle_t,
     struct pcmcia_mem_handle *);
 static int _chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 static void _chip_mem_unmap(pcmcia_chipset_handle_t, int);
 static int _chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
     bus_size_t, bus_size_t, struct pcmcia_io_handle *);
@@ -599,7 +599,7 @@ _chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
 static int
 _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
     bus_size_t size, struct pcmcia_mem_handle *pcmhp,
-    bus_addr_t *offsetp, int *windowp)
+    bus_size_t *offsetp, int *windowp)
 {
 	struct hd64461pcmcia_channel *ch = (struct hd64461pcmcia_channel *)pch;
 	struct hd64461pcmcia_window_cookie *cookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.30 2001/12/15 12:01:55 soren Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.31 2001/12/15 13:23:22 soren Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.30 2001/12/15 12:01:55 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.31 2001/12/15 13:23:22 soren Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -518,7 +518,7 @@ ray_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa;
 	struct ray_softc *sc;
 	struct ifnet *ifp;
-	bus_addr_t memoff;
+	bus_size_t memoff;
 	char devinfo[256];
 
 	pa = aux;
