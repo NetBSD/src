@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.30 2001/12/14 14:43:33 bouyer Exp $	*/
+/*	$NetBSD: dump.h,v 1.31 2001/12/22 08:05:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -49,21 +49,21 @@ struct ufsi {
 	int32_t ufs_bsize;	/* block size */
 	int32_t ufs_bshift;	/* log2(ufs_bsize) */
 	int32_t ufs_fsize;	/* fragment size */
-	int32_t ufs_frag;       /* block size / frag size */
+	int32_t ufs_frag;	/* block size / frag size */
 	int32_t ufs_fsatoda;	/* disk address conversion constant */
 	int32_t	ufs_nindir;	/* disk addresses per indirect block */
-	int32_t ufs_inopb;      /* inodes per block */
+	int32_t ufs_inopb;	/* inodes per block */
 	int32_t ufs_maxsymlinklen; /* max symlink length */
-	int32_t ufs_bmask;      /* block mask */
-	int32_t ufs_fmask;      /* frag mask */
-	int64_t ufs_qbmask;     /* ~ufs_bmask */
-	int64_t ufs_qfmask;     /* ~ufs_fmask */
+	int32_t ufs_bmask;	/* block mask */
+	int32_t ufs_fmask;	/* frag mask */
+	int64_t ufs_qbmask;	/* ~ufs_bmask */
+	int64_t ufs_qfmask;	/* ~ufs_fmask */
 };
 #define fsatoda(u,a) ((a) << (u)->ufs_fsatoda)
 #define ufs_fragroundup(u,size) /* calculates roundup(size, ufs_fsize) */ \
-        (((size) + (u)->ufs_qfmask) & (u)->ufs_fmask)
+	(((size) + (u)->ufs_qfmask) & (u)->ufs_fmask)
 #define ufs_blkoff(u,loc)   /* calculates (loc % u->ufs_bsize) */ \
-        ((loc) & (u)->ufs_qbmask)
+	((loc) & (u)->ufs_qbmask)
 #define ufs_dblksize(u,d,b) \
 	((((b) >= NDADDR || (d)->di_size >= ((b)+1) << (u)->ufs_bshift \
 		? (u)->ufs_bsize \
@@ -112,7 +112,7 @@ int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
 
 extern int	density;	/* density in 0.1" units */
 extern int	notify;		/* notify operator flag */
-extern int      timestamp;      /* timestamp messages */
+extern int	timestamp;	/* timestamp messages */
 extern int	blockswritten;	/* number of blocks written on current tape */
 extern int	tapeno;		/* current tape number */
 
