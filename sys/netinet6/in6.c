@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.89 2004/06/16 03:17:26 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.90 2004/07/26 13:44:35 yamt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,9 +62,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.89 2004/06/16 03:17:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.90 2004/07/26 13:44:35 yamt Exp $");
 
 #include "opt_inet.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -96,6 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.89 2004/06/16 03:17:26 itojun Exp $");
 #include <netinet6/in6_ifattach.h>
 
 #include <net/net_osdep.h>
+
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
 
 MALLOC_DEFINE(M_IP6OPT, "ip6_options", "IPv6 options");
 
@@ -737,6 +742,11 @@ in6_control(so, cmd, data, ifp, p)
 		 */
 		pfxlist_onlink_check();
 
+#ifdef PFIL_HOOKS
+		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCAIFADDR_IN6,
+		    ifp, PFIL_IFADDR);
+#endif
+
 		break;
 	}
 
@@ -777,6 +787,10 @@ in6_control(so, cmd, data, ifp, p)
 		in6_purgeaddr(&ia->ia_ifa);
 		if (pr && purgeprefix)
 			prelist_remove(pr);
+#ifdef PFIL_HOOKS
+		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR_IN6,
+		    ifp, PFIL_IFADDR);
+#endif
 		break;
 	}
 
