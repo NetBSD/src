@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.11 1997/08/16 13:47:21 lukem Exp $	*/
+/*	$NetBSD: pwd.h,v 1.12 1998/05/06 19:17:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -44,9 +44,10 @@
 #ifndef _PWD_H_
 #define	_PWD_H_
 
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	_PATH_PASSWD		"/etc/passwd"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
 #define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
@@ -92,14 +93,14 @@ struct passwd {
 __BEGIN_DECLS
 struct passwd	*getpwuid __P((uid_t));
 struct passwd	*getpwnam __P((const char *));
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 struct passwd	*getpwent __P((void));
-#ifndef _XOPEN_SOURCE
-int		 setpassent __P((int));
-char		*user_from_uid __P((uid_t, int));
-#endif
 void		 setpwent __P((void));
 void		 endpwent __P((void));
+#endif
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+int		 setpassent __P((int));
+char		*user_from_uid __P((uid_t, int));
 #endif
 __END_DECLS
 
