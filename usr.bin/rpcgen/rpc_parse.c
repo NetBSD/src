@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.8 1998/02/10 05:10:20 lukem Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.9 1998/02/11 23:11:18 lukem Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.8 1998/02/10 05:10:20 lukem Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.9 1998/02/11 23:11:18 lukem Exp $");
 #endif
 #endif
 
@@ -573,15 +573,12 @@ get_type(prefixp, typep, dkind)
 		unsigned_dec(typep);
 		break;
 	case TOK_SHORT:
-		*typep = "int16_t";
+		*typep = "short";
 		(void) peekscan(TOK_INT, &tok);
 		break;
 	case TOK_LONG:
-		*typep = "int32_t";
+		*typep = "long";
 		(void) peekscan(TOK_INT, &tok);
-		break;
-	case TOK_INT:
-		*typep = "int32_t";
 		break;
 	case TOK_VOID:
 		if (dkind != DEF_UNION && dkind != DEF_PROGRAM) {
@@ -592,6 +589,7 @@ get_type(prefixp, typep, dkind)
 	case TOK_STRING:
 	case TOK_OPAQUE:
 	case TOK_CHAR:
+	case TOK_INT:
 	case TOK_FLOAT:
 	case TOK_DOUBLE:
 	case TOK_BOOL:
@@ -616,20 +614,20 @@ unsigned_dec(typep)
 		break;
 	case TOK_SHORT:
 		get_token(&tok);
-		*typep = "u_int16_t";
+		*typep = "u_short";
 		(void) peekscan(TOK_INT, &tok);
 		break;
 	case TOK_LONG:
 		get_token(&tok);
-		*typep = "u_int32_t";
+		*typep = "u_long";
 		(void) peekscan(TOK_INT, &tok);
 		break;
 	case TOK_INT:
 		get_token(&tok);
-		*typep = "u_int32_t";
+		*typep = "u_int";
 		break;
 	default:
-		*typep = "u_int32_t";
+		*typep = "u_int";
 		break;
 	}
 }

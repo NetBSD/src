@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.10 1998/02/10 03:52:17 lukem Exp $	*/
+/*	$NetBSD: rpc.h,v 1.11 1998/02/11 23:01:25 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -80,27 +80,24 @@
 /* routines for parsing /etc/rpc */
 
 struct rpcent {
-      char	 *r_name;	/* name of server for this RPC program */
-      char	**r_aliases;	/* alias list */
-      u_int32_t   r_number;	/* RPC program number */
+      char    *r_name;        /* name of server for this rpc program */
+      char    **r_aliases;    /* alias list */
+      int     r_number;       /* rpc program number */
 };
 
 __BEGIN_DECLS
-extern struct rpcent	*getrpcbyname	__P((const char *));
-extern struct rpcent	*getrpcbynumber	__P((u_int32_t));
-extern struct rpcent	*getrpcent	__P((void));
-extern void		 setrpcent	__P((int));
-extern void		 endrpcent	__P((void));
-extern int		 get_myaddress	__P((struct sockaddr_in *));
-extern int		 bindresvport	__P((int, struct sockaddr_in *));
-extern int		 registerrpc	__P((u_int32_t, u_int32_t, u_int32_t,
-					    char *(*) __P((char [UDPMSGSIZE])),
-					    xdrproc_t, xdrproc_t));
-extern int		 callrpc	__P((const char *, u_int32_t, u_int32_t,
-					    u_int32_t, xdrproc_t, caddr_t,
-					    xdrproc_t , caddr_t));
-extern int		getrpcport	__P((const char *, u_int32_t,
-					    u_int32_t, int));
+extern struct rpcent *getrpcbyname	__P((char *));
+extern struct rpcent *getrpcbynumber	__P((int));
+extern struct rpcent *getrpcent		__P((void));
+extern void setrpcent __P((int));
+extern void endrpcent __P((void));
+extern int get_myaddress __P((struct sockaddr_in *));
+extern int bindresvport __P((int, struct sockaddr_in *));
+extern int registerrpc __P((int, int, int, char *(*) __P((char [UDPMSGSIZE])),
+    xdrproc_t, xdrproc_t));
+extern int callrpc __P((char *, int, int, int, xdrproc_t, char *,
+    xdrproc_t , char *));
+extern int getrpcport __P((char *, int, int, int));
 __END_DECLS
 
 #endif /* !_RPC_RPC_H_ */
