@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.25 1995/11/21 01:07:34 cgd Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.26 1996/01/15 21:11:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -67,9 +67,13 @@
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
+#ifndef IPFORWSRCRT
+#define	IPFORWSRCRT	1	/* allow source-routed packets */
+#endif
 int	ipforwarding = IPFORWARDING;
 int	ipsendredirects = IPSENDREDIRECTS;
 int	ip_defttl = IPDEFTTL;
+int	ip_forwsrcrt = IPFORWSRCRT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -796,6 +800,11 @@ ip_dooptions(m)
 		}
 	}
 	if (forward) {
+		if (ip_forwsrcrt == 0) {
+			type = ICMP_UNREACH;
+			code = ICMP_UNREACH_SRCFAIL;
+			goto bad;
+		}
 		ip_forward(m, 1);
 		return (1);
 	}
@@ -1123,6 +1132,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int temp;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -1139,6 +1150,14 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_DEFMTU:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
 #endif
+	case IPCTL_FORWSRCRT:
+		/*
+		 * Don't allow this to change in a secure environment.
+		 */
+		if (securelevel > 0)
+			return (EPERM);
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_forwsrcrt));
 	default:
 		return (EOPNOTSUPP);
 	}
