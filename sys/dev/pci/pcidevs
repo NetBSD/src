@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.527 2003/04/22 20:52:06 fvdl Exp $
+$NetBSD: pcidevs,v 1.528 2003/04/24 23:36:09 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -783,6 +783,10 @@ product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
 product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 
 /* AMD products */
+product AMD AMD64_HT	0x1100  AMD64 HyperTransport configuration
+product AMD AMD64_ADDR	0x1101  AMD64 Address Map configuration
+product AMD AMD64_DRAM	0x1102  AMD64 DRAM configuration
+product AMD AMD64_MISC	0x1103  AMD64 Miscellaneous configuration
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
@@ -810,6 +814,8 @@ product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
 product AMD PBC768_USB	0x7449	AMD768 USB Controller
 product AMD PCIX8131_PPB	0x7450	PCI-X Tunnel
 product AMD PCIX8131_APIC	0x7451	IO Apic
+product AMD PBC8111	0x7460	AMD8111 I/O Hub
+product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
 product AMD PBC8111_IDE		0x7469	AMD8111 IDE Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 
