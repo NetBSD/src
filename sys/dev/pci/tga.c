@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.55 2003/10/29 04:40:17 mycroft Exp $ */
+/* $NetBSD: tga.c,v 1.56 2003/10/29 04:43:18 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.55 2003/10/29 04:40:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.56 2003/10/29 04:43:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1106,6 +1106,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 
 	if (xdir == 1) {   /* move to the left */
 
+		if (wb & ~63)
 		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
 			/* 4*64 byte chunks */
 			for (xleft = wb, x = xstart; xleft >= 4*64;
@@ -1152,6 +1153,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	}
 	else {    /* above move to the left, below move to the right */
 
+		if (wb & ~63)
 		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
 			/* 4*64 byte chunks */
 			for (xleft = wb, x = xstart; xleft >= 4*64;
