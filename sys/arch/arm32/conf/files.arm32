@@ -1,10 +1,13 @@
-#	$NetBSD: files.arm32,v 1.44 1998/07/06 00:41:17 mark Exp $
+#	$NetBSD: files.arm32,v 1.45 1998/07/06 01:54:56 mark Exp $
 #
 # First try for arm-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
+
+# Floating point emulator
+defopt	ARMFPE
 
 # Maintain Interrupt statistics
 defopt	IRQSTATS
