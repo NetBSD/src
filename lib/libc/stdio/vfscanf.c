@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfscanf.c	5.7 (Berkeley) 12/14/92";*/
-static char *rcsid = "$Id: vfscanf.c,v 1.8 1994/09/19 04:43:05 mycroft Exp $";
+static char *rcsid = "$Id: vfscanf.c,v 1.9 1995/01/26 01:34:45 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -212,9 +212,7 @@ literal:
 			base = 10;
 			break;
 
-		case 'X':	/* compat   XXX */
-			flags |= LONG;
-			/* FALLTHROUGH */
+		case 'X':
 		case 'x':
 			flags |= PFXOK;	/* enable 0x prefixing */
 			c = CT_INT;
@@ -223,11 +221,11 @@ literal:
 			break;
 
 #ifdef FLOATING_POINT
-		case 'E':	/* compat   XXX */
-		case 'F':	/* compat */
-			flags |= LONG;
-			/* FALLTHROUGH */
-		case 'e': case 'f': case 'g':
+		case 'E':
+		case 'G':
+		case 'e': 
+		case 'f':
+		case 'g':
 			c = CT_FLOAT;
 			break;
 #endif
