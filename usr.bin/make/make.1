@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)make.1	5.7 (Berkeley) 7/24/91
-.\"	$Id: make.1,v 1.3 1993/08/01 07:31:03 mycroft Exp $
+.\"	$Id: make.1,v 1.4 1993/12/22 00:25:59 pk Exp $
 .\"
 .Dd July 24, 1991
 .Dt MAKE 1
@@ -384,6 +384,8 @@ was executed with
 A path to the directory where
 .Nm make
 was executed.
+.It Va .OBJDIR
+A path to the directory where the targets are built.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
@@ -819,7 +821,7 @@ command in the file.
 .It Ic .SUFFIXES
 Each source specifies a suffix to
 .Nm make .
-If no sources are specified, any previous specifies suffices are deleted.
+If no sources are specified, any previous specified suffices are deleted.
 .Sh ENVIRONMENT
 .Nm Make
 utilizes the following environment variables, if they exist:
