@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.129 2002/05/28 10:17:27 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.130 2002/05/29 07:53:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.129 2002/05/28 10:17:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.130 2002/05/29 07:53:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.129 2002/05/28 10:17:27 itojun Exp $"
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -1660,7 +1661,16 @@ tcp_mss_to_advertise(ifp, af)
 	 */
 
 	if (ifp != NULL)
-		mss = ifp->if_mtu;
+		switch (af) {
+		case AF_INET:
+			mss = ifp->if_mtu;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			mss = IN6_LINKMTU(ifp);
+			break;
+#endif
+		}
 
 	if (tcp_mss_ifmtu == 0)
 		switch (af) {
