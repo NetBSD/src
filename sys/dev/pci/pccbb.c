@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.94 2003/12/19 18:16:43 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.95 2003/12/19 19:00:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.94 2003/12/19 18:16:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.95 2003/12/19 19:00:00 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1081,7 +1081,6 @@ pccbbintr_function(sc)
 {
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
-/*###1082 [cc] warning: `s' might be used uninitialized in this function%%%*/
 	int s, splchanged;
 
 	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
@@ -1259,7 +1258,7 @@ pccbb_power(ct, command)
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
 
-	DPRINTF(("pccbb_power: %s and %s [%x]\n",
+	DPRINTF(("pccbb_power: %s and %s [0x%x]\n",
 	    (command & CARDBUS_VCCMASK) == CARDBUS_VCC_UC ? "CARDBUS_VCC_UC" :
 	    (command & CARDBUS_VCCMASK) == CARDBUS_VCC_5V ? "CARDBUS_VCC_5V" :
 	    (command & CARDBUS_VCCMASK) == CARDBUS_VCC_3V ? "CARDBUS_VCC_3V" :
@@ -1323,7 +1322,7 @@ pccbb_power(ct, command)
 	}
 
 #if 0
-	DPRINTF(("sock_ctrl: %x\n", sock_ctrl));
+	DPRINTF(("sock_ctrl: 0x%x\n", sock_ctrl));
 #endif
 	bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
@@ -1332,7 +1331,7 @@ pccbb_power(ct, command)
 		printf
 		    ("%s: bad Vcc request. sock_ctrl 0x%x, sock_status 0x%x\n",
 		    sc->sc_dev.dv_xname, sock_ctrl, status);
-		DPRINTF(("pccbb_power: %s and %s [%x]\n",
+		DPRINTF(("pccbb_power: %s and %s [0x%x]\n",
 		    (command & CARDBUS_VCCMASK) ==
 		    CARDBUS_VCC_UC ? "CARDBUS_VCC_UC" : (command &
 		    CARDBUS_VCCMASK) ==
@@ -2081,7 +2080,7 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 	if (rbus_space_alloc(rb, start, size, mask, align, 0, &ioaddr, &ioh)) {
 		return 1;
 	}
-	DPRINTF(("pccbb_pcmcia_io_alloc alloc port %lx+%lx\n",
+	DPRINTF(("pccbb_pcmcia_io_alloc alloc port 0x%lx+0x%lx\n",
 	    (u_long) ioaddr, (u_long) size));
 #else
 	if (start) {
@@ -2089,7 +2088,7 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 		if (bus_space_map(iot, start, size, 0, &ioh)) {
 			return 1;
 		}
-		DPRINTF(("pccbb_pcmcia_io_alloc map port %lx+%lx\n",
+		DPRINTF(("pccbb_pcmcia_io_alloc map port 0x%lx+0x%lx\n",
 		    (u_long) ioaddr, (u_long) size));
 	} else {
 		flags |= PCMCIA_IO_ALLOCATED;
@@ -2248,10 +2247,9 @@ pccbb_pcmcia_do_io_map(ph, win)
 	int regbase_win = 0x8 + win * 0x04;
 	u_int8_t ioctl, enable;
 
-	DPRINTF(
-	    ("pccbb_pcmcia_do_io_map win %d addr 0x%lx size 0x%lx width %d\n",
-	    win, (long)ph->io[win].addr, (long)ph->io[win].size,
-	    ph->io[win].width * 8));
+	DPRINTF(("pccbb_pcmcia_do_io_map win %d addr 0x%lx size 0x%lx "
+	    "width %d\n", win, (unsigned long)ph->io[win].addr,
+	    (unsigned long)ph->io[win].size, ph->io[win].width * 8));
 
 	Pcic_write(ph, regbase_win + PCIC_SIA_START_LOW,
 	    ph->io[win].addr & 0xff);
@@ -2634,9 +2632,9 @@ pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
 	}
 #endif
 
-	DPRINTF(
-	    ("pccbb_pcmcia_alloc_mem: addr 0x%lx size 0x%lx, realsize 0x%lx\n",
-	    addr, size, sizepg * PCIC_MEM_PAGESIZE));
+	DPRINTF(("pccbb_pcmcia_alloc_mem: addr 0x%lx size 0x%lx, "
+	    "realsize 0x%lx\n", (unsigned long)addr, (unsigned long)size,
+	    (unsigned long)sizepg * PCIC_MEM_PAGESIZE));
 
 	pcmhp->memt = sc->sc_memt;
 	pcmhp->memh = memh;
@@ -2711,7 +2709,8 @@ pccbb_pcmcia_do_mem_map(ph, win)
 	phys_end = phys_addr + ph->mem[win].size;
 
 	DPRINTF(("pccbb_pcmcia_do_mem_map: start 0x%lx end 0x%lx off 0x%lx\n",
-	    phys_addr, phys_end, ph->mem[win].offset));
+	    (unsigned long)phys_addr, (unsigned long)phys_end,
+	    (unsigned long)ph->mem[win].offset));
 
 #define PCIC_MEMREG_LSB_SHIFT PCIC_SYSMEM_ADDRX_SHIFT
 #define PCIC_MEMREG_MSB_SHIFT (PCIC_SYSMEM_ADDRX_SHIFT + 8)
@@ -2974,9 +2973,8 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 	if (!(pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)) {
 		/* what should I do? */
 		if ((pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)) {
-			DPRINTF(
-			    ("%s does not provide edge nor pulse interrupt\n",
-			    sc->sc_dev.dv_xname));
+			DPRINTF(("%s does not provide edge nor pulse "
+			    "interrupt\n", sc->sc_dev.dv_xname));
 			return NULL;
 		}
 		/* 
@@ -3031,9 +3029,9 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
-	DPRINTF(
-	    ("pccbb_rbus_cb_space_alloc: adr %lx, size %lx, mask %lx, align %lx\n",
-	    addr, size, mask, align));
+	DPRINTF(("pccbb_rbus_cb_space_alloc: addr 0x%lx, size 0x%lx, "
+	    "mask 0x%lx, align 0x%lx\n", (unsigned long)addr,
+	    (unsigned long)size, (unsigned long)mask, (unsigned long)align));
 
 	if (align == 0) {
 		align = size;
@@ -3068,9 +3066,10 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 		}
 
 	} else {
-		DPRINTF(
-		    ("pccbb_rbus_cb_space_alloc: Bus space tag %x is NOT used. io: %d, mem: %d\n",
-		    rb->rb_bt, sc->sc_iot, sc->sc_memt));
+		DPRINTF(("pccbb_rbus_cb_space_alloc: Bus space tag 0x%lx is "
+		    "NOT used. io: 0x%lx, mem: 0x%lx\n",
+		    (unsigned long)rb->rb_bt, (unsigned long)sc->sc_iot,
+		    (unsigned long)sc->sc_memt));
 		return 1;
 		/* XXX: panic here? */
 	}
@@ -3134,8 +3133,9 @@ pccbb_open_win(sc, bst, addr, size, bsh, flags)
 	if (sc->sc_memt == bst) {
 		head = &sc->sc_memwindow;
 		align = 0x1000;
-		DPRINTF(("using memory window, %x %x %x\n\n",
-		    sc->sc_iot, sc->sc_memt, bst));
+		DPRINTF(("using memory window, 0x%lx 0x%lx 0x%lx\n\n",
+		    (unsigned long)sc->sc_iot, (unsigned long)sc->sc_memt,
+		    (unsigned long)bst));
 	}
 
 	if (pccbb_winlist_insert(head, addr, size, bsh, flags)) {
@@ -3342,11 +3342,11 @@ pccbb_winset(align, sc, bst)
 	pci_conf_write(pc, tag, offs + 4, win[0].win_limit);
 	pci_conf_write(pc, tag, offs + 8, win[1].win_start);
 	pci_conf_write(pc, tag, offs + 12, win[1].win_limit);
-	DPRINTF(("--pccbb_winset: win0 [%x, %lx), win1 [%x, %lx)\n",
-	    pci_conf_read(pc, tag, offs),
-	    pci_conf_read(pc, tag, offs + 4) + align,
-	    pci_conf_read(pc, tag, offs + 8),
-	    pci_conf_read(pc, tag, offs + 12) + align));
+	DPRINTF(("--pccbb_winset: win0 [0x%lx, 0x%lx), win1 [0x%lx, 0x%lx)\n",
+	    (unsigned long)pci_conf_read(pc, tag, offs),
+	    (unsigned long)pci_conf_read(pc, tag, offs + 4) + align,
+	    (unsigned long)pci_conf_read(pc, tag, offs + 8),
+	    (unsigned long)pci_conf_read(pc, tag, offs + 12) + align));
 
 	if (bst == sc->sc_memt) {
 		pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
@@ -3375,7 +3375,8 @@ pccbb_powerhook(why, arg)
 	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
 
 	if (why == PWR_SUSPEND || why == PWR_STANDBY) {
-		DPRINTF(("%s: power: why %d stopping intr\n", sc->sc_dev.dv_xname, why));
+		DPRINTF(("%s: power: why %d stopping intr\n",
+		    sc->sc_dev.dv_xname, why));
 		if (sc->sc_pil_intr_enable) {
 			(void)pccbbintr_function(sc);
 		}
@@ -3437,7 +3438,8 @@ pccbb_powerhook(why, arg)
 		(void)pccbbintr(sc);
 
 		sc->sc_pil_intr_enable = 1;
-		DPRINTF(("%s: power: RESUME enabling intr\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: power: RESUME enabling intr\n",
+		    sc->sc_dev.dv_xname));
 
 		/* ToDo: activate or wakeup child devices */
 	}
