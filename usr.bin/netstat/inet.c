@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.42 2000/10/18 19:20:03 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.43 2001/03/02 04:26:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.42 2000/10/18 19:20:03 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.43 2001/03/02 04:26:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -398,6 +398,7 @@ ip_stats(off, name)
 	p(ips_fragmented, "\t%llu output datagram%s fragmented\n");
 	p(ips_ofragments, "\t%llu fragment%s created\n");
 	p(ips_cantfrag, "\t%llu datagram%s that can't be fragmented\n");
+	p(ips_badaddr, "\t%llu datagram%s with bad address in header\n");
 #undef ps
 #undef p
 }

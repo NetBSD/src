@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.44 2001/01/13 07:19:33 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.45 2001/03/02 04:26:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -154,6 +154,7 @@ struct	ipstat {
 	u_quad_t ips_rcvmemdrop;	/* frags dropped for lack of memory */
 	u_quad_t ips_toolong;		/* ip length > max ip packet size */
 	u_quad_t ips_nogif;		/* no match gif found */
+	u_quad_t ips_badaddr;		/* invalid address on header */
 };
 
 #define	IPFLOW_HASHBITS			6 /* should not be a multiple of 8 */
