@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104 1995/01/15 03:33:25 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.105 1995/02/04 14:23:00 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -792,15 +792,15 @@ ALTENTRY(ovbcopy)
  * Copy len bytes into the user's address space.
  */
 ENTRY(copyout)
-	movl	_curpcb,%eax
-	movl	$_copyout_fault,PCB_ONFAULT(%eax)
 	pushl	%esi
 	pushl	%edi
-	pushl	%ebx
-	movl	16(%esp),%esi
-	movl	20(%esp),%edi
-	movl	24(%esp),%ebx
-	testl	%ebx,%ebx		# anything to do?
+	movl	_curpcb,%eax
+	movl	$_copy_fault,PCB_ONFAULT(%eax)
+	
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%eax
+	testl	%eax,%eax		# anything to do?
 	jz	done_copyout
 
 	/*
@@ -810,11 +810,11 @@ ENTRY(copyout)
 	 * 386 will not.  (We assume that pages in user space that are not
 	 * writable by the user are not writable by the kernel either.)
 	 */
-	movl	%edi,%eax
-	addl	%ebx,%eax
-	jc	_copyout_fault
-	cmpl	$VM_MAXUSER_ADDRESS,%eax
-	ja	_copyout_fault
+	movl	%edi,%edx
+	addl	%eax,%edx
+	jc	_copy_fault
+	cmpl	$VM_MAXUSER_ADDRESS,%edx
+	ja	_copy_fault
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
@@ -830,65 +830,63 @@ ENTRY(copyout)
 	/* Compute number of pages. */
 	movl	%edi,%ecx
 	andl	$PGOFSET,%ecx
-	addl	%ebx,%ecx
+	addl	%eax,%ecx
 	decl	%ecx
 	shrl	$PGSHIFT,%ecx
 
 	/* Compute PTE offset for start address. */
-	movl	%edi,%edx
-	shrl	$PGSHIFT,%edx
+	shrl	$PGSHIFT,%edi
 
 1:	/* Check PTE for each page. */
-	movb	_PTmap(,%edx,4),%al
-	andb	$0x07,%al		# must be valid/user/write
-	cmpb	$0x07,%al
-	je	2f
-				
-	/* Simulate a trap. */
-	pushl	%edx
+#ifdef MYCROFT_IS_A_DORK
+	movb	_PTmap(,%edi,4),%dl
+	andb	$PG_V|PG_RW|PG_u,%dl	# must be valid/user/write
+	cmpb	$PG_V|PG_RW|PG_u,%dl
+	jne	2f
+#else
+	testb	$PG_RW,_PTmap(,%edi,4)
+	jz	2f
+#endif
+	
+4:	incl	%edi
+	decl	%ecx
+	jns	1b
+
+	movl	16(%esp),%edi
+	jmp	3f
+	
+2:	/* Simulate a trap. */
+	pushl	%eax
 	pushl	%ecx
-	shll	$PGSHIFT,%edx
-	pushl	%edx
+	movl	%edi,%eax
+	shll	$PGSHIFT,%eax
+	pushl	%eax
 	call	_trapwrite		# trapwrite(addr)
 	addl	$4,%esp			# pop argument
 	popl	%ecx
-	popl	%edx
-
 	testl	%eax,%eax		# if not ok, return EFAULT
-	jnz	_copyout_fault
-
-2:	incl	%edx
-	decl	%ecx
-	jns	1b			# check next page
+	popl	%eax
+	jnz	_copy_fault
+	jmp	4b
 #endif /* I386_CPU */
 
-3:	/* bcopy(%esi, %edi, %ebx); */
+3:	/* bcopy(%esi, %edi, %eax); */
 	cld
-	movl	%ebx,%ecx
+	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%bl,%cl
+	movb	%al,%cl
 	andb	$3,%cl
 	rep
 	movsb
+	xorl	%eax,%eax
 
 done_copyout:
-	popl	%ebx
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
 	movl	_curpcb,%edx
 	movl	%eax,PCB_ONFAULT(%edx)
-	ret
-
-ENTRY(copyout_fault)
-	popl	%ebx
-	popl	%edi
-	popl	%esi
-	movl	_curpcb,%edx
-	movl	$0,PCB_ONFAULT(%edx)
-	movl	$EFAULT,%eax
 	ret
 
 /*
@@ -896,34 +894,48 @@ ENTRY(copyout_fault)
  * Copy len bytes from the user's address space.
  */
 ENTRY(copyin)
-	movl	_curpcb,%eax
-	movl	$_copyin_fault,PCB_ONFAULT(%eax)
 	pushl	%esi
 	pushl	%edi
+	movl	_curpcb,%eax
+	movl	$_copy_fault,PCB_ONFAULT(%eax)
+	
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
+	movl	20(%esp),%eax
+	testl	%eax,%eax		# anything to do?
+	jz	done_copyin
 
-	movb	%cl,%dl
-	shrl	$2,%ecx			# copy longwords
+	/*
+	 * We check that the end of the destination buffer is not past the end
+	 * of the user's address space.  If it's not, then we only need to
+	 * check that each page is readable, and the CPU will do that for us.
+	 */
+	movl	%esi,%edx
+	addl	%eax,%edx
+	jc	_copy_fault
+	cmpl	$VM_MAXUSER_ADDRESS,%edx
+	ja	_copy_fault
+
+3:	/* bcopy(%esi, %edi, %eax); */
 	cld
-	gs
+	movl	%eax,%ecx
+	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%dl,%cl
-	andb	$3,%cl			# copy remainder
-	gs
+	movb	%al,%cl
+	andb	$3,%cl
 	rep
 	movsb
+	xorl	%eax,%eax
 
+done_copyin:	
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
 	movl	_curpcb,%edx
 	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
-ENTRY(copyin_fault)
+ENTRY(copy_fault)
 	popl	%edi
 	popl	%esi
 	movl	_curpcb,%edx
@@ -954,19 +966,29 @@ ENTRY(copyoutstr)
 	jne	5f
 #endif /* I486_CPU || I586_CPU */
 
+	movl	%edi,%eax
+	andl	$PGOFSET,%eax
+	movl	$NBPG,%ecx
+	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
+
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
-	 * space.
+	 * space, and check for a write fault.
 	 */
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_copyout_fault
+	jae	_copystr_fault
 
 	movl	%edi,%eax
-	shrl	$PGSHIFT,%eax
+	shrl	$PGSHIFT,%eax		# calculate pte address
+#ifdef MYCROFT_IS_A_DORK
 	movb	_PTmap(,%eax,4),%al
-	andb	$7,%al
-	cmpb	$7,%al
+	andb	$PG_V|PG_RW|PG_u,%al
+	cmpb	$PG_V|PG_RW|PG_u,%al
 	je	2f
+#else
+	testb	$PG_RW,_PTmap(,%eax,4)
+	jnz	2f
+#endif
 
 	/* Simulate a trap. */
 	pushl	%edx
@@ -978,16 +1000,10 @@ ENTRY(copyoutstr)
 	jnz	_copystr_fault
 
 2:	/* Copy up to end of this page. */
-	movl	%edi,%eax
-	andl	$PGOFSET,%eax
-	movl	$NBPG,%ecx
-	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
-	cmpl	%ecx,%edx
-	jae	3f
-	movl	%edx,%ecx		# ecx = min (ecx, edx)
-	cld
-
-3:	subl	%ecx,%edx		# predecrement total count
+	subl	%ecx,%edx		# predecrement total count
+	jnc	3f
+	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
+	xorl	%edx,%edx
 
 3:	decl	%ecx
 	js	4f
@@ -1002,6 +1018,7 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 
 4:	/* Go to next page, if any. */
+	movl	$NBPG,%ecx
 	testl	%edx,%edx
 	jnz	1b
 
@@ -1061,9 +1078,9 @@ ENTRY(copyinstr)
 	movl	_curpcb,%ecx
 	movl	$_copystr_fault,PCB_ONFAULT(%ecx)
 
-	movl	12(%esp),%esi			# %esi = from
-	movl	16(%esp),%edi			# %edi = to
-	movl	20(%esp),%edx			# %edx = maxlen
+	movl	12(%esp),%esi		# %esi = from
+	movl	16(%esp),%edi		# %edi = to
+	movl	20(%esp),%edx		# %edx = maxlen
 
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%esi).
@@ -1080,7 +1097,7 @@ ENTRY(copyinstr)
 	cld
 
 1:	decl	%edx
-	jz	4f
+	jz	2f
 	lodsb
 	stosb
 	testb	%al,%al
@@ -1091,7 +1108,7 @@ ENTRY(copyinstr)
 	xorl	%eax,%eax
 	jmp	copystr_return
 
-4:	/* edx is zero. */
+2:	/* edx is zero. */
 	testb	%cl,%cl
 	jnz	1f
 	/* edx is zero -- hit end of user space. */
@@ -1168,10 +1185,11 @@ ENTRY(copystr)
  */
 ENTRY(fuword)
 ALTENTRY(fuiword)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
+	ja	_fusufault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
-	movl	4(%esp),%edx
-	gs
 	movl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
@@ -1181,11 +1199,11 @@ ALTENTRY(fuiword)
  * Fetch a short from the user's address space.
  */
 ENTRY(fusword)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
+	ja	_fusufault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
-fusword1:
-	movl	4(%esp),%edx
-	gs
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
@@ -1196,13 +1214,14 @@ fusword1:
  * interrupt.
  */
 ENTRY(fuswintr)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
+	ja	_fusubail
 	movl	_curpcb,%ecx
-	/*
-	 * Use a different fault handler than fusword() to signal trap() not to
-	 * try to page fault.
-	 */
 	movl	$_fusubail,PCB_ONFAULT(%ecx)
-	jmp	fusword1
+	movzwl	(%edx),%eax
+	movl	$0,PCB_ONFAULT(%ecx)
+	ret
 	
 /*
  * fubyte(caddr_t uaddr);
@@ -1210,10 +1229,11 @@ ENTRY(fuswintr)
  */
 ENTRY(fubyte)
 ALTENTRY(fuibyte)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
+	ja	_fusufault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
-	movl	4(%esp),%edx
-	gs
 	movzbl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
@@ -1222,7 +1242,6 @@ ALTENTRY(fuibyte)
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
 ENTRY(fusufault)
-	movl	_curpcb,%ecx
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	decl	%eax
@@ -1234,7 +1253,6 @@ ENTRY(fusufault)
  * than trying to page fault.
  */
 ENTRY(fusubail)
-	movl	_curpcb,%ecx
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	decl	%eax
@@ -1246,9 +1264,11 @@ ENTRY(fusubail)
  */
 ENTRY(suword)
 ALTENTRY(suiword)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
+	ja	_fusufault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
-	movl	4(%esp),%edx
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
@@ -1257,26 +1277,31 @@ ALTENTRY(suiword)
 #endif /* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$PGSHIFT,%edx		# fetch pte associated with address
-	movb	_PTmap(,%edx,4),%dl
-	andb	$7,%dl
-	cmpb	$7,%dl			# must be valid/user/write
+	shrl	$PGSHIFT,%eax		# calculate pte address
+#ifdef MYCROFT_IS_A_DORK
+	movb	_PTmap(,%eax,4),%al
+	andb	$PG_V|PG_RW|PG_u,%al
+	cmpb	$PG_V|PG_RW|PG_u,%al
 	je	1f
+#else
+	testb	$PG_RW,_PTmap(,%eax,4)
+	jnz	1f
+#endif
 
 	/* Simulate a trap. */
-	pushl	%eax
+	pushl	%edx
+	pushl	%edx
 	call	_trapwrite		# trapwrite(addr)
 	addl	$4,%esp			# clear parameter from the stack
+	popl	%edx
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
 	jnz	_fusufault
 
 1:	/* XXX also need to check the following 3 bytes for validity! */
-	movl	4(%esp),%edx
 #endif
 
 2:	movl	8(%esp),%eax
-	gs
 	movl	%eax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -1287,10 +1312,11 @@ ALTENTRY(suiword)
  * Store a short in the user's address space.
  */
 ENTRY(susword)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
+	ja	_fusufault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
-susword1:
-	movl	4(%esp),%edx
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
@@ -1299,26 +1325,31 @@ susword1:
 #endif /* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$PGSHIFT,%edx		# calculate pte address
-	movb	_PTmap(,%edx,4),%dl
-	andb	$7,%dl
-	cmpb	$7,%dl			# must be valid/user/write
+	shrl	$PGSHIFT,%eax		# calculate pte address
+#ifdef MYCROFT_IS_A_DORK
+	movb	_PTmap(,%eax,4),%al
+	andb	$PG_V|PG_RW|PG_u,%al
+	cmpb	$PG_V|PG_RW|PG_u,%al
 	je	1f
+#else
+	testb	$PG_RW,_PTmap(,%eax,4)
+	jnz	1f
+#endif
 
 	/* Simulate a trap. */
-	pushl	%eax
+	pushl	%edx
+	pushl	%edx
 	call	_trapwrite		# trapwrite(addr)
 	addl	$4,%esp			# clear parameter from the stack
+	popl	%edx
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
 	jnz	_fusufault
 
 1:	/* XXX also need to check the following byte for validity! */
-	movl	4(%esp),%edx
 #endif
 
 2:	movl	8(%esp),%eax
-	gs
 	movw	%ax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -1330,23 +1361,11 @@ susword1:
  * interrupt.
  */
 ENTRY(suswintr)
-	movl	_curpcb,%ecx
-	/*
-	 * Use a different fault handler than susword() to signal trap() not to
-	 * try to page fault.
-	 */
-	movl	$_fusubail,PCB_ONFAULT(%ecx)
-	jmp	susword1
-
-/*
- * subyte(caddr_t uaddr, char x);
- * Store a byte in the user's address space.
- */
-ENTRY(subyte)
-ALTENTRY(suibyte)
-	movl	_curpcb,%ecx
-	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
+	ja	_fusubail
+	movl	_curpcb,%ecx
+	movl	$_fusubail,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
@@ -1355,25 +1374,80 @@ ALTENTRY(suibyte)
 #endif /* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$PGSHIFT,%edx		# calculate pte address
-	movb	_PTmap(,%edx,4),%dl
-	andb	$7,%dl
-	cmpb	$7,%dl			# must be valid/user/write
+	shrl	$PGSHIFT,%eax		# calculate pte address
+#ifdef MYCROFT_IS_A_DORK
+	movb	_PTmap(,%eax,4),%al
+	andb	$PG_V|PG_RW|PG_u,%al
+	cmpb	$PG_V|PG_RW|PG_u,%al
 	je	1f
+#else
+	testb	$PG_RW,_PTmap(,%eax,4)
+	jnz	1f
+#endif
 
 	/* Simulate a trap. */
-	pushl	%eax
+	pushl	%edx
+	pushl	%edx
 	call	_trapwrite		# trapwrite(addr)
 	addl	$4,%esp			# clear parameter from the stack
+	popl	%edx
+	movl	_curpcb,%ecx
+	testl	%eax,%eax
+	jnz	_fusubail
+
+1:	/* XXX also need to check the following byte for validity! */
+#endif
+
+2:	movl	8(%esp),%eax
+	movw	%ax,(%edx)
+	xorl	%eax,%eax
+	movl	%eax,PCB_ONFAULT(%ecx)
+	ret
+
+/*
+ * subyte(caddr_t uaddr, char x);
+ * Store a byte in the user's address space.
+ */
+ENTRY(subyte)
+ALTENTRY(suibyte)
+	movl	4(%esp),%edx
+	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
+	ja	_fusufault
+	movl	_curpcb,%ecx
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
+
+#if defined(I386_CPU)
+#if defined(I486_CPU) || defined(I586_CPU)
+	cmpl	$CPUCLASS_386,_cpu_class
+	jne	2f
+#endif /* I486_CPU || I586_CPU */
+
+	movl	%edx,%eax
+	shrl	$PGSHIFT,%eax		# calculate pte address
+#ifdef MYCROFT_IS_A_DORK
+	movb	_PTmap(,%eax,4),%al
+	andb	$PG_V|PG_RW|PG_u,%al
+	cmpb	$PG_V|PG_RW|PG_u,%al
+	je	1f
+#else
+	testb	$PG_RW,_PTmap(,%eax,4)
+	jnz	1f
+#endif
+
+	/* Simulate a trap. */
+	pushl	%edx
+	pushl	%edx
+	call	_trapwrite		# trapwrite(addr)
+	addl	$4,%esp			# clear parameter from the stack
+	popl	%edx
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
 	jnz	_fusufault
 
-1:	movl	4(%esp),%edx
+1:
 #endif
 
 2:	movb	8(%esp),%al
-	gs
 	movb	%al,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
