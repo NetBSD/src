@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# $NetBSD: ipmon,v 1.1 2002/04/17 11:04:16 darrenr Exp $
+
+#
+# To startup ipmon as a daemon
+#
+IPMON_DAEMON=Y
+
+#
+# To send ipmon output to syslog, use -s for log output.  To send ipmon
+# log output to a stdout, leave it empty, else as a path to a log file.
+#
+IPMON_LOG_OUTPUT=-s
+
+#
+# Location to put the pid of the running ipmon process
+#
+#IPMON_PIDFILE=/var/run/ipmon.pid
+
+#
+# Log all IPFilter generate log information, including state & NAT activity.
+#
+IPMON_LOG_ALL=Y
+
+#
+# For rules which have "log body", tell ipmon to display the body of data
+# logged.
+#
+IPMON_LOG_BODY=Y
+
+#
+# By default, ipmon does not do reverse DNS lookups of IP addresses in log
+# output.  To enable IP# -> hostname lookups, uncomment the following line.
+#
+#IPMON_RESOLVE_NAMES=Y
+
+#
+# Other command line arguments, which are not coverered by the above options)
+# you want to pass to ipmon should be set here.
+#
+IPMON_ARGS=
