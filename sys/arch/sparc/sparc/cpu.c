@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.74 1998/09/26 19:09:56 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.75 1998/09/26 20:13:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -397,6 +397,40 @@ extern void cpu_hatch __P((void));
 	}
 #endif
 	return;
+}
+
+void
+mp_pause_cpus()
+{
+	int i, n;
+	struct cpu_info *cip;
+
+	for (n = 0, i = 0; i < _MAXNCPU; i++) {
+		cip = cpus[i];
+		if (cip == NULL)
+			continue;
+		if (cpuinfo.mid != cip->mid)
+			rom_cpuidle(cip->node);
+		if (++n >= ncpu)
+			break;
+	}
+}
+
+void
+mp_resume_cpus()
+{
+	int i, n;
+	struct cpu_info *cip;
+
+	for (n = 0, i = 0; i < _MAXNCPU; i++) {
+		cip = cpus[i];
+		if (cip == NULL)
+			continue;
+		if (cpuinfo.mid != cip->mid)
+			rom_cpuresume(cip->node);
+		if (++n >= ncpu)
+			break;
+	}
 }
 
 /*
