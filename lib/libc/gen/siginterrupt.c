@@ -1,4 +1,4 @@
-/*	$NetBSD: siginterrupt.c,v 1.5 1995/02/27 05:51:03 cgd Exp $	*/
+/*	$NetBSD: siginterrupt.c,v 1.6 1995/03/04 01:56:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)siginterrupt.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: siginterrupt.c,v 1.6 1995/03/04 01:56:00 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

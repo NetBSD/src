@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.2 1995/02/27 05:52:13 cgd Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

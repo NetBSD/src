@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmperr.c,v 1.4 1995/02/27 05:50:31 cgd Exp $	*/
+/*	$NetBSD: setjmperr.c,v 1.5 1995/03/04 01:55:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setjmperr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: setjmperr.c,v 1.5 1995/03/04 01:55:55 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

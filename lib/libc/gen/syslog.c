@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.6 1995/02/27 05:52:56 cgd Exp $	*/
+/*	$NetBSD: syslog.c,v 1.7 1995/03/04 01:56:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: syslog.c,v 1.7 1995/03/04 01:56:12 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
