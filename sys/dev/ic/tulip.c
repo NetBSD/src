@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.31 1999/11/04 01:27:32 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.32 1999/11/12 18:14:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1661,6 +1661,11 @@ tlp_stop(sc, drain)
 	if (sc->sc_tick != NULL) {
 		/* Stop the one second clock. */
 		untimeout(sc->sc_tick, sc);
+	}
+
+	if (sc->sc_flags & TULIPF_HAS_MII) {
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
 	}
 
 	/* Disable interrupts. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.7 1999/11/04 00:24:59 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.8 1999/11/12 18:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -611,6 +611,11 @@ bestop(sc)
 	bus_space_handle_t br = sc->sc_br;
 
 	untimeout(be_tick, sc);
+
+	if (sc->sc_conf & BE_CONF_MII) {
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
+	}
 
 	/* Stop the transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG, 0);
