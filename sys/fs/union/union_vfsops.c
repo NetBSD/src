@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.13 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.14 2004/05/12 02:07:39 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.13 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.14 2004/05/12 02:07:39 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ union_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct union_args));
+	error = copyin(data, &args, sizeof(struct union_args));
 	if (error)
 		goto bad;
 
