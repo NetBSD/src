@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 1996/05/26 20:50:53 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 1996/06/18 06:13:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,18 +166,38 @@ Lbe10:
 	cmpw	#12,d0		|  address error vector?
 	jeq	Lisaerr		|  yes, go to it
 	movl	d1,a0		|  fault address
-	ptestr	#1,a0@,#7	|  do a table search
+	movl	sp@,d0		|  function code from ssw
+	btst	#8,d0		|  data fault?
+	jne	Lbe10a
+	movql	#1,d0		|  user program access FC
+				|  (we don't separate data/program)
+	btst	#5,a1@		|  supervisor mode?
+	jeq	Lbe10a		|  if no, done
+	movql	#5,d0		|  else supervisor program access
+Lbe10a:
+	ptestr	d0,a0@,#7	|  do a table search
 	pmove	psr,sp@		|  save result
-	btst	#7,sp@		|  bus error bit set?
-	jeq	Lismerr		|  no, must be MMU fault
-	clrw	sp@		|  yes, re-clear pad word
-	jra	Lisberr		|  and process as normal bus error
+	movb	sp@,d1
+	btst	#2,d1		|  invalid (incl. limit viol. and berr)?
+	jeq	Lmightnotbemerr	|  no -> wp check
+	btst	#7,d1		|  is it a MMU table berr?
+	jeq	Lismerr		|  no, must be fast
+	jra	Lisberr1	|  real bus err needs not be fast
+Lmightnotbemerr:
+	btst	#3,d1		|  write protect bit set?
+	jeq	Lisberr1	|  no: must be bus error
+	movl	sp@,d0		|  ssw into low word of d0
+	andw	#0xc0,d0	|  Write protect is set on page:
+	cmpw	#0x40,d0	|  was it a read cycle?
+	jeq	Lisberr1	|  yes, was not WPE, must be bus error
 Lismerr:
 	movl	#T_MMUFLT,sp@-	|  show that we are an MMU fault
 	jra	Ltrapnstkadj	|  and deal with it
 Lisaerr:
 	movl	#T_ADDRERR,sp@-	|  mark address error
 	jra	Ltrapnstkadj	|  and deal with it
+Lisberr1:
+	clrw	sp@		|  re-clear pad word
 Lisberr:
 	movl	#T_BUSERR,sp@-	|  mark bus error
 Ltrapnstkadj:
@@ -249,6 +269,18 @@ _fpfault:
 	movl	_curpcb,a0	|  current pcb
 	lea	a0@(PCB_FPCTX),a0 |  address of FP savearea
 	fsave	a0@		|  save state
+
+#if defined(M68040) || defined(M68060)
+#ifdef notdef /* XXX: Can't use this while we don't have the cputype */
+	movb	_cputype, d0
+	andb	#(ATARI_68040|ATARI_68060), d0
+	jne	Lfptnull
+#else
+	cmpb	#0x41,a0@	|  is it the 68040 FPU-frame format?
+	jeq	Lfptnull	|  yes, safe
+#endif /* notdef */
+#endif /* defined(M68040) || defined(M68060) */
+
 	tstb	a0@		|  null state frame?
 	jeq	Lfptnull	|  yes, safe
 	clrw	d0		|  no, need to tweak BIU
