@@ -1,3 +1,4 @@
+/*	$NetBSD: boxes-fst.dat,v 1.2 2000/10/02 17:19:15 itojun Exp $	*/
 /*	$KAME: boxes-fst.dat,v 1.5 2000/10/02 17:14:26 itojun Exp $	*/
 
 word8 S[256] = {
