@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/06/06 19:48:14 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2002/10/23 14:35:28 lukem Exp $
 
-#	$OpenBSD: Makefile,v 1.3 2000/05/31 19:52:59 mickey Exp $
+NOMAN=		# defined
 
-PROG=	mkboot
-CC=	${HOSTCC}
-CFLAGS=-g -O
-LDSTATIC=	-static
-MAN=	mkboot.8
-MANSUBDIR=/hp700
+HOSTPROG=	mkboot
+SRCS=		mkboot.c
 
-.include <bsd.prog.mk>
+.include <bsd.hostprog.mk>
