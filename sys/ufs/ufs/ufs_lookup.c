@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.40 2002/09/28 20:11:09 dbj Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.41 2002/11/25 01:55:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.40 2002/09/28 20:11:09 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.41 2002/11/25 01:55:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -983,7 +983,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (char **)&ep,
+		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (void *)&ep,
 				     &bp);
 		if (error)
 			return (error);
@@ -993,7 +993,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	}
 
 	if ((error = VOP_BLKATOFF(dvp,
-	    (off_t)(dp->i_offset - dp->i_count), (char **)&ep, &bp)) != 0)
+	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp)) != 0)
 		return (error);
 
 	if (dp->i_count == 0) {
@@ -1046,7 +1046,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (char **)&ep, &bp);
+	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(vdp->v_mount));
