@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.8 1999/09/08 21:17:51 jsm Exp $	*/
+/*	$NetBSD: getinp.c,v 1.9 2000/07/10 10:19:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getinp.c,v 1.8 1999/09/08 21:17:51 jsm Exp $");
+__RCSID("$NetBSD: getinp.c,v 1.9 2000/07/10 10:19:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ getinp(prompt, list)
 
 	for (;;) {
 inter:
-		printf(prompt);
+		printf("%s", prompt);
 		for (sp = buf; (c=getchar()) != '\n'; ) {
 			*sp = c;
 			if (c == -1)	/* check for interupted system call */
@@ -84,7 +84,7 @@ inter:
 					printf("<RETURN>");
 				}
 				else
-					printf(list[i]);
+					printf("%s", list[i]);
 				if (list[i+1])
 					printf(", ");
 				else
