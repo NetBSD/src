@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.2 1996/11/15 22:38:57 jtc Exp $	*/
+/*	$NetBSD: ansi.h,v 1.3 1997/04/16 22:51:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,8 +52,15 @@
 #define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
 #define	_BSD_TIME_T_	long			/* time() */
-struct __gnuc_va_list__;
+
+/*
+ * Actually va_list is an array, but this wouldn't work as a #define.
+ * Fortunately this is used only for formal parameters,
+ * so we can use a pointer instead.
+ */
+struct __gnuc_va_list__;  /* forward declaration to prohibit gcc warning XXX */
 #define	_BSD_VA_LIST_	struct __gnuc_va_list__ * /* va_list */
+
 #define _BSD_CLOCKID_T_	int
 #define _BSD_TIMER_T_	int
 
