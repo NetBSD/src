@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/05/02 18:02:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/01/03 15:34:33 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,6 +12,6 @@ BOOTOBJ!=	cd ${KERNSRCDIR}/arch/macppc/stand/ofwboot && ${PRINTOBJDIR}
 OFWBOOTERS=	${BOOTOBJ}/ofwboot.elf ${BOOTOBJ}/ofwboot.xcf
 
 release: check_RELEASEDIR .WAIT ${OWFBOOTERS}
-	${RELEASE_INSTALL} ${OFWBOOTERS} ${RELEASEDIR}/installation
+	${RELEASE_INSTALL} ${OFWBOOTERS} ${RELEASEDIR}/${MACHINE}/installation
 
 .include <bsd.subdir.mk>
