@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.70 2004/01/10 14:49:44 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.71 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -199,6 +199,7 @@ struct buf {
 do {									\
 	LIST_INIT(&(bp)->b_dep);					\
 	simple_lock_init(&(bp)->b_interlock);				\
+	(bp)->b_dev = NODEV;						\
 	BIO_SETPRIO((bp), BPRIO_DEFAULT);				\
 } while (/*CONSTCOND*/0)
 

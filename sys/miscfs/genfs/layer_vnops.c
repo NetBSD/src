@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.13 2003/11/30 20:53:48 wiz Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.14 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.13 2003/11/30 20:53:48 wiz Exp $
+ *	$Id: layer_vnops.c,v 1.14 2004/01/25 18:06:49 hannken Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.13 2003/11/30 20:53:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.14 2004/01/25 18:06:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -832,33 +832,7 @@ layer_print(v)
 }
 
 /*
- * XXX - vop_strategy must be hand coded because it has no
- * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
- */
-int
-layer_strategy(v)
-	void *v;
-{
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = LAYERVPTOLOWERVP(bp->b_vp);
-
-	error = VOP_STRATEGY(bp);
-
-	bp->b_vp = savedvp;
-
-	return (error);
-}
-
-/*
- * XXX - like vop_strategy, vop_bwrite must be hand coded because it has no
+ * XXX - vop_bwrite must be hand coded because it has no
  * vnode in its arguments.
  * This goes away with a merged VM/buffer cache.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.10 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.11 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -100,7 +100,6 @@ int	layer_getattr __P((void *));
 int	layer_inactive __P((void *));
 int	layer_reclaim __P((void *));
 int	layer_print __P((void *));
-int	layer_strategy __P((void *));
 int	layer_bwrite __P((void *));
 int	layer_bmap __P((void *));
 int	layer_lock __P((void *));

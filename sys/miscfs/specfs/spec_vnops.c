@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.75 2003/12/10 11:40:12 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.76 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.75 2003/12/10 11:40:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.76 2004/01/25 18:06:49 hannken Exp $");
 
 #include "fss.h"
 
@@ -583,22 +583,21 @@ spec_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
-	struct buf *bp;
-	const struct bdevsw *bdev;
+	struct vnode *vp = ap->a_vp;
+	struct buf *bp = ap->a_bp;
 
-	bp = ap->a_bp;
+	bp->b_dev = vp->v_rdev;
 	if (!(bp->b_flags & B_READ) &&
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
-	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev != NULL) {
 #if NFSS > 0
-		fss_cow_hook(bp);
+	fss_cow_hook(bp);
 #endif
-		(*bdev->d_strategy)(bp);
-	}
+	DEV_STRATEGY(bp);
+
 	return (0);
 }
 

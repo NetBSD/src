@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.7 2003/08/07 16:31:40 agc Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.7 2003/08/07 16:31:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1986,27 +1986,21 @@ union_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct vnode *ovp = OTHERVP(ap->a_vp);
 	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = OTHERVP(bp->b_vp);
 
 #ifdef DIAGNOSTIC
-	if (bp->b_vp == NULLVP)
+	if (ovp == NULLVP)
 		panic("union_strategy: nil vp");
 	if (((bp->b_flags & B_READ) == 0) &&
-	    (bp->b_vp == LOWERVP(savedvp)))
+	    (ovp == LOWERVP(bp->b_vp)))
 		panic("union_strategy: writing to lowervp");
 #endif
 
-	error = VOP_STRATEGY(bp);
-	bp->b_vp = savedvp;
-
-	return (error);
+	return (VOP_STRATEGY(ovp, bp));
 }
 
 int

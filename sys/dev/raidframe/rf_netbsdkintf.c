@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.172 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.173 2004/01/25 18:06:48 hannken Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.172 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.173 2004/01/25 18:06:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1878,7 +1878,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		if ((raidbp->rf_buf.b_flags & B_READ) == 0) {
 			raidbp->rf_buf.b_vp->v_numoutput++;
 		}
-		VOP_STRATEGY(&raidbp->rf_buf);
+		VOP_STRATEGY(raidbp->rf_buf.b_vp, &raidbp->rf_buf);
 
 		break;
 

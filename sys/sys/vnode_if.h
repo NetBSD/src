@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.h,v 1.44 2003/08/07 16:34:23 agc Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.45 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.33 2003/04/10 20:35:36 jdolecek Exp 
+ *	NetBSD: vnode_if.src,v 1.38 2004/01/25 18:02:04 hannken Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
+ *	NetBSD: vnode_if.sh,v 1.34 2004/01/25 18:02:04 hannken Exp 
  */
 
 /*
@@ -1095,6 +1095,33 @@ static __inline int VOP_BMAP(vp, bn, vpp, bnp, runp)
 }
 #endif
 
+struct vop_strategy_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	struct buf *a_bp;
+};
+extern const struct vnodeop_desc vop_strategy_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_STRATEGY(struct vnode *, struct buf *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_STRATEGY(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct vop_strategy_args a;
+	a.a_desc = VDESC(vop_strategy);
+	a.a_vp = vp;
+	a.a_bp = bp;
+	return (VCALL(vp, VOFFSET(vop_strategy), &a));
+}
+#endif
+
 struct vop_print_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -1584,30 +1611,6 @@ static __inline int VOP_PUTPAGES(vp, offlo, offhi, flags)
 
 /* Special cases: */
 #include <sys/buf.h>
-
-struct vop_strategy_args {
-	const struct vnodeop_desc *a_desc;
-	struct buf *a_bp;
-};
-extern const struct vnodeop_desc vop_strategy_desc;
-#ifndef VNODE_OP_NOINLINE
-static __inline
-#endif
-int VOP_STRATEGY(struct buf *)
-#ifndef VNODE_OP_NOINLINE
-__attribute__((__unused__))
-#endif
-;
-#ifndef VNODE_OP_NOINLINE
-static __inline int VOP_STRATEGY(bp)
-	struct buf *bp;
-{
-	struct vop_strategy_args a;
-	a.a_desc = VDESC(vop_strategy);
-	a.a_bp = bp;
-	return (VCALL(bp->b_vp, VOFFSET(vop_strategy), &a));
-}
-#endif
 
 struct vop_bwrite_args {
 	const struct vnodeop_desc *a_desc;

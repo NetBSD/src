@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.4 2004/01/11 19:05:27 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.5 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.4 2004/01/11 19:05:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.5 2004/01/25 18:06:48 hannken Exp $");
 
 #include "fss.h"
 #include "opt_ddb.h"
@@ -507,7 +507,7 @@ fss_copy_on_write(struct fss_softc *sc, struct buf *bp)
  * Lookup and open needed files.
  *
  * Returns dev and size of the underlying block device.
- * Initializes the fields sc_mntname, sc_bs_vp, sc_mount and sc_strategy
+ * Initializes the fields sc_mntname, sc_bs_vp and sc_mount
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
@@ -517,7 +517,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	struct partinfo dpart;
 	struct vattr va;
 	struct nameidata nd;
-	const struct bdevsw *bdevsw;
 
 	/*
 	 * Get the mounted file system.
@@ -559,10 +558,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	*bdev = nd.ni_vp->v_rdev;
 	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 	vrele(nd.ni_vp);
-
-	if ((bdevsw = bdevsw_lookup(*bdev)) == NULL)
-		return EINVAL;
-	sc->sc_strategy = bdevsw->d_strategy;
 
 	/*
 	 * Get the backing store
@@ -928,7 +923,7 @@ restart:
 		bp->b_private = scp;
 		bp->b_iodone = fss_cluster_iodone;
 
-		(*sc->sc_strategy)(bp);
+		DEV_STRATEGY(bp);
 
 		FSS_LOCK(sc, s);
 		scp->fc_xfercount++;
@@ -1002,7 +997,7 @@ fss_write_cluster(struct fss_cache *scp, u_int32_t cl)
 		bp->b_vp->v_numoutput++;
 
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 
 		FSS_LOCK(sc, s);
 		scp->fc_xfercount++;
@@ -1069,7 +1064,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 
 		if ((bp->b_flags & B_READ) == 0 || cl < sc->sc_indir_size)
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 
 		error = biowait(bp);
 
@@ -1256,7 +1251,7 @@ fss_bs_thread(void *arg)
 		nbp->b_dev = sc->sc_bdev;
 		nbp->b_vp = NULLVP;
 
-		(*sc->sc_strategy)(nbp);
+		DEV_STRATEGY(nbp);
 
 		if (biowait(nbp) != 0) {
 			bp->b_resid = bp->b_bcount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.114 2003/10/16 12:02:58 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.115 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -88,6 +88,14 @@ struct cdevsw {
 };
 
 #ifdef _KERNEL
+
+#define DEV_STRATEGY(bp) \
+	do { \
+		const struct bdevsw *bdev = bdevsw_lookup((bp)->b_dev); \
+		if (bdev == NULL) \
+			panic("DEV_STRATEGY: block device not found"); \
+		(*bdev->d_strategy)((bp)); \
+	} while (/*CONSTCOND*/0)
 
 int devsw_attach(const char *, const struct bdevsw *, int *,
 		 const struct cdevsw *, int *);
