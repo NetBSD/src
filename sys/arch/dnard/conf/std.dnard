@@ -1,0 +1,12 @@
+#	$NetBSD: std.dnard,v 1.1 2001/02/26 02:49:25 matt Exp $
+#
+# standard NetBSD/dnard options
+
+machine	dnard arm
+
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+options		EXEC_ELF
+
+# To support easy transit to ../arch/arm/arm32
+options		ARM32
