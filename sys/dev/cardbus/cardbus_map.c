@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.4 1999/10/27 10:04:41 haya Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.5 1999/10/27 14:14:18 joda Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -87,7 +87,8 @@ cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbusreg_t address, mask;
   int s;
 
-  if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
+  if (reg != CARDBUS_ROM_REG 
+      && (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
     panic("cardbus_io_find: bad request");
   }
 
@@ -154,7 +155,8 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
   cardbusreg_t address, mask;
   int s;
 
-  if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
+  if (reg != CARDBUS_ROM_REG && 
+      (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
     panic("cardbus_find_mem: bad request");
   }
 
