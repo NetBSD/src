@@ -1,4 +1,4 @@
-/* $NetBSD: config_lex.l,v 1.3 2003/08/06 18:07:53 jmmv Exp $ */
+/* $NetBSD: config_lex.l,v 1.4 2003/08/06 22:11:49 jmmv Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.3 2003/08/06 18:07:53 jmmv Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.4 2003/08/06 22:11:49 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,8 +56,7 @@ int yylex(void);
 
 STRING		[\$A-Za-z\.\/_\-0-9]*
 SP_STRING	[\$A-Za-z\.\/_\-0-9 ]*
-MODE_PROPS	device|fifo|lefthanded|modes|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole
-EVENT_PROPS	button|do
+MODE_PROPS	button_[0-9]+_down|button_[0-9]+_up|device|fifo|lefthanded|modes|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole
 
 %%
 
@@ -69,9 +68,7 @@ EVENT_PROPS	button|do
 ;		{ return TK_EOL; }
 "{"		{ return TK_LBRACE; }
 "}"		{ return TK_RBRACE; }
-event		{ return TK_EVENT; }
 mode		{ return TK_MODE; }
-{EVENT_PROPS}	{ yylval.string = strdup(yytext); return TK_EVENTPROP; }
 {MODE_PROPS}	{ yylval.string = strdup(yytext); return TK_MODEPROP; }
 \"{SP_STRING}\"	{ yylval.string = strdup(yytext + 1);
 		  yylval.string[strlen(yytext) - 2] = '\0'; return TK_STRING; }
