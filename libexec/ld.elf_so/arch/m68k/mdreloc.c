@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.15 2002/09/26 20:42:11 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.16 2002/10/03 20:39:22 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -139,7 +139,7 @@ _rtld_relocate_plt_lazy(obj)
 {
 	const Elf_Rela *rela;
 
-	if (!obj->isdynamic)
+	if (!obj->relocbase)
 		return 0;
 
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
