@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.6 2001/07/28 15:08:10 chris Exp $
+#	$NetBSD: Makefile.arm,v 1.7 2001/10/17 23:21:44 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -29,6 +29,10 @@ STRIP?=	strip
 TSORT?=	tsort -q
 
 COPTS?=	-O2
+
+.if	$S == "../../../.."
+S!=		cd ../../../..; pwd
+.endif
 
 ARM32=		$S/arch/arm32
 ARM=		$S/arch/arm
