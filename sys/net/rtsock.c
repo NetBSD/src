@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.45 2001/01/17 04:05:42 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.46 2001/06/04 01:30:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -423,15 +423,43 @@ flush:
 		/* There is another listener, so construct message */
 		rp = sotorawcb(so);
 	}
+	/*
+	 * copy rtm into m.
+	 * XXX is it okay if we omit responses when we are unable to reply?
+	 */
 	if (rtm) {
-		m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+		if (rtm->rtm_msglen > MCLBYTES) {
+			m_freem(m);
+			m = NULL;
+		} else if (m->m_pkthdr.len > rtm->rtm_msglen) {
+			m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+			m_adj(m, rtm->rtm_msglen - m->m_pkthdr.len);
+		} else {
+			m_freem(m);
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m && rtm->rtm_msglen > MHLEN) {
+				MCLGET(m, M_DONTWAIT);
+				if ((m->m_flags & M_EXT) == 0) {
+					m_free(m);
+					m = NULL;
+				}
+			}
+			if (m) {
+				m->m_pkthdr.len = m->m_len = rtm->rtm_msglen;
+				m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+			}
+		}
 		Free(rtm);
+	} else {
+		m_freem(m);
+		m = NULL;
 	}
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
 	if (dst)
 		route_proto.sp_protocol = dst->sa_family;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	if (m)
+		raw_input(m, &route_proto, &route_src, &route_dst);
 	if (rp)
 		rp->rcb_proto.sp_family = PF_ROUTE;
     }
@@ -505,52 +533,71 @@ rt_msg1(type, rtinfo, data, datalen)
 	struct mbuf *m;
 	int i;
 	struct sockaddr *sa;
-	int len, dlen;
+	int hlen, alen, len, dlen;
 
-	m = m_gethdr(M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return (m);
+	/* pre-compute length */
 	switch (type) {
-
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
-		len = sizeof(struct ifa_msghdr);
+		hlen = sizeof(struct ifa_msghdr);
 		break;
 
 #ifdef COMPAT_14
 	case RTM_OIFINFO:
-		len = sizeof(struct if_msghdr14);
+		hlen = sizeof(struct if_msghdr14);
 		break;
 #endif
 
 	case RTM_IFINFO:
-		len = sizeof(struct if_msghdr);
+		hlen = sizeof(struct if_msghdr);
 		break;
 
 	case RTM_IFANNOUNCE:
-		len = sizeof(struct if_announcemsghdr);
+		hlen = sizeof(struct if_announcemsghdr);
 		break;
 
 	default:
-		len = sizeof(struct rt_msghdr);
+		hlen = sizeof(struct rt_msghdr);
+		break;
 	}
-	if (len > MHLEN + MLEN)
+	alen = 0;
+	for (i = 0; i < RTAX_MAX; i++) {
+		if ((sa = rtinfo->rti_info[i]) == NULL)
+			continue;
+		dlen = ROUNDUP(sa->sa_len);
+		alen += dlen;
+	}
+
+	if (hlen > MHLEN || alen > MCLBYTES)
 		panic("rt_msg1: message too long");
-	else if (len > MHLEN) {
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
+	if (!m)
+		return (NULL);
+	m->m_pkthdr.len = hlen;
+	m->m_len = hlen;
+	if (hlen + alen > MHLEN) {
 		m->m_next = m_get(M_DONTWAIT, MT_DATA);
-		if (m->m_next == NULL) {
+		if (m->m_next && alen > MLEN) {
+			MCLGET(m->m_next, M_DONTWAIT);
+			if ((m->m_next->m_flags & M_EXT) == 0) {
+				m_freem(m->m_next);
+				m->m_next = NULL;
+			}
+		}
+		if (!m->m_next) {
 			m_freem(m);
 			return (NULL);
 		}
-		m->m_pkthdr.len = len;
-		m->m_len = MHLEN;
-		m->m_next->m_len = len - MHLEN;
-	} else {
-		m->m_pkthdr.len = m->m_len = len;
+		m->m_pkthdr.len += alen;
+		m->m_next->m_len = alen;
+	} else  {
+		m->m_pkthdr.len += alen;
+		m->m_len += alen;
 	}
-	m->m_pkthdr.rcvif = 0;
+	m->m_pkthdr.rcvif = NULL;
 	m_copyback(m, 0, datalen, data);
 	rtm = mtod(m, struct rt_msghdr *);
+	len = hlen;
 	for (i = 0; i < RTAX_MAX; i++) {
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
