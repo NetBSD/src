@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.38 1998/03/22 13:01:19 drochner Exp $	*/
+/*	$NetBSD: pms.c,v 1.39 1998/03/22 16:48:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles Hannum.
@@ -32,7 +32,7 @@
  */
 
 #include "pms.h"
-#if NPMS > 1
+#if (NPMS_HACK + NPMS_PCKBC) > 1
 #error Only one PS/2 style mouse may be configured into your system.
 #endif
 
@@ -50,11 +50,19 @@
 #include <sys/device.h>
 #include <sys/poll.h>
 
+#if (NPMS_HACK > 0)
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
+#endif
+#if (NPMS_PCKBC > 0)
+#include <machine/bus.h>
+#include <dev/isa/pckbcvar.h>
+#endif
 #include <machine/mouse.h>
 #include <machine/conf.h>
+
+#if (NPMS_HACK > 0)
 
 #include <dev/isa/isavar.h>
 
@@ -74,6 +82,8 @@
 #define	PMS_AUX_DISABLE	0xa7	/* disable auxiliary port */
 #define	PMS_AUX_TEST	0xa9	/* test auxiliary port */
 
+#endif /* NPMS_HACK > 0 */
+
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
 #define	PMS_SET_SCALE21 0xe7	/* set scaling 2:1 */
@@ -90,7 +100,13 @@
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
+#if (NPMS_HACK > 0)
 	void *sc_ih;
+#endif
+#if (NPMS_PCKBC > 0)
+	pckbc_tag_t sc_kbctag;
+	pckbc_slot_t sc_kbcslot;
+#endif
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
@@ -101,17 +117,31 @@ struct pms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-int pmsprobe __P((struct device *, struct cfdata *, void *));
-void pmsattach __P((struct device *, struct device *, void *));
+#if (NPMS_HACK > 0)
+int pms_hack_probe __P((struct device *, struct cfdata *, void *));
+void pms_hack_attach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
-struct cfattach pms_ca = {
-	sizeof(struct pms_softc), pmsprobe, pmsattach,
+struct cfattach pms_hack_ca = {
+	sizeof(struct pms_softc), pms_hack_probe, pms_hack_attach,
 };
+#endif
+#if (NPMS_PCKBC > 0)
+int pms_pckbc_probe __P((struct device *, struct cfdata *, void *));
+void pms_pckbc_attach __P((struct device *, struct device *, void *));
+
+struct cfattach pms_pckbc_ca = {
+	sizeof(struct pms_softc), pms_pckbc_probe, pms_pckbc_attach,
+};
+#endif
+
+void pmsinput __P((void *, int));
 
 extern struct cfdriver pms_cd;
 
 #define	PMSUNIT(dev)	(minor(dev))
+
+#if (NPMS_HACK > 0)
 
 static __inline int pms_wait_output __P((void));
 static __inline int pms_wait_input __P((void));
@@ -214,7 +244,7 @@ pms_pit_cmd(value)
  * provides the parent's io port and our irq.
  */
 int
-pmsprobe(parent, cf, aux)
+pms_hack_probe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -232,7 +262,7 @@ pmsprobe(parent, cf, aux)
 		return (0);
 
 	/* Can't wildcard IRQ. */
-	if (cf->cf_loc[PCKBDCF_IRQ] == PCKBDCF_IRQ_DEFAULT)
+	if (cf->cf_loc[PCKBCPORTCF_IRQ] == PCKBCPORTCF_IRQ_DEFAULT)
 		return (0);
 
 	pms_flush_input();
@@ -254,12 +284,12 @@ pmsprobe(parent, cf, aux)
 }
 
 void
-pmsattach(parent, self, aux)
+pms_hack_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct pms_softc *sc = (void *)self;
-	int irq = self->dv_cfdata->cf_loc[PCKBDCF_IRQ];
+	int irq = self->dv_cfdata->cf_loc[PCKBCPORTCF_IRQ];
 	isa_chipset_tag_t ic = aux;			/* XXX */
 
 	printf(" irq %d\n", irq);
@@ -271,6 +301,78 @@ pmsattach(parent, self, aux)
 	    pmsintr, sc);
 }
 
+#endif /* NPMS_HACK > 0 */
+
+#if (NPMS_PCKBC > 0)
+int
+pms_pckbc_probe(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct pckbc_attach_args *pa = aux;
+	u_char cmd[1], resp[2];
+	int res;
+
+	if (pa->pa_slot != PCKBC_AUX_SLOT)
+		return (0);
+
+	/* Flush any garbage. */
+	pckbc_flush(pa->pa_tag, pa->pa_slot);
+
+	/* reset the device */
+	cmd[0] = PMS_RESET;
+	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
+	if (res) {
+		printf("pmsprobe: command error\n");
+		return(0);
+	}
+	if (resp[0] != 0xaa) {
+		printf("pmsprobe: reset error\n");
+		return(0);
+	}
+
+	/* get type number (0 = mouse) */
+	if (resp[1] != 0) {
+#ifdef DIAGNOSTIC
+		printf("pmsprobe: type 0x%x\n", resp[1]);
+#endif
+		return(0);
+	}
+
+	return (1);
+}
+
+void
+pms_pckbc_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pms_softc *sc = (void *)self;
+	struct pckbc_attach_args *pa = aux;
+	u_char cmd[1];
+	int res;
+
+	sc->sc_kbctag = pa->pa_tag;
+	sc->sc_kbcslot = pa->pa_slot;
+
+	printf("\n");
+
+	/* Other initialization was done by pmsprobe. */
+	sc->sc_state = 0;
+
+	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
+			       pmsinput, sc);
+
+	/* no interrupts until enabled */
+	cmd[0] = PMS_DEV_DISABLE;
+	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
+	if (res)
+		printf("pmsattach: disable error\n");
+	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+}
+#endif
+
 int
 pmsopen(dev, flag, mode, p)
 	dev_t dev;
@@ -280,6 +382,10 @@ pmsopen(dev, flag, mode, p)
 {
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
+#if (NPMS_PCKBC > 0)
+	u_char cmd[1];
+	int res;
+#endif
 
 	if (unit >= pms_cd.cd_ndevs)
 		return ENXIO;
@@ -298,11 +404,24 @@ pmsopen(dev, flag, mode, p)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
+#if (NPMS_HACK > 0)
 	pms_aux_cmd(PMS_AUX_ENABLE);
 	pms_pit_cmd(PMS_INT_ENABLE);
 	pms_dev_cmd(PMS_DEV_ENABLE);
 	if (pms_wait_input())
 		pms_flush_input();
+#endif
+#if (NPMS_PCKBC > 0)
+	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
+
+	cmd[0] = PMS_DEV_ENABLE;
+	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+				cmd, 1, 0, 1, 0);
+	if (res) {
+		printf("pms_enable: command error\n");
+		return (res);
+	}
+#endif
 
 #if 0
 	pms_dev_cmd(PMS_SET_RES);
@@ -324,13 +443,28 @@ pmsclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+#if (NPMS_PCKBC > 0)
+	u_char cmd[1];
+	int res;
+#endif
 
 	/* Disable interrupts. */
+#if (NPMS_HACK > 0)
 	pms_dev_cmd(PMS_DEV_DISABLE);
 	if (pms_wait_input())
 		pms_flush_input();
 	pms_pit_cmd(PMS_INT_DISABLE);
 	pms_aux_cmd(PMS_AUX_DISABLE);
+#endif
+#if (NPMS_PCKBC > 0)
+	cmd[0] = PMS_DEV_DISABLE;
+	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+				cmd, 1, 0, 1, 0);
+	if (res)
+		printf("pms_disable: command error\n");
+
+	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+#endif
 
 	sc->sc_state &= ~PMS_OPEN;
 
@@ -445,9 +579,10 @@ pmsioctl(dev, cmd, addr, flag, p)
 #define PS2RBUTMASK 0x02
 #define PS2MBUTMASK 0x04
 
-int
-pmsintr(arg)
+void
+pmsinput(arg, data)
 	void *arg;
+	int data;
 {
 	struct pms_softc *sc = arg;
 	static int state = 0;
@@ -458,27 +593,26 @@ pmsintr(arg)
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */
-		pms_flush_input();
-		return 0;
+		return;
 	}
 
 	switch (state) {
 
 	case 0:
-		buttons = inb(PMS_DATA);
+		buttons = data;
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = inb(PMS_DATA);
+		dx = data;
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = inb(PMS_DATA);
+		dy = data;
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 
@@ -508,9 +642,27 @@ pmsintr(arg)
 
 		break;
 	}
-
-	return -1;
 }
+
+#if (NPMS_HACK > 0)
+int
+pmsintr(arg)
+	void *arg;
+{
+	struct pms_softc *sc = arg;
+	int data;
+
+	if ((sc->sc_state & PMS_OPEN) == 0) {
+		/* Interrupts are not expected.  Discard the byte. */
+		pms_flush_input();
+		return (0);
+	}
+
+	data = inb(PMS_DATA);
+	pmsinput(arg, data);
+	return (-1);
+}
+#endif
 
 int
 pmspoll(dev, events, p)
