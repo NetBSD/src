@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)general.h	4.2 (Berkeley) 4/26/91
- *	$Id: general.h,v 1.2 1993/08/01 18:05:25 mycroft Exp $
+ *	$Id: general.h,v 1.3 1996/01/01 02:16:34 thorpej Exp $
  */
 
 /*
@@ -49,7 +49,8 @@
 #define	ClearArray(x)		memset((char *)x, 0, sizeof x)
 #endif	/* defined(unix) */
 
-#if	defined(unix)		/* Define BSD equivalent mem* functions */
+/* Define BSD equivalent mem* functions */
+#if	defined(unix) && !defined(__NetBSD__)
 #define	memcpy(dest,src,n)	bcopy(src,dest,n)
 #define	memmove(dest,src,n)	bcopy(src,dest,n)
 #define	memset(s,c,n)		if (c == 0) { \
@@ -63,4 +64,4 @@
 				    } \
 				}
 #define	memcmp(s1,s2,n)		bcmp(s1,s2,n)
-#endif	/* defined(unix) */
+#endif	/* defined(unix) && !defined(__NetBSD__) */
