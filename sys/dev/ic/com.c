@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.225 2004/04/05 22:33:08 enami Exp $	*/
+/*	$NetBSD: com.c,v 1.226 2004/05/01 06:12:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.225 2004/04/05 22:33:08 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.226 2004/05/01 06:12:18 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -446,7 +446,7 @@ com_attach_subr(struct com_softc *sc)
 		comconsattached = 1;
 
 		/* Make sure the console is always "hardwired". */
-		delay(1000);			/* wait for output to finish */
+		delay(10000);			/* wait for output to finish */
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
