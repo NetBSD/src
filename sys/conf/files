@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188.2.9 1998/09/11 16:23:15 bouyer Exp $
+#	$NetBSD: files,v 1.188.2.10 1998/09/20 16:37:22 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -79,13 +79,13 @@ deffs	fs_nfs.h NFS
 deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
 deffs	fs_union.h UNION
-deffs	fs_cfs.h CFS
+deffs	fs_coda.h CODA
 
 # file system options
 defopt	QUOTA
 
 # Not entirely MI, but present on multiple arch's
-defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
+defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
 
 # debugging options
 defopt	DDB
@@ -344,7 +344,7 @@ file	dev/usb/ohci.c			ohci
 pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device md: disk
-pseudo-device vcfs
+pseudo-device vcoda
 
 pseudo-device pty: tty
 pseudo-device tb: tty
@@ -357,6 +357,7 @@ pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
+pseudo-device gre: ifnet
 
 pseudo-device sequencer
 
@@ -365,12 +366,12 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
-file cfs/cfs_namecache.c		cfs
-file cfs/cfs_psdev.c			vcfs			needs-count
-file cfs/cfs_subr.c			cfs
-file cfs/cfs_venus.c			cfs
-file cfs/cfs_vfsops.c			cfs
-file cfs/cfs_vnodeops.c			cfs
+file coda/coda_namecache.c		coda
+file coda/coda_psdev.c			vcoda			needs-count
+file coda/coda_subr.c			coda
+file coda/coda_venus.c			coda
+file coda/coda_vfsops.c			coda
+file coda/coda_vnops.c			coda
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
@@ -531,6 +532,7 @@ file net/if_atmsubr.c			atm
 file net/if_ethersubr.c			ether | fddi
 file net/if_fddisubr.c			fddi
 file net/if_hippisubr.c                 hippi                   needs-flag
+file net/if_gre.c			gre				needs-count	
 file net/if_loop.c			loop			needs-count
 file net/if_media.c
 file net/if_sl.c			sl			needs-count
@@ -572,6 +574,7 @@ file netinet/igmp.c			inet
 file netinet/in.c			inet
 file netinet/in_pcb.c			inet
 file netinet/in_proto.c			inet
+file netinet/ip_gre.c			inet
 file netinet/ip_flow.c			inet & gateway
 file netinet/ip_icmp.c			inet
 file netinet/ip_input.c			inet

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.11 1998/09/11 16:23:14 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.12 1998/09/20 16:37:22 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -28,7 +28,7 @@ options 	XSERVER		# X server support in console drivers
 # I/O address.   see console(4) for details.
 #options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
-#	serial debugger option of the new boot strap code.
+#	serial console option of the new boot strap code.
 #options	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # The following options override the memory sizes passed in from the boot
@@ -36,8 +36,8 @@ options 	XSERVER		# X server support in console drivers
 # values.  Note that the BIOS may *correctly* report less than 640k of base
 # memory if the extended BIOS data area is located at the top of base memory
 # (as is the case on most recent systems).
-#options 	REALBASEMEM=...	# size of base memory
-#options 	REALEXTMEM=...	# size of extended memory
+#options 	REALBASEMEM=639	# size of base memory (kB)
+#options 	REALEXTMEM=15360	# size of extended memory (kB)
 
 # Standard system options
 
@@ -99,7 +99,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-#file-system	CFS		# Coda File System; also needs vcfs (below)
+#file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -535,6 +535,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	gre		2	# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
@@ -545,5 +546,5 @@ pseudo-device	sequencer	1	# MIDI sequencer
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
-# a pseudo device needed for Coda	# also needs CFS (above)
-#pseudo-device	vcfs		4	# coda minicache <-> venus comm.
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.

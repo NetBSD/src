@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.4.2.7 1998/09/11 16:23:15 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.4.2.8 1998/09/20 16:37:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,8 @@ struct wdc_pcmcia_product {
 	/* CANON FC-8M is also matches.  */
 	{ PCMCIA_VENDOR_SANDISK,
 	  PCMCIA_PRODUCT_SANDISK_SDCFB,
-	  PCMCIA_WIDTH_IO16 /* _AUTO also works */, { NULL, NULL, NULL, NULL },
+	  WDC_PCMCIA_FORCE_16BIT_IO /* _AUTO also works */,
+	  { NULL, NULL, NULL, NULL },
 	  PCMCIA_STR_SANDISK_SDCFB },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
