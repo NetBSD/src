@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.17 2003/04/16 13:34:56 wiz Exp $
+.\"	$NetBSD: shmget.2,v 1.18 2004/05/13 01:39:14 kleink Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2002
+.Dd May 13, 2004
 .Dt SHMGET 2
 .Os
 .Sh NAME
@@ -45,27 +45,6 @@
 .Fn shmget
 returns the shared memory identifier associated with the key
 .Fa key .
-The
-.Fa shmflg
-should be a combination of the following flags:
-.Bl -tag -offset indent -width IPC_NOWAIT
-.It Dv IPC_CREAT
-create if segment does not exist
-.It Dv IPC_EXCL
-fail if segment already exists
-.It Dv IPC_NOWAIT
-return error instead of waiting
-.El
-.Pp
-and nine bits of access bits, based on:
-.Bl -tag -offset indent -width IPC_R
-.It Dv IPC_R
-read permission
-.It Dv IPC_W
-write permission
-.It Dv IPC_M
-changing control info permission
-.El
 .Pp
 A shared memory segment is created if either
 .Fa key
@@ -77,6 +56,14 @@ does not have a shared memory segment identifier associated with it, and the
 .Dv IPC_CREAT
 bit is set in
 .Fa shmflg .
+If both the
+.Dv IPC_CREAT
+bit and the
+.Dv IPC_EXCL
+bit are set in
+.Fa shmflg ,
+does have a shared memory segment identifier associated with it already,
+the operation will fail.
 .Pp
 If a new shared memory segment is created, the data structure
 associated with it (the
