@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.667 2004/11/19 09:58:42 tacha Exp $
+$NetBSD: pcidevs,v 1.668 2004/11/22 04:23:21 rumble Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2790,7 +2790,7 @@ product VIATECH VT82C595_2	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
-product VIATECH VT6306		0x3044	VT3606 IEEE 1394 Host Controller
+product VIATECH VT6306		0x3044	VT6306 IEEE 1394 Host Controller
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
