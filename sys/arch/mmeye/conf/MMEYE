@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.20 2003/04/10 22:07:00 christos Exp $
+#	$NetBSD: MMEYE,v 1.21 2003/10/08 11:13:02 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -84,7 +84,8 @@ pcmcia*	at mmeyepcmcia? controller ? socket ?
 
 com*	at pcmcia? function ?		# Modems and serial cards
 wdc*	at pcmcia? function ?
-wd*	at wdc? drive ?			# the drives themselves
+atabus* at wdc? channel ?
+wd*	at atabus? drive ?
 
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
