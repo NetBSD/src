@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.11 1995/01/11 20:31:33 gwr Exp $	*/
+/*	$NetBSD: vector.c,v 1.12 1995/01/18 17:14:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,8 +58,8 @@ void level4intr(), level5intr(), level6intr(), level7intr();
 #define fpunfl fpfault
 
 void (*vector_table[NVECTORS])() = {
-	0xfffe000,				/* 0: NOT USED (reset SP) */
-	0xfef0000,				/* 1: NOT USED (reset PC) */
+	(void*)0xfffe000,		/* 0: NOT USED (reset SP) */
+	(void*)0xfef0000,		/* 1: NOT USED (reset PC) */
 	buserr,					/* 2: bus error */
 	addrerr,				/* 3: address error */
 	illinst,				/* 4: illegal instruction */
