@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.13 1997/04/22 20:21:59 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.14 1997/04/29 04:40:24 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -47,6 +47,7 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -54,18 +55,14 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
 #include "nubus.h"
 #include <dev/ic/dp8390reg.h>
-#include "if_aereg.h"
-#include "if_aevar.h"
+#include <dev/ic/dp8390var.h>
+#include <arch/mac68k/dev/if_aevar.h>
+#include <arch/mac68k/dev/if_aereg.h>
 
 static int	ae_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	ae_nubus_attach __P((struct device *, struct device *, void *));
@@ -76,7 +73,7 @@ static void	ae_nb_watchdog __P((struct ifnet *));
 #endif
 
 struct cfattach ae_nubus_ca = {
-	sizeof(struct ae_softc), ae_nubus_match, ae_nubus_attach
+	sizeof(struct dp8390_softc), ae_nubus_match, ae_nubus_attach
 };
 
 static int
@@ -85,7 +82,7 @@ ae_nubus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
+	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	bus_space_handle_t bsh;
 	int rv;
 
@@ -98,15 +95,15 @@ ae_nubus_match(parent, cf, aux)
 	if (na->category == NUBUS_CATEGORY_NETWORK &&
 	    na->type == NUBUS_TYPE_ETHERNET) {
 		switch (ae_nb_card_vendor(na)) {
-		case AE_VENDOR_APPLE:
-		case AE_VENDOR_ASANTE:
-		case AE_VENDOR_FARALLON:
-		case AE_VENDOR_INTERLAN:
-		case AE_VENDOR_KINETICS:
+		case DP8390_VENDOR_APPLE:
+		case DP8390_VENDOR_ASANTE:
+		case DP8390_VENDOR_FARALLON:
+		case DP8390_VENDOR_INTERLAN:
+		case DP8390_VENDOR_KINETICS:
 			rv = 1;
 			break;
-		case AE_VENDOR_DAYNA:
-		case AE_VENDOR_FOCUS:
+		case DP8390_VENDOR_DAYNA:
+		case DP8390_VENDOR_FOCUS:
 			rv = UNSUPP;
 			break;
 		default:
@@ -127,15 +124,15 @@ ae_nubus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct ae_softc *sc = (struct ae_softc *) self;
-	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
+	struct dp8390_softc *sc = (struct dp8390_softc *)self;
+	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 #ifdef DEBUG
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 #endif
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	int i, success;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	char *cardtype;
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
@@ -146,22 +143,32 @@ ae_nubus_attach(parent, self, aux)
 
 	sc->sc_regt = sc->sc_buft = bst;
 	sc->sc_flags = self->dv_cfdata->cf_flags;
-	sc->use16bit = 1;
+
 	sc->vendor = ae_nb_card_vendor(na);
-	strncpy(sc->type_str, nubus_get_card_name(na->fmt),
-	    INTERFACE_NAME_LEN);
-	sc->type_str[INTERFACE_NAME_LEN-1] = '\0';
+	sc->type = 0;
+	cardtype = nubus_get_card_name(na->fmt);
+	i = strlen(cardtype);
+	if ((sc->type_str = malloc((u_long)(i + 1), M_DEVBUF, M_NOWAIT))) {
+		strncpy(sc->type_str, cardtype, i);
+		sc->type_str[i] = '\0';
+	}
+
+	sc->use16bit = 0;
+	sc->is790 = 0;
+
+	sc->mem_start = 0;
 	sc->mem_size = 0;
 
 	success = 0;
 
 	switch (sc->vendor) {
-	case AE_VENDOR_APPLE:	/* Apple-compatible cards */
-	case AE_VENDOR_ASANTE:
+	case DP8390_VENDOR_APPLE:	/* Apple-compatible cards */
+	case DP8390_VENDOR_ASANTE:
 		/* Map register offsets */
 		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
 			sc->sc_reg_map[i] = (15 - i) << 2;
 
+		sc->use16bit = 1;
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -180,10 +187,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			myaddr[i] =
+			sc->sc_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (AE_ROM_OFFSET + i * 2));
 #else
-		if (ae_nb_get_enaddr(na, myaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -192,11 +199,12 @@ ae_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
-	case AE_VENDOR_DAYNA:
+	case DP8390_VENDOR_DAYNA:
 		/* Map register offsets */
 		for (i = 0; i < 16; i++) /* normal order, longword aligned */
 			sc->sc_reg_map[i] = i << 2;
 
+		sc->use16bit = 1;
 		if (bus_space_subregion(bst, bsh,
 		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -211,10 +219,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			myaddr[i] =
+			sc->sc_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (DP_ROM_OFFSET + i * 2));
 #else
-		if (ae_nb_get_enaddr(na, myaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -223,11 +231,12 @@ ae_nubus_attach(parent, self, aux)
 		printf(": unsupported Dayna hardware\n");
 		break;
 
-	case AE_VENDOR_FARALLON:
+	case DP8390_VENDOR_FARALLON:
 		/* Map register offsets */
 		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
 			sc->sc_reg_map[i] = (15 - i) << 2;
 
+		sc->use16bit = 1;
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -246,10 +255,10 @@ ae_nubus_attach(parent, self, aux)
 #ifdef AE_OLD_GET_ENADDR
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			myaddr[i] =
+			sc->sc_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (FE_ROM_OFFSET + i));
 #else
-		if (ae_nb_get_enaddr(na, myaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -258,15 +267,16 @@ ae_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
-	case AE_VENDOR_FOCUS:
+	case DP8390_VENDOR_FOCUS:
 		printf(": unsupported Focus hardware\n");
 		break;
 
-	case AE_VENDOR_INTERLAN:
+	case DP8390_VENDOR_INTERLAN:
 		/* Map register offsets */
 		for (i = 0; i < 16; i++) /* normal order, longword aligned */
 			sc->sc_reg_map[i] = i << 2;
 
+		sc->use16bit = 1;
 		if (bus_space_subregion(bst, bsh,
 		    GC_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -286,10 +296,10 @@ ae_nubus_attach(parent, self, aux)
 		/* reset the NIC chip */
 		bus_space_write_1(bst, bsh, GC_RESET_OFFSET, 0);
 
-		if (ae_nb_get_enaddr(na, myaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_enaddr)) {
 			/* Fall back to snarf directly from ROM.  Ick. */
 			for (i = 0; i < ETHER_ADDR_LEN; ++i)
-				myaddr[i] =
+				sc->sc_enaddr[i] =
 				    bus_space_read_1(bst, bsh,
 				    (GC_ROM_OFFSET + i * 4));
 		}
@@ -297,7 +307,7 @@ ae_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
-	case AE_VENDOR_KINETICS:
+	case DP8390_VENDOR_KINETICS:
 		/* Map register offsets */
 		for (i = 0; i < 16; i++) /* normal order, longword aligned */
 			sc->sc_reg_map[i] = i << 2;
@@ -318,7 +328,7 @@ ae_nubus_attach(parent, self, aux)
 			printf(": failed to map register space\n");
 			break;
 		}
-		if (ae_nb_get_enaddr(na, myaddr)) {
+		if (ae_nb_get_enaddr(na, sc->sc_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -335,16 +345,25 @@ ae_nubus_attach(parent, self, aux)
 		return;
 	}
 
+	/*
+	 * Override test_mem and write_mbuf functions; other defaults
+	 * already work properly.
+	 */
+	sc->test_mem = ae_test_mem;
+	sc->write_mbuf = ae_write_mbuf;
 #ifdef DEBUG
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
 #endif
-	if (aesetup(sc, myaddr)) {
+
+	if (dp8390_config(sc)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}
 
+	printf("%dKB memory\n", sc->mem_size / 1024);
+
 	/* make sure interrupts are vectored to us */
-	add_nubus_intr(na->slot, aeintr, sc);
+	add_nubus_intr(na->slot, dp8390_intr, sc);
 }
 
 static int
@@ -357,43 +376,43 @@ ae_nb_card_vendor(na)
 	case NUBUS_DRSW_3COM:
 		switch (na->drhw) {
 		case NUBUS_DRHW_APPLE_SN:
-			vendor = AE_VENDOR_UNKNOWN;
+			vendor = DP8390_VENDOR_UNKNOWN;
 			break;
 		default:
-			vendor = AE_VENDOR_APPLE;
+			vendor = DP8390_VENDOR_APPLE;
 			break;
 		}
 		break;
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_TECHWORKS:
-		vendor = AE_VENDOR_APPLE;
+		vendor = DP8390_VENDOR_APPLE;
 		break;
 	case NUBUS_DRSW_ASANTE:
-		vendor = AE_VENDOR_ASANTE;
+		vendor = DP8390_VENDOR_ASANTE;
 		break;
 	case NUBUS_DRSW_FARALLON:
-		vendor = AE_VENDOR_FARALLON;
+		vendor = DP8390_VENDOR_FARALLON;
 		break;
 	case NUBUS_DRSW_FOCUS:
-		vendor = AE_VENDOR_FOCUS;
+		vendor = DP8390_VENDOR_FOCUS;
 		break;
 	case NUBUS_DRSW_GATOR:
 		switch (na->drhw) {
 		default:
 		case NUBUS_DRHW_INTERLAN:
-			vendor = AE_VENDOR_INTERLAN;
+			vendor = DP8390_VENDOR_INTERLAN;
 			break;
 		case NUBUS_DRHW_KINETICS:
 			if (strncmp(
 			    nubus_get_card_name(na->fmt), "EtherPort", 9) == 0)
-				vendor = AE_VENDOR_KINETICS;
+				vendor = DP8390_VENDOR_KINETICS;
 			else
-				vendor = AE_VENDOR_DAYNA;
+				vendor = DP8390_VENDOR_DAYNA;
 			break;
 		}
 		break;
 	default:
-		vendor = AE_VENDOR_UNKNOWN;
+		vendor = DP8390_VENDOR_UNKNOWN;
 	}
 	return vendor;
 }
@@ -428,7 +447,7 @@ static void
 ae_nb_watchdog(ifp)
 	struct ifnet *ifp;
 {
-	struct ae_softc *sc = ifp->if_softc;
+	struct dp8390_softc *sc = ifp->if_softc;
 
 /*
  * This is a kludge!  The via code seems to miss slot interrupts
@@ -440,6 +459,6 @@ ae_nb_watchdog(ifp)
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++ifp->if_oerrors;
 
-	aereset(sc);
+	dp8390_reset(sc);
 }
 #endif
