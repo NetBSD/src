@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_query.c	5.11 (Berkeley) 3/6/91";*/
-static char *rcsid = "$Id: res_query.c,v 1.4 1994/04/07 07:00:21 deraadt Exp $";
+static char *rcsid = "$Id: res_query.c,v 1.5 1994/06/01 19:54:07 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -287,7 +287,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 		printf(";; res_querydomain(%s, %s, %d, %d)\n",
 		    name, domain, class, type);
 #endif
-	if (domain == NULL) {
+	if (domain == NULL && *name != '\0') {
 		/*
 		 * Check for trailing '.';
 		 * copy without '.' if present.
