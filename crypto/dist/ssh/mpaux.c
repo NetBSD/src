@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: mpaux.c,v 1.15 2000/12/19 23:17:57 markus Exp $");
+RCSID("$OpenBSD: mpaux.c,v 1.16 2001/02/08 19:30:52 itojun Exp $");
 
 #include <openssl/bn.h>
 #include "getput.h"

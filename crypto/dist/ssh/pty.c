@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: pty.c,v 1.21 2001/02/04 15:32:24 stevesk Exp $");
+RCSID("$OpenBSD: pty.c,v 1.22 2001/02/08 19:30:52 itojun Exp $");
 
 #include <util.h>
 #include "pty.h"

@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.23 2001/02/08 10:47:04 itojun Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.26 2001/02/12 12:45:06 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -50,6 +50,20 @@ u_int supported_authentications = 0;
 
 extern Options options;
 extern char *__progname;
+
+static void
+ssh1_put_password(char *password)
+{
+	int size;
+	char *padded;
+
+	size = roundup(strlen(password) + 1, 32);
+	padded = xmalloc(size);
+	strlcpy(padded, password, size);
+	packet_put_string(padded, size);
+	memset(padded, 0, size);
+	xfree(padded);
+}
 
 /*
  * Checks if the user has an authentication agent, and if so, tries to
@@ -658,7 +672,7 @@ try_challenge_reponse_authentication(void)
 			break;
 		}
 		packet_start(SSH_CMSG_AUTH_TIS_RESPONSE);
-		packet_put_string(response, strlen(response));
+		ssh1_put_password(response);
 		memset(response, 0, strlen(response));
 		xfree(response);
 		packet_send();
@@ -691,7 +705,7 @@ try_password_authentication(char *prompt)
 			error("Permission denied, please try again.");
 		password = read_passphrase(prompt, 0);
 		packet_start(SSH_CMSG_AUTH_PASSWORD);
-		packet_put_string(password, strlen(password));
+		ssh1_put_password(password);
 		memset(password, 0, strlen(password));
 		xfree(password);
 		packet_send();

@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.17 2001/02/08 17:57:59 stevesk Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.21 2001/02/12 20:53:33 stevesk Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -169,13 +169,13 @@ static void
 local_do_ls(const char *args)
 {
 	if (!args || !*args)
-		local_do_shell("ls");
+		local_do_shell(_PATH_LS);
 	else {
-		int len = sizeof("/bin/ls ") + strlen(args) + 1;
+		int len = strlen(_PATH_LS " ") + strlen(args) + 1;
 		char *buf = xmalloc(len);
 
 		/* XXX: quoting - rip quoting code from ftp? */
-		snprintf(buf, len, "/bin/ls %s", args);
+		snprintf(buf, len, _PATH_LS " %s", args);
 		local_do_shell(buf);
 		xfree(buf);
 	}
@@ -203,7 +203,7 @@ parse_getput_flags(const char **cpp, int *pflag)
 
 	/* Check for flags */
 	if (cp[0] == '-' && cp[1] && strchr(WHITESPACE, cp[2])) {
-		switch (*cp) {
+		switch (cp[1]) {
 		case 'P':
 			*pflag = 1;
 			break;
@@ -293,7 +293,9 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
     char **path1, char **path2)
 {
 	const char *cmd, *cp = *cpp;
+	char *cp2;
 	int base = 0;
+	long l;
 	int i, cmdnum;
 
 	/* Skip leading whitespace */
@@ -387,18 +389,24 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 		/* Uses the rest of the line */
 		break;
 	case I_LUMASK:
+		base = 8;
 	case I_CHMOD:
 		base = 8;
 	case I_CHOWN:
 	case I_CHGRP:
 		/* Get numeric arg (mandatory) */
-		if (*cp < '0' && *cp > '9') {
+		l = strtol(cp, &cp2, base);
+		if (cp2 == cp || ((l == LONG_MIN || l == LONG_MAX) &&
+		    errno == ERANGE) || l < 0) {
 			error("You must supply a numeric argument "
 			    "to the %s command.", cmd);
 			return(-1);
 		}
-		*n_arg = strtoul(cp, (char**)&cp, base);
-		if (!*cp || !strchr(WHITESPACE, *cp)) {
+		cp = cp2;
+		*n_arg = l;
+		if (cmdnum == I_LUMASK && strchr(WHITESPACE, *cp))
+			break;
+		if (cmdnum == I_LUMASK || !strchr(WHITESPACE, *cp)) {
 			error("You must supply a numeric argument "
 			    "to the %s command.", cmd);
 			return(-1);
@@ -530,6 +538,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_LUMASK:
 		umask(n_arg);
+		printf("Local umask: %03lo\n", n_arg);
 		break;
 	case I_CHMOD:
 		path1 = make_absolute(path1, *pwd);
@@ -540,23 +549,27 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_CHOWN:
 		path1 = make_absolute(path1, *pwd);
-		aa = do_stat(in, out, path1);
+		if (!(aa = do_stat(in, out, path1)))
+			break;
 		if (!(aa->flags & SSH2_FILEXFER_ATTR_UIDGID)) {
 			error("Can't get current ownership of "
 			    "remote file \"%s\"", path1);
 			break;
 		}
+		aa->flags &= SSH2_FILEXFER_ATTR_UIDGID;
 		aa->uid = n_arg;
 		do_setstat(in, out, path1, aa);
 		break;
 	case I_CHGRP:
 		path1 = make_absolute(path1, *pwd);
-		aa = do_stat(in, out, path1);
+		if (!(aa = do_stat(in, out, path1)))
+			break;
 		if (!(aa->flags & SSH2_FILEXFER_ATTR_UIDGID)) {
 			error("Can't get current ownership of "
 			    "remote file \"%s\"", path1);
 			break;
 		}
+		aa->flags &= SSH2_FILEXFER_ATTR_UIDGID;
 		aa->gid = n_arg;
 		do_setstat(in, out, path1, aa);
 		break;

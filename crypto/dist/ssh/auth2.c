@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.39 2001/02/08 18:20:01 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.42 2001/02/13 22:49:40 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -89,12 +89,12 @@ Authmethod authmethods[] = {
 	{"publickey",
 		userauth_pubkey,
 		&options.pubkey_authentication},
-	{"keyboard-interactive",
-		userauth_kbdint,
-		&options.kbd_interactive_authentication},
 	{"password",
 		userauth_passwd,
 		&options.password_authentication},
+	{"keyboard-interactive",
+		userauth_kbdint,
+		&options.kbd_interactive_authentication},
 	{NULL, NULL, NULL}
 };
 
@@ -185,7 +185,6 @@ input_userauth_request(int type, int plen, void *ctxt)
 	if (authctxt->attempt++ == 0) {
 		/* setup auth context */
 		struct passwd *pw = NULL;
-		setproctitle("%s", user);
 		pw = getpwnam(user);
 		if (pw && allowed_user(pw) && strcmp(service, "ssh-connection")==0) {
 			authctxt->pw = pwcopy(pw);
@@ -194,6 +193,7 @@ input_userauth_request(int type, int plen, void *ctxt)
 		} else {
 			log("input_userauth_request: illegal user %s", user);
 		}
+		setproctitle("%s", pw ? user : "unknown");
 		authctxt->user = xstrdup(user);
 		authctxt->service = xstrdup(service);
 		authctxt->style = style ? xstrdup(style) : NULL; /* currently unused */
@@ -220,7 +220,8 @@ input_userauth_request(int type, int plen, void *ctxt)
 		    authctxt->user);
 
 	/* Special handling for root */
-	if (authenticated && authctxt->pw->pw_uid == 0 && !auth_root_allowed())
+	if (authenticated && authctxt->pw->pw_uid == 0 &&
+	    !auth_root_allowed(method))
 		authenticated = 0;
 
 	/* Log before sending the reply */
