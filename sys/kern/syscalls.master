@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.93 1999/06/15 23:28:16 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.94 1999/06/29 22:15:31 wrstuden Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -303,11 +303,7 @@
 158	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
-#else
-161	EXCL		getfh
-#endif
 162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
 			    ogetdomainname
 163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
@@ -564,3 +560,8 @@
 295	STD		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD		{ int sys___getcwd(char *bufp, size_t length); }
 297	STD		{ int sys_fchroot(int fd); }
+298	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
+299	STD		{ int sys_fhstat(const fhandle_t *fhp, \
+			    struct stat *sb); }
+300	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs *buf); }
