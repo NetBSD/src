@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.63 2004/08/11 04:35:35 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.64 2004/08/11 20:57:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.63 2004/08/11 04:35:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.64 2004/08/11 20:57:40 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -166,10 +166,12 @@ pcmcia_card_attach(dev)
 	 * the cis.
 	 */
 
-	if (sc->card.error)
+	if (sc->card.error ||
+	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
+		printf("%s: card appears to have bogus CIS\n",
+		    sc->dev.dv_xname);
 		goto done;
-	if (SIMPLEQ_EMPTY(&sc->card.pf_head))
-		goto done;
+	}
 
 	if (pcmcia_verbose)
 		pcmcia_print_cis(sc);
