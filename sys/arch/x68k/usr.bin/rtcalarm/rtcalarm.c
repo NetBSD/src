@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.2 1998/01/05 20:52:33 perry Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.3 1998/08/04 16:10:45 minoura Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -173,17 +173,20 @@ showontime(ontime)
 	printf("At %s:", numstr((ontime & 0x0000ff00) >> 8));
 	printf("%s ", numstr(ontime & 0x000000ff));
 
-	if ((ontime & 0x0fff0000) != 0x0fff0000)
+	if ((ontime & 0x0fff0000) != 0x0fff0000) {
 		if ((ontime & 0x0f000000) != 0x0f000000) {
 			if ((ontime & 0x00ff0000) != 0x00ff0000)
-				printf("on %s, %s in any month, \n",
+				printf("on %s, %sth in every month, \n",
 				       weekname[(ontime & 0x0f000000) >> 24],
 				       numstr((ontime & 0x00ff0000) >> 16));
 			else
-				printf("on every %s.\n",
+				printf("on every %s, \n",
 				     weekname[(ontime & 0x0f000000) >> 24]);
 		} else
-			printf("everyday.\n");
+			printf("on %sth in every month, \n",
+			       numstr((ontime & 0x00ff0000) >> 16));
+	} else
+		printf("everyday.\n");
 }
 
 
