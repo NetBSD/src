@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.3 1993/06/15 21:37:18 mycroft Exp $
+ *	$Id: spkr.c,v 1.4 1993/06/16 18:12:28 brezak Exp $
  */
 
 #include "speaker.h"
@@ -18,7 +18,7 @@
 #include "errno.h"
 #include "buf.h"
 #include "uio.h"
-#include "spkr.h"
+#include "i386/include/spkr.h"
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************
  *
