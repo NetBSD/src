@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.10 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.11 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -48,7 +48,7 @@ struct dpt_ccb {
 	/* Data that will be touched by the HBA */
 	struct eata_cp	ccb_eata_cp;		/* EATA command packet */
 	struct eata_sg	ccb_sg[DPT_SG_SIZE];	/* SG element list */
-	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
+	struct scsi_sense_data ccb_sense;	/* SCSI sense data on error */
 
 	/* Data that will not be touched by the HBA */
 	volatile int	ccb_flg;		/* CCB flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.10 2005/02/05 13:37:39 xtraeme Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.11 2005/02/21 00:29:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_subr.c,v 1.10 2005/02/05 13:37:39 xtraeme Exp $");
+__RCSID("$NetBSD: scsi_subr.c,v 1.11 2005/02/21 00:29:08 thorpej Exp $");
 #endif
 
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: scsi_subr.c,v 1.10 2005/02/05 13:37:39 xtraeme Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_spc.h>
 
 #include "extern.h"
 
@@ -104,12 +104,12 @@ scsi_command(int fd, void *cmd, size_t cmdlen, void *data, size_t datalen,
 void
 scsi_mode_sense(int fd, u_int8_t pgcode, u_int8_t pctl, void *buf, size_t len)
 {
-	struct scsipi_mode_sense cmd;
+	struct scsi_mode_sense_6 cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
 	memset(buf, 0, len);
 
-	cmd.opcode = MODE_SENSE;
+	cmd.opcode = SCSI_MODE_SENSE_6;
 	cmd.page = pgcode | pctl;
 	cmd.length = len;
 
@@ -119,11 +119,11 @@ scsi_mode_sense(int fd, u_int8_t pgcode, u_int8_t pctl, void *buf, size_t len)
 void
 scsi_mode_select(int fd, u_int8_t byte2, void *buf, size_t len)
 {
-	struct scsipi_mode_select cmd;
+	struct scsi_mode_select_6 cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	cmd.opcode = MODE_SELECT;
+	cmd.opcode = SCSI_MODE_SELECT_6;
 	cmd.byte2 = SMS_PF | byte2;
 	cmd.length = len;
 
@@ -133,12 +133,12 @@ scsi_mode_select(int fd, u_int8_t byte2, void *buf, size_t len)
 void
 scsi_request_sense(int fd, void *buf, size_t len)
 {
-	struct scsipi_sense cmd;
+	struct scsi_request_sense cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
 	memset(buf, 0, len);
 
-	cmd.opcode = REQUEST_SENSE;
+	cmd.opcode = SCSI_REQUEST_SENSE;
 	cmd.length = len;
  	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_READ);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.25 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.26 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.25 2005/02/01 00:19:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.26 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -627,7 +627,7 @@ asc2ascii(u_char asc, u_char ascq, char *result, size_t l)
 }
 
 void
-scsipi_print_sense_data(struct scsipi_sense_data *sense, int verbosity)
+scsipi_print_sense_data(struct scsi_sense_data *sense, int verbosity)
 {
 	int32_t info;
 	int i, j, k;

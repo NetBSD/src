@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.43 2003/11/02 11:07:44 wiz Exp $	 */
+/* $NetBSD: adw.c,v 1.44 2005/02/21 00:29:07 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.43 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.44 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,7 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	scsiqp->vsense_addr = &ccb->scsi_sense;
 	scsiqp->sense_addr = htole32(sc->sc_dmamap_control->dm_segs[0].ds_addr +
 			ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense));
-	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
+	scsiqp->sense_len = sizeof(struct scsi_sense_data);
 
 	/*
 	 * Build ADW_SCSI_REQ_Q for a scatter-gather buffer command.
@@ -1040,7 +1040,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADW_CCB        *ccb;
 	struct scsipi_xfer *xs;
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);

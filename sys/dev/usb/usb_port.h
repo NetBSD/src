@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.65 2004/10/23 13:38:26 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.66 2005/02/21 00:29:08 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -101,8 +101,6 @@ MALLOC_DECLARE(M_USBHC);
 #else
 #define Static static
 #endif
-
-#define SCSI_MODE_SENSE		MODE_SENSE
 
 typedef struct proc *usb_proc_ptr;
 
@@ -230,7 +228,6 @@ typedef struct proc *usb_proc_ptr;
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
 
-#define SCSI_MODE_SENSE		MODE_SENSE
 #define XS_STS_DONE		ITSDONE
 #define XS_CTL_POLL		SCSI_POLL
 #define XS_CTL_DATA_IN		SCSI_DATA_IN
@@ -241,7 +238,6 @@ typedef struct proc *usb_proc_ptr;
 #define scsipi_done		scsi_done
 #define scsipi_link		scsi_link
 #define scsipi_minphys		scsi_minphys
-#define scsipi_sense		scsi_sense
 #define scsipi_xfer		scsi_xfer
 #define xs_control		flags
 #define xs_status		status

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_tape.h,v 1.4 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: atapi_tape.h,v 1.5 2005/02/21 00:29:07 thorpej Exp $	*/
 
 
 /*-
@@ -41,7 +41,7 @@
 /* ATAPI tape drive Capabilities and Mechanical Status Page */
 struct atapi_cappage {
     /* mode page data header */
-    struct scsipi_mode_header header;
+    struct scsi_mode_parameter_header_6 header;
     /* capabilities page */
     u_int8_t	page_code;
 #define ATAPI_TAPE_CAP_PAGE	0x2a
@@ -103,7 +103,7 @@ struct ast_transferpage {
 /* ATAPI OnStream ADR vendor identification mode page (ADR unique) */
 struct ast_identifypage {
     /* mode page data header */
-    struct scsipi_mode_header header;
+    struct scsi_mode_parameter_header_6 header;
     /* data transfer page */
     u_int8_t	page_code;
 #define ATAPI_TAPE_IDENTIFY_PAGE     0x36
