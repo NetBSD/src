@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.17 2000/11/15 16:12:01 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.18 2002/08/23 01:08:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,12 +178,34 @@ struct v2bootargs {
 };
 
 /*
- * The format used by the PROM to describe a physical address.
+ * The format used by the PROM to describe a physical address.  These
+ * are typically found in a "reg" property.
  */
 struct openprom_addr {
 	int	oa_space;		/* address space (may be relative) */
 	u_int	oa_base;		/* address within space */
 	u_int	oa_size;		/* extent (number of bytes) */
+};
+
+/*
+ * The format used by the PROM to describe an address space window.  These
+ * are typically found in a "range" property.
+ */
+struct openprom_range {
+	int	or_child_space;		/* address space of child */
+	u_int	or_child_base;		/* offset in child's view of bus */
+	int	or_parent_space;	/* address space of parent */
+	u_int	or_parent_base;		/* offset in parent's view of bus */
+	u_int	or_size;		/* extent (number of bytes) */
+};
+
+/*
+ * The format used by the PROM to describe an interrupt.  These are
+ * typically found in an "intr" property.
+ */
+struct openprom_intr {
+	int	oi_pri;			/* interrupt priority */
+	int	oi_vec;			/* interrupt vector */
 };
 
 /*
