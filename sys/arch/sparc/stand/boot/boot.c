@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.3 1998/08/29 06:40:43 mrg Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,11 +48,6 @@ static void promsyms __P((int, struct exec *));
 int debug;
 int netif_debug;
 
-/*
- * Boot device is derived from ROM provided information.
- */
-#define	DEFAULT_KERNEL	"netbsd"
-
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 unsigned long		esym;
 char			*strtab;
@@ -63,38 +58,96 @@ typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
 
 void	loadfile __P((int, caddr_t));
 
+/*
+ * Boot device is derived from ROM provided information, or if there is none,
+ * this list is used in sequence, to find a kernel.
+ */
+char *kernels[] = {
+	"netbsd",
+	"netbsd.gz",
+	"netbsd.old",
+	"netbsd.old.gz",
+	"onetbsd",
+	"onetbsd.gz",
+	"vmunix",
+#ifdef notyet
+	"netbsd.pl",
+	"netbsd.pl.gz",
+	"netbsd.el",
+	"netbsd.el.gz",
+#endif
+	NULL
+};
+
 main()
 {
-	int	io;
-	char	*file;
+	int	io, i;
+	char	*kernel;
 
 	prom_init();
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
-	file = prom_bootfile;
-	if (file == 0 || *file == 0)
-		file = DEFAULT_KERNEL;
-
-	for (;;) {
-		if (prom_boothow & RB_ASKNAME) {
-			printf("device[%s]: ", prom_bootdevice);
-			gets(dbuf);
-			if (dbuf[0])
-				prom_bootdevice = dbuf;
-			printf("boot: ");
-			gets(fbuf);
-			if (fbuf[0])
-				file = fbuf;
-		}
-		if ((io = open(file, 0)) >= 0)
-			break;
-		printf("open: %s: %s\n", file, strerror(errno));
-		prom_boothow |= RB_ASKNAME;
+	/*
+	 * get default kernel.
+	 */
+	if (prom_bootfile && *prom_bootfile) {
+		i = -1;	/* not using the kernels */
+		kernel = prom_bootfile;
+	} else {
+		i = 0;
+		kernel = kernels[i];
 	}
 
-	printf("Booting %s @ 0x%x\n", file, LOADADDR);
+	for (;;) {
+		/*
+		 * ask for a kernel first ..
+		 */
+		if (prom_boothow & RB_ASKNAME) {
+			printf("device[%s] (\"halt\" to halt): ",
+			   prom_bootdevice);
+			gets(dbuf);
+			if (strcmp(dbuf, "halt") == 0)
+				_rtt();
+			if (dbuf[0])
+				prom_bootdevice = dbuf;
+			printf("boot (press RETURN to try default list): ");
+			gets(fbuf);
+			if (fbuf[0])
+				kernel = fbuf;
+			else {
+				prom_boothow &= ~RB_ASKNAME;
+				i = 0;
+				kernel = kernels[i];
+			}
+		}
+
+		if ((io = open(kernel, 0)) >= 0)
+			break;
+		printf("open: %s: %s", kernel, strerror(errno));
+
+		/*
+		 * if we have are not in askname mode, and we aren't using the
+		 * prom bootfile, try the next one (if it exits).  otherwise,
+		 * go into askname mode.
+		 */
+		if ((prom_boothow & RB_ASKNAME) == 0 &&
+		    i != -1 && kernels[++i]) {
+			kernel = kernels[i];
+			printf(": trying %s...\n", kernel);
+		} else {
+			printf("\n");
+			prom_boothow |= RB_ASKNAME;
+		}
+	}
+
+	/*
+	 * XXX
+	 * make loadfile() return a value, so that if the load of the kernel
+	 * fails, we can jump back and try another kernel in the list.
+	 */
+	printf("Booting %s @ 0x%x\n", kernel, LOADADDR);
 	loadfile(io, LOADADDR);
 
 	_rtt();

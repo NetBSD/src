@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.2 1998/05/27 10:29:10 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.3 1998/08/29 06:40:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -87,7 +87,7 @@ static int	saveecho;
 void
 prom_init()
 {
-	static	char storage[1024];
+	static	char storage[1024] = { '\0' };
 	char	*ap, *cp, *dp;
 
 	if (cputyp == CPU_SUN4)
@@ -101,18 +101,30 @@ prom_init()
 #ifndef BOOTXX
 		cp = *promvec->pv_v2bootargs.v2_bootargs;
 		dp = prom_bootfile = storage;
-		/* Copy kernel name */
-		while (*cp != 0 && *cp != ' ' && *cp != '\t') {
-			if (dp >= ep) {
-				printf("v2_bootargs too long\n");
-				_rtt();
-			}
-			*dp++ = *cp++;
-		}
-		*dp = '\0';
+
 		/* Skip whitespace */
 		while (*cp != 0 && (*cp == ' ' || *cp == '\t'))
 			cp++;
+
+		/* Check for options */
+		if (cp[0] == '-' &&
+		    (cp[1] == 'a' || cp[1] == 's' || cp[1] == 'd'))
+			cp++;
+		else {
+			/* Copy kernel name */
+			while (*cp != 0 && *cp != ' ' && *cp != '\t') {
+				if (dp >= ep) {
+					printf("v2_bootargs too long\n");
+					_rtt();
+				}
+				*dp++ = *cp++;
+			}
+
+			*dp = '\0';
+			/* Skip whitespace */
+			while (*cp != 0 && (*cp == ' ' || *cp == '\t'))
+				cp++;
+		}
 
 		ap = cp;
 #endif
@@ -132,11 +144,11 @@ prom_init()
 	}
 
 #ifndef BOOTXX
-	if (ap == NULL || *ap != '-')
+	if (ap == NULL || *ap++ != '-')
 		return;
 
-	while (*ap) {
-		switch (*ap++) {
+	while (*ap && *ap != ' ' && *ap != '\t' && *ap != '\n') {
+		switch (*ap) {
 		case 'a':
 			prom_boothow |= RB_ASKNAME;
 			break;
@@ -148,6 +160,7 @@ prom_init()
 			debug = 1;
 			break;
 		}
+		ap++;
 	}
 #endif
 }
