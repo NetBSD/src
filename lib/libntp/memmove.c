@@ -1,3 +1,5 @@
+/*	$NetBSD: memmove.c,v 1.2 1998/01/09 03:16:19 perry Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

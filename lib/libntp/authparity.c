@@ -1,3 +1,5 @@
+/*	$NetBSD: authparity.c,v 1.2 1998/01/09 03:15:57 perry Exp $	*/
+
 /*
  * auth_parity - set parity on a key/check for odd parity
  */

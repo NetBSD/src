@@ -1,3 +1,5 @@
+/*	$NetBSD: dofptoa.c,v 1.2 1998/01/09 03:16:06 perry Exp $	*/
+
 /*
  * dofptoa - do the grunge work to convert an fp number to ascii
  */

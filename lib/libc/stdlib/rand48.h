@@ -1,3 +1,5 @@
+/*	$NetBSD: rand48.h,v 1.4 1998/01/09 03:15:40 perry Exp $	*/
+
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: calleapwhen.c,v 1.2 1998/01/09 03:16:02 perry Exp $	*/
+
 /*
  * calleapwhen - determine the number of seconds to the next possible
  *		 leap occurance and the last one.

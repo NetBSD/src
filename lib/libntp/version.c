@@ -1,3 +1,5 @@
+/*	$NetBSD: version.c,v 1.2 1998/01/09 03:16:40 perry Exp $	*/
+
 /*
  * version file for 5.90
  */
