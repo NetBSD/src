@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.11 1998/06/09 00:00:21 thorpej Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.12 1998/06/09 01:04:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,8 @@ struct isa_dma_state {
 	int	ids_drqmap;		/* available DRQs (bitmap) */
 	int	ids_dmareads;		/* state for isa_dmadone() (bitmap) */
 	int	ids_dmafinished;	/* DMA completion state (bitmap) */
+	int	ids_masked;		/* masked channels (bitmap) */
+	int	ids_frozen;		/* `frozen' count */
 	int	ids_initialized;	/* only initialize once... */
 };
 
@@ -74,6 +76,12 @@ struct isa_dma_state {
 
 #define	ISA_DMA_DRQ_FREE(state, drq)					\
 	(state)->ids_drqmap &= ~(1 << (drq))
+
+#define	ISA_DMA_MASK_SET(state, drq)					\
+	(state)->ids_masked |= (1 << (drq))
+
+#define	ISA_DMA_MASK_CLR(state, drq)					\
+	(state)->ids_masked &= ~(1 << (drq))
 
 /*
  * Memory list used by _isa_malloc().
@@ -105,6 +113,9 @@ void	   _isa_dmaabort __P((struct isa_dma_state *, int));
 bus_size_t _isa_dmacount __P((struct isa_dma_state *, int));
 int	   _isa_dmafinished __P((struct isa_dma_state *, int));
 void	   _isa_dmadone __P((struct isa_dma_state *, int));
+
+void	   _isa_dmafreeze __P((struct isa_dma_state *));
+void	   _isa_dmathaw __P((struct isa_dma_state *));
 
 int	   _isa_dmamem_alloc __P((struct isa_dma_state *, int, bus_size_t,
 	       bus_addr_t *, int));
