@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.26 2004/09/25 22:53:46 soda Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.27 2004/09/25 23:51:31 soda Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -603,7 +603,8 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s, sz,
 				      wc, psenc, nresult);
 #if _ENCODING_IS_STATE_DEPENDENT
-	*nresult += rsz;
+	if (err == 0)
+		*nresult += rsz;
 quit:
 #endif
 	if (err == E2BIG)
@@ -693,7 +694,8 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 #endif
 	err = _FUNCNAME(wcrtomb_priv)(ei, s, sz, wc, psenc, &nr);
 #if _ENCODING_IS_STATE_DEPENDENT
-	*nresult = (int)(nr + rsz);
+	if (err == 0)
+		*nresult = (int)(nr + rsz);
 #else
 	*nresult = (int)nr;
 #endif
