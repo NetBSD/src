@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2.4.1 2000/08/31 15:16:44 minoura Exp $	*/
+/*	$NetBSD: md.h,v 1.2.4.2 2000/11/01 02:05:38 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,6 +79,7 @@ EXTERN distinfo dist_list[]
     {"xserver",	1, "cr", "X11 servers  : "},
     {"xcontrib",1, "aa", "X11 contrib  : "},
     {"xcomp",	1, "ah", "X programming: "},
+    {"xmisc",	1, NULL, "X11 Misc.    : "},
     {NULL, 0, NULL, NULL }
 }
 #endif
