@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.5 1993/11/26 23:51:54 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.6 1993/11/27 02:20:41 deraadt Exp $
  */
 
 /*
@@ -413,13 +413,12 @@ out:
 
 /*
  * The Sun bit-style arguments are not in the same order as the
- * NetBSD ones. We must remap them the bits.
+ * NetBSD ones. We must remap the bits.
  */
 
 #if defined(sparc)
 #define	DEVZERO	makedev(3, 12)		/* major,minor of /dev/zero */
-#endif
-#if defined(sun3) || defined(amiga) || defined(mac) || defined(hp300)
+#else /* all m68k architectures */
 #define	DEVZERO	makedev(2, 12)		/* major,minor of /dev/zero */
 #endif
 
@@ -791,4 +790,12 @@ sun_quotactl(p, uap, retval)
 	int *retval;
 {
 	return EINVAL;
+}
+
+sun_vhangup(p, uap, retval)
+	struct proc *p;
+	void *uap;
+	int *retval;
+{
+	return 0;
 }
