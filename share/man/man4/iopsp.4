@@ -1,4 +1,4 @@
-.\"	$NetBSD: iopsp.4,v 1.1 2000/11/08 19:54:13 ad Exp $
+.\"	$NetBSD: iopsp.4,v 1.2 2000/12/11 13:11:59 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,15 +39,15 @@
 .Os
 .Sh NAME
 .Nm iopsp
-.Nd I2O SCSI/FC-AL port driver
+.Nd I2O SCSI port driver
 .Sh SYNOPSIS
 .Cd "iopsp* at iop? tid ?"
 .Cd "scsibus* at iopsp?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for SCSI and FC-AL type I2O bus adapter ports and
-child peripherals.
+driver provides support for I2O SCSI bus adapter ports and child
+peripherals.
 .Pp
 I2O adapters present each child peripheral attached to a bus adapter port
 as an individual device.
