@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.36 1997/06/22 07:42:59 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.37 1997/06/23 21:45:11 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1092,6 +1092,10 @@ sys_stk_chk:
 1:
 	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
 	.text
+
+	li	a0, 0
+	jal	mips3_dump_tlb
+	li	a1, 2				# BDslot
 
 	la	sp, start - START_FRAME		# set sp to a valid place
 #ifdef DEBUG
