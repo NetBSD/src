@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.43 1999/10/10 22:33:55 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.44 1999/10/24 12:31:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -150,6 +150,14 @@ struct macel {
 	char *mac_end;		/* end of macro in macbuf */
 };
 
+/*
+ * Format of option table
+ */
+struct option {
+	char	*name;
+	char	*value;
+};
+
 
 /*
  * Global defines
@@ -170,7 +178,7 @@ struct macel {
 #define	GATE_SERVER	""	/* default server */
 #endif
 
-#define	PAGER		"more"	/* default pager if $PAGER isn't set */
+#define	DEFAULTPAGER	"more"	/* default pager if $PAGER isn't set */
 
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
@@ -262,10 +270,6 @@ GLOBAL	char 	*ftpport;	/* port number to use for FTP connections */
 GLOBAL	char	*httpport;	/* port number to use for HTTP connections */
 GLOBAL	char	*gateport;	/* port number to use for gateftp connections */
 
-GLOBAL	const char *ftpproxy;	/* ftp:// proxy server */
-GLOBAL	const char *httpproxy;	/* http:// proxy server */
-GLOBAL	const char *no_proxy;	/* list of domains not to proxy */
-
 GLOBAL	char   *outfile;	/* filename to output URLs to */
 GLOBAL	int	restartautofetch; /* restart auto-fetch */
 
@@ -297,7 +301,11 @@ GLOBAL	FILE   	*cin;
 GLOBAL	FILE   	*cout;
 GLOBAL	int	 data;
 
-extern	struct cmd cmdtab[];
-extern	int	 NCMDS;
+extern	struct cmd	cmdtab[];
+extern	struct option	optiontab[];
 
 extern	char	*__progname;		/* from crt0.o */
+
+
+#define	EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
+#define	FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.64 1999/10/13 02:47:54 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.65 1999/10/24 12:31:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.64 1999/10/13 02:47:54 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.65 1999/10/24 12:31:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,12 +131,13 @@ __RCSID("$NetBSD: main.c,v 1.64 1999/10/13 02:47:54 lukem Exp $");
 #define	GLOBAL		/* force GLOBAL decls in ftp_var.h to be declared */
 #include "ftp_var.h"
 
-#define FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
-#define HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
-#define NO_PROXY	"no_proxy"	/* env var with list of non-proxied
+#define	FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
+#define	HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
+#define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
-int main __P((int, char **));
+static void	setupoption __P((char *, char *, char *));
+int		main __P((int, char **));
 
 int
 main(argc, argv)
@@ -145,14 +146,11 @@ main(argc, argv)
 {
 	int ch, rval;
 	struct passwd *pw = NULL;
-	char *cp, *ep;
+	char *cp, *ep, *anonuser, *anonpass;
 	int dumbterm, s, len;
 
 	ftpport = "ftp";
 	httpport = "http";
-	ftpproxy = getenv(FTP_PROXY);
-	httpproxy = getenv(HTTP_PROXY);
-	no_proxy = getenv(NO_PROXY);
 	gateport = NULL;
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL)
@@ -219,15 +217,15 @@ main(argc, argv)
 
 	/* Set default operation mode based on FTPMODE environment variable */
 	if ((cp = getenv("FTPMODE")) != NULL) {
-		if (strcmp(cp, "passive") == 0) {
+		if (strcasecmp(cp, "passive") == 0) {
 			passivemode = 1;
 			activefallback = 0;
-		} else if (strcmp(cp, "active") == 0) {
+		} else if (strcasecmp(cp, "active") == 0) {
 			passivemode = 0;
 			activefallback = 0;
-		} else if (strcmp(cp, "gate") == 0) {
+		} else if (strcasecmp(cp, "gate") == 0) {
 			gatemode = 1;
-		} else if (strcmp(cp, "auto") == 0) {
+		} else if (strcasecmp(cp, "auto") == 0) {
 			passivemode = 1;
 			activefallback = 1;
 		} else
@@ -390,15 +388,35 @@ main(argc, argv)
 	 * Set up the home directory in case we're globbing.
 	 */
 	cp = getlogin();
-	if (cp != NULL) {
+	if (cp != NULL)
 		pw = getpwnam(cp);
-	}
 	if (pw == NULL)
 		pw = getpwuid(getuid());
-	if (pw != NULL)
+	if (pw != NULL) {
 		(void)strlcpy(home, pw->pw_dir, sizeof(home));
-	else
+		anonuser = pw->pw_name;
+	} else {
 		(void)strlcpy(home, "/", sizeof(home));
+		anonuser = "anonymous";
+	}
+
+	/*
+	 * Every anonymous FTP server I've encountered will accept the
+	 * string "username@", and will append the hostname itself. We
+	 * do this by default since many servers are picky about not
+	 * having a FQDN in the anonymous password.
+	 * - thorpej@netbsd.org
+	 */
+	len = strlen(anonuser) + 2;
+	anonpass = xmalloc(len);
+	(void)strlcpy(anonpass, anonuser, len);
+	(void)strlcat(anonpass, "@",	  len);
+
+	setupoption("anonpass",		getenv("FTPANONPASS"),	anonpass);
+	setupoption("ftp_proxy",	getenv(FTP_PROXY),	xstrdup(""));
+	setupoption("http_proxy",	getenv(HTTP_PROXY),	xstrdup(""));
+	setupoption("no_proxy",		getenv(NO_PROXY),	xstrdup(""));
+	setupoption("pager",		getenv("PAGER"), xstrdup(DEFAULTPAGER));
 
 	setttywidth(0);
 #ifdef SIGINFO
@@ -425,7 +443,7 @@ main(argc, argv)
 			if (sigsetjmp(toplevel, 1))
 				exit(0);
 			(void)xsignal(SIGINT, intr);
-			(void)xsignal(SIGPIPE, (sig_t)lostpeer);
+			(void)xsignal(SIGPIPE, lostpeer);
 			xargv[0] = __progname;
 			xargv[1] = argv[0];
 			xargv[2] = argv[1];
@@ -452,53 +470,9 @@ main(argc, argv)
 
 	(void)sigsetjmp(toplevel, 1);
 	(void)xsignal(SIGINT, intr);
-	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
+	(void)xsignal(SIGPIPE, lostpeer);
 	for (;;)
 		cmdscanner();
-}
-
-void
-intr(dummy)
-	int dummy;
-{
-
-	alarmtimer(0);
-	if (fromatty)
-		write(fileno(ttyout), "\n", 1);
-	siglongjmp(toplevel, 1);
-}
-
-void
-lostpeer()
-{
-	int oerrno = errno;
-
-	alarmtimer(0);
-	if (connected) {
-		if (cout != NULL) {
-			(void)shutdown(fileno(cout), 1+1);
-			(void)fclose(cout);
-			cout = NULL;
-		}
-		if (data >= 0) {
-			(void)shutdown(data, 1+1);
-			(void)close(data);
-			data = -1;
-		}
-		connected = 0;
-	}
-	pswitch(1);
-	if (connected) {
-		if (cout != NULL) {
-			(void)shutdown(fileno(cout), 1+1);
-			(void)fclose(cout);
-			cout = NULL;
-		}
-		connected = 0;
-	}
-	proxflag = 0;
-	pswitch(0);
-	errno = oerrno;
 }
 
 /*
@@ -604,7 +578,7 @@ cmdscanner()
 			break;
 	}
 	(void)xsignal(SIGINT, intr);
-	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
+	(void)xsignal(SIGPIPE, lostpeer);
 }
 
 struct cmd *
@@ -672,9 +646,9 @@ makeargv()
 }
 
 #ifdef NO_EDITCOMPLETE
-#define INC_CHKCURSOR(x)	(x)++
+#define	INC_CHKCURSOR(x)	(x)++
 #else  /* !NO_EDITCOMPLETE */
-#define INC_CHKCURSOR(x)	{ (x)++ ; \
+#define	INC_CHKCURSOR(x)	{ (x)++ ; \
 				if (x == cursor_pos) { \
 					cursor_argc = margc; \
 					cursor_argo = ap-argbase; \
@@ -817,7 +791,7 @@ OUT:
 }
 
 /*
- * Help command.
+ * Help/usage command.
  * Call each command handler with argc == 0 and argv[0] == name.
  */
 void
@@ -826,7 +800,14 @@ help(argc, argv)
 	char *argv[];
 {
 	struct cmd *c;
+	char *nargv[1], *p;
+	int isusage;
 
+	isusage = (strcmp(argv[0], "usage") == 0);
+	if (argc == 0 || (isusage && argc == 1)) {
+		fprintf(ttyout, "usage: %s [command [...]]\n", argv[0]);
+		return;
+	}
 	if (argc == 1) {
 		StringList *buf;
 
@@ -834,15 +815,15 @@ help(argc, argv)
 		fprintf(ttyout,
 		    "%sommands may be abbreviated.  Commands are:\n\n",
 		    proxy ? "Proxy c" : "C");
-		for (c = cmdtab; c < &cmdtab[NCMDS]; c++)
-			if (c->c_name && (!proxy || c->c_proxy))
-				sl_add(buf, c->c_name);
+		for (c = cmdtab; (p = c->c_name) != NULL; c++)
+			if (!proxy || c->c_proxy)
+				sl_add(buf, p);
 		list_vertical(buf);
 		sl_free(buf, 0);
 		return;
 	}
 
-#define HELPINDENT ((int) sizeof("disconnect"))
+#define	HELPINDENT ((int) sizeof("disconnect"))
 
 	while (--argc > 0) {
 		char *arg;
@@ -850,13 +831,68 @@ help(argc, argv)
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
-			fprintf(ttyout, "?Ambiguous help command %s\n", arg);
+			fprintf(ttyout, "?Ambiguous %s command `%s'\n",
+			    argv[0], arg);
 		else if (c == NULL)
-			fprintf(ttyout, "?Invalid help command %s\n", arg);
-		else
-			fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
-				c->c_name, c->c_help);
+			fprintf(ttyout, "?Invalid %s command `%s'\n",
+			    argv[0], arg);
+		else {
+			if (isusage) {
+				nargv[0] = arg;
+				(*c->c_handler)(0, nargv);
+			} else
+				fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
+				    c->c_name, c->c_help);
+		}
 	}
+}
+
+struct option *
+getoption(name)
+	const char *name;
+{
+	const char *p;
+	struct option *c;
+
+	if (name == NULL)
+		return (NULL);
+	for (c = optiontab; (p = c->name) != NULL; c++) {
+		if (strcasecmp(p, name) == 0)
+			return (c);
+	}
+	return (NULL);
+}
+
+char *
+getoptionvalue(name)
+	const char *name;
+{
+	const char *p;
+	struct option *c;
+
+	if (name == NULL)
+		errx(1, "getoptionvalue() invoked with NULL name");
+	for (c = optiontab; (p = c->name) != NULL; c++) {
+		if (strcasecmp(p, name) == 0)
+			return (c->value);
+	}
+	errx(1, "getoptionvalue() invoked with unknown option `%s'", name);
+}
+
+static void
+setupoption(name, value, defaultvalue)
+	char *name, *value, *defaultvalue;
+{
+	char *nargv[3];
+	int overbose;
+
+	nargv[0] = "setupoption()";
+	nargv[1] = name;
+	nargv[2] = (value ? value : defaultvalue);
+	overbose = verbose;
+	verbose = 0;
+	setoption(3, nargv);
+	verbose = overbose;
 }
 
 void

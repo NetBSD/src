@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.13 1999/09/27 23:09:43 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.14 1999/10/24 12:31:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.13 1999/09/27 23:09:43 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.14 1999/10/24 12:31:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,9 @@ domacro(argc, argv)
 	char *cp1, *cp2, line2[200];
 	struct cmd *c;
 
-	if (argc < 2 && !another(&argc, &argv, "macro name")) {
-		fprintf(ttyout, "usage: %s macro_name\n", argv[0]);
+	if ((argc == 0 && argv != NULL) ||
+	    (argc < 2 && !another(&argc, &argv, "macro name"))) {
+		fprintf(ttyout, "usage: %s macro_name [args]\n", argv[0]);
 		code = -1;
 		return;
 	}

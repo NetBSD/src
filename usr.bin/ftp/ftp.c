@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.84 1999/10/12 06:05:01 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.85 1999/10/24 12:31:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.84 1999/10/12 06:05:01 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.85 1999/10/24 12:31:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,9 +174,9 @@ union sockunion {
 #endif
 };
 
-#define su_len		su_si.si_len
-#define su_family	su_si.si_family
-#define su_port		su_si.si_port
+#define	su_len		su_si.si_len
+#define	su_family	su_si.si_family
+#define	su_port		su_si.si_port
 
 union sockunion myctladdr, hisctladdr, data_addr;
 
@@ -526,29 +526,31 @@ getreply(expecteof)
 				int reply_timeoutflag = timeoutflag;
 				int reply_abrtflag = abrtflag;
 
-				if (expecteof) {
-					alarmtimer(0);
+				alarmtimer(0);
+				if (expecteof && feof(cin)) {
 					(void)xsignal(SIGINT, oldsigint);
 					(void)xsignal(SIGALRM, oldsigalrm);
 					code = 221;
 					return (0);
 				}
-				lostpeer();
+				cpend = 0;
+				lostpeer(0);
 				if (verbose) {
 					if (reply_timeoutflag)
 						fputs(
-    "421 Service not available, remote server timed out.\n", ttyout);
+    "421 Service not available, remote server timed out. Connection closed\n",
+						    ttyout);
 					else if (reply_abrtflag)
 						fputs(
-    "421 Service not available, user interrupt.\n", ttyout);
+    "421 Service not available, user interrupt. Connection closed.\n",
+						    ttyout);
 					else
 						fputs(
     "421 Service not available, remote server has closed connection.\n",
-					              ttyout);
+						    ttyout);
 					(void)fflush(ttyout);
 				}
 				code = 421;
-				/* the lostpeer() above calls alarmtimer(0); */
 				(void)xsignal(SIGINT, oldsigint);
 				(void)xsignal(SIGALRM, oldsigalrm);
 				return (4);
@@ -611,11 +613,11 @@ getreply(expecteof)
 		*cp = '\0';
 		if (n != '1')
 			cpend = 0;
-		alarm(0);
+		alarmtimer(0);
 		(void)xsignal(SIGINT, oldsigint);
 		(void)xsignal(SIGALRM, oldsigalrm);
 		if (code == 421 || originalcode == 421)
-			lostpeer();
+			lostpeer(0);
 		if (abrtflag && oldsigint != cmdabort && oldsigint != SIG_IGN)
 			(*oldsigint)(SIGINT);
 		if (timeoutflag && oldsigalrm != cmdtimeout &&
@@ -707,10 +709,10 @@ abortxfer(notused)
 		strlcpy(msgbuf, "\nsend", sizeof(msgbuf));
 		break;
 	default:
-		errx(1, "abortxfer called with unknown direction %s\n",
+		errx(1, "abortxfer called with unknown direction `%s'",
 		    direction);
 	}
-	len = strlcat(msgbuf, " aborted\nwaiting for remote to finish abort.\n",
+	len = strlcat(msgbuf, " aborted. Waiting for remote to finish abort.\n",
 	    sizeof(msgbuf));
 	write(fileno(ttyout), msgbuf, len);
 	siglongjmp(xferabort, 1);
@@ -764,9 +766,8 @@ sendrequest(cmd, local, remote, printnames)
 	oldintp = NULL;
 	lmode = "w";
 	if (sigsetjmp(xferabort, 1)) {
-		while (cpend) {
+		while (cpend)
 			(void)getreply(0);
-		}
 		code = -1;
 		goto cleanupsend;
 	}
@@ -830,19 +831,17 @@ sendrequest(cmd, local, remote, printnames)
 #else
 		if (command("REST %ld", (long) restart_point) !=
 #endif
-		    CONTINUE) {
+		    CONTINUE)
 			goto cleanupsend;
-		}
 		lmode = "r+w";
 	}
 	if (remote) {
-		if (command("%s %s", cmd, remote) != PRELIM) {
+		if (command("%s %s", cmd, remote) != PRELIM)
 			goto cleanupsend;
-		}
-	} else
-		if (command("%s", cmd) != PRELIM) {
+	} else {
+		if (command("%s", cmd) != PRELIM)
 			goto cleanupsend;
-		}
+	}
 	dout = dataconn(lmode);
 	if (dout == NULL)
 		goto abort;
@@ -1055,9 +1054,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	oldintp = NULL;
 	tcrflag = !crflag && is_retr;
 	if (sigsetjmp(xferabort, 1)) {
-		while (cpend) {
+		while (cpend)
 			(void)getreply(0);
-		}
 		code = -1;
 		goto cleanuprecv;
 	}
@@ -1107,6 +1105,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		if (curtype != type)
 			changetype(type, 0);
 		filesize = remotesize(remote, 0);
+		if (code == 421 || code == -1)
+			goto cleanuprecv;
 	}
 	if (initconn()) {
 		code = -1;
@@ -1122,13 +1122,11 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 #endif
 		goto cleanuprecv;
 	if (remote) {
-		if (command("%s %s", cmd, remote) != PRELIM) {
+		if (command("%s %s", cmd, remote) != PRELIM)
 			goto cleanuprecv;
-		}
 	} else {
-		if (command("%s", cmd) != PRELIM) {
+		if (command("%s", cmd) != PRELIM)
 			goto cleanuprecv;
-		}
 	}
 	din = dataconn("r");
 	if (din == NULL)
@@ -1401,6 +1399,8 @@ reinit:
 		case AF_INET:
 			if (epsv4 && !epsv4bad) {
 				result = command(pasvcmd = "EPSV");
+				if (!connected)
+					return (1);
 				/*
 				 * this code is to be friendly with broken
 				 * BSDI ftpd
@@ -1419,12 +1419,17 @@ reinit:
 						    ttyout);
 				}
 			}
-			if (result != COMPLETE)
+			if (result != COMPLETE) {
 				result = command(pasvcmd = "PASV");
+				if (!connected)
+					return (1);
+			}
 			break;
 #ifdef INET6
 		case AF_INET6:
 			result = command(pasvcmd = "EPSV");
+			if (!connected)
+				return (1);
 			/* this code is to be friendly with broken BSDI ftpd */
 			if (code / 10 == 22 && code != 229) {
 				fputs(
@@ -1434,6 +1439,8 @@ reinit:
 			}
 			if (result != COMPLETE)
 				result = command(pasvcmd = "LPSV");
+			if (!connected)
+				return (1);
 			break;
 #endif
 		default:
@@ -1445,16 +1452,18 @@ reinit:
 				(void)close(data);
 				data = -1;
 				passivemode = 0;
+#if 0
 				activefallback = 0;
+#endif
 				goto reinit;
 			}
 			fputs("Passive mode refused.\n", ttyout);
 			goto bad;
 		}
 
-#define pack2(var, off) \
+#define	pack2(var, off) \
 	(((var[(off) + 0] & 0xff) << 8) | ((var[(off) + 1] & 0xff) << 0))
-#define pack4(var, off) \
+#define	pack4(var, off) \
 	(((var[(off) + 0] & 0xff) << 24) | ((var[(off) + 1] & 0xff) << 16) | \
 	 ((var[(off) + 2] & 0xff) << 8) | ((var[(off) + 3] & 0xff) << 0))
 
@@ -1604,7 +1613,9 @@ reinit:
 				(void)close(data);
 				data = -1;
 				passivemode = 0;
+#if 0
 				activefallback = 0;
+#endif
 				goto reinit;
 			}
 			warn("connect");
@@ -1681,6 +1692,8 @@ noport:
 			} else {
 				result = command("EPRT |%d|%s|%d|", af, hname,
 						ntohs(data_addr.su_port));
+				if (!connected)
+					return (1);
 				if (result != COMPLETE) {
 					epsv4bad = 1;
 					if (debug)
@@ -1711,7 +1724,7 @@ noport:
 			a = (char *)&data_addr.su_sin6.sin6_addr;
 			p = (char *)&data_addr.su_port;
 			result = command(
-"LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+	"LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 				 6, 16,
 				 UC(a[0]),UC(a[1]),UC(a[2]),UC(a[3]),
 				 UC(a[4]),UC(a[5]),UC(a[6]),UC(a[7]),
@@ -1723,6 +1736,8 @@ noport:
 		default:
 			result = COMPLETE + 1; /* xxx */
 		}
+		if (!connected)
+			return (1);
 	skip_port:
 		
 		if (result == ERROR && sendport == -1) {
@@ -2016,12 +2031,11 @@ abort:
 	pswitch(!proxy);
 	if (cpend) {
 		if ((nfnd = empty(cin, NULL, 10)) <= 0) {
-			if (nfnd < 0) {
+			if (nfnd < 0)
 				warn("abort");
-			}
 			if (ptabflg)
 				code = -1;
-			lostpeer();
+			lostpeer(0);
 		}
 		(void)getreply(0);
 		(void)getreply(0);
@@ -2041,15 +2055,18 @@ reset(argc, argv)
 {
 	int nfnd = 1;
 
+	if (argc == 0 && argv != NULL) {
+		fprintf(ttyout, "usage: %s\n", argv[0]);
+		code = -1;
+		return;
+	}
 	while (nfnd > 0) {
 		if ((nfnd = empty(cin, NULL, 0)) < 0) {
 			warn("reset");
 			code = -1;
-			lostpeer();
-		}
-		else if (nfnd) {
+			lostpeer(0);
+		} else if (nfnd)
 			(void)getreply(0);
-		}
 	}
 }
 
@@ -2117,7 +2134,7 @@ abort_squared(dummy)
 	len = strlcpy(msgbuf, "\nremote abort aborted; closing connection.\n",
 	    sizeof(msgbuf));
 	write(fileno(ttyout), msgbuf, len);
-	lostpeer();
+	lostpeer(0);
 	siglongjmp(xferabort, 1);
 }
 
@@ -2132,7 +2149,7 @@ abort_remote(din)
 		warnx("Lost control connection for abort.");
 		if (ptabflg)
 			code = -1;
-		lostpeer();
+		lostpeer(0);
 		return;
 	}
 	/*
@@ -2147,12 +2164,11 @@ abort_remote(din)
 	fprintf(cout, "%cABOR\r\n", DM);
 	(void)fflush(cout);
 	if ((nfnd = empty(cin, din, 10)) <= 0) {
-		if (nfnd < 0) {
+		if (nfnd < 0)
 			warn("abort");
-		}
 		if (ptabflg)
 			code = -1;
-		lostpeer();
+		lostpeer(0);
 	}
 	if (din && (nfnd & 2)) {
 		while (read(fileno(din), buf, BUFSIZ) > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.90 1999/10/12 06:05:00 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.91 1999/10/24 12:31:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.90 1999/10/12 06:05:00 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.91 1999/10/24 12:31:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -100,9 +100,6 @@ static int	redirect_loop;
 #define	HTTP_URL	"http://"	/* http URL prefix */
 
 
-#define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
-#define FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }
-
 /*
  * Generate authorization response based on given authentication challenge.
  * Returns -1 if an error occurred, otherwise 0.
@@ -130,7 +127,7 @@ auth_url(challenge, response, guser, gpass)
 		fprintf(ttyout, "auth_url: challenge `%s'\n", challenge);
 
 	scheme = strsep(&cp, " ");
-#define SCHEME_BASIC "Basic"
+#define	SCHEME_BASIC "Basic"
 	if (strncasecmp(scheme, SCHEME_BASIC, sizeof(SCHEME_BASIC) - 1) != 0) {
 		warnx("Unsupported WWW Authentication challenge - `%s'",
 		    challenge);
@@ -138,7 +135,7 @@ auth_url(challenge, response, guser, gpass)
 	}
 	cp += strspn(cp, " ");
 
-#define REALM "realm=\""
+#define	REALM "realm=\""
 	if (strncasecmp(cp, REALM, sizeof(REALM) - 1) == 0)
 		cp += sizeof(REALM) - 1;
 	else {
@@ -239,7 +236,7 @@ url_decode(url)
 		return;
 	p = q = (unsigned char *)url;
 
-#define HEXTOINT(x) (x - (isdigit(x) ? '0' : (islower(x) ? 'a' : 'A') - 10))
+#define	HEXTOINT(x) (x - (isdigit(x) ? '0' : (islower(x) ? 'a' : 'A') - 10))
 	while (*p) {
 		if (p[0] == '%'
 		    && p[1] && isxdigit((unsigned char)p[1])
@@ -572,20 +569,21 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 		if (proxyenv == NULL) {
 			if (urltype == HTTP_URL_T)
-				proxyenv = httpproxy;
+				proxyenv = getoptionvalue("http_proxy");
 			else if (urltype == FTP_URL_T)
-				proxyenv = ftpproxy;
+				proxyenv = getoptionvalue("ftp_proxy");
 		}
 		direction = "retrieved";
-		if (proxyenv != NULL) {				/* use proxy */
+		if (! EMPTYSTRING(proxyenv)) {			/* use proxy */
 			url_t purltype;
 			char *phost, *ppath;
-			char *pport;
+			char *pport, *no_proxy;
 
 			isproxy = 1;
 
 				/* check URL against list of no_proxied sites */
-			if (no_proxy != NULL) {
+			no_proxy = getoptionvalue("no_proxy");
+			if (! EMPTYSTRING(no_proxy)) {
 				char *np, *np_copy;
 				long np_port;
 				size_t hlen, plen;
@@ -641,7 +639,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				path = xstrdup(url);
 				FREEPTR(ppath);
 			}
-		} /* proxyenv != NULL */
+		} /* ! EMPTYSTRING(proxyenv) */
 
 #ifndef NI_NUMERICHOST
 		memset(&sin, 0, sizeof(sin));
@@ -846,7 +844,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				/* Look for some headers */
 			cp = buf;
 
-#define CONTENTLEN "Content-Length: "
+#define	CONTENTLEN "Content-Length: "
 			if (strncasecmp(cp, CONTENTLEN,
 					sizeof(CONTENTLEN) - 1) == 0) {
 				cp += sizeof(CONTENTLEN) - 1;
@@ -863,7 +861,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					    (long)filesize);
 #endif
 
-#define LASTMOD "Last-Modified: "
+#define	LASTMOD "Last-Modified: "
 			} else if (strncasecmp(cp, LASTMOD,
 						sizeof(LASTMOD) - 1) == 0) {
 				struct tm parsed;
@@ -892,7 +890,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					}
 				}
 
-#define LOCATION "Location: "
+#define	LOCATION "Location: "
 			} else if (strncasecmp(cp, LOCATION,
 						sizeof(LOCATION) - 1) == 0) {
 				cp += sizeof(LOCATION) - 1;
@@ -901,7 +899,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					fprintf(ttyout,
 					    "parsed location as: %s\n", cp);
 
-#define TRANSENC "Transfer-Encoding: "
+#define	TRANSENC "Transfer-Encoding: "
 			} else if (strncasecmp(cp, TRANSENC,
 						sizeof(TRANSENC) - 1) == 0) {
 				cp += sizeof(TRANSENC) - 1;
@@ -916,7 +914,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					fprintf(ttyout,
 					    "using chunked encoding\n");
 
-#define PROXYAUTH "Proxy-Authenticate: "
+#define	PROXYAUTH "Proxy-Authenticate: "
 			} else if (strncasecmp(cp, PROXYAUTH,
 						sizeof(PROXYAUTH) - 1) == 0) {
 				cp += sizeof(PROXYAUTH) - 1;
@@ -926,7 +924,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					fprintf(ttyout,
 					    "parsed proxy-auth as: %s\n", cp);
 
-#define WWWAUTH	"WWW-Authenticate: "
+#define	WWWAUTH	"WWW-Authenticate: "
 			} else if (strncasecmp(cp, WWWAUTH,
 			    sizeof(WWWAUTH) - 1) == 0) {
 				cp += sizeof(WWWAUTH) - 1;
@@ -1388,7 +1386,7 @@ fetch_ftp(url)
 		setbinary(0, NULL);
 		break;
 	default:
-		errx(1, "fetch_ftp: unknown transfer type %d\n", type);
+		errx(1, "fetch_ftp: unknown transfer type %d", type);
 	}
 
 		/*
@@ -1565,6 +1563,7 @@ static int
 go_fetch(url)
 	const char *url;
 {
+	char *proxy;
 
 	/*
 	 * Check for about:*
@@ -1601,7 +1600,9 @@ go_fetch(url)
 	 * If ftpproxy is set with an FTP URL, use fetch_url()
 	 * Othewise, use fetch_ftp().
 	 */
-	if (ftpproxy && strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+	proxy = getoptionvalue("ftp_proxy");
+	if (!EMPTYSTRING(proxy) &&
+	    strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0)
 		return (fetch_url(url, NULL, NULL, NULL));
 
 	return (fetch_ftp(url));
@@ -1635,7 +1636,7 @@ auto_fetch(argc, argv)
 		return (argpos + 1);
 	}
 	(void)xsignal(SIGINT, intr);
-	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
+	(void)xsignal(SIGPIPE, lostpeer);
 
 	/*
 	 * Loop through as long as there's files to fetch.
