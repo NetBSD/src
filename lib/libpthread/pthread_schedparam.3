@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_schedparam.3,v 1.2 2003/06/08 06:44:33 thorpej Exp $
+.\" $NetBSD: pthread_schedparam.3,v 1.3 2003/07/04 08:43:33 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ or
 .Dv SCHED_OTHER
 (system default).
 The thread priority (accessed via
-.Va param->sched_priority )
+.Va param-\*[Gt]sched_priority )
 must be at least
 .Dv PTHREAD_MIN_PRIORITY
 and no more than
