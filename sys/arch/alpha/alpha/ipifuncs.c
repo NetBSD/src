@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.2 1998/09/29 07:06:02 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.3 1998/09/29 19:40:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 1998/09/29 07:06:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3 1998/09/29 19:40:33 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -88,7 +88,9 @@ alpha_send_ipi(cpu_id, ipinum)
 
 	ipimask = (1UL << ipinum);
 	alpha_atomic_setbits_q(&sc->sc_ipis, ipimask);
+printf("SENDING IPI TO %lu\n", cpu_id);
 	alpha_pal_wripir(cpu_id);
+printf("IPI SENT\n");
 }
 
 void

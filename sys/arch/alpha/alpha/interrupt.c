@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.32 1998/09/29 15:55:47 drochner Exp $ */
+/* $NetBSD: interrupt.c,v 1.33 1998/09/29 19:40:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.32 1998/09/29 15:55:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.33 1998/09/29 19:40:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,10 @@ interrupt(a0, a1, a2, framep)
 	    {
 		struct cpu_softc *sc;
 		u_long pending_ipis, bit;
+
+#if 1
+		printf("CPU %lu got IPI\n", cpu_id);
+#endif
 
 		sc = cpus[cpu_id];
 #ifdef DIAGNOSTIC
