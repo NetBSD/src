@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.6 1994/05/13 04:46:47 gwr Exp $
+ *	$Id: db_disasm.c,v 1.7 1994/05/16 16:51:48 gwr Exp $
  */
 /*
  * Notes:
@@ -570,6 +570,7 @@ opcode_misc(dbuf, opc)
 	u_short opc;
 {
 	char *tmp;
+	int sz;
 	u_short  ext;
 
 	tmp = NULL;
@@ -677,6 +678,7 @@ opcode_misc(dbuf, opc)
 		return;
 	}
 
+	sz = 0;
 	switch (DIVSL_MASK & opc) {
 	case DIVSL_INST:
 	case MULSL_INST:
@@ -706,11 +708,12 @@ opcode_misc(dbuf, opc)
 	case MOVETOCCR_INST:
 	case MOVETOSR_INST:
 		tmp = "mov\t";
+		sz = SIZE_WORD;
 		break;
 	}
 	if (tmp) {
 		addstr(dbuf, tmp);
-		get_modregstr(dbuf,5, GETMOD_BEFORE,0, 0);
+		get_modregstr(dbuf,5, GETMOD_BEFORE, sz, 0);
 		if(IS_INST(MOVETOSR,opc))
 			addstr(dbuf, ",sr");
 		else if(IS_INST(MOVETOCCR,opc))
@@ -780,6 +783,7 @@ opcode_misc(dbuf, opc)
 		return;
 	}	
 }
+
 /*
  * ADDQ/SUBQ/Scc/DBcc/TRAPcc
  */
