@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.17 2004/09/10 05:34:54 itojun Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.18 2004/12/01 00:03:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.17 2004/09/10 05:34:54 itojun Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.18 2004/12/01 00:03:45 perry Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -110,7 +110,7 @@ get_shuffle(size_t t)
 	
 	/*
 	 * This algorithm taken from Knuth, Seminumerical Algorithms,
-	 * page 139.
+	 * 2nd Ed., page 139.
 	 */
 
 	for (j = t - 1; j > 0; j--) {
