@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memcmp.S,v 1.5 1994/03/12 01:40:02 jtc Exp $
+ *	$Id: memcmp.S,v 1.6 1994/03/22 01:15:49 jtc Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$Id: memcmp.S,v 1.5 1994/03/12 01:40:02 jtc Exp $")
+	RCSID("$Id: memcmp.S,v 1.6 1994/03/22 01:15:49 jtc Exp $")
 #endif
 
 /*
@@ -48,16 +48,15 @@ ENTRY(memcmp)
 	pushl	%esi
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
-	movl	20(%esp),%edx
 	cld				/* set compare direction forward */
 
-	movl	%edx,%ecx		/* compare by words */
+	movl	20(%esp),%ecx		/* compare by words */
 	shrl	$2,%ecx
 	repe
 	cmpsl
 	jne	L5			/* do we match so far? */
 
-	movl	%edx,%ecx		/* compare remainder by bytes */
+	movl	20(%esp),%ecx		/* compare remainder by bytes */
 	andl	$3,%ecx
 	repe
 	cmpsb
