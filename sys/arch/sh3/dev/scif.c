@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.9 2000/03/27 16:24:08 msaitoh Exp $ */
+/* $NetBSD: scif.c,v 1.10 2000/06/19 09:30:35 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -422,12 +422,14 @@ GetcScif(void)
 	while (((err_c = SHREG_SCSSR2)
 		& (SCSSR2_RDF | SCSSR2_ER | SCSSR2_FER | SCSSR2_PER | SCSSR2_DR)) == 0)
 		;
-	if ((err_c & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER)) != 0)
+	if ((err_c & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER)) != 0) {
+		SHREG_SCSSR2 &= ~SCSSR2_ER;
 		return(err_c |= 0x80);
+	}
 
 	c = SHREG_SCFRDR2;
 
-	SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
+	SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR);
 
 	return(c);
 }
@@ -1369,7 +1371,7 @@ scifintr(arg)
 			put[0] = SHREG_SCFRDR2;
 			put[1] = (u_char)(SHREG_SCSSR2 & 0x00ff);
 
-			SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
+			SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR);
 
 			put += 2;
 			if (put >= end)
