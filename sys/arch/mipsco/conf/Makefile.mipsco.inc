@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.mipsco.inc,v 1.3 2001/12/09 05:00:46 atatat Exp $
+#	$NetBSD: Makefile.mipsco.inc,v 1.4 2002/01/07 06:03:19 thorpej Exp $
 
 # build ECOFF image that can be booted directly from firmware
 LD_ECOFF=	${LD} -N -Ttext ${TEXTADDR} -e start ${GP} \
-		-T ${THISMIPS}/conf/kern.ldscript -x -oformat ecoff-bigmips
+		-T ${THISMIPS}/conf/kern.ldscript -x --oformat ecoff-bigmips
 
 # note that this ecoff image does not get stripped in the case of DEBUG=-g
 SYSTEM_LD_TAIL_EXTRA=; \
