@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.18.6.1 2003/01/10 06:46:01 jmc Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.18.6.1 2003/01/10 06:46:01 jmc Exp $");
 
 #include "opt_inet.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.18 2002/03/21 04:41:03 itojun Exp $");
 
 #include <net/raw_cb.h>
 #include <net/route.h>
+#include <netinet/in.h>
 
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
