@@ -1,4 +1,4 @@
-/*	$NetBSD: supio.h,v 1.2 1997/09/16 20:34:39 is Exp $ */
+/*	$NetBSD: supio.h,v 1.3 1998/03/22 17:16:33 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -32,7 +32,7 @@
  */
 
 /*
- * DraCo multi-io chip bus space stuff definitions
+ * PC-style multi-io chip bus space stuff definitions
  */
 
 struct supio_attach_args {
