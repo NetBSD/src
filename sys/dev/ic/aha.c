@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.43 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aha.c,v 1.44 2004/08/24 00:53:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,16 +53,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.43 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.44 2004/08/24 00:53:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 
 #undef AHADIAG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,26 +93,25 @@ __KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.43 2003/11/02 11:07:44 wiz Exp $");
 int	aha_debug = 1;
 #endif /* AHADEBUG */
 
-int aha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct aha_softc *, int,
-    u_char *, int, u_char *));
-integrate void aha_finish_ccbs __P((struct aha_softc *));
-integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
-void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *));
-integrate int aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
-struct aha_ccb *aha_get_ccb __P((struct aha_softc *));
-struct aha_ccb *aha_ccb_phys_kv __P((struct aha_softc *, u_long));
-void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
-void aha_collect_mbo __P((struct aha_softc *));
-void aha_start_ccbs __P((struct aha_softc *));
-void aha_done __P((struct aha_softc *, struct aha_ccb *));
-int aha_init __P((struct aha_softc *));
-void aha_inquire_setup_information __P((struct aha_softc *));
-void ahaminphys __P((struct buf *));
-void aha_scsipi_request __P((struct scsipi_channel *,
-    scsipi_adapter_req_t, void *));
-int aha_poll __P((struct aha_softc *, struct scsipi_xfer *, int));
-void aha_timeout __P((void *arg));
-int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
+static int	aha_cmd(bus_space_tag_t, bus_space_handle_t,
+			struct aha_softc *, int, u_char *, int, u_char *);
+static void	aha_finish_ccbs(struct aha_softc *);
+static void	aha_free_ccb(struct aha_softc *, struct aha_ccb *);
+static int	aha_init_ccb(struct aha_softc *, struct aha_ccb *);
+static struct aha_ccb *aha_get_ccb(struct aha_softc *);
+static struct aha_ccb *aha_ccb_phys_kv(struct aha_softc *, u_long);
+static void	aha_queue_ccb(struct aha_softc *, struct aha_ccb *);
+static void	aha_collect_mbo(struct aha_softc *);
+static void	aha_start_ccbs(struct aha_softc *);
+static void	aha_done(struct aha_softc *, struct aha_ccb *);
+static int	aha_init(struct aha_softc *);
+static void	aha_inquire_setup_information(struct aha_softc *);
+static void	ahaminphys(struct buf *);
+static void	aha_scsipi_request(struct scsipi_channel *,
+				   scsipi_adapter_req_t, void *);
+static int	aha_poll(struct aha_softc *, struct scsipi_xfer *, int);
+static void	aha_timeout(void *arg);
+static int	aha_create_ccbs(struct aha_softc *, struct aha_ccb *, int);
 
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
@@ -136,13 +130,9 @@ int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
  * scsi command, which is read in via the DMA; one of the adapter commands
  * tells it to read in a scsi command.
  */
-int
-aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct aha_softc *sc;
-	int icnt, ocnt;
-	u_char *ibuf, *obuf;
+static int
+aha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_softc *sc,
+    int icnt, u_char *ibuf, int ocnt, u_char *obuf)
 {
 	const char *name;
 	int i;
@@ -299,9 +289,8 @@ aha_attach(sc, apd)
 	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
-integrate void
-aha_finish_ccbs(sc)
-	struct aha_softc *sc;
+static void
+aha_finish_ccbs(struct aha_softc *sc)
 {
 	struct aha_mbx_in *wmbi;
 	struct aha_ccb *ccb;
@@ -452,10 +441,8 @@ aha_intr(arg)
 	return (1);
 }
 
-integrate void
-aha_reset_ccb(sc, ccb)
-	struct aha_softc *sc;
-	struct aha_ccb *ccb;
+static __inline void
+aha_reset_ccb(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 
 	ccb->flags = 0;
@@ -464,10 +451,8 @@ aha_reset_ccb(sc, ccb)
 /*
  * A ccb is put onto the free list.
  */
-void
-aha_free_ccb(sc, ccb)
-	struct aha_softc *sc;
-	struct aha_ccb *ccb;
+static void
+aha_free_ccb(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 	int s;
 
@@ -477,10 +462,8 @@ aha_free_ccb(sc, ccb)
 	splx(s);
 }
 
-integrate int
-aha_init_ccb(sc, ccb)
-	struct aha_softc *sc;
-	struct aha_ccb *ccb;
+static int
+aha_init_ccb(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum, error;
@@ -513,11 +496,8 @@ aha_init_ccb(sc, ccb)
  * Create a set of ccbs and add them to the free list.  Called once
  * by aha_init().  We return the number of CCBs successfully created.
  */
-int
-aha_create_ccbs(sc, ccbstore, count)
-	struct aha_softc *sc;
-	struct aha_ccb *ccbstore;
-	int count;
+static int
+aha_create_ccbs(struct aha_softc *sc, struct aha_ccb *ccbstore, int count)
 {
 	struct aha_ccb *ccb;
 	int i, error;
@@ -543,8 +523,7 @@ aha_create_ccbs(sc, ccbstore, count)
  * the hash table too otherwise either return an error or sleep.
  */
 struct aha_ccb *
-aha_get_ccb(sc)
-	struct aha_softc *sc;
+aha_get_ccb(struct aha_softc *sc)
 {
 	struct aha_ccb *ccb;
 	int s;
@@ -562,10 +541,8 @@ aha_get_ccb(sc)
 /*
  * Given a physical address, find the ccb that it corresponds to.
  */
-struct aha_ccb *
-aha_ccb_phys_kv(sc, ccb_phys)
-	struct aha_softc *sc;
-	u_long ccb_phys;
+static struct aha_ccb *
+aha_ccb_phys_kv(struct aha_softc *sc, u_long ccb_phys)
 {
 	int hashnum = CCB_HASH(ccb_phys);
 	struct aha_ccb *ccb = sc->sc_ccbhash[hashnum];
@@ -581,10 +558,8 @@ aha_ccb_phys_kv(sc, ccb_phys)
 /*
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
-void
-aha_queue_ccb(sc, ccb)
-	struct aha_softc *sc;
-	struct aha_ccb *ccb;
+static void
+aha_queue_ccb(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
@@ -594,9 +569,8 @@ aha_queue_ccb(sc, ccb)
 /*
  * Garbage collect mailboxes that are no longer in use.
  */
-void
-aha_collect_mbo(sc)
-	struct aha_softc *sc;
+static void
+aha_collect_mbo(struct aha_softc *sc)
 {
 	struct aha_mbx_out *wmbo;	/* Mail Box Out pointer */
 #ifdef AHADIAG
@@ -627,9 +601,8 @@ aha_collect_mbo(sc)
 /*
  * Send as many CCBs as we have empty mailboxes for.
  */
-void
-aha_start_ccbs(sc)
-	struct aha_softc *sc;
+static void
+aha_start_ccbs(struct aha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -689,10 +662,8 @@ aha_start_ccbs(sc)
  * adaptor, now we look to see how the operation
  * went. Wake up the owner if waiting
  */
-void
-aha_done(sc, ccb)
-	struct aha_softc *sc;
-	struct aha_ccb *ccb;
+static void
+aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsipi_sense_data *s1, *s2;
@@ -867,9 +838,8 @@ aha_find(iot, ioh, sc)
 /*
  * Start the board, ready for normal operation
  */
-int
-aha_init(sc)
-	struct aha_softc *sc;
+static int
+aha_init(struct aha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1039,9 +1009,8 @@ aha_init(sc)
 	return (0);
 }
 
-void
-aha_inquire_setup_information(sc)
-	struct aha_softc *sc;
+static void
+aha_inquire_setup_information(struct aha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1129,9 +1098,8 @@ noinquire:
 	       sc->sc_model, sc->sc_firmware);
 }
 
-void
-ahaminphys(bp)
-	struct buf *bp;
+static void
+ahaminphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > AHA_MAXXFER)
@@ -1144,11 +1112,9 @@ ahaminphys(bp)
  * the unit, target and lu.
  */
 
-void
-aha_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+static void
+aha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1324,11 +1290,8 @@ out_bad:
 /*
  * Poll a particular unit, looking for a particular xs
  */
-int
-aha_poll(sc, xs, count)
-	struct aha_softc *sc;
-	struct scsipi_xfer *xs;
-	int count;
+static int
+aha_poll(struct aha_softc *sc, struct scsipi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1349,9 +1312,8 @@ aha_poll(sc, xs, count)
 	return (1);
 }
 
-void
-aha_timeout(arg)
-	void *arg;
+static void
+aha_timeout(void *arg)
 {
 	struct aha_ccb *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;

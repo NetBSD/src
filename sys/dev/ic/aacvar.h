@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.2 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.3 2004/08/24 00:53:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,8 +92,6 @@ struct aac_code_lookup {
 };
 
 extern const struct	 aac_code_lookup aac_command_status_table[];
-extern const struct	 aac_code_lookup aac_cpu_variant[];
-extern const struct	 aac_code_lookup aac_battery_platform[];
 extern const struct	 aac_code_lookup aac_container_types[];
 
 struct aac_softc;

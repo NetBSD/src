@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.3 2002/10/22 00:01:55 fair Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.4 2004/08/24 00:53:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.3 2002/10/22 00:01:55 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.4 2004/08/24 00:53:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,17 +65,17 @@ __KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.3 2002/10/22 00:01:55 fair Exp $");
 #include <dev/ic/ax88190reg.h>
 #include <dev/ic/ax88190var.h>
 
-int	ax88190_mii_readreg(struct device *, int, int);
-void	ax88190_mii_writereg(struct device *, int, int, int);
-void	ax88190_mii_statchg(struct device *);
+static int	ax88190_mii_readreg(struct device *, int, int);
+static void	ax88190_mii_writereg(struct device *, int, int, int);
+static void	ax88190_mii_statchg(struct device *);
 
 /*
  * MII bit-bang glue.
  */
-u_int32_t	ax88190_mii_bitbang_read(struct device *);
-void		ax88190_mii_bitbang_write(struct device *, u_int32_t);
+static u_int32_t	ax88190_mii_bitbang_read(struct device *);
+static void		ax88190_mii_bitbang_write(struct device *, u_int32_t);
 
-const struct mii_bitbang_ops ax88190_mii_bitbang_ops = {
+static const struct mii_bitbang_ops ax88190_mii_bitbang_ops = {
 	ax88190_mii_bitbang_read,
 	ax88190_mii_bitbang_write,
 	{
@@ -148,7 +148,7 @@ ax88190_stop_card(struct dp8390_softc *sc)
 	mii_down(&sc->sc_mii);
 }
 
-u_int32_t
+static u_int32_t
 ax88190_mii_bitbang_read(self)
 	struct device *self;
 {
@@ -157,7 +157,7 @@ ax88190_mii_bitbang_read(self)
 	return (bus_space_read_1(sc->sc_asict, sc->sc_asich, AX88190_MEMR));
 }
 
-void
+static void
 ax88190_mii_bitbang_write(self, val)
 	struct device *self;
 	u_int32_t val;
@@ -167,7 +167,7 @@ ax88190_mii_bitbang_write(self, val)
 	bus_space_write_1(sc->sc_asict, sc->sc_asich, AX88190_MEMR, val);
 }
 
-int
+static int
 ax88190_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
@@ -176,7 +176,7 @@ ax88190_mii_readreg(self, phy, reg)
 	return (mii_bitbang_readreg(self, &ax88190_mii_bitbang_ops, phy, reg));
 }
 
-void
+static void
 ax88190_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
@@ -185,7 +185,7 @@ ax88190_mii_writereg(self, phy, reg, val)
 	mii_bitbang_writereg(self, &ax88190_mii_bitbang_ops, phy, reg, val);
 }
 
-void
+static void
 ax88190_mii_statchg(self)
 	struct device *self;
 {

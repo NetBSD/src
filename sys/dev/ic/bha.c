@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.58 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: bha.c,v 1.59 2004/08/24 00:53:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.58 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.59 2004/08/24 00:53:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -91,34 +91,34 @@ __KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.58 2004/04/22 00:17:11 itojun Exp $");
 int     bha_debug = 0;
 #endif /* BHADEBUG */
 
-static int bha_cmd __P((bus_space_tag_t, bus_space_handle_t, char *, int,
-	    u_char *, int, u_char *));
+static int	bha_cmd(bus_space_tag_t, bus_space_handle_t, const char *, int,
+			u_char *, int, u_char *);
 
-static void bha_scsipi_request __P((struct scsipi_channel *,
-	    scsipi_adapter_req_t, void *));
-static void bha_minphys __P((struct buf *));
+static void	bha_scsipi_request(struct scsipi_channel *,
+				   scsipi_adapter_req_t, void *);
+static void	bha_minphys(struct buf *);
 
-static void bha_get_xfer_mode __P((struct bha_softc *,
-	    struct scsipi_xfer_mode *));
+static void	bha_get_xfer_mode(struct bha_softc *,
+				  struct scsipi_xfer_mode *);
 
-static void bha_done __P((struct bha_softc *, struct bha_ccb *));
-int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
-static void bha_timeout __P((void *arg));
+static void	bha_done(struct bha_softc *, struct bha_ccb *);
+static int	bha_poll(struct bha_softc *, struct scsipi_xfer *, int);
+static void	bha_timeout(void *arg);
 
-static int bha_init __P((struct bha_softc *));
+static int	bha_init(struct bha_softc *);
 
-static int bha_create_mailbox __P((struct bha_softc *));
-static void bha_collect_mbo __P((struct bha_softc *));
+static int	bha_create_mailbox(struct bha_softc *);
+static void	bha_collect_mbo(struct bha_softc *);
 
-static void bha_queue_ccb __P((struct bha_softc *, struct bha_ccb *));
-static void bha_start_ccbs __P((struct bha_softc *));
-static void bha_finish_ccbs __P((struct bha_softc *));
+static void	bha_queue_ccb(struct bha_softc *, struct bha_ccb *);
+static void	bha_start_ccbs(struct bha_softc *);
+static void	bha_finish_ccbs(struct bha_softc *);
 
-struct bha_ccb *bha_ccb_phys_kv __P((struct bha_softc *, bus_addr_t));
-void	bha_create_ccbs __P((struct bha_softc *, int));
-int	bha_init_ccb __P((struct bha_softc *, struct bha_ccb *));
-struct bha_ccb *bha_get_ccb __P((struct bha_softc *));
-void	bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
+static struct bha_ccb *bha_ccb_phys_kv(struct bha_softc *, bus_addr_t);
+static void	bha_create_ccbs(struct bha_softc *, int);
+static int	bha_init_ccb(struct bha_softc *, struct bha_ccb *);
+static struct bha_ccb *bha_get_ccb(struct bha_softc *);
+static void	bha_free_ccb(struct bha_softc *, struct bha_ccb *);
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	BHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
@@ -126,17 +126,10 @@ void	bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
 /*
  * Number of CCBs in an allocation group; must be computed at run-time.
  */
-int	bha_ccbs_per_group;
+static int	bha_ccbs_per_group;
 
-__inline struct bha_mbx_out *bha_nextmbo __P((struct bha_softc *,
-	struct bha_mbx_out *));
-__inline struct bha_mbx_in *bha_nextmbi __P((struct bha_softc *,
-	struct bha_mbx_in *));
-
-__inline struct bha_mbx_out *
-bha_nextmbo(sc, mbo)
-	struct bha_softc *sc;
-	struct bha_mbx_out *mbo;
+static __inline struct bha_mbx_out *
+bha_nextmbo(struct bha_softc *sc, struct bha_mbx_out *mbo)
 {
 
 	if (mbo == &sc->sc_mbo[sc->sc_mbox_count - 1])
@@ -144,10 +137,8 @@ bha_nextmbo(sc, mbo)
 	return (mbo + 1);
 }
 
-__inline struct bha_mbx_in *
-bha_nextmbi(sc, mbi)
-	struct bha_softc *sc;
-	struct bha_mbx_in *mbi;
+static __inline struct bha_mbx_in *
+bha_nextmbi(struct bha_softc *sc, struct bha_mbx_in *mbi)
 {
 	if (mbi == &sc->sc_mbi[sc->sc_mbox_count - 1])
 		return (&sc->sc_mbi[0]);
@@ -160,8 +151,7 @@ bha_nextmbi(sc, mbi)
  *	Finish attaching a Buslogic controller, and configure children.
  */
 void
-bha_attach(sc)
-	struct bha_softc *sc;
+bha_attach(struct bha_softc *sc)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
@@ -231,8 +221,7 @@ bha_attach(sc)
  *	Interrupt service routine.
  */
 int
-bha_intr(arg)
-	void *arg;
+bha_intr(void *arg)
 {
 	struct bha_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -285,11 +274,9 @@ bha_intr(arg)
  *
  *	Perform a request for the SCSIPI layer.
  */
-void
-bha_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+static void
+bha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 	struct bha_softc *sc = (void *)adapt->adapt_dev;
@@ -476,8 +463,7 @@ bha_scsipi_request(chan, req, arg)
  *	Limit a transfer to our maximum transfer size.
  */
 void
-bha_minphys(bp)
-	struct buf *bp;
+bha_minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > BHA_MAXXFER)
@@ -497,10 +483,8 @@ bha_minphys(bp)
  *
  *	NOTE: we must be called at splbio().
  */
-void
-bha_get_xfer_mode(sc, xm)
-	struct bha_softc *sc;
-	struct scsipi_xfer_mode *xm;
+static void
+bha_get_xfer_mode(struct bha_softc *sc, struct scsipi_xfer_mode *xm)
 {
 	struct bha_setup hwsetup;
 	struct bha_period hwperiod;
@@ -603,10 +587,8 @@ bha_get_xfer_mode(sc, xm)
  *	A CCB has completed execution.  Pass the status back to the
  *	upper layer.
  */
-void
-bha_done(sc, ccb)
-	struct bha_softc *sc;
-	struct bha_ccb *ccb;
+static void
+bha_done(struct bha_softc *sc, struct bha_ccb *ccb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsipi_xfer *xs = ccb->xs;
@@ -682,11 +664,8 @@ bha_done(sc, ccb)
  *
  *	Poll for completion of the specified job.
  */
-int
-bha_poll(sc, xs, count)
-	struct bha_softc *sc;
-	struct scsipi_xfer *xs;
-	int count;
+static int
+bha_poll(struct bha_softc *sc, struct scsipi_xfer *xs, int count)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -713,9 +692,8 @@ bha_poll(sc, xs, count)
  *
  *	CCB timeout handler.
  */
-void
-bha_timeout(arg)
-	void *arg;
+static void
+bha_timeout(void *arg)
 {
 	struct bha_ccb *ccb = arg;
 	struct scsipi_xfer *xs = ccb->xs;
@@ -770,13 +748,9 @@ bha_timeout(arg)
  *
  *	Send a command to the Buglogic controller.
  */
-int
-bha_cmd(iot, ioh, name, icnt, ibuf, ocnt, obuf)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	char *name;
-	int icnt, ocnt;
-	u_char *ibuf, *obuf;
+static int
+bha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, const char *name, int icnt,
+    u_char *ibuf, int ocnt, u_char *obuf)
 {
 	int i;
 	int wait;
@@ -899,9 +873,7 @@ bad:
  *	Find the board.
  */
 int
-bha_find(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+bha_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i;
 	u_char sts;
@@ -1087,8 +1059,7 @@ bha_probe_inquiry(bus_space_tag_t iot, bus_space_handle_t ioh,
  *	to ensure they're not autoconfigured a second time as an ISA bha.
  */
 int
-bha_disable_isacompat(sc)
-	struct bha_softc *sc;
+bha_disable_isacompat(struct bha_softc *sc)
 {
 	struct bha_isadisable isa_disable;
 
@@ -1107,8 +1078,7 @@ bha_disable_isacompat(sc)
  *	return the initial number of CCBs, 0 if we failed.
  */
 int
-bha_info(sc)
-	struct bha_softc *sc;
+bha_info(struct bha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1382,9 +1352,8 @@ bha_info(sc)
  *
  *	Initialize the board.
  */
-int
-bha_init(sc)
-	struct bha_softc *sc;
+static int
+bha_init(struct bha_softc *sc)
 {
 	char *name = sc->sc_dev.dv_xname;
 	struct bha_toggle toggle;
@@ -1445,10 +1414,8 @@ bha_init(sc)
  *
  *	Queue a CCB to be sent to the controller, and send it if possible.
  */
-void
-bha_queue_ccb(sc, ccb)
-	struct bha_softc *sc;
-	struct bha_ccb *ccb;
+static void
+bha_queue_ccb(struct bha_softc *sc, struct bha_ccb *ccb)
 {
 
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
@@ -1460,9 +1427,8 @@ bha_queue_ccb(sc, ccb)
  *
  *	Send as many CCBs as we have empty mailboxes for.
  */
-void
-bha_start_ccbs(sc)
-	struct bha_softc *sc;
+static void
+bha_start_ccbs(struct bha_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1538,9 +1504,8 @@ bha_start_ccbs(sc)
  *
  *	Finalize the execution of CCBs in our incoming mailbox.
  */
-void
-bha_finish_ccbs(sc)
-	struct bha_softc *sc;
+static void
+bha_finish_ccbs(struct bha_softc *sc)
 {
 	struct bha_mbx_in *mbi;
 	struct bha_ccb *ccb;
@@ -1659,9 +1624,8 @@ bha_finish_ccbs(sc)
  *		mailbox_out[mailbox_size]
  *		mailbox_in[mailbox_size]
  */
-int
-bha_create_mailbox(sc)
-	struct bha_softc *sc;
+static int
+bha_create_mailbox(struct bha_softc *sc)
 {
 	bus_dma_segment_t seg;
 	size_t size;
@@ -1724,9 +1688,8 @@ bha_create_mailbox(sc)
  *
  *	Garbage collect mailboxes that are no longer in use.
  */
-void
-bha_collect_mbo(sc)
-	struct bha_softc *sc;
+static void
+bha_collect_mbo(struct bha_softc *sc)
 {
 	struct bha_mbx_out *mbo;
 #ifdef BHADIAG
@@ -1757,11 +1720,8 @@ bha_collect_mbo(sc)
  * CCB management functions
  *****************************************************************************/
 
-__inline void bha_reset_ccb __P((struct bha_ccb *));
-
-__inline void
-bha_reset_ccb(ccb)
-	struct bha_ccb *ccb;
+static __inline void
+bha_reset_ccb(struct bha_ccb *ccb)
 {
 
 	ccb->flags = 0;
@@ -1779,10 +1739,8 @@ bha_reset_ccb(ccb)
  *	XXX AB_QUIET/AB_SILENT lossage here; this is called during
  *	boot as well as at run-time.
  */
-void
-bha_create_ccbs(sc, count)
-	struct bha_softc *sc;
-	int count;
+static void
+bha_create_ccbs(struct bha_softc *sc, int count)
 {
 	struct bha_ccb_group *bcg;
 	struct bha_ccb *ccb;
@@ -1904,10 +1862,8 @@ bha_create_ccbs(sc, count)
  *
  *	Initialize a CCB; helper function for bha_create_ccbs().
  */
-int
-bha_init_ccb(sc, ccb)
-	struct bha_softc *sc;
-	struct bha_ccb *ccb;
+static int
+bha_init_ccb(struct bha_softc *sc, struct bha_ccb *ccb)
 {
 	struct bha_ccb_group *bcg = BHA_CCB_GROUP(ccb);
 	int hashnum, error;
@@ -1951,9 +1907,8 @@ bha_init_ccb(sc, ccb)
  *	Get a CCB for the SCSI operation.  If there are none left,
  *	wait until one becomes available, if we can.
  */
-struct bha_ccb *
-bha_get_ccb(sc)
-	struct bha_softc *sc;
+static struct bha_ccb *
+bha_get_ccb(struct bha_softc *sc)
 {
 	struct bha_ccb *ccb;
 	int s;
@@ -1973,10 +1928,8 @@ bha_get_ccb(sc)
  *
  *	Put a CCB back onto the free list.
  */
-void
-bha_free_ccb(sc, ccb)
-	struct bha_softc *sc;
-	struct bha_ccb *ccb;
+static void
+bha_free_ccb(struct bha_softc *sc, struct bha_ccb *ccb)
 {
 	int s;
 
@@ -1991,10 +1944,8 @@ bha_free_ccb(sc, ccb)
  *
  *	Given a CCB DMA address, locate the CCB in kernel virtual space.
  */
-struct bha_ccb *
-bha_ccb_phys_kv(sc, ccb_phys)
-	struct bha_softc *sc;
-	bus_addr_t ccb_phys;
+static struct bha_ccb *
+bha_ccb_phys_kv(struct bha_softc *sc, bus_addr_t ccb_phys)
 {
 	int hashnum = CCB_HASH(ccb_phys);
 	struct bha_ccb *ccb = sc->sc_ccbhash[hashnum];
