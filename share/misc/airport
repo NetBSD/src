@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.16 2001/01/29 16:43:20 hubertf Exp $
+#	$NetBSD: airport,v 1.17 2001/04/08 10:16:17 pooka Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -27,6 +27,7 @@ AUS:Austin Robert Mueller Municipal, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
 AVV:Avalon Airport, Victoria, Australia
 AXA:Anguilla
+BAR:Baker Island, Baker & Howland Islands
 BDA:Bermuda, BM
 BDL:Hartford/Springfield Bradley International, Connecticut, USA
 BER:All Airports around Berlin, Germany
@@ -104,6 +105,7 @@ FCO:Rome, Italy
 FDF:Fort De France, MQ
 FLL:Ft. Lauderdale-Hollywood International, Florida, USA
 FOE:Topeka Forbes Field, Kansas, USA
+FOO:Numfoor, Indonesia
 FRA:Frankfurt, Germany
 FSD:Sioux Falls Regional, South Dakota, USA
 FWA:Ft. Wayne Allen County, Indiana, USA
