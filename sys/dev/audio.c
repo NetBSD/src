@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.190 2005/02/13 17:05:15 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.191 2005/02/13 23:50:22 fredb Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.190 2005/02/13 17:05:15 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.191 2005/02/13 23:50:22 fredb Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -343,6 +343,11 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_outports.mixerout = -1;
 	sc->sc_outports.cur_port = -1;
 	sc->sc_monitor_port = -1;
+	/*
+	 * Read through the underlying driver's list, picking out the class
+	 * names from the mixer descriptions. We'll need them to decode the
+	 * mixer descriptions on the next pass through the loop.
+	 */
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
@@ -355,6 +360,11 @@ audioattach(struct device *parent, struct device *self, void *aux)
 				oclass = mi.mixer_class;
 		}
 	}
+	/*
+	 * This is where we assign each control in the "audio" model, to the
+	 * underlying "mixer" control.  We walk through the whole list once,
+	 * assigning likely candidates as we come across them.
+	 */
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
