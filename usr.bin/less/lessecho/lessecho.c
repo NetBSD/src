@@ -39,11 +39,16 @@
 
 #include "less.h"
 
-static char *version = "$Revision: 1.1.1.1 $";
+static char *version = "$Revision: 1.2 $";
 
 static int quote_all = 0;
 static char openquote = '"';
 static char closequote = '"';
+
+static void pr_usage __P((void));
+static void pr_version __P((void));
+static void pr_error __P((char *));
+static long lstrtol __P((char *, int, char **));
 
 	static void
 pr_usage()
