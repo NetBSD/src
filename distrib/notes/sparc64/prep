@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2004/06/10 07:23:49 mbw Exp $
+.\"	$NetBSD: prep,v 1.10 2004/06/12 07:00:00 mbw Exp $
 .
 .Ss2 Deciding on partition sizes
 .
@@ -11,13 +11,22 @@ on.  Will you be installing
 .Nx
 onto the same disk as
 .Tn Solaris ,
-or on its own disk (or netboot)?  While
+on its own disk,
+or will you be netbooting?  While
 .Nx
 can work just fine on a disk shared with
 .Tn Solaris ,
 the
 .Nx
-installer does not currently support this.
+installer does not currently support this.  The limitation is that the
+.Nx
+.Xr disklabel 8
+writes partition info that 
+.Tn Solaris
+is not familiar with.  Therefore, if you are sharing a disk with
+.Tn Solaris ,
+any time you change a partition table, you must do it from
+.Tn Solaris .
 .Pp
 Assuming a classic partition scheme with
 .Pa /
@@ -26,15 +35,17 @@ Assuming a classic partition scheme with
 file systems, a comfortable size for the
 .Nx
 .Pa /
-partition is about 64 MB;
-a good initial size for the swap partition is twice the amount of physical
-memory in your machine (though, unlike
-.Tn SunOS
-4.x, there are no restrictions
-on the size of the swap partition that would render part of your memory
-unusable).
-A full binary installation including X11R6 takes nearly 200 MB in
+partition is about 100 MB.
+A full binary installation including X11R6 takes nearly 350 MB in
 .Pa /usr .
+Since the pkgsrc binaries are typically installed in
+.Pa /usr/pkg 
+you may want a significantly larger 
+.Pa /usr
+partition.
+A good initial size for the swap partition is the amount of physical
+memory in your machine, if you've got more than 128 MB RAM.  If you've got 
+less RAM, you may want swap to be at least 128 MB.
 .
 .Ss2 Setting up Open Firmware
 .
@@ -62,7 +73,7 @@ ethernet (among other problems).  Read the Sun NVRAM/Hostid FAQ.
 If you have a valid ethernet address and you plan to netboot, write down
 your system's ethernet address.
 .Pp
-You cannot use the security modes of the SPARC OpenBoot PROM.
+You cannot use the security modes of the SPARC OpenFirmware.
 .(disp
 .No ok Ic "setenv security-mode none"
 .disp)
@@ -130,8 +141,8 @@ f002cc90 openprom
 f002cc24 chosen
 f002cbb4 packages
 .disp)
-Usually, you can simply type in the name before the at (@) sign and the
-OpenBoot PROM will fill in the rest.
+Usually, you can simply type in the name before the at (@) sign and
+OpenFirmware will fill in the rest.
 .(disp
 .No ok Ic "cd pci@1f,4000"
 .No ok Ic "ls"
