@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.2 2003/09/06 22:01:20 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.3 2003/09/14 07:00:45 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@ struct ksiginfo {
 			int	_fd;
 		} _poll;
 	} _reason;
+	struct ksiginfo *ksi_next;
+	struct ksiginfo *ksi_prev;
 };
 
 typedef union siginfo {
