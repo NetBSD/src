@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mixerctl,v 1.6 2003/08/18 13:04:10 tron Exp $
+# $NetBSD: mixerctl,v 1.7 2004/01/11 13:57:56 uebayasi Exp $
 #
 
 # PROVIDE: mixerctl
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="mixerctl"
+rcvar=$name
 start_cmd="mixerctl_start"
 stop_cmd="mixerctl_stop"
 
