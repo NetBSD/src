@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.60 2002/10/04 18:53:27 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.61 2002/10/21 03:20:25 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -390,7 +390,6 @@ ttyE*)
 	chr=41; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	chown root.wheel ttyE$unit
 	;;
 
 ttye*)
