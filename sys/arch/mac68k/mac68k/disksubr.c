@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 1997/11/26 04:14:07 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -120,7 +120,7 @@ getFreeLabelEntry(lp)
 {
 	int i = 0;
 
-	for (i = 0; i < NUM_PARTS_PROBED; i++) {
+	for (i = 0; i < MAXPARTITIONS; i++) {
 		if ((i != RAW_PART)
 		    && (lp->d_partitions[i].p_fstype == FS_UNUSED))
 			return i;
