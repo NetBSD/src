@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202 2002/02/09 11:09:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.203 2002/03/01 06:22:09 chs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -329,12 +329,12 @@ snap_pre: check_destdir check_releasedir
 #	KERNEL_SETS		The list of kernels that will be
 #				packaged into sets, named
 #				kern-${kernel}.tgz.  These kernels
-#				are also placed in the binary/kernels
+#				are also placed in the binary/kernel
 #				area of the release package as
 #				netbsd-${kernel}.gz.
 #
 #	EXTRA_KERNELS		Additional kernels to place in the
-#				binary/kernels area of the release
+#				binary/kernel area of the release
 #				package as netbsd-${kernel}.gz, but
 #				which are not placed into sets. This
 #				allows a port to provide e.g. a netbootable
@@ -342,14 +342,14 @@ snap_pre: check_destdir check_releasedir
 #
 #	BUILD_KERNELS		Additional kernels to build which are
 #				not placed into sets nor into the
-#				binary/kernels area of the release
+#				binary/kernel area of the release
 #				package.  These are typically kernels
 #				that are built for inclusion only in
 #				installation disk/CD-ROM/tape images.
 #
 # A port may also specify KERNEL_SUFFIXES, which is an optional list
 # of filename suffixes for kernels to include in the kernel sets and
-# in the binary/kernels area of the release package (e.g. "netbsd" vs.
+# in the binary/kernel area of the release package (e.g. "netbsd" vs.
 # "netbsd.ecoff" and "netbsd.srec").  It is not an error if kernels
 # with these suffixes do not exist in the kernel build directory.
 #
@@ -367,6 +367,7 @@ snap_kern: check_destdir check_releasedir
 .endif
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE} ${_J}
 .endfor # build kernels
+.endif # KERNELS_DONE							# }
 .for configfile in ${KERNEL_SETS}
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
@@ -398,7 +399,6 @@ snap_kern: check_destdir check_releasedir
 		gzip -c -9 < $${kernel} > \
 		    ${RELEASEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
 .endfor # place KERNEL_SETS kernels + EXTRA_KERNELS in binary/kernel/...
-.endif # KERNELS_DONE							# }
 .endif # no target(snap_kern)
 
 snap_md_pre: check_destdir check_releasedir
