@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.6 2002/09/27 20:41:11 thorpej Exp $ */
+/* $NetBSD: dtide.c,v 1.7 2002/09/30 22:33:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.6 2002/09/27 20:41:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.7 2002/09/30 22:33:19 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -60,9 +60,8 @@ struct dtide_softc {
 static int dtide_match(struct device *, struct cfdata *, void *);
 static void dtide_attach(struct device *, struct device *, void *);
 
-const struct cfattach dtide_ca = {
-	sizeof(struct dtide_softc), dtide_match, dtide_attach
-};
+CFATTACH_DECL(dtide, sizeof(struct dtide_softc),
+    dtide_match, dtide_attach, NULL, NULL)
 
 static const int dtide_cmdoffsets[] = { DTIDE_CMDBASE0, DTIDE_CMDBASE1 };
 static const int dtide_ctloffsets[] = { DTIDE_CTLBASE0, DTIDE_CTLBASE1 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.34 2002/09/27 20:39:28 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.35 2002/09/30 21:59:29 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.34 2002/09/27 20:39:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.35 2002/09/30 21:59:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -103,9 +103,8 @@ int	ramatch __P((struct device *, struct cfdata *, void *));
 void	raattach __P((struct device *, struct device *, void *));
 int	ra_putonline __P((struct ra_softc *));
 
-const struct cfattach ra_ca = {
-	sizeof(struct ra_softc), ramatch, rxattach
-};
+CFATTACH_DECL(ra, sizeof(struct ra_softc),
+    ramatch, rxattach, NULL, NULL)
 
 dev_type_open(raopen);
 dev_type_close(raclose);
@@ -521,9 +520,8 @@ rasize(dev)
 
 int	rxmatch __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach rx_ca = {
-	sizeof(struct rx_softc), rxmatch, rxattach
-};
+CFATTACH_DECL(rx, sizeof(struct rx_softc),
+    rxmatch, rxattach, NULL, NULL)
 
 dev_type_open(rxopen);
 dev_type_read(rxread);

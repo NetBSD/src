@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.9 2002/09/27 20:39:21 thorpej Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.10 2002/09/30 21:57:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.9 2002/09/27 20:39:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.10 2002/09/30 21:57:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.9 2002/09/27 20:39:21 thorpej Exp $");
 int	gphytermatch(struct device *, struct cfdata *, void *);
 void	gphyterattach(struct device *, struct device *, void *);
 
-const struct cfattach gphyter_ca = {
-	sizeof(struct mii_softc), gphytermatch, gphyterattach,
-	    mii_phy_detach, mii_phy_activate
-};
+CFATTACH_DECL(gphyter, sizeof(struct mii_softc),
+    gphytermatch, gphyterattach, mii_phy_detach, mii_phy_activate)
 
 int	gphyter_service(struct mii_softc *, struct mii_data *, int);
 void	gphyter_status(struct mii_softc *);

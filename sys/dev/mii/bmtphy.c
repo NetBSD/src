@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.9 2002/09/27 20:39:19 thorpej Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.10 2002/09/30 21:57:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.9 2002/09/27 20:39:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.10 2002/09/30 21:57:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.9 2002/09/27 20:39:19 thorpej Exp $");
 int	bmtphymatch(struct device *, struct cfdata *, void *);
 void	bmtphyattach(struct device *, struct device *, void *);
 
-const struct cfattach bmtphy_ca = {
-	sizeof(struct mii_softc), bmtphymatch, bmtphyattach,
-	    mii_phy_detach, mii_phy_activate
-};
+CFATTACH_DECL(bmtphy, sizeof(struct mii_softc),
+    bmtphymatch, bmtphyattach, mii_phy_detach, mii_phy_activate)
 
 int	bmtphy_service(struct mii_softc *, struct mii_data *, int);
 void	bmtphy_status(struct mii_softc *);

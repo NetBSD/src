@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.12 2002/09/27 20:39:39 thorpej Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.13 2002/09/30 22:10:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.12 2002/09/27 20:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.13 2002/09/30 22:10:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,8 @@ struct ofrtc_softc {
 static int ofrtc_match __P((struct device *, struct cfdata *, void *));
 static void ofrtc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach ofrtc_ca = {
-	sizeof(struct ofrtc_softc), ofrtc_match, ofrtc_attach
-};
+CFATTACH_DECL(ofrtc, sizeof(struct ofrtc_softc),
+    ofrtc_match, ofrtc_attach, NULL, NULL)
 
 extern struct cfdriver ofrtc_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.3 2002/09/27 20:39:30 thorpej Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.4 2002/09/30 22:04:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@ void clmpcc_pcctwo_attach __P((struct device *, struct device *, void *));
 void clmpcc_pcctwo_iackhook __P((struct clmpcc_softc *, int));
 void clmpcc_pcctwo_consiackhook __P((struct clmpcc_softc *, int));
 
-const struct cfattach clmpcc_pcctwo_ca = {
-	sizeof(struct clmpcc_softc), clmpcc_pcctwo_match, clmpcc_pcctwo_attach
-};
+CFATTACH_DECL(clmpcc_pcctwo, sizeof(struct clmpcc_softc),
+    clmpcc_pcctwo_match, clmpcc_pcctwo_attach, NULL, NULL)
 
 extern struct cfdriver clmpcc_cd;
 

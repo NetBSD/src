@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.18 2002/09/27 20:39:29 thorpej Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.19 2002/09/30 21:59:30 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.18 2002/09/27 20:39:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.19 2002/09/30 21:59:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,9 +109,8 @@ struct	mscp_device mt_device = {
 #define mtnorewind(dev) (dev & T_NOREWIND)
 #define mthdensity(dev) (dev & T_1600BPI)
 
-const struct cfattach mt_ca = {
-	sizeof(struct mt_softc), mtmatch, mtattach
-};
+CFATTACH_DECL(mt, sizeof(struct mt_softc),
+    mtmatch, mtattach, NULL, NULL)
 
 extern struct cfdriver mt_cd;
 

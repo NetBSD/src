@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.5 2002/09/27 20:41:07 thorpej Exp $ */
+/* $NetBSD: opl_esl.c,v 1.6 2002/09/30 22:27:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.5 2002/09/27 20:41:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.6 2002/09/30 22:27:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,8 @@ int	opl_esl_match(struct device *, struct cfdata *, void *);
 void	opl_esl_attach(struct device *, struct device *, void *);
 int	opl_esl_detach(struct device *, int);
 
-const struct cfattach opl_esl_ca = {
-	sizeof(struct opl_softc), opl_esl_match, opl_esl_attach,
-	opl_esl_detach
-};
+CFATTACH_DECL(opl_esl, sizeof(struct opl_softc),
+    opl_esl_match, opl_esl_attach, opl_esl_detach, NULL)
 
 int
 opl_esl_match(struct device *parent, struct cfdata *match, void *aux)

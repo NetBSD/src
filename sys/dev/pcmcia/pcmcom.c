@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.11 2002/09/27 20:41:09 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.12 2002/09/30 22:27:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.11 2002/09/27 20:41:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.12 2002/09/30 22:27:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +102,8 @@ void	pcmcom_attach __P((struct device *, struct device *, void *));
 int	pcmcom_detach __P((struct device *, int));
 int	pcmcom_activate __P((struct device *, enum devact));
 
-const struct cfattach pcmcom_ca = {
-	sizeof(struct pcmcom_softc), pcmcom_match, pcmcom_attach,
-	    pcmcom_detach, pcmcom_activate
-};
+CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
+    pcmcom_match, pcmcom_attach, pcmcom_detach, pcmcom_activate)
 
 const struct pcmcom_product {
 	struct pcmcia_product pp_product;
@@ -431,10 +429,8 @@ int	com_pcmcom_match __P((struct device *, struct cfdata *, void *));
 void	com_pcmcom_attach __P((struct device *, struct device *, void *));
 
 /* No pcmcom-specific goo in the softc; it's all in the parent. */
-const struct cfattach com_pcmcom_ca = {
-	sizeof(struct com_softc), com_pcmcom_match, com_pcmcom_attach,
-	    com_detach, com_activate
-};
+CFATTACH_DECL(com_pcmcom, sizeof(struct com_softc),
+    com_pcmcom_match, com_pcmcom_attach, com_detach, com_activate)
 
 int	com_pcmcom_enable __P((struct com_softc *));
 void	com_pcmcom_disable __P((struct com_softc *));
