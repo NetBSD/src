@@ -1,5 +1,7 @@
-.\" Copyright (c) 1985, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: spp.4,v 1.3 1994/11/30 16:22:33 jtc Exp $
+.\"
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)spp.4	1.5 (Berkeley) 3/28/91
-.\"	$Id: spp.4,v 1.2 1993/08/01 07:55:50 mycroft Exp $
+.\"     @(#)spp.4	8.2 (Berkeley) 4/19/94
 .\"
-.Dd March 28, 1991
+.Dd April 19, 1994
 .Dt SPP 4
 .Os BSD 4.3
 .Sh NAME
@@ -166,7 +167,7 @@ exists.
 when set, this determines the data stream type and whether
 the end of message bit is to be set on every ensuing packet.
 .It Dv SO_MTU
-This specifies the maximum ammount of user data in a single packet.
+This specifies the maximum amount of user data in a single packet.
 The default is 576 bytes - sizeof(struct spidp).  This quantity
 affects windowing \- increasing it without increasing the amount
 of buffering in the socket will lower the number of unread packets
