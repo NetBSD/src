@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.4 2001/02/04 22:59:26 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.5 2001/02/05 19:44:32 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -304,7 +304,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	 * It seems we need a 16 bytes alignement here (it just works with it,
 	 * don't ask me why
 	 */
-	scp = (linux_rt_sigframe *)((unsigned long)scp & ~0xfUL); 
+	scp = (struct linux_rt_sigframe *)((unsigned long)scp & ~0xfUL); 
 
 	/*
 	 * Get the context from user stack
