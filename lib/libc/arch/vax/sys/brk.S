@@ -33,17 +33,17 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: brk.S,v 1.1 1995/04/17 12:23:58 ragge Exp $"
+	.asciz "$NetBSD: brk.S,v 1.2 1997/02/04 18:38:18 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	curbrk
 	.globl	minbrk
-ENTRY(_brk)
+ENTRY(_brk, 0)
 	jbr	ok
 
-ENTRY(brk)
+ENTRY(brk, 0)
 	cmpl	4(ap),minbrk
 	bgeq	ok
 	movl	minbrk,4(ap)

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: Ovfork.S,v 1.1 1995/04/17 12:23:56 ragge Exp $"
+	.asciz "$NetBSD: Ovfork.S,v 1.2 1997/02/04 18:38:17 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -54,7 +54,7 @@
  * with a ret off this stack... we do the ret before we vfork!
  */
 
-ENTRY(vfork)
+ENTRY(vfork, 0)
 	movl	16(fp),r2	# save return address before we smash it
 	movab	here,16(fp)
 	ret
