@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.18 1999/08/25 02:07:42 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.19 2000/07/16 22:10:12 tron Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ipcp.c,v 1.50 1999/08/24 05:31:09 paulus Exp "
+#define RCSID	"Id: ipcp.c,v 1.52 1999/12/23 01:25:33 paulus Exp "
 #else
-__RCSID("$NetBSD: ipcp.c,v 1.18 1999/08/25 02:07:42 christos Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.19 2000/07/16 22:10:12 tron Exp $");
 #endif
 #endif
 
@@ -57,6 +57,12 @@ ipcp_options ipcp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
 ipcp_options ipcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 
 bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
+
+/* Hook for a plugin to know when IP protocol has come up */
+void (*ip_up_hook) __P((void)) = NULL;
+
+/* Hook for a plugin to know when IP protocol has come down */
+void (*ip_down_hook) __P((void)) = NULL;
 
 /* local vars */
 static int default_route_set[NUM_PPP];	/* Have set up a default route */
@@ -275,7 +281,7 @@ setdnsaddr(argv)
     struct hostent *hp;
 
     dns = inet_addr(*argv);
-    if (dns == -1) {
+    if (dns == (u_int32_t) -1) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
 	    option_error("invalid address parameter '%s' for ms-dns option",
 			 *argv);
@@ -307,7 +313,7 @@ setwinsaddr(argv)
     struct hostent *hp;
 
     wins = inet_addr(*argv);
-    if (wins == -1) {
+    if (wins == (u_int32_t) -1) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
 	    option_error("invalid address parameter '%s' for ms-wins option",
 			 *argv);
@@ -1518,6 +1524,9 @@ ipcp_up(f)
     np_up(f->unit, PPP_IP);
     ipcp_is_up = 1;
 
+    if (ip_up_hook)
+	ip_up_hook();
+
     /*
      * Execute the ip-up script, like this:
      *	/etc/ppp/ip-up interface tty speed local-IP remote-IP
@@ -1543,6 +1552,8 @@ ipcp_down(f)
     /* XXX a bit IPv4-centric here, we only need to get the stats
      * before the interface is marked down. */
     update_link_stats(f->unit);
+    if (ip_down_hook)
+	ip_down_hook();
     if (ipcp_is_up) {
 	ipcp_is_up = 0;
 	np_down(f->unit, PPP_IP);
