@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.72 2003/08/07 16:34:35 agc Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.73 2003/09/07 11:53:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.72 2003/08/07 16:34:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.73 2003/09/07 11:53:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,6 +723,7 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 #define BQ_EMPTY	3		/* buffer headers with no memory */
  
 extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
+extern struct simplelock bqueue_slock;
 
 /*
  * Return a count of buffers on the "locked" queue.
@@ -734,10 +735,12 @@ lfs_countlocked(int *count, long *bytes, char *msg)
 	struct buf *bp;
 	int n = 0;
 	long int size = 0L;
+	int s;
 
+	s = splbio();
+	simple_lock(&bqueue_slock);
 	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist) {
-		if (bp->b_flags & B_CALL)
-			continue;
+		KASSERT(!(bp->b_flags & B_CALL));
 		n++;
 		size += bp->b_bufsize;
 #ifdef DEBUG_LOCKED_LIST
@@ -757,5 +760,7 @@ lfs_countlocked(int *count, long *bytes, char *msg)
 #endif
 	*count = n;
 	*bytes = size;
+	simple_unlock(&bqueue_slock);
+	splx(s);
 	return;
 }

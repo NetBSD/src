@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.69 2003/08/07 16:34:33 agc Exp $	*/
+/*	$NetBSD: lfs.h,v 1.70 2003/09/07 11:53:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -202,10 +202,7 @@ typedef struct lfs_res_blk {
 
 # ifdef DEBUG_LOCKED_LIST
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	int _s;								\
-	_s = splbio();							\
 	lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m));	\
-	splx(_s);							\
 	wakeup(&locked_queue_count);					\
 } while (0)
 # else
