@@ -477,7 +477,8 @@ object_headers *headers;
 			
 			symbolP->sy_aux |= symbolP->sy_forward->sy_aux;
 			symbolP->sy_sizexp = symbolP->sy_forward->sy_sizexp;
-			if (S_IS_EXTERNAL(symbolP->sy_forward))
+			if (S_IS_EXTERNAL(symbolP->sy_forward)
+			    && !S_IS_DEBUG(symbolP))
 				S_SET_EXTERNAL(symbolP);
 		} /* if it has a forward reference */
 		symbolP->sy_forward=0;
