@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.68.2.4 2001/04/06 00:03:51 he Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.68.2.5 2002/02/26 21:17:46 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1224,7 +1224,6 @@ ufs_mkdir(v)
 		softdep_change_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
-	error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT|UPDATE_DIROP);
 
 	/*
 	 * Bump link count in parent directory to reflect work done below.
