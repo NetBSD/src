@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.44 2003/12/04 13:05:16 keihan Exp $	*/
+/*	$NetBSD: zs.c,v 1.45 2004/12/14 16:28:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.44 2003/12/04 13:05:16 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45 2004/12/14 16:28:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mac68k.h"
@@ -145,7 +145,7 @@ int	zs_cons_canabort = 0;
 /* device to which the console is attached--if serial. */
 dev_t	mac68k_zsdev;
 /* Mac stuff */
-volatile unsigned char *sccA = 0;
+extern volatile unsigned char *sccA;
 
 int	zs_cn_check_speed __P((int bps));
 
