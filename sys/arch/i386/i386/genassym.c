@@ -78,6 +78,7 @@ main()
 	def("P_STAT", &p->p_stat);
 	def("P_WCHAN", &p->p_wchan);
 
+	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
 	def("V_SWTCH", &vm->v_swtch);
 
@@ -96,7 +97,6 @@ main()
 	def("TF_CS", &tf->tf_cs);
 	def("TF_TRAPNO", &tf->tf_trapno);
 	def("TF_EFLAGS", &tf->tf_eflags);
-	def("TF_ERR", &tf->tf_err);
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);
