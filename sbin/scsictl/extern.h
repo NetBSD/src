@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1998/11/12 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2001/09/05 16:25:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,5 +47,5 @@ void	scsi_print_sense __P((const char *, const scsireq_t *, int));
 /* scsi_subr.c */
 void	scsi_command __P((int, void *, size_t, void *, size_t, int, int));
 void	scsi_mode_sense __P((int, u_int8_t, u_int8_t, void *, size_t));
-void	scsi_mode_select __P((int, u_int8_t, u_int8_t, void *, size_t));
+void	scsi_mode_select __P((int, u_int8_t, void *, size_t));
 void	scsi_strvis __P((char *, size_t, const char *, size_t));
