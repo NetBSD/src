@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xevar.h,v 1.2 1999/03/04 14:18:25 dbj Exp $	*/
+/*	$NetBSD: if_xevar.h,v 1.3 2002/09/11 01:46:31 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,24 @@
  */
 
 struct xe_softc {
-  struct mb8795_softc sc_mb8795; /* glue to MI code */
-  struct nextdma_config sc_rxdma;
-  struct nextdma_config sc_txdma;
+	struct mb8795_softc	sc_mb8795;	/* glue to MI code */
+
+	bus_space_tag_t		sc_bst;		/* bus space tag */
+	bus_space_handle_t	sc_bsh;		/* bus space handle */
+
+	struct nextdma_softc	*sc_rxdma;
+	struct nextdma_softc	*sc_txdma;
+
+	bus_dmamap_t		sc_tx_dmamap;	/* should we have multiple of these? */
+	struct mbuf		*sc_tx_mb_head;	/* pointer to data for this command */
+	int sc_tx_loaded;
+	u_char			*sc_txbuf;	/* to solve alignment problems, we
+						 * copy the mbuf into this buffer before
+						 * trying to dma it */
+
+	bus_dmamap_t		sc_rx_dmamap[MB8795_NRXBUFS];
+	struct mbuf		*sc_rx_mb_head[MB8795_NRXBUFS];
+	int			sc_rx_loaded_idx;
+	int			sc_rx_completed_idx;
+	int			sc_rx_handled_idx;
 };

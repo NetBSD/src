@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.7 2001/08/31 04:44:56 simonb Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.8 2002/09/11 01:46:35 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -236,7 +236,7 @@ caddr_t mon_alloc();
 #define	NeXT_WARP9	1
 #define	NeXT_X15	2
 #define	NeXT_WARP9C	3
-
+#define NeXT_TURBO_MONO	4
 #define NeXT_TURBO_COLOR 5			/* probed witnessed */
 
 #define	ROM_STACK_SIZE	(8192 - 2048)

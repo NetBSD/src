@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2002/07/11 16:03:14 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2002/09/11 01:46:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,35 +68,15 @@
 #include <next68k/next68k/isr.h>
 #include <next68k/next68k/nextrom.h>
 
-struct device *booted_device;	/* boot device */
+#include <next68k/dev/intiovar.h>
 
-void mainbus_attach __P((struct device *, struct device *, void *));
-int  mainbus_match __P((struct device *, struct cfdata *, void *));
-int  mainbus_print __P((void *, const char *));
+struct device *booted_device;	/* boot device */
+volatile u_long *intrstat;
+volatile u_long *intrmask;
 
 static struct device *getdevunit __P((char *, int));
 static int devidentparse __P((const char *, int *, int *, int *));
 static int atoi __P((const char *));
-
-struct mainbus_softc {
-	struct device sc_dev;
-};
-
-struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
-};
-
-#if 0
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, 0
-};
-#endif
-
-static	char *mainbusdevs[] = {
-        "intio",
-        "nextdisplay",
-	NULL
-};
 
 struct device_equiv {
 	char *alias;
@@ -108,60 +88,40 @@ static struct device_equiv device_equiv[] = {
 };
 static int ndevice_equivs = (sizeof(device_equiv)/sizeof(device_equiv[0]));
 
-int
-mainbus_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
-{
-	static int mainbus_matched;
-
-	if (mainbus_matched)
-		return (0);
-
-	return ((mainbus_matched = 1));
-}
-
-void
-mainbus_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
-{
-	char **devices;
-	int i;
-
-	printf("\n");
-
-	/*
-	 * Attach children.
-	 */
-        devices = mainbusdevs;
-
-	for (i = 0; devices[i] != NULL; ++i)
-		(void)config_found(self, devices[i], mainbus_print);
-}
-
-int
-mainbus_print(aux, cp)
-	void *aux;
-	const char *cp;
-{
-	char *devname = aux;
-
-	if (cp)
-		printf("%s at %s\n", devname, cp);
-
-	return (UNCONF);
-}
-
 /*
  * Determine mass storage and memory configuration for a machine.
  */
 void
 cpu_configure()
 {
+/* 	int dma_rev; */
+	extern u_int rom_intrmask;
+	extern u_int rom_intrstat;
 
 	booted_device = NULL;	/* set by device drivers (if found) */
+
+#if 0
+	dma_rev = ((volatile u_char *)IIOV(NEXT_P_SCR1))[1];
+	switch (dma_rev) {
+	case 0:
+		intrmask = (volatile u_long *)IIOV(NEXT_P_INTRMASK_0);
+		intrstat = (volatile u_long *)IIOV(NEXT_P_INTRSTAT_0);
+		/* dspreg = (volatile u_long *)IIOV(0x2007000); */
+		break;
+	case 1:
+		intrmask = (volatile u_long *)IIOV(NEXT_P_INTRMASK);
+		intrstat = (volatile u_long *)IIOV(NEXT_P_INTRSTAT);
+		/* dspreg = (volatile u_long *)IIOV(0x2108000); */
+		break;
+	default:
+		panic("unknown dma chip revision");
+	}
+#else
+	intrmask = (volatile u_long *)IIOV(rom_intrmask);
+	intrstat = (volatile u_long *)IIOV(rom_intrstat);
+	printf ("intrmask: %p\n", intrmask);
+	printf ("intrstat: %p\n", intrstat);
+#endif
 
 	INTR_SETMASK(0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/04/13 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2002/09/11 01:46:33 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -31,6 +31,8 @@
 #ifndef _NEXT68K_INTR_H_
 #define _NEXT68K_INTR_H_
 
+#include <sys/device.h>
+#include <sys/queue.h>
 #include <machine/psl.h>
 
 /* Probably want to dealwith IPL's here @@@ */
@@ -48,7 +50,7 @@
 #define splserial()     _splraise(PSL_S|PSL_IPL5)
 #define splsched()      spl7()
 #define spllock()	spl7()
-#define splclock()      _splraise(PSL_S|PSL_IPL6)
+#define splclock()      _splraise(PSL_S|PSL_IPL3)
 #define splstatclock()  splclock()
 #define splvm()         _splraise(PSL_S|PSL_IPL6)
 #define spltty()        _splraise(PSL_S|PSL_IPL3)
@@ -89,11 +91,14 @@ extern void init_sir __P((void));
 
 /* locore.s */
 int	spl0 __P((void));
-#endif /* _KERNEL */
 
-#define INTR_SETMASK(x)  ((*(volatile u_long *)IIOV(NEXT_P_INTRMASK))=(x))
-#define INTR_ENABLE(x)   ((*(volatile u_long *)IIOV(NEXT_P_INTRMASK))|=NEXT_I_BIT(x))
-#define INTR_DISABLE(x)  ((*(volatile u_long *)IIOV(NEXT_P_INTRMASK))&=(~NEXT_I_BIT(x)))
-#define INTR_OCCURRED(x)  ((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT))& NEXT_I_BIT(x))
+extern volatile u_long *intrstat;
+extern volatile u_long *intrmask;
+#define INTR_SETMASK(x)		(*intrmask = (x))
+#define INTR_ENABLE(x)		(*intrmask |= NEXT_I_BIT(x))
+#define INTR_DISABLE(x)		(*intrmask &= (~NEXT_I_BIT(x)))
+#define INTR_OCCURRED(x)	(*intrstat & NEXT_I_BIT(x))
+
+#endif /* _KERNEL */
 
 #endif /* _NEXT68K_INTR_H_ */

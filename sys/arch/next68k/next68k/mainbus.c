@@ -1,6 +1,6 @@
-/*	$NetBSD: intio.c,v 1.3 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1 2002/09/11 01:46:34 mycroft Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -36,94 +36,81 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Autoconfiguration support for next68k internal i/o space.
- */
-
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
-#include <sys/reboot.h>
 
+#define _M68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 
-#include <next68k/dev/intiovar.h>
+static int	mainbus_match __P((struct device *, struct cfdata *, void *));
+static void	mainbus_attach __P((struct device *, struct device *, void *));
+static int	mainbus_search __P((struct device *, struct cfdata *, void *));
 
-int	intiomatch __P((struct device *, struct cfdata *, void *));
-void	intioattach __P((struct device *, struct device *, void *));
-int	intioprint __P((void *, const char *));
-int	intiosearch __P((struct device *, struct cfdata *, void *));
-
-struct cfattach intio_ca = {
-	sizeof(struct device), intiomatch, intioattach
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-#if 0
-struct cfdriver intio_cd = {
-	NULL, "intio", DV_DULL
+struct m68k_bus_dma_tag next68k_bus_dma_tag = {
+	NULL,					/* _cookie */
+
+	0,					/* _boundary */
+
+	_bus_dmamap_create,			/* _dmamap_create */
+	_bus_dmamap_destroy,			/* _dmamap_destroy */
+	_bus_dmamap_load_direct,		/* _dmamap_load */
+	_bus_dmamap_load_mbuf_direct,		/* _dmamap_load_mbuf */
+	_bus_dmamap_load_uio_direct,		/* _dmamap_load_uio */
+	_bus_dmamap_load_raw_direct,		/* _dmamap_load_raw */
+	_bus_dmamap_unload,			/* _dmamap_unload */
+	_bus_dmamap_sync,			/* _dmamap_sync */
+  
+	_bus_dmamem_alloc,			/* _dmamem_alloc */
+	_bus_dmamem_free,			/* _dmamem_free */
+	_bus_dmamem_map,			/* _dmamem_map */
+	_bus_dmamem_unmap,			/* _dmamem_unmap */
+	_bus_dmamem_mmap			/* _dmamem_mmap */
 };
-#endif
 
-static int intio_attached = 0;
+static int mainbus_attached = 0;
 
-int
-intiomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	/* Allow only one instance. */
-	if (intio_attached)
-		return (0);
-
-	return (1);
-}
-
-void
-intioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-
-	printf("\n");
-
-	/* Search for and attach children. */
-	config_search(intiosearch, self, aux);
-
-	intio_attached = 1;
-}
-
-int
-intioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct intio_attach_args *ia = aux;
-
-	if (bootverbose && ia->ia_addr)
-		printf(" addr %p", ia->ia_addr);
-
-	return (UNCONF);
-}
-
-int
-intiosearch(parent, cf, aux)
+static int
+mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
-	struct intio_attach_args ia;
+	/* Allow only one instance. */
+	if (mainbus_attached)
+		return (0);
 
-	do {
-		ia.ia_addr = NULL;
-		ia.ia_bst = NEXT68K_INTIO_BUS_SPACE;
-		ia.ia_dmat = mba->mba_dmat;
-		
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) == 0)
-			break;
-		config_attach(parent, cf, &ia, intioprint);
-	} while (cf->cf_fstate == FSTATE_STAR);
+	return 1;
+}
 
-	return (0);
+static void
+mainbus_attach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
+{
+	struct mainbus_attach_args	mba;
+
+	printf("\n");
+
+	mba.mba_dmat = &next68k_bus_dma_tag;
+
+	/* Search for and attach children. */
+	config_search(mainbus_search, self, &mba);
+
+	mainbus_attached = 1;
+}
+
+static int
+mainbus_search(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	if ((*cf->cf_attach->ca_match)(parent, cf, aux) > 0)
+		config_attach(parent, cf, aux, NULL);
+	return 0;
 }

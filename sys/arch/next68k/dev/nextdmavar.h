@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.10 2002/07/11 16:03:13 christos Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.11 2002/09/11 01:46:32 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,42 +30,55 @@
  */
 
 
-struct nextdma_config {
-	bus_space_tag_t nd_bst;				/* bus space tag */
-	bus_space_handle_t nd_bsh;		/* bus space handle for device */
-
-  u_long nd_intr;               /* NEXT_I_ values from cpu.h */
-
-	bus_dma_tag_t nd_dmat;
-
-	/* This is called to get another map to dma */
-	bus_dmamap_t (*nd_continue_cb) __P((void *));
-	/* This is called when a map has completed dma */
-	void (*nd_completed_cb) __P((bus_dmamap_t, void *));
-	/* This is called when dma shuts down */
-	void (*nd_shutdown_cb)  __P((void *));
-
-	void *nd_cb_arg;							/* callback argument */
-
-	struct next68k_bus_dma_tag _nd_dmat; /* should probably be elsewhere */
-	bus_dmamap_t _nd_map;					/* map currently in dd_next */
-	int          _nd_idx;					/* idx of segment currently in dd_next */
-	bus_dmamap_t _nd_map_cont;    /* map needed to continue DMA */
-	int          _nd_idx_cont;		/* segment index to continue DMA */
-
-	unsigned int	dm_xfer_len;
-	int		dm_xfer_exception;
+struct nextdma_channel {
+	char			*nd_name;
+	int			nd_base;
+	int			nd_size;
+	u_long			nd_intr;
+	int			(*nd_intrfunc) __P((void *));
 };
 
+struct nextdma_config {
+	/* This is called to get another map to dma */
+	bus_dmamap_t		(*nd_continue_cb) __P((void *));
+	/* This is called when a map has completed dma */
+	void			(*nd_completed_cb) __P((bus_dmamap_t, void *));
+	/* This is called when dma shuts down */
+	void			(*nd_shutdown_cb)  __P((void *));
+	/* callback argument */
+	void			*nd_cb_arg;					
+};
+
+struct nextdma_status {
+	bus_dmamap_t	nd_map;			/* map currently in dd_next */
+	int		nd_idx;			/* idx of segment currently in dd_next */
+	bus_dmamap_t	nd_map_cont;		/* map needed to continue DMA */
+	int		nd_idx_cont;		/* segment index to continue DMA */
+	int		nd_exception;
+};
+
+struct nextdma_softc {
+	struct device		sc_dev;
+	struct nextdma_channel	*sc_chan;
+	bus_space_handle_t	sc_bsh;		/* bus space handle */
+	bus_space_tag_t		sc_bst;		/* bus space tag */
+	bus_dma_tag_t		sc_dmat;
+	struct nextdma_config	sc_conf;
+	struct nextdma_status	sc_stat;
+	struct evcnt		sc_intrcnt;
+};
+
+#define nextdma_setconf(nsc, elem, val) nsc->sc_conf.nd_##elem = (val)
 
 /* Configure the interface & initialize private structure vars */
-void nextdma_config __P((struct nextdma_config *));
-void nextdma_init __P((struct nextdma_config *));
-void nextdma_start __P((struct nextdma_config *, u_long));
+void nextdma_config	__P((struct nextdma_softc *));
+void nextdma_init	__P((struct nextdma_softc *));
+void nextdma_start	__P((struct nextdma_softc *, u_long));
 
 /* query to see if nextdma is finished */
-int nextdma_finished __P((	struct nextdma_config *));
-void nextdma_reset __P((struct nextdma_config *));
+int nextdma_finished	__P((struct nextdma_softc *));
+void nextdma_reset	__P((struct nextdma_softc *));
 
-int nextdma_intr __P((void *));
-void next_dma_print __P((struct nextdma_config *));
+void nextdma_print	__P((struct nextdma_softc *));
+
+struct nextdma_softc *nextdma_findchannel __P((char *));

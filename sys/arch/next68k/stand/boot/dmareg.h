@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.2 2002/07/11 16:03:18 christos Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.3 2002/09/11 01:46:36 mycroft Exp $	*/
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -85,3 +85,4 @@ struct dma_dev {		/* format of dma device registers */
 #define	DMACSR_CLRCOMPLETE	0x00080000	/* clear complete conditional */
 #define	DMACSR_RESET		0x00100000	/* clr cmplt, sup, enable */
 #define	DMACSR_INITBUF		0x00200000	/* initialize DMA buffers */
+#define DMACSR_INITBUFTURBO	0x00800000

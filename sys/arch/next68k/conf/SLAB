@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.15 2002/07/11 18:07:22 mycroft Exp $
+# $NetBSD: SLAB,v 1.16 2002/09/11 01:46:29 mycroft Exp $
 #
 # deberg's development machine
 #
@@ -150,6 +150,8 @@ wsdisplay*	at nextdisplay? console ?
 wskbd*		at nextkbd? console ?
 
 # INTIO
+nextdma*	at intio? ipl 6
+
 zsc0	at intio? ipl 5
 #zsc1	at intio? ipl 5
 

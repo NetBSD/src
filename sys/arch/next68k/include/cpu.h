@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2002/05/14 02:03:02 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2002/09/11 01:46:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,8 +43,8 @@
  */
 
 
-#ifndef _CPU_MACHINE_
-#define _CPU_MACHINE_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
@@ -97,19 +97,22 @@ extern struct cpu_info cpu_info_store;
 struct clockframe {
 	u_short	sr;		/* sr at time of interrupt */
 	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
+	u_short	fmt:4,
+		vec:12;		/* vector offset (4-word frame) */
 } __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#if 0
-/* We would like to do it this way... */
-#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
-#else
-/* but until we start using PSL_M, we have to do this instead */
-#define	CLKF_INTR(framep)	(0)	/* XXX */
-#endif
+
+/*
+ * The clock interrupt handler can determine if it's a nested
+ * interrupt by checking for interrupt_depth > 1.
+ * (Remember, the clock interrupt handler itself will cause the
+ * depth counter to be incremented).
+ */
+extern volatile unsigned int interrupt_depth;
+#define	CLKF_INTR(framep)	(interrupt_depth > 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -136,12 +139,6 @@ extern int want_resched; 	/* resched() was called */
 extern	int	astpending;	/* need to trap before returning to user mode */
 extern	int	want_resched;	/* resched() was called */
 
-extern	volatile char *intiobase;
-extern  volatile char *intiolimit;
-extern	volatile char *monobase;
-extern  volatile char *monolimit;
-extern	volatile char *colorbase;
-extern  volatile char *colorlimit;
 extern	void (*vectab[]) __P((void));
 
 struct frame;
@@ -186,6 +183,7 @@ void	proc_trampoline __P((void));
 void	loadustp __P((int));
 
 void	doboot __P((void)) __attribute__((__noreturn__));
+int   	nmihand __P((void *));
 
 /* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
@@ -274,8 +272,10 @@ void	next68k_calibrate_delay __P((void));
 #define NEXT_P_MEMTIMING	(NEXT_SLOT_ID_BMAP+0x02006010)
 #define NEXT_P_INTRSTAT		(NEXT_SLOT_ID+0x02007000)
 #define NEXT_P_INTRSTAT_CON	0x02007000
+/* #define NEXT_P_INTRSTAT_0	(NEXT_SLOT_ID+0x02008000) */
 #define NEXT_P_INTRMASK		(NEXT_SLOT_ID+0x02007800)
 #define NEXT_P_INTRMASK_CON	0x02007800
+/* #define NEXT_P_INTRMASK_0	(NEXT_SLOT_ID+0x0200a000) */
 #define NEXT_P_SCR1		(NEXT_SLOT_ID+0x0200c000)
 #define NEXT_P_SCR1_CON	0x0200c000
 #define NEXT_P_SID		0x0200c800		/* NOT slot-relative */
@@ -423,4 +423,4 @@ void	next68k_calibrate_delay __P((void));
 #define	COLORPOFF(pa)	((int)(pa)-COLORBASE)
 #define	COLORMAPSIZE	btoc(COLORTOP-COLORBASE)	/* who cares */
 
-#endif	/* _CPU_MACHINE_ */
+#endif	/* _MACHINE_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: enreg.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $ */
+/*	$NetBSD: enreg.h,v 1.2 2002/09/11 01:46:30 mycroft Exp $ */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -72,6 +72,7 @@ struct en_regs {
 #define EN_TMD_COLLMASK   0xf0 /* collision count */
 #define EN_TMD_COLLSHIFT     4
 #define EN_TMD_PARIGNORE  0x08 /* ignore parity */
+#define EN_TMD_TURBO1	0x04
 #define EN_TMD_LB_DISABLE 0x02 /* loop back disabled */
 #define EN_TMD_DISCONTENT 0x01 /* disable contention (rx carrier) */
 
