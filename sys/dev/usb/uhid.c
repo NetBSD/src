@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.4.2 2001/09/08 05:44:23 thorpej Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.4.3 2001/09/08 18:12:21 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -747,6 +747,9 @@ filt_uhidread(struct knote *kn, long hint)
 static const struct filterops uhidread_filtops =
 	{ 1, NULL, filt_uhidrdetach, filt_uhidread };
 
+static const struct filterops uhid_seltrue_filtops =
+	{ 1, NULL, filt_uhidrdetach, filt_seltrue };
+
 int
 uhidkqfilter(dev_t dev, struct knote *kn)
 {
@@ -763,6 +766,11 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_READ:
 		klist = &sc->sc_rsel.si_klist;
 		kn->kn_fop = &uhidread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &uhid_seltrue_filtops;
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45.4.1 2001/09/08 06:09:11 thorpej Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.4.2 2001/09/08 18:12:20 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1351,6 +1351,9 @@ static const struct filterops ugenread_intr_filtops =
 static const struct filterops ugenread_isoc_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_ugenread_isoc };
 
+static const struct filterops ugen_seltrue_filtops =
+	{ 1, NULL, filt_ugenrdetach, filt_seltrue };
+
 int
 ugenkqfilter(dev_t dev, struct knote *kn)
 {
@@ -1380,14 +1383,36 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			kn->kn_fop = &ugenread_isoc_filtops;
 			break;
 		case UE_BULK:
-		default:
 			/* 
 			 * We have no easy way of determining if a read will
 			 * yield any data or a write will happen.
 			 * So, emulate "seltrue".
 			 */
-			return (1);
+			kn->kn_fop = &ugen_seltrue_filtops;
 			break;
+		default:
+			return (1);
+		}
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sce->rsel.si_klist;
+		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+		case UE_INTERRUPT:
+		case UE_ISOCHRONOUS:
+			/* XXX poll doesn't support this */
+			return (1);
+
+		case UE_BULK:
+			/*
+			 * We have no easy way of determining if a read will
+			 * yield any data or a write will happen.
+			 * So, emulate "seltrue".
+			 */
+			kn->kn_fop = &ugen_seltrue_filtops;
+			break;
+		default:
+			return (1);
 		}
 		break;
 

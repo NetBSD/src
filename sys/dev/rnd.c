@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.22.2.1 2001/09/08 04:37:07 thorpej Exp $	*/
+/*	$NetBSD: rnd.c,v 1.22.2.2 2001/09/08 18:12:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ rndpoll(dev, events, p)
 }
 
 static void
-filt_rndrdetach(struct knote *kn)
+filt_rnddetach(struct knote *kn)
 {
 	int s;
 
@@ -716,8 +716,11 @@ filt_rndread(struct knote *kn, long hint)
 	return (0);
 }
 
+static const struct filterops rnd_seltrue_filtops =
+	{ 1, NULL, filt_rnddetach, filt_seltrue };
+
 static const struct filterops rndread_filtops =
-	{ 1, NULL, filt_rndrdetach, filt_rndread };
+	{ 1, NULL, filt_rnddetach, filt_rndread };
 
 int
 rndkqfilter(dev_t dev, struct knote *kn)
@@ -727,12 +730,16 @@ rndkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		if (minor(dev) == RND_DEV_URANDOM) {
-			/* Simulate "seltrue". */
-			return (1);
-		}
 		klist = &rnd_selq.si_klist;
-		kn->kn_fop = &rndread_filtops;
+		if (minor(dev) == RND_DEV_URANDOM)
+			kn->kn_fop = &rnd_seltrue_filtops;
+		else
+			kn->kn_fop = &rndread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &rnd_selq.si_klist;
+		kn->kn_fop = &rnd_seltrue_filtops;
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.4 2001/09/08 04:08:24 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.5 2001/09/08 18:12:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -723,6 +723,9 @@ filt_tunread(struct knote *kn, long hint)
 static const struct filterops tunread_filtops =
 	{ 1, NULL, filt_tunrdetach, filt_tunread };
 
+static const struct filterops tun_seltrue_filtops =
+	{ 1, NULL, filt_tunrdetach, filt_seltrue };
+
 int
 tunkqfilter(dev_t dev, struct knote *kn)
 {
@@ -734,6 +737,11 @@ tunkqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_READ:
 		klist = &tp->tun_rsel.si_klist;
 		kn->kn_fop = &tunread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &tp->tun_rsel.si_klist;
+		kn->kn_fop = &tun_seltrue_filtops;
 		break;
 
 	default:

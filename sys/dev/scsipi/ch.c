@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.46.2.2 2001/09/08 04:24:51 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.46.2.3 2001/09/08 18:12:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -467,7 +467,7 @@ chpoll(dev, events, p)
 }
 
 static void
-filt_chrdetach(struct knote *kn)
+filt_chdetach(struct knote *kn)
 {
 	struct ch_softc *sc = (void *) kn->kn_hook;
 
@@ -486,7 +486,10 @@ filt_chread(struct knote *kn, long hint)
 }
 
 static const struct filterops chread_filtops =
-	{ 1, NULL, filt_chrdetach, filt_chread };
+	{ 1, NULL, filt_chdetach, filt_chread };
+
+static const struct filterops chwrite_filtops =
+	{ 1, NULL, filt_chdetach, filt_seltrue };
 
 int
 chkqfilter(dev_t dev, struct knote *kn)
@@ -498,6 +501,11 @@ chkqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_READ:
 		klist = &sc->sc_selq.si_klist;
 		kn->kn_fop = &chread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_selq.si_klist;
+		kn->kn_fop = &chwrite_filtops;
 		break;
 
 	default:
