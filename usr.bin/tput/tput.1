@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)tput.1	6.4 (Berkeley) 4/23/91
-.\"	$Id: tput.1,v 1.2 1993/08/01 07:27:31 mycroft Exp $
+.\"	$Id: tput.1,v 1.3 1994/01/25 00:43:07 cgd Exp $
 .\"
 .Dd April 23, 1991
 .Dt TPUT 1
@@ -42,6 +42,8 @@
 .Nm tput
 .Op Fl T Ar term
 .Ar attribute
+.Op Ar attribute-args
+.Ar ...
 .Sh DESCRIPTION
 .Nm Tput
 makes terminal-dependent information available to users or shell
@@ -67,6 +69,10 @@ Otherwise,
 .Nm tput
 exits 0 if the terminal has the capability and 1 if it does not,
 without further action.
+.Pp
+For attributes that require numeric arguments, 
+.Nm tput
+will use the next argument(s) from the command line.
 .Pp
 The following special attributes are available:
 .Bl -tag -width Ar
@@ -97,6 +103,13 @@ If the attribute is of type boolean,
 exits 0 if the terminal has this attribute, and 1 if it does not.
 .Nm Tput
 exits 2 if any error occurred.
+.Sh EXAMPLES
+.Bl -tag -width "tput cm 6 11 DC 6" -compact
+.It Li "tput cl cm 5 10"
+clear the screen and goto line 5 column 10
+.Pp
+.It Li "tput cm 6 11 DC 6"
+goto line 6 column 11 and delete 6 characters
 .Sh SEE ALSO
 .Xr termcap 3 ,
 .Xr termcap 5
