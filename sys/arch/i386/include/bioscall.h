@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.6 2000/07/12 22:58:12 thorpej Exp $ */
+/*	$NetBSD: bioscall.h,v 1.7 2001/05/02 13:12:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct bioscallregs {
     bios_reg r_si;
     bios_reg r_di;
     bios_reg r_flags;
+    bios_reg r_es;
 };
 
 #define	AL	r_ax.biosreg_quarter[BIOSREG_LO]
@@ -100,6 +101,8 @@ struct bioscallregs {
 #define	FLAGS	 r_flags.biosreg_half[BIOSREG_LO]
 #define	FLAGS_HI r_flags.biosreg_half[BIOSREG_HI]
 #define	EFLAGS	 r_flags.biosreg_long
+
+#define ES	r_es.biosreg_half[BIOSREG_LO]
 
 void bioscall __P((int /* function*/ , struct bioscallregs * /* regs */));
 #endif
