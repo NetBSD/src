@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.3 1997/04/07 00:18:51 cgd Exp $ */
+/* $NetBSD: clockvar.h,v 1.4 1997/06/22 08:02:18 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * Definitions for "cpu-independent" clock handling for the alpha.
+ * Definitions for cpu-independent clock handling for the alpha and pmax.
  */
 
 /*
