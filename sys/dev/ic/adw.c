@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.12.2.7 2001/03/12 13:30:12 bouyer Exp $	 */
+/* $NetBSD: adw.c,v 1.12.2.8 2001/03/23 11:32:16 bouyer Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -707,8 +707,9 @@ adw_build_req(sc, ccb)
 		{
 			error = bus_dmamap_load(dmat,
 			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			      ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			       BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+			      ((xs->xs_control & XS_CTL_NOSLEEP) ?
+			       BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			       BUS_DMA_STREAMING);
 		}
 
 		switch (error) {
