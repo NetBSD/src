@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.64 1998/03/29 22:34:28 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.65 1998/03/29 22:36:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -2070,7 +2070,7 @@ tulip_crc32(
     size_t datalen)
 {
     u_int idx, crc = 0xFFFFFFFFUL;
-    static u_int crctab[] = {
+    static const u_int crctab[] = {
 	0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 	0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
 	0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.42 1998/03/29 22:34:27 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.43 1998/03/29 22:36:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1177,7 +1177,7 @@ am7990_setladrf(ac, af)
 	struct ether_multi *enm;
 	register u_char *cp;
 	register u_int32_t crc;
-	static u_int32_t crctab[] = {
+	static const u_int32_t crctab[] = {
 		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
 		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
