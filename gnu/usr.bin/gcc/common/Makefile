@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/12/01 17:59:42 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1996/03/01 00:13:51 jtc Exp $
 
 LIB=	cc1
 
@@ -167,8 +167,15 @@ bi-arity.o: bi-arity.c
 bi-arity: bi-arity.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
 	$(CC) -o bi-arity bi-arity.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
 
-CLEANFILES += bi-lexer.o bi-parser.o
+CLEANFILES += bi-lexer.o bi-parser.o bi-parser.c bi-parser.h
 
+bi-lexer.o: bi-parser.h
+
+bi-parser.h: bi-parser.c
+bi-parser.c: bi-parser.y
+	$(YACC) -d $(.IMPSRC)
+	mv -f y.tab.c bi-parser.c
+	mv -f y.tab.h bi-parser.h
 
 install:
 
