@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.14 1994/05/04 03:41:55 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.15 1994/05/05 05:38:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -161,7 +161,7 @@ kinfo_doproc(op, where, acopysize, arg, aneeded)
 	p = (struct proc *)allproc;
 	doingzomb = 0;
 again:
-	for (; p != NULL; p = p->p_nxt) {
+	for (; p != NULL; p = p->p_next) {
 		/*
 		 * If process not yet fully-formed, skip it.
 		 */
@@ -327,3 +327,11 @@ kinfo_file(op, where, acopysize, arg, aneeded)
 
 	return (0);
 }
+
+/* XXX THE FOLLOWING DO NOT BLEONG HERE */
+char hostname[MAXHOSTNAMELEN];
+int hostnamelen;
+char domainname[MAXHOSTNAMELEN];
+int domainnamelen;
+long hostid;
+int securelevel;

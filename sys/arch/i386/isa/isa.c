@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.54 1994/05/03 20:32:22 mycroft Exp $
+ *	$Id: isa.c,v 1.55 1994/05/05 05:36:35 cgd Exp $
  */
 
 /*
@@ -258,6 +258,8 @@ isasubmatch(parent, self, aux)
 void
 isa_configure()
 {
+
+	startrtclock();
 
 	while (config_search(isasubmatch, NULL, NULL));
 

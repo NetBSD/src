@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.16 1994/05/04 03:41:21 cgd Exp $
+ *	$Id: cpu.h,v 1.17 1994/05/05 05:36:06 cgd Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -62,12 +62,12 @@
  *
  * XXX intrframe has a lot of gunk we don't need.
  */
-typedef struct intrframe clockframe;
+#define clockframe intrframe
 
-#define	CLKF_USERMODE(framep)	(ISPL((framep)->if_cs) == SEL_UPL)
-#define	CLKF_BASEPRI(framep)	((framep)->if_ppl == 0)
-#define	CLKF_PC(framep)		((framep)->if_eip)
-#define	CLKF_INTR(framep)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_USERMODE(frame)	(ISPL((frame)->if_cs) == SEL_UPL)
+#define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
+#define	CLKF_PC(frame)		((frame)->if_eip)
+#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
 
 /*
  * Preempt the current process if in interrupt from user mode,

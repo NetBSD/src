@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# Copyright (c) 1984, 1986, 1990 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1984, 1986, 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,26 +31,26 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	from: @(#)newvers.sh	7.4 (Berkeley) 12/7/90
-#	$Id: newvers.sh,v 1.11 1993/12/18 04:21:35 mycroft Exp $
-#
+#	from: @(#)newvers.sh	8.1 (Berkeley) 4/20/94
+#	$Id: newvers.sh,v 1.12 1994/05/05 05:37:45 cgd Exp $
 
 if [ ! -r version ]
 then
 	echo 0 > version
-else
-	expr `cat version` + 1 > version
 fi
 
 touch version
+v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
+id=`basename ${d}`
 
-kernvers="NetBSD 0.9a"
-v=`cat version`
-t=`date`
-user=${USER-root}
-host=`hostname`
-dir=`pwd`
-ident=`basename $dir`
-(
-  echo "char version[] = \"${kernvers} ($ident) #${v}: ${t}\\n  ${user}@${host}:${dir}\\n\";"
-) > vers.c
+ost="NetBSD"
+osr="${ost} 0.9B"
+
+echo "char ostype[] = \"${ost}\";" > vers.c
+echo "char osrelease[] = \"${osr}\";" >> vers.c
+echo "char sccs[4] = { '@', '(', '#', ')' };" >> vers.c
+echo \
+  "char version[] = \"${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
+  >> vers.c
+
+echo `expr ${v} + 1` > version

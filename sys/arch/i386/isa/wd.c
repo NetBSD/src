@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.80 1994/04/25 03:16:03 mycroft Exp $
+ *	$Id: wd.c,v 1.81 1994/05/05 05:37:05 cgd Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -165,9 +165,9 @@ static int wdsetctlr __P((struct wd_softc *));
 static int wdgetctlr __P((struct wd_softc *));
 static void bad144intern __P((struct wd_softc *));
 static int wdcreset __P((struct wdc_softc *));
-static void wdcrestart __P((struct wdc_softc *));
+static void wdcrestart __P((void *arg));
 static void wdcunwedge __P((struct wdc_softc *));
-static void wdctimeout __P((struct wdc_softc *));
+static void wdctimeout __P((void *arg));
 void wddisksort __P((struct buf *, struct buf *));
 static void wderror __P((void *, struct buf *, char *));
 int wdcwait __P((struct wdc_softc *, int));
@@ -1484,9 +1484,10 @@ wdcreset(wdc)
 }
 
 static void
-wdcrestart(wdc)
-	struct wdc_softc *wdc;
+wdcrestart(arg)
+	void *arg;
 {
+	struct wdc_softc *wdc = (struct wdc_softc *)arg;
 	int s = splbio();
 
 	wdcstart(wdc);
@@ -1522,7 +1523,7 @@ wdcunwedge(wdc)
 	++wdc->sc_errors;
 
 	/* Wake up in a little bit and restart the operation. */
-	timeout((timeout_t)wdcrestart, (caddr_t)wdc, RECOVERYTIME);
+	timeout(wdcrestart, (caddr_t)wdc, RECOVERYTIME);
 }
 
 int
@@ -1553,16 +1554,17 @@ wdcwait(wdc, mask)
 }
 
 static void
-wdctimeout(wdc)
-	struct wdc_softc *wdc;
+wdctimeout(arg)
+	void *arg;
 {
+	struct wdc_softc *wdc = (struct wdc_softc *)arg;
 	int s = splbio();
 
 	if (wdc->sc_timeout && --wdc->sc_timeout == 0) {
 		wderror(wdc, NULL, "lost interrupt");
 		wdcunwedge(wdc);
 	}
-	timeout((timeout_t)wdctimeout, (caddr_t)wdc, hz);
+	timeout(wdctimeout, (caddr_t)wdc, hz);
 	splx(s);
 }
 

@@ -83,9 +83,9 @@ main()
 	def("PDSHIFT", PDSHIFT);
 
 	def("P_ADDR", &p->p_addr);
-	def("P_LINK", &p->p_link);
-	def("P_PRI", &p->p_pri);
-	def("P_RLINK", &p->p_rlink);
+	def("P_BACK", &p->p_back);
+	def("P_FORW", &p->p_forw);
+	def("P_PRIORITY", &p->p_priority);
 	def("P_STAT", &p->p_stat);
 	def("P_WCHAN", &p->p_wchan);
 	def("P_VMSPACE", &p->p_vmspace);

@@ -76,7 +76,7 @@ cpu_fork(p1, p2)
 
 	/* Copy the pcb. */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	p2->p_regs = p1->p_regs;
+	p2->p_md.md_regs = p1->p_md.md_regs;
 
 	/*
 	 * Wire top of address space of child to it's kstack.

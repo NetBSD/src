@@ -1,7 +1,7 @@
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
  *
- *	$Id: math_emulate.c,v 1.8 1994/05/03 20:51:15 mycroft Exp $
+ *	$Id: math_emulate.c,v 1.9 1994/05/05 05:35:51 cgd Exp $
  */
 
 /*
@@ -529,7 +529,7 @@ static int __regoffset[] = {
 	tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI
 };
 
-#define REG(x) (curproc->p_regs[__regoffset[(x)]])
+#define REG(x) (curproc->p_md.md_regs[__regoffset[(x)]])
 
 static char * sib(struct trapframe * info, int mod)
 {

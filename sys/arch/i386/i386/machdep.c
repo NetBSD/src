@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.101 1994/04/21 07:45:53 cgd Exp $
+ *	$Id: machdep.c,v 1.102 1994/05/05 05:35:48 cgd Exp $
  */
 
 #include <stddef.h>
@@ -405,15 +405,15 @@ sendsig(catcher, sig, mask, code)
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
-	tf = (struct trapframe *)p->p_regs;
-	oonstack = ps->ps_onstack;
+	tf = (struct trapframe *)p->p_md.md_regs;
+	oonstack = ps->ps_sigstk.ss_onstack;
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp
 				- sizeof(struct sigframe));
-		ps->ps_onstack = 1;
+		ps->ps_sigstk.ss_onstack = 1;
 	} else {
 		fp = (struct sigframe *)tf->tf_esp - 1;
 	}
@@ -532,7 +532,7 @@ sigreturn(p, uap, retval)
 	register struct trapframe *tf;
 	int eflags;
 
-	tf = (struct trapframe *)p->p_regs;
+	tf = (struct trapframe *)p->p_md.md_regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -568,7 +568,7 @@ sigreturn(p, uap, retval)
 		return(EINVAL);
 	}
 
-	p->p_sigacts->ps_onstack = context.sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = context.sc_onstack & 01;
 	p->p_sigmask = context.sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
 
@@ -757,7 +757,7 @@ setregs(p, entry, stack, retval)
 {
 	register struct trapframe *tf;
 
-	tf = (struct trapframe *)p->p_regs;
+	tf = (struct trapframe *)p->p_md.md_regs;
 	tf->tf_ebp = 0;	/* bottom of the fp chain */
 	tf->tf_eip = entry;
 	tf->tf_esp = stack;
@@ -957,6 +957,7 @@ init386(first_avail)
 	extern char sigcode[], esigcode[];
 	/* table descriptors - used to load tables by microp */
 	struct region_descriptor r_gdt, r_idt;
+	void consinit __P((void));
 
 	proc0.p_addr = proc0paddr;
 

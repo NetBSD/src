@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.11 1994/04/07 06:51:04 mycroft Exp $
+ *	$Id: mms.c,v 1.12 1994/05/05 05:36:45 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -248,7 +248,7 @@ mmsioctl(dev, cmd, addr, flag)
 		/* Reset historical information. */
 		sc->sc_x = sc->sc_y = 0;
 		sc->sc_status &= ~BUTCHNGMASK;
-		flushq(&sc->sc_q);
+		ndflush(&sc->sc_q, sc->sc_q.c_cc);
 
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));

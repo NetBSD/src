@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.19 1994/04/15 20:49:29 cgd Exp $
+ *	$Id: procfs_vnops.c,v 1.20 1994/05/05 05:39:17 cgd Exp $
  */
 
 /*
@@ -757,7 +757,7 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 					dp->d_namlen = sprintf(dp->d_name, "%ld", (long) p->p_pid);
 				}
 
-				p = p->p_nxt;
+				p = p->p_next;
 
 #ifdef PROCFS_ZOMBIE
 				if (p == 0 && doingzomb == 0) {

@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.13 1994/04/22 22:59:02 mycroft Exp $
+ *	$Id: wt.c,v 1.14 1994/05/05 05:37:09 cgd Exp $
  */
 
 /*
@@ -153,7 +153,7 @@ int wtwait __P((struct wt_softc *sc, int catch, char *msg));
 int wtcmd __P((struct wt_softc *sc, int cmd));
 int wtstart __P((struct wt_softc *sc, int flag, void *vaddr, size_t len));
 void wtdma __P((struct wt_softc *sc));
-void wttimer __P((struct wt_softc *sc));
+void wttimer __P((void *arg));
 void wtclock __P((struct wt_softc *sc));
 int wtreset __P((struct wt_softc *sc));
 int wtsense __P((struct wt_softc *sc, int verbose, int ignore));
@@ -880,7 +880,7 @@ wtclock(sc)
 	 * Some controllers seem to lose dma interrupts too often.  To make the
 	 * tape stream we need 1 tick timeout.
 	 */
-	timeout((timeout_t)wttimer, (caddr_t)sc, (sc->flags & TPACTIVE) ? 1 : hz);
+	timeout(wttimer, (caddr_t)sc, (sc->flags & TPACTIVE) ? 1 : hz);
 }
 
 /*
@@ -889,9 +889,10 @@ wtclock(sc)
  * multiple devices on a single IRQ line.
  */
 void
-wttimer(sc)
-	struct wt_softc *sc;
+wttimer(arg)
+	void *arg;
 {
+	struct wt_softc *sc = (struct wt_softc *)arg;
 	int s;
 
 	sc->flags &= ~TPTIMER;

@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.29 1994/05/03 20:53:54 mycroft Exp $
+ *	$Id: aha1542.c,v 1.30 1994/05/05 05:36:20 cgd Exp $
  */
 
 /*
@@ -335,7 +335,7 @@ int aha_scsi_cmd __P((struct scsi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsi_xfer *, struct aha_ccb *));
 int aha_set_bus_speed __P((struct aha_softc *));
 int aha_bus_speed_check __P((struct aha_softc *, int));
-void aha_timeout __P((caddr_t));
+void aha_timeout __P((void *arg));
 
 struct scsi_adapter aha_switch = {
 	aha_scsi_cmd,
@@ -703,7 +703,7 @@ ahaintr(aha)
 #endif /*AHADEBUG */
 			}
 			if (ccb) {
-				untimeout((timeout_t)aha_timeout, ccb);
+				untimeout(aha_timeout, ccb);
 				aha_done(aha, ccb);
 			}
 			aha->aha_mbx.mbi[i].stat = AHA_MBI_FREE;
@@ -1207,7 +1207,7 @@ aha_scsi_cmd(xs)
 		bcopy(xs->cmd, &ccb->scsi_cmd, ccb->scsi_cmd_length);
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();	/* stop instant timeouts */
-		timeout((timeout_t)aha_timeout, ccb, (xs->timeout * hz) / 1000);
+		timeout(aha_timeout, ccb, (xs->timeout * hz) / 1000);
 		aha_startmbx(ccb->mbx);
 		/*
 		 * Usually return SUCCESSFULLY QUEUED
@@ -1264,7 +1264,7 @@ aha_poll(aha, xs, ccb)
 		 * because we are polling, take out the timeout entry
 		 * aha_timeout made
 		 */
-		untimeout((timeout_t)aha_timeout, ccb);
+		untimeout(aha_timeout, ccb);
 		count = 2000;
 		while (count) {
 			/*
@@ -1404,10 +1404,10 @@ aha_bus_speed_check(aha, speed)
 
 void
 aha_timeout(arg)
-	caddr_t arg;
+	void *arg;
 {
 	int s = splbio();
-	struct aha_ccb *ccb = (void *)arg;
+	struct aha_ccb *ccb = (struct aha_ccb *)arg;
 	struct aha_softc *aha;
 
 	aha = ccb->xfer->sc_link->adapter_softc;
@@ -1439,7 +1439,7 @@ aha_timeout(arg)
 		printf("\n");
 		aha_abortmbx(ccb->mbx);
 		/* 4 secs for the abort */
-		timeout((timeout_t)aha_timeout, ccb, 2 * hz);
+		timeout(aha_timeout, ccb, 2 * hz);
 		ccb->flags = CCB_ABORTED;
 	}
 	splx(s);

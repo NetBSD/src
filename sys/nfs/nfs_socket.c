@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.11 1994/04/10 06:45:59 cgd Exp $
+ *	$Id: nfs_socket.c,v 1.12 1994/05/05 05:39:46 cgd Exp $
  */
 
 /*
@@ -1320,7 +1320,8 @@ nfs_backofftimer(nmp)
 nfs_sigintr(p)
 	register struct proc *p;
 {
-	if (p && p->p_sig && (((p->p_sig &~ p->p_sigmask) &~ p->p_sigignore) &
+	if (p && p->p_siglist &&
+	    (((p->p_siglist &~ p->p_sigmask) &~ p->p_sigignore) &
 	    NFSINT_SIGMASK))
 		return (1);
 	else

@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.6 1994/05/04 03:41:12 cgd Exp $
+ *	$Id: process_machdep.c,v 1.7 1994/05/05 05:35:53 cgd Exp $
  */
 
 /*
@@ -89,7 +89,7 @@ process_read_regs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
 
 	tp = ptr;
 	regs->r_es = tp->tf_es;
@@ -122,7 +122,7 @@ process_write_regs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *)p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	ptr = (char *)p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
 	tp = ptr;
 
 	eflags = regs->r_eflags;
@@ -159,7 +159,7 @@ process_sstep(p, sstep)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
 
 	tp = ptr;
 	if (sstep)
@@ -188,7 +188,7 @@ process_set_pc(p, addr)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
 
 	tp = ptr;
 	tp->tf_eip = addr;

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.63 1994/04/24 01:34:14 mycroft Exp $
+ *	$Id: pccons.c,v 1.64 1994/05/05 05:36:53 cgd Exp $
  */
 
 /*
@@ -304,13 +304,13 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout((timeout_t)do_async_update, 0);
+			untimeout(do_async_update, 0);
 		do_async_update(1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout((timeout_t)do_async_update, 0, 1);
+		timeout(do_async_update, 0, 1);
 	}
 }
 
@@ -608,7 +608,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
+		timeout(ttrstrt, (caddr_t)tp, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -1548,7 +1548,7 @@ pc_xmode_on()
 		return;
 	pc_xmode = 1;
 
-	fp = (struct trapframe *)curproc->p_regs;
+	fp = (struct trapframe *)curproc->p_md.md_regs;
 	fp->tf_eflags |= PSL_IOPL;
 }
 
@@ -1566,6 +1566,6 @@ pc_xmode_off()
 #endif
 	async_update();
 
-	fp = (struct trapframe *)curproc->p_regs;
+	fp = (struct trapframe *)curproc->p_md.md_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
 }
