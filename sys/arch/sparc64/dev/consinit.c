@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2000/03/06 21:36:11 thorpej Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3 2000/04/13 09:54:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -59,7 +59,6 @@
 #include <dev/cons.h>
 
 #include <sparc64/sparc64/vaddrs.h>
-#include <sparc64/sparc64/auxreg.h>
 #include <sparc64/dev/cons.h>
 
 
