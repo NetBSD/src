@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_ether.c,v 1.6 1994/01/08 21:21:29 mycroft Exp $
+ *	$Id: if_ether.c,v 1.7 1994/01/23 23:42:50 deraadt Exp $
  */
 
 /*
@@ -143,7 +143,7 @@ arpwhohas(ac, addr)
 	bzero((caddr_t)ea, sizeof (*ea));
 	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
 	    sizeof(eh->ether_dhost));
-	eh->ether_type = ETHERTYPE_ARP;		/* if_output will swap */
+	eh->ether_type = htons(ETHERTYPE_ARP);
 	ea->arp_hrd = htons(ARPHRD_ETHER);
 	ea->arp_pro = htons(ETHERTYPE_IP);
 	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
@@ -457,7 +457,7 @@ reply:
 	eh = (struct ether_header *)sa.sa_data;
 	bcopy((caddr_t)ea->arp_tha, (caddr_t)eh->ether_dhost,
 	    sizeof(eh->ether_dhost));
-	eh->ether_type = ETHERTYPE_ARP;
+	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);
 	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *)0);
