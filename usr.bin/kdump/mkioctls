@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkioctls,v 1.9 1997/07/23 05:51:08 mikel Exp $
+#	$NetBSD: mkioctls,v 1.10 1997/10/19 03:38:30 lukem Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,8 @@ BEGIN {
 	print "#include <sys/termios.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
+	print ""
+	print "char *ioctlname __P((long));"
 	print ""
 	print "char *"
 	print "ioctlname(val)"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.5 1997/07/23 05:47:45 mikel Exp $
+.\"	$NetBSD: kdump.1,v 1.6 1997/10/19 03:38:27 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm kdump
 .Nd display kernel trace data
 .Sh SYNOPSIS
-.Nm kdump
+.Nm
 .Op Fl dnlRT
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
 .Op Fl t Op cenis
 .Sh DESCRIPTION
-.Nm Kdump
+.Nm
 displays the kernel trace files produced with
 .Xr ktrace 1
 in human readable format.
@@ -75,7 +75,7 @@ bytes when decoding
 .It Fl n
 Suppress ad hoc translations.
 Normally
-.Nm kdump
+.Nm
 tries to decode many system calls into a more human readable format.
 For example,
 .Xr ioctl 2
@@ -100,6 +100,6 @@ option of
 .Xr ktrace 1
 .Sh HISTORY
 The
-.Nm kdump
+.Nm
 command appears in
 .Bx 4.4 .
