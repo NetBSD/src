@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.69.2.1 1999/10/19 17:39:32 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.69.2.2 1999/10/20 22:46:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ scsi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
  */
 
 /*
- * Print out the scsi_link structure's address info.
+ * Print out the periph's address info.
  */
 void
 scsi_print_addr(periph)
@@ -146,4 +146,21 @@ scsi_print_addr(periph)
 	    adapt->adapt_dev->dv_xname,
 	    chan->chan_channel, periph->periph_target,
 	    periph->periph_lun);
+}
+
+/*
+ * Kill off all pending xfers for a periph.
+ *
+ * Must be called at splbio().
+ */
+void
+scsi_kill_pending(periph)
+	struct scsipi_periph *periph;
+{
+	struct scsipi_xfer *xs;
+
+	while ((xs = TAILQ_FIRST(&periph->periph_xferq)) != NULL) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsipi_done(xs);
+	}
 }

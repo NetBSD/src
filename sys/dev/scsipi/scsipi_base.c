@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.3 1999/10/20 20:38:14 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.4 1999/10/20 22:50:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -582,12 +582,12 @@ void
 scsipi_kill_pending(periph)
 	struct scsipi_periph *periph;
 {
-	struct scsipi_xfer *xs;
 
-	while ((xs = TAILQ_FIRST(&periph->periph_xferq)) != NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		scsipi_done(xs);
-	}
+	(*periph->periph_channel->chan_bustype->bustype_kill_pending)(periph);
+#ifdef DIAGNOSTIC
+	if (TAILQ_FIRST(&periph->periph_xferq) != NULL)
+		panic("scsipi_kill_pending");
+#endif
 }
 
 /*
@@ -938,7 +938,7 @@ scsipi_start(periph, type, flags)
 
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, (type & SSS_START) ? 30000 : 10000, NULL, flags));
+	    0, 0, 2, (type & SSS_START) ? 60000 : 10000, NULL, flags));
 }
 
 /*

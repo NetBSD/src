@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.7.12.1 1999/10/19 17:39:27 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.7.12.2 1999/10/20 22:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -53,3 +53,4 @@ int	atapi_mode_select __P((struct scsipi_periph *,
 	    struct atapi_mode_header *, int, int, int, int));
 int	atapi_mode_sense __P((struct scsipi_periph *, int,
 	    struct atapi_mode_header *, int, int, int, int));
+void	atapi_kill_pending __P((struct scsipi_periph *));
