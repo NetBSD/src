@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.16 1998/09/21 00:33:16 matt Exp $ */
+/* $NetBSD: intr.h,v 1.17 1998/09/25 22:06:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
+
 #ifdef	_KERNEL
 
 /* IPL-lowering/restoring macros */
@@ -133,5 +134,5 @@ void	alpha_shared_intr_set_maxstrays __P((struct alpha_shared_intr *,
 void	alpha_shared_intr_stray __P((struct alpha_shared_intr *, unsigned int,
 	    const char *));
 
-#endif
-#endif
+#endif /* _KERNEL */
+#endif /* ! _ALPHA_INTR_H_ */
