@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_mem.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_mem.c,v 1.1 1994/01/05 07:51:18 cgd Exp $
+ *	$Id: procfs_mem.c,v 1.2 1994/01/05 08:00:05 cgd Exp $
  */
 
 /*
@@ -152,7 +152,7 @@ pfs_rwmem(p, uio)
 		 */
 		if (!error && writing && object->shadow) {
 			m = vm_page_lookup(object, off);
-			if (m == 0 || m->copy_on_write)
+			if (m == 0 || (m->flags & PG_COW))
 				error = vm_fault(map, pageno,
 							VM_PROT_WRITE, FALSE);
 		}
