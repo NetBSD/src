@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1996/07/14 04:22:12 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 1996/07/14 04:36:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -723,7 +723,7 @@ unaligned_fixup(va, opcode, reg, p)
 	 * If we're supposed to be noisy, squawk now.
 	 */
 	if (doprint) {
-		uprintf("pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx type=%:\n",
+		uprintf("pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=%:\n",
 		    p->p_pid, p->p_comm, va, p->p_md.md_tf->tf_regs[FRAME_PC],
 		    p->p_md.md_tf->tf_regs[FRAME_PC], type, opcode);
 	}
