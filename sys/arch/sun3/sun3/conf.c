@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46 1996/01/24 22:40:58 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.47 1996/02/04 06:06:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -125,7 +125,7 @@ cdev_decl(ctty);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 
-#include "zs.h"
+#define NZS 2 /* XXX: temporary hack */
 cdev_decl(zs);
 cdev_decl(kd);
 cdev_decl(ms);
