@@ -1,7 +1,6 @@
-#	@(#)Makefile	5.24 (Berkeley) 7/1/91
-#
-#	$Header: /cvsroot/src/bin/csh/Makefile,v 1.4 1993/05/26 19:05:47 proven Exp $
-#
+#	from: @(#)Makefile	5.24 (Berkeley) 7/1/91
+#	$Id: Makefile,v 1.5 1993/08/01 05:47:53 mycroft Exp $
+
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
 #
