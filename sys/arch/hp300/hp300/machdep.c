@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1996/10/06 00:14:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 1996/10/11 00:11:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -230,9 +230,9 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	kprintf(version);
 	identifycpu();
-	printf("real mem = %d\n", ctob(physmem));
+	kprintf("real mem = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate space for system data structures.
@@ -411,8 +411,8 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
-	printf("using %d buffers containing %d bytes of memory\n",
+	kprintf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	kprintf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -542,12 +542,12 @@ identifycpu()
 		t = "433 (33MHz";
 		break;
 	default:
-		printf("\nunknown machine type %d\n", machineid);
+		kprintf("\nunknown machine type %d\n", machineid);
 		panic("startup");
 	}
 	mc = (mmutype == MMU_68040 ? "40" :
 	       (mmutype == MMU_68030 ? "30" : "20"));
-	sprintf(cpu_model, "HP9000/%s MC680%s CPU", t, mc);
+	ksprintf(cpu_model, "HP9000/%s MC680%s CPU", t, mc);
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
@@ -560,34 +560,34 @@ identifycpu()
 		strcat(cpu_model, ", HP MMU");
 		break;
 	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+		kprintf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
 		panic("startup");
 	}
 	len = strlen(cpu_model);
 	if (mmutype == MMU_68040)
-		len += sprintf(cpu_model + len,
+		len += ksprintf(cpu_model + len,
 		    "+FPU, 4k on-chip physical I/D caches");
 	else if (mmutype == MMU_68030)
-		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU",
+		len += ksprintf(cpu_model + len, ", %sMHz MC68882 FPU",
 		       machineid == HP_340 ? "16.67" :
 		       (machineid == HP_360 ? "25" :
 			(machineid == HP_370 ? "33.33" : "50")));
 	else
-		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
+		len += ksprintf(cpu_model + len, ", %sMHz MC68881 FPU",
 		       machineid == HP_350 ? "20" : "16.67");
 	switch (ectype) {
 	case EC_VIRT:
-		sprintf(cpu_model + len, ", %dK virtual-address cache",
+		ksprintf(cpu_model + len, ", %dK virtual-address cache",
 		       machineid == HP_320 ? 16 : 32);
 		break;
 	case EC_PHYS:
-		sprintf(cpu_model + len, ", %dK physical-address cache",
+		ksprintf(cpu_model + len, ", %dK physical-address cache",
 		       machineid == HP_370 ? 64 : 32);
 		break;
 	}
 	strcat(cpu_model, ")");
-	printf("%s\n", cpu_model);
-	printf("delay constant for this cpu: %d\n", delay_divisor);
+	kprintf("%s\n", cpu_model);
+	kprintf("delay constant for this cpu: %d\n", delay_divisor);
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -803,13 +803,13 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		kprintf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
+			kprintf("sendsig(%d): useracc failed on sig %d\n",
 			       p->p_pid, sig);
 #endif
 		/*
@@ -865,7 +865,7 @@ sendsig(catcher, sig, mask, code)
 		frame->f_format = frame->f_vector = 0;
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
-			printf("sendsig(%d): copy out %d of frame %d\n",
+			kprintf("sendsig(%d): copy out %d of frame %d\n",
 			       p->p_pid, exframesize[ft], ft);
 #endif
 	}
@@ -874,7 +874,7 @@ sendsig(catcher, sig, mask, code)
 	m68881_save(&kfp->sf_state.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
+		kprintf("sendsig(%d): copy out FP state (%x) to %x\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
@@ -923,7 +923,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		kprintf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
 		       p->p_pid, sig, kfp->sf_scp, fp,
 		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -933,7 +933,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
+		kprintf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 	free((caddr_t)kfp, M_TEMP);
@@ -969,7 +969,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
@@ -1053,7 +1053,7 @@ sys_sigreturn(p, v, retval)
 	flags = fuword((caddr_t)rf);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): sc_ap %x flags %x\n",
+		kprintf("sigreturn(%d): sc_ap %x flags %x\n",
 		       p->p_pid, rf, flags);
 #endif
 	/*
@@ -1065,7 +1065,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		kprintf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -1094,7 +1094,7 @@ sys_sigreturn(p, v, retval)
 		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
-			printf("sigreturn(%d): copy in %d of frame type %d\n",
+			kprintf("sigreturn(%d): copy in %d of frame type %d\n",
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
@@ -1106,7 +1106,7 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		kprintf("sigreturn(%d): copied in FP state (%x) at %x\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
 #endif
@@ -1114,7 +1114,7 @@ sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sigreturn(%d): returns\n", p->p_pid);
+		kprintf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }
@@ -1162,20 +1162,20 @@ boot(howto, bootstr)
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
+		kprintf("hit any key to reboot...\n");
 		(void)cngetc();
-		printf("\n");
+		kprintf("\n");
 	}
 #endif
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
+		kprintf("System halted.\n\n");
 		asm("	stop	#0x2700");
 		/* NOTREACHED */
 	}
 
-	printf("rebooting...\n");
+	kprintf("rebooting...\n");
 	DELAY(1000000);
 	doboot();
 	/*NOTREACHED*/
@@ -1258,15 +1258,15 @@ dumpsys()
 	dump = bdevsw[major(dumpdev)].d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
+	kprintf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
 
-	printf("dump ");
+	kprintf("dump ");
 	maddr = lowram;
 	for (pg = 0; pg < dumpsize; pg++) {
 #define NPGMB	(1024*1024/NBPG)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			kprintf("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, TRUE);
@@ -1279,31 +1279,31 @@ dumpsys()
 			break;
 
 		case ENXIO:
-			printf("device bad\n");
+			kprintf("device bad\n");
 			return;
 
 		case EFAULT:
-			printf("device not ready\n");
+			kprintf("device not ready\n");
 			return;
 
 		case EINVAL:
-			printf("area improper\n");
+			kprintf("area improper\n");
 			return;
 
 		case EIO:
-			printf("i/o error\n");
+			kprintf("i/o error\n");
 			return;
 
 		case EINTR:
-			printf("aborted from console\n");
+			kprintf("aborted from console\n");
 			return;
 
 		default:
-			printf("error %d\n", error);
+			kprintf("error %d\n", error);
 			return;
 		}
 	}
-	printf("succeeded\n");
+	kprintf("succeeded\n");
 }
 
 void
@@ -1335,7 +1335,7 @@ straytrap(pc, evec)
 	int pc;
 	u_short evec;
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
+	kprintf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
 }
 
@@ -1414,7 +1414,7 @@ nmihand(frame)
 
 	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
-		printf("Got a keyboard NMI");
+		kprintf("Got a keyboard NMI");
 
 		/*
 		 * We can:
@@ -1426,24 +1426,24 @@ nmihand(frame)
 		 *	- Ignore it.
 		 */
 #ifdef DDB
-		printf(": entering debugger\n");
+		kprintf(": entering debugger\n");
 		Debugger();
 #else
 #ifdef PANICBUTTON
 		if (panicbutton) {
 			if (crashandburn) {
 				crashandburn = 0;
-				printf(": CRASH AND BURN!\n");
+				kprintf(": CRASH AND BURN!\n");
 				panic("forced crash");
 			} else {
 				/* Start the crashandburn sequence */
-				printf("\n");
+				kprintf("\n");
 				crashandburn = 1;
 				timeout(candbtimer, NULL, hz / candbdiv);
 			}
 		} else
 #endif /* PANICBUTTON */
-			printf(": ignoring\n");
+			kprintf(": ignoring\n");
 #endif /* DDB */
 
 		goto nmihand_out;	/* no more work to do */
@@ -1452,7 +1452,7 @@ nmihand(frame)
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
-	printf("unexpected level 7 interrupt ignored\n");
+	kprintf("unexpected level 7 interrupt ignored\n");
 
  nmihand_out:
 	innmihand = 0;
@@ -1478,13 +1478,13 @@ parityenable()
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		printf("No parity memory\n");
+		kprintf("No parity memory\n");
 		return;
 	}
 	*PARREG = 1;
 	nofault = (int *) 0;
 	gotparmem = 1;
-	printf("Parity detection enabled\n");
+	kprintf("Parity detection enabled\n");
 }
 
 /*
@@ -1501,19 +1501,19 @@ parityerror(fp)
 	DELAY(10);
 	*PARREG = 1;
 	if (panicstr) {
-		printf("parity error after panic ignored\n");
+		kprintf("parity error after panic ignored\n");
 		return(1);
 	}
 	if (!parityerrorfind())
-		printf("WARNING: transient parity error ignored\n");
+		kprintf("WARNING: transient parity error ignored\n");
 	else if (USERMODE(fp->f_sr)) {
-		printf("pid %d: parity error\n", curproc->p_pid);
+		kprintf("pid %d: parity error\n", curproc->p_pid);
 		uprintf("sorry, pid %d killed due to memory parity error\n",
 			curproc->p_pid);
 		psignal(curproc, SIGKILL);
 #ifdef DEBUG
 	} else if (ignorekperr) {
-		printf("WARNING: kernel parity error ignored\n");
+		kprintf("WARNING: kernel parity error ignored\n");
 #endif
 	} else {
 		regdump(fp, 128);
@@ -1552,7 +1552,7 @@ parityerrorfind()
 	 * for has just occured (longjmp above) at the current pg+o
 	 */
 	if (setjmp(&parcatch)) {
-		printf("Parity error at 0x%x\n", ctob(pg)|o);
+		kprintf("Parity error at 0x%x\n", ctob(pg)|o);
 		found = 1;
 		goto done;
 	}
@@ -1575,7 +1575,7 @@ parityerrorfind()
 	/*
 	 * Getting here implies no fault was found.  Should never happen.
 	 */
-	printf("Couldn't locate parity error\n");
+	kprintf("Couldn't locate parity error\n");
 	found = 0;
 done:
 	looking = 0;
@@ -1598,27 +1598,27 @@ regdump(fp, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ",
+	kprintf("pid = %d, pc = %s, ",
 	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
-	printf("ps = %s, ", hexstr(fp->f_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
+	kprintf("ps = %s, ", hexstr(fp->f_sr, 4));
+	kprintf("sfc = %s, ", hexstr(getsfc(), 4));
+	kprintf("dfc = %s\n", hexstr(getdfc(), 4));
+	kprintf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
+		kprintf("        %d", i);
+	kprintf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i], 8));
-	printf("\nareg:");
+		kprintf(" %s", hexstr(fp->f_regs[i], 8));
+	kprintf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
+		kprintf(" %s", hexstr(fp->f_regs[i+8], 8));
 	if (sbytes > 0) {
 		if (fp->f_sr & PSL_S) {
-			printf("\n\nKernel stack (%s):",
+			kprintf("\n\nKernel stack (%s):",
 			       hexstr((int)(((int *)&fp)-1), 8));
 			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
+			kprintf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
 			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
 		}
 	}
@@ -1637,9 +1637,9 @@ dumpmem(ptr, sz, ustack)
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
+			kprintf("\n%s: ", hexstr((int)ptr, 6));
 		else
-			printf(" ");
+			kprintf(" ");
 		if (ustack == 1) {
 			if ((val = fuword(ptr++)) == -1)
 				break;
@@ -1649,9 +1649,9 @@ dumpmem(ptr, sz, ustack)
 				break;
 			val = *ptr++;
 		}
-		printf("%s", hexstr(val, 8));
+		kprintf("%s", hexstr(val, 8));
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 char *

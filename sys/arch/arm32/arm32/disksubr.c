@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.3 1996/05/06 00:57:10 mark Exp $ */
+/* $NetBSD: disksubr.c,v 1.4 1996/10/11 00:06:39 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -120,7 +120,7 @@ readdisklabel(dev, strat, lp, osdep)
 	char *msg = NULL;
 	int cyl, riscbsdpartoff, i;
 
-/*	printf("Reading disclabel for %04x\n", dev);*/
+/*	kprintf("Reading disclabel for %04x\n", dev);*/
 
 /* minimal requirements for archtypal disk label */
 
@@ -164,7 +164,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 /* read the filecore boot block */
 
-/*		printf("readdisclabel: Reading boot block\n");*/
+/*		kprintf("readdisclabel: Reading boot block\n");*/
 
 		bp->b_blkno = FILECORE_BOOT_SECTOR;
 		bp->b_bcount = lp->d_secsize;
@@ -187,7 +187,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 /* Invalid boot block so lets assume the entire disc is RiscBSD */
 
-/*			printf("readdisklabel: Invalid filecore boot block (incorrect checksum)\n");*/
+/*			kprintf("readdisklabel: Invalid filecore boot block (incorrect checksum)\n");*/
 			goto readlabel;
 		}
 
@@ -201,7 +201,7 @@ readdisklabel(dev, strat, lp, osdep)
 /* Do we have a RiscBSD partition table ? */
 
 		if (bb->partition_type == PARTITION_FORMAT_RISCBSD) {
-/*			printf("heads = %d nsectors = %d\n", heads, sectors);*/
+/*			kprintf("heads = %d nsectors = %d\n", heads, sectors);*/
 
 			riscbsdpartoff = cyl * heads * sectors;
 		} else if (bb->partition_type == PARTITION_FORMAT_RISCIX) {
@@ -213,7 +213,7 @@ readdisklabel(dev, strat, lp, osdep)
 /* Ok read the RISCiX partition table and see if there is a RiscBSD partition */
 
 			bp->b_blkno = cyl * heads * sectors;
-			printf("Found RiscIX partition table @ %08x\n", bp->b_blkno);
+			kprintf("Found RiscIX partition table @ %08x\n", bp->b_blkno);
 			bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 			bp->b_bcount = lp->d_secsize;
 			bp->b_flags = B_BUSY | B_READ;
@@ -228,7 +228,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 			rpt = (struct riscix_partition_table *)bp->b_data;
 /*			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop)
-				printf("p%d: %16s %08x %08x %08x\n", loop,
+				kprintf("p%d: %16s %08x %08x %08x\n", loop,
 				    rpt->partitions[loop].rp_name,
 				    rpt->partitions[loop].rp_start,
 				    rpt->partitions[loop].rp_length,
@@ -254,7 +254,7 @@ readdisklabel(dev, strat, lp, osdep)
 /* next, dig out disk label */
 
 readlabel:
-/*	printf("Reading disklabel addr=%08x\n", riscbsdpartoff * DEV_BSIZE);*/
+/*	kprintf("Reading disklabel addr=%08x\n", riscbsdpartoff * DEV_BSIZE);*/
   
 	bp->b_blkno = riscbsdpartoff + LABELSECTOR;
 	bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
@@ -425,7 +425,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 /* read the filecore boot block */
 
-		printf("writedisklabel: Reading boot block\n");
+		kprintf("writedisklabel: Reading boot block\n");
 
 		bp->b_blkno = FILECORE_BOOT_SECTOR;
 		bp->b_bcount = lp->d_secsize;
@@ -436,7 +436,7 @@ writedisklabel(dev, strat, lp, osdep)
 /* if successful, validate boot block and locate parition table */
 
 		if (biowait(bp)) {
-			printf("writedisklabel: filecore boot block I/O error\n");
+			kprintf("writedisklabel: filecore boot block I/O error\n");
 			goto done;
 		}
 
@@ -447,14 +447,14 @@ writedisklabel(dev, strat, lp, osdep)
 		if (bb->checksum != filecore_checksum((u_char *)bb)) {
 /* Invalid boot block so lets assume the entire disc is RiscBSD */
 
-			printf("writedisklabel: Invalid filecore boot block (incorrect checksum)\n");
+			kprintf("writedisklabel: Invalid filecore boot block (incorrect checksum)\n");
 			goto writelabel;
 		}
 
 /* Do we have a RiscBSD partition ? */
 
 		if (bb->partition_type != PARTITION_FORMAT_RISCBSD) {
-			printf("writedisklabel: Invalid partition format\n");
+			kprintf("writedisklabel: Invalid partition format\n");
 			goto done;
 		}
 
@@ -463,14 +463,14 @@ writedisklabel(dev, strat, lp, osdep)
 		heads = bb->heads;
 		sectors = bb->secspertrack;
                         
-		/*printf("heads = %d nsectors = %d\n", heads, sectors);*/
+		/*kprintf("heads = %d nsectors = %d\n", heads, sectors);*/
 
 		riscbsdpartoff = cyl * heads * sectors;
 	}
 
 writelabel:
 
-/*	printf("writedisklabel: Reading disklabel addr=%08x\n", riscbsdpartoff * DEV_BSIZE);*/
+/*	kprintf("writedisklabel: Reading disklabel addr=%08x\n", riscbsdpartoff * DEV_BSIZE);*/
 
 /* next, dig out disk label */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.5 1996/08/29 22:25:26 mark Exp $ */
+/* $NetBSD: db_disasm.c,v 1.6 1996/10/11 00:06:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -494,39 +494,39 @@ db_insn_ldrstr(insn, loc)
 
 u_int instruction_msrf(u_int addr, u_int word)
   {
-    printf("MSR%s\t", opcode_condition(word));
+    kprintf("MSR%s\t", opcode_condition(word));
 
-    printf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
+    kprintf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
 
     if (word & 0x02000000)
-      printf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
+      kprintf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
     else
-      printf("r%d", word &0x0f);
+      kprintf("r%d", word &0x0f);
     return(addr);
   }
 
 
 u_int instruction_cdt(u_int addr, u_int word)
   {
-    printf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
+    kprintf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
       opcode_condition(word), (word & (1 << 22)) ? "L" : "");
 
-    printf("CP #%d, cr%d, ", (word >> 8) & 0x0f, (word >> 12) & 0x0f);
+    kprintf("CP #%d, cr%d, ", (word >> 8) & 0x0f, (word >> 12) & 0x0f);
 
-    printf("[r%d", (word >> 16) & 0x0f);
+    kprintf("[r%d", (word >> 16) & 0x0f);
 
-    printf("%s, ", (word & (1 << 24)) ? "" : "]");
+    kprintf("%s, ", (word & (1 << 24)) ? "" : "]");
 
     if (!(word & (1 << 23)))
-      printf("-");
+      kprintf("-");
 
-    printf("#0x%02x", word & 0xff);
+    kprintf("#0x%02x", word & 0xff);
 
     if (word & (1 << 24))
-      printf("]");
+      kprintf("]");
 
     if (word & (1 << 21))
-      printf("!");
+      kprintf("!");
 
     return(addr);
   }
@@ -534,23 +534,23 @@ u_int instruction_cdt(u_int addr, u_int word)
 
 u_int instruction_ldfstf(u_int addr, u_int word)
   {
-    printf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
+    kprintf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
       opcode_condition(word), (word & (1 << 22)) ? "L" : "");
 
-    printf("f%d, [r%d", (word >> 12) & 0x07, (word >> 16) & 0x0f);
+    kprintf("f%d, [r%d", (word >> 12) & 0x07, (word >> 16) & 0x0f);
 
-    printf("%s, ", (word & (1 << 24)) ? "" : "]");
+    kprintf("%s, ", (word & (1 << 24)) ? "" : "]");
 
     if (!(word & (1 << 23)))
-      printf("-");
+      kprintf("-");
 
-    printf("#0x%03x", (word & 0xff) << 2);
+    kprintf("#0x%03x", (word & 0xff) << 2);
 
     if (word & (1 << 24))
-      printf("]");
+      kprintf("]");
 
     if (word & (1 << 21))
-      printf("!");
+      kprintf("!");
 
     return(addr);
   }

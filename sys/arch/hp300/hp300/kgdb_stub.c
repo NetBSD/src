@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.4 1996/09/07 22:26:49 mycroft Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.5 1996/10/11 00:11:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.4 1996/09/07 22:26:49 mycroft Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.5 1996/10/11 00:11:48 christos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -256,11 +256,11 @@ kgdb_connect(verbose)
 {
 
 	if (verbose)
-		printf("kgdb waiting...");
+		kprintf("kgdb waiting...");
 	/* trap into kgdb */
 	asm("trap #15;");
 	if (verbose)
-		printf("connected.\n");
+		kprintf("connected.\n");
 }
 
 /*
@@ -385,11 +385,11 @@ kgdb_trap(type, frame)
 		while (GETC != FRAME_END)
 			;
 		/*
-		 * Do the printf *before* we ack the message.  This way
+		 * Do the kprintf *before* we ack the message.  This way
 		 * we won't drop any inbound characters while we're 
-		 * doing the polling printf.
+		 * doing the polling kprintf.
 		 */
-		printf("kgdb started from device %x\n", kgdb_dev);
+		kprintf("kgdb started from device %x\n", kgdb_dev);
 		kgdb_send(in | KGDB_ACK, (u_char *)0, 0);
 		kgdb_active = 1;
 	}
@@ -502,7 +502,7 @@ kgdb_trap(type, frame)
 
 		case KGDB_KILL:
 			kgdb_active = 0;
-			printf("kgdb detached\n");
+			kprintf("kgdb detached\n");
 			/* fall through */
 		case KGDB_CONT:
 			kgdb_send(out, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1996/04/26 06:59:53 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1996/10/11 00:09:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,11 +134,11 @@ void			*auxp;
 	MFP->mf_tadr  = divisor;	/* Set divisor			*/
 
 	if (hz != 48 && hz != 64 && hz != 96) { /* XXX */
-		printf (": illegal value %d for systemclock, reset to %d\n\t",
+		kprintf (": illegal value %d for systemclock, reset to %d\n\t",
 								hz, 64);
 		hz = 64;
 	}
-	printf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
+	kprintf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
 
 #ifdef STATCLOCK
 	if ((stathz == 0) || (stathz > hz) || (CLOCK_HZ % stathz))
@@ -354,7 +354,7 @@ time_t base;
 	timbuf = gettod();
   
 	if(timbuf < base) {
-		printf("WARNING: bad date in battery clock\n");
+		kprintf("WARNING: bad date in battery clock\n");
 		timbuf = base;
 	}
   
@@ -368,7 +368,7 @@ resettodr()
 {
 	if(settod(time.tv_sec) == 1)
 		return;
-	printf("Cannot set battery backed clock\n");
+	kprintf("Cannot set battery backed clock\n");
 }
 
 static	char	dmsize[12] =

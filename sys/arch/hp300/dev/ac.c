@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.4 1996/02/14 02:43:54 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.5 1996/10/11 00:11:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -190,7 +190,7 @@ acident(sc, hd, verbose)
 	scsi_str(inqbuf.rev, revision, sizeof(inqbuf.rev));
 
 	if (verbose)
-		printf(": <%s, %s, %s>\n", vendor, product, revision);
+		kprintf(": <%s, %s, %s>\n", vendor, product, revision);
 
 	scsi_delay(0);
 	return(inqbuf.type);
@@ -330,7 +330,7 @@ accommand(dev, command, bufp, buflen)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("accommand(dev=%x, cmd=%x, buf=%x, buflen=%x)\n",
+		kprintf("accommand(dev=%x, cmd=%x, buf=%x, buflen=%x)\n",
 		       dev, command, bufp, buflen);
 #endif
 	if (sc->sc_flags & ACF_ACTIVE)
@@ -391,7 +391,7 @@ acstart(unit)
 {
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acstart(unit=%x)\n", unit);
+		kprintf("acstart(unit=%x)\n", unit);
 #endif
 	if (scsiustart(ac_softc[unit].sc_hd->hp_ctlr))
 		acgo(unit);
@@ -407,13 +407,13 @@ acgo(unit)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acgo(unit=%x): ", unit);
+		kprintf("acgo(unit=%x): ", unit);
 #endif
 	stat = scsigo(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
 		      bp, sc->sc_cmd, 0);
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("scsigo returns %x\n", stat);
+		kprintf("scsigo returns %x\n", stat);
 #endif
 	if (stat) {
 		bp->b_error = EIO;
@@ -435,7 +435,7 @@ acintr(arg, stat)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acintr(unit=%x, stat=%x)\n", unit, stat);
+		kprintf("acintr(unit=%x, stat=%x)\n", unit, stat);
 #endif
 	switch (stat) {
 	case 0:
@@ -445,13 +445,13 @@ acintr(arg, stat)
 		scsi_request_sense(sc->sc_hd->hp_ctlr, sc->sc_hd->hp_slave,
 				   sc->sc_punit, sensebuf, sizeof sensebuf);
 		sp = (struct scsi_xsense *)sensebuf;
-		printf("%s: acintr sense key=%x, ac=%x, acq=%x\n",
+		kprintf("%s: acintr sense key=%x, ac=%x, acq=%x\n",
 		       sc->sc_hd->hp_xname, sp->key, sp->info4, sp->len);
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
 	default:
-		printf("%s: acintr unknown status 0x%x\n", sc->sc_hd->hp_xname,
+		kprintf("%s: acintr unknown status 0x%x\n", sc->sc_hd->hp_xname,
 		    stat);
 		break;
 	}
@@ -485,7 +485,7 @@ acgeteinfo(dev)
 			bp += 20;
 			break;
 		default:
-			printf("acgeteinfo: bad page type %x\n", bp[0]);
+			kprintf("acgeteinfo: bad page type %x\n", bp[0]);
 			return(EIO);
 		}
 	}
@@ -508,10 +508,10 @@ acconvert(sbuf, dbuf, ne)
 	sbuf += sizeof *hdr;
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("element status: first=%d, num=%d, len=%d\n",
+		kprintf("element status: first=%d, num=%d, len=%d\n",
 		       hdr->ac_felt, hdr->ac_nelt, hdr->ac_bcount);
 	if (hdr->ac_nelt != ne) {
-		printf("acconvert: # of elements, %d != %d\n",
+		kprintf("acconvert: # of elements, %d != %d\n",
 		       hdr->ac_nelt, ne);
 		if (hdr->ac_nelt < ne)
 			ne = hdr->ac_nelt;

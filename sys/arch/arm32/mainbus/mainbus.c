@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 1996/08/27 21:55:24 cgd Exp $ */
+/* $NetBSD: mainbus.c,v 1.5 1996/10/11 00:07:24 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -80,13 +80,13 @@ mainbusprint(aux, mainbus)
 	struct mainbus_attach_args *mb = aux;
 
 	if (mb->mb_iobase)
-		printf(" base 0x%x", mb->mb_iobase);
+		kprintf(" base 0x%x", mb->mb_iobase);
 	if (mb->mb_iosize > 1)
-		printf("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
+		kprintf("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
 	if (mb->mb_irq != -1)
-		printf(" irq %d", mb->mb_irq);
+		kprintf(" irq %d", mb->mb_irq);
 	if (mb->mb_drq != -1)
-		printf(" drq 0x%08x", mb->mb_drq);
+		kprintf(" drq 0x%08x", mb->mb_drq);
 
 /* XXXX print flags */
 	return (QUIET);
@@ -128,7 +128,7 @@ mainbusattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf("\n");
+	kprintf("\n");
 
 	config_scan(mainbusscan, self);
 }

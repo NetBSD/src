@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4 1996/06/10 15:33:36 cgd Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5 1996/10/11 00:08:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@ lowinit()
 	 * Routines called from interrupt vectors.
 	 */
 	panic("Machine check");
-	printf("Write timeout");
+	kprintf("Write timeout");
 	hilint();
 	if (dmaintr())
 		return;

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.12 1996/08/27 21:55:32 cgd Exp $ */
+/* $NetBSD: podulebus.c,v 1.13 1996/10/11 00:07:45 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -201,14 +201,14 @@ podulebusprint(aux, name)
 	struct podule_attach_args *pa = aux;
 
 	if (name) {
-		printf("podule%d: ", pa->pa_podule_number);
+		kprintf("podule%d: ", pa->pa_podule_number);
 		return(UNCONF);
 	}
 
 	if (pa->pa_podule->slottype == SLOT_POD)
-		printf(" [ podule %d ]:", pa->pa_podule_number);
+		kprintf(" [ podule %d ]:", pa->pa_podule_number);
 	else if (pa->pa_podule->slottype == SLOT_NET)
-		printf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
+		kprintf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
 	else
 		panic("Invalid slot type\n");
 
@@ -254,27 +254,27 @@ void
 dump_podule(podule)
 	podule_t *podule;
 {
-	printf("podule%d: ", podule->podulenum);
-	printf("flags0=%02x ", podule->flags0);
-	printf("flags1=%02x ", podule->flags1);
-	printf("reserved=%02x ", podule->reserved);
-	printf("product=%02x ", podule->product);
-	printf("manufacturer=%02x ", podule->manufacturer);
-	printf("country=%02x ", podule->country);
-	printf("irq_addr=%08x ", podule->irq_addr);
-	printf("irq_mask=%02x ", podule->irq_mask);
-	printf("fiq_addr=%08x ", podule->fiq_addr);
-	printf("fiq_mask=%02x ", podule->fiq_mask);
-	printf("fast_base=%08x ", podule->fast_base);
-	printf("medium_base=%08x ", podule->medium_base);
-	printf("slow_base=%08x ", podule->slow_base);
-	printf("sync_base=%08x ", podule->sync_base);
-	printf("mod_base=%08x ", podule->mod_base);
-	printf("easi_base=%08x ", podule->easi_base);
-	printf("attached=%d ", podule->attached);
-	printf("slottype=%d ", podule->slottype);
-	printf("podulenum=%d ", podule->podulenum);
-	printf("\n");
+	kprintf("podule%d: ", podule->podulenum);
+	kprintf("flags0=%02x ", podule->flags0);
+	kprintf("flags1=%02x ", podule->flags1);
+	kprintf("reserved=%02x ", podule->reserved);
+	kprintf("product=%02x ", podule->product);
+	kprintf("manufacturer=%02x ", podule->manufacturer);
+	kprintf("country=%02x ", podule->country);
+	kprintf("irq_addr=%08x ", podule->irq_addr);
+	kprintf("irq_mask=%02x ", podule->irq_mask);
+	kprintf("fiq_addr=%08x ", podule->fiq_addr);
+	kprintf("fiq_mask=%02x ", podule->fiq_mask);
+	kprintf("fast_base=%08x ", podule->fast_base);
+	kprintf("medium_base=%08x ", podule->medium_base);
+	kprintf("slow_base=%08x ", podule->slow_base);
+	kprintf("sync_base=%08x ", podule->sync_base);
+	kprintf("mod_base=%08x ", podule->mod_base);
+	kprintf("easi_base=%08x ", podule->easi_base);
+	kprintf("attached=%d ", podule->attached);
+	kprintf("slottype=%d ", podule->slottype);
+	kprintf("podulenum=%d ", podule->podulenum);
+	kprintf("\n");
 }
 
 
@@ -302,7 +302,7 @@ podulechunkdirectory(podule)
 			addr |= (poduleread(podule->slow_base, address + 28, podule->slottype) << 24);
 			if (addr < 0x800) {
 				for (loop = 0; loop < size; ++loop)
-					printf("%c", poduleread(podule->slow_base, (addr + loop)*4, podule->slottype));
+					kprintf("%c", poduleread(podule->slow_base, (addr + loop)*4, podule->slottype));
 			}
 		}
 		address += 32;
@@ -324,16 +324,16 @@ poduleexamine(podule, dev, slottype)
 	if ((podule->flags0 & 0x02) == 0x00) {
 		podule->slottype = slottype;
 		if (slottype == SLOT_NET)
-			printf("netslot%d at %s : ", podule->podulenum - MAX_PODULES,
+			kprintf("netslot%d at %s : ", podule->podulenum - MAX_PODULES,
 			    dev->dv_xname);
 		else
-			printf("podule%d  at %s : ", podule->podulenum,
+			kprintf("podule%d  at %s : ", podule->podulenum,
 			    dev->dv_xname);
 
 /* Is it Acorn conformant ? */
 
 		if (podule->flags0 & 0x80)
-			printf("Non-Acorn conformant expansion card\n");
+			kprintf("Non-Acorn conformant expansion card\n");
 		else {
 			int id;
 
@@ -341,7 +341,7 @@ poduleexamine(podule, dev, slottype)
 
 			id = (podule->flags0 >> 3) & 0x0f;
 			if (id != 0)
-				printf("Simple expansion card <%x>\n", id);
+				kprintf("Simple expansion card <%x>\n", id);
 			else {
 /* Do we know this manufacturer ? */
 				pod_list = known_podules;
@@ -351,9 +351,9 @@ poduleexamine(podule, dev, slottype)
 					++pod_list;
 				}
 				if (!pod_list->description)
-					printf("man=%04x   : ", podule->manufacturer);
+					kprintf("man=%04x   : ", podule->manufacturer);
 				else
-					printf("%10s : ", pod_list->description);
+					kprintf("%10s : ", pod_list->description);
 
 /* Do we know this product ? */
 
@@ -364,12 +364,12 @@ poduleexamine(podule, dev, slottype)
 					++pod_desc;
 				}
 				if (!pod_desc->description) {
-					printf("prod=%04x : ", podule->product);
+					kprintf("prod=%04x : ", podule->product);
 					if (podule->flags1 & PODULE_FLAGS_CD)
 						podulechunkdirectory(podule);
-					printf("\n");
+					kprintf("\n");
 				} else
-					printf("%s\n", pod_desc->description);
+					kprintf("%s\n", pod_desc->description);
 			}
 		}
 	}
@@ -541,14 +541,14 @@ podulebusattach(parent, self, aux)
 
 	easi_time = ReadByte(IOMD_ECTCR);
 
-	printf(": easi timings=");
+	kprintf(": easi timings=");
 	for (bit = 0x01; bit < 0x100; bit = bit << 1)
 		if (easi_time & bit)
-			printf("C");
+			kprintf("C");
 		else
-			printf("A");
+			kprintf("A");
 
-	printf("\n");
+	kprintf("\n");
 
 /* Ok we need to map in the podulebus */
 
@@ -613,7 +613,7 @@ poduleirqhandler()
 	int loop;
 	irqhandler_t *handler;
 
-	printf("eek ! Unknown podule IRQ received - Blocking all podule interrupts\n");
+	kprintf("eek ! Unknown podule IRQ received - Blocking all podule interrupts\n");
 	disable_irq(IRQ_PODULE);
 /*	return(1);*/
 

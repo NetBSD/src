@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 1996/04/29 20:50:28 leo Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.21 1996/10/11 00:11:13 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -60,7 +60,7 @@ kdb_kintr(regs)
 	register struct mc68020_saved_state *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
+		kprintf("\n\nkernel: keyboard interrupt\n");
 		kdb_trap(-1, regs);
 	}
 }
@@ -138,12 +138,12 @@ static void
 kdbprinttrap(type, code)
 	int	type, code;
 {
-	printf("kernel: ");
+	kprintf("kernel: ");
 	if (type >= trap_types || type < 0)
-		printf("type %d", type);
+		kprintf("type %d", type);
 	else
-		printf("%s", trap_type[type]);
-	printf(" trap\n");
+		kprintf("%s", trap_type[type]);
+	kprintf(" trap\n");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1996/09/25 15:07:40 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1996/10/11 00:08:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -198,7 +198,7 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	printf("changing root device to %c%c%d%c\n",
+	kprintf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
 #ifdef DOSWAP
@@ -257,7 +257,7 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	printf ("\n");
+	kprintf ("\n");
 	config_found(dp, "clock"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
 	config_found(dp, "kbd"    , simple_devprint);
@@ -274,6 +274,6 @@ mbprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("%s at %s", (char *)auxp, pnp);
+		kprintf("%s at %s", (char *)auxp, pnp);
 	return(UNCONF);
 }
