@@ -1,4 +1,4 @@
-/*	$NetBSD: srvr_nfs.c,v 1.6 2002/11/29 23:06:22 christos Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.7 2003/01/06 13:26:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -653,7 +653,7 @@ find_nfs_srvr(mntfs *mf)
     if (hasmntopt(&mnt, "nfsv2")) {
       nfs_version = (u_long) 2;	/* nullify any ``vers=X'' statements */
       nfs_proto = "udp";	/* nullify any ``proto=tcp'' statements */
-      plog(XLOG_WARNING, "found compatiblity option \"nfsv2\": set options vers=2,proto=udp for host %s", host);
+      plog(XLOG_WARNING, "found compatibility option \"nfsv2\": set options vers=2,proto=udp for host %s", host);
     }
 #endif /* HAVE_NFS_NFSV2_H */
 

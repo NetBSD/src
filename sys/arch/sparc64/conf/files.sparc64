@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.72 2002/12/08 22:30:53 martin Exp $
+#	$NetBSD: files.sparc64,v 1.73 2003/01/06 13:26:26 wiz Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -215,7 +215,7 @@ include "dev/ieee1394/files.ieee1394"
 # Compatibility modules
 #
 
-# Binary compatiblity with previous NetBSD releases.
+# Binary compatibility with previous NetBSD releases.
 file	arch/sparc64/sparc64/compat_13_machdep.c compat_13
 
 # NetBSD/sparc 32-bit Binary compatibility (COMPAT_NETBSD32)
