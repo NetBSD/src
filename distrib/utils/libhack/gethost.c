@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.2 1995/10/13 18:10:25 gwr Exp $	*/
+/*	$NetBSD: gethost.c,v 1.3 1998/08/10 02:22:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -256,7 +256,7 @@ _gethtbyaddr(addr, len, type)
 
 	_sethtent(0);
 	while (p = _gethtent())
-		if (p->h_addrtype == type && !bcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == type && !memcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
 	if (p==NULL)
