@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.31 2001/04/28 20:55:34 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.32 2001/07/15 00:34:14 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.31 2001/04/28 20:55:34 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.32 2001/07/15 00:34:14 hubertf Exp $");
 #endif
 
 /*
@@ -570,8 +570,8 @@ expandURL(char *expandedurl, const char *wildcardurl)
 			
 			filename[strlen(filename)-1] = '\0';
 
-			strip_txz(s_filename, filename);
-			strip_txz(s_pkg, pkg);
+			strip_txz(s_filename, NULL, filename);
+			strip_txz(s_pkg, NULL, pkg);
 			
 			if (pmatch(s_pkg, s_filename)) {
 				matches++;
