@@ -42,7 +42,7 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
- *	$Id: svr4_misc.c,v 1.3 1994/05/24 03:27:13 deraadt Exp $
+ *	$Id: svr4_misc.c,v 1.4 1994/06/24 07:30:17 deraadt Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <ufs/dir.h>
+#include <sys/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
