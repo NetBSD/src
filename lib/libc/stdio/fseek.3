@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.11 1998/09/09 20:17:27 kleink Exp $
+.\"	$NetBSD: fseek.3,v 1.12 1999/03/08 10:27:34 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@
 .Ft int
 .Fn fgetpos "FILE *stream" "fpos_t *pos"
 .Ft int
-.Fn fsetpos "FILE *stream" "fpos_t *pos"
+.Fn fsetpos "FILE *stream" "const fpos_t *pos"
 .Sh DESCRIPTION
 The
 .Fn fseek
