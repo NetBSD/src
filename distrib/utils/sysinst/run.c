@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.43 2003/07/10 13:36:48 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.44 2003/07/17 19:44:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -281,17 +281,17 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	rtt = tt;
 
 	/* ignore tty signals until we're done with subprocess setup */
-	endwin();
 	ttysig_ignore = 1;
 	ioctl(master, TIOCPKT, &ttysig_ignore);
 
-	switch(child=fork()) {
+	child = fork();
+	switch (child) {
 	case -1:
 		ttysig_ignore = 0;
 		refresh();
 		*errstr = "fork() failed";
 		return -1;
-	case 0:
+	case 0:	/* child */
 		(void)close(STDIN_FILENO);
 		subchild = fork();
 		if (subchild == 0) {
@@ -331,18 +331,17 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 		if ((flags & RUN_CHROOT) != 0)
 			chroot(target_prefix());
 		execvp(*args, args);
-		/* the parent will see this as the output from the
-		   child */
+		/* The parent will see this as the output from the child */
 		warn("execvp %s", *args);
 		_exit(EXIT_FAILURE);
 		break; /* end of child */
 	default:
 		/*
-		 * we've set up the subprocess.  forward tty signals to its			 * process group.
+		 * parent: we've set up the subprocess.
+		 * forward tty signals to its process group.
 		 */
 		ttysig_forward = child;
 		ttysig_ignore = 0;
-		refresh();
 		break;
 	}
 	close(dataflow[1]);
@@ -387,7 +386,7 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 						memcpy(&rtt, ibuf, sizeof(rtt));
 					goto enddisp;
 				}
-				for (j=1; j < n; j++) {
+				for (j = 1; j < n; j++) {
 					if ((flags & RUN_DISPLAY) != 0) {
 						switch (ibuf[j]) {
 						case '\n':
@@ -588,7 +587,7 @@ done:
 	reset_prog_mode();
 	if ((flags & RUN_FATAL) != 0 && ret != 0)
 		exit(ret);
-	if (ret && errmsg != MSG_NONE) {
+	if (ret && errmsg != NULL) {
 		msg_display(errmsg, scmd);
 		process_menu(MENU_ok, NULL);
 	}
