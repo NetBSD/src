@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.44 2003/09/07 11:27:32 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43 2003/06/13 05:31:29 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.44 2003/09/07 11:27:32 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,6 +350,7 @@ static const struct ac97_codecid {
 	 * http://www.soundmax.com/products/information/codecs.html
 	 * http://www.analog.com/productSelection/pdf/AD1881A_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1885_0.pdf
+	 * http://www.analog.com/UploadedFiles/Data_Sheets/206585810AD1980_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1981A_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1981B_0.pdf
 	 */
@@ -871,8 +872,9 @@ ac97_attach(host_if)
 	u_int16_t id1, id2;
 	u_int16_t extstat, rate;
 	mixer_ctrl_t ctl;
-	const char *delim;
 	void (*initfunc)(struct ac97_softc *);
+#define FLAGBUFLEN	140
+	char flagbuf[FLAGBUFLEN];
 
 	initfunc = NULL;
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -903,7 +905,7 @@ ac97_attach(host_if)
 
 	id = (id1 << 16) | id2;
 
-	aprint_normal("%s: ", sc_dev->dv_xname);
+	aprint_normal("%s: ac97: ", sc_dev->dv_xname);
 
 	for (i = 0; ; i++) {
 		if (ac97codecid[i].id == 0) {
@@ -940,49 +942,49 @@ ac97_attach(host_if)
 
 	as->ac97_clock = AC97_STANDARD_CLOCK;
 	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
-	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
-			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
-			  | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
-			  | AC97_EXT_AUDIO_LDAC)) {
-		aprint_normal("%s:", sc_dev->dv_xname);
-		delim = "";
+	if (as->ext_id != 0) {
+		/* Print capabilities */
+		bitmask_snprintf(as->ext_id, "\20\20SECONDARY10\17SECONDARY01"
+				 "\14AC97_23\13AC97_22\12AMAP\11LDAC\10SDAC"
+				 "\7CDAC\4VRM\3SPDIF\2DRA\1VRA",
+				 flagbuf, FLAGBUFLEN);
+		aprint_normal("%s: ac97: ext id %s\n", sc_dev->dv_xname, flagbuf);
 
+		/* Print unusual settings */
+		if (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
+			aprint_normal("%s: ac97: Slot assignment: ",
+				      sc_dev->dv_xname);
+			switch (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
+			case AC97_EXT_AUDIO_DSA01:
+				aprint_normal("7&8, 6&9, 10&11.\n");
+				break;
+			case AC97_EXT_AUDIO_DSA10:
+				aprint_normal("6&9, 10&11, 3&4.\n");
+				break;
+			case AC97_EXT_AUDIO_DSA11:
+				aprint_normal("10&11, 3&4, 7&8.\n");
+				break;
+			}
+		}
+
+		/* Enable and disable features */
 		ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &extstat);
-		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
-			aprint_normal("%s variable rate audio", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_VRA;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_DRA) {
-			aprint_normal("%s double rate output", delim);
-			delim = ",";
-		}
 		extstat &= ~AC97_EXT_AUDIO_DRA;
-		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
-			aprint_normal("%s S/PDIF", delim);
-			delim = ",";
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_VRM) {
-			aprint_normal("%s variable rate dedicated mic", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_VRM;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_CDAC) {
-			aprint_normal("%s center DAC", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_CDAC;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_SDAC) {
-			aprint_normal("%s surround DAC", delim);
-			delim = ",";
-			extstat |= AC97_EXT_AUDIO_SDAC;
-		}
-		if (as->ext_id & AC97_EXT_AUDIO_LDAC) {
-			aprint_normal("%s LFE DAC", delim);
+		if (as->ext_id & AC97_EXT_AUDIO_LDAC)
 			extstat |= AC97_EXT_AUDIO_LDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_SDAC)
+			extstat |= AC97_EXT_AUDIO_SDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_CDAC)
+			extstat |= AC97_EXT_AUDIO_CDAC;
+		if (as->ext_id & AC97_EXT_AUDIO_VRM)
+			extstat |= AC97_EXT_AUDIO_VRM;
+		if (as->ext_id & AC97_EXT_AUDIO_SPDIF) {
+			/* Output the same data as DAC to SPDIF output */
+			extstat &= ~AC97_EXT_AUDIO_SPSA_MASK;
+			extstat |= AC97_EXT_AUDIO_SPSA34;
 		}
-		aprint_normal("\n");
-
+		if (as->ext_id & AC97_EXT_AUDIO_VRA)
+			extstat |= AC97_EXT_AUDIO_VRA;
 		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, extstat);
 		if (as->ext_id & AC97_EXT_AUDIO_VRA) {
 			/* VRA should be enabled. */
