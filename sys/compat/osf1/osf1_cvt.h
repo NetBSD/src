@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.5 1999/05/10 05:58:44 cgd Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.6 1999/06/26 01:23:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
+#include <sys/fcntl.h>
 
 #include <compat/common/compat_util.h>
 
@@ -47,6 +48,10 @@
 #define	osf1_cvt_dev_to_native(dev)					\
     makedev(osf1_major(dev), osf1_minor(dev))
 
+void	osf1_cvt_flock_from_native(const struct flock *nf,
+				   struct osf1_flock *of);
+int	osf1_cvt_flock_to_native(const struct osf1_flock *of,
+				 struct flock *nf);
 int	osf1_cvt_msghdr_xopen_to_native(const struct osf1_msghdr_xopen *omh,
 					struct msghdr *nmh);
 int	osf1_cvt_pathconf_name_to_native(int oname, int *bnamep);
