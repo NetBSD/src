@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.49 2000/12/11 19:53:06 martin Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.50 2000/12/19 22:08:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -172,12 +172,12 @@ void
 ktremul(struct proc *p)
 {
 	struct ktr_header kth;
-	char *emul = p->p_emul->e_name;
+	const char *emul = p->p_emul->e_name;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_EMUL);
 	kth.ktr_len = strlen(emul);
-	kth.ktr_buf = emul;
+	kth.ktr_buf = (caddr_t)emul;
 
 	(void) ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
