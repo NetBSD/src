@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2001/03/18 14:10:34 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.39 2001/03/18 14:24:10 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -257,7 +257,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	db_printf("process %p:", p);
-	db_printf("pid:%d vmspace:%p ", p->p_pid, p->p_vmspace);
+	db_printf("pid:%d cpu:%d vmspace:%p ", p->p_pid, p->p_cpu->ci_cpuid, p->p_vmspace);
 	db_printf("pmap:%p ctx:%p wchan:%p pri:%d upri:%d\n",
 		  p->p_vmspace->vm_map.pmap, 
 		  p->p_vmspace->vm_map.pmap->pm_ctx,
