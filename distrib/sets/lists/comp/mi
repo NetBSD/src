@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.708 2004/06/22 15:41:55 itojun Exp $
+#	$NetBSD: mi,v 1.709 2004/07/02 17:00:31 drochner Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1314,6 +1314,7 @@
 ./usr/include/sys/ioctl.h			comp-c-include
 ./usr/include/sys/ioctl_compat.h		comp-c-include
 ./usr/include/sys/ipc.h				comp-c-include
+./usr/include/sys/joystick.h			comp-c-include
 ./usr/include/sys/kcore.h			comp-c-include
 ./usr/include/sys/kernel.h			comp-obsolete		obsolete
 ./usr/include/sys/kgdb.h			comp-c-include
