@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.21 2001/09/22 16:21:42 wiz Exp $
+.\"	$NetBSD: sb.4,v 1.22 2002/06/08 22:19:54 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,8 @@ driver.
 .Pp
 SoundBlaster 16 cards have MPU401 emulation and can use the mpu
 attachment, older cards have a different way to generate MIDI and
-has a midi device attached directly to the sb,
+has a midi device attached directly to the
+.Nm "" .
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr audio 4 ,
