@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.36 1999/05/19 21:05:59 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.37 1999/05/23 17:59:39 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -371,7 +371,7 @@ fbrcons_init(fb)
 {
 	struct rconsole	*rc = &fb->fb_rcons;
 	struct rasops_info *ri = &fb->fb_rinfo;
-	int maxrow, maxcol;
+	int maxrow, maxcol, *row, *col;
 
 	/* Set up what rasops needs to know about */
 	bzero(ri, sizeof *ri);
@@ -415,7 +415,15 @@ fbrcons_init(fb)
 	/* Get operations set and connect to rcons */
 	if (rasops_init(ri, maxrow, maxcol, 0, 1))
 		panic("fbrcons_init: rasops_init failed!");
-	
+
+	rc->rc_row = rc->rc_col = 0;
+#if !defined(RASTERCONS_FULLSCREEN)
+	/* Determine addresses of prom emulator row and column */
+	if (!CPU_ISSUN4 && !romgetcursoraddr(&row, &col)) {
+		rc->rc_row = *row;
+		rc->rc_col = *col;
+	}
+#endif
 	rc->rc_ops = &ri->ri_ops;
 	rc->rc_cookie = ri;
 	rc->rc_bell = fb_bell;

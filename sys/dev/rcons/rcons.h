@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.7 1999/05/20 19:56:49 thorpej Exp $ */
+/*	$NetBSD: rcons.h,v 1.8 1999/05/23 17:59:39 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,10 +67,10 @@ struct rconsole {
 	void	*rc_cookie;		/* cookie thereof */
 	u_int	rc_width;		/* width in pixels */
 	u_int	rc_height;		/* height in pixels */
-
-	/* Bits maintained by the raster routines */
 	u_int	rc_row;			/* emulator row */
 	u_int	rc_col;			/* emulator column */
+
+	/* Bits maintained by the raster routines */
 	u_int	rc_bits;		/* see defines below */
 	int	rc_ringing;		/* bell currently ringing */
 	int	rc_belldepth;		/* audible bell depth */
