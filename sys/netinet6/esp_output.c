@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.3 2000/07/18 14:56:43 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.23 2000/07/15 16:07:48 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.4 2000/07/23 05:23:04 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.24 2000/07/20 17:41:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -494,6 +494,40 @@ esp_output(m, nexthdrp, md, isr, af)
 #endif
 	}
     }
+
+	/*
+	 * XXX pre-compute and cache intermediate key
+	 */
+	if (!sav->sched && sav->schedlen == 0) {
+		if (algo->schedule && algo->schedlen) {
+			sav->sched = malloc(algo->schedlen, M_SECA,
+			    M_DONTWAIT);
+			sav->schedlen = algo->schedlen;
+			if (sav->sched == NULL ||
+			    esp_schedule(algo, sav) != 0) {
+				if (sav->sched) {
+					free(sav->sched, M_SECA);
+					sav->sched = NULL;
+				}
+				sav->schedlen = 0;
+				m_freem(m);
+				switch (af) {
+#ifdef INET
+				case AF_INET:
+					ipsecstat.out_inval++;
+					break;
+#endif
+#ifdef INET6
+				case AF_INET6:
+					ipsec6stat.out_inval++;
+					break;
+#endif
+				}
+				error = EINVAL;
+				goto fail;
+			}
+		}
+	}
 
 	/*
 	 * encrypt the packet, based on security association

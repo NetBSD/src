@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.2 2000/07/18 14:56:43 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.26 2000/07/15 16:07:48 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.3 2000/07/23 05:23:04 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.27 2000/07/20 17:41:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,9 +80,6 @@
 #define IPLEN_FLIPPED
 
 #ifdef INET
-extern struct protosw inetsw[];
-extern u_char ip_protox[];
-
 #define ESPMAXLEN \
 	(sizeof(struct esp) < sizeof(struct newesp) \
 		? sizeof(struct newesp) : sizeof(struct esp))
@@ -291,7 +288,26 @@ noreplaycheck:
 		}
 	}
 
-    {
+	/*
+	 * XXX pre-compute and cache intermediate key
+	 */
+	if (!sav->sched && sav->schedlen == 0) {
+		if (algo->schedule && algo->schedlen) {
+			sav->sched = malloc(algo->schedlen, M_SECA, M_DONTWAIT);
+			sav->schedlen = algo->schedlen;
+			if (sav->sched == NULL ||
+			    esp_schedule(algo, sav) != 0) {
+				if (sav->sched) {
+					free(sav->sched, M_SECA);
+					sav->sched = NULL;
+				}
+				sav->schedlen = 0;
+				ipsecstat.in_inval++;
+				goto bad;
+			}
+		}
+	}
+
 	/*
 	 * decrypt the packet.
 	 */
@@ -306,7 +322,6 @@ noreplaycheck:
 	ipsecstat.in_esphist[sav->alg_enc]++;
 
 	m->m_flags |= M_DECRYPTED;
-    }
 
 	/*
 	 * find the trailer of the ESP.
@@ -633,6 +648,26 @@ noreplaycheck:
 	}
 #endif
 	ip6 = mtod(m, struct ip6_hdr *);	/*set it again just in case*/
+
+	/*
+	 * XXX pre-compute and cache intermediate key
+	 */
+	if (!sav->sched && sav->schedlen == 0) {
+		if (algo->schedule && algo->schedlen) {
+			sav->sched = malloc(algo->schedlen, M_SECA, M_DONTWAIT);
+			sav->schedlen = algo->schedlen;
+			if (sav->sched == NULL ||
+			    esp_schedule(algo, sav) != 0) {
+				if (sav->sched) {
+					free(sav->sched, M_SECA);
+					sav->sched = NULL;
+				}
+				sav->schedlen = 0;
+				ipsec6stat.in_inval++;
+				goto bad;
+			}
+		}
+	}
 
 	/*
 	 * decrypt the packet.
