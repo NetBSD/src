@@ -1,7 +1,7 @@
 #
 # GENERIC
 #
-#	$NetBSD: GENERIC,v 1.30.4.2 1999/03/29 06:55:04 nisimura Exp $
+#	$NetBSD: GENERIC,v 1.30.4.3 1999/04/17 13:45:52 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -121,6 +121,8 @@ dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
 ibus0	at	tc? # slot ? offset ?	# 3MAX system slot
 mcclock0 at	ibus0			# DS1287 RTC
 dc0	at	ibus0			# DC7085 quad line serial device
+dctty0	at	dc? line 2
+dctty1	at	dc? line 3
 
 # TURBOchannel devices
 mfb0	at	tc? # slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
@@ -142,6 +144,8 @@ le0	at	ibus0			# 3100 onboard LANCE
 #sii0	at	ibus0			# DC7061 onboard SCSI
 pm0	at	ibus0			# 3100 onboard fb
 dc*	at	ibus0			# 5100 optional serial device
+dctty0	at	dc? line 2
+dctty1	at	dc? line 3
 
 lkkbd0	at	dc0
 vsms0	at	dc0
