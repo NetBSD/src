@@ -1,4 +1,4 @@
-/* $NetBSD: dc7085var.h,v 1.1.2.5 1999/11/20 06:28:20 nisimura Exp $ */
+/* $NetBSD: dc7085var.h,v 1.1.2.6 1999/11/26 05:09:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -46,7 +46,7 @@ struct dc_softc {
 	struct device sc_dv;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-	int sc_unit;
+
 	int sc_chip38400;
 
 	struct tty *sc_tty[4];			/* possible all of 4 */

@@ -1,4 +1,4 @@
-/* $NetBSD: dctty.c,v 1.1.2.5 1999/11/25 08:57:47 nisimura Exp $ */
+/* $NetBSD: dctty.c,v 1.1.2.6 1999/11/26 05:09:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.5 1999/11/25 08:57:47 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctty.c,v 1.1.2.6 1999/11/26 05:09:03 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,13 +100,14 @@ dctty_attach(parent, self, aux)
 	struct dc_softc *dc = (void *)parent;
 	struct dc_attach_args *args = aux;
 	struct tty *tp;
-	int line;
+	int unit, line;
 
 	printf("\n");
 
+	unit = dc->sc_dv.dv_unit;
 	line = args->line;
 	tp = ttymalloc();
-	tp->t_dev = makedev(dc_major, DCMINOR(dc->sc_unit, line));
+	tp->t_dev = makedev(dc_major, DCMINOR(unit, line));
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
 	tp->t_hwiflow = NULL;
