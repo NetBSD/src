@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.30 2000/09/03 19:15:45 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.31 2000/10/22 08:20:09 explorer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ USB_MATCH(umodem)
 	USB_MATCH_START(umodem, uaa);
 	usb_interface_descriptor_t *id;
 	int cm, acm;
-	
+
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
@@ -159,7 +159,7 @@ USB_MATCH(umodem)
 	    id->bInterfaceSubClass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
 	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
 		return (UMATCH_NONE);
-	
+
 	umodem_get_caps(uaa->device, &cm, &acm);
 	if (!(cm & USB_CDC_CM_DOES_CM) ||
 	    !(cm & USB_CDC_CM_OVER_DATA) ||
@@ -258,17 +258,20 @@ USB_ATTACH(umodem)
 		goto bad;
 	}
 
-	if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
-		err = umodem_set_comm_feature(sc, UCDC_ABSTRACT_STATE,
-					      UCDC_DATA_MULTIPLEXED);
-		if (err) {
-			printf("%s: could not set data multiplex mode\n",
-			       USBDEVNAME(sc->sc_dev));
-			goto bad;
-		}
+	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_ASSUME_CM_OVER_DATA) {
 		sc->sc_cm_over_data = 1;
+	} else {
+		if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
+			err = umodem_set_comm_feature(sc, UCDC_ABSTRACT_STATE,
+						      UCDC_DATA_MULTIPLEXED);
+			if (err) {
+				printf("%s: could not set data multiplex mode\n",
+				       USBDEVNAME(sc->sc_dev));
+				goto bad;
+			}
+			sc->sc_cm_over_data = 1;
+		}
 	}
-
 	sc->sc_dtr = -1;
 
 	uca.portno = UCOM_UNK_PORTNO;
