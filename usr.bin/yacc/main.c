@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/07/25 16:46:34 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.8.2.1 1997/10/31 21:11:48 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1997/07/25 16:46:34 perry Exp $");
+__RCSID("$NetBSD: main.c,v 1.8.2.1 1997/10/31 21:11:48 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,12 +369,32 @@ create_file_names()
     {
 	if (explicit_file_name)
 	{
-	    defines_file_name = MALLOC(strlen(output_file_name));
+	    char *suffix;
+	    defines_file_name = MALLOC(strlen(output_file_name) + 1);
 	    if (defines_file_name == 0)
 		no_space();
 	    strcpy(defines_file_name, output_file_name);
-	    if (!strcmp(output_file_name + (strlen(output_file_name)-2), ".c"))
-		defines_file_name [strlen(output_file_name)-1] = 'h';
+	    /* does the output_file_name have a known suffix */
+            suffix = strrchr(output_file_name, '.');
+            if (suffix != 0 &&
+		(!strcmp(suffix, ".c") ||   /* good, old-fashioned C */
+                 !strcmp(suffix, ".C") ||   /* C++, or C on Windows */
+                 !strcmp(suffix, ".cc") ||  /* C++ */
+                 !strcmp(suffix, ".cxx") || /* C++ */
+                 !strcmp(suffix, ".cpp")))  /* C++ (Windows) */
+            {
+                strncpy(defines_file_name, output_file_name,
+                        suffix - output_file_name + 1);
+                defines_file_name[suffix - output_file_name + 1] = 'h';
+                defines_file_name[suffix - output_file_name + 2] = 0;
+            } else {
+                fprintf(stderr,"%s: suffix of output file name %s"
+                               " not recognized, no -d file generated.\n",
+                        myname, output_file_name);
+                dflag = 0;
+                free(defines_file_name);
+                defines_file_name = 0;
+            }
 	}
 	else
 	{
