@@ -41,7 +41,7 @@
  *
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *	from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- *	$Id: kbd.c,v 1.2 1994/05/06 07:49:17 gwr Exp $
+ *	$Id: kbd.c,v 1.3 1994/06/03 02:05:18 gwr Exp $
  */
 
 /*
@@ -214,7 +214,7 @@ struct kbd_softc {
 /* Prototypes */
 void	kbd_ascii(struct tty *);
 void	kbd_serial(struct tty *, void (*)(), void (*)());
-static	void kbd_getid(void *);
+int 	kbd_init(void);
 void	kbd_reset(struct kbd_state *);
 static	int kbd_translate(int, struct kbd_state *);
 void	kbd_rint(int);
@@ -228,71 +228,69 @@ int	kbd_docmd(int, int);
 
 /*
  * Attach the console keyboard ASCII (up-link) interface.
- * This happens before kbd_serial.
+ * This is called by the "kd" (keyboard/display) driver to
+ * tell this module where to send read-side data.
  */
 void
 kbd_ascii(struct tty *tp)
 {
-
 	kbd_softc.k_cons = tp;
 }
 
 /*
  * Attach the console keyboard serial (down-link) interface.
- * We pick up the initial keyboard clock state here as well.
+ * This is called by the "zs" driver for the keyboard port
+ * to tell this module how to talk to the keyboard.
  */
 void
 kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
 {
 	register struct kbd_softc *k;
-	register char *cp;
 
 	k = &kbd_softc;
 	k->k_kbd = tp;
 	k->k_open = iopen;
 	k->k_close = iclose;
-
-#if 0
-	cp = getpropstring(optionsnode, "keyboard-click?");
-	if (cp && strcmp(cp, "true") == 0)
-		k->k_state.kbd_click = 1;
-#endif
-	if (k->k_cons) {
-		/*
-		 * We supply keys for /dev/console.  Before we can
-		 * do so, we have to ``open'' the line.  We also need
-		 * the type, got by sending a RESET down the line ...
-		 * but clists are not yet set up, so we use a timeout
-		 * to try constantly until we can get the ID.  (gag)
-		 */
-		(*iopen)(tp);		/* never to be closed */
-		kbd_getid(NULL);
-	}
 }
 
 /*
- * Initial keyboard reset, to obtain ID and thus a translation table.
- * We have to try again and again until the tty subsystem works.
+ * Initialization to be done at first open.
+ * This is called from kbdopen or kdopen (in kd.c)
  */
-static void
-kbd_getid(void *arg)
+int
+kbd_init()
 {
 	register struct kbd_softc *k;
-	register struct tty *tp;
-	register int retry;
-	extern int cold;		/* XXX */
+	int error, s;
 
 	k = &kbd_softc;
-	if (k->k_state.kbd_cur != NULL)
-		return;
-	tp = k->k_kbd;
-	if (cold || ttyoutput(KBD_CMD_RESET, tp) >= 0)
-		retry = 1;
-	else {
-		(*tp->t_oproc)(tp);
-		retry = 2 * hz;
-	}
-	timeout(kbd_getid, (caddr_t)NULL, retry);
+
+	/* Tolerate extra calls. */
+	if (k->k_state.kbd_cur)
+		return (0);
+
+	/* Make sure "down" link (to zs1a) is established. */
+	if (k->k_kbd == NULL)
+		return (ENXIO);
+
+	/* Open the "down" link (never to be closed). */
+	(*k->k_open)(k->k_kbd);
+
+	/* Reset the keyboard and find out its type. */
+	s = spltty();
+	(void) ttyoutput(KBD_CMD_RESET, k->k_kbd);
+	(*k->k_kbd->t_oproc)(k->k_kbd);
+	/* The wakeup for this sleep is in kbd_reset(). */
+	error = tsleep((caddr_t)&kbd_softc.k_state, PZERO | PCATCH,
+				   devopn, hz);
+	if (error == EWOULDBLOCK)	/* no response */
+		error = ENXIO;
+
+	if (error == 0)
+	    k->k_state.kbd_cur = kbd_unshifted;
+
+	splx(s);
+	return error;
 }
 
 void
@@ -472,29 +470,14 @@ kbd_rint(register int c)
 int
 kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	int s, error;
+	int error;
 
+	/* Exclusive open required for /dev/kbd */
 	if (kbd_softc.k_events.ev_io)
 		return (EBUSY);
 	kbd_softc.k_events.ev_io = p;
-	/*
-	 * If no console keyboard, tell the device to open up, maybe for
-	 * the first time.  Then make sure we know what kind of keyboard
-	 * it is.
-	 */
-	if (kbd_softc.k_cons == NULL)
-		(*kbd_softc.k_open)(kbd_softc.k_kbd);
-	error = 0;
-	s = spltty();
-	if (kbd_softc.k_state.kbd_cur == NULL) {
-		(void) ttyoutput(KBD_CMD_RESET, kbd_softc.k_kbd);
-		error = tsleep((caddr_t)&kbd_softc.k_state, PZERO | PCATCH,
-		    devopn, hz);
-		if (error == EWOULDBLOCK)	/* no response */
-			error = ENXIO;
-	}
-	splx(s);
-	if (error) {
+
+	if ((error = kbd_init()) != 0) {
 		kbd_softc.k_events.ev_io = NULL;
 		return (error);
 	}
@@ -512,8 +495,6 @@ kbdclose(dev_t dev, int flags, int mode, struct proc *p)
 	 */
 	kbd_softc.k_evmode = 0;
 	ev_fini(&kbd_softc.k_events);
-	if (kbd_softc.k_cons == NULL)
-		(*kbd_softc.k_close)(kbd_softc.k_kbd);
 	kbd_softc.k_events.ev_io = NULL;
 	return (0);
 }
