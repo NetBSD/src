@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.17 2002/08/07 03:40:01 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.18 2002/08/20 02:34:04 briggs Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -22,6 +22,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -mcpu=xscale"
 options 	XSCALE_CCLKCFG=9	# 733MHz
+options 	XSCALE_NO_COALESCE_WRITES
 
 # Architecture options
 
