@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_samedomain.c,v 1.1.1.1 2004/05/20 20:01:31 christos Exp $	*/
+/*	$NetBSD: ns_samedomain.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#ifdef notdef
 static const char rcsid[] = "Id: ns_samedomain.c,v 1.1.2.2.4.2 2004/03/16 12:34:17 marka Exp";
+#else
+__RCSID("$NetBSD: ns_samedomain.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+#endif
 #endif
 
 #include "port_before.h"
@@ -30,6 +35,7 @@ static const char rcsid[] = "Id: ns_samedomain.c,v 1.1.2.2.4.2 2004/03/16 12:34:
 
 #include "port_after.h"
 
+#ifndef _LIBC
 /*
  * int
  * ns_samedomain(a, b)
@@ -151,6 +157,7 @@ int
 ns_subdomain(const char *a, const char *b) {
 	return (ns_samename(a, b) != 1 && ns_samedomain(a, b));
 }
+#endif
 
 /*
  * int
