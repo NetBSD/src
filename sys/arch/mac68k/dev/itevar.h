@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.2 1997/04/08 04:47:09 briggs Exp $	*/
+/*	$NetBSD: itevar.h,v 1.2.16.1 2000/02/07 07:54:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -29,27 +29,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/adbsys.h>
-
-int	ite_intr __P((adb_event_t *event));
-int	iteon __P((dev_t dev, int flags));
-int	iteoff __P((dev_t dev, int flags));
-void	itereset __P((void));
-
-#ifndef CN_DEAD
-#include <dev/cons.h>
-#endif
-
-void	itestop __P((struct tty * tp, int flag));
-void	itestart __P((register struct tty * tp));
-int	iteopen __P((dev_t dev, int mode, int devtype, struct proc * p));
-int	iteclose __P((dev_t dev, int flag, int mode, struct proc * p));
-int	iteread __P((dev_t dev, struct uio * uio, int flag));
-int	itewrite __P((dev_t dev, struct uio * uio, int flag));
-int	iteioctl __P((dev_t, int, caddr_t, int, struct proc *));
-struct tty	*itetty __P((dev_t dev));
-
-int	itecnprobe __P((struct consdev * cp));
-int	itecninit __P((struct consdev * cp));
-int	itecngetc __P((dev_t dev));
-int	itecnputc __P((dev_t dev, int c));
+void	ite_attach __P((struct device *, dev_t));
