@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.1.2.1 1997/07/01 16:52:09 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.1.2.2 1997/07/01 23:19:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -137,8 +137,8 @@ struct atapibus_attach_args {
 
 int	wdc_atapi_get_params __P((struct scsipi_link *, u_int8_t,
 	    struct atapi_identify *)); 
-void atapi_print_addr __P((struct scsipi_link *));
-int atapi_interpret_sense __P((struct scsipi_xfer *));
-int atapi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
-		int, u_char *, int, int, int, struct buf *, int));
+void	atapi_print_addr __P((struct scsipi_link *));
+int	atapi_interpret_sense __P((struct scsipi_xfer *));
+int	atapi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
+	    int, u_char *, int, int, int, struct buf *, int));
 #endif /* SCSI_ATAPICONF_H */
