@@ -71,25 +71,11 @@ cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
 	register struct user *up = p2->p_addr;
-	int foo, offset, addr, i;
+	int addr, i;
 	extern char kstack[];
-	extern int mvesp();
 
-	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 * this is tricky, as the final pcb is constructed by savectx,
-	 * but its frame isn't yet on the stack when the stack is copied.
-	 * swtch compensates for this when the child eventually runs.
-	 * This should be done differently, with a single call
-	 * that copies and updates the pcb+stack,
-	 * replacing the bcopy and savectx.
-	 */
+	/* Copy the pcb. */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = mvesp() - (int)kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
 	p2->p_regs = p1->p_regs;
 
 	/*
@@ -101,18 +87,17 @@ cpu_fork(p1, p2)
 	for (i = 0; i < UPAGES; i++)
 		pmap_enter(&p2->p_vmspace->vm_pmap, kstack + i * NBPG,
 		    pmap_extract(kernel_pmap, ((int)p2->p_addr) + i * NBPG),
-		    VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
-							 * i486 WP support;
-							 * i386 doesn't care
-							 */
-		    TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
 	/*
-	 * 
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
+	 * Copy the stack.
+	 *
+	 * When we first swtch() to the child, this will return from swtch()
+	 * rather than savectx().  swtch() returns a pointer to the current
+	 * process; savectx() returns 0.  Thus we can look for a non-zero
+	 * return value to indicate that we're in the child.
 	 */
 	if (savectx(up, 1)) {
 		/*
