@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.195 2004/11/11 11:54:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.196 2005/01/10 02:45:35 lukem Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -34,7 +34,6 @@ SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
 SUBDIR+= mdsetimage
 .endif
 
-# IPv6
 .if (${MKINET6} != no)
 SUBDIR+=faithd ifmcstat mld6query ndp \
 	rip6query route6d rtadvd traceroute6 rtsold
