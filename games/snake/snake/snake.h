@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.6 1995/04/29 01:17:15 mycroft Exp $	*/
+/*	$NetBSD: snake.h,v 1.7 1996/07/03 04:17:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -56,7 +56,7 @@ char	*CL, *UP, *DO, *ND, *BS,
 	*TI, *TE, *KS, *KE;
 int	LINES, COLUMNS;	/* physical screen size. */
 int	lcnt, ccnt;	/* user's idea of screen size */
-char	xBC, PC;
+char	PC;
 int	AM, BW;
 char	tbuf[1024], tcapbuf[128];
 char	*tgetstr(), *tgoto();
