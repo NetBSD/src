@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.3 1998/01/22 23:42:39 mycroft Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.4 1998/01/23 01:04:54 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -127,10 +127,11 @@ wdc_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct wdc_isa_softc *sc = (struct wdc_isa_softc *)self;
+	struct wdc_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	bzero(&sc->sc_ad, sizeof sc->sc_ad);
+	printf("\n");
+
 	sc->sc_ad.iot = ia->ia_iot;
 	sc->sc_ad.auxiot = ia->ia_iot;
 	if (bus_space_map(sc->sc_ad.iot, ia->ia_iobase, WDC_ISA_REG_NPORTS, 0,
@@ -138,8 +139,8 @@ wdc_isa_attach(parent, self, aux)
 	    bus_space_map(sc->sc_ad.auxiot,
 	      ia->ia_iobase + WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS,
 	      0, &sc->sc_ad.auxioh)) {
-		printf(": couldn't map registers\n");
-		panic("wdc_isa_attach: couldn't map registers\n");
+		printf("%s: couldn't map registers\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
