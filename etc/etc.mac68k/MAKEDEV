@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.28 1997/07/23 01:29:49 phil Exp $
+#	$NetBSD: MAKEDEV,v 1.29 1997/07/31 04:08:29 perry Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -319,7 +319,7 @@ asc*)
 
 local)
 	umask 0
-	sh $0.local
+	sh MAKEDEV.local all
 	;;
 
 *)
