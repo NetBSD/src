@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.24 2000/06/29 08:53:01 mrg Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.25 2001/02/27 18:29:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -70,6 +70,7 @@ u_int irqblock[NIRQS];
 extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
+extern int  *iomd_base;
 
 /* Prototypes */
 
