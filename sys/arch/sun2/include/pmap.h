@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2001/06/02 18:09:21 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2001/06/27 18:54:27 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,10 +104,10 @@ extern int _pmap_extract_pmeg __P((pmap_t, vm_offset_t));
  */
 #define	PMAP_OBMEM	0x00
 #define	PMAP_OBIO	0x04	/* tells pmap_enter to use PG_OBIO */
-#define	PMAP_VME16	0x08	/* etc */
 #define	PMAP_MBMEM	0x08	/* etc (sun-2/120) */
 #define	PMAP_MBIO	0x0C	/* etc (sun-2/120) */
-/* 0x0C is also used for ??? on the 2/50 */
+#define	PMAP_VME0	0x08	/* etc (sun-2/50) */
+#define	PMAP_VME8	0x0C	/* etc (sun-2/50) */
 #define	PMAP_NC		0x00	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x0C	/* mask to get all above. */
 
