@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.286 2004/06/21 10:25:18 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.287 2004/06/21 17:27:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4121,4 +4121,13 @@ sys/kern/vfs_subr.c				1.227-1.228
 	Fix crashes with VOP_RECLAIM implementations which might block.
 	(eg. layered filesystems)
 	[yamt, ticket #516]
+
+sys/conf/files					1.673,1.675
+sys/dev/ic/rtl81x9.c				1.46
+sys/dev/ic/rtl81x9var.h				1.12-1.13
+sys/dev/pci/files.pci				1.211
+sys/dev/pci/if_re.c				1.1-1.4
+
+	Add re(4) RealTek 8139C+/8169/8169S/8110S PCI ethernet adapter driver.
+	[toshii, ticket #517]
 
