@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.22 1995/01/03 01:30:46 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.23 1995/02/01 09:54:36 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -55,7 +55,7 @@
 #include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
-#include <i386/isa/if_lereg.h>
+#include <dev/isa/if_lereg.h>
 
 
 #define	ETHER_MIN_LEN	64
