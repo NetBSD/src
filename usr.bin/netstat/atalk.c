@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.4 1998/07/12 03:20:13 mrg Exp $	*/
+/*	$NetBSD: atalk.c,v 1.5 1999/01/06 05:57:29 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.4 1998/07/12 03:20:13 mrg Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.5 1999/01/06 05:57:29 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ atalkprotopr(off, name)
 	}
 }
 #define ANY(x,y,z) \
-	((x) ? printf("\t%ld %s%s%s\n",x,y,plural(x),z) : 0)
+	((sflag==1 || (x)) ? printf("\t%ld %s%s%s\n",x,y,plural(x),z) : 0)
 
 /*
  * Dump DDP statistics structure.
