@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strtod.c	5.1 (Berkeley) 11/13/92";*/
-static char *rcsid = "$Id: strtod.c,v 1.4 1993/08/26 00:48:12 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /****************************************************************
@@ -92,7 +92,7 @@ static char *rcsid = "$Id: strtod.c,v 1.4 1993/08/26 00:48:12 jtc Exp $";
 #ifdef i386
 #define IEEE_8087
 #endif
-#ifdef hp300
+#if defined(hp300) || defined(sparc) || defined(amiga)
 #define IEEE_MC68k
 #endif
 #ifdef vax
