@@ -1,3 +1,5 @@
+/*	$NetBSD: ftpd.c,v 1.13 1995/04/11 02:44:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +37,14 @@
 static char copyright[] =
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-static char rcsid[] = "$Id: ftpd.c,v 1.12 1995/03/22 16:55:35 mycroft Exp $";
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.13 1995/04/11 02:44:55 cgd Exp $":
+#endif
 #endif /* not lint */
 
 /*
@@ -87,7 +92,7 @@ static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 6.01";
+static char version[] = "Version 6.00";
 
 extern	off_t restart_point;
 extern	char cbuf[];
@@ -125,12 +130,12 @@ int	defumask = CMASK;		/* default umask value */
 char	tmpline[7];
 char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
-static  char    ttyline[20];
-char    *tty = ttyline;  /* for klogin */
+static char ttyline[20];
+char	*tty = ttyline;		/* for klogin */
 
 #if defined(KERBEROS)
-int notickets = 1;
-char *krbtkfile_env = NULL;
+int	notickets = 1;
+char	*krbtkfile_env = NULL;
 #endif 
 
 /*
