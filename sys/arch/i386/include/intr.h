@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.8 2000/09/23 17:30:07 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.9 2000/12/31 17:45:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ softintr(sir, vec)
 #ifdef MULTIPROCESSOR
 void i386_send_ipi (struct cpu_info *, int);
 void i386_broadcast_ipi (int);
+void i386_multicast_ipi (int, int);
 void i386_ipi_handler (void);
 #endif
 
