@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.29 1999/11/02 23:35:02 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.30 2005/01/13 15:01:28 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -121,16 +121,16 @@
 #define SB16P_OSWITCH		0x3c
 #define SB16P_ISWITCH_L		0x3d
 #define SB16P_ISWITCH_R		0x3e
-#define 	SB16P_SW_MIC	0x01
-#define 	SB16P_SW_CD_R	0x02
-#define 	SB16P_SW_CD_L	0x04
-#define 	SB16P_SW_CD	(SB16P_SW_CD_L|SB16P_SW_CD_R)
-#define 	SB16P_SW_LINE_R	0x08
-#define 	SB16P_SW_LINE_L	0x10
-#define 	SB16P_SW_LINE	(SB16P_SW_LINE_L|SB16P_SW_LINE_R)
-#define 	SB16P_SW_MIDI_R	0x20
-#define 	SB16P_SW_MIDI_L	0x40
-#define 	SB16P_SW_MIDI	(SB16P_SW_MIDI_L|SB16P_SW_MIDI_R)
+#define		SB16P_SW_MIC	0x01
+#define		SB16P_SW_CD_R	0x02
+#define		SB16P_SW_CD_L	0x04
+#define		SB16P_SW_CD	(SB16P_SW_CD_L|SB16P_SW_CD_R)
+#define		SB16P_SW_LINE_R	0x08
+#define		SB16P_SW_LINE_L	0x10
+#define		SB16P_SW_LINE	(SB16P_SW_LINE_L|SB16P_SW_LINE_R)
+#define		SB16P_SW_MIDI_R	0x20
+#define		SB16P_SW_MIDI_L	0x40
+#define		SB16P_SW_MIDI	(SB16P_SW_MIDI_L|SB16P_SW_MIDI_R)
 #define SB16P_INPUT_GAIN_L	0x3f
 #define SB16P_OUTPUT_GAIN_L	0x41
 #define SB16P_TREBLE_L		0x44
@@ -141,10 +141,10 @@
 
 #define SBP_RECORD_SOURCE_L	0x3d
 #define SBP_RECORD_SOURCE_R	0x3e
-#define 	SBP_MIDI_SRC_R	0x20
-#define 	SBP_LINE_SRC_R	0x08
-#define 	SBP_CD_SRC_R	0x02
-#define 	SBP_MIC_SRC	0x01
+#define		SBP_MIDI_SRC_R	0x20
+#define		SBP_LINE_SRC_R	0x08
+#define		SBP_CD_SRC_R	0x02
+#define		SBP_MIC_SRC	0x01
 #define SB_SRC_R_TO_L(x) ((x) << 1)
 
 #define SB_STEREO_GAIN(left, right) ((left) | ((right) >> 4))
@@ -158,13 +158,13 @@
 #define SB_1335_MASTER_GAIN(x) ((x) >> 5)
 
 #define SBP_DSP_RESET		6	/* W reset port */
-#define 	SB_MAGIC	0xaa	/* card outputs on successful reset */
-#define SBP_DSP_READ		10 	/* R read port */
+#define		SB_MAGIC	0xaa	/* card outputs on successful reset */
+#define SBP_DSP_READ		10	/* R read port */
 #define SBP_DSP_WRITE		12	/* W write port */
 #define SBP_DSP_WSTAT		12	/* R write status */
 #define SBP_DSP_RSTAT		14	/* R read status */
-#define 	SB_DSP_BUSY	0x80
-#define 	SB_DSP_READY	0x80
+#define		SB_DSP_BUSY	0x80
+#define		SB_DSP_READY	0x80
 #define	SBP_DSP_IRQACK8		14	/* R acknowledge DSP IRQ, 8-bit */
 #define	SBP_DSP_IRQACK16	15	/* R acknowledge DSP IRQ, 16-bit */
 #define SBP_CDROM_DATA		16	/* RW send cmds/recv data */
@@ -172,15 +172,15 @@
 #define SBP_CDROM_RESET		18	/* W reset register */
 #define SBP_CDROM_ENABLE	19	/* W enable register */
 
-#define SBP_NPORT 24
-#define SB_NPORT 16
-#define SB_NMPUPORT 2
+#define SBP_NPORT	24
+#define SB_NPORT	16
+#define SB_NMPUPORT	2
 
 /*
  * DSP commands.  This unit handles MIDI and audio capabilities.
  * The DSP can be reset, data/commands can be read or written to it,
  * and it can generate interrupts.  Interrupts are generated for MIDI
- * input or DMA completion.  They seem to have neglected the fact 
+ * input or DMA completion.  They seem to have neglected the fact
  * that it would be nice to have a MIDI transmission complete interrupt.
  * Worse, the DMA engine is half-duplex.  This means you need to do
  * (timed) programmed I/O to be able to record and play simulataneously.
@@ -219,8 +219,8 @@
 #define	SB_DSP16_HALT		0xd5	/* suspend 16-bit DMA */
 #define	SB_DSP16_CONT		0xd6	/* continue 16-bit DMA */
 #define SB_DSP_RD_SPKR		0xd8	/* get speaker status */
-#define 	SB_SPKR_OFF	0x00
-#define 	SB_SPKR_ON	0xff
+#define		SB_SPKR_OFF	0x00
+#define		SB_SPKR_ON	0xff
 #define SB_DSP_VERSION		0xe1	/* get version number */
 
 #define SB_BMODE_UNSIGNED	0x00
@@ -245,24 +245,24 @@
  * full register details, alas.  Their source code CD-ROM probably includes
  * details, but it has an NDA attached.
  */
-#define	JAZZ16_DIR_PB 		0x10
+#define	JAZZ16_DIR_PB		0x10
 #define	JAZZ16_SINGLE_PB	0x14
-#define	JAZZ16_SINGLE_ALAW_PB 	0x17
+#define	JAZZ16_SINGLE_ALAW_PB	0x17
 #define	JAZZ16_CONT_PB		0x1C
-#define	JAZZ16_CONT_ALAW_PB 	0x1F
+#define	JAZZ16_CONT_ALAW_PB	0x1F
 #define	JAZZ16_DIR_PCM_REC	0x20
 #define	JAZZ16_SINGLE_REC	0x24
-#define	JAZZ16_SINGLE_ALAW_REC 	0x27
+#define	JAZZ16_SINGLE_ALAW_REC	0x27
 #define	JAZZ16_CONT_REC		0x2C
-#define	JAZZ16_CONT_ALAW_REC 	0x2F
-#define	JAZZ16_SINGLE_ADPCM_PB 	0x74
-#define	JAZZ16_SINGLE_MULAW_PB 	0x77
-#define	JAZZ16_CONT_ADPCM_PB 	0x7C
+#define	JAZZ16_CONT_ALAW_REC	0x2F
+#define	JAZZ16_SINGLE_ADPCM_PB	0x74
+#define	JAZZ16_SINGLE_MULAW_PB	0x77
+#define	JAZZ16_CONT_ADPCM_PB	0x7C
 #define	JAZZ16_SINGLE_ADPCM_REC 0x84
 #define	JAZZ16_SINGLE_MULAW_REC 0x87
-#define	JAZZ16_CONT_ADPCM_REC 	0x8C
-#define	JAZZ16_CONT_MULAW_REC 	0x8F
-#define	JAZZ16_CONT_PB_XX 	0x90
+#define	JAZZ16_CONT_ADPCM_REC	0x8C
+#define	JAZZ16_CONT_MULAW_REC	0x8F
+#define	JAZZ16_CONT_PB_XX	0x90
 #define	JAZZ16_SINGLE_PB_XX	0x91
 #define	JAZZ16_SINGLE_REC_XX	0x98
 #define	JAZZ16_CONT_REC_XX	0x99
@@ -284,7 +284,7 @@
 #define SB_IRQ_VALID(irq)   ((irq) == 3 || (irq) == 5 || (irq) == 7 || (irq) == 9)
 
 #define SB16_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3 || \
-			      (chan) == 5 || (chan) == 6 || (chan) == 7) 
+			      (chan) == 5 || (chan) == 6 || (chan) == 7)
 #define SBP_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3)
 #define SB_DRQ_VALID(chan)  ((chan) == 1)
 

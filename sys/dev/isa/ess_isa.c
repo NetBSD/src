@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.12 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.13 2005/01/13 15:01:27 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.12 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.13 2005/01/13 15:01:27 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,31 +59,30 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.12 2004/09/14 20:20:47 drochner Exp $"
 #define DPRINTF(x)
 #endif
 
-int ess_isa_probe __P((struct device *, struct cfdata *, void *));
-void ess_isa_attach __P((struct device *, struct device *, void *));
+int ess_isa_probe(struct device *, struct cfdata *, void *);
+void ess_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ess_isa, sizeof(struct ess_softc),
     ess_isa_probe, ess_isa_attach, NULL, NULL);
 
 int
-ess_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ess_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-  	int ret;   
-	struct isa_attach_args *ia = aux;
-	struct ess_softc probesc, *sc= &probesc;
+	int ret;
+	struct isa_attach_args *ia;
+	struct ess_softc probesc, *sc;
 
+	ia = aux;
+	sc= &probesc;
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 	if (ia->ia_ndrq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	memset(sc, 0, sizeof *sc);
 
@@ -104,7 +103,7 @@ ess_isa_probe(parent, match, aux)
 	sc->sc_audio2.drq = (ia->ia_ndrq > 1) ? ia->ia_drq[1].ir_drq : -1;
 
 	ret = essmatch(sc);
-		
+
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, ESS_NPORT);
 
 	if (ret) {
@@ -123,18 +122,20 @@ ess_isa_probe(parent, match, aux)
 		ia->ia_niomem = 0;
 	} else
 		DPRINTF(("ess_isa_probe failed\n"));
-		
+
 	return ret;
 }
 
-void ess_isa_attach(parent, self, aux)
-	 struct device *parent, *self;
-	 void *aux;
+void
+ess_isa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ess_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
-	int enablejoy = 0;
+	struct ess_softc *sc;
+	struct isa_attach_args *ia;
+	int enablejoy;
 
+	sc = (void *)self;
+	ia = aux;
+	enablejoy = 0;
 	printf("\n");
 
 	sc->sc_ic = ia->ia_ic;
