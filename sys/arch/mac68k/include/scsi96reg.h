@@ -24,7 +24,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi96reg.h,v 1.2 1994/07/07 00:29:37 briggs Exp $
+ * $Id: scsi96reg.h,v 1.3 1994/07/08 11:36:59 briggs Exp $
  *
  */
 
@@ -108,6 +108,7 @@ struct ncr53c96regs {
 #define   NCR96_STAT_PE		0x20	/* Parity Error */
 #define   NCR96_STAT_CTZ	0x10	/* Count To Zero */
 #define   NCR96_STAT_GCV	0x08	/* Group Code Valid */
+#define   NCR96_STAT_PHASE	0x07	/* Mask for SCSI Phase */
 #define   NCR96_STAT_MSG	0x04	/* Message */
 #define   NCR96_STAT_CD		0x02	/* Command/Data */
 #define   NCR96_STAT_IO		0x01	/* Input/Output */
