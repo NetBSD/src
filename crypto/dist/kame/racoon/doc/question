@@ -1,0 +1,575 @@
+$KAME: question,v 1.27 2000/10/04 17:41:07 itojun Exp $
+
+Q: how may policy matters are.  can we interoperate ?
+
+Q. If there is the phase 1 spi size excepting 16 and 0 in SA payload.
+	warn it.  and reject or accept ?
+
+Q. ID payload handling in phase 2 besides IPSECDOI_ID_IP*.
+   e.g. IPSECDOI_ID_DER_ASN1_DN.  Well, are these used in phase 2 ?
+
+Q. The padding for data attribute.
+	in particular, variable-length attribute like ID-userfqdn.
+
+Q. vendorid's hash algorithm
+	For aggressive mode ?.
+	In main mode, should I use negotiated algorithm ?
+A. it's not needed any negotiation.
+
+Q. If we use different hash algorith to compute the value of the vendor id,
+   is it possible to be same result of the hash value ?
+
+Q. encryption during aggressive mode.
+	when i receive encrypted packet of 2nd message from responder,
+	it can be decoded.  When i am responder, should i send encrypted one ?
+
+Q: phase2 PFS and KE payload
+	when the responder was not required PFS, if the initiator send KE ?
+	if the responder's pfs group is not match to the initiator's one ?
+	If initiator requests PFS, should we accept without acceptable check ?
+		reject the proposal and quit the phase 2.
+		accept it.
+	it's policy issue.
+
+Q. If tye type of ID payload is SUBNET, should it be allowed ::1/128 as host
+   address ?
+A. yes.  consensus at bake-off.
+
+Q. how many proposal can we send ?
+	30? 300? infinite ?
+
+Q. Is there only one payload of RESPONDER-LIFETIME in a IKE message
+   even if SA bundle is required ?
+   At the moment, racoon sends this notify payload(s) against each protocol.
+
+Q. Which is SPI to be used initiator's or responder's when sending
+   RESPONDER-LIFETIME ?
+A. At the moment, racoon sends responder's one.
+
+Q. Is it typo in the base mode draft ?
+            HDR, SA, Idii, Ni_b     =>
+                           Ni ???
+                                    <= HDR, SA, Idir, Nr_b
+                                                      Nr ???
+A. Yes, typo. (network associates said.)
+
+Q. What's proto_id in notify message of the responder 2nd message with commit
+   bit processing when multiple different SA applyed ?
+
+Q. Is it forbidden to clear commit bit during phase2 negotiation ?
+A. not forbidden,
+
+Q. how many time is the notify message sent in phase 2 ?
+A. don't resend notify message because peer can use Acknowledged
+   Informational if peer requires the reply of the notify message.
+Q. phase 1 is ?
+
+Q. What kind of policy configuration is desired?
+   policy.conf makes sense in certain situations only, such as:
+   - we are the initiator, and trying to enforce certain configuration.
+
+   If we would like to talk with strangers (like IPsec-ready webserver, or
+   "IPsec with everyone" configuration), or need to move from place to place
+   (like IPsec-ready nomadic node), we need an ability to write "wildcard
+   policy entry" which matches situations/packets/whatever, and then install
+   non-wildcard policy entry into the kernel.
+   For example:
+   - policy.conf says 0.0.0.0/0 -> 0.0.0.0/0, protocol "any", type "use",
+     for "encrypt everything" configuration.
+   - phase 2 ID payload will be exchanged for real address we have, and the
+     peer has (a.b.c.d/32).  This is not the same as "0.0.0.0/0" configured
+     onto policy entry.
+   - with the current code, policy.conf and phase 2 ID does not match, and
+     it will fail.
+
+   If we are acting as responder, we will be making policy entry from phase 2
+   IDs.  Is it always okay to accept phase 2 IDs as is, into our kernel policy?
+   We'll need to have filtering rule, or mapping rules from phase 2 IDs to
+   kernel policy.
+   For example:
+   - we have 10.1.1.0/24 -> 10.1.2.0/24, protocol "any" in policy.conf.
+   - what happens if we get, as responder, 10.1.1.0/25 -> 10.1.2.0/25,
+     protocol "any"?  should we accept it as is, or should we respect our
+     configuration?
+     if we respect our configuration, 10.1.1.128/25 -> 10.1.2.128/25 traffic
+     will be encrypted from our side, and end up being dropped by the peer.
+   - what happens if we get, as responder, 10.1.1.0/24 -> 10.1.2.0/24,
+     protocol "tcp"?  should we accept it as is, or should we respect our
+     configuration?
+     if we respect our configuration, non-tcp traffic will be dropped on
+     the peer.
+
+   -> the question is obsoleted by configuration language change.
+
+Q. What's msgid of informational exchange for error notify message during
+   phase2 ?  Is it same as msgid of phase2 negotiation caused error ?
+   Or new msgid created ?  If later case, spi must be conveyed.
+A. new msgid should be used
+Q. how can we deduce phase 2 from the notification?
+A. see draft-ietf-ipsec-notifymsg-*.txt
+
+Q. I don't know the situation to initiate acknowledged informational.
+
+Q. How many certificate payload in a packet are sent ?
+   isakmp-test.ssh.fi send both CRL and CERT in a packet.
+A. multiple CERT payload can be sent.  Or use PKCS#7.
+
+Q. What should we do if nonce size is greater than size of RSA modulus
+   in authentication with public key encryption, also size of body of
+   ID payload ?
+
+Q. For IKE negotiation of IPComp, how should we encode CPI (2 byte) into SPI
+   field of proposal payload (for AH/ESP, normally 4 bytes)?
+   Options are as follows:
+   (1) put it as 4 byte value, set SPI size to 4
+                          1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     ! Next Payload  !   RESERVED    !         Payload Length        !
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     !  Proposal #   !ProtID = ipcomp!    SPI Size(4)!# of Transforms!
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     !                        SPI = 0x0000XXXX                       !
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   (2) put it as 2 byte value, set SPI size to 2.  No padding must be made.
+                          1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     ! Next Payload  !   RESERVED    !         Payload Length        !
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     !  Proposal #   !ProtID = ipcomp!    SPI Size(2)!# of Transforms!
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     !       SPI = 0xXXXX            !   ... transform ...
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   IRE did (1), IIRC. (Jan 2000)
+
+   SSH does (2), and rejects (1). (Sep 2000)
+
+   The following email suggests (2) for normal case, and allow (1) for backward
+   compatibility (responder case I bet).
+	To: ipsec@lists.tislabs.com
+	From: Joern Sierwald <joern.sierwald@datafellows.com>
+	Subject: Re: issues from the bakeoff
+	Date: Wed, 16 Jun 1999 11:02:16 +0300
+	Message-Id: <3.0.5.32.19990616110216.00b77880@smtp.datafellows.com>
+
+A: (2) for normal case, and allow (1) for backward compatibility
+   (responder case I bet).  <draft-shacham-ippcp-rfc2393bis-05.txt>
+
+Q. INITIAL-CONTACT message.
+   When should we send an INITIAL-CONTACT message?
+A. see jenkins rekey draft
+
+   We must ignore unencrypted INITIAL-CONTACT message.
+
+   If we have two nodes and they issue the first packet of phase 1 at the same
+   time, both may try to transmit INITIAL-CONTACT message, and effectively
+   kills both connection attempt.
+
+	node 1			node 2
+	  |			  |
+	  |----------\  /---------| phase 1 first packet
+	  |	      \/	  |
+	  |	      /\	  |
+	  |<---------/  \-------->|
+	  |			  |
+	  |----------\  /---------| INITIAL-CONTACT
+	  |	      \/	  |
+	  |	      /\	  |
+	  |<---------/  \-------->|
+
+   Options are as follows:
+   (1) don't throw INITIAL-CONTACT message.
+   (2) don't delete old phase 1 information, even if we get INITIAL-CONTACT
+       message..
+   (3) don't delete phase 1 information, if it is very new.  delete phase 1
+       information only if they are old.
+   (4) implement tie-breaker rule.  for example, compare IP address and remove
+       phase 1 initiated by the one who has larger IP address.
+
+Q: IPv6 neighbor discovery.
+	When a security policy is set to "all packet require IPsec", it will
+	cover IPv6 ND packets as well.  The node will try to secure ND, and
+	we will have chicken-and-egg problem (without ND we cannot send IKE
+	packets, without IKE negotiation we cannot send ND).
+
+	What can we do?
+	- always bypass IPsec policy lookup if a packet is for ND.
+	- Security policy should have more detail rules to filter
+	  such packet, like icmp6 type/code filters.
+
+Q: When there are no ID payloads in phase 2 ?
+A. guess from the pair of address of IKE peer.
+
+Q: Delete payload.
+	Which SPI should I carry on Delete notify ?
+	There is no documentation.
+
+	An initiator should send a set of SPI of inbound SAs.
+	A responder should delete a set of outbound SAs which are sent by
+	an initiator.
+
+	When an IKE node deletes old SAs, should it send DELETE notify to
+	a peer ?
+
+	When does a node send DELETE notify ?
+		when a IKE node deletes old SAs expilicitly.
+		when a SA expires (hard lifetime reached).
+			It may not be necessary.
+
+	When a DELETE notify packet is dropped, SA will get inconsistent
+	between peers.
+		We can prevent from it by using "heartbeat" ?
+
+	when there is no phase 1 SA, should I negotiate phase 1 SA before
+	sending delete notify ?
+	A: no need.  (the consensus made at the mailing list ?)
+
+Q: "heartbeat"
+	It means a signal of "I'm alive".
+	It is exchanged in phase 1.5.
+	When a responder dies/reboots, phase 2 SA sitll remains but
+	we can know the rebooting of the peer by using "heartbeat".
+
+	Is INITIAL-CONTACT message useless if we choise "heartbeat" ?
+		We don't know.
+
+Q: responder's action in a normal case.
+	A responder should never initiate both phase 1 and phase 2 at anytime.
+	Once we have decided which side we are (initiator/responder), the
+	relationship will never change.
+
+Q: only the byte type of lifetime on phase 2, not exist the type of time.
+	No ducumentation states explicitly.
+	We can choose to use default lifetime (28800).
+	We can reject it accortding to a policy.
+
+Q: phase 2 lifetime negotiation
+	what should I do if the peer has proposed the lifetime value which
+	does not match to our policy ?
+	- always reject it.
+	- use my lifetime, then send RESPONDER LIFETIME.
+	- during negotiation obey the initiator.  install SA lifetime based
+	  on the lifetime we have decided (not from the negotiation).
+
+Q: phase 1 lifetime negotiation
+	can we do like phase 2 ?
+
+Q: Does RFC2407 4.5.4 Lifetime Notification say for phase 2 ? or phase 1 ?
+	responder lifetime may be inapproprite for phase1 because
+	proposal is not encrypted, so bad guy can forge it.
+
+Q: phase 1 lifetime of bytes.
+	What should we count ?
+	Or it should be obsoleted ?
+
+Q: phase 2 lifetime of bytes.
+	byte lifetime of an SA is harder to implement/manipulate than
+	wallclock lifetime, because:
+	- if there's packet losses on the link, it will lead to disagreement
+	  between peers about how much traffic were gone through the SA.
+	- it is unclear when to compute the lifetime.  for example, for IPComp,
+	  there's a big difference between computing byte lifetime before
+	  compression, or after compression.  [RFC2401 page 23:
+	  should compute byte lifetime using a packet BEFORE IPsec processing]
+
+	it is more questionable to use byte lifetime for inbound SA, than
+	for outbound SA.  we will have more problem if we expire inbound SA
+	earlier than the peer (if we expire an SA earlier than the peer,
+	inbound traffic will result in "no SA found" error).
+
+Q: soft and hard lifetime. [RFC2401 page 23]
+	RFC2401 talks about soft and hard lifetime.  for stable rekeying
+	operation, it may help if we introduce another kind of lifetime;
+
+	soft lifetime (80% of hard lifetime, for example):
+		should inform IKE of the expiry, and IKE should try to negotiate
+		a new SA.
+	deprecation lifetime (90%):
+		no outbound packet should be generated by this SA.
+		inbound packet is handled okay.
+	hard lifetime (100%)
+		SA will be erased.
+
+Q: responder should not modify phase 2 attributes
+	even for phase 1, we should not modify attributes.
+	for lifetime attributes, it is okay to switch between V/B format.
+
+	draft-ietf-ipsec-ike-01.txt Appendix A:
+	If this is the case, an
+	attribute offered as variable (or basic) by the initiator of this
+	protocol MAY be returned to the initiator as a basic (or variable).
+
+Q: check if reserved field is zero, reject if 
+	we should do this (sakane)
+	i don't think so, it will kill future protocol enhancements (itojun)
+
+Q: order of proposals in IKE phase 2 packet, and IPsec processing order
+	how to negotiate SA bundle.
+	IKE: esp+ah, or ah+esp
+		-> is it safe to consider both as IP|AH|ESP|ULP?
+		-> is the proposal prefered to send the order of ah+esp.
+	IKE: ah+ah?
+		reject? or policy issue.
+	RFC2401bis should state the pattern of SA bundle.
+	      AH
+	      AH+ESP
+	      AH    +IPCOMP
+	      AH+ESP+IPCOMP
+		 ESP
+	      AH+ESP
+	      AH+ESP+IPCOMP
+		 ESP+IPCOMP
+	      AH+ESP
+	      AH+ESP+IPCOMP
+	Also RFC2401bis should state the meaning of protcol mode.
+
+	we are going to install both SAs, ESP and AH.  and they are bundled.
+	we should negotiate both SAs in single phase2.
+
+	can we do that separately ?
+		it is hard to verify the policy because the policy might be
+		defined SA bundle.
+	when i make packet IP2|AH|ESP|IP1|ULP.
+		proposal and order must be
+			ah/transport + esp/tunnel ?
+			ah/tunnel + esp/tunnel ?
+
+Q: what should we do if phase 1 SA expires, during phase2 SA negotiation?
+A. restart phase 2 negotiation from scratch
+
+Q: what kind of notification message a node should send on decode failure?
+	ISAKMP_NTYPE_INVALID_PAYLOAD_TYPE
+		iked
+	ISAKMP_NTYPE_UNEQUAL_PAYLOAD_LENGTHS
+		racoon
+	ISAKMP_NTYPE_PAYLOAD_MALFORMED
+		sanity check would be hairy
+
+Q: Certificate Request.
+	where to attach CR?
+		obey draft-ietf-ipsec-pki-req-05.txt.
+	what should we put inside CR?
+		my own signer?
+	RFC2408 page 34 says;
+
+    o  Certificate Authority (variable length) - Contains an encoding of
+       an acceptable certificate authority for the type of certificate
+       requested.  As an example, for an X.509 certificate this field
+       would contain the Distinguished Name encoding of the Issuer Name
+       of an X.509 certificate authority acceptable to the sender of
+       this payload.  This would be included to assist the responder in
+       determining how much of the certificate chain would need to be
+       sent in response to this request.  If there is no specific
+       certificate authority requested, this field SHOULD not be
+       included.
+
+Message-Id: <200009262047.XAA10637@torni.hel.fi.ssh.com>
+Subject: CERT_REQ_PAYLOAD usage
+From: Tero Kivinen <kivinen@ssh.fi>
+Date: Tue, 26 Sep 2000 23:47:00 +0300 (EET DST)
+
+	1) If you absolutely need certificates from the other side for
+	the authentication to work, you MUST send certificate request
+	payload.
+
+	2) If the authentication can succeed without the other end
+	sending certificates (you have some certificate for the other
+	end, or you can fetch the certificate from the certificate
+	repository), you MAY send certificate request.
+
+	3) If you just want any certificate without specifying the CA
+	root, send certificate request having empty CA name.
+
+	4) When you receive certificate request you MUST send your own
+	certificate for that CA.
+
+	5) If you receive empty certificate request you MUST send the
+	certificate you are going use in the authentication. If you
+	have multiple certificates for the same private key, you
+	SHOULD send all of them.
+
+	6) If you do not receive certificate request, you SHOULD NOT
+	send any certificates, unless you have reason to belive that
+	the other end has wrong certificate for you (for example you
+	have enrolled a new certificate recently).
+
+	7) You MAY include extra certificates, CRLs etc if you have
+	them available (I.e include your other certificates also
+	(certificate pre-loading), include sub-CA certificates,
+	include CRLs etc.
+
+Q: retransmission method (implementation issue)
+	how can I realize that the last packet in phase 1 was dropped.
+	main/base mode:
+		no problem in initiator side.
+		responder should wait for the retransmited 5th(3rd) packet
+		from initiator.
+	aggressive mode:
+		responder should wait for the retransmited 2nd packet
+		from responder.
+	quick mode:
+		initiator should wait for the retransmited 2nd packet
+		from responder.
+		when i am initiator, if we don not use commit bit, i will
+		install the SAs after sending last message.
+
+	under the following situation we will see retransmisson of phase 1 3rd
+	packet (prior to the last packet) from the peer, even if we already
+	have started phase 2 negotiaiton:
+	- initiator have transmitted the last (5th) packet of phase 1 exchange.
+	  the initiator believes that phase 1 is done.
+	- the last (5th) packet in phase 1 exchange was lost
+	responder retransmits phase 1 N-1 packet
+		main mode
+	FW-1 transmits the last packet in phase 1/2 exchange, 3 times.
+
+Q: retransmission timer?
+	should we manage it in per-peer basis?
+		yup.  we may need to
+	RFC2408: change retransmission timer dynamically
+		gets harder to debug...
+
+Q: checks against retransmission
+	check ISAKPM header only (watanabe)
+	check MD5(msg)
+
+Sender: owner-ipsec@lists.tislabs.com
+Message-Id: <200007170936.e6H9a2J113489@thunk.east.sun.com>
+Subject: Re: simplifying rekeying [draft-jenkins-ipsec-rekeying-06.txt]
+From: Bill Sommerfeld <sommerfeld@East.Sun.COM>
+
+	pedants may need to worry about the following case:
+
+            initiator          responder
+		|                  |
+		|-------(1)------->|
+		|                  |
+		|    +--(2)--------|
+		|    |             |
+		|-------(1)--+     |
+		|    |       |     |
+		|<---+       |     |
+		|            |     |
+		|-------(3)------->|
+		|            |     |
+		|<------(4)--------|
+		|            |     |
+		|            +---->|
+		|                  |
+		:                  :
+
+Q: Nonce size
+	a size of value MUST be 4 - 252 (RFC2409)
+	reject if the value is out-of-range
+
+Q: x.509 certificate and ID payload
+	if there is the certificate and the type of ID payload is
+		not DN, then compare with the subjectAltName in certificate.
+		DN, then compare with the subjectName in certificate.
+			must take care of the order of OID.
+
+Q: IP address of subjectAltName and of real entity.
+	There are two subjectAltName, email and IP address, in the certificate.
+	ID payload includes USER-FQDN, and same to email address of
+	subjectAltName.
+	If IP address of subjectAltName is different from the real entity's
+	IP address.  What should we do ?
+
+Q: commit bit
+	who will set the commit bit?  when?
+
+	no action.  if the other end sets it to 1, we should do that too
+	(sakane)
+	responder should set it to 1.  or it may leave it as is (watanabe)
+
+	should revisit rekey draft.
+
+Q: what happens if we have multiple phase 1 SAs for the same src/dst pair?
+
+Q: phase 1 ID payload
+	RSA signature and pre-shared key
+	same ID value.
+	must include the ID into subject alt name.
+
+Q: rekey.
+	- common: IPsec layer always use oldest SA.  optionally, send a delete
+		payload for old SA when we got a new SA.
+	- freeswan: trust no informational exchange (including initial-contact).
+		assume everyone will be using the latest SA in IPsec layer.
+		assume that phase 2 responder will install new key when the
+		responder got 1st packet of phase 2 (not the 3rd packet).
+
+Q: for responder side, is it allowed to reorder proposals?  for example,
+is it allowed to reply to the following proposal:
+with this:
+
+(initiator sends ESP then AH)
+
+46:51.456226 3ffe:501:ffff:0:250:daff:fe87:4bbe:500 -> 3ffe:501:ffff:0:2a0:ccff:fe3c:4093:500: isakmp 1.0 msgid 3827457a: phase 2/others ? oakley-quick:
+    (hash: len=20)
+    (sa: doi=ipsec situation=identity
+        (p: #1 protoid=ipsec-esp transform=15 spi=058a15c0
+            (t: #1 id=blowfish (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=keylen value=0080)(type=auth value=hmac-md5)(type=group desc value=modp1024))
+            (t: #2 id=blowfish (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=keylen value=0080)(type=auth value=hmac-sha1)(type=group desc value=modp1024))
+            (t: #3 id=blowfish (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=keylen value=0080)(type=group desc value=modp1024))
+            (t: #4 id=3des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-md5)(type=group desc value=modp1024))
+            (t: #5 id=3des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-sha1)(type=group desc value=modp1024))
+            (t: #6 id=3des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=group desc value=modp1024))
+            (t: #7 id=1des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-md5)(type=group desc value=modp1024))
+            (t: #8 id=1des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-sha1)(type=group desc value=modp1024))
+            (t: #9 id=1des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=group desc value=modp1024))
+            (t: #10 id=cast (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=keylen value=0080)(type=auth value=hmac-md5)(type=group desc value=modp1024))
+            (t: #11 id=cast (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=keylen value=0080)(type=auth value=hmac-sha1)(type=group desc value=modp1024))
+            (t: #12 id=cast (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=keylen value=0080)(type=group desc value=modp1024))
+            (t: #13 id=null (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-md5)(type=group desc value=modp1024))
+            (t: #14 id=null (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-sha1)(type=group desc value=modp1024))
+            (t: #15 id=null (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=group desc value=modp1024)))
+        (p: #1 protoid=ipsec-ah transform=2 spi=0f316870
+            (t: #1 id=md5 (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-md5)(type=group desc value=modp1024))
+            (t: #2 id=sha (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-sha1)(type=group desc value=modp1024))))
+    (nonce: n len=16)
+    (ke: key len=128)
+    (id: idtype=IPv6 protoid=tcp port=0 len=16 3ffe:501:ffff:0:250:daff:fe87:4bbe)
+    (id: idtype=IPv6 protoid=tcp port=0 len=16 3ffe:501:ffff:0:2a0:ccff:fe3c:4093)
+
+(respoinder swap order, sends AH then ESP)
+
+46:53.368883 3ffe:501:ffff:0:2a0:ccff:fe3c:4093:500 -> 3ffe:501:ffff:0:250:daff:fe87:4bbe:500: isakmp 1.0 msgid 3827457a: phase 2/others ? oakley-quick:
+    (hash: len=20)
+    (sa: doi=ipsec situation=identity
+        (p: #1 protoid=ipsec-ah transform=1 spi=f8dc5700
+            (t: #1 id=md5 (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-md5)(type=group desc value=modp1024)))
+        (p: #1 protoid=ipsec-esp transform=1 spi=f8dc5701
+            (t: #4 id=3des (type=lifetype value=sec)(type=life value=0e10)(type=enc mode value=transport)(type=auth value=hmac-md5)(type=group desc value=modp1024))))
+    (nonce: n len=16)
+    (ke: key len=128)
+    (id: idtype=IPv6 protoid=tcp port=0 len=16 3ffe:501:ffff:0:250:daff:fe87:4bbe)
+    (id: idtype=IPv6 protoid=tcp port=0 len=16 3ffe:501:ffff:0:2a0:ccff:fe3c:4093)
+
+Q: IPComp SA with wellknown CPI in CPI field.  how to handle it?
+  with the current code, wellknown CPI will be installed as is, because:
+  - racoon can negotiate an IPComp SA with wellknown CPI, and installs it as is
+  - the kernel have no check about it
+  however, by doing so we will have CPI (SPI) conflict on rekey, or with
+  multiple peers.
+
+  there could be couple of stragegies from implementation point of view
+  (workaround):
+  (1) do not install IPComp SA if we negotiated it with wellknown CPI.
+      this will introduce another trouble: no trigger for rekey, due to
+      no lifetime management on the IPComp SA.
+  (2) install IPComp SA with fabricated (local) CPI, with RAWCPI option flag
+      raised.  confusing...
+  (3) use topmost 16 bits to turn wellknown CPI into unique numbers.
+      how to assign numbers?
+  the problem is not unique to racoon, it is a generic problem.
+  protocol-wise, we could have couple of fixes:
+  (1) never negotiate an IPComp SA with a wellknown CPI.
+  (2) disambiguate IPComp SA by using other attributes, like lifetime,
+      installation timestamp or whatever.
+  (3) always IPComp as a addendum to ESP/AH.  do not treat it as an independent
+      SA.
+  I'm in favor of (1).

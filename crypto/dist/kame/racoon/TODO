@@ -1,0 +1,146 @@
+$KAME: TODO,v 1.35 2000/10/04 17:40:58 itojun Exp $
+
+Please send any questions or bug reports to snap-users@kame.net.
+
+TODO list
+
+URGENT
+o The documents for users convenience.
+o split log file based on client.  printf-like config directive, i.e.
+  "logfile racoon.%s.log", should be useful here.
+  -> beware of possible security issue, don't use sprintf() directly!
+     make validation before giving a string to sprintf().
+o fix flag for logging
+o save decrypted IKE packet in tcpdump format
+o IPComp SA with wellknown CPI in CPI field.  how to handle it?
+o hunt for memory leaks
+o better rekey
+
+MUST
+o Certificate type handling.  e.g. CRL, CR, PGP...
+o multiple certificate payload handling.
+o To consider the use with certificate infrastructure.  PXIX ???
+o Support scoped (link-local and site-local) IPv6 addresses.
+  It needs pfkey modification for scope IDs, and advanced API (RFC2292)
+  related mods in racoon itself.
+o kmstat should be improved.
+o aggressive mode DH group checks/handling on responder side.
+o Informational Exchange processing properly.
+o mandatory configuration check.
+o require less configuration.  phase 2 is easier (as kernel presents racoon
+  some hints), phase 1 is harder.  for example,
+  - grab phase 2 lifetime and algorith configuration from sadb_comb payloads in
+    ACQUIRE message.
+  - give reasonable default behavior when no configuration file is present.
+  - difficult items:
+	how to guess a reasonable phase 1 SA lifetime
+		(hardcoded default?  guess from phase 2 lifetime?)
+	guess what kind of ID payload to use
+	guess what kind of authentication to be used
+	guess phase 1 DH group (for aggressive mode, we cannot negotiate it)
+	guess if we need phase 2 PFS or not (we cannot negotiate it. so
+		we may need to pick from "no PFS" or "same as phase 1 DH group")
+	guess how we should negotiate lifetime
+		(is "strict" a reasonable default?)
+	guess which mode to use for phase 1 negotiation (is main mode useful?
+		is base mode popular enough?)
+o psk.txt should be a database? (psk.db?)  psk_mkdb?
+
+SHOULD
+o how to support multi interfaces ?
+  - perform a dummy connect(2), like ping6.
+  - bind multi address, like named.
+  now racoon uses the former way.
+o DSA signature authentication method.
+o more acceptable check.
+o New group mode should be considered.
+o Dynamically retry to exchange and resend the packet per nodes.
+o Remote maintenance with secure connection.
+o To make the list of supported algorithm by sadb_supported payload
+  in the SADB_REGISTER message which happens asynchronously.
+o fix the structure of ph2handle.
+  We can handle the below case.
+
+  node A                            node B
+    +--------------SA1----------------+
+    +--------------SA2----------------+
+
+  at node A:
+  kernel
+    acquire(A-B) ------> ph2handle(A=B) -----> ph1handle
+                              |
+                            policy
+                             A=B
+                             A=B
+
+  But we can not handle the below case because there is no x?handle.
+
+  node A                            node B                           node C
+    +--------------SA1----------------+
+    +------------------------------------------------SA2---------------+
+
+  at node A:
+  kernel
+    acquire(A-C) ---+---> x?handle ---+---> ph2handle(A=B) -------> ph1handle
+                    |        |        |
+    acquire(A-B) ---+      policy     +---> ph2handle(A=C) -------> ph1handle
+                            A=B
+                            A=C
+
+o consistency of function name.
+o deep copy configuration entry to hander.  It's easy to reload configuration.
+o don't keep to hold keymat values, do it ?
+o local address's field in isakmpsa handler must be kicked out to rmconf.
+o responder policy and initiator policy should be separated.
+o for lifetime and key length, something like this should be useful.
+  - propose N
+  - accept between X and Y
+o wildcard "accept any proposal" policy should be allowed.
+o replay prevention
+  - limited total number of session
+  - limited session per peer
+  - number of proposal
+o full support for variable length SPI.  quickhack support for IPComp is done.
+
+MAY
+o Effective code.
+o interaction between IKE/IPsec and socket layer.
+  at this moment, IKE/IPsec failure is modeled as total packet loss to other
+  part of network subsystem, including socket layer.  this presents the
+  following behaviors:
+  - annoyingly long timeouts on tcp connection attempt, and IKE failure;
+    need to wait till tcp socket timeouts.
+  - blackhole if there's mismatching SAs.
+  we may be able to give socket layer some feedback from IKE/IPsec layer.
+  still not sure if those make sense or not.
+  for example:
+  - send PRU_HOSTDEAD to sockets if IKE negotiation failed
+    (sys/netkey/key.c:key_acquire2)
+    to do this, we need to remember which ACQUIRE was caused by which socket,
+    possibly into larval SAs.
+  - PRU_QUENCH on "no SA found on output"
+  - kick tcp retransmission timer on first SA establishment
+o IKE daemon should handle situations where peer does not run IKE daemon
+  (UDP port unreach for port 500) better.
+  should use connected UDP sockets for sending IKE datagrams.
+o rate-limit log messages from kernel IPsec errors, like "no SA found".
+
+TO BE TESTED.
+o IKE retransmit behavior
+	see, draft-*-ipsec-rekeying*.txt
+o Reboot recovery (peer reboot losing it's security associations)
+	see, draft-*-ipsec-rekeying*.txt
+o Scenarios
+	- End-to-End transport long lived security associations
+	  (over night, data transfer >1Gb) with frequent dynamic rekey
+	- End-to-GW tunnel long lived security associations
+	  (over night, data transfer >1Gb) with frequent dynamic rekey
+	- Policy change events while under SA load
+	- End-to-End SA through IPsec tunnels, initiation both ways
+	- Client End-to-End through client-to-GW tunnel SA, initiate from
+	  client for tunnel, then initiation both ways for end-to-end
+	- Client-to-GW transport SA for secure management
+o behavior to receive multiple auth method proposals and AND proposal
+
+and to be written many many.
+

@@ -1,0 +1,273 @@
+Mon Oct 26 1998 - Fri Oct 30 1998
+
+vs SSH http://isakmp-test.ssh.fi/
+	ちゃんとクリックして設定すれば動く。すげ便利。
+
+	SSH -> KAME
+		phase 1: DES+MD5
+		phase 2: DES+MD5
+			最後まできちんといける。
+
+		phase 1: 3DES+MD5 (final cipher key生成でSEGVしていたが修正済み)
+		phase 2: DES+MD5
+			quick mode3発目(SSH -> KAME)がKAME側でほどけない。
+			どうやら、isakmp-test.ssh.fiに入ってる実装が
+			ちょっと古いらしい。最新の実装とやってみたら
+			成功した。だからまあいいか。
+
+	KAME -> SSH
+		phase 1: DES+MD5
+		phase 1: 3DES+MD5 (final cipher key生成でSEGVしていたが修正済み)
+
+		phase 2はPFSしないと嫌われる。クリックのしかたが足りない?
+
+vs NIST linux IPsec + plutoplus
+	NIST -> KAME
+		phase 2: ESP DES+hmac-MD5で、KEYMATの取得のしかたが悪かった
+			-> 修正済み
+		phase 2: initiatorが「PFSしなくていい」と言ってるのに
+			KE payloadをつけていた -> 修正済み
+		うまくいった。ESP DES+hmac-MD5
+	KAME -> NIST
+		NISTはproposalを複数投げると動かない。修正中らしい。
+		PFS関係の問題は対RedCreekで修正済み。
+		うまくいった。ESP 3DES+hmac-SHA1
+
+vs Checkpoint
+	tunnel modeのみ、道場破りできず
+
+vs RedCreek
+	KAMEは鍵のrenewができない。
+	RedCreekはIPsec+fragmentでpingしても返事しない。先方はrouter役で、
+	どうもtunnelの奥行きのfragmentはちゃんと処理するが、自分宛の
+	fragmentは処理してくれないようだ。
+	RedCreekはphase 1のDH groupと、phase 2のPFS DH groupが同じと思ってる。
+
+	RedCreek -> KAME
+		ok
+	KAME -> RedCreek
+		phase 2でKAME -> RCのquick mode1発目を投げたところでへくる。
+		PFSしようと言っているのにKE payloadとかDH groupをつけていない。
+			-> これから直し
+
+		水曜午後、直した。ちゃんと動いた。
+
+vs Secure Computing
+	KAME -> Secure Computing
+		さっくりok。
+		phase1 DES+MD5
+		phase2 ESP DES+hmac-md5
+
+	Secure Computing -> KAME
+		phase1 DES+SHA1
+		phase2 ESP DES+hmac-md5
+			ok
+		phase1 3DES+SHA1
+			ダメ。多分Secure Computingの3DESがバグってる。
+			(KAME vs SSHの自動運転はok)
+			あっちのparity bit(2^0)が怪しい?
+			翌日(木曜)やりなおしたらできた。なんだ?
+
+	phase1のproposalの返し方をエンバグしてたので直しました。
+
+vs FreeS/WAN
+	KAME -> S/WAN	OK
+		phase1 DES+MD5
+		phase2 ESP DES+none
+		Phase 1 では沢山proposalを投げつけてはダメ。-> ibm.conf を修正。
+		pluto の life duration の解釈が間違っていた。
+	S/WAN -> KAME	N/A
+		transport mode で initiate できない。
+		racoon は tunnel mode の鍵を突っ込めない。
+
+vs Netscreen
+	Netscreen -> KAME	OK
+		phase1 DES+SHA1
+		phase2 ESP DES+none
+	KAME -> Netscreen	NG
+		phase 2 で netscreen に mulformed payload 返される。
+			-> netscreen 調べ中。
+			   なんとなく multi transform に対応していない様子。
+
+vs Data Fellows (F-Secure作っているとこ)
+	KAME -> Data Fellows	OK
+		phase1 DES+MD5
+		phase2 ESP DES+HMAC-MD5
+		proposal number は 1,2,3,..と言うので ibm.conf で逃げる。
+		たまに ESP Authentication failed が出る。不明。
+	Data Fellow -> KAME	OK
+		phase1 の 3DES を使ったら1回だけ失敗した。再現せず。
+			parity bit 問題？
+		phase2 の HASH(2) に失敗する。
+			IDii,IDirを付ける処理をいい加減にしてた。-> 修正
+
+vs Routerware
+	phase 1のDH groupと、phase 2のPFS DH groupが同じと仮定しているようだ。
+
+	KAME -> Routerware
+		phase 1(DES+MD5)、最初の暗号化されたパケット(3往復目の行き)を
+		Routerwareがほどけない。向こうはlogが全然でない...
+		にいちゃんは飯にいくと行って帰ってしまった。明日再試合。
+
+	結局やれないまま帰ってしまった。しくしく。
+
+vs Shiva
+	tunnel modeのみ
+
+vs Intel (only IKE)
+	KAME -> Intel	OK
+		phase1 DES MD5
+		phase2 AH SHA1
+
+		Intel で acceptable なのに no supported payload が出てた。
+		その Informational Exchange の decode に racoon が失敗。
+			-> Informational の IV は phase1 から直で作る。
+			-> Intel は起因exchangeの M-ID と同じM-IDを使っている。
+	Intel -> KAME	OK
+		phase1 DES MD5
+		phase2 AH SHA1
+
+vs Microsoft WinNT(Win2000 :-P)
+	DELETE payloadが来たけど処理に失敗。実装はすこし直したが
+	テストしていない。
+
+	Microsoft -> KAME 
+		phase 1: DES+MD5
+		phase 2: ESP(DES+MD5)
+
+		phase 2あたまのID payloadの処理に問題があったので直したら
+		ちゃんと動いた。
+
+	KAME -> Microsoft
+		phase 1: DES+MD5
+		phase 2: ESP(DES+MD5)
+
+		phase 2の最後が完了しない。理由は、commit bitつきのパケットを
+		捨てているため。supportしてないつもりなら、commit bitを無視して
+		処理すべき。
+
+vs IBM AIX
+	KAME -> IBM
+		phase 1 3DES+MD5
+		phase 2 AH(hmac-SHA1)
+
+		encryption mode attributeをつけ忘れた。config fileに
+		書いたら通った。
+
+	IBM -> KAME
+		phase 1 3DES+MD5
+		phase 2 AH(hmac-SHA1)
+
+		さっくりok
+
+vs KAME
+	phase 1: 3DES+MD5
+	phase 2: AH(hmac-SHA1) + ESP(DES+hmac-MD5)
+
+	NOTE: phase 2については個別にネゴ。
+	ping -f、telnet chargenともばっちし。
+	たまーに
+	- ah checksum error
+	- 初期化不十分なSAが{esp,ah}_outputに渡る("no replay field")
+	が起きる。なぜだ。
+
+	2054652 inbound processes succeeded
+	0 inbound process's security policy violation
+	214 inbound SA is unavailable
+	0 inbound processing failed due to EINVAL
+	0 failed getting a SPI
+	0 inbound packets failed on AH replay check
+	0 inbound packets failed on ESP replay check
+	1027563 inbound AH packets considered authentic
+	3 inbound AH packets failed on authentication
+	1027036 inbound ESP packets considered authentic
+	0 inbound ESP packets failed on authentication
+	AH input histogram:
+		hmac SHA1: 1027566
+	ESP input histogram:
+		DES CBC: 1027089
+	1929501 succeeded outbound process
+	0 outbound process's security policy violation
+	13956 outbound SA is unavailable
+	17 outbound processes failed due to EINVAL
+	0 packets without route
+	AH output histogram:
+		hmac SHA1: 964909
+	ESP output histogram:
+		DES CBC: 964592
+
+manual keying
+=============
+vs NIST
+	RC5-cbc: ばっちり
+
+vs SSH
+	CAST128-cbc: だめ
+		SSLeayの「鍵長が短いときのround数問題?」のためか?
+		mailで問い合わせ中(11/1)
+
+		KAMEのsys/cryptoにバグあり。修正済み。
+
+vs Ericsson ACC (mobile-ipしてるひととの関係は不明)
+	(manual keying、AH tunnel)
+	Ericcson実装はfragmentされているパケットがくるとcore dumpしていたが、
+	修正された。
+
+vs Freeswan
+	==+=======================+==209.154.161.0/24
+	  |184			  |149
+	freeswan router		kame router
+	  |?			  |2
+	==+==10.161.184.0/24	==+==10.161.149.0/24
+	  |1			  |1
+	host			host
+
+	DF bitの制御を確認しようと思ったがいまいち確認できず。
+	事実1: freeswan routerは、自分のipsec tunnelのmtuを1404だと思ってる
+		-> このせいか、ちょっとfragmentしすぎのケあり
+	事実2: freeswan hostは、kame host宛のTCP mssが1364だと思ってる
+	事実3: freeswan hostは、kame routerから送られるicmp need fragmentを
+		どこかに貯めているが、どこに貯めてるのやらさっぱりわからない
+	kameのDF bit処理の挙動を調べるには、初回にしか出ないicmp need
+	fragmentをつかまえないといけないが、つかまえられなかった。
+	とりあえず、telnet chargenしたときのlogを両側とったのを添付。
+
+--- on kame host
+03:40:30.840690 0:0:86:5:80:da 0:10:4b:a2:8b:aa 0800 74: 10.161.149.1.1167 > 10.161.184.1.19: S 1110010782:1110010782(0) win 8192 <mss 1460,nop,wscale 0,nop,nop,timestamp 39628 0> (DF) [tos 0x10] (ttl 64, id 259)
+03:40:30.843568 0:10:4b:a2:8b:aa 0:0:86:5:80:da 0800 60: 10.161.184.1.19 > 10.161.149.1.1167: S 3191535599:3191535599(0) ack 1110010783 win 32736 <mss 1364> (ttl 62, id 61263)
+								       ~~~~
+03:40:30.843925 0:0:86:5:80:da 0:10:4b:a2:8b:aa 0800 60: 10.161.149.1.1167 > 10.161.184.1.19: . ack 1 win 9548 (DF) [tos 0x10] (ttl 64, id 260)
+03:40:30.848227 0:10:4b:a2:8b:aa 0:0:86:5:80:da 0800 128: 10.161.184.1.19 > 10.161.149.1.1167: P 1:75(74) ack 1 win 32736 (DF) [tos 0x10] (ttl 62, id 61264)
+03:40:30.857492 0:10:4b:a2:8b:aa 0:0:86:5:80:da 0800 1418: 10.161.184.1.19 > 10.161.149.1.1167: P 75:1439(1364) ack 1 win 32736 (DF) [tos 0x10] (ttl 62, id 61265)
+
+--- on freeswan host
+tcpdump: listening on eth0
+12:18:47.780450 0:0:e8:2a:26:93 0:e0:98:0:16:c0 0800 74: 10.161.149.1.1184 > 10.161.184.1.19: S 1540282774:1540282774(0) win 8192 <mss 1460,nop,wscale 0,nop,nop,timestamp 44145 0> (DF) [tos 0x10]
+12:18:47.780450 0:e0:98:0:16:c0 0:0:e8:2a:26:93 0800 58: 10.161.184.1.19 > 10.161.149.1.1184: S 400137676:400137676(0) ack 1540282775 win 32736 <mss 1364>
+12:18:47.790450 0:0:e8:2a:26:93 0:e0:98:0:16:c0 0800 60: 10.161.149.1.1184 > 10.161.184.1.19: . ack 1 win 9548 (DF) [tos 0x10]
+12:18:47.790450 0:e0:98:0:16:c0 0:0:e8:2a:26:93 0800 128: 10.161.184.1.19 > 10.161.149.1.1184: P 1:75(74) ack 1 win 32736 (DF) [tos 0x10]
+12:18:47.790450 0:e0:98:0:16:c0 0:0:e8:2a:26:93 0800 1418: 10.161.184.1.19 > 10.161.149.1.1184: P 75:1439(1364) ack 1 win 32736 (DF) [tos 0x10]
+12:18:47.940450 0:0:e8:2a:26:93 0:e0:98:0:16:c0 0800 60: 10.161.149.1.1184 > 10.161.184.1.19: . ack 1439 win 9548 (DF) [tos 0x10]
+12:18:47.940450 0:e0:98:0:16:c0 0:0:e8:2a:26:93 0800 1418: 10.161.184.1.19 > 10.161.149.1.1184: P 1439:2803(1364) ack 1 win 32736 [tos 0x10]
+12:18:47.940450 0:e0:98:0:16:c0 0:0:e8:2a:26:93 0800 1418: 10.161.184.1.19 > 10.161.149.1.1184: P 2803:4167(1364) ack 1 win 32736 [tos 0x10]
+12:18:47.940450 0:e0:98:0:16:c0 0:0:e8:2a:26:93 0800 1418: 10.161.184.1.19 > 10.161.149.1.1184: P 4167:5531(1364) ack 1 win 32736 [tos 0x10]
+
+
+	AH tunnel(hmac-MD5) freeswan router <-> kame router間
+		host-hostのping -fもちゃんと動く。
+
+	AH tunnel(hmac-SHA1)
+		だめだめ。freeswanのバグ、または鍵設定失敗。
+
+	ESP tunnel(DES+hmac-MD5):
+		kame routerのバグ(snap-users参照)のせいで最初動かなかったが、
+		直した。ばっちり動いた。
+		ping -fのpacket loss率25%
+			freeswan routerがたっぷりlogをとってるせい?
+
+	AH transport(hmac-MD5) freeswan router <-> kame router間
+		試した。動いた。
+
+	freeswanでは、双方向の鍵はおなじと仮定している(いた)らしい。
+	最近直したらしいので、徐々にできるようになっている模様。
+

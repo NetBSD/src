@@ -1,0 +1,121 @@
+Mon Jan 10 2000 - Fri Jan 14 2000
+
+brief translation - see Japanese version for more complete results.
+this is *past test result* and implementation (both sides)
+is already fixed to address those problems, in most cases.
+
+vs microsoft
+    as responder
+	NT resends last packet on phase 1, racoon panics -> fixed
+
+	revenge, did well
+		phase 1: pre-shared/3des/sha1/dh2
+		phase 2: esp/sha/des/600sec/3kb
+
+vs bluesteel
+	config issues -> okay
+	phase 1: pre-shared/md5/des/dh1/10min
+	phase 2: esp/md5/des/10min
+
+vs racoon
+	rekey goes well, but sometimes phase 2 goes wrong.
+
+	memory leakage in kernel code -> fixed
+	racoon memory leakage (gets bigger and bigger) -> not yet
+
+	IPv6 works just fine like IPv4 case (no scoped address support yet)
+
+vs ashley laurent
+	phase 1 userfqdn support -> ok
+	phase 2 pfs -> ashley-laurent panics
+
+	phase1: psk/userfadn/md5/des/dh2
+
+vs ericsson
+	issues in kame side:
+	initiator: shouldn't attach DH group type for well-known DH groups
+	responder: blowfish key length
+
+	fixed, okay
+		phase 1: pre-shared/des/md5/dh1/lifetime 1hour/lifebyte 1MB
+		phase 2: esp/md5/blowfish 56bit/lifetime 1hour/lifebyte 1MB
+
+	ericsson manages phase 1 and 2 together (should be managed separately
+	from jenkins-rekey), problem with interpretation of delete payload
+
+vs ibm
+	IPv4: main/aggressive, both ok
+		phase 1 3des/md5/dh1/3600sec
+		phase 2 esp/transport/des/sha1/dh2/1800sec
+
+vs radguard
+	gateway: need more improvement
+		phase 1: pre-shared/des/md5/dh1
+		phase 2: esp tun(to node behind gw)/3des/sha1/dh2
+	client: fragment issue on radguard side
+		phase 1: pre-shared/3des/sha1/dh2
+		phase 2: esp tun(myself)/3des/sha1/dh2
+
+	no base mode support yet
+
+vs network associates
+	base mode:
+		initiator/responder: psk
+		PSK HASH_R -> fixed to conform to RFC2409
+		phase2 proposal parsing problem -> need fix on NAI side
+
+	ok, rekey ok
+		phase 1: pre-shared/sha1/3des/dh2/10min
+		phase 2: esp/md5/cast128/dh2/5min
+	dh group 5, ok
+	agressive mode, ok
+
+	byte lifetime bug on racoon side -> fixed
+
+vs intel
+	base mode: HASH computation bug in initiator/responder
+
+vs freeswan
+	group 5: phase1 ok.
+	no KE on phase2 PFS, probabilistic
+
+	config file parsing bug on racoon
+
+	phase1: psk/sha1/3des/dh5/10min
+	phase2: esp/3des/md5/dh1/10min
+
+vs ire
+	ipcomp over ike
+	variable-length spi support, etc.
+	phase 1: 3des/sha1/dh1/600s
+	phase 2: esp/transport/3des/sha1/300s, ipcomp/deflate/300s
+
+	ok.  tried so far:
+	ip esp ipcomp payload
+	ip ah ipcomp payload
+	ip esp ipcomp ip payload
+	ip ah ipcomp ip payload
+
+	- window size issue in kame side
+	  backout sys/netinet6/ipcomp_core.c 1.3 -> 1.4
+	- ire does not handle packet > link MTU 
+	- tunnel/transport interpretation issue
+
+vs fitel
+	just fine, tunnel/transport ok.  rekey has some problem
+	phase1: pks/userfqdn/md5/des/20s
+	phase2: pfs1/md5/des/10s
+
+	nonce len = 320 -> malformed payload
+	random padding -> ok
+	rekey -> some problems
+
+vs cisco
+	IKE works fine
+	phase 1: pre-shared/3des/sha1/dh2/180sec
+	phase 2: esp transport/3des/sha1/dh2/120sec
+
+	phase 1: pre-shared/3des/sha1/dh2/180sec
+	phase 2: esp tunnel/3des/sha1/dh2/120sec
+
+	dangling SA in kernel, fails to lookup policy -> fixed, refcnt issue

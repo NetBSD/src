@@ -1,0 +1,653 @@
+.\"	$KAME: racoon.conf.5,v 1.68 2000/12/17 21:17:53 sakane Exp $
+.\"
+.\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the project nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd November 20, 2000
+.Dt RACOON.CONF 5
+.Os KAME
+.\"
+.Sh NAME
+.Nm racoon.conf
+.Nd configuration file for racoon
+.\"
+.\" .Sh SYNOPSIS
+.\"
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the
+.Xr racoon 8
+ISAKMP daemon.
+.Xr racoon 8
+negotiates security association for itself (ISAKMP SA)
+and for kernel IPsec (IPsec SA).
+The file consists of a sequence of directives and statements.
+Each directives are composed by a tag, and statements enclosed by
+.Ql {
+and
+.Ql } .
+Lines beginning with
+.Ql #
+are comments.
+.\"
+.Ss Meta Syntax
+Keywords and special characters that the parser expects exactly are
+displayed using
+.Ic this
+font.
+Parameters are specified with
+.Ar this
+font.
+Parameters shown in
+square brackets
+.Po
+.Ql \*(lB
+and
+.Ql \*(rB
+.Pc
+are used to show optional keywords and parameters.
+Note that
+you have to pay attention to describing
+.Ar port
+number.
+The
+.Ar port
+number always are enclosed by
+.Ql \*(lB
+and
+.Ql \*(rB .
+They are not optional keyword.
+If it is possible to omit
+.Ar port
+number,
+the expression becomes
+.Bq Ic Bq Ar port .
+The vertical bar
+.Pq Ql \*(Ba
+is used to indicate
+between a choice of optional parameters.
+Parentheses
+.Po
+.Ql \*(lP
+and
+.Ql \*(rP
+.Pc
+are used to group keywords and parameters when necessary.
+Major parameters are listed below.
+.Pp
+.Bl -tag -width addressx -compact
+.It Ar number
+means hexa-decimal or decimal number.
+The former is expressed with
+.Ql 0x .
+.It Ar string
+.It Ar path
+.It Ar file
+means any string enclosed
+.Ql \&"
+.Pq double quote .
+.It Ar address
+means IPv6 and IPv4 address.
+.It Ar port
+means TCP/UDP port number.
+The port number always are enclosed by
+.Ql \*(lB
+and
+.Ql \*(rB .
+.It Ar timeunit
+is one of following:
+.Ic sec , secs , second , seconds , min , mins , minute , minutes ,
+.Ic hour , hours .
+.It Ar byteunit
+is one of following:
+.Ic B , byte , bytes , KB , MB , TB .
+.El
+.\"
+.Ss Path Specification
+.Bl -tag -width Ds -compact
+.It Ic path include Ar path ;
+specifies a path to include file.
+See
+.Sx File Include .
+.It Ic path pre_shared_key Ar file ;
+specifies a file including pre-shared key for various ID.
+See
+.Sx Pre-shared key File .
+.It Ic path certificate Ar path ;
+.Xr racoon 8
+will search this directory if the certificate or certificate request
+is received.
+.El
+.\"
+.Ss File Include
+.Bl -tag -width Ds -compact
+.It Ic include Ar file
+other configuration file can be included.
+.El
+.\"
+.Ss Identifier Specification
+is obsoleted.
+It must be defined at each
+.Ic remote
+directives.
+.\"
+.Ss Timer Specification
+.Bl -tag -width Ds -compact
+.It Ic timer { Ar statements Ic }
+specifies various timer.
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic counter Ar number ;
+maximum trying count to send.
+Default count is 5.
+.It Ic interval Ar number Ar timeunit ;
+interval to resend.
+This unit is second.
+Default timer is 10 second.
+.It Ic persend Ar number ;
+the number of packets per a send.
+Default is 1 time.
+.It Ic phase1 Ar number Ar timeunit ;
+Default timer is 15 seconds.
+.It Ic phase2 Ar number Ar timeunit ;
+Default timer is 10 seconds.
+timer for waiting to complete each phase.
+.El
+.El
+.\"
+.Ss Listening Port Specification
+.Bl -tag -width Ds -compact
+.It Ic listen { Ar statements Ic }
+If no
+.Ar listen
+directive is specified,
+.Xr racoon 8
+will listen to all available interface addresses.
+The followings are the list of statements.
+.Pp
+.Bl -tag -width Ds -compact
+.\" How do I express bold brackets; `[' and `]' .
+.\" Is the "Bq Ic [ Ar port ] ;" buggy ?
+.It Ic isakmp Ar address Bq Bq Ar port ;
+If it is specified,
+.Xr racoon 8
+will only listen to its address.
+Default port is 500 as IANA defines.
+You can define more than one definition.
+.\".It Ic admin Ic [ Ar port ] ;
+.\"specify the port for connecting to
+.\".Xr kmpstat 8 .
+.\"Default port is 61225.
+.It Ic strict_address ;
+require all addresses for ISAKMP must be bound.
+It will be ignored when you don't specify any addresses.
+.El
+.El
+.\"
+.Ss Remote Nodes Specifications
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic remote ( Ar address \*(Ba Ic anonymous )
+.Bq Bq Ar port
+.Ic { Ar statements Ic }
+.Xc
+defines the parameters of IKE phase 1 per remote node.
+Default port is 500.
+The followings are the list of statements.
+.Pp
+.Bl -tag -width Ds -compact
+.\"
+.It Ic exchange_mode ( main \*(Ba aggressive \*(Ba base ) ;
+defined exchange mode of phase 1.
+.\"
+.It Ic doi Ic ipsec_doi ;
+means to use IPSEC-DOI specified RFC 2407.
+You can omit it.
+.\"
+.It Ic situation Ic identity_only ;
+means to use SIT_IDENTITY_ONLY specified RFC 2407.
+You can omit it.
+.\"
+.It Ic identifier Ar idtype ;
+is obsoleted.
+Instead, use
+.Ic my_identifier .
+.\"
+.It Ic my_identifier Ar idtype ... ;
+specifies my identifier and its type to use in phase 1 negotiation.
+.Ic address, fqdn , user_fqdn , keyid and asn1dn
+can be used as
+.Ar idtype .
+Each usage are the following.
+.Bl -tag -width Ds -compact
+.It Ic my_identifier Ic address ;
+declares to use the type of IP address.
+It is default if you don't specify the identifier.
+.It Ic my_identifier Ic user_fqdn Ar string ;
+defines the type of USER_FQDN.
+.It Ic my_identifier Ic fqdn Ar string ;
+defines the type of FQDN.
+.It Ic my_identifier Ic keyid Ar file ;
+defines the type of KEY_ID.
+.It Ic my_identifier Ic asn1dn Bq Ar string ;
+defines the type of ASN.1 distinguished name.
+If
+.Ar string
+is omitted,
+.Xr racoon 8
+will get DN from the certificate.
+.El 
+.\"
+.It Ic peers_identifier Ar idtype ... ;
+specifies peer's identifier like
+.Ic my_identifier .
+If it is not defined then
+.Xr racoon 8
+will not verify the peer's identifier in ID payload transmitted from the peer.
+.Xr racoon 8
+will just warn it at the moment even if you defined it.
+.\"
+.It Ic certificate_type Ar certspec ;
+specifies a certificate specification.
+.Ar certspec
+is one of followings:
+.Bl -tag -width Ds -compact
+.It Ic x509 Ar certfile Ar privkeyfile;
+.Ar certfile
+means a file name of certificate.
+.Ar privkeyfile
+means a file name of secret key.
+.El
+.\"
+.It Ic peers_certfile Ar certfile ;
+When the peer don't send any certificate,
+.Xr racoon 8
+can use this certificate as peer's.
+.\"
+.It Ic send_cert (on \(ba off) ;
+If you don't want to send any certificate in some reasons, you may set off.
+default is on.
+.\"
+.It Ic send_cr (on \(ba off) ;
+If you don't want to send any certificate request in some reasons, you may set off.
+Default is on.
+.\"
+.It Ic verify_cert (on \(ba off) ;
+If you don't want to verify the certificate in some reasons, you may set off.
+default is on.
+.\"
+.It Ic lifetime time Ar number Ar timeunit ;
+.It Ic lifetime byte Ar number Ar byteunit ;
+define each lifetime of time or bytes which are to be proposed on phase 1.
+Any proposal will be accepted, and the attribute(s) will be not proposed to
+the peer if you don't specify it(them).
+Their individually can be specified in each proposals.
+Note that the lifetime of bytes is useless at the moment.
+.\"
+.It Ic initial_contact (on \(ba off) ;
+enable to send INITIAL-CONTACT message.
+default value is
+.Ic on .
+.\"
+.It Ic proposal_check Ar level ;
+specifies the action of lifetime length and PFS of phase 2 selection on the responder side.
+default level is
+.Ic strict .
+If the
+.Ar level
+is;
+.Bl -tag -width Ds -compact
+.It Ic obey
+the responder obey the initiator anytime.
+.It Ic strict
+If the responder's length is longer than the initiator's one, the
+responder uses the initiator's one.
+Otherwise rejects the proposal.
+If PFS is not required by the responder, the responder obeys the proposal.
+If PFS is required by both sides and if the responder's group is not equal to
+the initiator's one, then the responder reject the proposal.
+.It Ic claim
+If the responder's length is longer than the initiator's one, the
+responder use the initiator's one.
+If the responder's length is
+shorter than the initiator's one, the responder uses own length
+AND send RESPONDER-LIFETIME notify message to a initiator in the
+case of lifetime.
+About PFS, this directive is same as
+.Ic strict .
+.It Ic exact
+If the initiator's length is not equal to the responder's one, the
+responder rejects the proposal.
+If PFS is required by both sides and if the responder's group is not equal to
+the initiator's one, then the responder reject the proposal.
+.El
+.\"
+.It Ic support_mip6 (on \(ba off) ;
+If this value is set on then both values of ID payloads in phase 2 exchange
+are always used as the addresses of end-point of IPsec-SAs.
+Default is off.
+.\"
+.It Ic nonce_size Ar number ;
+define the byte size of nonce value.
+Racoon can send any value although
+RFC2409 specifies that the value MUST be between 8 and 256 bytes.
+Default size is 16 bytes.
+.\"
+.It Xo
+.Ic proposal { Ar sub-substatements Ic }
+.Xc
+.Bl -tag -width Ds -compact
+.\"
+.It Ic encryption_algorithm Ar algorithm ;
+define encryption algorithm for phase 1 negotiation.
+This directive must be defined.
+.Ar algorithm
+is one of following:
+.Ic des , 3des , blowfish , cast
+.\".Ic rc5 , idea
+for oakley.
+In the case of other transform, must not use this statement.
+.\"
+.It Ic hash_algorithm Ar algorithm;
+define hash algorithm for phase 1 negotiation.
+This directive must be defined.
+.Ar algorithm
+is one of following:
+.Ic md5, sha1
+for oakley.
+.\"
+.It Ic authentication_method Ar type ;
+define the authentication method for phase 1 negotiation.
+This directive must be defined.
+.Ar type
+is only one:
+.Ic pre_shared_key, rsasig , dsssig , rsaenc , rsarev, gssapi_krb .
+.\"
+.It Ic dh_group Ar group ;
+define the group of Diffie-Hellman exponentiations.
+This directive must be defined.
+.Ar group
+is one of following:
+.Ic modp768 , modp1024 , modp1536 .
+When you want to use aggressive mode,
+you must define same DH group in each proposals.
+.It Ic lifetime time Ar number Ar timeunit ;
+.It Ic lifetime byte Ar number Ar byteunit ;
+define lifetime of phase 1 SA eay proposal.
+Refer to the above description of
+.Ic lifetime
+directive immediately defined in
+.Ic remote
+directive.
+.It Ic gssapi_id Ar string ;
+define the GSS-API endpoint name, to be included as an attribute in the SA,
+if the
+.Ic gssapi_krb
+authentication method is used. If this is not defined, the default value of
+.Ql ike/hostname
+is used, where hostname is the FQDN of the interface being used.
+.El
+.El
+.El
+.\"
+.Ss Policy Specifications
+The policy directive is obsoleted, policies are now in the SPD.
+.Xr racoon 8
+will obey the policy configured into the kernel by
+.Xr setkey 8 ,
+and will construct phase 2 proposals by combining
+.Ic sainfo
+specifications in
+.Nm Ns ,
+and policies in the kernel.
+.\"
+.Ss Sainfo Specifications
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic sainfo ( Ar source_id destination_id \*(Ba Ic anonymous )
+.Ic { Ar statements Ic }
+.Xc
+defines the parameters of IKE phase 2 (IPsec-SA establishment).
+.Ar source_id destination_id
+are constructed like the following.
+.Pp
+.Ic address Ar address
+.Bq Ic / Ar prefix
+.Bq Ic [ Ar port ]
+.Ar ul_proto
+.Pp
+or
+.Pp
+.Ar idtype Ar string
+.Pp
+It means exactly the content of ID payload.
+It is not like a filter rule.
+For example, if you define 3ffe:501:4819::/48 as
+.Ar source_id .
+3ffe:501:4819:1000:/64 is not match with it.
+.Pp
+.Bl -tag -width Ds -compact
+.\"
+.It Ic pfs_group Ar group ;
+define the group of Diffie-Hellman exponentiations.
+If you don't require PFS then you can omit this directive.
+Any proposal will be accepted if you don't specify it.
+.Ar group
+is one of following:
+.Ic modp768 , modp1024 , modp1536 .
+.\"
+.It Ic lifetime time Ar number Ar timeunit ;
+.It Ic lifetime byte Ar number Ar byteunit ;
+define each lifetime of time or bytes which are to be used IPsec-SA.
+Any proposal will be accepted, and the attribute(s) will be not proposed to
+the peer if you don't specify it(them).
+See
+.Sx proposal_check
+directive.
+.\"
+.It Ic identifier Ar idtype ;
+is obsoleted.
+Instead use
+.Ic my_identifier
+directives.
+.\"
+.It Ic my_identifier Ar idtype ... ;
+specifies ID type to use phase 2 negotiation.
+The type of address is used as default.
+See
+.Sx my_identifier
+directive in
+.Ic remote
+for its usage.
+It is always for initiator, not responder.
+.Xr racoon
+as responder can handle only IP address type.
+.El
+.\"
+.Pp
+.Xr racoon 8
+does not have the list of security protocols to be negotiated.
+The list of security protocols are passed by SPD in the kernel.
+Therefore you have to define all of the potential algorithms
+in phase 2 proposals even if there is a algorithm which will not be used.
+These algorithms are define by using the following three directives.
+.Xr racoon 8
+will compute actual phase 2 proposals by computing permutation of the specified
+algorithms, and then combining them with security protocol specified by SPD.
+For example, if
+.Ic des, 3des, hmac_md5,
+and
+.Ic hmac_sha1
+are specified, we have four combination for use with ESP,
+and two for AH.
+Then, based on SPD settings,
+.Xr racoon 8
+will construct the actual proposals.
+If the SPD entry asks for ESP only, there will be 4 proposals.
+If it asks for both AH and ESP, there will be 8 proposals.
+Note that the kernel may not support the algorithm you have specified.
+.\"
+.Bl -tag -width Ds -compact
+.It Ic encryption_algorithm Ar algorithms ;
+.Ic des , 3des , des_iv64 , des_iv32 ,
+.Ic rc5 , rc4 , idea , 3idea ,
+.Ic cast128 , blowfish , null_enc ,
+.Ic twofish , rijndael
+.Pq used with esp
+.\"
+.It Ic authentication_algorithm Ar algorithms ;
+.Ic des , 3des , des_iv64 , des_iv32 ,
+.Ic hmac_md5 , hmac_sha1 , non_auth
+.Pq used with esp authentication and AH
+.\"
+.It Ic compression_algorithm Ar algorithms ;
+.Ic deflate
+.Pq used with ipcomp
+.El
+.El
+.\"
+.Ss Logging level
+.Bl -tag -width Ds -compact
+.It Ic log Ar level ;
+define logging level.
+.Ar level
+is one of the following:
+.Ic notify , debug
+and
+.Ic debug2 .
+Default is
+.Ic notify .
+.El
+.\"
+.Ss Specifying the way to pad
+.Bl -tag -width Ds -compact
+.It Ic padding { Ar statements Ic }
+specified padding format.
+The followings are the list of statements.
+.Bl -tag -width Ds -compact
+.It Ic randomize (on \(ba off) ;
+enable to randomize a value in padding.
+Default is on.
+.It Ic randomize_length (on \(ba off) ;
+enable to randomize length of padding.
+Default is off.
+.It Ic maximum_length Ar number ;
+define a maximum length of padding.
+If
+.Ic randomize_length is off, it is ignored.
+Default is 20 bytes.
+.It Ic exclusive_tail (on \(ba off) ;
+means to set the number of pad bytes minus one into last part of the padding.
+Default is on.
+.It Ic strict_check (on \(ba off) ;
+means to be constrained the peer to set the number of pad bytes.
+Default is off.
+.El
+.El
+.\"
+.Ss Static SA configuration
+.Bl -tag -width Ds -compact
+.It Ic static_sa Ar parameters
+specifies static SA.
+This
+.Ar parameters
+will be passed to
+.Xr setkey 8 .
+Not yet.
+.El
+.\"
+.Ss Pre-shared key File
+Pre-shared key file defines a pair of the identifier and the shared secret key
+which are used at Pre-shared key authentication method in phase 1.
+The pair in each lines are separated by some number of blanks and/or tab
+characters like
+.Xr hosts 5 .
+Key can be included any blanks because all of the words after 2nd column
+are interpreted as a secret key.
+Lines start with
+.Ql #
+are ignored.
+Key start with
+.Ql 0x
+means hexa-decimal string.
+Note that the file must be owned by the user ID running
+.Xr racoon 8
+.Pq usually privileged user ,
+and must not be accessible by others.
+.\"
+.Sh EXAMPLE
+The following is a sample of the configuration file.
+.Bd -literal -offset
+path pre_shared_key "/usr/local/v6/etc/psk.txt" ;
+remote anonymous
+{
+	exchange_mode aggressive,main,base;
+	lifetime time 24 hour;
+	proposal {
+		encryption_algorithm 3des;
+		hash_algorithm sha1;
+		authentication_method pre_shared_key;
+		dh_group 2;
+	}
+}
+
+sainfo anonymous
+{
+	pfs_group 2;
+	lifetime time 12 hour ;
+	lifetime byte 50 MB ;
+	encryption_algorithm 3des, blowfish, twofish, rijndael ;
+	authentication_algorithm hmac_sha1, hmac_md5 ;
+	compression_algorithm deflate ;
+}
+.Ed
+
+The following is a sample of the file defined pre-shared key.
+.Bd -literal -offset
+10.160.94.3     mekmitasdigoat
+172.16.1.133    0x12345678
+194.100.55.1    whatcertificatereally
+3ffe:501:410:ffff:200:86ff:fe05:80fa    mekmitasdigoat
+3ffe:501:410:ffff:210:4bff:fea2:8baa    mekmitasdigoat
+foo@kame.net    mekmitasdigoat
+foo.kame.net    hoge
+.Ed
+.\"
+.Sh SEE ALSO
+.\".Xr kmpstat 8 ,
+.Xr racoon 8
+.\"
+.Sh HISTORY
+The
+.Nm
+configuration file first appeared in
+.Dq YIPS
+Yokogawa IPsec implementation.
+.\"
+.Sh BUGS
+Some statements may not be implemented.
+These will be worked in the future.
