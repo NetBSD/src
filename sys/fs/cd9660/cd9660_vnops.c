@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.2 2003/05/16 05:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.2 2003/05/16 05:09:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ out:
 }
 
 int
-iso_uiodir(idp,dp,off)
+iso_uiodir(idp, dp, off)
 	struct isoreaddir *idp;
 	struct dirent *dp;
 	off_t off;
@@ -533,14 +533,15 @@ cd9660_readdir(v)
 
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
-			cd9660_rrip_getname(ep,idp->current.d_name, &namelen,
-					   &idp->current.d_fileno,imp);
+			cd9660_rrip_getname(ep, idp->current.d_name, &namelen,
+			    &idp->current.d_fileno, imp);
 			idp->current.d_namlen = (u_char)namelen;
 			if (idp->current.d_namlen)
-				error = iso_uiodir(idp,&idp->current,idp->curroff);
+				error = iso_uiodir(idp, &idp->current,
+				    idp->curroff);
 			break;
 		default:	/* ISO_FTYPE_DEFAULT || ISO_FTYPE_9660 */
-			isofntrans(ep->name,idp->current.d_namlen,
+			isofntrans(ep->name, idp->current.d_namlen,
 				   idp->current.d_name, &namelen,
 				   imp->iso_ftype == ISO_FTYPE_9660,
 				   (imp->im_flags & ISOFSMNT_NOCASETRANS) == 0,
@@ -550,19 +551,23 @@ cd9660_readdir(v)
 			case 0:
 				idp->current.d_name[0] = '.';
 				idp->current.d_namlen = 1;
-				error = iso_uiodir(idp,&idp->current,idp->curroff);
+				error = iso_uiodir(idp, &idp->current,
+				    idp->curroff);
 				break;
 			case 1:
-				strcpy(idp->current.d_name,"..");
+				strlcpy(idp->current.d_name, "..",
+				    sizeof(idp->current.d_name));
 				idp->current.d_namlen = 2;
-				error = iso_uiodir(idp,&idp->current,idp->curroff);
+				error = iso_uiodir(idp, &idp->current,
+				    idp->curroff);
 				break;
 			default:
 				idp->current.d_namlen = (u_char)namelen;
 				if (imp->iso_ftype == ISO_FTYPE_DEFAULT)
 					error = iso_shipdir(idp);
 				else
-					error = iso_uiodir(idp,&idp->current,idp->curroff);
+					error = iso_uiodir(idp, &idp->current,
+					    idp->curroff);
 				break;
 			}
 		}
@@ -667,7 +672,8 @@ cd9660_readlink(v)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	if (uio->uio_segflg == UIO_SYSSPACE)
+	if (uio->uio_segflg == UIO_SYSSPACE ||
+	    uio->uio_iov->iov_len >= MAXPATHLEN)
 		symname = uio->uio_iov->iov_base;
 	else
 		MALLOC(symname, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
@@ -676,7 +682,8 @@ cd9660_readlink(v)
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
-		if (uio->uio_segflg != UIO_SYSSPACE)
+		if (uio->uio_segflg != UIO_SYSSPACE ||
+		    uio->uio_iov->iov_len < MAXPATHLEN)
 			FREE(symname, M_NAMEI);
 		brelse(bp);
 		return (EINVAL);
@@ -689,7 +696,8 @@ cd9660_readlink(v)
 	/*
 	 * return with the symbolic name to caller's.
 	 */
-	if (uio->uio_segflg != UIO_SYSSPACE) {
+	if (uio->uio_segflg != UIO_SYSSPACE ||
+	    uio->uio_iov->iov_len < MAXPATHLEN) {
 		error = uiomove(symname, symlen, uio);
 		FREE(symname, M_NAMEI);
 		return (error);
