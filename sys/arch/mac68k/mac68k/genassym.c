@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.15 1996/02/02 19:42:51 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.16 1996/02/27 03:29:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -181,13 +181,6 @@ main()
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
-
-	printf("#define\tINTIOBASE %d\n", INTIOBASE);
-	printf("#define\tNBBASE %d\n", NBBASE);
-	printf("#define\tROMBASE %d\n", ROMBASE);
-	printf("#define\tROMMAPSIZE %d\n", ROMMAPSIZE);
-	printf("#define\tIIOMAPSIZE %d\n", IIOMAPSIZE);
-	printf("#define\tNBMAPSIZE %d\n", NBMAPSIZE);
 
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
 	printf("#define\tMMU_68030 %d\n", MMU_68030);
