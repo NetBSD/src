@@ -1,4 +1,4 @@
-/*	$NetBSD: xlat_mbr_fstype.c,v 1.2 2003/10/08 04:13:13 lukem Exp $	*/
+/*	$NetBSD: xlat_mbr_fstype.c,v 1.3 2004/11/12 19:34:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.2 2003/10/08 04:13:13 lukem Exp $");
+__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.3 2004/11/12 19:34:43 uwe Exp $");
 
 
 #include <sys/disklabel.h>
@@ -51,7 +51,7 @@ xlat_mbr_fstype(int mbr_type)
 		uint8_t	netbsd_type;
 	} ptn_types[] = {
 		{ MBR_PTYPE_386BSD,	FS_BSDFFS },
-		{ MBR_PTYPE_APPLEUFS,	FS_APPLEUFS },
+		{ MBR_PTYPE_APPLE_UFS,	FS_APPLEUFS },
 		{ MBR_PTYPE_FAT12,	FS_MSDOS },
 		{ MBR_PTYPE_FAT16B,	FS_MSDOS },
 		{ MBR_PTYPE_FAT16L,	FS_MSDOS },
