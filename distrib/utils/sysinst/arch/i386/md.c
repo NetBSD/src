@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.82 2003/06/05 14:30:14 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.83 2003/06/09 19:06:49 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -217,8 +217,7 @@ md_post_newfs(void)
 	char bootxx[8192 + 4];
 #define bp (*(struct i386_boot_params *)(bootxx + 512 * 2 + 8))
 
-	ret = run_prog(RUN_DISPLAY, NULL,
-			"/bin/cp /usr/mdec/biosboot /mnt/boot");
+	ret = cp_to_target("/usr/mdec/biosboot", "/boot");
 	if (ret)
 		return ret;
 
