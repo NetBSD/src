@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.9 2000/04/17 17:30:48 drochner Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.10 2000/06/26 02:42:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -213,6 +213,10 @@ static long
 #define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
 #endif
 
+#ifndef	CHIP_PHYSADDR
+#define	CHIP_PHYSADDR(x)	(x)
+#endif
+
 void
 __C(CHIP,_bus_io_init)(t, v)
 	bus_space_tag_t t;
@@ -336,8 +340,10 @@ __C(CHIP,_io_get_window)(v, window, abst)
 	case 0:
 		abst->abst_bus_start = 0;
 		abst->abst_bus_end = 0xffffffffUL;
-		abst->abst_sys_start = CHIP_IO_SYS_START(v);
-		abst->abst_sys_end = CHIP_IO_SYS_START(v) + abst->abst_bus_end;
+		abst->abst_sys_start =
+		    CHIP_PHYSADDR(CHIP_IO_SYS_START(v));
+		abst->abst_sys_end =
+		    CHIP_PHYSADDR(CHIP_IO_SYS_START(v) + abst->abst_bus_end);
 		abst->abst_addr_shift = 0;
 		abst->abst_size_shift = 0;
 		abst->abst_flags = ABST_DENSE|ABST_BWX;

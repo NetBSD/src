@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.2 1999/12/02 19:43:58 thorpej Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.3 2000/06/26 02:42:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -53,6 +53,8 @@
 #define CHIP_MEM_EXTENT(v)       (((struct tsp_config *)(v))->pc_mem_ex)
 
 #define CHIP_MEM_SYS_START(v)    (((struct tsp_config *)(v))->pc_iobase)
+
+#define	CHIP_PHYSADDR(x)	TS_PHYSADDR(x)
 
 /* 
  * Tsunami core logic appears on EV6.  We require at least EV56          
