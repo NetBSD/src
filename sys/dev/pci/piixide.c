@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.4 2003/12/05 23:12:41 bouyer Exp $	*/
+/*	$NetBSD: piixide.c,v 1.5 2003/12/06 22:40:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -45,6 +45,7 @@ static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void artisea_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 
 static int  piixide_match(struct device *, struct cfdata *, void *);
 static void piixide_attach(struct device *, struct device *, void *);
@@ -125,18 +126,15 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 31244 Serial ATA Controller",
 	  artisea_chip_map,
 	},
-	/*
-	 * XXX Is this really the same as the 31244? --thorpej
-	 */
 	{ PCI_PRODUCT_INTEL_82801EB_SATA,
 	  0,
 	  "Intel 82801EB Serial ATA Controller",
-	  artisea_chip_map,
+	  piixsata_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801ER_SATA,
 	  0,
 	  "Intel 82801ER Serial ATA/Raid Controller",
-	  artisea_chip_map,
+	  piixsata_chip_map,
 	},
 	{ 0,
 	  0,
@@ -668,6 +666,48 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	/*
 	 * XXX Configure LEDs to show activity.
 	 */
+
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.PIO_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.UDMA_cap = 6;
+	}
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	interface = PCI_INTERFACE(pa->pa_class);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+	}
+}
+
+static void
+piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface;
+	int channel;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	aprint_normal("%s: bus-master DMA support present",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+	pciide_mapreg_dma(sc, pa);
+	aprint_normal("\n");
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
