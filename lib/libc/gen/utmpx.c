@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.4 2002/03/11 03:29:49 simonb Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.5 2002/04/04 19:42:14 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.4 2002/03/11 03:29:49 simonb Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.5 2002/04/04 19:42:14 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: utmpx.c,v 1.4 2002/03/11 03:29:49 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <vis.h>
+#include <utmp.h>
 #include <utmpx.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -308,4 +309,30 @@ utmpxname(const char *fname)
 	(void)strcpy(utfile, fname);
 	endutxent();
 	return 1;
+}
+
+
+void
+getutmp(const struct utmpx *ux, struct utmp *u)
+{
+	(void)memcpy(u->ut_name, ux->ut_name, sizeof(u->ut_name));
+	(void)memcpy(u->ut_line, ux->ut_line, sizeof(u->ut_line));
+	(void)memcpy(u->ut_host, ux->ut_host, sizeof(u->ut_host));
+	u->ut_time = ux->ut_tv.tv_sec;
+}
+
+void
+getutmpx(const struct utmp *u, struct utmpx *ux)
+{
+	(void)memcpy(ux->ut_name, u->ut_name, sizeof(u->ut_name));
+	(void)memcpy(ux->ut_line, u->ut_line, sizeof(u->ut_line));
+	(void)memcpy(ux->ut_host, u->ut_host, sizeof(u->ut_host));
+	ux->ut_tv.tv_sec = u->ut_time;
+	ux->ut_tv.tv_usec = 0;
+	(void)memset(&ux->ut_ss, 0, sizeof(ux->ut_ss));
+	ux->ut_pid = 0;
+	ux->ut_type = USER_PROCESS;
+	ux->ut_session = 0;
+	ux->ut_exit.e_termination = 0;
+	ux->ut_exit.e_exit = 0;
 }
