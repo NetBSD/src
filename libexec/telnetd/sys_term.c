@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.16 1999/08/12 23:05:22 aidan Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.17 1999/09/17 19:00:32 aidan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.16 1999/08/12 23:05:22 aidan Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.17 1999/09/17 19:00:32 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -1700,6 +1700,11 @@ start_login(host, autologin, name)
 #if	defined (AUTHENTICATION)
 	if (auth_level >= 0 && autologin == AUTH_VALID) {
 # if	!defined(NO_LOGIN_F)
+#  if	defined(FORWARD)
+		if (got_forwarded_creds)
+			argv = addarg(argv, "-F");
+		else
+#  endif /* FORWARD */
 		argv = addarg(argv, "-f");
 		argv = addarg(argv, "--");
 		argv = addarg(argv, name);
