@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.17 2001/01/27 04:49:35 itojun Exp $	*/
+/*	$NetBSD: show.c,v 1.18 2001/10/06 18:32:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.17 2001/01/27 04:49:35 itojun Exp $");
+__RCSID("$NetBSD: show.c,v 1.18 2001/10/06 18:32:45 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,42 +256,15 @@ p_sockaddr(sa, flags, width)
 {
 	char workbuf[128], *cplim;
 	char *cp = workbuf;
-	int cplen = 0, len;
 
 	switch(sa->sa_family) {
 
 	case AF_LINK:
-	    {
-		struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
-
-		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
-		    sdl->sdl_slen == 0)
-			(void)snprintf(workbuf, sizeof workbuf, "link#%d",
-			    sdl->sdl_index);
-		else switch (sdl->sdl_type) {
-		case IFT_ETHER:
-		    {
-			int i;
-			u_char *lla = (u_char *)sdl->sdl_data +
-			    sdl->sdl_nlen;
-
-			cplim = "";
-			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
-				len = snprintf(cp, sizeof(workbuf) - cplen,
-				    "%s%x", cplim, *lla);
-				cp += len;
-				cplen += len;
-				cplim = ":";
-			}
-			cp = workbuf;
-			break;
-		    }
-		default:
-			cp = link_ntoa(sdl);
-			break;
-		}
+		if (getnameinfo(sa, sa->sa_len, workbuf, sizeof(workbuf),
+		    NULL, 0, NI_NUMERICHOST) != 0)
+			strncpy(workbuf, "invalid", sizeof(workbuf));
+		cp = workbuf;
 		break;
-	    }
 
 	case AF_INET:
 	    {
