@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.1 1996/07/01 20:41:32 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.2 1996/07/10 23:35:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -44,32 +44,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/errno.h>
-#include <sys/dkstat.h>
-#include <sys/ioctl.h>
-#include <sys/disklabel.h>
-#include <sys/syslog.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpvar.h>
-
-#include "ra.h"
-#define	NMT	0 	/* XXX */
-
-#define	MAXMSCPDEV 255 /* Can there be more? */
-#define	b_forw	b_hash.le_next
-
-void	mscp_hexdump __P((struct mscp *));
-int	mscp_match __P((struct device *, void *, void *));
-void	mscp_attach __P((struct device *, struct device *, void *));
-void    mscp_start __P((struct  mscp_softc *));
-int	mscp_init __P((struct  mscp_softc *));
-void	mscp_initds __P((struct mscp_softc *));
 
 #define	PCMD	PSWP		/* priority for command packet waits */
 
@@ -198,6 +178,19 @@ loop:
 	 * Found a response.  Update credit information.  If there is
 	 * nothing else to do, jump to `done' to get the next response.
 	 */
+	if (mp->mscp_unit >= mi->mi_driveno) { /* Must expand drive table */
+		int tmpno = ((mp->mscp_unit + 32) & 0xffe0) * sizeof(void *);
+		struct device **tmp = (struct device **)
+		    malloc(tmpno, M_DEVBUF, M_NOWAIT);
+		bzero(tmp, tmpno);
+		if (mi->mi_driveno) {
+			bcopy(mi->mi_dp, tmp, mi->mi_driveno);
+			free(mi->mi_dp, mi->mi_driveno);
+		}
+		mi->mi_driveno = tmpno;
+		mi->mi_dp = tmp;
+	}
+
 	drive = mi->mi_dp[mp->mscp_unit];
 
 	switch (MSCP_MSGTYPE(mp->mscp_msgtc)) {
@@ -206,7 +199,7 @@ loop:
 		break;
 
 	case MSCPT_DATAGRAM:
-		(*me->me_dgram)(drive, mp);
+		(*me->me_dgram)(drive, mp, mi);
 		goto done;
 
 	case MSCPT_CREDITS:
@@ -263,13 +256,20 @@ loop:
 		if (cold)
 			bcopy(mp, &slavereply, sizeof(struct mscp));
 
+		if (mp->mscp_status == (M_ST_OFFLINE|M_OFFLINE_UNKNOWN))
+			break;
+
 		if (drive == 0) {
 			struct	drive_attach_args da;
 
 			da.da_mp = (struct mscp *)mp;
+			da.da_typ = mi->mi_type;
 			config_found(&mi->mi_dev, (void *)&da, mscp_print);
 		} else
-			(*me->me_gotstatus)(drive, mp);
+			/* Hack to avoid complaints */
+			if (!(((mp->mscp_event & M_ST_MASK) == M_ST_AVAILABLE)
+			    && cold))
+				(*me->me_gotstatus)(drive, mp);
 		break;
 
 	case M_OP_AVAILATTN:
@@ -286,6 +286,14 @@ loop:
 #ifdef notyet
 		(*md->md_offline)(ui, mp);
 #endif
+		break;
+
+	case M_OP_POS | M_OP_END:
+	case M_OP_WRITM | M_OP_END:
+		/*
+		 * A non-data transfer operation completed.
+		 */
+		(*me->me_cmddone)(drive, mp);
 		break;
 
 	case M_OP_READ | M_OP_END:
@@ -306,7 +314,6 @@ loop:
 			mscp_hexdump(mp);
 			break;
 		}
-
 rwend:
 		bp = (struct buf *) mp->mscp_cmdref;
 
@@ -328,7 +335,7 @@ rwend:
 		/*
 		 * Unlink the transfer from the wait queue.
 		 */
-		remque(&bp->b_actf);
+		_remque(&bp->b_actf);
 
 		/*
 		 * If the transfer has something to do with bad

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.1 1996/07/01 20:41:34 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.2 1996/07/10 23:36:01 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -48,26 +48,17 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/map.h>
 #include <sys/device.h>
-#include <sys/dkstat.h>
-#include <sys/disklabel.h>
-#include <sys/syslog.h>
-#include <sys/stat.h>
 #include <sys/disk.h>
-#include <sys/kernel.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/fcntl.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <machine/pte.h>
-#include <machine/sid.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
+#include <ufs/ffs/fs.h> /* For some disklabel stuff */
 
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpvar.h>
@@ -86,7 +77,9 @@ struct ra_softc {
 	int	ra_wlabel;	/* label sector is currently writable */
 };
 
-void	radgram __P((struct device *, struct mscp *));
+int	ramatch __P((struct device *, void *, void *));
+void	raattach __P((struct device *, struct device *, void *));
+void	radgram __P((struct device *, struct mscp *, struct mscp_softc *));
 void	raiodone __P((struct device *, struct buf *));
 int	raonline __P((struct device *, struct mscp *));
 int	ragotstatus __P((struct device *, struct mscp *));
@@ -103,6 +96,8 @@ int	rawrite __P((dev_t, struct uio *));
 int	raioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int	radump __P((dev_t, daddr_t, caddr_t, size_t));
 int	rasize __P((dev_t));
+int	ra_putonline __P((struct ra_softc *));
+
 
 struct	mscp_device ra_device = {
 	radgram,
@@ -124,10 +119,6 @@ struct	mscp_device ra_device = {
 #define	rapart(dev)	(minor(dev) & UNITMASK)
 #define	raminor(u, p)	(((u) << UNITSHIFT) | (p))
 
-
-int	ramatch __P((struct device *, void *, void *));
-void	raattach __P((struct device *, struct device *, void *));
-
 struct	cfdriver ra_cd = {
 	NULL, "ra", DV_DULL
 };
@@ -146,7 +137,6 @@ struct	cfattach ra_ca = {
 /*
  * More driver definitions, for generic MSCP code.
  */
-struct	device **ra_dp;
 extern int cold;
 
 int
@@ -155,8 +145,11 @@ ramatch(parent, match, aux)
 	void	*match, *aux;
 {
 	struct	cfdata *cf = match;
-	struct	mscp *mp = aux;
+	struct	drive_attach_args *da = aux;
+	struct	mscp *mp = da->da_mp;
 
+	if ((da->da_typ & MSCPBUS_DISK) == 0)
+		return 0;
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != mp->mscp_unit)
 		return 0;
 	return 1;
@@ -175,13 +168,14 @@ raattach(parent, self, aux)
 	struct	ra_softc *ra = (void *)self;
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
+	struct	mscp_softc *mi = (void *)parent;
 	struct	disklabel *dl;
-	int d = mp->mscp_guse.guse_mediaid;
 
+	ra->ra_mediaid = mp->mscp_guse.guse_mediaid;
 	ra->ra_state = RA_OFFLINE;
 	ra->ra_havelabel = 0;
 	ra->ra_hwunit = mp->mscp_unit;
-	ra_dp[mp->mscp_unit] = self;
+	mi->mi_dp[mp->mscp_unit] = self;
 	disk_attach((struct disk *)&ra->ra_disk);
 	bzero((void *)&ra->ra_buf, sizeof(struct buf));
 
@@ -193,14 +187,7 @@ raattach(parent, self, aux)
 	dl->d_ntracks = mp->mscp_guse.guse_ngpc;
 	dl->d_secpercyl = dl->d_nsectors * dl->d_ntracks;
 	
-	ra->ra_mediaid = mp->mscp_guse.guse_mediaid;
-
-	printf(" drive %d: %c%c", mp->mscp_unit, (((d >> 17) & 037) + '@'),
-	    (((d >> 12) & 037) + '@'));
-	if (((d>>7)& 037) == 0) 
-		printf("%d\n", (d & 127));
-	else
-		printf("%c%d\n", (((d >> 12) & 037) + '@'), (d & 127));
+	mscp_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
 }
 
 /* 
@@ -216,7 +203,6 @@ ra_putonline(ra)
 	struct	disklabel *dl;
 	volatile int i;
 	char *msg;
-	int timo;
 
 	dl = ra->ra_disk.dk_label;
 
@@ -229,9 +215,13 @@ ra_putonline(ra)
 
 	/* Poll away */
 	i = *mi->mi_ip;
-	if (tsleep(&ra->ra_state, PRIBIO, "raonline", 100 * hz))
+	if (tsleep(&ra->ra_state, PRIBIO, "raonline", 100*100)) {
+		ra->ra_state = RA_OFFLINE;
 		return MSCP_FAILED;
+	}
 
+	if (ra->ra_state == RA_OFFLINE)
+		return MSCP_FAILED;
 
 	dl->d_partitions[0].p_size = dl->d_partitions[2].p_size =
 	    dl->d_secperunit;
@@ -243,7 +233,7 @@ ra_putonline(ra)
 		printf(": %s", msg);
 	else
 		ra->ra_havelabel = 1;
-	ra->ra_state == RA_ONLINE;
+	ra->ra_state = RA_ONLINE;
 
 	printf(": size %d sectors\n", dl->d_secperunit);
 
@@ -259,11 +249,8 @@ raopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct disklabel *lp;
-	register struct partition *pp;
 	register struct ra_softc *ra;
-	int s, i, part, unit, mask, error = 0;
-	daddr_t start, end;
+	int part, unit, mask;
 
 	/*
 	 * Make sure this is a reasonable open request.
@@ -322,7 +309,7 @@ raclose(dev, flags, fmt, p)
 {
 	register int unit = raunit(dev);
 	register struct ra_softc *ra = ra_cd.cd_devs[unit];
-	int s, mask = (1 << rapart(dev));
+	int mask = (1 << rapart(dev));
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -365,9 +352,7 @@ rastrategy(bp)
 {
 	register int unit;
 	register struct ra_softc *ra;
-	struct partition *pp;
 	int p;
-	daddr_t sz, maxsz;
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -391,8 +376,8 @@ rastrategy(bp)
 	 */
 	if (bounds_check_with_label(bp, ra->ra_disk.dk_label, ra->ra_wlabel)
 	    <= 0) {
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
+		bp->b_error = ENXIO;
+		goto bad;
 	}
 
 	mscp_strategy(bp, &ra->ra_buf, ra->ra_dev.dv_parent);
@@ -426,8 +411,6 @@ raiodone(usc, bp)
 	struct device *usc;
 	struct buf *bp;
 {
-	struct	ra_softc *ra = (void *)usc;
-
 	biodone(bp);
 }
 
@@ -444,6 +427,7 @@ rafillin(bp, mp)
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	struct disklabel *lp = ra->ra_disk.dk_label;
 
+	
 	/* XXX more checks needed */
 	mp->mscp_unit = ra->ra_hwunit;
 	mp->mscp_seq.seq_lbn = bp->b_blkno + lp->d_partitions[part].p_offset;
@@ -455,11 +439,13 @@ rafillin(bp, mp)
  * This can come from an unconfigured drive as well.
  */
 void
-radgram(usc, mp)
+radgram(usc, mp, mi)
 	struct device *usc;
 	struct mscp *mp;
+	struct mscp_softc *mi;
 {
-	mscp_decodeerror(usc == NULL ? "unconf ra" : usc->dv_xname, mp);
+	if (mscp_decodeerror(usc == NULL?"unconf ra" : usc->dv_xname, mp, mi))
+		return;
 	/*
 	 * SDI status information bytes 10 and 11 are the microprocessor
 	 * error code and front panel code respectively.  These vary per
@@ -483,6 +469,7 @@ raonline(usc, mp)
 {
 	register struct ra_softc *ra = (void *)usc;
 	struct disklabel *dl;
+	int p = 0, d, n;
 
 	wakeup((caddr_t)&ra->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
@@ -500,6 +487,29 @@ raonline(usc, mp)
 	dl = ra->ra_disk.dk_label;
 	dl->d_secperunit = (daddr_t)mp->mscp_onle.onle_unitsize;
 	dl->d_ncylinders = dl->d_secperunit/dl->d_secpercyl;
+	dl->d_type = DTYPE_MSCP;
+	dl->d_rpm = 3600;
+	dl->d_bbsize = BBSIZE;
+	dl->d_sbsize = SBSIZE;
+
+	/* Create the disk name for disklabel. Phew... */
+	d = ra->ra_mediaid;
+	dl->d_typename[p++] = MSCP_MID_CHAR(2, d);
+	dl->d_typename[p++] = MSCP_MID_CHAR(1, d);
+	if (MSCP_MID_ECH(0, d))
+		dl->d_typename[p++] = MSCP_MID_CHAR(0, d);
+	n = MSCP_MID_NUM(d);
+	if (n > 99) {
+		dl->d_typename[p++] = '1';
+		n -= 100;
+	}
+	if (n > 9) {
+		dl->d_typename[p++] = (n / 10) + '0';
+		n %= 10;
+	}
+	dl->d_typename[p++] = n + '0';
+	dl->d_typename[p] = 0;
+	dl->d_npartitions = MAXPARTITIONS;
 
 	return (MSCP_DONE);
 }
@@ -512,14 +522,13 @@ ragotstatus(usc, mp)
 	register struct device *usc;
 	register struct mscp *mp;
 {
-#if 0
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
-		printf("uda%d: attempt to get status for ra%d failed: ",
-			ui->ui_ctlr, ui->ui_unit);
+		printf("%s: attempt to get status failed: ", usc->dv_xname);
 		mscp_printevent(mp);
 		return (MSCP_FAILED);
 	}
 	/* record for (future) bad block forwarding and whatever else */
+#ifdef notyet
 	uda_rasave(ui->ui_unit, mp, 1);
 #endif
 	return (MSCP_DONE);
@@ -536,6 +545,7 @@ raioerror(usc, mp, bp)
 	register struct mscp *mp;
 	struct buf *bp;
 {
+printf("raioerror\n");
 #if 0
 	if (mp->mscp_flags & M_EF_BBLKR) {
 		/*

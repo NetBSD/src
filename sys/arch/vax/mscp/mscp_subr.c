@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.1 1996/07/01 20:41:35 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.2 1996/07/10 23:36:02 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,31 +43,20 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/errno.h>
-#include <sys/dkstat.h>
-#include <sys/ioctl.h>
-#include <sys/disklabel.h>
-#include <sys/syslog.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <machine/sid.h>
-#include <machine/mtpr.h>
 
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpreg.h>
 #include <vax/mscp/mscpvar.h>
 
 #include "ra.h"
-#define	NMT	0 	/* XXX */
+#include "mt.h"
 
-#define	MAXMSCPDEV 255 /* Can there be more? */
 #define	b_forw	b_hash.le_next
 
-void	mscp_hexdump __P((struct mscp *));
 int	mscp_match __P((struct device *, void *, void *));
 void	mscp_attach __P((struct device *, struct device *, void *));
 void    mscp_start __P((struct  mscp_softc *));
@@ -175,29 +164,15 @@ mscp_attach(parent, self, aux)
 #if NRA
 	if (ma->ma_type & MSCPBUS_DISK) {
 		extern	struct mscp_device ra_device;
-		extern	struct device **ra_dp;
 
 		mi->mi_me = &ra_device;
-		if (ra_dp == NULL) {
-			ra_dp = (struct device **)malloc(MAXMSCPDEV *
-			    sizeof(void *), M_DEVBUF, M_NOWAIT);
-			bzero(ra_dp, MAXMSCPDEV * sizeof(void *));
-		}
-		mi->mi_dp = ra_dp;
 	}
 #endif
 #if NMT
 	if (ma->ma_type & MSCPBUS_TAPE) {
 		extern	struct mscp_device mt_device;
-		extern	struct device **mt_dp;
 
 		mi->mi_me = &mt_device;
-		if (mt_dp == NULL) {
-			mt_dp = (struct device **)malloc(MAXMSCPDEV *
-			    sizeof(void *), M_DEVBUF, M_NOWAIT);
-			bzero(mt_dp, MAXMSCPDEV * sizeof(void *));
-		}
-		mi->mi_dp = mt_dp;
 	}
 #endif
 	/*
@@ -249,7 +224,7 @@ gotit:	/*
                          * higher unit numbers either, if we are
                          * using M_GUM_NEXTUNIT.
                          */
-			printf("offl unknown \n");
+			mi->mi_ierr = 3;
                         return;
 
                 case M_OFFLINE_UNMOUNTED:
@@ -286,6 +261,7 @@ gotit:	/*
         /*
          * If we get a lower number, we have circulated around all
 	 * devices and are finished, otherwise try to find next unit.
+	 * We shouldn't ever get this, it's a workaround.
          */
         if (mp->mscp_unit < next)
                 return;
@@ -307,6 +283,7 @@ mscp_init(mi)
 	struct	mscp *mp;
 	volatile int i;
 	int	status, count;
+	unsigned int j;
 
         /*
          * While we are thinking about it, reset the next command
@@ -356,10 +333,10 @@ mscp_init(mi)
 #define	BURST 4	/* XXX */
 	if (mi->mi_type & MSCPBUS_UDA) {
 		*mi->mi_sw = MP_GO | (BURST - 1) << 2;
-		*mi->mi_sw = MP_GO;
 		printf("%s: DMA burst size set to %d\n", 
 		    mi->mi_dev.dv_xname, BURST);
 	}
+	*mi->mi_sw = MP_GO;
 
 	mscp_initds(mi);
 	mi->mi_flags &= ~MSC_IGNOREINTR;
@@ -370,11 +347,13 @@ mscp_init(mi)
 	 */
 	mi->mi_credits = MSCP_MINCREDITS + 1;
 	mp = mscp_getcp(mi, MSCP_DONTWAIT);
-	if (mp == NULL) /* `cannot happen' */
-		panic("mscpbus: no packets");
+
 	mi->mi_credits = 0;
 	mp->mscp_opcode = M_OP_SETCTLRC;
-	mp->mscp_unit = 0;
+	mp->mscp_unit = mp->mscp_modifier = mp->mscp_flags =
+	    mp->mscp_sccc.sccc_version = mp->mscp_sccc.sccc_hosttimo = 
+	    mp->mscp_sccc.sccc_time = mp->mscp_sccc.sccc_time1 =
+	    mp->mscp_sccc.sccc_errlgfl = 0;
 	mp->mscp_sccc.sccc_ctlrflags = M_CF_ATTN | M_CF_MISC | M_CF_THIS;
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 	i = *mi->mi_ip;
@@ -383,11 +362,15 @@ mscp_init(mi)
         while (count < DELAYTEN) {
                 if (((volatile)mi->mi_flags & MSC_READY) != 0)
                         break;
+		if ((j = *mi->mi_sa) & MP_ERR)
+			goto out;
                 DELAY(10000);
                 count += 1;
         }
 	if (count == DELAYTEN) {
-		printf(": couldn't set ctlr characteristics\n");
+out:
+		printf("%s: couldn't set ctlr characteristics, sa=%x\n", 
+		    mi->mi_dev.dv_xname, j);
 		return 1;
 	}
 	return 0;
@@ -416,6 +399,8 @@ mscp_initds(mi)
 		    (long)&uud->mp_cmd[i].mscp_cmdref;
 		mp->mscp_addr = &ud->mp_ca.ca_cmddsc[i];
 		mp->mscp_msglen = MSCP_MSGLEN;
+		if (mi->mi_type & MSCPBUS_TAPE)
+			mp->mscp_vcid = 1;
 	}
 }
 
@@ -533,7 +518,7 @@ mscp_dgo(mi, buffer, info)
 	if (dp->b_actf) /* If more xfers, put it back on queue */
 		MSCP_APPEND(dp, mi->mi_cbuf, b_forw);
 
-	insque(&bp->b_actf, &mi->mi_actf);
+	_insque(&bp->b_actf, &mi->mi_actf);
 
 	bp->b_resid = info;
 	mp->mscp_cmdref = (long) bp;
@@ -770,16 +755,31 @@ mscp_printevent(mp)
 	printf(" %s (%s) (code %d, subcode %d)\n", cm, scm, c, sc);
 }
 
+static char *codemsg[16] = {
+	"lbn", "code 1", "code 2", "code 3",
+	"code 4", "code 5", "rbn", "code 7",
+	"code 8", "code 9", "code 10", "code 11",
+	"code 12", "code 13", "code 14", "code 15"
+};
 /*
  * Print the code and logical block number for an error packet.
  * THIS IS PROBABLY PECULIAR TO DISK DRIVES.  IT SURE WOULD BE
  * NICE IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
  */
-void
-mscp_decodeerror(name, mp)
+int
+mscp_decodeerror(name, mp, mi)
 	char *name;
 	register struct mscp *mp;
+	struct mscp_softc *mi;
 {
+	int issoft;
+	/* 
+	 * We will get three sdi errors of type 11 after autoconfig
+	 * is finished; depending of searching for non-existing units.
+	 * How can we avoid this???
+	 */
+	if (((mp->mscp_event & M_ST_MASK) == 11) && (mi->mi_ierr++ < 3))
+		return 1;
 	/*
 	 * For bad blocks, mp->mscp_erd.erd_hdr identifies a code and
 	 * the logical block number.  Code 0 is a regular block; code 6
@@ -787,13 +787,7 @@ mscp_decodeerror(name, mp)
 	 * undefined.  The code is in the upper four bits of the header
 	 * (bits 0-27 are the lbn).
 	 */
-	int issoft = mp->mscp_flags & (M_LF_SUCC | M_LF_CONT);
-	static char *codemsg[16] = {
-		"lbn", "code 1", "code 2", "code 3",
-		"code 4", "code 5", "rbn", "code 7",
-		"code 8", "code 9", "code 10", "code 11",
-		"code 12", "code 13", "code 14", "code 15"
-	};
+	issoft = mp->mscp_flags & (M_LF_SUCC | M_LF_CONT);
 #define BADCODE(h)	(codemsg[(unsigned)(h) >> 28])
 #define BADLBN(h)	((h) & 0xfffffff)
 
@@ -828,11 +822,36 @@ mscp_decodeerror(name, mp)
 			mp->mscp_unit, mp->mscp_erd.erd_sdecyl);
 		break;
 
+	case M_FM_TAPETRN:
+		printf(" unit %d: tape transfer error, grp 0x%x event 0%o:",
+		    mp->mscp_unit, mp->mscp_erd.erd_sdecyl, mp->mscp_event);
+		break;
+
+	case M_FM_STIERR:
+		printf(" unit %d: STI error, event 0%o:", mp->mscp_unit,
+		    mp->mscp_event);
+		break;
+
 	default:
 		printf(" unit %d: unknown error, format 0x%x:",
 			mp->mscp_unit, mp->mscp_format);
 	}
 	mscp_printevent(mp);
+	return 0;
 #undef BADCODE
 #undef BADLBN
+}
+
+/*
+ * Print out the name of the device; ex. TK50, RA80 etc...
+ */
+void
+mscp_printtype(unit, type)
+	int unit, type;
+{
+	printf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
+	    MSCP_MID_CHAR(1, type));
+	if (MSCP_MID_ECH(0, type))
+		printf("%c", MSCP_MID_CHAR(0, type));
+	printf("%d\n", MSCP_MID_NUM(type));
 }
