@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.32 2003/09/02 22:44:09 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.33 2003/09/05 01:02:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.32 2003/09/02 22:44:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.33 2003/09/05 01:02:52 mycroft Exp $");
 
 #define	PCICISADEBUG
 
@@ -300,8 +300,7 @@ pcic_isa_config_interrupts(self)
 
 		/* the cirrus chips lack support for the soft interrupt */
 		if (pcic_irq_probe != 0 &&
-		    h->vendor != PCIC_VENDOR_CIRRUS_PD6710 &&
-		    h->vendor != PCIC_VENDOR_CIRRUS_PD672X)
+		    h->vendor != PCIC_VENDOR_CIRRUS_PD67XX)
 			pcic_isa_probe_interrupts(sc, h);
 
 		chipmask &= sc->intr_mask[h->chip];

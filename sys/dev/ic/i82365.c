@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.74 2003/09/03 01:33:23 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.75 2003/09/05 01:02:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.74 2003/09/03 01:33:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.75 2003/09/05 01:02:51 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -104,6 +104,9 @@ pcic_ident_ok(ident)
 	if ((ident == 0) || (ident == 0xff) || (ident & PCIC_IDENT_ZERO))
 		return (0);
 
+	if ((ident & PCIC_IDENT_REV_MASK) == 0)
+		return (0);
+
 	if ((ident & PCIC_IDENT_IFTYPE_MASK) != PCIC_IDENT_IFTYPE_MEM_AND_IO) {
 #ifdef DIAGNOSTIC
 		printf("pcic: does not support memory and I/O cards, "
@@ -111,6 +114,7 @@ pcic_ident_ok(ident)
 #endif
 		return (0);
 	}
+
 	return (1);
 }
 
@@ -121,28 +125,15 @@ pcic_vendor(h)
 	int reg;
 	int vendor;
 
-	/*
-	 * the chip_id of the cirrus toggles between 11 and 00 after a write.
-	 * weird.
-	 */
-
-	pcic_write(h, PCIC_CIRRUS_CHIP_INFO, 0);
-	reg = pcic_read(h, -1);
-
-	if ((reg & PCIC_CIRRUS_CHIP_INFO_CHIP_ID) ==
-	    PCIC_CIRRUS_CHIP_INFO_CHIP_ID) {
-		reg = pcic_read(h, -1);
-		if ((reg & PCIC_CIRRUS_CHIP_INFO_CHIP_ID) == 0) {
-			if (reg & PCIC_CIRRUS_CHIP_INFO_SLOTS)
-				return (PCIC_VENDOR_CIRRUS_PD672X);
-			else
-				return (PCIC_VENDOR_CIRRUS_PD6710);
-		}
-	}
-
 	reg = pcic_read(h, PCIC_IDENT);
 
+	if ((reg & PCIC_IDENT_REV_MASK) == 0)
+		return (PCIC_VENDOR_NONE);
+
 	switch (reg) {
+	case 0x00:
+	case 0xff:
+		return (PCIC_VENDOR_NONE);
 	case PCIC_IDENT_ID_INTEL0:
 		vendor = PCIC_VENDOR_I82365SLR0;
 		break;
@@ -167,22 +158,32 @@ pcic_vendor(h)
 	if (vendor == PCIC_VENDOR_I82365SLR0 ||
 	    vendor == PCIC_VENDOR_I82365SLR1) {
 		/*
+		 * Check for Cirrus PD67xx.
+		 * the chip_id of the cirrus toggles between 11 and 00 after a
+		 * write.  weird.
+		 */
+		pcic_write(h, PCIC_CIRRUS_CHIP_INFO, 0);
+		reg = pcic_read(h, -1);
+		if ((reg & PCIC_CIRRUS_CHIP_INFO_CHIP_ID) ==
+		    PCIC_CIRRUS_CHIP_INFO_CHIP_ID) {
+			reg = pcic_read(h, -1);
+			if ((reg & PCIC_CIRRUS_CHIP_INFO_CHIP_ID) == 0)
+				return (PCIC_VENDOR_CIRRUS_PD67XX);
+		}
+
+		/*
 		 * check for Ricoh RF5C[23]96
 		 */
 		reg = pcic_read(h, PCIC_RICOH_REG_CHIP_ID);
 		switch (reg) {
 		case PCIC_RICOH_CHIP_ID_5C296:
-			vendor = PCIC_VENDOR_RICOH_5C296;
-			break;
+			return (PCIC_VENDOR_RICOH_5C296);
 		case PCIC_RICOH_CHIP_ID_5C396:
-			vendor = PCIC_VENDOR_RICOH_5C396;
-			break;
-		default:
-			break;
+			return (PCIC_VENDOR_RICOH_5C396);
 		}
 	}
 
-	return ( vendor );
+	return (vendor);
 }
 
 char *
@@ -194,10 +195,8 @@ pcic_vendor_to_string(vendor)
 		return ("Intel 82365SL Revision 0");
 	case PCIC_VENDOR_I82365SLR1:
 		return ("Intel 82365SL Revision 1");
-	case PCIC_VENDOR_CIRRUS_PD6710:
-		return ("Cirrus PD6710");
-	case PCIC_VENDOR_CIRRUS_PD672X:
-		return ("Cirrus PD672X");
+	case PCIC_VENDOR_CIRRUS_PD67XX:
+		return ("Cirrus PD6710/2X");
 	case PCIC_VENDOR_I82365SL_DF:
 		return ("Intel 82365SL-DF");
 	case PCIC_VENDOR_RICOH_5C296:
@@ -217,7 +216,7 @@ void
 pcic_attach(sc)
 	struct pcic_softc *sc;
 {
-	int i, reg, chip, socket, intr;
+	int i, reg, chip, socket;
 	struct pcic_handle *h;
 
 	DPRINTF(("pcic ident regs:"));
@@ -239,23 +238,37 @@ pcic_attach(sc)
 		h->ph_write = st_pcic_write;
 		h->ph_bus_t = sc->iot;
 		h->ph_bus_h = sc->ioh;
+		h->flags = 0;
 
 		/* need to read vendor -- for cirrus to report no xtra chip */
 		if (socket == 0)
 			h->vendor = (h+1)->vendor = pcic_vendor(h);
 
-		/*
-		 * During the socket probe, read the ident register twice.
-		 * I don't understand why, but sometimes the clone chips
-		 * in hpcmips boxes read all-0s the first time. -- mycroft
-		 */
-		reg = pcic_read(h, PCIC_IDENT);
-		reg = pcic_read(h, PCIC_IDENT);
-		DPRINTF(("ident reg 0x%02x\n", reg));
-		if (pcic_ident_ok(reg))
-			h->flags = PCIC_FLAG_SOCKETP;
-		else
-			h->flags = 0;
+		switch (h->vendor) {
+		case PCIC_VENDOR_NONE:
+			/* no chip */
+			continue;
+		case PCIC_VENDOR_CIRRUS_PD67XX:
+			reg = pcic_read(h, PCIC_CIRRUS_CHIP_INFO);
+			if (socket == 0 ||
+			    (reg & PCIC_CIRRUS_CHIP_INFO_SLOTS))
+				h->flags = PCIC_FLAG_SOCKETP;
+			break;
+		default: 
+			/*
+			 * During the socket probe, read the ident register
+			 * twice.  I don't understand why, but sometimes the
+			 * clone chips in hpcmips boxes read all-0s the first
+			 * time. -- mycroft
+			 */
+			reg = pcic_read(h, PCIC_IDENT);
+			DPRINTF(("socket %d ident reg 0x%02x\n", i, reg));
+			reg = pcic_read(h, PCIC_IDENT);
+			DPRINTF(("socket %d ident reg 0x%02x\n", i, reg));
+			if (pcic_ident_ok(reg))
+				h->flags = PCIC_FLAG_SOCKETP;
+			break;
+		}
 	}
 
 	for (i = 0; i < PCIC_NSLOTS; i++) {
@@ -264,13 +277,9 @@ pcic_attach(sc)
 		if (h->flags & PCIC_FLAG_SOCKETP) {
 			SIMPLEQ_INIT(&h->events);
 
-			/* disable interrupts -- for now */
+			/* disable interrupts and leave socket in reset */
 			pcic_write(h, PCIC_CSC_INTR, 0);
-			intr = pcic_read(h, PCIC_INTR);
-			DPRINTF(("intr was 0x%02x\n", intr));
-			intr &= ~(PCIC_INTR_RI_ENABLE | PCIC_INTR_ENABLE |
-			    PCIC_INTR_IRQ_MASK);
-			pcic_write(h, PCIC_INTR, intr);
+			pcic_write(h, PCIC_INTR, 0);
 			(void) pcic_read(h, PCIC_CSC);
 		}
 	}
@@ -279,6 +288,9 @@ pcic_attach(sc)
 	for (i = 0; i < PCIC_NSLOTS; i += 2) {
 		h = &sc->handle[i];
 		chip = i / 2;
+
+		if (h->vendor == PCIC_VENDOR_NONE)
+			continue;
 
 		aprint_normal("%s: controller %d (%s) has ", sc->dev.dv_xname,
 		    chip, pcic_vendor_to_string(sc->handle[i].vendor));
@@ -459,8 +471,7 @@ pcic_attach_socket_finish(h)
 	    h->vendor));
 
 	/* unsleep the cirrus controller */
-	if ((h->vendor == PCIC_VENDOR_CIRRUS_PD6710) ||
-	    (h->vendor == PCIC_VENDOR_CIRRUS_PD672X)) {
+	if (h->vendor == PCIC_VENDOR_CIRRUS_PD67XX) {
 		reg = pcic_read(h, PCIC_CIRRUS_MISC_CTL_2);
 		if (reg & PCIC_CIRRUS_MISC_CTL_2_SUSPEND) {
 			DPRINTF(("%s: socket %02x was suspended\n",
