@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.2 1997/05/11 06:16:26 jeremy Exp $	*/
+/*	$NetBSD: leds.c,v 1.3 1997/05/14 16:41:19 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,13 +60,19 @@
 static u_char led_countdown = 0;
 static u_char led_px = 0;
 
-/* Initial value is the default pattern set. */
+/*
+ * Initial value is the default pattern set. Note, only bit zero
+ * shows on the 3/80, and it is active-high (3/470 is active-low).
+ * We normally want the 3/80's LED to just stay ON, so the 3/80
+ * will change the default patlen to one, causing the LED to keep
+ * using the first byte of the pattern where bit zero is ON.
+ */
 static struct led_patterns ledpat = {
 	8,	/* divisor */
 	8,	/* patlen */
 	{	/* patterns */
+		0x0F, 0x1E, 0x3C, 0x78,
 		0xF0, 0xE1, 0xC3, 0x87,
-		0x0F, 0x1E, 0x3C, 0x78
 	}
 };
 
@@ -81,7 +87,19 @@ leds_init()
 {
 
 	diagreg = obio_find_mapping(OBIO_DIAGREG, 1);
-	*diagreg = 0xff;	/* all on */
+	*diagreg = ledpat.pat[0];
+}
+
+/*
+ * This is called by clock attach (on 3/80 only)
+ * to let us have a change to change the pattern.
+ * Note:  cpu_machine_id is not yet valid when 
+ * leds_init() is called.
+ */
+void
+leds_hydra()
+{
+	ledpat.patlen = 1;
 }
 
 /*
