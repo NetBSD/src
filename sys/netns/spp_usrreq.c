@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.14 1996/10/10 23:25:55 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.15 1996/10/13 01:59:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1741,7 +1741,7 @@ spp_timers(cb, timer)
 	 * control block.
 	 */
 	case SPPT_2MSL:
-		kprintf("spp: SPPT_2MSL went off for no reason\n");
+		printf("spp: SPPT_2MSL went off for no reason\n");
 		cb->s_timer[timer] = 0;
 		break;
 
