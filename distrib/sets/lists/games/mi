@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.24 2001/01/12 04:49:58 jwise Exp $
+# $NetBSD: mi,v 1.25 2001/10/27 06:29:00 jmc Exp $
 ./usr/games/adventure		games-games-bin
 ./usr/games/arithmetic		games-games-bin
 ./usr/games/atc			games-games-bin
@@ -102,6 +102,8 @@
 ./usr/share/games/cards.pck		games-games-share
 ./usr/share/games/cribbage.instr	games-games-share
 ./usr/share/games/fish.instr		games-games-share
+./usr/share/games/fortune/farber		games-utils-share
+./usr/share/games/fortune/farber.dat		games-utils-share
 ./usr/share/games/fortune/fortunes		games-utils-share
 ./usr/share/games/fortune/fortunes-o		games-utils-share
 ./usr/share/games/fortune/fortunes-o.dat	games-utils-share
