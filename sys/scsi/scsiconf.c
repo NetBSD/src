@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.31 1995/06/24 01:22:30 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.32 1995/06/27 20:42:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -275,6 +275,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "CD-ROM CDU-541  ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-55S  ", "",     SDEV_NOLUNS},
+	{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-8003A", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8012 ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
