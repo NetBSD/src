@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgavar.h,v 1.6 2002/10/14 14:19:29 scw Exp $	*/
+/*	$NetBSD: sysfpgavar.h,v 1.7 2002/10/22 15:19:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,46 +50,46 @@ struct sysfpga_attach_args {
 /*
  * Interrupt groups managed by the System FPGA
  */
-#define	SYSFPGA_IGROUP_SUPERIO	0	/* Output to CPU's IRL1 pin */
-#define	SYSFPGA_IGROUP_FEMI	1	/* Output to CPU's IRL0 pin */
-#define	SYSFPGA_IGROUP_PCI1	2	/* Output to CPU's IRL2 pin */
-#define	SYSFPGA_IGROUP_PCI2	3	/* Output to CPU's IRL3 pin */
+#define	SYSFPGA_IGROUP_IRL1	0	/* Output to CPU's IRL1 pin */
+#define	SYSFPGA_IGROUP_IRL0	1	/* Output to CPU's IRL0 pin */
+#define	SYSFPGA_IGROUP_IRL2	2	/* Output to CPU's IRL2 pin */
+#define	SYSFPGA_IGROUP_IRL3	3	/* Output to CPU's IRL3 pin */
 #define	SYSFPGA_NGROUPS		4
 
 /*
  * Super IO generates the following interrupts
  */
-#define	SYSFPGA_SUPERIO_INUM_DCD	0	/* XXX: Not strictly SuperIO! */
-#define	SYSFPGA_SUPERIO_INUM_LAN	1	/* XXX: Not strictly SuperIO! */
-#define	SYSFPGA_SUPERIO_INUM_KBD	2
-#define	SYSFPGA_SUPERIO_INUM_UART2	3
-#define	SYSFPGA_SUPERIO_INUM_UART1	4
-#define	SYSFPGA_SUPERIO_INUM_LPT	5
-#define	SYSFPGA_SUPERIO_INUM_MOUSE	6
-#define	SYSFPGA_SUPERIO_INUM_IDE	7
-#define	SYSFPGA_SUPERIO_NINTR		8
+#define	SYSFPGA_IRL1_INUM_DCD	0	/* XXX: Not strictly SuperIO! */
+#define	SYSFPGA_IRL1_INUM_LAN	1	/* XXX: Not strictly SuperIO! */
+#define	SYSFPGA_IRL1_INUM_KBD	2
+#define	SYSFPGA_IRL1_INUM_UART2	3
+#define	SYSFPGA_IRL1_INUM_UART1	4
+#define	SYSFPGA_IRL1_INUM_LPT	5
+#define	SYSFPGA_IRL1_INUM_MOUSE	6
+#define	SYSFPGA_IRL1_INUM_IDE	7
+#define	SYSFPGA_IRL1_NINTR	8
 
 /*
  * PCI1 generates the following interrupts
  */
-#define	SYSFPGA_PCI1_INTA		0
-#define	SYSFPGA_PCI1_INTB		1
-#define	SYSFPGA_PCI1_INTC		2
-#define	SYSFPGA_PCI1_INTD		3
-#define	SYSFPGA_PCI1_NINTR		4
+#define	SYSFPGA_IRL2_INTA	0
+#define	SYSFPGA_IRL2_INTB	1
+#define	SYSFPGA_IRL2_INTC	2
+#define	SYSFPGA_IRL2_INTD	3
+#define	SYSFPGA_IRL2_NINTR	4
 
 /*
  * PCI2 generates the following interrupts
  */
-#define	SYSFPGA_PCI2_INTA		0
-#define	SYSFPGA_PCI2_INTB		1
-#define	SYSFPGA_PCI2_INTC		2
-#define	SYSFPGA_PCI2_INTD		3
-#define	SYSFPGA_PCI2_FAL		4	/* XXX: cPCI form-factor only */
-#define	SYSFPGA_PCI2_DEG		5	/* XXX: cPCI form-factor only */
-#define	SYSFPGA_PCI2_INTP		6	/* XXX: cPCI form-factor only */
-#define	SYSFPGA_PCI2_INTS		7	/* XXX: cPCI form-factor only */
-#define	SYSFPGA_PCI2_NINTR		8
+#define	SYSFPGA_IRL3_INTA	0
+#define	SYSFPGA_IRL3_INTB	1
+#define	SYSFPGA_IRL3_INTC	2
+#define	SYSFPGA_IRL3_INTD	3
+#define	SYSFPGA_IRL3_FAL	4	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_IRL3_DEG	5	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_IRL3_INTP	6	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_IRL3_INTS	7	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_IRL3_NINTR	8
 
 struct evcnt;
 extern void *sysfpga_intr_establish(int, int, int, int (*)(void *), void *);
