@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.2 2003/04/28 06:27:19 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.3 2003/04/28 06:31:15 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -18,4 +18,9 @@ sys/dev/pci/pciide_pdc202xx_reg.h		1.9
 	Make DMA mode works on Promise Ultra66/100 with 48-bit LBA drives.
 	Ok'ed by bouyer in tech-kern@netbsd.org.
 	[nakayama, ticket #1275]
+
+usr.sbin/etcupdate/etcupdate			1.10
+
+	Use md5 instead of sum (bin/20196).
+	[martti, ticket #1146]
 
