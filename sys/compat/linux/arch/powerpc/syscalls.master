@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2002/03/22 15:19:43 christos Exp $  
+	$NetBSD: syscalls.master,v 1.11 2002/04/10 18:18:28 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -362,7 +362,8 @@
 199	UNIMPL		sys_pciconfig_write
 200	UNIMPL		sys_pciconfig_iobase
 201	UNIMPL		/* Unused (MacOnLinux project) */
-202	UNIMPL		sys_getdents64
+202	STD		{ int linux_sys_getdents64(int fd, \
+			    struct linux_dirent64 *dent, unsigned int count); }
 203	UNIMPL		pivot_root
 204	UNIMPL		fcntl64
 205	UNIMPL		madvise
