@@ -1,0 +1,5 @@
+#       $NetBSD: shlib_version,v 1.1 2002/06/18 08:29:35 fvdl Exp $
+#       Remember to update distrib/sets/lists/base/md.x86_64 when changing
+#
+major=0
+minor=0
