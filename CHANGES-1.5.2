@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.13 2001/08/16 16:03:44 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.14 2001/08/16 16:10:52 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -193,3 +193,9 @@ sys/kern/vfs_subr.c				1.156
 sys/nfs/nfs.h					1.30
 
   Bounds check mount args.
+
+sys/dev/ccd.c					1.73
+sys/dev/ccdvar.h				1.20
+
+  Provide hard limit on the number of concatenated disks, and bounds
+  check against that limit.
