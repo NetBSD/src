@@ -1,4 +1,4 @@
-$NetBSD: STATUS,v 1.4 1996/06/13 20:36:10 cgd Exp $
+$NetBSD: STATUS,v 1.5 1996/09/06 04:01:37 cgd Exp $
 
 NetBSD/Alpha's Status
 
@@ -57,12 +57,11 @@ Supported hardware:
 			DEC ZLXp-E2 and ZLXp-E3 PCI video boards.
 			Other PCI boards.
 
-	AlphaStation 600 systems, with the same supported hardware
-	list as the AlphaStation {200,250,255,400} systems.  (NOTE
-	THAT THAT MEANS THE AlphaStation 600's BUILT-IN SCSI
+	AlphaStation 500 and 600 systems, with the same supported
+	hardware list as the AlphaStation {200,250,255,400} systems.
+	(NOTE THAT THAT MEANS THE AlphaStation 600's BUILT-IN SCSI
 	CONTROLLERS DO NOT WORK.  You'll need to get a 53c810 board,
-	or run diskless.)  AlphaStation 500 systems may work, but
-	have not been tested.
+	or run diskless.)
 
 	AXPpci systems (including Multia), with the same supported
 	hardware list as the AlphaStation {200,250,255,400} systems.
