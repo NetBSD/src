@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.28 2003/05/13 05:51:46 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.29 2003/05/13 09:22:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -539,8 +539,19 @@ struct ieee80211com {
 	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
 	u_int16_t		ic_max_aid;
 };
+#ifdef __NetBSD__
 #define	ic_if		ic_ec.ec_if
-#define	ic_softc	ic_ec.ec_if.if_softc
+#define	IEEE80211_LOCK_DECL()	int s
+#define	IEEE80211_LOCK(_ic)	do { s = splnet(); } while (0)
+#define	IEEE80211_UNLOCK(_ic)	splx(s)
+#endif
+#ifdef __FreeBSD__
+#define	ic_if		ic_ac.ac_if
+#define	IEEE80211_LOCK_DECL()
+#define	IEEE80211_LOCK(_ic)	mtx_lock(&(_ic)->ic_mtx)
+#define	IEEE80211_UNLOCK(_ic)	mtx_unlock(&(_ic)->ic_mtx)
+#endif
+#define	ic_softc	ic_if.if_softc
 
 #define	IEEE80211_SEND_MGMT(ic,ni,type,arg)	do {			      \
 	if ((ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT] != NULL)  \
