@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 2002/10/19 00:10:53 bjh21 Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 2002/11/24 01:07:47 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -362,7 +362,7 @@ vmapbuf(bp, len)
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_enter(pmap_kernel(), taddr, fpa,
-			VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+			VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
