@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/12 01:50:06 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2001/12/12 11:44:45 lukem Exp $
 
 COMPAT_UTIL_OVERRIDE=	freebsd
 .include "../Makefile.inc"
@@ -9,8 +9,6 @@ CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_FREEBSD -DKTRACE
 CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
 		-I. -I${S}
-
-NOMAN=	# defined
 
 KMOD=	compat_freebsd
 

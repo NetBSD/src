@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:50:13 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 11:49:08 lukem Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/svr4_32
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF32
-
-NOMAN=	# defined
 
 KMOD=	exec_svr4_32_elf
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:50:09 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 11:44:47 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -8,8 +8,6 @@ CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_ULTRIX
 CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S}
-
-NOMAN=	# defined
 
 KMOD=	compat_ultrix
 
