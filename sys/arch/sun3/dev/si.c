@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.34 1997/02/26 22:26:01 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.35 1997/04/28 22:10:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -278,6 +278,8 @@ si_intr(void *arg)
 			}
 		}
 #endif
+		/* Yes, we DID cause this interrupt. */
+		claimed = 1;
 	}
 
 	return (claimed);
