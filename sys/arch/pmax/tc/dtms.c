@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.4 2005/01/10 04:40:05 mhitch Exp $	*/
+/*	$NetBSD: dtms.c,v 1.5 2005/01/10 04:43:34 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.4 2005/01/10 04:40:05 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.5 2005/01/10 04:43:34 mhitch Exp $");
 
 #include "locators.h"
 
@@ -140,7 +140,7 @@ dtms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 	}
 
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 void
