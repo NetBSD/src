@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: setkey.8,v 1.6 2000/01/31 14:22:43 itojun Exp $
-.\"	KAME Id: setkey.8,v 1.18 2000/01/14 01:28:27 itojun Exp
+.\"	$NetBSD: setkey.8,v 1.7 2000/03/15 00:24:30 itojun Exp $
+.\"     KAME Id: setkey.8,v 1.23 2000/03/13 05:33:53 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt SETKEY 8
-.Os KAME
+.Os
 .\" 
 .Sh NAME
 .Nm setkey
@@ -55,16 +55,17 @@
 .\" 
 .Sh DESCRIPTION
 .Nm
-updates, or lists the content of, Security Association Database (SAD) entries
-in the kernel as well as Security Policy Database (SPD) entries.
+addes, updates, dumpes, or flushes
+Security Association Database (SAD) entries
+as well as Security Policy Database (SPD) entries in the kernel.
 .Pp
 .Nm
-takes a series of operation from standard input
+takes a series of operations from the standard input
 .Po
 if invoked with
 .Fl c
 .Pc
-or file named
+or the file named
 .Ar filename
 .Po
 if invoked with
@@ -77,21 +78,23 @@ If with
 .Fl P ,
 the SPD entries are dumped.
 .It Fl F
-Flush the SAD.
+Flush the SAD entries.
 If with
 .Fl P ,
-the SPD are flushed.
+the SPD entries are flushed.
 .It Fl a
 .Nm
-usually do not display dead SAD entries on
+usually does not display dead SAD entries with
 .Fl D .
-With
+If with
 .Fl a ,
-dead SAD entries will be displayed as well.
-Dead SAD entries are kept in the kernel,
-when they are referenced from any of SPD entries in the kernel.
+the dead SAD entries will be displayed as well.
+A dead SAD entry means that
+it has been expired but remains
+because it is referenced by SPD entries.
 .It Fl d
-Enable debugging messages.
+Enable to print debugging messages for command parser,
+without talking to kernel.  It is not used usually.
 .It Fl x
 Loop forever and dump all the messages transmitted to
 .Dv PF_KEY
@@ -112,9 +115,8 @@ including messages sent from other processes
 .Pc .
 .El
 .Pp
-Operation has the following grammar. Note that lines, that start with a
-hashmark ('#') are treated as comment lines.
-Description of meta-arguments follows.
+Operations have the following grammar. Note that lines starting with
+hashmarks ('#') are treated as comment lines.
 .Bl -tag -width Ds
 .It Xo
 .Li add
@@ -123,7 +125,7 @@ Description of meta-arguments follows.
 .Ar algorithm...
 .Li ;
 .Xc
-Add a SAD entry.
+Add an SAD entry.
 .\"
 .It Xo
 .Li get
@@ -131,7 +133,7 @@ Add a SAD entry.
 .Op Fl m Ar mode
 .Li ;
 .Xc
-Show a SAD entry.
+Show an SAD entry.
 .\"
 .It Xo
 .Li delete
@@ -139,35 +141,35 @@ Show a SAD entry.
 .Op Fl m Ar mode
 .Li ;
 .Xc
-Remove a SAD entry.
+Remove an SAD entry.
 .\"
 .It Xo
 .Li flush
 .Op Ar protocol
 .Li ;
 .Xc
-Clear all SAD entries that matches the options.
+Clear all SAD entries matched by the options.
 .\"
 .It Xo
 .Li dump
 .Op Ar protocol
 .Li ;
 .Xc
-Dumps all SAD entries that matches the options.
+Dumps all SAD entries matched by the options.
 .\"
 .It Xo
 .Li spdadd
 .Ar src_range Ar dst_range Ar upperspec Ar policy
 .Li ;
 .Xc
-Add a SPD entry.
+Add an SPD entry.
 .\"
 .It Xo
 .Li spddelete
-.Ar src_range Ar dst_range Ar upperspec
+.Ar src_range Ar dst_range Ar upperspec Fl P Ar direction
 .Li ;
 .Xc
-Delete a SPD entry.
+Delete an SPD entry.
 .\"
 .It Xo
 .Li spdflush
@@ -179,7 +181,7 @@ Clear all SPD entries.
 .Li spddump
 .Li ;
 .Xc
-Dumps all SAD entries.
+Dumps all SPD entries.
 .El
 .\"
 .Pp
@@ -215,7 +217,7 @@ IPCOMP
 .\"
 .Pp
 .It Ar spi
-Security Parameter Index (SPI) for the SA and SPD.
+Security Parameter Index (SPI) for the SAD and the SPD.
 It must be decimal number or hexadecimal number
 .Po
 with
@@ -225,16 +227,17 @@ attached
 .\"
 .Pp
 .It Ar extensions
-takes some of the following:
+take some of the following:
 .Bl -tag -width Fl -compact 
 .\"
 .It Fl m Ar mode
-Specify an security protocol mode for use.  By default,
-.Li any .
+Specify a security protocol mode for use.  
 .Ar mode
 is one of following:
 .Li transport , tunnel
 or
+.Li any .
+The default value is
 .Li any .
 .\"
 .It Fl r Ar size
@@ -320,7 +323,7 @@ SAs accept
 only.
 .Pp
 .Ar key
-must be double-quoted character string or a series of hexadecimal digits.
+must be double-quoted character string or series of hexadecimal digits.
 .Pp
 Possible values for
 .Ar ealgo ,
@@ -331,7 +334,7 @@ are specified in separate section.
 .\"
 .It Ar src_range
 .It Ar dst_range
-These are selection of the secure communication is specified as
+These are selections of the secure communication specified as
 IPv4/v6 address or IPv4/v6 address range, and it may accompany
 TCP/UDP port specification.
 This takes the following form:
@@ -374,7 +377,7 @@ NOTE:
 .Ar upperspec
 does not work against forwarding case at this moment,
 as it requires extra reassembly at forwarding node
-.Pq not implemented as this moment .
+.Pq not implemented at this moment .
 .\"
 .It Ar policy
 .Ar policy
@@ -436,15 +439,15 @@ is to be one of the following:
 or
 .Li require .
 .Li default
-means kernel consults to the system wide default against protocol you
+means the kernel consults to the system wide default against protocol you
 specified, e.g.
 .Li esp_trans_deflev
-sysctl variable, when kernel processes the packet.
+sysctl variable, when the kernel processes the packet.
 .Li use
-means that kernel use a SA if it's available,
-otherwise kernel keeps normal operation.
+means that the kernel use a SA if it's available,
+otherwise the kernel keeps normal operation.
 .Li require
-means SA is required whenever kernel deals with the packet.
+means SA is required whenever the kernel deals with the packet.
 Note that
 .Dq Li discard
 and
@@ -465,7 +468,7 @@ The following list shows the supported algorithms.
 and
 .Sy algorithm
 are almost orthogonal.
-Following are the list of authentication algorithms that can be used as
+Followings are the list of authentication algorithms that can be used as
 .Ar aalgo
 in
 .Fl A Ar aalgo
@@ -486,7 +489,7 @@ keyed-sha1	160		ah: 96bit ICV (no document)
 null		0 to 2048	for debugging
 .Ed
 .Pp
-Following are the list of encryption algorithms that can be used as
+Followings are the list of encryption algorithms that can be used as
 .Ar ealgo
 in
 .Fl E Ar ealgo
@@ -506,7 +509,7 @@ des-deriv	64		ipsec-ciph-des-derived-01 (expired)
 3des-deriv	192		no document
 .Ed
 .Pp
-Following are the list of compression algorithms that can be used as
+Followings are the list of compression algorithms that can be used as
 .Ar calgo
 in
 .Fl C Ar calgo
@@ -523,7 +526,7 @@ lzs		rfc2395
 .Sh EXAMPLES
 .Bd -literal -offset
 add	3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
-		-E des-cbc "ESP SA!!"
+		-E des-cbc "ESP SA!!" ;
 
 add	3ffe:501:4819::1 3ffe:501:481d::1 ah 123456
 		-A hmac-sha1 "AH SA configuration!" ;
