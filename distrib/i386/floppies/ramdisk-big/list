@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1.2.3 2001/04/23 22:36:45 he Exp $
+#	$NetBSD: list,v 1.1.2.4 2001/08/06 21:27:15 he Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -87,8 +87,8 @@ COPY	${CURDIR}/../../../../etc/services	etc/services
 COPY	${CURDIR}/../../../../usr.sbin/dhcp/client/scripts/netbsd sbin/dhclient-script
 
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
-SPECIAL /bin/rm etc/spwd.db
-SPECIAL /bin/rm etc/pwd.db
+#SPECIAL /bin/rm etc/spwd.db
+#SPECIAL /bin/rm etc/pwd.db
 
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../../etc/etc.i386/MAKEDEV	dev/MAKEDEV
