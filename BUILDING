@@ -483,7 +483,7 @@ BUILDING
 
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
                place the built object files under obj.  For instance, a set-
-               ting of /usr/obj will place build-time files files under
+               ting of /usr/obj will place build-time files under
                /usr/obj/bin, /usr/obj/lib, and so forth.
 
      -R rel    Set the value of RELEASEDIR to rel.  Setting this option will
