@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.41 1999/03/24 05:51:23 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.42 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -627,7 +627,7 @@ kmeminit()
 		(vsize_t)(npg * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
 		(vaddr_t *)&kmemlimit, (vsize_t)(npg * NBPG), 
-			FALSE, FALSE, &kmem_map_store);
+			VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= CLBYTES)
