@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 1998/12/17 22:36:42 thorpej Exp $
+#	$NetBSD: Makefile,v 1.63 1998/12/30 15:03:31 tv Exp $
 
 # XXX for OBJECT_FMT
 .include <bsd.own.mk>
@@ -6,18 +6,18 @@
 SUBDIR+=	bc binutils cpio dc diff diff3 egcs gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar gdb
 
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "arm32") || \
+.if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "mips") || \
     (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "vax")
 SUBDIR+=	gas.new
-.else
+.elif (${MACHINE_ARCH} != "arm32")
 SUBDIR+=	gas
 .endif
 
 # XXX mips vs mips{el,eb}.  Should be all ELF hosts anyway.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips")
 SUBDIR+=	ld.new
-.else
+.elif (${MACHINE_ARCH} != "arm32")
 SUBDIR+=	ld
 .endif
 
