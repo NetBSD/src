@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.20 1997/10/19 14:42:38 mrg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.21 1997/10/20 03:32:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.20 1997/10/19 14:42:38 mrg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.21 1997/10/20 03:32:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(argc, argv)
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cf:g:l:m:o:sd")) != EOF)
+	while ((ch = getopt(argc, argv, "cf:g:l:m:o:sd")) != -1)
 		switch((char)ch) {
 		case 'c':
 			docopy = 1;
@@ -321,7 +321,7 @@ install(from_name, to_name, fset, flags)
 		if (flags & DIRECTORY) {
 			(void)snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
 			    to_name,
-			    (p = rindex(from_name, '/')) ? ++p : from_name);
+			    (p = strrchr(from_name, '/')) ? ++p : from_name);
 			to_name = pathbuf;
 		}
 		devnull = 0;
