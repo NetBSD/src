@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.7 1997/05/26 14:29:36 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.8 1997/06/02 11:57:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	8.4 (Berkeley) 4/29/95";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.7 1997/05/26 14:29:36 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.8 1997/06/02 11:57:23 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -108,19 +108,17 @@ main(argc, argv)
 	one = 1;
 	host = user = NULL;
 
+#ifndef IN_RCMD
 	/*
-	 * If called as something other than "rsh" or "rcmd", use it as the
-	 * host name
+	 * If called as something other than "rsh" use it as the host name,
+	 * only for rsh.
 	 */
 	p = __progname;
-	if (strcmp(p, "rsh") == 0
-#ifdef IN_RCMD
-	    || strcmp(p, "rcmd") == 0
-#endif /* IN_RCMD */
-	    )
+	if (strcmp(p, "rsh") == 0)
 		asrsh = 1;
 	else
 		host = p;
+#endif /* IN_RCMD */
 
 	/* handle "rsh host flags" */
 	if (!host && argc > 2 && argv[1][0] != '-') {
@@ -129,7 +127,6 @@ main(argc, argv)
 	}
 
 #ifdef IN_RCMD
-
 	if ((loop = getenv("RCMD_LOOP")) && strcmp(loop, "YES") == 0)
 		warnx("rcmd appears to be looping!");
 
@@ -524,7 +521,7 @@ copyargs(argv)
 	if (!(args = malloc((u_int)cc)))
 		errx(1, "%s", strerror(ENOMEM));
 	for (p = args, *p = '\0', ap = argv; *ap; ++ap) {
-		strcat(p, *ap);
+		(void)strcpy(p, *ap);
 		p += strlen(p);
 		if (ap[1])
 			*p++ = ' ';
