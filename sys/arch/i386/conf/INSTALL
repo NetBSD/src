@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.33 1997/03/13 04:15:26 cgd Exp $
+#	$NetBSD: INSTALL,v 1.34 1997/04/01 13:12:16 mycroft Exp $
 #
 #	INSTALL -- an installation kernel config.
 #                     adapters.    This kernel should be GENERICOTHER with lines
@@ -182,7 +182,7 @@ fd*	at fdc? drive ?
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq ?
+wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
