@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.15 1998/08/20 08:33:45 kleink Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16 1998/12/11 18:46:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -447,11 +447,12 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Determine VA aliasing distance if any
 	 */
-	if (RELOC(ectype, int) == EC_VIRT)
+	if (RELOC(ectype, int) == EC_VIRT) {
 		if (RELOC(machineid, int) == HP_320)
 			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
 		else if (RELOC(machineid, int) == HP_350)
 			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
+	}
 #endif
 
 	/*
