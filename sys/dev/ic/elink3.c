@@ -1,7 +1,7 @@
-/*	$NetBSD: elink3.c,v 1.92 2001/05/14 09:28:49 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.93 2001/05/16 20:30:52 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1592,10 +1592,12 @@ epget(sc, totlen)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct mbuf *top, **mp, *m, *rv = NULL;
+	struct mbuf *m;
 	bus_addr_t rxreg;
 	int len, remaining;
-	int sh;
+	int s;
+	caddr_t newdata;
+	u_long offset;
 
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = 0;
@@ -1607,6 +1609,7 @@ epget(sc, totlen)
 		/* If the queue is no longer full, refill. */
 		if (sc->last_mb == sc->next_mb)
 			callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
+
 		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
@@ -1616,8 +1619,34 @@ epget(sc, totlen)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
-	top = 0;
-	mp = &top;
+
+	/*
+	 * Allocate big enough space to hold whole packet, to avoid
+	 * allocating new mbufs on splsched().
+	 */
+	if (totlen + ALIGNBYTES > len) {
+		if (totlen + ALIGNBYTES > MCLBYTES) {
+			len = ALIGN(totlen + ALIGNBYTES);
+			MEXTMALLOC(m, len, M_DONTWAIT);
+		} else {
+			len = MCLBYTES;
+			MCLGET(m, M_DONTWAIT);
+		}
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return 0;
+		}
+	}
+
+	/* align the struct ip header */
+	newdata = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header))
+		    - sizeof(struct ether_header);
+	m->m_data = newdata;
+	m->m_len = totlen;
+
+	rxreg = ep_w1_reg(sc, ELINK_W1_RX_PIO_RD_1);
+	remaining = totlen;
+	offset = mtod(m, u_long);
 
 	/*
 	 * We read the packet at a high interrupt priority level so that
@@ -1629,9 +1658,7 @@ epget(sc, totlen)
 	 *
 	 * XXX THIS CAN CAUSE CLOCK DRIFT!
 	 */
-	sh = splsched();
-
-	rxreg = ep_w1_reg(sc, ELINK_W1_RX_PIO_RD_1);
+	s = splsched();
 
 	if (sc->ep_flags & ELINK_FLAGS_USEFIFOBUFFER) {
 		/*
@@ -1644,99 +1671,56 @@ epget(sc, totlen)
 		bus_space_write_2(iot, ioh, ELINK_W1_RUNNER_RDCTL, totlen >> 1);
 	}
 
-	while (totlen > 0) {
-		if (top) {
-			m = sc->mb[sc->next_mb];
-			sc->mb[sc->next_mb] = 0;
-			if (m == 0) {
-				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == 0) {
-					m_freem(top);
-					goto out;
-				}
-			} else {
-				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-			}
-			len = MLEN;
+	if (ELINK_IS_BUS_32(sc->bustype)) {
+		/*
+		 * Read bytes up to the point where we are aligned.
+		 * (We can align to 4 bytes, rather than ALIGNBYTES,
+		 * here because we're later reading 4-byte chunks.)
+		 */
+		if ((remaining > 3) && (offset & 3))  {
+			int count = (4 - (offset & 3));
+			bus_space_read_multi_1(iot, ioh,
+			    rxreg, (u_int8_t *) offset, count);
+			offset += count;
+			remaining -= count;
 		}
-		if (totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_free(m);
-				m_freem(top);
-				goto out;
-			}
-			len = MCLBYTES;
-		}
-		if (top == 0)  {
-			/* align the struct ip header */
-			caddr_t newdata = (caddr_t)
-			    ALIGN(m->m_data + sizeof(struct ether_header))
-			    - sizeof(struct ether_header);
-			len -= newdata - m->m_data;
-			m->m_data = newdata;
-		}
-		remaining = len = min(totlen, len);
-		if (ELINK_IS_BUS_32(sc->bustype)) {
-			u_long offset = mtod(m, u_long);
-			/*
-			 * Read bytes up to the point where we are aligned.
-			 * (We can align to 4 bytes, rather than ALIGNBYTES,
-			 * here because we're later reading 4-byte chunks.)
-			 */
-			if ((remaining > 3) && (offset & 3))  {
-				int count = (4 - (offset & 3));
-				bus_space_read_multi_1(iot, ioh,
-				    rxreg, (u_int8_t *) offset, count);
-				offset += count;
-				remaining -= count;
-			}
-			if (remaining > 3) {
-				bus_space_read_multi_stream_4(iot, ioh,
-				    rxreg, (u_int32_t *) offset,
+		if (remaining > 3) {
+			bus_space_read_multi_stream_4(iot, ioh,
+			    rxreg, (u_int32_t *) offset,
 				    remaining >> 2);
-				offset += remaining & ~3;
-				remaining &= 3;
-			}
-			if (remaining)  {
-				bus_space_read_multi_1(iot, ioh,
-				    rxreg, (u_int8_t *) offset, remaining);
-			}
-		} else {
-			u_long offset = mtod(m, u_long);
-			if ((remaining > 1) && (offset & 1))  {
-				bus_space_read_multi_1(iot, ioh,
-				    rxreg, (u_int8_t *) offset, 1);
-				remaining -= 1;
-				offset += 1;
-			}
-			if (remaining > 1) {
-				bus_space_read_multi_stream_2(iot, ioh,
-				    rxreg, (u_int16_t *) offset,
-				    remaining >> 1);
-				offset += remaining & ~1;
-			}
-			if (remaining & 1)  {
-				bus_space_read_multi_1(iot, ioh,
-				    rxreg, (u_int8_t *) offset, remaining & 1);
-			}
+			offset += remaining & ~3;
+			remaining &= 3;
 		}
-		m->m_len = len;
-		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+		if (remaining)  {
+			bus_space_read_multi_1(iot, ioh,
+			    rxreg, (u_int8_t *) offset, remaining);
+		}
+	} else {
+		if ((remaining > 1) && (offset & 1))  {
+			bus_space_read_multi_1(iot, ioh,
+			    rxreg, (u_int8_t *) offset, 1);
+			remaining -= 1;
+			offset += 1;
+		}
+		if (remaining > 1) {
+			bus_space_read_multi_stream_2(iot, ioh,
+			    rxreg, (u_int16_t *) offset,
+			    remaining >> 1);
+			offset += remaining & ~1;
+		}
+		if (remaining & 1)  {
+				bus_space_read_multi_1(iot, ioh,
+			    rxreg, (u_int8_t *) offset, remaining & 1);
+		}
 	}
-
-	rv = top;
 
 	ep_discard_rxtop(iot, ioh);
 
- out:
 	if (sc->ep_flags & ELINK_FLAGS_USEFIFOBUFFER)
 		bus_space_write_2(iot, ioh, ELINK_W1_RUNNER_RDCTL, 0);
-	splx(sh);
+	splx(s);
 
-	return rv;
+	return (m);
 }
 
 int
