@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.5 2000/02/21 18:27:49 aymeric Exp $	*/
+/*	$NetBSD: wdc_amiga.c,v 1.6 2001/04/07 05:09:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ wdc_amiga_attach(parent, self, aux)
 		return;
 	}
 
-	if (is_a1200())
+	if (sc->sc_a1200)
 		sc->wdc_channel.ctl_ioh = sc->ctl_iot.base;
 	else if (bus_space_subregion(sc->wdc_channel.cmd_iot,
 	    sc->wdc_channel.cmd_ioh, 0x406, 1, &sc->wdc_channel.ctl_ioh))
@@ -142,7 +142,7 @@ wdc_amiga_attach(parent, self, aux)
 	sc->sc_isr.isr_ipl = 2;
 	add_isr (&sc->sc_isr);
 
-	if (is_a1200())
+	if (sc->sc_a1200)
 		gayle.intena |= GAYLE_INT_IDE;
 
 	wdcattach(&sc->wdc_channel);
