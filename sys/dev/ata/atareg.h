@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.16 2003/12/30 19:30:13 thorpej Exp $	*/
+/*	$NetBSD: atareg.h,v 1.17 2004/03/14 20:11:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -340,7 +340,7 @@ struct ataparams {
 #define	WDC_CMD2_DCO	0x0800		/*	Device Configuration Overlay */
 #define	ATA_CMD2_LBA48	0x0400		/*	48-bit Address */
 #define	WDC_CMD2_AAM	0x0200		/*	Automatic Acoustic Management */
-#define	WDC_CMD2_SM	0x0100		/*	SET MAX security extention */
+#define	WDC_CMD2_SM	0x0100		/*	SET MAX security extension */
 #define	WDC_CMD2_SFREQ	0x0040		/*	SET FEATURE is required
 						to spin-up after power-up */
 #define	WDC_CMD2_PUIS	0x0020		/*	Power-Up In Standby */

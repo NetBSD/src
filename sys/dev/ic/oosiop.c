@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.5 2004/03/14 20:11:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.5 2004/03/14 20:11:24 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ oosiop_relocate_io(struct oosiop_softc *sc, bus_addr_t addr)
 		dcmd &= ~0x04000000;
 #if 0
 		/*
-		 * sign extention isn't needed here because
+		 * sign extension isn't needed here because
 		 * ncr53cxxx.c generates 32 bit dsps.
 		 */
 		dsps <<= 8;
@@ -365,7 +365,7 @@ oosiop_relocate_tc(struct oosiop_softc *sc, bus_addr_t addr)
 		sc->sc_scr[addr / 4] = htole32(dcmd);
 #if 0
 		/*
-		 * sign extention isn't needed here because
+		 * sign extension isn't needed here because
 		 * ncr53cxxx.c generates 32 bit dsps.
 		 */
 		dsps <<= 8;
