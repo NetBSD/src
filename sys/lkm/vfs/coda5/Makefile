@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/12 13:05:28 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2003/09/12 16:29:09 christos Exp $
 
 .include "../Makefile.inc"
 
-.PATH: ${.CURDIR}/../coda
+.PATH: $S/coda ${.CURDIR}/../coda
 
 KMOD=	coda5
 
