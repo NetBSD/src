@@ -32,10 +32,6 @@
    */
 #undef HAVE_DCGETTEXT
 
-/* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
-   */
-#undef HAVE_DECL_GETENV
-
 /* Define if this function is declared. */
 #undef HAVE_DECL_STRCASECMP
 
@@ -80,9 +76,6 @@
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
-
-/* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
 
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID
@@ -132,9 +125,6 @@
 
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
-
-/* Define to 1 if you have the `mkstemp' function. */
-#undef HAVE_MKSTEMP
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
@@ -258,13 +248,10 @@
 /* Define to 1 if you have the `tsearch' function. */
 #undef HAVE_TSEARCH
 
-/* Define if you have the 'uintmax_t' type in <stdint.h> or <inttypes.h>. */
-#undef HAVE_UINTMAX_T
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the 'unsigned long long' type. */
+/* Define if you have the unsigned long long type. */
 #undef HAVE_UNSIGNED_LONG_LONG
 
 /* Define to 1 if you have the `vprintf' function. */
@@ -278,12 +265,6 @@
 
 /* Define to 1 if you have the `__argz_stringify' function. */
 #undef HAVE___ARGZ_STRINGIFY
-
-/* Define to 1 if you have the `__fsetlocking' function. */
-#undef HAVE___FSETLOCKING
-
-/* Define to 1 if you have the `__secure_getenv' function. */
-#undef HAVE___SECURE_GETENV
 
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST
@@ -352,15 +333,12 @@
    if it is not supported. */
 #undef inline
 
-/* Define to rpl_mkstemp if the replacement function should be used. */
-#undef mkstemp
-
 /* Define to `long' if <sys/types.h> does not define. */
 #undef off_t
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
-/* Define to unsigned long or unsigned long long if <stdint.h> and
-   <inttypes.h> don't define. */
+/* Define to unsigned long or unsigned long long if <inttypes.h> and
+   <stdint.h> don't define. */
 #undef uintmax_t
