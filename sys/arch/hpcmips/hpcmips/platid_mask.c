@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.6 1999/12/08 05:25:11 jun Exp $ */
+/* $Id: platid_mask.c,v 1.7 1999/12/08 05:27:07 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
