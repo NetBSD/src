@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2001/01/15 20:19:52 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 2001/04/24 18:21:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -105,12 +105,6 @@ setsoftserial()
 }
 
 int astpending;
-
-void
-setsoftast()
-{
-	astpending = 1;
-}
 
 /* Handle software interrupts */
 
