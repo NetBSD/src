@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.5 2002/01/23 11:03:19 martti Exp $
+#	$NetBSD: ipf2netbsd,v 1.6 2002/03/14 08:07:06 martti Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,6 +67,10 @@ rm -rf $dbase $dsys $dlkm
 ### Copy the files and directories
 mkdir -p $dbase $dsys $dlkm
 cd $r
+
+### Remove some files (because of license issues)
+rm -f ip_h323_pxy.c
+
 pax -rvw . $dbase
 pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_ipsec_pxy.c ip_log.c ip_nat.c ip_nat.h ip_netbios_pxy.c ip_proxy.c ip_proxy.h ip_raudio_pxy.c ip_rcmd_pxy.c ip_state.c ip_state.h ipl.h $dsys
 pax -rvw mln_ipl.c $dlkm
