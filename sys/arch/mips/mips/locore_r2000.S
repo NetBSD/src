@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.36 1997/06/23 21:45:05 mhitch Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.37 1997/06/25 05:06:01 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1671,8 +1671,8 @@ LEAF(mips1_cpu_switch_resume)
 	mtc0	v0, MIPS_COP_0_TLB_HI
 	nop
 	tlbp					# probe for entry
-	nop
 	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
+	nop
 	bltz	s1, 1f				# not found
 	li	s1, MIPS_KSEG0_START
 	mtc0	s1, MIPS_COP_0_TLB_HI
@@ -1691,8 +1691,8 @@ LEAF(mips1_cpu_switch_resume)
 	mtc0	v0, MIPS_COP_0_TLB_HI
 	nop
 	tlbp					# probe for entry
-	nop
 	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
+	nop
 	bltz	s1, 1f				# not found
 	li	s1, MIPS_KSEG0_START
 	mtc0	s1, MIPS_COP_0_TLB_HI

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.37 1997/06/23 21:45:11 mhitch Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.38 1997/06/25 05:06:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2177,7 +2177,9 @@ LEAF(mips3_cpu_switch_resume)
 	nop
 	tlbp					# probe for existing entry
 	nop
+	nop
 	mfc0	s1, MIPS_COP_0_TLB_INDEX
+	nop
 	slti	s1, s1, 8			# if found in random entry
 	bnez	s1, 2f
 	mtc0	zero, MIPS_COP_0_TLB_LO0	# flush it
@@ -2206,7 +2208,9 @@ LEAF(mips3_cpu_switch_resume)
 	nop
 	tlbp					# probe for existing entry
 	nop
+	nop
 	mfc0	s1, MIPS_COP_0_TLB_INDEX
+	nop
 	slti	s1, s1, 8			# if found in random entry
 	bnez	s1, 2f
 	mtc0	zero, MIPS_COP_0_TLB_LO0	# flush it
