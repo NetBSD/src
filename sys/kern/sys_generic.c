@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.69 2003/01/18 10:06:33 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.70 2003/02/23 14:37:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.69 2003/01/18 10:06:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.70 2003/02/23 14:37:34 pk Exp $");
 
 #include "opt_ktrace.h"
 
@@ -93,8 +93,10 @@ sys_read(struct lwp *l, void *v, register_t *retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp->f_flag & FREAD) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -182,8 +184,10 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp->f_flag & FREAD) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -303,8 +307,10 @@ sys_write(struct lwp *l, void *v, register_t *retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp->f_flag & FWRITE) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -395,8 +401,10 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp->f_flag & FWRITE) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 

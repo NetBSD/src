@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.49 2003/01/18 08:44:27 thorpej Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.50 2003/02/23 14:37:33 pk Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.49 2003/01/18 08:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.50 2003/02/23 14:37:33 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1524,6 +1524,8 @@ svr4_sys_putmsg(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
+	simple_unlock(&fp->f_slock);
+
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
 			return error;
@@ -1695,6 +1697,8 @@ svr4_sys_getmsg(l, v, retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
+
+	simple_unlock(&fp->f_slock);
 
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.35 2003/02/01 06:23:50 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.36 2003/02/23 14:37:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,6 +92,7 @@ struct file {
 	} *f_ops;
 	off_t		f_offset;
 	caddr_t		f_data;		/* descriptor data, e.g. vnode/socket */
+	struct simplelock f_slock;
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
@@ -115,21 +116,31 @@ do {									\
 #define	FILE_USE_CHECK(fp, str)		/* nothing */
 #endif
 
+/*
+ * FILE_USE() must be called with the file lock held.
+ * (Typical usage is: `fp = fd_getfile(..); FILE_USE(fp);'
+ * and fd_getfile() returns the file locked)
+ */
 #define	FILE_USE(fp)							\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
+	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE(fp, p)						\
 do {									\
+	simple_lock(&(fp)->f_slock);					\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
+		simple_unlock(&(fp)->f_slock);				\
 		/* Will drop usecount */				\
 		(void) closef((fp), (p));				\
+		break;							\
 	} else {							\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
+	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
 
 /*

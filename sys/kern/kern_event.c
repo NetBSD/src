@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.9 2003/02/21 20:57:09 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.10 2003/02/23 14:37:34 pk Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -662,8 +662,13 @@ sys_kevent(struct lwp *l, void *v, register_t *retval)
 	p = l->l_proc;
 	/* check that we're dealing with a kq */
 	fp = fd_getfile(p->p_fd, SCARG(uap, fd));
-	if (!fp || fp->f_type != DTYPE_KQUEUE)
+	if (fp == NULL)
 		return (EBADF);
+
+	if (fp->f_type != DTYPE_KQUEUE) {
+		simple_unlock(&fp->f_slock);
+		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
