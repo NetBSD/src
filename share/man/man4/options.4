@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.49 1998/06/26 02:12:56 lukem Exp $
+.\"	$NetBSD: options.4,v 1.50 1998/06/28 21:36:56 nathanw Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -793,6 +793,18 @@ to a value less than
 .Em CHILD_MAX
 is not permitted, as this would result in a violation of the semantics of
 .St -p1003.1-90 .
+.It Cd options SHORTCORENAME
+If set, process core dumps are named 
+.Nm core .
+If not specified, they are named
+.Nm programname.core 
+(the default in 4.4BSD). Note that this changes the value of the 
+.Em kern.shortcorename 
+sysctl variable which may be changed at run time. See
+.Xr sysctl 8
+and
+.Xr sysctl 3
+for details. 
 .El
 .Ss Networking Options
 .Bl -ohang
