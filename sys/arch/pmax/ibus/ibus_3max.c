@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_3max.c,v 1.3 1999/11/30 01:29:44 nisimura Exp $ */
+/* $NetBSD: ibus_3max.c,v 1.4 1999/12/11 13:49:18 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.3 1999/11/30 01:29:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.4 1999/12/11 13:49:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.3 1999/11/30 01:29:44 nisimura Exp $
 
 struct ibus_attach_args kn02sys_devs[] = {
 	{ "mc146818",	0,	KV(KN02_SYS_CLOCK),		0,	},
-	{ "dc",  	7,	KV(KN02_SYS_DZ),		0,	},
+	{ "dc",  	1,	KV(KN02_SYS_DZ),		0,	},
 };
 const int kn02sys_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
 
