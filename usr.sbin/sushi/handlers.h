@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.h,v 1.1 2001/01/05 01:28:36 garbled Exp $       */
+/*      $NetBSD: handlers.h,v 1.2 2001/01/05 18:57:25 thorpej Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,6 @@ int simple_lang_handler(char *path, char *file, int(* handler)(char *));
 #define EXECFILE	"exec"
 #define SCRIPTFILE	"script"
 #define FUNCFILE	"func"
-#define DUMPFILE	"smit.image"
+#define DUMPFILE	"sushi.image"
 
 #endif	/* _HANDLERS_H_ */
