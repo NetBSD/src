@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.5 2002/03/25 17:23:19 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.6 2003/12/23 15:08:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -340,25 +340,19 @@ ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 	}
 
  display:
-	// count # of '\n'
+	// count number of '\n'
 	for (cr = 0, p = buf; p = wcschr(p, TEXT('\n')); cr++, p++)
-		;
-	// total length of new buffer('\n' -> "\r\n" + '\0')
-	int ln = wcslen(buf) + cr + 1;
+		continue;
 
-	// get old buffer.
-	int lo = Edit_GetTextLength(_edit);
-	size_t sz =(lo  + ln) * sizeof(TCHAR);
+	// total length of new buffer ('\n' -> "\r\n" + '\0')
+	size_t sz = (wcslen(buf) + cr + 1) * sizeof(TCHAR);
 
 	p = reinterpret_cast <TCHAR *>(malloc(sz));
 	if (p == NULL)
 		return;
 
-	memset(p, 0, sz);
-	Edit_GetText(_edit, p, lo + 1);
-
-	// put new buffer to end of old buffer.
-	TCHAR *d = p + lo;
+	// convert newlines
+	TCHAR *d = p;
 	while (*buf != TEXT('\0')) {
 		TCHAR c = *buf++;
 		if (c == TEXT('\n'))
@@ -366,10 +360,12 @@ ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 		*d++ = c;
 	}
 	*d = TEXT('\0');
-    
-	// display total buffer.
-	Edit_SetText(_edit, p);
-//  Edit_Scroll(_edit, Edit_GetLineCount(_edit), 0);
+
+	// append the text and scroll
+	int end = Edit_GetTextLength(_edit);
+	Edit_SetSel(_edit, end, end);
+	Edit_ReplaceSel(_edit, p);
+	Edit_ScrollCaret(_edit);
 	UpdateWindow(_edit);
 
 	free(p);
