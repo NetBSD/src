@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2000/04/14 04:08:26 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2000/04/22 16:42:25 mrg Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef BOOT_DEBUG
@@ -1642,7 +1642,7 @@ pmap_enter(pm, va, pa, prot, flags)
 #ifdef DEBUG
 	/* Trap mapping of page zero */
 	if (va == NULL) {
-		prom_printf("pmap_enter: NULL va=%08x pa=%x:%08x\r\b", 
+		prom_printf("pmap_enter: NULL va=%08x pa=%x:%08x\r\n", 
 			    va, (int)(pa>>32), (int)pa);
 		OF_enter();
 	}
