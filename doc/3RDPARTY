@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.48 2003/01/28 12:05:00 kanaoka Exp $
+#	$NetBSD: 3RDPARTY,v 1.49 2003/02/02 09:57:51 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -524,7 +524,7 @@ markus is very cooperative about it):
 http://www.openbsd.org/advisories/ssh_channelalloc.txt is integrated
 manually to 1.5 branch.  version date "20020307" identifies the fix.
 http://www.openssh.com/txt/preauth.adv is integrated manually to 1.5 branch.
-veresion date "20020626" identifies the fix.
+version date "20020626" identifies the fix.
 
 Package:	OpenSSL
 Version:	0.9.6g
