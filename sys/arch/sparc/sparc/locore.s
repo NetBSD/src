@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.213 2004/07/04 09:11:33 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.214 2004/07/04 09:54:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6606,19 +6606,30 @@ _ENTRY(_C_LABEL(__cpu_simple_lock))
 0:
 	ldstub	[%o0], %o1
 	tst	%o1
-	bnz	1f
-	 set	0x1000000, %o2	! set spinout counter
+	bnz,a	2f
+	 ldub	[%o0], %o1
+1:
 	retl
 	 EMPTY
-1:
-	ldub	[%o0], %o1
+2:
+	set	0x1000000, %o2	! set spinout counter
+3:
 	tst	%o1
 	bz	0b		! lock has been released; try again
 	deccc	%o2
-	bcc	1b		! repeat until counter < 0
-	 nop
+	bcc,a	3b		! repeat until counter < 0
+	 ldub	[%o0], %o1
 
-	! spun out; set up stack frame and call panic
+	! spun out; check if already panicking
+	sethi	%hi(_C_LABEL(panicstr)), %o2
+	ld	[%o2 + %lo(_C_LABEL(panicstr))], %o1
+	tst	%o1
+	! if so, just take the lock and return on the assumption that
+	! in panic mode we're running on a single CPU anyway.
+	bnz,a	1b
+	 ldstub	[%o0], %g0
+
+	! set up stack frame and call panic
 	save	%sp, -CCFSZ, %sp
 	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
 	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
