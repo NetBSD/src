@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.16 1997/11/11 14:40:04 mrg Exp $
+.\"	$NetBSD: slattach.8,v 1.17 1997/11/17 23:32:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Nm
 .Op Fl hm
 .Op Fl s Ar baudrate
+.Op Fl t Ar ldisc
 .Ar ttyname
 .Sh DESCRIPTION
 .Nm
@@ -62,6 +63,19 @@ this disables HUPCL.
 .It Fl s Ar baudrate
 Specifies the speed of the connection.  If not specified, the
 default of 9600 is used.
+.It Fl t Ar ldisc
+Specifies the line discipline to use for the tty.  Supported line
+disciplines are
+.Dq slip
+(creates a
+.Xr sl 4
+instance) and
+.Dq strip
+(creates a
+.Xr strip 4
+instance).
+If this option is not specified, the default is
+.Dq slip .
 .It Ar ttyname
 Specifies the name of the tty device.
 .Ar Ttyname
@@ -73,7 +87,7 @@ or
 .Pp
 In addition, the following flags to
 .Xr ifconfig 8
-control various properties of the link:
+control various properties of a SLIP link:
 .Bl -tag -width Ar
 .It Ar link0
 Turn on Van Jacobsen header compression.
@@ -113,6 +127,7 @@ tried to alter an interface's configuration.
 .Xr netstat 1 ,
 .Xr netintro 4 ,
 .Xr sl 4 ,
+.Xr strip 4 ,
 .Xr ifconfig 8 ,
 .Xr rc 8
 .Sh HISTORY
