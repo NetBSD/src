@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 1999/03/30 08:03:42 dbj Exp $
+#	$NetBSD: list,v 1.15.2.1 1999/04/18 00:22:31 fvdl Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -88,6 +88,7 @@ SPECIAL	/bin/rm dev/MAKEDEV
 # we need the boot block in /usr/mdec + the MBR copy
 COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 
 # and the common installation tools
 # COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
