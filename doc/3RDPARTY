@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.60 2003/02/28 17:48:09 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.61 2003/03/01 13:25:25 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -119,12 +119,12 @@ Notes:
 Version ??? still in-tree for historical reasons, but unused.
 
 Package:	binutils/misc
-Version:	2.11.2
+Version:	2.13.2.1
 Current Vers:	2.13.2.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	thorpej
+Responsible:	thorpej, mrg
 Notes:
 
 Package:	bsd-family-tree
@@ -274,7 +274,7 @@ Current Vers:	3.2.2
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
-Responsible:	thorpej
+Responsible:	thorpej, mrg
 Notes:
 
 Package:	gdb
@@ -283,7 +283,7 @@ Current Vers:	5.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Mailing List:	bug-gdb@gnu.org
-Responsible:	thorpej
+Responsible:	thorpej, mrg
 Notes:
 
 Package:	gettext
