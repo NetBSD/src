@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.13 1998/07/28 03:47:15 mycroft Exp $	*/
+/*	$NetBSD: args.c,v 1.14 1999/07/29 19:03:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.13 1998/07/28 03:47:15 mycroft Exp $");
+__RCSID("$NetBSD: args.c,v 1.14 1999/07/29 19:03:31 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ static void	f_obs __P((char *));
 static void	f_of __P((char *));
 static void	f_seek __P((char *));
 static void	f_skip __P((char *));
+static void	f_progress __P((char *));
 static u_long	get_bsz __P((char *));
 
 static const struct arg {
@@ -78,6 +79,8 @@ static const struct arg {
 	void (*f) __P((char *));
 	u_int set, noset;
 } args[] = {
+     /* the array needs to be sorted by the first column so
+        bsearch() can be used to find commands quickly */
 	{ "bs",		f_bs,		C_BS,	 C_BS|C_IBS|C_OBS|C_OSYNC },
 	{ "cbs",	f_cbs,		C_CBS,	 C_CBS },
 	{ "conv",	f_conv,		0,	 0 },
@@ -87,6 +90,7 @@ static const struct arg {
 	{ "if",		f_if,		C_IF,	 C_IF },
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
 	{ "of",		f_of,		C_OF,	 C_OF },
+	{ "progress",	f_progress,	0,	 0 },
 	{ "seek",	f_seek,		C_SEEK,	 C_SEEK },
 	{ "skip",	f_skip,		C_SKIP,	 C_SKIP },
 };
@@ -188,7 +192,6 @@ static int
 c_arg(a, b)
 	const void *a, *b;
 {
-
 	return (strcmp(((const struct arg *)a)->name,
 	    ((const struct arg *)b)->name));
 }
@@ -197,7 +200,6 @@ static void
 f_bs(arg)
 	char *arg;
 {
-
 	in.dbsz = out.dbsz = (int)get_bsz(arg);
 }
 
@@ -205,7 +207,6 @@ static void
 f_cbs(arg)
 	char *arg;
 {
-
 	cbsz = (int)get_bsz(arg);
 }
 
@@ -213,7 +214,6 @@ static void
 f_count(arg)
 	char *arg;
 {
-
 	cpy_cnt = (u_int)get_bsz(arg);
 	if (!cpy_cnt)
 		terminate(0);
@@ -223,7 +223,6 @@ static void
 f_files(arg)
 	char *arg;
 {
-
 	files_cnt = (int)get_bsz(arg);
 }
 
@@ -231,7 +230,6 @@ static void
 f_ibs(arg)
 	char *arg;
 {
-
 	if (!(ddflags & C_BS))
 		in.dbsz = (int)get_bsz(arg);
 }
@@ -240,7 +238,6 @@ static void
 f_if(arg)
 	char *arg;
 {
-
 	in.name = arg;
 }
 
@@ -248,7 +245,6 @@ static void
 f_obs(arg)
 	char *arg;
 {
-
 	if (!(ddflags & C_BS))
 		out.dbsz = (int)get_bsz(arg);
 }
@@ -257,7 +253,6 @@ static void
 f_of(arg)
 	char *arg;
 {
-
 	out.name = arg;
 }
 
@@ -265,7 +260,6 @@ static void
 f_seek(arg)
 	char *arg;
 {
-
 	out.offset = (u_int)get_bsz(arg);
 }
 
@@ -273,8 +267,15 @@ static void
 f_skip(arg)
 	char *arg;
 {
-
 	in.offset = (u_int)get_bsz(arg);
+}
+
+static void
+f_progress(arg)
+	char *arg;
+{
+	if (*arg != '0')
+		progress = 1;
 }
 
 #ifdef	NO_CONV
