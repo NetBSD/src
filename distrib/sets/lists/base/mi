@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.20 2001/05/02 22:44:46 he Exp $
+# $NetBSD: mi,v 1.169.2.21 2001/05/09 20:56:47 he Exp $
 .
 ./altroot
 ./bin
@@ -1430,6 +1430,7 @@
 ./usr/share/zoneinfo/Asia/Tehran
 ./usr/share/zoneinfo/Asia/Tel_Aviv
 ./usr/share/zoneinfo/Asia/Thimbu
+./usr/share/zoneinfo/Asia/Thimphu
 ./usr/share/zoneinfo/Asia/Tokyo
 ./usr/share/zoneinfo/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/Asia/Ulaanbaatar
