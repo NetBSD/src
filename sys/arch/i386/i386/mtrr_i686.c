@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr_i686.c,v 1.1 2001/09/10 10:14:21 fvdl Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2 2001/09/17 20:44:08 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -322,8 +322,7 @@ i686_raw2soft(void)
 
 	for (i = 0; i < MTRR_I686_NVAR; i++) {
 		mtrrp = &mtrr_var[i];
-		mtrrp->flags = 0;
-		mtrrp->owner = 0;
+		memset(mtrrp, 0, sizeof *mtrrp);
 		mask = mtrr_var_raw[i * 2 + 1].msrval;
 		if (!mtrr_valid(mask))
 			continue;
@@ -398,7 +397,7 @@ i686_soft2raw(void)
 	for (i = 0; i < MTRR_I686_NFIXED_64K; i++, idx++) {
 		val = 0;
 		for (j = 0; j < 8; j++) {
-			mtrrp = &mtrr_fixed[idx];
+			mtrrp = &mtrr_fixed[idx * 8 + j];
 			val |= ((uint64_t)mtrrp->type << (j << 3));
 		}
 		mtrr_fixed_raw[idx].msrval = val;
@@ -407,7 +406,7 @@ i686_soft2raw(void)
 	for (i = 0; i < MTRR_I686_NFIXED_16K; i++, idx++) {
 		val = 0;
 		for (j = 0; j < 8; j++) {
-			mtrrp = &mtrr_fixed[idx];
+			mtrrp = &mtrr_fixed[idx * 8 + j];
 			val |= ((uint64_t)mtrrp->type << (j << 3));
 		}
 		mtrr_fixed_raw[idx].msrval = val;
@@ -416,7 +415,7 @@ i686_soft2raw(void)
 	for (i = 0; i < MTRR_I686_NFIXED_4K; i++, idx++) {
 		val = 0;
 		for (j = 0; j < 8; j++) {
-			mtrrp = &mtrr_fixed[idx];
+			mtrrp = &mtrr_fixed[idx * 8 + j];
 			val |= ((uint64_t)mtrrp->type << (j << 3));
 		}
 		mtrr_fixed_raw[idx].msrval = val;
@@ -454,8 +453,8 @@ i686_mtrr_validate(struct mtrr *mtrrp, struct proc *p)
 	/*
 	 * Check for bad types.
 	 */
-	if (mtrrp->type == MTRR_TYPE_UNDEF1 || mtrrp->type == MTRR_TYPE_UNDEF2
-	    || mtrrp->type > MTRR_TYPE_WB)
+	if ((mtrrp->type == MTRR_TYPE_UNDEF1 || mtrrp->type == MTRR_TYPE_UNDEF2
+	    || mtrrp->type > MTRR_TYPE_WB) && (mtrrp->flags & MTRR_VALID))
 		return EINVAL;
 
 	/*
@@ -471,20 +470,26 @@ i686_mtrr_validate(struct mtrr *mtrrp, struct proc *p)
 	 */
 	if (mtrrp->flags & MTRR_FIXED) {
 		if (mtrrp->base < MTRR_I686_16K_START) {
-			if (mtrrp->base != 0)
+			if ((mtrrp->base  & 0xffff) != 0)
 				return EINVAL;
 		} else if (mtrrp->base < MTRR_I686_4K_START) {
-			if (mtrrp->base != MTRR_I686_16K_START ||
-			    mtrrp->base != MTRR_I686_16K_START + 16384)
+			if ((mtrrp->base & 0x3fff) != 0)
 				return EINVAL;
 		} else {
-			if (mtrrp->len != 4096)
+			if ((mtrrp->base  & 0xfff) != 0)
 				return EINVAL;
 		}
-		if (high < MTRR_I686_16K_START)
-			return EINVAL;
-		else if (high < MTRR_I686_4K_START && (high & 0x3fff))
-			return EINVAL;
+
+		if (high < MTRR_I686_16K_START) {
+			if ((high  & 0xffff) != 0)
+				return EINVAL;
+		} else if (high < MTRR_I686_4K_START) {
+			if ((high & 0x3fff) != 0)
+				return EINVAL;
+		} else {
+			if ((high & 0xfff) != 0)
+				return EINVAL;
+		}
 	}
 
 	return 0;
@@ -507,7 +512,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 	 * try the fixed range MTRRs.
 	 */
 	if (mtrrp->flags & MTRR_FIXED ||
-	    (mtrrp->base + mtrrp->len) < 0x100000) {
+	    (mtrrp->base + mtrrp->len) <= 0x100000) {
 		lowp = highp = NULL;
 		for (i = 0; i < MTRR_I686_NFIXED_SOFT; i++) {
 			if (mtrr_fixed[i].base == mtrrp->base + mtrrp->len) {
@@ -516,10 +521,22 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 			}
 			if (mtrr_fixed[i].base == mtrrp->base) {
 				lowp = &mtrr_fixed[i];
-				highp = &mtrr_fixed[i + 1];
-				continue;
+				/*
+				 * If the requested upper bound is the 1M
+				 * limit, search no further.
+				 */
+				if ((mtrrp->base + mtrrp->len) == 0x100000) {
+					highp =
+					    &mtrr_fixed[MTRR_I686_NFIXED_SOFT];
+					break;
+				} else {
+					highp = &mtrr_fixed[i + 1];
+					continue;
+				}
 			}
 		}
+		if (lowp == NULL || highp == NULL)
+			panic("mtrr: fixed register fuckup");
 		error = 0;
 		for (mp = lowp; mp < highp; mp++) {
 			if ((mp->flags & MTRR_PRIVATE) && p != NULL
@@ -549,8 +566,8 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 					mp->owner = p->p_pid;
 				}
 			}
+			return 0;
 		}
-		return 0;
 	}
 
 	/*
@@ -573,12 +590,13 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 			freep = &mtrr_var[i];
 			break;
 		}
-		if (((high >= curlow && high <= curhigh) ||
-		    (low >= curlow && low <= curhigh)) &&
+		if (((high >= curlow && high < curhigh) ||
+		    (low >= curlow && low < curhigh)) &&
 	 	    ((mtrr_var[i].type != mtrrp->type) ||
 		     ((mtrr_var[i].flags & MTRR_PRIVATE) &&
-		      mtrr_var[i].owner != p->p_pid)))
+		      mtrr_var[i].owner != p->p_pid))) {
 			return EBUSY;
+		}
 	}
 	if (freep == NULL)
 		return EBUSY;
@@ -615,6 +633,7 @@ i686_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 	int i, error;
 	struct mtrr mtrr;
 
+	error = 0;
 	for (i = 0; i < *n; i++) {
 		if (flags & MTRR_GETSET_USER) {
 			error = copyin(&mtrrp[i], &mtrr, sizeof mtrr);
