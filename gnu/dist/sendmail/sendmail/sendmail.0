@@ -1,7 +1,5 @@
-
-
-
 SENDMAIL(8)                                           SENDMAIL(8)
+
 
 
 NNAAMMEE
@@ -57,20 +55,8 @@ DDEESSCCRRIIPPTTIIOONN
 
        --bbhh    Print the persistent host status database.
 
-       --bbHH    Purge  expired  entries  from  the  persistent host
-
-
-
-                   Date: 2000/12/14 23:08:15                 1
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
-
-              status database.
+       --bbHH    Purge expired entries from the persistent host sta-
+              tus database.
 
        --bbii    Initialize the alias database.
 
@@ -123,21 +109,9 @@ SENDMAIL(8)                                           SENDMAIL(8)
               specified,  ``Received:''  lines in the message are
               counted.
 
-       --ii     Ignore  dots  alone  on  lines  by  themselves   in
-
-
-
-                   Date: 2000/12/14 23:08:15                 2
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
-
-              incoming  messages.   This should be set if you are
-              reading data from a file.
+       --ii     Ignore dots alone on lines by themselves in  incom-
+              ing  messages.  This should be set if you are read-
+              ing data from a file.
 
        --LL _t_a_g Set the identifier used in syslog messages  to  the
               supplied _t_a_g.
@@ -190,17 +164,6 @@ SENDMAIL(8)                                           SENDMAIL(8)
        --qqSS_s_u_b_s_t_r
               Limit  processed jobs to those containing _s_u_b_s_t_r as
               a substring of the sender.
-
-
-
-                   Date: 2000/12/14 23:08:15                 3
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
 
        --RR _r_e_t_u_r_n
               Set the amount of the message to be returned if the
@@ -255,18 +218,6 @@ SENDMAIL(8)                                           SENDMAIL(8)
               On mailers that  are  considered  ``expensive''  to
               connect  to,  don't  initiate immediate connection.
               This requires queueing.
-
-
-
-
-                   Date: 2000/12/14 23:08:15                 4
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
 
        CheckpointInterval=_N
               Checkpoint the queue file after every _N  successful
@@ -323,17 +274,6 @@ SENDMAIL(8)                                           SENDMAIL(8)
        LogLevel=_n
               The log level.
 
-
-
-                   Date: 2000/12/14 23:08:15                 5
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
-
        MeToo=_F_a_l_s_e
               Don't  send  to  ``me''  (the sender) if I am in an
               alias expansion.
@@ -388,18 +328,6 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
        MinQueueAge=_t_i_m_e_o_u_t
               Sets how long a  job  must  ferment  in  the  queue
-
-
-
-                   Date: 2000/12/14 23:08:15                 6
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
-
               between attempts to send it.
 
        DefaultCharSet=_c_h_a_r_s_e_t
@@ -452,19 +380,6 @@ SENDMAIL(8)                                           SENDMAIL(8)
        The codes are defined in <_s_y_s_e_x_i_t_s_._h>:
 
        EX_OK  Successful completion on all addresses.
-
-
-
-
-
-                   Date: 2000/12/14 23:08:15                 7
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
 
        EX_NOUSER
               User name not recognized.
@@ -520,18 +435,6 @@ FFIILLEESS
         /etc/mail/aliases
               raw data for alias names
 
-
-
-
-                   Date: 2000/12/14 23:08:15                 8
-
-
-
-
-
-SENDMAIL(8)                                           SENDMAIL(8)
-
-
         /etc/mail/aliases.db
               data base of alias names
 
@@ -562,33 +465,4 @@ HHIISSTTOORRYY
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   Date: 2000/12/14 23:08:15                 9
-
-
+                   Date: 2000/12/14 23:08:15       SENDMAIL(8)
