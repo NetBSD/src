@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan2.S,v 1.3 1999/07/02 15:37:35 simonb Exp $	*/
+/*	$NetBSD: n_atan2.S,v 1.4 2000/07/14 04:50:58 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,8 @@
  *
  *	@(#)atan2.s	8.1 (Berkeley) 6/4/93
  */
+
+#include <machine/asm.h>
 
 /*
  * ATAN2(Y,X)
@@ -74,12 +76,7 @@
  *	atan2(y,x) returns the exact ARG(x+iy) nearly rounded.
  */
 
-	.text
-	.align 1
-	.globl	_atan2
-	.type	_atan2,@function
-_atan2 :
-	.word	0x0ff4
+ENTRY(atan2, 0x0fc0)
 	movq	4(ap),r2		# r2 = y
 	movq	12(ap),r4		# r4 = x
 	bicw3	$0x7f,r2,r0
@@ -96,7 +93,7 @@ _atan2 :
 	movq	r2,r0
 	bicw2	$0x8000,r0		# t = |y|
 	movq	r0,r2			# y = |y|
-	brb	begin
+	jbr	begin
 xnot1:
 	bicw3	$0x807f,r2,r11		# yexp
 	jeql	yeq0			# if y=0 goto yeq0
@@ -137,13 +134,13 @@ L10:
 	addd2	r10,r2			# 3y
 	addd2	r4,r2			# 3y+2x
 	divd2	r2,r0			# (2y-3x)/(2x+3y)
-	brw	L60
+	jbr	L60
 L20:
 	cmpw	r0,$0x3280		# t : 2**(-28)
 	jlss	L80
 	clrq	r6			# Hi=r6=0, Lo=r8=0
 	clrq	r8
-	brw	L60
+	jbr	L60
 L30:
 	movq	$0xda7b2b0d63383fed,r6	# Hi=.46364760900080611433d0
 	movq	$0xf0ea17b2bf912295,r8	# Lo=.10147340032515978826d-17
@@ -153,7 +150,7 @@ L30:
 	addw2	$0x80,r4		# 2x
 	addd2	r2,r4			# 2x+y
 	divd2	r4,r0 			# (2y-x)/(2x+y)
-	brb	L60
+	jbr	L60
 L50:
 	movq	$0x68c2a2210fda40c9,r6	# Hi=1.5707963267948966135d1
 	movq	$0x06e0145c26332326,r8	# Lo=.22517417741562176079d-17
@@ -161,7 +158,7 @@ L50:
 	bgeq	L90
 	divd3	r2,r4,r0
 	bisw2	$0x8000,r0 		# -x/y
-	brb	L60
+	jbr	L60
 L40:
 	movq	$0x68c2a2210fda4049,r6	# Hi=.78539816339744830676d0
 	movq	$0x06e0145c263322a6,r8	# Lo=.11258708870781088040d-17
@@ -183,7 +180,7 @@ L80:
 	ret
 L90:					# x >= 2**25
 	movq	r6,r0
-	brb	L80
+	jbr	L80
 pim:
 	subd3	r0,$0x68c2a2210fda4149,r0	# pi-t
 	bisw2	-4(fp),r0
@@ -203,7 +200,8 @@ pio2:
 resop:
 	movq	$0x8000,r0		# propagate the reserved operand
 	ret
-	.align 2
+
+	_ALIGN_TEXT
 ptable:
 	.quad	0xb50f5ce96e7abd60
 	.quad	0x51e44a42c1073e02
