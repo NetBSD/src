@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.19 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.20 2005/02/01 14:56:17 drochner Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.19 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.20 2005/02/01 14:56:17 drochner Exp $");
 
 #include "opt_inet.h"
 
@@ -159,7 +159,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 *      sin6_scope_id field, so this part will be rewritten in
 	 *      the near future.
 	 */
-	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MULTICAST(dst)) &&
+	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MC_LINKLOCAL(dst)) &&
 	    dstsock->sin6_scope_id) {
 		/*
 		 * I'm not sure if boundary check for scope_id is done
