@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.1 1999/10/15 06:24:24 haya Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.2 1999/11/08 19:57:32 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	Id: cardbusdevs,v 1.1 1999/10/15 06:07:18 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.4 1999/11/08 19:57:13 joda Exp 
  */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 /*
- * This code is stollen from sys/dev/pci/pcidevs
+ * This code is stolen from sys/dev/pci/pcidevs.
  */
 
 
@@ -52,6 +52,7 @@
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
 #define	CARDBUS_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
+#define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 
 /*
@@ -74,3 +75,10 @@
 
 /* Opti products */
 #define	CARDBUS_PRODUCT_OPTI_82C861	0xc861		/* 82C861 USB Host Controller (OHCI) */
+
+/* Xircom products */
+/* is the `-3' here just indicating revision 3, or is it really part
+   of the device name? */
+#define	CARDBUS_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
+/* this is the device id `indicating 21143 driver compatibility' */
+#define	CARDBUS_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
