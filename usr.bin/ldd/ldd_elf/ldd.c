@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.14 2002/10/09 15:43:34 nathanw Exp $	*/
+/*	$NetBSD: ldd.c,v 1.15 2002/11/15 22:39:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 /*
  * Data declarations.
  */
-const char *_rtld_error_message;	/* Message for dlopen(), or NULL */
+static char *error_message;	/* Message for dlopen(), or NULL */
 bool _rtld_trust;		/* False for setuid and setgid programs */
 Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
@@ -131,7 +131,7 @@ main(
 	_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, NULL);
 	if (_rtld_objmain == NULL) {
 		if (ldd_aout(*argv, fd) < 0)
-		    warnx("%s", _rtld_error_message);
+		    warnx("%s", error_message);
 	    close(fd);
 	    continue;
 	}
@@ -189,8 +189,16 @@ _rtld_error(
     va_list ap;
     va_start(ap, fmt);
     xvsnprintf(buf, sizeof buf, fmt, ap);
-    _rtld_error_message = buf;
+    error_message = buf;
     va_end(ap);
+}
+
+char *
+_rtld_dlerror()
+{
+	char *msg = error_message;
+	error_message = NULL;
+	return msg;
 }
 
 static void
