@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.4 2000/12/12 18:00:27 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.5 2000/12/13 22:07:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,10 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET
 	struct ieee1394_arphdr *ah;
 #endif /* INET */
+
+	/*
+	 * XXX ALTQ
+	 */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
