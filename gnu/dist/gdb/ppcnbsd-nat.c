@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "inferior.h"
 #include "target.h"
 #include "gdbcore.h"
+#include "floatformat.h"
 #include <sys/param.h>
 #include <sys/ptrace.h>
 #include <machine/frame.h>
@@ -179,3 +180,19 @@ fetch_kcore_registers (pcb)
   registers_fetched ();
 }
 #endif	/* FETCH_KCORE_REGISTERS */
+
+ppc_float_info ()
+{
+  int n;
+  double v;
+
+  if (!target_has_registers)
+    error ("The program has no registers now.");
+
+  for (n = 0; n < 32; n++)
+  {
+    floatformat_to_double (&floatformat_ieee_double_big,
+        &registers[REGISTER_BYTE (FP0_REGNUM) + (8 * n)], &v);
+    printf_unfiltered ("f%d\t\t%g\n", n, v);
+  }
+}
