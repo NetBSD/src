@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.13 1998/08/25 20:59:42 ross Exp $	*/
+/*	$NetBSD: tsort.c,v 1.14 2001/02/21 00:11:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.13 1998/08/25 20:59:42 ross Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.14 2001/02/21 00:11:36 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,6 +125,8 @@ main(argc, argv)
 	FILE *fp;
 	int bsize, ch, nused;
 	BUF bufs[2];
+
+	setprogname(argv[0]);
 
 	fp = NULL;
 	while ((ch = getopt(argc, argv, "dlq")) != -1)
