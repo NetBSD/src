@@ -1,11 +1,11 @@
-/* $NetBSD: ics2101.c,v 1.1 1995/07/19 19:58:49 brezak Exp $ */
+/* $NetBSD: ics2101.c,v 1.2 1996/02/05 00:10:45 jtc Exp $ */
+
 /*-
- * Copyright (c) 1995 John T. Kohl.  All Rights Reserved.
- * Copyright (c) 1994 The Regents of the University of California.
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Ken Hornstein.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Ken Hornstein and John Kohl.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,11 +17,11 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD 
+ *	  Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ *    contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,8 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
- *	$Id: ics2101.c,v 1.1 1995/07/19 19:58:49 brezak Exp $
  */
 
 #include <sys/param.h>
