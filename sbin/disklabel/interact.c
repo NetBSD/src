@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.12 1999/12/17 12:30:02 abs Exp $	*/
+/*	$NetBSD: interact.c,v 1.13 1999/12/17 13:06:49 abs Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.12 1999/12/17 12:30:02 abs Exp $");
+__RCSID("$NetBSD: interact.c,v 1.13 1999/12/17 13:06:49 abs Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -445,7 +445,7 @@ cmd_part(lp, s, fd)
 	}
 	for (;;) {
 		defnum(def, lp, p->p_size);
-		i = getinput(":", "Partition size ('-' for all remaining)",
+		i = getinput(":", "Partition size ('$' for all remaining)",
 		    def, line);
 		if (i <= 0)
 			break;
@@ -578,7 +578,7 @@ getnum(buf, max, lp)
 	double d;
 	int rv;
 
-	if (max && buf[0] == '-' && buf[1] == 0)
+	if (max && buf[0] == '$' && buf[1] == 0)
 		return max;
 
 	d = strtod(buf, &ep);
