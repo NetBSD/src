@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.18 2004/06/23 22:04:44 kleink Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.19 2004/06/26 21:48:30 kleink Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.18 2004/06/23 22:04:44 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.19 2004/06/26 21:48:30 kleink Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -345,6 +345,20 @@ oea_init(void (*handler)(void))
 				__syncicache(ip, sizeof(*ip));
 		}
 	}
+
+        /*
+	 * Configure a PSL user mask matching this processor.
+ 	 */
+	cpu_psluserset = PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_RI;
+	cpu_pslusermod = PSL_FP | PSL_FE0 | PSL_FE1 | PSL_LE | PSL_SE | PSL_BE;
+	if (cpuvers == MPC601) {
+		cpu_psluserset &= PSL_601_MASK;
+		cpu_pslusermod &= PSL_601_MASK;
+	}
+#ifdef ALTIVEC
+	if (cpu_altivec)
+		cpu_pslusermod |= PSL_VEC;
+#endif
 
 	/*
 	 * external interrupt handler install
