@@ -34,7 +34,7 @@
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/file.h>
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 #include <machine/cpu.h>
 
 #define vm_page_size (NBPG)

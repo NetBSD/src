@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.10 2000/06/05 07:59:51 nisimura Exp $	*/
+/*	$NetBSD: esp.c,v 1.11 2000/06/26 14:59:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-#include <vm/vm_param.h>	/* for trunc_page */
+#include <uvm/uvm_param.h>	/* for trunc_page */
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

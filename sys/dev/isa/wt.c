@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.49 2000/03/23 07:01:36 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.50 2000/06/26 14:59:04 mrg Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -62,8 +62,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-
-#include <vm/vm_param.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

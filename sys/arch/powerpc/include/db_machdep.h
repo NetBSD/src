@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.6 2000/06/26 14:20:54 mrg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7 2000/06/26 14:59:02 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,7 +36,7 @@
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_inherit.h>
 
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 #include <machine/trap.h>
 
 #define	DB_ELF_SYMBOLS
