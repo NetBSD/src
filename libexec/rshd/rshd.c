@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.29 2003/03/03 18:29:55 dsl Exp $	*/
+/*	$NetBSD: rshd.c,v 1.30 2003/05/17 21:26:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.29 2003/03/03 18:29:55 dsl Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.30 2003/05/17 21:26:47 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 		char hbuf[NI_MAXHOST];
 		if (getnameinfo((struct sockaddr *)&from, fromlen, hbuf,
 				sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0) {
-			strncpy(hbuf, "invalid", sizeof(hbuf));
+			strlcpy(hbuf, "invalid", sizeof(hbuf));
 		}
 		syslog(LOG_ERR, "malformed \"from\" address (v4 mapped, %s)",
 		    hbuf);
@@ -284,7 +284,7 @@ doit(struct sockaddr *fromp)
 	if (af == AF_INET)
       {
 	u_char optbuf[BUFSIZ/3], *cp;
-	char lbuf[BUFSIZ], *lp;
+	char lbuf[BUFSIZ], *lp, *ep;
 	int optsize = sizeof(optbuf), ipproto;
 	struct protoent *ip;
 
@@ -295,8 +295,9 @@ doit(struct sockaddr *fromp)
 	if (!getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf, &optsize) &&
 	    optsize != 0) {
 		lp = lbuf;
+		ep = lbuf + sizeof(lbuf);
 		for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-			sprintf(lp, " %2.2x", *cp);
+			snprintf(lp, ep - lp, " %2.2x", *cp);
 		syslog(LOG_NOTICE,
 		    "Connection received from %s using IP options (ignored):%s",
 		    naddr, lbuf);
@@ -565,10 +566,10 @@ fail:
 	}
 #endif
 	environ = envinit;
-	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
-	strcat(path, _PATH_DEFPATH);
-	strncat(shell, pwd->pw_shell, sizeof(shell)-7);
-	strncat(username, pwd->pw_name, sizeof(username)-6);
+	strlcat(homedir, pwd->pw_dir, sizeof(homedir));
+	strlcat(path, _PATH_DEFPATH, sizeof(path));
+	strlcat(shell, pwd->pw_shell, sizeof(shell));
+	strlcat(username, pwd->pw_name, sizeof(username));
 #ifdef LOGIN_CAP
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL) != 0) {
 		syslog(LOG_ERR, "setusercontext: %m");
