@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.2 1997/04/27 21:15:14 thorpej Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -47,6 +47,7 @@
 #define NITE		4
 
 /* from cpu.h */
+#define	INTIOBASE	(0x00400000)
 #define IIOV(x)		(x)
 #define DIOBASE		(0x600000)
 #define	DIOCSIZE	(0x10000)
@@ -65,6 +66,9 @@ extern	int cons_scode;
 extern	u_int opendev;
 extern	u_int bootdev;
 extern	char *getmachineid();
+
+extern	int userom;
+extern	void romputchar __P((int));
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
