@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.407 2004/08/17 18:12:07 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.408 2004/08/22 13:24:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6712,3 +6712,19 @@ sbin/fdisk/fdisk.c				1.81
 	as well as fixing several related bugs that occur when the bios
 	geometry is not read by the boot loader.
 	[dbj, ticket #767]
+
+
+lib/libpthread/pthread_stack.c			1.16 via patch
+
+	Redo the fix for PR 26392 differently: instead of changing the stack
+	bounds for the initial stack, just change the initial thread's pt_uc
+	to point to the opposite end of the stack (away from the argv,
+	environment, etc).
+	[chs, ticket #768]
+
+share/man/man4/stpcide.4			1.6-1.7
+sys/dev/pci/stpcide.c				1.10-1.11
+
+	Remove fluctuation of written name in alphabetical representation of
+	copyright holder.
+	[nisimura, ticket #779]
