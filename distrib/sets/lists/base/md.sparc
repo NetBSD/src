@@ -16,10 +16,10 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/binstall
 ./usr/mdec/boot
-./usr/mdec/boot.200000  
-./usr/mdec/boot.300000  
-./usr/mdec/boot.400000  
-./usr/mdec/boot.700000  
+./usr/mdec/boot.200000
+./usr/mdec/boot.300000
+./usr/mdec/boot.400000
+./usr/mdec/boot.700000
 ./usr/mdec/boot.net
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
