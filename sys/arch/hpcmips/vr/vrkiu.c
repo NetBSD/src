@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.8 1999/12/09 03:03:55 jun Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.9 1999/12/09 03:14:06 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -252,7 +252,7 @@ static char mobilepro_keytrans[] = {
 /*58*/ IGN, IGN, IGN,  42,  62,  61,  60,  59,  /* - - - shift f4 f3 f2 f1 */
 };
 
-/* NEC MobilePro 750c */
+/* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
 static char mobilepro750c_keytrans[] = {
 /*00*/  77,  43,  25,  52,  21,  48,  44,  57, /* right \ p . y b z space */
 /*08*/  80,  53,  24,  51,  20,  47,  30, UNK, /* down / o , t v a  - */
