@@ -38,7 +38,7 @@
  *
  * from: Utah Hdr: machdep.c 1.63 91/04/24
  * from: @(#)machdep.c	7.17 (Berkeley) 2/26/93
- * $Id: machdep.c,v 1.1.1.1 1993/10/12 03:22:31 deraadt Exp $
+ * $Id: machdep.c,v 1.2 1993/10/15 03:00:56 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -138,12 +138,12 @@ int	nswbuf = 0;
 #ifdef	NBUF
 int	nbuf = NBUF;
 #else
-int	nbuf = 512;
+int	nbuf = 0;
 #endif
 #ifdef	BUFPAGES
 int	bufpages = BUFPAGES;
 #else
-int	bufpages = 1024;
+int	bufpages = 0;
 #endif
 int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
