@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.42 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: if.h,v 1.43 1999/12/13 15:17:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -297,7 +297,7 @@ struct ifaddr {
 /*
  * The prefix structure contains information about one prefix
  * of an interface.  They are maintained by the different address families,
- * are allocated and attached when an prefix or an address is set, 
+ * are allocated and attached when an prefix or an address is set,
  * and are linked together so all prfefixes for an interface can be located.
  */
 struct ifprefix {
@@ -305,6 +305,7 @@ struct ifprefix {
 	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
 	struct ifprefix *ifpr_next;
 	u_char	ifpr_plen;		/* prefix length in bits */
+	u_char	ifpr_type;		/* protocol dependent prefix type */
 };
 
 /*

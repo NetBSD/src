@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.11 1999/12/10 17:56:13 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.12 1999/12/13 15:17:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,7 +46,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
 #endif
 #include <sys/syslog.h>
@@ -55,7 +55,9 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#if !(defined(__bsdi__) && _BSDI_VERSION >= 199802)
 #include <net/if_atm.h>
+#endif
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -76,19 +78,20 @@
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/in6_prefix.h>
 #include <netinet6/icmp6.h>
 
+#ifndef __bsdi__
 #include "loop.h"
-#ifdef __NetBSD__
+#endif
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 extern struct ifnet loif[NLOOP];
 #endif
 
+#include <net/net_osdep.h>
+
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
-
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
-#define time_second time.tv_sec
-#endif
 
 #define SIN6(s) ((struct sockaddr_in6 *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
@@ -101,18 +104,22 @@ int	nd6_mmaxtries	= 3;	/* maximum multicast query */
 int	nd6_useloopback = 1;	/* use loopback interface for local traffic */
 int	nd6_proxyall	= 0;	/* enable Proxy Neighbor Advertisement */
 
+/* preventing too many loops in ND option parsing */
+int nd6_maxndopt = 10;	/* max # of ND options allowed */
+
 /* for debugging? */
 static int nd6_inuse, nd6_allocated;
 
 struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
-struct nd_ifinfo *nd_ifinfo;
-struct nd_drhead nd_defrouter = { 0 };
+struct nd_ifinfo *nd_ifinfo = NULL;
+struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 #if 0
 extern	int ip6_forwarding;
 #endif
+static struct sockaddr_in6 all1_sa;
 
 static void nd6_slowtimo __P((void *));
 
@@ -120,11 +127,21 @@ void
 nd6_init()
 {
 	static int nd6_init_done = 0;
+	int i;
 
 	if (nd6_init_done) {
 		log(LOG_NOTICE, "nd6_init called more than once(ignored)\n");
 		return;
 	}
+
+	all1_sa.sin6_family = AF_INET6;
+	all1_sa.sin6_len = sizeof(struct sockaddr_in6);
+	for (i = 0; i < sizeof(all1_sa.sin6_addr); i++)
+		all1_sa.sin6_addr.s6_addr[i] = 0xff;
+
+	/* initialization of the default router list */
+	TAILQ_INIT(&nd_defrouter);
+
 	nd6_init_done = 1;
 
 	/* start timer */
@@ -192,12 +209,18 @@ nd6_setmtu(ifp)
 		 break;
 #if defined(__FreeBSD__) || defined(__bsdi__)
 	 case IFT_FDDI:
+#if defined(__bsdi__) && _BSDI_VERSION >= 199802
+		 ndi->maxmtu = MIN(FDDIMTU, ifp->if_mtu);
+#else
 		 ndi->maxmtu = MIN(FDDIIPMTU, ifp->if_mtu);
+#endif
 		 break;
 #endif
+#if !(defined(__bsdi__) && _BSDI_VERSION >= 199802)
 	 case IFT_ATM:
 		 ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
 		 break;
+#endif
 	 default:
 		 ndi->maxmtu = ifp->if_mtu;
 		 break;
@@ -353,7 +376,8 @@ nd6_options(ndopts)
 
 skip1:
 		i++;
-		if (i > 10) {
+		if (i > nd6_maxndopt) {
+			icmp6stat.icp6s_nd_toomanyopt++;
 			printf("too many loop in nd opt\n");
 			break;
 		}
@@ -376,8 +400,15 @@ nd6_timer(ignored_arg)
 	register struct llinfo_nd6 *ln;
 	register struct nd_defrouter *dr;
 	register struct nd_prefix *pr;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 	
+#ifdef __NetBSD__
 	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
 
 	ln = llinfo_nd6.ln_next;
@@ -474,15 +505,15 @@ nd6_timer(ignored_arg)
 	}
 	
 	/* expire */
-	dr = nd_defrouter.lh_first;
+	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
 		if (dr->expire && dr->expire < time_second) {
 			struct nd_defrouter *t;
-			t = dr->dr_next;
+			t = TAILQ_NEXT(dr, dr_entry);
 			defrtrlist_del(dr);
 			dr = t;
 		} else
-			dr = dr->dr_next;
+			dr = TAILQ_NEXT(dr, dr_entry);
 	}
 	pr = nd_prefix.lh_first;
 	while (pr) {
@@ -533,10 +564,6 @@ nd6_timer(ignored_arg)
 	}
 	splx(s);
 }
-
-static struct sockaddr_in6 all1_sa = {
-	sizeof(struct sockaddr_in6), AF_INET6, 0, 0,
-	{{{0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}}}, 0};
 
 struct rtentry *
 nd6_lookup(addr6, create, ifp)
@@ -609,11 +636,19 @@ nd6_lookup(addr6, create, ifp)
 			return(NULL);
 	}
 	rt->rt_refcnt--;
+	/*
+	 * Validation for the entry.
+	 * XXX: we can't use rt->rt_ifp to check for the interface, since
+	 *      it might be the loopback interface if the entry is for our
+	 *      own address on a non-loopback interface. Instead, we should
+	 *      use rt->rt_ifa->ifa_ifp, which would specify the REAL interface.
+	 */
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
-	   rt->rt_gateway->sa_family != AF_LINK) {
+	    rt->rt_gateway->sa_family != AF_LINK ||
+	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
 		if (create) {
-			log(LOG_DEBUG, "nd6_lookup: failed to lookup %s\n",
-			    ip6_sprintf(addr6));
+			log(LOG_DEBUG, "nd6_lookup: failed to lookup %s (if = %s)\n",
+			    ip6_sprintf(addr6), ifp ? if_name(ifp) : "unspec");
 			/* xxx more logs... kazu */
 		}
 		return(0);
@@ -644,7 +679,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * If the address matches one of our addresses,
 	 * it should be a neighbor.
 	 */
-#ifdef __bsdi__
+#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
 #else
 	for (ifa = ifp->if_addrlist.tqh_first;
@@ -684,40 +719,72 @@ nd6_free(rt)
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct sockaddr_dl *sdl;
+	struct in6_addr in6 = ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+	struct nd_defrouter *dr;
 
-	if (ln->ln_router) {
-		/* remove from default router list */
-		struct nd_defrouter *dr;
-		struct in6_addr *in6;
+	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
 		int s;
-		in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
-
+#ifdef __NetBSD__
 		s = splsoftnet();
-		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->
-				      sin6_addr,
+#else
+		s = splnet();
+#endif
+		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
 				      rt->rt_ifp);
-		if (dr)
-			defrtrlist_del(dr);
-		else if (!ip6_forwarding && ip6_accept_rtadv) {
+		if (ln->ln_router || dr) {
 			/*
-			 * rt6_flush must be called in any case.
-			 * see the comment in nd6_na_input().
+			 * rt6_flush must be called whether or not the neighbor
+			 * is in the Default Router List.
+			 * See a corresponding comment in nd6_na_input().
 			 */
-			rt6_flush(in6, rt->rt_ifp);
+			rt6_flush(&in6, rt->rt_ifp);
+		}
+
+		if (dr) {
+			/*
+			 * Unreachablity of a router might affect the default
+			 * router selection and on-link detection of advertised
+			 * prefixes.
+			 */
+
+			/*
+			 * Temporarily fake the state to choose a new default
+			 * router and to perform on-link determination of
+			 * prefixes coreectly.
+			 * Below the state will be set correctly,
+			 * or the entry itself will be deleted.
+			 */
+			ln->ln_state = ND6_LLINFO_INCOMPLETE;
+
+			if (dr == TAILQ_FIRST(&nd_defrouter)) {
+				/*
+				 * It is used as the current default router,
+				 * so we have to move it to the end of the
+				 * list and choose a new one.
+				 * XXX: it is not very efficient if this is
+				 *      the only router.
+				 */
+				TAILQ_REMOVE(&nd_defrouter, dr, dr_entry);
+				TAILQ_INSERT_TAIL(&nd_defrouter, dr, dr_entry);
+
+				defrouter_select();
+			}
+			pfxlist_onlink_check();
 		}
 		splx(s);
 	}
-	
+
 	if (rt->rt_refcnt > 0 && (sdl = SDL(rt->rt_gateway)) &&
-	   sdl->sdl_family == AF_LINK) {
+	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_alen = 0;
 		ln->ln_state = ND6_LLINFO_WAITDELETE;
 		ln->ln_asked = 0;
 		rt->rt_flags &= ~RTF_REJECT;
 		return;
 	}
-	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0, rt_mask(rt),
-		  0, (struct rtentry **)0);
+
+	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
+		  rt_mask(rt), 0, (struct rtentry **)0);
 }
 
 /*
@@ -731,6 +798,9 @@ nd6_nud_hint(rt, dst6)
 	struct in6_addr *dst6;
 {
 	struct llinfo_nd6 *ln;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 
 	/*
 	 * If the caller specified "rt", use that.  Otherwise, resolve the
@@ -762,6 +832,7 @@ nd6_nud_hint(rt, dst6)
 			nd_ifinfo[rt->rt_ifp->if_index].reachable;
 }
 
+#ifdef OLDIP6OUTPUT
 /*
  * Resolve an IP6 address into an ethernet address. If success,
  * desten is filled in. If there is no entry in ndptab,
@@ -782,6 +853,9 @@ nd6_resolve(ifp, rt, m, dst, desten)
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)NULL;
 	struct sockaddr_dl *sdl;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 
 	if (m->m_flags & M_MCAST) {
 		switch (ifp->if_type) {
@@ -794,6 +868,7 @@ nd6_resolve(ifp, rt, m, dst, desten)
 		case IFT_ARCNET:
 			*desten = 0;
 			return(1);
+			break;
 		default:
 			return(0);
 		}
@@ -853,18 +928,29 @@ nd6_resolve(ifp, rt, m, dst, desten)
 	}
 	return(0);
 }
+#endif /* OLDIP6OUTPUT */
 
 void
+#if defined(__bsdi__) && _BSDI_VERSION >= 199802
+nd6_rtrequest(req, rt, info)
+	int	req;
+	struct rtentry *rt;
+	struct rt_addrinfo *info; /* xxx unused */
+#else
 nd6_rtrequest(req, rt, sa)
 	int	req;
 	struct rtentry *rt;
 	struct sockaddr *sa; /* xxx unused */
+#endif
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 
 	if (rt->rt_flags & RTF_GATEWAY)
 		return;
@@ -950,7 +1036,7 @@ nd6_rtrequest(req, rt, sa)
 			 * When req == RTM_RESOLVE, rt is created and
 			 * initialized in rtrequest(), so rt_expire is 0.
 			 */
-			ln->ln_state = ND6_LLINFO_INCOMPLETE;
+			ln->ln_state = ND6_LLINFO_NOSTATE;
 			ln->ln_expire = time_second;
 		}
 		rt->rt_flags |= RTF_LLINFO;
@@ -979,10 +1065,14 @@ nd6_rtrequest(req, rt, sa)
 			}
 			if (nd6_useloopback) {
 #ifdef __bsdi__
+#if _BSDI_VERSION >= 199802
+				extern struct ifnet *loifp;
+				rt->rt_ifp = loifp;	/*XXX*/
+#else
 				extern struct ifnet loif;
 				rt->rt_ifp = &loif;	/*XXX*/
-#endif /*__bsdi__*/
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#endif
+#else /* non-bsdi */
 				rt->rt_ifp = &loif[0];	/*XXX*/
 #endif
 				/*
@@ -1022,10 +1112,17 @@ nd6_rtrequest(req, rt, sa)
 }
 
 void
+#if defined(__bsdi__) && _BSDI_VERSION >= 199802
+nd6_p2p_rtrequest(req, rt, info)
+	int	req;
+	struct rtentry *rt;
+	struct rt_addrinfo *info; /* xxx unused */
+#else
 nd6_p2p_rtrequest(req, rt, sa)
 	int	req;
 	struct rtentry *rt;
 	struct sockaddr *sa; /* xxx unused */
+#endif
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
@@ -1056,7 +1153,7 @@ nd6_p2p_rtrequest(req, rt, sa)
 			SDL(gate)->sdl_index = ifp->if_index;
 			break;
 		}
-		/* Announce a new entry if rqquested. */
+		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			nd6_na_output(ifp,
 				      &SIN6(rt_key(rt))->sin6_addr,
@@ -1074,12 +1171,16 @@ nd6_p2p_rtrequest(req, rt, sa)
 		if (ifa) {
 			if (nd6_useloopback) {
 #ifdef __bsdi__
+#if _BSDI_VERSION >= 199802
+				extern struct ifnet *loifp;
+				rt->rt_ifp = loifp;	/*XXX*/
+#else
 				extern struct ifnet loif;
 				rt->rt_ifp = &loif;	/*XXX*/
-#endif /*__bsdi__*/
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-				rt->rt_ifp = &loif[0];	/*XXX*/
 #endif
+#else
+				rt->rt_ifp = &loif[0];	/*XXX*/
+#endif /*__bsdi__*/
 			}
 		}
 		break;
@@ -1096,6 +1197,7 @@ nd6_ioctl(cmd, data, ifp)
 	struct in6_prlist *prl = (struct in6_prlist *)data;
 	struct in6_ndireq *ndi = (struct in6_ndireq *)data;
 	struct in6_nbrinfo *nbi = (struct in6_nbrinfo *)data;
+	struct in6_ndifreq *ndif = (struct in6_ndifreq *)data;
 	struct nd_defrouter *dr, any;
 	struct nd_prefix *pr;
 	struct rtentry *rt;
@@ -1105,8 +1207,12 @@ nd6_ioctl(cmd, data, ifp)
 	switch (cmd) {
 	case SIOCGDRLST_IN6:
 		bzero(drl, sizeof(*drl));
+#ifdef __NetBSD__
 		s = splsoftnet();
-		dr = nd_defrouter.lh_first;
+#else
+		s = splnet();
+#endif
+		dr = TAILQ_FIRST(&nd_defrouter);
 		while (dr && i < DRLSTSIZ) {
 			drl->defrouter[i].rtaddr = dr->rtaddr;
 			if (IN6_IS_ADDR_LINKLOCAL(&drl->defrouter[i].rtaddr)) {
@@ -1124,13 +1230,17 @@ nd6_ioctl(cmd, data, ifp)
 			drl->defrouter[i].expire = dr->expire;
 			drl->defrouter[i].if_index = dr->ifp->if_index;
 			i++;
-			dr = dr->dr_next;
+			dr = TAILQ_NEXT(dr, dr_entry);
 		}
 		splx(s);
 		break;
 	case SIOCGPRLST_IN6:
 		bzero(prl, sizeof(*prl));
+#ifdef __NetBSD__
 		s = splsoftnet();
+#else
+		s = splnet();
+#endif
 		pr = nd_prefix.lh_first;
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
@@ -1171,11 +1281,30 @@ nd6_ioctl(cmd, data, ifp)
 			pr = pr->ndpr_next;
 		}
 		splx(s);
+	      {
+		struct rr_prefix *rpp;
+
+		for (rpp = LIST_FIRST(&rr_prefix); rpp;
+		     rpp = LIST_NEXT(rpp, rp_entry)) {
+			if (i >= PRLSTSIZ)
+				break;
+			prl->prefix[i].prefix = rpp->rp_prefix.sin6_addr;
+			prl->prefix[i].raflags = rpp->rp_raf;
+			prl->prefix[i].prefixlen = rpp->rp_plen;
+			prl->prefix[i].vltime = rpp->rp_vltime;
+			prl->prefix[i].pltime = rpp->rp_pltime;
+			prl->prefix[i].if_index = rpp->rp_ifp->if_index;
+			prl->prefix[i].expire = rpp->rp_expire;
+			prl->prefix[i].advrtrs = 0;
+			i++;
+		}
+	      }
+
 		break;
 	case SIOCGIFINFO_IN6:
 		ndi->ndi = nd_ifinfo[ifp->if_index];
 		break;
-	case SIOCSNDFLUSH_IN6:
+	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* flush default router list */
 		/*
 		 * xxx sumikawa: should not delete route if default
@@ -1183,6 +1312,7 @@ nd6_ioctl(cmd, data, ifp)
 		 */
 		bzero(&any, sizeof(any));
 		defrouter_delreq(&any, 0);
+		defrouter_select();
 		/* xxx sumikawa: flush prefix list */
 		break;
 	case SIOCSPFXFLUSH_IN6:
@@ -1190,7 +1320,11 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
+#ifdef __NetBSD__
 		s = splsoftnet();
+#else
+		s = splnet();
+#endif
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			next = pr->ndpr_next;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
@@ -1205,40 +1339,67 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *next;
 
+#ifdef __NetBSD__
 		s = splsoftnet();
-		if ((dr = nd_defrouter.lh_first) != NULL) {
+#else
+		s = splnet();
+#endif
+		if ((dr = TAILQ_FIRST(&nd_defrouter)) != NULL) {
 			/*
 			 * The first entry of the list may be stored in
 			 * the routing table, so we'll delete it later.
 			 */
-			for (dr = dr->dr_next; dr; dr = next) {
-				next = dr->dr_next;
+			for (dr = TAILQ_NEXT(dr, dr_entry); dr; dr = next) {
+				next = TAILQ_NEXT(dr, dr_entry);
 				defrtrlist_del(dr);
 			}
-			defrtrlist_del(nd_defrouter.lh_first);
+			defrtrlist_del(TAILQ_FIRST(&nd_defrouter));
 		}
 		splx(s);
 		break;
 	    }
 	case SIOCGNBRINFO_IN6:
 	    {
-		  struct llinfo_nd6 *ln;
+		struct llinfo_nd6 *ln;
+		struct in6_addr nb_addr = nbi->addr; /* make local for safety */
 
-		  s = splsoftnet();
-		  if ((rt = nd6_lookup(&nbi->addr, 0, ifp)) == NULL) {
-			  error = EINVAL;
-			  splx(s);
-			  break;
-		  }
-		  ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-		  nbi->state = ln->ln_state;
-		  nbi->asked = ln->ln_asked;
-		  nbi->isrouter = ln->ln_router;
-		  nbi->expire = ln->ln_expire;
-		  splx(s);
-		  
-		  break;
+		/*
+		 * XXX: KAME specific hack for scoped addresses
+		 *      XXXX: for other scopes than link-local?
+		 */
+		if (IN6_IS_ADDR_LINKLOCAL(&nbi->addr) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&nbi->addr)) {
+			u_int16_t *idp = (u_int16_t *)&nb_addr.s6_addr[2];
+
+			if (*idp == 0)
+				*idp = htons(ifp->if_index);
+		}
+
+#ifdef __NetBSD__
+		s = splsoftnet();
+#else
+		s = splnet();
+#endif
+		if ((rt = nd6_lookup(&nb_addr, 0, ifp)) == NULL) {
+			error = EINVAL;
+			splx(s);
+			break;
+		}
+		ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+		nbi->state = ln->ln_state;
+		nbi->asked = ln->ln_asked;
+		nbi->isrouter = ln->ln_router;
+		nbi->expire = ln->ln_expire;
+		splx(s);
+		
+		break;
 	    }
+	case SIOCGDEFIFACE_IN6:	/* XXX: should be implemented as a sysctl? */
+		ndif->ifindex = nd6_defifindex;
+		break;
+	case SIOCSDEFIFACE_IN6:	/* XXX: should be implemented as a sysctl? */
+		return(nd6_setdefaultiface(ndif->ifindex));
+		break;
 	}
 	return(error);
 }
@@ -1264,6 +1425,9 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	int olladdr;
 	int llchange;
 	int newstate = 0;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 
 	if (!ifp)
 		panic("ifp == NULL in nd6_cache_lladdr");
@@ -1366,8 +1530,14 @@ fail:
 		if (ln->ln_state == ND6_LLINFO_STALE) {
 			rt->rt_flags &= ~RTF_REJECT;
 			if (ln->ln_hold) {
+#ifdef OLDIP6OUTPUT
 				(*ifp->if_output)(ifp, ln->ln_hold,
 						  rt_key(rt), rt);
+#else
+				nd6_output(ifp, ln->ln_hold,
+					   (struct sockaddr_in6 *)rt_key(rt),
+					   rt);
+#endif 
 				ln->ln_hold = 0;
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
@@ -1449,7 +1619,11 @@ static void
 nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
+#ifdef __NetBSD__
 	int s = splsoftnet();
+#else
+	int s = splnet();
+#endif
 	register int i;
 	register struct nd_ifinfo *nd6if;
 
@@ -1471,8 +1645,6 @@ nd6_slowtimo(ignored_arg)
 	splx(s);
 }
 
-#ifdef NEWIP6OUTPUT
-/* for experimental */
 #define senderr(e) { error = (e); goto bad;}
 int
 nd6_output(ifp, m0, dst, rt0)
@@ -1485,6 +1657,9 @@ nd6_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt = rt0;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+	long time_second = time.tv_sec;
+#endif
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -1509,11 +1684,12 @@ nd6_output(ifp, m0, dst, rt0)
 		if ((rt->rt_flags & RTF_UP) == 0) {
 #ifdef __FreeBSD__
 			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst, 1, 0UL)) !=
-				NULL) {
+				NULL)
 #else
 			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst, 1)) !=
-				NULL) {
+				NULL)
 #endif 
+			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
 					return nd6_output(ifp, m0, dst, rt); /* XXX: loop care? */
@@ -1647,7 +1823,6 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 		case IFT_ARCNET:
 			*desten = 0;
 			return(1);
-			break;
 		default:
 			return(0);
 		}
@@ -1664,4 +1839,3 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 
 	return(1);
 }
-#endif /* NEWIP6OUTPUT */

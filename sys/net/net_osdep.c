@@ -1,3 +1,5 @@
+/*	$NetBSD: net_osdep.c,v 1.2 1999/12/13 15:17:19 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

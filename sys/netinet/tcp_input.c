@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.98 1999/12/11 09:55:14 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.99 1999/12/13 15:17:20 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -159,6 +159,13 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+#endif
+
+#ifdef PULLDOWN_TEST
+#ifndef INET6
+/* always need ip6.h for IP6_EXTHDR_GET */
+#include <netinet/ip6.h>
+#endif
 #endif
 
 #include <netinet/tcp.h>
@@ -589,6 +596,7 @@ tcp_input(m, va_alist)
 	case 4:
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
+#ifndef PULLDOWN_TEST
 		/* would like to get rid of this... */
 		if (toff > sizeof (struct ip)) {
 			ip_stripoptions(m, (struct mbuf *)0);
@@ -602,12 +610,22 @@ tcp_input(m, va_alist)
 		}
 		ip = mtod(m, struct ip *);
 		th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
+#else
+		ip = mtod(m, struct ip *);
+		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
+			sizeof(struct tcphdr));
+		if (th == NULL) {
+			tcpstat.tcps_rcvshort++;
+			return;
+		}
+#endif
 
 		/*
 		 * Checksum extended TCP header and data.
 		 */
 		len = ip->ip_len;
 		tlen = len - toff;
+#ifndef PULLDOWN_TEST
 	    {
 		struct ipovly *ipov;
 		ipov = (struct ipovly *)ip;
@@ -618,12 +636,19 @@ tcp_input(m, va_alist)
 			tcpstat.tcps_rcvbadsum++;
 			goto drop;
 		}
+#else
+		if (in4_cksum(m, IPPROTO_TCP, toff, tlen) != 0) {
+			tcpstat.tcps_rcvbadsum++;
+			goto drop;
+		}
+#endif
 		break;
 #ifdef INET6
 	case 6:
 		ip = NULL;
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
+#ifndef PULLDOWN_TEST
 		if (m->m_len < toff + sizeof(struct tcphdr)) {
 			m = m_pullup(m, toff + sizeof(struct tcphdr));	/*XXX*/
 			if (m == NULL) {
@@ -633,6 +658,15 @@ tcp_input(m, va_alist)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
+#else
+		ip6 = mtod(m, struct ip6_hdr *);
+		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
+			sizeof(struct tcphdr));
+		if (th == NULL) {
+			tcpstat.tcps_rcvshort++;
+			return;
+		}
+#endif
 
 		/*
 		 * Checksum extended TCP header and data.
@@ -669,6 +703,7 @@ tcp_input(m, va_alist)
 	 */
 
 	if (off > sizeof (struct tcphdr)) {
+#ifndef PULLDOWN_TEST
 		if (m->m_len < toff + off) {
 			if ((m = m_pullup(m, toff + off)) == 0) {
 				tcpstat.tcps_rcvshort++;
@@ -686,8 +721,19 @@ tcp_input(m, va_alist)
 			}
 			th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
 		}
+#else
+		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
+		if (th == NULL) {
+			tcpstat.tcps_rcvshort++;
+			return;
+		}
+		/*
+		 * NOTE: ip/ip6 will not be affected by m_pulldown()
+		 * (as they're before toff) and we don't need to update those.
+		 */
+#endif
 		optlen = off - sizeof (struct tcphdr);
-		optp = mtod(m, caddr_t) + toff + sizeof (struct tcphdr);
+		optp = ((caddr_t)th) + sizeof(struct tcphdr);
 		/* 
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's
@@ -3384,7 +3430,7 @@ syn_cache_respond(sc, m)
 	case AF_INET6:
 		ip6->ip6_vfc = IPV6_VERSION;
 		ip6->ip6_plen = htons(tlen - hlen);
-		ip6->ip6_hlim = ip6_defhlim;
+		/* ip6_hlim will be initialized afterwards */
 		/* XXX flowlabel? */
 		break;
 #endif
@@ -3429,8 +3475,11 @@ syn_cache_respond(sc, m)
 		break;
 #ifdef INET6
 	case AF_INET6:
+		ip6->ip6_hlim = in6_selecthlim(NULL,
+				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+
 		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro,
-			0, NULL);
+			0, NULL, NULL);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.26 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.27 1999/12/13 15:17:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -204,39 +204,51 @@ looutput(ifp, m, dst, rt)
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 
-#ifdef INET6
+#ifndef PULLDOWN_TEST
 	/*
 	 * KAME requires that the packet to be contiguous on the
 	 * mbuf.  We need to make that sure.
 	 * this kind of code should be avoided.
-	 * XXX: fails to join if interface MTU > MCLBYTES.  jumbogram?
+	 * XXX other conditions to avoid running this part?
 	 */
-	if (m && m->m_next != NULL && m->m_pkthdr.len < MCLBYTES) {
+	if (m && m->m_next != NULL) {
 		struct mbuf *n;
 
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
-		if (!n)
-			goto contiguousfail;
-		MCLGET(n, M_DONTWAIT);
-		if (! (n->m_flags & M_EXT)) {
-			m_freem(n);
-			goto contiguousfail;
+		if (n) {
+			MCLGET(n, M_DONTWAIT);
+			if ((n->m_flags & M_EXT) == 0) {
+				m_free(n);
+				n = NULL;
+			}
+		}
+		if (!n) {
+			printf("looutput: mbuf allocation failed\n");
+			m_freem(m);
+			return ENOBUFS;
 		}
 
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
-		n->m_pkthdr.rcvif = m->m_pkthdr.rcvif;
-		n->m_pkthdr.len = m->m_pkthdr.len;
-		n->m_len = m->m_pkthdr.len;
-		m_freem(m);
+		M_COPY_PKTHDR(n, m);
+		if (m->m_pkthdr.len <= MCLBYTES) {
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
+			n->m_len = m->m_pkthdr.len;
+			n->m_next = NULL;
+			m_freem(m);
+		} else {
+			m_copydata(m, 0, MCLBYTES, mtod(n, caddr_t));
+			m_adj(m, MCLBYTES);
+			n->m_len = MCLBYTES;
+			n->m_next = m;
+			m->m_flags &= ~M_PKTHDR;
+		}
 		m = n;
 	}
-	if (0) {
-contiguousfail:
-		printf("looutput: mbuf allocation failed\n");
-	}
 #if 0
-	if (m && m->m_next != NULL)
+	if (m && m->m_next != NULL) {
 		printf("loop: not contiguous...\n");
+		m_freem(m);
+		return ENOBUFS;
+	}
 #endif
 #endif
 

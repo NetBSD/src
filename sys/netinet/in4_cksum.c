@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.1.2.1 1999/11/30 13:35:24 itojun Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.2 1999/12/13 15:17:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -67,11 +67,12 @@
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
+#include <sys/socket.h>
+#include <net/route.h>
 #include <netinet/in.h>
-#include <netinet/ip_var.h>
-
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
 /*
  * Checksum routine for Internet Protocol family headers (Portable Version).

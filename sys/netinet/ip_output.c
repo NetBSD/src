@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.62 1999/07/09 22:57:19 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.63 1999/12/13 15:17:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -549,6 +549,19 @@ skip_ipsec:
 	 * If small enough for mtu of path, can just send directly.
 	 */
 	if ((u_int16_t)ip->ip_len <= mtu) {
+#if IFA_STATS
+		/*
+		 * search for the source address structure to
+		 * maintain output statistics.
+		 */
+		bzero((caddr_t*) &src, sizeof(src));
+		src.sin_family = AF_INET;
+		src.sin_addr.s_addr = ip->ip_src.s_addr;
+		src.sin_len = sizeof(src);
+		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+		if (ia)
+			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
+#endif
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
@@ -659,10 +672,25 @@ sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
-		if (error == 0)
+		if (error == 0) {
+#if IFA_STATS
+			/*
+			 * search for the source address structure to
+			 * maintain output statistics.
+			 */
+			bzero((caddr_t*) &src, sizeof(src));
+			src.sin_family = AF_INET;
+			src.sin_addr.s_addr = ip->ip_src.s_addr;
+			src.sin_len = sizeof(src);
+			ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+			if (ia) {
+				ia->ia_ifa.ifa_data.ifad_outbytes +=
+					ntohs(ip->ip_len);
+			}
+#endif
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);
-		else
+		} else
 			m_freem(m);
 	}
 
@@ -674,19 +702,6 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
-#if IFA_STATS
-	if (error == 0) {
-		/* search for the source address structure to maintain output
-		 * statistics. */
-		bzero((caddr_t*) &src, sizeof(src));
-		src.sin_family = AF_INET;
-		src.sin_addr.s_addr = ip->ip_src.s_addr;
-		src.sin_len = sizeof(src);
-		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
-		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
-	}
-#endif
 
 #ifdef IPSEC
 	if (sp != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.60 1999/07/09 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.61 1999/12/13 15:17:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -507,11 +507,6 @@ in_pcbdetach(v)
 	int s;
 
 #ifdef IPSEC
-	if (so->so_pcb) {
-		KEYDEBUG(KEYDEBUG_KEY_STAMP,
-			printf("DP call free SO=%p from in_pcbdetach\n", so));
-		key_freeso(so);
-	}
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;
