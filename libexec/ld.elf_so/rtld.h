@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.5 1998/07/01 20:42:47 tv Exp $	*/
+/*	$NetBSD: rtld.h,v 1.6 1998/11/24 11:34:30 tsubai Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -219,6 +219,13 @@ extern Obj_Entry *_rtld_map_object(const char *, int);
 /* mips_reloc.c */
 extern void _rtld_relocate_mips_got(Obj_Entry *);
 extern caddr_t _rtld_bind_mips (Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
+#endif
+
+#if defined(__powerpc__)
+/* ppc_reloc.c */
+extern caddr_t _rtld_bind_powerpc(const Obj_Entry *, Elf_Word);
+extern int _rtld_reloc_powerpc_plt(const Obj_Entry *, const Elf_RelA *, bool);
+extern void _rtld_setup_powerpc_plt(const Obj_Entry *);
 #endif
 
 #endif /* } */
