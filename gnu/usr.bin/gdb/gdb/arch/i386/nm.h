@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.3 1995/01/26 17:55:19 mycroft Exp $
+	$Id: nm.h,v 1.4 1995/01/26 22:39:17 mycroft Exp $
 */
 
 #ifndef NM_I386BSD_H
@@ -25,7 +25,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <machine/vmparam.h>
 
+#if 0
 #define FLOAT_INFO	{ extern i386_float_info(); i386_float_info(); }
+#endif
 
 #define PTRACE_ARG3_TYPE	caddr_t
 
