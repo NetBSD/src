@@ -1,7 +1,7 @@
 .\" @(#)rpcinfo.1m 1.23 93/03/29 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
-.\" $NetBSD: rpcinfo.8,v 1.8 2001/10/02 14:38:09 bjh21 Exp $
+.\" $NetBSD: rpcinfo.8,v 1.9 2001/10/02 14:41:31 bjh21 Exp $
 .Dd August 18, 1992
 .Dt RPCINFO 8
 .Sh NAME
@@ -179,7 +179,7 @@ an error message is printed.
 Use of broadcasting should be limited because of the potential for adverse
 effect on other systems.
 .Pp
-.Fl d
+.It Fl d
 Delete registration for the RPC service of the specified
 .Ar prognum
 and
@@ -193,7 +193,7 @@ the transports on which it was registered.
 Only the owner of a service can delete a registration, except the
 super-user who can delete any service.
 .Pp
-.Fl l
+.It Fl l
 Display a list of entries with a given
 .Ar prognum
 and
