@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.14 2003/03/29 18:38:48 perry Exp $
+.\" $NetBSD: ksh.Man,v 1.15 2003/05/01 13:50:59 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1802,7 +1802,7 @@ that are recognized.
 .sp
 The options are provided for compatibility with BSD shell scripts:
 \fB\-n\fP suppresses the trailing newline, \fB\-e\fP enables backslash
-interpretation (a no-op, since this is normally done), and \fB\-E\fP which
+interpretation (a no-op, since this is normally done), and \fB\-E\fP
 suppresses backslash interpretation.
 .\"}}}
 .\"{{{  eval command ...
@@ -2245,7 +2245,7 @@ renamed to \fB1\fP, \fB2\fP, \fIetc.\fP
 .IP "\fBtest\fP \fIexpression\fP"
 .IP "\fB[\fP \fIexpression\fP \fB]\fP"
 \fBtest\fP evaluates the \fIexpression\fP and returns zero status if
-true, and 1 status if false and greater than 1 if there was an error.
+true, 1 if false, and greater than 1 if there was an error.
 It is normally used as the
 condition command of \fBif\fP and \fBwhile\fP statements.
 The following basic expressions are available:
