@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.2 2003/09/02 07:35:08 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.3 2003/09/03 12:45:25 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -120,14 +120,6 @@ delete|rm)	action=delete ;;
 *)		usage ;;
 esac
 shift
-
-# XXX Only support the standard view for now.
-case "$view" in
-"")	;;
-*)	echo "pkg_view: only the standard view is supported" 1>&2
-	exit 1
-	;;
-esac
 
 # if standard view, put package info into ${dflt_pkg_dbdir}
 # if not standard view, put package info into view's pkgdb
