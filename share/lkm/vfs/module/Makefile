@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$NetBSD: Makefile,v 1.9 1997/11/08 08:09:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1999/11/10 00:44:22 wrstuden Exp $
 #
 
 SRCS=kernfsmod.c
@@ -45,7 +45,7 @@ KOBJS=kernfs_vfsops.o kernfs_vnops.o
 MODOBJ=combined.o
 
 KMOD=kernfsmod
-CFLAGS= -D_KERNEL -I/sys -I.
+CFLAGS= -D_LKM -D_KERNEL -I/sys -I.
 
 all:	$(MODOBJ)
 
