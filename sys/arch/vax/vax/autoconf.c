@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2000/02/12 15:48:34 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 2000/04/16 16:03:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -231,7 +231,14 @@ booted_sd(dev, aux)
 		return 0; /* Wrong unit */
 
 	ppdev = dev->dv_parent->dv_parent;
+
+	/* VS3100 NCR 53C80 */
 	if ((strcmp(ppdev->dv_cfdata->cf_driver->cd_name, "ncr") == 0) &&
+	    (ppdev->dv_unit == B_CONTROLLER(bootdev)))
+			return 1;
+
+	/* VS4000 NCR 53C94 */
+	if ((strcmp(ppdev->dv_cfdata->cf_driver->cd_name, "asc") == 0) &&
 	    (ppdev->dv_unit == B_CONTROLLER(bootdev)))
 			return 1;
 
