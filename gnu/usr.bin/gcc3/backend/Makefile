@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/08/11 07:34:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2003/08/22 03:06:32 uwe Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -39,15 +39,16 @@ COPTS.insn-conditions.c=	-DGENERATOR_FILE
 COPTS.sparc.o=			-DTARGET_CPU_DEFAULT=${G_target_cpu_default}
 
 # Headers that host objects depend on (except gen*rtl*)
-HH=	hconfig.h genrtl.h
+HH=	${G_HCONFIG_H} genrtl.h
 
 #
 # Generate the various header files we need.
 #
-genrtl.c genrtl.h: gengenrtl
+genrtl.c: gengenrtl
 	./gengenrtl > genrtl.c
+genrtl.h: gengenrtl
 	./gengenrtl -h > genrtl.h
-gengenrtl.o: gengenrtl.c hconfig.h
+gengenrtl.o: gengenrtl.c ${G_HCONFIG_H}
 	${HOST_COMPILE.c} $<
 gengenrtl: gengenrtl.o
 	${HOST_LINK.c} -o $@ $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
@@ -71,8 +72,7 @@ gtype-desc.h: gengtype
 	rm -f auto-host.h
 	ln -s ${.CURDIR}/../arch/${MACHINE_ARCH}/auto-host.h .
 	./gengtype
-gengtype.c: gtyp-gen.h
-gengtype.o: gengtype.c $(HH)
+gengtype.o: gengtype.c gtyp-gen.h $(HH)
 	${HOST_COMPILE.c} $<
 gengtype-lex.o: gengtype-lex.c $(HH)
 	${HOST_COMPILE.c} $<
@@ -109,6 +109,7 @@ tm_p.h: Makefile
 	HEADERS="$(G_tm_p_file)" XM_DEFINES="" TARGET_CPU_DEFAULT="" \
 	/bin/sh $(GNUHOSTDIST)/gcc/mkconfig.sh tm_p.h
 
+CLEANFILES+=	options.h
 options.h: Makefile
 	for f in $(lang_options_files); do \
 		echo "#include \"$$f\""; \
@@ -117,7 +118,6 @@ options.h: Makefile
 
 # Yuck, we have to run configure to generate this one...
 CLEANFILES+=	auto-build.h
-hconfig.h: auto-build.h
 auto-build.h: Makefile
 	rm -rf .ab && \
 	mkdir .ab && \
@@ -225,10 +225,10 @@ insn-attrtab.c: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.
 #
 # Required hard-coded dependancies.
 #
-genextract.c: insn-config.h
-insn-attrtab.c: ${G_HOST_RTLANAL:.o=.c}
-insn-attrtab.c insn-extract.c: insn-config.h
-insn-conditions.c: insn-constants.h tm_p.h tm-preds.h
-toplev.c: options.h
+genextract.o: insn-config.h
+insn-attrtab.o: insn-config.h ${G_HOST_RTLANAL:.o=.c}
+insn-conditions.o: insn-constants.h tm_p.h tm-preds.h
+insn-extract.o: insn-config.h
+toplev.d toplev.o: options.h
 
-.PATH: ${DIST}/gcc ${DIST}/libiberty ${G_out_file:H}
+.PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H}
