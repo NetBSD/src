@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.7 2003/05/25 14:36:56 gehenna Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.8 2003/10/15 06:43:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.7 2003/05/25 14:36:56 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.8 2003/10/15 06:43:36 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -809,11 +809,12 @@ uax_miibus_statchg(device_ptr_t dev)
 		val = 0x00;
 	err = uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_MEDIUM_STATUS,
 			  val, 0, 0, NULL);
-#endif
 	if (err) {
 		DPRINTF(("%s: uax_miibus_statchg error=%s\n",
 			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
 	}
+#endif
+	/* Nothing to do */
 }
 
 Static int
