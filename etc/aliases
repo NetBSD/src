@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.15 2001/03/04 06:00:54 lukem Exp $
+#	$NetBSD: aliases,v 1.16 2002/06/05 21:32:25 itojun Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -22,6 +22,10 @@ named:		root
 nobody:		root
 postfix:	root
 toor:		root
+named:		root
+ndpd:		root
+sshd:		root
+smmsp:		root
 
 # Well-known aliases -- these should be filled in!
 # root:
