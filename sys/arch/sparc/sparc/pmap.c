@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 1999/11/13 00:32:15 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.154 1999/11/17 06:16:49 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -494,8 +494,7 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
 boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
 void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
-void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-		    boolean_t, vm_prot_t));
+int		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
