@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.32 1999/06/06 20:24:02 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.33 1999/06/06 20:41:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.32 1999/06/06 20:24:02 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.33 1999/06/06 20:41:04 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.32 1999/06/06 20:24:02 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.33 1999/06/06 20:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1551,7 +1551,6 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	     * right now, setting the length to be the distance to
 	     * the end of the string, since that's what make does.
 	     */
-printf("never found end char\n");
 	    *lengthPtr = tstr - str;
 	    return (var_Error);
 	}
@@ -1669,7 +1668,6 @@ printf("never found end char\n");
 		    return(str);
 		} else {
 		    Buf_Destroy (buf, TRUE);
-printf("no modifiers %d\n", err);
 		    return (err ? var_Error : varNoError);
 		}
 	    } else {
@@ -1932,7 +1930,6 @@ printf("no modifiers %d\n", err);
 			*lengthPtr = cp - start + 1;
 			VarREError(error, &pattern.re, "RE substitution error");
 			free(pattern.replace);
-printf("regcomp error\n");
 			return (var_Error);
 		    }
 
@@ -2082,7 +2079,6 @@ printf("regcomp error\n");
 			     cp++)
 				 continue;
 			termc = *cp;
-printf("Unknown modifier\n");
 			newStr = var_Error;
 		    }
 		}
@@ -2155,7 +2151,6 @@ cleanup:
     if (delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      v->name, delim);
-printf("cleanup\n");
     return (var_Error);
 }
 
