@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.54 1999/03/14 05:03:35 jonb Exp $
+#	$NetBSD: Makefile.pc532,v 1.55 1999/07/09 09:52:59 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -54,6 +54,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext F8002000 -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}

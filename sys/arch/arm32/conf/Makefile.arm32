@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.45 1999/01/29 22:20:49 tron Exp $
+#	$NetBSD: Makefile.arm32,v 1.46 1999/07/09 09:52:56 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -53,6 +53,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0000000 -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}

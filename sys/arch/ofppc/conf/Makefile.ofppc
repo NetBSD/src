@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.18 1999/01/15 23:37:07 thorpej Exp $
+#	$NetBSD: Makefile.ofppc,v 1.19 1999/07/09 09:52:59 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -56,6 +56,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100000 -e __start
 STRIPFLAGS=	--strip-debug
+
+%INCLUDES
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
