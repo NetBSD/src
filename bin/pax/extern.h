@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2000/03/30 17:53:04 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.23.4.1 2000/10/25 16:18:52 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -242,7 +242,6 @@ extern int pids;
 extern int exit_val;
 extern int docrc;
 extern char *dirptr;
-extern const char *ltmfrmt;
 extern char *argv0;
 int main __P((int, char **));
 void sig_cleanup __P((int));
