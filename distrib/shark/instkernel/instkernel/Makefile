@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/05 21:23:31 thorpej Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.4 2002/03/30 06:55:18 thorpej Exp $
 
 .include "../../../../Makefile.inc"
+.include <bsd.own.mk>
 
 TOP=	${.CURDIR}/../../../..
 
-RAMDISKDIR!=	${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETIMAGE?=	mdsetimage
 KERNEL?=${KERNOBJDIR}/INSTALL/netbsd
-KERNEL=/sys/arch/shark/compile/INSTALL/netbsd
-STRIP?=		strip		# make STRIP=echo can be useful
 
 all:
 	cp ${KERNEL} netbsd

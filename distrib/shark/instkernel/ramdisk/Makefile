@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2002/03/30 00:35:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/30 06:55:18 thorpej Exp $
 
-.include "${.CURDIR}/../../Makefile.inc"
+.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
@@ -11,7 +11,7 @@ WARNS=		1
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
-IMAGEENDIAN=	be
+IMAGEENDIAN=	le
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
