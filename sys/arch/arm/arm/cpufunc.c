@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.13 2001/11/07 00:17:36 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.14 2001/11/10 23:12:41 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -281,18 +281,18 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* domain		*/
-	arm7tdmi_setttb,			/* setttb		*/
+	arm7tdmi_setttb,		/* setttb		*/
 	cpufunc_faultstatus,		/* faultstatus		*/
 	cpufunc_faultaddress,		/* faultaddress		*/
 
 	/* TLB functions */
 
 	arm7tdmi_tlb_flushID,		/* tlb_flushID		*/
-	arm7tdmi_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	arm7tdmi_tlb_flushID_SE,	/* tlb_flushID_SE	*/
 	arm7tdmi_tlb_flushID,		/* tlb_flushI		*/
-	arm7tdmi_tlb_flushID_SE,		/* tlb_flushI_SE	*/
+	arm7tdmi_tlb_flushID_SE,	/* tlb_flushI_SE	*/
 	arm7tdmi_tlb_flushID,		/* tlb_flushD		*/
-	arm7tdmi_tlb_flushID_SE,		/* tlb_flushD_SE	*/
+	arm7tdmi_tlb_flushID_SE,	/* tlb_flushD_SE	*/
 
 	/* Cache functions */
 
@@ -334,7 +334,7 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	late_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
-	arm7tdmi_context_switch,		/* context_switch	*/
+	arm7tdmi_context_switch,	/* context_switch	*/
 
 	arm7tdmi_setup			/* cpu setup		*/
 
@@ -497,7 +497,7 @@ struct cpu_functions sa110_cpufuncs = {
 	/* TLB functions */
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
-	sa110_tlb_flushID_SE,		/* tlb_flushID_SE		*/
+	sa110_tlb_flushID_SE,		/* tlb_flushID_SE	*/
 	armv4_tlb_flushI,		/* tlb_flushI		*/
 	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
@@ -566,7 +566,7 @@ struct cpu_functions xscale_cpufuncs = {
 	/* TLB functions */
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
-	xscale_tlb_flushID_SE,		/* tlb_flushID_SE		*/
+	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
 	armv4_tlb_flushI,		/* tlb_flushI		*/
 	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
@@ -683,7 +683,7 @@ set_cpufuncs()
 	if (cputype == CPU_ID_ARM920T) {
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1; /* V4 or higher */
+		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		return 0;
 	}
 #endif /* CPU_ARM9 */
@@ -691,14 +691,14 @@ set_cpufuncs()
 	if (cputype == CPU_ID_SA110 || cputype == CPU_ID_SA1100 ||
 	    cputype == CPU_ID_SA1110) {
 		cpufuncs = sa110_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
+		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		return 0;
 	}
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
 		cpufuncs = xscale_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XXX correct? */
+		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		return 0;
 	}
 #endif /* CPU_XSCALE */
