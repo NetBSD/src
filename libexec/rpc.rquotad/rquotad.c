@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.9 1997/10/07 11:15:18 mrg Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.10 1998/01/21 11:37:16 lukem Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.9 1997/10/07 11:15:18 mrg Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.10 1998/01/21 11:37:16 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -105,8 +105,11 @@ main(argc, argv)
 		syslog(LOG_ERR, "couldn't create udp service.");
 		exit(1);
 	}
-	if (!svc_register(transp, RQUOTAPROG, RQUOTAVERS, rquota_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RQUOTAPROG, RQUOTAVERS, %s).", proto?"udp":"(inetd)");
+	if (!svc_register(transp, RQUOTAPROG, RQUOTAVERS, rquota_service,
+	    proto)) {
+		syslog(LOG_ERR,
+		    "unable to register (RQUOTAPROG, RQUOTAVERS, %s).",
+		    proto ? "udp" : "(inetd)");
 		exit(1);
 	}
 
@@ -158,7 +161,8 @@ sendquota(request, transp)
 	if (request->rq_cred.oa_flavor != AUTH_UNIX) {
 		/* bad auth */
 		getq_rslt.status = Q_EPERM;
-	} else if (!getfsquota(getq_args.gqa_uid, getq_args.gqa_pathp, &dqblk)) {
+	} else if (!getfsquota(getq_args.gqa_uid, getq_args.gqa_pathp,
+	    &dqblk)) {
 		/* failed, return noquota */
 		getq_rslt.status = Q_NOQUOTA;
 	} else {
@@ -183,9 +187,8 @@ sendquota(request, transp)
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft =
 		    dqblk.dqb_itime - timev.tv_sec;
 	}
-	if (!svc_sendreply(transp, xdr_getquota_rslt, (char *)&getq_rslt)) {
+	if (!svc_sendreply(transp, xdr_getquota_rslt, (char *)&getq_rslt))
 		svcerr_systemerr(transp);
-	}
 	if (!svc_freeargs(transp, xdr_getquota_args, (caddr_t)&getq_args)) {
 		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
@@ -229,15 +232,25 @@ initfs()
 			continue;
 
 		fs_current = (struct fs_stat *) malloc(sizeof(struct fs_stat));
+		if (fs_current == NULL) {
+			syslog(LOG_ERR, "can't malloc: %m");
+			exit(1);
+		}
 		fs_current->fs_next = fs_next;	/* next element */
 
-		fs_current->fs_file = malloc(sizeof(char) * (strlen(fs->fs_file) + 1));
-		strcpy(fs_current->fs_file, fs->fs_file);
+		fs_current->fs_file = strdup(fs->fs_file);
+		if (fs_current->fs_file == NULL) {
+			syslog(LOG_ERR, "can't strdup: %m");
+			exit(1);
+		}
 
-		fs_current->qfpathname = malloc(sizeof(char) * (strlen(qfpathname) + 1));
-		strcpy(fs_current->qfpathname, qfpathname);
+		fs_current->qfpathname = strdup(qfpathname);
+		if (fs_current->qfpathname == NULL) {
+			syslog(LOG_ERR, "can't strdup: %m");
+			exit(1);
+		}
 
-		stat(qfpathname, &st);
+		stat(fs->fs_file, &st);
 		fs_current->st_dev = st.st_dev;
 
 		fs_next = fs_current;
@@ -266,7 +279,7 @@ getfsquota(id, path, dqblk)
 	qcmd = QCMD(Q_GETQUOTA, USRQUOTA);
 
 	for (fs = fs_begin; fs != NULL; fs = fs->fs_next) {
-		/* where the devise is the same as path */
+		/* where the device is the same as path */
 		if (fs->st_dev != st_path.st_dev)
 			continue;
 
@@ -326,7 +339,7 @@ hasquota(fs, qfnamep)
 	strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
 	buf[sizeof(buf) - 1] = '\0';
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if ((cp = index(opt, '=')))
+		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';
 		if (strcmp(opt, usrname) == 0)
 			break;
