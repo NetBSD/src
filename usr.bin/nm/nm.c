@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nm.c	5.8 (Berkeley) 5/2/91";*/
-static char rcsid[] = "$Id: nm.c,v 1.3 1993/12/01 08:56:58 pk Exp $";
+static char rcsid[] = "$Id: nm.c,v 1.4 1994/10/19 20:39:31 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -545,9 +545,17 @@ typeletter(type)
 	case N_DATA:
 		return(IS_EXTERNAL(type) ? 'D' : 'd');
 	case N_FN:
-		return(IS_EXTERNAL(type) ? 'F' : 'f');
+		/* NOTE: N_FN == N_WARNING,
+		 * in this case, the N_EXT bit is to considered as
+		 * part of the symbol's type itself.
+		 */
+		return(IS_EXTERNAL(type) ? 'F' : 'W');
 	case N_TEXT:
 		return(IS_EXTERNAL(type) ? 'T' : 't');
+	case N_INDR:
+		return(IS_EXTERNAL(type) ? 'I' : 'i');
+	case N_SIZE:
+		return(IS_EXTERNAL(type) ? 'S' : 's');
 	case N_UNDF:
 		return(IS_EXTERNAL(type) ? 'U' : 'u');
 	}
