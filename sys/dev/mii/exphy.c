@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.11 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.12 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ exphyattach(parent, self, aux)
 		    sc->sc_mii.mii_dev.dv_xname);
 		return;
 	}
+	sc->sc_mii.mii_flags |= MIIF_NOISOLATE;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
@@ -320,17 +321,8 @@ void
 exphy_reset(sc)
 	struct exphy_softc *sc;
 {
-	int reg, i;
 
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET);
-
-	/* Wait 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
-		if ((reg & BMCR_RESET) == 0)
-			break;
-		delay(1000);
-	}
+	mii_phy_reset(&sc->sc_mii);
 
 	/*
 	 * XXX 3Com PHY doesn't set the BMCR properly after
