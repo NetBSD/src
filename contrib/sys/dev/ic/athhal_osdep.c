@@ -122,44 +122,43 @@ SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
 	int debug_nodenum;
 #endif /* AH_DEBUG */
 	int ath_nodenum, hal_nodenum, version_nodenum;
-	struct sysctlnode *node = NULL;
+	struct sysctlnode *node;
 
-	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "hw",
-	    &node, NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
 		goto err;
 
-	node = NULL;
-
-	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "ath",
-	    &node, NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ath", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	ath_nodenum = node->sysctl_num;
-	node = NULL;
 
-	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "hal",
-	    &node, NULL, 0, NULL, 0, CTL_HW, ath_nodenum, CTL_CREATE,
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hal", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, ath_nodenum, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
 	hal_nodenum = node->sysctl_num;
-	node = NULL;
 
 	/* HAL version */
-	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY,
-	    CTLTYPE_STRING, "version", &node, NULL, 0, &ath_hal_version, 0,
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_STRING, "version", NULL, NULL, 0, &ath_hal_version, 0,
 	    CTL_HW, ath_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	version_nodenum = node->sysctl_num;
-	node = NULL;
 
 #ifdef AH_DEBUG
-	node = NULL;
 
 	/* control debugging printfs */
-	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE, CTLTYPE_INT,
-	    "debug", &node, NULL, 0, &ath_hal_debug, 0,
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "debug", NULL, NULL, 0, &ath_hal_debug, 0,
 	    CTL_HW, ath_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
