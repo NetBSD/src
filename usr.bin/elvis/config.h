@@ -3,8 +3,10 @@
  * We try to automatically configure to various compilers and operating
  * systems. Extend the autoconf section as needed.
  *
- *	$Id: config.h,v 1.3 1993/08/02 17:53:46 mycroft Exp $
+ *	$Id: config.h,v 1.4 1993/08/10 15:44:23 mycroft Exp $
  */
+
+#include <sys/unistd.h>
 
 #ifndef _CONFIG_H
 # define _CONFIG_H
@@ -274,7 +276,7 @@ extern char *strchr();
  * Also, the Coherent-286 uses getwd(), but Coherent-386 uses getcwd()
  */
 #if BSD
-#ifndef __386BSD__
+#ifndef _POSIX_VERSION
 # define getcwd	getwd
 #endif
 #endif
