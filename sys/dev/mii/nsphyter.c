@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.10 2001/05/31 20:30:21 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.11 2001/06/02 21:39:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -106,6 +106,17 @@ const struct mii_phy_funcs nsphyter_funcs = {
 	nsphyter_service, nsphyter_status, mii_phy_reset,
 };
 
+const struct mii_phydesc nsphyters[] = {
+	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83843,
+	  MII_STR_xxNATSEMI_DP83843 },
+
+	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83815,
+	  MII_STR_xxNATSEMI_DP83815 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 nsphytermatch(parent, match, aux)
 	struct device *parent;
@@ -114,12 +125,7 @@ nsphytermatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxNATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83843)
-		return (10);
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxNATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83815)
+	if (mii_phy_match(ma, nsphyters) != NULL)
 		return (10);
 
 	return (0);
@@ -133,21 +139,10 @@ nsphyterattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	const char *model;
+	const struct mii_phydesc *mpd;
 
-	switch (MII_MODEL(ma->mii_id2)) {
-	case MII_MODEL_xxNATSEMI_DP83843:
-		model = MII_STR_xxNATSEMI_DP83843;
-		break;
-	case MII_MODEL_xxNATSEMI_DP83815:
-		model = MII_STR_xxNATSEMI_DP83815;
-		break;
-	default:
-		printf("\n");
-		panic("nsphyterattach: impossible");
-	}
-
-	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, nsphyters);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

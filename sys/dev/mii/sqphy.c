@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.21 2001/05/31 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.22 2001/06/02 21:39:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,14 @@ const struct mii_phy_funcs sqphy_funcs = {
 	sqphy_service, sqphy_status, mii_phy_reset,
 };
 
+const struct mii_phydesc sqphys[] = {
+	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80220,
+	  MII_STR_SEEQ_80220 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 sqphymatch(parent, match, aux)
 	struct device *parent;
@@ -111,8 +119,7 @@ sqphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_SEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_SEEQ_80220)
+	if (mii_phy_match(ma, sqphys) != NULL)
 		return (10);
 
 	return (0);
@@ -126,9 +133,10 @@ sqphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_SEEQ_80220,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, sqphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

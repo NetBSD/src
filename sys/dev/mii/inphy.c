@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.22 2001/05/31 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.23 2001/06/02 21:39:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,14 @@ const struct mii_phy_funcs inphy_funcs = {
 	inphy_service, inphy_status, mii_phy_reset,
 };
 
+const struct mii_phydesc inphys[] = {
+	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82555,
+	  MII_STR_yyINTEL_I82555 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 inphymatch(parent, match, aux)
 	struct device *parent;
@@ -111,8 +119,7 @@ inphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_yyINTEL &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_yyINTEL_I82555)
+	if (mii_phy_match(ma, inphys) != NULL)
 		return (10);
 
 	return (0);
@@ -126,9 +133,10 @@ inphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_yyINTEL_I82555,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, inphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

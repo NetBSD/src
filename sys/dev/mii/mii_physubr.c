@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.23 2001/05/31 18:44:48 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.24 2001/06/02 21:39:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -524,4 +524,16 @@ mii_phy_detach(self, flags)
 	mii_phy_delete_media(sc);
 
 	return (0);
+}
+
+const struct mii_phydesc *
+mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
+{
+
+	for (; mpd->mpd_name != NULL; mpd++) {
+		if (MII_OUI(ma->mii_id1, ma->mii_id2) == mpd->mpd_oui &&
+		    MII_MODEL(ma->mii_id2) == mpd->mpd_model)
+			return (mpd);
+	}
+	return (NULL);
 }
