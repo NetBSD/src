@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/08/01 17:04:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/19 01:23:27 lukem Exp $
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
@@ -13,5 +13,7 @@ CLEANFILES+=	keysym.h
 .include <bsd.prog.mk>
 
 keysym.h: mkkeysym.sh ${DESTDIR}/usr/include/dev/wscons/wsksymdef.h
-	sh ${.CURDIR}/mkkeysym.sh \
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
+	${HOST_SH} ${.CURDIR}/mkkeysym.sh \
 	  ${DESTDIR}/usr/include/dev/wscons/wsksymdef.h > keysym.h
