@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23.2.2 1999/09/13 22:14:30 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.3 1999/12/20 15:36:09 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23.2.2 1999/09/13 22:14:30 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.3 1999/12/20 15:36:09 he Exp $");
 #endif
 #endif
 
@@ -198,6 +198,12 @@ pkg_do(char *pkg)
 		}
 		if ((Flags & SHOW_BUILD_INFO) && fexists(BUILD_INFO_FNAME)) {
 			show_file("Build information:\n", BUILD_INFO_FNAME);
+		}
+		if ((Flags & SHOW_PKG_SIZE) && fexists(SIZE_PKG_FNAME)) {
+			show_file("Size of this package in bytes: ", SIZE_PKG_FNAME);
+		}
+		if ((Flags & SHOW_ALL_SIZE) && fexists(SIZE_ALL_FNAME)) {
+			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
 			puts(InfoPrefix);
