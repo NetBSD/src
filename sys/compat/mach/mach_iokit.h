@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.15 2003/05/22 18:10:19 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.16 2003/05/22 22:07:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -460,6 +460,42 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_connect_add_client_reply_t;
 
+/* io_connect_method_scalari_structi */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	int req_selector;
+	mach_msg_type_number_t req_incount;
+	int req_in[16];
+	mach_msg_type_number_t req_instructcount;
+	char req_instruct[4096];
+} mach_io_connect_method_scalari_structi_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_connect_method_scalari_structi_reply_t;
+
+/* io_registry_entry_from_path */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_pathoffset;
+	mach_msg_type_number_t req_pathcount;
+	char req_path[512];
+} mach_io_registry_entry_from_path_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_entry;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_from_path_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -484,6 +520,8 @@ int mach_io_connect_method_scalari_structo(struct mach_trap_args *);
 int mach_io_connect_method_structi_structo(struct mach_trap_args *);
 int mach_io_service_close(struct mach_trap_args *);
 int mach_io_connect_add_client(struct mach_trap_args *);
+int mach_io_connect_method_scalari_structi(struct mach_trap_args *);
+int mach_io_registry_entry_from_path(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
@@ -504,6 +542,7 @@ struct mach_iokit_devclass {
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
 	int (*mid_connect_method_scalari_structo)(struct mach_trap_args *);
 	int (*mid_connect_method_structi_structo)(struct mach_trap_args *);
+	int (*mid_connect_method_scalari_structi)(struct mach_trap_args *);
 	int (*mid_connect_map_memory)(struct mach_trap_args *);
 	char *mid_name;
 };

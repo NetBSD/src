@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.6 2003/05/14 18:28:05 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.7 2003/05/22 22:07:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.6 2003/05/14 18:28:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.7 2003/05/22 22:07:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,6 +74,7 @@ struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	darwin_iohidsystem_connect_method_scalari_scalaro,
 	NULL,
 	NULL,
+	NULL,
 	darwin_iohidsystem_connect_map_memory,
 	"IOHIDSystem",
 };
@@ -85,6 +86,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int maxoutcount;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_connect_method_scalari_scalaro()\n");
@@ -95,9 +97,93 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
+
+	maxoutcount = req->req_in[req->req_incount];
+
+	switch (req->req_selector) {
+	case DARWIN_IOHIDCREATESHMEM: {
+		/* Create the shared memory for HID events */
+		int version;
+		struct proc *newpp;
+		int error;
+		size_t memsize;
+		vaddr_t kvaddr;
+
+		version = req->req_in[0]; /* 1 */
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOHIDCREATESHMEM: version = %d\n", version);
+#endif
+		memsize = round_page(sizeof(struct darwin_iohidsystem_shmem));
+
+		/* If it has not been used yet, initialize it */
+		if (darwin_iohidsystem_shmem == NULL) {
+			darwin_iohidsystem_shmem = uao_create(memsize, 0);
+
+			error = uvm_map(kernel_map, &kvaddr, memsize, 
+			    darwin_iohidsystem_shmem, 0, PAGE_SIZE,
+			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, 
+			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+			if (error != 0) {
+				uao_detach(darwin_iohidsystem_shmem);
+				darwin_iohidsystem_shmem = NULL;
+				return mach_msg_error(args, error);
+			}
+
+			error = uvm_map_pageable(kernel_map, kvaddr, 
+			    kvaddr + memsize, FALSE, 0);
+			if (error != 0) {
+				uao_detach(darwin_iohidsystem_shmem);
+				darwin_iohidsystem_shmem = NULL;
+				return mach_msg_error(args, error);
+			}
+
+			darwin_iohidsystem_shmeminit(kvaddr);
+
+			kthread_create1(darwin_iohidsystem_thread, 
+			    (void *)kvaddr, &newpp, "iohidsystem");
+		}
+		rep->rep_outcount = 0;
+		break;
+	}
+
+	case DARWIN_IOHIDSETEVENTSENABLE: {
+		/* Enable or disable events */
+		int enable;
+
+		enable = req->req_in[0];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOHIDSETEVENTSENABLE: enable = %d\n", enable);
+#endif
+		/* For now, this is a no-op */
+		rep->rep_outcount = 0;
+		break;
+	}
+
+	case DARWIN_IOHIDSETCURSORENABLE: {
+		/* Enable or disable the cursor */	
+		int enable;
+
+		enable = req->req_in[0];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOHIDSETCURSORENABLE: enable = %d\n", enable);
+#endif
+		/* We don't support it */
+		rep->rep_outcount = 0;
+		break;
+	}
+
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Unknown selector %d\n", req->req_selector);
+#endif
+		return mach_msg_error(args, EINVAL);
+		break;
+	}
+
 	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
-	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
+	*msglen = sizeof(*rep) - ((16 + rep->rep_outcount) * sizeof(int));
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
 	return 0;
 }
 
@@ -109,44 +195,17 @@ darwin_iohidsystem_connect_map_memory(args)
 	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct proc *p = args->l->l_proc;
-	struct proc *newpp;
 	int error;
 	size_t memsize;
 	vaddr_t pvaddr;
-	vaddr_t kvaddr;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_connect_map_memory()\n");
 #endif
 	memsize = round_page(sizeof(struct darwin_iohidsystem_shmem));
 
-	/* If it has not been used yet, initialize it */
-	if (darwin_iohidsystem_shmem == NULL) {
-		darwin_iohidsystem_shmem = uao_create(memsize, 0);
-
-		error = uvm_map(kernel_map, &kvaddr, memsize, 
-		    darwin_iohidsystem_shmem, 0, PAGE_SIZE,
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, 
-		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
-		if (error != 0) {
-			uao_detach(darwin_iohidsystem_shmem);
-			darwin_iohidsystem_shmem = NULL;
-			return error;
-		}
-
-		error = uvm_map_pageable(kernel_map, kvaddr, 
-		    kvaddr + memsize, FALSE, 0);
-		if (error != 0) {
-			uao_detach(darwin_iohidsystem_shmem);
-			darwin_iohidsystem_shmem = NULL;
-			return error;
-		}
-
-		darwin_iohidsystem_shmeminit(kvaddr);
-
-		kthread_create1(darwin_iohidsystem_thread, 
-		    (void *)kvaddr, &newpp, "iohidsystem");
-	}
+	if (darwin_iohidsystem_shmem == NULL) 
+		return mach_msg_error(args, ENOMEM);
 
 	uao_reference(darwin_iohidsystem_shmem);
 	pvaddr = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, memsize);

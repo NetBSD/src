@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.28 2003/05/22 18:10:19 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.29 2003/05/22 22:07:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.28 2003/05/22 18:10:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.29 2003/05/22 22:07:37 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,6 +75,8 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	    "io_service_get_matching_services" },
 	{ 2805, mach_io_registry_entry_get_property,
 	    "io_registry_entry_get_property" },
+	{ 2809, mach_io_registry_entry_from_path, 
+	    "io_registry_entry_from_path" },
 	{ 2811, mach_io_registry_entry_get_properties,
 	    "io_registry_entry_get_properties" },
 	{ 2813, mach_io_registry_entry_get_child_iterator,
@@ -91,6 +93,8 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	    "io_connect_method_scalari_scalaro" },
 	{ 2823, mach_io_connect_method_scalari_structo, 
 	    "io_connect_method_scalari_structo" },
+	{ 2824, mach_io_connect_method_scalari_structi, 
+	    "io_connect_method_scalari_structi" },
 	{ 2825, mach_io_connect_method_structi_structo, 
 	    "io_connect_method_structi_structo" },
 	{ 2826, mach_io_registry_entry_get_path,

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.7 2003/05/15 23:35:37 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.8 2003/05/22 22:07:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -74,9 +74,22 @@ struct darwin_ioframebuffer_shmem {
 #define DARWIN_IOFBCREATESHAREDCURSOR 0
 #define DARWIN_IOFBGETPIXELINFORMATION 1
 #define DARWIN_IOFBGETCURRENTDISPLAYMODE 2
+#define DARWIN_IOFBSETSTARTUPDISPLAYMODE 3
+#define DARWIN_IOFBSETDISPLAYMODE 4
 #define DARWIN_IOFBGETVRAMMAPOFFSET 8
+#define DARWIN_IOFBSETCLUTWITHENTRIES 16
 #define DARWIN_IOFBGETATTRIBUTE 18
 
+/* For DARWIN_IOFBSETCLUTWITHENTRIES */
+typedef uint16_t darwin_iocolorcomponent;
+struct darwin_iocolorentry {
+	uint16_t index;
+	darwin_iocolorcomponent red;
+	darwin_iocolorcomponent green;
+	darwin_iocolorcomponent blue;
+};
+
+/* For DARWIN_IOFBCREATESHAREDCURSOR */
 #define DARWIN_IOMAXPIXELBITS 64
 
 typedef int32_t darwin_ioindex;
@@ -113,6 +126,8 @@ int
 darwin_ioframebuffer_connect_method_scalari_structo(struct mach_trap_args *);
 int
 darwin_ioframebuffer_connect_method_structi_structo(struct mach_trap_args *);
+int 
+darwin_ioframebuffer_connect_method_scalari_structi(struct mach_trap_args *);
 int darwin_ioframebuffer_connect_map_memory(struct mach_trap_args *);
 
 #endif /* _DARWIN_IOFRAMEBUFFER_H_ */
