@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.155 2005/03/19 03:53:55 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.156 2005/03/19 03:56:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.155 2005/03/19 03:53:55 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.156 2005/03/19 03:56:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.155 2005/03/19 03:53:55 thorpej Exp $");
 #include <ifaddrs.h>
 #include <util.h>
 
+#include "extern.h"
 #include "agr.h"
 #include "vlan.h"
 

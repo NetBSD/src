@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.1 2005/03/19 03:53:55 thorpej Exp $	*/
+/*	$NetBSD: vlan.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.1 2005/03/19 03:53:55 thorpej Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -47,10 +47,8 @@ __RCSID("$NetBSD: vlan.c,v 1.1 2005/03/19 03:53:55 thorpej Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "extern.h"
 #include "vlan.h"
-
-extern struct ifreq ifr;
-extern int s;
 
 static u_int vlan_tag = (u_int)-1;
 

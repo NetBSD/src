@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.1 2005/03/18 11:11:51 yamt Exp $	*/
+/*	$NetBSD: agr.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.1 2005/03/18 11:11:51 yamt Exp $");
+__RCSID("$NetBSD: agr.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -44,10 +44,8 @@ __RCSID("$NetBSD: agr.c,v 1.1 2005/03/18 11:11:51 yamt Exp $");
 #include <stdlib.h>
 #include <util.h>
 
+#include "extern.h"
 #include "agr.h"
-
-extern struct ifreq ifr;
-extern int s;
 
 static int checkifname(const char *);
 static void assertifname(const char *);
