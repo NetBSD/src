@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.3 1998/06/09 00:02:43 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.4 1998/06/10 16:48:21 tv Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -95,11 +95,10 @@ ofisamatch(parent, cf, aux)
 }
 
 void
-ofisaattach(parent, dev, aux)
-	struct device *parent, *dev;
+ofisaattach(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
-
 	struct ofbus_attach_args *oba = aux;
 	struct isabus_attach_args iba;
 	struct ofisa_attach_args aa;
@@ -131,7 +130,7 @@ ofisaattach(parent, dev, aux)
 		aa.dmat = iba.iba_dmat;
 		aa.ic = iba.iba_ic;
 
-		config_found(dev, &aa, ofisaprint);
+		config_found(self, &aa, ofisaprint);
 	}
 }
 
