@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.14 2002/02/27 00:30:07 jmcneill Exp $ */
+/* $NetBSD: psm.c,v 1.15 2002/03/10 22:21:21 christos Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,12 +24,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.14 2002/02/27 00:30:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.15 2002/03/10 22:21:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kthread.h>
 
 #include <machine/bus.h>
 
@@ -39,6 +40,15 @@ __KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.14 2002/02/27 00:30:07 jmcneill Exp $");
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+
+enum pms_protocol { PMS_UNKNOWN, PMS_STANDARD, PMS_SCROLL3, PMS_SCROLL5 };
+
+static const char *pms_protocol_name[] = {
+	"unknown",
+	"standard (no scroll wheel)",
+	"scroll wheel (3 buttons)",
+	"scroll wheel (5 buttons)",
+};
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
@@ -52,9 +62,15 @@ struct pms_softc {		/* driver status information */
 #endif /* !PMS_DISABLE_POWERHOOK */
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
-	signed char dx;
+	signed char dx, dy, dz;
+	enum pms_protocol protocol;
+	char inbuf[4];
 
 	struct device *sc_wsmousedev;
+	struct proc *sc_event_thread;
+	int sc_reset_flag;
+	unsigned long packet;
+	struct timeval last, current;
 };
 
 int pmsprobe __P((struct device *, struct cfdata *, void *));
@@ -65,8 +81,11 @@ struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
 
+static int	pms_protocol __P((pckbc_tag_t, pckbc_slot_t));
 static void	do_enable __P((struct pms_softc *));
 static void	do_disable __P((struct pms_softc *));
+static void	pms_reset_thread __P((void*));
+static void	pms_spawn_reset_thread __P((void*));
 int	pms_enable __P((void *));
 int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void	pms_disable __P((void *));
@@ -79,6 +98,48 @@ const struct wsmouse_accessops pms_accessops = {
 	pms_ioctl,
 	pms_disable,
 };
+
+static int
+pms_protocol(tag, slot)
+	pckbc_tag_t tag;
+	pckbc_slot_t slot;
+{
+	u_char cmd[2], resp[1];
+	int i, j, res;
+	static const struct {
+		int rates[3], response;
+		enum pms_protocol p;
+	} protocols[] = {
+		{ { 200, 200, 80 }, 4, PMS_SCROLL5 },
+		{ { 200, 100, 80 }, 3, PMS_SCROLL3 },
+		{ { 0, 0, 0 }, 0, PMS_STANDARD },
+	};
+
+	for (j = 0; protocols[j].rates[0]; ++j) {
+		cmd[0] = PMS_SET_SAMPLE;
+		for (i = 0; i < 3; i++) {
+			cmd[1] = protocols[j].rates[i];
+			res = pckbc_poll_cmd(tag, slot, cmd, 2, 0, 0, 0);
+			if (res)
+				return 0;
+		}
+
+		cmd[0] = PMS_SEND_DEV_ID;
+		res = pckbc_poll_cmd(tag, slot, cmd, 1, 1, resp, 0);
+		if (res)
+			return 0;
+		if (resp[0] == protocols[j].response) {
+#ifdef PS2DEBUG
+			printf("returning protocol %d\n", protocols[j].p);
+#endif
+			return protocols[j].p;
+		}
+	}
+#ifdef PS2DEBUG
+	printf("standard protocol\n");
+#endif
+	return PMS_STANDARD;
+}
 
 int
 pmsprobe(parent, match, aux)
@@ -135,7 +196,9 @@ pmsattach(parent, self, aux)
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
-	printf("\n");
+	sc->last.tv_sec = sc->current.tv_sec = 0;
+	sc->last.tv_usec = sc->current.tv_usec = 0;
+	sc->packet = 0;
 
 	/* Flush any garbage. */
 	pckbc_flush(pa->pa_tag, pa->pa_slot);
@@ -149,6 +212,16 @@ pmsattach(parent, self, aux)
 		return;
 	}
 #endif
+	res = pms_protocol(pa->pa_tag, pa->pa_slot);
+	if (!res) {
+#ifdef DEBUG
+		printf("pmsattach: error setting protocol\n");
+#endif
+		sc->protocol = PMS_STANDARD;
+	} else {
+		sc->protocol = res;
+	}
+	printf(" %s\n", pms_protocol_name[sc->protocol]);
 
 	sc->inputstate = 0;
 	sc->oldbuttons = 0;
@@ -174,6 +247,10 @@ pmsattach(parent, self, aux)
 		printf("pmsattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
+	sc->sc_reset_flag = 0;
+
+	kthread_create(pms_spawn_reset_thread, sc);
+
 #ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_powerhook = powerhook_establish(pms_power, sc);
 #endif /* !PMS_DISABLE_POWERHOOK */
@@ -195,6 +272,18 @@ do_enable(sc)
 	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
 		printf("pms_enable: command error\n");
+
+	res = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
+	if (res) {
+		sc->protocol = res;
+#ifdef DEBUG
+		printf("psm_enable: using %s protocol\n",
+		    pms_protocol_name[sc->protocol]);
+	} else {
+		printf("psm_enable: couldn't verify protocol\n");
+
+#endif
+	}
 #if 0
 	{
 		u_char scmd[2];
@@ -202,20 +291,20 @@ do_enable(sc)
 		scmd[0] = PMS_SET_RES;
 		scmd[1] = 3; /* 8 counts/mm */
 		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
-					2, 0, 1, 0);
+		    2, 0, 1, 0);
 		if (res)
 			printf("pms_enable: setup error1 (%d)\n", res);
 
 		scmd[0] = PMS_SET_SCALE21;
 		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
-					1, 0, 1, 0);
+		    1, 0, 1, 0);
 		if (res)
 			printf("pms_enable: setup error2 (%d)\n", res);
 
 		scmd[0] = PMS_SET_SAMPLE;
 		scmd[1] = 100; /* 100 samples/sec */
 		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
-					2, 0, 1, 0);
+		    2, 0, 1, 0);
 		if (res)
 			printf("pms_enable: setup error3 (%d)\n", res);
 	}
@@ -330,36 +419,74 @@ pms_ioctl(v, cmd, data, flag, p)
 	return (0);
 }
 
+static void
+pms_spawn_reset_thread(arg)
+	void *arg;
+{
+	struct pms_softc *sc = arg;
+	kthread_create1(pms_reset_thread, sc, &sc->sc_event_thread,
+	    "pms reset thread");
+}
+
+static void
+pms_reset_thread(arg)
+	void *arg;
+{
+	struct pms_softc *sc = arg;
+	for (;;) {
+		tsleep(&sc->sc_reset_flag, PWAIT, "pmsreset", 0);
+		do_disable(sc);
+		do_enable(sc);
+	}
+}
+
 /* Masks for the first byte of a packet */
 #define PS2LBUTMASK 0x01
 #define PS2RBUTMASK 0x02
 #define PS2MBUTMASK 0x04
+#define PS24BUTMASK 0x10
+#define PS25BUTMASK 0x20
 
 void pmsinput(vsc, data)
 void *vsc;
 int data;
 {
 	struct pms_softc *sc = vsc;
-	signed char dy;
 	u_int changed;
 
 	if (!sc->sc_enabled) {
-		/* Interrupts are not expected.  Discard the byte. */
+		/* Interrupts are not expected.	 Discard the byte. */
 		return;
 	}
 
+	microtime(&sc->current);
+	if (sc->inputstate != 0 && ((sc->current.tv_sec != sc->last.tv_sec ||
+	    (sc->current.tv_usec - sc->last.tv_usec) > 10000))) {
+#if DEBUG
+		printf("psm_input: unusual delay, spawning reset thread\n");
+#endif
+		wakeup(&sc->sc_reset_flag);
+		sc->inputstate = 0;
+		return;
+	}
+	sc->last = sc->current;
 	switch (sc->inputstate) {
-
 	case 0:
+		sc->packet = (data & 0xff) << 24;
 		if ((data & 0xc0) == 0) { /* no ovfl, bit 3 == 1 too? */
 			sc->buttons = ((data & PS2LBUTMASK) ? 0x1 : 0) |
 			    ((data & PS2MBUTMASK) ? 0x2 : 0) |
 			    ((data & PS2RBUTMASK) ? 0x4 : 0);
 			++sc->inputstate;
-		}
+#ifdef PS2DEBUG
+		} else {
+  			printf("got data 0x%x\n", data);
+#endif
+  		}
 		break;
 
 	case 1:
+		sc->packet |= (data & 0xff) << 16;
 		sc->dx = data;
 		/* Bounding at -127 avoids a bug in XFree86. */
 		sc->dx = (sc->dx == -128) ? -127 : sc->dx;
@@ -367,19 +494,55 @@ int data;
 		break;
 
 	case 2:
-		dy = data;
-		dy = (dy == -128) ? -127 : dy;
+		sc->packet |= (data & 0xff) << 8;
+		sc->dy = data;
+		sc->dy = (sc->dy == -128) ? -127 : sc->dy;
+
+		if (sc->protocol == PMS_STANDARD) {
+#ifdef PS2DEBUG
+			printf("packet: 0x%08lx\n", packet);
+#endif
+			sc->inputstate = 0;
+			changed = (sc->buttons ^ sc->oldbuttons);
+			sc->oldbuttons = sc->buttons;
+
+			if (sc->dx || sc->dy || changed) {
+				wsmouse_input(sc->sc_wsmousedev,
+				    sc->buttons, sc->dx, sc->dy, 0,
+				    WSMOUSE_INPUT_DELTA);
+			}
+		} else
+			++sc->inputstate;
+		break;
+
+	case 3:
+		sc->packet |= (data & 0xff);
 		sc->inputstate = 0;
+		if (sc->protocol == PMS_SCROLL5) {
+			sc->dz = data & 0xf;
+			if (sc->dz & 0x8)
+				sc->dz -= 16;
+			if (data & PS24BUTMASK)
+				sc->buttons |= 0x8;
+			if (data & PS25BUTMASK)
+				sc->buttons |= 0x10;
+		} else {
+			sc->dz = data;
+			if (sc->dz == -128)
+				sc->dz = -127;
+		}
+#ifdef PS2DEBUG
+		printf("packet: 0x%08lx\n", packet);
+#endif
 
 		changed = (sc->buttons ^ sc->oldbuttons);
 		sc->oldbuttons = sc->buttons;
 
-		if (sc->dx || dy || changed)
+		if (sc->dx || sc->dy || sc->dz || changed) {
 			wsmouse_input(sc->sc_wsmousedev,
-				      sc->buttons, sc->dx, dy, 0,
-				      WSMOUSE_INPUT_DELTA);
+			    sc->buttons, sc->dx, sc->dy, sc->dz,
+			    WSMOUSE_INPUT_DELTA);
+		}
 		break;
 	}
-
-	return;
 }
