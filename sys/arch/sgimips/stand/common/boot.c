@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2003/11/11 06:47:00 sekiya Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2003/11/13 08:01:17 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -161,10 +161,24 @@ main(int argc, char **argv)
 	/*
 	 * How to find partition and file to load?
 	 *
-	 * If OSLoaderPartition is not set, we're probably doing an install
-	 * from removable media.  Therefore, we'll fake up the bootpath from
-	 * argv[0].
+	 * If argv[0] contains the string "cdrom(", we're probably doing an
+	 * install.  The bootpath will therefore be partition 0 of whatever
+	 * device we've booted from.  Derive the install kernel name from
+	 * the bootloader name ("ip32boot", "ip22boot", or "aoutboot").
 	 */
+
+	if (strstr(argv[0], "cdrom("))
+	{
+		strcpy(bootfile, argv[0]);
+		i = (strrchr(bootfile, ')') - bootfile);
+		bootfile[i-1] = '0';
+		if (strstr(bootfile, "ip3x"))
+			sprintf( (strrchr(bootfile, ')') + 1), "netbsd-INSTALL32_IP3x");
+		else
+			sprintf( (strrchr(bootfile, ')') + 1), "netbsd-INSTALL32_IP2x");
+		if ( (loadfile(bootfile, marks, LOAD_KERNEL)) >=1 )
+			goto finish;
+	}
 
 	bootpath = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
 
@@ -221,6 +235,8 @@ main(int argc, char **argv)
 		printf("Boot failed!  Halting...\n");
 		return 0;
 	}
+
+finish:
 	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
 	bi_add(&bi_bpath, BTINFO_BOOTPATH);
 
