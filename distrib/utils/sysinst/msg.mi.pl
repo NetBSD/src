@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.43 2004/11/11 21:24:41 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.44 2005/02/12 15:06:59 aymeric Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -689,7 +689,7 @@ message noetcfstab
 }
 
 message badetcfstab
-{Pomocy! Nie moge przeczytac /etc/fdstab na dysku %s. Przerywamy aktualizacje.
+{Pomocy! Nie moge przeczytac /etc/fstab na dysku %s. Przerywamy aktualizacje.
 }
 
 message X_oldexists
