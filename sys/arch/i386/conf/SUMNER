@@ -1,7 +1,7 @@
 #
 # Thos Sumner's 50Mhz 486
 #
-#	$Id: SUMNER,v 1.10 1993/05/20 14:32:38 cgd Exp $
+#	$Id: SUMNER,v 1.11 1993/06/03 01:30:36 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -12,6 +12,7 @@ options		INET, NFSSERVER,NFSCLIENT, MFS, ISOFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options 	DDB
+options		"COMPAT_NOMID"
 
 config		netbsd	root on wd0 swap on wd0 and as0
 

@@ -1,7 +1,7 @@
 #
 # Developement config
 #
-#	$Id: DEVEL,v 1.7 1993/05/20 14:32:24 cgd Exp $
+#	$Id: DEVEL,v 1.8 1993/06/03 01:30:25 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -13,6 +13,7 @@ options		INET,DDB
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		"MATH_EMULATE"
+options		"COMPAT_NOMID"
 
 config		netbsd	root on dk0 swap on dk0
 

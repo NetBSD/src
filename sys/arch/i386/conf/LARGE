@@ -1,7 +1,7 @@
 #
 # Everthing sans OSI (need to get an ACCUNET connection -wfj)
 #
-#	$Id: LARGE,v 1.9 1993/05/20 14:32:32 cgd Exp $
+#	$Id: LARGE,v 1.10 1993/06/03 01:30:31 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -13,6 +13,7 @@ options		INET,NFSSERVER,NFSCLIENT,MFS,HSFS,DIAGNOSTIC # OSI real soon
 options		"COMPAT_43","TCP_COMPAT_42"
 options 	DDB
 options		"MATH_EMULATE"
+options		"COMPAT_NOMID"
 
 config		netbsd	root on dk0 swap on dk0
 

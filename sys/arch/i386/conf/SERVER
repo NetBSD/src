@@ -1,7 +1,7 @@
 #
 #	SERVER -- an NFS server
 #
-#	$Id: SERVER,v 1.7 1993/05/20 14:32:36 cgd Exp $
+#	$Id: SERVER,v 1.8 1993/06/03 01:30:35 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -16,6 +16,7 @@ options		"i387"
 options		XSERVER,UCONSOLE
 options		KERNFS,FDESC,DDB
 options		"MATH_EMULATE"
+options		"COMPAT_NOMID"
 
 config		netbsd	root on wd0 swap on wd0 and as0
 

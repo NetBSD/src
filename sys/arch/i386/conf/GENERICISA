@@ -1,7 +1,7 @@
 #
 # GENERICISA -- Generic ISA machine -- distribution floppy
 #
-#	$Id: GENERICISA,v 1.16 1993/05/20 14:32:29 cgd Exp $
+#	$Id: GENERICISA,v 1.17 1993/06/03 01:30:29 cgd Exp $
 #
 
 machine		"i386"
@@ -17,6 +17,7 @@ options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
 options		SCSI
 options		"MATH_EMULATE"
+options		"COMPAT_NOMID"
 
 config		netbsd	root on wd0 swap on wd0 and sd0
 
