@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.10 1999/05/18 23:52:56 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.11 1999/05/26 01:09:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1062,7 +1062,8 @@ esh_fpread(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vslock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 
 	/* 
@@ -1225,7 +1226,7 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vslock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vslock(p, iovp->iov_base, iovp->iov_len, VM_PROT_READ);
 	}
 
 	/* 
