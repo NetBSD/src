@@ -16,7 +16,7 @@ and ported to NetBSD by Manuel Bouyer.
 Ultrix emulation for Internet applications is improved over NetBSD
 1.2.  The Ultrix `ifconfig' command and multicast applications now
 work in Ultrix compatibility mode.  A ecoff-format NetBSD kernel in an
-Ultrix root filesysstem should boot multi-user, though this is not
+Ultrix root filesystem should boot multi-user, though this is not
 recommended as an installation method.
 
 A bug in mips interrupt handling from 4.4BSD, which could cause
