@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.35 2000/08/03 20:41:23 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.36 2001/09/08 02:02:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,7 +92,6 @@ namei(ndp)
 	int error, linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 
-	ndp->ni_cnd.cn_cred = ndp->ni_cnd.cn_proc->p_ucred;
 #ifdef DIAGNOSTIC
 	if (!cnp->cn_cred || !cnp->cn_proc)
 		panic ("namei: bad cred/proc");
