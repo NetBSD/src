@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.12 1999/02/19 21:03:00 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.13 1999/03/26 19:20:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -82,11 +82,6 @@
 #define VGA_BASE	0xa0000
 
 /*
- * Where we map the PCI registers in the io-space (et6000)
- * XXX: 0x400 would probably work too...
- */
-#define PCI_IOBASE	0x800
-/*
  * Linear memory base, near the end of the pci area
  */
 #define PCI_LINMEMBASE  0x0e000000
@@ -96,10 +91,8 @@
  */
 static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
 static colormap_t *alloc_colormap __P((dmode_t *));
-static void	  et6000_init __P((void));
 static void	  et_display_view __P((view_t *));
 static view_t	  *et_alloc_view __P((dmode_t *, dimen_t *, u_char));
-static void	  et_boardinit __P((void));
 static void	  et_free_view __P((view_t *));
 static void	  et_loadmode __P((struct grfvideo_mode *, et_sv_reg_t *));
 static void	  et_remove_view __P((view_t *));
@@ -421,7 +414,7 @@ int
 et_probe_card()
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
-	pcitag_t		tag, csr;
+	pcitag_t		tag;
 	int			device, found, id, maxndevs;
 
 	found    = 0;
@@ -454,16 +447,6 @@ et_probe_card()
 		et_priv.board_type = BT_ET6000;
 	else et_priv.board_type = BT_ET4000;
 
-	/* Turn on the card */
-	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);
-	if (et_priv.board_type == BT_ET6000) 
-		pci_conf_write(pc, tag, PCI_MAPREG_START+4,
-					PCI_IOBASE | PCI_MAPREG_TYPE_IO);
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
-	csr |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
 	et_priv.pci_tag = tag;
 
 	/*
@@ -471,12 +454,11 @@ et_probe_card()
 	 */
 	et_priv.regkva  = (volatile caddr_t)pci_io_addr;
 	et_priv.memkva  = (volatile caddr_t)pci_mem_addr;
-	et_priv.linbase = PCI_LINMEMBASE;
+	et_priv.linbase = PCI_LINMEMBASE; /* XXX pci_conf_read??? */
 	et_priv.memsz   = PCI_VGA_SIZE;
 	et_priv.regsz   = PCI_IO_SIZE;
 
 	if (found && !atari_realconfig) {
-		et_boardinit();
 		et_loadmode(&hw_modes[0], NULL);
 		return (1);
 	}
@@ -649,150 +631,6 @@ et_sv_reg_t		*regs;
 
 	if(regs == &loc_regs)
 		et_hwrest(regs);
-}
-
-static void
-et_boardinit()
-{
-	volatile u_char *ba;
-	int		i, j;
-
-	ba = et_priv.regkva;
-	
-	vgaw(ba, GREG_HERCULESCOMPAT,     0x03);
-	vgaw(ba, GREG_DISPMODECONTROL,    0xa0);
-	vgaw(ba, GREG_MISC_OUTPUT_W,      0x23);
-
-	WSeq(ba, SEQ_ID_RESET,            0x03);
-	WSeq(ba, SEQ_ID_CLOCKING_MODE,    0x21);	/* 8 dot, Display off */
-	WSeq(ba, SEQ_ID_MAP_MASK,         0x0f);
-	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT,  0x00);
-	WSeq(ba, SEQ_ID_MEMORY_MODE,      0x0e);
-	WSeq(ba, SEQ_ID_AUXILIARY_MODE,   0xf4);
-
-	WCrt(ba, CRT_ID_PRESET_ROW_SCAN,  0x00);
-	WCrt(ba, CRT_ID_CURSOR_START,     0x00);
-	WCrt(ba, CRT_ID_CURSOR_END,       0x08);
-	WCrt(ba, CRT_ID_START_ADDR_HIGH,  0x00);
-	WCrt(ba, CRT_ID_START_ADDR_LOW,   0x00);
-	WCrt(ba, CRT_ID_CURSOR_LOC_HIGH,  0x00);
-	WCrt(ba, CRT_ID_CURSOR_LOC_LOW,   0x00);
-
-	WCrt(ba, CRT_ID_UNDERLINE_LOC,    0x07);
-	WCrt(ba, CRT_ID_MODE_CONTROL,     0xa3);
-	WCrt(ba, CRT_ID_LINE_COMPARE,     0xff);
-	/*
-	 * ET4000 special
-	 */
-	WCrt(ba, CRT_ID_RASCAS_CONFIG,    0x28);
-	WCrt(ba, CTR_ID_EXT_START,        0x00);
-	WCrt(ba, CRT_ID_6845_COMPAT,      0x08);
-	if (et_priv.board_type == BT_ET6000)
-		et6000_init();
-	else {
-		WCrt(ba, CRT_ID_VIDEO_CONFIG1,    0x43);
-		WCrt(ba, CRT_ID_VIDEO_CONFIG2,    0x09);
-	}
-	
-	WCrt(ba, CRT_ID_HOR_OVERFLOW,     0x00);
-
-	WGfx(ba, GCT_ID_SET_RESET,        0x00);
-	WGfx(ba, GCT_ID_ENABLE_SET_RESET, 0x00);
-	WGfx(ba, GCT_ID_COLOR_COMPARE,    0x00);
-	WGfx(ba, GCT_ID_DATA_ROTATE,      0x00);
-	WGfx(ba, GCT_ID_READ_MAP_SELECT,  0x00);
-	WGfx(ba, GCT_ID_GRAPHICS_MODE,    0x40);
-	WGfx(ba, GCT_ID_MISC,             0x05);
-	WGfx(ba, GCT_ID_COLOR_XCARE,      0x0f);
-	WGfx(ba, GCT_ID_BITMASK,          0xff);
-
-	vgaw(ba, GREG_SEGMENTSELECT,      0x00);
-
-	for (i = 0; i < 0x10; i++)
-		WAttr(ba, i, i);
-	WAttr(ba, ACT_ID_ATTR_MODE_CNTL,  0x01);
-	WAttr(ba, ACT_ID_OVERSCAN_COLOR,  0x00);
-	WAttr(ba, ACT_ID_COLOR_PLANE_ENA, 0x0f);
-	WAttr(ba, ACT_ID_HOR_PEL_PANNING, 0x00);
-	WAttr(ba, ACT_ID_COLOR_SELECT,    0x00);
-	WAttr(ba, ACT_ID_MISCELLANEOUS,   0x00);
-
-	vgaw(ba, VDAC_MASK, 0xff);
-
-#if 0 /* XXX: We like to do this: */
-	delay(200000);
-#else /* But because we run before the delay is initialized: */
-	for(i = 0; i < 4000; i++)
-		for(j =  0; j < 400; j++);
-#endif
-
-	/*
-	 * colors initially set to greyscale
-	 */
-	vgaw(ba, VDAC_ADDRESS_W, 0);
-	for (i = 255; i >= 0; i--) {
-		vgaw(ba, VDAC_DATA, i);
-		vgaw(ba, VDAC_DATA, i);
-		vgaw(ba, VDAC_DATA, i);
-	}
-}
-
-/*
- * Initialize the et6000 specific (PCI) registers. Try to do it like the
- * video-bios would have done it, so things like Xservers get what they
- * expect. Most info was kindly provided by Koen Gadeyne.
- *
- * XXX: not fit for programming beauty contest...
- */
-static void
-et6000_init()
-{
-
-	volatile u_char *ba;
-	int		i;
-	u_char		dac_tab[] = { 0x7d,0x67, 0x5d,0x64, 0x56,0x63,
-				      0x28,0x22, 0x79,0x49, 0x6f,0x47,
-				      0x28,0x41, 0x6b,0x44, 0x00,0x00,
-				      0x00,0x00, 0x5d,0x25, 0x00,0x00,
-				      0x00,0x00, 0x00,0x96 };
-
-	ba = et_priv.regkva + PCI_IOBASE;
-
-
-	ba[0x40] = 0x06;	/* Use standard vga addressing		*/
-	ba[0x41] = 0x2a;	/* Performance control			*/
-	ba[0x43] = 0x02;	/* XCLK/SCLK config			*/
-	ba[0x44] = 0x11;	/* RAS/CAS config			*/
-	ba[0x46] = 0x00;	/* CRT display feature			*/
-	ba[0x47] = 0x10;
-	ba[0x58] = 0x00;	/* Video Control 1			*/
-	ba[0x59] = 0x04;	/* Video Control 2			*/
-	
-	/*
-	 * Setup a 'standard' CLKDAC
-	 */
-	ba[0x42] = 0x00;	/* MCLK == CLK0 */
-	ba[0x67] = 0x00;	/* Start filling from dac-reg 0 and up... */
-	for (i = 0; i < 0x16; i++)
-		ba[0x69] = dac_tab[i];
-
-	if (ba[8] == 0x70) { /* et6100, right? */
-		volatile u_char *ma;
-		u_char	bv;
-
-		ma = et_priv.memkva;
-
-		/*
-		 * XXX Black magic to get the bloody MDRAM's to function...
-                 * XXX _Only_ tested on my card! [leo]
-		 */
-		bv = ba[45];
-		ba[0x45] = bv | 0x40;	/* Reset MDRAM's		*/
-		ba[0x45] = bv | 0x70;	/* Program latency value	*/
-		ma[0x0] = 0;		/* Yeah, right :-(		*/
-		ba[0x45] = bv;		/* Back to normal		*/
-		ba[0x44] = 0x14;	/* RAS/CAS config		*/
-	}
 }
 
 void
