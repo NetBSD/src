@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.109 2004/03/23 13:22:33 junyoung Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.110 2004/04/21 18:40:38 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.109 2004/03/23 13:22:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.110 2004/04/21 18:40:38 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -203,6 +203,28 @@ uiomove(buf, n, uio)
 		n -= cnt;
 	}
 	return (error);
+}
+
+/*
+ * Wrapper for uiomove() that validates the arguments against a known-good
+ * kernel buffer.  Currently, uiomove accepts a signed (n) argument, which
+ * is almost definitely a bad thing, so we catch that here as well.  We
+ * return a runtime failure, but it might be desirable to generate a runtime
+ * assertion failure instead.
+ */
+int
+uiomove_frombuf(void *buf, int buflen, struct uio *uio)
+{
+	unsigned int offset, n;
+
+	if (uio->uio_offset < 0 || uio->uio_resid < 0 ||
+	    (offset = uio->uio_offset) != uio->uio_offset)
+		return (EINVAL);
+	if (buflen <= 0 || offset >= buflen)
+		return (0);
+	if ((n = buflen - offset) > INT_MAX)
+		return (EINVAL);
+	return (uiomove((char *)buf + offset, n, uio));
 }
 
 /*
@@ -756,7 +778,8 @@ setroot(bootdv, bootpartition)
 		fakemdrootdev[i].dv_cfdata = NULL;
 		fakemdrootdev[i].dv_unit   = i;
 		fakemdrootdev[i].dv_parent = NULL;
-		sprintf(fakemdrootdev[i].dv_xname, "md%d", i);
+		snprintf(fakemdrootdev[i].dv_xname,
+		    sizeof(fakemdrootdev[i].dv_xname), "md%d", i);
 	}
 #endif /* MEMORY_DISK_HOOKS */
 
@@ -966,7 +989,8 @@ setroot(bootdv, bootpartition)
 			goto top;
 		}
 		memset(buf, 0, sizeof(buf));
-		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
+		snprintf(buf, sizeof(buf), "%s%d", rootdevname,
+		    DISKUNIT(rootdev));
 
 		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
@@ -1031,7 +1055,8 @@ setroot(bootdv, bootpartition)
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
-		sprintf(buf, "%s%d", dumpdevname, DISKUNIT(dumpdev));
+		snprintf(buf, sizeof(buf), "%s%d", dumpdevname,
+		    DISKUNIT(dumpdev));
 
 		dumpdv = finddevice(buf);
 		if (dumpdv == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.49 2003/12/11 00:22:29 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.50 2004/04/21 18:40:38 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.49 2003/12/11 00:22:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.50 2004/04/21 18:40:38 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -140,7 +140,8 @@ gre_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK);
 	memset(sc, 0, sizeof(struct gre_softc));
 
-	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_type = IFT_OTHER;
 	sc->sc_if.if_addrlen = 0;

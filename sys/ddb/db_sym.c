@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.45 2003/11/17 10:16:18 cube Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.46 2004/04/21 18:40:37 itojun Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.45 2003/11/17 10:16:18 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.46 2004/04/21 18:40:37 itojun Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -324,7 +324,8 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 					if ((*db_symformat->sym_line_at_pc)
 					    (NULL, cursym, &filename,
 					    &linenum, off))
-						sprintf(buf+strlen(buf),
+						snprintf(buf + strlen(buf),
+						    buflen - strlen(buf),
 						    " [%s:%d]",
 						    filename, linenum);
 				}
@@ -339,7 +340,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 	    strategy|KSYMS_CLOSEST) == 0) {
 		(void)ksyms_getval_from_kernel(mod, name, &val, KSYMS_ANY);
 		if (((off - val) < db_maxoff) && val) {
-			sprintf(buf, "%s:%s", mod, name);
+			snprintf(buf, buflen, "%s:%s", mod, name);
 			if (off - val) {
 				strlcat(buf, "+", buflen);
 				db_format_radix(buf+strlen(buf),
@@ -347,7 +348,9 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 			}
 #ifdef notyet
 			if (strategy & KSYMS_PROC) {
-				if (ksyms_fmaddr(off, &filename, &linenum) == 0)					sprintf(buf+strlen(buf),
+				if (ksyms_fmaddr(off, &filename, &linenum) == 0)
+					snprintf(buf + strlen(buf),
+					    buflen - strlen(buf),
 					    " [%s:%d]", filename, linenum);
 			}
 #endif
