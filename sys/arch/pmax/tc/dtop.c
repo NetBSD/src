@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.1.2.3 1998/10/23 15:58:19 nisimura Exp $ */
+/*	$NetBSD: dtop.c,v 1.1.2.4 1999/04/03 13:50:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
@@ -32,9 +32,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.1.2.3 1998/10/23 15:58:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.1.2.4 1999/04/03 13:50:21 nisimura Exp $");
 
 #include "opt_ddb.h"
+
+/*
+ * XXX XXX XXX
+ * This file is far from useful and must be rewritten
+ * XXX XXX XXX
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.1.2.3 1998/10/23 15:58:19 nisimura Exp $"
 #include <dev/wscons/wsmousevar.h>
 
 #include <dev/dec/lk201.h>
-#include <dev/dec/lk201vsxxxvar.h>
+#include <dev/dec/lk201var.h>
 
 /* XXX XXX XXX */
 #include <pmax/pmax/maxine.h>
@@ -97,6 +103,7 @@ struct cfattach dtop_ca = {
 };
 
 int dtopintr __P((void *));
+void dtopkbd_cnattach __P((tc_addr_t));
 
 int
 dtopmatch(parent, match, aux)
@@ -209,4 +216,10 @@ gotall:
 	}
 
 	return 1;
+}
+
+void
+dtopkbd_cnattach(addr)
+	tc_addr_t addr;
+{
 }
