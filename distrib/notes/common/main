@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.38 2000/10/12 21:52:10 he Exp $
+.\" $NetBSD: main,v 1.6.2.39 2000/10/13 17:42:53 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,6 +253,12 @@ This means that you
 .Em will
 have to upgrade the kernel before installing the new user-land
 code.
+.It
+The more strict format checking required a minor fix to the
+C compiler to allow NULL format strings.  Thus, you will need
+to update your compiler before doing a
+.Dq make build
+during a source-based upgrade.
 .It
 .Tn PCMCIA
 support may require manual adjustment to function properly.
