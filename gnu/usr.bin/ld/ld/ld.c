@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.70.2.2 2000/11/03 18:43:18 tv Exp $	*/
+/*	$NetBSD: ld.c,v 1.70.2.3 2000/12/26 01:19:35 jhawk Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.70.2.2 2000/11/03 18:43:18 tv Exp $");
+__RCSID("$NetBSD: ld.c,v 1.70.2.3 2000/12/26 01:19:35 jhawk Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -763,6 +763,8 @@ decode_command(argc, argv)
 		if (code == 0) {
 			p->filename = argv[i];
 			p->local_sym_name = argv[i];
+			if (link_mode & FORCEARCHIVE)
+				p->flags |= E_FORCE_ARCHIVE;
 			p++;
 			continue;
 		}
@@ -788,8 +790,12 @@ decode_command(argc, argv)
 			else if (strcmp(string, "~silly") == 0)
 				link_mode &= ~SILLYARCHIVE;
 #endif
-		}
-		if (argv[i][1] == 'A') {
+		} else if (argv[i][1] == '-') {
+			if (strcmp(string, "whole-archive") == 0)
+				link_mode |= FORCEARCHIVE;
+			else if (strcmp(string, "no-whole-archive") == 0)
+				link_mode &= ~FORCEARCHIVE;
+		} else if (argv[i][1] == 'A') {
 			if (p != file_table)
 				errx(1, "-A specified before an input file other than the first");
 			p->filename = string;
@@ -797,13 +803,14 @@ decode_command(argc, argv)
 			p->flags |= E_JUST_SYMS;
 			link_mode &= ~DYNAMIC;
 			p++;
-		}
-		if (argv[i][1] == 'l') {
+		} else if (argv[i][1] == 'l') {
 			p->filename = string;
 			p->local_sym_name = concat("-l", string, "");
 			p->flags |= E_SEARCH_DIRS;
 			if (link_mode & DYNAMIC && !relocatable_output)
 				p->flags |= E_SEARCH_DYNAMIC;
+			if (link_mode & FORCEARCHIVE)
+				p->flags |= E_FORCE_ARCHIVE;
 			p++;
 		}
 		i += code - 1;
@@ -880,32 +887,20 @@ decode_option(swt, arg)
 		return;
 	if (!strcmp(swt + 1, "Bforcearchive"))
 		return;
-	if (!strcmp(swt + 1, "Bshareable")) {
-		if (warn_obsolete_syntax)
-			warnx("-Bshareable: obsolete syntax");
+	if (!strcmp(swt + 1, "Bshareable"))
 		return;
-	}			
 	if (!strcmp(swt + 1, "assert"))
 		return;
 #ifdef GNU_BINUTIL_COMPAT
-	if (strcmp(swt + 1, "-export-dynamic") == 0) {
+	if (!strcmp(swt + 1, "-export-dynamic")) {
 		if (warn_forwards_compatible_inexact)
-			warnx("%s ignored", swt + 1);
+			warnx("-export-dynamic ignored");
 		return;
 	}
-	if (strcmp(swt + 1, "-whole-archive") == 0) {
-		/* XXX incomplete emulation */
-		link_mode |= FORCEARCHIVE;
-		if (warn_forwards_compatible_inexact)
-			warnx("-no-whole-archive treated as -Bshareable");
+	if (!strcmp(swt + 1, "-whole-archive"))
 		return;
-	}
-	if (strcmp(swt + 1, "-no-whole-archive") == 0) {
-		/* XXX incomplete emulation */
-		if (warn_forwards_compatible_inexact)
-			warnx("-no-whole-archive ignored");
+	if (!strcmp(swt + 1, "-no-whole-archive"))
 		return;
-	}
 	if (strcmp(swt + 1, "shared") == 0) {
 		link_mode |= SHAREABLE;
 #ifdef DEBUG_COMPAT
