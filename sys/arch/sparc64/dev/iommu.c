@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.42 2001/10/07 20:30:40 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.43 2001/10/08 19:24:20 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -609,9 +609,9 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			/* How can this fail?  And if it does what can we do? */
 			err = extent_free(is->is_dvmamap,
 				dvmaddr, sgsize, EX_NOWAIT);
-			splx(s);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
+			splx(s);
 			return (E2BIG);
 		}
 		sgstart = roundup(sgstart, boundary);
@@ -691,13 +691,13 @@ iommu_dvmamap_unload(t, is, map)
 	s = splhigh();
 	error = extent_free(is->is_dvmamap, map->_dm_dvmastart, 
 		map->_dm_dvmasize, EX_NOWAIT);
+	map->_dm_dvmastart = 0;
+	map->_dm_dvmasize = 0;
 	splx(s);
 	if (error != 0)
 		printf("warning: %qd of DVMA space lost\n", (long long)sgsize);
 
 	/* Clear the map */
-	map->_dm_dvmastart = 0;
-	map->_dm_dvmasize = 0;
 }
 
 
@@ -916,9 +916,9 @@ fail:
 			/* How can this fail?  And if it does what can we do? */
 			err = extent_free(is->is_dvmamap,
 				dvmaddr, sgsize, EX_NOWAIT);
-			splx(s);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
+			splx(s);
 			return (E2BIG);
 		}
 		sgstart = roundup(sgstart, boundary);
