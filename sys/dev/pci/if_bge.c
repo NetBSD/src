@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.61 2004/03/20 01:42:21 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.62 2004/03/20 01:58:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.61 2004/03/20 01:42:21 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.62 2004/03/20 01:58:51 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2436,11 +2436,13 @@ bge_reset(sc)
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    BGE_PCI_PCISTATE);
-		if (new_pcistate == pcistate)
+		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) == 
+		    (pcistate & ~BGE_PCISTATE_RESERVED))
 			break;
 		DELAY(10);
 	}
-	if (new_pcistate != pcistate) {
+	if ((new_pcistate & ~BGE_PCISTATE_RESERVED) != 
+	    (pcistate & ~BGE_PCISTATE_RESERVED)) {
 		printf("%s: pcistate failed to revert\n",
 		    sc->bge_dev.dv_xname);
 	}
