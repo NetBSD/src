@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30 1997/01/15 01:28:47 perry Exp $
+#	$NetBSD: INSTALL,v 1.31 1997/01/16 23:30:32 perry Exp $
 #
 #	INSTALL -- an installation kernel config.
 #                     adapters.    This kernel should be GENERICOTHER with lines
@@ -14,6 +14,7 @@ include "arch/i386/conf/std.i386"
 options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
+options		I686_CPU
 options		MATH_EMULATE	# floating point emulation
 #options	VM86		# Virtual 8086 emulation
 
