@@ -1,4 +1,4 @@
-.\"	$NetBSD: mixerctl.conf.5,v 1.5 2003/02/14 15:20:20 grant Exp $
+.\"	$NetBSD: mixerctl.conf.5,v 1.6 2003/04/06 15:24:08 wiz Exp $
 .\"
 .\" Copyright 2002 Jared D. McNeill <jmcneill@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 2, 2002
+.Dd April 5, 2003
 .Dt MIXERCTL.CONF 5
 .Os
 .Sh NAME
@@ -48,6 +48,17 @@ To generate a
 .Nm
 from the current mixer settings, execute:
 .Dl Ic mixerctl -a \*[Gt] /etc/mixerctl.conf
+.Pp
+Set
+.Sy mixerctl
+to YES in
+.Xr rc.conf 5
+to have the variables set at boot time.
+Additionally, you can have the settings saved
+and restored for the devices of your choice by listing them in
+.Sy mixerctl_mixers
+in
+.Xr rc.conf 5 .
 .Sh FILES
 .Bl -tag -width /etc/mixerctl.conf -compact
 .It Pa /etc/mixerctl.conf
@@ -94,7 +105,8 @@ outputs.spatial.center=0
 outputs.spatial.depth=0
 .Ed
 .Sh SEE ALSO
-.Xr mixerctl 1
+.Xr mixerctl 1 ,
+.Xr rc.conf 5
 .Sh HISTORY
 The
 .Nm

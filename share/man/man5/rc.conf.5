@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.79 2003/04/02 19:19:18 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.80 2003/04/06 15:24:09 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 2, 2003
+.Dd April 5, 2003
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -310,6 +310,17 @@ Run
 to calibrate touch panel device.
 Passes
 .Sy tpctl_flags .
+.It Sy mixerctl
+.Sq YES
+or
+.Sq NO .
+Read
+.Xr mixerctl.conf 5
+for how to set mixer values.
+List in
+.Sy mixerctl_mixers
+the devices whose settings are to be saved at shutdown and
+restored at start-up.
 .El
 .Ss System security setting
 .Bl -tag -width net_interfaces
@@ -754,15 +765,15 @@ If this is set to
 .Sq YES ,
 you can remove the submit.cf file, and then turn off the
 .Sy smmsp
-process. 
+process.
 .It Sy smmsp
 .Sq YES
 or
 .Sq NO .
-Runs   
+Runs
 .Xr sendmail 8
 as a client queue runner and passes
-.Sy smmsp_flags . 
+.Sy smmsp_flags .
 Note that the smmsp process is not a full-featured SMTP daemon.
 Its main purpose is to flush locally collected mail from the queue, but
 it can also be used as a non-privileged
