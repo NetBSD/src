@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.47 1994/11/22 03:23:55 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.48 1994/11/23 07:55:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -233,10 +233,11 @@ sdopen(dev, flag, fmt)
 		 */
 		scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
 
+		sc_link->flags |= SDEV_OPEN;	/* unit attn becomes an err now */
+
 		/*
 		 * Check that it is still responding and ok.
 		 */
-		sc_link->flags |= SDEV_OPEN;	/* unit attn becomes an err now */
 		if (scsi_test_unit_ready(sc_link, 0)) {
 			SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
 			error = ENXIO;
@@ -299,12 +300,12 @@ bad:
 	if (sd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
-	}
 
-	sd->flags &= ~SDF_LOCKED;
-	if ((sd->flags & SDF_WANTED) != 0) {
-		sd->flags &= ~SDF_WANTED;
-		wakeup(sd);
+		sd->flags &= ~SDF_LOCKED;
+		if ((sd->flags & SDF_WANTED) != 0) {
+			sd->flags &= ~SDF_WANTED;
+			wakeup(sd);
+		}
 	}
 
 	return error;
