@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.51.2.7 2002/10/13 23:04:46 lukem Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.51.2.8 2002/10/13 23:20:14 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -185,10 +185,13 @@ menu edfspart, title "Change what?", exit, y=14;
 		};
 	option "Mount point", action 
 		{	if (PI_ISBSDFS(&bsdlabel[editpart]) ||
-			    bsdlabel[editpart].pi_fstype == FS_MSDOS)
-				msg_prompt_add (MSG_mountpoint, NULL,
+			    bsdlabel[editpart].pi_fstype == FS_MSDOS) {
+				msg_prompt_add (MSG_mountpoint,
+					fsmount[editpart],
 					fsmount[editpart], 20);
-			else {
+				if (strcmp(fsmount[editpart], "none") == 0)
+					fsmount[editpart][0] = '\0';
+			} else {
 				msg_display (MSG_nomount, 'a'+editpart);
 				process_menu (MENU_ok);
 			}
