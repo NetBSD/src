@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 2002/03/16 17:03:34 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2002/06/17 16:21:10 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -98,6 +98,7 @@
 #	wsfont	Console font control
 #	wsmux*	wscons event multiplexor
 #	pci*	PCI bus access devices
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -139,6 +140,7 @@ all)
 	makedev isdns
 	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev clockctl
+	makedev systrace
 	;;
 
 floppy)
@@ -493,28 +495,28 @@ audio*)
 	mknod $audioctl c $major $(($unit + 192))
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
-
-rmidi*)
-	unit=${i#rmidi}
-	major=58
-	rmidi=rmidi$unit
-	rm -f $rmidi
-	mknod $rmidi c $major $unit
-	chmod 666 $rmidi
-	;;
-
-music*)
-	unit=${i#music}
-	music=music$unit
-	sequencer=sequencer$unit
-	major=59
-	if [ "$unit" = "" ]; then unit=0; fi
-	rm -f $sequencer $music
-	mknod $music     c $major $(($unit + 0))
-	mknod $sequencer c $major $(($unit + 128))
-	chmod 666 $music $sequencer
-	;;
-
+#
+#rmidi*)
+#	unit=${i#rmidi}
+#	major=58
+#	rmidi=rmidi$unit
+#	rm -f $rmidi
+#	mknod $rmidi c $major $unit
+#	chmod 666 $rmidi
+#	;;
+#
+#music*)
+#	unit=${i#music}
+#	music=music$unit
+#	sequencer=sequencer$unit
+#	major=59
+#	if [ "$unit" = "" ]; then unit=0; fi
+#	rm -f $sequencer $music
+#	mknod $music     c $major $(($unit + 0))
+#	mknod $sequencer c $major $(($unit + 128))
+#	chmod 666 $music $sequencer
+#	;;
+#
 random)
 	chr=46
 	rm -f random urandom
@@ -524,67 +526,74 @@ random)
 	chmod 644 urandom
 	;;
 
-cfs*)
-	unit=${i#cfs}
-	cfs=cfs$unit
-	major=60
-	rm -f $cfs
-	mknod $cfs c $major $unit
-	chmod 600 $cfs
-	;;
-
-scsibus*)
-	unit=${i#scsibus}
-	rm -f scsibus$unit
-	mknod scsibus$unit c 61 $unit
-	chmod 644 scsibus$unit
-	;;
-
-isdn)
-	rm -f isdn
-	mknod isdn c 66 0
-	chmod 600 isdn
-	;;
-
-isdnctl)
-	rm -f isdnctl
-	mknod isdnctl c 67 0
-	chmod 600 isdnctl
-	;;
-
-isdnbchan*)
-	unit=${i#isdnbchan}
-	rm -f isdnbchan$unit
-	mknod isdnbchan$unit c 68 $unit
-	chmod 600 isdnbchan$unit
-	;;
-
-isdntel*)
-	unit=${i#isdntel}
-	rm -f isdntel$unit
-	mknod isdntel$unit c 70 $unit
-	chmod 600 isdntel$unit
-	;;
-
-isdntrc*)
-	unit=${i#isdntrc}
-	rm -f isdntrc$unit
-	mknod isdntrc$unit c 69 $unit
-	chmod 600 isdntrc$unit
-	;;
-
-pci*)
-	unit=${i#pci}
-	rm -f pci$unit
-	mknod pci$unit c 72 $unit
-	chmod 644 pci$unit
-	;;
+#cfs*)
+#	unit=${i#cfs}
+#	cfs=cfs$unit
+#	major=60
+#	rm -f $cfs
+#	mknod $cfs c $major $unit
+#	chmod 600 $cfs
+#	;;
+#
+#scsibus*)
+#	unit=${i#scsibus}
+#	rm -f scsibus$unit
+#	mknod scsibus$unit c 61 $unit
+#	chmod 644 scsibus$unit
+#	;;
+#
+#isdn)
+#	rm -f isdn
+#	mknod isdn c 66 0
+#	chmod 600 isdn
+#	;;
+#
+#isdnctl)
+#	rm -f isdnctl
+#	mknod isdnctl c 67 0
+#	chmod 600 isdnctl
+#	;;
+#
+#isdnbchan*)
+#	unit=${i#isdnbchan}
+#	rm -f isdnbchan$unit
+#	mknod isdnbchan$unit c 68 $unit
+#	chmod 600 isdnbchan$unit
+#	;;
+#
+#isdntel*)
+#	unit=${i#isdntel}
+#	rm -f isdntel$unit
+#	mknod isdntel$unit c 70 $unit
+#	chmod 600 isdntel$unit
+#	;;
+#
+#isdntrc*)
+#	unit=${i#isdntrc}
+#	rm -f isdntrc$unit
+#	mknod isdntrc$unit c 69 $unit
+#	chmod 600 isdntrc$unit
+#	;;
+#
+#pci*)
+#	unit=${i#pci}
+#	rm -f pci$unit
+#	mknod pci$unit c 72 $unit
+#	chmod 644 pci$unit
+#	;;
+#
 
 clockctl)
 	rm -f clockctl
-	mknod clockctl c 73 0
+	mknod clockctl c 58 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 59 0
+	chmod 644 systrace
 	;;
 
 local)

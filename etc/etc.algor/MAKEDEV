@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.1 2002/04/01 23:32:17 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2002/06/17 16:21:04 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -117,6 +117,7 @@
 #	mlx*	Mylex DAC960 control interface
 #	altq	ALTQ control device
 #	wsmux*	wscons event multiplexor
+#	systrace syscall tracer
 
 dialin=0
 dialout=524288
@@ -160,6 +161,7 @@ all)
 	makedev ttyCZ0 ttyCY0
 	makedev altq
 	makedev clockctl
+	makedev systrace
 	;;
 
 minimal)
@@ -706,6 +708,12 @@ clockctl)
 	mknod clockctl c 66 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 67 0
+	chmod 644 systrace
 	;;
 
 local)

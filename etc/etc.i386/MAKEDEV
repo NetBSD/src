@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.175 2002/04/18 12:54:11 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.176 2002/06/17 16:21:08 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -136,6 +136,7 @@
 #	dpti*	DPT/Adaptec RAID management interface
 #	radio*	radio devices
 #	nsmb*	SMB requester
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -192,6 +193,7 @@ all)
 	makedev cir0 cir1 irframe0 irframe1
 	makedev clockctl
 	makedev nsmb0 nsmb1 nsmb2 nsmb3
+	makedev systrace
 	;;
 
 audio)
@@ -946,6 +948,12 @@ nsmb*)
 	rm -f $nsmb
 	mknod $nsmb c $major $unit
 	chmod 644 $nsmb
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 90 0
+	chmod 644 systrace
 	;;
 
 local)
