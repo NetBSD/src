@@ -57,7 +57,7 @@ int le_machdep_attach(parent, self, args)
 
     /* register access */
     le->sc_r1 = (struct lereg1 *)
-	obio_alloc(le_addr, (caddr_t) OBIO_AMD_ETHER_SIZE, OBIO_WRITE);
+	obio_alloc(le_addr, OBIO_AMD_ETHER_SIZE, OBIO_WRITE);
     if (!le->sc_r1) {
 	printf(": not enough obio space\n");
 	return 1;

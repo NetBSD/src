@@ -27,7 +27,7 @@ cpu_fork(p1, p2)
 	register struct user *up = p2->p_addr;
 	int offset;
 	extern caddr_t getsp();
-	extern char kstack[];
+	extern char *kstack;
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 

@@ -37,9 +37,7 @@
 #include "net/netisr.h"
 
 
-char kstack[NBPG];		/* totally bogus */
 
-struct proc *proc0paddr = &proc0;
 extern char *cpu_string;
 int physmem;
 int cold;
@@ -59,6 +57,10 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
+char *kstack = (char *) MONSHORTSEG;
+
+extern vm_offset_t u_area_va;
+
 void identifycpu()
 {
     /*
@@ -71,12 +73,30 @@ void identifycpu()
     /* should eventually include whether it has a VAC, mc6888x version, etc */
 }
 
+void save_u_area(pcbp, va)
+     struct pcb *pcbp;
+     vm_offset_t va;
+{
+    pcbp->pcb_upte[0] = get_pte(va);
+    pcbp->pcb_upte[1] = get_pte(va+NBPG);
+    pcbp->pcb_upte[2] = get_pte(va+NBPG+NBPG);
+}
+void load_u_area(pcbp)
+     struct pcb *pcbp;
+{
+
+    set_pte(u_area_va, pcbp->pcb_upte[0]);
+    set_pte(u_area_va+NBPG, pcbp->pcb_upte[1]);
+    set_pte(u_area_va+NBPG+NBPG, pcbp->pcb_upte[2]);
+}
+
+
 void cpu_startup()
 {
     caddr_t v;
     int firstaddr, i;
     vm_size_t size;    
-    vm_offset_t minaddr, maxaddr;
+    vm_offset_t minaddr, maxaddr, uarea_pages;
 
     printf("got to cpu_startup()\n");
 
@@ -132,7 +152,7 @@ void cpu_startup()
      */
     if (firstaddr == 0) {
 	size = (vm_size_t)(v - firstaddr);
-	firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
+	firstaddr = (int) kmem_alloc(kernel_map, round_page(size));
 	if (firstaddr == 0)
 	    panic("cpu_startup: no room for tables");
 	goto again;
@@ -186,7 +206,6 @@ void cpu_startup()
     printf("about to call configure\n");
     configure();
 
-    sun3_stop();
     cold = 0;
 }
 
@@ -701,7 +720,7 @@ void boot(howto)
 {
 
     mon_printf("booting....\n");
-    mon_exit_to_mon();
+    sun3_stop();
     if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
 	struct buf *bp;
 	int iter, nbusy;
@@ -739,7 +758,7 @@ void boot(howto)
     if (howto&RB_HALT) {
 	printf("\n");
 	printf("The operating system has halted.\n");
-	mon_exit_to_mon();
+	sun3_stop();
     } else {
 	if (howto & RB_DUMP) {
 	    printf("dumping not supported yet :)\n");
@@ -791,7 +810,6 @@ regdump(rp, sbytes)
 	splx(s);
 }
 
-extern char kstack[];
 #define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
 
 dumpmem(ptr, sz, ustack)

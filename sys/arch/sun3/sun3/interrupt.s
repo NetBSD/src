@@ -19,33 +19,44 @@ _intrcnt:
 	addql #1, _cnt+V_INTR	;				\
 	jra rei
 
-.globl _level1intr, _level2intr, _level3intr, _level4intr
+.globl _level0intr, _level1intr, _level2intr, _level3intr, _level4intr
 .globl _level5intr, _level6intr, _level7intr
 
+.align 4
+/* spurious interrupt */
+_level0intr:	
+	INTERRUPT_HANDLE(0)
 /* system enable register 1 */
+.align 4
 _level1intr:	
 	INTERRUPT_HANDLE(1)
 /* system enable register 2, SCSI */
+.align 4
 _level2intr: 
 	INTERRUPT_HANDLE(2)
 
 /* system enable register 3, Ethernet */
+.align 4
 _level3intr:
 	INTERRUPT_HANDLE(3)
 
 /* video */
+.align 4
 _level4intr:
 	INTERRUPT_HANDLE(4)
 
 /* clock */
+.align 4
 _level5intr:
 	INTERRUPT_HANDLE(5)
 
 /* SCCs */
+.align 4
 _level6intr:
 	INTERRUPT_HANDLE(6)
 
-/* Memory Error */
+/* Memory Error/NMI */
+.align 4
 _level7intr:
 	INTERRUPT_HANDLE(7)
 
