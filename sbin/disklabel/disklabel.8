@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
+.\"	$NetBSD: disklabel.8,v 1.10 1996/01/16 06:41:20 hpeyerl Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -279,8 +279,20 @@ Display the in-core label for sd0 as obtained via
 .Dl disklabel -w -r /dev/rsd0c sd2212 foo
 .Pp
 Create a label for sd0 based on information for ``sd2212'' found in
-.Pa /etc/disktab .
-Any existing bootstrap code will be clobbered.
+.Pa /etc/disktab ,
+using
+.Pa foo
+as the disk pack label.
+Any existing bootstrap code will be clobbered.  If you do not have an
+entry for your disk in
+.Pa /etc/disktab ,
+you can use this style to put
+an initial label onto a new disk.  Then dump the label to a file (using
+.Em disklabel sd0 >  protofile
+),
+editing the file, and replacing the label with 
+.Em disklabel -R sd0 
+.Em protofile .
 .Pp
 .Dl disklabel -e -r sd0
 .Pp
@@ -310,6 +322,16 @@ The label is derived from disktab information for ``sd2212'' and
 installed both in-core and on-disk.
 The bootstrap code comes from the file
 .Pa /usr/mdec/newboot .
+.Pp
+.Dl disklabel -R -r sd0 <protofile>
+.Pp
+Install a new label and bootstrap on a disk, from a prototype label
+file.  This is a good way to install a label on a previously unlabeled
+disk for which no entry appears in
+.Pa  /etc/disktab ,
+if you create the
+prototype file by dumping some other disk's label to a file and editing
+it appropriately (total size, partition offsets, types, etc.)
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 5
@@ -342,4 +364,5 @@ will not install bootstrap code that overlaps it.
 .Sh BUGS
 When a disk name is given without a full pathname,
 the constructed device name uses the ``a'' partition on the tahoe,
-the ``c'' partition on all others.
+the ``d'' partition on the i386 or its successors, and the ``c''
+partition on all others.
