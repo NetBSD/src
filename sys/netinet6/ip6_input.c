@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.38 2001/03/16 12:22:34 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.39 2001/03/21 19:12:56 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.183 2001/03/01 15:15:23 itojun Exp $	*/
 
 /*
@@ -303,12 +303,23 @@ ip6_input(m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
-			   PFIL_IN) != 0)
-		return;
-	if (m == NULL)
-		return;
-	ip6 = mtod(m, struct ip6_hdr *);
+	/*
+	 * let ipfilter look at packet on the wire,
+	 * not the decapsulated packet.
+	 */
+#ifdef IPSEC
+	if (!ipsec_gethist(m, NULL))
+#else
+	if (1)
+#endif
+	{
+		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+				   PFIL_IN) != 0)
+			return;
+		if (m == NULL)
+			return;
+		ip6 = mtod(m, struct ip6_hdr *);
+	}
 #endif /* PFIL_HOOKS */
 
 
