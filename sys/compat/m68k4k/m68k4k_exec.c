@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.1 1996/09/10 22:01:20 thorpej Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.2 1997/04/04 09:52:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -78,7 +78,6 @@ exec_m68k4k_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	static int m68k4k_emul_inited;
 	u_long midmag, magic;
 	u_short mid;
 	int error;
