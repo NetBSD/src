@@ -1,7 +1,7 @@
-/*	$NetBSD: crtbegin.c,v 1.19 2002/11/11 00:44:43 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.20 2002/11/22 06:44:58 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -94,19 +94,23 @@ extern void __cxa_finalize(void *) __attribute__((weak));
 #endif
 #endif
 
-static void __dtors(void);
-static void __ctors(void);
-
-INIT_FALLTHRU_DECL;
-FINI_FALLTHRU_DECL;
-
-extern void _init(void)   __attribute__((section(".init")));
-extern void _fini(void)   __attribute__((section(".fini")));
-static void __ctors(void) __attribute__((section(".init")));
-static void __dtors(void) __attribute__((section(".fini")));
+#ifndef MD_CALL_STATIC_FUNCTION
+#if defined(__GNUC__)
+#define	MD_CALL_STATIC_FUNCTION(section, func)				\
+static void __attribute__((__unused__))					\
+__call_##func(void)							\
+{									\
+	__asm __volatile (".section " #section);			\
+	func();								\
+	__asm __volatile (".previous");					\
+}
+#else
+#error Need MD_CALL_STATIC_FUNCTION
+#endif
+#endif /* ! MD_CALL_STATIC_FUNCTION */
 
 static void
-__ctors()
+__ctors(void)
 {
 	unsigned long i = (unsigned long) __CTOR_LIST__[0];
 	void (**p)(void);
@@ -122,7 +126,7 @@ __ctors()
 }
 
 static void
-__dtors()
+__dtors(void)
 {
 	void (**p)(void) = __DTOR_LIST__ + 1;
 
@@ -130,20 +134,16 @@ __dtors()
 		(**p++)();
 }
 
-void
-_init()
+static void __attribute__((__unused__))
+__do_global_ctors_aux(void)
 {
-	static int initialized = 0;
+	static int initialized;
 #ifdef DWARF2_EH
 #if defined(__GNUC__)
 	static struct dwarf2_eh_object object;
 #endif /* __GNUC__ */
 #endif /* DWARF2_EH */
 
-	/*
-	 * Execute code in the .init sections
-	 */
-	INIT_FALLTHRU();
 	if (!initialized) {
 		initialized = 1;
 
@@ -165,10 +165,15 @@ _init()
 		__ctors();
 	}
 }
+MD_CALL_STATIC_FUNCTION(.init, __do_global_ctors_aux)
 
-void
-_fini()
+static void __attribute__((__unused__))
+__do_global_dtors_aux(void)
 {
+	static int finished;
+
+	if (finished)
+		return;
 
 #if defined(DSO_HANDLE) && defined(__GNUC__) && defined(SHARED)
 	/*
@@ -190,12 +195,6 @@ _fini()
 #endif /* __GNUC__ */
 #endif /* DWARF2_EH */
 
-	/*
-	 * Execute code in the .fini sections
-	 */
-	FINI_FALLTHRU();
+	finished = 1;
 }
-
-MD_INIT_SECTION_PROLOGUE;
-
-MD_FINI_SECTION_PROLOGUE;
+MD_CALL_STATIC_FUNCTION(.fini, __do_global_dtors_aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.2 2002/01/14 12:06:49 drochner Exp $ */
+/* $NetBSD: dot_init.h,v 1.3 2002/11/22 06:45:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -67,3 +67,6 @@
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
+
+#define MD_CALL_STATIC_FUNCTION(section, func) \
+asm(".section " #section "; call " #func "; .previous");
