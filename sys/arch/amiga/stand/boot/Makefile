@@ -112,7 +112,7 @@ chksum.o: ${.CURDIR}/chksum.c
 txlt: txlt.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $> -ll
 
-depend::
+depend:
 	mkdep -a ${.CURDIR}/aout2bb.c ${.CURDIR}/chksum.c
 
 ### end of helper programs ###
