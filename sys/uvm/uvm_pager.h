@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.18 2000/11/24 22:41:39 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.19 2000/11/27 08:19:51 chs Exp $	*/
 
 /*
  *
@@ -214,7 +214,9 @@ struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
  * is changed to do physically-addressed i/o.
  */
 
+#ifndef PAGER_MAP_SIZE
 #define PAGER_MAP_SIZE       (16 * 1024 * 1024)
+#endif
 
 #endif /* _KERNEL */
 
