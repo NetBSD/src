@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.137 2003/08/28 10:04:28 ragge Exp $
+#	$NetBSD: DEVNAMES,v 1.138 2003/08/30 21:41:19 jdolecek Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1043,6 +1043,7 @@ siop_common		MI		Attribute
 siopng			amiga		Attribute
 siotty			luna68k
 sip			MI		
+sk			MI
 skbd			hpcmips
 skbdif			hpcmips
 slhci			MI
