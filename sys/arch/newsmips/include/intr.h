@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1998/06/08 20:35:14 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1998/08/26 12:07:21 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,8 +33,6 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
-#include <mips/intr.h>
-
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_BIO		1	/* disable block I/O interrupts */
 #define	IPL_NET		2	/* disable network interrupts */
@@ -42,33 +40,57 @@
 #define	IPL_CLOCK	4	/* disable clock interrupts */
 #define	IPL_STATCLOCK	5	/* disable profiling interrupts */
 #define	IPL_SERIAL	6	/* disable serial hardware interrupts */
-#define	IPL_DMA		7	/* disable DMA reload interrupts */
-#define	IPL_HIGH	8	/* disable all interrupts */
+#define	IPL_HIGH	7	/* disable all interrupts */
+
+#ifndef _LOCORE
+
+#define splbio cpu_spl0
+#define splnet cpu_spl1
+#define spltty cpu_spl1
+#define splimp cpu_spl1
+#define splclock cpu_spl2
+#define splstatclock cpu_spl2
+
+extern void setsoftnet __P((void)), clearsoftnet __P((void));
+extern void setsoftclock __P((void)), clearsoftclock __P((void));
+
+extern int splhigh __P((void));
+extern int splclock __P((void));
+extern int splstatclock __P((void));
+extern int splimp __P((void));
+extern int spltty __P((void));
+extern int splnet __P((void));
+extern int splbio __P((void));
+extern int splsoftnet __P((void));
+extern int splsoftclock __P((void));
+extern int spl0 __P((void));
+extern void splx __P((int));
+
 
 /*
  * Index into intrcnt[], which is defined in locore
  */
-typedef enum {
-	SOFTCLOCK_INTR = 0,
-	SOFTNET_INTR,
-	SERIAL0_INTR,
-	SERIAL1_INTR,
-	SERIAL2_INTR,
-	LANCE_INTR,
-	SCSI_INTR,
-	ERROR_INTR,
-	HARDCLOCK_INTR,
-  	FPU_INTR,
-	SLOT1_INTR,
-	SLOT2_INTR,
-	SLOT3_INTR,
-	FLOPPY_INTR,
-	STRAY_INTR
-} newsmips_intr_t;
-
-extern int news3400_intr
-		__P((u_int mask, u_int pc, u_int statusReg, u_int causeReg));
+#define SOFTCLOCK_INTR	0
+#define SOFTNET_INTR	1
+#define SERIAL0_INTR	2
+#define SERIAL1_INTR	3
+#define SERIAL2_INTR	4
+#define LANCE_INTR	5
+#define SCSI_INTR	6
+#define ERROR_INTR	7
+#define HARDCLOCK_INTR	8
+#define FPU_INTR	9
+#define SLOT1_INTR	10
+#define SLOT2_INTR	11
+#define SLOT3_INTR	12
+#define FLOPPY_INTR	13
+#define STRAY_INTR	14
 
 extern u_int intrcnt[];
 
+/* handle i/o device interrupts */
+extern int (*mips_hardware_intr) __P((u_int, u_int, u_int, u_int));
+extern int news3400_intr __P((u_int, u_int, u_int, u_int));
+
+#endif /* !_LOCORE */
 #endif /* _MACHINE_INTR_H_ */
