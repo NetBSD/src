@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.19 1998/05/28 03:07:49 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.20 1998/08/24 02:34:44 tv Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -796,22 +796,23 @@ pdq_process_received_data(
 			status.rxs_rcc_reason, status.rxs_fsc, status.rxs_fsb_e));
 	    if (status.rxs_rcc_reason == 7)
 		goto discard_frame;
-	    if (status.rxs_rcc_reason != 0)
+	    if (status.rxs_rcc_reason != 0) {
 		/* hardware fault */
-	    if (status.rxs_rcc_badcrc) {
-		printf(PDQ_OS_PREFIX " MAC CRC error (source=%x-%x-%x-%x-%x-%x)\n",
-		       PDQ_OS_PREFIX_ARGS,
-		       dataptr[PDQ_RX_FC_OFFSET+1],
-		       dataptr[PDQ_RX_FC_OFFSET+2],
-		       dataptr[PDQ_RX_FC_OFFSET+3],
-		       dataptr[PDQ_RX_FC_OFFSET+4],
-		       dataptr[PDQ_RX_FC_OFFSET+5],
-		       dataptr[PDQ_RX_FC_OFFSET+6]);
-		/* rx->rx_badcrc++; */
-	    } else if (status.rxs_fsc == 0 || status.rxs_fsb_e == 1) {
-		/* rx->rx_frame_status_errors++; */
-	    } else {
-		/* hardware fault */
+		if (status.rxs_rcc_badcrc) {
+		    printf(PDQ_OS_PREFIX " MAC CRC error (source=%x-%x-%x-%x-%x-%x)\n",
+			   PDQ_OS_PREFIX_ARGS,
+			   dataptr[PDQ_RX_FC_OFFSET+1],
+			   dataptr[PDQ_RX_FC_OFFSET+2],
+			   dataptr[PDQ_RX_FC_OFFSET+3],
+			   dataptr[PDQ_RX_FC_OFFSET+4],
+			   dataptr[PDQ_RX_FC_OFFSET+5],
+			   dataptr[PDQ_RX_FC_OFFSET+6]);
+		    /* rx->rx_badcrc++; */
+		} else if (status.rxs_fsc == 0 || status.rxs_fsb_e == 1) {
+		    /* rx->rx_frame_status_errors++; */
+		} else {
+		    /* hardware fault */
+		}
 	    }
 	}
       discard_frame:
