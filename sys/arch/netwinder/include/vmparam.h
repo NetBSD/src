@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2001/11/23 17:39:05 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2001/11/23 18:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,34 +40,6 @@
 
 #include <arm/arm32/vmparam.h>
 
-#define	USRTEXT		VM_MIN_ADDRESS
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
- * Note that MAXTSIZ mustn't be greater than 32M. Otherwise you'd have
- * to change the compiler to not generate bl instructions
- */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
-#ifndef	DFLDSIZ
-#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
-#endif
-#ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS       1024
-#endif
-
 /*
  * Address space constants
  */
@@ -77,12 +49,6 @@
  * Mappings >= KERNEL_SPACE_START are constant across all processes
  */
 #define	KERNEL_SPACE_START	0xf0000000
-
-/* total number of page table entries to map 4GB * size of each entry*/
-#define	PAGE_TABLE_SPACE	((1 << (32 - PGSHIFT)) * sizeof(pt_entry_t))
-
-/* Address where the page tables are mapped */
-#define	PAGE_TABLE_SPACE_START	(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
 
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
@@ -109,18 +75,6 @@
  * Override the default pager_map size, there's not enough KVA.
  */
 #define PAGER_MAP_SIZE		(4 * 1024 * 1024)
-
-/*
- * Mach derived constants
- */
-
-#define	VM_MIN_ADDRESS		((vm_offset_t)0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t)(PAGE_TABLE_SPACE_START - UPAGES * NBPG))
-#define	VM_MAX_ADDRESS		((vm_offset_t)(PAGE_TABLE_SPACE_START + (KERNEL_SPACE_START >> PGSHIFT) * sizeof(pt_entry_t)))
-
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNEL_TEXT_BASE)
-#define	VM_MAXKERN_ADDRESS	((vm_offset_t)(KERNEL_VM_BASE + KERNEL_VM_SIZE))
-#define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffffffff)
 
 /*
  * Size of User Raw I/O map

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2001/11/23 17:39:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2001/11/23 18:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -47,6 +47,34 @@
 /* for pt_entry_t definition */
 #include <arm/arm32/pte.h>
 
+#define	USRTEXT		VM_MIN_ADDRESS
+#define	USRSTACK	VM_MAXUSER_ADDRESS
+
+/*
+ * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler
+ * would have to be changed to not generate "bl" instructions.
+ */
+#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#ifndef	DFLDSIZ
+#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
+#endif
+#ifndef	MAXDSIZ
+#define	MAXDSIZ		(512*1024*1024)		/* max data size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
+#endif
+
+/*
+ * Size of SysV shared memory map
+ */
+#ifndef SHMMAXPGS
+#define	SHMMAXPGS	1024
+#endif
+
 /*
  * While the ARM architecture defines Section mappings, large pages,
  * and small pages, the standard page size is (and will always be) 4K.
@@ -54,6 +82,28 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * Linear page table space: number of PTEs required to map the 4G address
+ * space * size of each PTE.
+ */
+#define	PAGE_TABLE_SPACE	((1 << (32 - PGSHIFT)) * sizeof(pt_entry_t))
+
+/* Address where the page talbles are mapped. */
+#define	PAGE_TABLE_SPACE_START	(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
+
+/*
+ * Mach derived constants
+ */
+#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) (PAGE_TABLE_SPACE_START -	\
+					    UPAGES * NBPG))
+#define	VM_MAX_ADDRESS		((vaddr_t) (PAGE_TABLE_SPACE_START +	\
+					    (KERNEL_SPACE_START >> PGSHIFT) * \
+					    sizeof(pt_entry_t)))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
+#define	VM_MAXKERN_ADDRESS	((vaddr_t) KERNEL_VM_BASE + KERNEL_VM_SIZE)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
 /*
  * define structure pmap_physseg: there is one of these structures
