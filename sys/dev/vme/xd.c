@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.4 1998/01/12 09:54:58 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.5 1998/01/25 15:22:34 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.4 1998/01/12 09:54:58 thorpej Exp $
+ * id: $NetBSD: xd.c,v 1.5 1998/01/25 15:22:34 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -538,25 +538,15 @@ xdcattach(parent, self, aux)
 	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
 	vme_intr_establish(ct, ih, xdcintr, xdc);
 	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
+	vme_bus_establish(ct, &xdc->sc_dev);
 
 
 	/* now we must look for disks using autoconfig */
 	xa.fullmode = XD_SUB_POLL;
 	xa.booting = 1;
 
-#if 0	/* XXX - deal with this disksubr */
-	if (ca->ca_ra.ra_bp && ca->ca_ra.ra_bp->val[0] == -1 &&
-	    ca->ca_ra.ra_bp->val[1] == xdc->sc_dev.dv_unit) {
-		bootpath_store(1, ca->ca_ra.ra_bp + 1); /* advance bootpath */
-	}
-#endif
-
 	for (xa.driveno = 0; xa.driveno < XDC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, NULL);
-
-#if 0
-	bootpath_store(1, NULL);
-#endif
 
 	/* start the watchdog clock */
 	timeout(xdc_tick, xdc, XDC_TICKCNT);
@@ -604,7 +594,6 @@ xdattach(parent, self, aux)
 	int     rqno, spt = 0, mb, blk, lcv, fmode, s = 0, newstate;
 	struct xd_iopb_drive *driopb;
 	struct dkbad *dkb;
-	struct bootpath *bp;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
 	caddr_t			dmaddr;
@@ -795,14 +784,6 @@ xdattach(parent, self, aux)
 			xd->sc_dev.dv_xname);
 	} else {
 		bcopy(buf, &xd->dkb, XDFM_BPS);
-	}
-
-	if (xa->booting) {
-		/* restore bootpath! (do this via attach_args again?)*/
-		bp = bootpath_store(0, NULL);
-		if (bp && strcmp("xd", bp->name) == 0 &&
-						xd->xd_drive == bp->val[0])
-			bp->dev = &xd->sc_dev;
 	}
 
 	dk_establish(&xd->sc_dk, &xd->sc_dev);		/* XXX */
