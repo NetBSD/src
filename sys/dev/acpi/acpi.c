@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.42 2003/08/17 03:45:19 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.43 2003/10/30 18:13:38 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.42 2003/08/17 03:45:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.43 2003/10/30 18:13:38 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -520,11 +520,19 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 		switch (type) {
 		case ACPI_TYPE_DEVICE:
 #ifdef ACPI_ACTIVATE_DEV
-			if ((devinfo.Valid & ACPI_VALID_STA) &&
+			if ((devinfo.Valid & (ACPI_VALID_STA|ACPI_VALID_HID)) ==
+			    (ACPI_VALID_STA|ACPI_VALID_HID) &&
 			    (devinfo.CurrentStatus &
 			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED)) ==
-			    ACPI_STA_DEV_PRESENT)
+			    ACPI_STA_DEV_PRESENT) {
 				acpi_activate_device(handle, &devinfo);
+
+				/* Update devinfo. */
+				rv = AcpiGetObjectInfo(handle, &devinfo);
+				if (rv != AE_OK)
+					goto out;
+			}
+
 			/* FALLTHROUGH */
 #endif
 
@@ -535,16 +543,13 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 			if (ad == NULL)
 				return (AE_NO_MEMORY);
 
+			ad->ad_devinfo = devinfo;
 			ad->ad_handle = handle;
 			ad->ad_level = level;
 			ad->ad_scope = as;
 			ad->ad_type = type;
 
 			TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
-
-			rv = AcpiGetObjectInfo(handle, &ad->ad_devinfo);
-			if (rv != AE_OK)
-				goto out;
 
 			if ((ad->ad_devinfo.Valid & ACPI_VALID_HID) == 0)
 				goto out;
