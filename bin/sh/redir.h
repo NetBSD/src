@@ -33,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)redir.h	5.1 (Berkeley) 3/7/91
- *
- *	$Header: /cvsroot/src/bin/sh/redir.h,v 1.4 1993/05/02 01:28:45 sef Exp $
+ *	from: @(#)redir.h	5.1 (Berkeley) 3/7/91
+ *	$Id: redir.h,v 1.5 1993/08/01 18:58:36 mycroft Exp $
  */
 
 /* flags passed to redirect */

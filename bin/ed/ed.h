@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ed.h	5.5 (Berkeley) 3/28/93
+ *	from: @(#)ed.h	5.5 (Berkeley) 3/28/93
+ *	$Id: ed.h,v 1.14 1993/08/01 18:59:50 mycroft Exp $
  */
 
 #include <unistd.h>

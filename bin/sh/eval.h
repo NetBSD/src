@@ -33,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)eval.h	5.2 (Berkeley) 4/12/91
- *
- *	$Header: /cvsroot/src/bin/sh/eval.h,v 1.3 1993/03/23 00:27:52 cgd Exp $
+ *	from: @(#)eval.h	5.2 (Berkeley) 4/12/91
+ *	$Id: eval.h,v 1.4 1993/08/01 18:58:31 mycroft Exp $
  */
 
 extern char *commandname;	/* currently executing command */

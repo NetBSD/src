@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)driver.h	5.4 (Berkeley) 6/1/90
+ *	from: @(#)driver.h	5.4 (Berkeley) 6/1/90
+ *	$Id: driver.h,v 1.2 1993/08/01 18:51:58 mycroft Exp $
  */
 
 #include "externs.h"

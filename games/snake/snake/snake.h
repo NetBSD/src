@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)snake.h	5.5 (Berkeley) 6/1/90
+ *	from: @(#)snake.h	5.5 (Berkeley) 6/1/90
+ *	$Id: snake.h,v 1.2 1993/08/01 18:51:16 mycroft Exp $
  */
 
 # include <stdio.h>

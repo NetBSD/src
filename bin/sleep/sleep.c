@@ -38,8 +38,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)sleep.c	5.5 (Berkeley) 4/8/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sleep/sleep.c,v 1.3 1993/03/23 00:30:07 cgd Exp $";
+/*static char sccsid[] = "from: @(#)sleep.c	5.5 (Berkeley) 4/8/91";*/
+static char rcsid[] = "$Id: sleep.c,v 1.4 1993/08/01 18:57:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <unistd.h>

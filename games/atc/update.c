@@ -44,7 +44,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)update.c	5.5 (Berkeley) 10/30/90";
+/*static char sccsid[] = "from: @(#)update.c	5.5 (Berkeley) 10/30/90";*/
+static char rcsid[] = "$Id: update.c,v 1.2 1993/08/01 18:57:02 mycroft Exp $";
 #endif not lint
 
 #include "include.h"

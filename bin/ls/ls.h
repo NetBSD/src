@@ -33,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ls.h	5.11 (Berkeley) 7/22/90
- *
- *	$Header: /cvsroot/src/bin/ls/ls.h,v 1.3 1993/03/23 00:26:09 cgd Exp $
+ *	from: @(#)ls.h	5.11 (Berkeley) 7/22/90
+ *	$Id: ls.h,v 1.4 1993/08/01 18:59:31 mycroft Exp $
  */
 
 typedef struct _lsstruct {

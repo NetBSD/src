@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.4 (Berkeley) 10/30/90
+ *	from: @(#)extern.h	5.4 (Berkeley) 10/30/90
+ *	$Id: extern.h,v 1.2 1993/08/01 18:57:16 mycroft Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hangman.h	5.5 (Berkeley) 2/28/91
+ *	from: @(#)hangman.h	5.5 (Berkeley) 2/28/91
+ *	$Id: hangman.h,v 1.2 1993/08/01 18:54:30 mycroft Exp $
  */
 
 # include	<curses.h>

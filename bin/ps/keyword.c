@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)keyword.c	5.9 (Berkeley) 6/3/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/keyword.c,v 1.3 1993/03/23 00:26:31 cgd Exp $";
+/*static char sccsid[] = "from: @(#)keyword.c	5.9 (Berkeley) 6/3/91";*/
+static char rcsid[] = "$Id: keyword.c,v 1.4 1993/08/01 18:59:09 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

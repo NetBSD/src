@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)execute.c	5.5 (Berkeley) 2/28/91";
+/*static char sccsid[] = "from: @(#)execute.c	5.5 (Berkeley) 2/28/91";*/
+static char rcsid[] = "$Id: execute.c,v 1.2 1993/08/01 18:53:43 mycroft Exp $";
 #endif /* not lint */
 
 # include	"monop.ext"

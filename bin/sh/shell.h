@@ -33,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)shell.h	5.4 (Berkeley) 4/12/91
- *
- *	$Header: /cvsroot/src/bin/sh/shell.h,v 1.3 1993/03/23 00:29:23 cgd Exp $
+ *	from: @(#)shell.h	5.4 (Berkeley) 4/12/91
+ *	$Id: shell.h,v 1.4 1993/08/01 18:58:35 mycroft Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.2 (Berkeley) 4/8/91
+ *	from: @(#)pathnames.h	5.2 (Berkeley) 4/8/91
+ *	$Id: pathnames.h,v 1.2 1993/08/01 18:54:47 mycroft Exp $
  */
 
 #define	FORTDIR		"/usr/share/games/fortune"
