@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.44 1999/02/07 13:15:12 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.45 1999/02/12 12:11:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.44 1999/02/07 13:15:12 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.45 1999/02/12 12:11:18 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -749,11 +749,7 @@ updateprogressmeter(dummy)
 	int dummy;
 {
 
-	/*
-	 * print progress bar only if we are foreground process.
-	 */
-	if (foregroundproc())
-		progressmeter(0);
+	progressmeter(0);
 }
 #endif	/* SMALL */
 
@@ -790,16 +786,32 @@ progressmeter(flag)
 	char buf[256];
 
 	len = 0;
-
 	if (flag == -1) {
 		(void)gettimeofday(&start, NULL);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void)gettimeofday(&now, NULL);
 	if (!progress || filesize <= 0)
 		return;
+
+	(void)gettimeofday(&now, NULL);
 	cursize = bytes + restart_point;
+	timersub(&now, &lastupdate, &wait);
+	if (cursize > lastsize) {
+		lastupdate = now;
+		lastsize = cursize;
+		if (wait.tv_sec >= STALLTIME) {	/* fudge out stalled time */
+			start.tv_sec += wait.tv_sec;
+			start.tv_usec += wait.tv_usec;
+		}
+		wait.tv_sec = 0;
+	}
+
+	/*
+	 * print progress bar only if we are foreground process.
+	 */
+	if (! foregroundproc())
+		return;
 
 	ratio = (int)((double)cursize * 100.0 / (double)filesize);
 	ratio = MAX(ratio, 0);
@@ -827,17 +839,6 @@ progressmeter(flag)
 #endif
 	    prefixes[i],
 	    i == 0 ? ' ' : 'B');
-
-	timersub(&now, &lastupdate, &wait);
-	if (cursize > lastsize) {
-		lastupdate = now;
-		lastsize = cursize;
-		if (wait.tv_sec >= STALLTIME) {	/* fudge out stalled time */
-			start.tv_sec += wait.tv_sec;
-			start.tv_usec += wait.tv_usec;
-		}
-		wait.tv_sec = 0;
-	}
 
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
