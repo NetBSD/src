@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_update.c,v 1.1.1.4 2000/07/20 05:50:24 mellon Exp $";
+static const char rcsid[] = "$Id: res_update.c,v 1.1.1.5 2000/10/17 15:09:40 taca Exp $";
 #endif /* not lint */
 
 /*
@@ -73,7 +73,6 @@ struct zonegrp {
 
 static int	nscopy(struct sockaddr_in *, const struct sockaddr_in *, int);
 static int	nsprom(struct sockaddr_in *, const struct in_addr *, int);
-static void	dprintf(const char *, ...);
 
 void tkey_free (ns_tsig_key **);
 
@@ -215,15 +214,4 @@ nsprom(struct sockaddr_in *dst, const struct in_addr *src, int n) {
 		dst[i].sin_addr = src[i];
 	}
 	return (n);
-}
-
-static void
-dprintf(const char *fmt, ...) {
-	va_list ap;
-
-	va_start(ap, fmt);
-	fputs(";; res_nupdate: ", stderr);
-	vfprintf(stderr, fmt, ap);
-	fputc('\n', stderr);
-	va_end(ap);
 }

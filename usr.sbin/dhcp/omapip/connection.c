@@ -197,9 +197,11 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 		   0, omapi_connection_writefd,
 		   0, omapi_connection_connect,
 		   omapi_connection_reaper));
-
+	if (status != ISC_R_SUCCESS)
+		goto out;
 	obj -> state = omapi_connection_unconnected;
-	omapi_connection_connect ((omapi_object_t *)obj);
+	status = omapi_connection_connect ((omapi_object_t *)obj);
+      out:
 	omapi_connection_dereference (&obj, MDL);
 	return status;
 }
@@ -358,7 +360,18 @@ isc_result_t omapi_connection_connect (omapi_object_t *h)
 			error = errno;
 			if (error != EINPROGRESS) {
 				omapi_disconnect (h, 1);
-				return ISC_R_UNEXPECTED;
+				switch (error) {
+				      case ECONNREFUSED:
+					status = ISC_R_CONNREFUSED;
+					break;
+				      case ENETUNREACH:
+					status = ISC_R_NETUNREACH;
+					break;
+				      default:
+					status = ISC_R_UNEXPECTED;
+					break;
+				}
+				return status;
 			}
 			c -> state = omapi_connection_connecting;
 			return ISC_R_INCOMPLETE;

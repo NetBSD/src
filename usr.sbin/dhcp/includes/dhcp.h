@@ -157,6 +157,7 @@ struct dhcp_packet {
 #define DHO_NWIP_DOMAIN_NAME		62
 #define DHO_NWIP_SUBOPTIONS		63
 #define DHO_USER_CLASS			77
+#define DHO_FQDN			81
 #define DHO_DHCP_AGENT_OPTIONS		82
 /* The DHO_AUTHENTICATE option is not a standard yet, so I've
    allocated an option out of the "local" option space for it on a
@@ -184,3 +185,12 @@ struct dhcp_packet {
 #define RAI_CIRCUIT_ID	1
 #define RAI_REMOTE_ID	2
 #define RAI_AGENT_ID	3
+
+/* FQDN suboptions: */
+#define FQDN_NO_CLIENT_UPDATE		1
+#define FQDN_SERVER_UPDATE		2
+#define FQDN_ENCODED			3
+#define FQDN_RCODE1			4
+#define FQDN_RCODE2			5
+#define FQDN_NAME			6
+#define FQDN_SUBOPTION_COUNT		6

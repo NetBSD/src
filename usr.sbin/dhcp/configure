@@ -63,7 +63,13 @@ if [ "$sysname" = "" ]; then
       minor=`echo $release |sed -e 's/.*[0-9]*\.\([0-9][0-9]*\).*$/\1/'`
       major=`echo $release |sed -e 's/\([0-9][0-9]*\)\..*$/\1/'`
       case $major in
-        4) sysname=sunos4;;
+        4) 
+	  set `which gcc`
+	  if [ $# != 1 ]; then
+	    echo SunOS 4 build will not work without the GNU C Compiler.
+	    exit 1
+	  fi
+	  sysname=sunos4;;
         5)
 	  set `which gcc`
 	  if [ $# = 1 ]; then

@@ -447,6 +447,10 @@ isc_result_t omapi_connection_write_typed_data (omapi_object_t *c,
 	isc_result_t status;
 	omapi_handle_t handle;
 
+	/* Null data is valid. */
+	if (!data)
+		return omapi_connection_put_uint32 (c, 0);
+
 	switch (data -> type) {
 	      case omapi_datatype_int:
 		status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.7 2000/09/04 23:10:17 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.1.1.8 2000/10/17 15:08:49 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1021,10 +1021,10 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 	      case expr_exists:
 		memset (&left, 0, sizeof left);
 		if (!in_options ||
-		    !((*expr -> data.option -> universe -> get_func)
-		      (&left, expr -> data.exists -> universe,
-		       packet, lease, in_options, cfg_options, in_options,
-		       scope, expr -> data.exists -> code)))
+		    !get_option (&left, expr -> data.exists -> universe,
+				 packet, lease, in_options, cfg_options,
+				 in_options,
+				 scope, expr -> data.exists -> code))
 			*result = 0;
 		else {
 			*result = 1;
@@ -1274,7 +1274,7 @@ int evaluate_data_expression (result, packet, lease,
 		s1 = evaluate_numeric_expression (&len, packet, lease,
 						  in_options, cfg_options,
 						  scope,
-						  expr -> data.substring.len);
+						  expr -> data.suffix.len);
 		if (s0 && s1) {
 			data_string_copy (result, &data, MDL);
 
@@ -1302,11 +1302,11 @@ int evaluate_data_expression (result, packet, lease,
 		/* Extract an option. */
 	      case expr_option:
 		if (in_options)
-			s0 = ((*expr -> data.option -> universe -> get_func)
-			      (result, expr -> data.option -> universe,
-			       packet, lease,
-			       in_options, cfg_options, in_options,
-			       scope, expr -> data.option -> code));
+			s0 = get_option (result,
+					 expr -> data.option -> universe,
+					 packet, lease,
+					 in_options, cfg_options, in_options,
+					 scope, expr -> data.option -> code);
 		else
 			s0 = 0;
 
@@ -1321,11 +1321,11 @@ int evaluate_data_expression (result, packet, lease,
 
 	      case expr_config_option:
 		if (cfg_options)
-			s0 = ((*expr -> data.option -> universe -> get_func)
-			      (result, expr -> data.option -> universe,
-			       packet, lease,
-			       in_options, cfg_options, cfg_options,
-			       scope, expr -> data.option -> code));
+			s0 = get_option (result,
+					 expr -> data.option -> universe,
+					 packet, lease,
+					 in_options, cfg_options, cfg_options,
+					 scope, expr -> data.option -> code);
 		else
 			s0 = 0;
 
@@ -3604,5 +3604,170 @@ int fundef_dereference (ptr, file, line)
 	*ptr = (struct fundef *)0;
 	return 1;
 }
+
+#if defined (NOTYET)		/* Post 3.0 final. */
+int data_subexpression_length (int *rv,
+			       struct expression *expr)
+{
+	int crhs, clhs, llhs, lrhs;
+	switch (expr -> op) {
+	      case expr_substring:
+		if (expr -> data.substring.len &&
+		    expr -> data.substring.len -> op == expr_const_int) {
+			(*rv =
+			 (int)expr -> data.substring.len -> data.const_int);
+			return 1;
+		}
+		return 0;
+
+	      case expr_packet:
+	      case expr_suffix:
+		if (expr -> data.suffix.len &&
+		    expr -> data.suffix.len -> op == expr_const_int) {
+			(*rv =
+			 (int)expr -> data.suffix.len -> data.const_int);
+			return 1;
+		}
+		return 0;
+
+	      case expr_concat:
+		clhs = data_subexpression_length (&llhs,
+						  expr -> data.concat [0]);
+		crhs = data_subexpression_length (&lrhs,
+						  expr -> data.concat [1]);
+		if (crhs == 0 || clhs == 0)
+			return 0;
+		*rv = llhs + lrhs;
+		return 1;
+		break;
+
+	      case expr_hardware:
+		return 0;
+
+	      case expr_const_data:
+		*rv = expr -> data.const_data.len;
+		return 2;
+
+	      case expr_reverse:
+		return data_subexpression_length (rv,
+						  expr -> data.reverse.buffer);
+
+	      case expr_leased_address:
+	      case expr_lease_time:
+		*rv = 4;
+		return 2;
+
+	      case expr_pick_first_value:
+		clhs = data_subexpression_length (&llhs,
+						  expr -> data.concat [0]);
+		crhs = data_subexpression_length (&lrhs,
+						  expr -> data.concat [1]);
+		if (crhs == 0 || clhs == 0)
+			return 0;
+		if (llhs > lrhs)
+			*rv = llhs;
+		else
+			*rv = lrhs;
+		return 1;
+			
+	      case expr_binary_to_ascii:
+	      case expr_config_option:
+	      case expr_host_decl_name:
+	      case expr_encapsulate:
+	      case expr_filename:
+	      case expr_sname:
+	      case expr_host_lookup:
+	      case expr_option:
+	      case expr_none:
+	      case expr_match:
+	      case expr_check:
+	      case expr_equal:
+	      case expr_and:
+	      case expr_or:
+	      case expr_not:
+	      case expr_extract_int8:
+	      case expr_extract_int16:
+	      case expr_extract_int32:
+	      case expr_encode_int8:
+	      case expr_encode_int16:
+	      case expr_encode_int32:
+	      case expr_const_int:
+	      case expr_exists:
+	      case expr_known:
+	      case expr_dns_transaction:
+	      case expr_static:
+	      case expr_ns_add:
+	      case expr_ns_delete:
+	      case expr_ns_exists:
+	      case expr_ns_not_exists:
+	      case expr_not_equal:
+	      case expr_null:
+	      case expr_variable_exists:
+	      case expr_variable_reference:
+	      case expr_arg:
+	      case expr_funcall:
+	      case expr_function:
+	      case expr_add:
+	      case expr_subtract:
+	      case expr_multiply:
+	      case expr_divide:
+	      case expr_remainder:
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
+		return 0;
+	}
+	return 0;
+}
+
+int expr_valid_for_context (struct expression *expr,
+			    enum expression_context context)
+{
+	/* We don't know at parse time what type of value a function may
+	   return, so we can't flag an error on it. */
+	if (expr -> op == expr_funcall ||
+	    expr -> op == expr_variable_reference)
+		return 1;
+
+	switch (context) {
+	      case context_any:
+		return 1;
+
+	      case context_boolean:
+		if (is_boolean_expression (expr))
+			return 1;
+		return 0;
+
+	      case context_data:
+		if (is_data_expression (expr))
+			return 1;
+		return 0;
+
+	      case context_numeric:
+		if (is_numeric_expression (expr))
+			return 1;
+		return 0;
+
+	      case context_dns:
+		if (is_dns_expression (expr)) {
+			return 1;
+		}
+		return 0;
+
+	      case context_data_or_numeric:
+		if (is_numeric_expression (expr) ||
+		    is_data_expression (expr)) {
+			return 1;
+		}
+		return 0;
+
+	      case context_function:
+		if (expr -> op == expr_function)
+			return 1;
+		return 0;
+	}
+	return 0;
+}
+#endif /* NOTYET */
 
 /* vim: set tabstop=8: */

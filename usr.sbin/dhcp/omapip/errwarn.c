@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1.1.3 2000/09/04 23:10:32 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.1.1.4 2000/10/17 15:09:49 taca Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -56,8 +56,9 @@ int log_perror = 1;
 int log_priority;
 void (*log_cleanup) (void);
 
-static char mbuf [1024];
-static char fbuf [1024];
+#define CVT_BUF_MAX 1023
+static char mbuf [CVT_BUF_MAX + 1];
+static char fbuf [CVT_BUF_MAX + 1];
 
 /* Log an error message, then exit... */
 
@@ -187,13 +188,11 @@ void do_percentm (obuf, ibuf)
 	char *p = obuf;
 	int infmt = 0;
 	const char *m;
+	int len = 0;
 
-	while (*s)
-	{
-		if (infmt)
-		{
-			if (*s == 'm')
-			{
+	while (*s) {
+		if (infmt) {
+			if (*s == 'm') {
 #ifndef __CYGWIN32__
 				m = strerror (errno);
 #else
@@ -201,21 +200,27 @@ void do_percentm (obuf, ibuf)
 #endif
 				if (!m)
 					m = "<unknown error>";
+				len += strlen (m);
+				if (len > CVT_BUF_MAX)
+					goto out;
 				strcpy (p - 1, m);
 				p += strlen (p);
 				++s;
-			}
-			else
+			} else {
+				if (++len > CVT_BUF_MAX)
+					goto out;
 				*p++ = *s++;
+			}
 			infmt = 0;
-		}
-		else
-		{
+		} else {
 			if (*s == '%')
 				infmt = 1;
+			if (++len > CVT_BUF_MAX)
+				goto out;
 			*p++ = *s++;
 		}
 	}
+      out:
 	*p = 0;
 }
 

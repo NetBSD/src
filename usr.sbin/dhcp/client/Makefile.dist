@@ -61,7 +61,7 @@ install: all
 			$(DESTDIR)$(ADMMANDIR)/dhclient-script$(ADMMANEXT)
 	$(MANINSTALL) $(MANFROM) dhclient.conf.$(MANCAT)5 $(MANTO) \
 			$(DESTDIR)$(FFMANDIR)/dhclient.conf$(FFMANEXT)
-	$(MANINSTALL) $(MANFROM) dhclient.leases.cat5 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhclient.leases.$(MANCAT)5 $(MANTO) \
 			$(DESTDIR)$(FFMANDIR)/dhclient.leases$(FFMANEXT)
 
 depend:

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.7 2000/09/04 23:10:10 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.8 2000/10/17 15:08:09 taca Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -138,19 +138,11 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 {
 	isc_result_t status;
 	ns_tsig_key *tkey;
-#if 0
-	struct dns_zone *zone;
 
-	zone = (struct dns_zone *)0;
-	status = dns_zone_lookup (&zone, zname);
-	if (status != ISC_R_SUCCESS)
-		return status;
-#else
 	if (!zone)
 		return ISC_R_NOTFOUND;
-#endif
+
 	if (!zone -> key) {
-		dns_zone_dereference (&zone, MDL);
 		return ISC_R_KEY_UNKNOWN;
 	}
 	
@@ -159,13 +151,11 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 	    (!zone -> key -> algorithm ||
 	     strlen (zone -> key -> algorithm) > NS_MAXDNAME) ||
 	    (!zone -> key)) {
-		dns_zone_dereference (&zone, MDL);
 		return ISC_R_INVALIDKEY;
 	}
 	tkey = dmalloc (sizeof *tkey, MDL);
 	if (!tkey) {
 	      nomem:
-		dns_zone_dereference (&zone, MDL);
 		return ISC_R_NOMEMORY;
 	}
 	memset (tkey, 0, sizeof *tkey);
@@ -405,6 +395,70 @@ void repudiate_zone (struct dns_zone **zone)
 
 	(*zone) -> timeout = cur_time - 1;
 	dns_zone_dereference (zone, MDL);
+}
+
+void cache_found_zone (ns_class class,
+		       char *zname, struct in_addr *addrs, int naddrs)
+{
+	isc_result_t status = ISC_R_NOTFOUND;
+	const char *np;
+	struct dns_zone *zone = (struct dns_zone *)0;
+	struct data_string nsaddrs;
+	int ix = strlen (zname);
+
+	if (zname [ix - 1] == '.')
+		ix = 0;
+
+	/* See if there's already such a zone. */
+	if (dns_zone_lookup (&zone, np) == ISC_R_SUCCESS) {
+		/* If it's not a dynamic zone, leave it alone. */
+		if (!zone -> timeout)
+			return;
+		/* Address may have changed, so just blow it away. */
+		if (zone -> primary)
+			option_cache_dereference (&zone -> primary, MDL);
+		if (zone -> secondary)
+			option_cache_dereference (&zone -> secondary, MDL);
+	}
+
+	if (!dns_zone_allocate (&zone, MDL))
+		return;
+
+	if (!zone -> name) {
+		zone -> name =
+			dmalloc (strlen (zname) + 1 + (ix != 0), MDL);
+		if (!zone -> name) {
+			dns_zone_dereference (&zone, MDL);
+			return;
+		}
+		strcpy (zone -> name, zname);
+		/* Add a trailing '.' if it was missing. */
+		if (ix) {
+			zone -> name [ix] = '.';
+			zone -> name [ix + 1] = 0;
+		}
+	}
+
+	/* XXX Need to get the lower-level code to push the actual zone
+	   XXX TTL up to us. */
+	zone -> timeout = cur_time + 1800;
+	
+	if (!option_cache_allocate (&zone -> primary, MDL)) {
+		dns_zone_dereference (&zone, MDL);
+		return;
+	}
+	if (!buffer_allocate (&zone -> primary -> data.buffer,
+			      naddrs * sizeof (struct in_addr), MDL)) {
+		dns_zone_dereference (&zone, MDL);
+		return;
+	}
+	memcpy (zone -> primary -> data.buffer -> data,
+		addrs, naddrs * sizeof *addrs);
+	zone -> primary -> data.data =
+		&zone -> primary -> data.buffer -> data [0];
+	zone -> primary -> data.len = naddrs * sizeof *addrs;
+
+	enter_dns_zone (zone);
 }
 #endif /* NSUPDATE */
 

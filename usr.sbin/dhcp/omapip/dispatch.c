@@ -326,10 +326,32 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 				     obj -> outer;
 				     obj = obj -> outer)
 					;
-				for (; obj; obj = obj -> inner)
-					log_error ("Object %lx %s",
-						   (unsigned long)obj,
-						   obj -> type -> name);
+				for (; obj; obj = obj -> inner) {
+				    omapi_value_t *ov;
+				    int len;
+				    const char *s;
+				    ov = (omapi_value_t *)0;
+				    omapi_get_value_str (obj,
+							 (omapi_object_t *)0,
+							 "name", &ov);
+				    if (ov && ov -> value &&
+					(ov -> value -> type ==
+					 omapi_datatype_string)) {
+					s = (char *)
+						ov -> value -> u.buffer.value;
+					len = ov -> value -> u.buffer.len;
+				    } else {
+					s = "";
+					len = 0;
+				    }
+				    log_error ("Object %lx %s%s%.*s",
+					       (unsigned long)obj,
+					       obj -> type -> name,
+					       len ? " " : "",
+					       len, s);
+				    if (len)
+					omapi_value_dereference (&ov, MDL);
+				}
 				status = (*(io -> reaper)) (io -> inner);
 				goto again;
 			    }

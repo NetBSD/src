@@ -21,10 +21,10 @@ CATMANPAGES = omapi.cat3
 SEDMANPAGES = omapi.man3
 SRC    = protocol.c buffer.c alloc.c result.c connection.c errwarn.c \
 	 listener.c dispatch.c generic.c support.c handle.c message.c \
-	 convert.c hash.c auth.c
+	 convert.c hash.c auth.c inet_addr.c
 OBJ    = protocol.o buffer.o alloc.o result.o connection.o errwarn.o \
 	 listener.o dispatch.o generic.o support.o handle.o message.o \
-	 convert.o hash.o auth.o
+	 convert.o hash.o auth.o inet_addr.o
 MAN    = omapi.3
 
 DEBUG  = -g
