@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.7 2002/03/17 19:40:42 atatat Exp $ */
+/* $NetBSD: lunafb.c,v 1.8 2002/07/04 14:43:49 junyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.7 2002/03/17 19:40:42 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.8 2002/07/04 14:43:49 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ omfb_cnattach()
 	long defattr;
 
 	omfb_getdevconfig(OMFB_FB_WADDR, dc);
-	(*omfb_emulops.alloc_attr)(&dc->dc_rcons, 0, 0, 0, &defattr);
+	(*omfb_emulops.allocattr)(&dc->dc_rcons, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&omfb_stdscreen, &dc->dc_rcons, 0, 0, defattr);
 	omfb_console = 1;
 	return (0);
@@ -471,7 +471,7 @@ omfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*omfb_emulops.alloc_attr)(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	(*omfb_emulops.allocattr)(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
