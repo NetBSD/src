@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.98 2003/05/25 21:53:49 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.99 2003/05/25 22:09:44 lha Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -336,12 +336,12 @@ Responsible:	atatat
 Notes:
 
 Package:	heimdal
-Version:	0.5
+Version:	0.6
 Current Vers:	0.6
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Mailing List:	heimdal-discuss@pdc.kth.se
-Responsible:	assar, joda
+Responsible:	assar, joda, lha
 Notes:
 
 Package:	hunt
