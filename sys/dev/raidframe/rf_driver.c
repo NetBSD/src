@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.93 2004/03/09 02:41:21 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.94 2004/03/13 02:00:15 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.93 2004/03/09 02:41:21 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.94 2004/03/13 02:00:15 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -392,7 +392,6 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	if (rf_keepAccTotals) {
 		raidPtr->keep_acc_totals = 1;
 	}
-	rf_StartUserStats(raidPtr);
 
 	raidPtr->valid = 1;
 
@@ -749,136 +748,6 @@ rf_ConfigureDebug(RF_Config_t *cfgPtr)
 		set_debug_option(name_p, val);
 	}
 }
-/* performance monitoring stuff */
-
-#define TIMEVAL_TO_US(t) (((long) t.tv_sec) * 1000000L + (long) t.tv_usec)
-
-#if !defined(_KERNEL) && !defined(SIMULATE)
-
-/*
- * Throughput stats currently only used in user-level RAIDframe
- */
-
-static int 
-rf_InitThroughputStats(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-		       RF_Config_t *cfgPtr)
-{
-	int     rc;
-
-	/* these used by user-level raidframe only */
-	rf_mutex_init(&raidPtr->throughputstats.mutex);
-	raidPtr->throughputstats.sum_io_us = 0;
-	raidPtr->throughputstats.num_ios = 0;
-	raidPtr->throughputstats.num_out_ios = 0;
-	return (0);
-}
-
-void 
-rf_StartThroughputStats(RF_Raid_t *raidPtr)
-{
-	RF_LOCK_MUTEX(raidPtr->throughputstats.mutex);
-	raidPtr->throughputstats.num_ios++;
-	raidPtr->throughputstats.num_out_ios++;
-	if (raidPtr->throughputstats.num_out_ios == 1)
-		RF_GETTIME(raidPtr->throughputstats.start);
-	RF_UNLOCK_MUTEX(raidPtr->throughputstats.mutex);
-}
-
-static void 
-rf_StopThroughputStats(RF_Raid_t *raidPtr)
-{
-	struct timeval diff;
-
-	RF_LOCK_MUTEX(raidPtr->throughputstats.mutex);
-	raidPtr->throughputstats.num_out_ios--;
-	if (raidPtr->throughputstats.num_out_ios == 0) {
-		RF_GETTIME(raidPtr->throughputstats.stop);
-		RF_TIMEVAL_DIFF(&raidPtr->throughputstats.start, &raidPtr->throughputstats.stop, &diff);
-		raidPtr->throughputstats.sum_io_us += TIMEVAL_TO_US(diff);
-	}
-	RF_UNLOCK_MUTEX(raidPtr->throughputstats.mutex);
-}
-
-static void 
-rf_PrintThroughputStats(RF_Raid_t *raidPtr)
-{
-	RF_ASSERT(raidPtr->throughputstats.num_out_ios == 0);
-	if (raidPtr->throughputstats.sum_io_us != 0) {
-		printf("[Througphut: %8.2f IOs/second]\n", raidPtr->throughputstats.num_ios
-		    / (raidPtr->throughputstats.sum_io_us / 1000000.0));
-	}
-}
-#endif				/* !KERNEL && !SIMULATE */
-
-void 
-rf_StartUserStats(RF_Raid_t *raidPtr)
-{
-	RF_GETTIME(raidPtr->userstats.start);
-	raidPtr->userstats.sum_io_us = 0;
-	raidPtr->userstats.num_ios = 0;
-	raidPtr->userstats.num_sect_moved = 0;
-}
-
-void 
-rf_StopUserStats(RF_Raid_t *raidPtr)
-{
-	RF_GETTIME(raidPtr->userstats.stop);
-}
-
-/* rt: resp time in us 
-   numsect: number of sectors for this access */
-void 
-rf_UpdateUserStats(RF_Raid_t *raidPtr, int rt, int numsect)
-{
-	raidPtr->userstats.sum_io_us += rt;
-	raidPtr->userstats.num_ios++;
-	raidPtr->userstats.num_sect_moved += numsect;
-}
-
-void 
-rf_PrintUserStats(RF_Raid_t *raidPtr)
-{
-	long    elapsed_us, mbs, mbs_frac;
-	struct timeval diff;
-
-	RF_TIMEVAL_DIFF(&raidPtr->userstats.start, 
-			&raidPtr->userstats.stop, &diff);
-	elapsed_us = TIMEVAL_TO_US(diff);
-
-	/* 2000 sectors per megabyte, 10000000 microseconds per second */
-	if (elapsed_us)
-		mbs = (raidPtr->userstats.num_sect_moved / 2000) / 
-			(elapsed_us / 1000000);
-	else
-		mbs = 0;
-
-	/* this computes only the first digit of the fractional mb/s moved */
-	if (elapsed_us) {
-		mbs_frac = ((raidPtr->userstats.num_sect_moved / 200) / 
-			    (elapsed_us / 1000000)) - (mbs * 10);
-	} else {
-		mbs_frac = 0;
-	}
-
-	printf("raid%d: Number of I/Os:             %ld\n", 
-	       raidPtr->raidid, raidPtr->userstats.num_ios);
-	printf("raid%d: Elapsed time (us):          %ld\n", 
-	       raidPtr->raidid, elapsed_us);
-	printf("raid%d: User I/Os per second:       %ld\n", 
-	       raidPtr->raidid, RF_DB0_CHECK(raidPtr->userstats.num_ios, 
-					     (elapsed_us / 1000000)));
-	printf("raid%d: Average user response time: %ld us\n", 
-	       raidPtr->raidid, RF_DB0_CHECK(raidPtr->userstats.sum_io_us, 
-					     raidPtr->userstats.num_ios));
-	printf("raid%d: Total sectors moved:        %ld\n", 
-	       raidPtr->raidid, raidPtr->userstats.num_sect_moved);
-	printf("raid%d: Average access size (sect): %ld\n", 
-	       raidPtr->raidid, RF_DB0_CHECK(raidPtr->userstats.num_sect_moved,
-					     raidPtr->userstats.num_ios));
-	printf("raid%d: Achieved data rate:         %ld.%ld MB/sec\n", 
-	       raidPtr->raidid, mbs, mbs_frac);
-}
-
 
 void
 rf_print_panic_message(int line, char *file)
