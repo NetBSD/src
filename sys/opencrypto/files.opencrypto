@@ -1,8 +1,8 @@
-#	$NetBSD: files.opencrypto,v 1.6 2003/08/24 19:21:13 thorpej Exp $
+#	$NetBSD: files.opencrypto,v 1.7 2003/08/24 19:26:56 thorpej Exp $
 #
 #
 
-defpseudo opencrypto: des
+defpseudo opencrypto: des, ripemd160, sha2
 
 file	opencrypto/criov.c		opencrypto
 file	opencrypto/cryptodev.c		opencrypto
@@ -13,13 +13,11 @@ file	opencrypto/crypto.c		opencrypto	needs-flag
 #Standalone m_apply()/m_getptr()
 #file	opencrypto/crypto_mbuf.c	opencrypto
 
-# crypto  algorithms
+# local crypto algorithms - XXX should G/C and use crypto/...
 file	opencrypto/blf.c		opencrypto
 file	opencrypto/skipjack.c		opencrypto
-# rmd160.c is now in sys/crypto/ripemd160/files.ripemd160
 file	opencrypto/cast.c		opencrypto
 file	opencrypto/rijndael.c		opencrypto
-# sha2.c is in crypto/sha2/files.sha2
 
 file	opencrypto/deflate.c		opencrypto
 
