@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.9 1997/10/19 18:35:09 mycroft Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.10 1997/10/20 22:05:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -413,7 +413,7 @@ hpux_sys_fstat(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
-	struct sys_fstat_args fsa;
+	struct sys___fstat13_args fsa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -426,7 +426,7 @@ hpux_sys_fstat(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys_fstat(p, &fsa, retval)))
+	if ((error = sys___fstat13(p, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -477,7 +477,7 @@ hpux_stat1(p, v, retval, dolstat)
 		syscallarg(char *) path;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
-	struct sys_stat_args sa;
+	struct sys___stat13_args sa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -492,9 +492,9 @@ hpux_stat1(p, v, retval, dolstat)
 	SCARG(&sa, path) = SCARG(uap, path);
 
 	if (dolstat)
-		error = sys_lstat(p, &sa, retval);
+		error = sys___lstat13(p, &sa, retval);
 	else
-		error = sys_stat(p, &sa, retval);
+		error = sys___stat13(p, &sa, retval);
 
 	if (error)
 		return (error);
@@ -520,7 +520,7 @@ hpux_sys_fstat_6x(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
-	struct sys_fstat_args fsa;
+	struct sys___fstat13_args fsa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -533,7 +533,7 @@ hpux_sys_fstat_6x(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys_fstat(p, &fsa, retval)))
+	if ((error = sys___fstat13(p, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -557,7 +557,7 @@ hpux_sys_stat_6x(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
-	struct sys_stat_args sa;
+	struct sys___stat13_args sa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
 	caddr_t sg;
@@ -571,7 +571,7 @@ hpux_sys_stat_6x(p, v, retval)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = sys_stat(p, &sa, retval)))
+	if ((error = sys___stat13(p, &sa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -721,24 +721,19 @@ hpux_sys_mknod(p, v, retval)
 		syscallarf(int) dev;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
-	struct sys_mkfifo_args mfa;
-	struct sys_mknod_args mna;
+	struct sys_mkfifo_args bma;
 
 	HPUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	/*
 	 * BSD handles FIFOs separately.
 	 */
-	if (S_ISFIFO(SCARG(uap, mode))) {
-		SCARG(&mfa, path) = SCARG(uap, path);
-		SCARG(&mfa, mode) = SCARG(uap, mode);
-		return (sys_mkfifo(p, &mfa, retval));
-	} else {
-		SCARG(&mna, path) = SCARG(uap, path);
-		SCARG(&mna, mode) = SCARG(uap, mode);
-		SCARG(&mna, dev) = SCARG(uap, dev);
-		return (sys_mknod(p, &mna, retval));
-	}
+	if (SCARG(uap, mode) & S_IFIFO) {
+		SCARG(&bma, path) = SCARG(uap, path);
+		SCARG(&bma, mode) = SCARG(uap, mode);
+		return (sys_mkfifo(p, uap, retval));
+	} else
+		return (sys_mknod(p, uap, retval));
 }
 
 /*

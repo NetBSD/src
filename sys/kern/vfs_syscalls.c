@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.104 1997/10/19 17:18:10 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.105 1997/10/20 22:05:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1257,12 +1257,12 @@ out1:
  */
 /* ARGSUSED */
 int
-sys_stat(p, v, retval)
+sys___stat13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_stat_args /* {
+	register struct sys___stat13_args /* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
@@ -1287,12 +1287,12 @@ sys_stat(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_lstat(p, v, retval)
+sys___lstat13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_lstat_args /* {
+	register struct sys___lstat13_args /* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;

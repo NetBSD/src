@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.6 1997/10/16 23:52:20 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.7 1997/10/20 22:05:21 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
@@ -168,14 +168,14 @@ ibcs2_sys_stat(p, v, retval)
 	} */ *uap = v;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys_stat_args cup;
+	struct sys___stat13_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	if ((error = sys_stat(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -196,14 +196,14 @@ ibcs2_sys_lstat(p, v, retval)
 	} */ *uap = v;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys_lstat_args cup;
+	struct sys___lstat13_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	if ((error = sys_lstat(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -224,13 +224,13 @@ ibcs2_sys_fstat(p, v, retval)
 	} */ *uap = v;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct sys_fstat_args cup;
+	struct sys___fstat13_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(st));
-	if ((error = sys_fstat(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return error;

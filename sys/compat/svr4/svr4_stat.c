@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.23 1997/07/21 23:02:39 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.24 1997/10/20 22:05:18 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -166,7 +166,7 @@ svr4_sys_stat(p, v, retval)
 #else
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct sys_stat_args	cup;
+	struct sys___stat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -176,7 +176,7 @@ svr4_sys_stat(p, v, retval)
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
 
-	if ((error = sys_stat(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -212,7 +212,7 @@ svr4_sys_lstat(p, v, retval)
 #else
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct sys_lstat_args	cup;
+	struct sys___lstat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -221,7 +221,7 @@ svr4_sys_lstat(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_lstat(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -257,7 +257,7 @@ svr4_sys_fstat(p, v, retval)
 #else
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct sys_fstat_args	cup;
+	struct sys___fstat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -265,7 +265,7 @@ svr4_sys_fstat(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_fstat(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -290,7 +290,7 @@ svr4_sys_xstat(p, v, retval)
 	struct svr4_sys_xstat_args *uap = v;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct sys_stat_args	cup;
+	struct sys___stat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -299,7 +299,7 @@ svr4_sys_xstat(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_stat(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -326,7 +326,7 @@ svr4_sys_lxstat(p, v, retval)
 	struct svr4_sys_lxstat_args *uap = v;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct sys_lstat_args	cup;
+	struct sys___lstat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -335,7 +335,7 @@ svr4_sys_lxstat(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_lstat(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -362,7 +362,7 @@ svr4_sys_fxstat(p, v, retval)
 	struct svr4_sys_fxstat_args *uap = v;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct sys_fstat_args	cup;
+	struct sys___fstat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -370,7 +370,7 @@ svr4_sys_fxstat(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_fstat(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -394,7 +394,7 @@ svr4_sys_stat64(p, v, retval)
 	struct svr4_sys_stat64_args *uap = v;
 	struct stat		st;
 	struct svr4_stat64	svr4_st;
-	struct sys_stat_args	cup;
+	struct sys___stat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -403,7 +403,7 @@ svr4_sys_stat64(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_stat(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -430,7 +430,7 @@ svr4_sys_lstat64(p, v, retval)
 	struct svr4_sys_lstat64_args *uap = v;
 	struct stat		st;
 	struct svr4_stat64	svr4_st;
-	struct sys_lstat_args	cup;
+	struct sys___lstat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -439,7 +439,7 @@ svr4_sys_lstat64(p, v, retval)
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_lstat(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -466,7 +466,7 @@ svr4_sys_fstat64(p, v, retval)
 	struct svr4_sys_fstat64_args *uap = v;
 	struct stat		st;
 	struct svr4_stat64	svr4_st;
-	struct sys_fstat_args	cup;
+	struct sys___fstat13_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -474,7 +474,7 @@ svr4_sys_fstat64(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = sys_fstat(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(p, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.13 1997/10/16 23:31:21 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.14 1997/10/20 22:05:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -83,8 +83,8 @@
  * Flags to msync
  */
 #define	MS_ASYNC	0x01	/* perform asynchronous writes */
-#define	MS_SYNC		0x02	/* perform synchronous writes */
-#define	MS_INVALIDATE	0x04	/* invalidate cached data */
+#define	MS_INVALIDATE	0x02	/* invalidate cached data */
+#define	MS_SYNC		0x04	/* perform synchronous writes */
 
 #ifndef _KERNEL
 
@@ -95,11 +95,14 @@ __BEGIN_DECLS
 void   *mmap __P((void *, size_t, int, int, int, off_t));
 int	munmap __P((void *, size_t));
 int	mprotect __P((void *, size_t, int));
-int	msync __P((void *, size_t, int));
+int	msync __P((void *, size_t));
+int	__msync13 __P((void *, size_t, int));
 int	mlock __P((void *, size_t));
 int	munlock __P((void *, size_t));
 int	madvise __P((void *, size_t, int));
 __END_DECLS
+
+#define msync(p,s,f)	__msync13(p,s,f)
 
 #endif /* !_KERNEL */
 
