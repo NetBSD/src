@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.233 1999/04/17 16:52:06 drochner Exp $
+#	$NetBSD: GENERIC,v 1.234 1999/05/06 16:29:26 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -93,6 +93,7 @@ file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
+file-system 	NTFS		# Windows/NT file system
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
