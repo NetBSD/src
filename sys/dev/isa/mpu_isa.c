@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.3 1999/08/02 17:37:42 augustss Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.4 1999/08/05 11:25:47 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ mpu_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
 				       mpu_intr, sc);
 	
-	sc->model = "Roland MPU-401 MIDI UART";
+	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 	mpu_attach(&sc->sc_mpu);
 }
 
