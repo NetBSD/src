@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.9 1998/09/13 05:32:18 wrstuden Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.10 1999/05/06 18:40:39 wrstuden Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.9 1998/09/13 05:32:18 wrstuden Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.10 1999/05/06 18:40:39 wrstuden Exp $");
 #endif
 
 #include <stdlib.h>
@@ -682,6 +682,7 @@ void gen_output_makefile(void)
     for(p = progs; p != NULL; p = p->next)
 	prog_makefile_rules(outmk, p); 
 
+    fprintf(outmk, "\n.include <bsd.sys.mk>\n");
     fprintf(outmk, "\n# ========\n");
     fclose(outmk);
 }
@@ -768,14 +769,14 @@ void top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
-    fprintf(outmk, "STRIP=strip\n");
+    fprintf(outmk, "STRIP?=strip\n");
     fprintf(outmk, "LIBS=");
     fprintf(outmk, "-L%s ", libdir);
     output_strlst(outmk, libs);
 
     fprintf(outmk, "CRUNCHED_OBJS=");
     for(p = progs; p != NULL; p = p->next)
-	fprintf(outmk, " %s.lo", p->name);
+	fprintf(outmk, " %s.cro", p->name);
     fprintf(outmk, "\n");
 
     fprintf(outmk, "SUBMAKE_TARGETS=");
@@ -790,7 +791,7 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t$(STRIP) %s\n", execfname);
     fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
-    fprintf(outmk, "clean:\n\trm -f %s *.lo *.o *_stub.c\n",
+    fprintf(outmk, "clean:\n\trm -f %s *.cro *.o *_stub.c\n",
 	    execfname);
 }
 
@@ -819,11 +820,11 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	           "int _crunched_%s_stub(int argc, char **argv, char **envp)"
 	           "{return main(argc,argv,envp);}\" >%s_stub.c\n",
 	    p->ident, p->name);
-    fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
+    fprintf(outmk, "%s.cro: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
-    fprintf(outmk, "\t${LD} -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n", 
+    fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
-    fprintf(outmk, "\tcrunchide -k _crunched_%s_stub %s.lo\n", 
+    fprintf(outmk, "\tcrunchide -k _crunched_%s_stub %s.cro\n", 
 	    p->ident, p->name);
 }
 
