@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.33.2.7 2002/07/20 02:53:49 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.33.2.8 2002/07/22 05:17:54 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,16 +60,19 @@ If you are asked for a terminal type, respond with
 .Ic hp300h
 for a local console, or whatever is appropriate for your serial console.
 .\}
-.el .ie r_macppc \{\
+.el \{\
+.ie r_macppc \{\
 .Ic vt100
 (or whatever is appropriate for your terminal type)
 .\}
-.el .ie r_pmax \{\
+.el \{\
+.ie r_pmax \{\
 the correct terminal type as discussed in the
 .Sx Once you've booted the diskimage
 section.
 .\}
-.el .ie r_sparc \{\
+.el \{\
+.ie r_sparc \{\
 .Ic sun
 for a local console, or whatever is appropriate for your serial
 console (some systems display garbage with a
@@ -80,6 +83,9 @@ terminal type, you may need to use
 .el \{\
 .Ic vt220
 (or whatever is appropriate for your terminal type)
+.\}
+.\}
+.\}
 .\}
 and press
 .Key RETURN .
@@ -121,11 +127,12 @@ or
 Do the following:
 .Pp
 .Dl # Ic "mount /usr"
-.ie     r_hp300 .Dl # Ic "export TERM=hp300h"
-.el .ie r_macppc .Dl # Ic "export TERM=vt100"
-.el .ie r_pmax  .Dl # Ic "export TERM=termtype"
-.el .ie r_sparc .Dl # Ic "export TERM=sun"
-.el             .Dl # Ic "export TERM=vt220"
+.       ie r_hp300   .Dl # Ic "export TERM=hp300h"
+.el \{ .ie r_macppc  .Dl # Ic "export TERM=vt100"
+.el \{ .ie r_pmax    .Dl # Ic "export TERM=termtype"
+.el \{ .ie r_sparc   .Dl # Ic "export TERM=sun"
+.el \{               .Dl # Ic "export TERM=vt220"
+\}\}\}\}
 .Pp
 If you have
 .Pa /var
@@ -158,7 +165,8 @@ or
 .Li sn0 .
 For example:
 .\}
-.el .ie r_macppc \{\
+.el \{\
+.ie r_macppc \{\
 where your on-board interfaces may be one of
 .Li mc0 ,
 .Li bm0 ,
@@ -168,31 +176,23 @@ or
 For example:
 .\}
 .el along the lines of
+.\}
 .Pp
-.ie \n[hp300]:\n[pmax]:\n[sparc] \{\
-.Dl                  ifconfig_le0="inet 123.45.67.89 netmask 255.255.255.0"
-.\}
-.el .ie \n[next68k] \{\
-.Dl                  ifconfig_xe0="inet 123.45.67.89 netmask 255.255.255.0"
-.\}
-.el .ie r_mac68k .Dl ifconfig_sn0="inet 123.45.67.89 netmask 255.255.255.0"
-.el .ie r_macppc .Dl ifconfig_mc0="inet 123.45.67.89 netmask 255.255.255.0"
-.el              .Dl ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
+.
+.ds IFname de0
+.if \n[hp300]:\n[mvme68k]:\n[pmax]:\n[sparc] .ds IFname le0
+.if r_next68k .ds IFname xe0
+.if r_mac68k  .ds IFname sn0
+.if r_macppc  .ds IFname mc0
+.
+.Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
 .Pp
 or, if you have
 .Ar myname.my.dom
 in
 .Pa /etc/hosts :
 .Pp
-.ie \n[hp300]:\n[pmax]:\n[sparc] \{\
-.Dl                  ifconfig_le0="inet myname.my.dom netmask 255.255.255.0"
-.\}
-.el .ie \n[next68k] \{\
-.Dl                  ifconfig_xe0="inet myname.my.dom netmask 255.255.255.0"
-.\}
-.el .ie r_mac68k .Dl ifconfig_sn0="inet myname.my.dom netmask 255.255.255.0"
-.el .ie r_macppc .Dl ifconfig_mc0="inet myname.my.dom netmask 255.255.255.0"
-.el              .Dl ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
+.Dl ifconfig_\*[IFname]="inet myname.my.dom netmask 255.255.255.0"
 .Pp
 To enable proper hostname resolution, you will also want to add an
 .Pa /etc/resolv.conf
