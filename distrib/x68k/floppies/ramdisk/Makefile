@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/03/04 20:32:21 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.7 1999/03/24 15:54:45 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -24,7 +24,7 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-DISKTYPE=	floppy3
+DISKTYPE=	floppy5
 
 install.sh: install.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
@@ -36,7 +36,7 @@ start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
 all: ${AUXTARGETS} ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} count=2880
+	dd if=/dev/zero of=${IMAGE} count=2400
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
