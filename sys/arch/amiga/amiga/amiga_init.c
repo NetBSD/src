@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.65 1999/03/25 21:55:18 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.66 1999/09/25 21:47:03 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -73,7 +73,7 @@ extern u_int	virtual_avail;
 extern int	protostfree;
 #endif
 extern u_long boot_partition;
-vm_offset_t	amiga_uptbase;
+vaddr_t		amiga_uptbase;
 
 extern char *esym;
 
@@ -86,8 +86,8 @@ extern u_long noncontig_enable;
 /*
  * some addresses used in locore
  */
-vm_offset_t INTREQRaddr;
-vm_offset_t INTREQWaddr;
+vaddr_t INTREQRaddr;
+vaddr_t INTREQWaddr;
 
 /*
  * these are used by the extended spl?() macros.
@@ -97,14 +97,14 @@ volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 /*
  * the number of pages in our hw mapping and the start address
  */
-vm_offset_t amigahwaddr;
+vaddr_t amigahwaddr;
 u_int namigahwpg;
 
-vm_offset_t amigashdwaddr;
+vaddr_t amigashdwaddr;
 u_int namigashdwpg;
 
-vm_offset_t z2mem_start;		/* XXX */
-static vm_offset_t z2mem_end;		/* XXX */
+vaddr_t z2mem_start;		/* XXX */
+static vaddr_t z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
 
 u_long boot_fphystart, boot_fphysize, boot_cphysize;
@@ -132,7 +132,7 @@ chipmem_steal(amount)
 	 * steal from top of chipmem, so we don't collide with
 	 * the kernel loaded into chipmem in the not-yet-mapped state.
 	 */
-	vm_offset_t p = chipmem_end - amount;
+	vaddr_t p = chipmem_end - amount;
 	if (p & 1)
 		p = p - 1;
 	chipmem_end = p;
@@ -233,7 +233,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	RELOC(boot_cphysize, u_long) = cphysize;
 
 	RELOC(machineid, int) = id;
-	RELOC(chipmem_end, vm_offset_t) = cphysize;
+	RELOC(chipmem_end, paddr_t) = cphysize;
 	RELOC(esym, char *) = esym_addr;
 	RELOC(boot_flags, u_long) = flags;
 	RELOC(boot_partition, u_long) = boot_part;
@@ -280,19 +280,19 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 				continue;
 			if (sp->ms_start == fphystart)
 				continue;
-			RELOC(z2mem_end, vm_offset_t) =
+			RELOC(z2mem_end, paddr_t) =
 			    sp->ms_start + sp->ms_size;
-			RELOC(z2mem_start, vm_offset_t) =
-			    RELOC(z2mem_end, vm_offset_t) - MAXPHYS *
+			RELOC(z2mem_start, paddr_t) =
+			    RELOC(z2mem_end, paddr_t) - MAXPHYS *
 			    RELOC(use_z2_mem, int) * 7;
 			RELOC(NZTWOMEMPG, u_int) =
-			    (RELOC(z2mem_end, vm_offset_t) -
-			    RELOC(z2mem_start, vm_offset_t)) / NBPG;
-			if ((RELOC(z2mem_end, vm_offset_t) -
-			    RELOC(z2mem_start, vm_offset_t)) > sp->ms_size) {
+			    (RELOC(z2mem_end, paddr_t) -
+			    RELOC(z2mem_start, paddr_t)) / NBPG;
+			if ((RELOC(z2mem_end, paddr_t) -
+			    RELOC(z2mem_start, paddr_t)) > sp->ms_size) {
 				RELOC(NZTWOMEMPG, u_int) = sp->ms_size / NBPG;
-				RELOC(z2mem_start, vm_offset_t) =
-				    RELOC(z2mem_end, vm_offset_t) - sp->ms_size;
+				RELOC(z2mem_start, paddr_t) =
+				    RELOC(z2mem_end, paddr_t) - sp->ms_size;
 			}
 			break;
 		}
@@ -655,10 +655,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 			pg_proto += NBPG;
 		}
 	}
-	if (RELOC(z2mem_end, vm_offset_t)) {			/* XXX */
-		pg_proto = RELOC(z2mem_start, vm_offset_t) |	/* XXX */
+	if (RELOC(z2mem_end, paddr_t)) {			/* XXX */
+		pg_proto = RELOC(z2mem_start, paddr_t) |	/* XXX */
 		    PG_RW | PG_V;				/* XXX */
-		while (pg_proto < RELOC(z2mem_end, vm_offset_t)) { /* XXX */
+		while (pg_proto < RELOC(z2mem_end, paddr_t)) { /* XXX */
 			*pg++ = pg_proto;			/* XXX */
 			pg_proto += NBPG;			/* XXX */
 		}						/* XXX */
@@ -683,7 +683,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	 * Initial any "shadow" mapping of the kernel
 	 */
 	if (loadbase != 0 && shadow_pt != 0) {
-		RELOC(amigashdwaddr, vm_offset_t) = (u_int)shadow_pt - loadbase;
+		RELOC(amigashdwaddr, vaddr_t) = (u_int)shadow_pt - loadbase;
 		RELOC(namigashdwpg, u_int) = (vstart + USPACE) >> PGSHIFT;
 		pg_proto = fphystart | PG_RO | PG_V;
 		pg = shadow_pt;
@@ -726,7 +726,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	 * XXX 16 MB instead of 256 MB should be enough, but...
 	 * we need to fix the fastmem loading first. (see comment at line 375)
 	 */
-	RELOC(amiga_uptbase, vm_offset_t) =
+	RELOC(amiga_uptbase, vaddr_t) =
 	    roundup(RELOC(Sysmap, u_int) + 0x10000000, 0x10000000);
 
 	/*
@@ -745,22 +745,22 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		RELOC(CIAADDR, u_int) =
 		    RELOC(DRCCADDR, u_int) + DRCIAPG * NBPG;
 
-		if (RELOC(z2mem_end, vm_offset_t)) {		/* XXX */
+		if (RELOC(z2mem_end, vaddr_t)) {		/* XXX */
 			RELOC(ZTWOMEMADDR, u_int) =
 			    RELOC(DRCCADDR, u_int) + NDRCCPG * NBPG;
 
-			RELOC(ZBUSADDR, vm_offset_t) =
+			RELOC(ZBUSADDR, vaddr_t) =
 			    RELOC(ZTWOMEMADDR, u_int) + 
 			    RELOC(NZTWOMEMPG, u_int)*NBPG;
 		} else {
-			RELOC(ZBUSADDR, vm_offset_t) =
+			RELOC(ZBUSADDR, vaddr_t) =
 			    RELOC(DRCCADDR, u_int) + NDRCCPG * NBPG;
 		}
 
 		/*
 		 * some nice variables for pmap to use
 		 */
-		RELOC(amigahwaddr, vm_offset_t) = RELOC(DRCCADDR, u_int);
+		RELOC(amigahwaddr, vaddr_t) = RELOC(DRCCADDR, u_int);
 	} else 
 #endif
 	{
@@ -775,17 +775,17 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 			RELOC(CIAADDR, u_int) =
 			    RELOC(ZTWOMEMADDR, u_int) + RELOC(NZTWOMEMPG, u_int) * NBPG;
 		}
-		RELOC(ZTWOROMADDR, vm_offset_t)  =
+		RELOC(ZTWOROMADDR, vaddr_t)  =
 		    RELOC(CIAADDR, u_int) + NCIAPG * NBPG;
-		RELOC(ZBUSADDR, vm_offset_t) =
+		RELOC(ZBUSADDR, vaddr_t) =
 		    RELOC(ZTWOROMADDR, u_int) + NZTWOROMPG * NBPG;
-		RELOC(CIAADDR, vm_offset_t) += NBPG/2;	/* not on 8k boundery :-( */
-		RELOC(CUSTOMADDR, vm_offset_t)  =
+		RELOC(CIAADDR, vaddr_t) += NBPG/2;	/* not on 8k boundery :-( */
+		RELOC(CUSTOMADDR, vaddr_t)  =
 		    RELOC(ZTWOROMADDR, u_int) - ZTWOROMBASE + CUSTOMBASE;
 		/*
 		 * some nice variables for pmap to use
 		 */
-		RELOC(amigahwaddr, vm_offset_t) = RELOC(CHIPMEMADDR, u_int);
+		RELOC(amigahwaddr, vaddr_t) = RELOC(CHIPMEMADDR, u_int);
 	}
 
 	/* Set number of pages to reserve for mapping Amiga hardware pages */
@@ -913,8 +913,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	} else 
 #endif
 	{
-		INTREQRaddr = (vm_offset_t)&custom.intreqr;
-		INTREQWaddr = (vm_offset_t)&custom.intreq;
+		INTREQRaddr = (vaddr_t)&custom.intreqr;
+		INTREQWaddr = (vaddr_t)&custom.intreq;
 	}
 	/*
 	 * Get our chip memory allocation system working
