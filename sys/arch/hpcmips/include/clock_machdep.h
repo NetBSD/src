@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
+/*	$NetBSD: clock_machdep.h,v 1.2 2000/02/09 10:41:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,6 +48,5 @@
  *		the acutal RTC hardware in use. clock
  */
 
-
-/* The  default clock rate on a pmax is 256 Hz. */
-#define CLOCK_RATE	256
+/* The  default clock rate on a vr41xx is 128 Hz. */
+#define CLOCK_RATE	128
