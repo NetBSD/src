@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220l8x16.h,v 1.2 2003/02/09 10:29:37 jdolecek Exp $	*/
+/* 	$NetBSD: vt220l8x16.h,v 1.3 2003/02/10 14:28:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -35,7 +35,7 @@
 /*
  * Translated into wsfont format by Izumi Tsutsui.
  */
-extern const u_char vt220l8x16_data[];
+extern u_char vt220l8x16_data[];
 
 struct wsdisplay_font vt220l8x16 = {
 	"vt220l",			/* typeface name */
@@ -50,7 +50,7 @@ struct wsdisplay_font vt220l8x16 = {
 	vt220l8x16_data			/* data */
 };
 
-static const u_char vt220l8x16_data[] = {
+static u_char vt220l8x16_data[] = {
 	/* 0x00 */
 	0x00,	/* ........ */
 	0x00,	/* ........ */
