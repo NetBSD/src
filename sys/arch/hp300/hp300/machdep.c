@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.2 1993/05/22 07:57:33 cgd Exp $
+ *	$Id: machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp $
  */
 
 #include "param.h"
@@ -112,6 +112,7 @@ extern	u_int lowram;
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
 
@@ -151,6 +152,7 @@ consinit()
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -284,8 +286,10 @@ again:
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
+/*	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+ *				 16*NCARGS, TRUE);
+ *	NOT CURRENTLY USED -- cgd
+ */
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -335,12 +339,15 @@ again:
  * XXX Should clear registers except sp, pc,
  * but would break init; should be fixed soon.
  */
-setregs(p, entry, retval)
+void
+setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
+	u_long stack;
 	int retval[2];
 {
 	p->p_regs[PC] = entry & ~1;
+	p->p_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -900,6 +907,7 @@ sigreturn(p, uap, retval)
 
 int	waittime = -1;
 
+void
 boot(howto)
 	register int howto;
 {
@@ -958,6 +966,7 @@ boot(howto)
 		doboot();
 		/*NOTREACHED*/
 	}
+	for (;;) ; /* should not be necessary, but here to quiet compiler */
 	/*NOTREACHED*/
 }
 
