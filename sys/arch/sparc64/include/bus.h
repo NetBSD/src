@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1998/09/06 21:53:42 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1999/01/30 17:02:32 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
  */
 
 /*
+ * Copyright (c) 1997, 1998 Eduardo E. Horvath. All rights reserved.
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -386,28 +387,28 @@ int bus_space_probe __P((
 
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_1(t, h, o);			\
 } while (0)
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_2(t, h, o);			\
 } while (0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_4(t, h, o);			\
 } while (0)
 
 #define	bus_space_read_multi_8(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		*p++ = bus_space_read_8(t, h, o);			\
 } while (0)
@@ -461,28 +462,28 @@ int bus_space_probe __P((
 
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_1(t, h, o, *p++);			\
 } while (0)
 
 #define bus_space_write_multi_2(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_2(t, h, o, *p++);			\
 } while (0)
 
 #define bus_space_write_multi_4(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_4(t, h, o, *p++);			\
 } while (0)
 
 #define bus_space_write_multi_8(t, h, o, a, c) do {			\
 	int i = c;							\
-	u_char *p = (u_char *)a;					\
+	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
 		bus_space_write_8(t, h, o, *p++);			\
 } while (0)
@@ -533,25 +534,25 @@ int bus_space_probe __P((
 
 #define bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
 {	int i = c;							\
-	while (i-- > 0)							\
+	for (; i; i--, o1++, o2++)					\
 	    bus_space_write_1(t, h1, o1, bus_space_read_1(t, h2, o2));	\
 } while (0)
 
 #define bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
 {	int i = c;							\
-	while (i-- > 0)							\
+	for (; i; i--, o1 += 2, o2 += 2)				\
 	    bus_space_write_2(t, h1, o1, bus_space_read_2(t, h2, o2));	\
 } while (0)
 
 #define bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
 {	int i = c;							\
-	while (i-- > 0)							\
+	for (; i; i--, o1 += 4, o2 += 4)				\
 	    bus_space_write_4(t, h1, o1, bus_space_read_4(t, h2, o2));	\
 } while (0)
 
 #define bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
 {	int i = c;							\
-	while (i-- > 0)							\
+	for (; i; i--, o1 += 8, o2 += 8)				\
 	    bus_space_write_8(t, h1, o1, bus_space_read_4(t, h2, o2));	\
 } while (0)
 
