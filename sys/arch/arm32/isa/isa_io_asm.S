@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io_asm.S,v 1.1 1998/06/08 17:49:44 tv Exp $	*/
+/*	$NetBSD: isa_io_asm.S,v 1.2 1998/06/28 07:27:53 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -51,14 +51,14 @@ pc	.req	r15
  * read single
  */
 
-ENTRY(isa_r_1)
+ENTRY(isa_bs_r_1)
 	ldrb	r0, [r1, r2]
 #ifdef GPROF
 	nop ; nop ; nop ; nop ; nop
 #endif
 	mov	pc, lr
 
-ENTRY(isa_r_2)
+ENTRY(isa_bs_r_2)
 	add	r0, r1, r2
 /*	ldrh	r0, [r0] */	.word	0xe1d000b0
 #ifdef GPROF
@@ -66,7 +66,7 @@ ENTRY(isa_r_2)
 #endif
 	mov	pc, lr
 
-ENTRY(isa_r_4)
+ENTRY(isa_bs_r_4)
 	ldr	r0, [r1, r2]
 #ifdef GPROF
 	nop ; nop ; nop ; nop ; nop
@@ -78,7 +78,7 @@ ENTRY(isa_r_4)
  * cloned from assembly generated for:
  * 
  *	void
- *	isa_rm_4(v, h, o, p, s)
+ *	isa_bs_rm_4(v, h, o, p, s)
  *		void *v;
  *		bus_space_handle_t h;
  *		bus_size_t o, s;
@@ -94,7 +94,7 @@ ENTRY(isa_r_4)
  *	}
  */
 
-ENTRY(isa_rm_1)
+ENTRY(isa_bs_rm_1)
 	mov     ip, sp
         stmfd   sp!, {fp, ip, lr, pc}
         mov     r0, r3
@@ -111,7 +111,7 @@ Lisa_rm_1_loop:
         bcc     Lisa_rm_1_loop
         ldmea   fp, {fp, sp, pc}
 
-ENTRY(isa_rm_2)
+ENTRY(isa_bs_rm_2)
 	mov     ip, sp
         stmfd   sp!, {fp, ip, lr, pc}
         mov     r0, r3
@@ -128,7 +128,7 @@ Lisa_rm_2_loop:
         bcc     Lisa_rm_2_loop
         ldmea   fp, {fp, sp, pc}
 
-ENTRY(isa_rm_4)
+ENTRY(isa_bs_rm_4)
 	mov     ip, sp
         stmfd   sp!, {fp, ip, lr, pc}
         mov     r0, r3
@@ -151,7 +151,7 @@ Lisa_rm_4_loop:
  * cloned from assembly generated for:
  *
  *	void
- *	isa_wr_4(v, h, o, p, s)
+ *	isa_bs_wr_4(v, h, o, p, s)
  *		void *v;
  *		bus_space_handle_t h;
  *		bus_size_t o, s;
@@ -168,7 +168,7 @@ Lisa_rm_4_loop:
  *
  */
 
-ENTRY(isa_rr_1)
+ENTRY(isa_bs_rr_1)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, r3
@@ -185,7 +185,7 @@ Lisa_rr_1_loop:
 	bcc	Lisa_rr_1_loop
 	ldmea	fp, {fp, sp, pc}
 
-ENTRY(isa_rr_2)
+ENTRY(isa_bs_rr_2)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, r3
@@ -202,7 +202,7 @@ Lisa_rr_2_loop:
 	bcc	Lisa_rr_2_loop
 	ldmea	fp, {fp, sp, pc}
 
-ENTRY(isa_rr_4)
+ENTRY(isa_bs_rr_4)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, r3
@@ -223,14 +223,14 @@ Lisa_rr_4_loop:
  * write single
  */
 
-ENTRY(isa_w_1)
+ENTRY(isa_bs_w_1)
 	strb	r3, [r1, r2]
 #ifdef GPROF
 	nop ; nop ; nop ; nop ; nop
 #endif
 	mov	pc, lr
 
-ENTRY(isa_w_2)
+ENTRY(isa_bs_w_2)
 	add	r0, r1, r2
 /*	strh	r3, [r0] */	.word	0xe1c030b0
 #ifdef GPROF
@@ -238,7 +238,7 @@ ENTRY(isa_w_2)
 #endif
 	mov	pc, lr
 
-ENTRY(isa_w_4)
+ENTRY(isa_bs_w_4)
 	str	r3, [r1, r2]
 #ifdef GPROF
 	nop ; nop ; nop ; nop ; nop
@@ -250,7 +250,7 @@ ENTRY(isa_w_4)
  * cloned from assembly generated for:
  *
  *	void
- *	isa_wm_4(v, h, o, p, s)
+ *	isa_bs_wm_4(v, h, o, p, s)
  *		void *v;
  *		bus_space_handle_t h;
  *		bus_size_t o, s;
@@ -265,7 +265,7 @@ ENTRY(isa_w_4)
  *			*port = *p++;
  *	}
  */
-ENTRY(isa_wm_1)
+ENTRY(isa_bs_wm_1)
         mov     ip, sp
         stmfd   sp!, {fp, ip, lr, pc}
         mov     r0, r3
@@ -282,7 +282,7 @@ Lisa_wm_1_loop:
         bcc     Lisa_wm_1_loop
         ldmea   fp, {fp, sp, pc}
 
-ENTRY(isa_wm_2)
+ENTRY(isa_bs_wm_2)
         mov     ip, sp
         stmfd   sp!, {fp, ip, lr, pc}
         mov     r0, r3
@@ -299,7 +299,7 @@ Lisa_wm_2_loop:
         bcc     Lisa_wm_2_loop
         ldmea   fp, {fp, sp, pc}
 
-ENTRY(isa_wm_4)
+ENTRY(isa_bs_wm_4)
         mov     ip, sp
         stmfd   sp!, {fp, ip, lr, pc}
         mov     r0, r3
@@ -322,7 +322,7 @@ Lisa_wm_4_loop:
  * cloned from assembly generated for:
  *
  *	void
- *	isa_wr_4(v, h, o, p, s)
+ *	isa_bs_wr_4(v, h, o, p, s)
  *		void *v;
  *		bus_space_handle_t h;
  *		bus_size_t o, s;
@@ -339,7 +339,7 @@ Lisa_wm_4_loop:
  *
  */
 
-ENTRY(isa_wr_1)
+ENTRY(isa_bs_wr_1)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, r3
@@ -356,7 +356,7 @@ Lisa_wr_1_loop:
 	bcc	Lisa_wr_1_loop
 	ldmea	fp, {fp, sp, pc}
 
-ENTRY(isa_wr_2)
+ENTRY(isa_bs_wr_2)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, r3
@@ -373,7 +373,7 @@ Lisa_wr_2_loop:
 	bcc	Lisa_wr_2_loop
 	ldmea	fp, {fp, sp, pc}
 
-ENTRY(isa_wr_4)
+ENTRY(isa_bs_wr_4)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, r3

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.3 1998/04/01 22:55:45 mark Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.4 1998/06/28 07:27:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 #define __C(x,y)	__CONCAT(x,y)
 #define __S(s)		__STRING(s)
-#define NAME(func)	__C(__C(BUS_SPACE,_),func)
+#define NAME(func)	__C(BUS_SPACE,__C(_bs_,func))
 #define LNAME(func)	__C(L,NAME(func))
 
 #define GLOBAL(func)	.global	__C(_,NAME(func))

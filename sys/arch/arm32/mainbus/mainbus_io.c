@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.3 1997/10/14 21:25:03 mark Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.4 1998/06/28 07:27:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -52,75 +52,75 @@ struct bus_space mainbus_bs_tag = {
 	NULL,
 
 	/* mapping/unmapping */
-	mainbus_map,
-	mainbus_unmap,
-	mainbus_subregion,
+	mainbus_bs_map,
+	mainbus_bs_unmap,
+	mainbus_bs_subregion,
 
 	/* allocation/deallocation */
-	mainbus_alloc,
-	mainbus_free,
+	mainbus_bs_alloc,
+	mainbus_bs_free,
 
 	/* barrier */
-	mainbus_barrier,
+	mainbus_bs_barrier,
 
 	/* read (single) */
-	mainbus_r_1,
-	mainbus_r_2,
-	mainbus_r_4,
-	bs_notimpl_r_8,
+	mainbus_bs_r_1,
+	mainbus_bs_r_2,
+	mainbus_bs_r_4,
+	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_rm_1,
-	mainbus_rm_2,
-	bs_notimpl_rm_4,
-	bs_notimpl_rm_8,
+	bs_notimpl_bs_rm_1,
+	mainbus_bs_rm_2,
+	bs_notimpl_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_rr_1,
-	bs_notimpl_rr_2,
-	bs_notimpl_rr_4,
-	bs_notimpl_rr_8,
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	mainbus_w_1,
-	mainbus_w_2,
-	mainbus_w_4,
-	bs_notimpl_w_8,
+	mainbus_bs_w_1,
+	mainbus_bs_w_2,
+	mainbus_bs_w_4,
+	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	mainbus_wm_1,
-	mainbus_wm_2,
-	bs_notimpl_wm_4,
-	bs_notimpl_wm_8,
+	mainbus_bs_wm_1,
+	mainbus_bs_wm_2,
+	bs_notimpl_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_wr_1,
-	bs_notimpl_wr_2,
-	bs_notimpl_wr_4,
-	bs_notimpl_wr_8,
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
-	bs_notimpl_sm_1,
-	bs_notimpl_sm_2,
-	bs_notimpl_sm_4,
-	bs_notimpl_sm_8,
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_sr_1,
-	bs_notimpl_sr_2,
-	bs_notimpl_sr_4,
-	bs_notimpl_sr_8,
+	bs_notimpl_bs_sr_1,
+	bs_notimpl_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_c_1,
-	bs_notimpl_c_2,
-	bs_notimpl_c_4,
-	bs_notimpl_c_8,
+	bs_notimpl_bs_c_1,
+	bs_notimpl_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 /* bus space functions */
 
 int
-mainbus_map(t, bpa, size, cacheable, bshp)
+mainbus_bs_map(t, bpa, size, cacheable, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -137,7 +137,7 @@ mainbus_map(t, bpa, size, cacheable, bshp)
 	}
 
 int
-mainbus_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+mainbus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	void *t;
 	bus_addr_t rstart, rend;
@@ -146,12 +146,12 @@ mainbus_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("mainbus_alloc(): Help!\n");
+	panic("mainbus_bs_alloc(): Help!\n");
 }
 
 
 void
-mainbus_unmap(t, bsh, size)
+mainbus_bs_unmap(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -162,19 +162,19 @@ mainbus_unmap(t, bsh, size)
 }
 
 void    
-mainbus_free(t, bsh, size)
+mainbus_bs_free(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
 
-	panic("mainbus_free(): Help!\n");
-	/* mainbus_unmap() does all that we need to do. */
-/*	mainbus_unmap(t, bsh, size);*/
+	panic("mainbus_bs_free(): Help!\n");
+	/* mainbus_bs_unmap() does all that we need to do. */
+/*	mainbus_bs_unmap(t, bsh, size);*/
 }
 
 int
-mainbus_subregion(t, bsh, offset, size, nbshp)
+mainbus_bs_subregion(t, bsh, offset, size, nbshp)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, size;
@@ -186,7 +186,7 @@ mainbus_subregion(t, bsh, offset, size, nbshp)
 }
 
 void
-mainbus_barrier(t, bsh, offset, len, flags)
+mainbus_bs_barrier(t, bsh, offset, len, flags)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, len;

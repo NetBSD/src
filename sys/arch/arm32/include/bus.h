@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 1998/06/28 03:22:10 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 1998/06/28 07:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -371,177 +371,177 @@ struct bus_space {
  */
 
 #define bs_map_proto(f)							\
-int	__bs_c(f,_map) __P((void *t, bus_addr_t addr,			\
+int	__bs_c(f,_bs_map) __P((void *t, bus_addr_t addr,		\
 	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
 
 #define bs_unmap_proto(f)						\
-void	__bs_c(f,_unmap) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_unmap) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t size));
 
 #define bs_subregion_proto(f)						\
-int	__bs_c(f,_subregion) __P((void *t, bus_space_handle_t bsh,	\
+int	__bs_c(f,_bs_subregion) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, bus_size_t size, 			\
 	    bus_space_handle_t *nbshp));
 
 #define bs_alloc_proto(f)						\
-int	__bs_c(f,_alloc) __P((void *t, bus_addr_t rstart,		\
+int	__bs_c(f,_bs_alloc) __P((void *t, bus_addr_t rstart,		\
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,		\
 	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,	\
 	    bus_space_handle_t *bshp));
 
 #define bs_free_proto(f)						\
-void	__bs_c(f,_free) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_free) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t size));
 
 #define bs_barrier_proto(f)						\
-void	__bs_c(f,_barrier) __P((void *t, bus_space_handle_t bsh,	\
+void	__bs_c(f,_bs_barrier) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, bus_size_t len, int flags));
 
 #define	bs_r_1_proto(f)							\
-u_int8_t	__bs_c(f,_r_1) __P((void *t, bus_space_handle_t bsh,	\
+u_int8_t	__bs_c(f,_bs_r_1) __P((void *t, bus_space_handle_t bsh,	\
 		    bus_size_t offset));
 
 #define	bs_r_2_proto(f)							\
-u_int16_t	__bs_c(f,_r_2) __P((void *t, bus_space_handle_t bsh,	\
+u_int16_t	__bs_c(f,_bs_r_2) __P((void *t, bus_space_handle_t bsh,	\
 		    bus_size_t offset));
 
 #define	bs_r_4_proto(f)							\
-u_int32_t	__bs_c(f,_r_4) __P((void *t, bus_space_handle_t bsh,	\
+u_int32_t	__bs_c(f,_bs_r_4) __P((void *t, bus_space_handle_t bsh,	\
 		    bus_size_t offset));
 
 #define	bs_r_8_proto(f)							\
-u_int64_t	__bs_c(f,_r_8) __P((void *t, bus_space_handle_t bsh,	\
+u_int64_t	__bs_c(f,_bs_r_8) __P((void *t, bus_space_handle_t bsh,	\
 		    bus_size_t offset));
 
 #define	bs_w_1_proto(f)							\
-void	__bs_c(f,_w_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_w_1) __P((void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, u_int8_t value));
 
 #define	bs_w_2_proto(f)							\
-void	__bs_c(f,_w_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_w_2) __P((void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, u_int16_t value));
 
 #define	bs_w_4_proto(f)							\
-void	__bs_c(f,_w_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_w_4) __P((void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, u_int32_t value));
 
 #define	bs_w_8_proto(f)							\
-void	__bs_c(f,_w_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_w_8) __P((void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, u_int64_t value));
 
 #define	bs_rm_1_proto(f)						\
-void	__bs_c(f,_rm_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_rm_1) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int8_t *addr, bus_size_t count));
 
 #define	bs_rm_2_proto(f)						\
-void	__bs_c(f,_rm_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_rm_2) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int16_t *addr, bus_size_t count));
 
 #define	bs_rm_4_proto(f)						\
-void	__bs_c(f,_rm_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_rm_4) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int32_t *addr, bus_size_t count));		
 
 #define	bs_rm_8_proto(f)						\
-void	__bs_c(f,_rm_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_rm_8) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int64_t *addr, bus_size_t count));
 
 #define	bs_wm_1_proto(f)						\
-void	__bs_c(f,_wm_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_wm_1) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int8_t *addr, bus_size_t count));
 
 #define	bs_wm_2_proto(f)						\
-void	__bs_c(f,_wm_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_wm_2) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int16_t *addr, bus_size_t count));
 
 #define	bs_wm_4_proto(f)						\
-void	__bs_c(f,_wm_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_wm_4) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int32_t *addr, bus_size_t count));
 
 #define	bs_wm_8_proto(f)						\
-void	__bs_c(f,_wm_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_wm_8) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int64_t *addr, bus_size_t count));
 
 #define	bs_rr_1_proto(f)						\
-void	__bs_c(f, _rr_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_rr_1) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int8_t *addr, bus_size_t count));
 
 #define	bs_rr_2_proto(f)						\
-void	__bs_c(f, _rr_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_rr_2) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int16_t *addr, bus_size_t count));
 
 #define	bs_rr_4_proto(f)						\
-void	__bs_c(f, _rr_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_rr_4) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int32_t *addr, bus_size_t count));
 
 #define	bs_rr_8_proto(f)						\
-void	__bs_c(f, _rr_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_rr_8) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int64_t *addr, bus_size_t count));
 
 #define	bs_wr_1_proto(f)						\
-void	__bs_c(f, _wr_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_wr_1) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int8_t *addr, bus_size_t count));
 
 #define	bs_wr_2_proto(f)						\
-void	__bs_c(f, _wr_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_wr_2) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int16_t *addr, bus_size_t count));
 
 #define	bs_wr_4_proto(f)						\
-void	__bs_c(f, _wr_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_wr_4) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int32_t *addr, bus_size_t count));
 
 #define	bs_wr_8_proto(f)						\
-void	__bs_c(f, _wr_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f, _bs_wr_8) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, const u_int64_t *addr, bus_size_t count));
 
 #define	bs_sm_1_proto(f)						\
-void	__bs_c(f,_sm_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sm_1) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int8_t value, bus_size_t count));
 
 #define	bs_sm_2_proto(f)						\
-void	__bs_c(f,_sm_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sm_2) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int16_t value, bus_size_t count));
 
 #define	bs_sm_4_proto(f)						\
-void	__bs_c(f,_sm_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sm_4) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int32_t value, bus_size_t count));
 
 #define	bs_sm_8_proto(f)						\
-void	__bs_c(f,_sm_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sm_8) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int64_t value, bus_size_t count));
 
 #define	bs_sr_1_proto(f)						\
-void	__bs_c(f,_sr_1) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sr_1) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int8_t value, bus_size_t count));
 
 #define	bs_sr_2_proto(f)						\
-void	__bs_c(f,_sr_2) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sr_2) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int16_t value, bus_size_t count));
 
 #define	bs_sr_4_proto(f)						\
-void	__bs_c(f,_sr_4) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sr_4) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int32_t value, bus_size_t count));
 
 #define	bs_sr_8_proto(f)						\
-void	__bs_c(f,_sr_8) __P((void *t, bus_space_handle_t bsh,		\
+void	__bs_c(f,_bs_sr_8) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, u_int64_t value, bus_size_t count));
 
 #define	bs_c_1_proto(f)							\
-void	__bs_c(f,_c_1) __P((void *t, bus_space_handle_t bsh1,		\
+void	__bs_c(f,_bs_c_1) __P((void *t, bus_space_handle_t bsh1,	\
 	    bus_size_t offset1, bus_space_handle_t bsh2,		\
 	    bus_size_t offset2, bus_size_t count));
 
 #define	bs_c_2_proto(f)							\
-void	__bs_c(f,_c_2) __P((void *t, bus_space_handle_t bsh1,		\
+void	__bs_c(f,_bs_c_2) __P((void *t, bus_space_handle_t bsh1,	\
 	    bus_size_t offset1, bus_space_handle_t bsh2,		\
 	    bus_size_t offset2, bus_size_t count));
 
 #define	bs_c_4_proto(f)							\
-void	__bs_c(f,_c_4) __P((void *t, bus_space_handle_t bsh1,		\
+void	__bs_c(f,_bs_c_4) __P((void *t, bus_space_handle_t bsh1,	\
 	    bus_size_t offset1, bus_space_handle_t bsh2,		\
 	    bus_size_t offset2, bus_size_t count));
 
 #define	bs_c_8_proto(f)							\
-void	__bs_c(f,_c_8) __P((void *t, bus_space_handle_t bsh1,		\
+void	__bs_c(f,_bs_c_8) __P((void *t, bus_space_handle_t bsh1,	\
 	    bus_size_t offset1, bus_space_handle_t bsh2,		\
 	    bus_size_t offset2, bus_size_t count));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.6 1998/03/23 17:07:38 mark Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.7 1998/06/28 07:27:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -52,76 +52,76 @@ struct bus_space podulebus_bs_tag = {
 	(void *) 2,			/* Shift to apply to registers */
 
 	/* mapping/unmapping */
-	podulebus_map,
-	podulebus_unmap,
-	podulebus_subregion,
+	podulebus_bs_map,
+	podulebus_bs_unmap,
+	podulebus_bs_subregion,
 
 	/* allocation/deallocation */
-	podulebus_alloc,
-	podulebus_free,
+	podulebus_bs_alloc,
+	podulebus_bs_free,
 
 	/* barrier */
-	podulebus_barrier,
+	podulebus_bs_barrier,
 
 	/* read (single) */
-	podulebus_r_1,
-	podulebus_r_2,
-	podulebus_r_4,
-	bs_notimpl_r_8,
+	podulebus_bs_r_1,
+	podulebus_bs_r_2,
+	podulebus_bs_r_4,
+	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	podulebus_rm_1,
-   	podulebus_rm_2,
-	bs_notimpl_rm_4,
-	bs_notimpl_rm_8,
+	podulebus_bs_rm_1,
+   	podulebus_bs_rm_2,
+	bs_notimpl_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_rr_1,
-	bs_notimpl_rr_2,
-	bs_notimpl_rr_4,
-	bs_notimpl_rr_8,
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	podulebus_w_1,
-	podulebus_w_2,
-	podulebus_w_4,
-	bs_notimpl_w_8,
+	podulebus_bs_w_1,
+	podulebus_bs_w_2,
+	podulebus_bs_w_4,
+	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	podulebus_wm_1,
-	podulebus_wm_2,
-	bs_notimpl_wm_4,
-	bs_notimpl_wm_8,
+	podulebus_bs_wm_1,
+	podulebus_bs_wm_2,
+	bs_notimpl_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_wr_1,
-	bs_notimpl_wr_2,
-	bs_notimpl_wr_4,
-	bs_notimpl_wr_8,
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_sm_1,
-	bs_notimpl_sm_2,
-	bs_notimpl_sm_4,
-	bs_notimpl_sm_8,
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_sr_1,
-	bs_notimpl_sr_2,
-	bs_notimpl_sr_4,
-	bs_notimpl_sr_8,
+	bs_notimpl_bs_sr_1,
+	bs_notimpl_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_c_1,
-	bs_notimpl_c_2,
-	bs_notimpl_c_4,
-	bs_notimpl_c_8,
+	bs_notimpl_bs_c_1,
+	bs_notimpl_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 /* bus space functions */
 
 int
-podulebus_map(t, bpa, size, cacheable, bshp)
+podulebus_bs_map(t, bpa, size, cacheable, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -138,7 +138,7 @@ podulebus_map(t, bpa, size, cacheable, bshp)
 	}
 
 int
-podulebus_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+podulebus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	void *t;
 	bus_addr_t rstart, rend;
@@ -147,12 +147,12 @@ podulebus_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("podulebus_alloc(): Help!\n");
+	panic("podulebus_bs_alloc(): Help!\n");
 }
 
 
 void
-podulebus_unmap(t, bsh, size)
+podulebus_bs_unmap(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -163,19 +163,19 @@ podulebus_unmap(t, bsh, size)
 }
 
 void    
-podulebus_free(t, bsh, size)
+podulebus_bs_free(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
 
-	panic("podulebus_free(): Help!\n");
-	/* podulebus_unmap() does all that we need to do. */
-/*	podulebus_unmap(t, bsh, size);*/
+	panic("podulebus_bs_free(): Help!\n");
+	/* podulebus_bs_unmap() does all that we need to do. */
+/*	podulebus_bs_unmap(t, bsh, size);*/
 }
 
 int
-podulebus_subregion(t, bsh, offset, size, nbshp)
+podulebus_bs_subregion(t, bsh, offset, size, nbshp)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, size;
@@ -187,7 +187,7 @@ podulebus_subregion(t, bsh, offset, size, nbshp)
 }
 
 void
-podulebus_barrier(t, bsh, offset, len, flags)
+podulebus_bs_barrier(t, bsh, offset, len, flags)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, len;

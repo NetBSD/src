@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.5 1998/01/18 04:09:53 mark Exp $	*/
+/*	$NetBSD: simide.c,v 1.6 1998/06/28 07:27:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -198,8 +198,8 @@ simide_attach(parent, self, aux)
 
 	sc->sc_tag = *pa->pa_iot;
 	sc->sc_tag.bs_cookie = (void *) 7;
-	sc->sc_tag.bs_rm_2 = simide_rm_2;
-	sc->sc_tag.bs_wm_2 = simide_wm_2;
+	sc->sc_tag.bs_rm_2 = simide_bs_rm_2;
+	sc->sc_tag.bs_wm_2 = simide_bs_wm_2;
 	sc->sc_iot = &sc->sc_tag;
 
 	/* Obtain bus space handles for all the control registers */
