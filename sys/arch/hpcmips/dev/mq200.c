@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.1 2000/07/22 08:53:36 takemura Exp $	*/
+/*	$NetBSD: mq200.c,v 1.2 2000/10/02 04:03:06 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -33,6 +33,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -47,19 +48,26 @@
 
 #include <hpcmips/dev/mq200reg.h>
 #include <hpcmips/dev/mq200var.h>
-#include <hpcmips/dev/bivideovar.h>
+#include "bivideo.h"
+#if NBIVIDEO > 0
+#include <hpcmips/dev/bivideovar.h>     
+#endif
 
 #define MQ200DEBUG
 #ifdef MQ200DEBUG
 #ifndef MQ200DEBUG_CONF
-#define MQ200DEBUG_CONF 1
+#define MQ200DEBUG_CONF 0
 #endif
 int	mq200_debug = MQ200DEBUG_CONF;
 #define	DPRINTF(arg)     do { if (mq200_debug) printf arg; } while(0);
 #define	DPRINTFN(n, arg) do { if (mq200_debug > (n)) printf arg; } while (0);
+#define	VPRINTF(arg)     do { if (bootverbose || mq200_debug) printf arg; } while(0);
+#define	VPRINTFN(n, arg) do { if (bootverbose || mq200_debug > (n)) printf arg; } while (0);
 #else
 #define	DPRINTF(arg)     do { } while (0);
 #define DPRINTFN(n, arg) do { } while (0);
+#define	VPRINTF(arg)     do { if (bootverbose) printf arg; } while(0);
+#define	VPRINTFN(n, arg) do { if (bootverbose) printf arg; } while (0);
 #endif
 
 /*
@@ -85,8 +93,13 @@ mq200_probe(iot, ioh)
 {
 	unsigned long regval;
 
+#if NBIVIDEO > 0
+	if (bivideo_dont_attach) /* some video driver already attached */
+		return (0);
+#endif /* NBIVIDEO > 0 */
+
 	regval = bus_space_read_4(iot, ioh, MQ200_PC00R);
-	DPRINTF(("mq200 probe: vendor id=%04lx product id=%04lx\n",
+	VPRINTF(("mq200 probe: vendor id=%04lx product id=%04lx\n",
 		 regval & 0xffff, (regval >> 16) & 0xffff));
 	if (regval != ((MQ200_PRODUCT_ID << 16) | MQ200_VENDOR_ID))
 		return (0);
@@ -139,10 +152,12 @@ mq200_attach(sc)
 
 	config_found(&sc->sc_dev, &ha, hpcfbprint);
 
+#if NBIVIDEO > 0
 	/*
 	 * bivideo is no longer need
 	 */
 	bivideo_dont_attach = 1;
+#endif /* NBIVIDEO > 0 */
 }
 
 static void 
