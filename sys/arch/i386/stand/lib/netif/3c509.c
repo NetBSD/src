@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.2 1997/03/15 22:18:21 perry Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -38,7 +38,7 @@ Author: Martin Renters.
 
 char etherdev[20];
 
-char bnc=0, utp=0; /* for 3C509 */
+int ether_medium;
 unsigned short eth_base;
 
 extern void epreset __P((void));
@@ -48,6 +48,16 @@ static int send_ID_sequence __P((int));
 static int get_eeprom_data __P((int, int));
 
 u_char eth_myaddr[6];
+
+static struct mtabentry {
+    int address_cfg; /* configured connector */
+    int config_bit; /* connector present */
+    char *name;
+} mediatab[] = { /* indexed by media type - etherdrv.h */
+    {3, IS_BNC, "BNC"},
+    {0, IS_UTP, "UTP"},
+    {1, IS_AUI, "AUI"},
+};
 
 /**************************************************************************
 ETH_PROBE - Look for an adapter
@@ -62,6 +72,7 @@ char *myadr;
 	u_short k;
 /*	int ep_current_tag = EP_LAST_TAG + 1; */
 	short *p;
+	struct mtabentry *m;
 
 	/*********************************************************
 			Search for 3Com 509 card
@@ -116,44 +127,22 @@ char *myadr;
 	i = inw(IS_BASE + EP_W0_CONFIG_CTRL);
 	j = inw(IS_BASE + EP_W0_ADDRESS_CFG) >> 14;
 
-	switch(j) {
-		case 0:
-			if(i & IS_UTP) {
-				printf("10baseT\r\n");
-				utp=1;
-				}
-			else {
-				printf("10baseT not present\r\n");
-				return 0;
-				}
-
-			break;
-/*
-		case 1:
-			if(i & IS_AUI)
-				printf("10base5\r\n");
-			else {
-				printf("10base5 not present\r\n");
-				return 0;
-				}
-
-			break;
-*/
-		case 3:
-			if(i & IS_BNC) {
-				printf("10base2\r\n");
-				bnc=1;
-				}
-			else {
-				printf("10base2 not present\r\n");
-				return 0;
-				}
-
-			break;
-		default:
-			printf("unknown connector\r\n");
-		  return 0;
+	for(ether_medium = 0, m = mediatab;
+	    ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
+	    ether_medium++, m++) {
+	    if(j == m->address_cfg) {
+		if(!(i & m->config_bit)) {
+		    printf("%s not present\n", m->name);
+		    return(0);
 		}
+		printf("using %s\n", m->name);
+		goto ok;
+	    }
+	}
+	printf("unknown connector\n");
+	return(0);
+
+ok:
 	/*
 	* Read the station address from the eeprom
 	*/
