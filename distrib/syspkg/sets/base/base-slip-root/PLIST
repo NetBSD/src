@@ -1,0 +1,3 @@
+@cwd /
+./etc/sliphome
+./sbin/slattach

@@ -1,0 +1,8 @@
+@cwd /
+./usr/libexec/dnskeygen
+./usr/libexec/named-xfer
+./usr/sbin/named
+./usr/sbin/named-bootconf
+./usr/sbin/named.reload
+./usr/sbin/named.restart
+./usr/sbin/ndc

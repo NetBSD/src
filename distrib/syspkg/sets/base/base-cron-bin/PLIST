@@ -1,0 +1,8 @@
+@cwd /
+./usr/bin/at
+./usr/bin/atq
+./usr/bin/atrm
+./usr/bin/batch
+./usr/bin/crontab
+./usr/libexec/atrun
+./usr/sbin/cron

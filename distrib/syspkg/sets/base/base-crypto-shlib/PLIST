@@ -1,0 +1,7 @@
+@cwd /
+./usr/lib/libcrypto.so.1
+./usr/lib/libcrypto.so.1.0
+./usr/lib/libdes.so.5
+./usr/lib/libdes.so.5.1
+./usr/lib/libssl.so.2
+./usr/lib/libssl.so.2.0

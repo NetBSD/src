@@ -1,0 +1,3 @@
+@cwd /
+./sbin/routed
+./sbin/tbrconfig
