@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.8 2002/09/27 15:35:51 provos Exp $	*/
+/*	$NetBSD: i80321.c,v 1.9 2003/01/01 00:45:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -72,7 +72,8 @@ static const struct iopxs_device {
 	bus_size_t id_size;
 } iopxs_devices[] = {
 	{ "iopaau",	VERDE_AAU_BASE,		VERDE_AAU_SIZE },
-	{ "iopdma",	VERDE_DMA_BASE,		VERDE_DMA_SIZE },
+	{ "iopdma",	VERDE_DMA_BASE0,	VERDE_DMA_CHSIZE },
+	{ "iopdma",	VERDE_DMA_BASE1,	VERDE_DMA_CHSIZE },
 	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },
 	{ "iopwdog",	0,			0 },
 	{ NULL,		0,			0 }
@@ -271,9 +272,9 @@ i80321_pcibus_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 
-	printf(" bus %d", pba->pba_bus);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }
