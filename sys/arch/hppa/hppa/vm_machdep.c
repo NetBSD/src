@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 2003/11/18 11:37:39 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 2003/11/28 19:02:25 chs Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2003/11/18 11:37:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2003/11/28 19:02:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2003/11/18 11:37:39 chs Exp $");
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(l, vp, cred, core)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *core;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+    struct core *core)
 {
 	struct proc *p = l->l_proc;
 	struct md_coredump md_core;
@@ -104,9 +101,7 @@ cpu_coredump(l, vp, cred, core)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	paddr_t pa;
 	boolean_t rv;
@@ -128,8 +123,7 @@ pagemove(from, to, size)
 }
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
@@ -148,8 +142,7 @@ cpu_swapin(l)
 }
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 
 	/* Flush this LWP out of the FPU. */
@@ -157,12 +150,8 @@ cpu_swapout(l)
 }
 
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcbp;
 	struct trapframe *tf;
@@ -237,29 +226,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	printf("cpu_setfunc not implemented\n");
 }
 
-#if 0
 void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-	register_t sp = tf->tf_sp;
-
-	/*
-	 * Overwrite normally stashed there &child_return(p)
-	 */
-	*HPPA_FRAME_CARG(1, sp) = (register_t)pc;
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)sp, HPPA_FRAME_SIZE);
-}
-#endif
-
-void
-cpu_exit(l, proc)
-	struct lwp *l;
-	int proc;
+cpu_exit(struct lwp *l, int proc)
 {
 	(void) splsched();
 	uvmexp.swtch++;
@@ -273,9 +241,7 @@ cpu_exit(l, proc)
  * Map an IO request into kernel virtual address space.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t uva, kva;
 	paddr_t pa;
@@ -316,9 +282,7 @@ vmapbuf(bp, len)
  * Unmap IO request from the kernel virtual address space.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *pmap;
 	vaddr_t addr;

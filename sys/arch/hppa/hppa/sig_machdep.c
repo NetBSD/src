@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.6 2003/09/26 12:02:56 simonb Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7 2003/11/28 19:02:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.6 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7 2003/11/28 19:02:25 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -144,10 +144,7 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -276,10 +273,7 @@ sendsig(sig, mask, code)
 }
 
 int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;

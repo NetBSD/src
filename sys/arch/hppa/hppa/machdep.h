@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2003/08/31 01:26:35 chs Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 2003/11/28 19:02:25 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,34 +77,33 @@ extern int fpu_present;
 extern u_int fpu_version;
 extern u_int fpu_csw;
 extern paddr_t fpu_cur_uspace;
-void hppa_fpu_bootstrap __P((u_int));
-void hppa_fpu_flush __P((struct lwp *));
-void hppa_fpu_emulate __P((struct trapframe *, struct lwp *));
+void hppa_fpu_bootstrap(u_int);
+void hppa_fpu_flush(struct lwp *);
+void hppa_fpu_emulate(struct trapframe *, struct lwp *);
 
 /* Interrupt dispatching. */
 extern u_int hppa_intr_depth;
-void hppa_intr __P((struct trapframe *));
+void hppa_intr(struct trapframe *);
 
 /* Special pmap functions. */
-void pmap_bootstrap __P((vaddr_t *, vaddr_t *));
-void pmap_redzone __P((vaddr_t, vaddr_t, int));
+void pmap_bootstrap(vaddr_t *, vaddr_t *);
+void pmap_redzone(vaddr_t, vaddr_t, int);
 
 /* Functions to write low memory and the kernel text. */
-void hppa_ktext_stw __P((vaddr_t, int));
-void hppa_ktext_stb __P((vaddr_t, char));
+void hppa_ktext_stw(vaddr_t, int);
+void hppa_ktext_stb(vaddr_t, char);
 
 /* Machine check handling. */
 extern u_int os_hpmc;
 extern u_int os_hpmc_cont;
 extern u_int os_hpmc_cont_end;
-int os_toc __P((void));
+int os_toc(void);
 extern u_int os_toc_end;
-void hppa_machine_check __P((int));
+void hppa_machine_check(int);
 
 /* BTLB handling. */
-int hppa_btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
-		     vsize_t *lenp, u_int prot)); 
-int hppa_btlb_reload __P((void)); 
-int hppa_btlb_purge __P((pa_space_t, vaddr_t, vsize_t *));
+int hppa_btlb_insert(pa_space_t, vaddr_t, paddr_t, vsize_t *, u_int); 
+int hppa_btlb_reload(void);
+int hppa_btlb_purge(pa_space_t, vaddr_t, vsize_t *);
 
 #endif /* _KERNEL */
