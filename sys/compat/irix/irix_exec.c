@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.13 2002/04/14 21:50:49 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.14 2002/04/20 16:19:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.13 2002/04/14 21:50:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.14 2002/04/20 16:19:22 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.13 2002/04/14 21:50:49 manu Exp $");
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/regnum.h>
 
@@ -262,7 +264,28 @@ irix_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
+	int error;
+	struct exec_vmcmd evc;
+
 	irix_e_proc_init(p, p->p_vmspace);
+
+	/* 
+	 * On IRIX, usinit(3) expects the kernel to prepare one page of 
+	 * memory mapped at address 0x200000. It is used for shared 
+	 * semaphores and locks.
+	 */
+	bzero(&evc, sizeof(evc));
+	evc.ev_addr = IRIX_SH_ARENA_ADDR;
+	evc.ev_len = IRIX_SH_ARENA_SZ;
+	evc.ev_prot = UVM_PROT_RW;
+	evc.ev_proc = *vmcmd_map_zero;
+
+	error = (*evc.ev_proc)(p, &evc);
+#ifdef DEBUG_IRIX
+	printf("irix_e_proc_init(): uvm_map() returned %d\n", error);
+	if (error != 0)
+		printf("irix_e_proc_init(): IRIX_SHARED_ARENA map failed ");
+#endif
 }
 
 /*
