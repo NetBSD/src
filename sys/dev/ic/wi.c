@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.166 2004/07/22 19:48:28 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.167 2004/07/22 19:50:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.166 2004/07/22 19:48:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.167 2004/07/22 19:50:43 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -285,7 +285,7 @@ wi_attach(struct wi_softc *sc)
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_AHDEMO;
+	ic->ic_caps = IEEE80211_C_AHDEMO;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_max_aid = WI_MAX_AID;
 
@@ -343,6 +343,7 @@ wi_attach(struct wi_softc *sc)
 			ic->ic_caps |= IEEE80211_C_IBSS;
 			ic->ic_caps |= IEEE80211_C_MONITOR;
 		}
+		ic->ic_caps |= IEEE80211_C_PMGT;
 		sc->sc_ibss_port = 1;
 		break;
 
@@ -358,6 +359,7 @@ wi_attach(struct wi_softc *sc)
 			ic->ic_caps |= IEEE80211_C_IBSS;
 			ic->ic_caps |= IEEE80211_C_MONITOR;
 		}
+		ic->ic_caps |= IEEE80211_C_PMGT;
 		sc->sc_ibss_port = 0;
 		sc->sc_alt_retry = 2;
 		break;
