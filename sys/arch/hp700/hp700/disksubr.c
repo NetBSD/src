@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2003/11/01 18:23:37 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2003/11/24 02:51:35 chs Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.7 2003/11/01 18:23:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8 2003/11/24 02:51:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,21 +107,21 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.7 2003/11/01 18:23:37 matt Exp $");
 #define	b_cylin	b_resid
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-void	swapdisklabel __P((struct disklabel *d));
-char   *readbsdlabel __P((struct buf *, void (*) __P((struct buf *)), int, int,
-    int, int, struct disklabel *, int));
+void	swapdisklabel(struct disklabel *);
+char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
+    int, int, struct disklabel *, int);
 #endif
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-char   *readdoslabel __P((struct buf *, void (*) __P((struct buf *)),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int));
+char   *readdoslabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-char   *readamigalabel __P((struct buf *, void (*) __P((struct buf *)),
-    struct disklabel *, struct cpu_disklabel *, int));
+char   *readamigalabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int);
 #endif
 #if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-char   *readliflabel __P((struct buf *, void (*) __P((struct buf *)),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int));
+char   *readliflabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
@@ -132,8 +132,7 @@ static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
  * Byteswap all the fields that might be swapped.
  */
 void
-swapdisklabel(dlp)
-	struct disklabel *dlp;
+swapdisklabel(struct disklabel *dlp)
 {
 	int i;
 	struct partition *pp;
@@ -183,12 +182,8 @@ swapdisklabel(dlp)
  * Try to read a standard BSD disklabel at a certain sector.
  */
 char *
-readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
-	struct buf *bp;
-	void (*strat) __P((struct buf *));
-	int cyl, sec, off, endian;
-	struct disklabel *lp;
-	int spoofonly;
+readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
+    int off, int endian, struct disklabel *lp, int spoofonly)
 {
 	struct disklabel *dlp;
 	char *msg = NULL;
@@ -267,11 +262,8 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	int spoofonly = 0;
 	struct buf *bp = NULL;
@@ -375,14 +367,8 @@ done:
  * MBR is valid.
  */
 char *
-readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
-	struct buf *bp;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *partoffp;
-	int *cylp;
-	int spoofonly;
+readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep, int *partoffp, int *cylp, int spoofonly)
 {
 	struct dos_partition *dp = osdep->u._i386.dosparts, *dp2;
 	struct dkbad *db, *bdp = &DKBAD(osdep);
@@ -429,7 +415,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 					*partoffp = -1;
 				return (msg);
 			}
-			bcopy(bp->b_data + DOSPARTOFF, dp,
+			memcpy(dp, bp->b_data + DOSPARTOFF,
 			    NDOSPART * sizeof(*dp));
 
 			if (ourpart == -1) {
@@ -602,12 +588,8 @@ donot:
  * XXX RDB parsing is missing still.
  */
 char *
-readamigalabel(bp, strat, lp, osdep, spoofonly)
-	struct buf *bp;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readamigalabel(struct buf *bp, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	char *msg;
 
@@ -619,14 +601,8 @@ readamigalabel(bp, strat, lp, osdep, spoofonly)
 
 #if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 char *
-readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
-	struct buf *bp;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *partoffp;
-	int *cylp;
-	int spoofonly;
+readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep, int *partoffp, int *cylp, int spoofonly)
 {
 	int fsoff;
 
@@ -643,11 +619,11 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		return "LIF volume header I/O error";
 	}
 
-	bcopy (bp->b_data, &osdep->u._hppa.lifvol, sizeof(struct lifvol));
+	memcpy(&osdep->u._hppa.lifvol, bp->b_data, sizeof(struct lifvol));
 	if (osdep->u._hppa.lifvol.vol_id != LIF_VOL_ID) {
 		fsoff = 0;
 	} else {
-		register struct lifdir *p;
+		struct lifdir *p;
 
 		/* read LIF directory */
 		bp->b_blkno = btodb(LIF_DIRSTART);
@@ -662,7 +638,7 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			return "LIF directory I/O error";
 		}
 
-		bcopy(bp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
+		memcpy(osdep->u._hppa.lifdir, bp->b_data, LIF_DIRSIZE);
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
 		     fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++)
@@ -687,10 +663,8 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -751,11 +725,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	enum disklabel_tag *tp;
 	char *msg = "no disk label";
@@ -868,10 +839,7 @@ writedisklabel(dev, strat, lp, osdep)
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct disklabel *lp = dk->dk_label;
