@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2001/05/22 17:25:16 toshii Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2001/05/23 02:20:47 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,8 +108,7 @@ void
 softintr_schedule(void *cookie)
 {
 	struct softintr_handler **p, *sh = cookie;
-	register int pending;
-	u_int saved_cpsr;
+	register int pending, saved_cpsr;
 
 	pending = 1;
 	asm("swp %0, %0, [%1]" : "+r" (pending) : "r" (&sh->sh_pending));
@@ -120,15 +119,18 @@ softintr_schedule(void *cookie)
 	sh->sh_vlink = NULL;
 	sh->sh_hlink = NULL;
 
+#ifdef __GNUC__
+	asm("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
+	    "=r" (saved_cpsr) : "i" (I32_bit) : "r1");
+#else
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
+#endif
 	p = &softintr_pending;
 
 	for (;; p = &(*p)->sh_vlink) {
-		if (*p == NULL) {
-			*p = sh;
-			SetCPSR(I32_bit, I32_bit & saved_cpsr);
-			return;
-		}
+		if (*p == NULL)
+			goto set_and_exit;
+
 		if ((*p)->sh_level <= sh->sh_level)
 			break;
 	}
@@ -137,14 +139,17 @@ softintr_schedule(void *cookie)
 		sh->sh_hlink = *p;
 		sh->sh_vlink = (*p)->sh_vlink;
 		(*p)->sh_vlink = NULL;
-		*p = sh;
-		SetCPSR(I32_bit, I32_bit & saved_cpsr);
-		return;
+		goto set_and_exit;
 	}
 
 	sh->sh_vlink = *p;
+set_and_exit:
 	*p = sh;
+#ifdef __GNUC__
+	asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
+#else
 	SetCPSR(I32_bit, I32_bit & saved_cpsr);
+#endif
 	return;
 }
 
@@ -152,22 +157,36 @@ void
 softintr_dispatch(int s)
 {
 	struct softintr_handler *sh, *sh1;
-	u_int saved_cpsr;
+	register int saved_cpsr;
 
 	while (1) {
 		/* Protect list operation from interrupts */
+#ifdef __GNUC__
+		asm("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
+		    "=r" (saved_cpsr) : "i" (I32_bit) : "r1");
+#else
 		saved_cpsr = SetCPSR(I32_bit, I32_bit);
+#endif
 
 		if (softintr_pending == NULL ||
 		    softintr_pending->sh_level <= s) {
+#ifdef __GNUC__
+			asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
+#else
 			SetCPSR(I32_bit, I32_bit & saved_cpsr);
+#endif
 			return;
 		}
 		sh = softintr_pending;
 		softintr_pending = softintr_pending->sh_vlink;
-		SetCPSR(I32_bit, I32_bit & saved_cpsr);
 
 		s = raisespl(sh->sh_level);
+#ifdef __GNUC__
+		asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
+#else
+		SetCPSR(I32_bit, I32_bit & saved_cpsr);
+#endif
+
 		while (1) {
 			/* The order is important */
 			sh1 = sh->sh_hlink;
