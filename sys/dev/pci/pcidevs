@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.221 2000/05/27 16:38:02 nathanw Exp $
+$NetBSD: pcidevs,v 1.222 2000/05/27 17:11:37 scw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1201,6 +1201,8 @@ product OLICOM OC2326	0x0014	Olicom OC-2326 10/100-TX Ethernet
 /* Opti products */
 product OPTI 82C557	0xc557	82C557
 product OPTI 82C558	0xc558	82C558
+product OPTI 82C568	0xc568	82C568
+product OPTI 82D568	0xd568	82D568
 product OPTI 82C621	0xc621	82C621
 product OPTI 82C822	0xc822	82C822
 product OPTI RM861HA	0xc861	RM861HA
