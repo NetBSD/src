@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.17 1996/08/10 09:08:27 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.18 1996/09/03 02:44:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -352,15 +352,11 @@ ibcs2_sys_getdents(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
-
 	vp = (struct vnode *)fp->f_data;
-
 	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
 		return (EINVAL);
-
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	ncookies = buflen / 16;
@@ -385,13 +381,11 @@ again:
 	    ncookies);
 	if (error)
 		goto out;
-
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
-
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
@@ -417,7 +411,8 @@ again:
 		idb.d_off = (ibcs2_off_t)off;
 		idb.d_reclen = (u_short)ibcs2_reclen;
 		strcpy(idb.d_name, bdp->d_name);
-		if ((error = copyout((caddr_t)&idb, outp, ibcs2_reclen)))
+		error = copyout(&idb, outp, ibcs2_reclen);
+		if (error)
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -452,11 +447,11 @@ ibcs2_sys_read(p, v, retval)
 		syscallarg(u_int) nbytes;
 	} */ *uap = v;
 	register struct dirent *bdp;
-	register struct vnode *vp;
-	register caddr_t inp, buf;	/* BSD-format */
-	register int len, reclen;	/* BSD-format */
-	register caddr_t outp;		/* iBCS2-format */
-	register int resid;		/* iBCS2-format */
+	struct vnode *vp;
+	caddr_t inp, buf;	/* BSD-format */
+	int len, reclen;	/* BSD-format */
+	caddr_t outp;		/* iBCS2-format */
+	int resid, ibcs2_reclen;/* iBCS2-format */
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
@@ -503,12 +498,9 @@ again:
 	 */
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
 	    ncookies);
-	if (error) {
-		DPRINTF(("VOP_READDIR failed: %d\n", error));
+	if (error)
 		goto out;
-	}
-	inp = buf + off;
-	buflen -= off;
+	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -518,12 +510,13 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_read");
+		off = *cookie++;	/* each entry points to the next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
 			continue;
 		}
-		if (reclen > len || resid < sizeof(struct ibcs2_direct)) {
+		ibcs2_reclen = 16;
+		if (reclen > len || resid < ibcs2_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
 			break;
@@ -539,15 +532,14 @@ again:
 		idb.ino = (bdp->d_fileno > 0xfffe) ? 0xfffe : bdp->d_fileno;
 		(void)copystr(bdp->d_name, idb.name, 14, &size);
 		bzero(idb.name + size, 14 - size);
-		error = copyout(&idb, outp, sizeof(struct ibcs2_direct));
+		error = copyout(&idb, outp, ibcs2_reclen);
 		if (error)
 			goto out;
 		/* advance past this real entry */
-		off = *cookie++;	/* each entry points to the next */
 		inp += reclen;
 		/* advance output past iBCS2-shaped entry */
-		outp += sizeof(struct ibcs2_direct);
-		resid -= sizeof(struct ibcs2_direct);
+		outp += ibcs2_reclen;
+		resid -= ibcs2_reclen;
 	}
 	/* if we squished out the whole block, try again */
 	if (outp == SCARG(uap, buf))
