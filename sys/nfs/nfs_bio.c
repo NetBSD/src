@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.37.2.1 1997/10/23 01:42:53 mellon Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.37.2.2 1997/10/23 20:09:21 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -361,9 +361,10 @@ diragain:
 		     * Just return if we hit EOF right away with this
 		     * block.
 		     */
-		    if (ndp->dc_blkcookie == np->n_direofoffset) {
-			brelse(bp);
-			return (0);
+		    if (np->n_direofoffset != 0 && 
+			ndp->dc_blkcookie == np->n_direofoffset) {
+			    brelse(bp);
+			    return (0);
 		    }
 		}
 
