@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.29.4.3 2001/03/20 18:11:13 he Exp $ */
+/* $NetBSD: lib.h,v 1.29.4.4 2001/05/01 11:01:25 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -187,6 +187,7 @@ int	findbestmatchingname_fn(const char *pkg, char *data);	/* neither */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
 char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
+void	strip_txz(char *buf, char *fname);
 
 /* File */
 Boolean fexists(char *);
