@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.1.1.1 2001/06/25 19:26:41 itojun Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.1.1.2 2004/09/27 17:07:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -22,8 +22,8 @@
  */
 
 #ifndef lint
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/vfprintf.c,v 1.4 2000/07/01 03:39:12 assar Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/vfprintf.c,v 1.4.8.2 2003/11/16 08:51:58 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

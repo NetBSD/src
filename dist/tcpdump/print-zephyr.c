@@ -1,4 +1,4 @@
-/*	$NetBSD: print-zephyr.c,v 1.1.1.2 2002/05/31 09:28:49 itojun Exp $	*/
+/*	$NetBSD: print-zephyr.c,v 1.1.1.3 2004/09/27 17:07:33 dyoung Exp $	*/
 
 /*
  * Decode and print Zephyr packets.
@@ -21,19 +21,19 @@
  */
 
 #ifndef lint
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.4 2002/04/27 23:39:25 guy Exp";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.6.2.2 2003/11/16 08:51:56 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include <tcpdump-stdinc.h>
+
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
 
 #include "interface.h"
 
@@ -50,7 +50,7 @@ struct z_packet {
     char *inst;
     char *opcode;
     char *sender;
-    char *recipient;
+    const char *recipient;
     char *format;
     int cksum;
     int multi;
@@ -107,7 +107,7 @@ parse_field(char **pptr, int *len)
 }
 
 static const char *
-z_triple(char *class, char *inst, char *recipient)
+z_triple(char *class, char *inst, const char *recipient)
 {
     if (!*recipient)
 	recipient = "*";

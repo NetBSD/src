@@ -1,4 +1,7 @@
-/*	$NetBSD: nfs.h,v 1.1.1.1 2001/06/25 19:26:32 itojun Exp $	*/
+/*	$NetBSD: nfs.h,v 1.1.1.2 2004/09/27 17:06:51 dyoung Exp $	*/
+
+/* @(#) Header: /tcpdump/master/tcpdump/nfs.h,v 1.7 2002/12/11 07:13:55 guy Exp (LBL) */
+/*	$NetBSD: nfs.h,v 1.1.1.2 2004/09/27 17:06:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

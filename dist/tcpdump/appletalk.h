@@ -1,4 +1,4 @@
-/*	$NetBSD: appletalk.h,v 1.1.1.1 2001/06/25 19:26:29 itojun Exp $	*/
+/*	$NetBSD: appletalk.h,v 1.1.1.2 2004/09/27 17:06:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993, 1994, 1995, 1996
@@ -22,7 +22,7 @@
  *
  * AppleTalk protocol formats (courtesy Bill Croft of Stanford/SUMEX).
  *
- * @(#) Header: /tcpdump/master/tcpdump/appletalk.h,v 1.13 2000/10/03 02:54:54 itojun Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/appletalk.h,v 1.15 2002/12/11 07:13:49 guy Exp (LBL)
  */
 
 struct LAP {

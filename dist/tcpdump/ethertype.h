@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertype.h,v 1.1.1.1 2001/06/25 19:26:31 itojun Exp $	*/
+/*	$NetBSD: ethertype.h,v 1.1.1.2 2004/09/27 17:06:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/ethertype.h,v 1.16 2001/06/21 17:56:02 itojun Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/ethertype.h,v 1.20 2003/07/01 19:10:26 guy Exp (LBL)
  */
 
 /*
@@ -71,9 +71,6 @@
 #ifndef ETHERTYPE_SCA
 #define ETHERTYPE_SCA		0x6007
 #endif
-#ifndef ETHERTYPE_REVARP
-#define ETHERTYPE_REVARP	0x8035
-#endif
 #ifndef	ETHERTYPE_LANBRIDGE
 #define	ETHERTYPE_LANBRIDGE	0x8038
 #endif
@@ -122,3 +119,11 @@
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000
 #endif
+#ifndef	ETHERTYPE_VMAN
+#define	ETHERTYPE_VMAN	        0x9100 /* Extreme VMAN Protocol */ 
+#endif
+#ifndef	ETHERTYPE_ISO
+#define	ETHERTYPE_ISO           0xfefe  /* nonstandard - used in Cisco HDLC encapsulation */
+#endif
+
+extern const struct tok ethertype_values[];

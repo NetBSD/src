@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.1.1.3 2002/05/31 09:28:18 itojun Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.1.1.4 2004/09/27 17:06:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -43,18 +43,16 @@
  */
 
 #ifndef lint
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.24 2002/04/24 06:27:06 guy Exp (LBL)";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.25.2.2 2003/11/16 08:51:07 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <sys/time.h>
+#include <tcpdump-stdinc.h>
 
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
