@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1998/09/25 19:10:25 hwr Exp $	
+#	$NetBSD: Makefile,v 1.14 1999/03/23 00:02:24 bad Exp $	
 
 PROG=	tcpdump
 MAN=	tcpdump.8 
@@ -7,7 +7,7 @@ CPPFLAGS+=-DHAVE_FCNTL_H=1 -DHAVE_MALLOC_H=1 -DHAVE_MEMORY_H=1
 CPPFLAGS+=-DTIME_WITH_SYS_TIME=1 -DHAVE_NET_SLIP_H=1 -DHAVE_VFPRINTF=1
 CPPFLAGS+=-DHAVE_STRCASECMP=1 -DHAVE_ETHER_NTOA=1 -DHAVE_SETLINEBUF=1
 CPPFLAGS+=-DRETSIGTYPE=void -DRETSIGVAL= -DHAVE_SIGACTION=1
-CPPFLAGS+=-DHAVE_SOCKADDR_SA_LEN=1 -DHAVE_FDDI -DLBL_ALIGN
+CPPFLAGS+=-DHAVE_SOCKADDR_SA_LEN=1 -DHAVE_FDDI -DHAVE_TOKEN -DLBL_ALIGN
 CPPFLAGS+=-DHAVE_HDLC
 
 LDADD+=	-lpcap -ll
@@ -19,7 +19,7 @@ print-raw.c print-ppp.c print-pim.c print-ospf.c print-null.c print-ntp.c \
 print-nfs.c print-netbios.c print-llc.c print-krb.c print-isoclns.c print-ipx.c \
 print-ip.c print-igrp.c print-icmp.c print-gre.c print-fddi.c print-ether.c \
 print-egp.c print-dvmrp.c print-domain.c print-decnet.c print-bootp.c print-atm.c \
-print-hdlc.c \
+print-hdlc.c print-token.c \
 print-atalk.c print-arp.c parsenfsfh.c machdep.c gmt2local.c bpf_dump.c \
 addrtoname.c print-mobile.c
 SRCS+= version.c
