@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.4 2001/09/05 23:53:22 wiz Exp $
+.\" $NetBSD: boot.8,v 1.5 2001/11/25 23:44:14 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -88,7 +88,7 @@ to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8 ,
+.Xr ddb 4 ,
 if it is configured in the kernel.
 If the crash occurred during
 initialization and the debugger is not present or is exited, the
@@ -142,11 +142,11 @@ secondary bootstrap (installed)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
-.Xr savecore 8 ,
-.Xr shutdown 8 ,
 .Xr installboot 8 ,
 .Xr mkbootimage 8 ,
-.Xr setnetbootinfo 8
+.Xr savecore 8 ,
+.Xr setnetbootinfo 8 ,
+.Xr shutdown 8
 .Rs
 .%T "Alpha Architecture Reference Manual Third Edition"
 .%Q "Alpha Architecture Committee"
