@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.91 2002/06/01 21:03:14 itojun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.92 2002/06/01 23:51:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.91 2002/06/01 21:03:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.92 2002/06/01 23:51:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,8 +592,7 @@ ne_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
-	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 #if 0
 		/*
 		 * Some ne2000 driver's claim to have memory; others don't.

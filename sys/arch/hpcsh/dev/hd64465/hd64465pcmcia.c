@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.5 2002/05/09 12:37:59 uch Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.6 2002/06/01 23:50:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ hd64465pcmcia_event_thread(void *arg)
 				break;
 			}
 			s = splhigh();
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_event_head, pe, pe_link);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_event_head, pe_link);
 			pe->__queued = 0;
 		}
 		splx(s);

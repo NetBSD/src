@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2002/05/14 19:22:34 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 2002/06/01 23:50:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2002/05/14 19:22:34 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2002/06/01 23:50:54 lukem Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1407,12 +1407,12 @@ pmap_allocpagedir(struct pmap *pmap)
 	/* Do we have any spare L1's lying around ? */
 	if (l1pt_static_queue_count) {
 		--l1pt_static_queue_count;
-		pt = l1pt_static_queue.sqh_first;
-		SIMPLEQ_REMOVE_HEAD(&l1pt_static_queue, pt, pt_queue);
+		pt = SIMPLEQ_FIRST(&l1pt_static_queue);
+		SIMPLEQ_REMOVE_HEAD(&l1pt_static_queue, pt_queue);
 	} else if (l1pt_queue_count) {
 		--l1pt_queue_count;
-		pt = l1pt_queue.sqh_first;
-		SIMPLEQ_REMOVE_HEAD(&l1pt_queue, pt, pt_queue);
+		pt = SIMPLEQ_FIRST(&l1pt_queue);
+		SIMPLEQ_REMOVE_HEAD(&l1pt_queue, pt_queue);
 		++l1pt_reuse_count;
 	} else {
 		pt = pmap_alloc_l1pt();

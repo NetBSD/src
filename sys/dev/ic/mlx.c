@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.17 2002/06/01 23:50:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.17 2002/06/01 23:50:58 lukem Exp $");
 
 #include "ld.h"
 
@@ -1898,7 +1898,7 @@ mlx_ccb_enqueue(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	while ((mc = SIMPLEQ_FIRST(&mlx->mlx_ccb_queue)) != NULL) {
 		if (mlx_ccb_submit(mlx, mc) != 0)
 			break;
-		SIMPLEQ_REMOVE_HEAD(&mlx->mlx_ccb_queue, mc, mc_chain.simpleq);
+		SIMPLEQ_REMOVE_HEAD(&mlx->mlx_ccb_queue, mc_chain.simpleq);
 		TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq);
 	}
 

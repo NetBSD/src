@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.1 2002/04/22 21:05:21 ad Exp $	*/
+/*	$NetBSD: icp.c,v 1.2 2002/06/01 23:50:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.1 2002/04/22 21:05:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.2 2002/06/01 23:50:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ icp_watchdog(void *cookie)
 
 	s = splbio();
 	icp_intr(icp);
-	if (SIMPLEQ_FIRST(&icp->icp_ccb_queue) != NULL)
+	if (! SIMPLEQ_EMPTY(&icp->icp_ccb_queue))
 		icp_ccb_enqueue(icp, NULL);
 	splx(s);
 
@@ -514,7 +514,7 @@ icp_intr(void *cookie)
 		else if (ic->ic_intr != NULL)
 			(*ic->ic_intr)(ic);
 
-		if (SIMPLEQ_FIRST(&icp->icp_ccb_queue) != NULL)
+		if (! SIMPLEQ_EMPTY(&icp->icp_ccb_queue))
 			icp_ccb_enqueue(icp, NULL);
 
 		break;
@@ -599,7 +599,7 @@ icp_ccb_alloc(struct icp_softc *icp)
 
 	s = splbio();
 	ic = SIMPLEQ_FIRST(&icp->icp_ccb_freelist);
-	SIMPLEQ_REMOVE_HEAD(&icp->icp_ccb_freelist, ic, ic_chain);
+	SIMPLEQ_REMOVE_HEAD(&icp->icp_ccb_freelist, ic_chain);
 	splx(s);
 
 	ic->ic_flags = IC_ALLOCED;
@@ -632,7 +632,7 @@ icp_ccb_enqueue(struct icp_softc *icp, struct icp_ccb *ic)
 		if ((*icp->icp_test_busy)(icp))
 			break;
 		icp_ccb_submit(icp, ic);
-		SIMPLEQ_REMOVE_HEAD(&icp->icp_ccb_queue, ic, ic_chain);
+		SIMPLEQ_REMOVE_HEAD(&icp->icp_ccb_queue, ic_chain);
 	}
 
 	splx(s);

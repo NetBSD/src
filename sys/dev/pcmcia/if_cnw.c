@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.20 2001/12/15 13:23:22 soren Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.21 2002/06/01 23:51:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.20 2001/12/15 13:23:22 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.21 2002/06/01 23:51:00 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -518,7 +518,7 @@ cnw_attach(parent, self, aux)
 
 	/* Enable the card */
 	sc->sc_pf = pa->pf;
-	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
+	pcmcia_function_init(sc->sc_pf, SIMPLEQ_FIRST(&sc->sc_pf->cfe_head));
 	if (pcmcia_function_enable(sc->sc_pf)) {
 		printf(": function enable failed\n");
 		return;
