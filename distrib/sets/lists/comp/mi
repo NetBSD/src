@@ -1109,7 +1109,6 @@
 ./usr/include/vm/vnode_pager.h
 ./usr/include/zconf.h
 ./usr/include/zlib.h
-./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libbfd.a

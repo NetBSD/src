@@ -5,3 +5,4 @@
 ./usr/include/machine/intr.h
 ./usr/include/machine/kcore.h
 ./usr/include/machine/mtpr.h
+./usr/lib/c++rt0.o
