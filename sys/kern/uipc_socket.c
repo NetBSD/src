@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.13 2002/07/12 01:40:22 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.14 2002/07/15 20:04:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.13 2002/07/12 01:40:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.14 2002/07/15 20:04:45 nathanw Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -323,7 +323,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	struct socket	*so;
 	int		error, s;
 
-	p = curproc;	/* XXX */
+	p = curproc;		/* XXX */
 	if (proto)
 		prp = pffindproto(dom, proto, type);
 	else
