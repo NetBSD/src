@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.31 1999/04/28 05:09:48 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.32 1999/04/28 06:01:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -258,8 +258,8 @@ const struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
     {	OSF1_PROT_NONE,		OSF1_PROT_NONE,		PROT_NONE	},
 #endif
     {	OSF1_PROT_READ,		OSF1_PROT_READ,		PROT_READ	},
-    {	OSF1_PROT_WRITE,	OSF1_PROT_WRITE,	PROT_WRITE	},
-    {	OSF1_PROT_EXEC,		OSF1_PROT_EXEC,		PROT_EXEC	},
+    {	OSF1_PROT_WRITE,	OSF1_PROT_WRITE,	PROT_READ|PROT_WRITE },
+    {	OSF1_PROT_EXEC,		OSF1_PROT_EXEC,		PROT_READ|PROT_EXEC },
     {	0								}
 };
 
@@ -1246,8 +1246,8 @@ osf1_sys_gettimeofday(p, v, retval)
 			otz.tz_minuteswest = tz.tz_minuteswest;
 			otz.tz_dsttime = tz.tz_dsttime;
 
-			error = copyout((caddr_t)&otv,
-			    (caddr_t)SCARG(uap, tzp), sizeof otv);
+			error = copyout((caddr_t)&otz,
+			    (caddr_t)SCARG(uap, tzp), sizeof otz);
 		}
 	}
 	return (error);
