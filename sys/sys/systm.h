@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.158 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.159 2003/02/04 01:21:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -262,9 +262,7 @@ long	fuiword __P((const void *));
 int	hzto __P((struct timeval *));
 
 void	hardclock __P((struct clockframe *));
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	softclock __P((void *));
-#endif
 void	statclock __P((struct clockframe *));
 #ifdef NTP
 void	hardupdate __P((long offset));
