@@ -1,4 +1,4 @@
-.\" Copyright (c) 1990, 1991, 1993, 1994
+.\" Copyright (c) 1990, 1991, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.14 2002/02/08 01:38:47 ross Exp $
+.\"	$NetBSD: chown.8,v 1.15 2003/01/18 18:37:08 jrf Exp $
 .\"
-.Dd March 31, 1994
+.Dd January 18, 2003
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fh
+.Op Fl fhv
 .Ar owner Ns Op Ar :group
 .Ar file ...
 .Nm ""
@@ -52,7 +52,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fh
+.Op Fl fhv
 .Ar :group
 .Ar file ...
 .Sh DESCRIPTION
@@ -84,6 +84,10 @@ the exit status to reflect such failures.
 If
 .Ar file
 is a symbolic link, the owner and/or group of the link is changed.
+.It Fl v
+Cause
+.Nm 
+to be verbose, showing files as they are processed.
 .El
 .Pp
 The
@@ -152,3 +156,8 @@ group names may contain the dot character.
 The
 .Nm
 command is expected to be POSIX 1003.2 compliant.
+.Pp
+The
+.Fl v
+option is an extension to
+.St -p1003.2 .
