@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.22 2002/09/06 15:51:23 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.23 2002/09/09 18:10:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -278,7 +278,19 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 		 * relocating ourself.
 		 */
 		if (type == R_TYPE(RELATIVE)) {
-			*where += (Elf_Addr)(obj->relocbase + value);
+			extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
+			extern Elf_Addr _GOT_END_[];
+
+			/* This is the ...iffy hueristic. */
+			if (!self ||
+			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+			    (caddr_t)where >= (caddr_t)_GOT_END_) {
+				*where += (Elf_Addr)(obj->relocbase + value);
+				rdbg(dodebug, ("RELATIVE in %s --> %p",
+				    obj->path, (void *)*where));
+			} else
+				rdbg(dodebug, ("RELATIVE in %s stays at %p",
+				    obj->path, (void *)*where));
 			continue;
 		}
 
@@ -331,13 +343,14 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 		*where |= value;
 #ifdef RTLD_DEBUG_RELOC
 		if (RELOC_RESOLVE_SYMBOL(type)) {
-			rdbg(dodebug, ("%s %s in %s --> %p %s",
+			rdbg(dodebug, ("%s %s in %s --> %p in %s",
 			    reloc_names[type],
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 		} else {
-			rdbg(dodebug, ("%s --> %p", reloc_names[type],
-			    (void *)*where));
+			rdbg(dodebug, ("%s in %s --> %p",
+			    reloc_names[type],
+			    obj->path, (void *)*where));
 		}
 #endif
 	}
