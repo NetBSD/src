@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.2 2001/11/16 02:57:10 thorpej Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.3 2001/11/16 16:20:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -35,6 +35,11 @@
 #include <pthread.h>
 
 #include <stdio.h>
+
+/*
+ * When you update this file, don't forget to update pthread-intr.c
+ * for those poor folks still using a.out.
+ */
 
 #ifdef __weak_alias
 __weak_alias(pthread_mutex_init, _pthread_mutex_init)
