@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.3 1998/01/19 02:20:55 sakamoto Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.4 1998/01/19 02:47:33 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -105,10 +105,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <bebox/isa/nvram.h>
 #include <bebox/isa/spkrreg.h>
 
-void	spinwait __P((int));
-void findcpuspeed __P((void));
-int	clockintr __P((void *));
-int	gettick __P((void));
 void	sysbeepstop __P((void *));
 void	sysbeep __P((int, int));
 void	rtcinit __P((void));
@@ -117,7 +113,6 @@ void	rtcput __P((mc_todregs *));
 static int yeartoday __P((int));
 int 	hexdectodec __P((int));
 int	dectohexdec __P((int));
-
 
 __inline u_int mc146818_read __P((void *, u_int));
 __inline void mc146818_write __P((void *, u_int, u_int));
