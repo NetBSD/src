@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.20 2002/07/04 22:46:04 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.21 2003/11/26 01:31:48 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # bind2netbsd:  convert a bind source tree into a
-# netbsd bind source tree, under basesrc/dist and basesrc/crypto/dist,
+# netbsd bind source tree, under src/dist.
 
 # Note: you need to extract the src and doc tar files and put it into
 #	one directory. This directory is the 'src' argument of bind2netbsd.
@@ -42,7 +42,7 @@
 if [ $# -ne 2 ]; then echo "bind2netbsd src dest"; exit 1; fi
 
 r=$1
-d=$2/basesrc/dist/bind
+d=$2/src/dist/bind
 
 case "$d" in
 	/*)
