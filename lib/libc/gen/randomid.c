@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.3 2003/09/10 07:20:13 tls Exp $	*/
+/*	$NetBSD: randomid.c,v 1.4 2003/09/11 11:24:33 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,7 +88,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.3 2003/09/10 07:20:13 tls Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.4 2003/09/11 11:24:33 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -267,6 +267,9 @@ randomid_new(int bits, long timeo)
 	}
 
 	ctx = malloc(sizeof(*ctx));
+	if (!ctx)
+		return (NULL);
+
 	memset(ctx, 0, sizeof(*ctx));
 	ctx->ru_conf = conf;
 	ctx->ru_out = timeo;
