@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.622 2004/05/10 06:18:53 gendalia Exp $
+$NetBSD: pcidevs,v 1.623 2004/05/10 23:29:40 lukem Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2093,6 +2093,7 @@ product NVIDIA	QUADRO4_700XGL	0x025b	Quadro4 700XGL
 product NVIDIA	GF4_TI_4800	0x0280	GeForce4 Ti 4800
 product NVIDIA	GF4_TI_4200_8X	0x0281	GeForce4 Ti 4200 (AGP8X)
 product NVIDIA	GF4_TI_4800_SE	0x0282	GeForce4 Ti 4800 SE
+product NVIDIA	GF4_TI_4200_GO	0x0286	GeForce4 Ti 4200 Go AGP 8x
 product NVIDIA	QUADRO4_980_XGL	0x0288	Quadro4 980 XGL
 product NVIDIA	QUADRO4_780_XGL	0x0289	Quadro4 780 XGL
 product NVIDIA	GEFORCE_FX5800U	0x0301	GeForce FX 5800 Ultra
