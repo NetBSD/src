@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.8 1997/10/19 23:36:21 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.9 1998/12/19 22:26:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.8 1997/10/19 23:36:21 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.9 1998/12/19 22:26:13 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -61,13 +61,13 @@ command(cmd)
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
 	sigprocmask(SIG_BLOCK, &set, NULL);
-	for (cp = cmd; *cp && !isspace(*cp); cp++)
+	for (cp = cmd; *cp && !isspace((unsigned char)*cp); cp++)
 		;
 	if (*cp)
 		*cp++ = '\0';
 	if (*cmd == '\0')
 		return;
-	for (; *cp && isspace(*cp); cp++)
+	for (; *cp && isspace((unsigned char)*cp); cp++)
 		;
 	if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0)
 		die(0);
