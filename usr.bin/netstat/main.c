@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2002/07/03 01:42:59 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2002/07/23 23:34:39 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2002/07/03 01:42:59 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2002/07/23 23:34:39 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,12 @@ struct nlist nl[] = {
 	{ "_hdintrq" },
 #define	N_NATMINTRQ	65
 	{ "_natmintrq" },
+#define	N_PPPOEDISCINQ	66
+	{ "_ppoediscinq" },
+#define	N_PPPOEINQ	67
+	{ "_ppoeinq" },
+#define	N_PKINTRQ	68
+	{ "_pkintrq" },
 	{ "" },
 };
 
@@ -341,6 +347,9 @@ const struct softintrq {
 	{ "llcintrq", N_LLCINTRQ },
 	{ "hdintrq", N_HDINTRQ },
 	{ "natmintrq", N_NATMINTRQ },
+	{ "ppoediscinq", N_PPPOEDISCINQ },
+	{ "ppoeinq", N_PPPOEINQ },
+	{ "pkintrq", N_PKINTRQ },
 	{ NULL, -1 },
 };
 
