@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.72 1996/10/21 17:42:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1121,7 +1121,11 @@ sys_lseek(p, v, retval)
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_VNODE)
+	if (fp->f_type != DTYPE_VNODE
+#ifdef FIFO
+	    || ((struct vnode *)fp->f_data)->v_type == VFIFO
+#endif
+	)
 		return (ESPIPE);
 	switch (SCARG(uap, whence)) {
 	case L_INCR:
