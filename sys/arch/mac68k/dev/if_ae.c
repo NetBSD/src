@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.53 1997/02/24 07:34:18 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.54 1997/02/25 06:36:04 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -124,6 +124,65 @@ ae_size_card_memory(bst, bsh, ofs)
 		return 8192;
 
 	return 0;
+}
+
+/*
+ * Do bus-independent setup.
+ */
+void
+aesetup(sc)
+	struct ae_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int i;
+
+	sc->cr_proto = ED_CR_RD2;
+
+	/* Allocate one xmit buffer if < 16k, two buffers otherwise. */
+	if ((sc->mem_size < 16384) ||
+	    (sc->sc_flags & AE_FLAGS_NO_DOUBLE_BUFFERING))
+		sc->txb_cnt = 1;
+	else
+		sc->txb_cnt = 2;
+
+	sc->tx_page_start = 0;
+	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
+	sc->mem_ring = sc->rec_page_start << ED_PAGE_SHIFT;
+
+	/* Now zero memory and verify that it is clear. */
+	bus_space_set_region_2(sc->sc_buf_tag, sc->sc_buf_handle, 0,
+	    0, sc->mem_size / 2);
+
+	for (i = 0; i < sc->mem_size; ++i)
+		if (bus_space_read_1(sc->sc_buf_tag, sc->sc_buf_handle, i))
+printf("%s: failed to clear shared memory - check configuration\n",
+			    sc->sc_dev.dv_xname);
+
+	/* Set interface to stopped condition (reset). */
+	aestop(sc);
+
+	/* Initialize ifnet structure. */
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
+	ifp->if_start = aestart;
+	ifp->if_ioctl = aeioctl;
+	ifp->if_watchdog = aewatchdog;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+
+	/* Attach the interface. */
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+	/* Print additional info when attached. */
+	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	printf("type %s, %dKB memory\n", sc->type_str, sc->mem_size / 1024);
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 /*
