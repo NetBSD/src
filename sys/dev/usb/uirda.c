@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.2 2001/12/13 02:16:21 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.3 2001/12/13 17:25:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.2 2001/12/13 02:16:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.3 2001/12/13 17:25:37 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,6 +347,9 @@ USB_ATTACH(uirda)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	lockinit(&sc->sc_wr_buf_lk, PZERO, "iirwrl", 0, 0);
+	lockinit(&sc->sc_rd_buf_lk, PZERO, "uirrdl", 0, 0);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = &uirda_methods;
