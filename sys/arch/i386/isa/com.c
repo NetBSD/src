@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.31.2.1 1994/08/01 17:13:41 cgd Exp $
+ *	$Id: com.c,v 1.31.2.2 1994/08/07 11:28:12 mycroft Exp $
  */
 
 /*
@@ -67,6 +67,7 @@ struct com_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
+	int sc_overflows;
 	u_short sc_iobase;
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
@@ -86,6 +87,7 @@ int comprobe();
 void comattach();
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
+void comdiag __P((void *));
 int comintr __P((struct com_softc *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
@@ -693,8 +695,10 @@ comeint(sc, stat)
 		c |= TTY_FE;
 	else if (stat & LSR_PE)
 		c |= TTY_PE;
-	if (stat & LSR_OE)
-		log(LOG_WARNING, "%s: silo overflow\n", sc->sc_dev.dv_xname);
+	if (stat & LSR_OE) {
+		if (sc->sc_overflows++ == 0)
+			timeout(comdiag, sc, 60 * hz);
+	}
 	/* XXXX put in FIFO and process later */
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
@@ -726,6 +730,24 @@ commint(sc)
 		} else
 			tp->t_state |= TS_TTSTOP;
 	}
+}
+
+void
+comdiag(arg)
+	void *arg;
+{
+	struct com_softc *sc = arg;
+	int overflows;
+	int s;
+
+	s = spltty();
+	overflows = sc->sc_overflows;
+	sc->sc_overflows = 0;
+	splx(s);
+
+	if (overflows)
+		log(LOG_WARNING, "%s: %d silo overflow%s\n",
+		    sc->sc_dev.dv_xname, overflows, overflows == 1 ? "" : "s");
 }
 
 int
