@@ -676,19 +676,23 @@ jump_optimize (f, cross_jump, noop_moves, after_regscan)
 	      int diff_vec_p = GET_CODE (PATTERN (insn)) == ADDR_DIFF_VEC;
 	      int len = XVECLEN (pat, diff_vec_p);
 	      rtx dispatch = prev_real_insn (insn);
+	      rtx set;
 
 	      for (i = 0; i < len; i++)
 		if (XEXP (XVECEXP (pat, diff_vec_p, i), 0)
 		    != XEXP (XVECEXP (pat, diff_vec_p, 0), 0))
 		  break;
+
 	      if (i == len
 		  && dispatch != 0
 		  && GET_CODE (dispatch) == JUMP_INSN
 		  && JUMP_LABEL (dispatch) != 0
-		  /* Don't mess with a casesi insn.  */
-		  && !(GET_CODE (PATTERN (dispatch)) == SET
-		       && (GET_CODE (SET_SRC (PATTERN (dispatch)))
-			   == IF_THEN_ELSE))
+		  /* Don't mess with a casesi insn. 
+		     XXX according to the comment before computed_jump_p(),
+		     all casesi insns should be a parallel of the jump
+		     and a USE of a LABEL_REF.  */
+		  && ! ((set = single_set (dispatch)) != NULL
+			&& (GET_CODE (SET_SRC (set)) == IF_THEN_ELSE))
 		  && next_real_insn (JUMP_LABEL (dispatch)) == insn)
 		{
 		  redirect_tablejump (dispatch,
@@ -862,7 +866,12 @@ jump_optimize (f, cross_jump, noop_moves, after_regscan)
 		  && ! reg_referenced_between_p (temp1, p, NEXT_INSN (temp3))
 		  && ! reg_set_between_p (temp1, p, temp3)
 		  && (GET_CODE (SET_SRC (temp4)) == CONST_INT
-		      || ! modified_between_p (SET_SRC (temp4), p, temp2)))
+		      || ! modified_between_p (SET_SRC (temp4), p, temp2))
+		  /* Verify that registers used by the jump are not clobbered
+		     by the instruction being moved.  */
+		  && ! regs_set_between_p (PATTERN (temp),
+					   PREV_INSN (temp2),
+					   NEXT_INSN (temp2)))
 		{
 		  emit_insn_after_with_line_notes (PATTERN (temp2), p, temp2);
 		  delete_insn (temp2);
@@ -960,6 +969,11 @@ jump_optimize (f, cross_jump, noop_moves, after_regscan)
 						 NEXT_INSN (temp2))
 		  && ! reg_set_between_p (temp1, insert_after, temp)
 		  && ! modified_between_p (SET_SRC (temp4), insert_after, temp)
+		  /* Verify that registers used by the jump are not clobbered
+		     by the instruction being moved.  */
+		  && ! regs_set_between_p (PATTERN (temp),
+					   PREV_INSN (temp3),
+					   NEXT_INSN (temp3))
 		  && invert_jump (temp, JUMP_LABEL (insn)))
 		{
 		  emit_insn_after_with_line_notes (PATTERN (temp3),
