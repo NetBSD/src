@@ -38,11 +38,11 @@ Bootable installation floppies:
 
         Because the kernel on the installation disks is not suitable
         for use beyond initial installation and configuration, a
-        "generic" kernel, named "GENERIC.gz", has been placed in the
-        binaries directory. This kernel is intended to run your system
-        while you build a custom kernel. It is strongly encouraged
-        that you build a custom kernel for your installation rather
-        than use the prebuilt generic kernel on a long term basis.
+        "generic" kernel has been placed in a distribution set named
+        "kern12D". This kernel is intended to run your system while
+        you build a custom kernel. It is strongly encouraged that you
+        build a custom kernel for your installation rather than use
+        the prebuilt generic kernel on a long term basis.
 
         Please note that because of space considerations the kernels
         booted from the installation floppies do not contain drivers
@@ -69,16 +69,11 @@ Bootable upgrade floppies:
 
 
 The NetBSD/i386 binary distribution sets contain the binaries which
-comprise the NetBSD 1.2 release for the i386.  There are seven binary
-distribution sets, the "security" distribution set, and a GENERIC
-kernel.  The binary distribution sets can be found in subdirectories
-of the "i386/binary" subdirectory of the NetBSD 1.2 distribution tree,
-and are as follows:
+comprise the NetBSD 1.2 release for the i386.  There are eight binary
+distribution sets and the "security" distribution set.  The binary
+distribution sets can be found in subdirectories of the "i386/binary"
+subdirectory of the NetBSD 1.2 distribution tree, and are as follows:
 
-	Kernels	This set contains a NetBSD/i386 1.2D GENERIC kernel,
-		named "GENERIC", which must be copied to the hard
-		drive as /netbsd during installation.
-		[ .8M gzipped, 1.7M uncompressed ]
 
 	base12	The NetBSD/i386 1.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
@@ -111,6 +106,11 @@ and are as follows:
 	games12	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.9M uncompressed ]
 
+	kern12D	This set contains a NetBSD/i386 1.2D GENERIC kernel,
+		named "/netbsd". You MUST install this distribution
+		set.
+		[ .8M gzipped, 1.7M uncompressed ]
+
 	man12	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
@@ -128,6 +128,13 @@ and are as follows:
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
+
+IMPORTANT: In previous versions of NetBSD, the kernel from the install
+floppy was copied onto the hard drive in a special step. In the new
+install system, the kernel on the floppy is unsuited to being copied
+onto the hard drive. Instead, a new set, "kern", has been added which
+contains a generic kernel to be unloaded onto the drive. It must be
+extracted in order to have a minimally functioning system.
 
 The i386 security distribution set is named "secr12" and can be found
 in the "i386/security" subdirectory of the NetBSD 1.2 distribution
