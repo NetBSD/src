@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.10 2005/01/12 22:56:55 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.11 2005/01/13 16:39:22 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -180,3 +180,22 @@ sys/kern/sysv_sem.c				1.55
 	to compensate for a race condition in a file locking
 	implementation.
 	[briggs, ticket #903]
+
+x11/Xserver/Makefile				1.13
+x11/Xserver/Makefile.common			1.19
+x11/Xserver/miext/Makefile			1.2
+x11/Xserver/miext/shadow/Makefile		1.3
+x11/Xserver/miext/shadow/Makefile.shadow	1.1 (new)
+x11/Xserver/miext/shadow/module/Makefile	1.1 (new)
+x11/Xserver/miext/layer/Makefile		1.3
+x11/Xserver/miext/layer/Makefile.layer		1.1 (new)
+x11/Xserver/miext/layer/module/Makefile		1.1 (new)
+distrib/sets/lists/xserver/md.amd64		1.9
+distrib/sets/lists/xserver/md.cats		1.5
+distrib/sets/lists/xserver/md.i386		1.25
+distrib/sets/lists/xserver/md.macppc		1.17
+distrib/sets/lists/xserver/md.sgimips		1.7
+
+	Build and install libshadow.a and liblayer.a.
+	Fixes PR#27156.
+	[rtr, tickets 905, 906, 907]
