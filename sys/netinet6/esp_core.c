@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.18 2001/11/13 00:56:57 lukem Exp $	*/
-/*	$KAME: esp_core.c,v 1.52 2001/09/10 04:04:00 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.19 2001/11/27 11:19:36 itojun Exp $	*/
+/*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.18 2001/11/13 00:56:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.19 2001/11/27 11:19:36 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -511,7 +511,8 @@ esp_cast128_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc));
+	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc),
+		_KEYLEN(sav->key_enc));
 	return 0;
 }
 
