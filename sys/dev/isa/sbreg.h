@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.23 1997/08/11 01:08:15 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.24 1997/08/24 23:24:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -117,6 +117,19 @@
 #define SB16P_LINE_L		0x38
 #define SB16P_MIC_L		0x3a
 #define SB16P_PCSPEAKER		0x3b
+#define SB16P_OSWITCH		0x3c
+#define SB16P_ISWITCH_L		0x3d
+#define SB16P_ISWITCH_R		0x3e
+#define 	SB16P_SW_MIC	0x01
+#define 	SB16P_SW_CD_R	0x02
+#define 	SB16P_SW_CD_L	0x04
+#define 	SB16P_SW_CD	(SB16P_SW_CD_L|SB16P_SW_CD_R)
+#define 	SB16P_SW_LINE_R	0x08
+#define 	SB16P_SW_LINE_L	0x10
+#define 	SB16P_SW_LINE	(SB16P_SW_LINE_L|SB16P_SW_LINE_R)
+#define 	SB16P_SW_MIDI_R	0x20
+#define 	SB16P_SW_MIDI_L	0x40
+#define 	SB16P_SW_MIDI	(SB16P_SW_MIDI_L|SB16P_SW_MIDI_R)
 #define SB16P_INPUT_GAIN_L	0x3f
 #define SB16P_OUTPUT_GAIN_L	0x41
 #define SB16P_TREBLE_L		0x44
