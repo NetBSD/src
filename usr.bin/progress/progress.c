@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.5 2003/01/22 10:44:17 agc Exp $ */
+/*	$NetBSD: progress.c,v 1.6 2003/02/10 09:10:01 ross Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.5 2003/01/22 10:44:17 agc Exp $");
+__RCSID("$NetBSD: progress.c,v 1.6 2003/02/10 09:10:01 ross Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -211,7 +211,8 @@ main(int argc, char *argv[])
 							(unsigned) nr);
 	close(outpipe[1]);
 
-	wait(&waitstat);
+	while(wait(&waitstat) != -1)
+		continue;
 
 	progressmeter(1);
 	return 0;
