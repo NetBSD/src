@@ -20,7 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define default target values. */
 
-#ifndef TARGET_ENDIAN_DEFAULT
+#ifdef TARGET_BIG_ENDIAN_DEFAULT
+#define TARGET_ENDIAN_DEFAULT MASK_BIG_ENDIAN
+#else
 #define TARGET_ENDIAN_DEFAULT 0
 #endif
 #define TARGET_DEFAULT MASK_GAS
@@ -47,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 /* Define mips-specific netbsd predefines... */
 
 #undef CPP_PREDEFINES
-#if TARGET_ENDIAN_DEFAULT == MASK_BIG_ENDIAN
+#ifdef TARGET_BIG_ENDIAN_DEFAULT
 #define CPP_PREDEFINES \
  "-D__ANSI_COMPAT -DMIPSEB -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
   -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
