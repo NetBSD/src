@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.34 2003/03/06 20:12:53 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.35 2003/03/06 20:53:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2095,14 +2095,20 @@ bge_attach(parent, self, aux)
 
 	/*
 	 * Figure out what sort of media we have by checking the
-	 * hardware config word in the EEPROM. Note: on some BCM5700
+	 * hardware config word in the first 32k of NIC internal memory,
+	 * or fall back to the config word in the EEPROM. Note: on some BCM5700
 	 * cards, this value appears to be unset. If that's the
 	 * case, we have to rely on identifying the NIC by its PCI
 	 * subsystem ID, as we do below for the SysKonnect SK-9D41.
 	 */
-	bge_read_eeprom(sc, (caddr_t)&hwcfg,
+	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER) {
+		hwcfg = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG);
+	} else {
+		bge_read_eeprom(sc, (caddr_t)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
-	if ((be32toh(hwcfg) & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER)
+		hwcfg = be32toh(hwcfg);
+	}
+	if ((hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER)
 		sc->bge_tbi = 1;
 
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
