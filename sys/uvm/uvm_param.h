@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.6 2001/03/15 06:10:58 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -126,20 +126,6 @@ typedef int	boolean_t;
 	{ "vtextmin", CTLTYPE_INT }, \
 	{ "vnodemin", CTLTYPE_INT }, \
 }
-
-/* 
- *	Return values from the VM routines.
- */
-#define	KERN_SUCCESS		0
-#define	KERN_INVALID_ADDRESS	1
-#define	KERN_PROTECTION_FAILURE	2
-#define	KERN_NO_SPACE		3
-#define	KERN_INVALID_ARGUMENT	4
-#define	KERN_FAILURE		5
-#define	KERN_RESOURCE_SHORTAGE	6
-#define	KERN_NOT_RECEIVER	7
-#define	KERN_NO_ACCESS		8
-#define	KERN_PAGES_LOCKED	9
 
 #ifndef ASSEMBLER
 /*

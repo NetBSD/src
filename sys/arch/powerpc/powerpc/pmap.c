@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2001/03/07 08:18:45 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 2001/03/15 06:10:47 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1038,7 +1038,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	if (pte_insert(idx, &pte)) {
 		splx(s);
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	/*
@@ -1051,7 +1051,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	LIST_INSERT_HEAD(potable + idx, po, po_list);
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void

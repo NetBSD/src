@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2000/12/31 19:41:41 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.61 2001/03/15 06:10:53 chs Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -229,13 +229,13 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			ftype = VM_PROT_READ;
 
 		rv = uvm_fault(map, addr, 0, ftype);
-		if (rv != KERN_SUCCESS) {
+		if (rv != 0) {
 			if (umode == 0) {
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
-			if (rv == KERN_RESOURCE_SHORTAGE) {
+			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
 				       p->p_pid, p->p_comm,

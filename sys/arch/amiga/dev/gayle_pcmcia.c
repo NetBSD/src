@@ -1,4 +1,4 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.7 2001/02/11 09:54:48 is Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.8 2001/03/15 06:10:35 chs Exp $	*/
 
 /* public domain */
 
@@ -131,7 +131,7 @@ pccard_attach(parent, myself, aux)
 		UVM_UNKNOWN_OFFSET, 0,
 		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 		UVM_INH_NONE, UVM_ADV_RANDOM, 0));
-	if (ret != KERN_SUCCESS) {
+	if (ret != 0) {
 		printf("attach failed (no virtual memory)\n");
 		return;
 	}
