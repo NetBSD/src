@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/04/06 16:35:38 lha Exp $
+#	$NetBSD: Makefile,v 1.34 2003/07/22 12:34:40 lukem Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -34,6 +34,3 @@ MLINKS+=	passwd.1 kpasswd.1
 .endif
 
 .include <bsd.prog.mk>
-
-# getpwent.o: getpwent.c
-# 	${COMPILE.c} -UYP ${.IMPSRC}
