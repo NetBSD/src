@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.12 2000/02/08 17:56:58 mycroft Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.13 2000/02/22 16:04:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -116,9 +116,6 @@ struct pcic_softc {
 	bus_space_handle_t memh;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-
-	/* XXX isa_chipset_tag_t, pci_chipset_tag_t, etc. */
-	void *intr_est;
 
 	pcmcia_chipset_tag_t pct;
 
