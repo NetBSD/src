@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.12 2002/03/03 12:13:47 he Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.13 2003/05/17 23:10:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -127,7 +127,7 @@ edit_head_field(v, f, modify)
 
 	default:
 		/* must be a string. */
-		strncpy(tmpbuf, (char*)cp, sizeof(tmpbuf));
+		strlcpy(tmpbuf, (char*)cp, sizeof(tmpbuf));
 		printf("%s", tmpbuf);
 		break;
 	}
@@ -231,7 +231,8 @@ print_val_cts(d, val)
 	cyls   = val / d->d_nsectors;
 	trks   = cyls % d->d_ntracks;
 	cyls  /= d->d_ntracks;
-	sprintf(buf, "(%d/%02d/%02d)%c", cyls, trks, sects, marker);
+	snprintf(buf, sizeof(buf), "(%d/%02d/%02d)%c", cyls, trks, sects,
+	    marker);
 	printf(" %9ld %16s", val, buf);
 }
 
