@@ -8,6 +8,7 @@ maxusers 2 8 64
 include "arch/powerpc/conf/files.ofw"
 
 file arch/macppc/macppc/autoconf.c
+file arch/macppc/macppc/bus_dma.c
 file arch/macppc/macppc/clock.c
 file arch/macppc/macppc/conf.c
 file arch/macppc/macppc/disksubr.c		disk
