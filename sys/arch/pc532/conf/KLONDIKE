@@ -1,4 +1,4 @@
-#	$NetBSD: KLONDIKE,v 1.12 1997/03/22 08:29:45 matthias Exp $
+#	$NetBSD: KLONDIKE,v 1.13 1997/06/12 18:42:10 mrg Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -53,7 +53,7 @@ options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"
 options		NS381			# FPU installed
 options		PLIP			# PLIP driver in dev/lpt.c
 
-config		netbsd root on sd0a type ffs swap on sd0b and sd1b
+config		netbsd root on sd0a type ffs 
 
 sd0 at scsibus0 target 0 lun 0		# Quantum LP52S
 sd1 at scsibus0 target 1 lun 0		# Micropolis 4110

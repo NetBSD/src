@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.86 1997/04/01 13:12:17 mycroft Exp $
+#	$NetBSD: SUN_LAMP,v 1.87 1997/06/12 18:42:05 mrg Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -73,7 +73,7 @@ options		INET		# IP + ICMP + TCP + UDP
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
 
-config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and sd2
+config		netbsd	root on sd0 type ffs 
 
 mainbus0 at root
 

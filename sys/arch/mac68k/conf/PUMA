@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.21 1997/05/06 00:31:50 lukem Exp $
+#	$NetBSD: PUMA,v 1.22 1997/06/12 18:42:08 mrg Exp $
 #
 # PUMA
 
@@ -46,7 +46,7 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 
-config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
+config		netbsd	root on sd0  dumps on sd1b
 
 asc0		at obio?			# ASC/EASC audio
 
