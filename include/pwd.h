@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.19 1998/07/28 16:27:49 mycroft Exp $	*/
+/*	$NetBSD: pwd.h,v 1.20 1999/12/22 21:59:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -64,7 +64,7 @@
 
 #define	_PASSWORD_EFMT1		'_'	/* extended encryption format */
 
-#define	_PASSWORD_LEN		128	/* max length, not counting NULL */
+#define	_PASSWORD_LEN		128	/* max length, not counting NUL */
 
 #define _PASSWORD_NOUID		0x01	/* flag for no specified uid. */
 #define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
