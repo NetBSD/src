@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 1998/09/12 14:11:53 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.129 1998/09/14 09:46:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3604,7 +3604,7 @@ pmap_alloc_cpu(sc)
 	vm_page_t m;
 	int cachebit;
 
-	cachebit = ((sc->flags & CPUFLG_CACHEPAGETABLES) != 0) ? SRMMU_PG_C : 0;
+	cachebit = (sc->flags & CPUFLG_CACHEPAGETABLES) != 0;
 
 	/*
 	 * Allocate properly aligned and contiguous physically memory
@@ -3628,7 +3628,7 @@ pmap_alloc_cpu(sc)
 	/* Map the pages */
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa | cachebit,
+		pmap_enter(pmap_kernel(), va, pa | (cachebit ? 0 : PMAP_NC),
 			   VM_PROT_READ|VM_PROT_WRITE, 1);
 		va += NBPG;
 	}
@@ -3671,17 +3671,10 @@ pmap_alloc_cpu(sc)
 	qcopy(sp->sg_pte, pagtable, SRMMU_L3SIZE * sizeof(int));
 	setpgt4m(&pagtable[vpg],
 		(VA2PA((caddr_t)sc) >> SRMMU_PPNPASHIFT) |
-		(SRMMU_TEPTE | PPROT_RWX_RWX | cachebit));
+		(SRMMU_TEPTE | PPROT_N_RWX | SRMMU_PG_C));
 
 	sc->ctx_tbl = ctxtable;
 	sc->L1_ptps = regtable;
-#ifdef DEBUG
-{char bits[64];
- int pte = lda(((u_int)regtable & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP);
- printf("regtab PTE at %p = %s\n", regtable,
-		bitmask_snprintf(pte, SRMMU_PTE_BITS, bits, sizeof(bits)));
-}
-#endif
 }
 #endif /* SUN4M */
 
