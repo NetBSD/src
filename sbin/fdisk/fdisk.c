@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.77 2004/03/24 02:49:37 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.77.2.1 2004/08/16 17:46:13 jmc Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.77 2004/03/24 02:49:37 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.77.2.1 2004/08/16 17:46:13 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1012,11 +1012,14 @@ get_geometry(void)
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_DISKINFO;
 	if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
-		intuit_translated_geometry();
-		return;
+		goto out;
 	}
 	dl = (struct disklist *) malloc(len);
-	sysctl(mib, 2, dl, &len, NULL, 0);
+	if (sysctl(mib, 2, dl, &len, NULL, 0) < 0) {
+		free(dl);
+		dl = 0;
+		goto out;
+	}
 
 	get_diskname(disk, diskname, sizeof diskname);
 
@@ -1040,6 +1043,7 @@ get_geometry(void)
 			return;
 		}
 	}
+ out:
 	/* Allright, allright, make a stupid guess.. */
 	intuit_translated_geometry();
 }
