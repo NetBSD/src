@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.39 1997/03/17 03:17:37 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.40 1997/03/31 07:37:24 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -96,8 +96,8 @@ lewrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	register struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	do {
 		ler1->ler1_rap = port;
@@ -112,8 +112,8 @@ lerdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	register struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	do {
@@ -148,7 +148,7 @@ leattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct lereg0 *ler0;
+	struct lereg0 *ler0;
 	struct dio_attach_args *da = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	caddr_t addr;

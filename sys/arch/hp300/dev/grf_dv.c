@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.10 1997/01/30 09:18:45 thorpej Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.11 1997/03/31 07:34:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -47,13 +47,13 @@
  * Graphics routines for the DaVinci, HP98730/98731 Graphics system.
  */
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -83,6 +83,10 @@ void	dvbox_intio_attach __P((struct device *, struct device *, void *));
 
 int	dvbox_dio_match __P((struct device *, struct cfdata *, void *));
 void	dvbox_dio_attach __P((struct device *, struct device *, void *));
+
+int	dvbox_console_scan __P((int, caddr_t, void *));
+void	dvboxcnprobe __P((struct consdev *cp));
+void	dvboxcninit __P((struct consdev *cp));
 
 struct cfattach dvbox_intio_ca = {
 	sizeof(struct grfdev_softc), dvbox_intio_match, dvbox_intio_attach
@@ -204,10 +208,9 @@ dv_init(gp, scode, addr)
 	int scode;
 	caddr_t addr;
 {
-	register struct dvboxfb *dbp;
+	struct dvboxfb *dbp;
 	struct grfinfo *gi = &gp->g_display;
 	int fboff;
-	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -230,7 +233,7 @@ dv_init(gp, scode, addr)
 			 * For DIO II space the fbaddr just computed is
 			 * the offset from the select code base (regaddr)
 			 * of the framebuffer.  Hence it is also implicitly
-			 * the size of the register set.
+			 * the size of the set.
 			 */
 			gi->gd_regsize = (int) gi->gd_fbaddr;
 			gi->gd_fbaddr += (int) gi->gd_regaddr;
@@ -316,7 +319,7 @@ dv_mode(gp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	register struct dvboxfb *dbp;
+	struct dvboxfb *dbp;
 	int error = 0;
 
 	dbp = (struct dvboxfb *) gp->g_regkva;
@@ -405,7 +408,7 @@ dv_mode(gp, cmd, data)
 
 void
 dvbox_init(ip)
-	register struct ite_data *ip;
+	struct ite_data *ip;
 {
 	int i;
 	
@@ -502,7 +505,7 @@ dvbox_init(ip)
 
 void
 dvbox_deinit(ip)
-	register struct ite_data *ip;
+	struct ite_data *ip;
 {
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	db_waitbusy(ip->regbase);
@@ -515,7 +518,7 @@ dvbox_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
         int dy, dx, c, mode;
 {
-        register int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 	
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			 dy * ip->ftheight, dx * ip->ftwidth,
@@ -553,10 +556,10 @@ dvbox_scroll(ip, sy, sx, count, dir)
         struct ite_data *ip;
         int sy, count, dir, sx;
 {
-	register int dy;
-	register int dx = sx;
-	register int height = 1;
-	register int width = ip->cols;
+	int dy;
+	int dx = sx;
+	int height = 1;
+	int width = ip->cols;
 
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
@@ -588,7 +591,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
-	register struct dvboxfb *dp = REGBASE;
+	struct dvboxfb *dp = REGBASE;
 	if (h == 0 || w == 0)
 		return;
 	

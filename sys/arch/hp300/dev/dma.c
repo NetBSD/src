@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.12 1997/01/31 23:01:25 carrel Exp $	*/
+/*	$NetBSD: dma.c,v 1.13 1997/03/31 07:32:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -326,14 +326,14 @@ dmafree(dq)
 void
 dmago(unit, addr, count, flags)
 	int unit;
-	register char *addr;
-	register int count;
-	register int flags;
+	char *addr;
+	int count;
+	int flags;
 {
 	struct dma_softc *sc = &Dma_softc;
-	register struct dma_channel *dc = &sc->sc_chan[unit];
-	register char *dmaend = NULL;
-	register int seg, tcount;
+	struct dma_channel *dc = &sc->sc_chan[unit];
+	char *dmaend = NULL;
+	int seg, tcount;
 
 	if (count > MAXPHYS)
 		panic("dmago: count > MAXPHYS");
@@ -466,10 +466,10 @@ dmago(unit, addr, count, flags)
 
 void
 dmastop(unit)
-	register int unit;
+	int unit;
 {
 	struct dma_softc *sc = &Dma_softc;
-	register struct dma_channel *dc = &sc->sc_chan[unit];
+	struct dma_channel *dc = &sc->sc_chan[unit];
 	struct dmaqueue *dq;
 
 #ifdef DEBUG
@@ -513,8 +513,8 @@ dmaintr(arg)
 	void *arg;
 {
 	struct dma_softc *sc = arg;
-	register struct dma_channel *dc;
-	register int i, stat;
+	struct dma_channel *dc;
+	int i, stat;
 	int found = 0;
 
 #ifdef DEBUG
@@ -566,7 +566,7 @@ void
 dmatimeout(arg)
 	void *arg;
 {
-	register int i, s;
+	int i, s;
 	struct dma_softc *sc = arg;
 
 	for (i = 0; i < NDMACHAN; i++) {

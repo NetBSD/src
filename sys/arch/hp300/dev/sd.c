@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.29 1997/01/30 09:14:20 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.30 1997/03/31 07:40:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -46,20 +46,18 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/stat.h>
-#include <sys/disklabel.h>
+#include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/device.h>
+#include <sys/stat.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
-
 #include <hp300/dev/sdvar.h>
-
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
 #endif
@@ -69,10 +67,12 @@
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
 
+/*
 extern void disksort();
 extern void biodone();
 extern int physio();
 extern void TBIS();
+*/
 
 int	sdmatch __P((struct device *, struct cfdata *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
@@ -85,17 +85,6 @@ struct cfdriver sd_cd = {
 	NULL, "sd", DV_DISK
 };
 
-void	sdstrategy __P((struct buf *));
-void	sdustart __P((int));
-
-void	sdstart __P((void *));
-void	sdgo __P((void *));
-void	sdintr __P((void *, int));
-
-int	sdgetcapacity __P((struct sd_softc *, dev_t));
-
-static void sdgetgeom __P((struct sd_softc *));
-
 #ifdef DEBUG
 int sddebug = 1;
 #define SDB_ERROR	0x01
@@ -103,8 +92,8 @@ int sddebug = 1;
 #define SDB_CAPACITY	0x04
 #endif
 
-static struct scsi_fmt_cdb sd_read_cmd = { 10, CMD_READ_EXT };
-static struct scsi_fmt_cdb sd_write_cmd = { 10, CMD_WRITE_EXT };
+static struct scsi_fmt_cdb sd_read_cmd = { 10, { CMD_READ_EXT } };
+static struct scsi_fmt_cdb sd_write_cmd = { 10, { CMD_WRITE_EXT } };
 
 /*
  * Table of scsi commands users are allowed to access via "format"
@@ -131,6 +120,26 @@ static char legal_cmds[256] = {
 /*f0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 };
 
+/* bdev_decl(sd); */
+/* cdev_decl(sd); */
+/* XXX we should use macros to do these... */
+int	sdopen __P((dev_t, int, int, struct proc *));
+int	sdclose __P((dev_t, int, int, struct proc *));
+
+int	sdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	sdread __P((dev_t, struct uio *, int));
+void	sdreset __P((struct sd_softc *));
+int	sdwrite __P((dev_t, struct uio *, int));
+
+void	sdstrategy __P((struct buf *));
+int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
+int	sdsize __P((dev_t));
+
+static void 	sdgetgeom __P((struct sd_softc *));
+static void	sdlblkstrat __P((struct buf *, int));
+static int	sderror __P((struct sd_softc *, int));
+static void	sdfinish __P((struct sd_softc *, struct buf *));
+
 /*
  * Perform a mode-sense on page 0x04 (rigid geometry).
  */
@@ -144,7 +153,7 @@ sdgetgeom(sc)
 	} sensebuf;
 	struct scsi_fmt_cdb modesense_geom = {
 		6,
-		CMD_MODE_SENSE, 0, 0x04, 0, sizeof(sensebuf), 0
+		{ CMD_MODE_SENSE, 0, 0x04, 0, sizeof(sensebuf), 0 }
 	};
 	int ctlr, slave, unit;
 
@@ -258,7 +267,7 @@ sdattach(parent, self, aux)
 
 void
 sdreset(sc)
-	register struct sd_softc *sc;
+	struct sd_softc *sc;
 {
 	sc->sc_stats.sdresets++;
 }
@@ -275,7 +284,7 @@ sdgetcapacity(sc, dev)
 {
 	static struct scsi_fmt_cdb cap = {
 		10,
-		CMD_READ_CAPACITY, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		{ CMD_READ_CAPACITY, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 	};
 	u_char *capbuf;
 	int i, capbufsize;
@@ -375,9 +384,9 @@ sdgetinfo(dev)
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	register struct disklabel *lp = sc->sc_dkdev.dk_label;
-	register struct partition *pi;
-	char *msg, *readdisklabel();
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct partition *pi;
+	char *msg;
 #ifdef COMPAT_NOLABEL
 	int usedefault = 1;
 
@@ -467,7 +476,7 @@ sdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register int unit = sdunit(dev);
+	int unit = sdunit(dev);
 	struct sd_softc *sc;
 	int error, mask, part;
 
@@ -528,7 +537,7 @@ sdclose(dev, flag, mode, p)
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	register struct disk *dk = &sc->sc_dkdev;
+	struct disk *dk = &sc->sc_dkdev;
 	int mask, s;
 
 	mask = 1 << sdpart(dev);
@@ -570,15 +579,15 @@ sdclose(dev, flag, mode, p)
  */
 static void
 sdlblkstrat(bp, bsize)
-	register struct buf *bp;
-	register int bsize;
+	struct buf *bp;
+	int bsize;
 {
 	struct sd_softc *sc = sd_cd.cd_devs[sdunit(bp->b_dev)];
-	register struct buf *cbp = (struct buf *)malloc(sizeof(struct buf),
+	struct buf *cbp = (struct buf *)malloc(sizeof(struct buf),
 							M_DEVBUF, M_WAITOK);
 	caddr_t cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
-	register int bn, resid;
-	register caddr_t addr;
+	int bn, resid;
+	caddr_t addr;
 
 	bzero((caddr_t)cbp, sizeof(*cbp));
 	cbp->b_proc = curproc;		/* XXX */
@@ -593,8 +602,8 @@ sdlblkstrat(bp, bsize)
 #endif
 
 	while (resid > 0) {
-		register int boff = dbtob(bn) & (bsize - 1);
-		register int count;
+		int boff = dbtob(bn) & (bsize - 1);
+		int count;
 
 		if (boff || resid < bsize) {
 			sc->sc_stats.sdpartials++;
@@ -660,14 +669,14 @@ done:
 
 void
 sdstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	int unit = sdunit(bp->b_dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	register struct buf *dp = &sc->sc_tab;
-	register struct partition *pinfo;
-	register daddr_t bn;
-	register int sz, s;
+	struct buf *dp = &sc->sc_tab;
+	struct partition *pinfo;
+	daddr_t bn;
+	int sz, s;
 	int offset;
 
 	if (sc->sc_format_pid >= 0) {
@@ -745,7 +754,7 @@ done:
 
 void
 sdustart(unit)
-	register int unit;
+	int unit;
 {
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
 
@@ -818,7 +827,7 @@ sdfinish(sc, bp)
 	struct sd_softc *sc;
 	struct buf *bp;
 {
-	register struct buf *dp = &sc->sc_tab;
+	struct buf *dp = &sc->sc_tab;
 
 	dp->b_errcnt = 0;
 	dp->b_actf = bp->b_actf;
@@ -847,8 +856,8 @@ sdstart(arg)
 	 * so check now.
 	 */
 	if (sc->sc_format_pid >= 0 && legal_cmds[sc->sc_cmdstore.cdb[0]] > 0) {
-		register struct buf *bp = sc->sc_tab.b_actf;
-		register int sts;
+		struct buf *bp = sc->sc_tab.b_actf;
+		int sts;
 
 		sc->sc_tab.b_errcnt = 0;
 		while (1) {
@@ -877,9 +886,9 @@ sdgo(arg)
 	void *arg;
 {
 	struct sd_softc *sc = arg;
-	register struct buf *bp = sc->sc_tab.b_actf;
-	register int pad;
-	register struct scsi_fmt_cdb *cmd;
+	struct buf *bp = sc->sc_tab.b_actf;
+	int pad;
+	struct scsi_fmt_cdb *cmd;
 
 	if (sc->sc_format_pid >= 0) {
 		cmd = &sc->sc_cmdstore;
@@ -935,9 +944,8 @@ sdintr(arg, stat)
 	void *arg;
 	int stat;
 {
-	register struct sd_softc *sc = arg;
-	int unit = sc->sc_dev.dv_unit;
-	register struct buf *bp = sc->sc_tab.b_actf;
+	struct sd_softc *sc = arg;
+	struct buf *bp = sc->sc_tab.b_actf;
 	int cond;
 	
 	if (bp == NULL) {
@@ -978,9 +986,9 @@ sdread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register int unit = sdunit(dev);
+	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	register int pid;
+	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
 	    pid != uio->uio_procp->p_pid)
@@ -995,9 +1003,9 @@ sdwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register int unit = sdunit(dev);
+	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	register int pid;
+	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
 	    pid != uio->uio_procp->p_pid)
@@ -1009,14 +1017,14 @@ sdwrite(dev, uio, flags)
 int
 sdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	register struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
 	switch (cmd) {
@@ -1113,7 +1121,7 @@ int
 sdsize(dev)
 	dev_t dev;
 {
-	register int unit = sdunit(dev);
+	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
 	int psize, didopen = 0;
 
@@ -1158,7 +1166,6 @@ sddump(dev, blkno, va, size)
 	int unit, part;
 	struct sd_softc *sc;
 	struct disklabel *lp;
-	daddr_t baddr;
 	char stat;
 
 	/* Check for recursive dump; if so, punt. */
