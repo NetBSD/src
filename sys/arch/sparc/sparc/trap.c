@@ -1,3 +1,5 @@
+#undef DEBUG_PFAULT
+#undef DEBUG_SCALL
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.2 1993/10/11 02:16:26 deraadt Exp $
+ * $Id: trap.c,v 1.3 1993/10/11 10:53:28 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -546,6 +548,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (i != 0 && i != -1)
 		goto fault;
 	ftype = ser & SER_WRITE ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+#ifdef DEBUG_PFAULT
+printf("ADDR va=%8x pc=%8x psr=%8x\n", v, pc, psr);
+#endif
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
@@ -687,6 +692,9 @@ syscall(code, tf, pc, suncompat)
 #endif
 	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
+#ifdef DEBUG_SCALL
+printf("sc[%d] %s%d(", p->p_pid, suncompat ? "sun" : "", code);
+#endif
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 #ifdef COMPAT_SUNOS
@@ -755,7 +763,17 @@ syscall(code, tf, pc, suncompat)
 			i = nap;
 		}
 		copywords(ap, args.i, i * 4);
+#ifdef DEBUG_SCALL
+{
+int asdf;
+for(asdf=0; asdf<i; asdf++)
+printf("%x%s", args.i[asdf], (asdf+1<i) ? ", " : "");
+}
+#endif
 	}
+#ifdef DEBUG_SCALL
+printf(") = ");
+#endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 	error = (*callp->sy_call)(p, &args, rval);
@@ -788,8 +806,14 @@ syscall(code, tf, pc, suncompat)
 		}
 		tf->tf_pc = i;
 		tf->tf_npc = i + 4;
+#ifdef DEBUG_SCALL
+printf("%d", rval[0]);
+#endif
 	} else if (error > 0 /*error != ERESTART && error != EJUSTRETURN*/) {
 bad:
+#ifdef DEBUG_SCALL
+printf("errno %d", error);
+#endif
 		tf->tf_out[0] = error;
 		tf->tf_psr |= PSR_C;	/* fail */
 		i = tf->tf_npc;
@@ -804,4 +828,7 @@ bad:
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
+#ifdef DEBUG_SCALL
+printf("\n");
+#endif
 }
