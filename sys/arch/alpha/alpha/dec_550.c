@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.21 2003/06/14 17:01:07 thorpej Exp $ */
+/* $NetBSD: dec_550.c,v 1.22 2003/10/14 22:01:02 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.21 2003/06/14 17:01:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.22 2003/10/14 22:01:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,10 +289,10 @@ dec_550_device_register(dev, aux)
 	 */
 	if ((ideboot || scsiboot) && !strcmp(name, "wd")) {
 		struct ata_device *adev = aux;
-		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
+		if ((strncmp("atabus", parent->dv_xname, 6) != 0)) {
 			return;
 		} else {
-			if (parent != scsipidev)
+			if (parent->dv_parent != scsipidev)
 				return;
 		}
 		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",
