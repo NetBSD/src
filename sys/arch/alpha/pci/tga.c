@@ -1,7 +1,7 @@
-/*	$NetBSD: tga.c,v 1.5 1996/04/12 02:13:09 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.6 1996/04/12 06:09:08 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

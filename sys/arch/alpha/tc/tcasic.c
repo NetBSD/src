@@ -1,7 +1,7 @@
-/*	$NetBSD: tcasic.c,v 1.3 1996/04/12 01:31:50 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.4 1996/04/12 06:10:04 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

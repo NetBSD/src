@@ -1,7 +1,7 @@
-/*	$NetBSD: siovar.h,v 1.2 1996/04/12 02:11:24 cgd Exp $	*/
+/*	$NetBSD: siovar.h,v 1.3 1996/04/12 06:09:06 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

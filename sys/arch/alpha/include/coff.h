@@ -1,3 +1,5 @@
+/*	$NetBSD: coff.h,v 1.2 1996/04/12 06:07:51 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992,1993,1994,1995 Carnegie Mellon University

@@ -1,7 +1,7 @@
-/*	$NetBSD: disksubr.c,v 1.4 1996/01/07 22:01:38 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 1996/04/12 06:07:25 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou

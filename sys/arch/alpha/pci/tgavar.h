@@ -1,7 +1,7 @@
-/*	$NetBSD: tgavar.h,v 1.4 1996/04/12 02:13:16 cgd Exp $	*/
+/*	$NetBSD: tgavar.h,v 1.5 1996/04/12 06:09:21 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

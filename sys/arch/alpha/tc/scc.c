@@ -1,7 +1,7 @@
-/*	$NetBSD: scc.c,v 1.14 1996/04/12 01:31:47 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.15 1996/04/12 06:09:54 cgd Exp $	*/
 
 /* 
- * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
+ * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its

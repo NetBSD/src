@@ -1,7 +1,7 @@
-/*	$NetBSD: tcds.c,v 1.8 1996/04/12 01:31:52 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.9 1996/04/12 06:10:12 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou

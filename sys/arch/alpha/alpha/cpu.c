@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.5 1996/03/17 01:06:20 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 1996/04/12 06:07:15 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

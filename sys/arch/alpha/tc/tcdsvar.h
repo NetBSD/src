@@ -1,7 +1,7 @@
-/*	$NetBSD: tcdsvar.h,v 1.2 1996/04/12 01:31:54 cgd Exp $	*/
+/*	$NetBSD: tcdsvar.h,v 1.3 1996/04/12 06:10:18 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
