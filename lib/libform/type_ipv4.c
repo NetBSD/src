@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv4.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_ipv4.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -42,13 +42,13 @@
 /*
  * Check the contents of the field buffer are a valid IPv4 address only.
  */
-static int /* ARGSUSED1 */
+static int
 ipv4_check_field(FIELD *field, char *args)
 {
 	char *buf, *keeper, *p;
 	unsigned int vals[4], i;
 	
-	if (asprintf(&keeper, "%s", field->buffers[0].string) < 0)
+	if (asprintf(&keeper, "%s", args) < 0)
 		return FALSE;
 
 	buf = keeper;
@@ -99,7 +99,6 @@ static FIELDTYPE builtin_ipv4 = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	NULL,                               /* make_args */
 	NULL,                               /* copy_args */
 	NULL,                               /* free_args */

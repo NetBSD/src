@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alpha.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_alpha.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -92,11 +92,11 @@ free_alpha_args(char *args)
 static int
 alpha_check_field(FIELD *field, char *args)
 {
-	int width, start, cur;
-	char *buf;
+	int width, start, cur, end;
+	char *buf, *new;
 
-	width = ((alpha_args *) (void *) args)->width;
-	buf = field->buffers[0].string;
+	width = ((alpha_args *) (void *) field->args)->width;
+	buf = args;
 	start = 0;
 
 	  /* skip leading white space */
@@ -117,6 +117,8 @@ alpha_check_field(FIELD *field, char *args)
 	if ((cur - start) > width)
 		return FALSE;
 
+	end = cur;
+	
 	  /* check there is only trailing whitespace */
 	while ((buf[cur] != '\0')
 	       && ((buf[cur] == ' ') || (buf[cur] == '\t')))
@@ -126,6 +128,16 @@ alpha_check_field(FIELD *field, char *args)
 	if (buf[cur] != '\0')
 		return FALSE;
 
+	  /* set buffer 0 to the new string */
+	if ((new = (char *) malloc(sizeof(char) * (end - start))) == NULL)
+		return FALSE;
+
+	strncpy(new, &buf[start], end - start - 1);
+	new[end] = '\0';
+
+	set_field_buffer(field, 0, new);
+	free(new);
+	
 	  /* otherwise all was ok */
 	return TRUE;
 }
@@ -143,7 +155,6 @@ static FIELDTYPE builtin_alpha = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	create_alpha_args,                  /* make_args */
 	copy_alpha_args,                    /* copy_args */
 	free_alpha_args,                    /* free_args */
