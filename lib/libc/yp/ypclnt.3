@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.13 1999/11/29 23:28:23 hubertf Exp $
+.\"	$NetBSD: ypclnt.3,v 1.14 2000/07/03 10:06:26 enami Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -377,7 +377,8 @@ domain is not set.
 .It Bq Er YPERR_NOMORE
 There are no more records in the queried map.
 .It Bq Er YPERR_PMAP
-Cannot communicate with portmap.
+Cannot communicate with portmapper (see
+.Xr rcpbind 8 ).
 .It Bq Er YPERR_RESRC
 A resource allocation failure occurred.
 .It Bq Er YPERR_RPC

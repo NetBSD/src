@@ -1,4 +1,4 @@
-.\"	$NetBSD: rup.1,v 1.12 1999/03/22 18:16:42 garbled Exp $
+.\"	$NetBSD: rup.1,v 1.13 2000/07/03 10:06:24 enami Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -90,13 +90,13 @@ excessively congested, or the
 daemon has terminated on the remote host.
 .It rup: RPC: Port mapper failure - RPC: Timed out
 The remote host is not running the portmapper (see
-.Xr portmap 8 ),
+.Xr rpcbind 8 ),
 and cannot accommodate any RPC-based services.  The host may be down.
 .El
 .Sh SEE ALSO
 .Xr ruptime 1 ,
-.Xr portmap 8 ,
-.Xr rpc.rstatd 8
+.Xr rpc.rstatd 8 ,
+.Xr rpcbind 8
 .Sh HISTORY
 The
 .Nm
