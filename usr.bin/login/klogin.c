@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.11 1997/10/12 14:07:07 mycroft Exp $	*/
+/*	$NetBSD: klogin.c,v 1.12 1997/10/19 04:18:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.11 1997/10/12 14:07:07 mycroft Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.12 1997/10/19 04:18:46 lukem Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -242,7 +242,7 @@ kdestroy()
 	if ((fd = open(file, O_RDWR, 0)) < 0)
 	    goto out;
 
-	bzero(buf, BUFSIZ);
+	memset(buf, 0, BUFSIZ);
 
 	for (i = 0; i < statb.st_size; i += BUFSIZ)
 	    if (write(fd, buf, BUFSIZ) != BUFSIZ) {
