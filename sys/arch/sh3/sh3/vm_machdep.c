@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 2002/03/08 13:12:11 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 2002/03/17 14:02:03 uch Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
@@ -45,6 +46,8 @@
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
 
+#include "opt_kstack_debug.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -58,13 +61,12 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-
-void	setredzone(u_short *, caddr_t);
+#include <sh3/cpu.h>
+#include <sh3/reg.h>
+#include <sh3/mmu.h>
+#include <sh3/locore.h>
 
 /* XXX XXX XXX */
-#include <sh3/mmu.h>
 #ifdef SH4
 #define	TLBFLUSH()		(cacheflush(), sh_tlb_invalidate_all())
 #else
@@ -95,38 +97,64 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
     size_t stacksize, void (*func)(void *), void *arg)
 {
 	extern void proc_trampoline(void);
-	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
+	vaddr_t spbase;
 
-	if (CPU_IS_SH4)
-		cacheflush();
-
-	p2->p_md.md_flags = p1->p_md.md_flags;
-
-	/* Copy pcb from proc p1 to p2. */
-	if (p1 == curproc) {
-		/* Sync the PCB before we copy it. */
-		savectx(curpcb);
-	}
+#define P1ADDR(x)	((vtophys((vaddr_t)(x)) & 0x1fffffff) | 0x80000000)
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
+	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
+	/* 
+	 * wbinv u-area to avoid cache-aliasing, since trapframe
+	 * top is accessed from P1 instead of P3.
+	 */
+	if (CPU_IS_SH4)
+		sh_dcache_wbinv_range((vaddr_t)p2->p_addr, USPACE);
+
+	p2->p_md.md_p3 = p2->p_addr;
+
+	/* Copy flags */
+	p2->p_md.md_flags = p1->p_md.md_flags;
+
+	/* Copy PCB */
+	pcb = &p2->p_addr->u_pcb;
 	*pcb = p1->p_addr->u_pcb;
+	/* Set page directory base to pcb */
 	pmap_activate(p2);
 
 	/* set up the kernel stack pointer */
-	pcb->kr15 = (int)p2->p_addr + USPACE - sizeof(struct trapframe);
+	spbase = (vaddr_t)p2->p_md.md_p3 + NBPG;
+#ifdef P1_STACK
+	/* Convert to P1 from P3 */
+	spbase = P1ADDR(spbase);
+#else /* P1_STACK */
+	/* Prepare kernel stack PTEs */
+	if (CPU_IS_SH3)
+		sh3_switch_setup(p2);
+	else
+		sh4_switch_setup(p2);
+#endif /* P1_STACK */
 
-	/* convert r15, kr15 to physical address , because tlb miss must not
-	   occur when accessing kernel stack */
-        pcb->kr15 = SH3_PHYS_TO_P1SEG(SH3_P2SEG_TO_PHYS(vtophys(pcb->kr15)));
+	pcb->pcb_sp = spbase + USPACE - NBPG;
+	/*
+	 * Convert frame pointer top to P1. because SH3 can't make
+	 * wired TLB entry, context store space accessing must not cause
+	 * exception. SH4 can make wired entry, no need to convert to P1.
+	 */
+	pcb->pcb_fp = (vaddr_t)P1ADDR(pcb) + NBPG;		/* P1 */
 
+#ifdef KSTACK_DEBUG
+	memset((char *)pcb->pcb_fp - NBPG + sizeof(struct user), 0x5a,
+	    NBPG - sizeof(struct user));
+	memset((char *)spbase, 0xa5, (USPACE - NBPG));
+#endif
 	/*
 	 * Copy the trapframe.
 	 */
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->kr15 - 1;
+	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_fp - 1;
 	*tf = *p1->p_md.md_regs;
 
 	/*
@@ -135,28 +163,47 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	if (stack != NULL)
 		tf->tf_r15 = (u_int)stack + stacksize;
 
-	sf = (struct switchframe *)tf - 1;
+	/* Setup switch frame */
+	sf = &pcb->pcb_sf;
+	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
+	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
+	sf->sf_r6_bank = (int)tf;	/* frame pointer */
+	sf->sf_r15 = pcb->pcb_sp;	/* stack pointer */
+	/* when switch to me, jump to proc_trampoline */
+	sf->sf_pr  = (int)proc_trampoline;
 	sf->sf_ppl = 0;
-	sf->sf_r12 = (int)func;
-	sf->sf_r11 = (int)arg;
-	sf->sf_pr = (int)proc_trampoline;
-	pcb->r15 = (int)sf;
 }
 
 /*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, and finally
- * jumps into switch() to wait for another process to wake up.
+ * void cpu_exit(sturct proc *p):
+ *	+ Change kernel context to proc0's one.
+ *	+ Schedule process 'p' resources.
+ *	+ switch to another process.
  */
 void
 cpu_exit(struct proc *p)
 {
-	extern void switch_exit(struct proc *);
-
+	
+	splhigh();
 	uvmexp.swtch++;
-	switch_exit(p);
+
+	/* Switch to proc0 stack */
+	curproc = 0;
+	curpcb = (struct pcb *)proc0.p_addr;
+	__asm__ __volatile__(
+		"mov	%0, r15;"	/* current stack */
+		"ldc	%1, r6_bank;"	/* current frame pointer */
+		"ldc	%2, r7_bank;"	/* stack top */
+		::
+		"r"(curpcb->pcb_sf.sf_r15),
+		"r"(curpcb->pcb_sf.sf_r6_bank),
+		"r"(curpcb->pcb_sp));
+
+	/* Schedule freeing process resources */
+	exit2(p);
+
+	cpu_switch(p);
+	/* NOTREACHED */
 }
 
 /*
