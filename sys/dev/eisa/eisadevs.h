@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.22 2000/09/01 17:19:36 ad Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.23 2000/10/19 15:29:14 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.20 2000/09/01 17:19:25 ad Exp 
+ *	NetBSD: eisadevs,v 1.21 2000/10/19 15:28:50 ad Exp 
  */
 
 /*
@@ -66,6 +66,7 @@
 /* Compaq products */
 #define	EISA_PRODUCT_CPQ4001	"Compaq IDA array controller"
 #define	EISA_PRODUCT_CPQ4002	"Compaq IDA-2 array controller"
+#define	EISA_PRODUCT_CPQ4010	"Compaq IEAS array controller"
 #define	EISA_PRODUCT_CPQ4020	"Compaq SMART array controller"
 #define	EISA_PRODUCT_CPQ4030	"Compaq SMART-2/E array controller"
 #define	EISA_PRODUCT_CPQ6101	"Compaq NetFlex-2 ENET-TR"
