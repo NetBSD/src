@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.130 2004/09/12 19:12:45 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.131 2004/11/11 22:30:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -752,6 +752,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 {
 	int got_dist;
 	int verbose;
+	distinfo *list;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
@@ -793,12 +794,23 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	mnt_net_config();
 	
 	/* Clean up dist dir (use absolute path name) */
-	if (clean_dist_dir && ext_dir[0] == '/' && ext_dir[1] != 0) {
-		msg_display(MSG_delete_dist_files,
-		    ext_dir + strlen(target_prefix()));
+	if (clean_dist_dir) {
+		msg_display(MSG_delete_dist_files, dist_dir);
 		process_menu(MENU_yesno, NULL);
-		if (yesno)
-			run_program(0, "/bin/rm -rf %s", ext_dir);
+		if (yesno) {
+			for (list = dist_list; list->desc != NULL; list++) {
+				if (list->name == NULL)
+					/* menu entry for a group of sets */
+					continue;
+				run_program(0, "/bin/rm -f %s/%s/%s%s",
+					target_prefix(), dist_dir,
+					list->name, dist_postfix);
+			}
+			/* chroot 'cos no rmdir in install fs */
+			run_program(RUN_CHROOT | RUN_SILENT | RUN_ERROR_OK,
+					"/bin/rmdir %s/%s",
+					target_prefix(), dist_dir);
+		}
 	}
 
 	/* Mounted dist dir? */
