@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.387 2002/01/13 03:14:23 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.388 2002/01/14 01:37:36 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.384 2002/01/13 03:13:39 augustss Exp 
+ *	NetBSD: pcidevs,v 1.385 2002/01/14 01:35:05 augustss Exp 
  */
 
 /*
@@ -3286,7 +3286,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CA LPC Interface",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_1,
 	    0,
 	    "Intel",
 	    "82801CA/CAM USB Controller",
@@ -3298,7 +3298,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CA/CAM SMBus Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_2,
 	    0,
 	    "Intel",
 	    "82801CA/CAM USB Controller",
@@ -3322,16 +3322,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801CA/CAM USB Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_ATAA,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_1,
 	    0,
 	    "Intel",
-	    "82801CA UltraATA IDE Controller",
+	    "82801CA IDE Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_ATAB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_2,
 	    0,
 	    "Intel",
-	    "82801CA UltraATA IDE Controller",
+	    "82801CA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC,
@@ -3352,10 +3352,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82820 AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
 	    0,
 	    "Intel",
-	    "82830MP CPU to I/O Bridge",
+	    "82830MP CPU to I/O Bridge 1",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
@@ -3370,10 +3370,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82830MP Integrated Video",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2,
 	    0,
 	    "Intel",
-	    "82830MP CPU to I/O Bridge",
+	    "82830MP CPU to I/O Bridge 2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
