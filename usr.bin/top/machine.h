@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+/*	$NetBSD: machine.h,v 1.4 2000/05/29 11:52:36 simonb Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -62,10 +62,4 @@ void get_system_info __P((struct system_info *));
 caddr_t get_process_info __P((struct system_info *, struct process_select *,
     int (*)(struct proc **, struct proc **)));
 char *format_next_process __P((caddr_t, char *(*)(int)));
-int compare_cpu __P((struct proc **, struct proc **));
-int compare_prio __P((struct proc **, struct proc **));
-int compare_res __P((struct proc **, struct proc **));
-int compare_size __P((struct proc **, struct proc **));
-int compare_state __P((struct proc **, struct proc **));
-int compare_time __P((struct proc **, struct proc **));
 int proc_owner __P((int));
