@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.4 1993/10/13 03:28:16 deraadt Exp $
+ * $Id: conf.c,v 1.5 1993/11/10 15:07:07 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -179,11 +179,11 @@ cdev_decl(no);			/* dummy declarations */
 
 cdev_decl(cn);
 /* open, close, read, write, ioctl, select -- XXX should be a tty */
-extern struct tty *cntty[];
+extern struct tty *cn_tty[];
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, cntty, dev_init(c,n,select), 0, 0 }
+	0, cn_tty, dev_init(c,n,select), 0, 0 }
 
 cdev_decl(ctty);
 /* open, read, write, ioctl, select -- XXX should be a tty */
