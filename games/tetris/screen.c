@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.16 2001/11/02 18:27:00 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.17 2002/06/02 22:17:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -183,13 +183,13 @@ scr_init()
 	if (t_getent(&info, term) <= 0)
 		stop("cannot find your termcap");
 	{
-		register struct tcsinfo *p;
+		struct tcsinfo *p;
 
 		for (p = tcstrings; p->tcaddr; p++)
 			*p->tcaddr = t_agetstr(info, p->tcname);
 	}
 	{
-		register struct tcninfo *p;
+		struct tcninfo *p;
 
 		for (p = tcflags; p->tcaddr; p++)
 			*p->tcaddr = t_getflag(info, p->tcname);
@@ -377,9 +377,9 @@ typedef cell regcell;
 void
 scr_update()
 {
-	register cell *bp, *sp;
-	register regcell so, cur_so = 0;
-	register int i, ccol, j;
+	cell *bp, *sp;
+	regcell so, cur_so = 0;
+	int i, ccol, j;
 	sigset_t sigset, osigset;
 	static const struct shape *lastshape;
 
@@ -489,12 +489,12 @@ scr_update()
  */
 void
 scr_msg(s, set)
-	register char *s;
+	char *s;
 	int set;
 {
 	
 	if (set || CEstr == NULL) {
-		register int l = strlen(s);
+		int l = strlen(s);
 
 		moveto(Rows - 2, ((Cols - l) >> 1) - 1);
 		if (set)
