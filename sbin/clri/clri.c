@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.11 1997/09/16 02:33:48 lukem Exp $	*/
+/*	$NetBSD: clri.c,v 1.12 1998/03/18 16:51:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.11 1997/09/16 02:33:48 lukem Exp $");
+__RCSID("$NetBSD: clri.c,v 1.12 1998/03/18 16:51:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,9 @@ __RCSID("$NetBSD: clri.c,v 1.11 1997/09/16 02:33:48 lukem Exp $");
 #include <sys/time.h>
 
 #include <ufs/ufs/dinode.h>
+#include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <err.h>
 #include <errno.h>
@@ -80,6 +82,8 @@ main(argc, argv)
 	size_t bsize;
 	int inonum;
 	char *fs, sblock[SBSIZE];
+	int needswap = 0;
+	int i, imax;
 
 	if (argc < 3) {
 		(void)fprintf(stderr, "usage: clri filesystem inode ...\n");
@@ -87,6 +91,7 @@ main(argc, argv)
 	}
 
 	fs = *++argv;
+
 
 	/* get the superblock. */
 	if ((fd = open(fs, O_RDWR, 0)) < 0)
@@ -98,15 +103,37 @@ main(argc, argv)
 
 	sbp = (struct fs *)sblock;
 	if (sbp->fs_magic != FS_MAGIC)
-		errx(1, "%s: superblock magic number 0x%x, not 0x%x",
-		    fs, sbp->fs_magic, FS_MAGIC);
+		if (sbp->fs_magic == bswap32(FS_MAGIC))
+			needswap = 1;
+		else
+			errx(1, "%s: superblock magic number 0x%x, not 0x%x",
+		    	fs, sbp->fs_magic, FS_MAGIC);
+
+	/* check that inode numbers are valid */
+	imax = ufs_rw32(sbp->fs_ncg, needswap) *
+		ufs_rw32(sbp->fs_ipg, needswap);
+	for (i = 1; i < (argc - 1); i++)
+		if (atoi(argv[i]) <= 0 || atoi(argv[i]) >= imax) 
+			errx(1, "%s is not a valid inode number", argv[i]);
+
+	/* delete clean flag in the superblok */
+	sbp->fs_clean = ufs_rw32(
+						ufs_rw32(sbp->fs_clean, needswap) << 1,
+						needswap);
+	if (lseek(fd, (off_t)(SBLOCK * DEV_BSIZE), SEEK_SET) < 0)
+		err(1, "%s", fs);
+	if (write(fd, sblock, sizeof(sblock)) != sizeof(sblock))
+		errx(1, "%s: can't rewrite superblock", fs);
+	(void)fsync(fd);
+
+	if (needswap)
+		ffs_sb_swap(sbp, sbp, 0);
 	bsize = sbp->fs_bsize;
 
 	/* remaining arguments are inode numbers. */
 	while (*++argv) {
 		/* get the inode number. */
-		if ((inonum = atoi(*argv)) <= 0)
-			errx(1, "%s is not a valid inode number", *argv);
+		inonum = atoi(*argv);
 		(void)printf("clearing %d\n", inonum);
 
 		/* read in the appropriate block. */
