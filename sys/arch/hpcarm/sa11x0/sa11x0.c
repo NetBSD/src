@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.9 2001/05/01 12:36:54 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.10 2001/06/20 02:19:55 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -68,7 +68,12 @@
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
 #include <hpcarm/sa11x0/sa11x0_dmacreg.h>
+#include <hpcarm/sa11x0/sa11x0_ppcreg.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
+
+#include <hpc/hpc/config_hook.h>
+#include <hpc/hpc/platid.h>
+#include <hpc/include/platid_mask.h>
 
 #include "locators.h"
 
@@ -162,6 +167,12 @@ sa11x0_attach(parent, self, aux)
 	if (bus_space_map(sc->sc_iot, SAGPIO_BASE, SAGPIO_NPORTS,
 			  0, &sc->sc_gpioh))
 		panic("%s: unable to map GPIO registers\n", self->dv_xname);
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_EDR, 0xffffffff);
+
+	/* Map the PPC registers */
+	if (bus_space_map(sc->sc_iot, SAPPC_BASE, SAPPC_NPORTS,
+			  0, &sc->sc_ppch))
+		panic("%s: unable to map PPC registers\n", self->dv_xname);
 
 	/* Map the DMA controller registers */
 	if (bus_space_map(sc->sc_iot, SADMAC_BASE, SADMAC_NPORTS,
@@ -182,7 +193,7 @@ sa11x0_attach(parent, self, aux)
 	/* Exit idle mode only when unmasked intr is received */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAIPIC_CR, 1);
 
-	/* diable all DMAC channels */
+	/* disable all DMAC channels */
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR0_CLR, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR1_CLR, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR2_CLR, 1);
@@ -229,6 +240,3 @@ sa11x0_search(parent, cf, aux)
 
         return 0;
 }
-
-/* end of sa11x0.c */
-
