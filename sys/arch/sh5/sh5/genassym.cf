@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 2002/11/23 09:25:55 scw Exp $
+#	$NetBSD: genassym.cf,v 1.14 2003/01/19 19:49:54 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -74,7 +74,7 @@ define	_PTRSZ			sizeof(void *)
 
 define	SZ_CPU_INFO		sizeof(struct cpu_info)
 define	CI_SCHEDSTATE		offsetof(struct cpu_info, ci_schedstate)
-define	CI_CURPROC		offsetof(struct cpu_info, ci_curproc)
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURVSID		offsetof(struct cpu_info, ci_curvsid)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
@@ -244,17 +244,20 @@ define	TS_TR0			offsetof(struct tlb_scratch_frame, ts_tr[0])
 define	TS_TR1			offsetof(struct tlb_scratch_frame, ts_tr[1])
 define	TS_STACK		(sizeof(struct tlb_scratch_frame)-8)
 
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_BACK			offsetof(struct proc, p_back)
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
+define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_BACK			offsetof(struct lwp, l_back)
+define	L_FORW			offsetof(struct lwp, l_forw)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
+define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
+
+define	PH_LINK			offsetof(struct prochd, ph_link)
+
 define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
-define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
-define	PH_LINK			offsetof(struct prochd, ph_link)
 
 define	MDP_FPUSED		MDP_FPUSED
 define	MDP_FPSAVED		MDP_FPSAVED
@@ -272,8 +275,8 @@ define	CRIT_ASYNC_EXCEPTION	CRIT_ASYNC_EXCEPTION
 define	CRIT_TLBMISS_TRAP	CRIT_TLBMISS_TRAP
 
 # Process status constants
-define	SONPROC			SONPROC
-define	SRUN			SRUN
+define	LSONPROC		LSONPROC
+define	LSRUN			LSRUN
 
 # VM constants
 define	NBPG			NBPG

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2002/12/06 10:14:10 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.10 2003/01/19 19:49:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -429,7 +429,7 @@ static void
 db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct switchframe sw, *swp;
-	struct proc *p;
+	struct lwp *l;
 	u_int usr;
 	int i, flagc, flagf;
 
@@ -437,18 +437,19 @@ db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	flagf = (strchr(modif, 'f') != NULL);
 
 	if (have_addr) {
-		p = pfind(addr);
+		struct proc *p = pfind(addr);
 		if (p == NULL) {
 			db_printf("Invalid PID\n");
 			return;
 		}
+		l = LIST_FIRST(&p->p_lwps);	/* XXX: Not much use... */
 	} else
-		p = curproc;
+		l = curlwp;
 
-	if (flagc || p == NULL || (p->p_md.md_flags & MDP_FPSAVED) == 0) {
+	if (flagc || l == NULL || (l->l_md.md_flags & MDP_FPSAVED) == 0) {
 		/*
 		 * Fetch "Current" FP reg contents (at time
-		 * of entry to ddb), or if the current process'
+		 * of entry to ddb), or if the current LWP's
 		 * FP registers have not yet been saved.
 		 */
 		swp = &sw;
@@ -456,12 +457,12 @@ db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		i = sh5_fpsave(usr, (struct pcb *)swp);
 	} else {
 		/*
-		 * Fetch FP registers for current process, as
+		 * Fetch FP registers for current LWP, as
 		 * stashed in the PCB.
 		 */
-		swp = &p->p_addr->u_pcb.pcb_ctx;
-		usr = (u_int)p->p_md.md_regs->tf_state.sf_usr;
-		i = p->p_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
+		swp = &l->l_addr->u_pcb.pcb_ctx;
+		usr = (u_int)l->l_md.md_regs->tf_state.sf_usr;
+		i = l->l_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
 	}
 
 	if (i == 0) {
@@ -473,7 +474,7 @@ db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_printf("  usr: 0x%04x\n", usr);
 
 	if ((i & MDP_FPUSED) == 0) {
-		db_printf("The current process hasn't used the FPU.");
+		db_printf("The current LWP hasn't used the FPU.");
 		if (flagf == 0) {
 			db_printf("\n");
 			return;

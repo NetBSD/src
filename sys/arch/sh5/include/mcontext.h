@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2003/01/19 19:49:49 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1 2003/01/19 19:49:49 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,31 +35,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SH5_MCONTEXT_H_
+#define _SH5_MCONTEXT_H_
+
+#ifdef _KERNEL_
+#include <machine/frame.h>
+#endif
+
 /*
- * The world's simplest COMPAT_NETBSD32 shim ...
+ * General register state
+ *
+ * See notes, below, about the layout of mcontext_t before changing this.
+ */
+#define	_NGREG		73	/* PC, USR, R0 -> R62, TR0 -> TR7 */
+
+#define	_REG_PC		0
+#define	_REG_USR	1
+#define	_REG_R(n)	(2 + (n))
+#define	_REG_TR(n)	(65 + (n))
+
+#define	_REG_FP		_REG_R(14)
+#define	_REG_SP		_REG_R(15)
+
+#ifndef __ASSEMBLER__
+#ifdef _LP64
+typedef	long		__greg_t;
+#else
+typedef long long	__greg_t;
+#endif
+typedef __greg_t	__gregset_t[_NGREG];
+
+/*
+ * Floating point register state
+ *
+ * See notes, below, about the layout of mcontext_t before changing this.
+ */
+typedef float		__fpreg_single_t;
+typedef double		__fpreg_double_t;
+
+typedef struct {
+	u_int32_t	__fp_scr;
+	u_int32_t	__fp_pad;
+	union {
+		__fpreg_single_t __u_fp_single[64];
+		__fpreg_double_t __u_fp_double[32];
+	} __fpregs_u;
+} __fpregset_t;
+#define	__fp_single	__fpregs_u.__u_fp_single
+#define	__fp_double	__fpregs_u.__u_fp_double
+
+/*
+ * SH5's mcontext_t structure.
+ *
+ * Note: This *exactly* matches the layout of SH5's "struct reg".
+ * Please don't update one without making a similar change to the other.
+ */
+typedef struct {
+	__gregset_t	__gregs;
+	__fpregset_t	__fpregs;
+} mcontext_t;
+
+#endif 	/* !__ASSEMBLER__ */
+
+/*
+ * Note: no additional padding required in ucontext_t
  */
 
-#ifndef _SH5_NETBSD32_MACHDEP_H
-#define _SH5_NETBSD32_MACHDEP_H
+#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 
-#include <sys/types.h>
-#include <sys/proc.h>
-#include <compat/netbsd32/netbsd32.h>
-
-typedef int netbsd32_pointer_t;
-#define	NETBSD32PTR64(p32)	((void *)(long)(int)(p32))
-
-#define	register32_t	register_t
-
-typedef netbsd32_pointer_t netbsd32_sigcontextp_t;
-
-#define	netbsd32_sigcontext sigcontext
-
-#define	netbsd32_sigcode	sigcode
-#define	netbsd32_esigcode	esigcode
-#define	netbsd32_sendsig	sendsig
-#define	netbsd32_syscall_intern	syscall_intern
-
-extern void netbsd32_setregs(struct lwp *, struct exec_package *, u_long);
-
-#endif /* _SH5_NETBSD32_MACHDEP_H */
+#endif /* _SH5_MCONTEXT_H_ */
