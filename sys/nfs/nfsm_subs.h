@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.32 2003/09/26 11:51:53 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.33 2004/03/15 11:47:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -194,6 +194,17 @@
 		} \
 		(v) = ttvp; }
 
+/*
+ * nfsm_postop_attr: process nfsv3 post_op_attr
+ *
+ * dissect post_op_attr.  if we got a one,
+ * call nfsm_loadattrcache to update attribute cache.
+ *
+ * v: (IN/OUT) the corresponding vnode
+ * f: (OUT) true if we got valid attribute
+ * flags: (IN) flags for nfsm_loadattrcache
+ */
+
 #define	nfsm_postop_attr(v, f, flags) \
 		{ struct vnode *ttvp = (v); \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
@@ -207,6 +218,19 @@
 			} \
 			(v) = ttvp; \
 		} }
+
+/*
+ * nfsm_wcc_data: process nfsv3 wcc_data
+ *
+ * dissect pre_op_attr and then let nfsm_postop_attr dissect post_op_attr.
+ *
+ * v: (IN/OUT) the corresponding vnode
+ * f: (IN/OUT)
+ *	NFSV3_WCCRATTR	return true if we got valid post_op_attr.
+ *	NFSV3_WCCCHK	return true if pre_op_attr's mtime is the same
+ *			as our n_mtime.  (ie. our cache isn't stale.)
+ * flags: (IN) flags for nfsm_loadattrcache
+ */
 
 /* Used as (f) for nfsm_wcc_data() */
 #define NFSV3_WCCRATTR	0
