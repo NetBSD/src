@@ -1,5 +1,7 @@
+.\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
+.\" Portions Copyright (c) 1994 Jason R. Thorpe.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -26,45 +28,106 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)yp.8	1.0 (deraadt) 4/26/93
-.\"	$Id: yp.8,v 1.5 1994/01/14 16:23:12 jtc Exp $
+.\"	$Id: yp.8,v 1.6 1994/11/14 06:30:36 deraadt Exp $
 .\"
 .Dd April 5, 1993
 .Dt YP 8
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm yp
-.Nd description of the YP system
+.Nd description of the YP subsystem
 .Sh SYNOPSIS
-.Nm yp
+.Nm ypbind
+.Op Fl ypset
+.Nm ypbind
+.Op Fl ypsetme
+.Pp
+.Nm ypset
+.Op Fl h Ar host
+.Op Fl d Ar domain
+.Ar server
+.Pp
+.Nm yppoll
+.Op Fl h Ar host
+.Op Fl d Ar domain
+.Ar mapname
+.Pp
+.Nm ypcat
+.Op Fl kt
+.Op Fl d Ar domainname
+.Ar mapname
+.Nm ypcat
+.Fl x
+.Pp
+.Nm ypmatch
+.Op Fl kt
+.Op Fl d Ar domainname
+.Ar key ... mapname
+.Nm ypmatch
+.Fl x
+.Pp
+.Nm ypwhich
+.Op Fl d Ar domain
+.Oo
+.Op Fl t
+.Fl m Op Ar mname
+|
+.Ar host
+.Oc
+.Nm ypwhich
+.Fl x
 .Sh DESCRIPTION
 The
 .Nm YP
 subsystem allows network management of passwd and group file
-entries through the functions getpwent(3) and getgrent(3).
+entries through the functions
+.Xr getpwent 3
+and
+.Xr getgrent 3 .
+.Nm YP
+also provides hooks for other client programs, such as
+.Xr amd 8
+and
+.Xr bootparamd 8 ,
+that can use
+.Nm YP
+maps.
+.Pp
 The
 .Nm YP 
 subsystem is started automatically in
-.Nm /etc/netstart
+.Pa /etc/rc
 if the directory
-.Nm /var/yp
+.Pa /var/yp
 exists.
 .Sh BUGS
 Only
 .Nm YP
 client functionality exists -- the server code has not yet been
 written. Brave folk can contact the author.
-
-.Nm /etc/passwd
+.Pp
+.Pa /etc/passwd
 and
-.Nm /etc/group only supports "+" entries.
-
-Many more manual pages should be written, especially ypclnt(3).
-For the time being, seek out a local Sun machine and read the
-manuals for there.
-
+.Pa /etc/group
+only support ``+'' entries.
+.Pp
+The
+.Xr ypclnt 3
+manual pages have not yet been written.
+.Pp
 Neither Sun nor this author have found a clean way to handle
-the problems that occur when ypbind cannot find its server
+the problems that occur when
+.Xr ypbind 8
+cannot find its server
 upon bootup.
+.Sh SEE ALSO
+.Xr domainname 1 ,
+.Xr ypbind 8 ,
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+.Xr yppoll 8 , 
+.Xr ypset 8 ,
+.Xr ypwhich 1
 .Sh HISTORY
 The
 .Nm YP
