@@ -20,7 +20,7 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS=	gas ${DEBUG}
+AS=	gas 
 CC=	gcc ${DEBUG}
 CPP=	gcpp -traditional
 LD=	ld
@@ -77,7 +77,7 @@ SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X; \
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 		[ X${DEBUG} = X-g ] && { \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo strip -d $@; strip -d $@; } || true
+		echo strip $@; strip $@; } || true
 
 %LOAD
 

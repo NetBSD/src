@@ -1,0 +1,27 @@
+#
+#
+machine		"sun3"
+cpu		"SUN3_50"
+ident		TIMESINK
+
+timezone	8 dst
+maxusers	16
+
+# Standard options
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+
+# Options for all SUN3 machines
+options		KTRACE
+options		DDB
+
+config		netbsd swap generic
+
+pseudo-device prom
+pseudo-device idprom
+
+pseudo-device	swappager
+pseudo-device	vnodepager
+pseudo-device	devpager
+
+
