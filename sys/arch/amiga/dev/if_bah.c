@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.9 1995/06/27 13:13:32 chopps Exp $ */
+/*	$NetBSD: if_bah.c,v 1.10 1995/07/02 00:16:00 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -301,10 +301,6 @@ bah_init(sc)
 	int s;
 
 	ifp = &sc->sc_arccom.ac_if;
-
-	/* Address not known. */
-	if (ifp->if_addrlist.tqh_first == 0)
-		return;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splimp();

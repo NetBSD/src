@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 1995/06/27 13:13:42 chopps Exp $	*/
+/*	$NetBSD: if_le.c,v 1.14 1995/07/02 00:16:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -362,10 +362,6 @@ leinit(unit)
 	struct le_softc *le = &le_softc[unit];
 	register struct ifnet *ifp = &le->sc_if;
 	int s;
-
-	/* not yet, if address still unknown */
-	if (ifp->if_addrlist.tqh_first == 0)
-		return;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splimp();
