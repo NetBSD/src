@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.33 2002/12/08 01:35:13 mrg Exp $	*/
+/*	$NetBSD: tar.c,v 1.34 2002/12/08 02:00:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.33 2002/12/08 01:35:13 mrg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.34 2002/12/08 02:00:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1250,7 +1250,6 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 	sbuf[1] = '^';
 	sbuf[j] = '$';
 	sbuf[j + 3] = '\0';
-printf("rep_add(%s)\n", sbuf);
 	if (rep_add(sbuf) < 0)
 		return (-1);
 
