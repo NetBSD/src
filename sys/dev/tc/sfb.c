@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.64 2003/12/20 09:17:28 tsutsui Exp $ */
+/* $NetBSD: sfb.c,v 1.65 2005/01/02 20:43:23 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.64 2003/12/20 09:17:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.65 2005/01/02 20:43:23 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ int  sfb_cnattach(tc_addr_t);
 static int  sfbintr(void *);
 static void sfbhwinit(caddr_t);
 static void sfb_cmap_init(struct sfb_softc *);
-static void sfb_screenblank(struct sfb_softc *, int);
+static void sfb_screenblank(struct sfb_softc *);
 
 static int  get_cmap(struct sfb_softc *, struct wsdisplay_cmap *);
 static int  set_cmap(struct sfb_softc *, struct wsdisplay_cmap *);
@@ -433,7 +433,10 @@ sfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
-		sfb_screenblank(sc, turnoff);
+		if (sc->sc_blanked != turnoff) {
+			sc->sc_blanked = turnoff;
+			sfb_screenblank(sc);
+		}
 		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
@@ -468,10 +471,11 @@ sfbioctl(v, cmd, data, flag, p)
 			s = spltty();
 			sfb_cmap_init(sc);
 			sc->sc_curenb = 0;
+			sc->sc_blanked = 0;
 			sc->sc_changed |= (WSDISPLAY_CURSOR_DOCUR |
 			    WSDISPLAY_CMAP_DOLUT);
 			splx(s);
-			sfb_screenblank(sc, 0);
+			sfb_screenblank(sc);
 		}
 		return (0);
 	}
@@ -479,18 +483,16 @@ sfbioctl(v, cmd, data, flag, p)
 }
 
 static void
-sfb_screenblank(sc, turnoff)
+sfb_screenblank(sc)
 	struct sfb_softc *sc;
-	int turnoff;
 {
 	struct rasops_info *ri;
 	caddr_t asic;
 
 	ri = sc->sc_ri;
 	asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
-	SFBWRITE32(asic, SFB_ASIC_VIDEO_VALID, !turnoff);
+	SFBWRITE32(asic, SFB_ASIC_VIDEO_VALID, !sc->sc_blanked);
 	tc_wmb();
-	sc->sc_blanked = turnoff;
 }
 
 static paddr_t
