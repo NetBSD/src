@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,14 +46,14 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.3 1998/10/08 02:27:59 eeh Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * C library -- setjmp, longjmp
+ * C library -- setjmp, __longjmp14
  *
- *	longjmp(a,v)
+ *	__longjmp14(a,v)
  * will generate a "return(v)" from
  * the last call to
  *	setjmp(a)
@@ -64,7 +64,7 @@
 #include "SYS.h"
 
 #define STACK_T_SZ
-ENTRY(setjmp)
+ENTRY(__setjmp14)
 	/*
 	 * We use the part of the sigcontext structure, the sp, pc, and npc fields,
 	 * for the sigstack call so we don't need to get our own stackframe.  It 
@@ -93,18 +93,18 @@ ENTRY(setjmp)
 	stx	%o0, [%o3 + 0x18]	/* sc.sc_npc = return_pc + 4 */
 	stx	%g0, [%o3 + 0x20]	/* sc.sc_psr = (clean psr) */
 	stx	%fp, [%o3 + 0x28]	/* sc.sc_g1 = %fp (misuse, but what the heck) */
-					/* sc.sc_o0 = random(), set in longjmp */
+					/* sc.sc_o0 = random(), set in __longjmp14 */
 	retl				/* return 0 */
 	 clr	%o0
 
 /*
  * All we need to do here is force sigreturn to load a new stack pointer,
  * new <pc,npc>, and appropriate %o0 return value from the sigcontext built
- * in setjmp.  The %i and %l registers will be reloaded from the place to
+ * in __setjmp14.  The %i and %l registers will be reloaded from the place to
  * which %sp points, due to sigreturn() semantics (sigreturn does not modify
  * the window pointer in the psr, hence it must force all windows to reload).
  */
-ENTRY(longjmp)
+ENTRY(__longjmp14)
 	save	%sp, -CC64FSZ, %sp
 	ldx	[%i0 + 0x08], %o2	/* make sure sc->sc_sp, sc->sc_fp nonzero */
 	ldx	[%i0 + 0x28], %o3

@@ -1,4 +1,5 @@
-/*	$NetBSD: sigpending.S,v 1.4 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,27 +36,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: sigpending.s,v 1.1 91/07/06 13:06:00 torek Exp
+ * from: Header: sigreturn.s,v 1.1 91/07/06 13:06:01 torek Exp
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 #if 0
-	.asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93"
+	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigpending.S,v 1.4 1998/10/08 02:27:59 eeh Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-ENTRY(sigpending)
-	mov	%o0, %o2		! save pointer
-	mov	SYS_compat_13_sigpending13, %g1
-	t	ST_SYSCALL		! sigpending()
-	bcc,a	1f			! if success,
-	 st	%o0, [%o2]		!    store return value
+ENTRY(__sigreturn14)
+	mov	SYS___sigreturn14, %g1
+	t	ST_SYSCALL
 	ERROR()
-1:
-	retl				! and return 0
-	 clr	%o0

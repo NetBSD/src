@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.3 1998/09/13 23:54:44 eeh Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.4 1998/10/08 02:27:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,13 +40,11 @@
  */
 
 #include <machine/asm.h>
-#define _LOCORE	/* Not really true, but hey */
-#include <machine/frame.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.3 1998/09/13 23:54:44 eeh Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.4 1998/10/08 02:27:59 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,9 +60,9 @@
  */
 
 ENTRY(_setjmp)
-	stx	%sp, [%o0+0x00+BIAS]	/* store caller's stack pointer */
-	stx	%o7, [%o0+0x08+BIAS]	/* ... return pc */
-	stx	%fp, [%o0+0x10+BIAS]	/* ... and frame pointer */
+	stx	%sp, [%o0+0x00]	/* store caller's stack pointer */
+	stx	%o7, [%o0+0x08]	/* ... return pc */
+	stx	%fp, [%o0+0x10]	/* ... and frame pointer */
 	retl
 	 clr	%o0		! return 0
 
