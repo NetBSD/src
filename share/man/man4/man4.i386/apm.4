@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"   $NetBSD: apm.4,v 1.16 2003/04/16 13:35:21 wiz Exp $
+.\"   $NetBSD: apm.4,v 1.17 2003/06/27 18:27:58 wiz Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -75,7 +75,7 @@ Enable kernel printout of every call to the APM BIOS (this is very noisy).
 Print power state on console at
 .Dv APM_POWER_CHANGE
 events.  (Since it increases
-.Xr syslogd 8 's
+.Xr syslogd 8 Ns 's
 activity, it may consume increased
 battery power.  Some systems generate the events too frequently,
 and printing the status may disturb single-user operations.)
@@ -100,7 +100,7 @@ writer. Multiple readers may fetch the status with
 .Xr ioctl 2
 without worrying about interference, but they must cooperate to share
 events as only a single event queue is provided.  The device may only be
-.Xr select 2 ed
+.Xr select 2 Ns ed
 or manipulated with
 .Xr ioctl 2 ;
 .Xr read 2
