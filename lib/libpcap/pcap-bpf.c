@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.7 1999/07/02 10:05:22 itojun Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.7.10.1 2002/10/23 12:15:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap-bpf.c,v 1.29 96/12/31 20:53:40 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.7 1999/07/02 10:05:22 itojun Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.7.10.1 2002/10/23 12:15:27 lukem Exp $");
 #endif
 #endif
 
@@ -152,7 +152,7 @@ bpf_open(pcap_t *p, char *errbuf)
 	 */
 	do {
 		(void)snprintf(device, sizeof device, "/dev/bpf%d", n++);
-		fd = open(device, O_RDONLY);
+		fd = open(device, O_RDWR);
 	} while (fd < 0 && errno == EBUSY);
 
 	/*
