@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 1999/03/23 21:29:04 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 1999/06/18 04:49:25 cgd Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -894,18 +894,6 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 
 #define	bus_space_copy_region_8	!!! bus_space_copy_region_8 unimplemented !!!
 
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#endif
-
 /*
  * Bus read/write barrier methods.
  *
@@ -918,12 +906,6 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
-#define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
-#endif
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 

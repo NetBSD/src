@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 1999/03/29 12:42:51 mrg Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 1999/06/18 04:49:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -256,12 +256,6 @@ struct bus_space {
 #define	BUS_SPACE_BARRIER_READ	0x01
 #define	BUS_SPACE_BARRIER_WRITE	0x02
 
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	BUS_BARRIER_READ	0x01
-#define	BUS_BARRIER_WRITE	0x02
-#endif
-
 /*
  * Bus read (single) operations.
  */
@@ -369,18 +363,6 @@ struct bus_space {
 	__bs_copy(4, t, h1, o1, h2, o2, c)
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)				\
 	__bs_copy(8, t, h1, o1, h2, o2, c)
-
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#endif
 
 /*
  * Macros to provide prototypes for all the functions used in the

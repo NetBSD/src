@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 1999/03/23 21:29:05 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 1999/06/18 04:49:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -694,12 +694,6 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
-#define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
-#endif
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
