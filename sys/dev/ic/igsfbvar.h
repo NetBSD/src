@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.5 2003/05/10 01:51:56 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.6 2003/05/10 16:20:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -50,16 +50,6 @@ struct igs_hwcursor {
 	u_int8_t cc_mask[512];		/* save copy of mask for GCURSOR */
 	u_int16_t cc_sprite[512];	/* sprite in device 2bpp format */
 	u_int8_t cc_color[6];		/* 2 colors, 3 rgb components */
-};
-
-
-/*
- * Precomputed bit tables to convert 1bpp image/mask to 2bpp hw cursor
- * sprite.  For IGSFB_HW_BSWAP attachments they are pre-bswapped as well.
- */
-struct igs_bittab {
-	u_int16_t iexpand[256];	/* image: 0 -> 00, 1 -> 01 */
-	u_int16_t mexpand[256];	/* mask:  0 -> 00, 1 -> 11 */
 };
 
 
@@ -116,8 +106,8 @@ struct igsfb_devconfig {
 	struct igs_hwcmap dc_cmap;	/* software copy of colormap */
 	struct igs_hwcursor dc_cursor;	/* software copy of cursor sprite */
 
-	/* precomputed bit tables for cursor sprite 1bpp -> 2bpp conversion */
-	struct igs_bittab dc_bittab;
+	/* precomputed bit table for cursor sprite 1bpp -> 2bpp conversion */
+	u_int16_t dc_bexpand[256];
 
 	int dc_nscreens;		/* can do only a single screen */
 
