@@ -15,8 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/denode.h,v 1.1 1993/04/09 19:37:55 cgd Exp $
- *
+ *	$Id: denode.h,v 1.2 1993/05/20 03:34:05 cgd Exp $
  */
 
 /*
