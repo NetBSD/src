@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.2 1997/05/19 23:26:41 jtc Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.3 1998/02/18 07:18:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@
  * This is the vfsops table for the file system in question
  */
 extern struct vfsops union_vfsops;
-extern struct vnodeopv_desc union_vnodeop_opv_desc;
 
 /*
  * declare the filesystem
@@ -66,13 +65,6 @@ union_lkmentry(lkmtp, cmd, ver)
 	int cmd;
 	int ver;
 {
-	/*
-	 * This is normally done automatically at boot time if the
-	 * opv_desc is listed in vfs_opv_descs[] in vfs_conf.c.  For
-	 * loaded modules, we have to do it manually.
-	 */
-	vfs_opv_init_explicit(&union_vnodeop_opv_desc);
-	vfs_opv_init_default(&union_vnodeop_opv_desc);
 
 	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
 }
