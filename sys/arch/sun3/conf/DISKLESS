@@ -1,7 +1,6 @@
+#	$NetBSD: DISKLESS,v 1.2 1994/10/26 09:08:05 cgd Exp $
 #
 # DISKLESS -- config file for a diskless Sun3/50 or Sun3/60
-# $Id: DISKLESS,v 1.1 1994/07/29 04:19:59 gwr Exp $
-#
 
 include "std.sun3"
 

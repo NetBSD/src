@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.22 1994/10/26 09:12:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -36,9 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	conf.c,v 1.2 1993/05/22 07:57:16 cgd Exp
- *	$Id: conf.c,v 1.21 1994/09/20 16:52:56 gwr Exp $
+ *	@(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
 #include <sys/param.h>

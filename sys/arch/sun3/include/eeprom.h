@@ -1,3 +1,5 @@
+/*	$NetBSD: eeprom.h,v 1.5 1994/10/26 09:10:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
@@ -23,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: eeprom.h,v 1.4 1994/09/20 16:26:00 gwr Exp $
  */
 
 /*

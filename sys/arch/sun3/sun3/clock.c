@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.c,v 1.19 1994/10/26 09:12:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -39,8 +41,7 @@
  *
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
- *	from: @(#)clock.c	8.2 (Berkeley) 1/12/94
- *	$Id: clock.c,v 1.18 1994/09/26 17:25:23 gwr Exp $
+ *	@(#)clock.c	8.2 (Berkeley) 1/12/94
  */
 
 /*

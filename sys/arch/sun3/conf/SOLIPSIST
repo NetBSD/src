@@ -1,6 +1,5 @@
+#	$NetBSD: SOLIPSIST,v 1.4 1994/10/26 09:08:18 cgd Exp $
 #
-#
-
 
 include "std.sun3"
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.c,v 1.36 1994/10/26 09:12:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: pmap.c,v 1.35 1994/07/29 04:04:31 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

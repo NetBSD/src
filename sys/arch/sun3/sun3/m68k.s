@@ -1,3 +1,5 @@
+/*	$NetBSD: m68k.s,v 1.13 1994/10/26 09:12:45 cgd Exp $	*/
+
 /* XXXX some code at the bottom is from the hp300, should be moved to lib.s
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.12 1994/05/27 14:58:30 gwr Exp $
  */
 
 ENTRY(getvbr)

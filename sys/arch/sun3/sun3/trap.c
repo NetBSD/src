@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.30 1994/10/26 09:13:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass 
@@ -37,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: trap.c 1.37 92/12/20
- *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.29 1994/10/20 05:10:15 cgd Exp $
+ * from: Utah Hdr: trap.c 1.37 92/12/20
+ *
+ *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

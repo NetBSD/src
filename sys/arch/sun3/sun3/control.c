@@ -1,3 +1,5 @@
+/*	$NetBSD: control.c,v 1.9 1994/10/26 09:12:21 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: control.c,v 1.8 1994/07/05 03:00:37 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
