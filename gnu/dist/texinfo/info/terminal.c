@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.7 2003/07/03 12:50:09 wiz Exp $	*/
+/*	$NetBSD: terminal.c,v 1.8 2003/07/03 12:53:07 wiz Exp $	*/
 
 /* terminal.c -- how to handle the physical terminal for Info.
    Id: terminal.c,v 1.1 2002/08/25 23:38:38 karl Exp
@@ -33,7 +33,7 @@
 #ifdef HAVE_NCURSES_TERMCAP_H
 #include <ncurses/termcap.h>
 #else
-#if defined(HAVE_TERMCAP_H)
+#ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #else
 /* On Solaris2, sys/types.h #includes sys/reg.h, which #defines PC.
