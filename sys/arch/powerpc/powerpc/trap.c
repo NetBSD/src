@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2003/10/17 19:56:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 2003/10/22 17:29:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2003/10/17 19:56:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2003/10/22 17:29:18 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -87,8 +87,14 @@ trap(struct trapframe *frame)
 
 	ci->ci_ev_traps.ev_count++;
 
-	if (frame->srr1 & PSL_PR)
+	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
+#ifdef DIAGNOSTIC
+		if (l == NULL || p == NULL)
+			panic("trap: user trap %d with lwp = %p, proc = %p",
+			    type, l, p);
+#endif
+	}
 
 	uvmexp.traps++;
 
@@ -356,7 +362,7 @@ trap(struct trapframe *frame)
 		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d.%d (%s): user VEC trap @ %#lx "
-			    "(SSR1=%#lx)\n",
+			    "(SRR1=%#lx)\n",
 			    p->p_pid, l->l_lid, p->p_comm,
 			    frame->srr0, frame->srr1);
 		}
@@ -374,7 +380,7 @@ trap(struct trapframe *frame)
 		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#lx "
-			    "(SSR1=%#lx)\n",
+			    "(SRR1=%#lx)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -404,7 +410,7 @@ trap(struct trapframe *frame)
 		} else {
 			if (cpu_printfataltraps)
 				printf("trap: pid %d.%d (%s): user PGM trap @"
-				    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
+				    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
 				    p->p_comm, frame->srr0, frame->srr1);
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
@@ -436,7 +442,7 @@ trap(struct trapframe *frame)
 			return;
 		}
 		printf("trap: pid %d.%d (%s): kernel MCHK trap @"
-		    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
+		    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
 		    p->p_comm, frame->srr0, frame->srr1);
 		goto brain_damage2;
 	}
@@ -447,7 +453,7 @@ trap(struct trapframe *frame)
 		goto brain_damage2;
 	case EXC_PGM:
 		printf("trap: pid %d.%d (%s): kernel PGM trap @"
-		    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
+		    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
 		    p->p_comm, frame->srr0, frame->srr1);
 		goto brain_damage2;
 
