@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.32 2002/08/01 20:05:48 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.33 2002/11/09 12:27:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.32 2002/08/01 20:05:48 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.33 2002/11/09 12:27:08 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ printacol(DISPLAY *dp)
 	colwidth = termwidth / numcols;		/* spread out if possible */
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
-		(void)printf("total %llu\n", 
+		(void)printf("total %llu\n",
 		    (long long)(howmany(dp->btotal, blocksize)));
 	chcnt = col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
@@ -366,7 +366,7 @@ printlink(FTSENT *p)
 
 	if (p->fts_level == FTS_ROOTLEVEL)
 		(void)snprintf(name, sizeof(name), "%s", p->fts_name);
-	else 
+	else
 		(void)snprintf(name, sizeof(name),
 		    "%s/%s", p->fts_parent->fts_accpath, p->fts_name);
 	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
