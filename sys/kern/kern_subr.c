@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.36 1998/02/18 07:11:46 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.37 1998/02/22 12:53:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -416,6 +416,9 @@ setroot(bootdv, bootpartition, nam2blk)
 {
 	struct device *dv;
 	int len, print_newline = 0;
+#ifdef MEMORY_DISK_HOOKS
+	int i;
+#endif
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
 	char buf[128];
