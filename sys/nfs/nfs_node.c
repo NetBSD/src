@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.38 2000/11/27 08:39:48 chs Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.39 2001/02/06 11:40:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -156,7 +156,6 @@ loop:
 		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
-	nvp->v_vnlock = 0;	/* XXX At least untill we do locking */
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof *np);
@@ -176,6 +175,8 @@ loop:
 	np->n_fhsize = fhsize;
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
+
+	lockmgr(&vp->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
 	/*
 	 * XXXUBC doing this while holding the nfs_hashlock is bad,
@@ -235,9 +236,10 @@ nfs_inactive(v)
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 */
+		vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		vrele(sp->s_dvp);
+		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
