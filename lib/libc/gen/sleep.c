@@ -1,6 +1,8 @@
+/*	$NetBSD: sleep.c,v 1.6 1995/02/27 05:51:55 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)sleep.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sleep.c,v 1.5 1994/12/11 17:34:10 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: signame.c,v 1.5 1995/02/27 05:51:23 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: signame.c,v 1.4 1993/12/02 09:53:33 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
