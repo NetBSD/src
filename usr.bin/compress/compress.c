@@ -1,3 +1,5 @@
+/*	$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)compress.c	8.2 (Berkeley) 1/7/94";*/
-static char *rcsid = "$Id: compress.c,v 1.8 1994/12/24 16:27:18 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
+#else
+static char rcsid[] = "$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)zopen.c	8.1 (Berkeley) 6/27/93";*/
-static char *rcsid = "$Id: zopen.c,v 1.4 1994/10/06 16:43:19 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
+#else
+static char rcsid[] = "$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*-
