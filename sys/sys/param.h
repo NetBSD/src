@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.81 1999/12/23 14:07:36 tron Exp $	*/
+/*	$NetBSD: param.h,v 1.82 1999/12/23 15:23:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 
 #define NetBSD	199905		/* NetBSD version (year & month). */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef NULL
 #define	NULL	0
 #endif /* NULL */
