@@ -1,5 +1,5 @@
-/* $NetBSD: isp.c,v 1.28 1998/12/05 19:43:52 mjacob Exp $ */
-/* isp.c 1.28 */
+/* $NetBSD: isp.c,v 1.29 1998/12/28 19:10:43 mjacob Exp $ */
+/* release_12_28_98_A */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -52,7 +52,7 @@
 #include <dev/isp/isp_freebsd.h>
 #endif
 #ifdef	__linux__
-#include <isp_linux.h>
+#include "isp_linux.h"
 #endif
 
 /*
@@ -64,6 +64,26 @@
 /*
  * Local static data
  */
+#ifdef	ISP_TARGET_MODE
+static const char tgtiqd[36] = {
+	0x03, 0x00, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00,
+	0x51, 0x4C, 0x4F, 0x47, 0x49, 0x43, 0x20, 0x20,
+#ifdef	__NetBSD__
+	0x4E, 0x45, 0x54, 0x42, 0x53, 0x44, 0x20, 0x20,
+#else
+# ifdef	__FreeBSD__
+	0x46, 0x52, 0x45, 0x45, 0x42, 0x52, 0x44, 0x20,
+# else
+#  ifdef linux
+	0x4C, 0x49, 0x4E, 0x55, 0x58, 0x20, 0x20, 0x20,
+#  else
+#  endif
+# endif
+#endif
+	0x54, 0x41, 0x52, 0x47, 0x45, 0x54, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x31
+};
+#endif
 
 
 /*
@@ -72,6 +92,14 @@
 static int isp_parse_async __P((struct ispsoftc *, int));
 static int isp_handle_other_response
 __P((struct ispsoftc *, ispstatusreq_t *, u_int8_t *));
+#ifdef	ISP_TARGET_MODE
+static int isp_modify_lun __P((struct ispsoftc *, int, int, int));
+static void isp_notify_ack __P((struct ispsoftc *, void *));
+static void isp_handle_atio __P((struct ispsoftc *, void *));
+static void isp_handle_atio2 __P((struct ispsoftc *, void *));
+static void isp_handle_ctio __P((struct ispsoftc *, void *));
+static void isp_handle_ctio2 __P((struct ispsoftc *, void *));
+#endif
 static void isp_parse_status
 __P((struct ispsoftc *, ispstatusreq_t *, ISP_SCSI_XFER_T *));
 static void isp_fibre_init __P((struct ispsoftc *));
@@ -712,7 +740,11 @@ isp_fibre_init(isp)
 	bzero(icbp, sizeof (*icbp));
 
 	icbp->icb_version = ICB_VERSION1;
+#ifdef	ISP_TARGET_MODE
+	fcp->isp_fwoptions = ICBOPT_TGT_ENABLE|ICBOPT_INI_TGTTYPE;
+#else
 	fcp->isp_fwoptions = 0;
+#endif
 	fcp->isp_fwoptions |= ICBOPT_INI_ADISC|ICBOPT_FAIRNESS;
 	fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
 	fcp->isp_fwoptions |= ICBOPT_HARD_ADDRESS;
@@ -825,34 +857,19 @@ isp_fibre_init(isp)
 		PRINTF("%s: Loop ID %d, ALPA 0x%x\n", isp->isp_name,
 		    fcp->isp_loopid, fcp->isp_alpa);
 		isp->isp_state = ISP_INITSTATE;
+#ifdef	ISP_TARGET_MODE
+		DISABLE_INTS(isp);
+		if (isp_modify_lun(isp, 0, 1, 1)) {
+			PRINTF("%s: failed to enable target mode\n",
+			    isp->isp_name);
+		}
+		ENABLE_INTS(isp);
+#endif
 	} else {
 		PRINTF("%s: failed to go to FW READY state- will not attach\n",
 		    isp->isp_name);
 	}
 }
-
-/*
- * Free any associated resources prior to decommissioning and
- * set the card to a known state (so it doesn't wake up and kick
- * us when we aren't expecting it to).
- *
- * Locks are held before coming here.
- */
-void
-isp_uninit(isp)
-	struct ispsoftc *isp;
-{
-	/*
-	 * Leave with interrupts disabled.
-	 */
-	DISABLE_INTS(isp);
-
-	/*
-	 * Stop the watchdog timer (if started).
-	 */
-	STOP_WATCHDOG(isp_watch, isp);
-}
-
 
 /*
  * Start a command. Locking is assumed done in the caller.
@@ -1377,6 +1394,9 @@ isp_parse_async(isp, mbox)
 	case ASYNC_BUS_RESET:
 		PRINTF("%s: SCSI bus reset detected\n", isp->isp_name);
 		isp->isp_sendmarker = 1;
+#ifdef	ISP_TARGET_MODE
+		isp_notify_ack(isp, NULL);
+#endif
 		break;
 
 	case ASYNC_SYSTEM_ERROR:
@@ -1403,10 +1423,16 @@ isp_parse_async(isp, mbox)
 	case ASYNC_TIMEOUT_RESET:
 		PRINTF("%s: timeout initiated SCSI bus reset\n", isp->isp_name);
 		isp->isp_sendmarker = 1;
+#ifdef	ISP_TARGET_MODE
+		isp_notify_ack(isp, NULL);
+#endif
 		break;
 
 	case ASYNC_DEVICE_RESET:
 		PRINTF("%s: device reset\n", isp->isp_name);
+#ifdef	ISP_TARGET_MODE
+		isp_notify_ack(isp, NULL);
+#endif
 		break;
 
 	case ASYNC_EXTMSG_UNDERRUN:
@@ -1460,6 +1486,9 @@ isp_parse_async(isp, mbox)
 
 	case ASYNC_LOOP_RESET:
 		PRINTF("%s: Loop RESET\n", isp->isp_name);
+#ifdef	ISP_TARGET_MODE
+		isp_notify_ack(isp, NULL);
+#endif
 		break;
 
 	case ASYNC_PDB_CHANGED:
@@ -1486,11 +1515,274 @@ isp_handle_other_response(isp, sp, optrp)
 	u_int8_t iptr, optr;
 	int reqsize = 0;
 	void *ireqp = NULL;
+#ifdef	ISP_TARGET_MODE
+	union {
+		at_entry_t	*atio;
+		at2_entry_t	*at2io;
+		ct_entry_t	*ctio;
+		ct2_entry_t	*ct2io;
+		lun_entry_t	*lunen;
+		in_entry_t	*inot;
+		in_fcentry_t	*inot_fc;
+		na_entry_t	*nack;
+		na_fcentry_t	*nack_fc;
+		void            *voidp;
+#define	atio	un.atio
+#define	at2io	un.at2io
+#define	ctio	un.ctio
+#define	ct2io	un.ct2io
+#define	lunen	un.lunen
+#define	inot	un.inot
+#define	inot_fc	un.inot_fc
+#define	nack	un.nack
+#define	nack_fc	un.nack_fc
+	} un;
+
+	un.voidp = sp;
+#endif
 
 
 	switch (sp->req_header.rqs_entry_type) {
 	case RQSTYPE_REQUEST:
 		return (-1);
+#ifdef	ISP_TARGET_MODE
+	case RQSTYPE_NOTIFY_ACK:
+	{
+		static const char *f =
+			"%s: Notify Ack Status 0x%x Sequence Id 0x%x\n"
+		/*
+		 * The ISP is acknowleding our ack of an Immediate Notify.
+		 */
+		if (isp->isp_type & ISP_HA_FC) {
+			PRINTF(f, isp->isp_name,
+			    nack_fc->na-status, nack_fc->na_seqid);
+		} else {
+			PRINTF(f, isp->isp_name,
+			    nack->na_status, nack->na_seqid);
+		}
+		break;
+	}
+	case RQSTYPE_NOTIFY:
+	{
+		u_int16_t seqid, status;
+
+		/*
+		 * Either the ISP received a SCSI message it cannot handle
+		 * or some other out of band condition (e.g., Port Logout)
+		 * or it is returning an Immediate Notify entry we sent.
+		 */
+		if (isp->isp_type & ISP_HA_FC) {
+			status = inot_fc->status;
+			seqid = inot_fc->in_seqid;
+		} else {
+			status = inot->status;
+			seqid = inot->seqid & 0xff;
+		}
+		PRINTF("%s: Immediate Notify Status 0x%x Sequence Id 0x%x\n",
+		    isp->isp_name, status, seqid);
+
+		switch (status) {
+		case IN_MSG_RECEIVED:
+		case IN_IDE_RECEIVED:
+			ptisp_got_msg(ptp, &inot);
+			break;
+		case IN_RSRC_UNAVAIL:
+                        PRINTF("%s: Firmware out of ATIOs\n", isp->isp_name);
+                        break;
+                case IN_ABORT_TASK:
+			PRINTF("%s: Abort Task iid %d rx_id 0x%x\n",
+			    inot_fc->in_iid, seqid);
+                        break;
+                case IN_PORT_LOGOUT:
+			PRINTF("%s: Port Logout for Initiator %d\n",
+			    isp->isp_name, inot_fc->in_iid);
+                        break;
+                default:
+			PRINTF("%s: bad status (0x%x) in Immediate Notify\n",
+                            isp->isp_name, status);
+                        break;
+
+		}
+		isp_notify_ack(isp, un.voidp);
+		reqsize = 0;
+		break;
+	}
+	case RQSTYPE_ENABLE_LUN:
+	case RQSTYPE_MODIFY_LUN:
+		if (lunen->req_status != 1) {
+		    PRINTF("%s: ENABLE/MODIFY LUN returned status 0x%x\n",
+			isp->isp_name, lunen->req_status);
+		}
+		break;
+	case RQSTYPE_ATIO2:
+	{
+		fcparam *fcp = isp->isp_param;
+		ispctiot2_t local, *ct2 = NULL;
+		ispatiot2_t *at2 = (ispatiot2_t *) sp;
+		int s, lun;
+
+#ifdef	SCCLUN
+		lun = at2->req_scclun;
+#else
+		lun = at2->req_lun;
+#endif
+		PRINTF("%s: atio2 loopid %d for lun %d rxid 0x%x flags0x%x "
+		    "tflags0x%x ecodes0x%x rqstatus0x%x\n", isp->isp_name,
+		    at2->req_initiator, lun, at2->req_rxid,
+		    at2->req_flags, at2->req_taskflags, at2->req_execodes,
+		    at2->req_status);
+
+		switch (at2->req_status & ~ATIO_SENSEVALID) {
+		case ATIO_PATH_INVALID:
+			PRINTF("%s: ATIO2 Path Invalid\n", isp->isp_name);
+			break;
+		case ATIO_NOCAP:
+			PRINTF("%s: ATIO2 No Cap\n", isp->isp_name);
+			break;
+		case ATIO_BDR_MSG:
+			PRINTF("%s: ATIO2 BDR Received\n", isp->isp_name);
+			break;
+		case ATIO_CDB_RECEIVED:
+			ct2 = &local;
+			break;
+		default:
+			PRINTF("%s: unknown req_status 0x%x\n", isp->isp_name,
+			    at2->req_status);
+			break;
+		}
+		if (ct2 == NULL) {
+			/*
+			 * Just do an ACCEPT on this fellow.
+			 */
+			at2->req_header.rqs_entry_type = RQSTYPE_ATIO2;
+			at2->req_header.rqs_flags = 0;
+			at2->req_flags = 1;
+			ireqp = at2;
+			reqsize = sizeof (*at2);
+			break;
+		}
+		PRINTF("%s: datalen %d cdb0=0x%x\n", isp->isp_name,
+		    at2->req_datalen, at2->req_cdb[0]);
+		bzero ((void *) ct2, sizeof (*ct2));
+		ct2->req_header.rqs_entry_type = RQSTYPE_CTIO2;
+		ct2->req_header.rqs_entry_count = 1;
+		ct2->req_header.rqs_flags = 0;
+		ct2->req_header.rqs_seqno = isp->isp_seqno++;
+		ct2->req_handle = (at2->req_initiator << 16) | lun;
+#ifndef	SCCLUN
+		ct2->req_lun = lun;
+#endif
+		ct2->req_initiator = at2->req_initiator;
+		ct2->req_rxid = at2->req_rxid;
+
+		ct2->req_flags = CTIO_SEND_STATUS;
+		switch (at2->req_cdb[0]) {
+		case 0x0:		/* TUR */
+			ct2->req_flags |= CTIO_NODATA | CTIO2_SMODE0;
+			ct2->req_m.mode0.req_scsi_status = CTIO2_STATUS_VALID;
+			break;
+
+		case 0x3:		/* REQUEST SENSE */
+		case 0x12:		/* INQUIRE */
+			ct2->req_flags |= CTIO_SEND_DATA | CTIO2_SMODE0;
+			ct2->req_m.mode0.req_scsi_status = CTIO2_STATUS_VALID;
+			ct2->req_seg_count = 1;
+			if (at2->req_cdb[0] == 0x12) {
+				s = sizeof(tgtiqd);
+				bcopy((void *)tgtiqd, fcp->isp_scratch, s);
+			} else {
+				s = at2->req_datalen;
+				bzero(fcp->isp_scratch, s);
+			}
+			ct2->req_m.mode0.req_dataseg[0].ds_base =
+			    fcp->isp_scdma;
+			ct2->req_m.mode0.req_dataseg[0].ds_count = s;
+			ct2->req_m.mode0.req_datalen = s;
+#if	1
+			if (at2->req_datalen < s) {
+				ct2->req_m.mode1.req_scsi_status |=
+				    CTIO2_RESP_VALID|CTIO2_RSPOVERUN;
+			} else if (at2->req_datalen > s) {
+				ct2->req_m.mode1.req_scsi_status |=
+				    CTIO2_RESP_VALID|CTIO2_RSPUNDERUN;
+			}
+#endif
+			break;
+
+		default:		/* ALL OTHERS */
+			ct2->req_flags |= CTIO_NODATA | CTIO2_SMODE1;
+			ct2->req_m.mode1.req_scsi_status = 0;
+#if	1
+			if (at2->req_datalen) {
+				ct2->req_m.mode1.req_scsi_status |=
+				    CTIO2_RSPUNDERUN;
+#if	BYTE_ORDER == BIG_ENDIAN
+				ct2->req_resid[1] = at2->req_datalen & 0xff;
+				ct2->req_resid[0] =
+					(at2->req_datalen >> 8) & 0xff;
+				ct2->req_resid[3] =
+					(at2->req_datalen >> 16) & 0xff;
+				ct2->req_resid[2] =
+					(at2->req_datalen >> 24) & 0xff;
+#else
+				ct2->req_resid[0] = at2->req_datalen & 0xff;
+				ct2->req_resid[1] =
+					(at2->req_datalen >> 8) & 0xff;
+				ct2->req_resid[2] =
+					(at2->req_datalen >> 16) & 0xff;
+				ct2->req_resid[3] =
+					(at2->req_datalen >> 24) & 0xff;
+#endif
+			}
+#endif
+			if ((at2->req_status & ATIO_SENSEVALID) == 0) {
+				ct2->req_m.mode1.req_sense_len = 18;
+				ct2->req_m.mode1.req_scsi_status |= 2;
+				ct2->req_m.mode1.req_response[0] = 0x70;
+				ct2->req_m.mode1.req_response[2] = 0x2;
+			} else {
+				ct2->req_m.mode1.req_sense_len = 18;
+				ct2->req_m.mode1.req_scsi_status |=
+				    at2->req_scsi_status;
+				bcopy((void *)at2->req_sense,
+				    (void *)ct2->req_m.mode1.req_response,
+				    sizeof (at2->req_sense));
+			}
+			break;
+		}
+		reqsize = sizeof (*ct2);
+		ireqp = ct2;
+		break;
+	}
+	case RQSTYPE_CTIO2:
+	{
+		ispatiot2_t *at2;
+		ispctiot2_t *ct2 = (ispctiot2_t *) sp;
+		PRINTF("%s: CTIO2 returned status 0x%x\n", isp->isp_name,
+		    ct2->req_status);
+		/*
+	 	 * Return the ATIO to the board.
+		 */
+		at2 = (ispatiot2_t *) sp;
+		at2->req_header.rqs_entry_type = RQSTYPE_ATIO2;
+		at2->req_header.rqs_entry_count = 1;
+		at2->req_header.rqs_flags = 0;
+		at2->req_header.rqs_seqno = isp->isp_seqno++;
+		at2->req_status = 1;
+		reqsize = sizeof (*at2);
+		ireqp = at2;
+		break;
+	}
+#undef	atio
+#undef	at2io
+#undef	ctio
+#undef	ct2io
+#undef	lunen
+#undef	inot
+#undef	inot_fc
+#undef	nack
+#undef	nack_fc
+#endif
 	default:
 		PRINTF("%s: other response type %x\n", isp->isp_name,
 		    sp->req_header.rqs_entry_type);
@@ -1514,6 +1806,336 @@ isp_handle_other_response(isp, sp, optrp)
 	return (0);
 }
 
+#ifdef	ISP_TARGET_MODE
+
+static void isp_tmd_newcmd_dflt __P((void *, tmd_cmd_t *));
+static void isp_tmd_event_dflt __P((void *, int));
+static void isp_tmd_notify_dflt __P((void *, tmd_notify_t *));
+
+static void isp_tgt_data_xfer __P ((tmd_cmd_t *));
+static void isp_tgt_endcmd __P ((tmd_cmd_t *, u_int8_t));
+static void isp_tgt_done __P ((tmd_cmd_t *));
+
+static void
+isp_tmd_newcmd_dflt(arg0, cmdp)
+	void *arg0;
+	tmd_cmd_t *cmdp;
+{
+}
+
+static void
+isp_tmd_event_dflt(arg0, event)
+	void *arg0;
+	int event;
+{
+}
+
+static void
+isp_tmd_notify_dflt(arg0, npt)
+	void *arg0;
+	tmd_notify_t *npt;
+{
+}
+
+/*
+ * Locks held, and ints disabled (if FC).
+ *
+ * XXX: SETUP ONLY FOR INITIAL ENABLING RIGHT NOW
+ */
+static int
+isp_modify_lun(isp, lun, icnt, ccnt)
+	struct ispsoftc *isp;
+	int lun;	/* logical unit to enable, modify, or disable */
+	int icnt;	/* immediate notify count */
+	int ccnt;	/* command count */
+{
+	isplun_t *ip = NULL;
+	u_int8_t iptr, optr;
+
+	optr = isp->isp_reqodx = ISP_READ(isp, OUTMAILBOX4);
+	iptr = isp->isp_reqidx;
+	ip = (isplun_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, iptr);
+	iptr = ISP_NXT_QENTRY(iptr, RQUEST_QUEUE_LEN);
+	if (iptr == optr) {
+		PRINTF("%s: Request Queue Overflow in isp_modify_lun\n",
+		    isp->isp_name);
+		return (-1);
+	}
+
+	bzero((void *) ip, sizeof (*ip));
+	ip->req_header.rqs_entry_type = RQSTYPE_ENABLE_LUN;
+	ip->req_header.rqs_entry_count = 1;
+	ip->req_header.rqs_seqno = isp->isp_seqno++;
+	ip->req_handle = RQSTYPE_ENABLE_LUN;
+	if (isp->isp_type & ISP_HA_SCSI) {
+		ip->req_lun = lun;
+	}
+	ip->req_cmdcount = ccnt;
+	ip->req_imcount = icnt;
+	ip->req_timeout = 0;	/* default 30 seconds */
+	ISP_WRITE(isp, INMAILBOX4, iptr);
+	isp->isp_reqidx = iptr;
+	return (0);
+}
+
+static void
+isp_notify_ack(isp, ptrp)
+	struct ispsoftc *isp;
+	void *ptrp;
+{
+	void *reqp;
+	u_int8_t iptr, optr;
+	union {
+		na_fcentry_t _naf;
+		na_entry_t _nas;
+	} un;
+
+	bzero((caddr_t)&un, sizeof (un));
+	un._nas.na_header.rqs_entry_type = RQSTYPE_NOTIFY_ACK;
+	un._nas.na_header.rqs_entry_count = 1;
+
+	if (isp->isp_type & ISP_HA_FC) {
+		na_fcentry_t *na = &un._nas;
+		if (ptrp) {
+			in_fcentry_t *inp = ptrp;
+			na->na_iid = inp->in_iid;
+			na->na_lun = inp->in_lun;
+			na->na_task_flags = inp->in_task_flags;
+			na->na_seqid = inp->in_seqid;
+			na->na_status = inp->in_status;
+		} else {
+			na->na_flags = NAFC_RST_CLRD;
+		}
+	} else {
+		na_entry_t *na = &un._nas;
+		if (ptrp) {
+			in_entry_t *inp = ptrp;
+			na->na_iid = inp->in_iid;
+			na->na_lun = inp->in_lun;
+			na->na_tgt = inp->in_tgt;
+			na->na_seqid = inp->in_seqid;
+		} else {
+			na->na_flags = NA_RST_CLRD;
+		}
+	}
+	optr = isp->isp_reqodx = ISP_READ(isp, OUTMAILBOX4);
+	iptr = isp->isp_reqidx;
+	reqp = (void *) ISP_QUEUE_ENTRY(isp->isp_rquest, iptr);
+	iptr = ISP_NXT_QENTRY(iptr, RQUEST_QUEUE_LEN);
+	if (iptr == optr) {
+		PRINTF("%s: Request Queue Overflow For isp_notify_ack\n",
+		    isp->isp_name);
+	} else {
+		bcopy(ireqp, reqp, sizeof (un));
+		ISP_WRITE(isp, INMAILBOX4, iptr);
+		isp->isp_reqidx = iptr;
+	}
+}
+
+/*
+ * These are dummy stubs for now until the outside framework is plugged in.
+ */
+
+static void
+isp_handle_atio (isp, aep)
+	struct ispsoftc *isp;
+	at_entry_t *aep;
+{
+	int status, connected;
+	tmd_cmd_t local, *cdp = &local;
+
+	/*
+	 * Get the ATIO status and see if we're still connected.
+	 */
+	status = aep->at_status;
+	connected = ((aep->at_flags & AT_NODISC) != 0);
+
+	PRINTF("%s: ATIO status=0x%x, connected=%d\n", isp->isp_name,
+	    status, connected);
+
+	/*
+	 * The firmware status (except for the SenseValid bit) indicates
+	 * why this ATIO was sent to us.
+	 * If SenseValid is set, the firware has recommended Sense Data.
+	 * If the Disconnects Disabled bit is set in the flags field,
+	 * we're still connected on the SCSI bus - i.e. the initiator
+	 * did not set DiscPriv in the identify message. We don't care
+	 * about this so it's ignored.
+	 */
+	switch(status & ~TGTSVALID) {
+	case AT_PATH_INVALID:
+		/*
+		 * ATIO rejected by the firmware due to disabled lun.
+		 */
+		PRINTF("%s: Firmware rejected ATIO for disabled lun %d\n",
+		    isp->isp_name, aep->at_lun);
+		break;
+
+	case AT_PHASE_ERROR:
+		/*
+		 * Bus Pase Sequence error.
+		 *
+		 * The firmware should have filled in the correct
+		 * sense data.
+		 */
+
+
+		if (status & TGTSVALID) {
+			bcopy((caddr_t) aep->at_sense,
+			    (caddr_t) &cdp->cd_sensedata,
+			    sizeof (cdp->cd_sensedata));
+			PRINTF("%s: Bus Phase Sequence error key 0x%x\n",
+			    isp->isp_name, cdp->cd_sensedata[2] & 0xf);
+		} else {
+			PRINTF("%s: Bus Phase Sequence With No Sense\n",
+			    isp->isp_name);
+		}
+		(*isp->isp_tmd_newcmd)(isp, cdp);
+		break;
+
+	case AT_NOCAP:
+		/*
+		 * Requested Capability not available
+		 * We sent an ATIO that overflowed the firmware's
+		 * command resource count.
+		 */
+		PRINTF("%s: Firmware rejected ATIO, command count overflow\n",
+		    isp->isp_name);
+		break;
+
+	case AT_BDR_MSG:
+		/*
+		 * If we send an ATIO to the firmware to increment
+		 * its command resource count, and the firmware is
+		 * recovering from a Bus Device Reset, it returns
+		 * the ATIO with this status.
+		 */
+		PRINTF("%s: ATIO returned with BDR received\n", isp->isp_name);
+		break;
+
+	case AT_CDB:
+		/*
+		 * New CDB
+		 */
+		cdp->cd_hba = isp;
+		cdp->cd_iid = aep->at_iid;
+		cdp->cd_tgt = aep->at_tgt;
+		cdp->cd_lun = aep->at_lun;
+		cdp->cd_tagtype = aep->at_tag_type;
+		cdp->cd_tagval = aep->at_tag_val;
+		bcopy(aep->at_cdb, cdp->cd_cdb, 16);
+		PRINTF("%s: CDB 0x%x itl %d/%d/%d\n", isp->isp_name,
+		    cdp->cd_cdb[0], cdp->cd_iid, cdp->cd_tgt, cdp->cd_lun);
+		(*isp->isp_tmd_newcmd)(isp, cdp);
+		break;
+
+	default:
+		PRINTF("%s: Unknown status (0x%x) in ATIO\n",
+		    isp->isp_name, status);
+		cdp->cd_hba = isp;
+		cdp->cd_iid = aep->at_iid;
+		cdp->cd_tgt = aep->at_tgt;
+		cdp->cd_lun = aep->at_lun;
+		cdp->cd_tagtype = aep->at_tag_type;
+		cdp->cd_tagval = aep->at_tag_val;
+		isp_tgtcmd_done(cdp);
+		break;
+	}
+}
+
+static void
+isp_handle_atio2(isp, aep)
+	struct ispsoftc *isp;
+	at2_entry_t *aep;
+{
+	int status;
+	tmd_cmd_t local, *cdp = &local;
+
+	/*
+	 * Get the ATIO2 status.
+	 */
+	status = aep->at_status;
+	PRINTD("%s: ATIO2 status=0x%x\n", status);
+
+	/*
+	 * The firmware status (except for the SenseValid bit) indicates
+	 * why this ATIO was sent to us.
+	 * If SenseValid is set, the firware has recommended Sense Data.
+	 */
+	switch(status & ~TGTSVALID) {
+	case AT_PATH_INVALID:
+		/*
+		 * ATIO rejected by the firmware due to disabled lun.
+		 */
+		PRINTF("%s: Firmware rejected ATIO2 for disabled lun %d\n",
+		    isp->isp_name, aep->at_lun);
+		break;
+
+	case AT_NOCAP:
+		/*
+		 * Requested Capability not available
+		 * We sent an ATIO that overflowed the firmware's
+		 * command resource count.
+		 */
+		PRINTF("%s: Firmware rejected ATIO2, command count overflow\n",
+		    isp->isp_name);
+		break;
+
+	case AT_BDR_MSG:
+		/*
+		 * If we send an ATIO to the firmware to increment
+		 * its command resource count, and the firmware is
+		 * recovering from a Bus Device Reset, it returns
+		 * the ATIO with this status.
+		 */
+		PRINTF("%s: ATIO2 returned with BDR rcvd\n", isp->isp_name);
+		break;
+
+	case AT_CDB:
+		/*
+		 * New CDB
+		 */
+		cdp->cd_hba = isp;
+		cdp->cd_iid = aep->at_iid;
+		cdp->cd_tgt = 0;
+		cdp->cd_lun = aep->at_lun;
+		bcopy(aep->at_cdb, cdp->cd_cdb, 16);
+		cdp->cd_rxid = aep->at_rxid;
+		cdp->cp_origdlen = aep->at_datalen;
+		cdp->cp_totbytes = 0;
+		PRINTF("%s: CDB 0x%x rx_id 0x%x itl %d/%d/%d dlen %d\n",
+		    isp->isp_name, cdp->cd_cdb[0], cdp->cd_tagval, cdp->cd_iid,
+		    cdp->cd_tgt, cdp->cd_lun, aep->at_datalen);
+		(*isp->isp_tmd_newcmd)(isp, cdp);
+		break;
+
+	default:
+		PRINTF("%s: Unknown status (0x%x) in ATIO2\n",
+		    isp->isp_name, status);
+		cdp->cd_hba = isp;
+		cdp->cd_iid = aep->at_iid;
+		cdp->cd_tgt = aep->at_tgt;
+		cdp->cd_lun = aep->at_lun;
+		cdp->cp_rxid = aep->at_rxid;
+		isp_tgtcmd_done(cdp);
+		break;
+	}
+}
+
+static void
+isp_handle_ctio(isp, cep)
+	struct ispsoftc *isp;
+	ct_entry_t *aep;
+{
+}
+
+static void
+isp_handle_ctio2(isp, cep)
+	struct ispsoftc *isp;
+	at2_entry_t *aep;
+{
+}
+#endif
 
 static void
 isp_parse_status(isp, sp, xs)
@@ -2454,49 +3076,6 @@ isp_restart(isp)
 		XS_SETERR(xs, HBA_BUSRESET);
 		XS_CMD_DONE(xs);
 	}
-}
-
-void
-isp_watch(arg)
-	void *arg;
-{
-	int i;
-	struct ispsoftc *isp = arg;
-	ISP_SCSI_XFER_T *xs;
-	ISP_LOCKVAL_DECL;
-
-	/*
-	 * Look for completely dead commands (but not polled ones).
-	 */
-	ISP_ILOCK(isp);
-	for (i = 0; i < RQUEST_QUEUE_LEN; i++) {
-		if ((xs = (ISP_SCSI_XFER_T *) isp->isp_xflist[i]) == NULL) {
-			continue;
-		}
-		if (XS_TIME(xs) == 0) {
-			continue;
-		}
-		XS_TIME(xs) -= (WATCH_INTERVAL * 1000);
-		/*
-		 * Avoid later thinking that this
-		 * transaction is not being timed.
-		 * Then give ourselves to watchdog
-		 * periods of grace.
-		 */
-		if (XS_TIME(xs) == 0)
-			XS_TIME(xs) = 1;
-		else if (XS_TIME(xs) > -(2 * WATCH_INTERVAL * 1000)) {
-			continue;
-		}
-		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
-			PRINTF("%s: isp_watch failed to abort command\n",
-			    isp->isp_name);
-			isp_restart(isp);
-			break;
-		}
-	}
-	ISP_IUNLOCK(isp);
-	RESTART_WATCHDOG(isp_watch, isp);
 }
 
 /*

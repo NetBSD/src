@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.6 1998/12/05 19:48:23 mjacob Exp $	*/
-/* isp_netbsd.h 1.16 */
+/* $NetBSD: isp_netbsd.h,v 1.7 1998/12/28 19:10:43 mjacob Exp $ */
+/* release_12_28_98_A */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -91,6 +91,7 @@ struct isposinfo {
 #endif
 
 #define	ISP_LOCKVAL_DECL	int isp_spl_save
+#define	ISP_ILOCKVAL_DECL	ISP_LOCKVAL_DECL
 #define	ISP_LOCK(x)		isp_spl_save = splbio()
 #define	ISP_UNLOCK(x)		(void) splx(isp_spl_save)
 #define	ISP_ILOCK		ISP_LOCK
@@ -158,14 +159,8 @@ struct isposinfo {
 
 #define	SYS_DELAY(x)	delay(x)
 
-#define	WATCH_INTERVAL		30
-#define	START_WATCHDOG(f, s)	\
-	timeout(f, s, WATCH_INTERVAL * hz), s->isp_dogactive = 1
-
-#define	RESTART_WATCHDOG(f, s)		START_WATCHDOG(f, s)
-#define	STOP_WATCHDOG(f, s)		untimeout(f, s), s->isp_dogactive = 0
-
+#define	WATCH_INTERVAL	30
 
 extern void isp_attach __P((struct ispsoftc *));
-
+extern void isp_uninit __P((struct ispsoftc *));
 #endif	/* _ISP_NETBSD_H */
