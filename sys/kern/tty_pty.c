@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.12.2.1 1993/09/24 08:51:47 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.12.2.2 1993/09/27 04:08:57 deraadt Exp $
  */
 
 /*
@@ -84,6 +84,12 @@ int	npty = NPTY;		/* for pstat -t */
 #define PF_UCNTL	0x80		/* user control mode */
 
 void ptcwakeup __P((struct tty *tp, int flag));
+
+void
+ptyattach(n)
+int n;
+{
+}
 
 /*ARGSUSED*/
 int
