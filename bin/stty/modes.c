@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.11 1997/07/20 21:31:25 christos Exp $	*/
+/*	$NetBSD: modes.c,v 1.12 1997/10/20 08:08:04 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: modes.c,v 1.11 1997/07/20 21:31:25 christos Exp $");
+__RCSID("$NetBSD: modes.c,v 1.12 1997/10/20 08:08:04 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,8 @@ const struct modes cmodes[] = {
 	{ "-crtscts",	0, CRTSCTS },
 	{ "mdmbuf",	MDMBUF, 0 },
 	{ "-mdmbuf",	0, MDMBUF },
+	{ "cdtrcts",	CDTRCTS, 0 },
+	{ "-cdtrcts",	0, CDTRCTS },
 	{ NULL },
 };
 

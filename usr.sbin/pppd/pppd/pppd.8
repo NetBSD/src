@@ -1,6 +1,6 @@
-.\"	$NetBSD: pppd.8,v 1.19 1997/10/18 07:01:38 mikel Exp $
+.\"	$NetBSD: pppd.8,v 1.20 1997/10/20 08:08:41 scottr Exp $
 .\" manual page [] for pppd 2.3
-.\" $NetBSD: pppd.8,v 1.19 1997/10/18 07:01:38 mikel Exp $
+.\" $NetBSD: pppd.8,v 1.20 1997/10/20 08:08:41 scottr Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -93,10 +93,29 @@ program to dial the modem and start the remote ppp session.  This
 option is privileged if the \fInoauth\fR option is used.
 .TP
 .B crtscts
-Use hardware flow control (i.e. RTS/CTS) to control the flow of data
-on the serial port.  If neither the \fIcrtscts\fR nor the
-\fInocrtscts\fR option is given, the hardware flow control setting
-for the serial port is left unchanged.
+Use hardware flow control (i.e. RTS/CTS) to control the flow of
+data on the serial port.  If neither the \fIcrtscts\fR, the
+\fInocrtscts\fR, the \fIcdtrcts\fR nor the \fInocdtrcts\fR option
+is given, the hardware flow control setting for the serial port is
+left unchanged.
+Some serial ports (such as Macintosh serial ports) lack a true
+RTS output. Such serial ports use this mode to impliment
+unidirectional flow control. The serial port will
+suspend transmission when requested by the modem (via CTS)
+but will be unable to request the modem stop sending to the
+computer. This mode retains the ability to use DTR as
+a modem control line.
+.TP
+.B cdtrcts
+Use a non-standard hardware flow control (i.e. DTR/CTS) to control
+the flow of data on the serial port.  If neither the \fIcrtscts\fR,
+the \fInocrtscts\fR, the \fIcdtrcts\fR nor the \fInocdtrcts\fR
+option is given, the hardware flow control setting for the serial
+port is left unchanged.
+Some serial ports (such as Macintosh serial ports) lack a true
+RTS output. Such serial ports use this mode to impliment true
+bi-directional flow control. The sacrafice is that this flow
+control mode does not permit using DTR as a modem control line.
 .TP
 .B defaultroute
 Add a default route to the system routing tables, using the peer as
@@ -470,10 +489,14 @@ should only be required if the peer is buggy and gets confused by
 requests from pppd for CCP negotiation.
 .TP
 .B nocrtscts
-Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
-neither the \fIcrtscts\fR nor the \fInocrtscts\fR option is given,
-the hardware flow control setting for the serial port is left
-unchanged.
+Disable hardware flow control (i.e. RTS/CTS) on the serial port.
+If neither the \fIcrtscts\fR nor the \fInocrtscts\fR nor the
+\fIcdtrcts\fR nor the \fInodtrcts\fR option is given, the hardware
+flow control setting for the serial port is left unchanged.
+.TP
+.B nodtrcts
+This option is a synonym for \fInocrtscts\fR. Either of these options will
+disable both forms of hardware flow control.
 .TP
 .B nodefaultroute
 Disable the \fIdefaultroute\fR option.  The system administrator who

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.23 1997/09/30 16:45:16 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.24 1997/10/20 08:08:47 scottr Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -22,12 +22,11 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.23 1997/09/30 16:45:16 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.24 1997/10/20 08:08:47 scottr Exp $");
 #endif
 #endif
 
@@ -66,8 +65,8 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.23 1997/09/30 16:45:16 christos Exp $");
 #include <sys/param.h>
 #if defined(NetBSD) && (NetBSD >= 199703)
 #include <netinet/if_inarp.h>
-#else	/* NetBSD 1.2D or later */
-#include <net/if_ether.h>
+#else	/* NetBSD 1.2C or earlier */
+#include <netinet/if_ether.h>
 #endif
 #endif
 
@@ -391,10 +390,13 @@ set_up_tty(fd, local)
     }
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
-    if (crtscts > 0 && !local)
-	tios.c_cflag |= CRTSCTS;
-    else if (crtscts < 0)
-	tios.c_cflag &= ~CRTSCTS;
+    if (crtscts > 0 && !local) {
+        if (crtscts == 2)
+            tios.c_cflag |= CDTRCTS;
+	else
+	    tios.c_cflag |= CRTSCTS;
+    } else if (crtscts < 0)
+	tios.c_cflag &= ~(CRTSCTS | CDTRCTS);
 
     tios.c_cflag |= CS8 | CREAD | HUPCL;
     if (local || !modem)
