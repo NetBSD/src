@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.1 1994/12/28 09:26:07 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.2 1995/01/05 07:30:03 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -108,7 +108,7 @@ static struct aconfdata aconftab[] = {
 
 	/* MacroSystemsUS */
 	{ "wesc",	2203,	19},	/* Warp engine */
-	{ "grfrtblt",	18260,	16},	/* Retina BLT Z3 */
+	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
 	{ "flz3sc",	8512,	11},	/* FastlaneZ3 */
 	{ "flz3mem",	8512,	12},	/* FastlaneZ3 memory */
 	/* Cirrus CL GD 5426 -> Piccolo, EGS Spectrum */
@@ -128,7 +128,7 @@ static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
  */
 static struct preconfdata preconftab[] = {
 	/* Retina BLT Z3 */
-	{ 18260, 6 }
+	{ 18260, 16, 0}
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
