@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2003/05/13 08:33:58 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2003/05/13 09:35:16 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -939,7 +939,7 @@ switch_resume:
 	SET_CURLWP(%r12,%rcx)
 
 	/* Skip context switch if same lwp. */
-	movl	$1,%ebx
+	xorl	%ebx,%ebx
 	cmpq	%r12,%r13
 	je	switch_return
 
@@ -1037,7 +1037,7 @@ switch_restored:
 	je	1f
 	movq	%rax,TF_RIP(%rbx)
 1:
-	xor	%rbx,%rbx
+	movl	$1,%ebx
 
 switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
