@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.17.2.1 2000/07/10 19:58:53 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.17.2.2 2000/07/22 04:59:41 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -166,6 +166,9 @@ int main (argc, argv, envp)
 	struct parse *parse;
 	int lose;
 	int omapi_port;
+	int no_dhcpd_conf = 0;
+	int no_dhcpd_db = 0;
+	int no_dhcpd_pid = 0;
 
 	/* Set up the client classification system. */
 	classification_setup ();
@@ -221,14 +224,17 @@ int main (argc, argv, envp)
 			if (++i == argc)
 				usage ();
 			path_dhcpd_conf = argv [i];
+			no_dhcpd_conf = 1;
 		} else if (!strcmp (argv [i], "-lf")) {
 			if (++i == argc)
 				usage ();
 			path_dhcpd_db = argv [i];
+			no_dhcpd_db = 1;
 		} else if (!strcmp (argv [i], "-pf")) {
 			if (++i == argc)
 				usage ();
 			path_dhcpd_pid = argv [i];
+			no_dhcpd_pid = 1;
                 } else if (!strcmp (argv [i], "-t")) {
 			/* test configurations only */
 #ifndef DEBUG
@@ -266,6 +272,16 @@ int main (argc, argv, envp)
 			interface_reference (&interfaces, tmp, MDL);
 			tmp -> flags = INTERFACE_REQUESTED;
 		}
+	}
+
+	if (!no_dhcpd_conf && (s = getenv ("PATH_DHCPD_CONF"))) {
+		path_dhcpd_conf = s;
+	}
+	if (!no_dhcpd_db && (s = getenv ("PATH_DHCPD_DB"))) {
+		path_dhcpd_db = s;
+	}
+	if (!no_dhcpd_pid && (s = getenv ("PATH_DHCPD_PID"))) {
+		path_dhcpd_pid = s;
 	}
 
 	if (!quiet) {
