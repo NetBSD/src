@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/08/30 23:51:52 jhawk Exp $
+#	$NetBSD: Makefile,v 1.9 2000/09/30 00:23:37 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -61,24 +61,14 @@ INCS+=	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h
 INCS+=	ripemd.h safestack.h sha.h stack.h tmdiff.h
 INCS+=	txt_db.h x509.h x509_vfy.h x509v3.h
 
-.if (${MKCRYPTO_RSA} != "no")
 INCS+=	rsa.h rsaref.h
 .PATH: ${OPENSSLSRC}/rsaref
-.else
-CPPFLAGS+= -DNO_RSA
-.endif
 
-.if (${MKCRYPTO_IDEA} != "no")
+# IDEA - patented, but we install the header anyways
 INCS+=	idea.h
-.else
-CPPFLAGS+= -DNO_IDEA
-.endif
 
-.if (${MKCRYPTO_RC5} != "no")
+# RC5 - patented, but we install the header anyways
 INCS+=	rc5.h
-.else
-CPPFLAGS+= -DNO_RC5
-.endif
 
 INCSDIR=/usr/include/openssl
 
