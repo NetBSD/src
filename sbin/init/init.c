@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.54 2003/04/17 18:04:47 fvdl Exp $	*/
+/*	$NetBSD: init.c,v 1.55 2003/04/20 17:16:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.54 2003/04/17 18:04:47 fvdl Exp $");
+__RCSID("$NetBSD: init.c,v 1.55 2003/04/20 17:16:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,6 +468,8 @@ void
 transition(state_t s)
 {
 
+	if (s == NULL)
+		return;
 	for (;;)
 		s = (state_t)(*s)();
 }
@@ -480,6 +482,7 @@ void
 clear_session_logs(session_t *sp, int status)
 {
 	char *line = sp->se_device + sizeof(_PATH_DEV) - 1;
+
 #ifdef SUPPORT_UTMPX
 	if (logoutx(line, status, DEAD_PROCESS))
 		logwtmpx(line, "", "", status, DEAD_PROCESS);
@@ -521,6 +524,7 @@ single_user(void)
 	int status;
 	int from_securitylevel;
 	sigset_t mask;
+	struct sigaction sa, satstp, sahup;
 #ifdef ALTSHELL
 	const char *shell = _PATH_ALTSHELL;
 #endif
@@ -541,6 +545,11 @@ single_user(void)
 	if (from_securitylevel > 0)
 		setsecuritylevel(0);
 
+	(void)sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sa.sa_handler = SIG_IGN;
+	(void)sigaction(SIGTSTP, &sa, &satstp);
+	(void)sigaction(SIGHUP, &sa, &sahup);
 	if ((pid = fork()) == 0) {
 		/*
 		 * Start the single user session.
@@ -626,6 +635,8 @@ single_user(void)
 		emergency("can't fork single-user shell, trying again");
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			continue;
+		(void)sigaction(SIGTSTP, &satstp, NULL);
+		(void)sigaction(SIGHUP, &sahup, NULL);
 		return (state_func_t) single_user;
 	}
 
@@ -647,8 +658,11 @@ single_user(void)
 		}
 	} while (wpid != pid && !requested_transition);
 
-	if (requested_transition)
+	if (requested_transition) {
+		(void)sigaction(SIGTSTP, &satstp, NULL);
+		(void)sigaction(SIGHUP, &sahup, NULL);
 		return (state_func_t)requested_transition;
+	}
 
 	if (WIFSIGNALED(status)) {
 		if (WTERMSIG(status) == SIGKILL) {
@@ -660,11 +674,15 @@ single_user(void)
 				(void)sigsuspend(&s);
 		} else {	
 			warning("single user shell terminated, restarting");
+			(void)sigaction(SIGTSTP, &satstp, NULL);
+			(void)sigaction(SIGHUP, &sahup, NULL);
 			return (state_func_t) single_user;
 		}
 	}
 
 	runcom_mode = FASTBOOT;
+	(void)sigaction(SIGTSTP, &satstp, NULL);
+	(void)sigaction(SIGHUP, &sahup, NULL);
 #ifndef LETS_GET_SMALL
 	return (state_func_t) runcom;
 #else /* LETS_GET_SMALL */
@@ -795,6 +813,9 @@ add_session(session_t *sp)
 	DBT key;
 	DBT data;
 
+	if (session_db == NULL)
+		return;
+
 	key.data = &sp->se_process;
 	key.size = sizeof sp->se_process;
 	data.data = &sp;
@@ -828,6 +849,9 @@ find_session(pid_t pid)
 	DBT key;
 	DBT data;
 	session_t *ret;
+
+	if (session_db == NULL)
+		return NULL;
 
 	key.data = &pid;
 	key.size = sizeof pid;
@@ -886,6 +910,8 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 		return (NULL);
 
 	sp = malloc(sizeof (session_t));
+	if (sp == NULL)
+		return NULL;
 	memset(sp, 0, sizeof *sp);
 
 	sp->se_flags = SE_PRESENT;
@@ -1202,7 +1228,8 @@ clean_ttys(void)
 			if ((typ->ty_status & TTY_ON) == 0 ||
 			    typ->ty_getty == 0) {
 				sp->se_flags |= SE_SHUTDOWN;
-				(void)kill(sp->se_process, SIGHUP);
+				if (sp->se_process != 0)
+					(void)kill(sp->se_process, SIGHUP);
 				continue;
 			}
 			sp->se_flags &= ~SE_SHUTDOWN;
@@ -1210,7 +1237,8 @@ clean_ttys(void)
 				warning("can't parse getty for port %s",
 				    sp->se_device);
 				sp->se_flags |= SE_SHUTDOWN;
-				(void)kill(sp->se_process, SIGHUP);
+				if (sp->se_process != 0)
+					(void)kill(sp->se_process, SIGHUP);
 			}
 			continue;
 		}
@@ -1223,7 +1251,8 @@ clean_ttys(void)
 	for (sp = sessions; sp; sp = sp->se_next)
 		if ((sp->se_flags & SE_PRESENT) == 0) {
 			sp->se_flags |= SE_SHUTDOWN;
-			(void)kill(sp->se_process, SIGHUP);
+			if (sp->se_process != 0)
+				(void)kill(sp->se_process, SIGHUP);
 		}
 
 	return (state_func_t)multi_user;
