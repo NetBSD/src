@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.83 2004/07/01 13:00:39 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.84 2004/07/03 18:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.83 2004/07/01 13:00:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.84 2004/07/03 18:24:37 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -612,7 +612,7 @@ i8254_initclocks()
 	 * we'll actually get (TIMER_FREQ/rtclock_tval) interrupts/sec.
 	 */
 	fixtick = 1000000 -
-	    (tick * TIMER_FREQ + rtclock_tval / 2) / rtclock_tval;
+	    ((int64_t)tick * TIMER_FREQ + rtclock_tval / 2) / rtclock_tval;
 #endif /* NTP */
 
 	/*
