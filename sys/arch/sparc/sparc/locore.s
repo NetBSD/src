@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.175 2003/01/01 16:17:10 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.176 2003/01/04 11:09:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4616,6 +4616,7 @@ ENTRY(switchexit)
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
+	 nop
 	call	_C_LABEL(exit2)		! exit2(p)
 	 mov	%g2, %o0
 
@@ -4684,7 +4685,7 @@ idle_enter:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 idle_leave:
 	/* Before we leave the idle loop, detain the scheduler lock */
-	nop;nop;nop;	! just wrote to %psr; delay before doing a `save'
+	nop	! just wrote to %psr; observe psr delay before doing a `save'
 	call	_C_LABEL(sched_lock_idle)
 	 nop
 	b,a	Lsw_scan
@@ -4917,6 +4918,7 @@ Lsw_load:
 	 *	%g3 = p
 	 *	%g4 = lastproc
 	 *	%g5 = newpcb
+	 *	%l0 = return value
 	 *	%l1 = oldpsr (excluding ipl bits)
 	 *	%l6 = %hi(cpcb)
 	 *	%o0 = tmp 1
@@ -4963,10 +4965,15 @@ Lsw_load:
 	 * Now running p.  Make sure it has a context so that it
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
+	 *
+	 * On multi-processor machines, the context might have changed
+	 * (e.g. by exec(2)) even if we pick up the same process here.
 	 */
-	cmp	%g3, %g4		! p == lastproc?
+	subcc	%g3, %g4, %l0		! p == lastproc?
+#if !defined(MULTIPROCESSOR)
 	be	Lsw_sameproc		! yes, context is still set for p
 	 EMPTY
+#endif
 
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
 	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
@@ -4981,7 +4988,7 @@ Lsw_load:
 	 mov	%o3, %o0
 
 	ret
-	 restore %g0, 1, %o0	! return (1)
+	 restore %g0, %l0, %o0		! return (p != lastproc)
 
 	/* p does have a context: just switch to it */
 Lsw_havectx:
@@ -4996,10 +5003,10 @@ NOP_ON_4M_15:
 	set	AC_CONTEXT, %o1
 	stba	%i1, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 	ret
-	 restore %g0, 1, %o0	! return (1)
+	 restore %g0, %l0, %o0		! return (p != lastproc)
 #endif
 2:
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 	/*
 	 * Flush caches that need to be flushed on context switch.
 	 * We know this is currently only necessary on the sun4m hypersparc.
@@ -5010,17 +5017,18 @@ NOP_ON_4M_15:
 	 set	SRMMU_CXR, %i2
 	sta	%i1, [%i2] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 	ret
-	 restore %g0, 1, %o0	! return (1)
+	 restore %g0, %l0, %o0		! return (p != lastproc)
 #endif
 
+#if !defined(MULTIPROCESSOR)
 Lsw_sameproc:
 	/*
 	 * We are resuming the process that was running at the
-	 * call to switch().  Just set psr ipl and return.
+	 * call to switch().
 	 */
 	ret
-	 restore %g0, %g0, %o0	! return (0)
-
+	 restore %g0, %g0, %o0		! return (0)
+#endif /* !MULTIPROCESSOR */
 
 /*
  * Snapshot the current process so that stack frames are up to date.
