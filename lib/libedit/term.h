@@ -46,7 +46,6 @@
 
 typedef struct {	/* Symbolic function key bindings	*/
     char       *name;	/* name of the key			*/
-    int     	key;	/* Index in termcap table		*/
     key_value_t fun;	/* Function bound to it			*/
     int	        type;	/* Type of function			*/
 } fkey_t;
