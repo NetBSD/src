@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.20 1998/02/16 22:05:37 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.21 1998/06/30 03:30:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -780,7 +780,7 @@ setfstype(fstp, v)
 		return;
 	}
 
-	if (v != s_qmark && ht_lookup(fsopttab, v) == NULL) {
+	if (v != s_qmark && !OPT_FSOPT(v)) {
 		error("\"%s\" is not a configured file system", v);
 		return;
 	}

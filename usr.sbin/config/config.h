@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.39 1998/06/24 11:20:54 jonathan Exp $	*/
+/*	$NetBSD: config.h,v 1.40 1998/06/30 03:30:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -369,8 +369,17 @@ void	defflag __P((const char *fname, struct nvlist *opts,
 void	defparam __P((const char *fname, struct nvlist *opts,
 	    struct nvlist *deps));
 int	devbase_has_instances __P((struct devbase *, int));
+struct nvlist * find_declared_option __P((const char *name));
 int	deva_has_instances __P((struct deva *, int));
 void	setupdirs __P((void));
+
+/* tests on option types */
+#define OPT_FSOPT(n)	(ht_lookup(deffstab, (n)) != NULL)
+#define OPT_DEFOPT(n)	(ht_lookup(defopttab, (n)) != NULL)
+#define OPT_DEFFLAG(n)	(ht_lookup(defflagtab, (n)) != NULL)
+#define OPT_DEFPARAM(n)	(ht_lookup(defparamtab, (n)) != NULL)
+#define DEFINED_OPTION(n) (find_declared_option((n)) != NULL)
+
 
 /* mkheaders.c */
 int	mkheaders __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 1998/06/28 04:41:36 scottr Exp $	*/
+/*	$NetBSD: main.c,v 1.36 1998/06/30 03:30:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -283,7 +283,7 @@ dependopts()
 	struct nvlist *nv, *opt;
 
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
-		if ((opt = ht_lookup(defopttab, nv->nv_name)) != NULL) {
+		if ((opt = find_declared_option(nv->nv_name)) != NULL) {
 			for (opt = opt->nv_ptr; opt != NULL;
 			    opt = opt->nv_next) {
 				do_depend(opt);
@@ -301,10 +301,9 @@ do_depend(nv)
 	if (nv != NULL) {
 		if (ht_lookup(opttab, nv->nv_name) == NULL)
 			addoption(nv->nv_name, NULL);
-		if ((nextnv = ht_lookup(defopttab, nv->nv_name)) != NULL)
+		if ((nextnv = find_declared_option(nv->nv_name)) != NULL)
 			do_depend(nextnv->nv_ptr);
 	}
-	
 }
 
 /*
@@ -428,6 +427,27 @@ badfilename(fname)
 
 
 /*
+ * Search for a defined option (defopt, filesystem, etc), and if found,
+ * return the  option's struct nvlist.
+ */
+struct nvlist *
+find_declared_option(name)
+	const char *name;
+{
+	struct nvlist *option = NULL;
+
+	if ((option = ht_lookup(defopttab, name)) != NULL ||
+	    (option = ht_lookup(defparamtab, name)) != NULL ||
+	    (option = ht_lookup(defflagtab, name)) != NULL ||
+	    (option = ht_lookup(fsopttab, name)) != NULL) {
+		return (option);
+	}
+
+	return (NULL);
+}
+
+
+/*
  * Define one or more standard options.  If an option file name is specified,
  * place all options in one file with the specified name.  Otherwise, create
  * an option file for each option.
@@ -453,6 +473,14 @@ defopt(ht, fname, opts, deps)
 	 */
 	for (nv = opts; nv != NULL; nv = nextnv) {
 		nextnv = nv->nv_next;
+
+		/* An option name can be declared at most once. */
+		if (DEFINED_OPTION(nv->nv_name)) {
+			error("file system or option `%s' already defined",
+			    nv->nv_name);
+			return;
+		}
+
 		if (ht_insert(ht, nv->nv_name, nv)) {
 			error("file system or option `%s' already defined",
 			    nv->nv_name);
@@ -558,11 +586,11 @@ addoption(name, value)
 	 * XXX should use "params" and "flags" in config.
 	 * XXX crying out for a type field in a unified hashtab.
 	 */
-	is_fs = ht_lookup(deffstab, name) != NULL;
-	is_param = ht_lookup(defparamtab, name) != NULL;
-	is_opt = ht_lookup(defopttab, name) != NULL;
-	is_flag = ht_lookup(defflagtab, name) != NULL;
-	is_undecl = (!is_param && !is_flag && !is_fs && !is_opt);
+	is_fs = OPT_FSOPT(name);
+	is_param = OPT_DEFPARAM(name);
+	is_opt = OPT_DEFOPT(name);
+	is_flag =  OPT_DEFFLAG(name);
+	is_undecl = !DEFINED_OPTION(name);
 
 	/* Make sure this is not a defined file system. */
 	if (is_fs) {
@@ -609,7 +637,7 @@ addfsoption(name)
 	char low[500];
 
 	/* Make sure this is a defined file system. */
-	if (ht_lookup(deffstab, name) == NULL) {
+	if (!OPT_FSOPT(name)) {
 		error("`%s' is not a defined file system", name);
 		return;
 	}
@@ -660,6 +688,14 @@ do_option(ht, nppp, name, value, type)
 {
 	struct nvlist *nv;
 
+	/*
+	 * If a defopt'ed option was enabled but without an explicit
+	 * value, supply a default value of 1, as for non-defopt
+	 * options (where cc treats -DBAR as -DBAR=1.) 
+	 */
+	if (OPT_DEFOPT(name) && value == NULL)
+		value = "1";
+
 	/* assume it will work */
 	nv = newnv(name, value, NULL, 0, NULL);
 	if (ht_insert(ht, name, nv) == 0) {
@@ -672,7 +708,7 @@ do_option(ht, nppp, name, value, type)
 	nvfree(nv);
 	if ((nv = ht_lookup(ht, name)) == NULL)
 		panic("do_option");
-	if (nv->nv_str != NULL && ht != fsopttab)
+	if (nv->nv_str != NULL && !OPT_FSOPT(name))
 		error("already have %s `%s=%s'", type, name, nv->nv_str);
 	else
 		error("already have %s `%s'", type, name);
