@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.5 1995/05/02 01:22:58 mycroft Exp $	*/
+/*	$NetBSD: lock.c,v 1.6 1995/06/07 16:09:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: lock.c,v 1.5 1995/05/02 01:22:58 mycroft Exp $";
+static char rcsid[] = "$NetBSD: lock.c,v 1.6 1995/06/07 16:09:53 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -89,6 +89,7 @@ main(argc, argv)
 	struct timeval timval;
 	struct itimerval ntimer, otimer;
 	struct tm *timp;
+	time_t curtime;
 	int ch, sectimeout, usemine;
 	char *ap, *mypw, *ttynam, *tzn;
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
@@ -128,8 +129,9 @@ main(argc, argv)
 		errx(1, "not a terminal?");
 	if (gettimeofday(&timval, (struct timezone *)NULL))
 		err(1, "gettimeofday");
+	curtime = timval.tv_sec;
 	nexttime = timval.tv_sec + (sectimeout * 60);
-	timp = localtime(&timval.tv_sec);
+	timp = localtime(&curtime);
 	ap = asctime(timp);
 	tzn = timp->tm_zone;
 
