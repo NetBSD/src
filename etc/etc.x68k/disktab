@@ -1,3 +1,5 @@
+#	$NetBSD: disktab,v 1.2 1998/01/09 06:09:49 perry Exp $
+#
 # Disk geometry and partition layout tables. 
 # Key:
 #	dt	controller type

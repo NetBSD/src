@@ -1,3 +1,5 @@
+#	$NetBSD: fstab.sd1,v 1.2 1998/01/09 06:09:52 perry Exp $
+#
 /dev/sd1a	/	ffs	rw	1	1
 /dev/sd1d	/usr	ffs	rw	1	1
 #/dev/sd1f	/usr/local ffs	rw	1	1
