@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.20.6.1 2001/10/10 11:57:02 fvdl Exp $	*/
+/*	$NetBSD: ms.c,v 1.20.6.2 2001/10/11 00:02:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ msopen(devvp, flags, mode, p)
 
 	if (ms->ms_deviopen) {
 		int err;
-		err = (*ms->ms_deviopen)((struct device *)ms, flags);
+		err = (*ms->ms_deviopen)((struct device *)ms, flags, devvp);
 		if (err) 
 			return (err);
 	}
@@ -140,7 +140,7 @@ msclose(devvp, flags, mode, p)
 	ms->ms_events.ev_io = NULL;
 	if (ms->ms_deviclose) {
 		int err;
-		err = (*ms->ms_deviclose)((struct device *)ms, flags);
+		err = (*ms->ms_deviclose)((struct device *)ms, flags, devvp);
 		if (err) 
 			return (err);
 	}

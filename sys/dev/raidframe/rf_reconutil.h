@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.h,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.h,v 1.3.24.1 2001/10/11 00:02:25 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,8 @@
 #ifndef _RF__RF_RECONUTIL_H_
 #define _RF__RF_RECONUTIL_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_reconstruct.h"
 
 RF_ReconCtrl_t *

@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.2 2000/09/21 23:40:47 eeh Exp $	*/
+/*	$NetBSD: msvar.h,v 1.2.6.1 2001/10/11 00:02:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,8 @@
 #define MS_BPS 	1200
 #endif
 
+struct vnode;
+
 /*
  * Mouse state.  A Mouse Systems mouse is a fairly simple device,
  * producing five-byte blobs of the form:
@@ -86,8 +88,11 @@ struct ms_softc {
 	 * by the lower level driver and used as a back door
 	 * when opening and closing the internal device.
 	 */
-	int	(*ms_deviopen)	__P((struct device *, int));
-	int	(*ms_deviclose)	__P((struct device *, int));
+	int	(*ms_deviopen)	__P((struct device *, int, struct vnode *));
+	int	(*ms_deviclose)	__P((struct device *, int, struct vnode *));
+
+	dev_t	ms_rdev;
+	struct vnode *ms_devvp;
 
 	/* Flags to communicate with ms_softintr() */
 	volatile int ms_intr_flags;

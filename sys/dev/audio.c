@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.138.2.3 2001/10/01 12:44:09 fvdl Exp $	*/
+/*	$NetBSD: audio.c,v 1.138.2.4 2001/10/11 00:02:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -100,56 +100,56 @@ int	audiodebug = 0;
 
 int	audio_blk_ms = AUDIO_BLK_MS;
 
-int	audiosetinfo __P((struct audio_softc *, struct audio_info *));
-int	audiogetinfo __P((struct audio_softc *, struct audio_info *));
+int	audiosetinfo(struct audio_softc *, struct audio_info *);
+int	audiogetinfo(struct audio_softc *, struct audio_info *);
 
-int	audio_open __P((struct vnode *, struct audio_softc *, int, int,
-	    struct proc *));
-int	audio_close __P((struct audio_softc *, int, int, struct proc *));
-int	audio_read __P((struct audio_softc *, struct uio *, int));
-int	audio_write __P((struct audio_softc *, struct uio *, int));
-int	audio_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
-int	audio_poll __P((struct audio_softc *, int, struct proc *));
-paddr_t	audio_mmap __P((struct audio_softc *, off_t, int));
+int	audio_open(struct vnode *, struct audio_softc *, int, int,
+		   struct proc *);
+int	audio_close(struct audio_softc *, int, int, struct proc *);
+int	audio_read(struct audio_softc *, struct uio *, int);
+int	audio_write(struct audio_softc *, struct uio *, int);
+int	audio_ioctl(struct audio_softc *, u_long, caddr_t, int, struct proc *);
+int	audio_poll(struct audio_softc *, int, struct proc *);
+paddr_t	audio_mmap(struct audio_softc *, off_t, int);
 
-int	mixer_open __P((struct vnode *, struct audio_softc *, int, int,
-	    struct proc *));
-int	mixer_close __P((struct audio_softc *, int, int, struct proc *));
-int	mixer_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
-static	void mixer_remove __P((struct audio_softc *, struct proc *p));
-static	void mixer_signal __P((struct audio_softc *));
+int	mixer_open(struct vnode *, struct audio_softc *, int, int,
+		   struct proc *);
+int	mixer_close(struct audio_softc *, int, int, struct proc *);
+int	mixer_ioctl(struct audio_softc *, u_long, caddr_t, int, struct proc *);
+static	void mixer_remove(struct audio_softc *, struct proc *p);
+static	void mixer_signal(struct audio_softc *);
     
-void	audio_init_record __P((struct audio_softc *));
-void	audio_init_play __P((struct audio_softc *));
-int	audiostartr __P((struct audio_softc *));
-int	audiostartp __P((struct audio_softc *));
-void	audio_rint __P((void *));
-void	audio_pint __P((void *));
-int	audio_check_params __P((struct audio_params *));
+void	audio_init_record(struct audio_softc *);
+void	audio_init_play(struct audio_softc *);
+int	audiostartr(struct audio_softc *);
+int	audiostartp(struct audio_softc *);
+void	audio_rint(void *);
+void	audio_pint(void *);
+int	audio_check_params(struct audio_params *);
 
-void	audio_calc_blksize __P((struct audio_softc *, int));
-void	audio_fill_silence __P((struct audio_params *, u_char *, int));
-int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
+void	audio_calc_blksize(struct audio_softc *, int);
+void	audio_fill_silence(struct audio_params *, u_char *, int);
+int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
-void	audio_init_ringbuffer __P((struct audio_ringbuffer *));
-int	audio_initbufs __P((struct audio_softc *));
-void	audio_calcwater __P((struct audio_softc *));
-static __inline int audio_sleep_timo __P((int *, char *, int));
-static __inline int audio_sleep __P((int *, char *));
-static __inline void audio_wakeup __P((int *));
-int	audio_drain __P((struct audio_softc *));
-void	audio_clear __P((struct audio_softc *));
+void	audio_init_ringbuffer(struct audio_ringbuffer *);
+int	audio_initbufs(struct audio_softc *);
+void	audio_calcwater(struct audio_softc *);
+static __inline int audio_sleep_timo(int *, char *, int);
+static __inline int audio_sleep(int *, char *);
+static __inline void audio_wakeup(int *);
+int	audio_drain(struct audio_softc *);
+void	audio_clear(struct audio_softc *);
 static __inline void audio_pint_silence 
-	__P((struct audio_softc *, struct audio_ringbuffer *, u_char *, int));
+	(struct audio_softc *, struct audio_ringbuffer *, u_char *, int);
 
 int	audio_alloc_ring 
-	__P((struct audio_softc *, struct audio_ringbuffer *, int, size_t));
-void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
+	(struct audio_softc *, struct audio_ringbuffer *, int, size_t);
+void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
 
-int	audioprobe __P((struct device *, struct cfdata *, void *));
-void	audioattach __P((struct device *, struct device *, void *));
-int	audiodetach __P((struct device *, int));
-int	audioactivate __P((struct device *, enum devact));
+int	audioprobe(struct device *, struct cfdata *, void *);
+void	audioattach(struct device *, struct device *, void *);
+int	audiodetach(struct device *, int);
+int	audioactivate(struct device *, enum devact);
 
 struct portname {
 	char 	*name;
@@ -167,21 +167,21 @@ static struct portname otable[] = {
 	{ AudioNline,		AUDIO_LINE_OUT },
 	{ 0 }
 };
-void	au_check_ports __P((struct audio_softc *, struct au_mixer_ports *, 
+void	au_check_ports(struct audio_softc *, struct au_mixer_ports *, 
 			    mixer_devinfo_t *, int, char *, char *,
-			    struct portname *));
-int	au_set_gain __P((struct audio_softc *, struct au_mixer_ports *, 
-			 int, int));
-void	au_get_gain __P((struct audio_softc *, struct au_mixer_ports *,
-			 u_int *, u_char *));
-int	au_set_port __P((struct audio_softc *, struct au_mixer_ports *,
-			 u_int));
-int	au_get_port __P((struct audio_softc *, struct au_mixer_ports *));
-int	au_get_lr_value __P((struct audio_softc *, mixer_ctrl_t *,
-			     int *, int *r));
-int	au_set_lr_value __P((struct audio_softc *, mixer_ctrl_t *,
-			     int, int));
-int	au_portof __P((struct audio_softc *, char *));
+			    struct portname *);
+int	au_set_gain(struct audio_softc *, struct au_mixer_ports *, 
+			 int, int);
+void	au_get_gain(struct audio_softc *, struct au_mixer_ports *,
+			 u_int *, u_char *);
+int	au_set_port(struct audio_softc *, struct au_mixer_ports *,
+			 u_int);
+int	au_get_port(struct audio_softc *, struct au_mixer_ports *);
+int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *,
+			     int *, int *r);
+int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
+			     int, int);
+int	au_portof(struct audio_softc *, char *);
 
 
 /* The default audio mode: 8 kHz mono ulaw */
@@ -196,10 +196,7 @@ struct cfattach audio_ca = {
 extern struct cfdriver audio_cd;
 
 int
-audioprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+audioprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *sa = aux;
 
@@ -209,9 +206,7 @@ audioprobe(parent, match, aux)
 }
 
 void
-audioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+audioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct audio_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
@@ -335,9 +330,7 @@ audioattach(parent, self, aux)
 }
 
 int
-audioactivate(self, act)
-	struct device *self;
-	enum devact act;
+audioactivate(struct device *self, enum devact act)
 {
 	struct audio_softc *sc = (struct audio_softc *)self;
 
@@ -354,9 +347,7 @@ audioactivate(self, act)
 }
 
 int
-audiodetach(self, flags)
-	struct device *self;
-	int flags;
+audiodetach(struct device *self, int flags)
 {
 	struct audio_softc *sc = (struct audio_softc *)self;
 	int maj, mn;
@@ -396,9 +387,7 @@ audiodetach(self, flags)
 }
 
 int
-au_portof(sc, name)
-	struct	audio_softc *sc;
-	char	*name;
+au_portof(struct audio_softc *sc, char *name)
 {
 	mixer_devinfo_t mi;
 
@@ -411,14 +400,9 @@ au_portof(sc, name)
 }
 
 void
-au_check_ports(sc, ports, mi, cls, name, mname, tbl)
-	struct	audio_softc *sc;
-	struct	au_mixer_ports *ports;
-	mixer_devinfo_t *mi;
-	int	cls;
-	char	*name;
-	char	*mname;
-	struct	portname *tbl;
+au_check_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
+	       mixer_devinfo_t *mi, int cls, char *name, char *mname,
+	       struct portname *tbl)
 {
 	int i, j;
 
@@ -467,10 +451,7 @@ au_check_ports(sc, ports, mi, cls, name, mname, tbl)
  * probed/attached to the hardware driver.
  */
 struct device *
-audio_attach_mi(ahwp, hdlp, dev)
-	struct audio_hw_if *ahwp;
-	void *hdlp;
-	struct device *dev;
+audio_attach_mi(struct audio_hw_if *ahwp, void *hdlp, struct device *dev)
 {
 	struct audio_attach_args arg;
 
@@ -487,12 +468,11 @@ audio_attach_mi(ahwp, hdlp, dev)
 }
 
 #ifdef AUDIO_DEBUG
-void	audio_printsc __P((struct audio_softc *));
-void	audio_print_params __P((char *, struct audio_params *));
+void	audio_printsc(struct audio_softc *);
+void	audio_print_params(char *, struct audio_params *);
 
 void
-audio_printsc(sc)
-	struct audio_softc *sc;
+audio_printsc(struct audio_softc *sc)
 {
 	printf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
 	printf("open 0x%x mode 0x%x\n", sc->sc_open, sc->sc_mode);
@@ -505,9 +485,7 @@ audio_printsc(sc)
 }
 
 void
-audio_print_params(s, p)
-	char *s;
-	struct audio_params *p;
+audio_print_params(char *s, struct audio_params *p)
 {
 	printf("audio: %s sr=%ld, enc=%d, chan=%d, prec=%d\n", s,
 	       p->sample_rate, p->encoding, p->channels, p->precision);
@@ -515,11 +493,8 @@ audio_print_params(s, p)
 #endif
 
 int
-audio_alloc_ring(sc, r, direction, bufsize)
-	struct audio_softc *sc;
-	struct audio_ringbuffer *r;
-	int direction;
-	size_t bufsize;
+audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r, 
+		 int direction, size_t bufsize)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	void *hdl = sc->hw_hdl;
@@ -542,9 +517,7 @@ audio_alloc_ring(sc, r, direction, bufsize)
 }
 
 void
-audio_free_ring(sc, r)
-	struct audio_softc *sc;
-	struct audio_ringbuffer *r;
+audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 {
 
 	if (sc->hw_if->freem)
@@ -555,10 +528,7 @@ audio_free_ring(sc, r)
 }
 
 int
-audioopen(devvp, flags, ifmt, p)
-	struct vnode *devvp;
-	int flags, ifmt;
-	struct proc *p;
+audioopen(struct vnode *devvp, int flags, int ifmt, struct proc *p)
 {
 	struct audio_softc *sc;
 	dev_t rdev;
@@ -597,10 +567,7 @@ audioopen(devvp, flags, ifmt, p)
 }
 
 int
-audioclose(devvp, flags, ifmt, p)
-	struct vnode *devvp;
-	int flags, ifmt;
-	struct proc *p;
+audioclose(struct vnode *devvp, int flags, int ifmt, struct proc *p)
 {
 	struct audio_softc *sc;
 	int error;
@@ -626,10 +593,7 @@ audioclose(devvp, flags, ifmt, p)
 }
 
 int
-audioread(devvp, uio, ioflag)
-	struct vnode *devvp;
-	struct uio *uio;
-	int ioflag;
+audioread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
 	struct audio_softc *sc;
 	int error;
@@ -659,10 +623,7 @@ audioread(devvp, uio, ioflag)
 }
 
 int
-audiowrite(devvp, uio, ioflag)
-	struct vnode *devvp;
-	struct uio *uio;
-	int ioflag;
+audiowrite(struct vnode *devvp, struct uio *uio, int ioflag)
 {
 	struct audio_softc *sc;
 	int error;
@@ -692,12 +653,8 @@ audiowrite(devvp, uio, ioflag)
 }
 
 int
-audioioctl(devvp, cmd, addr, flag, p)
-	struct vnode *devvp;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+audioioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag,
+	   struct proc *p)
 {
 	struct audio_softc *sc;
 	int error;
@@ -727,10 +684,7 @@ audioioctl(devvp, cmd, addr, flag, p)
 }
 
 int
-audiopoll(devvp, events, p)
-	struct vnode *devvp;
-	int events;
-	struct proc *p;
+audiopoll(struct vnode *devvp, int events, struct proc *p)
 {
 	struct audio_softc *sc;
 	int error;
@@ -760,10 +714,7 @@ audiopoll(devvp, events, p)
 }
 
 paddr_t
-audiommap(devvp, off, prot)
-	struct vnode *devvp;
-	off_t off;
-	int prot;
+audiommap(struct vnode *devvp, off_t off, int prot)
 {
 	struct audio_softc *sc;
 	paddr_t error;
@@ -796,8 +747,7 @@ audiommap(devvp, off, prot)
  * Audio driver
  */
 void
-audio_init_ringbuffer(rp)
-	struct audio_ringbuffer *rp;
+audio_init_ringbuffer(struct audio_ringbuffer *rp)
 {
 	int nblks;
 	int blksize = rp->blksize;
@@ -825,8 +775,7 @@ audio_init_ringbuffer(rp)
 }
 
 int
-audio_initbufs(sc)
-	struct audio_softc *sc;
+audio_initbufs(struct audio_softc *sc)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	int error;
@@ -874,8 +823,7 @@ audio_initbufs(sc)
 }
 
 void
-audio_calcwater(sc)
-	struct audio_softc *sc;
+audio_calcwater(struct audio_softc *sc)
 {
 	sc->sc_pr.usedhigh = sc->sc_pr.end - sc->sc_pr.start;
 	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;	/* set low at 75% */
@@ -887,10 +835,7 @@ audio_calcwater(sc)
 }
 
 static __inline int
-audio_sleep_timo(chan, label, timo)
-	int *chan;
-	char *label;
-	int timo;
+audio_sleep_timo(int *chan, char *label, int timo)
 {
 	int st;
 
@@ -910,17 +855,14 @@ audio_sleep_timo(chan, label, timo)
 }
 
 static __inline int
-audio_sleep(chan, label)
-	int *chan;
-	char *label;
+audio_sleep(int *chan, char *label)
 {
 	return audio_sleep_timo(chan, label, 0);
 }
 
 /* call at splaudio() */
 static __inline void
-audio_wakeup(chan)
-	int *chan;
+audio_wakeup(int *chan)
 {
 	DPRINTFN(3, ("audio_wakeup: chan=%p, *chan=%d\n", chan, *chan));
 	if (*chan) {
@@ -930,11 +872,8 @@ audio_wakeup(chan)
 }
 
 int
-audio_open(devvp, sc, flags, ifmt, p)
-	struct vnode *devvp;
-	struct audio_softc *sc;
-	int flags, ifmt;
-	struct proc *p;
+audio_open(struct vnode *devvp, struct audio_softc *sc, int flags, int ifmt,
+	   struct proc *p)
 {
 	int error;
 	int mode;
@@ -1038,8 +977,7 @@ bad:
  * Must be called from task context.
  */
 void
-audio_init_record(sc)
-	struct audio_softc *sc;
+audio_init_record(struct audio_softc *sc)
 {
 	int s = splaudio();
 
@@ -1053,8 +991,7 @@ audio_init_record(sc)
  * Must be called from task context.
  */
 void
-audio_init_play(sc)
-	struct audio_softc *sc;
+audio_init_play(struct audio_softc *sc)
 {
 	int s = splaudio();
 
@@ -1065,8 +1002,7 @@ audio_init_play(sc)
 }
 
 int
-audio_drain(sc)
-	struct audio_softc *sc;
+audio_drain(struct audio_softc *sc)
 {
 	int error, drops;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
@@ -1132,10 +1068,7 @@ audio_drain(sc)
  */
 /* ARGSUSED */
 int
-audio_close(sc, flags, ifmt, p)
-	struct audio_softc *sc;
-	int flags, ifmt;
-	struct proc *p;
+audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	int s;
@@ -1190,10 +1123,7 @@ audio_close(sc, flags, ifmt, p)
 }
 
 int
-audio_read(sc, uio, ioflag)
-	struct audio_softc *sc;
-	struct uio *uio;
-	int ioflag;
+audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 {
 	struct audio_ringbuffer *cb = &sc->sc_rr;
 	u_char *outp;
@@ -1310,8 +1240,7 @@ audio_read(sc, uio, ioflag)
 }
 
 void
-audio_clear(sc)
-	struct audio_softc *sc;
+audio_clear(struct audio_softc *sc)
 {
 	int s = splaudio();
 
@@ -1329,9 +1258,7 @@ audio_clear(sc)
 }
 
 void
-audio_calc_blksize(sc, mode)
-	struct audio_softc *sc;
-	int mode;
+audio_calc_blksize(struct audio_softc *sc, int mode)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params *parm;
@@ -1368,10 +1295,7 @@ audio_calc_blksize(sc, mode)
 }
 
 void
-audio_fill_silence(params, p, n)
-	struct audio_params *params;
-        u_char *p;
-        int n;
+audio_fill_silence(struct audio_params *params, u_char *p, int n)
 {
 	u_char auzero0, auzero1 = 0; /* initialize to please gcc */
 	int nfill = 1;
@@ -1432,10 +1356,7 @@ audio_fill_silence(params, p, n)
 }
 
 int
-audio_silence_copyout(sc, n, uio)
-	struct audio_softc *sc;
-	int n;
-	struct uio *uio;
+audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 {
 	int error;
 	int k;
@@ -1453,10 +1374,7 @@ audio_silence_copyout(sc, n, uio)
 }
 
 int
-audio_write(sc, uio, ioflag)
-	struct audio_softc *sc;
-	struct uio *uio;
-	int ioflag;
+audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 {
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp, *einp;
@@ -1615,12 +1533,8 @@ audio_write(sc, uio, ioflag)
 }
 
 int
-audio_ioctl(sc, cmd, addr, flag, p)
-	struct audio_softc *sc;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
+	    struct proc *p)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
@@ -1770,8 +1684,12 @@ audio_ioctl(sc, cmd, addr, flag, p)
 		break;
 
 	default:
-		DPRINTF(("audio_ioctl: unknown ioctl\n"));
-		error = EINVAL;
+		if (hw->dev_ioctl) {
+			error = hw->dev_ioctl(sc->hw_hdl, cmd, addr, flag, p);
+		} else {
+			DPRINTF(("audio_ioctl: unknown ioctl\n"));
+			error = EINVAL;
+		}
 		break;
 	}
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu) result %d\n",
@@ -1780,10 +1698,7 @@ audio_ioctl(sc, cmd, addr, flag, p)
 }
 
 int
-audio_poll(sc, events, p)
-	struct audio_softc *sc;
-	int events;
-	struct proc *p;
+audio_poll(struct audio_softc *sc, int events, struct proc *p)
 {
 	int revents = 0;
 	int s = splaudio();
@@ -1814,10 +1729,7 @@ audio_poll(sc, events, p)
 }
 
 paddr_t
-audio_mmap(sc, off, prot)
-	struct audio_softc *sc;
-	off_t off;
-	int prot;
+audio_mmap(struct audio_softc *sc, off_t off, int prot)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb;
@@ -1874,8 +1786,7 @@ audio_mmap(sc, off, prot)
 }
 
 int
-audiostartr(sc)
-	struct audio_softc *sc;
+audiostartr(struct audio_softc *sc)
 {
 	int error;
     
@@ -1899,8 +1810,7 @@ audiostartr(sc)
 }
 
 int
-audiostartp(sc)
-	struct audio_softc *sc;
+audiostartp(struct audio_softc *sc)
 {
 	int error;
     
@@ -1941,11 +1851,8 @@ audiostartp(sc)
  * at splaudio, but there is no softaudio level to do it at yet.
  */
 static __inline void
-audio_pint_silence(sc, cb, inp, cc)
-	struct audio_softc *sc;
-	struct audio_ringbuffer *cb;
-	u_char *inp;
-	int cc;
+audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
+		   u_char *inp, int cc)
 {
 	u_char *s, *e, *p, *q;
 
@@ -1987,8 +1894,7 @@ audio_pint_silence(sc, cb, inp, cc)
  * Do a wakeup if necessary.
  */
 void
-audio_pint(v)
-	void *v;
+audio_pint(void *v)
 {
 	struct audio_softc *sc = v;
 	struct audio_hw_if *hw = sc->hw_if;
@@ -2117,8 +2023,7 @@ audio_pint(v)
  * Do a wakeup if necessary.
  */
 void
-audio_rint(v)
-	void *v;
+audio_rint(void *v)
 {
 	struct audio_softc *sc = v;
 	struct audio_hw_if *hw = sc->hw_if;
@@ -2208,8 +2113,7 @@ audio_rint(v)
 }
 
 int
-audio_check_params(p)
-	struct audio_params *p;
+audio_check_params(struct audio_params *p)
 {
 	if (p->encoding == AUDIO_ENCODING_PCM16) {
 		if (p->precision == 8)
@@ -2273,10 +2177,7 @@ audio_check_params(p)
 }
 
 int
-au_set_lr_value(sc, ct, l, r)
-	struct	audio_softc *sc;
-	mixer_ctrl_t *ct;
-	int l, r;
+au_set_lr_value(struct	audio_softc *sc, mixer_ctrl_t *ct, int l, int r)
 {
 	ct->type = AUDIO_MIXER_VALUE;
 	ct->un.value.num_channels = 2;
@@ -2290,11 +2191,8 @@ au_set_lr_value(sc, ct, l, r)
 }
 
 int
-au_set_gain(sc, ports, gain, balance)
-	struct	audio_softc *sc;
-	struct	au_mixer_ports *ports;
-	int	gain;
-	int	balance;
+au_set_gain(struct audio_softc *sc, struct au_mixer_ports *ports,
+	    int gain, int balance)
 {
 	mixer_ctrl_t ct;
 	int i, error;
@@ -2363,10 +2261,7 @@ au_set_gain(sc, ports, gain, balance)
 }
 
 int
-au_get_lr_value(sc, ct, l, r)
-	struct	audio_softc *sc;
-	mixer_ctrl_t *ct;
-	int *l, *r;
+au_get_lr_value(struct	audio_softc *sc, mixer_ctrl_t *ct, int *l, int *r)
 {
 	int error;
 
@@ -2385,11 +2280,8 @@ au_get_lr_value(sc, ct, l, r)
 }
 
 void
-au_get_gain(sc, ports, pgain, pbalance)
-	struct	audio_softc *sc;
-	struct	au_mixer_ports *ports;
-	u_int	*pgain;
-	u_char	*pbalance;
+au_get_gain(struct audio_softc *sc, struct au_mixer_ports *ports,
+	    u_int *pgain, u_char *pbalance)
 {
 	mixer_ctrl_t ct;
 	int i, l, r, n;
@@ -2461,10 +2353,7 @@ bad:
 }
 
 int
-au_set_port(sc, ports, port)
-	struct	audio_softc *sc;
-	struct	au_mixer_ports *ports;
-	u_int	port;
+au_set_port(struct audio_softc *sc, struct au_mixer_ports *ports, u_int port)
 {
 	mixer_ctrl_t ct;
 	int i, error;
@@ -2503,9 +2392,7 @@ au_set_port(sc, ports, port)
 }
 
 int
-au_get_port(sc, ports)
-	struct	audio_softc *sc;
-	struct	au_mixer_ports *ports;
+au_get_port(struct audio_softc *sc, struct au_mixer_ports *ports)
 {
 	mixer_ctrl_t ct;
 	int i, aumask;
@@ -2530,9 +2417,7 @@ au_get_port(sc, ports)
 }
 
 int
-audiosetinfo(sc, ai)
-	struct audio_softc *sc;
-	struct audio_info *ai;
+audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	int cleared;
@@ -2837,9 +2722,7 @@ audiosetinfo(sc, ai)
 }
 
 int
-audiogetinfo(sc, ai)
-	struct audio_softc *sc;
-	struct audio_info *ai;
+audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	struct audio_hw_if *hw = sc->hw_if;
@@ -2917,11 +2800,8 @@ audiogetinfo(sc, ai)
  * Mixer driver
  */
 int
-mixer_open(devvp, sc, flags, ifmt, p)
-	struct vnode *devvp;
-	struct audio_softc *sc;
-	int flags, ifmt;
-	struct proc *p;
+mixer_open(struct vnode *devvp, struct audio_softc *sc, int flags, int ifmt,
+	   struct proc *p)
 {
 	if (!sc->hw_if)
 		return (ENXIO);
@@ -2935,9 +2815,7 @@ mixer_open(devvp, sc, flags, ifmt, p)
  * Remove a process from those to be signalled on mixer activity.
  */
 static void
-mixer_remove(sc, p)
-	struct audio_softc *sc;
-	struct proc *p;
+mixer_remove(struct audio_softc *sc, struct proc *p)
 {
 	struct mixer_asyncs **pm, *m;
 
@@ -2952,11 +2830,10 @@ mixer_remove(sc, p)
 }
 
 /*
- * Signal all processes waitinf for the mixer.
+ * Signal all processes waiting for the mixer.
  */
 static void
-mixer_signal(sc)
-	struct audio_softc *sc;
+mixer_signal(struct audio_softc *sc)
 {
 	struct mixer_asyncs *m;
 
@@ -2969,10 +2846,7 @@ mixer_signal(sc)
  */
 /* ARGSUSED */
 int
-mixer_close(sc, flags, ifmt, p)
-	struct audio_softc *sc;
-	int flags, ifmt;
-	struct proc *p;
+mixer_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 {
 	DPRINTF(("mixer_close: sc %p\n", sc));
 	
@@ -2982,12 +2856,8 @@ mixer_close(sc, flags, ifmt, p)
 }
 
 int
-mixer_ioctl(sc, cmd, addr, flag, p)
-	struct audio_softc *sc;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+mixer_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
+	    struct proc *p)
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	int error = EINVAL;
@@ -3035,7 +2905,10 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 		break;
 
 	default:
-		error = EINVAL;
+		if (hw->dev_ioctl)
+			error = hw->dev_ioctl(sc->hw_hdl, cmd, addr, flag, p);
+		else
+			error = EINVAL;
 		break;
 	}
 	DPRINTF(("mixer_ioctl(%lu,'%c',%lu) result %d\n",
@@ -3056,9 +2929,7 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 
 #if NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0)
 int
-audioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+audioprint(void *aux, const char *pnp)
 {
 	struct audio_attach_args *arg = aux;
 	const char *type;

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14.4.3 2001/10/01 12:46:44 fvdl Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.14.4.4 2001/10/11 00:02:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -85,6 +85,10 @@ struct vfsops filecore_vfsops = {
 	NULL,				/* filecore_mountroot */
 	filecore_checkexp,
 	filecore_vnodeopv_descs,
+};
+
+struct genfs_ops filecore_genfsops = {
+	genfs_size,
 };
 
 /*
@@ -673,6 +677,7 @@ filecore_vget(mp, ino, vpp)
 	 * XXX need generation number?
 	 */
 
+	genfs_node_init(vp, &filecore_genfsops);
 	vp->v_size = ip->i_size;
 	*vpp = vp;
 	return (0);

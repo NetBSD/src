@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183.2.1 2001/10/01 12:42:11 fvdl Exp $ */
+/*	$NetBSD: machdep.c,v 1.183.2.2 2001/10/11 00:01:53 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -238,20 +238,18 @@ cpu_startup()
 
 	/* Map first 8192 */
 	while (va < va0 + 8192) {
-		pmap_enter(pmap_kernel(), va, pa,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		pa += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
 	/* Map the rest of the pages */
-	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	TAILQ_FOREACH(m, &mlist ,pageq) {
 		if (va >= va0 + size)
 			panic("cpu_start: memory buffer size botch");
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
@@ -323,7 +321,7 @@ cpu_startup()
 				panic("cpu_startup: "
 				    "not enough RAM for buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				   VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1448,7 +1446,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_size_t sgsize;
 	vaddr_t va = (vaddr_t)buf;
 	int pagesz = PAGE_SIZE;
-	bus_addr_t dva;
+	vaddr_t dva;
 	pmap_t pmap;
 
 	/*
@@ -1495,7 +1493,7 @@ no_fit:
 
 	if (extent_alloc(dvmamap24, sgsize, pagesz, map->_dm_boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dva) != 0) {
+			 &dva) != 0) {
 		return (ENOMEM);
 	}
 
@@ -1514,6 +1512,7 @@ no_fit:
 
 	for (; buflen > 0; ) {
 		paddr_t pa;
+
 		/*
 		 * Get the physical address for this page.
 		 */
@@ -1532,9 +1531,8 @@ no_fit:
 			pa |= PG_IOC;
 #endif
 #endif
-		pmap_enter(pmap_kernel(), dva,
-			   (pa & -pagesz) | PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(dva, (pa & -pagesz) | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE);
 
 		dva += pagesz;
 		va += sgsize;
@@ -1561,7 +1559,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 {
 	struct vm_page *m;
 	paddr_t pa;
-	bus_addr_t dva;
+	vaddr_t dva;
 	bus_size_t sgsize;
 	struct pglist *mlist;
 	int pagesz = PAGE_SIZE;
@@ -1576,7 +1574,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)&dva);
+					&dva);
 		if (error)
 			return (error);
 	} else {
@@ -1603,9 +1601,8 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 			pa |= PG_IOC;
 #endif
 #endif
-		pmap_enter(pmap_kernel(), dva,
-			   (pa & -pagesz) | PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(dva, (pa & -pagesz) | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE);
 
 		dva += pagesz;
 		sgsize -= pagesz;
@@ -1629,7 +1626,7 @@ sun4_dmamap_unload(t, map)
 	bus_dma_segment_t *segs = map->dm_segs;
 	int nsegs = map->dm_nsegs;
 	int flags = map->_dm_flags;
-	bus_addr_t dva;
+	vaddr_t dva;
 	bus_size_t len;
 	int i, s, error;
 
@@ -1645,7 +1642,7 @@ sun4_dmamap_unload(t, map)
 		dva = segs[i].ds_addr & -PAGE_SIZE;
 		len = segs[i]._ds_sgsize;
 
-		pmap_remove(pmap_kernel(), dva, dva + len);
+		pmap_kremove(dva, len);
 
 		if ((flags & BUS_DMA_24BIT) != 0) {
 			s = splhigh();
@@ -1694,15 +1691,14 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	*kvap = (caddr_t)va;
 
 	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	TAILQ_FOREACH(m, mlist, pageq) {
 		paddr_t pa;
 
 		if (size == 0)
 			panic("sun4_dmamem_map: size botch");
 
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -1792,8 +1788,8 @@ static	vaddr_t iobase;
 	pmtype = PMAP_IOENC(iospace);
 
 	do {
-		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(v, pa | pmtype | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
@@ -1808,9 +1804,8 @@ sparc_bus_unmap(t, bh, size)
 	bus_space_handle_t bh;
 {
 	vaddr_t va = trunc_page((vaddr_t)bh);
-	vaddr_t endva = va + round_page(size);
 
-	pmap_remove(pmap_kernel(), va, endva);
+	pmap_kremove(va, round_page(size));
 	pmap_update(pmap_kernel());
 	return (0);
 }

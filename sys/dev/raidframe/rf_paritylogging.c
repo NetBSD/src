@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.10 2000/02/12 16:06:27 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.10.10.1 2001/10/11 00:02:21 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,8 @@
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

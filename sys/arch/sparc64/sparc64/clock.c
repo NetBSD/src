@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41.2.1 2001/10/01 12:42:31 fvdl Exp $ */
+/*	$NetBSD: clock.c,v 1.41.2.2 2001/10/11 00:01:55 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,9 +451,10 @@ rtc_read_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg)
 	return (bus_space_read_1(bt, bh, RTC_DATA));
 }
 void 
-rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val) {
+rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val)
+{
 	bus_space_write_1(bt, bh, RTC_ADDR, reg);
-	bus_space_write_1(bt, bh, RTC_DATA, reg);
+	bus_space_write_1(bt, bh, RTC_DATA, val);
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29.4.2 2001/10/10 11:56:35 fvdl Exp $	*/
+/*	$NetBSD: zs.c,v 1.29.4.3 2001/10/11 00:01:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
@@ -322,8 +321,8 @@ zs_attach(zsc, zsd, pri)
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 			zs_conschan_put = zc;
 		}
-		/* Childs need to set cn_dev, etc */
 
+		/* Children need to set cn_dev, etc */
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
@@ -377,11 +376,12 @@ zs_attach(zsc, zsd, pri)
 				struct	device zst_dev;
 				struct  tty *zst_tty;
 				struct	zs_chanstate *zst_cs;
+				dev_t	zst_rdev;
 			} *zst = (struct zstty_softc *)child;
 			struct tty *tp;
 
 			kma.kmta_tp = tp = zst->zst_tty;
-			kma.kmta_dev = vdev_rdev(tp->t_devvp);
+			kma.kmta_dev = zst->zst_rdev;
 			kma.kmta_consdev = zsc_args.consdev;
 			
 			/* Attach 'em if we got 'em. */

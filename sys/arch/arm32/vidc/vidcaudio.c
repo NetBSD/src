@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.39 2001/07/28 18:12:45 chris Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.39.2.1 2001/10/11 00:01:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -150,6 +150,9 @@ struct audio_hw_if vidcaudio_hw_if = {
 	0,
 	0,
 	vidcaudio_get_props,
+	0,
+	0,
+	0,
 };
 
 

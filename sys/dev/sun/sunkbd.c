@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.6.4.1 2001/10/10 11:57:02 fvdl Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.6.4.2 2001/10/11 00:02:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,8 @@
 static int	sunkbd_match(struct device *, struct cfdata *, void *);
 static void	sunkbd_attach(struct device *, struct device *, void *);
 static void	sunkbd_write_data(struct kbd_softc *, int);
-static int	sunkbdiopen(struct device *, int mode);
+static int	sunkbdiopen(struct device *, int mode, struct vnode *);
+static int	sunkbdiclose(struct device *, int mode, struct vnode *);
 
 int	sunkbdinput(int, struct tty *);
 int	sunkbdstart(struct tty *);
@@ -148,7 +149,8 @@ sunkbd_attach(parent, self, aux)
 	kbd_unit = k->k_dev.dv_unit;
 
 	k->k_deviopen = sunkbdiopen;
-	k->k_deviclose = NULL;
+	k->k_deviclose = sunkbdiclose;
+	k->k_rdev = args->kmta_dev;
 	k->k_write_data = sunkbd_write_data;
 
 	if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
@@ -206,10 +208,11 @@ sunkbd_attach(parent, self, aux)
  * But I'm putting it here until we have a generic internal open
  * mechanism.
  */
-int
-sunkbdiopen(dev, flags)
+static int
+sunkbdiopen(dev, flags, devvp)
 	struct device *dev;
 	int flags;
+	struct vnode *devvp;
 {
 	struct kbd_softc *k = (void *) dev;
 	struct tty *tp = (struct tty *)k->k_priv;
@@ -219,24 +222,39 @@ sunkbdiopen(dev, flags)
 	int error;
 	dev_t rdev;
 
-	rdev = vdev_rdev(tp->t_devvp);
+	rdev = k->k_rdev;
 	maj = major(rdev);
 	if (p == NULL)
 		p = &proc0;
 
+	error = cdevvp(rdev, &k->k_devvp);
+	if (error != 0)
+		return error;
+
 	/* Open the lower device */
-	if ((error = (*cdevsw[maj].d_open)(tp->t_devvp, O_NONBLOCK|flags,
+	if ((error = (*cdevsw[maj].d_open)(k->k_devvp, O_NONBLOCK|flags,
 					   0/* ignored? */, p)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
+	tp->t_devvp = k->k_devvp;
 	t.c_ispeed = KBD_BPS;
 	t.c_ospeed = KBD_BPS;
 	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
 
 	return (0);
+}
+
+static int
+sunkbdiclose(dev, flags, devvp)
+	struct device *dev;
+	int flags;
+	struct vnode *devvp;
+{
+	/* XXX why is this never called? should relese the vnode. */
+	return 0;
 }
 
 /*

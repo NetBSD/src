@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46.4.4 2001/10/10 11:55:46 fvdl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.46.4.5 2001/10/11 00:01:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -77,6 +77,10 @@ int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 struct simplelock adosfs_hashlock;
 
 struct pool adosfs_node_pool;
+
+struct genfs_ops adosfs_genfsops = {
+	genfs_size,
+};
 
 int
 adosfs_mount(mp, path, data, ndp, p)
@@ -590,6 +594,7 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
+	genfs_node_init(vp, &adosfs_genfsops);
 	*vpp = vp;
 	brelse(bp);
 	vp->v_size = ap->fsize;

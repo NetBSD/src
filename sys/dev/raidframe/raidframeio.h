@@ -1,4 +1,40 @@
-/*	$NetBSD: rf_raidframe.h,v 1.11 2000/05/28 00:48:31 oster Exp $	*/
+/*	$NetBSD: raidframeio.h,v 1.1.2.2 2001/10/11 00:02:15 fvdl Exp $ */
+/*-
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Greg Oster
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,66 +64,17 @@
 
 /*****************************************************
  *
- * rf_raidframe.h
+ * raidframeio.h
  *
- * main header file for using raidframe in the kernel.
+ * IOCTL's used by RAIDframe.
  *
  *****************************************************/
 
 
-#ifndef _RF__RF_RAIDFRAME_H_
-#define _RF__RF_RAIDFRAME_H_
+#ifndef _RF_RAIDFRAMEIO_H_
+#define _RF_RAIDFRAMEIO_H_
 
-#include "rf_types.h"
-#include "rf_configure.h"
-#include "rf_disks.h"
-#include "rf_raid.h"
-
-typedef RF_uint32 RF_ReconReqFlags_t;
-
-struct rf_recon_req {		/* used to tell the kernel to fail a disk */
-	RF_RowCol_t row, col;
-	RF_ReconReqFlags_t flags;
-	void   *raidPtr;	/* used internally; need not be set at ioctl
-				 * time */
-	struct rf_recon_req *next;	/* used internally; need not be set at
-					 * ioctl time */
-};
-
-struct RF_SparetWait_s {
-	int     C, G, fcol;	/* C = # disks in row, G = # units in stripe,
-				 * fcol = which disk has failed */
-
-	RF_StripeCount_t SUsPerPU;	/* this stuff is the info required to
-					 * create a spare table */
-	int     TablesPerSpareRegion;
-	int     BlocksPerTable;
-	RF_StripeCount_t TableDepthInPUs;
-	RF_StripeCount_t SpareSpaceDepthPerRegionInSUs;
-
-	RF_SparetWait_t *next;	/* used internally; need not be set at ioctl
-				 * time */
-};
-
-typedef struct RF_DeviceConfig_s {
-	u_int   rows;
-	u_int   cols;
-	u_int   maxqdepth;
-	int     ndevs;
-	RF_RaidDisk_t devs[RF_MAX_DISKS];
-	int     nspares;
-	RF_RaidDisk_t spares[RF_MAX_DISKS];
-}       RF_DeviceConfig_t;
-
-typedef struct RF_ProgressInfo_s {
-	RF_uint64 remaining;
-	RF_uint64 completed;
-	RF_uint64 total;
-} RF_ProgressInfo_t;
-
-/* flags that can be put in the rf_recon_req structure */
-#define RF_FDFLAGS_NONE   0x0	/* just fail the disk */
-#define RF_FDFLAGS_RECON  0x1	/* fail and initiate recon */
+#include "raidframevar.h"
 
 #define RAIDFRAME_CONFIGURE         _IOW ('r',  1, void *)	/* configure the driver */
 #define RAIDFRAME_SHUTDOWN          _IO  ('r',  2)	/* shutdown the driver */
@@ -145,4 +132,4 @@ typedef struct RF_ProgressInfo_s {
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT _IOWR ('r', 33, RF_ProgressInfo_t *)
 #define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT _IOWR ('r', 34, RF_ProgressInfo_t *)
 
-#endif				/* !_RF__RF_RAIDFRAME_H_ */
+#endif				/* !_RF_RAIDFRAMEIO_H_ */

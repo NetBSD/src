@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28.4.1 2001/10/10 11:57:02 fvdl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28.4.2 2001/10/11 00:02:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,8 +96,8 @@ static void	kbd_set_leds __P((struct kbd_softc *, int));
 static void	kbd_update_leds __P((struct kbd_softc *));
 static void	kbd_was_reset __P((struct kbd_softc *));
 static int 	kbd_drain_tx __P((struct kbd_softc *));
-static int	kbd_iopen __P((struct kbd_softc *));
-static int	kbd_iclose __P((struct kbd_softc *));
+static int	kbd_iopen __P((struct kbd_softc *, struct vnode *));
+static int	kbd_iclose __P((struct kbd_softc *, struct vnode *));
 
 cdev_decl(kbd);	/* open, close, read, write, ioctl, stop, ... */
 
@@ -137,7 +137,7 @@ kbdopen(devvp, flags, mode, p)
 
 	vdev_setprivdata(devvp, k);
 
-	if ((error = kbd_iopen(k)) != 0) {
+	if ((error = kbd_iopen(k, devvp)) != 0) {
 		k->k_events.ev_io = NULL;
 		return (error);
 	}
@@ -800,19 +800,21 @@ kbd_input_raw(k, c)
  * if we serve console input.
  */
 int
-kbd_cc_open(cc)
+kbd_cc_open(cc, devvp)
 	struct cons_channel *cc;
+	struct vnode *devvp;
 {
 	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
-	return (kbd_iopen(k));
+	return (kbd_iopen(k, devvp));
 }
 
 int
-kbd_cc_close(cc)
+kbd_cc_close(cc, devvp)
 	struct cons_channel *cc;
+	struct vnode *devvp;
 {
 	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
-	return (kbd_iclose(k));
+	return (kbd_iclose(k, devvp));
 }
 
 /*
@@ -821,8 +823,9 @@ kbd_cc_close(cc)
  * Called with user context.
  */
 int
-kbd_iopen(k)
+kbd_iopen(k, devvp)
 	struct kbd_softc *k;
+	struct vnode *devvp;
 {
 	struct kbd_state *ks;
 	int error, s;
@@ -838,7 +841,7 @@ kbd_iopen(k)
 
 	/* Open internal device */
 	if (k->k_deviopen)
-		(*k->k_deviopen)((struct device *)k, FREAD|FWRITE);
+		(*k->k_deviopen)((struct device *)k, FREAD|FWRITE, devvp);
 
 	s = spltty();
 
@@ -891,8 +894,9 @@ out:
 }
 
 int
-kbd_iclose(k)
+kbd_iclose(k, devvp)
 	struct kbd_softc *k;
+	struct vnode *devvp;
 {
 	/* For now: */ return (0);
 }

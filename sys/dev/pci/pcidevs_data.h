@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.358.2.1 2001/10/01 12:46:00 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.358.2.2 2001/10/11 00:02:12 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp 
  */
 
 /*
@@ -2653,7 +2653,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP,
 	    0,
 	    "IBM",
-	    "IBM 405GP PCI Bridge",
+	    "PPC 405GP PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
@@ -4448,6 +4448,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8129 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139B,
+	    0,
+	    "Realtek Semiconductor",
+	    "8139B 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,

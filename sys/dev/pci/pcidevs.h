@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.360.2.1 2001/10/01 12:45:59 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.360.2.2 2001/10/11 00:02:11 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp 
  */
 
 /*
@@ -1172,7 +1172,7 @@
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
-#define	PCI_PRODUCT_IBM_405GP	0x0156		/* IBM 405GP PCI Bridge */
+#define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* IDT products */
@@ -1570,6 +1570,7 @@
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8139B	0x8138		/* 8139B 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
 
 /* RICOH products */

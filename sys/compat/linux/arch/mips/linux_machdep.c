@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2.2.2 2001/10/01 12:43:38 fvdl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.2.2.3 2001/10/11 00:01:59 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -351,7 +351,7 @@ linux_sys_new_uname(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_uname(p, v, retval);
+	 return linux_sys_uname(p, v, retval);
 }
 
 /*
@@ -404,8 +404,29 @@ linux_sys_sysmips(p, v, retval)
 		
 		break;
 	}
-	case LINUX_MIPS_ATOMIC_SET:	/* XXX not implemented */
+	case LINUX_MIPS_ATOMIC_SET: {
+		void *addr;
+		int s;
+
+		addr = (void *)SCARG(uap, arg1);
+
+		if ((uvm_useracc((caddr_t)addr, sizeof(int), 
+		    B_READ | B_WRITE)) != 1)
+			return EFAULT;
+
+		s = splhigh();
+		/*
+		 * No error testing here. This is bad, but Linux does
+		 * it like this. The source aknowledge "This is broken"
+		 * in a comment...
+		 */
+		*retval = (register_t)fubyte(addr);
+		error = subyte(addr, SCARG(uap, arg2));
+		splx(s);
+
+		return 0;
 		break;
+	}
 	case LINUX_MIPS_FIXADE:		/* XXX not implemented */
 		break;
 	case LINUX_FLUSH_CACHE:
@@ -418,7 +439,7 @@ linux_sys_sysmips(p, v, retval)
 		return EINVAL;
 		break;
 	}
-#if 1 /* def DEBUG_LINUX */
+#ifdef DEBUG_LINUX
 	printf("linux_sys_sysmips(): unimplemented command %d\n", 
 	    SCARG(uap,cmd));	
 #endif /* DEBUG_LINUX */

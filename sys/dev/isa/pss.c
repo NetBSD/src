@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.56 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.56.2.1 2001/10/11 00:02:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -239,6 +239,7 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_isa_get_props,
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
+	NULL,
 };
 
 /* Interrupt translation for WSS config */

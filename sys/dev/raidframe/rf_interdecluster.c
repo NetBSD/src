@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.5 2001/01/26 05:09:13 oster Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.5.6.1 2001/10/11 00:02:19 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,8 @@
 
 #if RF_INCLUDE_INTERDECLUSTER > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_interdecluster.h"
 #include "rf_dag.h"

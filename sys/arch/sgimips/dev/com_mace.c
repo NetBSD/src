@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.1 2000/06/14 16:13:53 soren Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.1.8.1 2001/10/11 00:01:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,6 +53,9 @@
 
 #include <sgimips/dev/macevar.h>
 
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
+
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
@@ -91,6 +94,8 @@ com_mace_attach(parent, self, aux)
 	struct com_mace_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct mace_attach_args *maa = aux;
+	unsigned long rate;
+	char *dbaud;
 
 	sc->sc_iot = maa->maa_st;
 	sc->sc_ioh = maa->maa_sh;
@@ -111,17 +116,17 @@ console = 1;
 	console = GetEnvironmentVariable("console");
 
 	if console[0] = 'd'
-
-	dbaud = GetEnvironmentVariable("dbaud");
-
-	rate = strtoul(dbaud);
-
 #endif
+	dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
+	if (dbaud != NULL)
+		rate = strtoul(dbaud, NULL, 10);
+	else
+		rate = 9600;
 
 	delay(10000); 
 	/* if console    & dbaud */
 	if (console == 0) {
-		comcnattach(sc->sc_iot, sc->sc_ioh, 38400, COM_FREQ, CONMODE);
+		comcnattach(sc->sc_iot, sc->sc_ioh, rate, COM_FREQ, CONMODE);
 		console = 1;
 	}
 	delay(10000);

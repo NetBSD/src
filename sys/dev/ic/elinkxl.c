@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.55.2.1 2001/10/01 12:45:34 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.55.2.2 2001/10/11 00:02:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -958,8 +958,6 @@ ex_start(ifp)
 		 * Get pointer to next available tx desc.
 		 */
 		txp = sc->tx_free;
-		sc->tx_free = txp->tx_next;
-		txp->tx_next = NULL;
 		dmamap = txp->tx_dmamap;
 
 		/*
@@ -1019,6 +1017,12 @@ ex_start(ifp)
 			m_freem(mb_head);
 			goto out;
 		}
+
+		/*
+		 * remove our tx desc from freelist.
+		 */
+		sc->tx_free = txp->tx_next;
+		txp->tx_next = NULL;
 
 		fr = &txp->tx_dpd->dpd_frags[0];
 		totlen = 0;
@@ -1127,8 +1131,6 @@ ex_intr(arg)
 		return (0);
 
 	for (;;) {
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
-
 		stat = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
 		if ((stat & S_MASK) == 0) {
@@ -1147,7 +1149,7 @@ ex_intr(arg)
 		 * Acknowledge interrupts.
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
-				  (stat & S_MASK));
+				  (stat & (S_MASK | S_INTR_LATCH)));
 		if (sc->intr_ack)
 			(*sc->intr_ack)(sc);
 
