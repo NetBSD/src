@@ -157,9 +157,9 @@
 .	ds cH \\$2
 .\" .	if "\\$3"" \{\
 .		if \\$2>=1 .if \\$2<=8 \{\
-.			ds vT UNIX Reference Manual
-.			if \\$2>1 .if \\$2<6 .ds vT UNIX Programmer's Manual
-.			if "\\$2"8" .ds vT UNIX System Manager's Manual
+.			ds vT NetBSD Reference Manual
+.			if \\$2>1 .if \\$2<6 .ds vT NetBSDd Programmer's Manual
+.			if "\\$2"8" .ds vT NetBSD System Manager's Manual
 .			nr sN \\$2
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
@@ -168,17 +168,17 @@
 .\" .	\}
 .\}
 .if !"\\$3"" \{\
-.	if "\\$3"USD"   .ds vT UNIX User's Supplementary Documents
-.	if "\\$3"PS1"   .ds vT UNIX Programmers's Supplementary Documents
-.	if "\\$3"AMD"   .ds vT UNIX Ancestral Manual Documents
-.	if "\\$3"SMM"   .ds vT UNIX System Manager's Manual
-.	if "\\$3"URM"   .ds vT UNIX Reference Manual
-.	if "\\$3"PRM"   .ds vT UNIX Programmers's Manual
-.	if "\\$3"IND"   .ds vT UNIX Manual Master Index
-.\" .	if "\\$3"CON"   .ds vT UNIX Contributed Software Manual
-.\" .	if "\\$3"IMP"	.ds vT UNIX Implementation Notes
-.\" .	if "\\$3"HOW"	.ds vT UNIX How Pocket Manual
-.	if "\\$3"LOCAL" .ds vT UNIX Local Manual
+.	if "\\$3"USD"   .ds vT NetBSD User's Supplementary Documents
+.	if "\\$3"PS1"   .ds vT NetBSD Programmers's Supplementary Documents
+.	if "\\$3"AMD"   .ds vT NetBSD Ancestral Manual Documents
+.	if "\\$3"SMM"   .ds vT NetBSD System Manager's Manual
+.	if "\\$3"URM"   .ds vT NetBSD Reference Manual
+.	if "\\$3"PRM"   .ds vT NetBSD Programmers's Manual
+.	if "\\$3"IND"   .ds vT NetBSD Manual Master Index
+.\" .	if "\\$3"CON"   .ds vT NetBSD Contributed Software Manual
+.\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
+.\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
+.	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
 .	if "\\$3"tahoe" .as vT \ (Tahoe Architecture)
 .	if "\\$3"vax" .as vT \ (VAX Architecture)
 .	if "\\$3"hp300" .as vT \ (HP300 Architecture)
@@ -221,6 +221,12 @@
 .	if "\\$2"4.3t" .ds oS 4.3-Tahoe Berkeley Distribution
 .	if "\\$2"4.3r" .ds oS 4.3-Reno Berkeley Distribution
 .	if "\\$2"4.4"  .ds oS BSD Experimental
+.\}
+.if "\\$1"NetBSD" \{\
+.	ds oS NetBSD
+.	if "\\$2"0.8"  .as oS \00.8
+.	if "\\$2"0.8a" .as oS \00.8a Experimental
+.	if "\\$2"0.9"  .as oS \00.9 Experimental
 .\}
 .if "\\*(oS"Null" .ds oS \0\\$1
 .if "\\*(aa"Non-Null" .as oS \0\\$2
