@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.148 2002/11/07 00:22:28 manu Exp $	*/
+/*	$NetBSD: proc.h,v 1.149 2002/12/12 20:41:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -352,6 +352,12 @@ struct proclist_desc {
  */
 #define	PID_MAX		30000
 #define	NO_PID		30001
+
+/*
+ * Process IDs <0,PID_SKIP-1> are not considered for new processes
+ * once the prototype wraps around.
+ */
+#define PID_SKIP	500
 
 #define	SESS_LEADER(p)	((p)->p_session->s_leader == (p))
 #define	SESSHOLD(s)	((s)->s_count++)
