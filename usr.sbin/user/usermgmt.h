@@ -1,4 +1,4 @@
-/* $NetBSD: usermgmt.h,v 1.3 1999/12/08 18:22:54 hubertf Exp $ */
+/* $NetBSD: usermgmt.h,v 1.4 1999/12/24 09:08:51 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,85 +33,18 @@
 #ifndef USERMGMT_H_
 #define USERMGMT_H_
 
-#define CONFFILE	"/etc/usermgmt.conf"
+int useradd __P((int, char **));
+int usermod __P((int, char **));
+int userdel __P((int, char **));
+int groupadd __P((int, char **));
+int groupdel __P((int, char **));
+int groupmod __P((int, char **));
 
-#define DEF_GROUP	"other"
-#define DEF_BASEDIR	"/home"
-#define DEF_SKELDIR	"/etc/skel"
-#define DEF_SHELL	"/bin/csh"
-#define DEF_COMMENT	""
-#define DEF_LOWUID	1000
-#define DEF_HIGHUID	60000
-#define DEF_INACTIVE	0
-#define DEF_EXPIRE	(char *) NULL
-
-#ifndef MASTER
-#define MASTER		"/etc/master.passwd"
+#ifdef EXTENSIONS
+int userinfo __P((int, char **));
+int groupinfo __P((int, char **));
 #endif
 
-#ifndef ETCGROUP
-#define ETCGROUP	"/etc/group"
-#endif
-
-#ifndef WAITSECS
-#define WAITSECS	10
-#endif
-
-#ifndef NOBODY_UID
-#define NOBODY_UID	32767
-#endif
-
-/* some useful constants */
-enum {
-	MaxShellNameLen = 256,
-	MaxFileNameLen = MAXPATHLEN,
-	MaxUserNameLen = 32,
-	MaxFieldNameLen = 32,
-	MaxCommandLen = 2048,
-	MaxEntryLen = 2048,
-	PasswordLength = 13,
-
-	LowGid = 1000,
-	HighGid = 60000
-};
-
-/* Full paths of programs used here */
-#define CHOWN		"/usr/sbin/chown"
-#define CP		"/bin/cp"
-#define FALSE_PROG	"/usr/bin/false"
-#define MKDIR		"/bin/mkdir"
-#define MV		"/bin/mv"
-#define RM		"/bin/rm"
-
-#define UNSET_EXPIRY	"Null (unset)"
-
-/* this struct describes a uid range */
-typedef struct range_t {
-	int	r_from;		/* low uid */
-	int	r_to;		/* high uid */
-} range_t;
-
-/* this struct encapsulates the user information */
-typedef struct user_t {
-	int		u_uid;			/* uid of user */
-	char		*u_password;		/* encrypted password */
-	char		*u_comment;		/* comment field */
-	int		u_homeset;		/* home dir has been set */
-	char		*u_home;		/* home directory */
-	char		*u_primgrp;		/* primary group */
-	int		u_groupc;		/* # of secondary groups */
-	char		*u_groupv[NGROUPS_MAX];	/* secondary groups */
-	char		*u_shell;		/* user's shell */
-	char		*u_basedir;		/* base directory for home */
-	char		*u_expire;		/* when password will expire */
-	int		u_inactive;		/* inactive */
-	int		u_mkdir;		/* make the home directory */
-	int		u_dupuid;		/* duplicate uids are allowed */
-	char		*u_skeldir;		/* directory for startup files */
-	unsigned	u_rsize;		/* size of range array */
-	unsigned	u_rc;			/* # of ranges */
-	range_t		*u_rv;			/* the ranges */
-	int		u_preserve;		/* preserve uids on deletion */
-} user_t;
+void usermgmt_usage __P((char *));
 
 #endif

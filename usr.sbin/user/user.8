@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.3 1999/12/07 10:25:33 lukem Exp $ */
+.\" $NetBSD: user.8,v 1.4 1999/12/24 09:08:50 agc Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -75,6 +75,11 @@ del
 .Op Fl v
 user
 .Nm ""
+info
+.Op Fl e
+.Op Fl v
+user
+.Nm ""
 mod
 .Op Fl G Ar secondary-group
 .Op Fl c Ar comment
@@ -96,6 +101,7 @@ The
 utility acts as a frontend to the
 .Xr useradd 8 ,
 .Xr usermod 8 ,
+.Xr userinfo 8 ,
 and
 .Xr userdel 8
 commands.
@@ -126,4 +132,5 @@ utility was written by Alistair G. Crooks (agc@netbsd.org).
 .Xr passwd 5 ,
 .Xr useradd 8 ,
 .Xr userdel 8 ,
+.Xr userinfo 8 ,
 .Xr usermod 8 .
