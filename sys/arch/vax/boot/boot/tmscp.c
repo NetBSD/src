@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.2 1999/04/01 20:40:08 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -86,7 +86,6 @@ tmscpopen(f, adapt, ctlr, unit, part)
 	unsigned short johan;
 	int i,err;
 
-printf("OPen\n");
 	curblock = 0;
 	if(adapt>nuba) return(EADAPT);
 	if(ctlr>nuda) return(ECTLR);
@@ -168,10 +167,9 @@ tmscpstrategy(ra, func, dblk, size, buf, rsize)
 	volatile u_int *ptmapp = (u_int *)&ur->uba_map[0];
 	volatile int hej;
 
-printf("strategy: size %d dblk %ld\n", size, dblk);
-	pfnum=(u_int)buf>>PGSHIFT;
+	pfnum=(u_int)buf>>VAX_PGSHIFT;
 
-	for(mapnr=0, nsize=size;(nsize+NBPG)>0;nsize-=NBPG)
+	for(mapnr=0, nsize=size;(nsize+VAX_NBPG)>0;nsize-=VAX_NBPG)
 		ptmapp[mapnr++]=PG_V|pfnum++;
 
 	/*
