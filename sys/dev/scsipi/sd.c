@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.193 2003/01/06 20:30:38 wiz Exp $	*/
+/*	$NetBSD: sd.c,v 1.194 2003/01/23 00:00:33 bad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.193 2003/01/06 20:30:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.194 2003/01/23 00:00:33 bad Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -631,8 +631,7 @@ sdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (SDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, lp,
+	if (bounds_check_with_label(bp, lp,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
