@@ -1,4 +1,4 @@
-/*	$NetBSD: savefile.c,v 1.5 1997/10/03 15:53:17 christos Exp $	*/
+/*	$NetBSD: savefile.c,v 1.5.4.1 2000/04/30 11:39:32 he Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -36,7 +36,7 @@
 static const char rcsid[] =
     "@(#) Header: savefile.c,v 1.36 96/12/10 23:15:02 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: savefile.c,v 1.5 1997/10/03 15:53:17 christos Exp $");
+__RCSID("$NetBSD: savefile.c,v 1.5.4.1 2000/04/30 11:39:32 he Exp $");
 #endif
 #endif
 
@@ -243,7 +243,8 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 		static int tsize = 0;
 
 		if (hdr->caplen > 65535) {
-			sprintf(p->errbuf, "bogus savefile header");
+			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+			    "bogus savefile header");
 			return (-1);
 		}
 		if (tsize < hdr->caplen) {
