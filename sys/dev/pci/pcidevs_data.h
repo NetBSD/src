@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.325 2001/05/14 22:37:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.326 2001/05/17 17:37:01 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.321 2001/05/14 22:36:06 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.322 2001/05/17 17:36:30 drochner Exp 
  */
 
 /*
@@ -3556,6 +3556,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Universe VME bridge",
 	},
 	{
+	    PCI_VENDOR_NATIONALINST, PCI_PRODUCT_NATIONALINST_MXI3,
+	    0,
+	    "National Instruments",
+	    "MXI-3 PCI extender",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
 	    0,
 	    "National Semiconductor",
@@ -4952,6 +4958,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI1451 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
+	    0,
+	    "Texas Instruments",
+	    "PCI2040 PCI-to-DSP Bridge",
 	},
 	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,
