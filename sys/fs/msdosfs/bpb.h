@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.1 2002/12/26 12:31:33 jdolecek Exp $	*/
+/*	$NetBSD: bpb.h,v 1.2 2003/10/08 04:11:43 lukem Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -77,7 +77,7 @@ struct bpb710 {
 	u_int32_t	bpbRootClust;	/* start cluster for root directory */
 	u_int16_t	bpbFSInfo;	/* filesystem info structure sector */
 	u_int16_t	bpbBackup;	/* backup boot sector */
-	/* There is a 12 byte filler here, but we ignore it */
+	u_int8_t	bpbReserved[12]; /* Reserved for future expansion */
 };
 
 #ifdef	atari
@@ -189,7 +189,7 @@ struct byte_bpb710 {
 	u_int8_t bpbRootClust[4];	/* start cluster for root directory */
 	u_int8_t bpbFSInfo[2];		/* filesystem info structure sector */
 	u_int8_t bpbBackup[2];		/* backup boot sector */
-	/* There is a 12 byte filler here, but we ignore it */
+	u_int8_t bpbReserved[12];	/* Reserved for future expansion */
 };
 
 /*
