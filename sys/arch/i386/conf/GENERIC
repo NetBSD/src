@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.6 1998/06/25 10:50:23 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.7 1998/07/02 08:19:35 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -103,7 +103,6 @@ file-system 	UNION		# union file system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network File System server
-#options 	FIFO		# FIFOs; RECOMMENDED
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -161,6 +160,8 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # EISA bus support
 eisa*	at mainbus?
@@ -202,6 +203,7 @@ sysbeep0	at pcppi?
 # Serial Devices
 
 # PCI serial interfaces
+com*	at puc? port ?			# 16x450s on "universal" comm boards
 cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces
@@ -226,6 +228,9 @@ com2	at isa? port 0x3e8 irq 5
 
 
 # Parallel Printer Interfaces
+
+# PCI parallel printer interfaces
+lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # ISA parallel printer interfaces
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
