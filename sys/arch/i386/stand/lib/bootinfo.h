@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 1997/09/17 17:39:30 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 1997/09/20 12:10:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -32,66 +32,7 @@
  *
  */
 
-#ifdef notyet
 #include <machine/bootinfo.h>
-#else
-struct btinfo_common {
-	int len;
-	int type;
-};
-
-#define BTINFO_BOOTPATH 0
-#define BTINFO_BOOTDISK 3
-#define BTINFO_NETIF 4
-#define BTINFO_CONSOLE 6
-#define BTINFO_BIOSGEOM 7
-
-struct btinfo_bootpath {
-	struct btinfo_common common;
-	char bootpath[80];
-};
-
-struct btinfo_bootdisk {
-	struct btinfo_common common;
-	int labelsector; /* label valid if != -1 */
-	struct {
-		u_int16_t type, checksum;
-		char packname[16];
-	} label;
-	int biosdev;
-	int partition;
-};
-
-struct btinfo_netif {
-	struct btinfo_common common;
-	char ifname[16];
-	int bus, addr;
-#define BI_BUS_ISA 0
-#define BI_BUS_PCI 1
-	char hw_addr[6];
-	char dummy[2]; /* align */
-};
-
-struct btinfo_console {
-	struct btinfo_common common;
-	char devname[16];
-	int addr;
-	int speed;
-};
-
-#include <machine/disklabel.h>
-
-struct bi_biosgeom_entry {
-	int spc, spt;
-	struct dos_partition dosparts[NDOSPART];
-};
-
-struct btinfo_biosgeom {
-	struct btinfo_common common;
-	int num;
-	struct bi_biosgeom_entry disk[1]; /* var len */
-};
-#endif /* notyet */
 
 struct bootinfo {
 	int nentries;
