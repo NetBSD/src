@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2002/09/18 01:45:04 chs Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2003/06/26 20:44:51 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
 
 #include <machine/cpu.h>
 
+#include "alloc.h"
 #include "ofdev.h"
 #include "openfirm.h"
 
@@ -109,12 +110,11 @@ int debug;
 static char *kernels[] = { "/netbsd.ofppc", "/netbsd", "/netbsd.gz", NULL };
 
 static void
-prom2boot(dev)
-	char *dev;
+prom2boot(char *dev)
 {
 	char *cp, *ocp;
 	
-	ocp = cp;
+	ocp = dev;
 	cp = dev + strlen(dev) - 1;
 	for (; cp >= ocp; cp--) {
 		if (*cp == ':') {
@@ -125,9 +125,7 @@ prom2boot(dev)
 }
 
 static void
-parseargs(str, howtop)
-	char *str;
-	int *howtop;
+parseargs(char *str, int *howtop)
 {
 	char *cp;
 
@@ -154,10 +152,7 @@ parseargs(str, howtop)
 }
 
 static void
-chain(entry, args, ssym, esym)
-	void (*entry)();
-	char *args;
-	void *ssym, *esym;
+chain(void entry(), char *args, void *ssym, void *esym)
 {
 	extern char end[], *cp;
 	u_int l, magic = 0x19730224;
@@ -186,14 +181,14 @@ chain(entry, args, ssym, esym)
 }
 
 __dead void
-_rtt()
+_rtt(void)
 {
 
 	OF_exit();
 }
 
 void
-main()
+main(void)
 {
 	extern char bootprog_name[], bootprog_rev[],
 		    bootprog_maker[], bootprog_date[];
