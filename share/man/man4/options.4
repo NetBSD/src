@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.29 1997/10/08 09:46:24 mycroft Exp $
+.\"	$NetBSD: options.4,v 1.30 1997/10/08 10:12:21 mycroft Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -887,6 +887,20 @@ between 5% and 10% of total available RAM.
 .El
 .Ss i386-specific Options
 .Bl -ohang
+.It Cd options I386_CPU,I486_CPU,I586_CPU,I686_CPU
+Include support for a particular class of CPU (i386, i486, Pentium, or
+Pentium Pro).  If the appropriate class for your CPU is not configured, the
+kernel will use the highest class available that will work.  In general, using
+the correct CPU class will result in the best performance.  At least one of
+these options must be present.
+.It Cd options MATH_EMULATE
+Include the floating point emulator.  This is useful only for CPUs that lack an
+internal floating point unit or coprocessor.
+.It Cd options VM86
+Include support for virtual 8086 mode, used by DOS emulators.
+.It Cd options USER_LDT
+Include i386-specific system calls for modifying the local descriptor table,
+used by Windows emulators.
 .It Cd options REALBASEMEM
 Overrides the base memory size passed in from the boot block.  Use this option
 only if the boot block reports the size incorrectly.  (Note that some BIOSes
