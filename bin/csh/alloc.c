@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.7 1997/07/04 21:23:51 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.8 1998/07/28 02:23:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.7 1997/07/04 21:23:51 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.8 1998/07/28 02:23:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ Malloc(n)
     if ((ptr = malloc(n)) == (ptr_t) 0) {
 	child++;
 	stderror(ERR_NOMEM);
+	/* NOTREACHED */
     }
     return (ptr);
 }
@@ -84,6 +85,7 @@ Realloc(p, n)
     if ((ptr = realloc(p, n)) == (ptr_t) 0) {
 	child++;
 	stderror(ERR_NOMEM);
+	/* NOTREACHED */
     }
     return (ptr);
 }
@@ -99,6 +101,7 @@ Calloc(s, n)
     if ((ptr = calloc(s, n)) == (ptr_t) 0) {
 	child++;
 	stderror(ERR_NOMEM);
+	/* NOTREACHED */
     }
 
     return (ptr);

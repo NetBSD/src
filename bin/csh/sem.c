@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.11 1997/07/04 21:24:08 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.12 1998/07/28 02:23:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.11 1997/07/04 21:24:08 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.12 1998/07/28 02:23:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ execute(t, wanttty, pipein, pipeout)
 	    Dfix(t);		/* $ " ' \ */
 	if (t->t_dcom[0] == 0)
 	    return;
-	/* fall into... */
+	/* FALLTHROUGH */
 
     case NODE_PAREN:
 	if (t->t_dflg & F_PIPEOUT)
@@ -273,6 +273,7 @@ execute(t, wanttty, pipein, pipeout)
 		if (pid < 0) {
 		    sigprocmask(SIG_SETMASK, &osigset, NULL);
 		    stderror(ERR_NOPROC);
+		    /* NOTREACHED */
 		}
 		forked++;
 		if (pid) {	/* parent */
@@ -382,8 +383,10 @@ execute(t, wanttty, pipein, pipeout)
 	 */
 	if (bifunc) {
 	    func(t, bifunc);
-	    if (forked)
+	    if (forked) {
 		exitstat();
+		/* NOTREACHED */
+	    }
 	    break;
 	}
 	if (t->t_dtyp != NODE_PAREN) {
@@ -403,6 +406,7 @@ execute(t, wanttty, pipein, pipeout)
 	t->t_dspr->t_dflg |= t->t_dflg & F_NOINTERRUPT;
 	execute(t->t_dspr, wanttty, NULL, NULL);
 	exitstat();
+	/* NOTREACHED */
 
     case NODE_PIPE:
 	t->t_dcar->t_dflg |= F_PIPEOUT |
@@ -512,6 +516,7 @@ splicepipe(t, cp)
 		setname(vis_str(blk[0]));
 		xfree((ptr_t) blk[0]);
 		stderror(ERR_NAME | ERR_NOMATCH);
+		/* NOTREACHED */
 	    }
 	    gargv = NULL;
 	    if (pv[1] != NULL) { /* we need to fix the command vector */
@@ -560,8 +565,10 @@ doio(t, pipein, pipeout)
 	    (void) strncpy(tmp, short2str(cp), MAXPATHLEN);
 	    tmp[MAXPATHLEN] = '\0';
 	    xfree((ptr_t) cp);
-	    if ((fd = open(tmp, O_RDONLY)) < 0)
+	    if ((fd = open(tmp, O_RDONLY)) < 0) {
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
+		/* NOTREACHED */
+	    }
 	    (void) dmove(fd, 0);
 	}
 	else if (flags & F_PIPEIN) {
@@ -601,12 +608,16 @@ doio(t, pipein, pipeout)
 #endif
 	else {
 	    if (!(flags & F_OVERWRITE) && adrof(STRnoclobber)) {
-		if (flags & F_APPEND)
+		if (flags & F_APPEND) {
 		    stderror(ERR_SYSTEM, tmp, strerror(errno));
+		    /* NOTREACHED */
+		}
 		chkclob(tmp);
 	    }
-	    if ((fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+	    if ((fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
+		/* NOTREACHED */
+	    }
 	}
 	(void) dmove(fd, 1);
     }
@@ -644,6 +655,7 @@ mypipe(pv)
 	return;
 oops:
     stderror(ERR_PIPE);
+    /* NOTREACHED */
 }
 
 static void
@@ -657,4 +669,5 @@ chkclob(cp)
     if (S_ISCHR(stb.st_mode))
 	return;
     stderror(ERR_EXISTS, cp);
+    /* NOTREACHED */
 }

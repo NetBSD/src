@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1998/07/26 19:37:11 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 1998/07/28 02:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
  */
 int	gethdir __P((Char *));
 void	dosource __P((Char **, struct command *));
-void	exitstat __P((void));
+__dead	void exitstat __P((void)) __attribute__((noreturn));
 void	goodbye __P((void));
 void	importpath __P((Char *));
 void	initdesc __P((void));
@@ -55,9 +55,9 @@ void	untty __P((void));
 int	vis_fputc __P((int, FILE *));
 
 #ifdef PROF
-void done __P((int));
+__dead void done __P((int)) __attribute__((noreturn));
 #else
-void xexit __P((int));
+__dead void xexit __P((int)) __attribute__((noreturn));
 #endif
 
 /*
@@ -86,7 +86,7 @@ void	 heredoc __P((Char *));
  * err.c
  */
 void	seterror __P((int, ...));
-void	stderror __P((int, ...));
+__dead	void stderror __P((int, ...)) __attribute__((noreturn));
 
 /*
  * exec.c

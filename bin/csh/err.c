@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.10 1998/07/27 17:55:17 mycroft Exp $	*/
+/*	$NetBSD: err.c,v 1.11 1998/07/28 02:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.10 1998/07/27 17:55:17 mycroft Exp $");
+__RCSID("$NetBSD: err.c,v 1.11 1998/07/28 02:23:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ char   *seterr = NULL;	/* Holds last error if there was one */
 #define ERR_SILENT	0x20000000
 #define ERR_OLD		0x40000000
 
-static char *errorlist[] =
+static const char *errorlist[] =
 {
 #define ERR_SYNTAX	0
     "Syntax Error",
@@ -353,7 +353,7 @@ stderror(id, va_alist)
     id &= ~ERR_FLAGS;
 
     if ((flags & ERR_OLD) && seterr == NULL)
-	return;
+	abort();
 
     if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
 	id = ERR_INVALID;
@@ -398,8 +398,10 @@ stderror(id, va_alist)
     /*
      * Go away if -e or we are a child shell
      */
-    if (exiterr || child)
+    if (exiterr || child) {
 	xexit(1);
+	/* NOTREACHED */
+    }
 
     /*
      * Reset the state of the input. This buffered seek to end of file will
