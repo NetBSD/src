@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.8 2002/06/08 16:02:02 yamt Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.9 2002/06/08 16:20:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ ucb1200_state_idle(dev)
 void
 ucb1200_dump(struct ucb1200_softc *sc)
 {
-	static const char *regname[] = {
+	static const char *const regname[] = {
                 "IO_DATA        ",
                 "IO_DIR         ",
                 "POSINTEN       ",
