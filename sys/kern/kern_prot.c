@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.37 1996/09/19 04:54:16 jtc Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.38 1996/12/22 10:21:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -497,7 +497,7 @@ sys_setgroups(p, v, retval)
 {
 	struct sys_setgroups_args /* {
 		syscallarg(u_int) gidsetsize;
-		syscallarg(gid_t *) gidset;
+		syscallarg(const gid_t *) gidset;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	register u_int ngrp;
@@ -509,8 +509,8 @@ sys_setgroups(p, v, retval)
 	if (ngrp > NGROUPS)
 		return (EINVAL);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
-	error = copyin((caddr_t)SCARG(uap, gidset),
-		       (caddr_t)pc->pc_ucred->cr_groups, ngrp * sizeof(gid_t));
+	error = copyin(SCARG(uap, gidset), pc->pc_ucred->cr_groups,
+	    ngrp * sizeof(gid_t));
 	if (error)
 		return (error);
 	pc->pc_ucred->cr_ngroups = ngrp;
@@ -650,14 +650,13 @@ sys_setlogin(p, v, retval)
 	register_t *retval;
 {
 	struct sys_setlogin_args /* {
-		syscallarg(char *) namebuf;
+		syscallarg(const char *) namebuf;
 	} */ *uap = v;
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	error = copyinstr((caddr_t) SCARG(uap, namebuf),
-	    (caddr_t) p->p_pgrp->pg_session->s_login,
+	error = copyinstr(SCARG(uap, namebuf), p->p_pgrp->pg_session->s_login,
 	    sizeof (p->p_pgrp->pg_session->s_login) - 1, (size_t *)0);
 	if (error == ENAMETOOLONG)
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.39 1996/12/22 10:21:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -208,13 +208,12 @@ sys_setrlimit(p, v, retval)
 {
 	register struct sys_setrlimit_args /* {
 		syscallarg(u_int) which;
-		syscallarg(struct rlimit *) rlp;
+		syscallarg(const struct rlimit *) rlp;
 	} */ *uap = v;
 	struct rlimit alim;
 	int error;
 
-	error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&alim,
-		       sizeof (struct rlimit));
+	error = copyin(SCARG(uap, rlp), &alim, sizeof (struct rlimit));
 	if (error)
 		return (error);
 	return (dosetrlimit(p, SCARG(uap, which), &alim));
@@ -322,8 +321,8 @@ sys_getrlimit(p, v, retval)
 
 	if (SCARG(uap, which) >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout((caddr_t)&p->p_rlimit[SCARG(uap, which)],
-	    (caddr_t)SCARG(uap, rlp), sizeof (struct rlimit)));
+	return (copyout(&p->p_rlimit[SCARG(uap, which)], SCARG(uap, rlp),
+	    sizeof (struct rlimit)));
 }
 
 /*
@@ -410,8 +409,7 @@ sys_getrusage(p, v, retval)
 	default:
 		return (EINVAL);
 	}
-	return (copyout((caddr_t)rup, (caddr_t)SCARG(uap, rusage),
-	    sizeof (struct rusage)));
+	return (copyout(rup, SCARG(uap, rusage), sizeof (struct rusage)));
 }
 
 void

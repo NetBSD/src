@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.77 1996/09/30 23:18:46 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.78 1996/12/22 10:21:07 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -214,9 +214,9 @@ sys_execve(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_execve_args /* {
-		syscallarg(char *) path;
-		syscallarg(char * *) argp;
-		syscallarg(char * *) envp;
+		syscallarg(const char *) path;
+		syscallarg(char * const *) argp;
+		syscallarg(char * const *) envp;
 	} */ *uap = v;
 	int error, i;
 	struct exec_package pack;
@@ -224,7 +224,8 @@ sys_execve(p, v, retval)
 	struct vattr attr;
 	struct ucred *cred = p->p_ucred;
 	char *argp;
-	char **cpp, *dp, *sp;
+	char * const *cpp;
+	char *dp, *sp;
 	long argc, envc;
 	size_t len;
 	char *stack;
