@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.24.2.1 2004/05/29 09:00:13 tron Exp $	*/
+/*	$NetBSD: ath.c,v 1.24.2.2 2004/07/23 22:32:14 he Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24.2.1 2004/05/29 09:00:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24.2.2 2004/07/23 22:32:14 he Exp $");
 #endif
 
 /*
@@ -1463,13 +1463,12 @@ ath_calcrxfilter(struct ath_softc *sc)
 	      | HAL_RX_FILTER_UCAST | HAL_RX_FILTER_BCAST | HAL_RX_FILTER_MCAST;
 	if (ic->ic_opmode != IEEE80211_M_STA)
 		rfilt |= HAL_RX_FILTER_PROBEREQ;
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
-	    (ifp->if_flags & IFF_PROMISC))
-		rfilt |= HAL_RX_FILTER_PROM;
 	if (ic->ic_opmode == IEEE80211_M_STA ||
 	    ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_state == IEEE80211_S_SCAN)
 		rfilt |= HAL_RX_FILTER_BEACON;
+	if (ifp->if_flags & IFF_PROMISC)
+		rfilt |= HAL_RX_FILTER_PROM;
 	return rfilt;
 }
 
