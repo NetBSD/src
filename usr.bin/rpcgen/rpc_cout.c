@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.4 1995/06/11 21:49:53 pk Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.5 1995/08/29 23:05:49 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
  */
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "rpc_parse.h"
 #include "rpc_util.h"
