@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-tc-conf.c,v 1.2 1995/08/24 22:32:18 jonathan Exp $	*/
+/*	$NetBSD: ds-tc-conf.c,v 1.3 1995/09/12 07:27:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -65,18 +65,19 @@ struct tc_cpu_desc kmin_tc_desc =
 /************************************************************************/
 
 /* MAXINE  turbochannel slots  */
-struct confargs xine_devs[3] = {
+struct confargs xine_devs[4] = {
+	{ "PMAG-DV ",	  3,   3,    0x0,  },	/* xcfb ? */
 	{ "IOCTL   ",  	  2,  -1,    0x0,  },
-      /*{ "PMAG-DV ",	  ?,   ?,    0x0,  },*/	/* xcfb ? */
 	{ NULL, 	  1,   1,    0x0,  },
-	{ NULL, 	 0,   0,     0x0,  }
+	{ NULL, 	  0,   0,    0x0,  }
 };
 
 /* MAXINE slot addreseses */
 static struct tc_slot_desc xine_slot_addrs [4] = {
        	{ KV(XINE_PHYS_TC_0_START), },	/* slot 0 - tc option slot 0 */
 	{ KV(XINE_PHYS_TC_1_START), },	/* slot 1 - tc option slot 1 */
-	{ KV(XINE_PHYS_TC_3_START), }	/* slot 2 - IOCTL asic on CPU board */
+	{ KV(XINE_PHYS_TC_3_START), },	/* slot 2 - IOCTL asic on CPU board */
+	{ KV(XINE_PHYS_CFB_START),  }	/* slot 3 - fb on CPU board */
 };
 
 struct tc_cpu_desc xine_tc_desc =
