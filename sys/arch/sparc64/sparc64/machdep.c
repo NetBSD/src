@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 2004/06/30 21:16:39 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.171 2004/07/02 07:39:07 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2004/06/30 21:16:39 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2004/07/02 07:39:07 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1115,7 +1115,16 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			incr = PAGE_SIZE - (vaddr & PGOFSET);
 			incr = min(buflen, incr);
 
-			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
+			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE) {
+#ifdef DIAGNOSTIC
+				printf("_bus_dmamap_load_mbuf: pmap_extract failed %lx\n",
+				       vaddr);
+#endif
+				map->_dm_type = 0;
+				map->_dm_source = NULL;
+				return EINVAL;
+			}
+
 			buflen -= incr;
 			vaddr += incr;
 
