@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.34 2000/06/06 17:41:07 soren Exp $	*/
+/*	$NetBSD: locore.h,v 1.35 2000/06/20 02:57:19 soren Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -86,10 +86,11 @@ void mips3_FlushDCache_2way __P((vaddr_t addr, vaddr_t len));
 void mips3_HitFlushDCache_2way __P((vaddr_t, int));
 void mips3_FlushICache_2way __P((vaddr_t addr, vaddr_t len));
 
+u_int32_t mips3_read_config __P((void));
 u_int32_t mips3_cycle_count __P((void));
 u_int32_t mips3_write_count __P((u_int32_t));
 u_int32_t mips3_read_compare __P((void));
-u_int32_t mips3_read_config __P((void));
+void mips3_write_config __P((u_int32_t));
 void mips3_write_compare __P((u_int32_t));
 void mips3_write_xcontext_upper __P((u_int32_t));
 void mips3_clearBEV __P((void));
