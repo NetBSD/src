@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.33 2003/10/14 06:46:57 lukem Exp $
+#	$NetBSD: newvers.sh,v 1.34 2003/10/14 14:23:10 lukem Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,11 @@ then
 fi
 
 touch version
-v=$(cat version) u=${USER-root} d=$(pwd) h=$(hostname) t=$(date)
+v=$(cat version)
+t=$(date)
+u=${USER-root}
+h=$(hostname)
+d=$(pwd)
 
 if [ -f ident ]
 then
