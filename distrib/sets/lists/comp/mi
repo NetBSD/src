@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.171 1999/12/07 21:15:45 augustss Exp $
+# $NetBSD: mi,v 1.172 1999/12/10 23:23:01 jlam Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -3994,8 +3994,8 @@
 ./usr/share/man/man9/pool_put.9
 ./usr/share/man/man9/pool_sethiwat.9
 ./usr/share/man/man9/pool_setlowat.9
-./usr/share/man/man9/powerhook_disestablish.0
-./usr/share/man/man9/powerhook_establish.0
+./usr/share/man/man9/powerhook_disestablish.9
+./usr/share/man/man9/powerhook_establish.9
 ./usr/share/man/man9/printf.9
 ./usr/share/man/man9/psignal.9
 ./usr/share/man/man9/readdisklabel.9
