@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.89 2004/05/06 04:45:14 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.90 2004/05/06 04:46:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -646,3 +646,10 @@ sys/arch/sparc/stand/ofwboot/boot.c		1.5
 	When calculating the allocated symbol table size, round up the section
 	sizes with ELF_ALIGN(). PR#13429 PR#18691 PR#25429
 	[martin, ticket #1684]
+
+usr.bin/vi/common/line.c			1.7
+
+	Flush the current line cache on every operation on the DB.
+	We can't keep a reference to data returned by libdb after a subsequent
+	call to any other libdb function on that DB.
+	[aymeric, ticket #1685]
