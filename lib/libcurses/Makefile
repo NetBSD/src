@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2004/03/16 07:55:05 jdc Exp $
+#	$NetBSD: Makefile,v 1.50 2004/03/23 21:56:53 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -97,11 +97,13 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_addchstr.3 mvaddchstr.3 curses_addstr.3 mvaddnstr.3 \
 	 curses_addstr.3 mvaddstr.3 \
 	 curses_cursor.3 mvcur.3 curses_window.3 mvderwin.3 \
+	 curses_input.3 mvgetch.3 \
 	 curses_input.3 mvgetnstr.3 curses_input.3 mvgetstr.3 \
 	 curses_line.3 mvhline.3 curses_print.3 mvprintw.3 \
 	 curses_line.3 mvvline.3 curses_addch.3 mvwaddch.3 \
 	 curses_addchstr.3 mvwaddchnstr.3 curses_addchstr.3 mvwaddchstr.3 \
 	 curses_addstr.3 mvwaddnstr.3 curses_addstr.3 mvwaddstr.3 \
+	 curses_input.3 mvwgetch.3 \
 	 curses_input.3 mvwgetnstr.3 curses_input.3 mvwgetstr.3 \
 	 curses_line.3 mvwhline.3 curses_print.3 mvwprintw.3 \
 	 curses_line.3 mvwvline.3 \
