@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.236 2004/08/28 00:18:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.237 2004/09/02 02:02:38 tacha Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -188,7 +188,9 @@ BUILDTARGETS+=	includes
 BUILDTARGETS+=	do-tools-compat
 BUILDTARGETS+=	do-lib-csu
 .if ${MKGCC} != "no"
+.if ${HAVE_GCC3} != "no"
 BUILDTARGETS+=	do-gnu-lib-crtstuff${LIBGCC_EXT}
+.endif
 BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 BUILDTARGETS+=	do-lib-libc
