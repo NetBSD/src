@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 1999/02/25 22:47:18 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 1999/02/25 23:13:40 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -422,7 +422,7 @@ _trap12:
 	movl	d1,sp@-			|  push length
 	movl	a1,sp@-			|  push addr
 	movl	d0,sp@-			|  push command
-	jbsr	_cachectl		|  do it
+	jbsr	_cachectl1		|  do it
 	lea	sp@(16),sp		|  pop args
 	jra	rei			|  all done
 

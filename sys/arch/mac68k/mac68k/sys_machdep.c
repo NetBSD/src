@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 1999/01/19 18:18:42 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12 1999/02/25 23:13:41 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,16 +148,16 @@ vdoualarm(arg)
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
-int	cachectl __P((int, caddr_t, int));
 void	DCIU __P((void));
 void	ICIA __P((void));
 
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
+cachectl1(req, addr, len, p)
 	int req;
-	caddr_t	addr;
+	vaddr_t	addr;
 	int len;
+	struct proc *p;
 {
 	int error = 0;
 

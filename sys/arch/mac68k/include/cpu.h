@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 1998/12/22 08:47:06 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58 1999/02/25 23:13:41 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -325,6 +325,9 @@ void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
 void	loadustp __P((int));
+
+/* sys_machdep.c */
+void	cachectl1 __P((int, vaddr_t, u_long, struct proc *));
 
 /* vm_machdep.c */
 void	physaccess __P((caddr_t, caddr_t, register int, register int));
