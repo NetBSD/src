@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.42 2001/09/05 21:37:32 christos Exp $ */
+/* $NetBSD: user.c,v 1.43 2001/09/16 18:08:37 hubertf Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.42 2001/09/05 21:37:32 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.43 2001/09/16 18:08:37 hubertf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1009,7 +1009,7 @@ adduser(char *login, user_t *up)
 	    !creategid(login, gid, login)) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
-		err(EXIT_FAILURE, "can't create gid %d for login name %s", gid, login);
+		errx(EXIT_FAILURE, "can't create gid %d for login name %s", gid, login);
 	}
 	if (up->u_groupc > 0 && !append_group(login, up->u_groupc, up->u_groupv)) {
 		(void) close(ptmpfd);
@@ -1656,7 +1656,7 @@ groupadd(int argc, char **argv)
 		warnx("warning - invalid group name `%s'", *argv);
 	}
 	if (!creategid(*argv, gid, "")) {
-		err(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
+		errx(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
