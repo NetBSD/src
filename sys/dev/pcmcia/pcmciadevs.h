@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.196 2004/06/19 04:15:29 itohy Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.197 2004/07/07 04:19:15 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.194 2004/06/19 04:13:12 itohy Exp 
+ *	NetBSD: pcmciadevs,v 1.195 2004/07/07 04:19:01 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -115,6 +115,7 @@
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
+#define	PCMCIA_VENDOR_NEXTCOM	0xc020	/* NextCom K.K. */
 #define	PCMCIA_VENDOR_EMTAC	0xc250	/* EMTAC Technology Corporation */
 #define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
 
@@ -505,6 +506,11 @@
 #define	PCMCIA_PRODUCT_NI_PCMCIA_GPIB	0x4882
 #define	PCMCIA_STR_NI_PCMCIA_GPIB	"National Instruments PCMCIA-GPIB"
 
+/* NextCom K.K. */
+#define	PCMCIA_CIS_NEXTCOM_NEXTHAWK	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEXTCOM_NEXTHAWK	0x0001
+#define	PCMCIA_STR_NEXTCOM_NEXTHAWK	"Next Hawk Ethernet"
+
 /* Nokia Products */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NOKIA_C020_WLAN	0x20c0
@@ -698,8 +704,8 @@
 /*
  * Cards we know only by their cis, sorted by name.
  */
-#define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_ACCTON	-1	/* ACCTON */
+#define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
