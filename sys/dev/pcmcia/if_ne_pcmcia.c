@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.6 1997/11/20 04:02:34 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.7 1997/11/30 15:16:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -233,7 +233,7 @@ ne_pcmcia_match(parent, match, aux)
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
-	struct cfdata *cf;
+	struct cfdata *match;
 #endif
 	void *aux;
 {
