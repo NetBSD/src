@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kernfs.h	8.4 (Berkeley) 1/21/94
- *	$Id: kernfs.h,v 1.6 1994/06/08 11:33:19 mycroft Exp $
+ *	from: @(#)kernfs.h	8.5 (Berkeley) 6/15/94
+ *	$Id: kernfs.h,v 1.7 1994/06/15 22:54:38 mycroft Exp $
  */
 
 #define	_PATH_KERNFS	"/kern"		/* Default mountpoint */
