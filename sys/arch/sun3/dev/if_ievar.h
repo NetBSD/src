@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.11 2000/03/13 23:52:34 soren Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.12 2005/01/22 15:36:10 chs Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -60,17 +60,17 @@ struct ie_softc {
 #define	sc_if	sc_ethercom.ec_if 		/* network-visible interface */
 
 	/* XXX: This is used only during attach. */
-	u_int8_t sc_addr[ETHER_ADDR_LEN];
-	u_int8_t sc_pad1[2];
+	uint8_t sc_addr[ETHER_ADDR_LEN];
+	uint8_t sc_pad1[2];
 
 	int     sc_debug;	/* See IEDEBUG */
 
 	/* card dependent functions: */
-	void    (*reset_586) __P((struct ie_softc *));
-	void    (*chan_attn) __P((struct ie_softc *));
-	void    (*run_586)   __P((struct ie_softc *));
-	void	*(*sc_memcpy) __P((void *, const void *, size_t));
-	void	*(*sc_memset) __P((void *, int, size_t));
+	void    (*reset_586)(struct ie_softc *);
+	void    (*chan_attn)(struct ie_softc *);
+	void    (*run_586)  (struct ie_softc *);
+	void	*(*sc_memcpy)(void *, const void *, size_t);
+	void	*(*sc_memset)(void *, int, size_t);
 
 	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
 	caddr_t sc_maddr;	/* KVA of base of chip's RAM */
@@ -124,5 +124,5 @@ struct ie_softc {
 };
 
 
-extern void    ie_attach __P((struct ie_softc *));
-extern int  ie_intr __P((void *));
+extern void    ie_attach(struct ie_softc *);
+extern int  ie_intr(void *);

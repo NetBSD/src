@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.3 2003/07/15 03:36:12 lukem Exp $	*/
+/*	$NetBSD: control.c,v 1.4 2005/01/22 15:36:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,29 +37,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: control.c,v 1.3 2003/07/15 03:36:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: control.c,v 1.4 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 
 #include <machine/pte.h>
 #include <sun2/sun2/control.h>
 
-int
-get_context()
+int 
+get_context(void)
 {
 	return (get_control_byte(CONTEXT_REG) & CONTEXT_MASK);
 }
 
-void
-set_context(c)
-	int c;
+void 
+set_context(int c)
 {
 	set_control_byte(CONTEXT_REG, (c & CONTEXT_MASK));
 }
 
-u_int
-get_pte(va)
-	vaddr_t va;
+u_int 
+get_pte(vaddr_t va)
 {
 	u_int pte;
 
@@ -86,10 +84,8 @@ get_pte(va)
 	return (pte);
 }
 
-void
-set_pte(va, pte)
-	vaddr_t va;
-	u_int pte;
+void 
+set_pte(vaddr_t va, u_int pte)
 {
 	if (pte & PG_VALID) {
 		/* Clear bit 26 (the user writable bit).  */
@@ -117,17 +113,14 @@ set_pte(va, pte)
 	set_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va), pte);
 }
 
-int
-get_segmap(va)
-	vaddr_t va;
+int 
+get_segmap(vaddr_t va)
 {
 	return (get_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va)));
 }
 
-void
-set_segmap(va, sme)
-	vaddr_t va;
-	int sme;
+void 
+set_segmap(vaddr_t va, int sme)
 {
 	set_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.19 2003/07/15 03:36:18 lukem Exp $	*/
+/*	$NetBSD: obmem.c,v 1.20 2005/01/22 15:36:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.19 2003/07/15 03:36:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.20 2005/01/22 15:36:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,17 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.19 2003/07/15 03:36:18 lukem Exp $");
 #include <machine/autoconf.h>
 #include <sun3/sun3/obmem.h>
 
-static int  obmem_match __P((struct device *, struct cfdata *, void *));
-static void obmem_attach __P((struct device *, struct device *, void *));
+static int  obmem_match(struct device *, struct cfdata *, void *);
+static void obmem_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(obmem, sizeof(struct device),
     obmem_match, obmem_attach, NULL, NULL);
 
-static int
-obmem_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+obmem_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -70,11 +67,8 @@ obmem_match(parent, cf, aux)
 	return(1);
 }
 
-static void
-obmem_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+obmem_attach(struct device *parent, struct device *self, void *args)
 {
 	printf("\n");
 

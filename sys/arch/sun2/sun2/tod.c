@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.9 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: tod.c,v 1.10 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.9 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.10 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,11 +110,11 @@ __KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.9 2004/12/13 02:14:13 chs Exp $");
 
 static todr_chip_handle_t todr_handle;
 
-static int  tod_obio_match __P((struct device *, struct cfdata *, void *args));
-static void tod_obio_attach __P((struct device *, struct device *, void *));
-static int  tod_vme_match __P((struct device *, struct cfdata *, void *args));
-static void tod_vme_attach __P((struct device *, struct device *, void *));
-static void tod_attach __P((struct mm58167_softc *));
+static int  tod_obio_match(struct device *, struct cfdata *, void *args);
+static void tod_obio_attach(struct device *, struct device *, void *);
+static int  tod_vme_match(struct device *, struct cfdata *, void *args);
+static void tod_vme_attach(struct device *, struct device *, void *);
+static void tod_attach(struct mm58167_softc *);
 
 CFATTACH_DECL(tod_obio, sizeof(struct mm58167_softc),
     tod_obio_match, tod_obio_attach, NULL, NULL);
@@ -124,11 +124,8 @@ CFATTACH_DECL(tod_vme, sizeof(struct mm58167_softc),
 
 static int tod_attached;
 
-static int
-tod_obio_match(parent, cf, args)
-    struct device *parent;
-	struct cfdata *cf;
-    void *args;
+static int 
+tod_obio_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
@@ -147,11 +144,8 @@ tod_obio_match(parent, cf, args)
 	return (matched);
 }
 
-static void
-tod_obio_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+tod_obio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct obio_attach_args *oba = args;
 	struct mm58167_softc *sc;
@@ -168,11 +162,8 @@ tod_obio_attach(parent, self, args)
 	tod_attach(sc);
 }
 
-static int
-tod_vme_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+tod_vme_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -189,10 +180,8 @@ tod_vme_match(parent, cf, aux)
 	return (1);
 }
 
-static void
-tod_vme_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+static void 
+tod_vme_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mm58167_softc *sc;
 	struct vme_attach_args	*va = aux;
@@ -216,9 +205,8 @@ tod_vme_attach(parent, self, aux)
 	tod_attach(sc);
 }
 
-static void
-tod_attach(sc)
-	struct mm58167_softc *sc;
+static void 
+tod_attach(struct mm58167_softc *sc)
 {
 
 	/* Call the IC attach code. */
@@ -251,8 +239,8 @@ tod_attach(sc)
  * Initialize the time of day register, based on the time base
  * which is, e.g. from a filesystem.
  */
-void inittodr(fs_time)
-	time_t fs_time;
+void 
+inittodr(time_t fs_time)
 {
 	struct timeval tv;
 	time_t diff, clk_time;
@@ -303,7 +291,8 @@ void inittodr(fs_time)
 /*
  * Resettodr restores the time of day hardware after a time change.
  */
-void resettodr()
+void 
+resettodr(void)
 {
 	struct timeval tv;
 	tv = time;

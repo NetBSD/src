@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.2 2002/09/27 15:36:57 provos Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.3 2005/01/22 15:36:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,7 @@ void netif_getether(struct saif *, u_char *);
  * Return netif ptr on success.
  */
 struct devdata *
-netif_init(aux)
-	void *aux;
+netif_init(void *aux)
 {
 	struct devdata *dd = &netif_devdata;
 	struct saioreq *si;
@@ -100,7 +99,7 @@ netif_init(aux)
 	 * (determines what gets opened)
 	 */
 	si = &dd->dd_si;
-	bzero((caddr_t)si, sizeof(*si));
+	memset(si, 0, sizeof(*si));
 	bp = *romVectorPtr->bootParam;
 	si->si_boottab = bp->bootDevice;
 	si->si_ctlr = bp->ctlrNum;
@@ -154,9 +153,8 @@ netif_init(aux)
 	return(dd);
 }
 
-void
-netif_fini(dd)
-	struct devdata *dd;
+void 
+netif_fini(struct devdata *dd)
 {
 	struct saioreq *si;
 
@@ -179,11 +177,8 @@ netif_fini(dd)
 	}
 }
 
-int
-netif_attach(nif, s, aux)
-	struct netif *nif;
-	struct iodesc *s;
-	void *aux;
+int 
+netif_attach(struct netif *nif, struct iodesc *s, void *aux)
 {
 	struct devdata *dd;
 
@@ -200,9 +195,8 @@ netif_attach(nif, s, aux)
 	return(0);
 }
 
-void
-netif_detach(nif)
-	struct netif *nif;
+void 
+netif_detach(struct netif *nif)
 {
 	struct devdata *dd;
 
@@ -216,9 +210,8 @@ netif_detach(nif)
 	nif->nif_devdata = NULL;
 }
 
-int
-netif_open(aux)
-	void *aux;
+int 
+netif_open(void *aux)
 {
 	struct netif *nif;
 	struct iodesc *s;
@@ -232,7 +225,7 @@ netif_open(aux)
 	return (-1);
 
 found:
-	bzero(s, sizeof(*s));
+	memset(s, 0, sizeof(*s));
 	nif = &prom_netif;
 	error = netif_attach(nif, s);
 	if (error != 0) {
@@ -242,9 +235,8 @@ found:
 	return (fd);
 }
 
-int
-netif_close(fd)
-	int fd;
+int 
+netif_close(int fd)
 {
 	struct iodesc *s;
 	struct netif *nif;
@@ -265,8 +257,7 @@ netif_close(fd)
 
 
 struct iodesc *
-socktodesc(fd)
-	int fd;
+socktodesc(int fd)
 {
 	if (fd < 0 || fd >= SOPEN_MAX) {
 		errno = EBADF;
@@ -280,11 +271,8 @@ socktodesc(fd)
  * Send a packet.  The ether header is already there.
  * Return the length sent (or -1 on error).
  */
-int
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+int 
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct netif *nif;
 	struct devdata *dd;
@@ -325,7 +313,7 @@ netif_put(desc, pkt, len)
 	 */
 	if (slen > dd->tbuf_len)
 		panic("netif_put: slen=%d", slen);
-	bcopy(pkt, dd->tbuf, slen);
+	memcpy(dd->tbuf, pkt, slen);
 
 	if (slen < 60) {
 		slen = 60;
@@ -350,12 +338,8 @@ netif_put(desc, pkt, len)
  * Receive a packet, including the ether header.
  * Return the total length received (or -1 on error).
  */
-int
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;	/* seconds */
+int 
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 {
 	struct netif *nif;
 	struct devdata *dd;
@@ -412,7 +396,7 @@ break2:
 	if (rlen > maxlen)
 		rlen = maxlen;
 
-	bcopy(dd->rbuf, pkt, rlen);
+	memcpy(pkt, dd->rbuf, rlen);
 
 #ifdef NETIF_DEBUG
 	if (debug > 1) {
@@ -431,9 +415,7 @@ break2:
  * Copy our Ethernet address into the passed array.
  */
 void
-netif_getether(sif, ea)
-	struct saif *sif;
-	u_char *ea;
+netif_getether(struct saif *sif, u_char *ea)
 {
 	char *rev;
 

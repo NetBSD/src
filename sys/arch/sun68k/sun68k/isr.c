@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.5 2003/07/15 03:36:21 lukem Exp $	*/
+/*	$NetBSD: isr.c,v 1.6 2005/01/22 15:36:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.5 2003/07/15 03:36:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6 2005/01/22 15:36:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,24 +77,22 @@ struct isr {
  */
 struct softintr_head soft_level_heads[(_IPL_SOFT_LEVEL_MAX - _IPL_SOFT_LEVEL_MIN) + 1];
 void *softnet_cookie;
-static int softintr_handler __P((void *));
+static int softintr_handler(void *);
 
-void set_vector_entry __P((int, void *));
-void * get_vector_entry __P((int));
+void set_vector_entry(int, void *);
+void * get_vector_entry(int);
 
 /*
  * These are called from locore.  The "struct clockframe" arg
  * is really just the normal H/W interrupt frame format.
  * (kern_clock really wants it to be named that...)
  */
-void	isr_autovec  __P((struct clockframe));
-void	isr_vectored __P((struct clockframe));
+void	isr_autovec (struct clockframe);
+void	isr_vectored(struct clockframe);
 
 
-void
-isr_add_custom(level, handler)
-	int level;
-	void *handler;
+void 
+isr_add_custom(int level, void *handler)
 {
 	set_vector_entry(AUTOVEC_BASE + level, handler);
 }
@@ -106,7 +104,8 @@ isr_add_custom(level, handler)
  * a bitmask to avoid atomicity locking issues.
  */
 
-void netintr()
+void 
+netintr(void)
 {
 	int n, s;
 
@@ -132,8 +131,8 @@ static struct isr *isr_autovec_list[NUM_LEVELS];
  * This is called by the assembly routines
  * for handling auto-vectored interrupts.
  */
-void isr_autovec(cf)
-	struct clockframe cf;
+void
+isr_autovec(struct clockframe cf)
 {
 	struct isr *isr;
 	int n, ipl, vec;
@@ -168,10 +167,8 @@ void isr_autovec(cf)
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
-void isr_add_autovect(handler, arg, level)
-	isr_func_t handler;
-	void *arg;
-	int level;
+void
+isr_add_autovect(isr_func_t handler, void *arg, int level)
 {
 	struct isr *new_isr;
 
@@ -200,8 +197,7 @@ static struct vector_handler isr_vector_handlers[192];
  * for handling vectored interrupts.
  */
 void
-isr_vectored(cf)
-	struct clockframe cf;
+isr_vectored(struct clockframe cf)
 {
 	struct vector_handler *vh;
 	int ipl, vec;
@@ -233,12 +229,9 @@ isr_vectored(cf)
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
-extern void _isr_vectored __P((void));
+extern void _isr_vectored(void);
 void
-isr_add_vectored(func, arg, level, vec)
-	isr_func_t func;
-	void *arg;
-	int level, vec;
+isr_add_vectored(isr_func_t func, void *arg, int level, int vec)
 {
 	struct vector_handler *vh;
 
@@ -300,7 +293,8 @@ softintr_init(void)
 		isr_add_autovect(softintr_handler, shd, ipl);
 	}
 
-	softnet_cookie = softintr_establish(IPL_SOFTNET, (void (*) __P((void *))) netintr, NULL);
+	softnet_cookie = softintr_establish(IPL_SOFTNET,
+					    (void (*)(void *)) netintr, NULL);
 }
 
 /*
@@ -345,10 +339,8 @@ softintr_disestablish(void *arg)
 /*
  * XXX - could just kill these...
  */
-void
-set_vector_entry(entry, handler)
-	int entry;
-	void *handler;
+void 
+set_vector_entry(int entry, void *handler)
 {
 	if ((entry <0) || (entry >= NVECTORS))
 	panic("set_vector_entry: setting vector too high or low");
@@ -356,8 +348,7 @@ set_vector_entry(entry, handler)
 }
 
 void *
-get_vector_entry(entry)
-	int entry;
+get_vector_entry(int entry)
 {
 	if ((entry <0) || (entry >= NVECTORS))
 	panic("get_vector_entry: setting vector too high or low");

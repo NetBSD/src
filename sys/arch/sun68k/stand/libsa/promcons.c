@@ -1,24 +1,23 @@
-/*	$NetBSD: promcons.c,v 1.1 2001/06/14 12:57:15 fredette Exp $	*/
+/*	$NetBSD: promcons.c,v 1.2 2005/01/22 15:36:11 chs Exp $	*/
 
 
 #include <sys/types.h>
 #include <machine/mon.h>
 
-int
-getchar()
+int 
+getchar(void)
 {
 	return ( (*romVectorPtr->getChar)() );
 }
 
-int
-peekchar()
+int 
+peekchar(void)
 {
 	return ( (*romVectorPtr->mayGet)() );
 }
 
-void
-putchar(c)
-	int c;
+void 
+putchar(int c)
 {
 	if (c == '\n')
 		(*romVectorPtr->putChar)('\r');
