@@ -1,8 +1,8 @@
-/*	$NetBSD: cpu.h,v 1.4 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.1 1999/04/17 21:16:47 ws Exp $	*/
 
 /*
- * Copyright (C) 1995-1997 Wolfgang Solfrank.
- * Copyright (C) 1995-1997 TooLs GmbH.
+ * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
+ * Copyright (C) 1995-1997, 1999 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,36 +30,60 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_CPU_H_
-#define	_MACHINE_CPU_H_
+#include <sys/param.h>
+#if	defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/proc.h>
+#include <vm/vm.h>
+#endif
+#include <sys/sysctl.h>
 
-#include <machine/frame.h>
-#include <machine/psl.h>
+#include <machine/cpu.h>
 
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth > 0)
+#if	defined(_KERNEL) || defined(_STANDALONE)
+#ifndef	CACHELINESIZE
+#error "Must know the size of a cache line"
+#endif
+#else
+static int _cachelinesize;
+#define	CACHELINESIZE	_cachelinesize
 
-#define	cpu_swapout(p)
-#define cpu_wait(p)
+static void
+getcachelinesize()
+{
+	static int cachemib[] = { CTL_MACHDEP, CPU_CACHELINE };
+	int clen = sizeof(_cachelinesize);
 
-extern void delay __P((int));
-#define	DELAY(n)		delay(n)
-
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define	need_resched()		(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
-
-extern char *bootpath;
-
-#ifdef	_KERNEL
-#define	CACHELINESIZE	32
+	if (sysctl(cachemib, sizeof(cachemib) / sizeof(cachemib[0]),
+		   &_cachelinesize, &clen, NULL, 0) < 0
+	    || !_cachelinesize)
+		abort();
+}
 #endif
 
-#include <powerpc/cpu.h>
+void
+__syncicache(from, len)
+	void *from;
+	int len;
+{
+	int l, off;
+	char *p;
 
-#endif	/* _MACHINE_CPU_H_ */
+#if	!defined(_KERNEL) && !defined(_STANDALONE)
+	if (!_cachelinesize)
+		getcachelinesize();
+#endif	
+	off = (u_int)from & (CACHELINESIZE - 1);
+	l = len += off;
+	p = (char *)from - off;
+	do {
+		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
+	__asm__ __volatile ("sync");
+	p = (char *)from - off;
+	do {
+		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((len -= CACHELINESIZE) > 0);
+	__asm__ __volatile ("isync");
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1997/11/05 04:19:04 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1999/04/17 21:16:47 ws Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -91,28 +91,12 @@ extern __volatile int astpending;
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 
-#define	CACHELINESIZE	32			/* For now		XXX */
-
-extern __inline void
-syncicache(from, len)
-	void *from;
-	int len;
-{
-	int l = len;
-	void *p = from;
-	
-	do {
-		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("sync");
-	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(from));
-		from += CACHELINESIZE;
-	} while ((len -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("isync");
-}
-
 extern char *bootpath;
+
+#ifdef	_KERNEL
+#define	CACHELINESIZE	32
+#endif
+
+#include <powerpc/cpu.h>
 
 #endif	/* _MACHINE_CPU_H_ */

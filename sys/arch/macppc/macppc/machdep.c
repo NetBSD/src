@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1999/04/16 21:47:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1999/04/17 21:16:46 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -278,7 +278,7 @@ initppc(startkernel, endkernel, args)
 	 */
 	install_extint(ext_intr);
 
-	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
+	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
@@ -460,8 +460,8 @@ install_extint(handler)
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
-	syncicache((void *)&extint_call, sizeof extint_call);
-	syncicache((void *)EXC_EXI, (int)&extsize);
+	__syncicache((void *)&extint_call, sizeof extint_call);
+	__syncicache((void *)EXC_EXI, (int)&extsize);
 	asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
@@ -697,9 +697,9 @@ setregs(p, pack, stack)
 	p->p_addr->u_pcb.pcb_flags = 0;
 
 	/* sync I-cache for signal trampoline code */
-	syncicache((void *)pmap_extract(p->p_addr->u_pcb.pcb_pm,
-					(vaddr_t)p->p_sigacts->ps_sigcode),
-		   pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
+	__syncicache((void *)pmap_extract(p->p_addr->u_pcb.pcb_pm,
+					  (vaddr_t)p->p_sigacts->ps_sigcode),
+		     pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
 }
 
 /*
@@ -824,7 +824,6 @@ sys___sigreturn14(p, v, retval)
 
 /*
  * Machine dependent system variables.
- * None for now.
  */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -839,7 +838,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return ENOTDIR;
+
 	switch (name[0]) {
+	case CPU_CACHELINE:
+		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
 	default:
 		return EOPNOTSUPP;
 	}
