@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.15 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.16 1999/03/05 20:47:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -97,7 +97,9 @@ lfs_update(v)
 	ip = VTOI(vp);
 	mod = ip->i_flag & IN_MODIFIED;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	FFS_ITIMES(ip, ap->a_access, ap->a_modify, &ts);
+	FFS_ITIMES(ip,
+	    ap->a_access ? ap->a_access : &ts,
+	    ap->a_modify ? ap->a_modify : &ts, &ts);
 	if (!mod && ip->i_flag & IN_MODIFIED)
 		ip->i_lfs->lfs_uinodes++;
 	if ((ip->i_flag & IN_MODIFIED) == 0)

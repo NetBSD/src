@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.76 1998/09/21 15:17:42 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.77 1999/03/05 20:47:06 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -763,7 +763,9 @@ msdosfs_update(v)
 		return (0);
 	dep = VTODE(ap->a_vp);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(dep, ap->a_access, ap->a_modify, &ts);
+	DETIMES(dep,
+	    ap->a_access ? ap->a_access : &ts,
+	    ap->a_modify ? ap->a_modify : &ts, &ts);
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);
 	dep->de_flag &= ~DE_MODIFIED;
