@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/09/28 22:06:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/14 05:22:33 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,8 @@ SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
 	cipher.c compat.c compress.c crc32.c deattack.c \
 	hostfile.c log.c match.c mpaux.c nchan.c packet.c readpass.c \
 	random.c rsa.c tildexpand.c ttymodes.c uidswap.c xmalloc.c \
-	atomicio.c key.c dispatch.c dsa.c kex.c hmac.c uuencode.c util.c
+	atomicio.c key.c dispatch.c kex.c hmac.c uuencode.c util.c \
+	cli.c rijndael.c ssh-dss.c ssh-rsa.c
 
 MKLINT=		no
 MKMAN=		no

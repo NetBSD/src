@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.2 2000/11/07 16:06:24 is Exp $	*/
+/*	$NetBSD: canohost.c,v 1.3 2001/01/14 05:22:31 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,11 +13,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: canohost.c,v 1.15 2000/09/07 21:13:37 markus Exp */
+/* from OpenBSD: canohost.c,v 1.17 2000/12/19 23:17:55 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: canohost.c,v 1.2 2000/11/07 16:06:24 is Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.3 2001/01/14 05:22:31 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -120,7 +120,7 @@ check_ip_options:
 	 */
 	/* IP options -- IPv4 only */
 	if (from.ss_family == AF_INET) {
-		unsigned char options[200], *ucp;
+		u_char options[200], *ucp;
 		char text[1024], *cp;
 		socklen_t option_size;
 		int ipproto;

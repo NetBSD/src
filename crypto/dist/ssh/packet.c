@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.3 2001/01/05 06:33:36 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.4 2001/01/14 05:22:32 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,11 +38,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: packet.c,v 1.35 2000/09/07 20:27:52 deraadt Exp */
+/* from OpenBSD: packet.c,v 1.41 2001/01/02 20:41:02 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: packet.c,v 1.3 2001/01/05 06:33:36 itojun Exp $");
+__RCSID("$NetBSD: packet.c,v 1.4 2001/01/14 05:22:32 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: packet.c,v 1.3 2001/01/05 06:33:36 itojun Exp $");
 #include "bufaux.h"
 #include "ssh.h"
 #include "crc32.h"
-#include "cipher.h"
 #include "getput.h"
 
 #include "compress.h"
@@ -68,6 +67,7 @@ __RCSID("$NetBSD: packet.c,v 1.3 2001/01/05 06:33:36 itojun Exp $");
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include "buffer.h"
+#include "cipher.h"
 #include "kex.h"
 #include "hmac.h"
 
@@ -93,7 +93,7 @@ static int connection_out = -1;
 static int cipher_type = SSH_CIPHER_NONE;
 
 /* Protocol flags for the remote side. */
-static unsigned int remote_protocol_flags = 0;
+static u_int remote_protocol_flags = 0;
 
 /* Encryption context for receiving data.  This is only used for decryption. */
 static CipherContext receive_context;
@@ -170,11 +170,14 @@ packet_set_ssh2_format(void)
 void
 packet_set_connection(int fd_in, int fd_out)
 {
+	Cipher *none = cipher_by_name("none");
+	if (none == NULL)
+		fatal("packet_set_connection: cannot load cipher 'none'");
 	connection_in = fd_in;
 	connection_out = fd_out;
 	cipher_type = SSH_CIPHER_NONE;
-	cipher_set_key(&send_context, SSH_CIPHER_NONE, (unsigned char *) "", 0);
-	cipher_set_key(&receive_context, SSH_CIPHER_NONE, (unsigned char *) "", 0);
+	cipher_init(&send_context, none, (u_char *) "", 0, NULL, 0);
+	cipher_init(&receive_context, none, (u_char *) "", 0, NULL, 0);
 	if (!initialized) {
 		initialized = 1;
 		buffer_init(&input);
@@ -287,7 +290,7 @@ packet_close()
 /* Sets remote side protocol flags. */
 
 void
-packet_set_protocol_flags(unsigned int protocol_flags)
+packet_set_protocol_flags(u_int protocol_flags)
 {
 	remote_protocol_flags = protocol_flags;
 	channel_set_options((protocol_flags & SSH_PROTOFLAG_HOST_IN_FWD_OPEN) != 0);
@@ -295,7 +298,7 @@ packet_set_protocol_flags(unsigned int protocol_flags)
 
 /* Returns the remote protocol flags set earlier by the above function. */
 
-unsigned int
+u_int
 packet_get_protocol_flags()
 {
 	return remote_protocol_flags;
@@ -324,7 +327,7 @@ packet_start_compression(int level)
 
 static void
 packet_encrypt(CipherContext * cc, void *dest, void *src,
-    unsigned int bytes)
+    u_int bytes)
 {
 	cipher_encrypt(cc, dest, src, bytes);
 }
@@ -335,28 +338,18 @@ packet_encrypt(CipherContext * cc, void *dest, void *src,
  */
 
 static void
-packet_decrypt(CipherContext * cc, void *dest, void *src,
-    unsigned int bytes)
+packet_decrypt(CipherContext *context, void *dest, void *src, u_int bytes)
 {
-	int i;
-
-	if ((bytes % 8) != 0)
-		fatal("packet_decrypt: bad ciphertext length %d", bytes);
-
 	/*
 	 * Cryptographic attack detector for ssh - Modifications for packet.c
 	 * (C)1998 CORE-SDI, Buenos Aires Argentina Ariel Futoransky(futo@core-sdi.com)
 	 */
-
-	if (cc->type == SSH_CIPHER_NONE || compat20) {
-		i = DEATTACK_OK;
-	} else {
-		i = detect_attack(src, bytes, NULL);
-	}
-	if (i == DEATTACK_DETECTED)
+	if (!compat20 &&
+	    context->cipher->number != SSH_CIPHER_NONE &&
+	    detect_attack(src, bytes, NULL) == DEATTACK_DETECTED)
 		packet_disconnect("crc32 compensation attack: network attack detected");
 
-	cipher_decrypt(cc, dest, src, bytes);
+	cipher_decrypt(context, dest, src, bytes);
 }
 
 /*
@@ -366,15 +359,16 @@ packet_decrypt(CipherContext * cc, void *dest, void *src,
  */
 
 void
-packet_set_encryption_key(const unsigned char *key, unsigned int keylen,
-    int cipher)
+packet_set_encryption_key(const u_char *key, u_int keylen,
+    int number)
 {
+	Cipher *cipher = cipher_by_number(number);
+	if (cipher == NULL)
+		fatal("packet_set_encryption_key: unknown cipher number %d", number);
 	if (keylen < 20)
-		fatal("keylen too small: %d", keylen);
-
-	/* All other ciphers use the same key in both directions for now. */
-	cipher_set_key(&receive_context, cipher, key, keylen);
-	cipher_set_key(&send_context, cipher, key, keylen);
+		fatal("packet_set_encryption_key: keylen too small: %d", keylen);
+	cipher_init(&receive_context, cipher, key, keylen, NULL, 0);
+	cipher_init(&send_context, cipher, key, keylen, NULL, 0);
 }
 
 /* Starts constructing a packet to send. */
@@ -425,7 +419,7 @@ packet_put_char(int value)
 /* Appends an integer to the packet data. */
 
 void
-packet_put_int(unsigned int value)
+packet_put_int(u_int value)
 {
 	buffer_put_int(&outgoing_packet, value);
 }
@@ -433,7 +427,7 @@ packet_put_int(unsigned int value)
 /* Appends a string to packet data. */
 
 void
-packet_put_string(const char *buf, unsigned int len)
+packet_put_string(const char *buf, u_int len)
 {
 	buffer_put_string(&outgoing_packet, buf, len);
 }
@@ -444,7 +438,7 @@ packet_put_cstring(const char *str)
 }
 
 void
-packet_put_raw(const char *buf, unsigned int len)
+packet_put_raw(const char *buf, u_int len)
 {
 	buffer_append(&outgoing_packet, buf, len);
 }
@@ -473,7 +467,7 @@ packet_send1(void)
 {
 	char buf[8], *cp;
 	int i, padding, len;
-	unsigned int checksum;
+	u_int checksum;
 	u_int32_t rand = 0;
 
 	/*
@@ -511,7 +505,7 @@ packet_send1(void)
 	buffer_consume(&outgoing_packet, 8 - padding);
 
 	/* Add check bytes. */
-	checksum = ssh_crc32((unsigned char *) buffer_ptr(&outgoing_packet),
+	checksum = ssh_crc32((u_char *) buffer_ptr(&outgoing_packet),
 	    buffer_len(&outgoing_packet));
 	PUT_32BIT(buf, checksum);
 	buffer_append(&outgoing_packet, buf, 4);
@@ -548,12 +542,12 @@ packet_send1(void)
 static void
 packet_send2(void)
 {
-	unsigned char *macbuf = NULL;
+	u_char *macbuf = NULL;
 	char *cp;
-	unsigned int packet_length = 0;
-	unsigned int i, padlen, len;
+	u_int packet_length = 0;
+	u_int i, padlen, len;
 	u_int32_t rand = 0;
-	static unsigned int seqnr = 0;
+	static u_int seqnr = 0;
 	int type;
 	Enc *enc   = NULL;
 	Mac *mac   = NULL;
@@ -565,7 +559,7 @@ packet_send2(void)
 		mac  = &kex->mac[MODE_OUT];
 		comp = &kex->comp[MODE_OUT];
 	}
-	block_size = enc ? enc->block_size : 8;
+	block_size = enc ? enc->cipher->block_size : 8;
 
 	cp = buffer_ptr(&outgoing_packet);
 	type = cp[5] & 0xff;
@@ -600,7 +594,7 @@ packet_send2(void)
 	if (padlen < 4)
 		padlen += block_size;
 	buffer_append_space(&outgoing_packet, &cp, padlen);
-	if (enc && enc->type != SSH_CIPHER_NONE) {
+	if (enc && enc->cipher->number != SSH_CIPHER_NONE) {
 		/* random padding */
 		for (i = 0; i < padlen; i++) {
 			if (i % 4 == 0) {
@@ -625,11 +619,11 @@ packet_send2(void)
 	/* compute MAC over seqnr and packet(length fields, payload, padding) */
 	if (mac && mac->enabled) {
 		macbuf = hmac( mac->md, seqnr,
-		    (unsigned char *) buffer_ptr(&outgoing_packet),
+		    (u_char *) buffer_ptr(&outgoing_packet),
 		    buffer_len(&outgoing_packet),
 		    mac->key, mac->key_len
 		);
-		DBG(debug("done calc HMAC out #%d", seqnr));
+		DBG(debug("done calc MAC out #%d", seqnr));
 	}
 	/* encrypt packet and append to output buffer. */
 	buffer_append_space(&output, &cp, buffer_len(&outgoing_packet));
@@ -652,10 +646,10 @@ packet_send2(void)
 			fatal("packet_send2: no KEX");
 		if (mac->md != NULL)
 			mac->enabled = 1;
-		DBG(debug("cipher_set_key_iv send_context"));
-		cipher_set_key_iv(&send_context, enc->type,
-		    enc->key, enc->key_len,
-		    enc->iv, enc->iv_len);
+		DBG(debug("cipher_init send_context"));
+		cipher_init(&send_context, enc->cipher,
+		    enc->key, enc->cipher->key_len,
+		    enc->iv, enc->cipher->block_size);
 		clear_enc_keys(enc, kex->we_need);
 		if (comp->type != 0 && comp->enabled == 0) {
 			comp->enabled = 1;
@@ -763,16 +757,16 @@ packet_read_expect(int *payload_len_ptr, int expected_type)
 static int
 packet_read_poll1(int *payload_len_ptr)
 {
-	unsigned int len, padded_len;
-	unsigned char *ucp;
+	u_int len, padded_len;
+	u_char *ucp;
 	char buf[8], *cp;
-	unsigned int checksum, stored_checksum;
+	u_int checksum, stored_checksum;
 
 	/* Check if input size is less than minimum packet size. */
 	if (buffer_len(&input) < 4 + 8)
 		return SSH_MSG_NONE;
 	/* Get length of incoming packet. */
-	ucp = (unsigned char *) buffer_ptr(&input);
+	ucp = (u_char *) buffer_ptr(&input);
 	len = GET_32BIT(ucp);
 	if (len < 1 + 2 + 2 || len > 256 * 1024)
 		packet_disconnect("Bad packet length %d.", len);
@@ -799,7 +793,7 @@ packet_read_poll1(int *payload_len_ptr)
 #endif
 
 	/* Compute packet checksum. */
-	checksum = ssh_crc32((unsigned char *) buffer_ptr(&incoming_packet),
+	checksum = ssh_crc32((u_char *) buffer_ptr(&incoming_packet),
 	    buffer_len(&incoming_packet) - 4);
 
 	/* Skip padding. */
@@ -811,7 +805,7 @@ packet_read_poll1(int *payload_len_ptr)
 		packet_disconnect("packet_read_poll: len %d != buffer_len %d.",
 		    len, buffer_len(&incoming_packet));
 
-	ucp = (unsigned char *) buffer_ptr(&incoming_packet) + len - 4;
+	ucp = (u_char *) buffer_ptr(&incoming_packet) + len - 4;
 	stored_checksum = GET_32BIT(ucp);
 	if (checksum != stored_checksum)
 		packet_disconnect("Corrupted check bytes on input.");
@@ -832,18 +826,18 @@ packet_read_poll1(int *payload_len_ptr)
 	*payload_len_ptr = buffer_len(&incoming_packet);
 
 	/* Return type. */
-	return (unsigned char) buf[0];
+	return (u_char) buf[0];
 }
 
 static int
 packet_read_poll2(int *payload_len_ptr)
 {
-	unsigned int padlen, need;
-	unsigned char buf[8], *macbuf;
-	unsigned char *ucp;
+	u_int padlen, need;
+	u_char buf[8], *macbuf;
+	u_char *ucp;
 	char *cp;
-	static unsigned int packet_length = 0;
-	static unsigned int seqnr = 0;
+	static u_int packet_length = 0;
+	static u_int seqnr = 0;
 	int type;
 	int maclen, block_size;
 	Enc *enc   = NULL;
@@ -856,7 +850,7 @@ packet_read_poll2(int *payload_len_ptr)
 		comp = &kex->comp[MODE_IN];
 	}
 	maclen = mac && mac->enabled ? mac->mac_len : 0;
-	block_size = enc ? enc->block_size : 8;
+	block_size = enc ? enc->cipher->block_size : 8;
 
 	if (packet_length == 0) {
 		/*
@@ -869,7 +863,7 @@ packet_read_poll2(int *payload_len_ptr)
 		buffer_append_space(&incoming_packet, &cp, block_size);
 		packet_decrypt(&receive_context, cp, buffer_ptr(&input),
 		    block_size);
-		ucp = (unsigned char *) buffer_ptr(&incoming_packet);
+		ucp = (u_char *) buffer_ptr(&incoming_packet);
 		packet_length = GET_32BIT(ucp);
 		if (packet_length < 1 + 4 || packet_length > 256 * 1024) {
 			buffer_dump(&incoming_packet);
@@ -904,13 +898,13 @@ packet_read_poll2(int *payload_len_ptr)
 	 */
 	if (mac && mac->enabled) {
 		macbuf = hmac( mac->md, seqnr,
-		    (unsigned char *) buffer_ptr(&incoming_packet),
+		    (u_char *) buffer_ptr(&incoming_packet),
 		    buffer_len(&incoming_packet),
 		    mac->key, mac->key_len
 		);
 		if (memcmp(macbuf, buffer_ptr(&input), mac->mac_len) != 0)
-			packet_disconnect("Corrupted HMAC on input.");
-		DBG(debug("HMAC #%d ok", seqnr));
+			packet_disconnect("Corrupted MAC on input.");
+		DBG(debug("MAC #%d ok", seqnr));
 		buffer_consume(&input, mac->mac_len);
 	}
 	if (++seqnr == 0)
@@ -947,17 +941,17 @@ packet_read_poll2(int *payload_len_ptr)
 	packet_length = 0;
 
 	/* extract packet type */
-	type = (unsigned char)buf[0];
+	type = (u_char)buf[0];
 
 	if (type == SSH2_MSG_NEWKEYS) {
 		if (kex==NULL || mac==NULL || enc==NULL || comp==NULL)
 			fatal("packet_read_poll2: no KEX");
 		if (mac->md != NULL)
 			mac->enabled = 1;
-		DBG(debug("cipher_set_key_iv receive_context"));
-		cipher_set_key_iv(&receive_context, enc->type,
-		    enc->key, enc->key_len,
-		    enc->iv, enc->iv_len);
+		DBG(debug("cipher_init receive_context"));
+		cipher_init(&receive_context, enc->cipher,
+		    enc->key, enc->cipher->key_len,
+		    enc->iv, enc->cipher->block_size);
 		clear_enc_keys(enc, kex->we_need);
 		if (comp->type != 0 && comp->enabled == 0) {
 			comp->enabled = 1;
@@ -970,7 +964,7 @@ packet_read_poll2(int *payload_len_ptr)
 	fprintf(stderr, "read/plain[%d]:\r\n",type);
 	buffer_dump(&incoming_packet);
 #endif
-	return (unsigned char)type;
+	return (u_char)type;
 }
 
 int
@@ -1041,24 +1035,24 @@ packet_read_poll(int *payload_len_ptr)
  */
 
 void
-packet_process_incoming(const char *buf, unsigned int len)
+packet_process_incoming(const char *buf, u_int len)
 {
 	buffer_append(&input, buf, len);
 }
 
 /* Returns a character from the packet. */
 
-unsigned int
+u_int
 packet_get_char()
 {
 	char ch;
 	buffer_get(&incoming_packet, &ch, 1);
-	return (unsigned char) ch;
+	return (u_char) ch;
 }
 
 /* Returns an integer from the packet data. */
 
-unsigned int
+u_int
 packet_get_int()
 {
 	return buffer_get_int(&incoming_packet);
@@ -1104,7 +1098,7 @@ packet_remaining(void)
  */
 
 char *
-packet_get_string(unsigned int *length_ptr)
+packet_get_string(u_int *length_ptr)
 {
 	return buffer_get_string(&incoming_packet, length_ptr);
 }
@@ -1123,6 +1117,9 @@ packet_send_debug(const char *fmt,...)
 {
 	char buf[1024];
 	va_list args;
+
+	if (compat20 && (datafellows & SSH_BUG_DEBUG))
+		return;
 
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);

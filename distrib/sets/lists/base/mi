@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.210 2001/01/07 13:05:28 martin Exp $
+# $NetBSD: mi,v 1.211 2001/01/14 05:22:34 itojun Exp $
 .
 ./altroot
 ./bin
@@ -353,6 +353,7 @@
 ./usr/bin/ssh-add
 ./usr/bin/ssh-agent
 ./usr/bin/ssh-keygen
+./usr/bin/ssh-keyscan
 ./usr/bin/string2key
 ./usr/bin/su
 ./usr/bin/sum
@@ -521,6 +522,7 @@
 ./usr/libexec/rshd
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/sendmail
+./usr/libexec/sftp-server
 ./usr/libexec/sm.bin
 ./usr/libexec/smrsh
 ./usr/libexec/telnetd

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.2 2000/10/03 09:56:38 lukem Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.3 2001/01/14 05:22:31 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,11 +15,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rhosts.c,v 1.15 2000/09/07 20:27:49 deraadt Exp */
+/* from OpenBSD: auth-rhosts.c,v 1.17 2000/12/19 23:17:55 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-rhosts.c,v 1.2 2000/10/03 09:56:38 lukem Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.3 2001/01/14 05:22:31 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -161,8 +161,11 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 	const char *hostname, *ipaddr;
 	struct stat st;
 	static const char *rhosts_files[] = {".shosts", ".rhosts", NULL};
-	unsigned int rhosts_file_index;
+	u_int rhosts_file_index;
 
+	/* no user given */
+	if (pw == NULL)
+		return 0;
 	/* Switch to the user's uid. */
 	temporarily_use_uid(pw->pw_uid);
 	/*

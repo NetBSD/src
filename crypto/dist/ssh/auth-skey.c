@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-skey.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $	*/
+/*	$NetBSD: auth-skey.c,v 1.3 2001/01/14 05:22:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: auth-skey.c,v 1.8 2000/09/07 20:27:49 deraadt Exp */
+/* from OpenBSD: auth-skey.c,v 1.9 2000/10/19 16:41:13 deraadt Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-skey.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $");
+__RCSID("$NetBSD: auth-skey.c,v 1.3 2001/01/14 05:22:31 itojun Exp $");
 #endif
 
 #include "includes.h"
