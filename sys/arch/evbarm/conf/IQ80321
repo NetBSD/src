@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.16 2003/04/16 23:34:31 thorpej Exp $
+#	$NetBSD: IQ80321,v 1.17 2003/05/23 14:23:46 thorpej Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -131,7 +131,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=210000
+options 	SYMTAB_SPACE=220000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
@@ -211,6 +211,7 @@ pseudo-device	kttcp			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end

@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.1 2003/05/23 00:57:26 ichiro Exp $
+#	$NetBSD: ZAO425,v 1.2 2003/05/23 14:23:47 thorpej Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -171,6 +171,7 @@ pseudo-device	kttcp			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
