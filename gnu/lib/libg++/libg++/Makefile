@@ -1,9 +1,6 @@
-#	$Id: Makefile,v 1.19 1994/01/05 21:27:44 mycroft Exp $
+#	$Id: Makefile,v 1.20 1994/01/05 21:34:30 mycroft Exp $
 
 LIB=		g++
-
-DPADD+=		${LIBCURSES}
-LDADD+=		-lcurses
 
 SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
@@ -25,7 +22,7 @@ CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../g++-include \
 		-I$(.CURDIR)/../iostream
 CFLAGS+=	-I$(.CURDIR)
 LDADD=		/usr/lib/c++rt0.o -lcurses
-DPADD=		/usr/lib/c++rt0.o
+DPADD=		/usr/lib/c++rt0.o ${LIBCURSES}
 NOMAN=		noman
 .PATH:		$(.CURDIR)/../iostream 
 
