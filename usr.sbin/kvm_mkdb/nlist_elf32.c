@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.5 1997/10/23 12:30:32 enami Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.6 1997/12/15 04:21:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.5 1997/10/23 12:30:32 enami Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.6 1997/12/15 04:21:34 mrg Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -137,7 +137,8 @@ ELFNAMEEND(create_knlist)(name, db)
 	 * Map the file in its entirety.
 	 */
 	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
+	    fd, 0);
 	if (mappedfile == (char *)-1)
 		BAD;
 
