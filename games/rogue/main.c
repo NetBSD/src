@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1997/10/12 11:45:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $";
+__RCSID("$NetBSD: main.c,v 1.4 1997/10/12 11:45:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,11 +64,12 @@ static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $";
 
 #include "rogue.h"
 
-extern short party_room;
+int	main __P((int, char **));
 
+int
 main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	if (init(argc, argv)) {		/* restored game */
 		goto PL;

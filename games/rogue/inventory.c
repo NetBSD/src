@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.4 1997/05/17 19:26:24 pk Exp $	*/
+/*	$NetBSD: inventory.c,v 1.5 1997/10/12 11:45:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: inventory.c,v 1.4 1997/05/17 19:26:24 pk Exp $";
+__RCSID("$NetBSD: inventory.c,v 1.5 1997/10/12 11:45:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,62 +164,60 @@ struct id_com_s {
 };
 
 struct id_com_s com_id_tab[COMS] = {
-	'?',	"?       prints help",
-	'r',	"r       read scroll",
-	'/',	"/       identify object",
-	'e',	"e       eat food",
-	'h',	"h       left ",
-	'w',	"w       wield a weapon",
-	'j',	"j       down",
-	'W',	"W       wear armor",
-	'k',	"k       up",
-	'T',	"T       take armor off",
-	'l',	"l       right",
-	'P',	"P       put on ring",
-	'y',	"y       up & left",
-	'R',	"R       remove ring",
-	'u',	"u       up & right",
-	'd',	"d       drop object",
-	'b',	"b       down & left",
-	'c',	"c       call object",
-	'n',	"n       down & right",
-	'\0',	"<SHIFT><dir>: run that way",
-	')',	")       print current weapon",
-	'\0',	"<CTRL><dir>: run till adjacent",
-	']',	"]       print current armor",
-	'f',	"f<dir>  fight till death or near death",
-	'=',	"=       print current rings",
-	't',	"t<dir>  throw something",
-	'\001',	"^A      print Hp-raise average",
-	'm',	"m<dir>  move onto without picking up",
-	'z',	"z<dir>  zap a wand in a direction",
-	'o',	"o       examine/set options",
-	'^',	"^<dir>  identify trap type",
-	'\022',	"^R      redraw screen",
-	'&',	"&       save screen into 'rogue.screen'",
-	's',	"s       search for trap/secret door",
-	'\020',	"^P      repeat last message",
-	'>',	">       go down a staircase",
-	'\033',	"^[      cancel command",
-	'<',	"<       go up a staircase",
-	'S',	"S       save game",
-	'.',	".       rest for a turn",
-	'Q',	"Q       quit",
-	',',	",       pick something up",
-	'!',	"!       shell escape",
-	'i',	"i       inventory",
-	'F',	"F<dir>  fight till either of you dies",
-	'I',	"I       inventory single item",
-	'v',	"v       print version number",
-	'q',	"q       quaff potion"
+	{'?',	"?       prints help"},
+	{'r',	"r       read scroll"},
+	{'/',	"/       identify object"},
+	{'e',	"e       eat food"},
+	{'h',	"h       left "},
+	{'w',	"w       wield a weapon"},
+	{'j',	"j       down"},
+	{'W',	"W       wear armor"},
+	{'k',	"k       up"},
+	{'T',	"T       take armor off"},
+	{'l',	"l       right"},
+	{'P',	"P       put on ring"},
+	{'y',	"y       up & left"},
+	{'R',	"R       remove ring"},
+	{'u',	"u       up & right"},
+	{'d',	"d       drop object"},
+	{'b',	"b       down & left"},
+	{'c',	"c       call object"},
+	{'n',	"n       down & right"},
+	{'\0',	"<SHIFT><dir>: run that way"},
+	{')',	")       print current weapon"},
+	{'\0',	"<CTRL><dir>: run till adjacent"},
+	{']',	"]       print current armor"},
+	{'f',	"f<dir>  fight till death or near death"},
+	{'=',	"=       print current rings"},
+	{'t',	"t<dir>  throw something"},
+	{'\001',	"^A      print Hp-raise average"},
+	{'m',	"m<dir>  move onto without picking up"},
+	{'z',	"z<dir>  zap a wand in a direction"},
+	{'o',	"o       examine/set options"},
+	{'^',	"^<dir>  identify trap type"},
+	{'\022',	"^R      redraw screen"},
+	{'&',	"&       save screen into 'rogue.screen'"},
+	{'s',	"s       search for trap/secret door"},
+	{'\020',	"^P      repeat last message"},
+	{'>',	">       go down a staircase"},
+	{'\033',	"^[      cancel command"},
+	{'<',	"<       go up a staircase"},
+	{'S',	"S       save game"},
+	{'.',	".       rest for a turn"},
+	{'Q',	"Q       quit"},
+	{',',	",       pick something up"},
+	{'!',	"!       shell escape"},
+	{'i',	"i       inventory"},
+	{'F',	"F<dir>  fight till either of you dies"},
+	{'I',	"I       inventory single item"},
+	{'v',	"v       print version number"},
+	{'q',	"q       quaff potion" }
 };
 
-extern boolean wizard;
-extern char *m_names[], *more;
-
+void
 inventory(pack, mask)
-object *pack;
-unsigned short mask;
+	object *pack;
+	unsigned short mask;
 {
 	object *obj;
 	short i = 0, j, maxlen = 0, n;
@@ -271,6 +270,7 @@ unsigned short mask;
 	}
 }
 
+void
 id_com()
 {
 	int ch = 0;
@@ -288,7 +288,7 @@ id_com()
 			{
 				char save[(((COMS / 2) + (COMS % 2)) + 1)][DCOLS];
 				short rows = (((COMS / 2) + (COMS % 2)) + 1);
-				boolean need_two_screens;
+				boolean need_two_screens = FALSE;
 
 				if (rows > LINES) {
 					need_two_screens = 1;
@@ -347,8 +347,9 @@ MORE:
 	}
 }
 
+int
 pr_com_id(ch)
-int ch;
+	int ch;
 {
 	int i;
 
@@ -360,9 +361,10 @@ int ch;
 	return(1);
 }
 
+int
 get_com_id(index, ch)
-int *index;
-short ch;
+	int *index;
+	short ch;
 {
 	short i;
 
@@ -375,8 +377,9 @@ short ch;
 	return(0);
 }
 
+int
 pr_motion_char(ch)
-int ch;
+	int ch;
 {
 	if (	(ch == 'J') ||
 			(ch == 'K') ||
@@ -414,6 +417,7 @@ int ch;
 	}
 }
 
+void
 mix_colors()
 {
 	short i, j, k;
@@ -428,6 +432,7 @@ mix_colors()
 	}
 }
 
+void
 make_scroll_titles()
 {
 	short i, j, n;
@@ -446,9 +451,10 @@ make_scroll_titles()
 	}
 }
 
+void
 get_desc(obj, desc)
-object *obj;
-char *desc;
+	object *obj;
+	char *desc;
 {
 	char *item_name;
 	struct id *id_table;
@@ -609,6 +615,7 @@ ANA:
 	}
 }
 
+void
 get_wand_and_ring_materials()
 {
 	short i, j;
@@ -637,8 +644,9 @@ get_wand_and_ring_materials()
 	}
 }
 
+void
 single_inv(ichar)
-short ichar;
+	short ichar;
 {
 	short ch;
 	char desc[DCOLS];
@@ -663,7 +671,7 @@ short ichar;
 
 struct id *
 get_id_table(obj)
-object *obj;
+	object *obj;
 {
 	switch(obj->what_is) {
 	case SCROL:
@@ -682,8 +690,9 @@ object *obj;
 	return((struct id *) 0);
 }
 
+void
 inv_armor_weapon(is_weapon)
-boolean is_weapon;
+	boolean is_weapon;
 {
 	if (is_weapon) {
 		if (rogue.weapon) {
@@ -700,6 +709,7 @@ boolean is_weapon;
 	}
 }
 
+void
 id_type()
 {
 	char *id;

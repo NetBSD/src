@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $	*/
+/*	$NetBSD: random.c,v 1.4 1997/10/12 11:45:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,13 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)random.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $";
+__RCSID("$NetBSD: random.c,v 1.4 1997/10/12 11:45:43 lukem Exp $");
 #endif
 #endif /* not lint */
+
+#include "rogue.h"
 
 /*
  * random.c
@@ -74,11 +77,11 @@ static int rand_deg = 31;
 static int rand_sep = 3;
 static long *end_ptr = &rntb[32];
 
+void
 srrandom(x)
-int x;
+	int x;
 {
-	register int i;
-	long rrandom();
+	int i;
 
 	state[0] = (long) x;
 	if (rand_type != 0) {
@@ -115,10 +118,11 @@ rrandom()
 	return(i);
 }
 
+int
 get_rand(x, y)
-register int x, y;
+	int x, y;
 {
-	register int r, t;
+	int r, t;
 	long lr;
 
 	if (x > y) {
@@ -133,14 +137,15 @@ register int x, y;
 	return(r);
 }
 
+int
 rand_percent(percentage)
-register int percentage;
+	int percentage;
 {
 	return(get_rand(1, 100) <= percentage);
 }
 
+int
 coin_toss()
 {
-
 	return(((rrandom() & 01) ? 1 : 0));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.3 1995/04/22 10:27:27 cgd Exp $	*/
+/*	$NetBSD: curses.c,v 1.4 1997/10/12 11:45:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)curses.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: curses.c,v 1.3 1995/04/22 10:27:27 cgd Exp $";
+__RCSID("$NetBSD: curses.c,v 1.4 1997/10/12 11:45:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,7 +173,7 @@ char *str;
 }
 
 addch(ch)
-register int ch;
+	int ch;
 {
 	short row, col;
 
@@ -197,7 +198,7 @@ int ch;
 
 refresh()
 {
-	register i, j, line;
+	int i, j, line;
 	short old_row, old_col, first_row;
 
 	if (screen_dirty) {
@@ -307,7 +308,7 @@ nonl()
 
 clear_buffers()
 {
-	register i, j;
+	int i, j;
 
 	screen_dirty = 0;
 
@@ -321,7 +322,7 @@ clear_buffers()
 }
 
 put_char_at(row, col, ch)
-register row, col, ch;
+	int row, col, ch;
 {
 	put_cursor(row, col);
 	put_st_char(ch);
@@ -330,9 +331,9 @@ register row, col, ch;
 }
 
 put_cursor(row, col)
-register row, col;
+	int  row, col;
 {
-	register i, rdif, cdif;
+	int i, rdif, cdif;
 	short ch, t;
 
 	rdif = (row > cur_row) ? row - cur_row : cur_row - row;
@@ -384,7 +385,7 @@ register row, col;
 }
 
 put_st_char(ch)
-register ch;
+	int ch;
 {
 	if ((ch & ST_MASK) && (!term_stand_out)) {
 		ch &= ~ST_MASK;
@@ -697,4 +698,4 @@ tc_cmget()
 	cm_end[j] = 0;
 }
 
-#endif
+#endif	/* CURSES */
