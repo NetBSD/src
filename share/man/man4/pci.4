@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.55 2001/09/17 19:23:40 jdolecek Exp $
+.\"	$NetBSD: pci.4,v 1.56 2001/09/22 15:58:13 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -36,7 +36,6 @@
 .Nm pci
 .Nd introduction to machine-independent PCI bus support and drivers
 .Sh SYNOPSIS
-.Pp
 .Cd "pci* at mainbus? bus ?"
 .Cd "pci* at pchb? bus ?"
 .Cd "pci* at ppb? bus ?"
@@ -49,7 +48,7 @@ bus interface of your system.
 See
 .Xr intro 4
 for your system for details.
-.Sh INTRODUCTION
+.Sh DESCRIPTION
 .Nx
 includes a machine-independent
 .Tn PCI
@@ -67,12 +66,11 @@ devices not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
 for additional information.
-.Sh SUPPORTED DEVICES
+.Sh HARDWARE
 .Nx
 includes machine-independent
 .Tn PCI
 drivers, sorted by device type and driver name:
-.Pp
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It ahc
@@ -116,7 +114,6 @@ Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
 interfaces.
 .El
-.Pp
 .Ss Disk and tape controllers
 .Bl -tag -width pcdisplay -offset indent
 .It cac
@@ -128,7 +125,6 @@ IDE disk controllers.
 .It twe
 3Ware Escalade RAID controllers.
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It an
@@ -230,7 +226,6 @@ VIA VT3043 (Rhine) and VT86C100A (Rhine-II)
 .Tn Ethernet
 interfaces.
 .El
-.Pp
 .Ss Serial interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It cy
@@ -238,7 +233,6 @@ Cyclades Cyclom-4Y, -8Y, and -16Y multi-port serial interfaces.
 .It cz
 Cyclades-Z series multi-port serial interfaces.
 .El
-.Pp
 .Ss Audio devices
 .Bl -tag -width pcdisplay -offset indent
 .It auich
@@ -266,7 +260,6 @@ S3 SonicVibes audio device.
 .It yds
 Yamaha YMF724/740/744/754-based audio device.
 .El
-.Pp
 .Ss Bridges
 .Bl -tag -width pcdisplay -offset indent
 .It cbb
@@ -308,9 +301,7 @@ VIA VT82C686A hardware monitors.
 .It vga
 VGA graphics boards.
 .El
-.Pp
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr adv 4 ,
 .Xr adw 4 ,
 .Xr agp 4 ,
@@ -342,6 +333,7 @@ VGA graphics boards.
 .Xr gsip 4 ,
 .Xr hme 4 ,
 .Xr iha 4 ,
+.Xr intro 4 ,
 .Xr iop 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
