@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.1 2002/07/05 13:31:59 scw Exp $	*/
+/*	$NetBSD: int_types.h,v 1.2 2002/10/10 09:47:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,10 +54,17 @@ typedef	unsigned int	       __uint32_t;
 typedef	__COMPILER_INT64__		__int64_t;
 typedef	unsigned __COMPILER_INT64__	__uint64_t;
 #else
+#ifndef _LP64
 /* LONGLONG */
 typedef	long long int		__int64_t;
 /* LONGLONG */
-typedef	unsigned long long int __uint64_t;
+typedef	unsigned long long int	__uint64_t;
+#else
+/* LONGLONG */
+typedef	long int		__int64_t;
+/* LONGLONG */
+typedef	unsigned long int	__uint64_t;
+#endif
 #endif
 
 #define	__BIT_TYPES_DEFINED__

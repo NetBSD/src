@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2002/07/11 14:08:45 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2002/10/10 09:47:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -85,7 +85,11 @@
 /*
  * u-space.
  */
+#ifndef _LP64
 #define	UPAGES		4		/* pages of u-area */
+#else
+#define	UPAGES		6		/* pages of u-area */
+#endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE

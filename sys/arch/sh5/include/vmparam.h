@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2002/07/05 13:32:02 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2002/10/10 09:47:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,6 +106,7 @@
  */
 #define	USRTEXT		(VM_MIN_ADDRESS + NBPG)
 #define USRSTACK	VM_MAXUSER_ADDRESS
+#define USRSTACK32	USRSTACK
 
 /* Virtual memory resoruce limit. */
 #define MAXTSIZ                 (64 * 1024 * 1024)      /* max text size */

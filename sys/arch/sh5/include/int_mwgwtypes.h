@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.1 2002/07/05 13:31:58 scw Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.2 2002/10/10 09:47:17 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,10 +55,17 @@ typedef	unsigned int		uint_least32_t;
 typedef	__COMPILER_INT64__	 int_least64_t;
 typedef	__COMPILER_UINT64__	uint_least64_t;
 #else
+#ifndef _LP64
 /* LONGLONG */
 typedef	long long int		 int_least64_t;
 /* LONGLONG */
 typedef	unsigned long long int	uint_least64_t;
+#else
+/* LONGLONG */
+typedef	long int		 int_least64_t;
+/* LONGLONG */
+typedef	unsigned long int	uint_least64_t;
+#endif
 #endif
 
 /* 7.18.1.3 Fastest minimum-width integer types */
@@ -72,10 +79,17 @@ typedef	unsigned int		 uint_fast32_t;
 typedef	__COMPILER_INT64__	  int_fast64_t;
 typedef	__COMPILER_UINT64__	 uint_fast64_t;
 #else
+#ifndef _LP64
 /* LONGLONG */
 typedef	long long int		  int_fast64_t;
 /* LONGLONG */
 typedef	unsigned long long int	 uint_fast64_t;
+#else
+/* LONGLONG */
+typedef	long int		  int_fast64_t;
+/* LONGLONG */
+typedef	unsigned long int	 uint_fast64_t;
+#endif
 #endif
 
 /* 7.18.1.5 Greatest-width integer types */
@@ -84,10 +98,17 @@ typedef	unsigned long long int	 uint_fast64_t;
 typedef	__COMPILER_INT64__	      intmax_t;
 typedef	__COMPILER_UINT64__	     uintmax_t;
 #else
+#ifndef _LP64
 /* LONGLONG */
 typedef	long long int		      intmax_t;
 /* LONGLONG */
 typedef	unsigned long long int	     uintmax_t;
+#else
+/* LONGLONG */
+typedef	long int		      intmax_t;
+/* LONGLONG */
+typedef	unsigned long int	     uintmax_t;
+#endif
 #endif
 
 #endif /* _SH5_INT_MWGWTYPES_H_ */
