@@ -1,7 +1,7 @@
-/*	$NetBSD: getconf.c,v 1.7 1998/05/24 20:12:28 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.8 1998/08/03 14:48:40 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.7 1998/05/24 20:12:28 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.8 1998/08/03 14:48:40 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -133,15 +133,18 @@ const struct conf_variable conf_table[] =
   { "_POSIX_NO_TRUNC",		PATHCONF,	_PC_NO_TRUNC		},
   { "_POSIX_VDISABLE",		PATHCONF,	_PC_VDISABLE		},
 
-  /* POSIX.1.b Configurable System Variables */
-  { "_POSIX_FSYNC",		SYSCONF,	_SC_FSYNC		},
+  /* POSIX.1b Configurable System Variables */
   { "PAGESIZE",			SYSCONF,	_SC_PAGESIZE		},
+  { "_POSIX_FSYNC",		SYSCONF,	_SC_FSYNC		},
+  { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},
+
+  { "_POSIX_SYNC_IO",		PATHCONF,	_PC_SYNC_IO		},
+
 
   /* XPG4.2 Configurable System Variables */
-  { "_XOPEN_SHM",		SYSCONF,	_SC_XOPEN_SHM		},
-
-  /* X/Open Spec 1170 Configurable System Variables. */
+  { "IOV_MAX",			SYSCONF,	_SC_IOV_MAX		},
   { "PAGE_SIZE",		SYSCONF,	_SC_PAGE_SIZE		},
+  { "_XOPEN_SHM",		SYSCONF,	_SC_XOPEN_SHM		},
   { NULL }
 };
 
