@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 1995/05/24 21:07:46 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 1995/05/26 17:17:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -688,6 +688,10 @@ syscall(code, frame)
 #endif
 }
 
+/*
+ * Set up return-value registers as fork() libc stub expects,
+ * and do normal return-to-user-mode stuff.
+ */
 void
 child_return(p)
 	struct proc *p;
