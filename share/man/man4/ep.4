@@ -1,0 +1,96 @@
+.\"
+.\" Copyright (c) 1994 Herb Peyerl
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Herb Peyerl
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$Id: ep.4,v 1.1 1994/02/05 02:30:51 hpeyerl Exp $
+.\"
+.Dd February 04, 1993
+.Dt EP 4
+.Os
+.Sh NAME
+.Nm ep
+.Nd Ethernet driver for 3Com Etherlink III (3c5x9)
+.Sh SYNOPSIS
+device ep0 at isa? port 0x350 net irq 5 vector epintr
+.Sh DESCRIPTION
+Configuration information for the
+.Nm ep
+device driver.
+
+3c5x9 cards have various combinations of connectors on them including:
+
+.nf
+.in +9
+AUI/DIX
+10Base2 (BNC)
+10BaseT (UTP)
+.in -9
+.fi
+
+Consequently; the flags for ifconfig(8) are as follows:
+
+.nf
+.in +9
+-link0       Enable internal Transceiver (BNC)
+link0        Disable internal Transceiver (AUI/UTP)
+link1        Enable 10BaseT (UTP)
+-link1       Disable 10BaseT (UTP)
+.in -9
+.fi
+
+Thus to enable 10BaseT you would "ifconfig ep0 link0 link1"
+
+It does not make sense to "ifconfig ep0 -link0 link1"
+
+The default is "-link0".
+
+.Sh NOTES
+Since the driver has no jumpers, the autoconfig routines scribbles 
+all over 0x100 to get the attention of any 3c509 cards that may
+be in the machine.  If you have any other hardware that lives at
+0x100, then you should put any ep drivers before that hardware
+in your config file.
+.Sh DIAGNOSTICS
+ep%d: reset (status: %x)
+.in +4
+the driver has encountered a FIFO underrun or overrun. The driver will reset
+the card and the packet will be lost. This is not fatal.
+.in -4
+ep%d: eeprom failed to come ready
+.in +4
+The eeprom failed to come ready.  This probably means the card is wedged.
+.in -4
+ep%d: 3c509 in test mode. Erase pencil mark!
+.in +4
+This means that someone has scribbled with pencil in the test area on the
+card.  Erase the pencil mark and reboot.  (This is not a joke).
+.in -4
+.Sh SEE ALSO
+.Xr ifconfig 8
+.Sh STANDARDS
+are great. There's so many to choose from.
