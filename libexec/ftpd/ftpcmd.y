@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.29 1999/05/24 21:18:03 ross Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.30 1999/05/24 21:57:19 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.29 1999/05/24 21:18:03 ross Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.30 1999/05/24 21:57:19 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,20 +189,20 @@ cmd
 				lreply(221, "");
 				lreply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
-				   total_data, PLURAL(total_data),
-				   total_files, PLURAL(total_files));
+				    (qdfmt_t)total_data, PLURAL(total_data),
+				    (qdfmt_t)total_files, PLURAL(total_files));
 				lreply(0,
 	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
-				   total_bytes, PLURAL(total_bytes),
-				   total_xfers, PLURAL(total_xfers));
+				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
+				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
 				syslog(LOG_INFO,
 				    "Data traffic: %qd byte%s in %qd file%s",
-				   (long long)total_data, PLURAL(total_data),
-				   (long long)total_files, PLURAL(total_files));
+				    (qdfmt_t)total_data, PLURAL(total_data),
+				    (qdfmt_t)total_files, PLURAL(total_files));
 				syslog(LOG_INFO,
 				  "Total traffic: %qd byte%s in %qd transfer%s",
-				   (long long)total_bytes, PLURAL(total_bytes),
-				   (long long)total_xfers, PLURAL(total_xfers));
+				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
+				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
 			}
 			reply(221,
 			    "Thank you for using the FTP service on %s.",
@@ -657,7 +657,8 @@ rcmd
 		{
 			fromname = NULL;
 			restart_point = $3;	/* XXX $3 is only "int" */
-			reply(350, "Restarting at %qd. %s", restart_point,
+			reply(350, "Restarting at %qd. %s",
+			    (qdfmt_t)restart_point,
 			    "Send STORE or RETRIEVE to initiate transfer.");
 		}
 	| RNFR check_modify SP pathname CRLF
@@ -1483,7 +1484,7 @@ sizecmd(filename)
 		if (stat(filename, &stbuf) < 0 || !S_ISREG(stbuf.st_mode))
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%qu", stbuf.st_size);
+			reply(213, "%qu", (qufmt_t)stbuf.st_size);
 		break; }
 	case TYPE_A: {
 		FILE *fin;
@@ -1509,7 +1510,7 @@ sizecmd(filename)
 		}
 		(void) fclose(fin);
 
-		reply(213, "%qd", count);
+		reply(213, "%qd", (qdfmt_t)count);
 		break; }
 	default:
 		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
