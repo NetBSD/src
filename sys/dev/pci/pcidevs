@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.370 2001/12/07 07:59:24 onoe Exp $
+$NetBSD: pcidevs,v 1.371 2001/12/11 10:57:50 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1405,6 +1405,7 @@ product MEDIAQ MQ200		0x0200	MQ200
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
+product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
