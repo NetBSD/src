@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1996/05/20 01:12:22 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.22.4.1 1996/06/12 20:29:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -264,6 +264,10 @@ void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
+int		mmu_pagein __P((struct pmap *pm, int, int));
+#ifdef DEBUG
+int		mmu_pagein4m __P((struct pmap *pm, int, int));
+#endif
 
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
@@ -282,7 +286,6 @@ void            pmap_protect4_4c __P((pmap_t,
                     vm_offset_t, vm_offset_t, vm_prot_t));
 void            pmap_zero_page4_4c __P((vm_offset_t));
 void		pmap_changeprot4_4c __P((pmap_t, vm_offset_t, vm_prot_t, int));
-int		mmu_pagein4_4c __P((pmap_t, int, int));
 
 #endif
 
@@ -302,7 +305,6 @@ void            pmap_protect4m __P((pmap_t,
                     vm_offset_t, vm_offset_t, vm_prot_t));
 void            pmap_zero_page4m __P((vm_offset_t));
 void		pmap_changeprot4m __P((pmap_t, vm_offset_t, vm_prot_t, int));
-int		mmu_pagein4m __P((pmap_t, int, int));
 
 #endif /* defined SUN4M */
 
@@ -319,7 +321,6 @@ int		mmu_pagein4m __P((pmap_t, int, int));
 #define		pmap_protect		pmap_protect4_4c
 #define		pmap_zero_page		pmap_zero_page4_4c
 #define		pmap_changeprot		pmap_changeprot4_4c
-#define		mmu_pagein		mmu_pagein4_4c
 
 #elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
 
@@ -334,7 +335,6 @@ int		mmu_pagein4m __P((pmap_t, int, int));
 #define		pmap_protect		pmap_protect4m
 #define		pmap_zero_page		pmap_zero_page4m
 #define		pmap_changeprot		pmap_changeprot4m
-#define		mmu_pagein		mmu_pagein4m
 
 #else  /* must use function pointers */
 
@@ -352,7 +352,6 @@ extern void            	(*pmap_protect_p) __P((pmap_t,
 extern void            	(*pmap_zero_page_p) __P((vm_offset_t));
 extern void	       	(*pmap_changeprot_p) __P((pmap_t, vm_offset_t,
 		            vm_prot_t, int));
-extern int		(*mmu_pagein_p) __P((pmap_t, int, int));
 
 #define	  	pmap_clear_modify	(*pmap_clear_modify_p)
 #define		pmap_clear_reference	(*pmap_clear_reference_p)
@@ -365,7 +364,6 @@ extern int		(*mmu_pagein_p) __P((pmap_t, int, int));
 #define		pmap_protect		(*pmap_protect_p)
 #define		pmap_zero_page		(*pmap_zero_page_p)
 #define		pmap_changeprot		(*pmap_changeprot_p)
-#define		mmu_pagein		(*mmu_pagein_p)
 
 #endif
 
