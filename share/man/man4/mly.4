@@ -1,4 +1,4 @@
-.\"	$NetBSD: mly.4,v 1.4 2001/08/03 14:11:41 ad Exp $
+.\"	$NetBSD: mly.4,v 1.5 2001/09/22 01:34:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -271,14 +271,19 @@ The driver does not attempt to name the enclosures.
 These events report controller status changes.
 .El
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr intro 4 ,
 .Xr mlx 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr scsictl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.6 .
 .Sh AUTHORS
 The
 .Nm
@@ -292,11 +297,6 @@ Thor Lancelot Simon
 .Aq tls@netbsd.org
 and Eric Haszlakiewicz
 .Aq erh@netbsd.org .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Nx 1.6 .
 .Sh BUGS
 The
 .Nm
