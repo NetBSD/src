@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.49 1996/10/17 15:42:38 is Exp $
+#	$NetBSD: files.amiga,v 1.50 1996/12/04 16:36:36 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -164,6 +164,11 @@ include "../../../scsi/files.scsi"
 major {sd = 4}
 major {st = 5}
 major {cd = 7}
+
+# DraCo internal com port
+device	drcom: tty
+attach	drcom at mainbus
+file	arch/amiga/dev/drcom.c		drcom needs-count
 
 # wd 33c93 contrllers
 define	sbic 
