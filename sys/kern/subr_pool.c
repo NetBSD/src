@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.69 2002/03/08 21:43:54 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.70 2002/03/09 01:33:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.69 2002/03/08 21:43:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.70 2002/03/09 01:33:34 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -580,9 +580,8 @@ pool_destroy(struct pool *pp)
 #endif
 
 	/* Remove all pages */
-	if ((pp->pr_roflags & PR_STATIC) == 0)
-		while ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
-			pr_rmpage(pp, ph, NULL);
+	while ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
+		pr_rmpage(pp, ph, NULL);
 
 	/* Remove from global pool list */
 	simple_lock(&pool_head_slock);
@@ -645,12 +644,6 @@ pool_get(struct pool *pp, int flags)
 	void *v;
 
 #ifdef DIAGNOSTIC
-	if (__predict_false((pp->pr_roflags & PR_STATIC) &&
-			    (flags & PR_MALLOCOK))) {
-		pr_printlog(pp, NULL, printf);
-		panic("pool_get: static");
-	}
-
 	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
@@ -1178,18 +1171,6 @@ pool_catchup(struct pool *pp)
 	caddr_t cp;
 	int error = 0;
 
-	if (pp->pr_roflags & PR_STATIC) {
-		/*
-		 * We dropped below the low water mark, and this is not a
-		 * good thing.  Log a warning.
-		 *
-		 * XXX: rate-limit this?
-		 */
-		printf("WARNING: static pool `%s' dropped below low water "
-		    "mark\n", pp->pr_wchan);
-		return (0);
-	}
-
 	while (POOL_NEEDS_CATCHUP(pp)) {
 		/*
 		 * Call the page back-end allocator for more memory.
@@ -1290,9 +1271,6 @@ pool_reclaim(struct pool *pp)
 	struct timeval curtime;
 	struct pool_pagelist pq;
 	int s;
-
-	if (pp->pr_roflags & PR_STATIC)
-		return (0);
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
