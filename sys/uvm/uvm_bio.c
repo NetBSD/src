@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.4.5 1999/08/09 00:05:55 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.4.6 1999/08/11 05:41:40 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -68,7 +68,8 @@ static struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
  */
 
 #define UBC_HASH(uobj, offset) (((long)(uobj) / sizeof(struct uvm_object) + \
-				 (offset) / UBC_WINSIZE) & ubc_object.hashmask)
+				 (long)(offset) / UBC_WINSIZE) & \
+				ubc_object.hashmask)
 
 #define UBC_QUEUE(offset) (&ubc_object.inactive[((offset) / UBC_WINSIZE) & \
 					       (UBC_NQUEUES - 1)])
@@ -442,8 +443,8 @@ ubc_alloc(uobj, offset, lenp, flags)
 	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx",
 		    uobj, offset, *lenp,0);
 
-	umap_offset = offset & ~(UBC_WINSIZE - 1);
-	slot_offset = offset & (UBC_WINSIZE - 1);
+	umap_offset = (vaddr_t)(offset & ~((voff_t)UBC_WINSIZE - 1));
+	slot_offset = (vaddr_t)(offset & ((voff_t)UBC_WINSIZE - 1));
 	*lenp = min(*lenp, UBC_WINSIZE - slot_offset);
 
 	/*
