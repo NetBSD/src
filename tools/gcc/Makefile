@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/21 23:53:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2003/08/23 10:07:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ INSTALL_TARGET=	install-gcc
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -isystem-cxx ${DESTDIR}/usr/include/g++ -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -isystem-cxx ${DESTDIR}/usr/include/g++ -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 
