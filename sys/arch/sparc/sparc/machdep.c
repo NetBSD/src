@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 1998/09/13 20:17:54 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.127 1998/09/13 20:24:15 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -599,9 +599,12 @@ sendsig(catcher, sig, mask, code)
 	if (onstack) {
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		                                  psp->ps_sigstk.ss_size);
+
+		/* Remember that we're now on the signal stack. */
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
+
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
 
 #ifdef DEBUG
@@ -616,9 +619,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = code;
-#ifdef COMPAT_SUNOS
-	sf.sf_scp = &fp->sf_sc;
-#endif
+	sf.sf_scp = 0;
 	sf.sf_addr = 0;			/* XXX */
 
 	/*
