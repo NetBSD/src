@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.h	7.11 (Berkeley) 3/19/91
- *	$Id: if.h,v 1.5 1993/12/10 10:57:05 cgd Exp $
+ *	$Id: if.h,v 1.6 1993/12/10 11:45:25 cgd Exp $
  */
 
 #ifndef _NET_IF_H_
@@ -136,8 +136,8 @@ struct ifnet {
 #define	IFF_OACTIVE	0x400		/* transmission in progress */
 #define	IFF_SIMPLEX	0x800		/* can't hear own transmissions */
 #define	IFF_LINK0	0x1000		/* per link layer defined bit */
-#define	IFF_LINK1	0x2000		/* interface driver control/status */
-#define	IFF_LINK2	0x4000		/* interface driver control/status */
+#define	IFF_LINK1	0x2000		/* per link layer defined bit */
+#define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define IFF_MULTICAST	0x8000		/* supports multicast */
 
 /* flags set internally only: */
