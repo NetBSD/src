@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.2 1995/05/28 08:09:51 mycroft Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.3 1995/05/28 08:50:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -428,24 +428,12 @@ linux_to_bsd_sopt_level(llevel)
 	switch (llevel) {
 	case LINUX_SOL_SOCKET:
 		return SOL_SOCKET;
-	default:
-		return llevel;
-	}
-}
-
-/*
- * Convert Linux IP level socket option number to NetBSD values.
- * Linux only implements IP_TOS and IP_TTL
- */
-int
-linux_to_bsd_ip_sockopt(lopt)
-	int lopt;
-{
-	switch (lopt) {
-	case LINUX_IP_TOS:
-		return IP_TOS;
-	case LINUX_IP_TTL:
-		return IP_TTL;
+	case LINUX_SOL_IP:
+		return IPPROTO_IP;
+	case LINUX_SOL_TCP:
+		return IPPROTO_TCP;
+	case LINUX_SOL_UDP:
+		return IPPROTO_UDP;
 	default:
 		return -1;
 	}
@@ -489,6 +477,59 @@ linux_to_bsd_so_sockopt(lopt)
 }
 
 /*
+ * Convert Linux IP level socket option number to NetBSD values.
+ */
+int
+linux_to_bsd_ip_sockopt(lopt)
+	int lopt;
+{
+	switch (lopt) {
+	case LINUX_IP_TOS:
+		return IP_TOS;
+	case LINUX_IP_TTL:
+		return IP_TTL;
+	case LINUX_IP_MULTICAST_TTL:
+		return IP_MULTICAST_TTL;
+	case LINUX_IP_MULTICAST_LOOP:
+		return IP_MULTICAST_LOOP;
+	case LINUX_IP_MULTICAST_IF:
+		return IP_MULTICAST_IF;
+	case LINUX_IP_ADD_MEMBERSHIP:
+		return IP_ADD_MEMBERSHIP;
+	case LINUX_IP_DROP_MEMBERSHIP:
+		return IP_DROP_MEMBERSHIP;
+	default:
+		return -1;
+	}
+}
+
+/*
+ * Convert Linux TCP level socket option number to NetBSD values.
+ */
+int
+linux_to_bsd_tcp_sockopt(lopt)
+	int lopt;
+{
+	switch (lopt) {
+	default:
+		return linux_to_bsd_ip_sockopt(lopt);
+	}
+}
+
+/*
+ * Convert Linux UDP level socket option number to NetBSD values.
+ */
+int
+linux_to_bsd_udp_sockopt(lopt)
+	int lopt;
+{
+	switch (lopt) {
+	default:
+		return linux_to_bsd_ip_sockopt(lopt);
+	}
+}
+
+/*
  * Another reasonably straightforward function: setsockopt(2). Only
  * the SOL_SOCKET and IPPROTO_IP levels are implemented here.
  * The level and option numbers are converted; the values passed
@@ -524,6 +565,12 @@ linux_setsockopt(p, args, retval)
 			break;
 		case IPPROTO_IP:
 			name = linux_to_bsd_ip_sockopt(lsa.optname);
+			break;
+		case IPPROTO_TCP:
+			name = linux_to_bsd_tcp_sockopt(lsa.optname);
+			break;
+		case IPPROTO_UDP:
+			name = linux_to_bsd_udp_sockopt(lsa.optname);
 			break;
 		default:
 			return EINVAL;
@@ -570,6 +617,12 @@ linux_getsockopt(p, args, retval)
 			break;
 		case IPPROTO_IP:
 			name = linux_to_bsd_ip_sockopt(lga.optname);
+			break;
+		case IPPROTO_TCP:
+			name = linux_to_bsd_tcp_sockopt(lsa.optname);
+			break;
+		case IPPROTO_UDP:
+			name = linux_to_bsd_udp_sockopt(lsa.optname);
 			break;
 		default:
 			return EINVAL;

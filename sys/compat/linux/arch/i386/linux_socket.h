@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.1 1995/02/28 23:26:03 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.2 1995/05/28 08:50:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -90,7 +90,12 @@
  * currently implemented in Linux
  */
 
-#define LINUX_IP_TOS	1
-#define LINUX_IP_TTL	2
+#define LINUX_IP_TOS		1
+#define LINUX_IP_TTL		2
+#define	LINUX_IP_MULTICAST_IF	32
+#define	LINUX_IP_MULTICAST_TTL	33
+#define	LINUX_IP_MULTICAST_LOOP	34
+#define	LINUX_IP_ADD_MEMBERSHIP	35
+#define	LINUX_IP_DROP_MEMBERSHIP 36
 
 #endif /* _LINUX_SOCKET_H */
