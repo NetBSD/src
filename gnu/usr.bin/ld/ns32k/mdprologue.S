@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.1 1994/04/07 19:44:50 pk Exp $
+ *	$Id: mdprologue.S,v 1.2 1994/12/04 08:26:22 mycroft Exp $
  */
 
 /*
@@ -65,7 +65,7 @@ _rtl_entry:
 
 _binder_entry:
 	movd	tos,r1			/* grab return address (within PLT) */
-	movd	r0,tos			/* save r0 (that's for cerror)	*/
+	movd	r0,tos			/* save r0 (for cerror)		*/
 	movzwd	0(r1),tos		/* get function index		*/
 	addr	-6(r1),tos		/* point to PLT slot		*/
 	bsr	_binder			/* relocate function address	*/
