@@ -1,4 +1,5 @@
-/* $NetBSD: rtcreg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
+/* $Id: rtcreg.h,v 1.3 1999/12/21 22:06:04 msaitoh Exp $ */
+/* $NetBSD: rtcreg.h,v 1.3 1999/12/21 22:06:04 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -77,8 +78,15 @@
 
 #endif
 
-#define SHREG_RCR2_RESET	0x02
+#define SHREG_RCR2_PEF		0x80
+#define SHREG_RCR2_PES2		0x40
+#define SHREG_RCR2_PES1		0x20
+#define SHREG_RCR2_PES0		0x10
 #define SHREG_RCR2_ENABLE	0x08
+#define SHREG_RCR2_ADJ		0x04
+#define SHREG_RCR2_RESET	0x02
 #define SHREG_RCR2_START	0x01
+
+#define SHREG_RCR2_P64		(SHREG_RCR2_PES1)
 
 #endif /* !_SH3_RTCREG_H__ */
