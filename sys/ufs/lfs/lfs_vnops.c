@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.12 1996/09/01 23:49:31 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.13 1996/09/07 12:41:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -82,7 +82,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_write_desc, lfs_write },			/* write */
 	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
-	{ &vop_select_desc, ufs_select },		/* select */
+	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
@@ -131,7 +131,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_write_desc, ufsspec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -181,7 +181,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_write_desc, ufsfifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_select_desc, fifo_select },		/* select */
+	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */

@@ -5,25 +5,21 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
-#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <miscfs/genfs/genfs.h>
 
 int
-genfs_select(v)
+genfs_poll(v)
 	void *v;
 {
-#if 0
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-#endif
 
-	return (1);
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.33 1996/09/01 23:47:53 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.34 1996/09/07 12:40:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -941,7 +941,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_write_desc, cd9660_write },		/* write */
 	{ &vop_lease_desc, cd9660_lease_check },	/* lease */
 	{ &vop_ioctl_desc, cd9660_ioctl },		/* ioctl */
-	{ &vop_select_desc, cd9660_select },		/* select */
+	{ &vop_poll_desc, cd9660_poll },		/* poll */
 	{ &vop_mmap_desc, cd9660_mmap },		/* mmap */
 	{ &vop_fsync_desc, cd9660_fsync },		/* fsync */
 	{ &vop_seek_desc, cd9660_seek },		/* seek */
@@ -993,7 +993,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -1043,7 +1043,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_write_desc, fifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_select_desc, fifo_select },		/* select */
+	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.12 1996/05/22 13:55:00 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.13 1996/09/07 12:41:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -336,7 +336,7 @@ sowakeup(so, sb)
  * Each socket contains two socket buffers: one for sending data and
  * one for receiving data.  Each buffer contains a queue of mbufs,
  * information about the number of mbufs and amount of data in the
- * queue, and other fields allowing select() statements and notification
+ * queue, and other fields allowing poll() statements and notification
  * on data availability to be implemented.
  *
  * Data stored in a socket buffer is maintained as a list of records.

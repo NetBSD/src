@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.2 1996/08/30 02:37:04 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.3 1996/09/07 12:40:29 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -34,8 +34,6 @@
  */
 
 #include "apm.h"
-#if NAPM > 0
-
 #if NAPM > 1
 #error only one APM device may be configured
 #endif
@@ -51,6 +49,8 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <machine/stdarg.h>
 #include <machine/cpu.h>
@@ -999,24 +999,19 @@ apmioctl(dev, cmd, data, flag, p)
 }
 
 int
-apmselect(dev, rw, p)
+apmpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	int revents = 0;
 
-	switch (rw) {
-	case FREAD:
+	if (events & (POLLIN | POLLRDNORM))
 		if (sc->event_count)
-			return 1;
-		selrecord(p, &sc->sc_rsel);
-		break;
-	case FWRITE:
-	case 0:
-		return 0;
-	}
-	return 0;
-}
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &sc->sc_rsel);
 
-#endif /* NAPM > 0 */
+	return (revents);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.32 1996/09/01 23:48:36 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.33 1996/09/07 12:41:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -71,7 +71,7 @@ int union_read		__P((void *));
 int union_write		__P((void *));
 int union_lease		__P((void *));
 int union_ioctl		__P((void *));
-int union_select	__P((void *));
+int union_poll		__P((void *));
 int union_mmap		__P((void *));
 int union_fsync		__P((void *));
 int union_seek		__P((void *));
@@ -111,7 +111,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_write_desc, union_write },		/* write */
 	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
-	{ &vop_select_desc, union_select },		/* select */
+	{ &vop_poll_desc, union_poll },			/* poll */
 	{ &vop_mmap_desc, union_mmap },			/* mmap */
 	{ &vop_fsync_desc, union_fsync },		/* fsync */
 	{ &vop_seek_desc, union_seek },			/* seek */
@@ -983,20 +983,18 @@ union_ioctl(v)
 }
 
 int
-union_select(v)
+union_poll(v)
 	void *v;
 {
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_select), ap));
+	return (VCALL(vp, VOFFSET(vop_poll), ap));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.19 1996/09/01 23:48:17 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.20 1996/09/07 12:41:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ int	portal_setattr	__P((void *));
 #define	portal_read	genfs_badop
 #define	portal_write	genfs_badop
 #define	portal_ioctl	genfs_badop
-#define	portal_select	genfs_badop
+#define	portal_poll	genfs_badop
 #define	portal_mmap	genfs_badop
 #define	portal_fsync	genfs_badop
 #define	portal_seek	genfs_badop
@@ -126,7 +126,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_read_desc, portal_read },		/* read */
 	{ &vop_write_desc, portal_write },		/* write */
 	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
-	{ &vop_select_desc, portal_select },		/* select */
+	{ &vop_poll_desc, portal_poll },		/* poll */
 	{ &vop_mmap_desc, portal_mmap },		/* mmap */
 	{ &vop_fsync_desc, portal_fsync },		/* fsync */
 	{ &vop_seek_desc, portal_seek },		/* seek */

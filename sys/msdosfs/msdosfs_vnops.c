@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.51 1996/09/01 23:48:54 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.52 1996/09/07 12:41:24 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1912,7 +1912,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_write_desc, msdosfs_write },		/* write */
 	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, msdosfs_select },		/* select */
+	{ &vop_poll_desc, msdosfs_poll },		/* poll */
 	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, msdosfs_seek },		/* seek */

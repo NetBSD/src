@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.45 1996/09/07 12:41:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -44,7 +44,6 @@
 #define	_SYS_PROC_H_
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
-#include <sys/select.h>			/* For struct selinfo. */
 #include <sys/queue.h>
 
 /*

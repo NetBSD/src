@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1996/09/05 15:46:22 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1996/09/07 12:40:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -80,7 +80,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define cdev_wscons_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, write, ioctl */
 #define cdev_lpt_init(c,n) { \

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1996/09/05 15:46:29 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1996/09/07 12:40:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -128,7 +128,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_physcon_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), 0 }
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), 0 }
 
 /* open, close, write, ioctl */
 #define cdev_lpt_init(c,n) { \
@@ -148,7 +148,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, write, ioctl */
 #define cdev_cpu_init(c,n) { \

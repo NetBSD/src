@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.21 1996/09/07 12:41:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,11 +52,12 @@
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/poll.h>
 
 #include <vm/vm.h>
 
 struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_select, vn_closefile };
+	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_closefile };
 
 /*
  * Common code for vnode open operations.
@@ -411,17 +412,16 @@ vn_ioctl(fp, com, data, p)
 }
 
 /*
- * File table vnode select routine.
+ * File table vnode poll routine.
  */
 int
-vn_select(fp, which, p)
+vn_poll(fp, events, p)
 	struct file *fp;
-	int which;
+	int events;
 	struct proc *p;
 {
 
-	return (VOP_SELECT(((struct vnode *)fp->f_data), which, fp->f_flag,
-			   fp->f_cred, p));
+	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
 }
 
 /*

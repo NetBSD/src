@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.31 1996/09/02 06:44:41 mycroft Exp $	*/
+/*	$NetBSD: cons.c,v 1.32 1996/09/07 12:40:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -199,9 +199,9 @@ cnioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-cnselect(dev, rw, p)
+cnpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 
@@ -216,7 +216,7 @@ cnselect(dev, rw, p)
 		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
-	return (ttselect(cn_tab->cn_dev, rw, p));
+	return ((*cdevsw[major(dev)].d_poll)(dev, events, p));
 }
 
 int
