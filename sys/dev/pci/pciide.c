@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.4 1998/03/06 17:41:59 cgd Exp $	*/
+/*	$NetBSD: pciide.c,v 1.5 1998/03/06 19:13:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -59,18 +59,18 @@ struct pciide_softc {
 	struct device		sc_dev;
 
 	void			*sc_pci_ih;	/* PCI interrupt handle */
-	int			sc_dma_ioh_valid; /* bus-master DMA info */
+	int			sc_dma_ok;	/* bus-master DMA info */
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
 
 	struct pciide_channel {			/* per-channel data */
 		/* internal bookkeeping */
+		int		hw_ok;		/* hardware mapped & OK? */
 		struct device	*dev;		/* 'wdc' dev attached */
 		int		compat;		/* is it compat? */
 		void		*ih;		/* compat or pci handle */
 
 		/* used by wdc attachment (read-only after init) */
-		int		cmd_ioh_valid, ctl_ioh_valid;
 		bus_space_tag_t	cmd_iot, ctl_iot;
 		bus_space_handle_t cmd_ioh, ctl_ioh;
 
@@ -93,9 +93,15 @@ struct cfattach pciide_ca = {
 	sizeof(struct pciide_softc), pciide_match, pciide_attach
 };
 
+int	pciide_map_channel_compat __P((struct pciide_softc *,
+	    struct pci_attach_args *, int));
+int	pciide_compat_channel_probe __P((struct pciide_softc *,
+	    struct pci_attach_args *, int));
+int	pciide_map_channel_native __P((struct pciide_softc *,
+	    struct pci_attach_args *, int));
+int	pciide_print __P((void *, const char *pnp));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
-int	pciide_print __P((void *, const char *pnp));
 
 int
 pciide_match(parent, match, aux)
@@ -183,12 +189,12 @@ pciide_attach(parent, self, aux)
 	/*
 	 * Map DMA registers, if DMA is supported.
 	 *
-	 * Note that sc_dma_ioh_valid is a good test to see if DMA can
-	 * be done.  If the interface doesn't support DMA, sc_dma_ioh_valid
-	 * will never be non-zero.  If the DMA regs couldn't be mapped,
-	 * it'll be zero.  I.e., sc_dma_ioh_valid will only be non-zero
-	 * if the interface supports DMA and the registers could be
-	 * mapped.
+	 * Note that sc_dma_ok is the right variable to test to see if
+	 * DMA can * be done.  If the interface doesn't support DMA,
+	 * sc_dma_ok * will never be non-zero.  If the DMA regs couldn't
+	 * be mapped, it'll be zero.  I.e., sc_dma_ok will only be
+	 * non-zero if the interface supports DMA and the registers
+	 * could be mapped.
 	 *
 	 * XXX Note that despite the fact that the Bus Master IDE specs
 	 * XXX say that "The bus master IDE functoin uses 16 bytes of IO
@@ -198,41 +204,13 @@ pciide_attach(parent, self, aux)
 	 * XXX which type it is.  Either that or 'quirk' certain devices.
 	 */
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
-		sc->sc_dma_ioh_valid = (pci_mapreg_map(pa,
+		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
 		printf("%s: bus-master DMA support present, but unused (%s)\n",
 		    sc->sc_dev.dv_xname,
-		    sc->sc_dma_ioh_valid ? "no driver support" :
-		      "couldn't map regs!");
-	}
-
-	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
-		cp = &sc->sc_channels[i];
-
-		if (interface & PCIIDE_INTERFACE_PCI(i)) {
-			cp->compat = 0;
-			cp->ih = sc->sc_pci_ih;
-			cp->cmd_ioh_valid = (pci_mapreg_map(pa,
-			    PCIIDE_REG_CMD_BASE(i), PCI_MAPREG_TYPE_IO, 0,
-			    &cp->cmd_iot, &cp->cmd_ioh, NULL, NULL) == 0);
-			cp->ctl_ioh_valid = (pci_mapreg_map(pa,
-			    PCIIDE_REG_CTL_BASE(i), PCI_MAPREG_TYPE_IO, 0,
-			    &cp->ctl_iot, &cp->ctl_ioh, NULL, NULL) == 0);
-		} else {
-			cp->compat = 1;
-			cp->ih =
-			    pciide_machdep_compat_intr_establish(&sc->sc_dev,
-			    pa, i, pciide_compat_intr, cp);
-			cp->cmd_iot = pa->pa_iot;
-			cp->cmd_ioh_valid = (bus_space_map(cp->cmd_iot,
-			    PCIIDE_COMPAT_CMD_BASE(i), PCIIDE_COMPAT_CMD_SIZE,
-			    0, &cp->cmd_ioh) == 0);
-			cp->ctl_iot = pa->pa_iot;
-			cp->ctl_ioh_valid = (bus_space_map(cp->ctl_iot,
-			    PCIIDE_COMPAT_CTL_BASE(i), PCIIDE_COMPAT_CTL_SIZE,
-			    0, &cp->ctl_ioh) == 0);
-		}
+		    sc->sc_dma_ok ? "no driver support" :
+		      "couldn't map registers");
 	}
 
 	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
@@ -245,30 +223,161 @@ pciide_attach(parent, self, aux)
 		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
 		      "compatibility");
 
-		if (cp->cmd_ioh_valid && cp->ctl_ioh_valid && cp->ih != NULL) {
-			aa.channel = i;
-			aa.cmd_iot = cp->cmd_iot;
-			aa.cmd_ioh = cp->cmd_ioh;
-			aa.ctl_iot = cp->ctl_iot;
-			aa.ctl_ioh = cp->ctl_ioh;
-			aa.ihandp = &cp->ihand;
-			aa.ihandargp = &cp->ihandarg;
-			cp->dev = config_found(self, &aa, pciide_print);
+		if (interface & PCIIDE_INTERFACE_PCI(i))
+			cp->hw_ok = pciide_map_channel_native(sc, pa, i);
+		else
+			cp->hw_ok = pciide_map_channel_compat(sc, pa, i);
+		if (!cp->hw_ok)
+			continue;
+
+		aa.channel = i;
+		aa.cmd_iot = cp->cmd_iot;
+		aa.cmd_ioh = cp->cmd_ioh;
+		aa.ctl_iot = cp->ctl_iot;
+		aa.ctl_ioh = cp->ctl_ioh;
+		aa.ihandp = &cp->ihand;
+		aa.ihandargp = &cp->ihandarg;
+		cp->dev = config_found(self, &aa, pciide_print);
 			
-			/*
-			 * Note that if the 'wdc' device isn't configured,
-			 * the controller's resources are still marked as
-			 * being in use.  This is a feature.
-			 */
-		} else {
-			printf("%s: couldn't configure %s channel (cmd regs %s, ctl regs %s, (%s) intr %s)\n",
-			    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(i),
-			    cp->cmd_ioh_valid ? "ok" : "unmapped",
-			    cp->ctl_ioh_valid ? "ok" : "unmapped",
-			    cp->compat ? "compat" : "native-PCI",
-			    cp->ih != NULL ? "ok" : "broken");
-		}
+		/*
+		 * Note that if the 'wdc' device isn't configured,
+		 * the controller's resources are still marked as
+		 * being in use.  This is a feature.
+		 */
 	}
+}
+
+int
+pciide_map_channel_compat(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+	int chan;
+{
+	struct pciide_channel *cp = &sc->sc_channels[chan];
+	int rv = 1;
+
+	cp->compat = 1;
+
+	cp->cmd_iot = pa->pa_iot;
+	if (bus_space_map(cp->cmd_iot, PCIIDE_COMPAT_CMD_BASE(chan),
+	    PCIIDE_COMPAT_CMD_SIZE, 0, &cp->cmd_ioh) != 0) {
+		printf("%s: couldn't map %s channel cmd regs\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(chan));
+		rv = 0;
+	}
+
+	cp->ctl_iot = pa->pa_iot;
+	if (bus_space_map(cp->ctl_iot, PCIIDE_COMPAT_CTL_BASE(chan),
+	    PCIIDE_COMPAT_CTL_SIZE, 0, &cp->ctl_ioh) != 0) {
+		printf("%s: couldn't map %s channel ctl regs\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(chan));
+		rv = 0;
+	}
+
+	/*
+	 * If we weren't able to map the device successfully,
+	 * we just give up now.  Something else has already
+	 * occupied those ports, indicating that the device has
+	 * (probably) been completely disabled (by some nonstandard
+	 * mechanism).
+	 *
+	 * XXX If we successfully map some ports, but not others,
+	 * XXX it might make sense to unmap the ones that we mapped.
+	 */
+	if (rv == 0)
+		goto out;
+
+	/*
+	 * If we were able to map the device successfully, try to
+	 * make sure that there's a wdc there and that it's
+	 * attributable to us.
+	 *
+	 * If there's not, then we assume that there's the device
+	 * has been disabled and that other devices are free to use
+	 * its ports.
+	 */
+	if (pciide_compat_channel_probe(sc, pa, chan) == 0) {
+		rv = 0;
+
+		bus_space_unmap(cp->cmd_iot, cp->cmd_ioh,
+		    PCIIDE_COMPAT_CMD_SIZE);
+		bus_space_unmap(cp->ctl_iot, cp->ctl_ioh,
+		    PCIIDE_COMPAT_CTL_SIZE);
+
+		goto out;
+	}
+
+	/*
+	 * If we're here, we were able to map the device successfully
+	 * and it really looks like there's a controller there.
+	 *
+	 * Unless those conditions are true, we don't map the
+	 * compatibility interrupt.  The spec indicates that if a
+	 * channel is configured for compatibility mode and the PCI
+	 * device's I/O space is enabled, the channel will be enabled.
+	 * Hoewver, some devices seem to be able to disable invididual
+	 * compatibility channels (via non-standard mechanisms).  If
+	 * the channel is disabled, the interrupt line can (probably)
+	 * be used by other devices (and may be assigned to other
+	 * devices by the BIOS).  If we mapped the interrupt we might
+	 * conflict with another interrupt assignment.
+	 */
+	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_dev, pa,
+	    chan, pciide_compat_intr, cp);
+	if (cp->ih == NULL) {
+		printf("%s: no compatibility interrupt for use by %s channel\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(chan));
+		rv = 0;
+	}
+
+out:
+	return (rv);
+}
+
+int
+pciide_compat_channel_probe(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+
+	/*
+	 * XXX for now we claim that the devices are always present.
+	 */
+	return (1);
+}
+
+int
+pciide_map_channel_native(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+	int chan;
+{
+	struct pciide_channel *cp = &sc->sc_channels[chan];
+	int rv = 1;
+
+	cp->compat = 0;
+
+	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(chan), PCI_MAPREG_TYPE_IO,
+	    0, &cp->cmd_iot, &cp->cmd_ioh, NULL, NULL) != 0) {
+		printf("%s: couldn't map %s channel cmd regs\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(chan));
+		rv = 0;
+	}
+
+	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(chan), PCI_MAPREG_TYPE_IO,
+	    0, &cp->ctl_iot, &cp->ctl_ioh, NULL, NULL) != 0) {
+		printf("%s: couldn't map %s channel ctl regs\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(chan));
+		rv = 0;
+	}
+
+	if ((cp->ih = sc->sc_pci_ih) == NULL) {
+		printf("%s: no native-PCI interrupt for use by %s channel\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(chan));
+		rv = 0;
+	}
+
+	return (rv);
 }
 
 int
