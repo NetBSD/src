@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.8 2001/08/16 13:33:14 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.9 2001/08/16 13:47:19 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -169,3 +169,9 @@ sys/arch/mips/mips/locore_mips3.S		1.70
 sys/arch/mips/mips/vm_machdep.c			1.77-1.78
 
   Fix bugs in handling of SR on mips3 machines, causing TLB miss panics.
+
+sys/dev/ic/pckbc.c				1.6-1.8
+
+  Change the way the aux port is probed for. Some older chipsets w/o
+  mouse port seem to interpret the "test aux port" (0xa9) command differently,
+  leading to a non-working keyboard.
