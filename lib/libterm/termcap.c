@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.32 2000/06/01 07:54:00 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.33 2000/06/02 13:13:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.32 2000/06/01 07:54:00 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.33 2000/06/02 13:13:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -315,6 +315,8 @@ tgetflag(id)
  * placed in area, which is a ref parameter which is updated.
  * limit is the number of characters allowed to be put into
  * area, this is updated.
+ *
+ * returns dynamically allocated region, passed from cgetstr().
  */
 char *
 t_getstr(info, id, area, limit)
@@ -345,6 +347,7 @@ t_getstr(info, id, area, limit)
 		 */
 		if (limit != NULL && (*limit < i)) {
 			errno = E2BIG;
+			free(s);
 			return NULL;
 		}
   	
@@ -356,6 +359,7 @@ t_getstr(info, id, area, limit)
 	} else {
 		_DIAGASSERT(limit != NULL);
 		*limit = i;
+		free(s);
 		return NULL;
 	}
 }
