@@ -88,6 +88,7 @@ sttyclearflags(tp, flags)
 			SET(lflag, ICANON);
 	}
 
+	/* XXX */
 	switch (ISSET(flags, ANYP)) {
 	case EVENP:
 		SET(iflag, INPCK);
@@ -99,6 +100,7 @@ sttyclearflags(tp, flags)
 		break;
 	}
 
+	/* XXX */
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
 		CLR(cflag, CSIZE);
 		SET(cflag, CS7|PARENB);
@@ -138,6 +140,7 @@ sttysetflags(tp, flags)
 		CLR(lflag, ISIG|ICANON|IEXTEN);
 	}
 
+	/* XXX */
 	switch (ISSET(flags, ANYP)) {
 	case EVENP:
 		SET(iflag, INPCK);
@@ -149,6 +152,7 @@ sttysetflags(tp, flags)
 		break;
 	}
 
+	/* XXX */
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
 		CLR(cflag, CSIZE|PARENB);
 		SET(cflag, CS8);
@@ -192,10 +196,11 @@ sttyclearlflags(tp, flags)
 		CLR(lflag, ECHOKE);
 	if (ISSET(flags, CTLECH))
 		CLR(lflag, ECHOCTL);
-	if (!ISSET(flags, DECCTQ))
-		CLR(iflag, IXANY);
+	if (ISSET(flags, DECCTQ))
+		SET(iflag, IXANY);
 	CLR(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
+	/* XXX */
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
 		CLR(cflag, CSIZE);
 		SET(cflag, CS7|PARENB);
@@ -233,11 +238,11 @@ sttysetlflags(tp, flags)
 		SET(lflag, ECHOKE);
 	if (ISSET(flags, CTLECH))
 		SET(lflag, ECHOCTL);
-	if (!ISSET(flags, DECCTQ))
-		SET(iflag, IXANY);
-	CLR(lflag, TOSTOP|FLUSHO|PENDIN|NOFLSH);
+	if (ISSET(flags, DECCTQ))
+		CLR(iflag, IXANY);
 	SET(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
+	/* XXX */
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
 		CLR(cflag, CSIZE|PARENB);
 		SET(cflag, CS8);
