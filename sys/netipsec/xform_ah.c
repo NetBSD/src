@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.6 2004/03/17 00:21:43 jonathan Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.7 2004/05/01 03:00:42 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.6 2004/03/17 00:21:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.7 2004/05/01 03:00:42 jonathan Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -296,19 +296,28 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		ip->ip_sum = 0;
 
 		/*
-		 * On input, fix ip_len which has been byte-swapped
-		 * at ip_input().
+		 * On FreeBSD, ip_off and ip_len assumed in host endian;
+		 * they are converted (if necessary) by ip_input().
+		 * On NetBSD, ip_off and ip_len are in network byte order.
+		 * They must be massaged back to network byte order
+		 * before verifying the  HMAC. Moreover, on FreeBSD,
+		 * we should add `skip' back into the massaged ip_len
+		 * (presumably ip_input() deducted it before we got here?)
+		 * whereas on NetBSD, we should not.
 		 */
-/* On FreeBSD, ip_off and ip_len assumed in host endian. */
 #ifdef __FreeBSD__
   #define TOHOST(x) (x)
 #else
   #define TOHOST(x) (ntohs(x))
 #endif
 		if (!out) {
-			u_int16_t inlen = ip->ip_len;
+			u_int16_t inlen = TOHOST(ip->ip_len);
 
-			ip->ip_len = htons(TOHOST(ip->ip_len) + skip);
+#ifdef __FreeBSD__
+			ip->ip_len = htons(inlen + skip);
+#else  /*!__FreeBSD__ */
+			ip->ip_len = htons(inlen);
+#endif /*!__FreeBSD__ */
 			DPRINTF(("ip len: skip %d, "
 				 "in %d host %d: new: raw %d host %d\n",
 				 skip,
