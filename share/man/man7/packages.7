@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.27 2000/02/02 15:54:33 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.28 2000/04/26 21:17:03 tron Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -317,6 +317,10 @@ for building and running.
 .It USE_IMAKE	
 Says that the package uses
 .Pa imake .
+.It USE_SSL	
+Says that the package uses a SSL library. The location of the SSL
+installation can be found in
+.Dv ${SSLBASE} .
 .It USE_X11BASE	
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
