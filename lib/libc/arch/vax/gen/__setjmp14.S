@@ -29,7 +29,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __setjmp14.S,v 1.8 2003/08/07 16:42:31 agc Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.9 2004/03/21 18:19:52 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -76,6 +76,7 @@ ENTRY(__setjmp14, R6)
 	clrl	%r0
 	ret
 
+#ifndef __ELF__
 ENTRY(__longjmp14, 0)
 	movl	8(%ap),%r0		# return(v)
 	movl	4(%ap),%r1		# fetch buffer
@@ -110,3 +111,4 @@ done:
 botch:
 	calls	$0,_C_LABEL(longjmperror)
 	halt
+#endif
