@@ -1,7 +1,7 @@
-/*	$NetBSD: auxiotwo.c,v 1.1 2000/02/25 18:17:24 jdc Exp $	*/
+/*	$NetBSD: auxiotwo.c,v 1.2 2000/03/14 21:18:27 jdc Exp $	*/
 
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,8 +48,12 @@
 
 #include <machine/autoconf.h>
 
-#include <sparc/sparc/vaddrs.h>
+#include <sparc/include/tctrl.h>
 #include <sparc/sparc/auxiotwo.h>
+#include <sparc/sparc/vaddrs.h>
+
+static int serial_refcount;
+static int serial_power;
 
 static int auxiotwomatch __P((struct device *, struct cfdata *, void *));
 
@@ -97,18 +101,9 @@ auxiotwoattach(parent, self, aux)
 
 	auxiotwo_reg = (volatile u_char *)bh;
 	auxiotwo_regval = *auxiotwo_reg;
+	serial_refcount = 0;
+	serial_power = PORT_PWR_STANDBY;
 	printf("\n");
-
-	/*
-	 * This powers on the serial ports
-	 * XXX: this should probably be in the serial attach code.
-	 */
-	auxiotwobisc(AUXIOTWO_SON, 0);
-
-	/*
-	 * This powers them off :
-	 * auxiotwobisc(AUXIOTWO_SOF, 1);
-	 */
 }
 
 unsigned int
@@ -129,4 +124,73 @@ auxiotwobisc(bis, bic)
 	*auxiotwo_reg = auxiotwo_regval;
 	splx(s);
 	return (auxiotwo_regval);
+}
+
+/*
+ * Serial port state - called from zs_enable()/zs_disable()
+ */
+void
+auxiotwoserialendis (state)
+	int state;
+{
+	switch (state) {
+
+	case ZS_ENABLE:
+		/* Power on the serial ports? */
+		serial_refcount++;
+		if (serial_refcount == 1 && serial_power == PORT_PWR_STANDBY)
+			auxiotwobisc(AUXIOTWO_SON, 0);
+		break;
+	case ZS_DISABLE:
+		/* Power off the serial ports? */
+		serial_refcount--;
+		if (!serial_refcount && serial_power == PORT_PWR_STANDBY)
+			auxiotwobisc(AUXIOTWO_SOF, 1);
+		break;
+	}
+}
+
+/*
+ * Set power management - called by tctrl
+ */
+void
+auxiotwoserialsetapm (state)
+	int state;
+{
+	switch (state) {
+
+	case PORT_PWR_ON:
+		/* Change to: power always on */
+		if (serial_power == PORT_PWR_OFF ||
+		    (serial_power == PORT_PWR_STANDBY && !serial_refcount))
+			auxiotwobisc(AUXIOTWO_SON, 0);
+		serial_power = PORT_PWR_ON;
+		break;
+
+	case PORT_PWR_STANDBY:
+		/* Change to: power on if open */
+		if (serial_power == PORT_PWR_ON && !serial_refcount)
+			auxiotwobisc(AUXIOTWO_SOF, 1);
+		if (serial_power == PORT_PWR_OFF && serial_refcount)
+			auxiotwobisc(AUXIOTWO_SON, 0);
+		serial_power = PORT_PWR_STANDBY;
+		break;
+
+	case PORT_PWR_OFF:
+		/* Change to: power always off */
+		if (serial_power == PORT_PWR_ON ||
+		    (serial_power == PORT_PWR_STANDBY && serial_refcount))
+			auxiotwobisc(AUXIOTWO_SOF, 1);
+		serial_power = PORT_PWR_OFF;
+		break;
+	}
+}
+
+/*
+ * Get power management - called by tctrl
+ */
+int
+auxiotwoserialgetapm ()
+{
+	return (serial_power);
 }

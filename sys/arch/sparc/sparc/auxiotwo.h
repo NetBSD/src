@@ -1,11 +1,11 @@
-/*	$NetBSD: auxiotwo.h,v 1.1 2000/02/25 18:17:24 jdc Exp $	*/
+/*	$NetBSD: auxiotwo.h,v 1.2 2000/03/14 21:18:27 jdc Exp $	*/
 
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julian Coleman, Waldi Ravens and Leo Weppelman.
+ * by Julian Coleman.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,8 +54,18 @@
 #define	AUXIOTWO_CPF	0x02		/* Clear Power Fail Detect */
 #define	AUXIOTWO_SON	0x01		/* Serial ports on (when cleared) */
 
+/*
+ * Serial port open/close
+ */
+
+#define ZS_ENABLE	0
+#define ZS_DISABLE	1
+
 #ifndef _LOCORE
 volatile u_char *auxiotwo_reg;
 u_char auxiotwo_regval;
 unsigned int auxiotwobisc __P((int, int));
+void auxiotwoserialendis __P((int));
+void auxiotwoserialsetapm __P((int));
+int auxiotwoserialgetapm __P((void));
 #endif
