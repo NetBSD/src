@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.7 1998/02/24 22:06:10 pk Exp $	*/
+/*	$NetBSD: ffs.S,v 1.8 1998/07/01 02:16:27 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.7 1998/02/24 22:06:10 pk Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.8 1998/07/01 02:16:27 tv Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -65,9 +65,9 @@
 ENTRY(ffs)
 #ifdef PIC
 	PIC_PROLOGUE(%o1,%o2)
-	ld	[%o1 + ___ffstab], %o2
+	ld	[%o1 + _C_LABEL(__ffstab)], %o2
 #else
-	set	___ffstab, %o2
+	set	_C_LABEL(__ffstab), %o2
 #endif
 	andcc	%o0, 0xff, %o1	! get low byte
 	be,a	1f		! try again if 0

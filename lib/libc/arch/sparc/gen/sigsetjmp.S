@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.2 1995/03/11 20:28:59 pk Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.3 1998/07/01 02:16:27 tv Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -39,8 +39,8 @@ ENTRY(sigsetjmp)
 	cmp %o1,0
 	st %o1,[%o0+40]		! jmpbuf[JBLEN]
 	bne,a 1f
-	ld [%g1+_setjmp], %g1	! if (%o1 != 0) goto _setjmp;
-	ld [%g1+__setjmp], %g1	! else goto __setjmp;
+	ld [%g1+_C_LABEL(setjmp)], %g1	! if (%o1 != 0) goto _setjmp;
+	ld [%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
 1:
 	jmp %g1
 	nop
@@ -50,8 +50,8 @@ ENTRY(siglongjmp)
 	ld [%o0+40],%g2		! jmpbuf[JBLEN]
 	cmp %g2,0
 	bne,a 1f
-	ld [%g1+_longjmp], %g1	! if (%g2 != 0) goto _longjmp;
-	ld [%g1+__longjmp], %g1	! else goto __longjmp;
+	ld [%g1+_C_LABEL(longjmp)], %g1	 ! if (%g2 != 0) goto _longjmp;
+	ld [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
 1:
 	jmp %g1
 	nop
@@ -61,7 +61,7 @@ ENTRY(siglongjmp)
 
 ENTRY(sigsetjmp)
 	cmp %o1,0
-	be __setjmp
+	be _C_LABEL(_setjmp)
 	st %o1,[%o0+40]		! jmpbuf[JBLEN]
 	nop
 	ba,a _setjmp
@@ -70,9 +70,9 @@ ENTRY(sigsetjmp)
 ENTRY(siglongjmp)
 	ld [%o0+40],%g1
 	cmp %g1,0
-	be __longjmp
+	be _C_LABEL(_longjmp)
 	nop
-	ba,a _longjmp
+	ba,a _C_LABEL(longjmp)
 	unimp 0
 
 #endif /* PIC */
