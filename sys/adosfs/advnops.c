@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.43 1998/08/10 08:11:10 matthias Exp $	*/
+/*	$NetBSD: advnops.c,v 1.44 1998/08/13 10:06:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -83,7 +83,7 @@ int	adosfs_pathconf	__P((void *));
 #define adosfs_seek 	genfs_seek
 #define adosfs_vfree 	genfs_nullop
 
-#define adosfs_advlock 	genfs_eopnotsupp
+#define adosfs_advlock 	genfs_einval
 #define adosfs_blkatoff	genfs_eopnotsupp
 #define adosfs_bwrite 	genfs_eopnotsupp
 #define adosfs_create 	genfs_eopnotsupp

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.46 1998/08/09 20:51:08 perry Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.47 1998/08/13 10:06:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ int	fdesc_reclaim	__P((void *));
 int	fdesc_print	__P((void *));
 int	fdesc_pathconf	__P((void *));
 #define	fdesc_islocked	genfs_noislocked
-#define	fdesc_advlock	genfs_eopnotsupp
+#define	fdesc_advlock	genfs_einval
 #define	fdesc_blkatoff	genfs_eopnotsupp
 #define	fdesc_valloc	genfs_eopnotsupp
 #define	fdesc_vfree	genfs_nullop

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.57 1998/08/10 08:11:12 matthias Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.58 1998/08/13 10:06:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -133,7 +133,7 @@ int	procfs_bmap	__P((void *));
 int	procfs_print	__P((void *));
 int	procfs_pathconf	__P((void *));
 #define	procfs_islocked	genfs_noislocked
-#define	procfs_advlock	genfs_eopnotsupp
+#define	procfs_advlock	genfs_einval
 #define	procfs_blkatoff	genfs_eopnotsupp
 #define	procfs_valloc	genfs_eopnotsupp
 #define	procfs_vfree	genfs_nullop
