@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1996/03/16 23:12:11 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 1996/04/30 20:45:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -47,7 +47,6 @@ void	boot __P((int))
 void	pagemove __P((caddr_t, caddr_t, size_t));
 /* delay() is declared in <machine/param.h> */
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-int	dk_establish __P((struct disk *, struct device *));
 
 
 void	cpu_exit __P((struct proc *));
