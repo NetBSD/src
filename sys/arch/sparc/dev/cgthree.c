@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.8 1994/10/02 22:00:14 deraadt Exp $
+ * $Id: cgthree.c,v 1.9 1994/10/15 05:48:54 deraadt Exp $
  */
 
 /*
@@ -120,11 +120,10 @@ cgthreematch(parent, cf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		ra->ra_len = NBPG;
-		return (probeget(ra->ra_vaddr, 4) != -1);
-	}
-	return (1);
+	if (ca->ca_bustype == BUS_SBUS)
+		return(1);
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 4) != -1);
 }
 
 /*
@@ -155,7 +154,8 @@ cgthreeattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
-	case BUS_VME:
+	case BUS_VME32:
+	case BUS_VME16:
 		sbus = node = 0;
 		sc->sc_fb.fb_type.fb_width = 1152;
 		sc->sc_fb.fb_type.fb_height = 900;
@@ -189,10 +189,10 @@ cgthreeattach(parent, self, args)
 	p = (struct cgthree_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize);
+		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize, ca->ca_bustype);
 	}
 	sc->sc_bt = bt = (volatile struct bt_regs *)
-	    mapiodev((caddr_t)&p->ba_btreg, sizeof(p->ba_btreg));
+	    mapiodev((caddr_t)&p->ba_btreg, sizeof(p->ba_btreg), ca->ca_bustype);
 	sc->sc_phys = p->ba_ram;
 
 	/* grab initial (current) color map */
