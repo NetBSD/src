@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.64 2003/08/07 16:32:58 agc Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.65 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.64 2003/08/07 16:32:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.65 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_inet.h"
 
@@ -104,7 +104,7 @@ static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
 static int rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 static int sysctl_dumpentry __P((struct radix_node *, void *));
 static int sysctl_iflist __P((int, struct walkarg *, int));
-static int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
+static int sysctl_rtable __P((SYSCTLFN_PROTO));
 static __inline void rt_adjustcount __P((int, int));
 
 /* Sleazy use of local variables throughout file, warning!!!! */
@@ -1047,14 +1047,11 @@ sysctl_iflist(af, w, type)
 }
 
 static int
-sysctl_rtable(name, namelen, where, given, new, newlen)
-	int	*name;
-	u_int	namelen;
-	void 	*where;
-	size_t	*given;
-	void	*new;
-	size_t	newlen;
+sysctl_rtable(SYSCTLFN_ARGS)
 {
+	void 	*where = oldp;
+	size_t	*given = oldlenp;
+	const void *new = newp;
 	struct radix_node_head *rnh;
 	int	i, s, error = EINVAL;
 	u_char  af;
@@ -1130,10 +1127,27 @@ struct protosw routesw[] = {
   raw_input,	route_output,	raw_ctlinput,	0,
   route_usrreq,
   raw_init,	0,		0,		0,
-  sysctl_rtable,
+  NULL /* @@@ */,
 }
 };
 
 struct domain routedomain =
     { PF_ROUTE, "route", route_init, 0, 0,
       routesw, &routesw[sizeof(routesw)/sizeof(routesw[0])] };
+
+SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
+{
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "route", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_ROUTE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "rtable", NULL,
+		       sysctl_rtable, 0, NULL, 0,
+		       CTL_NET, PF_ROUTE, 0 /* any protocol */, CTL_EOL);
+}

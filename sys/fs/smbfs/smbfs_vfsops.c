@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.31 2003/06/29 22:31:13 fvdl Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.32 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31 2003/06/29 22:31:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.32 2003/12/04 19:38:23 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -65,6 +65,25 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31 2003/06/29 22:31:13 fvdl Exp $
 #ifndef __NetBSD__
 SYSCTL_NODE(_vfs, OID_AUTO, smbfs, CTLFLAG_RW, 0, "SMB/CIFS file system");
 SYSCTL_INT(_vfs_smbfs, OID_AUTO, version, CTLFLAG_RD, &smbfs_version, 0, "");
+#else
+SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
+{
+	struct sysctlnode *smb = NULL;
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "samba", &smb,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_CREATE);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "version", NULL,
+		       NULL, SMBFS_VERSION, NULL, 0,
+		       CTL_VFS, smb->sysctl_num, CTL_CREATE);
+}
 #endif
 
 static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
@@ -109,8 +128,7 @@ struct vfsops smbfs_vfsops = {
 	smbfs_init,
 	smbfs_reinit,
 	smbfs_done,
-	(int (*) (int *, u_int, void *, size_t *, void *, size_t, 
-		  struct proc *)) eopnotsupp, /* sysctl */
+	NULL,
 	(int (*) (void)) eopnotsupp, /* mountroot */
 	(int (*) (struct mount *, struct mbuf *, int *, 
 		  struct ucred **)) eopnotsupp, /* checkexp */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.14 2003/11/11 00:44:16 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.15 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.14 2003/11/11 00:44:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.15 2003/12/04 19:38:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.14 2003/11/11 00:44:16 christos Ex
 #include <sys/buf.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
-#include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
@@ -102,8 +102,6 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
 				   int *, struct ucred **));
 static int	ntfs_mountroot __P((void));
-static int	ntfs_sysctl __P((int *, u_int, void *, size_t *, void *,
-				 size_t, struct proc *));
 #else
 static int	ntfs_init __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
@@ -144,18 +142,22 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 	return (0);
 }
 
-/*ARGSUSED*/
-static int
-ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_ntfs_setup, "sysctl vfs.ntfs subtree setup")
 {
-	return (EINVAL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "ntfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 20, CTL_EOL);
+	/*
+	 * XXX the "20" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "20" is the order as taken from sys/mount.h
+	 */
 }
 
 static int
@@ -1062,7 +1064,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_init,
 	ntfs_reinit,
 	ntfs_done,
-	ntfs_sysctl,
+	NULL,
 	ntfs_mountroot,
 	ntfs_checkexp,
 	ntfs_vnodeopv_descs,

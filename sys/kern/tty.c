@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.158 2003/09/21 19:17:09 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.159 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.158 2003/09/21 19:17:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.159 2003/12/04 19:38:24 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.158 2003/09/21 19:17:09 jdolecek Exp $");
 #include <sys/poll.h>
 #include <sys/kprintf.h>
 #include <sys/namei.h>
+#include <sys/sysctl.h>
 
 #include <machine/stdarg.h>
 
@@ -176,6 +177,36 @@ u_int64_t tk_cancc;
 u_int64_t tk_nin;
 u_int64_t tk_nout;
 u_int64_t tk_rawcc;
+
+SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "tkstat", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_QUAD, "nin", NULL,
+		       NULL, 0, &tk_nin, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_QUAD, "nout", NULL,
+		       NULL, 0, &tk_nout, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NOUT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_QUAD, "cancc", NULL,
+		       NULL, 0, &tk_cancc, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_CANCC, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_QUAD, "rawcc", NULL,
+		       NULL, 0, &tk_rawcc, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_RAWCC, CTL_EOL);
+}
 
 int
 ttyopen(struct tty *tp, int dialout, int nonblock)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121 2003/06/29 22:29:30 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.122 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121 2003/06/29 22:29:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122 2003/12/04 19:38:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1456,15 +1456,12 @@ linux_sys_setdomainname(l, v, retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
-	int error;
+	int name[2];
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
-			    SCARG(uap, len), p));
+	name[0] = CTL_KERN;
+	name[1] = KERN_DOMAINNAME;
+	return (old_sysctl(&name[0], 2, 0, 0, SCARG(uap, domainname),
+			    SCARG(uap, len), l));
 }
 
 /*

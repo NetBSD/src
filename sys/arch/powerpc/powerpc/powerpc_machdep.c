@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.22 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.23 2003/12/04 19:38:22 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.22 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.23 2003/12/04 19:38:22 atatat Exp $");
 
 #include "opt_altivec.h"
 
@@ -108,47 +108,71 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 /*
  * Machine dependent system variables.
  */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	void *newp, size_t newlen, struct proc *p)
+static int
+sysctl_machdep_cacheinfo(SYSCTLFN_ARGS)
 {
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return ENOTDIR;
+	struct sysctlnode node = *rnode;
 
-	switch (name[0]) {
-	case CPU_CACHELINE:
-		/* Deprecated */
-		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
-	case CPU_TIMEBASE:
-		if (cpu_timebase)
-			return sysctl_rdint(oldp, oldlenp, newp, cpu_timebase);
-		break;
-	case CPU_PRINTFATALTRAPS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &cpu_printfataltraps);
-	case CPU_CACHEINFO:
-		/* Use this instead of CPU_CACHELINE */
-		return sysctl_rdstruct(oldp, oldlenp, newp,
-			&curcpu()->ci_ci, 
-			sizeof(curcpu()->ci_ci));
+	node.sysctl_data = &curcpu()->ci_ci;
+	node.sysctl_size = sizeof(curcpu()->ci_ci);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+static int
+sysctl_machdep_powersave(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+
+	if (powersave < 0)
+		node.sysctl_flags |= ~SYSCTL_READWRITE;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	/* Deprecated */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "cachelinesize", NULL,
+		       NULL, CACHELINESIZE, NULL, 0,
+		       CTL_MACHDEP, CPU_CACHELINE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "timebase", NULL,
+		       NULL, 0, &cpu_timebase, 0,
+		       CTL_MACHDEP, CPU_TIMEBASE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CPU_PRINTFATALTRAPS, CTL_EOL);
+	/* Use this instead of CPU_CACHELINE */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "cacheinfo", NULL,
+		       sysctl_machdep_cacheinfo, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_PRINTFATALTRAPS, CTL_EOL);
 #ifdef PPC_OEA
-	case CPU_POWERSAVE:
-		if (powersave < 0)
-			return sysctl_rdint(oldp, oldlenp, newp, powersave);
-		return sysctl_int(oldp, oldlenp, newp, newlen, &powersave);
-	case CPU_ALTIVEC:
-		return sysctl_rdint(oldp, oldlenp, newp, cpu_altivec);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "powersave", NULL,
+		       sysctl_machdep_powersave, 0, &powersave, 0,
+		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "altivec", NULL,
+		       NULL, cpu_altivec, NULL, 0,
+		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #else
-	case CPU_ALTIVEC:
-		return sysctl_rdint(oldp, oldlenp, newp, 0);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "altivec", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #endif
-	case CPU_MODEL:
-		return sysctl_rdstring(oldp, oldlenp, newp, cpu_model);
-	default:
-		break;
-	}
-	return EOPNOTSUPP;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "model", NULL,
+		       NULL, 0, cpu_model, 0,
+		       CTL_MACHDEP, CPU_MODEL, CTL_EOL);
 }
 
 /*

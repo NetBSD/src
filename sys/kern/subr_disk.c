@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.53 2003/08/07 16:31:52 agc Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.54 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.53 2003/08/07 16:31:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.54 2003/12/04 19:38:23 atatat Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -347,18 +347,23 @@ disk_resetstat(struct disk *diskp)
 }
 
 int
-sysctl_disknames(void *vwhere, size_t *sizep)
+sysctl_hw_disknames(SYSCTLFN_ARGS)
 {
 	char buf[DK_DISKNAMELEN + 1];
-	char *where = vwhere;
+	char *where = oldp;
 	struct disk *diskp;
 	size_t needed, left, slen;
 	int error, first;
 
+	if (newp != NULL)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
 	first = 1;
 	error = 0;
 	needed = 0;
-	left = *sizep;
+	left = *oldlenp;
 
 	simple_lock(&disklist_slock);
 	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
@@ -389,18 +394,21 @@ sysctl_disknames(void *vwhere, size_t *sizep)
 		}
 	}
 	simple_unlock(&disklist_slock);
-	*sizep = needed;
+	*oldlenp = needed;
 	return (error);
 }
 
 int
-sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
+sysctl_hw_diskstats(SYSCTLFN_ARGS)
 {
 	struct disk_sysctl sdisk;
 	struct disk *diskp;
-	char *where = vwhere;
+	char *where = oldp;
 	size_t tocopy, left;
 	int error;
+
+	if (newp != NULL)
+		return (EPERM);
 
 	/*
 	 * The original hw.diskstats call was broken and did not require
@@ -419,14 +427,14 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 		tocopy = name[0];
 
 	if (where == NULL) {
-		*sizep = disk_count * tocopy;
+		*oldlenp = disk_count * tocopy;
 		return (0);
 	}
 
 	error = 0;
-	left = *sizep;
+	left = *oldlenp;
 	memset(&sdisk, 0, sizeof(sdisk));
-	*sizep = 0;
+	*oldlenp = 0;
 
 	simple_lock(&disklist_slock);
 	TAILQ_FOREACH(diskp, &disklist, dk_link) {
@@ -452,7 +460,7 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 		if (error)
 			break;
 		where += tocopy;
-		*sizep += tocopy;
+		*oldlenp += tocopy;
 		left -= tocopy;
 	}
 	simple_unlock(&disklist_slock);

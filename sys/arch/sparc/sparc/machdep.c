@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240 2003/10/28 15:25:27 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.241 2003/12/04 19:38:22 atatat Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2003/10/28 15:25:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2003/12/04 19:38:22 atatat Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -470,51 +470,65 @@ int sigpid = 0;
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_boot(SYSCTLFN_ARGS)
 {
-	char *cp;
+	struct sysctlnode node = *rnode;
 	struct btinfo_kernelfile *bi_file;
+	char *cp;
 
-	/* all sysctl names are this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);	/* overloaded */
 
-	switch (name[0]) {
+	switch (node.sysctl_num) {
 	case CPU_BOOTED_KERNEL:
 		if ((bi_file = lookup_bootinfo(BTINFO_KERNELFILE)) != NULL)
 			cp = bi_file->name;
 		else
 			cp = prom_getbootfile();
-		if (cp == NULL)
-			return (ENOENT);
-		if (*cp == '\0')
+		if (cp != NULL && cp[0] == '\0')
 			cp = "netbsd";
-		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+		break;
 	case CPU_BOOTED_DEVICE:
 		cp = prom_getbootpath();
-		if (cp == NULL || cp[0] == '\0')
-			return (ENOENT);
-		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+		break;
 	case CPU_BOOT_ARGS:
 		cp = prom_getbootargs();
-		if (cp == NULL || cp[0] == '\0')
-			return (ENOENT);
-		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
-	case CPU_ARCH:
-		/* CPU architecture version */
-		return (sysctl_rdint(oldp, oldlenp, newp, cpu_arch));
+		break;
 	default:
-		return (EOPNOTSUPP);
+		return (EINVAL);
 	}
-	/* NOTREACHED */
+
+	if (cp == NULL || cp[0] == '\0')
+		return (ENOENT);
+
+	node.sysctl_data = cp;
+	node.sysctl_size = strlen(cp) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_device", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "boot_args", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOT_ARGS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "cpu_arch", NULL,
+		       NULL, 0, &cpu_arch, 0,
+		       CTL_MACHDEP, CPU_ARCH, CTL_EOL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.69 2003/11/12 15:25:19 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.70 2003/12/04 19:38:24 atatat Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.69 2003/11/12 15:25:19 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.70 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1435,130 +1435,173 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-int
-ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 {
-	int old, error;
 
-	/* All sysctl names (except ifq.*) at this level are terminal. */
-	if ((namelen != 1) && !(namelen == 2 && name[0] == IPCTL_IFQ))
-		return ENOTDIR;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "ip6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6, CTL_EOL);
 
-	switch (name[0]) {
-
-	case IPV6CTL_FORWARDING:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_forwarding);
-	case IPV6CTL_SENDREDIRECTS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_sendredirects);
-	case IPV6CTL_DEFHLIM:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_defhlim);
-	case IPV6CTL_MAXFRAGPACKETS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_maxfragpackets);
-	case IPV6CTL_ACCEPT_RTADV:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_accept_rtadv);
-	case IPV6CTL_KEEPFAITH:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_keepfaith);
-	case IPV6CTL_LOG_INTERVAL:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_log_interval);
-	case IPV6CTL_HDRNESTLIMIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_hdrnestlimit);
-	case IPV6CTL_DAD_COUNT:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_dad_count);
-	case IPV6CTL_AUTO_FLOWLABEL:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_auto_flowlabel);
-	case IPV6CTL_DEFMCASTHLIM:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_defmcasthlim);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "forwarding", NULL,
+		       NULL, 0, &ip6_forwarding, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_FORWARDING, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "redirect", NULL,
+		       NULL, 0, &ip6_sendredirects, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_SENDREDIRECTS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "hlim", NULL,
+		       NULL, 0, &ip6_defhlim, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_DEFHLIM, CTL_EOL);
+#ifdef notyet
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "mtu", NULL,
+		       NULL, 0, &, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_DEFMTU, CTL_EOL);
+#endif
+#ifdef __no_idea__
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "forwsrcrt", NULL,
+		       NULL, 0, &?, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_FORWSRCRT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRUCT, "stats", NULL,
+		       NULL, 0, &?, sizeof(?),
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_STATS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRUCT, "mrtstats", NULL,
+		       NULL, 0, &?, sizeof(?),
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_MRTSTATS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_?, "mrtproto", NULL,
+		       NULL, 0, &?, sizeof(?),
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_MRTPROTO, CTL_EOL);
+#endif
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maxfragpackets", NULL,
+		       NULL, 0, &ip6_maxfragpackets, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_MAXFRAGPACKETS, CTL_EOL);
+#ifdef __no_idea__
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "sourcecheck", NULL,
+		       NULL, 0, &?, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_SOURCECHECK, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "sourcecheck_logint", NULL,
+		       NULL, 0, &?, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_SOURCECHECK_LOGINT, CTL_EOL);
+#endif
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "accept_rtadv", NULL,
+		       NULL, 0, &ip6_accept_rtadv, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_ACCEPT_RTADV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "keepfaith", NULL,
+		       NULL, 0, &ip6_keepfaith, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_KEEPFAITH, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "log_interval", NULL,
+		       NULL, 0, &ip6_log_interval, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_LOG_INTERVAL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "hdrnestlimit", NULL,
+		       NULL, 0, &ip6_hdrnestlimit, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_HDRNESTLIMIT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "dad_count", NULL,
+		       NULL, 0, &ip6_dad_count, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_DAD_COUNT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "auto_flowlabel", NULL,
+		       NULL, 0, &ip6_auto_flowlabel, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_AUTO_FLOWLABEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "defmcasthlim", NULL,
+		       NULL, 0, &ip6_defmcasthlim, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_DEFMCASTHLIM, CTL_EOL);
 #if NGIF > 0
-	case IPV6CTL_GIF_HLIM:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_gif_hlim);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "gifhlim", NULL,
+		       NULL, 0, &ip6_gif_hlim, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_GIF_HLIM, CTL_EOL);
+#endif /* NGIF */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "kame_version", NULL,
+		       NULL, 0, __KAME_VERSION, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_KAME_VERSION, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "use_deprecated", NULL,
+		       NULL, 0, &ip6_use_deprecated, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_USE_DEPRECATED, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "rr_prune", NULL,
+		       NULL, 0, &ip6_rr_prune, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_RR_PRUNE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT
+#ifndef INET6_BINDV6ONLY
+		       |SYSCTL_READWRITE,
 #endif
-	case IPV6CTL_KAME_VERSION:
-		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
-	case IPV6CTL_USE_DEPRECATED:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_use_deprecated);
-	case IPV6CTL_RR_PRUNE:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
-	case IPV6CTL_V6ONLY:
-#ifdef INET6_BINDV6ONLY
-		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
-#else
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_v6only);
-#endif
-	case IPV6CTL_ANONPORTMIN:
-		old = ip6_anonportmin;
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_anonportmin);
-		if (ip6_anonportmin >= ip6_anonportmax || ip6_anonportmin < 0 ||
-		    ip6_anonportmin > 65535
+		       CTLTYPE_INT, "v6only", NULL,
+		       NULL, 0, &ip6_v6only, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_V6ONLY, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "anonportmin", NULL,
+		       sysctl_net_inet_ip_ports, 0, &ip6_anonportmin, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_ANONPORTMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "anonportmax", NULL,
+		       sysctl_net_inet_ip_ports, 0, &ip6_anonportmax, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_ANONPORTMAX, CTL_EOL);
 #ifndef IPNOPRIVPORTS
-		    || ip6_anonportmin < IPV6PORT_RESERVED
-#endif
-		    ) {
-			ip6_anonportmin = old;
-			return (EINVAL);
-		}
-		return (error);
-	case IPV6CTL_ANONPORTMAX:
-		old = ip6_anonportmax;
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_anonportmax);
-		if (ip6_anonportmin >= ip6_anonportmax || ip6_anonportmax < 0 ||
-		    ip6_anonportmax > 65535
-#ifndef IPNOPRIVPORTS
-		    || ip6_anonportmax < IPV6PORT_RESERVED
-#endif
-		    ) {
-			ip6_anonportmax = old;
-			return (EINVAL);
-		}
-		return (error);
-#ifndef IPNOPRIVPORTS
-	case IPV6CTL_LOWPORTMIN:
-		old = ip6_lowportmin;
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_lowportmin);
-		if (ip6_lowportmin >= ip6_lowportmax ||
-		    ip6_lowportmin > IPV6PORT_RESERVEDMAX ||
-		    ip6_lowportmin < IPV6PORT_RESERVEDMIN) {
-			ip6_lowportmin = old;
-			return (EINVAL);
-		}
-		return (error);
-	case IPV6CTL_LOWPORTMAX:
-		old = ip6_lowportmax;
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_lowportmax);
-		if (ip6_lowportmin >= ip6_lowportmax ||
-		    ip6_lowportmax > IPV6PORT_RESERVEDMAX ||
-		    ip6_lowportmax < IPV6PORT_RESERVEDMIN) {
-			ip6_lowportmax = old;
-			return (EINVAL);
-		}
-		return (error);
-#endif
-	case IPV6CTL_MAXFRAGS:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
-	case IPV6CTL_IFQ:
-		return sysctl_ifq(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen, &ip6intrq);
-	default:
-		return EOPNOTSUPP;
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "lowportmin", NULL,
+		       sysctl_net_inet_ip_ports, 0, &ip6_lowportmin, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_LOWPORTMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "lowportmax", NULL,
+		       sysctl_net_inet_ip_ports, 0, &ip6_lowportmax, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_LOWPORTMAX, CTL_EOL);
+#endif /* IPNOPRIVPORTS */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maxfrags", NULL,
+		       NULL, 0, &ip6_maxfrags, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_MAXFRAGS, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.66 2003/12/03 20:24:51 manu Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.67 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.66 2003/12/03 20:24:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.67 2003/12/04 19:38:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ const struct emul emul_linux = {
 #else
 #error Implement __HAVE_SYSCALL_INTERN for this platform
 #endif
-	linux_sysctl,
+	NULL,
 	NULL,
 };
 

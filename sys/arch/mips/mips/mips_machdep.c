@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.170 2003/12/04 13:05:16 keihan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.171 2003/12/04 19:38:21 atatat Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.170 2003/12/04 13:05:16 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.171 2003/12/04 19:38:21 atatat Exp $");
 
 #include "opt_cputype.h"
 
@@ -1118,51 +1118,49 @@ setregs(l, pack, stack)
 /*
  * Machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 {
-#ifdef __HAVE_BOOTINFO_H
 	struct btinfo_bootpath *bibp;
-#endif
-	dev_t consdev;
+	struct sysctlnode node;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return(ENOENT); /* ??? */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-#ifdef __HAVE_BOOTINFO_H
-	case CPU_BOOTED_KERNEL:
-		bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-		if (!bibp)
-			return (ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-#endif
-	case CPU_LLSC:
-		return (sysctl_rdint(oldp, oldlenp, newp, MIPS_HAS_LLSC));
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    root_device->dv_xname));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+#ifdef __HAVE_BOOTINFO_H
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+#endif
+        sysctl_createv(SYSCTL_PERMANENT,
+                       CTLTYPE_STRING, "root_device", NULL,
+                       sysctl_root_device, 0, NULL, 0,
+                       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+                       CTLTYPE_INT, "llsc", NULL,
+                       NULL, MIPS_HAS_LLSC, NULL, 0,
+                       CTL_MACHDEP, CPU_LLSC, CTL_EOL);
+}
 
 /*
  * These are imported from platform-specific code.
