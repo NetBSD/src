@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_arm32.c,v 1.7 2000/06/29 06:34:23 mrg Exp $	*/
+/*	$NetBSD: kvm_arm.c,v 1.1 2001/01/08 18:30:03 bjh21 Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
