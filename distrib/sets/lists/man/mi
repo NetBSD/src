@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.247 2000/05/18 07:22:58 shin Exp $
+# $NetBSD: mi,v 1.248 2000/05/28 22:38:54 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/as.info
@@ -463,6 +463,7 @@
 ./usr/share/man/cat4/lxtphy.0
 ./usr/share/man/cat4/mainbus.0
 ./usr/share/man/cat4/mbe.0
+./usr/share/man/cat4/mca.0
 ./usr/share/man/cat4/mcd.0
 ./usr/share/man/cat4/md.0
 ./usr/share/man/cat4/mhzc.0
@@ -1477,6 +1478,7 @@
 ./usr/share/man/man4/lxtphy.4
 ./usr/share/man/man4/mainbus.4
 ./usr/share/man/man4/mbe.4
+./usr/share/man/man4/mca.4
 ./usr/share/man/man4/mcd.4
 ./usr/share/man/man4/md.4
 ./usr/share/man/man4/mhzc.4
