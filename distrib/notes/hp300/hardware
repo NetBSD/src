@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2003/07/26 17:07:04 salo Exp $
+.\"	$NetBSD: hardware,v 1.17 2003/11/15 23:45:08 mbw Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -122,10 +122,10 @@ SCSI autochangers
 .It
 Serial interfaces
 .(bullet -compact
-.Em dca ;
+.Em com ;
 Built-in single serial port on System Interface board and Human Interface board
 .It
-.Em apci ;
+.Em com ;
 Built-in Apollo 4-port on Series 400 workstations
 .It
 .Em dcm ;
@@ -134,11 +134,8 @@ Built-in Apollo 4-port on Series 400 workstations
 .Em dcm ;
 98642 4-port (DIO-I board)
 .It
-.Em dca ;
+.Em com ;
 98626, 98644 built-in or add-on (DIO-I board) single serial port
-.It
-.Em dcl ;
-98628A single port (DIO-I board)
 .bullet)
 .(Note
 See the FAQ for more detailed specs and information on configuring:
@@ -263,6 +260,8 @@ EISA support, on Series 400 workstations
 Token Ring cards (a.k.a. ATR)
 .It
 VME bus adapter, on Series 300 workstations
+.It
+98628A single port dcl (DIO-I board)
 .It
 98625C fast HP-IB option on models 345 and 375
 .It
