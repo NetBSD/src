@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.59 2003/06/27 22:20:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.60 2003/07/07 12:30:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -278,21 +278,12 @@ message fspart
 }
 
 message fspart_header
-{       Debut       Fin    Taille   Type Bsize Fsize Preserver Point de montage
-   --------- --------- --------- ------ ----- ----- --------- ----------------
+{       Debut       Fin    Taille   Type Newfs Mount Point de montage
+   --------- --------- --------- ------ ----- ----- ----------------
 }
 
-message fspart_row_start
-{%9d %9d %9d %-6s }
-
-message fspart_row_end_bsd
-{%5d %5d %-9s %s\n}
-
-message fspart_row_end_msdos
-{                      %s\n}
-
-message fspart_row_end_other
-{\n}
+message fspart_row
+{%9d %9d %9d %-6s %-5s %-5s %s}
 
 message show_all_unused_partitions	/* XXX translate */
 {Show all unused partitions}
@@ -325,19 +316,24 @@ message bsize_fmt	/* XXX translate */
 message fsize_fmt	/* XXX translate */
 {        fsize: %9d bytes}
 
-message preserve_fmt
-{    préserver: %9s}
+message newfs_fmt	/* XXX translate */
+{        newfs: %9s}
 
-message mount_fmt
+message mount_fmt	/* XXX translate */
+{        mount: %9s}
+
+message mountpt_fmt
 {Pt de montage: %9s}
 
 message restore		/* XXX translate */
 {Restore original values}
 
+.if 0
 message not42bsd
 {La partition %c n'est pas de type 4.2BSD, et vous devez également
 spécifier sa taille de bloc et fragment.
 }
+.endif
 
 message Select_the_type
 {Selection du type de système de fichier}
@@ -840,8 +836,8 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{      Composant                 Installe?
-------------------------------- ---------
+{      Composant                      Installe?
+------------------------------------ ---------
 }
 
 message set_base
@@ -934,11 +930,6 @@ message cmdfail
 	%s
 ne s'est pas executée correctement. Impossible de continuer.}
 
-message noactivepart
-{Vous n'avez pas choisi de partition active.
-Cela peut empêcher votre système de démarrer correctement.
-Dois-je marquer la partition NetBSD active?}
-
 message upgradeparttype
 {La seule partition disponible pour installer NetBSD est de l'ancien type
 NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau ? }
@@ -955,6 +946,9 @@ pour quitter la selection de la zone horaire.
  Séléctionée:	%s
  Heure Locale:	%s %s
 }
+
+message tz_back	/* XXX translate */
+{ Back to main timezone list}
 
 message choose_crypt	
 {Sélectionez le type de hachage des mots de passe. NetBSD peut être

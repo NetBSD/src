@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.1 2003/06/27 22:20:16 dsl Exp $
+#	$NetBSD: msg_xlat.sh,v 1.2 2003/07/07 12:30:22 dsl Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 nl="
 "
 
+rval=0
+
 # Read header file and set up map of message names to numbers
 
 exec 3<&0 <msg_defs.h
@@ -79,7 +81,8 @@ do
 		name="$2"
 		eval number=\$MSG_$name
 		[ -z "$number" ] && {
-			echo "unknown text \"$name\"" >&2
+			echo "ERROR: unknown message \"$name\"" >&2
+			[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 			number=unknown
 		}
 		l=${line#*\{}
@@ -101,6 +104,11 @@ do
 	# We need the %b to expand the \n that exist in the message file
 	msg="$(printf "%bz" "${m#\{}")"
 	msg="${msg%z}"
+	eval old=\"\$MSGTEXT_$number\"
+	[ -n "$old" ] && {
+		echo "ERROR: Two translations for message \"$name\"" >&2
+		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
+	}
 	eval MSGTEXT_$number=\"\${msg}\"
 	# echo $number $msg
 	name=
@@ -113,7 +121,7 @@ done
 # is just a smidgen tricky in the shell.
 
 offset="$(( 8 + $last_msg_number * 8 + 8 ))"
-printf 'INSTMSGS%-8d' $last_msg_number
+printf 'MSGTXTS\0%-7d\0' $last_msg_number
 
 msgnum=0
 while
@@ -122,11 +130,12 @@ while
 do
 	eval msg=\${MSGTEXT_$msgnum}
 	[ -z "$msg" ] && {
-		eval echo "No translation for message \$MSGNUM_$msgnum" >&2
-		printf '%-8d' 0
+		eval echo "ERROR: No translation for message \$MSGNUM_$msgnum" >&2
+		printf '%-7d\0' 0
+		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 		continue
 	}
-	printf '%-8d' $offset
+	printf '%-7d\0' $offset
 	offset="$(( $offset + ${#msg} + 1 ))"
 done
 
@@ -141,3 +150,5 @@ do
 	[ -z "$msg" ] && continue
 	printf '%s\0' $msg
 done
+
+exit $rval

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.13 2003/06/12 10:51:40 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.14 2003/07/07 12:30:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,13 +82,6 @@ message biosmultmatch_header
    ------ ---------- ------- -------
 }
 
-message biosgeom_advise
-{
-Note: since sysinst was able to uniquely match the disk you chose with a disk
-known to the BIOS, the values displayed above are very likely correct, and
-should not be changed. Only change them if they are very obviously wrong.
-}
-
 message biosmultmatch_row
 {%-1d: %-6x %-10d %-7d %d\n}
 
@@ -101,13 +94,6 @@ your machine can address. Booting from it may not be possible. Are you
 sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
-
-message emulbackup
-{Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted file system. It has been given a '.old' extension.
-Once you bring your upgraded system back up, you may need to take care
-of merging the newly created /emul/aout directory with the old one.
-}
 
 message set_kernel_1
 {Kernel (GENERIC)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.9 2003/06/12 10:51:40 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.10 2003/07/07 12:30:24 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.4 2002/03/23 03:24:34 shin Exp */
 
@@ -80,14 +80,6 @@ message biosmultmatch_header
    ------ ---------- ------- -------
 }
 
-message biosgeom_advise
-{
-Notatka: od kiedy sysinst jest w stanie unikalnie rozpoznac dysk, ktory 
-wybrales i powiazac go z dyskiem BIOS, wartosci wyswietlane powyzej sa
-bardzo prawdopodobnie prawidlowe i nie powinny byc zmieniane. Zmieniaj je
-tylko wtedy jesli sa naprawde _obrzydliwie_ zle.
-}
-
 message biosmultmatch_row
 {%-1d: %-6x %-10d %-7d %d\n}
 
@@ -101,14 +93,7 @@ chcesz to zrobic?
 
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
-message emulbackup
-{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
-wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
-Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
-zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
-}
-
 message set_kernel_1
-{Kernel (GENERIC)}  
+{Kernel (GENERIC)}
 message set_kernel_2
 {Kernel (TX3912)}

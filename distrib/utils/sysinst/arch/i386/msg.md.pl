@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.13 2003/06/13 22:27:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.14 2003/07/07 12:30:25 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -137,6 +137,36 @@ zaadresowac. Nie mozliwe bedzie bootowanie z tego dysku. Jestes pewien, ze
 chcesz to zrobic?
 
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
+
+message missing_bootmenu_text	/* XXX translate */
+{You have more than one operating system on this disk, but have not
+specified a 'bootmenu' for either the active partition or the
+Netbsd partition that you are going to install into. 
+
+Do you want to re-edit the partition to add a bootmenu entry?}
+
+message no_extended_bootmenu	/* XXX translate */
+{You have requested that an extended partition be included in the bootmenu.
+However your system BIOS doesn't appear to support the read command used
+by that version of the bootmenu code. 
+Are you sure you that you want to do this?
+
+(Answering 'no' will take you back to the partition edit menu.)}
+
+message installbootsel	/* XXX translate */
+{Your configuration requires the NetBSD bootselect code to
+select which operating system to use. 
+
+It is not currently installed, do you want to install it now?}
+
+message installmbr	/* XXX translate */
+{The bootcode in the Master Boot Record does not appear to be valid.
+
+Do you want to install the NetBSD bootcode?}
+
+message updatembr	/* XXX translate */
+{Do you want to update the bootcode in the Master Boot Record to
+the latest version of the NetBSD bootcode?}
 
 message set_kernel_1
 {Kernel (GENERIC)}
