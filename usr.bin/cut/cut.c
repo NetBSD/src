@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.10 1997/02/11 09:41:45 mrg Exp $	*/
+/*	$NetBSD: cut.c,v 1.11 1997/10/18 13:21:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: cut.c,v 1.10 1997/02/11 09:41:45 mrg Exp $";
+__RCSID("$NetBSD: cut.c,v 1.11 1997/10/18 13:21:39 lukem Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -68,6 +68,7 @@ int	sflag;
 void	c_cut __P((FILE *, char *));
 void	f_cut __P((FILE *, char *));
 void	get_list __P((char *));
+int	main __P((int, char **));
 void	usage __P((void));
 
 int
@@ -79,6 +80,7 @@ main(argc, argv)
 	void (*fcn) __P((FILE *, char *));
 	int ch;
 
+	fcn = NULL;
 	setlocale (LC_ALL, "");
 
 	dchar = '\t';			/* default delimiter is \t */
@@ -140,8 +142,8 @@ void
 get_list(list)
 	char *list;
 {
-	register int setautostart, start, stop;
-	register char *pos;
+	int setautostart, start, stop;
+	char *pos;
 	char *p;
 
 	/*
@@ -152,7 +154,7 @@ get_list(list)
 	 * overlapping lists.  We also handle "-3-5" although there's no
 	 * real reason too.
 	 */
-	for (; p = strtok(list, ", \t"); list = NULL) {
+	for (; (p = strtok(list, ", \t")) != NULL; list = NULL) {
 		setautostart = start = stop = 0;
 		if (*p == '-') {
 			++p;
@@ -199,9 +201,10 @@ c_cut(fp, fname)
 	FILE *fp;
 	char *fname;
 {
-	register int ch, col;
-	register char *pos;
+	int ch, col;
+	char *pos;
 
+	ch = 0;
 	for (;;) {
 		pos = positions + 1;
 		for (col = maxval; col; --col) {
@@ -227,8 +230,8 @@ f_cut(fp, fname)
 	FILE *fp;
 	char *fname;
 {
-	register int ch, field, isdelim;
-	register char *pos, *p, sep;
+	int ch, field, isdelim;
+	char *pos, *p, sep;
 	int output;
 	char lbuf[_POSIX2_LINE_MAX + 1];
 
