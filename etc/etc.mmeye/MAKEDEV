@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 2002/05/22 15:02:26 uch Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2002/05/25 16:31:10 uch Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -209,7 +209,7 @@ ccd*|fd*|sd*|vnd*|wd*|raid*)
 	mknod ${name}${unit}f	b $blk $(($unit * 16 + 5))
 	mknod ${name}${unit}g	b $blk $(($unit * 16 + 6))
 	mknod ${name}${unit}h	b $blk $(($unit * 16 + 7))
-	mknod ${name}${unit}i	b $blk $(($unit * 16 + 9))
+	mknod ${name}${unit}i	b $blk $(($unit * 16 + 8))
 	mknod ${name}${unit}j	b $blk $(($unit * 16 + 9))
 	mknod ${name}${unit}k	b $blk $(($unit * 16 + 10))
 	mknod ${name}${unit}l	b $blk $(($unit * 16 + 11))
