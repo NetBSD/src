@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.4 1996/03/17 01:24:33 thorpej Exp $ */
+/* $NetBSD: lpt.c,v 1.5 1996/03/27 22:08:28 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -49,7 +49,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:$NetBSD: lpt.c,v 1.4 1996/03/17 01:24:33 thorpej Exp $
+ *	from:$NetBSD: lpt.c,v 1.5 1996/03/27 22:08:28 mark Exp $
  */
 
 /*
@@ -320,9 +320,11 @@ lptattach(parent, self, aux)
 		sc->sc_ih.ih_arg = sc;
 #if defined(INET) && defined(PLIP)
 		sc->sc_ih.ih_level = IPL_NET;
+		sc->sc_ih.ih_name = "lpt/plip";
         	plipattach(sc, self->dv_unit);
 #else
 		sc->sc_ih.ih_level = IPL_NONE;
+		sc->sc_ih.ih_name = "lpt";
 #endif
 		if (irq_claim(mb->mb_irq, &sc->sc_ih))
 			panic("Cannot claim IRQ %d for lpt%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
