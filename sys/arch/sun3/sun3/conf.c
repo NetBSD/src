@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.50 1996/10/22 15:58:12 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -123,18 +123,15 @@ cdev_decl(ctty);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 
-#define NZS 2 /* XXX: temporary hack */
+#include "zstty.h"
 cdev_decl(zs);
-cdev_decl(kd);
-cdev_decl(ms);
-cdev_decl(kbd);
 
-/* XXX - Should make keyboard/mouse real children of zs. */
-#if NZS > 1
-#define NKD 1
-#else
-#define NKD 0
-#endif
+#include "kbd.h"
+cdev_decl(kbd);
+cdev_decl(kd);
+
+#include "ms.h"
+cdev_decl(ms);
 
 #include "pty.h"
 #define	ptstty		ptytty
@@ -175,7 +172,7 @@ dev_decl(filedesc,open);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NKD,kd),	/* 1: Sun keyboard/display */
+	cdev_tty_init(NKBD,kd), 	/* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4: was PROM console */
@@ -186,8 +183,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
-	cdev_tty_init(NZS,zs),		/* 12: Zilog 8350 serial port */
-	cdev_mouse_init(NKD,ms),	/* 13: Sun mouse */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_mouse_init(NMS,ms),	/* 13: Sun mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: /dev/winXXX */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
@@ -203,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 26: bwone */
 	cdev_fb_init(NBWTWO,bw2),	/* 27: bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
-	cdev_mouse_init(NKD,kbd),	/* 29: Sun keyboard */
+	cdev_mouse_init(NKBD,kbd),	/* 29: Sun keyboard */
 	cdev_tape_init(NXT,xt),		/* 30: Xylogics tape */
 	cdev_fb_init(NCGTWO,cg2),	/* 31: cgtwo */
 	cdev_notdef(),			/* 32: /dev/gpone */
