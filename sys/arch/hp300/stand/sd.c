@@ -38,7 +38,7 @@
  * from: Utah $Hdr: sd.c 1.9 92/12/21$
  * from: @(#)sd.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: sd.c,v 1.5 1994/03/09 20:17:38 brezak Exp $
+ * $Id: sd.c,v 1.6 1994/09/19 00:23:43 mycroft Exp $
  */
 
 /*
@@ -191,7 +191,6 @@ sdopen(f, ctlr, unit, part)
 	}
 	if (part >= ss->sc_pinfo.npart || ss->sc_pinfo.offset[part] == -1)
 		return (EPART);
-
 	f->f_devdata = (void *)ss;
 	return (0);
 }

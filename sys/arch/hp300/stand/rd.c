@@ -38,7 +38,7 @@
  * from: Utah Hdr: rd.c 1.20 92/12/21
  * from: @(#)rd.c	8.1 (Berkeley) 7/15/93
  *
- * $Id: rd.c,v 1.5 1994/03/09 20:17:39 brezak Exp $
+ * $Id: rd.c,v 1.6 1994/09/19 00:23:42 mycroft Exp $
  */
 
 /*
@@ -313,7 +313,6 @@ rdopen(f, ctlr, unit, part)
 	}
 	if (part >= rs->sc_pinfo.npart || rs->sc_pinfo.offset[part] == -1)
 		return (EPART);
-
 	f->f_devdata = (void *)rs;
 	return (0);
 }

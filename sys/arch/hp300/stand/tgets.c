@@ -32,9 +32,10 @@
  *
  * from: @(#)gets.c	8.1 (Berkeley) 6/11/93
  *
- * $Id: tgets.c,v 1.2 1994/08/22 21:41:07 brezak Exp $
+ * $Id: tgets.c,v 1.3 1994/09/19 00:23:44 mycroft Exp $
  */
 
+int
 tgets(buf)
     char *buf;
 {
@@ -51,7 +52,7 @@ tgets(buf)
                 case '\r':
                     *lp = '\0';
                     putchar('\n');
-                    return;
+                    return (1);
                 case '\b':
                 case '\177':
                     if (lp > buf) {
@@ -87,5 +88,5 @@ tgets(buf)
             }
         }
     }
-    return(0);
+    return (0);
 }

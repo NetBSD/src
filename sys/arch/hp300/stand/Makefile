@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.11 1994/08/15 06:42:04 mycroft Exp $
+#	     $Id: Makefile,v 1.12 1994/09/19 00:23:36 mycroft Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -27,7 +27,7 @@ LIBKERN=	${KERNLIB}
 .include "$S/lib/libsa/Makefile.inc"
 LIBSA=	${SA_LIB}
 
-LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
+LIBS=	${LIBSA} libdrive.a \
 	${LIBSA} ${LIBKERN}
 
 BOOTS=	pboot dboot nboot dcopy tboot tcopy cat #ls
@@ -38,9 +38,10 @@ all: ${ALL}
 ${BOOTS}: ${LIBS}
 
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
-${.OBJDIR}/libdrive.a: ${OBJS}
-	ar crv $@ $?
-	ranlib $@
+libdrive.a: ${OBJS}
+	rm -f $@
+	${AR} cq $@ ${OBJS}
+	${RANLIB} $@
 
 # depend on DEFS
 
@@ -58,24 +59,24 @@ tpsrt0.o: ${.CURDIR}/srt0.s
 
 # new boot
 pboot:	pboot.o srt0.o ${LIBS}
-	ld -N -T ${RELOC} -e begin srt0.o pboot.o ${LIBS} -o $@
+	${LD} -N -T ${RELOC} -e begin srt0.o pboot.o ${LIBS} -o $@
 	@size pboot
 	@echo pboot total size should not exceed 1044480 bytes
 
 ls:	ls.o srt0.o ${LIBS}
-	ld -N -T ${RELOC} -e begin srt0.o ls.o ${LIBS} -o $@
+	${LD} -N -T ${RELOC} -e begin srt0.o ls.o ${LIBS} -o $@
 	@size ls
 	@echo ls total size should not exceed 1044480 bytes
 
 cat:	cat.o srt0.o ${LIBS}
-	ld -N -T ${RELOC} -e begin srt0.o cat.o ${LIBS} -o $@
+	${LD} -N -T ${RELOC} -e begin srt0.o cat.o ${LIBS} -o $@
 	@size cat
 	@echo cat total size should not exceed 1044480 bytes
 
 # bootable from tape
 
 tboot:	tboot.o srt0.o ${LIBS}
-	ld -N -T ${RELOC} -e begin srt0.o tboot.o ${LIBS} -o $@
+	${LD} -N -T ${RELOC} -e begin srt0.o tboot.o ${LIBS} -o $@
 	@size tboot
 	@echo tboot total size should not exceed 1044480 bytes
 
@@ -85,14 +86,14 @@ tboot.o: boot.c
 	rm -f tboot.c
 
 tcopy:	copy.o tpsrt0.o ${LIBS}
-	ld -N -T ${RELOC} -e begin tpsrt0.o copy.o ${LIBS} -o $@
+	${LD} -N -T ${RELOC} -e begin tpsrt0.o copy.o ${LIBS} -o $@
 	@size tcopy
 	@echo tcopy total size should not exceed 1044480 bytes
 
 # bootable from floppy or real disks
 
 dboot:	boot.o srt0.o bootconf.o ${LIBS}
-	ld -N -T ${RELOC} -e begin srt0.o boot.o bootconf.o ${LIBS} -o $@ 
+	${LD} -N -T ${RELOC} -e begin srt0.o boot.o bootconf.o ${LIBS} -o $@ 
 	@size dboot
 	@echo dboot text+data size should not exceed 57344 bytes
 	@echo dboot total size should not exceed 1044480 bytes
@@ -106,7 +107,7 @@ bootconf.o: ${.CURDIR}/conf.c
 # non-secure boot (allows booting non-root owned or world writable kernels)
 
 nboot:	nboot.o srt0.o bootconf.o ${LIBS}
-	ld -N -T ${RELOC} -e begin -o nboot srt0.o nboot.o bootconf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin -o nboot srt0.o nboot.o bootconf.o ${LIBS}
 	@size nboot
 	@echo nboot text+data size should not exceed 57344 bytes
 	@echo nboot total size should not exceed 1044480 bytes
@@ -118,7 +119,7 @@ nboot.o: ${.CURDIR}/boot.c
 	rm -f nboot.c
 
 dcopy:	copy.o srt0.o conf.o ${LIBS}
-	ld -N -T ${RELOC} -e begin -o dcopy srt0.o copy.o conf.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin -o dcopy srt0.o copy.o conf.o ${LIBS}
 
 mkboot: ${.CURDIR}/mkboot.c
 	${CC} ${CFLAGS} -o mkboot ${.CURDIR}/mkboot.c
