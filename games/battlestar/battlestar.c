@@ -38,7 +38,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)battlestar.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*
@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)battlestar.c	8.1 (Berkeley) 5/31/93";
  * on the Cory PDP-11/70, University of California, Berkeley.
  */
 
-#include "externs.h"
+#include "extern.h"
 
 main(argc,argv)
 int  argc;

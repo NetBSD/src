@@ -32,10 +32,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)assorted.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 table(rig, shot, hittable, on, from, roll)
 struct ship *on, *from;

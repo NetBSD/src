@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1983, 1993
+/*-
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,45 +32,96 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
+static char copyright[] =
+"@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
-#include "extern.h"
+#ifndef lint
+static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
+#endif /* not lint */
 
-meleeing(from, to)
-struct ship *from;
-register struct ship *to;
+#include <sys/types.h>
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+void pigout __P((char *, int));
+void usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	register struct BP *p = from->file->OBP;
-	register struct BP *q = p + NBP;
+	register int len;
+	int ch;
+	char buf[1024];
 
-	for (; p < q; p++)
-		if (p->turnsent && p->toship == to)
-			return 1;
-	return 0;
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	for (len = 0; (ch = getchar()) != EOF;) {
+		if (isalpha(ch)) {
+			if (len >= sizeof(buf)) {
+				(void)fprintf(stderr, "pig: ate too much!\n");
+				exit(1);
+			}
+			buf[len++] = ch;
+			continue;
+		}
+		if (len != 0) {
+			pigout(buf, len);
+			len = 0;
+		}
+		(void)putchar(ch);
+	}
+	exit(0);
 }
 
-boarding(from, isdefense)
-register struct ship *from;
-char isdefense;
+void
+pigout(buf, len)
+	char *buf;
+	int len;
 {
-	register struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
-	register struct BP *q = p + NBP;
+	register int ch, start;
+	int olen;
 
-	for (; p < q; p++)
-		if (p->turnsent)
-			return 1;
-	return 0;
+	/*
+	 * If the word starts with a vowel, append "way".  Don't treat 'y'
+	 * as a vowel if it appears first.
+	 */
+	if (index("aeiouAEIOU", buf[0]) != NULL) {
+		(void)printf("%.*sway", len, buf);
+		return;
+	}
+
+	/*
+	 * Copy leading consonants to the end of the word.  The unit "qu"
+	 * isn't treated as a vowel.
+	 */
+	for (start = 0, olen = len;
+	    !index("aeiouyAEIOUY", buf[start]) && start < olen;) {
+		ch = buf[len++] = buf[start++];
+		if ((ch == 'q' || ch == 'Q') && start < olen &&
+		    (buf[start] == 'u' || buf[start] == 'U'))
+			buf[len++] = buf[start++];
+	}
+	(void)printf("%.*say", olen, buf + start);
 }
 
-unboard(ship, to, isdefense)
-register struct ship *ship, *to;
-register char isdefense;
+void
+usage()
 {
-	register struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
-	register n;
-
-	for (n = 0; n < NBP; p++, n++)
-		if (p->turnsent && (p->toship == to || isdefense || ship == to))
-			Write(isdefense ? W_DBP : W_OBP, ship, 0, n, 0, 0, 0);
+	(void)fprintf(stderr, "usage: pig\n");
+	exit(1);
 }
