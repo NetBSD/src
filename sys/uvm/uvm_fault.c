@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.40 1999/07/08 18:11:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.41 1999/07/10 21:46:56 thorpej Exp $	*/
 
 /*
  *
@@ -1771,9 +1771,9 @@ uvm_fault_unwire_locked(map, start, end)
 {
 	vm_map_entry_t entry;
 	pmap_t pmap = vm_map_pmap(map);
-	vaddr_t va;
+	vaddr_t lim;
 	paddr_t pa;
-	struct vm_page *pg;
+	vm_page_t pg;
 
 #ifdef DIAGNOSTIC
 	if (map->flags & VM_MAP_INTRSAFE)
@@ -1799,37 +1799,33 @@ uvm_fault_unwire_locked(map, start, end)
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
 		panic("uvm_fault_unwire_locked: address not in map");
 
-	for (va = start; va < end ; va += PAGE_SIZE) {
-		if (pmap_extract(pmap, va, &pa) == FALSE)
-			panic("uvm_fault_unwire_locked: unwiring "
-			    "non-wired memory");
+	for (/* nothing */;
+	     entry != &map->header && entry->start < end;
+	     entry = entry->next) {
+#ifdef DIAGNOSTIC
+		if (UVM_ET_ISSUBMAP(entry))
+			panic("uvm_fault_unwire_locked: submap");
+		if (entry->end < end &&
+		    (entry->next == &map->header ||
+		     entry->next->start > entry->end))
+			panic("uvm_fault_unwire_locked: hole");
+#endif
 
-		/*
-		 * make sure the current entry is for the address we're
-		 * dealing with.  if not, grab the next entry.
-		 */
-#ifdef DIAGNOSTIC
-		if (va < entry->start)
-			panic("uvm_fault_unwire_locked: hole 1");
-#endif
-		if (va >= entry->end) {
-#ifdef DIAGNOSTIC
-			if (entry->next == &map->header ||
-			    entry->next->start > entry->end)
-				panic("uvm_fault_unwire_locked: hole 2");
-#endif
-			entry = entry->next;
+		lim = end > entry->end ? end : entry->end;
+
+		for (/* nothing */; start < lim; start += PAGE_SIZE) {
+			if (pmap_extract(pmap, start, &pa) == FALSE)
+				panic("uvm_fault_unwire_locked: unwiring "
+				    "non-wired memory");
+
+			/* If the entry is no longer wired, tell the pmap. */
+			if (VM_MAPENT_ISWIRED(entry) == 0)
+				pmap_unwire(pmap, start);
+
+			pg = PHYS_TO_VM_PAGE(pa);
+			if (pg != NULL)
+				uvm_pageunwire(pg);
 		}
-
-		/*
-		 * if the entry is no longer wired, tell the pmap.
-		 */
-		if (VM_MAPENT_ISWIRED(entry) == 0)
-			pmap_unwire(pmap, va);
-
-		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg)
-			uvm_pageunwire(pg);
 	}
 
 	uvm_unlock_pageq();
