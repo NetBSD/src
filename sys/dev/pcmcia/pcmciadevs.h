@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.12 1998/08/15 21:29:24 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.13 1998/08/15 21:37:24 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.11 1998/08/15 21:28:26 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.12 1998/08/15 21:36:25 thorpej Exp 
  */
 
 /*
@@ -136,6 +136,9 @@
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_PAGECARD	0x0003
 #define	PCMCIA_STR_SOCKET_PAGECARD	"Socket Communications PageCard"
+#define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0012
+#define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
 
 /* TDK Products */
 #define	PCMCIA_CIS_TDK_LAK_CD021BX	{ NULL, NULL, NULL, NULL }
@@ -149,11 +152,6 @@
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
 #define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
-
-/* Socket Communications Products */
-#define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0012
-#define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }

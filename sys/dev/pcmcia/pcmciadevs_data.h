@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.12 1998/08/15 21:29:25 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.13 1998/08/15 21:37:24 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.11 1998/08/15 21:28:26 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.12 1998/08/15 21:36:25 thorpej Exp 
  */
 
 /*
@@ -166,6 +166,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Socket Communications PageCard"	},
 	},
 	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
+	    PCMCIA_CIS_SOCKET_DUAL_RS232,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications Dual RS232"	},
+	},
+	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	    PCMCIA_CIS_TDK_LAK_CD021BX,
 	    0,
@@ -185,13 +192,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "NewMedia Corporation",
 	    "NewMedia BASICS Ethernet"	},
-	},
-	{
-	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
-	    PCMCIA_CIS_SOCKET_DUAL_RS232,
-	    0,
-	    "Socket Communications",
-	    "Socket Communications Dual RS232"	},
 	},
 	{
 	    PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8016,
