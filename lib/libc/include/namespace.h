@@ -166,3 +166,17 @@
 #define sigemptyset	_sigemptyset
 #define sigfillset	_sigfillset
 #define sigismember	_sigismember
+
+/* libsys */
+#define execl		_execl
+#define execle		_execle
+#define execlp		_execlp
+#define execv		_execv
+#define execvp		_execvp
+
+#define closedir	_closedir
+#define opendir		_opendir
+#define readdir		_readdir
+#define rewinddir	_rewinddir
+#define seekdir		_seekdir
+#define telldir		_telldir
