@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178 2001/02/13 13:48:15 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.179 2001/02/13 15:54:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -790,6 +790,7 @@ pmap_page_upload()
 			(u_long)avail_start, (u_long)etext_gap_end_pa);
 #endif
 
+#if 0 /* not yet, managed() et.al. cannot deal with this */
 	/* First, the `etext gap' */
 	if (etext_gap_start_pa < etext_gap_end_pa)
 		uvm_page_physload(
@@ -797,6 +798,7 @@ pmap_page_upload()
 			atop(etext_gap_end_pa),
 			atop(etext_gap_start_pa),
 			atop(etext_gap_end_pa), VM_FREELIST_DEFAULT);
+#endif
 
 	for (n = 0; n < npmemarr; n++) {
 		/*
