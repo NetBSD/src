@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.39 1997/03/12 22:31:37 mycroft Exp $	*/
+/*	$NetBSD: ccd.c,v 1.40 1997/06/23 23:59:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1315,23 +1315,31 @@ ccdsize(dev)
 	dev_t dev;
 {
 	struct ccd_softc *cs;
-	int part, size;
+	struct disklabel *lp;
+	int part, unit, omask, size;
 
-	if (ccdopen(dev, 0, S_IFBLK, curproc))
+	unit = ccdunit(dev);
+	if (unit >= numccd)
 		return (-1);
-
-	cs = &ccd_softc[ccdunit(dev)];
-	part = DISKPART(dev);
+	cs = &ccd_softc[unit];
 
 	if ((cs->sc_flags & CCDF_INITED) == 0)
 		return (-1);
 
-	if (cs->sc_dkdev.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	part = DISKPART(dev);
+	omask = cs->sc_dkdev.dk_openmask & (1 << part);
+	lp = cs->sc_dkdev.dk_label;
+
+	if (omask == 0 && ccdopen(dev, 0, S_IFBLK, curproc))
+		return (-1);
+
+	if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = cs->sc_dkdev.dk_label->d_partitions[part].p_size;
+		size = lp->d_partitions[part].p_size *
+		    (lp->d_secsize / DEV_BSIZE);
 
-	if (ccdclose(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && ccdclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	return (size);
