@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.4 2000/06/29 08:34:12 mrg Exp $	*/
+/*	$NetBSD: necpb.c,v 1.5 2000/11/09 06:15:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ necpb_intr_string(pc, ih)
 	static char str[8];
 
 	if (ih >= 4)
-		panic("necpb_intr_string: bogus handle %d", ih);
+		panic("necpb_intr_string: bogus handle %ld", ih);
 	sprintf(str, "int %c", 'A' + (int)ih);
 	return (str);
 }
