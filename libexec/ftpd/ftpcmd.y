@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.66 2001/12/01 10:25:30 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.66.2.1 2002/06/15 03:42:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.66 2001/12/01 10:25:30 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.66.2.1 2002/06/15 03:42:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,7 @@ cmd
 		{
 			int oldmask;
 
-			if ($4 && CURCLASS_FLAGS_ISSET(modify)) {
+			if ($4 && check_write("", 0)) {
 				if (($6 == -1) || ($6 > 0777)) {
 					reply(501, "Bad UMASK value");
 				} else {
@@ -1285,6 +1285,8 @@ extern int epsvall;
 /*
  * Check if a filename is allowed to be modified (isupload == 0) or
  * uploaded (isupload == 1), and if necessary, check the filename is `sane'.
+ * If the filename is NULL, fail.
+ * If the filename is "", don't do the sane name check.
  */
 static int
 check_write(const char *file, int isupload)
@@ -1305,8 +1307,9 @@ check_write(const char *file, int isupload)
 		reply(502, "No permission to use this command.");
 		return (0);
 	}
+
 		/* checking sanenames */
-	if (CURCLASS_FLAGS_ISSET(sanenames)) {
+	if (file[0] != '\0' && CURCLASS_FLAGS_ISSET(sanenames)) {
 		const char *p;
 
 		if (file[0] == '.')
