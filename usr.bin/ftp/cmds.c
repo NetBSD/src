@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.16 1997/01/19 14:19:04 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.17 1997/01/19 20:17:37 veego Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.16 1997/01/19 14:19:04 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.17 1997/01/19 20:17:37 veego Exp $";
 #endif
 #endif /* not lint */
 
@@ -917,7 +917,7 @@ cd(argc, argv)
 		code = -1;
 		return;
 	}
-	r = command("CWD %s", argv[1])
+	r = command("CWD %s", argv[1]);
 	if (r == ERROR && code == 500) {
 		if (verbose)
 			printf("CWD command not recognized, trying XCWD\n");
