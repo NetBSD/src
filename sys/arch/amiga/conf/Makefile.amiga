@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.83 1999/09/07 19:40:56 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.84 2000/01/19 14:44:58 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -58,7 +58,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS} -msoft-float 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

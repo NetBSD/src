@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.99 1999/07/26 05:20:46 cgd Exp $
+#	$NetBSD: Makefile.i386,v 1.100 2000/01/19 14:45:03 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -60,7 +60,7 @@ LINKFLAGS=	-Ttext F0100000 -e start
 .else
 LINKFLAGS+=	-z
 .endif
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
+#	$NetBSD: Makefile.vax,v 1.50 2000/01/19 14:45:14 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -57,7 +57,7 @@ CFLAGS+=	-mno-pic
 .endif
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80000000 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

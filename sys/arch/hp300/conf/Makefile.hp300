@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.70 1999/07/26 05:20:46 cgd Exp $
+#	$NetBSD: Makefile.hp300,v 1.71 2000/01/19 14:45:02 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -53,7 +53,7 @@ CWARNFLAGS+=	-Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

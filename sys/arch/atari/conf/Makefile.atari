@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.54 1999/07/26 05:20:45 cgd Exp $
+#	$NetBSD: Makefile.atari,v 1.55 2000/01/19 14:45:01 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -58,7 +58,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS} -msoft-float 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
