@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.160 2000/06/16 06:50:36 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.161 2000/07/13 15:56:18 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 \
@@ -73,6 +73,7 @@ MLINKS+=pcppi.4 spkr.4
 MLINKS+=pcppi.4 sysbeep.4
 MLINKS+=pss.4 sp.4
 MLINKS+=viaenv.4 viapm.4
+MLINKS+=tty.4 dty.4
 
 SUBDIR=	man4.amiga man4.arm26 man4.arm32 man4.atari man4.hp300 \
 	man4.i386 man4.mac68k man4.mvme68k man4.pc532 man4.pmax \
