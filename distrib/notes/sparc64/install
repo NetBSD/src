@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7 2001/08/23 16:42:40 mrg Exp $
+.\"	$NetBSD: install,v 1.8 2001/08/23 17:05:47 mrg Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -180,10 +180,15 @@ If you are going to be installing onto local disk, unpack the
 .Pa instfs.tgz
 file, located in the
 .Pa installation/misc
-directory in the release, into the root directory for your machine, which
-contains the basic installer filesystem that is part of the normal miniroot.
-Now you need to boot your workstation from the server by entering the
-following command at the monitor prompt:
+directory, and the
+.Pa netbsd.INSTALL.gz
+kernel, located in the
+.Pa binary/kernel
+directory, into the root directory for your machine.  The
+.Pa instfs.tgz
+file contains the basic installer filesystem that is part of the normal
+miniroot, but without a kernel.  Now you need to boot your workstation
+from the server by entering the following command at the monitor prompt:
 .Pp
 .Dl "ok boot net netbsd -s"
 .Pp
