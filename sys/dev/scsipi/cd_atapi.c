@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.3 1997/10/01 01:18:46 enami Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.4 1997/10/10 01:09:06 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/rnd.h>
 
 #include <sys/cdio.h>
 
