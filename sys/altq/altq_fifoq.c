@@ -1,3 +1,4 @@
+/*	$NetBSD: altq_fifoq.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
