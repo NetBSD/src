@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.65.4.1 2002/06/20 03:51:59 lukem Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.65.4.2 2002/08/07 01:29:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.65.4.1 2002/06/20 03:51:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.65.4.2 2002/08/07 01:29:32 lukem Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -617,6 +617,8 @@ sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
+	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
+		return (EINVAL);
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
@@ -650,6 +652,8 @@ sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
+	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
+		return (EINVAL);
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	blkiov15 = malloc(blkcnt * sizeof(BLOCK_INFO_15), M_SEGMENT, M_WAITOK);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
