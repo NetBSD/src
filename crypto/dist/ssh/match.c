@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.1.1.7 2001/12/06 03:46:18 itojun Exp $	*/
+/*	$NetBSD: match.c,v 1.1.1.8 2002/03/08 01:20:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: match.c,v 1.15 2001/12/05 16:54:51 markus Exp $");
+RCSID("$OpenBSD: match.c,v 1.19 2002/03/01 13:12:10 markus Exp $");
 
 #include "match.h"
 #include "xmalloc.h"
@@ -134,10 +134,10 @@ match_pattern_list(const char *string, const char *pattern, u_int len,
 		 * subpattern to lowercase.
 		 */
 		for (subi = 0;
-		     i < len && subi < sizeof(sub) - 1 && pattern[i] != ',';
-		     subi++, i++)
+		    i < len && subi < sizeof(sub) - 1 && pattern[i] != ',';
+		    subi++, i++)
 			sub[subi] = dolower && isupper(pattern[i]) ?
-			     tolower(pattern[i]) : pattern[i];
+			    tolower(pattern[i]) : pattern[i];
 		/* If subpattern too long, return failure (no match). */
 		if (subi >= sizeof(sub) - 1)
 			return 0;
@@ -227,7 +227,7 @@ match_user(const char *user, const char *host, const char *ipaddr,
  * Returns first item from client-list that is also supported by server-list,
  * caller must xfree() returned string.
  */
-#define	MAX_PROP	20
+#define	MAX_PROP	40
 #define	SEP	","
 char *
 match_list(const char *client, const char *server, u_int *next)
@@ -240,7 +240,7 @@ match_list(const char *client, const char *server, u_int *next)
 	s = sp = xstrdup(server);
 
 	for ((p = strsep(&sp, SEP)), i=0; p && *p != '\0';
-	     (p = strsep(&sp, SEP)), i++) {
+	    (p = strsep(&sp, SEP)), i++) {
 		if (i < MAX_PROP)
 			sproposals[i] = p;
 		else
@@ -249,7 +249,7 @@ match_list(const char *client, const char *server, u_int *next)
 	nproposals = i;
 
 	for ((p = strsep(&cp, SEP)), i=0; p && *p != '\0';
-	     (p = strsep(&cp, SEP)), i++) {
+	    (p = strsep(&cp, SEP)), i++) {
 		for (j = 0; j < nproposals; j++) {
 			if (strcmp(p, sproposals[j]) == 0) {
 				ret = xstrdup(p);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scp.1,v 1.1.1.5 2001/09/27 02:00:48 itojun Exp $
+.\"	$NetBSD: scp.1,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" scp.1
@@ -10,7 +10,7 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $OpenBSD: scp.1,v 1.20 2001/09/17 23:56:07 stevesk Exp $
+.\" $OpenBSD: scp.1,v 1.21 2002/01/29 23:50:37 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SCP 1
@@ -135,6 +135,9 @@ Forces
 .Nm
 to use IPv6 addresses only.
 .El
+.Sh DIAGNOSTICS
+.Nm
+exits with 0 on success or >0 if an error occurred.
 .Sh AUTHORS
 Timo Rinne <tri@iki.fi> and Tatu Ylonen <ylo@cs.hut.fi>
 .Sh HISTORY
