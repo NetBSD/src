@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.41 2004/12/30 16:29:48 bjh21 Exp $
+# $NetBSD: HACKS,v 1.42 2005/02/22 18:47:09 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -398,4 +398,18 @@ port	sparc64
 	descr
 		The sparc compiler miscompiles uvm_bio.c when using
 		any optimization. This results in ubc_release panics.
+	kcah
+
+port	macppc
+
+	hack	remove inline from rotate_{left,right}
+	cdate	Tue Feb 22 13:43:25 EST 2005
+	who	christos
+	file	src/dist/bind/lib/dns/rbt.c
+	descr
+		The macppc gcc-3.3 compiler miscompiles rbt.c when these
+		functions are inlined. The error is:
+		.* named[368]: rbt.c:1584: INSIST(child != (void *)0) >failed
+		.* named[368]: exiting (due to assertion failure)
+		This is reportedly fixed in gcc-3.4
 	kcah
