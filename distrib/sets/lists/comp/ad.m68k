@@ -1,3 +1,4 @@
+# $NetBSD: ad.m68k,v 1.8 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/m68k
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/aout_machdep.h

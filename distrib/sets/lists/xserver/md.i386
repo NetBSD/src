@@ -1,3 +1,4 @@
+# $NetBSD: md.i386,v 1.10 1999/04/19 03:11:37 simonb Exp $
 ./usr/X11R6/bin/SuperProbe
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF86_3DLabs

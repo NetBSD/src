@@ -1,3 +1,4 @@
+# $NetBSD: mi,v 1.17 1999/04/19 03:11:35 simonb Exp $
 ./bin/ed
 ./sbin/init
 ./usr/bin/bdes

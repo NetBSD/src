@@ -1,3 +1,4 @@
+# $NetBSD: md_share,v 1.62 1999/04/19 03:11:35 simonb Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0

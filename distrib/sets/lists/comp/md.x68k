@@ -1,3 +1,4 @@
+# $NetBSD: md.x68k,v 1.26 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/x68k
 ./usr/include/x68k/_G_config.h
 ./usr/include/x68k/ansi.h

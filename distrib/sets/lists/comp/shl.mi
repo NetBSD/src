@@ -1,3 +1,4 @@
+# $NetBSD: shl.mi,v 1.7 1999/04/19 03:11:34 simonb Exp $
 ./usr/lib/libbz2_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
