@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.47 1999/06/20 06:42:05 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.48 1999/06/20 07:55:00 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,12 +149,30 @@ done:
 	return dst;
 }
 
+static const char *ignored_if_names[] = {
+	"eon",			/* netiso */
+	"gre",			/* net */
+	"ipip",			/* netinet */
+	"lo",			/* net */
+#if 0
+	"mdecap",		/* netinet -- never in IF list (?) XXX */
+#endif
+	"nsip",			/* netns */
+	"ppp",			/* net */
+	"sl",			/* net */
+	"strip",		/* net */
+	"tun",			/* net */
+	/* XXX others? */
+	NULL,
+};
+
 static void
 get_ifconfig_info()
 {
 	char *textbuf;
-	int   textsize;
-	char *t;
+	char *t, *nt, *ndest;
+	const char **ignore;
+	int textsize, len;
 
 	/* Get ifconfig information */
 	
@@ -166,14 +184,27 @@ get_ifconfig_info()
 		exit(1);
 	}
 	(void)strtok(textbuf,"\n");
-	strncpy(net_devices, textbuf, textsize<STRSIZE ? textsize : STRSIZE);
-	net_devices[STRSIZE] = 0;
-	free(textbuf);
 
-	/* Remove lo0 and anything after ... */
-	t = strstr(net_devices, "lo0");
-	if (t != NULL)
-		*t = 0;
+	nt = textbuf;
+	ndest = net_devices;
+	*ndest = '\0';
+	while ((t = strsep(&nt, " ")) != NULL) {
+		for (ignore = ignored_if_names; *ignore != NULL; ignore++) {
+			len = strlen(*ignore);
+			if (strncmp(t, *ignore, len) == 0 &&
+			    isdigit((unsigned char)t[len]))
+				goto loop;
+		}
+
+		if (strlen(ndest) + 1 + strlen(t) + 1 > STRSIZE)
+			break;			/* would overflow */
+
+		strcat(ndest, t);
+		strcat(ndest, " ");	/* net_devices needs trailing space! */
+loop:
+		t = nt;
+	}
+	free(textbuf);
 }
 
 /* Fill in defaults network values for the selected interface */
