@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_locore.s,v 1.1 2000/11/21 21:13:23 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_sigcode.s,v 1.1 2000/11/26 11:18:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,56 +74,26 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#include "opt_vm86.h"
-
 #include "assym.h"
 
+#include <sys/errno.h>
+#include <sys/syscall.h>
+
+#include <compat/freebsd/freebsd_syscall.h>
 #include <machine/asm.h>
-#include <machine/psl.h>
-
-#include <compat/linux/linux_syscall.h>
-
-/*****************************************************************************/
 
 /*
  * Signal trampoline; copied to top of user stack.
  */
-NENTRY(linux_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_sigreturn,%eax
+NENTRY(freebsd_sigcode)
+	call	FREEBSD_SIGF_HANDLER(%esp)
+	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
+					# the copy at SIGF_SCP(%esp))
+	pushl	%eax
+	pushl	%eax			# junk to fake return address
+	movl	$FREEBSD_SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
+	movl	$FREEBSD_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_esigcode)
-_C_LABEL(linux_esigcode):
-
-NENTRY(linux_rt_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_rt_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_rt_esigcode)
-_C_LABEL(linux_rt_esigcode):
+	.globl	_C_LABEL(freebsd_esigcode)
+_C_LABEL(freebsd_esigcode):
