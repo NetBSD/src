@@ -20,11 +20,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
-#include "arm/tm-armbsd.h"
+#include "arm/tm-armnbsd.h"
 #include "tm-nbsd.h"
+#include <machine/setjmp.h>   /* for JMPBUF_REG_R14 definition */
+
+/* On NetBSD, sigtramp is above the user stack and immediately below
+   the user area. Using constants here allows for cross debugging. */
+#define SIGTRAMP_START	0xfdbfdfc0
+#define SIGTRAMP_END	0xfdbfe000	/* USRSTACK */
+   
+/* Saved Pc.  Get it from sigcontext if within sigtramp.  */
+/* Offset to saved PC in sigcontext, from <sys/signal.h>.  */
+#define SIGCONTEXT_PC_OFFSET 20	/* XXX - check this */
 
 #define JB_ELEMENT_SIZE sizeof(int)	/* jmp_buf[_JBLEN] is array of ints */
-#define JB_PC	0			/* Setjmp()'s return PC saved here */
+#define JB_PC	JMPBUF_REG_R14		/* Setjmp()'s return PC saved here */
 
 /* Figure out where the longjmp will land.  Slurp the args out of the stack.
    We expect the first arg to be a pointer to the jmp_buf structure from which
