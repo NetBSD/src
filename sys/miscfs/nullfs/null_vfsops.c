@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.10 1996/02/09 22:40:31 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * Save reference.  Each mount also holds
 	 * a reference on the root vnode.
 	 */
-	error = null_node_create(mp, lowerrootvp, &vp);
+	error = null_node_create(mp, lowerrootvp, &vp, 1);
 	/*
 	 * Unlock the node (either the lower or the alias)
 	 */

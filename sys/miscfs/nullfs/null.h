@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.5 1996/02/09 22:40:26 christos Exp $	*/
+/*	$NetBSD: null.h,v 1.6 1996/05/10 22:50:45 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,9 +56,25 @@ struct null_node {
 	LIST_ENTRY(null_node)	null_hash;	/* Hash list */
 	struct vnode	        *null_lowervp;	/* VREFed once */
 	struct vnode		*null_vnode;	/* Back pointer */
+	unsigned int		null_flags;	/* locking, etc. */
+#ifdef DIAGNOSTIC
+	pid_t			null_pid;	/* who's locking it? */
+	caddr_t			null_lockpc; /* their return addr */
+	caddr_t			null_lockpc2; /* their return addr^2 */
+#endif
 };
 
-extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
+#ifdef __GNUC__
+#define RETURN_PC(frameno) __builtin_return_address(frameno)
+#else
+#define RETURN_PC(frameno) (void *)0
+#endif
+
+#define NULL_WANTED	0x01
+#define NULL_LOCKED	0x02
+#define NULL_LLOCK	0x04
+
+extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit));
 
 #define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
 #define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
