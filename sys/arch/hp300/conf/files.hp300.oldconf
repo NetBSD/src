@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.23 1996/02/14 02:33:25 thorpej Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.24 1996/02/22 23:35:07 gwr Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -50,6 +50,7 @@ arch/hp300/dev/hil_keymaps.c		standard
 arch/hp300/dev/ite.c			optional ite needs-count # XXX? d-d?
 arch/hp300/dev/ite_subr.c		optional ite needs-count # XXX? d-d?
 arch/m68k/m68k/copy.s			standard
+arch/m68k/m68k/db_memrw.c		optional ddb
 dev/cons.c				standard
 dev/cninit.c				standard
 thisisfor_in_proto.c			optional hy
