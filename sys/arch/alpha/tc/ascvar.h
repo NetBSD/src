@@ -1,7 +1,7 @@
-/* $NetBSD: ascvar.h,v 1.4 1997/10/04 09:38:50 thorpej Exp $ */
+/* $NetBSD: ascvar.h,v 1.5 1998/05/24 23:41:43 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,8 @@
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 
-	volatile u_int32_t *sc_reg;		/* the registers */
+	bus_space_tag_t sc_bst;			/* bus space tag */
+	bus_space_handle_t sc_bsh;		/* bus space handle */
+
 	struct tcds_slotconfig *sc_dma;		/* DMA/slot info lives here */
-	void	*sc_cookie;			/* intr. handling cookie */
 };

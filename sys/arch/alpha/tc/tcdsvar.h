@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.8 1998/01/12 10:21:21 thorpej Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.9 1998/05/24 23:41:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,8 +32,12 @@ struct tcds_slotconfig {
 	 * Bookkeeping information
 	 */
 	int	sc_slot;
-	struct tcds_softc *sc_tcds;		/* to frob TCDS regs */
+
+	bus_space_tag_t sc_bst;			/* to frob TCDS regs */
+	bus_space_handle_t sc_bsh;
+
 	struct asc_softc *sc_asc;		/* to frob child's regs */
+
 	int	(*sc_intrhand) __P((void *));	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
 
@@ -48,12 +52,12 @@ struct tcds_slotconfig {
 	u_int32_t sc_errorbits;
 
 	/*
-	 * Pointers to slot-specific DMA resources.
+	 * Offsets to slot-specific DMA resources.
 	 */
-	volatile u_int32_t *sc_sda;
-	volatile u_int32_t *sc_dic;
-	volatile u_int32_t *sc_dud0;
-	volatile u_int32_t *sc_dud1;
+	bus_size_t sc_sda;
+	bus_size_t sc_dic;
+	bus_size_t sc_dud0;
+	bus_size_t sc_dud1;
 
 	/*
 	 * DMA bookkeeping information.
@@ -66,26 +70,21 @@ struct tcds_slotconfig {
 };
 
 struct tcdsdev_attach_args {
-	struct tc_attach_args tcdsda_ta;
-	struct tcds_slotconfig *tcdsda_sc;
-	u_int	tcdsda_id;
-	u_int	tcdsda_freq;
+	bus_space_tag_t tcdsda_bst;		/* bus space tag */
+	bus_space_handle_t tcdsda_bsh;		/* bus space handle */
+	struct tcds_slotconfig *tcdsda_sc;	/* slot configuration */
+	int	tcdsda_chip;			/* chip number */
+	int	tcdsda_id;			/* SCSI ID */
+	u_int	tcdsda_freq;			/* chip frequency */
+	int	tcdsda_variant;			/* NCR chip variant */
 };
-#define	tcdsda_modname	tcdsda_ta.ta_modname
-#define	tcdsda_slot	tcdsda_ta.ta_slot
-#define	tcdsda_offset	tcdsda_ta.ta_offset
-#define	tcdsda_addr	tcdsda_ta.ta_addr
-#define	tcdsda_cookie	tcdsda_ta.ta_cookie
-
-#define	TCDS_REG(base, off) \
-    (volatile u_int32_t *)TC_DENSE_TO_SPARSE((base) + (off))
 
 /*
  * TCDS functions.
  */
-void	tcds_intr_establish __P((struct device *, void *, tc_intrlevel_t,
+void	tcds_intr_establish __P((struct device *, int,
 	    int (*)(void *), void *));
-void	tcds_intr_disestablish __P((struct device *, void *));
+void	tcds_intr_disestablish __P((struct device *, int));
 void	tcds_dma_enable __P((struct tcds_slotconfig *, int));
 void	tcds_scsi_enable __P((struct tcds_slotconfig *, int));
 int	tcds_scsi_iserr __P((struct tcds_slotconfig *));

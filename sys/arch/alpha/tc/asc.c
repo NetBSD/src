@@ -1,7 +1,7 @@
-/* $NetBSD: asc.c,v 1.8 1998/01/12 10:21:15 thorpej Exp $ */
+/* $NetBSD: asc.c,v 1.9 1998/05/24 23:41:42 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -108,7 +108,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.8 1998/01/12 10:21:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.9 1998/05/24 23:41:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.8 1998/01/12 10:21:15 thorpej Exp $");
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/ic/ncr53c9xreg.h>
@@ -192,11 +193,9 @@ ascmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct tcdsdev_attach_args *tcdsdev = aux;
 
-	if (strncmp(tcdsdev->tcdsda_modname, "PMAZ-AA ", TC_ROM_LLEN))
-		return (0);
-	return (!tc_badaddr(tcdsdev->tcdsda_addr));
+	/* We always exist. */
+	return (1);
 }
 
 /*
@@ -207,36 +206,29 @@ ascattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct tcdsdev_attach_args *tcdsdev = aux;
+	struct tcdsdev_attach_args *tcdsdev = aux;
 	struct asc_softc *asc = (void *)self;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
-	extern struct cfdriver tcds_cd;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
 	sc->sc_glue = &asc_glue;
 
-	asc->sc_reg = (volatile u_int32_t *)tcdsdev->tcdsda_addr;
-	asc->sc_cookie = tcdsdev->tcdsda_cookie;
+	asc->sc_bst = tcdsdev->tcdsda_bst;
+	asc->sc_bsh = tcdsdev->tcdsda_bsh;
 	asc->sc_dma = tcdsdev->tcdsda_sc;
 
-	tcds_intr_establish(parent, asc->sc_cookie, TC_IPL_BIO,
-	    (int (*)(void *))ncr53c9x_intr, sc);
-
-	if (parent->dv_cfdata->cf_driver == &tcds_cd) {
-		sc->sc_id = tcdsdev->tcdsda_id;
-		sc->sc_freq = tcdsdev->tcdsda_freq;
-	} else {
-		/* XXX */
-		sc->sc_id = 7;
-		sc->sc_freq = 24000000;
-	}
+	sc->sc_id = tcdsdev->tcdsda_id;
+	sc->sc_freq = tcdsdev->tcdsda_freq;
 
 	/* gimme Mhz */
 	sc->sc_freq /= 1000000;
 
 	asc->sc_dma->sc_asc = asc;			/* XXX */
+
+	tcds_intr_establish(parent, tcdsdev->tcdsda_chip,
+	    (int (*) __P((void *)))ncr53c9x_intr, sc);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -250,7 +242,7 @@ ascattach(parent, self, aux)
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
 	sc->sc_cfg3 = 0x4;		/* Save residual byte. XXX??? */
-	sc->sc_rev = NCR_VARIANT_NCR53C94;
+	sc->sc_rev = tcdsdev->tcdsda_variant;
 
 	/*
 	 * XXX minsync and maxxfer _should_ be set up in MI code,
@@ -287,10 +279,9 @@ asc_read_reg(sc, reg)
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_char v;
 
-	v = asc->sc_reg[reg * 2] & 0xff;
-#if 1
-	alpha_mb();
-#endif
+	v = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+	    reg * sizeof(u_int32_t)) & 0xff;
+
 	return (v);
 }
 
@@ -302,8 +293,8 @@ asc_write_reg(sc, reg, val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	asc->sc_reg[reg * 2] = val;
-	alpha_mb();
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+	    reg * sizeof(u_int32_t), val);
 }
 
 int
