@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.6 1999/01/26 14:22:14 drochner Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.7 1999/01/29 22:24:24 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -88,6 +88,11 @@ static const struct wscons_syncops usl_syncops = {
 	_usl_sync_destroy
 };
 
+#ifndef WSCOMPAT_USL_SYNCTIMEOUT
+#define WSCOMPAT_USL_SYNCTIMEOUT 5 /* seconds */
+#endif
+static int wscompat_usl_synctimeout = WSCOMPAT_USL_SYNCTIMEOUT;
+
 static int
 usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	struct wsscreen *scr;
@@ -176,7 +181,7 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
 	psignal(sd->s_proc, sd->s_relsig);
-	timeout(usl_detachtimeout, sd, 5*hz);
+	timeout(usl_detachtimeout, sd, wscompat_usl_synctimeout * hz);
 
 	return (EAGAIN);
 }
@@ -237,7 +242,7 @@ usl_attachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
 	psignal(sd->s_proc, sd->s_acqsig);
-	timeout(usl_attachtimeout, sd, 5*hz);
+	timeout(usl_attachtimeout, sd, wscompat_usl_synctimeout * hz);
 
 	return (EAGAIN);
 }
