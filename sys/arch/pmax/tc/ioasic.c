@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.7 2000/01/10 03:24:41 simonb Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.8 2000/01/14 13:45:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.7 2000/01/10 03:24:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.8 2000/01/14 13:45:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,12 +37,13 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.7 2000/01/10 03:24:41 simonb Exp $");
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
+#include <machine/sysconf.h>
+
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
-#include <pmax/pmax/turbochannel.h>	/* interrupt enable declaration */
 
 #include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
@@ -196,7 +197,7 @@ ioasic_intr_establish(dev, cookie, level, handler, val)
 	int (*handler) __P((void *));
 	void *val;
 {
-	(*tc_enable_interrupt)((unsigned)cookie, handler, val, 1);
+	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }
 
 #else /* XXX eventually XXX */

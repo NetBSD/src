@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.6 2000/01/09 23:12:31 ad Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.7 2000/01/14 13:45:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,20 +31,20 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.6 2000/01/09 23:12:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.7 2000/01/14 13:45:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/sysconf.h>
 
 #define	_PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/turbochannel.h>
 
 /*
  * Which system models were configured?
@@ -163,13 +163,8 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 	void *val;
 {
 
-#ifdef DIAGNOSTIC
-	if (tc_enable_interrupt == NULL)
-	    panic("tc_intr_establish: tc_enable not set\n");
-#endif
-
 #ifdef DEBUG
-	printf("tc_intr_establish: slot %d level %d handler %p sc %p on\n",
+	printf("tc_ds_intr_establish: slot %d level %d handler %p sc %p on\n",
 		(int) cookie, (int) level, handler,  val);
 #endif
 
@@ -179,7 +174,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 	  * XXX store the level somewhere for selective enabling of
 	  * interrupts from TC option slots.
 	  */
-	 (*tc_enable_interrupt)((unsigned)cookie, handler, val, 1);
+	 (*platform.intr_establish)(dev, cookie, level, handler, val);
 }
 
 static void
@@ -187,7 +182,7 @@ tc_ds_intr_disestablish(dev, arg)
 	struct device *dev;
 	void *arg;
 {
-	/*(*tc_enable_interrupt) (ca->ca_slot, handler, 0);*/
+	/*(*platform.intr_disestablish)(dev, cookie, level, handler, val);*/
     	printf("cannot dis-establish IOASIC interrupts\n");
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.32 2000/01/10 03:24:37 simonb Exp $ */
+/* $NetBSD: dec_3min.c,v 1.33 2000/01/14 13:45:25 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.32 2000/01/10 03:24:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.33 2000/01/14 13:45:25 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.32 2000/01/10 03:24:37 simonb Exp $")
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
 #include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
@@ -102,11 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.32 2000/01/10 03:24:37 simonb Exp $")
  */
 void		dec_3min_init __P((void));		/* XXX */
 static void	dec_3min_bus_reset __P((void));
-static void	dec_3min_enable_intr __P((unsigned slotno,
-		    int (*handler)(void *), void *sc, int onoff));
-static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3min_device_register __P((struct device *, void *));
 static void	dec_3min_cons_init __P((void));
+static void	dec_3min_device_register __P((struct device *, void *));
+static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3min_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
+static void	dec_3min_intr_disestablish __P((struct device *, void *));
 
 static void	kn02ba_wbflush __P((void));
 static unsigned	kn02ba_clkread __P((void));
@@ -132,6 +132,8 @@ dec_3min_init()
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
 	platform.iointr = dec_3min_intr;
+	platform.intr_establish = dec_3min_intr_establish;
+	platform.intr_disestablish = dec_3min_intr_disestablish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn02ba_clkread;
 
@@ -141,7 +143,6 @@ dec_3min_init()
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
 	mips_hardware_intr = dec_3min_intr; 
-	tc_enable_interrupt = dec_3min_enable_intr;
 
 	/*
 	 * Since all the motherboard interrupts come through the
@@ -225,47 +226,54 @@ dec_3min_device_register(dev, aux)
 
 
 static void
-dec_3min_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
+dec_3min_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
 	int (*handler) __P((void *));
-	void *sc;
-	int on;
+	void *arg;
 {
+	int slotno = (int)cookie;
 	unsigned mask;
 
 	switch (slotno) {
 		/* slots 0-2 don't interrupt through the IOASIC. */
-	case 0:
-		mask = MIPS_INT_MASK_0;	break;
-	case 1:
-		mask = MIPS_INT_MASK_1; break;
-	case 2:
-		mask = MIPS_INT_MASK_2; break;
+	  case 0:
+		mask = MIPS_INT_MASK_0;
+		break;
+	  case 1:
+		mask = MIPS_INT_MASK_1;
+		break;
+	  case 2:
+		mask = MIPS_INT_MASK_2;
+		break;
 
-	case KMIN_SCSI_SLOT:
+	  case KMIN_SCSI_SLOT:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-
-	case KMIN_LANCE_SLOT:
+	  case KMIN_LANCE_SLOT:
 		mask = KMIN_INTR_LANCE;
 		break;
-	case KMIN_SCC0_SLOT:
+	  case KMIN_SCC0_SLOT:
 		mask = KMIN_INTR_SCC_0;
 		break;
-	case KMIN_SCC1_SLOT:
+	  case KMIN_SCC1_SLOT:
 		mask = KMIN_INTR_SCC_1;
 		break;
-	case KMIN_ASIC_SLOT:
+	  case KMIN_ASIC_SLOT:
 		mask = KMIN_INTR_ASIC;
 		break;
-	default:
+	  default:
+#ifdef DIAGNOSTIC
+		printf("warning: enabling unknown intr %x\n", slotno);
+#endif
 		return;
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 	printf("3MIN: imask %x, %sabling slot %d, sc %p handler %p\n",
-	       kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
+	    kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
 #endif
 
 	/*
@@ -277,42 +285,32 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 	 * interrupts before clearing handlers.
 	 */
 
-	if (on) {
-		/* Set the interrupt handler and argument ... */
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
-
-		/* ... and set the relevant mask */
-		if (slotno <= 2) {
-			/* it's an option slot */
-			int s = splhigh();
-			s  |= mask;
-			splx(s);
-		} else {
-			/* it's a baseboard device going via the ASIC */
-			kmin_tc3_imask |= mask;
-		}
+	/* Set the interrupt handler and argument ... */
+	intrtab[slotno].ih_func = handler;
+	intrtab[slotno].ih_arg = arg;
+	/* ... and set the relevant mask */
+	if (slotno <= 2) {
+		/* it's an option slot */
+		int s = splhigh();
+		s |= mask;
+		splx(s);
 	} else {
-		/* Clear the relevant mask... */
-		if (slotno <= 2) {
-			/* it's an option slot */
-			int s = splhigh();
-			printf("kmin_intr: cannot disable option slot %d\n",
-			    slotno);
-			s &= ~mask;
-			splx(s);
-		} else {
-			/* it's a baseboard device going via the ASIC */
-			kmin_tc3_imask &= ~mask;
-		}
-		/* ... and clear the handler */
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
+		/* it's a baseboard device going via the ASIC */
+		kmin_tc3_imask |= mask;
 	}
+
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
 	kn02ba_wbflush();
 }
 
+
+static void
+dec_3min_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+	printf("dec_3min_intr_distestablish: not implemented\n");
+}
 
 
 /*
@@ -395,16 +393,16 @@ dec_3min_intr(cpumask, pc, status, cause)
 			 goto done;
 
 		if ((intr & KMIN_INTR_SCC_0) &&
-		    tc_slot_info[KMIN_SCC0_SLOT].intr) {
-			(*(tc_slot_info[KMIN_SCC0_SLOT].intr))
-			  (tc_slot_info[KMIN_SCC0_SLOT].sc);
+		    intrtab[KMIN_SCC0_SLOT].ih_func) {
+			(*(intrtab[KMIN_SCC0_SLOT].ih_func))
+			  (intrtab[KMIN_SCC0_SLOT].ih_arg);
 			intrcnt[SERIAL0_INTR]++;
 		}
 
 		if ((intr & KMIN_INTR_SCC_1) &&
-		    tc_slot_info[KMIN_SCC1_SLOT].intr) {
-			(*(tc_slot_info[KMIN_SCC1_SLOT].intr))
-			  (tc_slot_info[KMIN_SCC1_SLOT].sc);
+		    intrtab[KMIN_SCC1_SLOT].ih_func) {
+			(*(intrtab[KMIN_SCC1_SLOT].ih_func))
+			  (intrtab[KMIN_SCC1_SLOT].ih_arg);
 			intrcnt[SERIAL1_INTR]++;
 		}
 
@@ -423,16 +421,16 @@ dec_3min_intr(cpumask, pc, status, cause)
 			 goto done;
 #endif
 		if ((intr & IOASIC_INTR_LANCE) &&
-		    tc_slot_info[KMIN_LANCE_SLOT].intr) {
-			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
-			  (tc_slot_info[KMIN_LANCE_SLOT].sc);
+		    intrtab[KMIN_LANCE_SLOT].ih_func) {
+			(*(intrtab[KMIN_LANCE_SLOT].ih_func))
+			  (intrtab[KMIN_LANCE_SLOT].ih_arg);
 			intrcnt[LANCE_INTR]++;
 		}
 
 		if ((intr & IOASIC_INTR_SCSI) &&
-		    tc_slot_info[KMIN_SCSI_SLOT].intr) {
-			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
-			  (tc_slot_info[KMIN_SCSI_SLOT].sc);
+		    intrtab[KMIN_SCSI_SLOT].ih_func) {
+			(*(intrtab[KMIN_SCSI_SLOT].ih_func))
+			  (intrtab[KMIN_SCSI_SLOT].ih_arg);
 			intrcnt[SCSI_INTR]++;
 		}
 
@@ -445,17 +443,17 @@ dec_3min_intr(cpumask, pc, status, cause)
 			printf("%s\n", "Power supply overheating");
 		}
 	}
-	if ((cpumask & MIPS_INT_MASK_0) && tc_slot_info[0].intr) {
-		(*tc_slot_info[0].intr)(tc_slot_info[0].sc);
+	if ((cpumask & MIPS_INT_MASK_0) && intrtab[0].ih_func) {
+		(*intrtab[0].ih_func)(intrtab[0].ih_arg);
 		intrcnt[SLOT0_INTR]++;
  	}
 
-	if ((cpumask & MIPS_INT_MASK_1) && tc_slot_info[1].intr) {
-		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
+	if ((cpumask & MIPS_INT_MASK_1) && intrtab[1].ih_func) {
+		(*intrtab[1].ih_func)(intrtab[1].ih_arg);
 		intrcnt[SLOT1_INTR]++;
 	}
-	if ((cpumask & MIPS_INT_MASK_2) && tc_slot_info[2].intr) {
-		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
+	if ((cpumask & MIPS_INT_MASK_2) && intrtab[2].ih_func) {
+		(*intrtab[2].ih_func)(intrtab[2].ih_arg);
 		intrcnt[SLOT2_INTR]++;
 	}
 

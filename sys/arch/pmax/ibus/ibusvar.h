@@ -1,4 +1,4 @@
-/* $NetBSD: ibusvar.h,v 1.13 2000/01/09 13:24:16 simonb Exp $ */
+/* $NetBSD: ibusvar.h,v 1.14 2000/01/14 13:45:21 simonb Exp $ */
 
 #ifndef _IBUSVAR_H_
 #define _IBUSVAR_H_ 1
@@ -44,13 +44,5 @@ int	ibusprint __P((void *, const char *));
 void	ibus_intr_establish __P((struct device *, void * cookie, int level,
 	    int (*handler)(void *), void *arg));
 void	ibus_intr_disestablish __P((struct device *, void *));
-
-void	dec_3100_intr_establish __P((struct device *, void *,
-	    int, int (*)(void *), void *));
-void	dec_3100_intr_disestablish __P((struct device *, void *));
-
-void	dec_5100_intr_establish __P((struct device *, void *,
-	    int, int (*)(void *), void *));
-void	dec_5100_intr_disestablish __P((struct device *, void *));
 
 #endif /* _IBUSVAR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.22 2000/01/10 03:24:37 simonb Exp $ */
+/* $NetBSD: dec_3max.c,v 1.23 2000/01/14 13:45:24 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.22 2000/01/10 03:24:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.23 2000/01/14 13:45:24 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.22 2000/01/10 03:24:37 simonb Exp $")
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
@@ -96,13 +95,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.22 2000/01/10 03:24:37 simonb Exp $")
 void		dec_3max_init __P((void));		/* XXX */
 static void	dec_3max_bus_reset __P((void));
 
-static void	dec_3max_enable_intr __P((unsigned slotno,
-		    int (*handler)(void *), void *sc, int onoff));
-static int	dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3max_cons_init __P((void));
 static void	dec_3max_device_register __P((struct device *, void *));
-
 static void	dec_3max_errintr __P((void));
+static int	dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3max_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
+static void	dec_3max_intr_disestablish __P((struct device *, void *));
+
 
 #define	kn02_wbflush()	mips1_wbflush()	/* XXX to be corrected XXX */
 
@@ -116,6 +116,8 @@ dec_3max_init()
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
 	platform.iointr = dec_3max_intr;
+	platform.intr_establish = dec_3max_intr_establish;
+	platform.intr_disestablish = dec_3max_intr_disestablish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -124,7 +126,6 @@ dec_3max_init()
 	kn02_wbflush();
 
 	mips_hardware_intr = dec_3max_intr;
-	tc_enable_interrupt = dec_3max_enable_intr;
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
@@ -168,6 +169,7 @@ dec_3max_bus_reset()
 static void
 dec_3max_cons_init()
 {
+	/* notyet */
 }
 
 static void
@@ -179,46 +181,43 @@ dec_3max_device_register(dev, aux)
 }
 
 
-/*
- * Enable/Disable interrupts for a TURBOchannel slot on the 3MAX.
- */
 static void
-dec_3max_enable_intr(slotno, handler, sc, on)
-	u_int slotno;
+dec_3max_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
 	int (*handler) __P((void *));
-	void *sc;
-	int on;
+	void *arg;
 {
+	int slotno = (int)cookie;
 	volatile int *p_csr =
-		(volatile int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	    (volatile int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 	int csr;
 	int s;
 
 #if 0
 	printf("3MAX enable_intr: %sabling slot %d, sc %p\n",
-	       (on? "en" : "dis"), slotno, sc);
-#endif
+	    (on? "en" : "dis"), slotno, sc);
+#endif 
+	if (slotno > MAX_INTR_COOKIES)
+		panic("dec_3max_intr_establish: bogus slot %d\n", slotno);
 
-	if (slotno > TC_MAX_LOGICAL_SLOTS)
-		panic("kn02_enable_intr: bogus slot %d\n", slotno);
-
-	if (on)  {
-		/*printf("kn02: slot %d handler 0x%x\n", slotno, handler);*/
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
-	} else {
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
-	}
+	intrtab[slotno].ih_func = handler;
+	intrtab[slotno].ih_arg = arg;
 
 	slotno = 1 << (slotno + KN02_CSR_IOINTEN_SHIFT);
 	s = splhigh();
 	csr = *p_csr & ~(KN02_CSR_WRESERVED | 0xFF);
-	if (on)
-		*p_csr = csr | slotno;
-	else
-		*p_csr = csr & ~slotno;
+	*p_csr = csr | slotno;
 	splx(s);
+}
+
+static void
+dec_3max_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+	printf("dec_3max_intr_distestablish: not implemented\n");
 }
 
 
@@ -282,8 +281,8 @@ dec_3max_intr(mask, pc, status, cause)
 			if (!(m & 1))
 				continue;
 			intrcnt[intr_map[i]]++;
-			if (tc_slot_info[i].intr)
-				(*tc_slot_info[i].intr)(tc_slot_info[i].sc);
+			if (intrtab[i].ih_func)
+				(*intrtab[i].ih_func)(intrtab[i].ih_arg);
 			else
 				printf("spurious interrupt %d\n", i);
 		}

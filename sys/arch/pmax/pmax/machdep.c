@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 2000/01/10 03:24:40 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 2000/01/14 13:45:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2000/01/10 03:24:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2000/01/14 13:45:26 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -96,6 +96,7 @@ vm_map_t phys_map = NULL;
 
 int		systype;		/* mother board type */
 char		*bootinfo = NULL;	/* pointer to bootinfo structure */
+int		cpuspeed = 30;		/* approx # instr per usec. */
 int		physmem;		/* max supported memory, changes to actual */
 int		physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
@@ -112,9 +113,6 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 struct splvec	splvec;			/* XXX will go XXX */
 
-/* Old 4.4bsd/pmax-derived interrupt-enable method */
-void (*tc_enable_interrupt) __P((unsigned, int (*)(void *), void *, int));
-
 void	mach_init __P((int, char *[], int, int, u_int, char *));	/* XXX */
 
 /* Motherboard or system-specific initialization vector */
@@ -122,6 +120,9 @@ static void	unimpl_bus_reset __P((void));
 static void	unimpl_cons_init __P((void));
 static void	unimpl_device_register __P((struct device *, void *));
 static int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+static void	unimpl_intr_establish __P((struct device *, void *, int,
+		    int (*)(void *), void *));
+static void	unimpl_intr_disestablish __P((struct device *, void *));
 static int	unimpl_memsize __P((caddr_t));
 static unsigned	nullwork __P((void));
 
@@ -131,6 +132,8 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
+	unimpl_intr_establish,
+	unimpl_intr_disestablish,
 	unimpl_memsize,
 	(void *)nullwork,
 };
@@ -753,9 +756,28 @@ unimpl_iointr(mask, pc, statusreg, causereg)
 	panic("sysconf.init didn't set intr");
 }
 
+static void
+unimpl_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	panic("sysconf.init didn't set intr_establish");
+}
+
+static void
+unimpl_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+	panic("sysconf.init didn't set intr_disestablish");
+}
+
 static int
 unimpl_memsize(first)
-	caddr_t first;
+caddr_t first;
 {
 
 	panic("sysconf.init didn't set memsize");

@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.13 2000/01/10 03:24:35 simonb Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.14 2000/01/14 13:45:21 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.13 2000/01/10 03:24:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.14 2000/01/14 13:45:21 simonb Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.13 2000/01/10 03:24:35 simonb Exp $"
 
 #include <pmax/ibus/ibusvar.h>
 #include <machine/autoconf.h>
+#include <machine/sysconf.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn230.h>
 #include <pmax/pmax/pmaxtype.h>
@@ -120,21 +121,19 @@ ibus_pmax_attach(parent, self, aux)
 	ibus_attached = 1;
 
 	ida.ida_busname = "ibus";
+	ida.ida_establish = platform.intr_establish;
+	ida.ida_disestablish = platform.intr_disestablish;
 	switch (systype) {
 #ifdef DEC_3100
 	case DS_PMAX:
 		ida.ida_devs = ibus_pmax_devs;
 		ida.ida_ndevs = ibus_pmax_ndevs;
-		ida.ida_establish = dec_3100_intr_establish;
-		ida.ida_disestablish = dec_3100_intr_disestablish;
 		break;
 #endif
 #ifdef DEC_5100
 	case DS_MIPSMATE:
 		ida.ida_devs = ibus_mipsmate_devs;
 		ida.ida_ndevs = ibus_mipsmate_ndevs;
-		ida.ida_establish = dec_5100_intr_establish;
-		ida.ida_disestablish = dec_5100_intr_disestablish;
 		break;
 #endif
 	default:
