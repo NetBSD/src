@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.7 1995/03/21 15:08:53 cgd Exp $	*/
+/*	$NetBSD: io.c,v 1.8 1997/05/17 19:26:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: io.c,v 1.7 1995/03/21 15:08:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: io.c,v 1.8 1997/05/17 19:26:18 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -256,10 +256,10 @@ incard(crd)
 	if (!(line = getline()))
 		goto gotit;
 	p = p1 = line;
-	while (*p1 != ' ' && *p1 != NULL)
+	while (*p1 != ' ' && *p1 != '\0')
 		++p1;
-	*p1++ = NULL;
-	if (*p == NULL)
+	*p1++ = '\0';
+	if (*p == '\0')
 		goto gotit;
 
 	/* IMPORTANT: no real card has 2 char first name */
@@ -295,17 +295,17 @@ incard(crd)
 	if (rnk == EMPTY)
 		goto gotit;
 	p = p1;
-	while (*p1 != ' ' && *p1 != NULL)
+	while (*p1 != ' ' && *p1 != '\0')
 		++p1;
-	*p1++ = NULL;
-	if (*p == NULL)
+	*p1++ = '\0';
+	if (*p == '\0')
 		goto gotit;
 	if (!strcmp("OF", p)) {
 		p = p1;
-		while (*p1 != ' ' && *p1 != NULL)
+		while (*p1 != ' ' && *p1 != '\0')
 			++p1;
-		*p1++ = NULL;
-		if (*p == NULL)
+		*p1++ = '\0';
+		if (*p == '\0')
 			goto gotit;
 	}
 	sut = EMPTY;
@@ -354,7 +354,7 @@ number(lo, hi, prompt)
 
 	for (sum = 0;;) {
 		msg(prompt);
-		if (!(p = getline()) || *p == NULL) {
+		if (!(p = getline()) || *p == '\0') {
 			msg(quiet ? "Not a number" :
 			    "That doesn't look like a number");
 			continue;
@@ -369,7 +369,7 @@ number(lo, hi, prompt)
 				++p;
 			}
 
-		if (*p != ' ' && *p != '\t' && *p != NULL)
+		if (*p != ' ' && *p != '\t' && *p != '\0')
 			sum = lo - 1;
 		if (sum >= lo && sum <= hi)
 			break;
