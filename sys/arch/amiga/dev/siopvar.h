@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.21 2002/05/14 00:08:22 matt Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.22 2003/04/09 01:54:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,11 @@
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
- * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
- * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
+ * at most MAXPHYS/PAGE_SIZE+1 chain elements to describe, i.e. if none of
+ * the buffer pages are physically contiguous (MAXPHYS/PAGE_SIZE) and the
  * buffer is not page aligned (+1).
  */
-#define	DMAMAXIO	(MAXPHYS/NBPG+1)
+#define	DMAMAXIO	(MAXPHYS/PAGE_SIZE+1)
 
 /*
  * Data Structure for SCRIPTS program
