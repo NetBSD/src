@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.20 1999/06/08 23:42:36 simonb Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.20 1999/06/08 23:42:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21 1999/06/10 01:37:10 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -545,8 +545,8 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 void
 kn02ba_wbflush()
 {
-	/* read twice IOASIC_INTR register */
-	__asm __volatile("lw $0,0xbc040120; lw $0,0xbc040120");
+	/* read twice IOASIC_IMSK */
+	__asm __volatile("lw $0,%0; lw $0,%0" :: "i"(0xbc040120));
 }
 
 unsigned
