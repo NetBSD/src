@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.38 1998/03/22 12:50:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -235,7 +235,11 @@ pasconf(model, sbbase, sbirq, sbdrq)
 	paswrite(P_M_MV508_INPUTMIX | 30, PARALLEL_MIXER);
 }
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pasprobe __P((struct device *, void *, void *));
+#else
+int	pasprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	pasattach __P((struct device *, struct device *, void *));
 
 struct cfattach pas_ca = {
@@ -252,8 +256,16 @@ struct cfattach pas_ca = {
 int
 pasprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
+#ifndef __BROKEN_INDIRECT_CONFIG
+	return(0);
+#else
 	struct pas_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	int iobase;
@@ -396,6 +408,7 @@ pasprobe(parent, match, aux)
  unmap:
 	bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
 	return 0;
+#endif
 }
 
 #ifdef NEWCONFIG
