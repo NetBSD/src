@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 1998/08/15 05:10:24 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 1999/01/26 14:22:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,8 +159,11 @@ static __inline void
 softintr(mask)
 	register int mask;
 {
-
+#ifdef __ELF__
+	__asm __volatile("orl %0,ipending" : : "ir" (1 << mask));
+#else
 	__asm __volatile("orl %0,_ipending" : : "ir" (1 << mask));
+#endif
 }
 
 #define	setsoftast()	(astpending = 1)
