@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54 2001/02/27 04:44:51 lukem Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.55 2001/05/24 06:52:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -600,7 +600,8 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 			break;
 		}
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
-		*(int *)data = -*(int *)data;
+		if (error == 0)
+			*(int *)data = -*(int *)data;
 		break;
 
 	default:
