@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.3 2002/09/27 03:17:41 thorpej Exp $ */
+/* $NetBSD: ioc.c,v 1.4 2002/09/27 20:29:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.3 2002/09/27 03:17:41 thorpej Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.4 2002/09/27 20:29:04 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -58,7 +58,7 @@ static int ioc_print(void *aux, const char *pnp);
 static int ioc_irq_clock(void *cookie);
 static int ioc_irq_statclock(void *cookie);
 
-struct cfattach ioc_ca = {
+const struct cfattach ioc_ca = {
 	sizeof(struct ioc_softc), ioc_match, ioc_attach
 };
 

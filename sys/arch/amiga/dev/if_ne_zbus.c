@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.9 2002/01/28 09:56:59 aymeric Exp $ */
+/*	$NetBSD: if_ne_zbus.c,v 1.10 2002/09/27 20:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.9 2002/01/28 09:56:59 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.10 2002/09/27 20:30:09 thorpej Exp $");
 
 /*
  * Thanks to Village Tronic for giving me a card.
@@ -81,7 +81,7 @@ struct ne_zbus_softc {
 	struct isr		sc_isr;
 };
 
-struct cfattach ne_zbus_ca = {
+const struct cfattach ne_zbus_ca = {
 	sizeof(struct ne_zbus_softc), ne_zbus_match, ne_zbus_attach
 };
 

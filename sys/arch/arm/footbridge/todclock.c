@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.2 2002/05/26 12:07:55 bjh21 Exp $	*/
+/*	$NetBSD: todclock.c,v 1.3 2002/09/27 20:30:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -92,7 +92,7 @@ static struct todclock_softc *todclock_sc = NULL;
 
 /* driver and attach structures */
 
-struct cfattach todclock_ca = {
+const struct cfattach todclock_ca = {
 	sizeof(struct todclock_softc), todclockmatch, todclockattach
 };
 

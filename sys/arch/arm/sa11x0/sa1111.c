@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.7 2002/09/27 15:35:49 provos Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.8 2002/09/27 20:30:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct platid_data sacc_platid_table[] = {
 };
 #endif
 
-struct cfattach sacc_ca = {
+const struct cfattach sacc_ca = {
 	sizeof(struct sacc_softc), sacc_probe, sacc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.28 2002/01/28 09:57:04 aymeric Exp $ */
+/*	$NetBSD: wesc.c,v 1.29 2002/09/27 20:30:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.28 2002/01/28 09:57:04 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.29 2002/09/27 20:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ void wesc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach wesc_ca = {
+const struct cfattach wesc_ca = {
 	sizeof(struct siop_softc), wescmatch, wescattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.14 2002/09/27 15:35:54 provos Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.15 2002/09/27 20:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -121,7 +121,7 @@ static int bvme410_mem_size __P((bus_space_tag_t, u_long));
 static void bvme410_copytobuf __P((struct lance_softc *, void *, int, int));
 static void bvme410_zerobuf __P((struct lance_softc *, int, int));
 
-struct cfattach le_vme_ca = {
+const struct cfattach le_vme_ca = {
 	sizeof(struct le_softc), le_vme_match, le_vme_attach
 };
 

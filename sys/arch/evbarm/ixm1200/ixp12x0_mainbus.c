@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_mainbus.c,v 1.1 2002/07/15 17:13:34 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_mainbus.c,v 1.2 2002/09/27 20:31:30 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -54,7 +54,7 @@
 static int	ixp12x0_mainbus_match(struct device *, struct cfdata *, void *);
 static void	ixp12x0_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach ixpio_mainbus_ca = {
+const struct cfattach ixpio_mainbus_ca = {
 	sizeof(struct ixp12x0_softc), ixp12x0_mainbus_match,
 	    ixp12x0_mainbus_attach,
 };

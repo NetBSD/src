@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.3 2002/09/27 02:17:26 thorpej Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.4 2002/09/27 20:31:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -55,7 +55,7 @@ struct plrtc_softc {
 static int  plrtc_probe  (struct device *, struct cfdata *, void *);
 static void plrtc_attach (struct device *, struct device *, void *);
 
-struct cfattach plrtc_ca = {
+const struct cfattach plrtc_ca = {
 	sizeof(struct plrtc_softc), plrtc_probe, plrtc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.23 2001/05/14 13:18:47 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.24 2002/09/27 20:31:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -74,7 +74,7 @@ struct isabus_softc {
 	struct atari_isa_chipset sc_chipset;
 };
 
-struct cfattach isabus_ca = {
+const struct cfattach isabus_ca = {
 	sizeof(struct isabus_softc), isabusmatch, isabusattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.11 2002/09/27 02:16:28 thorpej Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.12 2002/09/27 20:31:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -84,7 +84,7 @@ struct gdrom_softc {
 	int cmd_cond;		/* resulting condition of command */
 };
 
-struct cfattach gdrom_ca = {
+const struct cfattach gdrom_ca = {
 	sizeof(struct gdrom_softc), gdrommatch, gdromattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.32 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.33 2002/09/27 20:29:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.32 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.33 2002/09/27 20:29:57 thorpej Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -68,7 +68,7 @@ int grfccprint(void *, const char *);
 void grfccattach(struct device *, struct device *, void *);
 void grf_cc_on(struct grf_softc *);
 
-struct cfattach grfcc_ca = {
+const struct cfattach grfcc_ca = {
 	sizeof(struct grf_softc), grfccmatch, grfccattach
 };
 

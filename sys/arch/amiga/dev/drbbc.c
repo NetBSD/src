@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.8 2002/01/28 09:56:53 aymeric Exp $ */
+/*	$NetBSD: drbbc.c,v 1.9 2002/09/27 20:29:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.8 2002/01/28 09:56:53 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.9 2002/09/27 20:29:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,7 +72,7 @@ struct drbbc_softc {
 	struct ds_handle sc_dsh;
 };
 
-struct cfattach drbbc_ca = {
+const struct cfattach drbbc_ca = {
 	sizeof(struct drbbc_softc),
 	drbbc_match,
 	drbbc_attach

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.8 2002/01/28 09:57:04 aymeric Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.9 2002/09/27 20:30:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.8 2002/01/28 09:57:04 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.9 2002/09/27 20:30:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,7 @@ int	wdc_amiga_probe(struct device *, struct cfdata *, void *);
 void	wdc_amiga_attach(struct device *, struct device *, void *);
 int	wdc_amiga_intr(void *);
 
-struct cfattach wdc_amiga_ca = {
+const struct cfattach wdc_amiga_ca = {
 	sizeof(struct wdc_amiga_softc), wdc_amiga_probe, wdc_amiga_attach
 };
 

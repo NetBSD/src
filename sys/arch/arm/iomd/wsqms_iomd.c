@@ -1,4 +1,4 @@
-/*	$NetBSD: wsqms_iomd.c,v 1.5 2002/06/19 23:49:14 bjh21 Exp $	*/
+/*	$NetBSD: wsqms_iomd.c,v 1.6 2002/09/27 20:30:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.5 2002/06/19 23:49:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.6 2002/09/27 20:30:43 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -61,7 +61,7 @@ static int  wsqms_iomd_probe(struct device *, struct cfdata *, void *);
 static void wsqms_iomd_attach(struct device *, struct device *, void *);
 
 
-struct cfattach wsqms_iomd_ca = {
+const struct cfattach wsqms_iomd_ca = {
 	sizeof(struct wsqms_softc), wsqms_iomd_probe, wsqms_iomd_attach
 };
 

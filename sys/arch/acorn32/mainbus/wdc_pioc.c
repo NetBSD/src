@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.3 2002/09/27 15:35:29 provos Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.4 2002/09/27 20:29:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -64,7 +64,7 @@ static int  wdc_pioc_probe  __P((struct device *, struct cfdata *, void *));
 static void wdc_pioc_attach __P((struct device *, struct device *, void *));
 
 /* device attach structure */
-struct cfattach wdc_pioc_ca = {
+const struct cfattach wdc_pioc_ca = {
 	sizeof(struct wdc_pioc_softc), wdc_pioc_probe, wdc_pioc_attach
 };
 

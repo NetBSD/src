@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.22 2002/01/28 09:56:59 aymeric Exp $ */
+/*	$NetBSD: if_qn.c,v 1.23 2002/09/27 20:30:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.22 2002/01/28 09:56:59 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.23 2002/09/27 20:30:09 thorpej Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -179,7 +179,7 @@ static	void qn_get_packet(struct qn_softc *, u_short);
 static	void qn_dump(struct qn_softc *);
 #endif
 
-struct cfattach qn_ca = {
+const struct cfattach qn_ca = {
 	sizeof(struct qn_softc), qnmatch, qnattach
 };
 
