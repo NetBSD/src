@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.40 2003/08/06 13:36:16 itojun Exp $	*/
+/*	$NetBSD: target.c,v 1.41 2003/08/06 13:56:59 itojun Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.40 2003/08/06 13:36:16 itojun Exp $");
+__RCSID("$NetBSD: target.c,v 1.41 2003/08/06 13:56:59 itojun Exp $");
 #endif
 
 /*
@@ -791,7 +791,7 @@ target_realpath(const char *path, char *resolved)
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {
-		(void)strcpy(resolved, ".");
+		(void)strlcpy(resolved, ".", MAXPATHLEN);
 		return (NULL);
 	}
 
@@ -805,10 +805,11 @@ target_realpath(const char *path, char *resolved)
 	 */
 	if (target_prefix() != NULL && strcmp(target_prefix(), "") != 0)
 		snprintf(resolved, MAXPATHLEN, "%s/%s", target_prefix(), path);
-	else {
-		(void)strncpy(resolved, path, MAXPATHLEN - 1);
-		resolved[MAXPATHLEN - 1] = '\0';
-	}
+	else
+		if (strlcpy(resolved, path, MAXPATHLEN) >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
 loop:
 	q = strrchr(resolved, '/');
 	if (q != NULL) {
@@ -839,10 +840,10 @@ loop:
 				goto err1;
 			wbuf[n] = '\0';
 			if (wbuf[0] == '/')
-				snprintf(resolved, MAXPATHLEN, "%s%s", target_prefix(),
-				    wbuf);
+				snprintf(resolved, MAXPATHLEN, "%s%s",
+				    target_prefix(), wbuf);
 			else
-				strcpy(resolved, wbuf);
+				strlcpy(resolved, wbuf, MAXPATHLEN);
 			goto loop;
 		}
 		if (S_ISDIR(sb.st_mode)) {
@@ -856,7 +857,10 @@ loop:
 	 * Save the last component name and get the full pathname of
 	 * the current directory.
 	 */
-	(void)strncpy(wbuf, p, (sizeof(wbuf) - 1));
+	if (strlcpy(wbuf, p, sizeof(wbuf)) >= sizeof(wbuf)) {
+		errno = ENAMETOOLONG;
+		goto err1;
+	}
 
 	/*
 	 * Call the internal internal version of getcwd which
@@ -881,8 +885,14 @@ loop:
 			goto err1;
 		}
 		if (rootd == 0)
-			(void)strcat(resolved, "/"); /* XXX: strcat is safe */
-		(void)strcat(resolved, wbuf);	/* XXX: strcat is safe */
+			if (strlcat(resolved, "/", MAXPATHLEN) >= MAXPATHLEN) {
+				errno = ENAMETOOLONG;
+				goto err1;
+			}
+		if (strlcat(resolved, wbuf, MAXPATHLEN) >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
 	}
 
 	/* Go back to where we came from. */
