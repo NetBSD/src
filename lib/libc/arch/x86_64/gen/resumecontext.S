@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.1 2003/01/30 02:07:31 fvdl Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.2 2004/02/27 21:23:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.1 2003/01/30 02:07:31 fvdl Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.2 2004/02/27 21:23:05 drochner Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -59,7 +59,7 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 #else
 	call	_C_LABEL(_getcontext)
 #endif
-	movq	4(%rsp),%rdi
+	movq	8(%rsp),%rdi
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(setcontext))
 #else
