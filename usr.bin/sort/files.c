@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.17 2001/05/15 11:18:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.17 2001/05/15 11:18:23 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -125,22 +125,22 @@ getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
  * in the first fsort pass.
  */
 int
-makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
+makeline(flno, top, filelist, nfiles, recbuf, bufend, dummy2)
 	int flno, top;
 	struct filelist *filelist;
 	int nfiles;
-	RECHEADER *buffer;
+	RECHEADER *recbuf;
 	u_char *bufend;
 	struct field *dummy2;
 {
 	static u_char *obufend;
 	static size_t osz;
 	char *pos;
-	static int fileno = 0, overflow = 0;
+	static int filenum = 0, overflow = 0;
 	static FILE *fp = 0;
 	int c;
 
-	pos = (char *) buffer->data;
+	pos = (char *) recbuf->data;
 	if (overflow) {
 		/*
 		 * Buffer shortage is solved by either of two ways:
@@ -161,31 +161,31 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 		if (flno >= 0 && (fp = fstack[flno].fp) == NULL)
 			return (EOF);
 		else if (fp == NULL) {
-			if (fileno  >= nfiles)
+			if (filenum  >= nfiles)
 				return (EOF);
-			if (!(fp = fopen(filelist->names[fileno], "r")))
-				err(2, "%s", filelist->names[fileno]);
-			fileno++;
+			if (!(fp = fopen(filelist->names[filenum], "r")))
+				err(2, "%s", filelist->names[filenum]);
+			filenum++;
 		}
 		while ((pos < (char *)bufend) && ((c = getc(fp)) != EOF)) {
 			if ((*pos++ = c) == REC_D) {
-				buffer->offset = 0;
-				buffer->length = pos - (char *) buffer->data;
+				recbuf->offset = 0;
+				recbuf->length = pos - (char *) recbuf->data;
 				return (0);
 			}
 		}
 		if (pos >= (char *)bufend) {
-			if (buffer->data < bufend) {
+			if (recbuf->data < bufend) {
 				overflow = 1;
 				obufend = bufend;
-				osz = (pos - (char *) buffer->data);
+				osz = (pos - (char *) recbuf->data);
 			}
 			return (BUFFEND);
 		} else if (c == EOF) {
-			if (buffer->data != (u_char *) pos) {
+			if (recbuf->data != (u_char *) pos) {
 				*pos++ = REC_D;
-				buffer->offset = 0;
-				buffer->length = pos - (char *) buffer->data;
+				recbuf->offset = 0;
+				recbuf->length = pos - (char *) recbuf->data;
 				return (0);
 			}
 			FCLOSE(fp);
@@ -194,14 +194,14 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 				fstack[flno].fp = 0;
 		} else {
 			
-			warnx("makeline: line too long: ignoring '%.100s...'", buffer->data);
+			warnx("makeline: line too long: ignoring '%.100s...'", recbuf->data);
 
 			/* Consume the rest of line from input */
 			while((c = getc(fp)) != REC_D && c != EOF)
 				;
 
-			buffer->offset = 0;
-			buffer->length = 0;
+			recbuf->offset = 0;
+			recbuf->length = 0;
 
 			return (BUFFEND);
 		}
@@ -212,22 +212,22 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
  * This generates keys. It's only called in the first fsort pass
  */
 int
-makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
+makekey(flno, top, filelist, nfiles, recbuf, bufend, ftbl)
 	int flno, top;
 	struct filelist *filelist;
 	int nfiles;
-	RECHEADER *buffer;
+	RECHEADER *recbuf;
 	u_char *bufend;
 	struct field *ftbl;
 {
-	static int fileno = 0;
+	static int filenum = 0;
 	static FILE *dbdesc = 0;
 	static DBT dbkey[1], line[1];
 	static int overflow = 0;
 	int c;
 
 	if (overflow) {
-		overflow = enterkey(buffer, line, bufend - (u_char *)buffer,
+		overflow = enterkey(recbuf, line, bufend - (u_char *)recbuf,
 									ftbl);
 		if (overflow)
 			return (BUFFEND);
@@ -240,19 +240,19 @@ makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
 			if (!(dbdesc = fstack[flno].fp))
 				return (EOF);
 		} else if (!dbdesc) {
-			if (fileno  >= nfiles)
+			if (filenum  >= nfiles)
 				return (EOF);
-			dbdesc = fopen(filelist->names[fileno], "r");
+			dbdesc = fopen(filelist->names[filenum], "r");
 			if (!dbdesc)
-				err(2, "%s", filelist->names[fileno]);
-			fileno++;
+				err(2, "%s", filelist->names[filenum]);
+			filenum++;
 		}
 		if (!(c = seq(dbdesc, line, dbkey))) {
-			if ((signed)line->size > bufend - buffer->data) {
+			if ((signed)line->size > bufend - recbuf->data) {
 				overflow = 1;
 			} else {
-				overflow = enterkey(buffer, line,
-				    bufend - (u_char *) buffer, ftbl);
+				overflow = enterkey(recbuf, line,
+				    bufend - (u_char *) recbuf, ftbl);
 			}
 			if (overflow)
 				return (BUFFEND);
