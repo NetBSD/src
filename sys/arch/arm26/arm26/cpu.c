@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.2 2000/12/11 23:46:50 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2000/12/11 23:46:50 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -52,7 +52,7 @@ static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
 static register_t cpu_identify(void);
 #ifdef CPU_ARM3
-static void cpu_arm3_setup(struct device *);
+static void cpu_arm3_setup(struct device *, int);
 #endif
 static void cpu_delay_calibrate(struct device *);
 
@@ -65,6 +65,9 @@ struct cpu_softc {
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
 };
+
+/* cf_flags bits */
+#define CFF_NOCACHE	0x00000001
 
 static int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -100,7 +103,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("ARM3 (rev. %d)", cpu_type & CPU_ID_REVISION_MASK);
 #ifdef CPU_ARM3
 		supported = 1;
-		cpu_arm3_setup(self);
+		cpu_arm3_setup(self, self->dv_cfdata->cf_flags);
 #endif
 		break;
 	default:
@@ -142,37 +145,26 @@ cpu_identify()
 	asm ("mcr 15, 0, %0, cr" __STRING(reg) ", cr0" : : "r" (val))
 
 static void
-cpu_arm3_setup(struct device *self)
+cpu_arm3_setup(struct device *self, int flags)
 {
-	int oldctl;
 
-	/*
-	 * We decide whether to enable the cache based on its current
-	 * state.  This is very dodgy, since the bootloader really
-	 * _should_ disable it for us, but currently BBBB doesn't.  In
-	 * future, this should probably be a flag in the cpu
-	 * attachment.
-	 */
-	ARM3_READ(ARM3_CP15_CONTROL, oldctl);
-	if (oldctl & ARM3_CTL_CACHE_ON) {
-		/* Disable the cache while we set things up. */
-		ARM3_WRITE(ARM3_CP15_CONTROL, ARM3_CTL_SHARED);
-		/* All RAM and ROM is cacheable. */
-		ARM3_WRITE(ARM3_CP15_CACHEABLE, 0xfcffffff);
-		/* All RAM is updateable. */
-		ARM3_WRITE(ARM3_CP15_UPDATEABLE, 0x00ffffff);
-		/* Nothing is disruptive.  We'll do cache flushing manually. */
-		ARM3_WRITE(ARM3_CP15_DISRUPTIVE, 0x00000000);
-		/* Flush the cache and turn it on. */
-		ARM3_WRITE(ARM3_CP15_FLUSH, 0);
-		ARM3_WRITE(ARM3_CP15_CONTROL,
-			   ARM3_CTL_CACHE_ON | ARM3_CTL_SHARED);
-		printf(", cache enabled");
-		cpu_delay_factor = 8;
-	} else {
-		ARM3_WRITE(ARM3_CP15_CONTROL, ARM3_CTL_SHARED);
+	/* Disable the cache while we set things up. */
+	ARM3_WRITE(ARM3_CP15_CONTROL, ARM3_CTL_SHARED);
+	if (flags & CFF_NOCACHE) {
 		printf(", cache disabled");
+		return;
 	}
+	/* All RAM and ROM is cacheable. */
+	ARM3_WRITE(ARM3_CP15_CACHEABLE, 0xfcffffff);
+	/* All RAM is updateable. */
+	ARM3_WRITE(ARM3_CP15_UPDATEABLE, 0x00ffffff);
+	/* Nothing is disruptive.  We'll do cache flushing manually. */
+	ARM3_WRITE(ARM3_CP15_DISRUPTIVE, 0x00000000);
+	/* Flush the cache and turn it on. */
+	ARM3_WRITE(ARM3_CP15_FLUSH, 0);
+	ARM3_WRITE(ARM3_CP15_CONTROL, ARM3_CTL_CACHE_ON | ARM3_CTL_SHARED);
+	printf(", cache enabled");
+	cpu_delay_factor = 8;
 }
 #endif
 
