@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 1997/10/20 06:13:42 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.1 1997/10/30 06:14:37 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,20 +161,94 @@ void run_makedev (void)
 /* Load files from floppy. */
 int get_via_floppy (void)
 {
-	char realdir[STRSIZE];
 	char distname[STRSIZE];
 	char fddev[STRSIZE] = "/dev/fd0a";
-	char dirname[STRSIZE];
 	char fname[STRSIZE];
 	char fullname[STRSIZE];
-	char **list;
-	char **last;
+	distinfo *list;
 	char post[4];
 	int  mounted = 0;
+	int  first;
 	struct stat sb;
 
-	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE,
-		    "unloading from floppy");
+
+	cd_dist_dir ("unloading from floppy");
+
+	msg_prompt_add (MSG_fddev, fddev, fddev, STRSIZE);
+
+	list = dist_list;
+	while (list->name) {
+		strcpy (post, ".aa");
+		snprintf (distname, STRSIZE, list->name, rels, dist_postfix);
+		while (list->getit && strcmp(&post[1],list->fdlast) <= 0) {
+			snprintf (fname, STRSIZE, list->name, rels, post);
+			snprintf (fullname, STRSIZE, "/mnt2/%s", fname);
+			first = 1;
+			while (!mounted || stat(fullname, &sb)) {
+ 				if (mounted) 
+					run_prog ("/sbin/umount /mnt2 "
+						  "2>/dev/null");
+				if (first)
+					msg_display (MSG_fdmount, fname);
+				else
+					msg_display (MSG_fdnotfound, fname);
+				process_menu (MENU_fdok);
+				if (!yesno)
+					return 0;
+				while (run_prog("/sbin/mount -t %s %s /mnt2",
+						 fdtype, fddev)) {
+					msg_display (MSG_fdremount, fname);
+					process_menu (MENU_fdremount);
+					if (!yesno)
+						return 0;
+				}
+				mounted = 1;
+				first = 0;
+			}
+			run_prog ("/bin/cat %s >> %s", fullname, distname);
+			if (post[2] < 'z')
+				post[2]++;
+			else
+				post[2]='a', post[1]++;
+		}
+		run_prog ("/sbin/umount /mnt2 2>/dev/null");
+		mounted = 0;
+		list++;
+	}
+#ifndef DEBUG
+	chdir("/");
+#endif
+	return 1;
+}
+
+int
+get_via_cdrom(void)
+{
+	/* Get server and filepath */
+	process_menu (MENU_cdromsource);
+
+	/* Mount it */
+	while (run_prog ("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+		process_menu (MENU_cdrombadmount);
+		if (!yesno)
+			return 0;
+		/* Verify distribution files exist.  XXX */
+	}
+
+	/* return location, don't clean... */
+	strcpy (dist_dir, "/mnt2");
+	strncat (dist_dir, cdrom_dir, STRSIZE-strlen(dist_dir)-1);
+	clean_dist_dir = 0;
+	mnt2_mounted = 1;
+	return 1;
+}
+
+
+void cd_dist_dir (char *forwhat)
+{
+	char realdir[STRSIZE];
+
+	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
 	if (*dist_dir == '/')
 		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
 	else
@@ -191,72 +265,24 @@ int get_via_floppy (void)
 #else
 	printf ("chdir (%s)\n", realdir);
 #endif
-
-	msg_prompt_add (MSG_fddev, fddev, fddev, STRSIZE);
-
-	list = dist_list;
-	last = fd_last;
-	while (*last) {
-		strcpy (post, ".aa");
-		snprintf (dirname, STRSIZE, *list, rels, "/" );
-		snprintf (distname, STRSIZE, *list, rels, dist_postfix);
-		msg_display (MSG_fdload, dirname);
-		process_menu (MENU_yesno);
-		while (yesno && strcmp(post,*last) <= 0) {
-			snprintf (fname, STRSIZE, *list, rels, post);
-			snprintf (fullname, STRSIZE, "/mnt2/%s%s", dirname,
-				  fname);
-			while (!mounted || stat(fullname, &sb)) {
-				if (mounted)
-					run_prog ("/sbin/umount /mnt2");
-				msg_display (MSG_fdmount, dirname, fname);
-				process_menu (MENU_ok);
-				while (!run_prog("/sbin/mount -t %s %s /mnt2",
-						 fdtype, fddev)) {
-					msg_display (MSG_fdremount, dirname,
-						     fname);
-					process_menu (MENU_fdremount);
-					if (!yesno)
-						return 0;
-				}
-				mounted = 1;
-			}
-			run_prog ("/bin/cat /mnt2/%s >> %s", fullname,
-				  distname);
-			if (post[1] < 'z')
-				post[1]++;
-			else
-				post[1]='a', post[2]++;
-		}
-		run_prog ("/sbin/umount /mnt2");
-		mounted = 0;
-		list++;
-		last++;
-	}
-#ifndef DEBUG
-	chdir("/");
-#endif
-	return 1;
 }
 
-int
-get_via_cdrom(void)
+/* Support for custom distribution fetches / unpacks. */
+
+void toggle_getit (int num)
 {
-	/* Get server and filepath */
-	process_menu (MENU_cdromsource);
+	dist_list[num].getit ^= 1;
+}
 
-	/* Mount it */
-	while (!run_prog ("/sbin/mount -rt cd9660 %s /mnt2", cdrom_dev)) {
-		process_menu (MENU_cdrombadmount);
-		if (!yesno)
-			return 0;
-		/* Verify distribution files exist.  XXX */
+void show_cur_distsets (void)
+{
+	distinfo *list;
+
+	msg_display (MSG_cur_distsets);
+	list = dist_list;
+	while (list->name) {
+		msg_printf_add ("%s%s\n", list->desc, list->getit ?
+				msg_string(MSG_yes) : msg_string(MSG_no));
+		list++;
 	}
-
-	/* return location, don't clean... */
-	strcpy (dist_dir, "/mnt2");
-	strncat (dist_dir, cdrom_dir, STRSIZE-strlen(dist_dir)-1);
-	clean_dist_dir = 0;
-	mnt2_mounted = 1;
-	return 1;
 }
