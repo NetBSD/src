@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.100 2004/04/19 03:36:12 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.101 2004/04/19 03:39:20 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1018,3 +1018,8 @@ bin/pax/tar.c					1.48
 
 	Redo GNU tar --exclude emulation to actually work the same.
 	[mrg, ticket #155]
+
+bin/pax/tar.c					1.49
+
+	Fix bugs in the previous.  use snprintf(). PR#25131
+	[mrg, ticket #145]
