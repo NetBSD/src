@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.1,v 1.41 2003/08/07 09:05:03 agc Exp $
+.\"	$NetBSD: csh.1,v 1.42 2004/04/17 15:45:08 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd April 5, 2003
+.Dd April 17, 2004
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -1406,20 +1406,20 @@ but a user may lower or raise the current limits within the legal range.
 Resources controllable currently include:
 .Bl -tag -width coredumpsize
 .It Ar cputime
-the maximum number of CPU-seconds to be used by each process.
+The maximum number of CPU-seconds to be used by each process.
 .It Ar filesize
-the largest single file (in bytes) that can be created.
+The largest single file (in bytes) that can be created.
 .It Ar datasize
-the maximum growth of the data+stack region via
+The maximum growth of the data+stack region via
 .Xr sbrk  2
 beyond the end of the program text.
 .It Ar stacksize
-the maximum
+The maximum
 size of the automatically-extended stack region.
 .It Ar coredumpsize
-the size of the largest core dump (in bytes) that will be created.
+The size of the largest core dump (in bytes) that will be created.
 .It Ar memoryuse
-the maximum size (in bytes) to which a process's resident set
+The maximum size (in bytes) to which a process's resident set
 size (RSS) may grow.
 .It Ar memorylocked
 The maximum size (in bytes) which a process may lock into memory using the
@@ -1429,6 +1429,8 @@ function.
 The maximum number of simultaneous processes for this user id.
 .It Ar openfiles
 The maximum number of simultaneous open files for this user id.
+.It Ar sbsize
+The maximum socket buffer size of a process (in bytes).
 .El
 .Pp
 The
