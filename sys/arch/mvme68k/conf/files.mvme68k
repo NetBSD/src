@@ -1,8 +1,9 @@
-#	$NetBSD: files.mvme68k,v 1.56 2002/11/05 07:41:30 chs Exp $
+#	$NetBSD: files.mvme68k,v 1.57 2003/06/28 08:26:45 he Exp $
 
 # config file for mvme68k
 
 defflag	opt_m060sp.h		M060SP
+defflag				PANICBUTTON	# panic on ABORT if not DDB
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
