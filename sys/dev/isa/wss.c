@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.3 1995/04/17 12:07:50 cgd Exp $	*/
+/*	$NetBSD: wss.c,v 1.4 1995/04/17 15:48:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: wss.c,v 1.3 1995/04/17 12:07:50 cgd Exp $
+ *	$Id: wss.c,v 1.4 1995/04/17 15:48:37 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -53,11 +53,11 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
-#include <i386/isa/ad1848var.h>
-#include <i386/isa/ad1848reg.h>
-#include <i386/isa/wssreg.h>
+#include <dev/isa/ad1848var.h>
+#include <dev/isa/ad1848reg.h>
+#include <dev/isa/wssreg.h>
 
 /*
  * Mixer devices

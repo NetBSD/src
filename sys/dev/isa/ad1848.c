@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.3 1995/04/17 12:06:55 cgd Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.4 1995/04/17 15:48:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848.c,v 1.3 1995/04/17 12:06:55 cgd Exp $
+ *	$Id: ad1848.c,v 1.4 1995/04/17 15:48:20 cgd Exp $
  */
 
 /*
@@ -89,10 +89,10 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
-#include <i386/isa/ad1848reg.h>
-#include <i386/isa/ad1848var.h>
+#include <dev/isa/ad1848reg.h>
+#include <dev/isa/ad1848var.h>
 
 #ifdef DEBUG
 extern void Dprintf __P((const char *, ...));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.4 1995/04/17 12:07:34 cgd Exp $	*/
+/*	$NetBSD: pss.c,v 1.5 1995/04/17 15:48:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pss.c,v 1.4 1995/04/17 12:07:34 cgd Exp $
+ *	$Id: pss.c,v 1.5 1995/04/17 15:48:26 cgd Exp $
  */
 
 /*
@@ -67,12 +67,12 @@
 #include <dev/audio_if.h>
 
 #include <dev/isa/isavar.h>
-#include <i386/isa/dmavar.h>
-#include <i386/isa/icu.h>
+#include <dev/isa/dmavar.h>
+#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
-#include <i386/isa/ad1848var.h>
-#include <i386/isa/wssreg.h>
-#include <i386/isa/pssreg.h>
+#include <dev/isa/ad1848var.h>
+#include <dev/isa/wssreg.h>
+#include <dev/isa/pssreg.h>
 
 /*
  * Mixer devices
