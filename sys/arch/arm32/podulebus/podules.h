@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.6 1997/07/28 17:47:53 mark Exp 
+ *	NetBSD: podules,v 1.7 1997/10/14 22:22:08 mark Exp 
  */
 
 /*
@@ -70,6 +70,7 @@
  * List of known podules.  Grouped by vendor.
  */
 
+#define	PODULE_ACORN_ETHER3XXX	0x0000		/* Ether3 (NOROM) */
 #define	PODULE_ACORN_SCSI	0x0002		/* SCSI 1 interface */
 #define	PODULE_ACORN_ETHER1	0x0003		/* ether 1 interface */
 #define	PODULE_ACORN_RAMROM	0x0005		/* RAM/ROM podule */
