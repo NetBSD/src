@@ -701,10 +701,7 @@ pcstart(register struct tty *tp)
 
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-
-	if (tp->t_outq.c_cc == 0 &&
-	    tp->t_wsel.si_pid == 0)
-	{
+	if (tp->t_outq.c_cc == 0) {
 		async_update();
 		goto low;
 	}
