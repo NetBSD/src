@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.195 2001/11/25 18:19:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.196 2001/11/29 22:45:53 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -19,11 +19,6 @@
 #	before kernel compile
 #   NO_SENDMAIL is normally undefined; if defined, it will not do a
 #	`make distribution' in the sendmail config file source directory.
-#   EXTRA_KERNELS has a machine-dependent list of kernels to build added
-#	to it, but you may also set this to have extra ones built.
-#   BUILD_KERNELS are a machine-dependent list of kernels that should just
-#	be built in place but not made into sets or installed, e.g., an
-#	INSTALL kernel used later in src/distrib/.
 #
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
@@ -337,16 +332,29 @@ snap_pre:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}/${dir}
 .endfor
 
-
-# This target builds the GENERIC kernel (which must exist for all
-# ports) and puts it in binary/sets/kern.tgz, and also builds any
-# kernels specified in EXTRA_KERNELS. Since NetBSD's kernel build
-# system can create more than one kernel from a single configuration
-# we figure out how many there are, what they're named, and move them
-# to binary/kernel/${KERNEL}.${CONFIGFILE}.gz - most often KERNEL will
-# simply be "netbsd". If we don't find the "config" line, assume the
-# kernel will be "netbsd" (some config files are simple additions on
-# GENERIC, and just include it).
+# This target builds the kernels specified by each port.  A port may
+# specify the following kernels:
+#
+#	KERNEL_SETS		The list of kernels that will be
+#				packaged into sets, named
+#				kern-${kernel}.tgz.  These kernels
+#				are also placed in the binary/kernels
+#				area of the release package as
+#				netbsd-${kernel}.gz.
+#
+#	EXTRA_KERNELS		Additional kernels to place in the
+#				binary/kernels area of the release
+#				package as netbsd-${kernel}.gz, but
+#				which are not placed into sets. This
+#				allows a port to provide e.g. a netbootable
+#				installation kernel containing a ramdisk.
+#
+#	BUILD_KERNELS		Additional kernels to build which are
+#				not placed into sets nor into the
+#				binary/kernels area of the release
+#				package.  These are typically kernels
+#				that are built for inclusion only in
+#				installation disk/CD-ROM/tape images.
 #
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
@@ -354,24 +362,26 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 .if !target(snap_kern)
 snap_kern:
 .ifndef KERNELS_DONE
-.for configfile in GENERIC ${EXTRA_KERNELS} ${BUILD_KERNELS}
+.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile:C/.*\///} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean 
 .endif
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE} ${_J}
-.endfor # kernels
-	cd ${KERNOBJDIR}/GENERIC &&	\
-		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
-		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
-.for configfile in GENERIC ${EXTRA_KERNELS}
+.endfor # build kernels
+.for configfile in ${KERNEL_SETS}
+	cd ${KERNOBJDIR}/${configfile:C/.*\///} && \
+		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/${configfile}` | \
+		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
+.endfor # make kernel sets
+.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} &&	\
 		for kernel in `${GETKERNELAWK} \
 			${KERNCONFDIR}/${configfile:C/.*\///}` ; do   \
 		gzip -c -9 < $${kernel} > \
-			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile:C/.*\///}.gz ; done
-.endfor # EXTRA_KERNELS
+			${RELEASEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
+.endfor # place KERNEL_SETS kernels + EXTRA_KERNELS in binary/kernel/...
 .endif # KERNELS_DONE
 .endif # no target(snap_kern)
 
