@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.4 1996/03/27 21:42:36 mark Exp $ */
+/* $NetBSD: conf.c,v 1.5 1996/03/28 21:40:22 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -125,6 +125,8 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 36: */
 	bdev_lkm_dummy(),		/* 37: */
 	bdev_lkm_dummy(),		/* 38: */
+	bdev_lkm_dummy(),		/* 39: */
+	bdev_lkm_dummy(),		/* 40: */
   };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -234,6 +236,8 @@ cdev_decl(vnd);
 cdev_decl(ccd);
 #include "quadmouse.h"
 cdev_decl(quadmouse);
+#include "pms.h"
+cdev_decl(pms);
 #include "beep.h"
 cdev_decl(beep);
 #include "kbd.h"
@@ -288,8 +292,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vidcvid_init(1,vidcvideo),	/* 37: vidcvideo device */
 	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
 	cdev_lkm_dummy(),		/* 39 */
-	cdev_lkm_dummy(),		/* 40 */
-/*	cdev_mouse_init(NPMS,pms),     */ /* 40: PS2 mouse driver */
+	cdev_mouse_init(NPMS,pms),      /* 40: PS2 mouse driver */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
