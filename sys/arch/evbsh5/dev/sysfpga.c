@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.3 2002/08/31 09:30:02 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.4 2002/09/22 20:51:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -330,4 +330,11 @@ sysfpga_intr_disestablish(void *cookie)
 	splx(s);
 
 	ih->ih_func = NULL;
+}
+
+void
+sysfpga_nmi_clear(void)
+{
+
+	sysfpga_reg_write(sysfpga_sc, SYSFPGA_REG_NMISR, 0);
 }
