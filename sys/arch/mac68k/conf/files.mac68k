@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.54 1997/01/20 00:30:56 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.55 1997/01/21 09:43:45 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -110,8 +110,6 @@ file	dev/cninit.c
 
 # Memory Disk for installs
 #     These files are out of order
-pseudo-device	md
-file	dev/md.c			md needs-flag
 file	arch/mac68k/dev/md_root.c	memory_disk_hooks
 
 major	{sd = 4}
