@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.4 1994/10/26 07:27:18 cgd Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.5 1995/08/05 16:47:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -41,7 +41,8 @@
 
 #include <sys/param.h>
 #include <hp300/dev/fhpibreg.h>
-#include "hpibvar.h"
+#include <hp300/stand/hpibvar.h>
+#include <hp300/stand/samachdep.h>
 
 fhpibinit(unit)
 	register int unit;

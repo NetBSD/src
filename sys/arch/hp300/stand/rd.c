@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.8 1995/08/04 07:55:48 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.9 1995/08/05 16:47:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.4 1994/10/26 07:27:55 cgd Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.5 1995/08/05 16:47:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -70,6 +70,8 @@ extern	int cpuspeed, machineid;
 extern	int howto;
 extern	unsigned int bootdev;
 extern	char *getmachineid();
+
+#define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
 /* bogon grfinfo structure to keep grf_softc happy */
 struct grfinfo {
