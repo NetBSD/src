@@ -159,6 +159,9 @@ enum insn_code {
   CODE_FOR_sgeu = 219,
   CODE_FOR_sle = 222,
   CODE_FOR_sleu = 225,
+  CODE_FOR_ffsqi2 = 228,
+  CODE_FOR_ffshi2 = 229,
+  CODE_FOR_ffssi2 = 230,
   CODE_FOR_nothing };
 
 #define MAX_INSN_CODE ((int) CODE_FOR_nothing)
