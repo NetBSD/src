@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.4 2000/05/29 22:08:47 deberg Exp $        */
+/*      $NetBSD: rtc.c,v 1.5 2001/05/13 16:55:40 chs Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -51,13 +51,6 @@
 #include <next68k/dev/clockreg.h>
 
 /* #define RTC_DEBUG */
-
-void rtc_init __P((void));
-u_char rtc_read __P((u_char));
-void rtc_write __P((u_char, u_char));
-void rtc_print __P((void));
-time_t getsecs __P((void));
-void setsecs __P((time_t));
 
 u_char new_clock;
 volatile u_int *scr2 = (u_int *)NEXT_P_SCR2; /* will get memory mapped in rtc_init */
