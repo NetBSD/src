@@ -1,7 +1,7 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.19 1996/12/22 06:33:16 cgd Exp $
+#	$NetBSD: makesyscalls.sh,v 1.20 1996/12/22 06:33:46 cgd Exp $
 #
-# Copyright (c) 1994 Christopher G. Demetriou
+# Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
