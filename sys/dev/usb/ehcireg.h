@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.13.16.3 2004/09/21 13:33:43 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.13.16.4 2004/11/02 07:53:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #define EHCI_HCSPARAMS		0x04	/* RO Structural parameters */
 #define  EHCI_HCS_DEBUGPORT(x)	(((x) >> 20) & 0xf)
-#define  EHCI_HCS_P_INCICATOR(x) ((x) & 0x10000)
+#define  EHCI_HCS_P_INDICATOR(x) ((x) & 0x10000)
 #define  EHCI_HCS_N_CC(x)	(((x) >> 12) & 0xf) /* # of companion ctlrs */
 #define  EHCI_HCS_N_PCC(x)	(((x) >> 8) & 0xf) /* # of ports per comp. */
 #define  EHCI_HCS_PPC(x)	((x) & 0x10) /* port power control */
@@ -206,6 +206,7 @@ typedef struct {
 	ehci_link_t	qtd_altnext;
 	u_int32_t	qtd_status;
 #define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
+#define EHCI_QTD_SET_STATUS(x)	((x) <<  0)
 #define  EHCI_QTD_ACTIVE	0x80
 #define  EHCI_QTD_HALTED	0x40
 #define  EHCI_QTD_BUFERR	0x20

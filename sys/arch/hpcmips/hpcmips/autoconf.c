@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.6.3 2004/09/21 13:16:05 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.6.4 2004/11/02 07:50:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.6.3 2004/09/21 13:16:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.6.4 2004/11/02 07:50:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.6.3 2004/09/21 13:16:05 skrll Exp 
 
 void makebootdev(const char *);
 
-struct device *booted_device;
-int booted_partition;
 static char __booted_device_name[16];
 static void get_device(const char *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.2.3 2004/09/21 13:14:47 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.2.4 2004/11/02 07:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.3 2004/09/21 13:14:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.4 2004/11/02 07:50:23 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -52,9 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.3 2004/09/21 13:14:47 skrll Exp $
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-
-struct device *booted_device;
-int booted_partition;
 
 void	(*evbarm_device_register)(struct device *, void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.4.4.5 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4.4.6 2004/11/02 07:52:10 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -1960,7 +1960,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	default:
 		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
-			if (RTK_IS_ENABLED(sc))
+			if (ifp->if_flags & IFF_RUNNING)
 				rtk_setmulti(sc);
 			error = 0;
 		}

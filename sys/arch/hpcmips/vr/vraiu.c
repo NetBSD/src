@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.5.2.3 2004/09/21 13:16:13 skrll Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.5.2.4 2004/11/02 07:50:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.5.2.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.5.2.4 2004/11/02 07:50:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ int vraiu_set_params(void *, int, int, struct audio_params *,
 		     struct audio_params *);
 int vraiu_get_props(void *);
 
-struct audio_hw_if vraiu_hw_if = {
+const struct audio_hw_if vraiu_hw_if = {
 	vraiu_open,
 	vraiu_close,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.4.4 2004/09/21 13:17:18 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.5 2004/11/02 07:50:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,9 +57,6 @@
 
 #include <machine/pte.h>
 #include <machine/intr.h>
-
-struct device *booted_device;
-int booted_partition;
 
 static void findroot __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36.2.3 2004/09/21 13:23:19 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.36.2.4 2004/11/02 07:50:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36.2.3 2004/09/21 13:23:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36.2.4 2004/11/02 07:50:56 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36.2.3 2004/09/21 13:23:19 skrll Exp $");
 #include <sys/disk.h>
 #include <sys/fdio.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>

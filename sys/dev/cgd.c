@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.12.2.6 2004/10/19 15:56:44 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.12.2.7 2004/11/02 07:51:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.6 2004/10/19 15:56:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.7 2004/11/02 07:51:19 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.6 2004/10/19 15:56:44 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/ioctl.h>

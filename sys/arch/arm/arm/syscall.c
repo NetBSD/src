@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18.2.5 2004/09/21 13:13:08 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.18.2.6 2004/11/02 07:50:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.5 2004/09/21 13:13:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.6 2004/11/02 07:50:22 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -146,14 +146,14 @@ swi_handler(trapframe_t *frame)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)(intptr_t) (frame->tf_pc-INSN_SIZE);
-		KERNEL_PROC_LOCK(l->l_proc);
+		KERNEL_PROC_LOCK(l);
 #if 0
 		/* maybe one day we'll do emulations */
 		(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 #else
 		trapsignal(l, &ksi);
 #endif
-		KERNEL_PROC_UNLOCK(l->l_proc);
+		KERNEL_PROC_UNLOCK(l);
 		userret(l);
 		return;
 	}
@@ -243,7 +243,7 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 	ksiginfo_t ksi;
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
 	case SWI_OS_ARM: /* ARM-defined SWIs */
@@ -389,7 +389,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 	ksiginfo_t ksi;
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
 	case SWI_OS_ARM: /* ARM-defined SWIs */
@@ -550,9 +550,9 @@ child_return(arg)
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 }

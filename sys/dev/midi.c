@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.34.2.4 2004/09/21 13:26:25 skrll Exp $	*/
+/*	$NetBSD: midi.c,v 1.34.2.5 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34.2.4 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34.2.5 2004/11/02 07:51:19 skrll Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -135,7 +135,7 @@ midiattach(struct device *parent, struct device *self, void *aux)
 {
 	struct midi_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
-	struct midi_hw_if *hwp = sa->hwif;
+	const struct midi_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
 
 	DPRINTFN(6, ("MIDI attach\n"));
@@ -392,7 +392,7 @@ int
 midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct midi_softc *sc;
-	struct midi_hw_if *hw;
+	const struct midi_hw_if *hw;
 	int error;
 
 	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
@@ -437,7 +437,7 @@ midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
-	struct midi_hw_if *hw = sc->hw_if;
+	const struct midi_hw_if *hw = sc->hw_if;
 	int s, error;
 
 	DPRINTF(("midiclose %p\n", sc));
@@ -696,7 +696,7 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
-	struct midi_hw_if *hw = sc->hw_if;
+	const struct midi_hw_if *hw = sc->hw_if;
 	int error;
 
 	DPRINTF(("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
@@ -883,7 +883,7 @@ midi_getinfo(dev_t dev, struct midi_info *mi)
 int	audioprint(void *, const char *);
 
 struct device *
-midi_attach_mi(struct midi_hw_if *mhwp, void *hdlp, struct device *dev)
+midi_attach_mi(const struct midi_hw_if *mhwp, void *hdlp, struct device *dev)
 {
 	struct audio_attach_args arg;
 

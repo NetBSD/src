@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.17.2.4 2004/09/24 10:53:28 skrll Exp $	*/
+/*	$NetBSD: yds.c,v 1.17.2.5 2004/11/02 07:52:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17.2.4 2004/09/24 10:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17.2.5 2004/11/02 07:52:11 skrll Exp $");
 
 #include "mpu.h"
 
@@ -199,7 +199,7 @@ static void yds_dump_play_slot __P((struct yds_softc *, int));
 #define	YDS_DUMP_PLAY_SLOT(n,sc,bank)
 #endif /* AUDIO_DEBUG */
 
-static struct audio_hw_if yds_hw_if = {
+static const struct audio_hw_if yds_hw_if = {
 	yds_open,
 	yds_close,
 	NULL,

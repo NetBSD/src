@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77.2.3 2004/09/21 13:23:56 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77.2.4 2004/11/02 07:50:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.3 2004/09/21 13:23:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.4 2004/11/02 07:50:57 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.3 2004/09/21 13:23:56 skrll Exp 
 #include <sys/reboot.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -69,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.3 2004/09/21 13:23:56 skrll Exp 
 void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
-struct device *booted_device;
-int booted_partition;	/* defaults to 0 (aka 'a' partition */
 
 struct evcnt softnet_intrcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "net");

@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.16.2.4 2004/09/21 13:33:46 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.16.2.5 2004/11/02 07:53:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.16.2.4 2004/09/21 13:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.16.2.5 2004/11/02 07:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,8 +247,6 @@ void uirda_rd_cb(usbd_xfer_handle xfer,	usbd_private_handle priv,
 		 usbd_status status);
 usbd_status uirda_start_read(struct uirda_softc *sc);
 
-usb_descriptor_t *usb_find_desc(usbd_device_handle dev, int type);
-
 /*
  * These devices don't quite follow the spec.  Speed changing is broken
  * and they don't handle windows.
@@ -340,7 +338,8 @@ USB_ATTACH(uirda)
 		  USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
 	if (err) {
 		/* maybe it's embedded in the config desc? */
-		void *d = usb_find_desc(sc->sc_udev, UDESC_IRDA);
+		const void *d = usb_find_desc(sc->sc_udev, UDESC_IRDA,
+					      USBD_SUBTYPE_ANY);
 		if (d == NULL) {
 			printf("%s: Cannot get IrDA descriptor\n",
 			       USBDEVNAME(sc->sc_dev));

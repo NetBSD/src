@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10.6.3 2004/09/21 13:16:25 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10.6.4 2004/11/02 07:50:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.6.3 2004/09/21 13:16:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.6.4 2004/11/02 07:50:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.6.3 2004/09/21 13:16:25 skrll Exp 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
 
-static struct device *booted_device;
-static int booted_partition;
 static char booted_device_name[16];
 #ifndef MEMORY_DISK_IS_ROOT
 static void get_device(char *name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.25.2.3 2004/09/21 13:25:14 skrll Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.25.2.4 2004/11/02 07:51:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25.2.3 2004/09/21 13:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25.2.4 2004/11/02 07:51:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -155,6 +155,10 @@ irix_signal_siginfo(isi, sig, code, addr)
 	u_long code;
 	caddr_t addr;
 {
+	if (sig < 0 || sig > SVR4_NSIG) {
+		isi->isi_errno = IRIX_EINVAL;
+		return;
+	}
 	isi->isi_signo = native_to_svr4_signo[sig];
 	isi->isi_errno = 0;
 	isi->isi_addr = (irix_app32_ptr_t)addr;
@@ -1009,6 +1013,8 @@ irix_sys_sigaction(l, v, retval)
 	 * The signal trampoline is hence saved in the p_emuldata field
 	 * of struct proc, in an array (one element for each signal)
 	 */
+	if (SCARG(uap, signum) < 0)
+		return(EINVAL);	
 	signum = svr4_to_native_signo[SCARG(uap, signum)];
 	ied = (struct irix_emuldata *)(p->p_emuldata);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.8.2.1 2004/09/24 10:53:16 skrll Exp $ */
+/*	$NetBSD: repulse.c,v 1.8.2.2 2004/11/02 07:50:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8.2.1 2004/09/24 10:53:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8.2.2 2004/11/02 07:50:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,7 @@ int rep_intr(void *tag);
 
 /* audio attachment */
 
-struct audio_hw_if rep_hw_if = {
+const struct audio_hw_if rep_hw_if = {
 	rep_open,
 	rep_close,
 	/* drain */ 0,

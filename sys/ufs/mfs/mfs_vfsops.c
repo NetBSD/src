@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.5 2004/09/21 13:39:21 skrll Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.6 2004/11/02 07:53:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.5 2004/09/21 13:39:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.6 2004/11/02 07:53:37 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.5 2004/09/21 13:39:21 skrll Ex
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/mount.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>

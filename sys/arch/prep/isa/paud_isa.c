@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.5.6.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.5.6.4 2004/11/02 07:50:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.5.6.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.5.6.4 2004/11/02 07:50:47 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -99,7 +99,7 @@ static int paud_mixer_set_port(void *, mixer_ctrl_t *);
 static int paud_mixer_get_port(void *, mixer_ctrl_t *);
 static int paud_query_devinfo(void *, mixer_devinfo_t *);
 
-static struct audio_hw_if paud_hw_if = {
+static const struct audio_hw_if paud_hw_if = {
 	ad1848_isa_open,
 	ad1848_isa_close,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.21.6.3 2004/09/21 13:30:59 skrll Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.21.6.4 2004/11/02 07:51:55 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.21.6.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.21.6.4 2004/11/02 07:51:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/ioccom.h>
 #include <sys/mtio.h>
 #include <sys/fcntl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.64.2.3 2004/09/21 13:33:46 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.64.2.4 2004/11/02 07:53:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.3 2004/09/21 13:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.4 2004/11/02 07:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,9 @@ struct uhub_softc {
 	u_int8_t		sc_status[1];	/* XXX more ports */
 	u_char			sc_running;
 };
+#define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
+#define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
+#define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
 
 Static usbd_status uhub_explore(usbd_device_handle hub);
 Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
@@ -147,18 +150,26 @@ USB_ATTACH(uhub)
 	usbd_device_handle dev = uaa->device;
 	char devinfo[1024];
 	usbd_status err;
-	struct usbd_hub *hub;
+	struct usbd_hub *hub = NULL;
 	usb_device_request_t req;
 	usb_hub_descriptor_t hubdesc;
 	int p, port, nports, nremov, pwrdly;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
+	struct usbd_tt *tts = NULL;
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
 	usbd_devinfo(dev, 1, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+
+	if (UHUB_IS_HIGH_SPEED(sc)) {
+		printf("%s: %s transaction translator%s\n",
+		       USBDEVNAME(sc->sc_dev), 
+		       UHUB_IS_SINGLE_TT(sc) ? "single" : "multiple",
+		       UHUB_IS_SINGLE_TT(sc) ? "" : "s");
+	}
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
@@ -198,6 +209,11 @@ USB_ATTACH(uhub)
 	printf("%s: %d port%s with %d removable, %s powered\n",
 	       USBDEVNAME(sc->sc_dev), nports, nports != 1 ? "s" : "",
 	       nremov, dev->self_powered ? "self" : "bus");
+
+	if (nports == 0) {
+		printf("%s: no ports, hub ignored\n", USBDEVNAME(sc->sc_dev));
+		goto bad;
+	}
 
 	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
 		     M_USBDEV, M_NOWAIT);
@@ -276,10 +292,16 @@ USB_ATTACH(uhub)
 	 *        proceed with device attachment
 	 */
 
+	if (UHUB_IS_HIGH_SPEED(sc)) {
+		tts = malloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
+			     sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
+		if (!tts)
+			goto bad;
+	}
 	/* Set up data structures */
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->ports[p];
-		up->device = 0;
+		up->device = NULL;
 		up->parent = dev;
 		up->portno = p+1;
 		if (dev->self_powered)
@@ -288,6 +310,12 @@ USB_ATTACH(uhub)
 		else
 			up->power = USB_MIN_POWER;
 		up->restartcnt = 0;
+		if (UHUB_IS_HIGH_SPEED(sc)) {
+			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
+			up->tt->hub = hub;
+		} else {
+			up->tt = NULL;
+		}
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -313,8 +341,9 @@ USB_ATTACH(uhub)
 	USB_ATTACH_SUCCESS_RETURN;
 
  bad:
-	free(hub, M_USBDEV);
-	dev->hub = 0;
+	if (hub)
+		free(hub, M_USBDEV);
+	dev->hub = NULL;
 	USB_ATTACH_ERROR_RETURN;
 }
 
@@ -451,6 +480,15 @@ uhub_explore(usbd_device_handle dev)
 			continue;
 		}
 
+#if 0
+		if (UHUB_IS_HIGH_SPEED(sc) && !(status & UPS_HIGH_SPEED)) {
+			printf("%s: port %d, transaction translation not "
+			       "implemented, low/full speed device ignored\n",
+			       USBDEVNAME(sc->sc_dev), port);
+			continue;
+		}
+#endif
+
 		/* Figure out device speed */
 		if (status & UPS_HIGH_SPEED)
 			speed = USB_SPEED_HIGH;
@@ -550,6 +588,8 @@ USB_DETACH(uhub)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
 			   USBDEV(sc->sc_dev));
 
+	if (hub->ports[0].tt)
+		free(hub->ports[0].tt, M_USBDEV);
 	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.9.2.4 2004/09/24 10:53:42 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.9.2.5 2004/11/02 07:53:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9.2.4 2004/09/24 10:53:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9.2.5 2004/11/02 07:53:03 skrll Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9.2.4 2004/09/24 10:53:42 skrll E
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>

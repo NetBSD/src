@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.78.2.4 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.78.2.5 2004/11/02 07:52:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.4 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.5 2004/11/02 07:52:10 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1559,7 +1559,8 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+			    (*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.44.2.3 2004/09/21 13:12:27 skrll Exp $ */
+/*	$NetBSD: if_ed.c,v 1.44.2.4 2004/11/02 07:50:22 skrll Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.44.2.3 2004/09/21 13:12:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.44.2.4 2004/11/02 07:50:22 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -934,8 +934,10 @@ ed_ioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ed_stop(sc); /* XXX for ds_setmcaf? */
-			ed_init(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				ed_stop(sc); /* XXX for ds_setmcaf? */
+				ed_init(sc);
+			}
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.2.2 2004/08/05 20:23:05 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.3 2004/11/02 07:50:24 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.2 2004/08/05 20:23:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.3 2004/11/02 07:50:24 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -132,9 +132,6 @@ static struct callout hp700_led_callout;
 static void hp700_led_blinker(void *);
 extern int hz;
 #endif
-
-/* XXX added for RAIDframe but so far ignored by us. */
-struct device *booted_device;
 
 /*
  * cpu_configure:

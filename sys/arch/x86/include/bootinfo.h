@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2.2.3 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2.2.4 2004/11/02 07:50:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -33,13 +33,14 @@ struct btinfo_common {
 	int type;
 };
 
-#define BTINFO_BOOTPATH 0
-#define BTINFO_BOOTDISK 3
-#define BTINFO_NETIF 4
-#define BTINFO_CONSOLE 6
-#define BTINFO_BIOSGEOM 7
-#define BTINFO_SYMTAB 8
-#define BTINFO_MEMMAP 9
+#define BTINFO_BOOTPATH		0
+#define BTINFO_BOOTDISK		3
+#define BTINFO_NETIF		4
+#define BTINFO_CONSOLE		6
+#define BTINFO_BIOSGEOM		7
+#define BTINFO_SYMTAB		8
+#define BTINFO_MEMMAP		9
+#define	BTINFO_BOOTWEDGE	10
 
 struct btinfo_bootpath {
 	struct btinfo_common common;
@@ -55,6 +56,16 @@ struct btinfo_bootdisk {
 	} label;
 	int biosdev;
 	int partition;
+};
+
+struct btinfo_bootwedge {
+	struct btinfo_common common;
+	int biosdev;
+	daddr_t startblk;
+	uint64_t nblks;
+	daddr_t matchblk;
+	uint64_t matchnblks;
+	uint8_t matchhash[16];	/* MD5 hash */
 };
 
 struct btinfo_netif {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.84.2.4 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: mcd.c,v 1.84.2.5 2004/11/02 07:51:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.4 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.5 2004/11/02 07:51:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.4 2004/09/21 13:29:47 skrll Exp $");
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.28.2.3 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.28.2.4 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ struct auconv_context {
 struct audio_softc {
 	struct	device dev;
 	void	*hw_hdl;	/* Hardware driver handle */
-	struct	audio_hw_if *hw_if; /* Hardware interface */
+	const struct audio_hw_if *hw_if; /* Hardware interface */
 	struct	device *sc_dev;	/* Hardware device struct */
 	u_char	sc_open;	/* single use device */
 #define AUOPEN_READ	0x01

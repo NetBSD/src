@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.62.2.2 2004/09/21 13:33:50 skrll Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.62.2.3 2004/11/02 07:53:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ MALLOC_DECLARE(M_USBHC);
 #define UISDATA_DEBUG 1
 #define UDSBR_DEBUG 1
 #define UBT_DEBUG 1
-#define UAX_DEBUG 1
+#define AXE_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -125,6 +125,8 @@ typedef struct callout usb_callout_t;
 #define usb_callout_init(h)	callout_init(&(h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
+
+#define usb_lockmgr lockmgr
 
 #define usb_kthread_create1	kthread_create1
 #define usb_kthread_create	kthread_create
@@ -261,6 +263,8 @@ typedef struct proc *usb_proc_ptr;
 
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred
+
+#define usb_lockmgr(lk, mode, ptr) lockmgr(lk, mode, ptr, curproc)
 
 #define	config_pending_incr()
 #define	config_pending_decr()

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.173.2.1 2004/08/03 10:51:34 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.173.2.2 2004/11/02 07:53:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173.2.1 2004/08/03 10:51:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173.2.2 2004/11/02 07:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3184,6 +3184,9 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
+			case 0: /* Language table */
+				totlen = uhci_str(buf, len, "\001");
+				break;
 			case 1: /* Vendor */
 				totlen = uhci_str(buf, len, sc->sc_vendor);
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.34.2.4 2004/09/21 13:23:56 skrll Exp $ */
+/*	$NetBSD: hp.c,v 1.34.2.5 2004/11/02 07:50:57 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.34.2.4 2004/09/21 13:23:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.34.2.5 2004/11/02 07:50:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.34.2.4 2004/09/21 13:23:56 skrll Exp $");
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/stat.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>

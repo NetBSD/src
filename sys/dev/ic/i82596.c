@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.1.4.5 2004/09/21 13:27:57 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.1.4.6 2004/11/02 07:51:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.1.4.5 2004/09/21 13:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.1.4.6 2004/11/02 07:51:31 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -703,29 +703,29 @@ iee_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int err;
 
 	s = splnet();
-	if (cmd == SIOCSIFMEDIA || cmd == SIOCGIFMEDIA)
-		return(ifmedia_ioctl(ifp, (struct ifreq *) data, 
-		    &sc->sc_ifmedia, cmd));
-	else {
+	switch (cmd) {
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		err = ifmedia_ioctl(ifp, (struct ifreq *) data,
+		    &sc->sc_ifmedia, cmd);
+		break;
+
+	default:
 		err = ether_ioctl(ifp, cmd, data);
-		if (err == ENETRESET || 
-		    ((ifp->if_flags & IFF_PROMISC) != 0 
-		    && (sc->sc_cf[8] & IEE_CF_8_PRM) == 0)
-		    || ((ifp->if_flags & IFF_PROMISC) == 0 
-		    && (sc->sc_cf[8] & IEE_CF_8_PRM) != 0)) {
-			/* Do multicast setup / toggle promisc mode. */
-			if ((ifp->if_flags & IFF_PROMISC) != 0)
-				sc->sc_cf[8] |= IEE_CF_8_PRM;
-			else
-				sc->sc_cf[8] &= ~IEE_CF_8_PRM;
-			/* Put new multicast list into the hardware filter. */
-			iee_cb_setup(sc, IEE_CB_CMD_MCS | IEE_CB_S | IEE_CB_EL 
-			    | IEE_CB_I);
-			if ((sc->sc_flags & IEE_WANT_MCAST) == 0)
-				/* Mcast setup is not defered. */
-				(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
+		if (err == ENETRESET) {
+			/*
+			 * Multicast list as changed; set the hardware filter
+			 * accordingly.
+			 */
+			if (ifp->if_flags & IFF_RUNNING) {
+				iee_cb_setup(sc, IEE_CB_CMD_MCS | IEE_CB_S |
+				    IEE_CB_EL | IEE_CB_I);
+				if ((sc->sc_flags & IEE_WANT_MCAST) == 0)
+					(*sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
+			}
 			err = 0;
 		}
+		break;
 	}
 	splx(s);
 	return(err);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.52.2.2 2004/09/21 13:27:54 skrll Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.52.2.3 2004/11/02 07:51:30 skrll Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.52.2.2 2004/09/21 13:27:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.52.2.3 2004/11/02 07:51:30 skrll Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -959,8 +959,10 @@ dp8390_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			dp8390_stop(sc);	/* XXX for ds_setmcaf? */
-			dp8390_init(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				dp8390_stop(sc); /* XXX for ds_setmcaf? */
+				dp8390_init(sc);
+			}
 			error = 0;
 		}
 		break;

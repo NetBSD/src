@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.31.2.3 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: eso.c,v 1.31.2.4 2004/11/02 07:52:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31.2.3 2004/09/21 13:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31.2.4 2004/11/02 07:52:09 skrll Exp $");
 
 #include "mpu.h"
 
@@ -127,7 +127,7 @@ static int	eso_trigger_output __P((void *, void *, void *, int,
 static int	eso_trigger_input __P((void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *));
 
-static struct audio_hw_if eso_hw_if = {
+static const struct audio_hw_if eso_hw_if = {
 	eso_open,
 	eso_close,
 	NULL,			/* drain */

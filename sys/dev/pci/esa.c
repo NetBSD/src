@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.20.2.2 2004/09/24 10:53:28 skrll Exp $ */
+/* $NetBSD: esa.c,v 1.20.2.3 2004/11/02 07:52:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.20.2.2 2004/09/24 10:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.20.2.3 2004/11/02 07:52:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -182,7 +182,7 @@ static audio_encoding_t esa_encoding[] = {
 
 #define ESA_NENCODINGS 8
 
-struct audio_hw_if esa_hw_if = {
+const struct audio_hw_if esa_hw_if = {
 	esa_open,
 	esa_close,
 	NULL,			/* drain */
