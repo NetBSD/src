@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.27 1998/08/10 08:11:13 matthias Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27.6.1 2000/01/05 23:40:16 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -94,12 +94,6 @@ struct nfsdircache {
  * There is a unique nfsnode allocated for each active file,
  * each current directory, each mounted-on file, text file, and the root.
  * An nfsnode is 'named' by its file handle. (nget/nfs_node.c)
- * If this structure exceeds 256 bytes (it is currently 256 using 4.4BSD-Lite
- * type definitions), file handles of > 32 bytes should probably be split out
- * into a separate MALLOC()'d data structure. (Reduce the size of nfsfh_t by
- * changing the definition in nfsproto.h of NFS_SMALLFH.)
- * NB: Hopefully the current order of the fields is such that everything will
- *     be well aligned and, therefore, tightly packed.
  */
 struct nfsnode {
 	u_quad_t		n_size;		/* Current size of file */
@@ -136,6 +130,10 @@ struct nfsnode {
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
+	time_t			n_accstamp;	/* Access cache timestamp */
+	uid_t			n_accuid;	/* Last access requester */
+	int			n_accmode;	/* Mode last requested */
+	int			n_accerror;	/* Error last returned */
 };
 
 #define n_atim		n_un1.nf_atim
