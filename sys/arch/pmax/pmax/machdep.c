@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2000/11/27 05:12:32 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 2000/11/27 05:17:06 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2000/11/27 05:12:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2000/11/27 05:17:06 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -359,9 +359,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/*
 	 * Allocate space for proc0's USPACE
 	 */
-	p0 = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
-	proc0.p_addr = proc0paddr = (struct user *)p0;
-	proc0.p_md.md_regs = (struct frame *)(p0 + USPACE) - 1;
+	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
+	proc0.p_addr = proc0paddr = (struct user *)v;
+	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
