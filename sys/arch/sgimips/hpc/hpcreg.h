@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.6 2003/09/18 15:00:26 lonewolf Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.7 2003/09/18 15:01:33 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -133,7 +133,7 @@ struct hpc_dma_desc {
 
 /* HPC_PBUS_CHx_CTL read: */
 #define HPC_PBUS_DMACTL_IRQ	0x01 /* IRQ asserted, DMA done */
-#define HPC_PBUS_DMACTL_ACT	0x02 /* DMA channel is active */
+#define HPC_PBUS_DMACTL_ISACT	0x02 /* DMA channel is active */
 /* HPC_PBUS_CHx_CTL write: */
 #define HPC_PBUS_DMACTL_ENDIAN	0x02 /* DMA endianness, 0=BE 1=LE */
 #define HPC_PBUS_DMACTL_RECEIVE	0x04 /* DMA direction, 1=dev->mem, 0=mem->dev */
