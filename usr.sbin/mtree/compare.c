@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.39 2002/02/04 07:17:14 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.40 2002/02/08 18:15:12 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.39 2002/02/04 07:17:14 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.40 2002/02/08 18:15:12 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,13 @@ compare(NODE *s, FTSENT *p)
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);
 		if (uflag) {
+#if HAVE_LCHMOD
 			if (lchmod(p->fts_accpath, s->st_mode))
+#else
+			if (S_ISLNK(p->fts_statp->st_mode))
+				printf(", not modified: no lchmod call\n");
+			else if (chmod(p->fts_accpath, s->st_mode))
+#endif
 				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
