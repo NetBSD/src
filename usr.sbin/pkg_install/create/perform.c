@@ -1,10 +1,10 @@
-/* $NetBSD: perform.c,v 1.3 1997/10/16 00:31:53 hubertf Exp $ */
+/* $NetBSD: perform.c,v 1.4 1997/10/16 00:50:34 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-static const char *rcsid = "$NetBSD: perform.c,v 1.3 1997/10/16 00:31:53 hubertf Exp $";
+static const char *rcsid = "$NetBSD: perform.c,v 1.4 1997/10/16 00:50:34 hubertf Exp $";
 #endif
 #endif
 
@@ -90,6 +90,14 @@ pkg_perform(char **pkgs)
 	if (Verbose && !PlistOnly)
 	    printf(".\n");
     }
+
+    /* If a SrcDir override is set, add it now */
+    if (SrcDir) {
+	if (Verbose && !PlistOnly)
+	    printf("Using SrcDir value of %s\n", SrcDir);
+	add_plist(&plist, PLIST_SRC, SrcDir);
+    }
+
     /* Slurp in the packing list */
     read_plist(&plist, pkg_in);
 
@@ -110,6 +118,7 @@ pkg_perform(char **pkgs)
      * hack.  It's not a real create in progress.
      */
     if (PlistOnly) {
+	check_list(home, &plist);
 	write_plist(&plist, stdout);
 	exit(0);
     }

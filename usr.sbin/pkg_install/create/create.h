@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.3 1997/10/16 00:31:49 hubertf Exp $ */
+/* $NetBSD: create.h,v 1.4 1997/10/16 00:50:28 hubertf Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -33,10 +33,11 @@ extern char	*Install;
 extern char	*DeInstall;
 extern char	*Contents;
 extern char	*Require;
-extern char	PlayPen[];
+extern char	*SrcDir;
 extern char	*ExcludeFrom;
 extern char	*Mtree;
 extern char	*Pkgdeps;
+extern char	PlayPen[];
 extern int	Dereference;
 extern int	PlistOnly;
 

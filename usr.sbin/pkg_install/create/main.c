@@ -1,10 +1,10 @@
-/* $NetBSD: main.c,v 1.3 1997/10/16 00:31:51 hubertf Exp $ */
+/* $NetBSD: main.c,v 1.4 1997/10/16 00:50:31 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: main.c,v 1.3 1997/10/16 00:31:51 hubertf Exp $";
+static const char *rcsid = "$NetBSD: main.c,v 1.4 1997/10/16 00:50:31 hubertf Exp $";
 #endif
 #endif
 
@@ -23,20 +23,21 @@ static const char *rcsid = "$NetBSD: main.c,v 1.3 1997/10/16 00:31:51 hubertf Ex
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "YNOhvf:p:P:c:d:i:k:r:t:X:D:m:";
+static char Options[] = "YNOhvf:p:P:c:d:i:k:r:t:X:D:m:s:";
 
 char	*Prefix		= NULL;
 char	*Comment        = NULL;
 char	*Desc		= NULL;
+char	*SrcDir		= NULL;
 char	*Display	= NULL;
 char	*Install	= NULL;
 char	*DeInstall	= NULL;
 char	*Contents	= NULL;
 char	*Require	= NULL;
-char	PlayPen[FILENAME_MAX];
 char	*ExcludeFrom	= NULL;
 char	*Mtree		= NULL;
 char	*Pkgdeps	= NULL;
+char	PlayPen[FILENAME_MAX];
 int	Dereference	= 0;
 int	PlistOnly	= 0;
 
@@ -69,6 +70,10 @@ main(int argc, char **argv)
 
 	case 'p':
 	    Prefix = optarg;
+	    break;
+
+	case 's':
+	    SrcDir = optarg;
 	    break;
 
 	case 'f':

@@ -1,10 +1,10 @@
-/* $NetBSD: extract.c,v 1.4 1997/10/16 00:31:32 hubertf Exp $ */
+/* $NetBSD: extract.c,v 1.5 1997/10/16 00:50:20 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: extract.c,v 1.4 1997/10/16 00:31:32 hubertf Exp $";
+static const char *rcsid = "$NetBSD: extract.c,v 1.5 1997/10/16 00:50:20 hubertf Exp $";
 #endif
 #endif
 
@@ -53,6 +53,32 @@ static const char *rcsid = "$NetBSD: extract.c,v 1.4 1997/10/16 00:31:32 hubertf
 		    perm_count = 0; \
 	}
 
+static void
+rollback(char *name, char *home, PackingList start, PackingList stop)
+{
+    PackingList q;
+    char try[FILENAME_MAX], bup[FILENAME_MAX], *dir;
+
+    dir = home;
+    for (q = start; q != stop; q = q->next) {
+	if (q->type == PLIST_FILE) {
+	    snprintf(try, FILENAME_MAX, "%s/%s", dir, q->name);
+	    if (make_preserve_name(bup, FILENAME_MAX, name, try) && fexists(bup)) {
+		(void)chflags(try, 0);
+		(void)unlink(try);
+		if (rename(bup, try))
+		    warnx("rollback: unable to rename %s back to %s", bup, try);
+	    }
+	}
+	else if (q->type == PLIST_CWD) {
+	    if (strcmp(q->name, "."))
+		dir = q->name;
+	    else
+		dir = home;
+	}
+    }
+}
+
 void
 extract_plist(char *home, Package *pkg)
 {
@@ -60,12 +86,13 @@ extract_plist(char *home, Package *pkg)
     char *last_file;
     char *where_args, *perm_args, *last_chdir;
     int maxargs, where_count = 0, perm_count = 0, add_count;
+    Boolean preserve;
 
     maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
-    where_args = malloc(maxargs);
+    where_args = alloca(maxargs);
     if (!where_args)
 	cleanup(0), errx(2, "can't get argument list space");
-    perm_args = malloc(maxargs);
+    perm_args = alloca(maxargs);
     if (!perm_args)
 	cleanup(0), errx(2, "can't get argument list space");
 
@@ -74,6 +101,7 @@ extract_plist(char *home, Package *pkg)
     perm_args[0] = 0;
 
     last_chdir = 0;
+    preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
 
     /* Reset the world */
     Owner = NULL;
@@ -101,7 +129,23 @@ extract_plist(char *home, Package *pkg)
 		char try[FILENAME_MAX];
 
 		/* first try to rename it into place */
-		sprintf(try, "%s/%s", Directory, p->name);
+		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
+		if (fexists(try)) {
+		    (void)chflags(try, 0);	/* XXX hack - if truly immutable, rename fails */
+		    if (preserve && PkgName) {
+			char pf[FILENAME_MAX];
+
+			if (make_preserve_name(pf, FILENAME_MAX, PkgName, try)) {
+			    if (rename(try, pf)) {
+				warnx(
+				"unable to back up %s to %s, aborting pkg_add",
+				try, pf);
+				rollback(PkgName, home, pkg->head, p);
+				return;
+			    }
+			}
+		    }
+		}
 		if (rename(p->name, try) == 0) {
 		    /* try to add to list of perms to be changed and run in bulk. */
 		    if (p->name[0] == '/' || TOOBIG(p->name)) {
@@ -186,6 +230,4 @@ extract_plist(char *home, Package *pkg)
 	p = p->next;
     }
     PUSHOUT(Directory);
-    free(where_args);
-    free(perm_args);
 }

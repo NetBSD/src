@@ -1,10 +1,10 @@
-/* $NetBSD: file.c,v 1.3 1997/10/16 00:32:19 hubertf Exp $ */
+/* $NetBSD: file.c,v 1.4 1997/10/16 00:50:41 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: file.c,v 1.3 1997/10/16 00:32:19 hubertf Exp $";
+static const char *rcsid = "$NetBSD: file.c,v 1.4 1997/10/16 00:50:41 hubertf Exp $";
 #endif
 #endif
 
@@ -344,6 +344,40 @@ fileGetContents(char *fname)
     close(fd);
     contents[sb.st_size] = '\0';
     return contents;
+}
+
+/* Takes a filename and package name, returning (in "try") the canonical "preserve"
+ * name for it.
+ */
+Boolean
+make_preserve_name(char *try, int max, char *name, char *file)
+{
+    int len, i;
+
+    if ((len = strlen(file)) == 0)
+	return FALSE;
+    else
+	i = len - 1;
+    strncpy(try, file, max);
+    if (try[i] == '/') /* Catch trailing slash early and save checking in the loop */
+	--i;
+    for (; i; i--) {
+	if (try[i] == '/') {
+	    try[i + 1]= '.';
+	    strncpy(&try[i + 2], &file[i + 1], max - i - 2);
+	    break;
+	}
+    }
+    if (!i) {
+	try[0] = '.';
+	strncpy(try + 1, file, max - 1);
+    }
+    /* I should probably be called rude names for these inline assignments */
+    strncat(try, ".",  max -= strlen(try));
+    strncat(try, name, max -= strlen(name));
+    strncat(try, ".",  max--);
+    strncat(try, "backup", max -= 6);
+    return TRUE;
 }
 
 /* Write the contents of "str" to a file */
