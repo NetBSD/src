@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.33 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: auvia.c,v 1.34 2004/03/25 10:20:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.33 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.34 2004/03/25 10:20:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,12 @@ int	auvia_intr __P((void *));
 
 CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, NULL, NULL);
+
+/* VIA VT823xx revision number */
+#define VIA_REV_8233C	0x20
+#define VIA_REV_8233	0x30
+#define VIA_REV_8233A	0x40
+#define VIA_REV_8235	0x50
 
 #define AUVIA_PCICONF_JUNK	0x40
 #define		AUVIA_PCICONF_ENABLES	 0x00FF0000	/* reg 42 mask */
@@ -256,6 +262,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	pcireg_t pr;
 	int r;
+	const char *revnum = NULL; /* VT823xx revision number */
 
 	aprint_naive(": Audio controller\n");
 
@@ -279,13 +286,28 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	r = PCI_REVISION(pa->pa_class);
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		sprintf(sc->sc_revision, "0x%02X", r);
-		if (r < 0x50) {
-			aprint_normal(": VIA VT8233 AC'97 Audio (rev %s)\n",
-			       sc->sc_revision);
-		} else {
-			aprint_normal(": VIA VT8235 AC'97 Audio (rev %s)\n",
-			       sc->sc_revision);
+		switch(r) {
+		case VIA_REV_8233C:
+			/* 2 rec, 4 pb, 1 multi-pb */
+			revnum = "3C";
+			break;
+		case VIA_REV_8233:
+			/* 2 rec, 4 pb, 1 multi-pb, spdif */
+			revnum = "3";
+			break;
+		case VIA_REV_8233A:
+			/* 1 rec, 1 multi-pb, spdif */
+			revnum = "3A";
+			break;
+		case VIA_REV_8235:
+			/* 2 rec, 4 pb, 1 multi-pb, spdif */
+			revnum = "5";
+			break;
+		default:
+			return;
 		}
+		 aprint_normal(": VIA VT823%s AC'97 (rev %s)\n",
+			revnum, sc->sc_revision);
 	} else {
 		sc->sc_revision[1] = '\0';
 		if (r == 0x20) {
