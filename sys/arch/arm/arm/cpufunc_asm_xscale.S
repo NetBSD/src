@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.15 2002/08/14 22:53:19 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.16 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 #define	DCACHE_SIZE		0x00008000
 
-Lblock_userspace_access:
+.Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
 /*
@@ -135,7 +135,7 @@ ENTRY(xscale_setttb)
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r1
 #else
-	ldr	r3, Lblock_userspace_access
+	ldr	r3, .Lblock_userspace_access
 	ldr	r2, [r3]
 	orr	r1, r2, #1 
 	str	r1, [r3]
@@ -245,14 +245,14 @@ _C_LABEL(xscale_minidata_clean_size):
 
 	.text
 
-Lxscale_cache_clean_addr:
+.Lxscale_cache_clean_addr:
 	.word	_C_LABEL(xscale_cache_clean_addr)
-Lxscale_cache_clean_size:
+.Lxscale_cache_clean_size:
 	.word	_C_LABEL(xscale_cache_clean_size)
 
-Lxscale_minidata_clean_addr:
+.Lxscale_minidata_clean_addr:
 	.word	_C_LABEL(xscale_minidata_clean_addr)
-Lxscale_minidata_clean_size:
+.Lxscale_minidata_clean_size:
 	.word	_C_LABEL(xscale_minidata_clean_size)
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
@@ -265,7 +265,7 @@ Lxscale_minidata_clean_size:
 	msr	cpsr_all, r3
 #else
 #define	XSCALE_CACHE_CLEAN_BLOCK					\
-	ldr	r3, Lblock_userspace_access			;	\
+	ldr	r3, .Lblock_userspace_access			;	\
 	ldr	ip, [r3]					;	\
 	orr	r0, ip, #1					;	\
 	str	r0, [r3]
@@ -276,7 +276,7 @@ Lxscale_minidata_clean_size:
 
 #define	XSCALE_CACHE_CLEAN_PROLOGUE					\
 	XSCALE_CACHE_CLEAN_BLOCK				;	\
-	ldr	r2, Lxscale_cache_clean_addr			;	\
+	ldr	r2, .Lxscale_cache_clean_addr			;	\
 	ldmia	r2, {r0, r1}					;	\
 	/*								\
 	 * BUG ALERT!							\
@@ -327,7 +327,7 @@ ENTRY(xscale_cache_cleanD)
  * while we clean it.
  */
 ENTRY(xscale_cache_clean_minidata)
-	ldr	r2, Lxscale_minidata_clean_addr
+	ldr	r2, .Lxscale_minidata_clean_addr
 	ldmia	r2, {r0, r1}
 1:	ldr	r3, [r0], #32
 	subs	r1, r1, #32

@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.3 2002/04/03 23:33:28 thorpej Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -48,46 +48,46 @@
 	.global _C_LABEL(fiqvector)
 
 _C_LABEL(page0):
-	ldr	pc, Lreset_target
-	ldr	pc, Lundefined_target
-	ldr	pc, Lswi_target
-	ldr	pc, Lprefetch_abort_target
-	ldr	pc, Ldata_abort_target
-	ldr	pc, Laddress_exception_target
-	ldr	pc, Lirq_target
+	ldr	pc, .Lreset_target
+	ldr	pc, .Lundefined_target
+	ldr	pc, .Lswi_target
+	ldr	pc, .Lprefetch_abort_target
+	ldr	pc, .Ldata_abort_target
+	ldr	pc, .Laddress_exception_target
+	ldr	pc, .Lirq_target
 #ifdef __ARM_FIQ_INDIRECT
-	ldr	pc, Lfiq_target
+	ldr	pc, .Lfiq_target
 #else
-Lfiqvector:
+.Lfiqvector:
 	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0)
 	subs	pc, lr, #4
-	.org	Lfiqvector + 0x100
+	.org	.Lfiqvector + 0x100
 #endif
 
 _C_LABEL(page0_data):
-Lreset_target:
+.Lreset_target:
 	.word	reset_entry
 
-Lundefined_target:
+.Lundefined_target:
 	.word	undefined_entry
 
-Lswi_target:
+.Lswi_target:
 	.word	swi_entry
 
-Lprefetch_abort_target:
+.Lprefetch_abort_target:
 	.word	prefetch_abort_entry
 
-Ldata_abort_target:
+.Ldata_abort_target:
 	.word	data_abort_entry
 
-Laddress_exception_target:
+.Laddress_exception_target:
 	.word	address_exception_entry
 
-Lirq_target:
+.Lirq_target:
 	.word	irq_entry
 
 #ifdef __ARM_FIQ_INDIRECT
-Lfiq_target:
+.Lfiq_target:
 	.word	_C_LABEL(fiqvector)
 #else
 	.word	0	/* pad it out */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.5 2002/08/15 01:37:02 briggs Exp $	*/
+/*	$NetBSD: fusu.S,v 1.6 2002/08/17 16:36:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-Lcurpcb:
+.Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
 /*
@@ -44,7 +44,7 @@ Lcurpcb:
  */
 
 ENTRY(fuword)
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -68,7 +68,7 @@ ENTRY(fuword)
  */
 
 ENTRY(fusword)
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -100,7 +100,7 @@ ENTRY(fuswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -135,7 +135,7 @@ _C_LABEL(block_userspace_access):
  */
 
 ENTRY(fubyte)
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -198,7 +198,7 @@ fusupcbfaulttext:
  */
 
 ENTRY(suword)
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -228,7 +228,7 @@ ENTRY(suswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -253,7 +253,7 @@ ENTRY(suswintr)
  */
 
 ENTRY(susword)
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 #ifdef DIAGNOSTIC
@@ -278,7 +278,7 @@ ENTRY(susword)
  */
 
 ENTRY(subyte)
-	ldr	r2, Lcurpcb
+	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
 
 
