@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd_compat.c	8.1 (Berkeley) 6/10/93
- *	$Id: sd_compat.c,v 1.1 1994/05/23 06:01:30 mycroft Exp $
+ *	$Id: sd_compat.c,v 1.2 1994/07/16 06:24:47 cgd Exp $
  */
 
 /*
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include <hp/dev/device.h>
+#include <hp300/dev/device.h>
 #include <hp300/dev/sdvar.h>
 
 /*
