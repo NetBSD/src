@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.15 1995/10/09 00:46:45 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.16 1995/10/09 01:45:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -612,7 +612,6 @@ ccdstrategy(bp)
 	register int sz, s;
 	int wlabel;
 	struct disklabel *lp;
-	struct partition *pp;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -629,7 +628,6 @@ ccdstrategy(bp)
 		goto done;
 
 	lp = &cs->sc_dkdev.dk_label;
-	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
 
 	/*
 	 * Do bounds checking, adjust transfer, and translate the
@@ -637,11 +635,9 @@ ccdstrategy(bp)
 	 * error, the bounds check will flag that for us.
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART) {
+	if (DISKPART(bp->b_dev) != RAW_PART)
 		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
 			goto done;
-		bp->b_blkno += pp->p_offset;
-	}
 
 	bp->b_resid = bp->b_bcount;
 
@@ -686,7 +682,8 @@ ccdstart(cs, bp)
 	/*
 	 * Allocate component buffers and fire off the requests
 	 */
-	bn = bp->b_blkno;
+	bn = (bp->b_blkno +
+	    cs->sc_dkdev.dk_label.d_partitions[DISKPART(bp->b_dev)].p_offset);
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
