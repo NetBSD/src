@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.635 2004/07/27 00:12:10 rumble Exp $
+$NetBSD: pcidevs,v 1.636 2004/07/27 01:01:00 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1202,6 +1202,7 @@ product COMPAQ CSA5300		0x4070	Smart Array 5300
 product COMPAQ CSA5i		0x4080	Smart Array 5i
 product COMPAQ CSA532		0x4082	Smart Array 532
 product COMPAQ USB		0x7020	USB Controller
+product COMPAQ ASMC		0xa0f0  Advanced Systems Management Controller
 /* MediaGX Cx55x0 built-in OHCI seems to have this ID */
 product COMPAQ USB_MEDIAGX	0xa0f8	USB Controller
 product COMPAQ SMART2P		0xae10	SMART2P RAID
