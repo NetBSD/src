@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.21 1997/06/06 23:28:41 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -900,6 +900,7 @@ _isa_dma_check_buffer(buf, buflen, segcnt, boundary, p)
 	vm_offset_t vaddr = (vm_offset_t)buf;
 	vm_offset_t pa, lastpa, endva;
 	u_long pagemask = ~(boundary - 1);
+	pmap_t pmap;
 	int nsegs;
 
 	endva = round_page(vaddr + buflen);
@@ -907,12 +908,16 @@ _isa_dma_check_buffer(buf, buflen, segcnt, boundary, p)
 	nsegs = 1;
 	lastpa = 0;
 
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
 	for (; vaddr < endva; vaddr += NBPG) {
 		/*
 		 * Get physical address for this segment.
 		 */
-		pa = pmap_extract(p != NULL ? &p->p_vmspace->vm_pmap :
-		    pmap_kernel(), (vm_offset_t)vaddr);
+		pa = pmap_extract(pmap, (vm_offset_t)vaddr);
 		pa = trunc_page(pa);
 
 		/*

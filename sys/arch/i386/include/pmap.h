@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 1997/05/16 21:35:36 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 1997/06/12 23:57:30 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -203,7 +203,5 @@ pmap_phys_address(int ppn)
 void pmap_activate __P((pmap_t, struct pcb *));
 
 #endif	/* _KERNEL */
-
-#define	__VM_PMAP_HACK
 
 #endif /* _I386_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 1997/06/06 23:14:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 1997/06/12 23:57:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -681,7 +681,7 @@ pmap_release(pmap)
 		printf("pmap_release(%p)\n", pmap);
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef notdef /* DIAGNOSTIC */
 	/* sometimes 1, sometimes 0; could rearrange pmap_destroy */
 	if (pmap->pm_count != 1)
 		panic("pmap_release count");
@@ -720,7 +720,7 @@ pmap_activate(pmap, pcb)
 	if (pmap /*&& pmap->pm_pdchanged */) {
 		pcb->pcb_cr3 =
 		    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
-		if (pmap == &curproc->p_vmspace->vm_pmap)
+		if (pmap == curproc->p_vmspace->vm_map.pmap)
 			lcr3(pcb->pcb_cr3);
 		pmap->pm_pdchanged = FALSE;
 	}
