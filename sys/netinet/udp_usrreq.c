@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.9 1994/01/08 23:50:47 mycroft Exp $
+ *	$Id: udp_usrreq.c,v 1.10 1994/01/10 20:14:34 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -450,9 +450,11 @@ udp_output(inp, m, addr, control)
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST)
 #ifdef MULTICAST
-		| IP_MULTICASTOPTS, inp->inp_moptions
+	    , inp->inp_moptions
+#else
+	    , NULL
 #endif
-		);
+	    );
 
 	if (addr) {
 		in_pcbdisconnect(inp);
