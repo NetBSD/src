@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.2 2002/05/22 05:14:01 manu Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.3 2002/08/25 19:03:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.2 2002/05/22 05:14:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.3 2002/08/25 19:03:13 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -112,7 +112,7 @@ irix_sys_ioctl(p, v, retval)
 	 * struct irix_ioctl_usrdata in the stackgap. The data argument
 	 * is set to the address of the structure, and the underlying 
 	 * code will be able to retreive both data and the retval address
-	 * by fecthing the struct irix_ioctl_usrdata.
+	 * by fetching the struct irix_ioctl_usrdata.
 	 *
 	 * We also bypass the checks in sys_ioctl() because theses ioctl
 	 * are defined _IO but really are _IOR. XXX need security review.
