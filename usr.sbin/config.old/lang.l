@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.4 1993/12/01 05:56:44 deraadt Exp $
+ *	$Id: lang.l,v 1.5 1993/12/03 04:58:22 deraadt Exp $
  */
 
 #include <ctype.h>
@@ -124,9 +124,10 @@ WORD	[A-Za-z_][-A-Za-z_]*
 			tprintf("(%s) ", yytext);
 			return i;
 		}
-\"[^"]+\"	{
+\"([^\"]|\\\")*\"	{
 			yytext[strlen(yytext)-1] = '\0';
 			yylval.str = yytext + 1;
+			tprintf("QID: %s", yylval.str);
 			return ID;
 		}
 0[0-7]*		{
