@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.S,v 1.5 1997/10/09 20:06:18 is Exp $	*/
+/*	$NetBSD: ldexp.S,v 1.6 1999/05/02 20:17:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)ldexp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ldexp.S,v 1.5 1997/10/09 20:06:18 is Exp $")
+	RCSID("$NetBSD: ldexp.S,v 1.6 1999/05/02 20:17:21 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,9 @@
 ENTRY(ldexp)
 	fmoved		sp@(4),fp0
 	fscalel		sp@(12),fp0
+#ifndef __SVR4_ABI__
 	fmoved		fp0,sp@-
 	movel		sp@+,d0
 	movel		sp@+,d1
+#endif
 	rts
