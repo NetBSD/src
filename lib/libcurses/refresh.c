@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.39 2000/08/01 04:17:09 itojun Exp $	*/
+/*	$NetBSD: refresh.c,v 1.40 2000/08/02 10:50:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.39 2000/08/01 04:17:09 itojun Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.40 2000/08/02 10:50:49 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -384,7 +384,7 @@ makech(wy)
 	else
 		win = __virtscr;
 	/* Is the cursor still on the end of the last line? */
-	if (wy > 0 && win->lines[wy - 1]->flags & __ISPASTEOL) {
+	if (wy > 0 && curscr->lines[wy - 1]->flags & __ISPASTEOL) {
 		domvcur(ly, lx, ly + 1, 0);
 		ly++;
 		lx = 0;
