@@ -35,25 +35,27 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: dma.c,v 1.2 1993/10/16 03:55:59 mycroft Exp $
+ *	$Id: dma.c,v 1.3 1993/10/17 05:34:23 mycroft Exp $
  */
 
 /*
  * code to deal with ISA DMA
  */
 
-#include "param.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "syslog.h"
-#include "machine/cpu.h"
-#include "machine/pio.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/isavar.h"
-#include "i386/isa/ic/i8237.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+
+#include <machine/cpu.h>
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
+#include <i386/isa/ic/i8237.h>
 
 /*
 **  Register definitions for DMA controller 1 (channels 0..3):
