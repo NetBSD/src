@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 1998/09/17 02:33:06 thorpej Exp $ */
+/*	$NetBSD: signal.h,v 1.8 1999/11/27 11:20:41 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,27 +69,32 @@ struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
-	int	sc_sp;			/* %sp to restore */
-	int	sc_pc;			/* pc to restore */
-	int	sc_npc;			/* npc to restore */
-	int	sc_psr;			/* psr to restore */
-	int	sc_g1;			/* %g1 to restore */
-	int	sc_o0;			/* %o0 to restore */
+	long	sc_sp;			/* %sp to restore */
+	long	sc_pc;			/* pc to restore */
+	long	sc_npc;			/* npc to restore */
+#ifdef __arch64__
+	long	sc_tstate;		/* tstate to restore */
+#else
+	long	sc_psr;			/* psr to restore */
+#endif
+	long	sc_g1;			/* %g1 to restore */
+	long	sc_o0;			/* %o0 to restore */
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 struct sigcontext {
 	int		sc_onstack;	/* sigstack state to restore */
 	int		__sc_mask13;	/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
-	int		sc_sp;		/* %sp to restore */
-	int		sc_pc;		/* pc to restore */
-	int		sc_npc;		/* npc to restore */
-	int		sc_psr;		/* psr to restore */
-	int		sc_g1;		/* %g1 to restore */
-	int		sc_o0;		/* %o0 to restore */
+	long		sc_sp;		/* %sp to restore */
+	long		sc_pc;		/* pc to restore */
+	long		sc_npc;		/* npc to restore */
+	long		sc_psr;		/* psr to restore */
+	long		sc_g1;		/* %g1 to restore */
+	long		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
 #else /* _LOCORE */
+/* XXXXX These values don't work for _LP64 */
 #define	SC_SP_OFFSET	8
 #define	SC_PC_OFFSET	12
 #define	SC_NPC_OFFSET	16
