@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.26 2002/09/27 03:18:10 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.27 2002/10/22 13:42:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.26 2002/09/27 03:18:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.27 2002/10/22 13:42:33 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -902,10 +902,18 @@ iop_shutdown(void *junk)
 			continue;
 		if ((sc->sc_flags & IOP_ONLINE) == 0)
 			continue;
+
 		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_QUIESCE, IOP_ICTX,
 		    0, 5000);
-		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR, IOP_ICTX,
-		    0, 1000);
+
+		if (le16toh(sc->sc_status.orgid) != I2O_ORG_AMI) {
+			/*
+			 * Some AMI firmware revisions will go to sleep and
+			 * never come back after this.
+			 */
+			iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR,
+			    IOP_ICTX, 0, 1000);
+		}
 	}
 
 	/* Wait.  Some boards could still be flushing, stupidly enough. */
