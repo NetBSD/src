@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.74.2.10 2002/11/11 22:22:14 nathanw Exp $
+.\"	$NetBSD: sysctl.3,v 1.74.2.11 2002/12/11 16:45:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -289,6 +289,8 @@ information.
 .It KERN\_HOSTNAME	string	yes
 .It KERN\_IOV\_MAX	integer	no
 .It KERN\_JOB\_CONTROL	integer	no
+.It KERN\_LABELOFFSET	integer	no
+.It KERN\_LABELSECTOR	integer	no
 .It KERN\_LOGIN\_NAME\_MAX	integer	no
 .It KERN\_LOGSIGEXIT	integer	yes
 .It KERN\_MAPPED\_FILES	integer	no
@@ -403,6 +405,12 @@ and
 .Xr writev 2 .
 .It Li KERN_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise 0.
+.It Li KERN_LABELOFFSET
+The offset within the sector specified by KERN_LABELSECTOR of the
+.Xr disklabel 5 .
+.It Li KERN_LABELSECTOR
+The sector number containing the
+.Xr disklabel 5 .
 .It Li KERN_LOGIN_NAME_MAX
 The size of the storage required for a login name, in bytes,
 including the terminating NUL.
