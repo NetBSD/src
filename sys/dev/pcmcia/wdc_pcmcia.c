@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.5 1998/06/05 03:26:52 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.6 1998/06/05 03:40:07 enami Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -139,7 +139,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	if (cfe == NULL) {
-		printf("%s: can't handle card info\n", self->dv_xname);
+		printf(": can't handle card info\n");
 		return;
 	}
 
