@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.12 1996/04/12 18:22:35 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.13 1996/07/30 06:36:33 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -792,7 +792,7 @@ again:
 				sii_StartDMA(regs,
 					state->dmaCurPhase = SII_DATA_IN_PHASE,
 					state->dmaAddr[state->dmaBufIndex],
-					state->dmalen = len);
+					state->dmaCnt = state->dmalen = len);
 				dstat &= ~(SII_IBF | SII_TBE);
 			}
 			/* copy in the data */
@@ -814,7 +814,7 @@ again:
 				sii_StartDMA(regs, state->dmaCurPhase =
 					SII_DATA_OUT_PHASE,
 					state->dmaAddr[state->dmaBufIndex],
-					state->dmalen =
+					state->dmaCnt = state->dmalen =
 					SII_MAX_DMA_XFER_LENGTH);
 				/* prepare for next chunk */
 				i -= SII_MAX_DMA_XFER_LENGTH;
@@ -828,7 +828,7 @@ again:
 				sii_StartDMA(regs, state->dmaCurPhase =
 					SII_DATA_OUT_PHASE,
 					state->dmaAddr[state->dmaBufIndex],
-					state->dmalen = i);
+					state->dmaCnt = state->dmalen = i);
 			}
 			dstat &= ~(SII_IBF | SII_TBE);
 		}
@@ -899,7 +899,7 @@ again:
 					i);
 				sii_StartDMA(regs, state->dmaCurPhase =
 					SII_CMD_PHASE, state->dmaAddr[0],
-					state->dmalen = i);
+					state->dmaCnt = state->dmalen = i);
 			}
 			/* wait a short time for XFER complete */
 			SII_WAIT_UNTIL(dstat, regs->dstat,
@@ -982,7 +982,7 @@ again:
 				sii_StartDMA(regs,
 					state->dmaCurPhase = SII_DATA_IN_PHASE,
 					state->dmaAddr[state->dmaBufIndex],
-					state->dmalen = i);
+					state->dmaCnt = state->dmalen = i);
 				break;
 			}
 			/* start first chunk */
@@ -995,7 +995,7 @@ again:
 			sii_StartDMA(regs,
 				state->dmaCurPhase = SII_DATA_OUT_PHASE,
 				state->dmaAddr[state->dmaBufIndex],
-				state->dmalen = i);
+				state->dmaCnt = state->dmalen = i);
 			i = state->buflen - SII_MAX_DMA_XFER_LENGTH;
 			if (i > 0) {
 				/* prepare for next chunk */
@@ -1088,15 +1088,17 @@ again:
 				/* save dma registers */
 				state->dmaPrevPhase = state->dmaCurPhase;
 				state->dmaCurPhase = -1;
-				state->dmaCnt = i = regs->dmlotc;
 				if (dstat & SII_OBB)
 					state->dmaByte = regs->dmabyte;
-				if (i == 0)
-					i = SII_MAX_DMA_XFER_LENGTH;
-				i = state->dmalen - i;
+				i = regs->dmlotc;
+				if (i != 0)
+					i = state->dmaCnt - i;
 				/* note: no carry from dmaddrl to dmaddrh */
 				state->dmaAddrL = regs->dmaddrl + i;
 				state->dmaAddrH = regs->dmaddrh;
+				state->dmaCnt = regs->dmlotc;
+				if (state->dmaCnt == 0)
+					state->dmaCnt = SII_MAX_DMA_XFER_LENGTH;
 				regs->comm = comm &
 					(SII_STATE_MSK | SII_PHASE_MSK);
 				wbflush();
