@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.56 1996/02/28 20:29:48 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.57 1996/03/08 22:03:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
@@ -264,8 +264,9 @@ struct ahb_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
 	void *sc_ih;
+	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
 
-	int sc_iobase;
 	int sc_irq;
 
 	struct ahb_ecb *immed_ecb;	/* an outstanding immediete command */
@@ -284,7 +285,7 @@ void ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
 void ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *, int));
 struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
 struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
-int ahb_find __P((int, struct ahb_softc *));
+int ahb_find __P((bus_chipset_tag_t, bus_io_handle_t, struct ahb_softc *));
 void ahb_init __P((struct ahb_softc *));
 void ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
@@ -331,12 +332,12 @@ ahb_send_mbox(ahb, opcode, ecb)
 	int opcode;
 	struct ahb_ecb *ecb;
 {
-	int iobase = ahb->sc_iobase;
-	int stport = iobase + G2STAT;
+	bus_chipset_tag_t bc = ahb->sc_bc;
+	bus_io_handle_t ioh = ahb->sc_ioh;
 	int wait = 300;	/* 1ms should be enough */
 
 	while (--wait) {
-		if ((inb(stport) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
+		if ((bus_io_read_1(bc, ioh, G2STAT) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
 		    == (G2STAT_MBOX_EMPTY))
 			break;
 		delay(10);
@@ -346,8 +347,8 @@ ahb_send_mbox(ahb, opcode, ecb)
 		Debugger();
 	}
 
-	outl(iobase + MBOXOUT0, KVTOPHYS(ecb));	/* don't know this will work */
-	outb(iobase + ATTN, opcode | ecb->xs->sc_link->target);
+	bus_io_write_4(bc, ioh, MBOXOUT0, KVTOPHYS(ecb)); /* don't know this will work */
+	bus_io_write_1(bc, ioh, ATTN, opcode | ecb->xs->sc_link->target);
 }
 
 /*
@@ -359,15 +360,15 @@ ahb_poll(ahb, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {				/* in msec  */
-	int iobase = ahb->sc_iobase;
-	int stport = iobase + G2STAT;
+	bus_chipset_tag_t bc = ahb->sc_bc;
+	bus_io_handle_t ioh = ahb->sc_ioh;
 
 	while (count) {
 		/*
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(stport) & G2STAT_INT_PEND)
+		if (bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND)
 			ahbintr(ahb);
 		if (xs->flags & ITSDONE)
 			return 0;
@@ -386,12 +387,12 @@ ahb_send_immed(ahb, target, cmd)
 	int target;
 	u_long cmd;
 {
-	int iobase = ahb->sc_iobase;
-	int stport = iobase + G2STAT;
+	bus_chipset_tag_t bc = ahb->sc_bc;
+	bus_io_handle_t ioh = ahb->sc_ioh;
 	int wait = 100;	/* 1 ms enough? */
 
 	while (--wait) {
-		if ((inb(stport) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
+		if ((bus_io_read_1(bc, ioh, G2STAT) & (G2STAT_BUSY | G2STAT_MBOX_EMPTY))
 		    == (G2STAT_MBOX_EMPTY))
 			break;
 		delay(10);
@@ -401,9 +402,9 @@ ahb_send_immed(ahb, target, cmd)
 		Debugger();
 	}
 
-	outl(iobase + MBOXOUT0, cmd);	/* don't know this will work */
-	outb(iobase + G2CNTRL, G2CNTRL_SET_HOST_READY);
-	outb(iobase + ATTN, OP_IMMED | target);
+	bus_io_write_4(bc, ioh, MBOXOUT0, cmd);	/* don't know this will work */
+	bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_SET_HOST_READY);
+	bus_io_write_1(bc, ioh, ATTN, OP_IMMED | target);
 }
 
 /*
@@ -417,6 +418,9 @@ ahbmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
+	bus_chipset_tag_t bc = ea->ea_bc;
+	bus_io_handle_t ioh;
+	int rv;
 
 	/* must match one of our known ID strings */
 	if (strcmp(ea->ea_idstring, "ADP0000") &&
@@ -425,19 +429,23 @@ ahbmatch(parent, match, aux)
 	    strcmp(ea->ea_idstring, "ADP0400"))
 		return (0);
 
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
+		return (0);
+
 #ifdef notyet
 	/* This won't compile as-is, anyway. */
-	outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+	bus_io_write_1(bc, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 	delay(10);
-	outb(iobase + EISA_CONTROL, EISA_ENABLE);
+	bus_io_write_1(bc, ioh, EISA_CONTROL, EISA_ENABLE);
 	/* Wait for reset? */
 	delay(1000);
 #endif
 
-	if (ahb_find(ea->ea_slot, NULL))
-		return (0);
+	rv = !ahb_find(bc, ioh, NULL);
 
-	return 1;
+	bus_io_unmap(ea->ea_bc, ioh, EISA_SLOT_SIZE);
+
+	return (rv);
 }
 
 ahbprint()
@@ -455,11 +463,16 @@ ahbattach(parent, self, aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *ahb = (void *)self;
+	bus_chipset_tag_t bc = ea->ea_bc;
+	bus_io_handle_t ioh;
 	char *model;
 
-	if (ahb_find(ea->ea_slot, ahb))
+	ahb->sc_bc = bc;
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
+		panic("ahbattach: could not map I/O addresses");
+	ahb->sc_ioh = ioh;
+	if (ahb_find(bc, ioh, ahb))
 		panic("ahbattach: ahb_find failed!");
-	ahb->sc_iobase = EISA_SLOT_ADDR(ea->ea_slot);
 
 	ahb_init(ahb);
 	TAILQ_INIT(&ahb->free_ecb);
@@ -505,16 +518,17 @@ ahbintr(arg)
 	void *arg;
 {
 	struct ahb_softc *ahb = arg;
+	bus_chipset_tag_t bc = ahb->sc_bc;
+	bus_io_handle_t ioh = ahb->sc_ioh;
 	struct ahb_ecb *ecb;
 	u_char ahbstat;
 	u_long mboxval;
-	int iobase = ahb->sc_iobase;
 
 #ifdef	AHBDEBUG
 	printf("%s: ahbintr ", ahb->sc_dev.dv_xname);
 #endif /* AHBDEBUG */
 
-	if ((inb(iobase + G2STAT) & G2STAT_INT_PEND) == 0)
+	if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
 		return 0;
 
 	for (;;) {
@@ -522,9 +536,9 @@ ahbintr(arg)
 		 * First get all the information and then
 		 * acknowlege the interrupt
 		 */
-		ahbstat = inb(iobase + G2INTST);
-		mboxval = inl(iobase + MBOXIN0);
-		outb(iobase + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+		ahbstat = bus_io_read_1(bc, ioh, G2INTST);
+		mboxval = bus_io_read_4(bc, ioh, MBOXIN0);
+		bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 
 #ifdef	AHBDEBUG
 		printf("status = 0x%x ", ahbstat);
@@ -569,7 +583,7 @@ ahbintr(arg)
 			ahb_done(ahb, ecb);
 		}
 
-		if ((inb(iobase + G2STAT) & G2STAT_INT_PEND) == 0)
+		if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) == 0)
 			return 1;
 	}
 }
@@ -772,17 +786,16 @@ ahb_ecb_phys_kv(ahb, ecb_phys)
  * Start the board, ready for normal operation
  */
 int
-ahb_find(slot, ahb)
-	int slot;
+ahb_find(bc, ioh, ahb)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct ahb_softc *ahb;
 {
-	int iobase = EISA_SLOT_ADDR(slot);
-	int stport = iobase + G2STAT;
 	u_char intdef;
 	int i, irq, busid;
 	int wait = 1000;	/* 1 sec enough? */
 
-	outb(iobase + PORTADDR, PORTADDR_ENHANCED);
+	bus_io_write_1(bc, ioh, PORTADDR, PORTADDR_ENHANCED);
 
 #define	NO_NO 1
 #ifdef NO_NO
@@ -790,12 +803,12 @@ ahb_find(slot, ahb)
 	 * reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
-	outb(iobase + G2CNTRL, G2CNTRL_HARD_RESET);
+	bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_HARD_RESET);
 	delay(1000);
-	outb(iobase + G2CNTRL, 0);
+	bus_io_write_1(bc, ioh, G2CNTRL, 0);
 	delay(10000);
 	while (--wait) {
-		if ((inb(stport) & G2STAT_BUSY) == 0)
+		if ((bus_io_read_1(bc, ioh, G2STAT) & G2STAT_BUSY) == 0)
 			break;
 		delay(1000);
 	}
@@ -806,23 +819,23 @@ ahb_find(slot, ahb)
 #endif /*AHBDEBUG */
 		return ENXIO;
 	}
-	i = inb(iobase + MBOXIN0);
+	i = bus_io_read_1(bc, ioh, MBOXIN0);
 	if (i) {
 		printf("self test failed, val = 0x%x\n", i);
 		return EIO;
 	}
 
 	/* Set it again, just to be sure. */
-	outb(iobase + PORTADDR, PORTADDR_ENHANCED);
+	bus_io_write_1(bc, ioh, PORTADDR, PORTADDR_ENHANCED);
 #endif
 
-	while (inb(stport) & G2STAT_INT_PEND) {
+	while (bus_io_read_1(bc, ioh, G2STAT) & G2STAT_INT_PEND) {
 		printf(".");
-		outb(iobase + G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
+		bus_io_write_1(bc, ioh, G2CNTRL, G2CNTRL_CLEAR_EISA_INT);
 		delay(10000);
 	}
 
-	intdef = inb(iobase + INTDEF);
+	intdef = bus_io_read_1(bc, ioh, INTDEF);
 	switch (intdef & 0x07) {
 	case INT9:
 		irq = 9;
@@ -847,10 +860,10 @@ ahb_find(slot, ahb)
 		return EIO;
 	}
 
-	outb(iobase + INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
+	bus_io_write_1(bc, ioh, INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
 
 	/* who are we on the scsi bus? */
-	busid = (inb(iobase + SCSIDEF) & HSCSIID);
+	busid = (bus_io_read_1(bc, ioh, SCSIDEF) & HSCSIID);
 
 	/* if we want to fill in softc, do so now */
 	if (ahb != NULL) {
