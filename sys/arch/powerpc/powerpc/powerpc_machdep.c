@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.23 2003/12/04 19:38:22 atatat Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.24 2003/12/05 11:00:57 hannken Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.23 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.24 2003/12/05 11:00:57 hannken Exp $");
 
 #include "opt_altivec.h"
 
@@ -118,6 +118,7 @@ sysctl_machdep_cacheinfo(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+#ifdef PPC_OEA
 static int
 sysctl_machdep_powersave(SYSCTLFN_ARGS)
 {
@@ -127,6 +128,7 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 		node.sysctl_flags |= ~SYSCTL_READWRITE;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
+#endif
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
