@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4reg.h,v 1.3 1996/10/29 19:54:21 gwr Exp $	*/
+/*	$NetBSD: cg4reg.h,v 1.4 1998/02/08 05:20:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,17 +59,15 @@
  * "Type A" has a AMD DACs (Digital-to-Analog Converters)
  * "Type B" has a Brooktree DACs.  H/W addresses differ too.
  */
-#define CG4_TYPE_A 0
-#define CG4_TYPE_B 1
 
 /*
  * Memory layout of the Type A hardware (OBMEM)
  */
-#define CG4A_DEF_BASE     0xFE400000	/* Sun3/110 */
-#define CG4A_OFF_ENABLE 	0
-#define CG4A_OFF_PIXMAP		0x400000
-#define CG4A_OFF_OVERLAY	0xC00000
-#define CG4A_OBIO_CMAP		0x0E0000	/* OBIO space! */
+#define CG4A_DEF_BASE   0xFE400000	/* Sun3/110 */
+#define CG4A_OFF_ENABLE     0
+#define CG4A_OFF_PIXMAP	  0x400000
+#define CG4A_OFF_OVERLAY  0xC00000
+#define CG4A_OBIO_CMAP	  0x0E0000	/* OBIO space! */
 
 /* colormap/status register structure */
 struct amd_regs {
@@ -84,11 +82,12 @@ struct amd_regs {
 
 /*
  * Memory layout of the Type B hardware (OBMEM)
- * Appears on the Sun3/60 at base 0xFF200000
+ * P4 appears on the Sun3/60 at 0xFF300000, so
+ * define things relative to that.
  */
-#define CG4B_DEF_BASE     0xFF200000	/* Sun3/60 */
-#define CG4B_OFF_CMAP		0
-#define CG4B_OFF_OVERLAY	0x200000
-#define CG4B_OFF_ENABLE 	0x400000
-#define CG4B_OFF_PIXMAP		0x600000
+#define CG4B_DEF_BASE  0xFF300000	/* Sun3/60 */
+#define CG4B_OFF_CMAP  (-0x100000)
+#define CG4B_OFF_OVERLAY 0x100000
+#define CG4B_OFF_ENABLE  0x300000
+#define CG4B_OFF_PIXMAP  0x500000
 
