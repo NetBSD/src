@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.dist,v 1.33 1996/08/30 05:13:21 thorpej Exp $
+#	$NetBSD: 4.4BSD.dist,v 1.34 1996/10/17 04:29:14 perry Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -973,11 +973,6 @@ sun3
 # ./usr/share/man/cat4/sun3
 ..
 
-# ./usr/share/man/cat4/tahoe
-tahoe
-# ./usr/share/man/cat4/tahoe
-..
-
 # ./usr/share/man/cat4/vax
 vax
 # ./usr/share/man/cat4/vax
@@ -1052,11 +1047,6 @@ sparc
 # ./usr/share/man/cat8/sun3
 sun3
 # ./usr/share/man/cat8/sun3
-..
-
-# ./usr/share/man/cat8/tahoe
-tahoe
-# ./usr/share/man/cat8/tahoe
 ..
 
 # ./usr/share/man/cat8/vax
@@ -1150,11 +1140,6 @@ sun3
 # ./usr/share/man/man4/sun3
 ..
 
-# ./usr/share/man/man4/tahoe
-tahoe
-# ./usr/share/man/man4/tahoe
-..
-
 # ./usr/share/man/man4/vax
 vax
 # ./usr/share/man/man4/vax
@@ -1229,11 +1214,6 @@ sparc
 # ./usr/share/man/man8/sun3
 sun3
 # ./usr/share/man/man8/sun3
-..
-
-# ./usr/share/man/man8/tahoe
-tahoe
-# ./usr/share/man/man8/tahoe
 ..
 
 # ./usr/share/man/man8/vax
