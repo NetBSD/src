@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.108.2.8 2002/05/29 21:32:56 nathanw Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.108.2.9 2002/06/21 05:52:33 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.108.2.8 2002/05/29 21:32:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.108.2.9 2002/06/21 05:52:33 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -745,11 +745,11 @@ sunos_sys_setsockopt(l, v, retval)
 	return (error);
 }
 
-static __inline__ int sunos_sys_socket_common(struct proc *, register_t *,
+static __inline__ int sunos_sys_socket_common(struct lwp *, register_t *,
 					      int type);
 static __inline__ int
-sunos_sys_socket_common(p, retval, type)
-	struct proc *p;
+sunos_sys_socket_common(l, retval, type)
+	struct lwp *l;
 	register_t *retval;
 	int type;
 {
@@ -759,18 +759,18 @@ sunos_sys_socket_common(p, retval, type)
 
 	/* getsock() will use the descriptor for us */
 	fd = (int)*retval;
-	if ((error = getsock(p->p_fd, fd, &fp)) == 0) {
+	if ((error = getsock(l->l_proc->p_fd, fd, &fp)) == 0) {
 		so = (struct socket *)fp->f_data;
 		if (type == SOCK_DGRAM)
 			so->so_options |= SO_BROADCAST;
 	}
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l->l_proc);
 	return (error);
 }
 
 int
-sunos_sys_socket(p, v, retval)
-	struct proc *p;
+sunos_sys_socket(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -781,15 +781,15 @@ sunos_sys_socket(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = sys_socket(p, v, retval);
+	error = sys_socket(l, v, retval);
 	if (error)
 		return (error);
-	return sunos_sys_socket_common(p, retval, SCARG(uap, type));
+	return sunos_sys_socket_common(l, retval, SCARG(uap, type));
 }
 
 int
-sunos_sys_socketpair(p, v, retval)
-	struct proc *p;
+sunos_sys_socketpair(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -801,10 +801,10 @@ sunos_sys_socketpair(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = sys_socketpair(p, v, retval);
+	error = sys_socketpair(l, v, retval);
 	if (error)
 		return (error);
-	return sunos_sys_socket_common(p, retval, SCARG(uap, type));
+	return sunos_sys_socket_common(l, retval, SCARG(uap, type));
 }
 
 /*
