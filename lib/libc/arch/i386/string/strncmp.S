@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Winning Strategies, Inc.
+ * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strncmp.S,v 1.6 1994/02/07 20:57:07 jtc Exp $
+ *	$Id: strncmp.S,v 1.7 1994/02/14 17:44:39 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strncmp.S,v 1.6 1994/02/07 20:57:07 jtc Exp $"
+	.asciz "$Id: strncmp.S,v 1.7 1994/02/14 17:44:39 jtc Exp $"
 #endif
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 /*
  * strncmp(s1, s2, n)
@@ -54,7 +54,7 @@
 /*
  * I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the
- * cashe.
+ * cache.
  */
 
 ENTRY(strncmp)
@@ -62,89 +62,90 @@ ENTRY(strncmp)
 	movl	8(%esp),%eax
 	movl	12(%esp),%ecx
 	movl	16(%esp),%edx
+	testl	%edx,%edx
 	jmp	L2			/* Jump into the loop! */
 
 	.align 2,0x90
 L1:	incl	%eax
 	incl	%ecx
 	decl	%edx
-L2:	testl	%edx,%edx		/* Have we compared n chars yet? */
-	jle	L4			/* Yes, strings are equal */
+L2:	je	L4			/* strings are equal */
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	jne	L3
+
 	incl	%eax
 	incl	%ecx
 	decl	%edx
-	testl	%edx,%edx
-	jle	L4
+	je	L4
 	movb	(%eax),%bl
 	testb	%bl,%bl
 	je	L3
 	cmpb	%bl,(%ecx)
 	je	L1
+
 	.align 2,0x90
 L3:	movzbl	(%eax),%eax		/* unsigned comparision */
 	movzbl	(%ecx),%ecx
