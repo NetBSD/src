@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.39 2000/07/15 01:44:35 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.40 2000/07/15 07:07:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.39 2000/07/15 01:44:35 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.40 2000/07/15 07:07:02 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,6 +386,14 @@ parse(string, flags)
 			break;
 		case KERN_CP_TIME:
 			special |= CPTIME;
+			break;
+		case KERN_MSGBUF:
+			if (flags == 0)
+				return;
+			warnx("Use dmesg to view %s information", string);
+			return;
+		case KERN_CONSDEV:
+			special |= CONSDEV;
 			break;
 		}
 		break;
