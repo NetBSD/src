@@ -1,9 +1,0 @@
-# 	$NetBSD: GENERIC64,v 1.13 2000/04/15 03:08:12 mrg Exp $
-
-include "arch/sparc64/conf/GENERIC"
-
-#ident 		"GENERIC64-$Revision: 1.13 $"
-
-options 	_LP64		# we're using a 64-bit compiler
-options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
-options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
