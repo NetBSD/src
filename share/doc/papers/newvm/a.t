@@ -1,4 +1,4 @@
-.\"	$NetBSD: a.t,v 1.2 1998/01/09 06:41:39 perry Exp $
+.\"	$NetBSD: a.t,v 1.3 2000/03/13 23:03:37 soren Exp $
 .\"
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
@@ -202,7 +202,7 @@ value = mset(sem, wait)
 result int value; semaphore *sem; int wait;
 .DE
 \fIMset\fP indivisibly tests and sets the semaphore \fIsem\fP.
-If the the previous value is zero, the process has acquired the lock
+If the previous value is zero, the process has acquired the lock
 and \fImset\fP returns true immediately.
 Otherwise, if the \fIwait\fP flag is zero,
 failure is returned.

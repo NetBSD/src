@@ -1,4 +1,4 @@
-/*	$NetBSD: mrt.c,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: mrt.c,v 1.2 2000/03/13 23:22:56 soren Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -815,7 +815,7 @@ create_grpentry(group)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points the the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points to the previous entry
  * (or NULL if first in the chain.
  */
 static int
@@ -852,7 +852,7 @@ search_srcmrtlink(srcentry_ptr, group, mrtPtr)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points the the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points to the previous entry
  * (or NULL if first in the chain.
  */
 static int

@@ -1,5 +1,5 @@
 \input texinfo          @c -*-texinfo-*-
-@c	$NetBSD: am-utils.texi,v 1.1.1.6 1999/09/04 22:25:37 christos Exp $
+@c	$NetBSD: am-utils.texi,v 1.2 2000/03/13 23:22:53 soren Exp $
 @c
 @c Copyright (c) 1997-1999 Erez Zadok
 @c Copyright (c) 1989 Jan-Simon Pendry
@@ -1218,7 +1218,7 @@ using the @dfn{Hesiod} name server.  The string following the dot is
 used as a name qualifier and is prepended with the key being located.
 The entire string is then resolved in the @code{automount} context, or
 the @i{amd.conf} parameter @samp{hesiod_base} (@pxref{hesiod_base
-Parameter}).  For example, if the the key is @samp{jsp} and map name is
+Parameter}).  For example, if the key is @samp{jsp} and map name is
 @samp{hesiod.homes} then @dfn{Hesiod} is asked to resolve
 @samp{jsp.homes.automount}.
 
