@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.21 1994/12/28 19:43:45 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.22 1994/12/31 05:34:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1113,7 +1113,7 @@ aic_done(aic, acb)
 	if (xs->error == XS_NOERROR) {
 		if (acb->flags == ACB_ABORTED) {
 			xs->error = XS_DRIVER_STUFFUP;
-		} if (acb->flags == ACB_CHKSENSE) {
+		} else if (acb->flags == ACB_CHKSENSE) {
 			xs->error = XS_SENSE;
 		} else if (acb->target_stat == SCSI_CHECK) {
 			struct scsi_sense *ss = (void *)&acb->scsi_cmd;
