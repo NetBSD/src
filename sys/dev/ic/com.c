@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.95 1996/12/14 08:56:23 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.96 1996/12/14 10:46:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -167,7 +167,6 @@ int	comdefaultrate = CONSPEED;		/* XXX why set default? */
 int	comdefaultrate = TTYDEF_SPEED;
 #endif
 int	comconsaddr;
-int	comconsinit;
 int	comconsattached;
 bus_space_tag_t comconstag;
 bus_space_handle_t comconsbah;
@@ -429,12 +428,8 @@ comattach(parent, self, aux)
 	if (iobase == comconsaddr) {
 		comconsattached = 1;
 
-		/* 
-		 * Need to reset baud rate, etc. of next print so reset
-		 * comconsinit.  Also make sure console is always "hardwired".
-		 */
+		/* Make sure the console is always "hardwired". */
 		delay(1000);			/* wait for output to finish */
-		comconsinit = 0;
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, COM_SW_SOFTCAR);
 	}
@@ -491,6 +486,11 @@ comattach(parent, self, aux)
 			panic("comattach: IRQ but can't have one");
 	}
 
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		cominit(iot, ioh, comdefaultrate);
+		printf("%s: console\n", sc->sc_dev.dv_xname);
+	}
+
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
@@ -510,10 +510,6 @@ comattach(parent, self, aux)
 		}
 	}
 #endif
-
-	/* XXX maybe move up some? */
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-		printf("%s: console\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -1389,7 +1385,6 @@ comcninit(cp)
 
 	cominit(comconstag, comconsbah, comdefaultrate);
 	comconsaddr = CONADDR;
-	comconsinit = 0;
 }
 
 void
@@ -1446,13 +1441,6 @@ comcnputc(dev, c)
 	u_char stat;
 	register int timo;
 
-#ifdef KGDB
-	if (dev != kgdb_dev)
-#endif
-	if (comconsinit == 0) {
-		cominit(iot, ioh, comdefaultrate);
-		comconsinit = 1;
-	}
 	/* wait for any pending transmission to finish */
 	timo = 50000;
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
