@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.42 2005/03/22 19:09:02 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.43 2005/03/24 08:34:00 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -897,4 +897,9 @@ sys/arch/evbppc/conf/Makefile.walnut.inc	1.3
 	Can't depend on shell scripts being executable from CVS. Preface
 	mkimg.sh with ${HOST_SH}
 	[jmc, ticket #1350]
+
+distrib/evbppc/md-kernel/Makefile		1.2
+
+	One more place that needs $HOST_SH to run a script correctly.
+	[jmc, ticket #1353]
 
