@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.24 2001/06/03 03:07:40 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.25 2001/06/03 03:24:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -83,8 +83,8 @@ struct	ether_header {
  * Compute the maximum frame size based on ethertype (i.e. possible
  * encapsulation) and whether or not an FCS is present.
  */
-#define	ETHER_MAX_FRAME(etype, hasfcs)					\
-	(ETHERMTU + ETHER_HDR_LEN +					\
+#define	ETHER_MAX_FRAME(ifp, etype, hasfcs)				\
+	((ifp)->if_mtu + ETHER_HDR_LEN +				\
 	 ((hasfcs) ? ETHER_CRC_LEN : 0) +				\
 	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0))
 
