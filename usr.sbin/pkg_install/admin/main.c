@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.3 1999/03/22 05:02:40 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1999/05/29 20:44:21 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 1999/03/22 05:02:40 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 1999/05/29 20:44:21 christos Exp $");
 #endif
 
 /*
@@ -84,7 +84,10 @@ static void check1pkg(const char *pkgdir)
 		abort();
 	    }
 		
-	    snprintf(file, FILENAME_MAX, "%s/%s", dirp, p->name);
+	    if (p->name[0] == '/')
+		snprintf(file, FILENAME_MAX, "%s", p->name);
+	    else
+		snprintf(file, FILENAME_MAX, "%s/%s", dirp, p->name);
 
 	    if (!isfile(file))
 		warnx("%s: File %s is in %s but not on filesystem!", PkgName, file, CONTENTS_FNAME);
@@ -208,7 +211,10 @@ static void rebuild(void)
 		    abort();
 		}
 		
-		snprintf(file, FILENAME_MAX, "%s/%s", dirp, p->name);
+		if (p->name[0] == '/')
+		    snprintf(file, FILENAME_MAX, "%s", p->name);
+		else
+		    snprintf(file, FILENAME_MAX, "%s/%s", dirp, p->name);
 
 		if (!isfile(file))
 		    warnx("%s: File %s is in %s but not on filesystem!",
