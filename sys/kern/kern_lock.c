@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.46 2000/08/26 17:02:16 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.47 2000/08/26 19:26:43 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -89,10 +89,6 @@
 #include <sys/systm.h>
 #include <machine/cpu.h>
 
-#if defined(__HAVE_ATOMIC_OPERATIONS)
-#include <machine/atomic.h>
-#endif
-
 #if defined(LOCKDEBUG)
 #include <sys/syslog.h>
 /*
@@ -115,12 +111,8 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
 #if defined(MULTIPROCESSOR) /* { */
-#if defined(__HAVE_ATOMIC_OPERATIONS) /* { */
 #define	COUNT_CPU(cpu_id, x)						\
-	atomic_add_ulong(&curcpu()->ci_spin_locks, (x))
-#else
-#define	COUNT_CPU(cpu_id, x)	/* not safe */
-#endif /* __HAVE_ATOMIC_OPERATIONS */ /* } */
+	curcpu()->ci_spin_locks += (x)
 #else
 u_long	spin_locks;
 #define	COUNT_CPU(cpu_id, x)	spin_locks += (x)
@@ -735,6 +727,99 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 }
 
 /*
+ * For a recursive spinlock held one or more times by the current CPU,
+ * release all N locks, and return N.
+ * Intended for use in mi_switch() shortly before context switching.
+ */
+
+int
+spinlock_release_all(__volatile struct lock *lkp)
+{
+	int s, count;
+	cpuid_t cpu_id;
+	
+	KASSERT(lkp->lk_flags & LK_SPIN);
+	
+	INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
+
+	cpu_id = cpu_number();
+	count = lkp->lk_exclusivecount;
+	
+	if (count != 0) {
+#ifdef DIAGNOSTIC		
+		if (WEHOLDIT(lkp, 0, cpu_id) == 0) {
+			panic("spinlock_release_all: processor %lu, not "
+			    "exclusive lock holder %lu "
+			    "unlocking", (long)cpu_id, lkp->lk_cpu);
+		}
+#endif
+		lkp->lk_recurselevel = 0;
+		lkp->lk_exclusivecount = 0;
+		COUNT_CPU(cpu_id, -count);
+		lkp->lk_flags &= ~LK_HAVE_EXCL;
+		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
+		DONTHAVEIT(lkp);
+	}
+#ifdef DIAGNOSTIC
+	else if (lkp->lk_sharecount != 0)
+		panic("spinlock_release_all: release of shared lock!");
+	else
+		panic("spinlock_release_all: release of unlocked lock!");
+#endif
+	INTERLOCK_RELEASE(lkp, LK_SPIN, s);	
+
+	return (count);
+}
+
+/*
+ * For a recursive spinlock held one or more times by the current CPU,
+ * release all N locks, and return N.
+ * Intended for use in mi_switch() right after resuming execution.
+ */
+
+void
+spinlock_acquire_count(__volatile struct lock *lkp, int count)
+{
+	int s, error;
+	cpuid_t cpu_id;
+	
+	KASSERT(lkp->lk_flags & LK_SPIN);
+	
+	INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
+
+	cpu_id = cpu_number();
+
+#ifdef DIAGNOSTIC
+	if (WEHOLDIT(lkp, LK_NOPROC, cpu_id))
+		panic("spinlock_acquire_count: processor %lu already holds lock\n", (long)cpu_id);
+#endif
+	/*
+	 * Try to acquire the want_exclusive flag.
+	 */
+	ACQUIRE(lkp, error, LK_SPIN, 0, lkp->lk_flags &
+	    (LK_HAVE_EXCL | LK_WANT_EXCL));
+	lkp->lk_flags |= LK_WANT_EXCL;
+	/*
+	 * Wait for shared locks and upgrades to finish.
+	 */
+	ACQUIRE(lkp, error, LK_SPIN, 0, lkp->lk_sharecount != 0 ||
+	    (lkp->lk_flags & LK_WANT_UPGRADE));
+	lkp->lk_flags &= ~LK_WANT_EXCL;
+	lkp->lk_flags |= LK_HAVE_EXCL;
+	SETHOLDER(lkp, LK_NOPROC, cpu_id);
+	HAVEIT(lkp);
+	if (lkp->lk_exclusivecount != 0)
+		panic("lockmgr: non-zero exclusive count");
+	lkp->lk_exclusivecount = count;
+	lkp->lk_recurselevel = 1;
+	COUNT_CPU(cpu_id, count);
+
+	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);	
+}
+
+
+
+/*
  * Print out information about state of a lock. Used by VOP_PRINT
  * routines to display ststus about contained locks.
  */
@@ -771,12 +856,8 @@ struct simplelock simplelock_list_slock = SIMPLELOCK_INITIALIZER;
 #define	SLOCK_LIST_UNLOCK()						\
 	__cpu_simple_unlock(&simplelock_list_slock.lock_data)
 
-#if defined(__HAVE_ATOMIC_OPERATIONS) /* { */
 #define	SLOCK_COUNT(x)							\
-	atomic_add_ulong(&curcpu()->ci_simple_locks, (x))
-#else
-#define	SLOCK_COUNT(x)		/* not safe */
-#endif /* __HAVE_ATOMIC_OPERATIONS */ /* } */
+	curcpu()->ci_simple_locks += (x)
 #else
 u_long simple_locks;
 

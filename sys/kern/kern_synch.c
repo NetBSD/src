@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.89 2000/08/26 04:01:17 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.90 2000/08/26 19:26:43 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -328,40 +328,6 @@ updatepri(struct proc *p)
 	}
 	resetpriority(p);
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * XXX Need to tweak lockmgr() for this!
- */
-static int
-kernel_lock_release_all(void)
-{
-	int count, s;
-
-	s = splsched();
-	count = kernel_lock.lk_exclusivecount;
-	KDASSERT(count > 0);
-	kernel_lock.lk_exclusivecount = 1;
-	kernel_lock.lk_recurselevel = 1;
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
-	splx(s);
-
-	return (count);
-}
-
-static void
-kernel_lock_acquire_count(int flags, int count)
-{
-	int s;
-
-	s = splsched();
-	KDASSERT(count > 0);
-	spinlockmgr(&kernel_lock, flags, 0);
-	KDASSERT(kernel_lock.lk_exclusivecount == 1);
-	kernel_lock.lk_exclusivecount = count;
-	splx(s);
-}
-#endif /* MULTIPROCESSOR */
 
 /*
  * During autoconfiguration or after a panic, a sleep will simply
@@ -811,15 +777,13 @@ mi_switch(struct proc *p)
 	SCHED_ASSERT_LOCKED();
 
 #if defined(MULTIPROCESSOR)
-	if (p->p_flag & P_BIGLOCK) {
-		/*
-		 * Release the kernel_lock, as we are about to
-		 * yield the CPU.  The scheduler_slock is still
-		 * held until cpu_switch() selects a new process
-		 * and removes it from the run queue.
-		 */
-		hold_count = kernel_lock_release_all();
-	}
+	/*
+	 * Release the kernel_lock, as we are about to yield the CPU.
+	 * The scheduler lock is still held until cpu_switch()
+	 * selects a new process and removes it from the run queue.
+	 */
+	if (p->p_flag & P_BIGLOCK)
+		hold_count = spinlock_release_all(&kernel_lock);
 #endif
 
 	KDASSERT(p->p_cpu != NULL);
@@ -901,15 +865,13 @@ mi_switch(struct proc *p)
 	microtime(&p->p_cpu->ci_schedstate.spc_runtime);
 
 #if defined(MULTIPROCESSOR)
-	if (p->p_flag & P_BIGLOCK) {
-		/*
-		 * Reacquire the kernel_lock now.  We do this after
-		 * we've released sched_lock to avoid deadlock,
-		 * and before we reacquire the interlock.
-		 */
-		kernel_lock_acquire_count(LK_EXCLUSIVE|LK_CANRECURSE,
-		    hold_count);
-	}
+	/*
+	 * Reacquire the kernel_lock now.  We do this after we've
+	 * released the scheduler lock to avoid deadlock, and before
+	 * we reacquire the interlock.
+	 */
+	if (p->p_flag & P_BIGLOCK)
+		spinlock_acquire_count(&kernel_lock, hold_count);
 #endif
 }
 
