@@ -314,6 +314,9 @@ SEND-PR:
 SEND-PR: Please consult the send-pr man page `send-pr(1)' or the Texinfo
 SEND-PR: manual if you are not sure how to fill out a problem report.
 SEND-PR:
+SEND-PR: NOTE: If you include a patch that corrects the problem, the
+SEND-PR: issue will probably be handled much more quickly.
+SEND-PR:
 SEND-PR: Choose from the following categories:
 SEND-PR:
 __EOF__
