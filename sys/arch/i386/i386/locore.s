@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.30 1994/01/11 13:36:28 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.31 1994/01/11 18:52:43 mycroft Exp $
  */
 
 
@@ -123,10 +123,10 @@ _KPTphys:	.long	0
 tmpstk:
 	.text
 	.globl	start
-start:	jmp	1f
+start:	movw	$0x1234,0x472	# warm boot
+	jmp	1f
 	.space	0x500
-
-1:	movw	$0x1234,0x472	# warm boot
+1:
 
 	/*
 	 * pass parameters on stack (howto, bootdev, unit, cyloffset, esym)
@@ -150,7 +150,7 @@ start:	jmp	1f
 	andl	$~(PSL_AC|PSL_ID),%eax
 	pushl	%eax
 	popfl
-	
+
 	/* try to frob alignment check flag; does not exist on 386 */
 	pushfl
 	popl	%eax
@@ -164,12 +164,12 @@ start:	jmp	1f
 	andl	$(PSL_AC),%eax
 	pushl	%ecx
 	popfl
-      
+
 	testl	%eax,%eax
 	jnz	1f
-	movl    $(CPU_386),_cpu-KERNBASE
+	movl	$(CPU_386),_cpu-KERNBASE
 	jmp	2f
-	
+
 1:	/* try to frob identification flag; does not exist on 486 */
 	pushfl
 	popl	%eax
@@ -189,7 +189,7 @@ start:	jmp	1f
 	movl	$(CPU_486),_cpu-KERNBASE
 	jmp	2f
 
-1:	movl    $(CPU_586),_cpu-KERNBASE
+1:	movl	$(CPU_586),_cpu-KERNBASE
 2:
 
 	/*
@@ -279,7 +279,7 @@ start:	jmp	1f
 /* map I/O memory */
 
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx	# for this many pte s,
-	movl	$(IOM_BEGIN|PG_V|PG_UW|PG_N),%eax	# having these bits set
+	movl	$(IOM_BEGIN|PG_V|PG_UW/*|PG_N*/),%eax	# having these bits set
 	movl	%ebx,_atdevphys-KERNBASE	# remember phys addr of ptes
 	fillkpt
 
@@ -329,12 +329,12 @@ start:	jmp	1f
 
 	sgdt	(%esp)
 	movl	2(%esp),%esi		# base address of current gdt
-	movl	$_gdt-KERNBASE,%edi
+	movl	$(_gdt-KERNBASE),%edi
 	movl	%edi,2(%esp)
 	movl	$8*18/4,%ecx
 	rep				# copy gdt
 	movsl
-	movl	$_gdt-KERNBASE,-8+2(%edi)	# adjust gdt self-ptr
+	movl	$(_gdt-KERNBASE),-8+2(%edi)	# adjust gdt self-ptr
 	movb	$0x92,-8+5(%edi)
 
 	sidt	6(%esp)
@@ -394,7 +394,7 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	$(_gdt+8*9),%eax	# adjust slots 9-17
 	movl	$9,%ecx
 reloc_gdt:
-	movb	$0xfe,7(%eax)		# top byte of base addresses, was 0,
+	movb	$(KERNBASE>>24),7(%eax)	# top byte of base addresses, was 0,
 	addl	$8,%eax			# now KERNBASE>>24
 	loop	reloc_gdt
 
@@ -1364,7 +1364,7 @@ sti_for_idle:
 
 	ALIGN_TEXT
 idle:
-	call	_splnone		# process pending interrupts
+	call	_spl0			# process pending interrupts
 	cmpl	$0,_whichqs
 	jne	sw1
 	hlt				# wait for interrupt
@@ -1498,7 +1498,7 @@ sw1:
 #endif
 	sti				# splx() doesn't do an sti/cli
 
-	pushl   PCB_IML(%edx)
+	pushl	PCB_IML(%edx)
 	call    _splx			# restore the process's ipl
 	addl	$4,%esp
 
@@ -1559,7 +1559,7 @@ ENTRY(savectx)
 	 */
 	movl	_npxproc,%eax
 	testl	%eax,%eax
-  	jz	1f
+	jz	1f
 
 	pushl	%ecx
 	movl	P_ADDR(%eax),%eax
@@ -1600,7 +1600,7 @@ ENTRY(savectx)
 1:
 	xorl	%eax,%eax		# return 0
 	ret
-	
+
 
 /*
  * Trap and fault vector routines
@@ -1645,7 +1645,7 @@ IDTVEC(dbg)
 	andb	$~15,%al
 #	movl	%eax,%dr6	/* XXX stupid assembler! */
 	.byte	0x0f, 0x23, 0xf0
-	popl	%eax	
+	popl	%eax
 #ifdef BDB
 	BDBTRAP(dbg)
 #endif
@@ -1653,10 +1653,10 @@ IDTVEC(dbg)
 IDTVEC(nmi)
 	ZTRAP(T_NMI)
 IDTVEC(bpt)
-#ifdef BDBTRAP
+	pushl	$0
+#ifdef BDB
 	BDBTRAP(bpt)
 #endif
-	pushl	$0
 	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
 	ZTRAP(T_OFLOW)
@@ -1768,8 +1768,11 @@ bpttraps:
 
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
-	pushl	$0			# Room for tf_err
-	pushfl				# Room for tf_trapno
+	pushl	$0	# Room for tf_err
+	pushfl		# Room for tf_trapno
+	pushfl		# turn off trace bit
+	andb	$~(PSL_T>>8),1(%esp)
+	popfl
 	INTRENTRY
 	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to tf_eflags
 	movl	%eax,TF_EFLAGS(%esp)
