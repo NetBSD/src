@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2003/09/06 17:44:40 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 2003/09/18 19:31:19 skd Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2003/09/06 17:44:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2003/09/18 19:31:19 skd Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -262,6 +262,14 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 	 */
 	if (legacy_irq != -1) {
 		ci = &cpu_info_primary;
+		/* must check for duplicate pic + pin first */
+		for (slot = 0 ; slot < MAX_INTR_SOURCES ; slot++) {
+			isp = ci->ci_isources[slot];
+			if (isp != NULL && isp->is_pic == pic &&
+			    isp->is_pin == pin ) {
+				goto duplicate;
+			}
+		}
 		slot = legacy_irq;
 		isp = ci->ci_isources[slot];
 		if (isp == NULL) {
@@ -284,7 +292,7 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 				goto other;
 			}
 		}
-
+duplicate:
 		if (pic == &i8259_pic)
 			idtvec = ICU_OFFSET + legacy_irq;
 		else {
