@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.43 2001/09/21 20:50:23 tv Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.44 2001/09/22 05:01:26 tv Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -18,23 +18,17 @@ __REALSUBDIR+=${dir}
 .endif
 .endfor
 
-.if defined(DESTDIR) && exists(${DESTDIR}/usr/share/mk/sys.mk)
-_M=-m ${DESTDIR}/usr/share/mk
-.else
-_M=
-.endif
-
 __recurse: .USE
 	@targ=${.TARGET:C/-.*$//};dir=${.TARGET:C/^[^-]*-//};		\
 	case "$$dir" in /*)						\
 		echo "$$targ ===> $$dir";				\
 		cd "$$dir";						\
-		${MAKE} ${_M} "_THISDIR_=$$dir/" $$targ;		\
+		${MAKE} "_THISDIR_=$$dir/" $$targ;			\
 		;;							\
 	*)								\
 		echo "$$targ ===> ${_THISDIR_}$$dir";			\
 		cd "${.CURDIR}/$$dir";					\
-		${MAKE} ${_M} "_THISDIR_=${_THISDIR_}$$dir/" $$targ;	\
+		${MAKE} "_THISDIR_=${_THISDIR_}$$dir/" $$targ;		\
 		;;							\
 	esac
 
