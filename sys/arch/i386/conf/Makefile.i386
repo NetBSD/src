@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.123 2002/06/04 21:39:10 thorpej Exp $
+#	$NetBSD: Makefile.i386,v 1.124 2002/11/02 07:59:26 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -75,7 +75,6 @@ apmcall.o in_cksum.o pnpbioscall.o: assym.h
 ##
 ## (7) misc settings
 ##
-KERNLINTFLAGS=	-bceghnxzF
 
 ##
 ## (8) config(8) generated machinery
