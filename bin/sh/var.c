@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.21 1998/04/07 21:15:33 fair Exp $	*/
+/*	$NetBSD: var.c,v 1.22 1999/01/28 18:11:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.21 1998/04/07 21:15:33 fair Exp $");
+__RCSID("$NetBSD: var.c,v 1.22 1999/01/28 18:11:51 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,9 +501,11 @@ exportcmd(argc, argv)
 	char *name;
 	char *p;
 	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
+	int pflag;
 
 	listsetvar(cmdenviron);
-	if (argc > 1) {
+	pflag = (nextopt("p") == 'p');
+	if (argc > 1 && !pflag) {
 		while ((name = *argptr++) != NULL) {
 			if ((p = strchr(name, '=')) != NULL) {
 				p++;
@@ -522,7 +524,11 @@ found:;
 	} else {
 		for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 			for (vp = *vpp ; vp ; vp = vp->next) {
-				if (vp->flags & flag) {
+				if ((vp->flags & flag) == 0)
+					continue;
+				if (pflag) {
+					out1fmt("%s %s\n", argv[0], vp->text);
+				} else {
 					for (p = vp->text ; *p != '=' ; p++)
 						out1c(*p);
 					out1c('\n');
