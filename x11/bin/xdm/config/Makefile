@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2.2.1 2005/01/30 14:55:58 he Exp $
+#	$NetBSD: Makefile,v 1.5.2.2.2.2 2005/03/05 17:40:54 he Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11LIBDIR}/xdm/pixmaps \
 				-DXDM_BWPIXMAP=NetBSDbw.xpm
 
 # native only gives DEFAULTVT for i386 and amd64.
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || ${MACHINE} == "cats"
 DEFAULTVT=vt05
 .else
 DEFAULTVT=	# defined empty
