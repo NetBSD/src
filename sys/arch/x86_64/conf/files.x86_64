@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.15 2003/03/25 00:09:27 fvdl Exp $
+#	$NetBSD: files.x86_64,v 1.16 2003/04/24 18:54:54 fvdl Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -118,6 +118,10 @@ file	arch/x86_64/pci/pchb.c			pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/x86_64/pci/pcib.c			pcib
+
+device 	aapic
+attach 	aapic at pci
+file 	arch/x86_64/pci/aapic.c			aapic
 
 #
 # ISA or ISA+PCI drivers
