@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.14 1998/12/09 19:24:28 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.15 1998/12/10 16:13:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -802,10 +802,15 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		DPRINTFN(1,("usbd_new_device: trying config idx=%d\n", confi));
 		r = usbd_set_config_index(dev, confi, 1);
 		if (r != USBD_NORMAL_COMPLETION) {
+#ifdef USB_DEBUG
 			DPRINTF(("%s: set config at addr %d failed, "
 				 "error=%d(%s)\n",
 				 parent->dv_xname, addr, r,
 				 usbd_error_strs[r]));
+#else
+			printf("%s: set config at addr %d failed\n",
+			       parent->dv_xname, addr);
+#endif
 			goto bad;
 		}
 		uaa.configno = confi;
