@@ -1,14 +1,24 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/03 02:05:49 takemura Exp $
+#	$NetBSD: Makefile,v 1.7 2004/01/06 12:30:13 mrg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	Xnest Xprt Xvfb
+.include "../Makefile.common"
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+SUBDIR=		Xnest Xprt
+
+.if ${XSERVER_XVFB} != "no"
+SUBDIR+=	Xvfb
+.endif
+
+.if ${XSERVER_XSUN} == "yes"
 SUBDIR+=	Xsun Xsun24 XsunMono
-.elif ${MACHINE} == "hpcmips" 
+.endif
+
+.if ${XSERVER_XHPC} == "yes" 
 SUBDIR+=	Xhpc
-.else
+.endif
+
+.if ${XSERVER_XFREE86} == "yes" 
 SUBDIR+=	XFree86
 .endif
 

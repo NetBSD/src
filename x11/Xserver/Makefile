@@ -1,17 +1,29 @@
-#	$NetBSD: Makefile,v 1.8 2004/01/03 02:05:49 takemura Exp $
+#	$NetBSD: Makefile,v 1.9 2004/01/06 12:30:13 mrg Exp $
 
 .include <bsd.own.mk>
 
-.if ${MACHINE} != "sparc" && ${MACHINE} != "sparc64" && ${MACHINE} != "hpcmips"
-SUBDIR.md=fontbase Xfont
+.include "Makefile.common"
+
+.if ${XSERVER_NEEDS_XFONT} != "no"
+SUBDIR.xfont=fontbase Xfont
 .endif
 
-SUBDIR=	include \
-	.WAIT \
-	dix os mi printer Xext xkb xinput GL lbx dbe record randr render \
-	xtrap mfb cfb cfb16 cfb24 cfb32 fb hw ${SUBDIR.md} \
-	.WAIT \
-	Xserver
+.if ${XSERVER_HAS_CFB} == "no"
+SUBDIR.cfb=
+.else
+SUBDIR.cfb=cfb cfb16 cfb24 cfb32
+.endif
+
+.if ${XSERVER_HAS_FB} == "no"
+SUBDIR.fb=
+.else
+SUBDIR.fb=fb
+.endif
+
+SUBDIR=		include
+SUBDIR+=	.WAIT dix os mi printer Xext xkb xinput GL lbx dbe record
+SUBDIR+=	mfb randr render xtrap
+SUBDIR+=	${SUBDIR.cfb} ${SUBDIR.fb} hw ${SUBDIR.xfont} .WAIT Xserver
 
 XTODO=	afb miext/shadow miext/layer hw/xfree86
 
