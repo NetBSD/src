@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.133 2003/10/13 08:07:21 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.134 2003/10/16 10:38:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.133 2003/10/13 08:07:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.134 2003/10/16 10:38:07 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -277,13 +277,8 @@ wi_attach(struct wi_softc *sc)
 	}
 
 	if (sc->sc_firmware_type == WI_LUCENT) {
-		sc->sc_min_rssi = WI_LUCENT_MIN_RSSI;
-		sc->sc_max_rssi = WI_LUCENT_MAX_RSSI;
 		sc->sc_dbm_offset = WI_LUCENT_DBM_OFFSET;
 	} else {
-		sc->sc_min_rssi = WI_PRISM_MIN_RSSI;
-		sc->sc_max_rssi = WI_PRISM_MAX_RSSI;
-
 		buflen = sizeof(val);
 		if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
 		    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0)
