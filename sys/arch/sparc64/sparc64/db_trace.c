@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 1998/09/11 00:16:59 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.6 1998/09/22 02:48:44 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -263,7 +263,7 @@ db_dump_stack(addr, have_addr, count, modif)
 			db_printf("Window %x ", i);
 			db_print_window(frame - BIAS);
 			if (!INKERNEL(((struct frame64 *)(frame))))
-				copyin(((caddr_t)&((struct frame64 *)frame)->fr_fp)+4, &frame, sizeof(frame));
+				copyin(((caddr_t)&((struct frame64 *)frame)->fr_fp), &frame, sizeof(frame));
 			else
 				frame = ((struct frame64 *)frame)->fr_fp;
 		} else {

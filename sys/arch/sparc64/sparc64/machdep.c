@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1998/09/17 04:52:17 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.18 1998/09/22 02:48:44 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -474,6 +474,8 @@ allocsys(v)
 #define rwindow		rwindow64
 #define STACK_OFFSET	BIAS
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
+#undef CCFSZ
+#define CCFSZ	CC64FSZ
 #else
 #define rwindow		rwindow32
 #define STACK_OFFSET	0
@@ -623,6 +625,7 @@ sendsig(catcher, sig, mask, code)
 						  psp->ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
+	/* Allocate an aligned sigframe */
 	fp = (struct sigframe *)((long)(fp - 1) & ~0x0f);
 
 #ifdef DEBUG
@@ -660,12 +663,14 @@ sendsig(catcher, sig, mask, code)
 	 */
 	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
 #endif
+	/* Save register context. */
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
-	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
+	sf.sf_sc.sc_tstate = tf->tf_tstate; /* XXX */
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
+
 
 	/*
 	 * Put the stack in a consistent state before we whack away
@@ -676,7 +681,7 @@ sendsig(catcher, sig, mask, code)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
-	newsp = (struct rwindow *)((vaddr_t)fp - sizeof(struct rwindow));
+	newsp = (struct rwindow *)((vaddr_t)fp - CC64FSZ);
 	write_user_windows();
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
@@ -684,7 +689,7 @@ sendsig(catcher, sig, mask, code)
 		   fp, &(((struct rwindow *)newsp)->rw_in[6]), (vaddr_t)tf->tf_out[6]);
 #endif
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-#ifdef DEBUG
+#ifdef NOT_DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
 #endif
 	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
@@ -781,7 +786,7 @@ sys___sigreturn14(p, v, retval)
  	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
-		printf("sigreturn: copyin failed\n");
+		printf("sigreturn: copyin failed: scp=%p\n", scp);
 		Debugger();
 		return (EINVAL);
 	}
@@ -807,7 +812,7 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
 	tf->tf_pc = (int64_t)scp->sc_pc;
 	tf->tf_npc = (int64_t)scp->sc_npc;
 	tf->tf_global[1] = (int64_t)scp->sc_g1;
