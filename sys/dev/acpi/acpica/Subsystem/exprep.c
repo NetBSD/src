@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exprep - ACPI AML (p-code) execution - field prep utilities
- *              xRevision: 125 $
+ *              xRevision: 127 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exprep.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exprep.c,v 1.10 2004/02/14 16:57:24 kochi Exp $");
 
 #define __EXPREP_C__
 
@@ -601,7 +601,7 @@ AcpiExPrepFieldValue (
 
         if (!ObjDesc->IndexField.DataObj || !ObjDesc->IndexField.IndexObj)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Null Index Object\n"));
+            ACPI_REPORT_ERROR (("Null Index Object during field prep\n"));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
 

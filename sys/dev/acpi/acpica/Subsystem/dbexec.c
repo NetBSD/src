@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              xRevision: 55 $
+ *              xRevision: 57 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.11 2003/12/13 18:11:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.12 2004/02/14 16:57:24 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -411,7 +411,7 @@ AcpiDbExecute (
 
     if (Allocations > 0)
     {
-        AcpiOsPrintf ("Outstanding: %ld allocations after execution\n",
+        AcpiOsPrintf ("Outstanding: %u allocations after execution\n",
                         Allocations);
     }
 #endif

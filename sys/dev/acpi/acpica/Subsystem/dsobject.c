@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 117 $
+ *              xRevision: 119 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.9 2003/12/13 18:11:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.10 2004/02/14 16:57:24 kochi Exp $");
 
 #define __DSOBJECT_C__
 
@@ -692,6 +692,11 @@ AcpiDsInitObjectFromOp (
 
             ObjDesc->Reference.Opcode = AML_ARG_OP;
             ObjDesc->Reference.Offset = Opcode - AML_ARG_OP;
+
+#ifndef ACPI_NO_METHOD_EXECUTION
+            Status = AcpiDsMethodDataGetNode (AML_ARG_OP, ObjDesc->Reference.Offset,
+                        WalkState, (ACPI_NAMESPACE_NODE **) &ObjDesc->Reference.Object);
+#endif
             break;
 
         default: /* Other literals, etc.. */

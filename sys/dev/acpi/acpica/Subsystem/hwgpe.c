@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwgpe - Low level GPE enable/disable/clear functions
- *              xRevision: 53 $
+ *              xRevision: 55 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.10 2004/02/14 16:57:24 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -436,18 +436,15 @@ AcpiHwDisableGpeBlock (
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     UINT32                  i;
-    ACPI_GPE_REGISTER_INFO  *GpeRegisterInfo;
     ACPI_STATUS             Status;
 
-
-    /* Get the register info for the entire GPE block */
-
-    GpeRegisterInfo = GpeBlock->RegisterInfo;
 
     /* Examine each GPE Register within the block */
 
     for (i = 0; i < GpeBlock->RegisterCount; i++)
     {
+        /* Disable all GPEs in this register */
+
         Status = AcpiHwLowLevelWrite (8, 0x00,
                     &GpeBlock->RegisterInfo[i].EnableAddress);
         if (ACPI_FAILURE (Status))
@@ -479,18 +476,15 @@ AcpiHwClearGpeBlock (
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     UINT32                  i;
-    ACPI_GPE_REGISTER_INFO  *GpeRegisterInfo;
     ACPI_STATUS             Status;
 
-
-    /* Get the register info for the entire GPE block */
-
-    GpeRegisterInfo = GpeBlock->RegisterInfo;
 
     /* Examine each GPE Register within the block */
 
     for (i = 0; i < GpeBlock->RegisterCount; i++)
     {
+        /* Clear all GPEs in this register */
+
         Status = AcpiHwLowLevelWrite (8, 0xFF,
                     &GpeBlock->RegisterInfo[i].StatusAddress);
         if (ACPI_FAILURE (Status))

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              xRevision: 177 $
+ *              xRevision: 180 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.10 2004/02/02 08:00:56 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.11 2004/02/14 16:57:24 kochi Exp $");
 
 #define __EXSTORE_C__
 
@@ -206,7 +206,7 @@ AcpiExStore (
 
     default:
 
-        /* Destination is not an Reference */
+        /* Destination is not a Reference object */
 
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "Destination is not a Reference or Constant object [%p]\n", DestDesc));
@@ -272,35 +272,38 @@ AcpiExStore (
         {
         case ACPI_TYPE_INTEGER:
 
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "%8.8X%8.8X\n",
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "0x%8.8X%8.8X\n",
                     ACPI_FORMAT_UINT64 (SourceDesc->Integer.Value)));
             break;
 
 
         case ACPI_TYPE_BUFFER:
 
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "Length %.2X\n",
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "Length 0x%.2X",
                     (UINT32) SourceDesc->Buffer.Length));
+            ACPI_DUMP_BUFFER (SourceDesc->Buffer.Pointer, 
+                (SourceDesc->Buffer.Length < 32) ? SourceDesc->Buffer.Length : 32);
             break;
 
 
         case ACPI_TYPE_STRING:
 
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "%s\n", SourceDesc->String.Pointer));
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "Length 0x%.2X, \"%s\"\n", 
+                    SourceDesc->String.Length, SourceDesc->String.Pointer));
             break;
 
 
         case ACPI_TYPE_PACKAGE:
 
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "Elements Ptr - %p\n",
-                    SourceDesc->Package.Elements));
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "Size 0x%.2X Elements Ptr - %p\n",
+                    SourceDesc->Package.Count, SourceDesc->Package.Elements));
             break;
 
 
         default:
 
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "Type %s %p\n",
-                    AcpiUtGetObjectTypeName (SourceDesc), SourceDesc));
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "%p\n",
+                    SourceDesc));
             break;
         }
 
@@ -310,7 +313,7 @@ AcpiExStore (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown Reference opcode %X\n",
+        ACPI_REPORT_ERROR (("ExStore: Unknown Reference opcode %X\n",
             RefDesc->Reference.Opcode));
         ACPI_DUMP_ENTRY (RefDesc, ACPI_LV_ERROR);
 
@@ -346,6 +349,7 @@ AcpiExStoreObjectToIndex (
     ACPI_OPERAND_OBJECT     *ObjDesc;
     ACPI_OPERAND_OBJECT     *NewDesc;
     UINT8                   Value = 0;
+    UINT32                  i;
 
 
     ACPI_FUNCTION_TRACE ("ExStoreObjectToIndex");
@@ -367,6 +371,7 @@ AcpiExStoreObjectToIndex (
         /*
          * The object at *(IndexDesc->Reference.Where) is the
          * element within the package that is to be modified.
+         * The parent package object is at IndexDesc->Reference.Object
          */
         ObjDesc = *(IndexDesc->Reference.Where);
 
@@ -392,7 +397,14 @@ AcpiExStoreObjectToIndex (
 
             /* If same as the original source, add a reference */
 
-            if (NewDesc == SourceDesc || ObjDesc == NULL)
+            if (NewDesc == SourceDesc)
+            {
+                AcpiUtAddReference (NewDesc);
+            }
+
+            /* Increment reference count by the ref count of the parent package -1 */
+
+            for (i = 1; i < ((ACPI_OPERAND_OBJECT *) IndexDesc->Reference.Object)->Common.ReferenceCount; i++)
             {
                 AcpiUtAddReference (NewDesc);
             }

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              xRevision: 58 $
+ *              xRevision: 62 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.11 2003/12/21 10:27:23 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.12 2004/02/14 16:57:24 kochi Exp $");
 
 #include "acpi.h"
 
@@ -364,7 +364,7 @@ AcpiEnterSleepState (
         }
     }
 
-    Status = AcpiHwDisableNonWakeupGpes();
+    Status = AcpiHwDisableNonWakeupGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -388,6 +388,11 @@ AcpiEnterSleepState (
 
     PM1AControl |= (AcpiGbl_SleepTypeA << SleepTypeRegInfo->BitPosition);
     PM1BControl |= (AcpiGbl_SleepTypeB << SleepTypeRegInfo->BitPosition);
+
+    /*
+     * We split the writes of SLP_TYP and SLP_EN to workaround
+     * poorly implemented hardware.
+     */
 
     /* Write #1: fill in SLP_TYP data */
 
@@ -433,7 +438,7 @@ AcpiEnterSleepState (
          * Wait ten seconds, then try again. This is to get S4/S5 to work on all machines.
          *
          * We wait so long to allow chipsets that poll this reg very slowly to
-         * still read the right value. Ideally, this entire block would go
+         * still read the right value. Ideally, this block would go
          * away entirely.
          */
         AcpiOsStall (10000000);
@@ -498,12 +503,25 @@ AcpiEnterSleepStateS4bios (
     ACPI_FUNCTION_TRACE ("AcpiEnterSleepStateS4bios");
 
 
-    AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_DO_NOT_LOCK);
-    AcpiHwClearAcpiStatus(ACPI_MTX_DO_NOT_LOCK);
+    Status = AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_DO_NOT_LOCK);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
 
-    AcpiHwDisableNonWakeupGpes();
+    Status = AcpiHwClearAcpiStatus (ACPI_MTX_DO_NOT_LOCK);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
 
-    ACPI_FLUSH_CPU_CACHE();
+    Status = AcpiHwDisableNonWakeupGpes ();
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    ACPI_FLUSH_CPU_CACHE ();
 
     Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd, (UINT32) AcpiGbl_FADT->S4BiosReq, 8);
 
@@ -541,31 +559,49 @@ AcpiLeaveSleepState (
     ACPI_STATUS             Status;
     ACPI_BIT_REGISTER_INFO  *SleepTypeRegInfo;
     ACPI_BIT_REGISTER_INFO  *SleepEnableRegInfo;
-    UINT32                  PM1xControl;
+    UINT32                  PM1AControl;
+    UINT32                  PM1BControl;
 
 
     ACPI_FUNCTION_TRACE ("AcpiLeaveSleepState");
 
-    /* Some machines require SLP_TYPE and SLP_EN to be cleared */
 
-    SleepTypeRegInfo   = AcpiHwGetBitRegisterInfo (ACPI_BITREG_SLEEP_TYPE_A);
-    SleepEnableRegInfo = AcpiHwGetBitRegisterInfo (ACPI_BITREG_SLEEP_ENABLE);
-
-    /* Get current value of PM1A control */
-
-    Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK, 
-                ACPI_REGISTER_PM1_CONTROL, &PM1xControl);
+    /*
+     * Set SLP_TYPE and SLP_EN to state S0.
+     * This is unclear from the ACPI Spec, but it is required
+     * by some machines.
+     */
+    Status = AcpiGetSleepTypeData (ACPI_STATE_S0,
+                    &AcpiGbl_SleepTypeA, &AcpiGbl_SleepTypeB);
     if (ACPI_SUCCESS (Status))
     {
-        /* Clear SLP_TYP and SLP_EN */
+        SleepTypeRegInfo   = AcpiHwGetBitRegisterInfo (ACPI_BITREG_SLEEP_TYPE_A);
+        SleepEnableRegInfo = AcpiHwGetBitRegisterInfo (ACPI_BITREG_SLEEP_ENABLE);
 
-        PM1xControl &= ~(SleepTypeRegInfo->AccessBitMask | 
-                         SleepEnableRegInfo->AccessBitMask);
+        /* Get current value of PM1A control */
 
-        AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, 
-                ACPI_REGISTER_PM1A_CONTROL, PM1xControl);
-        AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, 
-                ACPI_REGISTER_PM1B_CONTROL, PM1xControl);
+        Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK,
+                    ACPI_REGISTER_PM1_CONTROL, &PM1AControl);
+        if (ACPI_SUCCESS (Status))
+        {
+            /* Clear SLP_EN and SLP_TYP fields */
+
+            PM1AControl &= ~(SleepTypeRegInfo->AccessBitMask |
+                             SleepEnableRegInfo->AccessBitMask);
+            PM1BControl = PM1AControl;
+
+            /* Insert SLP_TYP bits */
+
+            PM1AControl |= (AcpiGbl_SleepTypeA << SleepTypeRegInfo->BitPosition);
+            PM1BControl |= (AcpiGbl_SleepTypeB << SleepTypeRegInfo->BitPosition);
+
+            /* Just ignore any errors */
+
+            (void) AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK,
+                            ACPI_REGISTER_PM1A_CONTROL, PM1AControl);
+            (void) AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK,
+                            ACPI_REGISTER_PM1B_CONTROL, PM1BControl);
+        }
     }
 
     /* Ensure EnterSleepStatePrep -> EnterSleepState ordering */
@@ -603,7 +639,7 @@ AcpiLeaveSleepState (
 
     /* _WAK returns stuff - do we want to look at it? */
 
-    Status = AcpiHwEnableNonWakeupGpes();
+    Status = AcpiHwEnableNonWakeupGpes ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
