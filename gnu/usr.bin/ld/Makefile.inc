@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/10/25 10:12:41 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/12/17 15:17:27 pk Exp $
 
-CPPFLAGS += -I$(.CURDIR)/../common -I$(.CURDIR)/../arch/$(MACHINE_ARCH)
+SHLIBPATH = $(.CURDIR)/../../../../libexec/ld.aout_so
 
-.PATH: $(.CURDIR)/../common $(.CURDIR)/../arch/$(MACHINE_ARCH)
+CPPFLAGS += -I$(SHLIBPATH) -I$(SHLIBPATH)/arch/$(MACHINE_ARCH) -I$(.CURDIR)
+.PATH:	      $(SHLIBPATH)   $(SHLIBPATH)/arch/$(MACHINE_ARCH)
+
+CFLAGS += -Wall -Wstrict-prototypes -Wmissing-prototypes
