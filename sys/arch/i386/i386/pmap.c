@@ -36,17 +36,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.12 1993/11/05 08:45:15 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.13 1993/11/08 20:27:32 mycroft Exp $
  */
 
 /*
- * Derived from hp300 version by Mike Hibler, this version by William
- * Jolitz uses a recursive map [a pde points to the page directory] to
- * map the page tables using the pagetables themselves. This is done to
- * reduce the impact on kernel virtual memory for lots of sparse address
- * space, and to reduce the cost of memory to each process.
- *
- *	Derived from: hp300/@(#)pmap.c	7.1 (Berkeley) 12/5/90
+ * Derived originally from an old hp300 version by Mike Hibler.  The version
+ * by William Jolitz has been heavily modified to allow non-contiguous
+ * mapping of physical memory by Wolfgang Solfrank, and to fix several bugs
+ * and greatly speedup it up by Charles Hannum.
+ * 
+ * A recursive map [a pde which points to the page directory] is used to map
+ * the page tables using the pagetables themselves. This is done to reduce
+ * the impact on kernel virtual memory for lots of sparse address space, and
+ * to reduce the cost of memory to each process.
  */
 
 /*
@@ -178,8 +180,14 @@ vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
 
-boolean_t	pmap_testbit();
-void		pmap_clear_modify();
+boolean_t pmap_testbit __P((vm_offset_t, int));
+void pmap_changebit __P((vm_offset_t, int, int));
+
+/* XXX should be in a .h file somewhere */
+#define	PMAP_CLEAR_MODIFY(pa)		pmap_changebit(pa, 0, ~PG_M)
+#define	PMAP_CLEAR_REFERENCE(pa)	pmap_changebit(pa, 0, ~PG_U)
+#define	PMAP_IS_REFERENCED(pa)		pmap_testbit(pa, PG_U)
+#define	PMAP_IS_MODIFIED(pa)		pmap_testbit(pa, PG_M)
 
 #define	pmap_valid_page(pa)	(pmap_initialized && pmap_page_index(pa) >= 0)
 
@@ -363,7 +371,7 @@ pmap_map(virt, start, end, prot)
 		virt += NBPG;
 		start += NBPG;
 	}
-	return(virt);
+	return virt;
 }
 
 /*
@@ -396,7 +404,7 @@ pmap_create(size)
 	 * Software use map does not need a pmap
 	 */
 	if (size)
-		return(NULL);
+		return NULL;
 
 	/* XXX: is it ok to wait here? */
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
@@ -406,7 +414,7 @@ pmap_create(size)
 #endif
 	bzero(pmap, sizeof(*pmap));
 	pmap_pinit(pmap);
-	return (pmap);
+	return pmap;
 }
 
 /*
@@ -702,7 +710,7 @@ pmap_copy_on_write(pa)
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
 		printf("pmap_copy_on_write(%x)", pa);
 #endif
-	pmap_changebit(pa, PG_RO, TRUE);
+	pmap_changebit(pa, PG_RO, ~PG_RW);
 }
 
 /*
@@ -960,8 +968,10 @@ validate:
 	 */
 	npte = (pa & PG_FRAME) | pte_prot(pmap, prot) | PG_V;
 	npte |= *(int *)pte & (PG_M|PG_U);
+#if 0 /* nobody uses this bit; no point setting it */
 	if (wired)
 		npte |= PG_W;
+#endif
 
 	if (va < VM_MAXUSER_ADDRESS)	/* i.e. below USRSTACK */
 		npte |= PG_u;
@@ -1091,7 +1101,7 @@ pmap_pte(pmap, va)
 		ptp = APTmap;
 	}
 
-	return(ptp + i386_btop(va));
+	return ptp + i386_btop(va);
 }
 
 /*
@@ -1124,7 +1134,7 @@ pmap_extract(pmap, va)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("%x\n", pa);
 #endif
-	return(pa | (va & ~PG_FRAME));
+	return pa | (va & ~PG_FRAME);
 }
 
 /*
@@ -1199,7 +1209,6 @@ pmap_collect(pmap)
 
 }
 
-/* [ macro again?, should I force kstack into user map here? -wfj ] */
 void
 pmap_activate(pmap, pcbp)
 	register pmap_t pmap;
@@ -1223,7 +1232,7 @@ pmap_t
 pmap_kernel()
 {
 
-    	return(kernel_pmap);
+    	return kernel_pmap;
 }
 
 /*
@@ -1240,7 +1249,7 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%x)", phys);
 #endif
 
-	*(int *)CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW;
+	*(int *)CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	tlbflush();
 	bzero(CADDR2, NBPG);
 }
@@ -1261,7 +1270,7 @@ pmap_copy_page(src, dst)
 #endif
 
 	*(int *)CMAP1 = (src & PG_FRAME) | PG_V | PG_KW;
-	*(int *)CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW;
+	*(int *)CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	tlbflush();
 	bcopy(CADDR1, CADDR2, NBPG);
 }
@@ -1321,10 +1330,11 @@ pmap_pageable(pmap, sva, eva, pageable)
 			return;
 
 		pa = pmap_pte_pa(pte);
+
+#ifdef DEBUG
 		if (!pmap_valid_page(pa))
 			return;
 
-#ifdef DEBUG
 		pv = pa_to_pvh(pa);
 		if (pv->pv_va != sva || pv->pv_next) {
 			pg("pmap_pageable: bad PT page va %x next %x\n",
@@ -1336,7 +1346,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		/*
 		 * Mark it unmodified to avoid pageout
 		 */
-		pmap_clear_modify(pa);
+		PMAP_CLEAR_MODIFY(pa);
 
 #ifdef needsomethinglikethis
 		if (pmapdebug & PDB_PTPAGE)
@@ -1357,11 +1367,7 @@ pmap_clear_modify(pa)
 	vm_offset_t	pa;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%x)", pa);
-#endif
-	pmap_changebit(pa, PG_M, FALSE);
+	PMAP_CLEAR_MODIFY(pa);
 }
 
 /*
@@ -1374,11 +1380,7 @@ void pmap_clear_reference(pa)
 	vm_offset_t	pa;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_reference(%x)", pa);
-#endif
-	pmap_changebit(pa, PG_U, FALSE);
+	PMAP_CLEAR_REFERENCE(pa);
 }
 
 /*
@@ -1393,14 +1395,7 @@ pmap_is_referenced(pa)
 	vm_offset_t	pa;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		boolean_t rv = pmap_testbit(pa, PG_U);
-		printf("pmap_is_referenced(%x) -> %c", pa, "FT"[rv]);
-		return(rv);
-	}
-#endif
-	return(pmap_testbit(pa, PG_U));
+	return PMAP_IS_REFERENCED(pa);
 }
 
 /*
@@ -1415,14 +1410,7 @@ pmap_is_modified(pa)
 	vm_offset_t	pa;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		boolean_t rv = pmap_testbit(pa, PG_M);
-		printf("pmap_is_modified(%x) -> %c", pa, "FT"[rv]);
-		return(rv);
-	}
-#endif
-	return(pmap_testbit(pa, PG_M));
+	return PMAP_IS_MODIFIED(pa);
 }
 
 vm_offset_t
@@ -1430,7 +1418,7 @@ pmap_phys_address(ppn)
 	int ppn;
 {
 
-	return(i386_ptob(ppn));
+	return i386_ptob(ppn);
 }
 
 /*
@@ -1451,25 +1439,25 @@ i386_protection_init()
 }
 
 boolean_t
-pmap_testbit(pa, bit)
+pmap_testbit(pa, setbits)
 	register vm_offset_t pa;
-	int bit;
+	int setbits;
 {
 	register pv_entry_t pv;
 	register int *pte;
 	int s;
 
 	if (!pmap_valid_page(pa))
-		return(FALSE);
+		return FALSE;
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
 	/*
 	 * Check saved info first
 	 */
-	if (pmap_attributes[pmap_page_index(pa)] & bit) {
+	if (pmap_attributes[pmap_page_index(pa)] & setbits) {
 		splx(s);
-		return(TRUE);
+		return TRUE;
 	}
 	/*
 	 * Not found, check current mappings returning
@@ -1478,20 +1466,25 @@ pmap_testbit(pa, bit)
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			pte = (int *) pmap_pte(pv->pv_pmap, pv->pv_va);
-			if (*pte & bit) {
+			if (*pte & setbits) {
 				splx(s);
-				return(TRUE);
+				return TRUE;
 			}
 		}
 	}
 	splx(s);
-	return(FALSE);
+	return FALSE;
 }
 
-pmap_changebit(pa, bit, setem)
+/*
+ * Modify pte bits for all ptes corresponding to the given physical address.
+ * We use `maskbits' rather than `clearbits' because we're always passing
+ * constants and the latter would require an extra inversion at run-time.
+ */
+void
+pmap_changebit(pa, setbits, maskbits)
 	register vm_offset_t pa;
-	int bit;
-	boolean_t setem;
+	int setbits, maskbits;
 {
 	register pv_entry_t pv;
 	register int *pte, npte;
@@ -1500,8 +1493,8 @@ pmap_changebit(pa, bit, setem)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
-		printf("pmap_changebit(%x, %x, %s)",
-		       pa, bit, setem ? "set" : "clear");
+		printf("pmap_changebit(%x, %x, %x)",
+		       pa, setbits, ~maskbits);
 #endif
 
 	if (!pmap_valid_page(pa))
@@ -1512,8 +1505,8 @@ pmap_changebit(pa, bit, setem)
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
-	if (!setem)
-		pmap_attributes[pmap_page_index(pa)] &= ~bit;
+	if (~maskbits)
+		pmap_attributes[pmap_page_index(pa)] &= maskbits;
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
 	 * If setting RO do we need to clear the VAC?
@@ -1531,7 +1524,8 @@ pmap_changebit(pa, bit, setem)
                         /*
                          * XXX don't write protect pager mappings
                          */
-                        if (bit == PG_RO) {
+                        if ((PG_RO && setbits == PG_RO) ||
+			    (PG_RW && maskbits == ~PG_RW)) {
                                 extern vm_offset_t pager_sva, pager_eva;
 
                                 if (va >= pager_sva && va < pager_eva)
@@ -1539,17 +1533,14 @@ pmap_changebit(pa, bit, setem)
                         }
 
 			pte = (int *) pmap_pte(pv->pv_pmap, va);
-			if (setem)
-				npte = *pte | bit;
-			else
-				npte = *pte & ~bit;
+			npte = (*pte & maskbits) | setbits;
 			if (*pte != npte)
 				*pte = npte;
 			va += NBPG;
 			pte++;
 
 			if (curproc && pv->pv_pmap == &curproc->p_vmspace->vm_pmap)
-				pmap_activate(pv->pv_pmap, (struct pcb *)curproc->p_addr);
+				tlbflush();
 		}
 #ifdef somethinglikethis
 		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
