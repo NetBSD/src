@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.40 1999/02/01 15:09:46 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.41 1999/02/02 07:10:45 marc Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -38,10 +38,6 @@
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
-
-#if NGRE > 0
-extern struct gre_softc gre_softc[NGRE];
-#endif
 
 #include <machine/stdarg.h>
 
