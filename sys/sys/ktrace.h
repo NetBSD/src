@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.16 1998/09/11 12:50:12 mycroft Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.17 1999/04/11 18:44:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -92,7 +92,7 @@ struct ktr_syscall {
 #define KTR_SYSRET	2
 struct ktr_sysret {
 	short	ktr_code;
-	short	ktr_eosys;
+	short	ktr_eosys;		/* XXX unused */
 	int	ktr_error;
 	int	ktr_retval;
 };
