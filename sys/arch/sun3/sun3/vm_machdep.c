@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 1997/04/04 20:49:02 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 1997/10/07 18:28:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,7 +55,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-/* #include <vm/vm_map.h> */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -292,134 +291,109 @@ cpu_coredump(p, vp, cred, chdr)
  * and size must be a multiple of CLSIZE.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(fptr, tptr, len)
+	caddr_t fptr, tptr;
+	size_t len;
 {
-	register vm_offset_t pa;
+	struct pmap *kpmap;
+	vm_offset_t fva, tva, pa;
 
+	fva = (vm_offset_t)fptr;
+	tva = (vm_offset_t)tptr;
 #ifdef DIAGNOSTIC
-	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
-		panic("pagemove 1");
+	if (len & PGOFSET || fva & PGOFSET || tva & PGOFSET)
+		panic("pagemove");
 #endif
-	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
-#ifdef DIAGNOSTIC
-		if (pa == 0)
-			panic("pagemove 2");
-#endif
-		/* this does the cache flush work itself */
-		pmap_remove(pmap_kernel(),
-			(vm_offset_t)from, (vm_offset_t)from + NBPG);
-		pmap_enter(pmap_kernel(),
-			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+
+	kpmap = vm_map_pmap(kernel_map);
+	while (len > 0) {
+		pa = pmap_extract(kpmap, fva);
+		if (pa != 0) {
+			/* this does the cache flush work itself */
+			pmap_remove(kpmap, fva, fva + NBPG);
+			pmap_enter(kpmap, tva, pa,
+			    VM_PROT_READ|VM_PROT_WRITE, 1);
+		}
+		fva += NBPG;
+		tva += NBPG;
+		len -= NBPG;
 	}
 }
 
 /*
- * Map an IO request into kernel virtual address space.
- * Requests fall into one of five catagories:
- *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the kernel_map
+ * Map a user-space I/O request into kernel virtual address space.
+ * NB: We have DVMA, and therefore need no separate phys_map.
  *
  * This routine has user context and can sleep
  * (called only by physio).
- *
- * XXX we allocate KVA space by using kmem_alloc_wait which we know
- * allocates space without backing physical memory.  This implementation
- * is a total crock, the multiple mappings of these physical pages should
- * be reflected in the higher-level VM structures to avoid problems.
  */
 void
-vmapbuf(bp, sz)
-	register struct buf *bp;
-	vm_size_t sz;
+vmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
 {
-	register vm_offset_t addr, kva, pa;
-	register vm_size_t size, off;
-	register int npf;
-	struct proc *p;
-	register struct vm_map *map;
+	struct pmap *upmap, *kpmap;
+	vm_offset_t uva;	/* User VA (map from) */
+	vm_offset_t kva;	/* Kernel VA (new to) */
+	vm_offset_t pa; 	/* physical address */
+	vm_size_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	p = bp->b_proc;
-	map = &p->p_vmspace->vm_map;
+
+	/*
+	 * XXX:  It might be better to round/trunc to a
+	 * segment boundary to avoid VAC problems! -gwr
+	 */
 	bp->b_saveaddr = bp->b_data;
-	addr = (vm_offset_t)bp->b_saveaddr;
-	off = addr & PGOFSET;
-	addr = trunc_page(addr);
-	size = round_page(bp->b_bcount + off);
-	kva = kmem_alloc_wait(kernel_map, size);
+	uva = m68k_trunc_page(bp->b_data);
+	off = (vm_offset_t)bp->b_data - uva;
+	len = m68k_round_page(off + len);
+	kva = kmem_alloc_wait(kernel_map, len);
 	bp->b_data = (caddr_t)(kva + off);
 
-	npf = btoc(size);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(map), (vm_offset_t)addr);
-		pa = trunc_page(pa);	/* page type in low bits? */
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(kernel_map);
+	do {
+		pa = pmap_extract(upmap, uva);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 #ifdef	HAVECACHE
-		/* flush write-back on old mappings */
+		/* Flush write-back cache on old mappings. */
 		if (cache_size)
-			cache_flush_page((vm_offset_t)addr);
+			cache_flush_page(uva);
 #endif
-		pmap_enter(pmap_kernel(), kva,
-			pa | PMAP_NC,
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		addr += NBPG;
-		kva  += NBPG;
-	}
+		/* Now map the page into kernel space. */
+		pmap_enter(kpmap, kva, pa | PMAP_NC,
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		uva += NBPG;
+		kva += NBPG;
+		len -= NBPG;
+	} while (len);
 }
 
 /*
  * Free the io mappings associated with this I/O operation.
- * The mappings in the I/O map (phys_map) were non-cached,
- * so there are no write-back modifications to flush.
- * Also note, kmem_free_wakeup will remove the mappings.
- *
- * This routine has user context and can sleep
- * (called only by physio).
+ * The temporary I/O mappings were non-cached, so there is
+ * no need to flush write-back cache here.
  */
 void
-vunmapbuf(bp, sz)
-	register struct buf *bp;
-	vm_size_t sz;
+vunmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
 {
-	register vm_offset_t kva, pgva;
-	register vm_size_t size, off;
+	vm_offset_t kva;
+	vm_size_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	kva = (vm_offset_t)bp->b_data;
-	off = kva & PGOFSET;
-	pgva = trunc_page(kva);
-	size = round_page(bp->b_bcount + off);
+	kva = m68k_trunc_page(bp->b_data);
+	off = (vm_offset_t)bp->b_data - kva;
+	len = m68k_round_page(off + len);
 
-	/* Actually remove mappings, which does cache flush. */
-	pmap_remove(pmap_kernel(), pgva, pgva + size);
-
-	/*
-	 * Now remove the map entry, which may also call
-	 * pmap_remove but that will do nothing since we
-	 * already removed the actual mappings.
-	 */
-	kmem_free_wakeup(kernel_map, pgva, size);
+	/* This will call pmap_remove() for us. */
+	kmem_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
