@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.1 1999/06/04 13:22:22 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.2 1999/06/05 14:33:44 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -196,7 +196,7 @@ ebus*	at pci?					# ebus devices
 
 # We also need:
 # bpp0 at sbus0					# parallel port
-#lpt*	at ebus?				# parallel port
+lpt*	at ebus?				# parallel port
 
 ## Mostek clock found on 4/300, sun4c, sun4m and sun4u systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
@@ -374,9 +374,9 @@ pseudo-device	bpfilter	8
 
 ## /dev/audio support (`audiocs' plus `audio')
 ##
-#audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
-#audiocs0	at ebus0                		# SUNW,CS4231
-#audio*		at audiocs0
+#audiocs*	at sbus? slot ? offset ?		# SUNW,CS4231
+#audiocs*	at ebus?                		# SUNW,CS4231
+#audio*		at audiocs?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
