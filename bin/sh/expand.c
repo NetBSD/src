@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.27 1997/03/01 19:33:29 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.28 1997/03/03 19:26:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.27 1997/03/01 19:33:29 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.28 1997/03/03 19:26:18 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -710,8 +710,6 @@ varisset(name, nulok)
 	char *name;
 	int nulok;
 {
-	char **ap;
-
 	if (*name == '!')
 		return backgndpid != -1;
 	else if (*name == '@' || *name == '*') {
@@ -719,19 +717,26 @@ varisset(name, nulok)
 			return 0;
 
 		if (nulok) {
-			for (ap = shellparam.p; *ap; ap++)
-				if (**ap != '\0')
+			char **av;
+
+			for (av = shellparam.p; *av; av++)
+				if (**av != '\0')
 					return 1;
 			return 0;
 		}
 	} else if (is_digit(*name)) {
+		char *ap;
 		int num = atoi(name);
 
-	    	for (ap = shellparam.p; --num > 0; ap++)
-			if (*ap == NULL)
-				return 0;
+		if (num > shellparam.nparam)
+			return 0;
 
-		if (nulok && (*ap == NULL || **ap == '\0'))
+		if (num == 0)
+			ap = arg0;
+		else
+			ap = shellparam.p[num - 1];
+
+		if (nulok && (ap == NULL || *ap == '\0'))
 			return 0;
 	}
 	return 1;
