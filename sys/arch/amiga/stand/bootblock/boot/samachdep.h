@@ -1,4 +1,4 @@
-/* $NetBSD: samachdep.h,v 1.4 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: samachdep.h,v 1.5 2001/12/17 05:41:13 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,11 +42,15 @@
 /* "hardware" init: */
 
 int configure(void *);
+#ifdef _PRIMARY_BOOT
 int pain(void *);
+#else
+int pain(void *, void *);
+#endif
 
 /* console functions not declared MI: */
 
-int consinit(void);
+int consinit(void *);
 void puts(char *);
 
 void xdinit(void *);
