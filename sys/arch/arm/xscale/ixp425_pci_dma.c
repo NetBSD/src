@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_dma.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_pci_dma.c,v 1.2 2003/10/08 14:55:04 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.2 2003/10/08 14:55:04 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,6 @@ ixp425_pci_dma_init(struct ixp425_softc *sc)
 	dmat->_nranges = 1;
 
 	dr->dr_sysbase = physical_start;
-	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(IXP425_PCI_MEM_VBASE +
-			 physical_start);
 	dr->dr_busbase = physical_start;
 	dr->dr_len = physical_end - physical_start;
 
