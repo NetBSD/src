@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.8 2003/04/16 13:35:02 wiz Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.9 2004/11/24 11:57:09 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -62,6 +62,13 @@ function returns the contents of the buffer number specified by
 for the given field.
 If the requested buffer number exceeds the
 number of buffers attached to the field then NULL will be returned.
+If the field option O_REFORMAT is enabled on the given field then
+storage will be allocated to hold the reformatted buffer.
+This storage must be release by calling
+.Xr free 3
+when it is no longer required.
+If the O_REFORMAT field option is not set then no extra storage is
+allocated.
 The field buffer may be set by calling
 .Fn set_field_buffer
 which will set the given buffer number to the contents of the string
