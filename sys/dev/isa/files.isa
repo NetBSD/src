@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.63 1998/07/21 17:36:06 drochner Exp $
+#	$NetBSD: files.isa,v 1.64 1998/07/23 16:39:24 drochner Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -284,7 +284,7 @@ device	ym: audio, isadma, ad1848, auconv
 file	dev/isa/ym.c			ym needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
-# Use the "flags" keyword in a config file to specify an extra DMA
+# Use the "drq2" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
 device	gus: audio, isadma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
