@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.h,v 1.6 1994/10/09 08:19:44 mycroft Exp $	*/
+/*	$NetBSD: db_watch.h,v 1.7 1994/10/09 08:30:17 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,8 +31,6 @@
 
 #ifndef	_DDB_DB_WATCH_
 #define	_DDB_DB_WATCH_
-
-#include <ddb/db_break.h>
 
 /*
  * Watchpoint.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.6 1994/10/09 08:19:34 mycroft Exp $	*/
+/*	$NetBSD: db_command.h,v 1.7 1994/10/09 08:30:00 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,21 +32,17 @@
 /*
  * Command loop declarations.
  */
-#include <sys/param.h>
-#include <sys/proc.h>
-#include <machine/db_machdep.h>
-
 void db_command_loop __P((void));
 void db_skip_to_eol __P((void));
 
 void db_error __P((char *));	/* report error */
 
-extern db_addr_t	db_dot;		/* current location */
-extern db_addr_t	db_last_addr;	/* last explicit address typed */
-extern db_addr_t	db_prev;	/* last address examined
-					   or written */
-extern db_addr_t	db_next;	/* next address to be examined
-					   or written */
+db_addr_t	db_dot;		/* current location */
+db_addr_t	db_last_addr;	/* last explicit address typed */
+db_addr_t	db_prev;	/* last address examined
+				   or written */
+db_addr_t	db_next;	/* next address to be examined
+				   or written */
 
 /*
  * Command table
