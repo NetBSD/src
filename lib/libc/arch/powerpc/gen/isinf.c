@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.4 1998/11/14 19:31:02 christos Exp $	*/
+/*	$NetBSD: isinf.c,v 1.5 1999/08/29 18:08:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinf.c,v 1.4 1998/11/14 19:31:02 christos Exp $");
+__RCSID("$NetBSD: isinf.c,v 1.5 1999/08/29 18:08:31 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,5 +64,5 @@ isinf(d)
 	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
-	    p->dbl_frach == 0 && p->dbl_fracl == 0);
+	    (p->dbl_frach == 0 && p->dbl_fracl == 0));
 }
