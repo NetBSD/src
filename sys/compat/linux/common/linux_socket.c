@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.37 2002/03/29 20:49:40 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.38 2002/04/08 14:00:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.37 2002/03/29 20:49:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.38 2002/04/08 14:00:31 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1080,10 +1080,11 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 			error = EINVAL;
 			goto out;
 		}
-	} else if (bdom == AF_INET) {
+	} else
+#endif 
+	if (bdom == AF_INET) {
 		alloclen = sizeof(struct sockaddr_in);
 	}
-#endif
 
 	sa = (struct sockaddr *) kosa;
 	sa->sa_family = bdom;
