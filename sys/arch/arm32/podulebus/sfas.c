@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.19 2001/04/25 17:53:12 bouyer Exp $	*/
+/*	$NetBSD: sfas.c,v 1.20 2001/06/12 15:17:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -565,7 +565,7 @@ sfas_ixfer(dev, polling)
 			sfasiwait(dev);
 		}
 
-/* Update buffer pointers to reflect the sent/recieved data. */
+/* Update buffer pointers to reflect the sent/received data. */
 	dev->sc_buf = buf;
 	dev->sc_len = len;
 
@@ -1013,7 +1013,7 @@ sfas_midaction(dev, rp, nexus)
 
 		case SFAS_NS_DISCONNECTING:
 			/*
-			 * We have recieved a DISCONNECT message, so we are
+			 * We have received a DISCONNECT message, so we are
 			 * doing a normal disconnection.
 			 */
 			nexus->state = SFAS_NS_DISCONNECTED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.4 2001/06/12 15:17:12 wiz Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -14,7 +14,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.4 2001/06/12 15:17:12 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -28,7 +28,7 @@ __RCSID("$NetBSD: ctl_transact.c,v 1.3 1997/10/20 00:37:16 lukem Exp $");
 
 /*
  * SOCKDGRAM is unreliable, so we must repeat messages if we have
- * not recieved an acknowledgement within a reasonable amount
+ * not received an acknowledgement within a reasonable amount
  * of time
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.18 2001/06/02 16:17:09 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.19 2001/06/12 15:17:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ ipflow_fastforward(
 		return 0;
 
 	/*
-	 * Was packet recieved as a link-level multicast or broadcast?
+	 * Was packet received as a link-level multicast or broadcast?
 	 * If so, don't try to fast forward..
 	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
