@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.27 2003/03/14 18:32:42 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.28 2003/03/14 18:43:52 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
@@ -1183,7 +1183,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 	int optlen = 0;
 
 	for (; limit > 0; limit -= optlen) {
-		if (limit < sizeof(struct nd_opt_hdr *)) {
+		if (limit < sizeof(struct nd_opt_hdr)) {
 			syslog(LOG_INFO, "<%s> short option header", __func__);
 			goto bad;
 		}
