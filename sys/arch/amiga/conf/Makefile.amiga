@@ -24,7 +24,7 @@
 AS=	as ${DEBUG}
 CC=	gcc ${DEBUG}
 CPP=	/lib/cpp -traditional
-LD=	ld
+LD=	ld.old
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/usr.lib/libc/csu/amiga/gmon.ex
 
@@ -32,7 +32,7 @@ GPROF.EX=/usr/src/usr.lib/libc/csu/amiga/gmon.ex
 S=	../../../..
 AMIGA=	../..
 
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Damiga -DREFBIT
 CFLAGS=	-O -mc68020 -m68881 ${COPTS}
 
@@ -89,7 +89,7 @@ SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 vers.o:	newvers
 
 newvers:
-	sh $S/conf/newvers.sh
+	sh $S/conf/newvers.sh ${KERN_IDENT}
 	${CC} $(CFLAGS) -c vers.c
 
 clean:
