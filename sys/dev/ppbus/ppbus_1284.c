@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.3 2004/01/22 01:17:03 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -33,8 +33,8 @@
 
 #include "opt_ppbus_1284.h"
 
-#include <sys/malloc.h>
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <dev/ppbus/ppbus_conf.h>
