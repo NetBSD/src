@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	8.2 (Berkeley) 10/22/93";*/
-static char *rcsid = "$Id: expand.c,v 1.15 1995/02/28 23:09:43 christos Exp $";
+static char *rcsid = "$Id: expand.c,v 1.16 1995/02/28 23:27:24 christos Exp $";
 #endif /* not lint */
 
 /*
@@ -857,7 +857,7 @@ ifsbreakup(string, arglist)
 				if (*p == CTLESC)
 					p++;
 				if (strchr(ifs, *p++)) {
-					if (q > start || ifsspc) {
+					if (q > start || !ifsspc) {
 						*q = '\0';
 						sp = (struct strlist *)stalloc(sizeof *sp);
 						sp->text = start;
