@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.16.2.4 2004/09/18 14:45:56 skrll Exp $ */
+/* $NetBSD: atppc.c,v 1.16.2.5 2004/09/21 13:27:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.16.2.4 2004/09/18 14:45:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.16.2.5 2004/09/21 13:27:53 skrll Exp $");
 
 #include "opt_atppc.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.10.2.3 2004/09/18 14:44:05 skrll Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.10.2.4 2004/09/21 13:25:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.3 2004/09/18 14:44:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.4 2004/09/21 13:25:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ int sunos_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 int sunos_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 
 int
-exec_sunos_aout_makecmds(p, epp)
-	struct proc *p;
+exec_sunos_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct sunos_exec *sunmag = epp->ep_hdr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.8.2.2 2004/09/18 14:43:29 skrll Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.8.2.3 2004/09/21 13:25:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.8.2.2 2004/09/18 14:43:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.8.2.3 2004/09/21 13:25:18 skrll Exp $");
 
 #include <sys/systm.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.2.2 2004/09/18 14:41:03 skrll Exp $
+#	$NetBSD: Makefile,v 1.18.2.3 2004/09/21 13:22:39 skrll Exp $
 
 .if ${MACHINE} == sparc
 SUBDIR= boot bootxx bootblk ofwboot binstall

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.4.2.3 2004/09/18 14:43:05 skrll Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.4.2.4 2004/09/21 13:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.4.2.3 2004/09/18 14:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.4.2.4 2004/09/21 13:24:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ darwin_sys_getattrlist(l, v, retval)
 	fl = CHECK_ALT_FL_EXISTS;
 	if (follow == 0)
 		fl |= CHECK_ALT_FL_SYMLINK;
-	(void)emul_find(p, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
+	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
 
 	/* 
 	 * Get the informations for path: file related info
@@ -199,12 +199,12 @@ darwin_sys_getattrlist(l, v, retval)
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0) 
 		goto out2;	
 
 	vp = nd.ni_vp;
-	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, p)) != 0)
+	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, l)) != 0)
 		goto out3;
 
 	/* 

@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.16.10.2 2004/09/18 14:41:58 skrll Exp $ */
+/* $NetBSD: bootxx.c,v 1.16.10.3 2004/09/21 13:23:40 skrll Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.

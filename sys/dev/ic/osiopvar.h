@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.3.10.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.3.10.3 2004/09/21 13:28:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.

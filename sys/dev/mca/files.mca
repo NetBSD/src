@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.18.10.2 2004/09/18 14:48:19 skrll Exp $
+# $NetBSD: files.mca,v 1.18.10.3 2004/09/21 13:30:17 skrll Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.

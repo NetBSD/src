@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.9.6.2 2004/09/18 14:47:47 skrll Exp $ */
+/* $NetBSD: pcppi.c,v 1.9.6.3 2004/09/21 13:29:47 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9.6.2 2004/09/18 14:47:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9.6.3 2004/09/21 13:29:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

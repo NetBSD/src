@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.9.6.2 2004/09/18 14:47:47 skrll Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.9.6.3 2004/09/21 13:29:49 skrll Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.9.6.2 2004/09/18 14:47:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.9.6.3 2004/09/21 13:29:49 skrll Exp $");
 
 #undef	TCICISADEBUG
 

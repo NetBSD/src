@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.9.6.2 2004/09/18 14:42:06 skrll Exp $	*/
+/*	$NetBSD: ka650.h,v 1.9.6.3 2004/09/21 13:23:43 skrll Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.79.2.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: cache.c,v 1.79.2.3 2004/09/21 13:22:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.79.2.2 2004/09/18 14:40:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.79.2.3 2004/09/21 13:22:27 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"

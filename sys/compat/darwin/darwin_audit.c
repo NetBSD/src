@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_audit.c,v 1.1.2.3 2004/09/18 14:43:05 skrll Exp $ */
+/*	$NetBSD: darwin_audit.c,v 1.1.2.4 2004/09/21 13:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_audit.c,v 1.1.2.3 2004/09/18 14:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_audit.c,v 1.1.2.4 2004/09/21 13:24:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

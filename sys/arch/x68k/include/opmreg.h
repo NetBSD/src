@@ -1,4 +1,4 @@
-/*	$NetBSD: opmreg.h,v 1.1.2.3 2004/09/18 14:42:28 skrll Exp $	*/
+/*	$NetBSD: opmreg.h,v 1.1.2.4 2004/09/21 13:24:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.1.4.3 2004/09/18 14:45:47 skrll Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.1.4.4 2004/09/21 13:27:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_ecb.c,v 1.1.4.3 2004/09/18 14:44:25 skrll Exp $	*/
+/*	$NetBSD: bf_ecb.c,v 1.1.4.4 2004/09/21 13:26:15 skrll Exp $	*/
 
 /* crypto/bf/bf_ecb.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_ecb.c,v 1.1.4.3 2004/09/18 14:44:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_ecb.c,v 1.1.4.4 2004/09/21 13:26:15 skrll Exp $");
 
 #include <sys/types.h>
 

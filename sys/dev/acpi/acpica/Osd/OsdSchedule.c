@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.8.2.3 2004/09/18 14:44:43 skrll Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.8.2.4 2004/09/21 13:26:40 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.2.3 2004/09/18 14:44:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.2.4 2004/09/21 13:26:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -105,7 +105,7 @@ AcpiOsGetThreadId(void)
 		return 1;
 
 	/* XXX Bleh, we're not allowed to return 0 (how stupid!) */
-	return (curproc->p_pid + 2);
+	return (curlwp->l_proc->p_pid + 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.36.2.4 2004/09/18 14:46:01 skrll Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.36.2.5 2004/09/21 13:28:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.

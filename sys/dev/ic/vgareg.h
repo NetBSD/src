@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.6.2.2 2004/09/18 14:46:01 skrll Exp $ */
+/* $NetBSD: vgareg.h,v 1.6.2.3 2004/09/21 13:28:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1998

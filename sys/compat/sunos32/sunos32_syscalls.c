@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscalls.c,v 1.11.2.2 2004/09/18 14:44:05 skrll Exp $ */
+/* $NetBSD: sunos32_syscalls.c,v 1.11.2.3 2004/09/21 13:26:00 skrll Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_syscalls.c,v 1.11.2.2 2004/09/18 14:44:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_syscalls.c,v 1.11.2.3 2004/09/21 13:26:00 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)

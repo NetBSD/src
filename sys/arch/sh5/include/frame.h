@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6.6.2 2004/09/18 14:40:08 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.6.6.3 2004/09/21 13:21:37 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

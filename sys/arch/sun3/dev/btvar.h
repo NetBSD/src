@@ -1,4 +1,4 @@
-/*	$NetBSD: btvar.h,v 1.1.68.2 2004/09/18 14:41:39 skrll Exp $ */
+/*	$NetBSD: btvar.h,v 1.1.68.3 2004/09/21 13:23:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1993

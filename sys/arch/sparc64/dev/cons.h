@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.3.28.2 2004/09/18 14:41:04 skrll Exp $	*/
+/*	$NetBSD: cons.h,v 1.3.28.3 2004/09/21 13:22:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.5.6.2 2004/09/18 14:48:18 skrll Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.5.6.3 2004/09/21 13:30:16 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.5.6.2 2004/09/18 14:48:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.5.6.3 2004/09/21 13:30:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: inphyreg.h,v 1.2.36.2 2004/09/18 14:48:44 skrll Exp $	*/
+/*	$NetBSD: inphyreg.h,v 1.2.36.3 2004/09/21 13:30:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

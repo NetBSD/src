@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.24.2.2 2004/09/18 14:43:58 skrll Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.24.2.3 2004/09/21 13:25:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

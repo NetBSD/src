@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.60.2.2 2004/09/18 14:45:58 skrll Exp $ */
+/* $NetBSD: ispvar.h,v 1.60.2.3 2004/09/21 13:28:03 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *

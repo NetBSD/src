@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.5.6.2 2004/09/18 14:39:54 skrll Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.5.6.3 2004/09/21 13:21:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

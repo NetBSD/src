@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.52.2.1 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.52.2.2 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.52.2.1 2004/09/18 14:47:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.52.2.2 2004/09/21 13:29:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dzreg.h,v 1.2.2.2 2004/09/18 14:45:39 skrll Exp $ */
+/*	$NetBSD: dzreg.h,v 1.2.2.3 2004/09/21 13:27:36 skrll Exp $ */
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *

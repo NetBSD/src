@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.10.2.2 2004/09/18 14:40:02 skrll Exp $
+#	$NetBSD: Makefile.sh5,v 1.10.2.3 2004/09/21 13:21:37 skrll Exp $
 
 # Makefile for NetBSD/sh5
 #

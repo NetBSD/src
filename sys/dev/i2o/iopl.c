@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.11.6.2 2004/09/18 14:45:47 skrll Exp $	*/
+/*	$NetBSD: iopl.c,v 1.11.6.3 2004/09/21 13:27:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.2 2004/09/18 14:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.3 2004/09/21 13:27:46 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"

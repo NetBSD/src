@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.19.10.2 2004/09/18 14:43:44 skrll Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.19.10.3 2004/09/21 13:25:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.

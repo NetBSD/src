@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.15.6.2 2004/09/18 14:41:28 skrll Exp $
+# $NetBSD: Makefile.sun2,v 1.15.6.3 2004/09/21 13:23:07 skrll Exp $
 
 # Makefile for NetBSD
 #

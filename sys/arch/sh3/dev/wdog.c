@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.12.6.2 2004/09/18 14:39:54 skrll Exp $ */
+/* $NetBSD: wdog.c,v 1.12.6.3 2004/09/21 13:21:25 skrll Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.12.6.2 2004/09/18 14:39:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.12.6.3 2004/09/21 13:21:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

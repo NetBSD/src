@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.74.2.2 2004/09/18 14:47:47 skrll Exp $	*/
+/*	$NetBSD: sb.c,v 1.74.2.3 2004/09/21 13:29:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.2 2004/09/18 14:47:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.3 2004/09/21 13:29:48 skrll Exp $");
 
 #include "midi.h"
 

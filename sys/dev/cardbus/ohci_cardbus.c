@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.15.2.2 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.15.2.3 2004/09/21 13:27:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.15.2.2 2004/09/18 14:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.15.2.3 2004/09/21 13:27:26 skrll Exp $");
 
 #include "ehci_cardbus.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4reg.h,v 1.5.48.2 2004/09/18 14:41:39 skrll Exp $	*/
+/*	$NetBSD: cg4reg.h,v 1.5.48.3 2004/09/21 13:23:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

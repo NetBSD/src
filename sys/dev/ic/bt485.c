@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.9.6.2 2004/09/18 14:45:57 skrll Exp $ */
+/* $NetBSD: bt485.c,v 1.9.6.3 2004/09/21 13:27:54 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.9.6.2 2004/09/18 14:45:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.9.6.3 2004/09/21 13:27:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

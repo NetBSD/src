@@ -1,4 +1,4 @@
-/* $NetBSD: lcgreg.h,v 1.1.30.2 2004/09/18 14:42:06 skrll Exp $ */
+/* $NetBSD: lcgreg.h,v 1.1.30.3 2004/09/21 13:23:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

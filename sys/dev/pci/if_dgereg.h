@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dgereg.h,v 1.1.4.3 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: if_dgereg.h,v 1.1.4.4 2004/09/21 13:31:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.

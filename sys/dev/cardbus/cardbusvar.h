@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.24.16.3 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.24.16.4 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000

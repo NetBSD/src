@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.1.20.2 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: memc.c,v 1.1.20.3 2004/09/21 13:30:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.1.20.2 2004/09/18 14:49:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.1.20.3 2004/09/21 13:30:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

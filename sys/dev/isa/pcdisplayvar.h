@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.1.48.2 2004/09/18 14:47:47 skrll Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.1.48.3 2004/09/21 13:29:47 skrll Exp $ */
 
 /*
  * Copyright (c) 1998

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.13.6.2 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.13.6.3 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.13.6.2 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.13.6.3 2004/09/21 13:31:04 skrll Exp $");
 
 #include "opt_i2o.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael.h,v 1.2.28.2 2004/09/18 14:44:26 skrll Exp $	*/
+/*	$NetBSD: rijndael.h,v 1.2.28.3 2004/09/21 13:26:23 skrll Exp $	*/
 /*	$KAME: rijndael.h,v 1.3 2003/07/15 10:47:16 itojun Exp $	*/
 
 /**

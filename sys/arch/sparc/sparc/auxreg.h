@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.8.28.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: auxreg.h,v 1.8.28.3 2004/09/21 13:22:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

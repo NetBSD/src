@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.7.18.2 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.7.18.3 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.

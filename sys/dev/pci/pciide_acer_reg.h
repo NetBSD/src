@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acer_reg.h,v 1.6.10.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: pciide_acer_reg.h,v 1.6.10.3 2004/09/21 13:31:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.

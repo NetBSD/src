@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.26.2.2 2004/09/18 14:42:24 skrll Exp $	*/
+/*	$NetBSD: grf.c,v 1.26.2.3 2004/09/21 13:24:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.26.2.2 2004/09/18 14:42:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.26.2.3 2004/09/21 13:24:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

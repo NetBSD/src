@@ -1,0 +1,12 @@
+#	$NetBSD: files.aout,v 1.1.42.2 2004/09/21 13:24:56 skrll Exp $
+#
+# Config file description for machine-independent SVR4 compat code.
+# Included by ports that need it.
+
+# ports should define any machine-specific files they need in their
+# own file lists.
+
+file	compat/aout/aout_exec.c		compat_aout
+file	compat/aout/aout_misc.c		compat_aout
+file	compat/aout/aout_syscalls.c	compat_aout
+file	compat/aout/aout_sysent.c	compat_aout

@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.15.2.2 2004/09/18 14:44:28 skrll Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.15.2.3 2004/09/21 13:26:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.129.2.4 2004/09/18 14:47:46 skrll Exp $
+#	$NetBSD: files.isa,v 1.129.2.5 2004/09/21 13:29:43 skrll Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be

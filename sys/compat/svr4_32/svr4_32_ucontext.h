@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ucontext.h,v 1.2.2.2 2004/09/18 14:44:18 skrll Exp $	 */
+/*	$NetBSD: svr4_32_ucontext.h,v 1.2.2.3 2004/09/21 13:26:13 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.c,v 1.5.16.2 2004/09/18 14:44:26 skrll Exp $	*/
+/*	$NetBSD: cast128.c,v 1.5.16.3 2004/09/21 13:26:23 skrll Exp $	*/
 /*      $OpenBSD: cast.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
 
 /*
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.5.16.2 2004/09/18 14:44:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.5.16.3 2004/09/21 13:26:23 skrll Exp $");
 
 #include <sys/types.h>
 #include <crypto/cast128/cast128.h>

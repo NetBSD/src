@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmath.c,v 1.5.2.2 2004/09/18 14:44:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utmath.c,v 1.5.2.3 2004/09/21 13:26:48 skrll Exp $");
 
 #define __UTMATH_C__
 

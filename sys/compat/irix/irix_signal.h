@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.12.6.2 2004/09/18 14:43:26 skrll Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.12.6.3 2004/09/21 13:25:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.

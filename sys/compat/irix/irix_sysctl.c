@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysctl.c,v 1.1.8.2 2004/09/18 14:43:26 skrll Exp $ */
+/*	$NetBSD: irix_sysctl.c,v 1.1.8.3 2004/09/21 13:25:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.1.8.2 2004/09/18 14:43:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.1.8.3 2004/09/21 13:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>

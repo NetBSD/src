@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_signal.h,v 1.2.6.2 2004/09/18 14:43:15 skrll Exp $ */
+/*	$NetBSD: freebsd_signal.h,v 1.2.6.3 2004/09/21 13:25:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Atsushi Onoe

@@ -1,4 +1,4 @@
-/*	$NetBSD: edcvar.h,v 1.4.16.2 2004/09/18 14:48:19 skrll Exp $	*/
+/*	$NetBSD: edcvar.h,v 1.4.16.3 2004/09/21 13:30:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

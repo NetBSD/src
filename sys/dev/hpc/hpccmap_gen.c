@@ -1,4 +1,4 @@
-/*	$NetBSD: hpccmap_gen.c,v 1.3.22.2 2004/09/18 14:45:47 skrll Exp $	*/
+/*	$NetBSD: hpccmap_gen.c,v 1.3.22.3 2004/09/21 13:27:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hpccmap_gen.c,v 1.3.22.2 2004/09/18 14:45:47 skrll Exp $");
+__RCSID("$NetBSD: hpccmap_gen.c,v 1.3.22.3 2004/09/21 13:27:37 skrll Exp $");
 
 typedef unsigned char u_char;
 typedef void (*output_func)(void*, int, u_char,  u_char, u_char);

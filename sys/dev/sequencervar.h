@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.6.28.2 2004/09/18 14:44:28 skrll Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.6.28.3 2004/09/21 13:26:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicreg.h,v 1.3.34.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: tropicreg.h,v 1.3.34.3 2004/09/21 13:28:08 skrll Exp $	*/
 
 /* 
  * Mach Operating System

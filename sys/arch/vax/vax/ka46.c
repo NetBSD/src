@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.17.24.2 2004/09/18 14:42:13 skrll Exp $ */
+/*	$NetBSD: ka46.c,v 1.17.24.3 2004/09/21 13:23:57 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.17.24.2 2004/09/18 14:42:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.17.24.3 2004/09/21 13:23:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

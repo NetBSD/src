@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.542.2.4 2004/09/18 14:49:04 skrll Exp $
+$NetBSD: pcidevs,v 1.542.2.5 2004/09/21 13:31:05 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5.2.3 2004/09/18 14:42:43 skrll Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.2.4 2004/09/21 13:24:36 skrll Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.2.3 2004/09/18 14:42:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.2.4 2004/09/21 13:24:36 skrll Exp $");
 
 #include "opt_xen.h"
 

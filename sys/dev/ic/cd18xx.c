@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.8.2.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.8.2.3 2004/09/21 13:27:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.8.2.2 2004/09/18 14:45:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.8.2.3 2004/09/21 13:27:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.1.20.2 2004/09/18 14:40:17 skrll Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.1.20.3 2004/09/21 13:21:49 skrll Exp $     */
 
 /*
  * Copyright 1997

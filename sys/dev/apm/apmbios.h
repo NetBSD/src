@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.h,v 1.1.8.2 2004/09/18 14:45:25 skrll Exp $	*/
+/*	$NetBSD: apmbios.h,v 1.1.8.3 2004/09/21 13:27:23 skrll Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.29.2.2 2004/09/18 14:42:22 skrll Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.29.2.3 2004/09/21 13:24:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.29.2.2 2004/09/18 14:42:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.29.2.3 2004/09/21 13:24:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

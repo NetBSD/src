@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.8.2.4 2004/09/18 14:44:18 skrll Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.8.2.5 2004/09/21 13:26:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.4 2004/09/18 14:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.5 2004/09/21 13:26:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,14 +75,15 @@ int	exec_vax1k_prep_anymagic __P((struct proc *p, struct exec_package *epp,
  */
 
 int
-exec_vax1k_makecmds(p, epp)
-	struct proc *p;
+exec_vax1k_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	u_long midmag, magic;
 	u_short mid;
 	int error;
 	struct exec *execp = epp->ep_hdr;
+	struct proc *p = l->l_proc;
 
 	if (epp->ep_hdrvalid < sizeof(struct exec))
 		return ENOEXEC;

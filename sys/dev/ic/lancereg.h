@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.9.6.2 2004/09/18 14:45:58 skrll Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.9.6.3 2004/09/21 13:28:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.

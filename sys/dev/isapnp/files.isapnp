@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.33.6.2 2004/09/18 14:48:18 skrll Exp $
+#	$NetBSD: files.isapnp,v 1.33.6.3 2004/09/21 13:30:16 skrll Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.

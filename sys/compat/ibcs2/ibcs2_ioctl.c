@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.30.2.3 2004/09/18 14:43:16 skrll Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.30.2.4 2004/09/21 13:25:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.30.2.3 2004/09/18 14:43:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.30.2.4 2004/09/21 13:25:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ ibcs2_sys_ioctl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl)(struct file *, u_long, void *, struct proc *);
+	int (*ctl)(struct file *, u_long, void *, struct lwp *);
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL) {
@@ -370,7 +370,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		struct ibcs2_termios sts;
 		struct ibcs2_termio st;
 	
-		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, l)) != 0)
 			return error;
 	
 		btios2stios (&bts, &sts);
@@ -404,7 +404,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		}
 
 		/* get full BSD termios so we don't lose information */
-		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0) {
+		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, l)) != 0) {
 			DPRINTF(("ibcs2_ioctl(%d): TCSET ctl failed fd %d ",
 				 p->p_pid, SCARG(uap, fd)));
 			return error;
@@ -419,7 +419,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		stios2btios(&sts, &bts);
 
 		return (*ctl)(fp, SCARG(uap, cmd) - IBCS2_TCSETA + TIOCSETA,
-			      (caddr_t)&bts, p);
+			      (caddr_t)&bts, l);
 	    }
 
 	case IBCS2_XCSETA:
@@ -435,7 +435,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		}
 		stios2btios (&sts, &bts);
 		return (*ctl)(fp, SCARG(uap, cmd) - IBCS2_XCSETA + TIOCSETA,
-			      (caddr_t)&bts, p);
+			      (caddr_t)&bts, l);
 	    }
 
 	case IBCS2_OXCSETA:
@@ -451,7 +451,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		}
 		stios2btios (&sts, &bts);
 		return (*ctl)(fp, SCARG(uap, cmd) - IBCS2_OXCSETA + TIOCSETA,
-			      (caddr_t)&bts, p);
+			      (caddr_t)&bts, l);
 	    }
 
 	case IBCS2_TCSBRK:
@@ -460,14 +460,14 @@ ibcs2_sys_ioctl(l, v, retval)
 		t = (int) SCARG(uap, data);
 		t = (t ? t : 1) * hz * 4;
 		t /= 10;
-		if ((error = (*ctl)(fp, TIOCSBRK, (caddr_t)0, p)))
+		if ((error = (*ctl)(fp, TIOCSBRK, (caddr_t)0, l)))
 			return error;
 		error = tsleep((caddr_t)&t, PZERO | PCATCH, "ibcs2_tcsbrk", t);
 		if (error == EINTR || error == ERESTART) {
-			(*ctl)(fp, TIOCCBRK, (caddr_t)0, p);
+			(*ctl)(fp, TIOCCBRK, (caddr_t)0, l);
 			return EINTR;
 		} else
-			return (*ctl)(fp, TIOCCBRK, (caddr_t)0, p);
+			return (*ctl)(fp, TIOCCBRK, (caddr_t)0, l);
 	    }
 
 	case IBCS2_TCXONC:
@@ -478,9 +478,9 @@ ibcs2_sys_ioctl(l, v, retval)
 			DPRINTF(("ibcs2_ioctl(%d): TCXONC ", p->p_pid));
 			return ENOSYS;
 		case 2:
-			return (*ctl)(fp, TIOCSTOP, (caddr_t)0, p);
+			return (*ctl)(fp, TIOCSTOP, (caddr_t)0, l);
 		case 3:
-			return (*ctl)(fp, TIOCSTART, (caddr_t)1, p);
+			return (*ctl)(fp, TIOCSTART, (caddr_t)1, l);
 		default:
 			return EINVAL;
 		}
@@ -503,7 +503,7 @@ ibcs2_sys_ioctl(l, v, retval)
 		default:
 			return EINVAL;
 		}
-		return (*ctl)(fp, TIOCFLUSH, (caddr_t)&arg, p);
+		return (*ctl)(fp, TIOCFLUSH, (caddr_t)&arg, l);
 	    }
 
 	case IBCS2_TIOCGWINSZ:
@@ -546,7 +546,7 @@ ibcs2_sys_ioctl(l, v, retval)
 			    sizeof(arg))) != 0)
 				return error;
 
-		    	return (*ctl)(fp, FIONBIO, (caddr_t)&arg, p);
+		    	return (*ctl)(fp, FIONBIO, (caddr_t)&arg, l);
 		}
 
 	case IBCS2_I_NREAD:     /* STREAMS */
@@ -588,7 +588,7 @@ ibcs2_sys_gtty(l, v, retval)
 		return EBADF;
 	}
 
-	error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETP, (caddr_t)&tb, p);
+	error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETP, (caddr_t)&tb, l);
 	if (error)
 		return error;
 
