@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.9 1998/03/30 02:31:44 mrg Exp $	*/
+/*	$NetBSD: courier.c,v 1.10 1998/07/12 09:14:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: courier.c,v 1.9 1998/03/30 02:31:44 mrg Exp $");
+__RCSID("$NetBSD: courier.c,v 1.10 1998/07/12 09:14:20 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -125,7 +125,8 @@ badsynch:
 void
 cour_disconnect()
 {
-	 /* first hang up the modem*/
+
+	/* first hang up the modem*/
 	ioctl(FD, TIOCCDTR, 0);
 	sleep(1);
 	ioctl(FD, TIOCSDTR, 0);
@@ -136,6 +137,7 @@ cour_disconnect()
 void
 cour_abort()
 {
+
 	cour_write(FD, "\r", 1);	/* send anything to abort the call */
 	cour_disconnect();
 }
@@ -144,6 +146,7 @@ static void
 sigALRM(dummy)
 	int dummy;
 {
+
 	printf("\07timeout waiting for reply\n");
 	timeout = 1;
 	longjmp(timeoutbuf, 1);
@@ -218,10 +221,9 @@ cour_connect()
 		return (0);
 	f = signal(SIGALRM, sigALRM);
 again:
-	nc = 0; nl = sizeof(dialer_buf)-1;
 	memset(dialer_buf, 0, sizeof(dialer_buf));
 	timeout = 0;
-	for (nc = 0, nl = sizeof(dialer_buf)-1 ; nl > 0 ; nc++, nl--) {
+	for (nc = 0, nl = sizeof(dialer_buf) - 1 ; nl > 0 ; nc++, nl--) {
 		if (setjmp(timeoutbuf))
 			break;
 		alarm(number(value(DIALTIMEOUT)));
@@ -326,6 +328,7 @@ cour_write(fd, cp, n)
 	char *cp;
 	int n;
 {
+
 #ifdef notdef
 	if (boolean(value(VERBOSE)))
 		write(1, cp, n);
@@ -399,5 +402,6 @@ static void
 cour_napx(dummy)
 	int dummy;
 {
+
         ringring = 1;
 }
