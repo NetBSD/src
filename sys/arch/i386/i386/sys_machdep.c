@@ -1,6 +1,7 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 1994/11/05 03:17:33 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 1995/05/01 10:43:01 mycroft Exp $	*/
 
 /*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -152,7 +153,7 @@ i386_get_ldt(p, args, retval)
 	struct i386_get_ldt_args ua, *uap;
 
 	if ((error = copyin(args, &ua, sizeof(struct i386_get_ldt_args))) < 0)
-		return(error);
+		return (error);
 
 	uap = &ua;
 
@@ -162,27 +163,27 @@ i386_get_ldt(p, args, retval)
 #endif
 
 	if (uap->start < 0 || uap->num < 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	if (pcb->pcb_ldt) {
 		nldt = pcb->pcb_ldt_len;
 		lp = (union descriptor *)pcb->pcb_ldt;
 	} else {
-		nldt = sizeof(ldt)/sizeof(ldt[0]);
+		nldt = NLDT;
 		lp = ldt;
 	}
 	if (uap->start > nldt) {
 		splx(s);
-		return(EINVAL);
+		return (EINVAL);
 	}
 	lp += uap->start;
 	num = min(uap->num, nldt - uap->start);
 
 	if (error = copyout(lp, uap->desc, num * sizeof(union descriptor)))
-		return(error);
+		return (error);
 
 	*retval = num;
-	return(0);
+	return (0);
 }
 
 struct i386_set_ldt_args {
@@ -204,7 +205,7 @@ i386_set_ldt(p, args, retval)
 	struct i386_set_ldt_args ua, *uap;
 
 	if (error = copyin(args, &ua, sizeof(struct i386_set_ldt_args)))
-		return(error);
+		return (error);
 
 	uap = &ua;
 
@@ -214,10 +215,10 @@ i386_set_ldt(p, args, retval)
 #endif
 
 	if (uap->start < 0 || uap->num < 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	if (uap->start > 8192 || (uap->start + uap->num) > 8192)
-		return(EINVAL);
+		return (EINVAL);
 
 	/* allocate user ldt */
 	if (!pcb->pcb_ldt || (uap->start + uap->num) > pcb->pcb_ldt_len) {
@@ -231,7 +232,7 @@ i386_set_ldt(p, args, retval)
 		len = pcb->pcb_ldt_len * sizeof(union descriptor);
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
 		if (!pcb->pcb_ldt) {
-			oldlen = sizeof(ldt);
+			oldlen = NLDT * sizeof(union descriptor);
 			bcopy(ldt, new_ldt, oldlen);
 		} else {
 			oldlen = pcb->pcb_ldt_len * sizeof(union descriptor);
@@ -255,15 +256,15 @@ i386_set_ldt(p, args, retval)
 		dp = &uap->desc[i];
 		error = copyin(dp, &desc, sizeof(union descriptor));
 		if (error)
-			return(error);
+			return (error);
 
 		/* Only user (ring-3) descriptors */
 		if (desc.sd.sd_dpl != SEL_UPL)
-			return(EACCES);
+			return (EACCES);
 
 		/* Must be "present" */
 		if (desc.sd.sd_p == 0)
-			return(EACCES);
+			return (EACCES);
 
 		switch (desc.sd.sd_type) {
 		case SDT_SYSNULL:
@@ -288,12 +289,12 @@ i386_set_ldt(p, args, retval)
 			unsigned long base = (desc.sd.sd_hibase << 24)&0xFF000000;
 			base |= (desc.sd.sd_lobase&0x00FFFFFF);
 			if (base >= KERNBASE)
-				return(EACCES);
+				return (EACCES);
 #endif
 			break;
 		}
 		default:
-			return(EACCES);
+			return (EACCES);
 			/*NOTREACHED*/
 		}
 	}
@@ -317,7 +318,7 @@ i386_set_ldt(p, args, retval)
 	}
 
 	splx(s);
-	return(error);
+	return (error);
 }
 #endif	/* USER_LDT */
 
@@ -346,5 +347,5 @@ sysarch(p, uap, retval)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return (error);
 }
