@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.20 1999/02/17 03:41:00 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.21 1999/05/18 23:52:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -201,8 +201,7 @@ void    	i82586_mediastatus 	__P((struct ifnet *,
 						struct ifmediareq *));
 
 static int 	ie_readframe		__P((struct ie_softc *, int));
-static struct mbuf *ieget 		__P((struct ie_softc *,
-					     struct ether_header *, int *,
+static struct mbuf *ieget 		__P((struct ie_softc *, int *,
 					     int, int));
 static int	i82586_get_rbd_list	__P((struct ie_softc *,
 					     u_int16_t *, u_int16_t *, int *));
@@ -1074,9 +1073,8 @@ i82586_chk_rx_ring(sc)
  * operation considerably.  (Provided that it works, of course.)
  */
 static __inline struct mbuf *
-ieget(sc, ehp, to_bpf, head, totlen)
+ieget(sc, to_bpf, head, totlen)
 	struct ie_softc *sc;
-	struct ether_header *ehp;
 	int *to_bpf;
 	int head;
 	int totlen;
@@ -1084,11 +1082,13 @@ ieget(sc, ehp, to_bpf, head, totlen)
 	struct mbuf *m, *m0, *newm;
 	int len, resid;
 	int thisrboff, thismboff;
+	struct ether_header eh;
 
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	(sc->memcopyin)(sc, ehp, IE_RBUF_ADDR(sc, head), sizeof *ehp);
+	(sc->memcopyin)(sc, &eh, IE_RBUF_ADDR(sc, head),
+	    sizeof(struct ether_header));
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -1097,13 +1097,13 @@ ieget(sc, ehp, to_bpf, head, totlen)
 	 * This is only a consideration when FILTER is defined; i.e., when
 	 * we are either running BPF or doing multicasting.
 	 */
-	if (!check_eh(sc, ehp, to_bpf)) {
+	if (!check_eh(sc, &eh, to_bpf)) {
 		/* just this case, it's not an error */
 		sc->sc_ethercom.ec_if.if_ierrors--;
 		return (0);
 	}
 
-	resid = totlen -= (thisrboff = sizeof *ehp);
+	resid = totlen;
 
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
@@ -1139,6 +1139,14 @@ ieget(sc, ehp, to_bpf, head, totlen)
 
 	m = m0;
 	thismboff = 0;
+
+	/*
+	 * Copy the Ethernet header into the mbuf chain.
+	 */
+	memcpy(mtod(m, caddr_t), &eh, sizeof(struct ether_header));
+	thismboff = sizeof(struct ether_header);
+	thisrboff = sizeof(struct ether_header);
+	resid -= sizeof(struct ether_header);
 
 	/*
 	 * Now we take the mbuf chain (hopefully only one mbuf most of the
@@ -1196,7 +1204,6 @@ ie_readframe(sc, num)
 	int num;		/* frame number to read */
 {
 	struct mbuf *m;
-	struct ether_header eh;
 	u_int16_t bstart, bend;
 	int pktlen;
 #if NBPFILTER > 0
@@ -1209,9 +1216,9 @@ ie_readframe(sc, num)
 	}
 
 #if NBPFILTER > 0
-	m = ieget(sc, &eh, &bpf_gets_it, bstart, pktlen);
+	m = ieget(sc, &bpf_gets_it, bstart, pktlen);
 #else
-	m = ieget(sc, &eh, 0, bstart, pktlen);
+	m = ieget(sc, 0, bstart, pktlen);
 #endif
 	i82586_release_rbd_list(sc, bstart, bend);
 
@@ -1221,12 +1228,15 @@ ie_readframe(sc, num)
 	}
 
 #ifdef I82586_DEBUG
-	if (sc->sc_debug & IED_READFRAME)
+	if (sc->sc_debug & IED_READFRAME) {
+		struct ether_header *eh = mtod(m, struct ether_header *);
+
 		printf("%s: frame from ether %s type 0x%x len %d\n",
 			sc->sc_dev.dv_xname,
-			ether_sprintf(eh.ether_shost),
-			(u_int)eh.ether_type,
+			ether_sprintf(eh->ether_shost),
+			(u_int)eh->ether_type,
 			pktlen);
+	}
 #endif
 
 #if NBPFILTER > 0
@@ -1239,13 +1249,8 @@ ie_readframe(sc, num)
 	 * tho' it will make a copy for tcpdump.)
 	 */
 	if (bpf_gets_it) {
-		struct mbuf m0;
-		m0.m_len = sizeof eh;
-		m0.m_data = (caddr_t)&eh;
-		m0.m_next = m;
-
 		/* Pass it up. */
-		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, &m0);
+		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m);
 
 		/*
 		 * A signal passed up from the filtering code indicating that
@@ -1263,7 +1268,7 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input(&sc->sc_ethercom.ec_if, &eh, m);
+	(*sc->sc_ethercom.ec_if.if_input)(&sc->sc_ethercom.ec_if, m);
 	sc->sc_ethercom.ec_if.if_ipackets++;
 	return (0);
 }

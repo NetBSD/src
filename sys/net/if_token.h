@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.3 1999/04/08 15:53:31 bad Exp $	*/
+/*	$NetBSD: if_token.h,v 1.4 1999/05/18 23:57:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -116,10 +116,6 @@ struct token_rif {
 #define	token_sprintf		ether_sprintf
 
 void    token_ifattach __P((struct ifnet *, caddr_t));
-void    token_input __P((struct ifnet *, struct token_header *, struct mbuf *));
-int     token_output __P((struct ifnet *,
-           struct mbuf *, struct sockaddr *, struct rtentry *)); 
-
 #endif
 
 #endif /* !_NET_IF_TOKEN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.10 1999/02/28 17:11:52 explorer Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.11 1999/05/18 23:52:53 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -369,12 +369,8 @@ mb8795_rint(sc)
 				ifp->if_ipackets++;
 				debugipkt++;
 
-				/* We assume that the header fit entirely in one mbuf. */
-				eh = mtod(m, struct ether_header *);
-
-				/* Pass the packet up, with the ether header sort-of removed. */
-				m_adj(m, sizeof(struct ether_header));
-				ether_input(ifp, eh, m);
+				/* Pass the packet up. */
+				(*ifp->if_input)(ifp, m);
 			}
 
 			s = spldma();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.17 1999/03/25 23:10:53 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.18 1999/05/18 23:52:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -244,7 +244,6 @@ qnattach(parent, self, aux)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = qnioctl;
 	ifp->if_watchdog = qnwatchdog;
-	ifp->if_output = ether_output;
 	ifp->if_start = qnstart;
 	/* XXX IFF_MULTICAST */
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
@@ -643,8 +642,7 @@ qn_get_packet(sc, len)
 	}
 #endif
 
-	m_adj(head, sizeof(struct ether_header));
-	ether_input(ifp, eh, head);
+	(*ifp->if_input)(ifp, head);
 	return;
 
 bad:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.15 1999/03/16 10:55:42 mark Exp $	*/
+/*	$NetBSD: if_es.c,v 1.16 1999/05/18 23:52:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -207,7 +207,6 @@ esattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_output = ether_output;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = estint;
 	ifp->if_watchdog = eswatchdog;
@@ -642,7 +641,6 @@ esrint(sc)
 	}
 #endif
 
-	pktlen -= sizeof(struct ether_header);
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_ipackets++;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -656,7 +654,7 @@ esrint(sc)
 
 	eh = (struct ether_header *) pktbuf;
 
-	b = pktbuf + sizeof(struct ether_header);
+	b = pktbuf;
 
 	while (pktlen > 0) {
 		if (top) {
@@ -686,8 +684,7 @@ esrint(sc)
 	 * the raw packet to bpf.
 	 */
 	if (sc->sc_ethercom.ec_if.if_bpf) {
-		bpf_tap(sc->sc_ethercom.ec_if.if_bpf, pktbuf, pktlen);
-		/* bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, top);*/
+		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, top);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
@@ -704,7 +701,7 @@ esrint(sc)
 	}
 #endif
 
-	ether_input(ifp, eh, top);
+	(*ifp->if_input)(ifp, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
 		printf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.33 1999/03/25 23:21:38 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.34 1999/05/18 23:52:57 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -976,8 +976,7 @@ iyget(sc, iot, ioh, rxlen)
 		}
 	}
 #endif
-	m_adj(top, sizeof(struct ether_header));
-	ether_input(ifp, eh, top);
+	(*ifp->if_input)(ifp, top);
 	return;
 
 dropped:

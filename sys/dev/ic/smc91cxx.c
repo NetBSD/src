@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.16 1999/03/25 23:20:22 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.17 1999/05/18 23:52:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -940,13 +940,8 @@ smc91cxx_read(sc)
 	}
 #endif
 
-	/*
-	 * Strip the ethernet header.
-	 */
-	m->m_pkthdr.len = m->m_len = packetlen - sizeof(struct ether_header);
-	m->m_data += sizeof(struct ether_header);
-
-	ether_input(ifp, eh, m);
+	m->m_pkthdr.len = m->m_len = packetlen;
+	(*ifp->if_input)(ifp, m);
 
  out:
 	/*

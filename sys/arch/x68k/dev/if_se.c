@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.7 1999/03/25 23:17:35 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.8 1999/05/18 23:52:55 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -215,8 +215,6 @@ static inline void se_rint();
 static inline void se_xmit();
 static inline char *se_ring_copy();
 
-extern int ether_output();
-
 char se_name[] = "DP8390 SCSI Ethernet Adapter (Ether+)";
 static char zero = 0;
 static u_char ones = 0xff;
@@ -275,7 +273,6 @@ sefind(xd)
 	/* XXX: se->se_dev.dv_unit, se_cd.cd_name */
 	sprintf(ifp->if_xname, "%s%d", sedriver.d_name, xd->x68k_unit);
 	ifp->if_softc = sc;
-	ifp->if_output = ether_output;
 	ifp->if_start = se_start;
 	ifp->if_ioctl = se_ioctl;
 	ifp->if_watchdog = se_watchdog;
@@ -1468,12 +1465,7 @@ se_get_packet(sc, buf, len)
 	}
 #endif
 
-	/*
-	 * Fix up data start offset in mbuf to point past ether header
-	 */
-	m_adj(head, sizeof(struct ether_header));
-
-	ether_input(&sc->sc_arpcom.ac_if, eh, head);
+	(*sc->sc_arpcom.ac_if)(&sc->sc_arpcom.ac_if, head);
 	return;
 
 bad:	if (head)

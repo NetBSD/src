@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.21 1999/03/25 23:11:51 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.22 1999/05/18 23:52:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1321,9 +1321,6 @@ earead(sc, buf, len)
 
 	ifp = &sc->sc_ethercom.ec_if;
 	eh = (struct ether_header *)buf;
-	len -= sizeof(struct ether_header);
-	if (len <= 0)
-		return;
 
 	/* Pull packet off interface. */
 	m = eaget(buf, len, ifp);
@@ -1336,8 +1333,7 @@ earead(sc, buf, len)
 	 * If so, hand off the raw packet to bpf.
 	 */
 	if (ifp->if_bpf) {
-		bpf_tap(ifp->if_bpf, buf, len + sizeof(struct ether_header));
-/*		bpf_mtap(ifp->if_bpf, m);*/
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
@@ -1354,7 +1350,7 @@ earead(sc, buf, len)
 	}
 #endif
 
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, m);
 }
 
 /*
@@ -1374,7 +1370,6 @@ eaget(buf, totlen, ifp)
         register caddr_t cp = buf;
         char *epkt;
 
-        buf += sizeof(struct ether_header);
         cp = buf;
         epkt = cp + totlen;
 

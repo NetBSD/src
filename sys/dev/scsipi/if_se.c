@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.23 1998/12/12 17:08:14 mycroft Exp $	*/
+/*	$NetBSD: if_se.c,v 1.24 1999/05/18 23:52:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -710,9 +710,8 @@ se_read(sc, data, datalen)
 		}
 #endif
 
-		/* Pass the packet up, with the ether header sort-of removed. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* Pass the packet up. */
+		(*ifp->if_input)(ifp, m);
 
 	next_packet:
 		data += len;

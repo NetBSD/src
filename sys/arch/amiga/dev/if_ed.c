@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.31 1999/03/25 23:10:13 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.32 1999/05/18 23:52:52 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1027,9 +1027,7 @@ ed_get_packet(sc, buf, len)
 	}
 #endif
 
-	/* Fix up data start offset in mbuf to point past ether header. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, m);
 }
 
 /*

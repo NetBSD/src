@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.46 1999/03/25 23:21:38 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.47 1999/05/18 23:52:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -798,9 +798,7 @@ egread(sc, buf, len)
 	}
 #endif
 
-	/* We assume the header fit entirely in one mbuf. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, m);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.3 1999/04/29 15:47:02 bad Exp $	*/
+/*	$NetBSD: tropic.c,v 1.4 1999/05/18 23:52:56 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -338,7 +338,6 @@ tr_attach(sc)
 	 */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_output = token_output;
 	ifp->if_ioctl = tr_ioctl;
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT)
 		ifp->if_start = tr_start;
@@ -1173,7 +1172,6 @@ struct tr_softc *sc;
 	struct rbcb *rbc = &sc->rbc;
 	struct mbuf *m;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct token_header *trh;
 
 #ifdef TROPICDEBUG
 	printf("tr_rint: arb.command = %x, arb.station_id= %x\n",
@@ -1260,16 +1258,11 @@ struct tr_softc *sc;
 		ACA_SETB(sc, ACA_ISRA_o, RESP_IN_ASB);
 		++ifp->if_ipackets;
 
-		trh = mtod(m, struct token_header *);
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/*
-		 * lan_hdr_len = sizeof(*trh) + riflen
-		 */
-		m_adj(m, (ARB_INB(sc, arb, ARB_RXD_LANHDRLEN)));
-		token_input(ifp, trh, m);
+		(*ifp->if_input)(ifp, m);
 	}
 }
 
