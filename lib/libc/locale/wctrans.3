@@ -1,4 +1,4 @@
-.\" $NetBSD: wctrans.3,v 1.1 2003/03/04 12:11:52 tshiozak Exp $
+.\" $NetBSD: wctrans.3,v 1.2 2003/04/16 08:36:55 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 The
 .Fn wctrans
 function returns a character mapping identifier corresponding to the
-locale-specific character mapping name, pointed by
+locale-specific character mapping name
 .Fa charmap .
 This identifier can be used on the subsequent calls of
 .Fn towctrans .
@@ -55,7 +55,9 @@ tolower toupper
 .Pp
 The behaviour of the
 .Fn wctrans
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 The
@@ -63,24 +65,23 @@ The
 returns:
 .Bl -tag -width 012345678901
 .It 0
-if the string pointed by
+if the string
 .Fa charmap
 does not corresponding to a valid character mapping name.
 .It non-zero
-an character mapping identifier corresponding to the name pointed by
+a character mapping identifier corresponding to
 .Fa charmap .
 .El
 .Pp
-note: wctype_t is a scalar type, e.g. pointer.
+Note: wctype_t is a scalar type, e.g., a pointer.
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
 No errors are defined.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr wctrans 3 ,
-.Xr wctype 3 ,
 .Xr iswctype 3 ,
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr wctype 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
