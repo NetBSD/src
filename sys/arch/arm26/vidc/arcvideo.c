@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.14 2001/02/17 18:43:13 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.15 2001/02/17 18:45:19 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.14 2001/02/17 18:43:13 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.15 2001/02/17 18:45:19 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ static int arcvideo_alloc_screen(void *cookie, const struct wsscreen_descr *scr,
 				      void **scookiep, int *curxp, int *curyp,
 				      long *defattrp);
 static void arcvideo_free_screen(void *cookie, void *scookie);
-static void arcvideo_show_screen(void *cookie, void *scookie, int waitok,
+static int arcvideo_show_screen(void *cookie, void *scookie, int waitok,
 				      void (*cb)(void *, int, int),
 				      void *cbarg);
 static int arcvideo_load_font(void *cookie, void *scookie,
@@ -450,7 +450,7 @@ arcvideo_free_screen(void *cookie, void *scookie)
 	panic("arcvideo_free_screen not implemented");
 }
 
-static void
+static int
 arcvideo_show_screen(void *cookie, void *scookie, int waitok,
     void (*cb)(void *cbarg, int error, int waitok), void *cbarg)
 {
