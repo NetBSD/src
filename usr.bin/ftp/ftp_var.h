@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.56 2000/07/28 11:03:13 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.57 2000/07/30 04:42:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -337,3 +337,16 @@ extern	char	*__progname;		/* from crt0.o */
 
 #define	EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 #define	FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }
+
+
+#ifdef NO_QUAD
+# define QUADF		"%ld"
+# define QUADFP(x)	"%" x "ld"
+# define QUADT		long
+# define STRTOLL(x,y,z)	strtol(x,y,z)
+#else
+# define QUADF		"%lld"
+# define QUADFP(x)	"%" x "lld"
+# define QUADT		long long
+# define STRTOLL(x,y,z)	strtoll(x,y,z)
+#endif
