@@ -1,0 +1,26 @@
+#	$NetBSD: Makefile.xlibi18n,v 1.1.1.1 2003/09/12 02:50:57 lukem Exp $
+
+MKLINKLIB=	no
+
+.include <bsd.own.mk>
+
+.PATH:		${X11SRCDIR.xc}/lib/X11
+
+LIBDIR=		${X11LIBDIR}/locale/lib/common
+SHLIB_MAJOR=	2
+SHLIB_MINOR=	0
+
+CPPFLAGS+=	${X11FLAGS.THREADLIB}
+
+#LM#	LDADD+=		-lX11
+#LM#	DPADD+=		${LIBX11}
+
+.PRECIOUS:	${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
+libinstall::	${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
+
+.include <bsd.lib.mk>
+.include <bsd.x11.mk>
+
+${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}: lib${LIB}.so.${SHLIB_FULLVERSION}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    ${.ALLSRC} ${.TARGET}
