@@ -100,7 +100,6 @@ void dcstart	__P((struct tty *));
 void dcxint	__P((struct tty *));
 void dcPutc	__P((dev_t, int));
 void dcscan	__P((void *));
-extern void ttrstrt __P((void *));
 int dcGetc	__P((dev_t));
 int dcparam	__P((struct tty *, struct termios *));
 extern void KBDReset	__P((dev_t, void (*)()));
@@ -335,12 +334,11 @@ dcwrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-dcioctl(dev, cmd, data, flag, p)
+dcioctl(dev, cmd, data, flag)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
@@ -348,7 +346,7 @@ dcioctl(dev, cmd, data, flag, p)
 	int error;
 
 	tp = &dc_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
@@ -587,7 +585,7 @@ dcxint(tp)
 	if (tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
 	else {
-		ndflush(&tp->t_outq, dp->p_mem-tp->t_outq.c_cf);
+		ndflush(&tp->t_outq, (u_char *)(dp->p_mem) - tp->t_outq.c_cf);
 		dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	}
 	if (tp->t_line)
