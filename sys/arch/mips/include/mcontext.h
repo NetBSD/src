@@ -1,11 +1,11 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.3 2001/12/28 05:46:57 nathanw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.4 2002/12/17 02:08:47 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Klaus Klein, and by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,18 +40,9 @@
 #define _MIPS_MCONTEXT_H_
 
 /*
- * Layout of mcontext_t according to the System V Application Binary Interface,
- * MIPS(tm) Processor Supplement, 3rd Edition, Feburary 1996 (p 6-79)
- */  
-
-/*
  * General register state
  */
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-#define _NGREG		36	/* R0-R31, MDLO, MDHI, CAUSE, PC */
-#else
 #define _NGREG		37	/* R0-R31, MDLO, MDHI, CAUSE, PC, SR */
-#endif
 
 #define _REG_R0		0
 #define _REG_AT		1
@@ -95,7 +86,13 @@
 
 #ifndef __ASSEMBLER__
 
-typedef	mips_reg_t	__greg_t;
+/* Make sure this is signed; we need pointers to be sign-extended. */
+#if defined(__mips_n32)
+typedef	long long       __greg_t;
+#else   
+typedef	long            __greg_t;
+#endif /* __mips_n32 */
+
 typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
@@ -103,12 +100,26 @@ typedef	__greg_t	__gregset_t[_NGREG];
  */
 typedef struct {
 	union {
-		double	__fp_dregs[16];
-		float	__fp_fregs[32];
-		__greg_t	__fp_regs[32];
+		/*
+		 * For the o32 ABI, there are 16 doubles, one at each
+		 * even FP reg number.  For 64-bit ABIs, each FP register
+		 * is a 64-bit double.
+		 *
+		 * The FR bit in the SR indicates which FP mode is
+		 * in use.
+		 */
+		union {
+			double	__fp32_dregs[16];
+			float	__fp32_fregs[32];
+			unsigned int __fp32_regs[32];
+		} __fp_regs32;
+		union {
+			double	__fp64_dregs[32];
+			unsigned long long __fp64_regs[32];
+		} __fp_regs64;
 	} __fp_r;
-	u_int		__fp_csr;
-	u_int		__fp_pad;
+	unsigned int	__fp_csr;
+	unsigned int	__fp_pad;
 } __fpregset_t;
 
 typedef struct {
@@ -118,7 +129,7 @@ typedef struct {
 
 #endif /* !__ASSEMBLER__ */
 
-#define _UC_MACHINE_PAD	48	/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD	16	/* Padding appended to ucontext_t */
 
 /*
  * Offsets relative to ucontext_t; intended to be used by assembly stubs.
