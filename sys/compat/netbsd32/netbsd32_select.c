@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.3 2002/10/23 13:16:45 scw Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.4 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.3 2002/10/23 13:16:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4 2003/01/18 08:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.3 2002/10/23 13:16:45 scw Exp 
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_select(p, v, retval)
-	struct proc *p;
+netbsd32_select(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -63,6 +63,7 @@ netbsd32_select(p, v, retval)
 		syscallarg(netbsd32_timevalp_t) tv;
 	} */ *uap = v;
 /* This one must be done in-line 'cause of the timeval */
+	struct proc *p = l->l_proc;
 	struct netbsd32_timeval tv32;
 	caddr_t bits;
 	char smallbits[howmany(FD_SETSIZE, NFDBITS) * sizeof(fd_mask) * 6];
@@ -114,7 +115,7 @@ netbsd32_select(p, v, retval)
 		timo = 0;
 retry:
 	ncoll = nselcoll;
-	p->p_flag |= P_SELECT;
+	l->l_flag |= L_SELECT;
 	error = selscan(p, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
@@ -128,17 +129,17 @@ retry:
 			goto done;
 	}
 	s = splhigh();
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
 done:
-	p->p_flag &= ~P_SELECT;
+	l->l_flag &= ~L_SELECT;
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
