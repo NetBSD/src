@@ -1,4 +1,4 @@
-#	$NetBSD: JURA,v 1.5 1996/04/12 01:20:47 cgd Exp $
+#	$NetBSD: JURA,v 1.6 1996/04/17 22:01:42 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 
@@ -47,7 +47,7 @@ ibus*	at	mainbus0			# "internal bus"
 jcombo* at	ibus?				# the VLSI combo chip
 isa*	at	jcombo?
 
-clock0  at      isa? port 0x70
+mcclock0 at      isa? port 0x70
 pckbd0  at      isa? port 0x60 irq 1            # PC-ish ISA keyboard
 pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0    at      isa? port 0x3f8 irq 4           # standard serial ports
