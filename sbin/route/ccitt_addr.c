@@ -32,7 +32,7 @@
  *
  *	@(#)ccitt_addr.c	5.1 (Berkeley) 6/27/91
  *
- *	$Id: ccitt_addr.c,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/sbin/route/Attic/ccitt_addr.c,v 1.3 1993/03/23 00:30:01 cgd Exp $
  */
 /*
  * parse CCITT addresses

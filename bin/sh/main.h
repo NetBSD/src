@@ -35,7 +35,7 @@
  *
  *	@(#)main.h	5.1 (Berkeley) 3/7/91
  *
- *	$Id: main.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/sh/main.h,v 1.3 1993/03/23 00:28:25 cgd Exp $
  */
 
 extern int rootpid;	/* pid of main shell */

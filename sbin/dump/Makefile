@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.12 (Berkeley) 3/7/91
 #
-#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#	$Header: /cvsroot/src/sbin/dump/Makefile,v 1.3 1993/03/23 00:26:59 cgd Exp $
 
 #	dump.h			header file
 #	dumpitime.c		reads /etc/dumpdates

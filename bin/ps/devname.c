@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)devname.c	5.14 (Berkeley) 5/6/91";
-static char rcsid[] = "$Id: devname.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/Attic/devname.c,v 1.3 1993/03/23 00:26:25 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

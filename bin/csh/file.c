@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)file.c	5.17 (Berkeley) 6/8/91";
-static char rcsid[] = "$Id: file.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/csh/file.c,v 1.3 1993/03/23 00:24:41 cgd Exp $";
 #endif /* not lint */
 
 #ifdef FILEC

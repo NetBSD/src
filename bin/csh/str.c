@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)str.c	5.5 (Berkeley) 6/27/91";
-static char rcsid[] = "$Id: str.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/csh/str.c,v 1.3 1993/03/23 00:25:25 cgd Exp $";
 #endif /* not lint */
 
 /*

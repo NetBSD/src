@@ -32,7 +32,7 @@
  *
  *	@(#)pathnames.h	5.2 (Berkeley) 5/31/90
  *
- *	$Id: pathnames.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/mv/pathnames.h,v 1.3 1993/03/23 00:26:20 cgd Exp $
  */
 
 #define	_PATH_RM	"/bin/rm"

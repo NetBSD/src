@@ -32,7 +32,7 @@
  *
  *	@(#)defs.h	5.10 (Berkeley) 2/28/91
  *
- *	$Id: defs.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/sbin/routed/defs.h,v 1.3 1993/03/23 00:30:18 cgd Exp $
  */
 
 /*

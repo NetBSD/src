@@ -32,7 +32,7 @@
  *
  *	@(#)ps.h	5.3 (Berkeley) 6/3/91
  *
- *	$Id: ps.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
+ *	$Header: /cvsroot/src/bin/ps/ps.h,v 1.3 1993/03/23 00:26:43 cgd Exp $
  */
 
 #define	UNLIMITED	0	/* unlimited terminal width */
