@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.15 2000/05/29 21:05:34 jdolecek Exp $       */
+/*      $NetBSD: catman.c,v 1.16 2001/05/20 22:05:30 uwe Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -325,14 +325,11 @@ uniquepath(void)
 static void
 catman(void)
 {
-	TAG *pathp;
 	ENTRY *e_path;
 	const char *mandir;
 	char catdir[PATH_MAX], *cp;
 
-
-	pathp = getlist("_default");
-	for(e_path = pathp->list.tqh_first; e_path;
+	for(e_path = defp->list.tqh_first; e_path;
 				e_path = e_path->q.tqe_next) {
 		mandir = e_path->s;
 		strcpy(catdir, mandir);
