@@ -1,7 +1,7 @@
-/* $NetBSD: mfb.c,v 1.2 1998/10/30 00:53:12 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $ */
 
 /*
- * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.2 1998/10/30 00:53:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,16 @@ struct bt455reg {
 	u_int32_t	bt_ovly;
 };
 
-/* it's really painful to manipulate 'twined' registers... */
+/*
+ * N.B. a paif of Bt431s are located adjascently.
+ * 	struct bt431twin {
+ *		struct {
+ *			u_int8_t u0;	for sprite image
+ *			u_int8_t u1;	for sprite mask
+ *			unsigned :16;
+ *		} bt_lo;
+ *		...
+ */
 struct bt431reg {
 	u_int32_t	bt_lo;
 	u_int32_t	bt_hi;
@@ -150,7 +159,16 @@ struct mfb_softc {
 #define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
 #define	DATA_ALL_CHANGED	0x0f
 	int nscreens;
+	short magic_x, magic_y;		/* MX cursor location offset */
+#define	MX_MAGIC_X 360
+#define	MX_MAGIC_Y 36
 };
+
+#define	MX_FB_OFFSET	0x200000
+#define	MX_FB_SIZE	 0x40000
+#define	MX_BT455_OFFSET	0x100000
+#define	MX_BT431_OFFSET	0x180000
+#define	MX_IREQ_OFFSET	0x080000	/* Interrupt req. control */
 
 int  mfbmatch __P((struct device *, struct cfdata *, void *));
 void mfbattach __P((struct device *, struct device *, void *));
@@ -234,11 +252,41 @@ void bt431_set_curpos __P((struct mfb_softc *));
    } while (0)
 /* XXX XXX XXX */
 
-#define	MFB_FB_OFFSET		0x200000
-#define	MFB_FB_SIZE		 0x40000
-#define	MFB_BT455_OFFSET	0x100000
-#define	MFB_BT431_OFFSET	0x180000
-#define	MFB_IREQ_OFFSET		0x080000	/* Interrupt req. control */
+/* bit order reverse */
+const static u_int8_t flip[256] = {
+	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
+	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
+	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
+	0x18, 0x98, 0x58, 0xd8, 0x38, 0xb8, 0x78, 0xf8,
+	0x04, 0x84, 0x44, 0xc4, 0x24, 0xa4, 0x64, 0xe4,
+	0x14, 0x94, 0x54, 0xd4, 0x34, 0xb4, 0x74, 0xf4,
+	0x0c, 0x8c, 0x4c, 0xcc, 0x2c, 0xac, 0x6c, 0xec,
+	0x1c, 0x9c, 0x5c, 0xdc, 0x3c, 0xbc, 0x7c, 0xfc,
+	0x02, 0x82, 0x42, 0xc2, 0x22, 0xa2, 0x62, 0xe2,
+	0x12, 0x92, 0x52, 0xd2, 0x32, 0xb2, 0x72, 0xf2,
+	0x0a, 0x8a, 0x4a, 0xca, 0x2a, 0xaa, 0x6a, 0xea,
+	0x1a, 0x9a, 0x5a, 0xda, 0x3a, 0xba, 0x7a, 0xfa,
+	0x06, 0x86, 0x46, 0xc6, 0x26, 0xa6, 0x66, 0xe6,
+	0x16, 0x96, 0x56, 0xd6, 0x36, 0xb6, 0x76, 0xf6,
+	0x0e, 0x8e, 0x4e, 0xce, 0x2e, 0xae, 0x6e, 0xee,
+	0x1e, 0x9e, 0x5e, 0xde, 0x3e, 0xbe, 0x7e, 0xfe,
+	0x01, 0x81, 0x41, 0xc1, 0x21, 0xa1, 0x61, 0xe1,
+	0x11, 0x91, 0x51, 0xd1, 0x31, 0xb1, 0x71, 0xf1,
+	0x09, 0x89, 0x49, 0xc9, 0x29, 0xa9, 0x69, 0xe9,
+	0x19, 0x99, 0x59, 0xd9, 0x39, 0xb9, 0x79, 0xf9,
+	0x05, 0x85, 0x45, 0xc5, 0x25, 0xa5, 0x65, 0xe5,
+	0x15, 0x95, 0x55, 0xd5, 0x35, 0xb5, 0x75, 0xf5,
+	0x0d, 0x8d, 0x4d, 0xcd, 0x2d, 0xad, 0x6d, 0xed,
+	0x1d, 0x9d, 0x5d, 0xdd, 0x3d, 0xbd, 0x7d, 0xfd,
+	0x03, 0x83, 0x43, 0xc3, 0x23, 0xa3, 0x63, 0xe3,
+	0x13, 0x93, 0x53, 0xd3, 0x33, 0xb3, 0x73, 0xf3,
+	0x0b, 0x8b, 0x4b, 0xcb, 0x2b, 0xab, 0x6b, 0xeb,
+	0x1b, 0x9b, 0x5b, 0xdb, 0x3b, 0xbb, 0x7b, 0xfb,
+	0x07, 0x87, 0x47, 0xc7, 0x27, 0xa7, 0x67, 0xe7,
+	0x17, 0x97, 0x57, 0xd7, 0x37, 0xb7, 0x77, 0xf7,
+	0x0f, 0x8f, 0x4f, 0xcf, 0x2f, 0xaf, 0x6f, 0xef,
+	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff,
+};
 
 int
 mfbmatch(parent, match, aux)
@@ -264,13 +312,13 @@ mfb_getdevconfig(dense_addr, dc)
 	int i;
 
 	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = MACHINE_KSEG0_TO_PHYS(dc->dc_vaddr + MFB_FB_OFFSET);
+	dc->dc_paddr = MACHINE_KSEG0_TO_PHYS(dc->dc_vaddr + MX_FB_OFFSET);
 
 	dc->dc_wid = 1280;
 	dc->dc_ht = 1024;
 	dc->dc_depth = 1;
 	dc->dc_rowbytes = 2048 / 8;
-	dc->dc_videobase = dc->dc_vaddr + MFB_FB_OFFSET;
+	dc->dc_videobase = dc->dc_vaddr + MX_FB_OFFSET;
 	dc->dc_blanked = 0;
 
 	/* initialize colormap and cursor resource */
@@ -324,13 +372,15 @@ mfbattach(parent, self, aux)
 	}
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
+	sc->magic_x = MX_MAGIC_X;
+	sc->magic_y = MX_MAGIC_Y;
 
         tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, mfbintr, sc);
 
 	mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	*(u_int8_t *)(mfbbase + MFB_IREQ_OFFSET) = 0;
-	junk = *(u_int8_t *)(mfbbase + MFB_IREQ_OFFSET);
-	*(u_int8_t *)(mfbbase + MFB_IREQ_OFFSET) = 1;
+	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 0;
+	junk = *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET);
+	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 1;
 
 	waa.console = console;
 	waa.scrdata = &mfb_screenlist;
@@ -373,8 +423,8 @@ mfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
 		if ((dc->dc_blanked == 0) ^ turnoff) {
-			/* sc->sc_changed |= DATA_ALL_CHANGED; */
 			dc->dc_blanked = turnoff;
+			/* XXX later XXX */
 		}
 		return (0);
 
@@ -414,7 +464,7 @@ mfbmmap(v, offset, prot)
 {
 	struct mfb_softc *sc = v;
 
-	if (offset > MFB_FB_SIZE)
+	if (offset > MX_FB_SIZE)
 		return (-1);
 	return machine_btop(sc->sc_dc->dc_paddr + offset);
 }
@@ -501,14 +551,14 @@ mfbintr(arg)
 	int v;
 	volatile register int junk;
 	
-	junk = *(u_int8_t *)(mfbbase + MFB_IREQ_OFFSET);
-	/* *(u_int8_t *)(mfbbase + MFB_IREQ_OFFSET) = 1; */
+	junk = *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET);
+	/* *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 1; */
 
 	if (sc->sc_changed == 0)
 		return (1);
 
-	vdac = (void *)(mfbbase + MFB_BT455_OFFSET);
-	curs = (void *)(mfbbase + MFB_BT431_OFFSET);
+	vdac = (void *)(mfbbase + MX_BT455_OFFSET);
+	curs = (void *)(mfbbase + MX_BT431_OFFSET);
 
 	v = sc->sc_changed;
 	sc->sc_changed = 0;	
@@ -517,6 +567,7 @@ mfbintr(arg)
 		curs->bt_ctl = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
+#if 0
 		u_int8_t *bp1, *bp2;
 		u_int16_t twin;
 		int index;
@@ -532,6 +583,38 @@ mfbintr(arg)
 			curs->bt_ram = twin;
 			tc_wmb();
 		}
+#else
+		u_int8_t *ip, *mp, img, msk;
+		int bcnt;
+
+		ip = (u_int8_t *)sc->sc_cursor.cc_image;
+		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
+
+		bcnt = 0;
+		BT431_SELECT(curs, BT431_REG_CRAM_BASE+0);
+		/* 64 pixel scan line is consisted with 16 byte cursor ram */
+		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
+			/* pad right half 32 pixel when smaller than 33 */
+			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
+				curs->bt_ram = 0;
+				tc_wmb();
+			}
+			else {
+				img = *ip++;
+				msk = *mp++;
+				img &= msk;	/* cookie off image */
+				curs->bt_ram = (flip[msk] << 8) | flip[img];
+				tc_wmb();
+			}
+			bcnt += 2;
+		}
+		/* pad unoccupied scan lines */
+		while (bcnt < CURSOR_MAX_SIZE * 16) {
+			curs->bt_ram = 0;
+			tc_wmb();
+			bcnt += 2;
+		}
+#endif
 	}
 	return (1);
 }
@@ -541,37 +624,9 @@ mfbinit(dc)
 	struct fb_devconfig *dc;
 {
 	caddr_t mfbbase = (caddr_t)dc->dc_vaddr;
-	struct bt431reg *curs = (void *)(mfbbase + MFB_BT431_OFFSET);
-	struct bt455reg *vdac = (void *)(mfbbase + MFB_BT455_OFFSET);
+	struct bt431reg *curs = (void *)(mfbbase + MX_BT431_OFFSET);
+	struct bt455reg *vdac = (void *)(mfbbase + MX_BT455_OFFSET);
 	int i;
-
-	BT455_SELECT(vdac, 0);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0xff;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
-	for (i = 2; i < 16; i++) {
-		vdac->bt_cmap = 0;	tc_wmb();
-		vdac->bt_cmap = 0;	tc_wmb();
-		vdac->bt_cmap = 0;	tc_wmb();
-	}
-
-	BT455_SELECT(vdac, 8);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
-	vdac->bt_ovly = 0;	tc_wmb();
-	vdac->bt_ovly = 0xff;	tc_wmb();
-	vdac->bt_ovly = 0;	tc_wmb();
 
 	BT431_SELECT(curs, BT431_REG_COMMAND);
 	curs->bt_ctl = 0x0404;	tc_wmb();
@@ -587,6 +642,27 @@ mfbinit(dc)
 	curs->bt_ctl = 0;	tc_wmb();
 	curs->bt_ctl = 0;	tc_wmb();
 	curs->bt_ctl = 0;	tc_wmb();
+
+	BT455_SELECT(vdac, 0);
+	for (i = 0; i < 16; i++) {
+		vdac->bt_cmap = 0;	tc_wmb();
+		vdac->bt_cmap = 0;	tc_wmb();
+		vdac->bt_cmap = 0;	tc_wmb();
+	}
+
+	BT455_SELECT(vdac, 1);
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0xff;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+
+	BT455_SELECT(vdac, 8);
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0xff;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+
+	vdac->bt_ovly = 0;	tc_wmb();
+	vdac->bt_ovly = 0xff;	tc_wmb();
+	vdac->bt_ovly = 0;	tc_wmb();
 }
 
 static int
@@ -601,7 +677,7 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = (CURSOR_MAX_SIZE / NBBY) * p->size.y;
+		count = ((p->size.x < 33) ? 4 : 8) * p->size.y;
 		if (!useracc(p->image, count, B_READ) ||
 		    !useracc(p->mask, count, B_READ))
 			return (EFAULT);
@@ -622,8 +698,8 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
-		copyin(p->image, (caddr_t)cc->cc_image, count);
-		copyin(p->mask, (caddr_t)(cc->cc_image+CURSOR_MAX_SIZE), count);
+		copyin(p->image, cc->cc_image, count);
+		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
 		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
 
@@ -649,12 +725,12 @@ set_curpos(sc, curpos)
 
 	if (y < 0)
 		y = 0;
-	else if (y > dc->dc_ht - sc->sc_cursor.cc_size.y - 1)
-		y = dc->dc_ht - sc->sc_cursor.cc_size.y - 1;	
+	else if (y > dc->dc_ht)
+		y = dc->dc_ht;
 	if (x < 0)
 		x = 0;
-	else if (x > dc->dc_wid - sc->sc_cursor.cc_size.x - 1)
-		x = dc->dc_wid - sc->sc_cursor.cc_size.x - 1;
+	else if (x > dc->dc_wid)
+		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
 }
@@ -664,33 +740,21 @@ bt431_set_curpos(sc)
 	struct mfb_softc *sc;
 {
 	caddr_t mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	struct bt431reg *curs = (void *)(mfbbase + MFB_BT431_OFFSET);
-	int x = 360, y = 36; /* magic offset of MX coordinate */
+	struct bt431reg *curs = (void *)(mfbbase + MX_BT431_OFFSET);
 	u_int16_t twin;
-	int s;
+	int x, y, s;
 
-	x += sc->sc_cursor.cc_pos.x;
-	y += sc->sc_cursor.cc_pos.y;
+	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+	x += sc->magic_x; y += sc->magic_y; /* magic offset of MX coordinate */
 
-#if 0 /* MACH legend tells */
-	/*
-	 * Cx = x + D + H - P
-	 *  P = 37 if 1:1, 52 if 4:1, 57 if 5:1
-	 *  D = pixel skew between outdata and external data
-	 *  H = pixels between HSYNCH falling and active video
-	 *
-	 * Cy = y + V - 32
-	 *  V = scanlines between HSYNCH falling, two or more
-	 *	clocks after VSYNCH falling, and active video
-	 */
-#endif
 	s = spltty();
 
 	BT431_SELECT(curs, BT431_REG_CURSOR_X_LOW);
-	curs->bt_ctl = TWIN_LO(x);
-	curs->bt_ctl = TWIN_HI(x);
-	curs->bt_ctl = TWIN_LO(y);
-	curs->bt_ctl = TWIN_HI(y);
+	curs->bt_ctl = TWIN_LO(x);	tc_wmb();
+	curs->bt_ctl = TWIN_HI(x);	tc_wmb();
+	curs->bt_ctl = TWIN_LO(y);	tc_wmb();
+	curs->bt_ctl = TWIN_HI(y);	tc_wmb();
 
 	splx(s);
 }
