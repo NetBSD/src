@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.335 2000/05/08 13:49:47 augustss Exp $
+#	$NetBSD: GENERIC,v 1.336 2000/05/08 18:41:26 joda Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.335 $"
+#ident 		"GENERIC-$Revision: 1.336 $"
 
 maxusers	32		# estimated number of users
 
@@ -352,6 +352,10 @@ lpt2	at isa? port 0x3bc
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+
+# VIA VT82C686A hardware monitor
+#viapm*	at pci? dev ? function ?
+#viaenv*	at viapm?
 
 # SCSI Controllers and Devices
 
