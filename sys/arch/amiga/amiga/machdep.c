@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 1996/05/16 15:53:02 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 1996/05/17 12:56:55 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -496,6 +496,10 @@ identifycpu()
         /* there's alot of XXX in here... */
 	char *mach, *mmu, *fpu;
 
+#ifdef M68060
+	char cpubuf[16];
+	u_int32_t pcr;
+#endif
 #ifdef DRACO
 	char machbuf[16];
 
@@ -515,7 +519,10 @@ identifycpu()
 
 	fpu = NULL;
 	if (machineid & AMIGA_68060) {
-		cpu_type = "m68060";
+		asm(".word 0x4e7a,0x0808; movl d0,%0" : "=d"(pcr) : : "d0");
+		sprintf(cpubuf, "68%s060 rev.%d",
+		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
+		cpu_type = cpubuf;
 		mmu = "/MMU";
 		fpu = "/FPU";
 		fputype = FPU_68040; /* XXX */
@@ -1176,15 +1183,16 @@ microtime(tvp)
 }
 
 #if defined(M68060)
-int m68060_pcr_init = 0x21;
+int m68060_pcr_init = 0x21;	/* make this patchable */
 #endif
 
 void
 initcpu()
 {
 	/* XXX should init '40 vecs here, too */
-#if defined(M68060)
+#if defined(M68060) || defined(DRACO)
 	extern caddr_t vectab[256];
+#endif
 
 #if defined(M060SP)
 	extern u_int8_t I_CALL_TOP[];
@@ -1193,6 +1201,11 @@ initcpu()
 	extern u_int8_t illinst;
 #endif
 
+#ifdef DRACO
+	extern u_int8_t DraCoLev2intr, lev2intr;
+#endif
+
+#ifdef M68060
 	if (machineid & AMIGA_68060) {
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 			"d"(m68060_pcr_init):"d0" );
@@ -1216,6 +1229,15 @@ initcpu()
 #else
 		vectab[61] = &illinst;
 #endif
+	}
+#endif
+
+#ifdef DRACO
+	if (is_draco()) {
+		vectab[24+2] = &DraCoLev2intr;
+		vectab[24+4] = &lev2intr;
+		vectab[24+5] = &lev2intr;
+		vectab[24+6] = &lev2intr;
 	}
 #endif
 	DCIS();
@@ -1480,7 +1502,7 @@ add_isr(isr)
 	case 3:
 		p = &isr_slot3;
 		break;
-	case 6:
+	default:	/* was case 6:; make gcc -Wall quiet */
 		p = &isr_exter;
 		break;
 	}
@@ -1517,7 +1539,7 @@ remove_isr(isr)
 	case 3:
 		p = &isr_slot3;
 		break;
-	case 6:
+	default:	/* XXX to make gcc -Wall quiet, was 6: */
 		p = &isr_exter;
 		break;
 	}
