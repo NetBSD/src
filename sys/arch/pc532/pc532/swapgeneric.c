@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.5 1996/10/13 03:30:51 christos Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.6 1997/01/01 23:04:58 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,9 +49,9 @@
 #include "sd.h"
 #include "cd.h"
 #ifdef RAMD_SIZE
-#define NRD 1
+#define NMD 1
 #else
-#define NRD 0
+#define NMD 0
 #endif
 
 /*
@@ -74,8 +74,8 @@ extern	struct cfdriver sd_cd;
 #if NCD > 0
 extern	struct cfdriver cd_cd;
 #endif
-#if NRD > 0
-extern	struct cfdriver rd_cd;
+#if NMD > 0
+extern	struct cfdriver md_cd;
 #endif
 
 struct	genericconf {
@@ -89,8 +89,8 @@ struct	genericconf {
 #if NCD > 0
 	{ &cd_cd,  "cd",  4 },
 #endif
-#if NRD > 0
-	{ &rd_cd,  "rd",  3 },
+#if NMD > 0
+	{ &md_cd,  "md",  3 },
 #endif
 	{ 0 }
 };
