@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.2 1998/01/09 08:06:19 perry Exp $	*/
+/*	$NetBSD: cl_bsd.c,v 1.3 2000/05/30 11:50:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996
@@ -167,15 +167,16 @@ newterm(a, b, c)
  * PUBLIC: void setupterm __P((char *, int, int *));
  * PUBLIC: #endif
  */
+static struct tinfo *info;
+
 void
 setupterm(ttype, fno, errp)
 	char *ttype;
 	int fno, *errp;
 {
-	static char buf[2048];
 	char *p;
 
-	if ((*errp = tgetent(buf, ttype)) > 0) {
+	if ((*errp = t_getent(&info, ttype)) > 0) {
 		if (ke != NULL)
 			free(ke);
 		ke = ((p = tigetstr("rmkx")) == (char *)-1) ? NULL : strdup(p);
@@ -268,7 +269,7 @@ tigetstr(name)
 {
 	static char sbuf[256];
 	TL *tlp;
-	int n;
+	int n, limit;
 	char *p, keyname[3];
 
 	if ((tlp = bsearch(name,
@@ -284,7 +285,8 @@ tigetstr(name)
 		name = tlp->termcap;
 
 	p = sbuf;
-	return (tgetstr(name, &p) == NULL ? (char *)-1 : sbuf);
+	limit = 255;
+	return (t_getstr(info, name, &p, &limit) == NULL ? (char *)-1 : sbuf);
 }
 
 /*
@@ -306,6 +308,6 @@ tigetnum(name)
 		name = tlp->termcap;
 	}
 
-	return ((val = tgetnum(name)) == -1 ? -2 : val);
+	return ((val = t_getnum(info, name)) == -1 ? -2 : val);
 }
 #endif /* !HAVE_CURSES_TIGETSTR */
