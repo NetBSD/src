@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.25 2001/02/03 22:33:45 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.26 2001/02/04 20:34:38 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1065,3 +1065,74 @@ usr.sbin/amd/amd/amd.conf.5			1.1 (new)
 
   Add amd.conf.5 from dist/am-utils/scripts here, and install it.
   Fixes PR#5051, PR#7524, PR#8999, PR#10814.
+
+sys/netkey/key.c				1.41
+
+  Avoid panic if second (optional) argument is NULL.
+
+sys/arch/i386/i386/apm.c			1.59
+
+  Ignore garbage left in registers by some APM BIOSes (IBM Thinkpad)
+  when event is a duplicate.  Gets rid of annoying ``APM get event:
+  unknown error code'' messages.  Fixes PR#12067.
+
+sys/dev/pci/pciide.c				1.101 
+sys/dev/pci/pciide_hpt_reg.h			1.3
+
+  Add support for Ultra/100 on the HPT370 controller.
+
+sys/dev/pci/pciide.c				1.104
+sys/dev/pci/pciide_apollo_reg.h			1.8
+
+  Run at Ultra/66 on VIA controllers that can do it.
+
+distrib/notes/i386/hardware			1.82
+share/man/man4/pciide.4				1.26
+
+  Update for Ultra/100 support, and add ICH2.
+
+sys/dev/pci/pciide.c				1.102-1.103 
+sys/dev/pci/pciide_piix_reg.h			1.5
+
+  Add support for Ultra/100 on Intel ICH2.
+
+sys/dev/pci/pciide.c				1.105
+sys/dev/pci/pciidevar.h				1.6
+
+  Fix bug which affects pciide controllers in native mode.  Main
+  effect was a non-functionnal IDE controller on some sparc64 and
+  macppc when booted from IDE disk.
+
+sys/dev/ic/siop.c				1.38 
+
+  Add missing bus_dmamap_sync() calls.
+
+sys/dev/ic/siopvar_common.h			1.10
+
+  Fix a 4 byte ovferflow in an array.
+
+share/man/man9/Makefile				1.63-1.64 via patch
+
+  Install lock.9 man page.
+
+sys/arch/sparc/sparc/machdep.c			1.174-1.175
+
+  Bus_dma fixes to support certain sbus extension devices on sun4c
+  machines.
+
+sys/sys/mbuf.h					1.54-1.55
+sys/kern/uipc_mbuf.c				1.51
+
+  Remove obsolete comment on MINCLSIZE.
+  Make sure every m_aux will be freed.
+
+sys/netinet6/ip6_output.c			1.29
+
+  Avoid panic when a packet with nonexistent link-local address is
+  issued.
+
+sys/arch/macppc/dev/awacs.c			1.1 (new)
+sys/arch/macppc/conf/GENERIC			1.79-1.80
+sys/arch/macppc/conf/files.macppc		1.32
+
+  Add new driver for Apple sound chip.
