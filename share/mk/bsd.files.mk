@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.13 2000/06/06 09:53:29 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.14 2000/06/10 14:12:03 mycroft Exp $
 
 # This file can be included multiple times.  It clears the definition of
 # FILES at the end so that this is possible.
@@ -20,9 +20,9 @@ filesinstall:: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${
 
 __fileinstall: .USE
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
-	    -o ${FILESOWN_${.ALLSRC}:U${FILESOWN}} \
-	    -g ${FILESGRP_${.ALLSRC}:U${FILESGRP}} \
-	    -m ${FILESMODE_${.ALLSRC}:U${FILESMODE}} \
+	    -o ${FILESOWN_${.ALLSRC:T}:U${FILESOWN}} \
+	    -g ${FILESGRP_${.ALLSRC:T}:U${FILESGRP}} \
+	    -m ${FILESMODE_${.ALLSRC:T}:U${FILESMODE}} \
 	    ${.ALLSRC} ${.TARGET}
 
 .for F in ${FILES}

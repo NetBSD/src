@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.17 2000/06/10 04:56:59 mycroft Exp $
+#	$NetBSD: bsd.info.mk,v 1.18 2000/06/10 14:12:04 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -43,12 +43,12 @@ infoinstall:: ${INFOFILES:@F@${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${
 
 __infoinstall: .USE
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
-	    -o ${INFOOWN_${.ALLSRC}:U${INFOOWN}} \
-	    -g ${INFOGRP_${.ALLSRC}:U${INFOGRP}} \
-	    -m ${INFOMODE_${.ALLSRC}:U${INFOMODE}} \
+	    -o ${INFOOWN_${.ALLSRC:T}:U${INFOOWN}} \
+	    -g ${INFOGRP_${.ALLSRC:T}:U${INFOGRP}} \
+	    -m ${INFOMODE_${.ALLSRC:T}:U${INFOMODE}} \
 	    ${.ALLSRC} ${.TARGET}
-	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${.ALLSRC}
-	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${.ALLSRC}
+	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
+	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
 
 .for F in ${INFOFILES}
 .if !defined(BUILD) && !make(all) && !make(${F})
