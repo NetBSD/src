@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.10 1998/10/09 09:35:39 agc Exp $
+.\" $NetBSD: pkg_create.1,v 1.11 1998/10/12 12:03:25 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl Ohv
+.Op Fl ORhvl
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
@@ -90,11 +90,23 @@ Go into a `packing list Only' mode.
 This is used to do `fake pkg_add' operations when a package is installed.
 In such cases, it is necessary to know what the final, adjusted packing
 list will look like.
+.It Fl R
+Re-order any directories in the pkg/PLIST file into reverse alphabetic
+order, so that child directories will automatically be removed before
+parent directories.
 .It Fl v
 Turn on verbose output.
 .It Fl h
 Force tar to follow symbolic links, so that the files they point to
 are dumped, rather than the links themselves.
+.It Fl l
+Check that any symbolic links which are to be placed in the package are
+relative to the current prefix. This means using
+.Xr unlink 2
+and
+.Xr symlink 2
+to remove and re-link
+any symbolic links which are targetted at full path names.
 .It Fl i Ar iscript
 Set
 .Ar iscript

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.6 1998/10/04 01:48:15 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1998/10/12 12:03:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1998/10/04 01:48:15 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1998/10/12 12:03:24 agc Exp $");
 #endif
 #endif
 
@@ -53,7 +53,14 @@ add_mode_t AddMode	= NORMAL;
 char	pkgnames[MAX_PKGS][MAXPATHLEN];
 char	*pkgs[MAX_PKGS];
 
-static void usage __P((void));
+static void
+usage(void)
+{
+    fprintf(stderr, "%s\n%s\n",
+		"usage: pkg_add [-vInfRMS] [-t template] [-p prefix]",
+		"               pkg-name [pkg-name ...]");
+    exit(1);
+}
 
 int
 main(int argc, char **argv)
@@ -161,13 +168,4 @@ main(int argc, char **argv)
     }
     else
 	return 0;
-}
-
-static void
-usage()
-{
-    fprintf(stderr, "%s\n%s\n",
-		"usage: pkg_add [-vInfRMS] [-t template] [-p prefix]",
-		"               pkg-name [pkg-name ...]");
-    exit(1);
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.13 1998/10/09 19:51:21 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.14 1998/10/12 12:03:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.13 1998/10/09 19:51:21 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.14 1998/10/12 12:03:26 agc Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ add_plist(package_t *p, pl_ent_t type, char *arg)
 	plist_t *tmp;
 
 	tmp = new_plist_entry();
-	tmp->name = copy_string(arg);
+	tmp->name = (arg == (char *) NULL) ? (char *) NULL : strdup(arg);
 	tmp->type = type;
 	if (!p->head) {
 		p->head = p->tail = tmp;
@@ -88,7 +88,7 @@ add_plist_top(package_t *p, pl_ent_t type, char *arg)
 	plist_t *tmp;
 
 	tmp = new_plist_entry();
-	tmp->name = copy_string(arg);
+	tmp->name = (arg == (char *) NULL) ? (char *) NULL : strdup(arg);
 	tmp->type = type;
 	if (!p->head) {
 		p->head = p->tail = tmp;
@@ -236,30 +236,31 @@ plist_cmd(char *s, char **arg)
 void
 read_plist(package_t *pkg, FILE *fp)
 {
-    char *cp, pline[FILENAME_MAX];
-    int cmd;
+	char	pline[FILENAME_MAX];
+	char	*cp;
+	int	cmd;
+	int	len;
 
-    while (fgets(pline, FILENAME_MAX, fp)) {
-	int len = strlen(pline);
-
-	while (len && isspace(pline[len - 1]))
-	    pline[--len] = '\0';
-	if (!len)
-	    continue;
-	cp = pline;
-	if (pline[0] == CMD_CHAR) {
-	    cmd = plist_cmd(pline + 1, &cp);
-	    if (cmd == FAIL) {
-		warnx("Unrecognised PLIST command `%s'", pline);
-		continue;
-	    }
-	    if (*cp == '\0')
-		cp = NULL;
+	while (fgets(pline, FILENAME_MAX, fp) != (char *) NULL) {
+		for (len = strlen(pline); len && isspace(pline[len - 1]) ; ) {
+			pline[--len] = '\0';
+		}
+		if (len == 0) {
+			continue;
+		}
+		if (*(cp = pline) == CMD_CHAR) {
+			if ((cmd = plist_cmd(pline + 1, &cp)) == FAIL) {
+				warnx("Unrecognised PLIST command `%s'", pline);
+				continue;
+			}
+			if (*cp == '\0') {
+				cp = NULL;
+			}
+		} else {
+			cmd = PLIST_FILE;
+		}
+		add_plist(pkg, cmd, cp);
 	}
-	else
-	    cmd = PLIST_FILE;
-	add_plist(pkg, cmd, cp);
-    }
 }
 
 /* Write a packing list to a file, converting commands to ascii equivs */

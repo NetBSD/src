@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.7 1998/10/09 18:27:33 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.8 1998/10/12 12:03:25 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.7 1998/10/09 18:27:33 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.8 1998/10/12 12:03:25 agc Exp $");
 #endif
 #endif
 
@@ -35,19 +35,84 @@ __RCSID("$NetBSD: pl.c,v 1.7 1998/10/09 18:27:33 agc Exp $");
 #include <err.h>
 #include <md5.h>
 
+/* check that any symbolic link is relative to the prefix */
+static void
+CheckSymlink(char *name, char *prefix, size_t prefixcc)
+{
+	char	newtgt[MAXPATHLEN];
+	char	oldtgt[MAXPATHLEN];
+	char	*slash;
+	int	slashc;
+	int	cc;
+	int	i;
+
+	if ((cc = readlink(name, oldtgt, sizeof(oldtgt))) > 0) {
+		oldtgt[cc] = 0;
+		if (strncmp(oldtgt, prefix, prefixcc) == 0 && oldtgt[prefixcc] == '/') {
+			for (slashc = 0, slash = &oldtgt[prefixcc + 1] ; (slash = strchr(slash, '/')) != (char *) NULL ; slash++, slashc++) {
+			}
+			for (cc = i = 0 ; i < slashc ; i++) {
+				strnncpy(&newtgt[cc], sizeof(newtgt) - cc, "../", 3);
+				cc += 3;
+			}
+			strnncpy(&newtgt[cc], sizeof(newtgt) - cc, &oldtgt[prefixcc + 1], strlen(&oldtgt[prefixcc + 1]));
+			(void) fprintf(stderr, "Full pathname symlink `%s' is target of `%s' - adjusting to `%s'\n", oldtgt, name, newtgt);
+			if (unlink(name) != 0) {
+				warn("can't unlink `%s'", name);
+			} else if (symlink(newtgt, name) != 0) {
+				warn("can't symlink `%s' called `%s'", newtgt, name);
+			}
+		}
+	}
+}
+
+/* (reversed) comparison routine for directory name sorting */
+static int
+dircmp(const void *vp1, const void *vp2)
+{
+	return strcmp(vp2, vp1);
+}
+
+/* re-order the PLIST_DIR_RM entries into reverse alphabetic order */
+static void
+reorder(package_t *pkg, int dirc)
+{
+	plist_t	*p;
+	char	**dirv;
+	int	i;
+
+	if ((dirv = (char **) calloc(dirc, sizeof(char *))) == (char **) NULL) {
+		warn("No directory re-ordering will be done");
+	} else {
+		for (p = pkg->head, i = 0 ; p ; p = p->next) {
+			if (p->type == PLIST_DIR_RM) {
+				dirv[i++] = p->name;
+			}
+		}
+		qsort(dirv, dirc, sizeof(char *), dircmp);
+		for (p = pkg->head, i = 0 ; p ; p = p->next) {
+			if (p->type == PLIST_DIR_RM) {
+				p->name = dirv[i++];
+			}
+		}
+		(void) free(dirv);
+	}
+}
+
 /* Check a list for files that require preconversion */
 void
 check_list(char *home, package_t *pkg)
 {
-	plist_t	*tmp;
-	plist_t	*p;
-	char	*cwd = home;
-	char	*there = NULL;
-	char	*cp;
-	char	name[FILENAME_MAX];
-	char	buf[LegibleChecksumLen];
+	struct stat	st;
+	plist_t		*tmp;
+	plist_t		*p;
+	char		name[FILENAME_MAX];
+	char		buf[ChecksumHeaderLen + LegibleChecksumLen];
+	char		*cwd = home;
+	char		*srcdir = NULL;
+	int		dirc;
 
-	for (p = pkg->head ; p ; p = p->next) {
+	for (dirc = 0, p = pkg->head ; p ; p = p->next) {
 		switch (p->type) {
 		case PLIST_CWD:
 			cwd = p->name;
@@ -56,13 +121,40 @@ check_list(char *home, package_t *pkg)
 			p = p->next;
 			break;
 		case PLIST_SRC:
-			there = p->name;
+			srcdir = p->name;
+			break;
+		case PLIST_DIR_RM:
+			dirc++;
 			break;
 		case PLIST_FILE:
-			(void) snprintf(name, sizeof(name), "%s/%s", there ? there : cwd, p->name);
-			if ((cp = MD5File(name, buf)) != NULL) {
+			(void) snprintf(name, sizeof(name), "%s/%s", srcdir ? srcdir : cwd, p->name);
+			if (lstat(name, &st) < 0) {
+				warnx("can't stat `%s'", name);
+				continue;
+			}
+			switch(st.st_mode & S_IFMT) {
+			case S_IFDIR:
+				p->type = PLIST_DIR_RM;
+				dirc++;
+				continue;
+			case S_IFLNK:
+				if (RelativeLinks) {
+					CheckSymlink(name, cwd, strlen(cwd));
+				}
+				break;
+			case S_IFCHR:
+				warnx("Warning - char special device `%s' in PLIST", name);
+				break;
+			case S_IFBLK:
+				warnx("Warning - block special device `%s' in PLIST", name);
+				break;
+			default:
+				break;
+			}
+			(void) strcpy(buf, CHECKSUM_HEADER);
+			if (MD5File(name, &buf[ChecksumHeaderLen]) != (char *) NULL) {
 				tmp = new_plist_entry();
-				tmp->name = copy_string(strconcat("MD5:", cp));
+				tmp->name = strdup(buf);
 				tmp->type = PLIST_COMMENT;
 				tmp->next = p->next;
 				tmp->prev = p;
@@ -73,6 +165,9 @@ check_list(char *home, package_t *pkg)
 		default:
 			break;
 		}
+	}
+	if (ReorderDirs && dirc > 0) {
+		reorder(pkg, dirc);
 	}
 }
 
