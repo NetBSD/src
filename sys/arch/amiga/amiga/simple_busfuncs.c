@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.1 1999/12/30 20:56:44 is Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.2 2000/01/23 21:02:18 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -238,6 +238,152 @@ oabs(bscr1_)(handlefrom, from, handleto, to, count)
 	}
 }
 
+
+#ifdef AMIGA_SIMPLE_BUS_WORD_METHODS
+
+/* word methods */
+
+bsr (oabs(bsr2_), u_int16_t);
+bsw (oabs(bsw2_), u_int16_t);
+bsrm(oabs(bsrm2_), u_int16_t);
+bswm(oabs(bswm2_), u_int16_t);
+bsrm(oabs(bsrr2_), u_int16_t);
+bswm(oabs(bswr2_), u_int16_t);
+bssr(oabs(bssr2_), u_int16_t);
+bscr(oabs(bscr2_), u_int16_t);
+
+u_int16_t
+oabs(bsr2_) (handle, offset)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+{
+	u_int16_t *p;
+
+	p = (u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	return (*p);
+}
+
+void
+oabs(bsw2_)(handle, offset, value)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	unsigned value;
+{
+	u_int16_t *p;
+
+	p = (u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	*p = (u_int16_t)value;
+}
+
+void
+oabs(bsrm2_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int16_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int16_t *p;
+
+	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*pointer++ = *p;
+		--count;
+	}
+}
+
+void
+oabs(bswm2_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	const u_int16_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int16_t *p;
+
+	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*p = *pointer++;
+		--count;
+	}
+}
+
+void
+oabs(bsrr2_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int16_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int8_t *p;
+
+	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*pointer++ = *(volatile u_int16_t *)p;
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
+		--count;
+	}
+}
+
+void
+oabs(bswr2_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	const u_int16_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int8_t *p;
+
+	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*(volatile u_int16_t *)p = *pointer++;
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
+		--count;
+	}
+}
+
+void
+oabs(bssr2_)(handle, offset, value, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	unsigned value;
+	bus_size_t count;
+{
+	volatile u_int8_t *p;
+
+	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*(volatile u_int16_t *)p = (unsigned)value;
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
+		--count;
+	}
+}
+
+void
+oabs(bscr2_)(handlefrom, from, handleto, to, count)
+	bus_space_handle_t handlefrom, handleto;
+	bus_size_t from, to;
+	bus_size_t count;
+{
+	volatile u_int8_t *p, *q;
+
+	p = (volatile u_int8_t *)(handlefrom + from * AMIGA_SIMPLE_BUS_STRIDE);
+	q = (volatile u_int8_t *)(handleto   +   to * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*(volatile u_int16_t *)q = *(volatile u_int16_t *)p;
+		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
+		q += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
+		--count;
+	}
+}
+#endif /* AMIGA_SIMPLE_BUS_WORD_METHODS */
+
+
 #ifndef AMIGA_SIMPLE_BUS_NO_ARRAY
 /* method array */
 
@@ -258,6 +404,23 @@ const struct amiga_bus_space_methods oabs(amiga_bus_stride_) = {
 	oabs(bssr1_),
 	oabs(bscr1_),
 
+#ifdef AMIGA_SIMPLE_BUS_WORD_METHODS
+        oabs(bsr2_),
+        oabs(bsw2_),
+        oabs(bsr2_),
+        oabs(bsw2_),
+        oabs(bsrm2_),
+        oabs(bswm2_),
+        oabs(bsrm2_),
+        oabs(bswm2_),
+        oabs(bsrr2_),
+        oabs(bswr2_),
+        oabs(bsrr2_),
+        oabs(bswr2_),
+        oabs(bssr2_),
+        oabs(bscr2_)
+#else /* AMIGA_SIMPLE_BUS_WORD_METHODS */
 	0
+#endif /* AMIGA_SIMPLE_BUS_WORD_METHODS */
 };
 #endif
