@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.150 2004/04/03 17:43:50 chs Exp $
+# $NetBSD: GENERIC,v 1.151 2004/04/10 04:02:29 fair Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.150 $"
+#ident 		"GENERIC-$Revision: 1.151 $"
 
 maxusers	32
 
@@ -352,9 +352,9 @@ dma0	at sbus0 slot ? offset ?			# sun4c/sun4m
 esp0	at sbus0 slot ? offset ? flags 0x0000		# sun4c
 esp0	at dma0 flags 0x0000				# sun4m
 
-# FSBE/S SCSI
+# FSBE/S SCSI & SunSwift Sbus FAS366
 dma*	at sbus? slot ? offset ?			# SBus
-esp*	at sbus? slot ? offset ? flags 0x0000		# SBus (older proms)
+esp*	at sbus? slot ? offset ? flags 0x0000		# SBus
 esp*	at dma? flags 0x0000				# SBus
 
 scsibus* at esp?
