@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.15 2004/11/22 17:17:24 peter Exp $
+.\" $NetBSD: tun.4,v 1.16 2004/12/05 13:26:39 peter Exp $
 .\"
 .\" Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,16 +75,15 @@ To use a
 device, the administrator must first create the interface.  This can
 be done by using the
 .Xr ifconfig 8
-.Sq create
+.Cm create
 command, or via the
 .Dv SIOCIFCREATE
-ioctl.  Note that an
+ioctl.  An
 .Fn open
 call on
 .Pa /dev/tun Ns Sy N ,
-will indicate that the device is not configured
-.Pq Er ENXIO
-unless the corresponding network interface has been created.
+will also create a network interface with the same unit number of
+that device if it doesn't exists yet.
 .Pp
 The network interfaces should be named
 .Sy tun Ns Ar 0 ,
