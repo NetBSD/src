@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.36.2.1 2000/07/03 17:44:02 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.36.2.2 2000/07/24 20:21:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -373,7 +373,10 @@ ext2fs_reload(mountp, cred, p)
 	 * Step 1: invalidate all cached meta-data.
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
-	if (vinvalbuf(devvp, 0, cred, p, 0, 0))
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0);
+	if (error)
 		panic("ext2fs_reload: dirty1");
 	/*
 	 * Step 2: re-read superblock from disk.
@@ -505,7 +508,10 @@ ext2fs_mountfs(devvp, mp, p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0);
+	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
