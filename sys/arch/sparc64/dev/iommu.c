@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.48 2002/02/21 02:42:27 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.49 2002/03/06 17:12:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -526,7 +526,8 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			"seg %d start %lx size %lx\n", seg,
 			(long)map->dm_segs[seg].ds_addr, 
 			map->dm_segs[seg].ds_len));
-		map->dm_segs[seg].ds_len = sgstart & (boundary - 1);
+		map->dm_segs[seg].ds_len =
+		    boundary - (sgstart & (boundary - 1));
 		if (++seg > map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
