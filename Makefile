@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2002/02/14 19:17:32 tv Exp $
+#	$NetBSD: Makefile,v 1.163 2002/02/28 02:22:59 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -57,6 +57,12 @@
 .if ${.MAKEFLAGS:M${.CURDIR}/share/mk} == ""
 .MAKEFLAGS: -m ${.CURDIR}/share/mk
 .endif
+
+# If _SRC_TOP_OBJ_ gets set here, we will end up with a directory that may
+# not be the top level objdir, because "make obj" can happen in the *middle*
+# of "make build" (long after <bsd.own.mk> is calculated it).  So, pre-set
+# _SRC_TOP_OBJ_ here so it will not be added to ${.MAKEOVERRIDES}.
+_SRC_TOP_OBJ_=
 
 .include <bsd.own.mk>
 
