@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)execve.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: execve.2,v 1.6 1994/04/19 00:10:59 jtc Exp $
+.\"	$Id: execve.2,v 1.7 1994/04/22 00:13:33 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt EXECVE 2
@@ -191,8 +191,6 @@ will fail and return to the calling process if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}

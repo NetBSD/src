@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bind.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: bind.2,v 1.5 1994/04/19 00:10:49 jtc Exp $
+.\"	$Id: bind.2,v 1.6 1994/04/22 00:13:25 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt BIND 2
@@ -99,8 +99,6 @@ The following errors are specific to binding names in the UNIX domain.
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)readlink.2	6.8 (Berkeley) 3/10/91
-.\"	$Id: readlink.2,v 1.5 1994/04/19 00:11:16 jtc Exp $
+.\"	$Id: readlink.2,v 1.6 1994/04/22 00:13:44 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt READLINK 2
@@ -66,8 +66,6 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
-.It Bq Er EINVAL
-The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}
