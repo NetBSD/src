@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.42 2000/10/01 02:27:06 darrenr Exp $	*/
+/*	$NetBSD: savecore.c,v 1.43 2000/10/08 07:04:28 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.42 2000/10/01 02:27:06 darrenr Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.43 2000/10/08 07:04:28 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ long	dumplo;				/* where dump starts on dumpdev */
 int	dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
-char	*kernel;
+char	*kernel = _PATH_UNIX;
 char	*dirname;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 dev_t	dumpdev;			/* dump device */
@@ -213,13 +213,12 @@ kmem_setup()
 	kvm_t	*kd_kern;
 	char	errbuf[_POSIX2_LINE_MAX];
 	int	i, hdrsz;
-	char	*dump_sys;
 	
 	/*
 	 * Some names we need for the currently running system, others for
 	 * the system that was running when the dump was made.  The values
 	 * obtained from the current system are used to look for things in
-	 * /dev/kmem that cannot be found in the dump_sys namelist, but are
+	 * /dev/kmem that cannot be found in the kernel namelist, but are
 	 * presumed to be the same (since the disk partitions are probably
 	 * the same!)
 	 */
@@ -272,22 +271,20 @@ kmem_setup()
 	ddname = find_dev(dumpdev, S_IFBLK);
 	dumpfd = Open(ddname, O_RDWR);
 
-	dump_sys = kernel ? kernel : _PATH_UNIX;
-
-	kd_dump = kvm_openfiles(dump_sys, ddname, NULL, O_RDWR, errbuf);
+	kd_dump = kvm_openfiles(kernel, ddname, NULL, O_RDWR, errbuf);
 	if (kd_dump == NULL) {
-		syslog(LOG_ERR, "%s: kvm_openfiles: %s", dump_sys, errbuf);
+		syslog(LOG_ERR, "%s: kvm_openfiles: %s", kernel, errbuf);
 		exit(1);
 	}
 
 	if (kvm_nlist(kd_dump, dump_nl) == -1)
-		syslog(LOG_ERR, "%s: kvm_nlist: %s", dump_sys,
+		syslog(LOG_ERR, "%s: kvm_nlist: %s", kernel,
 			kvm_geterr(kd_dump));
 
 	for (i = 0; dumpsyms[i] != -1; i++)
 		if (dump_nl[dumpsyms[i]].n_value == 0) {
 			syslog(LOG_ERR, "%s: %s not in namelist",
-			    dump_sys, dump_nl[dumpsyms[i]].n_name);
+			    kernel, dump_nl[dumpsyms[i]].n_name);
 			exit(1);
 		}
 	hdrsz = kvm_dump_mkheader(kd_dump, (off_t)dumplo);
@@ -301,7 +298,7 @@ kmem_setup()
 		exit(1);
 	}
 	if (hdrsz == -1) {
-		syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", dump_sys,
+		syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", kernel,
 			kvm_geterr(kd_dump));
 		exit(1);
 	}
@@ -611,7 +608,6 @@ int
 check_space()
 {
 	FILE *fp;
-	char *tkernel;
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
 	struct statfs fsbuf;
@@ -621,9 +617,8 @@ check_space()
 	(void) &minfree;
 #endif
 
-	tkernel = kernel ? kernel : _PATH_UNIX;
-	if (stat(tkernel, &st) < 0) {
-		syslog(LOG_ERR, "%s: %m", tkernel);
+	if (stat(kernel, &st) < 0) {
+		syslog(LOG_ERR, "%s: %m", kernel);
 		exit(1);
 	}
 	kernelsize = st.st_blocks * S_BLKSIZE;
