@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.9 2000/07/10 10:09:04 itojun Exp $	*/
+/*	$NetBSD: display.c,v 1.10 2001/02/15 18:16:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.9 2000/07/10 10:09:04 itojun Exp $");
+__RCSID("$NetBSD: display.c,v 1.10 2001/02/15 18:16:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,8 @@ get()
 		if (!length || (ateof && !next(NULL))) {
 			if (need == blocksize)
 				return(NULL);
-			if (vflag != ALL && !memcmp(curp, savp, nread)) {
+			if (!need && vflag != ALL &&
+			    !memcmp(curp, savp, nread)) {
 				if (vflag != DUP)
 					(void)printf("*\n");
 				return(NULL);
