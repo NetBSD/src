@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.30 1997/07/27 23:51:57 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.31 1997/07/28 01:31:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -120,8 +120,8 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
 	0,
-	0,
-	0,
+	sbdsp_dma_init_output,
+	sbdsp_dma_init_input,
 	sbdsp_dma_output,
 	sbdsp_dma_input,
 	sbdsp_haltdma,
@@ -137,7 +137,7 @@ struct audio_hw_if pas_hw_if = {
 	sb_malloc,
 	sb_free,
 	sb_round,
-	0,
+	AUDIO_PROP_MMAP,
 	0
 };
 

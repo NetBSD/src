@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.33 1997/07/27 01:16:50 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.34 1997/07/28 01:31:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -499,7 +499,7 @@ ad1848_attach(sc)
     sc->sc_recrun = NOTRUNNING;
 
     if (sc->sc_drq != -1) {
-	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq, MAXPHYS /* XXX */,
+	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq, MAX_ISADMA,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("ad1848_attach: can't create map for drq %d\n",
 		    sc->sc_drq);
@@ -507,7 +507,7 @@ ad1848_attach(sc)
 	}
     }
     if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
-	if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq, MAXPHYS /* XXX */,
+	if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq, MAX_ISADMA,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("ad1848_attach: can't creape map for drq %d\n",
 		    sc->sc_recdrq);
@@ -1152,12 +1152,8 @@ ad1848_round_blocksize(addr, blk)
 
     sc->sc_lastcc = -1;
 
-    /* Don't try to DMA too much at once. */
-    if (blk > NBPG)
-	blk = NBPG;
-
-    /* Round to a multiple of the sample size. */
-    blk &= -(sc->channels * sc->precision / 8);
+    /* Round to a multiple of the biggest sample size. */
+    blk &= -4;
 
     return (blk);
 }

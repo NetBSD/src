@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.61 1997/07/27 23:52:01 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.62 1997/07/28 01:32:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -67,8 +67,6 @@
 
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbdspvar.h>
-
-#define MAXDMA 65536		/* XXX */
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (sbdspdebug) printf x
@@ -323,7 +321,7 @@ sbdsp_attach(sc)
 	 */
 	if (sc->sc_drq8 != -1) {
 		if (isa_dmamap_create(sc->sc_isa, sc->sc_drq8,
-		    MAXPHYS /* XXX */, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq8);
 			return;
@@ -331,7 +329,7 @@ sbdsp_attach(sc)
 	}
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
 		if (isa_dmamap_create(sc->sc_isa, sc->sc_drq16,
-		    MAXPHYS /* XXX */, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq16);
 			return;
@@ -801,8 +799,6 @@ sbdsp_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	if (blk > MAXDMA)
-		blk = MAXDMA;	/* cannot DMA more than 64k */
 	blk &= -4;		/* round to biggest sample size */
 	return blk;
 }
