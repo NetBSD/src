@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.19 2000/11/25 21:06:12 scw Exp $
+#	$NetBSD: GENERIC,v 1.20 2000/11/25 21:46:42 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -84,7 +84,6 @@ mainbus0	at root
 # MVME147 specific devices
 pcc0		at mainbus0
 vmepcc0 	at pcc?
-vme0		at vmepcc0
 clock0		at pcc? ipl 5
 zsc*		at pcc? ipl 4
 le0		at pcc? ipl 3
@@ -94,7 +93,7 @@ lpt0		at pcc? ipl 1
 # MVME16x and MVME17x shared devices
 pcctwo0		at mainbus0
 vmetwo0 	at mainbus0
-vme0		at vmetwo0
+memc*		at pcctwo? ipl 6
 clock0		at pcctwo? ipl 5
 ie0		at pcctwo? ipl 3
 ncrsc0		at pcctwo? ipl 2
@@ -108,6 +107,10 @@ lpt0		at pcctwo? ipl 1
 
 # Common front-end for MVME147 and MVME162 `zs' device
 zstty*		at zsc? channel ?
+
+# MI VMEbus Interface
+vme0		at vmepcc0
+vme0		at vmetwo0
 
 # Example VMEbus device
 #foo0		at vme0 addr 0x00ef0000 irq 3 vect 0x80
