@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_bus_window.c,v 1.1 2000/02/26 18:59:36 thorpej Exp $	*/
+/*	$NetBSD: alpha_bus_window.c,v 1.2 2001/07/17 17:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,9 +54,7 @@
 #include <unistd.h>
 
 int
-alpha_bus_getwindows(type, abwp)
-	int type;
-	struct alpha_bus_window **abwp;
+alpha_bus_getwindows(int type, struct alpha_bus_window **abwp)
 {
 	struct alpha_bus_get_window_count_args count_args;
 	struct alpha_bus_get_window_args window_args;
@@ -87,8 +85,7 @@ alpha_bus_getwindows(type, abwp)
 }
 
 int
-alpha_bus_mapwindow(abw)
-	struct alpha_bus_window *abw;
+alpha_bus_mapwindow(struct alpha_bus_window *abw)
 {
 	struct alpha_bus_space_translation *abst = &abw->abw_abst;
 	void *addr;
@@ -117,8 +114,7 @@ alpha_bus_mapwindow(abw)
 }
 
 void
-alpha_bus_unmapwindow(abw)
-	struct alpha_bus_window *abw;
+alpha_bus_unmapwindow(struct alpha_bus_window *abw)
 {
 
 	(void) munmap(abw->abw_addr, abw->abw_size);
