@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.3 1996/02/28 00:44:06 thorpej Exp $
+#	$NetBSD: upgrade.sh,v 1.3.4.1 1996/06/09 22:32:54 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.1
+VERSION=1.2
 export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
 
