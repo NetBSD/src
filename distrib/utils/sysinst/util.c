@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.83 2003/02/14 00:17:56 grant Exp $	*/
+/*	$NetBSD: util.c,v 1.84 2003/02/20 11:00:35 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -469,7 +469,7 @@ extract_file(path)
 	/* now extract set files files into "./". */
 	if (verbose==1)
 	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "progress -zf %s tar -xepf", path);
+	    "progress -zf %s tar -xepf -", path);
 	else if (verbose==2)
 	  tarexit = run_prog(RUN_DISPLAY, NULL,
 	    "tar -zxvepf %s -O", path);
