@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.48.2.3 2002/06/23 17:49:44 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.48.2.4 2002/10/11 21:27:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.48.2.3 2002/06/23 17:49:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.48.2.4 2002/10/11 21:27:29 jdolecek Exp $");
 
 #include "fs_union.h"
 
@@ -603,10 +603,8 @@ vn_kqfilter(fp, kn)
 	struct file *fp;
 	struct knote *kn;
 {
-	struct vnode *vp;
 
-	vp = (struct vnode *)fp->f_data;
-	return (VOP_KQFILTER(vp, kn));
+	return (VOP_KQFILTER((struct vnode *)fp->f_data, kn));
 }
 
 /*
