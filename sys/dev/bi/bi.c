@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.12 1999/07/12 13:42:24 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.13 1999/08/04 19:12:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,23 +41,15 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/mtpr.h>
-#include <machine/nexus.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
-#include <arch/vax/bi/bireg.h>
-#include <arch/vax/bi/bivar.h>
+#include <dev/bi/bireg.h>
+#include <dev/bi/bivar.h>
 
-static int bi_match __P((struct device *, struct cfdata *, void *));
-static void bi_attach __P((struct device *, struct device *, void*));
 static int bi_print __P((void *, const char *));
-
-struct cfattach bi_ca = {
-	sizeof(struct bi_softc), bi_match, bi_attach
-};
 
 struct bi_list bi_list[] = {
 	{BIDT_MS820, 1, "ms820"},
@@ -87,65 +79,61 @@ bi_print(aux, name)
 	struct bi_list *bl;
 
 	for (bl = &bi_list[0]; bl->bl_nr; bl++)
-		if (bl->bl_nr == ba->ba_node->biic.bi_dtype)
+		if (bl->bl_nr == bus_space_read_2(ba->ba_iot, ba->ba_ioh, 0))
 			break;
 
 	if (name) {
 		if (bl->bl_nr == 0)
 			printf("unknown device 0x%x",
-			    ba->ba_node->biic.bi_dtype);
+			    bus_space_read_2(ba->ba_iot, ba->ba_ioh, 0));
 		else
 			printf(bl->bl_name);
 		printf(" at %s", name);
 	}
 	printf(" node %d", ba->ba_nodenr);
 #ifdef DEBUG
-	if (ba->ba_node->biic.bi_sadr && ba->ba_node->biic.bi_eadr)
-		printf(" [sadr %lx eadr %lx]", ba->ba_node->biic.bi_sadr,
-		    ba->ba_node->biic.bi_eadr);
+	if (bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_SADR) &&
+	    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_EADR))
+		printf(" [sadr %x eadr %x]",
+		    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_SADR),
+		    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_EADR));
 #endif
 	return bl->bl_havedriver ? UNCONF : UNSUPP;
 }
 
-int
-bi_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct bp_conf *bp = aux;
-
-	if (strcmp(bp->type, "bi"))
-		return 0;
-	return 1;
-}
+static	int lastiv = 0;
 
 void
-bi_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void *aux;
+bi_attach(sc)
+	struct bi_softc *sc;
 {
-	struct bp_conf *bp = aux;
-	struct bi_softc *bi = (void *)self;
-	struct bi_node *binode;
 	struct bi_attach_args ba;
 	int nodenr;
 
 	printf("\n");
-	bi->bi_base = (struct bi_node *)bp->bp_addr;
 
-	ba.ba_intcpu = 1 << mastercpu;
-#define	NODEPGS	(sizeof(struct bi_node) / VAX_NBPG)
+	ba.ba_iot = sc->sc_iot;
+	ba.ba_busnr = sc->sc_busnr;
+	/*
+	 * Interrupt numbers. All vectors from 256-512 are free, use
+	 * them for BI devices and just count them up.
+	 * Above 512 are only interrupt vectors for unibus devices.
+	 * Is it realistic with more than 64 BI devices???
+	 */
 	for (nodenr = 0; nodenr < NNODEBI; nodenr++) {
-		binode = (struct bi_node *)vax_map_physmem(
-		    (paddr_t)(bi->bi_base + nodenr), NODEPGS);
-		if (badaddr((caddr_t)binode, 4)) {
-			vax_unmap_physmem((vaddr_t)binode, NODEPGS);
+		if (bus_space_map(sc->sc_iot, sc->sc_addr + BI_NODE(nodenr),
+		    NODESIZE, 0, &ba.ba_ioh)) {
+			printf("bi_attach: bus_space_map failed, node %d\n", 
+			    nodenr);
+			return;
+		}
+		if (badaddr((caddr_t)ba.ba_ioh, 4)) {
+			bus_space_unmap(sc->sc_iot, ba.ba_ioh, NODESIZE);
 		} else {
-			ba.ba_node = binode;
 			ba.ba_nodenr = nodenr;
-			ba.ba_busnr = 0; /* XXX */
-			config_found(self, &ba, bi_print);
+			ba.ba_ivec = 256 + lastiv;
+			lastiv += 4;
+			config_found(&sc->sc_dev, &ba, bi_print);
 		}
 	}
 }
