@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.1 1995/06/25 19:05:27 leo Exp $
+/*	$NetBSD: ms.c,v 1.2 1995/06/26 14:31:29 leo Exp $
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -308,16 +308,5 @@ struct proc	*p;
 
 	ms = &ms_softc[minor(dev)];
 	return(ev_select(&ms->ms_events, rw, p));
-}
-
-#else /* NMOUSE > 0 */
-/*
- * Provide the hook to the keyboard driver.
- */
-void
-mouse_soft(pkg, size)
-void	*pkg;
-int	size;
-{
 }
 #endif /* NMOUSE > 0 */
