@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.135 1998/11/11 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.136 1998/11/11 22:45:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -57,6 +57,7 @@
 #include <sys/mount.h>
 #include <sys/map.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
@@ -244,7 +245,12 @@ main()
 	session0.s_sid = p->p_pid;
 	session0.s_leader = p;
 
-	p->p_flag = P_INMEM | P_SYSTEM;
+	/*
+	 * Set P_NOCLDWAIT so that kernel threads are reparented to
+	 * init(8) when they exit.  init(8) can easily wait them out
+	 * for us.
+	 */
+	p->p_flag = P_INMEM | P_SYSTEM | P_NOCLDWAIT;
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
@@ -418,11 +424,11 @@ main()
 	cpu_set_kpc(p2, start_init, p2);
 
 	/* Create process 2, the pageout daemon kernel thread. */
-	if (fork_kthread(start_pagedaemon, NULL, NULL, "pagedaemon"))
+	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
 	/* Create process 3, the process reaper kernel thread. */
-	if (fork_kthread(start_reaper, NULL, NULL, "reaper"))
+	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
 	/* The scheduler is an infinite loop. */
