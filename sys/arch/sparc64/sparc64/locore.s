@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 2001/07/19 23:37:17 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.128 2001/07/23 17:19:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -64,7 +64,6 @@
 #define	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
-#undef	MMUDEBUG		/* Check use of regs during MMU faults */
 #define	VECTORED_INTERRUPTS	/* Use interrupt vectors */
 #undef	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define	NEW_FPSTATE
@@ -890,17 +889,6 @@ ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss;
 	 nop
@@ -920,17 +908,6 @@ ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
 #ifdef NO_TSB
 	ba,a	%icc, data_miss;
 	 nop
@@ -958,17 +935,6 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	lduw	[%g1+%lo(_C_LABEL(udprot))], %g2
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(udprot))]
-#endif
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(protmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(protmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(protmmu))]	! DEBUG
-0:							! DEBUG
 #endif
 #ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
@@ -1165,17 +1131,6 @@ kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss;
 	 nop
@@ -1195,17 +1150,6 @@ kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
-0:							! DEBUG
-#endif
 #ifdef NO_TSB
 	ba,a	%icc, data_miss;
 	 nop
@@ -1233,17 +1177,6 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	lduw	[%g1+%lo(_C_LABEL(kdprot))], %g2
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(kdprot))]
-#endif
-#ifdef MMUDEBUG
-	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
-	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
-	btst	PSTATE_MG, %g7				! DEBUG
-	bz	0f					! DEBUG
-	 sethi	%hi(_C_LABEL(protmmu)), %g7		! DEBUG
-	lduw	[%g7+%lo(_C_LABEL(protmmu))], %g6	! DEBUG
-	inc	%g6					! DEBUG
-	stw	%g6, [%g7+%lo(_C_LABEL(protmmu))]	! DEBUG
-0:							! DEBUG
 #endif
 #ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
