@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.6 2000/08/12 18:08:43 thorpej Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.7 2000/10/11 20:23:56 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.6 2000/08/12 18:08:43 thorpej Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.7 2000/10/11 20:23:56 is Exp $");
 #endif
 
 #include <sys/param.h>
@@ -227,7 +227,7 @@ get_client(host_addr, vers)
 	freenetconfigent(nconf);
 
 	if (!client) {
-		syslog(LOG_ERR, clnt_spcreateerror("clntudp_create"));
+		syslog(LOG_ERR, "%s", clnt_spcreateerror("clntudp_create"));
 		syslog(LOG_ERR, "Unable to return result to %s", host);
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.24 2000/10/01 08:56:28 simonb Exp $ */
+/* $NetBSD: user.c,v 1.25 2000/10/11 20:23:58 is Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.24 2000/10/01 08:56:28 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.25 2000/10/11 20:23:58 is Exp $");
 #endif
 
 #include <sys/types.h>
@@ -161,6 +161,9 @@ enum {
 
 #define UNSET_EXPIRY	"Null (unset)"
 
+static int asystem(const char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
+	
 static int	verbose;
 
 /* if *cpp is non-null, free it, then assign `n' chars of `s' to it */
@@ -177,7 +180,7 @@ memsave(char **cpp, char *s, size_t n)
 
 /* a replacement for system(3) */
 static int
-asystem(char *fmt, ...)
+asystem(const char *fmt, ...)
 {
 	va_list	vp;
 	char	buf[MaxCommandLen];
