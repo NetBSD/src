@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2001/06/22 09:09:42 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2001/06/24 23:21:04 chris Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -194,6 +194,13 @@ extern void bcopy_page __P((vaddr_t, vaddr_t));
 struct l1pt *pmap_alloc_l1pt __P((void));
 static __inline void pmap_map_in_l1 __P((pmap_t pmap, vaddr_t va,
      vaddr_t l2pa));
+
+static pt_entry_t *pmap_map_ptes __P((struct pmap *));
+/* eventually this will be a function */
+#define pmap_unmap_ptes(a)
+
+void pmap_vac_me_harder __P((struct pmap *, struct pv_entry *,
+	    pt_entry_t *));
 
 #ifdef MYCROFT_HACK
 int mycroft_hack = 0;
@@ -959,7 +966,7 @@ pmap_alloc_l1pt(void)
 	struct l1pt *pt;
 	int error;
 	struct vm_page *m;
-	pt_entry_t *pte;
+	pt_entry_t *ptes;
 
 	/* Allocate virtual address space for the L1 page table */
 	va = uvm_km_valloc(kernel_map, PD_SIZE);
@@ -993,6 +1000,7 @@ pmap_alloc_l1pt(void)
 	/* Map our physical pages into our virtual space */
 	pt->pt_va = va;
 	m = pt->pt_plist.tqh_first;
+	ptes = pmap_map_ptes(pmap_kernel());
 	while (m && va < (pt->pt_va + PD_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
@@ -1001,12 +1009,12 @@ pmap_alloc_l1pt(void)
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
-		pte = pmap_pte(pmap_kernel(), va);
-		*pte = *pte & ~(PT_C | PT_B);
+		ptes[arm_byte_to_page(va)] &= ~(PT_C | PT_B);
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
 	}
+	pmap_unmap_ptes(pmap_kernel());
 	pmap_update();
 
 #ifdef DIAGNOSTIC
@@ -1587,11 +1595,14 @@ pmap_pte_delref(pmap, va)
  * other mappings within the same pmap, or kernel_pmap.
  * This function is also called when a page is unmapped, to possibly reenable
  * caching on any remaining mappings.
+ *
+ * Note that the pmap must have it's ptes mapped in, and passed with ptes.
  */
 void
-pmap_vac_me_harder(pmap, pv)
+pmap_vac_me_harder(pmap, pv, ptes)
 	pmap_t pmap;
 	struct pv_entry *pv;
+	pt_entry_t *ptes;
 {
 	struct pv_entry *npv;
 	pt_entry_t *pte;
@@ -1600,6 +1611,7 @@ pmap_vac_me_harder(pmap, pv)
 
 	if (pv->pv_pmap == NULL)
 		return;
+	KASSERT(ptes != NULL);
 
 	/*
 	 * Count mappings and writable mappings in this pmap.
@@ -1622,25 +1634,28 @@ pmap_vac_me_harder(pmap, pv)
 	 * we're already in the right state.
 	 */
 	if (entries > 1 && writeable) {
-		pte = pmap_pte(pmap, pv->pv_va);
+		pte =  &ptes[arm_byte_to_page(pv->pv_va)];
 		if (~*pte & (PT_C | PT_B))
+		{
 			return;
-		*pte = *pte & ~(PT_C | PT_B);
+		}
+		*pte &= ~(PT_C | PT_B);
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap) {
-				pte = pmap_pte(pmap, npv->pv_va);
-				*pte = *pte & ~(PT_C | PT_B);
+			    ptes[arm_byte_to_page(npv->pv_va)] &= 
+				    ~(PT_C | PT_B);
 			}
 		}
 	} else if (entries > 0) {
-		pte = pmap_pte(pmap, pv->pv_va);
-		if (*pte & (PT_C | PT_B))
+		pte = &ptes[arm_byte_to_page(pv->pv_va)];
+		if (*pte & (PT_C | PT_B)) {
 			return;
-		*pte = *pte | (PT_C | PT_B);
+		}
+		*pte |= (PT_C | PT_B);
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap) {
-				pte = pmap_pte(pmap, npv->pv_va);
-				*pte = *pte | (PT_C | PT_B);
+				ptes[arm_byte_to_page(npv->pv_va)] |=
+				    (PT_C | PT_B);	
 			}
 		}
 	}
@@ -1677,7 +1692,7 @@ pmap_remove(pmap, sva, eva)
 		vaddr_t va;
 		pt_entry_t *pte;
 	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
-	pt_entry_t *pte = 0;
+	pt_entry_t *pte = 0, *ptes;
 	paddr_t pa;
 	int pmap_active;
 	struct pv_entry *pv;
@@ -1691,14 +1706,15 @@ pmap_remove(pmap, sva, eva)
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
+	ptes = pmap_map_ptes(pmap);
 	/* Get a page table pointer */
 	while (sva < eva) {
-		pte = pmap_pte(pmap, sva);
-		if (pte)
+		if (pmap_pde_v(pmap_pde(pmap, sva)))
 			break;
 		sva = (sva & PD_MASK) + NBPD;
 	}
-
+	
+	pte = &ptes[arm_byte_to_page(sva)];
 	/* Note if the pmap is active thus require cache and tlb cleans */
 	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
 	    || (pmap == kernel_pmap))
@@ -1779,13 +1795,14 @@ pmap_remove(pmap, sva, eva)
 			if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 				pv = &vm_physmem[bank].pmseg.pvent[off];
 				pmap_remove_pv(pmap, sva, pv);
-				pmap_vac_me_harder(pmap, pv);
+				pmap_vac_me_harder(pmap, pv, ptes);
 			}
 		}
 		sva += NBPG;
 		pte++;
 	}
 
+	pmap_unmap_ptes(pmap);
 	/*
 	 * Now, if we've fallen through down to here, chances are that there
 	 * are less than PMAP_REMOVE_CLEAN_LIST_SIZE mappings left.
@@ -1819,7 +1836,7 @@ pmap_remove_all(pa)
 {
 	struct pv_entry *ph, *pv, *npv;
 	pmap_t pmap;
-	pt_entry_t *pte;
+	pt_entry_t *pte, *ptes;
 	int s;
 
 	PDEBUG(0, printf("pmap_remove_all: pa=%lx ", pa));
@@ -1835,14 +1852,18 @@ pmap_remove_all(pa)
 		return;
 	}
 
+	
+	
 	while (pv) {
 		pmap = pv->pv_pmap;
-		pte = pmap_pte(pmap, pv->pv_va);
+		ptes = pmap_map_ptes(pmap);
+		pte = &ptes[arm_byte_to_page(pv->pv_va)];
 
 		PDEBUG(0, printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
 		    pv->pv_va, pv->pv_flags));
 #ifdef DEBUG
-		if (!pte || !pmap_pte_v(pte) || pmap_pte_pa(pte) != pa)
+		if (!pmap_pde_v(pmap_pde(pmap, va)) || !pmap_pte_v(pte)
+			    || pmap_pte_pa(pte) != pa)
 			panic("pmap_remove_all: bad mapping");
 #endif	/* DEBUG */
 
@@ -1874,8 +1895,9 @@ reduce wiring count on page table pages as references drop
 		else
 			pmap_free_pv(pv);
 		pv = npv;
+		pmap_unmap_ptes(pmap);
 	}
-
+	
 	splx(s);
 
 	PDEBUG(0, printf("done\n"));
@@ -1894,7 +1916,7 @@ pmap_protect(pmap, sva, eva, prot)
 	vaddr_t eva;
 	vm_prot_t prot;
 {
-	pt_entry_t *pte = NULL;
+	pt_entry_t *pte = NULL, *ptes;
 	int armprot;
 	int flush = 0;
 	paddr_t pa;
@@ -1925,16 +1947,18 @@ pmap_protect(pmap, sva, eva, prot)
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
+	ptes = pmap_map_ptes(pmap);
 	/*
 	 * We need to acquire a pointer to a page table page before entering
 	 * the following loop.
 	 */
 	while (sva < eva) {
-		pte = pmap_pte(pmap, sva);
-		if (pte)
+		if (pmap_pde_v(pmap_pde(pmap, sva)))
 			break;
 		sva = (sva & PD_MASK) + NBPD;
 	}
+	
+	pte = &ptes[arm_byte_to_page(sva)];
 
 	while (sva < eva) {
 		/* only check once in a while */
@@ -1967,14 +1991,14 @@ pmap_protect(pmap, sva, eva, prot)
 		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 			pv = &vm_physmem[bank].pmseg.pvent[off];
 			(void) pmap_modify_pv(pmap, sva, pv, PT_Wr, 0);
-			pmap_vac_me_harder(pmap, pv);
+			pmap_vac_me_harder(pmap, pv, ptes);
 		}
 
 next:
 		sva += NBPG;
 		pte++;
 	}
-
+	pmap_unmap_ptes(pmap);
 	if (flush)
 		cpu_tlb_flushID();
 }
@@ -2003,7 +2027,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	pt_entry_t *pte;
+	pt_entry_t *pte, *ptes;
 	u_int npte;
 	int bank, off;
 	struct pv_entry *pv = NULL;
@@ -2187,7 +2211,14 @@ pmap_enter(pmap, va, pa, prot, flags)
 	*pte = npte;
 
 	if (bank != -1)
-		pmap_vac_me_harder(pmap, pv);
+	{
+		/* XXX this will change once the whole of pmap_enter uses
+		 * map_ptes
+		 */
+		ptes = pmap_map_ptes(pmap);
+		pmap_vac_me_harder(pmap, pv, ptes);
+		pmap_unmap_ptes(pmap);
+	}
 
 	/* Better flush the TLB ... */
 	cpu_tlb_flushID_SE(va);
@@ -2398,23 +2429,25 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	pt_entry_t *pte;
+	pt_entry_t *pte, *ptes;
 	paddr_t pa;
 
 	PDEBUG(5, printf("pmap_extract: pmap=%p, va=V%08lx\n", pmap, va));
 
 	/*
-	 * Get the pte for this virtual address. If there is no pte
-	 * then there is no page table etc.
+	 * Get the pte for this virtual address.
 	 */
-  
-	pte = pmap_pte(pmap, va);
-	if (!pte)
-		return(FALSE);
+	ptes = pmap_map_ptes(pmap);
+	pte = &ptes[arm_byte_to_page(va)]; 
 
-	/* Is the pte valid ? If not then no paged is actually mapped here */
-	if (!pmap_pte_v(pte))
-		return(FALSE);
+	/*
+	 * If there is no pte then there is no page table etc.
+	 * Is the pte valid ? If not then no paged is actually mapped here
+	 */
+	if (!pmap_pde_v(pmap_pde(pmap, va)) || !pmap_pte_v(pte)){
+	    pmap_unmap_ptes(pmap);
+    	    return (FALSE);
+	}
 
 	/* Return the physical address depending on the PTE type */
 	/* XXX What about L1 section mappings ? */
@@ -2427,7 +2460,6 @@ pmap_extract(pmap, va, pap)
 
 		if (pap != NULL)
 			*pap = pa | (va & (L2_LPAGE_SIZE - 1));
-		return (TRUE);
 	} else {
 		/* Extract the physical address from the pte */
 		pa = pmap_pte_pa(pte);
@@ -2437,8 +2469,9 @@ pmap_extract(pmap, va, pap)
 
 		if (pap != NULL)
 			*pap = pa | (va & ~PG_FRAME);
-		return (TRUE);
 	}
+	pmap_unmap_ptes(pmap);
+	return (TRUE);
 }
 
 
@@ -2514,6 +2547,30 @@ pmap_testbit(pa, setbits)
 	return(FALSE);
 }
 
+static pt_entry_t *
+pmap_map_ptes(struct pmap *pmap)
+{
+    struct proc *p;
+   
+    /* the kernel's pmap is always accessible */
+    if (pmap == pmap_kernel()) {
+	return (pt_entry_t *)PROCESS_PAGE_TBLS_BASE ;
+    }
+    
+    if (curproc &&
+	    curproc->p_vmspace->vm_map.pmap == pmap)
+	return (pt_entry_t *)PROCESS_PAGE_TBLS_BASE;
+    
+    p = curproc;
+    
+    if (p == NULL)
+	p = &proc0;
+    
+    pmap_map_in_l1(p->p_vmspace->vm_map.pmap, ALT_PAGE_TBLS_BASE,
+	    pmap->pm_pptpt);
+    cpu_tlb_flushD();
+    return (pt_entry_t *)ALT_PAGE_TBLS_BASE;
+}
 
 /*
  * Modify pte bits for all ptes corresponding to the given physical address.
@@ -2559,7 +2616,7 @@ pmap_clearbit(pa, maskbits)
 		 * XXX don't write protect pager mappings
 		 */
 		if (va >= uvm.pager_sva && va < uvm.pager_eva) {
-			printf("pmap_clearbit: bogon alpha\n");
+			printf("pmap_clearbit: found page VA on pv_list\n");
 			continue;
 		}
 
