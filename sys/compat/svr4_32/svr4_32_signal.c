@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.1 2001/02/06 16:37:58 eeh Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.2 2001/02/28 15:58:35 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@ void native_to_svr4_32_sigaction __P((const struct sigaction *,
 				struct svr4_32_sigaction *));
 
 #ifdef COMPAT_SVR4
-extern int native_to_svr4_sig[];
 extern int svr4_to_native_sig[];
 #else
 int native_to_svr4_sig[NSIG] = {
