@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.82 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.83 2004/09/17 23:43:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.82 2004/09/17 23:30:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.83 2004/09/17 23:43:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ scsi_change_def(struct scsipi_periph *periph, int flags)
 	scsipi_cmd.opcode = SCSI_CHANGE_DEFINITION;
 	scsipi_cmd.how = SC_SCSI_2;
 
-	return (scsipi_command(periph, NULL,
+	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, SCSIPIRETRIES, 100000, NULL, flags));
 }

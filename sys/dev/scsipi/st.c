@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.168 2004/09/17 23:35:13 mycroft Exp $ */
+/*	$NetBSD: st.c,v 1.169 2004/09/17 23:43:17 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.168 2004/09/17 23:35:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.169 2004/09/17 23:43:17 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1648,7 +1648,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 		    cmd.len);
 	} else
 		_lto3b(size, cmd.len);
-	return (scsipi_command(st->sc_periph, NULL,
+	return (scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)buf, size, 0, ST_IO_TIME, NULL, flags | XS_CTL_DATA_IN));
 }
@@ -1684,7 +1684,7 @@ st_erase(struct st_softc *st, int full, int flags)
 	if ((st->quirks & ST_Q_ERASE_NOIMM) == 0)
 		cmd.byte2 |= SE_IMMED;
 
-	return (scsipi_command(st->sc_periph, NULL,
+	return (scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, tmo, NULL, flags));
 }
@@ -1770,7 +1770,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 
 	st->flags &= ~ST_POSUPDATED;
 	st->last_ctl_resid = 0;
-	error = scsipi_command(st->sc_periph, NULL,
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, ST_SPC_TIME, NULL, flags);
 
@@ -1840,7 +1840,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		_lto3b(number, cmd.number);
 
 	/* XXX WE NEED TO BE ABLE TO GET A RESIDIUAL XXX */
-	error = scsipi_command(st->sc_periph, NULL,
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, ST_IO_TIME * 4, NULL, flags);
 	if (error == 0 && st->fileno != -1) {
@@ -1914,7 +1914,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
-	error = scsipi_command(st->sc_periph, NULL,
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
 	if (error) {
@@ -1952,7 +1952,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	error = scsipi_command(st->sc_periph, NULL,
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), 0, 0, ST_RETRIES,
 	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
 	if (error) {
@@ -2003,7 +2003,7 @@ st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 	if (hard)
 		cmd.byte1 = 1;
 
-	error = scsipi_command(st->sc_periph, NULL,
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
 	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -2044,7 +2044,7 @@ st_setpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 	if (hard)
 		cmd.byte2 = 1 << 2;
 	_lto4b(*blkptr, cmd.blkaddr);
-	error = scsipi_command(st->sc_periph, NULL,
+	error = scsipi_command(st->sc_periph,
 		(struct scsipi_generic *)&cmd, sizeof(cmd),
 		NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
 	/*
