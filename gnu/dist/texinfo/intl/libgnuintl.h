@@ -1,4 +1,4 @@
-/*	$NetBSD: libgnuintl.h,v 1.1.1.1 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: libgnuintl.h,v 1.2 2003/03/12 22:46:25 thorpej Exp $	*/
 
 /* Message catalogs for internationalization.
    Copyright (C) 1995-1997, 2000-2002 Free Software Foundation, Inc.
@@ -95,7 +95,8 @@ extern "C" {
    If he doesn't, we choose the method.  A third possible method is
    _INTL_REDIRECT_ASM, supported only by GCC.  */
 #if !(defined _INTL_REDIRECT_INLINE || defined _INTL_REDIRECT_MACROS)
-# if __GNUC__ >= 2 && (defined __STDC__ || defined __cplusplus)
+# if __GNUC__ >= 2 && (defined __STDC__ || defined __cplusplus) && \
+  !defined(__APPLE__)
 #  define _INTL_REDIRECT_ASM
 # else
 #  ifdef __cplusplus
