@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.9 1996/04/30 00:07:00 jtc Exp $	*/
+/*	$NetBSD: printjob.c,v 1.10 1996/06/30 23:55:49 jtc Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -1282,6 +1282,7 @@ openpr()
 	}
 }
 
+#if !defined(__NetBSD__)
 struct bauds {
 	int	baud;
 	int	speed;
@@ -1303,6 +1304,7 @@ struct bauds {
 	38400,	B38400,
 	0,	0
 };
+#endif
 
 /*
  * setup tty lines.
@@ -1310,7 +1312,6 @@ struct bauds {
 static void
 setty()
 {
-	register struct bauds *bp;
 	struct info i;
 	char **argv, **ap, *p, *val;
 
@@ -1325,6 +1326,8 @@ setty()
 		exit(1);
 	}
 	if (BR > 0) {
+#if !defined(__NetBSD__)
+		register struct bauds *bp;
 		for (bp = bauds; bp->baud; bp++)
 			if (BR == bp->baud)
 				break;
@@ -1333,6 +1336,9 @@ setty()
 			exit(1);
 		}
 		cfsetspeed(&i.t, bp->speed);
+#else
+		cfsetspeed(&i.t, BR);
+#endif
 		i.set = 1;
 	}
 	if (MS) {
