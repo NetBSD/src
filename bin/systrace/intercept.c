@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.9 2002/10/17 04:45:04 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.10 2002/10/30 17:39:34 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.9 2002/10/17 04:45:04 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.10 2002/10/30 17:39:34 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -701,7 +701,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		argname = intercept_filename(fd, pid, addr, 0);
+		argname = intercept_filename(fd, pid, addr, ICLINK_ALL);
 		if (argname == NULL)
 			err(1, "%s:%d: intercept_filename",
 			    __func__, __LINE__);
