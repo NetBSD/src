@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.10 1995/07/02 00:16:00 mycroft Exp $ */
+/*	$NetBSD: if_bah.c,v 1.11 1995/10/09 14:05:24 chopps Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -282,6 +282,12 @@ bahattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_ARCNET, ARC_HDRLEN);
 #endif
+
+	/* under heavy load we need four of them: */
+	alloc_sicallback();
+	alloc_sicallback();
+	alloc_sicallback();
+	alloc_sicallback();
 
 	sc->sc_isr.isr_intr = bahintr;
 	sc->sc_isr.isr_arg = sc;
@@ -1018,13 +1024,14 @@ int
 bahintr(sc)
 	struct bah_softc *sc;
 {
-	u_char isr;
+	u_char isr, maskedisr;
 	int buffer;
 	int unit;
 	u_long newsec;
 
 	isr = sc->sc_base->status;
-	if (!(isr & sc->sc_intmask)) 
+	maskedisr = isr & sc->sc_intmask;
+	if (!maskedisr) 
 		return (0);
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG>1)
@@ -1032,14 +1039,14 @@ bahintr(sc)
 	    sc->sc_dev.dv_xname, isr, sc->sc_intmask);
 #endif
 
-	if (isr & ARC_POR) {
+	if (maskedisr & ARC_POR) {
 		sc->sc_arccom.ac_anaddr = sc->sc_base->dipswitches;
 		sc->sc_base->command = ARC_CLR(CLR_POR);
 		log(LOG_WARNING, "%s: intr: got spurious power on reset int\n",
 		    sc->sc_dev.dv_xname);
 	}
 
-	if (isr & ARC_RECON) {
+	if (maskedisr & ARC_RECON) {
 		/*
 		 * we dont need to:
 		 * sc->sc_base->command = ARC_CONF(CONF_LONG);
@@ -1079,7 +1086,7 @@ bahintr(sc)
 		}
 	}
 
-	if (isr & ARC_RI) {
+	if (maskedisr & ARC_RI) {
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
 		printf("%s: intr: hard rint, act %ld 2:%ld 3:%ld\n",
@@ -1122,7 +1129,7 @@ bahintr(sc)
 #endif
 	}
 
-	if (isr & sc->sc_intmask & ARC_TA) 
+	if (maskedisr & ARC_TA) 
 		bah_tint(sc);
 
 	return (1);
