@@ -752,8 +752,8 @@ svi_modeline(sp, ep)
 				++p;
 				break;
 			}
-			if ((curlen += KEY_LEN(sp, *p)) > cols) {
-				curlen -= KEY_LEN(sp, *p);
+			if ((curlen += KEY_LEN(sp, *(u_char *)p)) > cols) {
+				curlen -= KEY_LEN(sp, *(u_char *)p);
 				++p;
 				break;
 			}
