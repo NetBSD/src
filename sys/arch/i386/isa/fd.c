@@ -650,11 +650,12 @@ retry:
 		fd_drive, fd_status[0], NE7_ST0BITS, fd_status[1], NE7_ST1BITS,
 		fd_status[2], NE7_ST2BITS,  fd_status[3], NE7_ST3BITS, 
 		fd_status[4], fd_status[5], fd_status[6]);*/
-printf("fd%d: hard error (ST0 %b ", fd_drive, fd_status[0], NE7_ST0BITS);
-printf(" ST1 %b ", fd_status[1], NE7_ST1BITS);
-printf(" ST2 %b ", fd_status[2], NE7_ST2BITS);
-printf(" ST3 %b ", fd_status[3], NE7_ST3BITS);
-printf("cyl %d hd %d sec %d)\n", fd_status[4], fd_status[5], fd_status[6]);
+		printf("fd%d: hard error (ST0 %b ", fd_drive, fd_status[0], NE7_ST0BITS);
+		printf(" ST1 %b ", fd_status[1], NE7_ST1BITS);
+		printf(" ST2 %b ", fd_status[2], NE7_ST2BITS);
+		printf(" ST3 %b ", fd_status[3], NE7_ST3BITS);
+		printf("cyl %d hd %d sec %d secsize %d)\n", fd_status[3],
+			fd_status[4], fd_status[5], 128 << (fd_status[6]));
 		badtrans(dp,bp);
 		return;
 	}
