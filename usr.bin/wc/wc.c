@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.18 1999/03/05 22:24:01 mycroft Exp $	*/
+/*	$NetBSD: wc.c,v 1.19 1999/03/05 22:31:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.18 1999/03/05 22:24:01 mycroft Exp $");
+__RCSID("$NetBSD: wc.c,v 1.19 1999/03/05 22:31:06 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,9 +129,8 @@ main(argc, argv)
 			cnt(*argv);
 		} while(*++argv);
 
-		if (dototal) {
+		if (dototal)
 			print_counts(tlinect, twordct, tcharct, "total"); 
-		}
 	}
 
 	exit(rval);
@@ -240,7 +239,7 @@ cnt(file)
 		}
 	}
 
-	print_counts(linect, wordct, charct, file ? file : "");
+	print_counts(linect, wordct, charct, file ? file : 0);
 
 	/* don't bother checkint doline, doword, or dochar --- speeds
            up the common case */
@@ -269,7 +268,10 @@ print_counts(lines, words, chars, name)
 	if (dochar)
 		printf(WCFMT, (WCCAST)chars);
 
-	printf(" %s\n", name);
+	if (name)
+		printf(" %s\n", name);
+	else
+		printf("\n");
 }
 
 static void
