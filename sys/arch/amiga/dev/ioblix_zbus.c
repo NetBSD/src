@@ -1,4 +1,4 @@
-/* $NetBSD: ioblix_zbus.c,v 1.3 2001/03/10 23:55:29 is Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.4 2002/01/26 13:40:57 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,19 +63,16 @@ struct iobz_softc {
 	struct bus_space_tag sc_bst;
 };
 
-int iobzmatch __P((struct device *, struct cfdata *, void *));
-void iobzattach __P((struct device *, struct device *, void *));
-int iobzprint __P((void *auxp, const char *));
+int iobzmatch(struct device *, struct cfdata *, void *);
+void iobzattach(struct device *, struct device *, void *);
+int iobzprint(void *auxp, const char *);
 
 struct cfattach iobl_zbus_ca = {
 	sizeof(struct iobz_softc), iobzmatch, iobzattach
 };
 
 int
-iobzmatch(parent, cfp, auxp)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *auxp;
+iobzmatch(struct device *parent, struct cfdata *cfp, void *auxp)
 {
 
 	struct zbus_args *zap;
@@ -111,9 +108,7 @@ struct iobz_devs {
 int iobzclock = IOBZCLOCK;		/* patchable! */
 
 void
-iobzattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+iobzattach(struct device *parent, struct device *self, void *auxp)
 {
 	struct iobz_softc *iobzsc;
 	struct iobz_devs  *iobzd;
@@ -150,9 +145,7 @@ iobzattach(parent, self, auxp)
 }
 
 int
-iobzprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+iobzprint(void *auxp, const char *pnp)
 {
 	struct supio_attach_args *supa;
 	supa = auxp;

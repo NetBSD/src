@@ -1,4 +1,4 @@
-/*	$NetBSD: atzscreg.h,v 1.2 1994/10/26 02:02:49 cgd Exp $	*/
+/*	$NetBSD: atzscreg.h,v 1.3 2002/01/26 13:40:53 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -73,7 +73,7 @@ struct sdmac {
 	short		pad6;
 	vu_short FLUSH;		/* Flush FIFO RW-Strobe */
 };
-	
+
 /*
  * value to go into DAWR
  */

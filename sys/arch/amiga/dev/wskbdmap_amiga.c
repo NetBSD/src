@@ -1,3 +1,5 @@
+/*	$NetBSD: wskbdmap_amiga.c,v 1.3 2002/01/26 13:41:01 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,14 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Amiga keyboard map for wscons.
  *
  * Modified from wskbdmap_mfii.c
  * The parts which have not been converted to use Amiga keycodes have
  * been commented out.
  *
- * US/DE keymaps are the ones that are supposed to work at least 
+ * US/DE keymaps are the ones that are supposed to work at least
  * partially.
  */
 
@@ -97,7 +99,7 @@ static const keysym_t amikbd_keydesc_us[] = {
     KC(0), 			KS_grave,	KS_asciitilde,
     KC(96), 			KS_Shift_L,
     KC(13), 			KS_backslash,	KS_bar,
-    KC(48),                     KS_less,        KS_greater, 
+    KC(48),                     KS_less,        KS_greater,
     KC(49), 			KS_z,
     KC(50), 			KS_x,
     KC(51), 			KS_c,
@@ -132,15 +134,15 @@ static const keysym_t amikbd_keydesc_us[] = {
     KC(63), 			KS_KP_9,        KS_KP_Prior,
     KC(74), 			KS_KP_Subtract,
     KC(45), 			KS_KP_4,        KS_KP_Left,
-    KC(46), 			KS_KP_5,        KS_KP_Begin,	
-    KC(47), 			KS_KP_6,        KS_KP_Right,	
+    KC(46), 			KS_KP_5,        KS_KP_Begin,
+    KC(47), 			KS_KP_6,        KS_KP_Right,
     KC(94), 			KS_KP_Add,
-    KC(29), 			KS_KP_1,        KS_KP_End,	
-    KC(30), 			KS_KP_2,        KS_KP_Down,	
-    KC(31), 			KS_KP_3,        KS_KP_Next,	
-    KC(15), 			KS_KP_0,        KS_KP_Insert,	
-    KC(60), 			KS_KP_Decimal,  KS_KP_Delete,	
-    KC(67), 			KS_KP_Enter,	
+    KC(29), 			KS_KP_1,        KS_KP_End,
+    KC(30), 			KS_KP_2,        KS_KP_Down,
+    KC(31), 			KS_KP_3,        KS_KP_Next,
+    KC(15), 			KS_KP_0,        KS_KP_Insert,
+    KC(60), 			KS_KP_Decimal,  KS_KP_Delete,
+    KC(67), 			KS_KP_Enter,
     KC(90), 			KS_bracketleft,	KS_braceleft,
     KC(91), 			KS_bracketright,KS_braceright,
     KC(92), 			KS_KP_Divide,
@@ -204,6 +206,35 @@ static const keysym_t amikbd_keydesc_de_nodead[] = {
     KC(0),   KS_asciicircum,	KS_degree,
 };
 
+static const keysym_t pckbd_keydesc_fr[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(1),   KS_ampersand,	KS_1,
+    KC(2),   KS_eacute,		KS_2,		KS_2,		KS_at,
+    KC(3),   KS_quotedbl,	KS_3,		KS_3,		KS_numbersign,
+    KC(4),   KS_apostrophe,	KS_4,
+    KC(5),   KS_parenleft,	KS_5,
+    KC(6),   KS_section,	KS_6,
+    KC(7),   KS_egrave,		KS_7,
+    KC(8),   KS_exclam,		KS_8,
+    KC(9),   KS_ccedilla,	KS_9,
+    KC(10),  KS_agrave,		KS_0,
+    KC(11),  KS_parenright,	KS_degree,
+    KC(12),  KS_minus,		KS_underscore,
+    KC(16),  KS_a,
+    KC(17),  KS_z,
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis,
+    KC(27),  KS_dollar,		KS_asterisk,
+    KC(32),  KS_q,
+    KC(41),  KS_m,
+    KC(42),  KS_ugrave,		KS_percent,
+    KC(43),  KS_mu,		KS_sterling,
+    KC(49),  KS_w,
+    KC(55),  KS_comma,		KS_question,
+    KC(56),  KS_semicolon,	KS_period,
+    KC(57),  KS_colon,		KS_slash,
+    KC(58),  KS_equal,		KS_plus,
+};
+
 static const keysym_t amikbd_keydesc_dk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(2),   KS_2,		KS_quotedbl,	KS_at,
@@ -263,38 +294,6 @@ static const keysym_t amikbd_keydesc_no_nodead[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(12),  KS_backslash,	KS_grave,	KS_acute,
     KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
-};
-
-static const keysym_t pckbd_keydesc_fr[] = {
-/*  pos	     normal		shifted		altgr		shift-altgr */
-    KC(2),   KS_ampersand,	KS_1,
-    KC(3),   KS_eacute,		KS_2,		KS_asciitilde,
-    KC(4),   KS_quotedbl,	KS_3,		KS_numbersign,
-    KC(5),   KS_apostrophe,	KS_4,		KS_braceleft,
-    KC(6),   KS_parenleft,	KS_5,		KS_bracketleft,
-    KC(7),   KS_minus,		KS_6,		KS_bar,
-    KC(8),   KS_egrave,		KS_7,		KS_grave,
-    KC(9),   KS_underscore,	KS_8,		KS_backslash,
-    KC(10),  KS_ccedilla,	KS_9,		KS_asciicircum,
-    KC(11),  KS_agrave,		KS_0,		KS_at,
-    KC(12),  KS_parenright,	KS_degree,	KS_bracketright,
-    KC(13),  KS_equal,		KS_plus,	KS_braceright,
-    KC(16),  KS_a,
-    KC(17),  KS_z,
-    KC(26),  KS_dead_circumflex, KS_dead_diaeresis, 
-    KC(27),  KS_dollar,		KS_sterling,	KS_currency,
-    KC(30),  KS_q,
-    KC(39),  KS_m,
-    KC(40),  KS_ugrave,		KS_percent,
-    KC(41),  KS_twosuperior,
-    KC(43),  KS_asterisk,	KS_mu,
-    KC(44),  KS_w,
-    KC(50),  KS_comma,		KS_question,
-    KC(51),  KS_semicolon,	KS_period,
-    KC(52),  KS_colon,		KS_slash,
-    KC(53),  KS_exclam,		KS_section,
-    KC(86),  KS_less,		KS_greater,
-    KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
 static const keysym_t pckbd_keydesc_it[] = {
@@ -481,7 +480,7 @@ const struct wscons_keydesc amigakbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	amikbd_keydesc_us),
 	KBD_MAP(KB_DE,			KB_US,	amikbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	amikbd_keydesc_de_nodead),
-/*	KBD_MAP(KB_FR,                  KB_US,  pckbd_keydesc_fr),*/
+	KBD_MAP(KB_FR,                  KB_US,  pckbd_keydesc_fr),
 	KBD_MAP(KB_DK,			KB_US,	amikbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	amikbd_keydesc_dk_nodead),
 /*	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
@@ -495,7 +494,6 @@ const struct wscons_keydesc amigakbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	pckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP, pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
@@ -505,22 +503,3 @@ const struct wscons_keydesc amigakbd_keydesctab[] = {
 
 #undef KBD_MAP
 #undef KC
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

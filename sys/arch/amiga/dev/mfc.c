@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.24 2001/05/30 15:24:27 lukem Exp $ */
+/*	$NetBSD: mfc.c,v 1.25 2002/01/26 13:40:58 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -181,27 +181,27 @@ struct mfc_args {
 	char	unit;
 };
 
-int	mfcprint __P((void *auxp, const char *));
-void	mfcattach __P((struct device *, struct device *, void *));
-int	mfcmatch __P((struct device *, struct cfdata *, void *));
+int	mfcprint(void *auxp, const char *);
+void	mfcattach(struct device *, struct device *, void *);
+int	mfcmatch(struct device *, struct cfdata *, void *);
 
 #if NMFCS > 0
-int	mfcsmatch __P((struct device *, struct cfdata *, void *));
-void	mfcsattach __P((struct device *, struct device *, void *));
-int	mfcsparam __P(( struct tty *, struct termios *));
-int	mfcshwiflow __P((struct tty *, int));
-void	mfcsstart __P((struct tty *));
-int	mfcsmctl __P((dev_t, int, int)); 
-void	mfcsxintr __P((int));
-void	mfcseint __P((int, int));
-void	mfcsmint __P((register int));
+int	mfcsmatch(struct device *, struct cfdata *, void *);
+void	mfcsattach(struct device *, struct device *, void *);
+int	mfcsparam( struct tty *, struct termios *);
+int	mfcshwiflow(struct tty *, int);
+void	mfcsstart(struct tty *);
+int	mfcsmctl(dev_t, int, int);
+void	mfcsxintr(int);
+void	mfcseint(int, int);
+void	mfcsmint(register int);
 #endif
 
 #if NMFCP > 0
-void mfcpattach __P((struct device *, struct device *, void *));
-int mfcpmatch __P((struct device *, struct cfdata *, void *));
+void mfcpattach(struct device *, struct device *, void *);
+int mfcpmatch(struct device *, struct cfdata *, void *);
 #endif
-int mfcintr __P((void *));
+int mfcintr(void *);
 
 struct cfattach mfc_ca = {
 	sizeof(struct mfc_softc), mfcmatch, mfcattach
@@ -312,10 +312,7 @@ struct speedtab mfcs2speedtab2[] = {
  * if we are an bsc/Alf Data MultFaceCard (I, II, and III)
  */
 int
-mfcmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+mfcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -328,9 +325,7 @@ mfcmatch(pdp, cfp, auxp)
 }
 
 void
-mfcattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mfcattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct mfc_softc *scc;
 	struct zbus_args *zap;
@@ -394,10 +389,7 @@ mfcattach(pdp, dp, auxp)
  *
  */
 int
-mfcsmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+mfcsmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct mfc_args *ma;
 
@@ -408,9 +400,7 @@ mfcsmatch(pdp, cfp, auxp)
 }
 
 void
-mfcsattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mfcsattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int unit;
 	struct mfcs_softc *sc;
@@ -447,9 +437,7 @@ mfcsattach(pdp, dp, auxp)
  * print diag if pnp is NULL else just extra
  */
 int
-mfcprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+mfcprint(void *auxp, const char *pnp)
 {
 	if (pnp == NULL)
 		return(UNCONF);
@@ -457,10 +445,7 @@ mfcprint(auxp, pnp)
 }
 
 int
-mfcsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mfcsopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	struct mfcs_softc *sc;
@@ -559,10 +544,7 @@ done:
 
 /*ARGSUSED*/
 int
-mfcsclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mfcsclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	int unit;
@@ -603,10 +585,7 @@ mfcsclose(dev, flag, mode, p)
 }
 
 int
-mfcsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+mfcsread(dev_t dev, struct uio *uio, int flag)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
@@ -616,10 +595,7 @@ mfcsread(dev, uio, flag)
 }
 
 int
-mfcswrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+mfcswrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
@@ -630,10 +606,7 @@ mfcswrite(dev, uio, flag)
 }
 
 int
-mfcspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+mfcspoll(dev_t dev, int events, struct proc *p)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 	struct tty *tp = sc->sc_tty;
@@ -644,8 +617,7 @@ mfcspoll(dev, events, p)
 }
 
 struct tty *
-mfcstty(dev)
-	dev_t dev;
+mfcstty(dev_t dev)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
 
@@ -653,12 +625,7 @@ mfcstty(dev)
 }
 
 int
-mfcsioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t data;
-	int	flag;
-	struct proc *p;
+mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	register struct tty *tp;
 	register int error;
@@ -729,9 +696,7 @@ mfcsioctl(dev, cmd, data, flag, p)
 }
 
 int
-mfcsparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+mfcsparam(struct tty *tp, struct termios *t)
 {
 	int cflag, unit, ospeed;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
@@ -799,9 +764,7 @@ mfcsparam(tp, t)
 }
 
 int
-mfcshwiflow(tp, flag)
-        struct tty *tp;
-        int flag;
+mfcshwiflow(struct tty *tp, int flag)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	int unit = tp->t_dev & 1;
@@ -814,8 +777,7 @@ mfcshwiflow(tp, flag)
 }
 
 void
-mfcsstart(tp)
-	struct tty *tp;
+mfcsstart(struct tty *tp)
 {
 	int cc, s, unit;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
@@ -879,9 +841,7 @@ out:
  */
 /*ARGSUSED*/
 void
-mfcsstop(tp, flag)
-	struct tty *tp;
-	int flag;
+mfcsstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -894,9 +854,7 @@ mfcsstop(tp, flag)
 }
 
 int
-mfcsmctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
+mfcsmctl(dev_t dev, int bits, int how)
 {
 	int unit, s;
 	u_char ub = 0;
@@ -960,8 +918,7 @@ mfcsmctl(dev, bits, how)
  */
 
 int
-mfcintr(arg)
-	void *arg;
+mfcintr(void *arg)
 {
 	struct mfc_softc *scc = arg;
 	struct mfcs_softc *sc;
@@ -1054,8 +1011,7 @@ mfcintr(arg)
 }
 
 void
-mfcsxintr(unit)
-	int unit;
+mfcsxintr(int unit)
 {
 	int s1, s2, ovfl;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
@@ -1099,8 +1055,7 @@ mfcsxintr(unit)
 }
 
 void
-mfcseint(unit, stat)
-	int unit, stat;
+mfcseint(int unit, int stat)
 {
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
 	struct tty *tp;
@@ -1142,8 +1097,7 @@ mfcseint(unit, stat)
  * up into the tty layer.
  */
 void
-mfcsmint(unit)
-	int unit;
+mfcsmint(int unit)
 {
 	struct tty *tp;
 	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
