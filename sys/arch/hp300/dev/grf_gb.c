@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.20 2002/03/17 05:44:49 gmcgarry Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.20.6.1 2004/04/12 05:24:33 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.20 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.20.6.1 2004/04/12 05:24:33 jmc Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -618,7 +618,8 @@ gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
-	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_GATORBOX)) {
+	if (badaddr(va) ||
+	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_GATORBOX)) {
 		bus_space_unmap(bst, bsh, NBPG);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.16.6.1 2004/04/12 05:24:44 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.16.6.1 2004/04/12 05:24:44 jmc Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -766,7 +766,8 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
-	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
+	if (badaddr(va) ||
+	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
 		bus_space_unmap(bst, bsh, NBPG);
 		return (1);
 	}
