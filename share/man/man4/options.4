@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.1 1996/10/20 23:58:12 perry Exp $
+.\"	$NetBSD: options.4,v 1.2 1996/11/15 13:46:02 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -129,7 +129,43 @@ support for some older pre BSD 4.4 socket calls.
 On those architectures that support it, this enables binary
 compatibility with
 .At V.4
-applications built for the same architecture.
+applications built for the same architecture.  This currently includes
+the sparc, and i386.
+.It Cd options COMPAT_LINUX
+On those architectures that support it, this enables binary
+compatibility with Linux ELF and a.out
+applications built for the same architecture.  This is currently limited
+to the i386.
+.It Cd options COMPAT_SUNOS
+On those architectures that support it, this enables binary
+compatibility with SunOS 4.1
+applications built for the same architecture.  This currently includes
+the sparc and most or all m68k platforms.
+.It Cd options COMPAT_ULTRIX
+On those architectures that support it, this enables binary
+compatibility with Ultrix
+applications built for the same architecture.  This currently is limited
+to the pmax.  The functionality of this option is unknown.
+.It Cd options COMPAT_FREEBSD
+On those architectures that support it, this enables binary
+compatibility with FreeBSD
+applications built for the same architecture.  This is obviously limited
+to the i386.
+.It Cd options COMPAT_HPUX
+On those architectures that support it, this enables binary
+compatibility with HP/UX
+applications built for the same architecture.  This is limited to the
+hp300 port, and has some known bugs.  A limited set of programs do work.
+.It Cd options COMPAT_IBCS2
+On those architectures that support it, this enables binary
+compatibility with iBCS2 
+applications built for the same architecture.  This is currently
+limited to the i386.
+.It Cd options COMPAT_OSF1
+On those architectures that support it, this enables binary
+compatibility with Digital UNIX (formerly OSF/1)
+applications built for the same architecture.  This is currently
+limited to the alpha, and may not even work.
 .El
 .Ss Debugging Options
 .Bl -ohang
@@ -386,8 +422,9 @@ machines such as personal workstations which run X servers, where one
 would prefer to permit console output to be viewed in a window without
 requiring a suid root program to do it.
 .It Cd options MACHINE_NONCONTIG
-[Does something or other with the VM subsystem. Not clear if its
-optional. Text is solicited.]
+This option changes part of the VM/pmap interface, to allow for
+non-contiguous memory.  On some ports it is not an option.  These
+ports typically only use one of the interfaces.
 .It Cd options NTP
 Turns on in-kernel precision timekeeping support used by software
 implementing
@@ -459,8 +496,10 @@ the shell, rather than the filename.  NOTE: Execute only (non-readable)
 scripts will have 
 .Va argv[0]
 set to
-.Pa /dev/fd/* . [Quoth Curt Sampson "Is this the secure or
-non-secure version of this?]
+.Pa /dev/fd/* .
+What this option allows as far as security is
+concerned, is the ability to safely ensure that the correct script
+it run by the interpreter, as it is passed as an already open file.
 .It Cd options TIMEZONE=integer
 The kernel (and typically the hardware battery backed-up clock on
 those machines that have one) keeps time in
@@ -609,8 +648,7 @@ Includes support for the TCP/IP protocol stack. You almost certainly
 want this. See
 .Xr inet 4
 for details.
-[Is this option required, though? Can you save space on a
-standalone machine by nuking it, or will the kernel compile croak?]
+This option is currently required.
 .It Cd options NS
 Include support for the Xerox XNS protocol stack. See
 .Xr ns 4
@@ -620,11 +658,11 @@ Include support for the ubiquitous OSI protocol stack. See
 .Xr iso 4
 for details.
 .It Cd options EON
-Include support for OSI tunneling over IP. [Do we have any
-documentation on this at all?]
+Include support for OSI tunneling over IP.
 .It Cd options CCITT,LLC,HDLC
-Include support for the X.25 protocol stack. [Really? What is this
-thing? Does anything actually drive it? Do we have any documentation?]
+Include support for the X.25 protocol stack.
+The state of this code is currently unknown, and probably contains
+bugs.
 .It Cd options IPNOPRIVPORTS
 Normally, only root can bind a socket descriptor to a so-called
 .Dq privileged
@@ -641,6 +679,10 @@ values.  This option clamps the initial sequence number to start in
 the range 2^31 rather than the full unsigned range of 2^32.  Also,
 under 4.2BSD, keepalive packets must contain at least one byte or else
 the remote end would not respond.
+.It Cd options PFIL_HOOKS
+This option turns on the packet filter interface hooks.  See
+.Xr pfil 9
+for details.
 .El
 .Ss System V IPC Options
 .Bl -ohang
@@ -687,7 +729,6 @@ objects (i.e. BSS pages)).
 -- you cannot actually run without
 this
 .Dq option .
-[If its mandatory, why is it an option at all?]
 .It Cd options VNODEPAGER
 Support for mmap()ing of files. (Specifically, this enables the
 virtual memory module responsible for handling page faults on mapped
@@ -698,7 +739,6 @@ vnodes)).
 -- you cannot actually run without
 this
 .Dq option .
-[If its mandatory, why is it an option at all?]
 .It Cd options DEVPAGER
 Support for mmap()ing of devices.  (Specifically, this enables the
 virtual memory module responsible for handling page faults on mapped
@@ -709,13 +749,13 @@ vnodes)).
 -- you cannot actually run without
 this
 .Dq option .
-[If its mandatory, why is it an option at all?]
 .It Cd options NMBCLUSTERS=value
-Size of kernel [Something, what? mbuf pool?] in CLBYTES-sized logical
-pages. This region is covered by the kernel submap 
-.Em mb_map .
-[Better description, please? What does this do EXACTLY.]  Default on
-most ports is 256 (512 with GATEWAY).  See
+Size of kernel mbuf cluster map,
+.Em mb_map ,
+in CLBYTES-sized logical
+pages.  Default on most ports is 256 (512 with
+.Dq options GATEWAY ).
+See
 .Pa /usr/include/machine/param.h
 for exact default information.  Increase this value if you get 
 .Dq mb_map full
@@ -729,17 +769,16 @@ See
 for the default value, which is port specific.  Increase this value if
 you get 
 .Dq out of space in kmem_map
-panics, which mean you have run out of mallocable kernel memory. [Is
-this last bit right?]
+panics.
+.\" , which mean you have run out of mallocable kernel memory.
 .It Cd options NBUF=value
-[Quoth CGD: "Don't forget NBUF and BUFPAGES, which can be set to
-influence buffer cache size calculations." Can anyone fill in text?]
 .It Cd options BUFPAGES=value
-[Quoth CGD: "Don't forget NBUF and BUFPAGES, which can be set to
-influence buffer cache size calculations." Can anyone fill in text?]
+These option set the number of pages available for the buffer cache.
+Their default value is a machine depedant value, often calculated as
+between 5% and 10% of total available RAM.
 .It Cd options NKPDE=value
 .Em [ NOTE :
-This option may be i386 specific.]
+This option is i386 specific.]
 The i386 architecture uses a two-level page table; page directories
 contain entries for page tables, which contain entries for pages.
 The value of NKPDE indicates how many page tables (page directory entries)
@@ -809,3 +848,9 @@ The
 .Nm
 man page first appeared in
 .Nx 1.3 .
+.SH BUGS
+The
+.It Cd INET
+and the
+.It Cd VNODEPAGER
+options should not be required.
