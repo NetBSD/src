@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.3 2001/01/23 22:59:24 bjh21 Exp $ */
+/* $NetBSD: iobus.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.3 2001/01/23 22:59:24 bjh21 Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -57,23 +57,23 @@ struct cfattach iobus_ca = {
 	sizeof(struct iobus_softc), iobus_match, iobus_attach
 };
 
-extern struct cfdriver iobus_cd;
+struct iobus_softc *the_iobus;
 
 static int
 iobus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* There can be only one! */
-	if (cf->cf_unit == 0)
+	if (the_iobus == NULL)
 		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 static void
 iobus_attach(struct device *parent, struct device *self, void *aux)
 {
 
+	the_iobus = (struct iobus_softc *)self;
 	printf("\n");
 
 	/*
