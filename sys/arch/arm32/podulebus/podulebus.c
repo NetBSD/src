@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.8 1996/05/16 19:05:35 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.9 1996/05/17 16:17:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -131,6 +131,7 @@ struct podule_description podules_0050[] = {
 };
 
 struct podule_description podules_0053[] = {
+	{ 0xa4, "ether 3 interface" },
 	{ 0xe4, "ether B network slot interface" },
 	{ 0x00, NULL },
 };
