@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: inbound.c,v 1.2 1993/08/01 18:05:50 mycroft Exp $";
+static char rcsid[] = "$Id: inbound.c,v 1.3 1994/02/04 20:11:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -686,7 +686,7 @@ unsigned int
 	    switch (ctlrfcn) {
 	    case FCN_ESCAPE:
 		StopScreen(1);
-		command(0);
+		command(0, NULL, 0);
 		if (shell_active == 0) {
 		    ConnectScreen();
 		}
@@ -988,7 +988,7 @@ unsigned int
 	case FCN_ESCAPE:
 	    /* FlushChar(); do we want to flush characters from before? */
 	    StopScreen(1);
-	    command(0);
+	    command(0, NULL, 0);
 	    if (shell_active == 0) {
 		ConnectScreen();
 	    }
