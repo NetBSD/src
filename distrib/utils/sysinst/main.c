@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1999/06/22 15:04:15 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2000/05/11 02:23:53 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,7 +149,7 @@ void
 toplevel()
 {
 
-	/* Display banner message in (english, francais, deutche..) */
+	/* Display banner message in (english, francais, deutsch..) */
 	msg_display(MSG_hello);
 
 	/* 
