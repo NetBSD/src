@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.27 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: paths.c,v 1.28 2004/02/15 02:56:53 enami Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -330,7 +330,7 @@ _rtld_process_hints(Search_Path **path_p, Library_Xform **lib_p, const char *fna
 
 	buf = mmap(0, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FILE, fd, 0);
 	if (buf == MAP_FAILED) {
-		xwarn("fstat: %s", fname);
+		xwarn("mmap: %s", fname);
 		(void)close(fd);
 		return;
 	}
