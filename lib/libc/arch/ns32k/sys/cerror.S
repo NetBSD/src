@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: cerror.S,v 1.3 1994/05/03 20:40:35 phil Exp $
+ *	$Id: cerror.S,v 1.4 1994/06/02 20:39:22 phil Exp $
  */
 
 #include "SYS.h"
@@ -31,4 +31,5 @@ cerror:
 	movd	r0, PIC_GOT(_errno)
 	PIC_EPILOGUE
 	movqd	-1, r0
+	movqd	-1, r1
 	ret	0
