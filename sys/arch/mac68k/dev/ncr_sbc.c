@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.1 1996/02/10 23:28:41 scottr Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.2 1996/02/22 14:31:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -73,7 +73,9 @@
 #include "ncr_sbcreg.h"
 #include "../mac68k/via.h"
 
-/* #define DEBUG */
+#ifdef SBCTEST
+# define DEBUG
+#endif
 
 /*
  * Transfers smaller than this are done using PIO
@@ -96,12 +98,16 @@
 #define	SBC_DMA_NODRQ_OFFSET	0x12000
 
 #ifdef	DEBUG
-int	sbc_debug = 0x7;
-static int sbc_link_flags = 0 /* | SDEV_DB2 */;
+#define	SBC_DB_INTR	0x01
+#define	SBC_DB_DMA	0x02
+#define	SBC_DB_BREAK	0x04
+
+int	sbc_debug = SBC_DB_INTR | SBC_DB_DMA | SBC_DB_BREAK;
+int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 #endif
 
 /*
- * This structure is used to keep track of the PDMA requests.
+ * This structure is used to keep track of PDMA requests.
  */
 struct sbc_pdma_handle {
 	int	dh_flags;	/* flags */
@@ -115,7 +121,7 @@ struct sbc_pdma_handle {
 
 /*
  * The first structure member has to be the ncr5380_softc
- * so we can just cast to go back and fourth between them.
+ * so we can just cast to go back and forth between them.
  */
 struct sbc_softc {
 	struct ncr5380_softc ncr_sc;
@@ -123,6 +129,7 @@ struct sbc_softc {
 	volatile long	*sc_drq_addr;
 	volatile u_char	*sc_nodrq_addr;
 	volatile u_char	*sc_ienable;
+	volatile u_char	*sc_iflag;
 	int		sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
 #ifdef DEBUG
@@ -143,7 +150,6 @@ struct sbc_softc {
 #define	SBC_RESELECT	0x02	/* Allow disconnect/reselect */
 #define	SBC_OPTIONS_MASK	(SBC_INTR|SBC_RESELECT)
 #define	SBC_OPTIONS_BITS	"\10\2RESELECT\1INTR"
-/* int sbc_options = 0x03 /* 0 */;
 int sbc_options = 0;
 
 static	char sbc_name[] = "sbc";
@@ -300,10 +306,13 @@ sbc_attach(parent, self, args)
 	 */
 	sc->sc_drq_addr = (long *) (SCSIBase + SBC_DMA_DRQ_OFFSET);
 	sc->sc_nodrq_addr = (u_char *) (SCSIBase + SBC_DMA_NODRQ_OFFSET);
-	if (VIA2 == VIA2OFF)
+	if (VIA2 == VIA2OFF) {
 		sc->sc_ienable = Via1Base + VIA2 * 0x2000 + vIER;
-	else
+		sc->sc_iflag   = Via1Base + VIA2 * 0x2000 + vIFR;
+	} else {
 		sc->sc_ienable = Via1Base + VIA2 * 0x2000 + rIER;
+		sc->sc_iflag   = Via1Base + VIA2 * 0x2000 + rIFR;
+	}
 
 	if (sc->sc_options)
 		printf(": options=%b", sc->sc_options, SBC_OPTIONS_BITS);
@@ -421,6 +430,7 @@ sbc_intr_enable(ncr_sc)
 	int s;
 
 	s = splhigh();
+	*sc->sc_iflag   = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 	*sc->sc_ienable = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 	splx(s);
 }
@@ -457,7 +467,7 @@ sbc_irq_intr(p)
 				printf("%s: spurious intr\n",
 				    ncr_sc->sc_dev.dv_xname);
 # ifdef DDB
-				if (sbc_debug & 0x4)
+				if (sbc_debug & SBC_DB_BREAK)
 					Debugger();	/* XXX */
 # endif
 			}
@@ -487,6 +497,7 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 		return ncr5380_pio_out(ncr_sc, phase, count, data);
 
 	if (sbc_wait_busy(ncr_sc) == 0) {
+		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
 		*ncr_sc->sci_dma_send = 0;
@@ -563,6 +574,7 @@ sbc_pdma_in(ncr_sc, phase, count, data)
 		return ncr5380_pio_in(ncr_sc, phase, count, data);
 
 	if (sbc_wait_busy(ncr_sc) == 0) {
+		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
 		*ncr_sc->sci_irecv = 0;
@@ -700,7 +712,7 @@ sbc_drq_intr(p)
 
 #ifdef DEBUG
 	sc->sc_vstate = "got drq interrupt.";
-	if (sbc_debug & 0x4)
+	if (sbc_debug & SBC_DB_INTR)
 		printf("%s: drq intr, dh_len=%d, dh_flags=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_len, dh->dh_flags);
 #endif
@@ -733,6 +745,8 @@ sbc_drq_intr(p)
 		sc->sc_vstate = "handled bus error in xfer.";
 #endif
 		mac68k_buserr_addr = 0;
+
+		ncr5380_intr(ncr_sc);
 		return;
 	}
 
@@ -987,7 +1001,7 @@ sbc_dma_poll(ncr_sc)
 	}
 
 #ifdef	DEBUG
-	if (sbc_debug)
+	if (sbc_debug & SBC_DB_DMA)
 		printf("%s: poll done, csr=0x%x, bus_csr=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
 		    *ncr_sc->sci_bus_csr);
@@ -1016,12 +1030,14 @@ sbc_dma_start(ncr_sc)
 		*ncr_sc->sci_tcmd = PHASE_DATA_OUT;
 		SCI_CLR_INTR(ncr_sc);
 		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
+		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_dma_send = 0;
 	} else {
 		*ncr_sc->sci_tcmd = PHASE_DATA_IN;
 		SCI_CLR_INTR(ncr_sc);
 		*ncr_sc->sci_icmd = 0;
+		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_irecv = 0;
 	}
@@ -1035,7 +1051,7 @@ sbc_dma_start(ncr_sc)
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
 #ifdef	DEBUG
-	if (sbc_debug & 0x2)
+	if (sbc_debug & SBC_DB_DMA)
 		printf("sbc_dma_start: started, va=0x%lx, xlen=0x%x\n",
 			(long)dh->dh_addr, dh->dh_len);
 #endif
@@ -1071,7 +1087,7 @@ sbc_dma_stop(ncr_sc)
 	ntrans = ncr_sc->sc_datalen - dh->dh_len;
 
 #ifdef DEBUG
-	if (sbc_debug & 0x2)
+	if (sbc_debug & SBC_DB_DMA)
 		printf("sbc_dma_stop: ntrans=0x%x\n", ntrans);
 #endif
 
