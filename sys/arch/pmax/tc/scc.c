@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.32 1998/02/05 01:57:35 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.33 1998/03/22 07:04:14 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.32 1998/02/05 01:57:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.33 1998/03/22 07:04:14 jonathan Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -775,10 +775,9 @@ sccopen(dev, flag, mode, p)
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
 	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
-		firstopen = 1;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
+		firstopen = 1;
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
 #endif
@@ -801,9 +800,11 @@ sccopen(dev, flag, mode, p)
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
-		tp->t_state |= TS_WOPEN;
-		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0)) != 0)
+		tp->t_wopen++;
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		    ttopen, 0);
+		tp->t_wopen--;
+		if (error != 0)
 			break;
 	}
 	splx(s);
@@ -840,7 +841,7 @@ sccclose(dev, flag, mode, p)
 		ttyoutput(0, tp);
 	}
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	if ((tp->t_cflag & HUPCL) || (tp->t_state & TS_WOPEN) ||
+	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
 		(void) sccmctl(dev, 0, DMSET);
 	return (ttyclose(tp));
@@ -1256,7 +1257,7 @@ sccintr(xxxsc)
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
 #ifdef PORTSELECTOR
-			if (!(tp->t_state & TS_WOPEN))
+			if (tp->t_wopen == 0)
 #endif
 				continue;
 		}

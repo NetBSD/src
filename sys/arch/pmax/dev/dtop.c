@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.30 1998/01/12 20:12:31 thorpej Exp $	*/
+/*	$NetBSD: dtop.c,v 1.31 1998/03/22 07:04:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.30 1998/01/12 20:12:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.31 1998/03/22 07:04:13 jonathan Exp $");
 
 #include "rasterconsole.h"
 
@@ -293,10 +293,9 @@ dtopopen(dev, flag, mode, p)
 	tp->t_oproc = dtopstart;
 	tp->t_param = dtopparam;
 	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
-		firstopen = 1;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
+		firstopen = 1;
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
@@ -311,9 +310,11 @@ dtopopen(dev, flag, mode, p)
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
-		tp->t_state |= TS_WOPEN;
-		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-				      TTIPRI | PCATCH, ttopen, 0)) != 0)
+		tp->t_wopen++;
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+				      TTIPRI | PCATCH, ttopen, 0);
+		tp->t_wopen--;
+		if (error != 0)
 			break;
 	}
 	splx(s);
