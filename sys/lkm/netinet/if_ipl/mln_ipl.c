@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.16.2.1 1997/10/30 07:19:48 mrg Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.16.2.2 1997/11/11 09:16:46 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -115,11 +115,10 @@ extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
 
-int
 #if NetBSD >= 199706
-if_ipl_lkmentry(lkmtp, cmd, ver)
+int if_ipl_lkmentry(lkmtp, cmd, ver)
 #else
-xxxinit(lkmtp, cmd, ver)
+int xxxinit(lkmtp, cmd, ver)
 #endif
 struct lkm_table *lkmtp;
 int cmd, ver;
@@ -219,10 +218,6 @@ static int ipl_load()
 	 * XXX perfect world we could use the ones specified by cdevsw[].
 	 */
 	(void)ipl_remove();
-
-	error = iplattach();
-	if (error)
-		return error;
 
 	for (i = 0; (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
