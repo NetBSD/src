@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.65 2000/08/15 01:08:00 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.66 2000/09/08 02:50:43 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -622,6 +622,20 @@ One way is to start a shell from the Utilities menu, examine the
 target /etc and /etc.old.  If /etc.old is from a completed upgrade,
 you can rm -f etc.old and restart.  Or if /etc.old is from a recent,
 incomplete upgrade, you can rm -f /etc and mv etc.old to /etc.
+
+Aborting upgrade.}
+
+message X_oldexists
+{I cannot save /usr/X11R6/bin/X as /usr/X11R6/bin/X.old, because the
+target disk already has an /usr/X11R6/bin/X.old. Please fix this before
+continuing.
+
+One way is to start a shell from the Utilities menu, examine the
+target /usr/X11R6/bin/X and /usr/X11R6/bin/X.old.  If
+/usr/X11R6/bin/X.old is from a completed upgrade, you can rm -f
+/usr/X11R6/bin/X.old and restart.  Or if /usr/X11R6/bin/X.old is from
+a recent, incomplete upgrade, you can rm -f /usr/X11R6/bin/X and mv
+/usr/X11R6/bin/X.old to /usr/X11R6/bin/X.
 
 Aborting upgrade.}
 
