@@ -1,6 +1,5 @@
-#
-#	$Id: Makefile,v 1.2 1993/07/30 01:00:27 mycroft Exp $
-#
+#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
+#	$Id: Makefile,v 1.3 1994/01/12 19:01:00 cgd Exp $
 
 PROG=	mount_fdesc
 MAN8=	mount_fdesc.0
