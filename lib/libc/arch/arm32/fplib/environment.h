@@ -1,4 +1,4 @@
-/*	$NetBSD: environment.h,v 1.2 1998/01/06 00:06:10 perry Exp $	*/
+/*	$NetBSD: environment.h,v 1.3 1998/01/22 07:14:17 cgd Exp $	*/
 
 /*
 ===============================================================================
@@ -44,5 +44,5 @@ a compiler does not support inlining, this macro should be defined to be
 `static'.
 -------------------------------------------------------------------------------
 */
-#define INLINE extern inline
+#define INLINE static inline
 
