@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.75 2002/03/13 08:12:58 simonb Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.76 2002/03/13 10:57:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.75 2002/03/13 08:12:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.76 2002/03/13 10:57:18 simonb Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -144,16 +144,6 @@ struct pool_item {
 
 /* The cache group pool. */
 static struct pool pcgpool;
-
-/* The pool cache group. */
-#define	PCG_NOBJECTS		16
-struct pool_cache_group {
-	TAILQ_ENTRY(pool_cache_group)
-		pcg_list;	/* link in the pool cache's group list */
-	u_int	pcg_avail;	/* # available objects */
-				/* pointers to the objects */
-	void	*pcg_objects[PCG_NOBJECTS];
-};
 
 static void	pool_cache_reclaim(struct pool_cache *);
 
