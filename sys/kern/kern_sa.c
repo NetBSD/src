@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.17 2003/07/17 18:16:58 fvdl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.18 2003/07/17 20:34:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.17 2003/07/17 18:16:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.18 2003/07/17 20:34:41 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,20 +941,21 @@ sa_upcall_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 
+		KDASSERT(sa->sa_nstacks > 0);
+		st = sa->sa_stacks[--sa->sa_nstacks];
+
 		SCHED_ASSERT_UNLOCKED();
 
 		l2 = sa_vp_repossess(l);
 		
 		SCHED_ASSERT_UNLOCKED();
 			
-		if(l2 == NULL) {
+		if (l2 == NULL) {
 			sadata_upcall_free(sau);
+			/* No need to put st back */
 			lwp_exit(l);
 		}
 
-		KDASSERT(sa->sa_nstacks > 0);
-
-		st = sa->sa_stacks[--sa->sa_nstacks];
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) nstacks--   = %2d\n",
 		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER, l, l2, 0, NULL, sau,
