@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdate.8,v 1.1 2000/03/29 13:54:45 simonb Exp $
+.\"	$NetBSD: ntpdate.8,v 1.2 2000/03/30 01:49:24 simonb Exp $
 .\" Converted from HTML to mandoc by html-to-mdoc.pl
 .\"
 .Dd Mar 29, 2000
@@ -187,10 +187,11 @@ Be verbose. This option will cause
 string to be logged.
 .El
 .Sh FILES
-.Pa /etc/ntp.keys
-- encryption keys used by 
-.Nm
-.
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /etc/ntp.keys
+encryption keys used by 
+.Nm "" .
+.El
 .Sh BUGS
 The slew adjustment is actually 50% larger than the measured offset, since
 this (it is argued) will tend to keep a badly drifting clock more accurate.
