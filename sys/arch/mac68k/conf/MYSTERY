@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.6 1996/11/11 18:02:57 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.7 1996/11/19 00:38:05 scottr Exp $
 #
 # SPOT
 
@@ -10,7 +10,6 @@ makeoptions CC="cc -m68030"
 options 	MYSTERY
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options 	DIAGNOSTIC		# DEBUG for extra kernel debugging
 options 	KTRACE			# system call tracing support
 #options 	KGDB			# support for kernel gdb
@@ -63,7 +62,6 @@ options 	COMPAT_09
 options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
-options 	MACHINE_NONCONTIG
 options 	ZS_CONSOLE_ABORT
 
 config		netbsd	swap generic
@@ -83,7 +81,7 @@ grf*		at macvid?
 ite0		at grf?
 
 #ncrscsi0	at obio?		# SCSI NCR 5380
-#esp0		at obio?		# SCSI NCR 53C96
+esp0		at obio?		# SCSI NCR 53C96
 sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
 scsibus*	at scsi?

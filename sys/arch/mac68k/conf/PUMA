@@ -1,13 +1,10 @@
-#	$NetBSD: PUMA,v 1.16 1996/11/11 18:02:58 scottr Exp $
+#	$NetBSD: PUMA,v 1.17 1996/11/19 00:38:06 scottr Exp $
 #
 # PUMA
 
 include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
-
-# Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
@@ -39,7 +36,6 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68030
-options		MACHINE_NONCONTIG
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
