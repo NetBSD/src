@@ -304,7 +304,7 @@ struct sysent ultrix_sysent[] = {
 	    nosys },				/* 35 = obsolete v7 ftime */
 	{ 0, 0,
 	    sync },				/* 36 = sync */
-	{ 1, s(struct kill_args),
+	{ 2, s(struct kill_args),
 	    kill },				/* 37 = kill */
 	{ 2, s(struct compat_43_stat_args),
 	    compat_43_stat },			/* 38 = compat_43_stat */
