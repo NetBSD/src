@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.35 2003/06/02 21:19:35 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.36 2003/06/03 08:49:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,15 +68,15 @@ static int num_avail  = 0;
 #endif
 
 /* prototypes for in here! */
-static void init_menu (struct menudesc *m);
-static char opt_ch (int op_no);
-static void post_menu (struct menudesc *m);
-static void process_help (struct menudesc *m, int num);
-static void process_req (struct menudesc *m, int num, int req);
-static int menucmd (WINDOW *w);
+static void init_menu(struct menudesc *m);
+static char opt_ch(int op_no);
+static void draw_menu(struct menudesc *m);
+static void process_help(struct menudesc *m, int num);
+static void process_req(struct menudesc *m, int num, int req);
+static int menucmd(WINDOW *w);
 
 #ifndef NULL
-#define NULL (void *)0
+#define NULL 0
 #endif
 
 /* menu system processing routines */
@@ -100,7 +100,7 @@ menucmd(WINDOW *w)
 		case KEY_UP:
 			return REQ_PREV_ITEM;
 		case '\014':  /* Control-L */
-		        return REQ_REDISPLAY;
+			return REQ_REDISPLAY;
 		case '<':
 		case '\010':  /* Control-H (backspace) */
 		case KEY_PPAGE:
@@ -123,7 +123,7 @@ menucmd(WINDOW *w)
 		}
 		
 		if (isalpha(ch)) 
-			return (ch);
+			return ch;
 
 		mbeep();
 		wrefresh(w);
@@ -148,8 +148,10 @@ init_menu(struct menudesc *m)
 	/* Calculate h? h == number of visible options. */
 	if (m->h == 0) {
 		m->h = m->numopts + exithadd;
-		if (m->h + m->y + hadd >= max_lines && (m->mopt & MC_SCROLL))
-			m->h = max_lines - m->y - hadd ;
+		if (m->h + m->y + hadd >= max_lines && (m->mopt & MC_SCROLL)) {
+			hadd++;
+			m->h = max_lines - m->y - hadd;
+		}
 	}
 
 	/* Check window heights and set scrolling */
@@ -196,7 +198,7 @@ init_menu(struct menudesc *m)
 		m->x = max_cols - (m->w + wadd);
 
 	/* Get the windows. */
-	m->mw = newwin(m->h+hadd, m->w+wadd, m->y, m->x);
+	m->mw = newwin(m->h + hadd, m->w + wadd, m->y, m->x);
 	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
 
 	if (m->mw == NULL) {
@@ -227,12 +229,28 @@ opt_ch(int op_no)
 }
 
 static void
-post_menu(struct menudesc *m)
+draw_menu_line(struct menudesc *m, int i, int cury, char opt, const char *text)
+{
+	int hasbox = m->mopt & MC_NOBOX ? 0 : 1;
+
+	if (m->cursel == i) {
+		mvwaddstr(m->mw, cury, hasbox, ">");
+		wstandout(m->mw);
+	} else
+		mvwaddstr(m->mw, cury, hasbox, " ");
+	if (!(m->mopt & MC_NOSHORTCUT))
+		wprintw(m->mw, "%c: ", opt);
+	waddstr(m->mw, text);
+	if (m->cursel == i)
+		wstandend(m->mw);
+}
+
+static void
+draw_menu(struct menudesc *m)
 {
 	int i;
-	int hasbox, cury, maxy, selrow, lastopt;
+	int hasbox, cury, maxy;
 	int tadd;
-	char optstr[5];
 	
 	if (m->mopt & MC_NOBOX) {
 		cury = 0;
@@ -250,64 +268,32 @@ post_menu(struct menudesc *m)
 	tadd = strlen(m->title) ? 2 : 0;
 
 	if (tadd) {
-		mvwaddstr(m->mw, cury, cury, " ");
-		mvwaddstr(m->mw, cury, cury + 1, m->title);
-		cury += 2;
-		maxy += 2;
+		mvwaddstr(m->mw, hasbox, hasbox, " ");
+		mvwaddstr(m->mw, hasbox, hasbox + 1, m->title);
+		cury += tadd;
+		maxy += tadd;
 	}
 
-	/* Set defaults, calculate lastopt. */
-	selrow = -1;
-	if (m->mopt & MC_SCROLL) {
-		lastopt = MIN(m->numopts, m->topline+m->h-1);
-		maxy -= 1;
-	} else
-		lastopt = m->numopts;
-
-	for (i = m->topline; i < lastopt; i++, cury++) {
-		if (m->cursel == i) {
-			mvwaddstr(m->mw, cury, hasbox, ">");
-			wstandout(m->mw);
-			selrow = cury;
-		} else
-			mvwaddstr(m->mw, cury, hasbox, " ");
-		if (!(m->mopt & MC_NOSHORTCUT)) {
-			(void)sprintf (optstr, "%c: ", opt_ch(i));
-		    	waddstr(m->mw, optstr);
-		}
-		waddstr(m->mw, m->opts[i].opt_name);
-		if (m->cursel == i)
-			wstandend(m->mw);
+	for (i = m->topline; i < m->numopts; i++) {
+		if (cury >= maxy)
+			break;
+		draw_menu_line(m, i, cury++, opt_ch(i), m->opts[i].opt_name);
 	}
 
 	/* Add the exit option. */
-	if (!(m->mopt & MC_NOEXITOPT) && cury < maxy) {
-		if (m->cursel >= m->numopts) {
-			mvwaddstr(m->mw, cury, hasbox, ">");
-			wstandout(m->mw);
-			selrow = cury;
-		} else
-			mvwaddstr(m->mw, cury, hasbox, " ");
-		if (!(m->mopt & MC_NOSHORTCUT))
-			waddstr (m->mw, "x: ");
-		waddstr(m->mw, m->exitstr);
-		if (m->cursel >= m->numopts)
-			wstandend(m->mw);
-		cury++;
-	}
+	if (!(m->mopt & MC_NOEXITOPT) && cury < maxy)
+		draw_menu_line(m, m->numopts, cury++, 'x', m->exitstr);
 
 	/* Add the scroll line */
-	if (m->mopt & MC_SCROLL) {
+	if (m->mopt & MC_SCROLL)
 		mvwaddstr(m->mw, cury, hasbox, scrolltext);
-		if (selrow < 0)
-			selrow = cury;
-	}
 
 	/* Add the box. */
 	if (!(m->mopt & MC_NOBOX))
 		box(m->mw, 0, 0);
 
-	wmove(m->mw, selrow, hasbox);
+	wmove(m->mw, tadd + hasbox + m->cursel - m->topline, hasbox);
+	wrefresh(m->mw);
 }
 
 static void
@@ -343,7 +329,7 @@ process_help(struct menudesc *m, int num)
 			"Help: exit: x,  page up: u <, page down: d >");
 		mvwaddstr(stdscr, 2, 0, help);
 		wmove(stdscr, 1, 0);
-	  	wrefresh(stdscr);
+		wrefresh(stdscr);
 
 		do {
 			winin = wgetch(stdscr);
@@ -396,8 +382,6 @@ process_req(struct menudesc *m, int num, int req)
 {
 	int ch;
 	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
-	int refr = 0;
-	int scroll_sel = 0;
 
 	switch(req) {
 
@@ -410,9 +394,7 @@ process_req(struct menudesc *m, int num, int req)
 			return;
 		}
 		m->cursel++;
-		scroll_sel = 1;
-		refr = 1;
-		if (m->mopt & MC_SCROLL && m->cursel >= m->topline + m->h - 1)
+		if (m->mopt & MC_SCROLL && m->cursel >= m->topline + m->h)
 			m->topline += 1;
 		break;
 
@@ -422,8 +404,6 @@ process_req(struct menudesc *m, int num, int req)
 			return;
 		}
 		m->cursel--;
-		scroll_sel = 1;
-		refr = 1;
 		if (m->cursel < m->topline)
 			m->topline -= 1;
 		break;
@@ -433,52 +413,37 @@ process_req(struct menudesc *m, int num, int req)
 		wrefresh(stdscr);
 		if (m->post_act)
 			(*m->post_act)();
-		refr = 1;
 		break;
 
 	case REQ_HELP:
 		process_help(m, num);
-		refr = 1;
 		break;
 
 	case REQ_SCROLLUP:
-		if (!(m->mopt & MC_SCROLL)) {
-			mbeep();
-			return;
-		}
 		if (m->cursel == 0) {
 			mbeep();
 			return;
 		}
-		m->topline = MAX(0, m->topline - m->h + 1);
-		m->cursel = MAX(0, m->cursel - m->h + 1);
+		m->topline = MAX(0, m->topline - m->h);
+		m->cursel = MAX(0, m->cursel - m->h);
 		wclear(m->mw);
-		refr = 1;
 		break;
 
 	case REQ_SCROLLDOWN:
-		if (!(m->mopt & MC_SCROLL)) {
-			mbeep();
-			return;
-		}
 		if (m->cursel >= m->numopts + hasexit - 1) {
 			mbeep();
 			return;
 		}
-		m->topline = MIN(m->topline + m->h - 1,
-				 m->numopts + hasexit - m->h + 1);
-		m->cursel = MIN(m->numopts + hasexit - 1,
-				m->cursel + m->h - 1);
+		m->topline = MIN(m->topline + m->h,
+				 m->numopts + hasexit - m->h);
+		m->cursel = MIN(m->numopts + hasexit - 1, m->cursel + m->h);
 		wclear(m->mw);
-		refr = 1;
 		break;
 
 	default:
 		ch = req;
 		if (ch == 'x' && hasexit) {
 			m->cursel = m->numopts;
-			scroll_sel = 1;
-			refr = 1;
 			break;
 		}
 		if (m->mopt & MC_NOSHORTCUT) {
@@ -498,22 +463,15 @@ process_req(struct menudesc *m, int num, int req)
 			return;
 		}
 		m->cursel = ch;
-		scroll_sel = 1;
-		refr = 1;
 	}
 
-	if (m->mopt & MC_SCROLL && scroll_sel) {
-		while (m->cursel >= m->topline + m->h - 1)
-			m->topline = MIN(m->topline + m->h - 1,
-					 m->numopts + hasexit - m->h + 1);
-		while (m->cursel < m->topline)
-			m->topline = MAX(0, m->topline - m->h + 1);
-	}
+	while (m->cursel >= m->topline + m->h)
+		m->topline = MIN(m->topline + m->h,
+				 m->numopts + hasexit - m->h);
+	while (m->cursel < m->topline)
+		m->topline = MAX(0, m->topline - m->h);
 
-	if (refr) {
-		post_menu(m);
-		wrefresh(m->mw);
-	}
+	draw_menu(m);
 }
 
 int
@@ -553,13 +511,12 @@ menu_init(void)
 	if (menus == NULL)
 		return 2;
 	(void)memset(menus, 0, sizeof(menudesc) * num_menus);
-	(void)memcpy(menus, (void *)menu_def,
-		sizeof(menudesc) * DYN_MENU_START);
-	 num_avail = num_menus - DYN_MENU_START;
+	(void)memcpy(menus, menu_def, sizeof(menudesc) * DYN_MENU_START);
+	num_avail = num_menus - DYN_MENU_START;
 #endif
 
 	__menu_init = 1;
-	return (0);
+	return 0;
 }
 
 void
@@ -587,7 +544,7 @@ process_menu(int num)
 		__m_endwin = 0;
 	}
 	if (m->mw == NULL)
-		init_menu (m);
+		init_menu(m);
 
 	/* Always preselect option 0 and display from 0! */
 	m->cursel = 0;
@@ -603,11 +560,10 @@ process_menu(int num)
 		/* Process the display action */
 		if (m->post_act)
 			(*m->post_act)();
-		post_menu(m);
-		wrefresh(m->mw);
+		draw_menu(m);
 
-		while ((req = menucmd (m->mw)) != REQ_EXECUTE)
-			process_req (m, num, req);
+		while ((req = menucmd(m->mw)) != REQ_EXECUTE)
+			process_req(m, num, req);
 
 		sel = m->cursel;
 		wclear(m->mw);
@@ -623,7 +579,7 @@ process_menu(int num)
 				done = (*m->opts[sel].opt_action)(m);
 			if (m->opts[sel].opt_menu != -1) {
 				if (m->opts[sel].opt_flags & OPT_SUB)
-					process_menu (m->opts[sel].opt_menu);
+					process_menu(m->opts[sel].opt_menu);
 				else
 					num = m->opts[sel].opt_menu;
 			}
@@ -640,7 +596,7 @@ process_menu(int num)
 
 			/* Initialize? */
 			if (m->mw == NULL)
-				init_menu (m);
+				init_menu(m);
 			if (m->post_act)
 				(*m->post_act)();
 		}
