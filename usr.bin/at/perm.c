@@ -1,4 +1,4 @@
-/*	$NetBSD: perm.c,v 1.1 1998/06/27 21:15:08 christos Exp $	*/
+/*	$NetBSD: perm.c,v 1.2 2000/10/04 19:24:59 mjl Exp $	*/
 
 /* 
  * perm.c - check user permission for at(1)
@@ -50,20 +50,18 @@
 #if 0
 static char rcsid[] = "$OpenBSD: perm.c,v 1.1 1997/03/01 23:40:12 millert Exp $";
 #else
-__RCSID("$NetBSD: perm.c,v 1.1 1998/06/27 21:15:08 christos Exp $");
+__RCSID("$NetBSD: perm.c,v 1.2 2000/10/04 19:24:59 mjl Exp $");
 #endif
 #endif
 
 /* Function declarations */
 
-static int check_for_user __P((FILE *, const char *));
+static int check_for_user (FILE *, const char *);
 
 /* Local functions */
 
 static int
-check_for_user(fp, name)
-	FILE *fp;
-	const char *name;
+check_for_user(FILE *fp, const char *name)
 {
 	char *buffer;
 	size_t len;
@@ -88,7 +86,7 @@ check_for_user(fp, name)
 /* Global functions */
 
 int
-check_permission()
+check_permission(void)
 {
 	FILE *fp;
 	uid_t uid = geteuid();
