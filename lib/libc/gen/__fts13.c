@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.21 1999/08/27 18:26:34 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.22 1999/08/27 18:29:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.21 1999/08/27 18:26:34 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.22 1999/08/27 18:29:08 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1020,8 +1020,8 @@ fts_pow2(x)
 /*
  * Allow essentially unlimited paths; find, rm, ls should all work on any tree.
  * Most systems will allow creation of paths much longer than MAXPATHLEN, even
- * though the kernel won't resolve them.  Add the size (not just what's needed)
- * plus 256 bytes so don't realloc the path 2 bytes at a time. 
+ * though the kernel won't resolve them.  Round up the new size to a power of 2,
+ * so we don't realloc the path 2 bytes at a time. 
  */
 static int
 fts_palloc(sp, size)
