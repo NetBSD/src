@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.62 2001/11/23 18:14:51 perry Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.63 2001/11/24 21:58:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.62 2001/11/23 18:14:51 perry Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.63 2001/11/24 21:58:42 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ makelink(char *from_name, char *to_name)
 		 * The last component of to_name may be a symlink,
 		 * so use realpath to resolve only the directory.
 		 */
-		cp = dirname(to_name);
+		cp = xdirname(to_name);
 		if (realpath(cp, dst) == NULL)
 			err(1, "%s", cp);
 		/* .. and add the last component */
