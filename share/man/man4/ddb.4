@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" 
-.\"	$NetBSD: ddb.4,v 1.10 1997/03/11 16:58:55 sommerfe Exp $
+.\"	$NetBSD: ddb.4,v 1.11 1997/09/11 07:10:21 scottr Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -264,6 +264,12 @@ Search memory for a value. This command might fail in interesting
 ways if it doesn't find the searched-for value.  This is because
 ddb doesn't always recover from touching bad memory.  The optional
 count argument limits the search.
+.XX "\fBreboot \fI[<flags>]\fR"
+Reboot, using the optionally supplied boot flags.
+.br
+.sp
+Note:  Limitations of the command line interface
+preclude specification of a boot string.
 .XX "\fBshow all procs[/m]\fR"
 Display all process information.
 This version of "\fBddb\fR"
