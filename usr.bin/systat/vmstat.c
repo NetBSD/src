@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.33 2000/07/05 11:03:23 ad Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.34 2000/11/29 11:18:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.33 2000/07/05 11:03:23 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.34 2000/11/29 11:18:33 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.33 2000/07/05 11:03:23 ad Exp $");
 
 static struct Info {
 	u_int64_t time[CPUSTATES];
-	struct	uvmexp uvmexp;
+	struct	uvmexp_sysctl uvmexp;
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
 	long	nchcount;
@@ -594,7 +594,7 @@ getinfo(struct Info *s, enum state st)
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
 	size = sizeof(s->uvmexp);
 	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
+	mib[1] = VM_UVMEXP2;
 	if (sysctl(mib, 2, &s->uvmexp, &size, NULL, 0) < 0) {
 		error("can't get uvmexp: %s\n", strerror(errno));
 		memset(&s->uvmexp, 0, sizeof(s->uvmexp));
