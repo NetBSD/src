@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.17 1996/09/10 22:05:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -84,6 +84,10 @@
 #include <compat/hpux/hpux_exec.h>
 #endif
 
+#ifdef COMPAT_M68K4K
+#include <compat/m68k4k/m68k4k_exec.h>
+#endif
+
 struct execsw execsw[] = {
 #ifdef LKM
 	{ 0, NULL, },					/* entries for LKMs */
@@ -116,6 +120,9 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_HPUX
 	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, },	/* HP-UX a.out */
+#endif
+#ifdef COMPAT_M68K4K
+	{ sizeof(struct exec), exec_m68k4k_makecmds, },	/* m68k4k a.out */
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
