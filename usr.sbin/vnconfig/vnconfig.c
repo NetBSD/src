@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.17 1999/04/01 17:24:03 veego Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.18 2000/02/16 06:52:31 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@
  *	@(#)vnconfig.c	8.1 (Berkeley) 12/15/93
  */
 
+#define __POOL_EXPOSE			/* dev/vndvar.h uses struct pool */
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -86,7 +88,6 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#define __POOL_EXPOSE
 #include <dev/vndvar.h>
 
 #include <disktab.h>
