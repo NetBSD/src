@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.9 1998/05/10 12:35:59 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.10 1998/05/30 22:21:03 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -708,7 +708,7 @@ sys_mlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mlock_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
@@ -760,7 +760,7 @@ sys_munlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_munlock_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
