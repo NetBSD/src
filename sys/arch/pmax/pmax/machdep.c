@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2000/06/06 00:47:21 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.173.2.1 2000/06/29 15:05:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2000/06/06 00:47:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173.2.1 2000/06/29 15:05:57 ad Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -177,12 +177,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 #endif
 	extern char edata[], end[];	/* XXX */
 
-	/* Initialize callv so we can do PROM output... */
-	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
-
-	/* Use PROM console output until we initialize a console driver. */
-	cn_tab = &promcd;
-
 	/* Set up bootinfo structure looking at stack. */
 	if (bim == BOOTINFO_MAGIC) {
 		struct btinfo_magic *bi_magic;
@@ -197,10 +191,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 	}
 	else
 		bootinfo_msg = "invalid bootinfo pointer (old bootblocks?)\n";
-#if 0
-	if (bootinfo_msg != NULL)
-		printf(bootinfo_msg);
-#endif
 
 	/* clear the BSS segment */
 #ifdef DDB
@@ -233,6 +223,16 @@ mach_init(argc, argv, code, cv, bim, bip)
 		memset(edata, 0, kernend - edata);
 	}
 
+	/* Initialize callv so we can do PROM output... */
+	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
+
+	/* Use PROM console output until we initialize a console driver. */
+	cn_tab = &promcd;
+
+#if 0
+	if (bootinfo_msg != NULL)
+		printf(bootinfo_msg);
+#endif
 	/*
 	 * Set the VM page size.
 	 */
