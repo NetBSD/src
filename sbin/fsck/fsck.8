@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.16 1996/11/09 01:49:54 lukem Exp $
+.\"	$NetBSD: fsck.8,v 1.17 1996/11/09 18:43:22 perry Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Nm fsck
 .Nd file system consistency check and interactive repair
 .Sh SYNOPSIS
-.Nm fsck
+.Nm
 .Op Fl dvplfyn
 .Op Fl l Ar maxparallel
 .Op Fl t Ar fstype 
@@ -42,7 +42,7 @@
 .Op special | node ...
 .Sh DESCRIPTION
 The
-.Nm fsck
+.Nm
 command invokes filesystem-specific programs to check
 the special devices listed in the 
 .Xr fstab 5
@@ -54,7 +54,7 @@ during automatic reboot.
 If no filesystems are specified, and ``preen'' mode is enabled (
 .Fl p
 option)
-.Nm fsck
+.Nm
 reads the table
 .Pa /etc/fstab
 to determine which filesystems to check.
@@ -73,7 +73,7 @@ The options are as follows:
 .It Fl d
 Debugging mode. Just print the commands without executing them. Available
 only if
-.Nm fsck
+.Nm
 is compiled to support it.
 .It Fl f
 Force checking of filesystems, even when they are marked clean (for filesystems
@@ -85,19 +85,24 @@ disks, running one process per disk. If a smaller limit is giv-
 en, the disks are checked round-robin, one filesystem at a time.
 .It Fl n
 Causes
-.Nm fsck
+.Nm
 to assume no as the answer to all operator questions, except "CONTINUE?".
 .It Fl p
 Enter preen mode.
 .It Fl t Ar fstype
-Invoke fsck only in the comma separated list of filesystem types. If the
-list starts with no
-then invoke fsck the the filesystem types that are not specified in the list.
+Invoke
+.Nm
+only for the comma separated list of filesystem types. If the
+list starts with
+.Dq no
+then invoke
+.Nm
+for the filesystem types that are not specified in the list.
 .It Fl v
 Print the commands before executing them.
 .It Fl y
 Causes
-.Nm fsck
+.Nm
 to assume yes
 as the answer to all operator questions.
 .It Fl T Ar fstype:fsoptions
