@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.20 1998/05/11 22:12:59 thorpej Exp $
+#	$NetBSD: bsd.sys.mk,v 1.21 1998/07/27 13:16:52 mycroft Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -10,6 +10,10 @@ CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 .if defined(DESTDIR)
 CPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
 LINTFLAGS+= -d ${DESTDIR}/usr/include
+.endif
+
+.if defined(AUDIT)
+CPPFLAGS+= -D__AUDIT__
 .endif
 
 # Helpers for cross-compiling
