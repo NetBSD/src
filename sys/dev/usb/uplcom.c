@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.19 2001/07/20 21:03:41 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.20 2001/07/31 12:33:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,6 +91,7 @@ struct	uplcom_softc {
 	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
 
+	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
 	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
@@ -263,6 +264,9 @@ USB_ATTACH(uplcom)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	/* keep interface for interrupt */
+	sc->sc_intr_iface = sc->sc_iface;
 
 	/*
 	 * USB-RSAQ1 has two interface
@@ -624,7 +628,7 @@ uplcom_open(void *addr, int portno)
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_status = 0; /* clear status bit */
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
-		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
+		err = usbd_open_pipe_intr(sc->sc_intr_iface, sc->sc_intr_number,
 			USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc,
 			sc->sc_intr_buf, sc->sc_isize,
 			uplcom_intr, USBD_DEFAULT_INTERVAL);
