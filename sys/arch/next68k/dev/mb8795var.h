@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.2 2000/10/09 10:45:45 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -28,6 +28,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "rnd.h"                /* is random device-driver configured? */
+#if NRND > 0
+#include <sys/rnd.h>
+#endif  /* NRND */
 
 #define MB8795_NRXBUFS (32)
 
@@ -81,6 +86,10 @@ struct mb8795_softc {
 
 	struct nextdma_config *sc_tx_nd;		/* @@@ this shouldn't be here */
 	struct nextdma_config *sc_rx_nd;		/* @@@ this shouldn't be here */
+
+#if NRND > 0
+	rndsource_element_t     rnd_source;
+#endif /* NRND */
 
 };
 
