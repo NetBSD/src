@@ -1,7 +1,7 @@
-/*	$NetBSD: igsfb_pci.c,v 1.6 2002/10/02 16:51:38 thorpej Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.7 2003/05/10 01:51:56 uwe Exp $ */
 
 /*
- * Copyright (c) 2002 Valeriy E. Ushakov
+ * Copyright (c) 2002, 2003 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,9 @@
 
 /*
  * Integraphics Systems IGA 168x and CyberPro series.
- * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.6 2002/10/02 16:51:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.7 2003/05/10 01:51:56 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +50,25 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.6 2002/10/02 16:51:38 thorpej Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/rasops/rasops.h>
+
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
+#include <dev/pci/igsfb_pcivar.h>
+
+
+static int	igsfb_pci_match_by_id(pcireg_t);
+static int	igsfb_pci_map_regs(struct igsfb_devconfig *,
+				   bus_space_tag_t, bus_space_tag_t,
+				   pci_chipset_tag_t,
+				   pcitag_t, pci_product_id_t);
+static int	igsfb_pci_is_console(pci_chipset_tag_t, pcitag_t);
+
+static int igsfb_pci_console = 0;
+static pcitag_t igsfb_pci_constag;
+
 
 
 static int	igsfb_pci_match(struct device *, struct cfdata *, void *);
@@ -61,6 +76,72 @@ static void	igsfb_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(igsfb_pci, sizeof(struct igsfb_softc),
     igsfb_pci_match, igsfb_pci_attach, NULL, NULL);
+
+
+static int
+igsfb_pci_match_by_id(id)
+	pcireg_t id;
+{
+
+	if (PCI_VENDOR(id) != PCI_VENDOR_INTEGRAPHICS)
+		return (0);
+
+	switch (PCI_PRODUCT(id)) {
+	case PCI_PRODUCT_INTEGRAPHICS_IGA1682:		/* FALLTHROUGH */
+	case PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000:	/* FALLTHROUGH */
+	case PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010:
+		return (1);
+	default:
+		return (0);
+	}
+}
+
+
+int
+igsfb_pci_cnattach(iot, memt, pc, bus, device, function)
+	bus_space_tag_t iot, memt;
+	pci_chipset_tag_t pc;
+	int bus, device, function;
+{
+	struct igsfb_devconfig *dc;
+	pcitag_t tag;
+	pcireg_t id;
+	int ret;
+
+	tag = pci_make_tag(pc, bus, device, function);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+	if (igsfb_pci_match_by_id(id) == 0)
+		return (1);
+
+	dc = &igsfb_console_dc;
+	if (igsfb_pci_map_regs(dc, iot, memt, pc, tag, PCI_PRODUCT(id)) != 0)
+		return (1);
+
+	ret = igsfb_enable(dc->dc_iot, dc->dc_iobase, dc->dc_ioflags);
+	if (ret)
+		return (ret);
+
+	ret = igsfb_cnattach_subr(dc);
+	if (ret)
+		return (ret);
+
+	igsfb_pci_console = 1;
+	igsfb_pci_constag = tag;
+
+	return (0);
+}
+
+
+static int
+igsfb_pci_is_console(pc, tag)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+
+	return (igsfb_pci_is_console && (tag == igsfb_pci_constag));
+}
+
 
 static int
 igsfb_pci_match(parent, match, aux)
@@ -70,24 +151,10 @@ igsfb_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEGRAPHICS)
-		return (0);
-
-	/* probably can drive iga1680 and cyberpro cards as well */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEGRAPHICS_IGA1682)
-		return (1);
-
-	if (PCI_PRODUCT(pa->pa_id) == 0x2000) /* XXX */
-		return (1);
-
-	return (0);
+	return (igsfb_pci_match_by_id(pa->pa_id));
 }
 
 
-/*
- * Note, that the chip may still be not enabled (e.g. JavaStation PROM
- * doesn't bother to init the chip if PROM output goes to serial).
- */
 static void
 igsfb_pci_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -95,18 +162,66 @@ igsfb_pci_attach(parent, self, aux)
 {
 	struct igsfb_softc *sc = (struct igsfb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	bus_addr_t iobase;
-	int ioflags;
 	int isconsole;
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEGRAPHICS_IGA1682)
-		sc->sc_is2k = 0;
-	else
-		sc->sc_is2k = 1;
+
+#if defined(__sparc__) && !defined(KRUPS_FORCE_SERIAL_CONSOLE)
+	/* XXX: this doesn't belong here */
+	if (PCITAG_NODE(pa->pa_tag) == prom_instance_to_package(prom_stdout()))
+	{
+		int b, d, f;
+
+		pci_decompose_tag(pa->pa_pc, pa->pa_tag, &b, &d, &f);
+		igsfb_pci_cnattach(pa->pa_iot, pa->pa_memt, pa->pa_pc, b,d,f);
+	}
+#endif
+
+	isconsole = 0;
+	if (igsfb_pci_is_console(pa->pa_pc, pa->pa_tag)) {
+		sc->sc_dc = &igsfb_console_dc;
+		isconsole = 1;
+	} else {
+		sc->sc_dc = malloc(sizeof(struct igsfb_devconfig),
+				   M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (sc->sc_dc == NULL)
+			panic("unable to allocate igsfb_devconfig");
+		if (igsfb_pci_map_regs(sc->sc_dc,
+			    pa->pa_iot, pa->pa_memt, pa->pa_pc,
+			    pa->pa_tag, PCI_PRODUCT(pa->pa_id)) != 0)
+		{
+			printf("unable to map device registers\n");
+			free(sc->sc_dc, M_DEVBUF);
+			sc->sc_dc = NULL;
+			return;
+		}
+
+		igsfb_enable(sc->sc_dc->dc_iot, sc->sc_dc->dc_iobase,
+			     sc->sc_dc->dc_ioflags);
+	}
+
+	igsfb_attach_subr(sc, isconsole);
+}
+
+
+/*
+ * Init memory and i/o bus space tags.  Map device registers.
+ * Use memory space mapped i/o space access for i/o registers
+ * for CyberPro cards.
+ */
+static int
+igsfb_pci_map_regs(dc, iot, memt, pc, tag, id)
+	struct igsfb_devconfig *dc;
+	bus_space_tag_t iot, memt;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	pci_product_id_t id;
+{
+
+	dc->dc_id = id;
 
 	/*
 	 * Configure memory space first since for CyberPro we use
@@ -115,31 +230,27 @@ igsfb_pci_attach(parent, self, aux)
 	 */
 #define IGS_MEM_MAPREG (PCI_MAPREG_START + 0)
 
-	sc->sc_memt = pa->pa_memt;
-	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag,
+	dc->dc_memt = memt;
+	if (pci_mapreg_info(pc, tag,
 		IGS_MEM_MAPREG, PCI_MAPREG_TYPE_MEM,
-		&sc->sc_memaddr, &sc->sc_memsz, &sc->sc_memflags) != 0)
+		&dc->dc_memaddr, &dc->dc_memsz, &dc->dc_memflags) != 0)
 	{
 		printf("unable to configure memory space\n");
-		return;
+		return (1);
 	}
 
 	/*
-	 * Configure I/O space.  On CyberPro use MMIO.  IGS 168x
-	 * doesn't have a BAR for its i/o, so we have to hardcode it.
+	 * Configure I/O space.  On CyberPro use MMIO.  IGS 168x doesn't
+	 * have a BAR for its i/o space, so we have to hardcode it.
 	 */
-	if (sc->sc_is2k) {
-		sc->sc_iot = sc->sc_memt;
-		iobase = IGS_MEM_MMIO_SELECT | sc->sc_memaddr;
-		ioflags = sc->sc_memflags;
-		printf("mem = 0x%08x, io = 0x%08x\n",
-		       (u_int32_t)sc->sc_memaddr,
-		       (u_int32_t)iobase);
+	if (id >= PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000) {
+		dc->dc_iot = dc->dc_memt;
+		dc->dc_iobase = dc->dc_memaddr | IGS_MEM_MMIO_SELECT;
+		dc->dc_ioflags = dc->dc_memflags;
 	} else {
-		/* feh, 1682 config denies having io space registers */
-		sc->sc_iot = pa->pa_iot;
-		iobase = 0;
-		ioflags = 0;
+		dc->dc_iot = iot;
+		dc->dc_iobase = 0;
+		dc->dc_ioflags = 0;
 	}
 
 	/*
@@ -147,49 +258,14 @@ igsfb_pci_attach(parent, self, aux)
 	 * code because on e.g. ISA bus we'd need to access registers
 	 * to obtain/program linear memory location.
 	 */
-	if (bus_space_map(sc->sc_iot,
-			  iobase + IGS_REG_BASE, IGS_REG_SIZE, ioflags,
-			  &sc->sc_ioh) != 0)
+	if (bus_space_map(dc->dc_iot,
+			  dc->dc_iobase + IGS_REG_BASE, IGS_REG_SIZE,
+			  dc->dc_ioflags,
+			  &dc->dc_ioh) != 0)
 	{
 		printf("unable to map I/O registers\n");
-		return;
+		return (1);
 	}
 
-	/*
-	 * Enable the chip.
-	 * 
-	 * XXX: for CyberPro sc->sc_iot is actually MMIO.  Make sure
-	 * that the card responds to memory cycles first?
-	 */
-	if (igsfb_enable(sc->sc_iot) != 0)
-		return;
-
-#ifdef __arm__ /* XXX: uwe: netwinder */
-	/*
-	 * On Netwinder the card is absolutely out of whack.
-	 * Program the registers to bring the card into a usable state.
-	 * On Krups we rely on OFW to program the card correctly
-	 * (XXX: re-check the case when the console is on serial).
-	 */
-	igsfb_hw_setup(sc);
-#endif
-
-	/*
-	 * TODO: Map graphic coprocessor registers.  not sure if this
-	 * needs to be done in bus glue or can be moved to common
-	 * attach code.
-	 */
-
-
-	isconsole = 0;
-#ifdef __arm__
-	isconsole = 1;		/* XXX */
-#endif
-
-#ifdef __sparc__  /* XXX: this doesn't belong here */
-	if (PCITAG_NODE(pa->pa_tag) == prom_instance_to_package(prom_stdout()))
-		isconsole = 1;
-#endif
-
-	igsfb_common_attach(sc, isconsole);
+	return (0);
 }
