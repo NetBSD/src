@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.73 2003/09/02 22:44:08 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.74 2003/09/03 01:33:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.73 2003/09/02 22:44:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.74 2003/09/03 01:33:23 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -864,6 +864,7 @@ void
 pcic_deactivate_card(h)
 	struct pcic_handle *h;
 {
+	int intr;
 
 	/* call the MI deactivate function */
 	pcmcia_card_deactivate(h->pcmcia);
@@ -872,7 +873,9 @@ pcic_deactivate_card(h)
 	pcic_write(h, PCIC_PWRCTL, 0);
 
 	/* reset the socket */
-	pcic_write(h, PCIC_INTR, 0);
+	intr = pcic_read(h, PCIC_INTR);
+	intr &= PCIC_INTR_ENABLE;
+	pcic_write(h, PCIC_INTR, intr);
 }
 
 int 
