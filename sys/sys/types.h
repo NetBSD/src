@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.36 1998/08/13 02:10:59 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.37 1999/03/14 01:24:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -72,6 +72,7 @@ typedef	int32_t		daddr_t;	/* disk address */
 typedef	u_int32_t	dev_t;		/* device number */
 typedef	u_int32_t	fixpt_t;	/* fixed point number */
 typedef	u_int32_t	gid_t;		/* group id */
+typedef	u_int32_t	id_t;		/* group id, process id or user id */
 typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 typedef	u_int32_t	mode_t;		/* permissions */
