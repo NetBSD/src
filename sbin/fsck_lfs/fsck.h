@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.4 2000/05/16 04:55:59 perseant Exp $	*/
+/* $NetBSD: fsck.h,v 1.5 2000/05/23 01:48:52 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -38,10 +38,10 @@
  */
 
 #ifdef KS_DEBUG
-# include <err.h>
-# define debug_printf warn
+#include <err.h>
+#define debug_printf warn
 #else
-# define debug_printf
+#define debug_printf
 #endif
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
@@ -64,20 +64,20 @@
  * buffer cache structure.
  */
 struct bufarea {
-	struct bufarea	*b_next;		/* free list queue */
-	struct bufarea	*b_prev;		/* free list queue */
-	daddr_t	b_bno;
-	int	b_size;
-	int	b_errs;
-	int	b_flags;
+	struct bufarea *b_next;	/* free list queue */
+	struct bufarea *b_prev;	/* free list queue */
+	daddr_t         b_bno;
+	int             b_size;
+	int             b_errs;
+	int             b_flags;
 	union {
-		char	*b_buf;			/* buffer space */
-		daddr_t	*b_indir;		/* indirect block */
-		struct	lfs *b_fs;		/* super block */
-		struct	cg *b_cg;		/* cylinder group */
-		struct	dinode *b_dinode;	/* inode block */
-	} b_un;
-	char	b_dirty;
+		char           *b_buf;	/* buffer space */
+		daddr_t        *b_indir;	/* indirect block */
+		struct lfs     *b_fs;	/* super block */
+		struct cg      *b_cg;	/* cylinder group */
+		struct dinode  *b_dinode;	/* inode block */
+	}               b_un;
+	char            b_dirty;
 };
 
 #define	B_INUSE 1
@@ -90,50 +90,35 @@ struct bufarea {
 	(bp)->b_bno = (daddr_t)-1; \
 	(bp)->b_flags = 0;
 
-
-
-#ifdef OLD
-
-#define blkroundup(fs, size)	/* calculates roundup(size, fs->fs_bsize) */ \
-	(((size) + ~((fs)->lfs_bmask)) & (fs)->lfs_bmask)
-#if 1
-#define fragroundup(fs, size) blkroundup((fs), (size))
-#else
-#define fragroundup(fs, size)	/* calculates roundup(size, fs->fs_fsize) */ \
-	(((size) + ~((fs)->lfs_fmask)) & (fs)->lfs_fmask)
-#endif
-#if 1
-#define dblksize(fs, dip, lbn) (fs)->lfs_bsize /* XXX - no fragments, yet */
-#else
-#define dblksize(fs, dip, lbn) \
-        (((lbn) >= NDADDR || (dip)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
-            ? (fs)->lfs_bsize \
-            : (fragroundup(fs, blkoff(fs, (dip)->di_size))))
-#endif
-#endif /* OLD */
-
 #define	sbdirty()	sblk.b_dirty = 1
 #define	sblock		(*sblk.b_un.b_fs)
-/* #define	idinode		(iblk.b_un.b_dinode) */
 #define ifblock         (*iblk.b_un.b_dinode)
 
-enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
+enum fixstate {
+	DONTKNOW, NOFIX, FIX, IGNORE
+};
 
 struct inodesc {
-	enum fixstate id_fix;	/* policy on fixing errors */
-	int (*id_func)		/* function to be applied to blocks of inode */
-	    __P((struct inodesc *));
-	ino_t id_number;	/* inode number described */
-	ino_t id_parent;	/* for DATA nodes, their parent */
-	daddr_t id_blkno;	/* current block number being examined */
-	daddr_t id_lblkno;	/* current logical block number */
-	int id_numfrags;	/* number of frags contained in block */
-	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
-	int id_loc;		/* for DATA nodes, current location in dir */
-	int id_entryno;		/* for DATA nodes, current entry number */
-	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
-	char *id_name;		/* for DATA nodes, name to find or enter */
-	char id_type;		/* type of descriptor, DATA or ADDR */
+	enum fixstate   id_fix;		/* policy on fixing errors */
+	int             (*id_func)(struct inodesc *);  /* function to be
+					 * applied to blocks of inode */
+	ino_t           id_number;	/* inode number described */
+	ino_t           id_parent;	/* for DATA nodes, their parent */
+	daddr_t         id_blkno;	/* current block number being
+					 * examined */
+	daddr_t         id_lblkno;	/* current logical block number */
+	int             id_numfrags;	/* number of frags contained in block */
+	quad_t          id_filesize;	/* for DATA nodes, the size of the
+					 * directory */
+	int             id_loc;		/* for DATA nodes, current location
+					 * in dir */
+	int             id_entryno;	/* for DATA nodes, current entry
+					 * number */
+	struct direct  *id_dirp;	/* for DATA nodes, ptr to current
+					 * entry */
+	char           *id_name;	/* for DATA nodes, name to find or
+					 * enter */
+	char            id_type;	/* type of descriptor, DATA or ADDR */
 };
 /* file types */
 #define	DATA	1
@@ -141,14 +126,14 @@ struct inodesc {
 
 /*
  * Linked list of duplicate blocks.
- * 
+ *
  * The list is composed of two parts. The first part of the
  * list (from duplist through the node pointed to by muldup)
- * contains a single copy of each duplicate block that has been 
+ * contains a single copy of each duplicate block that has been
  * found. The second part of the list (from muldup to the end)
  * contains duplicate blocks that have been found more than once.
  * To check if a block has been found as a duplicate it is only
- * necessary to search from duplist through muldup. To find the 
+ * necessary to search from duplist through muldup. To find the
  * total number of times that a block has been found as a duplicate
  * the entire list must be searched for occurences of the block
  * in question. The following diagram shows a sample list where
@@ -161,42 +146,42 @@ struct inodesc {
  * duplist	  muldup
  */
 struct dups {
-	struct dups *next;
-	daddr_t dup;
+	struct dups    *next;
+	daddr_t         dup;
 };
 
 /*
  * Linked list of inodes with zero link counts.
  */
 struct zlncnt {
-	struct zlncnt *next;
-	ino_t zlncnt;
+	struct zlncnt  *next;
+	ino_t           zlncnt;
 };
 
 /*
  * Inode cache data structures.
  */
 struct inoinfo {
-	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
-	struct	inoinfo	*i_child, *i_sibling, *i_parentp;
-	ino_t	i_number;		/* inode number of this entry */
-	ino_t	i_parent;		/* inode number of parent */
-	ino_t	i_dotdot;		/* inode number of `..' */
-	size_t	i_isize;		/* size of inode */
-	u_int	i_numblks;		/* size of block array in bytes */
-	daddr_t	i_blks[1];		/* actually longer */
+	struct inoinfo *i_nexthash;	/* next entry in hash chain */
+	struct inoinfo *i_child, *i_sibling, *i_parentp;
+	ino_t           i_number;	/* inode number of this entry */
+	ino_t           i_parent;	/* inode number of parent */
+	ino_t           i_dotdot;	/* inode number of `..' */
+	size_t          i_isize;	/* size of inode */
+	u_int           i_numblks;	/* size of block array in bytes */
+	daddr_t         i_blks[1];	/* actually longer */
 } **inphead, **inpsort;
 
 #define	clearinode(dp)	(*(dp) = zino)
 
 #ifndef VERBOSE_BLOCKMAP
-# define	setbmap(blkno)	setbit(blockmap, blkno)
-# define	testbmap(blkno)	isset(blockmap, blkno)
-# define	clrbmap(blkno)	clrbit(blockmap, blkno)
+#define	setbmap(blkno)	setbit(blockmap, blkno)
+#define	testbmap(blkno)	isset(blockmap, blkno)
+#define	clrbmap(blkno)	clrbit(blockmap, blkno)
 #else
-# define	setbmap(blkno,ino)	if(blkno > maxfsblock) raise(1); else blockmap[blkno] = ino
-# define	testbmap(blkno)		blockmap[blkno]
-# define	clrbmap(blkno)		blockmap[blkno] = 0
+#define	setbmap(blkno,ino)	if(blkno > maxfsblock)raise(1); else blockmap[blkno] = ino
+#define	testbmap(blkno)		blockmap[blkno]
+#define	clrbmap(blkno)		blockmap[blkno] = 0
 #endif
 
 #define	STOP	0x01
@@ -205,18 +190,18 @@ struct inoinfo {
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-ino_t allocino __P((ino_t, int));
-int ino_to_fsba __P((struct lfs *, ino_t));
-struct bufarea *getfileblk __P((struct lfs *, struct dinode *, ino_t));
-struct dinode *ginode __P((ino_t));
-struct dinode *lfs_ginode __P((ino_t));
-struct dinode *lfs_difind __P((struct lfs *, ino_t, struct dinode *));
-struct ifile *lfs_ientry __P((ino_t, struct bufarea **));
-struct inoinfo *getinoinfo __P((ino_t));
-void getblk __P((struct bufarea *, daddr_t, long));
-void getdblk __P((struct bufarea *, daddr_t, long));
-int check_summary(struct lfs *, SEGSUM *, daddr_t);
-SEGUSE *lfs_gseguse(int, struct bufarea **);
-daddr_t lfs_ino_daddr(ino_t);
+ino_t           allocino(ino_t, int);
+int             ino_to_fsba(struct lfs *, ino_t);
+struct bufarea *getfileblk(struct lfs *, struct dinode *, ino_t);
+struct dinode  *ginode(ino_t);
+struct dinode  *lfs_ginode(ino_t);
+struct dinode  *lfs_difind(struct lfs *, ino_t, struct dinode *);
+struct ifile   *lfs_ientry(ino_t, struct bufarea **);
+struct inoinfo *getinoinfo(ino_t);
+void            getblk(struct bufarea *, daddr_t, long);
+void            getdblk(struct bufarea *, daddr_t, long);
+int             check_summary(struct lfs *, SEGSUM *, daddr_t);
+SEGUSE         *lfs_gseguse(int, struct bufarea **);
+daddr_t         lfs_ino_daddr(ino_t);
 
 #include "fsck_vars.h"
