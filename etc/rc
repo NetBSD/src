@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.87 1997/08/05 03:32:51 cjs Exp $
+#	$NetBSD: rc,v 1.88 1997/08/26 19:35:33 thorpej Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -237,11 +237,7 @@ echo '.'
 
 if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
-	if [ -f /etc/ld.so.conf ]; then
-		ldconfig `cat /etc/ld.so.conf`
-	else
-		ldconfig
-	fi
+	ldconfig
 fi 
 
 # load kernel modules specified in /etc/lkm.conf
