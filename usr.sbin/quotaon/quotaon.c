@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.14 2000/07/04 20:27:39 matt Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.15 2000/07/07 15:11:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.14 2000/07/04 20:27:39 matt Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.15 2000/07/07 15:11:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ quotaonoff(fs, offmode, type, qfpathname)
 		return (1);
 	if (offmode) {
 		if (quotactl(fs->fs_file, QCMD(Q_QUOTAOFF, type), 0, 0) < 0) {
-			warn(fs->fs_file);
+			warn("%s", fs->fs_file);
 			return (1);
 		}
 		if (vflag)
