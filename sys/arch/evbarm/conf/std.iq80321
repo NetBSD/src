@@ -1,0 +1,22 @@
+#	$NetBSD: std.iq80321,v 1.1 2002/03/27 21:51:29 thorpej Exp $
+#
+# standard NetBSD/evbarm for IQ80321 options
+
+machine	evbarm arm
+
+# Pull in IQ80321 config definitions.
+include "arch/evbarm/conf/files.iq80321"
+
+options 	EXEC_ELF32
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+options 	XSCALE_CCLKCFG=9
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+makeoptions	LOADADDRESS="0xa0200000"
+makeoptions	BOARDTYPE="iq80321"
+
+# We need to configure the PCI bus.
+options 	PCI_NETBSD_CONFIGURE
