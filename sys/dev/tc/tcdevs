@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.11 1999/09/18 01:46:01 ad Exp $
+$NetBSD: tcdevs,v 1.12 1999/09/26 09:18:53 mrg Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,6 +32,7 @@ $NetBSD: tcdevs,v 1.11 1999/09/18 01:46:01 ad Exp $
  */
 
 device	AV01B-AA	lofi	DecAudio \"LoFi\" audio/isdn
+device	AV300-AA	???	Video capture option card
 device	DGLTA-FA	otto	DGLTA ATM
 device	FORE_ATM	fa	Fore TCA-100 ATM
 device	KZTSA-AA	tza	TZA FWD SCSI
@@ -55,6 +56,7 @@ device	PMAZ-DS		tcds	53c94 TCDS SCSI (baseboard)
 device	PMAZ-FS		tcds	53c94 TCDS Fast SCSI (baseboard)
 device	PMAZB-AA	tcds	53c94 TCDS SCSI option card
 device	PMAZC-AA	tcds	53c94 TCDS Fast SCSI option card
+device	PMTNV-AA	???	Non-volatile RAM option card
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
 device	PMAT-AA 	tra	DEC TurboChannel Token Ring Controller
