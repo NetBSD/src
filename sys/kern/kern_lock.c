@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.44 2000/08/22 19:47:26 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.45 2000/08/23 15:17:47 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -788,7 +788,11 @@ u_long simple_locks;
 #endif /* MULTIPROCESSOR */ /* } */
 
 #ifdef DDB /* { */
+#ifdef MULTIPROCESSOR
+int simple_lock_debugger = 1;	/* more serious on MP */
+#else
 int simple_lock_debugger = 0;
+#endif
 #define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
 #else
 #define	SLOCK_DEBUGGER()	/* nothing */
@@ -866,8 +870,10 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 	alp->lock_data = __SIMPLELOCK_LOCKED;
 #endif /* } */
 
-	KASSERT(alp->lock_holder == LK_NOCPU);
-
+	if (alp->lock_holder != LK_NOCPU) {
+		SLOCK_WHERE("simple_lock: uninitialized lock\n",
+		    alp, id, l);
+	}
 	alp->lock_file = id;
 	alp->lock_line = l;
 	alp->lock_holder = cpu_id;
