@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.12 2003/10/31 16:30:15 scw Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.12 2003/10/31 16:30:15 scw Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $")	
 
 	.text
 	.align	0
@@ -736,7 +736,13 @@ ENTRY(badaddr_read_1)
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
+	nop
+	nop
+	nop
 	ldrb	r3, [r0]
+	nop
+	nop
+	nop
 	strb	r3, [r1]
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
@@ -764,7 +770,13 @@ ENTRY(badaddr_read_2)
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
+	nop
+	nop
+	nop
 	ldrh	r3, [r0]
+	nop
+	nop
+	nop
 	strh	r3, [r1]
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
@@ -792,7 +804,13 @@ ENTRY(badaddr_read_4)
 	ldr	ip, [r2, #PCB_ONFAULT]
 	adr	r3, 1f
 	str	r3, [r2, #PCB_ONFAULT]
+	nop
+	nop
+	nop
 	ldr	r3, [r0]
+	nop
+	nop
+	nop
 	str	r3, [r1]
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
