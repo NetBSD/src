@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107.6.1 1999/06/28 06:36:49 itojun Exp $	*/
+/*	$NetBSD: trap.c,v 1.107.6.2 1999/11/30 13:32:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107.6.1 1999/06/28 06:36:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107.6.2 1999/11/30 13:32:44 itojun Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"

@@ -1,6 +1,8 @@
+/*	$NetBSD: asc.c,v 1.50.4.2.4.1 1999/11/30 13:34:33 itojun Exp $	*/
+
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)asc.c	7.10 (Berkeley) 3/8/93
+ *	@(#)asc.c	8.3 (Berkeley) 7/3/94
  */
 
 /* 
@@ -47,7 +49,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
@@ -64,10 +66,7 @@
 
 /*
  * HISTORY
- * $Log: asc.c,v $
- * Revision 1.1.1.1  1993/10/12 03:22:23  deraadt
- * pmax code from <ralphc@pyramid.com> & <rick@snowhite.cis.uoguelph.ca>
- *
+ * Log:	scsi_53C94_hdw.c,v
  * Revision 2.5  91/02/05  17:45:07  mrt
  * 	Added author notices
  * 	[91/02/04  11:18:43  mrt]
@@ -129,8 +128,20 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/reboot.h>
 
-#include <machine/machConst.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
+#include <machine/cpu.h>
+#include <machine/autoconf.h>
+#include <machine/bus.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
@@ -138,10 +149,10 @@
 
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
-#include <pmax/pmax/pmaxtype.h>
 
-#define	readback(a)	{ register int foo; foo = (a); }
-extern int pmax_boardtype;
+
+/*#define	readback(a)	{ register int foo; wbflush(); foo = (a); }*/
+#define	readback(a)	{ register int foo;  foo = (a); }
 
 /*
  * In 4ns ticks.
@@ -182,26 +193,34 @@ int	asc_to_scsi_period[] = {
 };
 
 /*
- * Internal forward declarations.
+ * Debugging log of SCSI operations.
  */
-static void asc_reset();
-static void asc_startcmd();
 
 #ifdef DEBUG
 int	asc_debug = 1;
 int	asc_debug_cmd;
 int	asc_debug_bn;
 int	asc_debug_sz;
-#define NLOG 16
+#define NLOG 32
 struct asc_log {
 	u_int	status;
 	u_char	state;
 	u_char	msg;
 	int	target;
+	int	resid;
 } asc_log[NLOG], *asc_logp = asc_log;
 #define PACK(unit, status, ss, ir) \
 	((unit << 24) | (status << 16) | (ss << 8) | ir)
+void asc_DumpLog __P((char *str));
 #endif
+
+
+/*
+ * Script, scsi state, and device softc structure declarations.
+ * script pointers occur in both scsi state and the  softc,
+ * so they are defined first.
+ */
+
 
 /*
  * Scripts are entries in a state machine table.
@@ -216,32 +235,49 @@ struct asc_log {
  * script proceeds if the action routine returns TRUE.
  * See asc_intr() for how and where this is all done.
  */
+struct asc_softc;
 typedef struct script {
 	int		condition;	/* expected state at interrupt time */
-	int		(*action)();	/* extra operations */
+		
+	int		(*action)	/* extra operations */
+		 __P((register struct asc_softc *asc, register int status, 
+			 register int  ss, register int ir));
 	int		command;	/* command to the chip */
 	struct script	*next;		/* index into asc_scripts for next state */
 } script_t;
 
+
+/*
+ * script definitions
+ */
+
 /* Matching on the condition value */
-#define	SCRIPT_MATCH(ir, csr)		((ir) | (ASC_PHASE(csr) << 8))
+#define	SCRIPT_MATCH(ir, csr)		((ir) | (((csr) & 0x67) << 8))
+
+/*
+ * A typedef for a script function, to use in forward declarations.
+ */
+typedef int
+script_fn_t __P((register struct asc_softc *asc, register int status, 
+		 register int  ss, register int ir));
+
 
 /* forward decls of script actions */
-static int script_nop();		/* when nothing needed */
-static int asc_end();			/* all come to an end */
-static int asc_get_status();		/* get status from target */
-static int asc_dma_in();		/* start reading data from target */
-static int asc_last_dma_in();		/* cleanup after all data is read */
-static int asc_resume_in();		/* resume data in after a message */
-static int asc_resume_dma_in();		/* resume DMA after a disconnect */
-static int asc_dma_out();		/* send data to target via dma */
-static int asc_last_dma_out();		/* cleanup after all data is written */
-static int asc_resume_out();		/* resume data out after a message */
-static int asc_resume_dma_out();	/* resume DMA after a disconnect */
-static int asc_sendsync();		/* negotiate sync xfer */
-static int asc_replysync();		/* negotiate sync xfer */
-static int asc_msg_in();		/* process a message byte */
-static int asc_disconnect();		/* process an expected disconnect */
+static script_fn_t script_nop;		/* when nothing needed */
+static script_fn_t asc_end;		/* all come to an end */
+static script_fn_t asc_get_status;	/* get status from target */
+static script_fn_t asc_dma_in;		/* start reading data from target */
+static script_fn_t asc_last_dma_in;	/* cleanup after all data is read */
+static script_fn_t asc_resume_in;	/* resume data in after a message */
+static script_fn_t asc_resume_dma_in;	/* resume DMA after a disconnect */
+static script_fn_t asc_dma_out;		/* send data to target via dma */
+static script_fn_t asc_last_dma_out;	/* cleanup after all data is written */
+static script_fn_t asc_resume_out;	/* resume data out after a message */
+static script_fn_t asc_resume_dma_out;	/* resume DMA after a disconnect */
+static script_fn_t asc_sendsync;	/* negotiate sync xfer */
+static script_fn_t asc_replysync;	/* negotiate sync xfer */
+static script_fn_t asc_msg_in;		/* process a message byte */
+static script_fn_t asc_disconnect;	/* process an expected disconnect */
 
 /* Define the index into asc_scripts for various state transitions */
 #define	SCRIPT_DATA_IN		0
@@ -250,6 +286,7 @@ static int asc_disconnect();		/* process an expected disconnect */
 #define	SCRIPT_CONTINUE_OUT	5
 #define	SCRIPT_SIMPLE		6
 #define	SCRIPT_GET_STATUS	7
+#define	SCRIPT_DONE		8
 #define	SCRIPT_MSG_IN		9
 #define	SCRIPT_REPLY_SYNC	11
 #define	SCRIPT_TRY_SYNC		12
@@ -266,253 +303,173 @@ static int asc_disconnect();		/* process an expected disconnect */
  */
 script_t asc_scripts[] = {
 	/* start data in */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_DATAI),	/*  0 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_DATAI),	/*  0 */
 		asc_dma_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_STATUS),			/*  1 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_STATUS),			/*  1 */
 		asc_last_dma_in, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 
 	/* continue data in after a chunk is finished */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAI),			/*  2 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAI),			/*  2 */
 		asc_dma_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
 
 	/* start data out */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_DATAO),	/*  3 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_DATAO),	/*  3 */
 		asc_dma_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_STATUS),			/*  4 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_STATUS),			/*  4 */
 		asc_last_dma_out, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 
 	/* continue data out after a chunk is finished */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAO),			/*  5 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAO),			/*  5 */
 		asc_dma_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
 
 	/* simple command with no data transfer */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_STATUS),	/*  6 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_STATUS),	/*  6 */
 		script_nop, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 
 	/* get status and finish command */
-	{SCRIPT_MATCH(ASC_INT_FC, ASC_PHASE_MSG_IN),			/*  7 */
+	{SCRIPT_MATCH(ASC_INT_FC, SCSI_PHASE_MSG_IN),			/*  7 */
 		asc_get_status, ASC_CMD_MSG_ACPT,
-		&asc_scripts[SCRIPT_GET_STATUS + 1]},
+		&asc_scripts[SCRIPT_DONE]},
 	{SCRIPT_MATCH(ASC_INT_DISC, 0),					/*  8 */
 		asc_end, ASC_CMD_NOP,
-		&asc_scripts[SCRIPT_GET_STATUS + 1]},
+		&asc_scripts[SCRIPT_DONE]},
 
 	/* message in */
-	{SCRIPT_MATCH(ASC_INT_FC, ASC_PHASE_MSG_IN),			/*  9 */
+	{SCRIPT_MATCH(ASC_INT_FC, SCSI_PHASE_MSG_IN),			/*  9 */
 		asc_msg_in, ASC_CMD_MSG_ACPT,
 		&asc_scripts[SCRIPT_MSG_IN + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_MSG_IN),			/* 10 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_MSG_IN),			/* 10 */
 		script_nop, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_MSG_IN]},
 
 	/* send synchonous negotiation reply */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_MSG_OUT),			/* 11 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_MSG_OUT),			/* 11 */
 		asc_replysync, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_REPLY_SYNC]},
 
 	/* try to negotiate synchonous transfer parameters */
-	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, ASC_PHASE_MSG_OUT),	/* 12 */
+	{SCRIPT_MATCH(ASC_INT_FC | ASC_INT_BS, SCSI_PHASE_MSG_OUT),	/* 12 */
 		asc_sendsync, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_TRY_SYNC + 1]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_MSG_IN),			/* 13 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_MSG_IN),			/* 13 */
 		script_nop, ASC_CMD_XFER_INFO,
 		&asc_scripts[SCRIPT_MSG_IN]},
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_COMMAND),			/* 14 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_COMMAND),			/* 14 */
 		script_nop, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_RESUME_NO_DATA]},
 
 	/* handle a disconnect */
-	{SCRIPT_MATCH(ASC_INT_DISC, ASC_PHASE_DATAO),			/* 15 */
+	{SCRIPT_MATCH(ASC_INT_DISC, SCSI_PHASE_DATAO),			/* 15 */
 		asc_disconnect, ASC_CMD_ENABLE_SEL,
 		&asc_scripts[SCRIPT_RESEL]},
 
 	/* reselect sequence: this is just a placeholder so match fails */
-	{SCRIPT_MATCH(0, ASC_PHASE_MSG_IN),				/* 16 */
+	{SCRIPT_MATCH(0, SCSI_PHASE_MSG_IN),				/* 16 */
 		script_nop, ASC_CMD_MSG_ACPT,
 		&asc_scripts[SCRIPT_RESEL]},
 
 	/* resume data in after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAI),			/* 17 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAI),			/* 17 */
 		asc_resume_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
 
 	/* resume partial DMA data in after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAI),			/* 18 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAI),			/* 18 */
 		asc_resume_dma_in, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_IN + 1]},
 
 	/* resume data out after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAO),			/* 19 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAO),			/* 19 */
 		asc_resume_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
 
 	/* resume partial DMA data out after a message */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_DATAO),			/* 20 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_DATAO),			/* 20 */
 		asc_resume_dma_out, ASC_CMD_XFER_INFO | ASC_CMD_DMA,
 		&asc_scripts[SCRIPT_DATA_OUT + 1]},
 
 	/* resume after a message when there is no more data */
-	{SCRIPT_MATCH(ASC_INT_BS, ASC_PHASE_STATUS),			/* 21 */
+	{SCRIPT_MATCH(ASC_INT_BS, SCSI_PHASE_STATUS),			/* 21 */
 		script_nop, ASC_CMD_I_COMPLETE,
 		&asc_scripts[SCRIPT_GET_STATUS]},
 };
 
-/*
- * State kept for each active SCSI device.
- */
-typedef struct scsi_state {
-	script_t *script;	/* saved script while processing error */
-	int	statusByte;	/* status byte returned during STATUS_PHASE */
-	int	error;		/* errno to pass back to device driver */
-	u_char	*dmaBufAddr;	/* DMA buffer address */
-	u_int	dmaBufSize;	/* DMA buffer size */
-	int	dmalen;		/* amount to transfer in this chunk */
-	int	dmaresid;	/* amount not transfered if chunk suspended */
-	int	buflen;		/* total remaining amount of data to transfer */
-	char	*buf;		/* current pointer within scsicmd->buf */
-	int	flags;		/* see below */
-	int	msglen;		/* number of message bytes to read */
-	int	msgcnt;		/* number of message bytes received */
-	u_char	sync_period;	/* DMA synchronous period */
-	u_char	sync_offset;	/* DMA synchronous xfer offset or 0 if async */
-	u_char	msg_out;	/* next MSG_OUT byte to send */
-	u_char	msg_in[16];	/* buffer for multibyte messages */
-} State;
 
-/* state flags */
-#define DISCONN		0x01	/* true if currently disconnected from bus */
-#define DMA_IN_PROGRESS	0x02	/* true if data DMA started */
-#define DMA_IN		0x04	/* true if reading from SCSI device */
-#define DMA_OUT		0x10	/* true if writing to SCSI device */
-#define DID_SYNC	0x20	/* true if synchronous offset was negotiated */
-#define TRY_SYNC	0x40	/* true if try neg. synchronous offset */
+#include <dev/tc/ascvar.h>
 
 /*
- * State kept for each active SCSI host interface (53C94).
+ * Internal forward declarations.
  */
-struct asc_softc {
-	asc_regmap_t	*regs;		/* chip address */
-	volatile int	*dmar;		/* DMA address register address */
-	u_char		*buff;		/* RAM buffer address (uncached) */
-	int		myid;		/* SCSI ID of this interface */
-	int		myidmask;	/* ~(1 << myid) */
-	int		state;		/* current SCSI connection state */
-	int		target;		/* target SCSI ID if busy */
-	script_t	*script;	/* next expected interrupt & action */
-	ScsiCmd		*cmd[ASC_NCMD];	/* active command indexed by SCSI ID */
-	State		st[ASC_NCMD];	/* state info for each active command */
-	void		(*dma_start)();	/* Start dma routine */
-	void		(*dma_end)();	/* End dma routine */
-	u_char		*dma_next;
-	int		dma_xfer;	/* Dma len still to go */
-	int		min_period;	/* Min transfer period clk/byte */
-	int		max_period;	/* Max transfer period clk/byte */
-	int		ccf;		/* CCF, whatever that really is? */
-	int		timeout_250;	/* 250ms timeout */
-	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
-} asc_softc[NASC];
+static void asc_reset __P((asc_softc_t asc, asc_regmap_t *regs));
+static void asc_startcmd __P((asc_softc_t asc, int target));
+static void asc_timeout __P((void *arg));
 
-#define	ASC_STATE_IDLE		0	/* idle state */
-#define	ASC_STATE_BUSY		1	/* selecting or currently connected */
-#define ASC_STATE_TARGET	2	/* currently selected as target */
-#define ASC_STATE_RESEL		3	/* currently waiting for reselect */
-
-typedef struct asc_softc *asc_softc_t;
+#ifdef USE_NEW_SCSI
+/* Glue to the machine-independent scsi */
+struct scsipi_device asc_dev = {
+/*XXX*/	NULL,			/* Use default error handler */
+/*XXX*/	NULL,			/* have a queue, served by this */
+/*XXX*/	NULL,			/* have no async handler */
+/*XXX*/	NULL,			/* Use default 'done' routine */
+};
+#endif
 
 /*
- * Dma operations.
+ * Definition of the controller for the old auto-configuration program.
  */
-#define	ASCDMA_READ	1
-#define	ASCDMA_WRITE	2
-static void tb_dma_start(), tb_dma_end(), asic_dma_start(), asic_dma_end();
-extern u_long asc_iomem;
-extern u_long asic_base;
-
-/*
- * Definition of the controller for the auto-configuration program.
- */
-int	asc_probe();
-void	asc_start();
-void	asc_intr();
-struct	driver ascdriver = {
-	"asc", asc_probe, asc_start, 0, asc_intr,
+void	asc_start __P((register ScsiCmd *scsicmd));
+int	asc_intr __P ((void *asc));
+struct	pmax_driver ascdriver = {
+	"asc", NULL, asc_start, 0, asc_intr,
 };
 
+void asc_minphys __P((struct buf *bp));
+
+extern struct cfdriver asc_cd;
+
 /*
- * Test to see if device is present.
- * Return true if found and initialized ok.
+ * bus-parent shared attach function
  */
-asc_probe(cp)
-	register struct pmax_ctlr *cp;
-{
+void
+ascattach(asc, bus_speed)
 	register asc_softc_t asc;
+	int bus_speed;
+{
 	register asc_regmap_t *regs;
-	int unit, id, s, i;
-	int bufsiz;
+	int id, s;
 
-	if ((unit = cp->pmax_unit) >= NASC)
-		return (0);
-	if (badaddr(cp->pmax_addr + ASC_OFFSET_53C94, 1))
-		return (0);
-	asc = &asc_softc[unit];
+	int unit;
 
-	/*
-	 * Initialize hw descriptor, cache some pointers
-	 */
-	asc->regs = (asc_regmap_t *)(cp->pmax_addr + ASC_OFFSET_53C94);
-
+	unit = asc->sc_dev.dv_unit;
+	
 	/*
 	 * Set up machine dependencies.
-	 * 1) how to do dma
-	 * 2) timing based on turbochannel frequency
+	 * (1) timing based on turbochannel frequency
 	 */
-	switch (pmax_boardtype) {
-	case DS_3MIN:
-	case DS_MAXINE:
-	case DS_3MAXPLUS:
-	    if (unit == 0) {
-		asc->buff = (u_char *)MACH_PHYS_TO_UNCACHED(asc_iomem);
-		bufsiz = 8192;
-		*((volatile int *)ASIC_REG_SCSI_DMAPTR(asic_base)) = -1;
-		*((volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base)) = -1;
-		*((volatile int *)ASIC_REG_SCSI_SCR(asic_base)) = 0;
-		asc->dma_start = asic_dma_start;
-		asc->dma_end = asic_dma_end;
-		break;
-	    }
-	    /*
-	     * Fall through for turbochannel option.
-	     */
-	case DS_3MAX:
-	default:
-	    asc->dmar = (volatile int *)(cp->pmax_addr + ASC_OFFSET_DMAR);
-	    asc->buff = (u_char *)(cp->pmax_addr + ASC_OFFSET_RAM);
-	    bufsiz = PER_TGT_DMA_SIZE;
-	    asc->dma_start = tb_dma_start;
-	    asc->dma_end = tb_dma_end;
-	};
+
+	/* dma setup done in parent-specific attach code */
+
 	/*
 	 * Now for timing. The 3max has a 25Mhz tb whereas the 3min and
 	 * maxine are 12.5Mhz.
 	 */
-	switch (pmax_boardtype) {
-	case DS_3MAX:
-	case DS_3MAXPLUS:
+	switch (bus_speed) {
+	case ASC_SPEED_25_MHZ:
 		asc->min_period = ASC_MIN_PERIOD25;
 		asc->max_period = ASC_MAX_PERIOD25;
 		asc->ccf = ASC_CCF(25);
 		asc->timeout_250 = ASC_TIMEOUT_250(25, asc->ccf);
 		asc->tb_ticks = 10;
 		break;
-	case DS_3MIN:
-	case DS_MAXINE:
+
+	case ASC_SPEED_12_5_MHZ:
 	default:
 		asc->min_period = ASC_MIN_PERIOD12;
 		asc->max_period = ASC_MAX_PERIOD12;
@@ -533,8 +490,8 @@ asc_probe(cp)
 	s = splbio();
 
 	/* preserve our ID for now */
-	asc->myid = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
-	asc->myidmask = ~(1 << asc->myid);
+	asc->sc_id = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
+	asc->myidmask = ~(1 << asc->sc_id);
 
 	asc_reset(asc, regs);
 
@@ -547,27 +504,54 @@ asc_probe(cp)
 #ifdef	unneeded
 	regs->asc_cnfg1 = (regs->asc_cnfg1 & ~ASC_CNFG1_MY_BUS_ID) |
 			      (scsi_initiator_id[unit] & 0x7);
+	asc->sc_id = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
 #endif
-	id = regs->asc_cnfg1 & ASC_CNFG1_MY_BUS_ID;
+
+	id = asc->sc_id;
 	splx(s);
 
+	/* Hack for old-sytle SCSI-device probe */
+	(void) pmax_add_scsi(&ascdriver, unit);
+
+	printf(": target %d\n", id);
+
+
+#ifdef USE_NEW_SCSI
 	/*
-	 * Statically partition the DMA buffer between targets.
-	 * This way we will eventually be able to attach/detach
-	 * drives on-fly.  And 18k/target is plenty for normal use.
+	 * Fill in the adapter.
 	 */
+	asc->sc_adapter.scsipi_cmd = asc_scsi_cmd;
+	asc->sc_adapter.scsipi_minphys = minphys;
 
 	/*
-	 * Give each target its own DMA buffer region.
-	 * We may want to try ping ponging buffers later.
+	 * fill in the prototype scsi_link.
 	 */
-	for (i = 0; i < ASC_NCMD; i++) {
-		asc->st[i].dmaBufAddr = asc->buff + bufsiz * i;
-		asc->st[i].dmaBufSize = bufsiz;
-	}
-	printf("asc%d at nexus0 csr 0x%x priority %d SCSI id %d\n",
-		unit, cp->pmax_addr, cp->pmax_pri, id);
-	return (1);
+	asc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+	asc->sc_link.adapter_softc = asc;
+	asc->sc_link.scsipi_scsi.adapter_target = asc->sc_id;
+	asc->sc_link.adapter = &asc->sc_adapter;
+	asc->sc_link.device = &asc_dev;
+	asc->sc_link.openings = 2;
+	asc->sc_link.scsipi_scsi.max_target = 7;
+	asc->sc_link.scsipi_scsi.max_lun = 7;
+	asc->sc_link.type = BUS_SCSI;
+
+	/*
+	 * Now try to attach all the sub-devices.
+	 */
+	config_found(self, &asc->sc_link, scsiprint);
+
+#endif /* USE_NEW_SCSI */
+}
+
+/*
+ *  Per Fogelstrom's SCSI Driver breaks down request transfer size.
+ */
+void
+asc_minphys(bp)
+	struct buf *bp;
+{
+	/*XXX*/
 }
 
 /*
@@ -579,8 +563,8 @@ void
 asc_start(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
-	register struct scsi_device *sdp = scsicmd->sd;
-	register asc_softc_t asc = &asc_softc[sdp->sd_ctlr];
+	register struct pmax_scsi_device *sdp = scsicmd->sd;
+	register asc_softc_t asc = asc_cd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();
@@ -590,16 +574,50 @@ asc_start(scsicmd)
 	 * separate LUNs.
 	 */
 	if (asc->cmd[sdp->sd_drive]) {
-		printf("asc%d: device %s busy at start\n", sdp->sd_ctlr,
+		printf("asc %d: device %s busy at start\n",
+			sdp->sd_ctlr,	/*XXX*/
 			sdp->sd_driver->d_name);
 		(*sdp->sd_driver->d_done)(scsicmd->unit, EBUSY,
 			scsicmd->buflen, 0);
 		splx(s);
 	}
 	asc->cmd[sdp->sd_drive] = scsicmd;
+	/*
+	 * Kludge: use a 60 second timeout if data is being transfered,
+	 * otherwise use a 30 minute timeout.
+	 */
+	timeout(asc_timeout, scsicmd, hz * (scsicmd->buflen == 0 ?
+	    1800 : 60));
 	asc_startcmd(asc, sdp->sd_drive);
 	splx(s);
 }
+
+
+#ifdef USE_NEW_SCSI
+int
+asc_poll(asc, target)
+	struct asc_softc *asc;
+	int target;
+{
+	struct scsipi_xfer *scsicmd = asc->cmd[target];
+	int count = scsicmd->timeout * 10;
+
+	while(count) {
+		if(asc->regs->asc_status &ASC_CSR_INT) {
+			asc_intr(asc);
+		}
+		if(scsicmd->flags & ITSDONE)
+			break;
+		DELAY(5);
+		count--;
+	}
+	if(count == 0) {
+		scsicmd->error = XS_TIMEOUT;
+		asc_end(asc, 0, 0, 0);
+	}
+	return COMPLETE;
+}
+#endif /*USE_NEW_SCSI*/
 
 static void
 asc_reset(asc, regs)
@@ -611,20 +629,20 @@ asc_reset(asc, regs)
 	 * Reset chip and wait till done
 	 */
 	regs->asc_cmd = ASC_CMD_RESET;
-	MachEmptyWriteBuffer(); DELAY(25);
+	tc_syncbus(); DELAY(25);
 
 	/* spec says this is needed after reset */
 	regs->asc_cmd = ASC_CMD_NOP;
-	MachEmptyWriteBuffer(); DELAY(25);
+	tc_syncbus(); DELAY(25);
 
 	/*
 	 * Set up various chip parameters
 	 */
 	regs->asc_ccf = asc->ccf;
-	MachEmptyWriteBuffer(); DELAY(25);
+	tc_syncbus(); DELAY(25);
 	regs->asc_sel_timo = asc->timeout_250;
 	/* restore our ID */
-	regs->asc_cnfg1 = asc->myid | ASC_CNFG1_P_CHECK;
+	regs->asc_cnfg1 = asc->sc_id | ASC_CNFG1_P_CHECK;
 	/* include ASC_CNFG2_SCSI2 if you want to allow SCSI II commands */
 	regs->asc_cnfg2 = /* ASC_CNFG2_RFB | ASC_CNFG2_SCSI2 | */ ASC_CNFG2_EPL;
 	regs->asc_cnfg3 = 0;
@@ -632,7 +650,7 @@ asc_reset(asc, regs)
 	ASC_TC_PUT(regs, 0);
 	regs->asc_syn_p = asc->min_period;
 	regs->asc_syn_o = 0;	/* async for now */
-	MachEmptyWriteBuffer();
+	tc_mb();
 }
 
 /*
@@ -657,19 +675,12 @@ asc_startcmd(asc, target)
 	regs = asc->regs;
 
 	/*
-	 * Check to see if a reselection is in progress and if so,
-	 * try to cancel it or respond to the reselection if it won.
+	 * If a reselection is in progress, it is Ok to ignore it since
+	 * the ASC will automatically cancel the command and flush
+	 * the FIFO if the ASC is reselected before the command starts.
+	 * If we try to use ASC_CMD_DISABLE_SEL, we can hang the system if
+	 * a reselect occurs before starting the command.
 	 */
-	if (asc->state == ASC_STATE_RESEL) {
-		regs->asc_cmd = ASC_CMD_DISABLE_SEL;
-		readback(regs->asc_cmd);
-		while (!(regs->asc_status & ASC_CSR_INT))
-			DELAY(1);
-		asc_intr(asc - asc_softc);
-		/* we will be busy if a reselecting device won */
-		if (asc->state == ASC_STATE_BUSY)
-			return;
-	}
 
 	asc->state = ASC_STATE_BUSY;
 	asc->target = target;
@@ -681,42 +692,28 @@ asc_startcmd(asc, target)
 #ifdef DEBUG
 	if (asc_debug > 1) {
 		printf("asc_startcmd: %s target %d cmd %x len %d\n",
-			scsicmd->sd->sd_driver->d_name, target,
-			scsicmd->cmd[0], scsicmd->buflen);
+		    scsicmd->sd->sd_driver->d_name, target,
+		    scsicmd->cmd[0], scsicmd->buflen);
 	}
-	asc_debug_cmd = scsicmd->cmd[0];
-	if (scsicmd->cmd[0] == SCSI_READ_EXT) {
-		asc_debug_bn = (scsicmd->cmd[2] << 24) |
-			(scsicmd->cmd[3] << 16) |
-			(scsicmd->cmd[4] << 8) |
-			scsicmd->cmd[5];
-		asc_debug_sz = (scsicmd->cmd[7] << 8) | scsicmd->cmd[8];
-	}
-	asc_logp->status = PACK(asc - asc_softc, 0, 0, asc_debug_cmd);
-	asc_logp->target = asc->target;
-	asc_logp->state = 0;
-	asc_logp->msg = 0xff;
-	if (++asc_logp >= &asc_log[NLOG])
-		asc_logp = asc_log;
 #endif
+
+	/* Try to avoid reselect collisions */
+	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
+	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
+/*		printf("asc_startcmd: possible reselect in progress\n"); */
+		return;
+	}
 
 	/*
 	 * Init the chip and target state.
 	 */
-	regs->asc_cmd = ASC_CMD_FLUSH;
-	readback(regs->asc_cmd);
-	DELAY(2);
 	state->flags = state->flags & DID_SYNC;
 	state->error = 0;
 	state->script = (script_t *)0;
 	state->msg_out = SCSI_NO_OP;
 
-	/*
-	 * Copy command data to the DMA buffer.
-	 */
 	len = scsicmd->cmdlen;
 	state->dmalen = len;
-	bcopy(scsicmd->cmd, state->dmaBufAddr, len);
 
 	/* check for simple SCSI command with no data transfer */
 	if ((state->buflen = scsicmd->buflen) == 0) {
@@ -738,12 +735,27 @@ asc_startcmd(asc, target)
 		state->flags |= DMA_IN;
 	}
 
-	/* preload the FIFO with the message to be sent */
-	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
-	MachEmptyWriteBuffer();
+#ifdef DEBUG
+	asc_debug_cmd = scsicmd->cmd[0];
+	if (scsicmd->cmd[0] == SCSI_READ_EXT) {
+		asc_debug_bn = (scsicmd->cmd[2] << 24) |
+			(scsicmd->cmd[3] << 16) |
+			(scsicmd->cmd[4] << 8) |
+			scsicmd->cmd[5];
+		asc_debug_sz = (scsicmd->cmd[7] << 8) | scsicmd->cmd[8];
+	}
+	asc_logp->status = PACK(asc->sc_dev.dv_unit, 0, 0, asc_debug_cmd);
+	asc_logp->target = asc->target;
+	asc_logp->state = asc->script - asc_scripts;
+	asc_logp->msg = SCSI_DIS_REC_IDENTIFY;
+	asc_logp->resid = scsicmd->buflen;
+	if (++asc_logp >= &asc_log[NLOG])
+		asc_logp = asc_log;
+#endif
 
-	/* start the asc */
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
+	/* initialize the DMA */
+	len = (*asc->dma_start)(asc, state, scsicmd->cmd, ASCDMA_WRITE,
+	   len, 0);
 	ASC_TC_PUT(regs, len);
 	readback(regs->asc_cmd);
 
@@ -754,11 +766,45 @@ asc_startcmd(asc, target)
 	regs->asc_syn_o = state->sync_offset;
 	readback(regs->asc_syn_o);
 
+	/* Try to avoid reselect collisions */
+	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
+	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
+/*		printf("asc_startcmd: reselect in progress (before select)\n");*/
+		return;
+	}
+
+	/* preload the FIFO with the message to be sent */
+	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
+	tc_mb();
+
 	if (state->flags & TRY_SYNC)
-		regs->asc_cmd = ASC_CMD_SEL_ATN_STOP;
+		regs->asc_cmd = len = ASC_CMD_SEL_ATN_STOP;
 	else
-		regs->asc_cmd = ASC_CMD_SEL_ATN | ASC_CMD_DMA;
+		regs->asc_cmd = len = ASC_CMD_SEL_ATN | ASC_CMD_DMA;
 	readback(regs->asc_cmd);
+
+	/* Try to avoid reselect collisions */
+	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
+	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
+/*		printf("asc_startcmd: reselect in progress after select\n");*/
+		return;
+	} else {
+		/*
+		 * Here's a potentially nasty but infrequent problem:  a
+		 * reselect may have occurred, but did not interrupt.
+		 */
+		if (regs->asc_cmd != len &&
+		    regs->asc_cmd == (ASC_CMD_NOP|ASC_CMD_DMA)) {
+		    	if ((regs->asc_status & ASC_CSR_INT) == 0) {
+		    		delay(250);
+		    		if (regs->asc_status == SCSI_PHASE_MSG_IN) {
+		    			printf("asc_startcmd: reselect failed to interrupt?\n");
+		    			/* XXXX THIS NEEDS FIXING */
+		    		}
+		    	}
+		}
+	}
+
 }
 
 /*
@@ -769,34 +815,51 @@ asc_startcmd(asc, target)
  *	Move along the current command's script if
  *	all is well, invoke error handler if not.
  */
-void
-asc_intr(unit)
-	int unit;
+int
+asc_intr(sc)
+	void *sc;
 {
-	register asc_softc_t asc = &asc_softc[unit];
+	register asc_softc_t asc = (asc_softc_t) sc;
 	register asc_regmap_t *regs = asc->regs;
 	register State *state;
 	register script_t *scpt;
 	register int ss, ir, status;
+	register unsigned char cmd_was;
+	static int ill_cmd_count = 0;			/* XXX */
 
 	/* collect ephemeral information */
 	status = regs->asc_status;
 again:
 	ss = regs->asc_ss;
-	ir = regs->asc_intr;	/* this resets the previous two */
+	cmd_was = regs->asc_cmd;
+
+	/* drop spurious interrupts */
+	if ((status & ASC_CSR_INT) == 0)
+		return (-1);		/* XXX */
+
+	ir = regs->asc_intr;	/* this resets the previous two: i.e.,*/
+				/* this re-latches CSR (and SSTEP) */
 	scpt = asc->script;
 
+
 #ifdef DEBUG
-	asc_logp->status = PACK(unit, status, ss, ir);
+	asc_logp->status = PACK(asc->sc_dev.dv_unit, status, ss, ir);
 	asc_logp->target = (asc->state == ASC_STATE_BUSY) ? asc->target : -1;
 	asc_logp->state = scpt - asc_scripts;
-	asc_logp->msg = -1;
+	asc_logp->msg = cmd_was;
+	asc_logp->resid = 0;
 	if (++asc_logp >= &asc_log[NLOG])
 		asc_logp = asc_log;
 	if (asc_debug > 2)
 		printf("asc_intr: status %x ss %x ir %x cond %d:%x\n",
 			status, ss, ir, scpt - asc_scripts, scpt->condition);
 #endif
+
+	/* This must be done withing 250msec of disconnect */
+	if (ir & ASC_INT_DISC) {
+		regs->asc_cmd = ASC_CMD_ENABLE_SEL;
+		readback(regs->asc_cmd);
+	}
 
 	/* check the expected state */
 	if (SCRIPT_MATCH(ir, status) == scpt->condition) {
@@ -811,121 +874,233 @@ again:
 		goto done;
 	}
 
+	/*
+	 * Check for parity error.
+	 * Hardware will automatically set ATN
+	 * to request the device for a MSG_OUT phase.
+	 */
+	if (status & ASC_CSR_PE) {
+		printf("%s: SCSI device %d: incomming parity error seen\n",
+			asc->sc_dev.dv_xname, asc->target);
+		asc->st[asc->target].flags |= PARITY_ERR;
+	}
+
+	/*
+	 * Check for gross error.
+	 * Probably a bug in a device driver.
+	 */
+	if (status & ASC_CSR_GE) {
+		printf("%s: SCSI device %d: gross error\n",
+			asc->sc_dev.dv_xname, asc->target);
+		goto abort;
+	}
+
 	/* check for message in or out */
 	if ((ir & ~ASC_INT_FC) == ASC_INT_BS) {
 		register int len, fifo;
 
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
-		case ASC_PHASE_DATAI:
-		case ASC_PHASE_DATAO:
+		case SCSI_PHASE_DATAI:
+		case SCSI_PHASE_DATAO:
 			ASC_TC_GET(regs, len);
 			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
+			if (len != 0 && (
+			    (asc->script - asc_scripts) == SCRIPT_DATA_IN + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_IN ||
+			    (asc->script - asc_scripts) == SCRIPT_DATA_OUT + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_OUT)) {
+			    	/*
+			    	 * From the Mach driver:
+			    	 * After a reconnect and restart dma in/out, we
+			    	 * seem to have gotten an interrupt even though
+			    	 * the DMA is running.  The Mach driver just
+			    	 * ignores this interrupt.
+			    	 */
+			    	printf("asc_intr: ignoring strange interrupt");
+			    	printf(" tc %d fifo residue %d script %d\n",
+				    len, fifo, asc->script - asc_scripts);
+			    	goto done;
+			}
 			printf("asc_intr: data overrun: buflen %d dmalen %d tc %d fifo %d\n",
 				state->buflen, state->dmalen, len, fifo);
 			goto abort;
 
-		case ASC_PHASE_MSG_IN:
+		case SCSI_PHASE_MSG_IN:
 			break;
 
-		case ASC_PHASE_MSG_OUT:
+		case SCSI_PHASE_MSG_OUT:
+			/*
+			 * Check for parity error.
+			 * Hardware will automatically set ATN
+			 * to request the device for a MSG_OUT phase.
+			 */
+			if (state->flags & PARITY_ERR) {
+				state->flags &= ~PARITY_ERR;
+				state->msg_out = SCSI_MESSAGE_PARITY_ERROR;
+				/* reset message in counter */
+				state->msglen = 0;
+			} else
+				state->msg_out = SCSI_NO_OP;
 			regs->asc_fifo = state->msg_out;
-			state->msg_out = SCSI_NO_OP;
 			regs->asc_cmd = ASC_CMD_XFER_INFO;
 			readback(regs->asc_cmd);
 			goto done;
 
-		case ASC_PHASE_STATUS:
+		case SCSI_PHASE_STATUS:
 			/* probably an error in the SCSI command */
 			asc->script = &asc_scripts[SCRIPT_GET_STATUS];
 			regs->asc_cmd = ASC_CMD_I_COMPLETE;
 			readback(regs->asc_cmd);
 			goto done;
 
+		case SCSI_PHASE_COMMAND:
+			/*
+			 * This seems to occur after the command is sent
+			 * following sync negotiation.  The device still
+			 * wants more command data.  The fifo appears to
+			 * to still have the unsent data - but the 53C94
+			 * signaled TC.  If the fifo still contains data,
+			 * transfer it, otherwise do a transfer pad.  The
+			 * target should then continue through the rest of
+			 * the phases and complete normally.
+			 */
+			printf("asc_intr: tgt %d command phase TC zero",
+			    asc->target);
+			if ((regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
+				printf(" with non-empty fifo %d\n",
+				    regs->asc_flags & ASC_FLAGS_FIFO_CNT);
+				regs->asc_cmd = ASC_CMD_XFER_INFO;
+			} else {
+				printf("; padding command\n");
+				ASC_TC_PUT(regs, 0xff);
+				regs->asc_cmd = ASC_CMD_XFER_PAD | ASC_CMD_DMA;
+			}
+			goto done;
+
 		default:
+			printf("asc_intr: target %d, unknown phase 0x%x\n", 
+			  	asc->target, status);
 			goto abort;
 		}
 
-		if (state->script)
+		if (state->script) {
+			printf("asc_intr: target %d, incomplete script %p\n", 
+			  	asc->target, state->script);
 			goto abort;
+		}
 
 		/* check for DMA in progress */
 		ASC_TC_GET(regs, len);
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 		/* flush any data in the FIFO */
 		if (fifo) {
-			if (state->flags & DMA_OUT)
+			if (state->flags & DMA_OUT) {
+#ifdef ASC_DIAGNOSTIC
+	 			printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
+				    fifo, len, state->flags);
+#endif /* ASC_DIAGNOSTIC */
 				len += fifo;
-			else if (state->flags & DMA_IN) {
-				u_char *cp;
-
+			} else if (state->flags & DMA_IN) {
+#ifdef ASC_DIAGNOSTIC
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
-				len += fifo;
-				cp = state->dmaBufAddr + (state->dmalen - len);
-				while (fifo-- > 0)
-					*cp++ = regs->asc_fifo;
+#endif /* ASC_DIAGNOSTIC */
 			} else
 				printf("asc_intr: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
 			regs->asc_cmd = ASC_CMD_FLUSH;
+			tc_mb();
 			readback(regs->asc_cmd);
 			DELAY(2);
 		}
-		if (len) {
+		if (len && (state->flags & DMA_IN_PROGRESS)) {
 			/* save number of bytes still to be sent or received */
 			state->dmaresid = len;
-			/* setup state to resume to */
-			if (state->flags & DMA_IN)
-				state->script =
-					&asc_scripts[SCRIPT_RESUME_DMA_IN];
-			else if (state->flags & DMA_OUT)
-				state->script =
-					&asc_scripts[SCRIPT_RESUME_DMA_OUT];
+			state->flags &= ~DMA_IN_PROGRESS;
+			ASC_TC_PUT(regs, 0);
+#ifdef DEBUG
+			if (asc_logp == asc_log)
+				asc_log[NLOG - 1].resid = len;
 			else
-				state->script = asc->script;
-		} else {
+				asc_logp[-1].resid = len;
+#endif
 			/* setup state to resume to */
 			if (state->flags & DMA_IN) {
-				if (state->flags & DMA_IN_PROGRESS) {
-					state->flags &= ~DMA_IN_PROGRESS;
-					(*asc->dma_end)(asc, state, ASCDMA_READ);
-					len = state->dmalen;
-					bcopy(state->dmaBufAddr, state->buf,
-						len);
-					state->buf += len;
-					state->buflen -= len;
-				}
-				if (state->buflen)
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_IN];
-				else
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_NO_DATA];
-			} else if (state->flags & DMA_OUT) {
 				/*
-				 * If this is the last chunk, the next expected
-				 * state is to get status.
+				 * Since the ASC_CNFG3_SRB bit of the
+				 * cnfg3 register bit is not set,
+				 * we just transferred an extra byte.
+				 * Since we can't resume on an odd byte
+				 * boundary, we copy the valid data out
+				 * and resume DMA at the start address.
 				 */
-				if (state->flags & DMA_IN_PROGRESS) {
-					state->flags &= ~DMA_IN_PROGRESS;
-					(*asc->dma_end)(asc, state, ASCDMA_WRITE);
-					len = state->dmalen;
-					state->buf += len;
-					state->buflen -= len;
+				if (len & 1) {
+					printf("asc_intr: msg in len %d (fifo %d)\n",
+						len, fifo); /* XXX */
+					len = state->dmalen - len;
+					goto do_in;
 				}
-				if (state->buflen)
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_OUT];
-				else
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_NO_DATA];
-			} else if (asc->script == &asc_scripts[SCRIPT_SIMPLE])
 				state->script =
-					    &asc_scripts[SCRIPT_RESUME_NO_DATA];
-			else
+					&asc_scripts[SCRIPT_RESUME_DMA_IN];
+				state->flags |= DMA_RESUME;
+			} else if (state->flags & DMA_OUT) {
+				state->script =
+					&asc_scripts[SCRIPT_RESUME_DMA_OUT];
+				state->flags |= DMA_RESUME;
+			} else
 				state->script = asc->script;
-		}
+		} else if (state->flags & DMA_IN) {
+			if (len) {
+				printf("asc_intr: 1: len %d (fifo %d)\n",
+					len, fifo); /* XXX */
+			}
+			/* setup state to resume to */
+			if (state->flags & DMA_IN_PROGRESS) {
+				len = state->dmalen;
+				state->flags &= ~DMA_IN_PROGRESS;
+			do_in:
+				state->dmalen = len;	/* dma_end needs actual length */
+				(*asc->dma_end)(asc, state, ASCDMA_READ);
+				state->buf += len;
+				state->buflen -= len;
+			}
+			if (state->buflen)
+				state->script = (state->flags & DMA_RESUME) ?
+				    &asc_scripts[SCRIPT_RESUME_DMA_IN] :
+				    &asc_scripts[SCRIPT_RESUME_IN];
+			else
+				state->script =
+				    &asc_scripts[SCRIPT_RESUME_NO_DATA];
+		} else if (state->flags & DMA_OUT) {
+			if (len) {
+#ifdef DEBUG
+				printf("asc_intr: 2: len %d (fifo %d)\n", len,
+					fifo); /* XXX */
+#endif
+			}
+			/*
+			 * If this is the last chunk, the next expected
+			 * state is to get status.
+			 */
+			if (state->flags & DMA_IN_PROGRESS) {
+				state->flags &= ~DMA_IN_PROGRESS;
+				(*asc->dma_end)(asc, state, ASCDMA_WRITE);
+				len = state->dmalen;
+				state->buf += len;
+				state->buflen -= len;
+			}
+			if (state->buflen)
+				state->script = (state->flags & DMA_RESUME) ?
+				    &asc_scripts[SCRIPT_RESUME_DMA_OUT] :
+				    &asc_scripts[SCRIPT_RESUME_OUT];
+			else
+				state->script =
+				    &asc_scripts[SCRIPT_RESUME_NO_DATA];
+		} else if (asc->script == &asc_scripts[SCRIPT_SIMPLE])
+			state->script = &asc_scripts[SCRIPT_RESUME_NO_DATA];
+		else
+			state->script = asc->script;
 
 		/* setup to receive a message */
 		asc->script = &asc_scripts[SCRIPT_MSG_IN];
@@ -939,7 +1114,7 @@ again:
 	if (ir & ASC_INT_RESET) {
 		register int i;
 
-		printf("asc%d: SCSI bus reset!!\n", asc - asc_softc);
+		printf("%s: SCSI bus reset!!\n", asc->sc_dev.dv_xname);
 		/* need to flush any pending commands */
 		for (i = 0; i < ASC_NCMD; i++) {
 			if (!asc->cmd[i])
@@ -953,23 +1128,52 @@ again:
 			asc->st[i].flags = 0;
 		}
 		asc->target = -1;
-		return;
+		return 0 ; /* XXX ??? */
 	}
-
-	/* check for command errors */
-	if (ir & ASC_INT_ILL)
-		goto abort;
 
 	/* check for disconnect */
 	if (ir & ASC_INT_DISC) {
 		state = &asc->st[asc->target];
-		switch (ASC_SS(ss)) {
-		case 0: /* device did not respond */
-			state->error = ENXIO;
-			asc_end(asc, status, ss, ir);
-			return;
+		switch (asc->script - asc_scripts) {
+		case SCRIPT_DONE:
+		case SCRIPT_DISCONNECT:
+			/*
+			 * Disconnects can happen normally when the
+			 * command is complete with the phase being
+			 * either SCSI_PHASE_DATAO or SCSI_PHASE_MSG_IN.
+			 * The SCRIPT_MATCH() only checks for one phase
+			 * so we can wind up here.
+			 * Perform the appropriate operation, then proceed.
+			 */
+			if ((*scpt->action)(asc, status, ss, ir)) {
+				regs->asc_cmd = scpt->command;
+				readback(regs->asc_cmd);
+				asc->script = scpt->next;
+			}
+			goto done;
+
+		case SCRIPT_TRY_SYNC:
+		case SCRIPT_SIMPLE:
+		case SCRIPT_DATA_IN:
+		case SCRIPT_DATA_OUT: /* one of the starting scripts */
+			if (ASC_SS(ss) == 0) {
+				/* device did not respond */
+				if (regs->asc_flags & ASC_FLAGS_FIFO_CNT) {
+					regs->asc_cmd = ASC_CMD_FLUSH;
+					readback(regs->asc_cmd);
+				}
+				state->error = ENXIO;
+				asc_end(asc, status, ss, ir);
+				return 0 ; /* XXX ??? */
+			}
+			/* FALLTHROUGH */
 
 		default:
+			printf("%s: SCSI device %d: unexpected disconnect\n",
+				asc->sc_dev.dv_xname, asc->target);
+#ifdef DEBUG
+			asc_DumpLog("asc_disc");
+#endif
 			/*
 			 * On rare occasions my RZ24 does a disconnect during
 			 * data in phase and the following seems to keep it
@@ -981,17 +1185,52 @@ again:
 			state->flags |= DISCONN;
 			regs->asc_cmd = ASC_CMD_ENABLE_SEL;
 			readback(regs->asc_cmd);
-			return;
+			return 0 ; /* XXX ??? */
 		}
 	}
+
+	/* mhitch - debug - check select/reselect collision */
+	if ((ir & ASC_INT_ILL) && (regs->asc_cmd & ASC_CMD_SEL_ATN)) {
+		printf("asc_intr: Illegal command status %x ir %x\n",
+		    status, ir);
+		/* Should process reselect? */
+	}
+
+	/* check for illegal command */
+	if (ir & ASC_INT_ILL) {
+#ifdef ASC_DIAGNOSTIC
+		printf("asc_intr: Illegal command status %x ir %x cmd %x ? %x\n",
+		    status, ir, regs->asc_cmd, asc_scripts[SCRIPT_MSG_IN].command);
+#endif
+		/*
+		 * On a 5000/200, I see this frequently when using an RD52
+		 * CDROM.  The 53c94 doesn't seem to get the Message Accept
+		 * command, and generates an "Illegal Command" interrupt.
+		 * Re-issuing the Message Accept at this point seems to keep
+		 * things going.  Don't allow this too many times in a row,
+		 * just to make sure we don't get hung up.  mhitch
+		 */
+		if (ill_cmd_count++ != 3) {			/* XXX */
+			regs->asc_cmd = ASC_CMD_MSG_ACPT;	/* XXX */
+			readback(regs->asc_cmd);		/* XXX */
+			goto done;				/* XXX */
+		}						/* XXX */
+		printf("asc_intr: Illegal command tgt %d\n", asc->target);
+		goto abort;	/* XXX */
+	}
+	ill_cmd_count = 0;					/* XXX */
 
 	/* check for reselect */
 	if (ir & ASC_INT_RESEL) {
 		unsigned fifo, id, msg;
 
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
-		if (fifo < 2)
+		if (fifo < 2) {
+			printf("asc_intr: target %d, reselect, fifo %d too small for msg\n", 
+			  	asc->target, fifo);
+
 			goto abort;
+		}
 		/* read unencoded SCSI ID and convert to binary */
 		msg = regs->asc_fifo & asc->myidmask;
 		for (id = 0; (msg & 1) == 0; id++)
@@ -1004,15 +1243,21 @@ again:
 		else
 			asc_logp[-1].msg = msg;
 #endif
-		if (asc->state != ASC_STATE_RESEL)
-			goto abort;
+		/*
+		 * TC may have been initialized during a selection attempt.
+		 * Clear it to prevent possible confusion later.
+		 */
+		ASC_TC_PUT(regs,0);	/* ensure TC clear */
 		asc->state = ASC_STATE_BUSY;
 		asc->target = id;
 		state = &asc->st[id];
 		asc->script = state->script;
 		state->script = (script_t *)0;
-		if (!(state->flags & DISCONN))
+		if (!(state->flags & DISCONN)) {
+			printf("asc_intr: reselect tgt %d, flags 0x%x not disconnected\n",
+			       asc->target, state->flags);
 			goto abort;
+		}
 		state->flags &= ~DISCONN;
 		regs->asc_syn_p = state->sync_period;
 		regs->asc_syn_o = state->sync_offset;
@@ -1022,19 +1267,24 @@ again:
 	}
 
 	/* check if we are being selected as a target */
-	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN))
+	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN)) {
+			printf("asc_intr: host adaptor selected as target\n");
 		goto abort;
+	}
+	/*
+	 * 'ir' must be just ASC_INT_FC.
+	 * This is normal if canceling an ASC_ENABLE_SEL.
+	 */
 
-	/* must be just a ASC_INT_FC */
 done:
-	MachEmptyWriteBuffer();
+	tc_mb();
 	/* watch out for HW race conditions and setup & hold time violations */
 	ir = regs->asc_status;
 	while (ir != (status = regs->asc_status))
 		ir = status;
 	if (status & ASC_CSR_INT)
 		goto again;
-	return;
+	return 0 ; /* XXX ??? */
 
 abort:
 #ifdef DEBUG
@@ -1043,7 +1293,7 @@ abort:
 #if 0
 	panic("asc_intr");
 #else
-	for (;;);
+	cpu_reboot(RB_NOSYNC, NULL); /* XXX */
 #endif
 }
 
@@ -1074,7 +1324,11 @@ asc_get_status(asc, status, ss, ir)
 	 * Get the last two bytes in the FIFO.
 	 */
 	if ((data = regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 2) {
-		printf("asc_get_status: fifo cnt %d\n", data); /* XXX */
+		printf("asc_get_status: cmdreg %x, fifo cnt %d\n",
+		       regs->asc_cmd, data); /* XXX */
+#ifdef DEBUG
+		asc_DumpLog("get_status"); /* XXX */
+#endif
 		if (data < 2) {
 			asc->regs->asc_cmd = ASC_CMD_MSG_ACPT;
 			readback(asc->regs->asc_cmd);
@@ -1122,6 +1376,7 @@ asc_end(asc, status, ss, ir)
 	scsicmd = asc->cmd[target];
 	asc->cmd[target] = (ScsiCmd *)0;
 	state = &asc->st[target];
+	untimeout(asc_timeout, scsicmd);
 
 #ifdef DEBUG
 	if (asc_debug > 1) {
@@ -1146,7 +1401,35 @@ asc_end(asc, status, ss, ir)
 		break;
 	}
 
-	/* look for another device that is ready */
+#ifdef USE_NEW_SCSI
+	if(scsicmd->error == XS_NOERROR && !(state->flags & CHECK_SENSE)) {
+		if((state->statusByte & ST_MASK) == SCSI_CHECK) {
+			struct scsipi_sense *ss = (void *)&state->cmd;
+			/* Save return values */
+			scsicmd->resid = state->buflen;
+			scsicmd->status = state->statusByte;
+			/* Set up sense request command */
+			bzero(ss, sizeof(*ss));
+			ss->opcode = REQUEST_SENSE;
+			ss->byte2 = sc_link->lun << 5;
+			ss->length = sizeof(struct scsipi_sense_data);
+			state->cmdlen = sizeof(*ss);
+			state->buf = (vaddr_t)&scsicmd->sense;
+			state->buflen = sizeof(struct scsipi_sense_data);
+			state->flags |= CHECK_SENSE;
+			MachFlushDCache(state->buf, state->buflen);
+			asc->cmd[target] = scsicmd;
+			asc_startcmd(asc, target);
+			return(0);
+		}
+	}
+#endif /*USE_NEW_SCSI*/
+
+	/*
+	 * Look for another device that is ready.
+	 * May want to keep last one started and increment for fairness
+	 * rather than always starting at zero.
+	 */
 	for (i = 0; i < ASC_NCMD; i++) {
 		/* don't restart a disconnected command */
 		if (!asc->cmd[i] || (asc->st[i].flags & DISCONN))
@@ -1179,20 +1462,54 @@ asc_dma_in(asc, status, ss, ir)
 		 * There may be some bytes in the FIFO if synchonous transfers
 		 * are in progress.
 		 */
-		(*asc->dma_end)(asc, state, ASCDMA_READ);
 		ASC_TC_GET(regs, len);
 		len = state->dmalen - len;
-		bcopy(state->dmaBufAddr, state->buf, len);
+		state->dmalen = len;	/* dma_end may need actual length */
+		(*asc->dma_end)(asc, state, ASCDMA_READ);
 		state->buf += len;
 		state->buflen -= len;
 	}
 
+	if (!(state->flags & DMA_IN_PROGRESS) &&
+	    (regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
+	  	volatile int async_fifo_junk = 0;
+
+		/*
+		 * If the target is asynchronous, the FIFO contains
+		 * a byte of garbage. (see the Mach mk84 53c94 driver,
+		 * where this occurs on tk-50s and exabytes.)
+		 * It also occurs on  asynch disks like SCSI-1 disks.
+		 * Recover by reading the byte of junk from the fifo if,
+		 * and only if, the target is async. If the target is
+		 * synch, there is no junk, and reading the fifo
+		 * deadlocks our SCSI state machine.
+		 */
+		 if (state->sync_offset == 0)
+			async_fifo_junk = regs->asc_fifo;
+#ifdef ASC_DIAGNOSTIC
+		printf("%s: asc_dma_in: FIFO count %x flags %x sync_offset %d",
+		    asc->sc_dev.dv_xname, regs->asc_flags,
+		       state->flags, state->sync_offset);
+		if (state->sync_offset != 0)
+			printf("\n");
+		else
+			printf(" unexpected fifo data %x\n", async_fifo_junk);
+#ifdef DEBUG
+		asc_DumpLog("asc_dma_in");
+#endif	/* DEBUG */
+#endif	/* ASC_DIAGNOSTIC */
+
+	}
 	/* setup to start reading the next chunk */
 	len = state->buflen;
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+#ifdef DEBUG
+	if (asc_logp == asc_log)
+		asc_log[NLOG - 1].resid = len;
+	else
+		asc_logp[-1].resid = len;
+#endif
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_READ, len, 0);
 	state->dmalen = len;
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_READ);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1220,8 +1537,6 @@ asc_last_dma_in(asc, status, ss, ir)
 	register State *state = &asc->st[asc->target];
 	register int len, fifo;
 
-	/* copy data from buffer to main memory */
-	(*asc->dma_end)(asc, state, ASCDMA_READ);
 	ASC_TC_GET(regs, len);
 	fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 #ifdef DEBUG
@@ -1236,8 +1551,9 @@ asc_last_dma_in(asc, status, ss, ir)
 	}
 	state->flags &= ~DMA_IN_PROGRESS;
 	len = state->dmalen - len;
+	state->dmalen = len;	/* dma_end may need actual length */
+	(*asc->dma_end)(asc, state, ASCDMA_READ);
 	state->buflen -= len;
-	bcopy(state->dmaBufAddr, state->buf, len);
 
 	return (1);
 }
@@ -1254,10 +1570,14 @@ asc_resume_in(asc, status, ss, ir)
 
 	/* setup to start reading the next chunk */
 	len = state->buflen;
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+#ifdef DEBUG
+	if (asc_logp == asc_log)
+		asc_log[NLOG - 1].resid = len;
+	else
+		asc_logp[-1].resid = len;
+#endif
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_READ, len, 0);
 	state->dmalen = len;
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_READ);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1292,9 +1612,15 @@ asc_resume_dma_in(asc, status, ss, ir)
 	if ((off & 1) && state->sync_offset) {
 		printf("asc_resume_dma_in: odd xfer dmalen %d len %d off %d\n",
 			state->dmalen, len, off); /* XXX */
-		regs->asc_res_fifo = state->dmaBufAddr[off];
+		regs->asc_res_fifo = state->buf[off];
 	}
-	(*asc->dma_start)(asc, state, state->dmaBufAddr + off, ASCDMA_READ);
+#ifdef DEBUG
+	if (asc_logp == asc_log)
+		asc_log[NLOG - 1].resid = len;
+	else
+		asc_logp[-1].resid = len;
+#endif
+	len = (*asc->dma_start)(asc, state, state->buf + off, ASCDMA_READ, len, off);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1304,6 +1630,7 @@ asc_resume_dma_in(asc, status, ss, ir)
 
 	/* check for next chunk */
 	state->flags |= DMA_IN_PROGRESS;
+	state->flags &= ~DMA_RESUME;
 	if (state->dmalen != state->buflen) {
 		regs->asc_cmd = ASC_CMD_XFER_INFO | ASC_CMD_DMA;
 		readback(regs->asc_cmd);
@@ -1336,13 +1663,25 @@ asc_dma_out(asc, status, ss, ir)
 		state->buflen -= len;
 	}
 
-	/* setup for this chunck */
+	/*
+	 * Flush the fifo - sometimes there seems to be something left
+	 * in the fifo.  Since the dma output has not been started,
+	 * the fifo is supposed to be empty.
+	 */
+	if (regs->asc_flags & ASC_FLAGS_FIFO_CNT) {
+		while (regs->asc_flags & ASC_FLAGS_FIFO_CNT)
+			regs->asc_fifo;
+	}
+	/* setup for this chunk */
 	len = state->buflen;
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+#ifdef DEBUG
+	if (asc_logp == asc_log)
+		asc_log[NLOG - 1].resid = len;
+	else
+		asc_logp[-1].resid = len;
+#endif
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_WRITE, len, 0);
 	state->dmalen = len;
-	bcopy(state->buf, state->dmaBufAddr, len);
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1381,6 +1720,8 @@ asc_last_dma_out(asc, status, ss, ir)
 		len += fifo;
 		regs->asc_cmd = ASC_CMD_FLUSH;
 		readback(regs->asc_cmd);
+		printf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
+			state->buflen, state->dmalen, len, fifo);
 	}
 	state->flags &= ~DMA_IN_PROGRESS;
 	len = state->dmalen - len;
@@ -1398,13 +1739,16 @@ asc_resume_out(asc, status, ss, ir)
 	register State *state = &asc->st[asc->target];
 	register int len;
 
-	/* setup for this chunck */
+	/* setup for this chunk */
 	len = state->buflen;
-	if (len > state->dmaBufSize)
-		len = state->dmaBufSize;
+#ifdef DEBUG
+	if (asc_logp == asc_log)
+		asc_log[NLOG - 1].resid = len;
+	else
+		asc_logp[-1].resid = len;
+#endif
+	len = (*asc->dma_start)(asc, state, state->buf, ASCDMA_WRITE, len, 0);
 	state->dmalen = len;
-	bcopy(state->buf, state->dmaBufAddr, len);
-	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1439,11 +1783,18 @@ asc_resume_dma_out(asc, status, ss, ir)
 	if (off & 1) {
 		printf("asc_resume_dma_out: odd xfer dmalen %d len %d off %d\n",
 			state->dmalen, len, off); /* XXX */
-		regs->asc_fifo = state->dmaBufAddr[off];
+		regs->asc_fifo = state->buf[off];
 		off++;
 		len--;
 	}
-	(*asc->dma_start)(asc, state, state->dmaBufAddr + off, ASCDMA_WRITE);
+#ifdef DEBUG
+	if (asc_logp == asc_log)
+		asc_log[NLOG - 1].resid = len;
+	else
+		asc_logp[-1].resid = len;
+#endif
+	/* XXX may result in redundant copy of data */
+	len = (*asc->dma_start)(asc, state, state->buf + off, ASCDMA_WRITE, len, off);
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
@@ -1453,6 +1804,7 @@ asc_resume_dma_out(asc, status, ss, ir)
 
 	/* check for next chunk */
 	state->flags |= DMA_IN_PROGRESS;
+	state->flags &= ~DMA_RESUME;
 	if (state->dmalen != state->buflen) {
 		regs->asc_cmd = ASC_CMD_XFER_INFO | ASC_CMD_DMA;
 		readback(regs->asc_cmd);
@@ -1473,13 +1825,13 @@ asc_sendsync(asc, status, ss, ir)
 
 	/* send the extended synchronous negotiation message */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = 3;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = SCSI_SYNCHRONOUS_XFER;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = SCSI_MIN_PERIOD;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = ASC_MAX_OFFSET;
 	/* state to resume after we see the sync reply message */
 	state->script = asc->script + 2;
@@ -1504,13 +1856,13 @@ asc_replysync(asc, status, ss, ir)
 #endif
 	/* send synchronous transfer in response to a request */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = 3;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = SCSI_SYNCHRONOUS_XFER;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = asc_to_scsi_period[state->sync_period] * asc->tb_ticks;
-	MachEmptyWriteBuffer();
+	tc_mb();
 	regs->asc_fifo = state->sync_offset;
 	regs->asc_cmd = ASC_CMD_XFER_INFO;
 	readback(regs->asc_cmd);
@@ -1554,8 +1906,11 @@ asc_msg_in(asc, status, ss, ir)
 			state->msglen = msg;
 			return (1);
 		}
-		if (state->msgcnt >= state->msglen)
+		if (state->msgcnt >= state->msglen) {
+		  	printf("asc: msg_in too big, msgcnt %d msglen %d\n",
+			       state->msgcnt, state->msglen);
 			goto abort;
+		}
 		state->msg_in[state->msgcnt++] = msg;
 
 		/* did we just read the last byte of the message? */
@@ -1581,8 +1936,8 @@ asc_msg_in(asc, status, ss, ir)
 				i = asc->min_period;
 			else if (i >= asc->max_period) {
 				/* can't do sync transfer, period too long */
-				printf("asc%d: SCSI device %d: sync xfer period too long (%d)\n",
-					asc - asc_softc, asc->target, i);
+				printf("%s: SCSI device %d: sync xfer period too long (%d)\n",
+					asc->sc_dev.dv_xname, asc->target, i);
 				i = asc->max_period;
 				state->sync_offset = 0;
 			}
@@ -1621,8 +1976,8 @@ asc_msg_in(asc, status, ss, ir)
 			goto done;
 
 		default:
-			printf("asc%d: SCSI device %d: rejecting extended message 0x%x\n",
-				asc - asc_softc, asc->target,
+			printf("%s: SCSI device %d: rejecting extended message 0x%x\n",
+				asc->sc_dev.dv_xname, asc->target,
 				state->msg_in[0]);
 			goto reject;
 		}
@@ -1643,7 +1998,7 @@ asc_msg_in(asc, status, ss, ir)
 		status = asc_wait(regs, ASC_CSR_INT);
 		ir = regs->asc_intr;
 		/* some just break out here, some dont */
-		if (ASC_PHASE(status) == ASC_PHASE_MSG_OUT) {
+		if (ASC_PHASE(status) == SCSI_PHASE_MSG_OUT) {
 			regs->asc_fifo = SCSI_ABORT;
 			regs->asc_cmd = ASC_CMD_XFER_INFO;
 			readback(regs->asc_cmd);
@@ -1655,7 +2010,7 @@ asc_msg_in(asc, status, ss, ir)
 			return (0);
 		}
 		goto status;
-#endif
+#endif /*0*/
 
 	case SCSI_EXTENDED_MSG: /* read an extended message */
 		/* setup to read message length next */
@@ -1679,8 +2034,11 @@ asc_msg_in(asc, status, ss, ir)
 		break;
 
 	case SCSI_DISCONNECT:
-		if (state->flags & DISCONN)
+		if (state->flags & DISCONN) {
+			printf("asc: disconnected target %d disconnecting again\n",
+			    asc->target);
 			goto abort;
+		}
 		state->flags |= DISCONN;
 		regs->asc_cmd = ASC_CMD_MSG_ACPT;
 		readback(regs->asc_cmd);
@@ -1688,8 +2046,8 @@ asc_msg_in(asc, status, ss, ir)
 		return (0);
 
 	default:
-		printf("asc%d: SCSI device %d: rejecting message 0x%x\n",
-			asc - asc_softc, asc->target, msg);
+		printf("%s: SCSI device %d: rejecting message 0x%x\n",
+			asc->sc_dev.dv_xname, asc->target, msg);
 	reject:
 		/* request a message out before acknowledging this message */
 		state->msg_out = SCSI_MESSAGE_REJECT;
@@ -1702,6 +2060,8 @@ done:
 	regs->asc_cmd = ASC_CMD_MSG_ACPT;
 	readback(regs->asc_cmd);
 	if (!state->script) {
+	  	printf("asc_msg_in: target %d, no script?\n", asc->target);
+
 	abort:
 #ifdef DEBUG
 		asc_DumpLog("asc_msg_in");
@@ -1719,138 +2079,55 @@ asc_disconnect(asc, status, ss, ir)
 	register asc_softc_t asc;
 	register int status, ss, ir;
 {
+	int i;
+#ifdef DIAGNOSTIC
+	/* later Mach driver checks for late asych disconnect here. */
 	register State *state = &asc->st[asc->target];
 
+	if (!(state->flags & DISCONN)) {
+		printf("asc_disconnect: device %d: DISCONN not set!\n",
+			asc->target);
+	}
+#endif /*DIAGNOSTIC*/
 	asc->target = -1;
 	asc->state = ASC_STATE_RESEL;
+	/*
+	 * Look for another device that is ready.
+	 * May want to keep last one started and increment for fairness
+	 * rather than always starting at zero.
+	 */
+	for (i = 0; i < ASC_NCMD; i++) {
+		/* don't restart a disconnected command */
+		if (!asc->cmd[i] || asc->st[i].flags & DISCONN)
+			continue;
+		asc_startcmd(asc, i);
+		return (0);
+	}
 	return (1);
 }
 
-/*
- * DMA handling routines. For a turbochannel device, just set the dmar
- * for the I/O ASIC, handle the actual DMA interface.
- */
-static void
-tb_dma_start(asc, state, cp, flag)
-	asc_softc_t asc;
-	State *state;
-	caddr_t cp;
-	int flag;
-{
-
-	if (flag == ASCDMA_WRITE)
-		*asc->dmar = ASC_DMAR_WRITE | ASC_DMA_ADDR(cp);
-	else
-		*asc->dmar = ASC_DMA_ADDR(cp);
-}
-
-static void
-tb_dma_end(asc, state, flag)
-	asc_softc_t asc;
-	State *state;
-	int flag;
-{
-
-}
-
-static void
-asic_dma_start(asc, state, cp, flag)
-	asc_softc_t asc;
-	State *state;
-	caddr_t cp;
-	int flag;
-{
-	register volatile u_int *ssr = (volatile u_int *)
-		ASIC_REG_CSR(asic_base);
-	u_int phys, nphys;
-
-	/* stop DMA engine first */
-	*ssr &= ~ASIC_CSR_DMAEN_SCSI;
-	* ((volatile int *)ASIC_REG_SCSI_SCR(asic_base)) = 0;
-
-	phys = MACH_CACHED_TO_PHYS(cp);
-	cp = (caddr_t)pmax_trunc_page(cp + NBPG);
-	nphys = MACH_CACHED_TO_PHYS(cp);
-
-	asc->dma_next = cp;
-	asc->dma_xfer = state->dmalen - (nphys - phys);
-
-	*(volatile int *)ASIC_REG_SCSI_DMAPTR(asic_base) =
-		ASIC_DMA_ADDR(phys);
-	*(volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base) =
-		ASIC_DMA_ADDR(nphys);
-	if (flag == ASCDMA_READ)
-		*ssr |= ASIC_CSR_SCSI_DIR | ASIC_CSR_DMAEN_SCSI;
-	else
-		*ssr = (*ssr & ~ASIC_CSR_SCSI_DIR) | ASIC_CSR_DMAEN_SCSI;
-	MachEmptyWriteBuffer();
-}
-
-static void
-asic_dma_end(asc, state, flag)
-	asc_softc_t asc;
-	State *state;
-	int flag;
-{
-	register volatile u_int *ssr = (volatile u_int *)
-		ASIC_REG_CSR(asic_base);
-	int nb;
-
-	*ssr &= ~ASIC_CSR_DMAEN_SCSI;
-	*((volatile int *)ASIC_REG_SCSI_DMAPTR(asic_base)) = -1;
-	*((volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base)) = -1;
-	MachEmptyWriteBuffer();
-
-	if (flag == ASCDMA_READ) {
-		MachFlushDCache(MACH_PHYS_TO_CACHED(
-		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
-		if (nb = *((int *)ASIC_REG_SCSI_SCR(asic_base))) {
-			/* pick up last upto6 bytes, sigh. */
-			register u_short *to;
-			register int w;
-	
-			/* Last byte really xferred is.. */
-			to = (u_short *)(state->dmaBufAddr + state->dmalen - (nb << 1));
-			w = *(int *)ASIC_REG_SCSI_SDR0(asic_base);
-			*to++ = w;
-			if (--nb > 0) {
-				w >>= 16;
-				*to++ = w;
-			}
-			if (--nb > 0) {
-				w = *(int *)ASIC_REG_SCSI_SDR1(asic_base);
-				*to++ = w;
-			}
-		}
-	}
-}
-
-#ifdef notdef
-/*
- * Called by asic_intr() for scsi dma pointer update interrupts.
- */
 void
-asc_dma_intr()
+asc_timeout(arg)
+	void *arg;
 {
-	asc_softc_t asc = &asc_softc[0];
-	u_int next_phys;
+	int s = splbio();
+	ScsiCmd *scsicmd = (ScsiCmd *) arg;
 
-	asc->dma_xfer -= NBPG;
-	if (asc->dma_xfer <= -NBPG) {
-		volatile u_int *ssr = (volatile u_int *)
-			ASIC_REG_CSR(asic_base);
-		*ssr &= ~ASIC_CSR_DMAEN_SCSI;
-	} else {
-		asc->dma_next += NBPG;
-		next_phys = MACH_CACHED_TO_PHYS(asc->dma_next);
-	}
-	*(volatile int *)ASIC_REG_SCSI_DMANPTR(asic_base) =
-		ASIC_DMA_ADDR(next_phys);
-	MachEmptyWriteBuffer();
-}
+	printf("asc_timeout: cmd %p drive %d\n", scsicmd, scsicmd->sd->sd_drive);
+#ifdef DEBUG
+	asc_DumpLog("asc_timeout");
 #endif
+#if 0
+	panic("asc_timeout");
+#else
+	cpu_reboot(RB_NOSYNC, NULL); /* XXX */
+#endif
+	splx(s);
+}
+
 
 #ifdef DEBUG
+void
 asc_DumpLog(str)
 	char *str;
 {
@@ -1862,7 +2139,7 @@ asc_DumpLog(str)
 	lp = asc_logp;
 	do {
 		status = lp->status;
-		printf("asc%d tgt %d status %x ss %x ir %x cond %d:%x msg %x\n",
+		printf("asc%d tgt %d status %x ss %x ir %x cond %d:%x msg %x resid %d\n",
 			status >> 24,
 			lp->target,
 			(status >> 16) & 0xFF,
@@ -1870,11 +2147,11 @@ asc_DumpLog(str)
 			status & 0XFF,
 			lp->state,
 			asc_scripts[lp->state].condition,
-			lp->msg);
+			lp->msg, lp->resid);
 		if (++lp >= &asc_log[NLOG])
 			lp = asc_log;
 	} while (lp != asc_logp);
 }
-#endif
+#endif /*DEBUG*/
 
 #endif	/* NASC > 0 */
