@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.10 1993/05/25 07:27:31 deraadt Exp $
+ *	$Id: cd.c,v 1.11 1993/06/16 03:39:30 deraadt Exp $
  */
 
 #define SPLCD splbio
@@ -62,6 +62,8 @@ int	Debugger();
 #define	RAW_PART	3
 #define UNIT(z)		(  (minor(z) >> UNITSHIFT) )
 
+#undef	NCD
+#define	NCD		( makedev(1,0) >> UNIT_SHIFT)
 
 extern	int hz;
 int	cd_done();

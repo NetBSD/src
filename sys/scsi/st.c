@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.8 1993/05/20 03:46:50 cgd Exp $
+ *	$Id: st.c,v 1.9 1993/06/16 03:39:47 deraadt Exp $
  */
 
 /*
@@ -46,9 +46,13 @@ long int ststrats, stqueues;
 
 #define	ST_RETRIES	4
 
+#define	UNIT_SHIFT	4
 #define MODE(z)		((minor(z) & 0x03))
 #define DSTY(z)		(((minor(z) >> 2) & 0x03))
-#define UNIT(z)		((minor(z) >> 4))
+#define UNIT(z)		((minor(z) >> UNIT_SHIFT))
+
+#undef	NST
+#define	NST		( makedev(1,0) >> UNIT_SHIFT)
 
 #define DSTY_QIC120  3
 #define DSTY_QIC150  2
