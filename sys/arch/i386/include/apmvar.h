@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.8 1998/10/03 02:14:52 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.9 1999/08/17 19:05:53 drochner Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,6 +79,7 @@
 #define		APM_DEV_SERIAL(x)	(0x0400|((x)&0xff))
 #define		APM_DEV_NETWORK(x)	(0x0500|((x)&0xff))
 #define		APM_DEV_PCMCIA(x)	(0x0600|((x)&0xff))
+#define		APM_DEV_BATTERY(x)	(0x8000|((x)&0xff))	/* V1.2 */
 #define		APM_DEV_ALLUNITS	0xff
 
 #define	APM_INSTALLATION_CHECK	0x00	/* int15 only */
@@ -160,6 +161,7 @@
 #define		APM_USER_STANDBY_REQ	0x0009
 #define		APM_USER_SUSPEND_REQ	0x000A
 #define		APM_SYS_STANDBY_RESUME	0x000B
+#define		APM_CAP_CHANGE		0x000C	/* V1.2 */
 
 #define	APM_GET_POWER_STATE	0x0c
      /* device to query in %bx */
@@ -291,7 +293,9 @@ struct apm_ctl {
 #define	APM_IOC_SUSPEND	_IO('A', 2)	/* put system into suspend */
 #define	APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
 #define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
+#if 0
 #define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
+#endif
 
 struct apm_attach_args {
 	char *aaa_busname;
