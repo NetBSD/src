@@ -24,7 +24,7 @@ do
 		echo "$prog: option $1 requires an argument" >&2
 		exit 1
 		;;
-	-i|-[mrno]*)
+	-S|-i|-[mrno]*)
 		opts="$opts $1";
 		;;
 
