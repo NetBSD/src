@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 1997/06/29 19:02:07 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 1997/06/29 19:54:57 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -489,24 +489,24 @@ initcpu()
 	extern void (*vectab[256]) __P((void));
 	void addrerr4060 __P((void));
 #endif
-#ifdef M68040
-	void buserr40 __P((void));
-#endif
 #ifdef M68060
 	void buserr60 __P((void));
 #endif
+#ifdef M68040
+	void buserr40 __P((void));
+#endif
 
 	switch (cputype) {
-#ifdef M68040
-	case CPU_68040:
-		vectab[2] = adderr4060;
-		vectab[3] = buserr40;
-		break;
-#endif
 #ifdef M68060
 	case CPU_68060:
-		vectab[2] = adderr4060;
+		vectab[2] = addrerr4060;
 		vectab[3] = buserr60;
+		break;
+#endif
+#ifdef M68040
+	case CPU_68040:
+		vectab[2] = addrerr4060;
+		vectab[3] = buserr40;
 		break;
 #endif
 	default:
