@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.11 2005/03/12 03:42:03 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.12 2005/03/12 03:55:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.11 2005/03/12 03:42:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.12 2005/03/12 03:55:45 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -301,7 +301,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 	do { \
 		if ((FROM)->channels == 2 && (TO)->channels == 1) { \
 			WRITE_S##BITS##EN(WP, ((V)[0] + (V)[1]) / 2); \
-			WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY * 2); \
+			WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 		} else if (from->channels <= to->channels) { \
 			int j; \
 			for (j = 0; j < (FROM)->channels; j++) { \
