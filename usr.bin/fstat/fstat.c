@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.44 2000/08/14 09:17:11 enami Exp $	*/
+/*	$NetBSD: fstat.c,v 1.45 2001/01/04 23:05:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.44 2000/08/14 09:17:11 enami Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.45 2001/01/04 23:05:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ vtrans(vp, i, flag)
 		break;
 	}
 	default:
-		printf(" %6qd", (long long)fst.size);
+		printf(" %6lld", (long long)fst.size);
 	}
 	rw[0] = '\0';
 	if (flag & FREAD)

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.4 2000/03/17 02:23:17 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.5 2001/01/04 23:05:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -290,8 +290,8 @@ f_search(sp, fm, rm, ptrn, eptrn, flags)
 			search_msg(sp, S_WRAP);
 
 #if defined(DEBUG) && 0
-		TRACE(sp, "F search: %qu to %qu\n",
-		    match[0].rm_so, match[0].rm_eo);
+		TRACE(sp, "F search: %llu to %llu\n",
+		    (long long)match[0].rm_so, (long long)match[0].rm_eo);
 #endif
 		rm->lno = lno;
 		rm->cno = match[0].rm_so;
@@ -413,7 +413,8 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 #endif
 
 #if defined(DEBUG) && 0
-		TRACE(sp, "B search: %lu from 0 to %qu\n", lno, match[0].rm_eo);
+		TRACE(sp, "B search: %lu from 0 to %llu\n", lno,
+		    (long long)match[0].rm_eo);
 #endif
 		/* Search the line. */
 #ifdef REG_STARTEND
@@ -447,8 +448,8 @@ b_search(sp, fm, rm, ptrn, eptrn, flags)
 			search_msg(sp, S_WRAP);
 
 #if defined(DEBUG) && 0
-		TRACE(sp, "B found: %qu to %qu\n",
-		    match[0].rm_so, match[0].rm_eo);
+		TRACE(sp, "B found: %llu to %llu\n",
+		    (long long)match[0].rm_so, (long long)match[0].rm_eo);
 #endif
 		/*
 		 * We now have the first match on the line.  Step through the

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.19 2000/10/11 14:46:16 is Exp $	*/
+/*	$NetBSD: server.c,v 1.20 2001/01/04 23:05:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.19 2000/10/11 14:46:16 is Exp $");
+__RCSID("$NetBSD: server.c,v 1.20 2001/01/04 23:05:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -445,7 +445,7 @@ sendf(rname, opts)
 				return;
 			}
 		}
-		(void) snprintf(buf, sizeof(buf), "K%o %o %qd %ld %s %s %s\n",
+		(void) snprintf(buf, sizeof(buf), "K%o %o %lld %ld %s %s %s\n",
 		    opts, stb.st_mode & 07777, (unsigned long long)stb.st_size,
 		    (u_long)stb.st_mtime, protoname(), protogroup(), rname);
 		if (debug)
@@ -504,7 +504,7 @@ sendf(rname, opts)
 		error("%s: %s\n", target, strerror(errno));
 		return;
 	}
-	(void)snprintf(buf, sizeof(buf), "R%o %o %qd %lu %s %s %s\n", opts,
+	(void)snprintf(buf, sizeof(buf), "R%o %o %lld %lu %s %s %s\n", opts,
 		stb.st_mode & 07777, (unsigned long long)stb.st_size,
 		(u_long)stb.st_mtime, protoname(), protogroup(), rname);
 	if (debug)
@@ -713,7 +713,7 @@ query(name)
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFREG:
-		(void)snprintf(buf, sizeof(buf), "Y%qd %ld\n",
+		(void)snprintf(buf, sizeof(buf), "Y%lld %ld\n",
 		    (unsigned long long)stb.st_size, (u_long)stb.st_mtime);
 		if (write(rem, buf, strlen(buf)) < 0)
 			error("write to remote failed: %s\n", strerror(errno));

@@ -1,4 +1,4 @@
-/*	$NetBSD: special.c,v 1.6 1998/08/25 20:59:36 ross Exp $	*/
+/*	$NetBSD: special.c,v 1.7 2001/01/04 23:05:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: special.c,v 1.6 1998/08/25 20:59:36 ross Exp $");
+__RCSID("$NetBSD: special.c,v 1.7 2001/01/04 23:05:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ c_special(fd1, file1, skip1, fd2, file2, skip2)
 		if (ch1 != ch2) {
 			if (lflag) {
 				dfound = 1;
-				(void)printf("%6qd %3o %3o\n", (long long)byte,
+				(void)printf("%6lld %3o %3o\n", (long long)byte,
 				    ch1, ch2);
 			} else
 				diffmsg(file1, file2, byte, line);

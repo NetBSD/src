@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.16 2000/12/30 16:00:33 hubertf Exp $	*/
+/*	$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.16 2000/12/30 16:00:33 hubertf Exp $");
+__RCSID("$NetBSD: du.c,v 1.17 2001/01/04 23:05:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ main(argc, argv)
 			 * the root of a traversal, display the total.
 			 */
 			if (listfiles || !p->fts_level)
-				(void)printf("%qd\t%s\n", (long long)
+				(void)printf("%lld\t%s\n", (long long)
 				    howmany(p->fts_statp->st_blocks, blocksize),
 				    p->fts_path);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;

@@ -1,4 +1,4 @@
-/*	$NetBSD: less.h,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: less.h,v 1.4 2001/01/04 23:05:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -141,7 +141,7 @@ void free();
  * Special types and constants.
  */
 typedef off_t		POSITION;
-#define PR_POSITION	"%qd"
+#define PR_POSITION	"%lld"
 #define PR_CAST		long long
 #define MAX_PRINT_POSITION 20
 #define MAX_PRINT_INT      10

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.10 2000/07/07 15:13:25 itojun Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.11 2001/01/04 23:05:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-__RCSID("$NetBSD: tcopy.c,v 1.10 2000/07/07 15:13:25 itojun Exp $");
+__RCSID("$NetBSD: tcopy.c,v 1.11 2001/01/04 23:05:56 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -211,7 +211,7 @@ r1:		guesslen = 0;
 				break;
 			}
 			fprintf(msg,
-			    "file %d: eof after %ld records: %qd bytes\n",
+			    "file %d: eof after %ld records: %lld bytes\n",
 			    filen, record, (long long)size);
 			needeof = 1;
 			filen++;
@@ -221,7 +221,7 @@ r1:		guesslen = 0;
 		}
 		lastnread = nread;
 	}
-	fprintf(msg, "total length: %qd bytes\n", (long long)tsize);
+	fprintf(msg, "total length: %lld bytes\n", (long long)tsize);
 	(void)signal(SIGINT, oldsig);
 	if (op == COPY || op == COPYVERIFY) {
 		writeop(outp, MTWEOF);
@@ -302,7 +302,7 @@ intr(signo)
 			fprintf(msg, "record %ld\n", lastrec);
 	}
 	fprintf(msg, "interrupt at file %d: record %ld\n", filen, record);
-	fprintf(msg, "total length: %qd bytes\n", (long long)(tsize + size));
+	fprintf(msg, "total length: %lld bytes\n", (long long)(tsize + size));
 	exit(1);
 }
 
