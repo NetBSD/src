@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.21 2005/02/17 11:30:58 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.22 2005/02/18 17:56:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.21 2005/02/17 11:30:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.22 2005/02/18 17:56:57 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -414,7 +414,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		err = bus_dmamap_load(sc->sc_dmat, acb->cmddma,
 		    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
 		if (err) {
-			printf("%s: unable to load cmd DMA map: %d",
+			printf("%s: unable to load cmd DMA map: %d\n",
 			    sc->sc_dev.dv_xname, err);
 			xs->error = XS_DRIVER_STUFFUP;
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
@@ -431,7 +431,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (err) {
-				printf("%s: unable to load data DMA map: %d",
+				printf("%s: unable to load data DMA map: %d\n",
 				    sc->sc_dev.dv_xname, err);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
