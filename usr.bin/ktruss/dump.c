@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.3 1999/07/23 03:12:31 itohy Exp $	*/
+/*	$NetBSD: dump.c,v 1.4 1999/07/28 15:38:46 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.3 1999/07/23 03:12:31 itohy Exp $");
+__RCSID("$NetBSD: dump.c,v 1.4 1999/07/28 15:38:46 darrenr Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -548,7 +548,7 @@ ktrpsig(psig)
 		(void)printf("SIG_DFL\n");
 	else {
 		msk = 0;
-		bcopy((char *)&psig->mask, (char *)msk, sizeof(psig->mask));
+		bcopy((char *)&psig->mask, (char *)&msk, sizeof(psig->mask));
 		(void)printf("caught handler=0x%lx mask=0x%lx code=0x%x\n",
 		    (u_long)psig->action, msk, psig->code);
 	}
