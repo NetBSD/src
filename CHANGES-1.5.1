@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.50 2001/04/14 20:58:08 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.51 2001/04/21 22:15:02 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3684,3 +3684,170 @@ sys/netinet/ip_nat.h				1.23
 sys/netinet/ip_state.c				1.30
 
   Fix bug related to fragment cache handling.
+
+distrib/sun3/common/mini_usr.list		patch
+
+  Adapt to teeny version bump for libc to 12.62.1.
+
+sys/arch/hp300/hp300/disksubr.c			1.11
+
+  Correctly set d_npartitions in in-core disklabel to RAW_PART+1.
+
+etc/etc.sun3/Makefile.inc			1.11
+
+  Also build and install installation notes under ``make release''.
+
+etc/etc.hp300/Makefile.inc			1.8
+
+  Make sure to depend and build before doing ``make release'' in
+  sys/arch/hp300/stand.
+
+distrib/sun3/miniroot/disktab			1.1 (new)
+distrib/sun3/miniroot/Makefile			1.19
+
+  Bump the sun3 miniroot size from 10M to 12M, and add an
+  ``unconfig'' rule.
+
+etc/etc.sun3/disktab				patch
+
+  Fix the installed disktab to match even though it's no longer
+  used in the miniroot construction.
+
+share/zoneinfo/africa				1.1.1.13
+share/zoneinfo/antarctica			1.1.1.8-1.1.1.9
+share/zoneinfo/asia				1.1.1.15-1.1.1.18
+share/zoneinfo/australasia			1.1.1.16-1.1.1.19
+share/zoneinfo/backward				1.1.1.6-1.1.1.8
+share/zoneinfo/etcetera				1.1.1.4
+share/zoneinfo/europe				1.1.1.16-1.1.1.19
+share/zoneinfo/iso3166.tab			1.1.1.5
+share/zoneinfo/leapseconds			1.1.1.5
+share/zoneinfo/northamerica			1.1.1.16-1.1.1.19
+share/zoneinfo/southamerica			1.1.1.15-1.1.1.17
+share/zoneinfo/yearistype.sh			1.4
+share/zoneinfo/zone.tab				1.1.1.11-1.1.1.13
+distrib/sets/lists/base/mi			1.198,1.235 via patch
+
+  Update to tzdata2001b; includes fix for current DST in Mexico.
+
+usr.sbin/dhcp/client/dhclient.c			1.36
+usr.sbin/dhcp/common/bpf.c			1.9
+usr.sbin/dhcp/common/discover.c			1.12
+usr.sbin/dhcp/includes/dhcpd.h			1.19
+
+  Fix various bugs:
+   - PR#11081 (dhclient loops if interface is unplugged)
+   - PR#12065 (/etc/resolv.conf corrupted during DHCP lease renewal)
+   - PR#9709 (same as 11081)
+   - PR#11080 (dhclient -w doesn't work)
+   - PR#9657 (dhclient requires writable lease file)
+
+usr.sbin/dhcp/relay/dhcrelay.c			1.10
+usr.sbin/dhcp/server/dhcpd.c			1.25
+
+  Fixes the same problem as in PR#12065, although of course the
+  symptoms would be different for the relay agent and server.
+
+usr.sbin/dhcp/client/clparse.c			1.11
+
+  Fix a dhclient.conf file parsing bug.
+
+usr.sbin/dhcp/client/dhclient.8			1.14
+
+  Fix PR#11078 (dhclient documentation inaccurate).
+
+usr.sbin/dhcp/server/confpars.c			1.8
+
+  Fix a minor accounting oversight.
+
+usr.sbin/dhcp/server/failover.c			1.1.1.8
+
+  Fix a potential memory smash.
+
+usr.sbin/dhcp/server/mdb.c			1.1.1.8
+
+  Fix a problem that cause failover synchronization not to work at
+  all.
+
+usr.sbin/dhcp/dhcpctl/omshell.c			1.2
+
+  Fix the usage output.
+
+usr.sbin/dhcp/minires/res_findzonecut.c		1.1.1.7
+
+  Fix a core dump when doing DNS updates if the master is not
+  reachable.
+
+usr.sbin/dhcp/omapip/mrtrace.c			1.2
+
+  Fix a memory smash that will occur when tracing if DNS updates are
+  being done.
+
+usr.sbin/dhcp/omapip/trace.c			1.2
+
+  Prevent existing trace files from being partially overwritten.
+
+usr.sbin/dhcp/README				1.11
+usr.sbin/dhcp/RELNOTES				1.11
+usr.sbin/dhcp/includes/version.h		1.8
+
+  Updates version information and the changelog.
+  This updates the DHCP software to ISC V3.0 Beta 2 Patchlevel 24.
+
+usr.sbin/timed/timed/readmsg.c			1.10
+
+  Fix remote denial-of-service problem related to mishandling of
+  malformed messages.
+
+usr.sbin/dhcp/common/bpf.c			1.10
+
+  Fix PR#12572.   Without this fix, the DHCP client and server will
+  not work on NetBSD/alpha.
+
+dist/ntp/ntpd/ntp_control.c			1.3-1.4
+
+  Avoid underrun.  Overrun check was one byte too restrictive, fix.
+
+usr.sbin/dhcp/client/scripts/Makefile		1.3
+
+  Install dhcp client script in /sbin.
+
+distrib/x68k/floppies/inst/Makefile		1.6
+
+  Do not use bsd.prog.mk.
+
+distrib/notes/common/xfer       		1.13
+distrib/notes/x68k/hardware     		1.12
+distrib/notes/x68k/install      		1.17
+distrib/notes/x68k/upgrade      		1.14
+
+  Update installation notes to reflect the state of the installation
+  system for 1.5.1 on x68k.
+
+sys/ufs/ffs/ffs_softdep.c			1.12 via patch
+
+  Fix an ordering problem in softdep_setup_freeblks() that could
+  cause premature reuse of an inode, possibly causing the file to
+  contain garbage.
+
+sys/dev/ic/sgec.c				patch
+
+  Set M_HASFCS on mbuf to indicate that CRC is at the end of the
+  mbuf.
+
+distrib/sets/lists/comp/mi			patch
+
+  Fix typo, remove two files which are not installed.
+
+share/man/man5/wscons.conf.5			1.5 via patch
+
+  Add a copyright.
+
+sys/arch/alpha/alpha/vm_machdep.c		1.65 via patch
+
+  In cpu_fork(), make sure the spawned kthread or process runs at
+  IPL_0 instead of whatever IPL the parent was running at.
+
+  This appears to fix the NTP clock stability problems observed on
+  some alpha systems; the clock appears stable even when there's
+  heavy raidframe (i.e., kthread-intensive) I/O under way.
