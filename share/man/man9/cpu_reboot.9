@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_reboot.9,v 1.2 1996/09/24 07:01:26 ghudson Exp $
+.\"	$NetBSD: cpu_reboot.9,v 1.3 1997/03/27 20:15:06 gwr Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -30,18 +30,18 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 13, 1995
-.Dt BOOT 9
+.Dt CPU_REBOOT 9
 .Os NetBSD
 .Sh NAME
-.Nm boot
+.Nm cpu_reboot
 .Nd halt or reboot the system
 .Sh SYNOPSIS
 .Fd #include <sys/reboot.h>
 .Ft void
-.Fn boot "int howto" "char *bootstr"
+.Fn cpu_reboot "int howto" "char *bootstr"
 .Sh DESCRIPTION
 The
-.Fn boot
+.Fn cpu_reboot
 function handles final system shutdown, and either halts or reboots
 the system.  The exact action to be taken is determined by the
 flags passed in
@@ -49,7 +49,7 @@ flags passed in
 and by whether or not the system has finished autoconfiguration.
 .Pp
 If the system has finished autoconfiguration,
-.Fn boot
+.Fn cpu_reboot
 does the following:
 .Bl -enum -offset indent
 .It
@@ -60,7 +60,7 @@ system variable from the
 argument.
 .It
 If this is the first invocation of
-.Fn boot
+.Fn cpu_reboot
 and the
 .Dv RB_NOSYNC
 flag is not set in
@@ -95,7 +95,7 @@ Otherwise, reboots the system.
 .El
 .Pp
 If the system has not finished autoconfiguration,
-.Fn boot
+.Fn cpu_reboot
 runs any shutdown hooks by calling
 .Xr doshutdownhooks 9 ,
 prints a message, and halts the system.
