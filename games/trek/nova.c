@@ -1,4 +1,4 @@
-/*	$NetBSD: nova.c,v 1.4 1997/10/12 21:25:03 christos Exp $	*/
+/*	$NetBSD: nova.c,v 1.5 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nova.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: nova.c,v 1.4 1997/10/12 21:25:03 christos Exp $");
+__RCSID("$NetBSD: nova.c,v 1.5 1998/08/30 09:19:40 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,17 +124,15 @@ int	x, y;
 			  case ENTERPRISE:
 			  case QUEENE:
 				se = 2000;
-				if (Ship.shldup)
-					if (Ship.shield >= se)
-					{
+				if (Ship.shldup) {
+					if (Ship.shield >= se) {
 						Ship.shield -= se;
 						se = 0;
-					}
-					else
-					{
+					} else {
 						se -= Ship.shield;
 						Ship.shield = 0;
 					}
+				}
 				Ship.energy -= se;
 				if (Ship.energy <= 0)
 					lose(L_SUICID);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.6 1998/07/06 07:00:15 mrg Exp $	*/
+/*	$NetBSD: hunt.c,v 1.7 1998/08/30 09:19:37 veego Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.6 1998/07/06 07:00:15 mrg Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.7 1998/08/30 09:19:37 veego Exp $");
 #endif /* not lint */
 
 # include	<sys/stat.h>
@@ -1039,11 +1039,12 @@ env_init(enter_status)
 				envp = s + 1;
 			}
 		}
-		if (*envp != '\0')
+		if (*envp != '\0') {
 			if (envname == NULL)
 				strncpy(name, envp, NAMELEN);
 			else
 				printf("unknown option %s\n", envp);
+		}
 	}
 	return enter_status;
 }

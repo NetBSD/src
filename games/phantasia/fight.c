@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.3 1997/10/13 02:18:12 lukem Exp $	*/
+/*	$NetBSD: fight.c,v 1.4 1998/08/30 09:19:39 veego Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -203,13 +203,14 @@ playerhits()
 
 	mvaddstr(7, 0, "1:Melee  2:Skirmish  3:Evade  4:Spell  5:Nick  ");
 
-	if (!Luckout)
+	if (!Luckout) {
 		/* haven't tried to luckout yet */
 		if (Curmonster.m_type == SM_MORGOTH)
 			/* cannot luckout against Morgoth */
 			addstr("6:Ally  ");
 		else
 			addstr("6:Luckout  ");
+	}
 
 	if (Player.p_ring.ring_type != R_NONE)
 		/* player has a ring */
@@ -951,7 +952,7 @@ awardtreasure()
 		ch = getanswer("NY", FALSE);
 		addstr("\n\n");
 
-		if (ch == 'Y')
+		if (ch == 'Y') {
 			if (drandom() < treasuretype / 35.0 + 0.04)
 				/* cursed */
 			{
@@ -959,6 +960,7 @@ awardtreasure()
 				cursedtreasure();
 			} else
 				collecttaxes(gold, gems);
+		}
 
 		return;
 	} else
