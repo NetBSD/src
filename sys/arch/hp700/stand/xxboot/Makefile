@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/06/15 03:10:30 itohy Exp $
+#	$NetBSD: Makefile,v 1.2 2004/08/09 16:01:37 chs Exp $
 
 PROG=	xxboot
 SRCS=	start.s main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.s
@@ -8,12 +8,10 @@ CPPFLAGS+=	-mpa-risc-1-0 -I${.CURDIR}/../../../.. -I. -D_STANDALONE
 CPPFLAGS+=	-DUSE_LFS -DUSE_FFS -DUSE_UFS1 -DUSE_UFS2
 # IODC can handle only 2GB, so this is enough
 CPPFLAGS+=	-D__daddr_t=int32_t
-# require -O for relocatable code
-# -funsigned-char may reduce size
-DBG=		-O -funsigned-char -W -Wall
 # ANSI C feature prevents from being relocatable
 #CPPFLAGS+=	-traditional	# would be best
-CPPFLAGS+=	-fwritable-strings -Dconst=
+CPPFLAGS+=	-Dconst=
+COPTS+=	-fwritable-strings -funsigned-char
 
 LINKS=	${BINDIR}/${PROG} ${BINDIR}/sdboot
 
