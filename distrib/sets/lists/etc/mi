@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.78 2001/01/26 01:39:18 jwise Exp $
+# $NetBSD: mi,v 1.79 2001/01/26 07:20:22 jwise Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -172,11 +172,11 @@
 ./etc/weekly				etc-sys-etc
 ./etc/weekly.conf			etc-sys-etc
 ./etc/wscons.conf			etc-sys-etc
-./root/.cshrc				etc-root-etc
-./root/.klogin				etc-root-etc
-./root/.login				etc-root-etc
-./root/.profile				etc-root-etc
-./root/.shrc				etc-root-etc
+./root/.cshrc				etc-root-root
+./root/.klogin				etc-root-root
+./root/.login				etc-root-root
+./root/.profile				etc-root-root
+./root/.shrc				etc-root-root
 ./var/at/at.deny			etc-cron-root
 ./var/crash/minfree			etc-sys-root
 ./var/cron/log				etc-cron-log
