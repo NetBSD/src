@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.24 2002/08/31 16:11:03 mycroft Exp $
+# $NetBSD: mi,v 1.25 2003/03/01 00:11:28 tron Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -461,12 +461,10 @@
 ./usr/X11R6/lib/X11/xkb/types
 ./usr/X11R6/lib/X11/xkb/types.dir
 ./usr/X11R6/lib/X11/xkb/types/basic
-./usr/X11R6/lib/X11/xkb/types/cancel
 ./usr/X11R6/lib/X11/xkb/types/complete
 ./usr/X11R6/lib/X11/xkb/types/default
 ./usr/X11R6/lib/X11/xkb/types/iso9995
 ./usr/X11R6/lib/X11/xkb/types/mousekeys
-./usr/X11R6/lib/X11/xkb/types/nocancel
 ./usr/X11R6/lib/X11/xkb/types/pc
 ./usr/X11R6/lib/X11/xkb/xkbcomp
 ./usr/X11R6/lib/X11/xsm

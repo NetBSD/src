@@ -1,0 +1,6 @@
+# $NetBSD: obsolete.mi,v 1.1 2003/03/01 00:11:30 tron Exp $
+./usr/X11R6/bin/bdftruncate.pl
+./usr/X11R6/include/X11/Xft/XftFreetype.h
+./usr/X11R6/include/freetype2/freetype/internal/ftextend.h
+./usr/X11R6/include/freetype2/freetype/internal/psglobal.h
+./usr/X11R6/man/cat3/XRebindKeySym.0
