@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.29 2003/08/03 04:12:01 itojun Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.30 2003/08/03 04:14:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.29 2003/08/03 04:12:01 itojun Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.30 2003/08/03 04:14:00 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -175,8 +175,8 @@ loop:
 			goto err1;
 		}
 		if (rootd == 0)
-			(void)strcat(resolved, "/"); /* XXX: strcat is safe */
-		(void)strcat(resolved, wbuf);	/* XXX: strcat is safe */
+			(void)strlcat(resolved, "/", MAXPATHLEN);
+		(void)strlcat(resolved, wbuf, MAXPATHLEN);
 	}
 
 	/* Go back to where we came from. */
