@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.11 1998/02/27 18:29:53 perry Exp $	*/
+/*	$NetBSD: readdir.c,v 1.12 1998/11/13 12:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.11 1998/02/27 18:29:53 perry Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.12 1998/11/13 12:31:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,11 +73,12 @@ readdir(dirp)
 			if (dirp->dd_size <= 0)
 				return (NULL);
 		}
-		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
+		dp = (struct dirent *)
+		    (void *)(dirp->dd_buf + (size_t)dirp->dd_loc);
 		if ((long)dp & 03)	/* bogus pointer check */
 			return (NULL);
-		if (dp->d_reclen <= 0 ||
-		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
+		/* d_reclen is unsigned; no need to compare it <= 0 */
+		if (dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
 			return (NULL);
 		dirp->dd_loc += dp->d_reclen;
 		if (dp->d_ino == 0)
