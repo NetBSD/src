@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.150 2002/01/07 16:48:02 jhawk Exp $
+.\"	$NetBSD: main,v 1.151 2002/01/07 20:53:45 chris Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1439,6 +1439,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
 .It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
 .It Ta Matt Fredette Ta Mt fredette@netbsd.org Ta Sy sun2
+.It Ta Chris Gilbert Ta Mt chris@netbsd.org Ta Sy cats
 .It Ta Ross Harvey Ta Mt ross@netbsd.org Ta Sy alpha
 .It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@netbsd.org Ta Sy sh3
 .It Ta Ben Harris Ta Mt bjh21@netbsd.org Ta Sy arm26
