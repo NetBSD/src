@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.5 2001/10/18 06:28:17 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.6 2001/10/18 15:09:15 thorpej Exp $ */
 
 /*
  * 
@@ -108,8 +108,6 @@ int		gem_rint __P((struct gem_softc *));
 int		gem_tint __P((struct gem_softc *));
 void		gem_power __P((int, void *));
 
-static int	ether_cmp __P((u_char *, u_char *));
-
 /* Default buffer copy routines */
 void	gem_copytobuf_contig __P((struct gem_softc *, void *, int, int));
 void	gem_copyfrombuf_contig __P((struct gem_softc *, void *, int, int));
@@ -125,13 +123,14 @@ void	gem_zerobuf_contig __P((struct gem_softc *, int, int));
 
 
 /*
- * gem_config:
+ * gem_attach:
  *
  *	Attach a Gem interface to the system.
  */
 void
-gem_config(sc)
+gem_attach(sc, enaddr)
 	struct gem_softc *sc;
+	const uint8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -224,7 +223,7 @@ gem_config(sc)
 
 	/* Announce ourselves. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
+	    ether_sprintf(enaddr));
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -314,7 +313,7 @@ gem_config(sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp, sc->sc_enaddr);
+	ether_ifattach(ifp, enaddr);
 
 	sc->sc_sh = shutdownhook_establish(gem_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -823,22 +822,6 @@ gem_init(struct ifnet *ifp)
 	return (0);
 }
 
-/*
- * Compare two Ether/802 addresses for equality, inlined and unrolled for
- * speed.
- */
-static __inline__ int
-ether_cmp(a, b)
-	u_char *a, *b;
-{       
-        
-	if (a[5] != b[5] || a[4] != b[4] || a[3] != b[3] ||
-	    a[2] != b[2] || a[1] != b[1] || a[0] != b[0])
-		return (0);
-	return (1);
-}
-
-
 void
 gem_init_regs(struct gem_softc *sc)
 {
@@ -865,7 +848,8 @@ gem_init_regs(struct gem_softc *sc)
 		/* Dunno.... */
 		bus_space_write_4(t, h, GEM_MAC_CONTROL_TYPE, 0x8088);
 		bus_space_write_4(t, h, GEM_MAC_RANDOM_SEED,
-			((sc->sc_enaddr[5]<<8)|sc->sc_enaddr[4])&0x3ff);
+			((LLADDR(ifp->if_sadl)[5]<<8)|
+			 LLADDR(ifp->if_sadl)[4])&0x3ff);
 		/* Secondary MAC addr set to 0:0:0:0:0:0 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR3, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR4, 0);
@@ -910,11 +894,11 @@ gem_init_regs(struct gem_softc *sc)
 	 * Set the station address.
 	 */
 	bus_space_write_4(t, h, GEM_MAC_ADDR0, 
-		(sc->sc_enaddr[4]<<8) | sc->sc_enaddr[5]);
+		(LLADDR(ifp->if_sadl)[4]<<8) | LLADDR(ifp->if_sadl)[5]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR1, 
-		(sc->sc_enaddr[2]<<8) | sc->sc_enaddr[3]);
+		(LLADDR(ifp->if_sadl)[2]<<8) | LLADDR(ifp->if_sadl)[3]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
-		(sc->sc_enaddr[0]<<8) | sc->sc_enaddr[1]);
+		(LLADDR(ifp->if_sadl)[0]<<8) | LLADDR(ifp->if_sadl)[1]);
 
 }
 
@@ -1807,7 +1791,7 @@ gem_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
