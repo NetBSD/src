@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.56 2002/02/13 08:17:33 ross Exp $
+.\"	$NetBSD: ddb.4,v 1.57 2002/02/15 12:20:33 simonb Exp $
 .\"
 .\" Copyright (c) 1997 - 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -565,6 +565,15 @@ Print the struct buf at
 The
 .Cm /f
 does nothing at this time.
+.It Xo
+.Ic "show event" Ns Op Cm /f
+.Xc
+Print all the non-zero
+.Xr evcnt 9
+event counters.
+If
+.Cm /f
+is specified, all event counters with a count of zero are printed as well.
 .It Xo
 .Ic "show map" Ns Op Cm /f
 .Ar address
