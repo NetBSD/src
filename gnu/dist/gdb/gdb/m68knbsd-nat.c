@@ -31,6 +31,16 @@
 #include "gdbcore.h"
 #include "regcache.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 /* Map GDB register index to ptrace register buffer offset. */
 static const int regmap[] =
 {
@@ -72,75 +82,85 @@ static const int fpregmap[] =
 
 #define FPI_REGNUM 28
 
+#define REG_ADDR(regset, regno) ((char *) (regset) + regmap[regno])
+#define FPREG_ADDR(regset, regno) ((char *) (regset) + fpregmap[regno])
+
 /* Determine if PT_GETREGS fetches this register. */
 #define GETREGS_SUPPLIES(regno) \
   ((regno) >= D0_REGNUM && (regno) <= PC_REGNUM)
 
-static void
-supply_regs (regs)
-     char *regs;
+void
+supply_gregset (gregset_t *gregsetp)
 {
   int i;
 
   for (i = D0_REGNUM; i <= PC_REGNUM; i++)
-    supply_register (i, regs + regmap[i - D0_REGNUM]);
+    supply_register (i, REG_ADDR (gregsetp, i - D0_REGNUM));
 }
 
-static void
-supply_fpregs (freg)
-     char *freg;
+void
+fill_gregset (gregset_t *gregsetp, int regno)
+{
+  int i;
+
+  for (i = D0_REGNUM; i <= PC_REGNUM; i++)
+    if (regno == -1 || regno == i)
+      *(int *)REG_ADDR (gregsetp, i - D0_REGNUM) =
+	*(int *) &registers[REGISTER_BYTE (i)];
+}
+
+void
+supply_fpregset (fpregset_t *fpregsetp)
 {
   int i;
 
   for (i = FP0_REGNUM; i <= FPI_REGNUM; i++)
-    supply_register (i, freg + fpregmap[i - FP0_REGNUM]);
+    supply_register (i, (char *)FPREG_ADDR (fpregsetp, i - FP0_REGNUM));
 }
 
-static void
-fill_regs (regs)
-     char *regs;
-{
-  int i;
-
-  for (i = D0_REGNUM; i <= PC_REGNUM; i++)
-    *(int *)(regs + regmap[i - D0_REGNUM]) = *(int *) &registers[REGISTER_BYTE (i)];
-}
-
-static void
-fill_fpregs(freg)
-     char *freg;
+void
+fill_fpregset (fpregset_t *fpregsetp, int regno)
 {
   int i;
   char *to;
   char *from;
 
   for (i = FP0_REGNUM; i <= FPI_REGNUM; i++)
-    {
-      from = (char *) &registers[REGISTER_BYTE (i)];
-      to = (char *) (freg + fpregmap[i - FP0_REGNUM]);
-      memcpy (to, from, REGISTER_RAW_SIZE (i));
-    }
+    if (regno == -1 || regno == i)
+      {
+	from = (char *) &registers[REGISTER_BYTE (i)];
+	to = (char *) FPREG_ADDR (fpregsetp, i - FP0_REGNUM);
+	memcpy (to, from, REGISTER_RAW_SIZE (i));
+      }
 }
 
 void
 fetch_inferior_registers (int regno)
 {
-  struct reg inferior_registers;
-  struct fpreg inferior_fp_registers;
 
   if (regno == -1 || GETREGS_SUPPLIES (regno))
     {
-      ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_ARG3_TYPE) & inferior_registers, 0);
-      supply_regs ((char *) &inferior_registers);
-      
+      gregset_t gregs;
+
+      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+	     	  (PTRACE_ARG3_TYPE) &gregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name ("Couldn't get registers");
+
+      supply_gregset (&gregs);
       if (regno != -1)
 	return;
     }
 
-  ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-	  (PTRACE_ARG3_TYPE) & inferior_fp_registers, 0);
-  supply_fpregs ((char *) &inferior_fp_registers);
+  if (regno == -1 || regno >= FP0_REGNUM)
+    {
+      fpregset_t fpregs;
+      
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name ("Couldn't get floating point status");
+
+      supply_fpregset (&fpregs);
+    }
 }
 
 void
@@ -149,15 +169,38 @@ store_inferior_registers (int regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
-  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)],
-	  sizeof (inferior_registers));
-  ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	  (PTRACE_ARG3_TYPE) & inferior_registers, 0);
+  if (regno == -1 || GETREGS_SUPPLIES (regno))
+    {
+      gregset_t gregs;
 
-  memcpy (&inferior_fp_registers, &registers[REGISTER_BYTE (FP0_REGNUM)],
-	  sizeof (inferior_fp_registers));
-  ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-	  (PTRACE_ARG3_TYPE) & inferior_fp_registers, 0);
+      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+                  (PTRACE_ARG3_TYPE) &gregs, TIDGET (inferior_ptid)) == -1)
+        perror_with_name ("Couldn't get registers");
+
+      fill_gregset (&gregs, regno);
+
+      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+	          (PTRACE_ARG3_TYPE) &gregs, TIDGET (inferior_ptid)) == -1)
+        perror_with_name ("Couldn't write registers");
+
+      if (regno != -1)
+	return;
+    }
+
+  if (regno == -1 || regno >= FP0_REGNUM)
+    {
+      fpregset_t fpregs;
+
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name ("Couldn't get floating point status");
+      
+      fill_fpregset (&fpregs, regno);
+      
+      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name ("Couldn't write floating point status");
+    }
 }
 
 struct md_core
@@ -173,9 +216,10 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
   struct md_core *core_reg = (struct md_core *) core_reg_sect;
 
   /* Integer registers */
-  supply_regs ((char *) &core_reg->intreg);
+  supply_gregset (&core_reg->intreg);
+
   /* Floating point registers */
-  supply_fpregs ((char *) &core_reg->freg);
+  supply_fpregset ((fpregset_t *)&core_reg->freg);
 }
 
 static void
@@ -185,20 +229,29 @@ fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
      int which;
      CORE_ADDR ignore;
 {
+  struct reg intreg;
+  struct fpreg freg;
+
   switch (which)
     {
     case 0:  /* Integer registers */
       if (core_reg_size != sizeof (struct reg))
 	warning ("Wrong size register set in core file.");
       else
-	supply_regs (core_reg_sect);
+	{
+          memcpy (&intreg, core_reg_sect, sizeof (intreg));
+          supply_gregset (&intreg);
+	}
       break;
 
     case 2:  /* Floating point registers */
       if (core_reg_size != sizeof (struct fpreg))
 	warning ("Wrong size FP register set in core file.");
       else
-	supply_fpregs (core_reg_sect);
+	{
+          memcpy (&freg, core_reg_sect, sizeof (freg));
+          supply_fpregset ((fpregset_t *)&freg);
+	}
       break;
 
     default:
@@ -275,32 +328,3 @@ _initialize_m68knbsd_nat (void)
   add_core_fns (&m68knbsd_core_fns);
   add_core_fns (&m68knbsd_elfcore_fns);
 }
-
-void
-nbsd_reg_to_internal (rgs)
-	char *rgs;
-{
-  supply_regs(rgs);
-}
-
-void
-nbsd_fpreg_to_internal (frgs)
-	char *frgs;
-{
-  supply_fpregs(frgs);
-}
-
-void
-nbsd_internal_to_reg (regs)
-	char *regs;
-{
-  fill_regs(regs);
-}
-
-void
-nbsd_internal_to_fpreg (fpregs)
-	char *fpregs;
-{
-  fill_fpregs(fpregs);
-}
-
