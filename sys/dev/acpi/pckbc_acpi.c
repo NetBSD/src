@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.1 2002/12/28 08:45:31 matt Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.2 2002/12/28 09:44:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 /*
- * PNPBIOS attachment for the PC Keyboard Controller driver.
+ * ACPI attachment for the PC Keyboard Controller driver.
  *
  * This is a little wonky.  The keyboard controller actually
- * has 2 PNPBIOS nodes: one for the controller and the keyboard
+ * has 2 ACPI nodes: one for the controller and the keyboard
  * interrupt, and one for the aux port (mouse) interrupt.
  *
  * For this reason, we actually attach *two* instances of this
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.1 2002/12/28 08:45:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.2 2002/12/28 09:44:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,12 @@ static const char * const pckbc_acpi_ids[] = {
 	"PNP0303",	/* Standard PC KBD/MS port */
 	"PNP0320",	/* Japanese 106 */
 	"PNP0F13",
+	"IBM3780",	/* IBM pointing device */
 	NULL
 };
 
 /*
- * com_acpi_match: autoconf(9) match routine
+ * pckbc_acpi_match: autoconf(9) match routine
  */
 int
 pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
@@ -148,7 +149,8 @@ pckbc_acpi_attach(struct device *parent,
 	if (strncmp(idstr, "PNP03", 5) == 0) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
 		peer = PCKBC_AUX_SLOT;
-	} else if (strcmp(idstr, "PNP0F13") == 0) {
+	} else if (strncmp(idstr, "PNP0F", 5) == 0 ||
+			strcmp(idstr, "IBM3780") == 0) {
 		psc->sc_slot = PCKBC_AUX_SLOT;
 		peer = PCKBC_KBD_SLOT;
 	} else {
