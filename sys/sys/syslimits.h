@@ -43,6 +43,7 @@
 #define	OPEN_MAX	64	/* max open files per process */
 #define	PATH_MAX	1024	/* max number of bytes in pathname */
 #define	PIPE_BUF	512	/* max number of bytes for atomic pipe writes */
+#define SSIZE_MAX   INT_MAX /* max number ssize can return */
 
 #define	BC_BASE_MAX	99	/* max ibase/obase values allowed by bc(1) */
 #define	BC_DIM_MAX	2048	/* max array elements allowed by bc(1) */
