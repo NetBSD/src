@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.4 2003/12/02 12:20:06 bouyer Exp $	*/
+/*	$NetBSD: rccide.c,v 1.5 2003/12/14 00:17:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.4 2003/12/02 12:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.5 2003/12/14 00:17:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,18 +37,19 @@ __KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.4 2003/12/02 12:20:06 bouyer Exp $");
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-void serverworks_chip_map(struct pciide_softc *, struct pci_attach_args *);
-void serverworks_setup_channel(struct channel_softc *);
-int  serverworks_pci_intr(void *);
-int  serverworkscsb6_pci_intr(void *);
+static void serverworks_chip_map(struct pciide_softc *,
+				 struct pci_attach_args *);
+static void serverworks_setup_channel(struct channel_softc *);
+static int  serverworks_pci_intr(void *);
+static int  serverworkscsb6_pci_intr(void *);
 
-int  rccide_match(struct device *, struct cfdata *, void *);
-void rccide_attach(struct device *, struct device *, void *);
+static int  rccide_match(struct device *, struct cfdata *, void *);
+static void rccide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rccide, sizeof(struct pciide_softc),
     rccide_match, rccide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_serverworks_products[] =  {
+static const struct pciide_product_desc pciide_serverworks_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
 	  0,
 	  "ServerWorks OSB4 IDE Controller",
@@ -76,7 +77,7 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	}
 };
 
-int
+static int
 rccide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -91,7 +92,7 @@ rccide_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 rccide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -101,7 +102,7 @@ rccide_attach(struct device *parent, struct device *self, void *aux)
 	    pciide_lookup_product(pa->pa_id, pciide_serverworks_products));
 }
 
-void
+static void
 serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
@@ -168,7 +169,7 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    (pci_conf_read(pa->pa_pc, pcib_tag, 0x64) & ~0x2000) | 0x4000);
 }
 
-void
+static void
 serverworks_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
@@ -211,7 +212,9 @@ serverworks_setup_channel(struct channel_softc *chp)
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA, check for 80-pin cable */
 			if (drvp->UDMA_mode > 2 &&
-			    (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_SUBSYS_ID_REG)) & (1 << (14 + channel))) == 0)
+			    (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    			       PCI_SUBSYS_ID_REG))
+			     & (1 << (14 + channel))) == 0)
 				drvp->UDMA_mode = 2;
 			dma_time |= dma_modes[drvp->DMA_mode] << (8 * (unit^1));
 			udma_mode |= drvp->UDMA_mode << (4 * unit + 16);
@@ -242,7 +245,7 @@ serverworks_setup_channel(struct channel_softc *chp)
 	}
 }
 
-int
+static int
 serverworks_pci_intr(arg)
 	void *arg;
 {
@@ -272,7 +275,7 @@ serverworks_pci_intr(arg)
 	return rv;
 }
 
-int
+static int
 serverworkscsb6_pci_intr(arg)
 	void *arg;
 {
