@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 1999/05/06 19:16:44 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.9 2000/02/01 04:04:17 danw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,6 +58,7 @@ struct pci_bridge {
 	bus_space_tag_t iot;
 	bus_space_tag_t memt;
 	pci_chipset_tag_t pc;
+	u_int reg[2];
 	int present;
 };
 struct pci_bridge pci_bridges[2];

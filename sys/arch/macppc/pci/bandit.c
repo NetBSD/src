@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.11 1999/05/06 19:16:45 thorpej Exp $	*/
+/*	$NetBSD: bandit.c,v 1.12 2000/02/01 04:04:18 danw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -231,17 +231,19 @@ scan_pci_devs(canmap)
 		 * Map the PCI configuration space access registers,
 		 * and perform any PCI-Host bridge initialization.
 		 */
+		if (OF_getprop(node, "reg", pci_bridges[n].reg,
+		    sizeof(pci_bridges[n].reg)) != 8)
+			continue;
 		if (is_bandit) {
 			/* XXX magic numbers */
 			pci_bridges[n].pc = n;
 			if (canmap) {
-				if (OF_getprop(node, "reg", reg,
-				    sizeof(reg)) != 8)
-					continue;
 				pci_bridges[n].addr =
-				    mapiodev(reg[0] + 0x800000, 4);
+				    mapiodev(pci_bridges[n].reg[0] + 0x800000,
+				    4);
 				pci_bridges[n].data =
-				    mapiodev(reg[0] + 0xc00000, 4);
+				    mapiodev(pci_bridges[n].reg[0] + 0xc00000,
+				    4);
 				bandit_init(n);
 			}
 		} else if (is_mpc106) {
