@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.86 1996/05/16 04:00:58 mycroft Exp $
+#	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -61,6 +61,7 @@ pseudo-device sl: ifnet
 pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
+pseudo-device strip: ifnet
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
@@ -207,6 +208,7 @@ file net/if_ethersubr.c			ether | fddi		needs-flag
 file net/if_fddisubr.c			fddi
 file net/if_loop.c			loop			needs-count
 file net/if_sl.c			sl			needs-count
+file net/if_strip.c			strip			needs-count
 file net/if_ppp.c			ppp			needs-count
 file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp_bsdcomp
@@ -218,7 +220,7 @@ file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
-file net/slcompress.c			sl | ppp
+file net/slcompress.c			sl | ppp | strip
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
