@@ -1087,6 +1087,14 @@ and
 .Fn endwin .
 This function should not be used by the user.
 .Ds
+.Fn resizeterm "int lines" "int columns" \(dg
+.De
+Resizes the curses terminal to the given size.  All internal curses
+structures are resized to the new dimensions and all curses windows that
+would have boundaries outside the new terminal size will be resized to fit
+within the new boundaries.  All windows will be cleared and it is expected
+that the application will redraw the window contents.
+.Ds
 .Fn savetty "" \(dg
 .De
 .Fn savetty
@@ -1336,6 +1344,11 @@ Add the window contents to a virtual screen.  Several windows can be added
 before a call to
 .Fn doupdate ,
 thus allowing the screen to updated in an efficient manner.
+.Ds
+.Fn wresize "WINDOW *win" "int lines" "int columns"
+.De
+Resize the specified window to the given dimensions.  The window will be
+cleared and the application is expected to redraw the window contents.
 .Ds
 .Fn wtouchln "WINDOW *win" "int line" "int n" "int changed"
 .De
