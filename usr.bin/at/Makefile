@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1998/06/27 21:15:07 christos Exp $
+#	$NetBSD: Makefile,v 1.4 1998/08/21 19:39:41 tv Exp $
 
 PROG=	at
 SRCS=	at.c panic.c parsetime.c perm.c
+CFLAGS+=-Wno-format-y2k
 LINKS=	${BINDIR}/at ${BINDIR}/atq \
 	${BINDIR}/at ${BINDIR}/atrm \
 	${BINDIR}/at ${BINDIR}/batch
