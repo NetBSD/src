@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.37 2003/04/25 20:30:58 ragge Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.38 2003/04/28 15:55:45 ragge Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.37 2003/04/25 20:30:58 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.38 2003/04/28 15:55:45 ragge Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -280,41 +280,68 @@ extern char end[];
 unsigned long	db_lastsym = (unsigned long)end;
 unsigned int	db_maxoff = 0x10000000;
 
-#if 0
 void
 db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 {
-	db_expr_t	d;
-	char 		*filename;
-	char		*name;
-	db_expr_t	value;
-	int 		linenum;
-	db_sym_t	cursym;
+	char  *name, *mod;
+	long val;
 
-	if ((unsigned long) off <= db_lastsym) {
-		cursym = db_search_symbol(off, strategy, &d);
-		db_symbol_values(cursym, &name, &value);
-		if (name != NULL &&
-		    ((unsigned int) d < db_maxoff) &&
-		    value != 0) {
-			strcpy(buf, name);
-			if (d) {
-				strcat(buf, "+");
-				db_format_radix(buf+strlen(buf), 24, d, TRUE);
+#ifdef DB_AOUT_SYMBOLS
+	if (using_aout_symtab) {
+		db_expr_t	d;
+		char 		*filename;
+		char		*name;
+		db_expr_t	value;
+		int 		linenum;
+		db_sym_t	cursym;
+
+		if ((unsigned long) off <= db_lastsym) {
+			cursym = db_search_symbol(off, strategy, &d);
+			db_symbol_values(cursym, &name, &value);
+			if (name != NULL &&
+			    ((unsigned int) d < db_maxoff) &&
+			    value != 0) {
+				strcpy(buf, name);
+				if (d) {
+					strcat(buf, "+");
+					db_format_radix(buf+strlen(buf),
+					    24, d, TRUE);
+				}
+				if (strategy == DB_STGY_PROC) {
+					if ((*db_symformat->sym_line_at_pc)
+					    (NULL, cursym, &filename,
+					    &linenum, off))
+						sprintf(buf+strlen(buf),
+						    " [%s:%d]",
+						    filename, linenum);
+				}
+				return;
 			}
-			if (strategy == DB_STGY_PROC) {
-				if (db_line_at_pc(cursym, &filename, &linenum,
-				    off))
-					sprintf(buf+strlen(buf),
+		}
+		strcpy(buf, db_num_to_str(off));
+		return;
+	}
+#endif
+	if (ksyms_getname(&mod, &name, off, strategy|KSYMS_CLOSEST) == 0) {
+		(void)ksyms_getval(mod, name, &val, KSYMS_ANY);
+		if (((off - val) < db_maxoff) && val) {
+			sprintf(buf, "%s:%s", mod, name);
+			if (off - val) {
+				strcat(buf, "+");
+				db_format_radix(buf+strlen(buf),
+				    24, off - val, TRUE);
+			}
+#ifdef notyet
+			if (strategy & KSYMS_PROC) {
+				if (ksyms_fmaddr(off, &filename, &linenum) == 0)					sprintf(buf+strlen(buf),
 					    " [%s:%d]", filename, linenum);
 			}
+#endif
 			return;
 		}
 	}
 	strcpy(buf, db_num_to_str(off));
-	return;
 }
-#endif
 
 void
 db_printsym(db_expr_t off, db_strategy_t strategy,
