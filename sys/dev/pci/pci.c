@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.33 1998/03/28 02:24:04 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.34 1998/04/17 18:40:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -43,23 +43,27 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pcimatch __P((struct device *, void *, void *));
-#else
 int pcimatch __P((struct device *, struct cfdata *, void *));
-#endif
 void pciattach __P((struct device *, struct device *, void *));
 
-struct cfattach pci_ca = {
-	sizeof(struct device), pcimatch, pciattach
+struct pci_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_iot, sc_memt;
+	bus_dma_tag_t sc_dmat;
+	pci_chipset_tag_t sc_pc;
+	int sc_bus, sc_maxndevs;
+	u_int sc_intrswiz;
+	pcitag_t sc_intrtag;
+	int sc_flags;
 };
 
+struct cfattach pci_ca = {
+	sizeof(struct pci_softc), pcimatch, pciattach
+};
+
+void	pci_probe_bus __P((struct device *));
 int	pciprint __P((void *, const char *));
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pcisubmatch __P((struct device *, void *, void *));
-#else
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
-#endif
 
 /*
  * Callback so that ISA/EISA bridges can attach their child busses
@@ -86,22 +90,11 @@ static void	(*pci_isa_bridge_callback) __P((void *));
 static void	*pci_isa_bridge_callback_arg;
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-pcimatch(parent, match, aux)
-#else
 pcimatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct pcibus_attach_args *pba = aux;
 
 	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name))
@@ -124,42 +117,19 @@ pcimatch(parent, cf, aux)
 }
 
 void
-pciattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pci_probe_bus(self)
+	struct device *self;
 {
-	struct pcibus_attach_args *pba = aux;
+	struct pci_softc *sc = (struct pci_softc *)self;
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, maxndevs, function, nfunctions;
-	int io_enabled, mem_enabled;
 
-	pci_attach_hook(parent, self, pba);
-	printf("\n");
-
-	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
-	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
-
-	if (io_enabled == 0 && mem_enabled == 0) {
-		printf("%s: no spaces enabled!\n", self->dv_xname);
-		return;
-	}
-
-	printf("%s: ", self->dv_xname);
-	if (io_enabled)
-		printf("i/o enabled");
-	if (mem_enabled) {
-		if (io_enabled)
-			printf(", ");
-		printf("memory enabled");
-	}
-	printf("\n");
-
-	iot = pba->pba_iot;
-	memt = pba->pba_memt;
-	pc = pba->pba_pc;
-	bus = pba->pba_bus;
-	maxndevs = pci_bus_maxdevs(pc, bus);
+	iot = sc->sc_iot;
+	memt = sc->sc_memt;
+	pc = sc->sc_pc;
+	bus = sc->sc_bus;
+	maxndevs = sc->sc_maxndevs;
 
 	if (bus == 0)
 		pci_isa_bridge_callback = NULL;
@@ -199,7 +169,7 @@ pciattach(parent, self, aux)
 
 			pa.pa_iot = iot;
 			pa.pa_memt = memt;
-			pa.pa_dmat = pba->pba_dmat;
+			pa.pa_dmat = sc->sc_dmat;
 			pa.pa_pc = pc;
 			pa.pa_device = device;
 			pa.pa_function = function;
@@ -209,10 +179,10 @@ pciattach(parent, self, aux)
 
 			/* set up memory and I/O enable flags as appropriate */
 			pa.pa_flags = 0;
-			if ((pba->pba_flags & PCI_FLAGS_IO_ENABLED) &&
+			if ((sc->sc_flags & PCI_FLAGS_IO_ENABLED) &&
 			    (csr & PCI_COMMAND_IO_ENABLE))
 				pa.pa_flags |= PCI_FLAGS_IO_ENABLED;
-			if ((pba->pba_flags & PCI_FLAGS_MEM_ENABLED) &&
+			if ((sc->sc_flags & PCI_FLAGS_MEM_ENABLED) &&
 			    (csr & PCI_COMMAND_MEM_ENABLE))
 				pa.pa_flags |= PCI_FLAGS_MEM_ENABLED;
 
@@ -220,8 +190,8 @@ pciattach(parent, self, aux)
 				pa.pa_intrswiz = 0;
 				pa.pa_intrtag = tag;
 			} else {
-				pa.pa_intrswiz = pba->pba_intrswiz + device;
-				pa.pa_intrtag = pba->pba_intrtag;
+				pa.pa_intrswiz = sc->sc_intrswiz + device;
+				pa.pa_intrtag = sc->sc_intrtag;
 			}
 			pin = PCI_INTERRUPT_PIN(intr);
 			if (pin == PCI_INTERRUPT_PIN_NONE) {
@@ -246,6 +216,49 @@ pciattach(parent, self, aux)
 		(*pci_isa_bridge_callback)(pci_isa_bridge_callback_arg);
 }
 
+void
+pciattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pcibus_attach_args *pba = aux;
+	struct pci_softc *sc = (struct pci_softc *)self;
+	int io_enabled, mem_enabled;
+
+	pci_attach_hook(parent, self, pba);
+	printf("\n");
+
+	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
+	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
+
+	if (io_enabled == 0 && mem_enabled == 0) {
+		printf("%s: no spaces enabled!\n", self->dv_xname);
+		return;
+	}
+
+	printf("%s: ", self->dv_xname);
+	if (io_enabled)
+		printf("i/o enabled");
+	if (mem_enabled) {
+		if (io_enabled)
+			printf(", ");
+		printf("memory enabled");
+	}
+	printf("\n");
+
+	sc->sc_iot = pba->pba_iot;
+	sc->sc_memt = pba->pba_memt;
+	sc->sc_dmat = pba->pba_dmat;
+	sc->sc_pc = pba->pba_pc;
+	sc->sc_bus = pba->pba_bus;
+	sc->sc_maxndevs = pci_bus_maxdevs(pba->pba_pc, pba->pba_bus);
+	sc->sc_intrswiz = pba->pba_intrswiz;
+	sc->sc_intrtag = pba->pba_intrtag;
+	sc->sc_flags = pba->pba_flags;
+
+	pci_probe_bus(self);
+}
+
 int
 pciprint(aux, pnp)
 	void *aux;
@@ -268,22 +281,11 @@ pciprint(aux, pnp)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-pcisubmatch(parent, match, aux)
-#else
 pcisubmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct pci_attach_args *pa = aux;
 
 	if (cf->pcicf_dev != PCI_UNK_DEV &&
