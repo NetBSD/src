@@ -42,13 +42,15 @@ fetch_inferior_registers (regno)
   ptrace (PT_GETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, 4*71);
+  memcpy (&registers[REGISTER_BYTE (0)], 
+	  &inferior_registers, sizeof(inferior_registers));
 
   bzero(&inferior_fp_registers, sizeof(inferior_fp_registers));
   ptrace (PT_GETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
 
-  memcpy (&registers[REGISTER_BYTE (18)], &inferior_fp_registers, 8*12+4*3);
+  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
+	  &inferior_fp_registers, sizeof(struct fpreg));
 
   registers_fetched ();
 }
@@ -60,12 +62,14 @@ store_inferior_registers (regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
-  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], 4*71);
+  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], 
+	  sizeof(inferior_registers));
 
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
-  memcpy (&inferior_fp_registers, &registers[REGISTER_BYTE (18)], 8*12+4*3);
+  memcpy (&inferior_fp_registers, &registers[REGISTER_BYTE (FP0_REGNUM)],
+	  sizeof(inferior_fp_registers));
 
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
