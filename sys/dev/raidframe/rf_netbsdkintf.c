@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.80 2000/05/27 18:23:27 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.81 2000/05/27 19:12:03 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2889,6 +2889,17 @@ rf_does_it_fit(cset, ac)
 	   a little later in the autoconfiguration process.  
 
 	    (clabel1->mod_counter == clabel2->mod_counter) &&
+
+	   The reason we don't check for this is that failed disks
+	   will have lower modification counts.  If those disks are
+	   not added to the set they used to belong to, then they will
+	   form their own set, which may result in 2 different sets,
+	   for example, competing to be configured at raid0, and
+	   perhaps competing to be the root filesystem set.  If the
+	   wrong ones get configured, or both attempt to become /,
+	   weird behaviour and or serious lossage will occur.  Thus we
+	   need to bring them into the fold here, and kick them out at
+	   a later point.
 
 	*/
 
