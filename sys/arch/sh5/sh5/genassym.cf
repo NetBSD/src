@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2002/10/19 09:01:45 scw Exp $
+#	$NetBSD: genassym.cf,v 1.13 2002/11/23 09:25:55 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -281,12 +281,13 @@ define	USPACE			USPACE
 define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 define	KERNEL_IPT_SIZE		KERNEL_IPT_SIZE
-define	KERNEL_IPT_SHIFT	KERNEL_IPT_SHIFT
+#define	KERNEL_IPT_SHIFT	KERNEL_IPT_SHIFT
 
 # PTE constants
 define	SH5_PTE_PTEL		offsetof(pte_t, ptel)
-define	SH5_PTE_PTEH		offsetof(pte_t, pteh)
+define	SH5_PTE_TLBCOOKIE	offsetof(pte_t, tlbcookie)
 define	SH5_PTE_VSID		offsetof(pte_t, vsid)
+define	SH5_PTE_PTEH		offsetof(pte_t, pteh)
 define	SZ_SH5_PTE_T		sizeof(pte_t)
 
 define	SH5_PTEG_SIZE		SH5_PTEG_SIZE
@@ -295,7 +296,6 @@ define	SH5_PTEH_V		SH5_PTEH_V
 define	SH5_PTEH_SH		SH5_PTEH_SH
 define	SH5_PTEH_ASID_MASK	SH5_PTEH_ASID_MASK
 define	SH5_PTEH_ASID_SHIFT	SH5_PTEH_ASID_SHIFT
-define	SH5_PTEH_TLBCOOKIE_MASK	SH5_PTEH_TLBCOOKIE_MASK
 
 define	SH5_PTEL_CB_NOCACHE	SH5_PTEL_CB_NOCACHE
 define	SH5_PTEL_CB_WRITETHRU	SH5_PTEL_CB_WRITETHRU

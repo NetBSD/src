@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2002/10/31 14:34:17 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 2002/11/23 09:25:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -258,17 +258,16 @@ u_int pmap_pteg_mask;		/* Basically, just (pmap_pteg_cnt - 1) */
 u_int pmap_pteg_bits;		/* Number of bits set in pmap_pteg_mask */
 
 /*
- * The kernel IPT is a simple array of PTELs, indexed by virtual page
+ * The kernel IPT is an array of kpte_t structures, indexed by virtual page
  * number.
  */
-ptel_t pmap_kernel_ipt[KERNEL_IPT_SIZE];
+kpte_t pmap_kernel_ipt[KERNEL_IPT_SIZE];
 
 /*
  * These are initialised, at boot time by cpu-specific code, to point
  * to cpu-specific functions.
  */
-void	(*__cpu_tlbinv)(pteh_t, pteh_t);
-void	(*__cpu_tlbinv_cookie)(pteh_t, u_int);
+void	(*__cpu_tlbinv_cookie)(pteh_t, tlbcookie_t);
 void	(*__cpu_tlbinv_all)(void);
 void	(*__cpu_tlbload)(void);		/* Not callable from C */
 
@@ -397,7 +396,7 @@ static struct pvo_entry * pmap_pvo_find_va(pmap_t, vaddr_t, int *);
 static void pmap_pinit(pmap_t);
 static void pmap_release(pmap_t);
 static void pmap_pa_map_kva(vaddr_t, paddr_t, ptel_t);
-static ptel_t pmap_pa_unmap_kva(vaddr_t, ptel_t *);
+static ptel_t pmap_pa_unmap_kva(vaddr_t, kpte_t *);
 static void pmap_change_cache_attr(struct pvo_entry *, ptel_t);
 static int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, ptel_t, int);
@@ -473,6 +472,65 @@ kva_to_iptidx(vaddr_t kva)
 		return (-1);
 
 	return (idx);
+}
+
+/*
+ * Given a pointer to an element of the pmap_kernel_ipt array,
+ * return the ptel.
+ *
+ * XXX: This hack generates *much* better code than the compiler.
+ */
+static __inline ptel_t
+pmap_kernel_ipt_get_ptel(kpte_t *kpte)
+{
+	ptel_t ptel;
+	register_t r1, r2;
+
+	/*
+	 * XXX: Need to revisit for big-endian
+	 */
+#if SH5_NEFF_BITS == 32
+	__asm __volatile("ldlo.l %3, 0, %1; ldhi.l %3, 3, %2; or %1, %2, %0":
+	    "=r"(ptel), "=r"(r1), "=r"(r2): "r"(kpte));
+#else
+	__asm __volatile("ldlo.q %3, 0, %1; ldhi.q %3, 3, %2; or %1, %2, %0":
+	    "=r"(ptel), "=r"(r1), "=r"(r2): "r"(kpte));
+#endif
+
+	return (ptel);
+}
+
+static __inline void
+pmap_kernel_ipt_set_ptel(kpte_t *kpte, ptel_t ptel)
+{
+
+#if SH5_NEFF_BITS == 32
+	__asm __volatile("stlo.l %0, 0, %1; sthi.l %0, 3, %r1"::
+	    "r"(kpte), "r"(ptel));
+#else
+	__asm __volatile("stlo.q %0, 0, %1; sthi.q %0, 7, %r1"::
+	    "r"(kpte), "r"(ptel));
+#endif
+}
+
+/*
+ * Given a pointer to an element of the pmap_kernel_ipt array,
+ * return the tlbcookie.
+ */
+static __inline tlbcookie_t
+pmap_kernel_ipt_get_tlbcookie(kpte_t *kpte)
+{
+	u_int16_t *kpp = (u_int16_t *)&kpte->tlbcookie;
+
+	return ((tlbcookie_t)*kpp);
+}
+
+static __inline void
+pmap_kernel_ipt_set_tlbcookie(kpte_t *kpte, tlbcookie_t tlbcookie)
+{
+	u_int16_t *kpp = (u_int16_t *)&kpte->tlbcookie;
+
+	*kpp = (u_int16_t)tlbcookie;
 }
 
 /*
@@ -708,6 +766,15 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 	ptel = pt->ptel;
 
 	/*
+	 * Before raising the protection of the mapping,
+	 * make sure the cache is synchronised.
+	 *
+	 * Note: The cpu-specific cache handling code will ensure
+	 * this doesn't cause a TLB miss exception.
+	 */
+	pmap_cache_sync_raise(PVO_VADDR(pvo), ptel, ptebit);
+
+	/*
 	 * Note:
 	 * We clear the Referenced bit here so that subsequent calls to
 	 * pmap_cache_sync_*() will only purge the cache for the page
@@ -723,32 +790,27 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 		 */
 		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
 		    (pm->pm_asid << SH5_PTEH_ASID_SHIFT),
-		    SH5_PTEH_TLB_COOKIE(pteh));
+		    pt->tlbcookie);
 	}
 
-	/*
-	 * Before raising the protection of the mapping,
-	 * make sure the cache is synchronised.
-	 *
-	 * Note: The cpu-specific cache handling code will ensure
-	 * this doesn't cause a TLB miss exception.
-	 */
-	pmap_cache_sync_raise(PVO_VADDR(pvo), ptel, ptebit);
-
+	pt->tlbcookie = 0;
 	pmap_pteg_synch(ptel, pvo);
 }
 
 static void
 pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
 {
+	kpte_t *kpte;
 	ptel_t ptel;
 
-	ptel = pmap_kernel_ipt[idx];
+	kpte = &pmap_kernel_ipt[idx];
+	ptel = pmap_kernel_ipt_get_ptel(kpte);
 
 	if ((ptel & SH5_PTEL_R) != 0)
-		__cpu_tlbinv((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
-		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
+		__cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
+		    pmap_kernel_ipt_get_tlbcookie(kpte));
 
+	pmap_kernel_ipt_set_tlbcookie(kpte, 0);
 	pmap_pteg_synch(ptel, pvo);
 
 	/*
@@ -762,7 +824,7 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
 	 * pmap_cache_sync_*() will only purge the cache for the page
 	 * if it has been accessed between now and then.
 	 */
-	pmap_kernel_ipt[idx] = ptel & ~(ptebit | SH5_PTEL_R);
+	pmap_kernel_ipt_set_ptel(kpte, ptel & ~(ptebit | SH5_PTEL_R));
 }
 
 /*
@@ -804,17 +866,6 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 	pteh = pt->pteh;
 	pt->pteh = 0;
 
-	if ((ptel & SH5_PTEL_R) != 0 && pm->pm_asid != PMAP_ASID_UNASSIGNED &&
-	    pm->pm_asidgen == pmap_asid_generation) {
-		/*
-		 * The mapping may be in the TLB. Call cpu-specific
-		 * code to check and invalidate if necessary.
-		 */
-		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
-		    (pm->pm_asid << SH5_PTEH_ASID_SHIFT),
-		    SH5_PTEH_TLB_COOKIE(pteh));
-	}
-
 	/*
 	 * Before deleting the mapping from the PTEG/TLB,
 	 * make sure the cache is synchronised.
@@ -824,6 +875,18 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 	 */
 	pmap_cache_sync_unmap(PVO_VADDR(pvo), ptel);
 
+	if ((ptel & SH5_PTEL_R) != 0 && pm->pm_asid != PMAP_ASID_UNASSIGNED &&
+	    pm->pm_asidgen == pmap_asid_generation) {
+		/*
+		 * The mapping may be in the TLB. Call cpu-specific
+		 * code to check and invalidate if necessary.
+		 */
+		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
+		    (pm->pm_asid << SH5_PTEH_ASID_SHIFT),
+		    pt->tlbcookie);
+	}
+
+	pt->tlbcookie = 0;
 	pmap_pteg_synch(ptel, pvo);
 }
 
@@ -1129,7 +1192,7 @@ pmap_map_device(paddr_t pa, u_int len)
 		ptel = SH5_PTEL_CB_DEVICE | SH5_PTEL_PR_R | SH5_PTEL_PR_W;
 		ptel |= (ptel_t)(pa & SH5_PTEL_PPN_MASK);
 
-		pmap_kernel_ipt[idx] = ptel;
+		pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx], ptel);
 
 		va += NBPG;
 		pa += NBPG;
@@ -1159,8 +1222,8 @@ pmap_page_is_cacheable(pmap_t pm, vaddr_t va)
 	else
 	if (pm == pmap_kernel()) {
 		int idx = kva_to_iptidx(va);
-		if (idx >= 0 && pmap_kernel_ipt[idx])
-			ptel = pmap_kernel_ipt[idx];
+		if (idx >= 0)
+			ptel = pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]);
 	}
 	splx(s);
 
@@ -1566,7 +1629,8 @@ pmap_pa_map_kva(vaddr_t kva, paddr_t pa, ptel_t wprot)
 
 	prot = SH5_PTEL_CB_WRITEBACK | SH5_PTEL_SZ_4KB | SH5_PTEL_PR_R;
 
-	pmap_kernel_ipt[idx] = (ptel_t)(pa & SH5_PTEL_PPN_MASK) | prot | wprot;
+	pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx],
+	    (ptel_t)(pa & SH5_PTEL_PPN_MASK) | prot | wprot);
 }
 
 /*
@@ -1576,26 +1640,30 @@ pmap_pa_map_kva(vaddr_t kva, paddr_t pa, ptel_t wprot)
  * The contents of the PTEL which described the mapping are returned.
  */
 static ptel_t
-pmap_pa_unmap_kva(vaddr_t kva, ptel_t *ptel)
+pmap_pa_unmap_kva(vaddr_t kva, kpte_t *kpte)
 {
 	ptel_t oldptel;
 	int idx;
 
-	if (ptel == NULL) {
+	if (kpte == NULL) {
 		if ((idx = kva_to_iptidx(kva)) < 0)
 			panic("pmap_pa_unmap_kva: Invalid KVA %p", (void *)kva);
 
-		ptel = &pmap_kernel_ipt[idx];
+		kpte = &pmap_kernel_ipt[idx];
 	}
 
-	oldptel = *ptel;
-	*ptel = 0;
-
-	if ((oldptel & SH5_PTEL_R) != 0)
-		__cpu_tlbinv(((pteh_t)kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
-		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
+	oldptel = pmap_kernel_ipt_get_ptel(kpte);
+	pmap_kernel_ipt_set_ptel(kpte, 0);
 
 	pmap_cache_sync_unmap(kva, oldptel);
+
+	if ((oldptel & SH5_PTEL_R) != 0) {
+		__cpu_tlbinv_cookie(
+		    ((pteh_t)kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
+		    pmap_kernel_ipt_get_tlbcookie(kpte));
+	}
+
+	pmap_kernel_ipt_set_tlbcookie(kpte, 0);
 
 	return (oldptel);
 }
@@ -1655,7 +1723,8 @@ pmap_change_cache_attr(struct pvo_entry *pvo, ptel_t new_mode)
 		pvo->pvo_ptel |= new_mode;
 
 		/* Re-insert it back into the page table */
-		pmap_kernel_ipt[idx] = pvo->pvo_ptel & ~SH5_PTEL_R;
+		pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx],
+		    pvo->pvo_ptel & ~SH5_PTEL_R);
 	}
 
 	PMPRINTF(("pmap_change_cache_attr: done\n"));
@@ -1836,7 +1905,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			PVO_PTEGIDX_SET(pvo, i);
 		}
 	} else {
-		pmap_kernel_ipt[idx] = ptel & ~SH5_PTEL_R;
+		pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx],
+		    ptel & ~SH5_PTEL_R);
 		PMPRINTF((
 		    "pmap_pvo_enter: kva 0x%lx, ptel 0x%lx, kipt (idx %d)\n",
 		    va, (u_long)ptel, idx));
@@ -2169,9 +2239,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		ptel = SH5_PTEL_CB_DEVICE | SH5_PTEL_PR_R | SH5_PTEL_PR_W;
 		ptel |= (ptel_t)(pa & SH5_PTEL_PPN_MASK);
 
-		KDASSERT(pmap_kernel_ipt[idx] == 0);
-
-		pmap_kernel_ipt[idx] = ptel;
+		pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx], ptel);
 	} else {
 		if (pmap_enter(pmap_kernel(), va, pa, prot,
 		    PMAP_WIRED | PMAP_UNMANAGED))
@@ -2223,7 +2291,14 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 			pmap_pvo_remove(pvo, idx);
 		else
 		if (pm == pmap_kernel() && (idx = kva_to_iptidx(va)) >= 0) {
-			if (pmap_kernel_ipt[idx])
+#ifdef PMAP_DIAG
+			if ((pmap_kernel_ipt[idx].ptel & SH5_PTEL_CB_MASK) !=
+			    SH5_PTEL_CB_DEVICE) {
+			printf("pmap_remove: no pvo for non-device mapping!\n");
+				pmap_debugger();
+			}
+#endif
+			if (pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]))
 		    		pmap_pa_unmap_kva(va, &pmap_kernel_ipt[idx]);
 		}
 		splx(s);
@@ -2264,10 +2339,11 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		    PVO_ISMANAGED(pvo) ? "" : "un", *pap));
 	} else
 	if (pm == pmap_kernel()) {
+		ptel_t ptel;
 		idx = kva_to_iptidx(va);
-		if (idx >= 0 && pmap_kernel_ipt[idx]) {
-			*pap = (pmap_kernel_ipt[idx] & SH5_PTEL_PPN_MASK) |
-			    sh5_page_offset(va);
+		if (idx >= 0 &&
+		    (ptel = pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]))) {
+			*pap = (ptel & SH5_PTEL_PPN_MASK) | sh5_page_offset(va);
 			found = TRUE;
 			PMPRINTF(("no pvo, but kipt pa 0x%lx\n", *pap));
 		}
@@ -2352,7 +2428,8 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 				pmap_pteg_change(pt, pvo);
 		} else {
 			KDASSERT(idx >= 0);
-			if (pmap_kernel_ipt[idx] & clrbits)
+			if (pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]) &
+			    clrbits)
 				pmap_kpte_clear_bit(idx, pvo, clrbits);
 		}
 
@@ -2476,7 +2553,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		} else {
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
 			KDASSERT(idx >= 0);
-			if (pmap_kernel_ipt[idx] & clrbits)
+			if (pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]) &
+			    clrbits)
 				pmap_kpte_clear_bit(idx, pvo, clrbits);
 		}
 
@@ -2593,10 +2671,12 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 				}
 			}
 		} else {
+			ptel_t ptel;
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
 			KDASSERT(idx >= 0);
-			if (pmap_kernel_ipt[idx] & ptebit) {
-				pmap_pteg_synch(pmap_kernel_ipt[idx], pvo);
+			ptel = pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]);
+			if (ptel & ptebit) {
+				pmap_pteg_synch(ptel, pvo);
 				pmap_attr_save(pg, ptebit);
 				PMPRINTF(("yes. Cached in kipt for 0x%lx.\n",
 				    PVO_VADDR(pvo)));
@@ -2657,12 +2737,13 @@ pmap_clear_bit(struct vm_page *pg, ptel_t ptebit)
 					pmap_pteg_clear_bit(pt, pvo, ptebit);
 			}
 		} else {
+			ptel_t ptel;
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
 			KDASSERT(idx >= 0);
-			if (pmap_kernel_ipt[idx] != 0) {
+			ptel = pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]);
+			if (ptel != 0) {
 				if ((pvo->pvo_ptel & ptebit) == 0)
-					pmap_pteg_synch(pmap_kernel_ipt[idx],
-					    pvo);
+					pmap_pteg_synch( ptel, pvo);
 				if (pvo->pvo_ptel & ptebit)
 					pmap_kpte_clear_bit(idx, pvo, ptebit);
 			}
@@ -2733,6 +2814,7 @@ pmap_write_trap(int usermode, vaddr_t va)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	kpte_t *kpte;
 	pmap_t pm;
 	int s, idx;
 
@@ -2769,9 +2851,7 @@ pmap_write_trap(int usermode, vaddr_t va)
 			pmap_pteg_change(pt, pvo);
 	} else {
 		KDASSERT(idx >= 0);
-
-		__cpu_tlbinv((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
-		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
+		kpte = &pmap_kernel_ipt[idx];
 
 		/*
 		 * XXX: Technically, we shouldn't need to purge the dcache
@@ -2794,7 +2874,11 @@ pmap_write_trap(int usermode, vaddr_t va)
 			    (paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK), NBPG);
 		}
 
-		pmap_kernel_ipt[idx] = pvo->pvo_ptel;
+		__cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
+		    pmap_kernel_ipt_get_tlbcookie(kpte));
+
+		pmap_kernel_ipt_set_tlbcookie(kpte, 0);
+		pmap_kernel_ipt_set_ptel(kpte, pvo->pvo_ptel);
 	}
 
 	splx(s);
@@ -2804,6 +2888,7 @@ pmap_write_trap(int usermode, vaddr_t va)
 	return (1);
 }
 
+#ifdef PMAP_MAP_POOLPAGE
 vaddr_t
 pmap_map_poolpage(paddr_t pa)
 {
@@ -2824,7 +2909,9 @@ pmap_map_poolpage(paddr_t pa)
 	panic("pmap_map_poolpage: non-kseg0 page: pa = 0x%lx", pa);
 	return (0);
 }
+#endif
 
+#ifdef PMAP_UNMAP_POOLPAGE
 paddr_t
 pmap_unmap_poolpage(vaddr_t va)
 {
@@ -2849,6 +2936,7 @@ pmap_unmap_poolpage(vaddr_t va)
 	panic("pmap_unmap_poolpage: non-kseg0 page: va = 0x%lx", va);
 	return (0);
 }
+#endif
 
 static void *
 pmap_pool_ualloc(struct pool *pp, int flags)
@@ -2942,14 +3030,15 @@ void
 dump_kipt(void)
 {
 	vaddr_t va;
-	ptel_t *pt;
+	kpte_t *pt;
 
 	printf("\nKernel KSEG1 mappings:\n\n");
 
 	for (pt = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
 	    pt != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; pt++, va += NBPG) {
-		if (*pt && *pt < 0x80000000u)
-			printf("KVA: 0x%lx -> PTEL: 0x%lx\n", va, (u_long)*pt);
+		if (pt->ptel && pt->ptel < 0x80000000u)
+			printf("KVA: 0x%lx -> PTEL: 0x%lx\n", va,
+			    (u_long)pt->ptel);
 	}
 
 	printf("\n");
@@ -2960,14 +3049,15 @@ dump_kipt(void)
 int
 validate_kipt(int cookie)
 {
-	ptel_t *ptp, pt;
+	kpte_t *kpte;
+	ptel_t pt;
 	vaddr_t va;
 	paddr_t pa;
 	int errors = 0;
 
-	for (ptp = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
-	    ptp != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; ptp++, va += NBPG) {
-		if ((pt = *ptp) == 0)
+	for (kpte = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
+	    kpte != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; kpte++, va += NBPG) {
+		if ((pt = kpte->ptel) == 0)
 			continue;
 
 		pa = (paddr_t)(pt & SH5_PTEL_PPN_MASK);
