@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.21 1997/02/03 23:43:35 mycroft Exp $	*/
+/*	$NetBSD: db_command.c,v 1.22 1997/05/07 18:51:58 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -363,6 +363,7 @@ struct db_command db_command_table[] = {
 	{ "trace",	db_stack_trace_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
 	{ "ps",		db_show_all_procs,	0,		NULL },
+	{ "kill",	db_kill_proc,	CS_OWN,		NULL },
 	{ "callout",	db_show_callout,	0,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
 	{ NULL, 	NULL,			0,		NULL }
