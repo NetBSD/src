@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.25 2001/11/21 19:14:25 wiz Exp $ */
+/* $NetBSD: decl.c,v 1.26 2002/01/03 04:25:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.25 2001/11/21 19:14:25 wiz Exp $");
+__RCSID("$NetBSD: decl.c,v 1.26 2002/01/03 04:25:14 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -98,37 +98,37 @@ initdecl(void)
 		{ UNSIGN,   { 0, 0,
 			      SIGNED, UNSIGN,
 			      0, 0, 0, 0, 0, "unsigned" } },
-		{ CHAR,	    { CHAR_BIT, CHAR_BIT,
+		{ CHAR,	    { CHAR_SIZE, CHAR_BIT,
 			      SCHAR, UCHAR,
 			      1, 0, 0, 1, 1, "char" } },
-		{ SCHAR,    { CHAR_BIT, CHAR_BIT,
+		{ SCHAR,    { CHAR_SIZE, CHAR_BIT,
 			      SCHAR, UCHAR,
 			      1, 0, 0, 1, 1, "signed char" } },
-		{ UCHAR,    { CHAR_BIT, CHAR_BIT,
+		{ UCHAR,    { CHAR_SIZE, CHAR_BIT,
 			      SCHAR, UCHAR,
 			      1, 1, 0, 1, 1, "unsigned char" } },
-		{ SHORT,    { sizeof (short) * CHAR_BIT, 2 * CHAR_BIT,
+		{ SHORT,    { SHORT_SIZE, 2 * CHAR_BIT,
 			      SHORT, USHORT,
 			      1, 0, 0, 1, 1, "short" } },
-		{ USHORT,   { sizeof (u_short) * CHAR_BIT, 2 * CHAR_BIT,
+		{ USHORT,   { SHORT_SIZE, 2 * CHAR_BIT,
 			      SHORT, USHORT,
 			      1, 1, 0, 1, 1, "unsigned short" } },
-		{ INT,      { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
+		{ INT,      { INT_SIZE, 3 * CHAR_BIT,
 			      INT, UINT,
 			      1, 0, 0, 1, 1, "int" } },
-		{ UINT,     { sizeof (u_int) * CHAR_BIT, 3 * CHAR_BIT,
+		{ UINT,     { INT_SIZE, 3 * CHAR_BIT,
 			      INT, UINT,
 			      1, 1, 0, 1, 1, "unsigned int" } },
-		{ LONG,     { sizeof (long) * CHAR_BIT, 4 * CHAR_BIT,
+		{ LONG,     { LONG_SIZE, 4 * CHAR_BIT,
 			      LONG, ULONG,
 			      1, 0, 0, 1, 1, "long" } },
-		{ ULONG,    { sizeof (u_long) * CHAR_BIT, 4 * CHAR_BIT,
+		{ ULONG,    { LONG_SIZE, 4 * CHAR_BIT,
 			      LONG, ULONG,
 			      1, 1, 0, 1, 1, "unsigned long" } },
-		{ QUAD,     { sizeof (quad_t) * CHAR_BIT, 8 * CHAR_BIT,
+		{ QUAD,     { QUAD_SIZE, 8 * CHAR_BIT,
 			      QUAD, UQUAD,
 			      1, 0, 0, 1, 1, "long long" } },
-		{ UQUAD,    { sizeof (u_quad_t) * CHAR_BIT, 8 * CHAR_BIT,
+		{ UQUAD,    { QUAD_SIZE, 8 * CHAR_BIT,
 			      QUAD, UQUAD,
 			      1, 1, 0, 1, 1, "unsigned long long" } },
 		{ FLOAT,    { sizeof (float) * CHAR_BIT, 4 * CHAR_BIT,
@@ -152,7 +152,7 @@ initdecl(void)
 		{ ENUM,     { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
 			      ENUM, ENUM,
 			      1, 0, 0, 1, 1, "enum" } },
-		{ PTR,      { sizeof (void *) * CHAR_BIT, 4 * CHAR_BIT,
+		{ PTR,      { PTR_SIZE, 4 * CHAR_BIT,
 			      PTR, PTR,
 			      0, 1, 0, 0, 1, "pointer" } },
 		{ ARRAY,    { -1, -1,
@@ -1067,25 +1067,40 @@ decl1str(sym_t *dsym)
 		 */
 		if (t == CHAR || t == UCHAR || t == SCHAR ||
 		    t == SHORT || t == USHORT || t == ENUM) {
-			if (sflag) {
-				/* bit-field type '%s' invalid in ANSI C */
-				warning(273, tyname(tp));
-			} else if (pflag) {
-				/* nonportable bit-field type */
-				warning(34);
+			if (bitfieldtype_ok == 0) {
+				if (sflag) {
+					/*
+					 * bit-field type '%s' invalid in
+					 * ANSI C
+					 */
+					warning(273, tyname(tp));
+				} else if (pflag) {
+					/* nonportable bit-field type */
+					warning(34);
+				}
 			}
 		} else if (t == INT && dcs->d_smod == NOTSPEC) {
-			if (pflag) {
+			if (pflag && bitfieldtype_ok == 0) {
 				/* nonportable bit-field type */
 				warning(34);
 			}
 		} else if (t != INT && t != UINT) {
-			/* illegal bit-field type */
-			error(35);
-			sz = tp->t_flen;
-			dsym->s_type = tp = duptyp(gettyp(t = INT));
-			if ((tp->t_flen = sz) > size(t))
-				tp->t_flen = size(t);
+			/*
+			 * Non-integer types are always illegal for
+			 * bitfields, regardless of BITFIELDTYPE.
+			 * LONG/ULONG and QUAD/UQUAD are okay only
+			 * if BITFIELDTYPE is in effect.
+			 */
+			if (bitfieldtype_ok == 0 ||
+			    (t != LONG && t != ULONG &&
+			     t != QUAD && t != UQUAD)) {
+				/* illegal bit-field type */
+				error(35);
+				sz = tp->t_flen;
+				dsym->s_type = tp = duptyp(gettyp(t = INT));
+				if ((tp->t_flen = sz) > size(t))
+					tp->t_flen = size(t);
+			}
 		}
 		if ((len = tp->t_flen) < 0 || len > size(t)) {
 			/* illegal bit-field size */
@@ -1140,6 +1155,12 @@ decl1str(sym_t *dsym)
 	}
 
 	chkfdef(dsym, 0);
+
+	/*
+	 * Clear the BITFIELDTYPE indicator after processing each
+	 * structure element.
+	 */
+	bitfieldtype_ok = 0;
 
 	return (dsym);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.11 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: externs1.h,v 1.12 2002/01/03 04:25:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -224,6 +224,7 @@ extern	pos_t	scflpos;
 extern	int	ccflg;
 extern	int	llibflg;
 extern	int	nowarn;
+extern	int	bitfieldtype_ok;
 extern	int	plibflg;
 extern	int	quadflg;
 
@@ -260,6 +261,7 @@ extern	void	printflike(int);
 extern	void	scanflike(int);
 extern	void	protolib(int);
 extern	void	longlong(int);
+extern	void	bitfieldtype(int);
 
 /*
  * init.c

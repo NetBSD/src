@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.15 2001/11/21 17:33:29 wiz Exp $	*/
+/*	$NetBSD: func.c,v 1.16 2002/01/03 04:25:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: func.c,v 1.15 2001/11/21 17:33:29 wiz Exp $");
+__RCSID("$NetBSD: func.c,v 1.16 2002/01/03 04:25:15 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -128,6 +128,12 @@ int	llibflg;
  * Nonzero if warnings are suppressed by a LINTED directive
  */
 int	nowarn;
+
+/*
+ * Nonzero if bitfield type errors are suppressed by a BITFIELDTYPE
+ * directive.
+ */
+int	bitfieldtype_ok;
 
 /*
  * Nonzero if complaints about use of "long long" are suppressed in
@@ -1232,6 +1238,21 @@ linted(int n)
 	printf("%s, %d: nowarn = 1\n", curr_pos.p_file, curr_pos.p_line);
 #endif
 	nowarn = 1;
+}
+
+/*
+ * Suppress bitfield type errors on the current line.
+ */
+/* ARGSUSED */
+void
+bitfieldtype(int n)
+{
+
+#ifdef DEBUG
+	printf("%s, %d: bitfieldtype_ok = 1\n", curr_pos.p_file,
+	    curr_pos.p_line);
+#endif
+	bitfieldtype_ok = 1;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.2 2001/10/24 00:42:35 thorpej Exp $	*/
+/*	$NetBSD: targparam.h,v 1.3 2002/01/03 04:25:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,6 +34,8 @@
 /*
  * Machine-dependent target parameters for lint1.
  */
+
+#include "ilp32.h"
 
 /*    
  * Should be set to 1 if the difference of two pointers is of type long

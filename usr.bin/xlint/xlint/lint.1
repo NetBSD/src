@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.20 2001/12/08 19:27:56 wiz Exp $
+.\" $NetBSD: lint.1,v 1.21 2002/01/03 04:25:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -426,6 +426,9 @@ arguments for usage; a missing
 is taken to be 0 (this option acts like the
 .Fl v
 option for the next function).
+.It Li /* BITFIELDTYPE */
+Suppress error messages about illegal bitfield types if the type
+is an integer type, and suppress non-portable bitfield type warnings.
 .It Li /* CONSTCOND */ No or Xo
 .Li /* CONSTANTCOND */ No or
 .Li /* CONSTANTCONDITION */
