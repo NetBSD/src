@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.27 1997/09/07 20:41:59 pk Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.27.4.1 1998/02/08 06:54:17 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -96,6 +96,33 @@ int	vm_page_max_wired = 0;	/* XXX max # of wired pages system-wide */
 #define MAXPOCLUSTER		(MAXPHYS/NBPG)	/* XXX */
 int doclustered_pageout = 1;
 #endif
+
+/*
+ * Activate the pageout daemon and sleep awaiting more free memory
+ */
+void vm_wait(msg)
+	char *msg;
+{
+	int timo = 0;
+
+	if(curproc == pageout_daemon) {
+		/*
+		 * We might be toast here, but IF some paging operations
+		 * are pending then pages will magically appear. We
+		 * usually can't return an error because callers of
+		 * malloc who can wait generally don't check for
+		 * failure.
+		 *
+		 * Only the pageout_daemon wakes up this channel!
+		 */
+		printf("pageout daemon has stalled\n");
+		timo = hz >> 3;
+	}
+	simple_lock(&vm_pages_needed_lock);
+	thread_wakeup(&vm_pages_needed);
+	thread_sleep_msg(&cnt.v_free_count, &vm_pages_needed_lock, FALSE, msg,
+		timo);
+}
 
 /*
  *	vm_pageout_scan does the dirty work for the pageout daemon.
@@ -201,7 +228,6 @@ vm_pageout_scan()
 		object = m->object;
 		if (!vm_object_lock_try(object))
 			continue;
-		cnt.v_pageouts++;
 #ifdef CLUSTERED_PAGEOUT
 		if (object->pager &&
 		    vm_pager_cancluster(object->pager, PG_CLUSTERPUT))
@@ -281,9 +307,10 @@ vm_pageout_page(m, object)
 	vm_object_unlock(object);
 
 	/*
-	 * Do a wakeup here in case the following operations block.
+	 * We _used_ to wakeup page consumers here, "in case the following
+	 * operations block". That leads to livelock if the pageout fails,
+	 * which is actually quite a common thing for NFS paging.
 	 */
-	thread_wakeup(&cnt.v_free_count);
 
 	/*
 	 * If there is no pager for the page, use the default pager.
@@ -304,6 +331,9 @@ vm_pageout_page(m, object)
 	switch (pageout_status) {
 	case VM_PAGER_OK:
 	case VM_PAGER_PEND:
+		/* hmm, don't wakeup if memory is _very_ low? */
+		thread_wakeup(&cnt.v_free_count);
+		cnt.v_pageouts++;
 		cnt.v_pgpgout++;
 		m->flags &= ~PG_LAUNDRY;
 		break;
@@ -329,7 +359,7 @@ vm_pageout_page(m, object)
 		vm_page_unlock_queues();
 		vm_object_unlock(object);
 		(void) tsleep((caddr_t)&vm_pages_needed, PZERO|PCATCH,
-		    "pageout", hz);
+		    "pageout", hz>>3);
 		vm_object_lock(object);
 		vm_page_lock_queues();
 		break;
@@ -382,6 +412,7 @@ vm_pageout_cluster(m, object)
 	vm_page_t plist[MAXPOCLUSTER], *plistp, p;
 	int postatus, ix, count;
 
+	cnt.v_pageouts++;
 	/*
 	 * Determine the range of pages that can be part of a cluster
 	 * for this object/offset.  If it is only our single page, just
@@ -515,6 +546,7 @@ again:
 void
 vm_pageout()
 {
+	pageout_daemon = curproc;
 	(void) spl0();
 
 	/*
@@ -548,7 +580,8 @@ vm_pageout()
 
 	simple_lock(&vm_pages_needed_lock);
 	while (TRUE) {
-		thread_sleep(&vm_pages_needed, &vm_pages_needed_lock, FALSE);
+		thread_sleep_msg(&vm_pages_needed, &vm_pages_needed_lock,
+			FALSE, "paged", 0);
 		/*
 		 * Compute the inactive target for this scan.
 		 * We need to keep a reasonable amount of memory in the
