@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.1.1.2 2000/05/03 10:56:53 veego Exp $	*/
 
 %{
 /*
@@ -8,7 +8,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.1.2.1 1999/11/21 11:05:09 darrenr Exp
+ * Id: iplang_y.y,v 2.2 1999/12/04 03:37:04 darrenr Exp
  */
 
 #include <stdio.h>

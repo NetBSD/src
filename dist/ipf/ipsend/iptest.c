@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: iptest.c,v 1.1.1.2 2000/05/03 10:57:03 veego Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -14,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptest.c,v 2.1.2.2 1999/11/28 03:43:45 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptest.c,v 2.2 1999/12/04 03:37:05 darrenr Exp";
 #endif
 #include <stdio.h>
 #include <netdb.h>
