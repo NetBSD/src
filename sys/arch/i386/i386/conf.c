@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.85 1997/01/07 11:35:15 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.86 1997/07/13 19:12:06 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -117,6 +117,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_mmap((*))) enodev, 0 }
 #define cdev_apm_init cdev_ocis_init
 
+/* open, close, read, ioctl */
+#define cdev_satlink_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -178,6 +185,7 @@ cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
 #include "ipfilter.h"
+cdev_decl(satlink);
 
 struct cdevsw	cdevsw[] =
 {
@@ -230,6 +238,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 43 */
 #endif
 	cdev_ipf_init(NIPFILTER,ipl),	/* 44: ip-filter device */
+	cdev_satlink_init(1,satlink),   /* 45: planetconnect satlink */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
