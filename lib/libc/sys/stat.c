@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.1 1997/10/20 22:05:28 thorpej Exp $	*/
+/*	$NetBSD: stat.c,v 1.1.2.1 1997/10/22 06:48:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -31,12 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define __LIBC12_SOURCE__
+
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#undef stat
-#undef lstat
-#undef fstat
 
 /*
  * Convert from a new to an old stat structure.

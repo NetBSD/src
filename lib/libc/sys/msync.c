@@ -1,4 +1,4 @@
-/*	$NetBSD: msync.c,v 1.1 1997/10/20 22:05:29 thorpej Exp $	*/
+/*	$NetBSD: msync.c,v 1.1.2.1 1997/10/22 06:48:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -31,10 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define __LIBC12_SOURCE__
+
 #include <sys/types.h>
 #include <sys/mman.h>
-
-#undef msync
 
 int
 msync(addr, size)
