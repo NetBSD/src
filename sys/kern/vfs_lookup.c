@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.34 2000/05/27 00:40:47 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.34.4.1 2002/06/26 17:44:52 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
+#include <sys/syslog.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -402,6 +403,8 @@ dirloop:
 	 * 1. If at root directory (e.g. after chroot)
 	 *    or at absolute root directory
 	 *    then ignore it so can't get out.
+	 * 1a. If we have somehow gotten out of a jail, warn
+	 *    and also ignore it so we can't get farther out.
 	 * 2. If this vnode is the root of a mounted
 	 *    filesystem, then replace it with the
 	 *    vnode which was mounted on so we take the
@@ -414,6 +417,31 @@ dirloop:
 				ndp->ni_vp = dp;
 				VREF(dp);
 				goto nextname;
+			}
+			if (ndp->ni_rootdir != rootvnode) {
+				int retval;
+				VOP_UNLOCK(dp, 0);
+				retval = vn_isunder(dp, ndp->ni_rootdir,
+				    cnp->cn_proc);
+				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+				if (!retval) {
+				    /* Oops! We got out of jail! */
+				    log(LOG_WARNING,
+					"chrooted pid %d uid %d (%s) "
+					"detected outside of its chroot\n",
+					cnp->cn_proc->p_pid,
+					cnp->cn_proc->p_ucred->cr_uid,
+					cnp->cn_proc->p_comm);
+				    /* Put us at the jail root. */
+				    vput(dp);
+				    dp = ndp->ni_rootdir;
+				    ndp->ni_dvp = dp;
+				    ndp->ni_vp = dp;
+				    VREF(dp);
+				    VREF(dp);
+				    vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+				    goto nextname;
+				}
 			}
 			if ((dp->v_flag & VROOT) == 0 ||
 			    (cnp->cn_flags & NOCROSSMOUNT))
