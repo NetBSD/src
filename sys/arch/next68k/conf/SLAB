@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.6 2001/07/08 16:32:22 abs Exp $
+# $NetBSD: SLAB,v 1.7 2001/11/13 17:54:52 augustss Exp $
 #
 # deberg's development machine
 #
@@ -188,7 +188,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
-#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
