@@ -1,7 +1,7 @@
 /* 
  * evaluate the dc language, from a FILE* or a string
  *
- * Copyright (C) 1994 Free Software Foundation, Inc.
+ * Copyright (C) 1994, 1997 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,12 +39,12 @@
 #include "dc-proto.h"
 
 typedef enum {
-	DC_OKAY,		/* no further intervention needed for this command */
+	DC_OKAY = DC_SUCCESS, /* no further intervention needed for this command */
 	DC_EATONE,		/* caller needs to eat the lookahead char */
 	DC_QUIT,		/* quit out of unwind_depth levels of evaluation */
 
 	/* with the following return values, the caller does not have to 
-	 * fret about rescan_stdin's value
+	 * fret about stdin_lookahead's value
 	 */
 	DC_INT,			/* caller needs to parse a dc_num from input stream */
 	DC_STR,			/* caller needs to parse a dc_str from input stream */
@@ -58,17 +58,17 @@ static int dc_ibase=10;		/* input base, 2 <= dc_ibase <= DC_IBASE_MAX */
 static int dc_obase=10;		/* output base, 2 <= dc_obase */
 static int dc_scale=0;		/* scale (see user documentaton) */
 
-/* forward reference */
-static dc_status dc_evalstr DC_PROTO((dc_data));
-
 /* for Quitting evaluations */
 static int unwind_depth=0;
 
 /* if true, active Quit will not exit program */
 static dc_boolean unwind_noexit=DC_FALSE;
 
-/* if true, stdin has been mucked with, dc_evalfile() needs to resyncronize */
-static dc_boolean rescan_stdin=DC_FALSE;
+/*
+ * Used to synchronize lookahead on stdin for '?' command.
+ * If set to EOF then lookahead is used up.
+ */
+static int stdin_lookahead=EOF;
 
 
 /* input_fil and input_str are passed as arguments to dc_getnum */
@@ -109,7 +109,7 @@ input_str DC_DECLVOID()
 /* Wrapper around dc_evalstr to avoid duplicating the free call
  * at all possible return points.
  */
-static dc_status
+static int
 dc_eval_and_free_str DC_DECLARG((string))
 	dc_data string DC_DECLEND
 {
@@ -135,7 +135,7 @@ dc_func DC_DECLARG((c, peekc))
 {
 	/* we occasionally need these for temporary data */
 	/* Despite the GNU coding standards, it is much easier
-	 * to have these decared once here, since this function
+	 * to have these declared once here, since this function
 	 * is just one big switch statement.
 	 */
 	dc_data datum;
@@ -167,8 +167,27 @@ dc_func DC_DECLARG((c, peekc))
 		dc_binop(dc_div, dc_scale);
 		break;
 	case '%':
-		/* take the remainder from  division of the top two stack elements */
+		/* take the remainder from division of the top two stack elements */
 		dc_binop(dc_rem, dc_scale);
+		break;
+	case '~':
+		/* Do division on the top two stack elements.  Return the
+		 * quotient as next-to-top of stack and the remainder as
+		 * top-of-stack.
+		 */
+		dc_binop2(dc_divrem, dc_scale);
+		break;
+	case '|':
+		/* Consider the top three elements of the stack as (base, exp, mod),
+		 * where mod is top-of-stack, exp is next-to-top, and base is
+		 * second-from-top.  Mod must be non-zero and exp must be a
+		 * non-negative integer.   Push the result of raising base to the exp
+		 * power, reduced modulo mod.  If we had base in register b, exp in
+		 * register e, and mod in register m then this is conceptually
+		 * equivalent to "lble^lm%", but it is implemented in a more efficient
+		 * manner, and can handle arbritrarily large values for exp.
+		 */
+		dc_triop(dc_modexp, dc_scale);
 		break;
 	case '^':	/* exponientiation of the top two stack elements */
 		dc_binop(dc_exp, dc_scale);
@@ -206,13 +225,13 @@ dc_func DC_DECLARG((c, peekc))
 				if (dc_eval_and_free_str(datum) == DC_QUIT)
 					return DC_QUIT;
 		return DC_EATONE;
-	case '?':	/* read a lnie from standard-input and eval it */
-		for (c=peekc; c=='\n'; c=getc(stdin))
-			;
-		ungetc(c, stdin);
+	case '?':	/* read a line from standard-input and eval it */
+		if (stdin_lookahead != EOF){
+			ungetc(stdin_lookahead, stdin);
+			stdin_lookahead = EOF;
+		}
 		if (dc_eval_and_free_str(dc_readstring(stdin, '\n', '\n')) == DC_QUIT)
 			return DC_QUIT;
-		rescan_stdin = DC_TRUE;
 		return DC_OKAY;
 	case '[':	/* read to balancing ']' into a dc_str */
 		return DC_STR;
@@ -221,6 +240,21 @@ dc_func DC_DECLARG((c, peekc))
 	case '#':	/* comment; skip remainder of current line */
 		return DC_COMMENT;
 
+	case 'a':	/* Convert top of stack to an ascii character. */
+		if (dc_pop(&datum) == DC_SUCCESS){
+			char tmps;
+			if (datum.dc_type == DC_NUMBER){
+				tmps = (char) dc_num2int(datum.v.number, DC_TRUE);
+				dc_free_num(&datum.v.number);
+			}else if (datum.dc_type == DC_STRING){
+				tmps = *dc_str2charp(datum.v.string);
+				dc_free_str(&datum.v.string);
+			}else{
+				dc_garbage("at top of stack", -1);
+			}
+			dc_push(dc_makestring(&tmps, 1));
+		}
+		break;
 	case 'c':	/* clear whole stack */
 		dc_clear_stack();
 		break;
@@ -288,6 +322,17 @@ between 2 and %d (inclusive)\n",
 		unwind_depth = 2;
 		unwind_noexit = DC_FALSE;
 		return DC_QUIT;
+	case 'r':	/* rotate (swap) the top two elements on the stack
+				 */
+		if (dc_pop(&datum) == DC_SUCCESS) {
+			dc_data datum2;
+			int two_status;
+			two_status = dc_pop(&datum2);
+			dc_push(datum);
+			if (two_status == DC_SUCCESS)
+				dc_push(datum2);
+		}
+		break;
 	case 's':	/* "store" -- replace top of register stack named
 				 * by peekc with the value popped from the top
 				 * of the evaluation stack
@@ -368,10 +413,25 @@ between 2 and %d (inclusive)\n",
 			if (unwind_depth > 0)
 				return DC_QUIT;
 			fprintf(stderr,
-					"%s: Q command requires a positive number\n",
+					"%s: Q command requires a number >= 1\n",
 					progname);
 		}
 		break;
+#if 0
+	case 'R':	/* pop a value off of the evaluation stack,;
+				 * rotate the top
+				 remaining stack elements that many
+				 * places forward (negative numbers mean rotate
+				 * backward).
+				 */
+		if (dc_pop(&datum) == DC_SUCCESS){
+			tmpint = 0;
+			if (datum.dc_type == DC_NUMBER)
+				tmpint = dc_num2int(datum.v.number, DC_TRUE);
+			dc_stack_rotate(tmpint);
+		}
+		break;
+#endif
 	case 'S':	/* pop a value off of the evaluation stack
 				 * and push it onto the register stack named by peekc
 				 */
@@ -436,7 +496,7 @@ between 2 and %d (inclusive)\n",
 
 
 /* takes a string and evals it */
-static dc_status
+int
 dc_evalstr DC_DECLARG((string))
 	dc_data string DC_DECLEND
 {
@@ -499,7 +559,8 @@ dc_evalstr DC_DECLARG((string))
 			s = memchr(s, '\n', (size_t)(end-s));
 			if (!s)
 				s = end;
-			++s;
+			else
+				++s;
 			break;
 
 		case DC_EOF_ERROR:
@@ -523,12 +584,18 @@ dc_evalfile DC_DECLARG((fp))
 	int peekc;
 	dc_data datum;
 
+	stdin_lookahead = EOF;
 	for (c=getc(fp); c!=EOF; c=peekc){
 		peekc = getc(fp);
-		rescan_stdin = DC_FALSE;
+		/*
+		 * The following if() is the only place where ``stdin_lookahead''
+		 * might be set to other than EOF:
+		 */
+		if (fp == stdin)
+			stdin_lookahead = peekc;
 		switch (dc_func(c, peekc)){
 		case DC_OKAY:
-			if (rescan_stdin == DC_TRUE  &&  fp == stdin)
+			if (stdin_lookahead != peekc  &&  fp == stdin)
 				peekc = getc(fp);
 			break;
 		case DC_EATONE:
@@ -536,11 +603,11 @@ dc_evalfile DC_DECLARG((fp))
 			break;
 		case DC_QUIT:
 			if (unwind_noexit != DC_TRUE)
-				return DC_SUCCESS;
+				return DC_FAIL;
 			fprintf(stderr,
 					"%s: Q command argument exceeded string execution depth\n",
 					progname);
-			if (rescan_stdin == DC_TRUE  &&  fp == stdin)
+			if (stdin_lookahead != peekc  &&  fp == stdin)
 				peekc = getc(fp);
 			break;
 
