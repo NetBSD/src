@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.22 1999/08/01 19:47:07 kleink Exp $	 */
+/*	$NetBSD: rtld.c,v 1.23 1999/08/19 23:42:15 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -353,6 +353,7 @@ _rtld(sp)
 #endif
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
 	}
+	_rtld_process_hints(&_rtld_paths, _PATH_LD_HINTS, true);
 	dbg(("%s is initialized, base address = %p", __progname,
 	     (void *) pAUX_base->au_v));
 

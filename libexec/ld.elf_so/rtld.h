@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.15 1999/08/01 19:47:07 kleink Exp $	 */
+/*	$NetBSD: rtld.h,v 1.16 1999/08/19 23:42:15 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -44,6 +44,7 @@
 #if defined(_RTLD_SOURCE)
 
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
+#define _PATH_LD_HINTS			"/etc/ld.so.conf"
 
 #if 0
 #define SVR4_LIBDIR	"/usr/lib"
@@ -215,6 +216,7 @@ int _rtld_preload __P((const char *, bool));
 
 /* path.c */
 void _rtld_add_paths __P((Search_Path **, const char *, bool));
+void _rtld_process_hints __P((Search_Path **, const char *, bool));
 
 /* reloc.c */
 int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));
