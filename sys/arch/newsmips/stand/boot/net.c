@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1 1999/12/22 05:54:41 tsubai Exp $	*/
+/*	$NetBSD: net.c,v 1.2 2003/03/13 14:49:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -56,13 +56,14 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
 #include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
 
 #include <promdev.h>
+
+#include "netif_news.h"
 
 char rootpath[FNAME_SIZE];
 
@@ -82,7 +83,7 @@ net_open(pd)
 	/* On first open, do netif open, mount, etc. */
 	if (open_count == 0) {
 		/* Find network interface. */
-		if ((netdev_sock = netif_open(pd)) < 0) {
+		if ((netdev_sock = netif_news_open(pd)) < 0) {
 			error = errno;
 			goto bad;
 		}
@@ -103,7 +104,7 @@ net_close(pd)
 		return (0);
 
 	if (--open_count == 0)
-		return (netif_close(netdev_sock));
+		netif_news_close(netdev_sock);
 
 	return (0);
 }
