@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/03/13 21:21:51 sommerfe Exp $
+#	$NetBSD: Makefile,v 1.11 1999/03/14 03:29:06 sommerfe Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -70,6 +70,10 @@ ${CBIN}: libhack.o
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+
+# turn off small gethostby* temporarily
+HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
+
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
