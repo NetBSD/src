@@ -1,5 +1,11 @@
+/* $NetBSD: pen.c,v 1.2 1997/06/05 12:59:52 agc Exp $ */
+
 #ifndef lint
-static const char *rcsid = "FreeBSD Id: pen.c,v 1.24 1997/02/22 16:09:50 peter Exp";
+#if 0
+static const char *rcsid = "from FreeBSD Id: pen.c,v 1.24 1997/02/22 16:09:50 peter Exp";
+#else
+static const char *rcsid = "$NetBSD: pen.c,v 1.2 1997/06/05 12:59:52 agc Exp $";
+#endif
 #endif
 
 /*
