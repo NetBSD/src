@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.2 1998/01/17 11:38:36 christos Exp $ */
+/*	$NetBSD: mkarp.c,v 1.3 2000/02/11 11:27:20 abs Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.2 1998/01/17 11:38:36 christos Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.3 2000/02/11 11:27:20 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ __RCSID("$NetBSD: mkarp.c,v 1.2 1998/01/17 11:38:36 christos Exp $");
 
 #include "mkarp.h"
 
-int	rtmsg __P((int, struct rt_msghdr *, struct sockaddr_inarp *, 
+int	rtmsg __P((int, int, struct rt_msghdr *, struct sockaddr_inarp *, 
 		   struct sockaddr_dl *));
 struct	{
 	struct	rt_msghdr m_rtm;
@@ -102,6 +102,8 @@ mkarp(haddr, ipaddr)
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm;
 	u_int8_t *p, *endp;
+	int result;
+	int s;
 
 	struct sockaddr_inarp sin_m;
 	struct sockaddr_dl sdl_m;
@@ -124,12 +126,22 @@ mkarp(haddr, ipaddr)
 	}
 	sdl_m.sdl_alen = ETHER_ADDR_LEN;
 
+	/*
+	 * We need to close and open the socket to prevent routing updates
+	 * building up such that when we send our message we never see our
+	 * reply (and hang)
+	 */
+	s = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (s < 0)
+		err(1, "socket");
+
 	rtm->rtm_flags = 0;
 
-	if (rtmsg(RTM_GET, rtm, &sin_m, &sdl_m) < 0) {
+	if (rtmsg(RTM_GET, s, rtm, &sin_m, &sdl_m) < 0) {
 #if 0
 		warn("%s", host);
 #endif
+		close(s);
 		return (1);
 	}
 	sin = (struct sockaddr_inarp *)(rtm + 1);
@@ -145,6 +157,7 @@ mkarp(haddr, ipaddr)
 #if 0
 		(void)printf("set: can only proxy for %s\n", host);
 #endif
+		close(s);
 		return (1);
 	}
 overwrite:
@@ -153,22 +166,25 @@ overwrite:
 		(void)printf("cannot intuit interface index and type for %s\n",
 		    host);
 #endif
+		close(s);
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
-	return (rtmsg(RTM_ADD, rtm, &sin_m, &sdl_m));
+	result = rtmsg(RTM_ADD, s, rtm, &sin_m, &sdl_m);
+	close(s);
+	return (result);
 }
 
 int
-rtmsg(cmd, rtm, sin_m, sdl_m)
+rtmsg(cmd, s, rtm, sin_m, sdl_m)
 	int cmd;
+	int s;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin_m;
 	struct sockaddr_dl *sdl_m;
 {
 	static int seq;
-	static int s = -1;
 	int rlen;
 	char *cp;
 	int l;
@@ -179,11 +195,6 @@ rtmsg(cmd, rtm, sin_m, sdl_m)
 	cp = m_rtmsg.m_space;
 	errno = 0;
 
-	if (s < 0) {
-		s = socket(PF_ROUTE, SOCK_RAW, 0);
-		if (s < 0)
-			err(1, "socket");
-	}
 	pid = getpid();
 
 	(void)memset(&m_rtmsg, 0, sizeof(m_rtmsg));
