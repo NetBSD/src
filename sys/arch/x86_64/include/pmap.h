@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2002/09/22 07:53:51 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 2002/11/29 22:14:15 fvdl Exp $	*/
 
 /*
  *
@@ -406,8 +406,8 @@ extern pd_entry_t *pdes[];
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-#define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
-#define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
 #define pmap_copy(DP,SP,D,L,S)		
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
@@ -422,14 +422,14 @@ extern pd_entry_t *pdes[];
 
 void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
+boolean_t	pmap_clear_attrs __P((struct vm_page *, unsigned));
 void		pmap_deactivate __P((struct proc *));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, int));
+boolean_t	pmap_test_attrs __P((struct vm_page *, unsigned));
 static void	pmap_update_pg __P((vaddr_t));
 static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
@@ -483,19 +483,17 @@ pmap_update_2pg(va, vb)
  * pmap_page_protect: change the protection of all recorded mappings
  *	of a managed page
  *
- * => this function is a frontend for pmap_page_remove/pmap_change_attrs
+ * => this function is a frontend for pmap_page_remove/pmap_clear_attrs
  * => we only have to worry about making the page more protected.
  *	unprotecting a page is done on-demand at fault time.
  */
 
 __inline static void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t prot;
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_change_attrs(pg, PG_RO, PG_RW);
+			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
 		}
