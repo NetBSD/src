@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.343 2000/01/20 17:12:34 mjacob Exp $
+#	$NetBSD: files,v 1.344 2000/01/20 19:12:37 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -89,7 +89,7 @@ deffs	ADOSFS
 deffs	MSDOSFS
 deffs	FILECORE
 deffs	fs_nfs.h NFS
-deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
+deffs	NULLFS OVERLAY FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
 deffs	fs_union.h UNION
 deffs	fs_coda.h CODA
@@ -719,6 +719,8 @@ file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
 file miscfs/nullfs/null_vfsops.c	nullfs
 file miscfs/nullfs/null_vnops.c		nullfs
+file miscfs/overlay/overlay_vfsops.c	overlay
+file miscfs/overlay/overlay_vnops.c	overlay
 file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_ctl.c		procfs

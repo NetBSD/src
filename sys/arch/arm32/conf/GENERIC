@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.60 1999/12/24 00:15:51 tron Exp $
+#	$NetBSD: GENERIC,v 1.61 2000/01/20 19:12:29 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -50,6 +50,7 @@ file-system	FDESC		# /dev/fd
 file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay filesystem
 file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.57 1999/11/21 14:00:38 itojun Exp $
+#	$NetBSD: GENERIC,v 1.58 2000/01/20 19:12:30 wrstuden Exp $
 #
 # Generic atari
 #
@@ -81,6 +81,7 @@ file-system 	PROCFS		# Process filesystem
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	FDESC		# /dev/fd
 file-system 	NULLFS		# Loopback filesystem
+file-system 	OVERLAY		# overlay filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 file-system 	UNION		# union file system
