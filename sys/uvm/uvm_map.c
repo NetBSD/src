@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.149 2003/11/05 15:34:50 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.150 2003/11/06 12:45:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.149 2003/11/05 15:34:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.150 2003/11/06 12:45:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1528,11 +1528,11 @@ nextgap:
 		goto notfound;
 
 	if (topdown) {
-		KASSERT(hint >= prev->next->start - length ||
+		KASSERT(orig_hint >= prev->next->start - length ||
 		    prev->next->start - length > prev->next->start);
 		hint = prev->next->start - length;
 	} else {
-		KASSERT(hint <= prev->end);
+		KASSERT(orig_hint <= prev->end);
 		hint = prev->end;
 	}
 	switch (uvm_map_space_avail(&hint, length, uoffset, align,
@@ -1569,11 +1569,11 @@ nextgap:
 	}
 	
 	if (topdown) {
-		KASSERT(hint >= tmp->next->start - length ||
+		KASSERT(orig_hint >= tmp->next->start - length ||
 		    tmp->next->start - length > tmp->next->start);
 		hint = tmp->next->start - length;
 	} else {
-		KASSERT(hint <= tmp->end);
+		KASSERT(orig_hint <= tmp->end);
 		hint = tmp->end;
 	}
 	switch (uvm_map_space_avail(&hint, length, uoffset, align,
