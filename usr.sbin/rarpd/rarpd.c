@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.10 1996/01/31 20:25:31 hpeyerl Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.11 1996/02/01 21:57:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.10 1996/01/31 20:25:31 hpeyerl Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.11 1996/02/01 21:57:00 mycroft Exp $";
 #endif
 
 
@@ -356,7 +356,12 @@ rarp_check(p, len)
 		return 0;
 	}
 	/* XXX This test might be better off broken out... */
+#ifdef __FreeBSD__
+	/* BPF (incorrectly) returns this in host order. */
+	if (ep->ether_type != ETHERTYPE_REVARP ||
+#else
 	if (ntohs (ep->ether_type) != ETHERTYPE_REVARP ||
+#endif
 	    ntohs (ap->arp_hrd) != ARPHRD_ETHER ||
 	    ntohs (ap->arp_op) != ARPOP_REVREQUEST ||
 	    ntohs (ap->arp_pro) != ETHERTYPE_IP ||
@@ -724,7 +729,12 @@ rarp_reply(ii, ep, ipaddr)
 	update_arptab((u_char *) & ap->arp_sha, ipaddr);
 
 	/* Build the rarp reply by modifying the rarp request in place. */
+#ifdef __FreeBSD__
+	/* BPF (incorrectly) wants this in host order. */
+	ep->ether_type = ETHERTYPE_REVARP;
+#else
 	ep->ether_type = htons(ETHERTYPE_REVARP);
+#endif
 	ap->ea_hdr.ar_hrd = htons(ARPHRD_ETHER);
 	ap->ea_hdr.ar_pro = htons(ETHERTYPE_IP);
 	ap->arp_op = htons(ARPOP_REVREPLY);
