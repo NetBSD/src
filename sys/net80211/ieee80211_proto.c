@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.13 2004/07/23 08:25:25 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.14 2004/07/23 08:38:08 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.13 2004/07/23 08:25:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.14 2004/07/23 08:38:08 mycroft Exp $");
 #endif
 
 /*
@@ -533,6 +533,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			IASSERT(ni->ni_txrate < ni->ni_rates.rs_nrates,
 				("%s: bogus xmit rate %u setup", __func__,
 					ni->ni_txrate));
+#ifdef IEEE80211_DEBUG
 			if (ieee80211_msg_debug(ic)) {
 				if_printf(ifp, " ");
 				if (ic->ic_opmode == IEEE80211_M_STA)
@@ -547,6 +548,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 					ieee80211_chan2ieee(ic, ni->ni_chan),
 					IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]));
 			}
+#endif
 			ic->ic_mgt_timer = 0;
 			(*ifp->if_start)(ifp);
 			break;
