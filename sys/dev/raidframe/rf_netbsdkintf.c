@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.169 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.170 2003/12/31 03:02:57 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.169 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.170 2003/12/31 03:02:57 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -309,8 +309,6 @@ static void rf_markalldirty(RF_Raid_t *);
 struct device *raidrootdev;
 
 void rf_ReconThread(struct rf_recon_req *);
-/* XXX what I want is: */
-/*void rf_ReconThread(RF_Raid_t *raidPtr);  */
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 void rf_CopybackThread(RF_Raid_t *raidPtr);
 void rf_ReconstructInPlaceThread(struct rf_recon_req *);
@@ -2511,7 +2509,6 @@ rf_ReconThread(struct rf_recon_req *req)
 	rf_FailDisk((RF_Raid_t *) req->raidPtr, req->col,
 		    ((req->flags & RF_FDFLAGS_RECON) ? 1 : 0));
 
-	/* XXX get rid of this! we don't need it at all.. */
 	RF_Free(req, sizeof(*req));
 
 	raidPtr->recon_in_progress = 0;
