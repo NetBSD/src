@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2002/05/18 00:51:15 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120.2.1 2002/06/12 01:23:47 lukem Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1281,7 +1281,7 @@ remap_data:
 		pmap_kernel()->pm_segs=(paddr_t *)(u_long)newp;
 		pmap_kernel()->pm_physaddr = newp;
 		/* mark kernel context as busy */
-		((paddr_t*)ctxbusy)[0] = (int)pmap_kernel()->pm_physaddr;
+		ctxbusy[0] = pmap_kernel()->pm_physaddr;
 	}
 	/*
 	 * finish filling out kernel pmap.
