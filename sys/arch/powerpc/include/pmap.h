@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.4.1 1999/06/21 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.4.2 1999/08/02 20:07:16 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,7 +74,7 @@ extern struct pmap kernel_pmap_;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
-paddr_t pmap_extract __P((struct pmap *, vaddr_t));
+boolean_t pmap_extract __P((struct pmap *, vaddr_t, paddr_t *));
 void ptemodify __P((paddr_t, u_int, u_int));
 int ptebits __P((paddr_t, int));
 
@@ -99,7 +99,7 @@ vtophys(va)
 
 	/* XXX should check battable */
 
-	if ((pa = pmap_extract(pmap_kernel(), va)) != 0)
+	if (pmap_extract(pmap_kernel(), va, &pa))
 		return pa;
 	return va;
 }

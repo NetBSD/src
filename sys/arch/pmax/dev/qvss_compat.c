@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.15.4.2 1999/07/01 23:20:17 thorpej Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.15.4.3 1999/08/02 20:06:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -176,11 +176,13 @@ init_pmaxfbu(fi)
 	/* A guess, but correct for 1024x864, 1024x768 and 1280x1024 */
 	tty_rows = (fi->fi_type.fb_height / 15) - 1;
 
+#ifdef notdef
 	if (tty_rows != fbu->scrInfo.max_row ||
 	    tty_cols != fbu->scrInfo.max_col)
 		printf("framebuffer init: size mismatch: given %dx%d, compute %dx%d\n",
 		       fbu->scrInfo.max_row, fbu->scrInfo.max_col,
 		       tty_rows, tty_cols);
+#endif
 
 	pmEventQueueInit(&fi->fi_fbu->scrInfo.qe);
 }

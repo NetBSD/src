@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13.4.1 1999/06/21 00:58:59 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13.4.2 1999/08/02 20:06:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -178,8 +178,8 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		 * Get the physical address for this segment.
 		 */
 		if (p != NULL)
-			curaddr = pmap_extract(p->p_vmspace->vm_map.pmap,
-			    vaddr);
+			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+			    vaddr, &curaddr);
 		else
 			curaddr = kvtophys(vaddr);
 

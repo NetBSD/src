@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.7.12.1 1999/06/21 00:58:41 thorpej Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.7.12.2 1999/08/02 20:06:04 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -45,12 +45,9 @@ pm needs dc device
 #endif
 #endif
 
-
-extern int pminit __P((struct fbinfo *fi, int unit, int cold_console_flag));
-int ds_pm_init __P ((struct fbinfo *fi, int unti, int cold_console_flag));
-
-int pm_ds_match __P((struct device *, struct cfdata *, void *));
-void pm_ds_attach __P((struct device *, struct device *, void *));
+int	ds_pm_init __P ((struct fbinfo *fi, int unti, int cold_console_flag));
+int	pm_ds_match __P((struct device *, struct cfdata *, void *));
+void	pm_ds_attach __P((struct device *, struct device *, void *));
 
 /*
  * Define decstation pm front-end driver for autoconfig
@@ -62,9 +59,6 @@ struct cfattach pm_ds_ca = {
 
 /* XXX pmvar.h */
 extern struct fbuacces pmu;
-
-/* static struct for cold console init */
-struct fbinfo	pmfi;		/*XXX*/
 
 /*
  * rcons methods and globals.
@@ -91,8 +85,12 @@ ds_pm_init (fi, unit, cold_console_flag)
 	int unit;
 	int cold_console_flag;
 {
+	caddr_t base;
+	
+	base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
+
 	/* only have one pm, address &c hardcoded in pminit() */
-	return (pminit(fi, unit, cold_console_flag));
+	return (pminit(fi, base, unit, cold_console_flag));
 }
 
 int
@@ -120,16 +118,15 @@ pm_ds_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	/*struct ibus_attach_args *ia = aux;*/
-	/*caddr_t pmaddr = (caddr_t)ia->ia_addr;*/
+	struct ibus_attach_args *ia = aux;
+	caddr_t base = (caddr_t)ia->ia_addr;
+	struct fbinfo *fi;
 
-	/* don't init twice */
-	if (pmfi.fi_pixels != NULL)
-		printf (": (%dx%dx%d) (console)",
-			pmfi.fi_type.fb_width,
-			pmfi.fi_type.fb_height,
-			pmfi.fi_type.fb_depth);
-	else if (!pminit(&pmfi, 0, 0))
+	/* Allocate a struct fbinfo and point the softc at it */
+	if (fballoc(base, &fi) == 0 && !pminit(fi, base, 0, 0))
+			return;
+
+	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
 		return;
 
 	/* no interrupts for PM */
@@ -147,25 +144,17 @@ pm_ds_attach(parent, self, aux)
  * statically-allocated "softc", and pass to pmattach().
  */
 int
-pminit(fi, unit, cold_console_flag)
+pminit(fi, base, unit, cold_console_flag)
 	struct fbinfo *fi;
+	caddr_t base;
 	int unit;
 	int cold_console_flag;
 {
-	/*
-	 * If this device is being initialized as the console, malloc()
-	 * is not yet up and we must use statically-allocated space.
-	 */
-	if (fi == NULL) {
-		fi = &pmfi;	/* XXX */
-	}
-	/* cmap_bits set in MI back-end */
-
-
+	
 	/* Set address of frame buffer... */
 	fi->fi_unit = unit;
+	fi->fi_base = base;
 	fi->fi_pixels = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_PHYS_FBUF_START);
-	fi->fi_base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
 	fi->fi_vdac = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_VDAC);
 
 	/* check for no frame buffer */

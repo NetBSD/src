@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20.4.1 1999/06/21 00:52:34 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20.4.2 1999/08/02 19:57:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -229,17 +229,18 @@ pagemove(from, to, size)
 	size_t size;
 {
 	paddr_t pa;
+	boolean_t rv;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
+		rv = pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
 #ifdef DEBUG
-		if (pa == 0)
+		if (rv == FALSE)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vaddr_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
@@ -355,12 +356,11 @@ setredzone(pte, vaddr)
 kvtop(addr)
 	caddr_t addr;
 {
-	vaddr_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
-	if (va == 0)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -393,8 +393,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		pa = pmap_extract(upmap, uva);
-		if (pa == 0)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		uva += PAGE_SIZE;

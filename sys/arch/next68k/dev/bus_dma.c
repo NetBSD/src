@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.7.4.1 1999/06/21 00:54:00 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.7.4.2 1999/08/02 19:59:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7.4.1 1999/06/21 00:54:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7.4.2 1999/08/02 19:59:41 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -188,10 +188,10 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		 * Get the physical address for this segment.
 		 */
 		if (p != NULL)
-			curaddr = pmap_extract(p->p_vmspace->vm_map.pmap,
-			    vaddr);
+			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+			    vaddr, &curaddr);
 		else
-			curaddr = pmap_extract(pmap_kernel(),vaddr);
+			(void) pmap_extract(pmap_kernel(), vaddr, &curaddr);
 
 		curaddr |= wbase;
 

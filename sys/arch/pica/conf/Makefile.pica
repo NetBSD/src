@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.25 1999/01/15 23:37:07 thorpej Exp $
+#	$NetBSD: Makefile.pica,v 1.25.4.1 1999/08/02 20:02:42 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -58,6 +58,8 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext 80080000  -e start ${GP}
 STRIPFLAGS=	-g -X -x
 
+%INCLUDES
+
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
@@ -104,8 +106,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-x
 .endif

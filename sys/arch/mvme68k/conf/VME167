@@ -1,4 +1,4 @@
-#	$NetBSD: VME167,v 1.3 1999/02/20 00:16:38 scw Exp $
+#	$NetBSD: VME167,v 1.3.4.1 1999/08/02 19:57:20 thorpej Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -35,7 +35,7 @@ options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        TPIP
 #options        EON
 
-options 	COMPAT_13, COMPAT_12
+options 	COMPAT_14, COMPAT_13, COMPAT_12
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 
