@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.1.1.1.2.1 1997/11/09 21:13:18 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -172,6 +172,7 @@ write_menu_file (char *initcode)
 		"\n"
 		"/* Prototypes */\n"
 		"void process_menu (int num);\n"
+		"void __menu_initerror (void);\n"    
 		"\n"
 		"/* Menu names */\n"
 	      );
@@ -286,6 +287,22 @@ write_menu_file (char *initcode)
 	while ((ch = fgetc(sys_file)) != EOF)
 		fputc(ch, out_file);     	
 	
+	/* __menu_initerror: initscr failed. */
+	(void) fprintf (out_file, 
+		"/* __menu_initerror: initscr failed. */\n"
+		"void __menu_initerror (void) {\n");
+	if (error_act.code == NULL) {
+		(void) fprintf (out_file,
+			"\t(void) fprintf (stderr, "
+				"\"Could not initialize curses\\n\");\n"
+			"\texit(1);\n"
+			"}\n");
+	} else {
+		if (error_act.endwin)
+			(void) fprintf (out_file, "\tendwin();\n");
+		(void) fprintf (out_file, "%s\n}\n", error_act.code);
+	}
+
 	fclose (out_file);
 	fclose (sys_file);
 }

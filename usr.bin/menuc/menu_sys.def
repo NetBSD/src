@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.1.1.1.2.1 1997/11/09 21:14:02 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -277,7 +277,10 @@ void process_menu (int num)
 
 	/* Initialize? */
 	if (!__menu_init) {
-		initscr();
+		if (initscr() == NULL) {
+			__menu_initerror();
+			return;
+		}
 		cbreak();
 		noecho();
 		__menu_init = 1;
