@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.22 1997/11/17 01:57:45 lukem Exp $
+#	$NetBSD: DISKLESS,v 1.23 1997/12/01 15:25:34 kleink Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -30,6 +30,7 @@ options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_11	# compatibility with NetBSD 1.1
 options 	COMPAT_12	# compatibility with NetBSD 1.2
+options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
