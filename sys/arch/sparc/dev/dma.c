@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.36 1996/11/27 21:48:19 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.37 1996/11/28 10:30:34 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -156,11 +156,11 @@ dmaattach(parent, self, aux)
 		}
 		delay(20000);	/* manual says we need 20ms delay */
 	}
-	
+
 	/*
-	 * Get transfer burst size from PROM and plug it into the controller
-	 * registers. This is needed on the Sun4m; do others need it too?
-	 * XXX
+	 * Get transfer burst size from PROM and plug it into the
+	 * controller registers. This is needed on the Sun4m; do
+	 * others need it too?
 	 */
 	if (CPU_ISSUN4M) {
 		sc->sc_burst = getpropint(ca->ca_ra.ra_node,"burst-sizes", -1);
@@ -172,19 +172,6 @@ dmaattach(parent, self, aux)
 				sc->sc_burst = 
 					((struct sbus_softc *)parent)->sc_burst;
 		}
-		sc->sc_regs->csr &= ~D_BURST_SIZE; /* must clear first */
-		if (sc->sc_burst & SBUS_BURST_32) {
-			sc->sc_regs->csr |= D_BURST_32;
-		} else if (sc->sc_burst & SBUS_BURST_16) {
-			sc->sc_regs->csr |= D_BURST_16;
-		} else if (strcmp(ca->ca_ra.ra_name,"espdma") == 0) {
-			/* only espdma supports non-burst */
-			sc->sc_regs->csr |= D_BURST_0;
-#ifdef DIAGNOSTIC
-		} else {
-			printf(" <unknown burst size 0x%x>", sc->sc_burst);
-#endif
-		}
 	}
 
 	printf(": rev ");
@@ -195,6 +182,7 @@ dmaattach(parent, self, aux)
 		break;
 	case DMAREV_ESC:
 		printf("esc");
+		break;
 	case DMAREV_1:
 		printf("1");
 		break;
@@ -296,7 +284,7 @@ espsearch:
 	 */								\
 	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
 	/*								\
-	 * select drain bit based on revision				\
+	 * Select drain bit based on revision				\
 	 * also clears errors and D_TC flag				\
 	 */								\
 	if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)		\
@@ -323,10 +311,28 @@ dma_reset(sc)
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
 	if (sc->sc_rev > DMAREV_1)
 		DMACSR(sc) |= D_FASTER;
-	if (sc->sc_rev == DMAREV_ESC) {
-		/*DMACSR(sc) |= 0x800;		-* 16-byte burst mode */
+
+	switch (sc->sc_rev) {
+	case DMAREV_2:
+		sc->sc_regs->csr &= ~D_BURST_SIZE; /* must clear first */
+		if (sc->sc_burst & SBUS_BURST_32) {
+			DMACSR(sc) |= D_BURST_32;
+		} else if (sc->sc_burst & SBUS_BURST_16) {
+			DMACSR(sc) |= D_BURST_16;
+		} else {
+			DMACSR(sc) |= D_BURST_0;
+		}
+		break;
+	case DMAREV_ESC:
 		DMACSR(sc) |= D_AUTODRAIN;	/* Auto-drain */
+		if (sc->sc_burst & SBUS_BURST_32) {
+			DMACSR(sc) &= ~0x800;
+		} else
+			DMACSR(sc) |= 0x800;
+		break;
+	default:
 	}
+
 	sc->sc_active = 0;			/* and of course we aren't */
 }
 
