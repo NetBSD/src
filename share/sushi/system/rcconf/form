@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.10 2004/03/09 21:36:37 garbled Exp $
+# $NetBSD: form,v 1.11 2004/03/24 18:47:08 garbled Exp $
 escript:30,script2,rc_rcorder_flags	Flags to rcorder at boot
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 escript:30,script2,rcshutdown_rcorder_flags	Flags to rcorder at shutdown
@@ -42,7 +42,7 @@ escript:30,script2,dhclient_flags	Flags for DHCP, if blank, config all interface
 script:script1,ntpdate		Run ntpdate at boot?
 escript:30,script2,ntpdate_flags	Flags for ntpdate.
 escript:30,script2,ppp_peers	/etc/ppp/peers to call
-list:host,autohost,router	IPv6 mode
+script:script4	IPv6 mode
 script:script1,ip6sitelocal	IPv6 sitelocal addresses
 script:script1,rtsol		IPv6 autoconfig on non routers
 escript:30,script2,rtsol_flags	Flags to pass to rtsol
