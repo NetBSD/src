@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.38 2000/06/06 08:54:06 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.39 2000/12/30 14:32:04 sommerfeld Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -38,14 +38,21 @@ __recurse: .USE
 		;;							\
 	esac
 
+# for obscure reasons, we can't do a simple .if ${dir} == ".WAIT"
+# but have to assign to __TARGDIR first.
 .for targ in ${TARGETS}
 .for dir in ${__REALSUBDIR}
+__TARGDIR := ${dir}
+.if ${__TARGDIR} == ".WAIT"
+SUBDIR_${targ} += .WAIT
+.else
 .PHONY: ${targ}-${dir}
 ${targ}-${dir}: .MAKE __recurse
-subdir-${targ}: ${targ}-${dir}
+SUBDIR_${targ} += ${targ}-${dir}
+.endif
 .endfor
 .if defined(__REALSUBDIR)
-${targ}: subdir-${targ}
+${targ}: ${SUBDIR_${targ}}
 .endif
 .endfor
 
