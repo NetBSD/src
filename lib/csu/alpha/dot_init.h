@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.2 2002/11/22 06:44:58 thorpej Exp $ */
+/* $NetBSD: dot_init.h,v 1.3 2002/11/22 16:47:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -82,7 +82,7 @@
 #define MD_CALL_STATIC_FUNCTION(section, func) \
 asm(".section " #section "\n"		\
 "    br $29, 1f		\n"		\
-"1:  ldgp $29, 1f	\n"		\
+"1:  ldgp $29, 0($29)	\n"		\
 "    unop		\n"		\
 "    jsr $26, " #func "\n"		\
 "    .align 3; .previous");
