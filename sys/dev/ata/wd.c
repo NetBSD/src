@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
+/*	$NetBSD: wd.c,v 1.194 1999/08/09 09:48:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -470,9 +470,7 @@ __wdstart(wd, bp)
 		timeout(wdrestart, wd, hz);
 		break;
 	case WDC_QUEUED:
-		break;
 	case WDC_COMPLETE:
-		wddone(wd);
 		break;
 	default:
 		panic("__wdstart: bad return code from wdc_ata_bio()");
@@ -731,7 +729,7 @@ wdclose(dev, flag, fmt, p)
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	if (wd->sc_dk.dk_openmask == 0) {
-		wd_flushcache(wd,0);
+		wd_flushcache(wd, AT_WAIT);
 		/* XXXX Must wait for I/O to complete! */
 
 		wdc_ata_delref(wd->drvp);
@@ -1255,7 +1253,7 @@ wd_flushcache(wd, flags)
 	wdc_c.r_command = WDCC_FLUSHCACHE;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
-	wdc_c.flags = flags | AT_WAIT;
+	wdc_c.flags = flags;
 	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
@@ -1281,7 +1279,7 @@ wd_shutdown(arg)
 	void *arg;
 {
 	struct wd_softc *wd = arg;
-	wd_flushcache(wd, ATA_POLL);
+	wd_flushcache(wd, AT_POLL);
 }
 
 /*
