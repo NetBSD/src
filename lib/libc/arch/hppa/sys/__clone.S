@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.4 2004/07/01 06:50:04 skrll Exp $	*/
+/*	$NetBSD: __clone.S,v 1.5 2004/07/18 20:48:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,11 +44,51 @@
 #endif
 
 	.import	__cerror, code
+
 /*
  * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
  */
-/* XXX - this is unimplemented at this time. */
 ENTRY(__clone, 0)
+
+	/*
+	 * Sanity checks: func and stack may not be NULL.
+	 */
 	ldi	EINVAL, %t1
-	b,n	__cerror
+	comb,=	%r0, %arg0, __cerror
+	nop
+	comb,=	%r0, %arg1, __cerror
+	nop
+
+	/*
+	 * Put the func and arg arguments into a frame in the child's stack.
+	 */
+	ldo	(HPPA_FRAME_SIZE * 2)(%arg1), %arg1
+	stw	%arg0, HPPA_FRAME_ARG(0)(%arg1)
+	stw	%arg3, HPPA_FRAME_ARG(1)(%arg1)
+
+	/*
+	 * The system call expects (flags, stack).
+	 */
+	copy	%arg2, %arg0
+	SYSCALL(__clone)
+	comb,<>,n %r0, %ret1, 9f
+	bv,n	%r0(%rp)
+
+9:	/*
+	 * Child: Reload the function and argument from the new stack.
+	 */
+	ldw	HPPA_FRAME_ARG(0)(%sp), %r22
+	ldw	HPPA_FRAME_ARG(1)(%sp), %arg0
+
+	/* Call the clone's entry point. */
+	stw	%r19, HPPA_FRAME_ARG(2)(%sp)
+	bl	$$dyncall, %r31
+	copy	%r31, %rp
+	ldw	HPPA_FRAME_ARG(2)(%sp), %r19
+
+	/* Pass the return value to _exit(). */
+	copy	%ret0, %arg0
+	PIC_CALL(_exit)
+
+	/* NOTREACHED */
 EXIT(__clone)
