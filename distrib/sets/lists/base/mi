@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.350 2002/09/10 22:19:41 joda Exp $
+# $NetBSD: mi,v 1.351 2002/09/24 10:49:15 agc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -76,8 +76,10 @@
 ./rescue/bzip2		base-rescue-root
 ./rescue/cat		base-rescue-root
 ./rescue/ccdconfig	base-rescue-root
+./rescue/chgrp		base-rescue-root
 ./rescue/chio		base-rescue-root
 ./rescue/chmod		base-rescue-root
+./rescue/chown		base-rescue-root
 ./rescue/clri		base-rescue-root
 ./rescue/cp		base-rescue-root
 ./rescue/csh		base-rescue-root
