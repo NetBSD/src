@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Scooter Morris at Genentech Inc.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: vfs_lockf.c,v 1.3 1994/05/19 05:04:07 cgd Exp $
+ *	from: @(#)ufs_lockf.c	8.3 (Berkeley) 1/6/94
+ *	$Id: vfs_lockf.c,v 1.4 1994/05/19 06:13:50 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -48,8 +48,9 @@
 #include <sys/lockf.h>
 
 /*
- * Advisory record locking support
+ * Do an advisory lock operation.
  */
+int
 lf_advlock(head, size, id, op, fl, flags)
 	struct lockf **head;
 	off_t size;
@@ -71,7 +72,6 @@ lf_advlock(head, size, id, op, fl, flags)
 			return (0);
 		}
 	}
-
 	/*
 	 * Convert the flock structure into a start and end.
 	 */
@@ -100,7 +100,7 @@ lf_advlock(head, size, id, op, fl, flags)
 	else
 		end = start + fl->l_len - 1;
 	/*
-	 * Create the lockf structure
+	 * Create the lockf structure.
 	 */
 	MALLOC(lock, struct lockf *, sizeof *lock, M_LOCKF, M_WAITOK);
 	lock->lf_start = start;
@@ -114,7 +114,8 @@ lf_advlock(head, size, id, op, fl, flags)
 	/*
 	 * Do the requested operation.
 	 */
-	switch(op) {
+	switch (op) {
+
 	case F_SETLK:
 		return (lf_setlock(lock));
 
@@ -127,9 +128,9 @@ lf_advlock(head, size, id, op, fl, flags)
 		error = lf_getlock(lock, fl);
 		FREE(lock, M_LOCKF);
 		return (error);
-	
+
 	default:
-		free(lock, M_LOCKF);
+		FREE(lock, M_LOCKF);
 		return (EINVAL);
 	}
 	/* NOTREACHED */
@@ -143,7 +144,7 @@ int maxlockdepth = MAXDEPTH;
 
 #ifdef LOCKF_DEBUG
 int	lockf_debug = 0;
-#endif /* LOCKF_DEBUG */
+#endif
 
 #define NOLOCKF (struct lockf *)0
 #define SELF	0x1
@@ -152,6 +153,7 @@ int	lockf_debug = 0;
 /*
  * Set a byte-range lock.
  */
+int
 lf_setlock(lock)
 	register struct lockf *lock;
 {
@@ -240,7 +242,7 @@ lf_setlock(lock)
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-	if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
+		if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
 			/*
 			 * Delete ourselves from the waiting to lock list.
 			 */
@@ -250,10 +252,17 @@ lf_setlock(lock)
 				if (block->lf_block != lock)
 					continue;
 				block->lf_block = block->lf_block->lf_block;
-				free(lock, M_LOCKF);
-				return (error);
+				break;
 			}
-			panic("lf_setlock: lost lock");
+			/*
+			 * If we did not find ourselves on the list, but
+			 * are still linked onto a lock list, then something
+			 * is very wrong.
+			 */
+			if (block == NOLOCKF && lock->lf_next != NOLOCKF)
+				panic("lf_setlock: lost lock");
+			free(lock, M_LOCKF);
+			return (error);
 		}
 	}
 	/*
@@ -385,6 +394,7 @@ lf_setlock(lock)
  * Generally, find the lock (or an overlap to that lock)
  * and remove it (or shrink it), then wakeup anyone we can.
  */
+int
 lf_clearlock(unlock)
 	register struct lockf *unlock;
 {
@@ -453,12 +463,12 @@ lf_clearlock(unlock)
  * Check whether there is a blocking lock,
  * and if so return its process identifier.
  */
+int
 lf_getlock(lock, fl)
 	register struct lockf *lock;
 	register struct flock *fl;
 {
 	register struct lockf *block;
-	off_t start, end;
 
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 1)
@@ -517,6 +527,7 @@ lf_getblock(lock)
  * NOTE: this returns only the FIRST overlapping lock.  There
  *	 may be more than one.
  */
+int
 lf_findoverlap(lf, lock, type, prev, overlap)
 	register struct lockf *lf;
 	struct lockf *lock;
@@ -589,7 +600,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 			return (2);
 		}
 		if (start <= lf->lf_start &&
-			   (end == -1 ||
+		           (end == -1 ||
 			   (lf->lf_end != -1 && end >= lf->lf_end))) {
 			/* Case 3 */
 #ifdef LOCKF_DEBUG
@@ -726,6 +737,7 @@ lf_wakelock(listhead)
 /*
  * Print out a lock.
  */
+void
 lf_print(tag, lock)
 	char *tag;
 	register struct lockf *lock;
@@ -750,6 +762,7 @@ lf_print(tag, lock)
 		printf("\n");
 }
 
+void
 lf_printlist(tag, lock)
 	char *tag;
 	struct lockf *lock;
