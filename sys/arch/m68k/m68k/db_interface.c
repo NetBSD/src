@@ -31,13 +31,11 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
-#include <setjmp.h>	/* XXX */
+#include <setjmp.h>
 
-#include <vm/vm_statistics.h>
-#include <vm/pmap.h>
+#include <vm/vm.h>
 
 #include <machine/trap.h>
-#include <machine/mon.h>
 #include <machine/db_machdep.h>
 
 extern jmp_buf	*db_recover;
