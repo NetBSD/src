@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.36 2002/10/23 09:14:35 jdolecek Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.37 2002/11/26 19:01:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.36 2002/10/23 09:14:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.37 2002/11/26 19:01:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,8 +519,8 @@ filt_fifordetach(struct knote *kn)
 	struct socket *so;
 
 	so = (struct socket *)kn->kn_hook;
-	SLIST_REMOVE(&so->so_rcv.sb_sel.si_klist, kn, knote, kn_selnext);
-	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_klist))
+	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
 		so->so_rcv.sb_flags &= ~SB_KNOTE;
 }
 
@@ -545,8 +545,8 @@ filt_fifowdetach(struct knote *kn)
 	struct socket *so;
 
 	so = (struct socket *)kn->kn_hook;
-	SLIST_REMOVE(&so->so_snd.sb_sel.si_klist, kn, knote, kn_selnext);
-	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_klist))
+	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
 		so->so_snd.sb_flags &= ~SB_KNOTE;
 }
 
@@ -597,7 +597,7 @@ fifo_kqfilter(void *v)
 
 	ap->a_kn->kn_hook = so;
 
-	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, ap->a_kn, kn_selnext);
+	SLIST_INSERT_HEAD(&sb->sb_sel.sel_klist, ap->a_kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;
 	return (0);
 }
