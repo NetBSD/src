@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.13 1998/07/03 17:21:22 mrg Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.14 1998/07/03 18:09:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.13 1998/07/03 17:21:22 mrg Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.14 1998/07/03 18:09:49 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,21 +56,24 @@ __RCSID("$NetBSD: uucpd.c,v 1.13 1998/07/03 17:21:22 mrg Exp $");
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 
 #include <netinet/in.h>
+
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <time.h>
-#include <pwd.h>
-#include <unistd.h>
+
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <utmp.h>
-#include <fcntl.h>
 
 #include "pathnames.h"
 
@@ -84,6 +87,7 @@ char *nenv[] = {
 	Username,
 	NULL,
 };
+int	log;
 
 extern char **environ;
 
@@ -98,14 +102,20 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-#ifndef BSDINETD
-	register int s, tcp_socket;
-	struct servent *sp;
-#endif /* !BSDINETD */
-	extern int errno;
+	int	ch;
 
+	while ((ch = getopt(argc, argv, "l")) != -1)
+		switch (ch) {
+		case 'l':
+			log = 1;
+			break;
+		default:
+			exit(1);
+		}
+
+	if (log)
+		openlog("uucpd", LOG_PID, LOG_AUTH);
 	environ = nenv;
-#ifdef BSDINETD
 	close(1);
 	close(2);
 	dup(0);
@@ -114,6 +124,8 @@ main(argc, argv)
 	if (getpeername(0, (struct sockaddr *)&hisctladdr, &hisaddrlen) < 0) {
 		fprintf(stderr, "%s: ", argv[0]);
 		perror("getpeername");
+		if (log)
+			syslog(LOG_ERR, "getpeername failed: %m");
 		exit(1);
 	}
 	switch (fork()) {
@@ -126,53 +138,6 @@ main(argc, argv)
 		dologout();
 	}
 	exit(1);
-#else /* !BSDINETD */
-	sp = getservbyname("uucp", "tcp");
-	if (sp == NULL){
-		perror("uucpd: getservbyname");
-		exit(1);
-	}
-	if (fork())
-		exit(0);
-	if ((s=open(_PATH_TTY, 2)) >= 0){
-		ioctl(s, TIOCNOTTY, (char *)0);
-		close(s);
-	}
-
-	bzero((char *)&myctladdr, sizeof (myctladdr));
-	myctladdr.sin_len = sizeof(struct sockaddr_in);
-	myctladdr.sin_family = AF_INET;
-	myctladdr.sin_port = sp->s_port;
-	tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (tcp_socket < 0) {
-		perror("uucpd: socket");
-		exit(1);
-	}
-	if (bind(tcp_socket, (char *)&myctladdr, sizeof (myctladdr)) < 0) {
-		perror("uucpd: bind");
-		exit(1);
-	}
-	listen(tcp_socket, 3);	/* at most 3 simultaneuos uucp connections */
-	signal(SIGCHLD, dologout);
-
-	for(;;) {
-		s = accept(tcp_socket, &hisctladdr, &hisaddrlen);
-		if (s < 0){
-			if (errno == EINTR) 
-				continue;
-			perror("uucpd: accept");
-			exit(1);
-		}
-		if (fork() == 0) {
-			close(0); close(1); close(2);
-			dup(s); dup(s); dup(s);
-			close(tcp_socket); close(s);
-			doit(&hisctladdr);
-			exit(1);
-		}
-		close(s);
-	}
-#endif	/* !BSDINETD */
 }
 
 void
@@ -189,6 +154,8 @@ doit(sinp)
 		fflush(stdout);
 		if (readline(user, sizeof user) < 0) {
 			fprintf(stderr, "user read\n");
+			if (log)
+				syslog(LOG_ERR, "user read failed: %m");
 			return;
 		}
 	} while (user[0] == '\0');
@@ -200,6 +167,8 @@ doit(sinp)
 		fflush(stdout);
 		if (readline(passwd, sizeof passwd) < 0) {
 			fprintf(stderr, "passwd read\n");
+			if (log)
+				syslog(LOG_ERR, "passwd read failed: %m");
 			return;
 		}
 		if (pw != NULL)
@@ -207,24 +176,39 @@ doit(sinp)
 
 		if (pw == NULL || strcmp(xpasswd, pw->pw_passwd)) {
 			fprintf(stderr, "Login incorrect.\n");
+			if (log)
+				syslog(LOG_ERR, "incorrect password from %s",
+				    user);
 			return;
 		}
 	} else
 		(void)crypt("dummy password", "PA");	/* must always crypt */
 	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
 		fprintf(stderr, "Login incorrect.\n");
+			if (log)
+				syslog(LOG_ERR, "incorrect shell for %s", user);
 		return;
 	}
 	alarm(0);
 	sprintf(Username, "USER=%s", user);
 	dologin(pw, sinp);
-	setgid(pw->pw_gid);
-	initgroups(pw->pw_name, pw->pw_gid);
-	chdir(pw->pw_dir);
-	setlogin(user);
-	setuid(pw->pw_uid);
+	if (initgroups(pw->pw_name, pw->pw_gid) < 0 ||
+	    setgid(pw->pw_gid) < 0 ||
+	    chdir(pw->pw_dir) < 0 ||
+	    setlogin(user) < 0 ||
+	    setuid(pw->pw_uid) < 0) {
+		fprintf(stderr, "Could not set permissions.\n");
+		if (log)
+			syslog(LOG_ERR,"couldn't set user %s's permissions: %m",
+			    user);
+		return;
+	}
+	if (log)
+		syslog(LOG_INFO, "%s has logged in", user);
 	execl(_PATH_UUCICO, "uucico", (char *)0);
 	perror("uucico server: execl");
+	if (log)
+		syslog(LOG_ERR, "execl failed: %m");
 }
 
 int
@@ -245,7 +229,7 @@ readline(p, n)
 		if (c != '\n')
 			*p++ = c;
 	}
-	return(-1);
+	return (-1);
 }
 
 /* Note that SCPYN is only used on strings that may not be nul terminated */
@@ -256,14 +240,9 @@ struct	utmp utmp;
 void
 dologout()
 {
-	int status;
 	int pid, wtmp;
 
-#ifdef BSDINETD
-	while ((pid = wait(&status)) > 0) {
-#else  /* !BSDINETD */
-	while ((pid = wait3(&status,WNOHANG,0)) > 0) {
-#endif /* !BSDINETD */
+	while ((pid = wait(NULL)) > 0) {
 		wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 		if (wtmp >= 0) {
 			sprintf(utmp.ut_line, "uucp%.4d", pid);
