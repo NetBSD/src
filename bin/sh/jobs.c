@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.53 2002/09/28 03:15:43 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.54 2002/10/23 19:46:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.53 2002/09/28 03:15:43 mycroft Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.54 2002/10/23 19:46:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ showjobs(change)
 	 * Check if we are not in our foreground group, and if not
 	 * put us in it.
 	 */
-	if (gotpid != -1 && tcgetpgrp(ttyfd) != getpid()) {
+	if (mflag && gotpid != -1 && tcgetpgrp(ttyfd) != getpid()) {
 		if (tcsetpgrp(ttyfd, getpid()) == -1)
 			error("Cannot set tty process group (%s) at %d",
 			    strerror(errno), __LINE__);
