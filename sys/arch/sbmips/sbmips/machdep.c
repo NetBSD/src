@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2002/03/17 07:39:16 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2002/03/17 11:37:55 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -89,6 +89,7 @@
 #include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+#include <machine/swarm.h>
 #include <mips/locore.h>
 
 #include <mips/cfe/cfe_xiocb.h>
