@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.148 2000/09/21 20:59:58 jeffs Exp $	*/
+/*	$NetBSD: trap.c,v 1.149 2000/09/26 18:24:45 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2000/09/21 20:59:58 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2000/09/26 18:24:45 jeffs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -235,19 +235,10 @@ syscall(status, cause, opc)
 		callp += code;
 	argsiz = callp->sy_argsize / sizeof(int);
 	if (argsiz > nsaved) {
-#if 0
 		error = copyin(
-			(void *)((int *)frame->f_regs[SP] + 4),
+			(void *)((int *)(vaddr_t)frame->f_regs[SP] + 4),
 			(void *)(args + nsaved),
 			(argsiz - nsaved) * sizeof(int));
-#else
- 		int sp32;
- 		sp32 = frame->f_regs[SP];
-		error = copyin(
-			(void *)((int *)sp32 + 4),
-			(void *)(args + nsaved),
-			(argsiz - nsaved) * sizeof(int));
-#endif
 		if (error)
 			goto bad;
 	}
