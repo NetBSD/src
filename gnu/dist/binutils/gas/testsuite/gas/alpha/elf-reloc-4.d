@@ -1,7 +1,7 @@
 #objdump: -r
 #name: alpha elf-reloc-4
 
-.*:     file format elf64-alpha
+.*:     file format elf64-alpha.*
 
 RELOCATION RECORDS FOR \[\.text\]:
 OFFSET           TYPE              VALUE 

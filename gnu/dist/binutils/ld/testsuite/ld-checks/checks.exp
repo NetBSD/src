@@ -25,7 +25,7 @@ proc section_check {} {
     global subdir
     
     # The usage of .lcomm in asm.s is incompatible with ia64 and ppc coff.
-    if { [istarget ia64-*-elf*] || [istarget ia64-*-linux*]
+    if { [istarget ia64-*-*]
 	 || [istarget powerpc*-*-aix*] || [istarget powerpc-*-beos*]
 	 || [istarget rs6000-*-*] } {
 	return

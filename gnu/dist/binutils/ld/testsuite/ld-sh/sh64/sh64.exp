@@ -27,6 +27,10 @@ if [istarget sh64*-*-linux*] {
     return
 }
 
+if { [istarget sh64*-*-netbsd*] || [istarget sh5*-*-netbsd*] } then {
+	return
+}
+
 # List contains test-items with 3 items followed by 2 lists:
 # 0:name 1:ld options 2:assembler options
 # 3:filenames of assembler files 4: action and options. 5: name of output file
@@ -96,14 +100,14 @@ set sh64tests {
      {{readelf {-S -s -r -x 1 -x 2 -x 9} crange1.rd}} "crange1.bin" }
     {"Handling SH64 assembler-generated .cranges, partial linking" "-mshelf32 -r"
      "--abi=32" {crange-2a.s}
-     {{readelf {-S -s -r -x 2 -x 5} crangerel1.rd}} "crangerel1.bin" }
+     {{readelf {-S -s -r -x 2 -x 6} crangerel1.rd}} "crangerel1.bin" }
     {"Mixing SH64 assembler-generated with linker-generated .cranges" "-mshelf32"
      "--abi=32" {crange-2a.s crange-2b.s crange-1.s}
      {{readelf {-S -s -r -x 2 -x 9} crange2.rd}} "crange2.bin" }
     {"Mixing SH64 assembler-generated with linker-generated .cranges, partial linking"
      "-mshelf32 -r"
      "--abi=32" {crange-2a.s crange-2c.s crange-2d.s crange-2e.s}
-     {{readelf {-S -s -r -x 2 -x 5} crangerel2.rd}} "crangerel2.bin" }
+     {{readelf {-S -s -r -x 2 -x 6} crangerel2.rd}} "crangerel2.bin" }
     {"Merge and use of SH64 .cranges, some not originally in order" "-mshelf32"
      "--abi=32"
      {crange-2e.s crange-2f.s crange-2g.s crange-2a.s crange-2d.s crange-2i.s

@@ -21,7 +21,7 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   2 \.bss          0+  0+  0+  0+a0  2\*\*0
                   ALLOC
-  3 \.rodata       0+10  0+  0+  0+a0  2\*\*0
+  3 \.rodata       0+10  0+  0+  0+a0  2\*\*2
                   CONTENTS, ALLOC, LOAD, RELOC, READONLY, DATA
 SYMBOL TABLE:
 0+ l    d  \.text	0+ 
@@ -90,6 +90,5 @@ Contents of section \.text:
  0040 cc000210 c8000210 cc000080 c8000080  .*
  0050 cc0002c0 c80002c0 cc0001e0 c80001e0  .*
  0060 6ff0fff0 6ff0fff0 6ff0fff0           .*
-Contents of section \.data:
 Contents of section \.rodata:
  0000 00000048 00000088 00000008 00000020  .*

@@ -1479,7 +1479,7 @@ yyreturn:
 
 /* four modes
 
-   -d write structure defintions for sysroff in host format
+   -d write structure definitions for sysroff in host format
    -i write functions to swap into sysroff format in
    -o write functions to swap into sysroff format out
    -c write code to print info in human form */
@@ -1488,9 +1488,7 @@ int yydebug;
 char writecode;
 
 int 
-main(ac,av)
-int ac;
-char **av;
+main (int ac, char **av)
 {
   yydebug=0;
   if (ac > 1)
@@ -1507,8 +1505,7 @@ return 0;
 }
 
 int
-yyerror(s)
-     char *s;
+yyerror (char *s)
 {
   fprintf(stderr, "%s\n" , s);
   return 0;

@@ -1,7 +1,7 @@
 #objdump: -r
 #name: alpha elf-reloc-8
 
-.*:     file format elf64-alpha
+.*:     file format elf64-alpha.*
 
 RELOCATION RECORDS FOR \[\.text\]:
 OFFSET *TYPE *VALUE 
@@ -307,3 +307,24 @@ OFFSET *TYPE *VALUE
 0*0000048 REFQUAD           \.init\.text\+0x0*00005f0
 0*0000050 REFQUAD           \.init\.data\+0x0*0000029
 0*0000058 REFQUAD           \.init\.text\+0x0*0000610
+
+
+RELOCATION RECORDS FOR \[\.eh_frame\]:
+OFFSET *TYPE *VALUE 
+0*000001c SREL32            \.init\.text
+0*0000034 SREL32            \.init\.text\+0x0*0000050
+0*0000048 SREL32            \.init\.text\+0x0*0000080
+0*000005c SREL32            \.init\.text\+0x0*00000b0
+0*0000080 SREL32            \.init\.text\+0x0*00002c0
+0*00000a0 SREL32            \.init\.text\+0x0*00005a0
+0*00000b8 SREL32            \.init\.text\+0x0*00005f0
+0*00000cc SREL32            \.init\.text\+0x0*0000610
+0*00000e0 SREL32            \.init\.text\+0x0*0000630
+0*00000fc SREL32            \.init\.text\+0x0*0000750
+0*0000120 SREL32            \.init\.text\+0x0*0000990
+0*000013c SREL32            \.init\.text\+0x0*0000a10
+0*0000150 SREL32            \.init\.text\+0x0*0000a20
+0*0000164 SREL32            \.init\.text\+0x0*0000a40
+0*000017c SREL32            \.init\.text\+0x0*0000a90
+0*0000190 SREL32            \.init\.text\+0x0*0000aa0
+0*00001a4 SREL32            \.text

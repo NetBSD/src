@@ -37,4 +37,4 @@ Contents of section \.text:
  0070 6ff0fff0 6ff0fff0 6ff0fff0 6ff0fff0  .*
  0080 6ff0fff0 6ff0fff0 6ff0fff0 6ff0fff0  .*
  0090 6ff0fff0                             .*
-Contents of section \.data:
+

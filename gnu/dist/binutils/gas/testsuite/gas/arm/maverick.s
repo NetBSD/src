@@ -222,16 +222,16 @@ move:
 	cfmv64a	mvdx10, mvax2
 	cfmv64ami	mvdx14, mvax3
 	cfmv64ahi	mvdx13, mvax2
-	cfmvsc32cs	dspsc, mvfx12
-	cfmvsc32vs	dspsc, mvfx0
-	cfmvsc32vc	dspsc, mvfx14
-	cfmvsc32cc	dspsc, mvfx10
-	cfmvsc32ne	dspsc, mvfx15
-	cfmv32scle	mvfx6, dspsc
-	cfmv32scmi	mvfx2, dspsc
-	cfmv32sceq	mvfx5, dspsc
-	cfmv32scge	mvfx9, dspsc
-	cfmv32scal	mvfx3, dspsc
+	cfmvsc32cs	dspsc, mvdx12
+	cfmvsc32vs	dspsc, mvdx0
+	cfmvsc32vc	dspsc, mvdx14
+	cfmvsc32cc	dspsc, mvdx10
+	cfmvsc32ne	dspsc, mvdx15
+	cfmv32scle	mvdx6, dspsc
+	cfmv32scmi	mvdx2, dspsc
+	cfmv32sceq	mvdx5, dspsc
+	cfmv32scge	mvdx9, dspsc
+	cfmv32scal	mvdx3, dspsc
 	cfcpysle	mvf7, mvf2
 	cfcpysne	mvf12, mvf6
 	cfcpyslt	mvf0, mvf7

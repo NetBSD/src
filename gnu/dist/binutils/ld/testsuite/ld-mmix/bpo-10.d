@@ -26,7 +26,3 @@ SYMBOL TABLE:
 
 Contents of section \.init:
  0000 e37704a6                             .*
-Contents of section \.text:
-Contents of section \.sbss:
-Contents of section \.bss:
-Contents of section \.MMIX\.reg_contents:

@@ -1,4 +1,4 @@
-# Test that certain vr4122 hardware bugs are worked around.
+# Test workarounds selected by -mfix-vr4120.
 # Note that we only work around bugs gcc may generate.
 
 r21:

@@ -1,4 +1,5 @@
 #ld:
+#target: cris-*-*elf* cris-*-*aout*
 #objdump: -p
 
 # Check that we can link an object that doesn't have any global symbols;

@@ -108,7 +108,7 @@ compact2:
 	nop
 compactend2:
 	nop
-	.space 100,0
+	.space 102,0
 	.long 0
 mediapoollabel2:
 	.long mediapoolend2-compact2
@@ -177,7 +177,7 @@ shmedia_compact_code4:
 	nop
 	movi shmedia_compact_code_end4-shmedia_compact_code4,r46
 	.long 0x6ff0fff0
-	.space 18,0
+	.space 20,0
 mediapoollabel4a:
 	.long mediapoolend4a-shmedia_compact_code4
 mediapoolend4a:
@@ -203,7 +203,7 @@ compact4:
 	nop
 compactend4:
 	nop
-	.space 300,0
+	.space 298,0
 	.long 0
 mediapoollabel4:
 	.long mediapoolend4-compact4

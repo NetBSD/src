@@ -1,7 +1,7 @@
 #source: ldr1.s
 #source: ldr2.s
 #as: -little
-#ld: -shared -EL
+#ld: -shared -EL -z nocombreloc
 #readelf: -r -x4 -x5
 #target: sh*-*-elf
 
@@ -13,10 +13,10 @@
 
 Relocation section '\.rela\.text' at offset 0x[0-9a-f]+ contains 1 entries:
 .*
-0000033c  000000a5 R_SH_RELATIVE +00000340
+0000030c  000000a5 R_SH_RELATIVE +00000310
 
 Hex dump of section '\.rela\.text':
-  0x00000328          00000340 000000a5 0000033c .*
+  0x000002f8          00000310 000000a5 0000030c .*
 
 Hex dump of section '\.text':
-  0x00000334          00000340 00090009 00090009 .*
+  0x00000304          00000310 00090009 00090009 .*

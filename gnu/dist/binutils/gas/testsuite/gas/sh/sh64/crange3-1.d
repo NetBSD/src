@@ -17,7 +17,6 @@ Contents of section \.text:
  0010 01235678 12345678 12345678 1234fede  .*
  0020 6ff0fff0 6ff0fff0 6ff0fff0 6ff0fff0  .*
  0030 6ff0fff0                             .*
-Contents of section \.data:
 Contents of section \.rodata:
  0000 abcdef01 12345678                    .*
 Contents of section \.cranges:

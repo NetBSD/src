@@ -13,4 +13,3 @@ SYMBOL TABLE:
 Contents of section \.text:
  0000 00000020 00000020 00000020 00000020  .*
  0010 0000000a 00000000                    .*
-Contents of section \.data:

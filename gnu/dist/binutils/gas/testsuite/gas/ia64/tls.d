@@ -5,7 +5,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <foo>:
+0+000 <foo>:
    0:	0d 20 21 0a 80 05 	\[MFI\]       alloc r36=ar\.pfs,8,5,0
 			2: LTOFF_TPREL22	x
    6:	00 00 00 02 00 00 	            nop\.f 0x0

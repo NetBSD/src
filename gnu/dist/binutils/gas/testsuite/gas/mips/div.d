@@ -102,9 +102,9 @@ Disassembly of section .text:
 0+0174 <[^>]*> bnez	a2,0+0180 <foo\+0x180>
 0+0178 <[^>]*> ddiv	zero,a1,a2
 0+017c <[^>]*> break	(0x0,0x7|0x7)
-0+0180 <[^>]*> daddiu	at,zero,-1
+0+0180 <[^>]*> (daddiu	at,zero,-1|li	at,-1)
 0+0184 <[^>]*> bne	a2,at,0+019c <foo\+0x19c>
-0+0188 <[^>]*> daddiu	at,zero,1
+0+0188 <[^>]*> (daddiu	at,zero,1|li	at,1)
 0+018c <[^>]*> dsll32	at,at,0x1f
 0+0190 <[^>]*> bne	a1,at,0+019c <foo\+0x19c>
 0+0194 <[^>]*> nop

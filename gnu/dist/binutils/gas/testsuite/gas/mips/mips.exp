@@ -366,6 +366,10 @@ mips_arch_create mips32r2 32	mips32	{ ror } \
 mips_arch_create mips64	64	mips5	{ mips32 } \
 			{ -march=mips64 -mtune=mips64 } { -mmips:isa64 } \
 			{ mipsisa64-*-* mipsisa64el-*-* }
+mips_arch_create mips64r2 64	mips64	{ mips32r2 ror } \
+			{ -march=mips64r2 -mtune=mips64r2 } \
+			{ -mmips:isa64r2 } \
+			{ mipsisa64r2-*-* mipsisa64r2el-*-* }
 mips_arch_create r3000 	32	mips1	{} \
 			{ -march=r3000 -mtune=r3000 } { -mmips:3000 }
 mips_arch_create r3900 	32	mips1	{ gpr_ilocks } \
@@ -423,7 +427,8 @@ if { [istarget mips*-*-*] } then {
     run_dump_test_arches "blt"		[mips_arch_list_matching mips2]
     run_dump_test_arches "bltu"		[mips_arch_list_matching mips2]
     run_dump_test_arches "branch-misc-1" [mips_arch_list_matching mips1]
-    run_list_test_arches "branch-misc-2" "-32" [mips_arch_list_matching mips1]
+    run_list_test_arches "branch-misc-2" "-32 -non_shared" [mips_arch_list_matching mips1]
+    run_list_test_arches "branch-misc-2pic" "-32 -call_shared" [mips_arch_list_matching mips1]
 
     if $ilocks {
 	run_dump_test "div-ilocks"
@@ -458,6 +463,8 @@ if { [istarget mips*-*-*] } then {
     # Not sure when it first cropped up, but may be related to addition of
     # "la" -> "addiu" pattern in MIPS opcode table long ago.
     if $ecoff { run_dump_test "la-empic" }
+    if $elf { run_dump_test "lca-svr4pic" }
+    if $elf { run_dump_test "lca-xgot" }
     if !$aout {
 	# XXX FIXME: Has mips2 and later insns with mips1 disassemblies.
 	# (Should split and then use appropriate arch lists.)
@@ -536,6 +543,7 @@ if { [istarget mips*-*-*] } then {
     # supports the necessary mips16 reloc.
     if { $elf && !$no_mips16 } {
 	run_dump_test "mips16"
+	run_dump_test "mips16-64"
 	# Check jalx handling
 	run_dump_test "mips16-jalx"
 	run_dump_test "mips-jalx"
@@ -551,6 +559,7 @@ if { [istarget mips*-*-*] } then {
     run_dump_test "vr4122"
     run_dump_test "vr5400"
     run_dump_test "vr5500"
+    run_dump_test "rm7000"
     run_dump_test "perfcount"
     run_dump_test "lineno"
     run_dump_test "sync"
@@ -558,9 +567,17 @@ if { [istarget mips*-*-*] } then {
     run_dump_test_arches "mips32"	[mips_arch_list_matching mips32]
 
     run_dump_test_arches "mips32r2"	[mips_arch_list_matching mips32r2]
-    run_list_test_arches "mips32r2-ill" "-32" [mips_arch_list_matching mips32r2]
+    run_list_test_arches "mips32r2-ill" "-32" \
+			 [mips_arch_list_matching mips32r2 gpr32]
+    run_list_test_arches "mips32r2-ill-fp64" "-mabi=o64" \
+			 [mips_arch_list_matching mips32r2 gpr64]
 
     run_dump_test_arches "mips64"	[mips_arch_list_matching mips64]
+
+    run_dump_test_arches "mips64r2"	[mips_arch_list_matching mips64r2]
+    run_list_test_arches "mips64r2-ill" "" [mips_arch_list_matching mips64r2]
+
+    run_dump_test "set-arch"
 
     if { !$addr32 } {
 	run_dump_test "mips64-mips3d"
@@ -572,6 +589,9 @@ if { [istarget mips*-*-*] } then {
     }
 
     run_dump_test "relax"
+    run_dump_test "relax-swap1-mips1"
+    run_dump_test "relax-swap1-mips2"
+    run_dump_test "relax-swap2"
 
     run_list_test "illegal" "-32"
     run_list_test "baddata1" "-32"
@@ -605,6 +625,7 @@ if { [istarget mips*-*-*] } then {
 	run_dump_test "elf_arch_mips32"
 	run_dump_test "elf_arch_mips32r2"
 	run_dump_test "elf_arch_mips64"
+	run_dump_test "elf_arch_mips64r2"
 
 	# Verify that ASE markings are handled properly.
 	if { !$no_mips16 } { run_dump_test "elf_ase_mips16" }
@@ -646,12 +667,18 @@ if { [istarget mips*-*-*] } then {
 
 	if $has_newabi {
 	    run_dump_test "elf-rel15"
+	    run_dump_test "elf-rel16"
 
 	    run_dump_test "elf-rel-got-n32"
 	    run_dump_test "elf-rel-xgot-n32"
 	    run_dump_test "elf-rel-got-n64"
 	    run_dump_test "elf-rel-xgot-n64"
 	}
+	run_dump_test "elf-rel17"
+	if $has_newabi {
+	    run_dump_test "elf-rel18"
+	}
+	run_dump_test "elf-rel19"
 
 	run_dump_test "${tmips}${el}empic"
 	run_dump_test "empic2"
@@ -686,14 +713,35 @@ if { [istarget mips*-*-*] } then {
     run_dump_test "cp0-names-mips32"
     run_dump_test "cp0-names-mips32r2"
     run_dump_test "cp0-names-mips64"
+    run_dump_test "cp0-names-mips64r2"
     run_dump_test "cp0-names-sb1"
 
     run_dump_test "cp0sel-names-numeric"
     run_dump_test "cp0sel-names-mips32"
     run_dump_test "cp0sel-names-mips32r2"
     run_dump_test "cp0sel-names-mips64"
+    run_dump_test "cp0sel-names-mips64r2"
     run_dump_test "cp0sel-names-sb1"
 
     run_dump_test "hwr-names-numeric"
     run_dump_test "hwr-names-mips32r2"
+    run_dump_test "hwr-names-mips64r2"
+
+    run_dump_test "ldstla-32"
+    run_dump_test "ldstla-32-shared"
+    if $has_newabi {
+	run_dump_test "ldstla-n32"
+	run_dump_test "ldstla-n32-shared"
+	run_dump_test "ldstla-n64"
+	run_dump_test "ldstla-n64-shared"
+    }
+
+    run_dump_test "macro-warn-1"
+    run_dump_test "macro-warn-2"
+    run_dump_test "macro-warn-3"
+    run_dump_test "macro-warn-4"
+    if $has_newabi {
+	run_dump_test "macro-warn-1-n32"
+	run_dump_test "macro-warn-2-n32"
+    }
 }
