@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.29 1996/06/03 23:48:41 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.30 1996/06/12 19:12:21 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -454,12 +454,12 @@ espdmaintr(sc)
 		 */
 		resid += ( ESP_READ_REG(sc->sc_esp, ESP_TCL) |
 			  (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
-			   (sc->sc_esp->sc_rev > ESP100A
+			   ((sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
 				? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16)
 				: 0));
 
 		if (resid == 0 && sc->sc_dmasize == 65536 &&
-		    sc->sc_esp->sc_rev <= ESP100A)
+		    (sc->sc_esp->sc_cfg2 & ESPCFG2_FE) == 0)
 			/* A transfer of 64K is encoded as `TCL=TCM=0' */
 			resid = 65536;
 	}
@@ -474,7 +474,7 @@ espdmaintr(sc)
 	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
 		ESP_READ_REG(sc->sc_esp, ESP_TCL),
 		ESP_READ_REG(sc->sc_esp, ESP_TCM),
-		sc->sc_esp->sc_rev > ESP100A
+		(sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
 			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
 		trans, resid));
 
