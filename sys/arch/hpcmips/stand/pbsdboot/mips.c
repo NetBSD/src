@@ -1,4 +1,4 @@
-/*	$NetBSD: mips.c,v 1.1 1999/09/26 02:42:50 takemura Exp $	*/
+/*	$NetBSD: mips.c,v 1.2 1999/10/30 11:03:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,19 +37,22 @@
  */
 #include <pbsdboot.h>
 
+#define DUMMYBUFSIZE	(1024*32)
+int dummy_buf[DUMMYBUFSIZE];
+
 int
 mips_boot(caddr_t map)
 {
 	unsigned char *mem;
 	unsigned long jump_instruction, phys_mem;
+	int i, j;
 
 	/*
 	 *  allocate physical memory for startup program.
 	 */
 	if ((mem = (unsigned char*)vmem_alloc()) == NULL) {
-		debug_printf(TEXT("can't allocate final page.\n"));
-		msg_printf(MSG_ERROR, whoami, TEXT("can't allocate root page.\n"));
-		return (-1);
+		msg_printf(MSG_ERROR, whoami, TEXT("Can't allocate root page.\n"));
+		return -1;
 	}
 
 	/*
@@ -58,7 +61,7 @@ mips_boot(caddr_t map)
 	memcpy(mem, system_info.si_asmcode, system_info.si_asmcodelen);
   
 	/*
-	 *  set map address (override target field ofasmcode 
+	 *  set map address (override target field of asmcode 
 	 *  "lui a0, 0x0; ori a0, 0x0;".
 	 */
 	*(unsigned short*)&mem[0] = (unsigned short)(((long)map) >> 16);
@@ -67,19 +70,41 @@ mips_boot(caddr_t map)
 	/*
 	 *  construct start instruction
 	 */
-	phys_mem = (unsigned long)vtophysaddr(mem);
+	if (!(phys_mem = (unsigned long)vtophysaddr(mem))) {
+		msg_printf(MSG_ERROR, whoami, TEXT("Missing physical page.\n"));
+		return -1;
+	}
 	jump_instruction = (0x08000000 | ((phys_mem >> 2) & 0x03ffffff));
 
 	/*
 	 *  map interrupt vector
 	 */
 	mem = (unsigned char*)VirtualAlloc(0, 0x400, MEM_RESERVE, PAGE_NOACCESS);
-	VirtualCopy((LPVOID)mem, (LPVOID)(system_info.si_dramstart >> 8), 0x400,
-		    PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
+	if (!(VirtualCopy((LPVOID)mem, (LPVOID)(system_info.si_dramstart >> 8), 0x400,
+			  PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL))) {
+		msg_printf(MSG_ERROR, whoami, TEXT("Mapping interrupt vector failed.\n"));
+		return -1;
+	}
+
+	/*
+	 *  Flush D-cache
+	 */
+	for (i = 0; i < DUMMYBUFSIZE; i++) {
+		dummy_buf[i] = j;
+	}
+	for (i = 0; i < DUMMYBUFSIZE; i++) {
+		j = dummy_buf[i];
+		j++;
+	}
+	/*	
+	 *  Flush I-cache
+	 */
+	__asm(".space 32768;");
+
 	/*
 	 *  GO !
 	 */
-	*(unsigned long*)&mem[0x0] = jump_instruction;
+	*(unsigned long*)&mem[system_info.si_intrvec] = jump_instruction;
 
 	return (0); /* not reachable */
 }
