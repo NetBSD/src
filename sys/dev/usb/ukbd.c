@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.21 1999/01/08 11:58:25 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.22 1999/01/09 12:10:36 drochner Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
 	ukbd_set_leds,
 	ukbd_ioctl,
-#if 1
+#if 0
 	ukbd_cnattach,
 #endif
 };
