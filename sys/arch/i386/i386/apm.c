@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.34 1998/08/31 23:54:32 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.35 1998/11/12 21:32:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #if NAPM > 1
 #error only one APM device may be configured
 #endif
+
+#include "opt_apm.h"
 
 #ifdef APM_NOIDLE
 #error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
