@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/10/13 18:45:59 fvdl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.3 2003/10/19 18:14:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/10/13 18:45:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2003/10/19 18:14:42 fvdl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,7 @@ compat_16_sys___sigreturn14(l, v, retval)
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 	int error;
+	int err, trapno;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -106,7 +107,14 @@ compat_16_sys___sigreturn14(l, v, retval)
 	if (error != 0)
 		return error;
 
+	/*
+	 * XXX maybe inline this.
+	 */
+	err = tf->tf_err;
+	trapno = tf->tf_trapno;
 	memcpy(tf, &context.sc_mcontext.__gregs, sizeof (*tf));
+	tf->tf_err = err;
+	tf->tf_trapno = trapno;
 
 	/* Restore (possibly fixed up) FP state and force it to be reloaded */
 	if (l->l_md.md_flags & MDP_USEDFPU) {
