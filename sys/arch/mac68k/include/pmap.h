@@ -71,7 +71,7 @@
 
 /* 
  *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.5 1994/06/26 13:23:46 briggs Exp $
+ *	$Id: pmap.h,v 1.5.2.1 1994/08/11 22:29:02 mycroft Exp $
  */
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
@@ -131,7 +131,12 @@ typedef struct pv_entry {
 #ifdef	KERNEL
 pv_entry_t	pv_table;		/* array of entries, one per page */
 
+#ifdef MACHINE_NONCONTIG
+#define pa_index(pa)		pmap_page_index(pa)
+#else
 #define pa_index(pa)		atop(pa - vm_first_phys)
+#endif
+
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
 #define	pmap_kernel()			(kernel_pmap)

@@ -35,31 +35,32 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
-.\"	$Id: ast.4,v 1.2.2.1 1994/08/11 22:19:21 mycroft Exp $
+.\"	$Id: rtfps.4,v 1.1.2.2 1994/08/11 22:19:24 mycroft Exp $
 .\"
-.Dd March 30, 1994
-.Dt AST 4 i386
-.Os NetBSD 0.9a
+.Dd August 7, 1994
+.Dt RTFPS 4 i386
+.Os NetBSD 1.0
 .Sh NAME
-.Nm ast
+.Nm rtfps
 .Nd
 multiplexing serial communications interface
 .Sh SYNOPSIS
-.Cd "master ast0 at isa? port 0x1a0 irq 5"
-.Cd "device com2 at ast0 slave 0 flags 1"
-.Cd "device com3 at ast0 slave 1 flags 1"
-.Cd "device com4 at ast0 slave 2 flags 1"
-.Cd "device com5 at ast0 slave 3 flags 1"
+.Cd "master rtfps0 at isa? port 0x1230 irq 10"
+.Cd "device com2 at rtfps0 slave 0"
+.Cd "device com3 at rtfps0 slave 1"
+.Cd "device com4 at rtfps0 slave 2"
+.Cd "device com5 at rtfps0 slave 3"
 .Sh DESCRIPTION
 The
-.Nm ast
-driver provides support for boards that multiplex together up to four
-.Tn EIA
+.Nm rtfps
+driver provides support for IBM RT PC boards that multiplex together up to four
+.Rn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.  Apparently the original master of hardware
-using this multiplexing protocol was AST.
+or
+.Tn RS-422A
+communications interfaces.
 .Pp
 Each
 .Nm
@@ -69,11 +70,8 @@ devices.  The kernel configuration specifies these
 .Nm com
 devices as slave devices of the
 .Nm
-device, as shown in the synopsis.  The slave ID given for each
-.Nm com
-device determines which bit in the interrupt multiplexing register is
-tested to find interrupts for that device.
-The kernel configuration specification for each slave
+device, as shown in the synopsis.  The kernel configuration specification
+for each slave
 .Nm com
 device can optionally omit the 
 .Tn port
@@ -82,8 +80,7 @@ sequential addresses.  The
 .Tn port
 specification for the
 .Nm
-device is used to compute the port for the interrupt multiplexing
-register, and taken as the default port for the first slave
+device is taken as the default port for the first slave
 .Nm com
 device.
 .Sh FILES
@@ -95,5 +92,17 @@ device.
 .Sh HISTORY
 The
 .Nm
-driver was written by Roland McGrath and placed into the public
-domain.
+driver was written by Charles Hannum, based on the
+.Nm ast
+driver.
+.Sh BUGS
+The
+.Nm
+driver is unlikely to work on non-EISA and non-PCI machines.  The ISA
+bus only asserts 10 I/O address lines, and this is not enough.
+.Pp
+Even on EISA and PCI machines, some address conflicts have been observed.
+On one machine, the second port always conflicted with something (though
+it's not clear what) and caused strange results.  Disabling the second
+port in the kernel config allowed the other three ports to function
+correctly.
