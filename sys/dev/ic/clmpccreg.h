@@ -1,4 +1,4 @@
-/*  $NetBSD: clmpccreg.h,v 1.1 1999/02/13 17:05:20 scw Exp $ */
+/*  $NetBSD: clmpccreg.h,v 1.1.2.1 1999/09/10 23:30:41 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  * The values given here assume BYTESWAP is low. See 'sc_byteswap'
  * <dev/ic/clmpccvar.h>.
  */
+
+/* Number of bytes of FIFO (Rx & Tx) */
+#define CLMPCC_FIFO_DEPTH   16
 
 /* Global Registers */
 #define CLMPCC_REG_GFRCR    0x81    /* Global Firmware Revision Code Register */
