@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.4 2001/09/15 12:47:06 uch Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.5 2002/01/29 18:53:11 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #define PLUMIOBUSDEBUG
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

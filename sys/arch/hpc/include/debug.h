@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.3 2002/01/27 05:15:37 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.1 2002/01/29 18:53:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_interrupt_monitor.h"
-
 /*
  * debug version exports all symbols.
  */
@@ -55,6 +53,11 @@
  * #define DPRINTF_DEBUG	foo_debug
  * #define DPRINTF_LEVEL	2
  * #endif
+ */
+#ifdef USE_HPC_DPRINTF
+#ifdef __DPRINTF_EXT
+/*
+ * debug printf with Function name 
  */
 #define	PRINTF(fmt, args...)	printf("%s: " fmt, __FUNCTION__ , ##args) 
 #ifdef DPRINTF_ENABLE
@@ -75,6 +78,28 @@ int	DPRINTF_DEBUG = DPRINTF_LEVEL;
 #define DPRINTFN(n, args...)	((void)0)
 #endif /* DPRINTF_ENABLE */
 
+#else	/* __DPRINTF_EXT */
+/*
+ * normal debug printf
+ */
+#ifdef DPRINTF_ENABLE
+#ifndef DPRINTF_DEBUG
+#error "specify unique debug symbol"
+#endif
+#ifndef DPRINTF_LEVEL
+#define DPRINTF_LEVEL	1
+#endif
+int	DPRINTF_DEBUG = DPRINTF_LEVEL;
+#define	DPRINTF(arg)		if (DPRINTF_DEBUG) printf arg
+#define DPRINTFN(n, arg)	if (DPRINTF_DEBUG > (n)) printf arg
+#else /* DPRINTF_ENABLE */
+#define	DPRINTF(arg)		((void)0)
+#define DPRINTFN(n, arg)	((void)0)
+#endif /* DPRINTF_ENABLE */
+
+#endif /* __DPRINT_EXT */
+#endif /* USE_HPC_DPRINTF */
+
 /*
  * debug print utility
  */
@@ -89,22 +114,3 @@ void dbg_banner_line(void);
 	const char funcname[] = __FUNCTION__;				\
 	dbg_banner_title(funcname, sizeof funcname);			\
 }
-
-/*
- * interrupt monitor
- */
-#ifdef INTERRUPT_MONITOR
-enum heart_beat {
-	HEART_BEAT_CYAN = 0,
-	HEART_BEAT_MAGENTA,
-	HEART_BEAT_BLUE,
-	HEART_BEAT_YELLOW,
-	HEART_BEAT_GREEN,
-	HEART_BEAT_RED,
-	HEART_BEAT_WHITE,
-	HEART_BEAT_BLACK
-};
-void __dbg_heart_beat(enum heart_beat);
-#else
-#define __dbg_heart_beat(x)	((void)0)
-#endif /* INTERRUPT_MONITOR */

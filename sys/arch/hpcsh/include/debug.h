@@ -1,7 +1,7 @@
-/*	$NetBSD: debug.c,v 1.4 2002/01/29 18:53:02 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.1 2002/01/29 18:53:07 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,45 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
+#include "opt_interrupt_monitor.h"
+#define USE_HPC_DPRINTF
+#define __DPRINTF_EXT
+#include <hpc/include/debug.h>
 
-#include <machine/debug.h>
-#include <machine/bootinfo.h>
-
+/*
+ * interrupt monitor
+ */
 #ifdef INTERRUPT_MONITOR
-void
-__dbg_heart_beat(enum heart_beat cause) /* 16bpp R:G:B = 5:6:5 only */
-{
-#define LINE_STEP	2
-	struct state{
-		int cnt;
-		int phase;
-		u_int16_t color;
-	};
-	static struct state __state[] = {
-		{ 0, 0, 0x07ff }, /* cyan */
-		{ 0, 0, 0xf81f }, /* magenta */
-		{ 0, 0, 0x001f }, /* blue */
-		{ 0, 0, 0xffe0 }, /* yellow */
-		{ 0, 0, 0x07e0 }, /* green */
-		{ 0, 0, 0xf800 }, /* red */
-		{ 0, 0, 0xffff }, /* white */
-		{ 0, 0, 0x0000 }  /* black */
-	};
-	struct state *state = &__state[cause & 0x7];
-	u_int16_t *fb = (u_int16_t *)bootinfo->fb_addr;
-	int hline = bootinfo->fb_width;
-	u_int16_t color = state->color;
-	int i;
-
-	fb += (cause & 0x7) * bootinfo->fb_line_bytes * LINE_STEP;
-	if (++state->cnt > hline)
-		state->cnt = 0, state->phase ^= 1;
-	
-	for (i = 0; i < 8; i++)
-		*(fb + i) = color;
-	*(fb + state->cnt) = state->phase ? ~color : color;
-#undef LINE_STEP
-}
+enum heart_beat {
+	HEART_BEAT_CYAN = 0,
+	HEART_BEAT_MAGENTA,
+	HEART_BEAT_BLUE,
+	HEART_BEAT_YELLOW,
+	HEART_BEAT_GREEN,
+	HEART_BEAT_RED,
+	HEART_BEAT_WHITE,
+	HEART_BEAT_BLACK
+};
+void __dbg_heart_beat(enum heart_beat);
+#else
+#define __dbg_heart_beat(x)	((void)0)
 #endif /* INTERRUPT_MONITOR */

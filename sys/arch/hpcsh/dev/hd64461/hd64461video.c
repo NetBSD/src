@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.6 2002/01/27 05:15:36 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.7 2002/01/29 18:53:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	hd64461video_debug
 #endif
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 struct hd64461video_chip;
 struct hd64461video_font {

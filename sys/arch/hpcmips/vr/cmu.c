@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.7 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: cmu.c,v 1.8 2002/01/29 18:53:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -42,7 +42,7 @@
 #include <mips/cpuregs.h>
 
 #include <machine/bus.h>
-#include <machine/bitdisp.h>
+#include <machine/debug.h>
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
@@ -127,7 +127,7 @@ vrcmu_supply(vrcmu_chipset_tag_t cc, u_int16_t mask, int onoff)
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0);
 #ifdef VRCMU_VERBOSE
 	printf("cmu register(enter):");
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 #endif
 	if (onoff)
 		reg |= mask;
@@ -136,7 +136,7 @@ vrcmu_supply(vrcmu_chipset_tag_t cc, u_int16_t mask, int onoff)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0, reg);
 #ifdef VRCMU_VERBOSE
 	printf("cmu register(exit) :");
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 #endif
 	return (0);
 }

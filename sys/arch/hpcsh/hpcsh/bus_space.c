@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5 2002/01/27 05:15:36 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6 2002/01/29 18:53:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	bus_space_debug
 #endif
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 #define _BUS_SPACE_ACCESS_HOOK()	((void)0)
 _BUS_SPACE_READ(_bus_space, 1, 8)

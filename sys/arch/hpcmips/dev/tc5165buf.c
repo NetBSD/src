@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.8 2001/09/15 12:47:07 uch Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.9 2002/01/29 18:53:12 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
  * buffer chip
  */
 
-#include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
 
 #include <sys/param.h>

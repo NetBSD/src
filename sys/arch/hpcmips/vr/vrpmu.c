@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.13 2002/01/27 14:18:13 takemura Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.14 2002/01/29 18:53:22 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
-#include <machine/bitdisp.h>
+#include <machine/debug.h>
 
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vrpmuvar.h>
@@ -229,10 +229,10 @@ vrpmu_dump_regs(void *arg)
 	/* others? XXXX */
 	reg = vrpmu_read(sc, PMUCNT_REG_W);
 	printf("vrpmu: cnt 0x%x: ", reg);
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 	reg = vrpmu_read(sc, PMUCNT2_REG_W);
 	printf("vrpmu: cnt2 0x%x: ", reg);
-	bitdisp16(reg);
+	dbg_bit_print(reg);
 #if NVRBCU > 0
 	cpuid = vrbcu_vrip_getcpuid();
 	if (cpuid >= BCUREVID_RID_4111){

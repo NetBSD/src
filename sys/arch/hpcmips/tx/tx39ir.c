@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39ir.c,v 1.3 2001/08/02 04:30:01 shin Exp $ */
+/*	$NetBSD: tx39ir.c,v 1.4 2002/01/29 18:53:17 uch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
  * TX39 IR module (connected to UARTB)
  */
 #undef TX39IRDEBUG
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +136,7 @@ tx39ir_dump(struct tx39ir_softc *sc)
 	txreg_t reg;
 
 	reg = tx_conf_read(tc, TX39_IRCTRL1_REG);
-#define ISSETPRINT(r, m) __is_set_print((u_int32_t)(r),			\
+#define ISSETPRINT(r, m) dbg_bitmask_print((u_int32_t)(r),			\
 	TX39_IRCTRL1_##m, #m)
 	ISSETPRINT(reg, CARDET);
 	ISSETPRINT(reg, TESTIR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.5 2002/01/27 05:15:36 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.6 2002/01/29 18:53:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
 
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
