@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.8 2003/02/19 12:01:37 martin Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.9 2003/02/21 19:55:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -53,15 +53,6 @@
 #include <netsmb/smb_rq.h>
 #include <netsmb/smb_subr.h>
 
-/* freebsd-compatibility macros */
-#ifdef __NetBSD__
-#define p_siglist p_sigctx.ps_siglist
-#define p_sigmask p_sigctx.ps_sigmask
-#define p_sigignore p_sigctx.ps_sigignore
-#define SIGSETNAND(a,b) sigminusset(&(b),&(a))
-#define SIGNOTEMPTY(a) (!sigemptyset(&(a)))
-#endif
-
 smb_unichar smb_unieol = 0;
 
 static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
@@ -82,14 +73,10 @@ smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred)
 int
 smb_proc_intr(struct proc *p)
 {
-	sigset_t tmpset;
-
 	if (p == NULL)
 		return 0;
-	tmpset = p->p_siglist;
-	SIGSETNAND(tmpset, p->p_sigmask);
-	SIGSETNAND(tmpset, p->p_sigignore);
-	if (SIGNOTEMPTY(p->p_siglist) && SMB_SIGMASK(tmpset))
+	if (!sigemptyset(&p->p_sigctx.ps_siglist)
+	    && SMB_SIGMASK(p->p_sigctx.ps_siglist))
                 return EINTR;
 	return 0;
 }
