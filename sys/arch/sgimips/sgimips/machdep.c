@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2003/12/10 00:00:51 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2003/12/10 00:00:51 lonewolf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -416,11 +416,6 @@ mach_init(argc, argv, magic, btinfo)
 		panic("IP%d architecture not yet supported", mach_type);
 		break;
 	}
-
-	/*
-	 * Now that we know the system type, set up the real console
-	 */
-	consinit();
 
 	physmem = arcsmem = 0;
 	mem_cluster_cnt = 0;
