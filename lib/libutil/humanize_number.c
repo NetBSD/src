@@ -39,7 +39,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.1 2002/08/08 16:50:39 abs Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.2 2002/08/12 09:06:59 martin Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -117,14 +117,14 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 			s1++;
 			s2 = 0;
 		}
-		r = snprintf(buf, len, "%qd%s%qd%s%c%s", sign * s1, 
-		    localeconv()->decimal_point, s2,
+		r = snprintf(buf, len, "%lld%s%lld%s%c%s", (long long)(sign * s1), 
+		    localeconv()->decimal_point, (long long)s2,
 		    (i == 0 && !(flags & HN_B) ) || flags & HN_NOSPACE ?
 		    "" : " ", (i == 0 && (flags & HN_B)) ? 'B' :
 		    prefixes[i], suffix);
 		
 	} else
-	r = snprintf(buf, len, "%qd%s%c%s", sign * ((bytes + 50) / 100), 
+	r = snprintf(buf, len, "%lld%s%c%s", (long long)(sign * ((bytes + 50) / 100)), 
 	    i == 0 || flags & HN_NOSPACE ? "" : " ", (i == 0 &&
 	    (flags & HN_B)) ? 'B' : prefixes[i], suffix);
 
