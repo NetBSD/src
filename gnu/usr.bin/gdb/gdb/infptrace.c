@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: infptrace.c,v 1.1 1994/01/28 12:39:56 pk Exp $
+	$Id: infptrace.c,v 1.2 1994/02/04 16:40:20 pk Exp $
 */
 
 #include "defs.h"
@@ -41,28 +41,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <sys/ptrace.h>
 #endif
 #endif /* NO_PTRACE_H */
-
-#if !defined (PT_KILL)
-#define PT_KILL 8
-#endif
-
-#if !defined (PT_STEP)
-#define PT_STEP 9
-#define PT_CONTINUE 7
-#define PT_READ_U 3
-#define PT_WRITE_U 6
-#define PT_READ_I 1
-#define	PT_READ_D 2
-#define PT_WRITE_I 4
-#define PT_WRITE_D 5
-#endif /* No PT_STEP.  */
-
-#ifndef PT_ATTACH
-#define PT_ATTACH PTRACE_ATTACH
-#endif
-#ifndef PT_DETACH
-#define PT_DETACH PTRACE_DETACH
-#endif
 
 #include "gdbcore.h"
 #ifndef	NO_SYS_FILE
@@ -145,7 +123,11 @@ child_resume (pid, step, signal)
      instructions), so we don't have to worry about that here.  */
 
   if (step)
+#ifdef PT_STEP
     ptrace (PT_STEP,     pid, (PTRACE_ARG3_TYPE) 1, signal);
+#else
+    printf("Single step attempted\n");
+#endif
   else
     ptrace (PT_CONTINUE, pid, (PTRACE_ARG3_TYPE) 1, signal);
 
