@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.13 1994/01/18 01:32:06 brezak Exp $
+ *	$Id: disklabel.h,v 1.14 1994/01/26 21:43:19 mw Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -55,6 +55,10 @@
 #ifdef i386
 #define LABELSECTOR	1			/* sector containing label */
 #define LABELOFFSET	0			/* offset of label in sector */
+#endif
+
+#ifdef amiga
+#define MAXPARTITIONS   32
 #endif
 
 #ifndef	LABELSECTOR
@@ -231,6 +235,7 @@ static char *dktypenames[] = {
 #define	FS_ISO9660	12		/* ISO-9660 filesystem (cdrom) */
 #define FS_ISOFS	FS_ISO9660
 #define	FS_BOOT		13		/* partition contains bootstrap */
+#define FS_ADOS		14		/* AmigaDOS fast file system */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -248,6 +253,7 @@ static char *fstypenames[] = {
 	"HPFS",
 	"ISO-9660",
 	"boot",
+	"ADOS",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
@@ -337,7 +343,7 @@ struct cpu_disklabel {
 #endif /* i386 */
 
 #if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-    defined(sun3)
+    defined(sun3) || defined(amiga)
 struct cpu_disklabel {
 };
 #endif
