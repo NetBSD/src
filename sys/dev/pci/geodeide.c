@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.1.2.2 2004/07/14 09:08:28 tron Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.1.2.3 2004/07/28 10:56:06 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -31,15 +31,18 @@
  */
 
 /*
- * Driver for the IDE part of the AMD Geode CS5530A compagnion chip
+ * Driver for the IDE part of the AMD Geode CS5530A companion chip
+ * and AMD Geode SC1100.
  * Docs available from AMD's web site
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.1.2.2 2004/07/14 09:08:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.1.2.3 2004/07/28 10:56:06 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -64,6 +67,11 @@ static const struct pciide_product_desc pciide_geode_products[] = {
 	  "AMD Geode CX5530 IDE controller",
 	  geodeide_chip_map,
 	},
+	{ PCI_PRODUCT_NS_SC1100_IDE,
+	  0,
+	  "AMD Geode SC1100 IDE controller",
+	  geodeide_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -76,10 +84,11 @@ geodeide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CYRIX &&
-	    PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE &&
-	    pciide_lookup_product(pa->pa_id, pciide_geode_products)) 
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CYRIX ||
+	     PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS) &&
+	     PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE &&
+	     pciide_lookup_product(pa->pa_id, pciide_geode_products)) 
 		return(2);
 	return (0);
 }
@@ -122,6 +131,21 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 
+	/*
+	 * Soekris Engineering Issue #0003:
+	 * 	"The SC1100 built in busmaster IDE controller is pretty
+	 *	 standard, but have two bugs: data transfers need to be
+	 *	 dword aligned and it cannot do an exact 64Kbyte data
+	 *	 transfer."
+	 */
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_NS_SC1100_IDE) {
+		if (sc->sc_dma_boundary == 0x10000)
+			sc->sc_dma_boundary -= PAGE_SIZE;
+
+		if (sc->sc_dma_maxsegsz == 0x10000)
+			sc->sc_dma_maxsegsz -= PAGE_SIZE;
+	}
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		/* controller is compat-only */
@@ -141,6 +165,25 @@ geodeide_setup_channel(struct wdc_channel *chp)
 	int drive;
 	u_int32_t dma_timing;
 	u_int8_t idedma_ctl;
+	const int32_t *geode_pio;
+	const int32_t *geode_dma;
+	const int32_t *geode_udma;
+	bus_size_t dmaoff, piooff;
+
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_CYRIX_CX5530_IDE:
+		geode_pio = geode_cs5530_pio;
+		geode_dma = geode_cs5530_dma;
+		geode_udma = geode_cs5530_udma;
+		break;
+
+	case PCI_PRODUCT_NS_SC1100_IDE:
+	default: /* XXX gcc */
+		geode_pio = geode_sc1100_pio;
+		geode_dma = geode_sc1100_dma;
+		geode_udma = geode_sc1100_udma;
+		break;
+	}
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -153,7 +196,22 @@ geodeide_setup_channel(struct wdc_channel *chp)
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		dma_timing = DMA_REG_PIO_FORMAT;
+
+		switch (sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_CYRIX_CX5530_IDE:
+			dmaoff = CS5530_DMA_REG(channel, drive);
+			piooff = CS5530_PIO_REG(channel, drive);
+			dma_timing = CS5530_DMA_REG_PIO_FORMAT;
+			break;
+
+		case PCI_PRODUCT_NS_SC1100_IDE:
+		default: /* XXX gcc */
+			dmaoff = SC1100_DMA_REG(channel, drive);
+			piooff = SC1100_PIO_REG(channel, drive);
+			dma_timing = 0;
+			break;
+		}
+
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* Use Ultra-DMA */
@@ -167,10 +225,22 @@ geodeide_setup_channel(struct wdc_channel *chp)
 			/* PIO only */
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
 		}
-		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    DMA_REG(channel, drive), dma_timing);
-		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    PIO_REG(channel, drive), geode_pio[drvp->PIO_mode]);
+
+		switch (sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_CYRIX_CX5530_IDE:
+			bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    dmaoff, dma_timing);
+			bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    piooff, geode_pio[drvp->PIO_mode]);
+			break;
+
+		case PCI_PRODUCT_NS_SC1100_IDE:
+			pci_conf_write(sc->sc_pc, sc->sc_tag, dmaoff,
+			    dma_timing);
+			pci_conf_write(sc->sc_pc, sc->sc_tag, piooff,
+			    geode_pio[drvp->PIO_mode]);
+			break;
+		}
 	}
 
 	if (idedma_ctl != 0) {
