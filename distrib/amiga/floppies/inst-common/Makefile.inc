@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2001/10/13 06:15:15 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2002/03/06 22:55:18 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -9,7 +9,7 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
-IMAGE?=		xxx-${REV}.fs
+IMAGE?=		xxx-${DISTRIBREV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
