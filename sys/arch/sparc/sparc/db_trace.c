@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.20 2003/07/15 00:05:03 lukem Exp $ */
+/*	$NetBSD: db_trace.c,v 1.21 2003/09/07 00:30:40 uwe Exp $ */
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.20 2003/07/15 00:05:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.21 2003/09/07 00:30:40 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,8 +105,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		db_addr_t	prevpc;
 
 #define FR(framep,field) (INKERNEL(framep)			\
-				? (u_int)(framep)->##field	\
-				: fuword(&(framep)->##field))
+				? (u_int)(framep)->field	\
+				: fuword(&(framep)->field))
 
 		/* Fetch return address and arguments frame */
 		prevpc = (db_addr_t)FR(frame, fr_pc);
