@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.52 2000/12/17 21:36:49 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.53 2001/02/02 07:30:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -114,6 +114,9 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32_exec.h>
+#ifdef COMPAT_SUNOS
+#include <compat/sunos32/sunos32_exec.h>
+#endif
 #endif
 
 #ifdef COMPAT_VAX1K
@@ -257,9 +260,15 @@ const struct execsw execsw_builtin[] = {
 	  elf64_copyargs, setregs }, /* NetBSD 64bit ELF bins */
 #endif /* EXEC_ELF64 */
 #ifdef COMPAT_SUNOS
+#ifdef COMPAT_NETBSD32
+	{ SUNOS32_AOUT_HDR_SIZE, exec_sunos32_aout_makecmds, { NULL },
+	  &emul_sunos, EXECSW_PRIO_ANY,
+	  0, netbsd32_copyargs, netbsd32_setregs }, /* SunOS a.out, 64-bit kernel */
+#else
 	{ SUNOS_AOUT_HDR_SIZE, exec_sunos_aout_makecmds, { NULL },
 	  &emul_sunos, EXECSW_PRIO_ANY,
 	  0, copyargs, setregs }, /* SunOS a.out */
+#endif
 #endif
 #if defined(COMPAT_LINUX) && defined(EXEC_AOUT)
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, { NULL },
