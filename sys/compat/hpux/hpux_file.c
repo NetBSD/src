@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.12 1998/08/09 20:37:53 perry Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.13 1999/02/09 20:21:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,8 +117,6 @@
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
-#include <machine/hpux_machdep.h>
-
 static int	hpux_stat1 __P((struct proc *, void *, register_t *, int));
 static void	bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
 static void	bsd_to_hpux_ostat __P((struct stat *, struct hpux_ostat *));
@@ -135,7 +133,7 @@ hpux_sys_creat(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_creat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 
@@ -169,7 +167,7 @@ hpux_sys_open(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_open_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
@@ -474,7 +472,7 @@ hpux_stat1(p, v, retval, dolstat)
 	int dolstat;
 {
 	struct hpux_sys_stat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
 	struct sys___stat13_args sa;
@@ -554,7 +552,7 @@ hpux_sys_stat_6x(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_stat_6x_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
 	struct sys___stat13_args sa;
@@ -658,7 +656,7 @@ hpux_sys_access(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_access_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -697,7 +695,7 @@ hpux_sys_chdir(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_chdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -716,7 +714,7 @@ hpux_sys_mknod(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_mknod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 		syscallarf(int) dev;
 	} */ *uap = v;
@@ -746,7 +744,7 @@ hpux_sys_chmod(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_chmod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode; 
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -766,7 +764,7 @@ hpux_sys_chown(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_chown_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
@@ -789,13 +787,13 @@ hpux_sys_rename(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_rename_args /* {
-		syscallarg(char *) from;
-		syscallarg(char *) to;
+		syscallarg(const char *) from;
+		syscallarg(const char *) to;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
-	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, to));
+	HPUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 
 	return (sys___posix_rename(p, uap, retval));
 }
@@ -830,7 +828,7 @@ hpux_sys_rmdir(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_rmdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -849,8 +847,8 @@ hpux_sys_symlink(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_symlink_args /* {
-		syscallarg(char *) path;
-		syscallarg(char *) link;
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -870,7 +868,7 @@ hpux_sys_readlink(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_readlink_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
@@ -891,7 +889,7 @@ hpux_sys_truncate(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_truncate_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);

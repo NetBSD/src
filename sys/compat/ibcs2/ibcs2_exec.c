@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.21 1999/01/08 19:22:34 augustss Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.22 1999/02/09 20:22:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -90,7 +90,7 @@ int exec_ibcs2_xout_prep_nmagic __P((struct proc *, struct exec_package *,
 int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_setup_stack __P((struct proc *, struct exec_package *));
-int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
+int coff_load_shlib __P((struct proc *, const char *, struct exec_package *));
 static int coff_find_section __P((struct proc *, struct vnode *, 
 				  struct coff_filehdr *, struct coff_scnhdr *,
 				  int));
@@ -213,7 +213,7 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
 	char *itp;
 	Elf32_Addr *pos;
 {
-	char *bp;
+	const char *bp;
 	int error;
 	size_t len;
 
@@ -225,7 +225,7 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
-		free(bp, M_TEMP);
+		free((void *)bp, M_TEMP);
 	}
 	epp->ep_emul = &emul_ibcs2_elf;
 	*pos = ELF32_NO_ADDR;
@@ -599,7 +599,7 @@ n	 */
 int
 coff_load_shlib(p, path, epp)
 	struct proc *p;
-	char *path;
+	const char *path;
 	struct exec_package *epp;
 {
 	int error, siz;
