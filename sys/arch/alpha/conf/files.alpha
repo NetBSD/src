@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.46.2.2 1997/06/03 07:09:23 thorpej Exp $
+# $NetBSD: files.alpha,v 1.46.2.3 1997/06/03 23:39:58 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -29,6 +29,8 @@ define  wsconsdev {[console = -1]}
 define	alpha_shared_intr
 file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_eb64plus | dec_kn20aa | dec_kn8ae
+define	alpha_sgmap
+file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
 
 device	vga: wsconsdev
 file	arch/alpha/common/vga.c		vga
@@ -112,6 +114,8 @@ device	tcasic: tcbus
 attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_bus_mem.c	tcasic
+file	arch/alpha/tc/tc_dma.c		tcasic
+file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
@@ -219,7 +223,7 @@ include "dev/eisa/files.eisa"
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-device	apecs: pcibus
+device	apecs: pcibus, alpha_sgmap
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
 file	arch/alpha/pci/apecs_bus_io.c	apecs
@@ -227,7 +231,7 @@ file	arch/alpha/pci/apecs_bus_mem.c	apecs
 file	arch/alpha/pci/apecs_dma.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
-device	lca: pcibus
+device	lca: pcibus, alpha_sgmap
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
 file	arch/alpha/pci/lca_bus_io.c	lca
@@ -235,7 +239,7 @@ file	arch/alpha/pci/lca_bus_mem.c	lca
 file	arch/alpha/pci/lca_dma.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
 
-device	cia: pcibus
+device	cia: pcibus, alpha_sgmap
 attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
 file	arch/alpha/pci/cia_bus_io.c	cia
@@ -243,7 +247,7 @@ file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_dma.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
 
-device	dwlpx:	pcibus
+device	dwlpx:	pcibus, alpha_sgmap
 attach	dwlpx at kft
 file	arch/alpha/pci/dwlpx.c		dwlpx
 file	arch/alpha/pci/dwlpx_dma.c	dwlpx
@@ -325,7 +329,6 @@ file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
-file	arch/alpha/common/sgmap_common.c
 file	dev/cons.c
 
 # Network protocol checksum routines
