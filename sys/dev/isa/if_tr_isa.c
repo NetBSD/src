@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.4 1999/04/30 15:29:24 bad Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.5 2000/06/06 16:27:49 soren Exp $	*/
 
 #undef TRISADEBUG
 /*
@@ -90,6 +90,8 @@ bus_space_handle_t *pioh, *mmioh;
 {
 	bus_size_t mmio;
 	u_int8_t s;
+
+	printf("\n");
 
 	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ia->ia_iosize, 0, pioh)) {
 		printf("tr_isa_map_io: can't map PIO ports\n");
