@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/10/08 01:38:49 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 2003/10/24 04:49:31 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -39,9 +39,11 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.endif
 .NOPATH: machine powerpc
 CLEANFILES+= machine powerpc
 
