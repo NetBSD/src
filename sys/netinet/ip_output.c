@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.106 2003/06/30 01:22:51 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107 2003/06/30 02:08:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.106 2003/06/30 01:22:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107 2003/06/30 02:08:28 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -558,11 +558,7 @@ sendit:
 
 	/* be sure to update variables that are affected by ipsec4_output() */
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 	ip_len = ntohs(ip->ip_len);
 
 	if (ro->ro_rt == NULL) {
