@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.59 2004/11/17 09:01:38 he Exp $
+#	$NetBSD: files.x68k,v 1.60 2005/01/18 07:27:20 chs Exp $
 #
 # new style config file for x68k architecture
 #
@@ -57,24 +57,24 @@ attach	xcom at mainbus
 file	arch/x68k/dev/com.c		xcom needs-count
 
 # graphic devices
-define	grfb {}
+define	grfb { addr = -1 }
 
 device	grfbus: grfb
 attach	grfbus at mainbus
 
-device	grf {}
+device	grf { grfaddr = -1 }
 attach	grf at grfb
 file	arch/x68k/dev/grf.c		grf needs-count
-file	arch/x68k/dev/grf_conf.c	grf|ite
-file	arch/x68k/dev/grf_machdep.c	grf|ite
-file	arch/x68k/dev/grf_tv.c		grf|ite
-file	arch/x68k/dev/grf_gv.c		grf|ite
+file	arch/x68k/dev/grf_conf.c	grf | ite
+file	arch/x68k/dev/grf_machdep.c	grf | ite
+file	arch/x68k/dev/grf_tv.c		grf | ite
+file	arch/x68k/dev/grf_gv.c		grf | ite
 
 defparam opt_ite.h	ITE_KERNEL_ATTR
-device	ite: tty
+device	ite : tty
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
-file	arch/x68k/dev/ite_tv.c		grf|ite
+file	arch/x68k/dev/ite_tv.c		grf | ite
 file	arch/x68k/dev/kbdmap.c		ite
 
 device	intio {[addr = -1], [intr = -1], [dma = -1], [dmaintr = -1]}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.38 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: ite.c,v 1.39 2005/01/18 07:27:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.38 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39 2005/01/18 07:27:20 chs Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -212,33 +212,12 @@ int
 itematch(struct device *pdp, struct cfdata *cdp, void *auxp)
 {
 	struct grf_softc *gp;
-#if 0
-	int maj;
-#endif
 	
 	gp = auxp;
+	if (cdp->cf_loc[GRFCF_GRFADDR] != gp->g_cfaddr)
+		return 0;
 
-	/* ite0 should be at grf0 XXX */
-	if(cdp->cf_unit != gp->g_device.dv_unit)
-		return(0);
-
-#if 0
-	/*
-	 * all that our mask allows (more than enough no one 
-	 * has > 32 monitors for text consoles on one machine)
-	 */
-	if (cdp->cf_unit >= sizeof(ite_confunits) * NBBY)
-		return(0);
-	/*
-	 * XXX
-	 * normally this would be done in attach, however
-	 * during early init we do not have a device pointer
-	 * and thus no unit number.
-	 */
-	maj = cdevsw_lookup_major(&ite_cdevsw);
-	gp->g_itedev = makedev(maj, cdp->cf_unit);
-#endif
-	return(1);
+	return 1;
 }
 
 /* 

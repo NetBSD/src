@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61 2005/01/17 15:28:53 cube Exp $
+#	$NetBSD: INSTALL,v 1.62 2005/01/18 07:27:20 chs Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.61 $"
+#ident 		"INSTALL-$Revision: 1.62 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -215,11 +215,11 @@ opm0	at intio0 addr 0xe90000		# OPM: required for fdc
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
-grf0	at grfbus0			# multiplane graphics
-#grf1	at grfbus0			# flexible graphics
+grf0	at grfbus0 addr 0		# multiplane graphics
+#grf1	at grfbus0 addr 1		# flexible graphics
 
 kbd0	at mfp0				# standard keyboard
-ite0	at grf0				# internal terminal emulator
+ite0	at grf0 grfaddr 0		# internal terminal emulator
 options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
 #pseudo-device	pow		2	# software power switch
