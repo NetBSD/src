@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.1 1997/03/10 06:26:20 scottr Exp $	*/
+/*	$NetBSD: lockd.c,v 1.2 1997/10/18 04:01:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -33,6 +33,10 @@
  *
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: lockd.c,v 1.2 1997/10/18 04:01:18 lukem Exp $");
+#endif
 
 /*
  * main() function for NFS lock daemon.  Most of the code in this
@@ -41,8 +45,11 @@
  * The actual program logic is in the file procs.c
  */
 
+#include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/sm_inter.h>
@@ -72,14 +79,15 @@ typedef struct fdinfo {
 int		debug_level = 0;	/* 0 = no debugging syslog() calls */
 int		_rpcsvcdirty = 0;
 
+int	main __P((int, char **));
 void	nlm_prog_1 __P((struct svc_req *, SVCXPRT *));
 void	nlm_prog_3 __P((struct svc_req *, SVCXPRT *));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
 	SVCXPRT *transp;
 	int ch;
 
