@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.5 2003/10/13 04:28:35 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.6 2003/10/14 23:13:44 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.7 2003/08/13 22:09:44 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.5 2003/10/13 04:28:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.6 2003/10/14 23:13:44 dyoung Exp $");
 #endif
 
 /*
@@ -99,14 +99,27 @@ SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
 		enum ieee80211_phymode);
 
-static const char *ieee80211_phymode_name[] = {
-	"auto",		/* IEEE80211_MODE_AUTO */
-	"11a",		/* IEEE80211_MODE_11A */
-	"11b",		/* IEEE80211_MODE_11B */
-	"11g",		/* IEEE80211_MODE_11G */
-	"FH",		/* IEEE80211_MODE_FH */
-	"turbo",	/* IEEE80211_MODE_TURBO	*/
-};
+static const char *
+ieee80211_phymode_name(enum ieee80211_phymode mode)
+{
+	int i;
+	struct {
+		enum ieee80211_phymode mode;
+		const char *name;
+	} modenames[] = {
+		{ IEEE80211_MODE_AUTO,	"auto" },
+		{ IEEE80211_MODE_11A,	"11a" },
+		{ IEEE80211_MODE_11B,	"11b" },
+		{ IEEE80211_MODE_11G,	"11g" },
+		{ IEEE80211_MODE_FH,	"FH" },
+		{ IEEE80211_MODE_TURBO,  "turbo" }
+	};
+	for (i = 0; i < sizeof(modenames) / sizeof(modenames[0]); i++) {
+		if (mode == modenames[i].mode)
+			return modenames[i].name;
+	}
+	return "<unknown>";
+}
 
 void
 ieee80211_ifattach(struct ifnet *ifp)
@@ -313,7 +326,7 @@ ieee80211_media_init(struct ifnet *ifp,
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_MONITOR);
 		if (mode == IEEE80211_MODE_AUTO)
 			continue;
-		if_printf(ifp, "%s rates: ", ieee80211_phymode_name[mode]);
+		if_printf(ifp, "%s rates: ", ieee80211_phymode_name(mode));
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
 			rate = rs->rs_rates[i];

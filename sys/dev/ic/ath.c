@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.3 2003/10/14 17:47:03 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.4 2003/10/14 23:13:44 dyoung Exp $");
 #endif
 
 /*
@@ -658,14 +658,23 @@ ath_bmiss_proc(void *arg, int pending)
 static u_int
 ath_chan2flags(struct ieee80211com *ic, struct ieee80211_channel *chan)
 {
-	static const u_int modeflags[] = {
-		0,			/* IEEE80211_MODE_AUTO */
-		CHANNEL_A,		/* IEEE80211_MODE_11A */
-		CHANNEL_B,		/* IEEE80211_MODE_11B */
-		CHANNEL_PUREG,		/* IEEE80211_MODE_11G */
-		CHANNEL_T		/* IEEE80211_MODE_TURBO */
-	};
-	return modeflags[ieee80211_chan2mode(ic, chan)];
+	enum ieee80211_phymode mode = ieee80211_chan2mode(ic, chan);
+
+	switch (mode) {
+	case IEEE80211_MODE_AUTO:
+		return 0;
+	case IEEE80211_MODE_11A:
+		return CHANNEL_A;
+	case IEEE80211_MODE_11B:
+		return CHANNEL_B;
+	case IEEE80211_MODE_11G:
+		return CHANNEL_PUREG;
+	case IEEE80211_MODE_TURBO:
+		return CHANNEL_T;
+	default:
+		panic("%s: unsupported mode %d\n", __func__, mode);
+		return 0;
+	}
 }
 
 #ifdef __NetBSD__
@@ -2722,6 +2731,26 @@ ath_calibrate(void *arg)
 	callout_reset(&sc->sc_cal_ch, hz * ath_calinterval, ath_calibrate, sc);
 }
 
+static HAL_LED_STATE
+ath_state_to_led(enum ieee80211_state state)
+{
+	switch (state) {
+	case IEEE80211_S_INIT:
+		return HAL_LED_INIT;
+	case IEEE80211_S_SCAN:
+		return HAL_LED_SCAN;
+	case IEEE80211_S_AUTH:
+		return HAL_LED_AUTH;
+	case IEEE80211_S_ASSOC:
+		return HAL_LED_ASSOC;
+	case IEEE80211_S_RUN:
+		return HAL_LED_RUN;
+	default:
+		panic("%s: unknown 802.11 state %d\n", __func__, state);
+		return HAL_LED_INIT;
+	}
+}
+
 static int
 ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -2732,19 +2761,12 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int i, error;
 	u_int8_t *bssid;
 	u_int32_t rfilt;
-	static const HAL_LED_STATE leds[] = {
-	    HAL_LED_INIT,	/* IEEE80211_S_INIT */
-	    HAL_LED_SCAN,	/* IEEE80211_S_SCAN */
-	    HAL_LED_AUTH,	/* IEEE80211_S_AUTH */
-	    HAL_LED_ASSOC, 	/* IEEE80211_S_ASSOC */
-	    HAL_LED_RUN, 	/* IEEE80211_S_RUN */
-	};
 
 	DPRINTF(("%s: %s -> %s\n", __func__,
 		ieee80211_state_name[ic->ic_state],
 		ieee80211_state_name[nstate]));
 
-	ath_hal_setledstate(ah, leds[nstate]);	/* set LED */
+	ath_hal_setledstate(ah, ath_state_to_led(nstate));	/* set LED */
 
 	if (nstate == IEEE80211_S_INIT) {
 		sc->sc_imask &= ~(HAL_INT_SWBA | HAL_INT_BMISS);
