@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1995/04/22 22:05:17 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1995/06/25 19:06:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -138,6 +138,8 @@ cdev_decl(ite);
 cdev_decl(view);
 #include "kbd.h"
 cdev_decl(kbd);
+#include "mouse.h"
+cdev_decl(ms);
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 cdev_decl(fd);
 #undef	fdopen
@@ -169,7 +171,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NITE,ite),	/* 12: console terminal emulator */
 	cdev_view_init(NVIEW,view),	/* 13: /dev/view00 /dev/view01, ... */
 	cdev_mouse_init(NKBD,kbd),	/* 14: /dev/kbd	*/
-	cdev_notdef(),			/* 15: /dev/mouse0 /dev/mouse1 */
+	cdev_mouse_init(NMOUSE,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	cdev_disk_init(NFD,fd),		/* 16: floppy disk */
 #undef	fdopen
