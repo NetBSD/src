@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.43 1997/10/10 05:40:30 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.44 1997/10/10 13:16:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -164,7 +164,7 @@ struct vndbuf {
 #define putvndbuf(vbp)	\
 	free((caddr_t)(vbp), M_DEVBUF)
 
-int nswapdev, nswap;
+int nswapdev;
 int swflags;
 struct extent *swapmap;
 LIST_HEAD(swap_priority, swappri) swap_priority;
@@ -590,8 +590,14 @@ swap_on(p, sdp)
 	/* XXX make this based on ram as well. */
 	storagesize = EXTENT_FIXED_STORAGE_SIZE(maxproc * 2);
 	storage = malloc(storagesize, M_VMSWAP, M_WAITOK);
-	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
+	sdp->swd_ex = extent_create(name, 0, nblks, M_VMSWAP,
 				    storage, storagesize, EX_WAITOK);
+	if (addr) {
+		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
+			panic("disklabel region");
+		sdp->swd_inuse += addr;
+	}
+
 
 	if (vp == rootvp) {
 		struct mount *mp;
@@ -615,7 +621,6 @@ swap_on(p, sdp)
 
 	swap_addmap(sdp, size);
 	nswapdev++;
-	nswap += nblks;
 	sdp->swd_flags |= SWF_ENABLE;
 
 	return (0);
@@ -662,7 +667,6 @@ swap_off(p, sdp)
 	return ENODEV;
 
 	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
-	nswap -= sdp->swd_nblks;
 	nswapdev--;
 	name = sdp->swd_ex->ex_name;
 	extent_destroy(sdp->swd_ex);
@@ -1110,7 +1114,6 @@ swapinit()
 	if (vmswapdebug & VMSDB_SWINIT)
 		printf("swapinit\n");
 #endif
-	nswap = 0;
 	nswapdev = 0;
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("swapinit: can setup swapdev_vp");
