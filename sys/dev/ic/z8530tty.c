@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.8.4.1 1996/06/03 20:01:07 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.8.4.2 1996/06/13 23:11:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -776,7 +776,7 @@ zsparam(tp, t)
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
 			zst->zst_tbc = 0;
-			cs->cs_heldchange = 0xFFFF;
+			cs->cs_heldchange = 0xFF; /* XXX */
 		} else {
 			zs_loadchannelregs(cs);
 		}
