@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.11 1998/11/17 14:45:39 bouyer Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.12 1999/06/25 18:58:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	int flags;
 {
 	struct scsipi_xfer *xs;
-	int error;
+	int error, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("atapi_cmd\n"));
 
@@ -238,7 +238,9 @@ atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	 * we have finished with the xfer stuct, free it and
 	 * check if anyone else needs to be started up.
 	 */
+	s = splbio();
 	scsipi_free_xs(xs, flags);
+	splx(s);
 	return (error);
 }
 
