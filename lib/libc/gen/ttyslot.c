@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyslot.c,v 1.11 2003/08/07 16:42:58 agc Exp $	*/
+/*	$NetBSD: ttyslot.c,v 1.12 2004/11/11 00:01:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyslot.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ttyslot.c,v 1.11 2003/08/07 16:42:58 agc Exp $");
+__RCSID("$NetBSD: ttyslot.c,v 1.12 2004/11/11 00:01:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,34 +44,53 @@ __RCSID("$NetBSD: ttyslot.c,v 1.11 2003/08/07 16:42:58 agc Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #ifdef __weak_alias
 __weak_alias(ttyslot,_ttyslot)
 #endif
 
 int
-ttyslot()
+ttyslot(void)
 {
 	struct ttyent *ttyp;
-	int slot;
+	int slot = 0, ispty = 0;
 	char *p;
 	int cnt;
 	char *name;
+	struct ptmget ptm;
 
 	setttyent();
-	for (cnt = 0; cnt < 3; ++cnt) 
-		if ((name = ttyname(cnt)) != NULL) {
-			if ((p = strrchr(name, '/')) != NULL)
-				++p;
-			else
-				p = name;
-			for (slot = 1; (ttyp = getttyent()) != NULL; ++slot)
-				if (!strcmp(ttyp->ty_name, p)) {
-					endttyent();
-					return(slot);
-				}
-			break;
-		}
+	for (cnt = 0; cnt < 3; ++cnt) {
+		if (ioctl(cnt, TIOCPTSNAME, &ptm) != -1) {
+			ispty = 1;
+			name = ptm.sn;
+		} else if ((name = ttyname(cnt)) != NULL) {
+			ispty = 0;
+		} else
+			continue;
+
+		if ((p = strstr(name, "/pts/")) != NULL)
+			++p;
+		else if ((p = strrchr(name, '/')) != NULL)
+			++p;
+		else
+			p = name;
+
+		for (slot = 1; (ttyp = getttyent()) != NULL; ++slot)
+			if (!strcmp(ttyp->ty_name, p)) {
+				endttyent();
+				return slot;
+			}
+		break;
+	}
 	endttyent();
-	return(0);
+	if (ispty) {
+		struct stat st;
+		if (fstat(cnt, &st) == -1)
+			return 0;
+		return slot + minor(st.st_rdev) + 1;
+	}
+	return 0;
 }
