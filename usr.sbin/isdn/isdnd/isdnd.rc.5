@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.2 2001/04/09 13:41:16 wiz Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.3 2001/04/09 19:34:16 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.2 2001/04/09 13:41:16 wiz Exp $
+.\"	$Id: isdnd.rc.5,v 1.3 2001/04/09 19:34:16 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -526,10 +526,8 @@ than the requested channel!
 (mandatory)
 
 .It Li isdntxdel-incoming
-A delay value suitable for the
-.Em timeout()
-kernel subroutine to delay the transmission of the first packet after a
-successful connection is made by this value for
+How long to delay the transmission of the first packet after a
+successful connection is made for
 .Em incoming
 ISDN connections. The specification unit is 1/100 second. A zero (0) disables
 this feature and is the default value. This feature is implemented (and makes
@@ -538,10 +536,8 @@ sense only) for the
 IP over raw HDLC ISDN driver. (optional)
 
 .It Li isdntxdel-outgoing
-A delay value suitable for the
-.Em timeout()
-kernel subroutine to delay the transmission of the first packet after a
-successful connection is made by this value for
+How long to delay the transmission of the first packet after a
+successful connection is made for
 .Em outgoing
 ISDN connections. The specification unit is 1/100 second. A zero (0) disables
 this feature and is the default value. This feature is implemented (and makes
