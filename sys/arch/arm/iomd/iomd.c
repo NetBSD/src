@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.9 2002/10/13 12:20:44 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.10 2003/07/15 00:24:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -41,6 +41,9 @@
  * Created      : 10/10/95
  * Updated	: 18/03/01 for rpckbd as part of the wscons project
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.10 2003/07/15 00:24:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

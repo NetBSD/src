@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.6 2002/10/02 05:02:31 thorpej Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.7 2003/07/15 00:24:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -40,6 +40,9 @@
  *
  * Created      : 10/10/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.7 2003/07/15 00:24:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.4 2002/09/27 15:35:51 provos Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.5 2003/07/15 00:24:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * bus_space functions for i80321 I/O Processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.5 2003/07/15 00:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

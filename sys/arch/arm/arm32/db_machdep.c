@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.7 2002/01/05 22:41:47 chris Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.8 2003/07/15 00:24:41 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -27,6 +27,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2003/07/15 00:24:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

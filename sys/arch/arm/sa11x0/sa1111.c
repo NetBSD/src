@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.9 2002/10/02 05:02:31 thorpej Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.10 2003/07/15 00:24:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  *   - separate machine specific attach code
  *   - introduce bus abstraction to support SA1101
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.10 2003/07/15 00:24:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.17 2003/01/03 04:36:29 takemura Exp $ */
+/* $NetBSD: j720ssp.c,v 1.18 2003/07/15 00:25:08 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
  *
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.18 2003/07/15 00:25:08 lukem Exp $");
 
 #include "apm.h"
 

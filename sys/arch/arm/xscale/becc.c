@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.6 2003/06/15 23:08:57 fvdl Exp $	*/
+/*	$NetBSD: becc.c,v 1.7 2003/07/15 00:24:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Autoconfiguration support for the ADI Engineering Big Endian
  * Companion Chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.7 2003/07/15 00:24:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_pci.c,v 1.1 2002/11/20 18:06:26 bsh Exp $ */
+/*	$NetBSD: smdk2800_pci.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -35,6 +35,9 @@
 /*
  * Platform specific part for S3C2800 PCI support on SMDK2800
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_pci.c,v 1.2 2003/07/15 00:25:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

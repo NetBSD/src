@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.1 2001/03/04 05:06:51 matt Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,9 @@
  * make it easier to use on the arm32 and to use as MI code (not quite
  * clean enough, yet).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.1 2002/12/20 04:12:51 bsh Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.2 2003/07/15 00:24:50 lukem Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -67,6 +67,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.2 2003/07/15 00:24:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.c,v 1.4 2002/08/14 23:53:07 thorpej Exp $	*/
+/*	$NetBSD: in_cksum_arm.c,v 1.5 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
  * ARM version:
@@ -48,6 +48,9 @@
  *
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_cksum_arm.c,v 1.5 2003/07/15 00:24:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

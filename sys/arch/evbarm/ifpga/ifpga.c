@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.15 2003/06/15 23:08:58 fvdl Exp $ */
+/*	$NetBSD: ifpga.c,v 1.16 2003/07/15 00:24:58 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -36,6 +36,9 @@
  * at POR with a custom design.  This code supports the default logic as the
  * board is shipped.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.16 2003/07/15 00:24:58 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

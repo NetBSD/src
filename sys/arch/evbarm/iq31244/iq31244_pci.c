@@ -1,4 +1,4 @@
-/*	$NetBSD: iq31244_pci.c,v 1.1 2003/05/14 21:41:34 thorpej Exp $	*/
+/*	$NetBSD: iq31244_pci.c,v 1.2 2003/07/15 00:25:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * IQ31244 PCI interrupt support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq31244_pci.c,v 1.2 2003/07/15 00:25:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

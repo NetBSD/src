@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

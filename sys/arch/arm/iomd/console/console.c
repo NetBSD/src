@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.10 2002/10/23 09:10:44 jdolecek Exp $	*/
+/*	$NetBSD: console.c,v 1.11 2003/07/15 00:24:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -40,6 +40,9 @@
  *
  * Created      : 17/09/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.11 2003/07/15 00:24:43 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

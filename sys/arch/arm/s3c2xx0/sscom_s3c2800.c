@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom_s3c2800.c,v 1.3 2003/05/13 06:29:53 bsh Exp $ */
+/*	$NetBSD: sscom_s3c2800.c,v 1.4 2003/07/15 00:24:49 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -32,6 +32,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.4 2003/07/15 00:24:49 lukem Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"

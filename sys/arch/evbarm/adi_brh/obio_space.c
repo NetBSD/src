@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.2 2003/06/15 18:43:49 thorpej Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.3 2003/07/15 00:24:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * bus_space functions for ADI BRH on-board devices
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.3 2003/07/15 00:24:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

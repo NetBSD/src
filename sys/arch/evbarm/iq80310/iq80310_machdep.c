@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.60 2003/06/15 18:43:49 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.61 2003/07/15 00:25:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
  * Machine dependant functions for kernel setup for Intel IQ80310 evaluation
  * boards using RedBoot firmware.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.61 2003/07/15 00:25:02 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

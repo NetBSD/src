@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.36 2003/06/29 22:28:08 fvdl Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.37 2003/07/15 00:24:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,6 +40,9 @@
  * Created      : 17/09/94
  * Updated	: 18/04/01 updated for new wscons
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.37 2003/07/15 00:24:40 lukem Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.7 2003/06/29 22:28:10 fvdl Exp $ */
+/*	$NetBSD: sscom.c,v 1.8 2003/07/15 00:24:49 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -107,6 +107,9 @@
  * Support integrated UARTs of Samsung S3C2800/2400X/2410X
  * Derived from sys/dev/ic/com.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.8 2003/07/15 00:24:49 lukem Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"

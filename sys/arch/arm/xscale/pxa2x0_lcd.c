@@ -1,4 +1,4 @@
-/* $Id: pxa2x0_lcd.c,v 1.5 2003/06/17 09:43:14 bsh Exp $ */
+/* $Id: pxa2x0_lcd.c,v 1.6 2003/07/15 00:24:55 lukem Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -36,6 +36,10 @@
 /*
  * Support PXA2[15]0's integrated LCD controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.6 2003/07/15 00:24:55 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>

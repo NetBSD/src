@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_irqhandler.c,v 1.4 2002/10/06 17:13:58 thorpej Exp $ */
+/*	$NetBSD: ifpga_irqhandler.c,v 1.5 2003/07/15 00:24:59 lukem Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,6 +36,9 @@
  *
  *	from: iomd_irqhandler.c,v 1.16 $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ifpga_irqhandler.c,v 1.5 2003/07/15 00:24:59 lukem Exp $");
 
 #include "opt_irqstats.h"
 

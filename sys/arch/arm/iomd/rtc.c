@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.10 2003/01/06 12:38:50 wiz Exp $	*/
+/*	$NetBSD: rtc.c,v 1.11 2003/07/15 00:24:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,6 +43,9 @@
  * Created      : 13/10/94
  * Updated	: 15/07/2000	DD
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11 2003/07/15 00:24:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sm_obio_space.c,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
+/*	$NetBSD: sm_obio_space.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -32,6 +32,9 @@
 /*
  * bus_space I/O functions for SMC91C96 on Lubbock.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sm_obio_space.c,v 1.2 2003/07/15 00:25:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

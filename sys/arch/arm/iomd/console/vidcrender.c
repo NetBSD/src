@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.11 2003/04/01 15:03:00 thorpej Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.12 2003/07/15 00:24:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,6 +45,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.12 2003/07/15 00:24:43 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

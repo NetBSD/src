@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.4 2003/05/13 08:07:39 bsh Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.5 2003/07/15 00:24:48 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -36,6 +36,10 @@
 /*
  * Clock & Power Management
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.5 2003/07/15 00:24:48 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

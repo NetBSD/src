@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.14 2003/06/15 17:33:45 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.15 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -104,6 +104,9 @@
  * Machine dependant functions for kernel setup for Samsung SMDK2800
  * derived from integrator_machdep.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.15 2003/07/15 00:25:06 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.3 2003/06/16 20:00:58 thorpej Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.4 2003/07/15 00:24:49 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -71,6 +71,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.4 2003/07/15 00:24:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

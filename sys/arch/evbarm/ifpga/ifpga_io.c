@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.5 2003/04/02 03:49:25 thorpej Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.6 2003/07/15 00:24:59 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,6 +39,9 @@
 /*
  * bus_space I/O functions for IFPGA
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.6 2003/07/15 00:24:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.2 2003/05/23 05:21:26 briggs Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.3 2003/07/15 00:24:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Timer/clock support for the ADI Engineering Big Endian Companion Chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.3 2003/07/15 00:24:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.42 2003/06/15 17:45:24 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.43 2003/07/15 00:25:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -66,6 +66,9 @@
  *
  * Created      : 24/11/97
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.43 2003/07/15 00:25:00 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

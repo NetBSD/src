@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.5 2003/01/20 05:30:00 simonb Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.6 2003/07/15 00:24:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  *
  * Created      : 04/03/01
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.6 2003/07/15 00:24:46 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

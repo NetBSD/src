@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_pci.c,v 1.3 2003/05/31 22:35:04 thorpej Exp $	*/
+/*	$NetBSD: iq80321_pci.c,v 1.4 2003/07/15 00:25:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * IQ80321 PCI interrupt support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80321_pci.c,v 1.4 2003/07/15 00:25:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

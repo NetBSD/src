@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2003/06/16 17:40:51 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2003/07/15 00:24:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * On-board device autoconfiguration support for ADI BRH
  * evaluation boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.6 2003/07/15 00:24:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

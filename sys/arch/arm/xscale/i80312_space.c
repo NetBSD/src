@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_space.c,v 1.5 2002/09/27 15:35:51 provos Exp $	*/
+/*	$NetBSD: i80312_space.c,v 1.6 2003/07/15 00:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * bus_space functions for i80312 Companion I/O chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80312_space.c,v 1.6 2003/07/15 00:24:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

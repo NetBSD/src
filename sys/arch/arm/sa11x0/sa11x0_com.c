@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.17 2003/06/29 22:28:11 fvdl Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.18 2003/07/15 00:24:50 lukem Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.18 2003/07/15 00:24:50 lukem Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"

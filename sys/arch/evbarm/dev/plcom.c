@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.7 2003/06/23 11:01:13 martin Exp $	*/
+/*	$NetBSD: plcom.c,v 1.8 2003/07/15 00:24:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -103,6 +103,9 @@
  * but has a completely different programmer's model.
  * Derived from the NS16550AF com driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.8 2003/07/15 00:24:57 lukem Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"

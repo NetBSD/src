@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.11 2002/08/17 20:46:28 thorpej Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.12 2003/07/15 00:25:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * PCI DMA support for the ARM Integrator.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.12 2003/07/15 00:25:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

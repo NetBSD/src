@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.4 2003/04/29 01:07:31 thorpej Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.5 2003/07/15 00:24:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Timer/clock support for the Intel i80321 I/O processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.5 2003/07/15 00:24:54 lukem Exp $");
 
 #include "opt_perfctrs.h"
 

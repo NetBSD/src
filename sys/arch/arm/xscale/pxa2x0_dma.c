@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dma.c,v 1.1 2002/10/19 19:31:39 bsh Exp $ */
+/*	$NetBSD: pxa2x0_dma.c,v 1.2 2003/07/15 00:24:55 lukem Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -37,6 +37,9 @@
  * bus dma tag for PXA2[15]0 processor.
  * (Currently used only for LCD frame buffer)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.2 2003/07/15 00:24:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

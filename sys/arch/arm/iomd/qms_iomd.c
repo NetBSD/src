@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.7 2002/10/02 15:45:12 thorpej Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.8 2003/07/15 00:24:46 lukem Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -34,6 +34,9 @@
 /*
  * Quadrature mouse driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qms_iomd.c,v 1.8 2003/07/15 00:24:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

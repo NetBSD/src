@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.7 2003/04/29 01:11:14 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.8 2003/07/15 00:25:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.8 2003/07/15 00:25:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.9 2002/10/23 09:10:45 jdolecek Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.10 2003/07/15 00:24:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -47,6 +47,8 @@
 /* woo */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vidcconsole.c,v 1.10 2003/07/15 00:24:43 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

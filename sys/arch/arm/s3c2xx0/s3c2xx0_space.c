@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_space.c,v 1.1 2002/11/20 17:52:51 bsh Exp $ */
+/*	$NetBSD: s3c2xx0_space.c,v 1.2 2003/07/15 00:24:49 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -72,6 +72,9 @@
 /*
  * bus_space functions for Samsung S3C2800/2400/2410.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.2 2003/07/15 00:24:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

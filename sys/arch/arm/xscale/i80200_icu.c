@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.5 2002/06/25 19:39:51 thorpej Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.6 2003/07/15 00:24:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Intel i80200 Interrupt Controller Unit support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.6 2003/07/15 00:24:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

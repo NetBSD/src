@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2001/10/27 16:17:52 rearnsha Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.2 2003/07/15 00:25:01 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2003/07/15 00:25:01 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

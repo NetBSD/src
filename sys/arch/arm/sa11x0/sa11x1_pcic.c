@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.7 2002/10/02 05:02:32 thorpej Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.8 2003/07/15 00:24:51 lukem Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.8 2003/07/15 00:24:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

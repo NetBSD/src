@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.10 2002/10/03 01:35:28 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.11 2003/07/15 00:25:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  * of setting up the i80312 memory map, PCI interrupt routing, etc.,
  * which are all specific to the board the i80312 is wired up to.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.11 2003/07/15 00:25:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.5 2003/07/02 11:02:29 ichiro Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.6 2003/07/15 00:25:05 lukem Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,6 +68,9 @@
 /* Machine dependant functions for kernel setup for Intel IXP425 evaluation
  * boards using RedBoot firmware.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.6 2003/07/15 00:25:05 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

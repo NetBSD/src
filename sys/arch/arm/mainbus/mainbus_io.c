@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.12 2002/09/27 15:35:48 provos Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.13 2003/07/15 00:24:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,6 +35,9 @@
 /*
  * bus_space I/O functions for mainbus
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.13 2003/07/15 00:24:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

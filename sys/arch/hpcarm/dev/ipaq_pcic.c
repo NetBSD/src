@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.11 2002/10/02 05:18:52 thorpej Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.12 2003/07/15 00:25:07 lukem Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.12 2003/07/15 00:25:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
