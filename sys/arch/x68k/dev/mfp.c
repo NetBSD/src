@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.1.2.3 1998/12/27 15:14:31 minoura Exp $	*/
+/*	$NetBSD: mfp.c,v 1.1.2.4 1999/02/13 17:57:17 minoura Exp $	*/
 
 /*
  *
@@ -77,6 +77,11 @@ mfp_match(parent, cf, aux)
 		return 0;
 	if (cf->cf_unit != 0)
 		return (0);
+
+	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
+		ia->ia_addr = MFP_ADDR;
+	if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
+		ia->ia_addr = MFP_INTR;
 
 	/* fixed address */
 	if (ia->ia_addr != MFP_ADDR)
