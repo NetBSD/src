@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.127 2004/03/17 18:10:51 matt Exp $
+#	$NetBSD: files.sparc,v 1.128 2004/04/03 17:43:50 chs Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -74,6 +74,7 @@ file	arch/sparc/sparc/auxiotwo.c
 device clock: mk48txx
 attach clock at mainbus with clock_mainbus
 attach clock at obio with clock_obio
+attach clock at bootbus with clock_bootbus
 file	arch/sparc/sparc/mkclock.c		clock
 
 device oclock: intersil7170
@@ -119,16 +120,16 @@ file	arch/sparc/dev/tctrl.c			tctrl needs-flag
 
 include "dev/sun/files.sun"
 
-device zs {channel = -1}
+device zs { [channel = -1] }
 attach zs at mainbus with zs_mainbus
 attach zs at obio with zs_obio
 attach zs at bootbus with zs_bootbus
-file	arch/sparc/dev/zs.c			zs needs-count
+file	arch/sparc/dev/zs.c			zs
 file	dev/ic/z8530sc.c			zs
 
 device zstty {}: tty
 attach zstty at zs
-file dev/ic/z8530tty.c				zstty needs-flag
+file dev/ic/z8530tty.c				zstty
 file arch/sparc/dev/zs_kgdb.c			kgdb
 
 device fdc {}

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2003/12/17 08:08:02 martin Exp $
+# $NetBSD: GENERIC,v 1.150 2004/04/03 17:43:50 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32
 
@@ -34,6 +34,7 @@ maxusers	32
 options 	SUN4		# sun4/100, sun4/200, sun4/300
 options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
+options 	SUN4D		# sun4d - SS1000, SC2000
 
 options 	SUN4_MMU3L	# sun4/400 3-level MMU
 
@@ -217,16 +218,21 @@ options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 #### Main bus and CPU .. all systems.
 mainbus0 at root
 cpu0	at mainbus0
+cpuunit0	at mainbus0			# sun4d
+cpuunit*	at mainbus0			# sun4d
+cpu0	at cpuunit0				# sun4d
 
 #### Bus types found on SPARC systems.
 
 sbus0	at mainbus0				# sun4c
 obio0	at mainbus0				# sun4 and sun4m
-sparcvme0	at mainbus0				# sun4
+sparcvme0	at mainbus0			# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
-sparcvme0	at iommu0				# sun4m
-vme0	at sparcvme0		# mi VME attachment
+sparcvme0	at iommu0			# sun4m
+vme0	at sparcvme0				# MI VME attachment
+bootbus0	at cpuunit0			# sun4d
+bootbus*	at cpuunit?			# sun4d
 
 ## SBus expander box
 xbox*	at sbus? slot ? offset ?
@@ -247,11 +253,12 @@ auxiotwo0 at obio0				# only on Tadpole SPARCbook.
 ## Power status and control register on Sun4m systems
 power0	at obio0
 
-## Mostek clock found on 4/300, sun4c, and sun4m systems.
+## Mostek clock found on 4/300, sun4c, sun4m and sun4d systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock0	at mainbus0				# sun4c
 clock0	at obio0				# sun4m
 clock0	at obio0 addr 0xf2000000		# sun4/300
+clock0	at bootbus0				# sun4d
 
 ## Intersil clock found on 4/100 and 4/200 systems.
 oclock0	at obio0 addr 0xf3000000		# sun4/200
@@ -286,6 +293,7 @@ zs0	at mainbus0					# sun4c
 zs0	at obio0					# sun4m
 zs0	at obio0 addr 0xf1000000 level 12		# sun4/200 and sun4/300
 zs0	at obio0 addr 0x01000000 level 12		# sun4/100
+zs0	at bootbus0					# sun4d
 zstty0	at zs0 channel 0				# ttya
 zstty1	at zs0 channel 1				# ttyb
 
@@ -293,12 +301,16 @@ zs1	at mainbus0					# sun4c
 zs1	at obio0					# sun4m
 zs1	at obio0 addr 0xf0000000 level 12		# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12		# sun4/100
+zs1	at bootbus0					# sun4d
 kbd0	at zs1 channel 0				# keyboard
 ms0	at zs1 channel 1				# mouse
 
 zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 zstty2	at zs2 channel 0				# ttyc
 zstty3	at zs2 channel 1				# ttyd
+
+zs*	at bootbus?					# sun4d
+zstty*	at zs?
 
 ## NS16x50 serial chips and clones.  Present on the
 ## Sun JavaStation-1 and Tadpole SPARCbook 3
