@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11 2003/08/07 16:29:28 agc Exp $	*/
+/*	$NetBSD: frame.h,v 1.12 2003/11/23 23:13:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,11 +128,37 @@ struct switchframe {
 };
 
 /*
- * Signal frame
+ * Signal frame.
+ *
+ * NB: The order of sf_uc and sf_si is different from what other ports
+ * use (siginfo at the top of the stack), because we want to avoid
+ * wasting two instructions in __sigtramp_siginfo_2 to skip to the
+ * ucontext.  Not that this order really matters, but I think this
+ * inconsistency deserves an explanation.
  */
-struct sigframe {
-	struct	sigcontext sf_sc;
+struct sigframe_siginfo {
+#if 0 /* in registers on entry to signal trampoline */
+	int		sf_signum; /* r4 - "signum" argument for handler */
+	siginfo_t	*sf_sip;   /* r5 - "sip" argument for handler */
+	ucontext_t	*sf_ucp;   /* r6 - "ucp" argument for handler */
+#endif
+	ucontext_t	sf_uc;	/* actual saved ucontext */
+	siginfo_t	sf_si;	/* actual saved siginfo */
 };
+
+#if defined(COMPAT_16) && defined(_KERNEL)
+/*
+ * Old signal frame format.
+ */
+struct sigframe_sigcontext {
+#if 0 /* in registers on entry to signal trampoline */
+	int	sf_signum;	/* r4 - "signum" argument for handler */
+	int	sf_code;	/* r5 - "code" argument for handler */
+	struct sigcontext *sf_scp; /* r6 - "scp" argument for handler */
+#endif
+	struct sigcontext sf_sc; /* actual saved context */
+};
+#endif
 
 /*
  * Scheduler activations upcall frame
