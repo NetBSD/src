@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.4 1997/10/13 20:00:19 explorer Exp $        */
+/*      $NetBSD: rndpool.c,v 1.5 1997/10/20 15:03:19 explorer Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,12 +47,11 @@
 /*
  * The random pool "taps"
  */
-#define TAP1   13
-#define TAP2  113
-#define TAP3  230
-#define TAP4  412
-
-static rndpool_t _global_rndpool;
+#define TAP1	99
+#define TAP2	59
+#define TAP3	31
+#define TAP4	 9
+#define TAP5	 7
 
 static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
@@ -65,19 +64,10 @@ rndpool_init(rp)
 	rp->rotate = 0;
 }
 
-void
-rndpool_init_global(void)
-{
-	rndpool_init(&_global_rndpool);
-}
-
 u_int32_t
 rndpool_get_entropy_count(rp)
 	rndpool_t *rp;
 {
-	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	return rp->entropy;
 }
 
@@ -86,9 +76,6 @@ rndpool_set_entropy_count(rp, entropy)
 	rndpool_t *rp;
 	u_int32_t  entropy;
 {
-	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	rp->entropy = entropy;
 	if (rp->entropy > RND_POOLBITS)
 		rp->entropy = RND_POOLBITS;
@@ -99,9 +86,6 @@ rndpool_increment_entropy_count(rp, entropy)
 	rndpool_t *rp;
 	u_int32_t  entropy;
 {
-	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	rp->entropy += entropy;
 	if (rp->entropy > RND_POOLBITS)
 		rp->entropy = RND_POOLBITS;
@@ -111,9 +95,6 @@ u_int32_t *
 rndpool_get_pool(rp)
 	rndpool_t *rp;
 {
-	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	return (rp->pool);
 }
 
@@ -131,9 +112,6 @@ rndpool_add_one_word(rp, val)
 	rndpool_t *rp;
 	u_int32_t  val;
 {
-	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	/*
 	 * Steal some values out of the pool, and xor them into the
 	 * word we were given.
@@ -146,6 +124,7 @@ rndpool_add_one_word(rp, val)
 	val ^= rp->pool[(rp->cursor + TAP2) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP3) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP4) & (RND_POOLWORDS - 1)];
+	val ^= rp->pool[(rp->cursor + TAP5) & (RND_POOLWORDS - 1)];
 	rp->pool[rp->cursor++] ^=
 	  ((val << rp->rotate) | (val >> (31 - rp->rotate)));
 
@@ -172,9 +151,6 @@ rndpool_add_uint32(rp, val, entropy)
 	u_int32_t  val;
 	u_int32_t  entropy;
 {
-  	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	val = (val << rp->rotate) | (val >> rp->rotate);
 	rp->rotate = (rp->rotate + 1) & 0x07;
 	
@@ -200,9 +176,6 @@ rndpool_add_data(rp, p, len, entropy)
 	u_int32_t  val;
 	u_int8_t  *buf;
 	
-	if (rp == NULL)
-		rp = &_global_rndpool;
-
 	buf = p;
 	
 	for (; len > 3 ; len -= 4) {
@@ -259,9 +232,6 @@ rndpool_extract_data(rp, p, len, mode)
 	u_int32_t  remain;
 	u_int8_t  *buf;
 	int        good;
-
-	if (rp == NULL)
-		rp = &_global_rndpool;
 
 	buf = p;
 	remain = len;
