@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.21 2002/10/02 05:36:39 thorpej Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.22 2003/04/02 00:44:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -39,6 +39,8 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -201,20 +203,20 @@ sn_obio_getaddr(sc, lladdr)
 {
 	bus_space_handle_t bsh;
 
-	if (bus_space_map(sc->sc_regt, SONIC_PROM_BASE, NBPG, 0, &bsh)) {
+	if (bus_space_map(sc->sc_regt, SONIC_PROM_BASE, PAGE_SIZE, 0, &bsh)) {
 		printf(": failed to map space to read SONIC address.\n%s",
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
 	if (!mac68k_bus_space_probe(sc->sc_regt, bsh, 0, 1)) {
-		bus_space_unmap(sc->sc_regt, bsh, NBPG);
+		bus_space_unmap(sc->sc_regt, bsh, PAGE_SIZE);
 		return (-1);
 	}
 
 	sn_get_enaddr(sc->sc_regt, bsh, 0, lladdr);
 
-	bus_space_unmap(sc->sc_regt, bsh, NBPG);
+	bus_space_unmap(sc->sc_regt, bsh, PAGE_SIZE);
 
 	return 0;
 }

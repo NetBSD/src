@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.32 2002/09/27 15:36:15 provos Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.33 2003/04/02 00:44:23 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -27,6 +27,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -128,7 +130,7 @@ snsetup(sc, lladdr)
 	 * for its descriptor areas, or expect the MD attach code
 	 * to do that?
 	 */
-	sc->space = malloc((SN_NPAGES + 1) * NBPG, M_DEVBUF, M_WAITOK);
+	sc->space = malloc((SN_NPAGES + 1) * PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	if (sc->space == NULL) {
 		printf ("%s: memory allocation for descriptors failed\n",
 		    sc->sc_dev.dv_xname);
@@ -154,7 +156,7 @@ snsetup(sc, lladdr)
 	 * around problems near the end of 64k !!
 	 */
 	p = sc->space;
-	pp = (u_char *)ROUNDUP ((int)p, NBPG);
+	pp = (u_char *)ROUNDUP ((int)p, PAGE_SIZE);
 	p = pp;
 
 	/*
@@ -163,9 +165,9 @@ snsetup(sc, lladdr)
 	 * each page individually.
 	 */
 	for (i = 0; i < SN_NPAGES; i++) {
-		physaccess (p, (caddr_t)SONIC_GETDMA(p), NBPG,
+		physaccess (p, (caddr_t)SONIC_GETDMA(p), PAGE_SIZE,
 		    PG_V | PG_RW | PG_CI);
-		p += NBPG;
+		p += PAGE_SIZE;
 	}
 	p = pp;
 
@@ -193,29 +195,29 @@ snsetup(sc, lladdr)
 
 	p = (u_char *)SOALIGN(sc, p);
 
-	if ((p - pp) > NBPG) {
+	if ((p - pp) > PAGE_SIZE) {
 		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
-		    "TDA (%ld) > NBPG (%d). Punt!\n",
+		    "TDA (%ld) > PAGE_SIZE (%d). Punt!\n",
 		    sc->sc_dev.dv_xname,
 		    (ulong)sc->p_cda - (ulong)sc->p_rra[0],
 		    (ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 		    (ulong)p - (ulong)sc->mtda[0].mtd_txp,
-		    NBPG);
+		    PAGE_SIZE);
 		return(1);
 	}
 
-	p = pp + NBPG;
+	p = pp + PAGE_SIZE;
 	pp = p;
 
-	sc->sc_nrda = NBPG / RXPKT_SIZE(sc);
+	sc->sc_nrda = PAGE_SIZE / RXPKT_SIZE(sc);
 	sc->p_rda = (caddr_t) p;
 	sc->v_rda = SONIC_GETDMA(p);
 
-	p = pp + NBPG;
+	p = pp + PAGE_SIZE;
 
 	for (i = 0; i < NRBA; i++) {
 		sc->rbuf[i] = (caddr_t)p;
-		p += NBPG;
+		p += PAGE_SIZE;
 	}
 
 	pp = p;
@@ -226,10 +228,10 @@ snsetup(sc, lladdr)
 		mtdp->mtd_buf = p;
 		mtdp->mtd_vbuf = SONIC_GETDMA(p);
 		offset += TXBSIZE;
-		if (offset < NBPG) {
+		if (offset < PAGE_SIZE) {
 			p += TXBSIZE;
 		} else {
-			p = pp + NBPG;
+			p = pp + PAGE_SIZE;
 			pp = p;
 			offset = TXBSIZE;
 		}
@@ -851,8 +853,8 @@ initialise_rra(sc)
 		v = SONIC_GETDMA(sc->rbuf[i]);
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRHI, UPPER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRLO, LOWER(v));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(NBPG/2));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(NBPG/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(PAGE_SIZE/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(PAGE_SIZE/2));
 	}
 	sc->sc_rramark = NRBA;
 	NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[sc->sc_rramark]));

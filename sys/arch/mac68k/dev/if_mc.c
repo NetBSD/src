@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.19 2002/01/16 06:00:37 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.20 2003/04/02 00:44:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -50,6 +50,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -467,7 +469,7 @@ maceput(sc, m)
 		MFREE(m, n);
 	}
 
-	if (totlen > NBPG)
+	if (totlen > PAGE_SIZE)
 		panic("%s: maceput: packet overflow", sc->sc_dev.dv_xname);
 
 #if 0
