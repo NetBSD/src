@@ -811,7 +811,7 @@ check_float_value (mode, d, overflow)
   if (INDIRECTABLE_ADDRESS_P (X, STRICT, INDEXED, 0)) goto ADDR;	\
   xfoob = XEXP (X, 0);							\
   if (GET_CODE (X) == MEM						\
-      && INDIRECTABLE_ADDRESS_P (xfoob, STRICT, INDEXED, TARGET_INDIRECT)) \
+      && INDIRECTABLE_ADDRESS_P (xfoob, STRICT, INDEXED, !TARGET_INDIRECT)) \
     goto ADDR;								\
   if ((GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_INC)		\
       && GET_CODE (xfoob) == REG					\
