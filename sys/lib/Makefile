@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1995/06/30 03:00:33 christos Exp $
+#	$NetBSD: Makefile,v 1.7 1995/07/10 23:14:46 gwr Exp $
 
 .if exists(libsa)
 SUBDIR+= libsa
-.endif
-.if exists(libc_sa)
-SUBDIR+= libc_sa
-.endif
-.if exists(libnetboot)
-SUBDIR+= libnetboot
 .endif
 
 .include <bsd.subdir.mk>
