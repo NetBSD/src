@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/04/02 03:38:20 cgd Exp $
+# $NetBSD: Makefile,v 1.2 1999/04/05 03:37:28 cgd Exp $
 
 PROG = bootxx_cd9660
 CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=cd9660 \
@@ -9,8 +9,5 @@ CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=cd9660 \
 
 # XXX the following could probably be increased
 PRIMARY_MAX_LOAD!=	expr 8192 - 512
-
-# this and the following lines are bugs, which should be fixed.
-install:
 
 .include "../Makefile.bootxx"
