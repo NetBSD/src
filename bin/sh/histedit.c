@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)histedit.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: histedit.c,v 1.3 1994/06/11 16:11:57 mycroft Exp $";
+static char *rcsid = "$Id: histedit.c,v 1.4 1994/12/04 07:12:13 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -51,10 +51,12 @@ static char *rcsid = "$Id: histedit.c,v 1.3 1994/06/11 16:11:57 mycroft Exp $";
 #include "parser.h"
 #include "var.h"
 #include "options.h"
+#include "output.h"
 #include "mystring.h"
 #include "error.h"
 #include "histedit.h"
 #include "memalloc.h"
+#include "extern.h"
 
 #define MAXHISTLOOPS	4	/* max recursions through fc */
 #define DEFEDITOR	"ed"	/* default editor *should* be $EDITOR */
@@ -65,12 +67,15 @@ int displayhist;
 static FILE *el_in, *el_out;
 
 STATIC char *fc_replace __P((const char *, char *, char *));
+int not_fcnumber __P((char *));
+int str_to_event __P((char *, int));
 
 /*
  * Set history and editing status.  Called whenever the status may
  * have changed (figures out what to do).
  */
-histedit() {
+histedit() 
+{
 
 #define editing (Eflag || Vflag)
 
@@ -135,6 +140,8 @@ bad:
 	}
 }
 
+
+void
 sethistsize() {
 	char *cp;
 	int histsize;
@@ -152,7 +159,9 @@ sethistsize() {
  *  This command is provided since POSIX decided to standardize
  *  the Korn shell fc command.  Oh well...
  */
+int
 histcmd(argc, argv)
+	int argc;
 	char *argv[];
 {
 	extern char *optarg;
@@ -387,6 +396,7 @@ fc_replace(s, p, r)
 	return (dest);
 }
 
+int
 not_fcnumber(s)
         char *s;
 {
@@ -395,6 +405,7 @@ not_fcnumber(s)
 	return (!is_number(s));
 }
 
+int
 str_to_event(str, last)
 	char *str;
 	int last;
@@ -402,7 +413,7 @@ str_to_event(str, last)
 	const HistEvent *he;
 	char *s = str;
 	int relative = 0;
-	int i, j;
+	int i;
 
 	he = history(hist, H_FIRST);
 	switch (*s) {

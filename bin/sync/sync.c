@@ -39,10 +39,15 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sync.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: sync.c,v 1.5 1994/09/20 04:18:12 mycroft Exp $";
+static char *rcsid = "$Id: sync.c,v 1.6 1994/12/04 07:12:29 cgd Exp $";
 #endif /* not lint */
 
-main()
+#include <unistd.h>
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	sync();
 	exit(0);

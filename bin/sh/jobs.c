@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)jobs.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: jobs.c,v 1.12 1994/09/23 11:28:42 mycroft Exp $";
+static char *rcsid = "$Id: jobs.c,v 1.13 1994/12/04 07:12:15 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -56,6 +56,7 @@ static char *rcsid = "$Id: jobs.c,v 1.12 1994/09/23 11:28:42 mycroft Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "extern.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
@@ -106,7 +107,9 @@ STATIC int waitproc();
 MKINIT int jobctl;
 
 void
-setjobctl(on) {
+setjobctl(on) 
+	int on;
+{
 #ifdef OLD_TTY_DRIVER
 	int ldisc;
 #endif
@@ -164,7 +167,11 @@ SHELLPROC {
 
 
 #if JOBS
-fgcmd(argc, argv)  char **argv; {
+int
+fgcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	struct job *jp;
 	int pgrp;
 	int status;
@@ -182,7 +189,11 @@ fgcmd(argc, argv)  char **argv; {
 }
 
 
-bgcmd(argc, argv)  char **argv; {
+int
+bgcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	struct job *jp;
 
 	do {
@@ -198,7 +209,7 @@ bgcmd(argc, argv)  char **argv; {
 STATIC void
 restartjob(jp)
 	struct job *jp;
-	{
+{
 	struct procstat *ps;
 	int i;
 
@@ -218,7 +229,10 @@ restartjob(jp)
 
 
 int
-jobscmd(argc, argv)  char **argv; {
+jobscmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	showjobs(0);
 	return 0;
 }
@@ -234,7 +248,9 @@ jobscmd(argc, argv)  char **argv; {
  */
 
 void
-showjobs(change) {
+showjobs(change) 
+	int change;
+{
 	int jobno;
 	int procno;
 	int i;
@@ -328,7 +344,10 @@ freejob(jp)
 
 
 int
-waitcmd(argc, argv)  char **argv; {
+waitcmd(argc, argv) 
+	int argc;
+	char **argv; 
+{
 	struct job *job;
 	int status;
 	struct job *jp;
@@ -369,7 +388,11 @@ waitcmd(argc, argv)  char **argv; {
 
 
 
-jobidcmd(argc, argv)  char **argv; {
+int
+jobidcmd(argc, argv)  
+	int argc;
+	char **argv; 
+{
 	struct job *jp;
 	int i;
 
@@ -448,7 +471,8 @@ currentjob:
 struct job *
 makejob(node, nprocs)
 	union node *node;
-	{
+	int nprocs;
+{
 	int i;
 	struct job *jp;
 
@@ -509,7 +533,8 @@ int
 forkshell(jp, n, mode)
 	union node *n;
 	struct job *jp;
-	{
+	int mode;
+{
 	int pid;
 	int pgrp;
 
@@ -672,8 +697,9 @@ waitforjob(jp)
 
 STATIC int
 dowait(block, job)
+	int block;
 	struct job *job;
-	{
+{
 	int pid;
 	int status;
 	struct procstat *sp;
@@ -798,8 +824,9 @@ STATIC int onsigchild() {
 
 STATIC int
 waitproc(block, status)
+	int block;
 	int *status;
-	{
+{
 #ifdef BSD
 	int flags;
 

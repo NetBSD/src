@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: main.c,v 1.14 1994/08/03 16:25:26 jtc Exp $";
+static char *rcsid = "$Id: main.c,v 1.15 1994/12/04 07:12:18 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -67,6 +67,7 @@ static char *rcsid = "$Id: main.c,v 1.14 1994/08/03 16:25:26 jtc Exp $";
 #include "init.h"
 #include "mystring.h"
 #include "exec.h"
+#include "extern.h"
 
 #define PROFILE 0
 
@@ -97,7 +98,11 @@ char *getenv();
  * is used to figure out how far we had gotten.
  */
 
-main(argc, argv)  char **argv; {
+int
+main(argc, argv)
+	int argc;
+	char **argv; 
+{
 	struct jmploc jmploc;
 	struct stackmark smark;
 	volatile int state;
@@ -187,7 +192,9 @@ state4:	/* XXX ??? - why isn't this before the "if" statement */
  */
 
 void
-cmdloop(top) {
+cmdloop(top) 
+	int top;
+{
 	union node *n;
 	struct stackmark smark;
 	int inter;
@@ -298,7 +305,11 @@ find_dot_file(basename) char *basename; {
 	return basename;
 }
 
-dotcmd(argc, argv)  char **argv; {
+int
+dotcmd(argc, argv)  
+	int argc;
+	char **argv; 
+{
 	exitstatus = 0;
 	if (argc >= 2) {		/* That's what SVR2 does */
 		char *fullname = find_dot_file(argv[1]);
@@ -311,7 +322,11 @@ dotcmd(argc, argv)  char **argv; {
 }
 
 
-exitcmd(argc, argv)  char **argv; {
+int
+exitcmd(argc, argv)  
+	int argc;
+	char **argv; 
+{
 	if (stoppedjobs())
 		return;
 	if (argc > 1)
