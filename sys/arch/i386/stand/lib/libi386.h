@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.6 1997/09/17 18:04:21 drochner Exp $	*/
+/*	$NetBSD: libi386.h,v 1.7 1998/08/13 17:41:11 rvb Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -64,6 +64,10 @@ void initio __P((int));
 #define CONSDEV_COM1 2
 #define CONSDEV_COM2 3
 #define CONSDEV_COM3 4
+#define CONSDEV_COM0KBD 5
+#define CONSDEV_COM1KBD 6
+#define CONSDEV_COM2KBD 7
+#define CONSDEV_COM3KBD 8
 #define CONSDEV_AUTO (-1)
 int iskey __P((void));
 char awaitkey __P((int, int));
