@@ -1,7 +1,7 @@
-/*	$NetBSD: gemvar.h,v 1.9 2002/05/15 21:05:23 matt Exp $ */
+/*	$NetBSD: gemvar.h,v 1.10 2004/10/17 21:49:08 heas Exp $ */
 
 /*
- * 
+ *
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,13 +43,13 @@
 #endif
 
 /*
- * Misc. definitions for the Sun ``Gem'' Ethernet controller family driver.  
+ * Misc. definitions for the Sun ``Gem'' Ethernet controller family driver.
  */
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
  * enough descriptors for 64 pending transmissions and 16 segments
- * per packet.  
+ * per packet.
  */
 #define	GEM_NTXSEGS		16
 
