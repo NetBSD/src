@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 2002/09/10 12:44:38 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 2002/10/10 08:52:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,10 +60,28 @@ int     db_active = 0;
 db_regs_t ddb_regs;
 
 static db_expr_t reg_zero;
+static db_expr_t reg_kcr0;
+static db_expr_t reg_kcr1;
 
 static int db_var_reg(const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
+	{ "usr", (long *)&ddb_regs.tf_state.sf_usr, db_var_reg },
+	{ "sr",  (long *)&ddb_regs.tf_state.sf_ssr, db_var_reg },
+	{ "pc",  (long *)&ddb_regs.tf_state.sf_spc, db_var_reg },
+	{ "kcr0",(long *)&reg_kcr0, db_var_reg },
+	{ "kcr1",(long *)&reg_kcr1, db_var_reg },
+
+	{ "tr0", (long *)&ddb_regs.tf_caller.tr0, db_var_reg },
+	{ "tr1", (long *)&ddb_regs.tf_caller.tr1, db_var_reg },
+	{ "tr2", (long *)&ddb_regs.tf_caller.tr2, db_var_reg },
+	{ "tr3", (long *)&ddb_regs.tf_caller.tr3, db_var_reg },
+	{ "tr4", (long *)&ddb_regs.tf_caller.tr4, db_var_reg },
+
+	{ "tr5", (long *)&ddb_regs.tf_callee.tr5, db_var_reg },
+	{ "tr6", (long *)&ddb_regs.tf_callee.tr6, db_var_reg },
+	{ "tr7", (long *)&ddb_regs.tf_callee.tr7, db_var_reg },
+
 	{ "r0",  (long *)&ddb_regs.tf_caller.r0,  db_var_reg },
 	{ "r1",  (long *)&ddb_regs.tf_caller.r1,  db_var_reg },
 	{ "r2",  (long *)&ddb_regs.tf_caller.r2,  db_var_reg },
@@ -131,21 +149,7 @@ const struct db_variable db_regs[] = {
 	{ "r60", (long *)&ddb_regs.tf_caller.r60, db_var_reg },
 	{ "r61", (long *)&ddb_regs.tf_caller.r61, db_var_reg },
 	{ "r62", (long *)&ddb_regs.tf_caller.r62, db_var_reg },
-	{ "r63", (long *)&reg_zero,               db_var_reg },
-
-	{ "tr0", (long *)&ddb_regs.tf_caller.tr0, db_var_reg },
-	{ "tr1", (long *)&ddb_regs.tf_caller.tr1, db_var_reg },
-	{ "tr2", (long *)&ddb_regs.tf_caller.tr2, db_var_reg },
-	{ "tr3", (long *)&ddb_regs.tf_caller.tr3, db_var_reg },
-	{ "tr4", (long *)&ddb_regs.tf_caller.tr4, db_var_reg },
-
-	{ "tr5", (long *)&ddb_regs.tf_callee.tr5, db_var_reg },
-	{ "tr6", (long *)&ddb_regs.tf_callee.tr6, db_var_reg },
-	{ "tr7", (long *)&ddb_regs.tf_callee.tr7, db_var_reg },
-
-	{ "usr", (long *)&ddb_regs.tf_state.sf_usr, db_var_reg },
-	{ "sr",  (long *)&ddb_regs.tf_state.sf_ssr, db_var_reg },
-	{ "pc",  (long *)&ddb_regs.tf_state.sf_spc, db_var_reg }
+	{ "r63", (long *)&reg_zero,               db_var_reg }
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -171,26 +175,47 @@ db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 	register_t *rp = (register_t *) varp->valuep;
 
 	if (op == DB_VAR_GET)
-		*valp = *ep;
+		if (ep == &reg_kcr0) {
+			register_t kcr0;
+			__asm __volatile("getcon kcr0, %0" : "=r"(kcr0));
+			*valp = kcr0;
+		} else
+		if (ep == &reg_kcr1) {
+			register_t kcr1;
+			__asm __volatile("getcon kcr1, %0" : "=r"(kcr1));
+			*valp = kcr1;
+		} else
+			*valp = *ep;
 	else {
 		/* Disallow writing to registers which are not saved/writable */
 		if (ep == &reg_zero)
 			return(0);
 
-		*ep = *valp;
+		if (ep == &reg_kcr0) {
+			register_t kcr0 = *valp;
+			__asm __volatile("putcon %0, kcr0" :: "r"(kcr0));
+		} else
+		if (ep == &reg_kcr1) {
+			register_t kcr1 = *valp;
+			__asm __volatile("putcon %0, kcr1" :: "r"(kcr1));
+		} else {
 
-		/*
-		 * If writing to a branch target register, or the program
-		 * counter, ensure bit zero is set to force SHMedia mode.
-		 *
-		 * XXX: what if running some SHcompact code in kernel?
-		 */
-		if ((rp >= &ddb_regs.tf_caller.tr0 &&
-		     rp <= &ddb_regs.tf_caller.tr4) ||
-		    (rp >= &ddb_regs.tf_callee.tr5 &&
-		     rp <= &ddb_regs.tf_callee.tr7) ||
-		    rp == &ddb_regs.tf_state.sf_spc)
-			*ep |= 0x1;
+			*ep = *valp;
+
+			/*
+			 * If writing to a branch target register, or the
+			 * program counter, ensure bit zero is set to force
+			 * SHMedia mode.
+			 *
+			 * XXX: what if running some SHcompact code in kernel?
+			 */
+			if ((rp >= &ddb_regs.tf_caller.tr0 &&
+			     rp <= &ddb_regs.tf_caller.tr4) ||
+			    (rp >= &ddb_regs.tf_callee.tr5 &&
+			     rp <= &ddb_regs.tf_callee.tr7) ||
+			    rp == &ddb_regs.tf_state.sf_spc)
+				*ep |= 0x1;
+		}
 	}
 
 	return (0);
