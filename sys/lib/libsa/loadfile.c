@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.12 2001/07/13 17:43:23 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.13 2001/07/19 18:55:38 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -278,8 +278,8 @@ elf_exec(fd, elf, marks, flags)
 	size_t sz;
 	int first;
 	int havesyms;
-	paddr_t minp = ~0, maxp = 0, pos;
-	paddr_t offset = marks[MARK_START], shpp, elfp;
+	paddr_t minp = ~0, maxp = 0, pos = 0;
+	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
