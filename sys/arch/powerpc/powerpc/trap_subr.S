@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.48 2003/08/12 05:06:56 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.49 2003/08/12 15:40:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,9 +60,6 @@
  * User segment table is loaded through a pointer to the current pmap.
  */
 #define RESTORE_USER_SRS(t0,t1)						\
-	GET_CPUINFO(t0);						\
-	ldptr	t0,CI_CURPCB(t0);					\
-	ldptr	t0,PCB_PM(t0);						\
 	ldreg	t0,PM_STEG(t0);						\
 	mtasr	t0
 
@@ -101,9 +98,6 @@
  * User SRs are loaded through a pointer to the current pmap.
  */
 #define RESTORE_USER_SRS(pmap,sr) \
-	GET_CPUINFO(pmap); \
-	ldptr	pmap,CI_CURPCB(pmap); \
-	ldptr	pmap,PCB_PM(pmap); \
 	ldregu	sr,PM_SR(pmap); \
 	RESTORE_SRS(pmap,sr)
 
@@ -763,6 +757,11 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Can't touch %r1 from here on */					\
 	mtsprg2	%r2;			/* save r2 & r3 */		\
 	mtsprg3	%r3;							\
+/* While the MMU is on, get the PMAP address and save it */		\
+	GET_CPUINFO(%r2);						\
+	ldptr	%r3,CI_CURPCB(%r2);					\
+	ldptr	%r3,PCB_PM(%r3);					\
+	stptr	%r3,(savearea+CPUSAVE_R28)(%r2);			\
 /* Disable translation, machine check and recoverability: */		\
 	mfmsr	%r2;							\
 	andi.	%r2,%r2,~(PSL_DR|PSL_IR|PSL_ME|PSL_RI)@l;		\
@@ -775,6 +774,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	bf	17,1f;			/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	CPU601_KERN_LEAVE(%r2,%r3);					\
+	GET_CPUINFO(%r2);						\
+	ldreg	%r2,(savearea+CPUSAVE_R28)(%r2);			\
 	RESTORE_USER_SRS(%r2,%r3);					\
 1:	mfsprg1	%r2;			/* restore cr */		\
 	mtcr	%r2;							\
@@ -967,11 +968,12 @@ _C_LABEL(extint_call):
 	bl	_C_LABEL(extint_call)	/* to be filled in later */
 
 intr_exit:
-/* Disable interrupts (should already be disabled) and MMU here: */
+/* Disable interrupts (should already be disabled) and recoverability here: */
 	mfmsr	%r3
-	andi.	%r3,%r3,~(PSL_EE|PSL_ME|PSL_RI|PSL_DR|PSL_IR)@l
+	andi.	%r3,%r3,~(PSL_EE|PSL_ME|PSL_RI)@l
 	mtmsr	%r3
 	isync
+
 /* restore possibly overwritten registers: */
 	ldreg	%r12,IFRAME_R12(%r1)
 	ldreg	%r11,IFRAME_R11(%r1)
@@ -993,11 +995,20 @@ intr_exit:
 	addi	%r4,%r4,-1		/* adjust reentrancy count */
 	stint	%r4,CI_INTRDEPTH(%r5)
 
+	ldptr	%r3,CI_CURPCB(%r5)	/* access PCB while MMU is on */
+	ldptr	%r3,PCB_PM(%r3)		/* get pmap pointer */
+
+/* Now disable MMU */
+	mfmsr	%r4
+	andi.	%r4,%r4,~(PSL_DR|PSL_IR)@l
+	mtmsr	%r4
+	isync
+
 /* Returning to user mode? */
 	mtcr	%r6			/* saved SRR1 */
 	bf	17,1f			/* branch if PSL_PR is false */
 
-	CPU601_KERN_LEAVE(%r3,%r4)
+	CPU601_KERN_LEAVE(%r6,%r4)	/* leave r3 alone */
 	RESTORE_USER_SRS(%r3,%r4)
 	ldint	%r3,CI_ASTPENDING(%r5)	/* Test AST pending */
 	andi.	%r3,%r3,1
