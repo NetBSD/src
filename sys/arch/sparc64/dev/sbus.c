@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.63 2003/10/11 20:53:14 petrov Exp $ */
+/*	$NetBSD: sbus.c,v 1.64 2003/10/26 19:15:00 christos Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.63 2003/10/11 20:53:14 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.64 2003/10/26 19:15:00 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -436,7 +436,7 @@ sbus_bus_addr(t, btype, offset)
 	u_int btype;
 	u_int offset;
 {
-	bus_addr_t baddr;
+	bus_addr_t baddr = 0;
 	int slot = btype;
 	struct sbus_softc *sc = t->cookie;
 	int i;
