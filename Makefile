@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.135 2001/10/10 17:20:15 jwise Exp $
+#	$NetBSD: Makefile,v 1.136 2001/10/12 21:05:08 nathanw Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -210,7 +210,7 @@ release snapshot: build
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-bin includes-games includes-libexec includes-regress \
 includes-sbin includes-usr.sbin:
-	@${TRUE}
+	@true
 
 .if !exists(${.CURDIR}/share/mk)
 .BEGIN:

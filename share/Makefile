@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/09/21 20:54:02 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2001/10/12 21:05:09 nathanw Exp $
 #	from @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing:  ms
@@ -16,6 +16,6 @@ SUBDIR+=locale
 
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-examples includes-man includes-sushi:
-	@${TRUE}
+	@true
 
 .include <bsd.subdir.mk>
