@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.192 1998/05/20 16:30:54 drochner Exp $	*/
+/*	$NetBSD: locore.s,v 1.193 1998/05/27 15:53:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1037,8 +1037,6 @@ ENTRY(kcopy)
 ENTRY(copyout)
 	pushl	%esi
 	pushl	%edi
-	movl	_curpcb,%eax
-	movl	$_copy_fault,PCB_ONFAULT(%eax)
 	
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
@@ -1071,17 +1069,6 @@ ENTRY(copyout)
 	 * doesn't do it for us.
 	 */
 
-#if defined(PMAP_NEW)
-	pushl	%eax
-	pushl	%eax
-	pushl	%edi
-	call	_C_LABEL(i386_writecheck)
-	addl	$8,%esp			# pop arguments
-	testl	%eax,%eax		# if not ok, return EFAULT
-	popl	%eax
-	jz	3f
-	jmp	_copy_fault
-#else
 	/* Compute number of pages. */
 	movl	%edi,%ecx
 	andl	$PGOFSET,%ecx
@@ -1091,6 +1078,11 @@ ENTRY(copyout)
 
 	/* Compute PTE offset for start address. */
 	shrl	$PGSHIFT,%edi
+
+#if defined(PMAP_NEW)
+	movl	_curpcb,%edx
+	movl	$2f,PCB_ONFAULT(%edx)
+#endif
 
 1:	/* Check PTE for each page. */
 	testb	$PG_RW,_PTmap(,%edi,4)
@@ -1116,10 +1108,12 @@ ENTRY(copyout)
 	popl	%eax
 	jz	4b
 	jmp	_copy_fault
-#endif /* PMAP_NEW */
 #endif /* I386_CPU */
 
-3:	/* bcopy(%esi, %edi, %eax); */
+3:	movl	_curpcb,%edx
+	movl	$_copy_fault,PCB_ONFAULT(%edx)
+
+	/* bcopy(%esi, %edi, %eax); */
 	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
@@ -1133,7 +1127,6 @@ ENTRY(copyout)
 
 	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
 	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
@@ -1198,8 +1191,6 @@ ENTRY(copy_fault)
 ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
-	movl	_curpcb,%ecx
-	movl	$_copystr_fault,PCB_ONFAULT(%ecx)
 
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
@@ -1217,6 +1208,11 @@ ENTRY(copyoutstr)
 	movl	$NBPG,%ecx
 	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
 
+#if defined(PMAP_NEW)
+	movl	_curpcb,%eax
+	movl	$6f,PCB_ONFAULT(%eax)
+#endif
+
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
 	 * space, and check for a write fault.
@@ -1224,16 +1220,6 @@ ENTRY(copyoutstr)
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
 	jae	_copystr_fault
 
-#if defined(PMAP_NEW)
-	pushl	%edx
-	pushl	$1
-	pushl	%edi
-	call	_C_LABEL(i386_writecheck)
-	addl	$8,%esp
-	popl	%edx
-	testl	%eax,%eax
-	jnz	_copystr_fault
-#else
 	/* Compute PTE offset. */
 	movl	%edi,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1241,7 +1227,7 @@ ENTRY(copyoutstr)
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	2f
 
-	/* Simulate a trap. */
+6:	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%edi
 	call	_trapwrite		# trapwrite(addr)
@@ -1249,10 +1235,8 @@ ENTRY(copyoutstr)
 	popl	%edx
 	testl	%eax,%eax
 	jnz	_copystr_fault
-2:
-#endif
 
-	/* Copy up to end of this page. */
+2:	/* Copy up to end of this page. */
 	subl	%ecx,%edx		# predecrement total count
 	jnc	3f
 	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
@@ -1281,7 +1265,9 @@ ENTRY(copyoutstr)
 #endif /* I386_CPU */
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-5:	/*
+5:	movl	_curpcb,%eax
+	movl	$_copystr_fault,PCB_ONFAULT(%eax)
+	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
@@ -1512,8 +1498,6 @@ ENTRY(suword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_fusuaddrfault
-	movl	_curpcb,%ecx
-	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
@@ -1521,23 +1505,17 @@ ENTRY(suword)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#if defined(PMAP_NEW)
-	pushl	%edx
-	pushl	$4
-	pushl	%edx
-	call	_C_LABEL(i386_writecheck)
-	addl	$8,%esp
-	popl	%edx
-	movl	_curpcb,%ecx
-	testl	%eax,%eax
-	jnz	_fusufault
-#else
+#ifdef PMAP_NEW
+	movl	_curpcb,%eax
+	movl	$3f,PCB_ONFAULT(%eax)
+#endif
+
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
 
-	/* Simulate a trap. */
+3:	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%edx
 	call	_trapwrite		# trapwrite(addr)
@@ -1548,10 +1526,12 @@ ENTRY(suword)
 	jnz	_fusufault
 
 1:	/* XXX also need to check the following 3 bytes for validity! */
-#endif /* PMAP_NEW */
-#endif /* I386_CPU */
+#endif
 
-2:	movl	8(%esp),%eax
+2:	movl	_curpcb,%ecx
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
+
+	movl	8(%esp),%eax
 	movl	%eax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -1565,8 +1545,6 @@ ENTRY(susword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_fusuaddrfault
-	movl	_curpcb,%ecx
-	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
@@ -1574,23 +1552,17 @@ ENTRY(susword)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#if defined(PMAP_NEW)
-	pushl	%edx
-	pushl	$2
-	pushl	%edx
-	call	_C_LABEL(i386_writecheck)
-	addl	$8,%esp
-	popl	%edx
-	movl	_curpcb,%ecx
-	testl	%eax,%eax
-	jnz	_fusufault
-#else
+#ifdef PMAP_NEW
+	movl	_curpcb,%eax
+	movl	$3f,PCB_ONFAULT(%eax)
+#endif
+
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
 
-	/* Simulate a trap. */
+3:	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%edx
 	call	_trapwrite		# trapwrite(addr)
@@ -1601,10 +1573,12 @@ ENTRY(susword)
 	jnz	_fusufault
 
 1:	/* XXX also need to check the following byte for validity! */
-#endif /* PMAP_NEW */
-#endif /* I386_CPU */
+#endif
 
-2:	movl	8(%esp),%eax
+2:	movl	_curpcb,%ecx
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
+
+	movl	8(%esp),%eax
 	movw	%ax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -1628,19 +1602,6 @@ ENTRY(suswintr)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#if defined(PMAP_NEW)
-	movl	%edx,%eax
-	shrl	$PDSHIFT,%eax		# calculate pde address
-	testb	$PG_V,_PTD(,%eax,4)
-	jz	3f
-	movl	%edx,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_PTmap(,%eax,4)
-	jnz	1f
-
-3:	/* Simulate a trap. */
-	jmp	_fusubail
-#else
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
@@ -1648,7 +1609,6 @@ ENTRY(suswintr)
 
 	/* Simulate a trap. */
 	jmp	_fusubail
-#endif /* PMAP_NEW */
 
 1:	/* XXX also need to check the following byte for validity! */
 #endif
@@ -1667,8 +1627,6 @@ ENTRY(subyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_fusuaddrfault
-	movl	_curpcb,%ecx
-	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
@@ -1676,23 +1634,17 @@ ENTRY(subyte)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#if defined(PMAP_NEW)
-	pushl	%edx
-	pushl	$1
-	pushl	%edx
-	call	_C_LABEL(i386_writecheck)
-	addl	$8,%esp
-	popl	%edx
-	movl	_curpcb,%ecx
-	testl	%eax,%eax
-	jnz	_fusufault
-#else
+#ifdef PMAP_NEW
+	movl	_curpcb,%eax
+	movl	$3f,PCB_ONFAULT(%eax)
+#endif
+
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	1f
 
-	/* Simulate a trap. */
+3:	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%edx
 	call	_trapwrite		# trapwrite(addr)
@@ -1703,10 +1655,12 @@ ENTRY(subyte)
 	jnz	_fusufault
 
 1:
-#endif /* PMAP_NEW */
-#endif /* I386_CPU */
+#endif
 
-2:	movb	8(%esp),%al
+2:	movl	_curpcb,%ecx
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
+
+	movb	8(%esp),%al
 	movb	%al,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
