@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.15 2003/09/26 12:02:57 simonb Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.16 2004/03/26 15:01:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -125,10 +125,6 @@ extern const int native_to_ibcs2_signo[];
 void ibcs2_to_native_sigset __P((const ibcs2_sigset_t *, sigset_t *));
 void native_to_ibcs2_sigset __P((const sigset_t *, ibcs2_sigset_t *));
 
-#ifdef __HAVE_SIGINFO
 void	ibcs2_sendsig __P((const struct ksiginfo *, const sigset_t *));
-#else
-void	ibcs2_sendsig __P((int, const sigset_t *, u_long));
-#endif
 
 #endif /* _IBCS2_SIGNAL_H */
