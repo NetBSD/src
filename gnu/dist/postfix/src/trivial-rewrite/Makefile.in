@@ -67,6 +67,7 @@ resolve.o: ../../include/vbuf.h
 resolve.o: ../../include/vstream.h
 resolve.o: ../../include/vstring_vstream.h
 resolve.o: ../../include/split_at.h
+resolve.o: ../../include/valid_hostname.h
 resolve.o: ../../include/mail_params.h
 resolve.o: ../../include/mail_proto.h
 resolve.o: ../../include/iostuff.h

@@ -6331,6 +6331,15 @@ Apologies for any names omitted.
 	MAIL_CONFIG environment setting to the postdrop command.
 	File: global/mail_config.h.
 
+20021121
+
+	Bugfix: garbage in "user@garbage"@domain address forms may
+	cause the SMTP or LMTP client to terminate with a fatal
+	error exit because garbage/tcp is not an existing service.
+	This cannot be abused to cause the SMTP or LMTP client to
+	send data into unauthorized ports.  Files:  *qmgr/qmgr_message.c,
+	trivial-rewrite/resolve.c.
+
 Open problems:
 
 	Low: sendmail does not store null command-line recipients.

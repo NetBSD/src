@@ -61,6 +61,7 @@
 #include <vstream.h>
 #include <vstring_vstream.h>
 #include <split_at.h>
+#include <valid_hostname.h>
 
 /* Global library. */
 
@@ -219,8 +220,12 @@ void    resolve_addr(char *addr, VSTRING *channel, VSTRING *nexthop,
 	    vstring_strcpy(nexthop, destination);
 	else if (*var_relayhost)
 	    vstring_strcpy(nexthop, var_relayhost);
-	else
+	else {
 	    tok822_internalize(nexthop, domain->next, TOK822_STR_DEFL);
+	    if (STR(nexthop)[strspn(STR(nexthop), "[]0123456789.")] != 0
+		&& valid_hostname(STR(nexthop), DONT_GRIPE) == 0)
+		*flags |= RESOLVE_FLAG_ERROR;
+	}
 	if (*STR(channel) == 0)
 	    msg_fatal("null transport is not allowed: %s = %s",
 		      VAR_DEF_TRANSPORT, var_def_transport);
