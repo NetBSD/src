@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.3 2001/06/02 10:44:56 bjh21 Exp $	*/
+/*	$NetBSD: blockio.S,v 1.4 2001/06/02 11:15:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.3 2001/06/02 10:44:56 bjh21 Exp $")
+RCSID("$NetBSD: blockio.S,v 1.4 2001/06/02 11:15:56 bjh21 Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -60,6 +60,9 @@ RCSID("$NetBSD: blockio.S,v 1.3 2001/06/02 10:44:56 bjh21 Exp $")
 
 /* This code will look very familiar if you've read _memcpy(). */
 ENTRY(read_multi_1)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	Lrm1_l4			/* less than 4 bytes */
 	ands	r12, r1, #3
@@ -88,6 +91,7 @@ Lrm1loop:
 	bge	Lrm1loop
 Lrm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
+	ldmeqdb	fp, {fp, sp, pc}
 	moveq	pc, r14
 	cmp	r2, #2
 	ldrb	r3, [r0]
@@ -96,7 +100,7 @@ Lrm1_l4:
 	strgeb	r3, [r1], #1
 	ldrgtb	r3, [r0]
 	strgtb	r3, [r1], #1
-	mov	pc, r14
+	ldmdb	fp, {fp, sp, pc}
 
 /*
  * Write bytes to an I/O address from a block of memory
@@ -108,6 +112,9 @@ Lrm1_l4:
 
 /* This code will look very familiar if you've read _memcpy(). */
 ENTRY(write_multi_1)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	Lwm1_l4			/* less than 4 bytes */
 	ands	r12, r1, #3
@@ -136,7 +143,7 @@ Lwm1loop:
 	bge	Lwm1loop
 Lwm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
-	moveq	pc, r14
+	ldmeqdb	fp, {fp, sp, pc}
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0]
@@ -144,7 +151,7 @@ Lwm1_l4:
 	strgeb	r3, [r0]
 	ldrgtb	r3, [r1], #1
 	strgtb	r3, [r0]
-	mov	pc, r14
+	ldmdb	fp, {fp, sp, pc}
 
 /*
  * Reads short ints (16 bits) from an I/O address into a block of memory
