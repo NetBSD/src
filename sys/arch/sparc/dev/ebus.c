@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.5 2002/03/11 16:27:56 pk Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.6 2002/03/11 23:36:17 uwe Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -509,7 +509,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 			 (u_int32_t)pciaddr));
 
 		/* pass it onto the pci controller */
-		return (bus_space_map2(sc->sc_bustag, 0, pciaddr, size,
+		return (bus_space_map2(sc->sc_bustag, pciaddr, size,
 				       flags, va, hp));
 	}
 
