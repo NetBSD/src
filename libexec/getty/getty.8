@@ -1,4 +1,4 @@
-.\"	$NetBSD: getty.8,v 1.8 1998/04/10 09:31:55 fair Exp $
+.\"	$NetBSD: getty.8,v 1.9 1998/04/22 04:54:19 ross Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,6 +59,10 @@ is called by
 .Xr init 8
 to open and initialize the tty line, read a login name, and invoke
 .Xr login 1 .
+The devices on which to run 
+.Nm
+are normally determined by
+.Xr ttys 5 .
 .Pp
 The argument
 .Ar tty
@@ -128,6 +132,7 @@ does not exist.
 .Sh FILES
 .Bl -tag -width /var/spool/lock/LCK..ttyXX -compact
 .It Pa /etc/gettytab
+.It Pa /etc/ttys
 .It Pa /var/spool/lock/LCK..ttyXX
 .El
 .Sh SEE ALSO
