@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.144 1999/08/12 09:42:11 bouyer Exp $
+$NetBSD: pcidevs,v 1.145 1999/08/16 21:36:39 mcr Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -509,6 +509,7 @@ vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor LMC		0x1376	LAN Media Corporation
 vendor DELTA		0x1500	Delta Electronics
+vendor SOLIDUM          0x1588  Solidum Systems Corp. www.solidum.com/pcisig.html
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -689,6 +690,7 @@ product ATI MACH64_LP	0x4c50	Mach64 LP
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
+product AMCIRCUITS S5920	0x5920  S5920 PCI Target
 
 /* Atronics products */
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
@@ -1161,6 +1163,10 @@ product SMC 37C665	0x1000	FDC 37C665
 product SMC 37C922	0x1001	FDC 37C922
 product SMC 83C170	0x0005	83C170 (\"EPIC/100\") Fast Ethernet
 product SMC 83C175	0x0006	83C175 (\"EPIC/100\") Fast Ethernet
+
+/* Solidum Systems Corporation */
+product SOLIDUM AMD971		0x2000 SNP8023: AMD 971
+product SOLIDUM CLASS802	0x8023 SNP8023: Classifier Engine
 
 /* Surecom Technology products */
 product SURECOM NE34	0x0e34	NE-34 Ethernet
