@@ -1,7 +1,9 @@
-/*	$NetBSD: dma.c,v 1.22 1996/03/26 01:28:50 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.23 1996/03/31 22:32:45 pk Exp $ */
 
 /*
+ * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -58,9 +60,10 @@ int dmamatch		__P((struct device *, void *, void *));
 void dma_reset		__P((struct dma_softc *));
 void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
-void dma_start		__P((struct dma_softc *, caddr_t *, size_t *, int));
-int dmaintr		__P((struct dma_softc *));
-int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *, int, size_t *));
+int espdmaintr		__P((struct dma_softc *));
+int ledmaintr		__P((struct dma_softc *));
+int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *,
+			     int, size_t *));
 void dma_go		__P((struct dma_softc *));
 
 struct cfattach dma_ca = {
@@ -92,6 +95,11 @@ dmaprint(aux, name)
 	void *aux;
 	char *name;
 {
+	register struct confargs *ca = aux;
+
+	if (name)
+		printf("[%s at %s]", ca->ca_ra.ra_name, name);
+	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
 }
 
@@ -122,32 +130,39 @@ dmaattach(parent, self, aux)
 {
 	register struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
+#if defined(SUN4M)
+	int node;
+	struct confargs oca;
+	char *name;
+#endif
 
-	if (ca->ca_ra.ra_vaddr == NULL)
+	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
 		ca->ca_ra.ra_vaddr =
 		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
 			     ca->ca_bustype);
 
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 
-	/*
-	 * find the ESP by poking around the esp device structures
-	 *
-	 * What happens here is that if the esp driver has not been
-	 * configured, then this returns a NULL pointer. Then when the
-	 * esp actually gets configured, it does the opposing test, and
-	 * if the sc->sc_dma field in it's softc is NULL, then tries to
-	 * find the matching dma driver.
-	 *
-	 */
-	sc->sc_esp = ((struct esp_softc *)
-	    getdevunit("esp", sc->sc_dev.dv_unit));
+	if (!CPU_ISSUN4M) {
+		/*
+		 * find the ESP by poking around the esp device structures
+		 *
+		 * What happens here is that if the esp driver has not been
+		 * configured, then this returns a NULL pointer. Then when the
+		 * esp actually gets configured, it does the opposing test, and
+		 * if the sc->sc_dma field in it's softc is NULL, then tries to
+		 * find the matching dma driver.
+		 *
+		 */
+		sc->sc_esp = (struct esp_softc *)
+			     getdevunit("esp", sc->sc_dev.dv_unit);
 
-	/*
-	 * and a back pointer to us, for DMA
-	 */
-	if (sc->sc_esp)
-		sc->sc_esp->sc_dma = sc;
+		/*
+		 * and a back pointer to us, for DMA
+		 */
+		if (sc->sc_esp)
+			sc->sc_esp->sc_dma = sc;
+	}
 
 	printf(": rev ");
 	sc->sc_rev = sc->sc_regs->csr & D_DEV_ID;
@@ -170,12 +185,17 @@ dmaattach(parent, self, aux)
 	printf("\n");
 
 	/* indirect functions */
+	if (sc->sc_dev.dv_cfdata->cf_attach == &espdma_ca ||
+	    sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
+		sc->intr = espdmaintr;
+	} else {
+		sc->intr = ledmaintr;
+	}
 	sc->enintr = dma_enintr;
 	sc->isintr = dma_isintr;
 	sc->reset = dma_reset;
 	sc->setup = dma_setup;
 	sc->go = dma_go;
-	sc->intr = dmaintr;
 
 	sc->sc_node = ca->ca_ra.ra_node;
 #if defined(SUN4C) || defined(SUN4M)
@@ -183,26 +203,28 @@ dmaattach(parent, self, aux)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif /* SUN4C || SUN4M */
 
-#ifdef notyet
+#if defined(SUN4M)
 	/* return if we are a plain "dma" with no children */
-	if (strcmp(getpropstring(node, "name"), "dma") == 0)
+	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca)
 		return;
+
+	/* Propagate bootpath */
+	if (ca->ca_ra.ra_bp != NULL &&
+	    (strcmp(ca->ca_ra.ra_bp->name, "espdma") == 0 ||
+	     strcmp(ca->ca_ra.ra_bp->name, "ledma") == 0))
+		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
+	else
+		oca.ca_ra.ra_bp = NULL;
 
 	/* search through children */
 	for (node = firstchild(sc->sc_node); node; node = nextsibling(node)) {
 		name = getpropstring(node, "name");
-		if (!romprop(&ca->ca_ra, name, node))
+		if (!romprop(&oca.ca_ra, name, node))
 			continue;
-		base = (int)ca->ca_ra.ra_paddr;
-		if (SBUS_ABS(base)) {
-			ca->ca_slot = SBUS_ABS_TO_SLOT(base);
-			ca->ca_offset = SBUS_ABS_TO_OFFSET(base);
-		} else {
-			ca->ca_slot = slot = ca->ca_ra.ra_iospace;
-			ca->ca_offset = base;
-			ca->ca_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
-		}
-		(void) config_found(&sc->sc_dev, (void *)&ca, dmaprint);
+
+		sbus_translate(parent, &oca);
+		oca.ca_bustype = BUS_SBUS;
+		(void) config_found(&sc->sc_dev, (void *)&oca, dmaprint);
 	}
 #endif
 }
@@ -241,6 +263,7 @@ dma_isintr(sc)
 }
 
 #define DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
+
 
 /*
  * setup a dma transfer
@@ -282,8 +305,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	ESP_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Program the DMA address */
-#if defined(SUN4M)
-	if (sc->sc_dmasize && cputyp == CPU_SUN4M) {
+	if (CPU_ISSUN4M && sc->sc_dmasize) {
 		/*
 		 * Use dvma mapin routines to map the buffer into DVMA space.
 		 */
@@ -294,7 +316,6 @@ dma_setup(sc, addr, len, datain, dmasize)
 			panic("dma: cannot allocate DVMA address");
 		DMADDR(sc) = sc->sc_dvmakaddr;
 	} else
-#endif
 		DMADDR(sc) = *sc->sc_dmaaddr;
 
 	/* Setup DMA control register */
@@ -327,7 +348,7 @@ dma_go(sc)
  * return 1 if it was a DMA continue.
  */
 int
-dmaintr(sc)
+espdmaintr(sc)
 	struct dma_softc *sc;
 {
 	int trans = 0, resid = 0;
@@ -402,11 +423,9 @@ dmaintr(sc)
 	if (csr & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
 
-#if defined(SUN4M)
-	if (cputyp == CPU_SUN4M && sc->sc_dvmakaddr)
+	if (CPU_ISSUN4M && sc->sc_dvmakaddr)
 		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
 			    (vm_offset_t)sc->sc_dvmaaddr, sc->sc_dmasize);
-#endif
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
@@ -421,4 +440,28 @@ dmaintr(sc)
 	return 1;
 #endif
 	return 0;
+}
+
+/*
+ * Pseudo (chained) interrupt from the le driver to handle DMA
+ * errors.
+ *
+ * XXX: untested
+ */
+int
+ledmaintr(sc)
+	struct dma_softc *sc;
+{
+	u_long csr;
+
+	csr = DMACSR(sc);
+
+	if (csr & D_ERR_PEND) {
+		printf("Lance DMA error, see your doctor!\n");
+		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
+		DMACSR(sc) |= D_INVALIDATE;
+		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+			(u_int)csr, DMACSRBITS);
+	}
+	return 1;
 }

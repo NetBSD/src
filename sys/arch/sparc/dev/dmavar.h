@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.6 1996/03/16 23:28:28 christos Exp $ */
+/*	$NetBSD: dmavar.h,v 1.7 1996/03/31 22:32:48 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -32,6 +32,7 @@ struct dma_softc {
 	struct device sc_dev;			/* us as a device */
 	struct sbusdev sc_sd;			/* sbus device */
 	struct esp_softc *sc_esp;		/* my scsi */
+	struct le_softc *sc_le;			/* my ethernet */
 	struct dma_regs *sc_regs;		/* the registers */
 	int	sc_active;			/* DMA active ? */
 	int	sc_rev;				/* revision */
@@ -77,3 +78,12 @@ struct dma_softc {
 				DMACSR(sc) |= D_DRAIN; \
 				DMAWAIT1(sc); \
 			}
+
+/* DMA engine functions */
+#define DMA_ENINTR(r)		(((r)->enintr)(r))
+#define DMA_ISINTR(r)		(((r)->isintr)(r))
+#define DMA_RESET(r)		(((r)->reset)(r))
+#define DMA_INTR(r)		(((r)->intr)(r))
+#define DMA_ISACTIVE(r)		((r)->sc_active)
+#define DMA_SETUP(a, b, c, d, e)	(((a)->setup)(a, b, c, d, e))
+#define DMA_GO(r)		(((r)->go)(r))
