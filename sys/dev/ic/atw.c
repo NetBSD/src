@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.32 2004/06/06 04:38:33 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.33 2004/06/23 08:05:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.32 2004/06/06 04:38:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.33 2004/06/23 08:05:01 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -625,14 +625,14 @@ atw_attach(struct atw_softc *sc)
 	reg = LSHIFT(sc->sc_bbptype, ATW_BBPCTL_TYPE_MASK);
 
 	switch (sc->sc_bbptype) {
-	case ATW_RFTYPE_INTERSIL:
+	case ATW_BBPTYPE_INTERSIL:
 		reg |= ATW_BBPCTL_TWI;
 		break;
-	case ATW_RFTYPE_RFMD:
+	case ATW_BBPTYPE_RFMD:
 		reg |= ATW_BBPCTL_RF3KADDR_ADDR | ATW_BBPCTL_NEGEDGE_DO |
 		    ATW_BBPCTL_CCA_ACTLO;
 		break;
-	case ATW_RFTYPE_MARVEL:
+	case ATW_BBPTYPE_MARVEL:
 		break;
 	}
 
