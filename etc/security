@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.73 2001/11/09 09:01:20 lukem Exp $
+#	$NetBSD: security,v 1.74 2001/12/18 00:44:20 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -568,6 +568,7 @@ fi
 if checkyesno check_devices; then
 	> $ERR
 	(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
+			-o -fstype null \
 			-o -fstype procfs \) -a -prune -o \
 	    \( \( -perm -u+s -a ! -type d \) -o \
 	       \( -perm -g+s -a ! -type d \) -o \

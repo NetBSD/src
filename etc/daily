@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.42 2001/11/23 04:20:27 atatat Exp $
+#	$NetBSD: daily,v 1.43 2001/12/18 00:44:20 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -79,6 +79,7 @@ TMP2=daily2.$$
 
 if checkyesno find_core; then
 	find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
+		-o -fstype null \
 		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
 		-name 'lost+found' -a -prune -o \
 		\( -name '*.core' -o -name 'core' \) -a -print > $TMP
