@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.25 2003/02/03 23:34:50 chris Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26 2003/03/27 19:42:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -590,8 +590,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
  */
 
 extern paddr_t physical_start;
-extern paddr_t physical_freestart;
-extern paddr_t physical_freeend;
 extern paddr_t physical_end;
 
 int
