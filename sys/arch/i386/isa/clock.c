@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 1999/02/13 16:45:28 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.60 1999/03/29 17:33:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -310,17 +310,23 @@ gettick()
 }
 
 /*
- * Wait "n" microseconds.
+ * Wait approximately `n' microseconds.
  * Relies on timer 1 counting down from (TIMER_FREQ / hz) at TIMER_FREQ Hz.
  * Note: timer had better have been programmed before this is first used!
  * (Note that we use `rate generator' mode, which counts at 1:1; `square
  * wave' mode counts at 2:1).
+ * Don't rely on this being particularly accurate.
  */
 void
 delay(n)
 	int n;
 {
-	int limit, tick, otick;
+	int tick, otick;
+	static int delaytab[26] = {
+		 0,  1,  2,  4,  5,  6,  7,  8, 10, 11,
+		12, 13, 14, 16, 17, 18, 19, 20, 21, 23,
+		24, 25, 26, 27, 29, 30,
+	};
 
 	/* allow DELAY() to be used before startrtclock() */
 	if (!rtclock_tval)
@@ -332,45 +338,41 @@ delay(n)
 	 */
 	otick = gettick();
 
+	if (n <= 25)
+		n = delaytab[n];
+	else {
 #ifdef __GNUC__
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
-	 * we can take advantage of the intermediate 64-bit quantity to prevent
-	 * loss of significance.
-	 */
-	n -= 5;
-	if (n < 0)
-		return;
-	{register int m;
-	__asm __volatile("mul %3"
-			 : "=a" (n), "=d" (m)
-			 : "0" (n), "r" (TIMER_FREQ));
-	__asm __volatile("div %3"
-			 : "=a" (n)
-			 : "0" (n), "d" (m), "r" (1000000)
-			 : "%edx");}
+		/*
+		 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler
+		 * code so we can take advantage of the intermediate 64-bit
+		 * quantity to prevent loss of significance.
+		 */
+		register int m;
+		__asm __volatile("mul %3"
+				 : "=a" (n), "=d" (m)
+				 : "0" (n), "r" (TIMER_FREQ));
+		__asm __volatile("div %3"
+				 : "=a" (n)
+				 : "0" (n), "d" (m), "r" (1000000)
+				 : "%edx");
 #else
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
-	 * without any avoidable overflows.
-	 */
-	n -= 20;
-	{
+		/*
+		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
+		 * point and without any avoidable overflows.
+		 */
 		int sec = n / 1000000,
 		    usec = n % 1000000;
 		n = sec * TIMER_FREQ +
 		    usec * (TIMER_FREQ / 1000000) +
 		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
 		    usec * (TIMER_FREQ % 1000) / 1000000;
-	}
 #endif
-
-	limit = TIMER_FREQ / hz;
+	}
 
 	while (n > 0) {
 		tick = gettick();
 		if (tick > otick)
-			n -= limit - (tick - otick);
+			n -= rtclock_tval - (tick - otick);
 		else
 			n -= otick - tick;
 		otick = tick;
