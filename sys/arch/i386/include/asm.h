@@ -34,19 +34,38 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.3 1993/12/20 05:25:06 mycroft Exp $
+ *	$Id: asm.h,v 1.4 1994/01/07 00:46:20 pk Exp $
  */
 
 #ifndef _I386_ASM_H_
 #define _I386_ASM_H_
 
+#ifdef PIC
+#define PIC_PROLOGUE	\
+	pushl	%ebx;	\
+	call	1f;	\
+1:			\
+	popl	%ebx;	\
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+#define PIC_EPILOGUE	\
+	popl	%ebx
+#define PIC_PLT(x)	x@PLT
+#define PIC_GOT(x)	x@GOT(%ebx)
+#define PIC_GOTOFF(x)	x@GOTOFF(%ebx)
+#else
+#define PIC_PROLOGUE
+#define PIC_EPILOGUE
+#define PIC_PLT(x)	x
+#define PIC_GOT(x)	x
+#define PIC_GOTOFF(x)	x
+#endif
+
+#ifdef PROF
 /*
  * XXX assumes that arguments are not passed in %eax
  */
-
-#ifdef PROF
 # define _BEGIN_ENTRY	.data; 1:; .long 0; .text; .align 2
-# define _END_ENTRY	movl $1b,%eax; call mcount
+# define _END_ENTRY	movl $1b,%eax; call PIC_PLT(mcount)
 #else
 # define _BEGIN_ENTRY	.text; .align 2
 # define _END_ENTRY
@@ -59,7 +78,7 @@
 #endif
 #define	_ASM_FUNC(x)	x
 
-#define _ENTRY(x)	.globl x; x:
+#define _ENTRY(x)	.globl x; .type x,@function; x:
 
 #define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
 #define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
