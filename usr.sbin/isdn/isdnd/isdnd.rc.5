@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.10 2002/07/29 00:54:46 wiz Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.11 2002/09/13 14:29:15 pooka Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.10 2002/07/29 00:54:46 wiz Exp $
+.\"	$Id: isdnd.rc.5,v 1.11 2002/09/13 14:29:15 pooka Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -720,13 +720,13 @@ data to the user-land. The keyword is mandatory.
 This keyword accepts the following parameters:
 .Pp
 .Bl -tag -width Ds -compact
-.It Ar ipr
+.It Ar irip
 This parameter configures a raw HDLC IP over ISDN interface.
-.It Ar isp
+.It Ar ippp
 This parameter configures a synchronous PPP over ISDN interface.
 .It Ar rbch
 This specifies a Raw B Channel access interface.
-.It Ar tel
+.It Ar isdntel
 ISDN telephony.
 .It Ar ing
 configures a ISDN B-channel to NetGraph interface.
