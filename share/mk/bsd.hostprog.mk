@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.28 2003/06/12 23:26:21 provos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.29 2003/07/16 05:42:02 itojun Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -43,7 +43,6 @@ LIBRESOLV?=	/usr/lib/libresolv.a
 LIBRPCSVC?=	/usr/lib/librpcsvc.a
 LIBSKEY?=	/usr/lib/libskey.a
 LIBTERMCAP?=	/usr/lib/libtermcap.a
-LIBTELNET?=	/usr/lib/libtelnet.a
 LIBUTIL?=	/usr/lib/libutil.a
 LIBWRAP?=	/usr/lib/libwrap.a
 LIBY?=		/usr/lib/liby.a
