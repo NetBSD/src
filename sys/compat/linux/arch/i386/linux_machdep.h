@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.16 2000/12/11 05:29:01 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.17 2000/12/12 15:11:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -126,6 +126,19 @@ __END_DECLS
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
 #define LINUX_VT_DISALLOCATE	0x5608
+
+/*
+ * This range used by VMWare (XXX)
+ */
+#define LINUX_VMWARE_NONE 200
+#define LINUX_VMWARE_LAST 237
+
+/*
+ * Range of ioctls to just pass on, so that LKMs (like VMWare) can
+ * handle them.
+ */
+#define LINUX_IOCTL_MIN_PASS	LINUX_VMWARE_NONE
+#define LINUX_IOCTL_MAX_PASS	(LINUX_VMWARE_LAST+8)
 
 void linux_syscall_intern __P((struct proc *));
 

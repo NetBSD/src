@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.53 2000/12/10 17:34:25 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.54 2000/12/12 15:11:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -719,6 +719,7 @@ linux_machdepioctl(p, v, retval)
 		kbe.kb_value = linux_keytabs[kbe.kb_table][kbe.kb_index];
 		return (copyout(&kbe, SCARG(uap, data),
 				sizeof(struct kbentry)));
+#endif
 	case LINUX_HDIO_GETGEO:
 	case LINUX_HDIO_GETGEO_BIG:
 		/*
@@ -769,10 +770,23 @@ linux_machdepioctl(p, v, retval)
 		}
 		return 0;
 
-#endif
 	default:
-		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
-		return EINVAL;
+		/*
+		 * XXX just pass all for LKMs?
+		 * XXX this means that device drivers specifically dealing
+	 	 * XXX with Linux binaries will need to do copyin/copyout
+		 * XXX handling themselves.
+		 */
+		if (com > LINUX_IOCTL_MIN_PASS &&
+		    com < LINUX_IOCTL_MAX_PASS) {
+			FILE_USE(fp);
+			ioctlf = fp->f_ops->fo_ioctl;
+			error = ioctlf(fp, com, SCARG(uap, data), p);
+		}
+		if (error == EINVAL)
+			printf("linux_machdepioctl: invalid ioctl %08lx\n",
+			    com);
+		return error;
 	}
 	SCARG(&bia, com) = com;
 	return sys_ioctl(p, &bia, retval);
