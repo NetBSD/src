@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.17 2003/08/07 16:42:49 agc Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.18 2004/09/25 02:55:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.17 2003/08/07 16:42:49 agc Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.18 2004/09/25 02:55:25 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,11 +61,7 @@ __weak_alias(getgrouplist,_getgrouplist)
 struct group *_getgrent_user(const char *);
 
 int
-getgrouplist(uname, agroup, groups, grpcnt)
-	const char *uname;
-	gid_t agroup;
-	gid_t *groups;
-	int *grpcnt;
+getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 {
 	struct group *grp;
 	int i, ngroups;
