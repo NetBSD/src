@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.93 2004/08/28 22:12:40 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.94 2005/01/01 21:00:06 yamt Exp $	*/
 
 /*
  *
@@ -143,6 +143,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
+#define UVM_FLAG_QUANTUM 0x800000 /* entry never be splitted later */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
