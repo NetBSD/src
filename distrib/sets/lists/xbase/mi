@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2004/03/11 06:28:59 rtr Exp $
+# $NetBSD: mi,v 1.41 2004/04/28 14:17:55 lukem Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -15,7 +15,8 @@
 ./usr/X11R6/bin/editres
 ./usr/X11R6/bin/fc-cache
 ./usr/X11R6/bin/fc-list
-./usr/X11R6/bin/fontconfig-config
+./usr/X11R6/bin/fontconfig-config	xbase-obsolete	obsolete
+./usr/X11R6/bin/fonttosfnt
 ./usr/X11R6/bin/fslsfonts
 ./usr/X11R6/bin/fstobdf
 ./usr/X11R6/bin/glxgears
@@ -231,6 +232,7 @@
 ./usr/X11R6/lib/X11/app-defaults/XCalc-color
 ./usr/X11R6/lib/X11/app-defaults/XClipboard
 ./usr/X11R6/lib/X11/app-defaults/XClock
+./usr/X11R6/lib/X11/app-defaults/XClock-color
 ./usr/X11R6/lib/X11/app-defaults/XConsole
 ./usr/X11R6/lib/X11/app-defaults/XFontSel
 ./usr/X11R6/lib/X11/app-defaults/XLoad
@@ -381,6 +383,8 @@
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii/Compose	-unknown-		share
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii/XI18N_OBJS	-unknown-		share
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii/XLC_LOCALE	-unknown-		share
+./usr/X11R6/lib/X11/locale/zh_CN.UTF-8/XI18N_OBJS	-unknown-		share
+./usr/X11R6/lib/X11/locale/zh_CN.UTF-8/XLC_LOCALE	-unknown-		share
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk/Compose	-unknown-		share
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk/XI18N_OBJS	-unknown-		share
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk/XLC_LOCALE	-unknown-		share
@@ -410,6 +414,7 @@
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/lisp.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/make.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/man.lsp
+./usr/X11R6/lib/X11/xedit/lisp/progmodes/patch.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/rpm.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/sgml.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/sh.lsp
@@ -444,6 +449,7 @@
 ./usr/X11R6/lib/X11/xkb/geometry/README
 ./usr/X11R6/lib/X11/xkb/geometry/amiga
 ./usr/X11R6/lib/X11/xkb/geometry/ataritt
+./usr/X11R6/lib/X11/xkb/geometry/chicony
 ./usr/X11R6/lib/X11/xkb/geometry/dell
 ./usr/X11R6/lib/X11/xkb/geometry/digital/lk
 ./usr/X11R6/lib/X11/xkb/geometry/digital/pc
@@ -451,6 +457,7 @@
 ./usr/X11R6/lib/X11/xkb/geometry/everex
 ./usr/X11R6/lib/X11/xkb/geometry/fujitsu
 ./usr/X11R6/lib/X11/xkb/geometry/hp
+./usr/X11R6/lib/X11/xkb/geometry/ibm/thinkpad
 ./usr/X11R6/lib/X11/xkb/geometry/keytronic
 ./usr/X11R6/lib/X11/xkb/geometry/kinesis
 ./usr/X11R6/lib/X11/xkb/geometry/macintosh
@@ -653,6 +660,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/dev
 ./usr/X11R6/lib/X11/xkb/symbols/pc/dk
 ./usr/X11R6/lib/X11/xkb/symbols/pc/dvorak
+./usr/X11R6/lib/X11/xkb/symbols/pc/dz
 ./usr/X11R6/lib/X11/xkb/symbols/pc/ee
 ./usr/X11R6/lib/X11/xkb/symbols/pc/el
 ./usr/X11R6/lib/X11/xkb/symbols/pc/en_US
@@ -696,6 +704,9 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/ru
 ./usr/X11R6/lib/X11/xkb/symbols/pc/sapmi
 ./usr/X11R6/lib/X11/xkb/symbols/pc/se
+./usr/X11R6/lib/X11/xkb/symbols/pc/se_FI
+./usr/X11R6/lib/X11/xkb/symbols/pc/se_NO
+./usr/X11R6/lib/X11/xkb/symbols/pc/se_SE
 ./usr/X11R6/lib/X11/xkb/symbols/pc/si
 ./usr/X11R6/lib/X11/xkb/symbols/pc/sk
 ./usr/X11R6/lib/X11/xkb/symbols/pc/sk_qwerty
@@ -704,11 +715,15 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/syr_phonetic
 ./usr/X11R6/lib/X11/xkb/symbols/pc/tel
 ./usr/X11R6/lib/X11/xkb/symbols/pc/th
+./usr/X11R6/lib/X11/xkb/symbols/pc/th_pat
+./usr/X11R6/lib/X11/xkb/symbols/pc/th_tis
 ./usr/X11R6/lib/X11/xkb/symbols/pc/tj
 ./usr/X11R6/lib/X11/xkb/symbols/pc/tml
 ./usr/X11R6/lib/X11/xkb/symbols/pc/tr
 ./usr/X11R6/lib/X11/xkb/symbols/pc/ua
 ./usr/X11R6/lib/X11/xkb/symbols/pc/us
+./usr/X11R6/lib/X11/xkb/symbols/pc/us_intl
+./usr/X11R6/lib/X11/xkb/symbols/pc/uz
 ./usr/X11R6/lib/X11/xkb/symbols/pc/yu
 ./usr/X11R6/lib/X11/xkb/symbols/pc104
 ./usr/X11R6/lib/X11/xkb/symbols/pl
@@ -734,6 +749,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/srvr_ctrl
 ./usr/X11R6/lib/X11/xkb/symbols/sun/se
 ./usr/X11R6/lib/X11/xkb/symbols/sun/us
+./usr/X11R6/lib/X11/xkb/symbols/sun/usb
 ./usr/X11R6/lib/X11/xkb/symbols/syr
 ./usr/X11R6/lib/X11/xkb/symbols/syr_phonetic
 ./usr/X11R6/lib/X11/xkb/symbols/tel
@@ -765,6 +781,7 @@
 ./usr/X11R6/lib/X11/xkb/types/iso9995
 ./usr/X11R6/lib/X11/xkb/types/mousekeys
 ./usr/X11R6/lib/X11/xkb/types/nocancel	xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/xkb/types/numpad
 ./usr/X11R6/lib/X11/xkb/types/pc
 ./usr/X11R6/lib/X11/xkb/xkbcomp
 ./usr/X11R6/lib/X11/xman.help
@@ -785,6 +802,7 @@
 ./usr/X11R6/man/cat1/editres.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/fc-cache.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/fc-list.0			-unknown-		.cat
+./usr/X11R6/man/cat1/fonttosfnt.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/fslsfonts.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/fstobdf.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/glxgears.0			-unknown-		.cat
@@ -904,6 +922,7 @@
 ./usr/X11R6/man/man1/editres.1			-unknown-		.man
 ./usr/X11R6/man/man1/fc-cache.1			-unknown-		.man
 ./usr/X11R6/man/man1/fc-list.1			-unknown-		.man
+./usr/X11R6/man/man1/fonttosfnt.1		-unknown-		.man
 ./usr/X11R6/man/man1/fslsfonts.1		-unknown-		.man
 ./usr/X11R6/man/man1/fstobdf.1			-unknown-		.man
 ./usr/X11R6/man/man1/glxgears.1			-unknown-		.man
