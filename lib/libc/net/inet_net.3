@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet_net.3,v 1.7 2001/12/08 12:06:12 lukem Exp $
+.\"	$NetBSD: inet_net.3,v 1.8 2002/02/07 07:00:21 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
-.Fd #include <netinet/in.h>
-.Fd #include <arpa/inet.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]netinet/in.h\*[Gt]
+.Fd #include \*[Lt]arpa/inet.h\*[Gt]
 .Ft char *
 .Fn inet_net_ntop "int af" "const void *src" "int bits" "char *dst" "size_t size"
 .Ft int

@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.3,v 1.8 1998/08/29 17:31:55 tsarna Exp $
+.\" $NetBSD: ttyaction.3,v 1.9 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
-.Fd #include <util.h>
+.Fd #include \*[Lt]util.h\*[Gt]
 .Ft int
 .Fn ttyaction "char *ttyname" "char *action" "char *username"
 .Sh DESCRIPTION
@@ -93,9 +93,9 @@ or zero if no matching commands were found.
 .Sh AUTHORS
 The following people contributed to this design:
 .Bd -literal -offset indent
-Gordon W. Ross <gwr@netbsd.org>
-Chris G. Demetriou <cgd@netbsd.org>
-Ty Sarna <tsarna@endicor.com>
+Gordon W. Ross \*[Lt]gwr@netbsd.org\*[Gt]
+Chris G. Demetriou \*[Lt]cgd@netbsd.org\*[Gt]
+Ty Sarna \*[Lt]tsarna@endicor.com\*[Gt]
 .Ed
 .Sh BUGS
 There should be some

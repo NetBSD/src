@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcap.3,v 1.12 2001/09/16 02:57:03 wiz Exp $
+.\"	$NetBSD: getcap.3,v 1.13 2002/02/07 07:00:12 ross Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.Fd #include \*[Lt]stdlib.h\*[Gt]
 .Ft int
 .Fn cgetent "char **buf" "char **db_array" "const char *name"
 .Ft int
@@ -488,7 +488,7 @@ Non-printable
 codes, new lines, and colons may be conveniently represented by the use
 of escape sequences:
 .Bl -column "\e\|X,X\e\|X" "(ASCII octal nnn)"
-^X	('\fIX\fP' & 037)	control-\fIX\fP
+^X	('\fIX\fP' &amp; 037)	control-\fIX\fP
 \e\|b, \e\|B	(ASCII 010)	backspace
 \e\|t, \e\|T	(ASCII 011)	tab
 \e\|n, \e\|N	(ASCII 012)	line feed (newline)

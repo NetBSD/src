@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.17 2002/02/06 12:49:05 ross Exp $
+.\"	$NetBSD: ypclnt.3,v 1.18 2002/02/07 07:00:34 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,10 +53,10 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <rpc/rpc.h>
-.Fd #include <rpcsvc/ypclnt.h>
-.Fd #include <rpcsvc/yp_prot.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
+.Fd #include \*[Lt]rpcsvc/ypclnt.h\*[Gt]
+.Fd #include \*[Lt]rpcsvc/yp_prot.h\*[Gt]
 .Ft int
 .Fn yp_all "const char *indomain" "const char *inmap" "struct ypall_callback *incallback"
 .Ft int
@@ -293,7 +293,7 @@ Where:
 .Bl -tag -width "inkey, inval"
 .It Fa instatus
 Holds one of the return status values described in
-.Nm <rpcsvc/yp_prot.h> :
+.Nm \*[Lt]rpcsvc/yp_prot.h\*[Gt] :
 see
 .Fn ypprot_err
 below for a function that will translate
@@ -301,7 +301,7 @@ below for a function that will translate
 protocol errors into a
 .Nm ypclnt
 layer error code as described in
-.Nm <rpcsvc/ypclnt.h> .
+.Nm \*[Lt]rpcsvc/ypclnt.h\*[Gt] .
 .It Fa inkey, inval
 The key and value arguments are somewhat different here than described
 above.  In this case, the memory pointed to by
@@ -322,7 +322,7 @@ in the map, then they will not be terminated as such when given to the
 function, either.
 .It Fa indata
 This is the contents of the
-.Pa incallback->data
+.Pa incallback-\*[Gt]data
 element of the callback structure.  It is provided as a means to share
 state between the
 .Pa foreach
