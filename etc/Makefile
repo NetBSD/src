@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.290 2004/06/22 18:21:55 itojun Exp $
+#	$NetBSD: Makefile,v 1.291 2004/06/28 14:03:02 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -89,10 +89,12 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf locate.conf \
 	mailer.conf man.conf monthly monthly.conf mrouted.conf \
 	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
-	passwd.conf phones printcap profile protocols rbootd.conf rc rc.conf \
-	rc.lkm rc.local rc.subr rc.shutdown remote rpc \
+	passwd.conf phones printcap profile protocols \
+	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc \
 	security security.conf services shells sysctl.conf syslog.conf \
-	weekly weekly.conf wscons.conf \
+	weekly weekly.conf wscons.conf
+
+BIN1+=	pf.conf pf.os spamd.conf
 
 # Use machine-specific disktab if it exists, or the MI one otherwise
 .if exists(etc.${MACHINE}/disktab)
@@ -115,12 +117,11 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
+SYSPKG=	etc
 ETC_PKG=-T etc_pkg
 BASE_PKG=-T base_pkg
 ETC_INSTALL_FILE=cd ${.CURDIR} && ${INSTALL_FILE} ${ETC_PKG}
 ETC_INSTALL_OBJ_FILE=cd ${.OBJDIR} && ${INSTALL_FILE} ${ETC_PKG}
-ETC_INSTALL_LINK=cd ${.CURDIR} && ${INSTALL_LINK} ${ETC_PKG}
-ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
 .if ${TARGET_ENDIANNESS} == "1234"
 PWD_MKDB_ENDIAN=	-L
@@ -156,6 +157,7 @@ MAKEDEV: .EXEC
 	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
 
 ttys: mkttys etc.${MACHINE}/ttys
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 
@@ -209,22 +211,55 @@ install-etc-release: .PHONY etc-release
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    etc-release ${DESTDIR}/etc/release
 
+
+FILESDIR=		/etc
+CONFIGFILES=
+CONFIGSYMLINKS=
+
+.for file in ${BIN1}
+CONFIGFILES+=		${file}
+FILESMODE_${file:T}=	644
+.endfor
+
+.for file in ${BIN2}
+CONFIGFILES+=		${file}
+FILESMODE_${file:T}=	664
+.endfor
+
+.for file in ${BIN3}
+CONFIGFILES+=		${file}
+FILESMODE_${file:T}=	600
+.endfor
+
+CONFIGFILES+=		postinstall
+FILESMODE_postinstall=	${BINMODE}
+
+CONFIGFILES+=		aliases
+FILESDIR_aliases=	/etc/mail
+FILESMODE_aliases=	644
+
+CONFIGFILES+=		MAKEDEV.local
+FILESDIR_MAKEDEV.local=	/dev
+FILESMODE_MAKEDEV.local=${BINMODE}
+
+CONFIGFILES+=		crontab
+FILESDIR_crontab=	/var/cron/tabs
+FILESNAME_crontab=	root
+FILESMODE_crontab=	600
+
+CONFIGFILES+=		minfree
+FILESDIR_minfree=	/var/crash
+FILESMODE_minfree=	600
+
+CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
+			/usr/sbin/rmt		/etc/rmt
+
+
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
 install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${BIN1} ${DESTDIR}/etc
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
-	    ${BIN2} ${DESTDIR}/etc
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
-	    ${BIN3} ${DESTDIR}/etc
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    aliases ${DESTDIR}/etc/mail
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    /dev/null ${DESTDIR}/etc/mail/local-host-names
-	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
-	    crontab ${DESTDIR}/var/cron/tabs/root
+	${_MKMSG_INSTALL} ${DESTDIR}/etc/master.passwd
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
 	${TOOL_PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
@@ -236,102 +271,55 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
+	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ttys ${DESTDIR}/etc
+	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-	    MAKEDEV.local ${DESTDIR}/dev
-	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
-	    minfree ${DESTDIR}/var/crash
-	${MAKEDIRTARGET} defaults configinstall
-	${MAKEDIRTARGET} mtree configinstall
-	${MAKEDIRTARGET} namedb configinstall
-	${MAKEDIRTARGET} powerd configinstall
-	${MAKEDIRTARGET} rc.d configinstall
-	${MAKEDIRTARGET} root configinstall
-	${MAKEDIRTARGET} skel configinstall
-	${MAKEDIRTARGET} ssh configinstall
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    postinstall ${DESTDIR}/etc
-	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
-	    ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
-	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
-	    /usr/sbin/rmt ${DESTDIR}/etc/rmt
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g operator -m 664 \
-	    /dev/null ${DESTDIR}/etc/dumpdates
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g operator -m 600 \
-	    /dev/null ${DESTDIR}/etc/skeykeys
-	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
-	    /dev/null ${DESTDIR}/var/at/at.deny
-	${ETC_INSTALL_FILE} -o nobody -g ${BINGRP} -m 664 \
-	    /dev/null ${DESTDIR}/var/db/locate.database
-	${ETC_INSTALL_FILE} -o uucp -g dialer -m 640 \
-	    /dev/null ${DESTDIR}/var/log/aculog
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
-	    /dev/null ${DESTDIR}/var/log/authlog
-	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
-	    /dev/null ${DESTDIR}/var/log/cron
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
-	    /dev/null ${DESTDIR}/var/log/lastlog
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 640 \
-	    /dev/null ${DESTDIR}/var/log/lpd-errs
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
-	    /dev/null ${DESTDIR}/var/log/maillog
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    /dev/null ${DESTDIR}/var/log/messages
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
-	    /dev/null ${DESTDIR}/var/log/secure
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    /dev/null ${DESTDIR}/var/log/sendmail.st
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    /dev/null ${DESTDIR}/var/log/wtmp
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    /dev/null ${DESTDIR}/var/log/wtmpx
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 \
-	    /dev/null ${DESTDIR}/var/log/xferlog
-	${ETC_INSTALL_FILE} -o daemon -g staff -m 664 \
-	    /dev/null ${DESTDIR}/var/msgs/bounds
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 \
-	    /dev/null ${DESTDIR}/var/run/utmp
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 \
-	    /dev/null ${DESTDIR}/var/run/utmpx
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    pf.os ${DESTDIR}/etc
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    pf.conf ${DESTDIR}/etc
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    spamd.conf ${DESTDIR}/etc
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/atc_score
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/battlestar.log
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/cfscores
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/criblog
-	${ETC_INSTALL_FILE} -o games -g games -m 660 \
-	    /dev/null ${DESTDIR}/var/games/hackdir/perm
-	${ETC_INSTALL_FILE} -o games -g games -m 660 \
-	    /dev/null ${DESTDIR}/var/games/hackdir/record
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/larn/llog12.0
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/larn/lscore12.0
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/larn/playerids
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/robots_roll
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/rogue.scores
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/saillog
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/snakerawscores
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/snake.log
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/tetris.scores
+.for owner group mode file in \
+		${BINOWN} operator	664	/etc/dumpdates  \
+		${BINOWN} ${BINGRP}	644	/etc/mail/local-host-names \
+		${BINOWN} operator	600	/etc/skeykeys \
+		root wheel		600	/var/at/at.deny \
+		nobody ${BINGRP}	664	/var/db/locate.database \
+		uucp dialer		640	/var/log/aculog \
+		${BINOWN} ${BINGRP}	600	/var/log/authlog \
+		root wheel		600	/var/log/cron \
+		${BINOWN} ${BINGRP}	664	/var/log/lastlog \
+		${BINOWN} ${BINGRP}	640	/var/log/lpd-errs \
+		${BINOWN} ${BINGRP}	600	/var/log/maillog \
+		${BINOWN} ${BINGRP}	644	/var/log/messages \
+		${BINOWN} ${BINGRP}	600	/var/log/secure \
+		${BINOWN} ${BINGRP}	644	/var/log/sendmail.st \
+		${BINOWN} ${BINGRP}	644	/var/log/wtmp \
+		${BINOWN} ${BINGRP}	644	/var/log/wtmpx \
+		${BINOWN} ${BINGRP}	600	/var/log/xferlog \
+		daemon staff		664	/var/msgs/bounds \
+		${BINOWN} ${UTMPGRP}	664	/var/run/utmp \
+		${BINOWN} ${UTMPGRP}	664	/var/run/utmpx \
+		games games		664	/var/games/atc_score \
+		games games		664	/var/games/battlestar.log \
+		games games		664	/var/games/cfscores \
+		games games		664	/var/games/criblog \
+		games games		660	/var/games/hackdir/perm \
+		games games		660	/var/games/hackdir/record \
+		games games		664	/var/games/larn/llog12.0 \
+		games games		664	/var/games/larn/lscore12.0 \
+		games games		664	/var/games/larn/playerids \
+		games games		664	/var/games/robots_roll \
+		games games		664	/var/games/rogue.scores \
+		games games		664	/var/games/saillog \
+		games games		664	/var/games/snakerawscores \
+		games games		664	/var/games/snake.log \
+		games games		664	/var/games/tetris.scores
+	${_MKMSG_INSTALL} ${DESTDIR}${file}
+	${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
+	    	/dev/null ${DESTDIR}${file}
+.endfor
+.for subdir in . defaults mtree namedb powerd rc.d root skel ssh
+	${MAKEDIRTARGET} ${subdir} configinstall
+.endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
 .if (${MKCRYPTO} != "no")
@@ -353,6 +341,7 @@ install-obsolete-lists: .PHONY
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
 	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -t ${OBSOLETE.dir})
 .for file in ${OBSOLETE.files}
+	${_MKMSG_INSTALL} ${DESTDIR}/var/db/obsolete/${file}
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete
 .endfor
