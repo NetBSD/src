@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.29 1999/10/20 14:32:11 enami Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.30 1999/11/15 18:49:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -607,7 +607,7 @@ ext2fs_mountfs(devvp, mp, p)
 	ump->um_nindir = NINDIR(m_fs);
 	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 	return (0);
 out:
 	if (bp)
@@ -650,7 +650,7 @@ ext2fs_unmount(mp, mntflags, p)
 		(void) ext2fs_sbupdate(ump, MNT_WAIT);
 	}
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
@@ -775,9 +775,10 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		ip = VTOI(vp);
-		if ((ip->i_flag &
+		if (vp->v_type == VNON || ((ip->i_flag &
 		    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-			vp->v_dirtyblkhd.lh_first == NULL) {
+		    (vp->v_dirtyblkhd.lh_first == NULL || waitfor == MNT_LAZY)))
+		{   
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -838,7 +839,7 @@ ext2fs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 			return (0);
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 

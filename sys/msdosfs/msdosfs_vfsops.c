@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.64 1999/10/20 14:32:10 enami Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.65 1999/11/15 18:49:11 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -707,7 +707,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * in the directory entry where we could put uid's and gid's.
 	 */
 #endif
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 
 	return (0);
 
@@ -757,7 +757,7 @@ msdosfs_unmount(mp, mntflags, p)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
 	if (pmp->pm_devvp->v_type != VBAD)
-		pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
+		pmp->pm_devvp->v_specmountpoint = NULL;
 #ifdef MSDOSFS_DEBUG
 	{
 		struct vnode *vp = pmp->pm_devvp;
@@ -892,9 +892,10 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		dep = VTODE(vp);
-		if (((dep->de_flag
-		    & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0)
-		    && (vp->v_dirtyblkhd.lh_first == NULL)) {
+		if (vp->v_type == VNON || (((dep->de_flag &
+		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
+		    (vp->v_dirtyblkhd.lh_first == NULL ||
+		     waitfor == MNT_LAZY))) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -920,6 +921,7 @@ loop:
 	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
 		allerror = error;
 #ifdef QUOTA
+	/* qsync(mp); */
 #endif
 	return (allerror);
 }

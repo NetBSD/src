@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.15 1999/11/15 18:49:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,6 +44,7 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
@@ -66,27 +67,43 @@
  * the inode and the logical block number in a file.
  */
 int
-ffs_balloc(ip, lbn, size, cred, bpp, flags)
-	register struct inode *ip;
-	register ufs_daddr_t lbn;
+ffs_balloc(v)
+	void *v;
+{
+	struct vop_balloc_args /* {
+		struct vnode *a_vp;
+		off_t a_startpoint;
+		int a_size;
+		struct ucred *a_cred;
+		int a_flags;
+		struct buf *a_bpp;
+	} */ *ap = v;
+	ufs_daddr_t lbn;
 	int size;
 	struct ucred *cred;
-	struct buf **bpp;
 	int flags;
-{
-	register struct fs *fs;
-	register ufs_daddr_t nb;
+	ufs_daddr_t nb;
 	struct buf *bp, *nbp;
-	struct vnode *vp = ITOV(ip);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
 	ufs_daddr_t newb, *bap, pref;
 	int deallocated, osize, nsize, num, i, error;
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
+#ifdef FFS_EI
+	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif
 
-	*bpp = NULL;
+	lbn = lblkno(fs, ap->a_startoffset);
+	size = blkoff(fs, ap->a_startoffset) + ap->a_size;
+	if (size > fs->fs_bsize)
+		panic("ffs_balloc: blk too big");
+	*ap->a_bpp = NULL;
 	if (lbn < 0)
 		return (EFBIG);
-	fs = ip->i_fs;
+	cred = ap->a_cred;
+	flags = ap->a_flags;
 
 	/*
 	 * If the next write will extend the file into a new block,
@@ -102,10 +119,15 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 				osize, (int)fs->fs_bsize, cred, &bp);
 			if (error)
 				return (error);
+			if (DOINGSOFTDEP(vp))
+				softdep_setup_allocdirect(ip, nb,
+				    dbtofsb(fs, bp->b_blkno),
+				    ufs_rw32(ip->i_ffs_db[nb], needswap),
+				    fs->fs_bsize, osize, bp);
 			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 			ip->i_ffs_db[nb] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
-			    UFS_MPNEEDSWAP(vp->v_mount));
+			    needswap);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (flags & B_SYNC)
 				bwrite(bp);
@@ -117,14 +139,14 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 	 * The first NDADDR blocks are direct blocks
 	 */
 	if (lbn < NDADDR) {
-		nb = ufs_rw32(ip->i_ffs_db[lbn], UFS_MPNEEDSWAP(vp->v_mount));
+		nb = ufs_rw32(ip->i_ffs_db[lbn], needswap);
 		if (nb != 0 && ip->i_ffs_size >= (lbn + 1) * fs->fs_bsize) {
 			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
 			}
-			*bpp = bp;
+			*ap->a_bpp = bp;
 			return (0);
 		}
 		if (nb != 0) {
@@ -146,6 +168,10 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 					&bp);
 				if (error)
 					return (error);
+				if (DOINGSOFTDEP(vp))
+					softdep_setup_allocdirect(ip, lbn,
+					    dbtofsb(fs, bp->b_blkno), nb,
+					    nsize, osize, bp);
 			}
 		} else {
 			if (ip->i_ffs_size < (lbn + 1) * fs->fs_bsize)
@@ -161,11 +187,14 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			bp->b_blkno = fsbtodb(fs, newb);
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
+			if (DOINGSOFTDEP(vp))
+				softdep_setup_allocdirect(ip, lbn, newb, 0,
+				    nsize, 0, bp);
 		}
 		ip->i_ffs_db[lbn] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
-		    UFS_MPNEEDSWAP(vp->v_mount));
+			needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		*bpp = bp;
+		*ap->a_bpp = bp;
 		return (0);
 	}
 	/*
@@ -182,8 +211,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 	 * Fetch the first indirect block allocating if necessary.
 	 */
 	--num;
-	nb = ufs_rw32(ip->i_ffs_ib[indirs[0].in_off],
-	    UFS_MPNEEDSWAP(vp->v_mount));
+	nb = ufs_rw32(ip->i_ffs_ib[indirs[0].in_off], needswap);
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -197,14 +225,20 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
 		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
-		/*
-		 * Write synchronously so that indirect blocks
-		 * never point at garbage.
-		 */
-		if ((error = bwrite(bp)) != 0)
-			goto fail;
+		if (DOINGSOFTDEP(vp)) {
+			softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
+			    newb, 0, fs->fs_bsize, 0, bp);
+			bdwrite(bp);
+		} else {
+			/*
+			 * Write synchronously so that indirect blocks
+			 * never point at garbage.
+			 */
+			if ((error = bwrite(bp)) != 0)
+				goto fail;
+		}
 		allocib = &ip->i_ffs_ib[indirs[0].in_off];
-		*allocib = ufs_rw32(nb, UFS_MPNEEDSWAP(vp->v_mount));
+		*allocib = ufs_rw32(nb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
@@ -218,8 +252,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			goto fail;
 		}
 		bap = (ufs_daddr_t *)bp->b_data;
-		nb = ufs_rw32(bap[indirs[i].in_off],
-		    UFS_MPNEEDSWAP(vp->v_mount));
+		nb = ufs_rw32(bap[indirs[i].in_off], needswap);
 		if (i == num)
 			break;
 		i += 1;
@@ -240,16 +273,21 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		nbp = getblk(vp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
-		/*
-		 * Write synchronously so that indirect blocks
-		 * never point at garbage.
-		 */
-		if ((error = bwrite(nbp)) != 0) {
-			brelse(bp);
-			goto fail;
+		if (DOINGSOFTDEP(vp)) {
+			softdep_setup_allocindir_meta(nbp, ip, bp,
+			    indirs[i - 1].in_off, nb);
+			bdwrite(nbp);
+		} else {
+			/*
+			 * Write synchronously so that indirect blocks
+			 * never point at garbage.
+			 */
+			if ((error = bwrite(nbp)) != 0) {
+				brelse(bp);
+				goto fail;
+			}
 		}
-		bap[indirs[i - 1].in_off] = ufs_rw32(nb,
-		    UFS_MPNEEDSWAP(vp->v_mount));
+		bap[indirs[i - 1].in_off] = ufs_rw32(nb, needswap);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -277,8 +315,10 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		nbp->b_blkno = fsbtodb(fs, nb);
 		if (flags & B_CLRBUF)
 			clrbuf(nbp);
-		bap[indirs[i].in_off] = ufs_rw32(nb,
-		    UFS_MPNEEDSWAP(vp->v_mount));
+		if (DOINGSOFTDEP(vp))
+			softdep_setup_allocindir_page(ip, lbn, bp,
+			    indirs[i].in_off, nb, 0, nbp);
+		bap[indirs[i].in_off] = ufs_rw32(nb, needswap);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -288,7 +328,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		} else {
 			bdwrite(bp);
 		}
-		*bpp = nbp;
+		*ap->a_bpp = nbp;
 		return (0);
 	}
 	brelse(bp);
@@ -302,7 +342,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
 		nbp->b_blkno = fsbtodb(fs, nb);
 	}
-	*bpp = nbp;
+	*ap->a_bpp = nbp;
 	return (0);
 fail:
 	/*
