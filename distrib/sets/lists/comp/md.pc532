@@ -1,3 +1,4 @@
+./usr/include/ns32k
 ./usr/include/pc532
 ./usr/include/pc532/ansi.h
 ./usr/include/pc532/aout_machdep.h
@@ -35,6 +36,5 @@
 ./usr/include/pc532/types.h
 ./usr/include/pc532/varargs.h
 ./usr/include/pc532/vmparam.h
-./usr/include/ns32k
 ./usr/lib/c++rt0.o
 ./usr/lib/scrt0.o
