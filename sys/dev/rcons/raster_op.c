@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.1 1995/09/17 19:56:33 pk Exp $ */
+/*	$NetBSD: raster_op.c,v 1.2 1995/11/24 23:50:54 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,7 +57,11 @@
  */
 
 #include <sys/types.h>
+#ifdef _KERNEL
 #include <dev/rcons/raster.h>
+#else
+#include "raster.h"
+#endif
 
 /* CONFIGURE: To save on executable size, you can configure out the seldom-used
 ** logical operations.  With this variable set, the only operations implemented
@@ -413,7 +417,7 @@ static int needsrc[16] = { 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0 };
 
 #ifdef MSBIT_FIRST
 
-u_long raster_bitmask[32] = {
+u_int32_t raster_bitmask[32] = {
     0x80000000, 0x40000000, 0x20000000, 0x10000000,
     0x08000000, 0x04000000, 0x02000000, 0x01000000,
     0x00800000, 0x00400000, 0x00200000, 0x00100000,
@@ -424,7 +428,7 @@ u_long raster_bitmask[32] = {
     0x00000008, 0x00000004, 0x00000002, 0x00000001 };
 
 #ifdef MSBYTE_FIRST
-static u_long leftmask[32] = {
+static u_int32_t leftmask[32] = {
     0x00000000, 0x80000000, 0xc0000000, 0xe0000000,
     0xf0000000, 0xf8000000, 0xfc000000, 0xfe000000,
     0xff000000, 0xff800000, 0xffc00000, 0xffe00000,
@@ -433,7 +437,7 @@ static u_long leftmask[32] = {
     0xfffff000, 0xfffff800, 0xfffffc00, 0xfffffe00,
     0xffffff00, 0xffffff80, 0xffffffc0, 0xffffffe0,
     0xfffffff0, 0xfffffff8, 0xfffffffc, 0xfffffffe };
-static u_long rightmask[32] = {
+static u_int32_t rightmask[32] = {
     0x00000000, 0x00000001, 0x00000003, 0x00000007,
     0x0000000f, 0x0000001f, 0x0000003f, 0x0000007f,
     0x000000ff, 0x000001ff, 0x000003ff, 0x000007ff,
@@ -446,7 +450,7 @@ static u_long rightmask[32] = {
 
 #else /*MSBIT_FIRST*/
 
-u_long raster_bitmask[32] = {
+u_int32_t raster_bitmask[32] = {
     0x00000001, 0x00000002, 0x00000004, 0x00000008,
     0x00000010, 0x00000020, 0x00000040, 0x00000080,
     0x00000100, 0x00000200, 0x00000400, 0x00000800,
@@ -457,7 +461,7 @@ u_long raster_bitmask[32] = {
     0x10000000, 0x20000000, 0x40000000, 0x80000000 };
 
 #ifndef MSBYTE_FIRST
-static u_long leftmask[32] = {
+static u_int32_t leftmask[32] = {
     0x00000000, 0x00000001, 0x00000003, 0x00000007,
     0x0000000f, 0x0000001f, 0x0000003f, 0x0000007f,
     0x000000ff, 0x000001ff, 0x000003ff, 0x000007ff,
@@ -466,7 +470,7 @@ static u_long leftmask[32] = {
     0x000fffff, 0x001fffff, 0x003fffff, 0x007fffff,
     0x00ffffff, 0x01ffffff, 0x03ffffff, 0x07ffffff,
     0x0fffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff };
-static u_long rightmask[32] = {
+static u_int32_t rightmask[32] = {
     0x00000000, 0x80000000, 0xc0000000, 0xe0000000,
     0xf0000000, 0xf8000000, 0xfc000000, 0xfe000000,
     0xff000000, 0xff800000, 0xffc00000, 0xffe00000,
@@ -482,9 +486,9 @@ static u_long rightmask[32] = {
 /* (The odd combinations MSBIT+~MSBYTE and ~MSBIT+MSBYTE could be added.) */
 
 #ifdef MSBYTE_FIRST
-static u_long bytemask[4] = { 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff };
+static u_int32_t bytemask[4] = { 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff };
 #else /*MSBYTE_FIRST*/
-static u_long bytemask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+static u_int32_t bytemask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 #endif /*MSBYTE_FIRST*/
 
 
@@ -598,8 +602,8 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	if ( dst->depth == 1 )
 	    {
 	    /* One to one blit. */
-	    u_long* srclin1;
-	    u_long* dstlin1;
+	    u_int32_t* srclin1;
+	    u_int32_t* dstlin1;
 	    int srcleftignore, srcrightignore, srclongs;
 	    int dstleftignore, dstrightignore, dstlongs;
 
@@ -613,7 +617,7 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 		{
 		bcopy(
 		    (char*) srclin1, (char*) dstlin1,
-		    h * src->linelongs * sizeof(u_long) );
+		    h * src->linelongs * sizeof(u_int32_t) );
 		return 0;
 		}
 #endif /*BCOPY_FASTER*/
@@ -637,14 +641,14 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    ** as a group, indexing into a 16-element runtime-constructed
 	    ** table of longwords.
 	    */
-	    u_long* srclin1;
-	    u_long* dstlin1;
-	    u_long* srclin2;
-	    u_long* srclin;
-	    u_long* dstlin;
-	    register u_long* srclong;
-	    register u_long* dstlong;
-	    register u_long color, dl;
+	    u_int32_t* srclin1;
+	    u_int32_t* dstlin1;
+	    u_int32_t* srclin2;
+	    u_int32_t* srclin;
+	    u_int32_t* dstlin;
+	    register u_int32_t* srclong;
+	    register u_int32_t* dstlong;
+	    register u_int32_t color, dl;
 	    register int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
@@ -705,8 +709,8 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
     else
 	{
 	/* Eight to eight blit. */
-	u_long* srclin1;
-	u_long* dstlin1;
+	u_int32_t* srclin1;
+	u_int32_t* dstlin1;
 	int srcleftignore, srcrightignore, srclongs;
 	int dstleftignore, dstrightignore, dstlongs;
 
@@ -722,7 +726,7 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	     src->linelongs == dst->linelongs && src->linelongs == w >> 2 )
 	    {
 	    bcopy( (char*) srclin1, (char*) dstlin1,
-		   h * src->linelongs * sizeof(u_long) );
+		   h * src->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -757,13 +761,13 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     if ( dst->depth == 1 )
 	{
 	/* One-bit no-src blit. */
-	u_long* dstlin1;
-	u_long* dstlin2;
-	u_long* dstlin;
+	u_int32_t* dstlin1;
+	u_int32_t* dstlin2;
+	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
-	u_long dl, lm, nlm, rm, nrm;
-	register u_long* dstlong2;
-	register u_long* dstlong;
+	u_int32_t dl, lm, nlm, rm, nrm;
+	register u_int32_t* dstlong2;
+	register u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -771,7 +775,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 5 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_long) );
+	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -851,14 +855,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else
 	{
 	/* Eight-bit no-src blit. */
-	register u_long color;
-	u_long* dstlin1;
-	u_long* dstlin2;
-	u_long* dstlin;
+	register u_int32_t color;
+	u_int32_t* dstlin1;
+	u_int32_t* dstlin2;
+	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
-	u_long dl, lm, nlm, rm, nrm;
-	register u_long* dstlong2;
-	register u_long* dstlong;
+	u_int32_t dl, lm, nlm, rm, nrm;
+	register u_int32_t* dstlong2;
+	register u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -866,7 +870,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 2 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_long) );
+	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -962,24 +966,24 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 static int
 raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1, dstleftignore, dstrightignore, dstlongs, h, op )
     struct raster* src;
-    u_long* srclin1;
+    u_int32_t* srclin1;
     int srcleftignore, srcrightignore, srclongs;
     struct raster* dst;
-    u_long* dstlin1;
+    u_int32_t* dstlin1;
     int dstleftignore, dstrightignore, dstlongs;
     int h, op;
     {
-    u_long* srclin2;
-    u_long* dstlin2;
+    u_int32_t* srclin2;
+    u_int32_t* dstlin2;
     int srclininc, dstlininc;
-    u_long* srclin;
-    u_long* dstlin;
+    u_int32_t* srclin;
+    u_int32_t* dstlin;
     register int prevleftshift, currrightshift;
     int longinc;
-    register u_long* srclong;
-    register u_long* dstlong;
-    register u_long* dstlong2;
-    register u_long dl, lm, nlm, rm, nrm;
+    register u_int32_t* srclong;
+    register u_int32_t* dstlong;
+    register u_int32_t* dstlong2;
+    register u_int32_t dl, lm, nlm, rm, nrm;
 
     prevleftshift = ( srcleftignore - dstleftignore ) & 31;
 
@@ -1152,7 +1156,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
     else
 	{
 	/* General case, with shifting and everything. */
-	register u_long sl, prevsl;
+	register u_int32_t sl, prevsl;
 
 	currrightshift = 32 - prevleftshift;
 	if ( srclongs == 1 && dstlongs == 1 )
