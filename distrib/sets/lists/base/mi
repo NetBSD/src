@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.159 2000/05/02 12:46:05 simonb Exp $
+# $NetBSD: mi,v 1.160 2000/05/03 11:44:31 veego Exp $
 .
 ./altroot
 ./bin
@@ -558,6 +558,7 @@
 ./usr/sbin/ifmcstat
 ./usr/sbin/inetd
 ./usr/sbin/iostat
+./usr/sbin/ipfs
 ./usr/sbin/ipfstat
 ./usr/sbin/ipftest
 ./usr/sbin/ipmon
