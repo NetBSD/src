@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/04/24 15:15:05 pk Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/05 21:28:12 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/12/93
 
 PROG=	adventure
@@ -8,7 +8,7 @@ HIDEGAME=hidegame
 CLEANFILES+=setup data.c
 
 data.c: glorkz setup
-	${.OBJDIR}/setup ${.CURDIR}/glorkz > data.c
+	./setup ${.CURDIR}/glorkz > data.c
 
 setup: setup.c hdr.h
 	${HOST_LINK.c} -o setup ${.CURDIR}/setup.c
