@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.55 2003/02/05 21:38:42 pk Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.56 2003/02/25 20:35:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.55 2003/02/05 21:38:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.56 2003/02/25 20:35:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ getphysbuf()
 	bp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
 	memset(bp, 0, sizeof(*bp));
-	simple_lock_init(&bp->b_interlock);
+	BUF_INIT(bp);
 	return(bp);
 }
 

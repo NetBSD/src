@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.57 2003/02/05 21:38:43 pk Exp $	*/
+/*	$NetBSD: buf.h,v 1.58 2003/02/25 20:35:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -181,6 +181,12 @@ struct buf {
 	off_t	b_dcookie;		/* Offset cookie if dir block */
 	struct  workhead b_dep;		/* List of filesystem dependencies. */
 };
+
+#define	BUF_INIT(bp)							\
+do {									\
+	LIST_INIT(&(bp)->b_dep);					\
+	simple_lock_init(&(bp)->b_interlock);				\
+} while (/*CONSTCOND*/0)
 
 /*
  * For portability with historic industry practice, the cylinder number has
