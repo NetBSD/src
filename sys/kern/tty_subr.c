@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.9 1994/07/18 03:38:31 deraadt Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.10 1994/10/02 04:11:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -210,15 +210,15 @@ ndqb(clp, flag)
 	}
 
 	i = clp->c_cf - clp->c_cs;
-	if(flag & TTY_QUOTE) {
-		while (cc-- > 0 && (clp->c_cs[i++] & (flag & ~TTY_QUOTE)) &&
-		    !isset(clp->c_cq, i)) {
+	if (flag & TTY_QUOTE) {
+		while (cc-- > 0 && !(clp->c_cs[i++] & (flag & ~TTY_QUOTE) ||
+		    isset(clp->c_cq, i))) {
 			count++;
 			if (i == clp->c_cn)
 				break;
 		}
 	} else {
-		while (cc-- > 0 && (clp->c_cs[i++] & flag)) {
+		while (cc-- > 0 && !(clp->c_cs[i++] & flag)) {
 			count++;
 			if (i == clp->c_cn)
 				break;
