@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.9 1998/02/02 23:33:44 perry Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.10 1998/02/03 18:23:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.9 1998/02/02 23:33:44 perry Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.10 1998/02/03 18:23:44 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -221,12 +221,12 @@ getcwd_physical(pt, size)
 	char *pt;
 	size_t size;
 {
-	register struct dirent *dp;
-	register DIR *dir;
-	register dev_t dev;
-	register ino_t ino;
-	register int first;
-	register char *bpt, *bup;
+	struct dirent *dp;
+	DIR *dir;
+	dev_t dev;
+	ino_t ino;
+	int first;
+	char *bpt, *bup;
 	struct stat s;
 	dev_t root_dev;
 	ino_t root_ino;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.12 1997/10/20 08:07:51 scottr Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.13 1998/02/03 18:23:46 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.12 1997/10/20 08:07:51 scottr Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.13 1998/02/03 18:23:46 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,7 +64,7 @@ struct ttyent *
 getttynam(tty)
 	const char *tty;
 {
-	register struct ttyent *t;
+	struct ttyent *t;
 
 	setttyent();
 	while ((t = getttyent()) != NULL)
@@ -78,8 +78,8 @@ struct ttyent *
 getttyent()
 {
 	static struct ttyent tty;
-	register int c;
-	register char *p;
+	int c;
+	char *p;
 #define	MAXLINELENGTH	200
 	static char line[MAXLINELENGTH];
 
@@ -159,10 +159,10 @@ getttyent()
  */
 static char *
 skip(p)
-	register char *p;
+	char *p;
 {
-	register char *t;
-	register int c, q;
+	char *t;
+	int c, q;
 
 	for (q = 0, t = p; (c = *p) != '\0'; p++) {
 		if (c == '"') {
@@ -193,7 +193,7 @@ skip(p)
 
 static char *
 value(p)
-	register char *p;
+	char *p;
 {
 
 	return ((p = strchr(p, '=')) ? ++p : NULL);

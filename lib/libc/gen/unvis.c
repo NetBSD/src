@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.11 1997/10/22 06:37:53 thorpej Exp $	*/
+/*	$NetBSD: unvis.c,v 1.12 1998/02/03 18:23:57 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.11 1997/10/22 06:37:53 thorpej Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.12 1998/02/03 18:23:57 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -245,10 +245,10 @@ __unvis13(cp, c, astate, flag)
 
 int
 strunvis(dst, src)
-	register char *dst;
-	register const char *src;
+	char *dst;
+	const char *src;
 {
-	register char c;
+	char c;
 	char *start = dst;
 	int state = 0;
 

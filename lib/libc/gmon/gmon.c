@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.10 1997/07/13 19:53:06 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.11 1998/02/03 18:25:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.10 1997/07/13 19:53:06 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.11 1998/02/03 18:25:07 perry Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ monstartup(lowpc, highpc)
 	u_long lowpc;
 	u_long highpc;
 {
-	register int o;
+	int o;
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
 

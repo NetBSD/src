@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.4 1997/07/21 14:06:57 jtc Exp $	*/
+/*	$NetBSD: execvp.c,v 1.5 1998/02/03 18:23:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.4 1997/07/21 14:06:57 jtc Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.5 1998/02/03 18:23:42 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,8 +64,8 @@ execvp(name, argv)
 {
 	static int memsize;
 	static char **memp;
-	register int cnt, lp, ln;
-	register char *p;
+	int cnt, lp, ln;
+	char *p;
 	int eacces = 0, etxtbsy = 0;
 	char *bp, *cur, *path, buf[PATH_MAX];
 

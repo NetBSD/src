@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.18 1998/02/03 01:16:03 perry Exp $	*/
+/*	$NetBSD: popen.c,v 1.19 1998/02/03 18:23:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.18 1998/02/03 01:16:03 perry Exp $");
+__RCSID("$NetBSD: popen.c,v 1.19 1998/02/03 18:23:49 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,7 +162,7 @@ int
 pclose(iop)
 	FILE *iop;
 {
-	register struct pid *cur, *last;
+	struct pid *cur, *last;
 	int pstat;
 	pid_t pid;
 

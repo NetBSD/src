@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.8 1998/02/02 02:41:23 perry Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.8 1998/02/02 02:41:23 perry Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,8 +62,8 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	gid_t *groups;
 	int *grpcnt;
 {
-	register struct group *grp;
-	register int i, ngroups;
+	struct group *grp;
+	int i, ngroups;
 	int ret, maxgroups;
 
 	ret = 0;

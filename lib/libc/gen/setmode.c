@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.18 1997/10/08 17:19:13 mycroft Exp $	*/
+/*	$NetBSD: setmode.c,v 1.19 1998/02/03 18:23:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.18 1997/10/08 17:19:13 mycroft Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.19 1998/02/03 18:23:52 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,8 +96,8 @@ getmode(bbox, omode)
 	const void *bbox;
 	mode_t omode;
 {
-	register const BITCMD *set;
-	register mode_t clrval, newmode, value;
+	const BITCMD *set;
+	mode_t clrval, newmode, value;
 
 	set = (const BITCMD *)bbox;
 	newmode = omode;
@@ -163,7 +163,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 
 #define	ADDCMD(a, b, c, d)						\
 	if (set >= endset) {						\
-		register BITCMD *newset;				\
+		BITCMD *newset;				\
 		setlen += SET_LEN_INCR;					\
 		newset = realloc(saveset, sizeof(BITCMD) * setlen);	\
 		if (!saveset)						\
@@ -178,10 +178,10 @@ common:			if (set->cmd2 & CMD2_CLR) {
 
 void *
 setmode(p)
-	register const char *p;
+	const char *p;
 {
-	register int perm, who;
-	register char op;
+	int perm, who;
+	char op;
 	BITCMD *set, *saveset, *endset;
 	sigset_t sigset, sigoset;
 	mode_t mask;
@@ -357,8 +357,8 @@ apply:		if (!*p)
 static BITCMD *
 addcmd(set, op, who, oparg, mask)
 	BITCMD *set;
-	register int oparg, who;
-	register int op;
+	int oparg, who;
+	int op;
 	u_int mask;
 {
 	switch (op) {
@@ -404,7 +404,7 @@ addcmd(set, op, who, oparg, mask)
 #ifdef SETMODE_DEBUG
 static void
 dumpmode(set)
-	register BITCMD *set;
+	BITCMD *set;
 {
 	for (; set->cmd; ++set)
 		(void)printf("cmd: '%c' bits %04o%s%s%s%s%s%s\n",
@@ -425,10 +425,10 @@ dumpmode(set)
  */
 static void
 compress_mode(set)
-	register BITCMD *set;
+	BITCMD *set;
 {
-	register BITCMD *nset;
-	register int setbits, clrbits, Xbits, op;
+	BITCMD *nset;
+	int setbits, clrbits, Xbits, op;
 
 	for (nset = set;;) {
 		/* Copy over any 'u', 'g' and 'o' commands. */

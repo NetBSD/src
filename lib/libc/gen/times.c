@@ -1,4 +1,4 @@
-/*	$NetBSD: times.c,v 1.6 1997/07/21 14:07:39 jtc Exp $	*/
+/*	$NetBSD: times.c,v 1.7 1998/02/03 18:23:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: times.c,v 1.6 1997/07/21 14:07:39 jtc Exp $");
+__RCSID("$NetBSD: times.c,v 1.7 1998/02/03 18:23:54 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ __weak_alias(times,_times);
 
 clock_t
 times(tp)
-	register struct tms *tp;
+	struct tms *tp;
 {
 	struct rusage ru;
 	struct timeval t;

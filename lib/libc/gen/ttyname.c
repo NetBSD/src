@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.11 1997/07/21 14:07:41 jtc Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.12 1998/02/03 18:23:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.11 1997/07/21 14:07:41 jtc Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.12 1998/02/03 18:23:56 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,8 +102,8 @@ oldttyname(fd, sb)
 	int fd;
 	struct stat *sb;
 {
-	register struct dirent *dirp;
-	register DIR *dp;
+	struct dirent *dirp;
+	DIR *dp;
 	struct stat dsb;
 
 	if ((dp = opendir(_PATH_DEV)) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyslot.c,v 1.7 1997/07/21 14:07:42 jtc Exp $	*/
+/*	$NetBSD: ttyslot.c,v 1.8 1998/02/03 18:23:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyslot.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ttyslot.c,v 1.7 1997/07/21 14:07:42 jtc Exp $");
+__RCSID("$NetBSD: ttyslot.c,v 1.8 1998/02/03 18:23:56 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,9 +55,9 @@ __weak_alias(ttyslot,_ttyslot);
 int
 ttyslot()
 {
-	register struct ttyent *ttyp;
-	register int slot;
-	register char *p;
+	struct ttyent *ttyp;
+	int slot;
+	char *p;
 	int cnt;
 	char *name;
 

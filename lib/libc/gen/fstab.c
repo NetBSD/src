@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.11 1997/07/21 14:06:59 jtc Exp $	*/
+/*	$NetBSD: fstab.c,v 1.12 1998/02/03 18:23:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.11 1997/07/21 14:06:59 jtc Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.12 1998/02/03 18:23:42 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ static int fstabscan __P((void));
 static int
 fstabscan()
 {
-	register char *cp;
+	char *cp;
 #define	MAXLINELENGTH	1024
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
@@ -167,7 +167,7 @@ getfsent()
 
 struct fstab *
 getfsspec(name)
-	register const char *name;
+	const char *name;
 {
 	if (setfsent())
 		while (fstabscan())
@@ -178,7 +178,7 @@ getfsspec(name)
 
 struct fstab *
 getfsfile(name)
-	register const char *name;
+	const char *name;
 {
 	if (setfsent())
 		while (fstabscan())
