@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.2 1995/09/03 22:26:04 pk Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.3 1995/09/26 19:24:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -77,12 +77,10 @@
 
 #define ARBITRATION_RETRIES 1000
 
-#ifdef DDB
-int Debugger();
-#else
+#ifndef DDB
 #define Debugger() panic("Should call Debugger here %s:%d", \
 			 __FILE__, __LINE__)
-#endif
+#endif /* ! DDB */
 
 struct ncr5380_softc {
 	struct device	sc_dev;
