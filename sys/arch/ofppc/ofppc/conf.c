@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2002/01/12 14:54:15 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.11.8.1 2002/05/16 13:22:40 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,116 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/systm.h>
-#include <sys/tty.h>
-#include <sys/vnode.h>
 
-#include "ofdisk.h"
-bdev_decl(ofdisk_);
-bdev_decl(sw);
-
-#include "raid.h"
-bdev_decl(raid);
-
-#include "cd.h"
-bdev_decl(cd);
-
-#include "sd.h"
-bdev_decl(sd);
-
-#include "wd.h"
-bdev_decl(wd);
-
-#include "md.h"
-bdev_decl(md);
-
-#include "ld.h"
-bdev_decl(ld);
-
-struct bdevsw bdevsw[] = {
-	bdev_disk_init(NOFDISK,ofdisk_),/* 0: Openfirmware disk */
-	bdev_swap_init(1,sw),		/* 1: swap pseudo device */
-	bdev_disk_init(NRAID,raid),	/* 2: RAIDframe disk driver */
-	bdev_disk_init(NCD,cd),		/* 3: CD-ROM driver */
-	bdev_disk_init(NSD,sd),		/* 4: SCSI disk driver */
-	bdev_disk_init(NWD,wd),		/* 5: ATA disk driver */
-	bdev_disk_init(NMD,md),		/* 6: memory disk driver */
-	bdev_disk_init(NLD,ld),		/* 7: logical disks */
-};
-int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
-
-cdev_decl(cn);
-cdev_decl(ctty);
-#define mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(sw);
 #include "ofcons.h"
-cdev_decl(ofcons_);
-cdev_decl(ofdisk_);
-#include "ofrtc.h"
-cdev_decl(ofrtc_);
-#include "bpfilter.h"
-cdev_decl(bpf);
-#include "rnd.h"
-#include "openfirm.h"
-cdev_decl(openfirm);
-
-cdev_decl(raid);
-cdev_decl(cd);
-cdev_decl(sd);
-cdev_decl(wd);
-cdev_decl(md);
-cdev_decl(ld);
-
-#include "clockctl.h"
-cdev_decl(clockctl);
-
-/* open, close, read, write */
-#define	cdev_rtc_init(c,n)	cdev__ocrw_init(c,n)
-
-struct cdevsw cdevsw[] = {
-	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_ctty_init(1,ctty),		/* 1: control tty */
-	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_tty_init(NPTY,pts),	/* 3: pseudo tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 4: pseudo tty master */
-	cdev_log_init(1,log),		/* 5: /dev/klog */
-	cdev_swap_init(1,sw),		/* 6: /dev/drum pseudo device */
-	cdev_tty_init(NOFCONS,ofcons_),	/* 7: Openfirmware console */
-	cdev_disk_init(NOFDISK,ofdisk_),/* 8: Openfirmware disk */
-	cdev_rtc_init(NOFRTC,ofrtc_),	/* 9: Openfirmware RTC */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
-	cdev_rnd_init(NRND,rnd),	/* 11: random source pseudo-device */
-	cdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
-	cdev_openfirm_init(NOPENFIRM,openfirm),/* 13: OpenFirmware pseudo-device */
-	cdev_disk_init(NCD,cd),		/* 14: CD-ROM driver */
-	cdev_disk_init(NSD,sd),		/* 15: SCSI disk driver */
-	cdev_disk_init(NWD,wd),		/* 16: ATA disk driver */
-	cdev_disk_init(NMD,md),		/* 17: memory disk driver */
-	cdev_disk_init(NLD,ld),		/* 18: logical disks */
-	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 19: clockctl pseudo device */
-};
-int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
-
-int mem_no = 2;				/* major number of /dev/mem */
-
-/*
- * Swapdev is a fake device implemented in sw.c.
- * It is used only internally to get to swstrategy.
- */
-dev_t swapdev = makedev(1, 0);
 
 /*
  * Check whether dev is /dev/mem or /dev/kmem.
@@ -150,56 +43,6 @@ iskmemdev(dev)
 	dev_t dev;
 {
 	return major(dev) == mem_no && minor(dev) < 2;
-}
-
-/*
- * Check whether dev is /dev/zero.
- */
-int
-iszerodev(dev)
-	dev_t dev;
-{
-	return major(dev) == mem_no && minor(dev) == 12;
-}
-
-static int chrtoblktbl[] = {
-	/*VCHR*/	/*VBLK*/
-	/*  0 */	NODEV,
-	/*  1 */	NODEV,
-	/*  2 */	NODEV,
-	/*  3 */	NODEV,
-	/*  4 */	NODEV,
-	/*  5 */	NODEV,
-	/*  6 */	NODEV,
-	/*  7 */	NODEV,
-	/*  8 */	0,
-	/*  9 */	NODEV,
-	/* 10 */	NODEV,
-	/* 11 */	NODEV,
-	/* 12 */	2,
-	/* 13 */	NODEV,
-	/* 14 */	3,
-	/* 15 */	4,
-	/* 16 */	5,
-	/* 17 */	6,
-	/* 18 */	7,
-	/* 19 */	NODEV,
-};
-
-/*
- * Return accompanying block dev for a char dev.
- */
-dev_t
-chrtoblk(dev)
-	dev_t dev;
-{
-	int major;
-	
-	if ((major = major(dev)) >= nchrdev)
-		return NODEV;
-	if ((major = chrtoblktbl[major]) == NODEV)
-		return NODEV;
-	return makedev(major, minor(dev));
 }
 
 #include <dev/cons.h>
