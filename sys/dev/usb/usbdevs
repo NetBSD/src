@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.144 2001/01/21 15:57:41 augustss Exp $
+$NetBSD: usbdevs,v 1.145 2001/01/27 13:19:27 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -523,6 +523,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 /* I/O DATA products */
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
+product	IODATA USBRSAQ		0x0a03	USB serial adapter USB-RSAQ1
 
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
