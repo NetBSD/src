@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.79 2004/02/06 08:07:55 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.80 2004/03/01 22:32:35 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.79 2004/02/06 08:07:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.80 2004/03/01 22:32:35 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -567,10 +567,10 @@ skip_ipsec2:;
 		 * (this may happen when we are sending a packet to one of
 		 *  our own addresses.)
 		 */
-		if (opt && opt->ip6po_pktinfo
-		 && opt->ip6po_pktinfo->ipi6_ifindex) {
-			if (!(ifp->if_flags & IFF_LOOPBACK)
-			 && ifp->if_index != opt->ip6po_pktinfo->ipi6_ifindex) {
+		if (opt && opt->ip6po_pktinfo &&
+		    opt->ip6po_pktinfo->ipi6_ifindex) {
+			if (!(ifp->if_flags & IFF_LOOPBACK) &&
+			    ifp->if_index != opt->ip6po_pktinfo->ipi6_ifindex) {
 				ip6stat.ip6s_noroute++;
 				in6_ifstat_inc(ifp, ifs6_out_discard);
 				error = EHOSTUNREACH;
