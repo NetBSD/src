@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2005/02/20 10:44:15 manu Exp $
+# $NetBSD: Makefile,v 1.8 2005/02/23 14:44:41 manu Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -26,7 +26,7 @@ CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/libipsec
 CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
 CPPFLAGS+= -I${DIST}/src/racoon/missing
 CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
-CPPFLAGS+= -DADMINPORTDIR=\"/var/racoon\"
+CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
 
 LDADD+= -ll -ly -lipsec -lcrypto 
