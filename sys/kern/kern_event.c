@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.12 2002/04/09 06:19:52 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.13 2002/04/09 06:23:47 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -424,7 +424,19 @@ filt_proc(struct knote *kn, long hint)
 	 * process is gone, so flag the event as finished.
 	 */
 	if (event == NOTE_EXIT) {
+		/*
+		 * Detach the knote from watched process and mark
+		 * it as such. We can't leave this to kqueue_scan(),
+		 * since the process might not exist by then. And we
+		 * have to do this now, since psignal KNOTE() is called
+		 * also for zombies and we might end up reading freed
+		 * memory if the kevent would already be picked up
+		 * and knote g/c'ed. 
+		 */
+		kn->kn_fop->f_detach(kn);
 		kn->kn_status |= KN_DETACHED;
+
+		/* Mark as ONESHOT, so that the knote it g/c'ed when read */
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT); 
 		return (1);
 	}
