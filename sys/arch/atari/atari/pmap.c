@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2000/03/26 20:42:26 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55.4.1 2000/07/06 11:35:19 leo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1083,6 +1083,8 @@ pmap_protect(pmap, sva, eva, prot)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
+extern int kernel_copyback;
+
 int
 pmap_enter(pmap, va, pa, prot, flags)
 	register pmap_t pmap;
@@ -1308,10 +1310,10 @@ validate:
 	if (wired)
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
-		npte |= PG_CI;
+		npte |= (cputype == CPU_68060 ? PG_CIN : PG_CI);
 #if defined(M68040) || defined(M68060)
 	else if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW &&
-	         pmap != pmap_kernel())
+	         (kernel_copyback || pmap != pmap_kernel()))
 		npte |= PG_CCB;		/* cache copyback */
 #endif
 	/*
