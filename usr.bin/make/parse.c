@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.88 2003/03/21 16:48:21 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.89 2003/03/21 19:14:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.88 2003/03/21 16:48:21 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.89 2003/03/21 19:14:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.88 2003/03/21 16:48:21 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.89 2003/03/21 19:14:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -629,6 +629,13 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
     char *cp2;
     char *pref;
     
+    /*
+     * If the target is a suffix rule, leave it alone.
+     */
+    if (Suff_IsTransform(tn->name)) {
+	ParseDoSrc(ss->op, ss->src, ss->allsrc, FALSE); /* don't come back */
+	return 0;
+    }
     Var_Set(TARGET, tn->name, tn, 0);
     if ((pref = strrchr(tn->name, '/')))
 	pref++;
