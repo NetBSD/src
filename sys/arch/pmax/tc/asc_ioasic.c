@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.8 2000/06/05 07:59:52 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.9 2000/06/07 10:09:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.8 2000/06/05 07:59:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.9 2000/06/07 10:09:19 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,18 +224,17 @@ asc_ioasic_setup(sc, addr, len, ispullup, dmasize)
 	u_int32_t ssr, scr, *p;
 	size_t size;
 	vaddr_t cp;
-	paddr_t ptr0, ptr1;
 
-        NCR_DMA(("%s: start %d@%p,%s\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: start %d@%p,%s\n", sc->sc_dev.dv_xname,
 		*asc->sc_dmalen, *asc->sc_dmaaddr, ispullup ? "IN" : "OUT"));
 
 	/* upto two 4KB pages */
-        size = min(*dmasize, TWOPAGE((size_t)*addr));
-        asc->sc_dmaaddr = addr;
-        asc->sc_dmalen = len;
-        asc->sc_dmasize = size;
-        asc->sc_flags = (ispullup) ? ASC_ISPULLUP : 0;
-        *dmasize = size; /* return trimmed transfer size */
+	size = min(*dmasize, TWOPAGE((size_t)*addr));
+	asc->sc_dmaaddr = addr;
+	asc->sc_dmalen = len;
+	asc->sc_dmasize = size;
+	asc->sc_flags = (ispullup) ? ASC_ISPULLUP : 0;
+	*dmasize = size; /* return trimmed transfer size */
 
 	/* stop DMA engine first */
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
@@ -248,47 +247,46 @@ asc_ioasic_setup(sc, addr, len, ispullup, dmasize)
 			NULL /* kernel address */, BUS_DMA_NOWAIT))
 		panic("%s: cannot allocate DMA address", sc->sc_dev.dv_xname);
 
-        /* take care of 8B constraint on starting address */
-        cp = (vaddr_t)*addr;
-        if ((cp & 7) == 0) {
-                /* comfortably aligned to 8B boundary */
-                bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
-        }
-        else {
-                /* truncate to the boundary */
-                p = (u_int32_t *)(cp & ~7);
-                /* how many 16bit quantities in subject */
-                scr = (cp >> 1) & 3;
-                /* trim down physical address too */
-                asc->sc_dmamap->dm_segs[0].ds_addr &= ~7;
-                if ((asc->sc_flags & ASC_ISPULLUP) == 0) {
+	/* take care of 8B constraint on starting address */
+	cp = (vaddr_t)*addr;
+	if ((cp & 7) == 0) {
+		/* comfortably aligned to 8B boundary */
+		scr = 0;
+	}
+	else {
+		/* truncate to the boundary */
+		p = (u_int32_t *)(cp & ~7);
+		/* how many 16bit quantities in subject */
+		scr = (cp & 7) >> 1;
+		/* trim down physical address too */
+		asc->sc_dmamap->dm_segs[0].ds_addr &= ~7;
+		asc->sc_dmamap->dm_segs[0].ds_len += (cp & 6);
+		if ((asc->sc_flags & ASC_ISPULLUP) == 0) {
 			/* push down to SCSI device */
-                        scr |= 4;
-                        /* round up physical address in this case */
-                        asc->sc_dmamap->dm_segs[0].ds_addr += 8;
-                }
-                /* pack fixup data in SDR0/SDR1 pair and instruct SCR */
-                bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-                        IOASIC_SCSI_SDR0, p[0]);
-                bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-                        IOASIC_SCSI_SDR1, p[1]);
-                bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-                        IOASIC_SCSI_SCR, scr);
-        }
-        ptr0 = asc->sc_dmamap->dm_segs[0].ds_addr;
-        ptr1 = (asc->sc_dmamap->dm_nsegs > 1)
-		? asc->sc_dmamap->dm_segs[1].ds_addr : ~0;
-        bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-                IOASIC_SCSI_DMAPTR,
-                IOASIC_DMA_ADDR(ptr0));
-        bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-                IOASIC_SCSI_NEXTPTR,
-                IOASIC_DMA_ADDR(ptr1));
+			scr |= 4;
+			/* round up physical address in this case */
+			asc->sc_dmamap->dm_segs[0].ds_addr += 8;
+			/* don't care excess cache flush */
+		}
+		/* pack fixup data in SDR0/SDR1 pair and instruct SCR */
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+			IOASIC_SCSI_SDR0, p[0]);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+			IOASIC_SCSI_SDR1, p[1]);
+	}
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+		IOASIC_SCSI_DMAPTR,
+		IOASIC_DMA_ADDR(asc->sc_dmamap->dm_segs[0].ds_addr));
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+		IOASIC_SCSI_NEXTPTR,
+		(asc->sc_dmamap->dm_nsegs == 1)
+		? ~0 : IOASIC_DMA_ADDR(asc->sc_dmamap->dm_segs[1].ds_addr));
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, scr);
 
 	/* synchronize dmamap contents with memory image */
-        bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
+	bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
 		0, size,
-                (ispullup) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+		(ispullup) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	asc->sc_flags |= ASC_MAPLOADED;
 	return 0;
@@ -314,8 +312,6 @@ asc_ioasic_go(sc)
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 	asc->sc_flags |= ASC_DMAACTIVE;
 }
-
-#define	SCRDEBUG(x)
 
 static int
 asc_ioasic_intr(sc)
@@ -385,33 +381,22 @@ asc_ioasic_intr(sc)
 
 	scr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR);
 	if ((asc->sc_flags & ASC_ISPULLUP) && scr != 0) {
-		u_int32_t ptr;
-		u_int16_t *p;
-		union {
-			u_int32_t sdr[2];
-			u_int16_t half[4];
-		} scratch;
-		scratch.sdr[0] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+		u_int32_t sdr[2], ptr;
+
+		sdr[0] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_SDR0);
-		scratch.sdr[1] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+		sdr[1] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_SDR1);
 		ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_DMAPTR);
 		ptr = (ptr >> 3) & 0x1ffffffc;
-SCRDEBUG(("SCSI_SCR -> %x, DMAPTR: %p\n", scr, (void *)ptr));
-		p = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
 		/*
-		 * scr
-		 *	1 -> half[0]
-		 *	2 -> half[0] + half[1]
-		 *	3 -> half[0] + half[1] + half[2]
+		 * scr:	1 -> short[0]
+		 *	2 -> short[0] + short[1]
+		 *	3 -> short[0] + short[1] + short[2]
 		 */
 		scr &= IOASIC_SCR_WORD;
-		p[0] = scratch.half[0];
-		if (scr > 1)
-			p[1] = scratch.half[1];
-		if (scr > 2)
-			p[2] = scratch.half[2];
+		memcpy((void *)MIPS_PHYS_TO_KSEG0(ptr), sdr, scr << 1);
 	}
 
 	bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
