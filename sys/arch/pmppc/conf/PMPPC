@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.2 2002/05/30 09:08:52 augustss Exp $
+#	$NetBSD: PMPPC,v 1.3 2002/05/31 10:46:34 augustss Exp $
 #
 #	PMPPC
 #
@@ -13,20 +13,11 @@ ident 		"PMPPC"
 options 	BOOTHOWTO=0
 options 	MSGBUFSIZE=0x10000
 
-options 	TLP_DEBUG
-
 maxusers	32
-
-# Options for necessary to use MD
-#options 	MEMORY_DISK_HOOKS
-#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
-
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
@@ -62,25 +53,25 @@ options 	SYMTAB_SPACE=300000	# size for embedded symbol table
 
 # File systems
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
-#file-system 	FDESC		# /dev/fd
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
-#file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
-#file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
+file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
+file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
 
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -89,13 +80,13 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_RWSIZE=1024
 
 # Networking options
-#options 	GATEWAY		# packet forwarding
+options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-#options 	INET6		# IPV6
-#options 	IPSEC		# IP security
+options 	INET6		# IPV6
+options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
+options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
@@ -118,6 +109,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI devices
 #options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # Kernel root file system and dump configuration.
 #config		netbsd	root on ? type ?
@@ -159,23 +151,276 @@ pci*	at pchb?
 pci*	at ppb? bus ?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+# PCI PCMCIA controllers
+#pcic0	at pci? dev? function ?
+
+# CardBus bridge support
+#cbb*		at pci? dev ? function ?
+#cardslot*	at cbb?
+
+# CardBus bus support
+#cardbus*	at cardslot?
+#pcmcia* 	at cardslot?
+
+vga*		at pci? dev ? function ?
+wsdisplay*	at vga? console ?
+
+wsmouse*	at wsmousedev? mux 0
+wskbd*		at wskbddev? mux 1
+
+# PCI serial interfaces
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
+
+# I2O devices
+iop*	at pci? dev ? function ?	# I/O processor
+iopsp*	at iop? tid ?			# SCSI/FC-AL ports
+ld*	at iop? tid ?			# block devices
+dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 
-#pseudo-device	vnd		4	# disk-like interface to files
+# SCSI Controllers and Devices
+
+# PCI SCSI controllers
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+#options 	SIOP_SYMLED		# drive the act. LED in software
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
+
+# SCSI bus support
+scsibus* at scsi? channel ?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+
+# RAID controllers and devices
+#aac*	at pci? dev ? function ?	# Adaptec AAC family
+cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
+twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+
+#ld*	at aac? unit ?			# logical disk devices
+ld*	at cac? unit ?
+ld*	at icp? unit ?
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
+
+icpsp*	at icp? unit ?			# SCSI pass-through
+#scsibus* at icpsp?
+
+# Network Interfaces
+
+# PCI network interfaces
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+en*	at pci? dev ? function ?	# ENI/Adaptec ATM
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+esh*	at pci? dev ? function ?	# Essential HIPPI card
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
+stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+
+# MII/PHY support
+acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+
+
+# USB Controller and Devices
+
+# PCI USB controllers
+# The EHCI is not ready for prime time.
+#ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+
+# CardBus USB controllers
+#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+
+# USB bus support
+#usb*	at ehci?
+usb*	at ohci?
+usb*	at uhci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+#wd* at umass?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+# Prolific PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# Serial adapters
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
+
+# USB scanners
+uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+#scsibus* at usscanner? channel ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
+
+# D-Link DSB-R100 USB radio
+udsbr*	at uhub? port ?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+# PCI audio devices
+auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
+auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
+clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
+cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
+eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
+esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+fms*	at pci? dev ? function ?	# Forte Media FM801
+neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
+sv*	at pci? dev ? function ?	# S3 SonicVibes
+yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
+
+
+pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
-#pseudo-device	ppp		2	# Point-to-Point Protocol
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	tun		4	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	sl		2	# Serial Line IP
+pseudo-device	tun		4	# network tunneling over tty
+pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
