@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.26 1997/12/13 21:03:46 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.27 1997/12/17 06:17:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.26 1997/12/13 21:03:46 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.27 1997/12/17 06:17:26 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,8 @@ tcp_stats(off, name)
 		"\t%lu segment%s updated rtt (of %lu attempt%s)\n");
 	p(tcps_rexmttimeo, "\t%lu retransmit timeout%s\n");
 	p(tcps_timeoutdrop, "\t\t%lu connection%s dropped by rexmit timeout\n");
-	p(tcps_persisttimeo, "\t%lu persist timeout%s\n");
+	p2(tcps_persisttimeo, tcps_persistdrops,
+	   "\t%lu persist timeout%s (resulting in %lu dropped connection%s)\n");
 	p(tcps_keeptimeo, "\t%lu keepalive timeout%s\n");
 	p(tcps_keepprobe, "\t\t%lu keepalive probe%s sent\n");
 	p(tcps_keepdrops, "\t\t%lu connection%s dropped by keepalive\n");
