@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.25 2001/11/16 10:25:49 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.26 2001/11/16 11:06:46 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,7 +257,6 @@ is specified by
 may be either the full name of the device, e.g. /dev/rraid0d,
 for the i386 architecture, and /dev/rraid0c
 for all others, or just simply raid0 (for /dev/rraid0d).
-.Pp
 .Ss Configuration file
 The format of the configuration file is complex, and
 only an abbreviated treatment is given here.  In the configuration
@@ -275,7 +274,7 @@ section.  The first section is the
 section, and it specifies
 the number of rows, columns, and spare disks in the RAID set.  For
 example:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 1 3 0
 .Ed
@@ -289,7 +288,7 @@ The second section, the
 .Sq disks
 section, specifies the actual
 components of the device.  For example:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START disks
 /dev/sd0e
 /dev/sd1e
@@ -323,7 +322,7 @@ which are on-line, but are not actively used by the RAID driver unless
 one of the main components fail.  A simple
 .Sq spare
 section might be:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START spare
 /dev/sd3e
 .Ed
@@ -340,7 +339,7 @@ general layout parameters for the RAID device, and provides such
 information as sectors per stripe unit, stripe units per parity unit,
 stripe units per reconstruction unit, and the parity configuration to
 use.  This section might look like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START layout
 # sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level
 32 1 1 5
@@ -380,7 +379,7 @@ The next required section is the
 .Sq queue
 section.  This is most often
 specified as:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START queue
 fifo 100
 .Ed
@@ -397,13 +396,17 @@ on this the reader is referred to the RAIDframe documentation
 discussed in the
 .Sx HISTORY
 section.
-
+.Pp
 See
 .Sx EXAMPLES
 for a more complete configuration file example.
-
+.Sh FILES
+.Bl -tag -width /dev/XXrXraidX -compact
+.It Pa /dev/{,r}raid*
+.Cm raid
+device special files.
+.El
 .Sh EXAMPLES
-
 It is highly recommended that before using the RAID driver for real
 file systems that the system administrator(s) become quite familiar
 with the use of
@@ -424,7 +427,6 @@ or
 .Sq /dev/rraid0d
 may be used in place of
 .Sq raid0 .
-.Pp
 .Ss Initialization and Configuration
 The initial step in configuring a RAID set is to identify the components
 that will be used in the RAID set.  All components should be the same
@@ -432,7 +434,7 @@ size.  Each component should have a disklabel type of
 .Dv FS_RAID ,
 and a typical disklabel entry for a RAID component
 might look like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 f:  1800000  200495     RAID              # (Cyl.  405*- 4041*)
 .Ed
 .Pp
@@ -472,7 +474,7 @@ is then used to configure the
 .Xr raid 4
 device.  To configure the device, a configuration
 file which looks something like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 # numRow numCol numSpare
 1 3 1
@@ -500,7 +502,7 @@ with /dev/sd4e available as a
 in case one of
 the three main drives should fail. A RAID 0 set would be specified in
 a similar way:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 # numRow numCol numSpare
 1 4 0
@@ -525,7 +527,7 @@ hot spares for a RAID 0 set, since there is no way to recover data if
 any of the components fail.
 .Pp
 For a RAID 1 (mirror) set, the following configuration might be used:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 # numRow numCol numSpare
 1 2 0
@@ -552,7 +554,7 @@ possible.
 The first time a RAID set is configured, the
 .Fl C
 option must be used:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -C raid0.conf raid0
 .Ed
 .Pp
@@ -570,14 +572,14 @@ very good reason for it.  After the initial configuration is done (and
 appropriate component labels are added with the
 .Fl I
 option) then raid0 can be configured normally with:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -c raid0.conf raid0
 .Ed
 .Pp
 When the RAID set is configured for the first time, it is
 necessary to initialize the component labels, and to initialize the
 parity on the RAID set.  Initializing the component labels is done with:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -I 112341 raid0
 .Ed
 .Pp
@@ -604,13 +606,13 @@ quite time-consuming, the
 .Fl v
 option may be also used in conjunction with
 .Fl i :
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -iv raid0
 .Ed
 .Pp
 This will give more verbose output on the
 status of the initialization:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Initiating re-write of parity
 Parity Re-write status:
  10% |****                                   | ETA:    06:03 /
@@ -644,7 +646,7 @@ a physically existing component (as either the first or second
 component) and with a
 .Sq fake
 component.  In the following:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 # numRow numCol numSpare
 1 2 0
@@ -674,17 +676,16 @@ configuration, this set can be used normally, but will be operating
 in degraded mode.  Once a second physical component is obtained, it
 can be hot-added, the existing data mirrored, and normal operation
 resumed.
-.Pp
 .Ss Maintenance of the RAID set
 After the parity has been initialized for the first time, the command:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -p raid0
 .Ed
 .Pp
 can be used to check the current status of the parity.  To check the
 parity and rebuild it necessary (for example, after an unclean
 shutdown) the command:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -P raid0
 .Ed
 .Pp
@@ -697,12 +698,12 @@ data on the set is modified.
 .Pp
 To see how the RAID set is doing, the following command can be used to
 show the RAID set's status:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -s raid0
 .Ed
 .Pp
 The output will look something like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: optimal
@@ -751,12 +752,12 @@ will not be
 but the set as a whole can still be clean.
 .Pp
 To check the component label of /dev/sd1e, the following is used:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -g /dev/sd1e raid0
 .Ed
 .Pp
 The output of this command will look something like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Component label for /dev/sd1e:
    Row: 0 Column: 0 Num Rows: 1 Num Columns: 3
    Version: 2 Serial Number: 13432 Mod Counter: 65
@@ -766,19 +767,18 @@ Component label for /dev/sd1e:
    Autoconfig: No
    Last configured as: raid0
 .Ed
-.Pp
 .Ss Dealing with Component Failures
 If for some reason
 (perhaps to test reconstruction) it is necessary to pretend a drive
 has failed, the following will perform that function:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -f /dev/sd2e raid0
 .Ed
 .Pp
 The system will then be performing all operations in degraded mode,
 where missing data is re-computed from existing data and the parity.
 In this case, obtaining the status of raid0 will return (in part):
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: failed
@@ -793,7 +793,7 @@ a reconstruction has not been started.  To both fail the disk and
 start a reconstruction, the
 .Fl F
 option must be used:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -F /dev/sd2e raid0
 .Ed
 .Pp
@@ -803,7 +803,7 @@ option may be used first, and then the
 .Fl F
 option used later, on the same disk, if desired.
 Immediately after the reconstruction is started, the status will report:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: reconstructing
@@ -825,7 +825,7 @@ percentage of the reconstruction that is completed.  When the
 reconstruction is finished the
 .Fl s
 option will show:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: spared
@@ -850,7 +850,7 @@ be initiated with the
 option.  In this example, this would copy the entire contents of
 /dev/sd4e to /dev/sd2e.  Once the copyback procedure is complete, the
 status of the device would be (in part):
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: optimal
@@ -864,7 +864,7 @@ and the system is back to normal operation.
 The second option after the reconstruction is to simply use /dev/sd4e
 in place of /dev/sd2e in the configuration file.  For example, the
 configuration file (in part) might now look like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 1 3 0
 
@@ -885,7 +885,7 @@ be changed.
 .Pp
 If a component fails and there are no hot spares
 available on-line, the status of the RAID set might (in part) look like:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: failed
@@ -895,12 +895,12 @@ No spares.
 .Pp
 In this case there are a number of options.  The first option is to add a hot
 spare using:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -a /dev/sd4e raid0
 .Ed
 .Pp
 After the hot add, the status would then be:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: failed
@@ -915,13 +915,13 @@ as describe above.
 .Pp
 A second option is to rebuild directly onto /dev/sd2e.  Once the disk
 containing /dev/sd2e has been replaced, one can simply use:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -R /dev/sd2e raid0
 .Ed
 .Pp
 to rebuild the /dev/sd2e component.  As the rebuilding is in progress,
 the status will be:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: reconstructing
@@ -930,7 +930,7 @@ No spares.
 .Ed
 .Pp
 and when completed, will be:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd1e: optimal
            /dev/sd2e: optimal
@@ -941,7 +941,7 @@ No spares.
 In circumstances where a particular component is completely
 unavailable after a reboot, a special component name will be used to
 indicate the missing component.  For example:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Components:
            /dev/sd2e: optimal
           component1: failed
@@ -954,7 +954,7 @@ at all by the auto-configuration code.  The name
 can be used anywhere a normal component name would be used.  For
 example, to add a hot spare to the above set, and rebuild to that hot
 spare, the following could be done:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -a /dev/sd3e raid0
 raidctl -F component1 raid0
 .Ed
@@ -962,12 +962,11 @@ raidctl -F component1 raid0
 at which point the data missing from
 .Sq component1
 would be reconstructed onto /dev/sd3e.
-.Pp
 .Ss RAID on RAID
 RAID sets can be layered to create more complex and much larger RAID
 sets.  A RAID 0 set, for example, could be constructed from four RAID
 5 sets.  The following configuration file shows such a setup:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 START array
 # numRow numCol numSpare
 1 4 0
@@ -990,18 +989,17 @@ A similar configuration file might be used for a RAID 0 set
 constructed from components on RAID 1 sets.  In such a configuration,
 the mirroring provides a high degree of redundancy, while the striping
 provides additional speed benefits.
-.Pp
 .Ss Auto-configuration and Root on RAID
 RAID sets can also be auto-configured at boot.  To make a set
 auto-configurable, simply prepare the RAID set as above, and then do
 a:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -A yes raid0
 .Ed
 .Pp
 to turn on auto-configuration for that set.  To turn off
 auto-configuration, use:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -A no raid0
 .Ed
 .Pp
@@ -1022,7 +1020,7 @@ with the
 partition of such a RAID set being used for
 .Pa / .
 To use raid0a as the root file system, simply use:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -A root raid0
 .Ed
 .Pp
@@ -1049,9 +1047,12 @@ A typical RAID 1 setup with root on RAID might be as follows:
 .Bl -enum
 .It
 wd0a - a small partition, which contains a complete, bootable, basic
-NetBSD installation.
+.Nx
+installation.
 .It
-wd1a - also contains a complete, bootable, basic NetBSD installation.
+wd1a - also contains a complete, bootable, basic
+.Nx
+installation.
 .It
 wd0e and wd1e - a RAID 1 set, raid0, used for the root file system.
 .It
@@ -1092,26 +1093,24 @@ supported as root devices or auto-configurable devices at this point.
 supported in general, however, as mentioned earlier.)  Note that in
 order to enable component auto-detection and auto-configuration of
 RAID devices, the line:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 options    RAID_AUTOCONFIG
 .Ed
 .Pp
 must be in the kernel configuration file.  See
 .Xr raid 4
 for more details.
-.Pp
 .Ss Unconfiguration
 The final operation performed by
 .Nm
 is to unconfigure a
 .Xr raid 4
 device.  This is accomplished via a simple:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -u raid0
 .Ed
 .Pp
 at which point the device is ready to be reconfigured.
-.Pp
 .Ss Performance Tuning
 Selection of the various parameter values which result in the best
 performance can be quite tricky, and often requires a bit of
@@ -1192,7 +1191,6 @@ performance dramatically.  As well, changing the cylinders-per-group
 parameter from 16 to 32 or higher is often not only necessary for
 larger file systems, but may also have positive performance
 implications.
-.Pp
 .Ss Summary
 Despite the length of this man-page, configuring a RAID set is a
 relatively straight-forward process.  All that needs to be done is the
@@ -1207,55 +1205,55 @@ Construct a RAID configuration file: e.g.
 .Sq raid0.conf
 .It
 Configure the RAID set with:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -C raid0.conf raid0
 .Ed
 .Pp
 .It
 Initialize the component labels with:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -I 123456 raid0
 .Ed
 .Pp
 .It
 Initialize other important parts of the set with:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -i raid0
 .Ed
 .Pp
 .It
 Get the default label for the RAID set:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 disklabel raid0 > /tmp/label
 .Ed
 .Pp
 .It
 Edit the label:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 vi /tmp/label
 .Ed
 .Pp
 .It
 Put the new label on the RAID set:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 disklabel -R -r raid0 /tmp/label
 .Ed
 .Pp
 .It
 Create the file system:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 newfs /dev/rraid0e
 .Ed
 .Pp
 .It
 Mount the file system:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 mount /dev/raid0e /mnt
 .Ed
 .Pp
 .It
 Use:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 raidctl -c raid0.conf raid0
 .Ed
 .Pp
@@ -1263,39 +1261,10 @@ To re-configure the RAID set the next time it is needed, or put
 raid0.conf into /etc where it will automatically be started by
 the /etc/rc scripts.
 .El
-.Pp
-.Sh WARNINGS
-Certain RAID levels (1, 4, 5, 6, and others) can protect against some
-data loss due to component failure.  However the loss of two
-components of a RAID 4 or 5 system, or the loss of a single component
-of a RAID 0 system will result in the entire file system being lost.
-RAID is
-.Ar NOT
-a substitute for good backup practices.
-.Pp
-Recomputation of parity
-.Ar MUST
-be performed whenever there is a chance that it may have been
-compromised.  This includes after system crashes, or before a RAID
-device has been used for the first time.  Failure to keep parity
-correct will be catastrophic should a component ever fail -- it is
-better to use RAID 0 and get the additional space and speed, than it
-is to use parity, but not keep the parity correct.  At least with RAID
-0 there is no perception of increased data security.
-.Pp
-.Sh FILES
-.Bl -tag -width /dev/XXrXraidX -compact
-.It Pa /dev/{,r}raid*
-.Cm raid
-device special files.
-.El
-.Pp
 .Sh SEE ALSO
-.Xr raid 4 ,
 .Xr ccd 4 ,
+.Xr raid 4 ,
 .Xr rc 8
-.Sh BUGS
-Hot-spare removal is currently not available.
 .Sh HISTORY
 RAIDframe is a framework for rapid prototyping of RAID structures
 developed by the folks at the Parallel Data Laboratory at Carnegie
@@ -1314,7 +1283,7 @@ version of
 is a complete re-write, and first appeared in
 .Nx 1.4 .
 .Sh COPYRIGHT
-.Bd -unfilled
+.Bd -literal
 The RAIDframe Copyright is as follows:
 
 Copyright (c) 1994-1996 Carnegie-Mellon University.
@@ -1340,3 +1309,23 @@ Carnegie Mellon requests users of this software to return to
 any improvements or extensions that they make and grant Carnegie the
 rights to redistribute these changes.
 .Ed
+.Sh WARNINGS
+Certain RAID levels (1, 4, 5, 6, and others) can protect against some
+data loss due to component failure.  However the loss of two
+components of a RAID 4 or 5 system, or the loss of a single component
+of a RAID 0 system will result in the entire file system being lost.
+RAID is
+.Ar NOT
+a substitute for good backup practices.
+.Pp
+Recomputation of parity
+.Ar MUST
+be performed whenever there is a chance that it may have been
+compromised.  This includes after system crashes, or before a RAID
+device has been used for the first time.  Failure to keep parity
+correct will be catastrophic should a component ever fail -- it is
+better to use RAID 0 and get the additional space and speed, than it
+is to use parity, but not keep the parity correct.  At least with RAID
+0 there is no perception of increased data security.
+.Sh BUGS
+Hot-spare removal is currently not available.
