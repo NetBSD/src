@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.34 2001/06/18 01:58:08 simonb Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.35 2001/06/30 22:35:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1414,6 +1414,7 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 		ifp->if_timer = 0;
 }
 
+#if defined(DP83820)
 /*
  * sip_rxintr:
  *
@@ -1425,10 +1426,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
 	struct mbuf *m;
-	u_int32_t cmdsts;
-#ifdef DP83820
-	u_int32_t extsts;
-#endif /* DP83820 */
+	u_int32_t cmdsts, extsts;
 	int i, len;
 
 	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
@@ -1437,9 +1435,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
-#ifdef DP83820
 		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
-#endif /* DP83820 */
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -1453,13 +1449,218 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			break;
 		}
 
-#if !defined(DP83820)
+		/*
+		 * If an error occurred, update stats, clear the status
+		 * word, and leave the packet buffer in place.  It will
+		 * simply be reused the next time the ring comes around.
+		 */
+		if (cmdsts & (CMDSTS_Rx_RXA|CMDSTS_Rx_LONG|CMDSTS_Rx_RUNT|
+		    CMDSTS_Rx_ISE|CMDSTS_Rx_CRCE|CMDSTS_Rx_FAE)) {
+			ifp->if_ierrors++;
+			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
+			    (cmdsts & CMDSTS_Rx_RXO) == 0) {
+				/* Receive overrun handled elsewhere. */
+				printf("%s: receive descriptor error\n",
+				    sc->sc_dev.dv_xname);
+			}
+#define	PRINTERR(bit, str)						\
+			if (cmdsts & (bit))				\
+				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
+			PRINTERR(CMDSTS_Rx_LONG, "packet too long");
+			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
+			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
+			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
+			PRINTERR(CMDSTS_Rx_FAE, "frame alignment error");
+#undef PRINTERR
+			SIP_INIT_RXDESC(sc, i);
+			continue;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+		/*
+		 * No errors; receive the packet.  Note, the DP83820
+		 * includes the CRC with every packet.
+		 */
+		len = CMDSTS_SIZE(cmdsts);
+
+#ifdef __NO_STRICT_ALIGNMENT
+		/*
+		 * If the packet is small enough to fit in a
+		 * single header mbuf, allocate one and copy
+		 * the data into it.  This greatly reduces
+		 * memory consumption when we receive lots
+		 * of small packets.
+		 *
+		 * Otherwise, we add a new buffer to the receive
+		 * chain.  If this fails, we drop the packet and
+		 * recycle the old buffer.
+		 */
+		if (SIP_DECL(copy_small) != 0 && len <= MHLEN) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL)
+				goto dropit;
+			memcpy(mtod(m, caddr_t),
+			    mtod(rxs->rxs_mbuf, caddr_t), len);
+			SIP_INIT_RXDESC(sc, i);
+			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+			    rxs->rxs_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
+		} else {
+			m = rxs->rxs_mbuf;
+			if (SIP_DECL(add_rxbuf)(sc, i) != 0) {
+ dropit:
+				ifp->if_ierrors++;
+				SIP_INIT_RXDESC(sc, i);
+				bus_dmamap_sync(sc->sc_dmat,
+				    rxs->rxs_dmamap, 0,
+				    rxs->rxs_dmamap->dm_mapsize,
+				    BUS_DMASYNC_PREREAD);
+				continue;
+			}
+		}
+#else
+		/*
+		 * The SiS 900's receive buffers must be 4-byte aligned.
+		 * But this means that the data after the Ethernet header
+		 * is misaligned.  We must allocate a new buffer and
+		 * copy the data, shifted forward 2 bytes.
+		 */
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+ dropit:
+			ifp->if_ierrors++;
+			SIP_INIT_RXDESC(sc, i);
+			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+			continue;
+		}
+		if (len > (MHLEN - 2)) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				goto dropit;
+			}
+		}
+		m->m_data += 2;
+
+		/*
+		 * Note that we use clusters for incoming frames, so the
+		 * buffer is virtually contiguous.
+		 */
+		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
+
+		/* Allow the receive descriptor to continue using its mbuf. */
+		SIP_INIT_RXDESC(sc, i);
+		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+#endif /* __NO_STRICT_ALIGNMENT */
+
+		ifp->if_ipackets++;
+		m->m_flags |= M_HASFCS;
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = len;
+
+#if NBPFILTER > 0
+		/*
+		 * Pass this up to any BPF listeners, but only
+		 * pass if up the stack if it's for us.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif /* NBPFILTER > 0 */
+
+		/*
+		 * If VLANs are enabled, VLAN packets have been unwrapped
+		 * for us.  Associate the tag with the packet.
+		 */
+		if (sc->sc_ethercom.ec_nvlans != 0 &&
+		    (extsts & EXTSTS_VPKT) != 0) {
+			struct mbuf *vtag;
+
+			vtag = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
+			if (vtag == NULL) {
+				printf("%s: unable to allocate VLAN tag\n",
+				    sc->sc_dev.dv_xname);
+				m_freem(m);
+				continue;
+			}
+
+			*mtod(vtag, int *) = ntohs(extsts & EXTSTS_VTCI);
+			vtag->m_len = sizeof(int);
+		}
+
+		/*
+		 * Set the incoming checksum information for the
+		 * packet.
+		 */
+		if ((extsts & EXTSTS_IPPKT) != 0) {
+			SIP_EVCNT_INCR(&sc->sc_ev_rxipsum);
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if (extsts & EXTSTS_Rx_IPERR)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			if (extsts & EXTSTS_TCPPKT) {
+				SIP_EVCNT_INCR(&sc->sc_ev_rxtcpsum);
+				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+				if (extsts & EXTSTS_Rx_TCPERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			} else if (extsts & EXTSTS_UDPPKT) {
+				SIP_EVCNT_INCR(&sc->sc_ev_rxudpsum);
+				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+				if (extsts & EXTSTS_Rx_UDPERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			}
+		}
+
+		/* Pass it on. */
+		(*ifp->if_input)(ifp, m);
+	}
+
+	/* Update the receive pointer. */
+	sc->sc_rxptr = i;
+}
+#else /* ! DP83820 */
+/*
+ * sip_rxintr:
+ *
+ *	Helper; handle receive interrupts.
+ */
+void
+SIP_DECL(rxintr)(struct sip_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct sip_rxsoft *rxs;
+	struct mbuf *m;
+	u_int32_t cmdsts;
+	int i, len;
+
+	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
+		rxs = &sc->sc_rxsoft[i];
+
+		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
+
+		/*
+		 * NOTE: OWN is set if owned by _consumer_.  We're the
+		 * consumer of the receive ring, so if the bit is clear,
+		 * we have processed all of the packets.
+		 */
+		if ((cmdsts & CMDSTS_OWN) == 0) {
+			/*
+			 * We have processed all of the receive buffers.
+			 */
+			break;
+		}
+
 		/*
 		 * If any collisions were seen on the wire, count one.
 		 */
 		if (cmdsts & CMDSTS_Rx_COL)
 			ifp->if_collisions++;
-#endif /* ! DP83820 */
 
 		/*
 		 * If an error occurred, update stats, clear the status
@@ -1583,52 +1784,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif /* NBPFILTER > 0 */
 
-#ifdef DP83820
-		/*
-		 * If VLANs are enabled, VLAN packets have been unwrapped
-		 * for us.  Associate the tag with the packet.
-		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (extsts & EXTSTS_VPKT) != 0) {
-			struct mbuf *vtag;
-
-			vtag = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
-			if (vtag == NULL) {
-				printf("%s: unable to allocate VLAN tag\n",
-				    sc->sc_dev.dv_xname);
-				m_freem(m);
-				continue;
-			}
-
-			*mtod(vtag, int *) = ntohs(extsts & EXTSTS_VTCI);
-			vtag->m_len = sizeof(int);
-		}
-
-		/*
-		 * Set the incoming checksum information for the
-		 * packet.
-		 */
-		if ((extsts & EXTSTS_IPPKT) != 0) {
-			SIP_EVCNT_INCR(&sc->sc_ev_rxipsum);
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (extsts & EXTSTS_Rx_IPERR)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-			if (extsts & EXTSTS_TCPPKT) {
-				SIP_EVCNT_INCR(&sc->sc_ev_rxtcpsum);
-				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-				if (extsts & EXTSTS_Rx_TCPERR)
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_TCP_UDP_BAD;
-			} else if (extsts & EXTSTS_UDPPKT) {
-				SIP_EVCNT_INCR(&sc->sc_ev_rxudpsum);
-				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-				if (extsts & EXTSTS_Rx_UDPERR)
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_TCP_UDP_BAD;
-			}
-		}
-#endif /* DP83820 */
-
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1636,6 +1791,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
 }
+#endif /* DP83820 */
 
 /*
  * sip_tick:
