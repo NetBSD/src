@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.17 1999/12/07 02:13:28 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.18 1999/12/07 02:40:27 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -119,14 +119,6 @@
 
 #include <sys/buf.h>
 
-#if DKUSAGE > 0
-#include <sys/dkusage.h>
-#include <io/common/iotypes.h>
-#include <io/cam/dec_cam.h>
-#include <io/cam/cam.h>
-#include <io/cam/pdrv.h>
-#endif				/* DKUSAGE > 0 */
-
 /* rad == RF_RaidAccessDesc_t */
 static RF_FreeList_t *rf_rad_freelist;
 #define RF_MAX_FREE_RAD 128
@@ -163,23 +155,12 @@ RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
 #define WAIT_FOR_QUIESCENCE(_raid_) \
 	tsleep(&((_raid_)->accesses_suspended),PRIBIO,"raidframe quiesce", 0);
 
-#if DKUSAGE > 0
 #define IO_BUF_ERR(bp, err, unit) { \
 	bp->b_flags |= B_ERROR; \
 	bp->b_resid = bp->b_bcount; \
 	bp->b_error = err; \
-	RF_DKU_END_IO(unit, bp); \
 	biodone(bp); \
 }
-#else
-#define IO_BUF_ERR(bp, err, unit) { \
-	bp->b_flags |= B_ERROR; \
-	bp->b_resid = bp->b_bcount; \
-	bp->b_error = err; \
-	RF_DKU_END_IO(unit); \
-	biodone(bp); \
-}
-#endif				/* DKUSAGE > 0 */
 
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)

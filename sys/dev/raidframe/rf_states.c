@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.8 1999/12/03 03:35:30 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.9 1999/12/07 02:40:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,14 +42,6 @@
 #include "rf_engine.h"
 #include "rf_map.h"
 #include "rf_etimer.h"
-
-#if defined(KERNEL) && (DKUSAGE > 0)
-#include <sys/dkusage.h>
-#include <io/common/iotypes.h>
-#include <io/cam/dec_cam.h>
-#include <io/cam/cam.h>
-#include <io/cam/pdrv.h>
-#endif				/* KERNEL && DKUSAGE > 0 */
 
 /* prototypes for some of the available states.
 
@@ -202,12 +194,6 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 	RF_CBParam_t callbackArg;
 
 	callbackArg.p = desc->callbackArg;
-
-#if DKUSAGE > 0
-	RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid, (struct buf *) desc->bp);
-#else
-	RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid);
-#endif				/* DKUSAGE > 0 */
 	
 	/*
 	 * If this is not an async request, wake up the caller
