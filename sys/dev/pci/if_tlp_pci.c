@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.48 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.49 2001/01/08 21:45:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -870,8 +870,13 @@ tlp_pci_attach(parent, self, aux)
 		 * PHY, MAC-only has an external PHY (usually HomePNA).
 		 * The selection is based on an EEPROM setting, and both
 		 * PHYs are accessed via MII attached to SIO.
+		 *
+		 * The AN985 "ghosts" the internal PHY onto all
+		 * MII addresses, so we have to use a media init
+		 * routine that limits the search.
+		 * XXX How does this work with MAC-only mode?
 		 */
-		sc->sc_mediasw = &tlp_sio_mii_mediasw;
+		sc->sc_mediasw = &tlp_an985_mediasw;
 		break;
 
 	case TULIP_CHIP_DM9102:
