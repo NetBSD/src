@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.42 2003/10/27 07:07:34 chs Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.43 2003/10/28 23:24:07 mycroft Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.42 2003/10/27 07:07:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.43 2003/10/28 23:24:07 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1138,7 +1138,7 @@ ray_intr_start(sc)
 {
 	struct ieee80211_frame *iframe;
 	struct ether_header *eh;
-	size_t len, pktlen = 0, tmplen;
+	size_t len, pktlen, tmplen;
 	bus_size_t bufp, ebufp;
 	struct mbuf *m0, *m;
 	struct ifnet *ifp;
@@ -1230,7 +1230,7 @@ ray_intr_start(sc)
 			tmplen = sizeof(struct ieee80211_frame);
 		} else if (et > ETHERMTU) {
 			/* adjust for LLC/SNAP header */
-			tmplen= sizeof(struct ieee80211_frame) - ETHER_ADDR_LEN;
+			tmplen = sizeof(struct ieee80211_frame) - ETHER_ADDR_LEN;
 		} else {
 			tmplen = 0;
 		}
@@ -1325,6 +1325,9 @@ ray_intr_start(sc)
 #endif
 		pcount++;
 		m_freem(m0);
+
+		RAY_DPRINTF_XMIT(("%s: sent packet: len %ld\n", sc->sc_xname,
+		    (u_long)pktlen));
 	}
 
 	if (firsti == RAY_CCS_LINK_NULL)
@@ -1347,9 +1350,6 @@ ray_intr_start(sc)
 	RAY_DPRINTF(("%s: ray_start issuing %d \n", sc->sc_xname, firsti));
 	SRAM_WRITE_1(sc, RAY_SCB_CCSI, firsti);
 	RAY_ECF_START_CMD(sc);
-
-	RAY_DPRINTF_XMIT(("%s: sent packet: len %ld\n", sc->sc_xname,
-	    (u_long)pktlen));
 
 	ifp->if_opackets += pcount;
 }
