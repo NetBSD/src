@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.7 2001/09/08 16:48:18 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.8 2002/02/21 20:36:12 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -932,7 +932,7 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 		MALLOC(name, char *, KFILTER_MAXNAME, M_KEVENT, M_WAITOK);
 		error = copyinstr(km->name, name, KFILTER_MAXNAME, NULL);
 		if (error) {
-			free(name, M_KEVENT);
+			FREE(name, M_KEVENT);
 			break;
 		}
 		kfilter = kfilter_byname(name);
@@ -940,16 +940,16 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 			km->filter = kfilter->filter;
 		else
 			error = ENOENT;
-		free(name, M_KEVENT);
+		FREE(name, M_KEVENT);
 		break;
 
-#if 1		/* XXXLUKEM - test register & unregister */
+#if 1		/* XXXLUKEM - debug only; remove from production code */
 	case KFILTER_REGISTER:
 	case KFILTER_UNREGISTER:
 		MALLOC(name, char *, KFILTER_MAXNAME, M_KEVENT, M_WAITOK);
 		error = copyinstr(km->name, name, KFILTER_MAXNAME, NULL);
 		if (error) {
-			free(name, M_KEVENT);
+			FREE(name, M_KEVENT);
 			break;
 		}
 		if (com == KFILTER_REGISTER) {
@@ -961,7 +961,7 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 				error = ENOENT;
 		} else
 			error = kfilter_unregister(name);
-		free(name, M_KEVENT);
+		FREE(name, M_KEVENT);
 		break;
 #endif
 
