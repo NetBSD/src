@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.2 1998/07/29 18:32:54 pk Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.3 1999/01/16 12:46:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,12 @@ struct qec_softc {
 	struct	sbus_range *sc_range;	/* PROM ranges */
 	int	sc_nrange;		/*	       */
 
-	struct	qecregs *sc_regs;	/* QEC registers */
+	bus_space_handle_t sc_regs;	/* QEC registers */
+	int	sc_nchannels;		/* # of channels on board */
 	int	sc_burst;		/* DVMA burst size in effect */
 	caddr_t	sc_buffer;		/* VA of the buffer we provide */
 	int	sc_bufsiz;		/* Size of buffer */
+
+	u_int	sc_msize;		/* QEC buffer offset per channel */
+	u_int	sc_rsize;		/* QEC buffer size for receive */
 };
