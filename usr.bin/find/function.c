@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.48 2004/04/21 01:05:47 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.49 2004/12/28 05:11:07 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.48 2004/04/21 01:05:47 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.49 2004/12/28 05:11:07 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -1520,14 +1520,6 @@ c_type(argvp, isok)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	switch (typestring[0]) {
-#ifdef S_IFWHT
-	case 'W':
-#ifdef FTS_WHITEOUT
-	      ftsoptions |= FTS_WHITEOUT;
-#endif
-              mask = S_IFWHT;
-              break;
-#endif
 	case 'b':
 		mask = S_IFBLK;
 		break;
@@ -1549,12 +1541,15 @@ c_type(argvp, isok)
 	case 's':
 		mask = S_IFSOCK;
 		break;
-#ifdef FTS_WHITEOUT
+#ifdef S_IFWHT
+	case 'W':
 	case 'w':
 		mask = S_IFWHT;
+#ifdef FTS_WHITEOUT
 		ftsoptions |= FTS_WHITEOUT;
+#endif
 		break;
-#endif /* FTS_WHITEOUT */
+#endif /* S_IFWHT */
 	default:
 		errx(1, "-type: %s: unknown type", typestring);
 	}
