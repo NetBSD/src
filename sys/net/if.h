@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.59 2000/12/18 19:25:57 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.60 2000/12/18 20:58:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #if !defined(_XOPEN_SOURCE)
 
 #include <sys/queue.h>
+#include <net/dlt.h>
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
