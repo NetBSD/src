@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.14 1998/01/30 23:38:11 perry Exp $	*/
+/*	$NetBSD: system.c,v 1.15 1998/09/26 23:54:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.14 1998/01/30 23:38:11 perry Exp $");
+__RCSID("$NetBSD: system.c,v 1.15 1998/09/26 23:54:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,20 +58,23 @@ system(command)
 {
 	pid_t pid;
 	sig_t intsave, quitsave;
-	int omask;
+	sigset_t nmask, omask;
 	int pstat;
 	char *argp[] = {"sh", "-c", (char *) command, NULL};
 
 	if (!command)		/* just checking... */
 		return(1);
 
-	omask = sigblock(sigmask(SIGCHLD));
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGCHLD);
+	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
+		return -1;
 	switch(pid = vfork()) {
 	case -1:			/* error */
-		(void)sigsetmask(omask);
+		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		return(-1);
 	case 0:				/* child */
-		(void)sigsetmask(omask);
+		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		execve(_PATH_BSHELL, argp, environ);
 		_exit(127);
 	}
@@ -79,7 +82,7 @@ system(command)
 	intsave = signal(SIGINT, SIG_IGN);
 	quitsave = signal(SIGQUIT, SIG_IGN);
 	pid = waitpid(pid, (int *)&pstat, 0);
-	(void)sigsetmask(omask);
+	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 	(void)signal(SIGINT, intsave);
 	(void)signal(SIGQUIT, quitsave);
 	return(pid == -1 ? -1 : pstat);
