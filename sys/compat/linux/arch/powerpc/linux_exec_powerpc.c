@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.12.2.3 2004/09/21 13:25:27 skrll Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.12.2.4 2004/11/18 21:20:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.12.2.3 2004/09/21 13:25:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.12.2.4 2004/11/18 21:20:22 skrll Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.12.2.3 2004/09/21 13:25:27 
  * Alpha and PowerPC specific linux copyargs function.
  */
 int
-ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -85,8 +85,10 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	struct proc *p;
 	int error;
 
+	p = l->l_proc;
 #ifdef LINUX_SHIFT
 	/* 
 	 * Seems that PowerPC Linux binaries expect argc to start on a 16 bytes
@@ -96,7 +98,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~LINUX_SHIFT);
 #endif
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 #ifdef LINUX_SHIFT

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.35.2.3 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: ofb.c,v 1.35.2.4 2004/11/18 21:20:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.35.2.3 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.35.2.4 2004/11/18 21:20:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,7 +93,7 @@ struct wsscreen_list ofb_screenlist = {
 	sizeof(_ofb_scrlist) / sizeof(struct wsscreen_descr *), _ofb_scrlist
 };
 
-static int ofb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int ofb_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 static paddr_t ofb_mmap __P((void *, off_t, int));
 static int ofb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
@@ -329,12 +329,12 @@ ofb_is_console()
 }
 
 int
-ofb_ioctl(v, cmd, data, flag, p)
+ofb_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ofb_softc *sc = v;
 	struct ofb_devconfig *dc = sc->sc_dc;
@@ -371,7 +371,7 @@ ofb_ioctl(v, cmd, data, flag, p)
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
 		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-		    cmd, data, flag, p));
+		    cmd, data, flag, l));
 	}
 	return EPASSTHROUGH;
 }
