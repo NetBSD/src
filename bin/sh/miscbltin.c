@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.14 1995/05/11 21:29:32 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.15 1995/06/12 19:44:16 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: miscbltin.c,v 1.14 1995/05/11 21:29:32 christos Exp $";
+static char rcsid[] = "$NetBSD: miscbltin.c,v 1.15 1995/06/12 19:44:16 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ ulimitcmd(argc, argv)
 	char **argv;
 {
 	register int	c;
-	quad_t val;
+	rlim_t val;
 	enum { SOFT = 0x1, HARD = 0x2 }
 			how = SOFT | HARD;
 	const struct limits	*l;
@@ -332,12 +332,12 @@ ulimitcmd(argc, argv)
 		if (strcmp(p, "unlimited") == 0)
 			val = RLIM_INFINITY;
 		else {
-			val = (quad_t) 0;
+			val = (rlim_t) 0;
 
 			while ((c = *p++) >= '0' && c <= '9')
 			{
 				val = (val * 10) + (long)(c - '0');
-				if (val < (quad_t) 0)
+				if (val < (rlim_t) 0)
 					break;
 			}
 			if (c)
@@ -359,7 +359,7 @@ ulimitcmd(argc, argv)
 			else
 			{
 				val /= l->factor;
-				out1fmt("%ld\n", (long) val);
+				out1fmt("%qd\n", (quad_t) val);
 			}
 		}
 		return 0;
@@ -378,15 +378,13 @@ ulimitcmd(argc, argv)
 			val = limit.rlim_cur;
 		else if (how & HARD)
 			val = limit.rlim_max;
-	}
 
-	if (!set) {
 		if (val == RLIM_INFINITY)
 			out1fmt("unlimited\n");
 		else
 		{
 			val /= l->factor;
-			out1fmt("%ld\n", (long) val);
+			out1fmt("%qd\n", (quad_t) val);
 		}
 	}
 	return 0;
