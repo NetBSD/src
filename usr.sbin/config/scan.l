@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.35 2002/11/07 21:06:04 jrf Exp $	*/
+/*	$NetBSD: scan.l,v 1.36 2002/11/17 23:36:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 
 #include <sys/param.h>
 #include <errno.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,6 +120,7 @@ no		return NO;
 object		return XOBJECT;
 on		return ON;
 options		return OPTIONS;
+package		return PACKAGE;
 prefix		return PREFIX;
 pseudo-device	return PSEUDO_DEVICE;
 root		return ROOT;
@@ -207,6 +209,35 @@ firstfile(const char *fname)
 	yyfile = conffile = fname;
 	yyline = 1;
 	return (0);
+}
+
+/*
+ * Add a "package" to the configuration.  This is essentially
+ * syntactic sugar around the sequence:
+ *
+ *	prefix ../some/directory
+ *	include "files.package"
+ *	prefix
+ */
+void
+package(const char *fname)
+{
+	char *fname1 = estrdup(fname);
+	char *fname2 = estrdup(fname);
+	char *dir = dirname(fname1);
+	char *file = basename(fname2);
+
+	/*
+	 * Push the prefix on to the prefix stack and process the include
+	 * file.  When we reach the end of the include file, inserting
+	 * the PREFIX token into the input stream will pop the prefix off
+	 * of the prefix stack.
+	 */
+	prefix_push(dir);
+	(void) include(file, PREFIX, 0, 1);
+
+	free(fname1);
+	free(fname2);
 }
 
 /*
