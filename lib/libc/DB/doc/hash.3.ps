@@ -1,0 +1,342 @@
+%!PS-Adobe-3.0
+%%Creator: groff version 1.03
+%%DocumentNeededResources: font Times-Roman
+%%+ font Times-Bold
+%%+ font Times-Italic
+%%DocumentSuppliedResources: procset grops 1.03 0
+%%Pages: 2
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset grops 1.03 0
+
+/setpacking where {
+	pop
+	currentpacking
+	true setpacking
+} if
+
+/grops 120 dict dup begin 
+
+% The ASCII code of the space character.
+/SC 32 def
+
+/A /show load def
+/B { 0 SC 3 -1 roll widthshow } bind def
+/C { 0 exch ashow } bind def
+/D { 0 exch 0 SC 5 2 roll awidthshow } bind def
+/E { 0 rmoveto show } bind def
+/F { 0 rmoveto 0 SC 3 -1 roll widthshow } bind def
+/G { 0 rmoveto 0 exch ashow } bind def
+/H { 0 rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/I { 0 exch rmoveto show } bind def
+/J { 0 exch rmoveto 0 SC 3 -1 roll widthshow } bind def
+/K { 0 exch rmoveto 0 exch ashow } bind def
+/L { 0 exch rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/M { rmoveto show } bind def
+/N { rmoveto 0 SC 3 -1 roll widthshow } bind def
+/O { rmoveto 0 exch ashow } bind def
+/P { rmoveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+/Q { moveto show } bind def 
+/R { moveto 0 SC 3 -1 roll widthshow } bind def
+/S { moveto 0 exch ashow } bind def
+/T { moveto 0 exch 0 SC 5 2 roll awidthshow } bind def
+
+% name size font SF -
+
+/SF {
+	findfont exch
+	[ exch dup 0 exch 0 exch neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+% name a c d font MF -
+
+/MF {
+	findfont
+	[ 5 2 roll
+	0 3 1 roll % b
+	neg 0 0 ] makefont
+	dup setfont
+	[ exch /setfont cvx ] cvx bind def
+} bind def
+
+/level0 0 def
+/RES 0 def
+/PL 0 def
+/LS 0 def
+
+% BP -
+
+/BP {
+	/level0 save def
+	1 setlinecap
+	1 setlinejoin
+	72 RES div dup scale
+	LS {
+		90 rotate
+	} {
+		0 PL translate
+	} ifelse
+	1 -1 scale
+} bind def
+
+/EP {
+	level0 restore
+	showpage
+} bind def
+
+
+% centerx centery radius startangle endangle DA -
+
+/DA {
+	newpath arcn stroke
+} bind def
+
+% x y SN - x' y'
+% round a position to nearest (pixel + (.25,.25))
+
+/SN {
+	transform 
+	.25 sub exch .25 sub exch
+	round .25 add exch round .25 add exch
+	itransform
+} bind def
+	
+% endx endy startx starty DL -
+% we round the endpoints of the line, so that parallel horizontal
+% and vertical lines will appear even
+
+/DL {
+	SN
+	moveto
+	SN
+	lineto stroke
+} bind def
+
+% centerx centery radius DC -
+
+/DC {
+	newpath 0 360 arc closepath
+} bind def
+
+
+/TM matrix def
+
+%  width height centerx centery DE -
+
+/DE {
+	TM currentmatrix pop
+	translate scale newpath 0 0 .5 0 360 arc closepath
+	TM setmatrix
+} bind def
+
+% these are for splines
+
+/RC /rcurveto load def
+/RL /rlineto load def
+/ST /stroke load def
+/MT /moveto load def
+/CL /closepath load def
+
+% fill the last path
+
+% amount FL -
+
+/FL {
+	currentgray exch setgray fill setgray
+} bind def
+
+% fill with the ``current color''
+
+/BL /fill load def
+
+/LW /setlinewidth load def
+% new_font_name encoding_vector old_font_name RE -
+
+/RE {
+	findfont
+	dup maxlength dict begin
+	{
+		1 index /FID ne { def } { pop pop } ifelse
+	} forall
+	/Encoding exch def
+	dup /FontName exch def
+	currentdict end definefont pop
+} bind def
+
+/DEFS 0 def
+
+% hpos vpos EBEGIN -
+
+/EBEGIN {
+	moveto
+	DEFS begin
+} bind def
+
+/EEND /end load def
+
+/CNT 0 def
+/level1 0 def
+
+% llx lly newwid wid newht ht newllx newlly PBEGIN -
+
+/PBEGIN {
+	/level1 save def
+	translate
+	div 3 1 roll div exch scale
+	neg exch neg exch translate
+	% set the graphics state to default values
+	0 setgray
+	0 setlinecap
+	1 setlinewidth
+	0 setlinejoin
+	10 setmiterlimit
+	[] 0 setdash
+	/setstrokeadjust where {
+		pop
+		false setstrokeadjust
+	} if
+	/setoverprint where {
+		pop
+		false setoverprint
+	} if
+	newpath
+	/CNT countdictstack def
+	userdict begin
+	/showpage {} def
+} bind def
+
+/PEND {
+	clear
+	countdictstack CNT sub { end } repeat
+	level1 restore
+} bind def
+
+end def
+
+/setpacking where {
+	pop
+	setpacking
+} if
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-Italic
+grops begin/DEFS 1 dict def DEFS begin/u{.001 mul}bind def end/RES 72 def/PL
+792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron/scaron/zcaron
+/Ydieresis/trademark/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/space/exclam
+/quotedbl/numbersign/dollar/percent/ampersand/quoteright/parenleft/parenright
+/asterisk/plus/comma/hyphen/period/slash/zero/one/two/three/four/five/six/seven
+/eight/nine/colon/semicolon/less/equal/greater/question/at/A/B/C/D/E/F/G/H/I/J
+/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z/bracketleft/backslash/bracketright/circumflex
+/underscore/quoteleft/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z
+/braceleft/bar/braceright/tilde/.notdef/quotesinglbase/guillemotleft
+/guillemotright/bullet/florin/fraction/perthousand/dagger/daggerdbl/endash
+/emdash/ff/fi/fl/ffi/ffl/dotlessi/dotlessj/grave/hungarumlaut/dotaccent/breve
+/caron/ring/ogonek/quotedblleft/quotedblright/oe/lslash/quotedblbase/OE/Lslash
+/.notdef/exclamdown/cent/sterling/currency/yen/brokenbar/section/dieresis
+/copyright/ordfeminine/guilsinglleft/logicalnot/minus/registered/macron/degree
+/plusminus/twosuperior/threesuperior/acute/mu/paragraph/periodcentered/cedilla
+/onesuperior/ordmasculine/guilsinglright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE/Ccedilla
+/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex/Idieresis/Eth
+/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis/multiply/Oslash/Ugrave
+/Uacute/Ucircumflex/Udieresis/Yacute/Thorn/germandbls/agrave/aacute/acircumflex
+/atilde/adieresis/aring/ae/ccedilla/egrave/eacute/ecircumflex/edieresis/igrave
+/iacute/icircumflex/idieresis/eth/ntilde/ograve/oacute/ocircumflex/otilde
+/odieresis/divide/oslash/ugrave/uacute/ucircumflex/udieresis/yacute/thorn
+/ydieresis]def/Times-Italic@0 ENC0/Times-Italic RE/Times-Bold@0 ENC0/Times-Bold
+RE/Times-Roman@0 ENC0/Times-Roman RE
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 182.62(HASH\(3\) 1991 HASH\(3\))72 48 R/F1 9
+/Times-Bold@0 SF(NAME)72 84 Q F0(hash \255 hash database access method)108 96 Q
+F1(SYNOPSIS)72 112.8 Q/F2 10/Times-Bold@0 SF(#include <sys/types.h>)108 124.8 Q
+(#include <db.h>)108 136.8 Q F1(DESCRIPTION)72 153.6 Q F0 .285(The routine)108
+165.6 R/F3 10/Times-Italic@0 SF(dbopen)2.785 E F0 .285
+(is the library interface to database \214les.)2.785 F .284
+(One of the supported \214le formats is hash \214les.)5.284 F .976
+(The general description of the database access methods is in)108 177.6 R F3
+(dbopen)3.477 E F0 .977(\(3\), this manual page describes only).21 F
+(the hash speci\214c information.)108 189.6 Q
+(The hash data structure is an extensible, dynamic hashing scheme.)108 206.4 Q
+.798(The access method speci\214c data structure provided to)108 223.2 R F3
+(dbopen)3.298 E F0 .797(is de\214ned in the <db.h> include \214le as fol-)3.298
+F(lows:)108 235.2 Q(typedef struct {)108 259.2 Q(int bsize;)144 271.2 Q
+(u_int cachesize;)144 283.2 Q(int f)144 295.2 Q(factor;)-.18 E
+(u_long \(*hash\)\(const void *, const size_t\);)144 307.2 Q(int lorder;)144
+319.2 Q(int nelem;)144 331.2 Q 2.5(}H)108 343.2 S(ASHINFO;)122.52 343.2 Q
+(The elements of this structure are as follows:)108 360 Q(bsize)108 376.8 Q F3
+(Bsize)144 376.8 Q F0 1.37
+(de\214nes the hash table bucket size, and is, by default, 256 bytes.)3.87 F
+1.37(It may be preferable to)6.37 F
+(increase the page size for disk-resident tables and tables with lar)144 388.8
+Q(ge data items.)-.18 E(cachesize)108 405.6 Q 3.144(As)144 417.6 S .644
+(uggested maximum size, in bytes, of the memory cache.)158.254 417.6 R .644
+(This value is)5.644 F F2(only)3.143 E F0(advisory)3.143 E 3.143(,a)-.65 G .643
+(nd the)514.637 417.6 R
+(access method will allocate more memory rather than fail.)144 429.6 Q -.18(ff)
+108 446.4 S(actor).18 E F3(Ffactor)9.53 E F0 .482
+(indicates a desired density within the hash table.)2.981 F .482
+(It is an approximation of the number of)5.482 F .349(keys allowed to accumula\
+te in any one bucket, determining when the hash table grows or shrinks.)144
+458.4 R(The default value is 8.)144 470.4 Q(hash)108 487.2 Q F3(Hash)144 487.2
+Q F0 .1(is a user de\214ned hash function.)2.6 F .1
+(Since no hash function performs equally well on all possible)5.1 F .912(data,\
+ the user may \214nd that the built-in hash function does poorly on a particul\
+ar data set.)144 499.2 R(User)5.911 E 1.396
+(speci\214ed hash functions must take two ar)144 511.2 R 1.396
+(guments \(a pointer to a byte string and a length\) and)-.18 F
+(return an u_long to be used as the hash value.)144 523.2 Q 9.62(lorder The)108
+540 R 1.586(byte order for integers in the stored database metadata.)4.086 F
+1.585(The number should represent the)6.586 F .667
+(order as an integer; for example, big endian order would be the number 4,321.)
+144 552 R(If)5.667 E F3(lor)3.167 E(der)-.37 E F0 .667(is 0 \(no)3.167 F .799
+(order is speci\214ed\) the current host order is used.)144 564 R .798(If the)
+5.798 F .798(\214le already exists, the speci\214ed value is)5.798 F
+(ignored and the value speci\214ed when the tree was created is used.)144 576 Q
+(nelem)108 592.8 Q F3(Nelem)144 592.8 Q F0 .689
+(is an estimate of the \214nal size of the hash table.)3.189 F .689
+(If not set or set too low)5.689 F 3.189(,h)-.65 G .689(ash tables will)481.401
+592.8 R .405(expand gracefully as keys are entered, although a slight performa\
+nce degradation may be noticed.)144 604.8 R(The default value is 1.)144 616.8 Q
+.743(If the \214le already exists \(and the O_TRUNC \215ag is not speci\214ed\
+\), the values speci\214ed for the parameters)108 633.6 R(bsize, f)108 645.6 Q
+(factor)-.18 E 2.5(,l)-.4 G(order and nelem are ignored and the values speci\
+\214ed when the tree was created are used.)167.4 645.6 Q 1.232
+(If a hash function is speci\214ed,)108 662.4 R F3(hash_open)3.731 E F0 1.231
+(will attempt to determine if the hash function speci\214ed is the)3.731 F(sam\
+e as the one with which the database was created, and will fail if it is not.)
+108 674.4 Q .794(Backward compatible interfaces to the routines described in)
+108 691.2 R F3(dbm)3.294 E F0 .794(\(3\), and).26 F F3(ndbm)3.294 E F0 .794
+(\(3\) are provided, however).26 F(,)-.4 E
+(these interfaces are not compatible with previous \214le formats.)108 703.2 Q
+202.615(4, September)72 768 R(1)535 768 Q EP
+%%Page: 2 2
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Roman@0 SF 182.62(HASH\(3\) 1991 HASH\(3\))72 48 R/F1 9
+/Times-Bold@0 SF(SEE ALSO)72 84 Q/F2 10/Times-Italic@0 SF(btr)108 96 Q(ee)-.37
+E F0(\(3\),).18 E F2(dbopen)2.5 E F0(\(3\),).21 E F2(mpool)2.5 E F0(\(3\),).48
+E F2 -.37(re)2.5 G(cno).37 E F0(\(3\)).17 E F2(Dynamic Hash T)108 108 Q(ables)
+-.92 E F0 2.5(,P).28 G(er)206.8 108 Q
+(-Ake Larson, Communications of the ACM, April 1988.)-.2 E F2 2.5(AN)108 120 S
+(ew Hash Package for UNIX)123.28 120 Q F0 2.5(,M).72 G(ar)249.54 120 Q
+(go Seltzer)-.18 E 2.5(,U)-.4 G(SENIX Proceedings, W)309.22 120 Q(inter 1991.)
+-.4 E F1(BUGS)72 136.8 Q F0
+(Only big and little endian byte order is supported.)108 148.8 Q 202.615
+(4, September)72 768 R(2)535 768 Q EP
+%%Trailer
+end
+%%EOF
