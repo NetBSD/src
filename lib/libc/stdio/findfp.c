@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.12 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: findfp.c,v 1.13 2000/01/21 19:55:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.12 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.13 2000/01/21 19:55:02 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -171,7 +171,7 @@ void
 _cleanup()
 {
 	/* (void) _fwalk(fclose); */
-	(void) _fwalk(__sflush);		/* `cheating' */
+	(void) fflush(NULL);			/* `cheating' */
 }
 
 /*
