@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2.2.2 2002/06/20 03:47:19 nathanw Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2.2.3 2002/06/21 07:11:32 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.2 2002/06/20 03:47:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.3 2002/06/21 07:11:32 gmcgarry Exp $");
 
 #include "opt_systrace.h"
 
@@ -876,7 +876,7 @@ systrace_processready(struct str_process *strp)
 	if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
 		return (EINVAL);
 
-	if (strp->proc->p_stat != SSLEEP)
+	if (strp->proc->p_stat != LSSLEEP)
 		return (EBUSY);
 
 	return (0);
@@ -899,7 +899,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 		return (error);
 
 #ifdef __NetBSD__
-	mycwdp = curproc->p_cwdi;
+	mycwdp = curproc->l_proc->p_cwdi;
 	cwdp = strp->proc->p_cwdi;
 	if (mycwdp == NULL || cwdp == NULL)
 		return (EINVAL);
@@ -936,7 +936,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 int
 systrace_io(struct str_process *strp, struct systrace_io *io)
 {
-	struct proc *p = curproc, *t = strp->proc;
+	struct proc *p = curproc->l_proc, *t = strp->proc;
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
@@ -979,7 +979,7 @@ int
 systrace_attach(struct fsystrace *fst, pid_t pid)
 {
 	int error = 0;
-	struct proc *proc, *p = curproc;
+	struct proc *proc, *p = curproc->l_proc;
 
 	if ((proc = pfind(pid)) == NULL) {
 		error = ESRCH;
@@ -1265,7 +1265,7 @@ systrace_make_msg(struct str_process *strp, int type)
 		if (st != 0)
 			return (EINTR);
 		/* If we detach, then everything is permitted */
-		if ((strp = curproc->p_systrace) == NULL)
+		if ((strp = curproc->l_proc->p_systrace) == NULL)
 			return (0);
 		if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
 			break;
