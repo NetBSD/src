@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 1997/11/17 09:47:17 cjs Exp $
+#	$NetBSD: Makefile,v 1.2 1997/12/22 00:39:29 cjs Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		md_install-${REV}.fs
 CBIN=		md_install
+
+AUXTARGETS=	install.sh upgrade.sh start.sh
+AUXCLEAN=	${AUXTARGETS}
 
 MOUNT_POINT?=	/mnt
 # DEV/RDEV file system device, CDEV/RDEV vnconfig device
@@ -22,7 +25,16 @@ MTREE=		mtree.conf
 
 DISKTYPE=	floppy
 
-all: ${CBIN} 
+install.sh: install.tmpl
+	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+
+upgrade.sh: upgrade.tmpl
+	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+
+start.sh: start.tmpl
+	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+
+all: ${AUXTARGETS} ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=4096
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	#vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
@@ -53,7 +65,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 # libhack is listed in rd_bin.conf but is built here.
 HACKSRC=${TOP}/../../utils/libhack
