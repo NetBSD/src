@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.11 1998/07/06 07:01:01 mrg Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.12 1998/07/26 11:39:26 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.11 1998/07/06 07:01:01 mrg Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.12 1998/07/26 11:39:26 mycroft Exp $");
 #endif
 #endif
 
@@ -83,7 +83,7 @@ static void marshal_new_auth __P((AUTH *));
 /*
  * Unix authenticator operations vector
  */
-static struct auth_ops auth_unix_ops = {
+static const struct auth_ops auth_unix_ops = {
 	authunix_nextverf,
 	authunix_marshal,
 	authunix_validate,

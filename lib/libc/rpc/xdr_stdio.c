@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.9 1998/02/13 05:52:45 lukem Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.10 1998/07/26 11:38:24 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.9 1998/02/13 05:52:45 lukem Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.10 1998/07/26 11:38:24 mycroft Exp $");
 #endif
 #endif
 
@@ -72,7 +72,7 @@ static int32_t *xdrstdio_inline __P((XDR *, u_int));
 /*
  * Ops vector for stdio type XDR
  */
-static struct xdr_ops	xdrstdio_ops = {
+static const struct xdr_ops	xdrstdio_ops = {
 	xdrstdio_getlong,	/* deseraialize a long int */
 	xdrstdio_putlong,	/* seraialize a long int */
 	xdrstdio_getbytes,	/* deserialize counted bytes */
