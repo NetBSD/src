@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.10 2001/01/04 01:53:24 jwise Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.11 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.10 2001/01/04 01:53:24 jwise Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.11 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include "driver.h"
 #include <stdlib.h>
+#include "extern.h"
+#include "driver.h"
 
 void	moveall(void);
 static int	stillmoving(int);

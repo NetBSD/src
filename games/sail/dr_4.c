@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_4.c,v 1.10 2001/01/04 01:53:24 jwise Exp $	*/
+/*	$NetBSD: dr_4.c,v 1.11 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)dr_4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_4.c,v 1.10 2001/01/04 01:53:24 jwise Exp $");
+__RCSID("$NetBSD: dr_4.c,v 1.11 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include "extern.h"
 #include <stdlib.h>
+#include "extern.h"
 
 void	ungrap(struct ship *, struct ship *);
 void	grap(struct ship *, struct ship *);
