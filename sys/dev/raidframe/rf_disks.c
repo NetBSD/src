@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.52 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.53 2004/05/22 20:56:52 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.52 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.53 2004/05/22 20:56:52 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -591,6 +591,13 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 
 	raidPtr->raid_cinfo[col].ci_vp = NULL;
 	raidPtr->raid_cinfo[col].ci_dev = 0;
+
+	if (!strcmp("absent", diskPtr->devname)) {
+		printf("Ignoring missing component at column %d\n", col);
+		sprintf(diskPtr->devname, "component%d", col);
+		diskPtr->status = rf_ds_failed;
+		return (0);
+	}
 
 	error = raidlookup(diskPtr->devname, proc, &vp);
 	if (error) {
