@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.64 1998/09/04 19:54:39 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.65 1998/09/08 20:02:52 rvb Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -254,6 +254,8 @@ svr4_sys_getdents64(p, v, retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR)
+		return (EINVAL);
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
@@ -364,6 +366,8 @@ svr4_sys_getdents(p, v, retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR)
+		return (EINVAL);
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.93 1998/08/29 17:01:16 mrg Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.94 1998/09/08 20:02:52 rvb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -452,6 +452,8 @@ sunos_sys_getdents(p, v, retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR)
+		return (EINVAL);
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
