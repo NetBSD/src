@@ -1,4 +1,4 @@
-/*	$NetBSD: ofpci.c,v 1.2 2002/05/06 22:20:07 eeh Exp $	*/
+/*	$NetBSD: ofpci.c,v 1.3 2002/05/13 13:59:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofpci.c,v 1.2 2002/05/06 22:20:07 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofpci.c,v 1.3 2002/05/13 13:59:21 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -139,7 +139,7 @@ ofpci_attach_device(struct device *self, int node,
 
 	if (OF_getprop(node, "class-code", &class, sizeof(class))
 		!= sizeof(class))
-		panic("ofpciattach: %s no device class", getname(node));
+		return;
 
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
