@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $	*/
+/*	$NetBSD: regexec.c,v 1.7 1996/12/19 06:35:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: regexec.c,v 1.7 1996/12/19 06:35:52 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,7 +82,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 #define	SETUP(v)	((v) = 0)
 #define	onestate	long
 #define	INIT(o, n)	((o) = (unsigned long)1 << (n))
-#define	INC(o)	((unsigned long)(o) <<= 1)
+#define	INC(o)	((o) <<= 1)
 #define	ISSTATEIN(v, o)	(((v) & (o)) != 0)
 /* some abbreviations; note that some of these know variable names! */
 /* do "if I'm here, I can also be there" etc without branches */
