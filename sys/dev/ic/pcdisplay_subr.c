@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.17 2001/07/05 16:45:23 thorpej Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.18 2001/07/07 15:53:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -187,7 +187,7 @@ pcdisplay_copycols(id, row, srccol, dstcol, ncols)
 					memh, scr->dispoffset + dstoff * 2,
 					ncols);
 	else
-		bcopy(&scr->mem[srcoff], &scr->mem[dstoff], ncols * 2);
+		memcpy(&scr->mem[dstoff], &scr->mem[srcoff], ncols * 2);
 }
 
 void
@@ -235,7 +235,7 @@ pcdisplay_copyrows(id, srcrow, dstrow, nrows)
 					memh, scr->dispoffset + dstoff * 2,
 					nrows * ncols);
 	else
-		bcopy(&scr->mem[srcoff], &scr->mem[dstoff],
+		memcpy(&scr->mem[dstoff], &scr->mem[srcoff],
 		      nrows * ncols * 2);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.17 2001/06/14 05:44:26 itojun Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.18 2001/07/07 15:53:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -1121,7 +1121,7 @@ X
 			    ("TX: about to mbuf len %d\n", m->m_len));
 
 			if (sc->sc_usedma)
-				bcopy(mtod(m, u_int8_t *), buf, m->m_len);
+				memcpy(buf, mtod(m, u_int8_t *), m->m_len);
 			else
 				bus_space_write_region_1(sc->scu_memt,
 				    sc->scu_memh, sca_page_addr(sc, buf_p),
@@ -2035,7 +2035,7 @@ sca_mbuf_alloc(struct sca_softc *sc, caddr_t p, u_int len)
 	if (p != NULL) {
 		/* XXX do we need to sync here? */
 		if (sc->sc_usedma)
-			bcopy(p, mtod(m, caddr_t), len);
+			memcpy(mtod(m, caddr_t), p, len);
 		else
 			bus_space_read_region_1(sc->scu_memt, sc->scu_memh,
 			    sca_page_addr(sc, p), mtod(m, u_int8_t *), len);

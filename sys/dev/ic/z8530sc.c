@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.14 2001/07/07 05:36:18 thorpej Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.15 2001/07/07 15:53:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -145,7 +145,7 @@ zs_loadchannelregs(cs)
 	    return;	/* only change if values are different */
 
 	/* Copy "pending" regs to "current" */
-	bcopy((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16);
+	memcpy((caddr_t)cs->cs_creg, (caddr_t)cs->cs_preg, 16);
 	reg = cs->cs_creg;	/* current regs */
 
 	/* disable interrupts */
