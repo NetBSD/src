@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.8 2000/01/14 13:45:28 simonb Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.9 2000/02/03 05:22:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.8 2000/01/14 13:45:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.9 2000/02/03 05:22:47 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,10 @@ const struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
 };
 
-tc_addr_t	ioasic_base = 0;
+tc_addr_t ioasic_base;	/* XXX XXX XXX */
+
+/* There can be only one. */
+int ioasicfound;
 
 static int
 ioasicmatch(parent, cfdata, aux)
@@ -117,7 +120,7 @@ ioasicmatch(parent, cfdata, aux)
 	if (strncmp("IOCTL   ", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
 
-	if (cfdata->cf_unit > 0)
+	if (ioasicfound)
 		return (0);
 
 	return (1);
@@ -133,6 +136,8 @@ ioasicattach(parent, self, aux)
 	struct ioasic_dev *ioasic_devs;
 	int ioasic_ndevs, builtin_ndevs;
 	int i, imsk;
+
+	ioasicfound = 1;
 
 	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
