@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.89 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.90 2004/01/13 23:01:08 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.89 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.90 2004/01/13 23:01:08 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1267,8 +1267,11 @@ ipsec_deepcopy_policy(src)
 	struct ipsecrequest *r;
 	struct secpolicy *dst;
 
+	if (src == NULL)
+		return NULL;
+
 	dst = key_newsp(0);
-	if (src == NULL || dst == NULL)
+	if (dst == NULL)
 		return NULL;
 
 	/*
