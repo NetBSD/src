@@ -1,4 +1,4 @@
-/*	$NetBSD: opl3sa3reg.h,v 1.1 1999/10/05 03:38:17 itohy Exp $	*/
+/*	$NetBSD: opl3sa3reg.h,v 1.2 2002/03/10 13:57:10 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,11 +37,14 @@
  */
 
 /*
+ * YAMAHA YMF711  (OPL3 Single-chip Audio System 2; OPL3-SA2)
  * YAMAHA YMF715x (OPL3 Single-chip Audio System 3; OPL3-SA3)
  * control register description
  *
  * Other ports (SBpro, WSS CODEC, MPU401, OPL3, etc.) are NOT listed here.
  */
+
+/* [2]: OPL3-SA2 only, [3]: OPL3-SA3 only */
 
 /*
  * direct registers
@@ -58,7 +61,10 @@
  */
 
 #define SA3_PWR_MNG		0x01	/* Power management (R/W) */
-#define   SA3_PWR_MNG_ADOWN	0x20	/* Analog Down */
+#define   SA2_PWR_MNG_SRST	0x80	/* [2] Software reset */
+#define   SA3_PWR_MNG_ADOWN	0x20	/* [3] Analog Down */
+#define   SA2_PWR_MNG_CLKO	0x10	/* [2] Master Clock disable */
+#define   SA2_PWR_MNG_FMPS	0x08	/* [2] OPL3 power down */
 #define   SA3_PWR_MNG_PSV	0x04	/* Power save */
 #define   SA3_PWR_MNG_PDN	0x02	/* Power down */
 #define   SA3_PWR_MNG_PDX	0x01	/* Oscillation stop */
@@ -66,7 +72,7 @@
 
 #define SA3_SYS_CTL		0x02	/* System control (R/W) */
 #define   SA3_SYS_CTL_SBHE	0x80	/* 0: AT-bus, 1: XT-bus */
-#define   SA3_SYS_CTL_YMODE	0x30	/* 3D Enhancement mode */
+#define   SA3_SYS_CTL_YMODE	0x30	/* [3] 3D Enhancement mode */
 #define     SA3_SYS_CTL_YMODE0	0x00	/* Desktop mode  (speaker 5-12cm) */
 #define     SA3_SYS_CTL_YMODE1	0x10	/* Notebook PC mode (1)  (3cm) */
 #define     SA3_SYS_CTL_YMODE2	0x20	/* Notebook PC mode (2)  (1.5cm) */
@@ -93,7 +99,7 @@
 
 #define SA3_IRQA_STAT		0x04	/* Interrupt (IRQ-A) STATUS (RO) */
 #define SA3_IRQB_STAT		0x05	/* Interrupt (IRQ-B) STATUS (RO) */
-#define   SA3_IRQ_STAT_MV	0x40	/* Hardware Volume Interrupt */
+#define   SA3_IRQ_STAT_MV	0x40	/* [3] Hardware Volume Interrupt */
 #define   SA3_IRQ_STAT_OPL3	0x20	/* Internal FM-synthesizer timer */
 #define   SA3_IRQ_STAT_MPU	0x10	/* MPU401 Interrupt */
 #define   SA3_IRQ_STAT_SB	0x08	/* Sound Blaster Playback Interrupt */
@@ -175,9 +181,13 @@
 #define   SA3_MISC_MCSW		0x10	/* A/D is connected to  0: Rch of Mic,
 					   1: loopback of monaural output */
 #define   SA3_MISC_MODE		0x08	/* 0: SB mode, 1: WSS mode (RO) */
-#define   SA3_MISC_VER		0x07	/* Version of OPL3-SA3 (RO) */
-					/*	(4 or 5?) */
-/*#define SA3_MISC_DEFAULT	(SA3_MISC_VEN | (4 or 5?)) */
+#define   SA3_MISC_VER		0x07	/* Version of OPL3-SA2/OPL3-SA3 (RO) */
+#define     SA3_MISC_VER_711	1	/* OPL3-SA2 (YMF711) */
+#define     SA3_MISC_VER_715	2	/* OPL3-SA3 (YMF715) */
+#define     SA3_MISC_VER_715B	3	/* OPL3-SA3 (YMF715B) */
+#define     SA3_MISC_VER_715E	4	/* OPL3-SA3 (YMF715E) */
+			/*	(4 or 5?) */
+/*#define SA3_MISC_DEFAULT	(SA3_MISC_VEN | version) */
 
 /* WSS DMA Base counters (R/W) used for suspend/resume */
 #define SA3_DMA_CNT_PLAY_LOW	0x0b	/* Playback Base Counter (Low) */
@@ -185,12 +195,14 @@
 #define SA3_DMA_CNT_REC_LOW	0x0d	/* Recording Base Counter (Low) */
 #define SA3_DMA_CNT_REC_HIGH	0x0e	/* Recording Base Counter (High) */
 
-#define SA3_WSS_INT_SCAN	0x0f	/* WSS Interrupt Scan out/in (R/W) */
+/* [3] */
+#define SA3_WSS_INT_SCAN	0x0f	/* WSS Interrupt Scan out/in (R/W)*/
 #define   SA3_WSS_INT_SCAN_STI	0x04	/* 1: TI = "1" and IRQ active */
 #define   SA3_WSS_INT_SCAN_SCI	0x02	/* 1: CI = "1" and IRQ active */
 #define   SA3_WSS_INT_SCAN_SPI	0x01	/* 1: PI = "1" and IRQ active */
 #define SA3_WSS_INT_DEFAULT	0x00	/* default value */
 
+/* [3] */
 #define SA3_SB_SCAN		0x10	/* SB Internal State Scan out/in (R/W)*/
 #define   SA3_SB_SCAN_SBPDA	0x80	/* Sound Blaster Power Down ack */
 #define   SA3_SB_SCAN_SS	0x08	/* Scan Select */
@@ -199,8 +211,10 @@
 #define   SA3_SB_SCAN_SBPDR	0x01	/* Sound Blaster Power Down Request */
 #define SA3_SB_SCAN_DEFAULT	0x00	/* default value */
 
+/* [3] */
 #define SA3_SB_SCAN_DATA	0x11	/* SB Internal State Scan Data (R/W)*/
 
+/* [3] */
 #define SA3_DPWRDWN		0x12	/* Digital Partial Power Down (R/W) */
 #define   SA3_DPWRDWN_JOY	0x80	/* Joystick power down */
 #define   SA3_DPWRDWN_MPU	0x40	/* MPU401 power down */
@@ -212,6 +226,7 @@
 #define   SA3_DPWRDWN_PNP	0x01	/* PnP power down */
 #define SA3_DPWRDWN_DEFAULT	0x00	/* default value */
 
+/* [3] */
 #define SA3_APWRDWN		0x13	/* Analog Partial Power Down (R/W) */
 #define   SA3_APWRDWN_FMDAC	0x10	/* FMDAC for OPL3 power down */ 
 #define   SA3_APWRDWN_AD	0x08	/* A/D for WSS recording power down */
@@ -220,16 +235,19 @@
 #define   SA3_APWRDWN_WIDE	0x01	/* Wide Stereo power down */
 #define SA3_APWRDWN_DEFAULT	0x00	/* default value */
 
+/* [3] */
 #define SA3_3D_WIDE		0x14	/* 3D Enhanced control (WIDE) (R/W) */
 #define   SA3_3D_WIDE_WIDER	0x70	/* Rch of wide 3D enhanced control */
 #define   SA3_3D_WIDE_WIDEL	0x07	/* Lch of wide 3D enhanced control */
 #define SA3_3D_WIDE_DEFAULT	0x00	/* default value */
 
+/* [3] */
 #define SA3_3D_BASS		0x15	/* 3D Enhanced control (BASS) (R/W) */
 #define   SA3_3D_BASS_BASSR	0x70	/* Rch of bass 3D enhanced control */
 #define   SA3_3D_BASS_BASSL	0x07	/* Lch of bass 3D enhanced control */
 #define SA3_3D_BASS_DEFAULT	0x00	/* default value */
 
+/* [3] */
 #define SA3_3D_TREBLE		0x16	/* 3D Enhanced control (TREBLE) (R/W) */
 #define   SA3_3D_TREBLE_TRER	0x70	/* Rch of treble 3D enhanced control */
 #define   SA3_3D_TREBLE_TREL	0x07	/* Lch of treble 3D enhanced control */
@@ -240,10 +258,12 @@
 #define   SA3_3D_LSHIFT		0
 #define   SA3_3D_RSHIFT		4
 
+/* [3] */
 #define SA3_HVOL_INTR_CNF	0x17	/* Hardware Volume Intr Channel (R/W) */
 #define   SA3_HVOL_INTR_CNF_B	0x20	/* Hardware Volume uses IRQ-B */
 #define   SA3_HVOL_INTR_CNF_A	0x10	/* Hardware Volume uses IRQ-A */
 #define SA3_HVOL_INTR_CNF_DEFAULT	0x00
 
+/* [3] */
 #define SA3_MULTI_STAT		0x18	/* Multi-purpose Select Pin Stat (RO) */
 #define   SA3_MULTI_STAT_SEL	0x70	/* State of SEL2-0 pins */
