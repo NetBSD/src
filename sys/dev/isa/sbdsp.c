@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.34 1997/03/20 06:48:58 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.35 1997/03/20 11:03:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -123,7 +123,7 @@ u_int sbdsp_jazz16_probe __P((struct sbdsp_softc *));
 int	sbdsp16_wait __P((struct sbdsp_softc *));
 void	sbdsp_to __P((void *));
 void	sbdsp_pause __P((struct sbdsp_softc *));
-int	sbdsp_setrate __P((struct sbdsp_softc *, int, int, int *));
+int	sbdsp16_setrate __P((struct sbdsp_softc *, int, int, int *));
 int	sbdsp_tctosr __P((struct sbdsp_softc *, int));
 int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
 
@@ -138,8 +138,8 @@ sb_printsc(sc)
 {
 	int i;
     
-	printf("open %d dmachan %d iobase %x\n",
-	    sc->sc_open, sc->sc_drq, sc->sc_iobase);
+	printf("open %d dmachan %d/%d/%d iobase %x\n",
+	    sc->sc_open, sc->sc_drq, sc->sc_drq8, sc->sc_drq16, sc->sc_iobase);
 	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
 	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
 	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->sc_encoding);
@@ -202,7 +202,7 @@ sbdsp_jazz16_probe(sc)
 	if (bus_space_map(iot, JAZZ16_CONFIG_PORT, 1, 0, &ioh))
 		return rval;
 
-	if (jazz16_drq_conf[sc->sc_drq] == (u_char)-1 ||
+	if (jazz16_drq_conf[sc->sc_drq8] == (u_char)-1 ||
 	    jazz16_irq_conf[sc->sc_irq] == (u_char)-1)
 		goto done;		/* give up, we can't do it. */
 
@@ -220,10 +220,11 @@ sbdsp_jazz16_probe(sc)
 	if (sbdsp_rdsp(sc) != JAZZ16_VER_JAZZ)
 		goto done;
 
+	/* XXX set both 8 & 16-bit drq to same channel, it works fine. */
+	sc->sc_drq16 = sc->sc_drq8;
 	if (sbdsp_wdsp(sc, JAZZ16_SET_DMAINTR) ||
-	    /* set both 8 & 16-bit drq to same channel, it works fine. */
-	    sbdsp_wdsp(sc, (jazz16_drq_conf[sc->sc_drq] << 4) |
-		jazz16_drq_conf[sc->sc_drq]) ||
+	    sbdsp_wdsp(sc, (jazz16_drq_conf[sc->sc_drq16] << 4) |
+		jazz16_drq_conf[sc->sc_drq8]) ||
 	    sbdsp_wdsp(sc, jazz16_irq_conf[sc->sc_irq]))
 		DPRINTF(("sbdsp: can't write jazz16 probe stuff"));
 	else
@@ -280,18 +281,6 @@ sbdsp_attach(sc)
 	printf(": dsp v%d.%02d%s\n",
 	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model),
 	       ISJAZZ16(sc) ? ": <Jazz16>" : "");
-
-#ifdef notyet
-	sbdsp_mix_write(sc, SBP_SET_IRQ, 0x04);
-	sbdsp_mix_write(sc, SBP_SET_DRQ, 0x22);
-
-	printf("sbdsp_attach: irq=%02x, drq=%02x\n",
-	    sbdsp_mix_read(sc, SBP_SET_IRQ),
-	    sbdsp_mix_read(sc, SBP_SET_DRQ));
-#else
-	if (ISSB16CLASS(sc))
-		sc->sc_model = 0x0300;
-#endif
 }
 
 /*
@@ -334,7 +323,7 @@ sbdsp_set_in_sr(addr, sr)
 	register struct sbdsp_softc *sc = addr;
 
 	if (ISSB16CLASS(sc))
-		return (sbdsp_setrate(sc, sr, SB_INPUT_RATE, &sc->sc_irate));
+		return (sbdsp16_setrate(sc, sr, SB_INPUT_RATE, &sc->sc_irate));
 	else
 		return (sbdsp_srtotc(sc, sr, SB_INPUT_RATE, &sc->sc_itc, &sc->sc_imode));
 }
@@ -359,7 +348,7 @@ sbdsp_set_out_sr(addr, sr)
 	register struct sbdsp_softc *sc = addr;
 
 	if (ISSB16CLASS(sc))
-		return (sbdsp_setrate(sc, sr, SB_OUTPUT_RATE, &sc->sc_orate));
+		return (sbdsp16_setrate(sc, sr, SB_OUTPUT_RATE, &sc->sc_orate));
 	else
 		return (sbdsp_srtotc(sc, sr, SB_OUTPUT_RATE, &sc->sc_otc, &sc->sc_omode));
 }
@@ -483,6 +472,7 @@ sbdsp_set_ifilter(addr, which)
 	register struct sbdsp_softc *sc = addr;
 	int mixval;
 
+	/* XXXX SB16 */
 	if (ISSBPROCLASS(sc)) {
 		mixval = sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_IFILTER_MASK;
 		switch (which) {
@@ -511,6 +501,7 @@ sbdsp_get_ifilter(addr)
 {
 	register struct sbdsp_softc *sc = addr;
 	
+	/* XXXX SB16 */
 	if (ISSBPROCLASS(sc)) {
 		sc->in_filter =
 		    sbdsp_mix_read(sc, SBP_INFILTER) & SBP_IFILTER_MASK;
@@ -589,6 +580,7 @@ sbdsp_set_in_port(addr, port)
 
 	sc->in_port = port;	/* Just record it */
 
+	/* XXXX SB16 */
 	if (ISSBPROCLASS(sc)) {
 		/* record from that port */
 		sbdsp_mix_write(sc, SBP_RECORD_SOURCE,
@@ -961,7 +953,7 @@ sbdsp_contdma(addr)
 }
 
 int
-sbdsp_setrate(sc, sr, isdac, ratep)
+sbdsp16_setrate(sc, sr, isdac, ratep)
 	register struct sbdsp_softc *sc;
 	int sr;
 	int isdac;
@@ -972,7 +964,7 @@ sbdsp_setrate(sc, sr, isdac, ratep)
 	 * XXXX
 	 * More checks here?
 	 */
-	if (sr < 5000 || sr > 44100)
+	if (sr < 5000 || sr > 45454)
 		return (EINVAL);
 	*ratep = sr;
 	return (0);
@@ -1156,6 +1148,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		sc->sc_dmadir = SB_DMA_IN;
 	}
 
+	sc->sc_drq = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
 	isa_dmastart(DMAMODE_READ, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
@@ -1163,13 +1156,12 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = cc;		/* DMA controller is strange...? */
 
-	if ((ISSB16CLASS(sc) && sc->sc_precision == 16) ||
-	    (ISJAZZ16(sc) && sc->sc_drq > 3))
+	if (sc->sc_precision == 16)
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
 		if (sbdsp_wdsp(sc, sc->sc_precision == 16 ? SB_DSP16_RDMA_16 :
-								SB_DSP16_RDMA_8) < 0 ||
+							    SB_DSP16_RDMA_8) < 0 ||
 		    sbdsp_wdsp(sc, (sc->sc_precision == 16 ? 0x10 : 0x00) |
 				       (sc->sc_channels == 2 ? 0x20 : 0x00)) < 0 ||
 		    sbdsp16_wait(sc) ||
@@ -1265,6 +1257,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		sc->sc_dmadir = SB_DMA_OUT;
 	}
 
+	sc->sc_drq = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
 	isa_dmastart(DMAMODE_WRITE, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
@@ -1272,13 +1265,12 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = cc;	/* a vagary of how DMA works, apparently. */
 
-	if ((ISSB16CLASS(sc) && sc->sc_precision == 16) ||
-	    (ISJAZZ16(sc) && sc->sc_drq > 3))
+	if (sc->sc_precision == 16)
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
 		if (sbdsp_wdsp(sc, sc->sc_precision == 16 ? SB_DSP16_WDMA_16 :
-								SB_DSP16_WDMA_8) < 0 ||
+							    SB_DSP16_WDMA_8) < 0 ||
 		    sbdsp_wdsp(sc, (sc->sc_precision == 16 ? 0x10 : 0x00) |
 				       (sc->sc_channels == 2 ? 0x20 : 0x00)) < 0 ||
 		    sbdsp16_wait(sc) ||
@@ -1335,18 +1327,10 @@ sbdsp_intr(arg)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
 	if (!isa_dmafinished(sc->sc_drq)) {
-#ifdef AUDIO_DEBUG
 		printf("sbdsp_intr: not finished\n");
-#endif
 		return 0;
 	}
 	sc->sc_interrupts++;
-	/* clear interrupt */
-#ifdef notyet
-	x = sbdsp_mix_read(sc, 0x82);
-	x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 15);
-#endif
-	x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_RSTAT);
 	delay(10);
 #if 0
 	if (sc->sc_mintr != 0) {
@@ -1355,11 +1339,15 @@ sbdsp_intr(arg)
 	} else
 #endif
 	if (sc->sc_intr != 0) {
+		/* clear interrupt */
+		x = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_precision == 16 ? SBP_DSP_IRQACK16 :
+					     SBP_DSP_IRQACK8);
 		isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->sc_drq);
 		(*sc->sc_intr)(sc->sc_arg);
-	}
-	else
+	} else {
 		return 0;
+	}
 	return 1;
 }
 
