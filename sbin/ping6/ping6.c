@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.38 2001/11/02 05:33:21 lukem Exp $	*/
+/*	$NetBSD: ping6.c,v 1.39 2002/01/09 12:30:15 darrenr Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.38 2001/11/02 05:33:21 lukem Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.39 2002/01/09 12:30:15 darrenr Exp $");
 #endif
 #endif
 
@@ -1224,7 +1224,7 @@ pinger()
 
 		memcpy(nip->icmp6_ni_nonce, nonce,
 		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+		*(u_int16_t *)nip->icmp6_ni_nonce = htons(seq);
 
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
@@ -1239,7 +1239,7 @@ pinger()
 
 		memcpy(nip->icmp6_ni_nonce, nonce,
 		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+		*(u_int16_t *)nip->icmp6_ni_nonce = htons(seq);
 
 		cc = ICMP6_NIQLEN;
 		datalen = 0;
@@ -1251,7 +1251,7 @@ pinger()
 
 		memcpy(nip->icmp6_ni_nonce, nonce,
 		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+		*(u_int16_t *)nip->icmp6_ni_nonce = htons(seq);
 
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
@@ -1266,14 +1266,14 @@ pinger()
 
 		memcpy(nip->icmp6_ni_nonce, nonce,
 		    sizeof(nip->icmp6_ni_nonce));
-		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+		*(u_int16_t *)nip->icmp6_ni_nonce = htons(seq);
 		cc = ICMP6_NIQLEN;
 		datalen = 0;
 	} else {
 		icp->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp->icmp6_code = 0;
 		icp->icmp6_id = htons(ident);
-		icp->icmp6_seq = ntohs(seq);
+		icp->icmp6_seq = htons(seq);
 		if (timing)
 			(void)gettimeofday((struct timeval *)
 					   &outpack[ICMP6ECHOLEN], NULL);
