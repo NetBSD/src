@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.3 2003/01/21 11:29:29 scw Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.4 2003/01/22 13:44:36 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.3 2003/01/21 11:29:29 scw Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.4 2003/01/22 13:44:36 scw Exp $");
 #endif
 
 #include <sys/types.h>
@@ -105,7 +105,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	 * First 8 args are passed in r2-r9
 	 */
 	for (i = 0; i < argc && i < 8; i++)
-		gr[_REG_R(i)] = (register_t)va_arg(ap, long);
+		gr[_REG_R(i + 2)] = (register_t)va_arg(ap, long);
 
 	/*
 	 * Additional args are passed on the stack as 64-bit quantities
