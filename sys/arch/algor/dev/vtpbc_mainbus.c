@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.4 2001/06/14 18:52:26 thorpej Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.5 2001/06/22 03:45:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
-#include "opt_algor_p6032.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
