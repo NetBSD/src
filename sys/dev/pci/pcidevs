@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp $
+$NetBSD: pcidevs,v 1.308 2001/03/13 17:21:16 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -528,6 +528,7 @@ vendor ASKEY		0x144f	Askey Computer Corp.
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
+vendor TITAN		0x14d2  Titan Electronics, Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
@@ -1654,6 +1655,9 @@ product TI	PCI4451YENTA	0xac42	PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Cont
 product TI	PCI1410		0xac50	PCI1410 PCI-CardBus Bridge
 product TI	PCI1420		0xac51	PCI1420 PCI-CardBus Bridge
 product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
+
+/* Titan Electronics products */
+product TITAN PCI800H		0xa003	PCI-800H
 
 /* Toshiba America products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
