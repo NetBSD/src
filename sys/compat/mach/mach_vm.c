@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.40 2003/11/29 23:56:08 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.41 2003/12/03 18:19:12 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ktrace.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.40 2003/11/29 23:56:08 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.41 2003/12/03 18:19:12 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.40 2003/11/29 23:56:08 manu Exp $");
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/ktrace.h>
 #include <sys/exec.h>
 #include <sys/syscallargs.h>
 
@@ -793,6 +796,11 @@ mach_vm_read(args)
 		return mach_msg_error(args, EFAULT);
 	}
 
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
+		ktrmool(l->l_proc, buf, size, (void *)va);
+#endif
+
 	free(buf, M_WAITOK);
 
 	rep->rep_msgh.msgh_bits =
@@ -821,6 +829,7 @@ mach_vm_write(args)
 	mach_vm_write_request_t *req = args->smsg;
 	mach_vm_write_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
 	size_t size;
 	void *addr;
@@ -852,6 +861,11 @@ mach_vm_write(args)
 		free(buf, M_WAITOK);
 		return mach_msg_error(args, EFAULT);
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
+		ktrmool(l->l_proc, buf, size, (void *)addr);
+#endif
 
 	free(buf, M_WAITOK);
 	
