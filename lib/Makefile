@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.58 2000/03/07 20:54:57 veego Exp $
+#	$NetBSD: Makefile,v 1.59 2000/05/02 12:22:23 simonb Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 SRCTOP=	..
 .include <bsd.crypto.mk>
 
 SUBDIR=	csu libarch libbz2 libc libcompat libcrypt libcurses libedit \
-	libkvm libl libm libmenu libntp libossaudio libpcap libposix \
+	libkvm libl libm libmenu libossaudio libpcap libposix \
 	libresolv librmt librpcsvc libskey libterm libusb libutil libwrap \
 	liby libz
 
