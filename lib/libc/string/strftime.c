@@ -33,30 +33,29 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.5 1994/04/07 06:52:14 deraadt Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.6 1994/04/22 22:11:52 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <tzfile.h>
 #include <string.h>
+#include <tzfile.h>
+#include <time.h>
 
-static char *abday[] = {
+static const char *const abday[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
 };
-static char *day[] = {
+static const char *const day[] = {
 	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
 	"Saturday",
 };
-static char *abmon[] = {
+static const char *const abmon[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
 	"Oct", "Nov", "Dec",
 };
-static char *mon[] = {
+static const char *const mon[] = {
 	"January", "February", "March", "April", "May", "June", "July",
 	"August", "September", "October", "November", "December",
 };
-static char *ampm[] = {
+static const char *const ampm[] = {
 	"AM", "PM",
 };
 
@@ -77,6 +76,8 @@ strftime(s, maxsize, format, t)
 	const char *format;
 	const struct tm *t;
 {
+	tzset();
+
 	pt = s;
 	if ((gsize = maxsize) < 1)
 		return(0);
