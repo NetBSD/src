@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.55 2000/11/30 09:58:03 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1226,7 +1226,7 @@ ncr53c9x_dequeue(sc, ecb)
 #ifdef DIAGNOSTIC
 	if ((!li) || (li->lun != lun))
 		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist\n",
-		      lun, ecb);
+		      (long long) lun, ecb);
 #endif
 	if (li->untagged == ecb) {
 		li->busy = 0;
@@ -1236,7 +1236,8 @@ ncr53c9x_dequeue(sc, ecb)
 #ifdef DIAGNOSTIC
 		if (li->queued[ecb->tag[1]] && (li->queued[ecb->tag[1]] != ecb))
 			panic("ncr53c9x_dequeue: slot %d for lun %qx has %p "
-			      "instead of ecb %p\n", ecb->tag[1], (quad_t)lun,
+			      "instead of ecb %p\n", ecb->tag[1],
+			      (long long) lun,
 			      li->queued[ecb->tag[1]], ecb);
 #endif
 		li->queued[ecb->tag[1]] = NULL;
@@ -2687,61 +2688,3 @@ ncr53c9x_watch(arg)
 	splx(s);
 	callout_reset(&sc->sc_watchdog, 60*hz, ncr53c9x_watch, sc);
 }
-
-
-#include "opt_ddb.h"
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <machine/autoconf.h>
-#include <ddb/db_output.h>
-
-void db_esp __P((db_expr_t, int, db_expr_t, char*));
-
-void
-db_esp(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
-	struct ncr53c9x_linfo *li;
-	int u, t, i;
-
-	for (u=0; u<10; u++) {
-		sc = (struct ncr53c9x_softc *)
-			getdevunit("esp", u);
-		if (!sc) continue;
-
-		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
-			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase, 
-			  sc->sc_dp, sc->sc_dleft, sc->sc_msgify);
-		db_printf("\tmsgout %x msgpriq %x msgin %x:%x:%x:%x:%x\n",
-			  sc->sc_msgout, sc->sc_msgpriq, sc->sc_imess[0],
-			  sc->sc_imess[1], sc->sc_imess[2], sc->sc_imess[3],
-			  sc->sc_imess[0]);
-		db_printf("ready: ");
-		for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
-			db_printf("ecb %p ", ecb);
-			if (ecb == ecb->chain.tqe_next) {
-				db_printf("\nWARNING: tailq loop on ecb %p", ecb);
-				break;
-			}
-		}
-		db_printf("\n");
-		
-		for (t=0; t<NCR_NTARG; t++) {
-			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
-				db_printf("t%d lun %d untagged %p busy %d used %x\n",
-					  t, (int)li->lun, li->untagged, li->busy,
-					  li->used);
-				for (i=0; i<256; i++)
-					if ((ecb = li->queued[i])) {
-						db_printf("ecb %p tag %x\n", ecb, i);
-					}
-			}
-		}
-	}
-}
-#endif
