@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.28 2001/12/18 03:04:05 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.29 2002/05/29 07:53:42 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.28 2001/12/18 03:04:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.29 2002/05/29 07:53:42 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ nd6_ra_input(m, off, icmp6len)
 	int off, icmp6len;
 {
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct nd_ifinfo *ndi = &nd_ifinfo[ifp->if_index];
+	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_advert *nd_ra;
 	struct in6_addr saddr6 = ip6->ip6_src;

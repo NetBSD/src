@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.80 2002/05/26 16:05:43 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.81 2002/05/29 07:53:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.80 2002/05/26 16:05:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.81 2002/05/29 07:53:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -173,8 +173,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.80 2002/05/26 16:05:43 itojun Exp $
 #include <netinet/in.h>
 #endif
 #include <netinet/ip6.h>
-#include <netinet6/in6_pcb.h>
+#include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/in6_pcb.h>
+#include <netinet6/nd6.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -297,7 +299,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * for IPv6, path MTU discovery is always turned on,
 			 * or the node must use packet size <= 1280.
 			 */
-			size = tp->t_mtudisc ? ifp->if_mtu : IPV6_MMTU;
+			size = tp->t_mtudisc ? IN6_LINKMTU(ifp) : IPV6_MMTU;
 			size -= (iphlen + sizeof(struct tcphdr));
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.11 2002/05/29 01:43:25 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.12 2002/05/29 07:53:41 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.11 2002/05/29 01:43:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.12 2002/05/29 07:53:41 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -326,7 +326,7 @@ in6_selecthlim(in6p, ifp)
 	if (in6p && in6p->in6p_hops >= 0)
 		return(in6p->in6p_hops);
 	else if (ifp)
-		return(nd_ifinfo[ifp->if_index].chlim);
+		return(ND_IFINFO(ifp)->chlim);
 	else
 		return(ip6_defhlim);
 }
