@@ -1,4 +1,4 @@
-/*	$NetBSD: isnanl_ieee754.c,v 1.3 2003/10/22 21:37:34 kleink Exp $	*/
+/*	$NetBSD: isnanl_ieee754.c,v 1.4 2003/10/23 00:04:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD54_isnan.c,v 1.1 2002/02/19 13:08:13 simonb Exp $");
+__RCSID("$NetBSD: isnanl_ieee754.c,v 1.4 2003/10/23 00:04:57 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
