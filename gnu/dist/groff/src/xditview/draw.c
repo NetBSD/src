@@ -1,4 +1,4 @@
-/*	$NetBSD: draw.c,v 1.1.1.1 2001/04/19 12:52:32 wiz Exp $	*/
+/*	$NetBSD: draw.c,v 1.1.1.2 2003/06/30 17:52:18 wiz Exp $	*/
 
 /*
  * draw.c
@@ -70,9 +70,9 @@ AdjustCacheDeltas (dw)
 	for (i = 0; i <= dw->dvi.cache.index; i++)
 		if (dw->dvi.cache.adjustable[i])
 			++nadj;
-	if (nadj == 0)
-		return;
 	dw->dvi.text_x_width += extra;
+	if (nadj <= 1)
+		return;
 	for (i = 0; i <= dw->dvi.cache.index; i++)
 		if (dw->dvi.cache.adjustable[i]) {
 			int x;
@@ -183,6 +183,7 @@ DoCharacter (dw, c, wid)
 	    || dw->dvi.cache.char_index >= DVI_CHAR_CACHE_SIZE) {
 		FlushCharCache (dw);
 		x = dw->dvi.cache.x;
+		dw->dvi.cache.adjustable[dw->dvi.cache.index] = 0;
 	}
 	/*
 	 * load a new font, if the current block is not empty,
@@ -191,6 +192,8 @@ DoCharacter (dw, c, wid)
 	if (dw->dvi.cache.font_size != dw->dvi.state->font_size ||
 	    dw->dvi.cache.font_number != dw->dvi.state->font_number)
 	{
+		FlushCharCache (dw);
+		x = dw->dvi.cache.x;
 		dw->dvi.cache.font_size = dw->dvi.state->font_size;
 		dw->dvi.cache.font_number = dw->dvi.state->font_number;
 		dw->dvi.cache.font = QueryFont (dw,
@@ -210,6 +213,7 @@ DoCharacter (dw, c, wid)
 			if (dw->dvi.cache.index >= dw->dvi.cache.max)
 				FlushCharCache (dw);
 			dw->dvi.cache.cache[dw->dvi.cache.index].nchars = 0;
+			dw->dvi.cache.adjustable[dw->dvi.cache.index] = 0;
 		}
 		dw->dvi.cache.adjustable[dw->dvi.cache.index]
 			= dw->dvi.word_flag;

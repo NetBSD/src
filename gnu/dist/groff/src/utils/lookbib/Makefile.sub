@@ -1,7 +1,7 @@
-PROG=lookbib
+PROG=lookbib$(EXEEXT)
 MAN1=lookbib.n
 XLIBS=$(LIBBIB) $(LIBGROFF)
 MLIB=$(LIBM)
-OBJS=lookbib.o
-CCSRCS=$(srcdir)/lookbib.cc
+OBJS=lookbib.$(OBJEXT)
+CCSRCS=$(srcdir)/lookbib.cpp
 NAMEPREFIX=$(g)

@@ -1,7 +1,8 @@
-/*	$NetBSD: request.h,v 1.1.1.1 2001/04/19 12:51:19 wiz Exp $	*/
+/*	$NetBSD: request.h,v 1.1.1.2 2003/06/30 17:52:10 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -49,7 +50,8 @@ class macro : public request_or_macro {
   macro_header *p;
   const char *filename;		// where was it defined?
   int lineno;
-  int length;
+  int len;
+  int empty_macro;
 public:
   macro();
   ~macro();
@@ -57,17 +59,24 @@ public:
   macro &operator=(const macro &);
   void append(unsigned char);
   void append(node *);
+  void append_unsigned(unsigned int i);
+  void append_int(int i);
+  void append_str(const char *);
+  void set(unsigned char, int);
+  unsigned char get(int);
+  int length();
   void invoke(symbol);
   macro *to_macro();
   void print_size();
   int empty();
   friend class string_iterator;
   friend void chop_macro();
-  friend void substring_macro();
+  friend void substring_request();
   friend int operator==(const macro &, const macro &);
 };
 
 extern void init_input_requests();
+extern void init_markup_requests();
 extern void init_div_requests();
 extern void init_node_requests();
 extern void init_reg_requests();
