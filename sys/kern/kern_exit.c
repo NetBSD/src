@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.58 1998/09/12 17:20:02 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.59 1998/09/18 18:48:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -288,6 +288,29 @@ exit1(p, rv)
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
+	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
+	 * flag set, notify init instead (and hope it will handle
+	 * this situation).
+	 */
+	if (p->p_pptr->p_flag & P_NOCLDWAIT) {
+		struct proc *pp = p->p_pptr;
+		proc_reparent(p, initproc);
+		/*
+		 * If this was the last child of our parent, notify
+		 * parent, so in case he was wait(2)ing, he will
+		 * continue.
+		 */
+		if (pp->p_children.lh_first == NULL)
+			wakeup((caddr_t)pp);
+	}
+	/*
+	 * Notify parent that we're gone.
+	 */
+	if ((p->p_flag & P_FSTRACE) == 0)
+		psignal(p->p_pptr, SIGCHLD);
+	wakeup((caddr_t)p->p_pptr);
 
 	/*
 	 * Clear curproc after we've done all operations
