@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.4.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.4.6.2 2005/01/18 14:05:22 bouyer Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -1099,14 +1099,14 @@ calltrap:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	testb	$CHK_UPL,TF_CS(%esp)
-	jnz	alltraps_checkast
+	jnz	.Lalltraps_checkast
 #ifdef VM86
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 	jz	6f
 #else
 	jmp	6f
 #endif
-alltraps_checkast:
+.Lalltraps_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
 	CHECK_ASTPENDING(%eax)
@@ -1117,7 +1117,7 @@ alltraps_checkast:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	jmp	alltraps_checkast	/* re-check ASTs */
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH(%eax)
 	jnz	9f
 6:	STIC(%eax)
@@ -1139,12 +1139,12 @@ alltraps_checkast:
 	int	$3
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
-	jmp	alltraps_checkast	/* re-check ASTs */
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
-	jmp	alltraps_checkast	/* re-check ASTs */
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
 /* LINTSTUB: Ignore */
 IDTVEC(trap0e)
