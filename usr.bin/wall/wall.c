@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.17 2001/01/05 04:00:34 mjl Exp $	*/
+/*	$NetBSD: wall.c,v 1.18 2001/01/05 04:06:49 mjl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.17 2001/01/05 04:00:34 mjl Exp $");
+__RCSID("$NetBSD: wall.c,v 1.18 2001/01/05 04:06:49 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -66,8 +66,8 @@ __RCSID("$NetBSD: wall.c,v 1.17 2001/01/05 04:00:34 mjl Exp $");
 #include <utmp.h>
 #include <util.h>
 
-void	makemsg __P((char *));
-int	main __P((int, char *[]));
+void	makemsg(const char *);
+int	main(int, char **);
 
 int nobanner;
 int mbufsize;
@@ -75,9 +75,7 @@ char *mbuf;
 
 /* ARGSUSED */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	struct iovec iov;
@@ -124,8 +122,7 @@ usage:
 }
 
 void
-makemsg(fname)
-	char *fname;
+makemsg(const char *fname)
 {
 	register int ch, cnt;
 	struct tm *lt;
