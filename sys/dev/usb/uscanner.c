@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.4 2000/09/24 03:22:47 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.5 2000/10/13 16:18:48 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -99,7 +99,8 @@ static const struct scanner_id {
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_4200C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_5200 },
+	{ USB_VENDOR_HP, USB_PRODUCT_HP_5200C },
+	{ USB_VENDOR_HP, USB_PRODUCT_HP_5300C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_6200C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_6300C },
 
