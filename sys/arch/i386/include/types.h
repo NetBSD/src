@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 1994/10/27 04:16:32 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.9 1994/11/20 18:50:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,8 @@
 
 #ifndef	_MACHTYPES_H_
 #define	_MACHTYPES_H_
+
+#include <sys/cdefs.h>
 
 typedef struct _physadr {
 	int r[1];
