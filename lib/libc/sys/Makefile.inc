@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.36 1996/04/23 10:42:30 mycroft Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -17,7 +17,8 @@ SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
-	fstatfs.o fsync.o getdirentries.o getegid.o geteuid.o getfh.o \
+	fstatfs.o fsync.o futimes.o \
+	getdirentries.o getegid.o geteuid.o getfh.o \
 	getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o getpgrp.o \
 	getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o getuid.o ioctl.o kill.o \
