@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.15 2004/12/16 04:15:19 atatat Exp $	*/
+/*	$NetBSD: devname.c,v 1.16 2004/12/16 04:33:03 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.15 2004/12/16 04:15:19 atatat Exp $");
+__RCSID("$NetBSD: devname.c,v 1.16 2004/12/16 04:33:03 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,8 +120,7 @@ devname(dev, type)
 	DBT data, key;
 	DEVC *ptr, **pptr;
 	static DEVC **devtb = NULL;
-	dev_t pts;
-
+	static dev_t pts = (dev_t)~1;
 
 	if (!db && !failure &&
 	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
@@ -173,7 +172,8 @@ devname(dev, type)
 			return (NULL);
 		ptr->valid = INVALID;
 		if (type == S_IFCHR) {
-			pts = getdevmajor("pts", S_IFCHR);
+			if (pts == (dev_t)~1)
+				pts = getdevmajor("pts", S_IFCHR);
 			if (pts != (dev_t)~0 && major(dev) == pts) {
 				(void)snprintf(ptr->name, sizeof(ptr->name),
 				    "%s%d", _PATH_DEV_PTS +
