@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.119 2004/08/15 07:20:00 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.120 2004/08/15 21:44:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.119 2004/08/15 07:20:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.120 2004/08/15 21:44:11 mycroft Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -140,16 +140,17 @@ ufs_mknod(void *v)
 	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
+		struct ufsmount *ump = ip->i_ump;
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		if (ip->i_ump->um_fstype == UFS1)
+		if (ump->um_fstype == UFS1)
 			ip->i_ffs1_rdev = ufs_rw32(vap->va_rdev,
-			    UFS_MPNEEDSWAP(mp));
+			    UFS_MPNEEDSWAP(ump));
 		else
 			ip->i_ffs2_rdev = ufs_rw64(vap->va_rdev,
-			    UFS_MPNEEDSWAP(mp));
+			    UFS_MPNEEDSWAP(ump));
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
