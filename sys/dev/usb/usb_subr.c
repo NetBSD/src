@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.78 2000/06/01 14:29:02 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.79 2000/06/01 14:37:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -1260,11 +1260,7 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 }
 
 #ifdef __OpenBSD__
-void *usb_realloc(p, size, pool, flags)
-	void *p;
-	u_int size;
-	int pool;
-	int flags;
+void *usb_realloc(void *p, u_int size, int pool, int flags)
 {
 	void *q;
 
