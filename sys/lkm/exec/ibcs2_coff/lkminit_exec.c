@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:37 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/09/18 19:36:36 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ int exec_ibcs2_coff_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_ibcs2_coff =
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, ibcs2_setregs };	/* coff binaries */
+	  0, copyargs };	/* coff binaries */
 
 /*
  * declare the exec

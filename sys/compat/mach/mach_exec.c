@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.2 2001/07/29 21:26:07 christos Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.3 2001/09/18 19:36:40 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ const struct emul emul_mach = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

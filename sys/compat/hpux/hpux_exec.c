@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.26 2001/06/18 02:00:52 christos Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.27 2001/09/18 19:36:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ const struct emul emul_hpux = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	hpux_setregs,
 	NULL,
 	NULL,
 	NULL,

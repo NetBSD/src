@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:36 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/09/18 19:36:35 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ int exec_hpux_aout_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_hpux_aout =
 	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, hpux_setregs };	/* HP-UX a.out */
+	  0, copyargs };	/* HP-UX a.out */
 
 /*
  * declare the exec

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.28 2001/09/17 17:43:06 jdolecek Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.29 2001/09/18 19:36:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,6 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	setregs(p, epp, stack);
 	f->f_regs[GP] = (register_t)execp->a.gp_value;
 }
 
