@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 2000/09/07 18:46:19 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 2000/09/24 23:46:37 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -170,13 +170,13 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	extern char _etext;
+	extern char etext;
 	char *dst;
 
 	dst = (char *)addr;
 
 	/* If any part is in kernel text, use db_write_text() */
-	if (addr >= KERNBASE && addr < (vaddr_t)&_etext) {
+	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
 		db_write_text(addr, size, data);
 		return;
 	}
