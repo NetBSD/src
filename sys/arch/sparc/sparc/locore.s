@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.11 1994/05/27 08:56:01 deraadt Exp $
+ * $Id: locore.s,v 1.12 1994/06/10 14:33:08 pk Exp $
  */
 
 #define	LOCORE
@@ -1900,7 +1900,7 @@ winuf_invalid:
 	 * only window, and it is a user window).
 	 */
 	save	%g0, %g0, %g0		! back to R
-#if 0		/* this gives `as' mild heartburn */
+#ifdef SUN_AS	/* this gives `as' mild heartburn */
 	save	%g0, 1, %l4		! back to T, then %l4 = 1
 #else
 	save	%g0, %g0, %g0		! back to T

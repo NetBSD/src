@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.12 1994/05/31 10:20:59 pk Exp $
+ * $Id: pmap.c,v 1.13 1994/06/10 14:33:11 pk Exp $
  */
 
 /*
@@ -269,7 +269,8 @@ caddr_t	vpage[2];		/* two reserved MD virtual pages */
 caddr_t	vmempage;		/* one reserved MI vpage for /dev/mem */
 caddr_t vdumppages;		/* 32KB worth of reserved dump pages */
 
-struct kpmap	kernel_pmap_store;	/* the kernel's pmap */
+struct pmap	kernel_pmap_store;	/* the kernel's pmap */
+struct ksegmap	kernel_segmap_store;	/* the kernel's segmap */
 pmap_t		kernel_pmap;
 
 /*
@@ -772,6 +773,16 @@ mmu_pagein(pm, va, bits)
 	return (1);
 }
 
+PMPID(pm)
+struct pmap *pm;
+{
+	struct proc *p;
+
+	for (p = allproc; p; p = p->p_next)
+		if (&p->p_vmspace->vm_pmap == pm)
+			return p->p_pid;
+	return -1;
+}
 /*
  * Allocate a context.  If necessary, steal one from someone else.
  * Changes hardware context number and loads segment map.
@@ -784,8 +795,10 @@ ctx_alloc(pm)
 	register struct pmap *pm;
 {
 	register union ctxinfo *c;
-	register int cnum, i, va;
+	register int cnum, i;
 	register pmeg_t *segp;
+	register int gap_start, gap_end;
+	register unsigned long va;
 
 #ifdef DEBUG
 	if (pm->pm_ctx)
@@ -793,10 +806,18 @@ ctx_alloc(pm)
 	if (pmapdebug & PDB_CTX_ALLOC)
 		printf("ctx_alloc(%x)\n", pm);
 #endif
+	gap_start = pm->pm_gap_start;
+	gap_end = pm->pm_gap_end;
+
 	if ((c = ctx_freelist) != NULL) {
 		ctx_freelist = c->c_nextfree;
 		cnum = c - ctxinfo;
 		setcontext(cnum);
+#if 0
+		for (va = 0, i = NUSEG; --i >= 0; va += NBPSG)
+			if (getsegmap(va) != seginval)
+			 printf("free ctx %d: segmap(%x) = %x\n", cnum, va, getsegmap(va));
+#endif
 	} else {
 		if ((ctx_kick += ctx_kickdir) >= ncontext) {
 			ctx_kick = ncontext - 1;
@@ -819,19 +840,55 @@ ctx_alloc(pm)
 		if (vactype != VAC_NONE)
 #endif
 			cache_flush_context();
+		if (gap_start < c->c_pmap->pm_gap_start)
+			gap_start = c->c_pmap->pm_gap_start;
+		if (gap_end > c->c_pmap->pm_gap_end)
+			gap_end = c->c_pmap->pm_gap_end;
 	}
 	c->c_pmap = pm;
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
+#if 0
 	/*
 	 * XXX	loop below makes 3584 iterations ... could reduce
 	 *	by remembering valid ranges per context: two ranges
 	 *	should suffice (for text/data/bss and for stack).
 	 */
-	segp = pm->pm_rsegmap;
+	segp = pm->pm_segmap;
 	for (va = 0, i = NUSEG; --i >= 0; va += NBPSG)
 		setsegmap(va, *segp++);
+#else
+	/*
+	 * Write pmap's segment table into the MMU.
+	 *
+	 * Only write those pmeg numbers that seems interesting by
+	 * maintaining a pair of segment pointers in between the pmap
+	 * has no valid mappings.
+	 *
+	 * If a context was just allocated from the free list, trust that
+	 * all its pmeg numbers are `seginval'. We make sure this is the
+	 * case initially in pmap_bootstrap(). Otherwise, the context was
+	 * freed by calling ctx_free() in pmap_release(), which in turn is
+	 * supposedly called only when all mappings have been removed.
+	 *
+	 * On the other hand, if the context had to be stolen from another
+	 * pmap, we possibly shrink the gap to be the disjuction of the new
+	 * and the previous map.
+	 */
+	segp = pm->pm_segmap;
+	for (va = 0, i = NUSEG; --i >= 0; va += NBPSG) {
+		if (VA_VSEG(va) >= gap_start) {
+			va = VSTOVA(gap_end);
+			i -= gap_end - gap_start;
+			segp += gap_end - gap_start;
+			if (i < 0)
+				break;
+			gap_start = NUSEG; /* mustn't re-enter this branch */
+		}
+		setsegmap(va, *segp++);
+	}
+#endif
 }
 
 /*
@@ -925,17 +982,19 @@ if(pm==NULL)panic("pv_changepte 1");
 					continue;
 				setcontext(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
+				tpte = getpte(va);
 #ifdef notdef
 				if (vactype != VAC_NONE)
 #endif
+				if (tpte & PG_M)
 					cache_flush_page(va);
 			} else {
 				/* XXX per-cpu va? */
 				setcontext(0);
 				setsegmap(0, pmeg);
 				va = VA_VPG(va) * NBPG;
+				tpte = getpte(va);
 			}
-			tpte = getpte(va);
 			if (tpte & PG_V)
 				flags |= (tpte >> PG_M_SHIFT) &
 				    (PV_MOD|PV_REF);
@@ -990,17 +1049,19 @@ pv_syncflags(pv0)
 		if (pm->pm_ctx) {
 			setcontext(pm->pm_ctxnum);
 			/* XXX should flush only when necessary */
+			tpte = getpte(va);
 #ifdef notdef
 			if (vactype != VAC_NONE)
 #endif
+			if (tpte & PG_M)
 				cache_flush_page(va);
 		} else {
 			/* XXX per-cpu va? */
 			setcontext(0);
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) * NBPG;
+			tpte = getpte(va);
 		}
-		tpte = getpte(va);
 		if (tpte & (PG_M|PG_U) && tpte & PG_V) {
 			flags |= (tpte >> PG_M_SHIFT) &
 			    (PV_MOD|PV_REF);
@@ -1247,20 +1308,19 @@ pmap_bootstrap(nmmu, nctx)
 	 * Intialize the kernel pmap.
 	 */
 	{
-		register struct kpmap *k = &kernel_pmap_store;
+		register struct pmap *k = kernel_pmap;
 
-/*		kernel_pmap = (struct pmap *)k; */
 		k->pm_ctx = ctxinfo;
 		/* k->pm_ctxnum = 0; */
 		simple_lock_init(&k->pm_lock);
 		k->pm_refcount = 1;
 		/* k->pm_mmuforw = 0; */
 		k->pm_mmuback = &k->pm_mmuforw;
-		k->pm_segmap = &k->pm_rsegmap[-NUSEG];
-		k->pm_pte = &k->pm_rpte[-NUSEG];
-		k->pm_npte = &k->pm_rnpte[-NUSEG];
+		k->pm_segmap = &kernel_segmap_store.ks_segmap[-NUSEG];
+		k->pm_pte = &kernel_segmap_store.ks_pte[-NUSEG];
+		k->pm_npte = &kernel_segmap_store.ks_npte[-NUSEG];
 		for (i = NKSEG; --i >= 0;)
-			k->pm_rsegmap[i] = seginval;
+			kernel_segmap_store.ks_segmap[i] = seginval;
 	}
 
 	/*
@@ -1340,6 +1400,14 @@ pmap_bootstrap(nmmu, nctx)
 		/* me->me_pmap = NULL; */
 		me_freelist = me;
 	}
+
+	/* Erase all spurious user-space segmaps */
+	for (i = 1; i < ncontext; i++) {
+		setcontext(i);
+		for (p = 0, j = NUSEG; --j >= 0; p += NBPSG)
+			setsegmap(p, seginval);
+	}
+	setcontext(0);
 
 	/*
 	 * write protect & encache kernel text;
@@ -1465,23 +1533,29 @@ pmap_pinit(pm)
 	register struct pmap *pm;
 {
 	register int i;
+	register struct usegmap *usp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
 		printf("pmap_pinit(%x)\n", pm);
 #endif
+	usp = malloc(sizeof(struct usegmap), M_VMPMAP, M_WAITOK);
+	bzero((caddr_t)usp, sizeof (struct usegmap));
+	pm->pm_segstore = usp;
+
 	/* pm->pm_ctx = NULL; */
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_refcount = 1;
 	/* pm->pm_mmuforw = NULL; */
 	pm->pm_mmuback = &pm->pm_mmuforw;
-	pm->pm_segmap = pm->pm_rsegmap;
-	pm->pm_pte = pm->pm_rpte;
-	pm->pm_npte = pm->pm_rnpte;
+	pm->pm_segmap = usp->us_segmap;
+	pm->pm_pte = usp->us_pte;
+	pm->pm_npte = usp->us_npte;
 	for (i = NUSEG; --i >= 0;)
-		pm->pm_rsegmap[i] = seginval;
-	/* bzero((caddr_t)pm->pm_rpte, sizeof pm->pm_rpte); */
-	/* bzero((caddr_t)pm->pm_rnpte, sizeof pm->pm_rnpte); */
+		usp->us_segmap[i] = seginval;
+	/*bzero((caddr_t)usp->us_pte, sizeof usp->us_pte);*/
+	/*bzero((caddr_t)usp->us_npte, sizeof usp->us_npte);*/
+	pm->pm_gap_end = VA_VSEG(VM_MAXUSER_ADDRESS);
 }
 
 /*
@@ -1532,6 +1606,8 @@ pmap_release(pm)
 		ctx_free(pm);
 	}
 	splx(s);
+	if (pm->pm_segstore)
+		free((caddr_t)pm->pm_segstore, M_VMPMAP);
 }
 
 /*
@@ -1570,6 +1646,7 @@ pmap_remove(pm, va, endva)
 
 	if (pm == NULL)
 		return;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
 		printf("pmap_remove(%x, %x, %x)\n", pm, va, endva);
@@ -1624,7 +1701,11 @@ int	rmk_vlendiff;		/* # times npg != vlen */
  *	   for a user vmspace/pmap, almost never touches all 5 of those
  *	   pages.
  */
+#if 0
+#define	PMAP_RMK_MAGIC	(cacheinfo.c_hwflush?5:64)	/* if > magic, use cache_flush_segment */
+#else
 #define	PMAP_RMK_MAGIC	5	/* if > magic, use cache_flush_segment */
+#endif
 
 /*
  * Remove a range contained within a single segment.
@@ -1730,7 +1811,11 @@ int	rmu_noflush;		/* # times rmu does not need to flush at all */
  * Just like pmap_rmk_magic, but we have a different threshold.
  * Note that this may well deserve further tuning work.
  */
+#if 0
+#define	PMAP_RMU_MAGIC	(cacheinfo.c_hwflush?4:64)	/* if > magic, use cache_flush_segment */
+#else
 #define	PMAP_RMU_MAGIC	4	/* if > magic, use cache_flush_segment */
+#endif
 
 /* remove from user */
 static int
@@ -1851,6 +1936,12 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		free((caddr_t)pte0, M_VMPMAP);
 		pm->pm_pte[vseg] = NULL;
 		me_free(pm, pmeg);
+
+		if (vseg + 1 == pm->pm_gap_start)
+			pm->pm_gap_start = vseg;
+		if (vseg == pm->pm_gap_end)
+			pm->pm_gap_end = vseg + 1;
+
 	}
 	return (nleft);
 }
@@ -2308,7 +2399,8 @@ pmap_enu(pm, va, prot, wired, pv, pteproto)
 	register struct pvlist *pv;
 	register int pteproto;
 {
-	register int vseg, *pte, tpte, pmeg, i, s, doflush;
+	register int vseg, *pte, tpte, pmeg, s, doflush;
+	register int x;
 
 	write_user_windows();		/* XXX conservative */
 	vseg = VA_VSEG(va);
@@ -2322,6 +2414,24 @@ pmap_enu(pm, va, prot, wired, pv, pteproto)
 	 * TO SPEED UP CTX ALLOC, PUT SEGMENT BOUNDS STUFF HERE
 	 * AND IN pmap_rmu()
 	 */
+
+	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;
+	if (vseg > x) {
+		if (vseg < pm->pm_gap_end)
+			pm->pm_gap_end = vseg;
+	} else {
+		if (vseg >= pm->pm_gap_start && x != pm->pm_gap_start)
+			pm->pm_gap_start = vseg + 1;
+	}
+
+#ifdef DEBUG
+	if (pm->pm_gap_end < pm->pm_gap_start) {
+		printf("pmap_enu: gap_start %x, gap_end %x",
+			pm->pm_gap_start, pm->pm_gap_end);
+		panic("pmap_enu: gap botch");
+	}
+#endif
+
 retry:
 	pte = pm->pm_pte[vseg];
 	if (pte == NULL) {

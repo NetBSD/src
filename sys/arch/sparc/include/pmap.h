@@ -42,7 +42,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.h,v 1.11 93/05/25 10:36:09 torek Exp 
- * $Id: pmap.h,v 1.4 1994/05/24 02:25:40 deraadt Exp $
+ * $Id: pmap.h,v 1.5 1994/06/10 14:32:54 pk Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_
@@ -108,45 +108,36 @@
 #define	NUSEG	(4096 - NKSEG)				/* i.e., 3584 */
 
 /* data appearing in both user and kernel pmaps */
-struct pmap_common {
-	union	ctxinfo *pmc_ctx;	/* current context, if any */
-	int	pmc_ctxnum;		/* current context's number */
+struct pmap {
+	union	ctxinfo *pm_ctx;	/* current context, if any */
+	int	pm_ctxnum;		/* current context's number */
 #if NCPUS > 1
-	simple_lock_data_t pmc_lock;	/* spinlock */
+	simple_lock_data_t pm_lock;	/* spinlock */
 #endif
-	int	pmc_refcount;		/* just what it says */
-	struct	mmuentry *pmc_mmuforw;	/* pmap pmeg chain */
-	struct	mmuentry **pmc_mmuback;	/* (two way street) */
-	pmeg_t	*pmc_segmap;		/* points to pm_rsegmap per above */
-	u_char	*pmc_npte;		/* points to pm_rnpte */
-	int	**pmc_pte;		/* points to pm_rpte */
+	int	pm_refcount;		/* just what it says */
+	struct	mmuentry *pm_mmuforw;	/* pmap pmeg chain */
+	struct	mmuentry **pm_mmuback;	/* (two way street) */
+	void	*pm_segstore;
+	pmeg_t	*pm_segmap;		/* points to pm_rsegmap per above */
+	u_char	*pm_npte;		/* points to pm_rnpte */
+	int	**pm_pte;		/* points to pm_rpte */
+	int	pm_gap_start;		/* Starting with this vseg there's */
+	int	pm_gap_end;		/* no valid mapping until here */
 };
 
 /* data appearing only in user pmaps */
-struct pmap {
-	struct	pmap_common pmc;
-	pmeg_t	pm_rsegmap[NUSEG];	/* segment map */
-	u_char	pm_rnpte[NUSEG];	/* number of valid PTEs per seg */
-	int	*pm_rpte[NUSEG];	/* points to PTEs for valid segments */
+struct usegmap {
+	pmeg_t	us_segmap[NUSEG];	/* segment map */
+	u_char	us_npte[NUSEG];		/* number of valid PTEs per seg */
+	int	*us_pte[NUSEG];		/* points to PTEs for valid segments */
 };
 
 /* data appearing only in the kernel pmap */
-struct kpmap {
-	struct	pmap_common pmc;
-	pmeg_t	pm_rsegmap[NKSEG];	/* segment map */
-	u_char	pm_rnpte[NKSEG];	/* number of valid PTEs per kseg */
-	int	*pm_rpte[NKSEG];	/* always NULL */
+struct ksegmap {
+	pmeg_t	ks_segmap[NKSEG];	/* segment map */
+	u_char	ks_npte[NKSEG];		/* number of valid PTEs per kseg */
+	int	*ks_pte[NKSEG];		/* always NULL */
 };
-
-#define	pm_ctx		pmc.pmc_ctx
-#define	pm_ctxnum	pmc.pmc_ctxnum
-#define	pm_lock		pmc.pmc_lock
-#define	pm_refcount	pmc.pmc_refcount
-#define	pm_mmuforw	pmc.pmc_mmuforw
-#define	pm_mmuback	pmc.pmc_mmuback
-#define	pm_segmap	pmc.pmc_segmap
-#define	pm_npte		pmc.pmc_npte
-#define	pm_pte		pmc.pmc_pte
 
 typedef struct pmap *pmap_t;
 
@@ -154,7 +145,8 @@ typedef struct pmap *pmap_t;
 
 #define PMAP_NULL	((pmap_t)0)
 
-extern struct kpmap kernel_pmap_store;
+extern struct pmap	kernel_pmap_store;
+extern struct ksegmap	kernel_segmap_store;
 extern pmap_t		kernel_pmap;
 
 #define PMAP_ACTIVATE(pmap, pcb, iscurproc)
