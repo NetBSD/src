@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.30 2001/01/10 08:22:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.30 2001/01/10 08:22:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ static struct direct *fsck_readdir __P((struct inodesc *));
 static struct bufarea *getdirblk __P((daddr_t, long));
 static int lftempname __P((char *, ino_t));
 static int mkentry __P((struct inodesc *));
+void reparent __P((ino_t, ino_t));
 
 /*
  * Propagate connected state through the tree.
@@ -116,6 +117,21 @@ propagate(inumber)
 		else
 			inp = inp->i_parentp;
 	}
+}
+
+void
+reparent(inumber, parent)
+	ino_t inumber, parent;
+{
+	struct inoinfo *inp, *pinp;
+
+	inp = getinoinfo(inumber);
+	inp->i_parent = inp->i_dotdot = parent;
+	pinp = getinoinfo(parent);
+	inp->i_parentp = pinp;
+	inp->i_sibling = pinp->i_child;
+	pinp->i_child = inp;
+	propagate(lfdir);
 }
 
 /*
@@ -501,11 +517,11 @@ linkup(orphan, parentdir)
 							printf("\n");
 					}
 				}
+				reparent(lfdir, ROOTINO);
 			}
 		}
 		if (lfdir == 0) {
-			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY");
-			printf("\n\n");
+			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
 			markclean = 0;
 			return (0);
 		}
@@ -518,7 +534,8 @@ linkup(orphan, parentdir)
 			return (0);
 		}
 		oldlfdir = lfdir;
-		if ((lfdir = allocdir(ROOTINO, (ino_t)0, lfmode)) == 0) {
+		lfdir = allocdir(ROOTINO, (ino_t)0, lfmode);
+		if (lfdir == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
 			markclean = 0;
 			return (0);
@@ -529,6 +546,7 @@ linkup(orphan, parentdir)
 			return (0);
 		}
 		inodirty();
+		reparent(lfdir, ROOTINO);
 		idesc.id_type = ADDR;
 		idesc.id_func = pass4check;
 		idesc.id_number = oldlfdir;
@@ -557,6 +575,7 @@ linkup(orphan, parentdir)
 		dp->di_nlink = iswap16(iswap16(dp->di_nlink) + 1);
 		inodirty();
 		lncntp[lfdir]++;
+		reparent(orphan, lfdir);
 		pwarn("DIR I=%u CONNECTED. ", orphan);
 		if (parentdir != (ino_t)-1)
 			printf("PARENT WAS I=%u\n", parentdir);
@@ -690,7 +709,6 @@ allocdir(parent, request, mode)
 	ino_t parent, request;
 	int mode;
 {
-	struct inoinfo *inp;
 	ino_t ino;
 	char *cp;
 	struct dinode *dp;
@@ -735,8 +753,6 @@ allocdir(parent, request, mode)
 		return (0);
 	}
 	cacheino(dp, ino);
-	inp = getinoinfo(ino);
-	inp->i_parent = inp->i_dotdot = parent;
 	statemap[ino] = statemap[parent];
 	if (statemap[ino] == DSTATE) {
 		lncntp[ino] = iswap16(dp->di_nlink);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.11 2001/01/09 05:51:14 mycroft Exp $	*/
+/*	$NetBSD: pass3.c,v 1.12 2001/01/10 08:22:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.11 2001/01/09 05:51:14 mycroft Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.12 2001/01/10 08:22:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: pass3.c,v 1.11 2001/01/09 05:51:14 mycroft Exp $");
 void
 pass3()
 {
-	struct inoinfo **inpp, *inp, *pinp;
+	struct inoinfo **inpp, *inp;
 	ino_t orphan;
 	int loopcnt;
 
@@ -74,12 +74,6 @@ pass3()
 			inp = getinoinfo(inp->i_parent);
 		}
 		(void)linkup(orphan, inp->i_dotdot);
-		inp->i_parent = inp->i_dotdot = lfdir;
 		lncntp[lfdir]--;
-		pinp = getinoinfo(lfdir);
-		inp->i_parentp = pinp;
-		inp->i_sibling = pinp->i_child;
-		pinp->i_child = inp;
-		propagate(orphan);
 	}
 }
