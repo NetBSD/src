@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.96 2001/04/25 17:53:35 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.97 2001/06/11 21:18:36 bjh21 Exp $ */
 
 
 /*
@@ -165,7 +165,9 @@ atapiprint(aux, pnp)
  * 0x02 for drive 1).
  * Logic:
  * - If a status register is at 0xff, assume there is no drive here
- *   (ISA has pull-up resistors). If no drive at all -> return.
+ *   (ISA has pull-up resistors).  Similarly if the status register has
+ *   the value we last wrote to the bus (for IDE interfaces without pullups).
+ *   If no drive at all -> return.
  * - reset the controller, wait for it to complete (may take up to 31s !).
  *   If timeout -> return.
  * - test ATA/ATAPI signatures. If at last one drive found -> return.
@@ -200,9 +202,9 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->channel, st0, st1), DEBUG_PROBE);
 
-		if (st0 == 0xff)
+		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
-		if (st1 == 0xff)
+		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
 		if (ret_value == 0)
 			return 0;
