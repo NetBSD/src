@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $	*/
+/*	$NetBSD: input.c,v 1.4 1999/01/03 02:00:17 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -134,20 +134,6 @@ tsleep()
 	while (TV_POS(&tv))
 		if (rwait(&tv) && read(0, &c, 1) != 1)
 			break;
-}
-
-/*
- * Eat up any input (used at end of game).
- */
-void
-eat_input()
-{
-	struct timeval tv;
-	char c;
-
-	do {
-		tv.tv_sec = tv.tv_usec = 0;
-	} while (rwait(&tv) && read(0, &c, 1) == 1);
 }
 
 /*
