@@ -1,4 +1,4 @@
-.\" $NetBSD: bba.4,v 1.1 2000/05/02 07:17:21 augustss Exp $
+.\" $NetBSD: bba.4,v 1.2 2000/05/02 08:00:00 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -36,21 +36,23 @@
 .Os
 .Sh NAME
 .Nm bba
-.Nd Am7930 audio device driver
+.Nd IOASIC Baseboard Audio device driver
 .Sh SYNOPSIS
-.Cd "bba*   at tc? slot ? offset ?"
+.Cd "bba0   at ioasic? offset ?"
 .Cd "audio* at bba?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Am7930 found on the
-.Tn MAXINE
-family of machines.
+driver provides support for the IOASIC baseboard audio found on
+DEC 3000/300, 3000/500 and DEC Personal DECstation systems.  The baseboard
+audio driver is based on the AMD 79c30 ISDN and audio interface.  The
+interface is only capable of playing and recording 8kHz u-law audio.
 .Sh SEE ALSO
 .Xr audio 4 ,
-.Xr tc 4
+.Xr ioasic 4
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
 .Nx 1.5 .
+The name for the driver was adopted from the same driver in Ultrix.

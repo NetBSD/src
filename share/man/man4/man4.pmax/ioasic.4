@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ioasic.4,v 1.7 1999/04/06 20:24:49 pk Exp $
+.\"	$NetBSD: ioasic.4,v 1.8 2000/05/02 08:00:00 augustss Exp $
 .\"
 .Dd August 6, 1996
 .Dt IOASIC 4 pmax
@@ -56,6 +56,8 @@ baseboard devices, including one
 .Nm asc
 SCSI device with a scatter/gather DMA channel, an mc146818-compatible
 .Nm mcclock,
+an Am9730 audio device
+.Nm bba ,
 one or two
 .Nm scc
 two-port serial devices, and a AMD 9770 LANCE
@@ -85,6 +87,7 @@ counterpart.
 .Xr intro 4 ,
 .Xr mcclock 4 ,
 .Xr asc 4 ,
+.Xr bba 4 ,
 .Xr le 4 ,
 .Xr scc 4 ,
 .Xr tc 4 .
