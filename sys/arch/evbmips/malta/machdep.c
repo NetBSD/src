@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/08/04 01:41:31 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2002/08/05 01:15:22 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -122,7 +122,7 @@ int	comcnrate = 38400;	/* XXX should be config option */
 struct malta_config malta_configuration;
 
 /* For sysctl_hw. */
-exterm char cpu_model[];
+extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
