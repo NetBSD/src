@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.10 2003/08/01 17:03:56 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2003/10/25 22:31:20 kleink Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.S \
 	fabs.S frexp.c \
-	infinity.c isinf.c isinfl.c isnan.c isnanl.c \
+	infinityf.c infinity.c infinityl.c isinf.c isinfl.c isnan.c isnanl.c \
 	ldexp.S \
 	makecontext.c modf.S \
 	resumecontext.c \
