@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.10 2003/01/20 05:26:47 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11 2003/02/03 21:48:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,8 +58,9 @@ sendsig(sig, mask, code)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
 	struct sigframe *fp, frame;
+	struct trapframe *tf;
+	struct utrapframe *utf = &frame.sf_sc.sc_frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -79,7 +80,17 @@ sendsig(sig, mask, code)
 	fp = (struct sigframe *)((uintptr_t)(fp - 1) & ~0xf);
 
 	/* Save register context. */
-	frame.sf_sc.sc_frame = *tf;
+	memcpy(utf->fixreg, tf->fixreg, sizeof(utf->fixreg));
+	utf->lr   = tf->lr;
+	utf->cr   = tf->cr;
+	utf->xer  = tf->xer;
+	utf->ctr  = tf->ctr;
+	utf->srr0 = tf->srr0;
+	utf->srr1 = tf->srr1;
+#ifdef PPC_OEA
+	utf->vrsave = tf->tf_xtra[TF_VRSAVE];
+	utf->mq = tf->tf_xtra[TF_MQ];
+#endif
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -156,6 +167,7 @@ sys___sigreturn14(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sigcontext sc;
 	struct trapframe *tf;
+	struct utrapframe * const utf = &sc.sc_frame;
 	int error;
 
 	/*
@@ -170,7 +182,19 @@ sys___sigreturn14(l, v, retval)
 	tf = trapframe(l);
 	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);
-	*tf = sc.sc_frame;
+
+	/* Restore register context. */
+	memcpy(tf->fixreg, utf->fixreg, sizeof(tf->fixreg));
+	tf->lr   = utf->lr;
+	tf->cr   = utf->cr;
+	tf->xer  = utf->xer;
+	tf->ctr  = utf->ctr;
+	tf->srr0 = utf->srr0;
+	tf->srr1 = utf->srr1;
+#ifdef PPC_OEA
+	tf->tf_xtra[TF_VRSAVE] = utf->vrsave;
+	tf->tf_xtra[TF_MQ] = utf->mq;
+#endif
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
@@ -204,7 +228,11 @@ cpu_getmcontext(l, mcp, flagp)
 	gr[_REG_MSR] = tf->srr1;
 	gr[_REG_CTR] = tf->ctr;
 	gr[_REG_XER] = tf->xer;
-	gr[_REG_MQ]  = 0;				/* For now. */
+#ifdef PPC_OEA
+	gr[_REG_MQ]  = tf->tf_xtra[TF_MQ];
+#else
+	gr[_REG_MQ]  = 0;
+#endif
 	*flagp |= _UC_CPU;
 
 #ifdef PPC_HAVE_FPU
@@ -252,7 +280,9 @@ cpu_setmcontext(l, mcp, flags)
 		tf->srr1 = gr[_REG_MSR];
 		tf->ctr  = gr[_REG_CTR];
 		tf->xer  = gr[_REG_XER];
-		/* unused = gr[_REG_MQ]; */
+#ifdef PPC_OEA
+		tf->tf_xtra[TF_MQ] = gr[_REG_MQ];
+#endif
 	}
 
 #ifdef PPC_HAVE_FPU
