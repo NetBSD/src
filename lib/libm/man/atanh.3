@@ -30,14 +30,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atanh.3	5.2 (Berkeley) 5/6/91
-.\"	$Id: atanh.3,v 1.5 1995/03/04 01:36:40 jtc Exp $
+.\"	$Id: atanh.3,v 1.6 1995/04/14 18:40:01 jtc Exp $
 .\"
 .Dd May 6, 1991
 .Dt ATANH 3
 .Os BSD 4.3
 .Sh NAME
-.Nm atanh ,
-.Nm atanhf
+.Nm atanh
 .Nd inverse hyperbolic tangent function
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -54,34 +53,16 @@ functions compute the inverse hyperbolic tangent
 of the real
 argument
 .Ar x .
-For a discussion of error due to roundoff, see
-.Xr math 3 .
 .Sh RETURN VALUES
-The
-.Fn atanh
-function
-returns the inverse hyperbolic tangent of
-.Ar x
-if successful.
-On the
-.Tn VAX
-and
-.Tn Tahoe ,
-if the argument has absolute value
-bigger than or equal to 1,
-.Fn atanh
-sets the global variable
-.Va errno
-to
-.Er EDOM
-and
-a reserved operand fault is generated.
+Exceptional conditions are handled by
+.Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acosh 3 ,
 .Xr asinh 3 ,
 .Xr exp 3 ,
 .Xr infnan 3 ,
-.Xr math 3
+.Xr math 3 ,
+.Xr matherr 3
 .Sh HISTORY
 The
 .Fn atanh
