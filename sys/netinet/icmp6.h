@@ -1,4 +1,5 @@
-/*	$NetBSD: icmp6.h,v 1.4 2000/02/06 11:11:30 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.5 2000/02/26 08:39:18 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.6 2000/02/24 16:34:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -469,12 +470,12 @@ struct icmp6_filter {
 
 #ifdef _KERNEL
 #define	ICMP6_FILTER_SETPASSALL(filterp) \
-    {								\
+do {								\
 	int i; u_char *p;					\
 	p = (u_char *)filterp;					\
 	for (i = 0; i < sizeof(struct icmp6_filter); i++)	\
 		p[i] = 0xff;					\
-    }
+} while (0)
 #define	ICMP6_FILTER_SETBLOCKALL(filterp) \
 	bzero(filterp, sizeof(struct icmp6_filter))
 #else /* _KERNEL */
@@ -525,7 +526,7 @@ struct icmp6stat {
 #define ICMPV6CTL_ND6_UMAXTRIES	9
 #define ICMPV6CTL_ND6_MMAXTRIES		10
 #define ICMPV6CTL_ND6_USELOOPBACK	11
-#define ICMPV6CTL_ND6_PROXYALL	12
+/*#define ICMPV6CTL_ND6_PROXYALL	12	obsoleted, do not reuse here */
 #define ICMPV6CTL_NODEINFO	13
 #define ICMPV6CTL_MAXID		14
 
@@ -542,7 +543,7 @@ struct icmp6stat {
 	{ "nd6_umaxtries", CTLTYPE_INT }, \
 	{ "nd6_mmaxtries", CTLTYPE_INT }, \
 	{ "nd6_useloopback", CTLTYPE_INT }, \
-	{ "nd6_proxyall", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "nodeinfo", CTLTYPE_INT }, \
 }
 
@@ -560,7 +561,7 @@ struct icmp6stat {
 	&nd6_umaxtries, \
 	&nd6_mmaxtries,	\
 	&nd6_useloopback, \
-	&nd6_proxyall, \
+	0, \
 	&icmp6_nodeinfo, \
 }
 

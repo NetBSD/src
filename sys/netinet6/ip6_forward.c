@@ -1,4 +1,5 @@
-/*	$NetBSD: ip6_forward.c,v 1.8 2000/02/06 12:49:45 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.9 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.28 2000/02/22 14:04:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -109,19 +110,17 @@ ip6_forward(m, srcrt)
 	}
 #endif /*IPSEC_IPV6FWD*/
 
-	if (m->m_flags & (M_BCAST|M_MCAST) ||
-	   in6_canforward(&ip6->ip6_src, &ip6->ip6_dst) == 0) {
+	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
+	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		ip6stat.ip6s_cantforward++;
-		ip6stat.ip6s_badscope++;
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
 		if (ip6_log_time + ip6_log_interval < time_second) {
-			char addr[INET6_ADDRSTRLEN];
 			ip6_log_time = time_second;
-			strncpy(addr, ip6_sprintf(&ip6->ip6_src), sizeof(addr));
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on %s\n",
-			    addr, ip6_sprintf(&ip6->ip6_dst),
+			    ip6_sprintf(&ip6->ip6_src),
+			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
 			    if_name(m->m_pkthdr.rcvif));
 		}
@@ -324,6 +323,37 @@ ip6_forward(m, srcrt)
 		}
 	}
 	rt = ip6_forward_rt.ro_rt;
+
+	/*
+	 * Scope check: if a packet can't be delivered to its destination
+	 * for the reason that the destination is beyond the scope of the
+	 * source address, discard the packet and return an icmp6 destination
+	 * unreachable error with Code 2 (beyond scope of source address).
+	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
+	 */
+	if (in6_addr2scopeid(m->m_pkthdr.rcvif, &ip6->ip6_src) !=
+	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
+		ip6stat.ip6s_cantforward++;
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
+
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
+			log(LOG_DEBUG,
+			    "cannot forward "
+			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
+			    ip6_sprintf(&ip6->ip6_src),
+			    ip6_sprintf(&ip6->ip6_dst),
+			    ip6->ip6_nxt,
+			    if_name(m->m_pkthdr.rcvif), if_name(rt->rt_ifp));
+		}
+		if (mcopy)
+			icmp6_error(mcopy, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
+		m_freem(m);
+		return;
+	}
+
 	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {
