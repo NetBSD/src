@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1996/11/18 01:06:14 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41.8.1 1997/05/13 02:51:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -284,15 +284,6 @@ pmap_bootstrap(virtual_start)
 	 * Reserve pmap space for mapping physical pages during dump.
 	 */
 	virtual_avail = reserve_dumppages(virtual_avail);
-
-	/*
-	 * reserve special hunk of memory for use by bus dma as a bounce
-	 * buffer (contiguous virtual *and* physical memory).  XXX
-	 */
-#include "isadma.h"
-#if NISADMA > 0
-	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
-#endif
 
 	pmap_update();
 }
