@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.12 2004/11/24 20:49:20 bouyer Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.13 2005/01/24 18:47:37 shige Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -148,6 +148,11 @@ options	EMAC_EVENT_COUNTERS
 gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 xrtc0	at iic? addr 0x6f		# RTC
+
+gpio0	at opb? addr ? irq ?		# On-chip GPIO controller
+obsled0	at gpio? addr 0x0c		# OBS LED connected GPIO
+obsled1	at gpio? addr 0x0d		# OBS LED connected GPIO
+obsled2	at gpio? addr 0x0e		# OBS LED connected GPIO
 
 pchb0	at plb?				# PCI-Host bridges
 
