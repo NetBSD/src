@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.11 2004/06/11 19:45:55 tshiozak Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.12 2004/06/14 18:09:35 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11 2004/06/11 19:45:55 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.12 2004/06/14 18:09:35 tshiozak Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -352,6 +352,20 @@ acpi_md_sleep(int state)
 		WAKECODE_FIXUP(previous_fs,  u_int16_t, r_fs);
 		WAKECODE_FIXUP(previous_gs,  u_int16_t, r_gs);
 		WAKECODE_FIXUP(previous_ss,  u_int16_t, r_ss);
+
+		/*
+		 * XXX: restore curproc's PTD here -
+		 *
+		 * AcpiEnterSleepState() may switch the context.
+		 * (ltsleep() may probably be called from Osd.)
+		 * Such context switching may causes the kernel
+		 * to crash under the inconsistent PTD.
+		 * Curproc's PTD must be restored to prevent the crash.
+		 * Anyway, leaving the inconsistent PTD is unpreferable,
+		 * although the context switching during sleep
+		 * process is also unpreferable.
+		 */
+		__asm__( "movl %0,%%cr3;" : : "a" (r_cr3) );
 
 #ifdef ACPI_PRINT_REG
 		acpi_printcpu();
