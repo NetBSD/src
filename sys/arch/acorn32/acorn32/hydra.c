@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.6 2002/10/05 13:46:57 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.7 2002/10/05 23:30:03 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.6 2002/10/05 13:46:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.7 2002/10/05 23:30:03 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.6 2002/10/05 13:46:57 bjh21 Exp $");
 
 #include <arch/arm/mainbus/mainbus.h>
 #include <arch/acorn32/acorn32/hydrareg.h>
+#include <arch/acorn32/acorn32/hydravar.h>
 
 #include "locators.h"
 
@@ -64,10 +65,19 @@ static void hydra_shutdown(void *);
 
 static void hydra_reset(struct hydra_softc *);
 
+static int cpu_hydra_match(struct device *, struct cfdata *, void *);
+static void cpu_hydra_attach(struct device *, struct device *, void *);
+static void cpu_hydra_hatch(void);
+
 CFATTACH_DECL(hydra, sizeof(struct hydra_softc),
     hydra_match, hydra_attach, NULL, NULL);
+CFATTACH_DECL(cpu_hydra, sizeof(struct device),
+    cpu_hydra_match, cpu_hydra_attach, NULL, NULL);
 
-extern char const hydra_bootcode[], hydra_ebootcode[];
+extern char const hydra_probecode[], hydra_eprobecode[];
+extern char const hydra_hatchcode[], hydra_ehatchcode[];
+
+static struct hydra_softc *the_hydra;
 
 static int
 hydra_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -126,6 +136,9 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 	struct pglist bootpglist;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+
+	if (the_hydra == NULL)
+		the_hydra = sc;
 
 	sc->sc_iot = mba->mb_iot;
 	if (bus_space_map(sc->sc_iot, HYDRA_PHYS_BASE, HYDRA_PHYS_SIZE, 0,
@@ -191,8 +204,8 @@ hydra_probe_slave(struct hydra_softc *sc, int slave)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, ret;
 
-	memcpy((caddr_t)sc->sc_bootpage_va, hydra_bootcode,
-	    hydra_ebootcode - hydra_bootcode);
+	memcpy((caddr_t)sc->sc_bootpage_va, hydra_probecode,
+	    hydra_eprobecode - hydra_probecode);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_SET, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_RESET, 1 << slave);
@@ -267,6 +280,89 @@ hydra_reset(struct hydra_softc *sc)
 	bus_space_write_1(iot, ioh, HYDRA_MMU_LSN, 0);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_MSN, 0);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 0xf);
+}
+
+static int
+cpu_hydra_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+
+	/* If there's anything there, it's a CPU. */
+	return 1;
+}
+
+static void
+cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct hydra_softc *sc = (void *)parent;
+	struct hydra_attach_args *ha = aux;
+	int slave = ha->ha_slave;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int i, ret, error;
+	vaddr_t uaddr;
+	struct hydraboot_vars *hb;
+
+	/*
+	 * Generate a kernel stack and PCB (in essence, a u-area) for the
+	 * new CPU.
+	 */
+	uaddr = uvm_uarea_alloc();
+	error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
+	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
+	if (error)
+		panic("cpu_hydra_attach: uvm_fault_wire failed: %d", error);
+
+	/* Copy hatch code to boot page, and set up arguments */
+	memcpy((caddr_t)sc->sc_bootpage_va, hydra_hatchcode,
+	    hydra_ehatchcode - hydra_hatchcode);
+	KASSERT(hydra_ehatchcode - hydra_hatchcode <= HYDRABOOT_VARS);
+	hb = (struct hydraboot_vars *)(sc->sc_bootpage_va + HYDRABOOT_VARS);
+	hb->hb_ttb = (paddr_t)curproc->p_addr->u_pcb.pcb_pagedir;
+	hb->hb_bootpage_pa = sc->sc_bootpage_pa;
+	hb->hb_sp = uaddr + USPACE;
+	hb->hb_entry = &cpu_hydra_hatch;
+
+	cpu_drain_writebuf();
+
+	bus_space_write_1(iot, ioh, HYDRA_MMU_SET, 1 << slave);
+	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
+	bus_space_write_1(iot, ioh, HYDRA_RESET, 1 << slave);
+	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 1 << slave);
+	bus_space_write_1(iot, ioh, HYDRA_RESET, 0);
+	ret = 0;
+	for (i = 0; i < 100000; i++) {
+		if ((bus_space_read_1(iot, ioh, HYDRA_HALT_STATUS) &
+			(1 << slave)) != 0) {
+			ret = 1;
+			break;
+		}
+	}
+	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
+	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 1 << slave);
+
+	cpu_dcache_inv_range((vaddr_t)hb, sizeof(*hb));
+
+	if (ret == 0) {
+		printf(": failed to spin up\n");
+		return;
+	}
+	printf("\n");
+}
+
+static void
+cpu_hydra_hatch(void)
+{
+	struct hydra_softc *sc = the_hydra;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int slave;
+
+	slave = bus_space_read_1(iot, ioh, HYDRA_ID_STATUS) & 0x3;
+	printf(": Number %d is alive!", slave);
+	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
+	/* We only get here if someone resumes us. */
+	for (;;)
+		continue;
 }
 
 #ifdef MULTIPROCESSOR
