@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.4 2003/12/29 06:26:41 sekiya Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.4.2.1 2004/07/23 06:57:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  *	http://www.microsoft.com/hwdev/download/respec/riscspec.zip
  */
+
+#ifndef _ARCBIOS_H_
+#define _ARCBIOS_H_
 
 #define	ARCBIOS_STDIN		0
 #define	ARCBIOS_STDOUT		1
@@ -467,3 +470,5 @@ struct arcbios_fv {
 			    uint32_t);		/* file ID */
 #endif
 };
+
+#endif /* _ARCBIOS_H_ */
