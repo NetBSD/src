@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2002/03/12 06:26:35 lukem Exp $
+#	$NetBSD: list,v 1.11 2002/04/12 03:28:07 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -71,7 +71,7 @@ COPY	${_SRC_TOP_}/etc/netconfig		etc/netconfig
 COPY	${_SRC_TOP_}/etc/services		etc/services
 
 # and the common installation tools
-COPY	${CURDIR}/../miniroot/termcap.rcons	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/miniroot/termcap.rcons	usr/share/misc/termcap
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
@@ -83,4 +83,4 @@ COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 
 # someday put in the release notes too
 #
-# COPY	${CURDIR}/../../notes/pmax/INSTALL.txt	INSTALL.txt
+# COPY	${DISTRIBDIR}/notes/pmax/INSTALL.txt	INSTALL.txt
