@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.14 2002/02/07 03:15:08 ross Exp $
+.\" $NetBSD: uaudio.4,v 1.15 2002/02/12 19:53:57 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,7 +129,3 @@ The mixer interface is really incomplete.
 .Pp
 There should be some heuristics that allows important controls,
 e.g., volume, to be identified and given its traditional name.
-.Pp
-The driver is half duplex only at the moment, even when the USB device
-supports full duplex operation. This is driver limitation
-rather than hardware one.
