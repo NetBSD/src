@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.28 1999/06/07 15:34:07 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.29 1999/11/27 14:51:49 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,6 +297,7 @@ main(argc, argv)
 		die(0);
 	}
 	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
+		dprintf("making unix dgram socket %s\n", *pp);
 		unlink(*pp);
 		memset(&sunx, 0, sizeof(sunx));
 		sunx.sun_family = AF_LOCAL;
@@ -465,6 +466,7 @@ logpath_add(lp, szp, maxszp, new)
 	char *new;
 {
 
+	dprintf("adding %s to the %p logpath list\n", new, *lp);
 	if (*szp == *maxszp) {
 		if (*maxszp == 0) {
 			*maxszp = 4;	/* start of with enough for now */
