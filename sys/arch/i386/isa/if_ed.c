@@ -14,7 +14,7 @@
  * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
  * similar clones.
  *
- *	$Id: if_ed.c,v 1.51 1994/10/01 07:19:32 mycroft Exp $
+ *	$Id: if_ed.c,v 1.52 1994/10/12 13:42:00 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1273,7 +1273,7 @@ ed_init(sc)
 		 * Set promiscuous mode.  Multicast filter was set earlier so
 		 * that we should receive all multicast packets.
 		 */
-		i |= ED_RCR_PRO;
+		i |= ED_RCR_PRO | ED_RCR_AR | ED_RCR_SEP;
 	}
 	outb(sc->nic_addr + ED_P0_RCR, i);
 
@@ -1423,10 +1423,7 @@ outloop:
 			break;
 		/*
 		 * Enable 16bit access to shared memory on WD/SMC
-		 * boards don't update wd_laar_proto because we want to
-		 * restore the previous state (because an arp reply in
-		 * the input code may cause a call-back to ed_start).
-		 * XXX - the call-back to 'start' is a bug, IMHO.
+		 * boards.
 		 */
 		case ED_VENDOR_WD_SMC:
 			if (sc->isa16bit)
@@ -1476,7 +1473,7 @@ outloop:
 		ed_xmit(sc);
 
 #if NBPFILTER > 0
-	/* If there is BPF support in the configuration, tap off here. */
+	/* Tap off here if there is a BPF listener. */
 	if (sc->sc_arpcom.ac_if.if_bpf)
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
 #endif
@@ -1525,18 +1522,42 @@ ed_rint(sc)
 			ed_pio_readmem(sc, (u_short)packet_ptr,
 			    (caddr_t) &packet_hdr, sizeof(packet_hdr));
 		len = packet_hdr.count;
-		if ((len >= ETHER_MIN_LEN) && (len <= ETHER_MAX_LEN)) {
+		if (len > ETHER_MAX_LEN) {
+			/*
+			 * Length is a wild value.  There's a good chance that
+			 * this was caused by the NIC being old and buggy.
+			 * The bug is that the length low byte is duplicated in
+			 * the high byte.  Try to recalculate the length based
+			 * on the pointer to the next packet.
+			 *
+			 * NOTE: sc->next_packet is pointing at the current
+			 * packet.
+			 */
+			len &= ED_PAGE_SIZE - 1;
+			if (packet_hdr.next_packet >= sc->next_packet) {
+				len += (packet_hdr.next_packet - sc->next_packet) * ED_PAGE_SIZE;
+			} else {
+				len += ((packet_hdr.next_packet - sc->rec_page_start) +
+					(sc->rec_page_stop - sc->next_packet)) * ED_PAGE_SIZE;
+			}
+		}
+		/*
+		 * Be fairly liberal about what we allow as a "reasonable"
+		 * length so that a [crufty] packet will make it to BPF (and
+		 * can thus be analyzed).  Note that all that is really
+		 * important is that we have a length that will fit into one
+		 * mbuf cluster or less; the upper layer protocols can then
+		 * figure out the length from their own length field(s).
+		 */
+		if (len <= MCLBYTES &&
+		    packet_hdr.next_packet >= sc->rec_page_start &&
+		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
 			ed_get_packet(sc, packet_ptr + sizeof(struct ed_ring),
 			    len - sizeof(struct ed_ring));
 			++sc->sc_arpcom.ac_if.if_ipackets;
 		} else {
-			/*
-			 * Really BAD...probably indicates that the ring
-			 * pointers are corrupted.  Also seen on early rev
-			 * chips under high load - the byte order of the length
-			 * gets switched.
-			 */
+			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
@@ -1892,16 +1913,15 @@ ed_get_packet(sc, buf, len)
 	u_short len;
 {
 	struct ether_header *eh;
-    	struct mbuf *m, *head = 0, *ed_ring_to_mbuf();
+    	struct mbuf *m, *ed_ring_to_mbuf();
 
 	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
-		goto bad;
+		return;
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
-	head = m;
 
 	/* The following silliness is to make NFS happy. */
 #define EROUND	((sizeof(struct ether_header) + 3) & ~3)
@@ -1911,22 +1931,23 @@ ed_get_packet(sc, buf, len)
 	 * The following assumes there is room for the ether header in the
 	 * header mbuf.
 	 */
-	head->m_data += EOFF;
-	eh = mtod(head, struct ether_header *);
+	m->m_data += EOFF;
+	eh = mtod(m, struct ether_header *);
 
 	if (sc->mem_shared)
-		bcopy(buf, mtod(head, caddr_t), sizeof(struct ether_header));
+		bcopy(buf, mtod(m, caddr_t), sizeof(struct ether_header));
 	else
-		ed_pio_readmem(sc, (u_short)buf, mtod(head, caddr_t),
+		ed_pio_readmem(sc, (u_short)buf, mtod(m, caddr_t),
 		    sizeof(struct ether_header));
 	buf += sizeof(struct ether_header);
-	head->m_len += sizeof(struct ether_header);
+	m->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
 
 	/* Pull packet off interface. */
-	m = ed_ring_to_mbuf(sc, buf, m, len);
-	if (m == 0)
-		goto bad;
+	if (ed_ring_to_mbuf(sc, buf, m, len) == 0) {
+		m_freem(m);
+		return;
+	}
 
 #if NBPFILTER > 0
 	/*
@@ -1934,7 +1955,7 @@ ed_get_packet(sc, buf, len)
 	 * the raw packet to bpf. 
 	 */
 	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, head);
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
@@ -1945,20 +1966,15 @@ ed_get_packet(sc, buf, len)
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(head);
+			m_freem(m);
 			return;
 		}
 	}
 #endif
 
 	/* Fix up data start offset in mbuf to point past ether header. */
-	m_adj(head, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, head);
-	return;
-
-bad:	if (head)
-		m_freem(head);
-	return;
+	m_adj(m, sizeof(struct ether_header));
+	ether_input(&sc->sc_arpcom.ac_if, eh, m);
 }
 
 /*
