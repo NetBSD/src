@@ -1,4 +1,4 @@
-/* $NetBSD: sigreturn.S,v 1.3 1996/11/30 02:31:49 jtc Exp $ */
+/*	$NetBSD: sigreturn.S,v 1.4 1997/10/06 00:07:20 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,17 +40,6 @@
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
-
-/* I must code this bit ... - mark */
-
-#if 0
-#ifdef GPROF
-#undef ENTRY
-#define	ENTRY(x) \
-	.globl _/**/x; .align 2; _/**/x:  pusha ; \
-	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
-#endif /* GPROF */
-#endif
 
 SYSCALL(sigreturn)
 	mov	r15, r14

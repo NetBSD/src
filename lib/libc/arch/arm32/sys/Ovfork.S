@@ -1,4 +1,4 @@
-/* $NetBSD: Ovfork.S,v 1.2 1996/05/12 19:55:00 mark Exp $ */
+/*	$NetBSD: Ovfork.S,v 1.3 1997/10/06 00:07:09 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

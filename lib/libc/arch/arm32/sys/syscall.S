@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.S,v 1.2 1996/05/12 19:55:44 mark Exp $ */
+/*	$NetBSD: syscall.S,v 1.3 1997/10/06 00:07:22 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,9 +36,6 @@
  */
 
 #include "SYS.h"
-
-	.text
-	.align	0
 
 ENTRY(syscall)
 	swi	0x00000000
