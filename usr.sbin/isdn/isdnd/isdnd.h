@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.8 2002/04/10 23:35:07 martin Exp $ 
+ *	$Id: isdnd.h,v 1.9 2002/09/20 15:15:49 mycroft Exp $ 
  *
  * $FreeBSD$
  *
@@ -64,6 +64,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 
 #ifdef USE_RTPRIO
 #include <sys/rtprio.h>

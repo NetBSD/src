@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: main.c,v 1.2 2002/02/04 16:48:44 drochner Exp $ 
+ *      $Id: main.c,v 1.3 2002/09/20 15:15:50 mycroft Exp $ 
  *
  * $FreeBSD$
  *
@@ -56,6 +56,7 @@ main(int argc, char **argv)
 {
         int i;
 	int kchar;
+	struct pollfd set[1];
 	
 	char *aliasfile = ALIASFILE;
 	int rrtimeout = REREADTIMEOUT;
@@ -112,19 +113,13 @@ main(int argc, char **argv)
 	
 	/* go into loop */
 
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
 	for (;;)
 	{
-		fd_set set;
-		struct timeval timeout;
-
-		FD_ZERO(&set);
-		FD_SET(STDIN_FILENO, &set);
-		timeout.tv_sec = rrtimeout;
-		timeout.tv_usec = 0;
-
 		/* if no char is available within timeout, reread spool */
 		
-		if((select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout)) <= 0)
+		if((poll(set, 1, rrtimeout * 1000)) <= 0)
 		{
 			reread();
 			continue;
