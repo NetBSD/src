@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.15 1999/08/05 01:51:00 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.16 1999/08/28 09:19:05 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -555,7 +555,7 @@ mb8795_init(sc)
 	nextdma_init(sc->sc_tx_nd);
 	nextdma_init(sc->sc_rx_nd);
 
-	nextdma_start(sc->sc_rx_nd, DMACSR_READ);
+	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 
 	if (ifp->if_snd.ifq_head != NULL) {
 		mb8795_start(ifp);
@@ -823,7 +823,7 @@ mb8795_start(ifp)
   bus_dmamap_sync(sc->sc_tx_dmat, sc->sc_tx_dmamap, 0,
 			sc->sc_tx_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-	nextdma_start(sc->sc_tx_nd, DMACSR_WRITE);
+	nextdma_start(sc->sc_tx_nd, DMACSR_SETWRITE);
 
 #if NBPFILTER > 0
   /*
