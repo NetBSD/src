@@ -1,7 +1,7 @@
-/*	$NetBSD: sh3_machdep.c,v 1.32 2002/03/10 07:46:13 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.33 2002/03/17 14:02:03 uch Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,19 +78,20 @@
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
 #include "opt_compat_netbsd.h"
+#include "opt_kstack_debug.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
+
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
-#include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/proc.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -106,6 +107,7 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 #include <sh3/cache.h>
 #include <sh3/mmu.h>
 #include <sh3/clock.h>
+#include <sh3/locore.h>
 
 char cpu_model[120];
 
@@ -118,12 +120,14 @@ int cpu_product;
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
-struct vm_map *phys_map = NULL;
+struct vm_map *exec_map;
+struct vm_map *mb_map;
+struct vm_map *phys_map;
 
 int physmem;
-struct user *proc0paddr;
+struct user *proc0paddr;	/* init_main.c use this. */
+struct pcb *curpcb;
+struct md_upte *curupte;	/* SH3 wired u-area hack */
 
 #ifndef IOM_RAM_BEGIN
 #error "define IOM_RAM_BEGIN"
@@ -133,7 +137,8 @@ vaddr_t ram_start = IOM_RAM_BEGIN;
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
-extern char sh_vector_tlbmiss[], sh_vector_tlbmiss_end[];
+extern char sh3_vector_tlbmiss[], sh3_vector_tlbmiss_end[];
+extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
 
 /*
  * These variables are needed by /sbin/savecore
@@ -165,11 +170,22 @@ sh_cpu_init(int arch, int product)
 	/* Exception vector. */
 	memcpy(VBR + 0x100, sh_vector_generic,
 	    sh_vector_generic_end - sh_vector_generic);
-	memcpy(VBR + 0x400, sh_vector_tlbmiss,
-	    sh_vector_tlbmiss_end - sh_vector_tlbmiss);
+	if (CPU_IS_SH3)
+		memcpy(VBR + 0x400, sh3_vector_tlbmiss,
+		    sh3_vector_tlbmiss_end - sh3_vector_tlbmiss);
+	if (CPU_IS_SH4)
+		memcpy(VBR + 0x400, sh4_vector_tlbmiss,
+		    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss);
+
 	memcpy(VBR + 0x600, sh_vector_interrupt,
 	    sh_vector_interrupt_end - sh_vector_interrupt);
+
+	sh_icache_sync_all();	/* for I/D separated cache */
+
 	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBR));
+
+	/* kernel stack setup */
+	__sh_switch_resume = CPU_IS_SH3 ? sh3_switch_resume : sh4_switch_resume;
 }
 
 /*
@@ -232,12 +248,29 @@ sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pageDirReg = (pt_entry_t)pagedir;
-	/* kernel stack */
-	curpcb->kr15 = p0 + USPACE - sizeof(struct trapframe);
-	curpcb->r15 = curpcb->kr15;
-	/* trap frame */
-	proc0.p_md.md_regs = (struct trapframe *)curpcb->kr15 - 1;
+	/* 
+	 * u-area map:
+	 * |user| .... | ............... |
+	 * |      NBPG +  USPACE - NBPG  +
+         *           pcb_fp(P1)        pcb_sp
+	 * pcb_fp and pcb_sp are stored into r6_bank, r7_bank
+	 * when context switching.
+	 */
+	curpcb->pcb_sp = p0 + USPACE;
+	curpcb->pcb_fp = p0 + NBPG;
+	curpcb->pcb_sf.sf_r6_bank = curpcb->pcb_fp;
+	curpcb->pcb_sf.sf_r15 = curpcb->pcb_sp;
+	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(curpcb->pcb_fp));
+	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(curpcb->pcb_sp));
+	curupte = proc0.p_md.md_upte;
 
+	/* trap frame */
+	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_fp - 1;
+#ifdef KSTACK_DEBUG
+	memset((char *)(p0 + sizeof(struct user)), 0x5a,
+	    NBPG - sizeof(struct user));
+	memset((char *)(p0 + NBPG), 0xa5, USPACE - NBPG);
+#endif
 	/* Enable MMU */
 	sh_mmu_start();
 
@@ -261,9 +294,15 @@ sh3_startup()
 
 	printf(version);
 
-	/* Check exception vector size here. */
-	KDASSERT(sh_vector_generic_end - sh_vector_generic < 0x300);
-	KDASSERT(sh_vector_tlbmiss_end - sh_vector_tlbmiss < 0x200);
+#ifdef DEBUG
+	printf("general exception handler:\t%d byte\n",
+	       sh_vector_generic_end - sh_vector_generic);
+	printf("TLB miss exception handler:\t%d byte\n",
+	       CPU_IS_SH3 ? sh3_vector_tlbmiss_end - sh3_vector_tlbmiss :
+	       sh4_vector_tlbmiss_end - sh4_vector_tlbmiss);
+	printf("interrupt exception handler:\t%d byte\n",
+	       sh_vector_interrupt_end - sh_vector_interrupt);
+#endif /* DEBUG */
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	sprintf(cpu_model, "HITACHI SH%d %d.%02dMHz PCLOCK %d.%02d MHz",

@@ -1,7 +1,7 @@
-/*	$NetBSD: Locore.c,v 1.7 2002/03/03 14:32:21 uch Exp $	*/
+/*	$NetBSD: Locore.c,v 1.8 2002/03/17 14:02:03 uch Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,6 +78,8 @@
  *	@(#)Locore.c
  */
 
+#include "opt_lockdebug.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/user.h>
@@ -86,8 +88,170 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <sh3/cpu.h>
+#include <sh3/psl.h>
+#include <sh3/mmu.h>
+#include <sh3/locore.h>
+
+void (*__sh_switch_resume)(struct proc *);
+struct proc *cpu_switch_search(void);
+void idle(void);
+int want_resched;
+
+#ifdef LOCKDEBUG
+#define	SCHED_LOCK_IDLE()	sched_lock_idle()
+#define	SCHED_UNLOCK_IDLE()	sched_unlock_idle()
+#else
+#define	SCHED_LOCK_IDLE()	((void)0)
+#define	SCHED_UNLOCK_IDLE()	((void)0)
+#endif
+
+/*
+ * struct proc *cpu_switch_search(void):
+ *	Find the highest priority process.
+ */
+struct proc *
+cpu_switch_search()
+{
+	struct prochd *q;
+	struct proc *p;
+
+	curproc = 0;
+
+	SCHED_LOCK_IDLE();
+	while (sched_whichqs == 0) {
+		SCHED_UNLOCK_IDLE();
+		idle();
+		SCHED_LOCK_IDLE();
+	}
+
+	q = &sched_qs[ffs(sched_whichqs) - 1];
+	p = q->ph_link;
+	remrunqueue(p);
+	want_resched = 0;
+	SCHED_UNLOCK_IDLE();
+
+	p->p_stat = SONPROC;
+	curproc = p;
+
+	return (p);
+}
+
+/*
+ * void idle(void):
+ *	When no processes are on the run queue, wait for something to come
+ *	ready. Separated function for profiling.
+ */
+void
+idle()
+{
+
+	cpl = 0;
+	Xspllower();
+	__asm__ __volatile__("sleep");
+	splhigh();
+}
+
+/*
+ * Put process p on the run queue indicated by its priority.
+ * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
+ */
+void
+setrunqueue(struct proc *p)
+{
+	struct prochd *q;
+	struct proc *oldlast;
+	int which = p->p_priority >> 2;
+
+#ifdef DIAGNOSTIC
+	if (p->p_back || which >= 32 || which < 0)
+		panic("setrunqueue");
+#endif
+	q = &sched_qs[which];
+	sched_whichqs |= 0x00000001 << which;
+	if (sched_whichqs == 0) {
+		panic("setrunqueue[whichqs == 0 ]");
+	}
+	p->p_forw = (struct proc *)q;
+	p->p_back = oldlast = q->ph_rlink;
+	q->ph_rlink = p;
+	oldlast->p_forw = p;
+}
+
+/*
+ * Remove process p from its run queue, which should be the one
+ * indicated by its priority.
+ * Calls should be made at splstatclock().
+ */
+void
+remrunqueue(struct proc *p)
+{
+	int which = p->p_priority >> 2;
+	struct prochd *q;
+
+#ifdef DIAGNOSTIC
+	if (!(sched_whichqs & (0x00000001 << which)))
+		panic("remrunqueue");
+#endif
+	p->p_forw->p_back = p->p_back;
+	p->p_back->p_forw = p->p_forw;
+	p->p_back = NULL;
+	q = &sched_qs[which];
+	if (q->ph_link == (struct proc *)q)
+		sched_whichqs &= ~(0x00000001 << which);
+}
+
+/*
+ * void sh3_switch_setup(struct proc *p):
+ *	prepare kernel stack PTE table. TLB miss handler check these.
+ */
+void
+sh3_switch_setup(struct proc *p)
+{
+	pt_entry_t *pte;
+	struct md_upte *md_upte = p->p_md.md_upte;
+	u_int32_t vpn;
+	int i;
+
+	vpn = (u_int32_t)p->p_md.md_p3;
+	vpn &= ~PGOFSET;
+	for (i = 0; i < UPAGES; i++, pte++, vpn += NBPG, md_upte++) {
+		pte = vtopte(vpn);
+		md_upte->addr = vpn;
+		md_upte->data = (*pte & PG_HW_BITS) |
+		    SH3_MMUDA_D_D | SH3_MMUDA_D_V;
+	}
+		
+}
+
+/*
+ * void sh4_switch_setup(struct proc *p):
+ *	prepare kernel stack PTE table. sh4_switch_resume wired this PTE.
+ */
+void
+sh4_switch_setup(struct proc *p)
+{
+	pt_entry_t *pte;
+	struct md_upte *md_upte = p->p_md.md_upte;
+	u_int32_t vpn;
+	int i, e;
+
+	vpn = (u_int32_t)p->p_md.md_p3;
+	pte = vtopte(vpn);
+	vpn &= ~PGOFSET;
+	e = SH4_UTLB_ENTRY - UPAGES;
+	for (i = 0; i < UPAGES; i++, pte++, e++, vpn += NBPG) {
+		/* Address array */
+		md_upte->addr = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
+		md_upte->data = vpn | SH4_UTLB_AA_D | SH4_UTLB_AA_V;
+		md_upte++;
+		/* Data array */
+		md_upte->addr = SH4_UTLB_DA1 | (e << SH4_UTLB_E_SHIFT);
+		md_upte->data = (*pte & PG_HW_BITS) |
+		    SH4_UTLB_DA1_D | SH4_UTLB_DA1_V;
+		md_upte++;
+	}
+}
 
 /*
  * copyout(caddr_t from, caddr_t to, size_t len);
@@ -474,53 +638,4 @@ kcopy(const void *src, void *dst, size_t len)
 	curpcb->pcb_onfault = oldfault;
 
 	return EFAULT;
-}
-
-/*
- * Put process p on the run queue indicated by its priority.
- * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
- */
-void
-setrunqueue(struct proc *p)
-{
-	struct prochd *q;
-	struct proc *oldlast;
-	int which = p->p_priority >> 2;
-
-#ifdef DIAGNOSTIC
-	if (p->p_back || which >= 32 || which < 0)
-		panic("setrunqueue");
-#endif
-	q = &sched_qs[which];
-	sched_whichqs |= 0x00000001 << which;
-	if (sched_whichqs == 0) {
-		panic("setrunqueue[whichqs == 0 ]");
-	}
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
-}
-
-/*
- * Remove process p from its run queue, which should be the one
- * indicated by its priority.
- * Calls should be made at splstatclock().
- */
-void
-remrunqueue(struct proc *p)
-{
-	int which = p->p_priority >> 2;
-	struct prochd *q;
-
-#ifdef DIAGNOSTIC
-	if (!(sched_whichqs & (0x00000001 << which)))
-		panic("remrunqueue");
-#endif
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
-	q = &sched_qs[which];
-	if (q->ph_link == (struct proc *)q)
-		sched_whichqs &= ~(0x00000001 << which);
 }
