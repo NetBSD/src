@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.81 1999/03/27 11:42:13 kleink Exp $
+#	$NetBSD: TRINITY,v 1.82 1999/03/31 14:16:20 mycroft Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -628,7 +628,7 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd works; RND_COM does not on port i386 yet.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
