@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.39 2003/04/17 18:03:17 fvdl Exp $
+#	$NetBSD: MAKEDEV,v 1.40 2003/04/27 13:15:41 ragge Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -114,7 +114,7 @@ floppy)
 	;;
 
 std)
-	rm -f console kmem mem null zero drum klog
+	rm -f console kmem mem null zero drum klog ksyms
 	mknod console		c 0 0
 	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
@@ -122,6 +122,7 @@ std)
 	mknod zero		c 3 12	; chmod 666 zero
 	mknod drum		c 7 0	; chmod 640 drum ; chgrp kmem drum
 	mknod klog		c 33 0	; chmod 600 klog
+	mknod ksyms		c 78 0	; chmod 444 ksyms
 	if $nofdesc; then
 		rm -f tty stdin stdout stderr
 		mknod tty	c 2 0	; chmod 666 tty
