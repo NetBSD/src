@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.6 1999/09/08 21:45:29 jsm Exp $	*/
+/*	$NetBSD: random.c,v 1.7 2000/01/18 16:12:25 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.6 1999/09/08 21:45:29 jsm Exp $");
+__RCSID("$NetBSD: random.c,v 1.7 2000/01/18 16:12:25 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: random.c,v 1.6 1999/09/08 21:45:29 jsm Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
+
+#define MAXRANDOM	2147483647
 
 int  main __P((int, char **));
 void usage __P((void)) __attribute__((__noreturn__));
@@ -115,7 +117,7 @@ main(argc, argv)
 
 	/* Compute a random exit status between 0 and denom - 1. */
 	if (random_exit)
-		return ((denom * random()) / LONG_MAX);
+		return ((denom * random()) / MAXRANDOM);
 
 	/*
 	 * Act as a filter, randomly choosing lines of the standard input
@@ -130,7 +132,7 @@ main(argc, argv)
 	 * 0 (which has a 1 / denom chance of being true), we select the
 	 * line.
 	 */
-	selected = (int)(denom * random() / LONG_MAX) == 0;
+	selected = (int)(denom * random() / MAXRANDOM) == 0;
 	while ((ch = getchar()) != EOF) {
 		if (selected)
 			(void)putchar(ch);
@@ -140,7 +142,7 @@ main(argc, argv)
 				err(2, "stdout");
 
 			/* Now see if the next line is to be printed. */
-			selected = (int)(denom * random() / LONG_MAX) == 0;
+			selected = (int)(denom * random() / MAXRANDOM) == 0;
 		}
 	}
 	if (ferror(stdin))
