@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.10 2004/07/09 01:13:53 mycroft Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.11 2004/07/09 02:05:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -89,12 +89,6 @@ struct iw_softc {
 	int	vers;
 	int	revision;
 	int	sc_fullduplex;
-	int	sc_open;
-	int	sc_flags;
-	int	sc_mode;
-#define IW_OPEN 1
-#define IW_READ 2
-#define IW_WRITE 4
 	int	sc_irate;
 	int	sc_orate;
 	u_long	sc_dma_flags;
