@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.22 2000/07/18 11:41:32 soda Exp $
+#	$NetBSD: DR-EVIL,v 1.23 2000/07/27 14:34:06 mrg Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -92,7 +92,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_AOUT	# binary compatibility w/ NetBSD a.out
 
 # Executable format options
 
