@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1998/11/17 02:38:17 jonathan Exp $
+#	$NetBSD: list,v 1.2 1998/11/17 05:07:18 jonathan Exp $
 
 # pmax extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -16,11 +16,36 @@ LINK	instbin			sbin/fsck_ext2fs
 LINK	instbin			sbin/mount_kernfs
 
 # extras in /usr.bin
-
 SYMLINK	../../instbin		usr/bin/netstat
 SYMLINK	../../instbin		usr/bin/rsh
 SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
 SYMLINK	../../instbin		usr/bin/vi
+
+# OK, now do everything in /usr all over all again in usr.install,
+# in case we try and install directly into the miniroot (mounting over /usr).
+
+# local usr.bin
+SPECIAL	mkdir	usr.install
+SPECIAL	mkdir	usr.install/bin
+SPECIAL	mkdir	usr.install/sbin
+
+
+SPECIAL	ln -s ../../instbin	usr.install/bin/chflags
+SPECIAL	ln -s ../../instbin	usr.install/bin/chgrp
+SPECIAL	ln -s ../../instbin	usr.install/bin/ftp
+SPECIAL	ln -s ../../instbin	usr.install/bin/gunzip
+SPECIAL	ln -s ../../instbin	usr.install/bin/gzcat
+SPECIAL	ln -s ../../instbin	usr.install/bin/gzip
+SPECIAL	ln -s ../../instbin	usr.install/bin/netstat
+SPECIAL	ln -s ../../instbin	usr.install/bin/sort
+SPECIAL	ln -s ../../instbin	usr.install/bin/tar
+SPECIAL	ln -s ../../instbin	usr.install/bin/tip
+SPECIAL	ln -s ../../instbin	usr.install/bin/vi
+
+# local usr.sbin
+SPECIAL	ln -s ../../instbin	usr.install/sbin/chroot
+SPECIAL	ln -s ../../instbin	usr.install/sbin/chown
+SPECIAL	ln -s ../../instbin	usr.install/sbin/update
 
 
 # crunchgen source directory specials: progs built in nonstandard places
