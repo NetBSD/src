@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.28 2002/12/11 06:11:11 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.29 2002/12/17 02:08:46 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.28 2002/12/11 06:11:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.29 2002/12/17 02:08:46 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -1691,6 +1691,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_MDHI]  = f->f_regs[MULHI];
 	gr[_REG_CAUSE] = f->f_regs[CAUSE];
 	gr[_REG_EPC]   = f->f_regs[PC];
+	gr[_REG_SR]    = f->f_regs[SR];
 
 	*flags |= _UC_CPU;
 
@@ -1728,6 +1729,7 @@ cpu_setmcontext(l, mcp, flags)
 		f->f_regs[MULHI] = gr[_REG_MDHI];
 		f->f_regs[CAUSE] = gr[_REG_CAUSE];
 		f->f_regs[PC]    = gr[_REG_EPC];
+		/* Do not restore SR. */
 	}
 
 	/* Restore floating point register context, if any. */
