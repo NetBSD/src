@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.613 2003/09/07 21:06:06 seb Exp $
+#	$NetBSD: mi,v 1.614 2003/09/09 22:01:57 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3048,6 +3048,7 @@
 ./usr/share/man/cat3/putwchar.0	comp-c-catman
 ./usr/share/man/cat3/pw_abort.0	comp-c-catman
 ./usr/share/man/cat3/pw_copy.0	comp-c-catman
+./usr/share/man/cat3/pw_dup.0		comp-c-catman
 ./usr/share/man/cat3/pw_edit.0	comp-c-catman
 ./usr/share/man/cat3/pw_error.0	comp-c-catman
 ./usr/share/man/cat3/pw_getconf.0	comp-c-catman
@@ -6498,6 +6499,7 @@
 ./usr/share/man/man3/putwchar.3		comp-c-man
 ./usr/share/man/man3/pw_abort.3		comp-c-man
 ./usr/share/man/man3/pw_copy.3		comp-c-man
+./usr/share/man/man3/pw_dup.3		comp-c-man
 ./usr/share/man/man3/pw_edit.3		comp-c-man
 ./usr/share/man/man3/pw_error.3		comp-c-man
 ./usr/share/man/man3/pw_getconf.3	comp-c-man
