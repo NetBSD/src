@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.7 1997/10/19 05:03:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $";
+__RCSID("$NetBSD: send.c,v 1.7 1997/10/19 05:03:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,17 +60,17 @@ static char rcsid[] = "$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $"
  */
 int
 send(mp, obuf, doign, prefix)
-	register struct message *mp;
+	struct message *mp;
 	FILE *obuf;
 	struct ignoretab *doign;
 	char *prefix;
 {
 	long count;
-	register FILE *ibuf;
+	FILE *ibuf;
 	char line[LINESIZE];
 	int ishead, infld, ignoring = 0, dostat, firstline;
-	register char *cp, *cp2;
-	register int c = 0;
+	char *cp, *cp2;
+	int c = 0;
 	int length;
 	int prefixlen = 0;
 
@@ -235,12 +236,12 @@ send(mp, obuf, doign, prefix)
  */
 void
 statusput(mp, obuf, prefix)
-	register struct message *mp;
+	struct message *mp;
 	FILE *obuf;
 	char *prefix;
 {
 	char statout[3];
-	register char *cp = statout;
+	char *cp = statout;
 
 	if (mp->m_flag & MREAD)
 		*cp++ = 'R';
@@ -413,7 +414,7 @@ fixhead(hp, tolist)
 	struct header *hp;
 	struct name *tolist;
 {
-	register struct name *np;
+	struct name *np;
 
 	hp->h_to = NIL;
 	hp->h_cc = NIL;
@@ -440,8 +441,8 @@ infix(hp, fi)
 	FILE *fi;
 {
 	extern char *tempMail;
-	register FILE *nfo, *nfi;
-	register int c;
+	FILE *nfo, *nfi;
+	int c;
 
 	if ((nfo = Fopen(tempMail, "w")) == NULL) {
 		perror(tempMail);
@@ -488,7 +489,7 @@ puthead(hp, fo, w)
 	FILE *fo;
 	int w;
 {
-	register int gotcha;
+	int gotcha;
 
 	gotcha = 0;
 	if (hp->h_to != NIL && w & GTO)
@@ -510,11 +511,11 @@ puthead(hp, fo, w)
 void
 fmt(str, np, fo, comma)
 	char *str;
-	register struct name *np;
+	struct name *np;
 	FILE *fo;
 	int comma;
 {
-	register col, len;
+	int col, len;
 
 	comma = comma ? 1 : 0;
 	col = strlen(str);
@@ -546,11 +547,11 @@ fmt(str, np, fo, comma)
 int
 savemail(name, fi)
 	char name[];
-	register FILE *fi;
+	FILE *fi;
 {
-	register FILE *fo;
+	FILE *fo;
 	char buf[BUFSIZ];
-	register i;
+	int i;
 	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {

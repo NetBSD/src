@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.10 1997/09/25 19:56:15 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.11 1997/10/19 05:03:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: collect.c,v 1.10 1997/09/25 19:56:15 christos Exp $";
+__RCSID("$NetBSD: collect.c,v 1.11 1997/10/19 05:03:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +82,7 @@ collect(hp, printheaders)
 {
 	FILE *fbuf;
 	int lc, cc, escape, eofcount;
-	register int c, t;
+	int c, t;
 	char linebuf[LINESIZE], *cp;
 	extern char *tempMail;
 	char getsub;
@@ -421,8 +422,8 @@ exwrite(name, fp, f)
 	FILE *fp;
 	int f;
 {
-	register FILE *of;
-	register int c;
+	FILE *of;
+	int c;
 	long cc;
 	int lc;
 	struct stat junk;
@@ -541,7 +542,7 @@ forward(ms, fp, f)
 	FILE *fp;
 	int f;
 {
-	register int *msgvec;
+	int *msgvec;
 	extern char *tempMail;
 	struct ignoretab *ig;
 	char *tabst;
@@ -647,10 +648,10 @@ collhup(s)
 
 void
 savedeadletter(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register FILE *dbuf;
-	register int c;
+	FILE *dbuf;
+	int c;
 	char *cp;
 
 	if (fsize(fp) == 0)

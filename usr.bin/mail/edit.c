@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.6 1997/10/19 05:03:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $";
+__RCSID("$NetBSD: edit.c,v 1.6 1997/10/19 05:03:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <fcntl.h>
 #include "extern.h"
 
 /*
@@ -85,10 +85,10 @@ edit1(msgvec, type)
 	int *msgvec;
 	int type;
 {
-	register int c;
+	int c;
 	int i;
 	FILE *fp;
-	register struct message *mp;
+	struct message *mp;
 	off_t size;
 
 	/*
@@ -147,12 +147,12 @@ edit1(msgvec, type)
  */
 FILE *
 run_editor(fp, size, type, readonly)
-	register FILE *fp;
+	FILE *fp;
 	off_t size;
 	int type, readonly;
 {
-	register FILE *nf = NULL;
-	register int t;
+	FILE *nf = NULL;
+	int t;
 	time_t modtime;
 	char *edit;
 	struct stat statb;

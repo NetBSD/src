@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1997/10/19 05:03:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $
+ *	$NetBSD: extern.h,v 1.8 1997/10/19 05:03:20 lukem Exp $
  */
 
 struct name;
@@ -189,8 +189,6 @@ int	 more __P((void *));
 int	 newfileinfo __P((int));
 int	 next __P((void *));
 int	 null __P((void *));
-void	 panic __P((const char *, ...))
-    __attribute__((__format__(__printf__,1,2),__noreturn__));
 struct headline;
 void	 parse __P((char [], struct headline *, char []));
 int	 pcmdlist __P((void *));

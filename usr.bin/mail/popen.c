@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
+/*	$NetBSD: popen.c,v 1.7 1997/10/19 05:03:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $";
+__RCSID("$NetBSD: popen.c,v 1.7 1997/10/19 05:03:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/wait.h>
-#include <fcntl.h>
 #include "extern.h"
 
 #define READ 0
@@ -178,7 +177,7 @@ register_file(fp, pipe, pid)
 	struct fp *fpp;
 
 	if ((fpp = (struct fp *) malloc(sizeof *fpp)) == NULL)
-		panic("Out of memory");
+		errx(1, "Out of memory");
 	fpp->fp = fp;
 	fpp->pipe = pipe;
 	fpp->pid = pid;
@@ -198,7 +197,7 @@ unregister_file(fp)
 			free((char *) p);
 			return;
 		}
-	panic("Invalid file pointer");
+	errx(1, "Invalid file pointer");
 }
 
 static int
@@ -210,7 +209,7 @@ file_pid(fp)
 	for (p = fp_head; p; p = p->link)
 		if (p->fp == fp)
 			return (p->pid);
-	panic("Invalid file pointer");
+	errx(1, "Invalid file pointer");
 	/*NOTREACHED*/
 }
 
@@ -311,7 +310,7 @@ static struct child *
 findchild(pid)
 	int pid;
 {
-	register struct child **cpp;
+	struct child **cpp;
 
 	for (cpp = &child; *cpp != NULL && (*cpp)->pid != pid;
 	     cpp = &(*cpp)->link)
@@ -327,9 +326,9 @@ findchild(pid)
 
 static void
 delchild(cp)
-	register struct child *cp;
+	struct child *cp;
 {
-	register struct child **cpp;
+	struct child **cpp;
 
 	for (cpp = &child; *cpp != cp; cpp = &(*cpp)->link)
 		;
@@ -343,7 +342,7 @@ sigchild(signo)
 {
 	int pid;
 	union wait status;
-	register struct child *cp;
+	struct child *cp;
 
 	while ((pid =
 	    wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
@@ -367,7 +366,7 @@ wait_child(pid)
 	int pid;
 {
 	sigset_t nset, oset;
-	register struct child *cp = findchild(pid);
+	struct child *cp = findchild(pid);
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -388,7 +387,7 @@ free_child(pid)
 	int pid;
 {
 	sigset_t nset, oset;
-	register struct child *cp = findchild(pid);
+	struct child *cp = findchild(pid);
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);

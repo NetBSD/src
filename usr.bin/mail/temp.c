@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
+/*	$NetBSD: temp.c,v 1.6 1997/10/19 05:03:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $";
+__RCSID("$NetBSD: temp.c,v 1.6 1997/10/19 05:03:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <errno.h>
 #include "extern.h"
 
 /*
@@ -61,7 +61,7 @@ char	*tmpdir;
 void
 tinit()
 {
-	register char *cp;
+	char *cp;
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL) {
 		tmpdir = _PATH_TMP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
+/*	$NetBSD: quit.c,v 1.7 1997/10/19 05:03:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $";
+__RCSID("$NetBSD: quit.c,v 1.7 1997/10/19 05:03:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <fcntl.h>
 #include "extern.h"
 
 /*
@@ -77,8 +77,8 @@ quit()
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
-	register struct message *mp;
-	register int c;
+	struct message *mp;
+	int c;
 	extern char *tempQuit, *tempResid;
 	struct stat minfo;
 	char *mbox;
@@ -357,10 +357,10 @@ newmail:
  */
 int
 writeback(res)
-	register FILE *res;
+	FILE *res;
 {
-	register struct message *mp;
-	register int p, c;
+	struct message *mp;
+	int p, c;
 	FILE *obuf;
 
 	p = 0;
@@ -413,8 +413,8 @@ void
 edstop()
 {
 	extern char *tmpdir;
-	register int gotcha, c;
-	register struct message *mp;
+	int gotcha, c;
+	struct message *mp;
 	FILE *obuf, *ibuf, *readstat = NULL;
 	struct stat statb;
 	char *tempname;
