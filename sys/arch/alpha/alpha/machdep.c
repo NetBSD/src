@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.107 1998/02/14 00:53:26 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.108 1998/02/14 01:17:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 1998/02/14 00:53:26 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 1998/02/14 01:17:19 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1025,7 +1025,8 @@ cpu_dumpsize()
 {
 	int size;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
+	    ALIGN(mem_cluster_cnt * sizeof(phys_ram_seg_t));
 	if (roundup(size, dbtob(1)) != dbtob(1))
 		return -1;
 
