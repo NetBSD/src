@@ -24,22 +24,22 @@ zero:
                       0
 
 infinity:
-                    Inf
-                    Inf
-                    Inf
-                   -Inf
-                   -Inf
-                   -Inf
+                    inf
+                    inf
+                    inf
+                   -inf
+                   -inf
+                   -inf
 
 overflow:
-                    Inf
-                    Inf
-                    Inf
-                    Inf
-                   -Inf
-                   -Inf
-                   -Inf
-                   -Inf
+                    inf
+                    inf
+                    inf
+                    inf
+                   -inf
+                   -inf
+                   -inf
+                   -inf
 
 denormal:
 1.1125369292536006915451e-308
@@ -58,10 +58,10 @@ underflow:
                       0
                       0
                       0
-                      0
-                      0
-                      0
-                      0
+                     -0
+                     -0
+                     -0
+                     -0
 
 denormal, large exponent:
                  0.0625
