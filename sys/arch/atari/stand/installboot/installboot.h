@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.2.4.1 1996/06/30 19:56:27 jtc Exp $	*/
+/*	$NetBSD: installboot.h,v 1.2.4.2 1996/12/05 06:51:37 rat Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -54,7 +54,7 @@
  * should be obvious that those delimeters can not be part
  * of the strings, nor can the EOS marker ('\0').
  */
-#define	OS_LIST		"{NetBSD}[1.1A]<199306>[1.1B]<199306>[1.2]<199606>"
+#define	OS_LIST		"{NetBSD}[1.2]<199306>[1.2A]<199306>"
 #define	BRA_TYPE	"{}"
 #define	BRA_RELEASE	"[]"
 #define	BRA_REVISION	"<>"
