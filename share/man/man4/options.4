@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.204 2003/04/09 17:04:40 jmmv Exp $
+.\"	$NetBSD: options.4,v 1.205 2003/04/10 22:10:12 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -820,22 +820,6 @@ See also
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
-.It Cd options UCONSOLE
-Normally, only the superuser can execute the
-.Dv TIOCCONS
-.Xr ioctl 2 ,
-which redirects console output to a non-console tty.
-See
-.Xr tty 4
-for details.
-This option permits any user to execute the
-.Dv TIOCCONS
-.Xr ioctl 2 .
-This is useful on
-machines such as personal workstations which run
-.Xr X 7
-servers, where one would prefer to permit console output to be
-viewed in a window without requiring a suid root program to do it.
 .It Cd options MEMORY_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the
