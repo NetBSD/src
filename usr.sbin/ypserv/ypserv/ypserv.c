@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.5 1997/07/18 21:57:19 thorpej Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.6 1997/10/08 13:45:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -74,8 +74,6 @@ int	usedns;
 char	*aclfile;
 
 extern	char *__progname;	/* from crt0.s */
-extern	char *optarg;
-extern	int optind;
 
 int	main __P((int, char *[]));
 void	usage __P((void));
@@ -120,7 +118,7 @@ closedown()
 }
 
 static void
-ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
+ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		char * ypproc_domain_2_arg;
@@ -241,7 +239,7 @@ ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
  * makes v1 domain_nonack calls.
  */
 static void
-ypprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
+ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	switch (rqstp->rq_proc) {
 	case YPPROC_NULL:
@@ -262,7 +260,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register SVCXPRT *transp;
+	SVCXPRT *transp;
 	int sock, proto;
 	struct sigaction sa;
 	int xflag = 0;
@@ -336,10 +334,16 @@ main(argc, argv)
 			_msgout("cannot create udp service.");
 			exit(1);
 		}
+		if (transp->xp_port >= IPPORT_RESERVED) {
+			_msgout("udp service not bound to a privileged port.");
+			exit(1);
+		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_UDP;
-		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1, proto)) {
-			_msgout("unable to register (YPPROG, YPVERS_ORIG, udp).");
+		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1,
+		    proto)) {
+			_msgout(
+			    "unable to register (YPPROG, YPVERS_ORIG, udp).");
 			exit(1);
 		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
@@ -357,10 +361,16 @@ main(argc, argv)
 			_msgout("cannot create tcp service.");
 			exit(1);
 		}
+		if (transp->xp_port >= IPPORT_RESERVED) {
+			_msgout("tcp service not bound to a privileged port.");
+			exit(1);
+		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_TCP;
-		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1, proto)) {
-			_msgout("unable to register (YPPROG, YPVERS_ORIG, tcp).");
+		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1,
+		    proto)) {
+			_msgout(
+			    "unable to register (YPPROG, YPVERS_ORIG, tcp).");
 			exit(1);
 		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
