@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.77 2003/03/25 21:56:20 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.78 2003/04/29 01:15:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.77 2003/03/25 21:56:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.78 2003/04/29 01:15:39 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -129,7 +129,9 @@ pciattach(parent, self, aux)
 	const char *sep = "";
 
 	pci_attach_hook(parent, self, pba);
-	printf("\n");
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
 	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
@@ -138,19 +140,23 @@ pciattach(parent, self, aux)
 	mwi_enabled = (pba->pba_flags & PCI_FLAGS_MWI_OKAY);
 
 	if (io_enabled == 0 && mem_enabled == 0) {
-		printf("%s: no spaces enabled!\n", self->dv_xname);
+		aprint_error("%s: no spaces enabled!\n", self->dv_xname);
 		return;
 	}
 
-#define	PRINT(str)	do { printf("%s%s", sep, str); sep = ", "; } while (0)
+#define	PRINT(str)							\
+do {									\
+	aprint_normal("%s%s", sep, str);				\
+	sep = ", ";							\
+} while (/*CONSTCOND*/0)
 
-	printf("%s: ", self->dv_xname);
+	aprint_normal("%s: ", self->dv_xname);
 
 	if (io_enabled)
 		PRINT("i/o space");
 	if (mem_enabled)
 		PRINT("memory space");
-	printf(" enabled");
+	aprint_normal(" enabled");
 
 	if (mrl_enabled || mrm_enabled || mwi_enabled) {
 		if (mrl_enabled)
@@ -159,10 +165,10 @@ pciattach(parent, self, aux)
 			PRINT("rd/mult");
 		if (mwi_enabled)
 			PRINT("wr/inv");
-		printf(" ok");
+		aprint_normal(" ok");
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 #undef PRINT
 
