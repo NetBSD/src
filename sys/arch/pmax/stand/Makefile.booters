@@ -1,56 +1,20 @@
-#	$NetBSD: Makefile.booters,v 1.10 1997/06/15 22:53:49 jonathan Exp $
+#	$NetBSD: Makefile.booters,v 1.10.8.1 1999/02/02 05:58:12 cgd Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
-
-STAND=	../../stand
-#VPATH=	${STAND}
 
 # RELOC=80200000 allows for boot prog up to 1D0000 (1900544) bytes long
 RELOC=	80200000
 
-DEFS= -DSTANDALONE -DSMALL
-CFLAGS=	-O2 ${INCPATH} ${DEFS}
-AFLAGS=	-O2 ${INCPATH} ${DEFS} -D_LOCORE
-
-.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-.PATH: ${S}/stand ${S}/lib/libsa
-
-#INCPATH=-I. -I/sys
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
-
-### find out what to use for libkern
-.include "$S/lib/libkern/Makefile.inc"
-#LIBKERN= ${KERNLIB}
-#KERNLIB= ${.CURDIR}/../compile/libkern.a
-
-.include "$S/lib/libsa/Makefile.inc"
-LIBSA=  ${SA_LIB}
+BOOTDEFS=-D_STANDALONE -DSMALL
+AINC+=	 -D_LOCORE
+CFLAGS+= ${DEFS}
+AFLAGS+= ${DEFS}
 
 # not yet: need to write libsa/Makefile.inc first
-LIBS=  ${.OBJDIR}/libdrive.a ${.CURDIR}/libsa/libsa.a  ${KERNLIB}
-#LIBS=	libdrive.a libsa/libsa.a ../../libkern/obj/libkern.a 
-
-DRIVERS= rz.c
-SRCS=	${DRIVERS}
-#STUFF=	callvec.c devopen.c getenv.c gets.c strcmp.c
-STUFF=
-
-.s.o:
-	${CPP} -E ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	    ${AS} -o ${.TARGET}
+LIBSADIR != cd ${.CURDIR}/../libsa ; make print-objdir
+LIBSA=	${LIBSADIR}/libsa.a
+LIBS=	${LIBSA}
 
 includes:
-
-#libsa/libsa.a::
-#	cd libsa; make
-
-${.OBJDIR}/libdrive.a: conf.o ${DRIVERS:.c=.o}
-	ar crv $@ $?
-	ranlib $@
-
-depend: ${SRCS}
-	mkdep ${INCPATH} ${DEFS} ${SRCS}
-	mkdep -a -p ${INCPATH} ${DEFS} mkboot.c mkboottape.c
-	cd libsa; make depend
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>
