@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1996/09/17 22:00:25 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1996/09/23 04:33:01 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -30,12 +30,12 @@ all: ${BOOT_PROG}
 ${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
 	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.coff \
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.hdr \
 	     ${BOOT_OBJS} vers.o -lc # XXX
-	size ${BOOT_PROG}.coff
-	strip ${BOOT_PROG}.coff
-	dd if=${BOOT_PROG}.coff of=${BOOT_PROG} \
-	    bs=`./${HEADERSIZE_PROG} < ${BOOT_PROG}.coff` skip=1
+	size ${BOOT_PROG}.hdr
+	strip ${BOOT_PROG}.hdr
+	dd if=${BOOT_PROG}.hdr of=${BOOT_PROG} \
+	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
 
 install:
 	install -c -o bin -g bin -m 444 ${BOOT_PROG} \
@@ -44,7 +44,7 @@ install:
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
-	    ${BOOT_PROG}.coff ${HEADERSIZE_PROG}
+	    ${BOOT_PROG}.hdr ${HEADERSIZE_PROG}
 
 cleandir: _SUBDIRUSE clean
 
