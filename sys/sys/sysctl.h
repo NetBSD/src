@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.82 2002/12/11 12:59:32 scw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.83 2002/12/11 13:12:48 scw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -186,7 +186,7 @@ struct ctlname {
 #endif
 #define	KERN_LABELSECTOR	62	/* int: disklabel sector */
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
-#define	KERN_MAXID		63	/* number of valid kern ids */
+#define	KERN_MAXID		64	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
