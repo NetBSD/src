@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.19 1999/05/09 00:00:20 cgd Exp $	*/
+/*	$NetBSD: proc.c,v 1.20 1999/05/19 14:37:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.19 1999/05/09 00:00:20 cgd Exp $");
+__RCSID("$NetBSD: proc.c,v 1.20 1999/05/19 14:37:05 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -1006,7 +1006,7 @@ dokill(v, t)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
-	    if (v[0][1] == 's' && (Isspace(v[0][2]) || v[0][2] == '\0'))
+	    if (v[0][1] == 's' && v[0][2] == '\0')
 		signame = *(++v);
 	    else
 		signame = &v[0][1];
