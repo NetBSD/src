@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.2 2000/07/03 22:26:35 thorpej Exp $	
+.\"	$NetBSD: hardware,v 1.71.2.3 2000/07/19 12:33:01 bouyer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. Support
@@ -26,7 +26,8 @@ Supported devices include:
                 -  HighPoint HPT366 IDE Controller
                 -  Intel PIIX, PIIX3 and PIIX4 IDE Controllers
                 -  Intel 82801 (ICH/ICH0) IDE Controllers
-		-  Promise PDC20246 (Ultra/33) and PDC20262 (Ultra/66) 
+		-  Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66) and
+		   Ultra/100 (in Ultra/66 mode only)
                 -  Silicon Integrated System 5597/5598 IDE controller
                 -  VIA Technologies VT82C586 and VT82C586A IDE Controllers
                 Most of these controllers are only available in
