@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.54 2003/08/07 16:44:39 agc Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.55 2003/09/29 09:50:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.54 2003/08/07 16:44:39 agc Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.55 2003/09/29 09:50:21 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -380,7 +380,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			eproc.e_flag |= EPROC_SLEADER;
 		/*
 		 * Fill in the old-style proc.p_wmesg by copying the wmesg
-		 * from the first avaliable LWP.
+		 * from the first available LWP.
 		 */
 		kl = kvm_getlwps(kd, proc.p_pid,
 		    (u_long)PTRTOINT64(eproc.e_paddr),
