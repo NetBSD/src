@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.109 2001/08/25 21:15:45 is Exp $
+#	$NetBSD: files.amiga,v 1.110 2001/11/05 21:29:43 aymeric Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -16,6 +16,7 @@ defopt	opt_amigaccgrf.h	USE_C_BFOPS
 defopt	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defopt	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defopt	opt_amigacons.h		CV3DONZORRO2
+defopt	opt_amigacons.h		SERCONSOLE
 
 defopt	opt_retina.h		RH_MEMCLK RH_64BIT_SPRITE RH_HARDWARECURSOR
 defopt	opt_retina.h		RETINA_SPEED_HACK
