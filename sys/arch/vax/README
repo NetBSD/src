@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.7 1995/03/30 21:36:46 ragge Exp $
+	$NetBSD: README,v 1.8 1995/07/05 08:15:27 ragge Exp $
 
 Devices supported in kernel and _known_ to work:
 CPU:	VAX 11/750 with 2-14MB of memory.
@@ -12,7 +12,7 @@ Disks:	UDA50 Unibus MSCP controller.
 		RA??-disks on UDA50 or KDA50.
 		RD??-disks on RQDX3. (known as RA?? by system).
 
-Tapes:	Exabyte on qbus dilog board. (TMSCP emulating)
+Tapes:	Exabyte on Qbus DILOG board. (TMSCP emulating)
 	TK50 (TMSCP) on Q22 bus.
 		Other TMSCP ctlrs may also work, but haven't tried.
 
