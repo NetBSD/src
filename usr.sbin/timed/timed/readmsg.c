@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.12 2002/07/06 22:08:31 wiz Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.13 2002/09/19 00:01:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.12 2002/07/06 22:08:31 wiz Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.13 2002/09/19 00:01:33 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ readmsg(int type, char *machfrom, struct timeval *intvl,
 	struct netinfo *netfrom)
 {
 	int length;
-	fd_set ready;
+	struct pollfd set[1];
 	static struct tsplist *head = &msgslist;
 	static struct tsplist *tail = &msgslist;
 	static int msgcnt = 0;
@@ -175,7 +175,8 @@ again:
 
 	(void)gettimeofday(&rtout, 0);
 	timeradd(&rtout, intvl, &rtout);
-	FD_ZERO(&ready);
+	set[0].fd = sock;
+	set[0].events = POLLIN;
 	for (;;) {
 		(void)gettimeofday(&rtime, 0);
 		timersub(&rtout, &rtime, &rwait);
@@ -200,9 +201,7 @@ again:
 				traceoff("Tracing ended for cause at %s\n");
 		}
 
-		FD_SET(sock, &ready);
-		if (!select(sock+1, &ready, (fd_set *)0, (fd_set *)0,
-			   &rwait)) {
+		if (!poll(set, 1, rwait.tv_sec * 1000 + rwait.tv_usec / 1000)) {
 			if (rwait.tv_sec == 0 && rwait.tv_usec == 0)
 				return(0);
 			continue;

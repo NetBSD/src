@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.9 2002/07/10 22:44:22 wiz Exp $	*/
+/*	$NetBSD: measure.c,v 1.10 2002/09/19 00:01:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.9 2002/07/10 22:44:22 wiz Exp $");
+__RCSID("$NetBSD: measure.c,v 1.10 2002/09/19 00:01:33 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	int measure_status;
 	int rcvcount, trials;
 	int cc, count;
-	fd_set ready;
+	struct pollfd set[1];
 	long sendtime, recvtime, histime1, histime2;
 	long idelta, odelta, total;
 	long min_idelta, min_odelta;
@@ -102,15 +102,14 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 		}
 	}
 	    
+	set[0].fd = sock_raw;
+	set[0].events = POLLIN;
 
 	/*
 	 * empty the icmp input queue
 	 */
-	FD_ZERO(&ready);
 	for (;;) {
-		tout.tv_sec = tout.tv_usec = 0;
-		FD_SET(sock_raw, &ready);
-		if (select(sock_raw+1, &ready, 0,0, &tout)) {
+		if (poll(set, 1, 0)) {
 			length = sizeof(struct sockaddr_in);
 			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
 				      0,&length);
@@ -134,14 +133,14 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	oicp->icmp_ttime = 0;
 	oicp->icmp_seq = seqno;
 
-	FD_ZERO(&ready);
-
 	(void)gettimeofday(&tdone, 0);
 	mstotvround(&tout, maxmsec);
 	timeradd(&tdone, &tout, &tdone);	/* when we give up */
 
 	mstotvround(&twait, wmsec);
 
+	tout.tv_sec = 0;
+	tout.tv_usec = 0;
 	rcvcount = 0;
 	while (rcvcount < MSGS) {
 		(void)gettimeofday(&tcur, 0);
@@ -177,9 +176,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			if (tout.tv_sec < 0)
 				tout.tv_sec = 0;
 
-			FD_SET(sock_raw, &ready);
-			count = select(sock_raw+1, &ready, (fd_set *)0,
-				       (fd_set *)0, &tout);
+			count = poll(set, 1, tout.tv_sec * 1000 + tout.tv_usec / 1000);
 			(void)gettimeofday(&tcur, (struct timezone *)0);
 			if (count <= 0)
 				break;
