@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.12 2000/03/18 16:14:57 mycroft Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.13 2000/03/25 15:27:55 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -170,6 +170,8 @@ sbc_obio_attach(parent, self, args)
 	ncr_sc->sci_r5 = &sc->sc_regs->sci_pr5.sci_reg;
 	ncr_sc->sci_r6 = &sc->sc_regs->sci_pr6.sci_reg;
 	ncr_sc->sci_r7 = &sc->sc_regs->sci_pr7.sci_reg;
+
+	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
 
 	/*
 	 * MD function pointers used by the MI code.
