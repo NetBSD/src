@@ -5,7 +5,8 @@
 ARCH=	hp300 i386 luna68k news3400 pmax sparc tahoe vax
 
 all:
-	@echo "make tags, make links or init_sysent.c only"
+	@echo "make tags, links, init_sysent.c, or vnode_if.c only"
+	@false
 
 SYSCALLSRC = makesyscalls.sh syscalls.conf syscalls.master
 init_sysent.c syscalls.c ../sys/syscall.h ../sys/syscallargs.h: ${SYSCALLSRC}
@@ -14,6 +15,12 @@ init_sysent.c syscalls.c ../sys/syscall.h ../sys/syscallargs.h: ${SYSCALLSRC}
 	-mv -f ../sys/syscall.h ../sys/syscall.h.bak
 	-mv -f ../sys/syscallargs.h ../sys/syscallargs.h.bak
 	sh makesyscalls.sh syscalls.conf syscalls.master
+
+VNODEIFSRC = vnode_if.sh vnode_if.src
+vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
+	-mv -f vnode_if.c vnode_if.c.bak
+	-mv -f ../sys/vnode_if.h ../sys/vnode_if.h.bak
+	sh vnode_if.sh vnode_if.src
 
 # Kernel tags:
 # Tags files are built in the top-level directory for each architecture,

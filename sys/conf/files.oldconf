@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.63 1996/02/29 03:36:31 thorpej Exp $
+#	$NetBSD: files.oldconf,v 1.64 1996/02/29 20:58:09 cgd Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -92,6 +92,7 @@ kern/vfs_lookup.c	standard
 kern/vfs_subr.c		standard
 kern/vfs_syscalls.c	standard
 kern/vfs_vnops.c	standard
+kern/vnode_if.c		standard
 miscfs/deadfs/dead_vnops.c	standard
 miscfs/fdesc/fdesc_vfsops.c	optional fdesc
 miscfs/fdesc/fdesc_vnops.c	optional fdesc
