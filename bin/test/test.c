@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
+/*	$NetBSD: test.c,v 1.16 1997/01/09 16:44:57 tls Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: test.c,v 1.16 1997/01/09 16:44:57 tls Exp $";
 #endif
 
 #include <sys/types.h>
@@ -293,7 +293,7 @@ primary(n)
 static int
 binop()
 {
-	register const char *opnd1, *opnd2;
+	const char *opnd1, *opnd2;
 	struct t_op const *op;
 
 	opnd1 = *t_wp;
@@ -418,9 +418,9 @@ filebit:
 
 static enum token
 t_lex(s)
-	register char *s;
+	char *s;
 {
-	register struct t_op const *op = ops;
+	struct t_op const *op = ops;
 
 	if (s == 0) {
 		t_wp_op = (struct t_op *)0;
