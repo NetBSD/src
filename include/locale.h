@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locale.h	5.2 (Berkeley) 2/24/91
- *	$Id: locale.h,v 1.2 1993/08/01 18:44:49 mycroft Exp $
+ *	$Id: locale.h,v 1.3 1993/09/02 20:46:33 jtc Exp $
  */
 
 #ifndef _LOCALE_H_
@@ -68,8 +68,9 @@ struct lconv {
 #define	LC_MONETARY	3
 #define	LC_NUMERIC	4
 #define	LC_TIME		5
+#define LC_MESSAGES	6
 
-#define	_LC_LAST	6		/* marks end */
+#define	_LC_LAST	7		/* marks end */
 
 #include <sys/cdefs.h>
 
