@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.25 2001/04/04 13:13:59 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.26 2001/04/05 22:03:57 thorpej Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -42,6 +42,7 @@
 /usr/sbin/statmsg
 /usr/sbin/sysconfd
 /usr/sbin/sysctl
+/usr/sbin/tbrconfig
 /usr/sbin/update
 /usr/sbin/xntpd
 /usr/sbin/xntpdc
