@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.3 1993/12/02 17:37:07 pk Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.4 1994/01/25 05:58:02 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ static char rcsid[] = "$Id: auth.c,v 1.3 1993/12/02 17:37:07 pk Exp $";
 #include <alloca.h>
 #ifndef __GNUC__
 /* why alloca.h doesn't define what alloca() returns is a mystery */
-char *alloca __ARGS((int));
+/* char *alloca __ARGS((int)); */
 #endif /*__GNUC__*/
 #endif /*sun&sparc*/
 
@@ -543,7 +543,7 @@ have_upap_secret()
  * on `server'.  Either can be the null string, meaning we don't
  * know the identity yet.
  */
-int
+static int
 have_chap_secret(client, server)
     char *client;
     char *server;
