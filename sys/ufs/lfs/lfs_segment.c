@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.149 2004/01/28 10:53:12 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.150 2004/01/29 12:10:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.149 2004/01/28 10:53:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.150 2004/01/29 12:10:07 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1256,6 +1256,8 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 		    ((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
 		    (void) VOP_BWRITE(bp);
 	}
+
+	KASSERT(ooff == 0 || ooff == UNWRITTEN || ooff == daddr);
 
 	/*
 	 * Though we'd rather it couldn't, this *can* happen right now
