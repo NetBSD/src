@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.24 1996/05/26 23:57:10 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.25 1996/07/02 21:21:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
+ * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
 
 #include <sys/param.h>
@@ -36,9 +36,12 @@
 #include <sys/tty.h>
 #include <sys/socket.h>
 #include <sys/audioio.h>
+#include <sys/vnode.h>
 #include <net/if.h>
 
 #include <sys/mount.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
@@ -71,7 +74,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = { 
+static u_long s2btab[] = {
 	0,
 	50,
 	75,
@@ -96,8 +99,8 @@ static void stios2stio __P((struct sunos_termios *, struct sunos_termio *));
 static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
 
 /*
- * these two conversion functions have mostly been done
- * with some perl cut&paste, then handedited to comment
+ * These two conversion functions have mostly been done
+ * with some perl cut&paste, then hand-edited to comment
  * out what doesn't exist under NetBSD.
  * A note from Markus's code:
  *	(l & BITMASK1) / BITMASK1 * BITMASK2  is translated
@@ -106,8 +109,8 @@ static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
  *
  * I don't know what optimizer you used, but seeing divu's and
  * bfextu's in the m68k assembly output did not encourage me...
- * as well, gcc on the sparc definately generates much better
- * code with ?:.
+ * as well, gcc on the sparc definitely generates much better
+ * code with `?:'.
  */
 
 static void
@@ -177,7 +180,7 @@ stios2btios(st, bt)
 	case 0x00000030:
 		r = CS8;
 		break;
-	}		
+	}
 	r |=	((l & 0x00000040) ? CSTOPB	: 0);
 	r |=	((l & 0x00000080) ? CREAD	: 0);
 	r |= 	((l & 0x00000100) ? PARENB	: 0);
@@ -446,7 +449,7 @@ sunos_sys_ioctl(p, v, retval)
 		int on = 1;
 		return (*ctl)(fp, TIOCCONS, (caddr_t)&on, p);
 	    }
-	case _IOW('t', 37, struct sunos_ttysize): 
+	case _IOW('t', 37, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
@@ -462,7 +465,7 @@ sunos_sys_ioctl(p, v, retval)
 
 		return ((*ctl)(fp, TIOCSWINSZ, (caddr_t)&ws, p));
 	    }
-	case _IOW('t', 38, struct sunos_ttysize): 
+	case _IOW('t', 38, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
@@ -475,25 +478,40 @@ sunos_sys_ioctl(p, v, retval)
 
 		return copyout ((caddr_t)&ss, SCARG(uap, data), sizeof (ss));
 	    }
-	case _IOW('t', 130, int):
+	case _IOW('t', 130, int):	/* TIOCSETPGRP: posix variant */
 		SCARG(uap, com) = TIOCSPGRP;
 		break;
-	case _IOR('t', 131, int):
-		SCARG(uap, com) = TIOCGPGRP;
-		break;
+	case _IOR('t', 131, int):	/* TIOCGETPGRP: posix variant */
+	    {
+		/*
+		 * sigh, must do error translation on pty devices
+		 * (see also kern/tty_pty.c)
+		 */
+		int pgrp;
+		struct vnode *vp;
+		error = (*ctl)(fp, TIOCGPGRP, (caddr_t)&pgrp, p);
+		if (error) {
+			vp = (struct vnode *)fp->f_data;
+			if (error == EIO && vp != NULL &&
+			    vp->v_type == VCHR && major(vp->v_rdev) == 21)
+				error = ENOTTY;
+			return (error);
+		}
+		return copyout((caddr_t)&pgrp, SCARG(uap, data), sizeof(pgrp));
+	    }
 	case _IO('t', 132):
 		SCARG(uap, com) = TIOCSCTTY;
 		break;
 	case SUNOS_TCGETA:
-	case SUNOS_TCGETS: 
+	case SUNOS_TCGETS:
 	    {
 		struct termios bts;
 		struct sunos_termios sts;
 		struct sunos_termio st;
-	
+
 		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
 			return error;
-	
+
 		btios2stios (&bts, &sts);
 		if (SCARG(uap, com) == SUNOS_TCGETA) {
 			stios2stio (&sts, &st);
