@@ -1,0 +1,32 @@
+#	$NetBSD: Makefile.mdset,v 1.1 2002/04/11 12:17:15 lukem Exp $
+
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
+
+.include <bsd.kernobj.mk>
+
+.for K R E in ${TARGETS}
+_E:=${E}			# work around obscure issue in make(1)
+KERNELS+=	netbsd.${K}.gz
+KERNELSYMS+=	netbsd.${K}.symbols
+netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
+	@echo "Populating ${K} with ${R}"
+	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
+.if ${_E} == "nocluster"
+	gdb --write -batch -x ${.CURDIR}/../common/nocluster.gdb \
+	    netbsd.tmp </dev/null
+.endif
+	${MDSETIMAGE} -v netbsd.tmp ${R}
+	${NM} netbsd.tmp > netbsd.${K}.symbols
+	${STRIP} netbsd.tmp
+	gzip -9 netbsd.tmp
+	mv netbsd.tmp.gz ${.TARGET}
+.endfor
+
+CLEANFILES+=	netbsd.tmp netbsd.tmp.gz ${KERNELS} ${KERNELSYMS}
+
+#	do the work
+#
+realall: ${KERNELS}
+
+.include <bsd.prog.mk>

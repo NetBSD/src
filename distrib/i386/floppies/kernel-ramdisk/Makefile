@@ -1,11 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/05 20:29:36 thorpej Exp $
-
-TOP=	${.CURDIR}/..
+#	$NetBSD: Makefile,v 1.14 2002/04/11 12:17:16 lukem Exp $
 
 .include <bsd.own.mk>
-
-.include "${TOP}/Makefile.inc"
-.include <bsd.kernobj.mk>
 
 #	create ${RAMDISK_*} variables
 #
@@ -14,7 +9,7 @@ RAMDISKS=	RAMDISK_B	ramdisk-big	\
 		RAMDISK_T	ramdisk-tiny
 
 .for V F in ${RAMDISKS}
-${V}DIR!=	cd ${TOP}/${F} && ${PRINTOBJDIR}
+${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
 ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
@@ -29,31 +24,8 @@ TARGETS=	INSTALL		${RAMDISK_B}	-		\
 		INSTALL_TINY	${RAMDISK_T}	nocluster	\
 		INSTALL_PS2	${RAMDISK_S}	nocluster
 
-.for K R E in ${TARGETS}
-_E:=${E}			# work around obscure issue in make(1)
-KERNELS+=	netbsd.${K}.gz
-KERNELSYMS+=	netbsd.${K}.symbols
-netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
-	@echo "Populating ${K} with ${R}"
-	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
-.if ${_E} == "nocluster"
-	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
-.endif
-	${MDSETIMAGE} -v netbsd.tmp ${R}
-	${NM} netbsd.tmp > netbsd.${K}.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-.endfor
-
-CLEANFILES+=	netbsd.tmp ${KERNELS} ${KERNELSYMS}
-
-#	do the work
-#
-realall: ${KERNELS}
-
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/binary/kernel
 	cp -p ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
-.include <bsd.prog.mk>
+.include "${.CURDIR}/../common/Makefile.mdset"
