@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.28 1998/01/12 09:43:30 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.29 1998/01/14 12:14:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,11 @@ struct boca_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int bocaprobe __P((struct device *, void *, void *));
+#else
+int bocaprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void bocaattach __P((struct device *, struct device *, void *));
 int bocaintr __P((void *));
 int bocaprint __P((void *, const char *));
@@ -73,7 +77,11 @@ struct cfattach boca_ca = {
 int
 bocaprobe(parent, self, aux)
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *self;
+#else
+	struct cfdata *self;
+#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.59 1998/01/12 09:43:42 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -178,7 +178,11 @@ int mcd_getqchan __P((struct mcd_softc *, union mcd_qchninfo *, int));
 int mcd_setlock __P((struct mcd_softc *, int));
 
 int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
+#ifdef __BROKEN_INDIRECT_CONFIG
 int mcdprobe __P((struct device *, void *, void *));
+#else
+int mcdprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void mcdattach __P((struct device *, struct device *, void *));
 
 struct cfattach mcd_ca = {
@@ -861,7 +865,12 @@ mcd_find(iot, ioh, sc)
 int
 mcdprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	struct mcd_softc sc;

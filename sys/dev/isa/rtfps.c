@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.36 1998/01/12 09:43:44 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.37 1998/01/14 12:14:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -63,7 +63,11 @@ struct rtfps_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int rtfpsprobe __P((struct device *, void *, void *));
+#else
+int rtfpsprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void rtfpsattach __P((struct device *, struct device *, void *));
 int rtfpsintr __P((void *));
 int rtfpsprint __P((void *, const char *));
@@ -75,7 +79,11 @@ struct cfattach rtfps_ca = {
 int
 rtfpsprobe(parent, self, aux)
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *self;
+#else
+	struct cfdata *self;
+#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
