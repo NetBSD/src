@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.6 1998/06/26 01:54:03 lukem Exp $
+# 	$NetBSD: GENERIC,v 1.7 1998/11/16 16:44:57 oster Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -119,5 +119,6 @@ pseudo-device	tun		4	# Network "tunnel" device
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
+#pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter

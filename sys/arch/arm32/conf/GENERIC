@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.50 1998/10/12 16:13:03 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.51 1998/11/16 16:44:56 oster Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -262,6 +262,7 @@ pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	raid	4		# RAIDframe disk driver
 pseudo-device	md	1		# Ramdisk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

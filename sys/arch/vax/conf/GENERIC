@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1998/11/16 04:32:56 mrg Exp $
+#	$NetBSD: GENERIC,v 1.40 1998/11/16 16:44:58 oster Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -165,5 +165,6 @@ pseudo-device	tun	2
 pseudo-device	tb	1
 pseudo-device	vnd	4
 pseudo-device	ccd	4
+#pseudo-device	raid	4		# RAIDframe disk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.70 1998/08/27 20:56:44 pk Exp $
+# 	$NetBSD: GENERIC,v 1.71 1998/11/16 16:44:57 oster Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -349,6 +349,10 @@ pseudo-device	vnd	4
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
 pseudo-device	ccd	4
+
+## RAIDframe disk driver: software RAID driver.  See raid(4).
+
+#pseudo-device	raid	4
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
