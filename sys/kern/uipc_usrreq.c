@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.21 1996/05/23 16:41:49 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.22 1996/05/23 16:49:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -131,12 +131,10 @@ uipc_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
-	if (req != PRU_SEND && control && control->m_len) {
-		m_freem(control);
-		m_freem(m);
-		error = EOPNOTSUPP;
-		goto release;
-	}
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("uipc_usrreq: unexpected control mbuf");
+#endif
 	if (unp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -298,6 +296,7 @@ uipc_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SENDOOB:
+		m_freem(control);
 		m_freem(m);
 		error = EOPNOTSUPP;
 		break;
