@@ -34,8 +34,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)frame.h	5.2 (Berkeley) 1/18/91
- *	$Id: frame.h,v 1.3 1993/06/27 01:24:55 andrew Exp $
+ *	frame.h,v 1.3 1993/06/27 01:24:55 andrew Exp
  */
+
+#include <sys/signal.h>
 
 /*
  * System stack frames.
@@ -44,7 +46,6 @@
 /*
  * Exception/Trap Stack Frame
  */
-
 struct trapframe {
 	int	tf_es;
 	int	tf_ds;
@@ -68,7 +69,6 @@ struct trapframe {
 };
 
 /* Interrupt stack frame */
-
 struct intrframe {
 	int	if_vec;
 	int	if_ppl;
@@ -94,24 +94,12 @@ struct intrframe {
 };
 
 /*
- * Call Gate/System Call Stack Frame
+ * Signal frame
  */
-
-struct syscframe {
-	int	sf_edi;
-	int	sf_esi;
-	int	sf_ebp;
-	int	:32;		/* redundant save of isp */
-	int	sf_ebx;
-	int	sf_edx;
-	int	sf_ecx;
-	int	sf_eax;
-	int	sf_eflags;
-	/* below portion defined in 386 hardware */
-/*	int	sf_args[N]; 	 * if call gate copy args enabled!*/
-	int	sf_eip;
-	int	sf_cs;
-	/* below only when transitting rings (e.g. user to kernel) */
-	int	sf_esp;
-	int	sf_ss;
+struct sigframe {
+	int	sf_signum;
+	int	sf_code;
+	struct	sigcontext *sf_scp;
+	sig_t	sf_handler;
+	struct	sigcontext sf_sc;
 };
