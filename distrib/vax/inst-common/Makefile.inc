@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1 1995/10/01 21:22:30 ragge Exp $
+#	$Id: Makefile.inc,v 1.2 1997/06/23 21:38:57 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -17,10 +17,13 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 
+DISKTYPE=	miniroot
+BOOTDISKTYPE=	bootroot
+
 all: ${CBIN} bootroot
 	dd if=/dev/zero of=${IMAGE} bs=64k count=32
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} miniroot
+	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
+	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -33,8 +36,8 @@ all: ${CBIN} bootroot
 
 bootroot: edlabel copy xxboot boot
 	dd if=/dev/zero of=${BOOTSYS} bs=64k count=4
-	vnconfig -v -c ${VND_DEV} ${BOOTSYS}
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} bootroot
+	vnconfig -t ${BOOTDISKTYPE} -v -c ${VND_DEV} ${BOOTSYS}
+	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} ${BOOTDISKTYPE}
 	dd if=xxboot of=/dev/rvnd0a count=16
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp edlabel copy boot ${MOUNT_POINT}
