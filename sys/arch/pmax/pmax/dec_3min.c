@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7 1998/06/22 09:37:42 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.8 1999/02/18 10:24:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7 1998/06/22 09:37:42 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.8 1999/02/18 10:24:16 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -182,17 +182,17 @@ dec_3min_os_init()
 		KMIN_INTR_TIMEOUT);
 
 	/*
-	 * Since all the motherboard interrupts come through the
-	 * I/O ASIC, it has to be turned off for all the spls and
-	 * since we don't know what kinds of devices are in the
-	 * turbochannel option slots, just splhigh().
+	 * All the baseboard interrupts come through the I/O ASIC
+	 * (at INT_MASK_3), so  it has to be turned off for all the spls.
+	 * Since we don't know what kinds of devices are in the
+	 * turbochannel option slots, just block them all.
 	 */
-	Mach_splbio = splhigh;
-	Mach_splnet = splhigh;
-	Mach_spltty = splhigh;
-	Mach_splimp = splhigh;
-	Mach_splclock = splhigh;
-	Mach_splstatclock = splhigh;
+	Mach_splbio = cpu_spl3;
+	Mach_splnet = cpu_spl3;
+	Mach_spltty = cpu_spl3;
+	Mach_splimp = cpu_spl3;
+	Mach_splclock = cpu_spl3;
+	Mach_splstatclock = cpu_spl3;
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
 	dec_3min_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
