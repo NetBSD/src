@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf_gb.c 1.16 91/04/02$
  *
  *	from: @(#)grf_gb.c	7.4 (Berkeley) 5/7/91
- *	$Id: grf_gb.c,v 1.2 1993/11/29 00:32:34 briggs Exp $
+ *	$Id: grf_gb.c,v 1.3 1994/01/30 01:15:33 briggs Exp $
  */
 
 #include "grf.h"
@@ -51,14 +51,14 @@
  *       HP 987x0 graphics systems.  "Gator" is not used for high res mono.
  *       (as in 9837 Gator systems)
  */
-#include "sys/param.h"
-#include "sys/errno.h"
+#include <sys/param.h>
+#include <sys/errno.h>
 
 #include "grfioctl.h"
 #include "grfvar.h"
 #include "grf_gbreg.h"
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
 #define CRTC_DATA_LENGTH  0x0e
 u_char crtc_init_data[CRTC_DATA_LENGTH] = {
