@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.8 1999/03/12 04:14:37 sommerfe Exp $	 */
+/*	$NetBSD: pcio.c,v 1.9 1999/04/14 11:17:05 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -78,7 +78,7 @@ static int getcomaddr __P((int));
 #ifdef SUPPORT_SERIAL
 static int
 getcomaddr(idx)
-int idx;
+	int idx;
 {
 	short addr;
 	/* read in BIOS data area */
@@ -203,9 +203,11 @@ nocom:
 #endif /* SUPPORT_SERIAL */
 }
 
+static inline void internal_putchar __P((int));
+
 static inline void
 internal_putchar(c)
-	int             c;
+	int c;
 {
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
@@ -226,7 +228,7 @@ internal_putchar(c)
 
 void
 putchar(c)
-	int             c;
+	int c;
 {
 	if (c == '\n')
 		internal_putchar('\r');

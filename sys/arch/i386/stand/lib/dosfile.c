@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.4 1997/09/17 18:09:04 drochner Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.5 1999/04/14 11:17:04 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -49,16 +49,19 @@ extern int dosread __P((int, char *, int));
 extern int dosseek __P((int, int, int));
 
 struct dosfile {
-	int             doshandle, off;
+	int doshandle, off;
 };
 
-extern int      doserrno;	/* in dos_file.S */
+extern int doserrno;	/* in dos_file.S */
 
-static int dos2errno()
+static int dos2errno __P((void));
+
+static int
+dos2errno()
 {
 	int err;
 
-	switch(doserrno) {
+	switch (doserrno) {
 	    case 1:
 	    case 4:
 	    case 12:
@@ -72,7 +75,7 @@ static int dos2errno()
 	    case 6:
 		err = EINVAL;
 	}
-	return(err);
+	return (err);
 }
 
 int 
