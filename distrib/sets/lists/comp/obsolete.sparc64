@@ -1,5 +1,8 @@
-# $NetBSD: obsolete.sparc64,v 1.4 2003/08/26 15:19:35 uwe Exp $
+# $NetBSD: obsolete.sparc64,v 1.5 2003/09/19 08:15:49 mrg Exp $
+./usr/include/sparc/_G_config.h
 ./usr/include/sparc/conf.h
+./usr/include/sparc/fbio.h
+./usr/include/sparc64/_G_config.h
 ./usr/include/sparc64/conf.h
 ./usr/include/sparc64/fbio.h
 ./usr/include/sparc64/fbvar.h
