@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.96 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.97 2004/04/28 14:09:36 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.96 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.97 2004/04/28 14:09:36 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.96 2004/04/22 01:01:40 matt Exp $");
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
+#include <sys/sysctl.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>
@@ -137,7 +138,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.96 2004/04/22 01:01:40 matt Exp $");
 int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
 int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
+int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
+#define	rt_pksent rt_rmx.rmx_pksent
 
 extern	struct domain arpdomain;
 
@@ -356,7 +359,19 @@ arptimer(arg)
 		struct rtentry *rt = la->la_rt;
 
 		nla = LIST_NEXT(la, la_list);
-		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
+		if (rt->rt_expire == 0)
+			continue;
+		if ((rt->rt_expire - time.tv_sec) < arpt_refresh &&
+		    rt->rt_pksent > (time.tv_sec - arpt_keep)) {
+			/*
+			 * If the entry has been used during since last
+			 * refresh, try to renew it before deleting.
+			 */
+			arprequest(rt->rt_ifp,
+			    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
+			    &SIN(rt_key(rt))->sin_addr,
+			    LLADDR(rt->rt_ifp->if_sadl));
+		} else if (rt->rt_expire <= time.tv_sec)
 			arptfree(la); /* timer has expired; clear */
 	}
 
@@ -698,6 +713,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		bcopy(LLADDR(sdl), desten,
 		    min(sdl->sdl_alen, ifp->if_addrlen));
+		rt->rt_pksent = time.tv_sec; /* Time for last pkt sent */
 		return 1;
 	}
 	/*
@@ -1490,4 +1506,50 @@ db_show_arptab(addr, have_addr, count, modif)
 	return;
 }
 #endif
+
+SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
+{
+	struct sysctlnode *node;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "net", NULL,
+			NULL, 0, NULL, 0,
+			CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "inet", NULL,
+			NULL, 0, NULL, 0,
+			CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "arp", NULL,
+			NULL, 0, NULL, 0,
+			CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "prune", NULL,
+			NULL, 0, &arpt_prune, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "keep", NULL,
+			NULL, 0, &arpt_keep, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "down", NULL,
+			NULL, 0, &arpt_down, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "refresh", NULL,
+			NULL, 0, &arpt_refresh, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+}
+
 #endif /* INET */
