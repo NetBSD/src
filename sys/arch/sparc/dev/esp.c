@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.46 1996/05/16 20:31:28 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.47 1996/05/21 19:09:43 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -212,6 +212,8 @@ espattach(parent, self, aux)
 		 */
 		if (sc->sc_dma)
 			sc->sc_dma->sc_esp = sc;
+		else
+			panic("espattach: no dma found");
 	}
 
 	/*
