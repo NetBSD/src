@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.58 1994/03/04 17:51:10 mycroft Exp $
+ *	$Id: wd.c,v 1.59 1994/03/04 23:43:14 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -636,6 +636,9 @@ wdintr(ctrlr)
 	register struct	disk *du;
 	register struct buf *bp, *dp;
 	int stat, wdc;
+
+	/* clear the pending interrupt */
+	(void) inb(wdcontroller[ctrlr].dkc_port+wd_status);
 
 	if (!wdtab[ctrlr].b_active) {
 		printf("wdc%d: extra interrupt\n", ctrlr);
