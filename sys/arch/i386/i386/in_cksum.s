@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.11 2001/03/06 19:14:37 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.12 2001/03/06 19:20:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -139,15 +139,14 @@ ENTRY(in4_cksum)
 mbuf_loop_0:
 	testl	%ebp, %ebp
 	jz	out_of_mbufs
-	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
-	subl	%ecx, %edx		/* %edx = off - m_len */
-	jb	skip_done
-	movl	M_NEXT(%ebp), %ebp
-	jmp	mbuf_loop_0
 
-skip_done:
 	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
+	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
 	movl	M_NEXT(%ebp), %ebp
+
+	subl	%ecx, %edx		/* %edx = off - m_len */
+	jnb	mbuf_loop_0
+
 	addl	%edx, %ebx		/* %ebx = m_data + off - m_len */
 	negl	%edx			/* %edx = m_len - off */
 	addl	%ecx, %ebx		/* %ebx = m_data + off */
