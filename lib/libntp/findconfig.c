@@ -1,4 +1,4 @@
-/*	$NetBSD: findconfig.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
+/*	$NetBSD: findconfig.c,v 1.4 1998/07/06 06:46:34 mrg Exp $	*/
 
 
 #ifdef HAVE_CONFIG_H
@@ -18,7 +18,7 @@ FindConfig(base)
     char *base;
 {
     static char result[BUFSIZ];
-    char hostname[BUFSIZ], *cp;
+    char hostname[MAXHOSTNAMELEN + 1], *cp;
     struct stat sbuf; 
     struct utsname unamebuf; 
 
@@ -29,6 +29,7 @@ FindConfig(base)
 
 	    /* First choice is my hostname */
 	    if (gethostname(hostname, BUFSIZ) >= 0) {
+		hostname[sizeof(hostname) - 1] = '\0';
 		(void) sprintf(result, "%s/%s", base, hostname);
 		if (stat(result, &sbuf) == 0) {
 		    goto outahere;

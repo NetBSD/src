@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1998/06/02 18:02:55 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1998/07/06 06:50:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -40,7 +40,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.18 1998/06/02 18:02:55 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 1998/07/06 06:50:28 mrg Exp $");
 #endif
 
 #include "defs.h"
@@ -133,7 +133,8 @@ main(int argc,
 	now_garbage = EPOCH - GARBAGE_TIME;
 	wtime.tv_sec = 0;
 
-	(void)gethostname(myname, sizeof(myname)-1);
+	(void)gethostname(myname, sizeof(myname));
+	myname[sizeof(myname) - 1] = '\0';
 	(void)gethost(myname, &myaddr);
 
 	while ((n = getopt(argc, argv, "sqdghmpAtvT:F:P:")) != -1) {

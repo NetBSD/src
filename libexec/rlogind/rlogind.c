@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.13 1998/03/30 01:53:07 mrg Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.14 1998/07/06 06:48:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.13 1998/03/30 01:53:07 mrg Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.14 1998/07/06 06:48:38 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(argc, argv)
 	struct sockaddr_in from;
 	int ch, fromlen, on;
 
-	openlog("rlogind", LOG_PID | LOG_CONS, LOG_AUTH);
+	openlog("rlogind", LOG_PID, LOG_AUTH);
 
 	opterr = 0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
@@ -190,7 +190,7 @@ doit(f, fromp)
 		exit(1);
 
 	alarm(0);
-	fromp->sin_port = ntohs((u_short)fromp->sin_port);
+	fromp->sin_port = ntohs((in_port_t)fromp->sin_port);
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
 	    fromp->sin_family);
 	if (hp) {
@@ -646,11 +646,12 @@ int
 local_domain(h)
 	char *h;
 {
-	char localhost[MAXHOSTNAMELEN];
+	char localhost[MAXHOSTNAMELEN + 1];
 	char *p1, *p2;
 
 	localhost[0] = 0;
 	(void) gethostname(localhost, sizeof(localhost));
+	localhost[sizeof(localhost) - 1] = '\0';
 	p1 = topdomain(localhost);
 	p2 = topdomain(h);
 	if (p1 == NULL || p2 == NULL || !strcasecmp(p1, p2))
