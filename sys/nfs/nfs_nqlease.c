@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.13 1996/02/18 11:53:43 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,7 +185,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 		 * Find the lease by searching the hash list.
 		 */
 		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
-		VFS_VPTOFH(vp, &fh.fh_fid);
+		error = VFS_VPTOFH(vp, &fh.fh_fid);
 		if (error) {
 			splx(s);
 			return (error);
