@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.47 2002/09/27 05:36:06 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.48 2002/09/30 06:38:10 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.47 2002/09/27 05:36:06 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.48 2002/09/30 06:38:10 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -878,6 +878,7 @@ awi_media_change(struct ifnet *ifp)
 	 *							also LINK0
 	 *   -      -     -	STA         0       0		Infra Station
 	 */
+	ic->ic_flags &= ~IEEE80211_F_IBSSON;
 	if (ime->ifm_media & IFM_IEEE80211_HOSTAP) {
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
 			ic->ic_opmode = IEEE80211_M_HOSTAP;
@@ -903,6 +904,7 @@ awi_media_change(struct ifnet *ifp)
 				sc->sc_no_bssid = 0;
 				error = ENETRESET;
 			}
+			ic->ic_flags |= IEEE80211_F_IBSSON;
 		}
 	} else if (ime->ifm_media & IFM_FLAG0) {
 		if (ic->ic_opmode != IEEE80211_M_ADHOC ||
@@ -1767,8 +1769,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			case IEEE80211_S_AUTH:
 			case IEEE80211_S_ASSOC:
 				/* timeout restart scan */
-				while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
-					ieee80211_free_node(ic, ni);
+				ieee80211_free_allnodes(ic);
 				/* FALLTHRU */
 			case IEEE80211_S_INIT:
 				ic->ic_flags |= IEEE80211_F_ASCAN;
