@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.12 2001/11/25 16:00:05 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.13 2002/08/03 06:38:41 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
 #include <arch/x68k/dev/dmacvar.h>
 
 #ifdef DMAC_DEBUG
-#define DPRINTF(n,x)	if (dmacdebug>(n)&0x0f) printf x
-#define DDUMPREGS(n,x)	if (dmacdebug>(n)&0x0f) {printf x; dmac_dump_regs();}
+#define DPRINTF(n,x)	if (dmacdebug>((n)&0x0f)) printf x
+#define DDUMPREGS(n,x)	if (dmacdebug>((n)&0x0f)) {printf x; dmac_dump_regs();}
 int dmacdebug = 0;
 #else
 #define DPRINTF(n,x)
@@ -645,7 +645,8 @@ dmac_dump_regs(void)
 	struct dmac_channel_stat *chan = debugchan;
 	struct dmac_softc *sc;
 
-	if ((chan == 0) || (dmacdebug & 0xf0)) return;
+	if ((chan == 0) || (dmacdebug & 0xf0))
+		return 0;
 	sc = (void*) chan->ch_softc;
 
 	printf ("DMAC channel %d registers\n", chan->ch_channel);
