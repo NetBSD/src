@@ -169,29 +169,11 @@ void armelf_frob_symbol PARAMS ((symbolS *, int *));
 
 #define OPTIONAL_REGISTER_PREFIX '%'
 
-#define md_operand(x)
-
-#define TC_HANDLES_FX_DONE
-
-#define MD_APPLY_FIX3
-
 #define LOCAL_LABEL(name) (name[0] == '.' && (name[1] == 'L'))
 #define LOCAL_LABELS_FB   1
 #ifdef OBJ_ELF
 #define LOCAL_LABEL_PREFIX '.'
 #endif
-
-extern boolean pic_code;
-
-/* This expression evaluates to false if the relocation is for a local 
-   object for which we still want to do the relocation at runtime.
-   True if we are willing to perform this relocation while building  
-   the .o file.
-
-   If the reloc is against an externally visible symbol, then the
-   a.out assembler should not do the relocation if generating PIC */
-
-#define obj_relocate_extern   (!pic_code)
 
 /* This expression evaluates to false if the relocation is for a local object
    for which we still want to do the relocation at runtime.  True if we

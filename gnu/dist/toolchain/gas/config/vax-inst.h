@@ -60,6 +60,8 @@ typedef long vax_opcodeT;	/* For initialising array of opcodes	   */
 #define VAX_ABSOLUTE_MODE (0x9F)/* Use as @#...			   */
 #define VAX_BRB (0x11)		/* Canonical branch.			   */
 #define VAX_BRW (0x31)		/* Another canonical branch		   */
+#define VAX_CALLS (0xFB)	/* Call with arg list on stack	           */
+#define VAX_CALLG (0xFA)	/* Call with arg list in memory		   */
 #define VAX_WIDEN_WORD (0x20)	/* Add this to byte branch to get word br.  */
 #define VAX_WIDEN_LONG (0x6)	/* Add this to byte branch to get long jmp.*/
 /* Needs VAX_PC_RELATIVE_MODE byte after it*/

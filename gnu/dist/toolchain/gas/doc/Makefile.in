@@ -445,17 +445,17 @@ installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
-asconfig.texi: $(CONFIG).texi
-	rm -f asconfig.texi
-	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+#asconfig.texi: $(CONFIG).texi
+#	rm -f asconfig.texi
+#	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+#	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+#	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
 
-gasver.texi: Makefile
-	rm -f $@
-	echo '@set VERSION $(VERSION)' > $@
+#gasver.texi: Makefile
+#	rm -f $@
+#	echo '@set VERSION $(VERSION)' > $@
 
-as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#as.info: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 as.dvi: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
 
 # We want install to imply install-info as per GNU standards, despite the
@@ -470,14 +470,14 @@ info: $(MANS)
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
-as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
-	-($(POD2MAN) as.pod | \
-	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
-	        mv -f $@.T$$$$ $@) || \
-	        (rm -f $@.T$$$$ && exit 1)
-	rm -f as.pod
+#as.1: $(srcdir)/as.texinfo asconfig.texi gasver.texi $(CPU_DOCS)
+#	touch $@
+#	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
+#	-($(POD2MAN) as.pod | \
+#	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+#	        mv -f $@.T$$$$ $@) || \
+#	        (rm -f $@.T$$$$ && exit 1)
+#	rm -f as.pod
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

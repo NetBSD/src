@@ -35,8 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "aout/aout64.h"
 
-#define MY(op)	CAT(aoutarm_,op)
-#define NAME(x, y)	CAT3(aoutarm,_32_,y)
+#define MY(op)		CONCAT2 (aoutarm_,op)
+#define NAME(x, y)	CONCAT3 (aoutarm,_32_,y)
 
 #include "libaout.h"
 

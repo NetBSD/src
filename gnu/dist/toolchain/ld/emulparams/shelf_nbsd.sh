@@ -9,7 +9,6 @@ MAXPAGESIZE=0x10000
 
 DATA_START_SYMBOLS='__data_start = . ;';
 
-ENTRY=_start
-
-unset EMBEDDED
-unset OTHER_SECTIONS
+OTHER_READWRITE_SECTIONS='
+  .note.ABI-tag : { *(.note.ABI-tag) }
+'

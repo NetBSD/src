@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 USA.  */
 
-/* Check for our machine type (part of magic number). */
+/* Check for our machine type (part of magic number).  */
 #ifndef MACHTYPE_OK
 #define MACHTYPE_OK(m) ((m) == DEFAULT_MID || (m) == M_UNKNOWN)
 #endif
@@ -83,6 +83,7 @@ static boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 
 static boolean netbsd_translate_from_native_sym_flags PARAMS ((bfd *, aout_symbol_type *));
 static boolean netbsd_translate_to_native_sym_flags PARAMS ((bfd *, asymbol *, struct external_nlist *));
+static boolean netbsd_read_dynamic_info PARAMS ((bfd *abfd));
 static long netbsd_get_dynamic_symtab_upper_bound PARAMS ((bfd *));
 static long netbsd_canonicalize_dynamic_symtab PARAMS ((bfd *, asymbol **));
 static boolean netbsd_slurp_dynamic_symtab PARAMS ((bfd *));

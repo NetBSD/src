@@ -1,5 +1,5 @@
 /* bucomm.c -- Bin Utils COMmon code.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001
+   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -42,9 +42,9 @@ char *program_name;
 
 void
 bfd_nonfatal (string)
-     CONST char *string;
+     const char *string;
 {
-  CONST char *errmsg = bfd_errmsg (bfd_get_error ());
+  const char *errmsg = bfd_errmsg (bfd_get_error ());
 
   if (string)
     fprintf (stderr, "%s: %s: %s\n", program_name, string, errmsg);
@@ -54,7 +54,7 @@ bfd_nonfatal (string)
 
 void
 bfd_fatal (string)
-     CONST char *string;
+     const char *string;
 {
   bfd_nonfatal (string);
   xexit (1);
@@ -70,55 +70,26 @@ report (format, args)
   putc ('\n', stderr);
 }
 
-#ifdef ANSI_PROTOTYPES
 void
-fatal (const char *format, ...)
+fatal VPARAMS ((const char *format, ...))
 {
-  va_list args;
+  VA_OPEN (args, format);
+  VA_FIXEDARG (args, const char *, format);
 
-  va_start (args, format);
   report (format, args);
-  va_end (args);
+  VA_CLOSE (args);
   xexit (1);
 }
 
 void
-non_fatal (const char *format, ...)
+non_fatal VPARAMS ((const char *format, ...))
 {
-  va_list args;
+  VA_OPEN (args, format);
+  VA_FIXEDARG (args, const char *, format);
 
-  va_start (args, format);
   report (format, args);
-  va_end (args);
+  VA_CLOSE (args);
 }
-#else
-void 
-fatal (va_alist)
-     va_dcl
-{
-  char *Format;
-  va_list args;
-
-  va_start (args);
-  Format = va_arg (args, char *);
-  report (Format, args);
-  va_end (args);
-  xexit (1);
-}
-
-void 
-non_fatal (va_alist)
-     va_dcl
-{
-  char *Format;
-  va_list args;
-
-  va_start (args);
-  Format = va_arg (args, char *);
-  report (Format, args);
-  va_end (args);
-}
-#endif
 
 /* Set the default BFD target based on the configured target.  Doing
    this permits the binutils to be configured for a particular target,
@@ -157,15 +128,36 @@ list_supported_targets (name, f)
      const char *name;
      FILE *f;
 {
-  extern const bfd_target *const *bfd_target_vector;
   int t;
+  const char **targ_names = bfd_target_list ();
 
   if (name == NULL)
     fprintf (f, _("Supported targets:"));
   else
     fprintf (f, _("%s: supported targets:"), name);
-  for (t = 0; bfd_target_vector[t] != NULL; t++)
-    fprintf (f, " %s", bfd_target_vector[t]->name);
+
+  for (t = 0; targ_names[t] != NULL; t++)
+    fprintf (f, " %s", targ_names[t]);
+  fprintf (f, "\n");
+  free (targ_names);
+}
+
+/* List the supported architectures.  */
+
+void
+list_supported_architectures (name, f)
+     const char *name;
+     FILE *f;
+{
+  const char** arch;
+
+  if (name == NULL)
+    fprintf (f, _("Supported architectures:"));
+  else
+    fprintf (f, _("%s: supported architectures:"), name);
+
+  for (arch = bfd_arch_list (); *arch; arch++)
+    fprintf (f, " %s", *arch);
   fprintf (f, "\n");
 }
 
@@ -188,7 +180,7 @@ print_arelt_descr (file, abfd, verbose)
 	  char modebuf[11];
 	  char timebuf[40];
 	  time_t when = buf.st_mtime;
-	  CONST char *ctime_result = (CONST char *) ctime (&when);
+	  const char *ctime_result = (const char *) ctime (&when);
 
 	  /* POSIX format:  skip weekday and seconds from ctime output.  */
 	  sprintf (timebuf, "%.12s %.4s", ctime_result + 4, ctime_result + 20);
@@ -267,7 +259,7 @@ parse_vma (s, arg)
   const char *end;
 
   ret = bfd_scan_vma (s, &end, 0);
-  
+
   if (*end != '\0')
     fatal (_("%s: bad number: %s"), arg, s);
 

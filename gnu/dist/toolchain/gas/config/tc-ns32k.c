@@ -1,6 +1,6 @@
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
    Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001
+   2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -23,7 +23,6 @@
 /*#define SHOW_NUM 1*//* Uncomment for debugging.  */
 
 #include <stdio.h>
-#include <ctype.h>
 
 #include "as.h"
 #include "subsegs.h"
@@ -1318,7 +1317,7 @@ convert_iif ()
 	    case 3:
 	    case 4:
 	      /* The final size in objectmemory is known.  */
-	      memP = frag_more(size);
+	      memP = frag_more (size);
 	      j = iif.iifP[i].bit_fixP;
 
 	      switch (type)
@@ -1465,6 +1464,7 @@ convert_iif ()
 		if ((exprP.X_add_symbol || exprP.X_op_symbol) &&
 		    !iif.iifP[i].pcrel)
 		  {
+#if 0 /*<<<<<<< tc-ns32k.c*/
 		    if (reloc_mode == BFD_RELOC_NS32K_GLOB_DAT
 		    	&& got_offset_size == 2)
 		      {
@@ -1477,7 +1477,12 @@ convert_iif ()
 			   allow 4 bytes.  */
 			size = 4;
 		      }
-		    memP = frag_more(size);
+#else /*=======*/
+		    /* Size is unknown until link time so have to
+                       allow 4 bytes.  */
+		    size = 4;
+#endif /*>>>>>>> 1.1.1.4*/
+		    memP = frag_more (size);
 		    fix_new_ns32k_exp (frag_now,
 				       (long) (memP - frag_now->fr_literal),
 				       size,
@@ -1503,7 +1508,7 @@ convert_iif ()
 		      {
 			/* Size is not important.  This gets fixed by
 			   relax, but we assume 0 in what follows.  */
-			memP = frag_more(4); /* Max size.  */
+			memP = frag_more (4); /* Max size.  */
 			size = 0;
 
 			{
@@ -1984,52 +1989,43 @@ md_fix_pcrel_adjust (fixP)
    out separate functions for each kind of thing we could be fixing.
    They all get called from here.  */
 
-#ifdef BFD_ASSEMBLER
-int
-md_apply_fix (fixP, valp)
-     fixS *fixP;
-     valueT *valp;
-#else
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
-#endif
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
-#ifdef BFD_ASSEMBLER
-  long val = *valp;
-#endif
+  long val = * (long *) valP;
   fragS *fragP = fixP->fx_frag;
-
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (fix_bit_fixP (fixP))
-    {				/* Bitfields to fix, sigh.  */
-      md_number_to_field (buf, val, fix_bit_fixP (fixP));
+    /* Bitfields to fix, sigh.  */
+    md_number_to_field (buf, val, fix_bit_fixP (fixP));
+
+  else switch (fix_im_disp (fixP))
+    {
+    case 0:
+      /* Immediate field.  */
+      md_number_to_imm (buf, val, fixP->fx_size);
+      break;
+
+    case 1:
+      /* Displacement field.  */
+      /* Calculate offset */
+      md_number_to_disp (buf,
+			 (fixP->fx_pcrel ? val + md_fix_pcrel_adjust (fixP)
+			  : val), fixP->fx_size);
+      break;
+
+    case 2:
+      /* Pointer in a data object.  */
+      md_number_to_chars (buf, val, fixP->fx_size);
+      break;
     }
-  else
-    switch (fix_im_disp (fixP))
-      {
-      case 0:			/* Immediate field.  */
-	md_number_to_imm (buf, val, fixP->fx_size);
-	break;
 
-      case 1:			/* Displacement field.  */
-	/* Calculate offset */
-	{
-	  md_number_to_disp (buf,
-			     (fixP->fx_pcrel ? val + md_fix_pcrel_adjust (fixP)
-			      : val), fixP->fx_size);
-	}
-	break;
-
-      case 2:			/* Pointer in a data object.  */
-	md_number_to_chars (buf, val, fixP->fx_size);
-	break;
-      }
-#ifdef BSD_ASSEMBLER
-  return 1;
-#endif
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Convert a relaxed displacement to ditto in final output */
@@ -2080,9 +2076,6 @@ md_convert_frag (abfd, sec, fragP)
 
   /* The displacement of the address, from current location.  */
   disp = (S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset) - object_address;
-#ifdef BFD_ASSEMBLER
-  disp += symbol_get_frag (fragP->fr_symbol)->fr_address;
-#endif
   disp += md_pcrel_adjust (fragP);
 
   md_number_to_disp (buffer_address, (long) disp, (int) ext);
@@ -2173,7 +2166,7 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
   md_number_to_disp (ptr + 1, (valueT) offset, 4);
 }
 
-CONST char *md_shortopts = "m:";
+const char *md_shortopts = "m:";
 
 struct option md_longopts[] =
 {

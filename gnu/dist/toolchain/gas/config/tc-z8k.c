@@ -1,5 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 2000
+   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -24,11 +24,10 @@
 #define DEFINE_TABLE
 #include <stdio.h>
 
-#include "opcodes/z8k-opc.h"
-
 #include "as.h"
 #include "bfd.h"
-#include <ctype.h>
+#include "safe-ctype.h"
+#include "opcodes/z8k-opc.h"
 
 const char comment_chars[] = "!";
 const char line_comment_chars[] = "#";
@@ -70,9 +69,9 @@ int
 tohex (c)
      int c;
 {
-  if (isdigit (c))
+  if (ISDIGIT (c))
     return c - '0';
-  if (islower (c))
+  if (ISLOWER (c))
     return c - 'a' + 10;
   return c - 'A' + 10;
 }
@@ -221,7 +220,7 @@ whatreg (reg, src)
      int *reg;
      char *src;
 {
-  if (isdigit (src[1]))
+  if (ISDIGIT (src[1]))
     {
       *reg = (src[0] - '0') * 10 + src[1] - '0';
       return src + 2;
@@ -259,7 +258,7 @@ parse_reg (src, mode, reg)
   char *res = 0;
   char regno;
 
-  if (src[0] == 's' && src[1] == 'p')
+  if (src[0] == 's' && src[1] == 'p' && (src[2] == 0 || src[2] == ','))
     {
       if (segmented_mode)
 	{
@@ -277,6 +276,8 @@ parse_reg (src, mode, reg)
     {
       if (src[1] == 'r')
 	{
+	  if (src[2] < '0' || src[2] > '9')
+	    return res;	 /* Assume no register name but a label starting with 'rr'.  */
 	  *mode = CLASS_REG_LONG;
 	  res = whatreg (reg, src + 2);
 	  regno = *reg;
@@ -285,6 +286,8 @@ parse_reg (src, mode, reg)
 	}
       else if (src[1] == 'h')
 	{
+	  if (src[2] < '0' || src[2] > '9')
+	    return res;	 /* Assume no register name but a label starting with 'rh'.  */
 	  *mode = CLASS_REG_BYTE;
 	  res = whatreg (reg, src + 2);
 	  regno = *reg;
@@ -293,6 +296,8 @@ parse_reg (src, mode, reg)
 	}
       else if (src[1] == 'l')
 	{
+	  if (src[2] < '0' || src[2] > '9')
+	    return res;	 /* Assume no register name but a label starting with 'rl'.  */
 	  *mode = CLASS_REG_BYTE;
 	  res = whatreg (reg, src + 2);
 	  regno = *reg;
@@ -302,6 +307,8 @@ parse_reg (src, mode, reg)
 	}
       else if (src[1] == 'q')
 	{
+	  if (src[2] < '0' || src[2] > '9')
+	    return res;	 /* Assume no register name but a label starting with 'rq'.  */
 	  *mode = CLASS_REG_QUAD;
 	  res = whatreg (reg, src + 2);
 	  regno = *reg;
@@ -310,6 +317,8 @@ parse_reg (src, mode, reg)
 	}
       else
 	{
+	  if (src[1] < '0' || src[1] > '9')
+	    return res;	 /* Assume no register name but a label starting with 'r'.  */
 	  *mode = CLASS_REG_WORD;
 	  res = whatreg (reg, src + 1);
 	  regno = *reg;
@@ -996,7 +1005,7 @@ build_bytes (this_try, operand)
   frag_wane (frag_now);
   frag_new (0);
 
-  memset (buffer, 0, 20);
+  memset (buffer, 0, sizeof (buffer));
   class_ptr = this_try->byte_info;
 
   for (nibble = 0; (c = *class_ptr++); nibble++)
@@ -1072,6 +1081,7 @@ build_bytes (this_try, operand)
 	case CLASS_FLAGS:
 	  *output_ptr++ = the_flags;
 	  break;
+	case CLASS_IGNORE:
 	case CLASS_BIT:
 	  *output_ptr++ = c & 0xf;
 	  break;
@@ -1107,6 +1117,9 @@ build_bytes (this_try, operand)
 	    nib = 0;
 	    switch (c & ARG_MASK)
 	      {
+	      case ARG_NIM4:
+		imm_operand->X_add_number = -imm_operand->X_add_number;
+		/* Drop through.  */
 	      case ARG_IMM4:
 		output_ptr = apply_fix (output_ptr, R_IMM4L, imm_operand, 1);
 		break;
@@ -1196,13 +1209,12 @@ md_assemble (str)
 
   if (opcode->opcode == 250)
     {
-      /* Was really a pseudo op.  */
-
       pseudo_typeS *p;
       char oc;
-
       char *old = input_line_pointer;
       *op_end = c;
+
+      /* Was really a pseudo op.  */
 
       input_line_pointer = op_end;
 
@@ -1218,7 +1230,11 @@ md_assemble (str)
     }
   else
     {
-      input_line_pointer = get_operands (opcode, op_end, operand);
+      char *new_input_line_pointer;
+
+      new_input_line_pointer = get_operands (opcode, op_end, operand);
+      if (new_input_line_pointer)
+        input_line_pointer = new_input_line_pointer;
       prev_opcode = opcode;
 
       opcode = get_specific (opcode, operand);
@@ -1324,11 +1340,12 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-CONST char *md_shortopts = "z:";
+const char *md_shortopts = "z:";
 
-struct option md_longopts[] = {
-  {NULL, no_argument, NULL, 0}
-};
+struct option md_longopts[] =
+  {
+    {NULL, no_argument, NULL, 0}
+  };
 
 size_t md_longopts_size = sizeof (md_longopts);
 
@@ -1392,14 +1409,15 @@ md_section_align (seg, size)
 {
   return ((size + (1 << section_alignment[(int) seg]) - 1)
 	  & (-1 << section_alignment[(int) seg]));
-
 }
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, segment)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT segment ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   switch (fixP->fx_r_type)
@@ -1455,6 +1473,9 @@ md_apply_fix (fixP, val)
     default:
       abort ();
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 int

@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -63,15 +63,9 @@ LITTLENUM_TYPE big_operand_bits[VIT_MAX_OPERANDS][SIZE_OF_LARGE_NUMBER];
 FLONUM_TYPE float_operand[VIT_MAX_OPERANDS];
 /* Above is made to point into big_operand_bits by md_begin().  */
 
-#ifndef OBJ_VMS
-#ifdef OBJ_AOUT
-#define GLOBAL_OFFSET_TABLE_NAME	"__GLOBAL_OFFSET_TABLE_"
-#define PROCEDURE_LINKAGE_TABLE_NAME	"__PROCEDURE_LINKAGE_TABLE_"
-#endif
 #ifdef OBJ_ELF
 #define GLOBAL_OFFSET_TABLE_NAME	"_GLOBAL_OFFSET_TABLE_"
 #define PROCEDURE_LINKAGE_TABLE_NAME	"_PROCEDURE_LINKAGE_TABLE_"
-#endif
 symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE_" */
 symbolS *PLT_symbol;		/* Pre-defined "_PROCEDURE_LINKAGE_TABLE_" */
 #endif
@@ -80,7 +74,9 @@ int flag_hash_long_names;	/* -+ */
 int flag_one;			/* -1 */
 int flag_show_after_trunc;	/* -H */
 int flag_no_hash_mixed_case;	/* -h NUM */
+#ifdef OBJ_ELF
 int flag_want_pic;		/* -k */
+#endif
 
 /*
  * For VAX, relative addresses of "just the right length" are easy.
@@ -242,7 +238,7 @@ const relax_typeS md_relax_table[] =
 #undef WF
 #undef WB
 
-void float_cons ();
+void float_cons PARAMS ((int));
 
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -270,9 +266,12 @@ int flonum_gen2vax PARAMS ((char format_letter, FLONUM_TYPE * f,
 			    LITTLENUM_TYPE * words));
 static const char *vip_begin PARAMS ((int, const char *, const char *,
 				      const char *));
+static void vip_op_1 PARAMS ((int, const char *));
 static void vip_op_defaults PARAMS ((const char *, const char *, const char *));
 static void vip_op PARAMS ((char *, struct vop *));
 static void vip PARAMS ((struct vit *, char *));
+
+static int vax_reg_parse PARAMS ((char, char, char, char));
 
 void
 md_begin ()
@@ -307,32 +306,25 @@ md_number_to_chars (con, value, nbytes)
 /* Fix up some data or instructions after we find out the value of a symbol
    that they reference.  */
 
-#ifdef BFD_ASSEMBLER
-int				/* Knows about order of bytes in address. */
-md_apply_fix (fixP, valP)
+void				/* Knows about order of bytes in address.  */
+md_apply_fix3 (fixP, valueP, seg)
      fixS *fixP;
-     valueT *valP;
+     valueT *valueP;
+     segT seg ATTRIBUTE_UNUSED;
 {
-#ifdef OBJ_ELF
+  valueT value = * valueP;
+#ifdef BFD_ASSEMBLER
   if (((fixP->fx_addsy == NULL && fixP->fx_subsy == NULL)
        && fixP->fx_r_type != BFD_RELOC_32_PLT_PCREL
        && fixP->fx_r_type != BFD_RELOC_32_GOT_PCREL)
       || fixP->fx_r_type == NO_RELOC)
 #endif
     number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
-				  (valueT) *valP, fixP->fx_size);
-  return 0;
+				  value, fixP->fx_size);
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
-#else
-void				/* Knows about order of bytes in address.  */
-md_apply_fix (fixP, value)
-     fixS *fixP;
-     long value;
-{
-  number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
-				(valueT) value, fixP->fx_size);
-}
-#endif /* not BFD_ASSEMBLER */
 
 long
 md_chars_to_number (con, nbytes)
@@ -356,7 +348,7 @@ md_assemble (instruction_string)
 {
   /* Non-zero if operand expression's segment is not known yet.  */
   int is_undefined;
-  /* Non-zero if operand expression's segment is absolute. */
+  /* Non-zero if operand expression's segment is absolute.  */
   int is_absolute;
 
   int length_code;
@@ -1001,22 +993,16 @@ md_assemble (instruction_string)
 		      if (length == 0)
 			{
 			  know (operandP->vop_short == ' ');
-#ifndef OBJ_VMS
-			  if (S_IS_EXTERNAL (this_add_symbol)
+			  length_code = STATE_BYTE;
 #ifdef OBJ_ELF
-			      || S_IS_WEAK (this_add_symbol)
+			  if (S_IS_EXTERNAL (this_add_symbol)
+			      || S_IS_WEAK (this_add_symbol))
+			    length_code = STATE_UNDF;
 #endif
-			      )
-			    p = frag_var (rs_machine_dependent, 10, 2,
-			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
-					  this_add_symbol, this_add_number,
-					  opcode_low_byteP);
-			  else
-#endif
-			    p = frag_var (rs_machine_dependent, 10, 2,
-			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_BYTE),
-					  this_add_symbol, this_add_number,
-					  opcode_low_byteP);
+			  p = frag_var (rs_machine_dependent, 10, 2,
+			       ENCODE_RELAX (STATE_PC_RELATIVE, length_code),
+					this_add_symbol, this_add_number,
+					opcode_low_byteP);
 			  know (operandP->vop_mode == 10 + at);
 			  *p = at << 4;
 			  /* At is the only context we need to carry
@@ -1055,21 +1041,26 @@ md_assemble (instruction_string)
 			  know ((length == 0 && operandP->vop_short == ' ')
 			     || (length > 0 && operandP->vop_short != ' '));
 			  if (is_undefined
-#ifndef OBJ_VMS
 #ifdef OBJ_ELF
 			      || S_IS_WEAK(this_add_symbol)
-#endif
 			      || S_IS_EXTERNAL(this_add_symbol)
 #endif
 			      )
 			    {
+			      switch (length)
+				{
+				default: length_code = STATE_UNDF; break;
+				case 1: length_code = STATE_BYTE; break;
+				case 2: length_code = STATE_WORD; break;
+				case 4: length_code = STATE_LONG; break;
+				}
 			      /*
 			       * We have a SEG_UNKNOWN symbol. It might
 			       * turn out to be in the same segment as
 			       * the instruction, permitting relaxation.
 			       */
 			      p = frag_var (rs_machine_dependent, 5, 2,
-			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
+			       ENCODE_RELAX (STATE_PC_RELATIVE, length_code),
 					    this_add_symbol, this_add_number,
 					    opcode_low_byteP);
 			      p[0] = at << 4;
@@ -1125,7 +1116,7 @@ md_assemble (instruction_string)
 			  know (nbytes);
 			  p = frag_more (nbytes + 1);
 			  know (operandP->vop_reg == 0xF);
-#ifndef OBJ_VMS
+#ifdef OBJ_ELF
 			  if (flag_want_pic && operandP->vop_mode == 8
 				&& this_add_symbol != NULL)
 			    {
@@ -1239,10 +1230,8 @@ md_estimate_size_before_relax (fragP, segment)
   if (RELAX_LENGTH (fragP->fr_subtype) == STATE_UNDF)
     {
       if (S_GET_SEGMENT (fragP->fr_symbol) != segment
-#ifndef OBJ_VMS
 #ifdef OBJ_ELF
 	  || S_IS_WEAK (fragP->fr_symbol)
-#endif
 	  || S_IS_EXTERNAL (fragP->fr_symbol)
 #endif
 	  )
@@ -1254,17 +1243,13 @@ md_estimate_size_before_relax (fragP, segment)
 
 	  old_fr_fix = fragP->fr_fix;
 	  p = fragP->fr_literal + old_fr_fix;
-#ifndef OBJ_VMS
-	  /* If this is to an undefined symbol, then if it's an indirect
-	     reference indicate that is can mutated into a GLOB_DAT or
-	     JUMP_SLOT by the loader.  We restrict ourselves to no offset
-	     due to a limitation in the NetBSD linker.  */
-#ifdef OBJ_AOUT
-	  if ((p[0] & 0x10) == 0 && !fragP->fr_offset && !flag_want_pic)
-	    {
-	      reloc_type = NO_RELOC2;
-	    }
-#endif
+#ifdef OBJ_ELF
+	  /*
+	   * If this is to undefined symbol, then if it's an indirect
+	   * reference indicate that is can mutated into a GLOB_DAT
+	   * by the loader.  We restrict ourselves to no offset due to
+	   * a limitation in the NetBSD linker.
+	   */
 	  if (GOT_symbol == NULL)
 	    GOT_symbol = symbol_find (GLOBAL_OFFSET_TABLE_NAME);
 	  if (PLT_symbol == NULL)
@@ -1272,11 +1257,8 @@ md_estimate_size_before_relax (fragP, segment)
 	  if ((GOT_symbol == NULL || fragP->fr_symbol != GOT_symbol)
 	      && (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
 	      && fragP->fr_symbol != NULL
-	      && flag_want_pic
 	      && (!S_IS_DEFINED (fragP->fr_symbol)
-#ifdef OBJ_ELF
 	          || S_IS_WEAK (fragP->fr_symbol)
-#endif
 	          || S_IS_EXTERNAL (fragP->fr_symbol)))
 	    {
 	      if (p[0] & 0x10)
@@ -1290,37 +1272,12 @@ md_estimate_size_before_relax (fragP, segment)
 	
 		  if (((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLS
 		      || ((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLG
-#ifdef BFD_ASSEMBLER
-		      || S_IS_FUNCTION (fragP->fr_symbol)
-#endif
-		      )
-		    {
-#ifdef BFD_ASSEMBLER
-		      reloc_type = BFD_RELOC_32_PLT_PCREL;
-#else
-		      reloc_type = RELOC_JMP_TBL;
-#endif
-		    }
-		  else if (fragP->fr_opcode[0] == VAX_JSB
-		      || fragP->fr_opcode[0] == VAX_JMP)
-		    {
-#ifdef BFD_ASSEMBLER
-		      reloc_type = BFD_RELOC_32_PLT_PCREL;
-#else
-		      reloc_type = RELOC_JMP_SLOT;
-#endif
-		    }
+		      || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JSB
+		      || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JMP
+		      || S_IS_FUNCTION (fragP->fr_symbol))
+		    reloc_type = BFD_RELOC_32_PLT_PCREL;
 		  else
-		    {
-#ifdef OBJ_AOUT
-		      if (fragP->fr_offset)
-#endif
-#ifdef BFD_ASSEMBLER
-			reloc_type = BFD_RELOC_32_GOT_PCREL;
-#else
-			reloc_type = RELOC_GLOB_DAT;
-#endif
-		    }
+		    reloc_type = BFD_RELOC_32_GOT_PCREL;
 		}
 	    }
 #endif
@@ -1432,8 +1389,8 @@ md_convert_frag (headers, seg, fragP)
 #else
 void
 md_convert_frag (headers, seg, fragP)
-     object_headers *headers;
-     segT seg;
+     object_headers *headers ATTRIBUTE_UNUSED;
+     segT seg ATTRIBUTE_UNUSED;
      fragS *fragP;
 #endif
 {
@@ -2189,7 +2146,7 @@ main ()
  *
  */
 
-#include <ctype.h>
+#include "safe-ctype.h"
 #define AP (12)
 #define FP (13)
 #define SP (14)
@@ -2225,14 +2182,12 @@ vax_reg_parse (c1, c2, c3, c4)	/* 3 chars of register name */
     return retval;
 #endif
 
-  if (isupper (c1))
-    c1 = tolower (c1);
-  if (isupper (c2))
-    c2 = tolower (c2);
-  if (isdigit (c2) && c1 == 'r')
+  c1 = TOLOWER (c1);
+  c2 = TOLOWER (c2);
+  if (ISDIGIT (c2) && c1 == 'r')
     {
       retval = c2 - '0';
-      if (isdigit (c3))
+      if (ISDIGIT (c3))
 	{
 	  retval = retval * 10 + c3 - '0';
 	  retval = (retval > 15) ? -1 : retval;
@@ -2578,8 +2533,7 @@ vip_op (optext, vopP)
     char c;
 
     c = *p;
-    if (isupper (c))
-      c = tolower (c);
+    c = TOLOWER (c);
     if (DISPLENP (p[1]) && strchr ("bilws", len = c))
       p += 2;			/* skip (letter) '^' */
     else			/* no (letter) '^' seen */
@@ -3349,9 +3303,11 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
 }
 
 #ifdef OBJ_VMS
-CONST char *md_shortopts = "d:STt:V+1h:Hv::";
+const char *md_shortopts = "d:STt:V+1h:Hv::";
+#elif defined(OBJ_ELF)
+const char *md_shortopts = "d:STt:VkK";
 #else
-CONST char *md_shortopts = "d:STt:VkK";
+const char *md_shortopts = "d:STt:V";
 #endif
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
@@ -3416,7 +3372,7 @@ md_parse_option (c, arg)
       break;
 #endif
 
-#ifndef OBJ_VMS
+#ifdef OBJ_ELF
     case 'K':
     case 'k':
       flag_want_pic = 1;
@@ -3488,11 +3444,13 @@ void
 tc_headers_hook(headers)
      object_headers *headers;
 {
-  N_SET_INFO(headers->header, OMAGIC, M_VAX, flag_want_pic ? 0x40 : 0);
+#ifdef TE_NetBSD
+  N_SET_INFO(headers->header, OMAGIC, M_VAX4K_NETBSD, 0);
   headers->header.a_info = htonl(headers->header.a_info);
+#endif
 }
-#endif
-#endif
+#endif /* !BFD_ASSEMBLER */
+#endif /* OBJ_AOUT */
 
 #ifdef BFD_ASSEMBLER
 arelent *
@@ -3517,18 +3475,14 @@ tc_gen_reloc (section, fixp)
 	    case BFD_RELOC_8_PCREL:
 	    case BFD_RELOC_16_PCREL:
 	    case BFD_RELOC_32_PCREL:
+#ifdef OBJ_ELF
 	    case BFD_RELOC_8_GOT_PCREL:
 	    case BFD_RELOC_16_GOT_PCREL:
 	    case BFD_RELOC_32_GOT_PCREL:
-	    case BFD_RELOC_8_GOTOFF:
-	    case BFD_RELOC_16_GOTOFF:
-	    case BFD_RELOC_32_GOTOFF:
 	    case BFD_RELOC_8_PLT_PCREL:
 	    case BFD_RELOC_16_PLT_PCREL:
 	    case BFD_RELOC_32_PLT_PCREL:
-	    case BFD_RELOC_8_PLTOFF:
-	    case BFD_RELOC_16_PLTOFF:
-	    case BFD_RELOC_32_PLTOFF:
+#endif
 	      break;
 	    default:
 	      as_bad_where (fixp->fx_file, fixp->fx_line,
@@ -3574,7 +3528,6 @@ tc_gen_reloc (section, fixp)
 
   return reloc;
 }
-
 #endif	/* BFD_ASSEMBLER */
 
 /* end of tc-vax.c */

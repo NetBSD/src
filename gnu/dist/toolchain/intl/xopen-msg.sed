@@ -1,5 +1,5 @@
 # po2msg.sed - Convert Uniforum style .po file to X/Open style .msg file
-# Copyright (C) 1995 Free Software Foundation, Inc.
+# Copyright 1995, 2002 Free Software Foundation, Inc.
 # Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 #
 # This program is free software; you can redistribute it and/or modify
