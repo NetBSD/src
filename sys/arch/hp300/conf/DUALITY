@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.14 1994/10/26 07:23:07 cgd Exp $
+#	$NetBSD: DUALITY,v 1.15 1995/02/23 22:22:07 mycroft Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -40,6 +40,7 @@ options		NFSCLIENT
 options		NFSSERVER
 
 options		"CD9660"
+options		MSDOSFS
 options		FDESC
 options		FIFO
 options		KERNFS
@@ -52,9 +53,7 @@ options		UNION
 options		GATEWAY
 options		INET
 
-config		netbsd root on sd0 swap on sd0b and rd0b
-config		sdnetbsd root on sd0 swap on sd0b and sd1b and sd2b and sd3b
-config		rdnetbsd root on rd0 swap on rd0b and rd1b and rd2b and rd3b
+config		netbsd root on rd0 swap on sd0b and sd1b and sd2b and sd3b and rd0b and rd1b and rd2b and rd3b
 config		gennetbsd swap generic
 
 master		hpib0	at scode7
@@ -63,8 +62,14 @@ disk		rd0	at hpib? slave ?
 disk		rd1	at hpib? slave ?
 disk		rd2	at hpib? slave ?
 disk		rd3	at hpib? slave ?
-tape		ct0	at hpib0 slave ?
-tape		ct1	at hpib0 slave ?
+disk		rd4	at hpib? slave ?
+disk		rd5	at hpib? slave ?
+disk		rd6	at hpib? slave ?
+disk		rd7	at hpib? slave ?
+tape		ct0	at hpib? slave ?
+tape		ct1	at hpib? slave ?
+tape		mt0	at hpib? slave ?
+tape		mt1	at hpib? slave ?
 
 master		scsi0	at scode?
 master		scsi1	at scode?
@@ -72,6 +77,10 @@ disk		sd0	at scsi? slave ?
 disk		sd1	at scsi? slave ?
 disk		sd2	at scsi? slave ?
 disk		sd3	at scsi? slave ?
+disk		sd4	at scsi? slave ?
+disk		sd5	at scsi? slave ?
+disk		sd6	at scsi? slave ?
+disk		sd7	at scsi? slave ?
 tape		st0	at scsi? slave ?
 tape		st1	at scsi? slave ?
 
