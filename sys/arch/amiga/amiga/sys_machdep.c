@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.5 1994/02/13 21:13:29 chopps Exp $
+ *	$Id: sys_machdep.c,v 1.6 1994/06/02 08:32:10 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -45,6 +45,8 @@
 #include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
+
+#include <vm/vm.h>
 
 #ifdef TRACE
 int	nvualarm;
@@ -117,27 +119,96 @@ cachectl(req, addr, len)
 	int len;
 {
 	int error = 0;
+#ifdef M68040
+	if (mmutype == MMU_68040) {
+		register int inc = 0;
+		int pa = 0, doall = 0;
+		caddr_t end;
+
+		if (addr == 0 ||
+		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+			doall = 1;
+		if (!doall) {
+			end = addr + len;
+			if (len <= 1024) {
+				addr = (caddr_t)((int)addr & ~0xF);
+				inc = 16;
+			} else {
+				addr = (caddr_t)((int)addr & ~PGOFSET);
+				inc = NBPG;
+			}
+		}
+		do {
+			/*
+			 * Convert to physical address if needed.
+			 * If translation fails, we perform operation on
+			 * entire cache (XXX is this a rational thing to do?)
+			 */
+			if (!doall &&
+			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+				pa = pmap_extract(&curproc->p_vmspace->vm_pmap,
+						  (vm_offset_t)addr);
+				if (pa == 0)
+					doall = 1;
+			}
+			switch (req) {
+			case CC_EXTPURGE|CC_IPURGE:
+			case CC_IPURGE:
+				if (doall) {
+					DCFA();
+					ICPA();
+				} else if (inc == 16) {
+					DCFL(pa);
+					ICPL(pa);
+				} else if (inc == NBPG) {
+					DCFP(pa);
+					ICPP(pa);
+				}
+				break;
+			
+			case CC_EXTPURGE|CC_PURGE:
+			case CC_PURGE:
+				if (doall)
+					DCFA();	/* note: flush not purge */
+				else if (inc == 16)
+					DCPL(pa);
+				else if (inc == NBPG)
+					DCPP(pa);
+				break;
+
+			case CC_EXTPURGE|CC_FLUSH:
+			case CC_FLUSH:
+				if (doall)
+					DCFA();
+				else if (inc == 16)
+					DCFL(pa);
+				else if (inc == NBPG)
+					DCFP(pa);
+				break;
+				
+			default:
+				error = EINVAL;
+				break;
+			}
+			if (doall)
+				break;
+			pa += inc;
+			addr += inc;
+		} while (addr < end);
+		return(error);
+	}
+#endif	/* M68040 */
 
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP370)
-		if (ectype == EC_PHYS)
-			PCIA();
-		/* fall into... */
-#endif
 	case CC_PURGE:
 	case CC_FLUSH:
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP370)
-		if (ectype == EC_PHYS)
-			PCIA();
-		else
-#endif
 		DCIU();
-		/* fall into... */
+		/*FALLTHROUGH*/
 	case CC_IPURGE:
 		ICIA();
 		break;
