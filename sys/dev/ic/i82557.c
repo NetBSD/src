@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.81.2.2 2004/04/28 07:04:42 tron Exp $	*/
+/*	$NetBSD: i82557.c,v 1.81.2.2.2.1 2005/01/24 21:42:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.81.2.2 2004/04/28 07:04:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.81.2.2.2.1 2005/01/24 21:42:10 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2088,7 +2088,7 @@ fxp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
-			if (sc->sc_enabled) {
+			if (ifp->if_flags & IFF_RUNNING) {
 				/*
 				 * Multicast list has changed; set the
 				 * hardware filter accordingly.
