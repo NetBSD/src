@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.131 1999/02/11 20:14:28 christos Exp $
+#	$NetBSD: files.i386,v 1.132 1999/03/23 20:07:39 bad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -308,6 +308,26 @@ file	dev/isapnp/i82365_isapnp.c	pcic_isapnp
 
 # Code common to ISA and ISAPnP attachments
 file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
+
+# XXXX tcic here because it needs to be late.  The catch: tcic needs
+# to be late, so devices which attach to it are attached late.  But it
+# needs to be before its isa and pci attachments.  This answer is
+# non-optimal, but I don't have a better answer right now.
+
+# TCIC pcmcia contoller
+# XXX this needs to be done very late, so it's done here.  This feels
+# like a kludge, but it might be for the best.
+
+defopt	TCIC_ISA_ALLOC_IOBASE
+defopt	TCIC_ISA_ALLOC_IOSIZE
+defopt	TCIC_ISA_INTR_ALLOC_MASK
+
+device	tcic: pcmciabus
+file	dev/ic/tcic2.c			tcic
+
+# TCIC pcmcia contoller
+attach	tcic at isa with tcic_isa
+file	dev/isa/tcic2_isa.c		tcic_isa
 
 # this wants to be probed as late as possible.
 #
