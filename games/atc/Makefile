@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.11 1997/03/24 22:15:37 christos Exp $
+#	$NetBSD: Makefile,v 1.12 1997/10/10 02:07:01 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
-CFLAGS+=-DBSD -I${.CURDIR} -I.
+CFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
 SRCS=	extern.c grammar.c graphics.c input.c lex.c list.c log.c \
 	main.c tunable.c update.c
 MAN=	atc.6
