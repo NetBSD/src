@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.69 1998/11/11 22:44:25 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.70 1999/01/21 23:12:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -172,6 +172,7 @@ struct	proc {
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
+	void	*p_ctxlink;		/* uc_link {get,set}context */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy
