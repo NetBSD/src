@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5 2000/09/04 05:48:35 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6 2000/09/06 11:25:13 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -53,6 +53,7 @@ void enable_ext_intr __P((void));
 void disable_ext_intr __P((void));
 static __inline void setPageDir __P((int));
 static __inline void cache_clear __P((int));
+static __inline void breakpoint __P((void));
 
 static __inline void
 tlbflush(void)
@@ -158,6 +159,12 @@ cache_clear(va)
 #ifdef SH4
 	__asm __volatile("ocbp @%0" :: "r"(va));
 #endif
+}
+
+static __inline void
+breakpoint()
+{
+	__asm __volatile ("trapa #0xc3");
 }
 
 #endif
