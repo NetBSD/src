@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.2 1996/04/12 06:10:26 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.3 1996/04/17 21:48:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -230,7 +230,7 @@ wsconsopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct wscons_softc *sc;
-	int unit = WSCUNIT(dev);
+	int unit = WSCUNIT(dev), newopen, rv;
 	struct tty *tp;
 
 	if (unit >= wscons_cd.cd_ndevs)
@@ -248,7 +248,8 @@ wsconsopen(dev, flag, mode, p)
 	tp->t_oproc = wsconsstart;
 	tp->t_param = wsconsparam;
 	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	newopen = (tp->t_state & TS_ISOPEN) == 0;
+	if (newopen) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -262,7 +263,13 @@ wsconsopen(dev, flag, mode, p)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	rv = ((*linesw[tp->t_line].l_open)(dev, tp));
+	if (newopen && (rv == 0)) {
+		/* set window sizes to be correct */
+		tp->t_winsize.ws_row = sc->sc_emul_data->ac_nrow;
+		tp->t_winsize.ws_col = sc->sc_emul_data->ac_ncol;
+	}
+	return (rv);
 }
 
 int
