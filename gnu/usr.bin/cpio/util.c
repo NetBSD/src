@@ -601,8 +601,8 @@ find_inode_file (node_num, major_num, minor_num)
 	   temp = (temp + 1) % hash_size)
 	{
 	  if (hash_table[temp]->inode == node_num
-	      && hash_table[start]->major_num == major_num
-	      && hash_table[start]->minor_num == minor_num)
+	      && hash_table[temp]->major_num == major_num
+	      && hash_table[temp]->minor_num == minor_num)
 	    return hash_table[temp]->file_name;
 	}
     }
