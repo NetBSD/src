@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.10 1998/02/13 05:52:41 lukem Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.11 1999/01/20 11:37:40 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.10 1998/02/13 05:52:41 lukem Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.11 1999/01/20 11:37:40 lukem Exp $");
 #endif
 #endif
 
@@ -167,4 +167,3 @@ xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 	}
 	return(TRUE);	
 }
-
