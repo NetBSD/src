@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.28 2002/01/31 19:37:16 tv Exp $	*/
+/*	$NetBSD: mtree.c,v 1.29 2002/12/23 04:40:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.28 2002/01/31 19:37:16 tv Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.29 2002/12/23 04:40:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: mtree.c,v 1.28 2002/01/31 19:37:16 tv Exp $");
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;
-int	cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
+int	cflag, Cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
     	rflag, sflag, tflag, uflag, Uflag;
 char	fullpath[MAXPATHLEN];
 
@@ -77,11 +77,14 @@ main(int argc, char **argv)
 	dir = NULL;
 	init_excludes();
 
-	while ((ch = getopt(argc, argv, "cdDeE:f:I:ik:K:lLmN:p:PrR:s:tuUWxX:"))
+	while ((ch = getopt(argc, argv, "cCdDeE:f:I:ik:K:lLmN:p:PrR:s:tuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
+			break;
+		case 'C':
+			Cflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -188,21 +191,21 @@ main(int argc, char **argv)
 	if ((cflag || sflag) && !getcwd(fullpath, sizeof(fullpath)))
 		mtree_err("%s", strerror(errno));
 
-	if (cflag == 1 && Dflag == 1)
-		mtree_err("-c and -D flags are mutually exclusive");
+	if ((cflag && Cflag) || (cflag && Dflag) || (Cflag && Dflag))
+		mtree_err("-c, -C and -D flags are mutually exclusive");
 
-	if (iflag == 1 && mflag == 1)
+	if (iflag && mflag)
 		mtree_err("-i and -m flags are mutually exclusive");
 
-	if (lflag == 1 && uflag == 1)
+	if (lflag && uflag)
 		mtree_err("-l and -u flags are mutually exclusive");
 
 	if (cflag) {
 		cwalk();
 		exit(0);
 	}
-	if (Dflag) {
-		dump_nodes("", spec(stdin));
+	if (Cflag || Dflag) {
+		dump_nodes("", spec(stdin), Dflag);
 		exit(0);
 	}
 	status = verify();
@@ -216,7 +219,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-cdDelLPruUWx] [-i|-m] [-f spec] [-k key]\n"
+	    "usage: %s [-cCdDelLPruUWx] [-i|-m] [-f spec] [-k key]\n"
 	    "\t\t[-K addkey] [-R removekey] [-I inctags] [-E exctags]\n"
 	    "\t\t[-N userdbdir] [-X exclude-file] [-p path] [-s seed]\n",
 	    getprogname());
