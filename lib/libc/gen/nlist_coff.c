@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_coff.c,v 1.2 2000/06/09 16:22:54 simonb Exp $	*/
+/* $NetBSD: nlist_coff.c,v 1.3 2000/06/14 06:49:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.2 2000/06/09 16:22:54 simonb Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.3 2000/06/14 06:49:06 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

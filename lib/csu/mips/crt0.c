@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.15 1999/07/02 15:53:55 simonb Exp $	*/
+/* $NetBSD: crt0.c,v 1.16 2000/06/14 06:49:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -158,7 +158,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.15 1999/07/02 15:53:55 simonb Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.16 2000/06/14 06:49:00 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

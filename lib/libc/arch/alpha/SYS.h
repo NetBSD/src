@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.6 1999/01/14 22:48:19 kleink Exp $	*/
+/* $NetBSD: SYS.h,v 1.7 2000/06/14 06:49:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

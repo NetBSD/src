@@ -1,4 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.3 1995/05/12 21:04:32 leo Exp $	*/
+/* $NetBSD: pathnames.h,v 1.4 2000/06/14 06:49:25 cgd Exp $ */
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -27,7 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #if defined(amiga) || defined(atari)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwalld.c,v 1.16 2000/06/03 20:35:06 fvdl Exp $	*/
+/* $NetBSD: rwalld.c,v 1.17 2000/06/14 06:49:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.16 2000/06/03 20:35:06 fvdl Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.17 2000/06/14 06:49:12 cgd Exp $");
 #endif /* not lint */
 
 #include <unistd.h>

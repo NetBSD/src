@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 1999/01/22 10:59:18 mycroft Exp $	*/
+/* $NetBSD: byte_swap_2.S,v 1.3 2000/06/14 06:49:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

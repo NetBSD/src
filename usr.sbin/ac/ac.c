@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.9 1999/10/11 11:44:59 mrg Exp $	*/
+/* $NetBSD: ac.c,v 1.10 2000/06/14 06:49:24 cgd Exp $ */
 
 /*
  *      Copyright (c) 1994 Christopher G. Demetriou.
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.9 1999/10/11 11:44:59 mrg Exp $");
+__RCSID("$NetBSD: ac.c,v 1.10 2000/06/14 06:49:24 cgd Exp $");
 #endif
 
 #include <sys/types.h>

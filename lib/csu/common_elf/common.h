@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.4 2000/02/07 21:40:40 scottb Exp $	*/
+/* $NetBSD: common.h,v 1.5 2000/06/14 06:48:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
