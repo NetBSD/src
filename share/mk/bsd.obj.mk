@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.11 1997/05/06 20:54:38 mycroft Exp $
+#	$NetBSD: bsd.obj.mk,v 1.12 1997/05/07 17:06:24 mycroft Exp $
 
 .if !target(obj)
 .if defined(NOOBJ)
@@ -23,7 +23,7 @@ __usrobjdirpf=
 .endif
 .endif
 
-obj: _SUBDIRUSE
+obj:
 	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
 	here=`/bin/pwd`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \

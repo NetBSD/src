@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.74 1997/05/07 15:53:34 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.75 1997/05/07 17:06:28 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -10,7 +10,7 @@
 .MAIN:		all
 .PHONY:		cleanprog proginstall scriptsinstall
 install:	proginstall scriptsinstall
-clean:		cleanprog
+clean cleandir:	cleanprog
 
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
@@ -104,7 +104,7 @@ MAN=	${PROG}.1
 .endif	# !defined(MAN)
 .endif	# defined(PROG)
 
-all: ${PROG} _SUBDIRUSE
+all: ${PROG}
 
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
