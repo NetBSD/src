@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.121 2000/02/12 21:51:51 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.122 2000/02/13 23:20:42 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3434,3 +3434,12 @@ distrib/notes/common/contents			patch
 sys/arch/amiga/dev/if_ed.c			1.33
 
   Only output diagnostic message on really special DEBUG kernels.
+
+distrib/notes/common/main			patch
+
+  Some more editing of the ``upgrade path'' section.
+  Document the *__errno() change as "important" for 1.4.2.
+
+sys/arch/alpha/alpha/dec_550.c			patch
+
+  Make this compile when NPCKBD > 0.
