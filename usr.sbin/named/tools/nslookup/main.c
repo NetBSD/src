@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.42 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1994/03/24 07:56:28 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1995/05/22 01:02:36 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -213,8 +213,7 @@ main(argc, argv)
 	 * default to the server(s) in resolv.conf.
 	 */ 
 
-	addr.s_addr = inet_addr(*++argv);
-	if (addr.s_addr != (unsigned long)-1) {
+	if (inet_aton(*++argv, &addr) != 0) {
 	    _res.nscount = 1;
 	    _res.nsaddr.sin_addr = addr;
 	} else {
@@ -337,7 +336,7 @@ LocalServer(defaultPtr)
     gethostname(hostName, sizeof(hostName));
 
 #if BSD < 43
-    defaultAddr.s_addr = inet_addr(LOCALHOST);
+    (void) inet_aton(LOCALHOST, &defaultAddr);
     result = GetHostInfoByName(&defaultAddr, C_IN, T_A, 
 		hostName, defaultPtr, 1);
     if (result != SUCCESS) {
@@ -389,18 +388,15 @@ Usage()
  *	A string with a trailing dot is not an address, even if it looks
  *	like one.
  *
- *	XXX doesn't treat 255.255.255.255 as an address.
- *
  *******************************************************************************
  */
 
 Boolean
 IsAddr(host, addrPtr)
     char *host;
-    unsigned long *addrPtr;	/* If return TRUE, contains IP address */
+    struct in_addr *addrPtr;	/* If return TRUE, contains IP address */
 {
     register char *cp;
-    unsigned long addr;
 
     if (isdigit(host[0])) {
 	    /* Make sure it has only digits and dots. */
@@ -410,14 +406,8 @@ IsAddr(host, addrPtr)
 	    }
 	    /* If it has a trailing dot, don't treat it as an address. */
 	    if (*--cp != '.') { 
-		if ((addr = inet_addr(host)) != (unsigned long) -1) {
-		    *addrPtr = addr;
+		if (inet_aton(host, addrPtr) != 0)
 		    return TRUE;
-#if 0
-		} else {
-		    /* XXX Check for 255.255.255.255 case */
-#endif
-		}
 	    }
     }
     return FALSE;
@@ -505,7 +495,7 @@ SetDefaultServer(string, local)
     }
 
     result = ERROR;
-    if (IsAddr(newServer, &addr.s_addr)) {
+    if (IsAddr(newServer, &addr)) {
 	result = GetHostInfoByAddr(servAddrPtr, &addr, newDefPtr);
 	/* If we can't get the name, fall through... */
     } 
@@ -583,7 +573,7 @@ DoLookup(host, servPtr, serverName)
      * RFC1123 says we "SHOULD check the string syntactically for a 
      * dotted-decimal number before looking it up [...]" (p. 13).
      */
-    if (queryType == T_A && IsAddr(host, &addr.s_addr)) {
+    if (queryType == T_A && IsAddr(host, &addr)) {
 	result = GetHostInfoByAddr(servAddrPtr, &addr, &curHostInfo);
     } else {
 	if (queryType == T_PTR) {
@@ -1075,7 +1065,7 @@ CvtAddrToPtr(name)
     int ip[4];
     struct in_addr addr;
 
-    if (IsAddr(name, &addr.s_addr)) {
+    if (IsAddr(name, &addr)) {
 	p = inet_ntoa(addr);
 	if (sscanf(p, "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]) == 4) {
 	    sprintf(name, "%d.%d.%d.%d.in-addr.arpa.", 
