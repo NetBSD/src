@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.15 1999/06/08 23:42:36 simonb Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.16 1999/06/10 01:37:10 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.15 1999/06/08 23:42:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.16 1999/06/10 01:37:10 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -432,8 +432,8 @@ dec_maxine_intr(cpumask, pc, status, cause)
 void	
 kn02ca_wbflush()
 {
-	/* read once IOASIC_INTR */
-	__asm __volatile("lw $0,0xbc040120");
+	/* read once IOASIC_IMSK */
+	__asm __volatile("lw $0,%0" :: "i"(0xbc040120));
 }
 
 unsigned
