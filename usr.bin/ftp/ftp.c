@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.38 1998/08/08 06:46:02 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.39 1999/01/05 23:33:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.38 1998/08/08 06:46:02 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.39 1999/01/05 23:33:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1150,6 +1150,13 @@ reinit:
 			    sizeof(data_addr)) < 0) {
 			if (errno == EINTR)
 				continue;
+			if (activefallback) {
+				(void)close(data);
+				data = -1;
+				passivemode = 0;
+				activefallback = 0;
+				goto reinit;
+			}
 			warn("connect");
 			goto bad;
 		}
