@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 2002/03/06 07:34:36 simonb Exp $ */
+/* $NetBSD: cpu.c,v 1.4 2002/03/06 08:02:12 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -89,6 +89,11 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	mips_dcache_wbinv_all();
 
 	/* Determine CPU frequency */
+
+	/* XXX:  We should determine the CPU frequency from a time source
+	 *       not coupled with the CPU crystal, like the RTC.  Unfortunately
+	 *       we don't attach that yet...
+	 */
 	plldiv = G_SYS_PLL_DIV(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG)));
 	if (plldiv == 0) {
 		printf("PLL_DIV of zero found, assuming 6 (300MHz)\n");
