@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.72 2002/03/03 14:16:10 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.73 2002/03/04 14:02:38 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -98,9 +98,21 @@ dialout=524288		# high bit of the minor number
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
 
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
+makedev()
+{
+
 for i
 do
-
 case $i in
 
 all)
@@ -130,14 +142,13 @@ floppy|ramdisk)
 	;;
 
 isdn)
-	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
+	makedev i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
-	rm -f console tty kmem mem null zero eeprom openprom drum klog \
-		stdin stdout stderr fd/* ttya ttyb fb mouse kbd
+	rm -f console kmem mem null zero eeprom openprom drum klog \
+		ttya ttyb fb mouse kbd
 	mknod console		c 0 0
-	mknod tty		c 2 0	; chmod 666 tty
 	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
 	mknod null		c 3 2	; chmod 666 null
@@ -146,9 +157,13 @@ std)
 	mknod openprom		c 70 0  ; chmod 640 openprom;chgrp kmem openprom
 	mknod drum		c 7 0	; chmod 640 drum ; chgrp kmem drum
 	mknod klog		c 16 0	; chmod 600 klog
-	mknod stdin		c 24 0	; chmod 666 stdin
-	mknod stdout		c 24 1	; chmod 666 stdout
-	mknod stderr		c 24 2	; chmod 666 stderr
+	if $nofdesc; then
+		rm -f tty stdin stdout stderr
+		mknod tty	c 2 0	; chmod 666 tty
+		mknod stdin	c 24 0	; chmod 666 stdin
+		mknod stdout	c 24 1	; chmod 666 stdout
+		mknod stderr	c 24 2	; chmod 666 stderr
+	fi
 
 	mknod fb		c 22 0 ; chmod 666 fb
 	mknod mouse		c 13 0 ; chmod 666 mouse
@@ -166,28 +181,29 @@ tty[abcd])
 	rm -f tty$unit dty$unit
 	mknod tty$unit c 12 $(($index + $dialin ))
 	mknod dty$unit c 12 $(($index + $dialout))
-	chown uucp.wheel tty$unit dty$unit
+	chown uucp tty$unit dty$unit
 	;;
 
 ttyC*)
-        unit=${i#ttyC}
-        rm -f ttyC$unit dtyC$unit
-        mknod ttyC$unit c 36 $(($unit + $dialin ))
-        mknod dtyC$unit c 36 $(($unit + $dialout))
-        chown uucp.wheel ttyC$unit dtyC$unit
+	unit=${i#ttyC}
+	rm -f ttyC$unit dtyC$unit
+	mknod ttyC$unit c 36 $(($unit + $dialin ))
+	mknod dtyC$unit c 36 $(($unit + $dialout))
+	chown uucp ttyC$unit dtyC$unit
 	;;
 
 fd)
-	rm -f fd/*
-	mkdir fd > /dev/null 2>&1
-	n=0
-	while [ $n -lt 64 ]; do
-		mknod fd/$n c 24 $n
-		n=$(($n + 1))
-	done
-	chown -R root.wheel fd
-	chmod 755 fd
-	chmod 666 fd/*
+	if $nofdesc; then
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mknod fd/$n c 24 $n
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
 	;;
 
 bwtwo*)
@@ -251,7 +267,6 @@ audio*)
 	mknod $audio    c $major $(($unit + 128))
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
@@ -260,7 +275,6 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 105 $unit
 	chmod 600 bpf$unit
-	chown root.wheel bpf$unit
 	;;
 
 tun*)
@@ -268,7 +282,6 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 111 $unit
 	chmod 600 tun$unit
-	chown root.wheel tun$unit
 	;;
 
 md*)
@@ -373,7 +386,7 @@ ses*|ch*|uk*)
 lkm)
 	rm -f lkm
 	mknod lkm c 112 0
-	chown root.kmem lkm
+	chgrp kmem lkm
 	chmod 640 lkm
 	;;
 
@@ -383,7 +396,6 @@ ipl)
 	mknod ipnat c 25 1
 	mknod ipstate c 25 2
 	mknod ipauth c 25 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -403,7 +415,6 @@ opty)
 		mknod ttyp$j c 20 $jn
 		mknod ptyp$j c 21 $jn
 	done
-	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
 	;;
 
@@ -432,15 +443,13 @@ pty*)
 		mknod pty$name$j c 21 $unit
 		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
-        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 random)
 	rm -f random urandom
 	mknod random c 119 0
 	mknod urandom c 119 1
-	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
@@ -486,7 +495,7 @@ clcd*)
 		mknod ttyA$unit$j c 124 $(($unit * 8 + $j + $dialin))
 		mknod dtyA$unit$j c 124 $(($unit * 8 + $j + $dialout))
 	done
-	chown uucp.wheel ttyA$unit[0-9a-f] dtyA$unit[0-9a-f]
+	chown uucp ttyA$unit[0-9a-f] dtyA$unit[0-9a-f]
 
 	;;
 
@@ -494,15 +503,13 @@ scsibus*)
 	unit=${i#scsibus}; 
 	rm -f scsibus$unit
 	mknod scsibus$unit c 120 $unit
-	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
 	;;
 
 apm*)
-	rm -f apm apmctl
-	ln -s tctrl0 apm
+	rm -f apmctl
+	ln -fs tctrl0 apm
 	mknod apmctl c 71 8
-	chown root:wheel apm apmctl
 	chmod 644 apmctl
 	;;
 
@@ -510,7 +517,6 @@ tctrl*)
 	unit=${i#tctrl}
 	rm -f tctrl$unit
 	mknod tctrl$unit	c 71 $unit
-	chown root:wheel tctrl$unit
 	chmod 666 tctrl$unit
 	;;
 
@@ -557,7 +563,7 @@ pci*)
 clockctl)
 	rm -f clockctl
 	mknod clockctl c 125 0
-	chown root.ntpd clockctl
+	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
 
@@ -572,3 +578,7 @@ local)
 	;;
 esac
 done
+
+}
+
+makedev $*
