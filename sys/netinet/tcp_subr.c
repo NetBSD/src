@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.33 1997/11/08 02:35:24 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.34 1997/11/11 21:10:50 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -486,7 +486,6 @@ tcp_mtudisc(inp, errno)
 
 			if ((rt->rt_flags & RTF_HOST) == 0) {
 				in_rtchange(inp, errno);
-				rtfree(rt);
 				if ((rt = in_pcbrtentry(inp)) == 0)
 					return;
 			}
