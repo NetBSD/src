@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.7 2000/08/24 03:52:27 jhawk Exp $
+.\" $NetBSD: sysinst,v 1.8 2000/08/25 23:52:25 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,6 +231,7 @@ notes later in this document.
 We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
+.\}
 .\}
 .\}
 .It_need
