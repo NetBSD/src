@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.123 2001/04/01 23:04:31 aidan Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.124 2001/04/12 02:28:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.123 2001/04/01 23:04:31 aidan Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.124 2001/04/12 02:28:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2184,8 +2184,10 @@ dologout(int status)
 	_exit(status);
 }
 
-void abor(void)
+void
+abor(void)
 {
+
 	tmpline[0] = '\0';
 	is_oob = 0;
 	reply(426, "Transfer aborted. Data connection closed.");
@@ -2193,8 +2195,10 @@ void abor(void)
 	longjmp(urgcatch, 1);
 }
 
-void statxfer(void)
+void
+statxfer(void)
 {
+
 	tmpline[0] = '\0';
 	is_oob = 0;
 	if (file_size != (off_t) -1)
