@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.34 2000/05/08 22:41:38 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.35 2000/05/20 14:26:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -97,9 +97,9 @@
 #if defined(__cplusplus)
 #define	__inline	inline		/* convert to C++ keyword */
 #else
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__lint__)
 #define	__inline			/* delete GCC keyword */
-#endif /* !__GNUC__ */
+#endif /* !__GNUC__  && !__lint__ */
 #endif /* !__cplusplus */
 
 #else	/* !(__STDC__ || __cplusplus) */
