@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.177 2000/08/12 22:41:55 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.178 2000/08/21 02:11:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -467,7 +467,7 @@ main(void)
 	 * munched in mi_switch() after the time got set.
 	 */
 	proclist_lock_read();
-	s = splhigh();		/* block clock and statclock */
+	s = splsched();
 	for (p = LIST_FIRST(&allproc); p != NULL;
 	     p = LIST_NEXT(p, p_list)) {
 		p->p_stats->p_start = mono_time = boottime = time;
