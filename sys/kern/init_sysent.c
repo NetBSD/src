@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.124.2.14 2002/11/11 22:13:33 nathanw Exp $ */
+/* $NetBSD: init_sysent.c,v 1.124.2.15 2002/12/19 23:59:26 thorpej Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.14 2002/11/11 22:13:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.15 2002/12/19 23:59:26 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -671,11 +671,11 @@ struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_munlockall },			/* 243 = munlockall */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 244 = unimplemented */
+	    sys_nosys },			/* 244 = unimplemented sys_sigwaitinfo */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 245 = unimplemented */
+	    sys_nosys },			/* 245 = unimplemented sys_sigtimedwait */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 246 = unimplemented */
+	    sys_nosys },			/* 246 = unimplemented sys_sigqueue */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 247 = unimplemented */
 	{ 0, 0, 0,
