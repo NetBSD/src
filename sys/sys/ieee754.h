@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.2 2003/10/26 21:46:46 kleink Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.3 2003/10/27 01:11:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,7 +142,7 @@ struct ieee_double {
  */
 union ieee_single_u {
 	float			sngu_f;
-	struct ieee_single	sngu_flt;
+	struct ieee_single	sngu_sng;
 };
 
 union ieee_double_u {

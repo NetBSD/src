@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.5 2003/10/26 21:46:46 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.6 2003/10/27 01:11:47 kleink Exp $	*/
 
 /*	$OpenBSD: ieee.h,v 1.1 1999/04/20 19:44:04 mickey Exp $	*/
 
@@ -87,5 +87,5 @@ struct ieee_ext {
  */
 union ieee_ext_u {
 	long double		extu_ld;
-	struct ieee_ext		extu_ldbl;
+	struct ieee_ext		extu_ext;
 };
