@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-/*__RCSID("$NetBSD: cftoken.l,v 1.10 2003/07/29 23:17:39 itojun Exp $");*/
+__RCSID("$NetBSD: cftoken.l,v 1.11 2003/07/30 00:34:16 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
