@@ -14,7 +14,7 @@ FLOPPY_RELEASEDIR=	installation/diskimage
 
 MDEC=		${DESTDIR}/usr/mdec
 KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
-FLOPPY_NETBSD=	${KERNOBJ}/netbsd.INSTALL.gz
+FLOPPY_NETBSD=	${KERNOBJ}/netbsd.gz
 FLOPPY_BOOT=	${MDEC}/ustarboot
 FLOPPYINSTBOOT=\
 	"${INSTALLBOOT} -m ${MACHINE} -t raw -v -b 17 @IMAGE@ ${FLOPPY_BOOT}"
