@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.3 1993/11/12 05:56:25 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.4 1993/12/01 10:35:22 cgd Exp $
  */
 
 #include "param.h"
@@ -61,6 +61,23 @@ msdosfs_mount(mp, path, data, ndp, p)
 	 */
 	if (error = copyin(data, (caddr_t) & args, sizeof(struct msdosfs_args)))
 		return error;
+
+	/*
+	 * Check to see if they want it to be an exportable filesystem via
+	 * nfs.  And, if they do, should it be read only, and what uid is
+	 * root to be mapped to.
+	 */
+	if ((args.exflags & MNT_EXPORTED) || (mp->mnt_flag & MNT_EXPORTED)) {
+		if (args.exflags & MNT_EXPORTED)
+			mp->mnt_flag |= MNT_EXPORTED;
+		else
+			mp->mnt_flag &= ~MNT_EXPORTED;
+		if (args.exflags & MNT_EXRDONLY)
+			mp->mnt_flag |= MNT_EXRDONLY;
+		else
+			mp->mnt_flag &= ~MNT_EXRDONLY;
+		mp->mnt_exroot = args.exroot;
+	}
 
 	/*
 	 * If they just want to update then be sure we can do what is
@@ -215,6 +232,11 @@ mountmsdosfs(devvp, mp, p)
 		goto error_exit;
 	}
 #endif
+	if ( bsp->bs50.bsJump[0] != 0xe9 &&
+	    (bsp->bs50.bsJump[0] != 0xeb || bsp->bs50.bsJump[2] != 0x90)) {
+		error = EINVAL;
+		goto error_exit;
+	}
 
 	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
 	pmp->pm_inusemap = NULL;
@@ -235,6 +257,15 @@ mountmsdosfs(devvp, mp, p)
 	pmp->pm_FATsecs = getushort(b50->bpbFATsecs);
 	pmp->pm_SecPerTrack = getushort(b50->bpbSecPerTrack);
 	pmp->pm_Heads = getushort(b50->bpbHeads);
+
+	/* XXX - We should probably check more values here */
+    	if (!pmp->pm_BytesPerSec || !pmp->pm_SectPerClust ||
+	    !pmp->pm_Heads || pmp->pm_Heads > 255 ||
+	    !pmp->pm_SecPerTrack || pmp->pm_SecPerTrack > 63) {
+		error = EINVAL;
+		goto error_exit;
+	}
+
 	if (pmp->pm_Sectors == 0) {
 		pmp->pm_HiddenSects = getulong(b50->bpbHiddenSecs);
 		pmp->pm_HugeSectors = getulong(b50->bpbHugeSectors);
@@ -269,12 +300,6 @@ mountmsdosfs(devvp, mp, p)
 		pmp->pm_fatblocksize = MAXBSIZE;
 	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
 
-	/* XXX - We should probably check more values here */
-	if (!pmp->pm_Heads || pmp->pm_Heads > 255 ||
-	    !pmp->pm_SecPerTrack || pmp->pm_SecPerTrack > 63) {
-		error = EINVAL;
-		goto error_exit;
-	}
 
 	if ((pmp->pm_rootdirsize % pmp->pm_SectPerClust) != 0)
 		printf("mountmsdosfs(): root directory is not a multiple of the clustersize in length\n");
