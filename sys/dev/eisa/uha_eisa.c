@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.2 1996/09/01 00:20:21 mycroft Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.3 1996/10/10 19:54:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -116,7 +117,7 @@ uha_eisa_attach(parent, self, aux)
 		model = EISA_PRODUCT_USC0240;
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	kprintf(": %s\n", model);
 
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + UHA_EISA_SLOT_OFFSET,
 	    UHA_EISA_IOSIZE, &ioh))
@@ -128,7 +129,7 @@ uha_eisa_attach(parent, self, aux)
 		panic("uha_attach: u24_find failed!");
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
+		kprintf("%s: couldn't map interrupt (%d)\n",
 		    sc->sc_dev.dv_xname, sc->sc_irq);
 		return;
 	}
@@ -136,14 +137,14 @@ uha_eisa_attach(parent, self, aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    u24_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		kprintf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			kprintf(" at %s", intrstr);
+		kprintf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Save function pointers for later use. */
 	sc->start_mbox = u24_start_mbox;
@@ -186,7 +187,7 @@ u24_find(bc, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		printf("u24_find: illegal irq setting %x\n",
+		kprintf("u24_find: illegal irq setting %x\n",
 		    config0 & U24_IRQ_MASK);
 		return (0);
 	}
@@ -199,7 +200,7 @@ u24_find(bc, ioh, sc)
 		delay(1000);	/* 1 mSec per loop */
 	}
 	if (!resetcount) {
-		printf("u24_find: board timed out during reset\n");
+		kprintf("u24_find: board timed out during reset\n");
 		return (0);
 	}
 
@@ -228,7 +229,7 @@ u24_start_mbox(sc, mscp)
 		delay(100);
 	}
 	if (!spincount) {
-		printf("%s: uha_start_mbox, board not responding\n",
+		kprintf("%s: uha_start_mbox, board not responding\n",
 		    sc->sc_dev.dv_xname);
 		Debugger();
 	}
@@ -280,7 +281,7 @@ u24_intr(arg)
 	u_long mboxval;
 
 #ifdef	UHADEBUG
-	printf("%s: uhaintr ", sc->sc_dev.dv_xname);
+	kprintf("%s: uhaintr ", sc->sc_dev.dv_xname);
 #endif /*UHADEBUG */
 
 	if ((bus_io_read_1(bc, ioh, U24_SINT) & U24_SDIP) == 0)
@@ -297,7 +298,7 @@ u24_intr(arg)
 		bus_io_write_1(bc, ioh, U24_ICMCMD, 0);
 
 #ifdef	UHADEBUG
-		printf("status = 0x%x ", uhastat);
+		kprintf("status = 0x%x ", uhastat);
 #endif /*UHADEBUG*/
 
 		/*
@@ -305,7 +306,7 @@ u24_intr(arg)
 		 */
 		mscp = uha_mscp_phys_kv(sc, mboxval);
 		if (!mscp) {
-			printf("%s: BAD MSCP RETURNED!\n",
+			kprintf("%s: BAD MSCP RETURNED!\n",
 			    sc->sc_dev.dv_xname);
 			continue;	/* whatever it was, it'll timeout */
 		}
@@ -329,7 +330,7 @@ u24_init(sc)
 	bus_io_write_1(bc, ioh, U24_ICMCMD, 0);
 	/* make sure interrupts are enabled */
 #ifdef UHADEBUG
-	printf("u24_init: lmask=%02x, smask=%02x\n",
+	kprintf("u24_init: lmask=%02x, smask=%02x\n",
 	    bus_io_read_1(bc, ioh, U24_LMASK),
 	    bus_io_read_1(bc, ioh, U24_SMASK));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.6 1996/06/09 23:32:25 cgd Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.7 1996/10/10 19:54:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -246,7 +246,7 @@ pdq_eisa_attach(
 
     sc = (pdq_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
     if (sc == NULL) {
-	printf("fea%d: malloc failed!\n", sc->sc_if.if_unit);
+	kprintf("fea%d: malloc failed!\n", sc->sc_if.if_unit);
 	return -1;
     }
     pdqs_eisa[ed->unit] = sc;
@@ -256,36 +256,36 @@ pdq_eisa_attach(
     sc->sc_if.if_unit = ed->unit;
 
     if ((iospace = ed->ioconf.ioaddrs.lh_first) == NULL) {
-	printf("fea%d: no iospace??\n", sc->sc_if.if_unit);
+	kprintf("fea%d: no iospace??\n", sc->sc_if.if_unit);
 	return -1;
     }
     if ((mspace = ed->ioconf.maddrs.lh_first) == NULL) {
-	printf("fea%d: no memory space??\n", sc->sc_if.if_unit);
+	kprintf("fea%d: no memory space??\n", sc->sc_if.if_unit);
 	return -1;
     }
 
     sc->sc_iobase = (pdq_bus_ioport_t) iospace->addr;
     sc->sc_membase = (pdq_bus_memaddr_t) pmap_mapdev(mspace->addr, mspace->size);
     if (sc->sc_membase == NULL) {
-	printf("fea%d: failed to map memory 0x%x-0x%x!\n",
-	       sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
+	kprintf("fea%d: failed to map memory 0x%x-0x%x!\n",
+	    sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
 	return -1;
     }
 
     eisa_reg_start(ed);
     if (eisa_reg_iospace(ed, iospace)) {
-	printf("fea%d: failed to register iospace 0x%x-0x%x!\n",
-	       sc->sc_if.if_unit, iospace->addr, iospace->addr + iospace->size - 1);
+	kprintf("fea%d: failed to register iospace 0x%x-0x%x!\n",
+	    sc->sc_if.if_unit, iospace->addr, iospace->addr + iospace->size - 1);
 	return -1;
     }
     if (eisa_reg_mspace(ed, mspace)) {
-	printf("fea%d: failed to register memory 0x%x-0x%x!\n",
-	       sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
+	kprintf("fea%d: failed to register memory 0x%x-0x%x!\n",
+	    sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
 	return -1;
     }
 
     if (eisa_reg_intr(ed, irq, pdq_eisa_interrupt, sc, &net_imask, 1)) {
-	printf("fea%d: interrupt registration failed\n", sc->sc_if.if_unit);
+	kprintf("fea%d: interrupt registration failed\n", sc->sc_if.if_unit);
 	return -1;
     }
 
@@ -296,12 +296,12 @@ pdq_eisa_attach(
 				sc->sc_if.if_name, sc->sc_if.if_unit,
 				(void *) sc, PDQ_DEFEA);
     if (sc->sc_pdq == NULL) {
-	printf("fea%d: initialization failed\n", sc->sc_if.if_unit);
+	kprintf("fea%d: initialization failed\n", sc->sc_if.if_unit);
 	return -1;
     }
 
     if (eisa_enable_intr(ed, irq)) {
-	printf("fea%d: failed to enable interrupt\n", sc->sc_if.if_unit);
+	kprintf("fea%d: failed to enable interrupt\n", sc->sc_if.if_unit);
 	return -1;
     }
 
@@ -346,16 +346,15 @@ pdq_eisa_probe(
 
     pdq_eisa_subprobe(PDQ_BUS_EISA, ia->ia_iobase, &maddr, &msize, &irq);
     if (ia->ia_irq != IRQUNK && irq != ia->ia_irq) {
-	printf("fea%d: error: desired IRQ of %d does not match device's actual IRQ (%d),\n",
-	       cf->cf_unit,
-	       ffs(ia->ia_irq) - 1, ffs(irq) - 1);
+	kprintf("fea%d: error: desired IRQ of %d does not match device's actual IRQ (%d),\n",
+	    cf->cf_unit, ffs(ia->ia_irq) - 1, ffs(irq) - 1);
 	return 0;
     }
     if (ia->ia_irq == IRQUNK) {
 	if ((ia->ia_irq = isa_irqalloc(irq)) == 0) {
 	    if ((ia->ia_irq = isa_irqalloc(IRQ9|IRQ10|IRQ11|IRQ15)) == 0) {
-		printf("fea%d: error: IRQ %d is already in use\n", cf->cf_unit,
-		       ffs(irq) - 1);
+		kprintf("fea%d: error: IRQ %d is already in use\n", cf->cf_unit,
+		    ffs(irq) - 1);
 		return 0;
 	    }
 	    irq = PDQ_OS_IORD_8(PDQ_BUS_EISA, ia->ia_iobase, PDQ_EISA_IO_CONFIG_STAT_0) & ~3;
@@ -369,8 +368,8 @@ pdq_eisa_probe(
 	}
     }
     if (maddr == 0) {
-	printf("fea%d: error: memory not enabled! ECU reconfiguration required\n",
-	       cf->cf_unit);
+	kprintf("fea%d: error: memory not enabled! ECU reconfiguration required\n",
+	    cf->cf_unit);
 	return 0;
     }
 
@@ -404,7 +403,7 @@ pdq_eisa_attach(
 				sc->sc_if.if_name, sc->sc_if.if_unit,
 				(void *) sc, PDQ_DEFEA);
     if (sc->sc_pdq == NULL) {
-	printf("fea%d: initialization failed\n", sc->sc_if.if_unit);
+	kprintf("fea%d: initialization failed\n", sc->sc_if.if_unit);
 	return;
     }
 
@@ -469,7 +468,7 @@ pdq_eisa_attach(
     sc->sc_if.if_softc = sc;
 
     if (bus_io_map(sc->sc_bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &sc->sc_iobase)) {
-	printf("\n%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
+	kprintf("\n%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
@@ -477,14 +476,14 @@ pdq_eisa_attach(
 
 #if !defined(PDQ_IOMAPPED)
     if (maddr == 0 || msize == 0) {
-	printf("\n%s: error: memory not enabled! ECU reconfiguration required\n",
-	       sc->sc_dev.dv_xname);
+	kprintf("\n%s: error: memory not enabled! ECU reconfiguration required\n",
+	    sc->sc_dev.dv_xname);
 	return;
     }
 
     if (bus_mem_map(sc->sc_bc, maddr, msize, 0, &sc->sc_membase)) {
 	bus_io_unmap(sc->sc_bc, sc->sc_iobase, EISA_SLOT_SIZE);
-	printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
+	kprintf("\n%s: failed to map memory (0x%x-0x%x)!\n",
 	    sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
 	return;
     }
@@ -494,7 +493,7 @@ pdq_eisa_attach(
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFEA);
     if (sc->sc_pdq == NULL) {
-	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
+	kprintf("%s: initialization failed\n", sc->sc_dev.dv_xname);
 	return;
     }
 
@@ -503,28 +502,28 @@ pdq_eisa_attach(
     pdq_ifattach(sc, pdq_eisa_ifwatchdog);
 
     if (eisa_intr_map(ea->ea_ec, irq, &ih)) {
-	printf("%s: couldn't map interrupt (%d)\n", sc->sc_dev.dv_xname, irq);
+	kprintf("%s: couldn't map interrupt (%d)\n", sc->sc_dev.dv_xname, irq);
 	return;
     }
     intrstr = eisa_intr_string(ea->ea_ec, ih);
     sc->sc_ih = eisa_intr_establish(ea->ea_ec, ih, IST_LEVEL, IPL_NET,
 				    (int (*)(void *)) pdq_interrupt, sc->sc_pdq);
     if (sc->sc_ih == NULL) {
-	printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+	kprintf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 	if (intrstr != NULL)
-	    printf(" at %s", intrstr);
-	printf("\n");
+	    kprintf(" at %s", intrstr);
+	kprintf("\n");
 	return;
     }
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
-	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
+	kprintf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
 #if !defined(PDQ_IOMAPPED)
-    printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
+    kprintf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
 	maddr + msize - 1);
 #endif
     if (intrstr != NULL)
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
 
 struct cfattach fea_ca = {
