@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.35 2002/09/20 19:11:17 mycroft Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.36 2003/05/09 20:50:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.35 2002/09/20 19:11:17 mycroft Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.36 2003/05/09 20:50:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -890,6 +890,7 @@ doit(who)
 	int error;
 	int level;
 	int ptynum;
+	int flags;
 	char user_name[256];
 
 	/*
@@ -930,9 +931,11 @@ doit(who)
 	}
 #endif	/* _SC_CRAY_SECURE_SYS */
 
+	flags = registerd_host_only ? NI_NAMEREQD : 0;
+
 	/* get name of connected client */
 	error = getnameinfo(who, who->sa_len, remote_host_name,
-	    sizeof(remote_host_name), NULL, 0, 0);
+	    sizeof(remote_host_name), NULL, 0, flags);
 
 #if	!defined(UTMPX) && !(defined(CRAY) || defined(__hpux)) && BSD <= 43
 	if (!error && strlen(remote_host_name) > utmp_len)
