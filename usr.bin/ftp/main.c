@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 1999/03/22 07:36:41 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.40 1999/03/31 02:00:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.39 1999/03/22 07:36:41 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 1999/03/31 02:00:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,7 +442,7 @@ cmdscanner(top)
 
 			if ((buf = el_gets(el, &num)) == NULL || num == 0)
 				quit(0, 0);
-			if (line[--num] == '\n') {
+			if (buf[--num] == '\n') {
 				if (num == 0)
 					break;
 			} else if (num >= sizeof(line)) {
