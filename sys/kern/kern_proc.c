@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_proc.c	7.16 (Berkeley) 6/28/91
- *	$Id: kern_proc.c,v 1.5 1993/12/18 04:20:57 mycroft Exp $
+ *	$Id: kern_proc.c,v 1.6 1994/05/04 03:41:56 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ inferior(p)
  */
 struct proc *
 pfind(pid)
-	register pid;
+	register pid_t pid;
 {
 	register struct proc *p = pidhash[PIDHASH(pid)];
 
@@ -139,7 +139,7 @@ enterpgrp(p, pgid, mksess)
 			sess->s_ttyp = NULL;
 			bcopy(p->p_session->s_login, sess->s_login,
 			    sizeof(sess->s_login));
-			p->p_flag &= ~SCTTY;
+			p->p_flag &= ~P_CONTROLT;
 			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
 			if (p != curproc)

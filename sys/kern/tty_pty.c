@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.19 1994/04/25 05:48:41 cgd Exp $
+ *	$Id: tty_pty.c,v 1.20 1994/05/04 03:42:07 cgd Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ again:
 			if ((p->p_sigignore & sigmask(SIGTTIN)) ||
 			    (p->p_sigmask & sigmask(SIGTTIN)) ||
 			    p->p_pgrp->pg_jobc == 0 ||
-			    p->p_flag&SPPWAIT)
+			    p->p_flag&P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
 			if (error = ttysleep(tp, (caddr_t)&lbolt, 

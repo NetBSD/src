@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)signalvar.h	7.1 (Berkeley) 5/9/91
- *	$Id: signalvar.h,v 1.6 1994/01/20 21:23:19 ws Exp $
+ *	$Id: signalvar.h,v 1.7 1994/05/04 03:42:35 cgd Exp $
  */
 
 #ifndef _SYS_SIGNALVAR_H_
@@ -81,8 +81,8 @@ struct	sigacts {
  */
 #define	CURSIG(p) \
 	(((p)->p_sig == 0 || \
-	    ((p)->p_flag&STRC) == 0 && ((p)->p_sig &~ (p)->p_sigmask) == 0) ? \
-	    0 : issig(p))
+	    ((p)->p_flag&P_TRACED) == 0 && \
+	    ((p)->p_sig &~ (p)->p_sigmask) == 0) ? 0 : issig(p))
 
 /*
  * Clear a pending signal from a process.

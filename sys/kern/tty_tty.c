@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tty.c	7.15 (Berkeley) 5/28/91
- *	$Id: tty_tty.c,v 1.7 1993/12/18 04:22:22 mycroft Exp $
+ *	$Id: tty_tty.c,v 1.8 1994/05/04 03:42:09 cgd Exp $
  */
 
 /*
@@ -46,7 +46,7 @@
 #include <sys/vnode.h>
 #include <sys/file.h>
 
-#define cttyvp(p) ((p)->p_flag&SCTTY ? (p)->p_session->s_ttyvp : NULL)
+#define cttyvp(p) ((p)->p_flag&P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
 /*ARGSUSED*/
 int
@@ -122,7 +122,7 @@ cttyioctl(dev, cmd, addr, flag, p)
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
 		if (!SESS_LEADER(p)) {
-			p->p_flag &= ~SCTTY;
+			p->p_flag &= ~P_CONTROLT;
 			return (0);
 		} else
 			return (EINVAL);

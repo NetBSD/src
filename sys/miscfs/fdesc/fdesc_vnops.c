@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vnops.c,v 1.12 1994/04/25 03:49:55 cgd Exp $
+ *	$Id: fdesc_vnops.c,v 1.13 1994/05/04 03:42:14 cgd Exp $
  */
 
 /*
@@ -62,7 +62,7 @@
 
 #include <ufs/dir.h>		/* For readdir() XXX */
 
-#define cttyvp(p) ((p)->p_flag&SCTTY ? (p)->p_session->s_ttyvp : NULL)
+#define cttyvp(p) ((p)->p_flag&P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
 #define FDL_WANT	0x01
 #define FDL_LOCKED	0x02

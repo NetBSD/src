@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.5 1994/04/03 22:50:14 mycroft Exp $
+ *	$Id: process_machdep.c,v 1.6 1994/05/04 03:41:12 cgd Exp $
  */
 
 /*
@@ -86,7 +86,7 @@ process_read_regs(p, regs)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
@@ -119,7 +119,7 @@ process_write_regs(p, regs)
 	struct trapframe *tp;
 	int eflags;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *)p->p_addr + ((char *) p->p_regs - (char *) kstack);
@@ -156,7 +156,7 @@ process_sstep(p, sstep)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
@@ -185,7 +185,7 @@ process_set_pc(p, addr)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.36 1994/04/02 22:15:03 mycroft Exp $
+ *	$Id: trap.c,v 1.37 1994/05/04 03:41:14 cgd Exp $
  */
 
 /*
@@ -242,9 +242,9 @@ trap(frame)
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		cnt.v_soft++;
-		if ((p->p_flag & SOWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag & P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.tf_eip, &p->p_stats->p_prof, 1);
-			p->p_flag &= ~SOWEUPC;
+			p->p_flag &= ~P_OWEUPC;
 		}
 		goto out;
 
