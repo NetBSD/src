@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.21 2002/09/17 21:22:02 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.22 2002/10/11 22:27:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.21 2002/09/17 21:22:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.22 2002/10/11 22:27:23 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -176,8 +176,10 @@ exit1(struct lwp *l, int rv)
 	 * Disable scheduler activation upcalls. 
 	 * We're trying to get out of here. 
 	 */
-	if (l->l_flag & L_SA)
+	if (l->l_flag & L_SA) {
 		l->l_flag &= ~L_SA;
+		p->p_flag &= ~P_SA;
+	}
 
 #ifdef PGINPROF
 	vmsizmon();
