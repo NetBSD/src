@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.3 2002/05/29 06:27:15 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.4 2002/06/14 03:05:46 itojun Exp $	*/
 
 /*-
  * THE BEER-WARE LICENSE
@@ -75,6 +75,14 @@ arc4_randomstir(void)
 	arc4_tv_nextreseed = mono_time;
 	arc4_tv_nextreseed.tv_sec += ARC4_RESEED_SECONDS;
 	arc4_numruns = 0;
+
+	/*
+	 * Throw away the first N words of output, as suggested in the
+	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
+	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
+	 */
+	for (n = 0; n < 256 * 4; n++)
+		arc4_randbyte();
 }
 
 /*
@@ -91,14 +99,6 @@ arc4_init(void)
 
 	arc4_randomstir();
 	arc4_initialized = 1;
-
-	/*
-	 * Throw away the first N words of output, as suggested in the
-	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
-	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
-	 */
-	for (n = 0; n < 256 * 4; n++)
-		arc4_randbyte();
 }
 
 /*
