@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.217 2003/01/20 20:02:56 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.218 2003/03/19 11:36:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.217 2003/01/20 20:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.218 2003/03/19 11:36:32 dsl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -261,25 +261,7 @@ main(void)
 	 * Create process 0 (the swapper).
 	 */
 	p = &proc0;
-	LIST_INIT(&p->p_lwps);
-	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
-	p->p_nlwps = 1;
-
-	s = proclist_lock_write();
-	LIST_INSERT_HEAD(&allproc, p, p_list);
-	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
-	LIST_INSERT_HEAD(&alllwp, l, l_list);
-	proclist_unlock_write(s);
-
-	p->p_pgrp = &pgrp0;
-	LIST_INSERT_HEAD(PGRPHASH(0), &pgrp0, pg_hash);
-	LIST_INIT(&pgrp0.pg_members);
-	LIST_INSERT_HEAD(&pgrp0.pg_members, p, p_pglist);
-
-	pgrp0.pg_session = &session0;
-	session0.s_count = 1;
-	session0.s_sid = p->p_pid;
-	session0.s_leader = p;
+	proc0_insert(p, l, &pgrp0, &session0);
 
 	/*
 	 * Set P_NOCLDWAIT so that kernel threads are reparented to

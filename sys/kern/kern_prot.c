@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.76 2003/03/05 18:42:19 dsl Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.77 2003/03/19 11:36:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.76 2003/03/05 18:42:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.77 2003/03/19 11:36:34 dsl Exp $");
 
 #include "opt_compat_43.h"
 
@@ -275,6 +275,8 @@ sys_setsid(struct lwp *l, void *v, register_t *retval)
  * if pgid != pid
  * 	there must exist some pid in same session having pgid (EPERM)
  * pid must not be session leader (EPERM)
+ *
+ * Permission checks now in enterpgrp()
  */
 /* ARGSUSED */
 int
@@ -286,30 +288,21 @@ sys_setpgid(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *curp = l->l_proc;
 	struct proc *targp;			/* target process */
-	struct pgrp *pgrp;			/* target pgrp */
 
 	if (SCARG(uap, pgid) < 0)
-		return (EINVAL);
+		return EINVAL;
 
+	/* XXX MP - there is a horrid race here with targp exiting! */
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != curp->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0 ||
-		    !inferior(targp, curp))
-			return (ESRCH);
-		if (targp->p_session != curp->p_session)
-			return (EPERM);
-		if (targp->p_flag & P_EXEC)
-			return (EACCES);
+		targp = pfind(SCARG(uap, pid));
+		if (targp == NULL)
+			return ESRCH;
 	} else
 		targp = curp;
-	if (SESS_LEADER(targp))
-		return (EPERM);
+
 	if (SCARG(uap, pgid) == 0)
 		SCARG(uap, pgid) = targp->p_pid;
-	else if (SCARG(uap, pgid) != targp->p_pid)
-		if ((pgrp = pgfind(SCARG(uap, pgid))) == 0 ||
-		    pgrp->pg_session != curp->p_session)
-			return (EPERM);
-	return (enterpgrp(targp, SCARG(uap, pgid), 0));
+	return enterpgrp(targp, SCARG(uap, pgid), 0);
 }
 
 /*

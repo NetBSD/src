@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.114 2003/03/12 15:26:33 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.115 2003/03/19 11:36:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.114 2003/03/12 15:26:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.115 2003/03/19 11:36:33 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -269,39 +269,6 @@ exit1(struct lwp *l, int rv)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
-	 * Save exit status and final rusage info, adding in child rusage
-	 * info and self times.
-	 * In order to pick up the time for the current execution, we must
-	 * do this before unlinking the lwp from l_list.
-	 */
-	p->p_xstat = rv;
-	*p->p_ru = p->p_stats->p_ru;
-	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
-	ruadd(p->p_ru, &p->p_stats->p_cru);
-
-	/*
-	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
-	 */
-	p->p_stat = SDEAD;
-	p->p_nrlwps--;
-	l->l_stat = SDEAD;
-
-	/*
-	 * Remove proc from pidhash chain so looking it up won't
-	 * work.  Move it from allproc to zombproc, but do not yet
-	 * wake up the reaper.  We will put the proc on the
-	 * deadproc list later (using the p_hash member), and
-	 * wake up the reaper when we do.
-	 */
-	s = proclist_lock_write();
-	LIST_REMOVE(p, p_hash);
-	LIST_REMOVE(p, p_list);
-	LIST_INSERT_HEAD(&zombproc, p, p_list);
-	LIST_REMOVE(l, l_list);
-	l->l_flag |= L_DETACHED;
-	proclist_unlock_write(s);
-
-	/*
 	 * Give orphaned children to init(8).
 	 */
 	q = LIST_FIRST(&p->p_children);
@@ -351,6 +318,38 @@ exit1(struct lwp *l, int rv)
 
 		proclist_unlock_read();
 	}
+
+	/*
+	 * Save exit status and final rusage info, adding in child rusage
+	 * info and self times.
+	 * In order to pick up the time for the current execution, we must
+	 * do this before unlinking the lwp from l_list.
+	 */
+	p->p_xstat = rv;
+	*p->p_ru = p->p_stats->p_ru;
+	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
+	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
+	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
+	 */
+
+	/*
+	 * Move proc from allproc to zombproc, but do not yet
+	 * wake up the reaper.  We will put the proc on the
+	 * deadproc list later (using the p_dead member), and
+	 * wake up the reaper when we do.
+	 * Changing the state to SDEAD stops it being found by pfind().
+	 */
+	s = proclist_lock_write();
+	p->p_stat = SDEAD;
+	p->p_nrlwps--;
+	l->l_stat = SDEAD;
+	LIST_REMOVE(p, p_list);
+	LIST_INSERT_HEAD(&zombproc, p, p_list);
+	LIST_REMOVE(l, l_list);
+	l->l_flag |= L_DETACHED;
+	proclist_unlock_write(s);
 
 	/*
 	 * Notify interested parties of our demise.
@@ -505,7 +504,7 @@ lwp_exit_hook(struct lwp *l, void *arg)
  * we should refrain from changing any interrupt state.
  *
  * We lock the deadproc list (a spin lock), place the proc on that
- * list (using the p_hash member), and wake up the reaper.
+ * list (using the p_dead member), and wake up the reaper.
  */
 void
 exit2(struct lwp *l)
@@ -513,7 +512,7 @@ exit2(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	simple_lock(&deadproc_slock);
-	LIST_INSERT_HEAD(&deadproc, p, p_hash);
+	SLIST_INSERT_HEAD(&deadprocs, p, p_dead);
 	simple_unlock(&deadproc_slock);
 
 	/* lwp_exit2() will wake up deadproc for us. */
@@ -535,11 +534,11 @@ reaper(void *arg)
 
 	for (;;) {
 		simple_lock(&deadproc_slock);
-		p = LIST_FIRST(&deadproc);
+		p = SLIST_FIRST(&deadprocs);
 		l = LIST_FIRST(&deadlwp);
 		if (p == NULL && l == NULL) {
 			/* No work for us; go to sleep until someone exits. */
-			(void) ltsleep(&deadproc, PVM|PNORELOCK,
+			(void) ltsleep(&deadprocs, PVM|PNORELOCK,
 			    "reaper", 0, &deadproc_slock);
 			continue;
 		}
@@ -547,7 +546,7 @@ reaper(void *arg)
 		if (l != NULL ) {
 			p = l->l_proc;
 
-			/* Remove us from the deadlwp list. */
+			/* Remove lwp from the deadlwp list. */
 			LIST_REMOVE(l, l_list);
 			simple_unlock(&deadproc_slock);
 			KERNEL_PROC_LOCK(curlwp);
@@ -580,8 +579,8 @@ reaper(void *arg)
 			 * the wakeup() above? */
 			KERNEL_PROC_UNLOCK(curlwp);
 		} else {
-			/* Remove us from the deadproc list. */
-			LIST_REMOVE(p, p_hash);
+			/* Remove proc from the deadproc list. */
+			SLIST_REMOVE_HEAD(&deadprocs, p_dead);
 			simple_unlock(&deadproc_slock);
 			KERNEL_PROC_LOCK(curlwp);
 
@@ -754,7 +753,18 @@ proc_free(struct proc *p)
 
 	scheduler_wait_hook(parent, p);
 	p->p_xstat = 0;
+
 	ruadd(&parent->p_stats->p_cru, p->p_ru);
+
+	/*
+	 * At this point we are going to start freeing the final resources.
+	 * If anyone tries to access the proc structure after here they
+	 * will get a shock - bits are missing.
+	 * Attempt to make it hard!
+	 */
+
+	p->p_stat = SIDL;		/* not even a zombie any more */
+
 	pool_put(&rusage_pool, p->p_ru);
 
 	/*
@@ -765,9 +775,8 @@ proc_free(struct proc *p)
 
 	s = proclist_lock_write();
 	LIST_REMOVE(p, p_list);	/* off zombproc */
-	proclist_unlock_write(s);
-
 	LIST_REMOVE(p, p_sibling);
+	proclist_unlock_write(s);
 
 	/*
 	 * Decrement the count of procs running with this uid.
@@ -796,9 +805,8 @@ proc_free(struct proc *p)
 		pool_put(&sadata_pool, p->p_sa);
 	}
 
-	pool_put(&proc_pool, p);
-	nprocs--;
-	return;
+	/* Free proc structure and let pid be reallocated */
+	proc_free_mem(p);
 }
 
 /*

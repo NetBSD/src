@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.5 2003/01/30 05:51:58 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.6 2003/03/19 11:36:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -555,7 +555,7 @@ lwp_exit2(struct lwp *l)
 	LIST_INSERT_HEAD(&deadlwp, l, l_list);
 	simple_unlock(&deadproc_slock);
 
-	wakeup(&deadproc);
+	wakeup(&deadprocs);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.131 2003/03/06 20:33:00 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.132 2003/03/19 11:36:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.131 2003/03/06 20:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.132 2003/03/19 11:36:32 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -388,7 +388,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &nmaxproc);
 
 		if (!error && newp) {
-			if (nmaxproc < 0 || nmaxproc >= PID_MAX - PID_SKIP)
+			if (nmaxproc < nprocs)
 				return (EINVAL);
 
 #ifdef __HAVE_CPU_MAXPROC
@@ -1789,7 +1789,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	if ((p->p_flag & P_CONTROLT) &&
 	    (tp = ep->e_sess->s_ttyp)) {
 		ep->e_tdev = tp->t_dev;
-		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 		ep->e_tsess = tp->t_session;
 	} else
 		ep->e_tdev = NODEV;
@@ -1837,7 +1837,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_sid = p->p_session->s_sid;
 	ki->p__pgid = p->p_pgrp->pg_id;
 
-	ki->p_tpgid = NO_PID;	/* may be changed if controlling tty below */
+	ki->p_tpgid = NO_PGID;	/* may be changed if controlling tty below */
 
 	ki->p_uid = p->p_ucred->cr_uid;
 	ki->p_ruid = p->p_cred->p_ruid;
@@ -1853,7 +1853,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 		ki->p_tdev = tp->t_dev;
-		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 		ki->p_tsess = PTRTOINT64(tp->t_session);
 	} else {
 		ki->p_tdev = NODEV;
