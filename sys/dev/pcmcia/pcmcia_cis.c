@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.10 1998/12/29 09:03:15 marc Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.10.2.1 2000/01/15 18:05:48 he Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -67,8 +67,7 @@ pcmcia_read_cis(sc)
 {
 	struct cis_state state;
 
-	state.count = 0;
-	state.gotmfc = 0;
+	memset(&state, 0, sizeof state);
 
 	state.card = &sc->card;
 
@@ -267,17 +266,53 @@ pcmcia_scan_cis(dev, fct, arg)
 					    "short %d\n", tuple.length));
 					break;
 				}
+				if (((tuple.length - 1) % 5) != 0) {
+					DPRINTF(("CISTPL_LONGLINK_MFC bogus "
+					    "length %d\n", tuple.length));
+					break;
+				}
 				/*
 				 * this is kind of ad hoc, as I don't have
 				 * any real documentation
 				 */
 				{
-					int i;
+					int i, tmp_count;
 
-					mfc_count =
+					/*
+					 * put count into tmp var so that
+					 * if we have to bail (because it's
+					 * a bogus count) it won't be
+					 * remembered for later use.
+					 */
+					tmp_count =
 					    pcmcia_tuple_read_1(&tuple, 0);
 					DPRINTF(("CISTPL_LONGLINK_MFC %d",
-					    mfc_count));
+					    tmp_count));
+
+					/*
+					 * make _sure_ it's the right size;
+					 * if too short, it may be a weird
+					 * (unknown/undefined) format
+					 */
+					if (tuple.length != (tmp_count*5 + 1)) {
+						DPRINTF((" bogus length %d\n",
+						    tuple.length));
+						break;
+					}
+
+#ifdef PCMCIACISDEBUG	/* maybe enable all the time? */
+					/*
+					 * sanity check for a programming
+					 * error which is difficult to find
+					 * when debugging.
+					 */
+					if (tmp_count >
+					    howmany(sizeof mfc, sizeof mfc[0]))
+						panic("CISTPL_LONGLINK_MFC mfc "
+						    "count would blow stack");
+#endif
+
+					mfc_count = tmp_count;
 					for (i = 0; i < mfc_count; i++) {
 						mfc[i].common =
 						    (pcmcia_tuple_read_1(&tuple,
@@ -877,6 +912,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			 * cis, create new entry in the queue and start it
 			 * with the current default
 			 */
+			if (state->default_cfe == NULL) {
+				DPRINTF(("CISTPL_CFTABLE_ENTRY with no "
+				    "default\n"));
+				break;
+			}
 			if (num != state->default_cfe->number) {
 				cfe = (struct pcmcia_config_entry *)
 				    malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
