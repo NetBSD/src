@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36.2.1 1999/04/02 22:38:48 chopps Exp $	*/
+/*	$NetBSD: route.c,v 1.36.2.2 2000/01/21 00:17:37 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.36.2.1 1999/04/02 22:38:48 chopps Exp $");
+__RCSID("$NetBSD: route.c,v 1.36.2.2 2000/01/21 00:17:37 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ struct bits {
 	{ RTF_GATEWAY,	'G' },
 	{ RTF_HOST,	'H' },
 	{ RTF_REJECT,	'R' },
+	{ RTF_BLACKHOLE,'B' },
 	{ RTF_DYNAMIC,	'D' },
 	{ RTF_MODIFIED,	'M' },
 	{ RTF_DONE,	'd' }, /* Completed -- for routing messages only */
