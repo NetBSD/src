@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.11 1998/05/27 02:51:02 matt Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.12 1998/06/18 23:29:46 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.8 1998/01/30 02:24:58 thorpej Exp 
+ *	NetBSD: tcdevs,v 1.10 1998/06/18 23:28:12 jonathan Exp 
  */
 
 /*
@@ -37,6 +37,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	TC_DEVICE_AV01B_AA	"lofi"
+#define	TC_DESCRIPTION_AV01B_AA	"DecAudio \"LoFi\" audio/isdn"
 
 #define	TC_DEVICE_DGLTA_FA	"otto"
 #define	TC_DESCRIPTION_DGLTA_FA	"DGLTA ATM"
