@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.50 2003/03/18 01:13:23 fvdl Exp $ */
+/*	$NetBSD: disks.c,v 1.51 2003/05/18 20:04:21 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -25,13 +25,13 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -64,59 +64,59 @@
 
 /* Local prototypes */
 static void get_disks (void);
-static void foundffs (struct data *list, size_t num);
-static int do_fsck(const char *diskpart);
-static int fsck_root (void);
-static int 
-    do_flfs_newfs(const char *partname, int part, const char *mountpoint);
-static int fsck_num(const char *mp);
+static void foundffs(struct data *, size_t);
+static int do_fsck(const char *);
+static int fsck_root(void);
+static int do_flfs_newfs(const char *, int, const char *);
+static int fsck_num(const char *);
 
-static int fsck_with_error_menu(const char *diskpart);
-static int target_mount_with_error_menu(const char *opt, char *diskpart,
-					const char *mntpt);
+static int fsck_with_error_menu(const char *);
+static int target_mount_with_error_menu(const char *, char *, const char *);
 
 
 static void
 get_disks(void)
 {
-	char **xd = disk_names;
+	char **xd;
 	char d_name[SSTRSIZE];
 	struct disklabel l;
+	struct disk_desc *dd;
 	int i;
 
-	while (*xd != NULL) {
-		for (i=0; i< MAX_DISKS; i++) {
-			snprintf(d_name, SSTRSIZE, "%s%d", *xd, i);
-			if (get_geom(d_name, &l) && numdisks < MAX_DISKS) {
-				strncpy (disks[numdisks].dd_name,
-					 d_name, SSTRSIZE);
-				strncat (disknames, d_name,
-					 SSTRSIZE-1-strlen(disknames));
-				strncat (disknames, " ",
-					 SSTRSIZE-1-strlen(disknames));
-				disks[numdisks].dd_cyl = l.d_ncylinders;
-				disks[numdisks].dd_head = l.d_ntracks;
-				disks[numdisks].dd_sec = l.d_nsectors;
-				disks[numdisks].dd_secsize = l.d_secsize;
-				disks[numdisks].dd_totsec = l.d_secperunit;
-				numdisks++;
-			}
+	/* initialize */
+	disknames[0] = 0;
+	numdisks = 0;
+	dd = disks;
+
+	for (xd = disk_names; *xd != NULL; xd++) {
+		for (i = 0; i < MAX_DISKS; i++) {
+			snprintf(d_name, sizeof d_name, "%s%d", *xd, i);
+			if (!get_geom(d_name, &l))
+				continue;
+			strncpy(dd->dd_name, d_name, sizeof dd->dd_name);
+			strlcat(disknames, d_name, sizeof disknames);
+			strlcat(disknames, " ", sizeof disknames);
+			dd->dd_cyl = l.d_ncylinders;
+			dd->dd_head = l.d_ntracks;
+			dd->dd_sec = l.d_nsectors;
+			dd->dd_secsize = l.d_secsize;
+			dd->dd_totsec = l.d_secperunit;
+			dd++;
+			numdisks++;
+			if (numdisks >= MAX_DISKS)
+				return;
 		}
-		xd++;
 	}
 }
-			
+
 
 int
 find_disks(void)
 {
 	char *tp;
+	const char *prompt;
 	char defname[STRSIZE];
 	int  i;
-
-	/* initialize */
-	disknames[0] = 0;
-	numdisks = 0;
 
 	/* Find disks. */
 	get_disks();
@@ -131,37 +131,35 @@ find_disks(void)
 		process_menu(MENU_ok);
 		/*endwin();*/
 		return -1;
-	} else if (numdisks == 1) {
+	}
+
+	if (numdisks == 1) {
 		/* One disk found! */
 		/* Remove that space we added. */
-		disknames[strlen(disknames)-1] = 0;
+		disknames[strlen(disknames) - 1] = 0;
 		msg_display(MSG_onedisk, disknames, doingwhat);
 		process_menu(MENU_ok);
-		strcpy(diskdev, disknames);
+		strlcpy(diskdev, disknames, sizeof diskdev);
 	} else {
 		/* Multiple disks found! */
 		strcpy(defname, disknames);
 		tp = defname;
 		strsep(&tp, " ");
-		msg_prompt(MSG_askdisk, defname,  diskdev, 10, disknames);
-		tp = diskdev;
-		strsep(&tp, " ");
-		diskdev[strlen(diskdev)+1] = 0;
-		diskdev[strlen(diskdev)] = ' ';
-		while (!ISDISKSTART(*diskdev) ||
-		       strstr(disknames, diskdev) == NULL) {
-			msg_prompt(MSG_badname, defname,  diskdev, 10,
-				    disknames);
+		prompt = MSG_askdisk;
+		do {
+			msg_prompt(prompt, defname,  diskdev, 10, disknames);
+			prompt = MSG_badname;
 			tp = diskdev;
 			strsep(&tp, " ");
-			diskdev[strlen(diskdev)+1] = 0;
+			diskdev[strlen(diskdev) + 1] = 0;
 			diskdev[strlen(diskdev)] = ' ';
-		}
+			tp = strstr(disknames, diskdev);
+		} while (tp == NULL || (tp != disknames && tp[-1] != ' '));
 
 		/* Remove that space we added. */
-		diskdev[strlen(diskdev)-1] = 0;
+		diskdev[strlen(diskdev) - 1] = 0;
 	}
-	
+
 	/* Set disk. */
 	for (i = 0; i < numdisks; i++)
 		if (strcmp(diskdev, disks[i].dd_name) == 0)
@@ -206,7 +204,7 @@ disp_cur_fspart(int disp, int showall)
 				pend = (bsdlabel[i].pi_offset +
 				bsdlabel[i].pi_size) / sizemult - 1;
 			msg_table_add(MSG_fspart_row_start,
-					'a'+i, poffset, pend, psize,
+					'a' + i, poffset, pend, psize,
 					fstypenames[bsdlabel[i].pi_fstype]);
 			if (PI_ISBSDFS(&bsdlabel[i]))
 				msg_table_add(MSG_fspart_row_end_bsd,
@@ -232,7 +230,7 @@ disp_cur_fspart(int disp, int showall)
  * i386  port uses "/sbin/disklabel -w -r", just like i386
  * miniroot scripts, though this may leave a bogus incore label.
  *
- * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"	
+ * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"
  * to get incore  to ondisk inode translation for the Sun proms.
  */
 int
@@ -258,11 +256,11 @@ make_filesystems(void)
 	/* Making new file systems and mounting them*/
 	for (i = 0; i < getmaxpartitions(); i++) {
 		/*
-		 * newfs and mount. For now, process only BSD filesystems. 
+		 * newfs and mount. For now, process only BSD filesystems.
 		 * but if this is the mounted-on root, has no mount
-		 * point defined, or is marked preserve, don't touch it! 
+		 * point defined, or is marked preserve, don't touch it!
 		 */
-	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a'+i);
+	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a' + i);
 		if (PI_ISBSDFS(&bsdlabel[i]) && !is_active_rootpart(partname)) {
 			error = do_flfs_newfs(partname, i, fsmount[i]);
 			if (error)
@@ -273,7 +271,7 @@ make_filesystems(void)
 }
 
 /* newfs and mount an ffs filesystem. */
-static int 
+static int
 do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 {
 	char dev_name[STRSIZE];
@@ -285,7 +283,7 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 		    "/sbin/newfs" : "/sbin/newfs_lfs", partname);
 	else
 		error = 0;
-	if (*mountpoint && error == 0) { 
+	if (*mountpoint && error == 0) {
 		snprintf(dev_name, sizeof(dev_name), "/dev/%s", partname);
 		if (partno > 0)	/* XXX strcmp(mountpoint, "/") ? XXX */
 			make_target_dir(mountpoint);
@@ -293,7 +291,7 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 		    "-v -o async" : "-v", dev_name, mountpoint);
 		if (error) {
 			msg_display(MSG_mountfail, dev_name, mountpoint);
-			process_menu (MENU_ok);
+			process_menu(MENU_ok);
 		}
 	}
 	return error;
@@ -322,7 +320,7 @@ make_fstab(void)
 		return 1;
 #else
 		f = stdout;
-#endif		
+#endif
 	}
 	for (i = 0; i < getmaxpartitions(); i++)
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
@@ -331,7 +329,7 @@ make_fstab(void)
 			if (*fsmount[i] != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s ffs rw 1 %d\n", s,
-				       diskdev, 'a'+i, fsmount[i],
+				       diskdev, 'a' + i, fsmount[i],
 				       fsck_num(fsmount[i]));
 		} else if (bsdlabel[i].pi_fstype == FS_BSDLFS) {
 			char *s = "#";
@@ -340,7 +338,7 @@ make_fstab(void)
 			if (!check_lfs_progs() && *fsmount[i] != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s lfs rw 1 %d\n", s,
-				       diskdev, 'a'+i, fsmount[i],
+				       diskdev, 'a' + i, fsmount[i],
 				       fsck_num(fsmount[i]));
 		} else if (bsdlabel[i].pi_fstype == FS_MSDOS) {
 			char *s = "#";
@@ -348,15 +346,17 @@ make_fstab(void)
 			if (*fsmount[i] != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s msdos rw 0 0\n", s,
-				       diskdev, 'a'+i, fsmount[i]);
+				       diskdev, 'a' + i, fsmount[i]);
 		} else if (bsdlabel[i].pi_fstype == FS_SWAP) {
 			if (swap_dev == -1)
 				swap_dev = i;
-			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n", diskdev, 'a'+i);
+			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n",
+				diskdev, 'a' + i);
 		}
 	if (layout_tmp) {
 		if (swap_dev != -1)
-			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw\n", diskdev, 'a'+swap_dev);
+			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw\n",
+				diskdev, 'a' + swap_dev);
 		else
 			scripting_fprintf(f, "swap /tmp mfs rw\n");
 	}
@@ -427,7 +427,7 @@ do_fsck(const char *diskpart)
 	err = run_prog(RUN_DISPLAY, NULL, "%s %s", prog, rraw);
 #else
 	err = run_prog(RUN_DISPLAY, NULL, "%s -f %s", prog, rraw);
-#endif	
+#endif
 	wrefresh(stdscr);
 	return err;
 }
@@ -460,7 +460,7 @@ fsck_with_error_menu(const char *diskpart)
  * returns 0 if  the mount completed without indicating errors,
  *  and an nonzero error code from target_mount() otherwise.
  */
-int target_mount_with_error_menu(const char *opt, 
+int target_mount_with_error_menu(const char *opt,
 		 char *diskpart, const char *mntpoint)
 {
 	int error;
@@ -507,11 +507,11 @@ fsck_root()
 		return (0);
 	}
 
-	/* Mount /dev/<diskdev>a on  target's "".  
-	 * If we pass "" as mount-on, Prefixing will DTRT. 
+	/* Mount /dev/<diskdev>a on  target's "".
+	 * If we pass "" as mount-on, Prefixing will DTRT.
 	 * for now, use no options.
 	 * XXX consider -o remount in case target root is
-	 * current root, still  readonly from single-user? 
+	 * current root, still  readonly from single-user?
 	 */
 	error = target_mount_with_error_menu("", rootdev, "");
 
@@ -531,13 +531,12 @@ fsck_disks(void)
 	/* First the root device. */
 	if (!target_already_root()) {
 		error = fsck_root();
-		if (error != 0 && error != EBUSY) {
+		if (error != 0 && error != EBUSY)
 			return 0;
-		}
 	}
 
 	/* Check the target /etc/fstab exists before trying to parse it. */
-	if (target_dir_exists_p("/etc") == 0 || 
+	if (target_dir_exists_p("/etc") == 0 ||
 	    target_file_exists_p("/etc/fstab") == 0) {
 		msg_display(MSG_noetcfstab, diskdev);
 		process_menu(MENU_ok);
@@ -563,11 +562,10 @@ fsck_disks(void)
 #ifdef DEBUG
 		printf("sysinst: mount %s\n", dev[i]);
 #endif
-		if (target_mount_with_error_menu("", dev[i], mnt[i]) != 0) {
+		if (target_mount_with_error_menu("", dev[i], mnt[i]) != 0)
 			return 0;
-		}
 	}
-	
+
 	return 1;
 }
 
