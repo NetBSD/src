@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.219 2003/05/31 20:33:16 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.220 2003/06/11 04:56:58 msaitoh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -436,7 +436,7 @@ cleanlib:
 
 .if defined(SRCS)
 afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; \
+	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.ln:/' \
 	      < .depend > $$TMP && \
 	    mv $$TMP .depend)
