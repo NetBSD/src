@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.26 2003/10/16 06:30:11 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.27 2004/11/16 06:00:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.26 2003/10/16 06:30:11 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.27 2004/11/16 06:00:37 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,11 +308,7 @@ checkremote(void)
 	static char errbuf[128];
 	int error;
 	struct ifaddrs *ifap, *ifa;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 #ifdef __KAME__
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in6 *sin6p;
