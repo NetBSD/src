@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sys_term.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: sys_term.c,v 1.4 1994/12/23 14:29:46 cgd Exp $";
+static char *rcsid = "$Id: sys_term.c,v 1.5 1996/02/08 06:10:52 mycroft Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -1590,6 +1590,7 @@ start_login(host, autologin, name)
 	if (auth_level >= 0 && autologin == AUTH_VALID) {
 # if	!defined(NO_LOGIN_F)
 		argv = addarg(argv, "-f");
+		argv = addarg(argv, "--");
 		argv = addarg(argv, name);
 # else
 #  if defined(LOGIN_R)
@@ -1662,12 +1663,14 @@ start_login(host, autologin, name)
 			pty = xpty;
 		}
 #  else
+		argv = addarg(argv, "--");
 		argv = addarg(argv, name);
 #  endif
 # endif
 	} else
 #endif
 	if (getenv("USER")) {
+		argv = addarg(argv, "--");
 		argv = addarg(argv, getenv("USER"));
 #if	defined(LOGIN_ARGS) && defined(NO_LOGIN_P)
 		{
