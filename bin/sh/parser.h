@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.13 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: parser.h,v 1.14 2000/07/27 04:09:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,7 +77,7 @@ extern int tokpushback;
 extern int whichprompt;		/* 1 == PS1, 2 == PS2 */
 
 
-union node *parsecmd __P((int));
-void fixredir __P((union node *, const char *, int));
-int goodname __P((char *));
-const char *getprompt __P((void *));
+union node *parsecmd(int);
+void fixredir(union node *, const char *, int);
+int goodname(char *);
+const char *getprompt(void *);
