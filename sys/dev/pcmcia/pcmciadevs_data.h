@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.114 2001/01/23 19:24:19 tv Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.115 2001/01/28 07:15:07 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.115 2001/01/23 19:24:00 tv Exp 
+ *	NetBSD: pcmciadevs,v 1.116 2001/01/28 07:14:47 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -128,6 +128,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Compaq Netelligent 10/100 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
+	    PCMCIA_CIS_COMPAQ_NC5004,
+	    0,
+	    "Compaq",
+	    "Compaq Agency NC5004 Wireless Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
