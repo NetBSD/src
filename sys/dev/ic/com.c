@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.111 1997/09/30 21:51:43 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.112 1997/10/03 06:11:35 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1749,7 +1749,7 @@ int
 com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
 	int iobase;
-	int rate;
+	int rate, frequency;
 	tcflag_t cflag;
 {
 	int res;
