@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.57 2002/04/05 16:16:43 toshii Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.58 2002/04/20 17:04:32 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.57 2002/04/05 16:16:43 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.58 2002/04/20 17:04:32 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1893,6 +1893,7 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as = &sc->sc_alts[ch->altidx];
 
+	as->sc_busy = 0;
 	if (sc->sc_nullalt >= 0) {
 		DPRINTF(("uaudio_chan_close: set null alt=%d\n",
 			 sc->sc_nullalt));
