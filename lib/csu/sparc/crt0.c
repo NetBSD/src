@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.17 1996/12/07 23:47:40 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.18 1996/12/27 21:44:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.17 1996/12/07 23:47:40 pk Exp $";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.18 1996/12/27 21:44:59 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,8 +41,8 @@ static char rcsid[] = "$NetBSD: crt0.c,v 1.17 1996/12/07 23:47:40 pk Exp $";
 #include "common.h"
 
 extern	unsigned char	etext;
-extern	unsigned char	eprol asm ("eprol");
-extern void		start __P((void)) asm("start");
+extern	unsigned char	eprol __asm__ ("eprol");
+extern void		start __P((void)) __asm__ ("start");
 
 #if defined(sun) && defined(sparc)
 static void		__call __P((void));
@@ -56,30 +56,44 @@ static void		__call __P((void));
 extern int		__syscall2 __P((quad_t, ...));
 #endif
 
-asm ("	.global start");
-asm ("	.text");
-asm ("	start:");
+__asm__("
+	.global start
+	.text
+	start:
+");
 
-/* Set up `argc', `argv', and `envp' into local registers (from GNU Emacs). */
-asm ("	mov	0, %fp");
-asm ("	ld	[%sp + 64], %l0");	/* argc */
-asm ("	add	%sp, 68, %l1");		/* argv */
-asm ("	sll	%l0, 2,	%l2");		/**/
-asm ("	add	%l2, 4,	%l2");		/* envp = argv + (argc << 2) + 4 */
-asm ("	add	%l1, %l2, %l2");	/**/
-asm ("	sethi	%hi(_environ), %l3");
-asm ("	st	%l2, [%l3+%lo(_environ)]");	/* *environ = l2 */
+/*
+ * Set up `argc', `argv', and `envp' into local registers.
+ */
+__asm__("
+	mov	0, %fp
+	ld	[%sp + 64], %l0		! get argc
+	add	%sp, 68, %l1		! get argv
+	sll	%l0, 2,	%l2		!
+	add	%l2, 4,	%l2		! envp = argv + (argc << 2) + 4
+	add	%l1, %l2, %l2		!
+	sethi	%hi(_environ), %l3
+	st	%l2, [%l3+%lo(_environ)]	! *environ = l2
+");
 
-/* We get a pointer to PSSTRINGS in %g1 */
-asm ("	cmp	%g1, 0");
-asm ("	be	1f");
-asm ("	sethi	%hi(___ps_strings), %l3");
-asm ("	st	%g1, [%l3+%lo(___ps_strings)]");
-asm ("1:");
+/*
+ * We get a pointer to PSSTRINGS in %g1.
+ */
+__asm__("
+	cmp	%g1, 0
+	be	1f
+	sethi	%hi(___ps_strings), %l3
+	st	%g1, [%l3+%lo(___ps_strings)]
+1:
+");
 
-/* Finish diddling with stack. */
-asm ("	andn	%sp, 7,	%sp");
-asm ("	sub	%sp, 24, %sp");
+/*
+ * Finish diddling with stack.
+ */
+__asm__("
+	andn	%sp, 7,	%sp		! align
+	sub	%sp, 24, %sp		! expand to standard stack frame size
+");
 
 /*
  * Set __progname:
@@ -89,33 +103,39 @@ asm ("	sub	%sp, 24, %sp");
  *		else
  *			++__progname;
  */
-asm ("	ld	[%l1], %o0");
-asm ("	cmp	%o0, 0");
-asm ("	mov	%o0, %l6");
-asm ("	be	1f");
-asm ("	sethi	%hi(___progname), %l7");
+__asm__("
+	ld	[%l1], %o0
+	cmp	%o0, 0
+	mov	%o0, %l6
+	be	1f
+	 sethi	%hi(___progname), %l7
+");
 #ifdef DYNAMIC
-asm ("	call	__strrchr");
+__asm__("call	__strrchr");
 #else
-asm ("	call	_strrchr");
+__asm__("call	_strrchr");
 #endif
-asm ("	mov	47, %o1");
-asm ("	cmp	%o0, 0");
-asm ("	be,a	1f");
-asm ("	st	%l6, [%l7+%lo(___progname)]");
-asm ("	add	%o0, 1, %o0");
-asm ("	st	%o0, [%l7+%lo(___progname)]");
-asm ("1:");
+__asm__("
+	mov	47, %o1
+	cmp	%o0, 0
+	be,a	1f
+	 st	%l6, [%l7+%lo(___progname)]
+	add	%o0, 1, %o0
+	st	%o0, [%l7+%lo(___progname)]
+1:
+");
 
 #ifdef DYNAMIC
 /* Resolve symbols in dynamic libraries */
-asm ("	sethi	%hi(__DYNAMIC), %o0");
-asm ("	orcc	%o0, %lo(__DYNAMIC), %o0");
-asm ("	be	1f");
-asm ("	nop");
-asm ("	call	___load_rtld");
-asm ("	nop");
-asm ("1:");
+__asm__("
+	sethi	%hi(__DYNAMIC), %o0
+	orcc	%o0, %lo(__DYNAMIC), %o0
+	be	1f
+	 nop
+	call	___load_rtld
+	 nop
+1:
+");
 #endif
 
 /* From here, all symbols should have been resolved, so we can use libc */
@@ -124,49 +144,63 @@ asm ("1:");
  * atexit(_mcleanup);
  * monstartup((u_long)&eprol, (u_long)&etext);
  */
-asm ("	sethi	%hi(__mcleanup), %o0");
-asm ("	call	_atexit");
-asm ("	or	%o0, %lo(__mcleanup), %o0");
-asm ("	sethi	%hi(_eprol), %o0");
-asm ("	or	%o0, %lo(_eprol), %o0");
-asm ("	sethi	%hi(_etext), %o1");
-asm ("	call	_monstartup");
-asm ("	or	%o1, %lo(_etext), %o1");
+__asm__("
+	sethi	%hi(__mcleanup), %o0
+	call	_atexit
+	 or	%o0, %lo(__mcleanup), %o0
+	sethi	%hi(_eprol), %o0
+	or	%o0, %lo(_eprol), %o0
+	sethi	%hi(_etext), %o1
+	call	_monstartup
+	 or	%o1, %lo(_etext), %o1
+");
 #endif
 
 #ifdef sun
-/* SunOS compatibility */
-asm ("	call	start_float");
-asm ("	nop");
+/*
+ * SunOS compatibility
+ */
+__asm__("
+	call	start_float
+	 nop
+");
 #endif
 
-/* Move `argc', `argv', and `envp' from locals to parameters for `main'.  */
-asm ("	mov	%l0,%o0");
-asm ("	mov	%l1,%o1");
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-asm ("	call	_main");
-asm ("	mov	%l2,%o2");
+/*
+ * Move `argc', `argv', and `envp' from locals to parameters for `main'.
+ */
+__asm__("
+	mov	%l0,%o0
+	mov	%l1,%o1
+__callmain:
+	call	_main
+	 mov	%l2,%o2
 
-asm ("	call	_exit");
-asm ("	nop");
+	call	_exit
+	 nop
+");
 
 #ifdef DYNAMIC
-/* System call entry */
-asm("	.set	SYSCALL_G2RFLAG, 0x400");
-asm("	.set	SYS___syscall, 198");
-asm("___syscall2:");
-asm("	sethi	%hi(SYS___syscall), %g1");	/* `SYS___syscall' */
-asm("	ba	1f");
-asm("	or	%g1, %lo(SYS___syscall), %g1");
-asm("___syscall:");
-asm("	clr	%g1");				/* `SYS_syscall' */
-asm("1:");
-asm("	or	%g1, SYSCALL_G2RFLAG, %g1");	/* Use quick return */
-asm("	add	%o7, 8, %g2");
-asm("	ta	%g0");
-asm("	mov	-0x1, %o0");			/* Note: no `errno' */
-asm("	jmp	%o7 + 0x8");
-asm("	mov	-0x1, %o1");
+/*
+ * System call entry
+ */
+__asm__("
+	.set	SYSCALL_G2RFLAG, 0x400
+	.set	SYS___syscall, 198
+___syscall2:
+	sethi	%hi(SYS___syscall), %g1
+	ba	1f
+	 or	%g1, %lo(SYS___syscall), %g1
+___syscall:
+	clr	%g1
+1:
+	or	%g1, SYSCALL_G2RFLAG, %g1
+	add	%o7, 8, %g2
+	ta	%g0
+	mov	-0x1, %o0
+	jmp	%o7 + 0x8
+	 mov	-0x1, %o1
+");
 #endif
 
 #ifdef sun
@@ -177,10 +211,12 @@ __call()
 	 * adjust the C generated pointer to the crt struct to the
 	 * likings of ld.so, which is an offset relative to its %fp
 	 */
-	asm("mov	%i0, %o0");
-	asm("mov	%i1, %o1");
-	asm("call	%i2");
-	asm("sub	%o1, %sp, %o1");
+	__asm__("
+		mov	%i0, %o0
+		mov	%i1, %o1
+		call	%i2
+		 sub	%o1, %sp, %o1
+	");
 	/*NOTREACHED, control is transferred directly to our caller */
 }
 #endif
@@ -188,6 +224,8 @@ __call()
 #include "common.c"
 
 #ifdef MCRT0
-asm ("	.text");
-asm ("_eprol:");
+__asm__ ("
+	.text
+	_eprol:
+");
 #endif
