@@ -1,4 +1,4 @@
-/*	$NetBSD: abi.h,v 1.1 2001/06/19 00:26:29 fvdl Exp $	*/
+/*	$NetBSD: abi.h,v 1.2 2003/09/14 21:26:14 fvdl Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -42,6 +42,9 @@
 #define XMM_FLOAT_EPILOGUE \
 	fstps ARG_FLOAT_ONE ; \
 	movss ARG_FLOAT_ONE, %xmm0
+
+#define FLDL_VAR(x)	fldl x(%rip)
+
 #else
 
 #define ARG_DOUBLE_ONE		4(%esp)
@@ -57,4 +60,14 @@
 #define XMM_DOUBLE_EPILOGUE
 #define XMM_FLOAT_EPILOGUE
 
+#ifdef PIC
+#define FLDL_VAR(x) \
+	PIC_PROLOGUE ; \
+	fldl PIC_GOTOFF(x) ; \
+	PIC_EPILOGUE
+#else
+#define FLDL_VAR(x) \
+	fldl x
+
+#endif
 #endif
