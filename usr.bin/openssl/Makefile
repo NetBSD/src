@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/06/16 06:29:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2000/06/16 06:37:17 thorpej Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.1.1.1 2000/06/16 06:29:40 thorpej Exp $
+#	$Id: Makefile,v 1.2 2000/06/16 06:37:17 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -18,6 +18,9 @@
 #	sjg@quick.com.au
 #
 
+# XXX There's a bit of work to do before we can enable warnings.
+WARNS=0
+
 PROG=	openssl
 
 SRCS=	openssl.c
@@ -31,8 +34,8 @@ LDADD+=	-lssl -lcrypto
 CPPFLAGS+= -DMONOLITH -DUSE_SSL
 MKMAN=	no
 
-CRYPTODIST=	${.CURDIR}/../../dist
-.include "../../Makefile.openssl"
+CRYPTODIST=	${.CURDIR}/../../crypto/dist
+.include "../../crypto/Makefile.openssl"
 .PATH:	${OPENSSLSRC}/apps
 
 #LINKS= 	openssl verify \
@@ -86,7 +89,7 @@ CRYPTODIST=	${.CURDIR}/../../dist
 #	openssl rc2-cfb \
 #	openssl rc2-ofb \
 
-.if PATENTEDOPENSSLSRC
+.if !defined(USELESS_CRYPTO)
 SRCS+=	rsa.c genrsa.c 
 #LINKS+=	openssl rsa \
 #	openssl rsa-cbc \
