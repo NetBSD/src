@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.14 2001/12/07 01:23:42 bjh21 Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.14 2001/12/07 01:23:42 bjh21 Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ static void
 posixtypes(type_string)
 	char *type_string;
 {
-	int x, y, size;
+	int x, y, nbytes;
 
 	while (*type_string) {
 		odprecede();
@@ -262,16 +262,16 @@ posixtypes(type_string)
 			if (isupper(*type_string)) {
 				switch(*type_string) {
 				case 'C':
-					size = sizeof(char);
+					nbytes = sizeof(char);
 					break;
 				case 'S':
-					size = sizeof(short);
+					nbytes = sizeof(short);
 					break;
 				case 'I':
-					size = sizeof(int);
+					nbytes = sizeof(int);
 					break;
 				case 'L':
-					size = sizeof(long);
+					nbytes = sizeof(long);
 					break;
 				default:
 					warnx("Bad type-size qualifier '%c'",
@@ -280,9 +280,9 @@ posixtypes(type_string)
 				}
 				type_string++;
 			} else if (isdigit(*type_string))
-				size = strtol(type_string, &type_string, 10);
+				nbytes = strtol(type_string, &type_string, 10);
 
-			switch (size) {
+			switch (nbytes) {
 			case 1:
 				y = 0;
 				break;
@@ -297,7 +297,7 @@ posixtypes(type_string)
 				break;
 			default:
 				warnx("%d-byte integer formats are not "
-				    "supported", size);
+				    "supported", nbytes);
 				usage();
 			}
 			add(fmt[x][y]);

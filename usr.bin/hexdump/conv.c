@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.6 1997/10/19 02:34:02 lukem Exp $	*/
+/*	$NetBSD: conv.c,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: conv.c,v 1.6 1997/10/19 02:34:02 lukem Exp $");
+__RCSID("$NetBSD: conv.c,v 1.7 2001/12/07 15:14:29 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,8 @@ conv_c(pr, p)
 	PR *pr;
 	u_char *p;
 {
-	char buf[10], *str;
+	char buf[10];
+	char const *str;
 
 	switch(*p) {
 	case '\0':
@@ -93,7 +94,8 @@ conv_c(pr, p)
 		*pr->cchar = 'c';
 		(void)printf(pr->fmt, *p);
 	} else {
-		(void)sprintf(str = buf, "%03o", (int)*p);
+		(void)sprintf(buf, "%03o", (int)*p);
+		str = buf;
 strpr:		*pr->cchar = 's';
 		(void)printf(pr->fmt, str);
 	}
