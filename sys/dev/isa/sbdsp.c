@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.57 1997/06/06 23:44:02 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.58 1997/06/13 19:21:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -736,11 +736,11 @@ sbdsp_set_in_ports(sc, mask)
 			     (1<<SB_CD_VOL) | (1<<SB_MIC_VOL)))
 			return EINVAL;
 		bitsr = 0;
-		if (mask & SB_MIDI_VOL)    bitsr |= SBP_MIDI_SRC_R;
-		if (mask & SB_LINE_IN_VOL) bitsr |= SBP_LINE_SRC_R;
-		if (mask & SB_CD_VOL)      bitsr |= SBP_CD_SRC_R;
+		if (mask & (1<<SB_MIDI_VOL))    bitsr |= SBP_MIDI_SRC_R;
+		if (mask & (1<<SB_LINE_IN_VOL)) bitsr |= SBP_LINE_SRC_R;
+		if (mask & (1<<SB_CD_VOL))      bitsr |= SBP_CD_SRC_R;
 		bitsl = SB_SRC_R_TO_L(bitsr);
-		if (mask & SB_MIC_VOL) {
+		if (mask & (1<<SB_MIC_VOL)) {
 			bitsl |= SBP_MIC_SRC;
 			bitsr |= SBP_MIC_SRC;
 		}
@@ -1196,7 +1196,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->sc_arg = arg;
 
 	if ((sc->sc_model == SB_JAZZ && sc->dmachan > 3) ||
-	    (sc->sc_model != SB_JAZZ && sc->sc_omodep->precision == 16))
+	    (sc->sc_model != SB_JAZZ && sc->sc_imodep->precision == 16))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
