@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.9 2003/08/07 11:17:41 agc Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.10 2003/08/13 14:13:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwiomux.c,v 1.9 2003/08/07 11:17:41 agc Exp $");
+__RCSID("$NetBSD: wwiomux.c,v 1.10 2003/08/13 14:13:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,12 @@ __RCSID("$NetBSD: wwiomux.c,v 1.9 2003/08/07 11:17:41 agc Exp $");
 #include <sys/ioctl.h>
 #endif
 #include <sys/time.h>
+#include <poll.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 #include "ww.h"
 
 /*
@@ -64,12 +67,13 @@ void
 wwiomux(void)
 {
 	struct ww *w;
-	fd_set imask;
-	volatile int n;
+	int n, nfd, dostdin;
 	char *p;
 	char c;
-	struct timeval tv;
+	int millis;
 	char noblock = 0;
+	static struct pollfd *pfd = NULL;
+	static size_t maxfds = 0;
 
 	for (;;) {
 		if (wwinterrupt()) {
@@ -77,25 +81,49 @@ wwiomux(void)
 			return;
 		}
 
-		FD_ZERO(&imask);
-		n = -1;
+		n = 0;
+		for (w = wwhead.ww_forw; w != &wwhead; w = w->ww_forw) {
+			if (w->ww_pty < 0 || w->ww_obq >= w->ww_obe)
+				continue;
+			n++;
+		}
+
+		if (maxfds <= ++n) {	/* One more for the fd=0 case below */
+			struct pollfd *npfd = pfd == NULL ?
+			    malloc(sizeof(*pfd) * n) :
+			   realloc(pfd, sizeof(*pfd) * n);
+			if (npfd == NULL) {
+				warn("will retry");
+				if (pfd)
+					free(pfd);
+				pfd = NULL;
+				maxfds = 0;
+				return;
+			}
+			pfd = npfd;
+			maxfds = n;
+		}
+
+		n = 0;
 		for (w = wwhead.ww_forw; w != &wwhead; w = w->ww_forw) {
 			if (w->ww_pty < 0)
 				continue;
 			if (w->ww_obq < w->ww_obe) {
-				if (w->ww_pty > n)
-					n = w->ww_pty + 1;
-				FD_SET(w->ww_pty, &imask);
+				pfd[n].fd = w->ww_pty;
+				pfd[n++].events = POLLIN;
 			}
 			if (w->ww_obq > w->ww_obp &&
 			    !ISSET(w->ww_pflags, WWP_STOPPED))
 				noblock = 1;
 		}
 		if (wwibq < wwibe) {
-			if (0 > n)
-				n = 0 + 1;
-			FD_SET(0, &imask);
+			dostdin = n;
+			pfd[n].fd = 0;
+			pfd[n++].events = POLLIN;
+		} else {
+			dostdin = -1;
 		}
+		nfd = n;
 
 		if (!noblock) {
 			if (wwcurwin != 0)
@@ -110,14 +138,12 @@ wwiomux(void)
 				return;
 			}
 			/* XXXX */
-			tv.tv_sec = 30;
-			tv.tv_usec = 0;
+			millis = 30000;
 		} else {
-			tv.tv_sec = 0;
-			tv.tv_usec = 10000;
+			millis = 100;
 		}
 		wwnselect++;
-		n = select(n + 1, &imask, (fd_set *)0, (fd_set *)0, &tv);
+		n = poll(pfd, nfd, millis);
 		wwsetjmp = 0;
 		noblock = 0;
 
@@ -126,11 +152,15 @@ wwiomux(void)
 		else if (n == 0)
 			wwnselectz++;
 		else {
-			if (FD_ISSET(0, &imask))
+			if (dostdin != -1 && (pfd[dostdin].revents & POLLIN) != 0)
 				wwrint();
+			n = 0;
 			for (w = wwhead.ww_forw; w != &wwhead; w = w->ww_forw) {
-				if (w->ww_pty < 0 ||
-				    !FD_ISSET(w->ww_pty, &imask))
+				if (w->ww_pty < 0)
+					continue;
+				if (w->ww_pty != pfd[n].fd)
+					continue;
+				if ((pfd[n++].revents & POLLIN) == 0)
 					continue;
 				wwnwread++;
 				p = w->ww_obq;
