@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2000/03/08 21:58:10 cjs Exp $
+#	$NetBSD: Makefile,v 1.17 2000/04/16 04:16:12 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -7,7 +7,7 @@ MINIROOT=	${.CURDIR}/../../miniroot
 
 .include <bsd.own.mk>	# So we use /etc/mk.conf.
 
-KERN=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
+KERN?=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -57,6 +57,11 @@ all:	netbsd.ram.gz
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
+
+netbsd.ram: ${KERN} ${RAMDISK}
+	cp ${KERN} netbsd.tmp
+	mdsetimage -v netbsd.tmp ${RAMDISK}
+	mv netbsd.tmp ${.TARGET}
 
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
