@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2002/03/06 17:36:44 wiz Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2002/03/29 15:10:03 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.15 2002/03/06 17:36:44 wiz Exp $
+ *	$NetBSD: extern.h,v 1.16 2002/03/29 15:10:03 ross Exp $
  */
 
 struct name;
@@ -213,6 +213,7 @@ int	 rexit(void *);
 int	 rm(char *);
 int	 run_command(char *, sigset_t *, int, int, char *, char *, char *);
 int	 save(void *);
+int	 Save(void *);
 int	 save1(char [], int, char *, struct ignoretab *);
 void	 savedeadletter(FILE *);
 int	 saveigfield(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.8 1997/10/19 05:03:08 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.9 2002/03/29 15:10:02 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.8 1997/10/19 05:03:08 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.9 2002/03/29 15:10:02 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ const struct cmd cmdtab[] = {
 	{ "chdir",	schdir,		M|RAWLIST,	0,	1 },
 	{ "cd",		schdir,		M|RAWLIST,	0,	1 },
 	{ "save",	save,		STRLIST,	0,	0 },
+	{ "Save",	Save,		STRLIST,	0,	0 },
 	{ "source",	source,		M|RAWLIST,	1,	1 },
 	{ "set",	set,		M|RAWLIST,	0,	1000 },
 	{ "shell",	dosh,		I|NOLIST,	0,	0 },

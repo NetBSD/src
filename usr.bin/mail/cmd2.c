@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.15 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.16 2002/03/29 15:10:02 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.15 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.16 2002/03/29 15:10:02 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,20 @@ save(void *v)
 	char *str = v;
 
 	return save1(str, 1, "save", saveignore);
+}
+
+/*
+ * Save a message in a file.  Mark the message as saved
+ * so we can discard when the user quits.  Save all fields
+ * overriding saveignore and saveretain.
+ */
+int
+Save(v)
+	void *v;
+{
+	char *str = v;
+
+	return save1(str, 1, "Save", NULL);
 }
 
 /*
