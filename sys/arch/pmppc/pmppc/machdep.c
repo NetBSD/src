@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2002/09/25 22:21:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2003/01/01 16:18:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -263,7 +263,11 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	pmap_bootstrap(startkernel, endkernel, NULL);
 
 #ifdef DDB
+#ifdef SYMTAB_SPACE
+	ddb_init(0, NULL, NULL);
+#else
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
 #endif
 #ifdef IPKDB
 	/*
