@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.539 2004/11/12 10:40:38 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.540 2004/11/29 06:00:57 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8098,3 +8098,9 @@ share/tmac/doc-common				patch
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 
 	Welcome to 2.0_RC5
+
+share/man/man4/amr.4				1.5
+distrib/notes/i386/hardware			patch
+
+	Added Dell PERC 4/Di
+	[martti, ticket #971]
