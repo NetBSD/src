@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_computime.c,v 1.2 1998/01/09 06:06:27 perry Exp $	*/
+/*	$NetBSD: clk_computime.c,v 1.3 1998/04/01 15:01:19 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -65,15 +65,15 @@ static struct format computime_fmt =
 	0
 };
 
-static u_long   cvt_computime();
+static u_long cvt_computime P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t   clock_computime =
 {
-	(unsigned long (*) ()) 0,	/* no input handling */
+	NULL,				/* no input handling */
 	cvt_computime,			/* Computime conversion */
 	syn_simple,			/* easy time stamps for RS232 (fallback) */
-	(u_long (*)())0,		/* no PPS monitoring */
-	(u_long(*) ())0,		/* no time code synthesizer monitoring */
+	NULL,				/* no PPS monitoring */
+	NULL,				/* no time code synthesizer monitoring */
 	(void *)&computime_fmt,		/* conversion configuration */
 	"Diem's Computime Radio Clock",	/* Computime Radio Clock */
 	24,				/* string buffer */
@@ -91,12 +91,14 @@ clockformat_t   clock_computime =
  * convert simple type format
  */
 static          u_long
-cvt_computime(buffer, size, format, clock)
+cvt_computime(buffer, size, vf, clock, vt)
 	register char  *buffer;
-	register int    size;
-	register struct format *format;
+	register unsigned int    size;
+	register void  *vf;
 	register clocktime_t *clock;
+	register void  *vt;
 {
+	register struct format *format = vf;
 
 	if (!Strok(buffer, format->fixed_string)) { 
 		return CVT_NONE;

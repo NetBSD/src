@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.4 1998/04/01 15:01:22 christos Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -563,7 +563,7 @@ refclock_receive(peer, offset, delay, dispersion, reftime, rectime, leap)
 	l_fp *rectime;		/* time at last peer update */
 	int leap;		/* synchronization/leap code */
 {
-	int restrict;
+	int restrict_addr;
 	int trustable;
 	int refclock_own_states;
 	u_fp precision;
@@ -589,8 +589,8 @@ refclock_receive(peer, offset, delay, dispersion, reftime, rectime, leap)
 	 * The authentication and access-control machinery works, but
 	 * its utility may be questionable.
 	 */
-	restrict = restrictions(&peer->srcadr);
-	if (restrict & (RES_IGNORE|RES_DONTSERVE))
+	restrict_addr = restrictions(&peer->srcadr);
+	if (restrict_addr & (RES_IGNORE|RES_DONTSERVE))
 		return;
 	peer->processed++;
 	peer->timereceived = current_time;

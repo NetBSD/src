@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.4 1998/04/01 15:01:23 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -1496,7 +1496,7 @@ do_restrict(srcadr, inter, inpkt, op)
 	while (items-- > 0) {
 		matchaddr.sin_addr.s_addr = cr->addr;
 		matchmask.sin_addr.s_addr = cr->mask;
-		restrict(op, &matchaddr, &matchmask, cr->mflags,
+		restrict_addr(op, &matchaddr, &matchmask, cr->mflags,
 		    cr->flags);
 		cr++;
 	}

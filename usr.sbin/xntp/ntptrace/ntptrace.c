@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptrace.c,v 1.5 1998/03/30 02:27:57 mrg Exp $	*/
+/*	$NetBSD: ntptrace.c,v 1.6 1998/04/01 15:01:19 christos Exp $	*/
 
 /*
  * ntptrace - show the chain from an NTP host leading back to
@@ -104,6 +104,12 @@ static	int	getipaddr	P((char *, u_int32 *));
 static	int	decodeipaddr	P((char *, u_int32 *));
 static	void	printserver	P((struct server *, FILE *));
 static	void	printrefid	P((FILE *, struct server *));
+
+#ifndef NO_MAIN_ALLOWED
+int main P((int, char *[]));
+#else
+int ntptracemain P((int, char *[]));
+#endif /* NO_MAIN_ALLOWED */
 
 /*
  * Main program.  Initialize us and loop waiting for I/O and/or

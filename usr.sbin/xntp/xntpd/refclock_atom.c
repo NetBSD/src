@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_atom.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
+/*	$NetBSD: refclock_atom.c,v 1.4 1998/04/01 15:01:24 christos Exp $	*/
 
 /*
  * refclock_atom - clock driver for 1-pps signals
@@ -148,6 +148,7 @@ static	void	atom_poll	P((int, struct peer *));
 #ifdef PPS
 static	void	atom_pps	P((struct peer *));
 #endif /* PPS */
+static	int	atom_cmpl_fp	P((const void *, const void *));
 
 /*
  * Transfer vector
@@ -254,10 +255,6 @@ pps_sample(tsr)
 	int i;
 	l_fp lftemp;		/* l_fp temps */
 
-#ifdef	DEBUG
-	if (debug > 2)
-		printf("pps_sample: pollcnt %d\n", up->pollcnt);
-#endif
 	/*
 	 * This routine is called once per second by an auxilliary
 	 * routine in another driver. It saves the sign-extended
@@ -270,6 +267,11 @@ pps_sample(tsr)
 
 	pp = peer->procptr;
 	up = (struct atomunit *)pp->unitptr;
+
+#ifdef	DEBUG
+	if (debug > 2)
+		printf("pps_sample: pollcnt %d\n", up->pollcnt);
+#endif
 
 	L_CLR(&lftemp);
 	L_ADDF(&lftemp, tsr->l_f);
@@ -375,8 +377,8 @@ atom_receive(rbufp)
 	    &pp->lastrec);
 #ifdef	DEBUG
 	if (debug > 2)
-		printf("atom_receive: pollcnt %d, lastrec %ld\n",
-		       up->pollcnt, pp->lastrec);
+		printf("atom_receive: pollcnt %d, lastrec %d\n",
+		       up->pollcnt, pp->lastrec.l_ui);
 #endif
 
 	/*
