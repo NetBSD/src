@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.22 1999/06/24 14:54:28 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.23 1999/06/29 10:43:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.22 1999/06/24 14:54:28 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.23 1999/06/29 10:43:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ char	proxyhelp[] =	"issue command on alternate connection";
 char	pwdhelp[] =	"print working directory on remote machine";
 char	quithelp[] =	"terminate ftp session and exit";
 char	quotehelp[] =	"send arbitrary ftp command";
+char	ratehelp[] =	"set transfer rate limit";
 char	rcvbufhelp[] =	"set socket receive buffer size";
 char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
@@ -200,6 +201,7 @@ struct cmd cmdtab[] = {
 	{ "pwd",	pwdhelp,	0, 1, 1, CMPL0		pwd },
 	{ "quit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "quote",	quotehelp,	1, 1, 1, CMPL0		quote },
+	{ "rate",	ratehelp,	0, 0, 0, CMPL0		setrate },
 	{ "rcvbuf",	rcvbufhelp,	0, 0, 0, CMPL0		rcvbuf },
 	{ "recv",	receivehelp,	1, 1, 1, CMPL(rl)	get },
 	{ "reget",	regethelp,	1, 1, 1, CMPL(rl)	reget },
@@ -220,6 +222,7 @@ struct cmd cmdtab[] = {
 	{ "sunique",	suniquehelp,	0, 0, 1, CMPL0		setsunique },
 	{ "system",	systemhelp,	0, 1, 1, CMPL0		syst },
 	{ "tenex",	tenexhelp,	0, 1, 1, CMPL0		settenex },
+	{ "throttle",	ratehelp,	0, 0, 0, CMPL0		setrate },
 	{ "trace",	tracehelp,	0, 0, 0, CMPL0		settrace },
 	{ "type",	typehelp,	0, 1, 1, CMPL0		settype },
 	{ "umask",	umaskhelp,	0, 1, 1, CMPL0		do_umask },

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 1999/06/24 14:46:59 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.31 1999/06/29 10:43:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -52,6 +52,7 @@ void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P((int));
 void	cmdscanner __P((int));
+void	crankrate __P((int));
 int	command __P((const char *, ...));
 #ifndef NO_EDITCOMPLETE
 unsigned char complete __P((EditLine *, int));
@@ -74,7 +75,6 @@ void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
 int	getreply __P((int));
-int	getsockbufsize __P((const char *));
 int	globulize __P((char **));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
@@ -100,6 +100,7 @@ void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
 void	page __P((int, char **));
+int	parserate __P((int, char **, int));
 void    progressmeter __P((int));
 char   *prompt __P((void));
 void	proxabort __P((int));
@@ -150,6 +151,7 @@ void	setport __P((int, char **));
 void	setpreserve __P((int, char **));
 void	setprogress __P((int, char **));
 void	setprompt __P((int, char **));
+void	setrate __P((int, char **));
 void	setrunique __P((int, char **));
 void	setstruct __P((int, char **));
 void	setsunique __P((int, char **));
@@ -165,6 +167,7 @@ void	sizecmd __P((int, char **));
 char   *slurpstring __P((void));
 void	sndbuf __P((int, char **));
 void	status __P((int, char **));
+int	strsuftoi __P((const char *));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
 void	usage __P((void));

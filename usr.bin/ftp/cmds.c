@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.51 1999/06/20 22:07:28 cgd Exp $	*/
+/*	$NetBSD: cmds.c,v 1.52 1999/06/29 10:43:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.51 1999/06/20 22:07:28 cgd Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.52 1999/06/29 10:43:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -727,6 +727,12 @@ status(argc, argv)
 	fprintf(ttyout,
 	    "Hash mark printing: %s; Mark count: %d; Progress bar: %s.\n",
 	    onoff(hash), mark, onoff(progress));
+	fprintf(ttyout,
+	    "Get transfer rate throttle: %s; maximum: %d; increment %d.\n",
+	    onoff(rate_get), rate_get, rate_get_incr);
+	fprintf(ttyout,
+	    "Put transfer rate throttle: %s; maximum: %d; increment %d.\n",
+	    onoff(rate_put), rate_put, rate_put_incr);
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
 #ifndef NO_EDITCOMPLETE
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
@@ -829,10 +835,9 @@ sethash(argc, argv)
 		hash = 0;
 	else {
 		int nmark;
-		char *ep;
 
-		nmark = strtol(argv[1], &ep, 10);
-		if (nmark < 1 || *ep != '\0') {
+		nmark = strsuftoi(argv[1]);
+		if (nmark < 1) {
 			fprintf(ttyout, "mark: bad bytecount value `%s'.\n",
 			    argv[1]);
 			code = -1;
@@ -1007,17 +1012,16 @@ setdebug(argc, argv)
 		else if (strcasecmp(argv[1], "off") == 0)
 			debug = 0;
 		else {
-			char *ep;
-			long val;
+			int val;
 
-			val = strtol(argv[1], &ep, 10);
-			if (val < 0 || val > INT_MAX || *ep != '\0') {
+			val = strsuftoi(argv[1]);
+			if (val < 0) {
 				fprintf(ttyout, "%s: bad debugging value.\n",
 				    argv[1]);
 				code = -1;
 				return;
 			}
-			debug = (int)val;
+			debug = val;
 		}
 	} else
 		debug = !debug;
@@ -2039,6 +2043,89 @@ setrunique(argc, argv)
 	code = togglevar(argc, argv, &runique, "Receive unique");
 }
 
+int
+parserate(argc, argv, cmdlineopt)
+	int argc;
+	char *argv[];
+	int cmdlineopt;
+{
+	int dir, max, incr, showonly;
+	sig_t oldusr1, oldusr2;
+
+	if (argc > 4 || (argc < (cmdlineopt ? 3 : 2))) {
+usage:
+		if (cmdlineopt)
+			fprintf(ttyout,
+			    "usage: %s (all|get|put),maximum[,increment]]\n",
+			    argv[0]);
+		else
+			fprintf(ttyout,
+			    "usage: %s (all|get|put) [maximum [increment]]\n",
+			    argv[0]);
+		return -1;
+	}
+	dir = max = incr = showonly = 0;
+#define RATE_GET	1
+#define RATE_PUT	2
+#define RATE_ALL	(RATE_GET | RATE_PUT)
+
+	if (strcasecmp(argv[1], "all") == 0)
+		dir = RATE_ALL;
+	else if (strcasecmp(argv[1], "get") == 0)
+		dir = RATE_GET;
+	else if (strcasecmp(argv[1], "put") == 0)
+		dir = RATE_PUT;
+	else
+		goto usage;
+
+	if (argc >= 3) {
+		if ((max = strsuftoi(argv[2])) < 0)
+			goto usage;
+	} else
+		showonly = 1;
+
+	if (argc == 4) {
+		if ((incr = strsuftoi(argv[3])) <= 0)
+			goto usage;
+	} else
+		incr = DEFAULTINCR;
+
+	oldusr1 = signal(SIGUSR1, SIG_IGN);
+	oldusr2 = signal(SIGUSR2, SIG_IGN);
+	if (dir & RATE_GET) {
+		if (!showonly) {
+			rate_get = max;
+			rate_get_incr = incr;
+		}
+		if (!cmdlineopt || verbose)
+			fprintf(ttyout,
+		    "Get xfer rate throttle: %s; maximum: %d; increment %d.\n",
+			    onoff(rate_get), rate_get, rate_get_incr);
+	}
+	if (dir & RATE_PUT) {
+		if (!showonly) {
+			rate_put = max;
+			rate_put_incr = incr;
+		}
+		if (!cmdlineopt || verbose)
+			fprintf(ttyout,
+		    "Put xfer rate throttle: %s; maximum: %d; increment %d.\n",
+			    onoff(rate_put), rate_put, rate_put_incr);
+	}
+	(void)signal(SIGUSR1, oldusr1);
+	(void)signal(SIGUSR2, oldusr2);
+	return 0;
+}
+
+void
+setrate(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	code = parserate(argc, argv, 0);
+}
+
 /* change directory to parent directory */
 void
 cdup(argc, argv)
@@ -2311,7 +2398,7 @@ sndbuf(argc, argv)
 		return;
 	}
 
-	if ((size = getsockbufsize(argv[1])) == -1) {
+	if ((size = strsuftoi(argv[1])) == -1) {
 		printf("invalid socket buffer size: %s\n", argv[1]);
 		code = -1;
 		return;
@@ -2340,7 +2427,7 @@ rcvbuf(argc, argv)
 		return;
 	}
 
-	if ((size = getsockbufsize(argv[1])) == -1) {
+	if ((size = strsuftoi(argv[1])) == -1) {
 		printf("invalid socket buffer size: %s\n", argv[1]);
 		code = -1;
 		return;

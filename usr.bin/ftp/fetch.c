@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.58 1999/06/27 01:17:19 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.59 1999/06/29 10:43:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.58 1999/06/27 01:17:19 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.59 1999/06/29 10:43:17 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -947,17 +947,37 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				goto cleanup_fetch_url;
 			}
 			if (debug)
-				fprintf(ttyout, "got chunksize of %qd\n",
+				fprintf(ttyout,
+#ifndef NO_QUAD
+				    "got chunksize of %qd\n",
 				    (long long)chunksize);
+#else
+				    "got chunksize of %ld\n",
+				    (long)chunksize);
+#endif
 			if (chunksize == 0)
 				break;
 		}
-		while ((len = fread(buf, sizeof(char),
-		    ischunked ? MIN(chunksize, BUFSIZ) : BUFSIZ, fin)) > 0) {
-			bytes += len;
-			if (fwrite(buf, sizeof(char), len, fout) != len) {
-				warn("Writing `%s'", savefile);
-				goto cleanup_fetch_url;
+					/* transfer file or chunk */
+		while (1) {
+			struct timeval then, now, td;
+			off_t bufrem;
+
+			(void)gettimeofday(&then, NULL);
+			bufrem = rate_get ? rate_get : BUFSIZ;
+			while (bufrem > 0) {
+				len = fread(buf, sizeof(char),
+				    ischunked ? MIN(chunksize, bufrem) : BUFSIZ,
+				    fin);
+				if (len <= 0)
+					goto chunkdone;
+				bytes += len;
+				bufrem -= len;
+				if (fwrite(buf, sizeof(char), len, fout)
+				    != len) {
+					warn("Writing `%s'", savefile);
+					goto cleanup_fetch_url;
+				}
 			}
 			if (hash && !progress) {
 				while (bytes >= hashbytes) {
@@ -966,10 +986,23 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				}
 				(void)fflush(ttyout);
 			}
-			if (ischunked)
+			if (ischunked) {
 				chunksize -= len;
+				if (chunksize <= 0)
+					goto chunkdone;
+			}
+			if (rate_get) {
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
+				}
+			}
 		}
 					/* read CRLF after chunk*/
+ chunkdone:
 		if (ischunked) {
 			if (fgets(buf, BUFSIZ, fin) == NULL)
 				break;

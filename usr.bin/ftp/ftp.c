@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.45 1999/06/24 14:50:56 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.46 1999/06/29 10:43:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.45 1999/06/24 14:50:56 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.46 1999/06/29 10:43:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -640,20 +640,45 @@ sendrequest(cmd, local, remote, printnames)
 
 	case TYPE_I:
 	case TYPE_L:
-		errno = d = 0;
-		while ((c = read(fileno(fin), buf, sizeof(buf))) > 0) {
-			bytes += c;
-			for (bufp = buf; c > 0; c -= d, bufp += d)
-				if ((d = write(fileno(dout), bufp, c)) <= 0)
-					break;
-			if (hash && (!progress || filesize < 0) ) {
-				while (bytes >= hashbytes) {
-					(void)putc('#', ttyout);
-					hashbytes += mark;
+		while (1) {
+			struct timeval then, now, td;
+			off_t bufrem, bufsize;
+
+			bufsize = sizeof(buf);
+			(void)gettimeofday(&then, NULL);
+			errno = c = d = 0;
+			bufrem = rate_put ? rate_put : bufsize;
+			while (bufrem > 0) {
+				if ((c = read(fileno(fin), buf,
+				    MIN(bufsize, bufrem))) <= 0)
+					goto senddone;
+				bytes += c;
+				bufrem -= c;
+				for (bufp = buf; c > 0; c -= d, bufp += d)
+					if ((d = write(fileno(dout), bufp, c))
+					    <= 0)
+						break;
+				if (d < 0)
+					goto senddone;
+				if (hash && (!progress || filesize < 0) ) {
+					while (bytes >= hashbytes) {
+						(void)putc('#', ttyout);
+						hashbytes += mark;
+					}
+					(void)fflush(ttyout);
 				}
-				(void)fflush(ttyout);
+			}
+			if (rate_put) {
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
+				}
 			}
 		}
+ senddone:
 		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
 				(void)putc('#', ttyout);
@@ -768,8 +793,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	sig_t oldinti, oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;
-	static size_t bufsize;
-	static char *buf;
+	size_t bufsize;
+	char *buf;
 	volatile off_t hashbytes;
 	struct stat st;
 	time_t mtime;
@@ -844,7 +869,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			}
 			if (dir != NULL)
 				*dir = 0;
-			d = access(dir == local ? "/" : dir ? local : ".", W_OK);
+			d = access(dir == local ? "/" :
+			    dir ? local : ".", W_OK);
 			if (dir != NULL)
 				*dir = '/';
 			if (d < 0) {
@@ -938,6 +964,12 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		}
 		closefunc = fclose;
 	}
+
+		/*
+		 * XXX:	look at punting and just using sndbuf_* for
+		 *	the buffer size, since st.st_blksize ~= 512
+		 *	and BUFSIZ ~= 4K
+		 */
 	if (fstat(fileno(fout), &st) < 0 || st.st_blksize == 0)
 		st.st_blksize = BUFSIZ;
 	if (st.st_blksize > bufsize) {
@@ -964,19 +996,40 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 				(*closefunc)(fout);
 			return;
 		}
-		errno = d = 0;
-		while ((c = read(fileno(din), buf, bufsize)) > 0) {
-			if ((d = write(fileno(fout), buf, c)) != c)
-				break;
-			bytes += c;
-			if (hash && (!progress || filesize < 0)) {
-				while (bytes >= hashbytes) {
-					(void)putc('#', ttyout);
-					hashbytes += mark;
+		while (1) {
+			struct timeval then, now, td;
+			off_t bufrem;
+
+			(void)gettimeofday(&then, NULL);
+			errno = c = d = 0;
+			bufrem = rate_get ? rate_get : bufsize;
+			while (bufrem > 0) {
+				if ((c = read(fileno(din), buf,
+				    MIN(bufsize, bufrem))) <= 0)
+					goto recvdone;
+				bytes += c;
+				bufrem -=c;
+				if ((d = write(fileno(fout), buf, c)) != c)
+					goto recvdone;
+				if (hash && (!progress || filesize < 0)) {
+					while (bytes >= hashbytes) {
+						(void)putc('#', ttyout);
+						hashbytes += mark;
+					}
+					(void)fflush(ttyout);
 				}
-				(void)fflush(ttyout);
+			}
+			if (rate_get) {
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
+				}
 			}
 		}
+ recvdone:
 		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
 				(void)putc('#', ttyout);
@@ -1310,9 +1363,12 @@ void
 psummary(notused)
 	int notused;
 {
+	int oerrno;
 
+	oerrno = errno;
 	if (bytes > 0)
 		ptransfer(1);
+	errno = oerrno;
 }
 
 void
