@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.4 1998/04/07 16:06:33 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.5 1998/05/14 20:49:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.4 1998/04/07 16:06:33 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.5 1998/05/14 20:49:57 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,7 +79,7 @@ struct wsscreen {
 struct wsscreen *wsscreen_attach __P((struct wsdisplay_softc *, int,
 				      const char *,
 				      const struct wsscreen_descr *, void *,
-				      int, int));
+				      int, int, long));
 
 #define WSDISPLAY_MAXSCREEN 8
 
@@ -142,7 +142,7 @@ static int wsdisplayparam __P((struct tty *, struct termios *));
 	    (WSSCREEN_HAS_EMULATOR(scr) && (scr)->scr_graphics != 0)
 
 static void wsdisplay_common_attach __P((struct wsdisplay_softc *sc,
-	    int console, struct wsscreen_list *,
+	    int console, const struct wsscreen_list *,
 	    const struct wsdisplay_accessops *accessops,
 	    void *accesscookie));
 
@@ -163,13 +163,15 @@ static struct consdev wsdisplay_cons = {
 	wsdisplay_pollc_dummy, NODEV, CN_NORMAL
 };
 
-struct wsscreen *wsscreen_attach(sc, console, emul, type, cookie, ccol, crow)
+struct wsscreen *wsscreen_attach(sc, console, emul, type, cookie,
+				 ccol, crow, defattr)
 	struct wsdisplay_softc *sc;
 	int console;
 	const char *emul;
 	const struct wsscreen_descr *type;
 	void *cookie;
 	int ccol, crow;
+	long defattr;
 {
 	struct wsdisplay_conf *dconf;
 	struct wsscreen *scr;
@@ -185,7 +187,7 @@ struct wsscreen *wsscreen_attach(sc, console, emul, type, cookie, ccol, crow)
 		 * The other stuff is already there.
 		 */
 		if (dconf->wsemul != NULL)
-			(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr);
+			(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
 	} else { /* not console */
 		dconf = malloc(sizeof(struct wsdisplay_conf),
 			       M_DEVBUF, M_NOWAIT);
@@ -195,7 +197,7 @@ struct wsscreen *wsscreen_attach(sc, console, emul, type, cookie, ccol, crow)
 			dconf->wsemul = wsemul_pick(emul);
 			dconf->wsemulcookie =
 			  (*dconf->wsemul->attach)(0, type, cookie,
-						   ccol, crow, scr);
+						   ccol, crow, scr, defattr);
 		} else
 			dconf->wsemul = NULL;
 		dconf->scrdata = type;
@@ -339,7 +341,7 @@ static void
 wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	struct wsdisplay_softc *sc;
 	int console;
-	struct wsscreen_list *scrdata;
+	const struct wsscreen_list *scrdata;
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
 {
@@ -350,7 +352,7 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 		KASSERT(wsdisplay_console_initted);
 		KASSERT(wsdisplay_console_device == NULL);
 
-		sc->sc_scr[0] = wsscreen_attach(sc, 1, 0, 0, 0, 0, 0);
+		sc->sc_scr[0] = wsscreen_attach(sc, 1, 0, 0, 0, 0, 0, 0);
 		wsdisplay_console_device = sc;
 
 		printf(": console (%s, %s emulation)",
@@ -369,14 +371,16 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	for (; i < WSDISPLAY_MAXSCREEN; i++) {
 		void *cookie;
 		int ccol, crow;
+		long defattr;
 
 		res = ((*accessops->alloc_screen)(accesscookie, scr,
-						  &cookie, &ccol, &crow));
+						  &cookie, &ccol, &crow,
+						  &defattr));
 		if (res)
 			break;
 
 		sc->sc_scr[i] = wsscreen_attach(sc, 0, 0, scr, cookie,
-						ccol, crow);
+						ccol, crow, defattr);
 	}
 #endif
 
@@ -392,10 +396,11 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 }
 
 void
-wsdisplay_cnattach(type, cookie, ccol, crow)
+wsdisplay_cnattach(type, cookie, ccol, crow, defattr)
 	const struct wsscreen_descr *type;
 	void *cookie;
 	int ccol, crow;
+	long defattr;
 {
 	const struct wsemul_ops *wsemul;
 
@@ -412,7 +417,8 @@ wsdisplay_cnattach(type, cookie, ccol, crow)
 	wsemul = wsemul_pick(0); /* default */
 	wsdisplay_console_conf.wsemul = wsemul;
 	wsdisplay_console_conf.wsemulcookie = (*wsemul->cnattach)(type, cookie,
-								  ccol, crow);
+								  ccol, crow,
+								  defattr);
 
 	cn_tab = &wsdisplay_cons;
 
@@ -760,7 +766,7 @@ wsdisplaystart(tp)
 
 	if (WSSCREEN_HAS_EMULATOR(scr))
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-		    buf, n);
+		    buf, n, 0);
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
@@ -983,7 +989,7 @@ wsdisplay_cnputc(dev, i)
 		return;
 
 	dc = &wsdisplay_console_conf;
-	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1);
+	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_raster.h,v 1.1 1998/03/22 14:24:02 drochner Exp $ */
+/* $NetBSD: wscons_raster.h,v 1.2 1998/05/14 20:49:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,15 +66,14 @@ struct rcons {
 	int	rc_xorigin;		/* x origin for first column */
 	int	rc_yorigin;		/* y origin for first row */
 	int	rc_raswidth;		/* raster width for row copies */
-	int	rc_ras_blank;		/* current screen blank raster op */
 
 	/* Internal cursor row and column.  XXX  Weird Sun cursor pointers. */
 	int	rc_crow;		/* internal cursror row */
 	int	rc_ccol;		/* ptr to cursror column */
 };
 
-#define RC_STANDOUT	0x001		/* standout mode */
 #if 0
+#define RC_STANDOUT	0x001		/* standout mode */
 #define	RC_BOLD		0x?		/* boldface mode */
 #endif
 #define RC_INVERT	0x002		/* inverted screen colors */
@@ -86,10 +85,11 @@ void	rcons_init __P((struct rcons *rc, int mrow, int mcol));
 /* Console emulation interface functions.  See ansicons.h for more info. */
 void	rcons_cursor __P((void *, int, int, int));
 void	rcons_invert __P((void *, int));
-void	rcons_putstr __P((void *, int, int, char *, int));
+void	rcons_putstr __P((void *, int, int, char *, int, long));
 void	rcons_copycols __P((void *, int, int, int, int));
-void	rcons_erasecols __P((void *, int, int, int));
+void	rcons_erasecols __P((void *, int, int, int, long));
 void	rcons_copyrows __P((void *, int, int, int));
-void	rcons_eraserows __P((void *, int, int));
+void	rcons_eraserows __P((void *, int, int, long));
+int	rcons_alloc_attr __P((void *, int, int, int, long *));
 
 #endif /* _DEV_PSEUDO_RCONS_H_ */

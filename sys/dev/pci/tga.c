@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.3 1998/04/29 02:23:20 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.4 1998/05/14 20:49:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -77,13 +77,15 @@ struct wsdisplay_emulops tga_emulops = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
+	rcons_alloc_attr
 };
 
 struct wsscreen_descr tga_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
+	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&tga_emulops,
-	0, 0
+	0, 0,
+	WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *_tga_scrlist[] = {
@@ -98,7 +100,7 @@ struct wsscreen_list tga_screenlist = {
 int	tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	tga_mmap __P((void *, off_t, int));
 static int	tga_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *));
+				      void **, int *, int *, long *));
 static void	tga_free_screen __P((void *, void *));
 static void	tga_show_screen __P((void *, void *));
 static int	tga_load_font __P((void *, void *, int, int, int, void *));
@@ -430,13 +432,15 @@ tga_mmap(v, offset, prot)
 }
 
 int
-tga_alloc_screen(v, type, cookiep, curxp, curyp)
+tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
 	void **cookiep;
 	int *curxp, *curyp;
+	long *attrp;
 {
 	struct tga_softc *sc = v;
+	long defattr;
 
 	if (sc->nscreens > 0)
 		return (ENOMEM);
@@ -444,6 +448,8 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
+	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
 }
@@ -485,6 +491,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	int bus, device, function;
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
+	long defattr;
 
 	tga_getdevconfig(memt, pc,
 	    pci_make_tag(pc, bus, device, function), dcp);
@@ -504,8 +511,10 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	 */
 	(*dcp->dc_tgaconf->tgac_ramdac->tgar_init)(dcp, 0);
 
+	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+
 	wsdisplay_cnattach(&tga_stdscreen, &dcp->dc_rcons,
-			   0, 0);
+			   0, 0, defattr);
 
 	return(0);
 }

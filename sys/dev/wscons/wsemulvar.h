@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.2 1998/04/17 00:17:27 thorpej Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.3 1998/05/14 20:49:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,10 +36,12 @@ struct wsdisplay_emulops;
 struct wsemul_ops {
 	const char *name;
 
-	void	*(*cnattach) __P((const struct wsscreen_descr *, void *, int, int));
+	void	*(*cnattach) __P((const struct wsscreen_descr *, void *,
+				  int, int, long));
 	void	*(*attach) __P((int console, const struct wsscreen_descr *, void *,
-				int, int, void *));
-	void	(*output) __P((void *cookie, const u_char *data, u_int count));
+				int, int, void *, long));
+	void	(*output) __P((void *cookie, const u_char *data, u_int count,
+			       int));
 	void	(*detach) __P((void *cookie, u_int *crow, u_int *ccol));
 };
 
