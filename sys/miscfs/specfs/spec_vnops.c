@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.45 1999/11/15 18:49:10 fvdl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.46 1999/12/08 18:57:07 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,6 +62,16 @@ const char	devin[] = "devin";
 const char	devout[] = "devout";
 const char	devioc[] = "devioc";
 const char	devcls[] = "devcls";
+
+/*
+ * This vnode operations vector is used for two things only:
+ * - special device nodes created from whole cloth by the kernel.
+ * - as a temporary vnodeops replacement for vnodes which were found to
+ *	be aliased by callers of checkalias().
+ * For the ops vector for vnodes built from special devices found in a
+ * filesystem, see (e.g) ffs_specop_entries[] in ffs_vnops.c or the
+ * equivalent for other filesystems.
+ */
 
 int (**spec_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
