@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.258 2004/12/29 14:41:05 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.259 2005/01/10 02:42:34 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -28,11 +28,7 @@ LIBDO.${_lib}!=	cd ${_dir} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=LIBDO.${_lib}
 .endif
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
-.if exists(${LIBDO.${_lib}}/lib${_lib}.so)
 DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
-.else
-DPADD+=		${LIBDO.${_lib}}/lib${_lib}.a
-.endif
 .endfor
 .endif									# }
 
