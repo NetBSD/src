@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.8 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.9 1998/07/23 20:36:09 pk Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -80,6 +80,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -256,6 +257,9 @@ uvm_pageout()
 			aio->aiodone(aio);
 
 		}
+
+		/* Next, drain pool resources */
+		pool_drain(0);
 
 		/*
 		 * now lock page queues and recompute inactive count
