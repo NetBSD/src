@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)primes.h	5.2 (Berkeley) 6/1/90
- *	$Id: primes.h,v 1.2 1993/08/01 18:53:09 mycroft Exp $
+ *	$Id: primes.h,v 1.3 1994/03/01 01:07:51 cgd Exp $
  */
 
 /*
@@ -51,7 +51,7 @@ typedef unsigned long ubig;           /* must be >=32 bit unsigned value */
 /*
  * sieve parameters
  */
-#define BIG ((ubig)0xffffffff)        /* highest value we will sieve */
-#define SEMIBIG ((ubig)0x7fffffff)    /* highest signed value */
-#define NEG_SEMIBIG ((ubig)0x80000000) /* lowest signed value */
-#define TABSIZE 256*1024 /* bytes in sieve table (must be > 3*5*7*11) */
+#define BIG		ULONG_MAX      		/* highest value we will sieve */
+#define SEMIBIG		((ubig)LONG_MAX)	/* highest signed value */
+#define NEG_SEMIBIG	((ubig)LONG_MIN)	/* lowest signed value */
+#define TABSIZE 256*1024			/* bytes in sieve table (must be > 3*5*7*11) */
