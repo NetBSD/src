@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.192 2002/12/02 08:27:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.193 2002/12/21 16:43:33 lukem Exp $
 
+#
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
 # information, see http://www.netbsd.org/developers/releng/index.html
@@ -53,21 +54,26 @@
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
 #   do-build:        builds and installs the entire system.
+#
 
 .if ${.MAKEFLAGS:M${.CURDIR}/share/mk} == ""
 .MAKEFLAGS: -m ${.CURDIR}/share/mk
 .endif
 
+#
 # If _SRC_TOP_OBJ_ gets set here, we will end up with a directory that may
 # not be the top level objdir, because "make obj" can happen in the *middle*
 # of "make build" (long after <bsd.own.mk> is calculated it).  So, pre-set
 # _SRC_TOP_OBJ_ here so it will not be added to ${.MAKEOVERRIDES}.
+#
 _SRC_TOP_OBJ_=
 
 .include <bsd.own.mk>
 
+#
 # Sanity check: make sure that "make build" is not invoked simultaneously
 # with a standard recursive target.
+#
 
 .if make(build) || make(release) || make(snapshot)
 .for targ in ${TARGETS:Nobj:Ncleandir}
@@ -82,7 +88,9 @@ _SRC_TOP_OBJ_=
 _SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share rescue sys etc distrib regress
 
+#
 # Weed out directories that don't exist.
+#
 
 .for dir in ${_SUBDIR}
 .if exists(${dir}/Makefile) && (${BUILD_${dir}:Uyes} != "no")
@@ -122,7 +130,9 @@ postinstall-fix: .NOTMAIN
 	@echo "   ================================"
 
 
+#
 # Targets (in order!) called by "make build".
+#
 
 BUILDTARGETS+=	check-tools
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
@@ -142,13 +152,17 @@ BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib do-gnu-lib do-ld.so do-build
 
+#
 # Enforce proper ordering of some rules.
+#
 
 .ORDER:		${BUILDTARGETS}
 includes-lib:	includes-include includes-sys
 includes-gnu:	includes-lib
 
+#
 # Build the system and install into DESTDIR.
+#
 
 START_TIME!=	date
 
@@ -164,10 +178,16 @@ build:
 	@printf "Build finished at: " && date
 .endif
 
+#
 # Build a full distribution, but not a release (i.e. no sets into
-# ${RELEASEDIR}).
+# ${RELEASEDIR}).  "buildworld" enforces a build to ${DESTDIR} != /
+#
 
-distribution:
+distribution buildworld:
+.if make(buildworld) && (${DESTDIR} == "" || ${DESTDIR} == "/")
+	@echo "Won't make ${.TARGET} with DESTDIR=/"
+	@false
+.endif
 	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
@@ -176,9 +196,43 @@ distribution:
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
+#
+# Install the distribution from $DESTDIR to $INSTALLWORLDDIR (defaults to `/')
+# If installing to /, ensures that the host's operating system is NetBSD and
+# the host's `uname -m` == ${MACHINE}.
+#
+
+HOST_UNAME_S!=	uname -s
+HOST_UNAME_M!=	uname -m
+
+installworld:
+.if (${DESTDIR} == "" || ${DESTDIR} == "/")
+	@echo "Can't make ${.TARGET} to DESTDIR=/"
+	@false
+.endif
+.if !defined(INSTALLWORLDDIR) || \
+    ${INSTALLWORLDDIR} == "" || ${INSTALLWORLDDIR} == "/"
+.if (${HOST_UNAME_S} != "NetBSD")
+	@echo "Won't cross-make ${.TARGET} from ${HOST_UNAME_S} to NetBSD with INSTALLWORLDDIR=/"
+	@false
+.endif
+.if (${HOST_UNAME_M} != ${MACHINE})
+	@echo "Won't cross-make ${.TARGET} from ${HOST_UNAME_M} to ${MACHINE} with INSTALLWORLDDIR=/"
+	@false
+.endif
+.endif
+	(cd ${.CURDIR}/distrib/sets && \
+	    ${MAKE} INSTALLDIR=${INSTALLWORLDDIR:U/} INSTALLSETS= installsets)
+	(cd ${.CURDIR} && \
+	    ${MAKE} DESTDIR=${INSTALLWORLDDIR} postinstall-check)
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
+	@printf "make ${.TARGET} finished at: " && date
+
+#
 # Build a release or snapshot (implies "make build").  Note that
 # in this case, the set lists will be checked before the tar files
 # are made.
+#
 
 release snapshot:
 	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
@@ -186,7 +240,9 @@ release snapshot:
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
+#
 # Special components of the "make build" process.
+#
 
 check-tools:
 .if ${TOOLCHAIN_MISSING} == "yes" && !defined(EXTERNAL_TOOLCHAIN)
@@ -233,8 +289,10 @@ do-build:
 	(cd ${.CURDIR} && ${MAKE} ${targ} BUILD_tools=no BUILD_lib=no)
 .endfor
 
+#
 # Speedup stubs for some subtrees that don't need to run these rules.
 # (Tells <bsd.subdir.mk> not to recurse for them.)
+#
 
 .for dir in bin etc distrib games libexec regress sbin usr.sbin tools
 includes-${dir}:
@@ -245,7 +303,10 @@ install-${dir}:
 	@true
 .endfor
 
+#
 # XXX this needs to change when distrib Makefiles are recursion compliant
+# XXX many distrib subdirs need "cd etc && make snap_pre snap_kern" first...
+#
 dependall-distrib depend-distrib all-distrib:
 	@true
 
