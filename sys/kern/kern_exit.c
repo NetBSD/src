@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.10 2002/04/01 07:47:52 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.11 2002/04/01 21:23:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.10 2002/04/01 07:47:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.11 2002/04/01 21:23:30 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.10 2002/04/01 07:47:52 nathanw 
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
@@ -211,8 +213,8 @@ exit1(struct lwp *l, int rv)
 		SCHED_LOCK(s);
 		while ((l2 = sa_getcachelwp(p)) != 0) {
 			l2->l_priority = l2->l_usrpri;
+			l2->l_flag &= ~0x800000;
 			setrunnable(l2);
-			p->p_nrlwps++;
 			DPRINTF(("%d ", l2->l_lid));
 		}
 		DPRINTF(("\n"));
@@ -230,7 +232,6 @@ exit1(struct lwp *l, int rv)
 			SCHED_LOCK(s);
 			setrunnable(l2);
 			SCHED_UNLOCK(s);
-			p->p_nrlwps++;
 			DPRINTF(("exit1: Made %d.%d runnable\n",
 			    p->p_pid, l2->l_lid));
 		}
