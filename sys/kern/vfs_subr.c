@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.117 2000/02/16 11:57:45 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.118 2000/03/03 05:21:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ struct freelst vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
 struct vfs_list_head vfs_list =			/* vfs list */
-	 LIST_HEAD_INITIALIZER(vfs_list);
+    LIST_HEAD_INITIALIZER(vfs_list);
 
 struct nfs_public nfs_pub;			/* publicly exported FS */
 
@@ -831,9 +831,12 @@ reassignbuf(bp, newvp)
 				}
 				/* fall through */
 			default:
-				delay = filedelay;;
+				delay = filedelay;
+				break;
 			}
-			vn_syncer_add_to_worklist(newvp, delay);
+			if (!newvp->v_mount ||
+			    (newvp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+				vn_syncer_add_to_worklist(newvp, delay);
 		}
 	}
 	bufinsvn(bp, listheadp);
