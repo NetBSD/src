@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.68 2003/07/08 03:32:00 enami Exp $
+#	$NetBSD: services,v 1.69 2003/11/23 06:06:24 simonb Exp $
 #
 # Network services, Internet style
 #
@@ -74,6 +74,7 @@ sunrpc		111/udp		rpcbind
 auth		113/tcp		authentication tap ident
 sftp		115/tcp
 uucp-path	117/tcp
+sqlserv		118/tcp				# SQL Services
 nntp		119/tcp		readnews untp	# USENET News Transfer Protocol
 erpc		121/udp			# Encore Expedited Remote Pro.Call
 ntp		123/tcp
@@ -333,12 +334,16 @@ rtsp		554/tcp			# Real Time Stream Control Protocol
 rtsp		554/udp			# Real Time Stream Control Protocol
 socks		1080/tcp		# Socks
 socks		1080/udp		# Socks
+kazaa		1214/tcp		# KAZAA
+kazaa		1214/udp		# KAZAA
 ms-sql-s	1433/tcp		# Microsoft-SQL-Server
 ms-sql-s	1433/udp		# Microsoft-SQL-Server
 ms-sql-m	1434/tcp		# Microsoft-SQL-Monitor
 ms-sql-m	1434/udp		# Microsoft-SQL-Monitor
 ms-wbt-server	3389/tcp		# MS WBT Server
 ms-wbt-server	3389/udp		# MS WBT Server
+terabase	4000/tcp	icq	# used for both Terabase and ICQ
+terabase	4000/udp	icq	# used for both Terabase and ICQ
 radmin-port	4899/tcp		# RAdmin Port
 radmin-port	4899/udp		# RAdmin Port
 http-alt	8080/tcp		# HTTP Alternate (see port 80)
