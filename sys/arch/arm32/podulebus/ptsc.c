@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.2 1996/03/17 01:24:54 thorpej Exp $ */
+/* $NetBSD: ptsc.c,v 1.3 1996/04/26 22:38:18 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -103,15 +103,11 @@ ptscmatch(pdp, match, auxp)
 	void		*match, *auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
-	int podule;
 
-	podule = findpodule(0x5b, 0x107, pa->pa_podule_number);
+/* Look for the card */
 
-	if (podule == -1)
-	  return(0);
-
-	pa->pa_podule_number = podule;
-	pa->pa_podule = &podules[podule];
+	if (matchpodule(pa, 0x5b, 0x107, -1) == 0)
+		return(0);
 
 	return(1);
 }
@@ -128,11 +124,12 @@ ptscattach(pdp, dp, auxp)
 	vu_char		  *fas;
 
 	pa = (struct podule_attach_args *)auxp;
-	sc->sc_specific.sc_podule_number = pa->pa_podule_number;
-	if (sc->sc_specific.sc_podule_number == -1)
-	  panic("Podule has disappeared !");
 
-	sc->sc_specific.sc_podule = &podules[sc->sc_specific.sc_podule_number];
+	if (pa->pa_podule_number == -1)
+		panic("Podule has disappeared !");
+
+	sc->sc_specific.sc_podule_number = pa->pa_podule_number;
+	sc->sc_specific.sc_podule = pa->pa_podule;
 	sc->sc_specific.sc_iobase =
 	  (vu_char *)sc->sc_specific.sc_podule->fast_base;
 
