@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.374 2002/12/20 06:39:54 lukem Exp $
+# $NetBSD: mi,v 1.375 2002/12/21 12:52:58 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -763,6 +763,7 @@
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin
 ./usr/sbin/stdhosts		base-nis-bin
+./usr/sbin/sunlabel		base-sysutil-bin
 ./usr/sbin/sup			base-sup-bin
 ./usr/sbin/supfilesrv		base-sup-bin
 ./usr/sbin/supscan		base-sup-bin
