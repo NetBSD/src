@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.9 1998/12/11 17:44:41 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.10 1998/12/21 15:45:20 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.9 1998/12/11 17:43:31 augustss Exp 
+ *	NetBSD: usbdevs,v 1.10 1998/12/21 15:42:59 augustss Exp 
  */
 
 /*
@@ -201,6 +201,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "mouse",
 	},
 	{
+	    USB_VENDOR_ADS, USB_PRODUCT_ADS_0x0008,
+	    0,
+	    "ADS Technologies",
+	    "adapter",
+	},
+	{
 	    USB_VENDOR_PLX, USB_PRODUCT_PLX_TESTBOARD,
 	    0,
 	    "PLX",
@@ -336,6 +342,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_CHIC, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Chic Technology",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_ADS, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "ADS Technologies",
 	    NULL,
 	},
 	{
