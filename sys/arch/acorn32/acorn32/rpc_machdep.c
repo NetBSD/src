@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.20 2002/02/21 02:52:19 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.21 2002/02/21 05:25:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.20 2002/02/21 02:52:19 thorpej Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.21 2002/02/21 05:25:23 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -737,16 +737,20 @@ initarm(void *cookie)
 #endif
 
 	/* Map the stack pages */
-	pmap_map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, l2pagetable, irqstack.pv_va,
+	    irqstack.pv_pa, IRQ_STACK_SIZE * NBPG,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, l2pagetable, abtstack.pv_va,
+	    abtstack.pv_pa, ABT_STACK_SIZE * NBPG,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, l2pagetable, undstack.pv_va,
+	    undstack.pv_pa, UND_STACK_SIZE * NBPG,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, l2pagetable, kernelstack.pv_va,
+	    kernelstack.pv_pa, UPAGES * NBPG,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-	pmap_map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	pmap_map_chunk(l1pagetable, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2002/02/21 02:52:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 2002/02/21 05:25:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2002/02/21 02:52:20 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2002/02/21 05:25:24 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3800,6 +3800,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
 
 	resid = (size + (NBPG - 1)) & ~(NBPG - 1);
 
+	if (l1pt == 0)
+		panic("pmap_map_chunk: no L1 table provided");
+
 #ifdef VERBOSE_INIT_ARM     
 	printf("pmap_map_chunk: pa=0x%lx va=0x%lx size=0x%lx resid=0x%lx "
 	    "prot=0x%x cache=%d\n", pa, va, size, resid, prot, cache);
@@ -3809,8 +3812,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
 
 	while (resid > 0) {
 		/* See if we can use a section mapping. */
-		if (l1pt &&
-		    ((pa | va) & (L1_SEC_SIZE - 1)) == 0 &&
+		if (((pa | va) & (L1_SEC_SIZE - 1)) == 0 &&
 		    resid >= L1_SEC_SIZE) {
 #ifdef VERBOSE_INIT_ARM
 			printf("S");
