@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.18 1998/12/20 03:49:53 nathanw Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.19 1998/12/24 03:59:00 marc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ retry:
 			 * entry, which we want to avoid on the first pass and use
 			 * exclusively on the second pass. 
 			 */
-			if (cfe->iomask != 3) {
+			if ((cfe->iomask != 3) && (cfe->iospace[0].start != 0)) {
 				if (!pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
 									 cfe->iospace[0].length, 
 									 0, 
@@ -349,7 +349,8 @@ com_pcmcia_enable1(sc)
 	if ((ret = pcmcia_function_enable(pf)))
 	    return(ret);
 
-	if (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) {
+	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
+	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556)) {
 		int reg;
 
 		/* turn off the ethernet-disable bit */
