@@ -63,6 +63,7 @@
 extern "C" {
 #endif
 
+
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! MD4_LONG has to be at least 32 bits wide. If it's wider, then !
