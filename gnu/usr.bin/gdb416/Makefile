@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 1997/09/29 15:30:46 gwr Exp $
+# $NetBSD: Makefile,v 1.7 1997/09/29 15:41:09 gwr Exp $
 
 PROG=	gdb
 
@@ -74,7 +74,7 @@ LDADD+= $(LIBREADLINE)
 DPADD+= $(LIBREADLINE)
 
 LDADD+= -lbfd
-DPADD+= ${DESTDIR}/usr/lib/libbfd.a
+DPADD+= $(LIBBFD)
 
 LDADD+= -lkvm
 DPADD+= $(LIBKVM)
