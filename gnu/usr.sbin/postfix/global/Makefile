@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/12/24 19:47:50 perry Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -11,7 +11,7 @@ LIB=	global
 DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${LIB}
 .PATH:	${DIST}
 
-SRCS	= been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
+SRCS=	been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	debug_peer.c debug_process.c defer.c deliver_completed.c \
 	deliver_flock.c deliver_pass.c deliver_request.c domain_list.c \
 	dot_lockfile.c dot_lockfile_as.c ext_prop.c file_id.c \
@@ -31,7 +31,9 @@ SRCS	= been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c xtext.c bounce_log.c \
 	flush_clnt.c mail_conf_time.c mbox_conf.c mbox_open.c abounce.c \
-	verp_sender.c match_parent_style.c
+	verp_sender.c match_parent_style.c mime_state.c header_token.c \
+	strip_addr.c virtual8_maps.c hold_message.c
+
 # IPv6
 #SRCS+=	wildcard_inet_addr.c
 
