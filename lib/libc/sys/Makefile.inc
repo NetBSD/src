@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.65 1997/10/06 01:12:03 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.66 1997/10/10 02:15:44 fvdl Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -11,7 +11,8 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mmap.c semctl.c swapon.c truncate.c
+SRCS+=	ftruncate.c lseek.c mmap.c semctl.c swapon.c truncate.c \
+	getdirentries.c
 
 # "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
 # we can avoid bumping libc's minor number as functions are added to the
@@ -26,7 +27,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
-	getdirentries.o getfh.o getfsstat.o \
+	getdents.o getfh.o getfsstat.o \
 	getgroups.o getitimer.o __getlogin.o getpeername.o getpgid.o \
 	getpgrp.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o ioctl.o kill.o \
@@ -154,7 +155,7 @@ ${LPSEUDONOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 execve.2 _exit.2 \
-	fcntl.2 flock.2 fork.2 fsync.2 getdirentries.2 getfh.2 getfsstat.2 \
+	fcntl.2 flock.2 fork.2 fsync.2 getdents.2 getfh.2 getfsstat.2 \
 	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 ktrace.2 \

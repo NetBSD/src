@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdirentries.3,v 1.8 1997/10/10 02:15:52 fvdl Exp $
+.\"	$NetBSD: getdents.2,v 1.1 1997/10/10 02:15:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,22 +34,17 @@
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
 .Dd June 9, 1993
-.Dt GETDIRENTRIES 2
+.Dt GETDENTS 2
 .Os
 .Sh NAME
-.Nm getdirentries
+.Nm getdents
 .Nd "get directory entries in a filesystem independent format"
 .Sh SYNOPSIS
 .Fd #include <dirent.h>
 .Ft int
-.Fn getdirentries "int fd" "char *buf" "int nbytes" "long *basep"
+.Fn getdents "int fd" "char *buf" "size_t nbytes"
 .Sh DESCRIPTION
-.Bf -symbolic
-This interface is obsoleted by 
-.Xr getdents 2 .
-.Ef
-.Pp
-.Fn Getdirentries
+.Fn Getdents
 reads directory entries from the directory
 referenced by the file descriptor
 .Fa fd
@@ -65,7 +60,7 @@ block size associated with the file,
 see
 .Xr stat 2 .
 Some filesystems may not support
-.Fn getdirentries
+.Fn getdents
 with buffers smaller than this size.
 .Pp
 The data in the buffer is a series of
@@ -113,19 +108,14 @@ The current position pointer associated with
 .Fa fd
 is set to point to the next block of entries.
 The pointer may not advance by the number of bytes returned by
-.Fn getdirentries .
+.Fn getdents .
 A value of zero is returned when
 the end of the directory has been reached.
 .Pp
-.Fn Getdirentries
-writes the position of the block read into the location pointed to by
-.Fa basep .
-Alternatively, the current position pointer may be set and retrieved by
+The current position pointer may be set and retrieved by
 .Xr lseek 2 .
 The current position pointer should only be set to a value returned by
 .Xr lseek 2 ,
-a value returned in the location pointed to by
-.Fa basep ,
 or zero.
 .Sh RETURN VALUES
 If successful, the number of bytes actually transferred is returned.
@@ -142,18 +132,19 @@ is not a valid file descriptor open for reading.
 .It Bq Er EFAULT
 Either
 .Fa buf
-or
-.Fa basep
-point outside the allocated address space.
+points outside the allocated address space.
 .It Bq Er EIO
 An
 .Tn I/O
 error occurred while reading from or writing to the file system.
+.It Bq Er EINVAL
+A directory was being read on NFS, but it was modified on the server while
+it was being read.
 .El
 .Sh SEE ALSO
 .Xr open 2 ,
 .Xr lseek 2
 .Sh HISTORY
 The
-.Fn getdirentries
-function first appeared in 4.4BSD.
+.Fn getdents
+function first appeared in NetBSD 1.3
