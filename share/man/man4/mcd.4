@@ -1,4 +1,4 @@
-.\"	$NetBSD: mcd.4,v 1.8 2001/09/11 22:52:53 wiz Exp $
+.\"	$NetBSD: mcd.4,v 1.9 2001/09/22 01:34:47 wiz Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -41,7 +41,6 @@ driver provides support for
 controller and drive on the
 .Xr isa 4
 bus.
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/rmcd[0-9][a-h] -compact
 .It Pa /dev/cd[0-9][a-h]
@@ -53,6 +52,11 @@ raw mode Mitsumi
 .Tn CD-ROM
 devices
 .El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr ne 4 ,
+.Xr we 4
 .Sh BUGS
 The
 .Nm
@@ -74,8 +78,3 @@ hardware which  returns other result codes.
 .Pp
 .Cd "options MCD_PROMISC"
 enables the  original promiscuous probe behaviour. Use with extreme caution.
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr isa 4 ,
-.Xr ne 4 ,
-.Xr we 4

@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.18 2001/09/11 22:52:53 wiz Exp $
+.\" $NetBSD: midi.4,v 1.19 2001/09/22 01:34:47 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,13 +100,13 @@ interface.
 .It Pa /dev/sequencer
 .El
 .Sh SEE ALSO
-.Xr audio 4 ,
-.Xr ioctl 2 ,
 .Xr midiplay 1 ,
+.Xr ioctl 2 ,
+.Xr ossaudio 3 ,
+.Xr audio 4 ,
 .Xr mpu 4 ,
 .Xr opl 4 ,
-.Xr umidi 4 ,
-.Xr ossaudio 3 .
+.Xr umidi 4
 .br
 For ports using the ISA bus:
 .Xr cms 4 ,
@@ -123,4 +123,3 @@ driver first appeared in
 .Nx 1.4 .
 .Sh BUGS
 This man page is very incomplete.
-.Pp
