@@ -1,4 +1,4 @@
-/*	$NetBSD: ranlib.c,v 1.5 1997/10/19 05:50:34 mrg Exp $	*/
+/*	$NetBSD: ranlib.c,v 1.6 1997/10/19 13:40:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,30 +36,36 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ranlib.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: ranlib.c,v 1.5 1997/10/19 05:50:34 mrg Exp $";
+__RCSID("$NetBSD: ranlib.c,v 1.6 1997/10/19 13:40:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <dirent.h>
+#include <archive.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <archive.h>
+
+#include "extern.h"
 
 CHDR chdr;
 u_int options;				/* UNUSED -- keep open_archive happy */
 char *archive;
 
+int	main __P((int, char **));
+void	usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -67,7 +73,7 @@ main(argc, argv)
 	int ch, eval, tflag;
 
 	tflag = 0;
-	while ((ch = getopt(argc, argv, "t")) != EOF)
+	while ((ch = getopt(argc, argv, "t")) != -1)
 		switch(ch) {
 		case 't':
 			tflag = 1;
@@ -82,11 +88,12 @@ main(argc, argv)
 	if (!*argv)
 		usage();
 
-	for (eval = 0; archive = *argv++;)
+	for (eval = 0; (archive = *argv++) != NULL;)
 		eval |= tflag ? touch() : build();
 	exit(eval);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: ranlib [-t] archive ...\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1997/10/19 05:50:29 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1997/10/19 13:40:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,26 +36,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.7 1997/10/19 05:50:29 mrg Exp $";
+__RCSID("$NetBSD: misc.c,v 1.8 1997/10/19 13:40:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <signal.h>
+#include <dirent.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <archive.h>
+#include "extern.h"
 #include "pathnames.h"
 
-extern char	*archive;			/* archive name */
 char		*tname = "temporary file";
 
+int
 tmp()
 {
 	static char *envtmp;
@@ -73,12 +78,12 @@ tmp()
 		(void)snprintf(path, MAXPATHLEN, "%s/%s", envtmp,
 		    strrchr(_NAME_RANTMP, '/'));
 	else
-		bcopy(_PATH_RANTMP, path, sizeof(_PATH_RANTMP));
+		memmove(path, _PATH_RANTMP, sizeof(_PATH_RANTMP));
 
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) == -1)
-		error(path);
+		err(1, "mkstemp %s", path);
 	(void)unlink(path);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);
@@ -86,12 +91,12 @@ tmp()
 
 void *
 emalloc(len)
-	int len;
+	size_t len;
 {
 	void *p;
 
 	if ((p = malloc((u_int)len)) == NULL)
-		error(archive);
+		err(1, "malloc");
 	return(p);
 }
 
@@ -99,20 +104,14 @@ char *
 rname(path)
 	char *path;
 {
-	register char *ind;
+	char *ind;
 
-	return((ind = rindex(path, '/')) ? ind + 1 : path);
+	return((ind = strrchr(path, '/')) ? ind + 1 : path);
 }
 
+void
 badfmt()
 {
 	errno = EFTYPE;
-	error(archive);
-}
-
-error(name)
-	char *name;
-{
-	(void)fprintf(stderr, "ranlib: %s: %s\n", name, strerror(errno));
-	exit(1);
+	err(1, "%s", archive);
 }
