@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.22 1994/03/12 04:10:27 mycroft Exp $
+ *	$Id: ultra14f.c,v 1.23 1994/03/14 13:32:56 mycroft Exp $
  */
  
 #include <sys/types.h>
@@ -1075,11 +1075,9 @@ cheat = mscp;
 				uha_free_mscp(unit,mscp,flags);
 			}
 			xs->error = XS_DRIVER_STUFFUP;
-			splx(s);
 			return(HAD_ERROR);
 		}
 	} while (!(xs->flags & ITSDONE));/* something (?) else finished */
-	splx(s);
 scsi_debug = 0;uha_debug = 0;
 	if(xs->error)
 	{
