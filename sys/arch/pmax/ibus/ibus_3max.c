@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_3max.c,v 1.1 1999/11/15 09:50:30 nisimura Exp $ */
+/* $NetBSD: ibus_3max.c,v 1.2 1999/11/24 00:04:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.1 1999/11/15 09:50:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.2 1999/11/24 00:04:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.1 1999/11/15 09:50:30 nisimura Exp $
 
 #define KV(x) MIPS_PHYS_TO_KSEG1(x)
 
-static struct ibus_attach_args kn02sys_devs[] = {
-	{ "mc146818",	0, KV(KN02_SYS_CLOCK),	},
-	{ "dc",  	1, KV(KN02_SYS_DZ),	},
+struct ibus_attach_args kn02sys_devs[] = {
+	{ "mc146818",	0,	KV(KN02_SYS_CLOCK),		0,	},
+	{ "dc",  	1,	KV(KN02_SYS_DZ),		0,	},
 };
+const int kn02sys_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
 
 static int  kn02sys_match __P((struct device *, struct cfdata *, void *));
 static void kn02sys_attach __P((struct device *, struct device *, void *));
@@ -83,7 +84,7 @@ kn02sys_attach(parent, self, aux)
 
 	ida.ida_busname = "ibus";
 	ida.ida_devs = kn02sys_devs;
-	ida.ida_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
+	ida.ida_ndevs = kn02sys_ndevs;
 	ida.ida_establish = sc->sc_intr_establish;
 	ida.ida_disestablish = sc->sc_intr_disestablish;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.6 1999/11/19 03:15:28 nisimura Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.7 1999/11/24 00:04:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.6 1999/11/19 03:15:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.7 1999/11/24 00:04:06 thorpej Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -58,23 +58,36 @@ struct cfattach ibus_pmax_ca = {
 
 #define KV(x) MIPS_PHYS_TO_KSEG1(x)
 
-static struct ibus_attach_args kn01_devs[] = {
-	/* name     cookie   addr			  */
-	{ "pm",		0, KV(KN01_PHYS_FBUF_START)	},
-	{ "dc",  	1, KV(KN01_SYS_DZ)		},
-	{ "lance", 	2, KV(KN01_SYS_LANCE)		},
-	{ "sii",	3, KV(KN01_SYS_SII)		},
-	{ "mc146818",	4, KV(KN01_SYS_CLOCK)		},
-#ifdef notyet
-	{ "dc",  	5, KV(0x15000000),		},
-	{ "dc",  	6, KV(0x15200000),		},
+#ifdef DEC_3100
+struct ibus_attach_args ibus_pmax_devs[] = {
+	{ "pm",		0,	KV(KN01_PHYS_FBUF_START),	0	},
+	{ "dc",		1,	KV(KN01_SYS_DZ),		0	},
+	{ "lance",	2,	KV(KN01_SYS_LANCE),		0	},
+	{ "sii",	3,	KV(KN01_SYS_SII),		0	},
+	{ "mc146818",	4,	KV(KN01_SYS_CLOCK),		0	},
+};
+const int ibus_pmax_ndevs = sizeof(ibus_pmax_devs) / sizeof(ibus_pmax_devs[0]);
+#endif /* DEC_3100 */
+
+#ifdef DEC_5100
+struct ibus_attach_args ibus_mipsmate_devs[] = {
+	{ "dc",		1,	KV(KN01_SYS_DZ),		0	},
+	{ "lance",	2,	KV(KN01_SYS_LANCE),		0	},
+	{ "sii",	3,	KV(KN01_SYS_SII),		0	},
+	{ "mc146818",	4,	KV(KN01_SYS_CLOCK),		0	},
+	{ "dc",		5,	KV(0x15000000),			2	},
+	{ "dc",		6,	KV(0x15200000),			2	},
+#if 0
 	/*
-	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are
-	 * used for NVRAM state??
+	 * Ultrix configures it at 0x86400400.  The first 0x400 bytes
+	 * used for VMRAM state??
 	 */
-	{ "nvram",	7, KV(0x86400000),		},
+	{ "nvram",	7,	KV(0x86400000),			0	},
 #endif
 };
+const int ibus_mipsmate_ndevs =
+	sizeof(ibus_mipsmate_devs) / sizeof(ibus_mipsmate_devs[0]);
+#endif /* DEC_5100 */
 
 static int ibus_attached;
 
@@ -106,17 +119,19 @@ ibus_pmax_attach(parent, self, aux)
 	ibus_attached = 1;
 
 	ida.ida_busname = "ibus";
-	ida.ida_devs = kn01_devs;
-	ida.ida_ndevs = sizeof(kn01_devs) / sizeof(kn01_devs[0]);
 	switch (systype) {
 #ifdef DEC_3100
 	case DS_PMAX:
+		ida.ida_devs = ibus_pmax_devs;
+		ida.ida_ndevs = ibus_pmax_ndevs;
 		ida.ida_establish = dec_3100_intr_establish;
 		ida.ida_disestablish = dec_3100_intr_disestablish;
 		break;
 #endif
 #ifdef DEC_5100
 	case DS_MIPSMATE:
+		ida.ida_devs = ibus_mipsmate_devs;
+		ida.ida_ndevs = ibus_mipsmate_ndevs;
 		ida.ida_establish = dec_5100_intr_establish;
 		ida.ida_disestablish = dec_5100_intr_disestablish;
 		break;
