@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.39 1997/07/14 23:05:35 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.40 1997/07/15 07:43:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -249,34 +249,33 @@ notfound:
 }
 
 static int
-nubus_print(aux, name)
+nubus_print(aux, pnp)
 	void *aux;
-	const char *name;
+	const char *pnp;
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	bus_space_tag_t bst = na->na_tag;
 	bus_space_handle_t bsh;
 
-	if (name) {
+	if (pnp) {
+		printf("%s slot %x", pnp, na->slot);
 		if (bus_space_map(bst,
-		    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
-#ifdef DIAGNOSTIC
-			printf("%s: failed to map slot %x", name, na->slot);
-#endif
-		} else {
-			printf("%s: slot %x: %s", name, na->slot,
-			    nubus_get_card_name(bst, bsh, na->fmt));
+		    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh) == 0) {
+			printf(": %s", nubus_get_card_name(bst, bsh, na->fmt));
 			printf(" (Vendor: %s,", nubus_get_vendor(bst, bsh,
 			    na->fmt, NUBUS_RSRC_VEND_ID));
-			printf(" Part: %s", nubus_get_vendor(bst, bsh,
+			printf(" Part: %s)", nubus_get_vendor(bst, bsh,
 			    na->fmt, NUBUS_RSRC_VEND_PART));
-#ifdef DIAGNOSTIC
-			printf(" Type: %04x %04x %04x %04x",
-			    na->category, na->type, na->drsw, na->drhw);
-#endif
-
 			bus_space_unmap(bst, bsh, NBMEMSIZE);
 		}
+#ifdef DIAGNOSTIC
+		else
+			printf(":");
+		printf(" Type: %04x %04x %04x %04x",
+		    na->category, na->type, na->drsw, na->drhw);
+#endif
+	} else {
+		printf(" slot %x", na->slot);
 	}
 	return (UNCONF);
 }
