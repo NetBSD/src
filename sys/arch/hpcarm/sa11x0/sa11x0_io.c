@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.10 2002/04/05 03:57:16 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.11 2002/04/09 22:37:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -167,10 +167,8 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		pte = vtopte(va);
-		if (cacheable)
-			*pte |= pte_cache_mode;
-		else
-			*pte &= ~pte_cache_mode;
+		if (cacheable == 0)
+			*pte &= ~L2_S_CACHE_MASK;
 	}
 	pmap_update(pmap_kernel());
 
