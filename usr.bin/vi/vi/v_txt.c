@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.10 2003/01/06 20:30:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_txt.c	10.87 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.10 2003/01/06 20:30:41 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -2931,7 +2931,7 @@ txt_Rresolve(sp, tiqh, tp, orig_len)
 
 	/*
 	 * If the user has entered less characters than the original line
-	 * was long, restore any overwriteable characters to the original
+	 * was long, restore any overwritable characters to the original
 	 * characters.  These characters are entered as "insert characters",
 	 * because they're after the cursor and we don't want to lose them.
 	 * (This is okay because the R command has no insert characters.)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.5 2002/08/16 22:51:43 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.6 2003/01/06 20:30:31 wiz Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2002/08/16 22:51:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2003/01/06 20:30:31 wiz Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -919,7 +919,7 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 	if ((atype & ~pv->pv_prot) == 0) {
 		MEMC_WRITE(pv->pv_activate);
 		/*
-		 * If the new mapping is writeable, we should flush the cache
+		 * If the new mapping is writable, we should flush the cache
 		 * so that stale data for an existing mapping doesn't get
 		 * reused.
 		 * XXX: Should this be done more lazily?

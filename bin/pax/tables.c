@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.18 2002/10/12 15:39:30 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.19 2003/01/06 20:30:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.18 2002/10/12 15:39:30 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.19 2003/01/06 20:30:29 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1133,7 +1133,7 @@ dir_start(void)
  *	frc_mode is a flag that says whether to force the setting of the mode
  *	(ignoring the user set values for preserving file mode). Frc_mode is
  *	for the case where we created a file and found that the resulting
- *	directory was not writeable and the user asked for file modes to NOT
+ *	directory was not writable and the user asked for file modes to NOT
  *	be preserved. (we have to preserve what was created by default, so we
  *	have to force the setting at the end. this is stated explicitly in the
  *	pax spec)

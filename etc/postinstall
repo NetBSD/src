@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.44 2002/12/30 13:16:43 tron Exp $
+# $NetBSD: postinstall,v 1.45 2003/01/06 20:30:29 wiz Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -776,7 +776,7 @@ mkdtemp ()
 {
 	# Make sure we don't loop forever if mkdir will always fail.
 	[ -d /tmp ] || err 1 /tmp is not a directory
-	[ -w /tmp ] || err 1 /tmp is not writeable
+	[ -w /tmp ] || err 1 /tmp is not writable
 
 	_base=/tmp/_postinstall.$$
 	_serial=0

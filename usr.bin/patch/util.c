@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2003/01/06 20:30:41 wiz Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $");
+__RCSID("$NetBSD: util.c,v 1.13 2003/01/06 20:30:41 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -290,7 +290,7 @@ ask(const char *pat, ...)
 		write(1, buf, strlen(buf));
 		r = read(1, buf, sizeof buf);
 	} else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
-					/* might be deleted or unwriteable */
+					/* might be deleted or unwritable */
 		write(ttyfd, buf, strlen(buf));
 		r = read(ttyfd, buf, sizeof buf);
 		Close(ttyfd);
