@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vfsops.c,v 1.3 1993/06/07 04:56:35 cgd Exp $
+ *	$Id: fdesc_vfsops.c,v 1.4 1993/06/07 05:25:20 cgd Exp $
  */
 
 /*
@@ -87,7 +87,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = getnewvnode(VT_UFS, mp, &fdesc_vnodeops, &rvp);	/* XXX */
+	error = getnewvnode(VT_FDESC, mp, &fdesc_vnodeops, &rvp);
 	if (error)
 		return (error);
 
