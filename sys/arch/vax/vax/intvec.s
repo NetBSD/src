@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.4 1994/10/26 08:03:10 cgd Exp $	*/
+/*      $NetBSD: intvec.s,v 1.5 1994/11/25 19:09:54 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -36,6 +36,7 @@
 
 #include "vax/include/mtpr.h"
 #include "vax/include/pte.h"
+#include "vax/include/trap.h"
 #include "uba.h"
 
 		.text
@@ -47,25 +48,25 @@ _V_MACHINE_CHK: .long trp_0x04+1	# Machine Check.
 _V_K_STK_INV:   .long trp_0x08+1	# Kernel Stack Invalid.
 _V_POWER_FAIL:  .long trp_0x0C+1	# Power Failed.
 
-_V_PRIV_INSTR:  .long trp_0x10+1	# Privileged/Reserved Instruction.
+		.long privinflt		# Privileged/Reserved Instruction.
 _V_CUSTOMER:    .long trp_0x14+1	# Customer Reserved Instruction.
-_V_RES_OP:      .long trp_0x18+1	# Reserved Operand/Boot Vector(?)
-_V_RES_ADD_MODE:.long trp_0x1C+1	# Reserved Address Mode.
+		.long resopflt		# Reserved Operand/Boot Vector(?)
+		.long resadflt		# Reserved Address Mode.
 
-_V_ACC_CNTL_VIO:.long trp_0x20		# Access Control Violation.
-_V_TRANSL_INV:  .long trp_0x24		# Translation Invalid.
+		.long access_v		# Access Control Violation.
+		.long transl_v		# Translation Invalid.
 _V_TRACE_PEND:  .long trp_0x28+1	# Trace Pending.
 _V_BREAKPOINT:  .long trp_0x2C+1	# Breakpoint Instruction.
 
 _V_COMPAT:      .long trp_0x30+1	# Compatibility Exception.
-_V_ARITHMETIC:  .long trp_0x34+1	# Arithmetic Fault.
+		.long arithflt		# Arithmetic Fault.
                 .long trp_0x38+1	# Unused.
                 .long trp_0x3C+1	# Unused.
 
-_V_CHMK:        .long trp_0x40		# Mode Change Trap.
-_V_CHME:        .long trp_0x44+1	# Mode Change Trap.
-_V_CHMS:	.long trp_0x48+1	# Mode Change Trap.
-_V_CHMU:        .long trp_0x4C+1	# Mode Change Trap.
+	        .long Xsyscall		# main syscall trap, chmk
+		.long trp_0x44+1	# chme
+		.long trp_0x48+1	# chms
+	        .long trp_0x4C+1	# chmu
 
 _V_SBI_SILO:    .long trp_0x50+1	# System Backplane Exception.
 _V_CORR_READ:	.long trp_0x54+1	# Corrected Memory Read.
@@ -84,7 +85,7 @@ _V_MEM_W_TOUT:  .long trp_0x60+1	# Memory Write Timeout
 
                 .long trp_0x80+1              # Unused
 _V_SW_LVL1:     .long trp_0x84+1              # Software Lvl1 Interrupt
-_V_SW_LVL2:     .long trp_0x88         	      # AST interrupt
+		.long astintr         	      # AST interrupt
 _V_SW_LVL3:     .long trp_0x8C+1              # Software Lvl3 Interrupt
 
 _V_SW_LVL4:     .long trp_0x90+1               # Software Lvl4 Interrupt
@@ -92,17 +93,17 @@ _V_SW_LVL5:     .long trp_0x94+1               # Software Lvl5 Interrupt
 _V_SW_LVL6:     .long trp_0x98+1               # Software Lvl6 Interrupt
 _V_SW_LVL7:     .long trp_0x9C+1               # Software Lvl7 Interrupt
 
-_V_SW_LVL8:     .long trp_0xA0+1               # Software Lvl8 Interrupt
+		.long softclock+1              # Softclock interrupt
 _V_SW_LVL9:     .long trp_0xA4+1               # Software Lvl9 Interrupt
 _V_SW_LVL10:    .long trp_0xA8+1               # Software Lvl10 Interrupt
 _V_SW_LVL11:    .long trp_0xAC+1               # Software Lvl11 Interrupt
 
-_V_SW_LVL12:    .long trp_0xB0+1               # Software Lvl12 Interrupt
+		.long Xnetint+1			# Inet card Interrupt
 _V_SW_LVL13:    .long trp_0xB4+1               # Software Lvl13 Interrupt
 _V_SW_LVL14:    .long trp_0xB8+1               # Software Lvl14 Interrupt
 _V_SW_LVL15:    .long trp_0xBC+1               # Software Lvl15 Interrupt
 
-_V_INTERVAL:    .long trp_0xC0+1               # Interval Timer
+		.long hardclock+1              # Interval Timer
                 .long trp_0xC4+1               # Unused
                 .long trp_0xC8+1               # Unused
                 .long trp_0xCC+1               # Unused
@@ -119,8 +120,9 @@ _V_INTERVAL:    .long trp_0xC0+1               # Interval Timer
 
 _V_CONSOLE_SR:  .long trp_0xF0+1       # Console Storage Recieve Interrupt
 _V_CONSOLE_ST:  .long trp_0xF4+1       # Console Storage Transmit Interrupt
-_V_CONSOLE_TR:  .long trp_0xF8+1       # Console Terminal Recieve Interrupt
-_V_CONSOLE_TT:  .long trp_0xFC+1       # Console Terminal Transmit Interrupt
+		.long consrint+1       # Console Terminal Recieve Interrupt
+		.long constint+1       # Console Terminal Transmit Interrupt
+
 		.globl _V_DEVICE_VEC
 _V_DEVICE_VEC:  .space 0x100
 
@@ -262,20 +264,19 @@ trp_0x0C:	pushal	msg_trp_0x0C
 		calls	$1,_conout
 		halt
 		rei
+
 		.align 2
-trp_0x10:.globl	trp_0x10
-		halt
-		pushl	r0
-		pushl	r1
-		movl	8(sp),r1
-		pushl	r1
-		pushl	(r1)
-		pushal	msg_trp_0x10
-		calls	$1,_printf
-		movq	(sp)+,r1
-		movq	(sp)+,r0
-		halt
+privinflt:	.globl	privinflt
+		pushl	$0		# dummy
+		pushl	$T_PRIVINFLT
+		pushr	$0x3f
+		pushl	sp
+		addl2	$24,(sp)
+		calls	$1,_arithflt
+		popr	$0x3f
+		addl2	$8,sp
 		rei
+
 		.align 2
 trp_0x14:	pushal	msg_trp_0x14
 		calls	$1,_conout
@@ -283,69 +284,40 @@ trp_0x14:	pushal	msg_trp_0x14
 		rei
 
 		.align 2
-trp_0x18: #	halt
-		pushl	r0		# Reserved operand
-		pushl	r1
-		movl	8(sp),r1
-		pushl	r1		# The address
-		pushl	(r1)		# The instruction		
-		pushal	msg_trp_0x18
-		calls	$1,_printf
-		movq	(sp)+,r1
-		movq	(sp)+,r0
-		halt
+resopflt:	pushl	$0		#dummy
+		pushl	$T_RESOPFLT
+		pushr	$0x3f
+		pushl	sp
+		addl2	$24,(sp)
+		calls	$1,_arithflt
+		popr	$0x3f
+		addl2	$8,sp
 		rei
 
 		.align 2
-trp_0x1C:	pushal	msg_trp_0x1C 	# Reserved address
-		calls	$1,_conout
-		halt
+resadflt:	pushl	$0		#dummy
+		pushl	$T_RESADFLT
+		pushr	$0x3f
+		pushl	sp
+		addl2	$24,(sp)
+		calls	$1,_arithflt
+		popr	$0x3f
+		addl2	$8,sp
 		rei
-		.align 2
 
-trp_0x20:.globl trp_0x20	# Access cntrl viol fault
-
-        pushl   r0
-
-        pushr   $0x7fff
-        pushl   76(sp)
-        pushl   76(sp)
-        pushl   76(sp)
-        pushl   76(sp)
-        calls   $4,_access_v
-        popr    $0x7fff
-        movl    (sp)+,r0
-        addl2   $8,sp
-        rei
-
-	.align 2
-trp_0x24:.globl trp_0x24
-#	halt
-	pushl	r0		# We first check for a simulated
-#	movl	8(sp),r0	# page reference
-#	bicl2	$0x800001ff,r0
-#	ashl	$-7,r0,r0
-#	addl2	_Sysmap,r0	# Now we have calculated pte addr...
-
-#	bbsc	$0x17,(r0),1f	# PG_SREF is bit 0x17 (simul ref)
-
-	pushr	$0x7fff
-	pushl	76(sp)
-	pushl	76(sp)
-	pushl	76(sp)
-	pushl	76(sp)
-	calls	$4,_ingen_v
-	popr	$0x7fff
-	movl	(sp)+,r0
-	addl2	$8,sp
-#	halt
-	rei
-
-
-1:	bisl2	$(PG_REF|PG_V),(r0)	# Set valid & ref bit
-	movl	(sp),r0
-	addl2	$12,sp			# pop params off stack
-	rei
+		.align	2
+transl_v:	.globl	transl_v	# Translation violation
+access_v:	.globl	access_v	# Access cntrl viol fault
+		pushr	$0x3f
+		pushl	24(sp)	# code
+		pushl	32(sp)	# vaddr
+		pushl	40(sp)	# pc
+		pushl	48(sp)	# psl
+		pushl	sp		# arg pointer
+		calls	$5,_pageflt	# pop all args off stack
+		popr	$0x3f
+		addl2   $8,sp
+		rei
 
 trp_0x28:	.align 2
 		pushal	msg_trp_0x28
@@ -363,10 +335,16 @@ trp_0x30:	pushal	msg_trp_0x30
 		halt
 		rei
 		.align 2
-trp_0x34:	pushal	msg_trp_0x34
-		calls	$1,_conout
-		halt
+
+arithflt:	pushl	$T_ARITHFLT
+		pushr   $0x3f	# arithmetic fault, info pointed to by arg
+		pushl	sp
+		addl2	$24,(sp)
+		calls	$1,_arithflt
+		popr	$0x3f
+		addl2	$8,sp
 		rei
+
 		.align 2
 trp_0x38:	pushal	msg_trp_0x38
 		calls	$1,_conout
@@ -379,26 +357,29 @@ trp_0x3C:	pushal	msg_trp_0x3C
 		rei
 
 	.align 2		# Main system call 
-	.globl	trp_0x40
-trp_0x40:
+	.globl	Xsyscall
+Xsyscall:
 #	halt
 	pushl	r5
 	pushl	r4
-	pushl	r2
 	pushl	r3
-	pushl	r0
+	pushl	r2
 	pushl	r1
+	pushl	r0
 	pushl	ap
-	pushl	sp
-	calls	$2,_syscall
-	movl	(sp)+,r1
+	pushl	fp
+	pushl	sp		# pointer to syscall frame; defined in trap.h
+	calls	$1,_syscall
+	movl	(sp)+,fp
+	movl	(sp)+,ap
 	movl	(sp)+,r0
-	movl	(sp)+,r3
+	movl	(sp)+,r1
 	movl	(sp)+,r2
+	movl	(sp)+,r3
 	movl	(sp)+,r4
 	movl	(sp)+,r5
 	addl2	$4,sp
-	mtpr	$0x1f,$PR_IPL
+	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
 #	halt
 	rei
 
@@ -496,9 +477,9 @@ trp_0x84:	pushal	msg_trp_0x84
 		halt
 
 		.align 2
-trp_0x88:	pushr	$0x7fff		# AST trap
+astintr:	pushr	$0x3f		# AST trap
 		calls	$0,_astint
-		popr	$0x7fff	
+		popr	$0x3f	
 		rei
 
 		.align 2
@@ -526,14 +507,11 @@ trp_0x9C:	pushal	msg_trp_0x9C
 		calls	$1,_conout
 		halt
 
-	.align 2
-trp_0xA0:
-	pushr $0x7fff			# Software interrupt vector
-#        pushl   sp
-#        addl2   $8,(sp)
-        calls $0,_softclock
-        popr $0x7fff
-        rei
+		.align 2
+softclock:	pushr	$0x3f		# Software interrupt vector
+	        calls	$0,_softclock
+	       	popr	$0x3f
+	        rei
 
 		.align 2
 trp_0xA4:	pushal	msg_trp_0xA4
@@ -551,9 +529,10 @@ trp_0xAC:	pushal	msg_trp_0xAC
 		halt
 
 		.align 2
-trp_0xB0:	pushal	msg_trp_0xB0
-		calls	$1,_conout
-		halt
+Xnetint:	pushr	$0x3f		#network packet interrupt
+		calls	$0,_netintr
+		popr	$0x3f
+		rei
 
 		.align 2
 trp_0xB4:	pushal	msg_trp_0xB4
@@ -569,15 +548,14 @@ trp_0xB8:	pushal	msg_trp_0xB8
 trp_0xBC:	pushal	msg_trp_0xBC
 		calls	$1,_conout
 		halt
-	.align 2
-trp_0xC0:
-		mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
-		pushr $0x7fff
+		.align 2
+
+hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
+		pushr	$0x3f
 		pushl	sp
-		addl2	$60,(sp)
-#		halt
-		calls $1,_hardclock
-		popr $0x7fff
+		addl2	$24,(sp)
+		calls	$1,_hardclock
+		popr	$0x3f
 		rei
 
 		.align 2
@@ -646,22 +624,18 @@ trp_0xF4:	pushal	msg_trp_0xF4
 		halt
 
 		.align 2
-trp_0xF8:
-		pushr   $0x3f
+consrint:	pushr   $0x3f
 		calls   $0,_gencnrint
 		popr	$0x3f
 		rei
 
 		.align 2
-trp_0xFC:	
-		pushr	$0x3f
+constint:	pushr	$0x3f
 		calls	$0,_gencntint
 		popr	$0x3f
 		rei
 
 
-
-msg_end_of_memtest:	.asciz	"Memory check, at addr: 0x%x, MCESR: 0x%x, MCESR cleared\n"
 
 msg_trp_0x00:	.asciz	"\r\nTrap:	0x00	Unused.\r\n"
 msg_trp_0x04:   .asciz  "\r\nTrap:      0x04    V_MACHINE_CHK\nTried to execute op: 0x%x\n       from address: 0x%x\n"
@@ -670,8 +644,6 @@ msg_trp_0x0C:	.asciz	"\r\nTrap:	0x0C	V_POWER_FAIL\r\n"
 
 msg_trp_0x10:	.asciz	"\r\nTrap:	0x10	V_PRIV_INSTR\nTried to execute op: 0x%x\n       from address: 0x%x\n"
 msg_trp_0x14:	.asciz	"\r\nTrap:	0x14	V_CUSTOMER\n"
-msg_trp_0x18:	.asciz	"\r\nTrap:	0x18	V_RES_OP\nTried to execute op: 0x%x\n       from address: 0x%x\n"
-msg_trp_0x1C:	.asciz	"\r\nTrap:	0x1C	V_RES_ADD_MODE.\r\n"
 
 msg_trp_0x20:	.asciz	"\r\nTrap:	0x20	V_ACC_CNTL_VIO\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\n"
 msg_trp_0x24:	.asciz	"\r\nTrap:	0x24	V_TRANSL_INV\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\nObserve: YOU forgot to set the pte valid bit!\n"
@@ -683,7 +655,6 @@ msg_trp_0x34:	.asciz	"\r\nTrap:	0x34	V_ARITHMETIC\r\n"
 msg_trp_0x38:	.asciz	"\r\nTrap:	0x38	Unused.\r\n"
 msg_trp_0x3C:	.asciz	"\r\nTrap:	0x3C	Unused.\r\n"
 
-msg_trp_0x40:	.asciz	"\r\nTrap:	0x40	V_CHMK\r\n"
 msg_trp_0x44:	.asciz	"\r\nTrap:	0x44	V_CHME\r\n"
 msg_trp_0x48:	.asciz	"\r\nTrap:	0x48	V_CHMS.\r\n"
 msg_trp_0x4C:	.asciz	"\r\nTrap:	0x4C	V_CHMU\r\n"
@@ -713,17 +684,14 @@ msg_trp_0x94:	.asciz	"\r\nTrap:	0x94	V_SW_LVL5\r\n"
 msg_trp_0x98:	.asciz	"\r\nTrap:	0x98	V_SW_LVL6\r\n"
 msg_trp_0x9C:	.asciz	"\r\nTrap:	0x9C	V_SW_LVL7\r\n"
 
-msg_trp_0xA0:	.asciz	"\r\nTrap:	0xA0	V_SW_LVL8\r\n"
 msg_trp_0xA4:	.asciz	"\r\nTrap:	0xA4	V_SW_LVL9\r\n"
 msg_trp_0xA8:	.asciz	"\r\nTrap:	0xA8	V_SW_LVL10\r\n"
 msg_trp_0xAC:	.asciz	"\r\nTrap:	0xAC	V_SW_LVL11\r\n"
 
-msg_trp_0xB0:	.asciz	"\r\nTrap:	0xB0	V_SW_LVL12\r\n"
 msg_trp_0xB4:	.asciz	"\r\nTrap:	0xB4	V_SW_LVL13\r\n"
 msg_trp_0xB8:	.asciz	"\r\nTrap:	0xB8	V_SW_LVL14\r\n"
 msg_trp_0xBC:	.asciz	"\r\nTrap:	0xBC	V_SW_LVL15\r\n"
 
-msg_trp_0xC0:	.asciz	"\r\nTrap:	0xC0	V_INTERVAL\r\n"
 msg_trp_0xC4:	.asciz	"\r\nTrap:	0xC4	Unused.\r\n"
 msg_trp_0xC8:	.asciz	"\r\nTrap:	0xC8	Unused.\r\n"
 msg_trp_0xCC:	.asciz	"\r\nTrap:	0xCC	Unused.\r\n"
@@ -740,5 +708,3 @@ msg_trp_0xEC:	.asciz	"\r\nTrap:	0xEC	Unused.\r\n"
 
 msg_trp_0xF0:	.asciz	"\r\nTrap:	0xF0	V_CONSOLE_SR\r\n"
 msg_trp_0xF4:	.asciz	"\r\nTrap:	0xF4	V_CONSOLE_ST\r\n"
-msg_trp_0xF8:	.asciz	"\r\nTrap:	0xF8	V_CONSOLE_TR\r\n"
-msg_trp_0xFC:	.asciz	"\r\nTrap:	0xFC	V_CONSOLE_TT\r\n"

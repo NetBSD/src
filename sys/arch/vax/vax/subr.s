@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.2 1994/10/26 08:03:29 cgd Exp $	*/
+/*      $NetBSD: subr.s,v 1.3 1994/11/25 19:10:03 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,6 @@
 #include "vax/include/param.h"
 #include "vax/include/loconf.h"
 #include "vax/include/vmparam.h"
-/* #include "assym.s" */
 #include "vax/include/pte.h"
 #include "vax/include/nexus.h"
 #include "sys/syscall.h"
@@ -63,48 +62,15 @@ _memory_test:	.word	0x0
 		brb	1b
 2:		ret				# max mem address in r0
 
-
-
-/*
- *  End of locore startup
- */
-
-		.globl	__spl
-__spl:		.word 0x0
-		mfpr	$PR_IPL,r0
-		mtpr    4(ap),$PR_IPL
-		ret
-/*
-		.globl _TBIS
-_TBIS:		.word 0x0
-		mtpr	4(ap),$58
-		ret
-
-		.globl _TBIA
-_TBIA:		.word 0x0
-		mtpr	4(ap),$PR_TBIA
-		ret
-
-		.globl _DCIA
-_DCIA:		.word 0x0
-						# XXX Currently a no-op.
-		ret
-
-		.globl _DCIS
-_DCIS:		.word 0x0
-						# XXX Currently a no-op.
-		ret
-
-		.globl _DCIU
-_DCIU:		.word 0x0
-						# XXX Currently a no-op.
-		ret
-*/
-		.globl _spl0
-_spl0:		.word 0x0
-		mtpr	$0,$PR_IPL		# Supposed to work...
-		ret
-
+		.globl	_sigcode,_esigcode
+_sigcode:	pushr	$0x3f
+		subl2	$0xc,sp
+		movl	0x24(sp),r0
+		calls	$3,(r0)
+		popr	$0x3f
+		chmk	$SYS_sigreturn
+		halt	
+_esigcode:
 
 		.globl	_subyte
 _subyte:	.word 0x0
@@ -157,27 +123,19 @@ _physcopypage:	.word 0x7
 		ret
 
 
+# _clearpage should be inline assembler
 
 		.globl _clearpage
-_clearpage:	.word 0x3
-		movl	4(ap),r0
-		ashl	$-PGSHIFT,r0,r0
-		bisl2	$(PG_V|PG_KW),r0
-		movl	r0,*(_pte_cmap)
-		movl	_v_cmap,r0
-		mtpr	r0,$PR_TBIS
-		addl3	$0x200,r0,r1
-1:		clrl	(r0)+
-		cmpl	r0,r1
-		bneq	1b
+_clearpage:	.word 0x0
+		movc5	$0, (sp), $0, $NBPG, *4(ap)
 		ret
 
 
 		.globl _badaddr
 _badaddr:	.word	0xE		# XXX What to save?
 					# Called with addr,b/w/l
-		pushl	$0x1f		# XXX Should be a define
-		calls	$1,__spl	# Increase IPL to 0x1f
+		mfpr	$0x12,r0
+		mtpr	$0x1f,$0x12
 		movl	4(ap),r2 	# First argument, the address
 		movl	8(ap),r1 	# Sec arg, b,w,l
 		pushl	r0		# Save old IPL
@@ -203,7 +161,7 @@ _badaddr:	.word	0xE		# XXX What to save?
 		brb	5f
 
 4:		movl	$1,r3		# Got machine chk => addr bad
-5:		calls	$1,__spl	# Reset IPL
+5:		mtpr	(sp)+,$0x12
 		movl	r3,r0
 		ret
 
@@ -863,71 +821,52 @@ _loswtch:	.globl	_loswtch
 _savectx:
 		clrl	r0
 		mfpr	$PR_P0BR,p0br
-		mfpr    $PR_P1BR,p1br
+		mfpr	$PR_P0LR,p0lr
+		mfpr	$PR_P1BR,p1br
+		mfpr    $PR_P1LR,p1lr
 		svpctx
 		ldpctx
+		mtpr	p0lr,$PR_P0LR
 		mtpr	p0br,$PR_P0BR
+		mtpr	p1lr,$PR_P1LR
 		mtpr    p1br,$PR_P1BR
 		mfpr	$PR_ESP,r0	# PR_ESP == start chld pcb
 		mtpr	$0,$PR_ESP	# Clear ESP, used in fault routine
 		clrl	4(r0)		# Clear ESP in child
-		addl2	_uofset,8(r0)	# set pointer to ret frame
-					# (used in syscall())
-		movl	_ustat,(r0)	# New kernel sp in chld
-		addl2	_uofset,68(r0)	# set fp to new stack
-		movl	_ustat,r0
+                addl2   _uofset,8(r0)   # set pointer to ret frame
+                                        # (used in syscall())
+                movl    _ustat,(r0)     # New kernel sp in chld
+                addl2   _uofset,68(r0)  # set fp to new stack
+                movl    _ustat,r0
+                movl    (sp),(r0)
+                movl    4(sp),4(r0)
+#               halt
+                rei
+
+
+
+
+
+		subl2	$8,(r0)
+#		movl	_tmpsp,r0
 		movl	(sp),(r0)
 		movl	4(sp),4(r0)
 #		halt
 		rei
 
 
-_icode:		.globl	_icode
-	nop
-	nop
-	pushl   $0
-
-        movl    $binit,r0
-        subl2	$_icode,r0
-        pushl   r0
-
-	movl    $init,r0
-	subl2	$_icode,r0
-	pushl   r0
-	movl	sp,ap
-	subl2	$4,ap
-        chmk	$SYS_execve
-	pushl	r0
-	chmk	$SYS_exit
-
-init:   .asciz  "/sbin/init"
-
-ainit:	.asciz	"init"
-	.long	0
-binit:	.long	ainit-_icode
-	.long   0
-	
-eicode:
-
-        .globl  _szicode
-_szicode:
-        .long   eicode-_icode
-
-
 	.data
+p0br:		.long	0
+p1br:		.long	0
+p1lr:		.long	0
+p0lr:		.long	0
+
 mbanum:		.long 0
 ubanum:		.long 0
 _bootdev:	.long 0
 _boothowto:	.long 0
 	.text
 	
-msg_stack:	.asciz  "Stack=0x%x\n"
-msg_dot:	.asciz  "."
-msg_nl:		.asciz	"\n\r"
-msg_tillmain:	.asciz  "Returned to locore.\n\r"
-msg_exit_init:  .asciz  "PANIC: kernel main() exited unexpectedly.\n\r"
-msg_ipanic:	.asciz	"(dont) P A N I C.\n\r"
-
 
 /*** DATA ********************************************************************/
 
@@ -938,12 +877,6 @@ msg_ipanic:	.asciz	"(dont) P A N I C.\n\r"
 		.globl _cpu_type
 		.globl _ptab_len
 		.globl _ptab_addr
-
-p0br:		.long	0
-p1br:		.long	0
-
-
-_proc0paddr:	.long 0 ; .globl _proc0paddr	/* Process 0 pointer */
 
 _p_cmap:	.long 0	; .globl _p_cmap	/* Start of cmap	    */
 _v_cmap:	.long 0	; .globl _v_cmap	/* Start of cmap	    */
