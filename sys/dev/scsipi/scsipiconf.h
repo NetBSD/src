@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.80 2003/09/18 00:06:34 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.81 2004/02/22 07:26:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -445,8 +445,6 @@ struct scsipi_periph {
 #define	PQUIRK_NOMODESENSE	0x00000040	/* device doesn't do MODE SENSE
 						   properly */
 #define	PQUIRK_NOSYNCCACHE	0x00000100	/* do not issue SYNC CACHE */
-#define	PQUIRK_CDROM		0x00000200	/* device is a CD-ROM, no
-						   matter what else it claims */
 #define	PQUIRK_LITTLETOC	0x00000400	/* audio TOC is little-endian */
 #define	PQUIRK_NOCAPACITY	0x00000800	/* no READ CD CAPACITY */
 #define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
