@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.9 2002/11/12 19:01:18 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.10 2002/11/19 16:29:32 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.9 2002/11/12 19:01:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.10 2002/11/19 16:29:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,6 @@ exec_mach_copyargs(struct proc *p, struct exec_package *pack,
 	size_t zero = 0;
 	int pagelen = PAGE_SIZE;
 	int error;
-
-	*stackp -= 16;
 
 	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0) {
 		DPRINTF(("mach: copyout pagelen failed\n"));
