@@ -38,7 +38,7 @@
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
- *	$Id: cpu.h,v 1.9 1994/05/06 23:02:38 gwr Exp $
+ *	$Id: cpu.h,v 1.10 1994/05/10 05:24:05 gwr Exp $
  */
 
 #ifdef KERNEL
@@ -102,6 +102,17 @@ int want_resched; /* resched() was called */
 #define suswintr(x,y) (-1)
 
 #include <machine/mtpr.h>
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 /* values for machineid */
 
