@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188.2.3 1998/06/13 14:26:17 bouyer Exp $
+#	$NetBSD: files,v 1.188.2.4 1998/06/25 10:50:24 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -13,6 +13,8 @@ defopt	UCONSOLE
 defopt	DEVPAGER
 defopt	SWAPPAGER
 defopt	VNODEPAGER
+
+# defopt	FIFO		# No longer optional
 
 defopt	opt_ntp.h	PPS_SYNC NTP 
 
@@ -51,6 +53,9 @@ deffs	fs_union.h UNION
 
 # file system options
 defopt	QUOTA
+
+# Not entirely MI, but present on multiple arch's
+defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
 
 # device classes
 devclass disk
@@ -111,8 +116,13 @@ device	aic: scsi
 file	dev/ic/aic6360.c		aic
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
+defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE 
 device	ahc: scsi
 file	dev/ic/aic7xxx.c		ahc
+
+# AMD 7930 audio/ISDN codec
+device audioamd: audio
+file	dev/ic/am7930.c				audioamd
 
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 # (Must be declared before AHA to ensure bha probes before aha.
@@ -381,7 +391,7 @@ file kern/vnode_if.c
 file miscfs/deadfs/dead_vnops.c
 file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc
-file miscfs/fifofs/fifo_vnops.c		fifo
+file miscfs/fifofs/fifo_vnops.c
 file miscfs/genfs/genfs_vnops.c
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
