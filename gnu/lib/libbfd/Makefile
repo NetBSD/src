@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2001/12/12 01:48:57 tv Exp $
+#	$NetBSD: Makefile,v 1.25 2002/02/11 21:36:33 tv Exp $
 
 LIB=		bfd
 
@@ -11,6 +11,7 @@ NOPROFILE=	# defined
 
 .if defined(USE_NEW_TOOLCHAIN)
 
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	4
@@ -40,6 +41,9 @@ INFOFLAGS=	-I${DIST}/bfd/doc
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.so: targmatch.h Makefile
+.else
+.include <bsd.prog.mk> # do nothing
+.endif
 
 .else
 #

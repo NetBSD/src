@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2001/12/12 23:11:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2002/02/11 21:36:36 tv Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,6 +9,7 @@ LIB=		stdc++
 
 .if defined(USE_NEW_TOOLCHAIN)
 
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	4
@@ -77,6 +78,9 @@ ${t}${v}.cc: Makefile ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk cinst.cc
 .include <bsd.info.mk>
 
 ${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+.else
+.include <bsd.prog.mk> # do nothing
+.endif
 
 .else
 #
