@@ -1,13 +1,11 @@
-# $NetBSD: md.sgimips,v 1.3 2004/03/28 06:48:43 jmc Exp $
+# $NetBSD: md.sgimips,v 1.4 2004/03/28 09:35:37 jmc Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
-./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/kbd_mode
 ./usr/X11R6/bin/mmapr
-./usr/X11R6/bin/mmapw
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/scanpci
 ./usr/X11R6/bin/xf86cfg
@@ -129,7 +127,6 @@
 ./usr/X11R6/lib/modules/libxf8_16bpp.a
 ./usr/X11R6/lib/modules/libxf8_32bpp.a
 ./usr/X11R6/man/cat1/XFree86.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/dga.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/gtf.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
@@ -172,7 +169,6 @@
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
-./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
 ./usr/X11R6/man/man1/dga.1			-unknown-		.man
 ./usr/X11R6/man/man1/gtf.1			-unknown-		.man
 ./usr/X11R6/man/man1/kbd_mode.1			-unknown-		.man
