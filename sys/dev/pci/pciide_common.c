@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.17 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.18 2004/08/16 22:11:13 enami Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.17 2004/08/14 15:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.18 2004/08/16 22:11:13 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -872,9 +872,9 @@ default_chip_map(sc, pa)
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
-		wdr = &cp->ata_channel.ch_wdc->regs[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
+		wdr = &cp->ata_channel.ch_wdc->regs[channel];
 		if (interface & PCIIDE_INTERFACE_PCI(channel))
 			pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
 			    pciide_pci_intr);
