@@ -1,4 +1,6 @@
-This directory does  not build anything for the NetBSD/pmax 1.3 release.
+#	$NetBSD: README,v 1.2 1998/01/05 20:51:53 perry Exp $
+
+This directory does not build anything for the NetBSD/pmax 1.3 release.
 
 The NetBSD/pmax bootblocks shipped in 1.3 support reading symbols from
 a.out kernels and providing them to DDB. These new bootblocks are

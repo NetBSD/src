@@ -1,3 +1,4 @@
+/*	$NetBSD: bcopy.s,v 1.2 1998/01/05 20:51:28 perry Exp $	*/
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.

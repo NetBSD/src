@@ -1,3 +1,4 @@
+!	$NetBSD: rasboo.com,v 1.2 1998/01/05 20:52:02 perry Exp $
 !
 ! Load 'boot.' and boot 4.3BSD.
 !

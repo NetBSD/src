@@ -1,3 +1,4 @@
+/*	$NetBSD: poffd.c,v 1.2 1998/01/05 20:52:35 perry Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.

@@ -3,6 +3,8 @@
 #				--written by Yasha
 #
 #	usage: nm foo.o | sh all_bsr.sh foo.s >foo_new.s
+#
+#	$NetBSD: all_bsr.sh,v 1.2 1998/01/05 20:52:23 perry Exp $
 
 src="$1"
 case "$src" in

@@ -1,3 +1,5 @@
+!	$NetBSD: restar.cmd,v 1.2 1998/01/05 20:52:12 perry Exp $
+!
 !	RESTART COMMMAND FILE
 SET DEF HEX
 SET DEF LONG

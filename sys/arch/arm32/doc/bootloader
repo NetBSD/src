@@ -1,3 +1,5 @@
+#	$NetBSD: bootloader,v 1.2 1998/01/05 20:51:36 perry Exp $
+
 Currently the bootloader can only be built under RiscOS as this
 is the platform which it runs on. A spark file version of the
 bootloader source code is also available

@@ -1,3 +1,4 @@
+!	$NetBSD: hpsboo.cmd,v 1.3 1998/01/05 20:52:10 perry Exp $
 !
 ! BOOTSTRAP BY BOOT() SYSCALL
 ! GO SINGLE-USER AFTER BOOT

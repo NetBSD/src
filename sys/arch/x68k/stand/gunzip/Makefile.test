@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.test,v 1.2 1998/01/05 20:52:26 perry Exp $
+#
 #	Makefile for test
 
 PROG= zcat

@@ -1,3 +1,5 @@
+#	$NetBSD: BUGS_MISSINGS,v 1.3 1998/01/05 20:51:55 perry Exp $
+
 Programs may be hanging with the D flag set, even if they (HIGH)
 don't do I/O at all. (ps, ...) User PTE problem?
 950304/Ragge

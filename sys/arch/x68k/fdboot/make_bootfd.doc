@@ -1,3 +1,5 @@
+#	$NetBSD: make_bootfd.doc,v 1.2 1998/01/05 20:52:17 perry Exp $
+
 add following to /etc/disktab
 
 floppy1232|1024byte sector format for 2HD floppy:\

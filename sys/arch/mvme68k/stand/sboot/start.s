@@ -1,4 +1,5 @@
 /*
+ * $NetBSD: start.s,v 1.5 1998/01/05 20:51:45 perry Exp $
  *
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.

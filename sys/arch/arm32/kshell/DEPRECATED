@@ -1,3 +1,5 @@
+#	$NetBSD: DEPRECATED,v 1.2 1998/01/05 20:51:38 perry Exp $
+
 Use of any of this code is deprecated. It is not currently used unless the
 KSHELL option is used in a config file.
 

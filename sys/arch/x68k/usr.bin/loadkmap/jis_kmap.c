@@ -1,3 +1,4 @@
+/*	$NetBSD: jis_kmap.c,v 1.2 1998/01/05 20:52:28 perry Exp $	*/
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: kbdmap.h,v 1.2 1998/01/05 20:52:29 perry Exp $	*/
+
 #define NUL	0
 #define SOH	1
 #define STX	2

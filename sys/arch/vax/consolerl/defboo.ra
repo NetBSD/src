@@ -1,3 +1,4 @@
+!	$NetBSD: defboo.ra,v 1.2 1998/01/05 20:51:58 perry Exp $
 !
 ! Load 'boot.' and boot 4.3BSD.
 !

@@ -1,3 +1,5 @@
+#	$NetBSD: builtin.ioasic,v 1.3 1998/01/05 20:51:48 perry Exp $
+
 ########################################################################
 # Common configuration for machines with IO ASIC chips                 #
 # (3MIN, MAXINE, 3MAXPLUS)                                             #

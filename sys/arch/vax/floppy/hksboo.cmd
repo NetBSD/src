@@ -1,3 +1,4 @@
+!	$NetBSD: hksboo.cmd,v 1.2 1998/01/05 20:52:09 perry Exp $
 !
 ! BOOTSTRAP ON HK, LEAVING SINGLE USER
 !

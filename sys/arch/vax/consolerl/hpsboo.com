@@ -1,3 +1,4 @@
+!	$NetBSD: hpsboo.com,v 1.2 1998/01/05 20:52:01 perry Exp $
 !
 ! Load 'boot.' and boot 4.3BSD.
 !
