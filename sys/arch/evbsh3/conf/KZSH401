@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.2 2000/03/22 00:58:19 cgd Exp $
+#	$NetBSD: KZSH401,v 1.2.4.1 2000/08/08 19:56:47 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -45,6 +45,9 @@ options		BSC_RFCR_VAL	=0xa400
 options		FRQCR_VAL	=0x0e13
 options		BSC_SDMR2_VAL	=0xff90008c
 
+makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
+#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
+
 options		LED_ADDR=0xa8000000
 
 # Standard system options
@@ -74,6 +77,7 @@ options 	PMAP_NEW	# new pmap interface
 
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 
 # Executable format options
