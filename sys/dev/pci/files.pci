@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.195 2003/09/30 00:35:30 thorpej Exp $
+#	$NetBSD: files.pci,v 1.196 2003/10/08 10:58:12 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -191,7 +191,7 @@ file	dev/pci/gtp.c			gtp
 #file	dev/pci/sf64pcr.c		sf4r
 
 # PCI IDE controllers
-device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
+device	pciide {[channel = -1]}: cy82c693, wdc_base
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 

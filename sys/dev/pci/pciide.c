@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.207 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.208 2003/10/08 10:58:12 bouyer Exp $	*/
 
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.207 2003/10/05 17:48:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.208 2003/10/08 10:58:12 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -839,8 +839,6 @@ pciide_attach(parent, self, aux)
 	}
 	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
-
-	wdcattach(&sc->sc_wdcdev);
 }
 
 /* tell whether the chip is enabled or not */
@@ -1411,6 +1409,7 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
 	else
 		pciide_mapregs_compat(pa, cp, wdc_cp->channel, cmdsizep,
 		    ctlsizep);
+	wdcattach(wdc_cp);
 }
 
 /*
@@ -1497,6 +1496,13 @@ default_chip_map(sc, pa)
 		 * Check to see if something appears to be there.
 		 */
 		failreason = NULL;
+		/*
+		 * In native mode, always enable the controller. It's
+		 * not possible to have an ISA board using the same address
+		 * anyway.
+		 */
+		if (interface & PCIIDE_INTERFACE_PCI(channel))
+			goto next;
 		if (!wdcprobe(&cp->wdc_channel)) {
 			failreason = "not responding; disabled or no drives?";
 			goto next;
@@ -1523,6 +1529,7 @@ next:
 			    failreason);
 			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 		}
+		wdcattach(&cp->wdc_channel);
 	}
 
 	if (sc->sc_dma_ok == 0)
@@ -3239,6 +3246,7 @@ cy693_chip_map(sc, pa)
 		pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan, &cmdsize,
 		    &ctlsize);
 	}
+	wdcattach(&cp->wdc_channel);
 }
 
 void
@@ -3252,6 +3260,9 @@ cy693_setup_channel(chp)
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	int dma_mode = -1;
+
+	WDCDEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)),DEBUG_PROBE);
 
 	cy_cmd_ctrl = idedma_ctl = 0;
 
@@ -3298,6 +3309,8 @@ cy693_setup_channel(chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL, idedma_ctl);
 	}
+	WDCDEBUG_PRINT(("cy693_chip_map: new timings reg 0x%x\n",
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)), DEBUG_PROBE);
 }
 
 static struct sis_hostbr_type {
@@ -4004,6 +4017,7 @@ hpt_chip_map(sc, pa)
 			pciide_mapregs_compat(pa, cp, compatchan,
 			    &cmdsize, &ctlsize);
 		}
+		wdcattach(&cp->wdc_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
@@ -4594,6 +4608,11 @@ pdc20265_pci_intr(arg)
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
+#if 0
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh, IDEDMA_CMD + 0x1 + IDEDMA_SCH_OFFSET * i, 0x0b);
+		if ((bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh, IDEDMA_CMD + 0x3 + IDEDMA_SCH_OFFSET * i) & 0x20) == 0)
+			continue;
+#endif
 		/*
 		 * The Ultra/100 seems to assert PDC2xx_SCR_INT * spuriously,
 		 * however it asserts INT in IDEDMA_CTL even for non-DMA ops.

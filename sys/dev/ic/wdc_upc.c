@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.8 2003/09/25 19:29:49 mycroft Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.9 2003/10/08 10:58:12 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.8 2003/09/25 19:29:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.9 2003/10/08 10:58:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,5 +95,5 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	wdcattach(&sc->sc_wdc);
+	wdcattach(&sc->sc_channel);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.59 2003/09/25 19:29:49 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.60 2003/10/08 10:58:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.59 2003/09/25 19:29:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.60 2003/10/08 10:58:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -377,7 +377,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	    wdc_pcmcia_enable;
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
-	wdcattach(&sc->sc_wdcdev);
+	wdcattach(&sc->wdc_channel);
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 	return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.28 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.29 2003/10/08 10:58:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -66,17 +66,7 @@ struct ata_drive_datas {
      */
     u_int8_t state;
 #define RESET          0
-#define RECAL          1
-#define RECAL_WAIT     2
-#define PIOMODE        3
-#define PIOMODE_WAIT   4
-#define DMAMODE        5
-#define DMAMODE_WAIT   6
-#define GEOMETRY       7
-#define GEOMETRY_WAIT  8
-#define MULTIMODE      9
-#define MULTIMODE_WAIT 10
-#define READY          11
+#define READY          1
 
     /* numbers of xfers and DMA errs. Used by ata_dmaerr() */
     u_int8_t n_dmaerrs;
@@ -193,7 +183,7 @@ struct ata_smart_thresholds {
 	int8_t			checksum;
 } __attribute__((packed));
 
-int  wdc_downgrade_mode __P((struct ata_drive_datas *));
+int  wdc_downgrade_mode __P((struct ata_drive_datas *, int));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas *, u_int8_t,
@@ -204,4 +194,4 @@ int ata_set_mode __P((struct ata_drive_datas *, u_int8_t, u_int8_t));
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-void ata_dmaerr __P((struct ata_drive_datas *));
+void ata_dmaerr __P((struct ata_drive_datas *, int));
