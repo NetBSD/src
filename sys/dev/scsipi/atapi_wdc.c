@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.9 1998/11/19 21:54:18 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.10 1998/11/21 15:41:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -132,7 +132,7 @@ wdc_atapi_get_params(ab_link, drive, flags, id)
 {
 	struct wdc_softc *wdc = (void*)ab_link->adapter_softc;
 	struct channel_softc *chp =
-	    &wdc->channels[ab_link->scsipi_atapi.channel];
+	    wdc->channels[ab_link->scsipi_atapi.channel];
 	struct wdc_command wdc_c;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
@@ -202,7 +202,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	}
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
-	drvp = &wdc->channels[channel].ch_drive[drive];
+	drvp = &wdc->channels[channel]->ch_drive[drive];
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    sc_xfer->datalen > 0)
 		xfer->c_flags |= C_DMA;
@@ -214,7 +214,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	xfer->c_start = wdc_atapi_start;
 	xfer->c_intr = wdc_atapi_intr;
 	s = splbio();
-	wdc_exec_xfer(&wdc->channels[channel], xfer);
+	wdc_exec_xfer(wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC
 	if ((sc_xfer->flags & SCSI_POLL) != 0 &&
 	    (sc_xfer->flags & ITSDONE) == 0)
@@ -725,7 +725,6 @@ wdc_atapi_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
-	struct wdc_softc *wdc = chp->wdc;
 	int need_done =  xfer->c_flags & C_NEEDDONE;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
@@ -742,7 +741,7 @@ wdc_atapi_done(chp, xfer)
 	}
 	WDCDEBUG_PRINT(("wdcstart from wdc_atapi_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
-	wdcstart(wdc, chp->channel);
+	wdcstart(chp);
 }
 
 void

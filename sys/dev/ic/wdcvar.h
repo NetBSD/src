@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.9 1998/11/20 01:22:37 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.10 1998/11/21 15:41:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct wdc_softc { /* Per controller state */
 	u_int8_t      pio_mode; /* highest PIO mode supported */
 	u_int8_t      dma_mode; /* highest DMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
-	struct channel_softc *channels;  /* channels-specific datas (array) */
+	struct channel_softc **channels;  /* channels-specific datas (array) */
 
 	/*
 	 * The reference count here is used for both IDE and ATAPI devices.
@@ -157,7 +157,7 @@ struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_CANSLEEP 0x00
 #define WDC_NOSLEEP 0x01
 void   wdc_free_xfer  __P((struct channel_softc *, struct wdc_xfer *));
-void  wdcstart __P((struct wdc_softc *, int));
+void  wdcstart __P((struct channel_softc *));
 void  wdcrestart __P((void*));
 int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
