@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.4 2000/08/28 00:45:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.3 1998/10/08 02:27:59 eeh Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.4 2000/08/28 00:45:59 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ ENTRY(setjmp)
 	 * won't be filled out till later anyway.
 	 */
 	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
-	add	%o0, 0x38, %o2		/* build sigcontext in [%o2]->sc.sc_mask */
+	mov	%o0, %o2		/* build sigcontext in [%o2] */
 	mov	1, %o0			/* SIG_BLOCK */
 	mov	SYS_compat_13_sigprocmask13, %g1
 	clr	%o1			/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL, (sigset_t *)a) */
@@ -80,10 +80,10 @@ ENTRY(setjmp)
 	st	%o0, [%o3 + 0x04]	/* sc.sc_mask = current mask; */
 	mov	SYS___sigaltstack14, %g1
 	clr	%o0			/* sigstack(NULL, &foo) */
-	add	%o2, 8, %o1		/* (foo being at the bottom of the stack) */
+	add	%o3, 0x38, %o1		/* (foo being the sigcontext14 sc_mask) */
 	t	ST_SYSCALL
 	
-	lduw	[%o3 + 8 + 0x10], %o0	/* foo.ss_flags */
+	lduw	[%o3 + 0x38+0x10], %o0	/* foo.ss_flags */
 	and	%o0, 1, %o1		/* onstack = foo.ss_flags & 1; */
 	st	%o0, [%o3 + 0x00]	/* sc.sc_onstack = current onstack; */
 	stx	%sp, [%o3 + 0x08]	/* sc.sc_sp = sp (both ours and caller's) */
