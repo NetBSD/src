@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.20 2002/09/17 22:14:17 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.21 2002/10/10 22:27:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.20 2002/09/17 22:14:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.21 2002/10/10 22:27:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,6 +420,14 @@ sys_ptrace(l, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
+		tmp = SCARG(uap, data);
+		if (tmp != 0 && t->p_nlwps > 1) {
+			LIST_FOREACH(lt, &t->p_lwps, l_sibling)
+			    if (lt->l_lid == tmp)
+				    break;
+			if (lt == NULL)
+				return (ESRCH);
+		}
 		if (!process_validregs(lt))
 			return (EINVAL);
 		else {
@@ -445,6 +453,14 @@ sys_ptrace(l, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+		tmp = SCARG(uap, data);
+		if (tmp != 0 && t->p_nlwps > 1) {
+			LIST_FOREACH(lt, &t->p_lwps, l_sibling)
+			    if (lt->l_lid == tmp)
+				    break;
+			if (lt == NULL)
+				return (ESRCH);
+		}
 		if (!process_validfpregs(lt))
 			return (EINVAL);
 		else {
