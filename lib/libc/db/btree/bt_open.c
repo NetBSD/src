@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.14 2002/01/22 20:41:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.14 2002/01/22 20:41:22 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $");
  */
 
 #include "namespace.h"
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -400,7 +399,7 @@ tmp()
 	sigset_t set, oset;
 	int fd;
 	char *envtmp;
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	envtmp = getenv("TMPDIR");
 	(void)snprintf(path,
