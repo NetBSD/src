@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.33 1998/04/27 19:17:16 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.34 1998/04/30 08:27:00 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 1998/04/27 19:17:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 1998/04/30 08:27:00 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,35 +443,25 @@ void	pmap_pvdump __P((vm_offset_t));
 #endif
 
 /*
- * active_pmap:
+ * active_pmap{,_test}:
  *
  *	Check to see if a pmap is active on the current processor.
  */
+#define	active_pmap_test(pm)						\
+	(((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
+
 #ifdef DEBUG
 #define	active_pmap(pm)							\
 ({									\
-	int isactive_ =							\
-	    (((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0);	\
+	int isactive_ = active_pmap_test(pm);				\
 									\
-	if (isactive_) {						\
-		if (curproc == NULL ||					\
-		    (pm) != curproc->p_vmspace->vm_map.pmap) {		\
-			printf("line %ld, false TRUE\n", __LINE__);	\
-			panic("active_pmap");				\
-		}							\
-	} else {							\
-		if (curproc != NULL &&					\
-		    (pm) == curproc->p_vmspace->vm_map.pmap) {		\
-			printf("line %ld, false FALSE\n", __LINE__);	\
-			panic("active_pmap");				\
-		}							\
-	}								\
-									\
+	if (curproc != NULL &&						\
+	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
+		panic("active_pmap");					\
 	(isactive_);							\
 })
 #else
-#define	active_pmap(pm)							\
-	(((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
+#define	active_pmap(pm) active_pmap_test(pm)
 #endif /* DEBUG */
 
 /*
