@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.3 1997/10/19 18:56:43 thorpej Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.4 1997/10/20 18:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -138,14 +138,18 @@ aic_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, AIC_ISA_IOSIZE, 0, &ioh))
-		panic("aic_isa_attach: bus_space_map failed");
+	if (bus_space_map(iot, ia->ia_iobase, AIC_ISA_IOSIZE, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	AIC_TRACE(("aic_isa_attach: port 0x%x\n", ia->ia_iobase));
-	if (!aic_find(iot, ioh))
-		panic("aic_isa_attach: aic_find failed");
+	if (!aic_find(iot, ioh)) {
+		printf("%s: aic_find failed", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	isc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    aicintr, sc);

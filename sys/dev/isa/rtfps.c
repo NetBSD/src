@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.34 1997/10/19 18:57:15 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.35 1997/10/20 18:43:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -162,27 +162,34 @@ rtfpsattach(parent, self, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase;
 
+	printf("\n");
+
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
-	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == IOBASEUNK)
-		panic("rtfpsattach: invalid irq");
+	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == IOBASEUNK) {
+		printf("%s: invalid irq\n", sc->sc_dev.dv_xname);
+		return;
+	}
 	sc->sc_irqport = irqport[ia->ia_irq];
 
 	for (i = 0; i < NSLAVES; i++) {
 		iobase = sc->sc_iobase + i * COM_NPORTS;
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
-			&sc->sc_slaveioh[i]))
-			panic("rtfpsattach: couldn't map slave %d", i);
+			&sc->sc_slaveioh[i])) {
+			printf("%s: can't map i/o space for slave %d\n",
+			    sc->sc_dev.dv_xname, i);
+			return;
+		}
 	}
-	if (bus_space_map(iot, sc->sc_irqport, 1, 0, &sc->sc_irqioh))
-		panic("rtfpsattach: couldn't map irq port at 0x%x\n",
+	if (bus_space_map(iot, sc->sc_irqport, 1, 0, &sc->sc_irqioh)) {
+		printf("%s: can't map irq port at 0x%x\n", sc->sc_dev.dv_xname,
 		    sc->sc_irqport);
+		return;
+	}
 
 	bus_space_write_1(iot, sc->sc_irqioh, 0, 0);
-
-	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;

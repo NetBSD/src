@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.6 1997/10/19 18:56:54 thorpej Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.7 1997/10/20 18:43:08 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -82,11 +82,15 @@ cy_attach_isa(parent, self, aux)
 	sc->sc_bustype = CY_BUSTYPE_ISA;
 
 	if (bus_space_map(ia->ia_memt, ia->ia_maddr, CY_MEMSIZE, 0,
-	    &sc->sc_bsh) != 0)
-		panic("%s: Cannot map memory", sc->sc_dev.dv_xname);
+	    &sc->sc_bsh) != 0) {
+		printf(": cannot map mem space\n");
+		return;
+	}
 
-	if (cy_find(sc) == 0)
-		panic("%s: Cannot find card", sc->sc_dev.dv_xname);
+	if (cy_find(sc) == 0) {
+		printf(": cy_find failed\n");
+		return;
+	}
 
 	cy_attach(parent, self, aux);
 
