@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.11 2002/09/02 14:00:25 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.12 2002/09/04 14:37:53 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -212,11 +212,15 @@
  */
 #define	_EXCEPTION_EXIT(sz)						       \
 	getcon	sr, r0							      ;\
-	ori	r0, SH5_CONREG_SR_IMASK_ALL, r0 /* No IRQs please */	      ;\
-	putcon	r0, sr							      ;\
+	ori	r0, SH5_CONREG_SR_IMASK_ALL, r2 /* No IRQs please */	      ;\
+	putcon	r2, sr							      ;\
 	getcon	kcr0, r1						      ;\
 	st.q	r1, ES(ES_CRITICAL), r1	/* Entering critical section */	      ;\
 	ld.q	r15, SFO(SF_SSR,sz), r0					      ;\
+	LDC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r24)	      ;\
+	and	r2, r24, r2		/* Get current ASID into r2 */	      ;\
+	andc	r0, r24, r0		/* Clear ASID bits in saved SSR  */   ;\
+	or	r2, r0, r0		/* Insert current ASID in saved SSR */;\
 	st.q	r1, ES(ES_SSR), r0					      ;\
 	ld.q	r15, SFO(SF_SPC,sz), r0					      ;\
 	st.q	r1, ES(ES_SPC), r0					      ;\
@@ -836,6 +840,14 @@ Ltrapepilogue:
 	blink	tr0, r63		/* Go back around to deal with it */
 
 Ltrapexit:
+#if defined(DIAGNOSTIC)
+	movi	SH5_CONREG_SR_IMASK_ALL, r0
+	putcon	r0, sr
+	LEAF(_C_LABEL(validate_trapframe), r0)
+	ptabs/l	r0, tr0
+	or	r15, r63, r2
+	blink	tr0, r18
+#endif
 	_TRAP_FRAME_RESTORE(SZ_TRAPFRAME)
 	_INTR_FRAME_RESTORE(SZ_TRAPFRAME)
 	_EXCEPTION_EXIT(SZ_TRAPFRAME)
@@ -957,20 +969,20 @@ Lsh5_event_nmi:
  * Convenience macro for generating a pmap_pteg_table hash given an VSID and
  * Virtual Page Number.
  *
- * `vsid' is preserved, unless it is r2.
+ * `vsid' is not preserved. The hash is returned in this register.
  * `vpn' is not preserved.
  * `bits' should be set to pmap_pteg_bits. On exit, it
  * will be replaced with pmap_pteg_mask.
  */
 #define	MAKE_PTEG_HASH(vsid, vpn, bits)				       \
 	pta/u	1f, tr0							      ;\
-1:	xor	vpn, vsid, r2		/* XOR `pmap_pteg_bits' of the VPN */ ;\
+1:	xor	vpn, vsid, vsid		/* XOR `pmap_pteg_bits' of the VPN */ ;\
 	shlrd	vpn, bits, vpn		/* Get next chunk of VPN bits */      ;\
 	bne/l	vpn, r63, tr0		/* Back until VPN goes to zero. */    ;\
 	movi	1, vpn			/* Generate pmap_pteg_mask */	      ;\
 	shlld	vpn, bits, vpn						      ;\
 	addi	vpn, -1, bits						      ;\
-	and	r2, bits, r2
+	and	vsid, bits, vsid
 
 
 /******************************************************************************
@@ -983,6 +995,9 @@ Lsh5_event_nmi:
  * r3 == va
  */
 ENTRY_NOPROFILE(pmap_ipt_hash)
+#ifndef _LP64
+	add.l	r3, r63, r3		/* Sign extend */
+#endif
 	shari	r3, PGSHIFT, r3		/* Convert va to EPN */
 	LEA(_C_LABEL(pmap_pteg_bits), r0)
 	ld.l	r0, 0, r0		/* # of bits set in pmap_pteg_mask */
@@ -1011,13 +1026,12 @@ Ltlbmiss_user_ipt:
 
 	/* Get the VSID for the current pmap */
 
-	getcon	kcr0, r1		/* Get cpu_info */
-	LDPTE	r1, CI_CURVSID, r1	/* Fetch current vsid */
-	or	r1, r63, r5		/* Save vsid in r5 */
+	getcon	kcr0, r2		/* Get cpu_info */
+	LDPTE	r2, CI_CURVSID, r2	/* Fetch current vsid */
+	or	r2, r63, r5		/* Save vsid in r5 */
 	LEA(_C_LABEL(pmap_pteg_bits), r3)
 	ld.l	r3, 0, r3
-	or	r63, r63, r2
-	MAKE_PTEG_HASH(r1, r0, r3)
+	MAKE_PTEG_HASH(r2, r0, r3)
 	or	r2, r63, r3		/* Save hash in r3 */
 	HASH_TO_PTEG_IDX(r2, r1)	/* Generate pteg table offset */
 	LEA(_C_LABEL(pmap_pteg_table), r0)
@@ -1046,7 +1060,7 @@ Ltlbmiss_lookup:
 1:	LDPTE	r2, SH5_PTE_VSID, r0	/* Fetch VSID */
 	bne/l	r5, r0, tr1		/* Jump if PTE's VSID doesn't match */
 	LDPTE	r2, SH5_PTE_PTEH, r0	/* Fetch PTEH */
-	andc	r0, r1, r0		/* Keep only EPN bits */
+	and	r0, r1, r0		/* Keep only EPN bits */
 	bne/l	r4, r0, tr1		/* Jump if PTE's EPN doesn't match */
 	pta/l	Ltlbmiss_gotpte, tr0	/* Got it. */
 	blink	tr0, r63
@@ -1083,10 +1097,10 @@ Ltlbmiss_gotpte:
 
 	getcon	ssr, r3			/* Get ASID in effect at TLB miss time*/
 	shlri	r3, SH5_CONREG_SR_ASID_SHIFT, r3
-	andi	r3, (SH5_CONREG_SR_ASID_MASK >> SH5_CONREG_SR_ASID_SHIFT), r3
+	andi	r3, SH5_CONREG_SR_ASID_MASK, r3
 	shlli	r3, SH5_PTEH_ASID_SHIFT, r3
 	movi	SH5_PTE_PN_MASK_MOVI, r4
-	andc	r0, r4, r0
+	and	r0, r4, r0
 	or	r3, r0, r0		/* Now have correct PTEH value */
 	or	r2, r63, r4		/* Preserve PTE pointer in r4 */
 
