@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2002/02/27 21:02:23 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2002/11/25 06:40:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ mvmeppc_memio_unmap(t, bsh, size)
 		 * Nope. We have to figure out the physical address
 		 * and unmap it for real.
 		 */
-		if (!pmap_extract(pmap_kernel(), (vaddr_t)bsh, (paddr_t *)&bpa))
+		if (!pmap_extract(pmap_kernel(), (vaddr_t)bsh, (void *)&bpa))
 			panic("mvmeppc_memio_unmap: bad bus handle: 0x%x", bsh);
 		uvm_km_free(kernel_map, (vaddr_t)trunc_page(bsh),
 		    round_page(size));
