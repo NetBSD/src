@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.223 2003/01/06 12:10:46 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.224 2003/01/08 16:16:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -913,8 +913,6 @@ pgt_page_free(struct pool *pp, void *v)
 
 
 static void get_phys_mem __P((void));
-void	pv_flushcache __P((struct pvlist *));
-void	pv_uncache __P((struct pvlist *));
 void	kvm_iocache __P((caddr_t, int));
 
 #ifdef DEBUG
@@ -2674,9 +2672,7 @@ pv_link4m(pv, pm, va, nc)
  * in each entry to stop pv_unlink() from re-caching (i.e. when a
  * a bad alias is going away).
  */
-void
-pv_uncache(pv0)
-	struct pvlist *pv0;
+static void pv_uncache(struct pvlist *pv0)
 {
 	struct pvlist *pv;
 
@@ -2697,9 +2693,9 @@ pv_uncache(pv0)
  * Walk the given list and flush the cache for each (MI) page that is
  * potentially in the cache. Called only if vactype != VAC_NONE.
  */
-void
-pv_flushcache(pv)
-	struct pvlist *pv;
+#if defined(SUN4) || defined(SUN4C)
+static void
+pv_flushcache4_4c(struct pvlist *pv)
 {
 	struct pmap *pm;
 	int s, ctx;
@@ -2707,25 +2703,47 @@ pv_flushcache(pv)
 	write_user_windows();	/* paranoia? */
 	s = splvm();		/* XXX extreme paranoia */
 	if ((pm = pv->pv_pmap) != NULL) {
-		ctx = getcontext();
+		ctx = getcontext4();
 		for (;;) {
 			if (pm->pm_ctx) {
-				setcontext(pm->pm_ctxnum);
+				setcontext4(pm->pm_ctxnum);
 				cache_flush_page(pv->pv_va, pm->pm_ctxnum);
-#if defined(SUN4M) || defined(SUN4D)
-				if (CPU_HAS_SRMMU)
-					tlb_flush_page(pv->pv_va, pm->pm_ctxnum);
-#endif
 			}
 			pv = pv->pv_next;
 			if (pv == NULL)
 				break;
 			pm = pv->pv_pmap;
 		}
-		setcontext(ctx);
+		setcontext4(ctx);
 	}
 	splx(s);
 }
+#endif /* SUN4 || SUN4C */
+
+#if defined(SUN4M) || defined(SUN4D)
+static void
+pv_flushcache4m(struct pvlist *pv)
+{
+	struct pmap *pm;
+	int s;
+
+	write_user_windows();	/* paranoia? */
+	s = splvm();		/* XXX extreme paranoia */
+	if ((pm = pv->pv_pmap) != NULL) {
+		for (;;) {
+			if (pm->pm_ctx) {
+				cache_flush_page(pv->pv_va, pm->pm_ctxnum);
+				tlb_flush_page(pv->pv_va, pm->pm_ctxnum);
+			}
+			pv = pv->pv_next;
+			if (pv == NULL)
+				break;
+			pm = pv->pv_pmap;
+		}
+	}
+	splx(s);
+}
+#endif /* SUN4M || SUN4D */
 
 /*----------------------------------------------------------------*/
 
@@ -6634,7 +6652,7 @@ pmap_zero_page4_4c(pa)
 		 * is being cleared because it is about to be allocated,
 		 * i.e., is in use by no one.
 		 */
-		pv_flushcache(pv);
+		pv_flushcache4_4c(pv);
 	}
 	pte = PG_V | PG_S | PG_W | PG_NC | (pfn & PG_PFNUM);
 
@@ -6666,14 +6684,14 @@ pmap_copy_page4_4c(src, dst)
 	dstpfn = atop(dst);
 	if ((pv = pvhead(srcpfn)) != NULL) {
 		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-			pv_flushcache(pv);
+			pv_flushcache4_4c(pv);
 	}
 	spte = PG_V | PG_S | (srcpfn & PG_PFNUM);
 
 	if ((pv = pvhead(dstpfn)) != NULL) {
 		/* similar `might not be necessary' comment applies */
 		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pv);
+			pv_flushcache4_4c(pv);
 	}
 	dpte = PG_V | PG_S | PG_W | PG_NC | (dstpfn & PG_PFNUM);
 
@@ -6714,7 +6732,7 @@ pmap_zero_page4m(pa)
 		 * uncached access to clear it.
 		 */
 		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pv);
+			pv_flushcache4m(pv);
 		else
 			pcache_flush_page(pa, 1);
 	}
@@ -6781,7 +6799,7 @@ pmap_zero_page_hypersparc(pa)
 		 * i.e., is in use by no one.
 		 */
 		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pv);
+			pv_flushcache4m(pv);
 	}
 	pte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RWX | (pfn << SRMMU_PPNSHIFT);
 
@@ -6817,7 +6835,7 @@ pmap_copy_page4m(src, dst)
 	dstpfn = atop(dst);
 	if ((pv = pvhead(srcpfn)) != NULL) {
 		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-			pv_flushcache(pv);
+			pv_flushcache4m(pv);
 	}
 
 	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RX |
@@ -6826,7 +6844,7 @@ pmap_copy_page4m(src, dst)
 	if ((pv = pvhead(dstpfn)) != NULL) {
 		/* similar `might not be necessary' comment applies */
 		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pv);
+			pv_flushcache4m(pv);
 		else
 			pcache_flush_page(dst, 1);
 	}
@@ -6894,7 +6912,7 @@ pmap_copy_page_hypersparc(src, dst)
 	dstpfn = atop(dst);
 	if ((pv = pvhead(srcpfn)) != NULL) {
 		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-			pv_flushcache(pv);
+			pv_flushcache4m(pv);
 	}
 
 	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RX |
@@ -6903,7 +6921,7 @@ pmap_copy_page_hypersparc(src, dst)
 	if ((pv = pvhead(dstpfn)) != NULL) {
 		/* similar `might not be necessary' comment applies */
 		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pv);
+			pv_flushcache4m(pv);
 	}
 
 	dpte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RWX |
