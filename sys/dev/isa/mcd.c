@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.28 1995/03/27 15:45:20 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.29 1995/03/27 16:04:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -166,12 +166,11 @@ int mcd_getresult __P((struct mcd_softc *, struct mcd_result *));
 void mcd_setflags __P((struct mcd_softc *));
 int mcd_get __P((struct mcd_softc *, char *, int));
 int mcd_send __P((struct mcd_softc *, struct mcd_mbox *, int));
-int mcdintr __P((struct mcd_softc *));
+int mcdintr __P((void *));
 void mcd_soft_reset __P((struct mcd_softc *));
 int mcd_hard_reset __P((struct mcd_softc *));
 int mcd_setmode __P((struct mcd_softc *, int));
 int mcd_setupc __P((struct mcd_softc *, int));
-void mcd_fsm __P((void *));
 int mcd_read_toc __P((struct mcd_softc *));
 int mcd_getqchan __P((struct mcd_softc *, union mcd_qchninfo *, int));
 int mcd_setlock __P((struct mcd_softc *, int));
@@ -515,7 +514,7 @@ loop:
 	sc->mbx.mode = MCD_MD_COOKED;
 
 	s = splbio();
-	mcd_fsm(sc);
+	(void) mcdintr(sc);
 	splx(s);
 }
 
@@ -536,9 +535,6 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return EIO;
 
 	switch (cmd) {
-	case DIOCSBAD:
-		return EINVAL;
-
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = sc->sc_dk.dk_label;
 		return 0;
@@ -614,6 +610,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return 0;
 	case CDIOCRESET:
 		return mcd_hard_reset(sc);
+
 	default:
 		return ENOTTY;
 	}
@@ -970,15 +967,6 @@ msf2hsg(msf, relative)
 	return blkno;
 }
 
-int
-mcdintr(sc)
-	struct mcd_softc *sc;
-{
-	
-	mcd_fsm(sc);
-	return -1;
-}
-
 void
 mcd_pseudointr(sc)
 	struct mcd_softc *sc;
@@ -986,7 +974,7 @@ mcd_pseudointr(sc)
 	int s;
 
 	s = splbio();
-	mcd_fsm(sc);
+	(void) mcdintr(sc);
 	splx(s);
 }
 
@@ -997,8 +985,8 @@ mcd_pseudointr(sc)
  * MCD_S_WAITMODE: waits for status reply from set mode, set read command
  * MCD_S_WAITREAD: wait for read ready, read data.
  */
-void
-mcd_fsm(arg)
+int
+mcdintr(arg)
 	void *arg;
 {
 	struct mcd_softc *sc = arg;
@@ -1012,7 +1000,7 @@ mcd_fsm(arg)
 
 	switch (mbx->state) {
 	case MCD_S_IDLE:
-		return;
+		return 0;
 
 	case MCD_S_BEGIN:
 	tryagain:
@@ -1138,7 +1126,7 @@ mcd_fsm(arg)
 		biodone(bp);
 
 		mcdstart(sc);
-		return;
+		return 1;
 
 	hold:
 		if (mbx->count-- < 0) {
@@ -1152,7 +1140,7 @@ mcd_fsm(arg)
 		    mbx->state);
 #endif
 		timeout(mcd_pseudointr, sc, hz / 100);
-		return;
+		return -1;
 	}
 
 readerr:
@@ -1170,7 +1158,7 @@ harderr:
 	biodone(bp);
 
 	mcdstart(sc);
-	return;
+	return -1;
 
 #ifdef notyet
 	printf("%s: unit timeout; resetting\n", sc->sc_dev.dv_xname);
@@ -1188,7 +1176,7 @@ mcd_soft_reset(sc)
 	struct mcd_softc *sc;
 {
 
-	sc->debug = 1;
+	sc->debug = 0;
 	sc->flags = 0;
 	sc->lastmode = MCD_MD_UNKNOWN;
 	sc->lastupc = MCD_UPC_UNKNOWN;
