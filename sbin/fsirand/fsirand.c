@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.20 2003/04/02 10:39:29 fvdl Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.21 2003/04/17 04:01:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.20 2003/04/02 10:39:29 fvdl Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.21 2003/04/17 04:01:56 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -256,6 +256,7 @@ main(int argc, char *argv[])
 			pflag++;
 			break;
 		case 'x':
+			errno = 0;
 			xorval = strtol(optarg, &ep, 0);
 			if ((xorval == LONG_MIN || xorval == LONG_MAX) &&
 			    errno == ERANGE)
