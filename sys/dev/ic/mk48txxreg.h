@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxreg.h,v 1.3 2000/11/11 11:03:31 pk Exp $ */
+/*	$NetBSD: mk48txxreg.h,v 1.4 2000/11/11 11:59:42 pk Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -86,4 +86,4 @@ todr_chip_handle_t mk48txx_attach(bus_space_tag_t, bus_space_handle_t,
 				  const char *, int);
 
 /* Retrieve size of the on-chip NVRAM area */
-int	mk48txx_get_nvram_size(todr_chip_handle_t, u_int *);
+int	mk48txx_get_nvram_size(todr_chip_handle_t, bus_size_t *);
