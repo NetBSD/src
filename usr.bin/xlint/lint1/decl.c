@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.19 2001/02/24 00:43:50 cgd Exp $ */
+/* $NetBSD: decl.c,v 1.20 2001/05/19 17:19:00 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.19 2001/02/24 00:43:50 cgd Exp $");
+__RCSID("$NetBSD: decl.c,v 1.20 2001/05/19 17:19:00 sommerfeld Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1197,7 +1197,7 @@ bitfield(dsym, len)
 		dsym->s_name = unnamed;
 		dsym->s_kind = FMOS;
 		dsym->s_scl = MOS;
-		dsym->s_type = gettyp(INT);
+		dsym->s_type = gettyp(UINT);
 		dsym->s_blklev = -1;
 	}
 	dsym->s_type = duptyp(dsym->s_type);
