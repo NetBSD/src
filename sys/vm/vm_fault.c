@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.4 1993/06/27 06:38:48 andrew Exp $
+ *	$Id: vm_fault.c,v 1.5 1993/07/15 14:07:51 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -246,7 +246,6 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
-thread_wakeup(&vm_pages_needed); /* XXX! -- what does this do? */
 				thread_block();
 				wait_result = current_thread()->wait_result;
 				vm_object_deallocate(first_object);
@@ -280,7 +279,6 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
-thread_wakeup(&vm_pages_needed); /* XXX! -- what does this do? */
 				thread_block();
 				wait_result = current_thread()->wait_result;
 				vm_object_deallocate(first_object);
@@ -627,7 +625,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 					copy_object->ref_count--;
 					vm_object_unlock(copy_object);
 					UNLOCK_THINGS;
-thread_wakeup(&vm_pages_needed); /* XXX! -- what does this do? */
 					thread_block();
 					wait_result = current_thread()->wait_result;
 					vm_object_deallocate(first_object);
