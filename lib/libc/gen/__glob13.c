@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.7 1998/07/26 19:05:06 mycroft Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.8 1998/11/13 10:25:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.7 1998/07/26 19:05:06 mycroft Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.8 1998/11/13 10:25:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,7 +152,7 @@ static int	 compare __P((const void *, const void *));
 static void	 g_Ctoc __P((const Char *, char *));
 static int	 g_lstat __P((Char *, struct STAT *, glob_t *));
 static DIR	*g_opendir __P((Char *, glob_t *));
-static Char	*g_strchr __P((Char *, int));
+static Char	*g_strchr __P((const Char *, int));
 #ifdef notdef
 static Char	*g_strcat __P((Char *, const Char *));
 #endif
@@ -180,7 +180,7 @@ glob(pattern, flags, errfunc, pglob)
 	int c;
 	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
 
-	patnext = (u_char *) pattern;
+	patnext = (const u_char *) pattern;
 	if (!(flags & GLOB_APPEND)) {
 		pglob->gl_pathc = 0;
 		pglob->gl_pathv = NULL;
@@ -233,7 +233,7 @@ static int globexp1(pattern, pglob)
 	if (pattern[0] == LBRACE && pattern[1] == RBRACE && pattern[2] == EOS)
 		return glob0(pattern, pglob);
 
-	while ((ptr = (const Char *) g_strchr((Char *) ptr, LBRACE)) != NULL)
+	while ((ptr = (const Char *) g_strchr(ptr, LBRACE)) != NULL)
 		if (!globexp2(ptr, pattern, pglob, &rv))
 			return rv;
 
@@ -361,18 +361,20 @@ globtilde(pattern, patbuf, pglob)
 	const char *h;
 	const Char *p;
 	Char *b;
+	char *d;
 
 	if (*pattern != TILDE || !(pglob->gl_flags & GLOB_TILDE))
 		return pattern;
 
 	/* Copy up to the end of the string or / */
-	for (p = pattern + 1, b = patbuf; *p && *p != SLASH; 
-	     *b++ = *p++)
+	for (p = pattern + 1, d = (char *)(void *)patbuf; *p && *p != SLASH; 
+	     *d++ = *p++)
 		continue;
 
-	*b = EOS;
+	*d = EOS;
+	d = (char *)(void *)patbuf;
 
-	if (((char *) patbuf)[0] == EOS) {
+	if (d == EOS) {
 		/* 
 		 * handle a plain ~ or ~/ by expanding $HOME 
 		 * first and then trying the password file
@@ -388,7 +390,7 @@ globtilde(pattern, patbuf, pglob)
 		/*
 		 * Expand a ~user
 		 */
-		if ((pwd = getpwnam((char *) patbuf)) == NULL)
+		if ((pwd = getpwnam(d)) == NULL)
 			return pattern;
 		else
 			h = pwd->pw_dir;
@@ -434,7 +436,7 @@ glob0(pattern, pglob)
 			if (c == NOT)
 				++qpatnext;
 			if (*qpatnext == EOS ||
-			    g_strchr((Char *) qpatnext+1, RBRACKET) == NULL) {
+			    g_strchr(qpatnext+1, RBRACKET) == NULL) {
 				*bufnext++ = LBRACKET;
 				if (c == NOT)
 					--qpatnext;
@@ -499,7 +501,8 @@ glob0(pattern, pglob)
 		}
 	} else if (!(pglob->gl_flags & GLOB_NOSORT)) {
 		qsort(pglob->gl_pathv + pglob->gl_offs + oldpathc,
-		    pglob->gl_pathc - oldpathc, sizeof(char *), compare);
+		    (size_t)pglob->gl_pathc - oldpathc, sizeof(char *),
+		    compare);
 	}
 
 	return(0);
@@ -509,7 +512,7 @@ static int
 compare(p, q)
 	const void *p, *q;
 {
-	return(strcoll(*(char **)p, *(char **)q));
+	return(strcoll(*(const char * const *)p, *(const char * const *)q));
 }
 
 static int
@@ -620,7 +623,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 		readdirfunc = pglob->gl_readdir;
 	else
 		readdirfunc = (struct dirent *(*)__P((void *))) readdir;
-	while ((dp = (*readdirfunc)(dirp))) {
+	while ((dp = (*readdirfunc)(dirp)) != NULL) {
 		u_char *sc;
 		Char *dc;
 
@@ -674,7 +677,7 @@ globextend(path, pglob)
 
 	newsize = sizeof(*pathv) * (2 + pglob->gl_pathc + pglob->gl_offs);
 	pathv = pglob->gl_pathv ? 
-		    realloc((char *)pglob->gl_pathv, newsize) :
+		    realloc(pglob->gl_pathv, newsize) :
 		    malloc(newsize);
 	if (pathv == NULL)
 		return(GLOB_NOSPACE);
@@ -689,7 +692,7 @@ globextend(path, pglob)
 
 	for (p = path; *p++;)
 		continue;
-	if ((copy = malloc(p - path)) != NULL) {
+	if ((copy = malloc((size_t)(p - path))) != NULL) {
 		g_Ctoc(path, copy);
 		pathv[pglob->gl_offs + pglob->gl_pathc++] = copy;
 	}
@@ -814,14 +817,15 @@ g_stat(fn, sb, pglob)
 
 static Char *
 g_strchr(str, ch)
-	Char *str;
+	const Char *str;
 	int ch;
 {
 	do {
 		if (*str == ch)
-			return (str);
+			/* LINTED this is libc's definition! */
+			return (Char *)str;
 	} while (*str++);
-	return (NULL);
+	return NULL;
 }
 
 #ifdef notdef
