@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.62 1998/10/10 14:02:15 frueauf Exp $
+.\"	$NetBSD: options.4,v 1.63 1998/10/13 13:32:44 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1248,6 +1248,11 @@ In general, using the correct
 .Tn CPU
 class will result in the best performance.
 At least one of these options must be present.
+.It Cd options CPURESET_DELAY=value
+specifies the time (in millisecond) to wait before doing a hardware reset
+in the last phase of a reboot. This gives the user a chance to see error
+messages from the shutdown operations (like NFS unmounts, buffer cache flush,
+etc ...). Setting this to 0 will disable the delay. Default is 2 seconds.
 .It Cd options MATH_EMULATE
 Include the floating point emulator.
 This is useful only for
