@@ -1,4 +1,6 @@
-/*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.6 1997/03/12 20:26:54 christos Exp $	*/
+/*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
+
 /*
  * if_pppvar.h - private structures and declarations for PPP.
  *
@@ -76,12 +78,14 @@ struct ppp_softc {
 	void	*sc_rc_state;		/* receive decompressor state */
 	time_t	sc_last_sent;		/* time (secs) last NP pkt sent */
 	time_t	sc_last_recv;		/* time (secs) last NP pkt rcvd */
+#ifdef PPP_FILTER
 	struct	bpf_program sc_pass_filt;   /* filter for packets to pass */
 	struct	bpf_program sc_active_filt; /* filter for "non-idle" packets */
+#endif /* PPP_FILTER */
 #ifdef	VJC
 	struct	slcompress *sc_comp; 	/* vjc control buffer */
 #endif
-	
+
 	/* Device-dependent part for async lines. */
 	ext_accm sc_asyncmap;		/* async control character map */
 	u_int32_t sc_rasyncmap;		/* receive async control char map */
@@ -103,6 +107,7 @@ struct	ppp_softc *pppalloc __P((pid_t pid));
 void	pppdealloc __P((struct ppp_softc *sc));
 int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data,
 		      int flag, struct proc *p));
+void	ppp_restart __P((struct ppp_softc *sc));
 void	ppppktin __P((struct ppp_softc *sc, struct mbuf *m, int lost));
 struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
 #endif /* _KERNEL */

@@ -1,10 +1,18 @@
-/*	$NetBSD: zlib.h,v 1.1 1996/03/15 02:28:17 paulus Exp $	*/
+/*	$NetBSD: zlib.h,v 1.2 1997/03/12 20:27:11 christos Exp $	*/
+/*	Id: zlib.h,v 1.4 1997/03/04 03:26:36 paulus Exp 	*/
 
 /*
  * This file is derived from zlib.h and zconf.h from the zlib-0.95
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
  * by Paul Mackerras to aid in implementing Deflate compression and
  * decompression for PPP packets.
+ */
+
+/*
+ *  ==FILEVERSION 960122==
+ *
+ * This marker is used by the Linux installation script to determine
+ * whether an up-to-date version of this file is already installed.
  */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
@@ -369,6 +377,10 @@ extern int inflateInit OF((z_stream *strm));
    inflate().
 */
 
+
+#if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
+#define inflate	inflate_ppp	/* FreeBSD already has an inflate :-( */
+#endif
 
 extern int inflate OF((z_stream *strm, int flush));
 /*

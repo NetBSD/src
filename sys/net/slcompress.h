@@ -1,4 +1,5 @@
-/*	$NetBSD: slcompress.h,v 1.9 1995/07/04 06:28:29 paulus Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.10 1997/03/12 20:27:05 christos Exp $	*/
+/*	Id: slcompress.h,v 1.1 1995/12/11 05:17:12 paulus Exp 	*/
 
 /*
  * Copyright (c) 1989, 1993

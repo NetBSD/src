@@ -1,4 +1,5 @@
-/*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.7 1997/03/12 20:26:46 christos Exp $	*/
+/*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
  *
@@ -206,7 +207,6 @@ bsd_clear(db)
     db->ratio = 0;
     db->bytes_out = 0;
     db->in_count = 0;
-    db->incomp_count = 0;
     db->checkpoint = CHECK_GAP;
 }
 
@@ -714,7 +714,6 @@ bsd_incomp(state, dmsg)
     if (ent < 0x21 || ent > 0xf9)
 	return;
 
-    db->incomp_count++;
     db->seqno++;
     ilen = 1;		/* count the protocol as 1 byte */
     rptr += PPP_HDRLEN;
@@ -866,7 +865,7 @@ bsd_decompress(state, cmp, dmpp)
     if (seq != db->seqno) {
 	if (db->debug)
 	    printf("bsd_decomp%d: bad sequence # %d, expected %d\n",
-		db->unit, seq, db->seqno - 1);
+		   db->unit, seq, db->seqno - 1);
 	return DECOMP_ERROR;
     }
     ++db->seqno;
@@ -948,9 +947,9 @@ bsd_decompress(state, cmp, dmpp)
 	    m_freem(mret);
 	    if (db->debug) {
 		printf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
-		    db->unit, incode, oldcode);
+		       db->unit, incode, oldcode);
 		printf("max_ent=0x%x explen=%d seqno=%d\n",
-		    max_ent, explen, db->seqno);
+		       max_ent, explen, db->seqno);
 	    }
 	    return DECOMP_FATALERROR;	/* probably a bug */
 	}
@@ -1023,7 +1022,7 @@ bsd_decompress(state, cmp, dmpp)
 #ifdef DEBUG
 	if (--codelen != 0)
 	    printf("bsd_decomp%d: short by %d after code 0x%x, max_ent=0x%x\n",
-		db->unit, codelen, incode, max_ent);
+		   db->unit, codelen, incode, max_ent);
 #endif
 
 	if (extra)		/* the KwKwK case again */

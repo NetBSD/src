@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ppp.c,v 1.36 1997/03/04 21:40:07 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.37 1997/03/12 20:26:50 christos Exp $	*/
+/*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -94,7 +95,9 @@
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
+#ifdef PPP_FILTER
 #include <net/bpf.h>
+#endif
 
 #if INET
 #include <netinet/in.h>
@@ -123,8 +126,10 @@
 #include <net/ppp-comp.h>
 #endif
 
+static int	pppsioctl __P((struct ifnet *, u_long, caddr_t));
+static int	pppoutput __P((struct ifnet *, struct mbuf *,
+			       struct sockaddr *, struct rtentry *));
 static void	ppp_requeue __P((struct ppp_softc *));
-static void	ppp_outpkt __P((struct ppp_softc *));
 static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
 static void	ppp_ccp_closed __P((struct ppp_softc *));
 static void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
@@ -170,6 +175,7 @@ struct compressor *ppp_compressors[8] = {
     NULL
 };
 #endif /* PPP_COMPRESS */
+
 
 /*
  * Called from boot code to establish ppp interfaces.
@@ -289,6 +295,7 @@ pppdealloc(sc)
     sc->sc_xc_state = NULL;
     sc->sc_rc_state = NULL;
 #endif /* PPP_COMPRESS */
+#ifdef PPP_FILTER
     if (sc->sc_pass_filt.bf_insns != 0) {
 	FREE(sc->sc_pass_filt.bf_insns, M_DEVBUF);
 	sc->sc_pass_filt.bf_insns = 0;
@@ -299,6 +306,7 @@ pppdealloc(sc)
 	sc->sc_active_filt.bf_insns = 0;
 	sc->sc_active_filt.bf_len = 0;
     }
+#endif /* PPP_FILTER */
 #ifdef VJC
     if (sc->sc_comp != 0) {
 	FREE(sc->sc_comp, M_DEVBUF);
@@ -323,9 +331,11 @@ pppioctl(sc, cmd, data, flag, p)
     struct compressor **cp;
     struct npioctl *npi;
     time_t t;
+#ifdef PPP_FILTER
     struct bpf_program *bp, *nbp;
     struct bpf_insn *newcode, *oldcode;
     int newcodelen;
+#endif /* PPP_FILTER */
 #ifdef	PPP_COMPRESS
     u_char ccp_option[CCP_MAX_OPTION_LENGTH];
 #endif
@@ -481,6 +491,7 @@ pppioctl(sc, cmd, data, flag, p)
 	splx(s);
 	break;
 
+#ifdef PPP_FILTER
     case PPPIOCSPASS:
     case PPPIOCSACTIVE:
 	nbp = (struct bpf_program *) data;
@@ -512,6 +523,7 @@ pppioctl(sc, cmd, data, flag, p)
 	if (oldcode != 0)
 	    FREE(oldcode, M_DEVBUF);
 	break;
+#endif
 
     default:
 	return (-1);
@@ -522,12 +534,13 @@ pppioctl(sc, cmd, data, flag, p)
 /*
  * Process an ioctl request to the ppp network interface.
  */
-int
+static int
 pppsioctl(ifp, cmd, data)
     register struct ifnet *ifp;
     u_long cmd;
     caddr_t data;
 {
+    register struct proc *p = curproc;	/* XXX */
     register struct ppp_softc *sc = ifp->if_softc;
     register struct ifaddr *ifa = (struct ifaddr *)data;
     register struct ifreq *ifr = (struct ifreq *)data;
@@ -554,7 +567,13 @@ pppsioctl(ifp, cmd, data)
 	break;
 
     case SIOCSIFMTU:
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    break;
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
+	break;
+
+    case SIOCGIFMTU:
+	ifr->ifr_mtu = sc->sc_if.if_mtu;
 	break;
 
     case SIOCADDMULTI:
@@ -628,7 +647,7 @@ pppoutput(ifp, m0, dst, rtp)
     struct ip *ip;
     struct ifqueue *ifq;
     enum NPmode mode;
-    int active, len;
+    int len;
     struct mbuf *m;
 
     if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
@@ -712,12 +731,12 @@ pppoutput(ifp, m0, dst, rtp)
 	pppdumpm(m0);
     }
 
-    /*
-     * Apply the pass and active filters to the packet,
-     * but only if it is a data packet.
-     */
-    active = 0;
     if ((protocol & 0x8000) == 0) {
+#ifdef PPP_FILTER
+	/*
+	 * Apply the pass and active filters to the packet,
+	 * but only if it is a data packet.
+	 */
 	*mtod(m0, u_char *) = 1;	/* indicates outbound */
 	if (sc->sc_pass_filt.bf_insns != 0
 	    && bpf_filter(sc->sc_pass_filt.bf_insns, (u_char *) m0,
@@ -734,6 +753,12 @@ pppoutput(ifp, m0, dst, rtp)
 	    sc->sc_last_sent = time.tv_sec;
 
 	*mtod(m0, u_char *) = address;
+#else
+	/*
+	 * Update the time we sent the most recent packet.
+	 */
+	sc->sc_last_sent = time.tv_sec;
+#endif /* PPP_FILTER */
     }
 
 #if NBPFILTER > 0
@@ -831,71 +856,28 @@ ppp_requeue(sc)
 }
 
 /*
- * Get a packet to send.  This procedure is intended to be called at
- * spltty or splimp, so it takes little time.  If there isn't a packet
- * waiting to go out, it schedules a software interrupt to prepare a
- * new packet; the device start routine gets called again when a
- * packet is ready.
+ * Transmitter has finished outputting some stuff;
+ * remember to call sc->sc_start later at splsoftnet.
  */
-struct mbuf *
-ppp_dequeue(sc)
+void
+ppp_restart(sc)
     struct ppp_softc *sc;
 {
-    struct mbuf *m;
     int s = splimp();
 
-    m = sc->sc_togo;
-    if (m) {
-	/*
-	 * Had a packet waiting - send it.
-	 */
-	sc->sc_togo = NULL;
-	sc->sc_flags |= SC_TBUSY;
-	splx(s);
-	return m;
-    }
-    /*
-     * Remember we wanted a packet and schedule a software interrupt.
-     */
     sc->sc_flags &= ~SC_TBUSY;
     schednetisr(NETISR_PPP);
     splx(s);
-    return NULL;
 }
 
 /*
- * Software interrupt routine, called at splsoftnet.
+ * Get a packet to send.  This procedure is intended to be called at
+ * splsoftnet, since it may involve time-consuming operations such as
+ * applying VJ compression, packet compression, address/control and/or
+ * protocol field compression to the packet.
  */
-void
-pppintr()
-{
-    struct ppp_softc *sc;
-    int i, s;
-    struct mbuf *m;
-
-    sc = ppp_softc;
-    for (i = 0; i < NPPP; ++i, ++sc) {
-	if (!(sc->sc_flags & SC_TBUSY) && sc->sc_togo == NULL
-	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head))
-	    ppp_outpkt(sc);
-	for (;;) {
-	    s = splimp();
-	    IF_DEQUEUE(&sc->sc_rawq, m);
-	    splx(s);
-	    if (m == NULL)
-		break;
-	    ppp_inproc(sc, m);
-	}
-    }
-}
-
-/*
- * Grab another packet off a queue and apply VJ compression,
- * packet compression, address/control and/or protocol compression
- * if enabled.  Should be called at splsoftnet.
- */
-static void
-ppp_outpkt(sc)
+struct mbuf *
+ppp_dequeue(sc)
     struct ppp_softc *sc;
 {
     struct mbuf *m, *mp;
@@ -910,7 +892,7 @@ ppp_outpkt(sc)
     if (m == NULL)
 	IF_DEQUEUE(&sc->sc_if.if_snd, m);
     if (m == NULL)
-	return;
+	return NULL;
 
     ++sc->sc_stats.ppp_opackets;
 
@@ -980,13 +962,18 @@ ppp_outpkt(sc)
 	for (mp = m; mp != NULL; mp = mp->m_next)
 	    slen += mp->m_len;
 	clen = (*sc->sc_xcomp->compress)
-	    (sc->sc_xc_state, &mcomp, m, slen,
-	     (sc->sc_flags & SC_CCP_UP? sc->sc_if.if_mtu: 0));
+	    (sc->sc_xc_state, &mcomp, m, slen, sc->sc_if.if_mtu + PPP_HDRLEN);
 	if (mcomp != NULL) {
-	    m_freem(m);
-	    m = mcomp;
-	    cp = mtod(m, u_char *);
-	    protocol = cp[3];
+	    if (sc->sc_flags & SC_CCP_UP) {
+		/* Send the compressed packet instead of the original. */
+		m_freem(m);
+		m = mcomp;
+		cp = mtod(m, u_char *);
+		protocol = cp[3];
+	    } else {
+		/* Can't transmit compressed packets until CCP is up. */
+		m_freem(mcomp);
+	    }
 	}
     }
 #endif	/* PPP_COMPRESS */
@@ -1011,8 +998,39 @@ ppp_outpkt(sc)
 	--m->m_len;
     }
 
-    sc->sc_togo = m;
-    (*sc->sc_start)(sc);
+    return m;
+}
+
+/*
+ * Software interrupt routine, called at splsoftnet.
+ */
+void
+pppintr()
+{
+    struct ppp_softc *sc;
+    int i, s, s2;
+    struct mbuf *m;
+
+    sc = ppp_softc;
+    s = splsoftnet();
+    for (i = 0; i < NPPP; ++i, ++sc) {
+	if (!(sc->sc_flags & SC_TBUSY)
+	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head)) {
+	    s2 = splimp();
+	    sc->sc_flags |= SC_TBUSY;
+	    splx(s2);
+	    (*sc->sc_start)(sc);
+	}
+	for (;;) {
+	    s2 = splimp();
+	    IF_DEQUEUE(&sc->sc_rawq, m);
+	    splx(s2);
+	    if (m == NULL)
+		break;
+	    ppp_inproc(sc, m);
+	}
+    }
+    splx(s);
 }
 
 #ifdef PPP_COMPRESS
@@ -1349,11 +1367,12 @@ ppp_inproc(sc, m)
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = ifp;
 
-    /*
-     * See whether we want to pass this packet, and
-     * if it counts as link activity.
-     */
     if ((proto & 0x8000) == 0) {
+#ifdef PPP_FILTER
+	/*
+	 * See whether we want to pass this packet, and
+	 * if it counts as link activity.
+	 */
 	adrs = *mtod(m, u_char *);	/* save address field */
 	*mtod(m, u_char *) = 0;		/* indicate inbound */
 	if (sc->sc_pass_filt.bf_insns != 0
@@ -1368,6 +1387,12 @@ ppp_inproc(sc, m)
 	    sc->sc_last_recv = time.tv_sec;
 
 	*mtod(m, u_char *) = adrs;
+#else
+	/*
+	 * Record the time that we received this packet.
+	 */
+	sc->sc_last_recv = time.tv_sec;
+#endif /* PPP_FILTER */
     }
 
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.3 1996/09/18 03:11:03 scottr Exp $	*/
+/*	$NetBSD: zlib.c,v 1.4 1997/03/12 20:27:08 christos Exp $	*/
 
 /*
  * This file is derived from various .h and .c files from the zlib-0.95
@@ -12,8 +12,16 @@
  * - added minCompression parameter to deflateInit2
  * - added Z_PACKET_FLUSH (see zlib.h for details)
  * - added inflateIncomp
+ *
+ * Id: zlib.c,v 1.5 1997/03/04 03:26:35 paulus Exp 
  */
 
+/* 
+ *  ==FILEVERSION 960926==
+ *
+ * This marker is used by the Linux installation script to determine
+ * whether an up-to-date version of this file is already installed.
+ */
 
 /*+++++*/
 /* zutil.h -- internal interface and configuration of the compression library
@@ -31,12 +39,6 @@
 #define _Z_UTIL_H
 
 #include "zlib.h"
-
-#ifndef __NetBSD__
-#  ifdef STDC
-#    include <string.h>
-#  endif
-#endif
 
 #ifndef local
 #  define local static
@@ -88,13 +90,20 @@ extern char *z_errmsg[]; /* indexed by 1-zlib_error */
          /* functions */
 
 #if defined(KERNEL) || defined(_KERNEL)
-#  ifdef __NetBSD__
-#    include <sys/types.h>
-#    include <sys/systm.h>
-#  endif
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/systm.h>
 #  define zmemcpy(d, s, n)	bcopy((s), (d), (n))
 #  define zmemzero		bzero
+
 #else
+#if defined(__KERNEL__)
+/* Assume this is Linux */
+#include <linux/string.h>
+#define zmemcpy memcpy
+#define zmemzero(dest, len)	memset(dest, 0, len)
+
+#else /* not kernel */
 #if defined(STDC) && !defined(HAVE_MEMCPY) && !defined(NO_MEMCPY)
 #  define HAVE_MEMCPY
 #endif
@@ -105,7 +114,8 @@ extern char *z_errmsg[]; /* indexed by 1-zlib_error */
    extern void zmemcpy  OF((Bytef* dest, Bytef* source, uInt len));
    extern void zmemzero OF((Bytef* dest, uInt len));
 #endif
-#endif
+#endif	/* __KERNEL__ */
+#endif	/* KERNEL */
 
 /* Diagnostic functions */
 #ifdef DEBUG_ZLIB
@@ -478,9 +488,7 @@ local void ct_stored_type_only OF((deflate_state *s));
 
 /* From: deflate.c,v 1.8 1995/05/03 17:27:08 jloup Exp */
 
-#if 0
 local char zlib_copyright[] = " deflate Copyright 1995 Jean-loup Gailly ";
-#endif
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
