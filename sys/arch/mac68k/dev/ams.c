@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 1999/02/16 01:08:16 ender Exp $	*/
+/*	$NetBSD: ams.c,v 1.6 2000/02/14 07:01:46 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -39,22 +39,27 @@
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
+#include "aed.h"
+#include "wsmouse.h"
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
+
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
 #include <mac68k/dev/aedvar.h>
-#include <mac68k/dev/msvar.h>
-#include <mac68k/dev/itevar.h>
+#include <mac68k/dev/amsvar.h>
 
 /*
  * Function declarations.
  */
-static int	msmatch __P((struct device *, struct cfdata *, void *));
-static void	msattach __P((struct device *, struct device *, void *));
-static void	ems_init __P((struct ms_softc *));
-static void	ms_processevent __P((adb_event_t *event, struct ms_softc *));
+static int	amsmatch __P((struct device *, struct cfdata *, void *));
+static void	amsattach __P((struct device *, struct device *, void *));
+static void	ems_init __P((struct ams_softc *));
+static void	ms_processevent __P((adb_event_t *event, struct ams_softc *));
 
 /*
  * Global variables.
@@ -68,14 +73,24 @@ static volatile int extdms_done;  /* Did ADBOp() complete? */
 
 
 /* Driver definition. */
-struct cfattach ms_ca = {
-	sizeof(struct ms_softc), msmatch, msattach
+struct cfattach ams_ca = {
+	sizeof(struct ams_softc), amsmatch, amsattach
 };
 
-extern struct cfdriver ms_cd;
+extern struct cfdriver ams_cd;
+
+int ams_enable __P((void *));
+int ams_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+void ams_disable __P((void *));
+
+const struct wsmouse_accessops ams_accessops = {
+	ams_enable,
+	ams_ioctl,
+	ams_disable,
+};
 
 static int
-msmatch(parent, cf, aux)
+amsmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -89,14 +104,17 @@ msmatch(parent, cf, aux)
 }
 
 static void
-msattach(parent, self, aux)
+amsattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
 	ADBSetInfoBlock adbinfo;
-	struct ms_softc *sc = (struct ms_softc *)self;
+	struct ams_softc *sc = (struct ams_softc *)self;
 	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
 	int error;
+#if NWSMOUSE > 0
+	struct wsmousedev_attach_args a;
+#endif
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -177,10 +195,14 @@ msattach(parent, self, aux)
 	error = SetADBInfo(&adbinfo, sc->adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
-		printf("ms: returned %d from SetADBInfo\n", error);
+		printf("ams: returned %d from SetADBInfo\n", error);
 #endif
 
-	return;
+#if NWSMOUSE > 0
+	a.accessops = &ams_accessops;
+	a.accesscookie = sc;
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+#endif
 }
 
 
@@ -196,7 +218,7 @@ msattach(parent, self, aux)
  */
 void
 ems_init(sc)
-	struct ms_softc * sc;
+	struct ams_softc * sc;
 {
 	int adbaddr, count;
 	short cmd;
@@ -413,7 +435,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 	int adb_command;
 {
 	adb_event_t event;
-	struct ms_softc *msc;
+	struct ams_softc *amsc;
 	int adbaddr;
 #ifdef ADB_DEBUG
 	int i;
@@ -423,9 +445,9 @@ ms_adbcomplete(buffer, data_area, adb_command)
 #endif
 
 	adbaddr = (adb_command & 0xf0) >> 4;
-	msc = (struct ms_softc *)data_area;
+	amsc = (struct ams_softc *)data_area;
 
-	if ((msc->handler_id == ADBMS_EXTENDED) && (msc->sc_devid[0] == 0)) {
+	if ((amsc->handler_id == ADBMS_EXTENDED) && (amsc->sc_devid[0] == 0)) {
 		/* massage the data to look like EMP data */
 		if ((buffer[3] & 0x04) == 0x04)
 			buffer[1] &= 0x7f;
@@ -442,14 +464,14 @@ ms_adbcomplete(buffer, data_area, adb_command)
 	}
 
 	event.addr = adbaddr;
-	event.hand_id = msc->handler_id;
-	event.def_addr = msc->origaddr;
+	event.hand_id = amsc->handler_id;
+	event.def_addr = amsc->origaddr;
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("ms: from %d at %d (org %d) %d:", event.addr,
+		printf("ams: from %d at %d (org %d) %d:", event.addr,
 		    event.hand_id, event.def_addr, buffer[0]);
 		for (i = 1; i <= buffer[0]; i++)
 			printf(" %x", buffer[i]);
@@ -459,7 +481,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 
 	microtime(&event.timestamp);
 
-	ms_processevent(&event, msc);
+	ms_processevent(&event, amsc);
 }
 
 /*
@@ -467,9 +489,9 @@ ms_adbcomplete(buffer, data_area, adb_command)
  * x- and y-axis motion, and handoff the event to the appropriate subsystem.
  */
 static void
-ms_processevent(event, msc)
+ms_processevent(event, amsc)
 	adb_event_t *event;
-	struct ms_softc *msc;
+	struct ams_softc *amsc;
 {
 	adb_event_t new_event;
 	int i, button_bit, max_byte, mask, buttons;
@@ -520,32 +542,43 @@ ms_processevent(event, msc)
 		}
 		break;
 	}
-	new_event.u.m.buttons = msc->sc_mb | buttons;
+	new_event.u.m.buttons = amsc->sc_mb | buttons;
 	new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
 				((event->bytes[1] & 0x40) ? 64 : 0);
 	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
-	aed_input(&new_event);
-}
-
-#if 0
-int 
-msioctl(dev, cmd, data, flag, p)
-    dev_t dev;
-    int cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
-{
-	struct ms_softc *msc;
-
-	msc = ms_cd.cd_devs[minor(dev)];
-
-	switch (cmd) {
-	default:
-		return (EINVAL);
-	}
-	return (0);
-}
+#if NAED > 0
+	if (!aed_input(&new_event))
 #endif
+#if NWSMOUSE > 0
+		wsmouse_input(amsc->sc_wsmousedev, new_event.u.m.buttons,
+		    new_event.u.m.dx, new_event.u.m.dy, 0, 0);
+#else
+		/* do nothing */ ;
+#endif
+}
+
+int
+ams_enable(v)
+	void *v;
+{
+	return 0;
+}
+
+int
+ams_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	return (ENOTTY);
+}
+
+void
+ams_disable(v)
+	void *v;
+{
+}
