@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Robert Elz at The University of Melbourne.
@@ -35,14 +35,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1990 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)repquota.c	5.11 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: repquota.c,v 1.3 1994/06/13 20:52:39 cgd Exp $";
+/*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: repquota.c,v 1.4 1994/06/13 22:07:26 mycroft Exp $";
 #endif /* not lint */
 
 /*
