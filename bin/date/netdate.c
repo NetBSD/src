@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.20 2001/09/13 10:06:41 wiz Exp $ */
+/* $NetBSD: netdate.c,v 1.21 2001/11/03 13:08:16 lukem Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.20 2001/09/13 10:06:41 wiz Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.21 2001/11/03 13:08:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ extern int retval;
 int
 netsettime(time_t tval)
 {
-	struct sockaddr_in dest, from, sin;
+	struct sockaddr_in dest, from, nsin;
 	struct timeval tout;
 	struct tsp msg;
 	char hostname[MAXHOSTNAMELEN];
@@ -114,12 +114,12 @@ netsettime(time_t tval)
 	}
 #endif
 
-	(void)memset(&sin, 0, sizeof(sin));
+	(void)memset(&nsin, 0, sizeof(nsin));
 #ifdef BSD4_4
-	sin.sin_len = sizeof(struct sockaddr_in);
+	nsin.sin_len = sizeof(struct sockaddr_in);
 #endif
-	sin.sin_family = AF_INET;
-	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	nsin.sin_family = AF_INET;
+	if (bind(s, (struct sockaddr *)&nsin, sizeof(nsin)) < 0) {
 		warn("bind");
 		goto bad;
 	}
