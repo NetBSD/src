@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.53 2000/06/14 22:02:24 veego Exp $
+# 	$NetBSD: GENERIC,v 1.54 2000/06/17 10:53:05 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 maxusers	8
 
@@ -26,7 +26,7 @@ options 	DDB			# in-kernel debugger
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 
-options 	SCSIVERBOSE		# human readable SCSI error messages
+#options 	SCSIVERBOSE		# human readable SCSI error messages
 #options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
@@ -50,7 +50,7 @@ file-system 	FFS             # fast filesystem with user and group quotas
 file-system 	MFS		# memory-based filesystem
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
 #file-system	LFS		# Log-based filesystem (still experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern (kernel informational filesystem)
@@ -63,7 +63,7 @@ file-system 	UNION
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 #options 	SOFTDEP         # FFS soft updates support.
-options 	QUOTA		# UFS quotas
+#options 	QUOTA		# UFS quotas
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -303,7 +303,7 @@ pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
-pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	ccd		4	# concatenated disks
 pseudo-device   rnd                     # /dev/random and in-kernel generator
 
 pseudo-device	biconsdev	1	# build-in console device
