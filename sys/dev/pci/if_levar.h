@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.3 1996/10/21 22:56:46 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.3.4.1 1997/02/27 19:17:40 is Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -20,7 +20,7 @@
  * Ethernet software status per interface.
  *
  * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
+ * ethercom.ec_if, which the routing code uses to locate the interface.
  * This structure contains the output queue for the interface, its address, ...
  */
 struct le_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9.4.5 1997/02/26 21:59:52 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.6 1997/02/27 19:17:37 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -49,8 +49,6 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/netisr.h>
-#include <net/route.h>
 
 #include <net/if_ether.h>
 
@@ -264,6 +262,7 @@ iyattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	unsigned temp;
 	u_int16_t eaddr[8];
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	int eirq;
@@ -333,6 +332,9 @@ iyattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, 
 	    IPL_NET, iyintr, sc);
+
+	temp = bus_space_read_1(iot, ioh, INT_NO_REG);
+	bus_space_write_1(iot, ioh, INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
 }
 
 void
