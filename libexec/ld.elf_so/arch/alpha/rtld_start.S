@@ -1,8 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.14 2002/09/12 17:18:37 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.15 2002/10/05 11:59:05 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
- * Portions copyright 2002 Charles M. Hannum.
+ * Portions copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,8 @@
-/*	$NetBSD: paths.c,v 1.18 2002/09/28 05:00:27 junyoung Exp $	 */
+/*	$NetBSD: paths.c,v 1.19 2002/10/05 11:59:04 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,8 +54,8 @@
 
 static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
 static Search_Path **_rtld_append_path __P((Search_Path **, Search_Path **,
-    const char *, const char *));
-static void _rtld_process_mapping __P((Library_Xform **, char *, char *));
+    const char *, size_t));
+static void _rtld_process_mapping __P((Library_Xform **, char *, size_t));
 
 static Search_Path *
 _rtld_find_path(path, pathstr, pathlen)
@@ -71,25 +72,25 @@ _rtld_find_path(path, pathstr, pathlen)
 }
 
 static Search_Path **
-_rtld_append_path(head_p, path_p, bp, ep)
+_rtld_append_path(head_p, path_p, bp, len)
 	Search_Path **head_p, **path_p;
 	const char *bp;
-	const char *ep;
+	size_t len;
 {
 	char *cp;
 	Search_Path *path;
 
-	if (bp == NULL || bp == ep || *bp == '\0')
+	if (bp == NULL || len == 0 || *bp == '\0')
 		return path_p;
 
-	if (_rtld_find_path(*head_p, bp, ep - bp) != NULL)
+	if (_rtld_find_path(*head_p, bp, len) != NULL)
 		return path_p;
 
 	path = NEW(Search_Path);
-	path->sp_pathlen = ep - bp;
-	cp = xmalloc(path->sp_pathlen + 1);
-	strncpy(cp, bp, path->sp_pathlen);
-	cp[path->sp_pathlen] = '\0';
+	path->sp_pathlen = len;
+	cp = xmalloc(len + 1);
+	memcpy(cp, bp, len);
+	cp[len] = '\0';
 	path->sp_path = cp;
 	path->sp_next = (*path_p);
 	(*path_p) = path;
@@ -124,7 +125,7 @@ _rtld_add_paths(path_p, pathstr)
 		if (ep == NULL)
 			ep = &pathstr[strlen(pathstr)];
 
-		path_p = _rtld_append_path(head_p, path_p, bp, ep);
+		path_p = _rtld_append_path(head_p, path_p, bp, ep - bp);
 
 		if (ep[0] == '\0')
 			break;
@@ -186,16 +187,17 @@ const struct list *lists[] = {
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
  */
 static void
-_rtld_process_mapping(lib_p, bp, ep)
+_rtld_process_mapping(lib_p, bp, len)
 	Library_Xform **lib_p;
-	char *bp, *ep;
+	char *bp;
+	size_t len;
 {
 	static const char WS[] = " \t\n";
 	Library_Xform *hwptr = NULL;
 	char *ptr, *key, *lib, *l;
 	int i, j, k;
 	
-	if (bp == NULL || bp == ep || *bp == '\0')
+	if (bp == NULL || len == 0 || *bp == '\0')
 		return;
 
 	dbg((" processing mapping \"%s\"", bp));
@@ -372,12 +374,13 @@ _rtld_process_hints(path_p, lib_p, fname)
 			break;
 
 		case '\n':
-			*p = '\0';
 			if (doing_path)
 				path_p = _rtld_append_path(head_p, path_p, b,
-				    p);
-			else
-				_rtld_process_mapping(lib_p, b, p);
+				    p - b);
+			else {
+				*p = '\0';
+				_rtld_process_mapping(lib_p, b, p - b);
+			}
 			b = NULL;
 			break;
 
@@ -387,13 +390,15 @@ _rtld_process_hints(path_p, lib_p, fname)
 				for  (sp = p - 1; *sp == ' ' ||
 				    *sp == '\t'; --sp)
 					continue;
-				*++sp = '\0';
+				++sp;
 				if (doing_path)
 					path_p = _rtld_append_path(head_p,
-					    path_p, b, sp);
-				else
-					_rtld_process_mapping(lib_p, b, sp);
-				*sp = ' ';
+					    path_p, b, sp - b);
+				else {
+					*sp = '\0';
+					_rtld_process_mapping(lib_p, b, sp - b);
+					*sp = ' ';
+				}
 			}
 			b = NULL;
 			break;
@@ -406,9 +411,9 @@ _rtld_process_hints(path_p, lib_p, fname)
 	}
 
 	if (doing_path)
-		path_p = _rtld_append_path(head_p, path_p, b, ebuf);
+		path_p = _rtld_append_path(head_p, path_p, b, ebuf - b);
 	else
-		_rtld_process_mapping(lib_p, b, ebuf);
+		_rtld_process_mapping(lib_p, b, ebuf - b);
 
 	(void)munmap(buf, sz);
 }
