@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.190 2004/05/08 15:50:15 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.191 2004/05/09 08:24:00 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1911,3 +1911,24 @@ sbin/mount_nfs/mount_nfs.8			1.25
 	Reword some awkward english.  Sprinkle mandoc macros throughout.
 	Add white space to aid readability. Change date.
 	[fair, ticket #264]
+
+usr.bin/vi/common/line.c			1.7
+
+	Flush the current line cache on every operation on the DB.
+	We can't keep a reference to data returned by libdb after a
+	subsequent call to  any other libdb function on that DB.
+	[aymeric, ticket #261]
+
+sys/dev/ata/atareg.h				1.18
+sys/dev/ata/wd.c				1.275
+
+	When using LBA48, use Flush cache extended command if supported.
+	PR#25366.
+	[bouyer, ticket #262]
+
+bin/pax/tar.1					1.14
+bin/pax/pax.1					1.48
+
+	Documentation fixes.
+	[grant, ticket #263]
+
