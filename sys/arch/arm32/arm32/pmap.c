@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.3 1996/03/08 21:21:47 mark Exp $ */
+/* $NetBSD: pmap.c,v 1.4 1996/03/13 21:25:04 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -105,7 +105,6 @@ pmap_t          kernel_pmap;
 
 pagehook_t page_hook0;
 pagehook_t page_hook1;
-pagehook_t kstack_hook;
 char *memhook;
 pt_entry_t msgbufpte;
 
@@ -146,8 +145,6 @@ extern pv_addr_t kernelstack;
 #if NHYDRABUS > 0
 extern pv_addr_t hydrascratch;
 #endif
-
-char *kstack;
 
 #define ALLOC_PAGE_HOOK(x, s) \
 	x.va = virtual_start; \
@@ -546,16 +543,6 @@ pmap_bootstrap(kernel_l1pt)
 	ALLOC_PAGE_HOOK(page_hook0, NBPG);
 	ALLOC_PAGE_HOOK(page_hook1, NBPG);
 
-/* Allocate hook for kstack with padding to trap over/underflows */
-
-#ifdef DIAGNOSTIC
-	virtual_start += NBPG;
-#endif
-	ALLOC_PAGE_HOOK(kstack_hook, USPACE);
-#ifdef DIAGNOSTIC
-	virtual_start += NBPG;
-#endif
-
 /* The mem special device needs a virtual hook but we don't need a pte */
 
 	memhook = (char *)virtual_start;
@@ -564,23 +551,6 @@ pmap_bootstrap(kernel_l1pt)
 	msgbufp = (struct msgbuf *)virtual_start;
 	msgbufpte = (pt_entry_t)pmap_pte(kernel_pmap, virtual_start);
 	virtual_start += round_page(sizeof(struct msgbuf));
-
-/*	kstack = (char *)kstack_hook.va;*/
-	kstack = (char *)0xefbfe000;
-
-/* This is nasty !! */
-
-	*(kstack_hook.pte+0) = L2_PTE_NC(kernelstack.physical & PG_FRAME, AP_KRW);
-	*(kstack_hook.pte+1) = L2_PTE_NC((kernelstack.physical + NBPG) & PG_FRAME,
-	    AP_KRW);
-	tlbflush();
-
-
-/*	printf("kstack physical address = P%08x\n",
-	    pmap_extract(kernel_pmap, (vm_offset_t)kstack_hook.va));
-	printf("kstack hook at V%08x ptr=%08x\n", kstack_hook.va,
-	    kstack_hook.pte);
-	printf("*kstack_hook_pte = %08x\n", *kstack_hook.pte);*/
 
 #if PMAPDEBUG > 0
 	printf("pmap_bootstrap: page_hook = V%08x pte = V%08x\n",
@@ -1819,11 +1789,6 @@ pmap_enter(pmap, va, pa, prot, wired)
           }          
       }
 
-    if (va >= (vm_offset_t)kstack && va < (vm_offset_t)(kstack+USPACE)) {
-/*      printf("pmap_enter(%08x, %08x, %d, %d, %d)\n", va, pa, pind, prot, wired);*/
-      cacheable = 0;
-    }
-
 /* Construct the pte, giving the correct access */
       
      npte = (pa & PG_FRAME) | cacheable | PT_B;
@@ -1847,7 +1812,7 @@ if (va == 0 && (prot & VM_PROT_WRITE))
      if (va >= VM_MIN_ADDRESS) {
        if (va < VM_MAXUSER_ADDRESS)
          npte |= PT_AP(AP_U);
-       else if (va < VM_MAX_ADDRESS) /* This must be the kstack or a page table */
+       else if (va < VM_MAX_ADDRESS) /* This must be a page table */
          npte |= PT_AP(AP_W);
      }
 
