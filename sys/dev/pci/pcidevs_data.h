@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.109 1999/02/14 22:44:36 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.110 1999/02/19 05:53:36 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.104 1999/02/14 22:38:18 tron Exp 
+ *	NetBSD: pcidevs,v 1.105 1999/02/19 05:53:00 thorpej Exp 
  */
 
 /*
@@ -460,6 +460,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "2000MT",
 	},
 	{
+	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
+	    0,
+	    "ASIX Electronics",
+	    "AX88140A 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    0,
 	    "ATI Technologies",
@@ -872,6 +878,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compex",
 	    "Ethernet",
+	},
+	{
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100ATX,
+	    0,
+	    "Compex",
+	    "RL100-ATX 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -1438,10 +1450,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "S3 805",
 	},
 	{
+	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC,
+	    0,
+	    "Lite-On Communications",
+	    "82C168/82C169 (PNIC) 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
 	    0,
 	    "Macronix",
-	    "PMAC 100/10base PCI MAC controller",
+	    "MX98713 (PMAC) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX987x5,
+	    0,
+	    "Macronix",
+	    "MX987x5 (PMAC) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,
@@ -2560,10 +2584,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "W83769F",
 	},
 	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F,
+	    0,
+	    "Winbond Electronics",
+	    "W89C840F 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
 	    0,
 	    "Winbond Electronics",
-	    "W89C940F",
+	    "W89C940F Ethernet",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
@@ -5263,6 +5293,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LINEARSYS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Linear Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ASIX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ASIX Electronics",
 	    NULL,
 	},
 	{
