@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.8 2001/09/16 08:51:17 chris Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.9 2001/10/18 10:30:34 rearnsha Exp $	*/
 
 /*
  * xscale support code Copyright (c) 2001 Matt Thomas
@@ -69,19 +69,19 @@ ENTRY(cpufunc_nullop)
  */
 
 ENTRY(cpufunc_id)
-	mrc	15, 0, r0, c0, c0, 0
+	mrc	p15, 0, r0, c0, c0, 0
 	mov	pc, lr
 
 ENTRY(cpu_get_control)
-	mrc	15, 0, r0, c1, c0, 0
+	mrc	p15, 0, r0, c1, c0, 0
 	mov	pc, lr
 
 ENTRY(cpufunc_faultstatus)
-	mrc	15, 0, r0, c5, c0, 0
+	mrc	p15, 0, r0, c5, c0, 0
 	mov	pc, lr
 
 ENTRY(cpufunc_faultaddress)
-	mrc	15, 0, r0, c6, c0, 0
+	mrc	p15, 0, r0, c6, c0, 0
 	mov	pc, lr
 
 
@@ -97,11 +97,11 @@ ENTRY(cpufunc_faultaddress)
  */
  
 /*ENTRY(cpufunc_control)
-	mcr	15, 0, r0, c1, c0, 0
+	mcr	p15, 0, r0, c1, c0, 0
 	mov	pc, lr*/
 
 ENTRY(cpufunc_domains)
-	mcr	15, 0, r0, c3, c0, 0
+	mcr	p15, 0, r0, c3, c0, 0
 	mov	pc, lr
 
 /*
@@ -115,46 +115,46 @@ ENTRY(cpufunc_domains)
  */
  
 ENTRY(cpufunc_control)
-	mrc	15, 0, r3, c1, c0, 0	/* Read the control register */
+	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
 	bic	r2, r3, r0		/* Clear bits */
 	eor     r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there is a change */
-	mcrne	15, 0, r2, c1, c0, 0	/* Write new control register */
+	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 
 #ifdef CPU_ARM3
 	/* The ARM3 has its control register in a different place. */
 ENTRY(arm3_control)
-	mrc	15, 0, r3, c2, c0, 0	/* Read the control register */
+	mrc	p15, 0, r3, c2, c0, 0	/* Read the control register */
 	bic	r2, r3, r0		/* Clear bits */
 	eor     r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there is a change */
-	mcrne	15, 0, r2, c2, c0, 0	/* Write new control register */
+	mcrne	p15, 0, r2, c2, c0, 0	/* Write new control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 #endif
 
 #ifdef CPU_ARM8
 ENTRY(arm8_clock_config)
-	mrc	15, 0, r3, c15, c0, 0	/* Read the clock register */
+	mrc	p15, 0, r3, c15, c0, 0	/* Read the clock register */
 	bic	r2, r3, #0x11		/* turn off dynamic clocking
 					   and clear L bit */
-	mcr	15, 0, r2, c15, c0, 0	/* Write clock register */
+	mcr	p15, 0, r2, c15, c0, 0	/* Write clock register */
 
 	bic	r2, r3, r0		/* Clear bits */
 	eor     r2, r2, r1		/* XOR bits */
 	bic	r2, r2, #0x10		/* clear the L bit */
 
 	bic	r1, r2, #0x01		/* still keep dynamic clocking off */
-	mcr	15, 0, r1, c15, c0, 0	/* Write clock register */
+	mcr	p15, 0, r1, c15, c0, 0	/* Write clock register */
 	mov	r0, r0			/* NOP */
 	mov	r0, r0			/* NOP */
 	mov	r0, r0			/* NOP */
 	mov	r0, r0			/* NOP */
-	mcr	15, 0, r2, c15, c0, 0	/* Write clock register */
+	mcr	p15, 0, r2, c15, c0, 0	/* Write clock register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 #endif	/* CPU_ARM8 */
@@ -170,16 +170,16 @@ ENTRY(arm67_setttb)
 	 * We need to flush the cache as it uses virtual addresses that
 	 * are about to change
 	 */
-        mcr     15, 0, r0, c7, c0, 0
+        mcr     p15, 0, r0, c7, c0, 0
 
 	/* Write the TTB */
-	mcr	15, 0, r0, c2, c0, 0
+	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c5, c0, 0
+        mcr     p15, 0, r0, c5, c0, 0
 
 	/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c0, 0
+        mcr     p15, 0, r0, c7, c0, 0
 
 	/* Make sure that pipeline is emptied */
         mov     r0, r0
@@ -219,16 +219,16 @@ ENTRY(arm8_setttb)
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(arm8_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
-	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
+	mcr	p15, 0, r0, c7, c7, 0		/* flush I+D cache */
 
 	/* Write the TTB */
-	mcr	15, 0, r0, c2, c0, 0
+	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr     15, 0, r0, c8, c7, 0
+	mcr     p15, 0, r0, c8, c7, 0
 
 	/* For good measure we will flush the IDC as well */
-	mcr     15, 0, r0, c7, c7, 0
+	mcr     p15, 0, r0, c7, c7, 0
 
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
@@ -260,17 +260,17 @@ ENTRY(sa110_setttb)
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(sa110_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
-	mcr	15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
-	mcr	15, 0, r0, c7, c10, 4	/* drain write (& fill) buffer */
+	mcr	p15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write (& fill) buffer */
 
 	/* Write the TTB */
-	mcr	15, 0, r0, c2, c0, 0	/* set translation table base */
+	mcr	p15, 0, r0, c2, c0, 0	/* set translation table base */
 
 	/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c8, c7, 0	/* invalidate I&D TLB */
+        mcr     p15, 0, r0, c8, c7, 0	/* invalidate I&D TLB */
 
 	/* The cleanID above means we only need to flush the I cache here */
-        mcr     15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
+        mcr     p15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
 
 	/* Make sure that pipeline is emptied */
         mov     r0, r0
@@ -299,20 +299,20 @@ ENTRY(xscale_setttb)
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(xscale_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
-	mcr	15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
-	mcr	15, 0, r0, c7, c10, 4	/* drain write (& fill) buffer */
+	mcr	p15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write (& fill) buffer */
 
 	/* Write the TTB */
-	mcr	15, 0, r0, c2, c0, 0	/* set translation table base */
+	mcr	p15, 0, r0, c2, c0, 0	/* set translation table base */
 
 	/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c8, c7, 0	/* invalidate I&D TLB */
+        mcr     p15, 0, r0, c8, c7, 0	/* invalidate I&D TLB */
 
 	/* The cleanID above means we only need to flush the I cache here */
-        mcr     15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
+        mcr     p15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
 
 	/* Make sure that pipeline is emptied */
-	mrc	15, 0, r0, c2, c0, 0	/* read some register in CP15 */
+	mrc	p15, 0, r0, c2, c0, 0	/* read some register in CP15 */
         mov	r0, r0			/* for the read to complete */
         sub	pc, pc, #4		/* branch to next instruction */
 					/*  (flush the instruction pipeline) */
@@ -330,11 +330,11 @@ ENTRY(xscale_setttb)
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 ENTRY(arm67_tlb_flush)
-	mcr	15, 0, r0, c5, c0, 0
+	mcr	p15, 0, r0, c5, c0, 0
 	mov	pc, lr
 
 ENTRY(arm67_tlb_purge)
-	mcr	15, 0, r0, c6, c0, 0
+	mcr	p15, 0, r0, c6, c0, 0
 	mov	pc, lr
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
@@ -350,48 +350,48 @@ ENTRY(arm7tdmi_tlb_flushID_SE)
 #endif	
 #ifdef CPU_ARM8
 ENTRY(arm8_tlb_flushID)
-	mcr	15, 0, r0, c8, c7, 0		/* flush I+D tlb */
+	mcr	p15, 0, r0, c8, c7, 0		/* flush I+D tlb */
 	mov	pc, lr
 
 ENTRY(arm8_tlb_flushID_SE)
-	mcr	15, 0, r0, c8, c7, 1		/* flush I+D tlb single entry */
+	mcr	p15, 0, r0, c8, c7, 1		/* flush I+D tlb single entry */
 	mov	pc, lr
 #endif	/* CPU_ARM8 */
 
 #if defined(CPU_SA110) || defined(CPU_XSCALE)
 ENTRY_NP(xscale_tlb_flushID)
 ENTRY(sa110_tlb_flushID)
-	mcr	15, 0, r0, c8, c7, 0		/* flush I+D tlb */
+	mcr	p15, 0, r0, c8, c7, 0		/* flush I+D tlb */
 	mov	pc, lr
 
 #if defined(CPU_SA110)
 ENTRY(sa110_tlb_flushID_SE)
-	mcr	15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
-	mcr	15, 0, r0, c8, c5, 0		/* flush I tlb */
+	mcr	p15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c5, 0		/* flush I tlb */
 	mov	pc, lr
 #endif	/* CPU_SA110 */
 
 #if defined(CPU_XSCALE)
 ENTRY(xscale_tlb_flushID_SE)
-	mcr	15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
-	mcr	15, 0, r0, c8, c5, 1		/* flush I tlb single entry */
-	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
+	mcr	p15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c5, 1		/* flush I tlb single entry */
+	mcr	p15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	mov	pc, lr
 #endif	/* CPU_XSCALE */
 
 ENTRY_NP(xscale_tlb_flushI)
 ENTRY(sa110_tlb_flushI)
-	mcr	15, 0, r0, c8, c5, 0		/* flush I tlb */
+	mcr	p15, 0, r0, c8, c5, 0		/* flush I tlb */
 	mov	pc, lr
 
 ENTRY_NP(xscale_tlb_flushD)
 ENTRY(sa110_tlb_flushD)
-	mcr	15, 0, r0, c8, c6, 0		/* flush D tlb */
+	mcr	p15, 0, r0, c8, c6, 0		/* flush D tlb */
 	mov	pc, lr
 
 ENTRY_NP(xscale_tlb_flushD_SE)
 ENTRY(sa110_tlb_flushD_SE)
-	mcr	15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
 	mov	pc, lr
 #endif	/* CPU_SA110 || CPU_XSCALE */
 
@@ -401,13 +401,13 @@ ENTRY(sa110_tlb_flushD_SE)
 
 #if defined(CPU_ARM3)
 ENTRY(arm3_cache_flush)
-	mcr	15, 0, r0, c1, c0, 0
+	mcr	p15, 0, r0, c1, c0, 0
 	mov	pc, lr
 #endif /* CPU_ARM3 */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 ENTRY(arm67_cache_flush)
-	mcr	15, 0, r0, c7, c0, 0
+	mcr	p15, 0, r0, c7, c0, 0
 	mov	pc, lr
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
@@ -425,11 +425,11 @@ ENTRY(arm7tdmi_cache_flushID)
 	
 #ifdef CPU_ARM8
 ENTRY(arm8_cache_flushID)
-	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
+	mcr	p15, 0, r0, c7, c7, 0		/* flush I+D cache */
 	mov	pc, lr
 
 ENTRY(arm8_cache_flushID_E)
-	mcr	15, 0, r0, c7, c7, 1		/* flush I+D single entry */
+	mcr	p15, 0, r0, c7, c7, 1		/* flush I+D single entry */
 	mov	pc, lr
 
 ENTRY(arm8_cache_cleanID)
@@ -437,37 +437,37 @@ ENTRY(arm8_cache_cleanID)
 
 Larm8_cache_cleanID_loop:
 	mov	r2, r0
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c11, 1
 
 	adds	r0, r0, #0x04000000
 	bne	Larm8_cache_cleanID_loop
@@ -475,7 +475,7 @@ Larm8_cache_cleanID_loop:
 	mov	pc, lr
 
 ENTRY(arm8_cache_cleanID_E)
-	mcr	15, 0, r0, c7, c11, 1		/* clean ID single entry */
+	mcr	p15, 0, r0, c7, c11, 1		/* clean ID single entry */
 	mov	pc, lr
 
 ENTRY(arm8_cache_purgeID)
@@ -483,13 +483,13 @@ ENTRY(arm8_cache_purgeID)
 	 * ARM810 bug 3
 	 *
 	 * Clean and invalidate entry will not invalidate the entry
-	 * if the line was already clean. (mcr 15, 0, rd, c7, 15, 1)
+	 * if the line was already clean. (mcr p15, 0, rd, c7, 15, 1)
 	 *
 	 * Instead of using the clean and invalidate entry operation
 	 * use a separate clean and invalidate entry operations.
 	 * i.e.
-	 * mcr 15, 0, rd, c7, 11, 1
-	 * mcr 15, 0, rd, c7, 7, 1
+	 * mcr p15, 0, rd, c7, c11, 1
+	 * mcr p15, 0, rd, c7, c7, 1
 	 */
 
 	mov	r0, #0x00000000
@@ -500,53 +500,53 @@ ENTRY(arm8_cache_purgeID)
 
 Larm8_cache_purgeID_loop:
 	mov	r2, r0
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
-	mcr	15, 0, r2, c7, c11, 1
-	mcr	15, 0, r2, c7, c7, 1
+	mcr	p15, 0, r2, c7, c11, 1
+	mcr	p15, 0, r2, c7, c7, 1
 
 	adds	r0, r0, #0x04000000
 	bne	Larm8_cache_purgeID_loop
@@ -559,19 +559,19 @@ ENTRY(arm8_cache_purgeID_E)
 	 * ARM810 bug 3
 	 *
 	 * Clean and invalidate entry will not invalidate the entry
-	 * if the line was already clean. (mcr 15, 0, rd, c7, 15, 1)
+	 * if the line was already clean. (mcr p15, 0, rd, c7, c15, 1)
 	 *
 	 * Instead of using the clean and invalidate entry operation
 	 * use a separate clean and invalidate entry operations.
 	 * i.e.
-	 * mcr 15, 0, rd, c7, 11, 1
-	 * mcr 15, 0, rd, c7, 7, 1
+	 * mcr p15, 0, rd, c7, c11, 1
+	 * mcr p15, 0, rd, c7, c7, 1
 	 */
 	mrs	r3, cpsr_all
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r2
-	mcr	15, 0, r0, c7, c11, 1		/* clean ID single entry */
-	mcr	15, 0, r0, c7, c7, 1		/* flush ID single entry */
+	mcr	p15, 0, r0, c7, c11, 1		/* clean ID single entry */
+	mcr	p15, 0, r0, c7, c7, 1		/* flush ID single entry */
 	msr	cpsr_all , r3
 	mov	pc, lr
 #endif	/* CPU_ARM8 */
@@ -579,34 +579,34 @@ ENTRY(arm8_cache_purgeID_E)
 #if defined(CPU_SA110) || defined(CPU_XSCALE)
 ENTRY_NP(xscale_cache_flushID)
 ENTRY(sa110_cache_flushID)
-	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
+	mcr	p15, 0, r0, c7, c7, 0		/* flush I+D cache */
 	mov	pc, lr
 
 ENTRY_NP(xscale_cache_flushI)
 ENTRY(sa110_cache_flushI)
-	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
+	mcr	p15, 0, r0, c7, c5, 0		/* flush I cache */
 	mov	pc, lr
 
 ENTRY_NP(xscale_cache_flushD)
 ENTRY(sa110_cache_flushD)
-	mcr	15, 0, r0, c7, c6, 0		/* flush D cache */
+	mcr	p15, 0, r0, c7, c6, 0		/* flush D cache */
 	mov	pc, lr
 
 #if defined(CPU_XSCALE)
 ENTRY(xscale_cache_flushI_SE)
-	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
-	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
+	mcr	p15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	p15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	mov	pc, lr
 #endif
 
 ENTRY_NP(xscale_cache_flushD_SE)
 ENTRY(sa110_cache_flushD_SE)
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 
 ENTRY_NP(xscale_cache_cleanD_E)
 ENTRY(sa110_cache_cleanD_E)
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
 	mov	pc, lr
 #endif	/* CPU_SA110 || CPU_XSCALE */
 
@@ -656,7 +656,7 @@ Lsa110_cache_cleanD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_cleanD_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -687,8 +687,8 @@ Lsa110_cache_purgeID_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeID_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -719,7 +719,7 @@ Lsa110_cache_purgeD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeD_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -753,7 +753,7 @@ Lxscale_cache_clean_size:
 
 ENTRY_NP(xscale_cache_syncI)
 ENTRY_NP(xscale_cache_purgeID)
-	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D cleaned below) */
+	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D cleaned below) */
 ENTRY_NP(xscale_cache_cleanID)
 ENTRY_NP(xscale_cache_purgeD)
 ENTRY(xscale_cache_cleanD)
@@ -773,7 +773,7 @@ ENTRY(xscale_cache_cleanD)
 
 Lxscale_cache_cleanD_loop:
 	subs	r0, r0, #32
-	mcr	15, 0, r0, c7, c2, 5		/* allocate cache line */
+	mcr	p15, 0, r0, c7, c2, 5		/* allocate cache line */
 	subs	r1, r1, #32
 	bne	Lxscale_cache_cleanD_loop
 
@@ -792,7 +792,7 @@ Lxscale_cache_cleanD_loop2:
 	bne	Lxscale_cache_cleanD_loop2
 #endif
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
@@ -805,29 +805,29 @@ Lxscale_cache_cleanD_loop2:
 
 #if defined(CPU_SA110)
 ENTRY(sa110_cache_purgeID_E)
-	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 0		/* flush I cache */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif /* CPU_SA110 */
 
 #if defined(CPU_XSCALE)
 ENTRY(xscale_cache_purgeID_E)
-	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
-	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	p15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif	/* CPU_XSCALE */
 
 #if defined(CPU_SA110) || defined(CPU_XSCALE)
 ENTRY_NP(xscale_cache_purgeD_E)
 ENTRY(sa110_cache_purgeD_E)
-	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif	/* CPU_SA110 || CPU_XSCALE */
 
@@ -837,7 +837,7 @@ ENTRY(sa110_cache_purgeD_E)
 
 #if defined(CPU_SA110) || defined(CPU_XSCALE)
 ENTRY(sa110_drain_writebuf)
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 #endif	/* CPU_SA110 */
 
@@ -869,8 +869,8 @@ Lsa110_cache_syncI_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_syncI_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 0		/* flush I cache */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -888,12 +888,12 @@ ENTRY(sa110_cache_cleanD_rng)
 	bic	r0, r0, #0x1f
 
 sa110_cache_cleanD_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	sa110_cache_cleanD_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID_rng)
@@ -905,14 +905,14 @@ ENTRY(sa110_cache_purgeID_rng)
 	bic	r0, r0, #0x1f
 
 sa110_cache_purgeID_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeID_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
 
@@ -925,13 +925,13 @@ ENTRY(sa110_cache_purgeD_rng)
 	bic	r0, r0, #0x1f
 
 sa110_cache_purgeD_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeD_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(sa110_cache_syncI_rng)
@@ -943,13 +943,13 @@ ENTRY(sa110_cache_syncI_rng)
 	bic	r0, r0, #0x1f
 
 sa110_cache_syncI_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	sa110_cache_syncI_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
 #endif	/* CPU_SA110 */
@@ -980,8 +980,8 @@ Lxscale_cache_syncI_loop:
 	subs	r1, r1, #32
 	bne	Lxscale_cache_syncI_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c5, 0		/* flush I cache */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -1000,12 +1000,12 @@ ENTRY(xscale_cache_cleanD_rng)
 	bic	r0, r0, #0x1f
 
 xscale_cache_cleanD_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	xscale_cache_cleanD_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeID_rng)
@@ -1017,15 +1017,15 @@ ENTRY(xscale_cache_purgeID_rng)
 	bic	r0, r0, #0x1f
 
 xscale_cache_purgeID_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
-	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
-	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	p15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	xscale_cache_purgeID_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 
 	mov	pc, lr
 
@@ -1038,13 +1038,13 @@ ENTRY(xscale_cache_purgeD_rng)
 	bic	r0, r0, #0x1f
 
 xscale_cache_purgeD_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
-	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	xscale_cache_purgeD_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(xscale_cache_syncI_rng)
@@ -1056,14 +1056,14 @@ ENTRY(xscale_cache_syncI_rng)
 	bic	r0, r0, #0x1f
 
 xscale_cache_syncI_rng_loop:
-	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
-	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
-	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
+	mcr	p15, 0, r0, c7, c10, 1		/* clean D cache entry */
+	mcr	p15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	p15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	xscale_cache_syncI_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
+	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
 
 	mov	pc, lr
 #endif	/* CPU_SA110 */
@@ -1083,16 +1083,16 @@ ENTRY(arm67_context_switch)
 	/* Switch the memory to the new process */
 
 	/* For good measure we will flush the IDC as well */
-	mcr     15, 0, r0, c7, c0, 0		/* flush cache */
+	mcr     p15, 0, r0, c7, c0, 0		/* flush cache */
 
 	/* Write the TTB */
-	mcr     15, 0, r0, c2, c0, 0
+	mcr     p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr     15, 0, r0, c5, c0, 0
+	mcr     p15, 0, r0, c5, c0, 0
 
 	/* For good measure we will flush the IDC as well */
-/*	mcr     15, 0, r0, c7, c0, 0*/
+/*	mcr     p15, 0, r0, c7, c0, 0*/
 
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
@@ -1109,16 +1109,16 @@ ENTRY(arm8_context_switch)
 	/* Switch the memory to the new process */
 
 	/* For good measure we will flush the IDC as well */
-	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
+	mcr	p15, 0, r0, c7, c7, 0		/* flush i+d cache */
 
 	/* Write the TTB */
-	mcr     15, 0, r0, c2, c0, 0
+	mcr     p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+	mcr     p15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
 
 	/* For good measure we will flush the IDC as well */	
-/*	mcr     15, 0, r0, c7, c7, 0*/		/* flush the i+d cache */
+/*	mcr     p15, 0, r0, c7, c7, 0*/		/* flush the i+d cache */
 
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
@@ -1138,10 +1138,10 @@ ENTRY(sa110_context_switch)
 	 */
 
 	/* Write the TTB */
-	mcr     15, 0, r0, c2, c0, 0
+	mcr     p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+	mcr     p15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
 
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
@@ -1161,13 +1161,13 @@ ENTRY(xscale_context_switch)
 	 */
 
 	/* Write the TTB */
-	mcr     15, 0, r0, c2, c0, 0
+	mcr     p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+	mcr     p15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
 
 	/* Make sure that pipeline is emptied */
-	mrc	15, 0, r0, c2, c0, 0	/* read some register in CP15 */
+	mrc	p15, 0, r0, c2, c0, 0	/* read some register in CP15 */
         mov	r0, r0			/* for the read to complete */
         sub	pc, pc, #4		/* branch to next instruction */
 
@@ -1192,7 +1192,7 @@ ENTRY(xscale_context_switch)
  */
 ENTRY(get_pc_str_offset)
 	mov	ip, sp
-	stmfd	sp!, {ip, fp, lr, pc}
+	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	sub	sp, sp, #4
 	mov	r1, pc		/* R1 = addr of following STR */
@@ -1200,4 +1200,4 @@ ENTRY(get_pc_str_offset)
 	str	pc, [sp]	/* [SP] = . + offset */
 	ldr	r0, [sp]
 	sub	r0, r0, r1
-	ldmdb	fp, {sp, fp, pc}
+	ldmdb	fp, {fp, sp, pc}
