@@ -63,14 +63,14 @@ send-pr:	send-pr.sh Makefile
 	    -e 's%xDEFAULT_ORGANIZATIONx%$(DEFAULT_ORGANIZATION)%' \
 	    -e 's,xDEFAULT_RELEASEx,$(DEFAULT_RELEASE),' \
 	    -e 's,xDATADIRx,$(datadir),' $(srcdir)/send-pr.sh > $@-t
-	mv $@-t $@
+	mv -f $@-t $@
 	chmod 755 $@
 
 install-sid:	install-sid.sh Makefile
 	sed -e 's,xBINDIRx,$(bindir),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/install-sid.sh > $@-t
-	 mv $@-t $@
-	 chmod 755 $@
+	mv -f $@-t $@
+	chmod 755 $@
 
 send-pr.el:	send-pr-el.in Makefile
 	sed -e 's,xVERSIONx,$(VERSION),' \
@@ -81,12 +81,12 @@ send-pr.el:	send-pr-el.in Makefile
             -e 's,xDEFAULT_RELEASEx,$(DEFAULT_RELEASE),' \
 		$(srcdir)/send-pr-el.in \
             > $@-t
-	mv $@-t $@
+	mv -f $@-t $@
 
 send-pr.1:	send-pr.man Makefile
 	sed -e 's,xGNATS_ROOTx,$(GNATS_ROOT),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/send-pr.man > $@-t
-	mv $@-t $@
+	mv -f $@-t $@
 
 beforeinstall:
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} send-pr \
@@ -97,4 +97,3 @@ beforeinstall:
 		${DESTDIR}${LIBDIR}/gnats/${GNATS_SITE}
 
 .include <bsd.prog.mk>
-
