@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.12 1999/04/14 23:14:46 ragge Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.13 1999/05/18 23:52:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -577,9 +577,8 @@ ln_read(sc, boff, len)
 	}
 #endif
 
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	(*ifp->if_input)(ifp, m);
 }
 
 static inline void

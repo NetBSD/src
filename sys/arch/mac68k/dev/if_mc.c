@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.12 1998/12/22 08:47:05 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.13 1999/05/18 23:52:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -659,9 +659,8 @@ mace_read(sc, pkt, len)
 
 	ifp->if_ipackets++;
 
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	(*ifp->if_input)(ifp, m);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.23 1999/03/25 16:15:00 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.24 1999/05/18 23:52:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -947,8 +947,7 @@ tl_intr(v)
 					continue;
 				}
 				m->m_pkthdr.rcvif = ifp;
-				m->m_pkthdr.len = m->m_len =
-					size - sizeof(struct ether_header);
+				m->m_pkthdr.len = m->m_len = size;
 				eh = mtod(m, struct ether_header *);
 #ifdef TLDEBUG_RX
 				printf("tl_intr: Rx packet:\n");
@@ -973,8 +972,7 @@ tl_intr(v)
 					}
 				}
 #endif /* NBPFILTER > 0 */
-				m->m_data += sizeof(struct ether_header);
-				ether_input(ifp, eh, m);
+				(*ifp->if_input)(ifp, m);
 			}
 		}
 #ifdef TLDEBUG_RX

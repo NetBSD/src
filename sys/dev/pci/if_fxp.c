@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.33 1999/03/23 23:18:50 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.34 1999/05/18 23:52:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -944,9 +944,7 @@ fxp_intr(arg)
 						goto rcvloop;
 					}
 					m->m_pkthdr.rcvif = ifp;
-					m->m_pkthdr.len = m->m_len =
-					    total_len -
-					    sizeof(struct ether_header);
+					m->m_pkthdr.len = m->m_len = total_len;
 					eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 					if (ifp->if_bpf) {
@@ -968,9 +966,7 @@ fxp_intr(arg)
 						}
 					}
 #endif /* NBPFILTER > 0 */
-					m->m_data +=
-					    sizeof(struct ether_header);
-					ether_input(ifp, eh, m);
+					(*ifp->if_input)(ifp, m);
 				}
 				goto rcvloop;
 			}

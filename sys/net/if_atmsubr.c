@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.18 1998/07/05 22:48:07 jonathan Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.19 1999/05/18 23:57:20 thorpej Exp $       */
 
 /*
  *
@@ -307,6 +307,9 @@ atm_ifattach(ifp)
 	ifp->if_hdrlen = 0;
 	ifp->if_mtu = ATMMTU;
 	ifp->if_output = atm_output;
+#if 0 /* XXX XXX XXX */
+	ifp->if_input = atm_input;
+#endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
