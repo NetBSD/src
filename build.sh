@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.28 2001/11/30 02:18:13 thorpej Exp $
+#  $NetBSD: build.sh,v 1.29 2001/12/03 08:18:00 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -14,6 +14,8 @@ bomb () {
 	exit 1
 }
 [ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
+
+TOP=`pwd`
 
 getarch () {
 	# Translate a MACHINE into a default MACHINE_ARCH.
@@ -56,7 +58,7 @@ getarch () {
 }
 
 getmakevar () {
-	cat <<EOF | $make -s -f- _x_
+	cat <<EOF | $make -m ${TOP}/share/mk -s -f- _x_
 _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
@@ -245,7 +247,7 @@ fi
 # default setting from <bsd.own.mk> is used.
 if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
 	$runcmd cd tools
-	$runcmd $make obj NOSUBDIR= || exit 1
+	$runcmd $make -m ${TOP}/share/mk obj NOSUBDIR= || exit 1
 	$runcmd cd ..
 fi
 
@@ -323,7 +325,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.28 2001/11/30 02:18:13 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.29 2001/12/03 08:18:00 jmc Exp $
 #
 
 EOF
