@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.56 2003/02/01 21:07:02 erh Exp $	*/
+/*	$NetBSD: buf.h,v 1.57 2003/02/05 21:38:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/lock.h>
 
 struct buf;
 struct mount;
@@ -158,6 +159,7 @@ struct buf {
 	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
 	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
 	volatile long	b_flags;	/* B_* flags. */
+	struct simplelock b_interlock;	/* Lock for b_flags changes */
 	int	b_error;		/* Errno value. */
 	long	b_bufsize;		/* Allocated buffer size. */
 	long	b_bcount;		/* Valid bytes in buffer. */
