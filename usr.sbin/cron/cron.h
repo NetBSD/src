@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.h,v 1.2 1997/03/13 06:19:12 mikel Exp $	*/
+/*	$NetBSD: cron.h,v 1.3 1998/01/31 14:40:21 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -224,7 +224,7 @@ char		*env_get __P((char *, char **)),
 user		*load_user __P((int, struct passwd *, char *)),
 		*find_user __P((cron_db *, char *));
 
-entry		*load_entry __P((FILE *, void (*)(),
+entry		*load_entry __P((FILE *, void (*) __P((const char *)),
 				 struct passwd *, char **));
 
 FILE		*cron_popen __P((char *, char *));

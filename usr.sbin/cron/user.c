@@ -1,4 +1,4 @@
-/*	$NetBSD: user.c,v 1.2 1997/03/13 06:19:22 mikel Exp $	*/
+/*	$NetBSD: user.c,v 1.3 1998/01/31 14:40:45 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: user.c,v 2.8 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: user.c,v 1.2 1997/03/13 06:19:22 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: user.c,v 2.8 1994/01/15 20:43:43 vixie Exp";
+#else
+__RCSID("$NetBSD: user.c,v 1.3 1998/01/31 14:40:45 christos Exp $");
+#endif
 #endif
 
 /* vix 26jan87 [log is in RCS file]

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.2 1997/03/13 06:19:19 mikel Exp $	*/
+/*	$NetBSD: job.c,v 1.3 1998/01/31 14:40:35 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: job.c,v 1.6 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: job.c,v 1.2 1997/03/13 06:19:19 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: job.c,v 1.6 1994/01/15 20:43:43 vixie Exp";
+#else
+__RCSID("$NetBSD: job.c,v 1.3 1998/01/31 14:40:35 christos Exp $");
+#endif
 #endif
 
 
@@ -38,10 +42,10 @@ static job	*jhead = NULL, *jtail = NULL;
 
 void
 job_add(e, u)
-	register entry *e;
-	register user *u;
+	entry *e;
+	user *u;
 {
-	register job *j;
+	job *j;
 
 	/* if already on queue, keep going */
 	for (j=jhead; j; j=j->next)
@@ -63,8 +67,8 @@ job_add(e, u)
 int
 job_runqueue()
 {
-	register job	*j, *jn;
-	register int	run = 0;
+	job	*j, *jn;
+	int	run = 0;
 
 	for (j=jhead; j; j=jn) {
 		do_command(j->e, j->u);

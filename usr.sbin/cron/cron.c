@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.5 1997/10/17 00:10:42 lukem Exp $	*/
+/*	$NetBSD: cron.c,v 1.6 1998/01/31 14:40:19 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: cron.c,v 1.5 1997/10/17 00:10:42 lukem Exp $";
+#if 0
+static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
+#else
+__RCSID("$NetBSD: cron.c,v 1.6 1998/01/31 14:40:19 christos Exp $");
+#endif
 #endif
 
 
@@ -46,6 +50,8 @@ static	void	usage __P((void)),
 		sighup_handler __P((int)),
 		parse_args __P((int c, char *v[]));
 
+
+int main __P((int, char *[]));
 
 static void
 usage() {
@@ -130,8 +136,8 @@ static void
 run_reboot_jobs(db)
 	cron_db *db;
 {
-	register user		*u;
-	register entry		*e;
+	user		*u;
+	entry		*e;
 
 	for (u = db->head;  u != NULL;  u = u->next) {
 		for (e = u->crontab;  e != NULL;  e = e->next) {
@@ -148,10 +154,10 @@ static void
 cron_tick(db)
 	cron_db	*db;
 {
- 	register struct tm	*tm = localtime(&TargetTime);
-	register int		minute, hour, dom, month, dow;
-	register user		*u;
-	register entry		*e;
+ 	struct tm	*tm = localtime(&TargetTime);
+	int		minute, hour, dom, month, dow;
+	user		*u;
+	entry		*e;
 
 	/* make 0-based values out of these so we can use them as indicies
 	 */
@@ -201,7 +207,7 @@ cron_tick(db)
  */
 static void
 cron_sync() {
- 	register struct tm	*tm;
+ 	struct tm	*tm;
 
 	TargetTime = time((time_t*)0);
 	tm = localtime(&TargetTime);
@@ -211,7 +217,7 @@ cron_sync() {
 
 static void
 cron_sleep() {
-	register int	seconds_to_wait;
+	int	seconds_to_wait;
 
 	do {
 		seconds_to_wait = (int) (TargetTime - time((time_t*)0));

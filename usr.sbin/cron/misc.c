@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/10/19 19:37:31 mycroft Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1998/01/31 14:40:37 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/10/19 19:37:31 mycroft Exp $";
+#if 0
+static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
+#else
+__RCSID("$NetBSD: misc.c,v 1.6 1998/01/31 14:40:37 christos Exp $");
+#endif
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -47,6 +51,8 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/10/19 19:37:31 mycroft Exp $";
 #define LOG_CRON LOG_DAEMON
 #endif
 
+static int in_file __P((char *, FILE *));
+static void mkprint __P((char *, unsigned char *, int));
 
 static int		LogFD = ERR;
 
@@ -57,7 +63,7 @@ strcmp_until(left, right, until)
 	char	*right;
 	int	until;
 {
-	register int	diff;
+	int	diff;
 
 	while (*left && *left != until && *left == *right) {
 		left++;
@@ -471,7 +477,7 @@ log_it(username, xpid, event, detail)
 	char			*msg;
 	size_t			msglen;
 	TIME_T			now = time((TIME_T) 0);
-	register struct tm	*t = localtime(&now);
+	struct tm	*t = localtime(&now);
 #endif /*LOG_FILE*/
 
 #if defined(SYSLOG)
@@ -559,12 +565,12 @@ log_close() {
  */
 char *
 first_word(s, t)
-	register char *s;	/* string we want the first word of */
-	register char *t;	/* terminators, implicitly including \0 */
+	char *s;	/* string we want the first word of */
+	char *t;	/* terminators, implicitly including \0 */
 {
 	static char retbuf[2][MAX_TEMPSTR + 1];	/* sure wish C had GC */
 	static int retsel = 0;
-	register char *rb, *rp;
+	char *rb, *rp;
 
 	/* select a return buffer */
 	retsel = 1-retsel;
@@ -590,15 +596,15 @@ first_word(s, t)
 /* warning:
  *	heavily ascii-dependent.
  */
-void
+static void
 mkprint(dst, src, len)
-	register char *dst;
-	register unsigned char *src;
-	register int len;
+	char *dst;
+	unsigned char *src;
+	int len;
 {
 	while (len-- > 0)
 	{
-		register unsigned char ch = *src++;
+		unsigned char ch = *src++;
 
 		if (ch < ' ') {			/* control character */
 			*dst++ = '^';
@@ -622,10 +628,10 @@ mkprint(dst, src, len)
  */
 char *
 mkprints(src, len)
-	register unsigned char *src;
-	register unsigned int len;
+	unsigned char *src;
+	unsigned int len;
 {
-	register char *dst = malloc(len*4 + 1);
+	char *dst = malloc(len*4 + 1);
 
 	mkprint(dst, src, len);
 
@@ -662,8 +668,12 @@ arpadate(clock)
 #ifdef HAVE_SAVED_UIDS
 static int save_euid;
 int swap_uids() { save_euid = geteuid(); return seteuid(getuid()); }
+#if 0
 int swap_uids_back() { return seteuid(save_euid); }
+#endif
 #else /*HAVE_SAVED_UIDS*/
 int swap_uids() { return setreuid(geteuid(), getuid()); }
+#if 0
 int swap_uids_back() { return swap_uids(); }
+#endif
 #endif /*HAVE_SAVED_UIDS*/

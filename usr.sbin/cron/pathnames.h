@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1997/03/13 06:19:20 mikel Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 1998/01/31 14:40:40 christos Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -51,7 +51,7 @@
 			 */
 #define	ALLOW_FILE	"allow"		/*-*/
 #define DENY_FILE	"deny"		/*-*/
-/* #define LOG_FILE	"log"		/*-*/
+/* #define LOG_FILE	"log"		*/
 
 			/* where should the daemon stick its PID?
 			 */

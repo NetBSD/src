@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 1997/03/13 06:19:10 mikel Exp $	*/
+/*	$NetBSD: config.h,v 1.5 1998/01/31 14:40:17 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -52,15 +52,15 @@
 			 * -t    = read recipient from header of message
 			 */
 
-/* #define MAILCMD "/bin/mail"			/*-*/
-/* #define MAILARGS "%s -d  %s"			/*-*/
+/* #define MAILCMD "/bin/mail"			*/
+/* #define MAILARGS "%s -d  %s"			*/
 			/* -d = undocumented but common flag: deliver locally?
 			 */
 
-/* #define MAILCMD "/usr/mmdf/bin/submit"	/*-*/
-/* #define MAILARGS "%s -mlrxto %s"		/*-*/
+/* #define MAILCMD "/usr/mmdf/bin/submit"	*/
+/* #define MAILARGS "%s -mlrxto %s"		*/
 
-/* #define MAIL_DATE				/*-*/
+/* #define MAIL_DATE				*/
 			/* should we include an ersatz Date: header in
 			 * generated mail?  if you are using sendmail
 			 * for MAILCMD, it is better to let sendmail
@@ -71,7 +71,7 @@
 			 * defined but neither exists, should crontab(1) be
 			 * usable only by root?
 			 */
-/*#define ALLOW_ONLY_ROOT			/*-*/
+/*#define ALLOW_ONLY_ROOT			*/
 
 			/* if you want to use syslog(3) instead of appending
 			 * to CRONDIR/LOG_FILE (/var/cron/log, e.g.), define

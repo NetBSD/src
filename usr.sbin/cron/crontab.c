@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.6 1997/10/17 00:10:49 lukem Exp $	*/
+/*	$NetBSD: crontab.c,v 1.7 1998/01/31 14:40:23 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";*/
-static char rcsid[] = "$NetBSD: crontab.c,v 1.6 1997/10/17 00:10:49 lukem Exp $";
+#if 0
+static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";
+#else
+__RCSID("$NetBSD: crontab.c,v 1.7 1998/01/31 14:40:23 christos Exp $");
+#endif
 #endif
 
 /* crontab - install and manage per-user crontab files
