@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.83 1999/11/26 21:41:56 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.84 1999/11/27 01:00:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.83 1999/11/26 21:41:56 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.84 1999/11/27 01:00:06 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -253,6 +253,7 @@ cleanuppeer()
 	epsv4bad = 0;
 	if (username)
 		free(username);
+	username = NULL;
 	if (!proxy)
 		macnum = 0;
 }
