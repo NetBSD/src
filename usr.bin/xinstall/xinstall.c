@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.17 1997/03/16 19:46:02 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.18 1997/04/17 07:56:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.17 1997/03/16 19:46:02 christos Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.18 1997/04/17 07:56:58 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -449,6 +449,7 @@ strip(to_name)
 	char *to_name;
 {
 	int serrno, status;
+	char *stripprog;
 
 	switch (vfork()) {
 	case -1:
@@ -456,7 +457,10 @@ strip(to_name)
 		(void)unlink(to_name);
 		errx(1, "forks: %s", strerror(errno));
 	case 0:
-		execl(_PATH_STRIP, "strip", to_name, NULL);
+		stripprog = getenv("STRIP");
+		if (stripprog == NULL)
+			stripprog = _PATH_STRIP;
+		execl(stripprog, "strip", to_name, NULL);
 		err(1, "%s", _PATH_STRIP);
 	default:
 		if (wait(&status) == -1 || status)
