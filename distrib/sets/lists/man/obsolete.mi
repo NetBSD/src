@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.65 2003/05/11 19:00:06 ragge Exp $
+# $NetBSD: obsolete.mi,v 1.66 2003/05/15 06:14:15 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -91,6 +91,7 @@
 ./usr/share/man/cat4/lsu.0
 ./usr/share/man/cat4/mvme68k/le.0
 ./usr/share/man/cat4/ncr.0
+./usr/share/man/cat4/opms.0
 ./usr/share/man/cat4/pmax/ioasic.0
 ./usr/share/man/cat4/pmax/le.0
 ./usr/share/man/cat4/pmax/px.0
@@ -256,6 +257,7 @@
 ./usr/share/man/man4/lsu.4
 ./usr/share/man/man4/mvme68k/le.4
 ./usr/share/man/man4/ncr.4
+./usr/share/man/man4/opms.4
 ./usr/share/man/man4/pmax/ioasic.4
 ./usr/share/man/man4/pmax/le.4
 ./usr/share/man/man4/pmax/px.4
