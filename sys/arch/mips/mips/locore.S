@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.59 1998/11/26 20:52:45 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.60 1998/11/26 21:16:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1020,9 +1020,9 @@ NON_LEAF(kcopy, 48, ra)
 
 	lw	v1, _C_LABEL(curpcb)		# restore the old handler
 	lw	ra, 44(sp)			# restore ra
+	sw	s0, U_PCB_ONFAULT(v1)
 	lw	s0, 32(sp)			# restore s0
 	addu	sp, sp, 48			# kill stack frame
-	sw	s0, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# success!
 END(kcopy)
