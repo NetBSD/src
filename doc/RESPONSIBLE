@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.20 2003/04/05 23:36:38 bjh21 Exp $
+#	$NetBSD: RESPONSIBLE,v 1.21 2003/04/06 10:11:54 jdolecek Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -129,6 +129,14 @@ kevents		jdolecek
 ntp		simonb, jonathan
 pipes		jdolecek
 uvm		chuck, chs, mrg, atatat
+
+kern/compat:
+
+linux-alpha	erh
+linux-i386	fvdl, jdolecek
+linux-m68k	itohy
+linux-powerpc	manu
+linux-mips	manu
 
 networking:
 
