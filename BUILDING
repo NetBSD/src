@@ -9,8 +9,8 @@ STATUS
      Once this document is completely in sync with reality, this paragraph
      will be removed.
 
-     Discrepancies between this documentation and the current reality of im-
-     plementation are noted specially, as with the note below:
+     Discrepancies between this documentation and the current reality of
+     implementation are noted specially, as with the note below:
 
      Note: This document applies only to platforms which use the new toolchain
      as indicated by the default setting of TOOLCHAIN_MISSING in <bsd.own.mk>.
@@ -42,8 +42,8 @@ FILES
 
      BUILDING       This document (in plaintext).
 
-     Makefile       The main Makefile for NetBSD; should only be run for na-
-                    tive builds with an appropriately up-to-date version of
+     Makefile       The main Makefile for NetBSD; should only be run for
+                    native builds with an appropriately up-to-date version of
                     NetBSD make(1).  (For building from out-of-date systems or
                     on a non-native host, see the build.sh shell script.)
 
@@ -61,8 +61,8 @@ FILES
                     Sources imported verbatim from third parties, without man-
                     gling the existing build structure.  Other source trees in
                     bin through usr.sbin use the NetBSD make(1) ``reachover''
-                    Makefile semantics when building these programs for a na-
-                    tive host.
+                    Makefile semantics when building these programs for a
+                    native host.
 
      distrib/, etc/
                     Sources for items used when making a full release snap-
@@ -149,14 +149,14 @@ CONFIGURATION
      MKCRYPTO    Can be set to ``yes'' or ``no''.  Indicates whether crypto-
                  graphic code will be included in a build; provided for the
                  benefit of countries that do not allow strong cryptography.
-                 Will not affect use of the standard low-security password en-
-                 cryption system, crypt(3).
+                 Will not affect use of the standard low-security password
+                 encryption system, crypt(3).
 
                  Default: ``yes''
 
      MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
-                 documentation destined for DESTDIR/usr/share/doc will be in-
-                 stalled during a build.
+                 documentation destined for DESTDIR/usr/share/doc will be
+                 installed during a build.
 
                  Default: ``yes''
 
@@ -190,8 +190,8 @@ CONFIGURATION
                  Default: ``yes''
 
      MKNLS       Can be set to ``yes'' or ``no''.  Indicates whether Native
-                 Language System locale zone files will be compiled and in-
-                 stalled during a build.
+                 Language System locale zone files will be compiled and
+                 installed during a build.
 
                  Default: ``yes''
 
@@ -212,8 +212,8 @@ CONFIGURATION
 
      MKPICINSTALL
                  Can be set to ``yes'' or ``no''.  Indicates whether the ar(1)
-                 format libraries (lib*_pic.a), used to generate shared li-
-                 braries, are installed during a build.
+                 format libraries (lib*_pic.a), used to generate shared
+                 libraries, are installed during a build.
 
                  Default: ``yes''
 
@@ -226,28 +226,28 @@ CONFIGURATION
                  code.
 
      MKSHARE     Can be set to ``yes'' or ``no''.  Indicates whether files
-                 destined to reside in DESTDIR/usr/share will be built and in-
-                 stalled during a build.  If set to ``no'', then all of
+                 destined to reside in DESTDIR/usr/share will be built and
+                 installed during a build.  If set to ``no'', then all of
                  MKCATPAGES, MKDOC, MKINFO, MKMAN, and MKNLS will be set to
                  ``no'' unconditionally.
 
                  Default: ``yes''
 
-     MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an un-
-                 privileged install will occur.  The user, group, permissions,
-                 and file flags, will not be set on the installed item; in-
-                 stead the information will be appended to a file called
+     MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an
+                 unprivileged install will occur.  The user, group, permis-
+                 sions, and file flags, will not be set on the installed item;
+                 instead the information will be appended to a file called
                  METALOG in DESTDIR.  The contents of METALOG is used during
                  the generation of the distribution tar files to ensure that
                  the appropriate file ownership is stored.
 
                  Default: ``no''
 
-     MKUPDATE    Can be set to ``yes'' or ``no''.  Indicates whether all in-
-                 stall operations intended to write to DESTDIR will compare
+     MKUPDATE    Can be set to ``yes'' or ``no''.  Indicates whether all
+                 install operations intended to write to DESTDIR will compare
                  file timestamps before installing, and skip the install phase
-                 if the destination files are up-to-date.  This also has im-
-                 plications on full builds (see next subsection).
+                 if the destination files are up-to-date.  This also has
+                 implications on full builds (see next subsection).
 
                  Default: ``no''
 
@@ -280,8 +280,8 @@ CONFIGURATION
 
                  Default: ``yes'' if building all or part of a whole NetBSD
                  source tree (detected automatically); ``no'' otherwise (to
-                 preserve traditional semantics of the <bsd.*.mk> make(1) in-
-                 clude files).
+                 preserve traditional semantics of the <bsd.*.mk> make(1)
+                 include files).
 
    "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not affect
@@ -292,8 +292,8 @@ CONFIGURATION
 
                       Default: ``/''
 
-     MKOBJDIRS        Can be set to ``yes'' or ``no''.  Indicates whether ob-
-                      ject directories will be created automatically (via a
+     MKOBJDIRS        Can be set to ``yes'' or ``no''.  Indicates whether
+                      object directories will be created automatically (via a
                       ``make obj'' pass) at the start of a build.
 
                       Default: ``no''
@@ -327,8 +327,8 @@ CONFIGURATION
 
      NOINCLUDES       If set, avoids the ``make includes'' phase of a full
                       build.  This has the effect of preventing make(1) from
-                      thinking that some programs are out-of-date simply be-
-                      cause the system include files have changed.  However,
+                      thinking that some programs are out-of-date simply
+                      because the system include files have changed.  However,
                       this option should not be used when updating the entire
                       NetBSD source tree arbitrarily; it is suggested to use
                       MKUPDATE=yes in that case.
@@ -349,8 +349,8 @@ BUILDING
      used most frequently with NetBSD builds are listed here.
 
      -j njob    Run up to njob make(1) subjobs in parallel.  Makefiles should
-                use .WAIT or have explicit dependancies as necessary to en-
-                force build ordering.  If you see build failures with -j,
+                use .WAIT or have explicit dependancies as necessary to
+                enforce build ordering.  If you see build failures with -j,
                 please save complete build logs so the failures can be ana-
                 lyzed.
 
@@ -381,14 +381,14 @@ BUILDING
 
      clean      Remove program and library object code files.
 
-     cleandir   Same as clean, but also remove preformatted documentation, de-
-                pendency files generated by ``make depend'', and any other
+     cleandir   Same as clean, but also remove preformatted documentation,
+                dependency files generated by ``make depend'', and any other
                 files known to be created at build time.  ``make distclean''
                 may be used as a synonym, for familiarity with a similar well-
                 known convention.
 
-     depend     Create dependency files (.depend) containing more detailed in-
-                formation about the dependencies of source code on header
+     depend     Create dependency files (.depend) containing more detailed
+                information about the dependencies of source code on header
                 files.  Allows programs to be recompiled automatically when a
                 dependency changes.
 
@@ -396,8 +396,8 @@ BUILDING
                 This improves cache locality of the build since both passes
                 read the source files in their entirety.
 
-     includes   Build and install system header files.  Typically needed be-
-                fore any system libraries or programs can be built.
+     includes   Build and install system header files.  Typically needed
+                before any system libraries or programs can be built.
 
      install    Install programs, libraries, and documentation into DESTDIR.
                 Few files will be installed to DESTDIR/dev, DESTDIR/etc,
@@ -444,10 +444,10 @@ BUILDING
      sourcesets    Create source sets of the source tree into
                    RELEASEDIR/source/sets.
 
-     release       Do a ``make distribution'', build kernels, distribution me-
-                   dia, and install sets (this as per ``make sets''), and then
-                   package the system into a standard release layout as de-
-                   scribed by release(7).  This requires that RELEASEDIR be
+     release       Do a ``make distribution'', build kernels, distribution
+                   media, and install sets (this as per ``make sets''), and
+                   then package the system into a standard release layout as
+                   described by release(7).  This requires that RELEASEDIR be
                    set (see above).
 
      regression-tests
@@ -474,8 +474,8 @@ BUILDING
 
      The following operations are supported by build.sh:
 
-     build         Build the system as per ``make build''.  This option im-
-                   plies the obj and tools operations.
+     build         Build the system as per ``make build''.  This option
+                   implies the obj and tools operations.
 
      distribution  Build a full distribution as per ``make distribution''.
                    This option implies the build operation.
@@ -507,8 +507,8 @@ BUILDING
      releasekernel=kconf
                    Install a gzip(1)ed copy of the kernel built by
                    kernel=kconf into RELEASEDIR/MACHINE/binary/kernel, usually
-                   as netbsd-kconf.gz, although the ``netbsd'' prefix is de-
-                   termined from the ``config'' directives in kconf.
+                   as netbsd-kconf.gz, although the ``netbsd'' prefix is
+                   determined from the ``config'' directives in kconf.
 
      sets          Perform ``make sets''.
 
@@ -621,12 +621,12 @@ BUILDING
      with an absolute path.
 
 EXAMPLES
-     1.   ./build.sh tools kernel=GENERIC
+     1.   % ./build.sh tools kernel=GENERIC
 
           Build a new toolchain, and use the new toolchain to configure and
           build a new GENERIC kernel.
 
-     2.   ./build.sh -U distribution
+     2.   % ./build.sh -U distribution
 
           Using unprivileged mode, build a complete distribution to a DESTDIR
           directory that build.sh selects (and will display).
@@ -638,7 +638,7 @@ EXAMPLES
           sions stored in DESTDIR/METALOG are correctly applied to the files
           as they're copied to /.
 
-     4.   ./build.sh -U -u release
+     4.   % ./build.sh -U -u release
 
           Using unprivileged mode, build a complete release to DESTDIR and
           RELEASEDIR directories that build.sh selects (and will display).
