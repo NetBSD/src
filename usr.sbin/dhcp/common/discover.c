@@ -3,7 +3,7 @@
    Network input dispatcher... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.11 2001/04/02 23:45:55 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.12 2001/04/06 17:08:53 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -56,6 +56,7 @@ u_int16_t local_port;
 u_int16_t remote_port;
 int (*dhcp_interface_setup_hook) (struct interface_info *, struct iaddr *);
 int (*dhcp_interface_discovery_hook) (struct interface_info *);
+isc_result_t (*dhcp_interface_startup_hook) (struct interface_info *);
 int (*dhcp_interface_shutdown_hook) (struct interface_info *);
 
 struct in_addr limited_broadcast;
@@ -846,55 +847,24 @@ isc_result_t dhcp_interface_signal_handler (omapi_object_t *h,
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
-
-	/* This code needs some rethinking.   It doesn't test against
-	   a signal name, and it just kind of bulls into doing something
-	   that may or may not be appropriate. */
-#if 0
 	interface = (struct interface_info *)h;
 
-	if (interfaces) {
-		interface_reference (&interface -> next, interfaces, MDL);
-		interface_dereference (&interfaces, MDL);
-	}
-	interface_reference (&interfaces, interface, MDL);
+	/* If it's an update signal, see if the interface is dead right
+	   now, or isn't known at all, and if that's the case, revive it. */
+	if (!strcmp (name, "update")) {
+		for (ip = dummy_interfaces; ip; ip = ip -> next)
+			if (ip == interface)
+				break;
+		if (ip && dhcp_interface_startup_hook)
+			return (*dhcp_interface_startup_hook) (ip);
 
-	discover_interfaces (DISCOVER_UNCONFIGURED);
-
-	for (ip = interfaces; ip; ip = ip -> next) {
-		/* If interfaces were specified, don't configure
-		   interfaces that weren't specified! */
-		if (ip -> flags & INTERFACE_RUNNING ||
-		   (ip -> flags & (INTERFACE_REQUESTED |
-				     INTERFACE_AUTOMATIC)) !=
-		     INTERFACE_REQUESTED)
-			continue;
-		script_init (ip -> client,
-			     "PREINIT", (struct string_list *)0);
-		if (ip -> client -> alias)
-			script_write_params (ip -> client, "alias_",
-					     ip -> client -> alias);
-		script_go (ip -> client);
+		for (ip = interfaces; ip; ip = ip -> next)
+			if (ip == interface)
+				break;
+		if (!ip && dhcp_interface_startup_hook)
+			return (*dhcp_interface_startup_hook) (ip);
 	}
-	
-	discover_interfaces (interfaces_requested
-			     ? DISCOVER_REQUESTED
-			     : DISCOVER_RUNNING);
 
-	for (ip = interfaces; ip; ip = ip -> next) {
-		if (ip -> flags & INTERFACE_RUNNING)
-			continue;
-		ip -> flags |= INTERFACE_RUNNING;
-		for (client = ip -> client; client; client = client -> next) {
-			client -> state = S_INIT;
-			/* Set up a timeout to start the initialization
-			   process. */
-			add_timeout (cur_time + random () % 5,
-				     state_reboot, client, 0, 0);
-		}
-	}
-	return ISC_R_SUCCESS;
-#endif
 	/* Try to find some inner object that can take the value. */
 	if (h -> inner && h -> inner -> type -> get_value) {
 		status = ((*(h -> inner -> type -> signal_handler))
@@ -966,13 +936,38 @@ isc_result_t dhcp_interface_lookup (omapi_object_t **ip,
 	/* Now look for an interface name. */
 	status = omapi_get_value_str (ref, id, "name", &tv);
 	if (status == ISC_R_SUCCESS) {
+		char *s;
+		unsigned len;
 		for (interface = interfaces; interface;
 		     interface = interface -> next) {
-		    if (strncmp (interface -> name,
-				 (char *)tv -> value -> u.buffer.value,
-				 tv -> value -> u.buffer.len) == 0)
+		    s = memchr (interface -> name, 0, IFNAMSIZ);
+		    if (s)
+			    len = s - &interface -> name [0];
+		    else
+			    len = IFNAMSIZ;
+		    if ((tv -> value -> u.buffer.len == len &&
+			 !memcmp (interface -> name,
+				  (char *)tv -> value -> u.buffer.value,
+				  len)))
 			    break;
 		}
+		if (!interface) {
+		    for (interface = dummy_interfaces;
+			 interface; interface = interface -> next) {
+			    s = memchr (interface -> name, 0, IFNAMSIZ);
+			    if (s)
+				    len = s - &interface -> name [0];
+			    else
+				    len = IFNAMSIZ;
+			    if ((tv -> value -> u.buffer.len == len &&
+				 !memcmp (interface -> name,
+					  (char *)
+					  tv -> value -> u.buffer.value,
+					  len)))
+				    break;
+		    }
+		}
+
 		omapi_value_dereference (&tv, MDL);
 		if (*ip && *ip != (omapi_object_t *)interface) {
 			omapi_object_dereference (ip, MDL);
@@ -982,8 +977,6 @@ isc_result_t dhcp_interface_lookup (omapi_object_t **ip,
 				omapi_object_dereference (ip, MDL);
 			return ISC_R_NOTFOUND;
 		} else if (!*ip)
-			/* XXX fix so that hash lookup itself creates
-			   XXX the reference. */
 			omapi_object_reference (ip,
 						(omapi_object_t *)interface,
 						MDL);
