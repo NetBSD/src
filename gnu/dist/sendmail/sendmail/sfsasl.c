@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: sfsasl.c,v 8.17.4.13 2000/11/03 00:24:49 gshapiro Exp";
+static char id[] = "@(#)Id: sfsasl.c,v 8.17.4.15 2001/07/11 17:37:07 gshapiro Exp";
 #endif /* ! lint */
 
 #if SFIO
@@ -28,7 +28,7 @@ static char id[] = "@(#)Id: sfsasl.c,v 8.17.4.13 2000/11/03 00:24:49 gshapiro Ex
 # include "sfsasl.h"
 
 /* how to deallocate a buffer allocated by SASL */
-#  define SASL_DEALLOC(b)	free(b)
+#  define SASL_DEALLOC(b)	sm_free(b)
 
 static ssize_t
 sasl_read(f, buf, size, disc)
@@ -134,14 +134,8 @@ sfdcsasl(fin, fout, conn)
 		return 0;
 	}
 
-	if ((saslin = (Sasldisc_t *) malloc(sizeof(Sasldisc_t))) == NULL)
-		return -1;
-	if ((saslout = (Sasldisc_t *) malloc(sizeof(Sasldisc_t))) == NULL)
-	{
-		free(saslin);
-		return -1;
-	}
-
+	saslin = (Sasldisc_t *) xalloc(sizeof(Sasldisc_t));
+	saslout = (Sasldisc_t *) xalloc(sizeof(Sasldisc_t));
 	saslin->disc.readf = sasl_read;
 	saslin->disc.writef = sasl_write;
 	saslin->disc.seekf = NULL;
@@ -158,8 +152,8 @@ sfdcsasl(fin, fout, conn)
 	if (sfdisc(fin, (Sfdisc_t *) saslin) != (Sfdisc_t *) saslin ||
 	    sfdisc(fout, (Sfdisc_t *) saslout) != (Sfdisc_t *) saslout)
 	{
-		free(saslin);
-		free(saslout);
+		sm_free(saslin);
+		sm_free(saslout);
 		return -1;
 	}
 	return 0;
@@ -174,18 +168,19 @@ sfdcsasl(fin, fout, conn)
 # include "sfsasl.h"
 #  include <openssl/err.h>
 
-static ssize_t
 # if SFIO
+static ssize_t
 tls_read(f, buf, size, disc)
 	Sfio_t *f;
 	Void_t *buf;
 	size_t size;
 	Sfdisc_t *disc;
 # else /* SFIO */
+static int
 tls_read(disc, buf, size)
 	void *disc;
-	void *buf;
-	size_t size;
+	char *buf;
+	int size;
 # endif /* SFIO */
 {
 	int r;
@@ -232,18 +227,19 @@ tls_read(disc, buf, size)
 	return r;
 }
 
-static ssize_t
 # if SFIO
+static ssize_t
 tls_write(f, buf, size, disc)
 	Sfio_t *f;
 	const Void_t *buf;
 	size_t size;
 	Sfdisc_t *disc;
 # else /* SFIO */
+static int
 tls_write(disc, buf, size)
 	void *disc;
-	const void *buf;
-	size_t size;
+	const char *buf;
+	int size;
 # endif /* SFIO */
 {
 	int r;
@@ -310,7 +306,7 @@ tls_close(cookie)
 		tc->fp = NULL;
 	}
 
-	free(tc);
+	sm_free(tc);
 	return retval;
 }
 # endif /* !SFIO */
@@ -336,14 +332,8 @@ sfdctls(fin, fout, con)
 	if (con == NULL)
 		return 0;
 
-	if ((tlsin = (Tlsdisc_t *) malloc(sizeof(Tlsdisc_t))) == NULL)
-		return -1;
-	if ((tlsout = (Tlsdisc_t *) malloc(sizeof(Tlsdisc_t))) == NULL)
-	{
-		free(tlsin);
-		return -1;
-	}
-
+	tlsin = (Tlsdisc_t *) xalloc(sizeof(Tlsdisc_t));
+	tlsout = (Tlsdisc_t *) xalloc(sizeof(Tlsdisc_t));
 # if SFIO
 	tlsin->disc.readf = tls_read;
 	tlsin->disc.writef = tls_write;
@@ -362,15 +352,15 @@ sfdctls(fin, fout, con)
 	if (rfd < 0 || wfd < 0 ||
 	    SSL_set_rfd(con, rfd) <= 0 || SSL_set_wfd(con, wfd) <= 0)
 	{
-		free(tlsin);
-		free(tlsout);
+		sm_free(tlsin);
+		sm_free(tlsout);
 		return -1;
 	}
 	if (sfdisc(fin, (Sfdisc_t *) tlsin) != (Sfdisc_t *) tlsin ||
 	    sfdisc(fout, (Sfdisc_t *) tlsout) != (Sfdisc_t *) tlsout)
 	{
-		free(tlsin);
-		free(tlsout);
+		sm_free(tlsin);
+		sm_free(tlsout);
 		return -1;
 	}
 # else /* SFIO */
@@ -379,7 +369,7 @@ sfdctls(fin, fout, con)
 	fp = funopen(tlsin, tls_read, tls_write, NULL, tls_close);
 	if (fp == NULL)
 	{
-		free(tlsin);
+		sm_free(tlsin);
 		return -1;
 	}
 	*fin = fp;
@@ -396,7 +386,7 @@ sfdctls(fin, fout, con)
 		tlsin->fp = NULL;
 		fclose(*fin);
 		*fin = save;
-		free(tlsout);
+		sm_free(tlsout);
 		return -1;
 	}
 	*fout = fp;
