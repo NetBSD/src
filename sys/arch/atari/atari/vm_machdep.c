@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2001/09/10 21:19:12 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 2001/09/24 09:17:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -378,7 +378,7 @@ vunmapbuf(bp, len)
 	off = (vm_offset_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 	pmap_kremove(kva, len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
