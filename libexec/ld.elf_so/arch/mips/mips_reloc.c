@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.3 1999/11/07 08:01:51 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.4 2001/10/14 23:13:22 rafal Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -47,6 +47,7 @@ _rtld_relocate_mips_got(obj)
 	const Elf_Sym *sym = obj->symtab;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
+	Elf_Word info;
 	int i;
 
 	i = (got[1] & 0x80000000) ? 2 : 1;
@@ -58,42 +59,54 @@ _rtld_relocate_mips_got(obj)
 	sym += obj->gotsym;
 	/* Now do the global GOT entries */
 	while (i--) {
-		def = _rtld_find_symdef(_rtld_objlist, 0,
-		    sym->st_name + obj->strtab, obj, &defobj, true);
-		if (def != NULL) {
-			if (sym->st_shndx == SHN_UNDEF) {
+		rdbg(1, (" doing got %d sym %p (%s, %x)",  
+				obj->symtabno - obj->gotsym - i - 1, 
+				sym, sym->st_name + obj->strtab, *got));
+
+		info = ELF32_R_INFO(obj->symtabno - i - 1, sym->st_info);
+		def = _rtld_find_symdef(_rtld_objlist, info, NULL, obj, 
+					&defobj, true);
+
+		if (def == NULL)
+			_rtld_error(
+	    "%s: Undefined PLT symbol \"%s\" (reloc type = %ld, symnum = %ld)",
+			    obj->path, sym->st_name + obj->strtab,
+			    (u_long) ELF_R_TYPE(info), 
+			    (u_long) obj->symtabno - i - 1);
+
+		if (sym->st_shndx == SHN_UNDEF) {
 #if 0	/* These don't seem to work? */
 
-				if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-				    STT_FUNC) {
-					if (sym->st_value)
-						*got = sym->st_value +
-						    (Elf_Word)obj->relocbase;
-					else
-						*got = def->st_value +
-						    (Elf_Word)defobj->relocbase;
-				} else
-#endif
-					*got = def->st_value +
-					    (Elf_Word)defobj->relocbase;
-			} else if (sym->st_shndx == SHN_COMMON) {
-				*got = def->st_value +
-				    (Elf_Word)defobj->relocbase;
-			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_FUNC &&
-			    *got != sym->st_value) {
-				*got += (Elf_Word)obj->relocbase;
-			} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
-			    STT_SECTION && ELFDEFNNAME(ST_BIND)(sym->st_info) ==
-			    STB_GLOBAL) {
-				if (sym->st_shndx == SHN_ABS)
+			if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
+			    STT_FUNC) {
+				if (sym->st_value)
 					*got = sym->st_value +
 					    (Elf_Word)obj->relocbase;
-				/* else SGI stuff ignored */
+				else
+					*got = def->st_value +
+					    (Elf_Word)defobj->relocbase;
 			} else
+#endif
 				*got = def->st_value +
 				    (Elf_Word)defobj->relocbase;
-		}
+		} else if (sym->st_shndx == SHN_COMMON) {
+			*got = def->st_value +
+			    (Elf_Word)defobj->relocbase;
+		} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
+		    STT_FUNC &&
+		    *got != sym->st_value) {
+			*got += (Elf_Word)obj->relocbase;
+		} else if (ELFDEFNNAME(ST_TYPE)(sym->st_info) ==
+		    STT_SECTION && ELFDEFNNAME(ST_BIND)(sym->st_info) ==
+		    STB_GLOBAL) {
+			if (sym->st_shndx == SHN_ABS)
+				*got = sym->st_value +
+				    (Elf_Word)obj->relocbase;
+			/* else SGI stuff ignored */
+		} else
+			*got = def->st_value +
+			    (Elf_Word)defobj->relocbase;
+
 		++sym;
 		++got;
 	}
