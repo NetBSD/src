@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 1995/03/08 15:51:03 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.10 1995/08/18 10:47:46 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,6 +162,9 @@ struct bootpath {
 };
 
 struct device *bootdv;			/* found during autoconfiguration */
+
+struct bootpath	*bootpath_store __P((int, struct bootpath *));
+int		sd_crazymap __P((int));
 
 /* Parse a disk string into a dev_t, return device struct pointer */
 struct	device *parsedisk __P((char *, int, int, dev_t *));
