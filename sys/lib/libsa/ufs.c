@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.17 1997/01/17 20:17:58 cgd Exp $	*/
+/*	$NetBSD: ufs.c,v 1.18 1997/06/13 14:32:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,8 +72,6 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <lib/libkern/libkern.h>
-
-#include <string.h>
 
 #include "stand.h"
 
