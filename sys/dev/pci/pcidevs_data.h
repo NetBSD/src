@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.16 1996/09/24 17:47:14 christos Exp 
+ *	NetBSD: pcidevs,v 1.18 1996/10/13 22:19:20 christos Exp 
  */
 
 /*
@@ -41,25 +41,49 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
 	    "3Com",
-	    "3c590 10bT",
+	    "3c590 10b-T",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595,
 	    0,
 	    "3Com",
-	    "3c595 100bTX",
+	    "3c595 100b-TX",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4,
 	    0,
 	    "3Com",
-	    "3c595 100bT4",
+	    "3c595 100b-T4",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII,
 	    0,
 	    "3Com",
 	    "3c595 10b-MII",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900,
+	    0,
+	    "3Com",
+	    "3c900 10b-T",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900Combo,
+	    0,
+	    "3Com",
+	    "3c900 10b-Combo",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905,
+	    0,
+	    "3Com",
+	    "3c905 100b-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905T4,
+	    0,
+	    "3Com",
+	    "3c905 100b-T4",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
