@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.21 1998/03/31 10:05:59 kleink Exp $	*/
+/*	$NetBSD: termios.h,v 1.22 1999/08/22 13:12:41 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -117,9 +117,9 @@
 #endif
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define OXTABS		0x00000004	/* expand tabs to spaces */
+#define ONOEOT		0x00000008	/* discard EOT's (^D) on output */
 #endif
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-#define ONOEOT		0x00000008	/* discard EOT's (^D) on output */
 #define OCRNL		0x00000010	/* map CR to NL */
 #define ONOCR		0x00000020	/* discard CR's when on column 0 */
 #define ONLRET		0x00000040	/* move to column 0 on CR */
