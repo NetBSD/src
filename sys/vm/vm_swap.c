@@ -32,7 +32,7 @@
  *
  *	@(#)vm_swap.c	7.18 (Berkeley) 5/6/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.2 1993/04/28 03:04:25 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.3 1993/04/28 04:00:49 mycroft Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -126,6 +126,7 @@ swstrategy(bp)
 		return;
 	}
 	if (nswdev > 1) {
+		--bp->b_blkno;
 		off = bp->b_blkno % dmmax;
 		if (off+sz > dmmax) {
 			bp->b_flags |= B_ERROR;
@@ -136,6 +137,7 @@ swstrategy(bp)
 		index = seg % nswdev;
 		seg /= nswdev;
 		bp->b_blkno = seg*dmmax + off;
+		++bp->b_blkno;
 	} else
 		index = 0;
 	sp = &swdevt[index];
@@ -225,6 +227,9 @@ swapon(p, uap, retval)
  * Each of the nswdev devices provides 1/nswdev'th of the swap
  * space, which is laid out with blocks of dmmax pages circularly
  * among the devices.
+ *
+ * We explicitly ignore the first block in each swap area to avoid
+ * bashing a disk label and confusing the rest of the VM code.
  */
 swfree(p, index)
 	struct proc *p;
@@ -238,6 +243,8 @@ swfree(p, index)
 	register int nblks;
 	int error;
 
+	--nblks;
+
 	sp = &swdevt[index];
 	nblks = sp->sw_nblks;
 	if (nblks <= 0)
@@ -249,13 +256,13 @@ swfree(p, index)
 
 	/*printf("%d blocks from device %d/%d ",
 		sp->sw_nblks, major(sp->sw_dev), minor(sp->sw_dev));*/
-	for (dvbase = 1; dvbase < nblks; dvbase += dmmax) {
+	for (dvbase = 0; dvbase < nblks; dvbase += dmmax) {
 		blk = nblks - dvbase;
 		if ((vsbase = index*dmmax + dvbase*nswdev) >= nswap)
 			panic("swfree");
 		if (blk > dmmax)
 			blk = dmmax;
-		rlist_free(&swapmap, vsbase, vsbase + blk - 1); 
+		rlist_free(&swapmap, vsbase + 1, vsbase + blk); 
 	}
 	return (0);
 }
