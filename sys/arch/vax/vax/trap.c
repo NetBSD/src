@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 1999/06/20 00:53:02 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.46 1999/07/10 22:04:59 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -108,11 +108,9 @@ arithflt(frame)
 	u_int	sig = 0, type = frame->trap, trapsig = 1;
 	u_int	rv, addr, umode;
 	struct	proc *p = curproc;
-	struct	pmap *pm;
 	u_quad_t oticks = 0;
 	vm_map_t map;
 	vm_prot_t ftype;
-	extern vm_map_t pte_map;
 	
 	uvmexp.traps++;
 	if ((umode = USERMODE(frame))) {
@@ -174,28 +172,14 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			panic("trap: access fault: addr %lx code %lx",
 			    frame->pc, frame->code);
 #endif
+
 		/*
-		 * First check for ptefetch. Can only happen to pages
-		 * in user space.
+		 * Page tables are allocated in pmap_enter(). We get 
+		 * info from below if it is a page table fault, but
+		 * UVM may want to map in pages without faults, so
+		 * because we must check for PTE pages anyway we don't
+		 * bother doing it here.
 		 */
-		if (frame->trap & T_PTEFETCH) {
-			pm = p->p_vmspace->vm_map.pmap;
-			if (frame->code < 0x40000000) {
-				addr = trunc_page((unsigned)&pm->pm_p0br[
-				    frame->code >> VAX_PGSHIFT]);
-#ifdef DEBUG
-			} else if (frame->code < 0) {
-				panic("ptefetch in kernel");
-#endif
-			} else {
-				addr = trunc_page((unsigned)&pm->pm_p1br[
-				    (frame->code & 0x3fffffff) >> VAX_PGSHIFT]);
-			}
-			rv = uvm_fault(pte_map, addr, 0,
-			    VM_PROT_WRITE|VM_PROT_READ);
-			if (rv != KERN_SUCCESS)
-				goto ufault;
-		}
 		addr = trunc_page(frame->code);
 		if ((umode == 0) && (frame->code < 0))
 			map = kernel_map;
@@ -214,7 +198,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
-ufault:			if (rv == KERN_RESOURCE_SHORTAGE) {
+			if (rv == KERN_RESOURCE_SHORTAGE) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
 				       p->p_pid, p->p_comm,
@@ -266,6 +250,7 @@ ufault:			if (rv == KERN_RESOURCE_SHORTAGE) {
 #ifdef DDB
 	case T_BPTFLT: /* Kernel breakpoint */
 	case T_KDBTRAP:
+	case T_KDBTRAP|T_USER:
 	case T_TRCTRAP:
 		kdb_trap(frame);
 		return;
