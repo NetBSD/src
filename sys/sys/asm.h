@@ -34,27 +34,35 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.3 1993/05/20 16:21:47 cgd Exp $
+ *	$Id: asm.h,v 1.4 1993/06/16 19:00:11 mycroft Exp $
  */
 
 #ifndef _SYS_ASM_H_
 #define _SYS_ASM_H_
+
+/*
+ * XXX assumes that arguments are not passed in %eax
+ */
 
 #ifdef PROF
 # ifdef __STDC__
 #  define ENTRY(x)	.globl _ ## x; \
 			.data; 1:; .long 0; .text; .align 2; _ ## x: \
 			movl $1b,%eax; call mcount
+#  define ALTENTRY(x)	.globl _ ## x; _ ## x:
 # else
-#  define	ENTRY(x)	.globl _/**/x; \
+#  define ENTRY(x)	.globl _/**/x; \
 			.data; 1:; .long 0; .text; .align 2; _/**/x: \
 			movl $1b,%eax; call mcount
+#  define ALTENTRY(x)	.globl _/**/x; _/**/x:
 # endif /* __STDC__ */
 #else
 # ifdef __STDC__
 #  define ENTRY(x)	.globl _ ## x; .text; .align 2; _ ## x:
+#  define ALTENTRY(x)	.globl _ ## x; _ ## x:
 # else
-#  define	ENTRY(x)	.globl _/**/x; .text; .align 2; _/**/x: 
+#  define ENTRY(x)	.globl _/**/x; .text; .align 2; _/**/x: 
+#  define ALTENTRY(x)	.globl _/**/x; _/**/x:
 # endif /* __STDC__ */
 #endif PROF
 #define	ASMSTR		.asciz
