@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.29 1994/04/24 05:40:05 mycroft Exp $
+ *	$Id: st.c,v 1.30 1994/05/09 07:40:56 chopps Exp $
  */
 
 /*
@@ -1710,24 +1710,24 @@ st_interpret_sense(xs)
 	 * Get the sense fields and work out what code
 	 */
 	if (sense->error_code & SSD_ERRCODE_VALID)
-		info = ntohl(*((int *) sense->ext.extended.info));
+		info = ntohl(*((int *) sense->extended_info));
 	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksiz;
-		if (sense->ext.extended.flags & SSD_EOM) {
+		if (sense->extended_flags & SSD_EOM) {
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
-		if (sense->ext.extended.flags & SSD_FILEMARK) {
+		if (sense->extended_flags & SSD_FILEMARK) {
 			st->flags |= ST_AT_FILEMARK;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
-		if (sense->ext.extended.flags & SSD_ILI) {
+		if (sense->extended_flags & SSD_ILI) {
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
@@ -1760,14 +1760,14 @@ st_interpret_sense(xs)
 		}
 	} else {		/* must be variable mode */
 		xs->resid = xs->datalen;	/* to be sure */
-		if (sense->ext.extended.flags & SSD_EOM)
+		if (sense->extended_flags & SSD_EOM)
 			return EIO;
-		if (sense->ext.extended.flags & SSD_FILEMARK) {
+		if (sense->extended_flags & SSD_FILEMARK) {
 			if (bp)
 				bp->b_resid = bp->b_bcount;
 			return 0;
 		}
-		if (sense->ext.extended.flags & SSD_ILI) {
+		if (sense->extended_flags & SSD_ILI) {
 			if (info < 0) {
 				/*
 				 * the record was bigger than the read
@@ -1783,7 +1783,7 @@ st_interpret_sense(xs)
 				bp->b_resid = info;
 		}
 	}
-	key = sense->ext.extended.flags & SSD_KEY;
+	key = sense->extended_flags & SSD_KEY;
 
 	if (key == 0x8) {
 		/*

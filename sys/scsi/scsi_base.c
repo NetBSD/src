@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: scsi_base.c,v 1.12 1994/04/20 22:13:33 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.13 1994/05/09 07:40:52 chopps Exp $
  */
 
 /*
@@ -578,20 +578,20 @@ scsi_interpret_sense(xs)
 		    sense->error_code & SSD_ERRCODE,
 		    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
 		printf("seg%x key%x ili%x eom%x fmark%x\n",
-		    sense->ext.extended.segment,
-		    sense->ext.extended.flags & SSD_KEY,
-		    sense->ext.extended.flags & SSD_ILI ? 1 : 0,
-		    sense->ext.extended.flags & SSD_EOM ? 1 : 0,
-		    sense->ext.extended.flags & SSD_FILEMARK ? 1 : 0);
+		    sense->extended_segment,
+		    sense->extended_flags & SSD_KEY,
+		    sense->extended_flags & SSD_ILI ? 1 : 0,
+		    sense->extended_flags & SSD_EOM ? 1 : 0,
+		    sense->extended_flags & SSD_FILEMARK ? 1 : 0);
 		printf("info: %x %x %x %x followed by %d extra bytes\n",
-		    sense->ext.extended.info[0],
-		    sense->ext.extended.info[1],
-		    sense->ext.extended.info[2],
-		    sense->ext.extended.info[3],
-		    sense->ext.extended.extra_len);
+		    sense->extended_info[0],
+		    sense->extended_info[1],
+		    sense->extended_info[2],
+		    sense->extended_info[3],
+		    sense->extended_extra_len);
 		printf("extra: ");
-		while (count < sense->ext.extended.extra_len)
-			printf("%x ", sense->ext.extended.extra_bytes[count++]);
+		while (count < sense->extended_extra_len)
+			printf("%x ", sense->extended_extra_bytes[count++]);
 		printf("\n");
 	}
 #endif	/*SCSIDEBUG */
@@ -614,14 +614,14 @@ scsi_interpret_sense(xs)
 		 */
 	case 0x71:		/* delayed error */
 		sc_print_addr(sc_link);
-		key = sense->ext.extended.flags & SSD_KEY;
+		key = sense->extended_flags & SSD_KEY;
 		printf(" DELAYED ERROR, key = 0x%x\n", key);
 	case 0x70:
 		if (sense->error_code & SSD_ERRCODE_VALID)
-			info = ntohl(*((long *) sense->ext.extended.info));
+			info = ntohl(*((long *) sense->extended_info));
 		else
 			info = 0;
-		key = sense->ext.extended.flags & SSD_KEY;
+		key = sense->extended_flags & SSD_KEY;
 
 		if (key && !silent) {
 			sc_print_addr(sc_link);
@@ -680,9 +680,9 @@ scsi_interpret_sense(xs)
 			    sense->error_code & SSD_ERRCODE);
 			if (sense->error_code & SSD_ERRCODE_VALID) {
 				printf(" at block no. %d (decimal)",
-				    (sense->ext.unextended.blockhi << 16) +
-				    (sense->ext.unextended.blockmed << 8) +
-				    (sense->ext.unextended.blocklow));
+				    (sense->XXX_unextended_blockhi << 16) +
+				    (sense->XXX_unextended_blockmed << 8) +
+				    (sense->XXX_unextended_blocklow));
 			}
 			printf("\n");
 		}

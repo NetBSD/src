@@ -18,7 +18,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsi_all.h,v 1.3 1994/03/29 04:29:27 mycroft Exp $
+ *	$Id: scsi_all.h,v 1.4 1994/05/09 07:40:50 chopps Exp $
  */
 
 #ifndef	_SCSI_SCSI_ALL_H
@@ -244,8 +244,12 @@ struct scsi_inquiry_data
 	u_char	extra[8];
 };
 
-
-struct	scsi_sense_data
+/*
+ * The union had to die.  It caused a padding problem with 
+ * m68k gcc, specifically `ext.extended.segment' was being
+ * read at byte 2 not 1.
+ */
+struct	scsi_sense_data_old	/* XXXX The union had to die. */
 {
 /* 1*/	u_char	error_code;	/* same bits as new version */
 	union
@@ -268,6 +272,29 @@ struct	scsi_sense_data
 		} extended;
 	}ext;
 };	/* total of 32 bytes */
+
+/*
+ * This looks bad, and it is.  However it fixes padding problems
+ * caused by using unions.  This *needs* to be an array, if this code
+ * is to work on any architecture.
+ */
+struct	scsi_sense_data
+{
+/* 1*/	u_char	error_code;	/* same bits as new version */
+#define XXX_unextended_blockhi	extended_segment
+#define XXX_unextended_blockmed	extended_flags
+#define XXX_unextended_blocklow	extended_info[0]
+/* 2*/	u_char	extended_segment;
+/* 3*/	u_char	extended_flags;		/* same bits as new version */
+/* 7*/	u_char	extended_info[4];
+/* 8*/	u_char	extended_extra_len;
+	/*
+	 * allocate enough room to hold new stuff
+	 * (by increasing 16 to 24 below)
+	 */
+/*32*/	u_char	extended_extra_bytes[24];
+};	/* total of 32 bytes */
+
 struct	scsi_sense_data_new
 {
 /* 1*/	u_char	error_code;
