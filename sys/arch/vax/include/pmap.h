@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.28 1998/08/21 13:42:52 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.29 1998/11/29 14:55:04 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -62,6 +62,8 @@ typedef struct pmap {
 	long			 pm_p0lr; /* page 0 length register */
 	struct pte		*pm_p1br; /* page 1 base register */
 	long			 pm_p1lr; /* page 1 length register */
+	int			 pm_lock; /* Lock entry in MP environment */
+	struct pmap_statistics	 pm_stats;/* Some statistics */
 } *pmap_t;
 
 /*
@@ -72,6 +74,8 @@ typedef struct pmap {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pte	*pv_pte;	/* pte for this physical page */
+	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
+	int		 pv_attr;	/* write/modified bits */
 } *pv_entry_t;
 
 /* ROUND_PAGE used before vm system is initialized */
@@ -103,6 +107,7 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_update()	mtpr(0,PR_TBIA)	/* Update buffes */
 #define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_remove(pmap, start, slut)  pmap_protect(pmap, start, slut, 0)
+#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #ifdef UVM
 #define	pmap_reference(pmap)		(pmap)->ref_count++
 #else
