@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.15 2003/02/10 09:00:38 mjacob Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.16 2003/02/10 17:18:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.15 2003/02/10 09:00:38 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.16 2003/02/10 17:18:33 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1073,7 +1073,7 @@ stge_intr(void *arg)
 			break;
 
 		/* Host interface errors. */
-		if (isr & IS_HostError) {
+		if (isr & IE_HostError) {
 			printf("%s: Host interface error\n",
 			    sc->sc_dev.dv_xname);
 			wantinit = 1;
@@ -1081,7 +1081,7 @@ stge_intr(void *arg)
 		}
 
 		/* Receive interrupts. */
-		if (isr & (IS_RxDMAComplete|IS_RFDListEnd)) {
+		if (isr & (IE_RxDMAComplete|IE_RFDListEnd)) {
 			STGE_EVCNT_INCR(&sc->sc_ev_rxintr);
 			stge_rxintr(sc);
 			if (isr & IE_RFDListEnd) {
@@ -1096,20 +1096,20 @@ stge_intr(void *arg)
 		}
 
 		/* Transmit interrupts. */
-		if (isr & (IS_TxDMAComplete|IS_TxComplete)) {
+		if (isr & (IE_TxDMAComplete|IE_TxComplete)) {
 #ifdef STGE_EVENT_COUNTERS
-			if (isr & IS_TxDMAComplete)
+			if (isr & IE_TxDMAComplete)
 				STGE_EVCNT_INCR(&sc->sc_ev_txdmaintr);
 #endif
 			stge_txintr(sc);
 		}
 
 		/* Statistics overflow. */
-		if (isr & IS_UpdateStats)
+		if (isr & IE_UpdateStats)
 			stge_stats_update(sc);
 
 		/* Transmission errors. */
-		if (isr & IS_TxComplete) {
+		if (isr & IE_TxComplete) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txindintr);
 			for (;;) {
 				txstat = bus_space_read_4(sc->sc_st, sc->sc_sh,
