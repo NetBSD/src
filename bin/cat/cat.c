@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.14 1997/06/26 23:07:19 kleink Exp $	*/
+/*	$NetBSD: cat.c,v 1.15 1997/07/20 04:34:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: cat.c,v 1.14 1997/06/26 23:07:19 kleink Exp $";
+__RCSID("$NetBSD: cat.c,v 1.15 1997/07/20 04:34:33 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +68,7 @@ int bflag, eflag, nflag, sflag, tflag, vflag;
 int rval;
 char *filename;
 
+int main __P((int, char *[]));
 void cook_args __P((char *argv[]));
 void cook_buf __P((FILE *));
 void raw_args __P((char *argv[]));
