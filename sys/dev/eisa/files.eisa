@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.9 1996/05/16 03:48:16 mycroft Exp $
+#	$NetBSD: files.eisa,v 1.10 1996/05/20 00:44:11 thorpej Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -22,3 +22,8 @@ file	dev/eisa/ahc_eisa.c		ahc_eisa
 # device declaration in sys/conf/files
 attach	ep at eisa with ep_eisa
 file	dev/eisa/if_ep_eisa.c		ep_eisa
+
+# DEC DEFEA EISA FDDI Controller
+device	fea: pdq, fddi, ifnet
+attach	fea at eisa
+file	dev/eisa/if_fea.c		fea
