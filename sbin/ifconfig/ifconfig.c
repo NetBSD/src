@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.91 2000/11/07 14:47:59 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.92 2000/12/12 04:08:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.91 2000/11/07 14:47:59 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.92 2000/12/12 04:08:40 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,8 @@ void 	setifmetric __P((const char *, int));
 void 	setifmtu __P((const char *, int));
 void	setifnwid __P((const char *, int));
 void	setifnwkey __P((const char *, int));
+void	setifpowersave __P((const char *, int));
+void	setifpowersavesleep __P((const char *, int));
 void 	setifnetmask __P((const char *, int));
 void	setifprefixlen __P((const char *, int));
 void 	setnsellength __P((const char *, int));
@@ -240,6 +242,9 @@ const struct cmd {
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
+	{ "powersave",	1,		0,		setifpowersave },
+	{ "-powersave",	0,		0,		setifpowersave },
+	{ "powersavesleep", NEXTARG,	0,		setifpowersavesleep },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
@@ -1387,11 +1392,48 @@ setifnwkey(val, d)
 }
 
 void
+setifpowersave(val, d)
+	const char *val;
+	int d;
+{
+	struct ieee80211_power power;
+
+	(void)strncpy(power.i_name, name, sizeof(power.i_name));
+	if (ioctl(s, SIOCG80211POWER, (caddr_t)&power) < 0) {
+		warn("SIOCG80211POWER");
+		return;
+	}
+
+	power.i_enabled = d;
+	if (ioctl(s, SIOCS80211POWER, (caddr_t)&power) < 0)
+		warn("SIOCS80211POWER");
+}
+
+void
+setifpowersavesleep(val, d)
+	const char *val;
+	int d;
+{
+	struct ieee80211_power power;
+
+	(void)strncpy(power.i_name, name, sizeof(power.i_name));
+	if (ioctl(s, SIOCG80211POWER, (caddr_t)&power) < 0) {
+		warn("SIOCG80211POWER");
+		return;
+	}
+
+	power.i_maxsleep = atoi(val);
+	if (ioctl(s, SIOCS80211POWER, (caddr_t)&power) < 0)
+		warn("SIOCS80211POWER");
+}
+
+void
 ieee80211_status()
 {
 	int i;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey nwkey;
+	struct ieee80211_power power;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 
 	memset(&ifr, 0, sizeof(ifr));
@@ -1411,7 +1453,7 @@ ieee80211_status()
 	if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) != 0 ||
 	    nwkey.i_wepon == 0) {
 		printf("\n");
-		return;
+		goto skip_wep;
 	}
 
 	printf(" nwkey ");
@@ -1451,6 +1493,17 @@ ieee80211_status()
 			}
 		}
 	}
+	printf("\n");
+
+ skip_wep:
+	(void)strncpy(power.i_name, name, sizeof(power.i_name));
+	if (ioctl(s, SIOCG80211POWER, &power) != 0)
+		return;
+	printf("\tpowersave ");
+	if (power.i_enabled)
+		printf("on (%dms sleep)", power.i_maxsleep);
+	else
+		printf("off");
 	printf("\n");
 }
 
