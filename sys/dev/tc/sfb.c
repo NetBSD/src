@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $ */
+/* $NetBSD: sfb.c,v 1.9 1999/02/19 03:42:42 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.9 1999/02/19 03:42:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ static void bt459_set_curpos __P((struct sfb_softc *));
 /* XXX XXX XXX */
 #define	BT459_SELECT(vdac, regno) do {		\
 	vdac->bt_lo = (regno) & 0x00ff;		\
-	vdac->bt_hi = ((regno)& 0x0f00) >> 8 ;	\
+	vdac->bt_hi = ((regno)& 0x0f00) >> 8;	\
 	tc_wmb();				\
    } while (0)
 /* XXX XXX XXX */
@@ -305,6 +305,8 @@ sfb_getdevconfig(dense_addr, dc)
 	/* clear the screen */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
+
+	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VALID) = 1;
 
 	/* initialize the raster */
 	rap = &dc->dc_raster;
@@ -607,10 +609,11 @@ sfbinit(dc)
 	struct bt459reg *vdac = (void *)(dc->dc_vaddr + SFB_RAMDAC_OFFSET);
 	int i;
 
-	*(u_int32_t *)(sfbasic + SFB_ASIC_MODE) = 0;
-	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VALID) = 1;
+	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VALID) = 0;
 	*(u_int32_t *)(sfbasic + SFB_ASIC_PLANEMASK) = ~0;
 	*(u_int32_t *)(sfbasic + SFB_ASIC_PIXELMASK) = ~0;
+	*(u_int32_t *)(sfbasic + SFB_ASIC_MODE) = 0;
+	*(u_int32_t *)(sfbasic + SFB_ASCI_ROP) = 3;
 	
 	*(u_int32_t *)(sfbasic + 0x180000) = 0; /* Bt459 reset */
 
