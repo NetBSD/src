@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)dev_mkdb.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: dev_mkdb.8,v 1.5 1997/10/17 00:12:43 lukem Exp $
+.\"	$NetBSD: dev_mkdb.8,v 1.6 2001/07/04 20:42:02 manu Exp $
 .\"
 .Dd June 6, 1993
 .Os
@@ -42,6 +42,8 @@
 database
 .Sh SYNOPSIS
 .Nm
+.Op Fl o Ar database
+.Op directory
 .Sh DESCRIPTION
 The
 .Nm
@@ -50,16 +52,22 @@ command creates a
 hash access method database in
 .Dq Pa /var/run/dev.db
 which contains the names of all of the character and block special
-files in the
-.Dq Pa /dev
-directory, using the file type and the 
+files in the specified directory, using the file type and the 
 .Fa st_rdev
 field as the key.
+If no directory is specified, the 
+.Dq Pa /dev
+directory is used.
 .Pp
 Keys are a structure containing a mode_t followed by a dev_t,
 with any padding zero'd out.
 The former is the type of the file (st_mode & S_IFMT),
 the latter is the st_rdev field.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl o Ar database
+Put the output databases in the named file.
 .Sh FILES
 .Bl -tag -width /var/run/dev.db -compact
 .It Pa /dev
