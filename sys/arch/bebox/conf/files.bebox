@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.14 1998/11/18 09:05:18 sakamoto Exp $
+#	$NetBSD: files.bebox,v 1.15 1999/06/07 20:31:30 thorpej Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -17,14 +17,11 @@ file	arch/bebox/bebox/machdep.c
 # General files
 file	dev/cons.c
 
-major	{vnd = 14}
-
 #
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
 
 #
@@ -73,7 +70,6 @@ file	arch/bebox/pci/pcib.c		pcib
 include "dev/isa/files.isa"
 major	{mcd = 7}
 #major	{scd = 15}
-major	{wt = 3}
 
 file	arch/bebox/isa/isa_machdep.c	isa
 file	arch/bebox/isa/isadma_machdep.c	isa

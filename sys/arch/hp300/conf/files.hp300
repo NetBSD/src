@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.39 1999/04/19 21:22:58 kleink Exp $
+#	$NetBSD: files.hp300,v 1.40 1999/06/07 20:31:30 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -136,12 +136,10 @@ file	arch/hp300/dev/hpib.c		hpibbus
 device	ct: tape
 attach	ct at hpibbus
 file	arch/hp300/dev/ct.c		ct needs-flag
-major	{ct = 0}
 
 device	mt: tape
 attach	mt at hpibbus
 file	arch/hp300/dev/mt.c		mt needs-flag
-major	{mt = 1}
 
 device	rd: disk
 attach	rd at hpibbus
@@ -204,8 +202,6 @@ file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
 file	dev/cons.c
 file	dev/cninit.c
-
-major	{vnd = 6}
 
 #
 # HP-UX binary compatibility

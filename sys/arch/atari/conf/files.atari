@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.62 1999/05/06 20:27:57 leo Exp $
+#	$NetBSD: files.atari,v 1.63 1999/06/07 20:31:29 thorpej Exp $
 
 maxpartitions 16
 
@@ -155,12 +155,9 @@ major	{wd = 14}
 # ISA Plug 'n Play devices
 file	arch/atari/isa/isapnp_machdep.c	isapnp
 
-#
-# XXX: Some scsi-devices must be at fixed major#
-major   {sd = 4}
-major   {st = 5}
-major   {cd = 6}
 include "dev/scsipi/files.scsipi"
+major   {sd = 4}
+major   {cd = 6}
 
 # ncr 5380 controller
 device	ncrscsi: scsi

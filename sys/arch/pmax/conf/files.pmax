@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.66 1999/05/21 01:10:49 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.67 1999/06/07 20:31:33 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -108,7 +108,6 @@ file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 #
 
 include "dev/scsipi/files.scsipi"
-#major { st = 10 }
 #major { cd = 3 }
 #major { sd = 21 }
 major { tz = 10 }

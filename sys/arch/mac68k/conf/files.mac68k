@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.89 1999/04/19 21:22:59 kleink Exp $
+#	$NetBSD: files.mac68k,v 1.90 1999/06/07 20:31:31 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -160,9 +160,7 @@ file	dev/cninit.c
 file	arch/mac68k/dev/md_root.c	memory_disk_hooks
 
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
-major	{vnd = 8}
 major	{md = 13}
 
 # Compatibility modules

@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.19 1999/04/16 21:15:29 thorpej Exp $
+#	$NetBSD: files.macppc,v 1.20 1999/06/07 20:31:31 thorpej Exp $
 #
 # macppc-specific configuration info
 
@@ -30,7 +30,6 @@ major {md = 9}
 #
 include "dev/scsipi/files.scsipi"
 major {sd = 4}
-major {st = 5}
 major {cd = 6}
 
 #

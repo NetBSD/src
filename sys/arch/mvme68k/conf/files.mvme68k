@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.26 1999/04/19 21:23:00 kleink Exp $
+#	$NetBSD: files.mvme68k,v 1.27 1999/06/07 20:31:32 thorpej Exp $
 
 # config file for mvme68k
 
@@ -79,7 +79,6 @@ file arch/mvme68k/dev/vme_two.c			vmetwo
 
 include "../../../dev/scsipi/files.scsipi"
 
-major { vnd = 6 }
 major { sd = 7 }
 major { md = 9 }
 major { cd = 18 }
