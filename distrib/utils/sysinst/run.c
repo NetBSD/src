@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.29 2000/01/24 10:40:56 he Exp $	*/
+/*	$NetBSD: run.c,v 1.30 2000/04/14 21:46:11 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -375,9 +375,9 @@ launch_subwin(actionwin, args, win, display)
 						switch (ibuf[j]) {
 						case '\n':
 							getyx(actionwin, ycor, xcor);
-							if (ycor + 1 >= actionwin->maxy) {
+							if (ycor + 1 >= getmaxy(actionwin)) {
 								scroll(actionwin);
-								wmove(actionwin, actionwin->maxy - 1, 0);
+								wmove(actionwin, getmaxy(actionwin) - 1, 0);
 							} else
 								wmove(actionwin, ycor + 1, 0);
 							break;
