@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2003/03/08 19:12:17 perry Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/12 01:33:51 lukem Exp $
 
 .include <bsd.own.mk>
+
+.if ${MKDOC} != "no"						# {
 
 BINDIR=	${PFIX_HTMLDIR}
 
@@ -33,5 +35,7 @@ SYMLINKS+=sendmail.1.html ${BINDIR}/newaliases.1.html
 
 # not installed:
 # qmqpd.8.html
+
+.endif								# }
 
 .include <bsd.prog.mk>

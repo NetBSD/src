@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/08 05:17:13 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/12 01:35:53 lukem Exp $
 
 .include <bsd.own.mk>
+
+.if ${MKDOC} != "no"
 
 BINDIR=	${PFIX_EXAMPLEDIR}
 
@@ -15,5 +17,7 @@ FILES=	ADDRESS_CLASS_README DEBUG_README ETRN_README FILTER_README \
 
 #	DB_README INSTALL LINUX_README MACOSX_README ULTRIX_README
 #	PACKAGE_README
+
+.endif
 
 .include <bsd.prog.mk>
