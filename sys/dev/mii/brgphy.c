@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.15 2003/01/16 18:43:40 jonathan Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.16 2003/01/16 20:02:05 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.15 2003/01/16 18:43:40 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.16 2003/01/16 20:02:05 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,6 +422,7 @@ brgphy_5704_reset(struct mii_softc *sc)
 	bcm5704_load_dspcode(sc);
 }
 
+/* Turn off tap power management on 5401. */
 static void
 bcm5401_load_dspcode(struct mii_softc *sc)
 {
@@ -429,7 +430,7 @@ bcm5401_load_dspcode(struct mii_softc *sc)
 		int		reg;
 		uint16_t	val;
 	} dspcode[] = {
-		{ BRGPHY_MII_AUXCTL,		0x4c20 },
+		{ BRGPHY_MII_AUXCTL,		0x0c20 },
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x0012 },
 		{ BRGPHY_MII_DSP_RW_PORT,	0x1804 },
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x0013 },
@@ -446,6 +447,7 @@ bcm5401_load_dspcode(struct mii_softc *sc)
 
 	for (i = 0; dspcode[i].reg != 0; i++)
 		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+    delay(40);
 }
 
 static void
