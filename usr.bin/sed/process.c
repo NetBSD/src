@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.24 1998/12/19 22:12:32 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.24.2.1 1999/06/25 20:54:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.24 1998/12/19 22:12:32 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.24.2.1 1999/06/25 20:54:31 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,8 @@ redirect:
 				cspace(&PS, hs, hsl, REPLACE);
 				break;
 			case 'G':
+				if (hs == NULL)
+					cspace(&HS, "\n", 1, REPLACE);
 				cspace(&PS, hs, hsl, 0);
 				break;
 			case 'h':
