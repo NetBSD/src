@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 1997/01/28 23:58:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.33 1997/01/28 23:58:00 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.33 1997/01/28 23:58:00 christos Exp $
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
-#ifndef MACHINE
+#ifndef MAKE_BOOTSTRAP
 #include <sys/utsname.h>
 #endif
 #include <sys/wait.h>
@@ -491,8 +491,8 @@ main(argc, argv)
 	 * Note that both MACHINE and MACHINE_ARCH are decided at
 	 * run-time.
 	 */
-    	if (!machine) {
-#ifndef MACHINE
+	if (!machine) {
+#ifndef MAKE_BOOTSTRAP
 	    struct utsname utsname;
 
 	    if (uname(&utsname) == -1) {
