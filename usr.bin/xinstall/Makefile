@@ -4,7 +4,7 @@ PROG=	xinstall
 MAN1=	install.0
 CLEANFILES=xinstall
 
-install: maninstall
+realinstall:
 	install -c ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG} ${DESTDIR}${BINDIR}/install
 
