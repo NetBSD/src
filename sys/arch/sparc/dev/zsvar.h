@@ -42,7 +42,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: zsvar.h,v 1.7 92/11/26 01:28:04 torek Exp  (LBL)
- * $Id: zsvar.h,v 1.1 1993/10/02 10:22:48 deraadt Exp $
+ * $Id: zsvar.h,v 1.2 1994/08/20 09:11:08 deraadt Exp $
  */
 
 /*
@@ -140,7 +140,19 @@ struct zs_chanstate {
  * Macros to read and write individual registers (except 0) in a channel.
  *
  * On the SparcStation the 1.6 microsecond recovery time is
- * handled in hardware.
+ * handled in hardware. On the older Sun4 machine it isn't, and
+ * software must deal with the problem.
  */
+#ifdef SUN4
+#define	ZS_READ(c, r)		zs_read(c, r)
+#define	ZS_WRITE(c, r, v)	zs_write(c, r, v)
+#if defined(SUN4C) || defined(SUN4M)
+#define	ZS_DELAY()		(cputyp == CPU_SUN4 ? delay(1) : 0)
+#else
+#define	ZS_DELAY()		delay(1)
+#endif
+#else
 #define	ZS_READ(c, r)		((c)->zc_csr = (r), (c)->zc_csr)
 #define	ZS_WRITE(c, r, v)	((c)->zc_csr = (r), (c)->zc_csr = (v))
+#define	ZS_DELAY()
+#endif

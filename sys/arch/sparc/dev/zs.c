@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.11 1994/07/21 22:06:01 deraadt Exp $
+ * $Id: zs.c,v 1.12 1994/08/20 09:11:02 deraadt Exp $
  */
 
 /*
@@ -171,6 +171,34 @@ static struct conk_state {	/* console keyboard state */
 
 int zshardscope;
 int zsshortcuts;		/* number of "shortcut" software interrupts */
+
+#ifdef SUN4
+static u_char
+zs_read(zc, reg)
+	volatile struct zschan *zc;
+	u_char reg;
+{
+	u_char val;
+
+	zc->zc_csr = reg;
+	ZS_DELAY();
+	val = zc->zc_csr;
+	ZS_DELAY();
+	return val;
+}
+
+static u_char
+zs_write(zc, reg, val)
+	volatile struct zschan *zc;
+	u_char reg, val;
+{
+	zc->zc_csr = reg;
+	ZS_DELAY();
+	zc->zc_csr = val;
+	ZS_DELAY();
+	return val;
+}
+#endif /* SUN4 */
 
 /*
  * Match slave number to zs unit number, so that misconfiguration will
@@ -392,8 +420,9 @@ zscnputc(c)
 		(void) splzs();
 #endif
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
-		continue;
+		ZS_DELAY();
 	zc->zc_data = c;
+	ZS_DELAY();
 	splx(s);
 }
 
@@ -795,6 +824,14 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 		}
 	}
 	if ((rr0 & ZSRR0_BREAK) && cs->cs_brkabort) {
+#ifdef SUN4
+		/*
+		 * XXX This might not be necessary. Test and
+		 * delete if it isn't.
+		 */
+		while (zc->zc_csr & ZSRR0_BREAK)
+			ZS_DELAY();
+#endif
 		zsabort();
 		return (0);
 	}
