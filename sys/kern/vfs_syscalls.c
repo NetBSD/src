@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.77 1997/02/20 04:52:44 mikel Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.78 1997/02/22 03:22:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -364,11 +364,16 @@ sys_unmount(p, v, retval)
 		return (EINVAL);
 	}
 	vput(vp);
+
+	if (vfs_busy(mp))
+		return (EBUSY);
+
 	return (dounmount(mp, SCARG(uap, flags), p));
 }
 
 /*
- * Do the actual file system unmount.
+ * Do the actual file system unmount. File system is assumed to have been
+ * marked busy by the caller.
  */
 int
 dounmount(mp, flags, p)
@@ -380,11 +385,11 @@ dounmount(mp, flags, p)
 	int error;
 
 	coveredvp = mp->mnt_vnodecovered;
-	if (vfs_busy(mp))
-		return (EBUSY);
 	mp->mnt_flag |= MNT_UNMOUNT;
-	if ((error = vfs_lock(mp)) != 0)
+	if ((error = vfs_lock(mp)) != 0) {
+		vfs_unbusy(mp);
 		return (error);
+	}
 
 	mp->mnt_flag &=~ MNT_ASYNC;
 	vnode_pager_umount(mp);	/* release cached vnodes */
