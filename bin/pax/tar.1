@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.6 2002/11/06 14:56:48 wiz Exp $
+.\" $NetBSD: tar.1,v 1.7 2003/01/19 01:13:46 wiz Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -210,14 +210,6 @@ This argument and its parameter may also appear in a file list specified by
 .Fl T .
 .It Fl H
 Follow symlinks given on command line only.
-.It Fl L
-Follow all symlinks.
-.Em Warning!
-This flag has the opposite meaning in some other versions of
-.Nm tar ,
-including the one in AT\*[Am]T Bell Labs Research Tenth Edition, and its
-meaning is completely different and unrelated to symlinks in GNU Tar.
-.\" No wonder the world needs Pax!
 .It Fl P , -absolute-paths
 Do not strip leading slashes
 .Pq Sq /
@@ -307,8 +299,3 @@ command first appeared in
 .At v7 .
 .Sh AUTHORS
 Keith Muller at the University of California, San Diego.
-.Sh BUGS
-The
-.Fl L
-flag is not portable to other versions of
-.Nm tar .
