@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.14 1997/10/28 22:38:42 kml Exp $
+.\"	$NetBSD: netstat.1,v 1.15 1998/03/19 02:42:57 kml Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,6 +89,10 @@ for debugging.
 With the default display,
 show the state of all sockets; normally sockets used by
 server processes are not shown.
+.It Fl b
+With the interface display (option
+.Fl i
+), show bytes in and out, instead of packets in and out.
 .It Fl d
 With either interface display (option
 .Fl i
