@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19 2003/12/11 18:33:52 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.20 2004/04/04 17:20:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2003/12/11 18:33:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2004/04/04 17:20:15 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -223,7 +223,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		save_fpu_lwp(l);
 		(void)memcpy(&pcb->pcb_fpu.fpr, &mcp->__fpregs.__fpu_regs,
 		    sizeof (pcb->pcb_fpu.fpr));
-		pcb->pcb_fpu.fpscr = *(double *)&mcp->__fpregs.__fpu_fpscr;
+		((int *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] = 
+		    mcp->__fpregs.__fpu_fpscr;
 	}
 #endif
 
