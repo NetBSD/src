@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.2 1994/06/29 06:35:09 cgd Exp $	*/
+/*	$NetBSD: umap.h,v 1.2.2.1 1994/08/19 12:14:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,8 +68,7 @@ struct umap_mount {
  * A cache of vnode references
  */
 struct umap_node {
-	struct umap_node	*umap_forw;	/* Hash chain */
-	struct umap_node	*umap_back;
+	LIST_ENTRY(umap_node) umap_hash;	/* Hash list */
 	struct vnode	*umap_lowervp;	/* Aliased vnode - VREFed once */
 	struct vnode	*umap_vnode;	/* Back pointer to vnode/umap_node */
 };

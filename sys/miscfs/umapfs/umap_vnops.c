@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.2 1994/06/29 06:35:14 cgd Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.2.2.1 1994/08/19 12:14:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -359,7 +359,7 @@ umap_reclaim(ap)
 	
 	/* After this assignment, this node will not be re-used. */
 	xp->umap_lowervp = NULL;
-	remque(xp);
+	LIST_REMOVE(xp, umap_hash);
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = NULL;
 	vrele(lowervp);

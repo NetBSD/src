@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.2.2.1 1994/07/20 20:16:42 cgd Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.2.2.2 1994/08/19 12:13:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -373,7 +373,7 @@ null_reclaim(ap)
 	 */
 	/* After this assignment, this node will not be re-used. */
 	xp->null_lowervp = NULL;
-	remque(xp);
+	LIST_REMOVE(xp, null_hash);
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = NULL;
 	vrele (lowervp);

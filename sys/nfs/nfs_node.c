@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.12 1994/06/29 06:42:09 cgd Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.12.2.1 1994/08/19 12:10:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -54,9 +54,10 @@
 #include <nfs/nfsmount.h>
 #include <nfs/nqnfs.h>
 
-struct nfsnode **nheadhashtbl;
-u_long nheadhash;
-#define	NFSNOHASH(fhsum)	((fhsum)&nheadhash)
+#define	NFSNOHASH(fhsum) \
+	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
+LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
+u_long nfsnodehash;
 
 #define TRUE	1
 #define	FALSE	0
@@ -72,13 +73,13 @@ nfs_nhinit()
 	if ((sizeof(struct nfsnode) - 1) & sizeof(struct nfsnode))
 		printf("nfs_nhinit: bad size %d\n", sizeof(struct nfsnode));
 #endif /* not lint */
-	nheadhashtbl = hashinit(desiredvnodes, M_NFSNODE, &nheadhash);
+	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, &nfsnodehash);
 }
 
 /*
  * Compute an entry in the NFS hash table structure
  */
-struct nfsnode **
+struct nfsnodehashhead *
 nfs_hash(fhp)
 	register nfsv2fh_t *fhp;
 {
@@ -90,7 +91,7 @@ nfs_hash(fhp)
 	fhsum = 0;
 	for (i = 0; i < NFSX_FH; i++)
 		fhsum += *fhpp++;
-	return (&nheadhashtbl[NFSNOHASH(fhsum)]);
+	return (NFSNOHASH(fhsum));
 }
 
 /*
@@ -104,7 +105,8 @@ nfs_nget(mntp, fhp, npp)
 	register nfsv2fh_t *fhp;
 	struct nfsnode **npp;
 {
-	register struct nfsnode *np, *nq, **nhpp;
+	register struct nfsnode *np;
+	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
 	extern int (**nfsv2_vnodeop_p)();
 	struct vnode *nvp;
@@ -112,7 +114,7 @@ nfs_nget(mntp, fhp, npp)
 
 	nhpp = nfs_hash(fhp);
 loop:
-	for (np = *nhpp; np; np = np->n_forw) {
+	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
 		if (mntp != NFSTOV(np)->v_mount ||
 		    bcmp((caddr_t)fhp, (caddr_t)&np->n_fh, NFSX_FH))
 			continue;
@@ -134,11 +136,7 @@ loop:
 	 * Insert the nfsnode in the hash queue for its new file handle
 	 */
 	np->n_flag = 0;
-	if (nq = *nhpp)
-		nq->n_back = &np->n_forw;
-	np->n_forw = nq;
-	np->n_back = nhpp;
-	*nhpp = np;
+	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	bcopy((caddr_t)fhp, (caddr_t)&np->n_fh, NFSX_FH);
 	np->n_attrstamp = 0;
 	np->n_direofoffset = 0;
@@ -150,7 +148,7 @@ loop:
 		np->n_brev = 0;
 		np->n_lrev = 0;
 		np->n_expiry = (time_t)0;
-		np->n_tnext = (struct nfsnode *)0;
+		np->n_timer.cqe_next = (struct nfsnode *)0;
 	}
 	*npp = np;
 	return (0);
@@ -199,30 +197,17 @@ nfs_reclaim(ap)
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	register struct nfsnode *nq;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
-	/*
-	 * Remove the nfsnode from its hash chain.
-	 */
-	if (nq = np->n_forw)
-		nq->n_back = np->n_back;
-	*np->n_back = nq;
+	LIST_REMOVE(np, n_hash);
 
 	/*
 	 * For nqnfs, take it off the timer queue as required.
 	 */
-	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_tnext) {
-		if (np->n_tnext == (struct nfsnode *)nmp)
-			nmp->nm_tprev = np->n_tprev;
-		else
-			np->n_tnext->n_tprev = np->n_tprev;
-		if (np->n_tprev == (struct nfsnode *)nmp)
-			nmp->nm_tnext = np->n_tnext;
-		else
-			np->n_tprev->n_tnext = np->n_tnext;
+	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
+		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}
 	cache_purge(vp);
 	FREE(vp->v_data, M_NFSNODE);
