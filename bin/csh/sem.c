@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.18 1999/11/02 19:35:44 tron Exp $	*/
+/* $NetBSD: sem.c,v 1.19 2001/09/14 14:04:00 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,18 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.18 1999/11/02 19:35:44 tron Exp $");
+__RCSID("$NetBSD: sem.c,v 1.19 2001/09/14 14:04:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -57,34 +59,30 @@ __RCSID("$NetBSD: sem.c,v 1.18 1999/11/02 19:35:44 tron Exp $");
 #endif
 
 #include "csh.h"
-#include "proc.h"
 #include "extern.h"
+#include "proc.h"
 
-static void	 vffree __P((int));
-static Char	*splicepipe __P((struct command *t, Char *));
-static void	 doio __P((struct command *t, int *, int *));
-static void	 chkclob __P((char *));
+static void vffree(int);
+static Char *splicepipe(struct command *t, Char *);
+static void doio(struct command *t, int *, int *);
+static void chkclob(char *);
 
 void
-execute(t, wanttty, pipein, pipeout)
-    struct command *t;
-    int     wanttty, *pipein, *pipeout;
+execute(struct command *t, int wanttty, int *pipein, int *pipeout)
 {
-    bool    forked = 0;
+    static sigset_t csigset, ocsigset; 
+    static int nosigchld = 0, onosigchld = 0;
     struct biltins *bifunc;
-    int     pid = 0;
-    int     pv[2];
+    int pv[2], pid;
     sigset_t sigset;
-
-    static sigset_t csigset;
-
-    static sigset_t ocsigset;
-    static int onosigchld = 0;
-    static int nosigchld = 0;
+    bool forked;
 
     UNREGISTER(forked);
     UNREGISTER(bifunc);
     UNREGISTER(wanttty);
+
+    forked = 0;
+    pid = 0;
 
     if (t == 0)
 	return;
@@ -92,16 +90,14 @@ execute(t, wanttty, pipein, pipeout)
     if (t->t_dflg & F_AMPERSAND)
 	wanttty = 0;
     switch (t->t_dtyp) {
-
     case NODE_COMMAND:
 	if ((t->t_dcom[0][0] & (QUOTE | TRIM)) == QUOTE)
-	    (void) Strcpy(t->t_dcom[0], t->t_dcom[0] + 1);
+	    (void)Strcpy(t->t_dcom[0], t->t_dcom[0] + 1);
 	if ((t->t_dflg & F_REPEAT) == 0)
 	    Dfix(t);		/* $ " ' \ */
 	if (t->t_dcom[0] == 0)
 	    return;
 	/* FALLTHROUGH */
-
     case NODE_PAREN:
 	if (t->t_dflg & F_PIPEOUT)
 	    mypipe(pipeout);
@@ -110,10 +106,10 @@ execute(t, wanttty, pipein, pipeout)
 	 * If noexec then this is all we do.
 	 */
 	if (t->t_dflg & F_READ) {
-	    (void) close(0);
+	    (void)close(0);
 	    heredoc(t->t_dlef);
 	    if (noexec)
-		(void) close(0);
+		(void)close(0);
 	}
 
 	set(STRstatus, Strsave(STR0));
@@ -217,14 +213,14 @@ execute(t, wanttty, pipein, pipeout)
 		 */
 		if (wanttty >= 0 && !nosigchld) {
 		    sigemptyset(&sigset);
-		    (void) sigaddset(&sigset, SIGCHLD);
-		    (void) sigprocmask(SIG_BLOCK, &sigset, &csigset);
+		    (void)sigaddset(&sigset, SIGCHLD);
+		    (void)sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
 
 		pid = pfork(t, wanttty);
 		if (pid == 0 && nosigchld) {
-		    (void) sigprocmask(SIG_SETMASK, &csigset, NULL);
+		    (void)sigprocmask(SIG_SETMASK, &csigset, NULL);
 		    nosigchld = 0;
 		}
 		else if (pid != 0 && (t->t_dflg & F_AMPERSAND))
@@ -232,8 +228,8 @@ execute(t, wanttty, pipein, pipeout)
 
 	    }
 	    else {
-		int     ochild, osetintr, ohaderr, odidfds;
-		int     oSHIN, oSHOUT, oSHERR, oOLDSTD, otpgrp;
+		int ochild, osetintr, ohaderr, odidfds;
+		int oSHIN, oSHOUT, oSHERR, oOLDSTD, otpgrp;
 		sigset_t osigset;
 
 		/*
@@ -246,14 +242,14 @@ execute(t, wanttty, pipein, pipeout)
 		 */
 		if (wanttty >= 0 && !nosigchld && !noexec) {
 		    sigemptyset(&sigset);
-		    (void) sigaddset(&sigset, SIGCHLD);
-		    (void) sigprocmask(SIG_BLOCK, &sigset, &csigset);
+		    (void)sigaddset(&sigset, SIGCHLD);
+		    (void)sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
 		sigemptyset(&sigset);
-		(void) sigaddset(&sigset, SIGCHLD);
-		(void) sigaddset(&sigset, SIGINT);
-		(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
+		(void)sigaddset(&sigset, SIGCHLD);
+		(void)sigaddset(&sigset, SIGINT);
+		(void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
 		ochild = child;
 		osetintr = setintr;
 		ohaderr = haderr;
@@ -271,7 +267,7 @@ execute(t, wanttty, pipein, pipeout)
 		pid = vfork();
 
 		if (pid < 0) {
-		    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
+		    (void)sigprocmask(SIG_SETMASK, &osigset, NULL);
 		    stderror(ERR_NOPROC);
 		}
 		forked++;
@@ -298,15 +294,15 @@ execute(t, wanttty, pipein, pipeout)
 		    Vt = 0;
 		    /* this is from pfork() */
 		    palloc(pid, t);
-		    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
+		    (void)sigprocmask(SIG_SETMASK, &osigset, NULL);
 		}
 		else {		/* child */
 		    /* this is from pfork() */
-		    int     pgrp;
-		    bool    ignint = 0;
+		    int pgrp;
+		    bool ignint = 0;
 
 		    if (nosigchld) {
-		        (void) sigprocmask(SIG_SETMASK, &csigset, NULL);
+		        (void)sigprocmask(SIG_SETMASK, &csigset, NULL);
 			nosigchld = 0;
 		    }
 
@@ -320,33 +316,33 @@ execute(t, wanttty, pipein, pipeout)
 		    if (setintr) {
 			setintr = 0;
 			if (ignint) {
-			    (void) signal(SIGINT, SIG_IGN);
-			    (void) signal(SIGQUIT, SIG_IGN);
+			    (void)signal(SIGINT, SIG_IGN);
+			    (void)signal(SIGQUIT, SIG_IGN);
 			}
 			else {
-			    (void) signal(SIGINT, vffree);
-			    (void) signal(SIGQUIT, SIG_DFL);
+			    (void)signal(SIGINT, vffree);
+			    (void)signal(SIGQUIT, SIG_DFL);
 			}
 
 			if (wanttty >= 0) {
-			    (void) signal(SIGTSTP, SIG_DFL);
-			    (void) signal(SIGTTIN, SIG_DFL);
-			    (void) signal(SIGTTOU, SIG_DFL);
+			    (void)signal(SIGTSTP, SIG_DFL);
+			    (void)signal(SIGTTIN, SIG_DFL);
+			    (void)signal(SIGTTOU, SIG_DFL);
 			}
 
-			(void) signal(SIGTERM, parterm);
+			(void)signal(SIGTERM, parterm);
 		    }
 		    else if (tpgrp == -1 &&
 			     (t->t_dflg & F_NOINTERRUPT)) {
-			(void) signal(SIGINT, SIG_IGN);
-			(void) signal(SIGQUIT, SIG_IGN);
+			(void)signal(SIGINT, SIG_IGN);
+			(void)signal(SIGQUIT, SIG_IGN);
 		    }
 
 		    pgetty(wanttty, pgrp);
 		    if (t->t_dflg & F_NOHUP)
-			(void) signal(SIGHUP, SIG_IGN);
+			(void)signal(SIGHUP, SIG_IGN);
 		    if (t->t_dflg & F_NICE)
-			(void) setpriority(PRIO_PROCESS, 0, t->t_nice);
+			(void)setpriority(PRIO_PROCESS, 0, t->t_nice);
 		}
 
 	    }
@@ -359,12 +355,12 @@ execute(t, wanttty, pipein, pipeout)
 	     * express our intentions.
 	     */
 	    if (didfds == 0 && t->t_dflg & F_PIPEIN) {
-		(void) close(pipein[0]);
-		(void) close(pipein[1]);
+		(void)close(pipein[0]);
+		(void)close(pipein[1]);
 	    }
 	    if ((t->t_dflg & F_PIPEOUT) == 0) {
 		if (nosigchld) {
-		    (void) sigprocmask(SIG_SETMASK, &csigset, NULL);
+		    (void)sigprocmask(SIG_SETMASK, &csigset, NULL);
 		    nosigchld = 0;
 		}
 		if ((t->t_dflg & F_AMPERSAND) == 0)
@@ -374,8 +370,8 @@ execute(t, wanttty, pipein, pipeout)
 	}
 	doio(t, pipein, pipeout);
 	if (t->t_dflg & F_PIPEOUT) {
-	    (void) close(pipeout[0]);
-	    (void) close(pipeout[1]);
+	    (void)close(pipeout[0]);
+	    (void)close(pipeout[1]);
 	}
 	/*
 	 * Perform a builtin function. If we are not forked, arrange for
@@ -403,7 +399,6 @@ execute(t, wanttty, pipein, pipeout)
 	execute(t->t_dspr, wanttty, NULL, NULL);
 	exitstat();
 	/* NOTREACHED */
-
     case NODE_PIPE:
 	t->t_dcar->t_dflg |= F_PIPEOUT |
 	    (t->t_dflg & (F_PIPEIN | F_AMPERSAND | F_STDERR | F_NOINTERRUPT));
@@ -414,7 +409,6 @@ execute(t, wanttty, pipein, pipeout)
 	    wanttty = 0;	/* got tty already */
 	execute(t->t_dcdr, wanttty, pv, pipeout);
 	break;
-
     case NODE_LIST:
 	if (t->t_dcar) {
 	    t->t_dcar->t_dflg |= t->t_dflg & F_NOINTERRUPT;
@@ -432,7 +426,6 @@ execute(t, wanttty, pipein, pipeout)
 	    execute(t->t_dcdr, wanttty, NULL, NULL);
 	}
 	break;
-
     case NODE_OR:
     case NODE_AND:
 	if (t->t_dcar) {
@@ -461,8 +454,7 @@ execute(t, wanttty, pipein, pipeout)
 }
 
 static void
-vffree(i)
-int i;
+vffree(int i)
 {
     Char **v;
 
@@ -494,9 +486,7 @@ int i;
  * code is present and the user can choose it by setting noambiguous
  */
 static Char *
-splicepipe(t, cp)
-    struct command *t;
-    Char *cp;	/* word after < or > */
+splicepipe(struct command *t, Char *cp /* word after < or > */)
 {
     Char *blk[2];
 
@@ -538,70 +528,68 @@ splicepipe(t, cp)
  * We may or maynot be forked here.
  */
 static void
-doio(t, pipein, pipeout)
-    struct command *t;
-    int    *pipein, *pipeout;
+doio(struct command *t, int *pipein, int *pipeout)
 {
-    int fd;
     Char *cp;
-    int flags = t->t_dflg;
+    int fd, flags;
 
+    flags = t->t_dflg;
     if (didfds || (flags & F_REPEAT))
 	return;
     if ((flags & F_READ) == 0) {/* F_READ already done */
 	if (t->t_dlef) {
-	    char    tmp[MAXPATHLEN+1];
+	    char tmp[MAXPATHLEN+1];
 
 	    /*
 	     * so < /dev/std{in,out,err} work
 	     */
-	    (void) dcopy(SHIN, 0);
-	    (void) dcopy(SHOUT, 1);
-	    (void) dcopy(SHERR, 2);
+	    (void)dcopy(SHIN, 0);
+	    (void)dcopy(SHOUT, 1);
+	    (void)dcopy(SHERR, 2);
 	    cp = splicepipe(t, t->t_dlef);
-	    (void) strncpy(tmp, short2str(cp), MAXPATHLEN);
+	    (void)strncpy(tmp, short2str(cp), MAXPATHLEN);
 	    tmp[MAXPATHLEN] = '\0';
 	    xfree((ptr_t) cp);
 	    if ((fd = open(tmp, O_RDONLY)) < 0) {
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
 		/* NOTREACHED */
 	    }
-	    (void) dmove(fd, 0);
+	    (void)dmove(fd, 0);
 	}
 	else if (flags & F_PIPEIN) {
-	    (void) close(0);
-	    (void) dup(pipein[0]);
-	    (void) close(pipein[0]);
-	    (void) close(pipein[1]);
+	    (void)close(0);
+	    (void)dup(pipein[0]);
+	    (void)close(pipein[0]);
+	    (void)close(pipein[1]);
 	}
 	else if ((flags & F_NOINTERRUPT) && tpgrp == -1) {
-	    (void) close(0);
-	    (void) open(_PATH_DEVNULL, O_RDONLY);
+	    (void)close(0);
+	    (void)open(_PATH_DEVNULL, O_RDONLY);
 	}
 	else {
-	    (void) close(0);
-	    (void) dup(OLDSTD);
-	    (void) ioctl(0, FIONCLEX, NULL);
+	    (void)close(0);
+	    (void)dup(OLDSTD);
+	    (void)ioctl(0, FIONCLEX, NULL);
 	}
     }
     if (t->t_drit) {
 	char    tmp[MAXPATHLEN+1];
 
 	cp = splicepipe(t, t->t_drit);
-	(void) strncpy(tmp, short2str(cp), MAXPATHLEN);
+	(void)strncpy(tmp, short2str(cp), MAXPATHLEN);
 	tmp[MAXPATHLEN] = '\0';
 	xfree((ptr_t) cp);
 	/*
 	 * so > /dev/std{out,err} work
 	 */
-	(void) dcopy(SHOUT, 1);
-	(void) dcopy(SHERR, 2);
+	(void)dcopy(SHOUT, 1);
+	(void)dcopy(SHERR, 2);
 	if ((flags & F_APPEND) &&
 #ifdef O_APPEND
 	    (fd = open(tmp, O_WRONLY | O_APPEND)) >= 0);
 #else
 	    (fd = open(tmp, O_WRONLY)) >= 0)
-	    (void) lseek(1, (off_t) 0, SEEK_END);
+	    (void)lseek(1, (off_t) 0, SEEK_END);
 #endif
 	else {
 	    if (!(flags & F_OVERWRITE) && adrof(STRnoclobber)) {
@@ -616,34 +604,32 @@ doio(t, pipein, pipeout)
 		/* NOTREACHED */
 	    }
 	}
-	(void) dmove(fd, 1);
+	(void)dmove(fd, 1);
     }
     else if (flags & F_PIPEOUT) {
-	(void) close(1);
-	(void) dup(pipeout[1]);
+	(void)close(1);
+	(void)dup(pipeout[1]);
     }
     else {
-	(void) close(1);
-	(void) dup(SHOUT);
-	(void) ioctl(1, FIONCLEX, NULL);
+	(void)close(1);
+	(void)dup(SHOUT);
+	(void)ioctl(1, FIONCLEX, NULL);
     }
 
-    (void) close(2);
+    (void)close(2);
     if (flags & F_STDERR) {
-	(void) dup(1);
+	(void)dup(1);
     }
     else {
-	(void) dup(SHERR);
-	(void) ioctl(2, FIONCLEX, NULL);
+	(void)dup(SHERR);
+	(void)ioctl(2, FIONCLEX, NULL);
     }
     didfds = 1;
 }
 
 void
-mypipe(pv)
-    int *pv;
+mypipe(int *pv)
 {
-
     if (pipe(pv) < 0)
 	goto oops;
     pv[0] = dmove(pv[0], -1);
@@ -656,8 +642,7 @@ oops:
 }
 
 static void
-chkclob(cp)
-    char *cp;
+chkclob(char *cp)
 {
     struct stat stb;
 
