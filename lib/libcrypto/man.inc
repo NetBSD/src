@@ -64,6 +64,7 @@ MAN+=	SSL_COMP_add_compression_method.3 SSL_CTX_ctrl.3 \
 	SSL_CTX_set_client_cert_cb.3 SSL_CTX_set_info_callback.3 \
 	SSL_CTX_set_quiet_shutdown.3 SSL_CTX_set_tmp_dh_callback.3 \
 	SSL_CTX_set_tmp_rsa_callback.3 SSL_alert_type_string.3 \
+	SSL_do_handshake.3 \
 	SSL_get_SSL_CTX.3 SSL_get_default_timeout.3 \
 	SSL_rstate_string.3 SSL_session_reused.3 SSL_state_string.3 \
 	SSL_want.3

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.459 2002/07/20 03:58:27 thorpej Exp $
+#	$NetBSD: mi,v 1.460 2002/07/31 01:45:20 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1474,6 +1474,7 @@
 ./usr/share/man/cat3/SSL_alert_type_string.0	comp-c-catman
 ./usr/share/man/cat3/SSL_clear.0		comp-c-catman
 ./usr/share/man/cat3/SSL_connect.0		comp-c-catman
+./usr/share/man/cat3/SSL_do_handshake.0		comp-c-catman
 ./usr/share/man/cat3/SSL_free.0			comp-c-catman
 ./usr/share/man/cat3/SSL_get_SSL_CTX.0	comp-c-catman
 ./usr/share/man/cat3/SSL_get_ciphers.0		comp-c-catman
@@ -4042,6 +4043,7 @@
 ./usr/share/man/man3/SSL_alert_type_string.3	comp-c-man
 ./usr/share/man/man3/SSL_clear.3		comp-c-man
 ./usr/share/man/man3/SSL_connect.3		comp-c-man
+./usr/share/man/man3/SSL_do_handshake.3		comp-c-man
 ./usr/share/man/man3/SSL_free.3			comp-c-man
 ./usr/share/man/man3/SSL_get_SSL_CTX.3	comp-c-man
 ./usr/share/man/man3/SSL_get_ciphers.3		comp-c-man
