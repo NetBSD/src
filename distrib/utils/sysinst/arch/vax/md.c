@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1998/11/30 22:36:00 ragge Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1999/01/21 08:02:19 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,11 +73,16 @@ md_get_info()
 
 	fd = open (devname, O_RDONLY, 0);
 	if (fd < 0) {
+		if (logging)
+			(void)fprintf(log, "Can't open %s\n", devname);
 		endwin();
 		fprintf (stderr, "Can't open %s\n", devname);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
+		if (logging)
+			(void)fprintf(log, "Can't read disklabel on %s.\n",
+				devname);
 		endwin();
 		fprintf (stderr, "Can't read disklabel on %s.\n", devname);
 		close(fd);
@@ -139,7 +144,7 @@ md_post_newfs()
 {
 
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s", diskdev);
+	run_prog(0, 0, "/sbin/disklabel -B %s", diskdev);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.17 1998/08/10 02:23:45 perry Exp $	*/
+/*	$NetBSD: target.c,v 1.18 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.17 1998/08/10 02:23:45 perry Exp $");
+__RCSID("$NetBSD: target.c,v 1.18 1999/01/21 08:02:18 garbled Exp $");
 #endif
 
 /*
@@ -248,10 +248,12 @@ mounted_rootpart()
 	memset(&statfsbuf, 0, sizeof(statfsbuf));
 	result = statfs("/", &statfsbuf);
 	if (result < 0) {
-	  	endwin();
 		fprintf(stderr, "Help! statfs() can't find root: %s\n",
 		    strerror(errno));
 		fflush(stderr);
+		if (logging)
+			fprintf(log, "Help! statfs() can't find root: %s\n",
+			    strerror(errno));
 		exit(errno);
 		return(0);
 	}
@@ -376,7 +378,7 @@ make_prefixed_dir(prefix, path)
 	const char *path;
 {
 
-	run_prog_or_continue("/bin/mkdir -p %s", concat_paths(prefix, path));
+	run_prog(0, 0, "/bin/mkdir -p %s", concat_paths(prefix, path));
 }
 
 /* Make a directory with a pathname relative to the insatllation target. */
@@ -411,7 +413,7 @@ append_to_target_file(path, string)
 	const char *string;
 {
 
-	run_prog_or_die("echo %s >> %s", string, target_expand(path));
+	run_prog(1, 0, "echo %s >> %s", string, target_expand(path));
 }
 
 /*
@@ -447,7 +449,7 @@ trunc_target_file(path)
 	const char *path;
 {
 
-	run_prog_or_die("cat < /dev/null > %s",  target_expand(path));
+	run_prog(1, 0, "cat < /dev/null > %s",  target_expand(path));
 }
 
 static int
@@ -465,11 +467,21 @@ do_target_chdir(dir, must_succeed)
 	/* chdir returns -1 on error and sets errno. */
 	if (chdir(tgt_dir) < 0)
 		error = errno;
+	if (logging) {
+		fprintf(log, "cd to %s\n", tgt_dir);
+		fflush(log);
+	}
+	if (scripting) {
+		fprintf(script, "cd %s\n", tgt_dir);
+		fflush(script);
+	}
 
 	if (error && must_succeed) {
-		endwin();
 		fprintf(stderr, msg_string(MSG_realdir),
 		       target_prefix(), strerror(error));
+		if (logging)
+			fprintf(log, msg_string(MSG_realdir),
+			       target_prefix(), strerror(error));
 		exit(1);
 	}
 	return (error);
@@ -507,7 +519,7 @@ cp_to_target(srcpath, tgt_path)
 {
 	const char *realpath = target_expand(tgt_path);
 
-	run_prog ("/bin/cp %s %s", srcpath, realpath);
+	run_prog(0, 0, "/bin/cp %s %s", srcpath, realpath);
 }
 
 /*
@@ -538,7 +550,7 @@ void mv_within_target_or_die(frompath, topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
-	run_prog_or_die("mv %s %s", realfrom, realto);
+	run_prog(1, 0, "mv %s %s", realfrom, realto);
 }
 
 /* Do a cp where both pathnames are  within the target filesystem. */
@@ -552,7 +564,7 @@ int cp_within_target(frompath, topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
-	return (run_prog("cp -p %s %s", realfrom, realto));
+	return (run_prog(0, 0, "cp -p %s %s", realfrom, realto));
 }
 
 /* fopen a pathname in the target. */
@@ -592,7 +604,7 @@ mount_with_unwind(fstype, from, on)
 	backtowin();
 #endif
 
-	error = run_prog("/sbin/mount %s %s %s", fstype, from, on);
+	error = run_prog(0, 0, "/sbin/mount %s %s %s", fstype, from, on);
 	return (error);
 }
 
@@ -621,7 +633,7 @@ unwind_mounts()
 		fprintf(stderr, "unmounting %s\n", m->um_mountpoint);
 		backtowin();
 #endif
-		run_prog("/sbin/umount %s 2>/dev/null", m->um_mountpoint);
+		run_prog(0, 0, "/sbin/umount %s", m->um_mountpoint);
 		prev = m->um_prev;
 		free(m);
 		m = prev;
@@ -675,7 +687,9 @@ target_test(test, path)
 	const char *realpath = target_expand(path);
 	register int result;
 
-	result = run_prog("test %s %s", test, realpath);
+	result = run_prog(0, 0, "test %s %s", test, realpath);
+	if (scripting)
+		(void)fprintf(script, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", realpath);
 
 #if defined(DEBUG)
 	printf("target_test(%s %s) returning %d\n", test, realpath, result);

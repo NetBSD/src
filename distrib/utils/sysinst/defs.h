@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.32 1998/10/25 19:15:04 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.33 1999/01/21 08:02:17 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -88,6 +88,13 @@ EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
 EXTERN char *multname; 
 EXTERN char *doingwhat;
+
+/* loging variables */
+
+EXTERN int logging;
+EXTERN int scripting;
+EXTERN FILE *log;
+EXTERN FILE *script;
 
 /* Hardware variables */
 EXTERN long ramsize INIT(0);
@@ -252,15 +259,15 @@ void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((char *, ...));
-void	run_prog_or_die __P((char *, ...));
-int	run_prog_or_continue __P((char *, ...));
+int	run_prog __P((int, int, char *, ...));
+void	do_logging __P((void));
 
 /* from upgrade.c */
 void	do_upgrade __P((void));
 void	do_reinstall_sets __P((void));
 
 /* from util.c */
+int	askyesno __P((int reverse));
 int	dir_exists_p(const char *path);
 int	file_exists_p(const char *path);
 int	distribution_sets_exist_p __P((const char *path));

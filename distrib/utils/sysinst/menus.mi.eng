@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.21 1998/11/08 04:42:21 jonathan Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.22 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,7 @@
 
 {
 #include <stdio.h>
+#include <time.h>
 #include <curses.h>
 #include "defs.h"
 #include "md.h"
@@ -56,6 +57,8 @@
 }
 
 default x=20, y=12, no exit, scrollable;
+
+allow dynamic menus;
 
 menu netbsd, x=15, title "  NetBSD-@@VERSION@@ Install System";
 	display action  { toplevel(); };
@@ -66,13 +69,14 @@ menu netbsd, x=15, title "  NetBSD-@@VERSION@@ Install System";
 	option "Re-install sets or install additional sets",
 		action { do_reinstall_sets(); };
 	option "Reboot the computer", exit,
-		action (endwin) { run_prog("/sbin/reboot"); };
+		action { run_prog(0, 0, "/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
 	option "Exit Install System", exit;
 
 menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); };
+/*	option "test", action { run_prog(0, 1, "/bin/pwd"); }; */
 	option "Configure network",
 		action {
 			extern int network_up;
@@ -81,8 +85,9 @@ menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 			config_network();
 		};
 /*	option "Partition a disk"; XXX add later.  */
+	option "Logging functions", action { do_logging(); };
 	option "Halt the system", exit,
-		action (endwin) { run_prog("/sbin/halt"); };
+		action { run_prog(0, 0, "/sbin/halt"); };
 
 menu yesno, title "  yes or no?  ";
 	option "Yes", exit, action  {yesno = 1;};

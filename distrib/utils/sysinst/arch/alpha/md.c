@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1998/11/08 02:55:07 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.7 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,7 @@ void	md_post_newfs (void)
 
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	run_prog_or_continue("/usr/mdec/installboot %s %s /dev/r%sc",
+	run_prog(0, 0, "/usr/mdec/installboot %s %s /dev/r%sc",
 	    bootfile,  "/usr/mdec/bootxx", diskdev);
 }
 
@@ -148,8 +148,7 @@ void	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - -C / . |"
-		  "(cd /mnt ; tar --unlink -xpf - )");
+	run_prog(0, 0, "pax -X -r -w / /mnt");
 
 	/* Copy next-stage profile into target /.profile. */
 	cp_to_target ("/tmp/.hdprofile", "/.profile");

@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.12 1998/06/20 13:05:48 mrg Exp $	*/
+/*	$NetBSD: install.c,v 1.13 1999/01/21 08:02:17 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,8 +52,8 @@ do_install()
 	doingwhat = msg_string(MSG_install);
 
 	msg_display(MSG_installusure);
-	process_menu(MENU_noyes);
-	if (!yesno)
+/*	process_menu(MENU_noyes);*/
+	if (!askyesno(0))
 		return;
 	
 	get_ramsize();
@@ -79,13 +79,12 @@ do_install()
 	}
 
 	/* Last chance ... do you really want to do this? */
+	clear();
+	refresh();
 	msg_display(MSG_lastchance);
 	process_menu(MENU_noyes);
 	if (!yesno)
 		return;
-
-	/* Leave curses so program output looks good. */
-	endwin();
 
 	md_pre_disklabel();
 
@@ -102,7 +101,7 @@ do_install()
 	md_post_newfs();
 
 	/* Done to here. */
-	printf("%s", msg_string(MSG_disksetupdone));
+	msg_display(MSG_disksetupdone);
 
 	getchar();
 	puts(CL); /* just to make sure */

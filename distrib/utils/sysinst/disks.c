@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.19 1998/12/16 22:35:26 simonb Exp $ */
+/*	$NetBSD: disks.c,v 1.20 1999/01/21 08:02:17 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,11 +115,15 @@ int find_disks (void)
 	/* Find disks. */
 	get_disks();
 
+	/* need a redraw here, kernel messages hose everything */
+	touchwin(stdscr);
+	refresh();
+
 	if (numdisks == 0) {
 		/* No disks found! */
 		msg_display (MSG_nodisk);
 		process_menu (MENU_ok);
-		endwin();
+		/*endwin();*/
 		return -1;
 	} else if (numdisks == 1) {
 		/* One disk found! */
@@ -282,7 +286,7 @@ void write_disklabel (void)
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
 	printf ("%s", msg_string (MSG_dodisklabel));
-	run_prog_or_continue ("%s %s \"%s\"", DISKLABEL_CMD, diskdev, bsddiskname);
+	run_prog(0, 0, "%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
 #endif
 
 }
@@ -295,7 +299,7 @@ void make_filesystems (void)
 	char partname[STRSIZE];
 
 	/* Making new file systems and mounting them*/
-	printf ("%s", msg_string (MSG_donewfs));
+	msg_display(MSG_donewfs);
 	for (i=0; i<getmaxpartitions(); i++) {
 		/*
 		 * newfs and mount. For now, process only BSD filesystems. 
@@ -315,7 +319,7 @@ static void
 do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 {
 	char devname[STRSIZE];
-	run_prog_or_continue ("/sbin/newfs /dev/r%s", partname);
+	run_prog(0, 1, "/sbin/newfs /dev/r%s", partname);
 	if (*mountpoint) { 
 		snprintf(devname, STRSIZE, "/dev/%s", partname);
 		if (partno > 0) {
@@ -334,26 +338,49 @@ void make_fstab (void)
 	/* Create the fstab. */
 	make_target_dir("/etc");
 	f = target_fopen ("/etc/fstab", "w");
+	if (logging)
+		(void)fprintf(log, "Creating %s/etc/fstab.\n", target_prefix());
+	if (scripting)
+		(void)fprintf(script, "cat <<EOF >%s/etc/fstab\n", target_prefix());
+
 	if (f == NULL) {
 #ifndef DEBUG
 		(void)fprintf (stderr, msg_string (MSG_createfstab));
+		if (logging)
+			(void)fprintf(log, "Failed to make /etc/fstab!\n");
 		exit(1);
 #else
 		f = stdout;
 #endif		
 	}
 	(void)fprintf (f, "/dev/%sa / ffs rw 1 1\n", diskdev);
+	if (scripting)
+		(void)fprintf (script, "/dev/%sa / ffs rw 1 1\n", diskdev);
 	(void)fprintf (f, "/dev/%sb none swap sw 0 0\n", diskdev);
+	if (scripting)
+		(void)fprintf (script, "/dev/%sb none swap sw 0 0\n", diskdev);
 	for (i=getrawpartition()+1; i<getmaxpartitions(); i++)
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
+		if (bsdlabel[i][D_FSTYPE] == T_42BSD) {
 			(void)fprintf (f, "/dev/%s%c %s ffs rw 1 2\n",
 				       diskdev, 'a'+i, fsmount[i]);
-		else if (bsdlabel[i][D_FSTYPE] == T_MSDOS )
+			if (scripting)
+				(void)fprintf (script, "/dev/%s%c %s ffs rw 1 2\n",
+					diskdev, 'a'+i, fsmount[i]);
+		} else if (bsdlabel[i][D_FSTYPE] == T_MSDOS ) {
 			(void)fprintf (f, "/dev/%s%c %s msdos rw 0 0\n",
 				       diskdev, 'a'+i, fsmount[i]);
+			if (scripting)
+				(void)fprintf (script, "/dev/%s%c %s msdos rw 0 0\n",
+					diskdev, 'a'+i, fsmount[i]);
+		}
 	(void)fprintf (f, "/kern /kern kernfs rw\n");
+	if (scripting) {
+		(void)fprintf (script, "/kern /kern kernfs rw\n");
+		(void)fprintf (script, "EOF\n");
+	}
 #ifndef DEBUG
 	fclose(f);
+	fflush(NULL);
 #endif
 	/* We added /kern to fstab,  make mountpoint. */
 	make_target_dir("/kern");
@@ -445,11 +472,11 @@ do_fsck(const char *diskpart)
 			upgr = "-c ";
 	}
 
-	endwin();
+	/*endwin();*/
 #ifdef	DEBUG_SETS
-	err = run_prog ("/sbin/fsck_ffs %s%s", upgr, raw);
+	err = run_prog (0, 1, "/sbin/fsck_ffs %s%s", upgr, raw);
 #else
-	err = run_prog ("/sbin/fsck_ffs -f %s%s", upgr, raw);
+	err = run_prog (0, 1, "/sbin/fsck_ffs -f %s%s", upgr, raw);
 #endif	
 		wrefresh(stdscr);
 	return err;

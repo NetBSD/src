@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.35 1998/11/09 07:56:11 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.36 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,6 +58,9 @@ int network_up = 0;
 static void get_ifconfig_info __P((void));
 static void get_ifinterface_info __P((void));
 
+/* external */
+const char* target_prefix __P((void));
+
 static void
 get_ifconfig_info()
 {
@@ -69,7 +72,8 @@ get_ifconfig_info()
 	
 	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -l 2>/dev/null");
 	if (textsize < 0) {
-		endwin();
+		if (logging)
+			(void)fprintf(log, "Aborting: Could not run ifconfig.\n");
 		(void)fprintf(stderr, "Could not run ifconfig.");
 		exit(1);
 	}
@@ -218,10 +222,13 @@ config_network()
 		f = fopen("/etc/resolv.conf", "w");
 #endif
 		if (f == NULL) {
-			endwin();
+			if (logging)
+				(void)fprintf(log, "%s", msg_string(MSG_resolv));
 			(void)fprintf(stderr, "%s", msg_string(MSG_resolv));
 			exit(1);
 		}
+		if (scripting)
+			(void)fprintf(script, "cat <<EOF >/etc/resolv.conf\n");
 		time(&now);
 		/* NB: ctime() returns a string ending in  '\n' */
 		(void)fprintf(f, ";\n; BIND data file\n; %s %s;\n", 
@@ -229,10 +236,18 @@ config_network()
 		(void)fprintf (f,
 		    "nameserver %s\nlookup file bind\nsearch %s\n",
 		    net_namesvr, net_domain);
+		if (scripting) {
+			(void)fprintf(script, ";\n; BIND data file\n; %s %s;\n", 
+			    "Created by NetBSD sysinst on", ctime(&now)); 
+			(void)fprintf (script,
+			    "nameserver %s\nlookup file bind\nsearch %s\n",
+			    net_namesvr, net_domain);
+		}
+		fflush(NULL);
 		fclose(f);
 	}
 
-	run_prog("/sbin/ifconfig lo0 127.0.0.1");
+	run_prog(0, 0, "/sbin/ifconfig lo0 127.0.0.1");
 
 	/*
 	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
@@ -252,10 +267,10 @@ config_network()
 	}
 
 	if (*net_media != '\0')
-		run_prog("/sbin/ifconfig %s inet %s netmask %s media %s",
+		run_prog(0, 0, "/sbin/ifconfig %s inet %s netmask %s media %s",
 			  net_dev, net_ip, net_mask, net_media);
 	else
-		run_prog("/sbin/ifconfig %s inet %s netmask %s", net_dev,
+		run_prog(0, 0, "/sbin/ifconfig %s inet %s netmask %s", net_dev,
 			  net_ip, net_mask);
 
 	/* Set host name */
@@ -264,18 +279,24 @@ config_network()
 
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
-		run_prog("/sbin/route -n flush > /dev/null 2> /dev/null");
-		run_prog("/sbin/route -n add default %s > /dev/null 2> /dev/null",
+		run_prog(0, 0, "/sbin/route -n flush");
+		run_prog(0, 0, "/sbin/route -n add default %s",
 			  net_defroute);
 	}
 
+	/*
+	 * ping should be verbose, so users can see the cause
+	 * of a network failure.
+	 */
+
 	if (strcmp(net_namesvr, "") != 0 && network_up)
-		network_up = !run_prog("/sbin/ping -c 2 %s > /dev/null",
+		network_up = !run_prog(0, 1, "/sbin/ping -c 2 %s",
 					net_namesvr);
 
 	if (strcmp(net_defroute, "") != 0 && network_up)
-		network_up = !run_prog("/sbin/ping -c 2 %s > /dev/null",
+		network_up = !run_prog(0, 1, "/sbin/ping -c 2 %s",
 					net_defroute);
+	fflush(NULL);
 
 	return network_up;
 }
@@ -304,7 +325,6 @@ get_via_ftp()
 	process_menu(MENU_ftpsource);
 	
 	list = dist_list;
-	endwin();
 	while (list->name) {
 		if (!list->getit) {
 			list++;
@@ -313,10 +333,10 @@ get_via_ftp()
 		(void)snprintf(filename, SSTRSIZE, "%s%s", list->name,
 		    dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog("/usr/bin/ftp -a 'ftp://%s/%s/%s'",
+			ret = run_prog(0, 1, "/usr/bin/ftp -a 'ftp://%s/%s/%s'",
 			    ftp_host, ftp_dir, filename);
 		else
-			ret = run_prog("/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
+			ret = run_prog(0, 1, "/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
 			    ftp_user, ftp_pass, ftp_host, ftp_dir, filename);
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
@@ -330,7 +350,6 @@ get_via_ftp()
 				process_menu(MENU_ftpsource);
 			else
 				return 0;
-			endwin();
 		} else 
 			list++;
 
@@ -358,10 +377,10 @@ get_via_nfs()
 	process_menu(MENU_nfssource);
 again:
 
-	run_prog("/sbin/umount /mnt2 2> /dev/null");
+	run_prog(0, 0, "/sbin/umount /mnt2");
 	
 	/* Mount it */
-	if (run_prog("/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
+	if (run_prog(0, 0, "/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
 	    nfs_host, nfs_dir)) {
 		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
 		process_menu(MENU_nfsbadmount);
@@ -411,6 +430,8 @@ mnt_net_config(void)
 		        f = target_fopen("/etc/myname", "w");
 			if (f != 0) {
 			  	(void)fprintf(f, "%s\n", net_host);
+				if (scripting)
+				  	(void)fprintf(script, "echo \"%s\" >%s/etc/myname\n", net_host, target_prefix());
 				(void)fclose(f);
 			}
 
@@ -427,6 +448,12 @@ mnt_net_config(void)
 				(void)fprintf(f, msg_string(MSG_etc_hosts),
 				    net_ip, net_host, net_domain, net_host);
 				(void)fclose(f);
+				if (scripting) {
+					(void)fprintf(script, "cat <<EOF >>%s/etc/hosts\n", target_prefix());
+					(void)fprintf(script, msg_string(MSG_etc_hosts),
+					    net_ip, net_host, net_domain, net_host);
+					(void)fprintf(script, "EOF\n");
+				}
 			}
 
 			/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
@@ -434,20 +461,30 @@ mnt_net_config(void)
 			    net_dev);
 			f = target_fopen(ifconfig_fn, "w");
 			if (f != 0) {
-				if (*net_media != '\0')
+				if (*net_media != '\0') {
 					fprintf(f, "%s netmask %s media %s\n",
 						net_ip, net_mask, net_media);
-				else
+					if (scripting)
+						fprintf(script, "echo \"%s netmask %s media %s\">%s%s\n",
+							net_ip, net_mask, net_media, target_prefix(), ifconfig_fn);
+				} else {
 					fprintf(f, "%s netmask %s\n",
 						net_ip, net_mask);
+					if (scripting)
+						fprintf(script, "echo \"%s netmask %s\">%s%s\n",
+							net_ip, net_mask, target_prefix(), ifconfig_fn);
+				}
 				fclose(f);
 			}
 
 			f = target_fopen("/etc/mygate", "w");
 			if (f != 0) {
 				fprintf(f, "%s\n", net_defroute);
+				if (scripting)
+					fprintf(script, "echo \"%s\" >%s/etc/mygate\n", net_defroute, target_prefix());
 				fclose(f);
 			}
+			fflush(NULL);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1998/11/08 02:55:08 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.5 1999/01/21 08:02:19 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,7 +141,7 @@ md_post_newfs()
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/ofwboot", "/boot");
 	sync();
-	run_prog_or_continue("/usr/mdec/installboot %s %s /dev/r%sa",
+	run_prog(0, 1, "/usr/mdec/installboot %s %s /dev/r%sa",
 	    bootfile,  "/usr/mdec/bootxx", diskdev);
 }
 
