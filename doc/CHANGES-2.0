@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.217 2004/05/22 18:06:40 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.218 2004/05/23 11:02:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2952,3 +2952,78 @@ sys/arch/i386/include/int_mwgwtypes.h		1.3-1.4
 	a survey of pkgsrc has not shown uses that would be adversely
 	affected by it.
 	[kleink, #376]
+
+sys/coda/coda_vfsops.h				1.12
+sys/compat/irix/irix_sysctl.h			1.2
+sys/compat/linux/common/linux_sysctl.c		1.15
+sys/compat/linux/common/linux_sysctl.h		1.2
+sys/compat/netbsd32/netbsd32.h			1.28
+sys/fs/adosfs/adosfs.h				1.3
+sys/fs/cd9660/cd9660_extern.h			1.10
+sys/fs/filecorefs/filecore_extern.h		1.9
+sys/fs/msdosfs/msdosfsmount.h			1.7
+sys/fs/ntfs/ntfs_vfsops.h			1.4
+sys/fs/smbfs/smbfs_subr.h			1.11
+sys/fs/union/union.h				1.10
+sys/lkm/compat/irix/lkminit_emul.c		1.2
+sys/lkm/compat/linux/lkminit_emul.c		1.4
+sys/lkm/compat/netbsd32/lkminit_emul.c		1.6
+sys/lkm/vfs/adosfs/lkminit_vfs.c		1.5
+sys/lkm/vfs/cd9660/lkminit_vfs.c		1.2
+sys/lkm/vfs/coda/lkminit_vfs.c			1.8
+sys/lkm/vfs/filecorefs/lkminit_vfs.c		1.3
+sys/lkm/vfs/miscfs/fdesc/lkminit_vfs.c		1.6
+sys/lkm/vfs/miscfs/kernfs/lkminit_vfs.c		1.6
+sys/lkm/vfs/miscfs/nullfs/lkminit_vfs.c		1.7
+sys/lkm/vfs/miscfs/overlay/lkminit_vfs.c	1.4
+sys/lkm/vfs/miscfs/portal/lkminit_vfs.c		1.6
+sys/lkm/vfs/miscfs/procfs/lkminit_vfs.c		1.6
+sys/lkm/vfs/miscfs/umapfs/lkminit_vfs.c		1.7
+sys/lkm/vfs/miscfs/union/lkminit_vfs.c		1.6
+sys/lkm/vfs/msdosfs/lkminit_vfs.c		1.6
+sys/lkm/vfs/ntfs/lkminit_vfs.c			1.6
+sys/lkm/vfs/smbfs/lkminit_vfs.c			1.2
+sys/lkm/vfs/ufs/ext2fs/lkminit_vfs.c		1.4
+sys/lkm/vfs/ufs/ffs/lkminit_vfs.c		1.6
+sys/lkm/vfs/ufs/lfs/lkminit_vfs.c		1.9
+sys/lkm/vfs/ufs/mfs/lkminit_vfs.c		1.6
+sys/miscfs/fdesc/fdesc.h			1.16
+sys/miscfs/kernfs/kernfs.h			1.23
+sys/miscfs/nullfs/null.h			1.15
+sys/miscfs/overlay/overlay.h			1.5
+sys/miscfs/portal/portal.h			1.9
+sys/miscfs/procfs/procfs.h			1.53
+sys/miscfs/umapfs/umap.h			1.11
+sys/sys/sysctl.h				1.125
+sys/ufs/ext2fs/ext2fs_extern.h			1.24
+sys/ufs/ffs/ffs_extern.h			1.38
+sys/ufs/lfs/lfs_extern.h			1.61
+sys/ufs/mfs/mfs_extern.h			1.20
+
+	Tweak sysctl setup functions (the macros, actually) for use in lkms,
+	and tweak lkminit_*.c (where applicable) to call them, and to call
+	sysctl_teardown() when being unloaded.
+
+	This consists of (1) making setup functions not be static when being
+	compiled as lkms (change to sys/sysctl.h), (2) making prototypes
+	visible for the various setup functions in header files (changes to
+	various header files), and (3) making simple "load" and "unload"
+	functions in the actual lkminit stuff.
+
+	linux_sysctl.c also needs its root exposed (ie, made not static) for
+	this (when built as an lkm).
+	[atatat, ticket #374]
+
+sys/dev/raidframe/rf_disks.c			1.53
+
+	Add support for the word "absent" in the "disks" section of
+	RAID config files.  Used as a placeholder for a component that
+	will eventually be added into the set.
+	[oster, ticket #377]
+
+sbin/raidctl/raidctl.8				1.43
+
+	Update docs to reflect the support for the word "absent" in the "disks"
+	section of RAID config files.
+	[oster, ticket #378]
+
