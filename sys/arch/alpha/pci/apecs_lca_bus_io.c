@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_lca_bus_io.c,v 1.2 1996/04/12 06:08:04 cgd Exp $	*/
+/*	$NetBSD: apecs_lca_bus_io.c,v 1.3 1996/06/11 21:25:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -43,6 +43,17 @@
 #endif
 
 #define	CHIP		apecs_lca
-#define	CHIP_IO_BASE	APECS_PCI_SIO
+
+/* IO region 1 */
+#define	CHIP_IO_W1_START(v)	0x00000000
+#define	CHIP_IO_W1_END(v)	0x0003ffff
+#define	CHIP_IO_W1_BASE(v)	APECS_PCI_SIO
+#define	CHIP_IO_W1_MASK(v)	0x00ffffff
+
+/* IO region 2 */
+#define	CHIP_IO_W2_START(v)	0x00040000              /* XXX from HAXR2 */
+#define	CHIP_IO_W2_END(v)	0xfffbffff              /* XXX from HAXR2 */
+#define	CHIP_IO_W2_BASE(v)	APECS_PCI_SIO
+#define	CHIP_IO_W2_MASK(v)	0x00ffffff
 
 #include "pcs_bus_io_common.c"
