@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.9 2004/11/12 02:39:21 wiz Exp $
+.\"	$NetBSD: lastlogin.8,v 1.10 2005/03/04 16:06:26 christos Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 11, 2004
+.Dd March 4, 2005
 .Dt LASTLOGIN 8
 .Os
 .Sh NAME
@@ -100,10 +100,25 @@ Reverse the order of the sort.
 Sort by last login time (most recent first.)
 .El
 .Sh FILES
-.Bl -tag -width /var/log/lastlog -compact
+.Bl -tag -width /var/log/lastlogx -compact
+.It Pa /var/log/lastlogx
+default last login database
 .It Pa /var/log/lastlog
-last login database
+compatibility last login database
 .El
+.Sh EXAMPLES
+.Nm
+looks by default to the
+.Pa /var/log/lastlogx
+database, where some old programs that are not
+.Xr utmpx 5
+aware might only write to
+.Pa /var/log/lastlog .
+To look at the old database one can use:
+.Pp
+.nf
+	lastlogin -f /var/log/lastlog
+.fi
 .Sh SEE ALSO
 .Xr last 1 ,
 .Xr lastlog 5 ,
