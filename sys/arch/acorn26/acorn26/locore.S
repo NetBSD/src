@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
+/* $NetBSD: locore.S,v 1.4 2003/05/20 10:21:29 simonb Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -50,13 +50,6 @@
 
 #include "fiq.h"
 	
-fp	.req	r11
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-
 /*
  * MODE_CHANGE_NOP should be inserted between a mode change and a
  * banked register (R8--R15) access.
@@ -457,4 +450,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.3 2002/04/12 18:50:30 thorpej Exp $")
+RCSID("$NetBSD: locore.S,v 1.4 2003/05/20 10:21:29 simonb Exp $")
