@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.39 1998/08/20 13:58:04 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.40 1998/08/21 13:46:31 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -204,7 +204,6 @@ grfiv_attach(parent, self, aux)
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ2:
 		if (current_mac_model->machineid != MACH_MACLC575) {
-			printf(": Valkyrie video subsystem\n");
 			sc->sc_basepa = VALKYRIE_BASE;
 			length = 0x00100000;		/* 1MB */
 
