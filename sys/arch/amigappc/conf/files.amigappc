@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.12 2002/10/30 06:20:01 manu Exp $
+#	$NetBSD: files.amigappc,v 1.13 2002/10/30 06:26:42 manu Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -403,8 +403,5 @@ include "dev/ata/files.ata"
 # Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 include "arch/amiga/conf/majors.amiga"

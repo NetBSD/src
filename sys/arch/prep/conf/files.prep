@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.38 2002/10/26 13:50:41 jdolecek Exp $
+#	$NetBSD: files.prep,v 1.39 2002/10/30 06:26:43 manu Exp $
 #
 # prep-specific configuration info
 #
@@ -40,19 +40,6 @@ file	arch/powerpc/powerpc/bus_dma.c
 # General files
 file	dev/clock_subr.c
 file	dev/cons.c
-
-#
-# Compatibility modules
-#
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # Machine-independent I2O drivers
