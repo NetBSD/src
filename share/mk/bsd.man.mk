@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.83 2003/07/18 08:26:08 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.84 2003/09/03 05:40:12 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -218,6 +218,7 @@ cleanman:
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
+.include <bsd.files.mk>
 .include <bsd.sys.mk>
 
 ${TARGETS} catinstall maninstall: # ensure existence
