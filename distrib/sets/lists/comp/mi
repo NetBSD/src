@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.691 2004/04/18 23:42:23 lukem Exp $
+#	$NetBSD: mi,v 1.692 2004/04/21 00:08:04 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2891,6 +2891,7 @@
 ./usr/share/man/cat3/fgetln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetpos.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgets.0			comp-c-catman		.cat
+./usr/share/man/cat3/fgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetwc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetws.0			comp-c-catman		.cat
 ./usr/share/man/cat3/field_arg.0		comp-c-catman		.cat
@@ -6580,6 +6581,7 @@
 ./usr/share/man/man3/fgetln.3			comp-c-man		.man
 ./usr/share/man/man3/fgetpos.3			comp-c-man		.man
 ./usr/share/man/man3/fgets.3			comp-c-man		.man
+./usr/share/man/cat3/fgetstr.3			comp-c-man		.man
 ./usr/share/man/man3/fgetwc.3			comp-c-man		.man
 ./usr/share/man/man3/fgetws.3			comp-c-man		.man
 ./usr/share/man/man3/field_arg.3		comp-c-man		.man
