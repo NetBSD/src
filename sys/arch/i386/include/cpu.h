@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.12 1993/12/17 00:10:49 mycroft Exp $
+ *	$Id: cpu.h,v 1.13 1994/03/08 06:57:28 mycroft Exp $
  */
 
 /*
@@ -74,10 +74,12 @@ int	sir;
 #define	SIR_AST		0
 #define	SIR_NET		1
 #define	SIR_CLOCK	2
+#define	SIR_COM		3
 
 #define	softintr(n)	(sir |= 1 << (n))
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsoftclock()	softintr(SIR_CLOCK)
+#define	setsoftcom()	softintr(SIR_COM)
 
 /*
  * Preempt the current process if in interrupt from user mode,
