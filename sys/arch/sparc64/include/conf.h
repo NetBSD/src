@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.10 2002/02/27 01:19:08 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.11 2002/08/16 08:52:48 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@ cdev_decl(openprom);
 cdev_decl(cn);
 
 cdev_decl(zs);
+
+cdev_decl(sab);
 
 bdev_decl(fd);
 cdev_decl(fd);
