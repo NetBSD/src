@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.19 1999/01/03 05:18:01 erh Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.20 1999/05/27 13:30:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -228,6 +228,24 @@ linux_sys_semctl(p, v, retval)
 		break;
 	case LINUX_SETVAL:
 		SCARG(&nua, cmd) = SETVAL;
+		sg = stackgap_init(p->p_emul);
+		bup = stackgap_alloc(&sg, sizeof(union semun));
+		bup->val = SCARG(uap, arg).l_val;
+		SCARG(&nua, arg) = bup;
+		break;
+	case LINUX_GETALL:
+		SCARG(&nua, cmd) = GETALL;
+		sg = stackgap_init(p->p_emul);
+		bup = stackgap_alloc(&sg, sizeof(union semun));
+		bup->array = SCARG(uap, arg).l_array;
+		SCARG(&nua, arg) = bup;
+		break;
+	case LINUX_SETALL:
+		SCARG(&nua, cmd) = SETALL;
+		sg = stackgap_init(p->p_emul);
+		bup = stackgap_alloc(&sg, sizeof(union semun));
+		bup->array = SCARG(uap, arg).l_array;
+		SCARG(&nua, arg) = bup;
 		break;
 	default:
 		return EINVAL;
