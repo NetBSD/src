@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.57 2001/09/26 20:53:08 eeh Exp $ */
+/*	$NetBSD: iommu.c,v 1.58 2001/09/28 11:59:53 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -42,6 +42,7 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 

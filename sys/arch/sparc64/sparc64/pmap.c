@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2001/09/23 09:01:13 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113 2001/09/28 11:59:54 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -39,6 +39,7 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
