@@ -1,4 +1,4 @@
-/*      $NetBSD: rcache.c,v 1.6 2001/05/27 14:17:57 lukem Exp $       */
+/*      $NetBSD: rcache.c,v 1.7 2001/12/22 07:45:38 lukem Exp $       */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -178,12 +178,27 @@ rawread(daddr_t blkno, char *buf, int size)
 	physreadsize += size;
 #endif
 
+ loop:
 	if (lseek(diskfd, ((off_t) blkno << dev_bshift), 0) < 0) {
 		msg("rawread: lseek fails\n");
 		goto err;
 	}
 	if ((cnt =  read(diskfd, buf, size)) == size)
 		return;
+	if (blkno + (size / dev_bsize) > ufsib->ufs_dsize) {
+		/*
+		 * Trying to read the final fragment.
+		 *
+		 * NB - dump only works in TP_BSIZE blocks, hence
+		 * rounds `dev_bsize' fragments up to TP_BSIZE pieces.
+		 * It should be smarter about not actually trying to
+		 * read more than it can get, but for the time being
+		 * we punt and scale back the read only when it gets
+		 * us into trouble. (mkm 9/25/83)
+		 */
+		size -= dev_bsize;
+		goto loop;
+	}
 	if (cnt == -1)
 		msg("read error from %s: %s: [block %d]: count=%d\n",
 			disk, strerror(errno), blkno, size);
