@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.1.2.2 2002/07/16 00:41:13 gehenna Exp $	*/
+/*	$NetBSD: scif.c,v 1.1.2.3 2002/07/16 01:43:16 gehenna Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -264,7 +264,19 @@ struct cfattach scif_ca = {
 
 extern struct cfdriver scif_cd;
 
-cdev_decl(scif);
+dev_type_open(scifopen);
+dev_type_close(scifclose);
+dev_type_read(scifread);
+dev_type_write(scifwrite);
+dev_type_ioctl(scifioctl);
+dev_type_stop(scifstop);
+dev_type_tty(sciftty);
+dev_type_poll(scifpoll);
+
+const struct cdevsw scif_cdevsw = {
+	scifopen, scifclose, scifread, scifwrite, scifioctl,
+	scifstop, sciftty, scifpoll, nommap, D_TTY
+};
 
 void InitializeScif(bus_space_tag_t, bus_space_handle_t, unsigned int);
 
@@ -1448,15 +1460,8 @@ rnd_add_uint32(&sc->rnd_source, iir | lsr);
 void
 scifcnprobe(struct consdev *cp)
 {
-	int maj;
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == scifopen)
-			break;
-
 	/* Initialize required fields. */
-	cp->cn_dev = makedev(maj, 0);
+	cp->cn_dev = makedev(cdevsw_lookup_major(&scif_cdevsw), 0);
 	cp->cn_pri = CN_NORMAL;
 }
 
