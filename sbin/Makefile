@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 1999/05/06 16:05:26 christos Exp $
+#	$NetBSD: Makefile,v 1.58 1999/07/01 19:59:59 itojun Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -27,5 +27,8 @@ SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
+
+# IPv6
+SUBDIR+= ping6
 
 .include <bsd.subdir.mk>
