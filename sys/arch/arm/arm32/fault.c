@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.16 2002/03/29 00:48:58 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.17 2002/04/04 12:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -658,8 +658,8 @@ prefetch_abort_handler(frame)
 #ifdef DDB
 			if (kernel_debug & 2)
 				Debugger();
-		}
 #endif
+		}
 	}
 #endif /* CPU_SA110 */
 
