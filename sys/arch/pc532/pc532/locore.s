@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1996/02/02 20:05:21 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1996/03/11 22:50:17 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -137,6 +137,32 @@ ENTRY(proc_trampoline)
 	jsr	0(r3)
 	cmpqd	0,tos
 	br	rei
+
+/*****************************************************************************/
+
+/*
+ * Burn N microseconds in a delay loop.
+ */
+ENTRY(delay)			/* bsr  2 cycles;  80 ns */
+	cmpqd	0,S_ARG0	/*	2 cycles;  80 ns */
+	beq	2f		/*	2 cycles;  80 ns */
+	movd	S_ARG0,r0	/* 	2 cycles;  80 ns */
+	acbd	-1,r0,0f	/*      5 cycles; 200 ns */
+				/*                ====== */
+				/*                520 ns */
+	nop; nop; nop; nop	/*	8 cycles; 320 ns */
+	ret	0		/*	4 cycles; 160 ns */
+				/*                ====== */
+				/*		 1000 ns */
+
+				/*		  520 ns */
+0:	nop; nop; nop; nop	/*	8 cycles; 320 ns */
+				/*	          ====== */
+				/*		  840 ns */
+1:	nop; nop; nop; nop; nop	/*     10 cycles; 400 ns */
+	nop; nop: nop: nop; nop	/*     10 cycles; 400 ns */
+	acbd	-1,r0,1b	/* 	5 cycles; 200 ns */
+2:	ret	0		/* 	4 cycles; 160 ns */
 
 /*****************************************************************************/
 
