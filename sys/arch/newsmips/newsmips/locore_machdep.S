@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.10 2003/05/25 14:02:49 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.11 2003/05/25 15:03:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,91 +79,6 @@ LEAF(to_monitor)
 	syscall
 	nop
 END(to_monitor)
-
-/*
- * nesting interrupt masks.
- */
-#define MIPS_INT_MASK_SPL_SOFT0	MIPS_SOFT_INT_MASK_0
-#define MIPS_INT_MASK_SPL_SOFT1	(MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_SPL_SOFT0)
-#define MIPS_INT_MASK_SPL0	(MIPS_INT_MASK_0|MIPS_INT_MASK_SPL_SOFT1)
-#define MIPS_INT_MASK_SPL1	(MIPS_INT_MASK_1|MIPS_INT_MASK_SPL0)
-#define MIPS_INT_MASK_SPL2	(MIPS_INT_MASK_2|MIPS_INT_MASK_SPL1)
-#define MIPS_INT_MASK_SPL3	(MIPS_INT_MASK_3|MIPS_INT_MASK_SPL2)
-#define MIPS_INT_MASK_SPL4	(MIPS_INT_MASK_4|MIPS_INT_MASK_SPL3)
-#define MIPS_INT_MASK_SPL5	(MIPS_INT_MASK_5|MIPS_INT_MASK_SPL4)
-
-/*
- * hardware-level spls for hardware where the device interrupt priorites
- * are ordered, and map onto mips interrupt pins in increasing priority.
- * This maps directly onto BSD spl levels.
- */
-
-/*
- * Block out int2 (hardware interrupt 0) and lower mips levels.
- */
-LEAF(cpu_spl0)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl0)
-
-/*
- * Block out Int3 (hardware interrupt 1) and lower mips levels.
- */
-LEAF(cpu_spl1)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL1)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl1)
-
-LEAF(cpu_spl2)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL2)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl2)
-
-LEAF(cpu_spl3)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL3)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl3)
-
-LEAF(cpu_spl4)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL4)
-
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl4)
-
-LEAF(cpu_spl5)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL5)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl5)
 
 #ifdef MIPS3
 	.set	mips3
