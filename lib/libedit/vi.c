@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.9 2002/03/18 16:01:01 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.10 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.9 2002/03/18 16:01:01 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.10 2002/10/27 21:41:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -59,22 +59,14 @@ private el_action_t	cv_paste(EditLine *, int);
 private el_action_t
 cv_action(EditLine *el, int c)
 {
-	char *cp, *kp;
 
 	if (el->el_chared.c_vcmd.action & DELETE) {
+		/* 'dd' and (possibly) friends */
 		el->el_chared.c_vcmd.action = NOP;
 		el->el_chared.c_vcmd.pos = 0;
 
-		el->el_chared.c_undo.isize = 0;
-		el->el_chared.c_undo.dsize = 0;
-		kp = el->el_chared.c_undo.buf;
-		for (cp = el->el_line.buffer; cp < el->el_line.lastchar; cp++) {
-			*kp++ = *cp;
-			el->el_chared.c_undo.dsize++;
-		}
-
-		el->el_chared.c_undo.action = INSERT;
-		el->el_chared.c_undo.ptr = el->el_line.buffer;
+		cv_undo(el, el->el_line.lastchar - el->el_line.buffer,
+				el->el_line.buffer );
 		el->el_line.lastchar = el->el_line.buffer;
 		el->el_line.cursor = el->el_line.buffer;
 		if (c & INSERT)
@@ -103,7 +95,6 @@ cv_action(EditLine *el, int c)
 #endif
 }
 
-
 /* cv_paste():
  *	Paste previous deletion before or after the cursor
  */
@@ -114,20 +105,22 @@ cv_paste(EditLine *el, int c)
 	c_undo_t *un = &el->el_chared.c_undo;
 
 #ifdef DEBUG_PASTE
-	(void) fprintf(el->el_errfile, "Paste: %x \"%s\" +%d -%d\n",
-	    un->action, un->buf, un->isize, un->dsize);
+	(void) fprintf(el->el_errfile, "Paste: \"%.*s\"\n",
+	    (int)un->paste_len, un->paste ? un->paste : "<null>" );
 #endif
-	if (un->isize == 0)
+	if (!un->paste || !un->paste_len)
 		return (CC_ERROR);
+
+	cv_undo(el, 0, 0);
 
 	if (!c && el->el_line.cursor < el->el_line.lastchar)
 		el->el_line.cursor++;
 	ptr = el->el_line.cursor;
 
-	c_insert(el, (int) un->isize);
-	if (el->el_line.cursor + un->isize > el->el_line.lastchar)
+	c_insert(el, (int) un->paste_len);
+	if (el->el_line.cursor + un->paste_len > el->el_line.lastchar)
 		return (CC_ERROR);
-	(void) memcpy(ptr, un->buf, un->isize);
+	(void) memcpy(ptr, un->paste, un->paste_len);
 	return (CC_REFRESH);
 }
 
@@ -158,22 +151,22 @@ vi_paste_prev(EditLine *el, int c)
 }
 
 
-/* vi_prev_space_word():
+/* vi_prev_big_word():
  *	Vi move to the previous space delimited word
  *	[B]
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_prev_space_word(EditLine *el, int c)
+vi_prev_big_word(EditLine *el, int c)
 {
 
 	if (el->el_line.cursor == el->el_line.buffer)
 		return (CC_ERROR);
 
-	el->el_line.cursor = cv_prev_word(el, el->el_line.cursor,
+	el->el_line.cursor = cv_prev_word(el->el_line.cursor,
 	    el->el_line.buffer,
 	    el->el_state.argument,
-	    cv__isword);
+	    cv__isWord);
 
 	if (el->el_chared.c_vcmd.action & DELETE) {
 		cv_delfini(el);
@@ -185,7 +178,7 @@ vi_prev_space_word(EditLine *el, int c)
 
 /* vi_prev_word():
  *	Vi move to the previous word
- *	[B]
+ *	[b]
  */
 protected el_action_t
 /*ARGSUSED*/
@@ -195,10 +188,10 @@ vi_prev_word(EditLine *el, int c)
 	if (el->el_line.cursor == el->el_line.buffer)
 		return (CC_ERROR);
 
-	el->el_line.cursor = cv_prev_word(el, el->el_line.cursor,
+	el->el_line.cursor = cv_prev_word(el->el_line.cursor,
 	    el->el_line.buffer,
 	    el->el_state.argument,
-	    ce__isword);
+	    cv__isword);
 
 	if (el->el_chared.c_vcmd.action & DELETE) {
 		cv_delfini(el);
@@ -208,13 +201,13 @@ vi_prev_word(EditLine *el, int c)
 }
 
 
-/* vi_next_space_word():
+/* vi_next_big_word():
  *	Vi move to the next space delimited word
  *	[W]
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_next_space_word(EditLine *el, int c)
+vi_next_big_word(EditLine *el, int c)
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar)
@@ -223,7 +216,7 @@ vi_next_space_word(EditLine *el, int c)
 	el->el_line.cursor = cv_next_word(el, el->el_line.cursor,
 	    el->el_line.lastchar,
 	    el->el_state.argument,
-	    cv__isword);
+	    cv__isWord);
 
 	if (el->el_map.type == MAP_VI)
 		if (el->el_chared.c_vcmd.action & DELETE) {
@@ -249,7 +242,7 @@ vi_next_word(EditLine *el, int c)
 	el->el_line.cursor = cv_next_word(el, el->el_line.cursor,
 	    el->el_line.lastchar,
 	    el->el_state.argument,
-	    ce__isword);
+	    cv__isword);
 
 	if (el->el_map.type == MAP_VI)
 		if (el->el_chared.c_vcmd.action & DELETE) {
@@ -267,8 +260,15 @@ vi_next_word(EditLine *el, int c)
 protected el_action_t
 vi_change_case(EditLine *el, int c)
 {
+	int i;
 
-	if (el->el_line.cursor < el->el_line.lastchar) {
+	if (el->el_line.cursor >= el->el_line.lastchar)
+		return (CC_ERROR);
+	cv_undo(el, 0, 0);
+	for (i = 0; i < el->el_state.argument; i++) {
+		if (el->el_line.cursor >= el->el_line.lastchar)
+			break;
+
 		c = *el->el_line.cursor;
 		if (isupper(c))
 			*el->el_line.cursor++ = tolower(c);
@@ -277,9 +277,8 @@ vi_change_case(EditLine *el, int c)
 		else
 			el->el_line.cursor++;
 		re_fastaddc(el);
-		return (CC_NORM);
 	}
-	return (CC_ERROR);
+	return (CC_NORM);
 }
 
 
@@ -310,11 +309,7 @@ vi_insert_at_bol(EditLine *el, int c)
 {
 
 	el->el_line.cursor = el->el_line.buffer;
-	el->el_chared.c_vcmd.ins = el->el_line.cursor;
-
-	el->el_chared.c_undo.ptr = el->el_line.cursor;
-	el->el_chared.c_undo.action = DELETE;
-
+	cv_undo(el, 0, 0);
 	el->el_map.current = el->el_map.key;
 	return (CC_CURSOR);
 }
@@ -329,13 +324,13 @@ protected el_action_t
 vi_replace_char(EditLine *el, int c)
 {
 
+	if (el->el_state.argument > el->el_line.lastchar - el->el_line.cursor)
+		return CC_ERROR;
+
 	el->el_map.current = el->el_map.key;
 	el->el_state.inputmode = MODE_REPLACE_1;
-	el->el_chared.c_undo.action = CHANGE;
-	el->el_chared.c_undo.ptr = el->el_line.cursor;
-	el->el_chared.c_undo.isize = 0;
-	el->el_chared.c_undo.dsize = 0;
-	return (CC_NORM);
+	cv_undo(el, 0, 0);
+	return (CC_ARGHACK);
 }
 
 
@@ -350,17 +345,14 @@ vi_replace_mode(EditLine *el, int c)
 
 	el->el_map.current = el->el_map.key;
 	el->el_state.inputmode = MODE_REPLACE;
-	el->el_chared.c_undo.action = CHANGE;
-	el->el_chared.c_undo.ptr = el->el_line.cursor;
-	el->el_chared.c_undo.isize = 0;
-	el->el_chared.c_undo.dsize = 0;
+	cv_undo(el, 0, 0);
 	return (CC_NORM);
 }
 
 
 /* vi_substitute_char():
  *	Vi replace character under the cursor and enter insert mode
- *	[r]
+ *	[s]
  */
 protected el_action_t
 /*ARGSUSED*/
@@ -382,6 +374,8 @@ protected el_action_t
 vi_substitute_line(EditLine *el, int c)
 {
 
+	cv_undo(el, el->el_line.lastchar - el->el_line.buffer,
+		el->el_line.buffer);
 	(void) em_kill_line(el, 0);
 	el->el_map.current = el->el_map.key;
 	return (CC_REFRESH);
@@ -397,6 +391,8 @@ protected el_action_t
 vi_change_to_eol(EditLine *el, int c)
 {
 
+	cv_undo(el, el->el_line.lastchar - el->el_line.cursor,
+		el->el_line.cursor);
 	(void) ed_kill_line(el, 0);
 	el->el_map.current = el->el_map.key;
 	return (CC_REFRESH);
@@ -413,11 +409,7 @@ vi_insert(EditLine *el, int c)
 {
 
 	el->el_map.current = el->el_map.key;
-
-	el->el_chared.c_vcmd.ins = el->el_line.cursor;
-	el->el_chared.c_undo.ptr = el->el_line.cursor;
-	el->el_chared.c_undo.action = DELETE;
-
+	cv_undo(el, 0, 0);
 	return (CC_NORM);
 }
 
@@ -441,9 +433,7 @@ vi_add(EditLine *el, int c)
 	} else
 		ret = CC_NORM;
 
-	el->el_chared.c_vcmd.ins = el->el_line.cursor;
-	el->el_chared.c_undo.ptr = el->el_line.cursor;
-	el->el_chared.c_undo.action = DELETE;
+	cv_undo(el, 0, 0);
 
 	return (ret);
 }
@@ -460,11 +450,7 @@ vi_add_at_eol(EditLine *el, int c)
 
 	el->el_map.current = el->el_map.key;
 	el->el_line.cursor = el->el_line.lastchar;
-
-	/* Mark where insertion begins */
-	el->el_chared.c_vcmd.ins = el->el_line.lastchar;
-	el->el_chared.c_undo.ptr = el->el_line.lastchar;
-	el->el_chared.c_undo.action = DELETE;
+	cv_undo(el, 0, 0);
 	return (CC_CURSOR);
 }
 
@@ -482,20 +468,20 @@ vi_delete_meta(EditLine *el, int c)
 }
 
 
-/* vi_end_word():
+/* vi_end_big_word():
  *	Vi move to the end of the current space delimited word
  *	[E]
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_end_word(EditLine *el, int c)
+vi_end_big_word(EditLine *el, int c)
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar)
 		return (CC_ERROR);
 
 	el->el_line.cursor = cv__endword(el->el_line.cursor,
-	    el->el_line.lastchar, el->el_state.argument);
+	    el->el_line.lastchar, el->el_state.argument, cv__isWord);
 
 	if (el->el_chared.c_vcmd.action & DELETE) {
 		el->el_line.cursor++;
@@ -506,20 +492,20 @@ vi_end_word(EditLine *el, int c)
 }
 
 
-/* vi_to_end_word():
+/* vi_end_word():
  *	Vi move to the end of the current word
  *	[e]
  */
 protected el_action_t
 /*ARGSUSED*/
-vi_to_end_word(EditLine *el, int c)
+vi_end_word(EditLine *el, int c)
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar)
 		return (CC_ERROR);
 
 	el->el_line.cursor = cv__endword(el->el_line.cursor,
-	    el->el_line.lastchar, el->el_state.argument);
+	    el->el_line.lastchar, el->el_state.argument, cv__isword);
 
 	if (el->el_chared.c_vcmd.action & DELETE) {
 		el->el_line.cursor++;
@@ -538,100 +524,19 @@ protected el_action_t
 /*ARGSUSED*/
 vi_undo(EditLine *el, int c)
 {
-	char *cp, *kp;
-	char temp;
-	int i, size;
-	c_undo_t *un = &el->el_chared.c_undo;
+	c_undo_t un = el->el_chared.c_undo;
 
-#ifdef DEBUG_UNDO
-	(void) fprintf(el->el_errfile, "Undo: %x \"%s\" +%d -%d\n",
-	    un->action, un->buf, un->isize, un->dsize);
-#endif
-	switch (un->action) {
-	case DELETE:
-		if (un->dsize == 0)
-			return (CC_NORM);
+	if (un.len == -1)
+		return CC_ERROR;
 
-		(void) memcpy(un->buf, un->ptr, un->dsize);
-		for (cp = un->ptr; cp <= el->el_line.lastchar; cp++)
-			*cp = cp[un->dsize];
-
-		el->el_line.lastchar -= un->dsize;
-		el->el_line.cursor = un->ptr;
-
-		un->action = INSERT;
-		un->isize = un->dsize;
-		un->dsize = 0;
-		break;
-
-	case DELETE | INSERT:
-		size = un->isize - un->dsize;
-		if (size > 0)
-			i = un->dsize;
-		else
-			i = un->isize;
-		cp = un->ptr;
-		kp = un->buf;
-		while (i-- > 0) {
-			temp = *kp;
-			*kp++ = *cp;
-			*cp++ = temp;
-		}
-		if (size > 0) {
-			el->el_line.cursor = cp;
-			c_insert(el, size);
-			while (size-- > 0 && cp < el->el_line.lastchar) {
-				temp = *kp;
-				*kp++ = *cp;
-				*cp++ = temp;
-			}
-		} else if (size < 0) {
-			size = -size;
-			for (; cp <= el->el_line.lastchar; cp++) {
-				*kp++ = *cp;
-				*cp = cp[size];
-			}
-			el->el_line.lastchar -= size;
-		}
-		el->el_line.cursor = un->ptr;
-		i = un->dsize;
-		un->dsize = un->isize;
-		un->isize = i;
-		break;
-
-	case INSERT:
-		if (un->isize == 0)
-			return (CC_NORM);
-
-		el->el_line.cursor = un->ptr;
-		c_insert(el, (int) un->isize);
-		(void) memcpy(un->ptr, un->buf, un->isize);
-		un->action = DELETE;
-		un->dsize = un->isize;
-		un->isize = 0;
-		break;
-
-	case CHANGE:
-		if (un->isize == 0)
-			return (CC_NORM);
-
-		el->el_line.cursor = un->ptr;
-		size = (int) (el->el_line.cursor - el->el_line.lastchar);
-		if (size < un->isize)
-			size = un->isize;
-		cp = un->ptr;
-		kp = un->buf;
-		for (i = 0; i < size; i++) {
-			temp = *kp;
-			*kp++ = *cp;
-			*cp++ = temp;
-		}
-		un->dsize = 0;
-		break;
-
-	default:
-		return (CC_ERROR);
-	}
+	/* switch line buffer and undo buffer */
+	el->el_chared.c_undo.buf = el->el_line.buffer;
+	el->el_chared.c_undo.len = el->el_line.lastchar - el->el_line.buffer;
+	el->el_chared.c_undo.cursor = el->el_line.cursor - el->el_line.buffer;
+	el->el_line.limit = un.buf + (el->el_line.limit - el->el_line.buffer);
+	el->el_line.buffer = un.buf;
+	el->el_line.cursor = un.buf + un.cursor;
+	el->el_line.lastchar = un.buf + un.len;
 
 	return (CC_REFRESH);
 }
@@ -645,22 +550,12 @@ protected el_action_t
 /*ARGSUSED*/
 vi_command_mode(EditLine *el, int c)
 {
-	int size;
 
 	/* [Esc] cancels pending action */
-	el->el_chared.c_vcmd.ins = 0;
 	el->el_chared.c_vcmd.action = NOP;
 	el->el_chared.c_vcmd.pos = 0;
 
 	el->el_state.doingarg = 0;
-	size = el->el_chared.c_undo.ptr - el->el_line.cursor;
-	if (size < 0)
-		size = -size;
-	if (el->el_chared.c_undo.action == (INSERT | DELETE) ||
-	    el->el_chared.c_undo.action == DELETE)
-		el->el_chared.c_undo.dsize = size;
-	else
-		el->el_chared.c_undo.isize = size;
 
 	el->el_state.inputmode = MODE_INSERT;
 	el->el_map.current = el->el_map.alt;
@@ -699,22 +594,23 @@ vi_zero(EditLine *el, int c)
 
 /* vi_delete_prev_char():
  * 	Vi move to previous character (backspace)
- *	[^H]
+ *	[^H] in insert mode only
  */
 protected el_action_t
 /*ARGSUSED*/
 vi_delete_prev_char(EditLine *el, int c)
 {
+	char *cp;
 
-	if (el->el_chared.c_vcmd.ins == 0)
+	cp = el->el_line.cursor;
+	if (cp <= el->el_line.buffer)
 		return (CC_ERROR);
 
-	if (el->el_chared.c_vcmd.ins >
-	    el->el_line.cursor - el->el_state.argument)
-		return (CC_ERROR);
-
-	c_delbefore(el, el->el_state.argument);
-	el->el_line.cursor -= el->el_state.argument;
+	/* do the delete here so we dont mess up the undo and paste buffers */
+	el->el_line.cursor = --cp;
+	for (; cp < el->el_line.lastchar; cp++)
+		cp[0] = cp[1];
+	el->el_line.lastchar = cp - 1;
 
 	return (CC_REFRESH);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.23 2002/10/27 20:24:28 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.24 2002/10/27 21:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.23 2002/10/27 20:24:28 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.24 2002/10/27 21:41:50 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -337,7 +337,7 @@ static char *
 _rl_compat_sub(const char *str, const char *what, const char *with,
     int globally)
 {
-	char *result;
+	char *result, *r;
 	const char *temp, *new;
 	int len, with_len, what_len, add;
 	size_t size, i;
@@ -624,8 +624,10 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 
 				tempcmd = _rl_compat_sub(line, from, to,
 				    (g_on) ? 1 : 0);
-				free(line);
-				line = tempcmd;
+				if (tempcmd) {
+					free(line);
+					line = tempcmd;
+				}
 				g_on = 0;
 			}
 		}
@@ -1433,7 +1435,8 @@ completion_matches(const char *text, CPFunction *genfunc)
 	matches = 0;
 	match_list_len = 1;
 	while ((retstr = (*genfunc) (text, matches)) != NULL) {
-		if (matches + 1 >= match_list_len) {
+		/* allow for list terminator here */
+		if (matches + 2 >= match_list_len) {
 			char **nmatch_list;
 			match_list_len <<= 1;
 			nmatch_list = realloc(match_list,
@@ -1463,24 +1466,15 @@ completion_matches(const char *text, CPFunction *genfunc)
 	}
 
 	retstr = malloc(max_equal + 1);
-	if (retstr == NULL)
+	if (retstr == NULL) {
+		free(match_list);
 		return NULL;
+	}
 	(void) strncpy(retstr, match_list[1], max_equal);
 	retstr[max_equal] = '\0';
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
-	if (matches + 1 >= match_list_len) {
-		char **nmatch_list;
-		nmatch_list = realloc(match_list,
-		    (match_list_len + 1) * sizeof(char *));
-		if (nmatch_list == NULL) {
-			free(match_list);
-			return NULL;
-		}
-		match_list = nmatch_list;
-	}
-
 	match_list[matches + 1] = (char *) NULL;
 
 	return (match_list);
