@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.23 2002/02/22 04:49:19 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.24 2002/02/22 18:25:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.23 2002/02/22 04:49:19 thorpej Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.24 2002/02/22 18:25:08 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -751,8 +751,8 @@ initarm(void *cookie)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa - physical_start,
-	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 
 	/* Now we fill in the L2 pagetable for the VRAM */
