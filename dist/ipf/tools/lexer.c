@@ -24,7 +24,7 @@ union	{
 
 FILE *yyin;
 
-#define	ishex(c)	(isdigit(c) || ((c) >= 'a' && (c) <= 'f') || \
+#define	ishex(c)	(ISDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || \
 			 ((c) >= 'A' && (c) <= 'F'))
 #define	TOOLONG		-3
 
@@ -227,13 +227,13 @@ nextchar:
 			}
 			(void) yygetc();
 		} else {
-			if (!isalpha(n)) {
+			if (!ISALPHA(n)) {
 				yyunputc(n);
 				break;
 			}
 			do {
 				n = yygetc();
-			} while (isalpha(n) || isdigit(n) || n == '_');
+			} while (ISALPHA(n) || ISDIGIT(n) || n == '_');
 			yyunputc(n);
 		}
 
@@ -428,10 +428,10 @@ nextchar:
 	/*
 	 * No negative numbers with leading - sign..
 	 */
-	if (isbuilding == 0 && isdigit(c)) {
+	if (isbuilding == 0 && ISDIGIT(c)) {
 		do {
 			n = yygetc();
-		} while (isdigit(n));
+		} while (ISDIGIT(n));
 		yyunputc(n);
 		rval = YY_NUMBER;
 		goto done;
