@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_extent.c,v 1.10 1997/10/09 07:46:07 jtc Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.11 1998/01/21 22:33:49 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -81,7 +81,7 @@ static	void extent_free_region_descriptor __P((struct extent *,
  */
 struct extent *
 extent_create(name, start, end, mtype, storage, storagesize, flags)
-	char *name;
+	const char *name;
 	u_long start, end;
 	int mtype;
 	caddr_t storage;
