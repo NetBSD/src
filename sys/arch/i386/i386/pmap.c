@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166 2003/12/10 18:13:32 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167 2003/12/26 11:50:51 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2003/12/10 18:13:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2003/12/26 11:50:51 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2344,10 +2344,13 @@ pmap_do_remove(pmap, sva, eva, flags)
 	vaddr_t blkendva;
 	struct vm_page *ptp;
 	int32_t cpumask = 0;
+	TAILQ_HEAD(, vm_page) empty_ptps;
 
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
+
+	TAILQ_INIT(&empty_ptps);
 
 	PMAP_MAP_TO_HEAD_LOCK();
 	ptes = pmap_map_ptes(pmap);	/* locks pmap */
@@ -2421,12 +2424,17 @@ pmap_do_remove(pmap, sva, eva, flags)
 					    TAILQ_FIRST(&pmap->pm_obj.memq);
 				ptp->wire_count = 0;
 				ptp->flags |= PG_ZERO;
-				uvm_pagefree(ptp);
+				/* Postpone free to shootdown */
+				uvm_pagerealloc(ptp, NULL, 0);
+				TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
 			}
 		}
 		pmap_tlb_shootnow(cpumask);
 		pmap_unmap_ptes(pmap);		/* unlock pmap */
 		PMAP_MAP_TO_HEAD_UNLOCK();
+		/* Now we can free unused ptps */
+		TAILQ_FOREACH(ptp, &empty_ptps, listq)
+			uvm_pagefree(ptp);
 		return;
 	}
 
@@ -2512,13 +2520,18 @@ pmap_do_remove(pmap, sva, eva, flags)
 				pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
 			ptp->wire_count = 0;
 			ptp->flags |= PG_ZERO;
-			uvm_pagefree(ptp);
+			/* Postpone free to shootdown */
+			uvm_pagerealloc(ptp, NULL, 0);
+			TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
 		}
 	}
 
 	pmap_tlb_shootnow(cpumask);
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+	/* Now we can free unused ptps */
+	TAILQ_FOREACH(ptp, &empty_ptps, listq)
+		uvm_pagefree(ptp);
 }
 
 /*
@@ -2536,6 +2549,8 @@ pmap_page_remove(pg)
 	struct pv_entry *pve, *npve, *killlist = NULL;
 	pt_entry_t *ptes, opte;
 	int32_t cpumask = 0;
+	TAILQ_HEAD(, vm_page) empty_ptps;
+	struct vm_page *ptp;
 
 #ifdef DIAGNOSTIC
 	int bank, off;
@@ -2549,6 +2564,8 @@ pmap_page_remove(pg)
 	if (SPLAY_ROOT(&pvh->pvh_root) == NULL) {
 		return;
 	}
+
+	TAILQ_INIT(&empty_ptps);
 
 	/* set pv_head => pmap locking */
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2614,7 +2631,10 @@ pmap_page_remove(pg)
 					    pve->pv_pmap->pm_obj.memq.tqh_first;
 				pve->pv_ptp->wire_count = 0;
 				pve->pv_ptp->flags |= PG_ZERO;
-				uvm_pagefree(pve->pv_ptp);
+				/* Free only after the shootdown */
+				uvm_pagerealloc(pve->pv_ptp, NULL, 0);
+				TAILQ_INSERT_TAIL(&empty_ptps, pve->pv_ptp,
+				    listq);
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
@@ -2626,6 +2646,10 @@ pmap_page_remove(pg)
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
+
+	/* Now we can free unused ptps */
+	TAILQ_FOREACH(ptp, &empty_ptps, listq)
+		uvm_pagefree(ptp);
 }
 
 /*
