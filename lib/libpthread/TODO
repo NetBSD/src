@@ -8,15 +8,8 @@ Bugs to fix:
   pthread_cond_broadcast() or pthread_exit() about removing an item
   from the sleep queue. The locking protocols there need a little
   adjustment.
-- pthread_sig.c: pthread__signal_tramp() is broken.  It gets a ucontext,
-  but then hands off an empty (garbage from stack!) sigcontext to the
-  handler.  The ucontext MUST be converted to a sigcontext, the handler
-  called, and then the sigcontext converted back to ucontext, before the
-  ucontext is used to perform the sigreturn-analogue.  This is necessary
-  for e.g. C++/Java exceptions and some garbage-collectors.
-- pthread_sig.c: pthread__signal_tramp() should be changed so that it is
-  easy to add support for SA_SIGINFO later.  (Mostly a function signature
-  issue.)
+- pthread_sig.c: pthread__kill_self() passes a bogus ucontext to the handler.
+  This is probably not very important.
 - pthread_sig.c: Come up with a signal trampoline naming convention like
   libc's, so that GDB will have an easier time with things.
 - Consider moving pthread__signal_tramp() to its own file, and building
@@ -61,3 +54,4 @@ Ideas to play with:
   pthread_self().
 - Along the same lines, figure out whether/how to use registers reserved
   in the ABI for thread-specific-data to implement pthread_self().
+- Figure out what to do with changing stack sizes.
