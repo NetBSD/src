@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.52 2000/09/13 06:48:04 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.53 2000/09/16 06:57:21 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -665,7 +665,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK | MIPS_SR_INT_IE)
+	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
@@ -674,7 +674,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Call the system call handler.
  */
-	mtc0	t0, MIPS_COP_0_STATUS
+	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
 	jal	_C_LABEL(syscall)
 	nop
 /*
