@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.67 1999/03/16 23:22:57 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.68 1999/03/16 23:24:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -301,6 +301,7 @@ static short nfsv3err_write[] = {
 	NFSERR_STALE,
 	NFSERR_BADHANDLE,
 	NFSERR_SERVERFAULT,
+	NFSERR_JUKEBOX,
 	0,
 };
 
