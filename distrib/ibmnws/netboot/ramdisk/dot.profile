@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2003/10/19 03:37:16 matt Exp $
+# $NetBSD: dot.profile,v 1.2 2003/12/04 23:24:16 keihan Exp $
 #
 # Copyright (c) 2003 John Gordon
 # Copyright (c) 1995 Jason R. Thorpe
@@ -16,7 +16,7 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #          This product includes software developed for the
-#          NetBSD Project.  See http://www.netbsd.org/ for
+#          NetBSD Project.  See http://www.NetBSD.org/ for
 #          information about NetBSD.
 # 4. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
