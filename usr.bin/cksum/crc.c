@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.9 2001/03/20 18:48:10 atatat Exp $	*/
+/*	$NetBSD: crc.c,v 1.10 2001/03/21 03:16:38 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.9 2001/03/20 18:48:10 atatat Exp $");
+__RCSID("$NetBSD: crc.c,v 1.10 2001/03/21 03:16:38 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,22 +114,22 @@ static const u_int32_t crctab[] = {
 u_int32_t crc_total = ~0;		/* The crc over a number of files. */
 
 int
-ccrc(fd, cval, clen)
+crc(fd, cval, clen)
 	register int fd;
 	u_int32_t *cval, *clen;
 {
 	register u_char *p;
 	register int nr;
-	register u_int32_t crc, len;
+	register u_int32_t thecrc, len;
 	u_char buf[16 * 1024];
 
 #define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
 
-	crc = len = 0;
+	thecrc = len = 0;
 	crc_total = ~crc_total;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (len += nr, p = buf; nr--; ++p) {
-			COMPUTE(crc, *p);
+			COMPUTE(thecrc, *p);
 			COMPUTE(crc_total, *p);
 		}
 	if (nr < 0)
@@ -139,11 +139,11 @@ ccrc(fd, cval, clen)
 
 	/* Include the length of the file. */
 	for (; len != 0; len >>= 8) {
-		COMPUTE(crc, len & 0xff);
+		COMPUTE(thecrc, len & 0xff);
 		COMPUTE(crc_total, len & 0xff);
 	}
 
-	*cval = ~crc;
+	*cval = ~thecrc;
 	crc_total = ~crc_total;
 	return (0);
 }

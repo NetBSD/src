@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.14 2001/03/20 18:48:10 atatat Exp $	*/
+/*	$NetBSD: cksum.c,v 1.15 2001/03/21 03:16:38 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.14 2001/03/20 18:48:10 atatat Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.15 2001/03/21 03:16:38 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -142,7 +142,7 @@ main(argc, argv)
 			cfncn = csum1;
 			pfncn = psum1;
 		} else {
-			cfncn = ccrc;
+			cfncn = crc;
 			pfncn = pcrc;
 		}
 	}
