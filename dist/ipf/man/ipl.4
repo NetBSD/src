@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipl.4,v 1.6 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipl.4,v 1.7 2004/03/28 12:56:41 wiz Exp $
 .\"
 .TH IPL 4
 .SH NAME
@@ -51,8 +51,8 @@ When reading from the \fBipl\fP device, it is necessary to call read(2) with
 a buffer big enough to hold at least 1 complete log record - reading of partial
 log records is not supported.
 .PP
-If the packet contents is more then 128 bytes when \fBlog body\fP is used,
-then only 128 bytes of the packet contents is logged.
+If the packet contents are more than 128 bytes when \fBlog body\fP is used,
+then only 128 bytes of the packet contents are logged.
 .PP
 Although it is only possible to read from the \fBipl\fP device, opening it
 for writing is required when using an ioctl which changes any kernel data.
@@ -78,4 +78,4 @@ ipf(4)
 .SH BUGS
 Packet headers are dropped when the internal buffer (static size) fills.
 .SH FILES
-/dev/ipl0
+/dev/ipl
