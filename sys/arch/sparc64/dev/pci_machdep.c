@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.26 2002/03/20 18:54:47 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27 2002/05/06 22:18:51 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -61,6 +61,8 @@ int sparc_pci_debug = 0x0;
 #include <dev/pci/pcireg.h>
 
 #include <dev/ofw/ofw_pci.h>
+
+#include <sparc64/dev/ofpcivar.h>
 
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
@@ -315,7 +317,7 @@ pci_make_tag(pc, b, d, f)
 			continue;
 
 		/* Got a match */
-		tag = PCITAG_CREATE(node, b, d, f);
+		tag = ofpci_make_tag(pc, node, b, d, f);
 
 		/*
 		 * Record the node.  This has two effects:
@@ -324,15 +326,36 @@ pci_make_tag(pc, b, d, f)
 		 * 2) pci_bus_devorder will scan the right bus.
 		 */
 		pc->curnode = node;
-
-		/* Enable all the different spaces for this device */
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-			PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
-			PCI_COMMAND_IO_ENABLE);
-		DPRINTF(SPDB_PROBE, ("found node %x %s\n", node, name));
 		return (tag);
 	}
 	/* No device found -- return a dead tag */
+	return (tag);
+}
+
+pcitag_t
+ofpci_make_tag(pc, node, b, d, f)
+	pci_chipset_tag_t pc;
+	int node;
+	int b;
+	int d;
+	int f;
+{
+	pcitag_t tag;
+
+	tag = PCITAG_CREATE(node, b, d, f);
+
+	/*
+	 * Record the node.  This has two effects:
+	 *
+	 * 1) We don't have to search as far.
+	 * 2) pci_bus_devorder will scan the right bus.
+	 */
+	pc->curnode = node;
+
+	/* Enable all the different spaces for this device */
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+		PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
+		PCI_COMMAND_IO_ENABLE);
 	return (tag);
 }
 
