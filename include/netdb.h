@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.41 2004/05/25 13:55:48 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.42 2004/05/25 14:49:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -257,7 +257,7 @@ struct addrinfo {
 #define	AI_MASK	\
     (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV)
 
-#ifdef notyet
+#if 0
 /*
  * Flag values for getipnodebyname()
  */
