@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.227 2003/04/14 05:21:47 salo Exp $
+#	$NetBSD: NetBSD.dist,v 1.228 2003/04/17 22:23:47 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -413,6 +413,7 @@
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
 ./usr/share/man/cat4/acorn26
+./usr/share/man/cat4/acorn32
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/amiga
 ./usr/share/man/cat4/arm32
@@ -509,6 +510,7 @@
 ./usr/share/man/man3f
 ./usr/share/man/man4
 ./usr/share/man/man4/acorn26
+./usr/share/man/man4/acorn32
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
 ./usr/share/man/man4/arm32
@@ -605,6 +607,7 @@
 ./usr/share/man/html3f
 ./usr/share/man/html4
 ./usr/share/man/html4/acorn26
+./usr/share/man/html4/acorn32
 ./usr/share/man/html4/alpha
 ./usr/share/man/html4/amiga
 ./usr/share/man/html4/arm32
