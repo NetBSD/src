@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.18 2003/06/16 13:16:07 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.19 2003/06/16 13:18:36 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -312,3 +312,10 @@ lib/libcurses/tty.c				1.32 (via patch)
 	can do the translation ourselves (if the tty didn't do it for us).
 	Add debugging to track functions that change tty state.
 	[jdc, ticket #1244]
+
+usr.bin/chpass/Makefile				1.13
+
+	Build custom getpwent.o only if USE_YP==no. Otherwise, chpass will not
+	get the current passwd entry from NIS. Problem reported by Stephen M.
+	Jone on tech-net.
+	[bouyer, ticket #1245]
