@@ -29,3 +29,4 @@ reject.domain		REJECT
 reject@ok.domain	REJECT
 ok@ok.domain		OK
 ok.domain		OK
+<>			550 Go away postmaster

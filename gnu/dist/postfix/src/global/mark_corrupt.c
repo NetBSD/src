@@ -27,15 +27,19 @@
 
 #include <sys_defs.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 /* Utility library. */
 
 #include <msg.h>
 #include <vstream.h>
+#include <set_eugid.h>
 
 /* Global library. */
 
 #include <mail_queue.h>
+#include <mail_params.h>
+#include <deliver_request.h>
 #include <mark_corrupt.h>
 
 /* mark_corrupt - mark queue file as corrupt */
@@ -43,6 +47,16 @@
 int     mark_corrupt(VSTREAM *src)
 {
     char   *myname = "mark_corrupt";
+    uid_t   saved_uid;
+    gid_t   saved_gid;
+
+    /*
+     * If not running as the mail system, change privileges first.
+     */
+    if ((saved_uid = geteuid()) != var_owner_uid) {
+	saved_gid = getegid();
+	set_eugid(var_owner_uid, var_owner_gid);
+    }
 
     /*
      * For now, the result value is -1; this may become a bit mask, or
@@ -52,5 +66,12 @@ int     mark_corrupt(VSTREAM *src)
     msg_warn("corrupted queue file: %s", VSTREAM_PATH(src));
     if (fchmod(vstream_fileno(src), MAIL_QUEUE_STAT_CORRUPT))
 	msg_fatal("%s: fchmod %s: %m", myname, VSTREAM_PATH(src));
-    return (-1);
+
+    /*
+     * Restore privileges.
+     */
+    if (saved_uid != var_owner_uid)
+	set_eugid(saved_uid, saved_gid);
+
+    return (DEL_STAT_DEFER);
 }

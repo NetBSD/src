@@ -1,0 +1,41 @@
+# 
+#	Sample pcre (PERL-compatible regular expression) map file for
+#	message header filtering. See pcre_table(5) for syntax description.
+#
+#	Message headers are filtered one at a time. This filter understands
+#	multi-line message headers. However, the message header filter has
+#	no knowledge of MIME headers that are embedded in the message body.
+#
+#	The first field is a perl-like regular expression. The expression
+#	delimiter can be any character except whitespace, or characters
+#	that have special meaning to the regexp library (traditionally
+#	the forward slash is used). The regular expression can contain
+#	whitespace.
+#
+#	By default, matching is case-INsensitive, although following
+#	the second slash with an 'i' will reverse this. Other flags are
+#	supported, but the only other useful one is 'U', which makes
+#	matching ungreedy (see PCRE documentation and source for more
+#	info).
+#
+#	The second field is the "replacement" string - the text
+#	returned by the match. 
+#
+#	REJECT		The entire message is rejected.
+#	REJECT text.... The text is sent to the originator.
+#	IGNORE		The header line is silently discarded.
+#	WARN		The header is logged (not rejected) with a warning.
+#
+#	Substitution of sub-strings from the matched expression is
+#	possible using the conventional perl syntax. The macros in the
+#	replacement string may need to be protected with curly braces
+#	if they aren't followed by whitespace (see the examples
+#	below).
+#
+#	Lines starting with whitespace are continuation lines - they are
+#	appended to the previous line (there should be no whitespace
+#	before your regular expression!)
+#
+
+/^Subject: Make Money Fast/	REJECT
+/^To: friend@public.com/	REJECT

@@ -69,6 +69,7 @@
 #include <mail_params.h>
 #include <namadr_list.h>
 #include <debug_peer.h>
+#include <match_parent_style.h>
 
 /* Application-specific. */
 
@@ -97,7 +98,9 @@ void    debug_peer_init(void)
      * Finally.
      */
     if (*var_debug_peer_list)
-	debug_peer_list = namadr_list_init(var_debug_peer_list);
+	debug_peer_list =
+	    namadr_list_init(match_parent_style(VAR_DEBUG_PEER_LIST),
+			     var_debug_peer_list);
 }
 
 /* debug_peer_check - see if this peer needs verbose logging */

@@ -118,11 +118,11 @@ static int smtpd_sasl_log(void *unused_context, int priority,
     switch (priority) {
 	case SASL_LOG_ERR:
 	case SASL_LOG_WARNING:
-	msg_warn("%s", message);
+	msg_warn("SASL authentication problem: %s", message);
 	break;
     case SASL_LOG_INFO:
 	if (msg_verbose)
-	    msg_info("%s", message);
+	    msg_info("SASL authentication info: %s", message);
 	break;
     }
     return SASL_OK;

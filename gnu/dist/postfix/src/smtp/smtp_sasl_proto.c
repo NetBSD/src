@@ -52,6 +52,10 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <string.h>
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 /* Utility library. */
 
@@ -79,6 +83,8 @@ void    smtp_sasl_helo_auth(SMTP_STATE *state, const char *words)
      * then pretend that the server doesn't support SASL authentication.
      */
     if (state->sasl_mechanism_list) {
+	if (strcasecmp(state->sasl_mechanism_list, words) == 0)
+	    return;
 	myfree(state->sasl_mechanism_list);
 	msg_warn("%s offered AUTH option multiple times",
 		 state->session->namaddr);

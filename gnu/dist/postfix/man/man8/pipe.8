@@ -17,6 +17,10 @@ manager to deliver messages to external commands.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
 
+Message attributes such as sender address, recipient address and
+next-hop host name can be specified as command-line macros that are
+expanded before the external command is executed.
+
 The \fBpipe\fR daemon updates queue files and marks recipients
 as finished, or it informs the queue manager that delivery should
 be tried again at a later time. Delivery problem reports are sent
@@ -46,7 +50,7 @@ entry for the pipe-based delivery transport.
 .fi
 The external command attributes are given in the \fBmaster.cf\fR
 file at the end of a service definition.  The syntax is as follows:
-.IP "\fBflags=BFR.>\fR (optional)"
+.IP "\fBflags=BFRhqu.>\fR (optional)"
 Optional message processing flags. By default, a message is
 copied unchanged.
 .RS
@@ -61,6 +65,27 @@ This is expected by, for example, \fBUUCP\fR software.
 .IP \fBR\fR
 Prepend a \fBReturn-Path:\fR message header with the envelope sender
 address.
+.IP \fBh\fR
+Fold the command-line \fB$recipient\fR domain name and \fB$nexthop\fR
+host name to lower case.
+This is recommended for delivery via \fBUUCP\fR.
+.IP \fBq\fR
+Quote white space and other special characters in the command-line
+\fB$sender\fR and \fB$recipient\fR address localparts (text to the
+left of the right-most \fB@\fR character), according to an 8-bit
+transparent version of RFC 822.
+This is recommended for delivery via \fBUUCP\fR or \fBBSMTP\fR.
+.sp
+The result is compatible with the address parsing of command-line
+recipients by the Postfix \fBsendmail\fR mail submission command.
+.sp
+The \fBq\fR flag affects only entire addresses, not the partial
+address information from the \fB$user\fR, \fB$extension\fR or
+\fB$mailbox\fR command-line macros.
+.IP \fBu\fR
+Fold the command-line \fB$recipient\fR address localpart (text to
+the left of the right-most \fB@\fR character) to lower case.
+This is recommended for delivery via \fBUUCP\fR.
 .IP \fB.\fR
 Prepend \fB.\fR to lines starting with "\fB.\fR". This is needed
 by, for example, \fBBSMTP\fR software.
@@ -101,6 +126,8 @@ For example, with an address \fIuser+foo@domain\fR the extension is
 .sp
 A command-line argument that contains \fB${\fBextension\fR}\fR expands
 into as many command-line arguments as there are recipients.
+.sp
+This information is modified by the \fBu\fR flag for case folding.
 .IP \fB${\fBmailbox\fR}\fR
 This macro expands to the complete local part of a recipient address.
 For example, with an address \fIuser+foo@domain\fR the mailbox is
@@ -108,15 +135,24 @@ For example, with an address \fIuser+foo@domain\fR the mailbox is
 .sp
 A command-line argument that contains \fB${\fBmailbox\fR}\fR
 expands into as many command-line arguments as there are recipients.
+.sp
+This information is modified by the \fBu\fR flag for case folding.
 .IP \fB${\fBnexthop\fR}\fR
 This macro expands to the next-hop hostname.
+.sp
+This information is modified by the \fBh\fR flag for case folding.
 .IP \fB${\fBrecipient\fR}\fR
 This macro expands to the complete recipient address.
 .sp
 A command-line argument that contains \fB${\fBrecipient\fR}\fR
 expands into as many command-line arguments as there are recipients.
+.sp
+This information is modified by the \fBhqu\fR flags for quoting
+and case folding.
 .IP \fB${\fBsender\fR}\fR
 This macro expands to the envelope sender address.
+.sp
+This information is modified by the \fBq\fR flag for quoting.
 .IP \fB${\fBsize\fR}\fR
 This macro expands to Postfix's idea of the message size, which
 is an approximation of the size of the message as delivered.
@@ -127,6 +163,8 @@ part is \fIuser\fR.
 .sp
 A command-line argument that contains \fB${\fBuser\fR}\fR expands
 into as many command-line arguments as there are recipients.
+.sp
+This information is modified by the \fBu\fR flag for case folding.
 .RE
 .PP
 In addition to the form ${\fIname\fR}, the forms $\fIname\fR and

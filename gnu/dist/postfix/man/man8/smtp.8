@@ -51,6 +51,7 @@ RFC 1651 (SMTP service extensions)
 RFC 1870 (Message Size Declaration)
 RFC 2197 (Pipelining)
 RFC 2554 (AUTH command)
+RFC 2821 (SMTP protocol)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -110,14 +111,23 @@ postmaster with transcripts of SMTP sessions with protocol errors.
 Always send EHLO at the start of a connection.
 .IP \fBsmtp_never_send_ehlo\fR
 Never send EHLO at the start of a connection.
+.IP \fBsmtp_bind_address\fR
+Numerical source network address to bind to when making a connection.
+.IP \fBsmtp_break_lines\fR
+Break lines > \fB$line_length_limit\fR into multiple shorter lines.
+Some SMTP servers misbehave on long lines.
 .IP \fBsmtp_skip_4xx_greeting\fR
 Skip servers that greet us with a 4xx status code.
 .IP \fBsmtp_skip_5xx_greeting\fR
 Skip servers that greet us with a 5xx status code.
 .IP \fBsmtp_skip_quit_response\fR
 Do not wait for the server response after sending QUIT.
-.IP \fBsmtp_bind_address\fR
-Numerical network address to bind to when making a connection.
+.IP \fBsmtp_pix_workaround_delay_time\fR
+The time to pause before sending .<CR><LF>, while working
+around the CISCO PIX firewall <CR><LF>.<CR><LF> bug.
+.IP \fBsmtp_pix_workaround_threshold_time\fR
+The time a message must be queued before the CISCO PIX firewall
+<CR><LF>.<CR><LF> bug workaround is turned on.
 .SH "Authentication controls"
 .IP \fBsmtp_enable_sasl_auth\fR
 Enable per-session authentication as per RFC 2554 (SASL).

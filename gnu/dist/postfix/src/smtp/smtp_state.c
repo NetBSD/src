@@ -68,6 +68,7 @@ SMTP_STATE *smtp_state_alloc(void)
 #ifdef USE_SASL_AUTH
     smtp_sasl_connect(state);
 #endif
+    state->size_limit = 0;
     return (state);
 }
 

@@ -92,6 +92,9 @@
 /*	Function to be executed prior to accepting a new connection.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
+/* .IP "MAIL_SERVER_IN_FLOW_DELAY (none)"
+/*	Pause $in_flow_delay seconds when no "mail flow control token"
+/*	is available. A token is consumed for each connection request.
 /* .PP
 /*	The var_use_limit variable limits the number of clients that
 /*	a server can service before it commits suicide.
@@ -162,6 +165,7 @@
 #include <mail_conf.h>
 #include <timed_ipc.h>
 #include <resolve_local.h>
+#include <mail_flow.h>
 
 /* Process manager. */
 
@@ -183,6 +187,7 @@ static void (*single_server_accept) (int, char *);
 static void (*single_server_onexit) (char *, char **);
 static void (*single_server_pre_accept) (char *, char **);
 static VSTREAM *single_server_lock;
+static int single_server_in_flow_delay;
 
 /* single_server_exit - normal termination */
 
@@ -216,6 +221,7 @@ static void single_server_timeout(int unused_event, char *unused_context)
 static void single_server_wakeup(int fd)
 {
     VSTREAM *stream;
+    char   *tmp;
 
     /*
      * If the accept() succeeds, be sure to disable non-blocking I/O, because
@@ -228,9 +234,14 @@ static void single_server_wakeup(int fd)
     non_blocking(fd, BLOCKING);
     close_on_exec(fd, CLOSE_ON_EXEC);
     stream = vstream_fdopen(fd, O_RDWR);
+    tmp = concatenate(single_server_name, " socket", (char *) 0);
+    vstream_control(stream, VSTREAM_CTL_PATH, tmp,  VSTREAM_CTL_END);
+    myfree(tmp);
     timed_ipc_setup(stream);
     if (master_notify(var_pid, MASTER_STAT_TAKEN) < 0)
 	single_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
+    if (single_server_in_flow_delay && mail_flow_get(1) < 0)
+	doze(var_in_flow_delay * 1000000);
     single_server_service(stream, single_server_name, single_server_argv);
     (void) vstream_fclose(stream);
     if (master_notify(var_pid, MASTER_STAT_AVAIL) < 0)
@@ -469,6 +480,9 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	case MAIL_SERVER_PRE_ACCEPT:
 	    single_server_pre_accept = va_arg(ap, MAIL_SERVER_ACCEPT_FN);
 	    break;
+	case MAIL_SERVER_IN_FLOW_DELAY:
+	    single_server_in_flow_delay = 1;
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -582,6 +596,8 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     }
     event_enable_read(MASTER_STATUS_FD, single_server_abort, (char *) 0);
     close_on_exec(MASTER_STATUS_FD, CLOSE_ON_EXEC);
+    close_on_exec(MASTER_FLOW_READ, CLOSE_ON_EXEC);
+    close_on_exec(MASTER_FLOW_WRITE, CLOSE_ON_EXEC);
     watchdog = watchdog_create(var_daemon_timeout, (WATCHDOG_FN) 0, (char *) 0);
 
     /*

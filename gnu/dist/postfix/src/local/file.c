@@ -86,7 +86,8 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     struct stat st;
     MBOX   *mp;
     VSTRING *why;
-    int     status = -1;
+    int     mail_copy_status = MAIL_COPY_STAT_WRITE;
+    int     deliver_status;
     int     copy_flags;
 
     /*
@@ -157,10 +158,10 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
 	    vstring_sprintf(why, "destination file is executable");
 	    errno = 0;
 	} else {
-	    status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
-			       S_ISREG(st.st_mode) ? copy_flags :
-			       (copy_flags & ~MAIL_COPY_TOFILE),
-			       "\n", why);
+	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
+					 S_ISREG(st.st_mode) ? copy_flags :
+					 (copy_flags & ~MAIL_COPY_TOFILE),
+					 "\n", why);
 	}
 	mbox_release(mp);
     }
@@ -169,19 +170,21 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     /*
      * As the mail system, bounce, defer delivery, or report success.
      */
-    if (status != 0) {
-	status = (errno == EAGAIN || errno == ENOSPC ?
-		  defer_append : bounce_append)
+    if (mail_copy_status & MAIL_COPY_STAT_CORRUPT) {
+	deliver_status = DEL_STAT_DEFER;
+    } else if (mail_copy_status != 0) {
+	deliver_status = (errno == EAGAIN || errno == ENOSPC || errno == ESTALE ?
+			  defer_append : bounce_append)
 	    (BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
 	     "cannot append message to destination file %s: %s",
 	     path, STR(why));
     } else {
-	sent(SENT_ATTR(state.msg_attr), "%s", path);
+	deliver_status = sent(SENT_ATTR(state.msg_attr), "%s", path);
     }
 
     /*
      * Clean up.
      */
     vstring_free(why);
-    return (status);
+    return (deliver_status);
 }

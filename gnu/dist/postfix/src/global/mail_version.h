@@ -12,11 +12,28 @@
 /* .nf
 
  /*
-  * Version of this program.
+  * Version of this program. Official versions are called a.b.c, and
+  * snapshots are called a.b.c-yyyymmdd, where a=major release number,
+  * b=minor release number, c=patchlevel, and yyyymmdd is the release date:
+  * yyyy=year, mm=month, dd=day.
+  * 
+  * Patches change the patchlevel and the release date. Snapshots change the
+  * release date only, unless they include the same bugfix as a patch release.
   */
 #define VAR_MAIL_VERSION	"mail_version"
-#define DEF_MAIL_VERSION	"Postfix-20010228-pl08"
+#ifdef SNAPSHOT
+#define DEF_MAIL_VERSION	"1.1.2-$mail_release_date"
+#else
+#define DEF_MAIL_VERSION	"1.1.2"
+#endif
 extern char *var_mail_version;
+
+ /*
+  * Release date.
+  */
+#define VAR_MAIL_RELEASE	"mail_release_date"
+#define DEF_MAIL_RELEASE	"20020125"
+extern char *var_mail_release;
 
 /* LICENSE
 /* .ad

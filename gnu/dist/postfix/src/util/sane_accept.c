@@ -36,6 +36,7 @@
 
 /* Utility library. */
 
+#include "msg.h"
 #include "sane_accept.h"
 
 /* sane_accept - sanitize accept() error returns */
@@ -55,6 +56,10 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
 	EWOULDBLOCK,
 	0,
     };
+    static int accept_warn_errors[] = {
+	ECONNABORTED,
+	0,
+    };
     int     count;
     int     err;
     int     fd;
@@ -68,10 +73,24 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
      * XXX LINUX < 2.1 accept() wakes up before the three-way handshake is
      * complete, so it can fail with ECONNRESET and other "false alarm"
      * indications.
+     * 
+     * XXX FreeBSD 4.2-STABLE accept() returns ECONNABORTED when a UNIX-domain
+     * client has disconnected in the mean time. The data that was sent with
+     * connect() write() close() is lost, even though the write() and close()
+     * reported successful completion. This was fixed shortly before FreeBSD
+     * 4.3. However, other systems may make that same mistake again, so we're
+     * adding a special warning.
      */
     if ((fd = accept(sock, sa, len)) < 0) {
 	for (count = 0; (err = accept_ok_errors[count]) != 0; count++) {
 	    if (errno == err) {
+		errno = EAGAIN;
+		break;
+	    }
+	}
+	for (count = 0; (err = accept_warn_errors[count]) != 0; count++) {
+	    if (errno == err) {
+		msg_warn("accept: %m");
 		errno = EAGAIN;
 		break;
 	    }

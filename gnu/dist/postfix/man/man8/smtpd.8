@@ -42,12 +42,13 @@ run chrooted at fixed low privilege.
 .nf
 RFC 821 (SMTP protocol)
 RFC 1123 (Host requirements)
-RFC 1651 (SMTP service extensions)
 RFC 1652 (8bit-MIME transport)
+RFC 1869 (SMTP service extensions)
 RFC 1854 (SMTP Pipelining)
 RFC 1870 (Message Size Declaration)
 RFC 1985 (ETRN command)
 RFC 2554 (AUTH command)
+RFC 2821 (SMTP protocol)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -69,12 +70,16 @@ a configuration change.
 .ad
 .fi
 .IP \fBstrict_rfc821_envelopes\fR
-Disallow non-RFC 821 style addresses in envelopes. For example,
-allow RFC822-style address forms with comments, like Sendmail does.
+Disallow non-RFC 821 style addresses in SMTP commands. For example,
+the RFC822-style address forms with comments that Sendmail allows.
 .IP \fBbroken_sasl_auth_clients\fR
 Support older Microsoft clients that mis-implement the AUTH
 protocol, and that expect an EHLO response of "250 AUTH=list"
 instead of "250 AUTH list".
+.IP \fBsmtpd_noop_commands\fR
+List of commands that are treated as NOOP (no operation) commands,
+without any parameter syntax checking and without any state change.
+This list overrides built-in command definitions.
 .SH "Content inspection controls"
 .IP \fBcontent_filter\fR
 The name of a mail delivery transport that filters mail and that
@@ -102,6 +107,10 @@ dictionary attack.
 .IP \fBnoanonymous\fR
 Disallow anonymous logins.
 .RE
+.IP \fBsmtpd_sender_login_maps\fR
+Maps that specify the SASL login name that owns a MAIL FROM sender
+address. Used by the \fBreject_sender_login_mismatch\fR sender
+anti-spoofing restriction.
 .SH Miscellaneous
 .ad
 .fi
@@ -117,6 +126,9 @@ pattern in the \fBdebug_peer_list\fR parameter.
 List of domain or network patterns. When a remote host matches
 a pattern, increase the verbose logging level by the amount
 specified in the \fBdebug_peer_level\fR parameter.
+.IP \fBdefault_verp_delimiters\fR
+The default VERP delimiter characters that are used when the
+XVERP command is specified without explicit delimiters.
 .IP \fBerror_notice_recipient\fR
 Recipient of protocol/policy/resource/software error notices.
 .IP \fBhopcount_limit\fR
@@ -147,6 +159,8 @@ request.
 .IP \fBsoft_bounce\fR
 Change hard (5xx) reject responses into soft (4xx) reject responses.
 This can be useful for testing purposes.
+.IP \fBverp_delimiter_filter\fR
+The characters that Postfix accepts as VERP delimiter characters.
 .SH "Resource controls"
 .ad
 .fi
@@ -159,6 +173,9 @@ storage for envelope information.
 .IP \fBqueue_minfree\fR
 Minimal amount of free space in bytes in the queue file system
 for the SMTP server to accept any mail at all.
+.IP \fBsmtpd_history_flush_threshold\fR
+Flush the command history to postmaster after receipt of RSET etc.
+only if the number of history lines exceeds the given threshold.
 .SH Tarpitting
 .ad
 .fi
@@ -177,6 +194,10 @@ it is penalized with tarpit delays.
 .SH "UCE control restrictions"
 .ad
 .fi
+.IP \fBparent_domain_matches_subdomains\fR
+List of Postfix features that use \fIdomain.name\fR patterns
+to match \fIsub.domain.name\fR (as opposed to
+requiring \fI.domain.name\fR patterns).
 .IP \fBsmtpd_client_restrictions\fR
 Restrict what clients may connect to this mail system.
 .IP \fBsmtpd_helo_required\fR
@@ -200,9 +221,15 @@ trusted backup MX hosts.
 Declares the name of zero or more parameters that contain a
 list of UCE restrictions. The names of these parameters can
 then be used instead of the restriction lists that they represent.
+.IP \fBsmtpd_null_access_lookup_key\fR
+The lookup key to be used in SMTPD access tables instead of the
+null sender address. A null sender address cannot be looked up.
 .IP \fBmaps_rbl_domains\fR
 List of DNS domains that publish the addresses of blacklisted
 hosts.
+.IP \fBpermit_mx_backup_networks\fR
+Only domains whose primary MX hosts match the listed networks
+are eligible for the \fBpermit_mx_backup\fR feature.
 .IP \fBrelay_domains\fR
 Restrict what domains or networks this mail system will relay
 mail from or to.

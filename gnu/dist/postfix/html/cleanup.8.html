@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 CLEANUP(8)                                             CLEANUP(8)
-
 
 <b>NAME</b>
        cleanup - canonicalize and enqueue Postfix message
@@ -43,62 +40,51 @@ CLEANUP(8)                                             CLEANUP(8)
               and  message  header  addresses (i.e. strip host or
               domain information below all domains listed in  the
               <b>masquerade</b><i>_</i><b>domains</b> parameter, except for user names
-              listed  in  <b>masquerade</b><i>_</i><b>exceptions</b>).   Address  mas-
-              querading does not affect envelope recipients.
+              listed  in  <b>masquerade</b><i>_</i><b>exceptions</b>).   By   default,
+              address   masquerading  does  not  affect  envelope
+              recipients.
 
        <b>o</b>      Optionally, expand envelope recipients according to
-              information found in the <a href="virtual.5.html"><b>virtual</b>(5)</a> lookup  tables.
+              information  found in the <a href="virtual.5.html"><b>virtual</b>(5)</a> lookup tables.
 
-       The  <b>cleanup</b>  daemon performs sanity checks on the content
-       of each message. When it finds a problem,  by  default  it
-       returns  a  diagnostic status to the client, and leaves it
-       up to the client to deal with the problem.  Alternatively,
-       the  client  can  request the <b>cleanup</b> daemon to bounce the
+       The <b>cleanup</b> daemon performs sanity checks on  the  content
+       of  each  message.  When it finds a problem, by default it
+       returns a diagnostic status to the client, and  leaves  it
+       up  to the client to deal with the problem. Alternatively,
+       the client can request the <b>cleanup</b> daemon  to  bounce  the
        message back to the sender in case of trouble.
 
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
 
-
-
-
-                                                                1
-
-
-
-
-
-CLEANUP(8)                                             CLEANUP(8)
-
-
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       Table-driven rewriting rules make it hard  to  express  <b>if</b>
+       Table-driven  rewriting  rules  make it hard to express <b>if</b>
        <b>then</b> <b>else</b> and other logical relationships.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this program. See the Postfix <b>main.cf</b> file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  program. See the Postfix <b>main.cf</b> file for syntax
+       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
        command after a configuration change.
 
 <b>Content</b> <b>filtering</b>
        <b>body</b><i>_</i><b>checks</b>
               Lookup tables with content filters for message body
-              lines.   These  filters see physical lines one at a
+              lines.  These filters see physical lines one  at  a
               time, in chunks of at most line_length_limit bytes.
 
        <b>header</b><i>_</i><b>checks</b>
-              Lookup  tables  with  content  filters  for message
-              header lines.  These filters  see  logical  headers
+              Lookup tables  with  content  filters  for  message
+              header  lines.   These  filters see logical headers
               one at a time, including headers that span multiple
               lines.
 
 <b>Miscellaneous</b>
        <b>always</b><i>_</i><b>bcc</b>
-              Address to send a copy of each message that  enters
+              Address  to send a copy of each message that enters
               the system.
 
        <b>hopcount</b><i>_</i><b>limit</b>
@@ -111,8 +97,8 @@ CLEANUP(8)                                             CLEANUP(8)
 
 <b>Address</b> <b>transformations</b>
        <b>empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>
-              The  destination  for  undeliverable  mail from &lt;&gt;.
-              This substitution is done before all other  address
+              The destination for  undeliverable  mail  from  &lt;&gt;.
+              This  substitution is done before all other address
               rewriting.
 
        <b>canonical</b><i>_</i><b>maps</b>
@@ -125,26 +111,19 @@ CLEANUP(8)                                             CLEANUP(8)
 
        <b>sender</b><i>_</i><b>canonical</b><i>_</i><b>maps</b>
               Address  mapping  lookup  table  for  envelope  and
-
-
-
-                                                                2
-
-
-
-
-
-CLEANUP(8)                                             CLEANUP(8)
-
-
               header sender addresses.
 
+       <b>masquerade</b><i>_</i><b>classes</b>
+              List  of  address  classes subject to masquerading:
+              zero or more of  <b>envelope</b><i>_</i><b>sender</b>,  <b>envelope</b><i>_</i><b>recipi-</b>
+              <b>ent</b>, <b>header</b><i>_</i><b>sender</b>, <b>header</b><i>_</i><b>recipient</b>.
+
        <b>masquerade</b><i>_</i><b>domains</b>
-              List of domains that hide  their  subdomain  struc-
+              List  of  domains  that hide their subdomain struc-
               ture.
 
        <b>masquerade</b><i>_</i><b>exceptions</b>
-              List  of user names that are not subject to address
+              List of user names that are not subject to  address
               masquerading.
 
        <b>virtual</b><i>_</i><b>maps</b>
@@ -153,15 +132,20 @@ CLEANUP(8)                                             CLEANUP(8)
 
 <b>Resource</b> <b>controls</b>
        <b>duplicate</b><i>_</i><b>filter</b><i>_</i><b>limit</b>
-              Limit  the  number  of envelope recipients that are
+              Limit the number of envelope  recipients  that  are
               remembered.
 
        <b>header</b><i>_</i><b>size</b><i>_</i><b>limit</b>
               Limit the amount of memory in bytes used to process
               a message header.
 
+       <b>in</b><i>_</i><b>flow</b><i>_</i><b>delay</b>
+              Amount of time to pause before accepting a message,
+              when  the  message arrival rate exceeds the message
+              delivery rate.
+
        <b>extract</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit  the amount of recipients extracted from mes-
+              Limit the amount of recipients extracted from  mes-
               sage headers.
 
 <b>SEE</b> <b>ALSO</b>
@@ -176,7 +160,7 @@ CLEANUP(8)                                             CLEANUP(8)
        /etc/postfix/virtual*, virtual mapping table
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -185,16 +169,6 @@ CLEANUP(8)                                             CLEANUP(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-                                                                3
-
+                                                                1
 
 </pre> </body> </html>

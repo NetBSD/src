@@ -13,8 +13,8 @@
 # specify multiple tables, not necessarily all under control by
 # Postfix.
 #
-# alias_database = dbm:/etc/aliases
-# alias_database = dbm:/etc/mail/aliases
+#alias_database = dbm:/etc/aliases
+#alias_database = dbm:/etc/mail/aliases
 alias_database = hash:/etc/aliases
 
 # The alias_maps parameter specifies the list of alias databases used
@@ -30,6 +30,6 @@ alias_database = hash:/etc/aliases
 # It will take a minute or so before changes become visible.  Use
 # "postfix reload" to eliminate the delay.
 # 
-# alias_maps = dbm:/etc/aliases, nis:mail.aliases
-# alias_maps = hash:/etc/aliases
+#alias_maps = dbm:/etc/aliases, nis:mail.aliases
+#alias_maps = hash:/etc/aliases
 alias_maps = hash:/etc/aliases

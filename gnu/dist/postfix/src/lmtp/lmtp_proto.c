@@ -218,7 +218,7 @@ int     lmtp_lhlo(LMTP_STATE *state)
     lines = resp->str;
     (void) mystrtok(&lines, "\n");
     while ((words = mystrtok(&lines, "\n")) != 0) {
-	if (mystrtok(&words, "- ") && (word = mystrtok(&words, " \t")) != 0) {
+	if (mystrtok(&words, "- ") && (word = mystrtok(&words, " \t=")) != 0) {
 	    if (strcasecmp(word, "8BITMIME") == 0)
 		state->features |= LMTP_FEATURE_8BITMIME;
 	    else if (strcasecmp(word, "PIPELINING") == 0)
@@ -235,7 +235,7 @@ int     lmtp_lhlo(LMTP_STATE *state)
 	msg_info("server features: 0x%x", state->features);
 
 #ifdef USE_SASL_AUTH
-    if (var_lmtp_sasl_enable && (state->features & SMTP_FEATURE_AUTH))
+    if (var_lmtp_sasl_enable && (state->features & LMTP_FEATURE_AUTH))
 	return (lmtp_sasl_helo_login(state));
 #endif
 
@@ -489,9 +489,19 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		     * rejected, ignore RCPT TO responses: all recipients are
 		     * dead already. When all recipients are rejected the
 		     * receiver may apply a course correction.
+		     * 
+		     * XXX 2821: Section 4.5.3.1 says that a 552 RCPT TO reply
+		     * must be treated as if the server replied with 452.
+		     * However, this causes "too much mail data" to be
+		     * treated as a recoverable error, which is wrong. I'll
+		     * stick with RFC 821.
 		     */
 		case LMTP_STATE_RCPT:
 		    if (!mail_from_rejected) {
+#ifdef notdef
+			if (resp->code == 552)
+			    resp->code = 452;
+#endif
 			rcpt = request->rcpt_list.info + recv_rcpt;
 			if (resp->code / 100 == 2) {
 			    if (survivors == 0)
