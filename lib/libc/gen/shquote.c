@@ -1,4 +1,4 @@
-/* $NetBSD: shquote.c,v 1.5 2003/07/26 19:24:44 salo Exp $ */
+/* $NetBSD: shquote.c,v 1.6 2005/02/09 21:35:46 kleink Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -43,12 +43,17 @@
  */
 #undef	SHQUOTE_USE_MULTIBYTE
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef SHQUOTE_USE_MULTIBYTE
 #include <limits.h>
 #include <stdio.h>
 #include <wchar.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(shquote,_shquote)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: shquotev.c,v 1.3 2003/07/26 19:24:45 salo Exp $ */
+/* $NetBSD: shquotev.c,v 1.4 2005/02/09 21:35:46 kleink Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -34,6 +34,7 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
+#include "namespace.h"
 #include <stdlib.h>
 
 /*
