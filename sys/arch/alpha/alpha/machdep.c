@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.191 2000/01/19 20:05:30 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.192 2000/01/22 18:28:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2000/01/19 20:05:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2000/01/22 18:28:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1880,7 +1880,7 @@ netintr()
 #ifdef NATM
 	DONETISR(NETISR_NATM, natmintr());
 #endif
-#if NPPP > 1
+#if NPPP > 0
 	DONETISR(NETISR_PPP, pppintr());
 #endif
 
