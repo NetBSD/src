@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.10 2001/04/06 00:27:40 he Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.11 2001/04/22 17:33:53 he Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -1827,7 +1827,7 @@ icmp6_reflect(m, off)
 		src = &t;
 	}
 
-	if (src == 0)
+	if (src == 0 && m->m_pkthdr.rcvif)
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
 		 * that we do not own. Select a source address which has the
