@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.1 (Berkeley) 11/10/91
+#	from: @(#)Makefile	5.1 (Berkeley) 11/10/91
+#	$Id: Makefile,v 1.3 1993/08/01 05:44:38 mycroft Exp $
 
 PROG=	quiz
 MAN6=	quiz.0

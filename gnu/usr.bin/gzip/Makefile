@@ -1,4 +1,5 @@
-#       @(#)Makefile    5.3 (Berkeley) 5/12/90
+#	from: @(#)Makefile    5.3 (Berkeley) 5/12/90
+#	$Id: Makefile,v 1.3 1993/08/01 05:42:42 mycroft Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \

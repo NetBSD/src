@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.10 (Berkeley) 5/6/91
+#	from: @(#)Makefile	5.10 (Berkeley) 5/6/91
+#	$Id: Makefile,v 1.3 1993/08/01 05:39:50 mycroft Exp $
 
 LIB=	util
 CFLAGS+=-DLIBC_SCCS

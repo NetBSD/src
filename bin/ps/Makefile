@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.5 (Berkeley) 4/23/91
-#
-#	$Header: /cvsroot/src/bin/ps/Makefile,v 1.4 1993/06/17 13:16:20 mycroft Exp $
+#	from: @(#)Makefile	5.5 (Berkeley) 4/23/91
+#	$Id: Makefile,v 1.5 1993/08/01 05:47:09 mycroft Exp $
 
 PROG=	ps
 SRCS=	devname.c keyword.c nlist.c print.c ps.c

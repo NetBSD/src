@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.15 (Berkeley) 6/29/90
-#
-#	$Header: /cvsroot/src/sbin/fsck_ffs/Makefile,v 1.4 1993/04/28 05:43:55 cgd Exp $
+#	from: @(#)Makefile	5.15 (Berkeley) 6/29/90
+#	$Id: Makefile,v 1.5 1993/08/01 05:37:50 mycroft Exp $
 
 PROG=	fsck
 MAN8=	fsck.0

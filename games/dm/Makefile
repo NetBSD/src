@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.7 (Berkeley) 9/30/90
+#	from: @(#)Makefile	5.7 (Berkeley) 9/30/90
+#	$Id: Makefile,v 1.2 1993/08/01 05:45:39 mycroft Exp $
 
 # -DLOG		log games
 PROG=	dm

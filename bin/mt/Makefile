@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.4 (Berkeley) 1/14/91
-#
-#	$Header: /cvsroot/src/bin/mt/Makefile,v 1.1 1993/03/25 08:01:33 cgd Exp $
+#	from: @(#)Makefile	5.4 (Berkeley) 1/14/91
+#	$Id: Makefile,v 1.2 1993/08/01 05:47:16 mycroft Exp $
 
 PROG=	mt
 

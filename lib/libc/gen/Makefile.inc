@@ -1,4 +1,5 @@
-#	@(#)Makefile.inc	5.21 (Berkeley) 5/24/91
+#	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
+#	$Id: Makefile.inc,v 1.9 1993/08/01 05:41:00 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp

@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/4/93
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+#	$Id: Makefile,v 1.5 1993/08/01 05:38:39 mycroft Exp $
 
 PROG=	dbtest
 SRCS=	dbtest.c

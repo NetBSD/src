@@ -1,5 +1,5 @@
-#	@(#)Makefile	5.17 (Berkeley) 5/24/90
-# Fixed to use sun-lamp.cs.berkeley.edu as a bugs host - rgrimes 4/01/93
+#	from: @(#)Makefile	5.17 (Berkeley) 5/24/90
+#	$Id: Makefile,v 1.4 1993/08/01 05:39:43 mycroft Exp $
 
 PROG=	bugfiler
 CFLAGS+=-I${.CURDIR} -D"BUGS_HOME=\"owner-386bsd_bugs@sun-lamp.cs.berkeley.edu\""

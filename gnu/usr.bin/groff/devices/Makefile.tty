@@ -1,6 +1,7 @@
-#	@(#)Makefile.tty	6.1 (Berkeley) 3/3/91
-#
-# Modified for Berkeley Unix by Donn Seeley, donn@okeeffe.berkeley.edu
+#	from: @(#)Makefile.tty	6.1 (Berkeley) 3/3/91
+#	$Id: Makefile.tty,v 1.4 1993/08/01 05:42:07 mycroft Exp $
+
+#Modified for Berkeley Unix by Donn Seeley, donn@okeeffe.berkeley.edu
 #
 #Copyright (C) 1989, 1990 Free Software Foundation, Inc.
 #     Written by James Clark (jjc@jclark.uucp)

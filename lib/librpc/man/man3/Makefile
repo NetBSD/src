@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.13.1.1 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.13.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.3 1993/08/01 05:40:15 mycroft Exp $
 
 MAN3 =	bindresvport.0 getrpcent.0 getrpcport.0 rpc.0 xdr.0
 MLINKS=	getrpcport.3 getrpcbyname.3 \

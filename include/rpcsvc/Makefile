@@ -1,8 +1,5 @@
-#
-# @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
-#
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.8 1993/07/18 19:21:25 mycroft Exp $
-#
+#	from: @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
+#	$Id: Makefile,v 1.9 1993/08/01 05:41:52 mycroft Exp $
 
 .SUFFIXES: .x
 

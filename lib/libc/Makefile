@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.2 (Berkeley) 3/5/91
+#	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
+#	$Id: Makefile,v 1.8 1993/08/01 05:40:29 mycroft Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does

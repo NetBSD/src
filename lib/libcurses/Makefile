@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.10 (Berkeley) 6/24/90
+#	from: @(#)Makefile	5.10 (Berkeley) 6/24/90
+#	$Id: Makefile,v 1.2 1993/08/01 05:40:25 mycroft Exp $
 
 LIB=	curses
 SRCS=	addbytes.c addch.c addstr.c box.c clear.c clrtobot.c clrtoeol.c \
