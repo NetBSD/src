@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.19 2003/08/07 16:42:58 agc Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.20 2004/11/11 00:00:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.19 2003/08/07 16:42:58 agc Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.20 2004/11/11 00:00:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,12 +51,14 @@ __RCSID("$NetBSD: ttyname.c,v 1.19 2003/08/07 16:42:58 agc Exp $");
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 #ifdef __weak_alias
 __weak_alias(ttyname,_ttyname)
 #endif
 
 static char buf[sizeof(_PATH_DEV) + MAXNAMLEN] = _PATH_DEV;
+static struct ptmget ptm;
 static char *oldttyname __P((struct stat *));
 
 char *
@@ -73,6 +75,10 @@ ttyname(fd)
 	} bkey;
 
 	_DIAGASSERT(fd != -1);
+
+	/* If it is a pty, deal with it quickly */
+	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1)
+		return ptm.sn;
 
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) < 0)
