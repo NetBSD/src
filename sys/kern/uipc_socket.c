@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.60 2002/01/03 01:11:26 mrg Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.61 2002/01/03 01:16:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,9 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.60 2002/01/03 01:11:26 mrg Exp $");
-
-#include "opt_compat_sunos.h"
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.61 2002/01/03 01:16:02 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,13 +110,6 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		splx(s);
 		return (error);
 	}
-#if defined(COMPAT_SUNOS) && 0	/* moved into compat/sunos */
-	{
-		extern struct emul emul_sunos;
-		if (p->p_emul == &emul_sunos && type == SOCK_DGRAM)
-			so->so_options |= SO_BROADCAST;
-	}
-#endif
 	splx(s);
 	*aso = so;
 	return (0);
