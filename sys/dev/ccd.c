@@ -1,9 +1,9 @@
-/*	$NetBSD: ccd.c,v 1.2 1994/06/29 06:31:30 cgd Exp $	*/
+/*	$NetBSD: ccd.c,v 1.3 1994/07/02 06:03:47 hpeyerl Exp $      */
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -39,7 +39,7 @@
  *
  * from: Utah $Hdr: cd.c 1.6 90/11/28$
  *
- *	@(#)cd.c	7.4 (Berkeley) 5/7/91
+ *	@(#)cd.c	8.2 (Berkeley) 11/16/93
  */
 
 /*
@@ -50,27 +50,33 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/stat.h>
+#ifdef COMPAT_NOLABEL
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
+#endif
 
 #include <dev/ccdvar.h>
 
 #ifdef DEBUG
 int ccddebug = 0x00;
-#define CDB_FOLLOW	0x01
-#define CDB_INIT	0x02
-#define CDB_IO		0x04
+#define CCDB_FOLLOW	0x01
+#define CCDB_INIT	0x02
+#define CCDB_IO		0x04
 #endif
 
-struct	buf ccdbuf[NCCD];
 struct	buf *ccdbuffer();
 char	*ccddevtostr();
-int	ccdiodone();
+void	ccdiodone();
 
-#define	ccdunit(x)	((minor(x) >> 3) & 0x7)	/* for consistency */
+#define	ccdunit(x)	((minor(x) >> 3) & 0xf)	/* for consistency */
 
 #define	getcbuf()	\
 	((struct buf *)malloc(sizeof(struct buf), M_DEVBUF, M_WAITOK))
@@ -85,23 +91,62 @@ struct ccd_softc {
 	struct ccdcinfo	 sc_cinfo[NCCDISKS];	/* component info */
 	struct ccdiinfo	 *sc_itable;		/* interleave table */
 	int		 sc_usecnt;		/* number of requests active */
-	struct buf	 *sc_bp;		/* "current" request */
 	int		 sc_dk;			/* disk index */
-} ccd_softc[NCCD];
+};
 
 /* sc_flags */
-#define	CDF_ALIVE	0x01
-#define CDF_INITED	0x02
+#define	CCDF_ALIVE	0x01
+#define CCDF_INITED	0x02
 
-/* 
- * ccdattach() is called at boot time in new systems.  We do
- * nothing here since old systems will not call this.
+struct ccd_softc *ccd_softc;
+int numccd;
+
+/*
+ * Since this is called after auto-configuration of devices,
+ * we can handle the initialization here.
+ *
+ * XXX this will not work if you want to use a ccd as your primary
+ * swap device since swapconf() has been called before now.
  */
-
 void
-ccdattach(n) 
-        int n; 
-{ 
+ccdattach(num)
+	int num;
+{
+	char *mem;
+	register u_long size;
+	register struct ccddevice *ccd;
+	extern int dkn;
+
+	if (num <= 0)
+		return;
+	size = num * sizeof(struct ccd_softc);
+	mem = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (mem == NULL) {
+		printf("WARNING: no memory for concatonated disks\n");
+		return;
+	}
+	bzero(mem, size);
+	ccd_softc = (struct ccd_softc *)mem;
+	numccd = num;
+	for (ccd = ccddevice; ccd->ccd_unit >= 0; ccd++) {
+		/*
+		 * XXX
+		 * Assign disk index first so that init routine
+		 * can use it (saves having the driver drag around
+		 * the ccddevice pointer just to set up the dk_*
+		 * info in the open routine).
+		 */
+		if (dkn < DK_NDRIVE)
+			ccd->ccd_dk = dkn++;
+		else
+			ccd->ccd_dk = -1;
+		if (ccdinit(ccd))
+			printf("ccd%d configured\n", ccd->ccd_unit);
+		else if (ccd->ccd_dk >= 0) {
+			ccd->ccd_dk = -1;
+			dkn--;
+		}
+	}
 }
 
 ccdinit(ccd)
@@ -113,9 +158,12 @@ ccdinit(ccd)
 	register int ix;
 	size_t minsize;
 	dev_t dev;
+	struct bdevsw *bsw;
+	int error;
+	struct proc *p = curproc; /* XXX */
 
 #ifdef DEBUG
-	if (ccddebug & (CDB_FOLLOW|CDB_INIT))
+	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 		printf("ccdinit: unit %d\n", ccd->ccd_unit);
 #endif
 	cs->sc_dk = ccd->ccd_dk;
@@ -132,12 +180,22 @@ ccdinit(ccd)
 			break;
 		ci = &cs->sc_cinfo[ix];
 		ci->ci_dev = dev;
+		bsw = &bdevsw[major(dev)];
+		/*
+		 * Open the partition
+		 */
+		if (bsw->d_open &&
+		    (error = (*bsw->d_open)(dev, 0, S_IFBLK, p))) {
+			printf("ccd%d: component %s open failed, error = %d\n",
+			       ccd->ccd_unit, ccddevtostr(dev), error);
+			return(0);
+		}
 		/*
 		 * Calculate size (truncated to interleave boundary
 		 * if necessary.
 		 */
-		if (bdevsw[major(dev)].d_psize) {
-			size = (size_t) (*bdevsw[major(dev)].d_psize)(dev);
+		if (bsw->d_psize) {
+			size = (size_t) (*bsw->d_psize)(dev);
 			if ((int)size < 0)
 				size = 0;
 		} else
@@ -146,9 +204,27 @@ ccdinit(ccd)
 			size -= size % cs->sc_ileave;
 		if (size == 0) {
 			printf("ccd%d: not configured (component %s missing)\n",
-			       ccd->ccd_unit, ccddevtostr(ci->ci_dev));
+			       ccd->ccd_unit, ccddevtostr(dev));
 			return(0);
 		}
+#ifdef COMPAT_NOLABEL
+		/*
+		 * XXX if this is a 'c' partition then we need to mark the
+		 * label area writeable since there cannot be a label.
+		 */
+		if ((minor(dev) & 7) == 2 && bsw->d_open) {
+			int i, flag;
+
+			for (i = 0; i < nchrdev; i++)
+				if (ccdevsw[i].d_open == bsw->d_open)
+					break;
+			if (i != nchrdev && ccdevsw[i].d_ioctl) {
+				flag = 1;
+				(void)(*ccdevsw[i].d_ioctl)(dev, DIOCWLABEL,
+					(caddr_t)&flag, FWRITE, p);
+			}
+		}
+#endif
 		if (minsize == 0 || size < minsize)
 			minsize = size;
 		ci->ci_size = size;
@@ -159,7 +235,7 @@ ccdinit(ccd)
 	 * If uniform interleave is desired set all sizes to that of
 	 * the smallest component.
 	 */
-	if (ccd->ccd_flags & CDF_UNIFORM) {
+	if (ccd->ccd_flags & CCDF_UNIFORM) {
 		for (ci = cs->sc_cinfo;
 		     ci < &cs->sc_cinfo[cs->sc_nccdisks]; ci++)
 			ci->ci_size = minsize;
@@ -183,12 +259,13 @@ ccdinit(ccd)
 		printf("interleaved at %d blocks\n", cs->sc_ileave);
 	else
 		printf("concatenated\n");
-	cs->sc_flags = CDF_ALIVE | CDF_INITED;
+	cs->sc_flags = CCDF_ALIVE | CCDF_INITED;
 	return(1);
 }
 
 /*
  * XXX not really ccd specific.
+ * Could be called something like bdevtostr in machine/conf.c.
  */
 char *
 ccddevtostr(dev)
@@ -196,17 +273,21 @@ ccddevtostr(dev)
 {
 	static char dbuf[5];
 
-	dbuf[1] = 'd';
 	switch (major(dev)) {
+#ifdef hp300
 	case 2:
-		dbuf[0] = 'r';
+		dbuf[0] = 'r'; dbuf[1] = 'd';
 		break;
 	case 4:
-		dbuf[0] = 's';
+		dbuf[0] = 's'; dbuf[1] = 'd';
 		break;
 	case 5:
-		dbuf[0] = 'c';
+		dbuf[0] = 'c'; dbuf[1] = 'd';
 		break;
+	case 6:
+		dbuf[0] = 'v'; dbuf[1] = 'n';
+		break;
+#endif
 	default:
 		dbuf[0] = dbuf[1] = '?';
 		break;
@@ -227,7 +308,7 @@ ccdinterleave(cs)
 	u_long size;
 
 #ifdef DEBUG
-	if (ccddebug & CDB_INIT)
+	if (ccddebug & CCDB_INIT)
 		printf("ccdinterleave(%x): ileave %d\n", cs, cs->sc_ileave);
 #endif
 	/*
@@ -254,7 +335,7 @@ ccdinterleave(cs)
 		}
 		ii->ii_ndisk = 0;
 #ifdef DEBUG
-		if (ccddebug & CDB_INIT)
+		if (ccddebug & CCDB_INIT)
 			printiinfo(cs->sc_itable);
 #endif
 		return(1);
@@ -302,7 +383,7 @@ ccdinterleave(cs)
 		size = smallci->ci_size;
 	}
 #ifdef DEBUG
-	if (ccddebug & CDB_INIT)
+	if (ccddebug & CCDB_INIT)
 		printiinfo(cs->sc_itable);
 #endif
 	return(1);
@@ -331,15 +412,14 @@ ccdopen(dev, flags)
 	register struct ccd_softc *cs = &ccd_softc[unit];
 
 #ifdef DEBUG
-	if (ccddebug & CDB_FOLLOW)
+	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdopen(%x, %x)\n", dev, flags);
 #endif
-	if (unit >= NCCD || (cs->sc_flags & CDF_ALIVE) == 0)
+	if (unit >= numccd || (cs->sc_flags & CCDF_ALIVE) == 0)
 		return(ENXIO);
 	return(0);
 }
 
-void
 ccdstrategy(bp)
 	register struct buf *bp;
 {
@@ -349,10 +429,10 @@ ccdstrategy(bp)
 	register int sz, s;
 
 #ifdef DEBUG
-	if (ccddebug & CDB_FOLLOW)
+	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdstrategy(%x): unit %d\n", bp, unit);
 #endif
-	if ((cs->sc_flags & CDF_INITED) == 0) {
+	if ((cs->sc_flags & CCDF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -375,31 +455,27 @@ ccdstrategy(bp)
 	bp->b_resid = bp->b_bcount;
 	/*
 	 * "Start" the unit.
-	 * XXX: the use of sc_bp is just to retain the "traditional"
-	 * interface to the start routine.
 	 */
 	s = splbio();
-	cs->sc_bp = bp;
-	ccdstart(unit);
+	ccdstart(cs, bp);
 	splx(s);
 	return;
 done:
 	biodone(bp);
 }
 
-ccdstart(unit)
-	int unit;
+ccdstart(cs, bp)
+	register struct ccd_softc *cs;
+	register struct buf *bp;
 {
-	register struct ccd_softc *cs = &ccd_softc[unit];
-	register struct buf *bp = cs->sc_bp;
 	register long bcount, rcount;
 	struct buf *cbp;
 	caddr_t addr;
 	daddr_t bn;
 
 #ifdef DEBUG
-	if (ccddebug & CDB_FOLLOW)
-		printf("ccdstart(%d)\n", unit);
+	if (ccddebug & CCDB_FOLLOW)
+		printf("ccdstart(%x, %x)\n", cs, bp);
 #endif
 	/*
 	 * Instumentation (not real meaningful)
@@ -414,7 +490,7 @@ ccdstart(unit)
 	 * Allocate component buffers and fire off the requests
 	 */
 	bn = bp->b_blkno;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
 		rcount = cbp->b_bcount;
@@ -440,7 +516,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	register daddr_t cbn, cboff;
 
 #ifdef DEBUG
-	if (ccddebug & CDB_IO)
+	if (ccddebug & CCDB_IO)
 		printf("ccdbuffer(%x, %x, %d, %x, %d)\n",
 		       cs, bp, bn, addr, bcount);
 #endif
@@ -493,7 +569,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->b_proc = bp->b_proc;
 	cbp->b_dev = ci->ci_dev;
 	cbp->b_blkno = cbn + cboff;
-	cbp->b_un.b_addr = addr;
+	cbp->b_data = addr;
 	cbp->b_vp = 0;
 	if (cs->sc_ileave == 0)
 		cbp->b_bcount = dbtob(ci->ci_size - cbn);
@@ -502,28 +578,27 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	if (cbp->b_bcount > bcount)
 		cbp->b_bcount = bcount;
 	/*
-	 * XXX: context for ccdiodone
+	 * XXX context for ccdiodone
 	 */
 	cbp->b_saveaddr = (caddr_t)bp;
 	cbp->b_pfcent = ((cs - ccd_softc) << 16) | (ci - cs->sc_cinfo);
 #ifdef DEBUG
-	if (ccddebug & CDB_IO)
+	if (ccddebug & CCDB_IO)
 		printf(" dev %x(u%d): cbp %x bn %d addr %x bcnt %d\n",
 		       ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->b_blkno,
-		       cbp->b_un.b_addr, cbp->b_bcount);
+		       cbp->b_data, cbp->b_bcount);
 #endif
 	return(cbp);
 }
 
-ccdintr(unit)
-	int unit;
+ccdintr(cs, bp)
+	register struct ccd_softc *cs;
+	register struct buf *bp;
 {
-	register struct ccd_softc *cs = &ccd_softc[unit];
-	register struct buf *bp = cs->sc_bp;
 
 #ifdef DEBUG
-	if (ccddebug & CDB_FOLLOW)
-		printf("ccdintr(%d): bp %x\n", unit, bp);
+	if (ccddebug & CCDB_FOLLOW)
+		printf("ccdintr(%x, %x)\n", cs, bp);
 #endif
 	/*
 	 * Request is done for better or worse, wakeup the top half.
@@ -540,6 +615,7 @@ ccdintr(unit)
  * Mark the component as done and if all components are done,
  * take a ccd interrupt.
  */
+void
 ccdiodone(cbp)
 	register struct buf *cbp;
 {
@@ -549,14 +625,14 @@ ccdiodone(cbp)
 
 	s = splbio();
 #ifdef DEBUG
-	if (ccddebug & CDB_FOLLOW)
+	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdiodone(%x)\n", cbp);
-	if (ccddebug & CDB_IO) {
+	if (ccddebug & CCDB_IO) {
 		printf("ccdiodone: bp %x bcount %d resid %d\n",
 		       bp, bp->b_bcount, bp->b_resid);
 		printf(" dev %x(u%d), cbp %x bn %d addr %x bcnt %d\n",
 		       cbp->b_dev, cbp->b_pfcent & 0xFFFF, cbp,
-		       cbp->b_blkno, cbp->b_un.b_addr, cbp->b_bcount);
+		       cbp->b_blkno, cbp->b_data, cbp->b_bcount);
 	}
 #endif
 
@@ -573,24 +649,46 @@ ccdiodone(cbp)
 
 	/*
 	 * If all done, "interrupt".
-	 * Again, sc_bp is only used to preserve the traditional interface.
 	 */
 	bp->b_resid -= count;
 	if (bp->b_resid < 0)
 		panic("ccdiodone: count");
-	if (bp->b_resid == 0) {
-		ccd_softc[unit].sc_bp = bp;
-		ccdintr(unit);
-	}
+	if (bp->b_resid == 0)
+		ccdintr(&ccd_softc[unit], bp);
 	splx(s);
 }
 
-ccdioctl(dev, cmd, data, flag, p)
+ccdread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	register int unit = ccdunit(dev);
+
+#ifdef DEBUG
+	if (ccddebug & CCDB_FOLLOW)
+		printf("ccdread(%x, %x)\n", dev, uio);
+#endif
+	return(physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+ccdwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	register int unit = ccdunit(dev);
+
+#ifdef DEBUG
+	if (ccddebug & CCDB_FOLLOW)
+		printf("ccdwrite(%x, %x)\n", dev, uio);
+#endif
+	return(physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
+}
+
+ccdioctl(dev, cmd, data, flag)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
 {
 	return(EINVAL);
 }
@@ -601,7 +699,7 @@ ccdsize(dev)
 	int unit = ccdunit(dev);
 	register struct ccd_softc *cs = &ccd_softc[unit];
 
-	if (unit >= NCCD || (cs->sc_flags & CDF_INITED) == 0)
+	if (unit >= numccd || (cs->sc_flags & CCDF_INITED) == 0)
 		return(-1);
 	return(cs->sc_size);
 }
