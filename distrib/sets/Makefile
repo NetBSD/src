@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/01/03 15:34:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2003/01/12 18:51:26 veego Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -52,7 +52,7 @@ checkflist-x11: check_DESTDIR
 
 .PRECIOUS: maketars
 maketars: check_DESTDIR check_RELEASEDIR
-.if (${DESTDIR} != "")
+.if defined(DESTDIR) && ${DESTDIR} != ""
 	${MAKE} checkflist
 .endif
 	${SETSENV} sh ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
