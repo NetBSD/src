@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.10.6.2 2001/10/25 18:01:04 he Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.10.6.3 2002/06/06 16:04:19 he Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 	iop = (struct iop_softc *)dv->dv_parent;
 	rb = reply;
 
-	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("iopsp_intr\n"));
+	SC_DEBUG(xs->sc_link, SDEV_DB2, ("iopsp_intr\n"));
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
