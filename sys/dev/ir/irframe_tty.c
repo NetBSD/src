@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.18 2001/12/20 11:30:13 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19 2001/12/26 10:56:58 augustss Exp $	*/
 
 /*
  * TODO
@@ -337,6 +337,8 @@ irt_frame(struct irframet_softc *sc, u_char *buf, u_int len)
 	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
 		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
 
+	if (sc->sc_inbuf == NULL) /* XXX happens if device is closed? */
+		return;
 	if (sc->sc_nframes >= MAXFRAMES) {
 #ifdef IRFRAMET_DEBUG
 		printf("%s: dropped frame\n", __FUNCTION__);
