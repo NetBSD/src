@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: memory.c,v 1.1.1.3 1997/06/08 04:54:12 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: memory.c,v 1.1.1.4 1997/10/20 23:28:37 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -460,8 +460,7 @@ int supersede_lease (comp, lease, commit)
 
 	if (!(lease -> flags & ABANDONED_LEASE) &&
 	    comp -> ends > cur_time &&
-	    ((comp -> uid && (lease -> uid ||
-			      !(lease -> flags & DYNAMIC_BOOTP_OK)) &&
+	    (((comp -> uid && lease -> uid) &&
 	      (comp -> uid_len != lease -> uid_len ||
 	       memcmp (comp -> uid, lease -> uid, comp -> uid_len))) ||
 	     (!comp -> uid &&

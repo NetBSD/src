@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.3 1997/06/08 04:55:18 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.1.1.4 1997/10/20 23:29:37 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -406,7 +406,7 @@ void nak_lease (packet, cip)
 
 	/* Set up the option buffer... */
 	outgoing.packet_length =
-		cons_options (packet, outgoing.raw, options, 0, 0);
+		cons_options (packet, outgoing.raw, options, 0, 0, 0);
 
 /*	memset (&raw.ciaddr, 0, sizeof raw.ciaddr);*/
 	raw.siaddr = packet -> interface -> primary_address;
@@ -504,12 +504,6 @@ void ack_lease (packet, lease, offer, when)
 		return;
 	}
 
-	/* Allocate a lease state structure... */
-	state = new_lease_state ("ack_lease");
-	if (!state)
-		error ("unable to allocate lease state!");
-	memset (state, 0, sizeof *state);
-
 	if (packet -> options [DHO_DHCP_CLASS_IDENTIFIER].len) {
 		vendor_class =
 			find_class (0,
@@ -531,6 +525,29 @@ void ack_lease (packet, lease, offer, when)
 	} else {
 		user_class = (struct class *)0;
 	}
+
+	/*
+	 * If there is not a specific host entry, and either the
+	 * vendor class or user class (if they exist) deny booting,
+	 * then bug out.
+	 */
+	if (!lease -> host) {
+		if (vendor_class && !vendor_class -> group -> allow_booting) {
+			debug ("Booting denied by vendor class");
+			return;
+		}
+
+		if (user_class && !user_class -> group -> allow_booting) {
+			debug ("Booting denied by user class");
+			return;
+		}
+	}
+
+	/* Allocate a lease state structure... */
+	state = new_lease_state ("ack_lease");
+	if (!state)
+		error ("unable to allocate lease state!");
+	memset (state, 0, sizeof *state);
 
 	/* Replace the old lease hostname with the new one, if it's changed. */
 	if (packet -> options [DHO_HOST_NAME].len &&
@@ -896,7 +913,7 @@ void ack_lease (packet, lease, offer, when)
 
 	/* If this is a DHCPOFFER, ping the lease address before actually
 	   sending the offer. */
-	if (offer == DHCPOFFER) {
+	if (offer == DHCPOFFER && !(lease -> flags & STATIC_LEASE)) {
 		icmp_echorequest (&lease -> ip_addr);
 		add_timeout (cur_time + 1, lease_ping_timeout, lease);
 		++outstanding_pings;
@@ -917,6 +934,7 @@ void dhcp_reply (lease)
 	int result;
 	int i;
 	struct lease_state *state = lease -> state;
+	int nulltp, bootpp;
 
 	if (!state)
 		error ("dhcp_reply was supplied lease with no state!");
@@ -946,11 +964,19 @@ void dhcp_reply (lease)
 	/* See if this is a Microsoft client that NUL-terminates its
 	   strings and expects us to do likewise... */
 	if (lease -> flags & MS_NULL_TERMINATION)
-		packet_length = cons_options ((struct packet *)0,
-					      &raw, state -> options, bufs, 1);
+		nulltp = 1;
 	else
-		packet_length = cons_options ((struct packet *)0,
-					      &raw, state -> options, bufs, 0);
+		nulltp = 0;
+
+	/* See if this is a bootp client... */
+	if (state -> offer)
+		bootpp = 0;
+	else
+		bootpp = 1;
+
+	/* Insert such options as will fit into the buffer. */
+	packet_length = cons_options ((struct packet *)0, &raw,
+				      state -> options, bufs, nulltp, bootpp);
 
 	/* Having done the cons_options(), we can release the tree_cache
 	   entries. */
@@ -1184,9 +1210,9 @@ struct lease *find_lease (packet, share, ours)
 	   a uid) we let the client get away with it. */
 	if (hw_lease &&
 	    hw_lease -> ends >= cur_time &&
-	    hw_lease -> uid && hw_lease != uid_lease &&
-	    (packet -> packet_type != 0 ||
-	     !(hw_lease -> flags & DYNAMIC_BOOTP_OK)))
+	    hw_lease -> uid &&
+	    packet -> options [DHO_DHCP_CLIENT_IDENTIFIER].len &&
+	    hw_lease != uid_lease)
 		hw_lease = (struct lease *)0;
 
 	/* Toss extra pointers to the same lease... */
