@@ -1,20 +1,20 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/27 21:02:26 scw Exp $
+#	$NetBSD: Makefile,v 1.2 2002/03/03 11:03:43 scw Exp $
 
 SRCS=   boot.c conf.c devopen.c
-PROG=	netboot.tmp
+PROG=	boot.tmp
 LIBS=	${LIBSA}
 DPADD=	${LIBS}
-CLEANFILES+= netboot.bin
+CLEANFILES+= boot.bin
 
-netboot.bin: ${PROG}
-	${OBJCOPY} -O binary ${.OBJDIR}/netboot.tmp $@
+boot.bin: ${PROG}
+	${OBJCOPY} -O binary ${.OBJDIR}/boot.tmp $@
 
 .include "../Makefile.booters"
 
-all realall: netboot.bin
+all realall: boot.bin
 
-install: netboot.bin
+install: boot.bin
 	${INSTALL_FILE} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${.OBJDIR}/netboot.bin ${DESTDIR}${MDEC_DIR}/netboot
+		${.OBJDIR}/boot.bin ${DESTDIR}${MDEC_DIR}/boot
 
 .include <bsd.prog.mk>
