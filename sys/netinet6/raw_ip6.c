@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.9 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.10 1999/08/05 16:01:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -475,6 +475,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		splx(s);
 		in6p = sotoin6pcb(so);
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
+		in6p->in6p_ip6.ip6_hlim = ip6_defhlim;
 		in6p->in6p_cksum = -1;
 #ifdef IPSEC
 		if ((error = ipsec_init_policy(&in6p->in6p_sp)) != 0)
