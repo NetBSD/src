@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.4 2001/04/10 07:13:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rh-rsa.c,v 1.22 2001/02/03 10:08:36 markus Exp $");
+RCSID("$OpenBSD: auth-rh-rsa.c,v 1.23 2001/04/06 21:00:04 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -80,7 +81,7 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 			    pw->pw_name, user_hostfile);
 		} else {
 			/* XXX race between stat and the following open() */
-			temporarily_use_uid(pw->pw_uid);
+			temporarily_use_uid(pw);
 			host_status = check_host_in_hostfile(user_hostfile, canonical_hostname,
 			    client_key, found, NULL);
 			restore_uid();

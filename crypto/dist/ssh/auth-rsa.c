@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-rsa.c,v 1.1.1.5 2001/04/10 07:13:49 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.39 2001/03/01 02:45:10 deraadt Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.40 2001/04/06 21:00:07 markus Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
@@ -135,7 +136,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		return 0;
 
 	/* Temporarily use the user's uid. */
-	temporarily_use_uid(pw->pw_uid);
+	temporarily_use_uid(pw);
 
 	/* The authorized keys. */
 	snprintf(file, sizeof file, "%.500s/%.100s", pw->pw_dir,

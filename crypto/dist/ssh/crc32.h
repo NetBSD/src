@@ -1,3 +1,4 @@
+/*	$NetBSD: crc32.h,v 1.1.1.5 2001/04/10 07:13:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1992 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
