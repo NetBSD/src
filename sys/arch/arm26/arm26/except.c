@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.37 2001/08/26 14:15:07 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.38 2001/10/18 22:53:39 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.37 2001/08/26 14:15:07 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38 2001/10/18 22:53:39 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -414,8 +414,10 @@ do_fault(struct trapframe *tf, struct proc *p,
 		printf("unhandled fault at %p (error = %d)\n",
 		    (void *)va, error);
 		printregs(tf);
-		printf("pc -> ");
-		disassemble(tf->tf_r15 & R15_PC);
+		if ((tf->tf_r15 & R15_PC) != va) {
+			printf("pc -> ");
+			disassemble(tf->tf_r15 & R15_PC);
+		}
 #ifdef DDB
 		Debugger();
 #endif
