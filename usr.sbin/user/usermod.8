@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.4.4.3 2001/02/26 15:16:09 he Exp $ */
+.\" $NetBSD: usermod.8,v 1.4.4.4 2002/06/26 17:21:21 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd September 5, 2001
 .Dt USERMOD 8
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm usermod
 .Nd modify user login information
@@ -44,10 +44,11 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Oo
 .Fl g Ar gid | name | Li =uid
 .Oc
+.Op Fl L Ar login-class
 .Op Fl l Ar new-login
 .Op Fl p Ar password
 .Op Fl s Ar shell
@@ -57,13 +58,15 @@
 The
 .Nm
 utility modifies user login information on the system.
-Default values for the user are taken from the information
-provided in the
-.Pa /etc/usermgmt.conf
-file.
 .Pp
-After setting any defaults, and then values from that file,
-the command line options are processed:
+Default values are taken from the information provided in the
+.Pa /etc/usermgmt.conf
+file, which, if running as root, is created using the built-in defaults if
+it does not exist.
+.Pp
+After setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl G Ar secondary-group
 is the secondary group to which the user will be added in the
@@ -80,27 +83,31 @@ without populating it; if the
 .Fl m
 option is specified, tries to move the old home directory to
 .Ar home-directory .
-.It Fl e Ar secs-to-expiry
-provides the number of seconds since the epoch (UTC) at
-which the current password change expire. This
-can be used to implement password aging.
-A value of
-0 can be used to switch off this feature.
-The default value for this field is 0.
-See
-.Xr passwd 5
-for more details.
-This value can be preset for all users
-by using the
+.It Fl e Ar expiry-time
+sets the time at which the current password expires.  This can be used
+to implement password aging.  It should be entered in the form
+.Dq month day year ,
+where month is the month name (the first three characters are
+sufficient), day is the day of the month, and year is the year.
+Time in seconds since the epoch (UTC) is also valid.  A value of
+0 can be used to disable this feature.
+This value can be preset for all users using the
 .Ar expire
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic expire Ar secs-to-expiry
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl f Ar inactive-time
+sets the time at which the account expires.
+See the
+.Fl e
+option.
 .It Xo
 .Fl g Ar gid | name | Li =uid
 .Xc
-gives the group name or identifier to be used for the new user's primary group.
+gives the group name or identifier to be used for the user's primary group.
 If this is
 .Ql =uid ,
 then a uid and gid will be picked which are both unique
@@ -111,13 +118,23 @@ This value can be preset for all users
 by using the
 .Ar gid
 field in the
-.Pa /usr/share/adduser/defaults
-file - it has the format:
-.br \" XXX Shouldn't be necessary -- mdoc bug? --bjh21
-.Bd -ragged -offset indent -compact
-.Ic group
-.Ar gid | name | Li =uid
-.Ed
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl L Ar login-class
+This option sets the login class for the user.  See
+.Xr login.conf 5
+for more information on user login classes. This value can be preset
+for all users by using the
+.Ar class
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl l Ar new-user
 gives the new user name.
 It must consist of alphanumeric characters, or the characters
@@ -141,7 +158,7 @@ is needed.
 .It Fl o
 allows duplicate uids to be given.
 .It Fl p Ar password
-specifies an already-encrypted password for the new user.
+specifies an already-encrypted password for the user.
 This password can then be changed by using the
 .Xr chpass 1
 utility.
@@ -150,17 +167,21 @@ by using the
 .Ar password
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic password Ar encrypted-password
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl s Ar shell
-specifies the login shell for the new user.
+specifies the login shell for the user.
 This value can be preset for all users
 by using the
 .Ar shell
 field in the
-.Pa /usr/share/adduser/defaults
-file - it has the format:
-.D1 Ic shell Ar login-shell
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl u Ar uid
 specifies a new uid for the user.
 Boundaries for this value can be preset for all users
@@ -168,27 +189,36 @@ by using the
 .Ar range
 field in the
 .Pa /etc/usermgmt.conf
-file - they have the format:
-.br \" XXX
-.Bd -ragged -offset indent -compact
-.Ic range
-.Ar starting-uid Ns Li .. Ns Ar ending_uid
-.Ed
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
 .Pp
+Once the information has been verified,
+.Nm
+uses
+.Xr pwd_mkdb 8
+to update the user database.  This is run in the background, and,
+at very large sites could take several minutes.  Until this update
+is completed, the password file is unavailable for other updates
+and the new information is not available to programs.
+.Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
+.Xr group 5 ,
 .Xr passwd 5 ,
-.Xr group 5
+.Xr usermgmt.conf 5 ,
+.Xr pwd_mkdb 8
 .Sh HISTORY
 The
 .Nm
@@ -197,7 +227,7 @@ utility first appeared in
 It is based on the
 .Ar addnerd
 package by the same author.
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
