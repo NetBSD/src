@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/05/16 08:21:53 gwr Exp $
+#	$NetBSD: Makefile,v 1.10 1999/05/18 07:31:56 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,9 +20,9 @@ MOUNT_POINT?=	/mnt
 BDEV?=		/dev/sd1b
 CDEV?=		/dev/rsd1b
 
-# These are all the parameters for the root fs: (256K)
+# These are all the parameters for the root fs: (320K)
 DISKTYPE=	rdroot
-NBLKS=		512
+NBLKS=		640
 # bigendian, old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -B be -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
