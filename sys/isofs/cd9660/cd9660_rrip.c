@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.14 1996/09/30 15:50:19 ws Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.15 1996/10/10 22:39:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -107,7 +107,7 @@ cd9660_rrip_defattr(v, ana)
 	struct iso_directory_record *isodir = v;
 
 	/* But this is a required field! */
-	printf("RRIP without PX field?\n");
+	kprintf("RRIP without PX field?\n");
 	cd9660_defattr(isodir, ana->inop, NULL);
 }
 
@@ -194,7 +194,7 @@ cd9660_rrip_slink(v, ana)
 			inbuf = pcomp->name;
 			break;
 		default:
-			printf("RRIP with incorrect flags?");
+			kprintf("RRIP with incorrect flags?");
 			wlen = ana->maxlen + 1;
 			break;
 		}
@@ -267,7 +267,7 @@ cd9660_rrip_altname(v, ana)
 		break;
 		
 	default:
-		printf("RRIP with incorrect NM flags?\n");
+		kprintf("RRIP with incorrect NM flags?\n");
 		wlen = ana->maxlen + 1;
 		break;
 	}
