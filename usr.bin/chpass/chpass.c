@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.16 1998/12/19 02:13:43 thorpej Exp $	*/
+/*	$NetBSD: chpass.c,v 1.17 1998/12/19 02:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.16 1998/12/19 02:13:43 thorpej Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.17 1998/12/19 02:23:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,15 +213,15 @@ main(argc, argv)
 		/* protect p_shell -- it thinks NULL is /bin/sh */
 		if (!arg[0])
 			usage();
-		if (p_shell(arg, pw, (ENTRY *)NULL))
-				(*Pw_error)((char *)NULL, 0, 1);
+		if (p_shell(arg, pw, NULL))
+			(*Pw_error)(NULL, 0, 1);
 	}
 
 	if (op == LOADENTRY) {
 		if (uid)
 			baduser();
 		pw = &lpw;
-		if (!pw_scan(arg, pw, (int *)NULL))
+		if (!pw_scan(arg, pw, NULL))
 			exit(1);
 	}
 
@@ -232,7 +232,7 @@ main(argc, argv)
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		dfd = mkstemp(tempname);
-		if (dfd < 0)
+		if (dfd < 0 || fcntl(dfd, F_SETFD, 1) < 0)
 			(*Pw_error)(tempname, 1, 1);
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
@@ -258,19 +258,21 @@ main(argc, argv)
 	tfd = pw_lock(0);
 	if (tfd < 0) {
 		if (errno != EEXIST)
-			err(1, "unable to open temp passwd file");
+			err(1, _PATH_MASTERPASSWD_LOCK);
 		warnx("The passwd file is busy, waiting...");
 		tfd = pw_lock(10);
 		if (tfd < 0) {
 			if (errno != EEXIST)
-				err(1, "unable to open temp passwd file");
+				err(1, _PATH_MASTERPASSWD_LOCK);
 			errx(1, "The passwd file is still busy, "
 			     "try again later.");
 		}
 	}
+	if (fcntl(tfd, F_SETFD, 1) < 0)
+		pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
 
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
+	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Copy the passwd file to the lock file, updating pw. */
@@ -278,7 +280,7 @@ main(argc, argv)
 
 	/* Now finish the passwd file update. */
 	if (pw_mkdb() < 0)
-		pw_error((char *)NULL, 0, 1);
+		pw_error(NULL, 0, 1);
 
 	exit(0);
 }
