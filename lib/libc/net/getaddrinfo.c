@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.16 1999/12/13 17:05:45 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.17 1999/12/27 10:20:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -868,6 +868,10 @@ explore_numeric_scope(pai, hostname, servname, res)
 #ifdef INET6
 	case AF_INET6:
 		scope = if_nametoindex(cp);
+		if (scope == 0) {
+			free(hostname2);
+			return (EAI_NONAME);
+		}
 		break;
 #endif
 	}
