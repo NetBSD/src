@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.641 2004/11/24 20:49:21 bouyer Exp $
+# $NetBSD: GENERIC,v 1.642 2004/11/25 16:13:34 kim Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.641 $"
+#ident 		"GENERIC-$Revision: 1.642 $"
 
 maxusers	32		# estimated number of users
 
@@ -139,7 +139,7 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
