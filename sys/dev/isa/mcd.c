@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.33 1995/04/01 08:40:11 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.34 1995/04/01 08:45:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -227,8 +227,14 @@ mcdattach(parent, self, aux)
 	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
+/*
+ * Wait interruptibly for an exclusive lock.
+ *
+ * XXX
+ * Several drivers do this; it should be abstracted and made MP-safe.
+ */
 int
-mcdlockwait(sc)
+mcdlock(sc)
 	struct mcd_softc *sc;
 {
 	int error;
@@ -238,9 +244,13 @@ mcdlockwait(sc)
 		if ((error = tsleep(sc, PRIBIO | PCATCH, "mcdlck", 0)) != 0)
 			return error;
 	}
+	sc->flags |= MCDF_LOCKED;
 	return 0;
 }
 
+/*
+ * Unlock and wake up any waiters.
+ */
 void
 mcdunlock(sc)
 	struct mcd_softc *sc;
@@ -270,9 +280,7 @@ mcdopen(dev, flag, fmt, p)
 	if (!sc)
 		return ENXIO;
 
-	part = MCDPART(dev);
-	
-	if (error = mcdlockwait(sc))
+	if (error = mcdlock(sc))
 		return error;
 
 	if (sc->sc_dk.dk_openmask != 0) {
@@ -283,8 +291,6 @@ mcdopen(dev, flag, fmt, p)
 		if ((sc->flags & MCDF_LOADED) == 0)
 			return ENXIO;
 	} else {
-		sc->flags |= MCDF_LOCKED;
-
 		/*
 		 * Lock the drawer.  This will also notice any pending disk
 		 * change or door open indicator and clear the MCDF_LOADED bit
@@ -316,13 +322,13 @@ mcdopen(dev, flag, fmt, p)
 			/* Fabricate a disk label. */
 			mcdgetdisklabel(sc);
 		}
-
-		mcdunlock(sc);
 	}
 
 	MCD_TRACE("open: partition=%d disksize=%d blksize=%d\n", part,
 	    sc->disksize, sc->blksize, 0);
 
+	part = MCDPART(dev);
+	
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= sc->sc_dk.dk_label.d_npartitions ||
@@ -342,6 +348,7 @@ mcdopen(dev, flag, fmt, p)
 	}
 	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
+	mcdunlock(sc);
 	return 0;
 
 bad2:
@@ -353,10 +360,9 @@ bad:
 		(void) mcd_setmode(sc, MCD_MD_SLEEP);
 #endif
 		(void) mcd_setlock(sc, MCD_LK_UNLOCK);
-
-		mcdunlock(sc);
 	}
 
+	mcdunlock(sc);
 	return error;
 }
 
@@ -367,9 +373,12 @@ mcdclose(dev, flag, fmt)
 {
 	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(dev)];
 	int part = MCDPART(dev);
-	int s;
+	int error;
 	
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
+
+	if (error = mcdlock(sc))
+		return error;
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -382,30 +391,15 @@ mcdclose(dev, flag, fmt)
 	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	if (sc->sc_dk.dk_openmask == 0) {
-		/*
-		 * If we're closing the last partition, nobody else could be
-		 * holding the lock, so don't bother to check.
-		 */
-		sc->flags |= MCDF_LOCKED;
-
-#if 0
-		s = splbio();
-		while (...) {
-			sc->flags |= MCDF_WAITING;
-			if ((error = tsleep(sc, PRIBIO | PCATCH, "mcdcls", 0)) != 0)
-				return error;
-		}
-		splx(s);
-#endif
+		/* XXXX Must wait for I/O to complete! */
 
 #if 0
 		(void) mcd_setmode(sc, MCD_MD_SLEEP);
 #endif
 		(void) mcd_setlock(sc, MCD_LK_UNLOCK);
-
-		mcdunlock(sc);
 	}
 
+	mcdunlock(sc);
 	return 0;
 }
 
@@ -546,9 +540,9 @@ mcdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if (error = mcdlockwait(sc))
+		if (error = mcdlock(sc))
 			return error;
-		sc->flags |= MCDF_LOCKED | MCDF_LABELLING;
+		sc->flags |= MCDF_LABELLING;
 
 		error = setdisklabel(&sc->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0,
