@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 1997/10/15 17:18:38 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.21 1997/10/16 23:53:07 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -142,7 +142,7 @@
 82	STD		{ int linux_sys_oldselect(struct linux_select *lsp); }
 83	STD		{ int linux_sys_symlink(char *path, char *to); }
 84	NOARGS		{ int compat_43_sys_lstat(char *path, \
-			    struct ostat *up); } olstat
+			    struct stat43 *up); } oolstat
 85	STD		{ int linux_sys_readlink(char *name, char *buf, \
 			    int count); }
 86	STD		{ int linux_sys_uselib(char *path); }
