@@ -1,10 +1,13 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.13 1994/09/05 06:31:34 pk Exp $
+# $Id: files.sparc.newconf,v 1.14 1994/09/17 23:43:23 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
 
-device mainbus at root { [addr = 0], [level = -1]}
+device mainbus at root {}
+
+device obio at mainbus { [addr = 0], [level = -1] }
+file	arch/sparc/dev/obio.c
 
 device audio at mainbus
 file	arch/sparc/dev/bsd_audio.c		bsdaudio audio needs-flag
@@ -22,43 +25,59 @@ file	arch/sparc/sparc/cpu.c
 device memreg at mainbus
 file	arch/sparc/sparc/memreg.c
 
-device zs at mainbus
+device zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-count
 
 device sbus at mainbus { slot = -1, offset = -1 }
-file	arch/sparc/sbus/sbus.c		sbus
+file	arch/sparc/dev/sbus.c		sbus
 
-# scsi driver and associated stuff
-define	scsi { target = -1 }
-device	tg at scsi { drive = -1 }
-file	arch/sparc/scsi/scsi_subr.c	scsi
-
-device	sd at tg: disk
-file	arch/sparc/scsi/sd.c		sd needs-flag
-file	arch/sparc/scsi/sun_disklabel.c	sd
-
-# device st at tg: tape	-- not yet
-
-device dma at sbus
-device esp at sbus: scsi
-file	arch/sparc/sbus/esp.c		esp dma
-
-device bwtwo at sbus
-file	arch/sparc/sbus/bwtwo.c		bwtwo needs-flag
-
-device cgthree at sbus
-file	arch/sparc/sbus/cgthree.c	cgthree needs-flag
-
-device cgsix at sbus
-file	arch/sparc/sbus/cgsix.c		cgsix needs-flag
-
-file	arch/sparc/sbus/bt_subr.c	cgsix cgthree
-
-device le at sbus: ifnet, ether
-file	arch/sparc/sbus/if_le.c		le
-
+define scsi {}
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
+file	scsi/scsiconf.c			scsi
 
 major { sd = 7 }
+major { vn = 8 }
+major { cd = 18 }
+
+device dma at sbus
+device espdma at sbus	{ slot = -1, offset = -1 }
+device ledma at sbus	{ slot = -1, offset = -1 }
+file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
+
+device esp at sbus, espdma: scsi
+file	arch/sparc/dev/esp.c		dma needs-flag
+
+device scsibus at scsi	{ target = -1, drive = -1 }
+
+device cd at scsibus: disk
+file	scsi/cd.c			cd needs-flag
+device sd at scsibus: disk
+file	scsi/sd.c			sd needs-flag
+device st at scsibus: tape
+file	scsi/st.c			st needs-flag
+device ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+device uk at scsibus: disk
+file	scsi/uk.c			uk needs-flag
+device su at scsibus: disk
+file	scsi/su.c			su needs-flag
+
+device bwtwo at sbus
+file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
+
+device cgthree at sbus
+file	arch/sparc/dev/cgthree.c	cgthree needs-flag
+
+device cgsix at sbus
+file	arch/sparc/dev/cgsix.c		cgsix needs-flag
+
+file	arch/sparc/dev/bt_subr.c	cgsix cgthree
+
+device le at sbus, ledma: ifnet, ether
+file	arch/sparc/dev/if_le.c		le
+
+
 
 pseudo-device	kbd
 
@@ -107,6 +126,7 @@ file	arch/sparc/sparc/pmap.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
+file	arch/sparc/sparc/disksubr.c
 
 file	compat/sunos/sun_misc.c		compat_sunos
 file	compat/sunos/sun_sysent.c	compat_sunos
