@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.1.1.3 2000/07/08 20:41:11 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.1.1.4 2000/07/09 07:04:10 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -124,25 +124,22 @@ isc_result_t enter_host (hd, dynamicp, commit)
 		} else {
 			/* If there isn't already a host decl matching this
 			   address, add it to the hash table. */
-			if (!host_hash_lookup (&hp, host_hw_addr_hash,
-					       hd -> interface.hbuf,
-					       hd -> interface.hlen, MDL)) {
-				host_hash_add (host_hw_addr_hash,
-					       hd -> interface.hbuf,
-					       hd -> interface.hlen,
-					       hd, MDL);
-			}
+			host_hash_lookup (&hp, host_hw_addr_hash,
+					  hd -> interface.hbuf,
+					  hd -> interface.hlen, MDL);
 		}
-	}
-
-	/* If there was already a host declaration for this hardware
-	   address, add this one to the end of the list. */
-
-	if (hp) {
-		for (np = hp; np -> n_ipaddr; np = np -> n_ipaddr)
-			;
-		host_reference (&np -> n_ipaddr, hd, MDL);
-		host_dereference (&hp, MDL);
+		if (!hp)
+			host_hash_add (host_hw_addr_hash, hd -> interface.hbuf,
+				       hd -> interface.hlen, hd, MDL);
+		else {
+			/* If there was already a host declaration for
+			   this hardware address, add this one to the
+			   end of the list. */
+			for (np = hp; np -> n_ipaddr; np = np -> n_ipaddr)
+				;
+			host_reference (&np -> n_ipaddr, hd, MDL);
+			host_dereference (&hp, MDL);
+		}
 	}
 
 	/* See if there's a statement that sets the client identifier.
