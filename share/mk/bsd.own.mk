@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.54.2.3 1998/02/07 00:32:36 mellon Exp $
+#	$NetBSD: bsd.own.mk,v 1.54.2.4 1998/11/07 01:12:25 cgd Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -72,6 +72,21 @@ STRIPFLAG?=	-s
 NOPIC=
 .endif
 
+# Data-driven table using make variables to control how 
+# toolchain-dependent targets and shared libraries are built
+# for different platforms and object formats.
+# OBJECT_FMT:		currently either "ELF" or "a.out".
+# SHLIB_TYPE:		"ELF" or "a.out" or "" to force static libraries.
+#
+.if (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "mips") || \
+    (${MACHINE_ARCH} == "powerpc")
+OBJECT_FMT?=ELF
+.else
+OBJECT_FMT?=a.out
+.endif
+
+
 # No lint, for now.
 .if !defined(NONOLINT)
 NOLINT=
@@ -81,6 +96,23 @@ NOLINT=
 .if (${MACHINE_ARCH} == "powerpc")
 NOPROFILE=
 .endif
+
+# GNU sources and packages sometimes see architecture names differently.
+# This table maps an architecture name to its GNU counterpart.
+# Use as so:  ${GNU_ARCH.${TARGET_ARCH}} or ${MACHINE_GNU_ARCH}
+GNU_ARCH.alpha=alpha
+GNU_ARCH.arm32=arm
+GNU_ARCH.i386=i386
+GNU_ARCH.m68k=m68k
+GNU_ARCH.mipseb=mipseb
+GNU_ARCH.mipsel=mipsel
+GNU_ARCH.ns32k=ns32k
+GNU_ARCH.powerpc=powerpc
+GNU_ARCH.sparc=sparc
+GNU_ARCH.vax=vax
+# XXX temporary compatibility
+GNU_ARCH.mips=mipsel
+MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 
 TARGETS+=	all clean cleandir depend includes install lint obj regress \
 		tags
