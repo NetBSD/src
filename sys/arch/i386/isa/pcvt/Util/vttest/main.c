@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.2 1994/10/27 04:20:55 cgd Exp $	*/
-
 /*
                                VTTEST.C
 

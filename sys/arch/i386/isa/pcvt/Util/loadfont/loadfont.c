@@ -1,7 +1,7 @@
-/*	$NetBSD: loadfont.c,v 1.2 1994/10/27 04:20:31 cgd Exp $	*/
-
 /*
- * Copyright (c) 1992,1993,1994 Hellmuth Michaelis and Brian Dunford-Shore
+ * Copyright (c) 1992, 1995 Hellmuth Michaelis
+ *
+ * Copyright (c) 1992, 1994 Brian Dunford-Shore 
  *
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 static char *id =
-	"@(#)loadfont.c, 3.00, Last Edit-Date: [Mon Jan 10 21:26:09 1994]";
+	"@(#)loadfont.c, 3.31, Last Edit-Date: [Thu Aug 24 10:40:50 1995]";
 
 /*---------------------------------------------------------------------------*
  *
@@ -42,39 +42,34 @@ static char *id =
  *
  *	-hm	removing explicit HGC support (same as MDA ..)
  *	-hm	new pcvt_ioctl.h SIZ_xxROWS
+ *	-hm	add -d option
+ *	-hm	patch from Joerg, -s scanlines option
  *
  *---------------------------------------------------------------------------*/
  
 #include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <machine/pcvt_ioctl.h>
 
-#define FONT8X8		2048	/* filesize for 8x8 font              */
-#define HEIGHT8X8	8	/* 8 scan lines char cell height      */
-#define SSCAN8X8	143	/* 400 scan lines on screen - 256 - 1 */
-#define SROWS8X8	50	/* 50 character lines on screen       */
-
-#define FONT8X10	2560	/* filesize for 8x10 font             */
-#define HEIGHT8X10	10	/* 10 scan lines char cell height     */
-#define SSCAN8X10	143	/* 400 scan lines on screen - 256 - 1 */
-#define SROWS8X10	40	/* 50 character lines on screen       */
-
-#define FONT8X14	3584	/* filesize for 8x14 font             */
-#define HEIGHT8X14	14	/* 14 scan lines char cell height     */
-#define SSCAN8X14	135	/* 392 scan lines on screen - 256 - 1 */
-#define SROWS8X14	28	/* 28 character lines on screen       */
-
-#define FONT8X16	4096	/* filesize for 8x16 font             */
-#define HEIGHT8X16	16	/* 16 scan lines char cell height     */
-#define SSCAN8X16	143	/* 400 scan lines on screen - 256 - 1 */
-#define SROWS8X16	25	/* 25 character lines on screen       */
-
 struct screeninfo screeninfo;
 
-main(argc,argv)
-int argc;
-char *argv[];
+#define DEFAULTFD 0
+int fd;
+
+static int roundrows(int scrrow);
+static int codetosize(int code);
+static void setfont(int charset, int fontloaded, int charscan,
+		    int scrscan, int scrrow);
+static void loadfont(int fontset, int charscanlines,
+		     unsigned char *font_table);
+static void printvgafontattr(int charset);
+static void printheader(void);
+static void usage(void);
+
+main(int argc, char **argv)
 {
 	extern int optind;
 	extern int opterr;
@@ -87,13 +82,16 @@ char *argv[];
 	int chr_height;
 	int scr_scan;
 	int scr_rows;
+	int scan_lines = -1;
 	int c;
 	int chr_set = -1;
 	char *filename;
 	int fflag = -1;
 	int info = -1;
+	int dflag = 0;
+	char *device;
 	
-	while( (c = getopt(argc, argv, "c:f:i")) != EOF)
+	while( (c = getopt(argc, argv, "c:d:f:is:")) != EOF)
 	{
 		switch(c)
 		{
@@ -101,6 +99,11 @@ char *argv[];
 				chr_set = atoi(optarg);
 				break;
 				
+			case 'd':
+				device = optarg;
+				dflag = 1;
+				break;
+
 			case 'f':
 				filename = optarg;
 				fflag = 1;
@@ -110,6 +113,12 @@ char *argv[];
 				info = 1;
 				break;
 				
+			case 's':
+				scan_lines = atoi(optarg);
+				if(scan_lines == 0)
+					usage();
+				break;
+			
 			case '?':
 			default:
 				usage();
@@ -120,22 +129,39 @@ char *argv[];
 	if(chr_set == -1 || fflag == -1)
 		info = 1;
 
+	if(dflag)
+	{
+		if((fd = open(device, O_RDWR)) == -1)
+		{
+			char buffer[80];
+			strcpy(buffer,"ERROR opening ");
+			strcat(buffer,device);
+			perror(buffer);
+			exit(1);
+		}
+	}
+	else
+	{
+		fd = DEFAULTFD;
+	}
+
+	if(ioctl(fd, VGAGETSCREEN, &screeninfo) == -1)
+	{
+		perror("ioctl VGAGETSCREEN failed");
+		exit(1);
+	}
+
 	if(info == 1)
 	{
 		int i;
 	
-		if(ioctl(0, VGAGETSCREEN, &screeninfo) == -1)
-		{
-		    perror("ioctl VGAGETSCREEN failed");
-		    exit(1);
-		}
-
 		switch(screeninfo.adaptor_type)
 		{
 		  case UNKNOWN_ADAPTOR:
 		  case MDA_ADAPTOR:
 		  case CGA_ADAPTOR:
-		    printf("Adaptor does not support Downloadable Fonts!\n");
+		    fprintf(stderr,
+			    "Adaptor does not support Downloadable Fonts!\n");
 		    break;
 		  case EGA_ADAPTOR:
 		    printheader();
@@ -154,6 +180,37 @@ char *argv[];
 		printf("\n");
 		exit(0);
 	}
+
+	switch(screeninfo.adaptor_type)
+		{
+		case UNKNOWN_ADAPTOR:
+		case MDA_ADAPTOR:
+		case CGA_ADAPTOR:
+			fprintf(stderr,
+				"Adaptor does not support "
+				"Downloadable Fonts!\n");
+			exit(1);
+
+		case EGA_ADAPTOR:
+			if(scan_lines == -1) scan_lines = 350;
+			else if(scan_lines != 350) {
+				fprintf(stderr,
+					"EGA adaptors can only operate with "
+					"350 scan lines.\n");
+				exit(1);
+			}
+			break;
+
+		case VGA_ADAPTOR:
+			if(scan_lines == -1) scan_lines = 400;
+			else if(scan_lines != 400 && scan_lines != 480) {
+				fprintf(stderr,
+					"VGA adaptors can only operate with "
+					"400/480 scan lines.\n");
+				exit(1);
+			}
+			break;
+		}
 
 	if(chr_set < 0 || chr_set > 7)
 		usage();
@@ -176,36 +233,18 @@ char *argv[];
 		exit(1);
 	}
 		
-	switch(sbp->st_size)
-	{
-		case FONT8X8:
-			chr_height = HEIGHT8X8;
-			scr_scan = SSCAN8X8;
-			scr_rows = SIZ_50ROWS;
-			break;
+	chr_height = sbp->st_size / 256; /* 256 chars per font */
 			
-		case FONT8X10:
-			chr_height = HEIGHT8X10;
-			scr_scan = SSCAN8X10;
-			scr_rows = SIZ_40ROWS;
-			break;
-			
-		case FONT8X14:
-			chr_height = HEIGHT8X14;
-			scr_scan = SSCAN8X14;
-			scr_rows = SIZ_28ROWS;
-			break;
-			
-		case FONT8X16:
-			chr_height = HEIGHT8X16;
-			scr_scan = SSCAN8X16;
-			scr_rows = SIZ_25ROWS;
-			break;
-			
-		default:
-			fprintf(stderr,"error, file %s is no valid font file, size=%d\n",argv[1],sbp->st_size);
-			exit(1);
+	if(chr_height * 256 != sbp->st_size ||
+	   chr_height < 8 || chr_height > 20) {
+		fprintf(stderr,
+			"File is no valid font file, size = %d.\n",
+			sbp->st_size);
+		exit(1);
 	}			
+
+	scr_rows = codetosize(roundrows(scan_lines / chr_height));
+	scr_scan = scr_rows * chr_height - 256 - 1;
 
 	if((fonttab = (unsigned char *)malloc((size_t)sbp->st_size)) == NULL)
 	{
@@ -213,9 +252,13 @@ char *argv[];
 		exit(1);
 	}
 
-	if((ret = fread(fonttab, sizeof(*fonttab), sbp->st_size, in)) != sbp->st_size)
+	if((ret = fread(fonttab, sizeof(*fonttab), sbp->st_size, in)) !=
+	   sbp->st_size)
 	{
-		fprintf(stderr,"error reading file %s, size = %d, read =  is no valid font file, size=%d\n",argv[1],sbp->st_size, ret);
+		fprintf(stderr,
+			"error reading file %s, size = %d, read = %d, "
+			"errno %d\n",
+			argv[1], sbp->st_size, ret, errno);
 		exit(1);
 	}		
 
@@ -225,8 +268,28 @@ char *argv[];
 	exit(0);
 }
 
-setfont(charset, fontloaded, charscan, scrscan, scrrow)
-int charset, fontloaded, charscan, scrscan, scrrow;
+static int
+roundrows(int scrrow)
+{
+	if(scrrow >= 50) return SIZ_50ROWS;
+	else if(scrrow >= 43) return SIZ_43ROWS;
+	else if(scrrow >= 40) return SIZ_40ROWS;
+	else if(scrrow >= 35) return SIZ_35ROWS;
+	else if(scrrow >= 28) return SIZ_28ROWS;
+	else return SIZ_25ROWS;
+}
+
+static int
+codetosize(int code)
+{
+	static int sizetab[] = { 25, 28, 35, 40, 43, 50 };
+	if(code < 0 || code >= sizeof sizetab / sizeof(int))
+		return -1;
+	return sizetab[code];
+}
+
+static void
+setfont(int charset, int fontloaded, int charscan, int scrscan, int scrrow)
 {
 	struct vgafontattr vfattr;
 
@@ -236,17 +299,15 @@ int charset, fontloaded, charscan, scrscan, scrrow;
 	vfattr.screen_scanlines = scrscan;
 	vfattr.screen_size = scrrow;
 
-	if(ioctl(1, VGASETFONTATTR, &vfattr) == -1)
+	if(ioctl(fd, VGASETFONTATTR, &vfattr) == -1)
 	{
 		perror("loadfont - ioctl VGASETFONTATTR failed, error");
 		exit(1);
 	}
 }
 
-loadfont(fontset,charscanlines,font_table)
-int fontset;
-int charscanlines;
-unsigned char *font_table;
+static void
+loadfont(int fontset, int charscanlines, unsigned char *font_table)
 {
 	int i, j;
 	struct vgaloadchar vlc;
@@ -262,7 +323,7 @@ unsigned char *font_table;
 			vlc.char_table[j] = font_table[j];
 		}
 		font_table += charscanlines;
-		if(ioctl(1, VGALOADCHAR, &vlc) == -1)
+		if(ioctl(fd, VGALOADCHAR, &vlc) == -1)
 		{
 			perror("loadfont - ioctl VGALOADCHAR failed, error");
 			exit(1);
@@ -270,15 +331,14 @@ unsigned char *font_table;
 	}
 }
 
-printvgafontattr(charset)
-int charset;
+static void
+printvgafontattr(int charset)
 {
 	struct vgafontattr vfattr;
-	static int sizetab[] = { 25, 28, 35, 40, 43, 50 };
 	
 	vfattr.character_set = charset;
 
-	if(ioctl(1, VGAGETFONTATTR, &vfattr) == -1)
+	if(ioctl(fd, VGAGETFONTATTR, &vfattr) == -1)
 	{
 		perror("loadfont - ioctl VGAGETFONTATTR failed, error");
 		exit(1);
@@ -288,7 +348,7 @@ int charset;
 	{
 
 		printf("Loaded ");
-		printf(" %2.2d       ", sizetab[vfattr.screen_size]);
+		printf(" %2.2d       ", codetosize(vfattr.screen_size));
 		printf(" %2.2d           ",
 		       (((int)vfattr.character_scanlines) & 0x1f) + 1);
 		printf(" %3.3d",
@@ -301,19 +361,32 @@ int charset;
 	printf("\n");
 }
 
-printheader()
+static void
+printheader(void)
 {
 	printf("\nEGA/VGA Charactersets Status Info:\n\n");
 	printf("Set Status Lines CharScanLines ScreenScanLines\n");
 	printf("--- ------ ----- ------------- ---------------\n");
 }
 
-usage()
+static void
+usage(void)
 {
-	fprintf(stderr,"\nloadfont - load font into ega/vga font ram for pcvt video driver\n");
-	fprintf(stderr,"usage: loadfont -c<cset> -f<filename> -i\n");
-	fprintf(stderr,"       -c <cset> characterset to load (ega 0..3, vga 0..7)\n");
-	fprintf(stderr,"       -f <name> filename containing binary font data\n");
-	fprintf(stderr,"       -i        print status and types of loaded fonts (default)\n");
-	exit(1);
+	fprintf(stderr,
+         "\nloadfont - "
+         "load a font into EGA/VGA font ram for the pcvt video driver\n");
+	fprintf(stderr,
+         "usage: loadfont -c <charset> -d <device> -f <filename>"
+         " -i -s <scan_lines>\n");
+	fprintf(stderr,
+         "       -c <charset>    characterset to load (EGA 0..3, VGA 0..7)\n");
+	fprintf(stderr,
+         "       -d <device>     specify device\n");
+	fprintf(stderr,
+         "       -f <filename>   filename containing binary font data\n");
+	fprintf(stderr,
+         "       -i              print status and types of loaded fonts\n");
+	fprintf(stderr,
+         "       -s <scan_lines> number of scan lines on screen\n");
+	exit(2);
 }

@@ -1,7 +1,5 @@
-/*	$NetBSD: mcon.c,v 1.2 1994/10/27 04:20:36 cgd Exp $	*/
-
 /*
- * Copyright (c) 1994 Joerg Wunsch
+ * Copyright (c) 1994, 1995 Joerg Wunsch
  *
  * All rights reserved.
  *
@@ -31,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @(#)mcon.c, 3.00, Last Edit-Date: [Mon Jan 10 21:29:33 1994]
+ * @(#)mcon.c, 3.30, Last Edit-Date: [Fri Jun 30 20:15:02 1995]
  */
 
 /*---------------------------------------------------------------------------*
