@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.21 1997/04/03 04:46:52 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.22 1997/04/10 15:45:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.21 1997/04/03 04:46:52 christos Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.22 1997/04/10 15:45:58 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ pr_family(af)
 }
 
 /* column widths; each followed by one space */
-#define	WID_DST		16	/* width of destination column */
+#define	WID_DST		18	/* width of destination column */
 #define	WID_GW		18	/* width of gateway column */
 
 /*
