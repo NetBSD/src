@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/10/16 15:23:59 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2002/10/20 21:20:13 thorpej Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -45,8 +45,12 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
 .endif
 
 MAN=	pax.1 tar.1 cpio.1
+
 LINKS+=	${BINDIR}/pax ${BINDIR}/tar
+SYMLINKS+=${BINDIR}/tar /usr/bin/tar
+
 LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
+SYMLINKS+=${BINDIR}/cpio /usr/bin/cpio
 
 NOHTML=doc2html-error
 
