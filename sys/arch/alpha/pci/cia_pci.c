@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.21 1998/05/12 18:45:04 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.22 1998/06/04 21:34:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.21 1998/05/12 18:45:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.22 1998/06/04 21:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,11 +147,27 @@ cia_conf_read(cpv, tag, offset)
 		alpha_mb();
 	}
 
-	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
-	    tag << 5UL |					/* XXX */
-	    (offset & ~0x03) << 5 |				/* XXX */
-	    0 << 5 |						/* XXX */
-	    0x3 << 3);						/* XXX */
+	/*
+	 * We just inline the BWX support, since this is the only
+	 * difference between BWX and swiz for config space.
+	 */
+	if (ccp->cc_flags & CCF_USEBWX) {
+		if (secondary) {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF1 |
+				tag | (offset & ~0x03));
+		} else {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF0 |
+				tag | (offset & ~0x03));
+		}
+	} else {
+		datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
+		    tag << 5UL |				/* XXX */
+		    (offset & ~0x03) << 5 |			/* XXX */
+		    0 << 5 |					/* XXX */
+		    0x3 << 3);					/* XXX */
+	}
 	data = (pcireg_t)-1;
 	if (!(ba = badaddr(datap, sizeof *datap)))
 		data = *datap;
@@ -212,11 +228,27 @@ cia_conf_write(cpv, tag, offset, data)
 		alpha_mb();
 	}
 
-	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
-	    tag << 5UL |					/* XXX */
-	    (offset & ~0x03) << 5 |				/* XXX */
-	    0 << 5 |						/* XXX */
-	    0x3 << 3);						/* XXX */
+	/*
+	 * We just inline the BWX support, since this is the only
+	 * difference between BWX and swiz for config space.
+	 */
+	if (ccp->cc_flags & CCF_USEBWX) {
+		if (secondary) {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF1 |
+				tag | (offset & ~0x03));
+		} else {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF0 |
+				tag | (offset & ~0x03));
+		}
+	} else {
+		datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
+		    tag << 5UL |				/* XXX */
+		    (offset & ~0x03) << 5 |			/* XXX */
+		    0 << 5 |					/* XXX */
+		    0x3 << 3);					/* XXX */
+	}
 	*datap = data;
 
 	if (secondary) {

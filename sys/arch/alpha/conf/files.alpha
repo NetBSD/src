@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.78 1998/05/26 23:34:23 thorpej Exp $
+# $NetBSD: files.alpha,v 1.79 1998/06/04 21:34:45 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -247,6 +247,8 @@ attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
 file	arch/alpha/pci/cia_dma.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
+file	arch/alpha/pci/cia_bwx_bus_io.c cia
+file	arch/alpha/pci/cia_bwx_bus_mem.c cia
 file	arch/alpha/pci/cia_swiz_bus_io.c cia
 file	arch/alpha/pci/cia_swiz_bus_mem.c cia
 
