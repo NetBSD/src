@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.34 1996/09/28 15:30:08 thorpej Exp $	*/
+/*	$NetBSD: mountd.c,v 1.35 1996/10/07 22:33:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.34 1996/09/28 15:30:08 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.35 1996/10/07 22:33:15 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -862,7 +862,7 @@ get_exportlist()
 				out_of_mem();
 			hpe->h_name = "Default";
 			hpe->h_addrtype = AF_INET;
-			hpe->h_length = sizeof (u_long);
+			hpe->h_length = sizeof (u_int32_t);
 			hpe->h_addr_list = (char **)NULL;
 			grp->gr_ptr.gt_hostent = hpe;
 
@@ -1148,7 +1148,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
 {
 	struct hostlist *hp;
 	struct grouplist *grp;
-	u_long **addrp;
+	u_int32_t **addrp;
 
 	if (dp) {
 		if (dp->dp_flag & DP_DEFSET)
@@ -1158,7 +1158,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
 			grp = hp->ht_grp;
 			switch (grp->gr_type) {
 			case GT_HOST:
-			    addrp = (u_long **)
+			    addrp = (u_int32_t **)
 				grp->gr_ptr.gt_hostent->h_addr_list;
 			    while (*addrp) {
 				if (**addrp == saddr) {
@@ -1361,7 +1361,7 @@ get_host(cp, grp)
 				hp = &t_host;
 				hp->h_name = cp;
 				hp->h_addrtype = AF_INET;
-				hp->h_length = sizeof (u_long);
+				hp->h_length = sizeof (u_int32_t);
 				hp->h_addr_list = aptr;
 				aptr[0] = (char *)&saddr;
 				aptr[1] = (char *)NULL;
@@ -1512,7 +1512,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	struct statfs *fsb;
 {
 	char *cp = (char *)NULL;
-	u_long **addrp;
+	u_int32_t **addrp;
 	int done;
 	char savedc = '\0';
 	struct sockaddr_in sin, imask;
@@ -1535,9 +1535,9 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	imask.sin_family = AF_INET;
 	imask.sin_len = sizeof(sin);
 	if (grp->gr_type == GT_HOST)
-		addrp = (u_long **)grp->gr_ptr.gt_hostent->h_addr_list;
+		addrp = (u_int32_t **)grp->gr_ptr.gt_hostent->h_addr_list;
 	else
-		addrp = (u_long **)NULL;
+		addrp = (u_int32_t **)NULL;
 	done = FALSE;
 	while (!done) {
 		switch (grp->gr_type) {
@@ -1631,7 +1631,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		}
 		if (addrp) {
 			++addrp;
-			if (*addrp == (u_long *)NULL)
+			if (*addrp == (u_int32_t *)NULL)
 				done = TRUE;
 		} else
 			done = TRUE;
