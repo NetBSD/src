@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.20 1997/04/21 11:19:57 mycroft Exp $
+#	$NetBSD: security,v 1.21 1997/04/21 17:38:39 mycroft Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -393,9 +393,9 @@ if [ "$check_devices" = YES ]; then
 	printf "\nChecking setuid files and devices:\n"
 	(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 			-o -fstype procfs \) -a -prune -o \
-	    \( -perm -u+s -o \( -perm -g+s -a ! -type d \) -o \
-	       ! -type d -a ! -type f -a ! -type l -a \
-	       ! -type s \) -print | \
+	    \( \( -perm -u+s -a ! -type d \) -o \
+	       \( -perm -g+s -a ! -type d \) -o \
+	       -type b -o -type c \) -print | \
 	sort | sed -e 's/^/ls -ldgT /' | sh > $LIST) 2> $OUTPUT
 
 	# Display any errors that occurred during system file walk.
