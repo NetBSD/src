@@ -1,4 +1,4 @@
-/*	$NetBSD: rmdir.c,v 1.15 1997/11/05 21:18:29 cgd Exp $	*/
+/*	$NetBSD: rmdir.c,v 1.16 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.15 1997/11/05 21:18:29 cgd Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.16 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,4 +132,5 @@ usage()
 
 	(void)fprintf(stderr, "usage: rmdir [-p] directory ...\n");
 	exit(1);
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.11 1998/06/09 10:53:55 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.12 1998/07/28 05:31:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.11 1998/06/09 10:53:55 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.12 1998/07/28 05:31:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1386,6 +1386,7 @@ pax_usage()
 	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
 	(void)fputs("\n           [file ...] directory\n", stderr);
 	exit(1);
+	/* NOTREACHED */
 }
 
 /*
@@ -1405,6 +1406,7 @@ tar_usage()
 		 stderr);
 	(void)fputs("[blocksize] file1 file2...\n", stderr);
 	exit(1);
+	/* NOTREACHED */
 }
 
 /*
@@ -1442,4 +1444,5 @@ cpio_usage()
 	(void)fputs("usage: cpio -p [ adlLmuvV ] [ -R id ] directory\n", stderr);
 #endif
 	exit(1);
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.17 1997/07/04 21:02:11 christos Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mkinit.c,v 1.17 1997/07/04 21:02:11 christos Exp $");
+__RCSID("$NetBSD: mkinit.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,6 +186,7 @@ main(argc, argv)
 	output();
 	rename(OUTTEMP, OUTFILE);
 	exit(0);
+	/* NOTREACHED */
 }
 
 
@@ -486,6 +487,7 @@ ckfopen(file, mode)
 	if ((fp = fopen(file, mode)) == NULL) {
 		fprintf(stderr, "Can't open %s\n", file);
 		exit(2);
+		/* NOTREACHED */
 	}
 	return fp;
 }
@@ -520,4 +522,5 @@ error(msg)
 		fprintf(stderr, "%s:%d: ", curfile, linno);
 	fprintf(stderr, "%s\n", msg);
 	exit(2);
+	/* NOTREACHED */
 }

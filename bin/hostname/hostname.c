@@ -1,4 +1,4 @@
-/*	$NetBSD: hostname.c,v 1.12 1998/07/06 06:46:20 mrg Exp $	*/
+/*	$NetBSD: hostname.c,v 1.13 1998/07/28 05:31:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: hostname.c,v 1.12 1998/07/06 06:46:20 mrg Exp $");
+__RCSID("$NetBSD: hostname.c,v 1.13 1998/07/28 05:31:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ main(argc, argv)
 		(void)printf("%s\n", hostname);
 	}
 	exit(0);
+	/* NOTREACHED */
 }
 
 void
@@ -102,4 +103,5 @@ usage()
 
 	(void)fprintf(stderr, "usage: hostname [-s] [name-of-host]\n");
 	exit(1);
+	/* NOTREACHED */
 }

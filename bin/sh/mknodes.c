@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.15 1997/07/04 21:02:12 christos Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.16 1998/07/28 05:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mknodes.c,v 1.15 1997/07/04 21:02:12 christos Exp $");
+__RCSID("$NetBSD: mknodes.c,v 1.16 1998/07/28 05:31:28 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,7 @@ main(argc, argv)
 	}
 	output(argv[2]);
 	exit(0);
+	/* NOTREACHED */
 }
 
 
@@ -465,6 +466,7 @@ error(va_alist)
 	va_end(va);
 
 	exit(2);
+	/* NOTREACHED */
 }
 
 
