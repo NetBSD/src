@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.5 1998/02/09 02:30:48 scottb Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.6 2000/01/10 03:14:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -48,7 +48,7 @@ struct coff_filehdr {
 };
 
 /* f_magic flags */
-#define COFF_MAGIC_I386	0x14c
+/* defined in <machine/ibcs2_machdep.h> */
 
 /* f_flags */
 #define COFF_F_RELFLG	0x1
@@ -150,8 +150,6 @@ struct coff_slhdr {
 #define COFF_LDPGSZ 4096
 
 #define COFF_SEGMENT_ALIGNMENT(ap) 4
-
-#define COFF_BADMAG(ex) (ex->f_magic != COFF_MAGIC_I386)
 
 #define IBCS2_HIGH_SYSCALL(n)		(((n) & 0x7f) == 0x28 && ((n) >> 8) > 0)
 #define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 200)
@@ -282,7 +280,9 @@ struct xiter {
 
 int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
 
+#ifdef EXEC_ELF32
 int	ibcs2_elf32_probe __P((struct proc *, struct exec_package *,
 			       Elf32_Ehdr *, char *, Elf32_Addr *));
+#endif
 
 #endif /* !_IBCS2_EXEC_H_ */
