@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.32 2000/05/08 13:49:49 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.33 2000/05/19 05:28:47 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -214,6 +214,9 @@ simba*	at pci? dev ? function ?		# `APB' support.
 ebus*	at pci?					# ebus devices
 
 #### Standard system devices -- all required for a given architecture
+
+## PROM console driver -- if all else fails
+pcons0	at mainbus0				# PROM console
 
 ## Auxiliary system registers -- We use the OBP for power management
 auxio*	at ebus?				# auxio registers
