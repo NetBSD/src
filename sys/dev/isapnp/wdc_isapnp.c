@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.30 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.31 2004/09/21 02:46:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.30 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.31 2004/09/21 02:46:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,6 @@ wdc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->ata_channel);
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 
@@ -166,6 +165,8 @@ wdc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+
+	wdc_init_shadow_regs(&sc->ata_channel);
 
 	wdcattach(&sc->ata_channel);
 }
