@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.423 2002/04/18 17:40:56 tshiozak Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.424 2002/04/18 20:36:30 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.417 2002/04/16 10:08:34 drochner Exp 
+ *	NetBSD: pcidevs,v 1.419 2002/04/18 20:35:39 thorpej Exp 
  */
 
 /*
@@ -1583,6 +1583,7 @@
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875/876 */
 #define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
 #define	PCI_PRODUCT_SYMBIOS_895A	0x0012		/* 53c895A */
+#define	PCI_PRODUCT_SYMBIOS_875A	0x0013		/* 53c875A */
 #define	PCI_PRODUCT_SYMBIOS_1010	0x0020		/* 53c1010 */
 #define	PCI_PRODUCT_SYMBIOS_1010_2	0x0021		/* 53c1010 (66MHz) */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
