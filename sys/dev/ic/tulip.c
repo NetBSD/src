@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.18 1999/09/26 03:39:01 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.19 1999/09/27 19:14:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2824,6 +2824,65 @@ tlp_21140_reset(sc)
  * are potentially common to multiple front-ends.
  *****************************************************************************/
 
+const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
+	{ TULIP_ROM_MB_MEDIA_TP,	IFM_10_T,	0,
+	  "10baseT",			SIACONN_21041_10BASET,
+	  SIATXRX_21041_10BASET,	SIAGEN_21041_10BASET },
+
+	{ TULIP_ROM_MB_MEDIA_BNC,	IFM_10_2,	0,
+	  "10base2",			SIACONN_21041_BNC,
+	  SIATXRX_21041_BNC,		SIAGEN_21041_BNC },
+
+	{ TULIP_ROM_MB_MEDIA_AUI,	IFM_10_5,	0,
+	  "10base5",			SIACONN_21041_AUI,
+	  SIATXRX_21041_AUI,		SIAGEN_21041_AUI },
+
+	{ TULIP_ROM_MB_MEDIA_100TX,	IFM_100_TX,	0,
+	  "100baseTX",			0,
+	  0,				0 },
+
+	{ TULIP_ROM_MB_MEDIA_TP_FDX,	IFM_10_T,	IFM_FDX,
+	  "10baseT-FDX",		SIACONN_21041_10BASET_FDX,
+	  SIATXRX_21041_10BASET_FDX,	SIAGEN_21041_10BASET_FDX },
+
+	{ TULIP_ROM_MB_MEDIA_100TX_FDX,	IFM_100_TX,	IFM_FDX,
+	  "100baseTX-FDX",		0,
+	  0,				0 },
+
+	{ TULIP_ROM_MB_MEDIA_100T4,	IFM_100_T4,	0,
+	  "100baseT4",			0,
+	  0,				0 },
+
+	{ TULIP_ROM_MB_MEDIA_100FX,	IFM_100_FX,	0,
+	  "100baseFX",			0,
+	  0,				0 },
+
+	{ TULIP_ROM_MB_MEDIA_100FX_FDX,	IFM_100_FX,	IFM_FDX,
+	  "100baseFX-FDX",		0,
+	  0,				0 },
+
+	{ 0,				0,		0,
+	  NULL,				0,
+	  0,				0 },
+};
+
+const struct tulip_srom_to_ifmedia *tulip_srom_to_ifmedia __P((u_int8_t));
+
+const struct tulip_srom_to_ifmedia *
+tulip_srom_to_ifmedia(sm)
+	u_int8_t sm;
+{
+	const struct tulip_srom_to_ifmedia *tsti;
+
+	for (tsti = tulip_srom_to_ifmedia_table;
+	     tsti->tsti_name != NULL; tsti++) {
+		if (tsti->tsti_srom == sm)
+			return (tsti);
+	}
+
+	return (NULL);
+}
+
 /*
  * 21040 and 21041 media switches.
  */
@@ -2975,6 +3034,7 @@ tlp_21041_tmsw_init(sc)
 	struct tulip_softc *sc;
 {
 	int i, defmedia, devcnt, leaf_offset, mb_offset, m_cnt;
+	const struct tulip_srom_to_ifmedia *tsti;
 	struct tulip_21040_21041_sia_media *tsm;
 	const char *sep = "", *defstr;
 	u_int16_t romdef;
@@ -3012,71 +3072,29 @@ tlp_21041_tmsw_init(sc)
 		    M_DEVBUF, M_WAITOK);
 		switch (mb & TULIP_ROM_MB_MEDIA_CODE) {
 		case TULIP_ROM_MB_MEDIA_TP:
-			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR13) :
-			    SIACONN_21041_10BASET;
-			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR14) :
-			    SIATXRX_21041_10BASET;
-			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR15) :
-			    SIAGEN_21041_10BASET;
-			ADD(IFM_ETHER|IFM_10_T, tsm);
-			PRINT("10baseT");
-			break;
-
 		case TULIP_ROM_MB_MEDIA_BNC:
-			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR13) :
-			    SIACONN_21041_BNC;
-			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR14) :
-			    SIATXRX_21041_BNC;
-			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR15) :
-			    SIAGEN_21041_BNC;
-			ADD(IFM_ETHER|IFM_10_2, tsm);
-			PRINT("10base2");
-			break;
-
 		case TULIP_ROM_MB_MEDIA_AUI:
-			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR13) :
-			    SIACONN_21041_AUI;
-			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR14) :
-			    SIATXRX_21041_AUI;
-			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
-			    TULIP_ROM_GETW(sc->sc_srom,
-			      mb_offset + TULIP_ROM_MB_CSR15) :
-			    SIAGEN_21041_AUI;
-			ADD(IFM_ETHER|IFM_10_5, tsm);
-			PRINT("10base5");
-			break;
-
 		case TULIP_ROM_MB_MEDIA_TP_FDX:
+			tsti = tulip_srom_to_ifmedia(mb &
+			    TULIP_ROM_MB_MEDIA_CODE);
+
 			tsm->tsm_siaconn = (mb & TULIP_ROM_MB_EXT) ?
 			    TULIP_ROM_GETW(sc->sc_srom,
 			      mb_offset + TULIP_ROM_MB_CSR13) :
-			    SIACONN_21041_10BASET_FDX;
+			    tsti->tsti_21041_siaconn;
 			tsm->tsm_siatxrx = (mb & TULIP_ROM_MB_EXT) ?
 			    TULIP_ROM_GETW(sc->sc_srom,
 			      mb_offset + TULIP_ROM_MB_CSR14) :
-			    SIATXRX_21041_10BASET_FDX;
+			    tsti->tsti_21041_siatxrx;
 			tsm->tsm_siagen  = (mb & TULIP_ROM_MB_EXT) ?
 			    TULIP_ROM_GETW(sc->sc_srom,
 			      mb_offset + TULIP_ROM_MB_CSR15) :
-			    SIAGEN_21041_10BASET_FDX;
-			ADD(IFM_ETHER|IFM_10_T|IFM_FDX, tsm);
-			PRINT("10baseT-FDX");
+			    tsti->tsti_21041_siagen;
+
+			ifmedia_add(&sc->sc_mii.mii_media,
+			    IFM_MAKEWORD(IFM_ETHER, tsti->tsti_subtype,
+			    tsti->tsti_options, 0), 0, tsm);
+			PRINT(tsti->tsti_name);
 			break;
 
 		default:
@@ -3262,7 +3280,7 @@ tlp_21040_21041_tmsw_set(sc)
 
 /*
  * DECchip 2114x ISV media switch.
- * XXX Currently only handles 21140[A] MII.
+ * XXX Currently only handles 21140[A] GPR and MII.
  */
 void	tlp_2114x_isv_tmsw_init __P((struct tulip_softc *));
 void	tlp_2114x_isv_tmsw_get __P((struct tulip_softc *, struct ifmediareq *));
@@ -3272,6 +3290,10 @@ const struct tulip_mediasw tlp_2114x_isv_mediasw = {
 	tlp_2114x_isv_tmsw_init, tlp_2114x_isv_tmsw_get, tlp_2114x_isv_tmsw_set
 };
 
+void	tlp_21140_gpr_getmedia __P((struct tulip_softc *sc,
+	    struct ifmediareq *ifmr));
+int	tlp_21140_gpr_setmedia __P((struct tulip_softc *sc));
+
 void
 tlp_2114x_isv_tmsw_init(sc)
 	struct tulip_softc *sc;
@@ -3280,7 +3302,9 @@ tlp_2114x_isv_tmsw_init(sc)
 	struct ifmedia_entry *ife;
 	struct mii_softc *phy;
 	struct tulip_2114x_media *tm;
-	int i, devcnt, leaf_offset, m_cnt, type, length, seen, defmedia;
+	const struct tulip_srom_to_ifmedia *tsti;
+	int i, devcnt, leaf_offset, m_cnt, type, length, seen, defmedia, minst;
+	u_int16_t word;
 	u_int8_t *cp, *ncp;
 
 	seen = defmedia = 0;
@@ -3353,7 +3377,52 @@ tlp_2114x_isv_tmsw_init(sc)
 		/* Now, parse the block. */
 		switch (type) {
 		case TULIP_ROM_MB_21140_GPR:
-			printf("%s: 21140 GPR block\n", sc->sc_dev.dv_xname);
+			seen |= 1 << TULIP_ROM_MB_21140_GPR;
+
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
+			memset(tm, 0, sizeof(*tm));
+
+			tm->tm_type = TULIP_ROM_MB_21140_GPR;
+			tm->tm_get = tlp_21140_gpr_getmedia;
+			tm->tm_set = tlp_21140_gpr_setmedia;
+
+			minst = 0;	/* XXX compute new instance */
+
+			/* First is the media type code. */
+			tsti = tulip_srom_to_ifmedia(cp[0] &
+			    TULIP_ROM_MB_MEDIA_CODE);
+			if (tsti == NULL) {
+				/* Invalid media code. */
+				free(tm, M_DEVBUF);
+				break;
+			}
+			tm->tm_name = tsti->tsti_name;
+
+			/* Next is any GPIO info for this media. */
+			tm->tm_gpdata = cp[1];
+
+			/*
+			 * Next is a word containing OPMODE information
+			 * and info on how to detect if this media is
+			 * active.
+			 */
+			word = TULIP_ROM_GETW(cp, 2);
+			tm->tm_opmode = TULIP_ROM_MB_OPMODE(word);
+			if ((word & TULIP_ROM_MB_NOINDICATOR) == 0) {
+				tm->tm_actmask =
+				    TULIP_ROM_MB_BITPOS(word);
+				tm->tm_actdata =
+				    (word & TULIP_ROM_MB_POLARITY) ?
+				    0 : tm->tm_actmask;
+			}
+
+			/*
+			 * Now, add the media to our list.  We will
+			 * print them out later.
+			 */
+			ifmedia_add(&sc->sc_mii.mii_media,
+			    IFM_MAKEWORD(IFM_ETHER, tsti->tsti_subtype,
+			    tsti->tsti_options, minst), 0, tm);
 			break;
 
 		case TULIP_ROM_MB_21140_MII:
@@ -3366,7 +3435,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			tm->tm_get = tlp_mii_getmedia;
 			tm->tm_set = tlp_mii_setmedia;
 
-			sc->sc_reset = tlp_21140_reset;
+			if (sc->sc_reset == NULL)
+				sc->sc_reset = tlp_21140_reset;
 
 			/* First is the PHY number. */
 			tm->tm_phyno = *cp++;
@@ -3501,12 +3571,35 @@ tlp_2114x_isv_tmsw_init(sc)
 		goto set_default;
 	}
 
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+
 	/*
 	 * Display any non-MII media we've located.
 	 */
 	if (seen & (1 << TULIP_ROM_MB_21140_GPR)) {
+		const char *sep = "";
 		printf("%s: GPR media: ", sc->sc_dev.dv_xname);
-		/* XXX */
+		for (ife = LIST_FIRST(&sc->sc_mii.mii_media.ifm_list);
+		     ife != NULL;
+		     ife = LIST_NEXT(ife, ifm_list)) {
+			minst = IFM_INST(ife->ifm_media);
+			tm = ife->ifm_aux;
+			if (tm->tm_type != TULIP_ROM_MB_21140_GPR)
+				continue;
+			PRINT(tm->tm_name);
+		}
+
+		/*
+		 * XXX Pick a better default.  Should come
+		 * XXX from SROM on 21140[A], and should
+		 * XXX be "auto" on Macronix chips (which
+		 * XXX have an internal NWay block).
+		 */
+		if (defmedia == 0) {
+			defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0,
+			    minst);
+			printf(", default 10baseT");
+		}
 		printf("\n");
 	}
 
@@ -3525,6 +3618,8 @@ tlp_2114x_isv_tmsw_init(sc)
 	/*
 	 * XXX Display default media if not MII.
 	 */
+
+#undef PRINT
 
  set_default:
 	/*
@@ -3559,6 +3654,95 @@ tlp_2114x_isv_tmsw_set(sc)
 	struct tulip_2114x_media *tm = ife->ifm_aux;
 
 	return ((*tm->tm_set)(sc));
+}
+
+void
+tlp_21140_gpr_getmedia(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_2114x_media *tm = ife->ifm_aux;
+
+	ifmr->ifm_status = 0;
+
+	switch (IFM_SUBTYPE(ife->ifm_media)) {
+	case IFM_AUTO:
+		/*
+		 * XXX Implement autosensing case.
+		 */
+		break;
+
+	default:
+		/*
+		 * If not autosensing, active media is the currently
+		 * selected media.
+		 */
+		ifmr->ifm_active = ife->ifm_media;
+
+		/*
+		 * If we can sense the active status of the link,
+		 * so do.
+		 */
+		if (tm->tm_actmask != 0) {
+			ifmr->ifm_status |= IFM_AVALID;
+			if (TULIP_ISSET(sc, CSR_GPP, tm->tm_actmask) ==
+			    tm->tm_actdata)
+				ifmr->ifm_status |= IFM_ACTIVE;
+		}
+	}
+}
+
+int
+tlp_21140_gpr_setmedia(sc)
+	struct tulip_softc *sc;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_2114x_media *tm = ife->ifm_aux;
+
+	switch (IFM_SUBTYPE(ife->ifm_media)) {
+	case IFM_AUTO:
+		/*
+		 * XXX Implement autosensing case.
+		 */
+		break;
+
+	default:
+		/*
+		 * The ifmedia entry contains the OPMODE bits necessary
+		 * to enable this media type.  It may be necessary to
+		 * perform a reset of the chip; see tlp_21140_reset().
+		 */
+		if ((tm->tm_opmode & OPMODE_MEDIA_BITS) !=
+		    (sc->sc_opmode & OPMODE_MEDIA_BITS)) {
+			/*
+			 * We have to reset the chip.  Note that we
+			 * won't recurse into this path again as
+			 * the OPMODE bits will be correct this
+			 * next time through.
+			 */
+			return (tlp_init(sc));
+		}
+
+		/*
+		 * Set new OPMODE bits and write the OPMODE register.
+		 */
+		tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+		sc->sc_opmode = (sc->sc_opmode & ~OPMODE_MEDIA_BITS) |
+		    tm->tm_opmode;
+		TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+		/*
+		 * Set the GPIO pins for this media, to flip any
+		 * relays, etc.
+		 */
+		TULIP_WRITE(sc, CSR_GPP, GPP_GPC|sc->sc_gp_dir);
+		delay(10);
+		TULIP_WRITE(sc, CSR_GPP, tm->tm_gpdata);
+		break;
+	}
+
+	return (0);
 }
 
 /*
