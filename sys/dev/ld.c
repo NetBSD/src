@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.17 2002/10/23 09:13:02 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.18 2002/11/01 11:31:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.17 2002/10/23 09:13:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.18 2002/11/01 11:31:56 mrg Exp $");
 
 #include "rnd.h"
 
@@ -552,7 +552,8 @@ lddone(struct ld_softc *sc, struct buf *bp)
 		printf("\n");
 	}
 
-	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif

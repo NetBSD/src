@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.80 2002/10/23 09:13:23 jdolecek Exp $	*/
+/*	$NetBSD: mcd.c,v 1.81 2002/11/01 11:31:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.80 2002/10/23 09:13:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.81 2002/11/01 11:31:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1324,7 +1324,7 @@ mcdintr(arg)
 
 		/* Return buffer. */
 		bp->b_resid = 0;
-		disk_unbusy(&sc->sc_dk, bp->b_bcount);
+		disk_unbusy(&sc->sc_dk, bp->b_bcount, (bp->b_flags & B_READ));
 		biodone(bp);
 
 		mcdstart(sc);
@@ -1357,7 +1357,8 @@ changed:
 	/* Invalidate the buffer. */
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount - mbx->skip;
-	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 
 	mcdstart(sc);

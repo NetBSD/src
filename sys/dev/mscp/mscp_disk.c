@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.37 2002/10/23 09:13:27 jdolecek Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.38 2002/11/01 11:31:58 mrg Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.37 2002/10/23 09:13:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.38 2002/11/01 11:31:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -869,7 +869,7 @@ rriodone(usc, bp)
 	   already have verified it. Thus, no checks here... /bqt */
 	unit = DISKUNIT(bp->b_dev);
 	ra = ra_cd.cd_devs[unit];
-	disk_unbusy(&ra->ra_disk, bp->b_bcount);
+	disk_unbusy(&ra->ra_disk, bp->b_bcount, (bp->b_flags & B_READ));
 
 	biodone(bp);
 }
