@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.40 1999/03/17 02:39:59 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.41 1999/03/18 02:44:27 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -497,10 +497,10 @@ ess_config_irq(sc)
 	if (sc->sc_model == ESS_1788)
 		return;
 
-	/* irq2 is hardwired to 15 in this mode */
+	/* Audio2 is hardwired to INTRE in this mode. */
 	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
 			  ESS_AUDIO2_CTRL2_IRQ2_ENABLE);
-	/* Use old method. */
+	/* Tell the 1887 to use the old method. */
 	ess_write_mix_reg(sc, ESS_MREG_INTR_ST, ESS_IS_ES1888);
 }
 
@@ -1446,12 +1446,15 @@ ess_audio1_intr(arg)
 	void *arg;
 {
 	struct ess_softc *sc = arg;
-	u_char x;
+	u_int8_t reg;
 
 	DPRINTFN(1,("ess_audio1_intr: intr=%p\n", sc->sc_audio1.intr));
 
-	/* clear interrupt on Audio channel 1*/
-	x = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
+	/* Check and clear interrupt on Audio1. */
+	reg = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_DSP_RW_STATUS);
+	if ((reg & ESS_DSP_READ_OFLOW) == 0)
+		return (0);
+	reg = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
 
 	sc->sc_audio1.nintr++;
 
@@ -1467,12 +1470,16 @@ ess_audio2_intr(arg)
 	void *arg;
 {
 	struct ess_softc *sc = arg;
+	u_int8_t reg;
 
 	DPRINTFN(1,("ess_audio2_intr: intr=%p\n", sc->sc_audio2.intr));
 
-	/* clear interrupt on Audio channel 2 */
-	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
-			    ESS_AUDIO2_CTRL2_IRQ_LATCH);
+	/* Check and clear interrupt on Audio2. */
+	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
+	if ((reg & ESS_AUDIO2_CTRL2_IRQ_LATCH) == 0)
+		return (0);
+	reg &= ~ESS_AUDIO2_CTRL2_IRQ_LATCH;
+	ess_write_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2, reg);
 
 	sc->sc_audio2.nintr++;
 
