@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.7 2003/01/15 22:20:03 bouyer Exp $ */
+/* $NetBSD: if_eh.c,v 1.8 2003/01/18 13:29:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.7 2003/01/15 22:20:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8 2003/01/18 13:29:25 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -418,8 +418,7 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 				    mtod(m, u_int8_t *), m->m_len);
 		if (padlen) {
 			for(; padlen > 0; padlen--)
-				bus_space_write_1(asict, asich,
-				    NE2000_ASIC_DATA, 0);
+				bus_space_write_1(datat, datah, 0, 0);
 		}
 	} else {
 		/* NE2000s are a bit trickier. */
@@ -492,10 +491,9 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 			bus_space_write_stream_2(datat, datah, 0,
 			    *(u_int16_t *)savebyte);
 		}
-		if (padlen)
+		if (padlen) {
 			for(; padlen > 0; padlen -= 2)
-				bus_space_write_stream_2(asict, asich,
-				    NE2000_ASIC_DATA, 0);
+				bus_space_write_stream_2(datat, datah, 0, 0);
 		}
 	}
 	NIC_BARRIER(nict, nich);
