@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.27 2004/04/11 10:36:35 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.28 2004/04/11 15:41:50 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.27 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.28 2004/04/11 15:41:50 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,8 +196,6 @@ ACPI_MODULE_NAME("EC")
 struct acpi_ec_softc {
 	struct device	sc_dev;		/* base device glue */
 	ACPI_HANDLE sc_handle;		/* ACPI handle */
-
-	struct acpi_resources sc_res;	/* our bus resources */
 
 	UINT32		sc_gpebit;	/* our GPE interrupt bit */
 
@@ -480,6 +478,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_ec_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_io *io0, *io1;
+	struct acpi_resources res;
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
 
@@ -494,16 +493,17 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Parse our resources. */
 	ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "parsing EC resources\n"));
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
-	    &sc->sc_res, &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_dev, sc->sc_handle, "_CRS",
+	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
-	rv = acpi_eval_integer(aa->aa_node->ad_handle, "_UID", &v);
+#define adi aa->aa_node->ad_devinfo
 
 	/* check if we already attached EC via ECDT */
-	if (ACPI_SUCCESS(rv) && ecdt_sc && ecdt_sc->sc_uid == v) {
-
+	if (ecdt_sc &&
+	    ((adi->Valid & ACPI_VALID_UID) == ACPI_VALID_UID) &&
+	    ecdt_sc->sc_uid == strtoul(adi->UniqueId.Value, NULL, 10)) {
 		/* detach all ECDT handles */
 		rv = AcpiRemoveAddressSpaceHandler(ACPI_ROOT_OBJECT,
 		    ACPI_ADR_SPACE_EC, EcSpaceHandler);
@@ -525,8 +525,10 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		ecdt_sc = NULL;
 	}
 
+#undef adi
+
 	sc->sc_data_st = aa->aa_iot;
-	io0 = acpi_res_io(&sc->sc_res, 0);
+	io0 = acpi_res_io(&res, 0);
 	if (io0 == NULL) {
 		printf("%s: unable to find data register resource\n",
 		    sc->sc_dev.dv_xname);
@@ -540,7 +542,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_csr_st = aa->aa_iot;
-	io1 = acpi_res_io(&sc->sc_res, 1);
+	io1 = acpi_res_io(&res, 1);
 	if (io1 == NULL) {
 		printf("%s: unable to find csr register resource\n",
 		    sc->sc_dev.dv_xname);
@@ -608,7 +610,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	}
 
  out:
-	acpi_resource_cleanup(&sc->sc_res);
+	acpi_resource_cleanup(&res);
 	return_VOID;
 }
 
