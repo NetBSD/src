@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.12 1999/02/05 20:52:23 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.13 1999/03/06 00:17:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.12 1999/02/05 20:52:23 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.13 1999/03/06 00:17:25 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -152,7 +152,7 @@ private void	history_def_delete __P((history_t *, HistEvent *, hentry_t *));
 /* error messages */
 static const char *const he_errlist[] = {
     "OK",
-    "unknown error"
+    "unknown error",
     "malloc() failed",
     "first event not found",
     "last event not found",
