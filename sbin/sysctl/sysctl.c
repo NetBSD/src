@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.69 2003/06/16 21:52:58 dsl Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.70 2003/06/17 03:34:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.69 2003/06/16 21:52:58 dsl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.70 2003/06/17 03:34:23 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -436,9 +436,6 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 			break;
-		case KERN_DRIVERS:
-			USEAPP(string, "mknod -l");
-			return;
 		}
 		break;
 
