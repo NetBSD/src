@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.494 2004/10/08 03:19:35 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.495 2004/10/08 03:21:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7792,3 +7792,9 @@ sys/netinet/ip_state.c				patch
 	  match a state entry based on the number of real packets seen.
 
 	[darrenr, ticket #902]
+
+sys/compat/linux/common/linux_ioctl.c		1.39
+
+	linux_sys_ioctl: map EPASSTHROUGH to EINVAL as sys_ioctl does.
+	otherwise, linux_syscall() returns garbage, at least on i386.
+	[manu, ticket #904]
