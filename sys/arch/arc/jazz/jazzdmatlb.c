@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.12 2005/01/22 07:44:33 tsutsui Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.12 2005/01/22 07:44:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ jazz_dmatlb_init(bus_space_tag_t iot, bus_addr_t ioaddr)
 	dma_tlb = (jazz_dma_pte_t *)PICA_TL_BASE;
 
 	mips_dcache_wbinv_all();/* Make sure no map entries are cached */
-	bzero((char *)dma_tlb, JAZZ_DMATLB_SIZE);
+	memset((char *)dma_tlb, 0, JAZZ_DMATLB_SIZE);
 
 	dmatlbmap = extent_create("dmatlb", 0, NDMATLB, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT);
