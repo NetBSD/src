@@ -1,0 +1,47 @@
+#	$NetBSD: files.obs405,v 1.1 2003/09/23 14:45:13 shige Exp $
+#
+# obs405-specific configuration info
+
+file	arch/powerpc/ibm4xx/ibm4xxGPx_autoconf.c
+file	arch/powerpc/ibm4xx/ibm40x_machdep.c
+file	arch/evbppc/obs405/consinit.c
+file	arch/evbppc/obs405/machdep.c
+
+# Memory Disk for install kernel
+file	dev/md_root.c				memory_disk_hooks
+
+# Machine-independent SCSI drivers
+include	"dev/scsipi/files.scsipi"
+
+# Machine-independent ATA drivers
+include	"dev/ata/files.ata"
+
+# Workstation Console
+include "dev/wscons/files.wscons"
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+define	todservice {}
+
+device	todclock
+attach	todclock at todservice
+file	arch/powerpc/ibm4xx/dev/todclock.c	todclock	needs-count
+#file	arch/evbppc/obs405/dev/todclock.c	todclock	needs-count
+
+device	rtc: todservice
+attach	rtc at iic
+file	arch/evbppc/obs405/dev/x1226.c		rtc
+
+#
+# Machine-independent CardBus drivers
+#
+
+# XXX dev/pcmcia needs fdc
+device fdc {drive = -1}
+
+include "dev/cardbus/files.cardbus"
+include "dev/pcmcia/files.pcmcia"
+
+file arch/macppc/macppc/rbus_machdep.c		cardbus
