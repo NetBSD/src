@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.23 2000/05/23 21:36:43 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -57,7 +57,6 @@
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/cpu.h>
-#include <machine/rpb.h>
 
 #include <vax/mba/mbavar.h>
 #include <vax/mba/mbareg.h>
@@ -167,12 +166,6 @@ hpattach(parent, self, aux)
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
-	/*
-	 * check if this was what we booted from.
-	 */
-	if ((B_TYPE(bootdev) == BDEV_HP) && (ma->unit == B_UNIT(bootdev)) &&
-	    (ms->sc_physnr == B_ADAPTOR(bootdev)))
-		booted_from = self;
 }
 
 
