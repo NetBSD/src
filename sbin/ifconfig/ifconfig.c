@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.151 2005/02/06 06:15:57 perry Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.151 2005/02/06 06:15:57 perry Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -315,6 +315,8 @@ const struct cmd {
 	{ "-tcp4csum-rx",-IFCAP_CSUM_TCPv4_Rx,0,	setifcaps },
 	{ "udp4csum-rx",IFCAP_CSUM_UDPv4_Rx,0,		setifcaps },
 	{ "-udp4csum-rx",-IFCAP_CSUM_UDPv4_Rx,0,	setifcaps },
+	{ "tso4",	IFCAP_TSOv4,	0,		setifcaps },
+	{ "-tso4",	-IFCAP_TSOv4,	0,		setifcaps },
 	{ 0,		0,		0,		setifaddr },
 	{ 0,		0,		0,		setifdstaddr },
 };
@@ -1900,7 +1902,7 @@ carrier(void)
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFCAPBITS \
-"\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM\6TCP4CSUM_Rx\7UDP4CSUM_Rx"
+"\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM\6TCP4CSUM_Rx\7UDP4CSUM_Rx\10TSO4"
 
 const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 
