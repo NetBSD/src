@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1999/12/11 02:58:22 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1999/12/26 17:27:53 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -187,6 +187,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Compaq PRESARIO 213"), BIFB_D8_00,
 		320, 240, 0, 0,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_COMPAQ_PRESARIO_213 },
+	{ TEXT("Compaq Aero 1530"), BIFB_D2_M2L_0,
+		320, 240, 0, 0,
+		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_COMPAQ_AERO_1530 },
 	{ TEXT("Victor InterLink MP-C101"), BIFB_D16_0000,
 		640, 480, 0, 0,
 		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_VICTOR_INTERLINK_MPC101},
