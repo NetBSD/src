@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.3 1998/10/12 16:09:22 bouyer Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.4 1999/02/02 16:14:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,12 @@
 
 /*
  * Bits in the PCI Programming Interface register (some are per-channel).
+ * Bits 6-4 are defined as read-only in PCI 2.1 specification.
+ * Microsoft proposed to use these bits for independant channels
+ * enable/disable. This feature is enabled based on the value of bit 6.
  */
+#define PCIIDE_CHANSTATUS_EN		0x40
+#define PCIIDE_CHAN_EN(chan)		(0x20 >> (chan))
 #define	PCIIDE_INTERFACE_PCI(chan)	(0x01 << (2 * (chan)))
 #define	PCIIDE_INTERFACE_SETTABLE(chan)	(0x02 << (2 * (chan)))
 #define	PCIIDE_INTERFACE_BUS_MASTER_DMA	0x80
