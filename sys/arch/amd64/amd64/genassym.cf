@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2003/04/26 18:39:28 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.2 2003/05/04 23:46:41 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ include <machine/cpu.h>
 endif
 
 if NIOAPIC > 0
+include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
 
@@ -221,6 +222,12 @@ define  CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define  CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define  CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define  CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+
+if NIOAPIC > 0
+define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
+define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
+define		PIC_LOCK		offsetof(struct pic, pic_lock)
+endif
 
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
