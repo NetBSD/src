@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.37 1999/11/28 03:38:10 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.38 1999/11/28 06:32:21 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,8 +153,6 @@ md_post_newfs(void)
 
 	printf(msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
-	/* XXX need to enable writing to disklabel first at the moment */
-	run_prog(0, 1, NULL, "/sbin/disklabel -W /dev/r%sc", diskdev);
 	run_prog(0, 1, "Warning: disk is probably not bootable",
 	    "/usr/mdec/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev);
 	return 0;
