@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 1998/04/03 02:20:29 tv Exp $
+#	$NetBSD: Makefile,v 1.6 1998/04/07 16:32:59 tv Exp $
 
 .include "../Makefile.inc"
 
 LIB=	cc1
 
+NOLINT=
 NOMAN=
 NOPROFILE=
-
-.if defined(CC1_SHLIB)
 CPICFLAGS=-fPIC -DPIC
-.else
-NOPIC=
-.endif
 
 MD= ${DIST}/config/${MACHINE_ARCH}/${MACHINE_ARCH}.md
 
@@ -184,7 +180,12 @@ c-parse.c: c-parse.y
 	mv -f c.tab.c c-parse.c
 	mv -f c.tab.h c-parse.h
 
-# XXX need to figure out how to install only the shlib and not the .a files
-libinstall::
+install: __libinstall
 
 .include <bsd.lib.mk>
+
+.if !defined(NOPIC)
+__libinstall: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.else
+__libinstall:
+.endif
