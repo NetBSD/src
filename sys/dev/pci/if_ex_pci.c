@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.5 1999/02/20 07:07:07 ross Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.6 1999/05/29 01:31:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,8 @@ const struct ex_pci_product {
 	  "3c900B-TPO Ethernet" },
 	{ PCI_PRODUCT_3COM_3C900BCOMBO,	EX_CONF_90XB,
 	  "3c900B-COMBO Ethernet" },
+	{ PCI_PRODUCT_3COM_3C900BTPC,   EX_CONF_90XB,
+	  "3c900B-TPC Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C905BTX,	EX_CONF_90XB|EX_CONF_MII|EX_CONF_INTPHY,
 	  "3c905B-TX 10/100 Ethernet" },
