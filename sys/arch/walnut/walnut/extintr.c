@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2001/10/29 01:32:59 simonb Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3 2001/11/06 01:26:48 simonb Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*
@@ -87,29 +87,8 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr.h>
 
-volatile int cpl, ipending, astpending;
-u_long imask[NIPL];
 
-static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-static struct intrhand *intrhand[ICU_LEN];
-
-static inline void galaxy_disable_irq(int irq);
-static inline void galaxy_enable_irq(int irq);
-static void intr_calculatemasks(void);
-static char *intr_typename(int);
-
-static int fakeintr(void *);
-static inline int cntlzw(int);
-
-static int
-fakeintr(void *arg)
-{
-
-	return 0;
-}
-
-#define	GALAXY_INTR_MASK	0xffffe07f
-#define	GALAXY_INTR(x)		(0x80000000UL >> x)
+#define	GALAXY_INTR(x)		(0x80000000U >> x)
 
 /*
  * Galaxy interrupt list
@@ -149,13 +128,25 @@ fakeintr(void *arg)
 #define WALNUT_INTR_PCI_S1	GALAXY_INTR_IRQ5	
 #define WALNUT_INTR_PCI_S0	GALAXY_INTR_IRQ6	
 
-#define WALNUT_INTR_CASCADE	WALNUT_INTR_FPGA /* IR/Keyboard and Mouse are hiding behind... */
-#define WALNUT_CASCADED_INTR	8 /* Number of potential cascaded interrupt sources */
 
+static inline void galaxy_disable_irq(int irq);
+static inline void galaxy_enable_irq(int irq);
+static void intr_calculatemasks(void);
+static char *intr_typename(int);
+
+static int fakeintr(void *);
+static inline int cntlzw(int);
+
+
+volatile int cpl, ipending, astpending;
+u_long imask[NIPL];
+
+static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
+static struct intrhand *intrhand[ICU_LEN];
 
 /* SW irq# -> hw interrupt bitmask */
-static int galaxy_intr_map[] = {
-	0,			/* Reserved for clock interrupts */
+static unsigned int galaxy_intr_map[] = {
+	~0U,			/* Reserved for clock interrupts */
 	WALNUT_INTR_PCI_S0,	/* PCI dev 1 irq1 */
 	WALNUT_INTR_PCI_S1,	/* PCI dev 2 irq2 */
 	WALNUT_INTR_PCI_S2,	/* PCI dev 3 irq3 */
@@ -163,7 +154,7 @@ static int galaxy_intr_map[] = {
 	GALAXY_INTR_UART0,	/* com0 irq5 */
 	GALAXY_INTR_UART1,	/* com1 irq6 */
 	GALAXY_INTR_IIC,	/* iic irq7 */
-	0,			/* irq8 */
+	~0U,			/* irq8 - unused */
 	GALAXY_INTR_EWOL,	/* emac irq9 .. 15 */
 	GALAXY_INTR_MSERR,
 	GALAXY_INTR_MTXE,
@@ -175,16 +166,10 @@ static int galaxy_intr_map[] = {
 	WALNUT_INTR_SMI		/* mouse irq17 */
 };
 #define	GALAXY_INTR_SIZE	(sizeof (galaxy_intr_map) / sizeof (galaxy_intr_map[0]))
-#define HWIRQ_MASK	0xfefe	/* Mask sw interrupts in use */
 
-/* map MSR bit into sw irq#. */
-static int hw2swirq[32] =
-{
-	 1,  2,  3,  4, 17, 16, -1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1,
-	15, 14, 13, 12, 11, 10,  9, -1,
-	-1, -1, -1, -1, -1,  7,  6,  5
-};
+static uint32_t hwirq_mask;	/* Mask sw interrupts in use */
+static int hw2swirq[32];	/* map MSR bit into sw irq#. */
+
 
 static inline int
 cntlzw(int x)
@@ -193,6 +178,33 @@ cntlzw(int x)
 
 	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
 	return a;
+}
+
+static int
+fakeintr(void *arg)
+{
+
+	return 0;
+}
+
+/*
+ * Set up interrupt mapping array.
+ */
+void
+intr_init(void)
+{
+	int i;
+
+	hwirq_mask = 0;
+	for (i = 0; i < 32; i++)
+		hw2swirq[i] = -1;
+
+	for (i = 0; i < GALAXY_INTR_SIZE; i++) {
+		if (galaxy_intr_map[i] == ~0U)
+			continue;
+		hwirq_mask |= (1 << i);
+		hw2swirq[31 - cntlzw(galaxy_intr_map[i])] = i;
+	}
 }
 
 /*
@@ -258,6 +270,8 @@ galaxy_disable_irq(int irq)
 
 	if (irq >= GALAXY_INTR_SIZE)
 		return;
+	if (galaxy_intr_map[irq] == ~0U)
+		return;
 
 	mask = omask = mfdcr(DCR_UIC0_ER);
 	mask &= ~galaxy_intr_map[irq];
@@ -275,6 +289,8 @@ galaxy_enable_irq(int irq)
 	int mask, omask;
 
 	if (irq >= GALAXY_INTR_SIZE)
+		return;
+	if (galaxy_intr_map[irq] == ~0U)
 		return;
 	
 	mask = omask = mfdcr(DCR_UIC0_ER);
@@ -519,7 +535,7 @@ do_pending_int(void)
 
 	pcpl = cpl;		/* Turn off all */
   again:	
-	while ((hwpend = ipending & ~pcpl & HWIRQ_MASK)) {
+	while ((hwpend = ipending & ~pcpl & hwirq_mask)) {
 		irq = 31 - cntlzw(hwpend);
 		galaxy_enable_irq(irq);
 
