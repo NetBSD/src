@@ -1,4 +1,4 @@
-/* $NetBSD: wsfont.c,v 1.4 1999/04/14 23:06:26 ad Exp $ */
+/* $NetBSD: wsfont.c,v 1.5 1999/04/26 04:24:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.4 1999/04/14 23:06:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.5 1999/04/26 04:24:22 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -83,9 +83,6 @@ struct font {
 
 #define WSFONT_BUILTIN	(0x01)
 #define WSFONT_STATIC	(0x02)
-
-#define WSFONT_LITTLE	(0)
-#define WSFONT_BIG	(1)
 
 /* Our list of built-in fonts */
 static struct font *list, builtin_fonts[] = {
@@ -396,7 +393,9 @@ wsfont_remove(cookie)
 	
 
 /*
- * Lock a given font and return new lockcount.
+ * Lock a given font and return new lockcount. This fails if the cookie
+ * is invalid, or if the font is already locked and the bit/byte order 
+ * requested by the caller differs.
  */
 int
 wsfont_lock(cookie, ptr, bitorder, byteorder)
