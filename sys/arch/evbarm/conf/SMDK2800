@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.8 2003/12/13 23:13:41 thorpej Exp $
+#	$NetBSD: SMDK2800,v 1.9 2003/12/13 23:24:47 thorpej Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -179,22 +179,7 @@ pci0	at sspci0
 #viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ATA bus support
-#atabus* 	at pciide? channel ?
-#atabus* 	at acardide? channel ?
-#atabus* 	at aceride? channel ? 
-#atabus* 	at cmdide? channel ? 
-#atabus* 	at cypide? channel ?
-#atabus* 	at hptide? channel ?
-#atabus* 	at optiide? channel ?
-#atabus* 	at piixide? channel ?
-#atabus* 	at pdcide? channel ?
-#atabus* 	at satalink? channel ?
-#atabus* 	at siside? channel ?
-#atabus* 	at slide? channel ?
-#atabus* 	at viaide? channel ?
-
-# ATA bus support
-#atabus* 	at pciide? channel ?
+#atabus* 	at ata? channel ?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations

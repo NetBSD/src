@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.17 2003/12/13 23:13:41 thorpej Exp $
+#	$NetBSD: MALTA,v 1.18 2003/12/13 23:24:47 thorpej Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -198,21 +198,7 @@ siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
-atabus* 	at pciide? channel ?
-atabus* 	at acardide? channel ?
-atabus* 	at aceride? channel ?
-atabus* 	at cmdide? channel ?
-atabus* 	at cypide? channel ?
-atabus* 	at hptide? channel ?
-atabus* 	at optiide? channel ?
-atabus* 	at piixide? channel ?
-atabus* 	at pdcide? channel ?
-atabus* 	at satalink? channel ?
-atabus* 	at siside? channel ?
-atabus* 	at slide? channel ?
-atabus* 	at viaide? channel ?
-
-atabus* 	at pciide? channel ?
+atabus* 	at ata? channel ?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.14 2003/12/13 23:13:40 thorpej Exp $
+#	$NetBSD: MILAN.in,v 1.15 2003/12/13 23:24:47 thorpej Exp $
 #
 # Milan
 #
@@ -73,7 +73,6 @@ fdisa0 		at fdcisa0 drive 0
 # wdc on ISA with flags = WDC_OPTIONS_ATA_NOSTREAM!
 wdc0 		at isa? port 0x1f0 irq 14 flags 0x04	# 1st IDE controller
 wdc1 		at isa? port 0x170 irq 15 flags 0x04	# 2nd IDE controller
-atabus* 	at wdc? channel ?
 #endif
 
 #if defined(MILAN_PCIIDE)
@@ -90,20 +89,9 @@ satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-atabus* 	at pciide? channel ?
-atabus* 	at acardide? channel ?
-atabus* 	at aceride? channel ?
-atabus* 	at cmdide? channel ?
-atabus* 	at cypide? channel ?
-atabus* 	at hptide? channel ?
-atabus* 	at optiide? channel ?
-atabus* 	at piixide? channel ?
-atabus* 	at pdcide? channel ?
-atabus* 	at satalink? channel ?
-atabus* 	at siside? channel ?
-atabus* 	at slide? channel ?
-atabus* 	at viaide? channel ?
 #endif
+
+atabus*		at ata? channel ?
 
 #
 # The Milan uses wscons
