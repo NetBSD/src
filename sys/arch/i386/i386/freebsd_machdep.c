@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.15 1998/01/24 12:42:22 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.16 1998/01/24 13:19:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -67,8 +67,10 @@ freebsd_setregs(p, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
+	register struct pcb *pcb = &p->p_addr->u_pcb;
 
 	setregs(p, epp, stack);
+	pcb->pcb_savefpu.sv_env.en_cw = __FreeBSD_NPXCW__;
 }
 
 /*

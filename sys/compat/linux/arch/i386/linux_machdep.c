@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38 1998/01/24 12:45:16 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.39 1998/01/24 13:19:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -55,6 +55,7 @@
 #include <sys/device.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
+#include <sys/exec_elf.h>
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_signal.h>
@@ -102,7 +103,9 @@ linux_setregs(p, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
+	register struct pcb *pcb = &p->p_addr->u_pcb;
 
+	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
 	setregs(p, epp, stack);
 }
 
