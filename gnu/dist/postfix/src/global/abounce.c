@@ -6,44 +6,49 @@
 /* SYNOPSIS
 /*	#include <abounce.h>
 /*
-/*	void	abounce_flush(flags, queue, id, sender, callback, context)
+/*	void	abounce_flush(flags, queue, id, encoding, sender, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
+/*	const char *encoding;
 /*	const char *sender;
 /*	void	(*callback)(int status, char *context);
 /*	char	*context;
 /*
-/*	void	abounce_flush_verp(flags, queue, id, sender, verp, callback, context)
+/*	void	abounce_flush_verp(flags, queue, id, encoding, sender, verp, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
-/*	const char *sender;
-/*	const char *verp;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
-/*
-/*	void	adefer_flush(flags, queue, id, sender, callback, context)
-/*	int	flags;
-/*	const char *queue;
-/*	const char *id;
-/*	const char *sender;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
-/*
-/*	void	adefer_flush_verp(flags, queue, id, sender, verp, callback, context)
-/*	int	flags;
-/*	const char *queue;
-/*	const char *id;
+/*	const char *encoding;
 /*	const char *sender;
 /*	const char *verp;
 /*	void	(*callback)(int status, char *context);
 /*	char	*context;
 /*
-/*	void	adefer_warn(flags, queue, id, sender, callback, context)
+/*	void	adefer_flush(flags, queue, id, encoding, sender, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
+/*	const char *encoding;
+/*	const char *sender;
+/*	void	(*callback)(int status, char *context);
+/*	char	*context;
+/*
+/*	void	adefer_flush_verp(flags, queue, id, encoding, sender, verp, callback, context)
+/*	int	flags;
+/*	const char *queue;
+/*	const char *id;
+/*	const char *encoding;
+/*	const char *sender;
+/*	const char *verp;
+/*	void	(*callback)(int status, char *context);
+/*	char	*context;
+/*
+/*	void	adefer_warn(flags, queue, id, encoding, sender, callback, context)
+/*	int	flags;
+/*	const char *queue;
+/*	const char *id;
+/*	const char *encoding;
 /*	const char *sender;
 /*	void	(*callback)(int status, char *context);
 /*	char	*context;
@@ -86,6 +91,8 @@
 /* .IP id
 /*	The message queue id if the original message file. The bounce log
 /*	file has the same name as the original message file.
+/* .IP encoding
+/*	The body content encoding: MAIL_ATTR_ENC_{7BIT,8BIT,NONE}.
 /* .IP sender
 /*	The sender envelope address.
 /* .IP verp
@@ -126,6 +133,7 @@
 
 /* Global library. */
 
+#include <mail_params.h>
 #include <mail_proto.h>
 #include <abounce.h>
 
@@ -181,7 +189,9 @@ static void abounce_event(int unused_event, char *context)
 static void abounce_request_verp(const char *class, const char *service,
 				         int command, int flags,
 				         const char *queue, const char *id,
-			               const char *sender, const char *verp,
+				         const char *encoding,
+				         const char *sender,
+				         const char *verp,
 				         ABOUNCE_FN callback,
 				         char *context)
 {
@@ -204,6 +214,7 @@ static void abounce_request_verp(const char *class, const char *service,
 		   ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
 		   ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
 		   ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+		   ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 		   ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
 		   ATTR_TYPE_STR, MAIL_ATTR_VERPDL, verp,
 		   ATTR_TYPE_END) == 0
@@ -217,23 +228,25 @@ static void abounce_request_verp(const char *class, const char *service,
 /* abounce_flush_verp - asynchronous bounce flush */
 
 void    abounce_flush_verp(int flags, const char *queue, const char *id,
-			           const char *sender, const char *verp,
-			           ABOUNCE_FN callback, char *context)
+			           const char *encoding, const char *sender,
+			           const char *verp, ABOUNCE_FN callback,
+			           char *context)
 {
-    abounce_request_verp(MAIL_CLASS_PRIVATE, MAIL_SERVICE_BOUNCE,
-			 BOUNCE_CMD_VERP, flags, queue, id, sender, verp,
-			 callback, context);
+    abounce_request_verp(MAIL_CLASS_PRIVATE, var_bounce_service,
+			 BOUNCE_CMD_VERP, flags, queue, id, encoding,
+			 sender, verp, callback, context);
 }
 
 /* adefer_flush_verp - asynchronous defer flush */
 
 void    adefer_flush_verp(int flags, const char *queue, const char *id,
-			          const char *sender, const char *verp,
-			          ABOUNCE_FN callback, char *context)
+			          const char *encoding, const char *sender,
+			          const char *verp, ABOUNCE_FN callback,
+			          char *context)
 {
-    abounce_request_verp(MAIL_CLASS_PRIVATE, MAIL_SERVICE_DEFER,
-			 BOUNCE_CMD_VERP, flags, queue, id, sender, verp,
-			 callback, context);
+    abounce_request_verp(MAIL_CLASS_PRIVATE, var_defer_service,
+			 BOUNCE_CMD_VERP, flags, queue, id, encoding,
+			 sender, verp, callback, context);
 }
 
 /* abounce_request - suspend pseudo thread until server reply event */
@@ -241,9 +254,8 @@ void    adefer_flush_verp(int flags, const char *queue, const char *id,
 static void abounce_request(const char *class, const char *service,
 			            int command, int flags,
 			            const char *queue, const char *id,
-			            const char *sender,
-			            ABOUNCE_FN callback,
-			            char *context)
+			            const char *encoding, const char *sender,
+			            ABOUNCE_FN callback, char *context)
 {
     ABOUNCE *ap;
 
@@ -264,6 +276,7 @@ static void abounce_request(const char *class, const char *service,
 		   ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
 		   ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
 		   ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+		   ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 		   ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
 		   ATTR_TYPE_END) == 0
 	&& vstream_fflush(ap->fp) == 0) {
@@ -276,26 +289,29 @@ static void abounce_request(const char *class, const char *service,
 /* abounce_flush - asynchronous bounce flush */
 
 void    abounce_flush(int flags, const char *queue, const char *id,
-	             const char *sender, ABOUNCE_FN callback, char *context)
+		              const char *encoding, const char *sender,
+		              ABOUNCE_FN callback, char *context)
 {
-    abounce_request(MAIL_CLASS_PRIVATE, MAIL_SERVICE_BOUNCE, BOUNCE_CMD_FLUSH,
-		    flags, queue, id, sender, callback, context);
+    abounce_request(MAIL_CLASS_PRIVATE, var_bounce_service, BOUNCE_CMD_FLUSH,
+		    flags, queue, id, encoding, sender, callback, context);
 }
 
 /* adefer_flush - asynchronous defer flush */
 
 void    adefer_flush(int flags, const char *queue, const char *id,
-	             const char *sender, ABOUNCE_FN callback, char *context)
+		             const char *encoding, const char *sender,
+		             ABOUNCE_FN callback, char *context)
 {
-    abounce_request(MAIL_CLASS_PRIVATE, MAIL_SERVICE_DEFER, BOUNCE_CMD_FLUSH,
-		    flags, queue, id, sender, callback, context);
+    abounce_request(MAIL_CLASS_PRIVATE, var_defer_service, BOUNCE_CMD_FLUSH,
+		    flags, queue, id, encoding, sender, callback, context);
 }
 
 /* adefer_warn - send copy of defer log to sender as warning bounce */
 
 void    adefer_warn(int flags, const char *queue, const char *id,
-	             const char *sender, ABOUNCE_FN callback, char *context)
+		            const char *encoding, const char *sender,
+		            ABOUNCE_FN callback, char *context)
 {
-    abounce_request(MAIL_CLASS_PRIVATE, MAIL_SERVICE_DEFER, BOUNCE_CMD_WARN,
-		    flags, queue, id, sender, callback, context);
+    abounce_request(MAIL_CLASS_PRIVATE, var_defer_service, BOUNCE_CMD_WARN,
+		    flags, queue, id, encoding, sender, callback, context);
 }

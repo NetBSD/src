@@ -42,7 +42,7 @@ Initialize the alias database.  If no input file is specified (with
 the \fB-oA\fR option, see below), the program processes the file(s)
 specified with the \fBalias_database\fR configuration parameter.
 If no alias database type is specified, the program uses the type
-specified with the \fBdatabase_type\fR configuration parameter.
+specified with the \fBdefault_database_type\fR configuration parameter.
 This mode of operation is implemented by running the \fBpostalias\fR(1)
 command.
 .sp
@@ -55,9 +55,12 @@ appropriate combination of command-line options. Some features are
 controlled by parameters in the \fBmain.cf\fR configuration file.
 
 The following options are recognized:
-.IP "\fB-B \fIbody_type\fR (ignored)"
-The message body MIME type. Currently, Postfix implements
-\fBjust-send-eight\fR.
+.IP "\fB-Am\fR (ignored)"
+.IP "\fB-Ac\fR (ignored)"
+Postfix sendmail uses the same configuration file regardless of
+whether or not a message is an initial submission.
+.IP "\fB-B \fIbody_type\fR"
+The message body MIME type: \fB7BIT\fR or \fB8BITMIME\fR.
 .IP "\fB-C \fIconfig_file\fR (ignored :-)"
 The path name of the \fBsendmail.cf\fR file. Postfix configuration
 files are kept in \fB/etc/postfix\fR.
@@ -137,8 +140,8 @@ Non-default alias database. Specify \fIpathname\fR or
 details.
 .IP "\fB-o7\fR (ignored)"
 .IP "\fB-o8\fR (ignored)"
-The message body type. Currently, Postfix implements
-\fBjust-send-eight\fR.
+To send 8-bit or binary content, use an appropriate MIME encapsulation
+and specify the appropriate \fB-B\fR command-line option.
 .IP "\fB-oi\fR"
 When reading a message from standard input, don\'t treat a line
 with only a \fB.\fR character as the end of input.
@@ -172,7 +175,9 @@ Extract recipients from message headers. This requires that no
 recipients be specified on the command line.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
-options make the software increasingly verbose.
+options make the software increasingly verbose. For compatibility
+with mailx and other mail submission software, a single \fB-v\fR
+option produces no output.
 .SH SECURITY
 .na
 .nf
@@ -218,7 +223,7 @@ for this parameter is system-specific.
 .IP \fBbounce_size_limit\fR
 The amount of original message context that is sent along
 with a non-delivery notification.
-.IP \fBdatabase_type\fR
+.IP \fBdefault_database_type\fR
 Default alias etc. database type. On many UNIX systems the
 default type is either \fBdbm\fR or \fBhash\fR.
 .IP \fBdebugger_command\fR
@@ -247,11 +252,9 @@ Limit the number of \fBReceived:\fR message headers.
 .IP \fBmail_owner\fR
 The owner of the mail queue and of most Postfix processes.
 .IP \fBcommand_directory\fR
-Directory with Postfix support commands (default:
-\fB$program_directory\fR).
+Directory with Postfix support commands.
 .IP \fBdaemon_directory\fR
-Directory with Postfix daemon programs (default:
-\fB$program_directory\fR).
+Directory with Postfix daemon programs.
 .IP \fBqueue_directory\fR
 Top-level directory of the Postfix queue. This is also the root
 directory of Postfix daemons that run chrooted.
@@ -263,6 +266,7 @@ The characters that Postfix accepts as VERP delimiter characters.
 .na
 .nf
 pickup(8) mail pickup daemon
+postsuper(1) queue maintenance
 postalias(1) maintain alias database
 postdrop(1) mail posting utility
 postfix(1) mail system control

@@ -30,29 +30,59 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
                      field of an entry in the <b>master.cf</b> file.
 
               <i>nexthop</i>
-                     The host to send to. For local delivery this
-                     is an empty string.
+                     The  host  to  send to and optional delivery
+                     method information.
 
               <i>recipient</i>
                      The  envelope  recipient  address  that   is
                      passed on to <i>nexthop</i>.
 
-              The  <b>trivial-rewrite</b> daemon by default only distin-
-              guishes between local and non-local mail. For finer
-              control  over mail routing, use the optional <a href="transport.5.html"><b>trans-</b></a>
-              <a href="transport.5.html"><b>port</b>(5)</a> lookup table.
+<b>DEFAULT</b> <b>DELIVERY</b> <b>METHODS</b>
+       By  default,  Postfix  uses  one of the following delivery
+       methods.  This may be overruled with the  optional  <a href="transport.5.html">trans-</a>
+       <a href="transport.5.html">port(5)</a> table.  The default delivery method is selected by
+       matching the recipient address domain against one  of  the
+       following:
 
-       This program expects to be run from the <a href="master.8.html"><b>master</b>(8)</a>  process
-       manager.
+       <b>$mydestination</b>
+
+       <b>$inet</b><i>_</i><b>interfaces</b>
+              The  transport  and  optional nexthop are specified
+              with <b>$local</b><i>_</i><b>transport</b>.  The default nexthop is  the
+              recipient domain.
+
+       <b>$virtual</b><i>_</i><b>alias</b><i>_</i><b>domains</b>
+              The   recipient   address  is  undeliverable  (user
+              unknown).  By definition, all known addresses in  a
+              virtual   alias   domain   are   aliased  to  other
+              addresses.
+
+       <b>$virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>
+              The transport and optional  nexthop  are  specified
+              with  <b>$virtual</b><i>_</i><b>transport</b>.   The  default nexthop is
+              the recipient domain.
+
+       <b>$relay</b><i>_</i><b>domains</b>
+              The transport and optional  nexthop  are  specified
+              with  <b>$relay</b><i>_</i><b>transport</b>. This overrides the optional
+              nexthop information that is specified with  <b>$relay-</b>
+              <b>host</b>.  The default nexthop is the recipient domain.
+
+       none of the above
+              The transport and optional  nexthop  are  specified
+              with   <b>$default</b><i>_</i><b>transport</b>.    This   overrides  the
+              optional nexthop information that is specified with
+              <b>$relayhost</b>.   The  default nexthop is the recipient
+              domain.
 
 <b>STANDARDS</b>
-       None.  The  command  does  not  interact  with the outside
+       None. The command  does  not  interact  with  the  outside
        world.
 
 <b>SECURITY</b>
-       The <b>trivial-rewrite</b> daemon is not security sensitive.   By
-       default,  this  daemon  does  not  talk to remote or local
-       users.  It can run at a fixed low privilege in a  chrooted
+       The  <b>trivial-rewrite</b> daemon is not security sensitive.  By
+       default, this daemon does not  talk  to  remote  or  local
+       users.   It can run at a fixed low privilege in a chrooted
        environment.
 
 <b>DIAGNOSTICS</b>
@@ -60,24 +90,39 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
 <b>BUGS</b>
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this program. See the Postfix <b>main.cf</b> file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  program. See the Postfix <b>main.cf</b> file for syntax
+       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
        command after a configuration change.
 
 <b>Miscellaneous</b>
+       <b>empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>
+              The  recipient  that  is  substituted  for the null
+              address.
+
        <b>inet</b><i>_</i><b>interfaces</b>
               The  network  interfaces  that  this  mail   system
               receives  mail  on.   This  information  is used to
               determine if <i>user</i>@[<i>net.work.addr.ess</i>] is  local  or
-              remote.
+              remote.   Mail  for  local  users  is  given to the
+              <b>$local</b><i>_</i><b>transport</b>.
 
        <b>mydestination</b>
-              List  of domains that this machine considers local.
+              List of domains that are given to the <b>$local</b><i>_</i><b>trans-</b>
+              <b>port</b>.
 
-       <b>myorigin</b>
-              The domain that locally-posted mail appears to come
-              from.
+       <b>virtual</b><i>_</i><b>alias</b><i>_</i><b>domains</b>
+              List of simulated virtual domains (domains with all
+              recipients aliased to some other  local  or  remote
+              domain).
+
+       <b>virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>
+              List  of  domains  that  are  given  to  the  <b>$vir-</b>
+              <b>tual</b><i>_</i><b>transport</b>.
+
+       <b>relay</b><i>_</i><b>domains</b>
+              List of domains that are given to the <b>$relay</b><i>_</i><b>trans-</b>
+              <b>port</b>.
 
        <b>resolve</b><i>_</i><b>unquoted</b><i>_</i><b>address</b>
               When resolving an address, do not quote the address
@@ -87,15 +132,23 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
               attacks  when forwarding mail to a Sendmail primary
               MX host.
 
+       <b>relocated</b><i>_</i><b>maps</b>
+              Tables with contact information for users, hosts or
+              domains that no longer exist. See <a href="relocated.5.html"><b>relocated</b>(5)</a>.
+
 <b>Rewriting</b>
+       <b>myorigin</b>
+              The domain that locally-posted mail appears to come
+              from.
+
        <b>allow</b><i>_</i><b>percent</b><i>_</i><b>hack</b>
               Rewrite <i>user</i>%<i>domain</i> to <i>user</i>@<i>domain</i>.
 
        <b>append</b><i>_</i><b>at</b><i>_</i><b>myorigin</b>
-              Rewrite <i>user</i> to <i>user</i>@$<b>myorigin</b>.
+              Rewrite <i>user</i> to <i>user</i>@<b>$myorigin</b>.
 
        <b>append</b><i>_</i><b>dot</b><i>_</i><b>mydomain</b>
-              Rewrite <i>user</i>@<i>host</i> to <i>user</i>@<i>host</i>.$<b>mydomain</b>.
+              Rewrite <i>user</i>@<i>host</i> to <i>user</i>@<i>host</i>.<b>$mydomain</b>.
 
        <b>swap</b><i>_</i><b>bangpath</b>
               Rewrite <i>site</i>!<i>user</i> to <i>user</i>@<i>site</i>.
@@ -103,15 +156,31 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 <b>Routing</b>
        <b>local</b><i>_</i><b>transport</b>
               Where to deliver mail for destinations  that  match
-              $<b>mydestination</b>  or  $<b>inet</b><i>_</i><b>interfaces</b>.   The default
-              transport is <b>local</b>.
+              <b>$mydestination</b>  or  <b>$inet</b><i>_</i><b>interfaces</b>.   The default
+              transport is <b>local:$myhostname</b>.
 
               Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
               details. The :<i>nexthop</i> part is optional.
 
+       <b>virtual</b><i>_</i><b>transport</b>
+              Where  to  deliver  mail for non-local domains that
+              match <b>$virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>.  The default trans-
+              port is <b>virtual</b>.
+
+              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              details. The :<i>nexthop</i> part is optional.
+
+       <b>relay</b><i>_</i><b>transport</b>
+              Where to deliver mail for  non-local  domains  that
+              match  <b>$relay</b><i>_</i><b>domains</b>.   The  default  transport is
+              <b>relay</b> (which normally is a clone of the <b>smtp</b> trans-
+              port).
+
+              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              details. The :<i>nexthop</i> part is optional.
+
        <b>default</b><i>_</i><b>transport</b>
-              Where to deliver non-local mail when no information
-              is explicitly given in the <a href="transport.5.html"><b>transport</b>(5)</a> table.  The
+              Where to deliver all  other  non-local  mail.   The
               default transport is <b>smtp</b>.
 
               Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
@@ -124,19 +193,19 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
        <b>relayhost</b>
               The default host to send non-local mail to when  no
-              entry is matched in the <a href="transport.5.html"><b>transport</b>(5)</a> table.
-
-              When  no  <b>relayhost</b>  is  specified,  mail is routed
-              directly to the destination's mail exchanger.
+              host   is   specified   with   <b>$relay</b><i>_</i><b>transport</b>  or
+              <b>$default</b><i>_</i><b>transport</b>, and when the recipient  address
+              does not match the optional the <a href="transport.5.html"><b>transport</b>(5)</a> table.
 
        <b>transport</b><i>_</i><b>maps</b>
-              List of tables with <i>domain</i> to (<i>transport,</i>  <i>nexthop</i>)
-              mappings.
+              List of tables with <i>recipient</i> or <i>domain</i> to  (<i>trans-</i>
+              <i>port,</i> <i>nexthop</i>) mappings.
 
 <b>SEE</b> <b>ALSO</b>
        <a href="master.8.html">master(8)</a> process manager
        syslogd(8) system logging
        <a href="transport.5.html">transport(5)</a> transport table format
+       <a href="relocated.5.html">relocated(5)</a> format of the "user has moved" table
 
 <b>LICENSE</b>
        The  Secure  Mailer  license must be distributed with this

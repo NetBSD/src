@@ -3,6 +3,7 @@
 /usr/spool/mail	yes (compile time option)
 /var/mail	yes (compile time option)
 /var/spool/mail	yes (compile time option)
+8bitmime	yes (including 8bit to quoted-printable conversion)
 :include:	yes (mail to /file and |command is off by default)
 aliases		yes (can enable/disable mail to /file or |command)
 bare newlines	yes (but will send CRLF)
@@ -14,7 +15,7 @@ delivered-to	yes (configurable with prepend_delivered_header)
 dsn		not yet (bounces have DSN form)
 errors-to:	yes
 esmtp		yes
-etrn support	yes (uses per-destination log or flushes entire queue)
+etrn support	yes (per-destination log for authorized destinations only)
 fcntl locking	yes (runtime configurable)
 flock locking	yes (runtime configurable)
 home mailbox	yes
@@ -28,7 +29,8 @@ mail to file	yes (configurable for .forward, aliases, :include:)
 maildir		yes (in home, system mailspool, /file/name/ alias)
 mailertable	yes (it's called transport)
 mailq		yes
-majordomo	yes (edit approve script to delete /delivered-to/i)
+majordomo	yes (edit approve script to delete /^delivered-to:/i)
+mime		yes (including 8bit to quoted-printable conversion)
 mime conversion	not yet; postfix uses just-send-eight
 mysql tables	yes (contributed)
 netinfo tables	yes (contributed)

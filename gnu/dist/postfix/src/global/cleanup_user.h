@@ -16,7 +16,16 @@
   */
 #define CLEANUP_FLAG_NONE	0	/* No special features */
 #define CLEANUP_FLAG_BOUNCE	(1<<0)	/* Bounce bad messages */
-#define CLEANUP_FLAG_FILTER	(2<<0)	/* Enable content filter */
+#define CLEANUP_FLAG_FILTER	(1<<1)	/* Enable content filter */
+#define CLEANUP_FLAG_HOLD	(1<<2)	/* Place message on hold */
+#define CLEANUP_FLAG_DISCARD	(1<<3)	/* Discard message silently */
+
+ /*
+  * These are set on the fly while processing SMTP envelopes or message
+  * content.
+  */
+#define CLEANUP_FLAG_MASK_EXTRA \
+	(CLEANUP_FLAG_HOLD | CLEANUP_FLAG_DISCARD)
 
  /*
   * Diagnostics.

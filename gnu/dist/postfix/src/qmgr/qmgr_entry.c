@@ -195,6 +195,9 @@ QMGR_ENTRY *qmgr_entry_create(QMGR_QUEUE *queue, QMGR_MESSAGE *message)
     if (queue->window == 0)
 	msg_panic("qmgr_entry_create: dead queue: %s", queue->name);
 
+    /*
+     * Create the delivery request.
+     */
     entry = (QMGR_ENTRY *) mymalloc(sizeof(QMGR_ENTRY));
     entry->stream = 0;
     entry->message = message;
@@ -203,5 +206,70 @@ QMGR_ENTRY *qmgr_entry_create(QMGR_QUEUE *queue, QMGR_MESSAGE *message)
     entry->queue = queue;
     QMGR_LIST_APPEND(queue->todo, entry);
     queue->todo_refcount++;
+
+    /*
+     * Warn if a destination is falling behind while the active queue
+     * contains a non-trivial amount of single-recipient email. When a
+     * destination takes up more and more space in the active queue, then
+     * other mail will not get through and delivery performance will suffer.
+     * 
+     * XXX At this point in the code, the busy reference count is still less
+     * than the concurrency limit (otherwise this code would not be invoked
+     * in the first place) so we have to make make some awkward adjustments
+     * below.
+     * 
+     * XXX The queue length test below looks at the active queue share of an
+     * individual destination. This catches the case where mail for one
+     * destination is falling behind because it has to round-robin compete
+     * with many other destinations. However, Postfix will also perform
+     * poorly when most of the active queue is tied up by a small number of
+     * concurrency limited destinations. The queue length test below detects
+     * such conditions only indirectly.
+     * 
+     * XXX This code does not detect the case that the active queue is being
+     * starved because incoming mail is pounding the disk.
+     */
+    if (var_helpful_warnings && var_qmgr_clog_warn_time > 0) {
+	int     queue_length = queue->todo_refcount + queue->busy_refcount;
+	time_t  now;
+	QMGR_TRANSPORT *transport;
+	double  active_share;
+
+	if (queue_length > var_qmgr_active_limit / 5
+	    && (now = event_time()) >= queue->clog_time_to_warn) {
+	    active_share = queue_length / (double) qmgr_message_count;
+	    msg_warn("mail for %s is using up %d of %d active queue entries",
+		     queue->name, queue_length, qmgr_message_count);
+	    if (active_share < 0.9)
+		msg_warn("this may slow down other mail deliveries");
+	    transport = queue->transport;
+	    if (transport->dest_concurrency_limit > 0
+	    && transport->dest_concurrency_limit <= queue->busy_refcount + 1)
+		msg_warn("you may need to increase the main.cf %s%s from %d",
+			 transport->name, _DEST_CON_LIMIT,
+			 transport->dest_concurrency_limit);
+	    else if (queue->window > var_qmgr_active_limit * active_share)
+		msg_warn("you may need to increase the main.cf %s from %d",
+			 VAR_QMGR_ACT_LIMIT, var_qmgr_active_limit);
+	    else if (queue->peers.next != queue->peers.prev)
+		msg_warn("you may need a separate master.cf transport for %s",
+			 queue->name);
+	    else {
+		msg_warn("you may need to reduce %s connect and helo timeouts",
+			 transport->name);
+		msg_warn("so that Postfix quickly skips unavailable hosts");
+		msg_warn("you may need to increase the main.cf %s and %s",
+			 VAR_MIN_BACKOFF_TIME, VAR_MAX_BACKOFF_TIME);
+		msg_warn("so that Postfix wastes less time on undeliverable mail");
+		msg_warn("you may need to increase the master.cf %s process limit",
+			 transport->name);
+	    }
+	    msg_warn("please avoid flushing the whole queue when you have");
+	    msg_warn("lots of deferred mail, that is bad for performance");
+	    msg_warn("to turn off these warnings specify: %s = 0",
+		     VAR_QMGR_CLOG_WARN_TIME);
+	    queue->clog_time_to_warn = now + var_qmgr_clog_warn_time;
+	}
+    }
     return (entry);
 }

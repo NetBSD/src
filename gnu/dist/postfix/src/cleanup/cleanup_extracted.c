@@ -51,6 +51,7 @@
 #include <vstream.h>
 #include <argv.h>
 #include <mymalloc.h>
+#include <nvtable.h>
 
 /* Global library. */
 
@@ -59,6 +60,7 @@
 #include <rec_type.h>
 #include <mail_params.h>
 #include <ext_prop.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
@@ -72,11 +74,30 @@ static void cleanup_extracted_process(CLEANUP_STATE *, int, char *, int);
 
 void    cleanup_extracted(CLEANUP_STATE *state, int type, char *buf, int len)
 {
+    const char *encoding;
 
     /*
      * Start the extracted segment.
      */
     cleanup_out_string(state, REC_TYPE_XTRA, "");
+
+    /*
+     * Put the optional content filter before the mandatory Return-Receipt-To
+     * and Errors-To so that the queue manager will pick up the filter name
+     * before starting deliveries.
+     */
+    if (state->filter != 0)
+	cleanup_out_string(state, REC_TYPE_FILT, state->filter);
+
+    /*
+     * Older Postfix versions didn't emit encoding information, so this
+     * record can only be optional. Putting this before the mandatory
+     * Return-Receipt-To and Errors-To ensures that the queue manager will
+     * pick up the content encoding before starting deliveries.
+     */
+    if ((encoding = nvtable_find(state->attr, MAIL_ATTR_ENCODING)) != 0)
+	cleanup_out_format(state, REC_TYPE_ATTR, "%s=%s",
+			   MAIL_ATTR_ENCODING, encoding);
 
     /*
      * Always emit Return-Receipt-To and Errors-To records, and always emit
@@ -99,23 +120,29 @@ void    cleanup_extracted(CLEANUP_STATE *state, int type, char *buf, int len)
 
 /* cleanup_extracted_process - process extracted segment */
 
-static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf, int unused_len)
+static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf, int len)
 {
     char   *myname = "cleanup_extracted_process";
     VSTRING *clean_addr;
     ARGV   *rcpt;
     char  **cpp;
 
-    if (type == REC_TYPE_RRTO) {
-	/* XXX Use extracted information instead. */
-	return;
-    }
-    if (type == REC_TYPE_ERTO) {
-	/* XXX Use extracted information instead. */
-	return;
+    /*
+     * Weird condition for consistency with cleanup_envelope.c
+     */
+    if (type != REC_TYPE_RCPT) {
+	if (state->orig_rcpt != 0) {
+	    if (type != REC_TYPE_DONE)
+		msg_warn("%s: out-of-order original recipient record <%.200s>",
+			 state->queue_id, buf);
+	    myfree(state->orig_rcpt);
+	    state->orig_rcpt = 0;
+	}
     }
     if (type == REC_TYPE_RCPT) {
 	clean_addr = vstring_alloc(100);
+	if (state->orig_rcpt == 0)
+	    state->orig_rcpt = mystrdup(buf);
 	cleanup_rewrite_internal(clean_addr, *buf ? buf : var_empty_addr);
 	if (cleanup_rcpt_canon_maps)
 	    cleanup_map11_internal(state, clean_addr, cleanup_rcpt_canon_maps,
@@ -126,16 +153,18 @@ static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf,
 	if (cleanup_masq_domains
 	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
 	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
-	cleanup_out_recipient(state, STR(clean_addr));
+	cleanup_out_recipient(state, state->orig_rcpt, STR(clean_addr));
 	if (state->recip == 0)
 	    state->recip = mystrdup(STR(clean_addr));
 	vstring_free(clean_addr);
+	myfree(state->orig_rcpt);
+	state->orig_rcpt = 0;
 	return;
+    } else if (type == REC_TYPE_ORCP) {
+	state->orig_rcpt = mystrdup(buf);
     }
     if (type != REC_TYPE_END) {
-	msg_warn("%s: unexpected record type %d in extracted segment",
-		 state->queue_id, type);
-	state->errs |= CLEANUP_STAT_BAD;
+	cleanup_out(state, type, buf, len);
 	return;
     }
 
@@ -176,9 +205,10 @@ static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf,
 		    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT)) {
 		    vstring_strcpy(clean_addr, *cpp);
 		    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
-		    cleanup_out_recipient(state, STR(clean_addr));
+		    cleanup_out_recipient(state, STR(clean_addr),
+					  STR(clean_addr));	/* XXX */
 		} else
-		    cleanup_out_recipient(state, *cpp);
+		    cleanup_out_recipient(state, *cpp, *cpp);	/* XXX */
 	    }
 	    if (rcpt->argv[0])
 		state->recip = mystrdup(rcpt->argv[0]);

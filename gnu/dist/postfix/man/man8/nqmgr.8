@@ -22,10 +22,6 @@ manager.
 Mail addressed to the local \fBdouble-bounce\fR address is silently
 discarded.  This stops potential loops caused by undeliverable
 bounce notifications.
-
-Mail addressed to a user listed in the optional \fBrelocated\fR
-database is bounced with a "user has moved to \fInew_location\fR"
-message. See \fBrelocated\fR(5) for a precise description.
 .SH MAIL QUEUES
 .na
 .nf
@@ -45,6 +41,9 @@ manager implements exponential backoff by doubling the time between
 delivery attempts.
 .IP \fBcorrupt\fR
 Unreadable or damaged queue files are moved here for inspection.
+.IP \fBhold\fR
+Messages that are kept "on hold" are kept here until someone
+sets them free.
 .SH DELIVERY STATUS REPORTS
 .na
 .nf
@@ -175,9 +174,6 @@ a configuration change.
 .fi
 .IP \fBallow_min_user\fR
 Do not bounce recipient addresses that begin with '-'.
-.IP \fBrelocated_maps\fR
-Tables with contact information for users, hosts or domains
-that no longer exist. See \fBrelocated\fR(5).
 .IP \fBqueue_directory\fR
 Top-level directory of the Postfix queue.
 .SH "Active queue controls"
@@ -185,6 +181,9 @@ Top-level directory of the Postfix queue.
 .fi
 In the text below, \fItransport\fR is the first field in a
 \fBmaster.cf\fR entry.
+.IP \fBqmgr_clog_warn_time\fR
+Minimal delay between warnings that a specific destination
+is clogging up the active queue. Specify 0 to disable.
 .IP \fBqmgr_message_active_limit\fR
 Limit the number of messages in the active queue.
 .IP \fBqmgr_message_recipient_limit\fR
@@ -284,7 +283,6 @@ Default values for the transport specific parameters described above.
 .na
 .nf
 master(8), process manager
-relocated(5), format of the "user has moved" table
 syslogd(8) system logging
 trivial-rewrite(8), address routing
 .SH LICENSE

@@ -5,6 +5,7 @@
 
 . ./defines
 
+# Activate binaries
 if [ ! -e ${POSTFIXBACKUPDIR}/sendmail ]
 then
 	echo "Something is wrong: there is no existing postfix binary backup"
@@ -30,32 +31,13 @@ else
 	fi
 fi
 
-if [ -e "${SSI}" ]
-then
-	if [ ! -d "${SIDISABLEDDIR}" ]
-	then
-		mkdir -p "${SIDISABLEDDIR}"
-	fi
-	echo "Moving existing Sendmail StartupItem to ${SIDISABLEDDIR}..."
-	if [ -e "${SSIDISABLED}" ]
-	then
-		echo "Something is wrong. A disabled Sendmail StartupItem already exists."
-		DATETIME=`date +"%Y%b%e-%H%M%S"`
-		echo "Moving Sendmail to Sendmail.${DATETIME}"
-		mv "${SSI}" "${SSIDISABLED}.${DATETIME}"
-		echo "You should have just one ${SSIDISABLED}"
-	else
-		mv "${SSI}" "${SSIDISABLED}"
-	fi
-fi
-
-. /etc/hostconfig
-
-if [ "${MAILSERVER:=-NO-}" = "-YES-" ]
-then
-	echo "Postfix will start on reboot"
+# De-activate sendmail in /etc/hostconfig
+/usr/bin/perl -pi -e 's/MAILSERVER=-YES-/MAILSERVER=-NO-/g' /etc/hostconfig
+# Activate postfix in /etc/hostconfig
+if /usr/bin/grep '^POSTFIX=-NO-' /etc/hostconfig >/dev/null 2>&1; then
+	/usr/bin/perl -pi -e 's/POSTFIX=-NO-/POSTFIX=-YES-/g' /etc/hostconfig
 else
-	echo "Note: Postfix needs MAILSERVER set to -YES- in /etc/hostconfig"
-	echo "Postfix will NOT start on reboot"
+	echo "POSTFIX=-YES-" >>/etc/hostconfig
 fi
 
+/usr/sbin/postfix start

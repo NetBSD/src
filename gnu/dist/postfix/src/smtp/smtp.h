@@ -53,6 +53,8 @@ typedef struct SMTP_STATE {
     sasl_callback_t *sasl_callbacks;	/* stateful callbacks */
 #endif
     off_t   size_limit;			/* server limit or unknown */
+    int     space_left;			/* output length control */
+    struct MIME_STATE *mime_state;	/* mime state machine */
 } SMTP_STATE;
 
 #define SMTP_FEATURE_ESMTP	(1<<0)

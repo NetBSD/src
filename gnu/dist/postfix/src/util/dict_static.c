@@ -44,7 +44,7 @@
 
 /* dict_static_lookup - access static value*/
 
-static const char *dict_static_lookup(DICT *dict, const char *name)
+static const char *dict_static_lookup(DICT *dict, const char *unused_name)
 {
     dict_errno = 0;
 

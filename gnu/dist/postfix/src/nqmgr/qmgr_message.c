@@ -118,10 +118,9 @@
 #include <rec_type.h>
 #include <sent.h>
 #include <deliver_completed.h>
-#include <mail_addr_find.h>
 #include <opened.h>
-#include <resolve_local.h>
 #include <verp_sender.h>
+#include <mail_proto.h>
 
 /* Client stubs. */
 
@@ -153,6 +152,7 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->data_offset = 0;
     message->queue_id = mystrdup(queue_id);
     message->queue_name = mystrdup(queue_name);
+    message->encoding = 0;
     message->sender = 0;
     message->errors_to = 0;
     message->return_receipt = 0;
@@ -283,6 +283,10 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
     long    save_offset = message->rcpt_offset;	/* save a flag */
     char   *start;
     int     recipient_limit;
+    const char *error_text;
+    char   *name;
+    char   *value;
+    char   *orig_rcpt = 0;
 
     /*
      * Initialize. No early returns or we have a memory leak.
@@ -373,11 +377,13 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    if (message->arrival_time == 0)
 		message->arrival_time = atol(start);
 	} else if (rec_type == REC_TYPE_FILT) {
-	    if (message->filter_xport == 0)
-		message->filter_xport = mystrdup(start);
+	    if (message->filter_xport != 0)
+		myfree(message->filter_xport);
+	    message->filter_xport = mystrdup(start);
 	} else if (rec_type == REC_TYPE_INSP) {
-	    if (message->inspect_xport == 0)
-		message->inspect_xport = mystrdup(start);
+	    if (message->inspect_xport != 0)
+		myfree(message->inspect_xport);
+	    message->inspect_xport = mystrdup(start);
 	} else if (rec_type == REC_TYPE_FROM) {
 	    if (message->sender == 0) {
 		message->sender = mystrdup(start);
@@ -393,7 +399,12 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	} else if (rec_type == REC_TYPE_RCPT) {
 	    if (message->rcpt_list.len < recipient_limit) {
 		message->rcpt_unread--;
-		qmgr_rcpt_list_add(&message->rcpt_list, curr_offset, start);
+		qmgr_rcpt_list_add(&message->rcpt_list, curr_offset,
+				   orig_rcpt ? orig_rcpt : "unknown", start);
+		if (orig_rcpt) {
+		    myfree(orig_rcpt);
+		    orig_rcpt = 0;
+		}
 		if (message->rcpt_list.len >= recipient_limit) {
 		    if ((message->rcpt_offset = vstream_ftell(message->fp)) < 0)
 			msg_fatal("vstream_ftell %s: %m",
@@ -403,6 +414,18 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 			&& message->return_receipt != 0)
 			break;
 		}
+	    }
+	} else if (rec_type == REC_TYPE_ATTR) {
+	    if ((error_text = split_nameval(start, &name, &value)) != 0) {
+		msg_warn("%s: bad attribute: %s: %.200s",
+			 message->queue_id, error_text, start);
+		break;
+	    }
+	    /* Allow extra segment to override envelope segment info. */
+	    if (strcmp(name, MAIL_ATTR_ENCODING) == 0) {
+		if (message->encoding != 0)
+		    myfree(message->encoding);
+		message->encoding = mystrdup(value);
 	    }
 	} else if (rec_type == REC_TYPE_ERTO) {
 	    if (message->errors_to == 0) {
@@ -436,7 +459,25 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		}
 	    }
 	}
+	if (orig_rcpt != 0) {
+	    if (rec_type != REC_TYPE_DONE)
+		msg_warn("%s: out-of-order original recipient record <%.200s>",
+			 message->queue_id, start);
+	    myfree(orig_rcpt);
+	    orig_rcpt = 0;
+	}
+	if (rec_type == REC_TYPE_ORCP)
+	    orig_rcpt = mystrdup(start);
     } while (rec_type > 0 && rec_type != REC_TYPE_END);
+
+    /*
+     * Grr.
+     */
+    if (orig_rcpt != 0) {
+	msg_warn("%s: out-of-order original recipient <%.200s>",
+		 message->queue_id, start);
+	myfree(orig_rcpt);
+    }
 
     /*
      * Avoid clumsiness elsewhere in the program. When sending data across an
@@ -447,6 +488,8 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	message->errors_to = mystrdup("");
     if (message->return_receipt == 0)
 	message->return_receipt = mystrdup("");
+    if (message->encoding == 0)
+	message->encoding = mystrdup(MAIL_ATTR_ENC_NONE);
 
     /*
      * Clean up.
@@ -581,11 +624,8 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
     QMGR_TRANSPORT *transport = 0;
     QMGR_QUEUE *queue = 0;
     RESOLVE_REPLY reply;
-    const char *newloc;
     char   *at;
     char  **cpp;
-    char   *domain;
-    const char *junk;
     char   *nexthop;
     int     len;
 
@@ -617,12 +657,33 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * Resolve the destination to (transport, nexthop, address). The
 	 * result address may differ from the one specified by the sender.
 	 */
-	resolve_clnt_query(recipient->address, &reply);
-	if (reply.flags & RESOLVE_FLAG_ERROR) {
-	    qmgr_bounce_recipient(message, recipient,
-				  "bad address syntax: \"%s\"",
-				  recipient->address);
-	    continue;
+	if (var_sender_routing == 0) {
+	    resolve_clnt_query(recipient->address, &reply);
+	    if (reply.flags & RESOLVE_FLAG_FAIL) {
+		qmgr_defer_recipient(message, recipient,
+				     "address resolver failure");
+		continue;
+	    }
+	    if (reply.flags & RESOLVE_FLAG_ERROR) {
+		qmgr_bounce_recipient(message, recipient,
+				      "bad address syntax: \"%s\"",
+				      recipient->address);
+		continue;
+	    }
+	} else {
+	    resolve_clnt_query(message->sender, &reply);
+	    if (reply.flags & RESOLVE_FLAG_FAIL) {
+		qmgr_defer_recipient(message, recipient,
+				     "address resolver failure");
+		continue;
+	    }
+	    if (reply.flags & RESOLVE_FLAG_ERROR) {
+		qmgr_bounce_recipient(message, recipient,
+				      "bad address syntax: \"%s\"",
+				      message->sender);
+		continue;
+	    }
+	    vstring_strcpy(reply.recipient, recipient->address);
 	}
 	if (message->filter_xport) {
 	    vstring_strcpy(reply.transport, message->filter_xport);
@@ -634,6 +695,11 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	    if (!STREQ(recipient->address, STR(reply.recipient)))
 		UPDATE(recipient->address, STR(reply.recipient));
 	}
+	if (recipient->address[0] == 0) {
+	    qmgr_bounce_recipient(message, recipient,
+				  "null recipient address");
+	    continue;
+	}
 
 	/*
 	 * XXX The nexthop destination is also used as lookup key for the
@@ -641,46 +707,6 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * don't have multiple queues for the same site.
 	 */
 	lowercase(STR(reply.nexthop));
-
-	/*
-	 * Bounce recipients that have moved. We do it here instead of in the
-	 * local delivery agent. The benefit is that we can bounce mail for
-	 * virtual addresses, not just local addresses only, and that there
-	 * is no need to run a local delivery agent just for the sake of
-	 * relocation notices. The downside is that this table has no effect
-	 * on local alias expansion results, so that mail will have to make
-	 * almost an entire iteration through the mail system.
-	 */
-#define IGNORE_ADDR_EXTENSION	((char **) 0)
-
-	if (qmgr_relocated != 0) {
-	    if ((newloc = mail_addr_find(qmgr_relocated, recipient->address,
-					 IGNORE_ADDR_EXTENSION)) != 0) {
-		qmgr_bounce_recipient(message, recipient,
-				      "user has moved to %s", newloc);
-		continue;
-	    } else if (dict_errno != 0) {
-		qmgr_defer_recipient(message, recipient->address,
-				     "relocated map lookup failure");
-		continue;
-	    }
-	}
-
-	/*
-	 * Bounce mail to non-existent users in virtual domains.
-	 */
-	if (qmgr_virtual != 0
-	    && (at = strrchr(recipient->address, '@')) != 0
-	    && !resolve_local(at + 1)) {
-	    domain = lowercase(mystrdup(at + 1));
-	    junk = maps_find(qmgr_virtual, domain, 0);
-	    myfree(domain);
-	    if (junk) {
-		qmgr_bounce_recipient(message, recipient,
-				"unknown user: \"%s\"", recipient->address);
-		continue;
-	    }
-	}
 
 	/*
 	 * Bounce recipient addresses that start with `-'. External commands
@@ -741,13 +767,17 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * system can run without a local delivery agent. They'd still have
 	 * to configure something for mail directed to the local postmaster,
 	 * though, but that is an RFC requirement anyway.
+	 * 
+	 * XXX This lookup should be done in the resolver, and the mail should
+	 * be directed to a general-purpose null delivery agent.
 	 */
-	if (at == 0 || resolve_local(at + 1)) {
+	if (reply.flags & RESOLVE_CLASS_LOCAL) {
 	    if (strncasecmp(STR(reply.recipient), var_double_bounce_sender,
 			    len) == 0
 		&& !var_double_bounce_sender[len]) {
-		sent(message->queue_id, recipient->address,
-		     "none", message->arrival_time, "discarded");
+		sent(message->queue_id, recipient->orig_rcpt,
+		     recipient->address, "none", message->arrival_time,
+		     "discarded");
 		deliver_completed(message->fp, recipient->offset);
 		msg_warn("%s: undeliverable postmaster notification discarded",
 			 message->queue_id);
@@ -766,8 +796,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 		if (strcmp(*cpp, STR(reply.transport)) == 0)
 		    break;
 	    if (*cpp) {
-		qmgr_defer_recipient(message, recipient->address,
-				     "deferred transport");
+		qmgr_defer_recipient(message, recipient, "deferred transport");
 		continue;
 	    }
 	}
@@ -796,7 +825,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * This transport is dead. Defer delivery to this recipient.
 	 */
 	if ((transport->flags & QMGR_TRANSPORT_STAT_DEAD) != 0) {
-	    qmgr_defer_recipient(message, recipient->address, transport->reason);
+	    qmgr_defer_recipient(message, recipient, transport->reason);
 	    continue;
 	}
 
@@ -813,7 +842,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * This queue is dead. Defer delivery to this recipient.
 	 */
 	if (queue->window == 0) {
-	    qmgr_defer_recipient(message, recipient->address, queue->reason);
+	    qmgr_defer_recipient(message, recipient, queue->reason);
 	    continue;
 	}
 
@@ -880,7 +909,8 @@ static void qmgr_message_assign(QMGR_MESSAGE *message)
 	     * Add the recipient to the current entry and increase all those
 	     * recipient counters accordingly.
 	     */
-	    qmgr_rcpt_list_add(&entry->rcpt_list, recipient->offset, recipient->address);
+	    qmgr_rcpt_list_add(&entry->rcpt_list, recipient->offset,
+			       recipient->orig_rcpt, recipient->address);
 	    job->rcpt_count++;
 	    message->rcpt_count++;
 	    qmgr_recipient_count++;
@@ -932,6 +962,8 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
 	qmgr_job_free(job);
     myfree(message->queue_id);
     myfree(message->queue_name);
+    if (message->encoding)
+	myfree(message->encoding);
     if (message->sender)
 	myfree(message->sender);
     if (message->verp_delims)

@@ -26,7 +26,7 @@ update: ../../bin/$(PROG)
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
 
-test:	test1 test2
+tests:	test1 test2
 
 test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-ABC1.ref
 	./$(PROG) map.in
@@ -91,6 +91,7 @@ postmap.o: ../../include/readlline.h
 postmap.o: ../../include/stringops.h
 postmap.o: ../../include/split_at.h
 postmap.o: ../../include/vstring_vstream.h
+postmap.o: ../../include/set_eugid.h
 postmap.o: ../../include/mail_conf.h
 postmap.o: ../../include/mail_params.h
 postmap.o: ../../include/mkmap.h

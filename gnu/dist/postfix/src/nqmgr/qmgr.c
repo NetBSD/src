@@ -16,10 +16,6 @@
 /*	Mail addressed to the local \fBdouble-bounce\fR address is silently
 /*	discarded.  This stops potential loops caused by undeliverable
 /*	bounce notifications.
-/*
-/*	Mail addressed to a user listed in the optional \fBrelocated\fR
-/*	database is bounced with a "user has moved to \fInew_location\fR"
-/*	message. See \fBrelocated\fR(5) for a precise description.
 /* MAIL QUEUES
 /* .ad
 /* .fi
@@ -37,6 +33,9 @@
 /*	delivery attempts.
 /* .IP \fBcorrupt\fR
 /*	Unreadable or damaged queue files are moved here for inspection.
+/* .IP \fBhold\fR
+/*	Messages that are kept "on hold" are kept here until someone
+/*	sets them free.
 /* DELIVERY STATUS REPORTS
 /* .ad
 /* .fi
@@ -151,9 +150,6 @@
 /* .fi
 /* .IP \fBallow_min_user\fR
 /*	Do not bounce recipient addresses that begin with '-'.
-/* .IP \fBrelocated_maps\fR
-/*	Tables with contact information for users, hosts or domains
-/*	that no longer exist. See \fBrelocated\fR(5).
 /* .IP \fBqueue_directory\fR
 /*	Top-level directory of the Postfix queue.
 /* .SH "Active queue controls"
@@ -161,6 +157,9 @@
 /* .fi
 /*	In the text below, \fItransport\fR is the first field in a
 /*	\fBmaster.cf\fR entry.
+/* .IP \fBqmgr_clog_warn_time\fR
+/*	Minimal delay between warnings that a specific destination
+/*	is clogging up the active queue. Specify 0 to disable.
 /* .IP \fBqmgr_message_active_limit\fR
 /*	Limit the number of messages in the active queue.
 /* .IP \fBqmgr_message_recipient_limit\fR
@@ -258,7 +257,6 @@
 /*	Default values for the transport specific parameters described above.
 /* SEE ALSO
 /*	master(8), process manager
-/*	relocated(5), format of the "user has moved" table
 /*	syslogd(8) system logging
 /*	trivial-rewrite(8), address routing
 /* LICENSE
@@ -329,20 +327,17 @@ int     var_init_dest_concurrency;
 int     var_transport_retry_time;
 int     var_dest_con_limit;
 int     var_dest_rcpt_limit;
-char   *var_relocated_maps;
-char   *var_virtual_maps;
 char   *var_defer_xports;
 bool    var_allow_min_user;
 int     var_local_con_lim;
 int     var_local_rcpt_lim;
 int     var_proc_limit;
 bool    var_verp_bounce_off;
+bool    var_sender_routing;
+int     var_qmgr_clog_warn_time;
 
 static QMGR_SCAN *qmgr_incoming;
 static QMGR_SCAN *qmgr_deferred;
-
-MAPS   *qmgr_relocated;
-MAPS   *qmgr_virtual;
 
 /* qmgr_deferred_run_event - queue manager heartbeat */
 
@@ -484,22 +479,19 @@ static void pre_accept(char *unused_name, char **unused_argv)
     }
 }
 
-/* qmgr_pre_init - pre-jail initialization */
-
-static void qmgr_pre_init(char *unused_name, char **unused_argv)
-{
-    if (*var_relocated_maps)
-	qmgr_relocated = maps_create("relocated", var_relocated_maps,
-				     DICT_FLAG_LOCK);
-    if (*var_virtual_maps)
-	qmgr_virtual = maps_create("virtual", var_virtual_maps,
-				   DICT_FLAG_LOCK);
-}
-
 /* qmgr_post_init - post-jail initialization */
 
 static void qmgr_post_init(char *unused_name, char **unused_argv)
 {
+
+    /*
+     * Sanity check.
+     */
+    if (var_qmgr_rcpt_limit < var_qmgr_active_limit) {
+	msg_warn("%s is smaller than %s",
+		 VAR_QMGR_RCPT_LIMIT, VAR_QMGR_ACT_LIMIT);
+	var_qmgr_rcpt_limit = var_qmgr_active_limit;
+    }
 
     /*
      * This routine runs after the skeleton code has entered the chroot jail.
@@ -527,8 +519,6 @@ static void qmgr_post_init(char *unused_name, char **unused_argv)
 int     main(int argc, char **argv)
 {
     static CONFIG_STR_TABLE str_table[] = {
-	VAR_RELOCATED_MAPS, DEF_RELOCATED_MAPS, &var_relocated_maps, 0, 0,
-	VAR_VIRTUAL_MAPS, DEF_VIRTUAL_MAPS, &var_virtual_maps, 0, 0,
 	VAR_DEFER_XPORTS, DEF_DEFER_XPORTS, &var_defer_xports, 0, 0,
 	0,
     };
@@ -536,8 +526,9 @@ int     main(int argc, char **argv)
 	VAR_QUEUE_RUN_DELAY, DEF_QUEUE_RUN_DELAY, &var_queue_run_delay, 1, 0,
 	VAR_MIN_BACKOFF_TIME, DEF_MIN_BACKOFF_TIME, &var_min_backoff_time, 1, 0,
 	VAR_MAX_BACKOFF_TIME, DEF_MAX_BACKOFF_TIME, &var_max_backoff_time, 1, 0,
-	VAR_MAX_QUEUE_TIME, DEF_MAX_QUEUE_TIME, &var_max_queue_time, 1, 8640000,
+	VAR_MAX_QUEUE_TIME, DEF_MAX_QUEUE_TIME, &var_max_queue_time, 0, 8640000,
 	VAR_XPORT_RETRY_TIME, DEF_XPORT_RETRY_TIME, &var_transport_retry_time, 1, 0,
+	VAR_QMGR_CLOG_WARN_TIME, DEF_QMGR_CLOG_WARN_TIME, &var_qmgr_clog_warn_time, 0, 0,
 	0,
     };
     static CONFIG_INT_TABLE int_table[] = {
@@ -574,9 +565,9 @@ int     main(int argc, char **argv)
 			MAIL_SERVER_STR_TABLE, str_table,
 			MAIL_SERVER_BOOL_TABLE, bool_table,
 			MAIL_SERVER_TIME_TABLE, time_table,
-			MAIL_SERVER_PRE_INIT, qmgr_pre_init,
 			MAIL_SERVER_POST_INIT, qmgr_post_init,
 			MAIL_SERVER_LOOP, qmgr_loop,
 			MAIL_SERVER_PRE_ACCEPT, pre_accept,
+			MAIL_SERVER_SOLITARY,
 			0);
 }

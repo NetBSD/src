@@ -108,11 +108,17 @@
 #	addresses.
 # .IP \fBrecipient_delimiter\fR
 #	Delimiter that separates recipients from address extensions.
+# BUGS
+#	Regular expression alias lookup tables are allowed, but
+#	substitution of $1 etc. is forbidden because that would
+#	open a security loophole.
 # STANDARDS
 #	RFC 822 (ARPA Internet Text Messages)
 # SEE ALSO
 #	local(8) local delivery agent
-#	postalias(1) alias database management
+#	newaliases(1) alias database management
+#	regexp_table(5) POSIX regular expression table format
+#	pcre_table(5) Perl Compatible Regular Expression table format
 # LICENSE
 # .ad
 # .fi

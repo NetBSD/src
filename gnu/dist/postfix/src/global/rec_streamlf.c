@@ -25,7 +25,7 @@
 /*	This module implements record I/O on top of stream-lf files.
 /*
 /*	rec_streamlf_get() reads one record from the specified stream.
-/*	The result is not null-terminated and may contain embedded null
+/*	The result is null-terminated and may contain embedded null
 /*	characters.
 /*	The \fImaxlen\fR argument specifies an upper bound to the amount
 /*	of data read. The result is REC_TYPE_NORM when the record was
@@ -87,10 +87,13 @@ int     rec_streamlf_get(VSTREAM *stream, VSTRING *buf, int maxlen)
     while (n-- > 0) {
 	if ((ch = VSTREAM_GETC(stream)) == VSTREAM_EOF)
 	    return (VSTRING_LEN(buf) > 0 ? REC_TYPE_CONT : REC_TYPE_EOF);
-	if (ch == '\n')
+	if (ch == '\n') {
+	    VSTRING_TERMINATE(buf);
 	    return (REC_TYPE_NORM);
+	}
 	VSTRING_ADDCH(buf, ch);
     }
+    VSTRING_TERMINATE(buf);
     return (REC_TYPE_CONT);
 }
 

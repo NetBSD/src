@@ -38,11 +38,11 @@
 /*	These flags control the handling of data errors, and must be set
 /*	before processing the first message record.
 /* .IP CLEANUP_FLAG_BOUNCE
-/*	The cleanup server is responsible for returning undeliverable 
+/*	The cleanup server is responsible for returning undeliverable
 /*	mail (too many hops, message too large) to the sender.
 /* .IP CLEANUP_FLAG_FILTER
-/*	Enable header/body filtering. This should be enabled only with mail 
-/*	that enters Postfix, not with locally forwarded mail or with bounce 
+/*	Enable header/body filtering. This should be enabled only with mail
+/*	that enters Postfix, not with locally forwarded mail or with bounce
 /*	messages.
 /* .IP CLEANUP_FLAG_EXTRACT
 /*	Extract recipients from message headers when no recipients are
@@ -98,6 +98,7 @@
 #include <bounce.h>
 #include <mail_params.h>
 #include <mail_stream.h>
+#include <hold_message.h>
 
 /* Application-specific. */
 
@@ -123,9 +124,13 @@ CLEANUP_STATE *cleanup_open(void)
     /*
      * Open the queue file. Save the queue file name in a global variable, so
      * that the runtime error handler can clean up in case of problems.
+     * 
+     * XXX For now, a lot of detail is frozen that could be more useful if it
+     * were made configurable.
      */
-    state->handle = mail_stream_file(MAIL_QUEUE_INCOMING,
-				     MAIL_CLASS_PUBLIC, MAIL_SERVICE_QUEUE, 0);
+    state->queue_name = mystrdup(MAIL_QUEUE_INCOMING);
+    state->handle = mail_stream_file(state->queue_name,
+				   MAIL_CLASS_PUBLIC, var_queue_service, 0);
     state->dst = state->handle->stream;
     cleanup_path = mystrdup(VSTREAM_PATH(state->dst));
     state->queue_id = mystrdup(state->handle->id);
@@ -176,6 +181,7 @@ int     cleanup_flush(CLEANUP_STATE *state)
 {
     char   *junk;
     int     status;
+    char   *encoding;
 
     /*
      * Ignore recipient extraction alarms if (a) we did (not need to) extract
@@ -198,11 +204,30 @@ int     cleanup_flush(CLEANUP_STATE *state)
      * If there are no errors, be very picky about queue file write errors
      * because we are about to tell the sender that it can throw away its
      * copy of the message.
+     * 
+     * Optionally, place the message on hold, but only if the message was
+     * received successfully. This involves renaming the queue file before
+     * "finishing" it (or else the queue manager would open it for delivery)
+     * and updating our own idea of the queue file name for error recovery
+     * and for error reporting purposes.
      */
-    if (state->errs == 0) {
+    if (state->errs == 0 && (state->flags & CLEANUP_FLAG_DISCARD) == 0) {
+	if ((state->flags & CLEANUP_FLAG_HOLD) != 0) {
+	    if (hold_message(state->temp1, state->queue_name, state->queue_id) < 0)
+		msg_fatal("%s: problem putting message on hold: %m",
+			  state->queue_id);
+	    junk = cleanup_path;
+	    cleanup_path = mystrdup(vstring_str(state->temp1));
+	    myfree(junk);
+	    vstream_control(state->handle->stream,
+			    VSTREAM_CTL_PATH, cleanup_path,
+			    VSTREAM_CTL_END);
+	}
 	state->errs = mail_stream_finish(state->handle, (VSTRING *) 0);
     } else {
 	mail_stream_cleanup(state->handle);
+	if ((state->flags & CLEANUP_FLAG_DISCARD) != 0)
+	    state->errs = 0;
     }
     state->handle = 0;
     state->dst = 0;
@@ -231,11 +256,15 @@ int     cleanup_flush(CLEANUP_STATE *state)
 	if (CAN_BOUNCE()) {
 	    if (bounce_append(BOUNCE_FLAG_CLEAN, state->queue_id,
 			      state->recip ? state->recip : "unknown",
+			      state->recip ? state->recip : "unknown",
 			      "cleanup", state->time,
 			      "%s", state->reason ? state->reason :
 			      cleanup_strerror(state->errs)) == 0
-		&& bounce_flush(BOUNCE_FLAG_CLEAN, MAIL_QUEUE_INCOMING,
-				state->queue_id, state->sender) == 0) {
+		&& bounce_flush(BOUNCE_FLAG_CLEAN, state->queue_name,
+				state->queue_id,
+		(encoding = nvtable_find(state->attr, MAIL_ATTR_ENCODING)) ?
+				encoding : MAIL_ATTR_ENC_NONE,
+				state->sender) == 0) {
 		state->errs = 0;
 	    } else {
 		if (var_soft_bounce == 0) {
@@ -244,6 +273,9 @@ int     cleanup_flush(CLEANUP_STATE *state)
 		}
 	    }
 	}
+	if (REMOVE(cleanup_path))
+	    msg_warn("remove %s: %m", cleanup_path);
+    } else if ((state->flags & CLEANUP_FLAG_DISCARD) != 0) {
 	if (REMOVE(cleanup_path))
 	    msg_warn("remove %s: %m", cleanup_path);
     }

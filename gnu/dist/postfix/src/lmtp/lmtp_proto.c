@@ -117,6 +117,7 @@
 #include <off_cvt.h>
 #include <mark_corrupt.h>
 #include <quote_821_local.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
@@ -170,6 +171,15 @@ char   *xfer_states[LMTP_STATE_LAST] = {
     "sending RSET",
     "sending RSET",
     "sending QUIT",
+};
+
+char   *xfer_request[LMTP_STATE_LAST] = {
+    "MAIL FROM command",
+    "RCPT TO command",
+    "DATA command",
+    "end of DATA command",
+    "final RSET command",
+    "QUIT command",
 };
 
 /* lmtp_lhlo - perform initial handshake with LMTP server */
@@ -297,7 +307,6 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 #define REWRITE_ADDRESS(dst, src) do { \
 	  if (*(src)) { \
 	      quote_821_local(dst, src); \
-	      lowercase(vstring_str(dst)); \
 	  } else { \
 	      vstring_strcpy(dst, src); \
 	  } \
@@ -363,6 +372,15 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	    if (state->features & LMTP_FEATURE_SIZE)	/* RFC 1652 */
 		vstring_sprintf_append(next_command, " SIZE=%lu",
 				       request->data_size);
+	    if (state->features & LMTP_FEATURE_8BITMIME) {
+		if (strcmp(request->encoding, MAIL_ATTR_ENC_8BIT) == 0)
+		    vstring_strcat(next_command, " BODY=8BITMIME");
+		else if (strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) == 0)
+		    vstring_strcat(next_command, " BODY=7BIT");
+		else if (strcmp(request->encoding, MAIL_ATTR_ENC_NONE) != 0)
+		    msg_warn("%s: unknown content encoding: %s",
+			     request->queue_id, request->encoding);
+	    }
 	    next_state = LMTP_STATE_RCPT;
 	    break;
 
@@ -478,8 +496,10 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		case LMTP_STATE_MAIL:
 		    if (resp->code / 100 != 2) {
 			lmtp_mesg_fail(state, resp->code,
-				       "host %s said: %s", session->namaddr,
-				       translit(resp->str, "\n", " "));
+				       "host %s said: %s (in reply to %s)",
+				       session->namaddr,
+				       translit(resp->str, "\n", " "),
+				       xfer_request[LMTP_STATE_MAIL]);
 			mail_from_rejected = 1;
 		    }
 		    recv_state = LMTP_STATE_RCPT;
@@ -512,8 +532,10 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 			    survivors[nrcpt++] = recv_rcpt;
 			} else {
 			    lmtp_rcpt_fail(state, resp->code, rcpt,
-				       "host %s said: %s", session->namaddr,
-					   translit(resp->str, "\n", " "));
+					"host %s said: %s (in reply to %s)",
+					   session->namaddr,
+					   translit(resp->str, "\n", " "),
+					   xfer_request[LMTP_STATE_RCPT]);
 			    rcpt->offset = 0;	/* in case deferred */
 			}
 		    }
@@ -530,8 +552,10 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		    if (resp->code / 100 != 3) {
 			if (nrcpt > 0)
 			    lmtp_mesg_fail(state, resp->code,
-				       "host %s said: %s", session->namaddr,
-					   translit(resp->str, "\n", " "));
+					"host %s said: %s (in reply to %s)",
+					   session->namaddr,
+					   translit(resp->str, "\n", " "),
+					   xfer_request[LMTP_STATE_DATA]);
 			nrcpt = -1;
 		    }
 		    recv_state = LMTP_STATE_DOT;
@@ -551,17 +575,19 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 			rcpt = request->rcpt_list.info + survivors[recv_dot];
 			if (resp->code / 100 == 2) {
 			    if (rcpt->offset) {
-				sent(request->queue_id, rcpt->address,
-				     session->namaddr, request->arrival_time,
-				     "%s", resp->str);
+				sent(request->queue_id, rcpt->orig_addr,
+				     rcpt->address, session->namaddr,
+				     request->arrival_time, "%s", resp->str);
 				if (request->flags & DEL_REQ_FLAG_SUCCESS)
 				    deliver_completed(state->src, rcpt->offset);
 				rcpt->offset = 0;
 			    }
 			} else {
 			    lmtp_rcpt_fail(state, resp->code, rcpt,
-				       "host %s said: %s", session->namaddr,
-					   translit(resp->str, "\n", " "));
+					"host %s said: %s (in reply to %s)",
+					   session->namaddr,
+					   translit(resp->str, "\n", " "),
+					   xfer_request[LMTP_STATE_DOT]);
 			    rcpt->offset = 0;	/* in case deferred */
 			}
 		    }

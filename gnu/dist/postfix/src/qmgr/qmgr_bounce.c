@@ -63,7 +63,7 @@ void    qmgr_bounce_recipient(QMGR_MESSAGE *message, QMGR_RCPT *recipient,
 
     va_start(ap, format);
     status = vbounce_append(BOUNCE_FLAG_KEEP, message->queue_id,
-			    recipient->address, "none",
+			    recipient->orig_rcpt, recipient->address, "none",
 			    message->arrival_time, format, ap);
     va_end(ap);
 

@@ -30,6 +30,11 @@
 /*	void	bounce_log_rewind(bp)
 /*	BOUNCE_LOG *bp;
 /*
+/*	BOUNCE_LOG *bounce_log_forge(recipient, dsn, why)
+/*	const char *recipient;
+/*	const char *status;
+/*	const char *why;
+/*
 /*	void	bounce_log_close(bp)
 /*	BOUNCE_LOG *bp;
 /* DESCRIPTION
@@ -56,6 +61,11 @@
 /*	in an open bounce or defer logfile (skipping over recipients that
 /*	are marked as done). The result is 0 in case of success, -1 in case
 /*	of problems.
+/*
+/*	bounce_log_forge() forges one recipient status record
+/*	without actually accessing a logfile. 
+/*	The result cannot be used for any logfile access operation
+/*	and must be disposed of by passing it to bounce_log_close().
 /*
 /*	bounce_log_close() closes an open bounce or defer logfile and
 /*	releases memory for the specified handle. The result is non-zero
@@ -117,12 +127,32 @@
 
 #define STR(x)	vstring_str(x)
 
+/* bounce_log_init - initialize structure */
+
+static BOUNCE_LOG *bounce_log_init(VSTREAM *fp,
+				           VSTRING *buf,
+				           const char *recipient,
+				           const char *status,
+				           const char *text,
+				           long offset)
+{
+    BOUNCE_LOG *bp;
+
+    bp = (BOUNCE_LOG *) mymalloc(sizeof(*bp));
+    bp->fp = fp;
+    bp->buf = buf;
+    bp->recipient = recipient;
+    bp->status = status;
+    bp->text = text;
+    bp->offset = offset;
+    return (bp);
+}
+
 /* bounce_log_open - open bounce read stream */
 
 BOUNCE_LOG *bounce_log_open(const char *queue_name, const char *queue_id,
 			            int flags, int mode)
 {
-    BOUNCE_LOG *bp;
     VSTREAM *fp;
 
 #define STREQ(x,y)	(strcmp((x),(y)) == 0)
@@ -135,12 +165,13 @@ BOUNCE_LOG *bounce_log_open(const char *queue_name, const char *queue_id,
     if ((fp = mail_queue_open(queue_name, queue_id, flags, mode)) == 0) {
 	return (0);
     } else {
-	bp = (BOUNCE_LOG *) mymalloc(sizeof(*bp));
-	bp->fp = fp;
-	bp->buf = vstring_alloc(100);
-	bp->status = STREQ(queue_name, MAIL_QUEUE_DEFER) ? "4.0.0" : "5.0.0";
-	bp->offset = 0;
-	return (bp);
+	return (bounce_log_init(fp,		/* stream */
+				vstring_alloc(100),	/* buffer */
+				(const char *) 0,	/* recipient */
+				STREQ(queue_name, MAIL_QUEUE_DEFER) ?
+				"4.0.0" : "5.0.0",	/* status */
+				(const char *) 0,	/* text */
+				0));		/* offset */
     }
 }
 
@@ -214,14 +245,27 @@ BOUNCE_LOG *bounce_log_delrcpt(BOUNCE_LOG *bp)
     return (bp);
 }
 
+/* bounce_log_forge - forge one recipient status record */
+
+BOUNCE_LOG *bounce_log_forge(const char *recipient, const char *status,
+			             const char *text)
+{
+    return (bounce_log_init((VSTREAM *) 0, (VSTRING *) 0,
+			    recipient, status, text, 0));
+}
+
 /* bounce_log_close - close bounce reader stream */
 
 int     bounce_log_close(BOUNCE_LOG *bp)
 {
     int     ret;
 
-    ret = vstream_fclose(bp->fp);
-    vstring_free(bp->buf);
+    if (bp->fp)
+	ret = vstream_fclose(bp->fp);
+    else
+	ret = 0;
+    if (bp->buf)
+	vstring_free(bp->buf);
     myfree((char *) bp);
     return (ret);
 }

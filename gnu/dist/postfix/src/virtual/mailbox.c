@@ -60,6 +60,7 @@
 #include <defer.h>
 #include <sent.h>
 #include <mail_params.h>
+#include <virtual8_maps.h>
 
 #ifndef EDQUOT
 #define EDQUOT EFBIG
@@ -172,8 +173,7 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      * Look up the mailbox location. Bounce if not found, defer in case of
      * trouble.
      */
-    mailbox_res = maps_find(virtual_mailbox_maps, state.msg_attr.user,
-			    DICT_FLAG_FIXED);
+    mailbox_res = virtual8_maps_find(virtual_mailbox_maps, state.msg_attr.user);
     if (mailbox_res == 0) {
 	if (dict_errno == 0)
 	    return (NO);
@@ -191,8 +191,8 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     /*
      * Look up the mailbox owner rights. Defer in case of trouble.
      */
-    if ((uid_res = maps_find(virtual_uid_maps, state.msg_attr.user,
-			     DICT_FLAG_FIXED)) == 0) {
+    uid_res = virtual8_maps_find(virtual_uid_maps, state.msg_attr.user);
+    if (uid_res == 0) {
 	*statusp = defer_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
 				"recipient %s: uid not found in %s",
 			      state.msg_attr.user, virtual_uid_maps->title);
@@ -209,8 +209,8 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     /*
      * Look up the mailbox group rights. Defer in case of trouble.
      */
-    if ((gid_res = maps_find(virtual_gid_maps, state.msg_attr.user,
-			     DICT_FLAG_FIXED)) == 0) {
+    gid_res = virtual8_maps_find(virtual_gid_maps, state.msg_attr.user);
+    if (gid_res == 0) {
 	*statusp = defer_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
 				"recipient %s: gid not found in %s",
 			      state.msg_attr.user, virtual_gid_maps->title);
@@ -230,7 +230,7 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 		 (unsigned) usr_attr.uid, (unsigned) usr_attr.gid);
 
     /*
-     * Deliver to mailbox or to external command.
+     * Deliver to mailbox or to maildir.
      */
 #define LAST_CHAR(s) (s[strlen(s) - 1])
 

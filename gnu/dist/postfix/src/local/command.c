@@ -120,7 +120,8 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
     /*
      * Deliver.
      */
-    copy_flags = MAIL_COPY_FROM | MAIL_COPY_RETURN_PATH;
+    copy_flags = MAIL_COPY_FROM | MAIL_COPY_RETURN_PATH
+	| MAIL_COPY_ORIG_RCPT;
     if (local_deliver_hdr_mask & DELIVER_HDR_CMD)
 	copy_flags |= MAIL_COPY_DELIVERED;
 
@@ -168,6 +169,7 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
 			      PIPE_CMD_COMMAND, command,
 			      PIPE_CMD_COPY_FLAGS, copy_flags,
 			      PIPE_CMD_SENDER, state.msg_attr.sender,
+			      PIPE_CMD_ORIG_RCPT, state.msg_attr.orig_rcpt,
 			      PIPE_CMD_DELIVERED, state.msg_attr.delivered,
 			      PIPE_CMD_TIME_LIMIT, var_command_maxtime,
 			      PIPE_CMD_ENV, env->argv,

@@ -170,7 +170,7 @@ check)
 	}
 
 	find `ls -d $queue_directory/* | \
-	    egrep '/(incoming|active|defer|deferred|bounce|saved|corrupt|public|private|flush)$'` \
+	    egrep '/(incoming|active|defer|deferred|bounce|hold|corrupt|public|private|flush)$'` \
 	    ! \( -type p -o -type s \) ! -user $mail_owner \
 		-exec $WARN not owned by $mail_owner: {} \;
 

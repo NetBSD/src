@@ -81,7 +81,7 @@
 /* Global library. */
 
 #include <mail_params.h>
-#include <split_addr.h>
+#include <strip_addr.h>
 #include <mail_addr_find.h>
 #include <resolve_local.h>
 
@@ -97,7 +97,6 @@ const char *mail_addr_find(MAPS *path, const char *address, char **extp)
     const char *result;
     char   *ratsign = 0;
     char   *full_key;
-    char   *extent;
     char   *bare_key;
     char   *saved_ext;
 
@@ -108,21 +107,7 @@ const char *mail_addr_find(MAPS *path, const char *address, char **extp)
     if (*var_rcpt_delim == 0) {
 	bare_key = saved_ext = 0;
     } else {
-	bare_key = mystrdup(full_key);
-	if ((ratsign = strrchr(bare_key, '@')) != 0)
-	    *ratsign = 0;
-	if ((extent = split_addr(bare_key, *var_rcpt_delim)) != 0) {
-	    extent -= 1;
-	    *extent = *var_rcpt_delim;		/* XXX this is unclean */
-	    saved_ext = mystrdup(extent);	/* XXX maybe omit delimiter ? */
-	    if (ratsign != 0) {
-		*ratsign = '@';
-		memmove(extent, ratsign, strlen(ratsign) + 1);
-	    }
-	} else {
-	    myfree(bare_key);
-	    bare_key = saved_ext = 0;
-	}
+	bare_key = strip_addr(full_key, &saved_ext, *var_rcpt_delim);
     }
 
     /*

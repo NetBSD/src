@@ -407,7 +407,7 @@ static int dict_eval_action(int type, VSTRING *buf, char *ptr)
     char   *myname = "dict_eval_action";
     const char *pp;
 
-    if (msg_verbose)
+    if (msg_verbose > 1)
 	msg_info("%s: type %s buf %s context %s \"%s\" %s",
 		 myname, type == MAC_PARSE_VARNAME ? "variable" : "literal",
 		 STR(buf), ctxt->dict_name, STR(ctxt->buf),

@@ -9,6 +9,7 @@
 /*	typedef struct {
 /* .in +4
 /*		long    offset;
+/*		char   *orig_addr;
 /*		char   *address;
 /* .in -4
 /*	} RECIPIENT;
@@ -23,9 +24,10 @@
 /*	void	recipient_list_init(list)
 /*	RECIPIENT_LIST *list;
 /*
-/*	void	recipient_list_add(list, offset, recipient)
+/*	void	recipient_list_add(list, offset, orig_rcpt, recipient)
 /*	RECIPIENT_LIST *list;
 /*	long	offset;
+/*	const char *orig_rcpt;
 /*	const char *recipient;
 /*
 /*	void	recipient_list_free(list)
@@ -90,13 +92,15 @@ void    recipient_list_init(RECIPIENT_LIST *list)
 
 /* recipient_list_add - add rcpt to list */
 
-void    recipient_list_add(RECIPIENT_LIST *list, long offset, const char *rcpt)
+void    recipient_list_add(RECIPIENT_LIST *list, long offset,
+			           const char *orig_rcpt, const char *rcpt)
 {
     if (list->len >= list->avail) {
 	list->avail *= 2;
 	list->info = (RECIPIENT *)
 	    myrealloc((char *) list->info, list->avail * sizeof(RECIPIENT));
     }
+    list->info[list->len].orig_addr = mystrdup(orig_rcpt);
     list->info[list->len].address = mystrdup(rcpt);
     list->info[list->len].offset = offset;
     list->len++;
@@ -108,7 +112,9 @@ void    recipient_list_free(RECIPIENT_LIST *list)
 {
     RECIPIENT *rcpt;
 
-    for (rcpt = list->info; rcpt < list->info + list->len; rcpt++)
+    for (rcpt = list->info; rcpt < list->info + list->len; rcpt++) {
+	myfree(rcpt->orig_addr);
 	myfree(rcpt->address);
+    }
     myfree((char *) list->info);
 }

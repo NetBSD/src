@@ -33,6 +33,8 @@ Makefile: Makefile.in
 
 test:	$(TESTPROG)
 
+tests:	test
+
 update: ../../bin/$(PROG) $(SAMPLES)
 
 ../../bin/$(PROG): $(PROG)

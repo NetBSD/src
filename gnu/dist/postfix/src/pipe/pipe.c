@@ -40,7 +40,7 @@
 /* .fi
 /*	The external command attributes are given in the \fBmaster.cf\fR
 /*	file at the end of a service definition.  The syntax is as follows:
-/* .IP "\fBflags=BFRhqu.>\fR (optional)"
+/* .IP "\fBflags=BDFORhqu.>\fR (optional)"
 /*	Optional message processing flags. By default, a message is
 /*	copied unchanged.
 /* .RS
@@ -48,10 +48,18 @@
 /*	Append a blank line at the end of each message. This is required
 /*	by some mail user agents that recognize "\fBFrom \fR" lines only
 /*	when preceded by a blank line.
+/* .IP \fBD\fR
+/*	Prepend a "\fBDelivered-To: \fIrecipient\fR" message header with the
+/*	envelope recipient address. Note: for this to work, the
+/*	\fItransport\fB_destination_recipient_limit\fR must be 1.
 /* .IP \fBF\fR
 /*	Prepend a "\fBFrom \fIsender time_stamp\fR" envelope header to
 /*	the message content.
 /*	This is expected by, for example, \fBUUCP\fR software.
+/* .IP \fBO\fR
+/*	Prepend an "\fBX-Original-To: \fIrecipient\fR" message header
+/*	with the recipient address as given to Postfix. Note: for this to
+/*	work, the \fItransport\fB_destination_recipient_limit\fR must be 1.
 /* .IP \fBR\fR
 /*	Prepend a \fBReturn-Path:\fR message header with the envelope sender
 /*	address.
@@ -91,7 +99,7 @@
 /*	mail system owner. If \fIgroupname\fR is specified, the
 /*	corresponding group ID is used instead of the group ID of
 /*	\fIusername\fR.
-/* .IP "\fBeol=string\fR (default: \fB\en\fR)"
+/* .IP "\fBeol=string\fR (optional, default: \fB\en\fR)"
 /*	The output record delimiter. Typically one would use either
 /*	\fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
 /*	sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
@@ -207,7 +215,7 @@
 /*	Limit the time for delivery to external command, for delivery via
 /*	the named \fBtransport\fR. The default limit is taken from the
 /*	\fBcommand_time_limit\fR parameter.
-/*	The limit is enforced by the Postfix queue manager.
+/*	The limit is enforced by the pipe delivery agent.
 /* SEE ALSO
 /*	bounce(8) non-delivery status reports
 /*	master(8) process manager
@@ -568,17 +576,23 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
 		case 'B':
 		    attr->flags |= MAIL_COPY_BLANK;
 		    break;
+		case 'D':
+		    attr->flags |= MAIL_COPY_DELIVERED;
+		    break;
 		case 'F':
 		    attr->flags |= MAIL_COPY_FROM;
+		    break;
+		case 'O':
+		    attr->flags |= MAIL_COPY_ORIG_RCPT;
+		    break;
+		case 'R':
+		    attr->flags |= MAIL_COPY_RETURN_PATH;
 		    break;
 		case '.':
 		    attr->flags |= MAIL_COPY_DOT;
 		    break;
 		case '>':
 		    attr->flags |= MAIL_COPY_QUOTE;
-		    break;
-		case 'R':
-		    attr->flags |= MAIL_COPY_RETURN_PATH;
 		    break;
 		case 'h':
 		    attr->flags |= PIPE_OPT_FOLD_HOST;
@@ -692,7 +706,7 @@ static int eval_command_status(int command_status, char *service,
     case PIPE_STAT_OK:
 	for (n = 0; n < request->rcpt_list.len; n++) {
 	    rcpt = request->rcpt_list.info + n;
-	    sent(request->queue_id, rcpt->address, service,
+	    sent(request->queue_id, rcpt->orig_addr, rcpt->address, service,
 		 request->arrival_time, "%s", request->nexthop);
 	    if (request->flags & DEL_REQ_FLAG_SUCCESS)
 		deliver_completed(src, rcpt->offset);
@@ -702,8 +716,9 @@ static int eval_command_status(int command_status, char *service,
 	for (n = 0; n < request->rcpt_list.len; n++) {
 	    rcpt = request->rcpt_list.info + n;
 	    status = bounce_append(BOUNCE_FLAG_KEEP,
-				   request->queue_id, rcpt->address,
-				 service, request->arrival_time, "%s", why);
+				   request->queue_id, rcpt->orig_addr,
+				   rcpt->address, service,
+				   request->arrival_time, "%s", why);
 	    if (status == 0)
 		deliver_completed(src, rcpt->offset);
 	    result |= status;
@@ -713,8 +728,9 @@ static int eval_command_status(int command_status, char *service,
 	for (n = 0; n < request->rcpt_list.len; n++) {
 	    rcpt = request->rcpt_list.info + n;
 	    result |= defer_append(BOUNCE_FLAG_KEEP,
-				   request->queue_id, rcpt->address,
-				 service, request->arrival_time, "%s", why);
+				   request->queue_id, rcpt->orig_addr,
+				   rcpt->address, service,
+				   request->arrival_time, "%s", why);
 	}
 	break;
     case PIPE_STAT_CORRUPT:
@@ -782,6 +798,32 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     }
 
     /*
+     * The D flag cannot be specified for multi-recipient deliveries.
+     */
+    if ((attr.flags & MAIL_COPY_DELIVERED) && (rcpt_list->len > 1)) {
+	deliver_status = eval_command_status(PIPE_STAT_DEFER, service,
+					     request, request->fp,
+					     "mailer configuration error");
+	msg_warn("pipe flag `D' requires %s_destination_recipient_limit = 1",
+		 service);
+	DELIVER_MSG_CLEANUP();
+	return (deliver_status);
+    }
+
+    /*
+     * The O flag cannot be specified for multi-recipient deliveries.
+     */
+    if ((attr.flags & MAIL_COPY_ORIG_RCPT) && (rcpt_list->len > 1)) {
+	deliver_status = eval_command_status(PIPE_STAT_DEFER, service,
+					     request, request->fp,
+					     "mailer configuration error");
+	msg_warn("pipe flag `O' requires %s_destination_recipient_limit = 1",
+		 service);
+	DELIVER_MSG_CLEANUP();
+	return (deliver_status);
+    }
+
+    /*
      * Check that this agent accepts messages this large.
      */
     if (attr.size_limit != 0 && request->data_size > attr.size_limit) {
@@ -831,6 +873,8 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 				  PIPE_CMD_TIME_LIMIT, conf.time_limit,
 				  PIPE_CMD_EOL, STR(attr.eol),
 				  PIPE_CMD_EXPORT, export_env->argv,
+			   PIPE_CMD_ORIG_RCPT, rcpt_list->info[0].orig_addr,
+			     PIPE_CMD_DELIVERED, rcpt_list->info[0].address,
 				  PIPE_CMD_END);
     argv_free(export_env);
 

@@ -237,6 +237,7 @@ QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *site)
     QMGR_LIST_INIT(queue->todo);
     QMGR_LIST_INIT(queue->busy);
     queue->reason = 0;
+    queue->clog_time_to_warn = 0;
     queue->blocker_tag = 0;
     QMGR_LIST_APPEND(transport->queue_list, queue, peers);
     htable_enter(transport->queue_byname, site, (char *) queue);

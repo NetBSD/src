@@ -88,6 +88,7 @@
 
 #include <msg.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <vstream.h>
 #include <msg_vstream.h>
 
@@ -96,7 +97,7 @@ static void usage(char *progname)
     msg_fatal("usage: %s [-v] pattern_list hostname address", progname);
 }
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     NAMADR_LIST *list;
     char   *host;

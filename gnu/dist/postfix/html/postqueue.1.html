@@ -30,9 +30,24 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
               command,  by contacting the Postfix <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon.
 
        <b>-p</b>     Produce a traditional sendmail-style queue listing.
-
               This  option  implements the traditional <b>mailq</b> com-
               mand, by contacting the Postfix <a href="showq.8.html"><b>showq</b>(8)</a> daemon.
+
+              Each queue entry shows the queue file  ID,  message
+              size, arrival time, sender, and the recipients that
+              still need to be delivered.  If mail could  not  be
+              delivered  upon  the  last  attempt, the reason for
+              failure is shown. This mode of operation is  imple-
+              mented  by  executing the <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command. The
+              queue ID string is followed by an  optional  status
+              character:
+
+              <b>*</b>      The message is in the <b>active</b> queue, i.e. the
+                     message is selected for delivery.
+
+              <b>!</b>      The message is in the <b>hold</b>  queue,  i.e.  no
+                     further  delivery attempt will be made until
+                     the mail is taken off hold.
 
        <b>-s</b> <i>site</i>
               Schedule immediate delivery of  all  mail  that  is
@@ -69,7 +84,7 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
               <b>alternate</b><i>_</i><b>config</b><i>_</i><b>directories</b> configuration  parame-
               ter value.
 
-              Only the super-user is allowed to specify arbitrary
+              Only  the superuser is allowed to specify arbitrary
               directory names.
 
 <b>FILES</b>

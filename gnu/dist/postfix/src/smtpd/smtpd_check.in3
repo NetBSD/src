@@ -9,7 +9,7 @@ canonical_maps tcp:localhost:200
 recipient_restrictions permit
 rcpt no.such.user@[127.0.0.1]
 #
-virtual_maps tcp:localhost:100
+virtual_alias_maps tcp:localhost:100
 #
 recipient_restrictions permit_mx_backup
 rcpt wietse@nowhere1.com

@@ -22,10 +22,6 @@ manager.
 Mail addressed to the local \fBdouble-bounce\fR address is silently
 discarded.  This stops potential loops caused by undeliverable
 bounce notifications.
-
-Mail addressed to a user listed in the optional \fBrelocated\fR
-database is bounced with a "user has moved to \fInew_location\fR"
-message. See \fBrelocated\fR(5) for a precise description.
 .SH MAIL QUEUES
 .na
 .nf
@@ -45,6 +41,9 @@ manager implements exponential backoff by doubling the time between
 delivery attempts.
 .IP \fBcorrupt\fR
 Unreadable or damaged queue files are moved here for inspection.
+.IP \fBhold\fR
+Messages that are kept "on hold" are kept here until someone
+sets them free.
 .SH DELIVERY STATUS REPORTS
 .na
 .nf
@@ -171,14 +170,14 @@ a configuration change.
 .fi
 .IP \fBallow_min_user\fR
 Do not bounce recipient addresses that begin with '-'.
-.IP \fBrelocated_maps\fR
-Tables with contact information for users, hosts or domains
-that no longer exist. See \fBrelocated\fR(5).
 .IP \fBqueue_directory\fR
 Top-level directory of the Postfix queue.
 .SH "Active queue controls"
 .ad
 .fi
+.IP \fBqmgr_clog_warn_time\fR
+Minimal delay between warnings that a specific destination
+is clogging up the active queue. Specify 0 to disable.
 .IP \fBqmgr_message_active_limit\fR
 Limit the number of messages in the active queue.
 .IP \fBqmgr_message_recipient_limit\fR
@@ -223,15 +222,6 @@ but large mailing list delivery performance suffers. In the worst
 case, recipients near the beginning of a large list receive a burst
 of messages immediately, while recipients near the end of that list
 receive that same burst of messages a whole day later.
-.IP "\fBqmgr_site_hog_factor\fR (valid range: 10..100)"
-The percentage of delivery resources that a busy mail system will
-use up for delivery to a single site.
-With 100%, mail is delivered in first-in, first-out order, so that
-a burst of mail for one site can block mail for other destinations.
-With less than 100%, the excess mail is deferred. The deferred mail
-is delivered in little bursts, the remainder of the backlog being
-deferred again, with a lot of I/O activity happening as Postfix
-searches the deferred queue for deliverable mail.
 .IP \fBinitial_destination_concurrency\fR
 Initial per-destination concurrency level for parallel delivery
 to the same destination.
@@ -253,7 +243,6 @@ named message \fItransport\fR.
 .na
 .nf
 master(8), process manager
-relocated(5), format of the "user has moved" table
 syslogd(8) system logging
 trivial-rewrite(8), address routing
 .SH LICENSE

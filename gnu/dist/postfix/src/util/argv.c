@@ -30,10 +30,10 @@
 /* .PP
 /*	argv_alloc() returns an empty string array of the requested
 /*	length. The result is ready for use by argv_add(). The array
-/*	is not null terminated.
+/*	is null terminated.
 /*
 /*	argv_add() copies zero or more strings and adds them to the
-/*	specified string array. The array is not null terminated.
+/*	specified string array. The array is null terminated.
 /*	Terminate the argument list with a null pointer. The manifest
 /*	constant ARGV_END provides a convenient notation for this.
 /*
@@ -119,6 +119,7 @@ void    argv_add(ARGV *argvp,...)
 	argvp->argv[argvp->argc++] = mystrdup(arg);
     }
     va_end(ap);
+    argvp->argv[argvp->argc] = 0;
 }
 
 /* argv_terminate - terminate string array */

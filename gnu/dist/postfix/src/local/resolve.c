@@ -62,6 +62,7 @@
 #include <rewrite_clnt.h>
 #include <tok822.h>
 #include <mail_params.h>
+#include <defer.h>
 
 /* Application-specific. */
 
@@ -114,34 +115,50 @@ int     deliver_resolve_tree(LOCAL_STATE state, USER_ATTR usr_attr, TOK822 *addr
     tok822_resolve(addr, &reply);
 
     /*
-     * Splice in the optional unmatched address extension.
+     * First, a healthy portion of error handling.
      */
-    if (state.msg_attr.unmatched) {
-	if ((ratsign = strrchr(STR(reply.recipient), '@')) == 0) {
-	    VSTRING_ADDCH(reply.recipient, *var_rcpt_delim);
-	    vstring_strcat(reply.recipient, state.msg_attr.unmatched);
-	} else {
-	    ext_len = strlen(state.msg_attr.unmatched);
-	    VSTRING_SPACE(reply.recipient, ext_len + 2);
-	    if ((ratsign = strrchr(STR(reply.recipient), '@')) == 0)
-		msg_panic("%s: recipient @ botch", myname);
-	    memmove(ratsign + ext_len + 1, ratsign, strlen(ratsign) + 1);
-	    *ratsign = *var_rcpt_delim;
-	    memcpy(ratsign + 1, state.msg_attr.unmatched, ext_len);
-	    VSTRING_SKIP(reply.recipient);
-	}
-    }
-    state.msg_attr.recipient = STR(reply.recipient);
-
-    /*
-     * Delivery to a local or non-local address. For a while there was some
-     * ugly code to force local recursive alias expansions on a host with no
-     * authority over the local domain, but that code was just too unclean.
-     */
-    if (strcmp(state.msg_attr.relay, STR(reply.transport)) == 0) {
-	status = deliver_recipient(state, usr_attr);
+    if (reply.flags & RESOLVE_FLAG_FAIL) {
+	status = defer_append(BOUNCE_FLAG_KEEP,	/* XXX */
+			      BOUNCE_ATTR(state.msg_attr),
+			      "address resolver failure");
+    } else if (reply.flags & RESOLVE_FLAG_ERROR) {
+	status = bounce_append(BOUNCE_FLAG_KEEP,/* XXX */
+			       BOUNCE_ATTR(state.msg_attr),
+			       "bad recipient address syntax: %s",
+			       STR(reply.recipient));
     } else {
-	status = deliver_indirect(state);
+
+	/*
+	 * Splice in the optional unmatched address extension.
+	 */
+	if (state.msg_attr.unmatched) {
+	    if ((ratsign = strrchr(STR(reply.recipient), '@')) == 0) {
+		VSTRING_ADDCH(reply.recipient, *var_rcpt_delim);
+		vstring_strcat(reply.recipient, state.msg_attr.unmatched);
+	    } else {
+		ext_len = strlen(state.msg_attr.unmatched);
+		VSTRING_SPACE(reply.recipient, ext_len + 2);
+		if ((ratsign = strrchr(STR(reply.recipient), '@')) == 0)
+		    msg_panic("%s: recipient @ botch", myname);
+		memmove(ratsign + ext_len + 1, ratsign, strlen(ratsign) + 1);
+		*ratsign = *var_rcpt_delim;
+		memcpy(ratsign + 1, state.msg_attr.unmatched, ext_len);
+		VSTRING_SKIP(reply.recipient);
+	    }
+	}
+	state.msg_attr.recipient = STR(reply.recipient);
+
+	/*
+	 * Delivery to a local or non-local address. For a while there was
+	 * some ugly code to force local recursive alias expansions on a host
+	 * with no authority over the local domain, but that code was just
+	 * too unclean.
+	 */
+	if (strcmp(state.msg_attr.relay, STR(reply.transport)) == 0) {
+	    status = deliver_recipient(state, usr_attr);
+	} else {
+	    status = deliver_indirect(state);
+	}
     }
 
     /*

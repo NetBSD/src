@@ -47,9 +47,9 @@ $queue_directory/corrupt:d:$mail_owner:-:700:ucr
 $queue_directory/defer:d:$mail_owner:-:700:ucr
 $queue_directory/deferred:d:$mail_owner:-:700:ucr
 $queue_directory/flush:d:$mail_owner:-:700:ucr
+$queue_directory/hold:d:$mail_owner:-:700:ucr
 $queue_directory/incoming:d:$mail_owner:-:700:ucr
 $queue_directory/private:d:$mail_owner:-:700:uc
-$queue_directory/saved:d:$mail_owner:-:700:ucr
 $queue_directory/maildrop:d:$mail_owner:$setgid_group:730:uc
 $queue_directory/public:d:$mail_owner:$setgid_group:710:uc
 $queue_directory/pid:d:root:-:755:uc
@@ -151,6 +151,7 @@ $sample_directory/sample-flush.cf:f:root:-:644
 $sample_directory/sample-ldap.cf:f:root:-:644
 $sample_directory/sample-lmtp.cf:f:root:-:644
 $sample_directory/sample-local.cf:f:root:-:644
+$sample_directory/sample-mime.cf:f:root:-:644
 $sample_directory/sample-misc.cf:f:root:-:644
 $sample_directory/sample-pcre-access.cf:f:root:-:644
 $sample_directory/sample-pcre-body.cf:f:root:-:644
@@ -167,6 +168,7 @@ $sample_directory/sample-smtp.cf:f:root:-:644
 $sample_directory/sample-smtpd.cf:f:root:-:644
 $sample_directory/sample-transport.cf:f:root:-:644
 $sample_directory/sample-virtual.cf:f:root:-:644
+$readme_directory/ADDRESS_CLASS_README:f:root:-:644
 $readme_directory/DB_README:f:root:-:644
 $readme_directory/DEBUG_README:f:root:-:644
 $readme_directory/ETRN_README:f:root:-:644
@@ -175,12 +177,15 @@ $readme_directory/INSTALL:f:root:-:644
 $readme_directory/LDAP_README:f:root:-:644
 $readme_directory/LINUX_README:f:root:-:644
 $readme_directory/LMTP_README:f:root:-:644
+$readme_directory/LOCAL_RECIPIENT_README:f:root:-:644
 $readme_directory/MACOSX_README:f:root:-:644
+$readme_directory/MAILDROP_README:f:root:-:644
 $readme_directory/MYSQL_README:f:root:-:644
 $readme_directory/NFS_README:f:root:-:644
 $readme_directory/PACKAGE_README:f:root:-:644
 $readme_directory/PCRE_README:f:root:-:644
 $readme_directory/QMQP_README:f:root:-:644
+$readme_directory/RELEASE_NOTES:f:root:-:644
 $readme_directory/RESTRICTION_CLASS_README:f:root:-:644
 $readme_directory/SASL_README:f:root:-:644
 $readme_directory/ULTRIX_README:f:root:-:644

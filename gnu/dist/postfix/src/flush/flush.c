@@ -217,6 +217,7 @@ static int flush_send_path(const char *, int);
 
 static VSTRING *flush_site_to_path(VSTRING *path, const char *site)
 {
+    const char *ptr;
     int     ch;
 
     /*
@@ -228,7 +229,7 @@ static VSTRING *flush_site_to_path(VSTRING *path, const char *site)
     /*
      * Mask characters that could upset the name-to-queue-file mapping code.
      */
-    while ((ch = *(unsigned const char *) site++) != 0)
+    for (ptr = site; (ch = *(unsigned const char *) ptr) != 0; ptr++)
 	if (ISALNUM(ch))
 	    VSTRING_ADDCH(path, ch);
 	else
@@ -475,10 +476,10 @@ static int flush_send_path(const char *path, int how)
 	if (msg_verbose)
 	    msg_info("%s: requesting delivery for logfile %s", myname, path);
 	if (how == REFRESH_ONLY)
-	    mail_trigger(MAIL_CLASS_PUBLIC, MAIL_SERVICE_QUEUE,
+	    mail_trigger(MAIL_CLASS_PUBLIC, var_queue_service,
 			 qmgr_refresh_trigger, sizeof(qmgr_refresh_trigger));
 	else
-	    mail_trigger(MAIL_CLASS_PUBLIC, MAIL_SERVICE_QUEUE,
+	    mail_trigger(MAIL_CLASS_PUBLIC, var_queue_service,
 			 qmgr_deliver_trigger, sizeof(qmgr_deliver_trigger));
     }
     return (FLUSH_STAT_OK);
@@ -674,5 +675,6 @@ int     main(int argc, char **argv)
     single_server_main(argc, argv, flush_service,
 		       MAIL_SERVER_TIME_TABLE, time_table,
 		       MAIL_SERVER_PRE_INIT, pre_jail_init,
+		       MAIL_SERVER_UNLIMITED,
 		       0);
 }

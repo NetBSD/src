@@ -5,7 +5,7 @@ MASTER(8)                                               MASTER(8)
        master - Postfix master process
 
 <b>SYNOPSIS</b>
-       <b>master</b> [<b>-c</b> <i>config_dir</i>] [<b>-e</b> <i>exit_time</i>] [<b>-D</b>] [<b>-t</b>] [<b>-v</b>]
+       <b>master</b> [<b>-Dtv</b>] [<b>-c</b> <i>config_dir</i>] [<b>-e</b> <i>exit_time</i>]
 
 <b>DESCRIPTION</b>
        The  <b>master</b> daemon is the resident process that runs Post-
@@ -112,6 +112,11 @@ MASTER(8)                                               MASTER(8)
               Top-level  directory  of the Postfix queue. This is
               also the root directory of Postfix daemons that run
               chrooted.
+
+       <b>inet</b><i>_</i><b>interfaces</b>
+              The  network  interface  addresses that this system
+              receives mail on.  You need to stop and start Post-
+              fix when this parameter changes.
 
 <b>Resource</b> <b>controls</b>
        <b>default</b><i>_</i><b>process</b><i>_</i><b>limit</b>

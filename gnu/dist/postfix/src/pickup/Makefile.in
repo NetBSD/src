@@ -23,6 +23,8 @@ Makefile: Makefile.in
 
 test:	$(TESTPROG)
 
+tests:	test
+
 update: ../../libexec/$(PROG)
 
 ../../libexec/$(PROG): $(PROG)
@@ -62,6 +64,7 @@ pickup.o: ../../include/vbuf.h
 pickup.o: ../../include/vstream.h
 pickup.o: ../../include/set_ugid.h
 pickup.o: ../../include/safe_open.h
+pickup.o: ../../include/stringops.h
 pickup.o: ../../include/mail_queue.h
 pickup.o: ../../include/mail_open_ok.h
 pickup.o: ../../include/mymalloc.h
@@ -74,4 +77,5 @@ pickup.o: ../../include/mail_params.h
 pickup.o: ../../include/mail_conf.h
 pickup.o: ../../include/record.h
 pickup.o: ../../include/rec_type.h
+pickup.o: ../../include/lex_822.h
 pickup.o: ../../include/mail_server.h

@@ -131,7 +131,7 @@ const char *mail_date(time_t when)
 
 #include <vstream.h>
 
-main(void)
+int     main(void)
 {
     vstream_printf("%s\n", mail_date(time((time_t *) 0)));
     vstream_fflush(VSTREAM_OUT);

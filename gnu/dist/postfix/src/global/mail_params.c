@@ -14,6 +14,7 @@
 /*	char	*var_transit_origin;
 /*	char	*var_transit_dest;
 /*	char	*var_mail_name;
+/*	int	var_helpful_warnings;
 /*	char	*var_syslog_name;
 /*	char	*var_mail_owner;
 /*	uid_t	var_owner_uid;
@@ -37,6 +38,7 @@
 /*	char	*var_pid_dir;
 /*	int	var_dont_remove;
 /*	char	*var_inet_interfaces;
+/*	char	*var_proxy_interfaces;
 /*	char	*var_mynetworks;
 /*	char	*var_double_bounce_sender;
 /*	int	var_line_limit;
@@ -63,7 +65,6 @@
 /*	char	*var_syslog_facility;
 /*	char	*var_relay_domains;
 /*	char	*var_fflush_domains;
-/*	char	*var_def_transport;
 /*	char	*var_mynetworks_style;
 /*	char	*var_verp_delims;
 /*	char	*var_verp_filter;
@@ -76,6 +77,27 @@
 /*	int	var_debug_peer_level;
 /*	int	var_in_flow_delay;
 /*	int	var_fault_inj_code;
+/*	char   *var_bounce_service;
+/*	char   *var_cleanup_service;
+/*	char   *var_defer_service;
+/*	char   *var_pickup_service;
+/*	char   *var_queue_service;
+/*	char   *var_rewrite_service;
+/*	char   *var_showq_service;
+/*	char   *var_error_service;
+/*	char   *var_flush_service;
+/*	int	var_db_create_buf;
+/*	int	var_db_read_buf;
+/*	int	var_mime_maxdepth;
+/*	int	var_mime_bound_len;
+/*	int	var_header_limit;
+/*	int	var_token_limit;
+/*	int	var_disable_mime_input;
+/*	int	var_disable_mime_oconv;
+/*	int     var_strict_8bitmime;
+/*	int     var_strict_7bit_hdrs;
+/*	int     var_strict_8bit_body;
+/*	int     var_strict_encoding;
 /*
 /*	void	mail_params_init()
 /* DESCRIPTION
@@ -122,6 +144,9 @@
 #include <valid_hostname.h>
 #include <stringops.h>
 #include <safe.h>
+#ifdef HAS_DB
+#include <dict_db.h>
+#endif
 
 /* Global library. */
 
@@ -143,6 +168,7 @@ char   *var_relayhost;
 char   *var_transit_origin;
 char   *var_transit_dest;
 char   *var_mail_name;
+int     var_helpful_warnings;
 char   *var_syslog_name;
 char   *var_mail_owner;
 uid_t   var_owner_uid;
@@ -166,6 +192,7 @@ int     var_ipc_timeout;
 char   *var_pid_dir;
 int     var_dont_remove;
 char   *var_inet_interfaces;
+char   *var_proxy_interfaces;
 char   *var_mynetworks;
 char   *var_double_bounce_sender;
 int     var_line_limit;
@@ -192,7 +219,6 @@ int     var_daemon_timeout;
 char   *var_syslog_facility;
 char   *var_relay_domains;
 char   *var_fflush_domains;
-char   *var_def_transport;
 char   *var_mynetworks_style;
 char   *var_verp_delims;
 char   *var_verp_filter;
@@ -205,8 +231,27 @@ char   *var_export_environ;
 char   *var_debug_peer_list;
 int     var_debug_peer_level;
 int     var_fault_inj_code;
-
-#define MAIN_CONF_FILE	"main.cf"
+char   *var_bounce_service;
+char   *var_cleanup_service;
+char   *var_defer_service;
+char   *var_pickup_service;
+char   *var_queue_service;
+char   *var_rewrite_service;
+char   *var_showq_service;
+char   *var_error_service;
+char   *var_flush_service;
+int     var_db_create_buf;
+int     var_db_read_buf;
+int     var_mime_maxdepth;
+int     var_mime_bound_len;
+int     var_header_limit;
+int     var_token_limit;
+int     var_disable_mime_input;
+int     var_disable_mime_oconv;
+int     var_strict_8bitmime;
+int     var_strict_7bit_hdrs;
+int     var_strict_8bit_body;
+int     var_strict_encoding;
 
 /* check_myhostname - lookup hostname and validate */
 
@@ -394,6 +439,7 @@ void    mail_params_init()
 	VAR_QUEUE_DIR, DEF_QUEUE_DIR, &var_queue_dir, 1, 0,
 	VAR_PID_DIR, DEF_PID_DIR, &var_pid_dir, 1, 0,
 	VAR_INET_INTERFACES, DEF_INET_INTERFACES, &var_inet_interfaces, 1, 0,
+	VAR_PROXY_INTERFACES, DEF_PROXY_INTERFACES, &var_proxy_interfaces, 0, 0,
 	VAR_DOUBLE_BOUNCE, DEF_DOUBLE_BOUNCE, &var_double_bounce_sender, 1, 0,
 	VAR_DEFAULT_PRIVS, DEF_DEFAULT_PRIVS, &var_default_privs, 1, 0,
 	VAR_ALIAS_DB_MAP, DEF_ALIAS_DB_MAP, &var_alias_db_map, 0, 0,
@@ -406,13 +452,21 @@ void    mail_params_init()
 	VAR_FFLUSH_DOMAINS, DEF_FFLUSH_DOMAINS, &var_fflush_domains, 0, 0,
 	VAR_EXPORT_ENVIRON, DEF_EXPORT_ENVIRON, &var_export_environ, 0, 0,
 	VAR_IMPORT_ENVIRON, DEF_IMPORT_ENVIRON, &var_import_environ, 0, 0,
-	VAR_DEF_TRANSPORT, DEF_DEF_TRANSPORT, &var_def_transport, 0, 0,
 	VAR_MYNETWORKS_STYLE, DEF_MYNETWORKS_STYLE, &var_mynetworks_style, 1, 0,
 	VAR_DEBUG_PEER_LIST, DEF_DEBUG_PEER_LIST, &var_debug_peer_list, 0, 0,
 	VAR_VERP_DELIMS, DEF_VERP_DELIMS, &var_verp_delims, 2, 2,
 	VAR_VERP_FILTER, DEF_VERP_FILTER, &var_verp_filter, 1, 0,
 	VAR_PAR_DOM_MATCH, DEF_PAR_DOM_MATCH, &var_par_dom_match, 0, 0,
 	VAR_CONFIG_DIRS, DEF_CONFIG_DIRS, &var_config_dirs, 0, 0,
+	VAR_BOUNCE_SERVICE, DEF_BOUNCE_SERVICE, &var_bounce_service, 1, 0,
+	VAR_CLEANUP_SERVICE, DEF_CLEANUP_SERVICE, &var_cleanup_service, 1, 0,
+	VAR_DEFER_SERVICE, DEF_DEFER_SERVICE, &var_defer_service, 1, 0,
+	VAR_PICKUP_SERVICE, DEF_PICKUP_SERVICE, &var_pickup_service, 1, 0,
+	VAR_QUEUE_SERVICE, DEF_QUEUE_SERVICE, &var_queue_service, 1, 0,
+	VAR_REWRITE_SERVICE, DEF_REWRITE_SERVICE, &var_rewrite_service, 1, 0,
+	VAR_SHOWQ_SERVICE, DEF_SHOWQ_SERVICE, &var_showq_service, 1, 0,
+	VAR_ERROR_SERVICE, DEF_ERROR_SERVICE, &var_error_service, 1, 0,
+	VAR_FLUSH_SERVICE, DEF_FLUSH_SERVICE, &var_flush_service, 1, 0,
 	0,
     };
     static CONFIG_STR_FN_TABLE function_str_defaults_2[] = {
@@ -429,6 +483,12 @@ void    mail_params_init()
 	VAR_FLOCK_TRIES, DEF_FLOCK_TRIES, &var_flock_tries, 1, 0,
 	VAR_DEBUG_PEER_LEVEL, DEF_DEBUG_PEER_LEVEL, &var_debug_peer_level, 1, 0,
 	VAR_FAULT_INJ_CODE, DEF_FAULT_INJ_CODE, &var_fault_inj_code, 0, 0,
+	VAR_DB_CREATE_BUF, DEF_DB_CREATE_BUF, &var_db_create_buf, 1, 0,
+	VAR_DB_READ_BUF, DEF_DB_READ_BUF, &var_db_read_buf, 1, 0,
+	VAR_HEADER_LIMIT, DEF_HEADER_LIMIT, &var_header_limit, 1, 0,
+	VAR_TOKEN_LIMIT, DEF_TOKEN_LIMIT, &var_token_limit, 1, 0,
+	VAR_MIME_MAXDEPTH, DEF_MIME_MAXDEPTH, &var_mime_maxdepth, 1, 0,
+	VAR_MIME_BOUND_LEN, DEF_MIME_BOUND_LEN, &var_mime_bound_len, 1, 0,
 	0,
     };
     static CONFIG_TIME_TABLE time_defaults[] = {
@@ -447,6 +507,13 @@ void    mail_params_init()
 	VAR_DISABLE_DNS, DEF_DISABLE_DNS, &var_disable_dns,
 	VAR_SOFT_BOUNCE, DEF_SOFT_BOUNCE, &var_soft_bounce,
 	VAR_OWNREQ_SPECIAL, DEF_OWNREQ_SPECIAL, &var_ownreq_special,
+	VAR_STRICT_8BITMIME, DEF_STRICT_8BITMIME, &var_strict_8bitmime,
+	VAR_STRICT_7BIT_HDRS, DEF_STRICT_7BIT_HDRS, &var_strict_7bit_hdrs,
+	VAR_STRICT_8BIT_BODY, DEF_STRICT_8BIT_BODY, &var_strict_8bit_body,
+	VAR_STRICT_ENCODING, DEF_STRICT_ENCODING, &var_strict_encoding,
+	VAR_DISABLE_MIME_INPUT, DEF_DISABLE_MIME_INPUT, &var_disable_mime_input,
+	VAR_DISABLE_MIME_OCONV, DEF_DISABLE_MIME_OCONV, &var_disable_mime_oconv,
+	VAR_HELPFUL_WARNINGS, DEF_HELPFUL_WARNINGS, &var_helpful_warnings,
 	0,
     };
     const char *cp;
@@ -488,6 +555,9 @@ void    mail_params_init()
     check_mail_owner();
     check_sgid_group();
     check_overlap();
+#ifdef HAS_DB
+    dict_db_cache_size = var_db_read_buf;
+#endif
 
     /*
      * Variables whose defaults are determined at runtime, after other

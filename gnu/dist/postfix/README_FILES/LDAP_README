@@ -13,9 +13,18 @@ having to copy it to each.
 BUILDING WITH LDAP SUPPORT
 ==========================
 
-You need to have LDAP libraries and include files installed somewhere on
-your system, and you need to configure the Postfix Makefiles
-accordingly.
+Note: Postfix no longer supports the LDAP version 1 interface.
+
+You need to have LDAP libraries and include files installed somewhere
+on your system, and you need to configure the Postfix Makefiles
+accordingly. 
+
+For example, to build the OpenLDAP libraries for use with Postfix
+(i.e.  LDAP client code only), you could use the following command:
+
+    % ./configure  --without-kerberos --without-cyrus-sasl --without-tls \
+	--without-threads --disable-slapd --disable-slurpd \
+	--disable-debug --disable-shared
 
 If you're using the libraries from the UM distribution
 (http://www.umich.edu/~dirsvcs/ldap/ldap.html) or OpenLDAP
@@ -94,6 +103,11 @@ parameter below, "server_host", would be defined in main.cf as
 	substitute for the address Postfix is trying to resolve, e.g.
 		ldapsource_query_filter = (&(mail=%s)(paid_up=true))
 
+    result_filter (%s)
+	Filter applied to result attributes.  Supports the same expansions
+	as the query_filter, and can be easily used to append (or prepend)
+	text.
+
     domain (Default is to ignore this.)
     	This is a list of domain names, paths to files, or dictionaries.
 	If specified, only lookups for the domains on this list will be
@@ -165,6 +179,13 @@ parameter below, "server_host", would be defined in main.cf as
 	more information. And if you're using an LDAP package that has
 	other possible values, please bring it to the attention of the
 	postfix-users@postfix.org mailing list.
+
+    chase_referrals (0)
+	Sets (or clears) LDAP_OPT_REFERRALS (requires LDAP version 3
+	support.
+
+    version (2)
+	Specifies the LDAP protocol version to use.
 
     debuglevel (0)
 	What level to set for debugging in the OpenLDAP libraries.
@@ -327,5 +348,6 @@ Keith Stevenson: RFC 2254 escaping in queries.
 Samuel Tardieu: Noticed that searches could include wildcards, prompting
                 the work on RFC 2254 escaping in queries. Spotted a bug
                 in binding.
+Sami Haahtinen: Referral chasing and v3 support.
 
 And of course Wietse.

@@ -32,9 +32,23 @@ This option implements the traditional \fBsendmail -q\fR command,
 by contacting the Postfix \fBqmgr\fR(8) daemon.
 .IP \fB-p\fR
 Produce a traditional sendmail-style queue listing.
-
 This option implements the traditional \fBmailq\fR command,
 by contacting the Postfix \fBshowq\fR(8) daemon.
+
+Each queue entry shows the queue file ID, message
+size, arrival time, sender, and the recipients that still need to
+be delivered.  If mail could not be delivered upon the last attempt,
+the reason for failure is shown. This mode of operation is implemented
+by executing the \fBpostqueue\fR(1) command. The queue ID string
+is followed by an optional status character:
+.RS
+.IP \fB*\fR
+The message is in the \fBactive\fR queue, i.e. the message is
+selected for delivery.
+.IP \fB!\fR
+The message is in the \fBhold\fR queue, i.e. no further delivery
+attempt will be made until the mail is taken off hold.
+.RE
 .IP "\fB-s \fIsite\fR"
 Schedule immediate delivery of all mail that is queued for the named
 \fIsite\fR. The site must be eligible for the "fast flush" service.
@@ -73,7 +87,7 @@ A non-standard directory is allowed only if the name is listed in the
 standard \fBmain.cf\fR file, in the \fBalternate_config_directories\fR
 configuration parameter value.
 
-Only the super-user is allowed to specify arbitrary directory names.
+Only the superuser is allowed to specify arbitrary directory names.
 .SH FILES
 .na
 .nf

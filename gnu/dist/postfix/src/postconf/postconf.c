@@ -12,7 +12,7 @@
 /*		[\fIparameter=value ...\fR]
 /* DESCRIPTION
 /*	The \fBpostconf\fR command prints the actual value of
-/*	\fIparameter\fR (all known parameters by default), one
+/*	\fIparameter\fR (all known parameters by default) one
 /*	parameter per line, changes its value, or prints other
 /*	information about the Postfix mail system.
 /*
@@ -32,8 +32,68 @@
 /*	that normally precedes the value.
 /* .IP \fB-l\fR
 /*	List the names of all supported mailbox locking methods.
+/*	Postfix supports the following methods:
+/* .RS
+/* .IP \fBflock\fR
+/*	A kernel-based advisory locking method for local files only.
+/*	This locking method is available only on systems with a BSD
+/*	compatible library.
+/* .IP \fBfcntl\fR
+/*	A kernel-based advisory locking method for local and remote files.
+/* .IP \fBdotlock\fR
+/*	An application-level locking method. An application locks a file
+/*	named \fIfilename\fR by creating a file named \fIfilename\fB.lock\fR.
+/*	The application is expected to remove its own lock file, as well as
+/*	stale lock files that were left behind after abnormal termination.
+/* .RE
 /* .IP \fB-m\fR
 /*	List the names of all supported lookup table types.
+/* .RS
+/* .IP \fBbtree\fR
+/*	A sorted, balanced tree structure.
+/*	This is available only on systems with support for Berkeley DB
+/*	databases.
+/* .IP \fBdbm\fR
+/*	An indexed file type based on hashing.
+/*	This is available only on systems with support for DBM databases.
+/* .IP \fBenviron\fR
+/*	The UNIX process environment array. The lookup key is the variable
+/*	name. Originally implemented for testing, someone may find this
+/*	useful someday.
+/* .IP \fBhash\fR
+/*	An indexed file type based on hashing.
+/*	This is available only on systems with support for Berkeley DB
+/*	databases.
+/* .IP "\fBldap\fR (read-only)"
+/*	Perform lookups using the LDAP protocol. This is described
+/*	in an LDAP_README file.
+/* .IP "\fBmysql\fR (read-only)"
+/*	Perform lookups using the MYSQL protocol. This is described
+/*	in a MYSQL_README file.
+/* .IP "\fBpcre\fR (read-only)"
+/*	A lookup table based on Perl Compatible Regular Expressions. The
+/*	file format is described in \fBpcre_table\fR(5).
+/* .IP "\fBregexp\fR (read-only)"
+/*	A lookup table based on regular expressions. The file format is
+/*	described in \fBregexp_table\fR(5).
+/* .IP "\fBstatic\fR (read-only)"
+/*	A table that always returns its name as lookup result. For example,
+/*	\fBstatic:foobar\fR always returns the string \fBfoobar\fR as lookup
+/*	result.
+/* .IP "\fBunix\fR (read-only)"
+/*	A limited way to query the UNIX authentication database. The
+/*	following tables are implemented:
+/* .RS
+/*. IP \fBunix:passwd.byname\fR
+/*	The table is the UNIX password database. The key is a login name.
+/*	The result is a password file entry in passwd(5) format.
+/* .IP \fBunix:group.byname\fR
+/*	The table is the UNIX group database. The key is a group name.
+/*	The result is a group file entry in group(5) format.
+/* .RE
+/* .RE
+/* .sp
+/*	Other table types may exist depending on how Postfix was built.
 /* .IP \fB-n\fR
 /*	Print non-default parameter settings only.
 /* .IP \fB-v\fR
@@ -41,6 +101,11 @@
 /*	options make the software increasingly verbose.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
+/* ENVIRONMENT
+/* .ad
+/* .fi
+/* .IP \fBMAIL_CONFIG\fR
+/*	Directory with Postfix configuration files.
 /* LICENSE
 /* .ad
 /* .fi
@@ -303,7 +368,7 @@ static void edit_parameters(int argc, char **argv)
 	if (strchr(cp, '\n') != 0)
 	    msg_fatal("edit accepts no multi-line input");
 	while (ISSPACE(*cp))
-            cp++;
+	    cp++;
 	if (*cp == '#')
 	    msg_fatal("edit accepts no comment input");
 	if ((err = split_nameval(cp, &edit_key, &edit_val)) != 0)
@@ -352,7 +417,7 @@ static void edit_parameters(int argc, char **argv)
     interesting = 0;
     while (vstring_get(buf, src) != VSTREAM_EOF) {
 	for (cp = STR(buf); ISSPACE(*cp) /* including newline */ ; cp++)
-             /* void */ ;
+	     /* void */ ;
 	/* Copy comment, all-whitespace, or empty line. */
 	if (*cp == '#' || *cp == 0) {
 	    vstream_fputs(STR(buf), dst);
@@ -800,7 +865,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "c:dehmlnv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "c:deEhmlnv")) > 0) {
 	switch (ch) {
 	case 'c':
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
@@ -812,6 +877,18 @@ int     main(int argc, char **argv)
 	case 'e':
 	    mode |= EDIT_MAIN;
 	    break;
+
+	    /*
+	     * People, this does not work unless you properly handle default
+	     * settings. For example, fast_flush_domains = $relay_domains
+	     * must not evaluate to the empty string when relay_domains is
+	     * left at its default setting of $mydestination.
+	     */
+#if 0
+	case 'E':
+	    mode |= SHOW_EVAL;
+	    break;
+#endif
 	case 'h':
 	    mode &= ~SHOW_NAME;
 	    break;

@@ -20,7 +20,7 @@ and features</a> | <a href="architecture.html">Global architecture</a>
 
 <h2>Postfix mail queues</h2>
 
-Postfix has four different queues: <b>maildrop</b>, <b>incoming</b>,
+Postfix has four main queues: <b>maildrop</b>, <b>incoming</b>,
 <b>active</b> and <b>deferred</b> (click the upper left-hand icon
 for the big picture).  Locally-posted mail is deposited into the
 <b>maildrop</b>, and is copied to the <b>incoming</b> queue after
@@ -41,6 +41,16 @@ peak message workload</i>.  Whenever there is space in the
 <b>incoming</b> queue and one from the <b>deferred</b> queue. This
 guarantees that new mail will get through even when there is a
 large backlog.
+
+<p>
+
+In addition to the queues mentioned above Postfix also maintains
+two parking spaces. The <b>hold</b> queue is for mail that is frozen
+in the queue; no delivery attempts are made until someone releases
+these messages with the <a href="postsuper.1.html">postsuper</a>
+command. The <b>corrupt</b> directory is for damaged queue files.
+Rather than discarding these, Postfix leaves them here for human
+inspection.
 
 <h2>No thundering herd</h2>
 

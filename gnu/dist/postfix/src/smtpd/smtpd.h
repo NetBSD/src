@@ -39,6 +39,12 @@
   * some of this has to be global anyway, so that the run-time error handler
   * can clean up in case of a fatal error deep down in some library routine.
   */
+typedef struct SMTPD_DEFER {
+    int     active;			/* is this active */
+    VSTRING *reason;			/* reason for deferral */
+    int     class;			/* error notification class */
+} SMTPD_DEFER;
+
 typedef struct SMTPD_STATE {
     int     err;
     VSTREAM *client;
@@ -68,7 +74,11 @@ typedef struct SMTPD_STATE {
     off_t   msg_size;
     int     junk_cmds;
 #ifdef USE_SASL_AUTH
+#if SASL_VERSION_MAJOR >= 2
+    const char *sasl_mechanism_list;
+#else
     char   *sasl_mechanism_list;
+#endif
     char   *sasl_method;
     char   *sasl_username;
     char   *sasl_sender;
@@ -76,7 +86,14 @@ typedef struct SMTPD_STATE {
     VSTRING *sasl_encoded;
     VSTRING *sasl_decoded;
 #endif
-    int     warn_if_reject;
+    int     rcptmap_checked;
+    int     warn_if_reject;		/* force reject into warning */
+    SMTPD_DEFER defer_if_reject;	/* force reject into deferral */
+    SMTPD_DEFER defer_if_permit;	/* force permit into deferral */
+    int     defer_if_permit_client;	/* force permit into warning */
+    int     defer_if_permit_helo;	/* force permit into warning */
+    int     defer_if_permit_sender;	/* force permit into warning */
+    VSTRING *expand_buf;		/* scratch space for $name expansion */
 } SMTPD_STATE;
 
 extern void smtpd_state_init(SMTPD_STATE *, VSTREAM *);

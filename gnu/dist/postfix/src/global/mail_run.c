@@ -41,7 +41,6 @@
 /*	command. mail_run_background() returns the process id in case
 /*	of success.
 /* CONFIGURATION PARAMETERS
-/*	program_directory: directory with Postfix executables;
 /*	fork_attempts: number of attempts to fork() a process;
 /*	fork_delay: delay in seconds between fork() attempts.
 /* LICENSE

@@ -14,6 +14,7 @@
  /* External interface. */
 
 extern int mail_flush_deferred(void);
+extern int mail_flush_maildrop(void);
 
 /* LICENSE
 /* .ad

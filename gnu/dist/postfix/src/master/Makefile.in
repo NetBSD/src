@@ -35,6 +35,8 @@ $(PROG): $(OBJS) $(LIBS)
 
 test:	$(TESTPROG)
 
+tests:	test
+
 $(LIB):	$(LIB_OBJ)
 	$(AR) $(ARFL) $(LIB) $?
 	$(RANLIB) $(LIB)
@@ -102,6 +104,7 @@ master.o: ../../include/clean_env.h
 master.o: ../../include/argv.h
 master.o: ../../include/safe.h
 master.o: ../../include/mail_params.h
+master.o: ../../include/mail_version.h
 master.o: ../../include/debug_process.h
 master.o: ../../include/mail_task.h
 master.o: ../../include/mail_conf.h
@@ -172,6 +175,8 @@ master_sig.o: ../../include/sys_defs.h
 master_sig.o: ../../include/msg.h
 master_sig.o: ../../include/posix_signals.h
 master_sig.o: master.h
+master_sig.o: ../../include/iostuff.h
+master_sig.o: ../../include/events.h
 master_spawn.o: master_spawn.c
 master_spawn.o: ../../include/sys_defs.h
 master_spawn.o: ../../include/msg.h

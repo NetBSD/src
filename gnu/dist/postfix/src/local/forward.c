@@ -125,7 +125,7 @@ static FORWARD_INFO *forward_open(char *sender)
      * "message too large", perhaps some others. The reason not to bounce
      * ourselves is that we don't really know who the recipients are.
      */
-    cleanup = mail_connect(MAIL_CLASS_PUBLIC, MAIL_SERVICE_CLEANUP, BLOCKING);
+    cleanup = mail_connect(MAIL_CLASS_PUBLIC, var_cleanup_service, BLOCKING);
     if (cleanup == 0)
 	return (0);
     close_on_exec(vstream_fileno(cleanup), CLOSE_ON_EXEC);
@@ -187,6 +187,7 @@ int     forward_append(DELIVER_ATTR attr)
     /*
      * Append the recipient to the message envelope.
      */
+    rec_fputs(info->cleanup, REC_TYPE_ORCP, attr.orig_rcpt);
     rec_fputs(info->cleanup, REC_TYPE_RCPT, attr.recipient);
 
     return (vstream_ferror(info->cleanup));

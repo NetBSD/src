@@ -20,7 +20,7 @@
  /*
   * External interface.
   */
-extern int deliver_pass(const char *, const char *, DELIVER_REQUEST *, const char *, long);
+extern int deliver_pass(const char *, const char *, DELIVER_REQUEST *, const char *, const char *, long);
 extern int deliver_pass_all(const char *, const char *, DELIVER_REQUEST *);
 
 /* LICENSE

@@ -19,13 +19,12 @@
 /* SECURITY
 /* .ad
 /* .fi
-/*	The \fBpickup\fR daemon runs with superuser privileges so that it
-/*	1) can open a queue file with the rights of the submitting user
-/*	and 2) can access the Postfix private IPC channels.
-/*	On the positive side, the program can run chrooted, opens no files
-/*	for writing, is careful about what files it opens for reading, and
-/*	does not actually touch any data that is sent to its public service
-/*	endpoint.
+/*	The \fBpickup\fR daemon is moderately security sensitive. It runs
+/*	with fixed low privilege and can run in a chrooted environment.
+/*	However, the program reads files from potentially hostile users.
+/*	The \fBpickup\fR daemon opens no files for writing, is careful about
+/*	what files it opens for reading, and does not actually touch any data
+/*	that is sent to its public service endpoint.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* BUGS
@@ -51,8 +50,6 @@
 /* .fi
 /* .IP \fBalways_bcc\fR
 /*	Address to send a copy of each message that enters the system.
-/* .IP \fBmail_owner\fR
-/*	The process privileges used while not opening a \fBmaildrop\fR file.
 /* .IP \fBqueue_directory\fR
 /*	Top-level directory of the Postfix queue.
 /* SEE ALSO
@@ -92,6 +89,7 @@
 #include <vstream.h>
 #include <set_ugid.h>
 #include <safe_open.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -105,6 +103,7 @@
 #include <mail_conf.h>
 #include <record.h>
 #include <rec_type.h>
+#include <lex_822.h>
 
 /* Single-threaded server skeleton. */
 
@@ -159,13 +158,21 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 {
     int     type;
     int     check_first = (*expected == REC_TYPE_CONTENT[0]);
+    const char *error_text;
+    char   *attr_name;
+    char   *attr_value;
 
     /*
      * Limit the input record size. All front-end programs should protect the
      * mail system against unreasonable inputs. This also requires that we
      * limit the size of envelope records written by the local posting agent.
+     * 
      * As time stamp we use the scrutinized queue file modification time, and
      * ignore the time stamp embedded in the queue file.
+     * 
+     * Allow attribute records if the queue file is owned by the mail system
+     * (postsuper -r) or if the attribute specifies the MIME body type
+     * (sendmail -B).
      */
     for (;;) {
 	if ((type = rec_get(qfile, buf, var_line_limit)) < 0
@@ -176,14 +183,49 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	if (type == REC_TYPE_FROM)
 	    if (info->sender == 0)
 		info->sender = mystrdup(vstring_str(buf));
+	if (type == REC_TYPE_ORCP)
+	    if (info->st.st_uid != var_owner_uid) {
+		msg_warn("uid=%ld: ignoring original recipient record: %.200s",
+			 (long) info->st.st_uid, vstring_str(buf));
+		continue;
+	    }
 	if (type == REC_TYPE_RCPT)
 	    if (info->rcpt == 0)
 		info->rcpt = mystrdup(vstring_str(buf));
 	if (type == REC_TYPE_TIME)
 	    continue;
-	if (type == REC_TYPE_ATTR)
+	if (type == REC_TYPE_ATTR) {
+	    if ((error_text = split_nameval(vstring_str(buf), &attr_name,
+					    &attr_value)) != 0) {
+		msg_warn("uid=%ld: malformed attribute record: %s: %.200s",
+		      (long) info->st.st_uid, error_text, vstring_str(buf));
+		continue;
+	    }
+#define STREQ(x,y) (strcmp(x,y) == 0)
+
+	    if (STREQ(attr_name, MAIL_ATTR_ENCODING)
+		&& (STREQ(attr_value, MAIL_ATTR_ENC_7BIT)
+		    || STREQ(attr_value, MAIL_ATTR_ENC_8BIT)
+		    || STREQ(attr_value, MAIL_ATTR_ENC_NONE))) {
+		rec_fprintf(cleanup, REC_TYPE_ATTR, "%s=%s",
+			    attr_name, attr_value);
+	    } else if (info->st.st_uid != var_owner_uid) {
+		msg_warn("uid=%ld: ignoring attribute record: %.200s=%.200s",
+			 (long) info->st.st_uid, attr_name, attr_value);
+	    }
 	    continue;
-	if (type == REC_TYPE_FILT && *expected == REC_TYPE_ENVELOPE[0])
+	}
+	if (type == REC_TYPE_RRTO)
+	    /* Use message header extracted information instead. */
+	    continue;
+	if (type == REC_TYPE_ERTO)
+	    /* Use message header extracted information instead. */
+	    continue;
+	if (type == REC_TYPE_INSP)
+	    /* Use current content inspection settings instead. */
+	    continue;
+	if (type == REC_TYPE_FILT)
+	    /* Use current content filter settings instead. */
 	    continue;
 	else {
 
@@ -194,7 +236,7 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	     */
 	    if (check_first) {
 		check_first = 0;
-		if (VSTRING_LEN(buf) > 0 && ISSPACE(vstring_str(buf)[0]))
+		if (VSTRING_LEN(buf) > 0 && IS_SPACE_TAB(vstring_str(buf)[0]))
 		    rec_put(cleanup, REC_TYPE_NORM, "", 0);
 	    }
 	    if ((REC_PUT_BUF(cleanup, type, buf)) < 0)
@@ -240,6 +282,12 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      */
     if (*var_filter_xport)
 	rec_fprintf(cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
+
+    /*
+     * Origin is local.
+     */
+    rec_fprintf(cleanup, REC_TYPE_ATTR, "%s=%s",
+		MAIL_ATTR_ORIGIN, MAIL_ATTR_ORG_LOCAL);
 
     /*
      * Copy the message envelope segment. Allow only those records that we
@@ -324,7 +372,6 @@ static int pickup_file(PICKUP_INFO *info)
     int     status;
     VSTREAM *qfile;
     VSTREAM *cleanup;
-    int     fd;
 
     /*
      * Open the submitted file. If we cannot open it, and we're not having a
@@ -333,12 +380,15 @@ static int pickup_file(PICKUP_INFO *info)
      * Perhaps we should save "bad" files elsewhere for further inspection.
      * XXX How can we delete a file when open() fails with ENOENT?
      */
-    qfile = safe_open(info->path, O_RDONLY | O_NONBLOCK, 0, 
-		(struct stat *) 0, -1, -1, buf);
+    qfile = safe_open(info->path, O_RDONLY | O_NONBLOCK, 0,
+		      (struct stat *) 0, -1, -1, buf);
     if (qfile == 0) {
 	if (errno != ENOENT)
 	    msg_warn("open input file %s: %s", info->path, vstring_str(buf));
 	vstring_free(buf);
+	if (errno == EACCES)
+	    msg_warn("if this file was created by Postfix < 1.1, then you may have to chmod a+r %s/%s",
+		     var_queue_dir, info->path);
 	return (errno == EACCES ? KEEP_MESSAGE_FILE : REMOVE_MESSAGE_FILE);
     }
 
@@ -354,7 +404,7 @@ static int pickup_file(PICKUP_INFO *info)
      */
 #define PICKUP_CLEANUP_FLAGS	(CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_FILTER)
 
-    cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, MAIL_SERVICE_CLEANUP);
+    cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
 		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buf,
 		  ATTR_TYPE_END) != 1
@@ -468,5 +518,6 @@ int     main(int argc, char **argv)
     trigger_server_main(argc, argv, pickup_service,
 			MAIL_SERVER_STR_TABLE, str_table,
 			MAIL_SERVER_POST_INIT, drop_privileges,
+			MAIL_SERVER_SOLITARY,
 			0);
 }

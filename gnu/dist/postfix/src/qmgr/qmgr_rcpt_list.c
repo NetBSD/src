@@ -9,9 +9,10 @@
 /*	void	qmgr_rcpt_list_init(list)
 /*	QMGR_RCPT_LIST *list;
 /*
-/*	void	qmgr_rcpt_list_add(list, offset, recipient)
+/*	void	qmgr_rcpt_list_add(list, offset, orig_rcpt, recipient)
 /*	QMGR_RCPT_LIST *list;
 /*	long	offset;
+/*	const char *orig_rcpt;
 /*	const char *recipient;
 /*
 /*	void	qmgr_rcpt_list_free(list)
@@ -71,13 +72,15 @@ void    qmgr_rcpt_list_init(QMGR_RCPT_LIST *list)
 
 /* qmgr_rcpt_list_add - add rcpt to list */
 
-void    qmgr_rcpt_list_add(QMGR_RCPT_LIST *list, long offset, const char *rcpt)
+void    qmgr_rcpt_list_add(QMGR_RCPT_LIST *list, long offset,
+			           const char *orcpt, const char *rcpt)
 {
     if (list->len >= list->avail) {
 	list->avail *= 2;
 	list->info = (QMGR_RCPT *)
 	    myrealloc((char *) list->info, list->avail * sizeof(QMGR_RCPT));
     }
+    list->info[list->len].orig_rcpt = mystrdup(orcpt);
     list->info[list->len].address = mystrdup(rcpt);
     list->info[list->len].offset = offset;
     list->info[list->len].queue = 0;
@@ -90,7 +93,9 @@ void    qmgr_rcpt_list_free(QMGR_RCPT_LIST *list)
 {
     QMGR_RCPT *rcpt;
 
-    for (rcpt = list->info; rcpt < list->info + list->len; rcpt++)
+    for (rcpt = list->info; rcpt < list->info + list->len; rcpt++) {
+	myfree(rcpt->orig_rcpt);
 	myfree(rcpt->address);
+    }
     myfree((char *) list->info);
 }

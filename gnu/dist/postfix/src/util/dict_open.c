@@ -81,9 +81,12 @@
 /* .IP DICT_FLAG_SYNC_UPDATE
 /*	With file-based maps, flush I/O buffers to file after each update.
 /*	Thus feature is not supported with some file-based dictionaries.
-/* .IP DICT_FLAG_FOLD_KEY
-/*	Fold the lookup key to lower case.
+/* .IP DICT_FLAG_NO_REGSUB
+/*      Disallow regular expression substitution from left-hand side data 
+/*	into the right-hand side.
 /* .PP
+/*	Specify DICT_FLAG_NONE for no special processing.
+/*
 /*	The dictionary types are as follows:
 /* .IP environ
 /*	The process environment array. The \fIdict_name\fR argument is ignored.
@@ -245,7 +248,8 @@ DICT   *dict_open(const char *dict_spec, int open_flags, int dict_flags)
     DICT   *dict;
 
     if ((dict_name = split_at(saved_dict_spec, ':')) == 0)
-	msg_fatal("open dictionary: need \"type:name\" form: %s", dict_spec);
+	msg_fatal("open dictionary: need \"type:name\" form instead of: \"%s\"",
+		  dict_spec);
 
     dict = dict_open3(saved_dict_spec, dict_name, open_flags, dict_flags);
     myfree(saved_dict_spec);

@@ -1,6 +1,6 @@
 /*++
 /* NAME
-/*	mkmap 3
+/*	mkmap_dbm 3
 /* SUMMARY
 /*	create or open database, DBM style
 /* SYNOPSIS
@@ -42,6 +42,7 @@
 #include <stringops.h>
 #include <dict.h>
 #include <dict_dbm.h>
+#include <myflock.h>
 
 /* Application-specific. */
 
@@ -54,11 +55,28 @@
 #include <ndbm.h>
 #endif
 
+typedef struct MKMAP_DBM {
+    MKMAP   mkmap;			/* parent class */
+    char   *lock_file;			/* path name */
+    int     lock_fd;			/* -1 or open locked file */
+} MKMAP_DBM;
+
+/* mkmap_dbm_after_close - clean up after closing database */
+
+static void mkmap_dbm_after_close(MKMAP *mp)
+{
+    MKMAP_DBM *mkmap = (MKMAP_DBM *) mp;
+
+    if (mkmap->lock_fd >= 0 && close(mkmap->lock_fd) < 0)
+	msg_warn("close %s: %m", mkmap->lock_file);
+    myfree(mkmap->lock_file);
+}
+
 /* mkmap_dbm_open - create or open database */
 
 MKMAP  *mkmap_dbm_open(const char *path)
 {
-    MKMAP  *mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
+    MKMAP_DBM *mkmap = (MKMAP_DBM *) mymalloc(sizeof(*mkmap));
     char   *pag_file;
     int     pag_fd;
 
@@ -66,7 +84,9 @@ MKMAP  *mkmap_dbm_open(const char *path)
      * Fill in the generic members.
      */
     mkmap->lock_file = concatenate(path, ".dir", (char *) 0);
-    mkmap->open = dict_dbm_open;
+    mkmap->mkmap.open = dict_dbm_open;
+    mkmap->mkmap.after_open = 0;
+    mkmap->mkmap.after_close = mkmap_dbm_after_close;
 
     /*
      * Unfortunately, not all systems support locking on open(), so we open
@@ -83,7 +103,14 @@ MKMAP  *mkmap_dbm_open(const char *path)
 	msg_warn("close %s: %m", pag_file);
     myfree(pag_file);
 
-    return (mkmap);
+    /*
+     * Get an exclusive lock - we're going to change the database so we can't
+     * have any spectators.
+     */
+    if (myflock(mkmap->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	msg_fatal("lock %s: %m", mkmap->lock_file);
+
+    return (&mkmap->mkmap);
 }
 
 #endif

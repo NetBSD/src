@@ -118,6 +118,12 @@ Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
 addresses.
 .IP \fBrecipient_delimiter\fR
 Delimiter that separates recipients from address extensions.
+.SH BUGS
+.ad
+.fi
+Regular expression alias lookup tables are allowed, but
+substitution of $1 etc. is forbidden because that would
+open a security loophole.
 .SH STANDARDS
 .na
 .nf
@@ -126,7 +132,9 @@ RFC 822 (ARPA Internet Text Messages)
 .na
 .nf
 local(8) local delivery agent
-postalias(1) alias database management
+newaliases(1) alias database management
+regexp_table(5) POSIX regular expression table format
+pcre_table(5) Perl Compatible Regular Expression table format
 .SH LICENSE
 .na
 .nf

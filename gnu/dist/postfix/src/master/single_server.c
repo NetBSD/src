@@ -95,6 +95,10 @@
 /* .IP "MAIL_SERVER_IN_FLOW_DELAY (none)"
 /*	Pause $in_flow_delay seconds when no "mail flow control token"
 /*	is available. A token is consumed for each connection request.
+/* .IP MAIL_SERVER_SOLITARY
+/*	This service must be configured with process limit of 1.
+/* .IP MAIL_SERVER_UNLIMITED
+/*	This service must be configured with process limit of 0.
 /* .PP
 /*	The var_use_limit variable limits the number of clients that
 /*	a server can service before it commits suicide.
@@ -235,7 +239,7 @@ static void single_server_wakeup(int fd)
     close_on_exec(fd, CLOSE_ON_EXEC);
     stream = vstream_fdopen(fd, O_RDWR);
     tmp = concatenate(single_server_name, " socket", (char *) 0);
-    vstream_control(stream, VSTREAM_CTL_PATH, tmp,  VSTREAM_CTL_END);
+    vstream_control(stream, VSTREAM_CTL_PATH, tmp, VSTREAM_CTL_END);
     myfree(tmp);
     timed_ipc_setup(stream);
     if (master_notify(var_pid, MASTER_STAT_TAKEN) < 0)
@@ -344,6 +348,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     char   *lock_path;
     VSTRING *why;
     int     alone = 0;
+    int     zerolimit = 0;
     WATCHDOG *watchdog;
     char   *oval;
 
@@ -392,7 +397,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      * stderr, because no-one is going to see them.
      */
     opterr = 0;
-    while ((c = GETOPT(argc, argv, "cDi:lm:n:o:s:St:uv")) > 0) {
+    while ((c = GETOPT(argc, argv, "cDi:lm:n:o:s:St:uvz")) > 0) {
 	switch (c) {
 	case 'c':
 	    root_dir = "setme";
@@ -432,6 +437,9 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	    break;
 	case 'v':
 	    msg_verbose++;
+	    break;
+	case 'z':
+	    zerolimit = 1;
 	    break;
 	default:
 	    msg_fatal("invalid option: %c", c);
@@ -482,6 +490,16 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	    break;
 	case MAIL_SERVER_IN_FLOW_DELAY:
 	    single_server_in_flow_delay = 1;
+	    break;
+	case MAIL_SERVER_SOLITARY:
+	    if (!alone)
+		msg_fatal("service %s requires a process limit of 1",
+			  service_name);
+	    break;
+	case MAIL_SERVER_UNLIMITED:
+	    if (!zerolimit)
+		msg_fatal("service %s requires a process limit of 0",
+			  service_name);
 	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);

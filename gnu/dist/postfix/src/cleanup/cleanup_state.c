@@ -38,11 +38,13 @@
 #include <mymalloc.h>
 #include <vstring.h>
 #include <argv.h>
+#include <htable.h>
 
 /* Global library. */
 
 #include <been_here.h>
 #include <mail_params.h>
+#include <mime_state.h>
 
 /* Application-specific. */
 
@@ -58,6 +60,7 @@ CLEANUP_STATE *cleanup_state_alloc(void)
     state->temp2 = vstring_alloc(10);
     state->dst = 0;
     state->handle = 0;
+    state->queue_name = 0;
     state->queue_id = 0;
     state->time = 0;
     state->fullname = 0;
@@ -65,14 +68,13 @@ CLEANUP_STATE *cleanup_state_alloc(void)
     state->from = 0;
     state->resent_from = 0;
     state->recip = 0;
+    state->orig_rcpt = 0;
     state->return_receipt = 0;
     state->errors_to = 0;
     state->flags = 0;
     state->errs = 0;
     state->err_mask = 0;
-    state->header_buf = vstring_alloc(100);
     state->headers_seen = 0;
-    state->long_header = 0;
     state->hop_count = 0;
     state->recipients = argv_alloc(2);
     state->resent_recip = argv_alloc(2);
@@ -86,6 +88,10 @@ CLEANUP_STATE *cleanup_state_alloc(void)
     state->end_seen = 0;
     state->rcpt_count = 0;
     state->reason = 0;
+    state->attr = nvtable_create(10);
+    state->mime_state = 0;
+    state->mime_errs = 0;
+    state->filter = 0;
     return (state);
 }
 
@@ -105,17 +111,25 @@ void    cleanup_state_free(CLEANUP_STATE *state)
 	myfree(state->resent_from);
     if (state->recip)
 	myfree(state->recip);
+    if (state->orig_rcpt)
+	myfree(state->orig_rcpt);
     if (state->return_receipt)
 	myfree(state->return_receipt);
     if (state->errors_to)
 	myfree(state->errors_to);
-    vstring_free(state->header_buf);
     argv_free(state->recipients);
     argv_free(state->resent_recip);
+    if (state->queue_name)
+	myfree(state->queue_name);
     if (state->queue_id)
 	myfree(state->queue_id);
     been_here_free(state->dups);
     if (state->reason)
 	myfree(state->reason);
+    nvtable_free(state->attr);
+    if (state->mime_state)
+	mime_state_free(state->mime_state);
+    if (state->filter)
+	myfree(state->filter);
     myfree((char *) state);
 }

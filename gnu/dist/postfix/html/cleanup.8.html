@@ -1,5 +1,4 @@
 <html> <head> </head> <body> <pre>
-
 CLEANUP(8)                                             CLEANUP(8)
 
 <b>NAME</b>
@@ -56,6 +55,8 @@ CLEANUP(8)                                             CLEANUP(8)
 
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="http://www.faqs.org/rfcs/rfc2045.html">RFC 2045</a> (MIME: Format of Internet Message Bodies)
+       <a href="http://www.faqs.org/rfcs/rfc2046.html">RFC 2046</a> (MIME: Media Types)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -76,15 +77,70 @@ CLEANUP(8)                                             CLEANUP(8)
               lines.  These filters see physical lines one  at  a
               time, in chunks of at most line_length_limit bytes.
 
+       <b>body</b><i>_</i><b>checks</b><i>_</i><b>size</b><i>_</i><b>limit</b>
+              The amount of content per message body segment that
+              is subjected to <b>$body</b><i>_</i><b>checks</b> filtering.
+
        <b>header</b><i>_</i><b>checks</b>
-              Lookup tables  with  content  filters  for  message
-              header  lines.   These  filters see logical headers
-              one at a time, including headers that span multiple
-              lines.
+
+       <b>mime</b><i>_</i><b>header</b><i>_</i><b>checks</b> (default: <b>$header</b><i>_</i><b>checks</b>)
+
+       <b>nested</b><i>_</i><b>header</b><i>_</i><b>checks</b> (default: <b>$header</b><i>_</i><b>checks</b>)
+              Lookup  tables  with  content  filters  for message
+              header lines: respectively, these  are  applied  to
+              the  primary  message  headers  (not including MIME
+              headers), to the MIME headers anywhere in the  mes-
+              sage,  and  to the initial headers of attached mes-
+              sages.  These filters see logical headers one at  a
+              time, including headers that span multiple lines.
+
+<b>MIME</b> <b>Processing</b>
+       <b>disable</b><i>_</i><b>mime</b><i>_</i><b>input</b><i>_</i><b>processing</b>
+              While  receiving, give no special treatment to <b>Con-</b>
+              <b>tent-Type:</b> message headers; all text after the ini-
+              tial  message  headers  is considered to be part of
+              the message body.
+
+       <b>mime</b><i>_</i><b>boundary</b><i>_</i><b>length</b><i>_</i><b>limit</b>
+              The amount of space that will be allocated for MIME
+              multipart  boundary  strings. The MIME processor is
+              unable to distinguish between boundary strings that
+              do   not   differ   in   the   first   <b>$mime</b><i>_</i><b>bound-</b>
+              <b>ary</b><i>_</i><b>length</b><i>_</i><b>limit</b> characters.
+
+       <b>mime</b><i>_</i><b>nesting</b><i>_</i><b>limit</b>
+              The maximal nesting level of  multipart  mail  that
+              the  MIME processor can handle. Refuse mail that is
+              nested deeper.
+
+       <b>strict</b><i>_</i><b>8bitmime</b>
+              Turn on both <b>strict</b><i>_</i><b>7bit</b><i>_</i><b>headers</b>  and  <b>strict</b><i>_</i><b>8bit-</b>
+              <b>mime</b><i>_</i><b>body</b>.
+
+       <b>strict</b><i>_</i><b>7bit</b><i>_</i><b>headers</b>
+              Reject  mail  with  8-bit  text in message headers.
+              This blocks mail from poorly written  applications.
+
+       <b>strict</b><i>_</i><b>8bitmime</b><i>_</i><b>body</b>
+              Reject  mail with 8-bit text in content that claims
+              to be 7-bit, or in content  that  has  no  explicit
+              content  encoding  information.   This  blocks mail
+              from poorly written mail  software.  Unfortunately,
+              this  also  breaks majordomo approval requests when
+              the included  request  contains  valid  8-bit  MIME
+              mail,  and  it  breaks bounces from mailers that do
+              not properly encapsulate 8-bit content  (for  exam-
+              ple,  bounces  from  qmail  or from old versions of
+              Postfix).
+
+       <b>strict</b><i>_</i><b>mime</b><i>_</i><b>domain</b><i>_</i><b>encoding</b>
+              Reject mail with invalid <b>Content-Transfer-Encoding:</b>
+              information  for  message/*  or  multipart/*.  This
+              blocks mail from poorly written software.
 
 <b>Miscellaneous</b>
        <b>always</b><i>_</i><b>bcc</b>
-              Address  to send a copy of each message that enters
+              Address to send a copy of each message that  enters
               the system.
 
        <b>hopcount</b><i>_</i><b>limit</b>
@@ -97,8 +153,8 @@ CLEANUP(8)                                             CLEANUP(8)
 
 <b>Address</b> <b>transformations</b>
        <b>empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>
-              The destination for  undeliverable  mail  from  &lt;&gt;.
-              This  substitution is done before all other address
+              The  destination  for  undeliverable  mail from &lt;&gt;.
+              This substitution is done before all other  address
               rewriting.
 
        <b>canonical</b><i>_</i><b>maps</b>
@@ -114,30 +170,34 @@ CLEANUP(8)                                             CLEANUP(8)
               header sender addresses.
 
        <b>masquerade</b><i>_</i><b>classes</b>
-              List  of  address  classes subject to masquerading:
-              zero or more of  <b>envelope</b><i>_</i><b>sender</b>,  <b>envelope</b><i>_</i><b>recipi-</b>
+              List of address classes  subject  to  masquerading:
+              zero  or  more of <b>envelope</b><i>_</i><b>sender</b>, <b>envelope</b><i>_</i><b>recipi-</b>
               <b>ent</b>, <b>header</b><i>_</i><b>sender</b>, <b>header</b><i>_</i><b>recipient</b>.
 
        <b>masquerade</b><i>_</i><b>domains</b>
-              List  of  domains  that hide their subdomain struc-
+              List of domains that hide  their  subdomain  struc-
               ture.
 
        <b>masquerade</b><i>_</i><b>exceptions</b>
-              List of user names that are not subject to  address
+              List  of user names that are not subject to address
               masquerading.
 
-       <b>virtual</b><i>_</i><b>maps</b>
+       <b>virtual</b><i>_</i><b>alias</b><i>_</i><b>maps</b>
               Address mapping lookup table for envelope recipient
               addresses.
 
 <b>Resource</b> <b>controls</b>
        <b>duplicate</b><i>_</i><b>filter</b><i>_</i><b>limit</b>
-              Limit the number of envelope  recipients  that  are
+              Limits  the  number of envelope recipients that are
               remembered.
 
-       <b>header</b><i>_</i><b>size</b><i>_</i><b>limit</b>
-              Limit the amount of memory in bytes used to process
+       <b>header</b><i>_</i><b>address</b><i>_</i><b>token</b><i>_</i><b>limit</b>
+              Limits the number of address tokens used to process
               a message header.
+
+       <b>header</b><i>_</i><b>size</b><i>_</i><b>limit</b>
+              Limits  the  amount of memory in bytes used to pro-
+              cess a message header.
 
        <b>in</b><i>_</i><b>flow</b><i>_</i><b>delay</b>
               Amount of time to pause before accepting a message,
@@ -153,7 +213,7 @@ CLEANUP(8)                                             CLEANUP(8)
        <a href="qmgr.8.html">qmgr(8)</a> queue manager daemon
        syslogd(8) system logging
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a> address rewriting
-       <a href="virtual.5.html">virtual(5)</a> virtual address lookup table format
+       <a href="virtual.5.html">virtual(5)</a> virtual alias lookup table format
 
 <b>FILES</b>
        /etc/postfix/canonical*, canonical mapping table
@@ -169,6 +229,5 @@ CLEANUP(8)                                             CLEANUP(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                                1
-
+                                                       CLEANUP(8)
 </pre> </body> </html>

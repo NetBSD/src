@@ -100,7 +100,7 @@ int     flush_purge(void)
     if (*var_fflush_domains == 0)
 	status = FLUSH_STAT_DENY;
     else
-	status = mail_command_client(MAIL_CLASS_PUBLIC, MAIL_SERVICE_FLUSH,
+	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
 			      ATTR_TYPE_STR, MAIL_ATTR_REQ, FLUSH_REQ_PURGE,
 				     ATTR_TYPE_END);
 
@@ -126,7 +126,7 @@ int     flush_refresh(void)
     if (*var_fflush_domains == 0)
 	status = FLUSH_STAT_DENY;
     else
-	status = mail_command_client(MAIL_CLASS_PUBLIC, MAIL_SERVICE_FLUSH,
+	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
 			    ATTR_TYPE_STR, MAIL_ATTR_REQ, FLUSH_REQ_REFRESH,
 				     ATTR_TYPE_END);
 
@@ -152,7 +152,7 @@ int     flush_send(const char *site)
     if (*var_fflush_domains == 0)
 	status = FLUSH_STAT_DENY;
     else
-	status = mail_command_client(MAIL_CLASS_PUBLIC, MAIL_SERVICE_FLUSH,
+	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
 			       ATTR_TYPE_STR, MAIL_ATTR_REQ, FLUSH_REQ_SEND,
 				     ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
 				     ATTR_TYPE_END);
@@ -179,7 +179,7 @@ int     flush_add(const char *site, const char *queue_id)
     if (*var_fflush_domains == 0)
 	status = FLUSH_STAT_DENY;
     else
-	status = mail_command_client(MAIL_CLASS_PUBLIC, MAIL_SERVICE_FLUSH,
+	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
 				ATTR_TYPE_STR, MAIL_ATTR_REQ, FLUSH_REQ_ADD,
 				     ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
 				 ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,

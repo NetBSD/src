@@ -33,6 +33,8 @@
 /*	A parsing error was detected.
 /* .IP	MAC_PARSE_UNDEF
 /*	A macro was expanded but not defined.
+/* .PP
+/*	Use the constant MAC_PARSE_OK when no error was detected.
 /* SEE ALSO
 /*	dict(3) dictionary interface.
 /* DIAGNOSTICS

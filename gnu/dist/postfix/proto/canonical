@@ -5,6 +5,10 @@
 #	format of Postfix canonical table
 # SYNOPSIS
 #	\fBpostmap /etc/postfix/canonical\fR
+#
+#	\fBpostmap -q "\fIstring\fB" /etc/postfix/canonical\fR
+#
+#	\fBpostmap -q - /etc/postfix/canonical <\fIinputfile\fR
 # DESCRIPTION
 #	The optional \fBcanonical\fR table specifies an address mapping for
 #	local and non-local addresses. The mapping is used by the
@@ -59,7 +63,7 @@
 #	\fIuser\fR@\fIdomain\fR is replaced by \fIaddress\fR. This form
 #	has the highest precedence.
 #	.sp
-#	This form useful to clean up addresses produced by legacy mail systems.
+#	This is useful to clean up addresses produced by legacy mail systems.
 #	It can also be used to produce \fIFirstname.Lastname\fR style
 #	addresses, but see below for a simpler solution.
 # .IP "\fIuser address\fR"
@@ -123,6 +127,7 @@
 #	Other parameters of interest:
 # .IP \fBinet_interfaces\fR
 #	The network interface addresses that this system receives mail on.
+#	You need to stop and start Postfix when this parameter changes.
 # .IP \fBmasquerade_classes\fR
 #	List of address classes subject to masquerading: zero or more of
 #	\fBenvelope_sender\fR, \fBenvelope_recipient\fR, \fBheader_sender\fR, 

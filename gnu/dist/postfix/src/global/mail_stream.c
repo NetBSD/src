@@ -133,10 +133,10 @@ static int mail_stream_finish_file(MAIL_STREAM * info, VSTRING *unused_why)
      * take effect before all the data blocks are written. Wietse claims that
      * this is not a problem. Postfix rejects incomplete queue files, even
      * when the +x attribute is set. Every Postfix queue file record has a
-     * type code and a length field. Files with truncated records are
-     * rejected, as are files with unknown type codes. Every Postfix queue
-     * file must end with an explicit END record. Postfix queue files without
-     * END record are discarded.
+     * type code and a length field. Files with missing records are rejected,
+     * as are files with unknown record type codes. Every Postfix queue file
+     * must end with an explicit END record. Postfix queue files without END
+     * record are discarded.
      */
     if (vstream_fflush(info->stream)
 	|| fchmod(vstream_fileno(info->stream), 0700 | info->mode)

@@ -54,12 +54,17 @@
 #include <sys/syscall.h>
 #endif
 
+#ifndef USE_SIG_RETURN
+#define USE_SIG_PIPE
+#endif
+
 /* Local stuff. */
 
 #ifdef USE_SIG_PIPE
 #include <errno.h>
 #include <fcntl.h>
 #include <iostuff.h>
+#include <events.h>
 
 int     master_sig_pipe[2];
 
@@ -114,7 +119,7 @@ static void master_sigchld(int sig, int code, struct sigcontext * scp)
 
 /* master_sigchld - force wakeup from select() */
 
-static void master_sigchld(int sig)
+static void master_sigchld(int unused_sig)
 {
     if (write(SIG_PIPE_WRITE_FD, "", 1) != 1)
 	msg_warn("write to SIG_PIPE_WRITE_FD failed: %m");

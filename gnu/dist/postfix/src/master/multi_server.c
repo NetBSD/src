@@ -98,6 +98,10 @@
 /* .IP "MAIL_SERVER_IN_FLOW_DELAY (none)"
 /*	Pause $in_flow_delay seconds when no "mail flow control token"
 /*	is available. A token is consumed for each connection request.
+/* .IP MAIL_SERVER_SOLITARY
+/*	This service must be configured with process limit of 1.
+/* .IP MAIL_SERVER_UNLIMITED
+/*	This service must be configured with process limit of 0.
 /* .PP
 /*	multi_server_disconnect() should be called by the application
 /*	when a client disconnects.
@@ -250,7 +254,11 @@ static void multi_server_execute(int unused_event, char *context)
      * Do not bother the application when the client disconnected.
      */
     if (peekfd(vstream_fileno(stream)) > 0) {
+	if (master_notify(var_pid, MASTER_STAT_TAKEN) < 0)
+	    multi_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
 	multi_server_service(stream, multi_server_name, multi_server_argv);
+	if (master_notify(var_pid, MASTER_STAT_AVAIL) < 0)
+	    multi_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
     } else {
 	multi_server_disconnect(stream);
     }
@@ -384,6 +392,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     char   *lock_path;
     VSTRING *why;
     int     alone = 0;
+    int     zerolimit = 0;
     WATCHDOG *watchdog;
     char   *oval;
 
@@ -432,7 +441,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * stderr, because no-one is going to see them.
      */
     opterr = 0;
-    while ((c = GETOPT(argc, argv, "cDi:lm:n:o:s:St:uv")) > 0) {
+    while ((c = GETOPT(argc, argv, "cDi:lm:n:o:s:St:uvz")) > 0) {
 	switch (c) {
 	case 'c':
 	    root_dir = "setme";
@@ -472,6 +481,9 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    break;
 	case 'v':
 	    msg_verbose++;
+	    break;
+	case 'z':
+	    zerolimit = 1;
 	    break;
 	default:
 	    msg_fatal("invalid option: %c", c);
@@ -523,6 +535,16 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	case MAIL_SERVER_IN_FLOW_DELAY:
 	    multi_server_in_flow_delay = 1;
 	    break;
+	case MAIL_SERVER_SOLITARY:
+	    if (!alone)
+		msg_fatal("service %s requires a process limit of 1",
+			  service_name);
+	    break;
+	case MAIL_SERVER_UNLIMITED:
+	    if (!zerolimit)
+		msg_fatal("service %s requires a process limit of 0",
+			  service_name);
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -568,6 +590,12 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Illustrated volume 2 page 532. We avoid select() collisions with an
      * external lock file.
      */
+
+    /*
+     * XXX Can't compete for exclusive access to the listen socket because we
+     * also have to monitor existing client connections for service requests.
+     */
+#if 0
     if (stream == 0 && !alone) {
 	lock_path = concatenate(DEF_PID_DIR, "/", transport,
 				".", service_name, (char *) 0);
@@ -579,6 +607,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	myfree(lock_path);
 	vstring_free(why);
     }
+#endif
 
     /*
      * Set up call-back info.

@@ -1,5 +1,4 @@
 <html> <head> </head> <body> <pre>
-
 CANONICAL(5)                                         CANONICAL(5)
 
 <b>NAME</b>
@@ -7,6 +6,10 @@ CANONICAL(5)                                         CANONICAL(5)
 
 <b>SYNOPSIS</b>
        <b>postmap</b> <b>/etc/postfix/canonical</b>
+
+       <b>postmap</b> <b>-q</b> <b>"</b><i>string</i><b>"</b> <b>/etc/postfix/canonical</b>
+
+       <b>postmap</b> <b>-q</b> <b>-</b> <b>/etc/postfix/canonical</b> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
        The  optional <b>canonical</b> table specifies an address mapping
@@ -70,7 +73,7 @@ CANONICAL(5)                                         CANONICAL(5)
               <i>user</i>@<i>domain</i>  is  replaced by <i>address</i>. This form has
               the highest precedence.
 
-              This form useful to clean up addresses produced  by
+              This is useful to clean up  addresses  produced  by
               legacy  mail  systems.  It can also be used to pro-
               duce <i>Firstname.Lastname</i> style  addresses,  but  see
               below for a simpler solution.
@@ -141,23 +144,24 @@ CANONICAL(5)                                         CANONICAL(5)
 
        <b>inet</b><i>_</i><b>interfaces</b>
               The  network  interface  addresses that this system
-              receives mail on.
+              receives mail on.  You need to stop and start Post-
+              fix when this parameter changes.
 
        <b>masquerade</b><i>_</i><b>classes</b>
-              List of address classes  subject  to  masquerading:
-              zero  or  more of <b>envelope</b><i>_</i><b>sender</b>, <b>envelope</b><i>_</i><b>recipi-</b>
+              List  of  address  classes subject to masquerading:
+              zero or more of  <b>envelope</b><i>_</i><b>sender</b>,  <b>envelope</b><i>_</i><b>recipi-</b>
               <b>ent</b>, <b>header</b><i>_</i><b>sender</b>, <b>header</b><i>_</i><b>recipient</b>.
 
        <b>masquerade</b><i>_</i><b>domains</b>
-              List of domains that hide  their  subdomain  struc-
+              List  of  domains  that hide their subdomain struc-
               ture.
 
        <b>masquerade</b><i>_</i><b>exceptions</b>
-              List  of user names that are not subject to address
+              List of user names that are not subject to  address
               masquerading.
 
        <b>mydestination</b>
-              List of domains that  this  mail  system  considers
+              List  of  domains  that  this mail system considers
               local.
 
        <b>myorigin</b>
@@ -175,7 +179,7 @@ CANONICAL(5)                                         CANONICAL(5)
        <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
@@ -184,6 +188,5 @@ CANONICAL(5)                                         CANONICAL(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                                1
-
+                                                     CANONICAL(5)
 </pre> </body> </html>

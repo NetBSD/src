@@ -22,8 +22,13 @@
 /* .IP \fB-c\fR
 /*	Display a running counter that is updated whenever an SMTP
 /*	QUIT command is executed.
+/* .IP \fB-e\fR
+/*	Disable ESMTP support.
+/* .IP \fB-h\fI hostname\fR
+/*	Use \fIhostname\fR in the SMTP greeting, in the HELO response,
+/*	and in the EHLO response. The default hostname is "smtp-sink".
 /* .IP \fB-L\fR
-/*	Speak LMTP rather than SMTP.
+/*	Enable LMTP rather than SMTP.
 /* .IP "\fB-n \fIcount\fR"
 /*	Terminate after \fIcount\fR sessions. This is for testing purposes.
 /* .IP \fB-p\fR
@@ -31,10 +36,18 @@
 /* .IP \fB-P\fR
 /*	Change the server greeting so that it appears to come through
 /*	a CISCO PIX system.
+/* .IP "\fB-s \fIcommand,command,...\fR"
+/*	Log the named commands to syslogd.
+/*	Examples of commands that can be logged are HELO, EHLO, LHLO, MAIL,
+/*	RCPT, VRFY, RSET, NOOP, and QUIT. Separate command names by white
+/*	space or commas, and use quotes to protect white space from the
+/*	shell. Command names are case-insensitive.
 /* .IP \fB-v\fR
 /*	Show the SMTP conversations.
 /* .IP "\fB-w \fIdelay\fR"
 /*	Wait \fIdelay\fR seconds before responding to a DATA command.
+/* .IP \fB-8\fR
+/*	Disable 8BITMIME support.
 /* .IP [\fBinet:\fR][\fIhost\fR]:\fIport\fR
 /*	Listen on network interface \fIhost\fR (default: any interface)
 /*	TCP port \fIport\fR. Both \fIhost\fR and \fIport\fR may be
@@ -66,6 +79,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <syslog.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -83,6 +97,7 @@
 #include <mymalloc.h>
 #include <iostuff.h>
 #include <msg_vstream.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -115,7 +130,9 @@ static int count;
 static int counter;
 static int max_count;
 static int disable_pipelining;
+static int disable_8bitmime;
 static int fixed_delay;
+static int disable_esmtp;
 static int enable_lmtp;
 static int pretend_pix;
 
@@ -126,7 +143,16 @@ static void ehlo_response(SINK_STATE *state)
     smtp_printf(state->stream, "250-%s", var_myhostname);
     if (!disable_pipelining)
 	smtp_printf(state->stream, "250-PIPELINING");
-    smtp_printf(state->stream, "250 8BITMIME");
+    if (!disable_8bitmime)
+	smtp_printf(state->stream, "250-8BITMIME");
+    smtp_printf(state->stream, "250 ");
+}
+
+/* helo_response - respond to HELO command */
+
+static void helo_response(SINK_STATE *state)
+{
+    smtp_printf(state->stream, "250 %s", var_myhostname);
 }
 
 /* ok_response - send 250 OK */
@@ -249,7 +275,7 @@ static int data_read(SINK_STATE *state)
 	 * VSTREAM and kernel read buffers dry up.
 	 */
 	if (vstream_peek(state->stream) <= 0
-	    && peekfd(vstream_fileno(state->stream)) <= 0)
+	    && readable(vstream_fileno(state->stream)) <= 0)
 	    return (0);
     }
     return (0);
@@ -261,21 +287,53 @@ static int data_read(SINK_STATE *state)
 typedef struct SINK_COMMAND {
     char   *name;
     void    (*response) (SINK_STATE *);
+    int     flags;
 } SINK_COMMAND;
 
+#define FLAG_ENABLE	(1<<0)		/* command is enabled */
+#define FLAG_SYSLOG	(1<<1)		/* log the command */
+
 static SINK_COMMAND command_table[] = {
-    "helo", ok_response,
-    "ehlo", ehlo_response,
-    "lhlo", ehlo_response,
-    "mail", mail_response,
-    "rcpt", rcpt_response,
-    "data", data_response,
-    "rset", ok_response,
-    "noop", ok_response,
-    "vrfy", ok_response,
-    "quit", quit_response,
+    "helo", helo_response, 0,
+    "ehlo", ehlo_response, 0,
+    "lhlo", ehlo_response, 0,
+    "mail", mail_response, FLAG_ENABLE,
+    "rcpt", rcpt_response, FLAG_ENABLE,
+    "data", data_response, FLAG_ENABLE,
+    "rset", ok_response, FLAG_ENABLE,
+    "noop", ok_response, FLAG_ENABLE,
+    "vrfy", ok_response, FLAG_ENABLE,
+    "quit", quit_response, FLAG_ENABLE,
     0,
 };
+
+/* set_cmd_flags - set per-command command flags */
+
+static void set_cmd_flags(const char *cmd, int flags)
+{
+    SINK_COMMAND *cmdp;
+
+    for (cmdp = command_table; cmdp->name != 0; cmdp++)
+	if (strcasecmp(cmd, cmdp->name) == 0)
+	    break;
+    if (cmdp->name == 0)
+	msg_fatal("unknown command: %s", cmd);
+    cmdp->flags |= flags;
+}
+
+/* set_cmds_flags - set per-command flags for multiple commands */
+
+static void set_cmds_flags(const char *cmds, int flags)
+{
+    char   *saved_cmds;
+    char   *cp;
+    char   *cmd;
+
+    saved_cmds = cp = mystrdup(cmds);
+    while ((cmd = mystrtok(&cp, " \t\r\n,")) != 0)
+	set_cmd_flags(cmd, flags);
+    myfree(saved_cmds);
+}
 
 /* command_read - talk the SMTP protocol, server side */
 
@@ -294,6 +352,7 @@ static int command_read(SINK_STATE *state)
 	ST_CR, '\n', ST_CR_LF,
     };
     struct cmd_trans *cp;
+    char   *ptr;
 
     /*
      * A read may result in EOF, but is never supposed to time out - a time
@@ -331,9 +390,15 @@ static int command_read(SINK_STATE *state)
 	/*
 	 * We must avoid blocking I/O, so get out of here as soon as both the
 	 * VSTREAM and kernel read buffers dry up.
+	 * 
+	 * XXX Solaris non-blocking read() may fail on a socket when ioctl
+	 * FIONREAD reports there is unread data. Diagnosis by Max Pashkov.
+	 * As a workaround we use readable() (which uses poll or select())
+	 * instead of peek_fd() (which uses ioctl FIONREAD). Workaround added
+	 * 20020604.
 	 */
 	if (vstream_peek(state->stream) <= 0
-	    && peekfd(vstream_fileno(state->stream)) <= 0)
+	    && readable(vstream_fileno(state->stream)) <= 0)
 	    return (0);
     }
 
@@ -350,7 +415,8 @@ static int command_read(SINK_STATE *state)
     /*
      * Got a complete command line. Parse it.
      */
-    if ((command = strtok(vstring_str(state->buffer), " \t")) == 0) {
+    ptr = vstring_str(state->buffer);
+    if ((command = mystrtok(&ptr, " \t")) == 0) {
 	smtp_printf(state->stream, "500 Error: unknown command");
 	return (0);
     }
@@ -359,10 +425,13 @@ static int command_read(SINK_STATE *state)
     for (cmdp = command_table; cmdp->name != 0; cmdp++)
 	if (strcasecmp(command, cmdp->name) == 0)
 	    break;
-    if (cmdp->name == 0) {
+    if (cmdp->name == 0 || (cmdp->flags & FLAG_ENABLE) == 0) {
 	smtp_printf(state->stream, "500 Error: unknown command");
 	return (0);
     }
+    /* We use raw syslog. Sanitize data content and length. */
+    if (cmdp->flags & FLAG_SYSLOG)
+	syslog(LOG_INFO, "%s %.100s", command, printable(ptr, '?'));
     if (cmdp->response == data_response && fixed_delay > 0) {
 	event_request_timer(data_event, (char *) state, fixed_delay);
     } else {
@@ -413,7 +482,7 @@ static void disconnect(SINK_STATE *state)
     vstream_fclose(state->stream);
     vstring_free(state->buffer);
     myfree((char *) state);
-    if (max_count > 0 && counter >= max_count)
+    if (max_count > 0 && ++counter >= max_count)
 	exit(0);
 }
 
@@ -447,10 +516,12 @@ static void connect_event(int unused_event, char *context)
 	state->read = command_read;
 	state->data_state = ST_ANY;
 	smtp_timeout_setup(state->stream, var_tmout);
-if (pretend_pix)
-	smtp_printf(state->stream, "220 ********");
-else
-	smtp_printf(state->stream, "220 %s ESMTP", var_myhostname);
+	if (pretend_pix)
+	    smtp_printf(state->stream, "220 ********");
+	else if (disable_esmtp)
+	    smtp_printf(state->stream, "220 %s", var_myhostname);
+	else
+	    smtp_printf(state->stream, "220 %s ESMTP", var_myhostname);
 	event_enable_read(fd, read_event, (char *) state);
     }
 }
@@ -459,7 +530,7 @@ else
 
 static void usage(char *myname)
 {
-    msg_fatal("usage: %s [-cLpPv] [-n count] [-w delay] [host]:port backlog", myname);
+    msg_fatal("usage: %s [-ceLpPv8] [-h hostname] [-n count] [-s commands] [-w delay] [host]:port backlog", myname);
 }
 
 int     main(int argc, char **argv)
@@ -476,10 +547,16 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "cLn:pPvw:")) > 0) {
+    while ((ch = GETOPT(argc, argv, "ceh:Ln:pPs:vw:8")) > 0) {
 	switch (ch) {
 	case 'c':
 	    count++;
+	    break;
+	case 'e':
+	    disable_esmtp = 1;
+	    break;
+	case 'h':
+	    var_myhostname = optarg;
 	    break;
 	case 'L':
 	    enable_lmtp = 1;
@@ -491,7 +568,11 @@ int     main(int argc, char **argv)
 	    disable_pipelining = 1;
 	    break;
 	case 'P':
-	    pretend_pix=1;
+	    pretend_pix = 1;
+	    break;
+	case 's':
+	    openlog(basename(argv[0]), LOG_PID, LOG_MAIL);
+	    set_cmds_flags(optarg, FLAG_SYSLOG);
 	    break;
 	case 'v':
 	    msg_verbose++;
@@ -499,6 +580,9 @@ int     main(int argc, char **argv)
 	case 'w':
 	    if ((fixed_delay = atoi(optarg)) <= 0)
 		usage(argv[0]);
+	    break;
+	case '8':
+	    disable_8bitmime = 1;
 	    break;
 	default:
 	    usage(argv[0]);
@@ -512,7 +596,11 @@ int     main(int argc, char **argv)
     /*
      * Initialize.
      */
-    var_myhostname = "smtp-sink";
+    if (var_myhostname == 0)
+	var_myhostname = "smtp-sink";
+    set_cmds_flags(enable_lmtp ? "lhlo" :
+		   disable_esmtp ? "helo" :
+		   "helo, ehlo", FLAG_ENABLE);
     if (strncmp(argv[optind], "unix:", 5) == 0) {
 	sock = unix_listen(argv[optind] + 5, backlog, BLOCKING);
     } else {

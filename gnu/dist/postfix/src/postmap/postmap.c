@@ -5,7 +5,7 @@
 /*	Postfix lookup table management
 /* SYNOPSIS
 /* .fi
-/*	\fBpostmap\fR [\fB-Nfinrvw\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostmap\fR [\fB-Nfinorvw\fR] [\fB-c \fIconfig_dir\fR]
 /*		[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
 /*		[\fIfile_type\fR:]\fIfile_name\fR ...
 /* DESCRIPTION
@@ -69,6 +69,10 @@
 /*	Don't include the terminating null character that terminates lookup
 /*	keys and values. By default, Postfix does whatever is the default for
 /*	the host operating system.
+/* .IP \fB-o\fR
+/*	Do not release root privileges when processing a non-root
+/*	input file. By default, \fBpostmap\fR drops root privileges
+/*	and runs as the source file owner instead.
 /* .IP "\fB-q \fIkey\fR"
 /*	Search the specified maps for \fIkey\fR and print the first value
 /*	found on the standard output stream. The exit status is zero
@@ -103,8 +107,12 @@
 /*	The output file is a hashed file, named \fIfile_name\fB.db\fR.
 /*	This is available only on systems with support for \fBdb\fR databases.
 /* .PP
+/*	Use the command \fBpostconf -m\fR to find out what types of database
+/*	your Postfix installation can support.
+/*
 /*	When no \fIfile_type\fR is specified, the software uses the database
-/*	type specified via the \fBdatabase_type\fR configuration parameter.
+/*	type specified via the \fBdefault_database_type\fR configuration
+/*	parameter.
 /* .RE
 /* .IP \fIfile_name\fR
 /*	The name of the lookup table source file when rebuilding a database.
@@ -126,10 +134,16 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/* .IP \fBdatabase_type\fR
+/* .IP \fBdefault_database_type\fR
 /*	Default output database type.
 /*	On many UNIX systems, the default database type is either \fBhash\fR
 /*	or \fBdbm\fR.
+/* .IP \fBberkeley_db_create_buffer_size\fR
+/*	Amount of buffer memory to be used when creating a Berkeley DB
+/*	\fBhash\fR or \fBbtree\fR lookup table.
+/* .IP \fBberkeley_db_read_buffer_size\fR
+/*	Amount of buffer memory to be used when reading a Berkeley DB
+/*	\fBhash\fR or \fBbtree\fR lookup table.
 /* LICENSE
 /* .ad
 /* .fi
@@ -162,6 +176,7 @@
 #include <stringops.h>
 #include <split_at.h>
 #include <vstring_vstream.h>
+#include <set_eugid.h>
 
 /* Global library. */
 
@@ -173,9 +188,11 @@
 
 #define STR	vstring_str
 
+#define POSTMAP_FLAG_AS_OWNER	(1<<0)	/* open dest as owner of source */
+
 /* postmap - create or update mapping database */
 
-static void postmap(char *map_type, char *path_name,
+static void postmap(char *map_type, char *path_name, int postmap_flags,
 		            int open_flags, int dict_flags)
 {
     VSTREAM *source_fp;
@@ -205,6 +222,15 @@ static void postmap(char *map_type, char *path_name,
      */
     if (S_ISREG(st.st_mode))
 	saved_mask = umask(022 | (~st.st_mode & 077));
+
+    /*
+     * If running as root, run as the owner of the source file, so that the
+     * result shows proper ownership, and so that a bug in postmap does not
+     * allow privilege escalation.
+     */
+    if ((postmap_flags & POSTMAP_FLAG_AS_OWNER) && getuid() == 0
+	&& (st.st_uid != geteuid() || st.st_gid != getegid()))
+	set_eugid(st.st_uid, st.st_gid);
 
     /*
      * Open the database, optionally create it when it does not exist,
@@ -410,7 +436,7 @@ static int postmap_delete(const char *map_type, const char *map_name,
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s [-Nfinrvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
+    msg_fatal("usage: %s [-Nfinorvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
 	      myname);
 }
 
@@ -421,6 +447,7 @@ int     main(int argc, char **argv)
     int     fd;
     char   *slash;
     struct stat st;
+    int     postmap_flags = POSTMAP_FLAG_AS_OWNER;
     int     open_flags = O_RDWR | O_CREAT | O_TRUNC;
     int     dict_flags = DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_KEY;
     char   *query = 0;
@@ -460,7 +487,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "Nc:d:finq:rvw")) > 0) {
+    while ((ch = GETOPT(argc, argv, "Nc:d:finoq:rvw")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -487,6 +514,9 @@ int     main(int argc, char **argv)
 	case 'n':
 	    dict_flags |= DICT_FLAG_TRY0NULL;
 	    dict_flags &= ~DICT_FLAG_TRY1NULL;
+	    break;
+	case 'o':
+	    postmap_flags &= ~POSTMAP_FLAG_AS_OWNER;
 	    break;
 	case 'q':
 	    if (query || delkey)
@@ -551,9 +581,11 @@ int     main(int argc, char **argv)
 	    usage(argv[0]);
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
-		postmap(argv[optind], path_name, open_flags, dict_flags);
+		postmap(argv[optind], path_name, postmap_flags,
+			open_flags, dict_flags);
 	    } else {
-		postmap(var_db_type, argv[optind], open_flags, dict_flags);
+		postmap(var_db_type, argv[optind], postmap_flags,
+			open_flags, dict_flags);
 	    }
 	    optind++;
 	}

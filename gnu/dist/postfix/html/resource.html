@@ -77,8 +77,18 @@ an untrusted source.  Long lines are reconstructed upon delivery.
 
 <dd> How much text may be carried in a multi-line message header.
 Header text that does not fit in <b>$header_size_limit</b> bytes
-overflows into the message body. This limit is enforced by the <a
+is discarded. This limit is enforced by the <a
 href="cleanup.8.html"> cleanup</a> header rewriting code.
+
+<p>
+
+<dt> <b>header_address_token_limit</b> (default: 10240 tokens)
+
+<dd> Limit on the amount of memory and CPU that Postfix will use for
+rewriting addresses in message headers. The limit is expressed as
+a number of tokens.  Tokens text that do not fit are discarded.
+This limit is enforced by the <a href="cleanup.8.html"> cleanup</a>
+header rewriting code.
 
 <p>
 
@@ -129,7 +139,7 @@ of in-memory object instances.
 
 <dl>
 
-<dt> <b>qmgr_message_recipient_limit</b> (default: 10000)
+<dt> <b>qmgr_message_recipient_limit</b> (default: 20000)
 
 <dd> An upper bound on the number of <a href="qmgr.8.html">queue
 manager</a> in-memory recipient address data structures.  This
@@ -139,7 +149,7 @@ href="rate.html#backoff">delivery rate control</a> documentation.
 
 <p>
 
-<dt> <b>qmgr_message_active_limit</b> (default: 1000)
+<dt> <b>qmgr_message_active_limit</b> (default: 20000)
 
 <dd> An upper limit on the number of messages in the <b>active</b>
 queue.  For an introduction to the Postfix queue organization see

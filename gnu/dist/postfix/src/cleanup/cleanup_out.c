@@ -12,13 +12,13 @@
 /*	void	cleanup_out(state, type, data, len)
 /*	CLEANUP_STATE *state;
 /*	int	type;
-/*	char	*data;
+/*	const char *data;
 /*	int	len;
 /*
 /*	void	cleanup_out_string(state, type, str)
 /*	CLEANUP_STATE *state;
 /*	int	type;
-/*	char	*str;
+/*	const char *str;
 /*
 /*	void	CLEANUP_OUT_BUF(state, type, buf)
 /*	CLEANUP_STATE *state;
@@ -28,7 +28,7 @@
 /*	void	cleanup_out_format(state, type, format, ...)
 /*	CLEANUP_STATE *state;
 /*	int	type;
-/*	char	*format;
+/*	const char *format;
 /* DESCRIPTION
 /*	This module writes records to the output stream.
 /*
@@ -85,7 +85,7 @@
 
 /* cleanup_out - output one single record */
 
-void    cleanup_out(CLEANUP_STATE *state, int type, char *string, int len)
+void    cleanup_out(CLEANUP_STATE *state, int type, const char *string, int len)
 {
     int     err = 0;
 
@@ -129,14 +129,14 @@ void    cleanup_out(CLEANUP_STATE *state, int type, char *string, int len)
 
 /* cleanup_out_string - output string to one single record */
 
-void    cleanup_out_string(CLEANUP_STATE *state, int type, char *string)
+void    cleanup_out_string(CLEANUP_STATE *state, int type, const char *string)
 {
     cleanup_out(state, type, string, strlen(string));
 }
 
 /* cleanup_out_format - output one formatted record */
 
-void    cleanup_out_format(CLEANUP_STATE *state, int type, char *fmt,...)
+void    cleanup_out_format(CLEANUP_STATE *state, int type, const char *fmt,...)
 {
     static VSTRING *vp;
     va_list ap;

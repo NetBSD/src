@@ -44,11 +44,11 @@ RFC 821 (SMTP protocol)
 RFC 1123 (Host requirements)
 RFC 1652 (8bit-MIME transport)
 RFC 1869 (SMTP service extensions)
-RFC 1854 (SMTP Pipelining)
 RFC 1870 (Message Size Declaration)
 RFC 1985 (ETRN command)
 RFC 2554 (AUTH command)
 RFC 2821 (SMTP protocol)
+RFC 2920 (SMTP Pipelining)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -116,9 +116,9 @@ anti-spoofing restriction.
 .fi
 .IP \fBalways_bcc\fR
 Address to send a copy of each message that enters the system.
-.IP \fBcommand_directory\fR
-Location of Postfix support commands (default:
-\fB$program_directory\fR).
+.IP \fBauthorized_verp_clients\fR
+Hostnames, domain names and/or addresses of clients that are
+authorized to use the XVERP extension.
 .IP \fBdebug_peer_level\fR
 Increment in verbose logging level when a remote host matches a
 pattern in the \fBdebug_peer_list\fR parameter.
@@ -133,10 +133,6 @@ XVERP command is specified without explicit delimiters.
 Recipient of protocol/policy/resource/software error notices.
 .IP \fBhopcount_limit\fR
 Limit the number of \fBReceived:\fR message headers.
-.IP \fBlocal_recipient_maps\fR
-List of maps with user names that are local to \fB$myorigin\fR
-or \fB$inet_interfaces\fR. If this parameter is defined,
-then the SMTP server rejects mail for unknown local users.
 .IP \fBnotify_classes\fR
 List of error classes. Of special interest are:
 .RS
@@ -150,6 +146,9 @@ postmaster.
 .RE
 .IP \fBsmtpd_banner\fR
 Text that follows the \fB220\fR status code in the SMTP greeting banner.
+.IP \fBsmtpd_expansion_filter\fR
+Controls what characters are allowed in $name expansion of
+rbl template responses and other text.
 .IP \fBsmtpd_recipient_limit\fR
 Restrict the number of recipients that the SMTP server accepts
 per message delivery.
@@ -161,6 +160,30 @@ Change hard (5xx) reject responses into soft (4xx) reject responses.
 This can be useful for testing purposes.
 .IP \fBverp_delimiter_filter\fR
 The characters that Postfix accepts as VERP delimiter characters.
+.SH "Known versus unknown recipients"
+.ad
+.fi
+.IP \fBshow_user_unknown_table_name\fR
+Whether or not to reveal the table name in the "User unknown"
+responses. The extra detail makes trouble shooting easier
+but also reveals information that is nobody elses business.
+.IP \fBunknown_local_recipient_reject_code\fR
+The response code when a client specifies a recipient whose domain
+matches \fB$mydestination\fR or \fB$inet_interfaces\fR, while
+\fB$local_recipient_maps\fR is non-empty and does not list
+the recipient address or address local-part.
+.IP \fBunknown_relay_recipient_reject_code\fR
+The response code when a client specifies a recipient whose domain
+matches \fB$relay_domains\fR, while \fB$relay_recipient_maps\fR
+is non-empty and does not list the recipient address.
+.IP \fBunknown_virtual_alias_reject_code\fR
+The response code when a client specifies a recipient whose domain
+matches \fB$virtual_alias_domains\fR, while the recipient is not
+listed in \fB$virtual_alias_maps\fR.
+.IP \fBunknown_virtual_mailbox_reject_code\fR
+The response code when a client specifies a recipient whose domain
+matches \fB$virtual_mailbox_domains\fR, while the recipient is not
+listed in \fB$virtual_mailbox_maps\fR.
 .SH "Resource controls"
 .ad
 .fi
@@ -213,6 +236,9 @@ Restrict what recipient addresses are allowed in \fBRCPT TO\fR commands.
 .IP \fBsmtpd_etrn_restrictions\fR
 Restrict what domain names can be used in \fBETRN\fR commands,
 and what clients may issue \fBETRN\fR commands.
+.IP \fBsmtpd_data_restrictions\fR
+Restrictions on the \fBDATA\fR command. Currently, the only restriction
+that makes sense here is \fBreject_unauth_pipelining\fR.
 .IP \fBallow_untrusted_routing\fR
 Allow untrusted clients to specify addresses with sender-specified
 routing.  Enabling this opens up nasty relay loopholes involving
@@ -224,43 +250,58 @@ then be used instead of the restriction lists that they represent.
 .IP \fBsmtpd_null_access_lookup_key\fR
 The lookup key to be used in SMTPD access tables instead of the
 null sender address. A null sender address cannot be looked up.
-.IP \fBmaps_rbl_domains\fR
+.IP "\fBmaps_rbl_domains\fR (deprecated)"
 List of DNS domains that publish the addresses of blacklisted
-hosts.
+hosts. This is used with the deprecated \fBreject_maps_rbl\fR
+restriction.
 .IP \fBpermit_mx_backup_networks\fR
 Only domains whose primary MX hosts match the listed networks
 are eligible for the \fBpermit_mx_backup\fR feature.
 .IP \fBrelay_domains\fR
-Restrict what domains or networks this mail system will relay
-mail from or to.
+Restrict what domains this mail system will relay
+mail to. The domains are routed to the delivery agent
+specified with the \fBrelay_transport\fR setting.
 .SH "UCE control responses"
 .ad
 .fi
 .IP \fBaccess_map_reject_code\fR
-Server response when a client violates an access database restriction.
+Response code when a client violates an access database restriction.
+.IP \fBdefault_rbl_reply\fR
+Default template reply when a request is RBL blacklisted.
+This template is used by the \fBreject_rbl_*\fR and
+\fBreject_rhsbl_*\fR restrictions. See also:
+\fBrbl_reply_maps\fR and \fBsmtpd_expansion_filter\fR.
+.IP \fBdefer_code\fR
+Response code when a client request is rejected by the \fBdefer\fR
+restriction.
 .IP \fBinvalid_hostname_reject_code\fR
-Server response when a client violates the \fBreject_invalid_hostname\fR
+Response code when a client violates the \fBreject_invalid_hostname\fR
 restriction.
 .IP \fBmaps_rbl_reject_code\fR
-Server response when a client violates the \fBmaps_rbl_domains\fR
-restriction.
+Response code when a request is RBL blacklisted.
+.IP \fBrbl_reply_maps\fR
+Table with template responses for RBL blacklisted requests, indexed by
+RBL domain name. These templates are used by the \fBreject_rbl_*\fR
+and \fBreject_rhsbl_*\fR restrictions. See also:
+\fBdefault_rbl_reply\fR and \fBsmtpd_expansion_filter\fR.
 .IP \fBreject_code\fR
 Response code when the client matches a \fBreject\fR restriction.
 .IP \fBrelay_domains_reject_code\fR
-Server response when a client attempts to violate the mail relay
+Response code when a client attempts to violate the mail relay
 policy.
 .IP \fBunknown_address_reject_code\fR
-Server response when a client violates the \fBreject_unknown_address\fR
+Response code when a client violates the \fBreject_unknown_address\fR
 restriction.
 .IP \fBunknown_client_reject_code\fR
-Server response when a client without address to name mapping
-violates the \fBreject_unknown_clients\fR restriction.
+Response code when a client without address to name mapping
+violates the \fBreject_unknown_client\fR restriction.
 .IP \fBunknown_hostname_reject_code\fR
-Server response when a client violates the \fBreject_unknown_hostname\fR
+Response code when a client violates the \fBreject_unknown_hostname\fR
 restriction.
 .SH SEE ALSO
 .na
 .nf
+trivial-rewrite(8) address resolver
 cleanup(8) message canonicalization
 master(8) process manager
 syslogd(8) system logging

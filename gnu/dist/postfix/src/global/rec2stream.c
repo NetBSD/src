@@ -35,7 +35,7 @@
 #include <record.h>
 #include <rec_streamlf.h>
 
-main(void)
+int     main(void)
 {
     VSTRING *buf = vstring_alloc(100);
     int     type;

@@ -55,11 +55,11 @@ All mail:
 
 <p>
 
-<li> <a href="#relocated"> Relocated users table</a>
+<li> <a href="#transport"> Mail transport switch</a>
 
 <p>
 
-<li> <a href="#transport"> Mail transport switch</a>
+<li> <a href="#relocated"> Relocated users table</a>
 
 </ul>
 
@@ -233,20 +233,33 @@ comes from the gateway itself, instead of from individual machines.
 <p>
 
 Address masquerading is disabled by default. To enable, edit the
-<b>masquerade_domains</b> parameter in the <b>main.cf</b>
-file and specify one or more domain names separated by whitespace
-or commas. For example:
+<b>masquerade_domains</b> parameter in the <b>main.cf</b> file and
+specify one or more domain names separated by whitespace or commas.
+The list is processed left to right, and processing stops at the
+first match.  Thus,
 
-<dl>
+<blockquote>
 
-<dd><b>masquerade_domains = $mydomain</b>
+<b>masquerade_domains = foo.example.com example.com</b>
 
-</dl>
+</blockquote>
+
+strips any.thing.foo.example.com to foo.example.com, but strips
+any.thing.else.example.com to example.com.
 
 <p>
 
-In this example, addresses of the form <i>user@host.$mydomain</i>
-would be rewritten to <i>user@$mydomain</i>.
+A domain name prefixed with ! means do not masquerade this domain
+or its subdomains. Thus,
+
+<blockquote>
+
+<b>masquerade_domains = !foo.example.com example.com</b>
+
+</blockquote>
+
+does not change any.thing.foo.example.com and foo.example.com,
+but strips any.thing.else.example.com to example.com.
 
 <p>
 
@@ -290,72 +303,81 @@ header_sender, header_recipient</b>
 If you do this, Postfix will no longer be able to send mail to
 individual machines.
 
-<a name="virtual"> <h2> Virtual address mapping</h2>
+<a name="virtual"> <h2> Virtual address aliasing</h2>
 
 After applying the canonical and masquerade mappings, the <a
 href="cleanup.8.html">cleanup</a> daemon uses the <a
-href="virtual.5.html">virtual</a> table to redirect mail for all
+href="virtual.5.html">virtual alias</a> table to redirect mail for all
 recipients, local or remote.  The mapping affects only envelope
 recipients; it has no effect on message headers or envelope senders.
-Virtual lookups are useful to redirect mail for virtual domains to
-real user mailboxes, and to redirect mail for domains that no longer
-exist.  Virtual lookups can also be used to transform <i>
-Firstname.Lastname </i> back into UNIX login names, although it
-seems that local <a href="#aliases">aliases</a> are a more appropriate
-vehicle.
+Virtual alias lookups are useful to redirect mail for simulated
+virtual domains to real user mailboxes, and to redirect mail for
+domains that no longer exist.  Virtual alias lookups can also be
+used to transform <i> Firstname.Lastname </i> back into UNIX login
+names, although it seems that local <a href="#aliases">aliases</a>
+are a more appropriate vehicle.
 
 <p>
 
-Virtual mapping is disabled by default. To enable, edit the <b>
-virtual_maps</b> parameter in the <b>main.cf</b> file and
+Virtual aliasing is disabled by default. To enable, edit the <b>
+virtual_alias_maps</b> parameter in the <b>main.cf</b> file and
 specify one or more lookup tables, separated by whitespace or
 commas. For example:
 
 <dl>
 
-<dd><b>virtual_maps = hash:/etc/postfix/virtual</b>
+<dd><b>virtual_alias_maps = hash:/etc/postfix/virtual</b>
 
 </dl>
 
 <p>
 
-Addresses found in virtual maps are subjected to another iteration
-of virtual mapping, but are not subjected to canonical mapping, in
-order to avoid loops.
-
-<a name="relocated"> <h2> Relocated users table</h2>
-
-Next, the queue manager runs each recipient name through the
-<a href="relocated.5.html">relocated</a> database.  This table
-provides information on how to reach users that no longer have an
-account, or what to do with mail for entire domains that no longer
-exist.  When mail is sent to an address that is listed in this
-table, the message is bounced with an informative message.
-
-<p>
-
-Lookups of relocated users are disabled by default. To enable, edit
-the <b>relocated_maps</b> parameter in the <b>main.cf</b>
-file and specify one or more lookup tables, separated by whitespace
-or commas. For example:
-
-<dl>
-
-<dd><b>relocated_maps = hash:/etc/postfix/relocated</b>
-
-</dl>
+Addresses found in virtual alias maps are subjected to another
+iteration of virtual aliasing, but are not subjected to canonical
+mapping, in order to avoid loops.
 
 <a name="transport"> <h2> Mail transport switch</h2>
 
-Once the queue manager has established the destination of a message,
-the optional <a href="transport.5.html">transport</a> table controls
-how the message will be delivered (this table is used by the address
-rewriting and resolving daemon). By default, everything is sent
-via the <a href="smtp.8.html">smtp</a> transport. The transport
-table can be used to send mail to specific sites via <b>UUCP</b>,
-or to send mail to a really broken mail system that can handle only
-one SMTP connection at a time (yes, such systems exist and people
-used to pay real money for them).
+Once the address rewriting and resolving daemon has established
+the destination of a message, it determines the default delivery
+method for that destination. Postfix distinguishes four major
+address classes, each with its own default delivery method.
+
+<blockquote>
+
+<table border="1">
+
+<tr><th align="left">Destination matches<th align="left">Default delivery agent <th align="left">Controlling parameter
+
+<tr><td><a href="basic.html#mydestination">$mydestination</a> or
+<a href="basic.html#inet_interfaces">$inet_interfaces</a>
+<td><a href="local.8.html">local</a>
+<td><b>$local_transport</b> 
+
+<tr><td><b>$virtual_mailbox_domains</b> 
+<td><a href="virtual.8.html">virtual</a>
+<td><b>$virtual_transport</b> 
+
+<tr><td><a href="uce.html#relay_domains">$relay_domains</a>
+<td>relay (clone of <a href="smtp.8.html">smtp</a>)
+<td><b>$relay_transport</b> 
+
+<tr><td>none 
+<td><a href="smtp.8.html">smtp</a>
+<td><b>$default_transport</b> 
+
+</table>
+
+</blockquote>
+
+The optional <a href="transport.5.html">transport</a> table overrides
+the default message delivery method (this table is used by the
+address rewriting and resolving daemon).
+
+The transport table can be used to send mail to specific sites via
+<b>UUCP</b>, or to send mail to a really broken mail system that
+can handle only one SMTP connection at a time (yes, such systems
+exist and people used to pay real money for them).
 
 <p>
 
@@ -367,6 +389,28 @@ commas. For example:
 <dl>
 
 <dd><b>transport_maps = hash:/etc/postfix/transport</b>
+
+</dl>
+
+<a name="relocated"> <h2> Relocated users table</h2>
+
+Next, the address rewriting and resolving daemon runs each recipient
+name through the <a href="relocated.5.html">relocated</a> database.
+This table provides information on how to reach users that no longer
+have an account, or what to do with mail for entire domains that
+no longer exist.  When mail is sent to an address that is listed
+in this table, the message is bounced with an informative message.
+
+<p>
+
+Lookups of relocated users are disabled by default. To enable, edit
+the <b>relocated_maps</b> parameter in the <b>main.cf</b>
+file and specify one or more lookup tables, separated by whitespace
+or commas. For example:
+
+<dl>
+
+<dd><b>relocated_maps = hash:/etc/postfix/relocated</b>
 
 </dl>
 
@@ -442,6 +486,21 @@ Alternatively, mail for non-existent recipients can be delegated
 to an entirely different message transport, as specified with the
 <b>fallback_transport</b> configuration parameter. For details,
 see the <a href="local.8.html"> local</a> delivery agent.
+
+<p>
+
+Note: if you use the <b>luser_relay</b> feature in order to receive
+mail for non-UNIX accounts, then you must specify:
+
+<blockquote>
+<pre>
+<b>local_recipient_maps =</b>
+</pre>
+</blockquote>
+
+(i.e. empty) in the <b>main.cf</b> file, otherwise the Postfix SMTP
+server will reject mail for non-UNIX accounts with "User unknown
+in local recipient table".
 
 <p>
 

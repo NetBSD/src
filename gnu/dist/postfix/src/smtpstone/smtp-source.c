@@ -56,7 +56,7 @@
 /*	Wait a fixed time between messages.
 /*	Suspending one thread does not affect other delivery threads.
 /* .IP [\fBinet:\fR]\fIhost\fR[:\fIport\fR]
-/*	Connect via TCP to \fIhost\fR port \fIport\fR. The default
+/*	Connect via TCP to host \fIhost\fR, port \fIport\fR. The default
 /*	port is \fBsmtp\fR.
 /* .IP \fBunix:\fIpathname\fR
 /*	Connect to the UNIX-domain socket at \fIpathname\fR.

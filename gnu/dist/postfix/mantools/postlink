@@ -44,7 +44,7 @@ exec sed '
 	s/[<bB>]*canonical[</bB>]*(5)/<a href="canonical.5.html">&<\/a>/
 	s/[<bB>]*etrn[</bB>]*(5)/<a href="etrn.5.html">&<\/a>/
 	s/[<bB>]*pcre[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="pcre_table.5.html">&<\/a>/
-	s/[<bB>]*regexp[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="regexp_table.5.html">&<\/a>/
+	s/[<bB>]*reg[-</bB>]*\n*[ <bB>]*exp[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="regexp_table.5.html">&<\/a>/
 	s/[<bB>]*relocated[</bB>]*(5)/<a href="relocated.5.html">&<\/a>/
 	s/[<bB>]*trans[-</bB>]*\n*[ <bB>]*port[</bB>]*(5)/<a href="transport.5.html">&<\/a>/
 	s/[<bB>]*virtual[</bB>]*(5)/<a href="virtual.5.html">&<\/a>/

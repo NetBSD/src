@@ -21,13 +21,15 @@
 /*	const char *key;
 /*	int	flags;
 /*
-/*	void	maps_free(maps)
+/*	MAPS	*maps_free(maps)
 /*	MAPS	*maps;
 /* DESCRIPTION
 /*	This module implements multi-dictionary searches. it goes
 /*	through the high-level dictionary interface and does file
 /*	locking. Dictionaries are opened read-only, and in-memory
 /*	dictionary instances are shared.
+/*
+/*	Lookups are case sensitive.
 /*
 /*	maps_create() takes list of type:name pairs and opens the
 /*	named dictionaries.
@@ -217,7 +219,7 @@ MAPS   *maps_free(MAPS *maps)
 #include <vstream.h>
 #include <vstring_vstream.h>
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     VSTRING *buf = vstring_alloc(100);
     MAPS   *maps;

@@ -84,12 +84,16 @@
 #include <defer.h>
 #include <mail_params.h>
 #include <split_addr.h>
+#include <strip_addr.h>
 #include <ext_prop.h>
 #include <mypwd.h>
+#include <canon_addr.h>
 
 /* Application-specific. */
 
 #include "local.h"
+
+#define STR(x) vstring_str(x)
 
 /* deliver_switch - branch on recipient type */
 
@@ -214,10 +218,63 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
     /*
      * With each level of recursion, detect and break external message
      * forwarding loops.
+     * 
+     * If the looping recipient address has an owner- alias, send the error
+     * report there instead.
+     * 
+     * XXX A delivery agent cannot change the envelope sender address for
+     * bouncing. As a workaround we use a one-recipient bounce procedure.
+     * 
+     * The proper fix would be to record in the bounce logfile an error return
+     * address for each individual recipient. This would also eliminate the
+     * need for VERP specific bouncing code, at the cost of complicating the
+     * normal bounce sending procedure, but would simplify the code below.
      */
-    if (delivered_find(state.loop_info, state.msg_attr.recipient))
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
-		  "mail forwarding loop for %s", state.msg_attr.recipient));
+    if (delivered_find(state.loop_info, state.msg_attr.recipient)) {
+	VSTRING *canon_owner = 0;
+
+	if (var_ownreq_special) {
+	    char   *stripped_recipient;
+	    char   *owner_alias;
+	    const char *owner_expansion;
+
+#define FIND_OWNER(lhs, rhs, addr) { \
+	lhs = concatenate("owner-", addr, (char *) 0); \
+	(void) split_at_right(lhs, '@'); \
+	rhs = maps_find(alias_maps, lhs, DICT_FLAG_NONE); \
+    }
+
+	    FIND_OWNER(owner_alias, owner_expansion, state.msg_attr.recipient);
+	    if (owner_expansion == 0
+		&& (stripped_recipient = strip_addr(state.msg_attr.recipient,
+						    (char **) 0,
+						    *var_rcpt_delim)) != 0) {
+		myfree(owner_alias);
+		FIND_OWNER(owner_alias, owner_expansion, stripped_recipient);
+		myfree(stripped_recipient);
+	    }
+	    if (owner_expansion != 0) {
+		canon_owner = canon_addr_internal(vstring_alloc(10),
+						  var_exp_own_alias ?
+					     owner_expansion : owner_alias);
+		SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
+	    }
+	    myfree(owner_alias);
+	}
+	if (canon_owner) {
+	    rcpt_stat = bounce_one(BOUNCE_FLAG_KEEP,
+				   BOUNCE_ONE_ATTR(state.msg_attr),
+				   "mail forwarding loop for %s",
+				   state.msg_attr.recipient);
+	    vstring_free(canon_owner);
+	} else {
+	    rcpt_stat = bounce_append(BOUNCE_FLAG_KEEP,
+				      BOUNCE_ATTR(state.msg_attr),
+				      "mail forwarding loop for %s",
+				      state.msg_attr.recipient);
+	}
+	return (rcpt_stat);
+    }
 
     /*
      * Set up the recipient-specific attributes. If this is forwarded mail,

@@ -5,29 +5,24 @@
 > or not.
 
 Postfix jumps several hoops in order to deal with NFS-specific
-brain damage, however some operations can fail irrecoverably.  This
-is why Wietse makes no promises about Postfix reliability on NFS.
+problems. Thus, Postfix on NFS is slightly less reliable than
+Postfix on a local disk. That is not a problem in Postfix; the
+problem is in NFS and affects other MTAs as well.
 
 For queue locking, NFS is not an issue because you cannot share
-Postfix queues between Postfix instances anyawy.
-
-For mailbox locking, some systems use flock() by default (use:
-``postconf mailbox_delivery_lock'' and ``postconf virtual_mailbox_lock''
-to find out about your system). flock() does not work over NFS.
-This causes loss of mail when multiple hosts access the same
-mailboxes.
+Postfix queues with other Postfix instances.
 
 In order to have mailbox locking over NFS you have to configure
 everything to use fcntl() locks for mailbox access (or switch to
 maildir style, which needs no application-level lock controls).
 
-To turn on fcntl locks with Postfix you specify:
+To turn on fcntl mailbox locks with Postfix you specify:
 
     virtual_mailbox_lock = fcntl
     mailbox_delivery_lock = fcntl
 
 This is useful only if all mailbox access software uses fcntl()
-locks. I have no information on how well fcntl() locks work on NFS.
+locks.
 
 You can also "play safe" and throw in username.lock files:
 
