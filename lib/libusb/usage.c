@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.7 2000/09/24 02:17:52 augustss Exp $	*/
+/*	$NetBSD: usage.c,v 1.8 2000/10/10 19:23:58 is Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -182,7 +182,8 @@ hid_usage_in_page(unsigned int u)
 	for (j = 0; j < pages[k].pagesize; j++) {
 		us = pages[k].page_contents[j].usage;
 		if (us == -1) {
-			sprintf(b, pages[k].page_contents[j].name, i);
+			sprintf(b, "%s %d",
+			    pages[k].page_contents[j].name, i);
 			return b;
 		}
 		if (us == i)
