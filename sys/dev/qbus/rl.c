@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.10 2001/11/13 07:11:25 lukem Exp $	*/
+/*	$NetBSD: rl.c,v 1.11 2002/03/23 18:12:09 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.10 2001/11/13 07:11:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.11 2002/03/23 18:12:09 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,32 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.10 2001/11/13 07:11:25 lukem Exp $");
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/rlreg.h>
+#include <dev/qbus/rlvar.h>
 
 #include "ioconf.h"
 #include "locators.h"
-
-struct rlc_softc {
-	struct device sc_dev;
-	struct evcnt sc_intrcnt;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_dmam;
-	struct buf_queue sc_q;		/* Queue of waiting bufs */
-	struct buf *sc_active;		/* Currently active buf */
-	caddr_t sc_bufaddr;		/* Current in-core address */
-	int sc_diskblk;			/* Current block on disk */
-	int sc_bytecnt;			/* How much left to transfer */
-};
-
-struct rl_softc {
-	struct device rc_dev;
-	struct disk rc_disk;
-	int rc_state;
-	int rc_head;
-	int rc_cyl;
-	int rc_hwid;
-};
 
 static	int rlcmatch(struct device *, struct cfdata *, void *);
 static	void rlcattach(struct device *, struct device *, void *);
@@ -98,7 +76,7 @@ static	int rlmatch(struct device *, struct cfdata *, void *);
 static	void rlattach(struct device *, struct device *, void *);
 static	void rlcstart(struct rlc_softc *, struct buf *);
 static	void waitcrdy(struct rlc_softc *);
-static	void rlreset(struct device *);
+static	void rlcreset(struct device *);
 cdev_decl(rl);
 bdev_decl(rl);
 
@@ -110,11 +88,6 @@ struct cfattach rl_ca = {
 	sizeof(struct rl_softc), rlmatch, rlattach
 };
 
-struct rlc_attach_args {
-	u_int16_t type;
-	int hwid;
-};
-
 #define	MAXRLXFER (RL_BPS * RL_SPT)
 #define	RLMAJOR	14
 
@@ -122,6 +95,33 @@ struct rlc_attach_args {
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, (reg), (val))
 #define RL_RREG(reg) \
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, (reg))
+
+static char *rlstates[] = {
+	"drive not loaded",
+	"drive spinning up",
+	"drive brushes out",
+	"drive loading heads",
+	"drive seeking",
+	"drive ready",
+	"drive unloading heads",
+	"drive spun down",
+};
+
+static char *
+rlstate(struct rlc_softc *sc, int unit)
+{
+	int i = 0;
+
+	do {
+		RL_WREG(RL_DA, RLDA_GS);
+		RL_WREG(RL_CS, RLCS_GS|(unit << RLCS_USHFT));
+		waitcrdy(sc);
+	} while (((RL_RREG(RL_CS) & RLCS_ERR) != 0) && i++ < 10);
+	if (i == 10)
+		return NULL;
+	i = RL_RREG(RL_MP) & RLMP_STATUS;
+	return rlstates[i];
+}
 
 void
 waitcrdy(struct rlc_softc *sc)
@@ -186,6 +186,8 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 		rlcintr, sc, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
 		sc->sc_dev.dv_xname, "intr");
+	uba_reset_establish(rlcreset, self);
+
 	printf("\n");
 
 	/*
@@ -230,8 +232,6 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	struct rlc_attach_args *ra = aux;
 	struct disklabel *dl;
 
-	uba_reset_establish(rlreset, self);
-
 	rc->rc_hwid = ra->hwid;
 	rc->rc_disk.dk_name = rc->rc_dev.dv_xname;
 	disk_attach(&rc->rc_disk);
@@ -254,7 +254,8 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	dl->d_sbsize = SBSIZE;
 	dl->d_rpm = 2400;
 	dl->d_type = DTYPE_DEC;
-	printf(": %s\n", dl->d_typename);
+	printf(": %s, %s\n", dl->d_typename,
+	    rlstate((struct rlc_softc *)parent, ra->hwid));
 }
 
 int
@@ -265,6 +266,7 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 	struct rlc_softc *sc;
 	struct rl_softc *rc;
 	char *msg;
+
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
@@ -276,7 +278,11 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 		return ENXIO;
 
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
-	/* XXX - check that the disk actually is useable */
+	/* Check that the disk actually is useable */
+	msg = rlstate(sc, rc->rc_hwid);
+	if (msg == NULL || msg == rlstates[RLMP_UNLOAD] ||
+	    msg == rlstates[RLMP_SPUNDOWN])
+		return ENXIO;
 	/*
 	 * If this is the first open; read in where on the disk we are.
 	 */
@@ -595,7 +601,8 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		blks = RL_SPT/2 - sn;
 	RL_WREG(RL_MP, -(blks*DEV_BSIZE)/2);
 	err = bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, sc->sc_bufaddr,
-	    (blks*DEV_BSIZE), bp->b_proc, BUS_DMA_NOWAIT);
+	    (blks*DEV_BSIZE), (bp->b_flags & B_PHYS ? bp->b_proc : 0),
+	    BUS_DMA_NOWAIT);
 	if (err)
 		panic("%s: bus_dmamap_load failed: %d",
 		    sc->sc_dev.dv_xname, err);
@@ -612,20 +619,31 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		RL_WREG(RL_CS, RLCS_IE|RLCS_WD|(rc->rc_hwid << RLCS_USHFT));
 }
 
+/*
+ * Called once per controller when an ubareset occurs.
+ * Retracts all disks and restarts active transfers.
+ */
 void
-rlreset(struct device *dev)
+rlcreset(struct device *dev)
 {
-	struct rl_softc *rc = (struct rl_softc *)dev;
-	struct rlc_softc *sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
+	struct rlc_softc *sc = (struct rlc_softc *)dev;
+	struct rl_softc *rc;
+	int i;
 	u_int16_t mp;
 
-	if (rc->rc_state != DK_OPEN)
-		return;
-	RL_WREG(RL_CS, RLCS_RHDR|(rc->rc_hwid << RLCS_USHFT));
-	waitcrdy(sc);
-	mp = RL_RREG(RL_MP);
-	rc->rc_head = ((mp & RLMP_HS) == RLMP_HS);
-	rc->rc_cyl = (mp >> 7) & 0777;
+	for (i = 0; i < rl_cd.cd_ndevs; i++) {
+		if ((rc = rl_cd.cd_devs[i]) == NULL)
+			continue;
+		if (rc->rc_state != DK_OPEN)
+			continue;
+
+		printf(" %s", rc->rc_dev.dv_xname);
+		RL_WREG(RL_CS, RLCS_RHDR|(rc->rc_hwid << RLCS_USHFT));
+		waitcrdy(sc);
+		mp = RL_RREG(RL_MP);
+		rc->rc_head = ((mp & RLMP_HS) == RLMP_HS);
+		rc->rc_cyl = (mp >> 7) & 0777;
+	}
 	if (sc->sc_active == 0)
 		return;
 
