@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.17 2003/08/07 16:33:39 agc Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.18 2003/08/11 15:17:29 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.17 2003/08/07 16:33:39 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.18 2003/08/11 15:17:29 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,8 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		if (m) {
 			m->m_type = TPMT_TPHDR;
 			mbstat.m_mtypes[TPMT_TPHDR]++;
-			m->m_next = MNULL;
-			m->m_nextpkt = MNULL;
+			m->m_next = NULL;
+			m->m_nextpkt = NULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
 			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
@@ -210,7 +210,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		goto done;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_nextpkt = MNULL;
+	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
 	bzero((caddr_t) hdr, sizeof(struct tpdu));
@@ -890,7 +890,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		return ENOBUFS;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_nextpkt = MNULL;
+	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
 
