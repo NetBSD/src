@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.9 2002/10/18 02:39:58 nathanw Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.10 2002/11/26 14:50:13 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1933,7 +1933,7 @@ cpu_debug_dump(void)
 		    ci->ci_cpuid,
 		    ci->flags,
 		    ci->ci_curlwp,
-		    ci->fpproc);
+		    ci->fplwp);
 	}
 }
 #endif
