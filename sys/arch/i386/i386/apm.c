@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.58 2001/01/21 03:23:31 chuck Exp $ */
+/*	$NetBSD: apm.c,v 1.59 2001/01/29 19:26:36 chuck Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -754,7 +754,12 @@ apm_periodic_check(sc)
 	 * thinkpad) where it keeps posting the standby/suspend event
 	 * until forward progress is made.
 	 */
-	while (apm_get_event(&regs) == 0) {
+	while (1) {
+		if (apm_get_event(&regs) != 0) {	/* out of events? */
+			if (APM_ERR_CODE(&regs) != APM_ERR_NOEVENTS)
+				apm_perror("get event", &regs);
+			break;
+		}
 		if (!apm_event_handle(sc, & regs)) {
 			DPRINTF(APMDEBUG_EVENTS | APMDEBUG_ANOM,
 			  ("apm_periodic_check: duplicate event (break)\n"));
@@ -762,8 +767,6 @@ apm_periodic_check(sc)
 		}
 	}
 
-	if (APM_ERR_CODE(&regs) != APM_ERR_NOEVENTS)
-		apm_perror("get event", &regs);
 	if (apm_suspend_now) {
 		apm_suspend_pending = 0;
 		apm_suspend(sc);
