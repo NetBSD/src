@@ -1,4 +1,4 @@
-/*	$NetBSD: localhostname.c,v 1.6 1998/07/06 07:06:39 mrg Exp $	*/
+/*	$NetBSD: localhostname.c,v 1.7 2000/12/09 00:47:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,10 +38,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: localhostname.c,v 1.6 1998/07/06 07:06:39 mrg Exp $");
+__RCSID("$NetBSD: localhostname.c,v 1.7 2000/12/09 00:47:57 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/socket.h>
+
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -55,9 +57,9 @@ localhostname(buf, buflen)
 	char *buf;
 	size_t buflen;
 {
-	struct hostent *hp;
+	struct addrinfo *res, hints;
 	char hostname[MAXHOSTNAMELEN + 1];
-	int i;
+	int error;
 
 	if (gethostname(hostname, sizeof(hostname)))
 		err(1, "gethostname");
@@ -70,34 +72,21 @@ localhostname(buf, buflen)
 	 * just return it.
 	 */
 	if (strchr(hostname, '.')) {
-		snprintf(buf, buflen, "%s", hostname);
+		strlcpy(buf, hostname, buflen);
 		return;
 	}
 
 	/*
-	 * Lookup the host.  Return the first name that appears
-	 * to be fully-qualified.
+	 * Lookup the host.  Return the canonical name.
 	 */
-	hp = gethostbyname(hostname);
-	if (hp == NULL)
-		errx(1, "gethostbyname(%s) failed", hostname);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_CANONNAME;
+	hints.ai_family = PF_UNSPEC;
 
-	if (strchr(hp->h_name, '.')) {
-		snprintf(buf, buflen, "%s", hp->h_name);
-		return;
-	}
-
-	if (hp->h_aliases != NULL && hp->h_aliases[0] != NULL) {
-		for (i = 0; hp->h_aliases[i] != NULL; i++) {
-			if (strchr(hp->h_aliases[i], '.')) {
-				snprintf(buf, buflen, "%s", hp->h_aliases[i]);
-				return;
-			}
-		}
-	}
-
-	/*
-	 * As a last resort, just return hostname.
-	 */
-	snprintf(buf, buflen, "%s", hostname);
+	error = getaddrinfo(hostname, NULL, &hints, &res);
+	if (error)
+		errx(1, "getaddrinfo(%s) failed: %s", hostname,
+		    gai_strerror(error));
+	strlcpy(buf, res->ai_canonname, buflen);
+	freeaddrinfo(res);
 }
