@@ -10,6 +10,7 @@
 */
 #include <stdio.h>
 #include <unistd.h>
+#include <sysexits.h>
 #include <sys/utsname.h>
 
 #define SYSNAME 	0
@@ -66,7 +67,9 @@ register int c,space, all=0;
 			}
 			puts("");
 		}
-	}
-	else
+		exit (EX_OK);
+	} else {
 		perror("uname");
+		exit (EX_OSERR);
+	}
 }
