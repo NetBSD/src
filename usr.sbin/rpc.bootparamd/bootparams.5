@@ -1,4 +1,4 @@
-.\"	$NetBSD: bootparams.5,v 1.5 1996/08/30 20:10:28 thorpej Exp $
+.\"	$NetBSD: bootparams.5,v 1.6 1997/04/23 00:28:03 mrg Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross
 .\" All rights reserved.
@@ -41,10 +41,12 @@ file specifies the boot parameters that
 clients may request when booting over the network.
 Each client supported by this server must have an entry in the
 .Nm bootparams
-file containing the pathnames for its
-.Nm root
-and (optionally)
+file containing the servers and pathnames for its
+.Nm root ,
+area.  It may optionally contain
 .Nm swap
+and
+.Nm dump
 areas.
 .Pp
 Each line in the file
@@ -69,6 +71,8 @@ and pathname
 as the response to its
 .Tn RPC
 request.
+.Sh NOTES
+The server does not default to the localhost, and must be filled in.
 .Sh FILES
 .Bl -tag -width /etc/bootparams -compact
 .It Pa /etc/bootparams
