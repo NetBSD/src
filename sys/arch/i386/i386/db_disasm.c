@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 1999/04/12 20:38:18 pk Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.17 2000/03/28 19:15:40 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -144,6 +144,17 @@ char *	db_Grp8[] = {
 	"btc"
 };
 
+char *	db_Grp9[] = {
+	"",
+	"cmpxchg8b",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+};
+
 struct inst db_inst_0f0x[] = {
 /*00*/	{ "",	   TRUE,  NONE,  op1(Ew),     (char *)db_Grp6 },
 /*01*/	{ "",	   TRUE,  NONE,  op1(Ew),     (char *)db_Grp7 },
@@ -182,6 +193,26 @@ struct inst	db_inst_0f2x[] = {
 /*2d*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2e*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2f*/	{ "",      FALSE, NONE,  0,	      0 },
+};
+
+struct inst	db_inst_0f3x[] = {
+/*30*/	{ "wrmsr", FALSE, NONE,  0,	      0 },
+/*31*/	{ "rdtsc", FALSE, NONE,  0,	      0 },
+/*32*/	{ "rdmsr", FALSE, NONE,  0,	      0 },
+/*33*/	{ "rdpmc", FALSE, NONE,  0,	      0 },
+/*34*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*35*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*36*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*37*/	{ "",	   FALSE, NONE,  0,	      0 },
+
+/*38*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*39*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3a*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3v*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3c*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3d*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3e*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*3f*/	{ "",	   FALSE, NONE,  0,	      0 },
 };
 
 struct inst	db_inst_0f8x[] = {
@@ -236,7 +267,7 @@ struct inst	db_inst_0fax[] = {
 
 /*a8*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
 /*a9*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
-/*aa*/	{ "",      FALSE, NONE,  0,	      0 },
+/*aa*/	{ "rsm",   FALSE, NONE,  0,	      0 },
 /*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*ad*/	{ "shrd",  TRUE,  LONG,  op3(CL,E,R), 0 },
@@ -272,7 +303,7 @@ struct inst	db_inst_0fcx[] = {
 /*c4*/	{ "",	   FALSE, NONE,	 0,	      0 },
 /*c5*/	{ "",	   FALSE, NONE,	 0,	      0 },
 /*c6*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c7*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c7*/	{ "",	   TRUE,  NONE,	 op1(E),      (char *)db_Grp9 },
 /*c8*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
 /*c9*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
 /*ca*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
@@ -287,7 +318,7 @@ struct inst *db_inst_0f[] = {
 	db_inst_0f0x,
 	0,
 	db_inst_0f2x,
-	0,
+	db_inst_0f3x,
 	0,
 	0,
 	0,
