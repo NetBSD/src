@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.24 2002/06/27 18:05:29 drochner Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.25 2002/11/02 07:40:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.24 2002/06/27 18:05:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.25 2002/11/02 07:40:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.24 2002/06/27 18:05:29 drochner Exp
 			printf("%s:%d -- Already 0!\n", __FILE__, __LINE__); \
 		else \
 			(v)--; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 u_long	uvm_pglistalloc_npages;
 #else
 #define	STAT_INCR(v)
