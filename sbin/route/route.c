@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.19 1997/04/03 02:35:51 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.20 1997/04/21 11:40:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.19 1997/04/03 02:35:51 christos Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.20 1997/04/21 11:40:13 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,15 +372,17 @@ routename(sa)
 	if (first) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = strchr(domain, '.')))
-			(void) strcpy(domain, cp + 1);
-		else
+		    (cp = strchr(domain, '.'))) {
+			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
+			domain[sizeof(domain) - 1] = '\0';
+		} else
 			domain[0] = 0;
 	}
 
-	if (sa->sa_len == 0)
-		strcpy(line, "default");
-	else switch (sa->sa_family) {
+	if (sa->sa_len == 0) {
+		strncpy(line, "default", sizeof(line) - 1);
+		line[sizeof(line) - 1] = '\0';
+	} else switch (sa->sa_family) {
 
 	case AF_INET:
 		in = ((struct sockaddr_in *)sa)->sin_addr;
@@ -399,9 +401,10 @@ routename(sa)
 			}
 		}
 		if (cp)
-			strcpy(line, cp);
+			(void)strncpy(line, cp, sizeof(line) - 1);
 		else
-			strcpy(line, inet_ntoa(in));
+			(void)strncpy(line, inet_ntoa(in), sizeof(line) - 1);
+		line[sizeof(line) - 1] = '\0';
 		break;
 
 	case AF_LINK:
@@ -412,7 +415,7 @@ routename(sa)
 		return (ns_print((struct sockaddr_ns *)sa));
 
 	case AF_ISO:
-		(void) sprintf(line, "iso %s",
+		(void)snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
 		break;
 
@@ -424,7 +427,7 @@ routename(sa)
 #endif /* SMALL */
 
 	default:
-		(void) sprintf(line, "(%d) %s",
+		(void)snprintf(line, sizeof line, "(%d) %s",
 			sa->sa_family, any_ntoa(sa));
 		break;
 
@@ -481,27 +484,29 @@ netname(sa)
 			if (np)
 				cp = np->n_name;
 		}
-		if (cp)
-			strcpy(line, cp);
-		else {
+		if (cp) {
+			(void)strncpy(line, cp, sizeof(line) - 1);
+			line[sizeof(line) - 1] = '\0';
+		} else {
 #if 0	/* XXX - This is silly... */
 #define C(x)	((x) & 0xff)
 			if ((i & 0xffffff) == 0)
-				(void) sprintf(line, "%u", C(i >> 24));
+				(void)snprintf(line, sizeof line, "%u",
+				    C(i >> 24));
 			else if ((i & 0xffff) == 0)
-				(void) sprintf(line, "%u.%u", C(i >> 24),
-					C(i >> 16));
+				(void)snprintf(line, sizeof line, "%u.%u",
+				    C(i >> 24), C(i >> 16));
 			else if ((i & 0xff) == 0)
-				(void) sprintf(line, "%u.%u.%u", C(i >> 24),
-					C(i >> 16), C(i >> 8));
+				(void)snprintf(line, sizeof line, "%u.%u.%u",
+				    C(i >> 24), C(i >> 16), C(i >> 8));
 			else
-				(void) sprintf(line, "%u.%u.%u.%u", C(i >> 24),
-					C(i >> 16), C(i >> 8), C(i));
+				(void)snprintf(line, sizeof line, "%u.%u.%u.%u",
+				    C(i >> 24), C(i >> 16), C(i >> 8), C(i));
 #undef C
 #else /* XXX */
-			strcpy(line, inet_ntoa(in));
+			(void)strncpy(line, inet_ntoa(in), sizeof(line) - 1);
 #endif /* XXX */
-	    }
+		}
 		break;
 
 	case AF_LINK:
@@ -512,7 +517,7 @@ netname(sa)
 		return (ns_print((struct sockaddr_ns *)sa));
 
 	case AF_ISO:
-		(void) sprintf(line, "iso %s",
+		(void)snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
 		break;
 
@@ -524,7 +529,7 @@ netname(sa)
 #endif /* SMALL */
 
 	default:
-		(void) sprintf(line, "af %d: %s",
+		(void)snprintf(line, sizeof line, "af %d: %s",
 			sa->sa_family, any_ntoa(sa));
 		break;
 	}
@@ -1015,7 +1020,7 @@ ns_print(sns)
 	if (ns_nullhost(work) && net.long_e == 0) {
 		if (!port)
 			return ("*.*");
-		(void) sprintf(mybuf, "*.%XH", port);
+		(void)snprintf(mybuf, sizeof mybuf, "*.%XH", port);
 		return (mybuf);
 	}
 
@@ -1025,19 +1030,19 @@ ns_print(sns)
 		host = "*";
 	else {
 		q = work.x_host.c_host;
-		(void) sprintf(chost, "%02X%02X%02X%02X%02X%02XH",
+		(void)snprintf(chost, sizeof chost, "%02X%02X%02X%02X%02X%02XH",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
 			/* void */;
 		host = p;
 	}
 	if (port)
-		(void) sprintf(cport, ".%XH", htons(port));
+		(void)snprintf(cport, sizeof cport, ".%XH", htons(port));
 	else
 		*cport = 0;
 
-	(void) sprintf(mybuf,"%XH.%s%s", (u_int32_t) ntohl(net.long_e),
-	    host, cport);
+	(void)snprintf(mybuf, sizeof mybuf, "%XH.%s%s",
+	    (u_int32_t)ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 
