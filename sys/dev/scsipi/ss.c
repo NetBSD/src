@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.41 2002/09/14 21:41:24 chs Exp $	*/
+/*	$NetBSD: ss.c,v 1.42 2002/09/27 20:41:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.41 2002/09/14 21:41:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.42 2002/09/27 20:41:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ void ssattach(struct device *, struct device *, void *);
 int ssdetach(struct device *self, int flags);
 int ssactivate(struct device *self, enum devact act);
 
-struct cfattach ss_ca = {
+const struct cfattach ss_ca = {
 	sizeof(struct ss_softc), ssmatch, ssattach, ssdetach, ssactivate
 };
 

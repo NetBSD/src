@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.14 2002/01/09 18:48:18 drochner Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.15 2002/09/27 20:41:46 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.14 2002/01/09 18:48:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.15 2002/09/27 20:41:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.14 2002/01/09 18:48:18 drochner Exp $
 int	sd_atapibus_match __P((struct device *, struct cfdata *, void *));
 void	sd_atapibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sd_atapibus_ca = {
+const struct cfattach sd_atapibus_ca = {
 	sizeof(struct sd_softc), sd_atapibus_match, sd_atapibus_attach,
 	sddetach, sdactivate,
 };
