@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.14 1998/12/21 07:57:17 christos Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.15 1999/01/04 22:41:58 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.14 1998/12/21 07:57:00 christos Exp 
+ *	NetBSD: isapnpdevs,v 1.15 1999/01/04 22:39:42 augustss Exp 
  */
 
 /*-
@@ -79,6 +79,7 @@ static const char *isapnp_com_devlogic[] = {
 	"BRIB400",	/* Boca 56k PnP */
 	"ROK0010",	/* Rockwell ? */
 	"USR2070",	/* USR Sportster 56k */
+	"USR3031",	/* USR 56k Faxmodem */
 	"ZTIF761",	/* Zoom ComStar 33.6 */
 	"CIR3000",	/* Cirrus Logic V43 */
 	"MOT0000",	/* Motorolla ModemSurfr */
