@@ -197,7 +197,7 @@ int	debugging;
 
 int	maxfdescs;
 int	maxusers;
-u_long	loadaddress;
+u_int	loadaddress;
 int     fatal_errors;
 
 #define eq(a,b)	(!strcmp(a,b))
