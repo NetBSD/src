@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.515 2003/03/18 00:53:04 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.516 2003/03/20 05:50:13 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.514 2003/03/18 00:45:54 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.515 2003/03/20 05:49:21 thorpej Exp 
  */
 
 /*
@@ -5242,6 +5242,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "53c1010 (66MHz)",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030,
+	    0,
+	    "Symbios Logic",
+	    "53c1030",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R,
 	    0,
 	    "Symbios Logic",
@@ -5258,6 +5264,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "FC909",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909A,
+	    0,
+	    "Symbios Logic",
+	    "FC909A",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929,
