@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.2 2000/01/16 14:24:33 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.3 2000/01/16 15:10:27 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -118,6 +118,7 @@
 #include <net/bpf.h>
 #endif
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef INET
 #include <netinet/in.h> 
 #include <netinet/if_inarp.h>
@@ -127,6 +128,7 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
