@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.1.2.3 1999/02/10 16:02:26 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.1.2.4 1999/02/13 17:56:37 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,10 +93,13 @@ dmac_match(parent, cf, aux)
 	if (cf->cf_unit != 0)
 		return (0);
 
+	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
+		ia->ia_addr = DMAC_ADDR;
+
 	/* fixed address */
 	if (ia->ia_addr != DMAC_ADDR)
 		return (0);
-	if (ia->ia_intr != -1)
+	if (ia->ia_intr != INTIOCF_INTR_DEFAULT)
 		return (0);
 
 	return 1;
@@ -182,7 +185,7 @@ dmac_alloc_channel(self, ch, name,
 
 	/* fill the channel status structure. */
 	strcpy(chan->ch_name, name);
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
+	chan->ch_dcr = (DMAC_DCR_XRM_CSWH | DMAC_DCR_OTYP_EASYNC |
 			DMAC_DCR_OPS_8BIT);
 	chan->ch_ocr = (DMAC_OCR_SIZE_BYTE_NOPACK | DMAC_OCR_CHAIN_ARRAY |
 			DMAC_OCR_REQG_EXTERNAL);
