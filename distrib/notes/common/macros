@@ -1,6 +1,6 @@
-.\"	$NetBSD: macros,v 1.27 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: macros,v 1.28 2004/08/21 21:58:58 hubertf Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
