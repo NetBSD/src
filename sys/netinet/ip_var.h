@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip_var.h	7.7 (Berkeley) 6/28/90
- *	$Id: ip_var.h,v 1.8 1994/01/10 23:27:43 mycroft Exp $
+ *	from: @(#)ip_var.h	8.1 (Berkeley) 6/10/93
+ *	$Id: ip_var.h,v 1.9 1994/05/13 06:06:28 mycroft Exp $
  */
-
-#ifndef _NETINET_IP_VAR_H_
-#define _NETINET_IP_VAR_H_
 
 /*
  * Overlay for ip header used by other protocols (tcp, udp).
@@ -79,7 +76,9 @@ struct	ipasfrag {
 	u_char	ip_v:4,
 		ip_hl:4;
 #endif
-	u_char	ipf_mff;		/* copied from (ip_off&IP_MF) */
+	u_char	ipf_mff;		/* XXX overlays ip_tos: use low bit
+					 * to avoid destroying tos;
+					 * copied from (ip_off&IP_MF) */
 	short	ip_len;
 	u_short	ip_id;
 	short	ip_off;
@@ -129,55 +128,62 @@ struct	ipstat {
 	u_long	ips_cantforward;	/* packets rcvd for unreachable dest */
 	u_long	ips_redirectsent;	/* packets forwarded on same net */
 	u_long	ips_noproto;		/* unknown or unsupported protocol */
-	u_long	ips_delivered;		/* datagrams delivered to upper level */
+	u_long	ips_delivered;		/* datagrams delivered to upper level*/
 	u_long	ips_localout;		/* total ip packets generated here */
 	u_long	ips_odropped;		/* lost packets due to nobufs, etc. */
 	u_long	ips_reassembled;	/* total packets reassembled ok */
-	u_long	ips_fragmented;		/* datagrams successfully fragmented */
+	u_long	ips_fragmented;		/* datagrams sucessfully fragmented */
 	u_long	ips_ofragments;		/* output fragments created */
 	u_long	ips_cantfrag;		/* don't fragment flag was set, etc. */
+	u_long	ips_badoptions;		/* error in option processing */
+	u_long	ips_noroute;		/* packets discarded due to no route */
+	u_long	ips_badvers;		/* ip version != 4 */
+	u_long	ips_rawout;		/* total raw ip packets generated */
 };
 
 #ifdef KERNEL
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
+#define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
 struct	ipstat	ipstat;
 struct	ipq	ipq;			/* ip reass. queue */
 u_short	ip_id;				/* ip packet ctr, for ids */
+int	ip_defttl;			/* default IP ttl */
 
-int	ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-void	ip_deq __P((struct ipasfrag *));
-int	ip_dooptions __P((struct mbuf *));
-void	ip_drain __P((void));
-void	ip_enq __P((struct ipasfrag *, struct ipasfrag *));
-void	ip_freef __P((struct ipq *));
-void	ip_freemoptions __P((struct ip_moptions *));
-int	ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
-void	ip_init __P((void));
-void	ip_intr __P((void));
-int	ip_optcopy __P((struct ip *, struct ip *));
-int	ip_output
-	   __P((struct mbuf *, struct mbuf *, struct route *, int,
-		struct ip_moptions *));
-int	ip_pcbopts __P((struct mbuf **, struct mbuf *));
+int	 in_control __P((struct socket *, int, caddr_t, struct ifnet *));
+int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	 ip_deq __P((struct ipasfrag *));
+int	 ip_dooptions __P((struct mbuf *));
+void	 ip_drain __P((void));
+void	 ip_enq __P((struct ipasfrag *, struct ipasfrag *));
+void	 ip_forward __P((struct mbuf *, int));
+void	 ip_freef __P((struct ipq *));
+void	 ip_freemoptions __P((struct ip_moptions *));
+int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
+void	 ip_init __P((void));
+int	 ip_mforward __P((struct mbuf *, struct ifnet *));
+int	 ip_optcopy __P((struct ip *, struct ip *));
+int	 ip_output __P((struct mbuf *,
+	    struct mbuf *, struct route *, int, struct ip_moptions *));
+int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
 struct ip *
-	ip_reass __P((struct ipasfrag *, struct ipq *));
+	 ip_reass __P((struct ipasfrag *, struct ipq *));
 struct in_ifaddr *
-	ip_rtaddr __P((struct in_addr));
-int	ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
-void	ip_slowtimo __P((void));
+	 ip_rtaddr __P((struct in_addr));
+int	 ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
+void	 ip_slowtimo __P((void));
 struct mbuf *
-	ip_srcroute __P((void));
-void	ip_stripoptions __P((struct mbuf *, struct mbuf *));
-int	rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-void	rip_input __P((struct mbuf *));
-int	rip_output __P((struct mbuf *, struct socket *));
-int	rip_usrreq
-	   __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		struct mbuf *));
+	 ip_srcroute __P((void));
+void	 ip_stripoptions __P((struct mbuf *, struct mbuf *));
+int	 ip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+void	 ipintr __P((void));
+int	 rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	 rip_init __P((void));
+void	 rip_input __P((struct mbuf *));
+int	 rip_output __P((struct mbuf *, struct socket *, u_long));
+int	 rip_usrreq __P((struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 #endif
-
-#endif /* !_NETINET_IP_VAR_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_debug.c	7.6 (Berkeley) 6/28/90
- *	$Id: tcp_debug.c,v 1.6 1994/01/08 23:07:16 mycroft Exp $
+ *	from: @(#)tcp_debug.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tcp_debug.c,v 1.7 1994/05/13 06:06:34 mycroft Exp $
  */
 
 #ifdef TCPDEBUG
@@ -132,7 +132,7 @@ tcp_trace(act, ostate, tp, ti, req)
 		if (flags) {
 #ifndef lint
 			char *cp = "<";
-#define	pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
 			printf(">");

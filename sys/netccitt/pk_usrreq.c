@@ -1,11 +1,14 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (C) Computer Science Department IV, 
+ * 		 University of Erlangen-Nuremberg, Germany, 1992
+ * Copyright (c) 1991, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Laboratory for Computation Vision and the Computer Science Department
- * of the University of British Columbia.
+ * This code is derived from software contributed to Berkeley by the
+ * Laboratory for Computation Vision and the Computer Science Department
+ * of the the University of British Columbia and the Computer Science
+ * Department (IV) of the University of Erlangen-Nuremberg, Germany.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,8 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk_usrreq.c	7.16 (Berkeley) 6/27/91
- *	$Id: pk_usrreq.c,v 1.5 1993/12/18 00:41:39 mycroft Exp $
+ *	from: @(#)pk_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	$Id: pk_usrreq.c,v 1.6 1994/05/13 06:05:03 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -50,14 +53,15 @@
 #include <sys/stat.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/route.h>
 
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
 
-static int old_to_new(), new_to_old();
-
+static old_to_new();
+static new_to_old();
 /*
  * 
  *  X.25 Packet level protocol interface to socket abstraction.
@@ -309,8 +313,10 @@ register struct pklcd *lcp;
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
 #endif
 struct sockaddr_x25 pk_sockmask = {
-_offsetof(struct sockaddr_x25, x25_addr[0]),
-0, -1};
+	_offsetof(struct sockaddr_x25, x25_addr[0]),      /* x25_len */
+	0,                                                /* x25_family */
+	-1,                                               /* x25_net id */
+};
 
 /*ARGSUSED*/
 pk_control (so, cmd, data, ifp)
@@ -368,7 +374,7 @@ register struct ifnet *ifp;
 			ia -> ia_ifp = ifp;
 			ia -> ia_dstaddr.x25_family = AF_CCITT;
 			ia -> ia_dstaddr.x25_len = pk_sockmask.x25_len;
-		} else {
+		} else if (ISISO8802(ifp) == 0) {
 			rtinit (ifa, (int)RTM_DELETE, 0);
 		}
 		old_maxlcn = ia -> ia_maxlcn;
@@ -377,21 +383,22 @@ register struct ifnet *ifp;
 		if (ia -> ia_maxlcn != old_maxlcn && old_maxlcn != 0) {
 			/* VERY messy XXX */
 			register struct pkcb *pkp;
-			for (pkp = pkcbhead; pkp; pkp = pkp -> pk_next)
+			FOR_ALL_PKCBS(pkp)
 				if (pkp -> pk_ia == ia)
 					pk_resize (pkp);
 		}
 		/*
 		 * Give the interface a chance to initialize if this
-		 * is its first address, and to validate the address.
+p		 * is its first address, and to validate the address.
 		 */
 		ia -> ia_start = pk_start;
 		s = splimp();
 		if (ifp -> if_ioctl)
-			error = (*ifp -> if_ioctl)(ifp, SIOCSIFCONF_X25, ifa);
+			error = (*ifp -> if_ioctl)(ifp, SIOCSIFCONF_X25, 
+						   (caddr_t) ifa);
 		if (error)
 			ifp -> if_flags &= ~IFF_UP;
-		else
+		else if (ISISO8802(ifp) == 0)
 			error = rtinit (ifa, (int)RTM_ADD, RTF_UP);
 		splx (s);
 		return (error);
@@ -564,7 +571,7 @@ register struct mbuf *m;
 			goto bad;
 		*(mtod (m, octet *)) = 0;
 		xp = mtod (m, struct x25_packet *);
-		xp -> fmt_identifier = 1;
+		X25SBITS(xp -> bits, fmt_identifier, 1);
 		xp -> packet_type = X25_INTERRUPT;
 		SET_LCN(xp, lcp -> lcd_lcn);
 		sbinsertoob ( (so = lcp -> lcd_so) ?

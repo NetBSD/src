@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in_var.h	7.6 (Berkeley) 6/28/90
- *	$Id: in_var.h,v 1.6 1994/01/09 01:06:11 mycroft Exp $
+ *	from: @(#)in_var.h	8.1 (Berkeley) 6/10/93
+ *	$Id: in_var.h,v 1.7 1994/05/13 06:06:14 mycroft Exp $
  */
-
-#ifndef _NETINET_IN_VAR_H_
-#define _NETINET_IN_VAR_H_
 
 /*
  * Interface address, Internet version.  One of these structures
@@ -46,7 +43,7 @@
 struct in_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
-#define	ia_flags	ia_ifa.ifa_flags
+#define ia_flags	ia_ifa.ifa_flags
 					/* ia_{,sub}net{,mask} in host order */
 	u_long	ia_net;			/* network number of interface */
 	u_long	ia_netmask;		/* mask of net part */
@@ -65,7 +62,7 @@ struct	in_aliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr_in ifra_addr;
 	struct	sockaddr_in ifra_broadaddr;
-#define	ifra_dstaddr ifra_broadaddr
+#define ifra_dstaddr ifra_broadaddr
 	struct	sockaddr_in ifra_mask;
 };
 /*
@@ -74,18 +71,21 @@ struct	in_aliasreq {
  */
 #define	IA_SIN(ia) (&(((struct in_ifaddr *)(ia))->ia_addr))
 
-#ifdef	KERNEL
-struct	in_ifaddr *in_ifaddr;
-struct	in_ifaddr *in_iaonnetof();
-struct	ifqueue	ipintrq;		/* ip packet input queue */
-#endif
+#define IN_LNAOF(in, ifa) \
+	((ntohl((in).s_addr) & ~((struct in_ifaddr *)(ifa)->ia_subnetmask))
+			
 
-#ifdef KERNEL
+#ifdef	KERNEL
+extern	struct	in_ifaddr *in_ifaddr;
+extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
+void	in_socktrim __P((struct sockaddr_in *));
+
+
 /*
  * Macro for finding the interface (ifnet structure) corresponding to one
  * of our IP addresses.
  */
-#define	INADDR_TO_IFP(addr, ifp) \
+#define INADDR_TO_IFP(addr, ifp) \
 	/* struct in_addr addr; */ \
 	/* struct ifnet *ifp; */ \
 { \
@@ -102,7 +102,7 @@ struct	ifqueue	ipintrq;		/* ip packet input queue */
  * Macro for finding the internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-#define	IFP_TO_IA(ifp, ia) \
+#define IFP_TO_IA(ifp, ia) \
 	/* struct ifnet *ifp; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
@@ -142,7 +142,7 @@ struct in_multistep {
  * Macro for looking up the in_multi record for a given IP multicast address
  * on a given interface.  If no matching record is found, "inm" returns NULL.
  */
-#define	IN_LOOKUP_MULTI(addr, ifp, inm) \
+#define IN_LOOKUP_MULTI(addr, ifp, inm) \
 	/* struct in_addr addr; */ \
 	/* struct ifnet *ifp; */ \
 	/* struct in_multi *inm; */ \
@@ -166,7 +166,7 @@ struct in_multistep {
  * and get the first record.  Both macros return a NULL "inm" when there
  * are no remaining records.
  */
-#define	IN_NEXT_MULTI(step, inm) \
+#define IN_NEXT_MULTI(step, inm) \
 	/* struct in_multistep  step; */ \
 	/* struct in_multi *inm; */ \
 { \
@@ -183,7 +183,7 @@ struct in_multistep {
 		} \
 }
 
-#define	IN_FIRST_MULTI(step, inm) \
+#define IN_FIRST_MULTI(step, inm) \
 	/* struct in_multistep step; */ \
 	/* struct in_multi *inm; */ \
 { \
@@ -192,9 +192,10 @@ struct in_multistep {
 	IN_NEXT_MULTI((step), (inm)); \
 }
 
-struct	in_multi *
-	in_addmulti __P((struct in_addr *, struct ifnet *));
+int	in_ifinit __P((struct ifnet *,
+	    struct in_ifaddr *, struct sockaddr_in *, int));
+struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
 int	in_delmulti __P((struct in_multi *));
+void	in_ifscrub __P((struct ifnet *, struct in_ifaddr *));
+int	in_control __P((struct socket *, int, caddr_t, struct ifnet *));
 #endif
-
-#endif /* !_NETINET_IN_VAR_H_ */

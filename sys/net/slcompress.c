@@ -1,6 +1,6 @@
-/*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)slcompress.c	7.7 (Berkeley) 5/7/91
+ *	from: @(#)slcompress.c	8.2 (Berkeley) 4/16/94
+ *	$Id: slcompress.c,v 1.8 1994/05/13 06:03:25 mycroft Exp $
  */
 
 /*
@@ -38,19 +39,11 @@
  * over low speed serial lines.
  *
  * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
- *    - Initial distribution.
- *
- * Modified June 1993 by Paul Mackerras, paulus@cs.anu.edu.au,
- * so that the entire packet being decompressed doesn't have
- * to be in contiguous memory (just the compressed header).
- *
- *	$Id: slcompress.c,v 1.7 1994/05/08 12:34:21 paulus Exp $
+ *	- Initial distribution.
  */
-  
-#include <sys/types.h>
+
 #include <sys/param.h>
 #include <sys/mbuf.h>
-#include <sys/socketvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -71,41 +64,15 @@
 #define ovbcopy bcopy
 #endif
 
-
 void
-sl_compress_init(comp)
-	struct slcompress *comp;
-{
-	register u_int i;
-	register struct cstate *tstate = comp->tstate;
-
-	bzero((char *)comp, sizeof(*comp));
-	for (i = MAX_STATES - 1; i > 0; --i) {
-		tstate[i].cs_id = i;
-		tstate[i].cs_next = &tstate[i - 1];
-	}
-	tstate[0].cs_next = &tstate[MAX_STATES - 1];
-	tstate[0].cs_id = 0;
-	comp->last_cs = &tstate[0];
-	comp->last_recv = 255;
-	comp->last_xmit = 255;
-	comp->flags = SLF_TOSS;
-}
-
-
-/*
- * Like sl_compress_init, but we get to specify the maximum connection
- * ID to use on transmission.
- */
-void
-sl_compress_setup(comp, max_state)
+sl_compress_init(comp, max_state)
 	struct slcompress *comp;
 	int max_state;
 {
 	register u_int i;
 	register struct cstate *tstate = comp->tstate;
 
-	if ((unsigned) max_state > MAX_STATES - 1)
+	if (max_state == -1)
 		max_state = MAX_STATES - 1;
 	bzero((char *)comp, sizeof(*comp));
 	for (i = max_state; i > 0; --i) {
@@ -173,8 +140,7 @@ sl_compress_setup(comp, max_state)
 	} \
 }
 
-
-u_char
+u_int
 sl_compress_tcp(m, ip, comp, compress_cid)
 	struct mbuf *m;
 	register struct ip *ip;
@@ -249,8 +215,6 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		comp->last_cs = lcs;
 		hlen += th->th_off;
 		hlen <<= 2;
-		if (hlen > m->m_len)
-			return (TYPE_IP);
 		goto uncompressed;
 
 	found:
@@ -281,8 +245,6 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 	deltaS = hlen;
 	hlen += th->th_off;
 	hlen <<= 2;
-	if (hlen > m->m_len)
-		return (TYPE_IP);
 
 	if (((u_short *)ip)[0] != ((u_short *)&cs->cs_ip)[0] ||
 	    ((u_short *)ip)[3] != ((u_short *)&cs->cs_ip)[3] ||
@@ -437,9 +399,9 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	u_int type;
 	struct slcompress *comp;
 {
+
 	return sl_uncompress_tcp_part(bufp, len, len, type, comp);
 }
-
 
 /*
  * Uncompress a packet of total length total_len.  The first buflen

@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
@@ -35,12 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hdlc.h	7.4 (Berkeley) 5/6/91
- *	$Id: hdlc.h,v 1.3 1993/05/20 04:12:11 cgd Exp $
+ *	from: @(#)hdlc.h	8.1 (Berkeley) 6/10/93
+ *	$Id: hdlc.h,v 1.4 1994/05/13 06:04:25 mycroft Exp $
  */
-
-#ifndef _NETCCITT_HDLC_H_
-#define _NETCCITT_HDLC_H_
 
 #ifndef ORDER4
 #define FALSE   0
@@ -158,5 +155,3 @@ struct	Hdlc_frame {
 bool	range_check ();
 bool	valid_nr ();
 struct	mbuf *hd_remove ();
-
-#endif /* !_NETCCITT_HDLC_H_ */

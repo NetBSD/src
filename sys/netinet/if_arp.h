@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_ether.h	7.5 (Berkeley) 6/28/90
- *	$Id: if_arp.h,v 1.8 1994/02/02 05:58:54 hpeyerl Exp $
+ *	from: @(#)if_ether.h	8.1 (Berkeley) 6/10/93
+ *	$Id: if_arp.h,v 1.9 1994/05/13 06:05:57 mycroft Exp $
  */
-
-#ifndef _NETINET_IF_ETHER_H_
-#define _NETINET_IF_ETHER_H_
 
 /*
  * Ethernet address - 6 octets
@@ -76,9 +73,9 @@ struct	ether_header {
  * The high-order 25 bits of the Ethernet address are statically assigned,
  * and the low-order 23 bits are taken from the low end of the IP address.
  */
-#define	ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
+#define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
 	/* struct in_addr *ipaddr; */ \
-	/* u_char enaddr[6];       */ \
+	/* u_char enaddr[6];	   */ \
 { \
 	(enaddr)[0] = 0x01; \
 	(enaddr)[1] = 0x00; \
@@ -88,7 +85,6 @@ struct	ether_header {
 	(enaddr)[5] = ((u_char *)ipaddr)[3]; \
 }
 #endif
-
 
 /*
  * Ethernet Address Resolution Protocol.
@@ -110,7 +106,6 @@ struct	ether_arp {
 #define	arp_pln	ea_hdr.ar_pln
 #define	arp_op	ea_hdr.ar_op
 
-
 /*
  * Structure shared between the ethernet driver modules and
  * the address resolution code.  For example, each ec_softc or il_softc
@@ -119,29 +114,55 @@ struct	ether_arp {
 struct	arpcom {
 	struct 	ifnet ac_if;		/* network-visible interface */
 	u_char	ac_enaddr[6];		/* ethernet hardware address */
-	struct in_addr ac_ipaddr;	/* copy of ip address- XXX */
-	struct ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
-	int ac_multicnt;		/* length of ac_multiaddrs list */
+	struct	in_addr ac_ipaddr;	/* copy of ip address- XXX */
+	struct	ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
+	int	ac_multicnt;		/* length of ac_multiaddrs list */
+};
+
+struct llinfo_arp {
+	struct	llinfo_arp *la_next;
+	struct	llinfo_arp *la_prev;
+	struct	rtentry *la_rt;
+	struct	mbuf *la_hold;		/* last packet until resolved/timeout */
+	long	la_asked;		/* last time we QUERIED for this addr */
+#define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
+};
+
+struct sockaddr_inarp {
+	u_char	sin_len;
+	u_char	sin_family;
+	u_short	sin_port;
+	struct	in_addr sin_addr;
+	struct	in_addr sin_srcaddr;
+	u_short	sin_tos;
+	u_short	sin_other;
+#define SIN_PROXY 1
 };
 
 /*
- * Internet to ethernet address resolution table.
+ * IP and ethernet specific routing flags
  */
-struct	arptab {
-	struct	in_addr at_iaddr;	/* internet address */
-	u_char	at_enaddr[6];		/* ethernet address */
-	u_char	at_timer;		/* minutes since last reference */
-	u_char	at_flags;		/* flags */
-	struct	mbuf *at_hold;		/* last packet until resolved/timeout */
-};
+#define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
+#define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
 #ifdef	KERNEL
 u_char	etherbroadcastaddr[6];
 u_char	ether_ipmulticast_min[6];
 u_char	ether_ipmulticast_max[6];
-struct	arptab *arptnew();
-int	ether_output(), ether_input();
-char	*ether_sprintf();
+struct	ifqueue arpintrq;
+
+struct	llinfo_arp *arptnew __P((struct in_addr *));
+struct	llinfo_arp llinfo_arp;		/* head of the llinfo queue */
+
+void	arpwhohas __P((struct arpcom *, struct in_addr *));
+void	arpintr __P((void));
+int	arpresolve __P((struct arpcom *,
+	   struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
+void	arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void	arpwhohas __P((struct arpcom *, struct in_addr *));
+
+int	ether_addmulti __P((struct ifreq *, struct arpcom *));
+int	ether_delmulti __P((struct ifreq *, struct arpcom *));
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
@@ -172,7 +193,7 @@ struct ether_multistep {
  * multicast addresses connected to a given arpcom structure.  If no matching
  * record is found, "enm" returns NULL.
  */
-#define	ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm) \
+#define ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm) \
 	/* u_char addrlo[6]; */ \
 	/* u_char addrhi[6]; */ \
 	/* struct arpcom *ac; */ \
@@ -192,7 +213,7 @@ struct ether_multistep {
  * and get the first record.  Both macros return a NULL "enm" when there
  * are no remaining records.
  */
-#define	ETHER_NEXT_MULTI(step, enm) \
+#define ETHER_NEXT_MULTI(step, enm) \
 	/* struct ether_multistep step; */  \
 	/* struct ether_multi *enm; */  \
 { \
@@ -200,7 +221,7 @@ struct ether_multistep {
 		(step).e_enm = (enm)->enm_next; \
 }
 
-#define	ETHER_FIRST_MULTI(step, ac, enm) \
+#define ETHER_FIRST_MULTI(step, ac, enm) \
 	/* struct ether_multistep step; */ \
 	/* struct arpcom *ac; */ \
 	/* struct ether_multi *enm; */ \
@@ -209,5 +230,3 @@ struct ether_multistep {
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 #endif
-
-#endif /* !_NETINET_IF_ETHER_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)udp.h	7.4 (Berkeley) 6/28/90
- *	$Id: udp.h,v 1.3 1993/05/20 03:50:46 cgd Exp $
+ *	from: @(#)udp.h	8.1 (Berkeley) 6/10/93
+ *	$Id: udp.h,v 1.4 1994/05/13 06:06:54 mycroft Exp $
  */
-
-#ifndef _NETINET_UDP_H_
-#define _NETINET_UDP_H_
 
 /*
  * Udp protocol header.
@@ -47,5 +44,3 @@ struct udphdr {
 	short	uh_ulen;		/* udp length */
 	u_short	uh_sum;			/* udp checksum */
 };
-
-#endif /* !_NETINET_UDP_H_ */

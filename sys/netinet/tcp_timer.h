@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_timer.h	7.8 (Berkeley) 6/28/90
- *	$Id: tcp_timer.h,v 1.3 1993/05/20 03:50:40 cgd Exp $
+ *	from: @(#)tcp_timer.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tcp_timer.h,v 1.4 1994/05/13 06:06:48 mycroft Exp $
  */
-
-#ifndef _NETINET_TCP_TIMER_H_
-#define _NETINET_TCP_TIMER_H_
 
 /*
  * Definitions of the TCP timers.  These timers are counted
@@ -84,7 +81,6 @@
  * amount of time probing, then we drop the connection.
  */
 
-#define	TCP_TTL		60		/* default time to live for TCP segs */
 /*
  * Time constants.
  */
@@ -131,5 +127,3 @@ extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
 #endif
-
-#endif /* !_NETINET_TCP_TIMER_H_ */

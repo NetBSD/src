@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
- *	$Id: tcp_usrreq.c,v 1.8 1994/01/10 23:27:45 mycroft Exp $
+ *	from: @(#)tcp_usrreq.c	8.2 (Berkeley) 1/3/94
+ *	$Id: tcp_usrreq.c,v 1.9 1994/05/13 06:06:49 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -187,6 +187,10 @@ tcp_usrreq(so, req, m, nam, control)
 			error = ENOBUFS;
 			break;
 		}
+		/* Compute window scaling to request.  */
+		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
+		    (TCP_MAXWIN << tp->request_r_scale) < so->so_rcv.sb_hiwat)
+			tp->request_r_scale++;
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
@@ -337,13 +341,26 @@ tcp_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
-	int error = 0;
-	struct inpcb *inp = sotoinpcb(so);
-	register struct tcpcb *tp = intotcpcb(inp);
+	int error = 0, s;
+	struct inpcb *inp;
+	register struct tcpcb *tp;
 	register struct mbuf *m;
+	register int i;
 
-	if (level != IPPROTO_TCP)
-		return (ip_ctloutput(op, so, level, optname, mp));
+	s = splnet();
+	inp = sotoinpcb(so);
+	if (inp == NULL) {
+		splx(s);
+		if (op == PRCO_SETOPT && *mp)
+			(void) m_free(*mp);
+		return (ECONNRESET);
+	}
+	if (level != IPPROTO_TCP) {
+		error = ip_ctloutput(op, so, level, optname, mp);
+		splx(s);
+		return (error);
+	}
+	tp = intotcpcb(inp);
 
 	switch (op) {
 
@@ -360,9 +377,15 @@ tcp_ctloutput(op, so, level, optname, mp)
 				tp->t_flags &= ~TF_NODELAY;
 			break;
 
-		case TCP_MAXSEG:	/* not yet */
+		case TCP_MAXSEG:
+			if (m && (i = *mtod(m, int *)) > 0 && i <= tp->t_maxseg)
+				tp->t_maxseg = i;
+			else
+				error = EINVAL;
+			break;
+
 		default:
-			error = EINVAL;
+			error = ENOPROTOOPT;
 			break;
 		}
 		if (m)
@@ -381,11 +404,12 @@ tcp_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = tp->t_maxseg;
 			break;
 		default:
-			error = EINVAL;
+			error = ENOPROTOOPT;
 			break;
 		}
 		break;
 	}
+	splx(s);
 	return (error);
 }
 

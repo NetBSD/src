@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in_pcb.h	7.6 (Berkeley) 6/28/90
- *	$Id: in_pcb.h,v 1.5 1994/01/08 21:21:41 mycroft Exp $
+ *	from: @(#)in_pcb.h	8.1 (Berkeley) 6/10/93
+ *	$Id: in_pcb.h,v 1.6 1994/05/13 06:06:10 mycroft Exp $
  */
-
-#ifndef _NETINET_IN_PCB_H_
-#define _NETINET_IN_PCB_H_
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -67,32 +64,26 @@ struct inpcb {
 #define	INP_RECVRETOPTS		0x02	/* receive IP options for reply */
 #define	INP_RECVDSTADDR		0x04	/* receive IP dst address */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR)
-
-#ifdef sotorawcb
-/*
- * Common structure pcb for raw internet protocol access.
- * Here are internet specific extensions to the raw control block,
- * and space is allocated to the necessary sockaddrs.
- */
-struct raw_inpcb {
-	struct	rawcb rinp_rcb;	/* common control block prefix */
-	struct	mbuf *rinp_options;	/* IP options */
-	int	rinp_flags;		/* flags, e.g. raw sockopts */
-#define	RINPF_HDRINCL	0x1		/* user supplies entire IP header */
-	struct	sockaddr_in rinp_faddr;	/* foreign address */
-	struct	sockaddr_in rinp_laddr;	/* local address */
-	struct	route rinp_route;	/* placeholder for routing entry */
-};
-#endif
+#define	INP_HDRINCL		0x08	/* user supplies entire IP header */
 
 #define	INPLOOKUP_WILDCARD	1
 #define	INPLOOKUP_SETLOCAL	2
 
 #define	sotoinpcb(so)	((struct inpcb *)(so)->so_pcb)
-#define	sotorawinpcb(so)	((struct raw_inpcb *)(so)->so_pcb)
 
 #ifdef KERNEL
-struct	inpcb *in_pcblookup();
+int	 in_losing __P((struct inpcb *));
+int	 in_pcballoc __P((struct socket *, struct inpcb *));
+int	 in_pcbbind __P((struct inpcb *, struct mbuf *));
+int	 in_pcbconnect __P((struct inpcb *, struct mbuf *));
+int	 in_pcbdetach __P((struct inpcb *));
+int	 in_pcbdisconnect __P((struct inpcb *));
+struct inpcb *
+	 in_pcblookup __P((struct inpcb *,
+	    struct in_addr, u_int, struct in_addr, u_int, int));
+int	 in_pcbnotify __P((struct inpcb *, struct sockaddr *,
+	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
+void	 in_rtchange __P((struct inpcb *, int));
+int	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));
+int	 in_setsockaddr __P((struct inpcb *, struct mbuf *));
 #endif
-
-#endif /* !_NETINET_IN_PCB_H_ */

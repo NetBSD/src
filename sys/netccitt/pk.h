@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,12 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk.h	7.8 (Berkeley) 4/30/91
- *	$Id: pk.h,v 1.3 1993/05/20 04:12:14 cgd Exp $
+ *	from: @(#)pk.h	8.1 (Berkeley) 6/10/93
+ *	$Id: pk.h,v 1.4 1994/05/13 06:04:41 mycroft Exp $
  */
-
-#ifndef _NETCCITT_PK_H_
-#define _NETCCITT_PK_H_
 
 /*
  *
@@ -70,9 +67,12 @@
 
 /* Restart cause field definitions. */
 
+#define X25_RESTART_DTE_ORIGINATED	  0
 #define X25_RESTART_LOCAL_PROCEDURE_ERROR 1
 #define X25_RESTART_NETWORK_CONGESTION	  3
 #define X25_RESTART_NETWORK_OPERATIONAL	  7
+#define X25_RESTART_DTE_ORIGINATED2	  128
+
 
 /* Miscellaneous definitions. */
 
@@ -104,32 +104,23 @@ typedef char    bool;
  *  to bit fields, to be ansi C compliant and allignment safe.
  */
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define ORDER2(a, b) a , b
-#define ORDER4(a, b, c, d) a , b , c , d
-#endif
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define ORDER2(a, b) b , a
-#define ORDER4(a, b, c, d) d , c , b , a
-#endif
-
 typedef u_char octet;
 
 struct x25_calladdr {
-	octet ORDER2(calling_addrlen:4, called_addrlen:4);
+	octet addrlens;
 	octet address_field[MAXADDRLN];
 };
 
 struct x25_packet {
-	octet ORDER4(q_bit:1, d_bit:1, fmt_identifier:2, lc_group_number:4);
+	octet bits;
 	octet logical_channel_number;
 	octet packet_type;
 	octet packet_data;
 };
+#define packet_cause packet_data
 
 struct data_packet {
-	octet ORDER4(pr:3, m_bit:1, ps:3, z:1);
+	octet bits;
 };
 
 #define FACILITIES_REVERSE_CHARGE	0x1
@@ -139,14 +130,18 @@ struct data_packet {
 
 #define PKHEADERLN	3
 
+#define DP(xp)          (((struct data_packet *)&(xp) -> packet_type) -> bits)
+#define PS(xp)           X25GBITS(DP(xp), p_s)
+#define PR(xp)           X25GBITS(DP(xp), p_r)
+#define MBIT(xp)         X25GBITS(DP(xp), m_bit)
+#define SPR(xp, v)       X25SBITS(DP(xp), p_r, (v))
+#define SPS(xp, v)       X25SBITS(DP(xp), p_s, (v))
+#define SMBIT(xp, v)     X25SBITS(DP(xp), m_bit, (v))
 
-#define PR(xp)		(((struct data_packet *)&xp -> packet_type)->pr)
-#define PS(xp)		(((struct data_packet *)&xp -> packet_type)->ps)
-#define MBIT(xp)	(((struct data_packet *)&xp -> packet_type)->m_bit)
 #define LCN(xp)		(xp -> logical_channel_number + \
-	(xp -> lc_group_number ? (xp -> lc_group_number >> 8) : 0))
+	(X25GBITS(xp -> bits, lc_group_number) ? (X25GBITS(xp -> bits, lc_group_number) << 8) : 0))
 #define SET_LCN(xp, lcn) ((xp -> logical_channel_number = lcn), \
-	(xp -> lc_group_number = lcn > 255 ? lcn >> 8 : 0))
+	(X25SBITS(xp -> bits, lc_group_number, lcn > 255 ? lcn >> 8 : 0)))
 
 struct mbuf *pk_template ();
 
@@ -169,7 +164,11 @@ struct mbuf *pk_template ();
 #define DTE_SENT_RESTART	9
 #define DTE_READY		0
 
-#define MAXSTATES		10
+/* Cleaning out ... */
+
+#define LCN_ZOMBIE 		10
+
+#define MAXSTATES		11
 
 /*
  *  The following definitions are used in a switch statement after
@@ -195,4 +194,15 @@ struct mbuf *pk_template ();
 #define INVALID_PACKET  15 * MAXSTATES
 #define DELETE_PACKET	INVALID_PACKET
 
-#endif /* !_NETCCITT_PK_H_ */
+/*
+ * The following definitions are used by the restart procedures
+ * for noting wether the PLE is supposed to behave as DTE or DCE
+ * (essentially necessary for operation over LLC2)
+ */
+#define	DTE_DXERESOLVING	0x0001
+#define	DTE_PLAYDTE		0x0002
+#define	DTE_PLAYDCE		0x0004
+#define DTE_CONNECTPENDING	0x0010
+#define	DTE_PRETENDDTE		0x0020
+
+#define MAXRESTARTCOLLISIONS	10

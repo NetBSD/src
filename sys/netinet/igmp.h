@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 Stephen Deering.
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Stephen Deering of Stanford University.
@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)igmp.h	7.1 (Berkeley) 7/8/92
+ *	from: @(#)igmp.h	8.1 (Berkeley) 6/10/93
+ *	$Id: igmp.h,v 1.3 1994/05/13 06:06:00 mycroft Exp $
  */
 
 /* Internet Group Management Protocol (IGMP) definitions. */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip.h	7.10 (Berkeley) 6/28/90
- *	$Id: ip.h,v 1.4 1994/01/08 21:21:44 mycroft Exp $
+ *	from: @(#)ip.h	8.1 (Berkeley) 6/10/93
+ *	$Id: ip.h,v 1.5 1994/05/13 06:06:16 mycroft Exp $
  */
-
-#ifndef _NETINET_IP_H_
-#define _NETINET_IP_H_
 
 /*
  * Definitions for internet protocol version 4.
@@ -65,6 +62,7 @@ struct ip {
 	short	ip_off;			/* fragment offset field */
 #define	IP_DF 0x4000			/* dont fragment flag */
 #define	IP_MF 0x2000			/* more fragments flag */
+#define	IP_OFFMASK 0x1fff		/* mask for fragmenting bits */
 	u_char	ip_ttl;			/* time to live */
 	u_char	ip_p;			/* protocol */
 	u_short	ip_sum;			/* checksum */
@@ -164,9 +162,8 @@ struct	ip_timestamp {
  * Internet implementation parameters.
  */
 #define	MAXTTL		255		/* maximum time to live (seconds) */
+#define	IPDEFTTL	64		/* default ttl, from RFC 1340 */
 #define	IPFRAGTTL	60		/* time to live for frags, slowhz */
 #define	IPTTLDEC	1		/* subtracted when forwarding */
 
 #define	IP_MSS		576		/* default maximum segment size */
-
-#endif /* !_NETINET_IP_H_ */

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,12 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_var.h	7.4 (Berkeley) 5/29/91
- *	$Id: hd_var.h,v 1.3 1993/05/20 04:12:10 cgd Exp $
+ *	from: @(#)hd_var.h	8.1 (Berkeley) 6/10/93
+ *	$Id: hd_var.h,v 1.4 1994/05/13 06:04:24 mycroft Exp $
  */
-
-#ifndef _NETCCITT_HD_VAR_H_
-#define _NETCCITT_HD_VAR_H_
 
 /*
  *
@@ -109,5 +106,3 @@ int	hd_t1;			/* timer T1 value */
 int	hd_t3;			/* RR send timer */
 int	hd_n2;			/* frame retransmission limit */
 #endif
-
-#endif /* !_NETCCITT_HD_VAR_H_ */

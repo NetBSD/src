@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1989, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
- *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.27 1994/03/08 07:27:23 cgd Exp $
+ *	from: @(#)if_sl.c	8.6 (Berkeley) 2/1/94
+ *	$Id: if_sl.c,v 1.28 1994/05/13 06:02:53 mycroft Exp $
  */
 
 /*
@@ -236,7 +235,7 @@ slinit(sc)
 	}
 	sc->sc_buf = sc->sc_ep - SLMAX;
 	sc->sc_mp = sc->sc_buf;
-	sl_compress_init(&sc->sc_comp);
+	sl_compress_init(&sc->sc_comp, -1);
 	return (1);
 }
 
@@ -348,7 +347,6 @@ sltioctl(tp, cmd, data, flag)
 	int flag;
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
-	int s;
 
 	switch (cmd) {
 	case SLIOCGUNIT:
@@ -365,7 +363,7 @@ sltioctl(tp, cmd, data, flag)
  * Queue a packet.  Start transmission if not active.
  * Compression happens in slstart; if we do it here, IP TOS
  * will cause us to not compress "background" packets, because
- * ordering gets hosed.  It can be done for all packets in slstart.
+ * ordering gets trashed.  It can be done for all packets in slstart.
  */
 int
 sloutput(ifp, m, dst, rtp)
@@ -769,7 +767,7 @@ slinput(c, tp)
 		if (sc->sc_bpf) {
 			/*
 			 * Save the compressed header, so we
-			 * can tack it on later.  Note that we 
+			 * can tack it on later.  Note that we
 			 * will end up copying garbage in some
 			 * cases but this is okay.  We remember
 			 * where the buffer started so we can

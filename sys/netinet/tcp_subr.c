@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
- *	$Id: tcp_subr.c,v 1.9 1994/01/10 23:27:44 mycroft Exp $
+ *	from: @(#)tcp_subr.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tcp_subr.c,v 1.10 1994/05/13 06:06:45 mycroft Exp $
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -60,9 +61,9 @@
 #include <netinet/tcpip.h>
 
 /* patchable/settable parameters for tcp */
-int	tcp_ttl = TCP_TTL;
 int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
+int	tcp_do_rfc1323 = 1;
 
 extern	struct inpcb *tcp_last_inpcb;
 
@@ -169,7 +170,7 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 		m->m_data = (caddr_t)ti;
 		m->m_len = sizeof (struct tcpiphdr);
 		tlen = 0;
-#define	xchg(a,b,type) { type t; t=a; a=b; b=t; }
+#define xchg(a,b,type) { type t; t=a; a=b; b=t; }
 		xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_long);
 		xchg(ti->ti_dport, ti->ti_sport, u_short);
 #undef xchg
@@ -186,11 +187,15 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	ti->ti_x2 = 0;
 	ti->ti_off = sizeof (struct tcphdr) >> 2;
 	ti->ti_flags = flags;
-	ti->ti_win = htons((u_short)win);
+	if (tp)
+		ti->ti_win = htons((u_short) (win >> tp->rcv_scale));
+	else
+		ti->ti_win = htons((u_short)win);
 	ti->ti_urp = 0;
+	ti->ti_sum = 0;
 	ti->ti_sum = in_cksum(m, tlen);
 	((struct ip *)ti)->ip_len = tlen;
-	((struct ip *)ti)->ip_ttl = tcp_ttl;
+	((struct ip *)ti)->ip_ttl = ip_defttl;
 	(void) ip_output(m, NULL, ro, 0, NULL);
 }
 
@@ -203,16 +208,16 @@ struct tcpcb *
 tcp_newtcpcb(inp)
 	struct inpcb *inp;
 {
-	struct mbuf *m = m_getclr(M_DONTWAIT, MT_PCB);
 	register struct tcpcb *tp;
 
-	if (m == NULL)
+	tp = malloc(sizeof(*tp), M_PCB, M_NOWAIT);
+	if (tp == NULL)
 		return ((struct tcpcb *)0);
-	tp = mtod(m, struct tcpcb *);
+	bzero((char *) tp, sizeof(struct tcpcb));
 	tp->seg_next = tp->seg_prev = (struct tcpiphdr *)tp;
 	tp->t_maxseg = tcp_mssdflt;
 
-	tp->t_flags = 0;		/* sends options! */
+	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
 	/*
 	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no
@@ -222,12 +227,12 @@ tcp_newtcpcb(inp)
 	tp->t_srtt = TCPTV_SRTTBASE;
 	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << 2;
 	tp->t_rttmin = TCPTV_MIN;
-	TCPT_RANGESET(tp->t_rxtcur,
+	TCPT_RANGESET(tp->t_rxtcur, 
 	    ((TCPTV_SRTTBASE >> 2) + (TCPTV_SRTTDFLT << 2)) >> 1,
 	    TCPTV_MIN, TCPTV_REXMTMAX);
-	tp->snd_cwnd = TCP_MAXWIN;
-	tp->snd_ssthresh = TCP_MAXWIN;
-	inp->inp_ip.ip_ttl = tcp_ttl;
+	tp->snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT;
+	tp->snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT;
+	inp->inp_ip.ip_ttl = ip_defttl;
 	inp->inp_ppcb = (caddr_t)tp;
 	return (tp);
 }
@@ -275,7 +280,7 @@ tcp_close(tp)
 
 	/*
 	 * If we sent enough data to get some meaningful characteristics,
-	 * save them in the routing entry.  'Enough' is arbitrarily
+	 * save them in the routing entry.  'Enough' is arbitrarily 
 	 * defined as the sendpipesize (default 4K) * 16.  This would
 	 * give us 16 rtt samples assuming we only get one sample per
 	 * window (the usual case on a long haul net).  16 samples is
@@ -350,7 +355,7 @@ tcp_close(tp)
 	}
 	if (tp->t_template)
 		(void) m_free(dtom(tp->t_template));
-	(void) m_free(dtom(tp));
+	free(tp, M_PCB);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
 	/* clobber input pcb cache if we're closing the cached connection */
@@ -374,14 +379,31 @@ tcp_drain()
  */
 void
 tcp_notify(inp, error)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	int error;
 {
+	register struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
+	register struct socket *so = inp->inp_socket;
 
-	((struct tcpcb *)inp->inp_ppcb)->t_softerror = error;
-	wakeup((caddr_t) &inp->inp_socket->so_timeo);
-	sorwakeup(inp->inp_socket);
-	sowwakeup(inp->inp_socket);
+	/*
+	 * Ignore some errors if we are hooked up.
+	 * If connection hasn't completed, has retransmitted several times,
+	 * and receives a second error, give up now.  This is better
+	 * than waiting a long time to establish a connection that
+	 * can never complete.
+	 */
+	if (tp->t_state == TCPS_ESTABLISHED &&
+	     (error == EHOSTUNREACH || error == ENETUNREACH ||
+	      error == EHOSTDOWN)) {
+		return;
+	} else if (tp->t_state < TCPS_ESTABLISHED && tp->t_rxtshift > 3 &&
+	    tp->t_softerror)
+		so->so_error = error;
+	else 
+		tp->t_softerror = error;
+	wakeup((caddr_t) &so->so_timeo);
+	sorwakeup(so);
+	sowwakeup(so);
 }
 
 void
@@ -397,13 +419,11 @@ tcp_ctlinput(cmd, sa, ip)
 
 	if (cmd == PRC_QUENCH)
 		notify = tcp_quench;
-	else if ((unsigned)cmd > PRC_NCMDS || inetctlerrmap[cmd] == 0)
+	else if (!PRC_IS_REDIRECT(cmd) &&
+		 ((unsigned)cmd > PRC_NCMDS || inetctlerrmap[cmd] == 0))
 		return;
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		/* Ignore forged ICMP_UNREACH with dport==0 and sport==0. */
-		if (!th->th_dport || !th->th_sport)
-			return;
 		in_pcbnotify(&tcb, sa, th->th_dport, ip->ip_src, th->th_sport,
 			cmd, notify);
 	} else

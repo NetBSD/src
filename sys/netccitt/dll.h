@@ -1,5 +1,7 @@
-/*
- * Copyright (c) 1982, 1986, 1993
+/* 
+ * Copyright (C) Dirk Husemann, Computer Science Department IV, 
+ * 		 University of Erlangen-Nuremberg, Germany, 1990, 1991, 1992
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,31 +32,53 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcpip.h	8.1 (Berkeley) 6/10/93
- *	$Id: tcpip.h,v 1.4 1994/05/13 06:06:52 mycroft Exp $
+ *	from: @(#)dll.h	8.1 (Berkeley) 6/10/93
+ *	$Id: dll.h,v 1.1 1994/05/13 06:04:14 mycroft Exp $
  */
 
-/*
- * Tcp+ip header, after ip options removed.
+/* 
+ * We define the additional PRC_* codes in here
  */
-struct tcpiphdr {
-	struct 	ipovly ti_i;		/* overlaid ip structure */
-	struct	tcphdr ti_t;		/* tcp header */
+#ifdef KERNEL
+#ifndef PRC_IFUP
+#define PRC_IFUP		   3
+#endif
+#define PRC_CONNECT_INDICATION     8
+#define PRC_CONNECT_REQUEST        9
+#define PRC_DISCONNECT_REQUEST     10
+#define PRC_DISCONNECT_INDICATION  11
+#define PRC_RESET_REQUEST          12
+#endif
+
+/*
+ * Data link layer configuration --- basically a copy of the relevant parts
+ * of x25config, implemented to become a little bit more network
+ * layer independent. (Probably only used for casting et al.)
+ */
+struct dllconfig {
+       u_short dllcfg_unused0:4,
+               dllcfg_unused1:4,
+               dllcfg_trace:1,     /* link level tracing flag */
+               dllcfg_window:7;    /* link level window size */
+       u_short dllcfg_xchxid:1,    /* exchange XID (not yet) */
+               dllcfg_unused2:7;   /* here be dragons */
 };
-#define	ti_next		ti_i.ih_next
-#define	ti_prev		ti_i.ih_prev
-#define	ti_x1		ti_i.ih_x1
-#define	ti_pr		ti_i.ih_pr
-#define	ti_len		ti_i.ih_len
-#define	ti_src		ti_i.ih_src
-#define	ti_dst		ti_i.ih_dst
-#define	ti_sport	ti_t.th_sport
-#define	ti_dport	ti_t.th_dport
-#define	ti_seq		ti_t.th_seq
-#define	ti_ack		ti_t.th_ack
-#define	ti_x2		ti_t.th_x2
-#define	ti_off		ti_t.th_off
-#define	ti_flags	ti_t.th_flags
-#define	ti_win		ti_t.th_win
-#define	ti_sum		ti_t.th_sum
-#define	ti_urp		ti_t.th_urp
+
+struct dll_ctlinfo {
+	union {
+		struct {
+			struct	dllconfig *dctli_up_cfg;
+			u_char	dctli_up_lsap;
+		} CTLI_UP;
+		struct {
+			caddr_t dctli_down_pcb;
+			struct rtentry *dctli_down_rt;
+			struct dllconfig *dctli_down_llconf;
+		} CTLI_DOWN;
+	} CTLIun;
+};
+#define dlcti_cfg  CTLIun.CTLI_UP.dctli_up_cfg
+#define dlcti_lsap CTLIun.CTLI_UP.dctli_up_lsap
+#define dlcti_pcb  CTLIun.CTLI_DOWN.dctli_down_pcb
+#define dlcti_rt   CTLIun.CTLI_DOWN.dctli_down_rt
+#define dlcti_conf CTLIun.CTLI_DOWN.dctli_down_llconf

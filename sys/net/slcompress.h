@@ -1,8 +1,6 @@
 /*
- * Definitions for tcp compression routines.
- *
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +30,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
- *	- Initial distribution.
- *
- *	Paul Mackerras (paulus@cs.anu.edu.au), June 1993:
- *	- added sl_uncompress_tcp_part.
- *
- *	From: 	slcompress.h	7.4	90/06/28
- *	$Id: slcompress.h,v 1.6 1994/05/08 12:34:22 paulus Exp $
+ *	from: @(#)slcompress.h	8.1 (Berkeley) 6/10/93
+ *	$Id: slcompress.h,v 1.7 1994/05/13 06:03:28 mycroft Exp $
  */
 
-#ifndef _SLCOMPRESS_H_
-#define _SLCOMPRESS_H_
+/*
+ * Definitions for tcp compression routines.
+ *
+ * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
+ *	- Initial distribution.
+ */
 
 #define MAX_STATES 16		/* must be > 2 and < 256 */
 #define MAX_HDR MLEN		/* XXX 4bsd-ism: should really be 128 */
@@ -157,14 +153,9 @@ struct slcompress {
 /* flag values */
 #define SLF_TOSS 1		/* tossing rcvd frames because of input err */
 
-extern void sl_compress_init __P((struct slcompress *));
-extern void sl_compress_setup __P((struct slcompress *, int maxslot));
-extern u_char sl_compress_tcp __P((struct mbuf *m, struct ip *ip,
-				   struct slcompress *, int comp_cid_flag));
-extern int sl_uncompress_tcp __P((u_char **bufp, int len, u_int type,
-				  struct slcompress *));
-extern int sl_uncompress_tcp_part __P((u_char **bufp, int buflen,
-				       int total_len, u_int type,
-				       struct slcompress *));
-
-#endif /* _SLCOMPRESS_H_ */
+void	 sl_compress_init __P((struct slcompress *, int));
+u_int	 sl_compress_tcp __P((struct mbuf *,
+	    struct ip *, struct slcompress *, int));
+int	 sl_uncompress_tcp __P((u_char **, int, u_int, struct slcompress *));
+int	 sl_uncompress_tcp_part __P((u_char **, int, int, u_int,
+	    struct slcompress *));

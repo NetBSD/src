@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_timer.c	7.4 (Berkeley) 5/29/91
- *	$Id: hd_timer.c,v 1.3 1993/12/18 00:41:29 mycroft Exp $
+ *	from: @(#)hd_timer.c	8.1 (Berkeley) 6/10/93
+ *	$Id: hd_timer.c,v 1.4 1994/05/13 06:04:23 mycroft Exp $
  */
 
 #include <sys/param.h>

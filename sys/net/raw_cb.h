@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)raw_cb.h	7.6 (Berkeley) 6/28/90
- *	$Id: raw_cb.h,v 1.4 1993/12/06 04:17:46 hpeyerl Exp $
+ *	from: @(#)raw_cb.h	8.1 (Berkeley) 6/10/93
+ *	$Id: raw_cb.h,v 1.5 1994/05/13 06:03:11 mycroft Exp $
  */
-
-#ifndef _NET_RAW_CB_H_
-#define _NET_RAW_CB_H_
 
 /*
  * Raw protocol interface control block.  Used
@@ -48,7 +45,6 @@ struct rawcb {
 	struct	sockaddr *rcb_faddr;	/* destination address */
 	struct	sockaddr *rcb_laddr;	/* socket's address */
 	struct	sockproto rcb_proto;	/* protocol family, protocol */
-	struct	mbuf *rcb_moptions;	/* proto specific multicast options */
 };
 
 #define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
@@ -61,6 +57,14 @@ struct rawcb {
 
 #ifdef KERNEL
 struct rawcb rawcb;			/* head of list */
-#endif
 
-#endif /* !_NET_RAW_CB_H_ */
+int	 raw_attach __P((struct socket *, int));
+void	 raw_ctlinput __P((int, struct sockaddr *));
+void	 raw_detach __P((struct rawcb *));
+void	 raw_disconnect __P((struct rawcb *));
+void	 raw_init __P((void));
+void	 raw_input __P((struct mbuf *,
+	    struct sockproto *, struct sockaddr *, struct sockaddr *));
+int	 raw_usrreq __P((struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+#endif /* KERNEL */
