@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/12/16 20:37:55 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/24 22:18:33 christos Exp $
 
 PROG=	ld.elf_so
 
@@ -13,7 +13,7 @@ CFLAGS+= -DDEBUG -DRTLD_LOADER
 #CFLAGS+= -DRTLD_DEBUG
 
 LDADD+=	-L${LIBDIR} -non_shared -lc_pic
-DPADD+=	${LIBDIR}/libc_pic.a
+DPADD+=	${LIBC_PIC}
 
 # to be installed
 HDRS=	link.h

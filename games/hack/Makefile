@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/01/07 12:09:53 tls Exp $
+#	$NetBSD: Makefile,v 1.19 1997/03/24 22:15:44 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
@@ -20,6 +20,8 @@ DPADD+=	${LIBTERM} ${LIBCOMPAT}
 LDADD+=	-ltermcap -lcompat
 HIDEGAME=hidegame
 CLEANFILES+=hack.onames.h makedefs
+FILES=hh data
+FILESDIR=/var/games/hackdir
 
 ${PROG}: hack.onames.h
 
@@ -29,13 +31,15 @@ hack.onames.h: makedefs def.objects.h
 makedefs: makedefs.c
 	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
-beforeinstall: 
+.if !exists(${DESTDIR}${FILESDIR}/perm)
+proginstall:: clobber
+.endif
+
+clobber: 
 	${INSTALL} -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
 	${INSTALL} -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/help \
-	    ${.CURDIR}/hh ${.CURDIR}/data ${DESTDIR}/var/games/hackdir
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 
 .include <bsd.prog.mk>
