@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.2 1994/02/11 00:23:42 cgd Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.3 1994/04/14 03:26:06 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -565,7 +565,7 @@ int main(argc,argv)
 	if (all) {
 		cnt = getmntinfo(&mp,MNT_NOWAIT);
 		for (; --cnt >= 0; mp++) {
-			if (mp->f_type == MOUNT_UFS) {
+			if (!strncmp(mp->f_fstypename, MOUNT_UFS, MFSNAMELEN)) {
 				if (nm = strrchr(mp->f_mntfromname,'/')) {
 					sprintf(dev,"/dev/r%s",nm + 1);
 					nm = dev;
