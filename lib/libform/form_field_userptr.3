@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_userptr.3,v 1.7 2004/11/24 12:12:19 wiz Exp $
+.\"	$NetBSD: form_field_userptr.3,v 1.8 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -52,7 +52,9 @@ this pointer may be set by calling the
 .Fn set_field_userptr
 function.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp

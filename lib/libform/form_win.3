@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_win.3,v 1.8 2004/11/24 12:12:20 wiz Exp $
+.\"	$NetBSD: form_win.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -69,17 +69,23 @@ If a subwindow has been specified using
 then it will be used by the forms library to for screen output.
 The current setting for the form window can be retrieved by calling
 .Fn form_win .
-If the forms window has not been set then NULL will be returned.
+If the forms window has not been set then
+.Dv NULL
+will be returned.
 Similarly, the forms subwindow can be found by calling the
 .Fn form_sub
-function, again, if the subwindow has not been set then NULL will be
+function, again, if the subwindow has not been set then
+.Dv NULL
+will be
 returned.
 The
 .Fn scale_form
 function will return the minimum number of rows and columns that will
 entirely contain the given form.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp

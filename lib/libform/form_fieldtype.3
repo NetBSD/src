@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_fieldtype.3,v 1.8 2004/11/24 12:12:19 wiz Exp $
+.\"	$NetBSD: form_fieldtype.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -89,7 +89,8 @@ Neither
 .Fa field_check
 nor
 .Fa char_check
-may be NULL.
+may be
+.Dv NULL .
 The functions for handling the field type arguments can
 be defined by using the
 .Fn set_fieldtype_arg
@@ -101,7 +102,8 @@ is used to copy the fieldtype arguments to a new arguments structure
 and
 .Fa free_args
 is used to destroy the fieldtype arguments and release any associated
-storage, none of these function pointers may be NULL.
+storage, none of these function pointers may be
+.Dv NULL .
 The field type choice functions can be set by calling
 .Fn set_fieldtype_choice ,
 the
@@ -115,7 +117,9 @@ necessary.
 The choice functions must return TRUE if the function
 succeeded and FALSE otherwise.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.10 2004/11/24 12:09:13 wiz Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.11 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -61,7 +61,9 @@ function returns the contents of the buffer number specified by
 .Fa buffer
 for the given field.
 If the requested buffer number exceeds the
-number of buffers attached to the field then NULL will be returned.
+number of buffers attached to the field then
+.Dv NULL
+will be returned.
 If the field option
 .Dv O_REFORMAT
 is enabled on the given field then

@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_validation.3,v 1.8 2004/11/24 12:12:19 wiz Exp $
+.\"	$NetBSD: form_field_validation.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -60,7 +60,9 @@ field, this type can be set by calling the
 function which associates the given field type with the field, the
 third and subsequent parameters are field dependent arguments.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp
