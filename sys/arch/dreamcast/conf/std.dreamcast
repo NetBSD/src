@@ -1,0 +1,7 @@
+# $NetBSD: std.dreamcast,v 1.1 2000/12/11 18:19:13 marcus Exp $
+#
+# standard, required NetBSD/dreamcast 'options'
+ 
+machine dreamcast sh3
+
+options	EXEC_SCRIPT	# exec #! scripts
