@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.33 2004/05/31 09:20:38 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.34 2004/05/31 11:40:40 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.33 2004/05/31 09:20:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.34 2004/05/31 11:40:40 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -237,6 +237,7 @@ key_sendup0(rp, m, promisc, canwait)
 				;
 			n->m_nextpkt = m;
 			m = kp->kp_queue;
+			kp->kp_queue = NULL;
 		} else
 			m->m_nextpkt = NULL;	/* just for safety */
 	} else
@@ -253,6 +254,7 @@ key_sendup0(rp, m, promisc, canwait)
 				m = m_pullup(m, sizeof(struct sadb_msg));
 			if (!m) {
 				pfkeystat.in_nomem++;
+				kp->kp_queue = n;
 				return ENOBUFS;
 			}
 			m->m_pkthdr.len += sizeof(*pmsg);
@@ -280,8 +282,10 @@ key_sendup0(rp, m, promisc, canwait)
 		if (!sbappendaddr(&rp->rcb_socket->so_rcv,
 		    (struct sockaddr *)&key_src, m, NULL)) {
 			pfkeystat.in_nomem++;
-			m_freem(m);
+			kp->kp_queue = m;
+			m->m_nextpkt = n;
 			error = ENOBUFS;
+			break;
 		} else
 			error = 0;
 	}
