@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.52 1996/10/13 03:06:29 christos Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.53 1996/11/30 01:20:14 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -924,13 +924,20 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		*draco_intfrc = 0;
 		ciaa.icr = 0x7f;			/* and keyboard */
 		ciab.icr = 0x7f;			/* and again */
-		draco_ioct->io_control |= DRCNTRL_WDOGDIS; /* stop Fido */
 
-		*(volatile u_int8_t *)(DRCCADDR + 
+		draco_ioct->io_control &=
+		    ~(DRCNTRL_KBDINTENA|DRCNTRL_FDCINTENA); /* and another */
+
+		draco_ioct->io_status2 &=
+		    ~(DRSTAT2_PARIRQENA|DRSTAT2_TMRINTENA); /* some more */
+
+		*(volatile u_int8_t *)(DRCCADDR + 1 +
 		    DRSUPIOPG*NBPG + 4*(0x3F8 + 1)) = 0; /* and com0 */
-		*(volatile u_int8_t *)(DRCCADDR +
+
+		*(volatile u_int8_t *)(DRCCADDR + 1 +
 		    DRSUPIOPG*NBPG + 4*(0x2F8 + 1)) = 0; /* and com1 */
 		
+		draco_ioct->io_control |= DRCNTRL_WDOGDIS; /* stop Fido */
 		*draco_misc &= ~1/*DRMISC_FASTZ2*/;
 
 	} else 
