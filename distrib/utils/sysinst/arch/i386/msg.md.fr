@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 1997/12/15 13:19:50 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 1998/11/11 16:04:41 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,16 @@ message fullpart
 {Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
 choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
 sur une partie de celui-ci.
+
+Une installation sur une partie du disque crée une partition, ou `slice', pour
+NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
+disque. Une installation sur la totalité du disque est `dangereusement
+dédiée' : elle réinitialise complétement le MBR, ce qui efface tout système
+d'exploitation ou données existants sur le disque. Cela rend également
+impossible l'installation ultérieure d'un deuxième système d'exploitation,
+sauf si vous reinstallez complètement NetBSD en utilisant uniquement une
+partie du disque.
+
 Que désirez vous faire ?
 }
 
@@ -117,7 +127,7 @@ message badgeom
 }
 
 message realgeom
-{ géom réelle: %d cylindres, %d têtes, %d secteurs \n}
+{ géom réelle: %d cylindres, %d têtes, %d secteurs (pour information)\n}
 
 message biosgeom
 { géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
