@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2003/06/15 23:09:08 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2003/09/06 14:55:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2003/06/15 23:09:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2003/09/06 14:55:50 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2003/06/15 23:09:08 fvdl Exp $")
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+#include <machine/pic.h>
 #endif
 
 #ifdef MPBIOS
@@ -623,18 +624,27 @@ pci_intr_string(pc, ih)
 	pci_intr_handle_t ih;
 {
 	static char irqstr[64];
+#if NIOAPIC > 0
+	struct pic *pic;
+#endif
 
 	if (ih == 0)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 
 #if NIOAPIC > 0
-	if (ih & APIC_INT_VIA_APIC)
-		sprintf(irqstr, "apic %d int %d (irq %d)",
-		    APIC_IRQ_APIC(ih),
-		    APIC_IRQ_PIN(ih),
-		    ih&0xff);
-	else
+	if (ih & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
+		if (pic != NULL) {
+			sprintf(irqstr, "%s pin %d (irq %d)",
+			    pic->pic_name, APIC_IRQ_PIN(ih), ih&0xff);
+		} else {
+			sprintf(irqstr, "apic %d int %d (irq %d)",
+			    APIC_IRQ_APIC(ih),
+			    APIC_IRQ_PIN(ih),
+			    ih&0xff);
+		}
+	} else
 		sprintf(irqstr, "irq %d", ih&0xff);
 #else
 
