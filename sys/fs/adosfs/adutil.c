@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
+/*	$NetBSD: adutil.c,v 1.2 2003/01/27 04:08:45 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.1 2002/12/23 17:15:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.2 2003/01/27 04:08:45 lonewolf Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -113,7 +113,7 @@ adosfs_getblktype(amp, bp)
 {
 	if (adoscksum(bp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: cksum of blk %ld failed\n",
+		printf("adosfs: aget: cksum of blk %" PRId64 " failed\n",
 		    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
 		return (-1);
@@ -124,7 +124,7 @@ adosfs_getblktype(amp, bp)
 	 */
 	if (adoswordn(bp, 0) != BPT_SHORT) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: bad primary type blk %ld (type = %d)\n",
+		printf("adosfs: aget: bad primary type blk %" PRId64 " (type = %d)\n",
 		    bp->b_blkno / (amp->bsize / DEV_BSIZE), adoswordn(bp,0));
 #endif
 		return (-1);
@@ -149,7 +149,7 @@ adosfs_getblktype(amp, bp)
 	}
 
 #ifdef DIAGNOSTIC
-	printf("adosfs: aget: bad secondary type blk %ld (type = %d)\n",
+	printf("adosfs: aget: bad secondary type blk %" PRId64 " (type = %d)\n",
 	    bp->b_blkno / (amp->bsize / DEV_BSIZE), adoswordn(bp, amp->nwords - 1));
 #endif
 
