@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.14 1996/04/29 20:03:06 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.15 1996/05/03 22:35:24 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -425,7 +425,7 @@ STATIC void	gus_set_recrate __P((struct gus_softc *, u_long));
 STATIC void	gus_start_voice __P((struct gus_softc *, int, int));
 STATIC void	gus_stop_voice __P((struct gus_softc *, int, int));
 STATIC void	gus_set_endaddr __P((struct gus_softc *, int, u_long));
-#if 0
+#ifdef GUSPLAYDEBUG
 STATIC void	gus_set_curaddr __P((struct gus_softc *, int, u_long));
 STATIC u_long	gus_get_curaddr __P((struct gus_softc *, int));
 #endif
@@ -2714,7 +2714,7 @@ gus_set_endaddr(sc, voice, addr)
 
 }
 
-#if 0
+#ifdef GUSPLAYDEBUG
 /*
  * Set current address.  called at splgus()
  */
