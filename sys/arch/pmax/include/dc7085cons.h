@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dc7085cons.h	8.1 (Berkeley) 6/10/93
- *      $Id: dc7085cons.h,v 1.2 1994/05/27 08:40:32 glass Exp $
+ *      $Id: dc7085cons.h,v 1.3 1994/05/27 09:00:37 glass Exp $
  *
  * dc7085.h --
  *
@@ -51,7 +51,7 @@
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/dc7085.h,
  *      
  *	v 1.4 89/08/15 19:52:46 rab Exp  SPRITE (DECWRL)
- * $Id: dc7085cons.h,v 1.2 1994/05/27 08:40:32 glass Exp $
+ * $Id: dc7085cons.h,v 1.3 1994/05/27 09:00:37 glass Exp $
  */
 
 #ifndef _DC7085

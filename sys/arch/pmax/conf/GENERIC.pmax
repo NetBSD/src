@@ -2,10 +2,11 @@
 # GENERIC DECstation (3100 or 5000/xxx)
 #
 #	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: GENERIC.pmax,v 1.1 1994/05/27 08:39:05 glass Exp $
+# 	$Id: GENERIC.pmax,v 1.2 1994/05/27 08:57:42 glass Exp $
 #
 machine		pmax
 
+cpu		"DS3100"
 cpu		"DS5000"
 ident		GENERIC
 
@@ -30,10 +31,11 @@ options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 options		FIFO		# POSIX fifo support (in all filesystems)
 options		FFS,QUOTA	# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
-options		NFS		# Sun NFS-compatible filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem (client)
+options		NFSSERVER	# Sun NFS-compatible filesystem (server)
 options		LOFS		# Loop-back filesystem
 options		KERNFS		# kernel data-structure filesystem
-options		FDESC		# user file descriptor filesystem
+#options		FDESC		# user file descriptor filesystem
 #options	UMAPFS		# uid/gid remapping filesystem
 #options	NULLFS		# null layer filesystem
 #options	LFS		# Log-based filesystem (still experimental)
@@ -50,8 +52,8 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 
 
-config		vmunix swap generic
-#config		vmunix root on rz0a swap on rz0b dumps on rz0b
+config		netbsd swap generic
+#config		netbsd root on rz0a swap on rz0b dumps on rz0b
 
 controller	dtop0	at nexus0 csr ?
 controller	dc0	at nexus0 csr ?

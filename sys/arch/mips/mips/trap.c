@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.3 1994/05/27 08:42:21 glass Exp $
+ *      $Id: trap.c,v 1.4 1994/05/27 09:04:15 glass Exp $
  */
 
 #include <sys/param.h>
@@ -398,7 +398,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		int rval[2];
 		struct sysent *systab;
 		extern int nsysent;
-#ifdef ULTRIXCOMPAT
+#ifdef COMPAT_ULTRIX
 		extern struct sysent ultrixsysent[];
 		extern int ultrixnsysent;
 #endif
@@ -409,14 +409,18 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[PC] = MachEmulateBranch(locr0, pc, 0, 0);
 		else
 			locr0[PC] += 4;
-		systab = sysent;
-		numsys = nsysent;
-#ifdef ULTRIXCOMPAT
-		if (p->p_md.md_flags & MDP_ULTRIX) {
+		switch (p->p_emul) {
+		case EMUL_NETBSD:
+			systab = sysent;
+			numsys = nsysent;
+			break;
+#ifdef COMPAT_ULTRIX
+		case EMUL_ULTRIX:
 			systab = ultrixsysent;
 			numsys = ultrixnsysent;
-		}
+			break;
 #endif
+		}
 		code = locr0[V0];
 		switch (code) {
 		case SYS_syscall:

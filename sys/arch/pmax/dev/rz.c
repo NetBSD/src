@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: rz.c,v 1.2 1994/05/27 08:39:50 glass Exp $
+ *      $Id: rz.c,v 1.3 1994/05/27 08:59:13 glass Exp $
  */
 
 /*
@@ -58,8 +58,6 @@
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
-
-#include <ufs/ffs/fs.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
@@ -677,6 +675,7 @@ rzgetinfo(dev)
 	char *msg;
 	int part;
 	extern char *readdisklabel();
+	struct cpu_disklabel cd;
 
 	part = rzpart(dev);
 	sc->sc_flags |= RZF_HAVELABEL;
@@ -691,10 +690,10 @@ rzgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(dev, rzstrategy, lp);
+	msg = readdisklabel(dev, rzstrategy, lp, &cd);
 	if (msg == NULL)
 		return;
-
+#if 0
 	printf("rz%d: WARNING: %s\n", unit, msg);
 	sc->sc_label.d_magic = DISKMAGIC;
 	sc->sc_label.d_magic2 = DISKMAGIC;
@@ -713,6 +712,7 @@ rzgetinfo(dev)
 			rzdefaultpart[i].strtblk;
 	}
 	sc->sc_label.d_partitions[RAWPART].p_size = sc->sc_blks;
+#endif
 }
 
 int
@@ -848,6 +848,7 @@ rzioctl(dev, cmd, data, flag, p)
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
 	int error;
 	int flags;
+	struct cpu_disklabel cd;
 
 	switch (cmd) {
 	default:
@@ -901,8 +902,9 @@ rzioctl(dev, cmd, data, flag, p)
 		if (!(flag & FWRITE))
 			return (EBADF);
 		error = setdisklabel(&sc->sc_label,
-			(struct disklabel *)data,
-			(sc->sc_flags & RZF_WLABEL) ? 0 : sc->sc_openpart);
+				     (struct disklabel *)data,
+				     (sc->sc_flags & RZF_WLABEL) ? 0 :
+				     sc->sc_openpart, &cd);
 		return (error);
 
 	case DIOCGPART:
@@ -926,15 +928,17 @@ rzioctl(dev, cmd, data, flag, p)
 		if (!(flag & FWRITE))
 			return (EBADF);
 		error = setdisklabel(&sc->sc_label,
-			(struct disklabel *)data,
-			(sc->sc_flags & RZF_WLABEL) ? 0 : sc->sc_openpart);
+				     (struct disklabel *)data,
+				     (sc->sc_flags & RZF_WLABEL) ? 0 :
+				     sc->sc_openpart,
+				     &cd);
 		if (error)
 			return (error);
 
 		/* simulate opening partition 0 so write succeeds */
 		flags = sc->sc_flags;
 		sc->sc_flags = RZF_ALIVE | RZF_WLABEL;
-		error = writedisklabel(dev, rzstrategy, &sc->sc_label);
+		error = writedisklabel(dev, rzstrategy, &sc->sc_label, &cd);
 		sc->sc_flags = flags;
 		return (error);
 	}

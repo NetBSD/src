@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xcfbreg.h	8.1 (Berkeley) 6/10/93
- *      $Id: xcfbreg.h,v 1.2 1994/05/27 08:40:13 glass Exp $
+ *      $Id: xcfbreg.h,v 1.3 1994/05/27 08:59:45 glass Exp $
  */
 
 /* 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)devopen.c	8.1 (Berkeley) 6/10/93
- *      $Id: devopen.c,v 1.2 1994/05/27 08:42:52 glass Exp $
+ *      $Id: devopen.c,v 1.3 1994/05/27 09:05:51 glass Exp $
  */
 
 #include <stand/stand.h>

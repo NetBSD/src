@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
-#       $Id: Makefile,v 1.2 1994/05/27 08:42:48 glass Exp $
+#       $Id: Makefile,v 1.3 1994/05/27 09:05:41 glass Exp $
 
 LIB=	sa
 SRCS=	alloc.c bcopy.c bzero.c close.c dev.c disklabel.c getfile.c \

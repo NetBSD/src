@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machConst.h	8.1 (Berkeley) 6/10/93
- *      $Id: machConst.h,v 1.2 1994/05/27 08:40:42 glass Exp $
+ *      $Id: machConst.h,v 1.3 1994/05/27 09:01:23 glass Exp $
  *
  * machConst.h --
  *
@@ -54,7 +54,7 @@
  *	v 1.2 89/08/15 18:28:21 rab Exp  SPRITE (DECWRL)
  * from: Header: /sprite/src/kernel/vm/ds3100.md/RCS/vmPmaxConst.h,
  *	v 9.1 89/09/18 17:33:00 shirriff Exp  SPRITE (DECWRL)
- * $Id: machConst.h,v 1.2 1994/05/27 08:40:42 glass Exp $
+ * $Id: machConst.h,v 1.3 1994/05/27 09:01:23 glass Exp $
  */
 
 #ifndef _MACHCONST

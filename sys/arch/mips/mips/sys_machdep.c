@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	8.1 (Berkeley) 6/10/93
- *      $Id: sys_machdep.c,v 1.3 1994/05/27 08:42:19 glass Exp $
+ *      $Id: sys_machdep.c,v 1.4 1994/05/27 09:04:12 glass Exp $
  */
 
 #include <sys/param.h>
@@ -104,3 +104,12 @@ vdoualarm(arg)
 	nvualarm--;
 }
 #endif
+
+int
+sysarch(p, uap, retval)
+	struct proc *p;
+	void  *uap;
+	int *retval;
+{
+	return ENOSYS;
+}

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dec_boot.h	8.1 (Berkeley) 6/10/93
- *      $Id: dec_boot.h,v 1.2 1994/05/27 08:42:34 glass Exp $
+ *      $Id: dec_boot.h,v 1.3 1994/05/27 09:05:01 glass Exp $
  *
  * devDiskLabel.h --
  *
@@ -46,7 +46,7 @@
  *
  * from: Header: /sprite/src/kernel/dev/RCS/devDiskLabel.h,
  *	v 9.4 90/03/01 12:22:36 jhh Exp  SPRITE (Berkeley)
- * $Id: dec_boot.h,v 1.2 1994/05/27 08:42:34 glass Exp $
+ * $Id: dec_boot.h,v 1.3 1994/05/27 09:05:01 glass Exp $
  */
 
 /*

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	8.3 (Berkeley) 1/5/94
- *      $Id: types.h,v 1.3 1994/05/27 08:41:16 glass Exp $
+ *      $Id: types.h,v 1.4 1994/05/27 09:02:34 glass Exp $
  */
 
 #ifndef	_MACHTYPES_H_

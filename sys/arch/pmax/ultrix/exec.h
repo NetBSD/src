@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)exec.h	8.1 (Berkeley) 6/10/93
- *      $Id: exec.h,v 1.1 1994/05/27 08:43:18 glass Exp $
+ *      $Id: exec.h,v 1.2 1994/05/27 09:06:42 glass Exp $
  */
 
 /*

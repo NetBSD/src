@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
- *      $Id: scc.c,v 1.3 1994/05/27 08:39:52 glass Exp $
+ *      $Id: scc.c,v 1.4 1994/05/27 08:59:16 glass Exp $
  */
 
 /* 
@@ -99,14 +99,14 @@
 extern int pmax_boardtype;
 extern struct consdev cn_tab;
 extern void ttrstrt	__P((void *));
-extern void KBDReset	__P((dev_t, void (*)()));
-extern void MouseInit	__P((dev_t, void (*)(), int (*)()));
 
 /*
  * Driver information for auto-configuration stuff.
  */
-int	sccprobe(), sccopen(), sccparam(), sccGetc();
-void	sccintr(), sccstart(), sccPutc();
+int	sccprobe(), sccopen(), sccparam();
+void	sccintr(), sccstart();
+int sccGetc __P((dev_t));
+void sccPutc __P((dev_t, int));
 struct	driver sccdriver = {
 	"scc", sccprobe, 0, 0, sccintr,
 };
@@ -115,7 +115,7 @@ struct	driver sccdriver = {
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
 #define	SCCLINE(dev)	(minor(dev) & 0x1)
 
-struct	tty scc_tty[NSCCLINE];
+struct	tty *scc_tty[NSCCLINE];
 void	(*sccDivertXInput)();	/* X windows keyboard input routine */
 void	(*sccMouseEvent)();	/* X windows mouse motion event routine */
 void	(*sccMouseButtons)();	/* X windows mouse buttons event routine */
@@ -195,7 +195,9 @@ sccprobe(cp)
 	pdp = &sc->scc_pdma[0];
 
 	/* init pseudo DMA structures */
-	tp = &scc_tty[cp->pmax_unit * 2];
+	tp = scc_tty[cp->pmax_unit * 2];
+	if (tp == NULL) 
+		tp = scc_tty[cp->pmax_unit * 2] = ttymalloc();
 	for (cntr = 0; cntr < 2; cntr++) {
 		pdp->p_addr = (void *)cp->pmax_addr;
 		pdp->p_arg = (int)tp;
@@ -336,7 +338,9 @@ sccopen(dev, flag, mode, p)
 	sc = &scc_softc[unit];
 	if (sc->scc_pdma[line].p_addr == (void *)0)
 		return (ENXIO);
-	tp = &scc_tty[minor(dev)];
+	tp = scc_tty[minor(dev)];
+	if (tp == NULL)
+		tp = scc_tty[minor(dev)] = ttymalloc();
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
 	tp->t_dev = dev;
@@ -385,7 +389,7 @@ sccclose(dev, flag, mode, p)
 	register struct tty *tp;
 	register int bit, line;
 
-	tp = &scc_tty[minor(dev)];
+	tp = scc_tty[minor(dev)];
 	line = SCCLINE(dev);
 	if (sc->scc_wreg[line].wr5 & SCC_WR5_SEND_BREAK) {
 		sc->scc_wreg[line].wr5 &= ~SCC_WR5_SEND_BREAK;
@@ -404,7 +408,7 @@ sccread(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &scc_tty[minor(dev)];
+	tp = scc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
@@ -414,7 +418,7 @@ sccwrite(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &scc_tty[minor(dev)];
+	tp = scc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -430,11 +434,11 @@ sccioctl(dev, cmd, data, flag, p)
 	register struct tty *tp;
 	int error, line;
 
-	tp = &scc_tty[minor(dev)];
+	tp = scc_tty[minor(dev)];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -635,7 +639,7 @@ sccintr(unit)
 	    if ((rr2 == SCC_RR2_A_XMIT_DONE) || (rr2 == SCC_RR2_B_XMIT_DONE)) {
 		chan = (rr2 == SCC_RR2_A_XMIT_DONE) ?
 			SCC_CHANNEL_A : SCC_CHANNEL_B;
-		tp = &scc_tty[unit | chan];
+		tp = scc_tty[unit | chan];
 		dp = &sc->scc_pdma[chan];
 		if (dp->p_mem < dp->p_end) {
 			SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
@@ -669,7 +673,7 @@ sccintr(unit)
 			chan = SCC_CHANNEL_A;
 		else
 			chan = SCC_CHANNEL_B;
-		tp = &scc_tty[unit | chan];
+		tp = scc_tty[unit | chan];
 		SCC_READ_DATA(regs, chan, cc);
 		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
 			rr2 == SCC_RR2_B_RECV_SPECIAL) {
@@ -685,7 +689,7 @@ sccintr(unit)
 		/*
 		 * Keyboard needs special treatment.
 		 */
-		if (tp == &scc_tty[SCCKBD_PORT] && cn_tab.cn_screen) {
+		if (tp == scc_tty[SCCKBD_PORT] && cn_tab.cn_screen) {
 #ifdef KADB
 			if (cc == LK_DO) {
 				spl0();
@@ -705,7 +709,7 @@ sccintr(unit)
 		/*
 		 * Now for mousey
 		 */
-		} else if (tp == &scc_tty[SCCMOUSE_PORT] && sccMouseButtons) {
+		} else if (tp == scc_tty[SCCMOUSE_PORT] && sccMouseButtons) {
 			register MouseReport *mrp;
 			static MouseReport currentRep;
 
@@ -791,7 +795,7 @@ sccstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == &scc_tty[SCCKBD_PORT] && cn_tab.cn_screen) {
+	if (tp == scc_tty[SCCKBD_PORT] && cn_tab.cn_screen) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -925,7 +929,7 @@ sccmctl(dev, bits, how)
 			sc->scc_wreg[SCC_CHANNEL_A].wr5);
 	}
 	if ((mbits & DML_DTR) && (sc->scc_softCAR & (1 << line)))
-		scc_tty[minor(dev)].t_state |= TS_CARR_ON;
+		scc_tty[minor(dev)]->t_state |= TS_CARR_ON;
 	(void) splx(s);
 	return (mbits);
 }
@@ -945,7 +949,7 @@ scc_modem_intr(dev)
 	int s;
 
 	sc = &scc_softc[SCCUNIT(dev)];
-	tp = &scc_tty[minor(dev)];
+	tp = scc_tty[minor(dev)];
 	chan = SCCLINE(dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[chan].p_addr;
 	if (chan == SCC_CHANNEL_A)
