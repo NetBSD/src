@@ -1,4 +1,5 @@
-# $Id: roken.awk,v 1.1.1.2 2001/09/17 12:09:56 assar Exp $
+# $KTH-KRB: roken.awk,v 1.7 2001/03/26 09:26:35 joda Exp $
+# $NetBSD: roken.awk,v 1.1.1.3 2002/09/12 12:22:11 joda Exp $
 
 BEGIN {
 	print "#include <stdio.h>"

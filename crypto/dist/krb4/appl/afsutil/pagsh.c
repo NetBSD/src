@@ -35,7 +35,8 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: pagsh.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: pagsh.c,v 1.25 2002/05/24 17:18:26 bg Exp $"
+      "$NetBSD: pagsh.c,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +75,7 @@ main(int argc, char **argv)
   do {
     snprintf(tf, sizeof(tf), "%s%u_%u", TKT_ROOT, (unsigned int)getuid(),
 	    (unsigned int)(getpid()*time(0)));
-    f = open(tf, O_CREAT|O_EXCL|O_RDWR);
+    f = open(tf, O_CREAT|O_EXCL|O_RDWR, 0600);
   } while(f < 0);
   close(f);
   unlink(tf);

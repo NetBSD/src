@@ -1,4 +1,5 @@
-dnl $Id: find-func-no-libs.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
+dnl $KTH-KRB: find-func-no-libs.m4,v 1.5 1999/10/30 21:08:18 assar Exp $
+dnl $NetBSD: find-func-no-libs.m4,v 1.1.1.3 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl
 dnl Look for function in any of the specified libraries

@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: sendauth.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $");
+__RCSID("$KTH-KRB: sendauth.c,v 1.18 1999/09/16 20:41:55 assar Exp $"
+      "$NetBSD: sendauth.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 /*
  * krb_sendauth() transmits a ticket over a file descriptor for a

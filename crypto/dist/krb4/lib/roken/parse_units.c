@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: parse_units.c,v 1.1.1.3 2001/09/17 12:09:56 assar Exp $");
+__RCSID("$KTH-KRB: parse_units.c,v 1.14 2001/09/04 09:56:00 assar Exp $"
+      "$NetBSD: parse_units.c,v 1.1.1.4 2002/09/12 12:22:11 joda Exp $");
 #endif
 
 #include <stdio.h>

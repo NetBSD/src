@@ -1,3 +1,207 @@
+2002-09-10
+
+	* Release 1.2
+
+2002-09-09
+
+	* configure.in: set sysconfdir to /etc for now
+
+	* lib/krb/Makefile.am: update des_quad build glue
+
+	* lib/krb/krb_locl.h: prototype for _krb_des_quad_cksum
+
+	* lib/krb/quad_cksum.c: include a copy of des_quad_cksum here;
+	it's easier than using the one in ../des
+
+	* configure.in: fix des_quad_cksum test to work with openssl
+
+	* lib/krb/Makefile.am: fix des_quad_cksum filename
+
+	* configure.in: re-add lost readline test
+
+	* lib/krb/mk_safe.c: remove redundant decls (from NetBSD)
+
+	* lib/krb/krb_locl.h: remove redundant decls (from NetBSD)
+
+	* lib/krb/krb-archaeology.h: remove redundant decls (from NetBSD)
+
+	* lib/krb/klog.h: remove redundant decls (from NetBSD)
+
+	* lib/krb/get_krbrlm.c (krb_get_lrealm_f): take file FILE instead
+	of filename;
+	(krb_get_lrealm): add some unifdefed code to bail out if there are no
+	krb.conf files; (krb_get_default_realm): check that there actually
+	is a kdc for the returned realm (all from NetBSD)
+
+	* lib/kdb/kdb_locl.h: remove redundant decls (from NetBSD)
+
+	* lib/kadm/kadm_locl.h: remove redundant decls (from NetBSD)
+
+	* appl/bsd/rlogind.c: don't use LOG_CONS (from NetBSD)
+
+	* lib/krb/krb.equiv.5: remove reference to krb_equiv()
+
+	* lib/acl/Makefile.am: INCLUDE_des
+
+	* kuser/Makefile.am: INCLUDE_des
+
+2002-08-28
+
+	* appl/movemail/pop.c: IRIX == 4 -> IRIX4
+
+	* configure.in: use rk_SUNOS, and define _GNU_SOURCE
+
+	* configure.in: AC_TEST_PACKAGE_NEW -> rk_TEST_PACKAGE
+
+	* configure.in: move some of acconfig.h here, and some other
+	changes
+
+	* appl/bsd/bsd_locl.h: don't define KERBEROS here
+
+	* appl/bsd/klogin.c: KERBEROS -> KRB4
+
+	* appl/bsd/login.c: KERBEROS -> KRB4
+
+2002-08-21
+
+	* lib/krb/roken_rename.h: more renaming
+
+2002-08-20
+
+	* configure.in: use new AC_INIT interface
+
+	* configure.in: test for broken des_quad_cksum
+
+2002-08-15
+
+	* lib/krb/Makefile.am: remove concat.c
+
+	* lib/krb/get_in_tkt.c: use asprintf instead of roken_mconcat
+
+	* lib/krb/get_host.c: use asprintf instead of roken_mconcat
+
+	* kadmin/ksrvutil_get.c: krb_err_base -> ERROR_TABLE_BASE_krb
+
+	* kadmin/kadmin.c: krb_err_base -> ERROR_TABLE_BASE_krb
+
+	* kadmin/kadm_ser_wrap.c: krb_err_base -> ERROR_TABLE_BASE_krb
+
+	* lib/kadm/kadm_cli_wrap.c: krb_err_base -> ERROR_TABLE_BASE_krb
+
+2002-06-28
+
+	* kuser/klist.c (display_tokens): don't bail out before we get
+	EDOM (signaling the end of the tokens), the kernel can also return
+	ENOTCONN, meaning that the index does not exist anymore (for
+	example if the token has expired)
+
+2002-06-07
+
+	* kadmin/ksrvutil.c: fix bogus argument to strlcpy, and some
+	language; from Moritz Jodeit
+
+2002-05-20
+
+	* lib/krb/Makefile.am: version number
+
+	* NEWS: update
+
+	* configure.in: depend on autoconf 2.53
+
+	* lib/kdb/krb_dbm.c: fix ndbm test
+
+2002-05-19
+
+	* admin/kdb_util.8: convert to mdoc
+
+	* admin/kdb_destroy.8: convert to mdoc
+
+	* admin/kdb_init.8: convert to mdoc
+
+	* admin/ext_srvtab.8: convert to mdoc
+
+	* Makefile.am.common: remove stuff that moved to
+	cf/Makefile.am.common
+
+	* configure.in: use AC_HELP_STRING
+
+2002-05-17
+
+	* configure.in: just check for db stuff once
+
+	* tools/Makefile.am: expand DBLIBS
+
+	* tools/krb4-config.in: reconise kdb and krb as library types
+
+	* lib/kdb/Makefile.am: add hooks for ndbm_wrap
+
+	* lib/kdb/krb_dbm.c: use ndbm_wrap
+
+2002-05-02
+
+	* configure.in: remove some duplicate tests
+
+	* include/Makefile.am: if we're using openssl, fake a des.h that
+	includes openssl/des.h
+
+	* lib/kadm/Makefile.am: OBJECTS doesn't seem to be defined by
+	automake anymore
+
+	* lib/acl/Makefile.am: OBJECTS doesn't seem to be defined by
+	automake anymore
+
+2002-04-26
+
+	* slave/Makefile.am: SBINDIR is now defined in config.h
+
+	* appl/bsd/Makefile.am: BINDIR is now defined in config.h
+
+2002-04-25
+
+	* configure.in: use rk_DESTDIRS
+
+2002-02-14
+
+	* configure.in: find inttypes by CHECK_TYPES directly
+
+2002-02-06
+
+	* tools/krb4-config.in: include the flgas to find des.h
+	* tools/Makefile.am (INCLUDE_des): replace
+	* slave/Makefile.am (INCLUDES): add flags to find des.h (if it's
+	not in the standard include path)
+	* lib/krb/Makefile.am (INCLUDES): add flags to find des.h (if it's
+	not in the standard include path)
+	* lib/kdb/Makefile.am (INCLUDES): add flags to find des.h
+	* appl/sample/Makefile.am (INCLUDES): add flags for finding des.h
+	* appl/kip/Makefile.am (INCLUDES): add flags to find des.h
+	* configure.in (INCLUDE_krb4): add the flags for libcrypto
+
+2002-02-04
+
+	* lib/krb/read_service_key.c: don't copy the instance before we
+	know this is the key we're looking for
+
+2002-02-01
+
+	* configure.in: check for tgetent before testing for readline
+
+2002-01-14
+
+	* README: fix typo; from Rich Morin
+
+2001-12-05
+
+	* kadmin/admin_server.c, kadmin/kadm_locl.h,
+	kadmin/kadm_ser_wrap.c, kadmin/kadmind.8: add -p to enable kadmind
+	to use a different port
+
+2001-11-01
+
+	* appl/movemail/movemail.c (mbx_delimit_begin): add a LF here so
+	that the last line before the next From_ is empty.  noted by
+	<marc@mit.edu>
+
 2001-09-17
 
 	* Release 1.1
@@ -4557,7 +4761,7 @@ Sat Jun 8 1996
 
 Fri Jun 7 1996
 
-	* slave/kpropd.c: Add option -m to merge rather then load
+	* slave/kpropd.c: Add option -m to merge rather than load
  	database.
 
 Thu Jun 6 1996

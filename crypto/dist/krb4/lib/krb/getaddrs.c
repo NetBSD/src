@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: getaddrs.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: getaddrs.c,v 1.29 2000/04/09 21:04:14 assar Exp $"
+      "$NetBSD: getaddrs.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>

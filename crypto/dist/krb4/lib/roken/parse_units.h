@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: parse_units.h,v 1.1.1.3 2001/09/17 12:09:56 assar Exp $ */
+/* $KTH-KRB: parse_units.h,v 1.7 2001/09/04 09:56:00 assar Exp $
+   $NetBSD: parse_units.h,v 1.1.1.4 2002/09/12 12:22:11 joda Exp $ */
 
 #ifndef __PARSE_UNITS_H__
 #define __PARSE_UNITS_H__

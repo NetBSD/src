@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: AuthOption.cpp,v 1.1.1.2 2000/12/29 01:42:27 assar Exp $ */
+/* $KTH-KRB: AuthOption.cpp,v 1.5 1999/12/02 16:58:34 joda Exp $
+   $NetBSD: AuthOption.cpp,v 1.1.1.3 2002/09/12 12:22:04 joda Exp $ */
 
 //
 //

@@ -33,7 +33,8 @@
 
 #include "kx.h"
 
-RCSID("$Id: common.c,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $");
+__RCSID("$KTH-KRB: common.c,v 1.66 2002/08/22 16:23:28 joda Exp $"
+      "$NetBSD: common.c,v 1.1.1.4 2002/09/12 12:22:07 joda Exp $");
 
 char x_socket[MaxPathLen];
 
@@ -587,9 +588,11 @@ match_local_auth (Xauth* auth,
     char *tmp_disp;
     struct addrinfo *a;
     
-    tmp_disp = strndup (auth->number, auth->number_length);
+    tmp_disp = malloc(auth->number_length + 1);
     if (tmp_disp == NULL)
 	return -1;
+    memcpy(tmp_disp, auth->number, auth->number_length);
+    tmp_disp[auth->number_length] = '\0';
     auth_disp = atoi(tmp_disp);
     free (tmp_disp);
     if (auth_disp != disp_nr)

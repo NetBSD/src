@@ -59,7 +59,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: login_fbtab.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: login_fbtab.c,v 1.15 2001/06/04 14:08:41 assar Exp $"
+      "$NetBSD: login_fbtab.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 void	login_protect	(char *, char *, int, uid_t, gid_t);
 void	login_fbtab	(char *tty, uid_t uid, gid_t gid);

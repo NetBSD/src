@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rcmd_util.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: rcmd_util.c,v 1.23 2001/09/17 04:55:45 assar Exp $"
+      "$NetBSD: rcmd_util.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 int
 get_login_port(int kerberos, int encryption)

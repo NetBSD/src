@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: gai_strerror.c,v 1.1.1.1 2001/09/17 12:09:56 assar Exp $");
+__RCSID("$KTH-KRB: gai_strerror.c,v 1.2 1999/12/03 04:10:06 assar Exp $"
+      "$NetBSD: gai_strerror.c,v 1.1.1.2 2002/09/12 12:22:10 joda Exp $");
 #endif
 
 #include "roken.h"

@@ -1,37 +1,42 @@
-.\" $Id: kdb_init.8,v 1.1.1.1 2001/09/17 12:09:42 assar Exp $
+.\" $KTH-KRB: kdb_init.8,v 1.2 2002/05/19 21:32:51 joda Exp $
+.\" $NetBSD: kdb_init.8,v 1.1.1.2 2002/09/12 12:22:03 joda Exp $
 .\" Copyright 1989 by the Massachusetts Institute of Technology.
 .\"
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.TH KDB_INIT 8 "Kerberos Version 4.0" "MIT Project Athena"
-.SH NAME
-kdb_init \- Initialize Kerberos key distribution center database
-.SH SYNOPSIS
-kdb_init [ 
-.B realm
-]
-.SH DESCRIPTION
-.I kdb_init
+.Dd April 2, 1997
+.Dt KDB_INIT 8
+.Os
+.Sh NAME
+.Nm kdb_init
+.Nd Initialize Kerberos key distribution center database
+.Sh SYNOPSIS
+.Nm
+.Op Ar realm
+.Sh DESCRIPTION
+.Nm
 initializes a Kerberos key distribution center database, creating the
 necessary principals.
-.PP
+.Pp
 If the optional
-.I realm
+.Ar realm
 argument is not present,
-.I kdb_init
+.Nm
 prompts for a realm name.
 After determining the realm to be created, it prompts for
 a master key password.  The master key password is used to encrypt
 every encryption key stored in the database.
-.SH DIAGNOSTICS
-.TP 20n
-"/var/kerberos/principal: File exists"
+.Sh DIAGNOSTICS
+.Bl -tag -width Dv
+.It /var/kerberos/principal: File exists
 An attempt was made to create a database on a machine which already had
 an existing database.
-.SH FILES
-.TP 20n
-/var/kerberos/principal.pag, /var/kerberos/principal.dir
+.El
+.Sh FILES
+.Bl -tag -width Dv
+.It Pa /var/kerberos/principal.pag Ns No , Pa /var/kerberos/principal.dir
 DBM files containing database
-.SH SEE ALSO
-kdb_destroy(8)
+.El
+.Sh SEE ALSO
+.Xr kdb_destroy 8

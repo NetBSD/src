@@ -1,11 +1,12 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.27 2002/03/10 23:52:41 assar Exp $
+# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 YFLAGS = -d
 
 lib_LTLIBRARIES = libcom_err.la
-libcom_err_la_LDFLAGS = -version-info 2:0:1
+libcom_err_la_LDFLAGS = -version-info 2:1:1
 
 bin_PROGRAMS = compile_et
 

@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kauth.h,v 1.1.1.2 2000/12/29 01:42:52 assar Exp $ */
+/* $KTH-KRB: kauth.h,v 1.21 1999/12/02 16:58:31 joda Exp $
+   $NetBSD: kauth.h,v 1.1.1.3 2002/09/12 12:22:07 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

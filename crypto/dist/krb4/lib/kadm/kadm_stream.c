@@ -37,7 +37,8 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kadm_stream.c,v 1.1.1.2 2000/12/29 01:43:09 assar Exp $");
+__RCSID("$KTH-KRB: kadm_stream.c,v 1.13 1998/10/22 15:38:01 joda Exp $"
+      "$NetBSD: kadm_stream.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 static int
 build_field_header(u_char *cont, /* container for fields data */

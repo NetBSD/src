@@ -84,7 +84,7 @@ static int gettermination ( popserver );
 #endif
 static void pop_trash ( popserver );
 static char *find_crlf ( char * );
-#if defined(__ultrix) || IRIX == 4
+#if defined(__ultrix) || defined(IRIX4)
 char *getpass(const char*);
 #endif
 

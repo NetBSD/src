@@ -1,8 +1,9 @@
-# $Id: Makefile.am,v 1.1.1.1 2001/09/17 12:09:43 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.9 2002/04/26 12:22:06 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.2 2002/09/12 12:22:03 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -DBINDIR='"$(bindir)"' $(INCLUDE_des)
+INCLUDES += $(INCLUDE_des)
 
 bin_PROGRAMS = rsh rcp rlogin su login
 bin_SUIDS = rsh rcp rlogin su

@@ -33,9 +33,10 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: klogin.c,v 1.1.1.2 2000/12/29 01:42:20 assar Exp $");
+__RCSID("$KTH-KRB: klogin.c,v 1.28 2002/08/28 18:54:58 joda Exp $"
+      "$NetBSD: klogin.c,v 1.1.1.3 2002/09/12 12:22:03 joda Exp $");
 
-#ifdef KERBEROS
+#ifdef KRB4
 
 #define	VERIFY_SERVICE	"rcmd"
 

@@ -8,7 +8,8 @@
  *
  */
 
-/* $Id: version.h,v 1.1.1.2 2000/12/29 01:42:47 assar Exp $ */
+/* $KTH-KRB: version.h,v 1.5 1997/08/08 22:50:13 assar Exp $
+   $NetBSD: version.h,v 1.1.1.3 2002/09/12 12:22:06 joda Exp $ */
 
 /*
  *  Current version of this POP implementation

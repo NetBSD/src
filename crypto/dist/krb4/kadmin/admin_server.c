@@ -30,7 +30,8 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: admin_server.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
+__RCSID("$KTH-KRB: admin_server.c,v 1.55 2001/12/05 14:49:07 assar Exp $"
+      "$NetBSD: admin_server.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
 
 /* Almost all procs and such need this, so it is global */
 admin_params prm;		/* The command line parameters struct */
@@ -530,6 +531,7 @@ main(int argc, char **argv)		/* admin_server main routine */
     int errval;
     int c;
     struct in_addr i_addr;
+    int port = 0;
 
     setprogname (argv[0]);
 
@@ -550,7 +552,7 @@ main(int argc, char **argv)		/* admin_server main routine */
     srand (time(NULL));
 #endif
 
-    while ((c = getopt(argc, argv, "f:hmnd:a:r:i:")) != -1)
+    while ((c = getopt(argc, argv, "f:hmnd:a:r:i:p:")) != -1)
 	switch(c) {
 	case 'f':			/* Syslog file name change */
 	    prm.sysfile = optarg;
@@ -580,9 +582,26 @@ main(int argc, char **argv)		/* admin_server main routine */
 		exit (1);
 	    }
 	    break;
+	case 'p' : {
+	    struct servent *sp;
+
+	    sp = getservbyname(optarg, "tcp");
+	    if (sp != NULL) {
+		port = sp->s_port;
+	    } else {
+		char *end;
+
+		port = htons(strtol(optarg, &end, 0));
+		if (port == 0 && end == optarg) {
+		    fprintf(stderr, "Bad port: %s\n", optarg);
+		    exit (1);
+		}
+	    }
+	    break;
+	}
 	case 'h':			/* get help on using admin_server */
 	default:
-	    errx(1, "Usage: kadmind [-h] [-n] [-m] [-r realm] [-d dbname] [-f filename] [-a acldir] [-i address_to_listen_on]");
+	    errx(1, "Usage: kadmind [-h] [-n] [-m] [-r realm] [-d dbname] [-f filename] [-a acldir] [-i address_to_listen_on] [-p port]");
 	}
 
     if (krbrlm[0] == 0)
@@ -603,8 +622,14 @@ main(int argc, char **argv)		/* admin_server main routine */
 	close_syslog();
 	byebye();
     }
+    if (port == 0)
+	port = k_getportbyname (KADM_SNAME,
+				"tcp",
+				htons(751));	
+
     /* set up the server_parm struct */
-    if ((errval = kadm_ser_init(prm.inter, krbrlm, i_addr))==KADM_SUCCESS) {
+    if ((errval = kadm_ser_init(prm.inter, krbrlm, i_addr,
+				port))==KADM_SUCCESS) {
 	kerb_fini();			/* Close the Kerberos database--
 					   will re-open later */
 	errval = kadm_listen();		/* listen for calls to server from

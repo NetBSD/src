@@ -1,5 +1,6 @@
 #!/bin/sh
-# $Id: kip-join-network.in,v 1.1.1.1 2000/12/29 01:42:24 assar Exp $
+# $KTH-KRB$
+# $NetBSD: kip-join-network.in,v 1.1.1.2 2002/09/12 12:22:04 joda Exp $
 #
 # Join a network, see kipd-control from more comments.
 #

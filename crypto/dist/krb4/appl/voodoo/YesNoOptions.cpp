@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: YesNoOptions.cpp,v 1.1.1.2 2000/12/29 01:42:30 assar Exp $ */
+/* $KTH-KRB: YesNoOptions.cpp,v 1.3 1999/12/02 16:58:35 joda Exp $
+   $NetBSD: YesNoOptions.cpp,v 1.1.1.3 2002/09/12 12:22:05 joda Exp $ */
 
 //
 //

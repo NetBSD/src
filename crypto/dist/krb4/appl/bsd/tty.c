@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: tty.c,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $");
+__RCSID("$KTH-KRB: tty.c,v 1.3 1999/12/02 16:58:28 joda Exp $"
+      "$NetBSD: tty.c,v 1.1.1.3 2002/09/12 12:22:04 joda Exp $");
 
 /*
  * Clean the tty name.  Return a pointer to the cleaned version.

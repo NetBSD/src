@@ -1,8 +1,9 @@
-# $Id: Makefile.am,v 1.1.1.1 2001/09/17 12:09:53 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.6 2002/09/09 13:24:31 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.2 2002/09/12 12:22:08 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -DROKEN_RENAME
+INCLUDES += -DROKEN_RENAME $(INCLUDE_des)
 
 include_HEADERS =  acl.h
 
@@ -16,7 +17,7 @@ libacl_la_SOURCES = acl_files.c
 
 man_MANS = acl_check.3
 
-$(OBJECTS): roken_rename.h
+$(libacl_la_OBJECTS): roken_rename.h
 
 roken_rename.h:
 	$(LN_S) $(srcdir)/../krb/roken_rename.h .

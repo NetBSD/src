@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: Negotiator.cpp,v 1.1.1.2 2000/12/29 01:42:29 assar Exp $ */
+/* $KTH-KRB: Negotiator.cpp,v 1.3 1999/12/02 16:58:34 joda Exp $
+   $NetBSD: Negotiator.cpp,v 1.1.1.3 2002/09/12 12:22:04 joda Exp $ */
 
 //
 //

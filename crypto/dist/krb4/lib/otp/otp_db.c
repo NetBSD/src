@@ -33,10 +33,15 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$Id: otp_db.c,v 1.1.1.2 2000/12/29 01:43:49 assar Exp $");
+__RCSID("$KTH-KRB: otp_db.c,v 1.19 2002/05/19 22:11:03 joda Exp $"
+      "$NetBSD: otp_db.c,v 1.1.1.3 2002/09/12 12:22:12 joda Exp $");
 #endif
 
 #include "otp_locl.h"
+
+#if !defined(HAVE_NDBM) && !defined(HAVE_DB_NDBM)
+#include "ndbm_wrap.h"
+#endif
 
 #define RETRIES 5
 

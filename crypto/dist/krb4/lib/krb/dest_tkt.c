@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: dest_tkt.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: dest_tkt.c,v 1.13 2000/10/18 20:18:05 assar Exp $"
+      "$NetBSD: dest_tkt.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 #ifndef O_BINARY
 #define O_BINARY 0

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: mk_req.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: mk_req.c,v 1.26 2000/11/30 07:11:05 assar Exp $"
+      "$NetBSD: mk_req.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 static int lifetime = 255;	/* But no longer than TGT says. */
 

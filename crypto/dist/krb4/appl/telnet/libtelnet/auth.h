@@ -53,7 +53,8 @@
  * or implied warranty.
  */
 
-/* $Id: auth.h,v 1.1.1.2 2000/12/29 01:42:33 assar Exp $ */
+/* $KTH-KRB: auth.h,v 1.4 1998/06/09 19:24:41 joda Exp $
+   $NetBSD: auth.h,v 1.1.1.3 2002/09/12 12:22:05 joda Exp $ */
 
 #ifndef	__AUTH__
 #define	__AUTH__

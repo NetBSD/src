@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: getst.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: getst.c,v 1.6 1997/03/23 03:53:11 joda Exp $"
+      "$NetBSD: getst.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * getst() takes a file descriptor, a string and a count.  It reads

@@ -36,7 +36,8 @@
  * Date:	June 1996
  */
 
-/* $Id: passwd_dlg.h,v 1.1.1.2 2000/12/29 01:43:10 assar Exp $ */
+/* $KTH-KRB: passwd_dlg.h,v 1.7 1999/12/02 16:58:40 joda Exp $
+   $NetBSD: passwd_dlg.h,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $ */
 
 #ifndef PASSWD_DLG_H
 #define PASSWD_DLG_H

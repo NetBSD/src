@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: strsep_copy.c,v 1.1.1.1 2001/09/17 12:09:57 assar Exp $");
+__RCSID("$KTH-KRB: strsep_copy.c,v 1.4 2002/08/14 17:20:40 joda Exp $"
+      "$NetBSD: strsep_copy.c,v 1.1.1.2 2002/09/12 12:22:11 joda Exp $");
 #endif
 
 #include <string.h>
@@ -53,8 +54,10 @@ strsep_copy(const char **stringp, const char *delim, char *buf, size_t len)
 	return -1;
     *stringp = *stringp + strcspn(*stringp, delim);
     l = min(len, *stringp - save);
-    memcpy(buf, save, l);
-    buf[l] = '\0';
+    if(len > 0) {
+	memcpy(buf, save, l);
+	buf[l] = '\0';
+    }
 
     l = *stringp - save;
     if(**stringp == '\0')

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: k_localtime.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: k_localtime.c,v 1.8 1999/12/02 16:58:42 joda Exp $"
+      "$NetBSD: k_localtime.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 struct tm *k_localtime(u_int32_t *tp)
 {

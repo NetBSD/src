@@ -25,7 +25,8 @@ or implied warranty.
 
 #include "kdb_locl.h"
 
-RCSID("$Id: krb_cache.c,v 1.1.1.2 2000/12/29 01:43:11 assar Exp $");
+__RCSID("$KTH-KRB: krb_cache.c,v 1.7 1998/06/09 19:25:14 joda Exp $"
+      "$NetBSD: krb_cache.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 #ifdef DEBUG
 extern int debug;

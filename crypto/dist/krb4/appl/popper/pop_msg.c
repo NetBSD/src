@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_msg.c,v 1.1.1.2 2000/12/29 01:42:46 assar Exp $");
+__RCSID("$KTH-KRB: pop_msg.c,v 1.16 1999/09/16 20:38:50 assar Exp $"
+      "$NetBSD: pop_msg.c,v 1.1.1.3 2002/09/12 12:22:06 joda Exp $");
 
 /* 
  *  msg:    Send a formatted line to the POP client

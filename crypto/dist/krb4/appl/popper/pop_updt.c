@@ -5,7 +5,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_updt.c,v 1.1.1.2 2000/12/29 01:42:47 assar Exp $");
+__RCSID("$KTH-KRB: pop_updt.c,v 1.19 1998/04/23 18:36:51 joda Exp $"
+      "$NetBSD: pop_updt.c,v 1.1.1.3 2002/09/12 12:22:06 joda Exp $");
 
 static char standard_error[] =
     "Error error updating primary drop. Mailbox unchanged";

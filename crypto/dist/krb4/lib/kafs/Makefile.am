@@ -1,8 +1,9 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/09/17 12:10:05 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.37 2002/08/19 15:08:37 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4) $(AFS_EXTRA_DEFS)
+INCLUDES += $(INCLUDE_krb4) $(AFS_EXTRA_DEFS) $(ROKEN_RENAME)
 
 if KRB4
 AFSLIBS = libkafs.la
@@ -48,7 +49,7 @@ libkafs_la_LIBADD = ../roken/libroken.la $(DEPLIB_krb4)
 endif # KRB5
 
 lib_LTLIBRARIES = $(AFSLIBS)
-libkafs_la_LDFLAGS = -version-info 3:1:3
+libkafs_la_LDFLAGS = -version-info 3:4:3
 foodir = $(libdir)
 foo_DATA = $(AFS_EXTRA_LIBS)
 # EXTRA_DATA = afslib.so
@@ -62,7 +63,7 @@ afskrb5_c = afskrb5.c
 endif
 
 if do_roken_rename
-ROKEN_SRCS = resolve.c
+ROKEN_SRCS = resolve.c strtok_r.c strlcpy.c strsep.c
 endif
 
 libkafs_la_SOURCES =				\
@@ -92,3 +93,12 @@ $(OBJECTS): ../../include/config.h
 
 resolve.c:
 	$(LN_S) $(srcdir)/../roken/resolve.c .
+
+strtok_r.c:
+	$(LN_S) $(srcdir)/../roken/strtok_r.c .
+
+strlcpy.c:
+	$(LN_S) $(srcdir)/../roken/strlcpy.c .
+
+strsep.c:
+	$(LN_S) $(srcdir)/../roken/strsep.c .

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: create_auth_reply.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
+__RCSID("$KTH-KRB: create_auth_reply.c,v 1.15 1999/12/02 16:58:41 joda Exp $"
+      "$NetBSD: create_auth_reply.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * This routine is called by the Kerberos authentication server

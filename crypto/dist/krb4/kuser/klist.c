@@ -22,7 +22,8 @@
 
 #include <parse_time.h>
 
-RCSID("$Id: klist.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: klist.c,v 1.48 2002/06/28 17:40:49 joda Exp $"
+      "$NetBSD: klist.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
 
 static int option_verbose = 0;
 
@@ -244,7 +245,7 @@ display_tokens(void)
     parms.out = (void *)t;
     parms.out_size = sizeof(t);
 
-    for (i = 0; k_pioctl(NULL, VIOCGETTOK, &parms, 0) == 0; i++) {
+    for (i = 0;; i++) {
         int32_t size_secret_tok, size_public_tok;
         const char *cell;
 	struct ClearToken ct;
@@ -252,6 +253,11 @@ display_tokens(void)
 	struct timeval tv;
 	char buf1[20], buf2[20];
 
+	if(k_pioctl(NULL, VIOCGETTOK, &parms, 0) < 0) {
+	    if(errno == EDOM)
+		break;
+	    continue;
+	}
 	memcpy(&size_secret_tok, r, sizeof(size_secret_tok));
 	/* dont bother about the secret token */
 	r += size_secret_tok + sizeof(size_secret_tok);

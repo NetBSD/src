@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: getrealm.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: getrealm.c,v 1.36 1999/09/16 20:41:51 assar Exp $"
+      "$NetBSD: getrealm.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 #ifndef MATCH_SUBDOMAINS
 #define MATCH_SUBDOMAINS 0

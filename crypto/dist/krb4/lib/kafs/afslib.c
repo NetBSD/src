@@ -37,7 +37,8 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: afslib.c,v 1.1.1.2 2000/12/29 01:43:52 assar Exp $");
+__RCSID("$KTH-KRB: afslib.c,v 1.6 1999/12/02 16:58:40 joda Exp $"
+      "$NetBSD: afslib.c,v 1.1.1.3 2002/09/12 12:22:13 joda Exp $");
 
 int
 aix_pioctl(char *a_path,

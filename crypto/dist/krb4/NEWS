@@ -1,3 +1,32 @@
+Changes in release 1.2:
+
+* fix buffer overrun in ftp
+
+* fix openssl building
+
+* don't try to force encryption in telnet if not talking to a default
+  telnet port
+
+* recognise AIX 5
+
+* should work with more DB libraries
+
+Changes in release 1.1.1:
+
+* telnet: abort if telnetd does not support encryption
+
+* handle non-existant strtok_r and strlcpy better in libkafs
+
+* do not create extra symlink when installing man pages
+
+* build pam module
+
+* add localtime_r to libroken
+
+* install sia module more correctly
+
+* avoid reading too far when sorting DNS srv records
+
 Changes in release 1.1:
 
 * ftpd: new functionality (-R, -a/-A), also using high ports

@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: mk_err.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
+__RCSID("$KTH-KRB: mk_err.c,v 1.7 1998/06/09 19:25:22 joda Exp $"
+      "$NetBSD: mk_err.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * This routine creates a general purpose error reply message.  It

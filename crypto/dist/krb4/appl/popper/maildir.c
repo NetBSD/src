@@ -33,7 +33,8 @@
 
 #include <popper.h>
 #include <dirent.h>
-RCSID("$Id: maildir.c,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $");
+__RCSID("$KTH-KRB: maildir.c,v 1.6 2001/09/10 11:56:53 joda Exp $"
+      "$NetBSD: maildir.c,v 1.1.1.4 2002/09/12 12:22:06 joda Exp $");
 
 static void
 make_path(POP *p, MsgInfoList *mp, int new, char *buf, size_t len)

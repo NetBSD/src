@@ -25,7 +25,8 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kadm_server.c,v 1.1.1.2 2000/12/29 01:43:06 assar Exp $");
+__RCSID("$KTH-KRB: kadm_server.c,v 1.9 1997/05/02 10:29:08 joda Exp $"
+      "$NetBSD: kadm_server.c,v 1.1.1.3 2002/09/12 12:22:08 joda Exp $");
 
 /* 
 kadm_ser_cpw - the server side of the change_password routine

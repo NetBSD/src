@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_tf_fullname.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: get_tf_fullname.c,v 1.8 1999/09/16 20:41:51 assar Exp $"
+      "$NetBSD: get_tf_fullname.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * This file contains a routine to extract the fullname of a user

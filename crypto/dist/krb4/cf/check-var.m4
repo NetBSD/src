@@ -1,4 +1,5 @@
-dnl $Id: check-var.m4,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
+dnl $KTH-KRB: check-var.m4,v 1.6 2001/08/21 12:00:16 joda Exp $
+dnl $NetBSD: check-var.m4,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl rk_CHECK_VAR(variable, includes)
 AC_DEFUN([rk_CHECK_VAR], [

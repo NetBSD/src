@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp_md.h,v 1.1.1.3 2001/09/17 12:10:04 assar Exp $ */
+/* $KTH-KRB: otp_md.h,v 1.7 2000/07/12 00:26:44 assar Exp $
+   $NetBSD: otp_md.h,v 1.1.1.4 2002/09/12 12:22:12 joda Exp $ */
 
 int otp_md4_init (OtpKey key, const char *pwd, const char *seed);
 int otp_md4_hash (const char *, size_t, unsigned char *res);

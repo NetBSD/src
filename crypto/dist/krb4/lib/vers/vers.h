@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: vers.h,v 1.1.1.1 2001/09/17 12:09:59 assar Exp $ */
+/* $KTH-KRB: vers.h,v 1.1 2000/07/01 19:47:36 assar Exp $
+   $NetBSD: vers.h,v 1.1.1.2 2002/09/12 12:22:11 joda Exp $ */
 
 #ifndef __VERS_H__
 #define __VERS_H__

@@ -35,7 +35,8 @@
 
 #include "kprop.h"
 
-RCSID("$Id: kpropd.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
+__RCSID("$KTH-KRB: kpropd.c,v 2.35 2001/09/17 04:56:46 assar Exp $"
+      "$NetBSD: kpropd.c,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $");
 
 #ifndef SBINDIR
 #define SBINDIR "/usr/athena/sbin"

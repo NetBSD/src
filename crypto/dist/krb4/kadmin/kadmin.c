@@ -31,7 +31,8 @@ or implied warranty.
 #include "getarg.h"
 #include "parse_time.h"
 
-RCSID("$Id: kadmin.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
+__RCSID("$KTH-KRB: kadmin.c,v 1.68 2002/08/15 11:32:22 joda Exp $"
+      "$NetBSD: kadmin.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
 
 static int change_password(int argc, char **argv);
 static int change_key(int argc, char **argv);
@@ -298,7 +299,7 @@ get_admin_password(void)
 	printf("Incorrect admin password.\n");
 	goto bad;
     default:
-	com_err("kadmin", status+krb_err_base,
+	com_err("kadmin", status+ERROR_TABLE_BASE_krb,
 		"while getting password tickets");
 	goto bad;
     }

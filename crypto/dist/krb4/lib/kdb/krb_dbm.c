@@ -21,9 +21,13 @@ or implied warranty.
 
 #include "kdb_locl.h"
 
-RCSID("$Id: krb_dbm.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: krb_dbm.c,v 1.41 2002/05/19 22:11:15 joda Exp $"
+      "$NetBSD: krb_dbm.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 #include <xdbm.h>
+#if !defined(HAVE_NDBM) && !defined(HAVE_DB_NDBM)
+#include "ndbm_wrap.h"
+#endif
 
 #define KERB_DB_MAX_RETRY 5
 

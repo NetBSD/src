@@ -38,7 +38,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $ */
+/* $KTH-KRB: roken.h,v 1.9 2001/02/20 23:07:54 assar Exp $
+   $NetBSD: roken.h,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,6 +1,7 @@
 #include "krb_locl.h"
 
-RCSID("$Id: sizetest.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $");
+__RCSID("$KTH-KRB: sizetest.c,v 1.6 1998/01/01 22:29:04 assar Exp $"
+      "$NetBSD: sizetest.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 static void
 fatal(const char *msg)

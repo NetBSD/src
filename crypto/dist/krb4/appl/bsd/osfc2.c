@@ -32,7 +32,8 @@
  */
 
 #include "bsd_locl.h"
-RCSID("$Id: osfc2.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: osfc2.c,v 1.3 2001/02/20 23:07:50 assar Exp $"
+      "$NetBSD: osfc2.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 int
 do_osfc2_magic(uid_t uid)

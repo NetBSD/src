@@ -38,7 +38,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: KClient.c,v 1.1.1.2 2000/12/29 01:43:10 assar Exp $");
+__RCSID("$KTH-KRB: KClient.c,v 1.14 1999/12/02 16:58:40 joda Exp $"
+      "$NetBSD: KClient.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 #endif
 
 #ifdef WIN32	/* Visual C++ 4.0 (Windows95/NT) */

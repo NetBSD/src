@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_in_tkt.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: get_in_tkt.c,v 1.25 2002/08/15 11:39:32 joda Exp $"
+      "$NetBSD: get_in_tkt.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * This file contains three routines: passwd_to_key() and
@@ -56,8 +57,8 @@ passwd_to_5key(const char *user,
 {
     char *p;
     size_t len;
-    len = roken_mconcat (&p, 512, passwd, realm, user, instance, NULL);
-    if(len == 0)
+    len = asprintf(&p, "%s%s%s%s", (const char*)passwd, realm, user, instance);
+    if(p == NULL)
 	return  -1;
     des_string_to_key(p, key);
     memset(p, 0, len);

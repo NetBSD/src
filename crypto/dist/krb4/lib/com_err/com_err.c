@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: com_err.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
+__RCSID("$KTH-KRB: com_err.c,v 1.18 2002/03/10 23:07:01 assar Exp $"
+      "$NetBSD: com_err.c,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,8 +50,12 @@ error_message (long code)
 {
     static char msg[128];
     const char *p = com_right(_et_list, code);
-    if (p == NULL)
-	p = strerror(code);
+    if (p == NULL) {
+	if (code < 0)
+	    sprintf(msg, "Unknown error %ld", code);
+	else
+	    p = strerror(code);
+    }
     if (p != NULL && *p != '\0') {
 	strncpy(msg, p, sizeof(msg) - 1);
 	msg[sizeof(msg) - 1] = 0;

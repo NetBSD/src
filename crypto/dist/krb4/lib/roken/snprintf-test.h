@@ -31,7 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: snprintf-test.h,v 1.1.1.1 2001/09/17 12:09:57 assar Exp $ */
+/* $KTH-KRB: snprintf-test.h,v 1.2 2001/07/19 18:39:14 assar Exp $
+   $NetBSD: snprintf-test.h,v 1.1.1.2 2002/09/12 12:22:11 joda Exp $ */
 
 #ifndef __SNPRINTF_TEST_H__
 #define __SNPRINTF_TEST_H__

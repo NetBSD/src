@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: telnet_locl.h,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $ */
+/* $KTH-KRB: telnet_locl.h,v 1.21 2001/12/20 20:39:52 joda Exp $
+   $NetBSD: telnet_locl.h,v 1.1.1.4 2002/09/12 12:22:06 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -138,6 +139,10 @@
 #include <netinet/ip.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
+#ifdef _AIX
+struct sockaddr_dl; /* AIX fun */
+struct ether_addr;
+#endif
 #include <arpa/inet.h>
 #endif
 

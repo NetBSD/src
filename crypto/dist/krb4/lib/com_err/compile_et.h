@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: compile_et.h,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $ */
+/* $KTH-KRB: compile_et.h,v 1.6 2000/07/01 20:21:48 assar Exp $
+   $NetBSD: compile_et.h,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $ */
 
 #ifndef __COMPILE_ET_H__
 #define __COMPILE_ET_H__

@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: read_service_key.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
+__RCSID("$KTH-KRB: read_service_key.c,v 1.13 2002/02/04 12:57:23 joda Exp $"
+      "$NetBSD: read_service_key.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 /*
  * The private keys for servers on a given host are stored in a
@@ -96,9 +97,6 @@ read_service_key(const char *service,	/* Service Name */
         /* How about instance */
         if (!wcard && strcmp(inst,instance))
             continue;
-        if (wcard) {
-	    strlcpy (instance, inst, INST_SZ);
-	}
         /* Is this the right realm */
         if (strcmp(rlm,realm)) 
 	    continue;
@@ -107,6 +105,9 @@ read_service_key(const char *service,	/* Service Name */
         if (kvno && kvno != (int) vno)
             continue;
 
+        if (wcard) {
+	    strlcpy (instance, inst, INST_SZ);
+	}
         close(stab);
         return(KSUCCESS);
     }

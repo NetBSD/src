@@ -1,5 +1,6 @@
 dnl
-dnl $Id: broken-realloc.m4,v 1.1.1.1 2001/09/17 12:10:06 assar Exp $
+dnl $KTH-KRB: broken-realloc.m4,v 1.1 2000/07/15 18:05:36 joda Exp $
+dnl $NetBSD: broken-realloc.m4,v 1.1.1.2 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl Test for realloc that doesn't handle NULL as first parameter
 dnl

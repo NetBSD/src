@@ -1,4 +1,5 @@
-dnl $Id: acinclude.m4,v 1.1.1.2 2000/12/29 01:42:09 assar Exp $
+dnl $KTH-KRB: acinclude.m4,v 1.2 1999/03/01 13:06:21 joda Exp $
+dnl $NetBSD: acinclude.m4,v 1.1.1.3 2002/09/12 12:22:01 joda Exp $
 dnl
 dnl Only put things that for some reason can't live in the `cf'
 dnl directory in this file.

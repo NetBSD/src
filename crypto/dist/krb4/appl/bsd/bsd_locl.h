@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: bsd_locl.h,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $ */
+/* $KTH-KRB: bsd_locl.h,v 1.116 2002/08/28 18:55:41 joda Exp $
+   $NetBSD: bsd_locl.h,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $ */
 
 #define LOGALL
-#define KERBEROS
 #define KLOGIN_PARANOID
 #define LOGIN_ACCESS
 #define PASSWD_FALLBACK

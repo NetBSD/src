@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: com_err.h,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $ */
+/* $KTH-KRB: com_err.h,v 1.9 2001/05/11 20:03:36 assar Exp $
+   $NetBSD: com_err.h,v 1.1.1.4 2002/09/12 12:22:13 joda Exp $ */
 
 /* MIT compatible com_err library */
 

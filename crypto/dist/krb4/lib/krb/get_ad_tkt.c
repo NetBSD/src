@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_ad_tkt.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
+__RCSID("$KTH-KRB: get_ad_tkt.c,v 1.23 1999/12/11 23:37:49 joda Exp $"
+      "$NetBSD: get_ad_tkt.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * krb_get_cred_kdc obtains a new service ticket from Kerberos, using

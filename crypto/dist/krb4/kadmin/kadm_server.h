@@ -19,7 +19,8 @@ or implied warranty.
 
   */
 
-/* $Id: kadm_server.h,v 1.1.1.2 2000/12/29 01:43:06 assar Exp $ */
+/* $KTH-KRB: kadm_server.h,v 1.10 1997/05/11 04:08:26 assar Exp $
+   $NetBSD: kadm_server.h,v 1.1.1.3 2002/09/12 12:22:08 joda Exp $ */
 
 /*
  * Definitions for Kerberos administration server & client

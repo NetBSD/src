@@ -21,7 +21,8 @@ or implied warranty.
 
 #include "kdb_locl.h"
 
-RCSID("$Id: print_princ.c,v 1.1.1.2 2000/12/29 01:43:11 assar Exp $");
+__RCSID("$KTH-KRB: print_princ.c,v 1.5 1997/05/07 01:37:13 assar Exp $"
+      "$NetBSD: print_princ.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 void
 krb_print_principal(Principal *a_n)

@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_host.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
+__RCSID("$KTH-KRB: get_host.c,v 1.49 2002/08/15 11:35:41 joda Exp $"
+      "$NetBSD: get_host.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 static struct host_list {
     struct krb_host *this;
@@ -271,8 +272,7 @@ srv_find_realm(char *realm, char *proto, char *service)
     struct dns_reply *r;
     struct resource_record *rr;
     
-    roken_mconcat(&domain, 1024, service, ".", proto, ".", realm, ".", NULL);
-    
+    asprintf(&domain, "%s.%s.%s.", service, proto, realm);
     if(domain == NULL)
 	return;
     

@@ -33,7 +33,8 @@
  *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
-/* $Id: extern.h,v 1.1.1.3 2001/09/17 12:09:50 assar Exp $ */
+/* $KTH-KRB: extern.h,v 1.19 2000/09/19 13:15:12 assar Exp $
+   $NetBSD: extern.h,v 1.1.1.4 2002/09/12 12:22:07 joda Exp $ */
 
 #include <setjmp.h>
 #include <stdlib.h>

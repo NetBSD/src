@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: parse_name.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
+__RCSID("$KTH-KRB: parse_name.c,v 1.7 1999/12/02 16:58:43 joda Exp $"
+      "$NetBSD: parse_name.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 int
 krb_parse_name(const char *fullname, krb_principal *principal)

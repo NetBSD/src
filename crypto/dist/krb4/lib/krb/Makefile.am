@@ -1,10 +1,11 @@
-# $Id: Makefile.am,v 1.1.1.1 2001/09/17 12:09:53 assar Exp $
+# $KTH-KRB: Makefile.am,v 1.12 2002/09/09 18:42:38 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.2 2002/09/12 12:22:09 joda Exp $
 
 
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -DROKEN_RENAME
+INCLUDES += $(ROKEN_RENAME) $(INCLUDE_des) $(foo)
 
 incdir = $(includedir)
 inc_DATA = krb_err.h
@@ -23,9 +24,14 @@ man_MANS = kerberos.1 kerberos.3 krb_realmofhost.3 krb_sendauth.3	\
 
 
 lib_LTLIBRARIES = libkrb.la
-libkrb_la_LDFLAGS = -version-info 2:0:1
+libkrb_la_LDFLAGS = -version-info 2:1:1
 
 libkrb_la_LIBADD = $(LIB_des)
+
+if DES_QUAD_CKSUM_BROKEN
+des_quad_cksum = quad_cksum.c
+foo = -DDES_QUAD_CKSUM_BROKEN=1
+endif
 
 libkrb_la_SOURCES = \
 	check_time.c \
@@ -100,11 +106,11 @@ libkrb_la_SOURCES = \
 	verify_user.c \
 	krb_ip_realm.c \
 	$(EXTRA_SOURCE) \
-	$(SHLIB_EXTRA_SOURCE)
+	$(SHLIB_EXTRA_SOURCE) \
+	$(des_quad_cksum)
 
 EXTRA_SOURCE = 	\
 	base64.c \
-	concat.c \
 	flock.c \
 	gethostname.c \
 	gettimeofday.c \
@@ -132,8 +138,6 @@ krb_err.c krb_err.h: krb_err.et
 
 base64.c:
 	$(LN_S) $(srcdir)/../roken/base64.c .
-concat.c:
-	$(LN_S) $(srcdir)/../roken/concat.c .
 flock.c:
 	$(LN_S) $(srcdir)/../roken/flock.c .
 gethostname.c:
