@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.5 1998/03/01 02:23:46 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.6 1998/07/28 20:39:10 mjacob Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -985,7 +985,8 @@ ext2fs_dirempty(ip, parentino, cred)
 	register off_t off;
 	struct ext2fs_dirtemplate dbuf;
 	register struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
-	int error, count, namlen;
+	int error, namlen;
+	size_t count;
 		 
 #define	MINDIRSIZ (sizeof (struct ext2fs_dirtemplate) / 2)
 
@@ -1055,8 +1056,9 @@ ext2fs_checkpath(source, target, cred)
 			break;
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
-			sizeof (struct ext2fs_dirtemplate), (off_t)0, UIO_SYSSPACE,
-			IO_NODELOCKED, cred, (int *)0, (struct proc *)0);
+			sizeof (struct ext2fs_dirtemplate), (off_t)0,
+			UIO_SYSSPACE, IO_NODELOCKED, cred, (size_t *)0,
+			(struct proc *)0);
 		if (error != 0)
 			break;
 		namlen = fs2h16(dirbuf.dotdot_namlen);
