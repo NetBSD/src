@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.33 2001/06/12 22:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.34 2001/06/18 01:58:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1388,15 +1388,16 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 		 */
 		if (cmdsts &
 		    (CMDSTS_Tx_TXA|CMDSTS_Tx_TFU|CMDSTS_Tx_ED|CMDSTS_Tx_EC)) {
+			ifp->if_oerrors++;
+			if (cmdsts & CMDSTS_Tx_EC)
+				ifp->if_collisions += 16;
 			if (ifp->if_flags & IFF_DEBUG) {
-				if (CMDSTS_Tx_ED)
+				if (cmdsts & CMDSTS_Tx_ED)
 					printf("%s: excessive deferral\n",
 					    sc->sc_dev.dv_xname);
-				if (CMDSTS_Tx_EC) {
+				if (cmdsts & CMDSTS_Tx_EC)
 					printf("%s: excessive collisions\n",
 					    sc->sc_dev.dv_xname);
-					ifp->if_collisions += 16;
-				}
 			}
 		} else {
 			/* Packet was transmitted successfully. */
