@@ -6,21 +6,15 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
 Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided that
-the entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: as.info,  Node: Top,  Next: Overview,  Up: (dir)
@@ -28,7 +22,11 @@ File: as.info,  Node: Top,  Next: Overview,  Up: (dir)
 Using as
 ********
 
-   This file is a user guide to the GNU assembler `as' version 2.10.1.
+   This file is a user guide to the GNU assembler `as' version 2.11.
+
+   This document is distributed under the terms of the GNU Free
+Documentation License.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 * Menu:
 
@@ -42,6 +40,7 @@ Using as
 * Machine Dependencies::        Machine Dependent Features
 * Reporting Bugs::              Reporting Bugs
 * Acknowledgements::            Who Did What
+* GNU Free Documentation License::  GNU Free Documentation License
 * Index::                       Index
 
 
@@ -57,15 +56,16 @@ Comand-Line Options: Invoking..
       [ -f ] [ --gstabs ] [ --gdwarf2 ] [ --help ] [ -I DIR ] [ -J ] [ -K ] [ -L ]
       [ --keep-locals ] [ -o OBJFILE ] [ -R ] [ --statistics ] [ -v ]
       [ -version ] [ --version ] [ -W ] [ --warn ] [ --fatal-warnings ]
-      [ -w ] [ -x ] [ -Z ]
-      [ -mbig-endian | -mlittle-endian ]
+      [ -w ] [ -x ] [ -Z ] [ --target-help ]
+      [ -marc[5|6|7|8] ]
+      [ -EB | -EL ]
       [ -m[arm]1 | -m[arm]2 | -m[arm]250 | -m[arm]3 | -m[arm]6 | -m[arm]60 |
         -m[arm]600 | -m[arm]610 | -m[arm]620 | -m[arm]7[t][[d]m[i]][fe] | -m[arm]70 |
         -m[arm]700 | -m[arm]710[c] | -m[arm]7100 | -m[arm]7500 | -m[arm]8 |
         -m[arm]810 | -m[arm]9 | -m[arm]920 | -m[arm]920t | -m[arm]9tdmi |
         -mstrongarm | -mstrongarm110 | -mstrongarm1100 ]
       [ -m[arm]v2 | -m[arm]v2a | -m[arm]v3 | -m[arm]v3m | -m[arm]v4 | -m[arm]v4t |
-        -m[arm]v5 | -[arm]v5t ]
+        -m[arm]v5 | -[arm]v5t | -[arm]v5te ]
       [ -mthumb | -mall ]
       [ -mfpa10 | -mfpa11 | -mfpe-old | -mno-fpu ]
       [ -EB | -EL ]
@@ -81,10 +81,17 @@ Comand-Line Options: Invoking..
       [ -xarch=v8plus | -xarch=v8plusa ] [ -bump ] [ -32 | -64 ]
       [ -ACA | -ACA_A | -ACB | -ACC | -AKA | -AKB | -AKC | -AMC ]
       [ -b ] [ -no-relax ]
+      [ --m32rx | --[no-]warn-explicit-parallel-conflicts | --W[n]p ]
       [ -l ] [ -m68000 | -m68010 | -m68020 | ... ]
       [ -jsri2bsr ] [ -sifilter ] [ -relax ]
+      [ -mcpu=[210|340] ]
+      [ -m68hc11 | -m68hc12 ]
+      [ --force-long-branchs ] [ --short-branchs ] [ --strict-direct-mode ]
+      [ --print-insn-syntax ] [ --print-opcodes ] [ --generate-example ]
       [ -nocpp ] [ -EL ] [ -EB ] [ -G NUM ] [ -mcpu=CPU ]
-      [ -mips1 ] [ -mips2 ] [ -mips3 ] [ -m4650 ] [ -no-m4650 ]
+      [ -mips1 ] [ -mips2 ] [ -mips3 ] [ -mips4 ] [ -mips5 ]
+      [ -mips32 ] [ -mips64 ]
+      [ -m4650 ] [ -no-m4650 ]
       [ --trap ] [ --break ]
       [ --emulation=NAME ]
       [ -- | FILES ... ]
@@ -141,10 +148,14 @@ Comand-Line Options: Invoking..
 `--gdwarf2'
      Generate DWARF2 debugging information for each assembler line.
      This may help debugging assembler code, if the debugger can handle
-     it.
+     it.  Note - this option is only supported by some targets, not all
+     of them.
 
 `--help'
      Print a summary of the command line options and exit.
+
+`--target-help'
+     Print a summary of all target specific options and exit.
 
 `-I DIR'
      Add directory DIR to the search list for `.include' directives.
@@ -207,11 +218,11 @@ Comand-Line Options: Invoking..
    The following options are available when as is configured for an ARC
 processor.
 
-`-mbig-endian'
-     Generate "big endian" format output.
+`-marc[5|6|7|8]'
+     This option selects the core processor variant.
 
-`-mlittle-endian'
-     Generate "little endian" format output.
+`-EB | -EL'
+     Select either big-endian (-EB) or little-endian (-EL) output.
 
    The following options are available when as is configured for the ARM
 processor family.
@@ -226,7 +237,7 @@ processor family.
      Enable or disable Thumb only instruction decoding.
 
 `-mfpa10 | -mfpa11 | -mfpe-old | -mno-fpu'
-     Select which Floating Point architcture is the target.
+     Select which Floating Point architecture is the target.
 
 `-mapcs-32 | -mapcs-26 | -mapcs-float | -mapcs-reentrant | -moabi'
      Select which procedure calling convention is in use.
@@ -271,6 +282,22 @@ Intel 80960 processor.
      displacements; error if necessary.
 
    The following options are available when as is configured for the
+Mitsubishi M32R series.
+
+`--m32rx'
+     Specify which processor in the M32R family is the target.  The
+     default is normally the M32R, but this option changes it to the
+     M32RX.
+
+`--warn-explicit-parallel-conflicts or --Wp'
+     Produce warning messages when questionable parallel constructs are
+     encountered.
+
+`--no-warn-explicit-parallel-conflicts or --Wnp'
+     Do not produce warning messages when questionable parallel
+     constructs are encountered.
+
+   The following options are available when as is configured for the
 Motorola 68000 series.
 
 `-l'
@@ -304,6 +331,36 @@ picoJava processor.
 
 `-ml'
      Generate "little endian" format output.
+
+   The following options are available when as is configured for the
+Motorola 68HC11 or 68HC12 series.
+
+`-m68hc11 | -m68hc12'
+     Specify what processor is the target.  The default is defined by
+     the configuration option when building the assembler.
+
+`--force-long-branchs'
+     Relative branches are turned into absolute ones. This concerns
+     conditional branches, unconditional branches and branches to a sub
+     routine.
+
+`-S | --short-branchs'
+     Do not turn relative branchs into absolute ones when the offset is
+     out of range.
+
+`--strict-direct-mode'
+     Do not turn the direct addressing mode into extended addressing
+     mode when the instruction does not support direct addressing mode.
+
+`--print-insn-syntax'
+     Print the syntax of instruction in case of error.
+
+`--print-opcodes'
+     print the list of instructions with syntax and then exit.
+
+`--generate-example'
+     print an example of instruction for each possible instruction and
+     then exit.  This option is only useful for testing `as'.
 
    The following options are available when `as' is configured for the
 SPARC architecture:
@@ -343,10 +400,13 @@ processor.
 `-mips1'
 `-mips2'
 `-mips3'
+`-mips4'
+`-mips32'
      Generate code for a particular MIPS Instruction Set Architecture
      level.  `-mips1' corresponds to the R2000 and R3000 processors,
      `-mips2' to the R6000 processor, and `-mips3' to the R4000
-     processor.
+     processor.  `-mips5', `-mips32', and `-mips64' correspond to
+     generic MIPS V, MIPS32, and MIPS64 ISA processors, respectively.
 
 `-m4650'
 `-no-m4650'
@@ -356,8 +416,8 @@ processor.
      `-no-m4650' turns off this option.
 
 `-mcpu=CPU'
-     Generate code for a particular MIPS cpu.  This has little effect
-     on the assembler, but it is passed by `gcc'.
+     Generate code for a particular MIPS cpu.  It is exactly equivalent
+     to `-mCPU', except that there are more value of CPU understood.
 
 `--emulation=NAME'
      This option causes `as' to emulate `as' configured for some other
@@ -409,11 +469,21 @@ MCore processor.
 `-sifilter'
 `-nosifilter'
      Enable or disable the silicon filter behaviour.  By default this
-     is disabled.  The default can be overidden by the `-sifilter'
+     is disabled.  The default can be overridden by the `-sifilter'
      command line option.
 
 `-relax'
      Alter jump instructions for long displacements.
+
+`-mcpu=[210|340]'
+     Select the cpu type on the target hardware.  This controls which
+     instructions can be assembled.
+
+`-EB'
+     Assemble for a big endian target.
+
+`-EL'
+     Assemble for a little endian target.
 
 * Menu:
 
@@ -1103,9 +1173,10 @@ you may not nest these comments.
 considered a comment and is ignored.  The line comment character is `;'
 for the AMD 29K family; `;' on the ARC; `@' on the ARM; `;' for the
 H8/300 family; `!' for the H8/500 family; `;' for the HPPA; `#' on the
-i960; `;' for picoJava; `!' for the Hitachi SH; `!' on the SPARC; `#'
-on the m32r; `|' on the 680x0; `#' on the Vax; `!' for the Z8000; `#'
-on the V850; see *Note Machine Dependencies::.
+i386 and x86-64; `#' on the i960; `;' for picoJava; `!' for the Hitachi
+SH; `!' on the SPARC; `#' on the m32r; `|' on the 680x0; `#' on the
+68HC11 and 68HC12; `#' on the Vax; `!' for the Z8000; `#' on the V850;
+see *Note Machine Dependencies::.
 
    On some machines there are two different line comment characters.
 One character only begins a comment if it is the first non-whitespace
@@ -1320,105 +1391,4 @@ described below.
 * Integers::                    Integers
 * Bignums::                     Bignums
 * Flonums::                     Flonums
-
-
-File: as.info,  Node: Integers,  Next: Bignums,  Up: Numbers
-
-Integers
-........
-
-   A binary integer is `0b' or `0B' followed by zero or more of the
-binary digits `01'.
-
-   An octal integer is `0' followed by zero or more of the octal digits
-(`01234567').
-
-   A decimal integer starts with a non-zero digit followed by zero or
-more digits (`0123456789').
-
-   A hexadecimal integer is `0x' or `0X' followed by one or more
-hexadecimal digits chosen from `0123456789abcdefABCDEF'.
-
-   Integers have the usual values.  To denote a negative integer, use
-the prefix operator `-' discussed under expressions (*note Prefix
-Operators: Prefix Ops.).
-
-
-File: as.info,  Node: Bignums,  Next: Flonums,  Prev: Integers,  Up: Numbers
-
-Bignums
-.......
-
-   A "bignum" has the same syntax and semantics as an integer except
-that the number (or its negative) takes more than 32 bits to represent
-in binary.  The distinction is made because in some places integers are
-permitted while bignums are not.
-
-
-File: as.info,  Node: Flonums,  Prev: Bignums,  Up: Numbers
-
-Flonums
-.......
-
-   A "flonum" represents a floating point number.  The translation is
-indirect: a decimal floating point number from the text is converted by
-`as' to a generic binary floating point number of more than sufficient
-precision.  This generic floating point number is converted to a
-particular computer's floating point format (or formats) by a portion
-of `as' specialized to that computer.
-
-   A flonum is written by writing (in order)
-   * The digit `0'.  (`0' is optional on the HPPA.)
-
-   * A letter, to tell `as' the rest of the number is a flonum.  `e' is
-     recommended.  Case is not important.
-
-     On the H8/300, H8/500, Hitachi SH, and AMD 29K architectures, the
-     letter must be one of the letters `DFPRSX' (in upper or lower
-     case).
-
-     On the ARC, the letter must be one of the letters `DFRS' (in upper
-     or lower case).
-
-     On the Intel 960 architecture, the letter must be one of the
-     letters `DFT' (in upper or lower case).
-
-     On the HPPA architecture, the letter must be `E' (upper case only).
-
-   * An optional sign: either `+' or `-'.
-
-   * An optional "integer part": zero or more decimal digits.
-
-   * An optional "fractional part": `.' followed by zero or more
-     decimal digits.
-
-   * An optional exponent, consisting of:
-
-        * An `E' or `e'.
-
-        * Optional sign: either `+' or `-'.
-
-        * One or more decimal digits.
-
-
-   At least one of the integer part or the fractional part must be
-present.  The floating point number has the usual base-10 value.
-
-   `as' does all processing using integers.  Flonums are computed
-independently of any floating point hardware in the computer running
-`as'.
-
-
-File: as.info,  Node: Sections,  Next: Symbols,  Prev: Syntax,  Up: Top
-
-Sections and Relocation
-***********************
-
-* Menu:
-
-* Secs Background::             Background
-* Ld Sections::                 Linker Sections
-* As Sections::                 Assembler Internal Sections
-* Sub-Sections::                Sub-Sections
-* bss::                         bss Section
 

@@ -6,1037 +6,614 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
 Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided that
-the entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
-File: as.info,  Node: Index,  Prev: Acknowledgements,  Up: Top
+File: as.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: Reporting Bugs
 
-Index
-*****
+How to report bugs
+==================
 
-* Menu:
+   A number of companies and individuals offer support for GNU
+products.  If you obtained `as' from a support organization, we
+recommend you contact that organization first.
 
-* #:                                     Comments.
-* #APP:                                  Preprocessing.
-* #NO_APP:                               Preprocessing.
-* $ in symbol names <1>:                 SH-Chars.
-* $ in symbol names <2>:                 H8/500-Chars.
-* $ in symbol names <3>:                 D30V-Chars.
-* $ in symbol names:                     D10V-Chars.
-* -+ option, VAX/VMS:                    VAX-Opts.
-* --:                                    Command Line.
-* --base-size-default-16:                M68K-Opts.
-* --base-size-default-32:                M68K-Opts.
-* --bitwise-or option, M680x0:           M68K-Opts.
-* --disp-size-default-16:                M68K-Opts.
-* --disp-size-default-32:                M68K-Opts.
-* --enforce-aligned-data:                Sparc-Aligned-Data.
-* --fatal-warnings:                      W.
-* --MD:                                  MD.
-* --no-warn:                             W.
-* --register-prefix-optional option, M680x0: M68K-Opts.
-* --statistics:                          statistics.
-* --traditional-format:                  traditional-format.
-* --warn:                                W.
-* -1 option, VAX/VMS:                    VAX-Opts.
-* -a:                                    a.
-* -A options, i960:                      Options-i960.
-* -ac:                                   a.
-* -ad:                                   a.
-* -ah:                                   a.
-* -al:                                   a.
-* -an:                                   a.
-* -as:                                   a.
-* -Asparclet:                            Sparc-Opts.
-* -Asparclite:                           Sparc-Opts.
-* -Av6:                                  Sparc-Opts.
-* -Av8:                                  Sparc-Opts.
-* -Av9:                                  Sparc-Opts.
-* -Av9a:                                 Sparc-Opts.
-* -b option, i960:                       Options-i960.
-* -D:                                    D.
-* -D, ignored on VAX:                    VAX-Opts.
-* -d, VAX option:                        VAX-Opts.
-* -EB command line option, ARM:          ARM Options.
-* -EB option (MIPS):                     MIPS Opts.
-* -EL command line option, ARM:          ARM Options.
-* -EL option (MIPS):                     MIPS Opts.
-* -f:                                    f.
-* -G option (MIPS):                      MIPS Opts.
-* -H option, VAX/VMS:                    VAX-Opts.
-* -h option, VAX/VMS:                    VAX-Opts.
-* -I PATH:                               I.
-* -J, ignored on VAX:                    VAX-Opts.
-* -K:                                    K.
-* -k command line option, ARM:           ARM Options.
-* -L:                                    L.
-* -l option, M680x0:                     M68K-Opts.
-* -M:                                    M.
-* -m68000 and related options:           M68K-Opts.
-* -mall command line option, ARM:        ARM Options.
-* -mapcs command line option, ARM:       ARM Options.
-* -mapcs-float command line option, ARM: ARM Options.
-* -mapcs-reentrant command line option, ARM: ARM Options.
-* -marm command line option, ARM:        ARM Options.
-* -marmv command line option, ARM:       ARM Options.
-* -mbig-endian option (ARC):             ARC-Opts.
-* -mfpa command line option, ARM:        ARM Options.
-* -mfpe-old command line option, ARM:    ARM Options.
-* -mlittle-endian option (ARC):          ARC-Opts.
-* -mno-fpu command line option, ARM:     ARM Options.
-* -moabi command line option, ARM:       ARM Options.
-* -mthumb command line option, ARM:      ARM Options.
-* -mthumb-interwork command line option, ARM: ARM Options.
-* -mv850 command line option, V850:      V850 Options.
-* -mv850any command line option, V850:   V850 Options.
-* -mv850e command line option, V850:     V850 Options.
-* -no-relax option, i960:                Options-i960.
-* -nocpp ignored (MIPS):                 MIPS Opts.
-* -o:                                    o.
-* -R:                                    R.
-* -S, ignored on VAX:                    VAX-Opts.
-* -t, ignored on VAX:                    VAX-Opts.
-* -T, ignored on VAX:                    VAX-Opts.
-* -v:                                    v.
-* -V, redundant on VAX:                  VAX-Opts.
-* -version:                              v.
-* -W:                                    W.
-* -wsigned_overflow command line option, V850: V850 Options.
-* -wunsigned_overflow command line option, V850: V850 Options.
-* . (symbol):                            Dot.
-* .insn:                                 MIPS insn.
-* .ltorg directive, ARM:                 ARM Directives.
-* .o:                                    Object.
-* .param on HPPA:                        HPPA Directives.
-* .pool directive, ARM:                  ARM Directives.
-* .set autoextend:                       MIPS autoextend.
-* .set mipsN:                            MIPS ISA.
-* .set noautoextend:                     MIPS autoextend.
-* .set pop:                              MIPS option stack.
-* .set push:                             MIPS option stack.
-* .v850 directive, V850:                 V850 Directives.
-* .v850e directive, V850:                V850 Directives.
-* 16-bit code, i386:                     i386-16bit.
-* 29K support:                           AMD29K-Dependent.
-* 3DNow!, i386:                          i386-SIMD.
-* : (label):                             Statements.
-* @word modifier, D10V:                  D10V-Word.
-* \" (doublequote character):            Strings.
-* \\ (\ character):                      Strings.
-* \b (backspace character):              Strings.
-* \DDD (octal character code):           Strings.
-* \f (formfeed character):               Strings.
-* \n (newline character):                Strings.
-* \r (carriage return character):        Strings.
-* \t (tab):                              Strings.
-* \XD... (hex character code):           Strings.
-* a.out:                                 Object.
-* a.out symbol attributes:               a.out Symbols.
-* ABORT directive:                       ABORT.
-* abort directive:                       Abort.
-* absolute section:                      Ld Sections.
-* addition, permitted arguments:         Infix Ops.
-* addresses:                             Expressions.
-* addresses, format of:                  Secs Background.
-* addressing modes, D10V:                D10V-Addressing.
-* addressing modes, D30V:                D30V-Addressing.
-* addressing modes, H8/300:              H8/300-Addressing.
-* addressing modes, H8/500:              H8/500-Addressing.
-* addressing modes, M680x0:              M68K-Syntax.
-* addressing modes, SH:                  SH-Addressing.
-* addressing modes, Z8000:               Z8000-Addressing.
-* ADR reg,<label> pseudo op, ARM:        ARM Opcodes.
-* ADRL reg,<label> pseudo op, ARM:       ARM Opcodes.
-* advancing location counter:            Org.
-* align directive:                       Align.
-* align directive, ARM:                  ARM Directives.
-* align directive, SPARC:                Sparc-Directives.
-* altered difference tables:             Word.
-* alternate syntax for the 680x0:        M68K-Moto-Syntax.
-* AMD 29K floating point (IEEE):         AMD29K Floating Point.
-* AMD 29K identifiers:                   AMD29K-Chars.
-* AMD 29K line comment character:        AMD29K-Chars.
-* AMD 29K machine directives:            AMD29K Directives.
-* AMD 29K macros:                        AMD29K-Macros.
-* AMD 29K opcodes:                       AMD29K Opcodes.
-* AMD 29K options (none):                AMD29K Options.
-* AMD 29K protected registers:           AMD29K-Regs.
-* AMD 29K register names:                AMD29K-Regs.
-* AMD 29K special purpose registers:     AMD29K-Regs.
-* AMD 29K support:                       AMD29K-Dependent.
-* ARC architectures:                     ARC-Opts.
-* ARC big-endian output:                 ARC-Opts.
-* ARC endianness:                        Overview.
-* ARC floating point (IEEE):             ARC-Float.
-* ARC little-endian output:              ARC-Opts.
-* ARC machine directives:                ARC-Directives.
-* ARC options:                           ARC-Opts.
-* ARC support:                           ARC-Dependent.
-* architecture options, i960:            Options-i960.
-* architecture options, M680x0:          M68K-Opts.
-* architectures, ARC:                    ARC-Opts.
-* architectures, SPARC:                  Sparc-Opts.
-* arguments for addition:                Infix Ops.
-* arguments for subtraction:             Infix Ops.
-* arguments in expressions:              Arguments.
-* arithmetic functions:                  Operators.
-* arithmetic operands:                   Arguments.
-* arm directive, ARM:                    ARM Directives.
-* ARM floating point (IEEE):             ARM Floating Point.
-* ARM identifiers:                       ARM-Chars.
-* ARM immediate character:               ARM-Chars.
-* ARM line comment character:            ARM-Chars.
-* ARM line separator:                    ARM-Chars.
-* ARM machine directives:                ARM Directives.
-* ARM opcodes:                           ARM Opcodes.
-* ARM options (none):                    ARM Options.
-* ARM register names:                    ARM-Regs.
-* ARM support:                           ARM-Dependent.
-* ascii directive:                       Ascii.
-* asciz directive:                       Asciz.
-* assembler bugs, reporting:             Bug Reporting.
-* assembler crash:                       Bug Criteria.
-* assembler internal logic error:        As Sections.
-* assembler version:                     v.
-* assembler, and linker:                 Secs Background.
-* assembly listings, enabling:           a.
-* assigning values to symbols <1>:       Equ.
-* assigning values to symbols:           Setting Symbols.
-* attributes, symbol:                    Symbol Attributes.
-* auxiliary attributes, COFF symbols:    COFF Symbols.
-* auxiliary symbol information, COFF:    Dim.
-* Av7:                                   Sparc-Opts.
-* backslash (\\):                        Strings.
-* backspace (\b):                        Strings.
-* balign directive:                      Balign.
-* balignl directive:                     Balign.
-* balignw directive:                     Balign.
-* big endian output, ARC:                Overview.
-* big endian output, MIPS:               Overview.
-* big endian output, PJ:                 Overview.
-* big-endian output, ARC:                ARC-Opts.
-* big-endian output, MIPS:               MIPS Opts.
-* bignums:                               Bignums.
-* binary integers:                       Integers.
-* bitfields, not supported on VAX:       VAX-no.
-* block:                                 Z8000 Directives.
-* block directive, AMD 29K:              AMD29K Directives.
-* branch improvement, M680x0:            M68K-Branch.
-* branch improvement, VAX:               VAX-branch.
-* branch recording, i960:                Options-i960.
-* branch statistics table, i960:         Options-i960.
-* bss directive, i960:                   Directives-i960.
-* bss section <1>:                       bss.
-* bss section:                           Ld Sections.
-* bug criteria:                          Bug Criteria.
-* bug reports:                           Bug Reporting.
-* bugs in assembler:                     Reporting Bugs.
-* bus lock prefixes, i386:               i386-Prefixes.
-* bval:                                  Z8000 Directives.
-* byte directive:                        Byte.
-* call instructions, i386:               i386-Mnemonics.
-* callj, i960 pseudo-opcode:             callj-i960.
-* carriage return (\r):                  Strings.
-* character constants:                   Characters.
-* character escape codes:                Strings.
-* character, single:                     Chars.
-* characters used in symbols:            Symbol Intro.
-* code directive, ARM:                   ARM Directives.
-* code16 directive, i386:                i386-16bit.
-* code16gcc directive, i386:             i386-16bit.
-* code32 directive, i386:                i386-16bit.
-* COFF auxiliary symbol information:     Dim.
-* COFF structure debugging:              Tag.
-* COFF symbol attributes:                COFF Symbols.
-* COFF symbol descriptor:                Desc.
-* COFF symbol storage class:             Scl.
-* COFF symbol type:                      Type.
-* COFF symbols, debugging:               Def.
-* COFF value attribute:                  Val.
-* COMDAT:                                Linkonce.
-* comm directive:                        Comm.
-* command line conventions:              Command Line.
-* command line options, V850:            V850 Options.
-* command-line options ignored, VAX:     VAX-Opts.
-* comments:                              Comments.
-* comments, M680x0:                      M68K-Chars.
-* comments, removed by preprocessor:     Preprocessing.
-* common directive, SPARC:               Sparc-Directives.
-* common sections:                       Linkonce.
-* common variable storage:               bss.
-* compare and jump expansions, i960:     Compare-and-branch-i960.
-* compare/branch instructions, i960:     Compare-and-branch-i960.
-* conditional assembly:                  If.
-* constant, single character:            Chars.
-* constants:                             Constants.
-* constants, bignum:                     Bignums.
-* constants, character:                  Characters.
-* constants, converted by preprocessor:  Preprocessing.
-* constants, floating point:             Flonums.
-* constants, integer:                    Integers.
-* constants, number:                     Numbers.
-* constants, string:                     Strings.
-* conversion instructions, i386:         i386-Mnemonics.
-* coprocessor wait, i386:                i386-Prefixes.
-* cpu directive, SPARC:                  ARC-Directives.
-* cputype directive, AMD 29K:            AMD29K Directives.
-* crash of assembler:                    Bug Criteria.
-* ctbp register, V850:                   V850-Regs.
-* ctoff pseudo-op, V850:                 V850 Opcodes.
-* ctpc register, V850:                   V850-Regs.
-* ctpsw register, V850:                  V850-Regs.
-* current address:                       Dot.
-* current address, advancing:            Org.
-* D10V @word modifier:                   D10V-Word.
-* D10V addressing modes:                 D10V-Addressing.
-* D10V floating point:                   D10V-Float.
-* D10V line comment character:           D10V-Chars.
-* D10V opcode summary:                   D10V-Opcodes.
-* D10V optimization:                     Overview.
-* D10V options:                          D10V-Opts.
-* D10V registers:                        D10V-Regs.
-* D10V size modifiers:                   D10V-Size.
-* D10V sub-instruction ordering:         D10V-Chars.
-* D10V sub-instructions:                 D10V-Subs.
-* D10V support:                          D10V-Dependent.
-* D10V syntax:                           D10V-Syntax.
-* D30V addressing modes:                 D30V-Addressing.
-* D30V floating point:                   D30V-Float.
-* D30V Guarded Execution:                D30V-Guarded.
-* D30V line comment character:           D30V-Chars.
-* D30V nops:                             Overview.
-* D30V nops after 32-bit multiply:       Overview.
-* D30V opcode summary:                   D30V-Opcodes.
-* D30V optimization:                     Overview.
-* D30V options:                          D30V-Opts.
-* D30V registers:                        D30V-Regs.
-* D30V size modifiers:                   D30V-Size.
-* D30V sub-instruction ordering:         D30V-Chars.
-* D30V sub-instructions:                 D30V-Subs.
-* D30V support:                          D30V-Dependent.
-* D30V syntax:                           D30V-Syntax.
-* data alignment on SPARC:               Sparc-Aligned-Data.
-* data and text sections, joining:       R.
-* data directive:                        Data.
-* data section:                          Ld Sections.
-* data1 directive, M680x0:               M68K-Directives.
-* data2 directive, M680x0:               M68K-Directives.
-* dbpc register, V850:                   V850-Regs.
-* dbpsw register, V850:                  V850-Regs.
-* debuggers, and symbol order:           Symbols.
-* debugging COFF symbols:                Def.
-* decimal integers:                      Integers.
-* def directive:                         Def.
-* dependency tracking:                   MD.
-* deprecated directives:                 Deprecated.
-* desc directive:                        Desc.
-* descriptor, of a.out symbol:           Symbol Desc.
-* dfloat directive, VAX:                 VAX-directives.
-* difference tables altered:             Word.
-* difference tables, warning:            K.
-* dim directive:                         Dim.
-* directives and instructions:           Statements.
-* directives, M680x0:                    M68K-Directives.
-* directives, machine independent:       Pseudo Ops.
-* directives, Z8000:                     Z8000 Directives.
-* displacement sizing character, VAX:    VAX-operands.
-* dot (symbol):                          Dot.
-* double directive:                      Double.
-* double directive, i386:                i386-Float.
-* double directive, M680x0:              M68K-Float.
-* double directive, VAX:                 VAX-float.
-* doublequote (\"):                      Strings.
-* ECOFF sections:                        MIPS Object.
-* ecr register, V850:                    V850-Regs.
-* eight-byte integer:                    Quad.
-* eipc register, V850:                   V850-Regs.
-* eipsw register, V850:                  V850-Regs.
-* eject directive:                       Eject.
-* else directive:                        Else.
-* elseif directive:                      Elseif.
-* empty expressions:                     Empty Exprs.
-* emulation:                             Overview.
-* end directive:                         End.
-* endef directive:                       Endef.
-* endfunc directive:                     Endfunc.
-* endianness, ARC:                       Overview.
-* endianness, MIPS:                      Overview.
-* endianness, PJ:                        Overview.
-* endif directive:                       Endif.
-* endm directive:                        Macro.
-* EOF, newline must precede:             Statements.
-* ep register, V850:                     V850-Regs.
-* equ directive:                         Equ.
-* equiv directive:                       Equiv.
-* err directive:                         Err.
-* error messsages:                       Errors.
-* error on valid input:                  Bug Criteria.
-* errors, caused by warnings:            W.
-* errors, continuing after:              Z.
-* ESA/390 floating point (IEEE):         ESA/390 Floating Point.
-* ESA/390 support:                       ESA/390-Dependent.
-* ESA/390 Syntax:                        ESA/390 Options.
-* ESA/390-only directives:               ESA/390 Directives.
-* escape codes, character:               Strings.
-* even:                                  Z8000 Directives.
-* even directive, M680x0:                M68K-Directives.
-* exitm directive:                       Macro.
-* expr (internal section):               As Sections.
-* expression arguments:                  Arguments.
-* expressions:                           Expressions.
-* expressions, empty:                    Empty Exprs.
-* expressions, integer:                  Integer Exprs.
-* extend directive M680x0:               M68K-Float.
-* extended directive, i960:              Directives-i960.
-* extern directive:                      Extern.
-* fail directive:                        Fail.
-* faster processing (-f):                f.
-* fatal signal:                          Bug Criteria.
-* fepc register, V850:                   V850-Regs.
-* fepsw register, V850:                  V850-Regs.
-* ffloat directive, VAX:                 VAX-directives.
-* file directive:                        File.
-* file directive, AMD 29K:               AMD29K Directives.
-* file name, logical:                    File.
-* files, including:                      Include.
-* files, input:                          Input Files.
-* fill directive:                        Fill.
-* filling memory <1>:                    Space.
-* filling memory:                        Skip.
-* float directive:                       Float.
-* float directive, i386:                 i386-Float.
-* float directive, M680x0:               M68K-Float.
-* float directive, VAX:                  VAX-float.
-* floating point numbers:                Flonums.
-* floating point numbers (double):       Double.
-* floating point numbers (single) <1>:   Single.
-* floating point numbers (single):       Float.
-* floating point, AMD 29K (IEEE):        AMD29K Floating Point.
-* floating point, ARC (IEEE):            ARC-Float.
-* floating point, ARM (IEEE):            ARM Floating Point.
-* floating point, D10V:                  D10V-Float.
-* floating point, D30V:                  D30V-Float.
-* floating point, ESA/390 (IEEE):        ESA/390 Floating Point.
-* floating point, H8/300 (IEEE):         H8/300 Floating Point.
-* floating point, H8/500 (IEEE):         H8/500 Floating Point.
-* floating point, HPPA (IEEE):           HPPA Floating Point.
-* floating point, i386:                  i386-Float.
-* floating point, i960 (IEEE):           Floating Point-i960.
-* floating point, M680x0:                M68K-Float.
-* floating point, SH (IEEE):             SH Floating Point.
-* floating point, SPARC (IEEE):          Sparc-Float.
-* floating point, V850 (IEEE):           V850 Floating Point.
-* floating point, VAX:                   VAX-float.
-* flonums:                               Flonums.
-* force_thumb directive, ARM:            ARM Directives.
-* format of error messages:              Errors.
-* format of warning messages:            Errors.
-* formfeed (\f):                         Strings.
-* func directive:                        Func.
-* functions, in expressions:             Operators.
-* gbr960, i960 postprocessor:            Options-i960.
-* gfloat directive, VAX:                 VAX-directives.
-* global:                                Z8000 Directives.
-* global directive:                      Global.
-* gp register, MIPS:                     MIPS Object.
-* gp register, V850:                     V850-Regs.
-* grouping data:                         Sub-Sections.
-* H8/300 addressing modes:               H8/300-Addressing.
-* H8/300 floating point (IEEE):          H8/300 Floating Point.
-* H8/300 line comment character:         H8/300-Chars.
-* H8/300 line separator:                 H8/300-Chars.
-* H8/300 machine directives (none):      H8/300 Directives.
-* H8/300 opcode summary:                 H8/300 Opcodes.
-* H8/300 options (none):                 H8/300 Options.
-* H8/300 registers:                      H8/300-Regs.
-* H8/300 size suffixes:                  H8/300 Opcodes.
-* H8/300 support:                        H8/300-Dependent.
-* H8/300H, assembling for:               H8/300 Directives.
-* H8/500 addressing modes:               H8/500-Addressing.
-* H8/500 floating point (IEEE):          H8/500 Floating Point.
-* H8/500 line comment character:         H8/500-Chars.
-* H8/500 line separator:                 H8/500-Chars.
-* H8/500 machine directives (none):      H8/500 Directives.
-* H8/500 opcode summary:                 H8/500 Opcodes.
-* H8/500 options (none):                 H8/500 Options.
-* H8/500 registers:                      H8/500-Regs.
-* H8/500 support:                        H8/500-Dependent.
-* half directive, SPARC:                 Sparc-Directives.
-* hex character code (\XD...):           Strings.
-* hexadecimal integers:                  Integers.
-* hfloat directive, VAX:                 VAX-directives.
-* hi pseudo-op, V850:                    V850 Opcodes.
-* hi0 pseudo-op, V850:                   V850 Opcodes.
-* hidden directive:                      Visibility.
-* hilo pseudo-op, V850:                  V850 Opcodes.
-* HPPA directives not supported:         HPPA Directives.
-* HPPA floating point (IEEE):            HPPA Floating Point.
-* HPPA Syntax:                           HPPA Options.
-* HPPA-only directives:                  HPPA Directives.
-* hword directive:                       hword.
-* i370 support:                          ESA/390-Dependent.
-* i386 16-bit code:                      i386-16bit.
-* i386 conversion instructions:          i386-Mnemonics.
-* i386 floating point:                   i386-Float.
-* i386 immediate operands:               i386-Syntax.
-* i386 instruction naming:               i386-Mnemonics.
-* i386 instruction prefixes:             i386-Prefixes.
-* i386 jump optimization:                i386-jumps.
-* i386 jump, call, return:               i386-Syntax.
-* i386 jump/call operands:               i386-Syntax.
-* i386 memory references:                i386-Memory.
-* i386 mul, imul instructions:           i386-Notes.
-* i386 options (none):                   i386-Options.
-* i386 register operands:                i386-Syntax.
-* i386 registers:                        i386-Regs.
-* i386 sections:                         i386-Syntax.
-* i386 size suffixes:                    i386-Syntax.
-* i386 source, destination operands:     i386-Syntax.
-* i386 support:                          i386-Dependent.
-* i386 syntax compatibility:             i386-Syntax.
-* i80306 support:                        i386-Dependent.
-* i960 architecture options:             Options-i960.
-* i960 branch recording:                 Options-i960.
-* i960 callj pseudo-opcode:              callj-i960.
-* i960 compare and jump expansions:      Compare-and-branch-i960.
-* i960 compare/branch instructions:      Compare-and-branch-i960.
-* i960 floating point (IEEE):            Floating Point-i960.
-* i960 machine directives:               Directives-i960.
-* i960 opcodes:                          Opcodes for i960.
-* i960 options:                          Options-i960.
-* i960 support:                          i960-Dependent.
-* ident directive:                       Ident.
-* identifiers, AMD 29K:                  AMD29K-Chars.
-* identifiers, ARM:                      ARM-Chars.
-* if directive:                          If.
-* ifc directive:                         If.
-* ifdef directive:                       If.
-* ifeq directive:                        If.
-* ifeqs directive:                       If.
-* ifge directive:                        If.
-* ifgt directive:                        If.
-* ifle directive:                        If.
-* iflt directive:                        If.
-* ifnc directive:                        If.
-* ifndef directive:                      If.
-* ifne directive:                        If.
-* ifnes directive:                       If.
-* ifnotdef directive:                    If.
-* immediate character, ARM:              ARM-Chars.
-* immediate character, M680x0:           M68K-Chars.
-* immediate character, VAX:              VAX-operands.
-* immediate operands, i386:              i386-Syntax.
-* imul instruction, i386:                i386-Notes.
-* include directive:                     Include.
-* include directive search path:         I.
-* indirect character, VAX:               VAX-operands.
-* infix operators:                       Infix Ops.
-* inhibiting interrupts, i386:           i386-Prefixes.
-* input:                                 Input Files.
-* input file linenumbers:                Input Files.
-* instruction naming, i386:              i386-Mnemonics.
-* instruction prefixes, i386:            i386-Prefixes.
-* instruction set, M680x0:               M68K-opcodes.
-* instruction summary, D10V:             D10V-Opcodes.
-* instruction summary, D30V:             D30V-Opcodes.
-* instruction summary, H8/300:           H8/300 Opcodes.
-* instruction summary, H8/500:           H8/500 Opcodes.
-* instruction summary, SH:               SH Opcodes.
-* instruction summary, Z8000:            Z8000 Opcodes.
-* instructions and directives:           Statements.
-* int directive:                         Int.
-* int directive, H8/300:                 H8/300 Directives.
-* int directive, H8/500:                 H8/500 Directives.
-* int directive, i386:                   i386-Float.
-* integer expressions:                   Integer Exprs.
-* integer, 16-byte:                      Octa.
-* integer, 8-byte:                       Quad.
-* integers:                              Integers.
-* integers, 16-bit:                      hword.
-* integers, 32-bit:                      Int.
-* integers, binary:                      Integers.
-* integers, decimal:                     Integers.
-* integers, hexadecimal:                 Integers.
-* integers, octal:                       Integers.
-* integers, one byte:                    Byte.
-* internal assembler sections:           As Sections.
-* internal directive:                    Visibility.
-* invalid input:                         Bug Criteria.
-* invocation summary:                    Overview.
-* irp directive:                         Irp.
-* irpc directive:                        Irpc.
-* joining text and data sections:        R.
-* jump instructions, i386:               i386-Mnemonics.
-* jump optimization, i386:               i386-jumps.
-* jump/call operands, i386:              i386-Syntax.
-* label (:):                             Statements.
-* labels:                                Labels.
-* lcomm directive:                       Lcomm.
-* ld:                                    Object.
-* ldouble directive M680x0:              M68K-Float.
-* LDR reg,=<label> pseudo op, ARM:       ARM Opcodes.
-* leafproc directive, i960:              Directives-i960.
-* length of symbols:                     Symbol Intro.
-* lflags directive (ignored):            Lflags.
-* line comment character:                Comments.
-* line comment character, AMD 29K:       AMD29K-Chars.
-* line comment character, ARM:           ARM-Chars.
-* line comment character, D10V:          D10V-Chars.
-* line comment character, D30V:          D30V-Chars.
-* line comment character, H8/300:        H8/300-Chars.
-* line comment character, H8/500:        H8/500-Chars.
-* line comment character, M680x0:        M68K-Chars.
-* line comment character, SH:            SH-Chars.
-* line comment character, V850:          V850-Chars.
-* line comment character, Z8000:         Z8000-Chars.
-* line directive:                        Line.
-* line directive, AMD 29K:               AMD29K Directives.
-* line numbers, in input files:          Input Files.
-* line numbers, in warnings/errors:      Errors.
-* line separator character:              Statements.
-* line separator, ARM:                   ARM-Chars.
-* line separator, H8/300:                H8/300-Chars.
-* line separator, H8/500:                H8/500-Chars.
-* line separator, SH:                    SH-Chars.
-* line separator, Z8000:                 Z8000-Chars.
-* lines starting with #:                 Comments.
-* linker:                                Object.
-* linker, and assembler:                 Secs Background.
-* linkonce directive:                    Linkonce.
-* list directive:                        List.
-* listing control, turning off:          Nolist.
-* listing control, turning on:           List.
-* listing control: new page:             Eject.
-* listing control: paper size:           Psize.
-* listing control: subtitle:             Sbttl.
-* listing control: title line:           Title.
-* listings, enabling:                    a.
-* little endian output, ARC:             Overview.
-* little endian output, MIPS:            Overview.
-* little endian output, PJ:              Overview.
-* little-endian output, ARC:             ARC-Opts.
-* little-endian output, MIPS:            MIPS Opts.
-* ln directive:                          Ln.
-* lo pseudo-op, V850:                    V850 Opcodes.
-* local common symbols:                  Lcomm.
-* local labels, retaining in output:     L.
-* local symbol names:                    Symbol Names.
-* location counter:                      Dot.
-* location counter, advancing:           Org.
-* logical file name:                     File.
-* logical line number:                   Line.
-* logical line numbers:                  Comments.
-* long directive:                        Long.
-* long directive, i386:                  i386-Float.
-* lp register, V850:                     V850-Regs.
-* lval:                                  Z8000 Directives.
-* M680x0 addressing modes:               M68K-Syntax.
-* M680x0 architecture options:           M68K-Opts.
-* M680x0 branch improvement:             M68K-Branch.
-* M680x0 directives:                     M68K-Directives.
-* M680x0 floating point:                 M68K-Float.
-* M680x0 immediate character:            M68K-Chars.
-* M680x0 line comment character:         M68K-Chars.
-* M680x0 opcodes:                        M68K-opcodes.
-* M680x0 options:                        M68K-Opts.
-* M680x0 pseudo-opcodes:                 M68K-Branch.
-* M680x0 size modifiers:                 M68K-Syntax.
-* M680x0 support:                        M68K-Dependent.
-* M680x0 syntax:                         M68K-Syntax.
-* machine dependencies:                  Machine Dependencies.
-* machine directives, AMD 29K:           AMD29K Directives.
-* machine directives, ARC:               ARC-Directives.
-* machine directives, ARM:               ARM Directives.
-* machine directives, H8/300 (none):     H8/300 Directives.
-* machine directives, H8/500 (none):     H8/500 Directives.
-* machine directives, i960:              Directives-i960.
-* machine directives, SH:                SH Directives.
-* machine directives, SPARC:             Sparc-Directives.
-* machine directives, V850:              V850 Directives.
-* machine directives, VAX:               VAX-directives.
-* machine independent directives:        Pseudo Ops.
-* machine instructions (not covered):    Manual.
-* machine-independent syntax:            Syntax.
-* macro directive:                       Macro.
-* macros:                                Macro.
-* Macros, AMD 29K:                       AMD29K-Macros.
-* macros, count executed:                Macro.
-* make rules:                            MD.
-* manual, structure and purpose:         Manual.
-* memory references, i386:               i386-Memory.
-* merging text and data sections:        R.
-* messages from assembler:               Errors.
-* minus, permitted arguments:            Infix Ops.
-* MIPS architecture options:             MIPS Opts.
-* MIPS big-endian output:                MIPS Opts.
-* MIPS debugging directives:             MIPS Stabs.
-* MIPS ECOFF sections:                   MIPS Object.
-* MIPS endianness:                       Overview.
-* MIPS ISA:                              Overview.
-* MIPS ISA override:                     MIPS ISA.
-* MIPS little-endian output:             MIPS Opts.
-* MIPS option stack:                     MIPS option stack.
-* MIPS processor:                        MIPS-Dependent.
-* MIT:                                   M68K-Syntax.
-* MMX, i386:                             i386-SIMD.
-* mnemonic suffixes, i386:               i386-Syntax.
-* mnemonics for opcodes, VAX:            VAX-opcodes.
-* mnemonics, D10V:                       D10V-Opcodes.
-* mnemonics, D30V:                       D30V-Opcodes.
-* mnemonics, H8/300:                     H8/300 Opcodes.
-* mnemonics, H8/500:                     H8/500 Opcodes.
-* mnemonics, SH:                         SH Opcodes.
-* mnemonics, Z8000:                      Z8000 Opcodes.
-* Motorola syntax for the 680x0:         M68K-Moto-Syntax.
-* MRI compatibility mode:                M.
-* mri directive:                         MRI.
-* MRI mode, temporarily:                 MRI.
-* mul instruction, i386:                 i386-Notes.
-* name:                                  Z8000 Directives.
-* named section:                         Section.
-* named sections:                        Ld Sections.
-* names, symbol:                         Symbol Names.
-* naming object file:                    o.
-* new page, in listings:                 Eject.
-* newline (\n):                          Strings.
-* newline, required at file end:         Statements.
-* nolist directive:                      Nolist.
-* NOP pseudo op, ARM:                    ARM Opcodes.
-* null-terminated strings:               Asciz.
-* number constants:                      Numbers.
-* number of macros executed:             Macro.
-* numbered subsections:                  Sub-Sections.
-* numbers, 16-bit:                       hword.
-* numeric values:                        Expressions.
-* nword directive, SPARC:                Sparc-Directives.
-* object file:                           Object.
-* object file format:                    Object Formats.
-* object file name:                      o.
-* object file, after errors:             Z.
-* obsolescent directives:                Deprecated.
-* octa directive:                        Octa.
-* octal character code (\DDD):           Strings.
-* octal integers:                        Integers.
-* offset directive, V850:                V850 Directives.
-* opcode mnemonics, VAX:                 VAX-opcodes.
-* opcode summary, D10V:                  D10V-Opcodes.
-* opcode summary, D30V:                  D30V-Opcodes.
-* opcode summary, H8/300:                H8/300 Opcodes.
-* opcode summary, H8/500:                H8/500 Opcodes.
-* opcode summary, SH:                    SH Opcodes.
-* opcode summary, Z8000:                 Z8000 Opcodes.
-* opcodes for AMD 29K:                   AMD29K Opcodes.
-* opcodes for ARM:                       ARM Opcodes.
-* opcodes for V850:                      V850 Opcodes.
-* opcodes, i960:                         Opcodes for i960.
-* opcodes, M680x0:                       M68K-opcodes.
-* operand delimiters, i386:              i386-Syntax.
-* operand notation, VAX:                 VAX-operands.
-* operands in expressions:               Arguments.
-* operator precedence:                   Infix Ops.
-* operators, in expressions:             Operators.
-* operators, permitted arguments:        Infix Ops.
-* optimization, D10V:                    Overview.
-* optimization, D30V:                    Overview.
-* option summary:                        Overview.
-* options for AMD29K (none):             AMD29K Options.
-* options for ARC:                       ARC-Opts.
-* options for ARM (none):                ARM Options.
-* options for i386 (none):               i386-Options.
-* options for SPARC:                     Sparc-Opts.
-* options for V850 (none):               V850 Options.
-* options for VAX/VMS:                   VAX-Opts.
-* options, all versions of assembler:    Invoking.
-* options, command line:                 Command Line.
-* options, D10V:                         D10V-Opts.
-* options, D30V:                         D30V-Opts.
-* options, H8/300 (none):                H8/300 Options.
-* options, H8/500 (none):                H8/500 Options.
-* options, i960:                         Options-i960.
-* options, M680x0:                       M68K-Opts.
-* options, PJ:                           PJ Options.
-* options, SH (none):                    SH Options.
-* options, Z8000:                        Z8000 Options.
-* org directive:                         Org.
-* other attribute, of a.out symbol:      Symbol Other.
-* output file:                           Object.
-* p2align directive:                     P2align.
-* p2alignl directive:                    P2align.
-* p2alignw directive:                    P2align.
-* padding the location counter:          Align.
-* padding the location counter given a power of two: P2align.
-* padding the location counter given number of bytes: Balign.
-* page, in listings:                     Eject.
-* paper size, for listings:              Psize.
-* paths for .include:                    I.
-* patterns, writing in memory:           Fill.
-* PIC code generation for ARM:           ARM Options.
-* PJ endianness:                         Overview.
-* PJ options:                            PJ Options.
-* PJ support:                            PJ-Dependent.
-* plus, permitted arguments:             Infix Ops.
-* precedence of operators:               Infix Ops.
-* precision, floating point:             Flonums.
-* prefix operators:                      Prefix Ops.
-* prefixes, i386:                        i386-Prefixes.
-* preprocessing:                         Preprocessing.
-* preprocessing, turning on and off:     Preprocessing.
-* primary attributes, COFF symbols:      COFF Symbols.
-* print directive:                       Print.
-* proc directive, SPARC:                 Sparc-Directives.
-* protected directive:                   Visibility.
-* protected registers, AMD 29K:          AMD29K-Regs.
-* pseudo-opcodes, M680x0:                M68K-Branch.
-* pseudo-ops for branch, VAX:            VAX-branch.
-* pseudo-ops, machine independent:       Pseudo Ops.
-* psize directive:                       Psize.
-* psw register, V850:                    V850-Regs.
-* purgem directive:                      Purgem.
-* purpose of GNU assembler:              GNU Assembler.
-* quad directive:                        Quad.
-* quad directive, i386:                  i386-Float.
-* real-mode code, i386:                  i386-16bit.
-* register directive, SPARC:             Sparc-Directives.
-* register names, AMD 29K:               AMD29K-Regs.
-* register names, ARM:                   ARM-Regs.
-* register names, H8/300:                H8/300-Regs.
-* register names, V850:                  V850-Regs.
-* register names, VAX:                   VAX-operands.
-* register operands, i386:               i386-Syntax.
-* registers, D10V:                       D10V-Regs.
-* registers, D30V:                       D30V-Regs.
-* registers, H8/500:                     H8/500-Regs.
-* registers, i386:                       i386-Regs.
-* registers, SH:                         SH-Regs.
-* registers, Z8000:                      Z8000-Regs.
-* relocation:                            Sections.
-* relocation example:                    Ld Sections.
-* repeat prefixes, i386:                 i386-Prefixes.
-* reporting bugs in assembler:           Reporting Bugs.
-* rept directive:                        Rept.
-* req directive, ARM:                    ARM Directives.
-* reserve directive, SPARC:              Sparc-Directives.
-* return instructions, i386:             i386-Syntax.
-* rsect:                                 Z8000 Directives.
-* sbttl directive:                       Sbttl.
-* scl directive:                         Scl.
-* sdaoff pseudo-op, V850:                V850 Opcodes.
-* search path for .include:              I.
-* sect directive, AMD 29K:               AMD29K Directives.
-* section directive:                     Section.
-* section directive, V850:               V850 Directives.
-* section override prefixes, i386:       i386-Prefixes.
-* section-relative addressing:           Secs Background.
-* sections:                              Sections.
-* sections in messages, internal:        As Sections.
-* sections, i386:                        i386-Syntax.
-* sections, named:                       Ld Sections.
-* seg directive, SPARC:                  Sparc-Directives.
-* segm:                                  Z8000 Directives.
-* set directive:                         Set.
-* SH addressing modes:                   SH-Addressing.
-* SH floating point (IEEE):              SH Floating Point.
-* SH line comment character:             SH-Chars.
-* SH line separator:                     SH-Chars.
-* SH machine directives:                 SH Directives.
-* SH opcode summary:                     SH Opcodes.
-* SH options (none):                     SH Options.
-* SH registers:                          SH-Regs.
-* SH support:                            SH-Dependent.
-* short directive:                       Short.
-* SIMD, i386:                            i386-SIMD.
-* single character constant:             Chars.
-* single directive:                      Single.
-* single directive, i386:                i386-Float.
-* sixteen bit integers:                  hword.
-* sixteen byte integer:                  Octa.
-* size directive:                        Size.
-* size modifiers, D10V:                  D10V-Size.
-* size modifiers, D30V:                  D30V-Size.
-* size modifiers, M680x0:                M68K-Syntax.
-* size prefixes, i386:                   i386-Prefixes.
-* size suffixes, H8/300:                 H8/300 Opcodes.
-* sizes operands, i386:                  i386-Syntax.
-* skip directive:                        Skip.
-* skip directive, M680x0:                M68K-Directives.
-* skip directive, SPARC:                 Sparc-Directives.
-* sleb128 directive:                     Sleb128.
-* small objects, MIPS ECOFF:             MIPS Object.
-* SOM symbol attributes:                 SOM Symbols.
-* source program:                        Input Files.
-* source, destination operands; i386:    i386-Syntax.
-* sp register, V850:                     V850-Regs.
-* space directive:                       Space.
-* space used, maximum for assembly:      statistics.
-* SPARC architectures:                   Sparc-Opts.
-* SPARC data alignment:                  Sparc-Aligned-Data.
-* SPARC floating point (IEEE):           Sparc-Float.
-* SPARC machine directives:              Sparc-Directives.
-* SPARC options:                         Sparc-Opts.
-* SPARC support:                         Sparc-Dependent.
-* special characters, M680x0:            M68K-Chars.
-* special purpose registers, AMD 29K:    AMD29K-Regs.
-* stabd directive:                       Stab.
-* stabn directive:                       Stab.
-* stabs directive:                       Stab.
-* stabX directives:                      Stab.
-* standard assembler sections:           Secs Background.
-* standard input, as input file:         Command Line.
-* statement separator character:         Statements.
-* statement separator, ARM:              ARM-Chars.
-* statement separator, H8/300:           H8/300-Chars.
-* statement separator, H8/500:           H8/500-Chars.
-* statement separator, SH:               SH-Chars.
-* statement separator, Z8000:            Z8000-Chars.
-* statements, structure of:              Statements.
-* statistics, about assembly:            statistics.
-* stopping the assembly:                 Abort.
-* string constants:                      Strings.
-* string directive:                      String.
-* string directive on HPPA:              HPPA Directives.
-* string literals:                       Ascii.
-* string, copying to object file:        String.
-* struct directive:                      Struct.
-* structure debugging, COFF:             Tag.
-* sub-instruction ordering, D10V:        D10V-Chars.
-* sub-instruction ordering, D30V:        D30V-Chars.
-* sub-instructions, D10V:                D10V-Subs.
-* sub-instructions, D30V:                D30V-Subs.
-* subexpressions:                        Arguments.
-* subtitles for listings:                Sbttl.
-* subtraction, permitted arguments:      Infix Ops.
-* summary of options:                    Overview.
-* support:                               HPPA-Dependent.
-* supporting files, including:           Include.
-* suppressing warnings:                  W.
-* sval:                                  Z8000 Directives.
-* symbol attributes:                     Symbol Attributes.
-* symbol attributes, a.out:              a.out Symbols.
-* symbol attributes, COFF:               COFF Symbols.
-* symbol attributes, SOM:                SOM Symbols.
-* symbol descriptor, COFF:               Desc.
-* symbol names:                          Symbol Names.
-* symbol names, $ in <1>:                SH-Chars.
-* symbol names, $ in <2>:                H8/500-Chars.
-* symbol names, $ in <3>:                D30V-Chars.
-* symbol names, $ in:                    D10V-Chars.
-* symbol names, local:                   Symbol Names.
-* symbol names, temporary:               Symbol Names.
-* symbol storage class (COFF):           Scl.
-* symbol type:                           Symbol Type.
-* symbol type, COFF:                     Type.
-* symbol value:                          Symbol Value.
-* symbol value, setting:                 Set.
-* symbol values, assigning:              Setting Symbols.
-* symbol versioning:                     Symver.
-* symbol visibility:                     Visibility.
-* symbol, common:                        Comm.
-* symbol, making visible to linker:      Global.
-* symbolic debuggers, information for:   Stab.
-* symbols:                               Symbols.
-* symbols with uppercase, VAX/VMS:       VAX-Opts.
-* symbols, assigning values to:          Equ.
-* symbols, local common:                 Lcomm.
-* symver directive:                      Symver.
-* syntax compatibility, i386:            i386-Syntax.
-* syntax, D10V:                          D10V-Syntax.
-* syntax, D30V:                          D30V-Syntax.
-* syntax, M680x0:                        M68K-Syntax.
-* syntax, machine-independent:           Syntax.
-* sysproc directive, i960:               Directives-i960.
-* tab (\t):                              Strings.
-* tag directive:                         Tag.
-* tdaoff pseudo-op, V850:                V850 Opcodes.
-* temporary symbol names:                Symbol Names.
-* text and data sections, joining:       R.
-* text directive:                        Text.
-* text section:                          Ld Sections.
-* tfloat directive, i386:                i386-Float.
-* thumb directive, ARM:                  ARM Directives.
-* Thumb support:                         ARM-Dependent.
-* thumb_func directive, ARM:             ARM Directives.
-* thumb_set directive, ARM:              ARM Directives.
-* time, total for assembly:              statistics.
-* title directive:                       Title.
-* tp register, V850:                     V850-Regs.
-* trusted compiler:                      f.
-* turning preprocessing on and off:      Preprocessing.
-* type directive:                        Type.
-* type of a symbol:                      Symbol Type.
-* ualong directive, SH:                  SH Directives.
-* uaword directive, SH:                  SH Directives.
-* uleb128 directive:                     Uleb128.
-* undefined section:                     Ld Sections.
-* unsegm:                                Z8000 Directives.
-* use directive, AMD 29K:                AMD29K Directives.
-* V850 command line options:             V850 Options.
-* V850 floating point (IEEE):            V850 Floating Point.
-* V850 line comment character:           V850-Chars.
-* V850 machine directives:               V850 Directives.
-* V850 opcodes:                          V850 Opcodes.
-* V850 options (none):                   V850 Options.
-* V850 register names:                   V850-Regs.
-* V850 support:                          V850-Dependent.
-* val directive:                         Val.
-* value attribute, COFF:                 Val.
-* value of a symbol:                     Symbol Value.
-* VAX bitfields not supported:           VAX-no.
-* VAX branch improvement:                VAX-branch.
-* VAX command-line options ignored:      VAX-Opts.
-* VAX displacement sizing character:     VAX-operands.
-* VAX floating point:                    VAX-float.
-* VAX immediate character:               VAX-operands.
-* VAX indirect character:                VAX-operands.
-* VAX machine directives:                VAX-directives.
-* VAX opcode mnemonics:                  VAX-opcodes.
-* VAX operand notation:                  VAX-operands.
-* VAX register names:                    VAX-operands.
-* VAX support:                           Vax-Dependent.
-* Vax-11 C compatibility:                VAX-Opts.
-* VAX/VMS options:                       VAX-Opts.
-* version of assembler:                  v.
-* versions of symbols:                   Symver.
-* VMS (VAX) options:                     VAX-Opts.
-* warning for altered difference tables: K.
-* warning messages:                      Errors.
-* warnings, causing error:               W.
-* warnings, suppressing:                 W.
-* warnings, switching on:                W.
-* whitespace:                            Whitespace.
-* whitespace, removed by preprocessor:   Preprocessing.
-* wide floating point directives, VAX:   VAX-directives.
-* word directive:                        Word.
-* word directive, H8/300:                H8/300 Directives.
-* word directive, H8/500:                H8/500 Directives.
-* word directive, i386:                  i386-Float.
-* word directive, SPARC:                 Sparc-Directives.
-* writing patterns in memory:            Fill.
-* wval:                                  Z8000 Directives.
-* xword directive, SPARC:                Sparc-Directives.
-* Z800 addressing modes:                 Z8000-Addressing.
-* Z8000 directives:                      Z8000 Directives.
-* Z8000 line comment character:          Z8000-Chars.
-* Z8000 line separator:                  Z8000-Chars.
-* Z8000 opcode summary:                  Z8000 Opcodes.
-* Z8000 options:                         Z8000 Options.
-* Z8000 registers:                       Z8000-Regs.
-* Z8000 support:                         Z8000-Dependent.
-* zdaoff pseudo-op, V850:                V850 Opcodes.
-* zero register, V850:                   V850-Regs.
-* zero-terminated strings:               Asciz.
+   You can find contact information for many support companies and
+individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
 
+   In any event, we also recommend that you send bug reports for `as'
+to `bug-binutils@gnu.org'.
+
+   The fundamental principle of reporting bugs usefully is this:
+*report all the facts*.  If you are not sure whether to state a fact or
+leave it out, state it!
+
+   Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of a symbol you use in an example does not matter.
+Well, probably it does not, but one cannot be sure.  Perhaps the bug
+is a stray memory reference which happens to fetch from the location
+where that name is stored in memory; perhaps, if the name were
+different, the contents of that location would fool the assembler into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+   Keep in mind that the purpose of a bug report is to enable us to fix
+the bug if it is new to us.  Therefore, always write your bug reports
+on the assumption that the bug has not been reported previously.
+
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  Those bug reports are useless, and we urge everyone to _refuse
+to respond to them_ except to chide the sender to report bugs properly.
+
+   To enable us to fix the bug, you should include all these things:
+
+   * The version of `as'.  `as' announces it if you start it with the
+     `--version' argument.
+
+     Without this, we will not know whether there is any point in
+     looking for the bug in the current version of `as'.
+
+   * Any patches you may have applied to the `as' source.
+
+   * The type of machine you are using, and the operating system name
+     and version number.
+
+   * What compiler (and its version) was used to compile `as'--e.g.
+     "`gcc-2.7'".
+
+   * The command arguments you gave the assembler to assemble your
+     example and observe the bug.  To guarantee you will not omit
+     something important, list them all.  A copy of the Makefile (or
+     the output from make) is sufficient.
+
+     If we were to try to guess the arguments, we would probably guess
+     wrong and then we might not encounter the bug.
+
+   * A complete input file that will reproduce the bug.  If the bug is
+     observed when the assembler is invoked via a compiler, send the
+     assembler source, not the high level language source.  Most
+     compilers will produce the assembler source when run with the `-S'
+     option.  If you are using `gcc', use the options `-v
+     --save-temps'; this will save the assembler source in a file with
+     an extension of `.s', and also show you exactly how `as' is being
+     run.
+
+   * A description of what behavior you observe that you believe is
+     incorrect.  For example, "It gets a fatal signal."
+
+     Of course, if the bug is that `as' gets a fatal signal, then we
+     will certainly notice it.  But if the bug is incorrect output, we
+     might not notice unless it is glaringly wrong.  You might as well
+     not give us a chance to make a mistake.
+
+     Even if the problem you experience is a fatal signal, you should
+     still say so explicitly.  Suppose something strange is going on,
+     such as, your copy of `as' is out of synch, or you have
+     encountered a bug in the C library on your system.  (This has
+     happened!)  Your copy might crash and ours would not.  If you told
+     us to expect a crash, then when ours fails to crash, we would know
+     that the bug was not happening for us.  If you had not told us to
+     expect a crash, then we would not be able to draw any conclusion
+     from our observations.
+
+   * If you wish to suggest changes to the `as' source, send us context
+     diffs, as generated by `diff' with the `-u', `-c', or `-p' option.
+     Always send diffs from the old file to the new file.  If you even
+     discuss something in the `as' source, refer to it by context, not
+     by line number.
+
+     The line numbers in our development sources will not match those
+     in your sources.  Your line numbers would convey no useful
+     information to us.
+
+   Here are some things that are not necessary:
+
+   * A description of the envelope of the bug.
+
+     Often people who encounter a bug spend a lot of time investigating
+     which changes to the input file will make the bug go away and which
+     changes will not affect it.
+
+     This is often time consuming and not very useful, because the way
+     we will find the bug is by running a single example under the
+     debugger with breakpoints, not by pure deduction from a series of
+     examples.  We recommend that you save your time for something else.
+
+     Of course, if you can find a simpler example to report _instead_
+     of the original one, that is a convenience for us.  Errors in the
+     output will be easier to spot, running under the debugger will take
+     less time, and so on.
+
+     However, simplification is not vital; if you do not want to do
+     this, report the bug anyway and send us the entire test case you
+     used.
+
+   * A patch for the bug.
+
+     A patch for the bug does help us if it is a good one.  But do not
+     omit the necessary information, such as the test case, on the
+     assumption that a patch is all we need.  We might see problems
+     with your patch and decide to fix the problem another way, or we
+     might not understand it at all.
+
+     Sometimes with a program as complicated as `as' it is very hard to
+     construct an example that will make the program follow a certain
+     path through the code.  If you do not send us the example, we will
+     not be able to construct one, so we will not be able to verify
+     that the bug is fixed.
+
+     And if we cannot understand what bug you are trying to fix, or why
+     your patch should be an improvement, we will not install it.  A
+     test case will help us to understand.
+
+   * A guess about what the bug is or what it depends on.
+
+     Such guesses are usually wrong.  Even we cannot guess right about
+     such things without first using the debugger to find the facts.
+
+
+File: as.info,  Node: Acknowledgements,  Next: GNU Free Documentation License,  Prev: Reporting Bugs,  Up: Top
+
+Acknowledgements
+****************
+
+   If you have contributed to `as' and your name isn't listed here, it
+is not meant as a slight.  We just don't know about it.  Send mail to
+the maintainer, and we'll correct the situation.  Currently the
+maintainer is Ken Raeburn (email address `raeburn@cygnus.com').
+
+   Dean Elsner wrote the original GNU assembler for the VAX.(1)
+
+   Jay Fenlason maintained GAS for a while, adding support for
+GDB-specific debug information and the 68k series machines, most of the
+preprocessing pass, and extensive changes in `messages.c',
+`input-file.c', `write.c'.
+
+   K. Richard Pixley maintained GAS for a while, adding various
+enhancements and many bug fixes, including merging support for several
+processors, breaking GAS up to handle multiple object file format back
+ends (including heavy rewrite, testing, an integration of the coff and
+b.out back ends), adding configuration including heavy testing and
+verification of cross assemblers and file splits and renaming,
+converted GAS to strictly ANSI C including full prototypes, added
+support for m680[34]0 and cpu32, did considerable work on i960
+including a COFF port (including considerable amounts of reverse
+engineering), a SPARC opcode file rewrite, DECstation, rs6000, and
+hp300hpux host ports, updated "know" assertions and made them work,
+much other reorganization, cleanup, and lint.
+
+   Ken Raeburn wrote the high-level BFD interface code to replace most
+of the code in format-specific I/O modules.
+
+   The original VMS support was contributed by David L. Kashtan.  Eric
+Youngdale has done much work with it since.
+
+   The Intel 80386 machine description was written by Eliot Dresselhaus.
+
+   Minh Tran-Le at IntelliCorp contributed some AIX 386 support.
+
+   The Motorola 88k machine description was contributed by Devon Bowen
+of Buffalo University and Torbjorn Granlund of the Swedish Institute of
+Computer Science.
+
+   Keith Knowles at the Open Software Foundation wrote the original
+MIPS back end (`tc-mips.c', `tc-mips.h'), and contributed Rose format
+support (which hasn't been merged in yet).  Ralph Campbell worked with
+the MIPS code to support a.out format.
+
+   Support for the Zilog Z8k and Hitachi H8/300 and H8/500 processors
+(tc-z8k, tc-h8300, tc-h8500), and IEEE 695 object file format
+(obj-ieee), was written by Steve Chamberlain of Cygnus Support.  Steve
+also modified the COFF back end to use BFD for some low-level
+operations, for use with the H8/300 and AMD 29k targets.
+
+   John Gilmore built the AMD 29000 support, added `.include' support,
+and simplified the configuration of which versions accept which
+directives.  He updated the 68k machine description so that Motorola's
+opcodes always produced fixed-size instructions (e.g. `jsr'), while
+synthetic instructions remained shrinkable (`jbsr').  John fixed many
+bugs, including true tested cross-compilation support, and one bug in
+relaxation that took a week and required the proverbial one-bit fix.
+
+   Ian Lance Taylor of Cygnus Support merged the Motorola and MIT
+syntax for the 68k, completed support for some COFF targets (68k, i386
+SVR3, and SCO Unix), added support for MIPS ECOFF and ELF targets,
+wrote the initial RS/6000 and PowerPC assembler, and made a few other
+minor patches.
+
+   Steve Chamberlain made `as' able to generate listings.
+
+   Hewlett-Packard contributed support for the HP9000/300.
+
+   Jeff Law wrote GAS and BFD support for the native HPPA object format
+(SOM) along with a fairly extensive HPPA testsuite (for both SOM and
+ELF object formats).  This work was supported by both the Center for
+Software Science at the University of Utah and Cygnus Support.
+
+   Support for ELF format files has been worked on by Mark Eichin of
+Cygnus Support (original, incomplete implementation for SPARC), Pete
+Hoogenboom and Jeff Law at the University of Utah (HPPA mainly),
+Michael Meissner of the Open Software Foundation (i386 mainly), and Ken
+Raeburn of Cygnus Support (sparc, and some initial 64-bit support).
+
+   Linas Vepstas added GAS support for the ESA/390 "IBM 370"
+architecture.
+
+   Richard Henderson rewrote the Alpha assembler. Klaus Kaempf wrote
+GAS and BFD support for openVMS/Alpha.
+
+   Timothy Wall, Michael Hayes, and Greg Smart contributed to the
+various tic* flavors.
+
+   Several engineers at Cygnus Support have also provided many small
+bug fixes and configuration enhancements.
+
+   Many others have contributed large or small bugfixes and
+enhancements.  If you have contributed significant work and are not
+mentioned on this list, and want to be, let us know.  Some of the
+history has been lost; we are not intentionally leaving anyone out.
+
+   ---------- Footnotes ----------
+
+   (1) Any more details?
+
+
+File: as.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Acknowledgements,  Up: Top
+
+GNU Free Documentation License
+******************************
+
+   GNU Free Documentation License
+
+   Version 1.1, March 2000
+
+   Copyright (C) 2000  Free Software Foundation, Inc.    59 Temple
+Place, Suite 330, Boston, MA  02111-1307  USA
+
+   Everyone is permitted to copy and distribute verbatim copies  of
+this license document, but changing it is not allowed.
+
+   0. PREAMBLE
+
+   The purpose of this License is to make a manual, textbook, or other
+written document "free" in the sense of freedom: to assure everyone the
+effective freedom to copy and redistribute it, with or without
+modifying it, either commercially or noncommercially.  Secondarily,
+this License preserves for the author and publisher a way to get credit
+for their work, while not being considered responsible for
+modifications made by others.
+
+   This License is a kind of "copyleft", which means that derivative
+works of the document must themselves be free in the same sense.  It
+complements the GNU General Public License, which is a copyleft license
+designed for free software.
+
+   We have designed this License in order to use it for manuals for free
+software, because free software needs free documentation: a free
+program should come with manuals providing the same freedoms that the
+software does.  But this License is not limited to software manuals; it
+can be used for any textual work, regardless of subject matter or
+whether it is published as a printed book.  We recommend this License
+principally for works whose purpose is instruction or reference.
+
+   1. APPLICABILITY AND DEFINITIONS
+
+   This License applies to any manual or other work that contains a
+notice placed by the copyright holder saying it can be distributed
+under the terms of this License.  The "Document", below, refers to any
+such manual or work.  Any member of the public is a licensee, and is
+addressed as "you".
+
+   A "Modified Version" of the Document means any work containing the
+Document or a portion of it, either copied verbatim, or with
+modifications and/or translated into another language.
+
+   A "Secondary Section" is a named appendix or a front-matter section
+of the Document that deals exclusively with the relationship of the
+publishers or authors of the Document to the Document's overall subject
+(or to related matters) and contains nothing that could fall directly
+within that overall subject.  (For example, if the Document is in part a
+textbook of mathematics, a Secondary Section may not explain any
+mathematics.)  The relationship could be a matter of historical
+connection with the subject or with related matters, or of legal,
+commercial, philosophical, ethical or political position regarding them.
+
+   The "Invariant Sections" are certain Secondary Sections whose titles
+are designated, as being those of Invariant Sections, in the notice
+that says that the Document is released under this License.
+
+   The "Cover Texts" are certain short passages of text that are listed,
+as Front-Cover Texts or Back-Cover Texts, in the notice that says that
+the Document is released under this License.
+
+   A "Transparent" copy of the Document means a machine-readable copy,
+represented in a format whose specification is available to the general
+public, whose contents can be viewed and edited directly and
+straightforwardly with generic text editors or (for images composed of
+pixels) generic paint programs or (for drawings) some widely available
+drawing editor, and that is suitable for input to text formatters or
+for automatic translation to a variety of formats suitable for input to
+text formatters.  A copy made in an otherwise Transparent file format
+whose markup has been designed to thwart or discourage subsequent
+modification by readers is not Transparent.  A copy that is not
+"Transparent" is called "Opaque".
+
+   Examples of suitable formats for Transparent copies include plain
+ASCII without markup, Texinfo input format, LaTeX input format, SGML or
+XML using a publicly available DTD, and standard-conforming simple HTML
+designed for human modification.  Opaque formats include PostScript,
+PDF, proprietary formats that can be read and edited only by
+proprietary word processors, SGML or XML for which the DTD and/or
+processing tools are not generally available, and the machine-generated
+HTML produced by some word processors for output purposes only.
+
+   The "Title Page" means, for a printed book, the title page itself,
+plus such following pages as are needed to hold, legibly, the material
+this License requires to appear in the title page.  For works in
+formats which do not have any title page as such, "Title Page" means
+the text near the most prominent appearance of the work's title,
+preceding the beginning of the body of the text.
+
+   2. VERBATIM COPYING
+
+   You may copy and distribute the Document in any medium, either
+commercially or noncommercially, provided that this License, the
+copyright notices, and the license notice saying this License applies
+to the Document are reproduced in all copies, and that you add no other
+conditions whatsoever to those of this License.  You may not use
+technical measures to obstruct or control the reading or further
+copying of the copies you make or distribute.  However, you may accept
+compensation in exchange for copies.  If you distribute a large enough
+number of copies you must also follow the conditions in section 3.
+
+   You may also lend copies, under the same conditions stated above, and
+you may publicly display copies.
+
+   3. COPYING IN QUANTITY
+
+   If you publish printed copies of the Document numbering more than
+100, and the Document's license notice requires Cover Texts, you must
+enclose the copies in covers that carry, clearly and legibly, all these
+Cover Texts: Front-Cover Texts on the front cover, and Back-Cover Texts
+on the back cover.  Both covers must also clearly and legibly identify
+you as the publisher of these copies.  The front cover must present the
+full title with all words of the title equally prominent and visible.
+You may add other material on the covers in addition.  Copying with
+changes limited to the covers, as long as they preserve the title of
+the Document and satisfy these conditions, can be treated as verbatim
+copying in other respects.
+
+   If the required texts for either cover are too voluminous to fit
+legibly, you should put the first ones listed (as many as fit
+reasonably) on the actual cover, and continue the rest onto adjacent
+pages.
+
+   If you publish or distribute Opaque copies of the Document numbering
+more than 100, you must either include a machine-readable Transparent
+copy along with each Opaque copy, or state in or with each Opaque copy
+a publicly-accessible computer-network location containing a complete
+Transparent copy of the Document, free of added material, which the
+general network-using public has access to download anonymously at no
+charge using public-standard network protocols.  If you use the latter
+option, you must take reasonably prudent steps, when you begin
+distribution of Opaque copies in quantity, to ensure that this
+Transparent copy will remain thus accessible at the stated location
+until at least one year after the last time you distribute an Opaque
+copy (directly or through your agents or retailers) of that edition to
+the public.
+
+   It is requested, but not required, that you contact the authors of
+the Document well before redistributing any large number of copies, to
+give them a chance to provide you with an updated version of the
+Document.
+
+   4. MODIFICATIONS
+
+   You may copy and distribute a Modified Version of the Document under
+the conditions of sections 2 and 3 above, provided that you release the
+Modified Version under precisely this License, with the Modified
+Version filling the role of the Document, thus licensing distribution
+and modification of the Modified Version to whoever possesses a copy of
+it.  In addition, you must do these things in the Modified Version:
+
+   A. Use in the Title Page (and on the covers, if any) a title distinct
+  from that of the Document, and from those of previous versions
+(which should, if there were any, be listed in the History section
+of the Document).  You may use the same title as a previous version
+if the original publisher of that version gives permission.  B. List on
+the Title Page, as authors, one or more persons or entities
+responsible for authorship of the modifications in the Modified
+Version, together with at least five of the principal authors of the
+Document (all of its principal authors, if it has less than five).  C.
+State on the Title page the name of the publisher of the    Modified
+Version, as the publisher.  D. Preserve all the copyright notices of
+the Document.  E. Add an appropriate copyright notice for your
+modifications    adjacent to the other copyright notices.  F. Include,
+immediately after the copyright notices, a license notice    giving the
+public permission to use the Modified Version under the    terms of
+this License, in the form shown in the Addendum below.  G. Preserve in
+that license notice the full lists of Invariant Sections    and
+required Cover Texts given in the Document's license notice.  H.
+Include an unaltered copy of this License.  I. Preserve the section
+entitled "History", and its title, and add to    it an item stating at
+least the title, year, new authors, and    publisher of the Modified
+Version as given on the Title Page.  If    there is no section entitled
+"History" in the Document, create one    stating the title, year,
+authors, and publisher of the Document as    given on its Title Page,
+then add an item describing the Modified    Version as stated in the
+previous sentence.  J. Preserve the network location, if any, given in
+the Document for    public access to a Transparent copy of the
+Document, and likewise    the network locations given in the Document
+for previous versions    it was based on.  These may be placed in the
+"History" section.     You may omit a network location for a work that
+was published at    least four years before the Document itself, or if
+the original    publisher of the version it refers to gives permission.
+K. In any section entitled "Acknowledgements" or "Dedications",
+preserve the section's title, and preserve in the section all the
+substance and tone of each of the contributor acknowledgements
+and/or dedications given therein.  L. Preserve all the Invariant
+Sections of the Document,    unaltered in their text and in their
+titles.  Section numbers    or the equivalent are not considered part
+of the section titles.  M. Delete any section entitled "Endorsements".
+Such a section    may not be included in the Modified Version.  N. Do
+not retitle any existing section as "Endorsements"    or to conflict in
+title with any Invariant Section.
+
+   If the Modified Version includes new front-matter sections or
+appendices that qualify as Secondary Sections and contain no material
+copied from the Document, you may at your option designate some or all
+of these sections as invariant.  To do this, add their titles to the
+list of Invariant Sections in the Modified Version's license notice.
+These titles must be distinct from any other section titles.
+
+   You may add a section entitled "Endorsements", provided it contains
+nothing but endorsements of your Modified Version by various
+parties-for example, statements of peer review or that the text has
+been approved by an organization as the authoritative definition of a
+standard.
+
+   You may add a passage of up to five words as a Front-Cover Text, and
+a passage of up to 25 words as a Back-Cover Text, to the end of the list
+of Cover Texts in the Modified Version.  Only one passage of
+Front-Cover Text and one of Back-Cover Text may be added by (or through
+arrangements made by) any one entity.  If the Document already includes
+a cover text for the same cover, previously added by you or by
+arrangement made by the same entity you are acting on behalf of, you
+may not add another; but you may replace the old one, on explicit
+permission from the previous publisher that added the old one.
+
+   The author(s) and publisher(s) of the Document do not by this License
+give permission to use their names for publicity for or to assert or
+imply endorsement of any Modified Version.
+
+   5. COMBINING DOCUMENTS
+
+   You may combine the Document with other documents released under this
+License, under the terms defined in section 4 above for modified
+versions, provided that you include in the combination all of the
+Invariant Sections of all of the original documents, unmodified, and
+list them all as Invariant Sections of your combined work in its
+license notice.
+
+   The combined work need only contain one copy of this License, and
+multiple identical Invariant Sections may be replaced with a single
+copy.  If there are multiple Invariant Sections with the same name but
+different contents, make the title of each such section unique by
+adding at the end of it, in parentheses, the name of the original
+author or publisher of that section if known, or else a unique number.
+Make the same adjustment to the section titles in the list of Invariant
+Sections in the license notice of the combined work.
+
+   In the combination, you must combine any sections entitled "History"
+in the various original documents, forming one section entitled
+"History"; likewise combine any sections entitled "Acknowledgements",
+and any sections entitled "Dedications".  You must delete all sections
+entitled "Endorsements."
+
+   6. COLLECTIONS OF DOCUMENTS
+
+   You may make a collection consisting of the Document and other
+documents released under this License, and replace the individual
+copies of this License in the various documents with a single copy that
+is included in the collection, provided that you follow the rules of
+this License for verbatim copying of each of the documents in all other
+respects.
+
+   You may extract a single document from such a collection, and
+distribute it individually under this License, provided you insert a
+copy of this License into the extracted document, and follow this
+License in all other respects regarding verbatim copying of that
+document.
+
+   7. AGGREGATION WITH INDEPENDENT WORKS
+
+   A compilation of the Document or its derivatives with other separate
+and independent documents or works, in or on a volume of a storage or
+distribution medium, does not as a whole count as a Modified Version of
+the Document, provided no compilation copyright is claimed for the
+compilation.  Such a compilation is called an "aggregate", and this
+License does not apply to the other self-contained works thus compiled
+with the Document, on account of their being thus compiled, if they are
+not themselves derivative works of the Document.
+
+   If the Cover Text requirement of section 3 is applicable to these
+copies of the Document, then if the Document is less than one quarter
+of the entire aggregate, the Document's Cover Texts may be placed on
+covers that surround only the Document within the aggregate.  Otherwise
+they must appear on covers around the whole aggregate.
+
+   8. TRANSLATION
+
+   Translation is considered a kind of modification, so you may
+distribute translations of the Document under the terms of section 4.
+Replacing Invariant Sections with translations requires special
+permission from their copyright holders, but you may include
+translations of some or all Invariant Sections in addition to the
+original versions of these Invariant Sections.  You may include a
+translation of this License provided that you also include the original
+English version of this License.  In case of a disagreement between the
+translation and the original English version of this License, the
+original English version will prevail.
+
+   9. TERMINATION
+
+   You may not copy, modify, sublicense, or distribute the Document
+except as expressly provided for under this License.  Any other attempt
+to copy, modify, sublicense or distribute the Document is void, and will
+automatically terminate your rights under this License.  However,
+parties who have received copies, or rights, from you under this
+License will not have their licenses terminated so long as such parties
+remain in full compliance.
+
+   10. FUTURE REVISIONS OF THIS LICENSE
+
+   The Free Software Foundation may publish new, revised versions of
+the GNU Free Documentation License from time to time.  Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.  See
+http://www.gnu.org/copyleft/.
+
+   Each version of the License is given a distinguishing version number.
+If the Document specifies that a particular numbered version of this
+License "or any later version" applies to it, you have the option of
+following the terms and conditions either of that specified version or
+of any later version that has been published (not as a draft) by the
+Free Software Foundation.  If the Document does not specify a version
+number of this License, you may choose any version ever published (not
+as a draft) by the Free Software Foundation.
+
+   ADDENDUM: How to use this License for your documents
+
+   To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and license
+notices just after the title page:
+
+         Copyright (c)  YEAR  YOUR NAME.
+         Permission is granted to copy, distribute and/or modify this document
+         under the terms of the GNU Free Documentation License, Version 1.1
+         or any later version published by the Free Software Foundation;
+         with the Invariant Sections being LIST THEIR TITLES, with the
+         Front-Cover Texts being LIST, and with the Back-Cover Texts being LIST.
+         A copy of the license is included in the section entitled "GNU
+         Free Documentation License".
+
+   If you have no Invariant Sections, write "with no Invariant Sections"
+instead of saying which ones are invariant.  If you have no Front-Cover
+Texts, write "no Front-Cover Texts" instead of "Front-Cover Texts being
+LIST"; likewise for Back-Cover Texts.
+
+   If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License, to
+permit their use in free software.
 

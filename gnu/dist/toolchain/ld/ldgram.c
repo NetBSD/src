@@ -122,8 +122,8 @@
 #include "ldexp.h"
 #include "ldver.h"
 #include "ldlang.h"
-#include "ldemul.h"
 #include "ldfile.h"
+#include "ldemul.h"
 #include "ldmisc.h"
 #include "ldmain.h"
 #include "mri.h"
@@ -383,20 +383,20 @@ static const short yyrline[] = { 0,
    507,   512,   522,   524,   527,   529,   532,   535,   537,   539,
    541,   545,   553,   558,   561,   563,   565,   567,   569,   571,
    573,   578,   578,   582,   587,   595,   602,   603,   606,   610,
-   612,   613,   617,   619,   622,   630,   639,   642,   645,   647,
-   650,   653,   657,   662,   664,   668,   671,   676,   678,   681,
-   684,   687,   691,   696,   705,   716,   718,   721,   724,   726,
-   728,   730,   732,   735,   737,   739,   741,   743,   745,   747,
-   749,   751,   753,   755,   757,   759,   761,   763,   765,   767,
-   769,   771,   773,   775,   777,   780,   782,   784,   786,   788,
-   790,   792,   794,   796,   798,   803,   805,   808,   810,   813,
-   815,   817,   823,   824,   830,   830,   832,   835,   839,   841,
-   847,   847,   853,   857,   860,   862,   863,   864,   865,   868,
-   870,   871,   874,   876,   877,   882,   886,   888,   891,   894,
-   898,   901,   904,   909,   922,   924,   930,   932,   938,   940,
-   944,   946,   949,   951,   953,   959,   989,   994,  1006,  1013,
-  1018,  1026,  1032,  1040,  1044,  1050,  1052,  1055,  1060,  1066,
-  1071,  1077,  1082,  1086,  1090,  1094,  1100,  1105,  1109,  1114
+   612,   613,   617,   619,   624,   632,   641,   644,   647,   649,
+   652,   655,   659,   664,   666,   670,   673,   678,   680,   683,
+   686,   689,   693,   698,   707,   718,   720,   723,   726,   728,
+   730,   732,   734,   737,   739,   741,   743,   745,   747,   749,
+   751,   753,   755,   757,   759,   761,   763,   765,   767,   769,
+   771,   773,   775,   777,   779,   782,   784,   786,   788,   790,
+   792,   794,   796,   798,   800,   805,   807,   810,   812,   815,
+   817,   819,   825,   826,   832,   832,   834,   837,   841,   843,
+   849,   849,   855,   859,   862,   864,   865,   866,   867,   870,
+   872,   873,   876,   878,   879,   884,   888,   890,   893,   896,
+   900,   903,   906,   911,   924,   926,   932,   934,   940,   942,
+   946,   948,   951,   953,   955,   961,   991,   996,  1008,  1015,
+  1020,  1028,  1034,  1042,  1046,  1052,  1054,  1057,  1062,  1068,
+  1073,  1079,  1084,  1088,  1092,  1096,  1102,  1107,  1111,  1116
 };
 #endif
 
@@ -1956,14 +1956,14 @@ case 153:
 { region = lang_memory_region_lookup(yyvsp[0].name); ;
     break;}
 case 155:
-#line 624 "ldgram.y"
+#line 626 "ldgram.y"
 { region->current =
 		 region->origin =
 		 exp_get_vma(yyvsp[0].etree, 0L,"origin", lang_first_phase_enum);
 ;
     break;}
 case 156:
-#line 632 "ldgram.y"
+#line 634 "ldgram.y"
 { region->length = exp_get_vma(yyvsp[0].etree,
 					       ~((bfd_vma)0),
 					       "length",
@@ -1971,53 +1971,53 @@ case 156:
 		;
     break;}
 case 157:
-#line 641 "ldgram.y"
+#line 643 "ldgram.y"
 { /* dummy action to avoid bison 1.25 error message */ ;
     break;}
 case 161:
-#line 652 "ldgram.y"
+#line 654 "ldgram.y"
 { lang_set_flags (region, yyvsp[0].name, 0); ;
     break;}
 case 162:
-#line 654 "ldgram.y"
+#line 656 "ldgram.y"
 { lang_set_flags (region, yyvsp[0].name, 1); ;
     break;}
 case 163:
-#line 659 "ldgram.y"
+#line 661 "ldgram.y"
 { lang_startup(yyvsp[-1].name); ;
     break;}
 case 165:
-#line 665 "ldgram.y"
+#line 667 "ldgram.y"
 { ldemul_hll((char *)NULL); ;
     break;}
 case 166:
-#line 670 "ldgram.y"
-{ ldemul_hll(yyvsp[0].name); ;
-    break;}
-case 167:
 #line 672 "ldgram.y"
 { ldemul_hll(yyvsp[0].name); ;
     break;}
+case 167:
+#line 674 "ldgram.y"
+{ ldemul_hll(yyvsp[0].name); ;
+    break;}
 case 169:
-#line 680 "ldgram.y"
+#line 682 "ldgram.y"
 { ldemul_syslib(yyvsp[0].name); ;
     break;}
 case 171:
-#line 686 "ldgram.y"
+#line 688 "ldgram.y"
 { lang_float(true); ;
     break;}
 case 172:
-#line 688 "ldgram.y"
+#line 690 "ldgram.y"
 { lang_float(false); ;
     break;}
 case 173:
-#line 693 "ldgram.y"
+#line 695 "ldgram.y"
 {
 		  yyval.nocrossref = NULL;
 		;
     break;}
 case 174:
-#line 697 "ldgram.y"
+#line 699 "ldgram.y"
 {
 		  struct lang_nocrossref *n;
 
@@ -2028,7 +2028,7 @@ case 174:
 		;
     break;}
 case 175:
-#line 706 "ldgram.y"
+#line 708 "ldgram.y"
 {
 		  struct lang_nocrossref *n;
 
@@ -2039,191 +2039,191 @@ case 175:
 		;
     break;}
 case 176:
-#line 716 "ldgram.y"
+#line 718 "ldgram.y"
 { ldlex_expression(); ;
     break;}
 case 177:
-#line 718 "ldgram.y"
+#line 720 "ldgram.y"
 { ldlex_popstate(); yyval.etree=yyvsp[0].etree;;
     break;}
 case 178:
-#line 723 "ldgram.y"
+#line 725 "ldgram.y"
 { yyval.etree = exp_unop('-', yyvsp[0].etree); ;
     break;}
 case 179:
-#line 725 "ldgram.y"
+#line 727 "ldgram.y"
 { yyval.etree = yyvsp[-1].etree; ;
     break;}
 case 180:
-#line 727 "ldgram.y"
+#line 729 "ldgram.y"
 { yyval.etree = exp_unop((int) yyvsp[-3].integer,yyvsp[-1].etree); ;
     break;}
 case 181:
-#line 729 "ldgram.y"
+#line 731 "ldgram.y"
 { yyval.etree = exp_unop('!', yyvsp[0].etree); ;
     break;}
 case 182:
-#line 731 "ldgram.y"
+#line 733 "ldgram.y"
 { yyval.etree = yyvsp[0].etree; ;
     break;}
 case 183:
-#line 733 "ldgram.y"
+#line 735 "ldgram.y"
 { yyval.etree = exp_unop('~', yyvsp[0].etree);;
     break;}
 case 184:
-#line 736 "ldgram.y"
+#line 738 "ldgram.y"
 { yyval.etree = exp_binop('*', yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 185:
-#line 738 "ldgram.y"
+#line 740 "ldgram.y"
 { yyval.etree = exp_binop('/', yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 186:
-#line 740 "ldgram.y"
+#line 742 "ldgram.y"
 { yyval.etree = exp_binop('%', yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 187:
-#line 742 "ldgram.y"
+#line 744 "ldgram.y"
 { yyval.etree = exp_binop('+', yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 188:
-#line 744 "ldgram.y"
+#line 746 "ldgram.y"
 { yyval.etree = exp_binop('-' , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 189:
-#line 746 "ldgram.y"
+#line 748 "ldgram.y"
 { yyval.etree = exp_binop(LSHIFT , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 190:
-#line 748 "ldgram.y"
+#line 750 "ldgram.y"
 { yyval.etree = exp_binop(RSHIFT , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 191:
-#line 750 "ldgram.y"
+#line 752 "ldgram.y"
 { yyval.etree = exp_binop(EQ , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 192:
-#line 752 "ldgram.y"
+#line 754 "ldgram.y"
 { yyval.etree = exp_binop(NE , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 193:
-#line 754 "ldgram.y"
+#line 756 "ldgram.y"
 { yyval.etree = exp_binop(LE , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 194:
-#line 756 "ldgram.y"
+#line 758 "ldgram.y"
 { yyval.etree = exp_binop(GE , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 195:
-#line 758 "ldgram.y"
+#line 760 "ldgram.y"
 { yyval.etree = exp_binop('<' , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 196:
-#line 760 "ldgram.y"
+#line 762 "ldgram.y"
 { yyval.etree = exp_binop('>' , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 197:
-#line 762 "ldgram.y"
+#line 764 "ldgram.y"
 { yyval.etree = exp_binop('&' , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 198:
-#line 764 "ldgram.y"
+#line 766 "ldgram.y"
 { yyval.etree = exp_binop('^' , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 199:
-#line 766 "ldgram.y"
+#line 768 "ldgram.y"
 { yyval.etree = exp_binop('|' , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 200:
-#line 768 "ldgram.y"
+#line 770 "ldgram.y"
 { yyval.etree = exp_trinop('?' , yyvsp[-4].etree, yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 201:
-#line 770 "ldgram.y"
+#line 772 "ldgram.y"
 { yyval.etree = exp_binop(ANDAND , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 202:
-#line 772 "ldgram.y"
+#line 774 "ldgram.y"
 { yyval.etree = exp_binop(OROR , yyvsp[-2].etree, yyvsp[0].etree); ;
     break;}
 case 203:
-#line 774 "ldgram.y"
+#line 776 "ldgram.y"
 { yyval.etree = exp_nameop(DEFINED, yyvsp[-1].name); ;
     break;}
 case 204:
-#line 776 "ldgram.y"
+#line 778 "ldgram.y"
 { yyval.etree = exp_intop(yyvsp[0].integer); ;
     break;}
 case 205:
-#line 778 "ldgram.y"
+#line 780 "ldgram.y"
 { yyval.etree = exp_nameop(SIZEOF_HEADERS,0); ;
     break;}
 case 206:
-#line 781 "ldgram.y"
+#line 783 "ldgram.y"
 { yyval.etree = exp_nameop(SIZEOF,yyvsp[-1].name); ;
     break;}
 case 207:
-#line 783 "ldgram.y"
+#line 785 "ldgram.y"
 { yyval.etree = exp_nameop(ADDR,yyvsp[-1].name); ;
     break;}
 case 208:
-#line 785 "ldgram.y"
+#line 787 "ldgram.y"
 { yyval.etree = exp_nameop(LOADADDR,yyvsp[-1].name); ;
     break;}
 case 209:
-#line 787 "ldgram.y"
+#line 789 "ldgram.y"
 { yyval.etree = exp_unop(ABSOLUTE, yyvsp[-1].etree); ;
     break;}
 case 210:
-#line 789 "ldgram.y"
-{ yyval.etree = exp_unop(ALIGN_K,yyvsp[-1].etree); ;
-    break;}
-case 211:
 #line 791 "ldgram.y"
 { yyval.etree = exp_unop(ALIGN_K,yyvsp[-1].etree); ;
     break;}
-case 212:
+case 211:
 #line 793 "ldgram.y"
+{ yyval.etree = exp_unop(ALIGN_K,yyvsp[-1].etree); ;
+    break;}
+case 212:
+#line 795 "ldgram.y"
 { yyval.etree = exp_nameop(NAME,yyvsp[0].name); ;
     break;}
 case 213:
-#line 795 "ldgram.y"
+#line 797 "ldgram.y"
 { yyval.etree = exp_binop (MAX_K, yyvsp[-3].etree, yyvsp[-1].etree ); ;
     break;}
 case 214:
-#line 797 "ldgram.y"
+#line 799 "ldgram.y"
 { yyval.etree = exp_binop (MIN_K, yyvsp[-3].etree, yyvsp[-1].etree ); ;
     break;}
 case 215:
-#line 799 "ldgram.y"
+#line 801 "ldgram.y"
 { yyval.etree = exp_assert (yyvsp[-3].etree, yyvsp[-1].name); ;
     break;}
 case 216:
-#line 804 "ldgram.y"
+#line 806 "ldgram.y"
 { yyval.name = yyvsp[0].name; ;
     break;}
 case 217:
-#line 805 "ldgram.y"
+#line 807 "ldgram.y"
 { yyval.name = "*default*"; ;
     break;}
 case 218:
-#line 809 "ldgram.y"
+#line 811 "ldgram.y"
 { yyval.etree = yyvsp[-1].etree; ;
     break;}
 case 219:
-#line 810 "ldgram.y"
+#line 812 "ldgram.y"
 { yyval.etree = 0; ;
     break;}
 case 220:
-#line 813 "ldgram.y"
+#line 815 "ldgram.y"
 { ldlex_expression(); ;
     break;}
 case 221:
-#line 815 "ldgram.y"
+#line 817 "ldgram.y"
 { ldlex_popstate (); ldlex_script (); ;
     break;}
 case 222:
-#line 817 "ldgram.y"
+#line 819 "ldgram.y"
 {
 			  lang_enter_output_section_statement(yyvsp[-5].name, yyvsp[-3].etree,
 							      sectype,
@@ -2231,128 +2231,128 @@ case 222:
 			;
     break;}
 case 223:
-#line 823 "ldgram.y"
+#line 825 "ldgram.y"
 { ldlex_popstate (); ldlex_expression (); ;
     break;}
 case 224:
-#line 825 "ldgram.y"
+#line 827 "ldgram.y"
 {
 		  ldlex_popstate ();
 		  lang_leave_output_section_statement (yyvsp[0].integer, yyvsp[-3].name, yyvsp[-1].section_phdr, yyvsp[-2].name);
 		;
     break;}
 case 226:
-#line 831 "ldgram.y"
+#line 833 "ldgram.y"
 { ldlex_expression (); ;
     break;}
 case 227:
-#line 833 "ldgram.y"
+#line 835 "ldgram.y"
 { ldlex_popstate (); ldlex_script (); ;
     break;}
 case 228:
-#line 835 "ldgram.y"
+#line 837 "ldgram.y"
 {
 			  lang_enter_overlay (yyvsp[-4].etree, yyvsp[-2].etree, (int) yyvsp[-3].integer);
 			;
     break;}
 case 229:
-#line 840 "ldgram.y"
+#line 842 "ldgram.y"
 { ldlex_popstate (); ldlex_expression (); ;
     break;}
 case 230:
-#line 842 "ldgram.y"
+#line 844 "ldgram.y"
 {
 			  ldlex_popstate ();
 			  lang_leave_overlay (yyvsp[0].integer, yyvsp[-3].name, yyvsp[-1].section_phdr, yyvsp[-2].name);
 			;
     break;}
 case 232:
-#line 851 "ldgram.y"
+#line 853 "ldgram.y"
 { ldlex_expression (); ;
     break;}
 case 233:
-#line 853 "ldgram.y"
+#line 855 "ldgram.y"
 {
 		  ldlex_popstate ();
 		  lang_add_assignment (exp_assop ('=', ".", yyvsp[0].etree));
 		;
     break;}
 case 235:
-#line 861 "ldgram.y"
+#line 863 "ldgram.y"
 { sectype = noload_section; ;
     break;}
 case 236:
-#line 862 "ldgram.y"
+#line 864 "ldgram.y"
 { sectype = dsect_section; ;
     break;}
 case 237:
-#line 863 "ldgram.y"
+#line 865 "ldgram.y"
 { sectype = copy_section; ;
     break;}
 case 238:
-#line 864 "ldgram.y"
+#line 866 "ldgram.y"
 { sectype = info_section; ;
     break;}
 case 239:
-#line 865 "ldgram.y"
+#line 867 "ldgram.y"
 { sectype = overlay_section; ;
     break;}
 case 241:
-#line 870 "ldgram.y"
+#line 872 "ldgram.y"
 { sectype = normal_section; ;
     break;}
 case 242:
-#line 871 "ldgram.y"
+#line 873 "ldgram.y"
 { sectype = normal_section; ;
     break;}
 case 243:
-#line 875 "ldgram.y"
+#line 877 "ldgram.y"
 { yyval.etree = yyvsp[-2].etree; ;
     break;}
 case 244:
-#line 876 "ldgram.y"
+#line 878 "ldgram.y"
 { yyval.etree = (etree_type *)NULL;  ;
     break;}
 case 245:
-#line 881 "ldgram.y"
+#line 883 "ldgram.y"
 { yyval.etree = yyvsp[-3].etree; ;
     break;}
 case 246:
-#line 883 "ldgram.y"
+#line 885 "ldgram.y"
 { yyval.etree = yyvsp[-7].etree; ;
     break;}
 case 247:
-#line 887 "ldgram.y"
+#line 889 "ldgram.y"
 { yyval.etree = yyvsp[-1].etree; ;
     break;}
 case 248:
-#line 888 "ldgram.y"
+#line 890 "ldgram.y"
 { yyval.etree = (etree_type *) NULL;  ;
     break;}
 case 249:
-#line 893 "ldgram.y"
+#line 895 "ldgram.y"
 { yyval.integer = 0; ;
     break;}
 case 250:
-#line 895 "ldgram.y"
+#line 897 "ldgram.y"
 { yyval.integer = 1; ;
     break;}
 case 251:
-#line 900 "ldgram.y"
+#line 902 "ldgram.y"
 { yyval.name = yyvsp[0].name; ;
     break;}
 case 252:
-#line 901 "ldgram.y"
+#line 903 "ldgram.y"
 { yyval.name = "*default*"; ;
     break;}
 case 253:
-#line 906 "ldgram.y"
+#line 908 "ldgram.y"
 {
 		  yyval.section_phdr = NULL;
 		;
     break;}
 case 254:
-#line 910 "ldgram.y"
+#line 912 "ldgram.y"
 {
 		  struct lang_output_section_phdr_list *n;
 
@@ -2365,40 +2365,40 @@ case 254:
 		;
     break;}
 case 256:
-#line 926 "ldgram.y"
+#line 928 "ldgram.y"
 {
 			  ldlex_script ();
 			  lang_enter_overlay_section (yyvsp[0].name);
 			;
     break;}
 case 257:
-#line 931 "ldgram.y"
+#line 933 "ldgram.y"
 { ldlex_popstate (); ldlex_expression (); ;
     break;}
 case 258:
-#line 933 "ldgram.y"
+#line 935 "ldgram.y"
 {
 			  ldlex_popstate ();
 			  lang_leave_overlay_section (yyvsp[0].integer, yyvsp[-1].section_phdr);
 			;
     break;}
 case 263:
-#line 950 "ldgram.y"
+#line 952 "ldgram.y"
 { ldlex_expression (); ;
     break;}
 case 264:
-#line 951 "ldgram.y"
+#line 953 "ldgram.y"
 { ldlex_popstate (); ;
     break;}
 case 265:
-#line 953 "ldgram.y"
+#line 955 "ldgram.y"
 {
 		  lang_new_phdr (yyvsp[-5].name, yyvsp[-3].etree, yyvsp[-2].phdr.filehdr, yyvsp[-2].phdr.phdrs, yyvsp[-2].phdr.at,
 				 yyvsp[-2].phdr.flags);
 		;
     break;}
 case 266:
-#line 961 "ldgram.y"
+#line 963 "ldgram.y"
 {
 		  yyval.etree = yyvsp[0].etree;
 
@@ -2427,13 +2427,13 @@ case 266:
 		;
     break;}
 case 267:
-#line 991 "ldgram.y"
+#line 993 "ldgram.y"
 {
 		  memset (&yyval.phdr, 0, sizeof (struct phdr_info));
 		;
     break;}
 case 268:
-#line 995 "ldgram.y"
+#line 997 "ldgram.y"
 {
 		  yyval.phdr = yyvsp[0].phdr;
 		  if (strcmp (yyvsp[-2].name, "FILEHDR") == 0 && yyvsp[-1].etree == NULL)
@@ -2447,126 +2447,127 @@ case 268:
 		;
     break;}
 case 269:
-#line 1007 "ldgram.y"
+#line 1009 "ldgram.y"
 {
 		  yyval.phdr = yyvsp[0].phdr;
 		  yyval.phdr.at = yyvsp[-2].etree;
 		;
     break;}
 case 270:
-#line 1015 "ldgram.y"
+#line 1017 "ldgram.y"
 {
 		  yyval.etree = NULL;
 		;
     break;}
 case 271:
-#line 1019 "ldgram.y"
+#line 1021 "ldgram.y"
 {
 		  yyval.etree = yyvsp[-1].etree;
 		;
     break;}
 case 272:
-#line 1027 "ldgram.y"
+#line 1029 "ldgram.y"
 {
 		  ldlex_version_file ();
 		  PUSH_ERROR (_("VERSION script"));
 		;
     break;}
 case 273:
-#line 1032 "ldgram.y"
+#line 1034 "ldgram.y"
 {
 		  ldlex_popstate ();
 		  POP_ERROR ();
 		;
     break;}
 case 274:
-#line 1041 "ldgram.y"
+#line 1043 "ldgram.y"
 {
 		  ldlex_version_script ();
 		;
     break;}
 case 275:
-#line 1045 "ldgram.y"
+#line 1047 "ldgram.y"
 {
 		  ldlex_popstate ();
 		;
     break;}
 case 278:
-#line 1057 "ldgram.y"
+#line 1059 "ldgram.y"
 {
 		  lang_register_vers_node (yyvsp[-4].name, yyvsp[-2].versnode, NULL);
 		;
     break;}
 case 279:
-#line 1061 "ldgram.y"
+#line 1063 "ldgram.y"
 {
 		  lang_register_vers_node (yyvsp[-5].name, yyvsp[-3].versnode, yyvsp[-1].deflist);
 		;
     break;}
 case 280:
-#line 1068 "ldgram.y"
+#line 1070 "ldgram.y"
 {
 		  yyval.deflist = lang_add_vers_depend (NULL, yyvsp[0].name);
 		;
     break;}
 case 281:
-#line 1072 "ldgram.y"
+#line 1074 "ldgram.y"
 {
 		  yyval.deflist = lang_add_vers_depend (yyvsp[-1].deflist, yyvsp[0].name);
 		;
     break;}
 case 282:
-#line 1079 "ldgram.y"
+#line 1081 "ldgram.y"
 {
 		  yyval.versnode = lang_new_vers_node (NULL, NULL);
 		;
     break;}
 case 283:
-#line 1083 "ldgram.y"
+#line 1085 "ldgram.y"
 {
 		  yyval.versnode = lang_new_vers_node (yyvsp[-1].versyms, NULL);
 		;
     break;}
 case 284:
-#line 1087 "ldgram.y"
+#line 1089 "ldgram.y"
 {
 		  yyval.versnode = lang_new_vers_node (yyvsp[-1].versyms, NULL);
 		;
     break;}
 case 285:
-#line 1091 "ldgram.y"
+#line 1093 "ldgram.y"
 {
 		  yyval.versnode = lang_new_vers_node (NULL, yyvsp[-1].versyms);
 		;
     break;}
 case 286:
-#line 1095 "ldgram.y"
+#line 1097 "ldgram.y"
 {
 		  yyval.versnode = lang_new_vers_node (yyvsp[-5].versyms, yyvsp[-1].versyms);
 		;
     break;}
 case 287:
-#line 1102 "ldgram.y"
+#line 1104 "ldgram.y"
 {
 		  yyval.versyms = lang_new_vers_regex (NULL, yyvsp[0].name, ldgram_vers_current_lang);
 		;
     break;}
 case 288:
-#line 1106 "ldgram.y"
+#line 1108 "ldgram.y"
 {
 		  yyval.versyms = lang_new_vers_regex (yyvsp[-2].versyms, yyvsp[0].name, ldgram_vers_current_lang);
 		;
     break;}
 case 289:
-#line 1110 "ldgram.y"
+#line 1112 "ldgram.y"
 {
 			  yyval.name = ldgram_vers_current_lang;
 			  ldgram_vers_current_lang = yyvsp[-1].name;
 			;
     break;}
 case 290:
-#line 1115 "ldgram.y"
+#line 1117 "ldgram.y"
 {
+			  yyval.versyms = yyvsp[-1].versyms;
 			  ldgram_vers_current_lang = yyvsp[-2].name;
 			;
     break;}
@@ -2792,7 +2793,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 1120 "ldgram.y"
+#line 1123 "ldgram.y"
 
 void
 yyerror(arg) 

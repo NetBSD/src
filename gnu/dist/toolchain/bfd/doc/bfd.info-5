@@ -6,21 +6,70 @@ END-INFO-DIR-ENTRY
 
    This file documents the BFD library.
 
-   Copyright (C) 1991 Free Software Foundation, Inc.
+   Copyright (C) 1991, 2000 Free Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, subject to the
-terms of the GNU General Public License, which includes the provision
-that the entire resulting derived work is distributed under the terms
-of a permission notice identical to this one.
+
+File: bfd.info,  Node: Creating a Linker Hash Table,  Next: Adding Symbols to the Hash Table,  Prev: Linker Functions,  Up: Linker Functions
 
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+Creating a linker hash table
+----------------------------
+
+   The linker routines must create a hash table, which must be derived
+from `struct bfd_link_hash_table' described in `bfdlink.c'.  *Note Hash
+Tables::, for information on how to create a derived hash table.  This
+entry point is called using the target vector of the linker output file.
+
+   The `_bfd_link_hash_table_create' entry point must allocate and
+initialize an instance of the desired hash table.  If the back end does
+not require any additional information to be stored with the entries in
+the hash table, the entry point may simply create a `struct
+bfd_link_hash_table'.  Most likely, however, some additional
+information will be needed.
+
+   For example, with each entry in the hash table the a.out linker
+keeps the index the symbol has in the final output file (this index
+number is used so that when doing a relocateable link the symbol index
+used in the output file can be quickly filled in when copying over a
+reloc).  The a.out linker code defines the required structures and
+functions for a hash table derived from `struct bfd_link_hash_table'.
+The a.out linker hash table is created by the function
+`NAME(aout,link_hash_table_create)'; it simply allocates space for the
+hash table, initializes it, and returns a pointer to it.
+
+   When writing the linker routines for a new back end, you will
+generally not know exactly which fields will be required until you have
+finished.  You should simply create a new hash table which defines no
+additional fields, and then simply add fields as they become necessary.
+
+
+File: bfd.info,  Node: Adding Symbols to the Hash Table,  Next: Performing the Final Link,  Prev: Creating a Linker Hash Table,  Up: Linker Functions
+
+Adding symbols to the hash table
+--------------------------------
+
+   The linker proper will call the `_bfd_link_add_symbols' entry point
+for each object file or archive which is to be linked (typically these
+are the files named on the command line, but some may also come from
+the linker script).  The entry point is responsible for examining the
+file.  For an object file, BFD must add any relevant symbol information
+to the hash table.  For an archive, BFD must determine which elements
+of the archive should be used and adding them to the link.
+
+   The a.out version of this entry point is
+`NAME(aout,link_add_symbols)'.
+
+* Menu:
+
+* Differing file formats::
+* Adding symbols from an object file::
+* Adding symbols from an archive::
 
 
 File: bfd.info,  Node: Differing file formats,  Next: Adding symbols from an object file,  Prev: Adding Symbols to the Hash Table,  Up: Adding Symbols to the Hash Table
@@ -532,7 +581,7 @@ table, uses macros for the lookup and traversal routines.  These are
 `aout_link_hash_lookup' and `aout_link_hash_traverse' in aoutx.h.
 
 
-File: bfd.info,  Node: BFD back ends,  Next: Index,  Prev: BFD front end,  Up: Top
+File: bfd.info,  Node: BFD back ends,  Next: GNU Free Documentation License,  Prev: BFD front end,  Up: Top
 
 BFD back ends
 *************
@@ -680,7 +729,7 @@ the buffer RAW_BYTES ready for writing to disk.
    *Synopsis*
      const bfd_target *aout_SIZE_some_aout_object_p
         (bfd *abfd,
-         const bfd_target *(*callback_to_real_object_p)());
+         const bfd_target *(*callback_to_real_object_p) ());
    *Description*
 Some a.out variant thinks that the file open in ABFD checking is an
 a.out file.  Do some more checking, and set up for access if it really

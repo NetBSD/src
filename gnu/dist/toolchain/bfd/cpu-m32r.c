@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define NEXT NULL
 
-static const bfd_arch_info_type arch_info_struct[] = 
+static const bfd_arch_info_type arch_info_struct[] =
 {
   N (bfd_mach_m32rx, "m32rx", false, NULL)
 };
