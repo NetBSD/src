@@ -28,27 +28,37 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strncasecmp.c,v 1.1 1996/02/06 21:22:00 christos Exp $";
+static char *rcsid = "$Id: strncasecmp.c,v 1.2 1996/02/06 21:35:31 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 
 int
-strncasecmp(s1, s2, l)
+strncasecmp(s1, s2, n)
 	const char *s1;
 	const char *s2;
-	size_t l;
+	size_t n;
 {
-	while (--l >= 0) {
-		char c;
-		c = *s1++;
-		if (c != *s2) {
-			if (c >= 'A' && c <= 'Z' && c + ('a' - 'A') != *s2)
-				return 0;
-			if (c >= 'a' && c <= 'z' && c + ('A' - 'a') != *s2)
-				return 0;
+	if (n == 0)
+		return 0;
+
+	do {
+		unsigned char c1 = (unsigned char) *s1++;
+		unsigned char c2 = (unsigned char) *s2++;
+
+		if (c1 != c2) {
+			if (c1 >= 'A' && c1 <= 'Z' && 
+			    c2 >= 'a' && c2 <= 'z')
+				c1 += 'a' - 'A';
+			else if (c1 >= 'a' && c1 <= 'z' && 
+				 c2 >= 'A' && c2 <= 'Z')
+				c2 += 'a' - 'A';
+			if (c1 != c2)
+				return c1 - c2;
 		}
-		++s2;
-	}
-	return 1;
+		if (c1 == 0)
+			break;
+	} while (--n != 0);
+
+	return 0;
 }
