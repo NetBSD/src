@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.13 2000/03/30 11:31:27 augustss Exp $	*/
+/*	$NetBSD: db_input.c,v 1.14 2000/07/28 16:33:39 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -200,14 +200,24 @@ db_inputchar(c)
 		break;
 	    case CTRL('t'):
 		/* twiddle last 2 characters */
-		if (db_lc >= db_lbuf_start + 2) {
-		    c = db_lc[-2];
-		    db_lc[-2] = db_lc[-1];
-		    db_lc[-1] = c;
-		    cnputc(BACKUP);
-		    cnputc(BACKUP);
-		    cnputc(db_lc[-2]);
-		    cnputc(db_lc[-1]);
+		if (db_lc >= db_lbuf_start + 1) {
+		    if (db_lc < db_le) {
+			    c = db_lc[-1];
+			    db_lc[-1] = db_lc[0];
+			    db_lc[0] = c;
+			    cnputc(BACKUP);
+			    cnputc(db_lc[-1]);
+			    cnputc(db_lc[0]);
+			    db_lc++;
+		    } else if (db_lc >= db_lbuf_start + 2) {
+			    c = db_lc[-2];
+			    db_lc[-2] = db_lc[-1];
+			    db_lc[-1] = c;
+			    cnputc(BACKUP);
+			    cnputc(BACKUP);
+			    cnputc(db_lc[-2]);
+			    cnputc(db_lc[-1]);
+		    }
 		}
 		break;
 #if DDB_HISTORY_SIZE != 0
