@@ -1012,8 +1012,8 @@ the full distribution, but if you downloaded the "core" compiler plus
 any front ends, you must download the testsuites separately.
 
    Second, you must have the testing tools installed.  This includes
-DejaGnu 1.4.2 (or later), Tcl, and Expect; the DejaGnu site has links
-to these.
+DejaGnu 1.4.1 or 1.4.3 and later, Tcl, and Expect; the DejaGnu site has
+links to these.
 
    If the directories where `runtest' and `expect' were installed are
 not in the `PATH', you may need to set the following environment
@@ -3798,92 +3798,92 @@ Ref: with-as19391
 Ref: with-gnu-ld20352
 Node: Building34125
 Node: Testing43369
-Node: Final install48752
-Node: Binaries53438
-Node: Specific55186
-Ref: alpha*-*-*55469
-Ref: alpha*-dec-osf*55961
-Ref: alphaev5-cray-unicosmk*59646
-Ref: arc-*-elf60596
-Ref: arm-*-aout60699
-Ref: arm-*-elf61116
-Ref: arm*-*-linux-gnu61194
-Ref: avr61272
-Ref: c4x61955
-Ref: cris62556
-Ref: dos63541
-Ref: dsp16xx63867
-Ref: *-*-freebsd*63937
-Ref: h8300-hms66107
-Ref: hppa*-hp-hpux*66462
-Ref: hppa*-hp-hpux967811
-Ref: hppa*-hp-hpux1068391
-Ref: hppa*-hp-hpux1169102
-Ref: i370-*-*73752
-Ref: *-*-linux-gnu73892
-Ref: ix86-*-linux*aout74884
-Ref: ix86-*-linux*75097
-Ref: ix86-*-sco75414
-Ref: ix86-*-sco3.2v475581
-Ref: ix86-*-sco3.2v5*75672
-Ref: ix86-*-udk78858
-Ref: ia64-*-linux80225
-Ref: ia64-*-hpux*81216
-Ref: *-lynx-lynxos81648
-Ref: *-ibm-aix*82128
-Ref: ip2k-*-elf87156
-Ref: m32r-*-elf87390
-Ref: m68000-hp-bsd87495
-Ref: m6811-elf87754
-Ref: m6812-elf87907
-Ref: m68k-att-sysv88060
-Ref: m68k-crds-unos88423
-Ref: m68k-hp-hpux89887
-Ref: m68k-ncr-*91903
-Ref: m68k-sun92301
-Ref: m68k-sun-sunos4.1.192565
-Ref: mips-*-*92732
-Ref: mips-sgi-irix593596
-Ref: mips-sgi-irix695580
-Ref: powerpc*-*-*99369
-Ref: powerpc-*-darwin*99517
-Ref: powerpc-*-elf100465
-Ref: powerpc-*-linux-gnu*100587
-Ref: powerpc-*-netbsd*100698
-Ref: powerpc-*-eabiaix100897
-Ref: powerpc-*-eabisim101024
-Ref: powerpc-*-eabi101153
-Ref: powerpcle-*-elf101232
-Ref: powerpcle-*-eabisim101365
-Ref: powerpcle-*-eabi101501
-Ref: s390-*-linux*101587
-Ref: s390x-*-linux*101658
-Ref: *-*-solaris2*101744
-Ref: sparc-sun-solaris2*104202
-Ref: sparc-sun-solaris2.7105538
-Ref: sparc-sun-sunos4*107611
-Ref: sparc-unknown-linux-gnulibc1108278
-Ref: sparc-*-linux*108479
-Ref: sparc64-*-solaris2*108707
-Ref: sparcv9-*-solaris2*109086
-Ref: #*-*-sysv*109174
-Ref: vax-dec-ultrix110138
-Ref: xtensa-*-elf110293
-Ref: xtensa-*-linux*110975
-Ref: windows111316
-Ref: os2111643
-Ref: older111969
-Ref: elf_targets114097
-Node: Old114358
-Node: Configurations117733
-Node: Cross-Compiler121933
-Node: Steps of Cross123690
-Node: Configure Cross124815
-Node: Tools and Libraries125459
-Node: Cross Headers127905
-Node: Build Cross129920
-Node: VMS Install130887
-Node: GNU Free Documentation License140427
-Node: Concept Index162840
+Node: Final install48760
+Node: Binaries53446
+Node: Specific55194
+Ref: alpha*-*-*55477
+Ref: alpha*-dec-osf*55969
+Ref: alphaev5-cray-unicosmk*59654
+Ref: arc-*-elf60604
+Ref: arm-*-aout60707
+Ref: arm-*-elf61124
+Ref: arm*-*-linux-gnu61202
+Ref: avr61280
+Ref: c4x61963
+Ref: cris62564
+Ref: dos63549
+Ref: dsp16xx63875
+Ref: *-*-freebsd*63945
+Ref: h8300-hms66115
+Ref: hppa*-hp-hpux*66470
+Ref: hppa*-hp-hpux967819
+Ref: hppa*-hp-hpux1068399
+Ref: hppa*-hp-hpux1169110
+Ref: i370-*-*73760
+Ref: *-*-linux-gnu73900
+Ref: ix86-*-linux*aout74892
+Ref: ix86-*-linux*75105
+Ref: ix86-*-sco75422
+Ref: ix86-*-sco3.2v475589
+Ref: ix86-*-sco3.2v5*75680
+Ref: ix86-*-udk78866
+Ref: ia64-*-linux80233
+Ref: ia64-*-hpux*81224
+Ref: *-lynx-lynxos81656
+Ref: *-ibm-aix*82136
+Ref: ip2k-*-elf87164
+Ref: m32r-*-elf87398
+Ref: m68000-hp-bsd87503
+Ref: m6811-elf87762
+Ref: m6812-elf87915
+Ref: m68k-att-sysv88068
+Ref: m68k-crds-unos88431
+Ref: m68k-hp-hpux89895
+Ref: m68k-ncr-*91911
+Ref: m68k-sun92309
+Ref: m68k-sun-sunos4.1.192573
+Ref: mips-*-*92740
+Ref: mips-sgi-irix593604
+Ref: mips-sgi-irix695588
+Ref: powerpc*-*-*99377
+Ref: powerpc-*-darwin*99525
+Ref: powerpc-*-elf100473
+Ref: powerpc-*-linux-gnu*100595
+Ref: powerpc-*-netbsd*100706
+Ref: powerpc-*-eabiaix100905
+Ref: powerpc-*-eabisim101032
+Ref: powerpc-*-eabi101161
+Ref: powerpcle-*-elf101240
+Ref: powerpcle-*-eabisim101373
+Ref: powerpcle-*-eabi101509
+Ref: s390-*-linux*101595
+Ref: s390x-*-linux*101666
+Ref: *-*-solaris2*101752
+Ref: sparc-sun-solaris2*104210
+Ref: sparc-sun-solaris2.7105546
+Ref: sparc-sun-sunos4*107619
+Ref: sparc-unknown-linux-gnulibc1108286
+Ref: sparc-*-linux*108487
+Ref: sparc64-*-solaris2*108715
+Ref: sparcv9-*-solaris2*109094
+Ref: #*-*-sysv*109182
+Ref: vax-dec-ultrix110146
+Ref: xtensa-*-elf110301
+Ref: xtensa-*-linux*110983
+Ref: windows111324
+Ref: os2111651
+Ref: older111977
+Ref: elf_targets114105
+Node: Old114366
+Node: Configurations117741
+Node: Cross-Compiler121941
+Node: Steps of Cross123698
+Node: Configure Cross124823
+Node: Tools and Libraries125467
+Node: Cross Headers127913
+Node: Build Cross129928
+Node: VMS Install130895
+Node: GNU Free Documentation License140435
+Node: Concept Index162848
 
 End Tag Table

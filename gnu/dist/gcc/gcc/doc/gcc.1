@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCC 1"
-.TH GCC 1 "2003-07-20" "gcc-3.3.1" "GNU"
+.TH GCC 1 "2003-08-04" "gcc-3.3.1" "GNU"
 .SH "NAME"
 gcc \- GNU project C and C++ compiler
 .SH "SYNOPSIS"
@@ -1462,13 +1462,13 @@ Instantiations of these templates may be mangled incorrectly.
 .RE
 .IP "\fB\-Wctor\-dtor\-privacy\fR (\*(C+ only)" 4
 .IX Item "-Wctor-dtor-privacy ( only)"
-Warn when a class seems unusable, because all the constructors or
-destructors in a class are private and the class has no friends or
+Warn when a class seems unusable because all the constructors or
+destructors in that class are private, and it has neither friends nor
 public static member functions.  This warning is enabled by default.
 .IP "\fB\-Wnon\-virtual\-dtor\fR (\*(C+ only)" 4
 .IX Item "-Wnon-virtual-dtor ( only)"
-Warn when a class declares a non-virtual destructor that should probably
-be virtual, because it looks like the class will be used polymorphically.
+Warn when a class appears to be polymorphic, thereby requiring a virtual
+destructor, yet it declares a non-virtual one.
 This warning is enabled by \fB\-Wall\fR.
 .IP "\fB\-Wreorder\fR (\*(C+ only)" 4
 .IX Item "-Wreorder ( only)"
@@ -1483,9 +1483,9 @@ match the order in which they must be executed.  For instance:
 \&        };
 .Ve
 .Sp
-Here the compiler will warn that the member initializers for \fBi\fR
-and \fBj\fR will be rearranged to match the declaration order of the
-members.  This warning is enabled by \fB\-Wall\fR.
+The compiler will rearrange the member initializers for \fBi\fR
+and \fBj\fR to match the declaration order of the members, emitting
+a warning to that effect.  This warning is enabled by \fB\-Wall\fR.
 .PP
 The following \fB\-W...\fR options are not affected by \fB\-Wall\fR.
 .IP "\fB\-Weffc++\fR (\*(C+ only)" 4
@@ -1507,8 +1507,8 @@ Item 23:  Don't try to return a reference when you must return an object.
 .RE
 .RS 4
 .Sp
-and about violations of the following style guidelines from Scott Meyers'
-\&\fIMore Effective \*(C+\fR book:
+Also warn about violations of the following style guidelines from 
+Scott Meyers' \fIMore Effective \*(C+\fR book:
 .IP "\(bu" 4
 Item 6:  Distinguish between prefix and postfix forms of increment and
 decrement operators.
@@ -1517,8 +1517,8 @@ Item 7:  Never overload \f(CW\*(C`&&\*(C'\fR, \f(CW\*(C`||\*(C'\fR, or \f(CW\*(C
 .RE
 .RS 4
 .Sp
-If you use this option, you should be aware that the standard library
-headers do not obey all of these guidelines; you can use \fBgrep \-v\fR
+When selecting this option, be aware that the standard library
+headers do not obey all of these guidelines; use \fBgrep \-v\fR
 to filter out those warnings.
 .RE
 .IP "\fB\-Wno\-deprecated\fR (\*(C+ only)" 4
@@ -1527,7 +1527,7 @@ Do not warn about usage of deprecated features.
 .IP "\fB\-Wno\-non\-template\-friend\fR (\*(C+ only)" 4
 .IX Item "-Wno-non-template-friend ( only)"
 Disable warnings when non-templatized friend functions are declared
-within a template.  With the advent of explicit template specification
+within a template.  Since the advent of explicit template specification
 support in G++, if the name of the friend is an unqualified-id (i.e.,
 \&\fBfriend foo(int)\fR), the \*(C+ language specification demands that the
 friend declare or define an ordinary, nontemplate function.  (Section
@@ -1535,7 +1535,7 @@ friend declare or define an ordinary, nontemplate function.  (Section
 could be interpreted as a particular specialization of a templatized
 function.  Because this non-conforming behavior is no longer the default
 behavior for G++, \fB\-Wnon\-template\-friend\fR allows the compiler to
-check existing code for potential trouble spots, and is on by default.
+check existing code for potential trouble spots and is on by default.
 This new compiler behavior can be turned off with
 \&\fB\-Wno\-non\-template\-friend\fR which keeps the conformant compiler code
 but disables the helpful warning.
@@ -1544,7 +1544,7 @@ but disables the helpful warning.
 Warn if an old-style (C\-style) cast to a non-void type is used within
 a \*(C+ program.  The new-style casts (\fBstatic_cast\fR,
 \&\fBreinterpret_cast\fR, and \fBconst_cast\fR) are less vulnerable to
-unintended effects, and much easier to grep for.
+unintended effects and much easier to search for.
 .IP "\fB\-Woverloaded\-virtual\fR (\*(C+ only)" 4
 .IX Item "-Woverloaded-virtual ( only)"
 Warn when a function declaration hides virtual functions from a
@@ -1563,7 +1563,7 @@ base class.  For example, in:
 .Ve
 .Sp
 the \f(CW\*(C`A\*(C'\fR class version of \f(CW\*(C`f\*(C'\fR is hidden in \f(CW\*(C`B\*(C'\fR, and code
-like this:
+like:
 .Sp
 .Vb 2
 \&        B* b;
@@ -1578,7 +1578,7 @@ to a plain pointer.
 .IP "\fB\-Wsign\-promo\fR (\*(C+ only)" 4
 .IX Item "-Wsign-promo ( only)"
 Warn when overload resolution chooses a promotion from unsigned or
-enumeral type to a signed type over a conversion to an unsigned type of
+enumeral type to a signed type, over a conversion to an unsigned type of
 the same size.  Previous versions of G++ would try to preserve
 unsignedness, but the standard mandates the current behavior.
 .IP "\fB\-Wsynth\fR (\*(C+ only)" 4
@@ -1606,7 +1606,7 @@ In this example, G++ will synthesize a default \fBA& operator =
 .Sh "Options Controlling Objective-C Dialect"
 .IX Subsection "Options Controlling Objective-C Dialect"
 This section describes the command-line options that are only meaningful
-for Objective-C programs; but you can also use most of the \s-1GNU\s0 compiler
+for Objective-C programs, but you can also use most of the \s-1GNU\s0 compiler
 options regardless of what language your program is in.  For example,
 you might compile a file \f(CW\*(C`some_class.m\*(C'\fR like this:
 .PP
@@ -1614,7 +1614,7 @@ you might compile a file \f(CW\*(C`some_class.m\*(C'\fR like this:
 \&        gcc -g -fgnu-runtime -O -c some_class.m
 .Ve
 .PP
-In this example, only \fB\-fgnu\-runtime\fR is an option meant only for
+In this example, \fB\-fgnu\-runtime\fR is an option meant only for
 Objective-C programs; you can use the other options with any language
 supported by \s-1GCC\s0.
 .PP
@@ -1653,8 +1653,8 @@ and no warning is issued for them.
 Warn if multiple methods of different types for the same selector are
 found during compilation.  The check is performed on the list of methods
 in the final stage of compilation.  Additionally, a check is performed
-that for each selector appearing in a \f(CW\*(C`@selector(...)\*(C'\fR
-expression, a corresponding method with that selector has been found
+for each selector appearing in a \f(CW\*(C`@selector(...)\*(C'\fR
+expression, and a corresponding method for that selector has been found
 during compilation.  Because these checks scan the method table only at
 the end of compilation, these warnings are not produced if the final
 stage of compilation is not reached, for example because an error is
@@ -1664,13 +1664,13 @@ being used.
 .IX Item "-Wundeclared-selector"
 Warn if a \f(CW\*(C`@selector(...)\*(C'\fR expression referring to an
 undeclared selector is found.  A selector is considered undeclared if no
-method with that name has been declared (explicitly, in an
-\&\f(CW@interface\fR or \f(CW@protocol\fR declaration, or implicitly, in
-an \f(CW@implementation\fR section) before the
-\&\f(CW\*(C`@selector(...)\*(C'\fR expression.  This option always performs its
-checks as soon as a \f(CW\*(C`@selector(...)\*(C'\fR expression is found
-(while \f(CW\*(C`\-Wselector\*(C'\fR only performs its checks in the final stage of
-compilation), and so additionally enforces the coding style convention
+method with that name has been declared before the 
+\&\f(CW\*(C`@selector(...)\*(C'\fR expression, either explicitly in an
+\&\f(CW@interface\fR or \f(CW@protocol\fR declaration, or implicitly in
+an \f(CW@implementation\fR section.  This option always performs its
+checks as soon as a \f(CW\*(C`@selector(...)\*(C'\fR expression is found,
+while \f(CW\*(C`\-Wselector\*(C'\fR only performs its checks in the final stage of
+compilation.  This also enforces the coding style convention
 that methods and selectors must be declared before being used.
 .Sh "Options to Control Diagnostic Messages Formatting"
 .IX Subsection "Options to Control Diagnostic Messages Formatting"
@@ -8514,11 +8514,11 @@ option is on by default if you optimize.
 .IP "\fB\-mprolog\-function\fR" 4
 .IX Item "-mprolog-function"
 .PD
-Do not use (do use) external functions to save and restore registers at
-the prolog and epilog of a function.  The external functions are slower,
-but use less code space if more than one function saves the same number
-of registers.  The \fB\-mprolog\-function\fR option is on by default if
-you optimize.
+Do not use (do use) external functions to save and restore registers
+at the prologue and epilogue of a function.  The external functions
+are slower, but use less code space if more than one function saves
+the same number of registers.  The \fB\-mprolog\-function\fR option
+is on by default if you optimize.
 .IP "\fB\-mspace\fR" 4
 .IX Item "-mspace"
 Try to make the code as small as possible.  At present, this just turns
