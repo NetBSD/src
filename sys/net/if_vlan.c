@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.7 2000/09/28 08:28:56 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.8 2000/09/28 10:02:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
  *
  *	- Need some way to notify vlan interfaces when the parent
  *	  interface changes MTU.
+ *
+ *	- Need a way to facilitate parent interfaces that can do
+ *	  tag insertion and/or extraction in hardware.
  *
  *	- Need to make promiscuous mode work.
  */
