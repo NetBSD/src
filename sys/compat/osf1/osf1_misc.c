@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.36 1999/04/30 01:57:27 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.37 1999/04/30 05:25:34 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -77,6 +77,7 @@
 #include <sys/socketvar.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/wait.h>
 #include <vm/vm.h>				/* XXX UVM headers are Cool */
 #include <uvm/uvm.h>				/* XXX see mmap emulation */
 
@@ -116,6 +117,29 @@ const struct emul_flags_xtab osf1_open_flags_xtab[] = {
 #endif
     {	OSF1_O_DSYNC,		OSF1_O_DSYNC,		O_DSYNC		},
     {	OSF1_O_RSYNC,		OSF1_O_RSYNC,		O_RSYNC		},
+    {	0								}
+};
+
+const struct emul_flags_xtab osf1_open_flags_rxtab[] = {
+    {	O_ACCMODE,		O_RDONLY,		OSF1_O_RDONLY	},
+    {	O_ACCMODE,		O_WRONLY,		OSF1_O_WRONLY	},
+    {	O_ACCMODE,		O_RDWR,			OSF1_O_RDWR	},
+    {	O_NONBLOCK,		O_NONBLOCK,		OSF1_O_NONBLOCK	},
+    {	O_APPEND,		O_APPEND,		OSF1_O_APPEND	},
+#if 0 /* no equivalent +++ */
+    {	???,			???,			O_DEFER		},
+#endif
+    {	O_CREAT,		O_CREAT,		OSF1_O_CREAT	},
+    {	O_TRUNC,		O_TRUNC,		OSF1_O_TRUNC	},
+    {	O_EXCL,			O_EXCL,			OSF1_O_EXCL	},
+    {	O_NOCTTY,		O_NOCTTY,		OSF1_O_NOCTTY	},
+    {	O_SYNC,			O_SYNC,			OSF1_O_SYNC	},
+    {	O_NDELAY,		O_NDELAY,		OSF1_O_NDELAY	},
+#if 0 /* no equivalent, also same value as O_NDELAY! */
+    {	???,			???,			O_DRD		},
+#endif
+    {	O_DSYNC,		O_DSYNC,		OSF1_O_DSYNC	},
+    {	O_RSYNC,		O_RSYNC,		OSF1_O_RSYNC	},
     {	0								}
 };
 
@@ -606,25 +630,15 @@ const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[] = {
     {	0								}
 };
 
+/* flags specific to GETFL/SETFL; also uses open xtab */
 const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_xtab[] = {
-    {	OSF1_FNONBLOCK,		OSF1_FNONBLOCK,		FNONBLOCK	},
-    {	OSF1_FAPPEND,		OSF1_FAPPEND,		FAPPEND		},
     {	OSF1_FASYNC,		OSF1_FASYNC,		FASYNC		},
-    {	OSF1_FSYNC,		OSF1_FSYNC,		FFSYNC		},
-    {	OSF1_FNDELAY,		OSF1_FNDELAY,		FNDELAY		},
-    {	OSF1_FDSYNC,		OSF1_FDSYNC,		FDSYNC		},
-    {	OSF1_FRSYNC,		OSF1_FRSYNC,		FRSYNC		},
     {	0								}
 };
 
+/* flags specific to GETFL/SETFL; also uses open rxtab */
 const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_rxtab[] = {
-    {	FNONBLOCK,		FNONBLOCK,		OSF1_FNONBLOCK	},
-    {	FAPPEND,		FAPPEND,		OSF1_FAPPEND	},
     {	FASYNC,			FASYNC,			OSF1_FASYNC	},
-    {	FFSYNC,			FFSYNC,			OSF1_FSYNC	},
-    {	FNDELAY,		FNDELAY,		OSF1_FNDELAY	},
-    {	FDSYNC,			FDSYNC,			OSF1_FDSYNC	},
-    {	FRSYNC,			FRSYNC,			OSF1_FRSYNC	},
     {	0								}
 };
 
@@ -636,7 +650,7 @@ osf1_sys_fcntl(p, v, retval)
 {
 	struct osf1_sys_fcntl_args *uap = v;
 	struct sys_fcntl_args a;
-	unsigned long leftovers;
+	unsigned long xfl, leftovers;
 	int error;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
@@ -667,9 +681,11 @@ osf1_sys_fcntl(p, v, retval)
 
 	case OSF1_F_SETFL:
 		SCARG(&a, cmd) = F_SETFL;
-		SCARG(&a, arg) = (void *)emul_flags_translate(
-		    osf1_fcntl_getsetfl_flags_xtab,
+		xfl = emul_flags_translate(osf1_open_flags_xtab,
 		    (unsigned long)SCARG(uap, arg), &leftovers);
+		xfl |= emul_flags_translate(osf1_fcntl_getsetfl_flags_xtab,
+		    leftovers, &leftovers);
+		SCARG(&a, arg) = (void *)xfl;
 		break;
 
 	case OSF1_F_GETOWN:		/* XXX not yet supported */
@@ -705,8 +721,11 @@ osf1_sys_fcntl(p, v, retval)
 		break;
 
 	case OSF1_F_GETFL:
-		retval[0] = emul_flags_translate(
-		    osf1_fcntl_getsetfl_flags_rxtab, retval[0], NULL);
+		xfl = emul_flags_translate(osf1_open_flags_rxtab,
+		    retval[0], &leftovers);
+		xfl |= emul_flags_translate(osf1_fcntl_getsetfl_flags_rxtab,
+		    leftovers, NULL);
+		retval[0] = xfl;
 		break;
 	}
 
@@ -1481,7 +1500,7 @@ osf1_sys_access(p, v, retval)
 
 	SCARG(&a, path) = SCARG(uap, path);
 
-	/* translate opt */
+	/* translate flags */
 	SCARG(&a, flags) = emul_flags_translate(osf1_access_flags_xtab,
 	    SCARG(uap, flags), &leftovers);
 	if (leftovers != 0)
@@ -1576,11 +1595,118 @@ osf1_sys_sysinfo(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_sysinfo_args *uap = v;
+	const char *string;
+	int error;
+        extern char ostype[], osrelease[];
 
-	printf("osf1_sys_sysinfo(%d, %p, 0x%lx)\n", SCARG(uap, cmd),
-	    SCARG(uap, buf), SCARG(uap,len));
-	copyoutstr("", SCARG(uap, buf), SCARG(uap,len), 0);
+	error = 0;
+	switch (SCARG(uap, cmd)) {
+	case OSF1_SI_SYSNAME:
+		string = ostype;
+		break;
 
-	/* XXX */
-	return (0);
+	case OSF1_SI_HOSTNAME:
+		string = hostname;
+		break;
+
+	case OSF1_SI_RELEASE:
+		string = osrelease;
+		break;
+
+	case OSF1_SI_VERSION:
+		goto should_handle;
+
+	case OSF1_SI_MACHINE:
+		string = MACHINE;
+		break;
+
+	case OSF1_SI_ARCHITECTURE:
+		string = MACHINE_ARCH;
+		break;
+
+	case OSF1_SI_HW_SERIAL:
+		string = "666";			/* OSF/1 emulation?  YES! */
+		break;
+
+	case OSF1_SI_HW_PROVIDER:
+		string = "unknown";
+		break;
+
+	case OSF1_SI_SRPC_DOMAIN:
+		goto dont_care;
+
+	case OSF1_SI_SET_HOSTNAME:
+		goto should_handle;
+
+	case OSF1_SI_SET_SYSNAME:
+		goto should_handle;
+
+	case OSF1_SI_SET_SRPC_DOMAIN:
+		goto dont_care;
+
+	default:
+should_handle:
+		printf("osf1_sys_sysinfo(%d, %p, 0x%lx)\n", SCARG(uap, cmd),
+		    SCARG(uap, buf), SCARG(uap,len));
+dont_care:
+		error = EINVAL;
+		break;
+	};
+
+	if (error == 0)
+		error = copyoutstr(string, SCARG(uap, buf), SCARG(uap, len),
+		    NULL);
+
+	return (error);
+}
+
+const struct emul_flags_xtab osf1_wait_options_xtab[] = {
+    {	OSF1_WNOHANG,		OSF1_WNOHANG,		WNOHANG		},
+    {	OSF1_WUNTRACED,		OSF1_WUNTRACED,		WUNTRACED	},
+    {	0								}
+};
+
+int
+osf1_sys_wait4(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_wait4_args *uap = v;
+	struct sys_wait4_args a;
+	struct osf1_rusage osf1_rusage;
+	struct rusage netbsd_rusage;
+	unsigned long leftovers;
+	caddr_t sg;
+	int error;
+
+	SCARG(&a, pid) = SCARG(uap, pid);
+	SCARG(&a, status) = SCARG(uap, status);
+
+	/* translate options */
+	SCARG(&a, options) = emul_flags_translate(osf1_wait_options_xtab,
+	    SCARG(uap, options), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
+
+	if (SCARG(uap, rusage) == NULL)
+		SCARG(&a, rusage) = NULL;
+	else {
+		sg = stackgap_init(p->p_emul);
+		SCARG(&a, rusage) = stackgap_alloc(&sg, sizeof netbsd_rusage);
+	}
+
+	error = sys_wait4(p, &a, retval);
+
+	if (error == 0 && SCARG(&a, rusage) != NULL) {
+		error = copyin((caddr_t)SCARG(&a, rusage),
+		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
+		if (error == 0) {
+			cvtrusage2osf1(&netbsd_rusage, &osf1_rusage);
+			error = copyout((caddr_t)&osf1_rusage,
+			    (caddr_t)SCARG(uap, rusage), sizeof osf1_rusage);
+		}
+	}
+
+	return (error);
 }
