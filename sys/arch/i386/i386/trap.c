@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 1995/03/10 10:56:16 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.72 1995/03/10 12:20:37 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -618,6 +618,7 @@ syscall(frame)
 			args[1] = frame.tf_ecx;
 		case 4:
 			args[0] = frame.tf_ebx;
+		case 0:
 			break;
 		default:
 			panic("linux syscall with weird argument size %d",
