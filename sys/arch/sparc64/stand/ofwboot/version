@@ -1,9 +1,8 @@
-$NetBSD: version,v 1.1 2000/04/13 09:38:12 mrg Exp $
+$NetBSD: version,v 1.2 2000/07/21 22:06:11 jdolecek Exp $
 
-# The newvers.sh looks for the line below.  We use this method
-# rather than $3 of the dollar-NetBSD-dollar line above so that
-# this version can be on branch-files also.
-Version: 1.2
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
 
 1.1:
 1.2:	get it to work with non-start-of-disk partitions
