@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.6 1994/06/29 07:28:36 deraadt Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.7 1994/07/16 11:43:12 paulus Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -48,6 +48,9 @@
 #include <nfs/nfsv2.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsdiskless.h>
+
+#include "ether.h"
+#if NETHER > 0
 
 /*
  * Support for NFS diskless booting, specifically getting information
@@ -602,3 +605,14 @@ out:
 	m_freem(m);
 	return error;
 }
+
+#else /* NETHER */
+
+int nfs_boot_init(nd, procp)
+	struct nfs_diskless *nd;
+	struct proc *procp;
+{
+	panic("nfs_boot_init: no ether");
+}
+
+#endif /* NETHER */
