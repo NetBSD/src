@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.60 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: MAKEDEV,v 1.60.2.1 2002/07/11 18:30:18 thorpej Exp $
 #
 ###########################################################################
 #
@@ -142,6 +142,7 @@ raminst)
 	makedev sd0 sd1 sd2 sd3 wd0 wd1 wd2 wd3 st0 st1 cd0 cd1 md0
 	makedev adb grf0 grf1 ttye0
 	makedev tty0 tty1 opty
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	;;
 
 ttye*)
