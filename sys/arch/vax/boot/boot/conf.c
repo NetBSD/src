@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2000/05/20 13:35:07 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.8 2000/05/21 20:17:43 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,6 +58,7 @@ struct	devsw devsw[]={
 	SADEV("le",nodev, leopen, leclose, noioctl), /* LANCE */
         SADEV("ze",nodev, zeopen, zeclose, noioctl), /* SGEC */
 	SADEV("rl",romstrategy, romopen, nullsys, noioctl),
+	SADEV("de",nodev, deopen, declose, noioctl), /* DEUNA */
 };
 
 int	cnvtab[] = {
@@ -73,6 +74,7 @@ int	cnvtab[] = {
 	BDEV_LE,
 	BDEV_ZE,
 	BDEV_RL,
+	BDEV_DE,
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
