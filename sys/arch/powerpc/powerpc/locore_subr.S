@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2 2001/02/28 20:44:41 tsubai Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.20.1 2002/06/21 05:34:42 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -287,6 +287,7 @@ switch_exited:
 #endif
 	stwcx.	5,0,6			/* clear possible reservation */
 
+#if 0
 	addic.	5,5,64
 	li	6,0
 	mfsr	8,KERNEL_SR		/* save kernel SR */
@@ -298,6 +299,7 @@ switch_exited:
 	mtsrin	7,6			/* about accessibility */
 	bne	1b
 	mtsr	KERNEL_SR,8		/* restore kernel SR */
+#endif
 	isync
 
 	lwz	1,PCB_SP(4)		/* get new procs SP */
