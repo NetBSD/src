@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.475 2002/05/03 15:43:40 lukem Exp $
+# $NetBSD: mi,v 1.476 2002/05/19 20:43:28 pooka Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -877,6 +877,9 @@
 ./usr/share/man/cat4/sf.0			man-sys-catman
 ./usr/share/man/cat4/sf2r.0			man-sys-catman
 ./usr/share/man/cat4/sfb.0			man-sys-catman
+./usr/share/man/cat4/sgimips/gio.0		man-sys-catman
+./usr/share/man/cat4/sgimips/hpc.0		man-sys-catman
+./usr/share/man/cat4/sgimips/imc.0		man-sys-catman
 ./usr/share/man/cat4/si.0			man-sys-catman
 ./usr/share/man/cat4/siop.0			man-sys-catman
 ./usr/share/man/cat4/sip.0			man-sys-catman
@@ -2578,6 +2581,9 @@
 ./usr/share/man/man4/sf.4			man-sys-man
 ./usr/share/man/man4/sf2r.4			man-sys-man
 ./usr/share/man/man4/sfb.4			man-sys-man
+./usr/share/man/man4/sgimips/gio.4		man-sys-man
+./usr/share/man/man4/sgimips/hpc.4		man-sys-man
+./usr/share/man/man4/sgimips/imc.4		man-sys-man
 ./usr/share/man/man4/si.4			man-sys-man
 ./usr/share/man/man4/siop.4			man-sys-man
 ./usr/share/man/man4/sip.4			man-sys-man
