@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.182 2003/10/11 23:25:46 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.183 2003/10/14 09:59:32 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2356,4 +2356,10 @@ lib/libc/net/gethnamaddr.c			1.58
 	region'	is normal case.  If the parser wants something more, there
 	should be another bounds check for it.
 	[bad, ticket #1521]
+
+sys/arch/sparc64/sparc64/pmap.c			1.145 (via patch)
+
+	cache_flush_virt() is buggy, just use blast_dcache() instead.
+	this should fix PR 23093.
+	[martin, ticket #1522]
 
