@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.2 1998/04/07 13:43:17 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -41,9 +41,9 @@
  * with these functions, which is passed to them when they are invoked.
  */
 struct wskbd_accessops {
+	void	(*asyn_set_leds) __P((void *, int));
 	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
 		    struct proc *p));
-	const char *(*translate) __P((void *v, u_int type, int value));
 };
 
 /*
@@ -53,7 +53,7 @@ struct wskbd_accessops {
  * with these functions, which is passed to them when they are invoked.
  */
 struct wskbd_consops {
-	int	(*getc) __P((void *));
+	void	(*getc) __P((void *, u_int *, int *));
 	void	(*pollc) __P((void *, int));
 };
 
@@ -63,6 +63,9 @@ struct wskbd_consops {
  */
 struct wskbddev_attach_args {
 	int	console;				/* is it console? */
+	int	layout;					/* initial layout */
+	int	num_keydescs;				/* number of maps */
+	const struct wscons_keydesc *keydesc;		/* array of maps */
 	const struct wskbd_accessops *accessops;	/* access ops */
 	void	*accesscookie;				/* access cookie */
 };
@@ -80,9 +83,7 @@ int	wskbddevprint __P((void *, const char *));
 /*
  * Callbacks from the keyboard driver to the wskbd interface driver.
  */
-void	wskbd_holdscreen __P((struct device *kbddev, int hold));
 void	wskbd_input __P((struct device *kbddev, u_int type, int value));
-void	wskbd_ctlinput __P((struct device *kbddev, int));
 
 /*
  * Console interface.
