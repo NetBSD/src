@@ -4,7 +4,7 @@
  * Written by Roland McGrath <roland@frob.com> 10/14/93.
  * Public domain.
  *
- * $Id: ethers.c,v 1.2 1993/12/16 19:19:14 deraadt Exp $
+ * $Id: ethers.c,v 1.3 1993/12/28 19:51:37 jtc Exp $
  */
 
 #include <sys/types.h>
@@ -16,6 +16,8 @@
 #include <paths.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifndef _PATH_ETHERS
 #define _PATH_ETHERS "/etc/ethers"
