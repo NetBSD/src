@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.3 2001/02/19 22:48:59 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.4 2002/05/14 06:34:20 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -62,6 +62,7 @@
 
 #include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/stat.h>
+#include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <isofs/cd9660/iso.h>
 #include <assert.h>
@@ -72,8 +73,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <dev/dec/dec_boot.h>
 
 #include "installboot.h"
 

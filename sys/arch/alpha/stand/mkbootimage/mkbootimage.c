@@ -1,4 +1,4 @@
-/* $NetBSD: mkbootimage.c,v 1.5 2002/04/03 06:16:03 lukem Exp $ */
+/* $NetBSD: mkbootimage.c,v 1.6 2002/05/14 06:34:20 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>				/* XXX for roundup, howmany */
 #include <sys/stat.h>
+#include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <assert.h>
 #include <err.h>
@@ -40,8 +41,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <dev/dec/dec_boot.h>
 
 static void usage(void);
 
