@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2002/11/22 21:21:13 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2002/11/25 02:10:28 enami Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -47,6 +47,7 @@
 #include <sys/proc.h>
 #include <sys/errno.h>
 
+#include <machine/atomic.h>
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
