@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.294 2001/01/04 21:01:25 garbled Exp $
+#	$NetBSD: mi,v 1.295 2001/01/05 21:21:35 jdolecek Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -576,7 +576,6 @@
 ./usr/include/gssapi/gssapi.h	comp-c-include
 ./usr/include/hesiod.h		comp-c-include
 ./usr/include/histedit.h		comp-c-include
-./usr/include/history.h		comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
 ./usr/include/ifaddrs.h		comp-c-include
 ./usr/include/inttypes.h		comp-c-include
@@ -936,7 +935,9 @@
 ./usr/include/pwd.h		comp-c-include
 ./usr/include/ranlib.h		comp-c-include
 ./usr/include/re_comp.h		comp-c-include
-./usr/include/readline.h		comp-c-include
+./usr/include/readline			comp-c-include
+./usr/include/readline/readline.h	comp-c-include
+./usr/include/readline/history.h	comp-c-include
 ./usr/include/regex.h		comp-c-include
 ./usr/include/regexp.h		comp-c-include
 ./usr/include/resolv.h		comp-c-include
