@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 1997/10/11 01:03:47 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19.2.1 1997/10/27 19:45:55 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -120,7 +120,7 @@ getFreeLabelEntry(lp)
 {
 	int i = 0;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < NUM_PARTS_PROBED; i++) {
 		if ((i != RAW_PART)
 		    && (lp->d_partitions[i].p_fstype == FS_UNUSED))
 			return i;
@@ -189,7 +189,7 @@ fixPartTable(partTable, size, base, num)
 	struct partmapentry *pmap;
 	char *s;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < NUM_PARTS_PROBED; i++) {
 		pmap = (struct partmapentry *)((i * size) + base);
 
 		if (pmap->pmSig != DPME_MAGIC) { /* this is not valid */
@@ -361,7 +361,7 @@ skip:
  * MF --
  * here's what i'm gonna do:
  * read in the entire diskpartition table, it may be bigger or smaller
- * than MAXPARTITIONS but read that many entries.  Each entry has a magic
+ * than NUM_PARTS_PROBED but read that many entries.  Each entry has a magic
  * number so we'll know if an entry is crap.
  * next fill in the disklabel with info like this
  * next fill in the root, usr, and swap parts.
