@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.9 2000/01/26 16:21:33 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -183,7 +183,7 @@ struct m_ext2fs {
 
 /* features supported in this implementation */
 #define EXT2F_COMPAT_SUPP		0x0000
-#define EXT2F_ROCOMPAT_SUPP		0x0000
+#define EXT2F_ROCOMPAT_SUPP		EXT2F_ROCOMPAT_SPARSESUPER
 #define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*
@@ -212,6 +212,30 @@ struct ext2_gd {
 	u_int32_t reserved2[3];
 
 };
+
+
+/*
+ * If the EXT2F_ROCOMPAT_SPARSESUPER flag is set, the cylinder group has a
+ * copy of the super and cylinder group descriptors blocks only if it's
+ * a power of 3, 5 or 7
+ */
+
+static __inline__ int cg_has_sb __P((int)) __attribute__((__unused__));
+static __inline int
+cg_has_sb(i)
+	int i;
+{
+	int a3 ,a5 , a7;
+
+	if (i == 0 || i == 1)
+		return 1;
+	for (a3 = 3, a5 = 5, a7 = 7;
+	    a3 <= i || a5 <= i || a7 <= i;
+	    a3 *= 3, a5 *= 5, a7 *= 7)
+		if (i == a3 || i == a5 || i == a7)
+			return 1;
+	return 0;
+}
 
 /* EXT2FS metadatas are stored in little-endian byte order. These macros
  * helps reading theses metadatas
