@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.4 1995/02/20 11:04:06 mycroft Exp $	*/
+/*	$NetBSD: ether.c,v 1.5 1995/09/11 21:11:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -85,12 +85,18 @@ sendether(d, pkt, len, dea, etype)
 	return (len);
 }
 
+/*
+ * Get a packet of any Ethernet type, with our address or
+ * the broadcast address.  Save the Ether type in arg 5.
+ * NOTE: Caller must leave room for the Ether header.
+ */
 size_t
-readether(d, pkt, len, tleft)
+readether(d, pkt, len, tleft, etype)
 	register struct iodesc *d;
 	register void *pkt;
 	register size_t len;
 	time_t tleft;
+	register u_int16_t *etype;
 {
 	register struct ether_header *eh;
 
@@ -105,6 +111,18 @@ readether(d, pkt, len, tleft)
 	len = netif_get(d, eh, len, tleft);
 	if (len == -1 || len < sizeof(*eh))
 		return (-1);
+
+	/* Validate Ethernet address. */
+	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
+	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
+#ifdef ETHER_DEBUG
+		if (debug)
+			printf("readether: not ours (ea=%s)\n",
+				ether_sprintf(eh->ether_dhost));
+#endif
+		return (-1);
+	}
+	*etype = ntohs(eh->ether_type);
 
 	len -= sizeof(*eh);
 	return (len);
