@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 %{
-/*	$NetBSD: conf_parse.y,v 1.3 1997/10/26 00:24:54 christos Exp $	*/
+/*	$NetBSD: conf_parse.y,v 1.4 1998/08/08 22:33:29 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

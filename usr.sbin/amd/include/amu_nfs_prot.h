@@ -1,7 +1,7 @@
-/*	$NetBSD: amu_nfs_prot.h,v 1.4 1998/03/01 02:25:38 fvdl Exp $	*/
+/*	$NetBSD: amu_nfs_prot.h,v 1.5 1998/08/08 22:33:37 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,17 +61,19 @@
 # include <nfs/nfs.h>
 # include <nfs/nfsmount.h>
 #endif /* HAVE_NFS_NFS_H */
+#ifdef HAVE_NFS_NFSMOUNT_H
+# include <nfs/nfsmount.h>
+#endif /* HAVE_NFS_NFSMOUNT_H */
 
 /* NON-NFS STUFF (doesn't really belong here) */
 #ifndef DEFINED_YPALL_CALLBACK_FXN_T
 # define DEFINED_YPALL_CALLBACK_FXN_T
-/* this is RIGHT for 1.2G and 1.2.1 */
 #if 0
+/* this is RIGHT for 1.2G and 1.2.1 */
 typedef int (*ypall_callback_fxn_t)(u_long, char *, int, char *, int, void *);
-#else
-/*
- * this one was provided by Christos Zoulas <christos@deshaw.com>:
- */
+#endif
+#if 1
+/* this is right for 1.3beta */
 typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
 #endif
 #endif /* DEFINED_YPALL_CALLBACK_FXN_T */

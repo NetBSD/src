@@ -1,7 +1,7 @@
-/*	$NetBSD: autil.c,v 1.4 1997/10/26 00:24:50 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.5 1998/08/08 22:33:28 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@ strsplit(char *s, int ch, int qc)
     /*
      * skip to split char
      */
-    while (*s && (ch == ' ' ? (isascii(*s) && isspace(*s)) : *s == ch))
+    while (*s && (ch == ' ' ? (isascii(*s) && isspace((int)*s)) : *s == ch))
       *s++ = '\0';
 
     /*
@@ -109,7 +109,7 @@ strsplit(char *s, int ch, int qc)
     /*
      * skip to split char
      */
-    while (*s && !(ch == ' ' ? (isascii(*s) && isspace(*s)) : *s == ch)) {
+    while (*s && !(ch == ' ' ? (isascii(*s) && isspace((int)*s)) : *s == ch)) {
       if (*s++ == qc) {
 	/*
 	 * Skip past string.
@@ -279,7 +279,7 @@ am_mounted(am_node *mp)
   /*
    * Patch up path for direct mounts
    */
-  if (mp->am_parent && mp->am_parent->am_mnt->mf_ops == &dfs_ops)
+  if (mp->am_parent && mp->am_parent->am_mnt->mf_ops == &amfs_direct_ops)
     mp->am_path = str3cat(mp->am_path, mp->am_parent->am_path, "/", ".");
 
   /*
@@ -374,22 +374,6 @@ am_unmounted(am_node *mp)
     mp->am_parent->am_fattr.na_mtime.nt_seconds = clocktime();
 
   free_map(mp);
-}
-
-
-int
-auto_fmount(am_node *mp)
-{
-  mntfs *mf = mp->am_mnt;
-  return (*mf->mf_ops->fmount_fs) (mf);
-}
-
-
-int
-auto_fumount(am_node *mp)
-{
-  mntfs *mf = mp->am_mnt;
-  return (*mf->mf_ops->fumount_fs) (mf);
 }
 
 

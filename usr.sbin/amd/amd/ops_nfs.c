@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_nfs.c,v 1.5 1997/10/26 00:25:12 christos Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.6 1998/08/08 22:33:31 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,13 +106,8 @@ struct fh_cache {
 };
 
 /* forward definitions */
-static char * nfs_match(am_opts *fo);
 static int call_mountd(fh_cache *fp, u_long proc, fwd_fun f, voidp wchan);
 static int fh_id = 0;
-static int nfs_fmount(mntfs *mf);
-static int nfs_fumount(mntfs *mf);
-static int nfs_init(mntfs *mf);
-static void nfs_umounted(am_node *mp);
 
 /* globals */
 AUTH *nfs_auth;
@@ -126,12 +121,12 @@ am_ops nfs_ops =
   "nfs",
   nfs_match,
   nfs_init,
-  auto_fmount,
+  amfs_auto_fmount,
   nfs_fmount,
-  auto_fumount,
+  amfs_auto_fumount,
   nfs_fumount,
-  efs_lookuppn,
-  efs_readdir,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
   0,				/* nfs_readlink */
   0,				/* nfs_mounted */
   nfs_umounted,
@@ -154,10 +149,11 @@ find_nfs_fhandle_cache(voidp idv, int done)
   }
 
 #ifdef DEBUG
-  if (fp2)
+  if (fp2) {
     dlog("fh cache gives fp %#x, fs %s", fp2, fp2->fh_path);
-  else
+  } else {
     dlog("fh cache search failed");
+  }
 #endif /* DEBUG */
 
   if (fp2 && !done) {
@@ -239,8 +235,8 @@ discard_fh(voidp v)
     free_srvr(fp->fh_fs);
   }
   if (fp->fh_path)
-    free((voidp) fp->fh_path);
-  free((voidp) fp);
+    XFREE(fp->fh_path);
+  XFREE(fp);
 }
 
 
@@ -341,7 +337,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp w
      */
     untimeout(fp->fh_cid);
     free_srvr(fp->fh_fs);
-    free(fp->fh_path);
+    XFREE(fp->fh_path);
   } else {
     fp = ALLOC(struct fh_cache);
     memset((voidp) fp, 0, sizeof(struct fh_cache));
@@ -498,7 +494,7 @@ call_mountd(fh_cache *fp, u_long proc, fwd_fun f, voidp wchan)
  * remote hostname.
  * Local filesystem defaults to remote and vice-versa.
  */
-static char *
+char *
 nfs_match(am_opts *fo)
 {
   char *xmtab;
@@ -529,9 +525,9 @@ nfs_match(am_opts *fo)
 
 
 /*
- * Initialise am structure for nfs
+ * Initialize am structure for nfs
  */
-static int
+int
 nfs_init(mntfs *mf)
 {
   int error;
@@ -566,27 +562,13 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
   u_long nfs_version = fs->fs_version;
   char *nfs_proto = fs->fs_proto; /* "tcp" or "udp" */
   int error;
-  int flags;
+  int genflags;
   int retry;
   mntent_t mnt;
   nfs_args_t nfs_args;
-#ifdef HAVE_FS_NFS3
-  am_nfs_fh3 fh3;
-#endif /* HAVE_FS_NFS3 */
-#ifdef HAVE_TRANSPORT_TYPE_TLI
-  struct netbuf nb;	/* automatic space for addr field of nfs_args */
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
-#if defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI)
-  char *nc_protoname = NULL;
-#endif /* defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI) */
-#if defined(MNTTAB_OPT_ACREGMIN) || defined(MNTTAB_OPT_ACTIMEO)
-  int acval = 0;
-#endif /* defined(MNTTAB_OPT_ACREGMIN) || defined(MNTTAB_OPT_ACTIMEO) */
-
-  memset((voidp) &nfs_args, 0, sizeof(nfs_args)); /* Paranoid */
 
   /*
-   * Extract host name to give to kernel
+   * Extract HOST name to give to kernel.
    * Some systems like osf1/aix3/bsd44 variants may need old code
    * for NFS_ARGS_NEEDS_PATH.
    */
@@ -599,6 +581,11 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 #ifdef MOUNT_TABLE_ON_FILE
   *colon = ':';
 #endif /* MOUNT_TABLE_ON_FILE */
+#ifdef MAXHOSTNAMELEN
+  /* most kernels have a name length restriction */
+  if (strlen(host) >= MAXHOSTNAMELEN)
+    strcpy(host + MAXHOSTNAMELEN - 3, "..");
+#endif /* MAXHOSTNAMELEN */
 
   if (mf->mf_remopts && *mf->mf_remopts && !islocalnet(fs->fs_ip->sin_addr.s_addr))
     xopts = strdup(mf->mf_remopts);
@@ -619,334 +606,72 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 #else /* HAVE_FS_NFS3 */
   if (nfs_version == NFS_VERSION3) {
     type = MOUNT_TYPE_NFS3;
+    /*
+     * Systems that include the mount table "vers" option generally do not
+     * set the mnttab entry to "nfs3", but to "nfs" and then they set
+     * "vers=3".  Setting it to "nfs3" works, but it may break some things
+     * like "df -t nfs" and the "quota" program (esp. on Solaris and Irix).
+     * So on those systems, set it to "nfs".
+     * Note: MNTTAB_OPT_VERS is always set for NFS3 (see am_compat.h).
+     */
+# if defined(MNTTAB_OPT_VERS) && defined(MOUNT_TABLE_ON_FILE)
+    mnt.mnt_type = MNTTAB_TYPE_NFS;
+# else /* defined(MNTTAB_OPT_VERS) && defined(MOUNT_TABLE_ON_FILE) */
     mnt.mnt_type = MNTTAB_TYPE_NFS3;
+# endif /* defined(MNTTAB_OPT_VERS) && defined(MOUNT_TABLE_ON_FILE) */
   } else {
     type = MOUNT_TYPE_NFS;
     mnt.mnt_type = MNTTAB_TYPE_NFS;
   }
 #endif /* HAVE_FS_NFS3 */
   plog(XLOG_INFO, "mount_nfs_fh: NFS version %d", nfs_version);
-
 #if defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI)
-  nc_protoname = nfs_proto;
-  plog(XLOG_INFO, "mount_nfs_fh: using NFS transport %s", nc_protoname);
+  plog(XLOG_INFO, "mount_nfs_fh: using NFS transport %s", nfs_proto);
 #endif /* defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI) */
-
-#ifdef MNT2_NFS_OPT_TCP
-  if (STREQ(nfs_proto, "tcp"))
-    nfs_args.flags |= MNT2_NFS_OPT_TCP;
-#endif /* MNT2_NFS_OPT_TCP */
-
-#ifdef HAVE_FIELD_NFS_ARGS_T_SOTYPE
-  /* bsdi3 uses this */
-  if (STREQ(nfs_proto, "tcp"))
-    nfs_args.sotype = SOCK_STREAM;
-  else
-    nfs_args.sotype = SOCK_DGRAM;
-#endif /* HAVE_FIELD_NFS_ARGS_T_SOTYPE */
-
-#ifdef HAVE_FIELD_NFS_ARGS_T_PROTO
-  nfs_args.proto = 0;		/* bsdi3 sets this field to zero  */
-#endif /* HAVE_FIELD_NFS_ARGS_T_SOTYPE */
 
   retry = hasmntval(&mnt, MNTTAB_OPT_RETRY);
   if (retry <= 0)
     retry = 1;			/* XXX */
 
-  /*
-   * Set mount arguments:
-   * first, the NFS file handle.
-   */
-#ifdef HAVE_FS_NFS3
-  if (nfs_version == NFS_VERSION3) {
-    fh3.fh3_length = fhp->v3.mountres3_u.mountinfo.fhandle.fhandle3_len;
-    memmove(fh3.fh3_u.data,
-	    fhp->v3.mountres3_u.mountinfo.fhandle.fhandle3_val,
-	    fh3.fh3_length);
+  genflags = compute_mount_flags(&mnt);
 
-# if defined(HAVE_FIELD_NFS_ARGS_T_FHSIZE) || defined(HAVE_FIELD_NFS_ARGS_T_FH_LEN)
-    /*
-     * Some systems (Irix/bsdi3) have a separate field in nfs_args for
-     * the length of the file handle for NFS V3.  They insist that
-     * the file handle set in nfs_args be plain bytes, and not
-     * include the length field.
-     */
-    NFS_FH_DREF(nfs_args.NFS_FH_FIELD, &(fh3.fh3_u.data));
-# else /* not defined(HAVE_FIELD_NFS_ARGS_T_FHSIZE) || defined(HAVE_FIELD_NFS_ARGS_T_FH_LEN) */
-    NFS_FH_DREF(nfs_args.NFS_FH_FIELD, &fh3);
-# endif /* not defined(HAVE_FIELD_NFS_ARGS_T_FHSIZE) || defined(HAVE_FIELD_NFS_ARGS_T_FH_LEN) */
-# ifdef MNT2_NFS_OPT_NFSV3
-    nfs_args.flags |= MNT2_NFS_OPT_NFSV3;
-# endif /* MNT2_NFS_OPT_NFSV3 */
-  } else
-#endif /* HAVE_FS_NFS3 */
-    NFS_FH_DREF(nfs_args.NFS_FH_FIELD, &(fhp->v2.fhs_fh));
-
-#ifdef HAVE_FIELD_NFS_ARGS_T_FHSIZE
-# ifdef HAVE_FS_NFS3
-  if (nfs_version == NFS_VERSION3)
-    nfs_args.fhsize = fh3.fh3_length;
-  else
-# endif /* HAVE_FS_NFS3 */
-    nfs_args.fhsize = FHSIZE;
-#endif /* HAVE_FIELD_NFS_ARGS_T_FHSIZE */
-
-#ifdef HAVE_FIELD_NFS_ARGS_T_FH_LEN
-# ifdef HAVE_FS_NFS3
-  if (nfs_version == NFS_VERSION3)
-    nfs_args.fh_len = fh3.fh3_length;
-  else
-# endif /* HAVE_FS_NFS3 */
-    nfs_args.fh_len = FHSIZE;
-#endif /* HAVE_FIELD_NFS_ARGS_T_FH_LEN */
-
+  /* setup the many fields and flags within nfs_args */
 #ifdef HAVE_TRANSPORT_TYPE_TLI
-  /* set up syncaddr field */
-  nfs_args.syncaddr = (struct netbuf *) NULL;
+  compute_nfs_args(&nfs_args,
+		   &mnt,
+		   genflags,
+		   NULL,	/* struct netconfig *nfsncp */
+		   fs->fs_ip,
+		   nfs_version,
+		   nfs_proto,
+		   fhp,
+		   host,
+		   fs_name);
+#else /* not HAVE_TRANSPORT_TYPE_TLI */
+  compute_nfs_args(&nfs_args,
+		   &mnt,
+		   genflags,
+		   fs->fs_ip,
+		   nfs_version,
+		   nfs_proto,
+		   fhp,
+		   host,
+		   fs_name);
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
-  /* set up knconf field */
-  if (get_knetconfig(&nfs_args.knconf, NULL, nc_protoname) < 0) {
-    plog(XLOG_FATAL, "cannot fill knetconfig structure for nfs_args");
-    going_down(1);
-  }
-  /* update the flags field for knconf */
-  nfs_args.flags |= MNT2_NFS_OPT_KNCONF;
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
-
-#ifdef MAXHOSTNAMELEN
-  /*
-   * Most kernels have a name length restriction.
-   */
-  if (strlen(host) >= MAXHOSTNAMELEN)
-      strcpy(host + MAXHOSTNAMELEN - 3, "..");
-#endif /* MAXHOSTNAMELEN */
-
-  NFS_HN_DREF(nfs_args.hostname, host);
-
-#ifdef MNT2_NFS_OPT_HOSTNAME
-  nfs_args.flags |= MNT2_NFS_OPT_HOSTNAME;
-#endif /* MNT2_NFS_OPT_HOSTNAME */
-
-#ifdef MNT2_NFS_OPT_FSNAME
-  nfs_args.fsname = fs_name;
-  nfs_args.flags |= MNT2_NFS_OPT_FSNAME;
-#endif /* MNT2_NFS_OPT_FSNAME */
-
-  nfs_args.rsize = hasmntval(&mnt, MNTTAB_OPT_RSIZE);
-#ifdef MNT2_NFS_OPT_RSIZE
-  if (nfs_args.rsize)
-    nfs_args.flags |= MNT2_NFS_OPT_RSIZE;
-#endif /* MNT2_NFS_OPT_RSIZE */
-
-  nfs_args.wsize = hasmntval(&mnt, MNTTAB_OPT_WSIZE);
-#ifdef MNT2_NFS_OPT_WSIZE
-  if (nfs_args.wsize)
-    nfs_args.flags |= MNT2_NFS_OPT_WSIZE;
-#endif /* MNT2_NFS_OPT_WSIZE */
-
-  nfs_args.timeo = hasmntval(&mnt, MNTTAB_OPT_TIMEO);
-#ifdef MNT2_NFS_OPT_TIMEO
-  if (nfs_args.timeo)
-    nfs_args.flags |= MNT2_NFS_OPT_TIMEO;
-#endif /* MNT2_NFS_OPT_TIMEO */
-
-  nfs_args.retrans = hasmntval(&mnt, MNTTAB_OPT_RETRANS);
-#ifdef MNT2_NFS_OPT_RETRANS
-  if (nfs_args.retrans)
-    nfs_args.flags |= MNT2_NFS_OPT_RETRANS;
-#endif /* MNT2_NFS_OPT_RETRANS */
-
-#ifdef MNT2_NFS_OPT_BIODS
-  if ((nfs_args.biods = hasmntval(&mnt, MNTTAB_OPT_BIODS)))
-    nfs_args.flags |= MNT2_NFS_OPT_BIODS;
-#endif /* MNT2_NFS_OPT_BIODS */
-
-  if (hasmntopt(&mnt, MNTTAB_OPT_SOFT) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_SOFT;
-
-#ifdef MNT2_NFS_OPT_SPONGY
-  if (hasmntopt(&mnt, MNTTAB_OPT_SPONGY) != NULL) {
-    nfs_args.flags |= MNT2_NFS_OPT_SPONGY;
-    if (nfs_args.flags & MNT2_NFS_OPT_SOFT) {
-      plog(XLOG_USER, "Mount opts soft and spongy are incompatible - soft ignored");
-      nfs_args.flags &= ~MNT2_NFS_OPT_SOFT;
-    }
-  }
-#endif /* MNT2_NFS_OPT_SPONGY */
-
-#ifdef MNTTAB_OPT_INTR
-  if (hasmntopt(&mnt, MNTTAB_OPT_INTR) != NULL)
-    /*
-     * Either turn on the "allow interrupts" option, or
-     * turn off the "disallow interrupts" option"
-     */
-# ifdef MNT2_NFS_OPT_INT
-    nfs_args.flags |= MNT2_NFS_OPT_INT;
-# endif /* MNT2_NFS_OPT_INT */
-# ifdef MNT2_NFS_OPT_NOINT
-    nfs_args.flags &= ~MNT2_NFS_OPT_NOINT;
-# endif /* MNT2_NFS_OPT_NOINT */
-#endif /* MNTTAB_OPT_INTR */
-
-#ifdef MNTTAB_OPT_NODEVS
-  if (hasmntopt(&mnt, MNTTAB_OPT_NODEVS) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_NODEVS;
-#endif /* MNTTAB_OPT_NODEVS */
-
-#ifdef MNTTAB_OPT_COMPRESS
-  if (hasmntopt(&mnt, MNTTAB_OPT_COMPRESS) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_COMPRESS;
-#endif /* MNTTAB_OPT_COMPRESS */
-
-#ifdef MNT2_NFS_OPT_NOCONN
-  /* check if user specified to use unconnected or connected sockets */
-  if (hasmntopt(&mnt, MNTTAB_OPT_NOCONN) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_NOCONN;
-  else if (hasmntopt(&mnt, MNTTAB_OPT_CONN) != NULL)
-    nfs_args.flags &= ~MNT2_NFS_OPT_NOCONN;
-  else
-    /*
-     * If "noconn" option exists and we're using NFS V.3, then define
-     * it.  Otherwise NFS mounts cause hangs of mounts from
-     * multi-homed hosts when the return route is not the same as the
-     * outgoing route.  This is especially important for some versions
-     * of NetBSD, and even for FreeBSD that does not have NFS V.3.
-     */
-    nfs_args.flags |= MNT2_NFS_OPT_NOCONN;
-#endif /* MNT2_NFS_OPT_NOCONN */
-
-#ifdef MNT2_NFS_OPT_RESVPORT
-# ifdef MNTTAB_OPT_RESVPORT
-  if (hasmntopt(&mnt, MNTTAB_OPT_RESVPORT) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_RESVPORT;
-# else /* not MNTTAB_OPT_RESVPORT */
-  nfs_args.flags |= MNT2_NFS_OPT_RESVPORT;
-# endif /* not MNTTAB_OPT_RESVPORT */
-#endif /* MNT2_NFS_OPT_RESVPORT */
-
-#ifdef MNTTAB_OPT_NOAC		/* don't cache attributes */
-  if (hasmntopt(&mnt, MNTTAB_OPT_NOAC) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_NOAC;
-#endif /* MNTTAB_OPT_NOAC */
-
-/*
- * Attribue cache settings for NFS mounts.
- * Scott Presnell, srp@cgl.ucsf.edu, Sat Nov 14 12:42:16 PST 1992
- */
-#ifdef MNTTAB_OPT_ACTIMEO
-				/* attr cache timeout (sec) */
-  if ((acval = hasmntval(&mnt, MNTTAB_OPT_ACTIMEO))) {
-# if defined(MNT2_NFS_OPT_ACREGMIN) && defined(MNT2_NFS_OPT_ACREGMAX)
-    nfs_args.flags |= (MNT2_NFS_OPT_ACREGMIN | MNT2_NFS_OPT_ACREGMAX);
-# endif /* defined(MNT2_NFS_OPT_ACREGMIN) && defined(MNT2_NFS_OPT_ACREGMAX) */
-# ifdef HAVE_FIELD_NFS_ARGS_T_ACREGMIN
-    nfs_args.acregmin = acval;
-    nfs_args.acregmax = acval;
-# endif /* HAVE_FIELD_NFS_ARGS_T_ACREGMIN */
-
-#if defined(MNT2_NFS_OPT_ACDIRMIN) && defined(MNT2_NFS_OPT_ACDIRMAX)
-    nfs_args.flags |= (MNT2_NFS_OPT_ACDIRMIN | MNT2_NFS_OPT_ACDIRMAX);
-#endif /* defined(MNT2_NFS_OPT_ACDIRMIN) && defined(MNT2_NFS_OPT_ACDIRMAX) */
-# ifdef HAVE_FIELD_NFS_ARGS_T_ACDIRMIN
-    nfs_args.acdirmin = acval;
-    nfs_args.acdirmax = acval;
-# endif /* HAVE_FIELD_NFS_ARGS_T_ACDIRMIN */
-  }
-#endif /* MNTTAB_OPT_ACTIMEO */
-
-#ifdef MNTTAB_OPT_ACREGMIN
-				/* min ac timeout for reg files (sec) */
-  if (!acval && (nfs_args.acregmin = hasmntval(&mnt, MNTTAB_OPT_ACREGMIN)))
-# ifdef MNT2_NFS_OPT_ACREGMIN
-    nfs_args.flags |= MNT2_NFS_OPT_ACREGMIN;
-# else /* not MNT2_NFS_OPT_ACREGMIN */
-    ;
-# endif /* not MNT2_NFS_OPT_ACREGMIN */
-#endif /* MNTTAB_OPT_ACREGMIN */
-
-#ifdef MNTTAB_OPT_ACREGMAX
-				/* max ac timeout for reg files (sec) */
-  if (!acval && (nfs_args.acregmax = hasmntval(&mnt, MNTTAB_OPT_ACREGMAX)))
-# ifdef MNT2_NFS_OPT_ACREGMAX
-    nfs_args.flags |= MNT2_NFS_OPT_ACREGMAX;
-# else /* not MNT2_NFS_OPT_ACREGMAX */
-    ;
-# endif /* not MNT2_NFS_OPT_ACREGMAX */
-#endif /* MNTTAB_OPT_ACREGMAX */
-
-#ifdef MNTTAB_OPT_ACDIRMIN
-				/* min ac timeout for dirs (sec) */
-  if (!acval && (nfs_args.acdirmin = hasmntval(&mnt, MNTTAB_OPT_ACDIRMIN)))
-#ifdef MNT2_NFS_OPT_ACDIRMIN
-    nfs_args.flags |= MNT2_NFS_OPT_ACDIRMIN;
-# else /* not MNT2_NFS_OPT_ACDIRMIN */
-    ;
-# endif /* not MNT2_NFS_OPT_ACDIRMIN */
-#endif /* MNTTAB_OPT_ACDIRMIN */
-
-#ifdef MNTTAB_OPT_ACDIRMAX
-				/* max ac timeout for dirs (sec) */
-  if (!acval && (nfs_args.acdirmax = hasmntval(&mnt, MNTTAB_OPT_ACDIRMAX)))
-# ifdef MNT2_NFS_OPT_ACDIRMAX
-    nfs_args.flags |= MNT2_NFS_OPT_ACDIRMAX;
-# else /* not MNT2_NFS_OPT_ACDIRMAX */
-    ;
-# endif /* not MNT2_NFS_OPT_ACDIRMAX */
-#endif /* MNTTAB_OPT_ACDIRMAX */
-
-#ifdef MNTTAB_OPT_PRIVATE	/* mount private, single-client tree */
-  if (hasmntopt(&mnt, MNTTAB_OPT_PRIVATE) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_PRIVATE;
-#endif /* MNTTAB_OPT_PRIVATE */
-
-#ifdef MNTTAB_OPT_SYMTTL	/* symlink cache time-to-live */
-  if ((nfs_args.symttl = hasmntval(&mnt, MNTTAB_OPT_SYMTTL)))
-    nfs_args.flags |= MNT2_NFS_OPT_SYMTTL;
-#endif /* MNTTAB_OPT_SYMTTL */
-
-#ifdef MNT2_NFS_OPT_PGTHRESH
-  if ((nfs_args.pg_thresh = hasmntval(&mnt, MNTTAB_OPT_PGTHRESH)))
-    nfs_args.flags |= MNT2_NFS_OPT_PGTHRESH;
-#endif /* MNT2_NFS_OPT_PGTHRESH */
-
-#ifdef HAVE_TRANSPORT_TYPE_TLI
-  nfs_args.addr = &nb;		/* fill in some automatic space */
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
-
-  NFS_SA_DREF(nfs_args, fs->fs_ip); /* bug? do I need this for solaris? */
-
-  flags = compute_mount_flags(&mnt);
-
-#if defined(MNT2_NFS_OPT_NOCTO) && defined(MNTTAB_OPT_NOCTO)
-  if (hasmntopt(&mnt, MNTTAB_OPT_NOCTO) != NULL)
-    nfs_args.flags |= MNT2_NFS_OPT_NOCTO;
-#endif /* defined(MNT2_NFS_OPT_NOCTO) && defined(MNTTAB_OPT_NOCTO) */
-
-#ifdef HAVE_FIELD_NFS_ARGS_T_VERSION
-# ifdef NFS_ARGSVERSION
-  nfs_args.version = NFS_ARGSVERSION; /* BSDI 3.0 */
-# endif /* NFS_ARGSVERSION */
-# ifdef DG_MOUNT_NFS_VERSION
-  nfs_args.version = DG_MOUNT_NFS_VERSION; /* dg-ux */
-# endif /* DG_MOUNT_NFS_VERSION */
-#endif /* HAVE_FIELD_NFS_ARGS_VERSION */
-
-#if defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY)
-  /*
-   * Overlay this nfs mount: a must for autofs to work.
-   */
-  if (hasmntopt(&mnt, MNTTAB_OPT_OVERLAY) != NULL) {
-    flags |= MNT2_GEN_OPT_OVERLAY;
-    plog(XLOG_INFO, "using an overlay nfs mount");
-  }
-#endif /* defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY) */
-
-  error = mount_fs(&mnt, flags, (caddr_t) &nfs_args, retry, type,
+  /* finally call the mounting function */
+#ifdef DEBUG
+  amuDebug(D_TRACE)
+    print_nfs_args(&nfs_args, nfs_version);
+#endif /* DEBUG */
+  error = mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type,
 		   nfs_version, nfs_proto, mnttab_file_name);
-  free(xopts);
+  XFREE(xopts);
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   free_knetconfig(nfs_args.knconf);
+  if (nfs_args.addr)
+    XFREE(nfs_args.addr);	/* allocated in compute_nfs_args() */
 #endif /* HAVE_TRANSPORT_TYPE_TLI */
 
   return error;
@@ -965,7 +690,7 @@ mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
 }
 
 
-static int
+int
 nfs_fmount(mntfs *mf)
 {
   int error = 0;
@@ -983,7 +708,7 @@ nfs_fmount(mntfs *mf)
 }
 
 
-static int
+int
 nfs_fumount(mntfs *mf)
 {
   int error = UMOUNT_FS(mf->mf_mount, mnttab_file_name);
@@ -1013,7 +738,7 @@ nfs_fumount(mntfs *mf)
 	  ((new_mf->mf_flags & (MFF_MOUNTED | MFF_UNMOUNTING | MFF_RESTART)) == (MFF_MOUNTED | MFF_RESTART)))
 	continue;
 
-      if (strncmp(mf->mf_mount, new_mf->mf_mount, len) == 0 &&
+      if (NSTREQ(mf->mf_mount, new_mf->mf_mount, len) &&
 	  new_mf->mf_mount[len] == '/') {
 	UMOUNT_FS(new_mf->mf_mount, mnttab_file_name);
 	didsome = 1;
@@ -1029,7 +754,7 @@ nfs_fumount(mntfs *mf)
 }
 
 
-static void
+void
 nfs_umounted(am_node *mp)
 {
   /*

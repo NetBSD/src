@@ -1,7 +1,7 @@
-/*	$NetBSD: amq.c,v 1.9 1997/10/26 00:25:27 christos Exp $	*/
+/*	$NetBSD: amq.c,v 1.10 1998/08/08 22:33:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,16 +51,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 char copyright[] = "\
-@(#)Copyright (c) 1997 Erez Zadok\n\
+@(#)Copyright (c) 1997-1998 Erez Zadok\n\
 @(#)Copyright (c) 1990 Jan-Simon Pendry\n\
 @(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
-#if 0
-static char rcsid[] = "Id: amq.c,v 6.0 1997/01/01 15:09:16 ezk ";
-static char sccsid[] = "%W% (Berkeley) %G%";
+#if __GNUC__ < 2
+static char rcsid[] = "Id: amq.c,v 6.0 1997-1998/01/01 15:09:16 ezk ";
 #else
-__RCSID("$NetBSD: amq.c,v 1.9 1997/10/26 00:25:27 christos Exp $");
+__RCSID("$NetBSD: amq.c,v 1.10 1998/08/08 22:33:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +78,7 @@ static int unmount_flag;
 static int stats_flag;
 static int getvers_flag;
 static int amd_program_number = AMQ_PROGRAM;
+static int use_tcp_flag, use_udp_flag;
 static char *debug_opts;
 static char *amq_logfile;
 static char *mount_map;
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
   char *server;
   struct sockaddr_in server_addr;
   int s;	/* to pass the Amd security check, we must use a priv port */
-  CLIENT *clnt;
+  CLIENT *clnt = NULL;
   struct hostent *hp;
   int nodefault = 0;
   struct timeval tv;
@@ -334,7 +334,7 @@ main(int argc, char *argv[])
   /*
    * Parse arguments
    */
-  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:pP:")) != -1)
+  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:pP:TU")) != -1)
     switch (opt_ch) {
     case 'f':
       flush_flag = 1;
@@ -394,6 +394,14 @@ main(int argc, char *argv[])
       amd_program_number = atoi(optarg);
       break;
 
+    case 'T':
+      use_tcp_flag = 1;
+      break;
+
+    case 'U':
+      use_udp_flag = 1;
+      break;
+
     default:
       errs = 1;
       break;
@@ -408,9 +416,14 @@ main(int argc, char *argv[])
     fprintf(stderr, "\
 Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
 \t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n\
-\t[-P prognum]\n", progname);
+\t[-P prognum] [-T] [-U]\n", progname);
     exit(1);
   }
+
+  /* set use_udp and use_tcp flags both to on if none are defined */
+  if (!use_tcp_flag && !use_udp_flag)
+    use_tcp_flag = use_udp_flag = 1;
+
 #if defined(HAVE_CLUSTER_H) && defined(HAVE_CNODEID) && defined(HAVE_GETCCENT)
   /*
    * Figure out root server of cluster
@@ -419,7 +432,6 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     server = cluster_server();
   else
 #endif /* defined(HAVE_CLUSTER_H) && defined(HAVE_CNODEID) && defined(HAVE_GETCCENT) */
-
     server = def_server;
 
   /*
@@ -444,35 +456,21 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
    */
   tv.tv_sec = 5;		/* 5 seconds for timeout or per retry */
   tv.tv_usec = 0;
+
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   clnt = get_secure_amd_client(server, &tv, &s);
-
-  if (clnt == NULL) {
+  if (!clnt && use_tcp_flag)	/* try tcp first */
     clnt = clnt_create(server, amd_program_number, AMQ_VERSION, "tcp");
-    if (clnt == 0) {
-      clnt = clnt_create(server, amd_program_number, AMQ_VERSION, "udp");
-      if (clnt)
-	clnt_control(clnt, CLSET_RETRY_TIMEOUT, (char *) &tv);
-    }
-  }
-  if (clnt == 0) {
-    fprintf(stderr, "%s: ", progname);
-    clnt_pcreateerror(server);
-    exit(1);
+  if (!clnt && use_udp_flag) {	/* try udp next */
+    clnt = clnt_create(server, amd_program_number, AMQ_VERSION, "udp");
+    /* if ok, set timeout (valid for connectionless transports only) */
+    if (clnt)
+      clnt_control(clnt, CLSET_RETRY_TIMEOUT, (char *) &tv);
   }
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
 
   /* first check if remote portmapper is up */
-  cs = pmap_rmtcall(&server_addr,
-		    amd_program_number,
-		    AMQ_VERSION,
-		    AMQPROC_NULL,
-		    (XDRPROC_T_TYPE) xdr_void,
-		    NULL,
-		    (XDRPROC_T_TYPE) xdr_void,
-		    NULL,
-		    tv,
-		    NULL);
+  cs = pmap_ping(&server_addr);
   if (cs == RPC_TIMEDOUT) {
     fprintf(stderr, "%s: failed to contact portmapper on host \"%s\". %s\n",
 	    progname, server, clnt_sperrno(cs));
@@ -480,19 +478,23 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
   }
 
   /* portmapper exists: get remote amd info from it */
-  s = RPC_ANYSOCK;
-  clnt = clnttcp_create(&server_addr, amd_program_number, AMQ_VERSION, &s, 0, 0);
-  if (clnt == 0) {
-    close(s);
-    s = privsock(SOCK_DGRAM);
-    clnt = clntudp_create(&server_addr, amd_program_number, AMQ_VERSION, tv, &s);
+  if (!clnt && use_tcp_flag) {	/* try tcp first */
+    s = RPC_ANYSOCK;
+    clnt = clnttcp_create(&server_addr, amd_program_number,
+			  AMQ_VERSION, &s, 0, 0);
   }
-  if (clnt == 0) {
+  if (!clnt && use_udp_flag) {	/* try udp next */
+    /* XXX: do we need to close(s) ? */
+    s = privsock(SOCK_DGRAM);
+    clnt = clntudp_create(&server_addr, amd_program_number,
+			  AMQ_VERSION, tv, &s);
+  }
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
+  if (!clnt) {
     fprintf(stderr, "%s: ", progname);
     clnt_pcreateerror(server);
     exit(1);
   }
-#endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   /*
    * Control debugging
@@ -601,7 +603,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     amq_string *spp = amqproc_getvers_1((voidp) 0, clnt);
     if (spp && *spp) {
       fputs(*spp, stdout);
-      free(*spp);
+      XFREE(*spp);
     } else {
       fprintf(stderr, "%s: failed to get version information\n", progname);
       errs = 1;
@@ -803,88 +805,84 @@ get_secure_amd_client(char *host, struct timeval *tv, int *sock)
   /*
    * First transport type to try: TCP
    */
+  if (use_tcp_flag) {
+    /* Find amd address on TCP */
+    nc = getnetconfigent(NC_TCP);
+    if (!nc) {
+      fprintf(stderr, "getnetconfig for tcp failed: %s\n", nc_sperror());
+      goto tryudp;
+    }
 
-  /*
-   * Find amd address on TCP
-   */
-  if ((nc = getnetconfigent(NC_TCP)) == NULL) {
-    fprintf(stderr, "getnetconfig for tcp failed: %s\n", nc_sperror());
-    goto tryudp;
-  }
+    if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
+      /*
+       * don't pring error messages here, since amd might legitimately
+       * serve udp only
+       */
+      goto tryudp;
+    }
+    /* Create priviledged TCP socket */
+    *sock = t_open(nc->nc_device, O_RDWR, 0);
 
-  if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
-    /*
-     * don't pring error messages here, since amd might legitimately
-     * serve udp only
-     */
-    goto tryudp;
-  }
-  /*
-   * Create priviledged TCP socket
-   */
-  *sock = t_open(nc->nc_device, O_RDWR, 0);
+    if (*sock < 0) {
+      fprintf(stderr, "t_open %s: %m\n", nc->nc_device);
+      goto tryudp;
+    }
+    if (amq_bind_resv_port(*sock, (u_short *) 0) < 0)
+      goto tryudp;
 
-  if (*sock < 0) {
-    fprintf(stderr, "t_open %s: %m\n", nc->nc_device);
-    goto tryudp;
+    client = clnt_vc_create(*sock, &nb, amd_program_number, AMQ_VERSION, 0, 0);
+    if (!client) {
+      fprintf(stderr, "clnt_vc_create failed");
+      t_close(*sock);
+      goto tryudp;
+    }
+    /* tcp succeeded */
+    return client;
   }
-  if (amq_bind_resv_port(*sock, (u_short *) 0) < 0)
-    goto tryudp;
-
-  if ((client = clnt_vc_create(*sock, &nb, amd_program_number, AMQ_VERSION, 0, 0))
-      == (CLIENT *) NULL) {
-    fprintf(stderr, "clnt_vc_create failed");
-    t_close(*sock);
-    goto tryudp;
-  }
-  /* tcp succeeded */
-#ifdef DEBUG
-  fprintf(stderr, "get_secure_amd_client: using tcp, port %d\n", sin.sin_port);
-#endif /* DEBUG */
-  return client;
 
 tryudp:
   /*
    * TCP failed so try UDP
    */
+  if (use_udp_flag) {
+    /* find amd address on UDP */
+    nc = getnetconfigent(NC_UDP);
+    if (!nc) {
+      fprintf(stderr, "getnetconfig for udp failed: %s\n", nc_sperror());
+      return NULL;
+    }
+    if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
+      fprintf(stderr, "%s\n",
+	      clnt_spcreateerror("couldn't get amd address on udp"));
+      return NULL;
+    }
+    /* create priviledged UDP socket */
+    *sock = t_open(nc->nc_device, O_RDWR, 0);
 
-  /*
-   * Find amd address on UDP
-   */
-  if ((nc = getnetconfigent(NC_UDP)) == NULL) {
-    fprintf(stderr, "getnetconfig for udp failed: %s\n", nc_sperror());
-    return NULL;
-  }
-  if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
-    fprintf(stderr, "%s\n",
-	    clnt_spcreateerror("couldn't get amd address on udp"));
-    return NULL;
-  }
-  /*
-   * Create priviledged UDP socket
-   */
-  *sock = t_open(nc->nc_device, O_RDWR, 0);
+    if (*sock < 0) {
+      fprintf(stderr, "t_open %s: %m\n", nc->nc_device);
+      return NULL;		/* neither tcp not udp succeeded */
+    }
+    if (amq_bind_resv_port(*sock, (u_short *) 0) < 0)
+      return NULL;
 
-  if (*sock < 0) {
-    fprintf(stderr, "t_open %s: %m\n", nc->nc_device);
-    return NULL;		/* neither tcp not udp succeeded */
+    client = clnt_dg_create(*sock, &nb, amd_program_number, AMQ_VERSION, 0, 0);
+    if (!client) {
+      fprintf(stderr, "clnt_dg_create failed\n");
+      t_close(*sock);
+      return NULL;		/* neither tcp not udp succeeded */
+    }
+    if (clnt_control(client, CLSET_RETRY_TIMEOUT, (char *) tv) == FALSE) {
+      fprintf(stderr, "clnt_control CLSET_RETRY_TIMEOUT for udp failed\n");
+      clnt_destroy(client);
+      return NULL;		/* neither tcp not udp succeeded */
+    }
+    /* udp succeeded */
+    return client;
   }
-  if (amq_bind_resv_port(*sock, (u_short *) 0) < 0)
-    return NULL;
 
-  if ((client = clnt_dg_create(*sock, &nb, amd_program_number, AMQ_VERSION, 0, 0))
-      == (CLIENT *) NULL) {
-    fprintf(stderr, "clnt_dg_create failed\n");
-    t_close(*sock);
-    return NULL;		/* neither tcp not udp succeeded */
-  }
-  if (clnt_control(client, CLSET_RETRY_TIMEOUT, (char *) tv) == FALSE) {
-    fprintf(stderr, "clnt_control CLSET_RETRY_TIMEOUT for udp failed\n");
-    clnt_destroy(client);
-    return NULL;		/* neither tcp not udp succeeded */
-  }
-  /* udp succeeded */
-  return client;
+  /* should never get here */
+  return NULL;
 }
 
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
@@ -942,13 +940,3 @@ privsock(int ty)
 }
 
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
-
-#if defined(DEBUG) && defined(DEBUG_MEM)
-/* defined here so that it does not have to resolve it with libamu.a */
-static
-void xfree(char *f, int l, voidp p)
-{
-  Debug(D_MEM) plog(XLOG_DEBUG, "Free in %s:%d: block %#x", f, l, p);
-  free(p);
-}
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */

@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_pcfs.c,v 1.5 1997/10/26 00:25:15 christos Exp $	*/
+/*	$NetBSD: ops_pcfs.c,v 1.6 1998/08/08 22:33:32 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,16 +67,16 @@ am_ops pcfs_ops =
   "pcfs",
   pcfs_match,
   0,				/* pcfs_init */
-  auto_fmount,
+  amfs_auto_fmount,
   pcfs_fmount,
-  auto_fumount,
+  amfs_auto_fumount,
   pcfs_fumount,
-  efs_lookuppn,
-  efs_readdir,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
   0,				/* pcfs_readlink */
   0,				/* pcfs_mounted */
   0,				/* pcfs_umounted */
-  find_afs_srvr,
+  find_amfs_auto_srvr,
   FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO
 };
 
