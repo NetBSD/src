@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.14 2002/03/04 03:07:26 wiz Exp $	*/
+/*	$NetBSD: quit.c,v 1.15 2002/03/05 20:14:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.14 2002/03/04 03:07:26 wiz Exp $");
+__RCSID("$NetBSD: quit.c,v 1.15 2002/03/05 20:14:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: quit.c,v 1.14 2002/03/04 03:07:26 wiz Exp $");
  */
 
 extern char *tmpdir;
-extern char *tempQuit, *tempResid;
+extern char *tempResid;
 
 /*
  * The "quit" command.
@@ -81,8 +81,10 @@ quit(void)
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
 	struct message *mp;
 	int c;
+	int fd; /* temporary file descriptor for temp file */
 	struct stat minfo;
 	char *mbox;
+	char tempname[PATHSIZE];
 
 #ifdef __GNUC__
 	obuf = NULL;		/* XXX gcc -Wuninitialized */
@@ -227,28 +229,31 @@ nolock:
 	mbox = expand("&");
 	mcount = c;
 	if (value("append") == NULL) {
-		if ((obuf = Fopen(tempQuit, "w")) == NULL) {
-			perror(tempQuit);
+		(void)snprintf(tempname, sizeof(tempname),
+		    "%s/mail.RmXXXXXXXXXX", tmpdir);
+		if ((fd = mkstemp(tempname)) == -1 ||
+		    (obuf = Fdopen(fd, "w")) == NULL) {
+			warn("%s", tempname);
 			Fclose(fbuf);
 			dot_unlock(mailname);
 			return;
 		}
-		if ((ibuf = Fopen(tempQuit, "r")) == NULL) {
-			perror(tempQuit);
-			rm(tempQuit);
+		if ((ibuf = Fopen(tempname, "r")) == NULL) {
+			warn("%s", tempname);
+			rm(tempname);
 			Fclose(obuf);
 			Fclose(fbuf);
 			dot_unlock(mailname);
 			return;
 		}
-		rm(tempQuit);
+		rm(tempname);
 		if ((abuf = Fopen(mbox, "r")) != NULL) {
 			while ((c = getc(abuf)) != EOF)
 				(void) putc(c, obuf);
 			Fclose(abuf);
 		}
 		if (ferror(obuf)) {
-			perror(tempQuit);
+			warn("%s", tempname);
 			Fclose(ibuf);
 			Fclose(obuf);
 			Fclose(fbuf);
