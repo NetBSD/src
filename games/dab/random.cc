@@ -1,4 +1,4 @@
-/*	$Header: /cvsroot/src/games/dab/Attic/random.C,v 1.2 2003/12/26 18:03:34 christos Exp $	*/
+/*	$Header: /cvsroot/src/games/dab/random.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include "defs.h"
-RCSID("$NetBSD: random.C,v 1.2 2003/12/26 18:03:34 christos Exp $")
+RCSID("$NetBSD: random.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
 
 #include <time.h>
 #include <string.h>
