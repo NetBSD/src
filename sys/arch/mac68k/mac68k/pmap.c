@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.9 1994/04/22 12:11:21 briggs Exp $
+ *	$Id: pmap.c,v 1.10 1994/06/26 13:07:48 briggs Exp $
  */
 
 /*
@@ -267,7 +267,7 @@ void		pmap_enter_ptpage();
  */
 struct pte	*CMAP1, *CMAP2;
 caddr_t		CADDR1, CADDR2;
-struct pte	*mmap;
+struct pte	*pmap_mmap;
 caddr_t		vmmap;
 struct pte	*msgbufmap;
 struct msgbuf	*msgbufp;
@@ -373,7 +373,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t	,CMAP2	,CADDR2	   ,1	)
 
 	/* BG -- this is used only in mem.c and machdep.c, once each: */
-	SYSMAP(caddr_t		,mmap		,vmmap	   ,1		)
+	SYSMAP(caddr_t		,pmap_mmap	,vmmap	   ,1		)
 
 	/* BG -- this is used a few times in kern/subr_log.c and once */
 	/*  in kern/subr_prf.c. */
@@ -381,6 +381,37 @@ pmap_bootstrap(firstaddr, loadaddr)
 
 	virtual_avail = va;
 #endif
+}
+
+/*
+ * Bootstrap memory allocator. This function allows for early dynamic
+ * memory allocation until the virtual memory system has been bootstrapped.
+ * After that point, either kmem_alloc or malloc should be used. This
+ * function works by stealing pages from the (to be) managed page pool,
+ * stealing virtual address space, then mapping the pages and zeroing them.
+ *
+ * It should be used from pmap_bootstrap till vm_page_startup, afterwards
+ * it cannot be used, and will generate a panic if tried. Note that this
+ * memory will never be freed, and in essence it is wired down.
+ */
+void *
+pmap_bootstrap_alloc(size)
+	int size;
+{
+	extern boolean_t vm_page_startup_initialized;
+	vm_offset_t val;
+	
+	if (vm_page_startup_initialized)
+		panic("pmap_bootstrap_alloc: called after startup initialized");
+	size = round_page(size);
+	val = virtual_avail;
+
+	virtual_avail = pmap_map(virtual_avail, avail_start,
+		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
+	avail_start += size;
+
+	blkclr ((caddr_t) val, size);
+	return ((void *) val);
 }
 
 /*
@@ -421,10 +452,10 @@ pmap_init(phys_start, phys_end)
 	 * this used to say:
 	 *
 	 *
-	 *	addr = (vm_offset_t) intiobase;
+	 *	addr = (vm_offset_t) IOBase;
 	 *	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
 	 *			   &addr, mac68k_ptob(IIOMAPSIZE+NBMAPSIZE), FALSE);
-	 *	if (addr != (vm_offset_t)intiobase)
+	 *	if (addr != (vm_offset_t)IOBase)
 	 *		goto bogons;
 	 *
 	 */
@@ -437,20 +468,20 @@ pmap_init(phys_start, phys_end)
 /* BG: You bozo.  Well, turning this back on seems to be working. */
 /*  I wish I knew why it works now... */
 #if 1
-	addr = (vm_offset_t) intiobase;
+	addr = (vm_offset_t) IOBase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
 			   &addr, mac68k_ptob(IIOMAPSIZE), FALSE);
-	if (addr != (vm_offset_t)intiobase)
+	if (addr != (vm_offset_t)IOBase)
 		panic("pmap_init: I/O space not mapped!  Oh, no!\n");
 
 	/*
 	 * Mac II NuBus space (0xF0000000 - 0xFFFFFFFF)
 	 * (Added by BG)
 	 */
-	addr = (vm_offset_t) extiobase;
+	addr = (vm_offset_t) NuBusBase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
 			   &addr, mac68k_ptob(NBMAPSIZE), FALSE);
-	if (addr != (vm_offset_t)extiobase)
+	if (addr != (vm_offset_t)NuBusBase)
 		panic("pmap_init: NuBus space not mapped!  Oh, no!\n");
 #endif
 
@@ -741,6 +772,18 @@ pmap_reference(pmap)
 		pmap->pm_count++;
 		simple_unlock(&pmap->pm_lock);
 	}
+}
+
+void
+pmap_activate(pmap, pcbp)
+	register pmap_t pmap;
+	struct pcb *pcbp;
+{
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
+		printf("pmap_activate(%x, %x)\n", pmap, pcbp);
+#endif
+	PMAP_ACTIVATE(pmap, pcbp, pmap == curproc->p_vmspace->vm_map.pmap);
 }
 
 /*
@@ -1736,24 +1779,13 @@ ok:
 	splx(s);
 }
 
-void
-pmap_activate(pmap, pcbp)
-	register pmap_t pmap;
-	struct pcb *pcbp;
-{
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%x, %x)\n", pmap, pcbp);
-#endif
-	PMAP_ACTIVATE(pmap, pcbp, pmap == curproc->p_vmspace->vm_map.pmap);
-}
-
 /*
  *	pmap_zero_page zeros the specified (machine independent)
  *	page by mapping the page into virtual memory and using
  *	bzero to clear its contents, one machine dependent page
  *	at a time.
  */
+void
 pmap_zero_page(phys)
 	register vm_offset_t	phys;
 {
@@ -1776,6 +1808,7 @@ pmap_zero_page(phys)
  *	bcopy to copy the page, one machine dependent page at a
  *	time.
  */
+void
 pmap_copy_page(src, dst)
 	register vm_offset_t	src, dst;
 {
@@ -1808,6 +1841,7 @@ pmap_copy_page(src, dst)
  *		will specify that these pages are to be wired
  *		down (or not) as appropriate.
  */
+void
 pmap_pageable(pmap, sva, eva, pageable)
 	pmap_t		pmap;
 	vm_offset_t	sva, eva;
