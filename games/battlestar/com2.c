@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.15 2000/09/23 19:23:57 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.16 2000/09/23 19:45:07 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.15 2000/09/23 19:23:57 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.16 2000/09/23 19:45:07 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -274,12 +274,16 @@ void
 ravage()
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
-	if (wordtype[wordnumber] == NOUNS && testbit(location[position].objects, wordvalue[wordnumber])) {
+	if (wordtype[wordnumber] == NOUNS && (testbit(location[position].objects, wordvalue[wordnumber])
+	    || (wordvalue[wordnumber] == NORMGOD && testbit(location[position].objects, BATHGOD)))) {
 		ourtime++;
 		switch (wordvalue[wordnumber]) {
 		case NORMGOD:
 			puts("You attack the goddess, and she screams as you beat her.  She falls down");
-			puts("crying and tries to hold her torn and bloodied dress around her.");
+			if (testbit(location[position].objects, BATHGOD))
+				puts("crying and tries to cover her nakedness.");
+			else
+				puts("crying and tries to hold her torn and bloodied dress around her.");
 			power += 5;
 			pleasure += 8;
 			ego -= 10;
