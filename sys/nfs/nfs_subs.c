@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.87 2000/10/24 12:02:04 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.88 2000/11/08 14:28:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1219,8 +1219,8 @@ nfs_initdircache(vp)
 
 	np->n_dircachesize = 0;
 	np->n_dblkno = 1;
-	np->n_dircache =
-	    hashinit(NFS_DIRHASHSIZ, M_NFSDIROFF, M_WAITOK, &nfsdirhashmask);
+	np->n_dircache = hashinit(NFS_DIRHASHSIZ, HASH_LIST, M_NFSDIROFF,
+	    M_WAITOK, &nfsdirhashmask);
 	TAILQ_INIT(&np->n_dirchain);
 	if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
 		MALLOC(np->n_dirgens, unsigned *,
@@ -1466,7 +1466,8 @@ nfs_init()
 			+ nqsrv_clockskew + nqsrv_writeslack;
 		NQLOADNOVRAM(nqnfsstarttime);
 		CIRCLEQ_INIT(&nqtimerhead);
-		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, M_WAITOK, &nqfhhash);
+		nqfhhashtbl = hashinit(NQLCHSZ, HASH_LIST, M_NQLEASE,
+		    M_WAITOK, &nqfhhash);
 	}
 #endif
 
