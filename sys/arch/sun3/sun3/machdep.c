@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2001/09/10 21:19:27 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 2001/09/11 20:37:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -711,11 +711,10 @@ dumpsys()
 	do {
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
-		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-		    VM_PROT_READ, VM_PROT_READ);
+		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
 		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
-		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+		pmap_kremove(vmmap, NBPG);
 		pmap_update(pmap_kernel());
 		if (error)
 			goto fail;
