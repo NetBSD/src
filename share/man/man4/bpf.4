@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.13 2000/10/05 12:35:33 ad Exp $
+.\"	$NetBSD: bpf.4,v 1.14 2001/05/19 17:23:39 jdolecek Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -267,7 +267,7 @@ Set or clear non-blocking I/O.  If arg is non-zero, then doing a
 .Xr read 2
 when no data is available will return -1 and
 .Va errno
-will be set to EWOULDBLOCK.
+will be set to EAGAIN.
 If arg is zero, non-blocking I/O is disabled.  Note:  setting this
 overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
