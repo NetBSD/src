@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.7 1994/11/30 19:36:28 jtc Exp $
+.\"	$NetBSD: yp.8,v 1.8 1994/12/09 09:29:26 deraadt Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -101,23 +101,18 @@ exists.
 .Sh BUGS
 Only
 .Nm YP
-client functionality exists -- the server code has not yet been
-written. Brave folk can contact the author.
+client functionality exists, there is no ypserv (yet).
 .Pp
 .Pa /etc/passwd
 and
 .Pa /etc/group
-only support ``+'' entries.
+only support ``+'' entries, not the more sophisticated entries like
+``+user'' and ``+@netgroup''.
 .Pp
-The
-.Xr ypclnt 3
-manual pages have not yet been written.
-.Pp
-Neither Sun nor this author have found a clean way to handle
-the problems that occur when
-.Xr ypbind 8
-cannot find its server
-upon bootup.
+If
+.Xr ypbind
+cannot find a server, the system behaves the same way as Sun's code:
+it hangs.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypbind 8 ,
@@ -125,10 +120,10 @@ upon bootup.
 .Xr ypmatch 1 ,
 .Xr yppoll 8 , 
 .Xr ypset 8 ,
-.Xr ypwhich 1
+.Xr ypwhich 1 ,
+.Xr ypclnt 3
 .Sh HISTORY
-The
+This free
 .Nm YP
-subsystem was written from the ground up by Theo de Raadt
-to be compatible to Sun's implementation. No Sun code was
-referenced.
+subsystem was written from scratch by Theo de Raadt to be compatible
+to Sun's implementation.
