@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf.c,v 1.9 2000/01/21 19:51:37 mycroft Exp $	*/
+/*	$NetBSD: sprintf.c,v 1.10 2001/12/07 11:47:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sprintf.c,v 1.9 2000/01/21 19:51:37 mycroft Exp $");
+__RCSID("$NetBSD: sprintf.c,v 1.10 2001/12/07 11:47:44 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,10 +69,12 @@ sprintf(str, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+	struct __sfileext fext;
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;

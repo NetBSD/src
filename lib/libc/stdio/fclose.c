@@ -1,4 +1,4 @@
-/*	$NetBSD: fclose.c,v 1.13 2000/01/21 19:53:02 mycroft Exp $	*/
+/*	$NetBSD: fclose.c,v 1.14 2001/12/07 11:47:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)fclose.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: fclose.c,v 1.13 2000/01/21 19:53:02 mycroft Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.14 2001/12/07 11:47:41 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include "local.h"
 #include "reentrant.h"
 
@@ -64,6 +65,7 @@ fclose(fp)
 		return (EOF);
 	}
 	FLOCKFILE(fp);
+	WCIO_FREE(fp);
 	r = fp->_flags & __SWR ? __sflush(fp) : 0;
 	if (fp->_close != NULL && (*fp->_close)(fp->_cookie) < 0)
 		r = EOF;

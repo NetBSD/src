@@ -1,11 +1,8 @@
-/*	$NetBSD: fputs.c,v 1.11 2001/12/07 11:47:42 yamt Exp $	*/
+/* $NetBSD: fputwc.c,v 1.1 2001/12/07 11:47:42 yamt Exp $ */
 
 /*-
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Chris Torek.
+ * Copyright (c)2001 Citrus Project,
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,18 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,48 +24,64 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Citrus$
  */
-
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)fputs.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: fputs.c,v 1.11 2001/12/07 11:47:42 yamt Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
-#include <string.h>
+#include <wchar.h>
 #include "local.h"
 #include "fvwrite.h"
 #include "reentrant.h"
 
-/*
- * Write the given string to the given file.
- */
-int
-fputs(s, fp)
-	const char *s;
-	FILE *fp;
+wint_t
+fputwc(wchar_t wc, FILE *fp)
 {
+	struct wchar_io_data *wcio;
+	mbstate_t *st;
+	size_t size;
+	char buf[MB_LEN_MAX];
 	struct __suio uio;
 	struct __siov iov;
-	int r;
 
-	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(fp != NULL);
-
-	/* LINTED we don't touch s */
-	iov.iov_base = (void *)s;
-	iov.iov_len = uio.uio_resid = strlen(s);
+	
+	/* LINTED we don't play with buf */
+	iov.iov_base = (void *)buf;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
+
 	FLOCKFILE(fp);
-	_SET_ORIENTATION(fp, -1);
-	r = __sfvwrite(fp, &uio);
+	_SET_ORIENTATION(fp, 1);
+	wcio = WCIO_GET(fp);
+	if (wcio == 0) {
+		FUNLOCKFILE(fp);
+		errno = ENOMEM;
+		return WEOF;
+	}
+
+	wcio->wcio_ungetwc_inbuf = 0;
+	st = &wcio->wcio_mbstate_out;
+
+	size = wcrtomb(buf, wc, st);
+	if (size == (size_t)-1) {
+		FUNLOCKFILE(fp);
+		errno = EILSEQ;
+		return WEOF;
+	}
+
+	_DIAGASSERT(size != 0);
+
+	uio.uio_resid = iov.iov_len = size;
+	if (__sfvwrite(fp, &uio)) {
+		FUNLOCKFILE(fp);
+		return WEOF;
+	}
+
 	FUNLOCKFILE(fp);
-	return r;
+
+	return (wint_t)wc;
 }
