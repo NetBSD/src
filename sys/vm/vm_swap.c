@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.5 1997/05/07 22:33:17 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.6 1997/05/08 00:13:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -129,7 +129,7 @@ struct swappri {
 	LIST_ENTRY(swappri)	spi_swappri;
 };
 
-int nswapdev, nswap, nswapmap;
+int nswapdev, nswap;
 int swflags;
 struct extent *swapmap;
 LIST_HEAD(swap_priority, swappri) swap_priority;
@@ -141,8 +141,8 @@ static int swap_off __P((struct proc *, struct swapdev *));
 static struct swapdev *swap_getdevfromaddr __P((daddr_t));
 #if _unused_
 static daddr_t swap_vtop_addr __P((daddr_t));
-#endif
 static daddr_t swap_ptov_addr __P((struct swapdev *, daddr_t));
+#endif
 static void swap_addmap __P((struct swapdev *, int));
 
 int
@@ -372,8 +372,7 @@ swap_on(p, sdp)
 	struct vattr va;
 #endif
 	dev_t dev = sdp->swd_dev;
-	int ssize;
-	char *name, *storage;
+	char *name;
 
 #if 0
 	/*
@@ -386,11 +385,12 @@ swap_on(p, sdp)
 			return (error);
 	}
 #endif
-	sdp->swd_flags |= SWF_INUSE;
+
 #ifdef SWAPDEBUG	/* this wants only to block devices */
 	if (vmswapdebug & VMSDB_INFO)
 		printf("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev));
 #endif /* SWAPDEBUG */
+
 	if (vp->v_type == VBLK) {
 		if (bdevsw[major(dev)].d_psize == 0 ||
 		    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
@@ -415,6 +415,8 @@ swap_on(p, sdp)
 		error = EINVAL;
 		goto bad;
 	}
+
+	sdp->swd_flags |= SWF_INUSE;
 	sdp->swd_nblks = nblks;
 
 #if 0
@@ -436,29 +438,29 @@ swap_on(p, sdp)
 		size = (int)blk;
 		addr = (long)0;
 	}
+
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWON)
 		printf("swap_on: dev %x: size %d, addr %ld\n", dev, size, addr);
 #endif /* SWAPDEBUG */
-	/* coalesce these two malloc calls? */
+
 	name = malloc(12, M_VMSWAP, M_WAITOK);
 	sprintf(name, "swap0x%04x", count++);
-	ssize = EXTENT_FIXED_STORAGE_SIZE(nswapmap);
-	storage = malloc(ssize, M_VMSWAP, M_WAITOK);
 	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
-				    storage, ssize, EX_MALLOCOK|EX_WAITOK);
+				    0, 0, EX_NOCOALESCE|EX_WAITOK);
 	swap_addmap(sdp, size);
 	nswapdev++;
 	nswap += nblks;
 	sdp->swd_flags |= SWF_ENABLE;
 	if (dumpdev == NULL && vp->v_type == VBLK)
 		dumpdev = dev;
+
 	/* XXX handle miniroot == (rootvp == vp) */
 	return (0);
 
 bad:
 	/* XXX see above */
-#ifdef 0
+#if 0
 	if (vp != rootvp)
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
 #endif
@@ -508,14 +510,14 @@ swap_off(p, sdp)
 #endif
 
 /*
- * to decide where to allocate what part of swap, we must, "round robin"
+ * to decide where to allocate what part of swap, we must "round robin"
  * the swap devicies in swap_priority of the same priority until they are
  * full.  we do this with a list of swap priorities that have circle
- * queue's of swapdev's.
+ * queues of swapdevs.
  *
  * the following functions control allocation and freeing of part of the
  * swap area.  you call swap_alloc() with a size and it returns an address.
- * later you call swap_free() and it free's the use of that swap area.
+ * later you call swap_free() and it frees the use of that swap area.
  *
  *	daddr_t swap_alloc(int size);
  *	void swap_free(int size, daddr_t addr);
@@ -525,13 +527,12 @@ daddr_t
 swap_alloc(size)
 	int size;
 {
-	daddr_t addr;
 	struct swapdev *sdp;
 	struct swappri *spp;
 	u_long	result;
 
 	if (nswapdev < 1)
-		return NULL;
+		return 0;
 	
 	/*
 	 * XXX
@@ -547,7 +548,8 @@ swap_alloc(size)
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
-					 EX_NOBOUNDARY, 0, &result) != 0) {
+					 EX_NOBOUNDARY, EX_NOWAIT,
+					 &result) != 0) {
 				/*
 				 * XXX
 				 * do something smart to note this partition
@@ -555,11 +557,9 @@ swap_alloc(size)
 				 */
 				continue;
 			}
-			addr = swap_ptov_addr(sdp, (daddr_t)result);
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
-			if (addr)
-				return addr;
+			return (daddr_t)(result + sdp->swd_mapoffset);
 		}
 	}
 	return 0;
@@ -607,6 +607,7 @@ swap_getdevfromaddr(addr)
 	return NULL;
 }
 
+#if _unused_
 /* XXX make this a macro or an inline? */
 static daddr_t
 swap_ptov_addr(sdp, addr)
@@ -617,7 +618,6 @@ swap_ptov_addr(sdp, addr)
 	return (addr + sdp->swd_mapoffset);
 }
 
-#if _unused_
 /* XXX make this a macro or an inline? */
 static daddr_t
 swap_vtop_addr(addr)
@@ -636,7 +636,8 @@ swap_addmap(sdp, size)
 {
 	u_long result;
 
-	if (extent_alloc(swapmap, size, EX_NOALIGN, EX_NOBOUNDARY, 0, &result))
+	if (extent_alloc(swapmap, size, EX_NOALIGN, EX_NOBOUNDARY,
+			 EX_WAITOK, &result))
 		panic("swap_addmap");
 
 	sdp->swd_mapoffset = result;
@@ -703,8 +704,7 @@ swapinit()
 	struct buf *sp = swbuf;
 	struct proc *p = &proc0;       /* XXX */
 	u_long size, addr;
-	int i, ssize;
-	char *storage;
+	int i;
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWINIT)
@@ -716,16 +716,6 @@ swapinit()
 	LIST_INIT(&swap_priority);
 	/*
 	 * XXX
-	 * this 4 is simply a default starting point, as most people
-	 * will not have more than 4 swap devices.
-	 */
-	ssize = EXTENT_FIXED_STORAGE_SIZE(4);
-	storage = malloc(ssize , M_VMSWAP, M_WAITOK);
-	if (storage == 0)
-		panic("swapinit: can't malloc storage");
-	nswapmap = maxproc / 2;
-	/*
-	 * XXX
 	 * this is really just wanting to create a Large Address Space
 	 * that we can map each swap devive into.  if VM_{MIN,MAX}_ADDRESS
 	 * are bad things to use here, change it!
@@ -734,14 +724,13 @@ swapinit()
 	addr = VM_MIN_ADDRESS;
 	/* XXX make this based on ram as well. */
 	if (addr == 0)
-		addr = 0x1000;	/* XXX does this really matter ??? */
+		addr = 0x1000;	/* So we can't have 0 as a valid address */
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWALLOC)
-		printf("swapinit: swapmap size=%08lx addr=%08lx nswapmap=%d\n",
-		    size, addr, nswapmap);
+		printf("swapinit: swapmap size=%08lx addr=%08lx\n", size, addr);
 #endif
-	swapmap = extent_create("swapmap", addr, addr + size, M_WAITOK,
-				storage, ssize, EX_MALLOCOK);
+	swapmap = extent_create("swapmap", addr, addr + size,
+				M_VMSWAP, 0, 0, EX_WAITOK);
 	if (swapmap == 0)
 		panic("swapinit: extent_create failed");
 
