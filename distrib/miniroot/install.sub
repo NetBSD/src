@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.32 2000/02/04 15:28:28 pk Exp $
+#	$NetBSD: install.sub,v 1.33 2000/02/20 00:23:10 mrg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -742,7 +742,7 @@ __install_ftp_2
 		echo -n "File name [$_next]? "
 		getresp "$_next"
 		if isin $resp $_sets; then
-			echo "get $resp |\"pax -zrvpe\"" >> \
+			echo "get $resp |\"pax -zr${verbose_flag}pe\"" >> \
 					/tmp/ftp-script.sh
 			_setsdone="$resp $_setsdone"
 		else
@@ -840,7 +840,11 @@ install_from_mounted_fs() {
 		echo ""
 
 		# Get the name of the file.
-		if [ "X$_next" = "X" ]; then resp=n; else resp=y; fi
+		if [ "X$_next" = "X" ]; then
+			resp=n
+		else
+			resp=y
+		fi
 		echo -n "Continue extraction [$resp]?"
 		getresp "$resp"
 		if [ "$resp" = "n" ]; then
@@ -869,7 +873,7 @@ install_from_mounted_fs() {
 
 			# Extract file
 			echo "Extracting the $_f set:"
-			cat $_filename | (cd /mnt; pax -zrvpe)
+			cat $_filename | (cd /mnt; pax -zr${verbose_flag}pe)
 			echo "Extraction complete."
 			_setsdone="$_f $_setsdone"
 		done
@@ -1223,11 +1227,11 @@ __install_tape_2
 		getresp "1"
 		case "$resp" in
 		1)
-			_xcmd="pax -zrvpe"
+			_xcmd="pax -zr${verbose_flag}pe"
 			;;
 
 		2)
-			_xcmd="tar -rvpe"
+			_xcmd="pax -r${verbose_flag}pe"
 			;;
 
 		*)
@@ -1319,13 +1323,29 @@ install_sets()
 	_yup="FALSE"
 
 	# Ask the user which media to load the distribution from.
+	# Ask the user if they want verbose extraction.  They might not want
+	# it on, eg, SPARC frame buffer console.
 	cat << \__install_sets_1
 
 It is now time to extract the installation sets onto the hard disk.
 Make sure the sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
+Would you like to see each file listed during extraction (verbose) mode?
+On some console hardware, such as serial consoles and Sun frame buffers,
+this can extend the total extraction time.
 __install_sets_1
+	echo -n "Use verbose listing for extractions? [y] "
+	getresp "y"
+	case "$resp" in
+	y*|Y*)
+		verbose_flag=v
+		;;
+	*)
+		echo "Not using verbose listing.."
+		verbose_flag=""
+		;;
+	esac
 
 	if [ -d ${Default_sets_dir:-/dev/null} ]; then
 		if dir_has_sets $Default_sets_dir $THESETS; then
