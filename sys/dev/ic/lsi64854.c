@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.3 1998/09/06 21:39:33 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.4 1998/09/21 21:26:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@
 void	lsi64854_reset	__P((struct lsi64854_softc *));
 int	lsi64854_setup	__P((struct lsi64854_softc *, caddr_t *, size_t *,
 			     int, size_t *));
+int	lsi64854_setup_pp __P((struct lsi64854_softc *, caddr_t *, size_t *,
+			     int, size_t *));
 
 #ifdef DEBUG
 int lsi64854debug = 0;
@@ -90,17 +92,18 @@ lsi64854_attach(sc)
 	switch (sc->sc_channel) {
 	case L64854_CHANNEL_SCSI:
 		sc->intr = lsi64854_scsi_intr;
+		sc->setup = lsi64854_setup;
 		break;
 	case L64854_CHANNEL_ENET:
 		sc->intr = lsi64854_enet_intr;
 		break;
 	case L64854_CHANNEL_PP:
+		sc->setup = lsi64854_setup_pp;
 		break;
 	default:
 		printf("%s: unknown channel\n", sc->sc_dev.dv_xname);
 	}
 	sc->reset = lsi64854_reset;
-	sc->setup = lsi64854_setup;
 
 	/* Allocate a dmamap */
 	if (bus_dmamap_create(sc->sc_dmatag, MAX_DMA_SZ, 1, MAX_DMA_SZ,
@@ -315,8 +318,8 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 
 /*
  * Pseudo (chained) interrupt from the esp driver to kick the
- * current running DMA transfer. I am replying on espintr() to
- * pickup and clean errors for now
+ * current running DMA transfer. Called from ncr53c9x_intr()
+ * for now.
  *
  * return 1 if it was a DMA continue.
  */
@@ -473,4 +476,129 @@ static int dodrain=0;
 	}
 
 	return (*sc->sc_intrchain)(sc->sc_intrchainarg);
+}
+
+/*
+ * setup a dma transfer
+ */
+int
+lsi64854_setup_pp(sc, addr, len, datain, dmasize)
+	struct lsi64854_softc *sc;
+	caddr_t *addr;
+	size_t *len;
+	int datain;
+	size_t *dmasize;	/* IN-OUT */
+{
+	u_int32_t csr;
+
+	DMA_FLUSH(sc, 0);
+
+	sc->sc_dmaaddr = addr;
+	sc->sc_dmalen = len;
+
+	DPRINTF(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
+		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
+
+	/*
+	 * the rules say we cannot transfer more than the limit
+	 * of this DMA chip (64k for old and 16Mb for new),
+	 * and we cannot cross a 16Mb boundary.
+	 */
+	*dmasize = sc->sc_dmasize =
+		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
+
+	DPRINTF(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+
+	/* Program the DMA address */
+	if (sc->sc_dmasize) {
+		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
+		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
+				*sc->sc_dmaaddr, sc->sc_dmasize,
+				NULL /* kernel address */,   
+				BUS_DMA_NOWAIT))
+			panic("%s: cannot allocate DVMA address",
+			      sc->sc_dev.dv_xname);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
+				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				datain
+					? BUS_DMASYNC_PREREAD
+					: BUS_DMASYNC_PREWRITE);
+		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR,
+				  sc->sc_dmamap->dm_segs[0].ds_addr);
+
+		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT,
+				  sc->sc_dmasize);
+	}
+
+	/* Setup DMA control register */
+	csr = L64854_GCSR(sc);
+#if 0
+	/* This bit is read-only in PP csr register */
+	if (datain)
+		csr |= L64854_WRITE;
+	else
+		csr &= ~L64854_WRITE;
+#endif
+	csr |= L64854_INT_EN;
+	L64854_SCSR(sc, csr);
+
+	return (0);
+}
+/*
+ * Parallel port DMA interrupt.
+ */
+int
+lsi64854_pp_intr(arg)
+	void *arg;
+{
+	struct lsi64854_softc *sc = arg;
+	char bits[64];
+	int ret, trans, resid = 0;
+	u_int32_t csr;
+
+	csr = L64854_GCSR(sc);
+
+	DPRINTF(("%s: intr: addr 0x%x, csr %s\n", sc->sc_dev.dv_xname,
+		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
+		 bitmask_snprintf(csr, PDMACSR_BITS, bits, sizeof(bits))));
+
+	if (csr & P_ERR_PEND) {
+		csr &= ~P_EN_DMA;	/* Stop DMA */
+		csr |= P_INVALIDATE;
+		L64854_SCSR(sc, csr);
+		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+			bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
+	}
+
+	ret = (csr & P_INT_PEND) != 0;
+
+	if (sc->sc_active != 0) {
+		DMA_DRAIN(sc, 0);
+		resid = bus_space_read_4(sc->sc_bustag, sc->sc_regs,
+					 L64854_REG_CNT);
+	}
+
+	/* DMA has stopped */
+	csr &= ~D_EN_DMA;
+	L64854_SCSR(sc, csr);
+	sc->sc_active = 0;
+
+	trans = sc->sc_dmasize - resid;
+	if (trans < 0) {			/* transferred < 0 ? */
+		trans = sc->sc_dmasize;
+	}
+	*sc->sc_dmalen -= trans;
+	*sc->sc_dmaaddr += trans;
+
+	if (sc->sc_dmamap->dm_nsegs > 0) {
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
+				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(csr & D_WRITE) != 0
+					? BUS_DMASYNC_POSTREAD
+					: BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmatag, sc->sc_dmamap);
+	}
+
+	ret |= (*sc->sc_intrchain)(sc->sc_intrchainarg);
+	return (ret != 0);
 }
