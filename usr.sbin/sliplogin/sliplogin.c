@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.6 1993/12/10 13:19:20 cgd Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.7 1994/02/10 18:01:28 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -85,9 +85,7 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.6 1993/12/10 13:19:20 cgd Exp $";
 #else
 #include <sgtty.h>
 #endif
-#include <netinet/in.h>
-#include <net/if.h>
-#include <net/if_slvar.h>
+#include <net/slip.h>
 
 #include <stdio.h>
 #include <errno.h>
