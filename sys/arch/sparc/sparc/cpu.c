@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.38 1997/04/11 20:32:13 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.39 1997/04/14 21:05:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -950,6 +950,7 @@ struct cpu_conf {
 #if defined(SUN4)
 	{ CPU_SUN4, 0, 0, ANY, ANY, "MB86900/1A or L64801", &module_sun4 },
 	{ CPU_SUN4, 1, 0, ANY, ANY, "L64811", &module_sun4 },
+	{ CPU_SUN4, 1, 1, ANY, ANY, "CY7C601", &module_sun4 },
 #endif
 
 #if defined(SUN4C)
