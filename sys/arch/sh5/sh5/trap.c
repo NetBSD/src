@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 2003/03/27 17:29:17 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 2003/03/27 20:21:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -158,12 +158,12 @@ trap(struct lwp *l, struct trapframe *tf)
 	dopanic:
 		(void) splhigh();
 		{
-			register_t ssr;
+			register_t sr;
 
 			/* Make sure the FPU is enabled */
-			__asm __volatile("getcon ssr, %0" : "=r"(ssr));
-			ssr &= ~SH5_CONREG_SR_FD;
-			__asm __volatile("putcon %0, ssr" :: "r"(ssr));
+			__asm __volatile("getcon sr, %0" : "=r"(sr));
+			sr &= ~SH5_CONREG_SR_FD;
+			__asm __volatile("putcon %0, sr" :: "r"(sr));
 		}
 		printf("\ntrap: %s in %s mode\n",
 		    trap_type(traptype), USERMODE(tf) ? "user" : "kernel");
@@ -444,12 +444,12 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	tlbregs[8] = ci->ci_tscratch.ts_tr[1];
 
 	{
-		register_t ssr;
+		register_t sr;
 
 		/* Make sure the FPU is enabled */
-		__asm __volatile("getcon ssr, %0" : "=r"(ssr));
-		ssr &= ~SH5_CONREG_SR_FD;
-		__asm __volatile("putcon %0, ssr" :: "r"(ssr));
+		__asm __volatile("getcon sr, %0" : "=r"(sr));
+		sr &= ~SH5_CONREG_SR_FD;
+		__asm __volatile("putcon %0, sr" :: "r"(sr));
 	}
 
 	/*
@@ -494,6 +494,26 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	    (u_int)(excf.es_spc >> 32), (u_int)excf.es_spc);
 	printf("   SSR: 0x%08x\n", (u_int)excf.es_ssr);
 	printf("   USR: 0x%04x\n", (u_int)excf.es_usr);
+
+	printf("\nTLB Scratch Area:\n");
+	printf("    R0: 0x%08x%08x\n",
+	    (u_int)(tlbregs[0] >> 32), (u_int)tlbregs[0]);
+	printf("    R1: 0x%08x%08x\n",
+	    (u_int)(tlbregs[1] >> 32), (u_int)tlbregs[1]);
+	printf("    R2: 0x%08x%08x\n",
+	    (u_int)(tlbregs[2] >> 32), (u_int)tlbregs[2]);
+	printf("    R3: 0x%08x%08x\n",
+	    (u_int)(tlbregs[3] >> 32), (u_int)tlbregs[3]);
+	printf("    R4: 0x%08x%08x\n",
+	    (u_int)(tlbregs[4] >> 32), (u_int)tlbregs[4]);
+	printf("    R5: 0x%08x%08x\n",
+	    (u_int)(tlbregs[5] >> 32), (u_int)tlbregs[5]);
+	printf("    R6: 0x%08x%08x\n",
+	    (u_int)(tlbregs[6] >> 32), (u_int)tlbregs[6]);
+	printf("   TR0: 0x%08x%08x\n",
+	    (u_int)(tlbregs[7] >> 32), (u_int)tlbregs[7]);
+	printf("   TR1: 0x%08x%08x\n",
+	    (u_int)(tlbregs[8] >> 32), (u_int)tlbregs[8]);
 
 #ifdef DDB
 	dump_trapframe(printf, "\n", tf);
