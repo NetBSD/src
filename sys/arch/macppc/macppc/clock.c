@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2000/08/20 07:48:45 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2000/12/17 23:16:22 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,8 @@ static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
 static long ticks_per_intr;
 static volatile u_long lasttb;
+static int clockinitted = 0;
+volatile int tickspending;
 
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
@@ -63,8 +65,6 @@ u_int timebase_freq = 0;
 extern int adb_read_date_time __P((int *));
 extern int adb_set_date_time __P((int));
 #endif
-
-static int clockinitted = 0;
 
 void
 inittodr(base)
