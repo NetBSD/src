@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.25 2003/03/23 12:44:25 chris Exp $
+#	$NetBSD: INSTALL,v 1.26 2003/04/10 22:06:54 christos Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -13,7 +13,6 @@ maxusers	8
 
 # Standard system options
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

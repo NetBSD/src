@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.54 2003/04/08 18:58:20 abs Exp $
+#	$NetBSD: GENERIC_TINY,v 1.55 2003/04/10 22:06:58 christos Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -45,7 +45,6 @@ options 	NOREDZONE
 
 # Standard system options
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

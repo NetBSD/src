@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.1 2002/12/09 12:15:52 scw Exp $
+#	$NetBSD: WALNUT,v 1.2 2003/04/10 22:06:56 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -21,7 +21,6 @@ maxusers	32
 #options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)

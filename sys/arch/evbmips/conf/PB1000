@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.5 2003/04/03 22:50:30 he Exp $
+#	$NetBSD: PB1000,v 1.6 2003/04/10 22:06:55 christos Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000 and PB1500
 # evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -32,7 +32,6 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
 options 	NTP		# network time protocol
-#options 	UCONSOLE	# users can redirect console (unsafe)
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking

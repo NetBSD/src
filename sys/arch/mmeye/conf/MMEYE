@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.19 2002/09/18 02:44:03 lukem Exp $
+#	$NetBSD: MMEYE,v 1.20 2003/04/10 22:07:00 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -19,7 +19,6 @@ options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
 
 # Standard system options
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 
 options 	HZ=50		# clock interrupt generates every 1/HZ sec

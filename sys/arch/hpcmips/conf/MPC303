@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.21 2003/02/16 17:35:14 augustss Exp $
+# 	$NetBSD: MPC303,v 1.22 2003/04/10 22:06:56 christos Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	16
 
@@ -46,7 +46,6 @@ options 	RTC_OFFSET=-540		# JST-9
 					# In NO RTC_OFFSET , inherit RTC_OFFSET
 					# from Windows CE.
 options 	NTP			# network time protocol
-#options 	UCONSOLE		# users can redirect console (unsafe)
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
 #options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
