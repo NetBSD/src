@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.79 2001/04/13 23:30:12 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.80 2001/04/27 00:14:02 marcus Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -749,7 +749,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 #endif /* NVLAN > 0 */
 	default:
-		/* Nothing. */
+		; /* Nothing. */
 	}
 
 	/* Strip off the Ethernet header. */
