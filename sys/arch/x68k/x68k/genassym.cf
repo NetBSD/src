@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 1998/01/06 08:41:04 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.4 1998/01/06 08:46:18 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -108,9 +108,6 @@ define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
-
-# VM structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 
 # interrupt/fault metering
 define	V_INTR			offsetof(struct vmmeter, v_intr)
