@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2001/11/23 21:18:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2001/11/24 01:26:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -58,8 +58,8 @@
 
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
-#include <arm32/fpe-arm/armfpe.h>
-#endif	/* ARMFPE */
+#include <arm/fpe-arm/armfpe.h>
+#endif
 
 cpu_t cpus[MAX_CPUS];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9 2001/11/24 01:26:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -70,7 +70,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 2001/11/24 01:26:23 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej 
 #include <arm/armreg.h>
 
 #ifdef ARMFPE
-#include <arm32/fpe-arm/armfpe.h>
-#endif	/* ARMFPE */
+#include <arm/fpe-arm/armfpe.h>
+#endif
 
 static __inline struct trapframe *
 process_frame(struct proc *p)
