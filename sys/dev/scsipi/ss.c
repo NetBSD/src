@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.1 1996/02/18 20:32:46 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.2 1996/02/18 20:38:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -260,6 +260,9 @@ ssminphys(bp)
 
 	(ss->sc_link->adapter->scsi_minphys)(bp);
 
+	if (bp->b_bcount > ss->sio.scan_window_size)
+		bp->b_bcount = ss->sio.scan_window_size;
+
 	/*
 	 * trim the transfer further for special devices this is
 	 * because some scanners only read multiples of a line at a
@@ -292,26 +295,6 @@ ssread(dev, uio, flag)
 				return (error);
 		}
 		ss->flags |= SSF_TRIGGERED;
-	}
-
-	/* in any case, trim it down to window_size */
-	if (uio->uio_iov->iov_len > ss->sio.scan_window_size) {
-		uio->uio_iov->iov_len = ss->sio.scan_window_size;
-
-		SC_DEBUG(ss->sc_link, SDEV_DB1,
-		    ("ssread: bytes wanted exceeds window size\n"));
-		SC_DEBUG(ss->sc_link, SDEV_DB1,
-		    ("ssread: xfer reduced to %d\n", uio->uio_iov->iov_len));
-	}
-
-	/*
-	 * EOF detection
-	 */
-
-	if (ss->sio.scan_window_size == 0) {
-		uio->uio_iov++;
-		uio->uio_iovcnt--;
-		return (0);
 	}
 
 	return (physio(ssstrategy, NULL, dev, B_READ, ssminphys, uio));
