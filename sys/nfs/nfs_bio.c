@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.100 2003/05/15 14:34:06 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.101 2003/05/16 17:16:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.100 2003/05/15 14:34:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.101 2003/05/16 17:16:05 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -999,9 +999,9 @@ again:
 
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
-		KASSERT((pgs[i]->flags & PG_BUSY) || pgs[i]->uobject != uobj);
 		if (pgs[i]->uobject == uobj &&
 		    pgs[i]->offset == uiop->uio_offset + (i << PAGE_SHIFT)) {
+			KASSERT(pgs[i]->flags & PG_BUSY);
 			/*
 			 * this page belongs to our object.
 			 */
