@@ -1,0 +1,4 @@
+$NetBSD: version,v 1.2 1995/02/16 02:33:01 cgd Exp $
+
+1.1:	Initial version
+1.2:	don't forget the Id string!

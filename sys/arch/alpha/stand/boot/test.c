@@ -1,4 +1,5 @@
-/* BSD $Id: test.c,v 1.1 1995/02/13 23:08:15 cgd Exp $ */
+/*	$NetBSD: test.c,v 1.2 1995/02/16 02:33:00 cgd Exp $	*/
+
 /*  
  * Mach Operating System
  * Copyright (c) 1993 Carnegie Mellon University
