@@ -31,43 +31,45 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
- *	$Id: if_ethersubr.c,v 1.2.4.1 1993/10/16 10:49:24 mycroft Exp $
+ *	$Id: if_ethersubr.c,v 1.2.4.2 1993/10/29 04:32:15 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
 
-#include "if.h"
-#include "netisr.h"
-#include "route.h"
-#include "if_llc.h"
-#include "if_dl.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
+#include <net/if_llc.h>
+#include <net/if_dl.h>
 
 #ifdef INET
-#include "../netinet/in.h"
-#include "../netinet/in_var.h"
+#include <netinet/in.h>
+#include <netinet/in_var.h>
 #endif
-#include "../netinet/if_ether.h"
+#include <netinet/if_ether.h>
 
 #ifdef NS
-#include "../netns/ns.h"
-#include "../netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef ISO
-#include "../netiso/argo_debug.h"
-#include "../netiso/iso.h"
-#include "../netiso/iso_var.h"
-#include "../netiso/iso_snpac.h"
+#include <netiso/argo_debug.h>
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#include <netiso/iso_snpac.h>
 #endif
+
+#include <machine/cpu.h>
 
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 extern	struct ifnet loif;
