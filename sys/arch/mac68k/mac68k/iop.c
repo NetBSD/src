@@ -1,8 +1,30 @@
-/*	$NetBSD: iop.c,v 1.2 1999/06/28 04:33:22 briggs Exp $	*/
+/*	$NetBSD: iop.c,v 1.3 2000/07/30 21:48:55 briggs Exp $	*/
 
 /*
- * Freely contributed to the NetBSD Foundation.
- * XXX - Do paperwork and put a proper copyright here.
+ * Copyright (c) 2000 Allen Briggs.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -32,6 +54,7 @@ static void	iop_message_sent __P((IOP *iop, int chan));
 static void	receive_iop_message __P((IOP *iop, int chan));
 static void	default_listener __P((IOP *iop, struct iop_msg *msg));
 
+static __inline__ int iop_alive __P((IOPHW *ioph));
 static __inline__ int iop_read1 __P((IOPHW *ioph, u_long addr));
 static __inline__ void iop_write1 __P((IOPHW *ioph, u_long addr, u_char data));
 static __inline__ void _iop_upload __P((IOPHW *, u_char *, u_long, u_long));
@@ -54,6 +77,17 @@ iop_write1(ioph, iopbase, data)
 {
 	IOP_LOADADDR(ioph, iopbase);
 	ioph->data = data;
+}
+
+static __inline__ int
+iop_alive(ioph)
+	IOPHW	*ioph;
+{
+	int	alive;
+
+	alive = iop_read1(ioph, IOP_ADDR_ALIVE);
+	iop_write1(ioph, IOP_ADDR_ALIVE, 0);
+	return alive;
 }
 
 static void
@@ -90,14 +124,14 @@ iop_init(fullinit)
 		break;
 	}       
 
-	ioph = mac68k_iops[SCC_IOP].iop;
-	ioph->control_status = 0x82;		/* Reset */
-	ioph->control_status = IOP_BYPASS;	/* Set to bypass */
-
-	ioph = mac68k_iops[ISM_IOP].iop;
-	ioph->control_status = 0x82;		/* Reset */
-
 	if (!fullinit) {
+		ioph = mac68k_iops[SCC_IOP].iop;
+		ioph->control_status = 0;		/* Reset */
+		ioph->control_status = IOP_BYPASS;	/* Set to bypass */
+
+		ioph = mac68k_iops[ISM_IOP].iop;
+		ioph->control_status = 0;		/* Reset */
+
 		return;
 	}
 
@@ -110,10 +144,10 @@ iop_init(fullinit)
 			iop->listeners[i] = default_listener;
 			iop->listener_data[i] = NULL;
 		}
-		IOP_LOADADDR(ioph, 0x200);
+/*		IOP_LOADADDR(ioph, 0x200);
 		for (i = 0x200; i > 0; i--) {
 			ioph->data = 0;
-		}
+		}*/
 	}
 
 	switch (current_mac_model->machineid) {
@@ -126,9 +160,9 @@ iop_init(fullinit)
 		intr_establish(iopscc_hand, iop, 4);
 #endif
 		iop = &mac68k_iops[ISM_IOP];
-		via1_register_irq(2, iopism_hand, iop);
-		via_reg(VIA1, vIER) = 0x84;
-		via_reg(VIA1, vIFR) = 0x04;
+		via2_register_irq(0, iopism_hand, iop);
+		via_reg(VIA2, vIER) = 0x81;
+		via_reg(VIA2, vIFR) = 0x01;
 		break;
 	case MACH_MACIIFX:
 		/* oss_register_irq(2, iopism_hand, &ioph); */
@@ -140,11 +174,12 @@ iop_init(fullinit)
 	printf("SCC IOP base: 0x%x\n", (unsigned) ioph);
 	pool_init(&iop->pool, sizeof(struct iop_msg), 0, 0, 0, "mac68k_iop1",
 		  0, NULL, NULL, M_DEVBUF);
-	ioph->control_status = 0x80 | IOP_BYPASS;
+	ioph->control_status = IOP_BYPASS;
 
 	iop = &mac68k_iops[ISM_IOP];
 	ioph = iop->iop;
-	printf("ISM IOP base: 0x%x\n", (unsigned) ioph);
+	printf("ISM IOP base: 0x%x, alive %x\n", (unsigned) ioph, 
+	(unsigned) iop_alive(ioph));
 	pool_init(&iop->pool, sizeof(struct iop_msg), 0, 0, 0, "mac68k_iop2",
 		  0, NULL, NULL, M_DEVBUF);
 	iop_write1(ioph, IOP_ADDR_ALIVE, 0);
@@ -160,7 +195,7 @@ iop_init(fullinit)
  */
 	printf("OLD cs0: 0x%x\n", (unsigned) ioph->control_status);
 
-	ioph->control_status = 0x80 | IOP_CS_RUN | IOP_CS_AUTOINC;
+	ioph->control_status = IOP_CS_RUN | IOP_CS_AUTOINC;
 {unsigned cs, c2;
 	cs = (unsigned) ioph->control_status;
 	printf("OLD cs1: 0x%x\n", cs);
