@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.39 2003/11/20 22:05:25 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.40 2003/11/25 13:22:38 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.39 2003/11/20 22:05:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.40 2003/11/25 13:22:38 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -280,51 +280,55 @@ mach_e_proc_init(p, vmspace)
 		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 		/*
-		 * Do not touch bootstrap port here, as it is 
-		 * shared between all processes in our implementation.
-		 * We do not want to release it.
+		 * Do not touch special ports. Some other process (eg: gdb)
+		 * might have grabbed them to control the process, and the
+		 * controler intend to keep in control even after exec().
 		 */
-		if (--med->med_kernel->mp_refcount == 0) 
-			mach_port_put(med->med_kernel);
-		if (--med->med_host->mp_refcount == 0)  
-			mach_port_put(med->med_host);  
+	} else {
+		/* 
+		 * p->p_emuldata is uninitialized. Go ahaead and initialize it.
+		 */
+		LIST_INIT(&med->med_right);
+		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
+
+		/* 
+		 * For debugging purpose, it's convenient to have each process 
+		 * using distinct port names, so we prefix the first port name
+		 * by the PID. Darwin does not do that, but we can remove it 
+		 * when we want, it will not hurt.
+		 */
+		med->med_nextright = p->p_pid << 16;
+
+		/*
+		 * Initialize special ports. Bootstrap port is shared
+		 * among all Mach processes in our implementation.
+		 */
+		med->med_kernel = mach_port_get();
+		med->med_host = mach_port_get();
+
+		med->med_kernel->mp_flags |= MACH_MP_INKERNEL;
+		med->med_host->mp_flags |= MACH_MP_INKERNEL;
+
+		med->med_kernel->mp_data = (void *)p;
+		med->med_host->mp_data = (void *)p;
+
+		med->med_kernel->mp_datatype = MACH_MP_PROC;
+		med->med_host->mp_datatype = MACH_MP_PROC;
+
+		/* Make sure they will not be deallocated */
+		med->med_kernel->mp_refcount++;
+		med->med_host->mp_refcount++;
+
+		med->med_bootstrap = mach_bootstrap_port;
+		med->med_bootstrap->mp_refcount++;
 	}
-
-	LIST_INIT(&med->med_right);
-	lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
-	/* 
-	 * For debugging purpose, it's convenient to have each process 
-	 * using distinct port names, so we prefix the first port name
-	 * by the PID. Darwin does not do that, but we can remove it 
-	 * when we want, it will not hurt.
-	 */
-	med->med_nextright = p->p_pid << 16;
-
-	med->med_kernel = mach_port_get();
-	med->med_host = mach_port_get();
-
-	med->med_kernel->mp_flags |= MACH_MP_INKERNEL;
-	med->med_host->mp_flags |= MACH_MP_INKERNEL;
-
-	med->med_kernel->mp_data = (void *)p;
-	med->med_host->mp_data = (void *)p;
-
-	med->med_kernel->mp_datatype = MACH_MP_PROC;
-	med->med_host->mp_datatype = MACH_MP_PROC;
-
-	/* Make sure they will not be deallocated */
-	med->med_kernel->mp_refcount++;
-	med->med_host->mp_refcount++;
-
-	med->med_bootstrap = mach_bootstrap_port;
-	med->med_bootstrap->mp_refcount++;
 
 	/* 
 	 * Exception ports are inherited accross exec() calls.
 	 * If the structure is initialized, the ports are just 
 	 * here, so leave them untouched. If the structure is
-	 * uninitalized, the ports are all set to zero, so do
-	 * not touch them either.
+	 * uninitalized, the ports are all set to zero, which 
+	 * is the default, so do not touch them either.
 	 */
 
 	med->med_dirty_thid = 1;
