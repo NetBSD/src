@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.110 2003/10/30 01:58:18 simonb Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.111 2004/02/15 22:18:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.110 2003/10/30 01:58:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.111 2004/02/15 22:18:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1091,6 +1091,7 @@ procfs_readdir(v)
 	case PFSfd: {
 		struct proc *p;
 		struct filedesc	*fdp;
+		struct file *fp;
 		int lim, nc = 0;
 
 		p = PFIND(pfs->pfs_pid);
@@ -1128,8 +1129,11 @@ procfs_readdir(v)
 			break;
 		}
 		for (; uio->uio_resid >= UIO_MX && i < fdp->fd_nfiles; i++) {
-			if (fd_getfile(fdp, i - 2) == NULL)
+			/* check the descriptor exists */
+			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
 				continue;
+			simple_unlock(&fp->f_slock);
+
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%lld", (long long)(i - 2));
