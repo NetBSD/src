@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.6 1993/06/07 04:56:39 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.7 1993/06/07 05:25:24 cgd Exp $
  */
 
 /*
@@ -143,7 +143,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = getnewvnode(VT_UFS, mp, &kernfs_vnodeops, &rvp);	/* XXX */
+	error = getnewvnode(VT_KERNFS, mp, &kernfs_vnodeops, &rvp);
 	if (error)
 		return (error);
 

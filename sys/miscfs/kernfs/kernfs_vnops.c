@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.9 1993/05/28 16:47:05 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.10 1993/06/07 05:25:25 cgd Exp $
  */
 
 /*
@@ -237,7 +237,7 @@ kernfs_lookup(dvp, ndp, p)
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_lookup: allocate new vnode\n");
 #endif
-	error = getnewvnode(VT_UFS, dvp->v_mount, &kernfs_vnodeops, &fvp);
+	error = getnewvnode(VT_KERNFS, dvp->v_mount, &kernfs_vnodeops, &fvp);
 	if (error)
 		goto bad;
 	VTOKERN(fvp)->kf_kt = &kernfs_targets[i];
@@ -632,7 +632,7 @@ kernfs_inactive(vp, p)
 kernfs_print(vp)
 	struct vnode *vp;
 {
-	printf("tag VT_NON, kernfs vnode\n");
+	printf("tag VT_KERNFS, kernfs vnode\n");
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_node.h,v 1.3 1993/05/20 03:30:50 cgd Exp $
+ *	$Id: isofs_node.h,v 1.4 1993/06/07 05:25:16 cgd Exp $
  */
 
 struct iso_node {
@@ -44,8 +44,6 @@ struct iso_node {
 
 #define ISO_ILOCK(ip)	iso_ilock(ip)
 #define ISO_IUNLOCK(ip)	iso_iunlock(ip)
-
-#define VT_ISOFS (VT_MFS+1)
 
 /*
  * Prototypes for ISOFS vnode operations
