@@ -1,4 +1,4 @@
-/*	$NetBSD: ate_subr.h,v 1.1 2001/03/31 00:26:54 jdolecek Exp $	*/
+/*	$NetBSD: ate_subr.h,v 1.2 2001/03/31 09:49:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -13,7 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
