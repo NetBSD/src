@@ -73,6 +73,7 @@ static void parse __P((int, char **));
 static void restore_params __P((void));
 static void save_params __P((void));
 static void saverestore_params __P((int));
+static void cleanup_pidfile __P((void));
 
 void
 Usage()
@@ -176,11 +177,23 @@ main(ac, av)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"cannot open %s", pid_file);
 		}
+		if (atexit(cleanup_pidfile) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"cannot register pidfile cleanup");
+		}
 	}
 
 	session();
 
 	exit(0);
+}
+
+static void
+cleanup_pidfile()
+{
+	char *pid_file = _PATH_VARRUN "racoon.pid";
+
+	(void) unlink(pid_file);
 }
 
 static void
