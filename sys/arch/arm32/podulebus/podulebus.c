@@ -1,7 +1,7 @@
-/* $NetBSD: podulebus.c,v 1.16 1996/10/30 00:07:42 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.17 1996/11/23 03:42:39 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -56,8 +56,6 @@
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/podule_data.h>
 
-#define IOMD_ID (ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8))
-
 /* Array of podule structures, one per possible podule */
 
 podule_t podules[MAX_PODULES + MAX_NETSLOTS];
@@ -85,7 +83,12 @@ podulebusmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	return (1);
+	switch (IOMD_ID) {
+	case RPC600_IOMD_ID:
+	case ARM7500_IOC_ID:
+		return(1);
+	}
+	return (0);
 }
 
 
@@ -165,6 +168,7 @@ dump_podule(podule)
 	printf("attached=%d ", podule->attached);
 	printf("slottype=%d ", podule->slottype);
 	printf("podulenum=%d ", podule->podulenum);
+	printf("description=%s ", podule->description);
 	printf("\n");
 }
 #endif
@@ -184,21 +188,21 @@ podulechunkdirectory(podule)
 	address = 0x40;
 
 	do {
-		id = poduleread(podule->slow_base, address, podule->slottype);
-		size = poduleread(podule->slow_base, address + 4, podule->slottype);
-		size |= (poduleread(podule->slow_base, address + 8, podule->slottype) << 8);
-		size |= (poduleread(podule->slow_base, address + 12, podule->slottype) << 16);
+		id = poduleread(podule->sync_base, address, podule->slottype);
+		size = poduleread(podule->sync_base, address + 4, podule->slottype);
+		size |= (poduleread(podule->sync_base, address + 8, podule->slottype) << 8);
+		size |= (poduleread(podule->sync_base, address + 12, podule->slottype) << 16);
 		if (id == 0xf5) {
-			addr = poduleread(podule->slow_base, address + 16, podule->slottype);
-			addr |= (poduleread(podule->slow_base, address + 20, podule->slottype) << 8);
-			addr |= (poduleread(podule->slow_base, address + 24, podule->slottype) << 16);
-			addr |= (poduleread(podule->slow_base, address + 28, podule->slottype) << 24);
+			addr = poduleread(podule->sync_base, address + 16, podule->slottype);
+			addr |= (poduleread(podule->sync_base, address + 20, podule->slottype) << 8);
+			addr |= (poduleread(podule->sync_base, address + 24, podule->slottype) << 16);
+			addr |= (poduleread(podule->sync_base, address + 28, podule->slottype) << 24);
 			if (addr < 0x800 && done_f5 == 0) {
 				done_f5 = 1;
 				for (loop = 0; loop < size; ++loop) {
 					if (loop < PODULE_DESCRIPTION_LENGTH) {
 						podule->description[loop] =
-						    poduleread(podule->slow_base, (addr + loop)*4, podule->slottype);
+						    poduleread(podule->sync_base, (addr + loop)*4, podule->slottype);
 						podule->description[loop + 1] = 0;
 					}
 				}
@@ -206,14 +210,14 @@ podulechunkdirectory(podule)
 		}
 #if 0
 		if (id == 0xf5 || id == 0xf1 || id == 0xf2 || id == 0xf3 || id == 0xf4 || id == 0xf6) {
-			addr = poduleread(podule->slow_base, address + 16, podule->slottype);
-			addr |= (poduleread(podule->slow_base, address + 20, podule->slottype) << 8);
-			addr |= (poduleread(podule->slow_base, address + 24, podule->slottype) << 16);
-			addr |= (poduleread(podule->slow_base, address + 28, podule->slottype) << 24);
+			addr = poduleread(podule->sync_base, address + 16, podule->slottype);
+			addr |= (poduleread(podule->sync_base, address + 20, podule->slottype) << 8);
+			addr |= (poduleread(podule->sync_base, address + 24, podule->slottype) << 16);
+			addr |= (poduleread(podule->sync_base, address + 28, podule->slottype) << 24);
 			printf("<%04x.%04x.%04x.%04x>", id, address, addr, size);
 			if (addr < 0x800) {
 				for (loop = 0; loop < size; ++loop) {
-					printf("%c", poduleread(podule->slow_base, (addr + loop)*4, podule->slottype));
+					printf("%c", poduleread(podule->sync_base, (addr + loop)*4, podule->slottype));
 				}
 				printf("\\n\n");
 			}
@@ -330,7 +334,7 @@ podulescan(dev)
 
 	for (loop = 0; loop < MAX_PODULES; ++loop, offset += SIMPLE_PODULE_SIZE) {
 		if (loop == 4) offset += PODULE_GAP;
-		address = ((u_char *)SLOW_PODULE_BASE) + offset;
+		address = ((u_char *)SYNC_PODULE_BASE) + offset;
         
 		podule = &podules[loop];
 
