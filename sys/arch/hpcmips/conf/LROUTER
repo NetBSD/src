@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.19 2004/07/15 03:53:46 atatat Exp $
+# 	$NetBSD: LROUTER,v 1.20 2004/09/04 23:29:48 manu Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -87,6 +87,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
+#options 	PIM		# Protocol Independent Multicast
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.16 2004/06/22 15:31:38 toshii Exp $
+# $NetBSD: INSTALL,v 1.17 2004/09/04 23:29:45 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.16 $"
+#ident 		"INSTALL-$Revision: 1.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -101,6 +101,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

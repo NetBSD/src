@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.249 2004/08/10 20:50:11 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.250 2004/09/04 23:29:49 manu Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -130,6 +130,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

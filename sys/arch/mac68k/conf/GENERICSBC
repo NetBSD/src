@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.32 2004/07/15 03:53:49 atatat Exp $
+#	$NetBSD: GENERICSBC,v 1.33 2004/09/04 23:29:50 manu Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.32 $"
+#ident 		"GENERICSBC-$Revision: 1.33 $"
 
 maxusers	16		# estimated number of users
 
@@ -111,6 +111,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
