@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.2 1997/04/30 00:44:49 thorpej Exp $	*/
+/*	$NetBSD: md4.h,v 1.3 2000/07/07 10:43:54 ad Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest 
@@ -32,6 +32,7 @@
 #ifndef _MD4_H_
 #define _MD4_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 
 /* MD4 context. */
