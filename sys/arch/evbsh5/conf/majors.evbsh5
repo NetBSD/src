@@ -1,6 +1,0 @@
-#	$NetBSD: majors.evbsh5,v 1.1 2002/11/23 09:13:19 scw Exp $
-#
-# Devices majors specific to evbsh5
-#
-
-device-major	alphaled	char 9			alphaled

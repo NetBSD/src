@@ -1,9 +1,0 @@
-$NetBSD: TODO,v 1.2 2000/04/03 00:20:11 soren Exp $
-
-Things yet to do:
-
-- A boot loader
-- Respect console setting
-- Configuration of PCI slot?
-- Front panel driver
-- Installation guide

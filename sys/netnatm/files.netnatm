@@ -1,7 +1,0 @@
-#	$NetBSD: files.netnatm,v 1.1 2002/10/10 22:58:49 thorpej Exp $
-
-defflag			NATM		# "native" ATM protocols
-
-file	netnatm/natm.c			natm
-file	netnatm/natm_pcb.c		natm
-file	netnatm/natm_proto.c		natm

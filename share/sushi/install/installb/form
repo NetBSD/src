@@ -1,3 +1,0 @@
-# $NetBSD: form,v 1.2 2001/01/24 09:34:37 garbled Exp $
-func:ftp_pkglist,@@@1@@@	Install which package
-noedit:@@@1@@@			Selected Category:
