@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.40.2.5 2004/09/21 13:18:48 skrll Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.40.2.6 2004/10/24 07:15:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.5 2004/09/21 13:18:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.6 2004/10/24 07:15:57 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -211,11 +211,7 @@ mips_elf_makecmds (l, epp)
 		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)&ph,
 				    sizeof ph, ex->e_phoff + i * sizeof ph,
 				    UIO_SYSSPACE, IO_NODELOCKED,
-<<<<<<< cpu_exec.c
-				    l->l_proc->p_ucred, &resid, l))
-=======
-				    p->p_ucred, &resid, NULL))
->>>>>>> 1.46
+				    l->l_proc->p_ucred, &resid, NULL))
 		    != 0)
 			return error;
 
