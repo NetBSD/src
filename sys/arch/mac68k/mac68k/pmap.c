@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 1999/05/02 17:23:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -2160,7 +2160,6 @@ pmap_enter_ptpage(pmap, va)
 	 * reference count drops to zero.
 	 */
 	if (pmap->pm_stab == Segtabzero) {
-		pmap->pm_stab = (st_entry_t *)
 		pmap->pm_stab = (st_entry_t *)
 		    uvm_km_zalloc(st_map, MAC_STSIZE);
 		pmap->pm_stpa = (st_entry_t *)
