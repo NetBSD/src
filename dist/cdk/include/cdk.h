@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <cdk_config.h>
+#include <cdk/cdk_config.h>
 
 #ifdef	CDK_PERL_EXT
 #undef	instr
@@ -232,37 +232,37 @@ void stopCDKDebug (FILE *fd);
 /*
  * These header files define miscellaneous values and prototypes.
  */
-#include <cdkscreen.h>
-#include <curdefs.h>
-#include <binding.h>
-#include <cdk_util.h>
-#include <cdk_objs.h>
+#include <cdk/cdkscreen.h>
+#include <cdk/curdefs.h>
+#include <cdk/binding.h>
+#include <cdk/cdk_util.h>
+#include <cdk/cdk_objs.h>
 
 /*
  * Include the CDK widget header files.
  */
-#include <alphalist.h>
-#include <buttonbox.h>
-#include <calendar.h>
-#include <dialog.h>
-#include <entry.h>
-#include <fselect.h>
-#include <graph.h>
-#include <histogram.h>
-#include <itemlist.h>
-#include <label.h>
-#include <marquee.h>
-#include <matrix.h>
-#include <mentry.h>
-#include <menu.h>
-#include <radio.h>
-#include <scale.h>
-#include <scroll.h>
-#include <selection.h>
-#include <slider.h>
-#include <swindow.h>
-#include <template.h>
-#include <viewer.h>
-#include <draw.h>
+#include <cdk/alphalist.h>
+#include <cdk/buttonbox.h>
+#include <cdk/calendar.h>
+#include <cdk/dialog.h>
+#include <cdk/entry.h>
+#include <cdk/fselect.h>
+#include <cdk/graph.h>
+#include <cdk/histogram.h>
+#include <cdk/itemlist.h>
+#include <cdk/label.h>
+#include <cdk/marquee.h>
+#include <cdk/matrix.h>
+#include <cdk/mentry.h>
+#include <cdk/menu.h>
+#include <cdk/radio.h>
+#include <cdk/scale.h>
+#include <cdk/scroll.h>
+#include <cdk/selection.h>
+#include <cdk/slider.h>
+#include <cdk/swindow.h>
+#include <cdk/template.h>
+#include <cdk/viewer.h>
+#include <cdk/draw.h>
 
 #endif /* CDK_H */

@@ -1,7 +1,7 @@
 #ifndef CDKBINDING_H
 #define CDKBINDING_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Copyright 1999, Mike Glover

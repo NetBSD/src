@@ -1,7 +1,7 @@
 #ifndef CDKSCREEN_H
 #define CDKSCREEN_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Copyright 1999, Mike Glover
