@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 1996/09/16 18:11:42 jonathan Exp $	*/
+/*	$NetBSD: brk.S,v 1.7 1996/09/17 01:32:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: brk.S,v 1.6 1996/09/16 18:11:42 jonathan Exp $")
+	ASMSTR("$NetBSD: brk.S,v 1.7 1996/09/17 01:32:40 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 	.globl	minbrk
 	.globl	curbrk
@@ -51,8 +55,13 @@ minbrk:	.word	_C_LABEL(end)
 	.text
 
 LEAF(brk)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	lw	v0, minbrk
-	bgeu	a0, v0, _C_LABEL(brk)
+	bgeu	a0, v0, _C_LABEL(_brk)
 	move	a0, v0		# dont allow break < minbrk
 ALEAF(_brk)
 	li	v0, SYS_break
@@ -62,5 +71,6 @@ ALEAF(_brk)
 	move	v0, zero
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(brk)

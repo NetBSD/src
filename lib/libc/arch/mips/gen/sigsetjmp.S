@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.3 1996/09/16 18:11:03 jonathan Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.4 1996/09/17 01:32:27 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -37,14 +37,18 @@
  */
 
 #include <sys/syscall.h>
-#include <machine/regnum.h>
-#include <machine/machAsmDefs.h>
-#include <machine/setjmp.h>
+#include <mips/regnum.h>
+#include <mips/asm.h>
+#include <mips/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigsetjmp.S,v 1.3 1996/09/16 18:11:03 jonathan Exp $")
+	ASMSTR("$NetBSD: sigsetjmp.S,v 1.4 1996/09/17 01:32:27 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * C library -- sigsetjmp, siglongjmp
@@ -59,15 +63,30 @@
  */
 
 LEAF(sigsetjmp)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	sw	a1, (_JBLEN*4)(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
-	j	_setjmp
-1:	j	setjmp
+	la	t9, _setjmp
+	jr t9
+
+1:	la	t9, setjmp
+	jr t9
 END(sigsetjmp)
 
 LEAF(siglongjmp)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	lw	t0, (_JBLEN * 4)(a0)		# get "savemask"
 	bne	t0, 0x0, 1f			# restore signal mask?
-	j	_longjmp
-1:	j	longjmp
+	la	t9, _longjmp
+	jr	t9
+1:	la	t9, longjmp
+	jr	t9
 END(siglongjmp)
