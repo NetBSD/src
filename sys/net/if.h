@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.93 2003/11/10 20:03:29 jonathan Exp $	*/
+/*	$NetBSD: if.h,v 1.94 2003/11/28 08:56:48 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ struct ifnet {				/* and the entries */
 
 /*
  * Some convenience macros used for setting ifi_baudrate.
- * XXX 1000 vs. 1024? --thorpej@netbsd.org
+ * XXX 1000 vs. 1024? --thorpej@NetBSD.org
  */
 #define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
 #define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
