@@ -56,7 +56,7 @@ install: all
 	done
 	$(INSTALL) dhcrelay $(DESTDIR)$(BINDIR)
 	$(CHMOD) 755 $(DESTDIR)$(BINDIR)/dhcrelay
-	$(MANINSTALL) $(MANFROM) dhcrelay.cat8 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhcrelay.$(MANCAT)8 $(MANTO) \
 				$(DESTDIR)$(ADMMANDIR)/dhcrelay$(ADMMANEXT)
 
 clean:

@@ -56,11 +56,11 @@ install: all
 	done
 	$(INSTALL) dhcpd $(DESTDIR)$(BINDIR)
 	$(CHMOD) 755 $(DESTDIR)$(BINDIR)/dhcpd
-	$(MANINSTALL) $(MANFROM) dhcpd.cat8 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhcpd.$(MANCAT)8 $(MANTO) \
 			$(DESTDIR)$(ADMMANDIR)/dhcpd$(ADMMANEXT)
-	$(MANINSTALL) $(MANFROM) dhcpd.conf.cat5 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhcpd.conf.$(MANCAT)5 $(MANTO) \
 			$(DESTDIR)$(FFMANDIR)/dhcpd.conf$(FFMANEXT)
-	$(MANINSTALL) $(MANFROM) dhcpd.leases.cat5 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhcpd.leases.$(MANCAT)5 $(MANTO) \
 			$(DESTDIR)$(FFMANDIR)/dhcpd.leases$(FFMANEXT)
 
 clean:

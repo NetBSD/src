@@ -61,7 +61,7 @@ install: all
 	    fi; \
 	  done; \
 	done
-	$(MANINSTALL) $(MANFROM) dhcp-options.cat5 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhcp-options.$(MANCAT)5 $(MANTO) \
 				$(DESTDIR)$(FFMANDIR)/dhcp-options$(FFMANEXT)
 
 

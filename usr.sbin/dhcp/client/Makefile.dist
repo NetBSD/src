@@ -64,13 +64,13 @@ install: all
 	  $(INSTALL) scripts/$(SCRIPT) $(DESTDIR)$(ETC)/dhclient-script; \
 	  $(CHMOD) 700 $(DESTDIR)$(ETC)/dhclient-script; \
 	fi
-	$(MANINSTALL) $(MANFROM) dhclient.cat8 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhclient.$(MANCAT)8 $(MANTO) \
 			$(DESTDIR)$(ADMMANDIR)/dhclient$(ADMMANEXT)
-	$(MANINSTALL) $(MANFROM) dhclient-script.cat8 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhclient-script.$(MANCAT)8 $(MANTO) \
 			$(DESTDIR)$(ADMMANDIR)/dhclient-script$(ADMMANEXT)
-	$(MANINSTALL) $(MANFROM) dhclient.conf.cat5 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhclient.conf.$(MANCAT)5 $(MANTO) \
 			$(DESTDIR)$(FFMANDIR)/dhclient.conf$(FFMANEXT)
-	$(MANINSTALL) $(MANFROM) dhclient.leases.cat5 $(MANTO) \
+	$(MANINSTALL) $(MANFROM) dhclient.leases.$(MANCAT)5 $(MANTO) \
 			$(DESTDIR)$(FFMANDIR)/dhclient.leases$(FFMANEXT)
 
 clean:
