@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43 2002/06/07 19:31:04 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.44 2003/07/15 03:36:09 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.44 2003/07/15 03:36:09 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"

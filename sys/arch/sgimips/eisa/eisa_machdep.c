@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.1 2001/05/11 04:36:15 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.2 2003/07/15 03:35:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
 /*
  * Machine-specific functions for EISA autoconfiguration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.2 2003/07/15 03:35:52 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

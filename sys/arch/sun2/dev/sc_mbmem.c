@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.7 2003/05/03 18:11:03 wiz Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.8 2003/07/15 03:36:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
 /*****************************************************************
  * Multibus functions for sc
  ****************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.8 2003/07/15 03:36:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_next.c,v 1.2 1999/03/26 04:15:27 dbj Exp $	*/
+/*	$NetBSD: wskbdmap_next.c,v 1.3 2003/07/15 02:59:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_next.c,v 1.3 2003/07/15 02:59:32 lukem Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

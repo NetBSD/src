@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2002/10/02 04:11:37 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2003/07/15 02:54:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.4 2003/07/15 02:54:41 lukem Exp $");
+
 #include "pci.h"
 #include "opt_pci.h"
 

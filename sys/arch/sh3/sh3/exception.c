@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.8 2003/06/29 22:28:52 fvdl Exp $	*/
+/*	$NetBSD: exception.c,v 1.9 2003/07/15 03:35:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -45,6 +45,9 @@
  *
  * T.Horiuchi 1998.06.8
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.9 2003/07/15 03:35:57 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

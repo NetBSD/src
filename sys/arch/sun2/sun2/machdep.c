@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2003/06/29 22:29:03 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2003/07/15 03:36:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -124,6 +124,9 @@
  *
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2003/07/15 03:36:12 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

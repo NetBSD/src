@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2003/07/03 13:18:42 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2003/07/15 02:54:43 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,6 +65,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2003/07/15 02:54:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

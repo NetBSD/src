@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/06/14 17:01:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/07/15 02:54:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/15 02:54:42 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"

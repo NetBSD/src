@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 2003/03/14 05:32:27 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 2003/07/15 02:54:49 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2003/07/15 02:54:49 lukem Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"

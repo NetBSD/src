@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.26 2003/06/29 22:28:59 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.27 2003/07/15 03:36:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * The kbd driver sends its input here.
  * Output goes to the screen via PROM printf.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.27 2003/07/15 03:36:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

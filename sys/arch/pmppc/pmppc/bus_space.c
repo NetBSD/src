@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2003/03/06 05:25:19 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2003/07/15 02:54:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2003/07/15 02:54:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

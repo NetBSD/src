@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2003/04/01 15:47:48 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 2003/07/15 03:36:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -45,6 +45,9 @@
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11 2003/07/15 03:36:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

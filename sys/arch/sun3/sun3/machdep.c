@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2003/06/29 22:29:04 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 2003/07/15 03:36:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -42,6 +42,9 @@
  *	from: Utah Hdr: machdep.c 1.74 92/12/20
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2003/07/15 03:36:18 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

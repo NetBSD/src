@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.11 2003/01/01 02:26:13 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.12 2003/07/15 03:36:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,6 +50,9 @@
  * The job of this parent is to map the memory and partition it for
  * the two children.  This driver has no device nodes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.12 2003/07/15 03:36:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

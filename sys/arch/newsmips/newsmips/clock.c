@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2000/07/29 11:11:53 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2003/07/15 02:59:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2003/07/15 02:59:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2003/04/26 11:05:19 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2003/07/15 03:35:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2003/07/15 03:35:55 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

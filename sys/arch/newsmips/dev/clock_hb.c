@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.4 2003/05/09 13:36:39 tsutsui Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.5 2003/07/15 02:59:29 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock_hb.c,v 1.5 2003/07/15 02:59:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

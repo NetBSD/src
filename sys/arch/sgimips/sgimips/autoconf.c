@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2003/04/04 04:27:29 rafal Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2003/07/15 03:35:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2003/07/15 03:35:54 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_machtypes.h"

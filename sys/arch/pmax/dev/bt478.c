@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.17 2001/09/19 19:04:16 thorpej Exp $	*/
+/*	$NetBSD: bt478.c,v 1.18 2003/07/15 02:54:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,6 +55,9 @@
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bt478.c,v 1.18 2003/07/15 02:54:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

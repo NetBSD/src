@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.20 2002/10/02 16:02:28 thorpej Exp $	*/
+/*	$NetBSD: intreg.c,v 1.21 2003/07/15 03:36:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * This handles multiple attach of autovectored interrupts,
  * and the handy software interrupt request register.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.21 2003/07/15 03:36:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

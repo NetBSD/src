@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.3 2003/02/02 20:43:22 matt Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.4 2003/07/15 02:54:43 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.4 2003/07/15 02:54:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>

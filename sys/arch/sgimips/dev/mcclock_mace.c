@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.8 2003/01/19 22:26:38 rafal Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.9 2003/07/15 03:35:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -67,6 +67,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.9 2003/07/15 03:35:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

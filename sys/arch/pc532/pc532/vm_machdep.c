@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2003/06/23 13:06:58 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 2003/07/15 02:54:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -42,6 +42,9 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2003/07/15 02:54:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

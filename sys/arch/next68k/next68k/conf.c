@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 2002/10/26 13:50:38 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 2003/07/15 02:59:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,9 @@
  * Derived a long time ago from
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.15 2003/07/15 02:59:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
