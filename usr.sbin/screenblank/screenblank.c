@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.16 2002/01/23 16:57:51 lukem Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.17 2002/01/23 17:30:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.16 2002/01/23 16:57:51 lukem Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.17 2002/01/23 17:30:17 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -224,11 +224,9 @@ main(int argc, char *argv[])
 		change = 0;
 		for (dsp = ds_list.lh_first; dsp != NULL;
 		    dsp = dsp->ds_link.le_next) {
-#if 0		/* XXXLUKEM - doesn't make sense for wscons framebuffers */
 			/* Don't check framebuffers. */
 			if (dsp->ds_isfb)
 				continue;
-#endif
 			if (stat(dsp->ds_path, &st) == -1) {
 				syslog(LOG_CRIT,
 				    "Can't stat `%s' (%m)", dsp->ds_path);
