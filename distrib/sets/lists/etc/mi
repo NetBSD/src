@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.52 2000/05/03 11:22:28 itojun Exp $
+# $NetBSD: mi,v 1.53 2000/05/06 06:22:22 mycroft Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -26,9 +26,7 @@
 ./etc/lkm.conf
 ./etc/localtime
 ./etc/mail/aliases
-./etc/mail/aliases.db
 ./etc/mail/helpfile
-./etc/mail/sendmail.cf
 ./etc/mail.rc
 ./etc/mailer.conf
 ./etc/man.conf
@@ -51,10 +49,6 @@
 ./etc/ntp.conf
 ./etc/passwd
 ./etc/phones
-./etc/postfix
-./etc/postfix/README
-./etc/postfix/main.cf
-./etc/postfix/master.cf
 ./etc/printcap
 ./etc/profile
 ./etc/protocols

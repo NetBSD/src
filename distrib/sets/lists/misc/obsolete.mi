@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.4 2000/05/04 00:52:59 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.5 2000/05/06 06:22:23 mycroft Exp $
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
 /usr/share/doc/smm/03.fsck/2.t
@@ -13,11 +13,12 @@
 /usr/share/doc/usd/13.viref/merge.awk
 /usr/share/doc/usd/13.viref/spell.ok
 /usr/share/examples/supfiles/skarven.itea.unit.no
-/usr/share/sendmail/cf/trinity.mc
 /usr/share/doc/smm/09.sendmail/Makefile
 /usr/share/doc/smm/09.sendmail/intro.me
+/usr/share/misc/sendmail.hf
 /usr/share/sendmail/cf/clientproto.mc
 /usr/share/sendmail/cf/tcpproto.mc
+/usr/share/sendmail/cf/trinity.mc
 /usr/share/sendmail/cf/uucpproto.mc
 /usr/share/sendmail/m4/nullrelay.m4
 /usr/share/sendmail/ostype/gnuhurd.m4
