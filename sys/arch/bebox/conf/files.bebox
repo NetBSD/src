@@ -1,8 +1,8 @@
-#	$NetBSD: files.bebox,v 1.42 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.bebox,v 1.43 2004/03/25 12:40:19 wiz Exp $
 #
 # First try for bebox specific configuration info
 #
-maxpartitions 16
+maxpartitions 8
 
 maxusers 2 8 64
 
