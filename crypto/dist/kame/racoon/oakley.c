@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.77 2001/01/02 05:06:56 itojun Exp $	*/
+/*	$KAME: oakley.c,v 1.79 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,6 +71,7 @@
 #include "crypto_openssl.h"
 #include "sockmisc.h"
 #include "strnames.h"
+#include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
 #include "gssapi.h"
@@ -151,7 +152,7 @@ oakley_dhgrp_free(dhgrp)
 		vfree(dhgrp->curve_b);
 	if (dhgrp->order)
 		vfree(dhgrp->order);
-	free(dhgrp);
+	racoon_free(dhgrp);
 }
 
 /*
@@ -241,7 +242,7 @@ oakley_setdhgroup(group, dhgrp)
 	int group;
 	struct dhgroup **dhgrp;
 {
-	*dhgrp = CALLOC(sizeof(struct dhgroup), struct dhgroup *);
+	*dhgrp = racoon_calloc(1, sizeof(struct dhgroup));
 	if (*dhgrp == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get DH buffer.\n");
@@ -255,7 +256,7 @@ oakley_setdhgroup(group, dhgrp)
 		 || dhgroup[group].type == 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid DH parameter grp=%d.\n", group);
-			free(*dhgrp);
+			racoon_free(*dhgrp);
 			*dhgrp = NULL;
 			return -1;
 		}
@@ -1365,7 +1366,7 @@ get_cert_fromlocal(iph1, my)
 			char *p = NULL;
 			p = eay_get_x509text(cert);
 			plog(LLV_DEBUG, LOCATION, NULL, "%s", p ? p : "\n");
-			free(p);
+			racoon_free(p);
 		};
 		break;
 	default:
@@ -1536,7 +1537,7 @@ oakley_check_certid(iph1)
 				break;
 
 			/* next name */
-			free(altname);
+			racoon_free(altname);
 			altname = NULL;
 		}
 		memset(&hints, 0, sizeof(hints));
@@ -1547,7 +1548,7 @@ oakley_check_certid(iph1)
 		if (error != 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"no proper subjectAltName.\n");
-			free(altname);
+			racoon_free(altname);
 			return ISAKMP_NTYPE_INVALID_CERTIFICATE;
 		}
 		switch (res->ai_family) {
@@ -1562,7 +1563,7 @@ oakley_check_certid(iph1)
 		default:
 			plog(LLV_ERROR, LOCATION, NULL,
 				"family not supported: %d.\n", res->ai_family);
-			free(altname);
+			racoon_free(altname);
 			freeaddrinfo(res);
 			return ISAKMP_NTYPE_INVALID_CERTIFICATE;
 		}
@@ -1595,13 +1596,13 @@ oakley_check_certid(iph1)
 				break;
 
 			/* next name */
-			free(altname);
+			racoon_free(altname);
 			altname = NULL;
 		}
 		if (idlen != strlen(altname)) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"Invalid ID length in phase 1.\n");
-			free(altname);
+			racoon_free(altname);
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		if (check_typeofcertname(id_b->type, type) != 0) {
@@ -1609,11 +1610,11 @@ oakley_check_certid(iph1)
 				"ID type mismatched. ID: %s CERT: %s.\n",
 				s_ipsecdoi_ident(id_b->type),
 				s_ipsecdoi_ident(type));
-			free(altname);
+			racoon_free(altname);
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		error = memcmp(id_b + 1, altname, idlen);
-		free(altname);
+		racoon_free(altname);
 		return error == 0 ? 0 : ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 	}
 	default:
@@ -1718,7 +1719,7 @@ oakley_savecert(iph1, gen)
 		{
 			char *p = eay_get_x509text(&(*c)->cert);
 			plog(LLV_DEBUG, LOCATION, NULL, "%s", p ? p : "\n");
-			free(p);
+			racoon_free(p);
 		}
 		break;
 	case ISAKMP_CERT_CRL:
@@ -1921,8 +1922,9 @@ oakley_skeyid(iph1)
 				goto end;
 			}
 		}
-		plog(LLV_DEBUG, LOCATION, NULL, "psk found: ");
+		plog(LLV_DEBUG, LOCATION, NULL, "psk found.\n");
 		/* should be secret PSK */
+		plog(LLV_DEBUG2, LOCATION, NULL, "psk: ");
 		plogdump(LLV_DEBUG2, iph1->authstr->v, iph1->authstr->l);
 
 		len = iph1->nonce->l + iph1->nonce_p->l;
@@ -2288,7 +2290,7 @@ oakley_newcert()
 {
 	cert_t *new;
 
-	new = CALLOC(sizeof(*new), cert_t *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get cert's buffer\n");
@@ -2309,7 +2311,7 @@ oakley_delcert(cert)
 		return;
 	if (cert->pl)
 		VPTRINIT(cert->pl);
-	free(cert);
+	racoon_free(cert);
 }
 
 /*
@@ -2346,7 +2348,7 @@ oakley_newiv(iph1)
 	p += bp->l;
 
 	/* allocate IVm */
-	newivm = CALLOC(sizeof(struct isakmp_ivm), struct isakmp_ivm *);
+	newivm = racoon_calloc(1, sizeof(struct isakmp_ivm));
 	if (newivm == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get iv buffer\n");
@@ -2425,7 +2427,7 @@ oakley_newiv2(iph1, msgid)
 	plogdump(LLV_DEBUG, buf->v, buf->l);
 
 	/* allocate IVm */
-	newivm = CALLOC(sizeof(struct isakmp_ivm), struct isakmp_ivm *);
+	newivm = racoon_calloc(1, sizeof(struct isakmp_ivm));
 	if (newivm == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get iv buffer\n");
@@ -2466,10 +2468,10 @@ oakley_delivm(ivm)
 		return;
 
 	if (ivm->iv != NULL)
-		free(ivm->iv);
+		racoon_free(ivm->iv);
 	if (ivm->ive != NULL)
-		free(ivm->ive);
-	free(ivm);
+		racoon_free(ivm->ive);
+	racoon_free(ivm);
 
 	return;
 }
