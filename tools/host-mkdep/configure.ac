@@ -1,9 +1,9 @@
-#	$NetBSD: configure.ac,v 1.2 2002/09/15 17:23:01 thorpej Exp $
+#	$NetBSD: configure.ac,v 1.3 2003/07/26 20:24:00 salo Exp $
 #
 # Autoconf definition file for mkdep.
 #
 
-AC_INIT([mkdep], [noversion], [tech-toolchain@netbsd.org])
+AC_INIT([mkdep], [noversion], [tech-toolchain@NetBSD.org])
 
 AC_PATH_PROG(BSHELL, sh, )
 if test x"$BSHELL" = x; then

@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.79 2003/06/26 11:56:38 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.80 2003/07/26 20:17:37 salo Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -52,7 +52,7 @@ Where to get gzip'd, tar-balled copies of original sources.  The default is
 .It MASTER_SITE_BACKUP
 Backup location(s) for distribution files and patch files if not found
 locally and ${MASTER_SITES}/${PATCH_SITES}.  The Defaults are
-.Pa ftp://ftp.netbsd.org/pub/NetBSD/packages/distfiles/${DIST_SUBDIR}/
+.Pa ftp://ftp.NetBSD.org/pub/NetBSD/packages/distfiles/${DIST_SUBDIR}/
 and
 .Pa ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/ .
 .It MASTER_SITE_OVERRIDE
@@ -128,7 +128,7 @@ at problems or questions regarding this package which have been
 reported with
 .Xr send-pr 1 .
 The right person to contact before making major changes to the
-package.  The default is packages@netbsd.org.
+package.  The default is packages@NetBSD.org.
 .It CATEGORIES
 A list of descriptive categories into which this package falls.
 .It COMMENT
@@ -328,7 +328,7 @@ Distfile(s) of this package may not be placed on CDROM.  Set this string to
 .It NO_SRC_ON_FTP
 Distfile(s) of this package may not be made available via ftp.  Set this string to
 .Pa ${RESTRICTED} .
-If this variable is set, the distfile will not be mirrored by ftp.netbsd.org.
+If this variable is set, the distfile will not be mirrored by ftp.NetBSD.org.
 .It NO_DEPENDS
 Don't verify build of dependencies.
 .It CHECK_SHLIBS
@@ -580,12 +580,12 @@ are replaced by a package specific strings.
 .Bl -tag -width OBJMACHINE
 .It Sy MASTER_SITE_BACKUP
 Backup sites for packages that are maintained in
-.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/${DIST_SUBDIR} .
+.Sq ftp.NetBSD.org:/pub/NetBSD/packages/distfiles/${DIST_SUBDIR} .
 .It Sy MASTER_SITE_GNU
 GNU source mirror.
 .It Sy MASTER_SITE_LOCAL
 Local package source distributions that are maintained in
-.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
+.Sq ftp.NetBSD.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
 .It Sy MASTER_SITE_PERL_CPAN
 Perl CPAN mirror.
 .It Sy MASTER_SITE_SOURCEFORGE

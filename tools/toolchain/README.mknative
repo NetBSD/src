@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.4 2003/03/01 13:09:09 mrg Exp $
+$NetBSD: README.mknative,v 1.5 2003/07/26 20:24:01 salo Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -63,4 +63,4 @@ work.
 
 9. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.
 
-- tv@netbsd.org
+- tv@NetBSD.org
