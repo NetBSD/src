@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.24 1998/12/18 21:12:32 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.25 1998/12/18 21:53:08 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.22 1998/12/18 21:12:14 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.23 1998/12/18 21:52:53 thorpej Exp 
  */
 
 /*-
@@ -199,6 +199,7 @@
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
+#define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking Technology */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -236,3 +237,6 @@
 #define	PCMCIA_CIS_COREGA_PCC_2	{ "corega K.K.", "corega Ether PCC-T", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_PCC_2	-1
 #define	PCMCIA_STR_COREGA_PCC_2	"Corega"
+#define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
+#define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
+#define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"

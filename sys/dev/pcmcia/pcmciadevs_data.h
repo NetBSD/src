@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.24 1998/12/18 21:12:32 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.25 1998/12/18 21:53:08 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.22 1998/12/18 21:12:14 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.23 1998/12/18 21:52:53 thorpej Exp 
  */
 
 /*-
@@ -332,6 +332,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
+	    PCMCIA_CIS_SVEC_COMBOCARD,
+	    0,
+	    "SVEC/Hawking Technology",
+	    "SVEC/Hawking Tech. Combo Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_SANDISK, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -511,6 +518,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "TEAC",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SVEC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "SVEC/Hawking Technology",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
