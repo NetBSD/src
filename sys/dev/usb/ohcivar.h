@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.3 1998/11/25 22:32:04 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.4 1998/12/26 12:53:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,12 +62,18 @@ typedef struct ohci_soft_td {
 
 typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
+#if defined(__NetBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
+
+#elif defined(__FreeBSD__)
+        int             sc_iobase;
+	int             unit;
+#endif /* __FreeBSD__ */
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;
@@ -101,7 +107,7 @@ int		ohci_intr __P((void *));
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (ohcidebug) printf x
 #define DPRINTFN(n,x)	if (ohcidebug>(n)) printf x
-int ohcidebug;
+extern int ohcidebug;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)

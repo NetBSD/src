@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.7 1998/12/09 00:18:11 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.8 1998/12/26 12:53:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,26 @@
 #define _USB_H_
 
 #include <sys/types.h>
+#if defined(__NetBSD__)
 #include <sys/ioctl.h>
+#endif
+
+#if defined(__NetBSD__)
+#if defined(_KERNEL)
+#include <dev/usb/usb_port.h>
+#endif /* _KERNEL */
+
+#elif defined(__FreeBSD__)
+#include <sys/malloc.h>
+
+#if defined(KERNEL)
+MALLOC_DECLARE(M_USB);
+MALLOC_DECLARE(M_USBDEV);
+
+#include <dev/usb/usb_port.h>
+#endif /* KERNEL */
+#endif /* __FreeBSD__ */
+
 
 #define USB_MAX_DEVICES 128
 #define USB_START_ADDR 0
@@ -120,7 +139,7 @@ typedef struct {
 #define UR_SYNCH_FRAME		0x0c
 
 /* Feature numbers */
-#define UF_ENDPOINT_STALL	0
+#define UF_ENDPOINT_HALT	0
 #define UF_DEVICE_REMOTE_WAKEUP	1
 
 #define USB_MAX_IPACKET		8 /* maximum size of the initial packet */
@@ -229,7 +248,7 @@ typedef struct {
 	uByte		bDescLength;
 	uByte		bDescriptorType;
 	uByte		bNbrPorts;
-	uWord		bHubCharacteristics;
+	uWord		wHubCharacteristics;
 #define UHD_PWR			0x03
 #define UHD_PWR_GANGED		0x00
 #define UHD_PWR_INDIVIDUAL	0x01
@@ -242,17 +261,20 @@ typedef struct {
 	uByte		bPwrOn2PwrGood;	/* delay in 2 ms units */
 #define UHD_PWRON_FACTOR 2
 	uByte		bHubContrCurrent;
-	uByte		DeviceRemovable[1];
-	/* this is only correct with 1-7 ports on the hub */
-	uByte		PortPowerCtrlMask[3];
+	uByte		DeviceRemovable[32]; /* max 255 ports */
+#define UHD_NOT_REMOV(desc, i) \
+    (((desc)->DeviceRemovable[(i)/8] >> ((i) % 8)) & 1)
+	/* deprecated uByte		PortPowerCtrlMask[]; */
 } usb_hub_descriptor_t;
-#define USB_HUB_DESCRIPTOR_SIZE 9
+#define USB_HUB_DESCRIPTOR_SIZE 8
 
 typedef struct {
 	uWord		wStatus;
 /* Device status flags */
 #define UDS_SELF_POWERED		0x0001
 #define UDS_REMOTE_WAKEUP		0x0002
+/* Endpoint status flags */
+#define UES_HALT			0x0001
 } usb_status_t;
 
 typedef struct {
@@ -301,7 +323,7 @@ typedef struct {
 #define  UPROTO_PRINTER_UNI	1
 #define  UPROTO_PRINTER_BI	2
 #define UCLASS_HUB		9
-#define  USUBCLASS_HUB		1
+#define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
 
 #define USB_HUB_MAX_DEPTH 5
@@ -312,9 +334,19 @@ typedef struct {
  */
 #define USB_POWER_DOWN_TIME	1000 /* ms */
 
+#if 0
+/* These are the value from the spec. */
 #define USB_PORT_RESET_DELAY	10  /* ms */
+#define USB_PORT_RESET_SETTLE	10  /* ms */
 #define USB_PORT_POWERUP_DELAY	100 /* ms */
-#define USB_POWER_SETTLE	100 /* ms */
+#define USB_SET_ADDRESS_SETTLE	2   /* ms */
+#else
+/* Allow for bad device */
+#define USB_PORT_RESET_DELAY	10  /* ms */
+#define USB_PORT_RESET_RECOVERY	20  /* ms */
+#define USB_PORT_POWERUP_DELAY	200 /* ms */
+#define USB_SET_ADDRESS_SETTLE	10  /* ms */
+#endif
 
 #define USB_MIN_POWER		100 /* mA */
 #define USB_MAX_POWER		500 /* mA */

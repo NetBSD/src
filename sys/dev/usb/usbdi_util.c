@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.8 1998/12/09 00:18:12 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.9 1998/12/26 12:53:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/select.h>
 
@@ -50,8 +49,6 @@
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-
-#include "opt_usbverbose.h"
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) printf x
@@ -85,9 +82,19 @@ usbd_get_config_desc(dev, conf, d)
 	int conf;
 	usb_config_descriptor_t *d;
 {
+	usbd_status r;
+
 	DPRINTFN(3,("usbd_get_config_desc: conf=%d\n", conf));
-	return (usbd_get_desc(dev, UDESC_CONFIG, 
-			      conf, USB_CONFIG_DESCRIPTOR_SIZE, d));
+	r = usbd_get_desc(dev, UDESC_CONFIG, conf, 
+			  USB_CONFIG_DESCRIPTOR_SIZE, d);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	if (d->bDescriptorType != UDESC_CONFIG) {
+		DPRINTFN(-1,("usbd_get_config_desc: conf %d, bad desc %d\n",
+			     conf, d->bDescriptorType));
+		return (USBD_INVAL);
+	}
+	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status
@@ -398,7 +405,12 @@ usbd_alloc_report_desc(ifc, descp, sizep, mem)
 	usbd_interface_handle ifc;
 	void **descp;
 	int *sizep;
+#if defined(__NetBSD__)
 	int mem;
+#elif defined(__FreeBSD__)
+	struct malloc_type *mem;
+#endif
+	
 {
 	usb_interface_descriptor_t *id;
 	usb_hid_descriptor_t *hid;
