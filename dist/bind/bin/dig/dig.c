@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.5 2002/06/20 11:42:54 itojun Exp $	*/
+/*	$NetBSD: dig.c,v 1.6 2002/09/06 04:50:02 itojun Exp $	*/
 
 #ifndef lint
 static const char rcsid[] = "Id: dig.c,v 8.57 2002/06/18 02:26:49 marka Exp";
@@ -1801,7 +1801,7 @@ reverse6(char *domain, struct in6_addr *in6) {
 		in6->s6_addr[6] & 0x0f, (in6->s6_addr[6] >> 4) & 0x0f,
 		in6->s6_addr[5] & 0x0f, (in6->s6_addr[5] >> 4) & 0x0f,
 		in6->s6_addr[4] & 0x0f, (in6->s6_addr[4] >> 4) & 0x0f,
-		in6->s6_addr[6] & 0x0f, (in6->s6_addr[3] >> 4) & 0x0f,
+		in6->s6_addr[3] & 0x0f, (in6->s6_addr[3] >> 4) & 0x0f,
 		in6->s6_addr[2] & 0x0f, (in6->s6_addr[2] >> 4) & 0x0f,
 		in6->s6_addr[1] & 0x0f, (in6->s6_addr[1] >> 4) & 0x0f,
 		in6->s6_addr[0] & 0x0f, (in6->s6_addr[0] >> 4) & 0x0f);
