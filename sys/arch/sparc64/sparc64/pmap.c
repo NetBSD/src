@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.73 2000/09/11 23:27:23 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2000/09/12 19:42:26 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
-#undef HWREF
+#define	HWREF
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -1552,8 +1552,7 @@ pmap_release(pm)
 							if (data & TLB_ACCESS)
 								pv->pv_va |=
 									PV_REF;
-							if (data & (TLB_MODIFY|
-								TLB_W))
+							if (data & (TLB_MODIFY))
 								pv->pv_va |=
 									PV_MOD;
 
@@ -1752,7 +1751,7 @@ pmap_deactivate(p)
  *
  *	Note: no locking is necessary in this function.
  */
-#if 1
+#if 0
 void
 pmap_kenter_pa(va, pa, prot)
 	vaddr_t va;
@@ -1769,14 +1768,14 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pte_t tte;
-	paddr_t pg, ttep;
+	paddr_t pg;
 	struct pmap *pm = pmap_kernel();
 	int i, s;
 
 	/*
 	 * Construct the TTE.
 	 */
-	s = splimp()
+	s = splimp();
 	simple_lock(&pm->pm_lock);
 #ifdef DEBUG	     
 	enter_stats.unmanaged ++;
@@ -1835,7 +1834,6 @@ pmap_kenter_pa(va, pa, prot)
 			    i, &tsb[i]);
 	}
 #endif
-	tsb_enter(pm->pm_ctx, va, tte.data.data);
 	simple_unlock(&pm->pm_lock);
 	splx(s);
 	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
@@ -1876,7 +1874,7 @@ pmap_kenter_pgs(va, pgs, npgs)
  *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
  *	starting at va, for size bytes (assumed to be page rounded).
  */
-#if 1
+#if 0
 void
 pmap_kremove(va, size)
 	vaddr_t va;
@@ -2041,7 +2039,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		/* If we don't have the traphandler do it, set the ref/mod bits now */
 		if ((flags & VM_PROT_ALL) || (tte.data.data & TLB_ACCESS))
 			pv->pv_va |= PV_REF;
-		if (flags & VM_PROT_WRITE || (tte.data.data & (TLB_MODIFY|TLB_W)))
+		if (flags & VM_PROT_WRITE || (tte.data.data & (TLB_MODIFY)))
 			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 		enter_stats.managed ++;
@@ -2338,7 +2336,7 @@ pmap_remove(pm, va, endva)
 				/* Save REF/MOD info */
 				pv = pa_to_pvh(entry);
 				if (data & TLB_ACCESS) pv->pv_va |= PV_REF;
-				if (data & (TLB_MODIFY|TLB_W))  pv->pv_va |= PV_MOD;
+				if (data & (TLB_MODIFY))  pv->pv_va |= PV_MOD;
 
 				pmap_remove_pv(pm, va, entry);
 			}
@@ -2467,7 +2465,7 @@ pmap_protect(pm, sva, eva, prot)
 				/* Save REF/MOD info */
 				pv = pa_to_pvh(pa);
 				if (data & TLB_ACCESS) pv->pv_va |= PV_REF;
-				if (data & (TLB_MODIFY|TLB_W))  
+				if (data & (TLB_MODIFY))  
 					pv->pv_va |= PV_MOD;
 			}
 			/* Just do the pmap and TSB, not the pv_list */
@@ -2820,10 +2818,10 @@ pmap_clear_modify(pg)
 			/* First clear the mod bit in the PTE and make it R/O */
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 			/* Need to both clear the modify and write bits */
-			if (data & (TLB_MODIFY|TLB_W))
+			if (data & (TLB_MODIFY))
 				changed |= 1;
 #ifdef HWREF
-			data &= ~(TLB_MODIFY|TLB_W);
+			data &= ~(TLB_MODIFY);
 #else
 			data &= ~(TLB_MODIFY|TLB_W|TLB_REAL_W);
 #endif
@@ -2837,7 +2835,9 @@ pmap_clear_modify(pg)
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
 				if (tsb[i].tag.tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
 					tsb[i].data.data = /* data */ 0;
+/*
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
+*/
 			}
 			/* Then clear the mod bit in the pv */
 			if (pv->pv_va & PV_MOD)
@@ -2932,12 +2932,18 @@ pmap_clear_reference(pg)
 				Debugger();
 				/* panic? */
 			}
-			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
+			if (pv->pv_pmap->pm_ctx || 
+				pv->pv_pmap == pmap_kernel()) {
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
 				/* Invalidate our TSB entry since ref info is in the PTE */
-				if (tsb[i].tag.tag == TSB_TAG(0,pv->pv_pmap->pm_ctx,pv->pv_va&PV_VAMASK))
+				if (tsb[i].tag.tag == 
+					TSB_TAG(0,pv->pv_pmap->pm_ctx,pv->pv_va&
+						PV_VAMASK))
 					tsb[i].data.data = 0;
-				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
+/*
+				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
+					pv->pv_pmap->pm_ctx);
+*/
 			}
 			if (pv->pv_va & PV_REF)
 				changed |= 1;
@@ -2984,20 +2990,20 @@ pmap_is_modified(pg)
 	/* Check if any mapping has been modified */
 	s = splimp();
 	pv = pa_to_pvh(pa);
-#ifdef HWREF
 	if (pv->pv_va&PV_MOD) i = 1;
+#ifdef HWREF
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_is_modified: npv but no pmap for pv %p\n", pv);
 		Debugger();
 	}
 #endif
-	if (pv->pv_pmap != NULL)
+	if (!i && (pv->pv_pmap != NULL))
 		for (npv = pv; i == 0 && npv && npv->pv_pmap; npv = npv->pv_next) {
 			int64_t data;
 			
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
-			if (data & (TLB_MODIFY|TLB_W)) i = 1;
+			if (data & (TLB_MODIFY)) i = 1;
 			/* Migrate modify info to head pv */
 			if (npv->pv_va & PV_MOD) i = 1;
 			npv->pv_va &= ~PV_MOD;
@@ -3007,8 +3013,6 @@ pmap_is_modified(pg)
 #ifdef DEBUG
 	if (i) pv->pv_va |= PV_WE;
 #endif
-#else
-	if (pv->pv_va&PV_MOD) i = 1;
 #endif
 	splx(s);
 
@@ -3041,15 +3045,15 @@ pmap_is_referenced(pg)
 	/* Check if any mapping has been referenced */
 	s = splimp();
 	pv = pa_to_pvh(pa);
-#ifdef HWREF 
 	if (pv->pv_va&PV_REF) i = 1;
+#ifdef HWREF 
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_is_referenced: npv but no pmap for pv %p\n", pv);
 		Debugger();
 	}
 #endif
-	if (pv->pv_pmap != NULL)
+	if (!i && (pv->pv_pmap != NULL))
 		for (npv = pv; npv; npv = npv->pv_next) {
 			int64_t data;
 			
@@ -3061,8 +3065,6 @@ pmap_is_referenced(pg)
 		}
 	/* Save ref info */
 	if (i) pv->pv_va |= PV_REF;
-#else
-	if (pv->pv_va&PV_REF) i = 1;
 #endif
 	splx(s);
 
@@ -3202,7 +3204,7 @@ pmap_page_protect(pg, prot)
 
 				/* Save REF/MOD info */
 				if (data & TLB_ACCESS) pv->pv_va |= PV_REF;
-				if (data & (TLB_MODIFY|TLB_W))  
+				if (data & (TLB_MODIFY))  
 					pv->pv_va |= PV_MOD;
 
 				data &= ~(clear);
@@ -3261,7 +3263,7 @@ pmap_page_protect(pg, prot)
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS) 
 				firstpv->pv_va |= PV_REF;
-			if (data & (TLB_W|TLB_MODIFY))
+			if (data & (TLB_MODIFY))
 				firstpv->pv_va |= PV_MOD;
 			if (data & TLB_TSB_LOCK) {
 #ifdef DIAGNOSTIC
@@ -3313,7 +3315,7 @@ pmap_page_protect(pg, prot)
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS) 
 				pv->pv_va |= PV_REF;
-			if (data & (TLB_W|TLB_MODIFY))
+			if (data & (TLB_MODIFY))
 				pv->pv_va |= PV_MOD;
 			if (data & TLB_TSB_LOCK) {
 #ifdef DIAGNOSTIC
@@ -3667,7 +3669,7 @@ pmap_remove_pv(pmap, va, pa)
 	/* Save ref/mod info */
 	if (data & TLB_ACCESS) 
 		opv->pv_va |= PV_REF;
-	if (data & (TLB_W|TLB_MODIFY))
+	if (data & (TLB_MODIFY))
 		opv->pv_va |= PV_MOD;
 	splx(s);
 	pv_check();
