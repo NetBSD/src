@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.7 2000/01/15 17:08:03 aymeric Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.8 2000/04/05 19:38:33 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ void	_DCIA __P((void));
 void	_DCIS __P((void));
 void	_DCIU __P((void));
 void	_DCIAS __P((paddr_t));
+void	_PCIA __P((void));
 
 #define	TBIA()		_TBIA()
 #define	TBIS(va)	_TBIS((va))
@@ -148,10 +149,10 @@ void	_DCIAS __P((paddr_t));
 #define	DCIS()		_DCIS()
 #define	DCIU()		_DCIU()
 #define	DCIAS(pa)	_DCIAS((pa))
+#define	PCIA()		_PCIA()
 
 #if defined(M68040)||defined(M68060)
 
-void	_PCIA __P((void));
 void	_DCFA __P((void));
 void	_ICPL __P((paddr_t));
 void	_ICPP __P((paddr_t));
@@ -161,7 +162,6 @@ void	_DCPA __P((void));
 void	_DCFL __P((paddr_t));
 void	_DCFP __P((paddr_t));
 
-#define	PCIA()		_PCIA()
 #define	DCFA()		_DCFA()
 #define	ICPL(pa)	_ICPL((pa))
 #define	ICPP(pa)	_ICPP((pa))
