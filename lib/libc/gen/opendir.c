@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.11 1996/12/20 20:44:55 cgd Exp $	*/
+/*	$NetBSD: opendir.c,v 1.12 1997/02/25 13:16:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-static char rcsid[] = "$NetBSD: opendir.c,v 1.11 1996/12/20 20:44:55 cgd Exp $";
+static char rcsid[] = "$NetBSD: opendir.c,v 1.12 1997/02/25 13:16:39 fvdl Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,8 +110,8 @@ __opendir2(name, flags)
 			close(fd);
 			return (NULL);
 		}
-		unionstack = !strncmp(sfb.f_fstypename, MOUNT_UNION,
-		    MFSNAMELEN);
+		unionstack = !(strncmp(sfb.f_fstypename, MOUNT_UNION,
+		    MFSNAMELEN)) || (sfb.f_flags & MNT_UNION);
 	} else {
 		unionstack = 0;
 	}
