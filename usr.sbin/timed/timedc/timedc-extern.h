@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc-extern.h,v 1.4 2003/08/07 11:25:47 agc Exp $	*/
+/*	$NetBSD: timedc-extern.h,v 1.5 2003/10/13 06:14:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ void	bytenetorder(struct tsp *);
 void	clockdiff(int, char *[]);
 void	help(int, char *[]);
 void	intr(int);
-void	makeargv(void);
+int	makeargv(void);
 void	msite(int, char *[]);
 int	priv_resources(void);
 void	quit(int, char *[]);
