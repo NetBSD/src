@@ -1,5 +1,5 @@
 \input texinfo  @c -*-texinfo-*-
-@c $NetBSD: grep.texi,v 1.8 2003/01/26 23:38:50 wiz Exp $
+@c $NetBSD: grep.texi,v 1.9 2003/03/29 14:33:49 cjep Exp $
 @c %**start of header
 @setfilename grep.info
 @settitle grep, print lines matching a pattern
@@ -358,7 +358,7 @@ Suppress the prefixing of filenames on output when multiple files are searched.
 @item --line-buffered
 @opindex --line-buffered
 @cindex line buffering
-Set the line buffering policy, this can be a performance penality.
+Set the line buffering policy, this can be a performance penalty.
 
 @item --label=@var{LABEL}
 @opindex --label
