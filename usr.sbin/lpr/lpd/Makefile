@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.4 (Berkeley) 10/26/90
+#	from: @(#)Makefile	5.4 (Berkeley) 10/26/90
+#	$Id: Makefile,v 1.3 1993/07/30 22:12:25 mycroft Exp $
 
 PROG=	lpd
 CFLAGS+=-I${.CURDIR}/../common_source
