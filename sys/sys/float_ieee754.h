@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.4 2003/10/22 20:31:05 kleink Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.5 2003/10/23 23:26:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,10 @@ __END_DECLS
 #define DBL_MAX		1.7976931348623157E+308
 #define DBL_MAX_10_EXP	308
 
+/*
+ * If no extended-precision type is defined by the machine-dependent
+ * header including this, default to `long double' being double-precision.
+ */
 #ifndef LDBL_MANT_DIG
 #define LDBL_MANT_DIG	DBL_MANT_DIG
 #define LDBL_EPSILON	DBL_EPSILON
@@ -89,42 +93,14 @@ __END_DECLS
 #define LDBL_MAX_EXP	DBL_MAX_EXP
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
-#elif LDBL_MANT_DIG == 64
-#define LDBL_EPSILON	1.0842021724855044340E-19L
-#define LDBL_DIG	18
-#define LDBL_MIN_EXP	(-16381)
-#ifndef LDBL_MIN
-#define LDBL_MIN	1.6810515715560467531E-4932L
-#endif
-#define LDBL_MIN_10_EXP	(-4931)
-#define LDBL_MAX_EXP	16384
-#define LDBL_MAX	1.1897314953572317650E+4932L
-#define LDBL_MAX_10_EXP	4932
-#elif LDBL_MANT_DIG == 113
-#define	LDBL_EPSILON	1.925929944387235853055977942584927319E-34L
-#define	LDBL_DIG	33
-#define	LDBL_MIN_EXP	(-16381)
-#define	LDBL_MIN	3.3621031431120935062626778173217526026E-4932L
-#define	LDBL_MIN_10_EXP	(-4931)
-#define	LDBL_MAX_EXP	16384
-#define	LDBL_MAX	1.1897314953572317650857593266280070162E4932L
-#define	LDBL_MAX_10_EXP	4932
-#endif /* LDBL_MANT_DIG */
-
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE) || \
     ((__STDC_VERSION__ - 0) >= 199901L) || \
     ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     ((_XOPEN_SOURCE  - 0) >= 600) || \
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
-#ifndef	DECIMAL_DIG
-#if LDBL_MANT_DIG == DBL_MANT_DIG
 #define	DECIMAL_DIG	17		/* ceil((1+p*log10(b))-(b==10) */
-#elif LDBL_MANT_DIG == 64
-#define	DECIMAL_DIG	21
-#elif LDBL_MANT_DIG == 113
-#define	DECIMAL_DIG	36
-#endif /* LDBL_MANT_DIG == DBL_MANT_DIG */
-#endif /* DECIMAL_DIG */
 #endif /* !defined(_ANSI_SOURCE) && ... */
+#endif /* LDBL_MANT_DIG */
+
 #endif	/* _SYS_FLOAT_IEEE754_H_ */
