@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_axppci_33.c,v 1.4 1996/04/12 06:08:44 cgd Exp $	*/
+/*	$NetBSD: pci_axppci_33.c,v 1.5 1996/04/23 14:15:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -46,6 +46,7 @@
 
 #include <alpha/pci/pci_axppci_33.h>
 #include <alpha/pci/siovar.h>
+#include <alpha/pci/sioreg.h>
 
 #include "sio.h"
 
@@ -56,7 +57,7 @@ void    *dec_axppci_33_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void    dec_axppci_33_intr_disestablish __P((void *, void *));
 
-#define LCA_SIO_DEVICE 7		/* XXX */
+#define	LCA_SIO_DEVICE	7	/* XXX */
 
 void
 pci_axppci_33_pickintr(lcp)
@@ -169,7 +170,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 	}
 
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
-	    0x60); /* XXX */
+	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
 	printf("pci_axppci_33_map_int: device %d pin %c: pirq %d, reg = %x\n",
 		device, '@' + buspin, pirq, pirqreg);
