@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2004/03/10 00:39:13 lukem Exp $
+# $NetBSD: mi,v 1.19 2004/03/11 06:28:59 rtr Exp $
 ./etc/mtree/set.xfont						xfont-sys-root
 ./usr/X11R6/lib/X11/fonts                                       xfont   share
 ./usr/X11R6/lib/X11/fonts/100dpi                                xfont   share
@@ -4011,6 +4011,7 @@
 ./usr/X11R6/lib/X11/fonts/encodings/large/gb2312.1980-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/gbk-0.enc.gz		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0201.1976-0.enc.gz	xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1983-0.enc.gz	xfont-obsolete	obsolete
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1990-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0212.1990-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/ksc5601.1987-0.enc.gz	xfont	share

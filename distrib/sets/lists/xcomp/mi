@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 2004/03/06 03:54:24 rtr Exp $
+# $NetBSD: mi,v 1.23 2004/03/11 06:28:59 rtr Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -220,6 +220,9 @@
 ./usr/X11R6/include/X11/extensions/XEVI.h
 ./usr/X11R6/include/X11/extensions/XEVIstr.h
 ./usr/X11R6/include/X11/extensions/XI.h
+./usr/X11R6/include/X11/extensions/XIE.h	xcomp-obsolete	obsolete
+./usr/X11R6/include/X11/extensions/XIEproto.h	xcomp-obsolete	obsolete
+./usr/X11R6/include/X11/extensions/XIEprotost.h	xcomp-obsolete	obsolete
 ./usr/X11R6/include/X11/extensions/XInput.h
 ./usr/X11R6/include/X11/extensions/XIproto.h
 ./usr/X11R6/include/X11/extensions/XKB.h
@@ -327,6 +330,7 @@
 ./usr/X11R6/include/X11/keysym.h
 ./usr/X11R6/include/X11/keysymdef.h
 ./usr/X11R6/include/X11/xpm.h
+./usr/X11R6/include/expat.h			xcomp-obsolete	obsolete
 ./usr/X11R6/include/fontconfig/fcfreetype.h
 ./usr/X11R6/include/fontconfig/fcprivate.h
 ./usr/X11R6/include/fontconfig/fontconfig.h
