@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 2003/08/10 22:22:31 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13 2003/11/09 12:22:15 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2003/08/10 22:22:31 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2003/11/09 12:22:15 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -285,7 +285,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc_adj = 0;
 			(*pr)("\tTrap Type: %s\n",
 			    trap_type((int)tf->tf_state.sf_expevt));
-			(*pr)("\tSSR=0x%lx, TEA=0x%lx, TRA=0x%lx",
+			(*pr)("\tSPC=0x%lx, SSR=0x%lx, TEA=0x%lx, TRA=0x%lx",
+			    (long)tf->tf_state.sf_spc,
 			    (long)tf->tf_state.sf_ssr,
 			    (long)tf->tf_state.sf_tea,
 			    (long)tf->tf_state.sf_tra);
@@ -307,7 +308,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			fp = (db_addr_t) tf->if_caller.r14;
 			cur_intrframe = tf;
 			pc_adj = 0;
-			(*pr)("\tSSR=0x%lx, INTEVT=0x%lx",
+			(*pr)("\tSPC=0x%lx, SSR=0x%lx, INTEVT=0x%lx",
+			    (long)tf->if_state.sf_spc,
 			    (long)tf->if_state.sf_ssr,
 			    (long)tf->if_state.sf_intevt);
 			if (dump_eframe) {
