@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.3 1998/02/07 11:09:27 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.4 1998/02/08 06:15:59 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -95,7 +95,7 @@ void uvm_pager_init()
    */
 
    pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
-   			PAGER_MAP_SIZE, FALSE, NULL);
+   			PAGER_MAP_SIZE, FALSE, FALSE, NULL);
    simple_lock_init(&pager_map_wanted_lock);
    pager_map_wanted = FALSE;
 
