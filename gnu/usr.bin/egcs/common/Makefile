@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1998/10/14 16:55:52 tv Exp $
+#	$NetBSD: Makefile,v 1.19 1998/10/31 02:16:38 jonathan Exp $
 
 .include "../Makefile.inc"
 
@@ -8,17 +8,24 @@ NOMAN=
 NOLINKLIB=
 YHEADER=1
 
+# GNU (gcc,gas) uses "mips" as arch-dependent filename for mipsel and mipseb
+.if (${MACHINE_ARCH} == "mips")
+GCC_ARCH?=	${MACHINE_ARCH}
+.else
+GCC_ARCH?=	${MACHINE_GNU_ARCH}
+.endif
+
 CPPFLAGS+=	-DTARGET_NAME=\"${MACHINE_GNU_ARCH}-netbsd\"
 CPICFLAGS=	-fPIC -DPIC
 HOST_CPPFLAGS=	${CPPFLAGS}
 
-MD=		${DIST}/config/${MACHINE_GNU_ARCH}/${MACHINE_GNU_ARCH}.md
+MD=		${DIST}/config/${GCC_ARCH}/${GCC_ARCH}.md
 
 BCDEF=		${DIST}/bytecode.def
 
 .PATH:		${DIST}
 
-SRCS=		${MACHINE_GNU_ARCH}.c toplev.c version.c tree.c print-tree.c \
+SRCS=		${GCC_ARCH}.c toplev.c version.c tree.c print-tree.c \
 		stor-layout.c fold-const.c function.c stmt.c except.c expr.c \
 		calls.c expmed.c explow.c optabs.c varasm.c rtl.c print-rtl.c \
 		rtlanal.c emit-rtl.c genrtl.c real.c regmove.c dbxout.c \
@@ -90,4 +97,4 @@ insn-${_GEN_}.h: gen${_GEN_}
 ${OBJS} ${SOBJS} genattrtab.lo genextract.lo: \
 		insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
-.PATH:		${DIST}/config/${MACHINE_GNU_ARCH}
+.PATH:		${DIST}/config/${GCC_ARCH}
