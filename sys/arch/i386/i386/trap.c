@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.149 2000/12/09 11:21:52 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.150 2000/12/09 12:57:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -561,11 +561,6 @@ syscall(frame)
 
 	p = curproc;
 	p->p_md.md_regs = &frame;
-
-	if (p->p_emul->e_syscall) {
-		p->p_emul->e_syscall(&frame);
-		return;
-	}
 
 	sticks = p->p_sticks;
 	code = frame.tf_eax;
