@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.7 2001/05/11 14:04:48 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.8 2001/05/16 11:51:16 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -593,6 +593,10 @@ pos_form_cursor(FORM *form)
 	if ((cur->opts & O_PUBLIC) == O_PUBLIC) {
 		row += cur->cursor_ypos;
 		col += cur->cursor_xpos;
+		if (cur->cursor_xpos >= cur->cols) {
+			col = cur->form_col;
+			row++;
+		}
 	}
 	
 #ifdef DEBUG
