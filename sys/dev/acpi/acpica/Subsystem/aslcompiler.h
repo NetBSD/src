@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslcompiler.h - common include file
- *              $Revision: 123 $
+ *              $Revision: 127 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -154,8 +154,8 @@
 
 #define IntelAcpiCA                 "Intel ACPI Component Architecture"
 #define CompilerId                  "ASL Optimizing Compiler / AML Disassembler"
-#define CompilerCopyright           "Copyright (C) 2000 - 2002 Intel Corporation"
-#define CompilerCompliance          "ACPI 2.0a"
+#define CompilerCopyright           "Copyright (C) 2000 - 2003 Intel Corporation"
+#define CompilerCompliance          "ACPI 2.0b"
 #define CompilerName                "iasl"
 #define CompilerCreatorId           "INTL"
 
@@ -485,7 +485,7 @@ OptOptimizeNamePath (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Flags,
     ACPI_WALK_STATE         *WalkState,
-    NATIVE_CHAR             *AmlNameString,
+    char                    *AmlNameString,
     ACPI_NAMESPACE_NODE     *TargetNode);
 
 
@@ -905,14 +905,14 @@ UtGetArg (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Argn);
 
-NATIVE_CHAR *
+char *
 UtGetStringBuffer (
     UINT32                  Length);
 
 ACPI_STATUS
 UtInternalizeName (
-    NATIVE_CHAR             *ExternalName,
-    NATIVE_CHAR             **ConvertedName);
+    char                    *ExternalName,
+    char                    **ConvertedName);
 
 void
 UtAttachNamepathToOwner (
@@ -927,13 +927,13 @@ UtCheckIntegerRange (
 
 ACPI_STATUS
 UtStrtoul64 (
-    NATIVE_CHAR             *String,
+    char                    *String,
     UINT32                  Base,
     ACPI_INTEGER            *RetInteger);
 
 ACPI_INTEGER
 UtDoConstant (
-    NATIVE_CHAR             *String);
+    char                    *String);
 
 
 /* Find */
@@ -975,7 +975,7 @@ RsSetFlagBits (
     UINT8                   *Flags,
     ACPI_PARSE_OBJECT       *Op,
     UINT8                   Position,
-    UINT8                   Default);
+    UINT8                   DefaultBit);
 
 ACPI_PARSE_OBJECT *
 RsCompleteNodeAndGetNext (
