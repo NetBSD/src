@@ -1,4 +1,4 @@
-# $NetBSD: BUNNY,v 1.20 1998/04/15 21:19:21 drochner Exp $
+# $NetBSD: BUNNY,v 1.21 1998/04/24 18:18:41 thorpej Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -100,7 +100,7 @@ cd*	at	scsibus? target ? lun ?
 # Workstation Console attachments
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
-wskbd*	at	pckbd?
+wskbd*		at	pckbd?
 wsmouse*	at	psm?
 
 pseudo-device	bpfilter	16
