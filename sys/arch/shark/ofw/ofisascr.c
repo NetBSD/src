@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.3 2002/10/01 19:18:57 thorpej Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.4 2002/10/02 15:52:39 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -52,7 +52,7 @@ void ofisascrattach __P((struct device *, struct device *, void *));
 
 
 CFATTACH_DECL(ofisascr, sizeof(struct device),
-    ofisascrprobe, ofisascrattach, NULL, NULL)
+    ofisascrprobe, ofisascrattach, NULL, NULL);
 
 extern struct cfdriver ofisascr_cd;
 

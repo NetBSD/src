@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.8 2002/10/01 19:18:59 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.9 2002/10/02 15:52:41 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -136,7 +136,7 @@ extern unsigned int sa1_cache_clean_addr;
 extern unsigned int sa1_cache_clean_size;
 
 CFATTACH_DECL(ofbus_root, sizeof(struct device),
-    ofbus_match, ofbus_attach, NULL, NULL)
+    ofbus_match, ofbus_attach, NULL, NULL);
 
 /*
  *  Exported routines

@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.3 2002/10/01 02:54:11 thorpej Exp $ */
+/* $NetBSD: sbgbus.c,v 1.4 2002/10/02 15:52:25 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -49,7 +49,7 @@ static int	sbgbus_match(struct device *, struct cfdata *, void *);
 static void	sbgbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sbgbus, sizeof(struct device),
-    sbgbus_match, sbgbus_attach, NULL, NULL)
+    sbgbus_match, sbgbus_attach, NULL, NULL);
 
 static int	sbgbussearch(struct device *, struct cfdata *, void *);
 static int	sbgbusprint(void *, const char *);

@@ -1,4 +1,4 @@
-/* $NetBSD: auaudio.c,v 1.4 2002/10/01 02:56:45 thorpej Exp $ */
+/* $NetBSD: auaudio.c,v 1.5 2002/10/02 15:52:24 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@ static int	auaudio_match(struct device *, struct cfdata *, void *);
 static void	auaudio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(auaudio, sizeof (struct device),
-    auaudio_match, auaudio_attach, NULL, NULL)
+    auaudio_match, auaudio_attach, NULL, NULL);
 
 int
 auaudio_match(struct device *parent, struct cfdata *match, void *aux)
