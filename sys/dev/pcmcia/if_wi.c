@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.27 2000/07/25 12:04:29 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.28 2000/07/26 07:28:56 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -199,6 +199,12 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
 	  PCMCIA_CIS_INTERSIL_PRISM2,
 	  PCMCIA_STR_INTERSIL_PRISM2,
+	  1 },
+
+	{ PCMCIA_VENDOR_SAMSUNG,
+	  PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
+	  PCMCIA_CIS_SAMSUNG_SWL_2000N,
+	  PCMCIA_STR_SAMSUNG_SWL_2000N,
 	  1 },
 
 	{ 0,
