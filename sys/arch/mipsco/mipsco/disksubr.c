@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2000/08/22 11:59:36 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2000/09/04 22:35:26 wdk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -53,6 +53,9 @@ static int disklabel_bsd_to_mips __P((struct disklabel *,
 					struct mips_volheader *));
 static int mipsvh_cksum __P((struct mips_volheader *)); 
 
+#define LABELSIZE(lp)	((char *)&lp->d_partitions[lp->d_npartitions] -	\
+			 (char *)lp)
+
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
@@ -72,6 +75,12 @@ readdisklabel(dev, strat, lp, clp)
 	struct mips_volheader *vh;
 	struct disklabel *dlp;
 	char *msg = NULL;
+
+#ifdef DIAGNOSTIC
+	if (sizeof(*vh) > lp->d_secsize ||
+	    sizeof(*dlp)+LABELOFFSET > lp->d_secsize)
+		panic("label >512 bytes");
+#endif
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -95,8 +104,11 @@ readdisklabel(dev, strat, lp, clp)
 
 		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 		vh = (struct mips_volheader *) bp->b_un.b_addr;
-		if (dlp->d_magic == DISKMAGIC) {
-			*lp = *dlp;
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
+			if (dkcksum(dlp))
+				msg = "disk label corrupted";
+			else
+				bcopy(dlp, lp, LABELSIZE(dlp));
 		} else if (vh->vh_magic == MIPS_VHMAGIC) {
 			msg = disklabel_mips_to_bsd(vh, lp);
 		} else 
@@ -347,18 +359,18 @@ disklabel_bsd_to_mips(lp, vh)
 		vh->vh_magic = MIPS_VHMAGIC;
 		vh->vh_root = 0;	/* a*/
 		vh->vh_swap = 1;	/* b*/
-		strcpy(vh->bootfile, "/netbsd");
-		vh->vh_dp.dp_skew = lp->d_trackskew;
-		vh->vh_dp.dp_gap1 = 1; /* XXX */
-		vh->vh_dp.dp_gap2 = 1; /* XXX */
-		vh->vh_dp.dp_cyls = lp->d_ncylinders;
-		vh->vh_dp.dp_shd0 = 0;
-		vh->vh_dp.dp_trks0 = lp->d_ntracks;
-		vh->vh_dp.dp_secs = lp->d_nsectors;
-		vh->vh_dp.dp_secbytes = lp->d_secsize;
-		vh->vh_dp.dp_interleave = lp->d_interleave;
-		vh->vh_dp.dp_nretries = 22;
 	}
+	strcpy(vh->bootfile, "/netbsd");
+	vh->vh_dp.dp_skew = lp->d_trackskew;
+	vh->vh_dp.dp_gap1 = 1; /* XXX */
+	vh->vh_dp.dp_gap2 = 1; /* XXX */
+	vh->vh_dp.dp_cyls = lp->d_ncylinders;
+	vh->vh_dp.dp_shd0 = 0;
+	vh->vh_dp.dp_trks0 = lp->d_ntracks;
+	vh->vh_dp.dp_secs = lp->d_nsectors;
+	vh->vh_dp.dp_secbytes = lp->d_secsize;
+	vh->vh_dp.dp_interleave = lp->d_interleave;
+	vh->vh_dp.dp_nretries = 22;
 	
 	for (i = 0; i < NPARTMAP; i++) {
 		mp = partition_map[i].mips_part;
@@ -369,6 +381,13 @@ disklabel_bsd_to_mips(lp, vh)
 		vh->vh_part[mp].pt_size = lpp->p_size;
 		vh->vh_part[mp].pt_fstype = partition_map[i].mips_type;
 	}
+	/*
+	 * Create a fake partition for bootstrap code (or SASH)
+	 */
+	vh->vh_part[8].pt_offset = 0;
+	vh->vh_part[8].pt_size = vh->vh_part[vh->vh_root].pt_offset +
+		BBSIZE / vh->vh_dp.dp_secbytes;
+	vh->vh_part[8].pt_fstype = MIPS_FS_VOLHDR;
 
 	vh->vh_cksum = 0;
 	vh->vh_cksum = -mipsvh_cksum(vh);
