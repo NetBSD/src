@@ -1,4 +1,4 @@
-/* $Id: pxa2x0_lcd.c,v 1.6 2003/07/15 00:24:55 lukem Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.7 2003/07/23 09:26:15 bsh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.6 2003/07/15 00:24:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.7 2003/07/23 09:26:15 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
