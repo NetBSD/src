@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.18 2004/06/04 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.19 2004/06/04 23:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,7 +118,7 @@ struct nvlist {
  */
 struct config {
 	TAILQ_ENTRY(config) cf_next;
-	const char *cf_name;		/* "vmunix" */
+	const char *cf_name;		/* "netbsd" */
 	int	cf_lineno;		/* source line */
 	const char *cf_fstype;		/* file system type */
 	struct	nvlist *cf_root;	/* "root on ra0a" */
