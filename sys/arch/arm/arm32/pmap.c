@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2001/03/15 06:10:35 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2001/04/20 18:11:53 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -178,6 +178,7 @@ void map_pagetable __P((vaddr_t pagetable, vaddr_t va,
     paddr_t pa, unsigned int flags));
 void pmap_copy_on_write __P((paddr_t pa));
 void pmap_pinit __P((pmap_t));
+void pmap_freepagedir __P((pmap_t));
 void pmap_release __P((pmap_t));
 
 /* Other function prototypes */
@@ -1085,6 +1086,11 @@ pmap_allocpagedir(pmap)
 	}
 #endif	/* DIAGNOSTIC */
 	pmap->pm_vptpt = uvm_km_zalloc(kernel_map, NBPG);
+	if (pmap->pm_vptpt == 0) {
+		pmap_freepagedir(pmap);
+		return(ENOMEM);
+	}
+
 	(void) pmap_extract(kernel_pmap, pmap->pm_vptpt, &pmap->pm_pptpt);
 	pmap->pm_pptpt &= PG_FRAME;
 	/* Revoke cacheability and bufferability */
@@ -1160,7 +1166,8 @@ pmap_freepagedir(pmap)
 	pmap_t pmap;
 {
 	/* Free the memory used for the page table mapping */
-	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_vptpt, NBPG);
+	if (pmap->pm_vptpt != 0)
+		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_vptpt, NBPG);
 
 	/* junk the L1 page table */
 	if (pmap->pm_l1pt->pt_flags & PTFLAG_STATIC) {
