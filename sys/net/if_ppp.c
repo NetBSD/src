@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.96 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.97 2005/03/31 15:48:13 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.96 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.97 2005/03/31 15:48:13 christos Exp $");
 
 #include "ppp.h"
 
@@ -1024,24 +1024,10 @@ pppoutput(ifp, m0, dst, rtp)
 	m0->m_nextpkt = NULL;
 	sc->sc_npqtail = &m0->m_nextpkt;
     } else {
-	if ((m0->m_flags & M_HIGHPRI)
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&sc->sc_if.if_snd) == 0
-#endif
-	    ) {
-	    ifq = &sc->sc_fastq;
-	    if (IF_QFULL(ifq) && dst->sa_family != AF_UNSPEC) {
-	        IF_DROP(ifq);
-		splx(s);
-		error = ENOBUFS;
-		goto bad;
-	    } else {
-		IF_ENQUEUE(ifq, m0);
-		error = 0;
-	    }
-	} else
-	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, &pktattr, error);
-	if (error) {
+	if (m0->m_flags & M_HIGHPRI)
+		ifq = &sc->sc_fastq;
+	if ((error = ifq_enqueue2(&sc->sc_if, ifq, m0
+		ALTQ_COMMA ALTQ_DECL(&pktattr))) != 0) {
 	    splx(s);
 	    sc->sc_if.if_oerrors++;
 	    sc->sc_stats.ppp_oerrors++;
@@ -1093,23 +1079,10 @@ ppp_requeue(sc)
 	     */
 	    *mpp = m->m_nextpkt;
 	    m->m_nextpkt = NULL;
-	    if ((m->m_flags & M_HIGHPRI)
-#ifdef ALTQ
-		&& ALTQ_IS_ENABLED(&sc->sc_if.if_snd) == 0
-#endif
-		) {
+	    if (m->m_flags & M_HIGHPRI)
 		ifq = &sc->sc_fastq;
-		if (IF_QFULL(ifq)) {
-		    IF_DROP(ifq);
-		    m_freem(m);
-		    error = ENOBUFS;
-		} else {
-		    IF_ENQUEUE(ifq, m);
-		    error = 0;
-		}
-	    } else
-		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, NULL, error);
-	    if (error) {
+	    if ((error = ifq_enqueue2(&sc->sc_if, ifq, m ALTQ_COMMA
+		ALTQ_DECL(NULL))) != 0) {
 		sc->sc_if.if_oerrors++;
 		sc->sc_stats.ppp_oerrors++;
 	    }

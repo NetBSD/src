@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.54 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.55 2005/03/31 15:48:13 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.54 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.55 2005/03/31 15:48:13 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -221,14 +221,13 @@ fddi_output(ifp, m0, dst, rt0)
 	struct rtentry *rt0;
 {
 	u_int16_t etype;
-	int s, len, error = 0, hdrcmplt = 0;
+	int error = 0, hdrcmplt = 0;
  	u_char esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct fddi_header *fh;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
-	short mflags;
 
 	MCLAIM(m, ifp->if_mowner);
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -564,26 +563,8 @@ fddi_output(ifp, m0, dst, rt0)
 	else
 		bcopy((caddr_t)FDDIADDR(ifp), (caddr_t)fh->fddi_shost,
 		    sizeof(fh->fddi_shost));
-	mflags = m->m_flags;
-	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-	return (error);
+
+	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
 	if (m)

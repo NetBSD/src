@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.106 2005/03/20 07:47:29 agc Exp $	*/
+/*	$NetBSD: if.h,v 1.107 2005/03/31 15:48:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -645,6 +645,7 @@ do {									\
 
 #ifdef ALTQ
 #define	ALTQ_DECL(x)		x
+#define ALTQ_COMMA		,
 
 #define IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
@@ -708,6 +709,7 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
 #define	ALTQ_DECL(x)		/* nothing */
+#define ALTQ_COMMA
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
@@ -787,6 +789,11 @@ void	if_clone_detach __P((struct if_clone *));
 
 int	if_clone_create __P((const char *));
 int	if_clone_destroy __P((const char *));
+
+int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
+    ALTQ_DECL(struct altq_pktattr *));
+int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf * ALTQ_COMMA
+    ALTQ_DECL(struct altq_pktattr *));
 
 int	loioctl __P((struct ifnet *, u_long, caddr_t));
 void	loopattach __P((int));
