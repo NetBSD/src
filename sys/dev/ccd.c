@@ -1,7 +1,7 @@
-/*	$NetBSD: ccd.c,v 1.45 1997/10/09 08:11:07 jtc Exp $	*/
+/*	$NetBSD: ccd.c,v 1.46 1998/02/06 08:13:07 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -331,26 +331,15 @@ ccdinit(ccd, cpaths, p)
 			free(cs->sc_cinfo, M_DEVBUF);
 			return (error);
 		}
-		if (dpart.part->p_fstype == FS_BSDFFS) {
-			maxsecsize =
-			    ((dpart.disklab->d_secsize > maxsecsize) ?
-			    dpart.disklab->d_secsize : maxsecsize);
-			size = dpart.part->p_size;
-		} else {
-#ifdef DEBUG
-			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-				printf("%s: %s: incorrect partition type\n",
-				    cs->sc_xname, ci->ci_path);
-#endif
-			free(ci->ci_path, M_DEVBUF);
-			free(cs->sc_cinfo, M_DEVBUF);
-			return (EFTYPE);
-		}
 
 		/*
 		 * Calculate the size, truncating to an interleave
 		 * boundary if necessary.
 		 */
+		maxsecsize =
+		    ((dpart.disklab->d_secsize > maxsecsize) ?
+		    dpart.disklab->d_secsize : maxsecsize);
+		size = dpart.part->p_size;
 		if (cs->sc_ileave > 1)
 			size -= size % cs->sc_ileave;
 
