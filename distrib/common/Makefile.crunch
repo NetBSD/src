@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.9 2002/05/02 13:16:46 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.9.2.1 2002/05/29 09:59:04 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -23,11 +23,11 @@ CRUNCHENV?=	SMALLPROG=1
 .include "${DISTRIBDIR}/common/Makefile.parselist"
 
 ${CRUNCHBIN}: ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c
-	${CRUNCHENV} ${MAKE} -f ${CRUNCHBIN}.mk all
+	${CRUNCHENV} ${MAKE} -j 1 -f ${CRUNCHBIN}.mk all
 
 ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c: ${CRUNCHBIN}.conf
 	${CRUNCHENV} ${CRUNCHGEN} -f -D ${NETBSDSRCDIR} -L ${DESTDIR}/usr/lib \
-	    ${CRUNCHGEN_FLAGS} ${.ALLSRC}
+	    -q ${CRUNCHGEN_FLAGS} ${.ALLSRC}
 
 ${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
@@ -43,6 +43,6 @@ clean cleandir distclean: cleancrunchgen
 
 cleancrunchgen:
 	if [ -f ${CRUNCHBIN}.mk ]; then \
-		${MAKE} -f ${CRUNCHBIN}.mk clean; \
+		${MAKE} -j 1 -f ${CRUNCHBIN}.mk clean; \
 	fi
 	rm -f ${CRUNCHBIN}.mk
