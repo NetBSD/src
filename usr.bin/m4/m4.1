@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.8 1998/01/23 23:05:34 lukem Exp $
+.\"	$NetBSD: m4.1,v 1.9 1999/06/23 19:09:35 tv Exp $
 .\"
 .Dd January 26, 1993
 .Dt m4 1
@@ -8,6 +8,7 @@
 .Nd macro language processor
 .Sh SYNOPSIS
 .Nm
+.Op Fl P
 .Oo
 .Fl D Ns Ar name Ns Op Ar =value
 .Oc
@@ -38,6 +39,19 @@ the quote characters with the changequote built-in macro.
 .Pp
 The options are as follows:
 .Bl -tag -width "-Dname[=value]xxx"
+.It Fl P
+Prefixes all
+.Nm
+builtin macros with the string
+.Li m4_ .
+This changes the macro names
+.Li dnl
+to
+.Li m4_dnl ,
+.Li index
+to
+.Li m4_index ,
+and so forth.
 .It Fl D Ns Ar name Ns Oo
 .Ar =value
 .Oc
