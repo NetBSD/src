@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.14 2000/06/24 20:48:40 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.15 2000/06/30 22:58:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -229,6 +229,7 @@ main()
 	off("IH_NEXT", struct intrhand, ih_next);
 	off("IH_MAP", struct intrhand, ih_map);
 	off("IH_CLR", struct intrhand, ih_clr);
+	off("IH_PEND", struct intrhand, ih_pending);
 	siz("IH_SIZE", struct intrhand);
 
 	off("NO_NEXTNODE", struct nodeops, no_nextnode);

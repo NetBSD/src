@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26 2000/06/29 07:37:57 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.27 2000/06/30 22:58:02 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,13 +109,13 @@ void	strayintr __P((const struct trapframe64 *, int));
 int	softintr __P((void *));
 int	softnet __P((void *));
 int	send_softclock __P((void *));
-int	intr_list_handler __P((void *));
+int	intr_list_handler __P((void *, void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
  * If not, and if we get 10 interrupts in 10 seconds, panic.
  */
-int ignore_stray = 1;
+int ignore_stray = 0;
 int straycnt[16];
 
 void
@@ -149,6 +149,9 @@ strayintr(fp, vectored)
 		straytime = time.tv_sec;
 		nstray = 1;
 	}
+#ifdef DDB
+	Debugger();
+#endif
 }
 
 #include "arp.h"
@@ -246,8 +249,9 @@ int fastvec = 0;
  * a handler to hand out interrupts.
  */
 int
-intr_list_handler(arg)
+intr_list_handler(arg, vec)
 	void * arg;
+	void * vec;
 {
 	int claimed = 0;
 	struct intrhand *ih = (struct intrhand *)arg;
@@ -258,9 +262,9 @@ intr_list_handler(arg)
 #ifdef DEBUG
 		{
 			extern int intrdebug;
-			if (intrdebug)
-				printf("intr %p %x arg %p %s\n",
-					ih, ih->ih_number, ih->ih_arg,
+			if (intrdebug & 1)
+				printf("intr %p %x arg %p vec %p %s\n",
+					ih, ih->ih_number, ih->ih_arg, vec,
 					claimed ? "claimed" : "");
 		}
 #endif
@@ -289,6 +293,7 @@ intr_establish(level, ih)
 	 */
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
+	ih->ih_pending = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
 		;
 	*p = ih;
@@ -350,6 +355,8 @@ softintr_establish(level, fun, arg)
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
+	ih->ih_clr = NULL;
+	ih->ih_pending = NULL;
 	return (void *)ih;
 }
 
