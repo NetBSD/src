@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.43 2002/08/02 08:17:12 soren Exp $	*/
+/*	$NetBSD: df.c,v 1.44 2002/09/26 16:27:43 provos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.43 2002/08/02 08:17:12 soren Exp $");
+__RCSID("$NetBSD: df.c,v 1.44 2002/09/26 16:27:43 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: df.c,v 1.43 2002/08/02 08:17:12 soren Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,8 +76,10 @@ int	 selected(const char *);
 void	 maketypelist(char *);
 long	 regetmntinfo(struct statfs **, long);
 void	 usage(void);
+void	 prthumanval(int64_t, char *);
+void	 prthuman(struct statfs *, long);
 
-int	aflag, iflag, kflag, lflag, mflag, nflag, Pflag;
+int	aflag, hflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
 
 int
@@ -88,10 +91,13 @@ main(int argc, char *argv[])
 	int ch, i, maxwidth, width;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "aiklmnPt:")) != -1)
+	while ((ch = getopt(argc, argv, "ahiklmnPt:")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case 'i':
 			iflag = 1;
@@ -286,6 +292,26 @@ regetmntinfo(struct statfs **mntbufp, long mntsize)
 	return (j);
 }
 
+void
+prthumanval(int64_t bytes, char *pad)
+{
+	char buf[5];
+
+	humanize_number(buf, sizeof(buf), bytes, "", HN_AUTOSCALE,
+	    HN_B | HN_NOSPACE | HN_DECIMAL);
+
+	(void)printf("%s %6s", pad, buf);
+}
+
+void
+prthuman(struct statfs *sfsp, long used)
+{
+       prthumanval((int64_t)(sfsp->f_blocks) * (int64_t)(sfsp->f_bsize), "");
+       prthumanval((int64_t)(used) * (int64_t)(sfsp->f_bsize), "  ");
+       prthumanval((int64_t)(sfsp->f_bavail) * (int64_t)(sfsp->f_bsize), "   ");
+}
+
+
 /*
  * Convert statfs returned filesystem size into BLOCKSIZE units.
  * Attempts to avoid overflow for large filesystems.
@@ -317,6 +343,9 @@ prtstat(struct statfs *sfsp, int maxwidth)
 			blocksize = 1024 * 1024;
 			header = Pflag ? "1048576-blocks" : "1M-blocks";
 			headerlen = strlen(header);
+		} else if (hflag) {
+			header = "  Size";
+			headerlen = strlen(header);
 		} else
 			header = getbsize(&headerlen, &blocksize);
 		(void)printf("%-*.*s %s     Used %9s Capacity",
@@ -329,10 +358,13 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
 	availblks = sfsp->f_bavail + used;
-	(void)printf(" %*ld %8ld %9ld", headerlen,
-	    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
-	    fsbtoblk(used, sfsp->f_bsize, blocksize),
-	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
+	if (hflag)
+		prthuman(sfsp, used);
+	else
+		(void)printf(" %*ld %8ld %9ld", headerlen,
+		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
+		    fsbtoblk(used, sfsp->f_bsize, blocksize),
+		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
 	(void)printf("%7s",
 	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
 	if (iflag) {
