@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.5 (Berkeley) 3/7/93";*/
-static char rcsid[] = "$Id: touch.c,v 1.6 1993/08/07 04:50:32 mycroft Exp $";
+static char rcsid[] = "$Id: touch.c,v 1.7 1993/09/16 21:44:35 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -219,7 +219,7 @@ stime_arg1(arg, tvp)
 	switch(strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
 		t->tm_year = ATOI2(arg);
-		t->tm_year *= 1000;
+		t->tm_year *= 100;
 		yearset = 1;
 		/* FALLTHOUGH */
 	case 10:			/* YYMMDDhhmm */
