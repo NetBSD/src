@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.17 1994/04/26 19:50:37 pk Exp $
+ * $Id: sun_misc.c,v 1.18 1994/04/29 04:41:16 cgd Exp $
  */
 
 /*
@@ -459,7 +459,7 @@ sun_mmap(p, uap, retval)
 	}
 
 	uap->qoff = uap->off;
-	return (smmap(p, uap, retval));
+	return (mmap(p, uap, retval));
 }
 
 #define	MC_SYNC		1

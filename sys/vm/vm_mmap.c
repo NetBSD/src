@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.23 1994/04/16 23:23:48 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.24 1994/04/29 04:41:56 cgd Exp $
  */
 
 /*
@@ -124,7 +124,7 @@ struct mmap_args {
 };
 
 int
-smmap(p, uap, retval)				/* XXX SHOULD BE mmap() */
+mmap(p, uap, retval)
 	struct proc *p;
 	register struct mmap_args *uap;
 	int *retval;
@@ -240,7 +240,7 @@ onmmap(p, uap, retval)
 	register struct mmap_args *uap;
 	int *retval;
 {
-	return (smmap(p, uap, retval));
+	return (mmap(p, uap, retval));
 }
 
 struct ommap_args {
@@ -304,7 +304,7 @@ ommap(p, uap, retval)
 	if (uap->flags & OMAP_INHERIT)
 		ma.flags |= MAP_INHERIT;
 
-	return(smmap(p, &ma, retval));
+	return(mmap(p, &ma, retval));
 }
 #endif /* defined(COMPAT_43) || defined(COMPAT_SUNOS) */
 
