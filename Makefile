@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2000/02/01 01:22:05 assar Exp $
+#	$NetBSD: Makefile,v 1.106 2000/02/19 17:49:49 aidan Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -35,7 +35,12 @@
 #	more information on this.)
 #   snapshot: a synonym for release.
 
-.include <bsd.own.mk>			# for configuration variables.
+SRCTOP=.
+.include <bsd.crypto.mk>		# for configuration variables.
+
+.if defined(CRYPTOPATH)
+.sinclude "${CRYPTOPATH}/Makefile.frag"
+.endif
 
 MKOBJDIRS ?= no
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
@@ -131,6 +136,9 @@ build: beforeinstall
 	    ${MAKE} MKMAN=no MKINFO=no install)
 .if ${MKSHARE} != "no"
 	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
+.endif
+.if target(cryptobuild)
+	${MAKE} ${_J} cryptobuild
 .endif
 	${MAKE} ${_J} dependall && ${MAKE} _BUILD= install
 .if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
