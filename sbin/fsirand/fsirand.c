@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.11 2001/02/04 20:04:02 christos Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.12 2001/02/19 22:56:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.11 2001/02/04 20:04:02 christos Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.12 2001/02/19 22:56:20 cgd Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -72,13 +72,12 @@ int main __P((int, char *[]));
 
 int needswap = 0;
 
-extern char *__progname;
-
 static void
 usage()
 {
+
 	(void) fprintf(stderr, "Usage: %s [-x <constant>] [-p] <special>\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

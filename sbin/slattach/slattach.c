@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.23 2001/02/04 21:11:47 christos Exp $	*/
+/*	$NetBSD: slattach.c,v 1.24 2001/02/19 22:56:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.23 2001/02/04 21:11:47 christos Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.24 2001/02/19 22:56:23 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,6 @@ char	devicename[32];
 int	main __P((int, char *[]));
 int	ttydisc __P((char *));
 void	usage __P((void));
-
-extern char *__progname;
 
 int
 main(argc, argv)
@@ -174,8 +172,9 @@ ttydisc(name)
 void
 usage()
 {
+
 	(void)fprintf(stderr,
 	    "Usage: %s [-t ldisc] [-hHlm] [-s baudrate] ttyname\n",
-		__progname);
+		getprogname());
 	exit(1);
 }

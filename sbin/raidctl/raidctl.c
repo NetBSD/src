@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.25 2000/10/31 14:18:39 lukem Exp $   */
+/*      $NetBSD: raidctl.c,v 1.26 2001/02/19 22:56:22 cgd Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,8 +60,6 @@
 #include <util.h>
 
 #include "rf_raidframe.h"
-
-extern  char *__progname;
 
 int     main __P((int, char *[]));
 void	do_ioctl __P((int, u_long, void *, const char *));
@@ -225,17 +223,17 @@ main(argc,argv)
 	fd = opendisk(name, O_RDWR, dev_name, sizeof(dev_name), 1);
 	if (fd == -1) {
 		fprintf(stderr, "%s: unable to open device file: %s\n",
-			__progname, name);
+			getprogname(), name);
 		exit(1);
 	}
 	if (fstat(fd, &st) != 0) {
 		fprintf(stderr,"%s: stat failure on: %s\n",
-			__progname, dev_name);
+			getprogname(), dev_name);
 		exit(1);
 	}
 	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode)) {
 		fprintf(stderr,"%s: invalid device: %s\n",
-			__progname,dev_name);
+			getprogname(), dev_name);
 		exit(1);
 	}
 
@@ -333,7 +331,7 @@ rf_configure(fd,config_file,force)
 
 	if (rf_MakeConfig( config_file, &cfg ) != 0) {
 		fprintf(stderr,"%s: unable to create RAIDframe %s\n",
-			__progname, "configuration structure\n");
+			getprogname(), "configuration structure\n");
 		exit(1);
 	}
 	
@@ -491,7 +489,7 @@ get_component_number(fd, component_name, component_number, num_columns)
 	}
 
 	if (!found) {
-		fprintf(stderr,"%s: %s is not a component %s", __progname, 
+		fprintf(stderr,"%s: %s is not a component %s", getprogname(), 
 			component_name, "of this device\n");
 		exit(1);
 	}
@@ -832,7 +830,7 @@ do_meter(fd, option)
 	char eta_buffer[1024];
 
 	if (gettimeofday(&start_time,NULL)) {
-		fprintf(stderr,"%s: gettimeofday failed!?!?\n",__progname);
+		fprintf(stderr,"%s: gettimeofday failed!?!?\n", getprogname());
 		exit(errno);
 	}
 	memset(&progressInfo, 0, sizeof(RF_ProgressInfo_t));
@@ -915,7 +913,7 @@ do_meter(fd, option)
 
 		if (gettimeofday(&current_time,NULL)) {
 			fprintf(stderr,"%s: gettimeofday failed!?!?\n",
-				__progname);
+				getprogname());
 			exit(errno);
 		}
 
@@ -993,27 +991,29 @@ get_time_string(string,simple_time)
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [-v] -a component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -A yes | no | root dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -B dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -c config_file dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -C config_file dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -f component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -F component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -g component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -i dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -I serial_number dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -r component dev\n", __progname); 
-	fprintf(stderr, "       %s [-v] -R component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -s dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -S dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -u dev\n", __progname);
+	const char *progname = getprogname();
+
+	fprintf(stderr, "usage: %s [-v] -a component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -A yes | no | root dev\n", progname);
+	fprintf(stderr, "       %s [-v] -B dev\n", progname);
+	fprintf(stderr, "       %s [-v] -c config_file dev\n", progname);
+	fprintf(stderr, "       %s [-v] -C config_file dev\n", progname);
+	fprintf(stderr, "       %s [-v] -f component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -F component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -g component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -i dev\n", progname);
+	fprintf(stderr, "       %s [-v] -I serial_number dev\n", progname);
+	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
+	fprintf(stderr, "       %s [-v] -R component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -s dev\n", progname);
+	fprintf(stderr, "       %s [-v] -S dev\n", progname);
+	fprintf(stderr, "       %s [-v] -u dev\n", progname);
 #if 0
-	fprintf(stderr, "usage: %s %s\n", __progname, 
+	fprintf(stderr, "usage: %s %s\n", progname, 
 		"-a | -f | -F | -g | -r | -R component dev");
-	fprintf(stderr, "       %s -B | -i | -s | -S -u dev\n", __progname);
-	fprintf(stderr, "       %s -c | -C config_file dev\n", __progname);
-	fprintf(stderr, "       %s -I serial_number dev\n", __progname);
+	fprintf(stderr, "       %s -B | -i | -s | -S -u dev\n", progname);
+	fprintf(stderr, "       %s -c | -C config_file dev\n", progname);
+	fprintf(stderr, "       %s -I serial_number dev\n", progname);
 #endif
 	exit(1);
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.10 1999/07/25 05:53:01 abs Exp $	*/
+/*	$NetBSD: bim.c,v 1.11 2001/02/19 22:56:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.10 1999/07/25 05:53:01 abs Exp $");
+__RCSID("$NetBSD: bim.c,v 1.11 2001/02/19 22:56:18 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: bim.c,v 1.10 1999/07/25 05:53:01 abs Exp $");
 #include <fcntl.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define FSTYPENAMES
@@ -99,7 +100,7 @@ void
 usage()
 {
 	printf("usage: %s [-y] [-c command [-c command ...]] [device]\n",
-	    __progname);
+	    getprogname());
 	printf("  Maximum of %d commands\n", MAXARGCMDS);
 	exit(1);
 }

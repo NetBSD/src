@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.27 2001/01/10 03:41:35 lukem Exp $	*/
+/*	$NetBSD: reboot.c,v 1.28 2001/02/19 22:56:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.27 2001/01/10 03:41:35 lukem Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.28 2001/02/19 22:56:22 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,6 @@ __RCSID("$NetBSD: reboot.c,v 1.27 2001/01/10 03:41:35 lukem Exp $");
 int main __P((int, char *[]));
 void usage __P((void));
 
-extern char *__progname;
-
 int dohalt;
 int dopoweroff;
 
@@ -74,17 +72,19 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	const char *progname;
 	int i;
 	struct passwd *pw;
 	int ch, howto, lflag, nflag, qflag, sverrno, len;
 	const char *user;
 	char *bootstr, **av;
 
-	if (!strcmp(__progname, "halt") || !strcmp(__progname, "-halt")) {
+	progname = getprogname();
+	if (!strcmp(progname, "halt") || !strcmp(progname, "-halt")) {
 		dohalt = 1;
 		howto = RB_HALT;
-	} else if (!strcmp(__progname, "poweroff") 
-		   || !strcmp(__progname, "-poweroff")) {
+	} else if (!strcmp(progname, "poweroff") 
+		   || !strcmp(progname, "-poweroff")) {
 		dopoweroff = 1;
 		howto = RB_HALT | RB_POWERDOWN;
 	} else
@@ -238,6 +238,6 @@ usage()
 	const char *pflag = dohalt ? "p" : "";
 
 	(void)fprintf(stderr, "usage: %s [-dln%sq] [-- <boot string>]\n",
-	    __progname, pflag);
+	    getprogname(), pflag);
 	exit(1);
 }

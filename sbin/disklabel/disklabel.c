@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.95 2001/01/08 02:19:58 fvdl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.96 2001/02/19 22:56:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.95 2001/01/08 02:19:58 fvdl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.96 2001/02/19 22:56:18 cgd Exp $");
 #endif
 #endif	/* not lint */
 
@@ -96,8 +96,6 @@ __RCSID("$NetBSD: disklabel.c,v 1.95 2001/01/08 02:19:58 fvdl Exp $");
 #ifndef NUMBOOT
 #define NUMBOOT 0
 #endif
-
-extern char	*__progname;
 
 #define	DEFEDITOR	_PATH_VI
 
@@ -1819,9 +1817,9 @@ usage(void)
 
 	for (i = 0; usages[i].name; i++) {
 		(void) fputs(i ? "or " : "Usage: ", stderr);
-		(void) fprintf(stderr, "%s %s", __progname, usages[i].name);
+		(void) fprintf(stderr, "%s %s", getprogname(), usages[i].name);
 		(void) fputs("\n\t", stderr);
-		(void) fprintf(stderr, "%s %s", __progname, usages[i].expn);
+		(void) fprintf(stderr, "%s %s", getprogname(), usages[i].expn);
 		(void) fputs("\n", stderr);
 	}
 	exit(1);

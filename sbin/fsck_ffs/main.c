@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2001/02/04 21:25:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2001/02/19 22:56:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2001/02/04 21:25:54 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2001/02/19 22:56:19 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,6 @@ int	main __P((int, char *[]));
 static int	argtoi __P((int, char *, char *, int));
 static int	checkfilesys __P((const char *, char *, long, int));
 static  void usage __P((void));
-
-extern char *__progname;
 
 int
 main(argc, argv)
@@ -378,10 +376,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 static void
 usage()
 {
+
 	(void) fprintf(stderr,
 	    "Usage: %s [-dfnpy] [-B be|le] [-b block] [-c level] [-m mode]"
 			"filesystem ...\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.2 2000/03/13 23:52:32 soren Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.3 2001/02/19 22:48:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -48,8 +48,6 @@
 
 #include "../../../../../gnu/dist/include/coff/rs6000.h"
 
-extern char *__progname;
-
 void
 usage(prog)
 	char	*prog;
@@ -80,14 +78,14 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "h")) != -1)
 	    switch (ch) {
 		case 'h':
-		help(__progname);
+		help(getprogname());
 	}
 
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 1) {
-		usage(__progname);
+		usage(getprogname());
 		exit(1);
 	}
 
@@ -108,7 +106,7 @@ main(argc, argv)
 	i = ntohs(*(u_int16_t *)efh.f_opthdr);
 
 	if (i == SMALL_AOUTSZ)
-		errx(1, "%s: file has small \"optional\" header, inappropriate for use with %s", argv[0], __progname);
+		errx(1, "%s: file has small \"optional\" header, inappropriate for use with %s", argv[0], getprogname());
 	else if (i != AOUTSZ)
 		errx(1, "%s: invalid \"optional\" header", argv[0]);
 

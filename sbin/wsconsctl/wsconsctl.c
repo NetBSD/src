@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.3 2000/07/03 03:38:03 matt Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.4 2001/02/19 22:56:23 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,8 +48,6 @@
 #define PATH_MOUSE		"/dev/wsmouse0"
 #define PATH_DISPLAY		"/dev/ttyE0"
 
-extern const char *__progname;		/* from crt0.o */
-
 extern struct field keyboard_field_tab[];
 extern struct field mouse_field_tab[];
 extern struct field display_field_tab[];
@@ -64,14 +62,16 @@ static void
 usage(msg)
 	char *msg;
 {
+	const char *progname = getprogname();
+
 	if (msg != NULL)
-		fprintf(stderr, "%s: %s\n\n", __progname, msg);
+		fprintf(stderr, "%s: %s\n\n", progname, msg);
 
 	fprintf(stderr, "usage: %s [-kmd] [-f file] [-n] name ...\n",
-		__progname);
+		progname);
 	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -w name=value ...\n",
-		__progname);
-	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -a\n", __progname);
+		progname);
+	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -a\n", progname);
 
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.32 2000/11/10 03:12:45 enami Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.33 2001/02/19 22:56:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,8 +62,6 @@
 #undef major
 #undef minor
 
-extern char			*__progname;
-
 static int			verbose;
 static int			nostd;
 static int			noconf;
@@ -124,7 +122,7 @@ main(argc, argv)
 			break;
 		default:
 			errx(1, "Usage: %s [-c][-m][-r][-s][-S][-v][dir ...]",
-				__progname);
+				getprogname());
 			break;
 		}
 	}

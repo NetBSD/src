@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/09/15 01:29:31 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2001/02/19 22:56:18 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -43,5 +43,3 @@ void	prompt __P((char *, int, const char *));
 int	set_default_image __P((int, char **, char *));
 int	Str2Int __P((char *, int *));
 int	write_exit __P((int, char **, char *));
-
-extern char *__progname;
