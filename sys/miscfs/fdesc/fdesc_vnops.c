@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.24 1994/12/14 18:45:21 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.25 1995/10/09 11:19:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -503,21 +503,24 @@ fdesc_setattr(ap)
 	return (error);
 }
 
-#define UIO_MX 16
+#define UIO_MX 32
 
-static struct dirtmp {
-	u_long d_fileno;
-	u_short d_reclen;
-	u_short d_namlen;
-	char d_name[8];
-} rootent[] = {
-	{ FD_DEVFD, UIO_MX, 2, "fd" },
-	{ FD_STDIN, UIO_MX, 5, "stdin" },
-	{ FD_STDOUT, UIO_MX, 6, "stdout" },
-	{ FD_STDERR, UIO_MX, 6, "stderr" },
-	{ FD_CTTY, UIO_MX, 3, "tty" },
-	{ 0 }
+struct fdesc_target {
+	ino_t ft_fileno;
+	u_char ft_type;
+	u_char ft_namlen;
+	char *ft_name;
+} fdesc_targets[] = {
+/* NOTE: The name must be less than UIO_MX-16 chars in length */
+#define N(s) sizeof(s)-1, s
+	{ FD_DEVFD,  DT_DIR,     N("fd")     },
+	{ FD_STDIN,  DT_UNKNOWN, N("stdin")  },
+	{ FD_STDOUT, DT_UNKNOWN, N("stdout") },
+	{ FD_STDERR, DT_UNKNOWN, N("stderr") },
+	{ FD_CTTY,   DT_UNKNOWN, N("tty")    },
+#undef N
 };
+static int nfdesc_targets = sizeof(fdesc_targets) / sizeof(fdesc_targets[0]);
 
 int
 fdesc_readdir(ap)
@@ -531,16 +534,13 @@ fdesc_readdir(ap)
 	} */ *ap;
 {
 	struct uio *uio = ap->a_uio;
+	struct dirent d;
 	struct filedesc *fdp;
+	off_t off;
 	int i;
 	int error;
-
-	/*
-	 * We don't allow exporting fdesc mounts, and currently local
-	 * requests do not need cookies.
-	 */
-	if (ap->a_ncookies)
-		panic("fdesc_readdir: not hungry");
+	u_long *cookies = ap->a_cookies;
+	int ncookies = ap->a_ncookies;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
@@ -548,30 +548,27 @@ fdesc_readdir(ap)
 
 	case Fdesc:
 		return (ENOTDIR);
-
-	default:
-		break;
 	}
 
 	fdp = uio->uio_procp->p_fd;
 
+	if (uio->uio_resid < UIO_MX)
+		return (EINVAL);
+	off = uio->uio_offset;
+	if (off & (UIO_MX - 1) || off < 0)
+		return (EINVAL);
+
+	error = 0;
+	i = off / UIO_MX;
+	bzero((caddr_t)&d, UIO_MX);
+	d.d_reclen = UIO_MX;
+
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
-		struct dirent d;
-		struct dirent *dp = &d;
-		struct dirtmp *dt;
+		struct fdesc_target *ft;
 
-		i = uio->uio_offset / UIO_MX;
-		error = 0;
-
-		while (uio->uio_resid > 0) {
-			dt = &rootent[i];
-			if (dt->d_fileno == 0) {
-				/**eofflagp = 1;*/
-				break;
-			}
-			i++;
-			
-			switch (dt->d_fileno) {
+		for (ft = &fdesc_targets[i];
+		     uio->uio_resid >= UIO_MX && i < nfdesc_targets; ft++, i++) {
+			switch (ft->ft_fileno) {
 			case FD_CTTY:
 				if (cttyvp(uio->uio_procp) == NULL)
 					continue;
@@ -580,53 +577,53 @@ fdesc_readdir(ap)
 			case FD_STDIN:
 			case FD_STDOUT:
 			case FD_STDERR:
-				if ((dt->d_fileno-FD_STDIN) >= fdp->fd_nfiles)
+				if ((ft->ft_fileno - FD_STDIN) >= fdp->fd_nfiles)
 					continue;
-				if (fdp->fd_ofiles[dt->d_fileno-FD_STDIN] == NULL)
+				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN] == NULL)
 					continue;
 				break;
 			}
-			bzero((caddr_t) dp, UIO_MX);
-			dp->d_fileno = dt->d_fileno;
-			dp->d_namlen = dt->d_namlen;
-			dp->d_type = DT_UNKNOWN;
-			dp->d_reclen = dt->d_reclen;
-			bcopy(dt->d_name, dp->d_name, dp->d_namlen+1);
-			error = uiomove((caddr_t) dp, UIO_MX, uio);
-			if (error)
+
+			d.d_fileno = ft->ft_fileno;
+			d.d_namlen = ft->ft_namlen;
+			bcopy(ft->ft_name, d.d_name, ft->ft_namlen + 1);
+			d.d_type = ft->ft_type;
+
+			if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 				break;
+			if (ncookies-- > 0)
+				*cookies++ = (i + 1) * UIO_MX;
 		}
-		uio->uio_offset = i * UIO_MX;
-		return (error);
+	} else {
+		for (; i - 2 < fdp->fd_nfiles && uio->uio_resid >= UIO_MX;
+		     i++) {
+			switch (i) {
+			case 0:
+			case 1:
+				d.d_fileno = FD_ROOT;		/* XXX */
+				d.d_namlen = i + 1;
+				bcopy("..", d.d_name, d.d_namlen);
+				d.d_name[i + 1] = '\0';
+				d.d_type = DT_DIR;
+				break;
+	
+			default:
+				if (fdp->fd_ofiles[i - 2] == NULL)
+					continue;
+				d.d_fileno = i - 2 + FD_STDIN;
+				d.d_namlen = sprintf(d.d_name, "%d", i - 2);
+				d.d_type = DT_UNKNOWN;
+				break;
+			}
+
+			if (error = uiomove((caddr_t)&d, UIO_MX, uio))
+				break;
+			if (ncookies-- > 0)
+				*cookies++ = (i + 1) * UIO_MX;
+		}
 	}
 
-	i = uio->uio_offset / UIO_MX;
-	error = 0;
-	while (uio->uio_resid > 0) {
-		if (i >= fdp->fd_nfiles)
-			break;
-
-		if (fdp->fd_ofiles[i] != NULL) {
-			struct dirent d;
-			struct dirent *dp = &d;
-
-			bzero((caddr_t) dp, UIO_MX);
-
-			dp->d_namlen = sprintf(dp->d_name, "%d", i);
-			dp->d_reclen = UIO_MX;
-			dp->d_type = DT_UNKNOWN;
-			dp->d_fileno = i + FD_STDIN;
-			/*
-			 * And ship to userland
-			 */
-			error = uiomove((caddr_t) dp, UIO_MX, uio);
-			if (error)
-				break;
-		}
-		i++;
-	}
-
-	uio->uio_offset = i * UIO_MX;
+	uio->uio_offset = (i + 1) * UIO_MX;
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.36 1995/04/15 01:56:43 cgd Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.37 1995/10/09 11:18:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -489,26 +489,30 @@ kernfs_readdir(ap)
 	} */ *ap;
 {
 	struct uio *uio = ap->a_uio;
-	struct kern_target *kt;
 	struct dirent d;
+	struct kern_target *kt;
+	off_t off;
 	int i;
 	int error;
+	u_long *cookies = ap->a_cookies;
+	int ncookies = ap->a_ncookies;
 
 	if (ap->a_vp->v_type != VDIR)
 		return (ENOTDIR);
 
-	/*
-	 * We don't allow exporting kernfs mounts, and currently local
-	 * requests do not need cookies.
-	 */
-	if (ap->a_ncookies != NULL)
-		panic("kernfs_readdir: not hungry");
+	if (uio->uio_resid < UIO_MX)
+		return (EINVAL);
+	off = uio->uio_offset;
+	if (off & (UIO_MX - 1) || off < 0)
+		return (EINVAL);
 
-	i = uio->uio_offset / UIO_MX;
 	error = 0;
+	i = off / UIO_MX;
+	bzero((caddr_t)&d, UIO_MX);
+	d.d_reclen = UIO_MX;
+
 	for (kt = &kern_targets[i];
 	     uio->uio_resid >= UIO_MX && i < nkern_targets; kt++, i++) {
-		struct dirent *dp = &d;
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_readdir: i = %d\n", i);
 #endif
@@ -521,29 +525,18 @@ kernfs_readdir(ap)
 				continue;
 		}
 
-		bzero((caddr_t)dp, UIO_MX);
-		dp->d_namlen = kt->kt_namlen;
-		bcopy(kt->kt_name, dp->d_name, kt->kt_namlen+1);
+		d.d_fileno = i + 3;
+		d.d_namlen = kt->kt_namlen;
+		bcopy(kt->kt_name, d.d_name, kt->kt_namlen + 1);
+		d.d_type = kt->kt_type;
 
-#ifdef KERNFS_DIAGNOSTIC
-		printf("kernfs_readdir: name = %s, len = %d\n",
-				dp->d_name, dp->d_namlen);
-#endif
-		/*
-		 * Fill in the remaining fields
-		 */
-		dp->d_reclen = UIO_MX;
-		dp->d_fileno = i + 3;
-		dp->d_type = kt->kt_type;
-		/*
-		 * And ship to userland
-		 */
-		if (error = uiomove((caddr_t)dp, UIO_MX, uio))
+		if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 			break;
+		if (ncookies-- > 0)
+			*cookies++ = (i + 1) * UIO_MX;
 	}
 
-	uio->uio_offset = i * UIO_MX;
-
+	uio->uio_offset = (i + 1) * UIO_MX;
 	return (error);
 }
 
