@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 2002/06/23 17:26:58 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 2002/07/30 06:09:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,6 +94,7 @@
 
 /* Condition Register Bit Fields */
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define cr0     0
 #define cr1     1
 #define cr2     2
@@ -102,9 +103,11 @@
 #define cr5     5
 #define cr6     6
 #define cr7     7
+#endif
 
 /* General Purpose Registers (GPRs) */
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define r0      0
 #define r1      1
 #define r2      2
@@ -137,9 +140,11 @@
 #define r29     29
 #define r30     30
 #define r31     31
+#endif
 
 /* Floating Point Registers (FPRs) */
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define fr0     0
 #define fr1     1
 #define fr2     2
@@ -172,5 +177,6 @@
 #define fr29    29
 #define fr30    30
 #define fr31    31
+#endif
 
 #endif /* !_PPC_ASM_H_ */
