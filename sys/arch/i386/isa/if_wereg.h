@@ -225,7 +225,13 @@ union wet_status {
 #define WD_R_MON	0x20		/* Monitor mode			*/
 #define WD_R_RES1	0x40		/* reserved...			*/
 #define WD_R_RES2	0x80		/* reserved...			*/
+#ifdef ISO
+	/* Quick and dirty hack to enable reception of IS Hello packets */
+	/* This probably isn't the right way to do this... */
+#define	WD_R_CONFIG	(WD_R_AB|WD_R_AM)
+#else
 #define	WD_R_CONFIG	(WD_R_AB)
+#endif /* ISO */
 
 /*
  * Configuration constants (transmit unit)
