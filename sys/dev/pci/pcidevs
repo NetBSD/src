@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.277 2000/12/23 10:11:55 tsutsui Exp $
+$NetBSD: pcidevs,v 1.278 2000/12/27 04:15:53 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1366,6 +1366,7 @@ product NVIDIA	ALADDINTNT2	0x00A0	Aladdin TNT2
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
 product NVIDIA	QUADRO		0x0103	Quadro
+product NVIDIA  GEFORCE2MX	0x0110	GeForce2 MX [NV11]
 product NVIDIA	GEFORCE2	0x0150	GeForce2 GTS
 product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
@@ -1674,6 +1675,7 @@ product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
+product VIATECH VT8363_HB	0x0305	VT8363 KT133 System Controller
 product	VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 MVP4 System Controller
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
@@ -1702,6 +1704,7 @@ product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product	VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
+product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
 product	VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
 product VIATECH VT8501AGP	0x8501	VT8501 PCI-AGP
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) PCI-AGP
