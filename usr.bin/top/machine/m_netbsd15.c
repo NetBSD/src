@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.3 2000/05/29 11:38:33 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.4 2000/05/29 11:52:37 simonb Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.3 2000/05/29 11:38:33 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.4 2000/05/29 11:52:37 simonb Exp $
  */
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@
 #include "display.h"
 #include "loadavg.h"
 
-void percentages64(int, int *, u_int64_t *, u_int64_t *, u_int64_t *);
+void percentages64 __P((int, int *, u_int64_t *, u_int64_t *, u_int64_t *));
 
 
 /* get_process_info passes back a handle.  This is what it looks like: */
@@ -154,6 +154,13 @@ char *ordernames[] = {
 };
 
 /* forward definitions for comparison functions */
+static int compare_cpu __P((struct proc **, struct proc **));
+static int compare_prio __P((struct proc **, struct proc **));
+static int compare_res __P((struct proc **, struct proc **));
+static int compare_size __P((struct proc **, struct proc **));
+static int compare_state __P((struct proc **, struct proc **));
+static int compare_time __P((struct proc **, struct proc **));
+
 int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
 	compare_cpu,
 	compare_prio,
@@ -552,7 +559,7 @@ static int sorted_state[] = {
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
-int
+static int
 compare_cpu(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -578,7 +585,7 @@ compare_cpu(pp1, pp2)
 
 /* compare_prio - the comparison function for sorting by process priority */
 
-int
+static int
 compare_prio(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -604,7 +611,7 @@ compare_prio(pp1, pp2)
 
 /* compare_res - the comparison function for sorting by resident set size */
 
-int
+static int
 compare_res(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -630,7 +637,7 @@ compare_res(pp1, pp2)
 
 /* compare_size - the comparison function for sorting by total memory usage */
 
-int
+static int
 compare_size(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -656,7 +663,7 @@ compare_size(pp1, pp2)
 
 /* compare_state - the comparison function for sorting by process state */
 
-int
+static int
 compare_state(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -682,7 +689,7 @@ compare_state(pp1, pp2)
 
 /* compare_time - the comparison function for sorting by total cpu time */
 
-int
+static int
 compare_time(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
