@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.3 2002/10/05 21:19:39 fvdl Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.4 2002/11/02 01:57:31 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ i386_ipi_halt(struct cpu_info *ci)
 
 	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
 	for(;;) {
-		asm volatile("hlt");
+		__asm __volatile("hlt");
 	}
 }
 
