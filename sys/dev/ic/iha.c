@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.24 2003/11/02 11:07:45 wiz Exp $ */
+/*	$NetBSD: iha.c,v 1.24.4.1 2005/04/02 21:50:29 he Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.24 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.24.4.1 2005/04/02 21:50:29 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,9 +685,11 @@ iha_scsipi_request(chan, req, arg)
 		xs = arg;
 		periph = xs->xs_periph;
 
-		if (xs->cmdlen > sizeof(struct scsi_generic) ||
+		/* XXX This size isn't actually a hardware restriction. */
+		if (xs->cmdlen > sizeof(scb->cmd) ||
 		    periph->periph_target >= IHA_MAX_TARGETS) {
 			xs->error = XS_DRIVER_STUFFUP;
+			scsipi_done(xs);
 			return;
 		}
 
