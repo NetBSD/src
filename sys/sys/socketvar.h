@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.36 1999/02/10 14:37:25 tron Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.37 1999/03/23 10:45:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -121,7 +121,7 @@ struct socket {
 	int	(*so_receive) __P((struct socket *so, struct mbuf **paddr,
 				   struct uio *uio, struct mbuf **mp0,
 				   struct mbuf **controlp, int *flagsp));
-
+	uid_t	so_uid;			/* who opened the socket */
 };
 
 /*
