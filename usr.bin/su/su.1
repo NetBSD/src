@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.14.4.1 2000/01/08 18:35:58 he Exp $
+.\"	$NetBSD: su.1,v 1.14.4.2 2000/02/18 19:31:12 he Exp $
 .\"
 .Dd April 18, 1994
 .Dt SU 1
@@ -72,8 +72,9 @@ S/Key is a Trademark of Bellcore.
 By default, the environment is unmodified with the exception of
 .Ev USER ,
 .Ev HOME ,
+.Ev SHELL ,
 and
-.Ev SHELL .
+.Ev SU_FROM .
 .Ev HOME
 and
 .Ev SHELL
@@ -81,8 +82,12 @@ are set to the target login's default values.
 .Ev USER
 is set to the target login, unless the target login has a user ID of 0,
 in which case it is unmodified.
+.Ev SU_FROM
+is set to the caller's login.
 The invoked shell is the target login's.
-This is the traditional behavior of
+With the exception of
+.Ev SU_FROM
+this is the traditional behavior of
 .Nm "" .
 .Pp
 The options are as follows:
@@ -102,11 +107,13 @@ The environment is discarded except for
 .Ev SHELL ,
 .Ev PATH ,
 .Ev TERM ,
+.Ev USER ,
 and
-.Ev USER .
+.Ev SU_FROM .
 .Ev HOME
+.Ev SHELL ,
 and
-.Ev SHELL
+.Ev SU_FROM
 are modified as above.
 .Ev USER
 is set to the target login.
