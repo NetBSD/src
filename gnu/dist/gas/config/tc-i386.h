@@ -382,6 +382,7 @@ base_index_byte;
 #ifndef GLOBAL_OFFSET_TABLE_NAME
 #define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"
 #endif
+#define NBSD_GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
 
 #ifdef BFD_ASSEMBLER
 void i386_validate_fix PARAMS ((struct fix *));
