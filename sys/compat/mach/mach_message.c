@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.6 2002/12/21 23:50:47 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.7 2002/12/22 21:51:56 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.6 2002/12/21 23:50:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.7 2002/12/22 21:51:56 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -233,10 +233,13 @@ out3:			free(sm, M_EMULDATA);
 			 * Queue the message in the remote port, and wakeup 
 			 * any process that would be sleeping for it.
 		 	 */
-			 mr = (struct mach_right *)sm->msgh_remote_port;
-			 mp = mr->mr_port;
-			 (void)mach_message_get(sm, send_size, mp);
-			 wakeup(mp->mp_recv);
+			mr = (struct mach_right *)sm->msgh_remote_port;
+			mp = mr->mr_port;
+			(void)mach_message_get(sm, send_size, mp);
+#ifdef DEBUG_MACH
+			printf("pid %d: Mach message queued\n", p->p_pid);
+#endif
+			wakeup(mp->mp_recv);
 
 			 /* 
 			  * If the port is in a port set, wakup any process
@@ -254,7 +257,7 @@ out1:
 	}
 
 	/*
-	 * Receiving messages. XXX Handle port sets here.
+	 * Receiving messages.
 	 */
 	if (SCARG(uap, option) & MACH_RCV_MSG) {
 		/* 
