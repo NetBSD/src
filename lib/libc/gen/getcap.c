@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.19 1998/03/18 20:29:27 tv Exp $	*/
+/*	$NetBSD: getcap.c,v 1.20 1998/07/21 13:36:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.19 1998/03/18 20:29:27 tv Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.20 1998/07/21 13:36:54 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -298,8 +298,8 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 		 */
 		{
 		char buf[BUFSIZ];
-		char *b_end, *bp;
-		int c;
+		char *b_end, *bp, *cp;
+		int c, slash;
 
 		/*
 		 * Loop invariants:
@@ -308,9 +308,12 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 		 *	Rp always points just past last character in record.
 		 *	B_end always points just past last character in buf.
 		 *	Bp always points at next character in buf.
+		 *	Cp remembers where the last colon was.
 		 */
 		b_end = buf;
 		bp = buf;
+		cp = 0;
+		slash = 0;
 		for (;;) {
 
 			/*
@@ -341,11 +344,36 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	
 				c = *bp++;
 				if (c == '\n') {
-					if (rp > record && *(rp-1) == '\\') {
+					if (slash) {
+						slash = 0;
 						rp--;
 						continue;
 					} else
 						break;
+				}
+				if (slash) {
+					slash = 0;
+					cp = 0;
+				}
+				if (c == ':') {
+					/*
+					 * If the field was `empty' (i.e.
+					 * contained only white space), back up
+					 * to the colon (eliminating the
+					 * field).
+					 */
+					if (cp)
+						rp = cp;
+					else
+						cp = rp;
+				} else if (c == '\\') {
+					slash = 1;
+				} else if (c != ' ' && c != '\t') {
+					/*
+					 * Forget where the colon was, as this
+					 * is not an empty field.
+					 */
+					cp = 0;
 				}
 				*rp++ = c;
 
@@ -371,7 +399,10 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 					rp = record + pos;
 				}
 			}
-				/* loop invariant let's us do this */
+			/* Eliminate any white space after the last colon. */
+			if (cp)
+				rp = cp + 1;
+			/* Loop invariant lets us do this. */
 			*rp++ = '\0';
 
 			/*
