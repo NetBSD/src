@@ -26,9 +26,15 @@
 /*
  * HISTORY
  * $Log: db_interface.c,v $
- * Revision 1.1  1993/08/08 12:22:06  glass
- * lots of changes, too many printfs
+ * Revision 1.2  1993/08/10 08:42:52  glass
+ * fixed problem that caused two consecutive segments to be using the same
+ * pmeg unknowingly.  still too many printfs, not sure how many are actualy
+ * in the machine dependent code.  reaches cpu_startup() where it stops
+ * deliberately. next project: autoconfig(), maybe kgdb
  *
+ * Revision 1.1  93/08/08  12:22:06  glass
+ * lots of changes, too many printfs
+ * 
  * Revision 2.6  92/01/03  20:31:01  dbg
  * 	Ignore RB_KDB - always enter DDB.
  * 	[91/11/06            dbg]
@@ -153,7 +159,8 @@ kdb_trap(type, regs)
 }
 
 extern char *	trap_type[];
-extern int	TRAP_TYPES;
+#define TRAP_TYPES 15
+/*extern int	TRAP_TYPES;*/
 
 /*
  * Print trap reason.
@@ -237,3 +244,8 @@ db_write_bytes(addr, size, data)
 #endif
 }
 
+int
+Debugger()
+{
+    asm ("trap #15");
+}
