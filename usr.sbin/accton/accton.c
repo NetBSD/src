@@ -1,4 +1,4 @@
-/*	$NetBSD: accton.c,v 1.9 2003/08/07 11:25:11 agc Exp $	*/
+/*	$NetBSD: accton.c,v 1.10 2005/03/16 01:43:06 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)accton.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: accton.c,v 1.9 2003/08/07 11:25:11 agc Exp $");
+__RCSID("$NetBSD: accton.c,v 1.10 2005/03/16 01:43:06 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,13 +51,10 @@ __RCSID("$NetBSD: accton.c,v 1.9 2003/08/07 11:25:11 agc Exp $");
 #include <stdio.h>
 #include <string.h>
 
-int	main __P((int, char **));
-void	usage __P((void));
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int ch;
 
@@ -86,7 +83,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s [file]\n", getprogname());
