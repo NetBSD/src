@@ -1,3 +1,15 @@
+New in alpha3.2:  Assorted bits of cleanup and portability improvement
+(the development base is now a BSDI system using GCC instead of an ancient
+Sun system, and the newer compiler exposed some glitches).  Fix for a
+serious bug that affected REs using many [] (including REG_ICASE REs
+because of the way they are implemented), *sometimes*, depending on
+memory-allocation patterns.  The header-file prototypes no longer name
+the parameters, avoiding possible name conflicts.  The possibility that
+some clot has defined CHAR_MIN as (say) `-128' instead of `(-128)' is
+now handled gracefully.  "uchar" is no longer used as an internal type
+name (too many people have the same idea).  Still the same old lousy
+performance, alas.
+
 New in alpha3.1:  Basically nothing, this release is just a bookkeeping
 convenience.  Stay tuned.
 
