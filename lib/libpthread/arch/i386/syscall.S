@@ -43,21 +43,24 @@
  *		-The functions readv() and writev() added.
  */
 
+#ifndef lint
+    .text
+    .asciz "$Id: syscall.S,v 1.3 1994/02/07 22:00:47 proven Exp $";
+#endif
+ 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
         .asciz "@(#)syscall.s   5.1 (Berkeley) 4/23/90"
 #endif /* SYSLIBC_SCCS and not lint */
 
-#include <pthread/copyright.h>
 #include <machine/asm.h>
 #include <sys/syscall.h>
-
 
 #define	SYSCALL(x)					\
 	.globl _machdep_sys_/**/x;		\
 									\
 _machdep_sys_/**/x:;				\
 									\
-	movl	$(SYS_/**/x),%eax;			\
+	movl $(SYS_/**/x), %eax;		\
 	.byte 0x9a; .long 0; .word 7;	\
 	jb	1b;							\
 	ret;							
@@ -103,8 +106,23 @@ SYSCALL(close)
  */
 SYSCALL(fcntl)
 
-/* ======================================================================= */
 /* ==========================================================================
+ * machdep_sys_lseek()
+ */
+SYSCALL(lseek)
+
+/* ========================================================================== 
+ * Nonstandard calls used to make the system work
+ *
+ * ==========================================================================
+ * machdep_sys_select()
+ */
+SYSCALL(select)
+
+/* ========================================================================== 
+ * Berkeley socket stuff
+ * 
+ * ==========================================================================
  * machdep_sys_socket()
  */
 SYSCALL(socket)
@@ -148,3 +166,9 @@ SYSCALL(writev)
  * machdep_sys_getpeername()
  */
 SYSCALL(getpeername)
+
+/* ==========================================================================
+ * machdep_sys_getsockname()
+ */
+SYSCALL(getsockname)
+
