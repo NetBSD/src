@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.18 2001/05/03 13:11:26 soren Exp $
+#	$NetBSD: Makefile,v 1.19 2001/05/30 13:08:34 tsubai Exp $
 
 KDIR=	/sys/arch/powerpc/include
 INCSDIR= /usr/include/powerpc
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bat.h bswap.h \
+	bat.h bswap.h byte_swap.h \
 	cdefs.h cpu.h \
 	db_machdep.h \
 	elf_machdep.h endian.h endian_machdep.h \
