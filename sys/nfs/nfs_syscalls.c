@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.33 1998/11/08 15:57:44 mycroft Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.34 1999/05/04 16:08:02 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -624,8 +624,23 @@ nfssvc_nfsd(nsd, argp, p)
 		 * gathered together.
 		 */
 		do {
+#ifdef DIAGNOSTIC
+		    int lockcount;
+#endif
 		    switch (cacherep) {
 		    case RC_DOIT:
+#ifdef DIAGNOSTIC
+			/*
+			 * NFS server procs should neither release
+			 * locks already held, nor leave things
+			 * locked.  Catch this sooner, rather than
+			 * later (when we try to relock something we
+			 * already have locked).  Careful inspection
+			 * of the failing routine usually turns up the
+			 * lock leak.. once we know what it is..
+			 */
+			lockcount = p->p_locks;
+#endif
 			if (writes_todo || (nd->nd_procnum == NFSPROC_WRITE &&
 			    nfsrvw_procrastinate > 0 && !notstarted))
 			    error = nfsrv_writegather(&nd, slp,
@@ -633,6 +648,18 @@ nfssvc_nfsd(nsd, argp, p)
 			else
 			    error = (*(nfsrv3_procs[nd->nd_procnum]))(nd,
 				slp, nfsd->nfsd_procp, &mreq);
+#ifdef DIAGNOSTIC
+			if (p->p_locks != lockcount) {
+				/*
+				 * If you see this panic, audit
+				 * nfsrv3_procs[nd->nd_procnum] for vnode
+				 * locking errors (usually, it's due to
+				 * forgetting to vput() something).
+				 */
+				panic("nfsd: locking botch in op %d",
+				    nd ? nd->nd_procnum : -1);
+			}
+#endif
 			if (mreq == NULL)
 				break;
 			if (error) {
