@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.81 2002/08/07 04:35:45 lukem Exp $
+.\"	$NetBSD: contents,v 1.82 2002/08/16 04:15:11 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -798,7 +798,7 @@ This does not include the X servers.
 .if \n[sh3el] .setsize -unknown- -unknown-
 .if \n[sparc] .setsize 3 8
 .if \n[sparc64] .setsize 3 9
-.if \n[vax] .setsize -unknown- -unknown-
+.if \n[vax] .setsize 3 7
 .if \n[x86_64] .setsize -unknown- -unknown-
 .showsize
 .
@@ -819,7 +819,7 @@ The extra libraries and include files needed to compile X source code.
 .if \n[sh3el] .setsize -unknown- -unknown-
 .if \n[sparc] .setsize 2 8
 .if \n[sparc64] .setsize 2 10
-.if \n[vax] .setsize -unknown- -unknown-
+.if \n[vax] .setsize 2 8
 .if \n[x86_64] .setsize -unknown- -unknown-
 .showsize
 .
