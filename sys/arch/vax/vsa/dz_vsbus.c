@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.22 2002/04/30 12:33:32 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.23 2002/06/10 21:32:15 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -183,13 +183,15 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	DELAY(10000);
 
 #if NDZKBD > 0
-	/* Don't change speed if this is the console */
-	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0))
+	/* Don't touch this port if this is the console */
+	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0)) {
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
 		    | DZ_LPR_8_BIT_CHAR;
-	daa.daa_line = 0;
-	daa.daa_flags = (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
-	config_found(self, &daa, dz_print);
+		daa.daa_line = 0;
+		daa.daa_flags =
+		    (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
+		config_found(self, &daa, dz_print);
+	}
 #endif
 #if NDZMS > 0
 	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_7_BIT_CHAR \
