@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.7 1999/02/09 00:54:07 mjacob Exp $ */
-/* release_02_05_99 */
+/* $NetBSD: isp_sbus.c,v 1.8 1999/03/17 06:17:16 mjacob Exp $ */
+/* release_03_16_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -84,6 +84,7 @@ struct isp_sbussoftc {
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
 	bus_dmamap_t	sbus_dmamap[MAXISPREQUEST];
+	int16_t		sbus_poff[_NREG_BLKS];
 };
 
 
@@ -185,6 +186,11 @@ isp_sbus_attach(parent, self, aux)
 	isp->isp_param = &sbc->sbus_dev;
 	bzero(isp->isp_param, sizeof (sdparam));
 
+	sbc->sbus_poff[BIU_BLOCK >> _BLK_REG_SHFT] = BIU_REGS_OFF;
+	sbc->sbus_poff[MBOX_BLOCK >> _BLK_REG_SHFT] = SBUS_MBOX_REGS_OFF;
+	sbc->sbus_poff[SXP_BLOCK >> _BLK_REG_SHFT] = SBUS_SXP_REGS_OFF;
+	sbc->sbus_poff[RISC_BLOCK >> _BLK_REG_SHFT] = SBUS_RISC_REGS_OFF;
+	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
 	ISP_LOCK(isp);
 	isp_reset(isp);
@@ -202,14 +208,8 @@ isp_sbus_attach(parent, self, aux)
 	for (i = 0; i < MAXISPREQUEST; i++) {
 
 		/* Allocate a DMA handle */
-		if (bus_dmamap_create(
-				sbc->sbus_dmatag,
-				MAXPHYS,	/* size */
-				1,		/* nsegments */
-				MAXPHYS,	/* maxsegsz */
-				0,		/* boundary */
-				BUS_DMA_NOWAIT,
-				&sbc->sbus_dmamap[i]) != 0) {
+		if (bus_dmamap_create(sbc->sbus_dmatag, MAXPHYS, 1, MAXPHYS, 0,
+		    BUS_DMA_NOWAIT, &sbc->sbus_dmamap[i]) != 0) {
 			printf("%s: DMA map create error\n",
 				self->dv_xname);
 			return;
@@ -217,9 +217,8 @@ isp_sbus_attach(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	bus_intr_establish(sbc->sbus_bustag,
-			   sbc->sbus_pri, 0,
-			   (int(*)__P((void*)))isp_intr, sbc);
+	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, 0,
+	    (int(*)__P((void*)))isp_intr, sbc);
 
 	/*
 	 * do generic attach.
@@ -231,30 +230,14 @@ isp_sbus_attach(parent, self, aux)
 	ISP_UNLOCK(isp);
 }
 
-#define  SBUS_BIU_REGS_OFF		0x00
-#define	 SBUS_MBOX_REGS_OFF		0x80
-#define	 SBUS_SXP_REGS_OFF		0x200
-#define	 SBUS_RISC_REGS_OFF		0x400
-
 static u_int16_t
 isp_sbus_rd_reg(isp, regoff)
 	struct ispsoftc *isp;
 	int regoff;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-
-	int offset;
-	if ((regoff & BIU_BLOCK) != 0) {
-		offset = SBUS_BIU_REGS_OFF;
-	} else if ((regoff & MBOX_BLOCK) != 0) {
-		offset = SBUS_MBOX_REGS_OFF;
-	} else if ((regoff & SXP_BLOCK) != 0) {
-		offset = SBUS_SXP_REGS_OFF;
-	} else {
-		offset = SBUS_RISC_REGS_OFF;
-	}
-	regoff &= 0xff;
-	offset += regoff;
+	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
 	return (bus_space_read_2(sbc->sbus_bustag, sbc->sbus_reg, offset));
 }
 
@@ -265,19 +248,8 @@ isp_sbus_wr_reg (isp, regoff, val)
 	u_int16_t val;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	int offset;
-
-	if ((regoff & BIU_BLOCK) != 0) {
-		offset = SBUS_BIU_REGS_OFF;
-	} else if ((regoff & MBOX_BLOCK) != 0) {
-		offset = SBUS_MBOX_REGS_OFF;
-	} else if ((regoff & SXP_BLOCK) != 0) {
-		offset = SBUS_SXP_REGS_OFF;
-	} else {
-		offset = SBUS_RISC_REGS_OFF;
-	}
-	regoff &= 0xff;
-	offset += regoff;
+	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
 	bus_space_write_2(sbc->sbus_bustag, sbc->sbus_reg, offset, val);
 }
 
