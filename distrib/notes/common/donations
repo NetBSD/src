@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.1 1999/01/13 08:18:45 ross Exp $	
+.\"	$NetBSD: donations,v 1.2 1999/03/20 00:00:43 hubertf Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,6 +51,7 @@ Ross Harvey
 Demon Internet, UK
 Easynet, UK
 Scott Ellis
+Hubert Feyrer
 Free Hardware Foundation
 Greg Gingerich
 Michael L. Hitch
