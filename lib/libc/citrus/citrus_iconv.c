@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv.c,v 1.5 2004/12/21 08:07:41 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv.c,v 1.5 2004/12/21 08:07:41 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -166,7 +166,7 @@ open_shared(struct _citrus_iconv_shared * __restrict * __restrict rci,
 		if (ret == ENOENT)
 			/* fallback */
 			ret = lookup_iconv_entry(basedir, "*",
-						 linebuf, PATH_MAX,
+						 linebuf, sizeof(linebuf),
 						 &module, &variable);
 		if (ret)
 			return ret;
