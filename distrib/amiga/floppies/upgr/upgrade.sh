@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.2.6.1 1996/07/14 19:44:09 is Exp $
+#	$Id: upgrade.sh,v 1.2.6.2 1996/07/22 13:42:57 is Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -161,6 +161,10 @@ done
 echo	""
 echo	"Root partition is on ${drivename}a."
 
+echo	""
+echo	"If you've still installed 0.9 or earlier on your machine or you"
+echo	"haven't upgraded your pre-1.0 filesystems, then you might want to"
+echo	"upgrade the filesystem to the version introduced with 1.0."
 echo	""
 echo	"Would you like to upgrade your file systems to the new file system"
 echo -n	"format? [y] "
