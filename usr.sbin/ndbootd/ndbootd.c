@@ -23,10 +23,15 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* <<Header: /data/home/fredette/project/THE-WEIGHT-CVS/ndbootd/ndbootd.c,v 1.8 2001/05/23 02:35:36 fredette Exp >> */
+/* <<Header: /data/home/fredette/project/THE-WEIGHT-CVS/ndbootd/ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >> */
 
 /*
  * <<Log: ndbootd.c,v >>
+ * Revision 1.9  2001/06/13 21:19:11  fredette
+ * (main): Don't assume that a successful, but short, read
+ * leaves a zero in errno.  Instead, just check for the short
+ * read by looking at the byte count that read returned.
+ *
  * Revision 1.8  2001/05/23 02:35:36  fredette
  * Changed many debugging printfs to compile quietly on the
  * alpha.  Patch from Andrew Brown <atatat@atatdot.net>.
@@ -70,7 +75,7 @@
  *
  */
 
-static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.8 2001/05/23 02:35:36 fredette Exp >>";
+static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 
 /* includes: */
 #include "ndbootd.h"
@@ -864,7 +869,7 @@ where OPTIONS are:\n\
 					 * first-stage boot program is a
 					 * multiple of NDBOOT_BSIZE: */
 					if (byte_count_read != byte_count_wanted
-					    && errno == 0
+					    && byte_count_read > 0
 					    && file_offset + byte_count_read == boot1_byte_count) {
 						byte_count_read = byte_count_wanted;
 					}
@@ -912,7 +917,7 @@ where OPTIONS are:\n\
 					 * second-stage boot program is a
 					 * multiple of NDBOOT_BSIZE: */
 					if (byte_count_read != byte_count_wanted
-					    && errno == 0
+					    && byte_count_read > 0
 					    && file_offset + byte_count_read == boot2_byte_count) {
 						byte_count_read = byte_count_wanted;
 					}
