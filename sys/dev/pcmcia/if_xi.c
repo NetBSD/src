@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.49 2004/10/30 18:10:06 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.50 2005/01/30 19:30:16 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.49 2004/10/30 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.50 2005/01/30 19:30:16 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -468,7 +468,6 @@ xi_get(sc)
 		return (recvcount);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
-	m->m_flags |= M_HASFCS;
 	len = MHLEN;
 	top = 0;
 	mp = &top;
@@ -514,7 +513,10 @@ xi_get(sc)
 
 	/* Skip Rx packet. */
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, DO0, DO_SKIP_RX_PKT);
-	
+
+	/* Trim the CRC off the end of the packet. */
+	m_adj(top, -ETHER_CRC_LEN);
+
 	ifp->if_ipackets++;
 	
 #if NBPFILTER > 0
