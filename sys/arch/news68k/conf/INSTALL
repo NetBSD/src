@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.1 1999/12/09 14:53:02 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.2 2000/01/21 13:38:47 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
@@ -64,7 +64,7 @@ options 	INET		# Internet protocols
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	NFS_BOOT_BOOTPARAM
 
-config	netbsd root on ? type ?
+config	netbsd root on ? type ? dumps on none
 
 #
 # device declarations
