@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.26 1994/12/13 20:16:50 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.27 1994/12/27 18:00:26 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -818,7 +818,9 @@ msdosfs_link(ap)
 	} */ *ap;
 {
 
-	return (VOP_ABORTOP(ap->a_vp, ap->a_cnp));
+	VOP_ABORTOP(ap->a_vp, ap->a_cnp);
+	vput(ap->a_vp);
+	return (EOPNOTSUPP);
 }
 
 /*
