@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.4 1999/09/27 04:14:06 enami Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.5 1999/09/27 05:25:44 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ struct ne2000_softc {
 #define	NE2000_TYPE_NE1000	1
 #define	NE2000_TYPE_NE2000	2
 
-#define	NE2000_USE_WORD(type)	((type) == NE2000_TYPE_NE2000)
+#define	NE2000_USE_WORD(sc)	(((sc)->sc_type) == NE2000_TYPE_NE2000)
 
 void	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
 	    int *, int, int));
