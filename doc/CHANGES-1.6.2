@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.259 2004/02/01 08:25:32 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.260 2004/02/07 20:04:22 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3378,3 +3378,10 @@ sys/conf/osrelease.sh                           patched by hand
 share/tmac/doc-common                           patched by hand
 
 	Mark what we have now as 1.6.2.
+
+sys/kern/sysv_shm.c			1.74
+
+	Don't use uao_ functions directly; use them through the pgops methods.
+	Fix missing reference leak in the error path of shmat() mentioned in 
+	Full-Disclosure.
+	[groo, ticket #1604]
