@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.18 1998/07/27 00:52:01 mycroft Exp $	*/
+/*	$NetBSD: lpr.c,v 1.18.2.1 2000/10/19 17:05:21 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.18 1998/07/27 00:52:01 mycroft Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.18.2.1 2000/10/19 17:05:21 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,8 @@ static void	 card __P((int, const char *));
 static void	 chkprinter __P((char *));
 static void	 cleanup __P((int));
 static void	 copy __P((int, char []));
-static void	 fatal2 __P((const char *, ...));
+static void	 fatal2 __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 static char	*itoa __P((int));
 static char	*linked __P((char *));
 static char	*lmktemp __P((char *, int, int));
@@ -260,7 +261,7 @@ main(argc, argv)
 	if (SC && ncopies > 1)
 		fatal2("multiple copies are not allowed");
 	if (MC > 0 && ncopies > MC)
-		fatal2("only %d copies are allowed", MC);
+		fatal2("only %ld copies are allowed", MC);
 	/*
 	 * Get the identity of the person doing the lpr using the same
 	 * algorithm as lprm. 
