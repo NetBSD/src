@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.49 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.50 2003/01/06 21:02:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#ifndef _DEV_SCSIPI_SCSICONF_H_
+#define _DEV_SCSIPI_SCSICONF_H_
+
 #include <dev/scsipi/scsipiconf.h>
 
 int	scsiprint __P((void *, const char *));
@@ -75,3 +78,5 @@ void	scsi_print_addr __P((struct scsipi_periph *));
 int	scsi_probe_bus __P((struct scsibus_softc *, int, int));
 int	scsi_scsipi_cmd __P((struct scsipi_periph *, struct scsipi_generic *,
 	    int, void *, size_t, int, int, struct buf *, int));
+
+#endif /* _DEV_SCSIPI_SCSICONF_H_ */

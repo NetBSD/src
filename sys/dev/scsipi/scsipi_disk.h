@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.7 2001/11/19 17:18:09 soren Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.8 2003/01/06 21:02:18 matt Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -49,6 +49,9 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#ifndef _DEV_SCSIPI_SCSIPI_DISK_H_
+#define _DEV_SCSIPI_SCSIPI_DISK_H_
+
 /*
  * SCSI command format
  */
@@ -82,3 +85,5 @@ struct scsipi_read_cap_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
 };
+
+#endif /* _DEV_SCSIPI_SCSIPI_DISK_H_ */
