@@ -1,0 +1,4 @@
+# $NetBSD: form,v 1.1 2001/01/05 02:07:00 garbled Exp $
+noedit:@@@1@@@		User to be deleted:
+nescript:script2,@@@1@@@	User's home dir:
+list:no,yes		Delete user's home directory?

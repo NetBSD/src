@@ -1,0 +1,26 @@
+The menus and forms in Sushi are very simple to create.  At a minimum,
+they consist of a sub directory, an index file, and an action-file of some
+sort.
+
+To create a new menu item, you would create a directory, edit the "index"
+file in the parent directory, and populate your new directory with the
+appropriate files.
+
+The files are searched and executed in a specific order:
+
+index		A file containing definitions for submenus under this one.
+preform		A form called before the regular form, to preload it
+		with certain values.
+form		The actual form definition, which presents the questionaire
+		to the user.
+script		An executable of some sort.
+exec		A file containing the name of a program to run, with
+		arguments.
+func		Calls a function internal to Sushi.
+help		Displays a helpfile, similar to this one.
+
+It is an error to have an "endpoint" (a directory with no additional submenus)
+that contains no files, and upon encountering an empty enpoint, Sushi will
+exit with an error.
+
+$NetBSD: help,v 1.1 2001/01/05 02:06:55 garbled Exp $
