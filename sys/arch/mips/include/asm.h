@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.29 2000/12/14 21:29:51 jeffs Exp $	*/
+/*	$NetBSD: asm.h,v 1.30 2002/03/05 14:17:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 #ifndef _MIPS_ASM_H
 #define _MIPS_ASM_H
 
+#include <machine/cdefs.h>	/* for API selection */
 #include <mips/regdef.h>
 
 /*

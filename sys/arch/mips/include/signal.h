@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 1999/04/24 08:10:37 simonb Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 2002/03/05 14:17:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,8 @@
 
 #ifndef	_MIPS_SIGNAL_H_
 #define	_MIPS_SIGNAL_H_
+
+#include <machine/cdefs.h>	/* for API selection */
 
 #if !defined(__ASSEMBLER__)
 
