@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.22 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.23 1999/08/19 19:51:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ typedef struct usbd_request	*usbd_request_handle;
 typedef void			*usbd_private_handle;
 
 typedef enum { 
-	USBD_NORMAL_COMPLETION = 0,
+	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
 	USBD_IN_PROGRESS,
 	/* errors */
 	USBD_PENDING_REQUESTS,
@@ -67,6 +67,8 @@ typedef enum {
 	USBD_INTERRUPTED,
 
 	USBD_XXX,
+
+	USBD_ERROR_MAX,		/* must be last */
 } usbd_status;
 
 typedef int usbd_lock_token;
@@ -159,6 +161,8 @@ usb_endpoint_descriptor_t *usbd_find_edesc
 
 void usbd_dopoll __P((usbd_interface_handle));
 void usbd_set_polling __P((usbd_interface_handle iface, int on));
+
+char *usbd_errstr __P((usbd_status err));
 
 /* NetBSD attachment information */
 
