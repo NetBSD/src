@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.12 2001/07/17 13:28:05 mrg Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.13 2001/08/03 05:54:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,10 +37,6 @@
  */
 
 /*
- * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
- */
-
-/*
  * Run-time module which handles constructors and destructors,
  * and NetBSD identification.
  *
@@ -56,6 +52,9 @@
 #include <sys/exec_elf.h>
 #include <stdlib.h>
 
+#ifdef DWARF2_EH
+#include "dwarf2_eh.h"
+#endif
 #include "sysident.h"
 #include "dot_init.h"
 
@@ -63,6 +62,11 @@ static void (*__CTOR_LIST__[1])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
 static void (*__DTOR_LIST__[1])(void)
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
+
+#ifdef DWARF2_EH
+static char __EH_FRAME_BEGIN__[]
+    __attribute__((section(".eh_frame"))) = { };
+#endif
 
 static void __dtors(void);
 static void __ctors(void);
@@ -104,6 +108,11 @@ void
 _init()
 {
 	static int initialized = 0;
+#ifdef DWARF2_EH
+#if defined(__GNUC__)
+	static struct dwarf2_eh_object object;
+#endif /* __GNUC__ */
+#endif /* DWARF2_EH */
 
 	/*
 	 * Call global constructors.
@@ -112,6 +121,14 @@ _init()
 	INIT_FALLTHRU();
 	if (!initialized) {
 		initialized = 1;
+
+#ifdef DWARF2_EH
+#if defined(__GNUC__)
+		if (__register_frame_info != NULL)
+			__register_frame_info(__EH_FRAME_BEGIN__, &object);
+#endif /* __GNUC__ */
+#endif /* DWARF2_EH */
+
 		__ctors();
 	}
 }
@@ -125,6 +142,14 @@ _fini()
 	 */
 	/* prevent function pointer constant propagation */
 	__dtors();
+
+#ifdef DWARF2_EH
+#if defined(__GNUC__)
+	if (__deregister_frame_info != NULL)
+		__deregister_frame_info(__EH_FRAME_BEGIN__);
+#endif /* __GNUC__ */
+#endif /* DWARF2_EH */
+
 	FINI_FALLTHRU();
 }
 
