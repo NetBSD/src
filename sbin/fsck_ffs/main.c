@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 1998/07/26 20:32:43 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1999/11/15 19:18:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 1998/07/26 20:32:43 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 1999/11/15 19:18:25 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,6 +221,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		return (0);
 	}
 	/*
+	 * Cleared if any questions answered no. Used to decide if
+	 * the superblock should be marked clean.
+	 */
+	resolved = 1;
+	/*
 	 * 1: scan inodes tallying blocks used
 	 */
 	if (preen == 0) {
@@ -235,7 +240,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 1b: locate first references to duplicates, if any
 	 */
 	if (duplist) {
-		if (preen)
+		if (preen || usedsoftdep)
 			pfatal("INTERNAL ERROR: dups with -p");
 		printf("** Phase 1b - Rescan For More DUPS\n");
 		pass1b();
@@ -318,6 +323,8 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			bwrite(fswritefd, sblk.b_un.b_buf,
 			    fsbtodb(sblock, cgsblock(sblock, cylno)), SBSIZE);
 	}
+	if (rerun)
+		markclean = 0;
 #if LITE2BORKEN
 	if (!hotroot()) {
 		ckfini();
