@@ -111,7 +111,7 @@ DEFUN(print_arelt_descr,(file, abfd, verbose),
       mode_string (buf.st_mode, modebuf);
       modebuf[10] = '\0';
       /* Posix 1003.2/D11 says to skip first character (entry type). */
-      fprintf (file, "%s %d/%d %6ld %s ", modebuf+1, buf.st_uid, buf.st_gid, buf.st_size, timebuf);
+      fprintf (file, "%s %d/%d %6qd %s ", modebuf+1, buf.st_uid, buf.st_gid, buf.st_size, timebuf);
     }
   }
 
