@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.6 1999/09/08 21:17:57 jsm Exp $	*/
+/*	$NetBSD: init_field.c,v 1.7 2002/01/31 17:35:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.6 1999/09/08 21:17:57 jsm Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.7 2002/01/31 17:35:52 christos Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
+
+static int telx = 0;
+static int tely = 0;
 
 /*
  * init_field:
@@ -112,6 +115,8 @@ init_field()
 		move(i, X_FIELDSIZE + 2);
 		addstr(desc[i]);
 	}
+	telx = X_FIELDSIZE + 2;
+	tely = i;
 	if (first)
 		refresh();
 	first = FALSE;
@@ -119,4 +124,12 @@ init_field()
 	if (Pattern_roll)
 		Next_move = &Move_list[-1];
 #endif
+}
+
+void
+telmsg(on)
+	int on;
+{
+	move(tely, telx);
+	addstr(on ? "Teleport!" : "         ");
 }
