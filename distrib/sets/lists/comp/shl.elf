@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.17 2000/11/18 06:17:36 wiz Exp $
+# $NetBSD: shl.elf,v 1.18 2001/01/04 21:01:26 garbled Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -7,6 +7,7 @@
 ./usr/lib/libbfd.so.3		comp-util-bin
 ./usr/lib/libbz2.so		comp-c-lib
 ./usr/lib/libc.so		comp-c-lib
+./usr/lib/libcdk.so		comp-c-lib
 ./usr/lib/libcom_err.so		comp-c-lib
 ./usr/lib/libcrypt.so		comp-c-lib
 ./usr/lib/libcrypto.so		comp-c-lib

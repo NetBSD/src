@@ -1,7 +1,8 @@
-# $NetBSD: shl.mi,v 1.16 2000/11/18 06:17:36 wiz Exp $
+# $NetBSD: shl.mi,v 1.17 2001/01/04 21:01:26 garbled Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbfd.so.3.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
+./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libcom_err_pic.a	comp-c-piclib
 ./usr/lib/libcompat_pic.a	comp-c-piclib
