@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.6 2003/04/21 16:52:07 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.7 2003/04/21 19:59:48 fvdl Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -112,6 +112,11 @@ ahc_attach(struct ahc_softc *ahc)
 	}
 
 	ahc_intr_enable(ahc, TRUE);
+
+	if (ahc->flags & AHC_RESET_BUS_A)
+		ahc_reset_channel(ahc, 'A', TRUE);
+	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
+		ahc_reset_channel(ahc, 'B', TRUE);
 
 	ahc_unlock(ahc, &s);
 	return (1);
@@ -262,22 +267,9 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	int s;
 	struct ahc_initiator_tinfo *tinfo;
 	struct ahc_tmode_tstate *tstate;
-	char channel;
 
 	ahc  = (void *)chan->chan_adapter->adapt_dev;
 
-	channel = chan->chan_channel == 0 ? 'A' : 'B';
-
-	if (ahc->inited_channels[channel - 'A'] == 0) {
-		if ((channel == 'A' && (ahc->flags & AHC_RESET_BUS_A)) ||
-		    (channel == 'B' && (ahc->flags & AHC_RESET_BUS_B))) {
-			s = splbio();
-			ahc_reset_channel(ahc, channel, TRUE);
-			splx(s);
-		}
-		ahc->inited_channels[channel - 'A'] = 1;
-	}
-	
 	switch (req) {
 
 	case ADAPTER_REQ_RUN_XFER:
