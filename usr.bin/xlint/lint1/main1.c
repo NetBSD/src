@@ -1,3 +1,5 @@
+/*	$NetBSD: main1.c,v 1.2 1995/07/03 21:24:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
@@ -27,12 +29,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: main1.c,v 1.1.1.1 1995/07/03 20:56:37 cgd Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main1.c,v 1.1.1.1 1995/07/03 20:56:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: main1.c,v 1.2 1995/07/03 21:24:22 cgd Exp $";
 #endif
 
 #include <stdio.h>
