@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.165 2004/10/13 23:28:36 gavan Exp $
+#	$NetBSD: DEVNAMES,v 1.166 2004/10/22 13:11:12 augustss Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -162,6 +162,7 @@ cbsc			amiga
 cbsc			amigappc
 cd			MI		
 cd18xx			MI		Attribute
+cdce			MI
 cfb			alpha
 cfb			pmax
 cgeight			sparc
