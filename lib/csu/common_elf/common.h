@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.9 2003/08/12 09:18:42 skrll Exp $ */
+/* $NetBSD: common.h,v 1.10 2004/08/26 20:57:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -53,7 +53,7 @@
 typedef void Obj_Entry;
 #endif
 
-extern int	__syscall __P((quad_t, ...));
+extern int	__syscall(quad_t, ...);
 #define	_exit(v)	__syscall(SYS_exit, (v))
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 
@@ -63,17 +63,17 @@ do {						\
 	_exit(1);				\
 } while (0)
 
-static char	*_strrchr __P((char *, int));
+static char	*_strrchr(char *, int);
 
 char	**environ;
 char	*__progname = "";
 struct ps_strings *__ps_strings = 0;
 
-extern void	_init __P((void));
-extern void	_fini __P((void));
+extern void	_init(void);
+extern void	_fini(void);
 
 #ifdef DYNAMIC
-void	_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
+void	_rtld_setup(void (*)(void), const Obj_Entry *obj);
 
 /*
  * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
@@ -86,9 +86,9 @@ __weak_extern(_DYNAMIC);
 #endif /* DYNAMIC */
 
 #ifdef MCRT0
-extern void	monstartup __P((u_long, u_long));
-extern void	_mcleanup __P((void));
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
-int main __P((int, char **, char **));
+int main(int, char **, char **);
