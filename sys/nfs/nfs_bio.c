@@ -34,10 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.6 1993/07/13 10:50:04 cgd Exp $
+ *	$Id: nfs_bio.c,v 1.7 1993/09/03 23:57:21 jtc Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "buf.h"
 #include "uio.h"
