@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.6 2002/08/02 03:46:46 chs Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.7 2002/08/06 06:21:58 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -664,13 +664,13 @@ s_trap:
 
 k_trap:
 	FRAME_SETUP(CI_TEMPSAVE)
+trapagain:
 /* Now we can recover interrupts again: */
 	mfmsr	7
 	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
 	mtmsr	7
 	isync
 /* Call C trap code: */
-trapagain:
 	addi	3,1,8
 	bl	_C_LABEL(trap)
 	.globl	trapexit
@@ -901,7 +901,7 @@ intr_exit:
 	CPU601_KERN_LEAVE(3,4)
 	GET_CPUINFO(4)
 	RESTORE_USER_SRS(3,4)
-	lwz	4,CI_ASTPENDING(4)	 /* Test AST pending */
+	lwz	4,CI_ASTPENDING(4)	/* Test AST pending */
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
