@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)expand.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: expand.c,v 1.4 1993/12/04 02:11:33 jtc Exp $";
+/* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
+static char *rcsid = "$Id: expand.c,v 1.5 1994/03/07 05:05:28 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -58,10 +58,19 @@ int	expany;		/* any expansions done? */
 char	*entp;
 char	**sortbase;
 
-static int	argcmp();
-
 #define sort()	qsort((char *)sortbase, &eargv[eargc] - sortbase, \
 		      sizeof(*sortbase), argcmp), sortbase = &eargv[eargc]
+
+static void	Cat __P((char *, char *));
+static void	addpath __P((int));
+static int	amatch __P((char *, char *));
+static int	argcmp __P((const void *, const void *));
+static int	execbrc __P((char *, char *));
+static void	expsh __P((char *));
+static void	expstr __P((char *));
+static int	match __P((char *, char *));
+static void	matchdir __P((char *));
+static int	smatch __P((char *, char *));
 
 /*
  * Take a list of names and expand any macros, etc.
@@ -131,6 +140,7 @@ expand(list, wh)
 	return(list);
 }
 
+static void
 expstr(s)
 	char *s;
 {
@@ -231,18 +241,19 @@ expstr(s)
 	sort();
 }
 
-static
+static int
 argcmp(a1, a2)
-	char **a1, **a2;
+	const void *a1, *a2;
 {
 
-	return (strcmp(*a1, *a2));
+	return (strcmp(*(char **)a1, *(char **)a2));
 }
 
 /*
  * If there are any Shell meta characters in the name,
  * expand into a list, after searching directory
  */
+static void
 expsh(s)
 	char *s;
 {
@@ -280,11 +291,12 @@ endit:
 	*pathp = '\0';
 }
 
+static void
 matchdir(pattern)
 	char *pattern;
 {
 	struct stat stb;
-	register struct dirent *dp;
+	register struct direct *dp;
 	DIR *dirp;
 
 	dirp = opendir(path);
@@ -320,6 +332,7 @@ patherr2:
 	yyerror(path);
 }
 
+static int
 execbrc(p, s)
 	char *p, *s;
 {
@@ -399,6 +412,7 @@ doit:
 	return (0);
 }
 
+static int
 match(s, p)
 	char *s, *p;
 {
@@ -416,6 +430,7 @@ match(s, p)
 	return (c);
 }
 
+static int
 amatch(s, p)
 	register char *s, *p;
 {
@@ -504,6 +519,7 @@ slash:
 	}
 }
 
+static int
 smatch(s, p)
 	register char *s, *p;
 {
@@ -562,6 +578,7 @@ smatch(s, p)
 	}
 }
 
+static void
 Cat(s1, s2)
 	register char *s1, *s2;
 {
@@ -582,8 +599,9 @@ Cat(s1, s2)
 		;
 }
 
+static void
 addpath(c)
-	char c;
+	int c;
 {
 
 	if (pathp >= lastpathp)

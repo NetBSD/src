@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)docmd.c	5.8 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: docmd.c,v 1.5 1994/01/23 06:31:35 cgd Exp $";
+/* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
+static char *rcsid = "$Id: docmd.c,v 1.6 1994/03/07 05:05:26 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -44,11 +44,21 @@ FILE	*lfp;			/* log file for recording files updated */
 struct	subcmd *subcmds;	/* list of sub-commands for current cmd */
 jmp_buf	env;
 
-void cleanup(), lostconn();
+static int	 makeconn __P((char *));
+static int	 okname __P((char *));
+static void	 closeconn __P((void));
+static void	 cmptime __P((char *));
+static void	 doarrow __P((char **,
+		    struct namelist *, char *, struct subcmd *));
+static void	 dodcolon __P((char **,
+		    struct namelist *, char *, struct subcmd *));
+static void	 notify __P((char *, char *, struct namelist *, time_t));
+static void	 rcmptime __P((struct stat *));
 
 /*
  * Do the commands in cmds (initialized by yyparse).
  */
+void
 docmds(dhosts, argc, argv)
 	char **dhosts;
 	int argc;
@@ -104,6 +114,7 @@ docmds(dhosts, argc, argv)
 /*
  * Process commands for sending files to other machines.
  */
+static void
 doarrow(filev, files, rhost, cmds)
 	char **filev;
 	struct namelist *files;
@@ -184,6 +195,7 @@ done:
 /*
  * Create a connection to the rdist server on the machine rhost.
  */
+static int
 makeconn(rhost)
 	char *rhost;
 {
@@ -243,11 +255,11 @@ makeconn(rhost)
 		return(0);
 	cp = buf;
 	if (read(rem, cp, 1) != 1)
-		lostconn();
+		lostconn(0);
 	if (*cp == 'V') {
 		do {
 			if (read(rem, cp, 1) != 1)
-				lostconn();
+				lostconn(0);
 		} while (*cp++ != '\n' && cp < &buf[BUFSIZ]);
 		*--cp = '\0';
 		cp = buf;
@@ -257,8 +269,13 @@ makeconn(rhost)
 		if (*cp == '\0' && n == VERSION)
 			return(1);
 		error("connection failed: version numbers don't match (local %d, remote %d)\n", VERSION, n);
-	} else
+	} else {
 		error("connection failed: version numbers don't match\n");
+		error("got unexpected input:");
+		do {
+			error("%c", *cp);
+		} while (*cp != '\n' && read(rem, cp, 1) == 1);
+	}
 	closeconn();
 	return(0);
 }
@@ -266,6 +283,7 @@ makeconn(rhost)
 /*
  * Signal end of previous connection.
  */
+static void
 closeconn()
 {
 	if (debug)
@@ -279,14 +297,16 @@ closeconn()
 }
 
 void
-lostconn()
+lostconn(signo)
+	int signo;
 {
 	if (iamremote)
-		cleanup();
+		cleanup(0);
 	log(lfp, "rdist: lost connection\n");
 	longjmp(env, 1);
 }
 
+static int
 okname(name)
 	register char *name;
 {
@@ -314,6 +334,7 @@ extern	char target[], *tp;
 /*
  * Process commands for comparing files to time stamp files.
  */
+static void
 dodcolon(filev, files, stamp, cmds)
 	char **filev;
 	struct namelist *files;
@@ -339,7 +360,7 @@ dodcolon(filev, files, stamp, cmds)
 		return;
 	}
 	if (debug)
-		printf("%s: %d\n", stamp, stb.st_mtime);
+		printf("%s: %ld\n", stamp, stb.st_mtime);
 
 	subcmds = cmds;
 	lastmod = stb.st_mtime;
@@ -379,6 +400,7 @@ dodcolon(filev, files, stamp, cmds)
 /*
  * Compare the mtime of file to the list of time stamps.
  */
+static void
 cmptime(name)
 	char *name;
 {
@@ -427,11 +449,12 @@ cmptime(name)
 		log(tfp, "new: %s\n", name);
 }
 
+static void
 rcmptime(st)
 	struct stat *st;
 {
 	register DIR *d;
-	register struct dirent *dp;
+	register struct direct *dp;
 	register char *cp;
 	char *otp;
 	int len;
@@ -470,14 +493,15 @@ rcmptime(st)
  * rhost == NULL if we are mailing a list of changes compared to at time
  * stamp file.
  */
+static void
 notify(file, rhost, to, lmod)
 	char *file, *rhost;
 	register struct namelist *to;
 	time_t lmod;
 {
 	register int fd, len;
-	FILE *pf, *popen();
 	struct stat stb;
+	FILE *pf;
 
 	if ((options & VERIFY) || to == NULL)
 		return;
@@ -547,6 +571,7 @@ notify(file, rhost, to, lmod)
 /*
  * Return true if name is in the list.
  */
+int
 inlist(list, file)
 	struct namelist *list;
 	char *file;
@@ -562,6 +587,7 @@ inlist(list, file)
 /*
  * Return TRUE if file is in the exception list.
  */
+int
 except(file)
 	char *file;
 {
@@ -580,7 +606,8 @@ except(file)
 					return(1);
 				continue;
 			}
-			if (regexec(regcomp(nl->n_name), file) > 0)
+			re_comp(nl->n_name);
+			if (re_exec(file) > 0)
 				return(1);
 		}
 	}
