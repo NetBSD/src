@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsiom.h	7.3 (Berkeley) 6/28/90
+ *	from: @(#)nfsiom.h	7.3 (Berkeley) 6/28/90
+ *	$Id: nfsiom.h,v 1.3 1993/05/20 03:19:04 cgd Exp $
  */
 
 #ifndef _NFS_NFSIOM_H_
