@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.28 1994/01/07 23:55:00 jtc Exp $
+#	$Id: Makefile,v 1.29 1994/01/08 00:27:42 jtc Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -85,6 +85,7 @@ hcx9-distribution:
 	    ${DESTDIR}/)
 
 distrib-dirs:
+	-mkdir ${DESTDIR}
 	mtree -u -d -p ${DESTDIR} -f ${.CURDIR}/mtree/BSD.root.dist
 #	mtree -u -d -p ${DESTDIR}/usr -f ${.CURDIR}/mtree/BSD.usr.dist
 #	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
