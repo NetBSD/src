@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.17 1994/05/01 05:02:24 cgd Exp $
+ 	$Id: syscalls.master,v 1.18 1994/05/07 00:39:06 cgd Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
@@ -84,11 +84,7 @@
 50	STD	1 setlogin
 51	STD	1 acct
 52	STD	0 sigpending
-#ifdef notyet
-53	STD	3 sigaltstack
-#else
-53	UNIMPL	3 sigaltstack
-#endif
+53	STD	2 sigaltstack
 54	STD	3 ioctl
 55	STD	1 reboot
 56	STD	1 revoke
@@ -98,8 +94,8 @@
 60	STD	1 umask
 61	STD	1 chroot
 62	COMPAT	2 fstat
-63	STD	4 getkerninfo
-64	STD	0 getpagesize
+63	COMPAT	4 getkerninfo
+64	COMPAT	0 getpagesize
 65	STD	2 msync
 66	STD	0 vfork
 67	OBSOL	0 vread
@@ -122,8 +118,8 @@
 84	COMPAT	0 wait
 85	STD	1 swapon
 86	STD	2 getitimer
-87	STD	2 gethostname
-88	STD	2 sethostname
+87	COMPAT	2 gethostname
+88	COMPAT	2 sethostname
 89	STD	0 getdtablesize
 90	STD	2 dup2
 91	UNIMPL	2 getdopt
@@ -147,7 +143,7 @@
 109	COMPAT	1 sigblock
 110	COMPAT	1 sigsetmask
 111	STD	1 sigsuspend
-112	STD	2 sigstack
+112	COMPAT	2 sigstack
 113	COMPAT	3 recvmsg
 114	COMPAT	3 sendmsg
 #ifdef TRACE
@@ -185,8 +181,8 @@
 139	OBSOL	0 4.2 sigreturn
 140	STD	2 adjtime
 141	COMPAT	3 getpeername
-142	STD	0 gethostid
-143	STD	1 sethostid
+142	COMPAT	0 gethostid
+143	COMPAT	1 sethostid
 144	COMPAT	2 getrlimit
 145	COMPAT	2 setrlimit
 146	COMPAT	2 killpg
@@ -203,7 +199,7 @@
 152	UNIMPL	0 nosys
 153	UNIMPL	0 nosys
 154	UNIMPL	0 nosys
-#ifdef NFSSERVER
+#if defined(NFSSERVER)
 155	STD	5 nfssvc
 #else
 155	UNIMPL	0 nosys
@@ -219,9 +215,9 @@
 160	UNIMPL	0 nosys
 161	UNIMPL	0 nosys
 #endif
-162	STD	2 getdomainname
-163	STD 	2 setdomainname
-164	STD	1 uname
+162	COMPAT	2 getdomainname
+163	COMPAT	2 setdomainname
+164	COMPAT	1 uname
 165	STD	2 sysarch
 166	UNIMPL	0 nosys
 167	UNIMPL	0 nosys
@@ -269,8 +265,8 @@
 188	STD	2 stat
 189	STD	2 fstat
 190	STD	2 lstat
-191	UNIMPL	0 nosys
-192	UNIMPL	0 nosys
+191	STD	2 pathconf
+192	STD	2 fpathconf
 193	UNIMPL	0 nosys
 194	STD	2 getrlimit
 195	STD	2 setrlimit
@@ -280,9 +276,9 @@
 199	STD	5 lseek
 200	STD	4 truncate
 201	STD	4 ftruncate
-202	UNIMPL	0 nosys
-203	UNIMPL	0 nosys
-204	UNIMPL	0 nosys
+202	STD	6 __sysctl
+203	STD	2 mlock
+204	STD	2 munlock
 205	UNIMPL	0 nosys
 206	UNIMPL	0 nosys
 207	UNIMPL	0 nosys
