@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.18 2000/06/17 16:11:26 assar Exp $	*/
+/*	$NetBSD: util.c,v 1.19 2000/06/22 23:42:22 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.18 2000/06/17 16:11:26 assar Exp $");
+__RCSID("$NetBSD: util.c,v 1.19 2000/06/22 23:42:22 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,17 +57,19 @@ __RCSID("$NetBSD: util.c,v 1.18 2000/06/17 16:11:26 assar Exp $");
 #include "ls.h"
 #include "extern.h"
 
-void
+int
 printescaped(src)
 	const char *src;
 {
-	int c;
+	unsigned char c;
+	int n;
 
-	while ((c = *src++) != '\0')
+	for (n = 0; (c = *src) != '\0'; ++src, ++n)
 		if (isprint(c))
 			(void)putchar(c);
 		else
 			(void)putchar('?');
+	return n;
 }
 
 void

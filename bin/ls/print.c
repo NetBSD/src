@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.28 2000/06/17 16:11:26 assar Exp $	*/
+/*	$NetBSD: print.c,v 1.29 2000/06/22 23:42:22 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.28 2000/06/17 16:11:26 assar Exp $");
+__RCSID("$NetBSD: print.c,v 1.29 2000/06/22 23:42:22 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ printlong(dp)
 		else
 			printtime(sp->st_mtime);
 		if (f_nonprint)
-			printescaped(p->fts_name);
+			(void)printescaped(p->fts_name);
 		else
 			(void)printf("%s", p->fts_name);
 
@@ -306,7 +306,10 @@ printaname(p, inodefield, sizefield)
 	if (f_size)
 		chcnt += printf("%*llu ", sizefield,
 		    (long long)howmany(sp->st_blocks, blocksize));
-	chcnt += printf("%s", p->fts_name);
+	if (f_nonprint)
+	    chcnt += printescaped(p->fts_name);
+	else
+	    chcnt += printf("%s", p->fts_name);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
