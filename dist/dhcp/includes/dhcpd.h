@@ -44,6 +44,9 @@
 #ifndef __CYGWIN32__
 #include <sys/types.h>
 #include <netinet/in.h>
+#ifndef SMALL
+#include <netinet6/ipsec.h>
+#endif
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
