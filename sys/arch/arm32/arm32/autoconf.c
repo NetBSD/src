@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.14 1997/01/31 19:10:27 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.14.2.1 1997/03/02 16:17:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -186,7 +186,6 @@ set_boot_devs()
 
 	setroot(booted_device, booted_partition, arm32_nam2blk);
 
-	swapconf();
 	dumpconf();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 1997/01/31 01:51:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39.2.1 1997/03/02 16:17:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,6 @@ configure()
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, mac68k_nam2blk);
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

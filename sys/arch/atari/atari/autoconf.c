@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1997/01/31 01:47:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.2.1 1997/03/02 16:17:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -76,7 +76,6 @@ configure()
 
 	findroot(&booted_device, &booted_partition);
 	setroot(booted_device, booted_partition, atari_nam2blk);
-	swapconf();
 	dumpconf();
 	if( dumplo < 0)
 		dumplo = 0;

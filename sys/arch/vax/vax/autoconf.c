@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1997/01/31 02:13:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21.2.1 1997/03/02 16:17:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -184,7 +184,6 @@ configure()
 #if VAX410 || VAX43
 	dzcnslask(); /* XXX inte g|ras h{r */
 #endif
-	swapconf();
 	dumpconf();
 	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
