@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.36 2001/09/08 02:02:04 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.37 2001/10/17 23:33:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,6 +59,7 @@
 #endif
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
+struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 
 /*
  * Convert a pathname into a pointer to a locked inode.
