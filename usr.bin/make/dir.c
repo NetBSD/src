@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.20 1997/09/28 03:31:02 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.21 1999/07/11 02:06:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.20 1997/09/28 03:31:02 lukem Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.21 1999/07/11 02:06:57 thorpej Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.20 1997/09/28 03:31:02 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.21 1999/07/11 02:06:57 thorpej Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -187,6 +187,8 @@ static int    hits,	      /* Found in directory cache */
 
 static Path    	  *dot;	    /* contents of current directory */
 static Path    	  *cur;	    /* contents of current directory, if not dot */
+static Path	  *dotLast; /* a fake path entry indicating we need to
+			     * look for . last */
 static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * Dir_FindFile -- if we have to go to the
 			     * system to find the file, we might as well
@@ -206,6 +208,7 @@ static int DirPrintWord __P((ClientData, ClientData));
 static int DirPrintDir __P((ClientData, ClientData));
 static char *DirLookup __P((Path *, char *, char *, Boolean));
 static char *DirLookupSubdir __P((Path *, char *));
+static char *DirFindDot __P((Boolean, char *, char *));
 
 /*-
  *-----------------------------------------------------------------------
@@ -249,6 +252,12 @@ Dir_Init (cdname)
 	cur = Dir_AddDir (NULL, cdname);
 	cur->refCount += 1;
     }
+
+    dotLast = (Path *) emalloc (sizeof (Path));
+    dotLast->refCount = 1;
+    dotLast->hits = 0;
+    dotLast->name = estrdup(".DOTLAST");
+    Hash_InitTable (&dotLast->files, -1);
 }
 
 /*-
@@ -271,6 +280,8 @@ Dir_End()
 	Dir_Destroy((ClientData) cur);
     }
     dot->refCount -= 1;
+    dotLast->refCount -= 1;
+    Dir_Destroy((ClientData) dotLast);
     Dir_Destroy((ClientData) dot);
     Dir_ClearPath(dirSearchPath);
     Lst_Destroy(dirSearchPath, NOFREE);
@@ -828,6 +839,57 @@ DirLookupSubdir(p, name)
 
 /*-
  *-----------------------------------------------------------------------
+ * DirFindDot  --
+ *	Find the file given on "." or curdir
+ *
+ * Results:
+ *	The path to the file or NULL. This path is guaranteed to be in a
+ *	different part of memory than name and so may be safely free'd.
+ *
+ * Side Effects:
+ *	Hit counts change
+ *-----------------------------------------------------------------------
+ */
+static char *
+DirFindDot(hasSlash, name, cp)
+    Boolean hasSlash;
+    char *name;
+    char *cp;
+{
+    char *file;
+
+    if ((!hasSlash || (cp - name == 2 && *name == '.'))) {
+	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
+	    if (DEBUG(DIR)) {
+		printf("in '.'\n");
+	    }
+	    hits += 1;
+	    dot->hits += 1;
+	    return (estrdup (name));
+	}
+	if (cur &&
+	    Hash_FindEntry (&cur->files, cp) != (Hash_Entry *)NULL) {
+	    if (DEBUG(DIR)) {
+		printf("in ${.CURDIR} = %s\n", cur->name);
+	    }
+	    hits += 1;
+	    cur->hits += 1;
+	    return str_concat (cur->name, cp, STR_ADDSLASH);
+	}
+    }
+
+
+    if (cur && (file = DirLookup(cur, name, cp, hasSlash)) != NULL) {
+	if (*file)
+	    return file;
+	else
+	    return NULL;
+    }
+    return NULL;
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * Dir_FindFile  --
  *	Find the file with the given name along the given search path.
  *
@@ -849,13 +911,14 @@ Dir_FindFile (name, path)
     char    	  *name;    /* the file to find */
     Lst           path;	    /* the Lst of directories to search */
 {
-    LstNode       ln;	    /* a list element */
-    register char *file;    /* the current filename to check */
-    register Path *p;	    /* current path member */
-    register char *cp;	    /* index of first slash, if any */
-    Boolean	  hasSlash; /* true if 'name' contains a / */
-    struct stat	  stb;	    /* Buffer for stat, if necessary */
-    Hash_Entry	  *entry;   /* Entry for mtimes table */
+    LstNode       ln;			/* a list element */
+    register char *file;		/* the current filename to check */
+    register Path *p;			/* current path member */
+    register char *cp;			/* index of first slash, if any */
+    Boolean	  lastDot = TRUE;	/* true we should search dot last */
+    Boolean	  hasSlash;		/* true if 'name' contains a / */
+    struct stat	  stb;			/* Buffer for stat, if necessary */
+    Hash_Entry	  *entry;		/* Entry for mtimes table */
 
     /*
      * Find the final component of the name and note whether it has a
@@ -873,31 +936,6 @@ Dir_FindFile (name, path)
     if (DEBUG(DIR)) {
 	printf("Searching for %s...", name);
     }
-    /*
-     * No matter what, we always look for the file in the current directory
-     * before anywhere else and we *do not* add the ./ to it if it exists.
-     * This is so there are no conflicts between what the user specifies
-     * (fish.c) and what pmake finds (./fish.c).
-     */
-    if ((!hasSlash || (cp - name == 2 && *name == '.'))) {
-	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
-	    if (DEBUG(DIR)) {
-		printf("in '.'\n");
-	    }
-	    hits += 1;
-	    dot->hits += 1;
-	    return (estrdup (name));
-	}
-	if (cur &&
-	    Hash_FindEntry (&cur->files, cp) != (Hash_Entry *)NULL) {
-	    if (DEBUG(DIR)) {
-		printf("in ${.CURDIR} = %s\n", cur->name);
-	    }
-	    hits += 1;
-	    cur->hits += 1;
-	    return str_concat (cur->name, cp, STR_ADDSLASH);
-	}
-    }
 
     if (Lst_Open (path) == FAILURE) {
 	if (DEBUG(DIR)) {
@@ -907,12 +945,25 @@ Dir_FindFile (name, path)
 	return ((char *) NULL);
     }
 
-    if (cur && (file = DirLookup(cur, name, cp, hasSlash)) != NULL) {
-	if (*file)
-	    return file;
-	else
-	    return NULL;
+    if ((ln = Lst_First (path)) != NILLNODE) {
+	p = (Path *) Lst_Datum (ln);
+	if (p == dotLast)
+	    lastDot = TRUE;
+	if (DEBUG(DIR)) {
+	    printf("[dot last]...");
+	}
     }
+
+    /*
+     * No matter what, we always look for the file in the current directory
+     * before anywhere else and we *do not* add the ./ to it if it exists.
+     * This is so there are no conflicts between what the user specifies
+     * (fish.c) and what pmake finds (./fish.c).
+     * Unless we found the magic DOTLAST path...
+     */
+    if (!lastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL)
+	return file;
+
 
     /*
      * We look through all the directories on the path seeking one which
@@ -924,6 +975,8 @@ Dir_FindFile (name, path)
      */
     while ((ln = Lst_Next (path)) != NILLNODE) {
 	p = (Path *) Lst_Datum (ln);
+	if (p == dotLast)
+	    continue;
         if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
 	    Lst_Close (path);
 	    if (*file)
@@ -932,6 +985,9 @@ Dir_FindFile (name, path)
 		return NULL;
 	}
     }
+
+    if (lastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL)
+	return file;
 
     /*
      * We didn't find the file on any existing members of the directory.
@@ -960,12 +1016,14 @@ Dir_FindFile (name, path)
 	    printf("failed. Trying subdirectories...");
 	}
 
-	if (cur && (file = DirLookupSubdir(cur, name)) != NULL)
+	if (!lastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
 	    return file;
 
 	(void) Lst_Open (path);
 	while ((ln = Lst_Next (path)) != NILLNODE) {
 	    p = (Path *) Lst_Datum (ln);
+	    if (p == dotLast)
+		continue;
 	    if (p == dot)
 		checkedDot = TRUE;
 	    if ((file = DirLookupSubdir(p, name)) != NULL) {
@@ -973,6 +1031,9 @@ Dir_FindFile (name, path)
 		return file;
 	    }
 	}
+
+	if (lastDot && cur && (file = DirLookupSubdir(cur, name)) != NULL)
+	    return file;
 
 	if (DEBUG(DIR)) {
 	    printf("failed. ");
@@ -1149,6 +1210,16 @@ Dir_AddDir (path, name)
     register Path *p = NULL;  /* pointer to new Path structure */
     DIR     	  *d;	      /* for reading directory */
     register struct dirent *dp; /* entry in directory */
+
+    if (strcmp(name, ".DOTLAST") == 0) {
+	ln = Lst_Find (path, (ClientData)name, DirFindName);
+	if (ln != NILLNODE)
+	    return (Path *) Lst_Datum(ln);
+	else {
+	    dotLast->refCount += 1;
+	    (void)Lst_AtFront(path, (ClientData)dotLast);
+	}
+    }
 
     ln = Lst_Find (openDirectories, (ClientData)name, DirFindName);
     if (ln != NILLNODE) {
