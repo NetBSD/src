@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript,v 1.7 2002/04/25 01:48:21 thorpej Exp $	*/
+/*	$NetBSD: ldscript,v 1.1 2003/04/29 05:04:37 thorpej Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
