@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.22 1997/05/30 20:45:44 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.23 1997/06/01 08:24:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -167,16 +167,16 @@ static void sw_reg_start __P((struct swapdev *));
 #endif
 
 int
-sys_swapon(p, v, retval)
+sys_swapctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_swapon_args /* {
+	struct sys_swapctl_args /* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
-	} */ *uap = (struct sys_swapon_args *)v;
+	} */ *uap = (struct sys_swapctl_args *)v;
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;
@@ -188,14 +188,14 @@ sys_swapon(p, v, retval)
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("entering sys_swapon\n");
+		printf("entering sys_swapctl\n");
 #endif /* SWAPDEBUG */
 	
 	/* how many swap devices */
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("did SWAP_NSWAP:  leaving sys_swapon\n");
+			printf("did SWAP_NSWAP:  leaving sys_swapctl\n");
 #endif /* SWAPDEBUG */
 		*retval = nswapdev;
 		return (0);
@@ -221,7 +221,7 @@ sys_swapon(p, v, retval)
 		}
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: did SWAP_STATS:  leaving sys_swapon\n");
+			printf("sw: did SWAP_STATS:  leaving sys_swapctl\n");
 #endif /* SWAPDEBUG */
 		*retval = count;
 		return (0);
@@ -389,7 +389,7 @@ bad:
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("leaving sys_swapon:  error %d\n", error);
+		printf("leaving sys_swapctl:  error %d\n", error);
 #endif /* SWAPDEBUG */
 	return (error);
 }
@@ -616,7 +616,7 @@ swap_alloc(size)
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
 			    /* XXX IS THIS CORRECT ? */
-#if 0
+#if 1
 			    (sdp->swd_inuse + size > sdp->swd_nblks) ||
 #endif
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,

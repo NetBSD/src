@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.53 1997/04/17 19:07:15 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.53.2.1 1997/06/01 08:25:24 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -43,7 +43,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	setpriority.o setregid.o setreuid.o \
 	setrlimit.o setsid.o setsockopt.o settimeofday.o \
 	setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
-	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapon.o \
+	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapctl.o \
 	symlink.o sysarch.o umask.o undelete.o unlink.o unmount.o \
 	utimes.o vadvise.o wait4.o write.o writev.o __semctl.o __syscall.o \
 	__sysctl.o
