@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.25 1997/07/04 13:26:02 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.26 1997/11/02 14:01:07 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -50,8 +50,8 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
-#include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 #include <vax/uba/udareg.h>
 
 #include <vax/mscp/mscp.h>
