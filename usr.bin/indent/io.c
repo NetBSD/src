@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.9 1998/12/19 17:00:08 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.9.2.1 2000/10/19 14:48:53 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.9 1998/12/19 17:00:08 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.9.2.1 2000/10/19 14:48:53 he Exp $");
 #endif
 #endif				/* not lint */
 
@@ -133,7 +133,7 @@ dump_line()
 						s++;
 					if (s < e_lab)
 						fprintf(output, s[0] == '/' && s[1] == '*' ? "\t%.*s" : "\t/* %.*s */",
-						    e_lab - s, s);
+						    (int)(e_lab - s), s);
 				} else
 					fprintf(output, "%.*s", (int)(e_lab - s_lab), s_lab);
 				cur_col = count_spaces(cur_col, s_lab);
