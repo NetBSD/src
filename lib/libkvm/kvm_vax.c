@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.8 1999/07/02 15:28:51 simonb Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.9 2000/06/26 15:35:02 mrg Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,7 +54,6 @@
 #include <kvm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <limits.h>
 #include <db.h>

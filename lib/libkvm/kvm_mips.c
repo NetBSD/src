@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mips.c,v 1.13 2000/06/14 06:49:11 cgd Exp $ */
+/* $NetBSD: kvm_mips.c,v 1.14 2000/06/26 15:34:58 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.13 2000/06/14 06:49:11 cgd Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.14 2000/06/26 15:34:58 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: kvm_mips.c,v 1.13 2000/06/14 06:49:11 cgd Exp $");
 #include <kvm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <limits.h>
 #include <db.h>
