@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.58 1995/04/19 18:46:10 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.59 1995/06/04 12:57:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1051,7 +1051,7 @@ ttyblock(tp)
 			SET(tp->t_state, TS_TBLOCK);
 			ttstart(tp);
 		}
-		/* try to block remote output via hardware flow control */
+		/* Try to block remote output via hardware flow control. */
 		if (ISSET(tp->t_cflag, CHWFLOW) && tp->t_hwiflow &&
 		    (*tp->t_hwiflow)(tp, 1) != 0)
 			SET(tp->t_state, TS_TBLOCK);
@@ -1377,10 +1377,10 @@ read:
 			CLR(tp->t_state, TS_TBLOCK);
 			ttstart(tp);
 		}
-		/* try to unblock remote output via hardware flow control */
-		if (tp->t_cflag&CHWFLOW && tp->t_hwiflow &&
+		/* Try to unblock remote output via hardware flow control. */
+		if (ISSET(tp->t_cflag, CHWFLOW) && tp->t_hwiflow &&
 		    (*tp->t_hwiflow)(tp, 0) != 0)
-			tp->t_state &= ~TS_TBLOCK;
+			CLR(tp->t_state, TS_TBLOCK);
 	}
 	splx(s);
 	return (error);
