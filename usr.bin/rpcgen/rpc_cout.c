@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.19 2002/01/31 22:43:57 tv Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.20 2002/02/05 22:05:42 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.19 2002/01/31 22:43:57 tv Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.20 2002/02/05 22:05:42 christos Exp $");
 #endif
 #endif
 
@@ -194,7 +194,6 @@ print_ifopen(indent, name)
 	char   *name;
 {
 	char _t_kludge[32];
-
 	/*
 	 * XXX Solaris seems to strip the _t. No idea why.
 	 */
@@ -271,7 +270,7 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 			print_ifarg(objname);
 		} else {
 			print_ifopen(indent, "vector");
-			print_ifarg("(char *)");
+			print_ifarg("(char *)(void *)");
 			f_print(fout, "%s", objname);
 		}
 		print_ifarg(amax);
@@ -321,10 +320,15 @@ static void
 emit_enum(def)
 	definition *def;
 {
-	fprintf(fout, "\n");
-	print_ifopen(1, "enum");
-	print_ifarg("(enum_t *)objp");
-	print_ifclose(1);
+	tabify(fout, 1);
+	f_print(fout, "{\n");
+	tabify(fout, 2);
+	f_print(fout, "enum_t et = (enum_t)*objp;\n");
+	print_ifopen(2, "enum");
+	print_ifarg("&et");
+	print_ifclose(2);
+	tabify(fout, 1);
+	f_print(fout, "}\n");
 }
 
 static void
@@ -423,7 +427,7 @@ emit_struct(def)
 
 
 	if (doinline == 0) {
-		fprintf(fout, "\n");
+		f_print(fout, "\n");
 		for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 			print_stat(1, &dl->decl);
 		return;
@@ -452,7 +456,7 @@ emit_struct(def)
 		can_inline = 1;
 
 	if (can_inline == 0) {	/* can not inline, drop back to old mode */
-		fprintf(fout, "\n");
+		f_print(fout, "\n");
 		for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 			print_stat(1, &dl->decl);
 		return;
@@ -630,7 +634,7 @@ emit_typedef(def)
 	char   *amax = def->def.ty.array_max;
 	relation rel = def->def.ty.rel;
 
-	fprintf(fout, "\n");
+	f_print(fout, "\n");
 	print_ifstat(1, prefix, type, rel, amax, "objp", def->def_name);
 }
 
@@ -708,12 +712,12 @@ emit_single_in_line(decl, flag, rel)
 	if (strcmp(upp_case, "INT") == 0) {
 		free(upp_case);
 		freed = 1;
-		upp_case = "LONG";
+		upp_case = "INT32";
 	}
 	if (strcmp(upp_case, "U_INT") == 0) {
 		free(upp_case);
 		freed = 1;
-		upp_case = "U_LONG";
+		upp_case = "U_INT32";
 	}
 	if (flag == PUT) {
 		if (rel == REL_ALIAS)
