@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 1998/02/06 00:02:30 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.15 1998/02/06 01:22:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,8 @@
 #define	PSR_CWP		0x0000001f	/* current window pointer */
 
 #define	PSR_BITS "\20\16EC\15EF\10S\7PS\6ET"
+
+#define	PIL_CLOCK	10
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
@@ -198,7 +200,6 @@ SPL(splimp, 7)
 SPL(splpmap, 7)
 
 /* clock interrupts at level 10 */
-#define	PIL_CLOCK	10
 SPL(splclock, PIL_CLOCK)
 
 /* fd hardware interrupts are at level 11 */
