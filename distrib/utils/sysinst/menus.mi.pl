@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.12 2002/08/12 02:45:18 grant Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.13 2002/10/16 08:04:27 itojun Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -413,16 +413,6 @@ menu namesrv6, title "  Wybierz serwer nazw IPv6";
 		{
 #ifdef INET6
 		  strncpy(net_namesvr6, "3ffe:501:410:100:5254:ff:feda:48bf",
-		      sizeof(net_namesvr6));
-		  yesno = 1;
-#else
-		  yesno = 0;
-#endif
-		}; 
-	option "sh1.iijlab.net", exit, action
-		{
-#ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:507:0:1:260:97ff:fe07:69ea",
 		      sizeof(net_namesvr6));
 		  yesno = 1;
 #else

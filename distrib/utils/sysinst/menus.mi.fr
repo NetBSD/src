@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.41 2002/08/12 02:45:18 grant Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.42 2002/10/16 08:04:27 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -374,16 +374,6 @@ menu namesrv6, title "  Choisissez un serveur de noms IPv6 :";
 		{
 #ifdef INET6
 		  strncpy(net_namesvr6, "3ffe:501:410:100:5254:ff:feda:48bf",
-		      sizeof(net_namesvr6));
-		  yesno = 1;
-#else
-		  yesno = 0;
-#endif
-		}; 
-	option "sh1.iijlab.net", exit, action
-		{
-#ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:507:0:1:260:97ff:fe07:69ea",
 		      sizeof(net_namesvr6));
 		  yesno = 1;
 #else
