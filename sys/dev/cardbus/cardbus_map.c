@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.6 1999/11/09 09:20:30 haya Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.7 2000/01/25 22:32:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -220,7 +220,8 @@ cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
     *sizep = PCI_MAPREG_MEM_SIZE(mask);
   }
   if (flagsp != 0) {
-    *flagsp = PCI_MAPREG_MEM_CACHEABLE(address) ? BUS_SPACE_MAP_CACHEABLE : 0;
+    *flagsp = PCI_MAPREG_MEM_PREFETCHABLE(address) ?
+		BUS_SPACE_MAP_PREFETCHABLE : 0;
   }
 
   return 0;
