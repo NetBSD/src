@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13 1998/01/22 21:35:29 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.13.4.1 1998/01/27 19:33:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -77,9 +77,12 @@
 #include <machine/mon.h>
 #include <machine/vmparam.h>
 #include <machine/dvma.h>
-#include <machine/machdep.h>
 
-#include "buserr.h"
+#include <sun3/sun3/buserr.h>
+#include <sun3/sun3/cache.h>
+#include <sun3/sun3/fc.h>
+
+#include <sun3/sun3x/enable.h>
 
 /* Note: Avoid /usr/include for cross compilation! */
 extern void printf __P((char *fmt, ...));
@@ -128,9 +131,9 @@ struct nv assyms[] = {
 
 	/* sun3 memory map */
 	def1(USRSTACK),
-	def1(MONSTART),
-	def1(PROM_BASE),
-	def1(MONEND),
+	def1(SUN3X_MONSTART),
+	def1(SUN3X_PROM_BASE),
+	def1(SUN3X_MONEND),
 
 	/* kernel-isms */
 	def1(KERNBASE),
