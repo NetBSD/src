@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: kernfs_vnops.c,v 1.5 1993/04/27 07:21:37 mycroft Exp $
+ * $Id: kernfs_vnops.c,v 1.6 1993/04/27 10:06:10 cgd Exp $
  */
 
 /*
@@ -133,10 +133,12 @@ kernfs_xread(kt, buf, len, lenp)
 		char *cp = hostname;
 		int xlen = hostnamelen;
 
-		if (xlen >= len)
+		if (xlen + 2 > len)	/* extra space for null and newline */
 			return (EINVAL);
 
-		sprintf(buf, "%s\n", cp);
+		bcopy(cp, buf, xlen);	/* safer than sprintf */
+		buf[xlen] = '\n';
+		buf[xlen+1] = '\0';
 		break;
 	}
 
@@ -167,7 +169,11 @@ kernfs_xwrite(kt, buf, len)
 		if (buf[len-1] == '\n')
 			--len;
 		bcopy(buf, hostname, len);
-		hostnamelen = len - 1;
+		/* kernfs_write set buf[value_passed_as_len] = \0.
+		 * therefore, buf len (hostnamelen) = len.
+		 */
+		hostnamelen = len;
+		hostname[hostnamelen] = '\0';	/* null end of string. */
 		return (0);
 	}
 
