@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.3 2001/07/29 04:25:32 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.4 2001/07/29 20:51:08 he Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -27,3 +27,108 @@ libexec/telnetd/utility.c			1.18 via patch
 crypto/dist/openssl/crypto/rand/md_rand.c	1.2
 
   Fix a pseudo-random number generator weakness. Noted on bugtraq.
+
+sys/arch/i386/include/reg.h			1.16
+
+  Redefine register offsets using offsetof().  Fixes math emulation
+  lossage.
+
+etc/services					1.44,1.47-1.50
+
+  Rename old BSD ``kpasswd'' to ``kpwd'', add ``ripng'', ``sstp'',
+  and AFS services.  Fixes PR#11139.
+
+distrib/notes/macppc/hardware			1.17
+distrib/notes/macppc/install			1.15
+distrib/notes/macppc/prep			1.20
+distrib/notes/macppc/whatis			1.4
+distrib/notes/common/main			1.132
+
+  Clarify explanations and add additional deail about known problems
+  with two models.
+
+distrib/utils/sysinst/Makefile.inc		1.10
+
+  Add dependency for menu files on osrelease.sh.
+
+dist/ipf/fils.c					1.11
+usr.sbin/ipf/ipfstat/Makefile			1.14
+usr.sbin/ipf/Makefile.inc			1.8
+
+  Enable ``top''-like running state display in ``ipfstat''.
+  Fixes PR#13404.
+
+share/misc/bsd-family-tree			1.8-1.9
+
+  Update to state after NetBSD-1.5.1.
+
+sys/kern/kern_proc.c				1.44
+
+  When freeing a session, remove the reference to it from the
+  associated tty.
+
+distrib/notes/macppc/hardware			1.18-1.19
+
+  Add ``iMac (Summer 2000)'' (confirmed working); correct D-Link
+  DFE-530TX driver reference.
+
+sbin/route/route.c				1.46
+
+  Make sure decoded output from ``route monitor'' gets properly
+  flushed.
+
+sys/net/if_spppsubr.c				1.24
+
+  Fix bug causing NCP bit mask to get out of sync.  Fixes PR#11161.
+
+sys/dev/pci/pciide.c				1.120
+
+  Workaround for buggy OPTi pciide chipset revisions, as reported
+  in PR#11644.
+
+sys/kern/kern_descrip.c				1.80 via patch
+
+  Unshare the file descriptor table and ``cwdinfo'' when we exec.
+
+sys/kern/kern_sig.c				1.115 via patch
+
+  Unshare signal actions on exec.
+
+sys/dev/pci/cs4281.c				patch
+sys/dev/pci/yds.c				patch
+
+  Correct argument to pci_intr_map().  Fixes PR#13508.
+
+etc/defaults/daily.conf				1.2
+etc/defaults/monthly.conf			1.2
+etc/defaults/rc.conf				1.2
+etc/defaults/security.conf			1.2
+etc/defaults/weekly.conf			1.2
+
+  Remind people to edit /etc/*.conf instead of /etc/defaults/*.conf.
+
+distrib/utils/init_s/Makefile			patch
+distrib/utils/libhack/Makefile			patch
+distrib/utils/libhack/Makefile.inc		patch
+distrib/utils/more/Makefile			patch
+distrib/utils/ssh/Makefile			patch
+distrib/utils/tls/Makefile			patch
+distrib/utils/x_dd/Makefile			patch
+distrib/utils/x_dmesg/Makefile			patch
+distrib/utils/x_ftp/Makefile			patch
+distrib/utils/x_gzip/Makefile			patch
+distrib/utils/x_ifconfig/Makefile		patch
+distrib/utils/x_netstat/Makefile		patch
+distrib/utils/x_ping/Makefile			patch
+distrib/utils/x_ping6/Makefile			patch
+distrib/utils/x_route/Makefile			patch
+distrib/utils/x_sh/Makefile			patch
+distrib/utils/x_umount/Makefile			patch
+distrib/utils/zcat/Makefile			patch
+
+  Drop ``-Os'' on sparc64 due to toolchain issues.
+
+distrib/amiga/miniroot/install.md		1.15
+
+  Workaround for the changed ``mount'' behaviour, which no longer
+  defaults to ``ffs'' in certain circumstances.
