@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.11 1998/02/03 18:41:18 perry Exp $	*/
+/*	$NetBSD: perror.c,v 1.12 1998/02/16 11:27:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.11 1998/02/03 18:41:18 perry Exp $");
+__RCSID("$NetBSD: perror.c,v 1.12 1998/02/16 11:27:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ perror(s)
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = __strerror(errno, buf, NL_TEXTMAX);
+	v->iov_base = __strerror(errno, buf, sizeof(buf));
 	v->iov_len = strlen(v->iov_base);
 	v++;
 	v->iov_base = "\n";
