@@ -1,4 +1,4 @@
-/*	$NetBSD: yplog.c,v 1.3 1997/10/07 14:39:07 lukem Exp $	*/
+/*	$NetBSD: yplog.c,v 1.4 1997/10/13 03:42:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -29,6 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: yplog.c,v 1.4 1997/10/13 03:42:32 lukem Exp $");
+#endif
 
 /*
  * yplog.c: replacement yplog routines for 

@@ -1,4 +1,4 @@
-/*	$NetBSD: localhostname.c,v 1.3 1997/07/30 22:55:05 jtc Exp $	*/
+/*	$NetBSD: localhostname.c,v 1.4 1997/10/13 03:42:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: localhostname.c,v 1.4 1997/10/13 03:42:27 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <err.h>

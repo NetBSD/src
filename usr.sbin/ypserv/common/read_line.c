@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.1.1.1 1996/08/09 10:14:53 thorpej Exp $	*/
+/*	$NetBSD: read_line.c,v 1.2 1997/10/13 03:42:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: read_line.c,v 1.2 1997/10/13 03:42:29 lukem Exp $");
+#endif
 
 #include <sys/param.h>
 #include <ctype.h>
