@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 2002/06/06 20:03:38 fredette Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2 2003/08/31 01:52:43 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <machine/frame.h>
  
 #if defined(LIBC_SCCS) && !defined(lint) 
-        RCSID("$NetBSD: bcopy.S,v 1.1 2002/06/06 20:03:38 fredette Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.2 2003/08/31 01:52:43 chs Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -504,28 +504,28 @@ LEAF_ENTRY(spcopy)
 	 * Setup the fault handler, and load %ret0
 	 * with EFAULT, assuming the copy will fail.
 	 */
-	.import	curproc, data
-        ldil    L%curproc, %r31
-        ldw     R%curproc(%r31), %r31
+	.import	curlwp, data
+	ldil    L%curlwp, %r31
+	ldw     R%curlwp(%r31), %r31
 #ifdef	DIAGNOSTIC
-	comb,<>,n %r0, %r31, Lspcopy_curproc_ok
+	comb,<>,n %r0, %r31, Lspcopy_curlwp_ok
 	ldil	L%panic, %r1 
-	ldil	L%Lspcopy_curproc_bad, %arg0
+	ldil	L%Lspcopy_curlwp_bad, %arg0
 	ldo	R%panic(%r1), %r1
-	ldo	R%Lspcopy_curproc_bad(%arg0), %arg0
+	ldo	R%Lspcopy_curlwp_bad(%arg0), %arg0
 	.call
 	bv,n    %r0(%r1)
 	nop
-Lspcopy_curproc_bad
-	.asciz	"spcopy: curproc == NULL\n"
+Lspcopy_curlwp_bad
+	.asciz	"spcopy: curlwp == NULL\n"
 	.align	8
-Lspcopy_curproc_ok
+Lspcopy_curlwp_ok
 #endif /* DIAGNOSTIC */
-        ldil    L%spcopy_fault, %r1
-        ldw     P_ADDR(%r31), %r31
-        ldo     R%spcopy_fault(%r1), %r1
+	ldil    L%spcopy_fault, %r1
+	ldw     L_ADDR(%r31), %r31
+	ldo     R%spcopy_fault(%r1), %r1
 	ldi	EFAULT, %ret0
-        stw     %r1, U_PCB+PCB_ONFAULT(%r31)
+	stw     %r1, U_PCB+PCB_ONFAULT(%r31)
 
 	/* Setup the space registers. */
 	mfsp	sr2, %ret1
@@ -541,7 +541,7 @@ _LABEL(_done)
 	/* Return. */
 	copy	%r0, %ret0
 ALTENTRY(spcopy_fault)
-        stw     %r0, U_PCB+PCB_ONFAULT(%r31)
+	stw     %r0, U_PCB+PCB_ONFAULT(%r31)
 	bv	%r0(%rp)
 	mtsp	%ret1, sr2
 EXIT(spcopy)
