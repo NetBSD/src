@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.8 2001/03/12 10:00:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -374,3 +374,5 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SIOP_SCRATCHI	0x78 /* Scratch register I, R/W, 875-only */
 
 #define SIOP_SCRATCHJ	0x7c /* Scratch register J, R/W, 875-only */
+
+#define SIOP_DFBC	0xf0 /* DMA fifo byte count, RO */
