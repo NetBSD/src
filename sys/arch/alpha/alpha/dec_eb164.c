@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_eb164.c,v 1.4.2.1 1997/01/24 07:05:42 cgd Exp $	*/
+/*	$NetBSD: dec_eb164.c,v 1.4.2.2 1997/02/01 02:40:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,6 +38,7 @@
 #include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
+#include <alpha/isa/pcppivar.h>
 #include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
@@ -48,6 +49,9 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <alpha/wscons/wsdisplayvar.h>
+#include <alpha/wscons/wskbdvar.h>
 
 cpu_decl(dec_eb164);
 
@@ -102,21 +106,33 @@ dec_eb164_cons_init()
 			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 			cominit(comconstag, comconsbah, comdefaultrate);
 
-			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
+			cn_tab = &comcons;
 			break;
 		}
 
 	case 3:
 		/* display console ... */
 		/* XXX */
-		if (ctb->ctb_turboslot == 0)
-			isa_display_console(ccp->cc_iot, ccp->cc_memt);
-		else
-			pci_display_console(ccp->cc_iot, ccp->cc_memt,
-			    &ccp->cc_pc, (ctb->ctb_turboslot >> 8) & 0xff,
-			    ctb->ctb_turboslot & 0xff, 0);
-		break;
+		{
+			static struct consdev wscons = { NULL, NULL,
+			    wskbd_cngetc, wsdisplay_cnputc, wskbd_cnpollc,
+			    NODEV, 1 };
+
+			pcppi_attach_console(ccp->cc_iot);
+
+			if (ctb->ctb_turboslot == 0)
+				isa_display_console(ccp->cc_iot, ccp->cc_memt);
+			else
+				pci_display_console(ccp->cc_iot, ccp->cc_memt,
+				    &ccp->cc_pc,
+				    (ctb->ctb_turboslot >> 8) & 0xff,
+				    ctb->ctb_turboslot & 0xff, 0);
+		
+			wscons.cn_dev = makedev(25, 0);	/* XXX */
+			cn_tab = &wscons;
+			break;
+		}
 
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
