@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1997/10/19 15:17:27 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1997/10/19 15:32:57 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -445,8 +445,8 @@ static char *fpu_descr[] = {
 #else
 	"no math support",	/* 0 */
 #endif
-	" mc68881 FPU",		/* 1 */
-	" mc68882 FPU",		/* 2 */
+	" m68881 FPU",		/* 1 */
+	" m68882 FPU",		/* 2 */
 	"/FPU",			/* 3 */
 	"/FPU",			/* 4 */
 	};
