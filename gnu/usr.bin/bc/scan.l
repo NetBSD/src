@@ -1,4 +1,6 @@
 %{
+/* 	$NetBSD: scan.l,v 1.2 1994/12/02 00:43:41 phil Exp $  */
+
 /* scan.l: the (f)lex description file for the scanner. */
 
 /*  This file is part of bc written for MINIX.

@@ -1,7 +1,7 @@
 /* number.h: Arbitrary precision numbers header file. */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,8 +23,6 @@
                 Computer Science Department, 9062
                 Western Washington University
                 Bellingham, WA 98226-9062
-
-	$Id: number.h,v 1.2 1993/08/02 17:25:43 mycroft Exp $
        
 *************************************************************************/
 

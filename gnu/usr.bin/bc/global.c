@@ -1,7 +1,9 @@
+/* 	$NetBSD: global.c,v 1.3 1994/12/02 00:43:31 phil Exp $  */
+
 /* global.c:  This defines the global variables. */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,10 +28,6 @@
        
 *************************************************************************/
 
-#ifndef lint
-static char rcsid[] = "$Id: global.c,v 1.2 1993/08/02 17:25:37 mycroft Exp $";
-#endif /* not lint */
-
 #include "bcdefs.h"
 
 /* Since we want to define them here, we use the following define. */
@@ -41,6 +39,6 @@ static char rcsid[] = "$Id: global.c,v 1.2 1993/08/02 17:25:37 mycroft Exp $";
 
 #ifndef BC_MATH_FILE
 CONST char libmath[] = 
-#include "math.h"
+#include "libmath.h"
 ;
 #endif 
