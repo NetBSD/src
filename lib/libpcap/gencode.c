@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.11 1999/05/11 06:36:26 thorpej Exp $	*/
+/*	$NetBSD: gencode.c,v 1.12 1999/05/15 17:39:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.11 1999/05/11 06:36:26 thorpej Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.12 1999/05/15 17:39:07 thorpej Exp $");
 #endif
 #endif
 
@@ -1961,6 +1961,22 @@ gen_inbound(dir)
 	int dir;
 {
 	register struct block *b0;
+
+	/*
+	 * Only SLIP and old-style PPP data link types support
+	 * inbound/outbound qualifiers.
+	 */
+	switch (linktype) {
+	case DLT_SLIP:
+	case DLT_PPP:
+		/* These are okay. */
+		break;
+
+	default:
+		bpf_error("inbound/outbound not supported on linktype 0x%x\n",
+		    linktype);
+		/* NOTREACHED */
+	}
 
 	b0 = gen_relation(BPF_JEQ,
 			  gen_load(Q_LINK, gen_loadi(0), 1),
