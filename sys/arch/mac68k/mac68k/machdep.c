@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 1998/10/26 23:17:54 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.216 1998/12/22 08:47:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,10 +155,10 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 struct mac68k_machine_S mac68k_machine;
 
 volatile u_char *Via1Base, *Via2Base, *PSCBase = NULL;
-u_long  NuBusBase = NBBASE;
-u_long  IOBase;
+u_long	NuBusBase = NBBASE;
+u_long	IOBase;
 
-vm_offset_t SCSIBase;
+vaddr_t	SCSIBase;
 
 /* These are used to map kernel space: */
 extern int numranges;
@@ -273,7 +273,7 @@ void
 mac68k_init()
 {
 	int i;
-	extern vm_offset_t avail_start;
+	extern vaddr_t avail_start;
 
 	/*
 	 * Tell the VM system about available physical memory.
@@ -311,7 +311,7 @@ mac68k_init()
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
@@ -380,7 +380,7 @@ cpu_startup(void)
 	unsigned i;
 	int vers;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
+	vaddr_t minaddr, maxaddr;
 	vm_size_t size = 0;	/* To avoid compiler warning */
 	int delay;
 
@@ -508,16 +508,16 @@ again:
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 	    NULL, UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 	    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 	    &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 	    &minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
@@ -530,7 +530,7 @@ again:
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
 		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -539,7 +539,7 @@ again:
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -554,7 +554,7 @@ again:
 		}
 #else /* ! UVM */
 		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -563,7 +563,7 @@ again:
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -596,10 +596,10 @@ again:
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 #endif
 
@@ -677,7 +677,7 @@ void via_shutdown __P((void));
  */
 void
 setregs(p, pack, stack)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {
@@ -779,7 +779,7 @@ cpu_reboot(howto, bootstr)
 	}
 
 	/* Map the last physical page VA = PA for doboot() */
-	pmap_enter(pmap_kernel(), (vm_offset_t)maxaddr, (vm_offset_t)maxaddr,
+	pmap_enter(pmap_kernel(), (vaddr_t)maxaddr, (vaddr_t)maxaddr,
 	    VM_PROT_ALL, TRUE);
 
 	printf("rebooting...\n");
@@ -956,7 +956,7 @@ dumpsys()
 				/* dump routine */
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int pg;			/* page being dumped */
-	vm_offset_t maddr;	/* PA being dumped */
+	paddr_t maddr;		/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
 	int error;		/* error code from (*dump)() */
 
@@ -1009,7 +1009,7 @@ dumpsys()
 			}
 			maddr = m->ram_segs[seg].start;
 		}
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, TRUE);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
@@ -1060,7 +1060,7 @@ dumpsys()
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;
@@ -2356,7 +2356,7 @@ setmachdep()
  */
 void
 mac68k_set_io_offsets(base)
-	vm_offset_t base;
+	vaddr_t base;
 {
 	extern volatile u_char *sccA;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.45 1998/10/23 01:16:24 ender Exp $	*/
+/*	$NetBSD: ite.c,v 1.46 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -934,11 +934,11 @@ itematch(parent, cf, aux)
 {
 	struct grfbus_attach_args *ga = aux;
 	struct grfmode *gm = ga->ga_grfmode;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	if (strcmp(ga->ga_name, "ite"))
 		return 0;
-	pa = pmap_extract(pmap_kernel(), (vm_offset_t)(gm->fbbase + gm->fboff));
+	pa = pmap_extract(pmap_kernel(), (vaddr_t)(gm->fbbase + gm->fboff));
 
 	if (pa != mac68k_vidphys) {
 		if (pa < 0xf9000000 || pa > 0xfeffffff)
@@ -951,7 +951,7 @@ itematch(parent, cf, aux)
 		 * Note:  this is an ugly hack and I wish I knew what
 		 * to do about it.  -- sr
 		 */
-		pa = (vm_offset_t)(((u_long)pa & 0xff0fffff) |
+		pa = (paddr_t)(((u_long)pa & 0xff0fffff) |
 		    (((u_long)pa & 0x0f000000) >> 4));
 	}
 	return (pa == mac68k_vidphys);
