@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mount_fdesc.c,v 1.2 1993/07/30 01:00:28 mycroft Exp $
+ *	$Id: mount_fdesc.c,v 1.3 1993/08/24 13:15:14 pk Exp $
  */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ char *v[];
 	extern int optind;
 	int ch;
 	int usage = 0;
-	int mntflags;
+	int mntflags = 0;
 	char *dummy;
 	char *mountpt;
 	int rc;
