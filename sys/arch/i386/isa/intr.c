@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.19 1994/04/25 22:12:14 mycroft Exp $
+ *	$Id: intr.c,v 1.20 1994/04/28 08:28:35 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -86,6 +86,7 @@ isa_defaultirq()
 #endif
 	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
+	outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
 #ifdef REORDER_IRQ
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
@@ -100,6 +101,7 @@ isa_defaultirq()
 #endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
+	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
 
 	splhigh();
 	enable_intr();
