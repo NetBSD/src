@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.2 1997/03/22 01:41:35 thorpej Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.3 2003/02/01 14:48:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -31,7 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int biosdiskstrategy __P((void*, int, daddr_t, size_t, void*, size_t*));
-int biosdiskopen __P((struct open_file*, ...));
-int biosdiskclose __P((struct open_file*));
-int biosdiskioctl __P((struct open_file*, u_long, void*));
+int biosdiskstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int biosdiskopen(struct open_file *, ...);
+int biosdiskclose(struct open_file *);
+int biosdiskioctl(struct open_file *, u_long, void *);
+u_int biosdiskfindptn(int, u_int);
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.6 2001/07/07 22:57:57 perry Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.7 2003/02/01 14:48:18 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -130,17 +130,16 @@ dos_read(f, addr, size, resid)
 			if (tsize > DISKBUFSIZE)
 				tsize = DISKBUFSIZE;
 
-			diskbuf_user = dos_read;
+			alloc_diskbuf(dos_read);
 
-			tgot = dosread(df->doshandle, diskbuf, tsize);
-
+			tgot = dosread(df->doshandle, diskbufp, tsize);
 			if (tgot < 0) {
 #ifdef DEBUG
 				printf("DOS error %d\n", doserrno);
 #endif
 				return (dos2errno());
 			}
-			memcpy(addr, diskbuf, tgot);
+			memcpy(addr, diskbufp, tgot);
 
 			(unsigned long)addr += tgot;
 			lsize -= tgot;

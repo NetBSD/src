@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.2 2002/05/10 23:21:17 itohy Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.3 2003/02/01 14:48:19 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,44 +43,35 @@
  */
 
 #include <machine/asm.h>
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
 
 	.text
 ENTRY(start)
+	.code16
 	# start is loaded at 0x0:0x7c00 but we want 0x7c0:0x0
 	# ljmp to the next instruction to adjust %cs
-	data32
 	ljmp	$0x7c0, $start1
 
-	# Our stack
+	# Our stack		XXX probably not!
 	.space	1024
 
 start1:
 	# set up %ds
-	data32
 	xorl	%eax, %eax
-	movl	%cs, %ax
-	movl	%ax, %ds
+	mov	%cs, %ax
+	mov	%ax, %ds
 
 	# set up %ss and %esp
-	movl	%ax, %ss
-	data32
-	movl	$_C_LABEL(start), %esp
+	mov	%ax, %ss
+	movl	$0xfffc, %esp		/* stack at top of 64k segment */
 
-	addr32
-	data32
 	movl	%eax, _C_LABEL(ourseg)
 	shll	$4, %eax
 
 	/* fix up GDT entries for bootstrap */
 #define	FIXUP(gdt_index) \
-	addr32; \
-	movl	%eax, gdt+gdt_index+2;	/* actually movw %ax */ \
-	addr32; \
+	movw	%ax, gdt+gdt_index+2;	\
 	movb	%bl, gdt+gdt_index+4
 
-	data32
 	shldl	$16, %eax, %ebx
 
 	FIXUP(bootcodeseg)
@@ -88,21 +79,18 @@ start1:
 	FIXUP(bootdataseg)
 
 	/* fix up GDT pointer */
-	data32
 	addl	$gdt, %eax
-	addr32
-	data32
 	movl	%eax, gdtarg+2
 
 	/* change to protected mode */
-	data32
-	call	_C_LABEL(real_to_prot)
+	calll	_C_LABEL(real_to_prot)
+	.code16
 
 	/* clear bss */
-	xorl %eax, %eax
-	movl $_C_LABEL(edata), %edi
-	movl $_C_LABEL(end), %ecx
-	subl %edi, %ecx
+	xorl	%eax, %eax
+	movl	$_C_LABEL(edata), %edi
+	movl	$_C_LABEL(end), %ecx
+	subl	%edi, %ecx
 	cld
 	rep
 	stosb
@@ -113,18 +101,15 @@ start1:
 	.globl	_C_LABEL(exit)
 _C_LABEL(exit):
 	call	_C_LABEL(prot_to_real)
-	data32
-	movl	$efail, %esi
-	data32
+	.code16
+	movw	$efail, %si
 	call	message
 
 #ifdef notyet
 	/* sleep for 3s = 0x2dc6c0 us */
 	movb	$0x86, %ah
-	data32
-	movl	$0x002d, %ecx
-	data32
-	movl	$0xc6c0, %edx
+	mov	$0x002d, %cx
+	mov	$0xc6c0, %dx
 	int	$0x15
 
 	/* call ROM BASIC */
@@ -168,17 +153,17 @@ flatdataseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
 
-	/* boot code segment, will be patched */
+	/* boot code segment, base will be patched */
 bootcodeseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x9e, 0x40, 0
+	.byte	0, 0x9e, 0x4f, 0
 
-	/* boot data segment, will be patched */
+	/* boot data segment, base will be patched */
 bootdataseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x92, 0x0f, 0
+	.byte	0, 0x92, 0x4f, 0
 
-	/* 16 bit real mode, will be patched */
+	/* 16 bit real mode, base will be patched */
 bootrealseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x9e, 0x00, 0
@@ -200,34 +185,36 @@ CR0_PE		=	0x1
  *	transfer from real mode to protected mode.
  */
 ENTRY(real_to_prot)
+	.code16
 	# guarantee that interrupt is disabled when in prot mode 
 	cli
+	pushl	%eax
+	push	%cs			/* ensure %ds is correct */
+	pop	%ds
 
 	# load the gdtr
-	addr32
-	data32
 	lgdt	gdtarg
 
 	# set the PE bit of CR0
 	movl	%cr0, %eax
 
-	data32
 	orl	$CR0_PE, %eax
 	movl	%eax, %cr0
 
 	# make intrasegment jump to flush the processor pipeline and
 	# reload CS register   
-	data32
 	ljmp	$bootcodeseg, $xprot
 
 xprot:
+	.code32
 	# we are in USE32 mode now
 	# set up the protected mode segment registers : DS, SS, ES
-	movl	$bootdataseg, %eax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
+	mov	$bootdataseg, %ax
+	mov	%ax, %ds
+	mov	%ax, %ss
+	mov	%ax, %es
 
+	popl	%eax
 	ret
 
 /*
@@ -235,6 +222,8 @@ xprot:
  *	transfer from protected mode to real mode
  */
 ENTRY(prot_to_real)
+	.code32
+	pushl	%eax
 	# set up a dummy stack frame for the second seg change.
 	# Adjust the intersegment jump instruction following
 	# the clearing of protected mode bit.
@@ -248,33 +237,32 @@ ENTRY(prot_to_real)
 	ljmp	 $bootrealseg, $x16
 
 x16:
+	.code16
 	# clear the PE bit of CR0
 	movl	%cr0, %eax     
-	data32
 	andl	$~CR0_PE, %eax
 	movl	%eax, %cr0
-	# Here we have an 16 bits intersegment jump.
-	.byte 0xea
-	.word xreal
-	.word 0
+	ljmp	$0, $xreal		/* segment overwritten above */
 
 xreal:
+	.code16
 	# we are in real mode now
 	# set up the real mode segment registers : DS, SS, ES
-	movl	%cs, %ax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
+	mov	%cs, %ax
+	mov	%ax, %ds
+	mov	%ax, %ss
+	mov	%ax, %es
 
 	sti
-	data32
-	ret
+	popl	%eax
+	retl
 
 /*
  * pbzero(dst, cnt)
  *	where dst is a physical address and cnt is the length
  */
 ENTRY(pbzero)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%es
@@ -284,7 +272,7 @@ ENTRY(pbzero)
 
 	# set %es to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %es
+	mov	%ax, %es
 
 	movl	8(%ebp), %edi		# destination
 	movl	12(%ebp), %ecx		# count
@@ -303,6 +291,7 @@ ENTRY(pbzero)
  *	where src is a virtual address and dst is a physical address
  */
 ENTRY(vpbcopy)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%es
@@ -313,7 +302,7 @@ ENTRY(vpbcopy)
 
 	# set %es to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %es
+	mov	%ax, %es
 
 	movl	8(%ebp), %esi		# source
 	movl	12(%ebp), %edi		# destination
@@ -333,6 +322,7 @@ ENTRY(vpbcopy)
  *	where src is a physical address and dst is a virtual address
  */
 ENTRY(pvbcopy)
+	.code32
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ds
@@ -343,7 +333,7 @@ ENTRY(pvbcopy)
 
 	# set %ds to point at the flat segment
 	movl	$flatdataseg, %eax
-	movl	%ax, %ds
+	mov	%ax, %ds
 
 	movl	8(%ebp), %esi		# source
 	movl	12(%ebp), %edi		# destination
@@ -368,6 +358,7 @@ ENTRY(vtophys)
  * message: write the error message in %ds:%esi to the console
  */
 message:
+	.code16
 /*
  * BIOS call "INT 10H Function 0Eh" to write character to console
  *	Call with	%ah = 0x0e
@@ -375,34 +366,24 @@ message:
  *			%bh = page
  *			%bl = foreground color
  */
-	data32
 	pushl	%eax
-	data32
 	pushl	%ebx
-	data32
 	pushl	%edx
 
 nextb:
 	cld
 	lodsb			# load a byte into %al
 	testb	%al, %al
-	data32
 	jz	done
 
 	movb	$0x0e, %ah
-	data32
-	movl	$0x0001, %ebx
+	movw	$0x0001, %bx
 	int	$0x10
 
-	data32
 	jmp	nextb
 
 done:
-	data32
 	popl	%edx
-	data32
 	popl	%ebx
-	data32
 	popl	%eax
-	data32
 	ret
