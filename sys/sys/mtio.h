@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: mtio.h,v 1.4 1994/01/26 21:48:20 mw Exp $
+ *	$Id: mtio.h,v 1.5 1994/02/01 20:35:46 mycroft Exp $
  */
 
 #ifndef _SYS_MTIO_H_
@@ -100,7 +100,6 @@ struct mtget {
 #define MT_ISWTEK5099	0x13            /* WANGTEK 5099ES */
 #define MT_ISVIPER2525	0x14            /* Archive Viper 2525 */
 
-
 /* mag tape io control commands */
 #define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */
 #define	MTIOCGET	_IOR('m', 2, struct mtget)	/* get tape status */
@@ -108,7 +107,7 @@ struct mtget {
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 
 #ifndef KERNEL
-#define	DEFTAPE	"/dev/rmt12"
+#define	DEFTAPE	"/dev/nrst0"
 #endif
 
 #ifdef	KERNEL
