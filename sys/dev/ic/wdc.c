@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.84 2000/04/01 14:32:22 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.85 2000/04/01 14:50:32 bouyer Exp $ */
 
 
 /*
@@ -321,7 +321,7 @@ wdcattach(chp)
 		 * Wait a bit, some devices are weird just after a reset.
 		 * Then issue a IDENTIFY command, to try to detect slave ghost
 		 */
-		delay(100);
+		delay(1000000);
 		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
