@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.22 2000/06/17 07:17:36 soda Exp $
+#	$NetBSD: files.arc,v 1.23 2000/06/20 08:26:54 soda Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -75,6 +75,7 @@ file	arch/arc/algor/algorbus.c	algor
 device	isabr {} : isabus
 attach	isabr at mainbus		# optional
 file	arch/arc/isa/isabus.c		isabr
+file	arch/arc/isa/isadma_bounce.c	# XXX DESKSTATION_RPC44
 
 #
 #	PCI Bus bridge
