@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2000/02/27 20:26:28 mycroft Exp $
+#	$NetBSD: Makefile,v 1.23 2000/03/16 14:56:19 ad Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -42,7 +42,7 @@ realall: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=3072
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i 4000 -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
