@@ -34,35 +34,38 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.35 1993/11/11 15:43:52 mycroft Exp $
+ *	$Id: pccons.c,v 1.36 1993/12/20 09:06:35 mycroft Exp $
  */
+
+#include "pc.h"
+#if NPC > 0
 
 /*
  * code to work keyboard & display for PC-style console
  */
-#include "param.h"
-#include "conf.h"
-#include "ioctl.h"
-#include "proc.h"
-#include "user.h"
-#include "select.h"
-#include "tty.h"
-#include "uio.h"
-#include "i386/isa/isa_device.h"
-#include "callout.h"
-#include "systm.h"
-#include "kernel.h"
-#include "syslog.h"
-#include "i386/isa/icu.h"
-#include "i386/i386/cons.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/ic/i8042.h"
-#include "i386/isa/kbd.h"
-#include "machine/pc/display.h"
-#include "machine/pccons.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
+#include <sys/callout.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "pc.h"
-#if NPC > 0
+#include <machine/pio.h>
+#include <machine/pccons.h>
+#include <machine/pc/display.h>
+
+#include <i386/i386/cons.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/isa.h>
+#include <i386/isa/ic/i8042.h>
+#include <i386/isa/kbd.h>
 
 #ifndef BEEP_FREQ
 #define BEEP_FREQ 1500
@@ -1774,7 +1777,7 @@ getchar()
 	/*}*/
 }
 
-#include "machine/stdarg.h"
+#include <machine/stdarg.h>
 static nrow;
 
 #define	DPAUSE 1
@@ -1813,8 +1816,8 @@ int pcmmap(dev_t dev, int offset, int nprot)
 }
 
 #ifdef XSERVER						/* 15 Aug 92*/
-#include "machine/psl.h"
-#include "machine/frame.h"
+#include <machine/psl.h>
+#include <machine/frame.h>
 
 pc_xmode_on ()
 {
