@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: fields.c,v 1.3 2000/10/15 20:46:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: fields.c,v 1.3 2000/10/15 20:46:33 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -83,11 +83,11 @@ enterkey(keybuf, line, size, fieldtable)
 	struct field fieldtable[];
 {
 	int i;
-	register u_char *l_d_mask;
-	register u_char *lineend, *pos;
+	u_char *l_d_mask;
+	u_char *lineend, *pos;
 	u_char *endkey, *keypos;
-	register struct coldesc *clpos;
-	register int col = 1;
+	struct coldesc *clpos;
+	int col = 1;
 	struct field *ftpos;
 	l_d_mask = d_mask;
 	pos = (u_char *) line->data - 1;
@@ -137,12 +137,12 @@ enterkey(keybuf, line, size, fieldtable)
 u_char *
 enterfield(tablepos, endkey, cur_fld, gflags)
 	struct field *cur_fld;
-	register u_char *tablepos, *endkey;
+	u_char *tablepos, *endkey;
 	int gflags;
 {
-	register u_char *start, *end, *lineend, *mask, *lweight;
+	u_char *start, *end, *lineend, *mask, *lweight;
 	struct column icol, tcol;
-	register u_int flags;
+	u_int flags;
 	u_int Rflag;
 	icol = cur_fld->icol;
 	tcol = cur_fld->tcol;
@@ -204,13 +204,13 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 
 u_char *
 number(pos, bufend, line, lineend, Rflag)
-	register u_char *line, *pos, *bufend, *lineend;
+	u_char *line, *pos, *bufend, *lineend;
 	int Rflag;
 {
-	register int or_sign, parity = 0;
-	register int expincr = 1, exponent = -1;
+	int or_sign, parity = 0;
+	int expincr = 1, exponent = -1;
 	int bite, expsign = 1, sign = 1;
-	register u_char lastvalue, *nonzero, *tline, *C_TENS;
+	u_char lastvalue, *nonzero, *tline, *C_TENS;
 	u_char *nweights;
 
 	if (Rflag)
