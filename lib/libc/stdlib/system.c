@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.16 1998/11/15 17:13:52 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.17 2001/10/31 13:31:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.16 1998/11/15 17:13:52 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.17 2001/10/31 13:31:26 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -57,33 +58,52 @@ system(command)
 	const char *command;
 {
 	pid_t pid;
-	sig_t intsave, quitsave;
+	struct sigaction intsa, quitsa, sa;
 	sigset_t nmask, omask;
 	int pstat;
 	char *argp[] = {"sh", "-c", /* LINTED */(char *)command, NULL};
 
-	if (!command)		/* just checking... */
+	if (command == NULL)		/* just checking... */
 		return(1);
+
+	sa.sa_handler = SIG_IGN;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+
+	if (sigaction(SIGINT, &sa, &intsa) == -1)
+		return -1;
+	if (sigaction(SIGQUIT, &sa, &quitsa) == -1)
+		return -1;
 
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
 	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
 		return -1;
+
 	switch(pid = vfork()) {
 	case -1:			/* error */
+		sigaction(SIGINT, &intsa, NULL);
+		sigaction(SIGQUIT, &quitsa, NULL);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-		return(-1);
+		return -1;
 	case 0:				/* child */
+		sigaction(SIGINT, &intsa, NULL);
+		sigaction(SIGQUIT, &quitsa, NULL);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		execve(_PATH_BSHELL, argp, environ);
 		_exit(127);
 	}
 
-	intsave = signal(SIGINT, SIG_IGN);
-	quitsave = signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, (int *)&pstat, 0);
+	while (waitpid(pid, &pstat, 0) == -1) {
+		if (errno != EINTR) {
+			pstat = -1;
+			break;
+		}
+	}
+
+	sigaction(SIGINT, &intsa, NULL);
+	sigaction(SIGQUIT, &quitsa, NULL);
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-	(void)signal(SIGINT, intsave);
-	(void)signal(SIGQUIT, quitsave);
-	return(pid == -1 ? -1 : pstat);
+
+	return (pstat);
 }
