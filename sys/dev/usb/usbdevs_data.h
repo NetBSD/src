@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.22 1999/03/29 17:24:34 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.23 1999/04/03 11:57:02 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.22 1999/03/29 17:23:45 augustss Exp 
+ *	NetBSD: usbdevs,v 1.23 1999/04/03 11:56:39 augustss Exp 
  */
 
 /*
@@ -92,6 +92,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "Microsoft",
 	    "IntelliMouse",
+	},
+	{
+	    USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_NATURALKBD,
+	    0,
+	    "Microsoft",
+	    "Natural Keyboard Elite",
 	},
 	{
 	    USB_VENDOR_KENSINGTON, USB_PRODUCT_KENSINGTON_MOUSEINABOX,
