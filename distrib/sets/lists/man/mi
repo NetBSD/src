@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.400 2001/09/11 06:41:14 gmcgarry Exp $
+# $NetBSD: mi,v 1.401 2001/09/11 18:18:11 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -474,6 +474,7 @@
 ./usr/share/man/cat4/arm26/arcwskbd.0		man-sys-catman
 ./usr/share/man/cat4/arm26/arcwsmouse.0		man-sys-catman
 ./usr/share/man/cat4/arm26/cpu.0		man-sys-catman
+./usr/share/man/cat4/arm26/eca.0		man-sys-catman
 ./usr/share/man/cat4/arm26/eh.0			man-sys-catman
 ./usr/share/man/cat4/arm26/ei.0			man-sys-catman
 ./usr/share/man/cat4/arm26/podulebus.0		man-sys-catman
@@ -2064,6 +2065,7 @@
 ./usr/share/man/man4/arm26/arcwskbd.4		man-sys-man
 ./usr/share/man/man4/arm26/arcwsmouse.4		man-sys-man
 ./usr/share/man/man4/arm26/cpu.4		man-sys-man
+./usr/share/man/man4/arm26/eca.4		man-sys-man
 ./usr/share/man/man4/arm26/eh.4			man-sys-man
 ./usr/share/man/man4/arm26/ei.4			man-sys-man
 ./usr/share/man/man4/arm26/podulebus.4		man-sys-man
