@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.17 2003/08/24 17:52:40 chs Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.18 2003/08/29 23:11:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.17 2003/08/24 17:52:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.18 2003/08/29 23:11:40 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -49,10 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.17 2003/08/24 17:52:40 chs Exp $")
 #include <sys/malloc.h>
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
+#include <sys/conf.h>
 #include <sys/exec_macho.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
+
+#include <dev/wscons/wsconsio.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -63,6 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.17 2003/08/24 17:52:40 chs Exp $")
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
 #include <compat/darwin/darwin_sysctl.h>
+
+/* Redefined from sys/dev/wscons/wsdisplay.c */
+extern const struct cdevsw wsdisplay_cdevsw;
 
 static void darwin_e_proc_exec(struct proc *, struct exec_package *);
 static void darwin_e_proc_fork(struct proc *, struct proc *);
@@ -267,6 +273,7 @@ darwin_e_proc_init(p, vmspace)
 	}
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 	ded->ded_fakepid = 0;
+	ded->ded_wsdev = NODEV;
 
 	mach_e_proc_init(p, vmspace);
 
@@ -278,6 +285,7 @@ darwin_e_proc_exit(p)
 	struct proc *p;
 {
 	struct darwin_emuldata *ded;
+	int error, mode;
 
 	ded = p->p_emuldata;
 
@@ -289,6 +297,16 @@ darwin_e_proc_exit(p)
 	if (ded->ded_fakepid == 2)
 		mach_bootstrap_port = mach_saved_bootstrap_port;
 
+	if (ded->ded_wsdev != NODEV) {
+		mode = WSDISPLAYIO_MODE_EMUL;
+		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p);
+#ifdef DEBUG_DARWIN
+		if (error != 0)
+			printf("Unable to switch back to text mode\n");
+#endif
+	}
+		
 	mach_e_proc_exit(p);
 
 	return;
