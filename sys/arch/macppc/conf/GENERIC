@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 1999/02/04 15:04:58 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.26 1999/02/22 20:25:43 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -100,46 +100,48 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-mainbus0 at root
+mainbus* at root
 
-cpu*	at mainbus0
-pci*	at mainbus0 bus ?
+cpu*	at mainbus?
+pci*	at mainbus? bus ?
+pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pci*	at ppb? bus ?
-
-#macofcons0	at pci? dev ? function ?	# Openfirmware console
 
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
-ep*	at pci? dev ? function ?
+ep*	at pci? dev ? function ?	# 3Com 3c59x
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
-
-scsibus* at adv?
-#scsibus* at ahc?
-scsibus* at pcscp?
-
+ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+#macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 obio0	at pci? dev ? function ?
-nvram0	at obio0			# nvram
 
-adb0	at obio0			# Apple Desktop Bus
+nsphy*	at mii? phy ?			# NS83840 PHYs
+
+bm*	at obio?			# bmac ethernet
+mc*	at obio?			# MACE ethernet
+esp*	at obio? flags 0x00ff		# 53c9x SCSI
+mesh*	at obio? flags 0xffff		# MESH SCSI
+nvram*	at obio?			# nvram
+adb*	at obio?			# Apple Desktop Bus
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
+zsc*	at obio?
+zstty*	at zsc? channel ?
 
-ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-wsdisplay* at ofb? console ?
+wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
-mc0	at obio0			# MACE ethernet
-bm0	at obio0			# bmac ethernet
-esp0	at obio0 flags 0x00ff		# 53c9x SCSI
-
-scsibus* at esp0
+scsibus* at adv?
+scsibus* at ahc?
+scsibus* at esp?
+scsibus* at mesh?
+scsibus* at pcscp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -148,11 +150,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-zsc0	at obio0
-zstty0	at zsc0 channel 0
-zstty1	at zsc0 channel 1
-
-wdc*	at obio0 flags 0x0
+wdc*	at obio? flags 0x0
 wd*	at wdc? channel ? drive ? flags 0x0000
 
 atapibus* at wdc? channel ?
