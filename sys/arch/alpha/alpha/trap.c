@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.89 2003/11/13 03:09:28 chs Exp $ */
+/* $NetBSD: trap.c,v 1.90 2004/02/19 17:06:06 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,17 +72,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/11/13 03:09:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2004/02/19 17:06:06 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,18 +142,18 @@ trap_init(void)
 	/*
 	 * Point interrupt/exception vectors to our own.
 	 */
-	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT); 
+	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT);
 	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
 	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
 	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
-	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA); 
+	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA);
 	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
 
 	/*
 	 * Clear pending machine checks and error reports, and enable
 	 * system- and processor-correctable error reporting.
 	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() & 
+	alpha_pal_wrmces(alpha_pal_rdmces() &
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 
 	/*
@@ -305,7 +305,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				ksi.ksi_code = SEGV_MAPERR; /* just pick one */
 			else {
 				ksi.ksi_code = alpha_ucode_to_ksiginfo(ucode);
-				ksi.ksi_addr = 
+				ksi.ksi_addr =
 					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
 				ksi.ksi_trap = (int)ucode;
 			}
@@ -344,7 +344,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGFPE;
 				ksi.ksi_code =  alpha_ucode_to_ksiginfo(ucode);
-				ksi.ksi_addr = 
+				ksi.ksi_addr =
 					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
 				ksi.ksi_trap =  a0;	/* exception summary */
 				break;
@@ -371,7 +371,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			else if (i == SIGILL)
 				ksi.ksi_code = ILL_ILLOPC;
 			ksi.ksi_signo = i;
-			ksi.ksi_addr = 
+			ksi.ksi_addr =
 				(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
 			ksi.ksi_trap = (int)ucode;
 			break;
@@ -434,7 +434,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				break;
 #endif
 			}
-	
+
 			if (user) {
 				KERNEL_PROC_LOCK(l);
 				if (l->l_flag & L_SA) {
@@ -497,7 +497,7 @@ do_fault:
 				vm = l->l_proc->p_vmspace;
 				map = &vm->vm_map;
 			}
-	
+
 			va = trunc_page((vaddr_t)a0);
 			rv = uvm_fault(map, va,
 			    (a1 == ALPHA_MMCSR_INVALTRANS) ?
@@ -515,12 +515,13 @@ do_fault:
 			    va < USRSTACK) {
 				if (rv == 0) {
 					unsigned nss;
-	
+
 					nss = btoc(USRSTACK -
 					    (unsigned long)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
-				} else if (rv == EACCES)
+				} else if (rv == EACCES &&
+					   ftype != VM_PROT_EXECUTE)
 					rv = EFAULT;
 			}
 			if (rv == 0) {
@@ -550,7 +551,7 @@ do_fault:
 			ksi.ksi_trap = a1; /* MMCSR VALUE */
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
-				       "out of swap\n", l->l_proc->p_pid, 
+				       "out of swap\n", l->l_proc->p_pid,
 				       l->l_proc->p_comm,
 				       l->l_proc->p_cred && l->l_proc->p_ucred ?
 				       l->l_proc->p_ucred->cr_uid : -1);
@@ -965,7 +966,7 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	 * without warning.
 	 *
 	 * If we're trying to do a fixup, we assume that things
-	 * will be botched.  If everything works out OK, 
+	 * will be botched.  If everything works out OK,
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
 	signal = SIGSEGV;
@@ -1038,7 +1039,7 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 			panic("unaligned_fixup: can't get here");
 #endif
 		}
-	} 
+	}
 
 	/*
 	 * Force SIGBUS if requested.
@@ -1236,7 +1237,7 @@ alpha_ucode_to_ksiginfo(u_long ucode)
 	return (0);
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void
