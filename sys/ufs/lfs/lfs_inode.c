@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.73 2003/04/10 04:15:38 simonb Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.74 2003/04/23 07:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.73 2003/04/10 04:15:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.74 2003/04/23 07:20:37 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -794,10 +794,11 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
+		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
-			    "lfs_vtruncbuf", slptimeo);
+			error = ltsleep(bp, slpflag | (PRIBIO + 1),
+			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
 				return (error);
@@ -811,6 +812,7 @@ restart:
 			wakeup(&fs->lfs_avail);
 		}
 		LFS_UNLOCK_BUF(bp);
+		simple_unlock(&bp->b_interlock);
 		brelse(bp);
 	}
 
@@ -818,10 +820,11 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
+		simple_lock(&bp->b_interlock);
 		if (bp->b_flags & B_BUSY) {
 			bp->b_flags |= B_WANTED;
-			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
-			    "lfs_vtruncbuf", slptimeo);
+			error = ltsleep(bp, slpflag | (PRIBIO + 1),
+			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
 			if (error) {
 				splx(s);
 				return (error);
@@ -835,6 +838,7 @@ restart:
 			wakeup(&fs->lfs_avail);
 		}
 		LFS_UNLOCK_BUF(bp);
+		simple_unlock(&bp->b_interlock);
 		brelse(bp);
 	}
 
