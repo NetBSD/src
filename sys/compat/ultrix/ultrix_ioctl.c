@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.3.4.1 1996/06/13 18:22:37 jonathan Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.3.4.2 1996/09/08 07:52:44 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -366,7 +366,7 @@ btios2stios(bt, st)
 	st->c_cc[4] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOF]);
 	st->c_cc[5] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL]);
 	st->c_cc[6] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL2]);
-#ifdef CMOPAT_ULTRIX
+#ifdef COMPAT_ULTRIX
 	st->c_cc[7] = NATIVE_TO_EMUL_CC(bt->c_cc[VSWTCH]);
 #else
 	st->c_cc[7] = 0;
