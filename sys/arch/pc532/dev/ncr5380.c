@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.4 1995/09/26 20:16:11 phil Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.5 1995/10/10 08:08:01 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -880,7 +880,7 @@ SC_REQ	*reqp;
 	 * Allow disconnect only when interrups are allowed.
 	 */
 	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
-			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
+			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 0);
 	cnt    = 1;
 	phase  = PH_MSGOUT;
 
