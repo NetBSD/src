@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.56 2001/10/29 00:25:44 perry Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.57 2001/10/29 02:57:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.56 2001/10/29 00:25:44 perry Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.57 2001/10/29 02:57:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,13 +98,14 @@ char	*suffix = BACKUP_SUFFIX;
 
 void	backup(const char *);
 void	copy(int, char *, int, char *, off_t);
+const char *inotype(u_int);
 void	install(char *, char *, u_int);
 void	install_dir(char *, u_int);
 int	main(int, char *[]);
 void	makelink(char *, char *);
 int	parseid(char *, id_t *);
 void	strip(char *);
-void	metadata_log(const char *, mode_t, u_int, struct timeval *);
+void	metadata_log(const char *, mode_t, struct timeval *, const char *);
 void	usage(void);
 
 int
@@ -337,8 +338,10 @@ makelink(char *from_name, char *to_name)
 			if ((dolink & LN_HARD) || errno != EXDEV)
 				err(1, "link %s -> %s", from_name, to_name);
 		}
-		else
+		else {
+			/* XXX: need to log hard link metadata ? */
 			return;
+		}
 	}
 
 	/* Symbolic links */
@@ -348,6 +351,7 @@ makelink(char *from_name, char *to_name)
 			err(1, "%s", src);
 		if (symlink(src, to_name) == -1)
 			err(1, "symlink %s -> %s", src, to_name);
+		metadata_log(to_name, S_IFLNK, NULL, src);
 		return;
 	}
 
@@ -375,6 +379,7 @@ makelink(char *from_name, char *to_name)
 
 		if (symlink(lnk, dst) == -1)
 			err(1, "symlink %s -> %s", lnk, dst);
+		metadata_log(dst, S_IFLNK, NULL, lnk);
 		return;
 	}
 
@@ -384,7 +389,7 @@ makelink(char *from_name, char *to_name)
 	 */
 	if (symlink(from_name, to_name) == -1)
 		err(1, "symlink %s -> %s", from_name, to_name);
-
+	metadata_log(to_name, S_IFLNK, NULL, from_name);
 }
 
 /*
@@ -543,7 +548,7 @@ install(char *from_name, char *to_name, u_int flags)
 			warn("%s: chflags", to_name);
 	}
 
-	metadata_log(to_name, S_IFREG, flags, dopreserve ? tv : NULL);
+	metadata_log(to_name, S_IFREG, tv, NULL);
 }
 
 /*
@@ -715,7 +720,32 @@ install_dir(char *path, u_int flags)
 	    || chmod(path, mode) == -1 )) {
                 warn("%s", path);
 	}
-	metadata_log(path, S_IFDIR, flags & ~SETFLAGS, NULL);
+	metadata_log(path, S_IFDIR, NULL, NULL);
+}
+
+const char *
+inotype(u_int type)
+{
+
+	switch (type & S_IFMT) {
+	case S_IFBLK:
+		return ("block");
+	case S_IFCHR:
+		return ("char");
+	case S_IFDIR:
+		return ("dir");
+	case S_IFIFO:
+		return ("fifo");
+	case S_IFREG:
+		return ("file");
+	case S_IFLNK:
+		return ("link");
+	case S_IFSOCK:
+		return ("socket");
+	default:
+		return ("unknown");
+	}
+	/* NOTREACHED */
 }
 
 /*
@@ -724,7 +754,8 @@ install_dir(char *path, u_int flags)
  *	metafp, to allow permissions to be set correctly by other tools.
  */
 void
-metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
+metadata_log(const char *path, mode_t type, struct timeval *tv,
+	const char *link)
 {
 	const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 	char		*buf;
@@ -743,8 +774,9 @@ metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
 
 	strsvis(buf, path, VIS_CSTYLE, extra);		/* encode name */
 	fprintf(metafp, ".%s%s type=%s mode=%#o",	/* print details */
-	    buf[0] == '/' ? "" : "/", buf,
-	    S_ISDIR(type) ? "dir" : "file", mode);
+	    buf[0] == '/' ? "" : "/", buf, inotype(type), mode);
+	if (link)
+		fprintf(metafp, " link=%s", link);
 	if (owner)
 		fprintf(metafp, " uname=%s", owner);
 	if (group)
@@ -753,7 +785,7 @@ metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
 		fprintf(metafp, " flags=%s", fflags);
 	if (tags)
 		fprintf(metafp, " tags=%s", tags);
-	if (tv != NULL)
+	if (tv != NULL && dopreserve)
 		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
 	fputc('\n', metafp);
 	fflush(metafp);					/* flush output */
