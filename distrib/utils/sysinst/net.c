@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.12 1997/12/05 14:29:03 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.13 1997/12/05 17:21:15 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -228,11 +228,11 @@ int config_network (void)
 
 	if (strcmp(net_namesvr, "") != 0 && network_up)
 		network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null",
-					net_defroute);
+					net_namesvr);
 
 	if (strcmp(net_defroute, "") != 0 && network_up)
 		network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null",
-					net_namesvr);
+					net_defroute);
 
 	return network_up;
 }
