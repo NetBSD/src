@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.31 1999/07/21 17:10:08 tron Exp $	*/
+/*	$NetBSD: mt.c,v 1.32 1999/09/07 13:56:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.31 1999/07/21 17:10:08 tron Exp $");
+__RCSID("$NetBSD: mt.c,v 1.32 1999/09/07 13:56:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,6 +274,8 @@ status(bp)
 	(void)printf("density: %d (%d, %d, %d, %d)\n",
 		bp->mt_density, bp->mt_mdensity[0], bp->mt_mdensity[1],
 		bp->mt_mdensity[2], bp->mt_mdensity[3]);
+	(void)printf("current file number: %d\n", bp->mt_fileno);
+	(void)printf("current block number: %d\n", bp->mt_blkno);
 }
 
 /*
