@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
+#	$NetBSD: Makefile.inc,v 1.23 1996/12/26 21:32:37 christos Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -17,11 +17,11 @@ KERNLIB_PROF=	${KERNDST}/libkern.po
 
 KERNMAKE= \
 	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
-	    CC='${CC}' CFLAGS='${CFLAGS}' \
-	    AS='${AS}' AFLAGS='${AFLAGS}' \
-	    LD='${LD}' STRIP='${STRIP}' \
-	    MACHINE='${MACHINE}' MACHINE_ARCH='${MACHINE_ARCH}' \
-	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.@-I../../.@g}'
+	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
+	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
+	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q}
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
