@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.16 (Berkeley) 5/11/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	backgammon
 CFLAGS+=-DV7 -I${.CURDIR}/../common_source

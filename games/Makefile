@@ -1,10 +1,9 @@
-#	@(#)Makefile	5.15.1.2 (Berkeley) 5/8/91
+#	@(#)Makefile	8.2 (Berkeley) 3/31/94
 
-Missing: adventure boggle ching dungeon hunt phantasia quiz warp 
-
-SUBDIR=	arithmetic atc backgammon battlestar bcd caesar canfield \
-	chess cribbage dm factor fish fortune hack hangman larn \
-	mille monop morse number pom ppt primes rain robots rogue \
-	sail snake trek wargames worm worms wump
+SUBDIR=	adventure arithmetic atc backgammon battlestar bcd boggle caesar \
+	canfield chess ching cribbage dm factor fish fortune hack hangman \
+	larn mille monop morse number phantasia pig pom ppt primes quiz \
+	rain random robots rogue sail snake tetris trek wargames worm worms \
+	wump xneko xroach
 
 .include <bsd.subdir.mk>
