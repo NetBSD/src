@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.17 1998/08/28 02:58:41 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.18 1998/08/28 17:15:45 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -768,7 +768,7 @@ initarm(bootconf)
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
-	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (PD_SIZE - 1)) == 0
 		    && kernel_l1pt.physical == 0) {
