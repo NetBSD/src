@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.32 1999/09/28 14:54:43 bouyer Exp $
+.\"	$NetBSD: sh.1,v 1.33 1999/11/16 22:03:25 hubertf Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1268,6 +1268,8 @@ characters in
 that separated them) are assigned to the last variable. If there are more
 variables than pieces, the remaining variables are assigned the null
 string.
+The 'read' builtin will indicate success unless EOF is encountered
+on input, in which case failure is returned. 
 .Pp
 By default, unless the
 .Fl r
