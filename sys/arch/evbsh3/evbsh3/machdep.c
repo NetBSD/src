@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2004/03/24 15:34:48 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2005/03/11 07:06:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2004/03/24 15:34:48 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2005/03/11 07:06:54 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -754,6 +754,11 @@ intc_intr(int ssr, int spc, int ssp)
 	case CPU_PRODUCT_7750S:
 		evtcode = _reg_read_4(SH4_INTEVT);
 		break;
+	default:
+#ifdef DIAGNOSTIC
+		panic("intr_intc: cpu_product %d unhandled!", cpu_product);
+#endif
+		return;
 	}
 
 	ih = EVTCODE_IH(evtcode);
