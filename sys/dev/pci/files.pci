@@ -1,10 +1,10 @@
-#	$NetBSD: files.pci,v 1.79 2000/03/22 00:36:30 cgd Exp $
+#	$NetBSD: files.pci,v 1.80 2000/03/22 00:43:47 cgd Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-defopt	opt_pci.h PCIVERBOSE
+defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
