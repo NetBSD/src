@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.1 2004/10/04 01:07:25 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.2 2004/10/15 04:42:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.1 2004/10/04 01:07:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.2 2004/10/15 04:42:09 thorpej Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.1 2004/10/04 01:07:25 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -69,9 +70,9 @@ typedef enum {
 } dkwedge_state_t;
 
 struct dkwedge_softc {
-	char		sc_devname[16];	/* device-style name (e.g. "dk0") */
+	struct device	*sc_dev;	/* pointer to our pseudo-device */
+	struct cfdata	sc_cfdata;	/* our cfdata structure */
 	uint8_t		sc_wname[128];	/* wedge name (Unicode, UTF-8) */
-	u_int		sc_unit;	/* our unit # */
 
 	dkwedge_state_t sc_state;	/* state this wedge is in */
 
@@ -125,6 +126,68 @@ static LIST_HEAD(, dkwedge_discovery_method) dkwedge_discovery_methods;
 static int dkwedge_discovery_methods_initialized;
 static struct lock dkwedge_discovery_methods_lock =
     LOCK_INITIALIZER(PRIBIO, "dkddm", 0, 0);
+
+/*
+ * dkwedge_match:
+ *
+ *	Autoconfiguration match function for pseudo-device glue.
+ */
+static int
+dkwedge_match(struct device *parent, struct cfdata *match, void *aux)
+{
+
+	/* Pseudo-device; always present. */
+	return (1);
+}
+
+/*
+ * dkwedge_attach:
+ *
+ *	Autoconfiguration attach function for pseudo-device glue.
+ */
+static void
+dkwedge_attach(struct device *parent, struct device *self, void *aux)
+{
+
+	/* Nothing to do. */
+}
+
+/*
+ * dkwedge_detach:
+ *
+ *	Autoconfiguration detach function for pseudo-device glue.
+ */
+static int
+dkwedge_detach(struct device *self, int flags)
+{
+
+	/* Always succeeds. */
+	return (0);
+}
+
+CFDRIVER_DECL(dk, DV_DISK, NULL);
+CFATTACH_DECL(dk, sizeof(struct device),
+	      dkwedge_match, dkwedge_attach, dkwedge_detach, NULL);
+
+static int dkwedge_cfglue_initialized;
+static struct simplelock dkwedge_cfglue_initialized_slock =
+    SIMPLELOCK_INITIALIZER;
+
+static void
+dkwedge_cfglue_init(void)
+{
+
+	simple_lock(&dkwedge_cfglue_initialized_slock);
+	if (dkwedge_cfglue_initialized == 0) {
+		if (config_cfdriver_attach(&dk_cd) != 0)
+			panic("dkwedge: unable to attach cfdriver");
+		if (config_cfattach_attach(dk_cd.cd_name, &dk_ca) != 0)
+			panic("dkwedge: unable to attach cfattach");
+
+		dkwedge_cfglue_initialized = 1;
+	}
+	simple_unlock(&dkwedge_cfglue_initialized_slock);
+}
 
 /*
  * dkwedge_wait_drain:
@@ -209,6 +272,9 @@ dkwedge_add(struct dkwedge_info *dkw)
 	int error;
 	dev_t pdev;
 
+	if (dkwedge_cfglue_initialized == 0)
+		dkwedge_cfglue_init();
+
 	dkw->dkw_parent[sizeof(dkw->dkw_parent) - 1] = '\0';
 	pdk = disk_find(dkw->dkw_parent);
 	if (pdk == NULL)
@@ -277,6 +343,12 @@ dkwedge_add(struct dkwedge_info *dkw)
 		return (error);
 	}
 
+	/* Fill in our cfdata for the pseudo-device glue. */
+	sc->sc_cfdata.cf_name = dk_cd.cd_name;
+	sc->sc_cfdata.cf_atname = dk_ca.ca_name;
+	/* sc->sc_cfdata.cf_unit set below */
+	sc->sc_cfdata.cf_fstate = FSTATE_NOTFOUND;
+
 	/* Insert the larval wedge into the array. */
 	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
 	for (error = 0;;) {
@@ -290,7 +362,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 			if (dkwedges[unit] == NULL) {
 				if (scpp == NULL) {
 					scpp = &dkwedges[unit];
-					sc->sc_unit = unit;
+					sc->sc_cfdata.cf_unit = unit;
 				}
 			} else {
 				/* XXX Unicode. */
@@ -307,7 +379,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		if (scpp == NULL)
 			dkwedge_array_expand();
 		else {
-			KASSERT(scpp == &dkwedges[sc->sc_unit]);
+			KASSERT(scpp == &dkwedges[sc->sc_cfdata.cf_unit]);
 			*scpp = sc;
 			break;
 		}
@@ -324,12 +396,36 @@ dkwedge_add(struct dkwedge_info *dkw)
 		return (error);
 	}
 
-	/* Now that we know the unit #, set the devname. */
-	sprintf(sc->sc_devname, "dk%u", sc->sc_unit);
-	sc->sc_dk.dk_name = sc->sc_devname;
+	/*
+	 * Now that we know the unit #, attach a pseudo-device for
+	 * this wedge instance.  This will provide us with the
+	 * "struct device" necessary for glue to other parts of the
+	 * system.
+	 *
+	 * This should never fail, unless we're almost totally out of
+	 * memory.
+	 */
+	if ((sc->sc_dev = config_attach_pseudo(&sc->sc_cfdata)) == NULL) {
+		aprint_error("%s%u: unable to attach pseudo-device\n",
+		    sc->sc_cfdata.cf_name, sc->sc_cfdata.cf_unit);
+
+		(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+		dkwedges[sc->sc_cfdata.cf_unit] = NULL;
+		(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+
+		(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
+		pdk->dk_nwedges--;
+		LIST_REMOVE(sc, sc_plink);
+		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+
+		bufq_free(&sc->sc_bufq);
+		free(sc, M_DKWEDGE);
+		return (ENOMEM);
+	}
+	sc->sc_dk.dk_name = sc->sc_dev->dv_xname;
 
 	/* Return the devname to the caller. */
-	strcpy(dkw->dkw_devname, sc->sc_devname);
+	strcpy(dkw->dkw_devname, sc->sc_dev->dv_xname);
 
 	/*
 	 * XXX Really ought to make the disk_attach() and the changing
@@ -342,10 +438,10 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_state = DKW_STATE_RUNNING;
 
 	/* Announce our arrival. */
-	aprint_normal("%s at %s: %s\n", sc->sc_devname, pdk->dk_name,
+	aprint_normal("%s at %s: %s\n", sc->sc_dev->dv_xname, pdk->dk_name,
 	    sc->sc_wname);	/* XXX Unicode */
 	aprint_normal("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
-	    sc->sc_devname, sc->sc_size, sc->sc_offset, sc->sc_ptype);
+	    sc->sc_dev->dv_xname, sc->sc_size, sc->sc_offset, sc->sc_ptype);
 
 	return (0);
 }
@@ -369,7 +465,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
 	for (unit = 0; unit < ndkwedges; unit++) {
 		if ((sc = dkwedges[unit]) != NULL &&
-		    strcmp(sc->sc_devname, dkw->dkw_devname) == 0 &&
+		    strcmp(sc->sc_dev->dv_xname, dkw->dkw_devname) == 0 &&
 		    strcmp(sc->sc_parent->dk_name, dkw->dkw_parent) == 0) {
 			/* Mark the wedge as dying. */
 			sc->sc_state = DKW_STATE_DYING;
@@ -420,9 +516,12 @@ dkwedge_del(struct dkwedge_info *dkw)
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
 
 	/* Announce our departure. */
-	aprint_normal("%s at %s (%s) deleted\n", sc->sc_devname,
+	aprint_normal("%s at %s (%s) deleted\n", sc->sc_dev->dv_xname,
 	    sc->sc_parent->dk_name,
 	    sc->sc_wname);	/* XXX Unicode */
+
+	/* Delete our pseudo-device. */
+	(void) config_detach(sc->sc_dev, DETACH_FORCE | DETACH_QUIET);
 
 	(void) lockmgr(&sc->sc_parent->dk_openlock, LK_EXCLUSIVE, NULL);
 	sc->sc_parent->dk_nwedges--;
@@ -466,7 +565,7 @@ dkwedge_delall(struct disk *pdk)
 			return;
 		}
 		strcpy(dkw.dkw_parent, pdk->dk_name);
-		strcpy(dkw.dkw_devname, sc->sc_devname);
+		strcpy(dkw.dkw_devname, sc->sc_dev->dv_xname);
 		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
 		(void) dkwedge_del(&dkw);
 	}
@@ -509,7 +608,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct proc *p)
 		if (sc->sc_state != DKW_STATE_RUNNING)
 			continue;
 
-		strcpy(dkw.dkw_devname, sc->sc_devname);
+		strcpy(dkw.dkw_devname, sc->sc_dev->dv_xname);
 		memcpy(dkw.dkw_wname, sc->sc_wname, sizeof(dkw.dkw_wname));
 		dkw.dkw_wname[sizeof(dkw.dkw_wname) - 1] = '\0';
 		strcpy(dkw.dkw_parent, sc->sc_parent->dk_name);
@@ -1014,7 +1113,7 @@ dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    {
 	    	struct dkwedge_info *dkw = (void *) data;
 
-		strcpy(dkw->dkw_devname, sc->sc_devname);
+		strcpy(dkw->dkw_devname, sc->sc_dev->dv_xname);
 	    	memcpy(dkw->dkw_wname, sc->sc_wname, sizeof(dkw->dkw_wname));
 		dkw->dkw_wname[sizeof(dkw->dkw_wname) - 1] = '\0';
 		strcpy(dkw->dkw_parent, sc->sc_parent->dk_name);
