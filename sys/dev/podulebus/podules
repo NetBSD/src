@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.1 2001/03/17 19:05:19 bjh21 Exp $
+$NetBSD: podules,v 1.2 2001/05/20 20:40:19 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -47,6 +47,7 @@ manufacturer	ATOMWIDE2	0x0017	Atomwide
 manufacturer	LINGENUITY	0x001a	Lingenuity
 manufacturer	IRLAM		0x001f	Irlam Instruments
 manufacturer	OAK		0x0021	Oak Solutions
+manufacturer	SJ		0x0029	SJ Research
 manufacturer	MORLEY		0x002b	Morley
 manufacturer	VTI		0x0035	Vertical Twist
 manufacturer	CUMANA		0x003a	Cumana
@@ -93,7 +94,7 @@ podule	WILDVISION	EAGLEM2		0x00cc	eagle M2
 podule	WILDVISION	LARKA16		0x00ce	lark A16
 podule	WILDVISION	MIDIMAX		0x0200	MIDI max
 
-podule	HCCS		IDE		0x0022	IDE interface
+podule	HCCS		IDESCSI		0x0022	IDE or SCSI interface
 
 podule	ATOMWIDE	ETHER3		0x00A4	ether 3/5 interface
 
@@ -108,6 +109,8 @@ podule	IRLAM		24I16		0x00e6	24i16 digitiser
 podule	IRLAM		ETHERN		0x5678	EtherN interface
 
 podule	OAK		SCSI		0x0058	16 bit SCSI interface
+
+podule	SJ		NEXUS		0x0064	Nexus interface
 
 podule	MORLEY		SCSI		0x0067	SCSI interface
 
@@ -151,7 +154,7 @@ podule	ANT		ETHERM		0x00d8	ether M dual interface NIC
 
 podule	CASTLE		SCSI16		0x00f6  8 or 16 bit SCSI2 interface
 podule	CASTLE		SCSI16SHARE	0x00f3  8 or 16 bit SCSI2Share interface
-podule	CASTLE		ETHERSCSI	0x00f5  8 or 16 bit SCSI2 interface, possibly with Ethernet 
+podule	CASTLE		ETHERSCSI	0x00f5  EtherSCSI
 podule	CASTLE		ETHERSCSISHARE	0x00f4  8 or 16 bit SCSI2Share interface, possibly with Ethernet
 podule	CASTLE		SCSI32		0x012b  32 bit SCSI2 + DMA interface
 
