@@ -1,23 +1,28 @@
+/*	$NetBSD: get_names.c,v 1.2 1997/10/10 16:33:35 lukem Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
  * specifies the terms and conditions for redistribution.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: get_names.c,v 1.2 1997/10/10 16:33:35 lukem Exp $");
+#endif /* not lint */
+
 #include "bsd.h"
 
 #if	defined(TALK_43) || defined(TALK_42)
 
-# include	<stdio.h>
-# include	<string.h>
-# include	"talk_ctl.h"
 # include	<sys/param.h>
 # include	<netdb.h>
+# include	<stdio.h>
+# include	<string.h>
+# include	<unistd.h>
+# include	"hunt.h"
+# include	"talk_ctl.h"
 
 extern	CTL_MSG	msg;
-
-struct	hostent	*gethostbyname();
-struct	servent	*getservbyname();
 
 static	char	hostname[MAXHOSTNAMELEN];
 char		*my_machine_name;
@@ -25,6 +30,7 @@ char		*my_machine_name;
 /*
  * Determine the local user and machine
  */
+void
 get_local_name(my_name)
 	char	*my_name;
 {
@@ -75,6 +81,7 @@ get_local_name(my_name)
 /*
  * Determine the remote user and machine
  */
+int
 get_remote_name(his_address)
 	char	*his_address;
 {
@@ -109,7 +116,7 @@ get_remote_name(his_address)
 	msg.r_name[NAME_SIZE - 1] = '\0';
 
 	/* if he is on the same machine, then simply copy */
-	if (bcmp((char *) &his_machine_name, (char *) &my_machine_name,
+	if (memcmp((char *) &his_machine_name, (char *) &my_machine_name,
 						sizeof(his_machine_name)) == 0)
 		memcpy(&his_machine_addr, &my_machine_addr,
 						sizeof(his_machine_name));

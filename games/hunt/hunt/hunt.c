@@ -1,21 +1,30 @@
+/*	$NetBSD: hunt.c,v 1.2 1997/10/10 16:32:34 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: hunt.c,v 1.2 1997/10/10 16:32:34 lukem Exp $");
+#endif /* not lint */
+
+# include	<sys/stat.h>
+# include	<sys/time.h>
+# include	<ctype.h>
 # include	<errno.h>
+# include	<curses.h>
+# include	<signal.h>
+# include	<stdlib.h>
+# include	<string.h>
 # if !defined(USE_CURSES) && defined(BSD_RELEASE) && BSD_RELEASE >= 44
 # include	<termios.h>
 static struct termios saved_tty;
 # endif
-# include	<curses.h>
-# include	<string.h>
+# include	<unistd.h>
+
 # include	"hunt.h"
-# include	<signal.h>
-# include	<ctype.h>
-# include	<sys/stat.h>
-# include	<sys/time.h>
 
 /*
  * Some old versions of curses don't have these defined
@@ -73,19 +82,24 @@ static char	team = ' ';
 static int	in_visual;
 
 extern int	cur_row, cur_col;
-extern char	*tgoto();
 
+void	dump_scores __P((SOCKET));
+long	env_init __P((long));
+void	fill_in_blanks __P((void));
+void	leave __P((int, char *));
+int	main __P((int, char *[]));
 # ifdef INTERNET
-extern	SOCKET	*list_drivers();
+SOCKET *list_drivers __P((void));
 # endif
 
 /*
  * main:
  *	Main program for local process
  */
+int
 main(ac, av)
-int	ac;
-char	**av;
+	int	ac;
+	char	**av;
 {
 	char		*term;
 	int		c;
@@ -94,11 +108,9 @@ char	**av;
 	extern int	optind;
 	extern char	*optarg;
 	long		enter_status;
-	SIGNAL_TYPE	intr(), sigterm(), sigemt(), tstp();
-	long		env_init(), quit();
 
 	enter_status = env_init((long) Q_CLOAK);
-	while ((c = getopt(ac, av, "Sbcfh:l:mn:op:qst:w:")) != EOF) {
+	while ((c = getopt(ac, av, "Sbcfh:l:mn:op:qst:w:")) != -1) {
 		switch (c) {
 		case 'l':	/* rsh compatibility */
 		case 'n':
@@ -341,10 +353,12 @@ char	**av;
 	}
 	leave(0, (char *) NULL);
 	/* NOTREACHED */
+	return(0);
 }
 
 # ifdef INTERNET
 # ifdef BROADCAST
+int
 broadcast_vec(s, vector)
 	int			s;		/* socket */
 	struct	sockaddr	**vector;
@@ -383,7 +397,7 @@ list_drivers()
 	char			local_name[256];
 	static			initial = TRUE;
 	static struct in_addr	local_address;
-	register struct hostent	*hp;
+	struct hostent		*hp;
 	extern int		errno;
 # ifdef BROADCAST
 	static	int		brdc;
@@ -395,7 +409,7 @@ list_drivers()
 	static	SOCKET		*listv;
 	static	unsigned int	listmax;
 	unsigned int		listc;
-	int			mask;
+	fd_set			mask;
 	struct timeval		wait;
 
 	if (initial) {			/* do one time initialization */
@@ -502,10 +516,10 @@ get_response:
 						listmax * sizeof(SOCKET));
 		}
 
-		mask = 1 << test_socket;
-		if (select(test_socket + 1, &mask, NULL, NULL, &wait) == 1
-		&& recvfrom(test_socket, (char *) &port_num, sizeof port_num,
-			0, (struct sockaddr *) &listv[listc], &namelen) > 0) {
+		FD_SET(test_socket, &mask);
+		if (select(test_socket + 1, &mask, NULL, NULL, &wait) == 1 &&
+		    recvfrom(test_socket, (char *) &port_num, sizeof(port_num),
+		    0, (struct sockaddr *) &listv[listc], &namelen) > 0) {
 			/*
 			 * Note that we do *not* convert from network to host
 			 * order since the port number *should* be in network
@@ -543,8 +557,9 @@ test_one_host:
 	goto get_response;
 }
 
+void
 find_driver(do_startup)
-FLAG	do_startup;
+	FLAG	do_startup;
 {
 	SOCKET	*hosts;
 
@@ -610,6 +625,7 @@ FLAG	do_startup;
 	find_driver(FALSE);
 }
 
+void
 dump_scores(host)
 	SOCKET	host;
 {
@@ -639,9 +655,10 @@ dump_scores(host)
 
 # endif
 
+void
 start_driver()
 {
-	register int	procid;
+	int	procid;
 
 # ifdef MONITOR
 	if (Am_monitor) {
@@ -703,6 +720,7 @@ start_driver()
  *	We had a bad connection.  For the moment we assume that this
  *	means the game is full.
  */
+void
 bad_con()
 {
 	leave(1, "The game is full.  Sorry.");
@@ -713,6 +731,7 @@ bad_con()
  * bad_ver:
  *	version number mismatch.
  */
+void
 bad_ver()
 {
 	leave(1, "Version number mismatch. No go.");
@@ -724,7 +743,8 @@ bad_ver()
  *	Handle a terminate signal
  */
 SIGNAL_TYPE
-sigterm()
+sigterm(dummy)
+	int dummy;
 {
 	leave(0, (char *) NULL);
 	/* NOTREACHED */
@@ -736,7 +756,8 @@ sigterm()
  *	Handle a emt signal - shouldn't happen on vaxes(?)
  */
 SIGNAL_TYPE
-sigemt()
+sigemt(dummy)
+	int dummy;
 {
 	leave(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */
@@ -748,7 +769,8 @@ sigemt()
  *	Handle an alarm signal
  */
 SIGNAL_TYPE
-sigalrm()
+sigalrm(dummy)
+	int dummy;
 {
 	return;
 }
@@ -758,10 +780,11 @@ sigalrm()
  * rmnl:
  *	Remove a '\n' at the end of a string if there is one
  */
+void
 rmnl(s)
-char	*s;
+	char	*s;
 {
-	register char	*cp;
+	char	*cp;
 
 	cp = strrchr(s, '\n');
 	if (cp != NULL)
@@ -773,11 +796,12 @@ char	*s;
  *	Handle a interrupt signal
  */
 SIGNAL_TYPE
-intr()
+intr(dummy)
+	int dummy;
 {
-	register int	ch;
-	register int	explained;
-	register int	y, x;
+	int	ch;
+	int	explained;
+	int	y, x;
 
 	(void) signal(SIGINT, SIG_IGN);
 # ifdef USE_CURSES
@@ -832,9 +856,10 @@ intr()
  *	Leave the game somewhat gracefully, restoring all current
  *	tty stats.
  */
+void
 leave(eval, mesg)
-int	eval;
-char	*mesg;
+	int	eval;
+	char	*mesg;
 {
 	if (in_visual) {
 # ifdef USE_CURSES
@@ -864,7 +889,8 @@ char	*mesg;
  *	Handle stop and start signals
  */
 SIGNAL_TYPE
-tstp()
+tstp(dummy)
+	int dummy;
 {
 # if BSD_RELEASE < 44
 	static struct sgttyb	tty;
@@ -908,10 +934,10 @@ tstp()
 # if defined(BSD_RELEASE) && BSD_RELEASE < 43
 char *
 strpbrk(s, brk)
-	register char *s, *brk;
+	char *s, *brk;
 {
-	register char *p;
-	register c;
+	char *p;
+	c;
 
 	while (c = *s) {
 		for (p = brk; *p; p++)
@@ -927,7 +953,7 @@ long
 env_init(enter_status)
 	long	enter_status;
 {
-	register int	i;
+	int	i;
 	char	*envp, *envname, *s;
 
 	for (i = 0; i < 256; i++)
@@ -1032,10 +1058,11 @@ env_init(enter_status)
 	return enter_status;
 }
 
+void
 fill_in_blanks()
 {
-	register int	i;
-	register char	*cp;
+	int	i;
+	char	*cp;
 
 again:
 	if (name[0] != '\0') {

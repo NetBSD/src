@@ -1,9 +1,20 @@
+/*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $");
+#endif /* not lint */
+
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 # include	"hunt.h"
 # define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
 
@@ -12,9 +23,10 @@
  *	Move the cursor to the given position on the given player's
  *	terminal.
  */
+void
 cgoto(pp, y, x)
-register PLAYER	*pp;
-register int	y, x;
+	PLAYER	*pp;
+	int	y, x;
 {
 	if (x == pp->p_curx && y == pp->p_cury)
 		return;
@@ -27,9 +39,10 @@ register int	y, x;
  * outch:
  *	Put out a single character.
  */
+void
 outch(pp, ch)
-register PLAYER	*pp;
-char		ch;
+	PLAYER	*pp;
+	char	ch;
 {
 	if (++pp->p_curx >= TERM_WIDTH) {
 		pp->p_curx = 0;
@@ -42,10 +55,11 @@ char		ch;
  * outstr:
  *	Put out a string of the given length.
  */
+void
 outstr(pp, str, len)
-register PLAYER	*pp;
-register char	*str;
-register int	len;
+	PLAYER	*pp;
+	char	*str;
+	int	len;
 {
 	pp->p_curx += len;
 	pp->p_cury += (pp->p_curx / TERM_WIDTH);
@@ -58,8 +72,9 @@ register int	len;
  * clrscr:
  *	Clear the screen, and reset the current position on the screen.
  */
+void
 clrscr(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
 	sendcom(pp, CLEAR);
 	pp->p_cury = 0;
@@ -70,41 +85,61 @@ register PLAYER	*pp;
  * ce:
  *	Clear to the end of the line
  */
+void
 ce(pp)
-PLAYER	*pp;
+	PLAYER	*pp;
 {
 	sendcom(pp, CLRTOEOL);
 }
 
+#if 0		/* XXX lukem*/
 /*
  * ref;
  *	Refresh the screen
  */
+void
 ref(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
 	sendcom(pp, REFRESH);
 }
+#endif
 
 /*
  * sendcom:
  *	Send a command to the given user
  */
-/* VARARGS2 */
-sendcom(pp, command, arg1, arg2)
-register PLAYER		*pp;
-register int	command;
-int			arg1, arg2;
+void
+#if __STDC__
+sendcom(PLAYER *pp, int command, ...)
+#else
+sendcom(pp, command, va_alist)
+	PLAYER	*pp;
+	int	command;
+	va_dcl
+#endif
 {
+	va_list	ap;
+	int	arg1, arg2;
+#if __STDC__
+	va_start(ap, command);
+#else
+	va_start(ap);
+#endif
 	(void) putc(command, pp->p_output);
 	switch (command & 0377) {
-	  case MOVE:
+	case MOVE:
+		arg1 = va_arg(ap, int);
+		arg2 = va_arg(ap, int);
 		(void) putc(arg1, pp->p_output);
 		(void) putc(arg2, pp->p_output);
 		break;
-	  case ADDCH:
-	  case READY:
+	case ADDCH:
+	case READY:
+		arg1 = va_arg(ap, int);
 		(void) putc(arg1, pp->p_output);
 		break;
 	}
+
+	va_end(ap);		/* No return needed for void functions. */
 }

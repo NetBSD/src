@@ -1,18 +1,25 @@
+/*	$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $");
+#endif /* not lint */
+
 # include	"hunt.h"
 
+void
 drawmaze(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register int	x;
-	register char	*sp;
-	register int	y;
-	register char	*endp;
+	int	x;
+	char	*sp;
+	int	y;
+	char	*endp;
 
 	clrscr(pp);
 	outstr(pp, pp->p_maze[0], WIDTH);
@@ -38,11 +45,12 @@ register PLAYER	*pp;
  * drawstatus - put up the status lines (this assumes the screen
  *		size is 80x24 with the maze being 64x24)
  */
+void
 drawstatus(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register int	i;
-	register PLAYER	*np;
+	int	i;
+	PLAYER	*np;
 
 	cgoto(pp, STAT_AMMO_ROW, STAT_LABEL_COL);
 	outstr(pp, "Ammo:", 5);
@@ -89,10 +97,11 @@ register PLAYER	*pp;
 # endif
 }
 
+void
 look(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register int	x, y;
+	int	x, y;
 
 	x = pp->p_x;
 	y = pp->p_y;
@@ -136,12 +145,13 @@ register PLAYER	*pp;
 	cgoto(pp, y, x);
 }
 
+void
 see(pp, face)
-register PLAYER	*pp;
-int		face;
+	PLAYER	*pp;
+	int	face;
 {
-	register char	*sp;
-	register int	y, x, i, cnt;
+	char	*sp;
+	int	y, x, i, cnt;
 
 	x = pp->p_x;
 	y = pp->p_y;
@@ -149,7 +159,7 @@ int		face;
 	switch (face) {
 	  case LEFTS:
 		sp = &Maze[y][x];
-		for (i = 0; See_over[*--sp]; i++)
+		for (i = 0; See_over[(int)*--sp]; i++)
 			continue;
 
 		if (i == 0)
@@ -173,7 +183,7 @@ int		face;
 		break;
 	  case RIGHT:
 		sp = &Maze[y][++x];
-		for (i = 0; See_over[*sp++]; i++)
+		for (i = 0; See_over[(int)*sp++]; i++)
 			continue;
 
 		if (i == 0)
@@ -197,7 +207,7 @@ int		face;
 		break;
 	  case ABOVE:
 		sp = &Maze[--y][x];
-		if (!See_over[*sp])
+		if (!See_over[(int)*sp])
 			break;
 		do {
 			--y;
@@ -205,11 +215,11 @@ int		face;
 			check(pp, y, x - 1);
 			check(pp, y, x    );
 			check(pp, y, x + 1);
-		} while (See_over[*sp]);
+		} while (See_over[(int)*sp]);
 		break;
 	  case BELOW:
 		sp = &Maze[++y][x];
-		if (!See_over[*sp])
+		if (!See_over[(int)*sp])
 			break;
 		do {
 			y++;
@@ -217,18 +227,19 @@ int		face;
 			check(pp, y, x - 1);
 			check(pp, y, x    );
 			check(pp, y, x + 1);
-		} while (See_over[*sp]);
+		} while (See_over[(int)*sp]);
 		break;
 	}
 }
 
+void
 check(pp, y, x)
-PLAYER	*pp;
-int	y, x;
+	PLAYER	*pp;
+	int	y, x;
 {
-	register int	index;
-	register int	ch;
-	register PLAYER	*rpp;
+	int	index;
+	int	ch;
+	PLAYER	*rpp;
 
 	index = y * sizeof Maze[0] + x;
 	ch = ((char *) Maze)[index];
@@ -249,12 +260,13 @@ int	y, x;
  * showstat
  *	Update the status of players
  */
+void
 showstat(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register PLAYER	*np;
-	register int	y;
-	register char	c;
+	PLAYER	*np;
+	int	y;
+	char	c;
 
 	y = STAT_PLAY_ROW + 1 + (pp - Player);
 	c = stat_char(pp);
@@ -275,12 +287,13 @@ register PLAYER	*pp;
  *	Draw the player on the screen and show him to everyone who's scanning
  *	unless he is cloaked.
  */
+void
 drawplayer(pp, draw)
-PLAYER	*pp;
-FLAG	draw;
+	PLAYER	*pp;
+	FLAG	draw;
 {
-	register PLAYER	*newp;
-	register int	x, y;
+	PLAYER	*newp;
+	int	x, y;
 
 	x = pp->p_x;
 	y = pp->p_y;
@@ -312,9 +325,10 @@ FLAG	draw;
 		showstat(pp);
 }
 
+void
 message(pp, s)
-register PLAYER	*pp;
-char		*s;
+	PLAYER	*pp;
+	char	*s;
 {
 	cgoto(pp, HEIGHT, 0);
 	outstr(pp, s, strlen(s));
@@ -326,8 +340,9 @@ char		*s;
  *	Turn a character into the right direction character if we are
  *	looking at the current player.
  */
+char
 translate(ch)
-char	ch;
+	char	ch;
 {
 	switch (ch) {
 	  case LEFTS:
@@ -346,11 +361,12 @@ char	ch;
  * player_sym:
  *	Return the player symbol
  */
+int
 player_sym(pp, y, x)
-PLAYER	*pp;
-int	y, x;
+	PLAYER	*pp;
+	int	y, x;
 {
-	register PLAYER	*npp;
+	PLAYER	*npp;
 
 	npp = play_at(y, x);
 	if (npp->p_ident->i_team == ' ')

@@ -1,22 +1,31 @@
+/*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# include	"hunt.h"
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $");
+#endif /* not lint */
+
 # include	<ctype.h>
 # include	<errno.h>
 # include	<fcntl.h>
+# include	<stdlib.h>
+# include	<unistd.h>
+# include	"hunt.h"
 
 # define	SCOREDECAY	15
 
 static char	Ttyname[NAMELEN];
 
+int
 answer()
 {
-	register PLAYER		*pp;
-	register int		newsock;
+	PLAYER			*pp;
+	int			newsock;
 	static u_long		mode;
 	static char		name[NAMELEN];
 	static char		team;
@@ -25,7 +34,7 @@ answer()
 	static u_long		machine;
 	static u_long		uid;
 	static SOCKET		sockstruct;
-	register char	*cp1, *cp2;
+	char			*cp1, *cp2;
 	int			flags;
 	long			version;
 
@@ -143,8 +152,7 @@ answer()
 	pp->p_output = fdopen(newsock, "w");
 	pp->p_death[0] = '\0';
 	pp->p_fd = newsock;
-	pp->p_mask = (1 << pp->p_fd);
-	Fds_mask |= pp->p_mask;
+	FD_SET(pp->p_fd, &Fds_mask);
 	if (pp->p_fd >= Num_fds)
 		Num_fds = pp->p_fd + 1;
 
@@ -161,11 +169,12 @@ answer()
 }
 
 # ifdef MONITOR
+void
 stmonitor(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register int	line;
-	register PLAYER	*npp;
+	int	line;
+	PLAYER	*npp;
 
 	memcpy(pp->p_maze, Maze, sizeof Maze);
 
@@ -189,12 +198,13 @@ register PLAYER	*pp;
 }
 # endif
 
+void
 stplayer(newpp, enter_status)
-register PLAYER	*newpp;
-int		enter_status;
+	PLAYER	*newpp;
+	int	enter_status;
 {
-	register int	x, y;
-	register PLAYER	*pp;
+	int	x, y;
+	PLAYER	*pp;
 
 	Nplayer++;
 
@@ -315,6 +325,7 @@ int		enter_status;
  * rand_dir:
  *	Return a random direction
  */
+int
 rand_dir()
 {
 	switch (rand_num(4)) {
@@ -328,6 +339,7 @@ rand_dir()
 		return ABOVE;
 	}
 	/* NOTREACHED */
+	return(-1);
 }
 
 /*
@@ -336,12 +348,12 @@ rand_dir()
  */
 IDENT *
 get_ident(machine, uid, name, team)
-u_long	machine;
-u_long	uid;
-char	*name;
-char	team;
+	u_long	machine;
+	u_long	uid;
+	char	*name;
+	char	team;
 {
-	register IDENT	*ip;
+	IDENT		*ip;
 	static IDENT	punt;
 
 	for (ip = Scores; ip != NULL; ip = ip->i_next)

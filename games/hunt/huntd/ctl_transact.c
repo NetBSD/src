@@ -1,3 +1,4 @@
+/*	$NetBSD: ctl_transact.c,v 1.2 1997/10/10 16:33:01 lukem Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -8,12 +9,19 @@
 
 #if	defined(TALK_43) || defined(TALK_42)
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
+#else
+__RCSID("$NetBSD: ctl_transact.c,v 1.2 1997/10/10 16:33:01 lukem Exp $");
 #endif
+#endif /* not lint */
 
-#include "talk_ctl.h"
 #include <sys/time.h>
+#include <unistd.h>
+#include "hunt.h"
+#include "talk_ctl.h"
 
 #define CTL_WAIT 2	/* time to wait for a response, in seconds */
 #define MAX_RETRY 5
@@ -23,19 +31,22 @@ static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
  * not recieved an acknowledgement within a reasonable amount
  * of time
  */
+void
 ctl_transact(target, msg, type, rp)
 	struct in_addr target;
 	CTL_MSG msg;
 	int type;
 	CTL_RESPONSE *rp;
 {
-	int read_mask, ctl_mask, nready, cc, retries;
+	fd_set read_mask, ctl_mask;
+	int nready, cc, retries;
 	struct timeval wait;
 
+	nready = 0;
 	msg.type = type;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
-	ctl_mask = 1 << ctl_sockt;
+	FD_SET(ctl_sockt, &ctl_mask);
 
 	/*
 	 * Keep sending the message until a response of

@@ -1,20 +1,37 @@
+/*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $");
+#endif /* not lint */
+
+# include	<stdlib.h>
 # include	"hunt.h"
+
+static	void	cloak __P((PLAYER *));
+static	void	face __P((PLAYER *, int));
+static	void	fire __P((PLAYER *, int));
+static	void	fire_slime __P((PLAYER *, int));
+static	void	move_player __P((PLAYER *, int));
+static	void	pickup __P((PLAYER *, int, int, int, int));
+static	void	scan __P((PLAYER *));
+
 
 # ifdef MONITOR
 /*
  * mon_execute:
  *	Execute a single monitor command
  */
+void
 mon_execute(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register char	ch;
+	char	ch;
 
 	ch = pp->p_cbuf[pp->p_ncount++];
 	switch (ch) {
@@ -32,10 +49,11 @@ register PLAYER	*pp;
  * execute:
  *	Execute a single command
  */
+void
 execute(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
-	register char	ch;
+	char	ch;
 
 	ch = pp->p_cbuf[pp->p_ncount++];
 
@@ -148,14 +166,15 @@ register PLAYER	*pp;
  * move_player:
  *	Execute a move in the given direction
  */
+static void
 move_player(pp, dir)
-register PLAYER	*pp;
-int		dir;
+	PLAYER	*pp;
+	int	dir;
 {
-	register PLAYER	*newp;
-	register int	x, y;
-	register FLAG	moved;
-	register BULLET	*bp;
+	PLAYER	*newp;
+	int	x, y;
+	FLAG	moved;
+	BULLET	*bp;
 
 	y = pp->p_y;
 	x = pp->p_x;
@@ -283,9 +302,10 @@ int		dir;
  * face:
  *	Change the direction the player is facing
  */
+static void
 face(pp, dir)
-register PLAYER	*pp;
-register int	dir;
+	PLAYER	*pp;
+	int	dir;
 {
 	if (pp->p_face != dir) {
 		pp->p_face = dir;
@@ -297,9 +317,10 @@ register int	dir;
  * fire:
  *	Fire a shot of the given type in the given direction
  */
+static void
 fire(pp, req_index)
-register PLAYER	*pp;
-register int	req_index;
+	PLAYER	*pp;
+	int	req_index;
 {
 	if (pp == NULL)
 		return;
@@ -345,9 +366,10 @@ register int	req_index;
  * fire_slime:
  *	Fire a slime shot in the given direction
  */
+static void
 fire_slime(pp, req_index)
-register PLAYER	*pp;
-register int	req_index;
+	PLAYER	*pp;
+	int	req_index;
 {
 	if (pp == NULL)
 		return;
@@ -393,6 +415,7 @@ register int	req_index;
  * add_shot:
  *	Create a shot with the given properties
  */
+void
 add_shot(type, y, x, face, charge, owner, expl, over)
 int	type;
 int	y, x;
@@ -402,8 +425,8 @@ PLAYER	*owner;
 int	expl;
 char	over;
 {
-	register BULLET	*bp;
-	register int	size;
+	BULLET	*bp;
+	int	size;
 
 	switch (type) {
 	  case SHOT:
@@ -436,17 +459,17 @@ char	over;
 
 BULLET *
 create_shot(type, y, x, face, charge, size, owner, score, expl, over)
-int	type;
-int	y, x;
-char	face;
-int	charge;
-int	size;
-PLAYER	*owner;
-IDENT	*score;
-int	expl;
-char	over;
+	int	type;
+	int	y, x;
+	char	face;
+	int	charge;
+	int	size;
+	PLAYER	*owner;
+	IDENT	*score;
+	int	expl;
+	char	over;
 {
-	register BULLET	*bp;
+	BULLET	*bp;
 
 	bp = (BULLET *) malloc(sizeof (BULLET));	/* NOSTRICT */
 	if (bp == NULL) {
@@ -474,8 +497,9 @@ char	over;
  * cloak:
  *	Turn on or increase length of a cloak
  */
+static void
 cloak(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
 	if (pp->p_ammo <= 0) {
 		message(pp, "No more charges");
@@ -503,8 +527,9 @@ register PLAYER	*pp;
  * scan:
  *	Turn on or increase length of a scan
  */
+static void
 scan(pp)
-register PLAYER	*pp;
+	PLAYER	*pp;
 {
 	if (pp->p_ammo <= 0) {
 		message(pp, "No more charges");
@@ -526,13 +551,14 @@ register PLAYER	*pp;
  * pickup:
  *	check whether the object blew up or whether he picked it up
  */
+void
 pickup(pp, y, x, prob, obj)
-register PLAYER	*pp;
-register int	y, x;
-int		prob;
-int		obj;
+	PLAYER	*pp;
+	int	y, x;
+	int	prob;
+	int	obj;
 {
-	register int	req;
+	int	req;
 
 	switch (obj) {
 	  case MINE:
