@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.3 2003/10/06 16:11:19 thorpej Exp $
+#	$NetBSD: files.iomd,v 1.4 2003/12/31 15:15:29 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -72,7 +72,7 @@ device	sysbeep
 attach	sysbeep at vidc with sysbeep_vidc
 file	arch/arm/iomd/sysbeep_vidc.c		sysbeep_vidc
 
-device	vidcaudio: audiobus
+device	vidcaudio: audiobus, mulaw, aurateconv
 attach	vidcaudio at vidc
 file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
 
