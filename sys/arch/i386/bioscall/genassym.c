@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1 1996/09/13 00:02:39 jtk Exp $	*/
+/*	$NetBSD: genassym.c,v 1.2 1998/01/06 00:35:42 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -40,6 +40,7 @@
  */
 
 #include <sys/types.h>
+#include <i386/include/bioscall.h>
 #include <i386/include/apmvar.h>
 
 #include <stdio.h>
@@ -62,12 +63,12 @@ main()
 	off("APM_ENTRY", struct apm_connect_info, apm_entrypt);
 	off("APM_DETAIL", struct apm_connect_info, apm_detail);
 	def("APM_SIZE", sizeof(struct apm_connect_info));
-	off("APMREG_AX", struct apmregs, ax);
-	off("APMREG_BX", struct apmregs, bx);
-	off("APMREG_CX", struct apmregs, cx);
-	off("APMREG_DX", struct apmregs, dx);
-	off("APMREG_SI", struct apmregs, si);
-	off("APMREG_DI", struct apmregs, di);
-	off("APMREG_FLAGS", struct apmregs, flags);
+	off("APMREG_AX", struct bioscallregs, ax);
+	off("APMREG_BX", struct bioscallregs, bx);
+	off("APMREG_CX", struct bioscallregs, cx);
+	off("APMREG_DX", struct bioscallregs, dx);
+	off("APMREG_SI", struct bioscallregs, si);
+	off("APMREG_DI", struct bioscallregs, di);
+	off("APMREG_FLAGS", struct bioscallregs, flags);
 	exit(0);
 }
