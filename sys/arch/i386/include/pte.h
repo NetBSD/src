@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pte.h	5.5 (Berkeley) 5/9/91
- *	$Id: pte.h,v 1.5 1994/08/15 14:49:16 mycroft Exp $
+ *	$Id: pte.h,v 1.6 1994/10/09 13:23:21 mycroft Exp $
  */
 
 /*
@@ -92,11 +92,6 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define PGEX_P		0x01	/* Protection violation vs. not present */
 #define PGEX_W		0x02	/* during a Write cycle */
 #define PGEX_U		0x04	/* access from User mode (UPL) */
-
-/*
- * Pte related macros
- */
-#define	dirty(pte)	(*(pte) & PG_M)
 
 #ifndef LOCORE
 #ifdef KERNEL
