@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.551 2003/07/12 06:00:37 hubertf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.552 2003/07/14 06:52:40 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.550 2003/07/12 05:59:50 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.551 2003/07/14 06:51:57 wiz Exp 
  */
 
 /*
@@ -1742,6 +1742,7 @@
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
+#define	PCI_PRODUCT_MATROX_G550_AGP	0x2527		/* MGA G550 AGP */
 
 /* MediaQ, Inc. products */
 #define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
