@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.8 1998/08/03 14:48:40 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.9 1999/03/22 19:18:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.8 1998/08/03 14:48:40 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.9 1999/03/22 19:18:10 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -145,6 +145,9 @@ const struct conf_variable conf_table[] =
   { "IOV_MAX",			SYSCONF,	_SC_IOV_MAX		},
   { "PAGE_SIZE",		SYSCONF,	_SC_PAGE_SIZE		},
   { "_XOPEN_SHM",		SYSCONF,	_SC_XOPEN_SHM		},
+
+  /* X/Open CAE Spec. Issue 5 Version 2 Configurable System Variables */
+  { "FILESIZEBITS",		PATHCONF,	_PC_FILESIZEBITS	},
   { NULL }
 };
 
