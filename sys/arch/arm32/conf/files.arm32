@@ -68,6 +68,7 @@ attach	com at mainbus
 file    arch/arm32/mainbus/com.c		com needs-flag
 major   {com = 12}
 
+# Mouse devices
 device  quadmouse: tty
 attach	quadmouse at mainbus
 file    arch/arm32/mainbus/qmouse.c		quadmouse needs-flag
@@ -78,6 +79,7 @@ attach	pms at mainbus
 file    arch/arm32/mainbus/pms.c		pms needs-flag
 major   {pms = 40}
 
+# Audio devices
 device	beep
 attach	beep at mainbus
 file    arch/arm32/mainbus/beep.c			beep needs-flag
@@ -93,10 +95,12 @@ attach	kbd at mainbus
 file    arch/arm32/mainbus/kbd.c			kbd needs-flag
 major   {kbd = 11}
 
+# Podule bus device
 device podulebus { [slot = -1] }
 attach podulebus at root
 file	arch/arm32/podulebus/podulebus.c		podulebus
 
+# Ethernet devices
 device ea: ether, ifnet
 attach ea at podulebus
 file	arch/arm32/podulebus/if_ea.c		ea
@@ -112,6 +116,16 @@ file	arch/arm32/podulebus/if_eh.c		eh
 device ie: ether, ifnet
 attach ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
+
+# IIC/RTC files
+device iic { addr = -1 }
+attach iic at mainbus
+file	arch/arm32/mainbus/iic_asm.S		iic
+file	arch/arm32/mainbus/iic.c		iic	needs-flag
+
+device rtc
+attach rtc at iic
+file	arch/arm32/mainbus/rtc.c		rtc	needs-count
 
 #define	kgdb
 
@@ -201,11 +215,6 @@ file	arch/arm32/arm32/fusu.c
 
 file	netinet/in_cksum.c		inet
 file	netns/ns_cksum.c		ns
-
-# IIC/RTC files
-file	arch/arm32/arm32/iic.S
-file	arch/arm32/arm32/iiccontrol.c
-file	arch/arm32/arm32/rtc.c
 
 # IRQ/FIQ files
 file	arch/arm32/arm32/spl.S
