@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 1999/07/08 18:11:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 1999/09/12 01:17:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2006,13 +2006,9 @@ pmap_user_init(pmap)
  *	is bounded by that size.
  */
 pmap_t
-pmap_create(size)
-	vm_size_t	size;
+pmap_create()
 {
 	pmap_t pmap;
-
-	if (size)
-		return NULL;
 
 	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
 	pmap_pinit(pmap);
@@ -2489,6 +2485,39 @@ pmap_enter_user(pmap, pgva, new_pte, wired)
 	pmegp->pmeg_vpages++;
 }
 
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	struct vm_page **pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+	}
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}
+
 
 /*
  * The trap handler calls this so we can try to resolve
@@ -2622,38 +2651,43 @@ pmap_fault_reload(pmap, pgva, ftype)
 /*
  * Clear the modify bit for the given physical page.
  */
-void
-pmap_clear_modify(pa)
-	register vm_offset_t pa;
+boolean_t
+pmap_clear_modify(pg)
+	struct vm_page *pg;
 {
-	register pv_entry_t	*head;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pv_entry_t *head;
 	u_char *pv_flags;
 	int s;
+	boolean_t rv;
 
 	if (!pv_initialized)
-		return;
+		return FALSE;
 
 	/* The VM code may call this on device addresses! */
 	if (PA_IS_DEV(pa))
-		return;
+		return FALSE;
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
 	s = splpmap();
 	*pv_flags |= pv_syncflags(*head);
+	rv = *pv_flags & PV_MOD;
 	*pv_flags &= ~PV_MOD;
 	splx(s);
+	return rv;
 }
 
 /*
  * Tell whether the given physical page has been modified.
  */
 int
-pmap_is_modified(pa)
-	vm_offset_t pa;
+pmap_is_modified(pg)
+	struct vm_page *pg;
 {
-	pv_entry_t	*head;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pv_entry_t *head;
 	u_char *pv_flags;
 	int rv, s;
 
@@ -2680,48 +2714,54 @@ pmap_is_modified(pa)
  * Clear the reference bit for the given physical page.
  * It's OK to just remove mappings if that's easier.
  */
-void
-pmap_clear_reference(pa)
-	register vm_offset_t pa;
+boolean_t
+pmap_clear_reference(pg)
+	struct vm_page *pg;
 {
-	register pv_entry_t	*head;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pv_entry_t *head;
 	u_char *pv_flags;
 	int s;
+	boolean_t rv;
 
 	if (!pv_initialized)
-		return;
+		return FALSE;
 
 	/* The VM code may call this on device addresses! */
 	if (PA_IS_DEV(pa))
-		return;
+		return FALSE;
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
 	s = splpmap();
 	*pv_flags |= pv_syncflags(*head);
+	rv = *pv_flags & PV_REF;
 	*pv_flags &= ~PV_REF;
 	splx(s);
+	return rv;
 }
 
 /*
  * Tell whether the given physical page has been referenced.
  * It's OK to just return FALSE if page is not mapped.
  */
-int
-pmap_is_referenced(pa)
-	vm_offset_t	pa;
+boolean_t
+pmap_is_referenced(pg)
+	struct vm_page *pg;
 {
-	register pv_entry_t	*head;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pv_entry_t *head;
 	u_char *pv_flags;
-	int rv, s;
+	int s;
+	boolean_t rv;
 
 	if (!pv_initialized)
-		return (0);
+		return (FALSE);
 
 	/* The VM code may call this on device addresses! */
 	if (PA_IS_DEV(pa))
-		return (0);
+		return (FALSE);
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
@@ -2916,10 +2956,11 @@ pmap_extract(pmap, va, pap)
  *	  Lower the permission for all mappings to a given page.
  */
 void
-pmap_page_protect(pa, prot)
-	vm_offset_t	 pa;
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
 	vm_prot_t	   prot;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
 	/* The VM code may call this on device addresses! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1999/08/30 07:59:19 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 1999/09/12 01:17:18 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -594,8 +594,7 @@ pmap_virtual_space(start, end)
  * Create and return a physical map.
  */
 struct pmap *
-pmap_create(size)
-	vsize_t size;
+pmap_create()
 {
 	struct pmap *pm;
 	
@@ -1033,6 +1032,39 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	splx(s);
 }
 
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	struct vm_page **pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+	}
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}
+
 /*
  * Remove the given range of mapping entries.
  */
@@ -1163,32 +1195,35 @@ pmap_protect(pm, sva, eva, prot)
 	pmap_remove(pm, sva, eva);
 }
 
-void
-ptemodify(pa, mask, val)
-	paddr_t pa;
+boolean_t
+ptemodify(pg, mask, val)
+	struct vm_page *pg;
 	u_int mask;
 	u_int val;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct pv_entry *pv;
 	pte_t *ptp;
 	struct pte_ovfl *po;
 	int i, s;
 	char *attr;
+	int rv;
 
 	/*
 	 * First modify bits in cache.
 	 */
 	attr = pa_to_attr(pa);
 	if (attr == NULL)
-		return;
+		return FALSE;
 
 	*attr &= ~mask >> ATTRSHFT;
 	*attr |= val >> ATTRSHFT;
 	
 	pv = pa_to_pv(pa);
 	if (pv->pv_idx < 0)
-		return;
+		return FALSE;
 
+	rv = FALSE;
 	s = splimp();
 	for (; pv; pv = pv->pv_next) {
 		for (ptp = ptable + pv->pv_idx * 8, i = 8; --i >= 0; ptp++)
@@ -1198,6 +1233,7 @@ ptemodify(pa, mask, val)
 				asm volatile ("sync");
 				tlbie(pv->pv_va);
 				tlbsync();
+				rv |= ptp->pte_lo & mask; 
 				ptp->pte_lo &= ~mask;
 				ptp->pte_lo |= val;
 				asm volatile ("sync");
@@ -1210,6 +1246,7 @@ ptemodify(pa, mask, val)
 				asm volatile ("sync");
 				tlbie(pv->pv_va);
 				tlbsync();
+				rv |= ptp->pte_lo & mask; 
 				ptp->pte_lo &= ~mask;
 				ptp->pte_lo |= val;
 				asm volatile ("sync");
@@ -1217,11 +1254,13 @@ ptemodify(pa, mask, val)
 			}
 		for (po = potable[pv->pv_idx].lh_first; po; po = po->po_list.le_next)
 			if ((po->po_pte.pte_lo & PTE_RPGN) == pa) {
+				rv |= ptp->pte_lo & mask; 
 				po->po_pte.pte_lo &= ~mask;
 				po->po_pte.pte_lo |= val;
 			}
 	}
 	splx(s);
+	return rv != 0;
 }
 
 int
@@ -1289,10 +1328,11 @@ ptebits(pa, bit)
  * or it is going to read-only.
  */
 void
-pmap_page_protect(pa, prot)
-	paddr_t pa;
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
 	vm_prot_t prot;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	vaddr_t va;
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;

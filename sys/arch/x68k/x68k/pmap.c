@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1999/07/08 18:11:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1999/09/12 01:17:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -130,7 +130,6 @@
  */
 
 #include "opt_compat_hpux.h"
-#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,12 +319,8 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
 boolean_t pmap_testbit	__P((paddr_t, int));
-#if defined(PMAP_NEW)
-boolean_t pmap_changebit	__P((paddr_t, int, int));
-#else
-void	pmap_changebit	__P((paddr_t, int, int));
-#endif
-void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
+boolean_t pmap_changebit __P((paddr_t, int, int));
+void	pmap_enter_ptpage __P((pmap_t, vaddr_t));
 void	pmap_ptpage_addref __P((vaddr_t));
 int	pmap_ptpage_delref __P((vaddr_t));
 void	pmap_collect1	__P((pmap_t, paddr_t, paddr_t));
@@ -762,30 +757,13 @@ pmap_map(va, spa, epa, prot)
  *
  *	Note: no locking is necessary in this function.
  */
-#if defined(PMAP_NEW)
 pmap_t
 pmap_create()
-#else
-pmap_t
-pmap_create(size)
-	vsize_t	size;
-#endif
 {
 	pmap_t pmap;
 
-#if defined(PMAP_NEW)
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
 	    ("pmap_create()\n"));
-#else
-	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
-	    ("pmap_create(%lx)\n", size));
-
-	/*
-	 * Software use map does not need a pmap
-	 */
-	if (size)
-		return (NULL);
-#endif
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
@@ -1042,39 +1020,20 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page to
  *	the permissions specified.
  */
-#if defined(PMAP_NEW)
 void
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
-#else
-void
-pmap_page_protect(pa, prot)
-	paddr_t		pa;
-	vm_prot_t	prot;
-#endif
 {
 	struct pv_entry *pv;
 	int s;
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 #ifdef DEBUG
-#if defined(PMAP_NEW)
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
 
-#else
-	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
-	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
-		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
-#endif
-#endif
-#if !defined(PMAP_NEW)
-	if (!PAGE_IS_MANAGED(pa))
-		return;
 #endif
 
 	switch (prot) {
@@ -1507,9 +1466,8 @@ validate:
 #endif
 }
 
-#if defined(PMAP_NEW)
 /*
- * pmap_k* parts for PMAP_NEW is original for x68k.
+ * pmap_k* parts are original for x68k.
  * We support no VAC machines i.e. M68k_MMU_HP. (mi)
  */
 
@@ -1642,7 +1600,6 @@ pmap_kremove(sva, size)
 		}
 	}
 }
-#endif /* PMAP_NEW */
 
 /*
  * pmap_unwire:			[ INTERFACE ]
@@ -2071,27 +2028,15 @@ pmap_copy_page(src, dst)
  *
  *	Clear the modify bits on the specified physical page.
  */
-#if defined(PMAP_NEW)
 int
 pmap_clear_modify(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_modify(pa)
-	paddr_t	pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", pg));
 
 	return pmap_changebit(pa, 0, ~PG_M);
-#else
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%lx)\n", pa));
-
-	pmap_changebit(pa, 0, ~PG_M);
-#endif
 }
 
 /*
@@ -2099,27 +2044,15 @@ pmap_clear_modify(pa)
  *
  *	Clear the reference bit on the specified physical page.
  */
-#if defined(PMAP_NEW)
 int
 pmap_clear_reference(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_reference(pa)
-	paddr_t	pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n", pg));
 
 	return pmap_changebit(pa, 0, ~PG_U);
-#else
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%lx)\n", pa));
-
-	pmap_changebit(pa, 0, ~PG_U);
-#endif
 }
 
 /*
@@ -2128,17 +2061,10 @@ pmap_clear_reference(pa)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-#if defined(PMAP_NEW)
 boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
-#else
-boolean_t
-pmap_is_referenced(pa)
-	paddr_t	pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
@@ -2148,16 +2074,6 @@ pmap_is_referenced(pa)
 		return(rv);
 	}
 #endif
-#else
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		boolean_t rv = pmap_testbit(pa, PG_U);
-		printf("pmap_is_referenced(%lx) -> %c\n", pa, "FT"[rv]);
-		return(rv);
-	}
-#endif
-#endif
-
 	return(pmap_testbit(pa, PG_U));
 }
 
@@ -2167,17 +2083,10 @@ pmap_is_referenced(pa)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-#if defined(PMAP_NEW)
 boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
-#else
-boolean_t
-pmap_is_modified(pa)
-	paddr_t	pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
@@ -2186,15 +2095,6 @@ pmap_is_modified(pa)
 		printf("pmap_is_modified(%p) -> %c\n", pg, "FT"[rv]);
 		return(rv);
 	}
-#endif
-#else
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		boolean_t rv = pmap_testbit(pa, PG_M);
-		printf("pmap_is_modified(%lx) -> %c\n", pa, "FT"[rv]);
-		return(rv);
-	}
-#endif
 #endif
 	return(pmap_testbit(pa, PG_M));
 }
@@ -2595,17 +2495,10 @@ pmap_testbit(pa, bit)
  *	for a physical page.
  */
 /* static */
-#if defined(PMAP_NEW)
 boolean_t			/* return whether the PTE is modified */
 pmap_changebit(pa, set, mask)
 	paddr_t pa;
 	int set, mask;
-#else
-void
-pmap_changebit(pa, set, mask)
-	paddr_t pa;
-	int set, mask;
-#endif
 {
 	struct pv_entry *pv;
 	pt_entry_t *pte, npte;
@@ -2614,19 +2507,13 @@ pmap_changebit(pa, set, mask)
 #if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
 	boolean_t firstpage = TRUE;
 #endif
-#if defined(PMAP_NEW)
-	int r = FALSE;
-#endif
+	boolean_t r = FALSE;
 
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
 
 	if (!PAGE_IS_MANAGED(pa))
-#if defined(PMAP_NEW)
 		return (r);
-#else
-		return;
-#endif
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
@@ -2671,9 +2558,7 @@ pmap_changebit(pa, set, mask)
 #endif
 			npte = (*pte | set) & mask;
 			if (*pte != npte) {
-#if defined(PMAP_NEW)
 				r = TRUE;
-#endif
 #if defined(M68040) || defined(M68060)
 				/*
 				 * If we are changing caching status or
@@ -2699,9 +2584,7 @@ pmap_changebit(pa, set, mask)
 		}
 	}
 	splx(s);
-#if defined(PMAP_NEW)
 	return(r);
-#endif
 }
 
 /*
