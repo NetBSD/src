@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *	$Id: autoconf.c,v 1.8.2.1 1994/07/27 06:30:35 cgd Exp $
+ *	$Id: autoconf.c,v 1.8.2.2 1994/08/15 07:00:21 mycroft Exp $
  */
 
 /*
@@ -87,6 +87,7 @@ configure()
 	 * parameter based on device(s) used.
 	 */
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
 
@@ -111,13 +112,6 @@ swapconf()
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 	}
-	/* XXXX needs more work */
-	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
-	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
-		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			ctob(physmem)/DEV_BSIZE;
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */
