@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.4 1999/02/23 23:57:53 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.5 1999/03/02 03:18:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,6 +59,7 @@
 #define RF_MAX_DISKS 128	/* max disks per array */
 #define RF_DEV2RAIDID(_dev)  (DISKUNIT(_dev))
 
+#define RF_COMPONENT_LABEL_VERSION 1
 #define RF_RAID_DIRTY 0
 #define RF_RAID_CLEAN 1
 
@@ -130,6 +131,10 @@ struct RF_Raid_s {
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
 	RF_LockTableEntry_t *quiesceLock;	/* quiesnce table */
 	int     numFailures;	/* total number of failures in the array */
+
+	int     parity_good;    /* !0 if parity is known to be correct */
+	int     serial_number;  /* a "serial number" for this set */
+	int     mod_counter;    /* modification counter for component labels */
 	int     clean;          /* the clean bit for this array. */
 	/*
          * Cleanup stuff
