@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.8.1 2001/01/25 17:44:06 jhawk Exp $	*/
+/*	$NetBSD: main.c,v 1.12.8.2 2001/02/03 21:12:49 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.12.8.1 2001/01/25 17:44:06 jhawk Exp $");
+__RCSID("$NetBSD: main.c,v 1.12.8.2 2001/02/03 21:12:49 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,6 +201,8 @@ setpeer0(host, port)
 	}
 
 	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_addrlen > sizeof(peeraddr))
+			continue;
 		f = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (f < 0) {
 			cause = "socket";
@@ -223,6 +225,7 @@ setpeer0(host, port)
 	if (f < 0)
 		warn("%s", cause);
 	else {
+		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
 		memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
 		if (res->ai_canonname) {
 			(void) strncpy(hostname, res->ai_canonname,
