@@ -360,7 +360,8 @@ IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
 #define	ZS_INTERRUPT4M	HARDINT4M(12)
 #endif
 
-	.globl	start
+	.globl	start, _kernel_text
+	_kernel_text = start		! for kvm_mkdb(8)
 start:
 /*
  * Put sun4 traptable first, since it needs the most stringent aligment (8192)
