@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.61 1999/07/04 22:46:20 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.62 1999/07/06 22:11:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.61 1999/07/04 22:46:20 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.62 1999/07/06 22:11:37 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -586,6 +586,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 				FREEPTR(host);
 				host = phost;
+				FREEPTR(port);
+				port = pport;
 				FREEPTR(path);
 				path = xstrdup(url);
 				FREEPTR(ppath);
