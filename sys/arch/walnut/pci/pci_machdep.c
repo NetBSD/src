@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2002/08/13 04:57:50 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2002/08/13 05:25:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -66,7 +66,7 @@
 
 #include <machine/walnut.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
-#include <powerpc/ibm4xx/pcicreg.h>
+#include <powerpc/ibm4xx/dev/pcicreg.h>
 
 static bus_space_tag_t pci_iot;
 static bus_space_handle_t pci_ioh;
