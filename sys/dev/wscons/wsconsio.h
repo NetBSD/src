@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.26 2000/02/28 12:34:31 takemura Exp $ */
+/* $NetBSD: wsconsio.h,v 1.27 2000/03/12 04:59:24 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -212,6 +212,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_PX	13	/* DEC TC PX */
 #define		WSDISPLAY_TYPE_PXG	14	/* DEC TC PXG */
 #define		WSDISPLAY_TYPE_TX	15	/* DEC TC TX */
+#define		WSDISPLAY_TYPE_HPCFB	16	/* Handheld/PalmSize PC */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
