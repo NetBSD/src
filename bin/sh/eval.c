@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: eval.c,v 1.12 1994/06/11 16:11:49 mycroft Exp $";
+static char *rcsid = "$Id: eval.c,v 1.13 1994/06/12 02:31:28 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -875,7 +875,7 @@ prehash(n)
 
 bltincmd(argc, argv)  char **argv; {
 	listsetvar(cmdenviron);
-	return exitstatus;
+	return 0;
 }
 
 
