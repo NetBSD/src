@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.48 2002/03/21 11:34:17 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.49 2002/03/21 11:42:21 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.48 2002/03/21 11:34:17 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.49 2002/03/21 11:42:21 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.48 2002/03/21 11:34:17 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.49 2002/03/21 11:42:21 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -884,9 +884,8 @@ MakeStartJobs ()
 {
     GNode	*gn;
 
-extern ClientData Lst_DeQueue_Last (Lst);
     while (!Lst_IsEmpty (toBeMade)) {
-	gn = (GNode *) Lst_DeQueue_Last (toBeMade);
+	gn = (GNode *) Lst_DeQueue (toBeMade);
 	if (DEBUG(MAKE)) {
 	    printf ("Examining %s...", gn->name);
 	}
