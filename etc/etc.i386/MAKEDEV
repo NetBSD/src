@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.105 2000/03/07 17:55:06 groo Exp $
+#	$NetBSD: MAKEDEV,v 1.106 2000/03/16 14:58:09 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -53,6 +53,7 @@
 #	md*	memory pseudo-disk devices
 #	ccd*	contatenated disk devices
 #	raid*	RAIDframe disk devices
+#	ca*	Compaq array disk devices
 #
 # Console ports:
 #	ttyv0	pccons or pcvt screen 0
@@ -142,6 +143,7 @@ all)
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
+	sh $0 ca0 ca1 ca2 ca3
 	sh $0 lm0
 	;;
 
@@ -155,7 +157,7 @@ audio)
 
 floppy)
 	sh $0 std wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 tty0 tty1 tty2
-	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0
+	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0 ca0 ca1 ca2 ca3
 	;;
 
 ramdisk)
@@ -363,8 +365,9 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|fd*|sd*|vnd*|wd*|raid*)
+ca*|ccd*|fd*|sd*|vnd*|wd*|raid*)
 	case $i in
+	ca*) name=ca;	unit=${i#ca};	blk=19;	chr=69;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=16;	chr=18;;
 	fd*) name=fd;	unit=${i#fd};	blk=2;	chr=9;;
 	raid*) name=raid; unit=${i#raid}; blk=18; chr=62;;
