@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.273 2003/10/02 16:02:09 hannken Exp $ */
+/*	$NetBSD: pmap.c,v 1.274 2003/10/28 15:25:27 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2003/10/02 16:02:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.274 2003/10/28 15:25:27 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3175,7 +3175,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	int npte, zseg, vr, vs;
 	int startscookie, scookie;
 #if defined(SUN4_MMU3L)
-	int startrcookie, rcookie;
+	int startrcookie = 0, rcookie = 0;
 #endif
 	int *kptes;
 	int lastpage;
@@ -4705,8 +4705,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 
 	for (; va < endva; va += NBPG, ptep++) {
 		pte = *ptep;
-		if (inmmu)
-			mmupte = getpte4(va);
+		mmupte = inmmu ? getpte4(va) : 0;
 		if ((pte & PG_V) == 0) {
 #ifdef DIAGNOSTIC
 			if (inmmu && (mmupte & PG_V) != 0)
@@ -4851,6 +4850,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	 */
 	if (!inmmu) {
 		perpage = 0;
+		pteva = 0;
 	} else if (CTX_USABLE(pm,rp)) {
 		/* process has a context, must flush cache */
 		npg = (endva - va) >> PGSHIFT;
@@ -4878,8 +4878,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	for (; va < endva; ptep++, pteva += NBPG, va += NBPG) {
 		int mmupte;
 		pte = *ptep;
-		if (inmmu)
-			mmupte = getpte4(pteva);
+		mmupte = inmmu ? getpte4(pteva) : 0;
 
 		if ((pte & PG_V) == 0) {
 #ifdef DIAGNOSTIC
@@ -6112,8 +6111,7 @@ pmap_kremove4_4c(va, len)
 
 		for (; va < nva; va += NBPG, ptep++) {
 			pte = *ptep;
-			if (inmmu)
-				mmupte = getpte4(va);
+			mmupte = inmmu ? getpte4(va) : 0;
 			if ((pte & PG_V) == 0) {
 #ifdef DIAGNOSTIC
 				if (inmmu && (mmupte & PG_V) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.16 2003/08/07 16:29:35 agc Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.17 2003/10/28 15:25:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.16 2003/08/07 16:29:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.17 2003/10/28 15:25:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,13 +121,14 @@ com_obio_match(parent, cf, aux)
 	int tadpole = 0;
 	int need_probe = 0;
 	int rv = 0;
-	u_int8_t auxregval;
+	uint8_t auxregval = 0;
 
 	if (uoba->uoba_isobio4 != 0) {
 		return (0);
 	}
 
-	/* Tadpole 3GX/3GS uses "modem" for a 16450 port
+	/*
+	 * Tadpole 3GX/3GS uses "modem" for a 16450 port
 	 * (We need to enable it before probing)
 	 */
 	if (strcmp("modem", sa->sa_name) == 0) {
@@ -138,7 +139,8 @@ com_obio_match(parent, cf, aux)
 		need_probe = 1;
 	}
 
-	/* Sun JavaStation 1 uses "su" for a 16550 port
+	/*
+	 * Sun JavaStation 1 uses "su" for a 16550 port
 	 */
 	if (strcmp("su", sa->sa_name) == 0) {
 		need_probe = 1;
