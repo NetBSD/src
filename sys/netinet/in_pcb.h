@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.24 1998/02/10 01:26:36 perry Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.25 1998/05/18 17:10:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,18 +50,18 @@
 struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
-	struct	  inpcbtable *inp_table;
+	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
 	int	  inp_state;		/* bind/connect state */
 	u_int16_t inp_fport;		/* foreign port */
 	u_int16_t inp_lport;		/* local port */
 	struct	  socket *inp_socket;	/* back pointer to socket */
-	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
 	struct	  route inp_route;	/* placeholder for routing entry */
 	int	  inp_flags;		/* generic IP/datagram flags */
 	struct	  ip inp_ip;		/* header prototype; should have more */
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
 	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
+	struct	  inpcbtable *inp_table;
 };
 #define	inp_faddr	inp_ip.ip_dst
 #define	inp_laddr	inp_ip.ip_src
