@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.523 2003/04/13 01:53:00 explorer Exp $
+$NetBSD: pcidevs,v 1.524 2003/04/15 21:32:28 rjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -512,6 +512,7 @@ vendor NETAPP		0x1275	Network Appliance
 vendor TRANSMETA	0x1279	Transmeta Corp
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor DAVICOM		0x1282	Davicom Semiconductor
+vendor ITE		0x1283	Integrated Technology Express, Inc.
 vendor ESSTECH2		0x1285	ESS Technology, Inc.
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
@@ -1572,6 +1573,9 @@ product INTERSIL MINI_PCI_WLAN	0x3873	Intersil PRISM2.5 Mini-PCI WLAN
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
+
+/* ITE products */
+product	ITE IT8152		0x8152	IT8152 Host Bridge
 
 /* I. T. T. products */
 product ITT AGX016	0x0001	AGX016
