@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.17 2000/03/10 06:55:09 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.18 2000/03/10 07:26:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,10 @@ struct tulip_cardbus_softc {
 	int	sc_attached;		/* device is attached */
 					/* product info */
 	const struct tulip_cardbus_product *sc_product;
+
+	int	sc_cben;		/* CardBus enables */
+	int	sc_bar_reg;		/* which BAR to use */
+	pcireg_t sc_bar_val;		/* value of the BAR */
 };
 
 int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
@@ -147,7 +151,7 @@ const struct tulip_cardbus_product {
 	  TULIP_CHIP_INVALID,		0 },
 };
 
-void	tlp_cardbus_wakeup __P((struct tulip_cardbus_softc *));
+void	tlp_cardbus_setup __P((struct tulip_cardbus_softc *));
 
 void	tlp_cardbus_x3201_reset __P((struct tulip_softc *));
 
@@ -197,7 +201,6 @@ tlp_cardbus_attach(parent, self, aux)
 	cardbus_function_tag_t cf = ct->ct_cf;
 	const struct tulip_cardbus_product *tcp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	pcireg_t reg;
 	bus_addr_t adr;
 
 	sc->sc_devno = ca->ca_device;
@@ -238,11 +241,6 @@ tlp_cardbus_attach(parent, self, aux)
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/*
-	 * Bring the chip out of power-save mode.
-	 */
-	tlp_cardbus_wakeup(csc);
-
-	/*
 	 * Map the device.
 	 */
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
@@ -253,8 +251,10 @@ tlp_cardbus_attach(parent, self, aux)
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
+		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
+		csc->sc_bar_reg = TULIP_PCI_MMBA;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else if (Cardbus_mapreg_map(ct, TULIP_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
@@ -262,33 +262,21 @@ tlp_cardbus_attach(parent, self, aux)
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
+		csc->sc_cben = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
+		csc->sc_bar_reg = TULIP_PCI_IOBA;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	} else {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
-	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
-	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
-	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
-
 	/*
-	 * Make sure the latency timer is set to some reasonable
-	 * value.
+	 * Bring the chip out of powersave mode and initialize the
+	 * configuration registers.
 	 */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
-	if (PCI_LATTIMER(reg) < 0x20) {
-		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
-	}
+	tlp_cardbus_setup(csc);
 
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
@@ -418,7 +406,7 @@ tlp_cardbus_detach(self, flags)
 }
 
 void
-tlp_cardbus_wakeup(csc)
+tlp_cardbus_setup(csc)
 	struct tulip_cardbus_softc *csc;
 {
 	struct tulip_softc *sc = &csc->sc_tulip;
@@ -475,6 +463,31 @@ tlp_cardbus_wakeup(csc)
 			cardbus_conf_write(cc, cf, csc->sc_tag,
 			    tcp->tcp_pmreg, 0);
 		}
+	}
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
+
+	/* Program the BAR. */
+	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
+	    csc->sc_bar_val);
+
+	/* Enable the appropriate bits in the PCI CSR. */
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);
+	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
+	reg |= csc->sc_csr;
+	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
+
+	/*
+	 * Make sure the latency timer is set to some reasonable
+	 * value.
+	 */
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(reg) < 0x20) {
+		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		reg |= (0x20 << PCI_LATTIMER_SHIFT);
+		cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
 	}
 }
 
