@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.2 1999/05/11 02:57:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -578,7 +578,7 @@ extern struct cfdriver de_cd;
 #if !defined(LMC_BPF_MTAP) && NBPFILTER > 0
 #define	LMC_BPF_MTAP(sc, m)	bpf_mtap((sc)->lmc_bpf, m)
 #define	LMC_BPF_TAP(sc, p, l)	bpf_tap((sc)->lmc_bpf, p, l)
-#define	LMC_BPF_ATTACH(sc)	bpfattach(&(sc)->lmc_bpf, &(sc)->lmc_sppp.pp_if, DLT_PPP, PPP_HEADER_LEN)
+#define	LMC_BPF_ATTACH(sc)	bpfattach(&(sc)->lmc_bpf, &(sc)->lmc_sppp.pp_if, DLT_PPP_SERIAL, PPP_HEADER_LEN)
 #endif
 
 /*
