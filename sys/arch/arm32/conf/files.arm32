@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.65 1998/09/22 00:43:18 mark Exp $
+#	$NetBSD: files.arm32,v 1.66 1998/09/22 01:45:47 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -37,28 +37,28 @@ attach	cpu at mainbus
 file	arch/arm32/mainbus/cpu.c		cpu needs-flag
 major	{cpu = 38}
 
-# PIOC (Peripheral IO Controller) device
-# parent to wdc, fdc, com lpt
-device	pioc { [offset = -1], [dack = -1], [irq = -1] }
-attach	pioc at mainbus
-file	arch/arm32/mainbus/pioc.c		pioc
+#
+# ISA and mixed ISA+EISA or ISA+PCI drivers
+#
+include "dev/isa/files.isa"
 
 #
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-
-# Standard NetBSD wd driver
-device	wdc: atapi, ata
-# XXX shouldn't have to have NWD in wdc.h
-file	dev/ic/wdc.c				wdc & (wd | !wd) needs-flag
 major	{wd = 16}
+
+# PIOC (Peripheral IO Controller) device
+# parent to wdc, fdc, com and lpt
+device	pioc { [offset = -1], [dack = -1], [irq = -1] }
+attach	pioc at mainbus
+file	arch/arm32/mainbus/pioc.c		pioc
+
+# Standard NetBSD wdc driver
 attach	wdc at pioc with wdc_pioc
 file	arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
 
 # Standard parallel driver
-device	lpt
-file	dev/ic/lpt.c				lpt needs-flag
 major   {lpt = 8}
 attach  lpt at pioc with lpt_pioc
 file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
@@ -70,49 +70,12 @@ file	arch/arm32/ofw/ofw.c			ofw
 file	arch/arm32/ofw/openfirm.c		ofw
 file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
 
-# XXX ISA DMA controller (for ESS - should just pull in
-# XXX files.isa)
-define	isadma
-file	dev/isa/isadma.c			isadma needs-flag
+# ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
-
-# XXX SoundBlaster stuff (for files.ofisa - should just pull in
-# XXX files.isa)
-define	sbdsp
-file	dev/isa/sbdsp.c				sbdsp
 
 # XXX ISA joystick driver
 device	joy
 file	arch/arm32/isa/joy.c			joy needs-flag
-
-device	sb: audio, isadma, sbdsp, mulaw, auconv
-file	dev/isa/sb.c				sb needs-flag
-
-define ess { }
-# XXX should pull in files.isa
-# ESS Technology ES1887/ES888
-device	ess: ess, audio, isadma, mulaw, auconv, midibus
-file	dev/isa/ess.c			ess needs-flag
-
-attach	opl at ess with opl_ess
-file	dev/isa/opl_ess.c		opl_ess
-
-# XXX should pull in files.isa
-# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
-file	dev/isa/ad1848.c		ad1848 
-
-# XXX should pull in files.isa
-device	ym: audio, isadma, ad1848, auconv
-file	dev/isa/ym.c			ym needs-flag
-
-# XXX should pull in files.isa
-# Microsoft Windows Sound System
-device	wss: audio, isadma, ad1848, auconv
-file	dev/isa/wss.c			wss needs-flag
-
-# cs8900 Crystal Ethernet Controller
-device	cs: arp, ether, ifnet, isadma
-file	dev/isa/cs89x0.c		cs
 
 # OFW ISA bus driver.
 include "dev/ofisa/files.ofisa"
@@ -122,11 +85,6 @@ file	arch/arm32/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
 file	arch/arm32/ofw/if_cs_ofisa_machdep.c	cs_ofisa
 file	arch/arm32/ofw/lpt_ofisa_machdep.c	lpt_ofisa
 file	arch/arm32/ofw/wdc_ofisa_machdep.c	wdc_ofisa
-
-# XXX So ISA locator names are present in locators.h.
-device	   isa {[port = -1], [size = 0],
-	   [iomem = -1], [iosiz = 0],
-	   [irq = -1], [drq = -1], [drq2 = -1]}
 
 # Glue for OFW ISA device attachment
 device	ofisapc {}
@@ -495,6 +453,9 @@ device  scr: tty
 file	arch/arm32/shark/scr.c			scr needs-flag
 attach  scr at ofisascr
 
+# ISA Plug 'n Play autoconfiguration glue.
+file	arch/arm32/isa/isapnp_machdep.c		isapnp
+
 # DC21285 "Footbridge" specific files
 define	footbridge {}
 device	footbridge: pcibus, todservice
@@ -556,15 +517,6 @@ file	arch/arm32/pci/pciide_machdep.c	pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"
-
-# XXX REALLY JUST WANT FILES.ISA!!!!
-#
-# ISA Plug 'n Play autoconfiguration glue.
-# THIS MUST COME AFTER ALL MI ISA DEVICES ARE DEFINED.  This is because
-# ISA PnP devices often use `device' declarations listed in this file.
-#
-include "dev/isapnp/files.isapnp"       
-file	arch/arm32/isa/isapnp_machdep.c		isapnp
 
 #
 # Compatibility modules
