@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.7 1997/02/06 06:05:39 mikel Exp $
+.\"	$NetBSD: tar.1,v 1.8 1997/06/06 07:59:54 jeremy Exp $
 .\"
 .Dd 6 August 1994
 .Os NetBSD
@@ -164,6 +164,9 @@ uses stdin or stdout.
 .It Fl -new-volume-script Ar file
 Run a script at the end of each archive volume (implies
 .Fl M ) .
+.It Fl -fast-read
+Stop after all non-wildcard extraction targets have been found
+in the archive.
 .It Fl G
 .It Fl -incremental
 Create/list/extract old GNU-format incremental backup.
