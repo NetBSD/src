@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.28 2005/01/11 22:42:30 christos Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.29 2005/01/12 03:34:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.28 2005/01/11 22:42:30 christos Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.29 2005/01/12 03:34:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: local_passwd.c,v 1.28 2005/01/11 22:42:30 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
@@ -70,6 +71,7 @@ getnewpasswd(pw, min_pw_len)
 	int tries;
 	char *p, *t;
 	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN+1];
+	char option[LINE_MAX], *key, *opt;
 	
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
@@ -108,7 +110,10 @@ getnewpasswd(pw, min_pw_len)
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
 
-	if(pw_gensalt(salt, _PASSWORD_LEN, pw, 'l') == -1) {
+	pw_getpwconf(option, sizeof(option), pw, "localcipher");
+	opt = option;
+	key = strsep(&opt, ",");
+	if(pw_gensalt(salt, _PASSWORD_LEN, key, opt) == -1) {
 		warn("Couldn't generate salt");
 		pw_error(NULL, 0, 0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.29 2005/01/11 22:42:30 christos Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.30 2005/01/12 03:34:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.29 2005/01/11 22:42:30 christos Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.30 2005/01/12 03:34:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: yp_passwd.c,v 1.29 2005/01/11 22:42:30 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
+#include <util.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
@@ -69,13 +71,13 @@ static	int yflag;
 
 static	char		*getnewpasswd __P((struct passwd *, char **));
 static	int		 ypgetpwnam __P((const char *));
-static	void		 pw_error __P((char *, int, int));
+static	void		 pwerror __P((char *, int, int));
 
 static uid_t uid;
 char *domain;
 
 static void
-pw_error(name, err, eval)
+pwerror(name, err, eval)
 	char *name;
 	int err, eval;
 {
@@ -253,6 +255,7 @@ getnewpasswd(pw, old_pass)
 	char *p, *t;
 	static char buf[_PASSWORD_LEN+1];
 	char salt[_PASSWORD_LEN+1];
+	char option[LINE_MAX], *key, *opt;
 
 	(void)printf("Changing YP password for %s.\n", pw->pw_name);
 
@@ -263,7 +266,7 @@ getnewpasswd(pw, old_pass)
 			if (strcmp(crypt(p = getpass("Old password:"),
 					 pw->pw_passwd),  pw->pw_passwd)) {
 				(void)printf("Sorry.\n");
-				pw_error(NULL, 0, 1);
+				pwerror(NULL, 0, 1);
 			}
 		} else {
 			p = "";
@@ -272,14 +275,14 @@ getnewpasswd(pw, old_pass)
 		*old_pass = strdup(p);
 		if (!*old_pass) {
 			(void)printf("not enough core.\n");
-			pw_error(NULL, 0, 1);
+			pwerror(NULL, 0, 1);
 		}
 	}
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
 		if (!*p) {
 			(void)printf("Password unchanged.\n");
-			pw_error(NULL, 0, 0);
+			pwerror(NULL, 0, 0);
 		}
 		if (strlen(p) <= 5 && ++tries < 2) {
 			(void)printf("Please enter a longer password.\n");
@@ -299,14 +302,17 @@ getnewpasswd(pw, old_pass)
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
 
-	if (pw_gensalt(salt, _PASSWORD_LEN, pw, 'y' ) == -1) {
+	pw_getpwconf(option, sizeof(option), pw, "ypcipher");
+	opt = option;
+	key = strsep(&opt, ",");
+	if (pw_gensalt(salt, _PASSWORD_LEN, key, opt) == -1) {
 		warn("Couldn't generate salt");
-		pw_error(NULL, 0, 0);
+		pwerror(NULL, 0, 0);
 	}
 	p = strdup(crypt(buf, salt));
 	if (!p) {
 		(void)printf("not enough core.\n");
-		pw_error(NULL, 0, 0);
+		pwerror(NULL, 0, 0);
 	}
 	return (p);
 }
