@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.12 1999/11/07 01:04:59 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.13 1999/11/08 06:19:54 mycroft Exp $
 # From: GENERIC,v 1.127 1999/08/16 22:27:13 augustss Exp
 #
 # Mycroft's AS200.
@@ -324,11 +324,11 @@ fd*	at	fdc? drive ?
 
 # USB Mice
 #ums*	at uhub? port ? configuration ? interface ?
-#wsmouse*	at ums? mux 0
+#wsmouse*	at ums?
 
 # USB Keyboards
 #ukbd*	at uhub? port ? configuration ? interface ?
-#wskbd*	at ukbd? console ? mux 1
+#wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
 #uhid*	at uhub? port ? configuration ? interface ?
@@ -351,8 +351,8 @@ fd*	at	fdc? drive ?
 wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
-wskbd*		at	pckbd? mux 1
-wsmouse*	at	pms? mux 0
+wskbd*		at	pckbd?
+wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 #pseudo-device	ccd		4
@@ -365,7 +365,6 @@ pseudo-device	pty		64
 #pseudo-device	sl		4
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
