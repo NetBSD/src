@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.2 2003/09/11 09:40:11 kleink Exp $	*/
 
 #ifndef _AMD64_SYSARCH_H_
 #define _AMD64_SYSARCH_H_
@@ -103,6 +103,9 @@ int x86_64_iopl __P((struct lwp *, void *, register_t *));
 int x86_64_get_mtrr __P((struct lwp *, void *, register_t *));
 int x86_64_set_mtrr __P((struct lwp *, void *, register_t *));
 #else
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
 int x86_64_get_ldt __P((int, union descriptor *, int));
 int x86_64_set_ldt __P((int, union descriptor *, int));
 int x86_64_iopl __P((int));
@@ -114,6 +117,7 @@ int x86_64_pmc_read __P((struct x86_64_pmc_read_args *));
 int x86_64_set_mtrr __P((struct mtrr *, int *));
 int x86_64_get_mtrr __P((struct mtrr *, int *));
 int sysarch __P((int, void *));
+__END_DECLS
 #endif
 
 #endif /* !_AMD64_SYSARCH_H_ */
