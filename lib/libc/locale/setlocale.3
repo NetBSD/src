@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.14 2002/10/01 17:02:57 wiz Exp $
+.\"	$NetBSD: setlocale.3,v 1.15 2003/02/12 02:48:59 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,9 +128,17 @@ to return the current locale.
 By default, C programs start in the
 .Li "\&""C""
 locale.
+The format of the locale string is described in
+.Xr nls 7 .
+.Pp
 The only function in the library that sets the locale is
 .Fn setlocale ;
 the locale is never changed as a side effect of some other routine.
+.Pp
+.Pp
+Changing the setting of LC_MESSAGES has no effect on catalogs that
+have already been opened by
+.Xr catopen 3 .
 .Pp
 The
 .Fn localeconv
@@ -308,6 +316,25 @@ which may be altered by later calls to
 .Fn setlocale
 or
 .Fn localeconv .
+.Sh EXAMPLES
+The following code illustrates how a program can initialize the
+international environment for one language, while selectively
+modifying the program's locale such that regular expressions and
+string operations can be applied to text recorded in a different
+language:
+.Bd -literal
+	setlocale(LC_ALL, "de");
+	setlocale(LC_COLLATE, "fr");
+.Ed
+.Pp
+When a process is started, its current locale is set to the C or POSIX
+locale.  An internationalized program that depends on locale data not
+defined in the C or POSIX locale must invoke the setlocale subroutine
+in the following manner before using any of the locale-specific
+information:
+.Bd -literal
+	setlocale(LC_ALL, "");
+.Ed
 .\" .Sh FILES							XXX
 .\" .Bl -tag -width /usr/share/locale/locale/category -compact	XXX
 .\" .It Pa $PATH_LOCALE/\fIlocale\fP/\fIcategory\fP		XXX
@@ -316,7 +343,9 @@ or
 .\" and the category \fIcategory\fP.				XXX
 .\" .El
 .Sh SEE ALSO
-.Xr nl_langinfo 3
+.Xr catopen 3 ,
+.Xr nl_langinfo 3 ,
+.Xr nls 7
 .\" .Xr strcoll 3 ,						XXX
 .\" .Xr strxfrm 3						XXX
 .Sh STANDARDS
