@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.13 1994/12/24 15:30:12 cgd Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.14 1995/01/18 06:14:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -120,8 +120,7 @@ cd9660_mountroot()
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	imp = VFSTOISOFS(mp);
 	bzero(imp->im_fsmnt, sizeof(imp->im_fsmnt));
@@ -402,13 +401,8 @@ cd9660_unmount(mp, mntflags, p)
 	register struct iso_mnt *isomp;
 	int error, flags = 0;
 	
-	if (mntflags & MNT_FORCE) {
-		extern int doforce;
-
-		if (!doforce || (mp->mnt_flag & MNT_ROOTFS))
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 #if 0
 	mntflushbuf(mp, 0);
 	if (mntinvalbuf(mp))
