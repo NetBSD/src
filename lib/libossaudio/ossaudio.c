@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.15 2001/07/08 22:30:15 kim Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -515,6 +515,7 @@ getdevinfo(int fd)
 		{ AudioNline,		SOUND_MIXER_LINE },
 		{ AudioNcd,		SOUND_MIXER_CD },
 		{ AudioNdac,		SOUND_MIXER_PCM },
+		{ AudioNaux,		SOUND_MIXER_LINE1 },
 		{ AudioNrecord,		SOUND_MIXER_IMIX },
 		{ AudioNmaster,		SOUND_MIXER_VOLUME },
 		{ AudioNtreble,		SOUND_MIXER_TREBLE },
@@ -781,4 +782,3 @@ setblocksize(int fd, struct audio_info *info)
 		ioctl(fd, AUDIO_GETINFO, info);
 	}
 }
-
