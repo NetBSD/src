@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.61.2.9 2004/11/12 04:40:32 jmc Exp $	*/
+/*	$NetBSD: fil.c,v 1.61.2.10 2005/01/10 22:03:57 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.9 2004/11/12 04:40:32 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.10 2005/01/10 22:03:57 jmc Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -419,7 +419,7 @@ fr_info_t *fin;
 			 * Actually, hop by hop header is only allowed right
 			 * after IPv6 header!
 			 */
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -430,7 +430,7 @@ fr_info_t *fin;
 				frpr_hopopts6(fin);
 			break;
 		case IPPROTO_DSTOPTS :
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -438,7 +438,7 @@ fr_info_t *fin;
 			frpr_dstopts6(fin);
 			break;
 		case IPPROTO_ROUTING :
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -460,7 +460,7 @@ fr_info_t *fin;
 			go = 0;
 			break;
 		case IPPROTO_FRAGMENT :
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -2021,10 +2021,19 @@ u_32_t *passp;
 			ATOMIC_INCL(frstats[out].fr_ads);
 		} else {
 			ATOMIC_INCL(frstats[out].fr_bads);
+#ifdef notdef
+			/*
+			 * This blocks ICMP ECHOREPLY. fr_addstate returning
+			 * NULL is not necessary a bad thing because there
+			 * is no state to be added on some packets, eg.
+			 * icmp reply packets. XXX: but for others this
+			 * is wrong.
+			 */
 			if (FR_ISPASS(pass)) {
 				pass &= ~FR_CMDMASK;
 				pass |= FR_BLOCK;
 			}
+#endif
 		}
 	}
 
@@ -2756,7 +2765,11 @@ void *l4hdr;
 	m->m_off += hlen;
 #   endif
 	m->m_len -= hlen;
+#ifdef INET
 	sum2 = in_cksum(m, slen);
+#else
+	sum2 = 0;
+#endif
 	m->m_len += hlen;
 #   if BSD >= 199103
 	m->m_data -= hlen;
@@ -3967,13 +3980,12 @@ caddr_t data;
 	frentry_t frd, *fp, *f, **fprev, **ftail;
 	int error = 0, in, v;
 	u_int *p, *pp;
-	frgroup_t *fg;
+	frgroup_t *fg = NULL;
 	char *group;
-	void *ptr;
+	void *ptr = NULL;
 
-	fg = NULL;
-	fp = &frd;
 	if (makecopy != 0) {
+		fp = &frd;
 		error = fr_inobj(data, fp, IPFOBJ_FRENTRY);
 		if (error)
 			return EFAULT;
@@ -4020,7 +4032,6 @@ caddr_t data;
 			return error;
 	}
 
-	ptr = NULL;
 	/*
 	 * Check that the group number does exist and that its use (in/out)
 	 * matches what the rule is.
