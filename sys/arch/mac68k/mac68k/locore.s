@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 1994/10/28 19:55:37 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 1994/10/31 01:15:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -937,7 +937,7 @@ Lmmufigured:
 	jeq	mmu_off
 
 | MMU is on; if not '030, then just turn it off
-	tstl	_mmutype		| ttx instructions will break 68851
+	cmpl	#MMU_68030, _mmutype
 	jne	Lnoremap		| not '030 -- skip all this
 
 | find out how it is mapped
@@ -1331,7 +1331,7 @@ Lclru1:
 
 | LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
 	tstl	_mmutype		| ttx instructions will break 68851
-	jne	LnokillTT
+	jgt	LnokillTT
 	lea	longscratch,a0
 	movl	#0, a0@
 	.long	0xF0100800		| movl a0@,tt0
@@ -2525,7 +2525,7 @@ _doboot:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
-	tstl	_mmutype
+	cmpl	#MMU_68030, _mmutype
 	jeq	Lmap030rom		| don't turn off MMU if '030
 
 	lea	longscratch,a0		| make sure we have real memory
