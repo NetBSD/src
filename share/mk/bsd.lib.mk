@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.238 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.239 2003/10/26 03:29:44 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -34,7 +34,7 @@ SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
 	exists(${NETBSDSRCDIR}/lib/checkver)
 checkver:
 	@(cd ${.CURDIR} && \
-		sh ${NETBSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
+	    ${HOST_SH} ${NETBSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
 		    -d ${DESTDIR}${_LIBSODIR} ${LIB})
 .endif
 .endif
