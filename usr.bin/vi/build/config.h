@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.7 2000/11/05 20:07:23 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.8 2001/01/29 00:24:24 thorpej Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,9 +10,7 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define if you have a working `mmap' system call.  */
-#ifdef __SVR4
 #define HAVE_MMAP 1 
-#endif
 
 /* Define if your struct stat has st_blksize.  */
 #define HAVE_ST_BLKSIZE 1
