@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7 2002/09/06 15:48:51 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.8 2002/09/10 12:33:44 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -91,6 +91,10 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 	}
 	if ((p->p_md.md_flags & MDP_FPUSED) != 0)
 		process_read_fpregs(p, &ksc.sc_regs);
+	else {
+		/* Always copy the FPSCR */
+		ksc.sc_regs.r_fpscr = p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
+	}
 	ksc.sc_fpstate = p->p_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
 
 	/* Save signal stack */
@@ -196,6 +200,9 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	if ((ksc.sc_fpstate & MDP_FPSAVED) != 0) {
 		process_write_fpregs(p, &ksc.sc_regs);
 		sh5_fprestore(tf->tf_state.sf_usr, &p->p_addr->u_pcb);
+	} else {
+		/* Always restore FPSCR */
+		p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = ksc.sc_regs.r_fpscr;
 	}
 	p->p_md.md_flags = ksc.sc_fpstate & MDP_FPUSED;
 
