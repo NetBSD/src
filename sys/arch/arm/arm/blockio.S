@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.10 2001/03/19 22:51:51 rearnsha Exp $	*/
+/*	$NetBSD: blockio.S,v 1.1 2001/05/29 23:03:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
