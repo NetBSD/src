@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.11 1995/09/11 08:29:13 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.12 1995/09/13 19:35:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@ struct rzstats {
 };
 
 struct	rz_softc {
-	struct	scsi_device *sc_sd;	/* physical unit info */
+	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	pid_t	sc_format_pid;		/* process using "format" mode */
 	u_long	sc_openpart;		/* partitions open */
 	u_long	sc_bopenpart;		/* block partitions open */
@@ -322,7 +322,7 @@ rzready(sc)
  * Return true if found and initialized ok.
  */
 rzprobe(sd)
-	register struct scsi_device *sd;
+	register struct pmax_scsi_device *sd;
 {
 	register struct rz_softc *sc = &rz_softc[sd->sd_unit];
 	register int i;
@@ -657,7 +657,7 @@ rzdone(unit, error, resid, status)
 {
 	register struct rz_softc *sc = &rz_softc[unit];
 	register struct buf *bp = sc->sc_tab.b_actf;
-	register struct scsi_device *sd = sc->sc_sd;
+	register struct pmax_scsi_device *sd = sc->sc_sd;
 
 	if (bp == NULL) {
 		printf("rz%d: bp == NULL\n", unit);
@@ -1104,7 +1104,7 @@ rzdump(dev)
 	int part = rzpart(dev);
 	int unit = rzunit(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
-	register struct scsi_device *sd = sc->sc_sd;
+	register struct pmax_scsi_device *sd = sc->sc_sd;
 	register daddr_t baddr;
 	register int maddr;
 	register int pages, i;
