@@ -1,14 +1,14 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.19 1993/09/05 22:34:12 mycroft Exp $
+#	$Id: ALL,v 1.20 1993/09/06 18:37:56 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
 cpu		"I486_CPU"
 ident		ALL
 timezone	8 dst
-maxusers	30
+maxusers	32
 
 options	SWAPPAGER,VNODEPAGER,DEVPAGER
 options KTRACE
@@ -66,9 +66,9 @@ device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 #bus mice
-device		mms0	at isa? port "IO_BMS0" tty irq 5 vector mmsintr
-device		lms0	at isa? port "IO_BMS0" tty irq 5 vector lmsintr
-device		pms0	at isa? port "IO_BMS0" tty irq 5 vector pmsintr
+device		mms0	at isa? port "IO_BMS1" tty irq 5 vector mmsintr
+device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
+device		pms0	at isa? port "IO_KBD" tty irq 5 vector pmsintr
 
 #scsi
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
@@ -94,11 +94,12 @@ device we0 at isa? port 0x300 net irq 10 iomem 0xd0000 iosiz 8192 vector weintr
 device ne0 at isa? port 0x300 net irq 9 vector neintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
+device hp0 at isa? port 0x300 net irq 5 vector hpintr
 
 #pseudo-devices
-pseudo-device pty32
+pseudo-device pty	64
 #pseudo-device tb2	was never ported to 4.4
-pseudo-device bpfilter3
+pseudo-device bpfilter	4
 pseudo-device loop
 pseudo-device sl
 pseudo-device ppp
