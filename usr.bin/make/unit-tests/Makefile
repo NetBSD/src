@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2003/09/27 21:29:37 sjg Exp $
+# $Id: Makefile,v 1.9 2004/01/09 00:56:44 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -16,7 +16,7 @@
 
 UNIT_TESTS:= ${.PARSEDIR}
 
-all: mod-ts varcmd modword
+all: mod-ts varcmd modword ternary
 
 LIST= one two three
 LIST+= four five six
@@ -52,6 +52,11 @@ mod-ts:
 .PHONY: varcmd modword
 varcmd modword:
 	@${.MAKE} -k -f ${UNIT_TESTS}/$@
+
+ternary:
+	@${.MAKE} -k -f ${UNIT_TESTS}/$@
+	@${.MAKE} -k -f ${UNIT_TESTS}/$@ A=
+	@${.MAKE} -k -f ${UNIT_TESTS}/$@ A=42
 
 clean:
 	rm -f *.out *.fail *.core
