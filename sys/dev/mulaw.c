@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.22.2.2 2004/12/30 16:02:27 kent Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.22.2.3 2005/01/02 15:54:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,12 +35,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22.2.2 2004/12/30 16:02:27 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22.2.3 2005/01/02 15:54:45 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <dev/auconv.h>
 #include <dev/mulaw.h>
+
+#define MULAW_DEBUG
+#ifdef MULAW_DEBUG
+# define DPRINTF(x)	printf x
+#else
+# define DPRINTF(x)
+#endif
 
 /*
  * This table converts a (8 bit) mu-law value to a 16 bit value.
@@ -258,6 +265,7 @@ stream_filter_t * \
 name(struct audio_softc *sc, const audio_params_t *from, \
      const audio_params_t *to) \
 { \
+	DPRINTF(("Construct '%s' filter.\n", __func__)); \
 	return auconv_nocontext_filter_factory(name##_fetch_to); \
 } \
 static int \
@@ -283,16 +291,16 @@ DEFINE_FILTER(mulaw_to_linear8)
 	if (dst->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = mulawtolin16[*s][0];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
 	} else {
 		while (used_dst < m && used_src > 0) {
 			*d = mulawtolin16[*s][0] ^ 0x80;
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
@@ -325,8 +333,8 @@ DEFINE_FILTER(mulaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = mulawtolin16[s[0]][1];
 			d[1] = mulawtolin16[s[0]][0];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -335,8 +343,8 @@ DEFINE_FILTER(mulaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = mulawtolin16[s[0]][0];
 			d[1] = mulawtolin16[s[0]][1];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -345,8 +353,8 @@ DEFINE_FILTER(mulaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = mulawtolin16[s[0]][1];
 			d[1] = mulawtolin16[s[0]][0] ^ 0x80;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -355,8 +363,8 @@ DEFINE_FILTER(mulaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = mulawtolin16[s[0]][0] ^ 0x80;
 			d[1] = mulawtolin16[s[0]][1];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -388,8 +396,8 @@ DEFINE_FILTER(linear16_to_mulaw)
 	case AUDIO_ENCODING_SLINEAR_LE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintomulaw[s[1] ^ 0x80];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -397,8 +405,8 @@ DEFINE_FILTER(linear16_to_mulaw)
 	case AUDIO_ENCODING_SLINEAR_BE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintomulaw[s[0] ^ 0x80];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -406,8 +414,8 @@ DEFINE_FILTER(linear16_to_mulaw)
 	case AUDIO_ENCODING_ULINEAR_LE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintomulaw[s[1]];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -415,8 +423,8 @@ DEFINE_FILTER(linear16_to_mulaw)
 	case AUDIO_ENCODING_ULINEAR_BE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintomulaw[s[0]];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -447,16 +455,16 @@ DEFINE_FILTER(linear8_to_mulaw)
 	if (this->src->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = lintomulaw[*s];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
 	} else {		/* SLINEAR_LE */
 		while (used_dst < m && used_src > 0) {
 			*d = lintomulaw[*s ^ 0x80];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
@@ -486,16 +494,16 @@ DEFINE_FILTER(alaw_to_linear8)
 	if (dst->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = alawtolin16[*s][0];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
 	} else {		/* SLINEAR */
 		while (used_dst < m && used_src > 0) {
 			*d = alawtolin16[*s][0] ^ 0x80;
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
@@ -528,8 +536,8 @@ DEFINE_FILTER(alaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = alawtolin16[s[0]][1];
 			d[1] = alawtolin16[s[0]][0];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -538,8 +546,8 @@ DEFINE_FILTER(alaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = alawtolin16[s[0]][0];
 			d[1] = alawtolin16[s[0]][1];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -548,8 +556,8 @@ DEFINE_FILTER(alaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = alawtolin16[s[0]][1];
 			d[1] = alawtolin16[s[0]][0] ^ 0x80;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -558,8 +566,8 @@ DEFINE_FILTER(alaw_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = alawtolin16[s[0]][0] ^ 0x80;
 			d[1] = alawtolin16[s[0]][1];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -590,16 +598,16 @@ DEFINE_FILTER(linear8_to_alaw)
 	if (this->src->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = lintoalaw[*s];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
 	} else {		/* SLINEAR_LE */
 		while (used_dst < m && used_src > 0) {
 			*d = lintoalaw[*s ^ 0x80];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst++;
 			used_src--;
 		}
@@ -630,8 +638,8 @@ DEFINE_FILTER(linear16_to_alaw)
 	case AUDIO_ENCODING_SLINEAR_LE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintoalaw[s[1] ^ 0x80];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -639,8 +647,8 @@ DEFINE_FILTER(linear16_to_alaw)
 	case AUDIO_ENCODING_SLINEAR_BE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintoalaw[s[0] ^ 0x80];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -648,8 +656,8 @@ DEFINE_FILTER(linear16_to_alaw)
 	case AUDIO_ENCODING_ULINEAR_LE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintoalaw[s[1]];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -657,8 +665,8 @@ DEFINE_FILTER(linear16_to_alaw)
 	case AUDIO_ENCODING_ULINEAR_BE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintoalaw[s[0]];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
