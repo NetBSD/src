@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.1.2.6 2001/01/07 18:16:02 sommerfeld Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.1.2.7 2001/02/11 09:25:21 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ void
 __cpu_simple_lock_init(lockp)
 	__cpu_simple_lock_t *lockp;
 {
+
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
@@ -73,7 +74,7 @@ __cpu_simple_lock(lockp)
 	__cpu_simple_lock_t *lockp;
 {
 #if defined (DEBUG)
-#if defined(DDB)	
+#if defined(DDB)
 	int spincount = 0;
 	int cpu = cpu_number();
 	int limit = spin_limit * (cpu + 1);
@@ -86,8 +87,8 @@ __cpu_simple_lock(lockp)
 #endif
 #endif
 
-	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_LOCKED) {
+	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
+	    __SIMPLELOCK_LOCKED) {
 #if defined(DEBUG) && defined(DDB)
 		spincount++;
 		if (spincount == limit) {
@@ -95,10 +96,11 @@ __cpu_simple_lock(lockp)
 			spincount = 0;
 
 			if (db_active) {
-				db_printf("cpu%d: spinout while in debugger\n", cpu);
+				db_printf("cpu%d: spinout while in debugger\n",
+				    cpu);
 				while (db_active)
 					;
-			} 
+			}
 			db_printf("cpu%d: spinout\n", cpu);
 			Debugger();
 		}
@@ -116,12 +118,12 @@ __cpu_simple_lock_try(lockp)
 {
 #ifdef DEBUG
 	__cpu_simple_lock_t v = *lockp;
-	
+
 	KASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #endif
 
-	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_UNLOCKED)
+	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
+	    __SIMPLELOCK_UNLOCKED)
 		return (1);
 	return (0);
 }
@@ -132,7 +134,7 @@ __cpu_simple_unlock(lockp)
 {
 #ifdef DEBUG
 	__cpu_simple_lock_t v = *lockp;
-	
+
 	KASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #endif
 
