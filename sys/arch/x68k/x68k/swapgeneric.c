@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.1 1996/05/05 12:17:23 oki Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.2 1996/05/21 15:33:23 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -45,9 +45,13 @@
 #include <sys/fcntl.h>		/* XXXX and all that uses it */
 #include <sys/proc.h>		/* XXXX and all that uses it */
 #include <sys/disk.h>
+#include <dev/cons.h>
 
 #include "sd.h"
+#include "cd.h"
 #include "ether.h"
+
+void gets __P((char *));
 
 /*
  * Generic configuration;  all in one
@@ -105,6 +109,7 @@ struct	genericconf {
 
 int (*mountroot)() = ffs_mountroot;
 
+void
 setconf()
 {
 	register struct genericconf *gc;
@@ -184,6 +189,7 @@ doswap:
 	}
 }
 
+void
 gets(cp)
 	char *cp;
 {

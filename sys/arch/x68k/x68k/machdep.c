@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1996/05/05 12:17:22 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1996/05/21 15:33:07 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,10 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -88,6 +92,9 @@
 
 #include <x68k/x68k/iodevice.h>
 
+void dumpmem __P((int *, int, int));
+void initcpu __P((void));
+void identifycpu __P((void));
 void doboot __P((void))
     __attribute__((__noreturn__));
 
@@ -404,7 +411,7 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
@@ -500,6 +507,7 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
+void
 identifycpu()
 {
         /* there's alot of XXX in here... */
@@ -555,6 +563,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -689,7 +698,7 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
@@ -760,7 +769,7 @@ sendsig(catcher, sig, mask, code)
 	m68881_save(&kfp->sf_state.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
+		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
@@ -809,7 +818,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
 		       p->p_pid, sig, kfp->sf_scp, fp,
 		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -855,7 +864,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
@@ -951,7 +960,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -992,7 +1001,7 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
 #endif
@@ -1013,7 +1022,7 @@ boot(howto)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
-		savectx(curproc->p_addr);
+		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
@@ -1032,7 +1041,6 @@ boot(howto)
 	if (howto & RB_DUMP)
 		dumpsys();
 
- haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
@@ -1117,7 +1125,7 @@ static int
 find_range(pa)
 	vm_offset_t pa;
 {
-	int     i, max = 0;
+	int i;
 
 	for (i = 0; i < numranges; i++) {
 		if (low[i] <= pa && pa < high[i])
@@ -1152,6 +1160,7 @@ find_next_range(pa)
 /*
  * Write a crash dump.
  */
+void
 dumpsys()
 {
 	unsigned bytes, i, n;
@@ -1173,7 +1182,7 @@ dumpsys()
 	}
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -1248,6 +1257,7 @@ dumpsys()
 	}
 }
 
+void
 initcpu()
 {
 #ifdef MAPPEDCOPY
@@ -1264,6 +1274,7 @@ initcpu()
 #endif
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
@@ -1277,6 +1288,7 @@ straytrap(pc, evec)
 
 int	*nofault;
 
+int
 badaddr(addr)
 	register caddr_t addr;
 {
@@ -1296,6 +1308,7 @@ badaddr(addr)
 	return(0);
 }
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
@@ -1406,7 +1419,6 @@ add_sicallback (function, rock1, rock2)
 	splx(s);
 }
 
-
 void
 rem_sicallback (function)
 	void (*function) __P((void *rock1, void *rock2));
@@ -1430,25 +1442,8 @@ rem_sicallback (function)
 	splx(s);
 }
 
-/* purge the list */
-static void
-call_sicallbacks()
-{
-	int s;
-	struct si_callback *si;
 
-	do {
-		s = splhigh();
-		if (si = si_callbacks)
-			si_callbacks = si->next;
-		splx (s);
-		if (si) {
-			si->function(si->rock1, si->rock2);
-			free (si, M_TEMP);
-		}
-	} while (si);
-}
-
+void
 intrhand(sr)
 	int sr;
 {
@@ -1476,6 +1471,7 @@ candbtimer(arg)
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
+void
 nmihand(frame)
 	struct frame frame;
 {
@@ -1517,6 +1513,7 @@ nmihand(frame)
 	printf("unexpected level 7 interrupt ignored\n");
 }
 
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1560,6 +1557,7 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
+void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;

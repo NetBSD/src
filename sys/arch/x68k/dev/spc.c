@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.2 1996/05/21 15:32:48 oki Exp $	*/
 
 #define	integrate	static inline
 
@@ -225,7 +225,7 @@ struct spc_acb {
 
 	u_char target_stat;		/* SCSI status byte */
 
-/*	struct spc_dma_seg dma[SPC_NSEG]; /* Physical addresses+len */
+/*	struct spc_dma_seg dma[SPC_NSEG];*/ /* Physical addresses+len */
 
 	TAILQ_ENTRY(spc_acb) chain;
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
@@ -327,7 +327,7 @@ struct spc_softc {
 #define SPC_SHOWTRACE	0x10
 #define SPC_SHOWSTART	0x20
 #define SPC_DOBREAK	0x40
-int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; /**/
+int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #define	SPC_PRINT(b, s)	do {if ((spc_debug & (b)) != 0) printf s;} while (0)
 #define	SPC_BREAK()	do {if ((spc_debug & SPC_DOBREAK) != 0) Debugger();} while (0)
 #define	SPC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
@@ -551,7 +551,7 @@ spc_init(sc)
 			untimeout(spc_timeout, acb);
 			spc_done(sc, acb);
 		}
-		while (acb = sc->nexus_list.tqh_first) {
+		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			untimeout(spc_timeout, acb);
 			spc_done(sc, acb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 1996/05/05 12:17:24 oki Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 1996/05/21 15:33:26 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -130,6 +130,7 @@ vdoualarm(arg)
  * do pages, above that we do the entire cache.
  */
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -249,6 +250,7 @@ cachectl(req, addr, len)
  */
 
 /*ARGSUSED1*/
+int
 dma_cachectl(addr, len)
 	caddr_t	addr;
 	int len;

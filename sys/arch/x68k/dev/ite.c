@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: ite.c,v 1.2 1996/05/21 15:32:18 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,6 +255,7 @@ iteinit(dev)
 /*
  * Perform functions necessary to setup device as a terminal emulator.
  */
+int
 iteon(dev, flag)
 	dev_t dev;
 	int flag;
@@ -288,6 +289,7 @@ iteon(dev, flag)
  * Deinit'ing the console every time leads to a very active
  * screen when processing /etc/rc.
  */
+void
 iteoff(dev, flag)
 	dev_t dev;
 	int flag;
@@ -590,7 +592,6 @@ itecnfilter(c, caller)
 {
 	struct tty *kbd_tty;
 	static u_char mod = 0;
-	static u_char last_dead = 0;
 	struct key key;
 	u_char code, up, mask;
 	int s, i;
@@ -2423,7 +2424,7 @@ void
 itecnprobe(cd)
 	struct consdev *cd;
 {
-	int i, sw, maj, unit, pri;
+	int maj;
 
 	/*
 	 * bring graphics layer up.

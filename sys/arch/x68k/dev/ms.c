@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $ */
+/*	$NetBSD: ms.c,v 1.2 1996/05/21 15:32:31 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -244,8 +244,6 @@ msopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int s, error;
-
 	if (ms_softc.ms_events.ev_io)
 		return (EBUSY);
 	ms_softc.ms_events.ev_io = p;
@@ -298,8 +296,6 @@ msioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int s;
-
 	switch (cmd) {
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -337,4 +333,5 @@ msselect(dev, rw, p)
 	return (ev_select(&ms_softc.ms_events, rw, p));
 }
 
+void
 mouseattach(){} /* XXX pseudo-device */
