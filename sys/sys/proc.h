@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.88 2000/03/23 20:37:58 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.89 2000/03/28 06:01:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -353,7 +353,7 @@ extern struct proclist zombproc;	/* List of zombie processes. */
 extern struct proclist deadproc;	/* List of dead processes. */
 extern struct simplelock deadproc_slock;
 
-struct proc *initproc;			/* Process slots for init, pager. */
+extern struct proc *initproc;		/* Process slots for init, pager. */
 
 extern const struct proclist_desc proclists[];
 
@@ -387,7 +387,6 @@ void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
-void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
 int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
