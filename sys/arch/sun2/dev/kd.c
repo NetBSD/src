@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.4 2002/10/23 09:12:19 jdolecek Exp $	*/
+/*	$NetBSD: kd.c,v 1.5 2002/10/23 19:48:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,8 +98,6 @@ static void kdstart(struct tty *);
 static void kd_init __P((struct kd_softc *));
 static void kd_cons_input __P((int));
 static int  kdcngetc __P((dev_t));
-
-int	cons_ocount;		/* output byte count */
 
 dev_type_open(kdopen);
 dev_type_close(kdclose);
