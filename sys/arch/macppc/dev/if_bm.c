@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.7 2000/03/23 06:40:34 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.8 2000/04/07 14:35:58 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -422,13 +422,13 @@ bmac_init_dma(sc)
 
 	for (i = 0; i < BMAC_RXBUFS; i++) {
 		DBDMA_BUILD(cmd, DBDMA_CMD_IN_LAST, 0, BMAC_BUFLEN,
-			vtophys(sc->sc_rxbuf + BMAC_BUFLEN * i),
+			vtophys((vaddr_t)sc->sc_rxbuf + BMAC_BUFLEN * i),
 			DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		cmd++;
 	}
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys(sc->sc_rxcmd));
+	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_rxcmd));
 
 	sc->sc_rxlast = 0;
 
