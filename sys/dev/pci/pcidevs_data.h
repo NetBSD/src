@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.261 2000/09/13 13:53:22 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.262 2000/09/13 13:58:26 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.257 2000/09/13 13:53:06 tron Exp 
+ *	NetBSD: pcidevs,v 1.258 2000/09/13 13:58:06 tron Exp 
  */
 
 /*
@@ -1604,12 +1604,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Diamond Computer Systems",
 	    "Viper/PCI",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TX,
-	    0,
-	    "D-Link Systems",
-	    "",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX,
