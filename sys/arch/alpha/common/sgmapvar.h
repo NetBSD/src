@@ -1,4 +1,6 @@
-/* $NetBSD: sgmapvar.h,v 1.2 1997/06/07 05:29:33 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.3 1997/09/05 02:21:51 thorpej Exp $ */
+
+#define	SGMAP_LOG
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,6 +75,22 @@ struct alpha_sgmap_cookie {
 
 /* apdc_flags */
 #define	APDC_HAS_SGMAP		0x01	/* sgva/len are valid */
+
+#ifdef SGMAP_LOG
+/*
+ * Log entry, used for debugging SGMAPs.
+ */
+struct sgmap_log_entry {
+	int	sl_op;			/* op; 1 = load, 0 = unload */
+	struct alpha_sgmap *sl_sgmap;	/* sgmap for entry */
+	void	*sl_origbuf;		/* original buffer */
+	u_long	sl_pgoffset;		/* page offset of buffer start */
+	u_long	sl_origlen;		/* length of transfer */
+	u_long	sl_sgva;		/* sgva of transfer */
+	u_long	sl_dmaaddr;		/* dma address */
+	int	sl_ptecnt;		/* pte count */
+};
+#endif
 
 void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
 	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *));
