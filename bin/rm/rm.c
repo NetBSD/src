@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.33 2003/02/13 19:51:10 jrf Exp $ */
+/* $NetBSD: rm.c,v 1.34 2003/03/01 07:57:33 enami Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.33 2003/02/13 19:51:10 jrf Exp $");
+__RCSID("$NetBSD: rm.c,v 1.34 2003/03/01 07:57:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ rm_tree(char **argv)
 
 		case FTS_W:
 			rval = undelete(p->fts_accpath);
-			if (rval != 0 && fflag && errno == ENOENT) 
+			if (rval != 0 && fflag && errno == ENOENT)
 				continue;
 			break;
 
@@ -250,7 +250,7 @@ rm_tree(char **argv)
 		if (rval != 0) {
 			warn("%s", p->fts_path);
 			eval = 1;
-		} else if (vflag) 
+		} else if (vflag)
 			(void)printf("%s\n", p->fts_path);
 	}
 	if (errno)
