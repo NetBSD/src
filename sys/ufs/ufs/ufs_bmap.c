@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.22 2003/04/23 00:55:21 tls Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.23 2003/05/18 12:59:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.22 2003/04/23 00:55:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23 2003/05/18 12:59:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,23 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.22 2003/04/23 00:55:21 tls Exp $");
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+
+static boolean_t ufs_issequential __P((const struct ufsmount *,
+					daddr_t, daddr_t));
+
+static boolean_t
+ufs_issequential(ump, daddr0, daddr1)
+	const struct ufsmount *ump;
+	daddr_t daddr0;
+	daddr_t daddr1;
+{
+
+	/* for ufs, blocks in a hole is not 'contiguous'. */
+	if (daddr0 == 0)
+		return FALSE;
+
+	return (daddr0 + ump->um_seqinc == daddr1);
+}
 
 /*
  * Bmap converts a the logical block number of a file to its physical block
@@ -85,7 +102,7 @@ ufs_bmap(v)
 		return (0);
 
 	return (ufs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
-	    ap->a_runp));
+	    ap->a_runp, ufs_issequential));
 }
 
 /*
@@ -103,13 +120,14 @@ ufs_bmap(v)
  */
 
 int
-ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
+ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 	struct vnode *vp;
 	daddr_t bn;
 	daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
+	ufs_issequential_callback_t is_sequential;
 {
 	struct inode *ip;
 	struct buf *bp;
@@ -151,7 +169,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			    UFS_MPNEEDSWAP(vp->v_mount)));
 		if (*bnp == 0)
 			*bnp = -1;
-		else if (runp) {
+		if (runp) {
 			if (ip->i_ump->um_fstype == UFS1) {
 				for (++bn; bn < NDADDR && *runp < maxrun &&
 				    is_sequential(ump,
@@ -239,7 +257,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		if (ip->i_ump->um_fstype == UFS1) {
 			daddr = ufs_rw32(((int32_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(mp));
-			if (num == 1 && daddr && runp) {
+			if (num == 1 && runp) {
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
@@ -252,7 +270,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		} else {
 			daddr = ufs_rw64(((int64_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(mp));
-			if (num == 1 && daddr && runp) {
+			if (num == 1 && runp) {
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
