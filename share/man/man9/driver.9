@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.7 2002/09/06 15:45:28 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.8 2002/09/14 14:19:38 jonb Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/param.h\*[Gt]
 .Fd #include \*[Lt]sys/device.h\*[Gt]
-.Fd #include \*[Lt]sys/error.h\*[Gt]
+.Fd #include \*[Lt]sys/errno.h\*[Gt]
 .Ft static int
 .Fn foo_match "struct device *parent" "struct cfdata *match" "void *aux"
 .Ft static void
@@ -297,7 +297,7 @@ activate the device
 deactivate the device
 .Pc .
 If the action is not supported the activate function should return
-EOPNOSUPP.
+EOPNOTSUPP.
 The activate function is called in interrupt context.
 .Pp
 Most drivers will want to make use of interrupt facilities.  Interrupt
