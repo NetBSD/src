@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.53 2002/07/21 09:25:27 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.54 2002/07/21 09:28:03 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -569,7 +569,7 @@ or
 .Pp
 .\}
 The main menu will be displayed.
-.\}.\}
+.\}\}
 .(disp
 .ne 10
 . cs \n(.f 22
@@ -878,7 +878,7 @@ but the new installation floppies use a
 ramdisk file system and are no longer dependent on the floppy
 once it has booted.
 .\}
-.\}.\}
+.\}\}
 .Pp
 Once
 .Nx
@@ -1578,7 +1578,7 @@ The SGI volume header (boot partition)
 .\}
 .el \{\
 .It Li \*[usrpart]-h
-.\}.\}.\}
+.\}\}\}
 Available for other use.
 Traditionally,
 .Li \*[usrpart]
