@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.40 1996/04/22 01:23:13 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -234,6 +234,7 @@ static char *dktypenames[] = {
 #define	FS_BOOT		13		/* partition contains bootstrap */
 #define	FS_ADOS		14		/* AmigaDOS fast file system */
 #define	FS_HFS		15		/* Macintosh HFS */
+#define	FS_ADFS		16		/* Acorn Disk Filing System */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -253,6 +254,7 @@ static char *fstypenames[] = {
 	"boot",
 	"ADOS",
 	"HFS",
+	"ADFS",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
