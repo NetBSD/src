@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 1994/12/02 03:02:49 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.100 1994/12/03 14:55:51 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -186,14 +186,11 @@ start:	movw	$0x1234,0x472			# warm boot
  	addl	$(KERNBASE),%eax
  	movl	%eax,_esym-KERNBASE
 
-	/* Find out our CPU type. */
-
-	/* First, clear the alignment check and identification flags. */
-	pushfl
-	popl	%eax
-	andl	$~(PSL_AC|PSL_ID),%eax
-	pushl	%eax
+	/* First, reset the PSL. */
+	pushl	$PSL_MBO
 	popfl
+
+	/* Find out our CPU type. */
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
