@@ -18,3 +18,5 @@
 ./usr/lib/libkstream_pic.a
 ./usr/lib/libss.so.2.0
 ./usr/lib/libss_pic.a
+./usr/lib/libtelnet.so.1.0
+./usr/lib/libtelnet_pic.a
