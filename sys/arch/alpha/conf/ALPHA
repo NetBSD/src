@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.137 2000/11/26 17:44:07 ad Exp $
+# $NetBSD: ALPHA,v 1.138 2000/12/15 18:19:03 tsutsui Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.137 $"
+ident		"ALPHA-$Revision: 1.138 $"
 
 maxusers 32
 
@@ -97,6 +97,9 @@ options 	COMPAT_14
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
+
+# Linux binary compatibility
+options 	COMPAT_LINUX
 
 # System V-like message queues
 options 	SYSVMSG
