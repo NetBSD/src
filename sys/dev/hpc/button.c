@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.5 2001/11/13 12:47:56 lukem Exp $	*/
+/*	$NetBSD: button.c,v 1.6 2002/02/09 15:20:49 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.5 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.6 2002/02/09 15:20:49 sato Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,13 +101,6 @@ button_attach(struct device *parent, struct device *self, void *aux)
 	printf(" port=%d id=%ld active=%s",
 	    sc->sc_port, sc->sc_id, sc->sc_active ? "high" : "low");
 
-#if 0
-#if 1 /* Windows CE default */
-	mode = VRGIU_INTR_EDGE_HOLD; 
-#else /* XXX Don't challenge! Freestyle Only */
-	mode = VRGIU_INTR_LEVEL_LOW_HOLD;
-#endif
-#endif
 	mode = HPCIO_INTR_HOLD;
 	if (loc[HPCIOIFCF_LEVEL] != HPCIOIFCF_LEVEL_DEFAULT) {
 		mode |= HPCIO_INTR_LEVEL;
