@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
+/*	$NetBSD: tetris.c,v 1.3 1997/10/12 02:03:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,10 +38,10 @@
  *	@(#)tetris.c	8.1 (Berkeley) 5/31/93
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 /*
@@ -61,8 +61,11 @@ static char copyright[] =
 #include "screen.h"
 #include "tetris.h"
 
-void onintr __P((int));
-void usage __P((void));
+static	void	elide __P((void));
+static	void	setup_board __P((void));
+	int	main __P((int, char **));
+	void	onintr __P((int));
+	void	usage __P((void));
 
 /*
  * Set up the initial board.  The bottom display row is completely set,
@@ -126,7 +129,7 @@ main(argc, argv)
 
 	keys = "jkl pq";
 
-	while ((ch = getopt(argc, argv, "k:l:s")) != EOF)
+	while ((ch = getopt(argc, argv, "k:l:s")) != -1)
 		switch(ch) {
 		case 'k':
 			if (strlen(keys = optarg) != 6)
