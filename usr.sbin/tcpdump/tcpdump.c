@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.13 1999/10/05 20:37:22 is Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.11 1999/07/02 11:31:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.13 1999/10/05 20:37:22 is Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.11 1999/07/02 11:31:37 itojun Exp $");
 #endif
 #endif
 
@@ -73,7 +73,6 @@ int Sflag;			/* print raw TCP sequence numbers */
 int tflag = 1;			/* print packet arrival time */
 int vflag;			/* verbose */
 int xflag;			/* print packet in hex */
-int Xflag;			/* print packet in ascii as well as hex */
 
 int packettype;
 
@@ -98,7 +97,6 @@ struct printer {
 };
 
 static struct printer printers[] = {
-	{ arcnet_if_print,	DLT_ARCNET },
 	{ ether_if_print,	DLT_EN10MB },
 	{ token_if_print,	DLT_IEEE802 },
 	{ sl_if_print,		DLT_SLIP },
@@ -123,7 +121,7 @@ lookup_printer(int type)
 		if (type == p->type)
 			return p->f;
 
-	error("lookup_printer: unknown data link type 0x%x", type);
+	error("unknown data link type 0x%x", type);
 	/* NOTREACHED */
 }
 
@@ -160,7 +158,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while (
-	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:Rs:StT:vw:xXY")) != -1)
+	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:Rs:StT:vw:xY")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -276,10 +274,6 @@ main(int argc, char **argv)
 #endif
 		case 'x':
 			++xflag;
-			break;
-
-		case 'X':
-			++Xflag;
 			break;
 
 		default:
@@ -407,10 +401,6 @@ default_print_unaligned(register const u_char *cp, register u_int length)
 	register u_int i, s;
 	register int nshorts;
 
-	if (Xflag) {
-		ascii_print(cp, length);
-		return;
-	}
 	nshorts = (u_int) length / sizeof(u_short);
 	i = 0;
 	while (--nshorts >= 0) {
@@ -438,10 +428,6 @@ default_print(register const u_char *bp, register u_int length)
 	register u_int i;
 	register int nshorts;
 
-	if (Xflag) {
-		ascii_print(bp, length);
-		return;
-	}
 	if ((long)bp & 1) {
 		default_print_unaligned(bp, length);
 		return;

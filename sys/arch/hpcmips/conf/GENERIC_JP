@@ -1,8 +1,180 @@
 #
-# kernel config file in Japan Model
+# Distribution kernel (any  model) kernel config file
+
 #
-# 	$NetBSD: GENERIC_JP,v 1.9 1999/11/04 04:58:25 sato Exp $
+# 	$NetBSD: GENERIC_JP,v 1.2 1999/09/25 00:03:22 shin Exp $
 #
-include		"arch/hpcmips/conf/GENERIC"
-# for HPCs in Japan
-options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
+include		"arch/hpcmips/conf/std.hpcmips"
+
+maxusers	8
+
+options 	MIPS3			# R4000/R4400/R4600 CPUs
+
+# Support for specific models of H/PC MIPS
+options 	VR41X1			# NEC VR41x1 series
+options		MIPS3_4100		# VR4100 core
+options		SOFTFLOAT		# No FPU
+options		MIPS3_L2CACHE_ABSENT
+
+# Standard system options
+options 	DDB			# in-kernel debugger
+#options 	DDB_ONPANIC=0		# don't enter debugger on panic
+#options 	DIAGNOSTIC		# extra kernel debugging checks
+#options 	DEBUG			# extra kernel debugging support
+options 	KTRACE			# system call tracing support
+options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+
+options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+
+options		"RTC_OFFSET=-540" # hardware clock is this many mins. west of GMT
+options 	NTP			# network time protocol
+#options 	UCONSOLE		# users can redirect console (unsafe)
+
+#options		WINCE_DEFAULT_SETTING # Debugging use
+#options		DUMP_GIU_LEVEL2_INTR  # Debugging use
+#options		DEBUG_FIND_PCIC       # Debugging use XXX harmful don't define until read source.
+
+#options		SYSCALL_DEBUG		# for debug
+#options		HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
+#options		HPCMIPS_FLUSHCACHE_XXX	# for debug
+#options		MIPS_16K_PAGE		# page size is 16KB
+
+# Filesystem options
+file-system 	FFS             # fast filesystem with user and group quotas
+file-system 	MFS		# memory-based filesystem
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
+#file-system	LFS		# Log-based filesystem (still experimental)
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern (kernel informational filesystem)
+#file-system 	NULLFS		# loopback file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION
+
+options 	FIFO		# POSIX fifo support (in all filesystems)
+#options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	QUOTA		# UFS quotas
+
+# Networking options
+options 	INET		# Internet protocols
+#options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options 	GATEWAY		# IP packet forwarding
+options 	MULTICAST	# Multicast support
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP		# TPIP
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+
+# NetBSD backwards compatibility
+options 	COMPAT_43, COMPAT_13, COMPAT_14
+options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+options		NFS_BOOT_DHCP
+
+config		netbsd		root on ? type ?
+config		sdnetbsd	root on sd0a type ffs
+config		nfsnetbsd	root on ? type nfs
+
+# WS console uses SUN or VT100 terminal emulation
+options 	WSEMUL_VT100
+options		WSDISPLAY_DEFAULTSCREENS=4
+
+# Workstation Console attachments
+fb*	at mainbus0
+wsdisplay*	at	fb?
+#wskbd*		at	pckbd? mux 1
+#wsmouse*	at	pms? mux 0
+
+
+vrip*	at mainbus0
+vrcmu*	at vrip? addr 0x0b000060 size 0x20
+vrbcu*	at vrip? addr 0x0b000000 size 0x20
+vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
+
+vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+options __NO_SOFT_SERIAL_INTERRUPT
+com*	at vrip? addr 0x0c000000 size 0x20 intr 9
+vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
+vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
+
+#
+# MC-R300
+# Button to GPIO port # mapping
+#  + REC button       : 4
+#  + Open/Close button: 6
+# (PCIC-ISA : 9)
+# (COM power:14)
+gpbus0 at vrgiu? platform NEC_MCR_3XX comctrl 14 button1 4 button2 6
+gpbus0 at vrgiu? platform NEC_MCR_5XX comctrl 14 button1 4 button2 6
+gpbus0 at vrgiu? platform NEC_MCR_7XX comctrl 46
+gpbus0 at vrgiu? platform NEC_MCCS
+
+vrisab0 at vrgiu? platform NEC_MCR
+vrisab0 at vrgiu? platform NEC_MCCS
+isa0	at vrisab0
+pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
+#
+# Freestyle
+# Button to GPIO port # mapping
+#    +---------+
+# 1 +|         |
+#    |         |+ 7
+#    |         |
+#20 +|   LCD   |+ 4
+#    |         | + 6
+# 8 +|	       |+ 5
+#    |         |
+#    |         |+----Power On/Off (not connected to GPIO?)
+#    +---------+
+#          +9
+#        +12 +10
+#          +11
+# (PCIC-ISA : 23)
+gpbus1 at vrgiu? platform EVEREX_FREESTYLE button1 9 button2 10 button3 11 button4 12 button5 7 button6 4  button7 6  button8 5 button9 1 button10 20 button11 8
+vrisab1 at vrgiu? platform EVEREX_FREESTYLE isaportoffset 0x1000000
+isa1	at vrisab1
+pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
+
+options PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
+#
+# Unknown machines
+#
+vrisab2 at vrgiu?
+isa2	at vrisab2
+
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
+
+# PCMCIA IDE disk
+wdc*	at pcmcia? function ?
+wd*	at wdc? channel ? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus* at wdc? channel ?
+
+# PCMCIA network interfaces
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+sm*	at pcmcia? function ?		# Megahertz Ethernet
+
+com*	at pcmcia? function ?		# Modems and serial cards
+
+aic*	at pcmcia? function ?
+scsibus* at aic?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+pseudo-device	loop		1	# network loopback
+pseudo-device   ppp              2      # serial-line IP ports
+pseudo-device	pty		64	# pseudo ptys
+pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	ipfilter		# IP filter, NAT
+
+pseudo-device	vnd		4	# virtual disk ick
+pseudo-device   ccd             4       # concatenated disks
+
+pseudo-device	biconsdev	1	# build-in console device

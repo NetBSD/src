@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 1999/03/24 12:16:50 tron Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -62,7 +62,7 @@ L1:
 	bgt	L1
 
 	mov	fp, #0x00000000			/* trace back starts here */
-	bl	_C_LABEL(initarm)		/* Off we go */
+	bl	_initarm			/* Off we go */
 
 	/* init arm will return the new stack pointer. */
 	mov	sp, r0
@@ -78,7 +78,7 @@ L1:
 
 	mov	r0, sp			/* parameter to main is trap frame */ 
 
-	bl	_C_LABEL(main)		/* Lets light the flame and start her up */
+	bl	_main			/* Lets light the flame and start her up */
 
 	PULLFRAME			/* Pull the trap frame, now valid */
 
@@ -104,8 +104,8 @@ svcstk:
 
 	.text
 	.align	0
-	.global	_C_LABEL(page0), _C_LABEL(page0_end)
-_C_LABEL(page0):
+	.global	_page0, _page0_end
+_page0:
 	ldr	pc, [pc, #Lreset - . - 8]
 	ldr	pc, [pc, #Lundefined - . - 8]
 	ldr	pc, [pc, #Lswi - . - 8]
@@ -131,7 +131,7 @@ Lirq:
 	.word	irq_entry
 Lfiq:
 	.word	fiq
-_C_LABEL(page0_end) =	.
+_page0_end =	.
 
 /* vector 0x00000000 - RESET */
 
@@ -139,7 +139,7 @@ ASENTRY_NP(reset_entry)
 	PUSHFRAME
 
  	mov	r0, sp			/* Pass the frame to function */
-	b	_C_LABEL(resethandler)	/* It's a branch throught zero ! */
+	b	_resethandler		/* It's a branch throught zero ! */
 
 /* vector 0x00000008 - ADDRESS EXCEPTION */
 
@@ -148,7 +148,7 @@ ASENTRY_NP(addrexc)
 	mrs	r2, spsr_all
 	mov	r3, lr
 	add	r0, pc, #Laddrexcmsg - . - 8
-	bl	_C_LABEL(printf)
+	bl	_printf
 	b	data_abort_entry
 
 Laddrexcmsg:
@@ -159,7 +159,7 @@ Laddrexcmsg:
 
 ASENTRY_NP(fiq)
 	ldr	r0, Lfiqmsg
-	b	_C_LABEL(panic)
+	b	_panic
 
 Lfiqmsg:
 	.asciz	"fiq"
@@ -169,7 +169,7 @@ Lfiqmsg:
 	/* OFW based systems will used OF_boot() */
 	
 Lcpufuncs:	
-	.word	_C_LABEL(cpufuncs)
+	.word	_cpufuncs
 
 ENTRY_NP(cpu_reset)
 	mrs     r2, cpsr_all
@@ -203,7 +203,7 @@ Lboot_cache_purged:
 	 */
 
 Lcpu_reset_address:
-	.word	_C_LABEL(cpu_reset_address)
+	.word	_cpu_reset_address
 #endif	/* OFW */
 
 /*
@@ -232,8 +232,8 @@ ENTRY_NP(sigcode)
 	b	. - 8
 
 	.align	0
-        .global _C_LABEL(esigcode)
-_C_LABEL(esigcode):
+        .global _esigcode
+_esigcode:
 
 #if	NIPKDB > 0
 #if	0
@@ -261,7 +261,7 @@ ENTRY_NP(ipkdbsbyte)
 	mov	pc, lr
 
 abortp:
-	.word	Labortdata - _C_LABEL(page0)
+	.word	Labortdata - _page0
 ipkdbfault:
 	mov	r0, #0xd3
 	msr	cpsr_all, r0
@@ -320,11 +320,11 @@ ENTRY(longjmp)
 	mov	pc, lr
 
 	.data
-	.global _C_LABEL(esym)
-_C_LABEL(esym):	.word	_C_LABEL(end)
+	.global _esym
+_esym:	.word	_end
 
 ENTRY_NP(abort)
-	b	_C_LABEL(abort)
+	b	_abort
 
 
 /*

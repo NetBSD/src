@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.3 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: shf.c,v 1.2 1997/01/12 19:12:13 tls Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -33,32 +33,18 @@ shf_open(name, oflags, mode, sflags)
 	int mode;
 	int sflags;
 {
-	struct shf *shf;
-	int bsize = sflags & SHF_UNBUF ? (sflags & SHF_RD ? 1 : 0) : SHF_BSIZE;
 	int fd;
 
-	/* Done before open so if alloca fails, fd won't be lost. */
-	shf = (struct shf *) alloc(sizeof(struct shf) + bsize, ATEMP);
-	shf->areap = ATEMP;
-	shf->buf = (unsigned char *) &shf[1];
-	shf->bsize = bsize;
-	shf->flags = SHF_ALLOCS;
-	/* Rest filled in by reopen. */
-
 	fd = open(name, oflags, mode);
-	if (fd < 0) {
-		afree(shf, shf->areap);
+	if (fd < 0)
 		return NULL;
-	}
 	if ((sflags & SHF_MAPHI) && fd < FDBASE) {
 		int nfd;
 
 		nfd = ksh_dupbase(fd, FDBASE);
 		close(fd);
-		if (nfd < 0) {
-			afree(shf, shf->areap);
+		if (nfd < 0)
 			return NULL;
-		}
 		fd = nfd;
 	}
 	sflags &= ~SHF_ACCMODE;
@@ -66,7 +52,7 @@ shf_open(name, oflags, mode, sflags)
 		  : ((oflags & O_ACCMODE) == O_WRONLY ? SHF_WR
 		     : SHF_RDWR);
 
-	return shf_reopen(fd, sflags, shf);
+	return shf_fdopen(fd, sflags, (struct shf *) 0);
 }
 
 /* Set up the shf structure for a file descriptor.  Doesn't fail. */
@@ -572,14 +558,6 @@ shf_getse(buf, bsize, shf)
 		shf->rnleft -= ncopy;
 		buf += ncopy;
 		bsize -= ncopy;
-#ifdef OS2
-		if (end && buf > orig_buf + 1 && buf[-2] == '\r') {
-			buf--;
-			bsize++;
-			buf[-1] = '\n';
-		}
-#endif
-
 	} while (!end && bsize);
 	*buf = '\0';
 	return buf;
@@ -711,10 +689,7 @@ shf_write(buf, nbytes, shf)
 	if (nbytes < 0)
 		internal_errorf(1, "shf_write: nbytes %d", nbytes);
 
-	/* Don't buffer if buffer is empty and we're writting a large amount. */
-	if ((ncopy = shf->wnleft)
-	    && (shf->wp != shf->buf || nbytes < shf->wnleft))
-	{
+	if ((ncopy = shf->wnleft)) {
 		if (ncopy > nbytes)
 			ncopy = nbytes;
 		memcpy(shf->wp, buf, ncopy);
@@ -1123,11 +1098,11 @@ shf_vfprintf(shf, fmt, args)
 					precision = 0;
 			}
 			if (tmp)
-				*s++ = '-';
+				*--s = '-';
 			else if (flags & FL_PLUS)
-				*s++ = '+';
+				*--s = '+';
 			else if (flags & FL_BLANK)
-				*s++ = ' ';
+				*--s = ' ';
 
 			if (style == 'e')
 				*s++ = *p++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.65 1999/11/15 18:49:08 fvdl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.63.6.1 1999/12/21 23:19:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -224,11 +224,10 @@ ccdinit(cs, cpaths, vpp, p)
 	register int ix;
 	struct vattr va;
 	size_t minsize;
-	int maxsecsize;
 	struct partinfo dpart;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char tmppath[MAXPATHLEN];
-	int error;
+	int error, sectorsize;
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -245,7 +244,6 @@ ccdinit(cs, cpaths, vpp, p)
 	 * Verify that each component piece exists and record
 	 * relevant information about it.
 	 */
-	maxsecsize = 0;
 	minsize = 0;
 	for (ix = 0; ix < cs->sc_nccdisks; ix++) {
 		ci = &cs->sc_cinfo[ix];
@@ -302,12 +300,28 @@ ccdinit(cs, cpaths, vpp, p)
 		}
 
 		/*
+		 * Set up info for cd device block size. Use block size of
+		 * underlying block devices, and require it to be the same
+		 * for all components.
+		 */
+		if (ix == 0) {
+			sectorsize = dpart.disklab->d_secsize;
+		} else if (sectorsize != dpart.disklab->d_secsize) {
+#ifdef DEBUG
+			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
+				 printf("%s: %s: component with incorrect block size, got %d, expected %d\n",
+				     cs->sc_xname, ci->ci_path,
+				     dpart.disklab->d_secsize, sectorsize);
+#endif
+			free(ci->ci_path, M_DEVBUF);
+			free(cs->sc_cinfo, M_DEVBUF);
+			return (EINVAL);
+		}
+
+		/*
 		 * Calculate the size, truncating to an interleave
 		 * boundary if necessary.
 		 */
-		maxsecsize =
-		    ((dpart.disklab->d_secsize > maxsecsize) ?
-		    dpart.disklab->d_secsize : maxsecsize);
 		size = dpart.part->p_size;
 		if (cs->sc_ileave > 1)
 			size -= size % cs->sc_ileave;
@@ -333,6 +347,7 @@ ccdinit(cs, cpaths, vpp, p)
 	 * Don't allow the interleave to be smaller than
 	 * the biggest component sector.
 	 */
+#if 0 /* XXXX */
 	if ((cs->sc_ileave > 0) &&
 	    (cs->sc_ileave < (maxsecsize / DEV_BSIZE))) {
 #ifdef DEBUG
@@ -344,6 +359,7 @@ ccdinit(cs, cpaths, vpp, p)
 		free(cs->sc_cinfo, M_DEVBUF);
 		return (EINVAL);
 	}
+#endif
 
 	/*
 	 * If uniform interleave is desired set all sizes to that of
@@ -358,6 +374,28 @@ ccdinit(cs, cpaths, vpp, p)
 	}
 
 	/*
+	 * Figure out what the shift factor for our device is.
+	 */
+	if powerof2(sectorsize) {
+		cs->sc_dkdev.dk_byteshift = intlog2(sectorsize);
+	} else if (blocksize(-1) == 1) {
+		cs->sc_dkdev.dk_byteshift = -sectorsize;
+	} else {
+		/*
+		 * Kernel only supports 2**n disks, and we supposedly just
+		 * built an array of non-2**n disks.. ?? Just bail.
+		 */
+#ifdef DEBUG
+		if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
+			 printf("%s: Internal consistency error - built array of non 2**n disks when can't\n"
+			     cs->sc_xname);
+#endif
+		free(ci->ci_path, M_DEVBUF);
+		free(cs->sc_cinfo, M_DEVBUF);
+		return (EINVAL);
+	}
+
+	/*
 	 * Construct the interleave table.
 	 */
 	ccdinterleave(cs);
@@ -366,7 +404,7 @@ ccdinit(cs, cpaths, vpp, p)
 	 * Create pseudo-geometry based on 1MB cylinders.  It's
 	 * pretty close.
 	 */
-	ccg->ccg_secsize = DEV_BSIZE;
+	ccg->ccg_secsize = sectorsize;
 	ccg->ccg_ntracks = 1;
 	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
@@ -632,6 +670,8 @@ ccdstrategy(bp)
 	s = splbio();
 	ccdstart(cs, bp);
 	splx(s);
+	if (bp->b_flags & B_ERROR)
+		goto done;
 	return;
 done:
 	biodone(bp);
@@ -683,13 +723,12 @@ ccdstart(cs, bp)
 			/* Notify the upper layer we are out of memory. */
 			bp->b_error = ENOMEM;
 			bp->b_flags |= B_ERROR;
-			biodone(bp);
 			disk_unbusy(&cs->sc_dkdev, 0);
 			return;
 		}
 		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
 		rcount = cbp->cb_buf.b_bcount;
-		bn += btodb(rcount);
+		bn += btodb(rcount, bp->b_bshift);
 		addr += rcount;
 	}
 
@@ -781,11 +820,10 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
-	LIST_INIT(&cbp->cb_buf.b_dep);
 	if (cs->sc_ileave == 0)
-		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
+		cbc = dbtob((u_int64_t)(ci->ci_size - cbn), cs->sc_dkdev.dk_byteshift);
 	else
-		cbc = dbtob((u_int64_t)(cs->sc_ileave - cboff));
+		cbc = dbtob((u_int64_t)(cs->sc_ileave - cboff), cs->sc_dkdev.dk_byteshift);
 	cbp->cb_buf.b_bcount = cbc < bcount ? cbc : bcount;
 
 	/*
@@ -901,7 +939,7 @@ ccdread(dev, uio, flags)
 	 * in particular, for raw I/O.  Underlying devices might have some
 	 * non-obvious limits, because of the copy to user-space.
 	 */
-	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio, cs->sc_dkdev.dk_byteshift));
 }
 
 /* ARGSUSED */
@@ -930,7 +968,7 @@ ccdwrite(dev, uio, flags)
 	 * in particular, for raw I/O.  Underlying devices might have some
 	 * non-obvious limits, because of the copy to user-space.
 	 */
-	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio, cs->sc_dkdev.dk_byteshift));
 }
 
 int
@@ -1142,7 +1180,7 @@ ccdioctl(dev, cmd, data, flag, p)
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(CCDLABELDEV(dev),
 				    ccdstrategy, cs->sc_dkdev.dk_label,
-				    cs->sc_dkdev.dk_cpulabel);
+				    cs->sc_dkdev.dk_cpulabel, cs->sc_dkdev.dk_byteshift);
 		}
 
 		cs->sc_flags &= ~CCDF_LABELLING;
@@ -1195,7 +1233,7 @@ ccdsize(dev)
 		size = -1;
 	else
 		size = lp->d_partitions[part].p_size *
-		    (lp->d_secsize / DEV_BSIZE);
+		    (lp->d_secsize / DEF_BSIZE);
 
 	if (omask == 0 && ccdclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
@@ -1329,7 +1367,7 @@ ccdgetdisklabel(dev)
 	 * Call the generic disklabel extraction routine.
 	 */
 	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
-	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
+	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, cs->sc_dkdev.dk_byteshift);
 	if (errstring)
 		ccdmakedisklabel(cs);
 	else {

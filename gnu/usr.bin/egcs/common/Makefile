@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1999/10/09 16:11:16 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.27 1999/02/24 17:48:42 drochner Exp $
 
 MKLINKLIB=no
 MKMAN=	no
@@ -20,9 +20,8 @@ GCC_ARCH?=	${MACHINE_GNU_ARCH}
 .endif
 
 CPPFLAGS+=	-DTARGET_NAME=\"${MACHINE_GNU_ARCH}-netbsd\"
-HOST_CPPFLAGS+=	-DTARGET_NAME=\"${MACHINE_GNU_ARCH}-netbsd\"
 CPICFLAGS=	-fPIC -DPIC
-
+HOST_CPPFLAGS=	${CPPFLAGS}
 
 MD=		${DIST}/config/${GCC_ARCH}/${GCC_ARCH}.md
 

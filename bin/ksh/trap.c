@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 1997/01/12 19:12:22 tls Exp $	*/
 
 /*
  * signal handling
@@ -32,7 +32,7 @@ inittraps()
 
 	/* Use system description, if available, for unknown signals... */
 	for (i = 0; i < NSIG; i++)
-		if (!sigtraps[i].name && sys_siglist[i] && sys_siglist[i][0])
+		if (!sigtraps[i].name && sys_siglist[i][0])
 			sigtraps[i].mess = sys_siglist[i];
 #endif	/* HAVE_SYS_SIGLIST */
 
@@ -84,9 +84,8 @@ alarm_catcher(sig)
 #endif /* KSH */
 
 Trap *
-gettrap(name, igncase)
+gettrap(name)
 	const char *name;
-	int igncase;
 {
 	int i;
 	register Trap *p;
@@ -99,8 +98,7 @@ gettrap(name, igncase)
 		return NULL;
 	}
 	for (p = sigtraps, i = SIGNALS+1; --i >= 0; p++)
-		if (p->name && (igncase ? strcasecmp(p->name, name) == 0
-					: strcmp(p->name, name) == 0))
+		if (p->name && strcasecmp(p->name, name) == 0)
 			return p;
 	return NULL;
 }
@@ -240,9 +238,6 @@ runtrap(p)
 		p->trap = (char *) 0;
 	}
 	oexstat = exstat;
-	/* Note: trapstr is fully parsed before anything is executed, thus
-	 * no problem with afree(p->trap) in settrap() while still in use.
-	 */
 	command(trapstr);
 	exstat = oexstat;
 	if (i == SIGEXIT_ || i == SIGERR_) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/11/24 01:54:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 1999/05/09 19:14:15 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -14,7 +14,7 @@ SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c
 .PATH:		${S}/arch/sparc64/sparc64
 
 .if CROSS
-CEXTRAFLAGS=	-nostdinc
+CEXTRAFLAG=	-nostdinc
 .else
 CEXTRAFLAGS=	-D_LP64
 .endif

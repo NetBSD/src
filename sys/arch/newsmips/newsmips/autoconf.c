@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1999/12/06 06:47:14 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1999/09/17 20:04:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,6 +90,7 @@ void	findroot __P((struct device **, int *));
 void
 cpu_configure()
 {
+	int s;
 	extern struct idrom idrom;
 
 	printf("SONY NET WORK STATION, Model %s, ", idrom.id_model);
@@ -98,8 +99,7 @@ cpu_configure()
 	/*
 	 * Kick off autoconfiguration
 	 */
-	_splnone();	/* enable all interrupts */
-	splhigh();	/* ...then disable device interrupts */
+	s = splhigh();
 
 	*(char *)INTEN0 = INTEN0_BERR;		/* only buserr occurs */
 	*(char *)INTEN1 = 0;
@@ -108,9 +108,6 @@ cpu_configure()
 		panic("no mainbus found");
 
 	initcpu();
-
-	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 }
 
 void

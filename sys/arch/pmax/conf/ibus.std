@@ -1,0 +1,12 @@
+#	$NetBSD: ibus.std,v 1.2 1998/11/27 00:09:33 simonb Exp $
+
+#########################################################################
+# Decstation 2100/3100 (aka PMAX aka KN01) configuration.		#
+# (these don't really have any options except a framebuffer.)		#
+#########################################################################
+
+mcclock0 at ibus0			# RTC
+pm0	at ibus0			# 3100 onboard fb
+dc0	at ibus0			# dc7083 four-port DZ device
+le0	at ibus0			# 3100 onboard lance
+sii0	at ibus0			# onboard scsi

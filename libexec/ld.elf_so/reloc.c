@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.24 1999/12/08 08:47:10 itohy Exp $	 */
+/*	$NetBSD: reloc.c,v 1.21 1999/08/21 19:26:19 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -150,7 +150,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 #ifndef __sparc__
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	const Elf_RelA *rela;
 	bool dodebug;
 {
@@ -171,7 +171,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	case R_TYPE(NONE):
 		break;
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__m68k__)
 	case R_TYPE(GOT32):
 
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -217,54 +217,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path));
 		break;
-#endif /* __i386__ */
-
-#if defined(__m68k__)
-	case R_TYPE(GOT32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
-		if (def == NULL)
-			return -1;
-
-		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
-		    rela->r_addend);
-		if (*where != tmp)
-			*where = tmp;
-		rdbg(dodebug, ("GOT32 %s in %s --> %p in %s",
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-		break;
-
-	case R_TYPE(PC32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
-		if (def == NULL)
-			return -1;
-
-		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
-		    rela->r_addend) - (Elf_Addr)where;
-		if (*where != tmp)
-			*where = tmp;
-		rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-		break;
-
-	case R_TYPE(32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
-		if (def == NULL)
-			return -1;
-
-		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
-		    rela->r_addend);
-		if (*where != tmp)
-			*where = tmp;
-		rdbg(dodebug, ("32 %s in %s --> %p in %s",
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-		break;
-#endif /* __m68k__ */
+#endif /* __i386__ || __m68k__ */
 
 #if defined(__alpha__)
 	case R_TYPE(REFQUAD):
@@ -332,9 +285,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		/* 32-bit PC-relative reference */
 		def = obj->symtab + ELF_R_SYM(rela->r_info);
 
-		if (ELFDEFNNAME(ST_BIND)(def->st_info) == STB_LOCAL &&
-		  (ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_SECTION ||
-		   ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_NOTYPE)) {
+		if (ELF_SYM_BIND(def->st_info) == Elf_estb_local &&
+		  (ELF_SYM_TYPE(def->st_info) == Elf_estt_section ||
+		   ELF_SYM_TYPE(def->st_info) == Elf_estt_notype)) {
 			*where += (Elf_Addr)obj->relocbase;
 			rdbg(dodebug, ("REL32 in %s --> %p", obj->path,
 			    (void *)*where));
@@ -425,7 +378,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 int
 _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	const Elf_RelA *rela;
 	caddr_t *addrp;
 	bool bind_now;
@@ -482,7 +435,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 caddr_t
 _rtld_bind(obj, reloff)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	Elf_Word reloff;
 {
 	const Elf_RelA *rela;

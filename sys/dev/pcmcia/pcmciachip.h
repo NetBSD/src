@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.4 1999/10/15 06:07:32 haya Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.3 1998/11/17 08:49:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -83,9 +83,6 @@ struct pcmcia_chip_functions {
 	/* card enable/disable */
 	void	(*socket_enable) __P((pcmcia_chipset_handle_t));
 	void	(*socket_disable) __P((pcmcia_chipset_handle_t));
-
-	/* card detection */
-	int (*card_detect) __P((pcmcia_chipset_handle_t));  
 };
 
 /* Memory space functions. */
@@ -132,7 +129,6 @@ struct pcmcia_chip_functions {
 	((*(tag)->socket_disable)((handle)))
 
 struct pcmciabus_attach_args {
-	char *paa_busname;	/* Bus name */
 	pcmcia_chipset_tag_t pct;
 	pcmcia_chipset_handle_t pch;
 	bus_addr_t iobase;		/* start i/o space allocation here */

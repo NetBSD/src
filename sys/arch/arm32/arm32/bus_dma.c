@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 1999/11/13 00:30:27 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 1999/09/10 10:12:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -376,6 +376,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				return;
 		}
 
+		/* XXX Is this only for BUS_DMASYNC_PREWRITE ? */
+		cpu_drain_writebuf();
+
 		/* Set the starting address and maximum length */
 		vaddr = seg->_ds_vaddr + offset;
 		length = seg->ds_len - offset;
@@ -403,8 +406,6 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				length = seg->ds_len;
 			}
 		} while (len > 0);
-
-		cpu_drain_writebuf();
 	}
 }
 
@@ -514,8 +515,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 			/*
 			 * If the memory must remain coherent with the
 			 * cache then we must make the memory uncacheable

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1999/12/04 21:21:48 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 1999/09/12 01:17:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@
 #include <net/netisr.h>
 #include <dev/cons.h>
 
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -247,8 +247,8 @@ cpu_startup()
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -305,7 +305,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vsize_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -351,7 +351,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -708,7 +708,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space in
+ * Dumps always skip the first CLBYTES of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
  * that swapping trashes it.
@@ -739,7 +739,7 @@ cpu_dumpconf()
 		dumpsize += btoc(m->ram_segs[i].size);
 	/*
 	 * Check to see if we will fit.  Note we always skip the
-	 * first NBPG in case there is a disk label there.
+	 * first CLBYTES in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -822,7 +822,7 @@ dumpsys()
 			maddr = m->ram_segs[seg].start;
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
@@ -1188,14 +1188,14 @@ mem_exists(mem, basemax)
 	DPRINTF (("Enter mem_exists(%p, %x)\n", mem, basemax));
 	DPRINTF ((" pmap_enter(%p, %p) for target... ", mem_v, mem));
 	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
-		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ);
 	DPRINTF ((" done.\n"));
 
 	/* only 24bits are significant on normal X680x0 systems */
 	base = (caddr_t)((u_long)mem & 0x00FFFFFF);
 	DPRINTF ((" pmap_enter(%p, %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
-		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ);
 	DPRINTF ((" done.\n"));
 
 	m = (void*)mem_v;

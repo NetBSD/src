@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pim.c,v 1.4 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-pim.c,v 1.3 1999/07/25 04:23:21 explorer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-pim.c,v 1.4 1999/11/17 14:49:49 jinmei Exp";
+    "@(#) Header: print-pim.c,v 1.7 96/09/26 23:36:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.3 1999/07/25 04:23:21 explorer Exp $");
 #endif
 #endif
 
@@ -317,12 +317,10 @@ pimv2_print(register const u_char *bp, register u_int len)
 		ip = (struct ip *)bp;
 		switch(ip->ip_v) {
 		 case 4:	/* IPv4 */
-			printf(" ");
 			ip_print(bp, len);
 			break;
 #ifdef INET6
 		 case 6:	/* IPv6 */
-			printf(" ");
 			ip6_print(bp, len);
 			break;
 #endif
@@ -499,17 +497,17 @@ pimv2_print(register const u_char *bp, register u_int len)
 				}
 				bp += advance;
 
-				if (bp + 1 >= ep) {
+				if (bp + 2 >= ep) {
 					(void)printf("...)");
 					goto bs_done;
 				}
 				(void)printf(",holdtime=%d",
 					     ntohs(*(u_int16_t *)bp));
-				if (bp + 2 >= ep) {
+				if (bp + 3 >= ep) {
 					(void)printf("...)");
 					goto bs_done;
 				}
-				(void)printf(",prio=%d", bp[2]);
+				(void)printf(",prio=%d", bp[3]);
 				bp += 4;
 			}
 			(void)printf(")");
@@ -540,7 +538,7 @@ pimv2_print(register const u_char *bp, register u_int len)
 			break;
 		if (ntohl(*(u_int32_t *)bp) & 0x80000000)
 			(void)printf(" RPT");
-		(void)printf(" pref=%u", ntohl(*(u_int32_t *)bp & 0x7fffffff));
+		(void)printf(" pref=%u", ntohl(*(u_int32_t *)bp));
 		(void)printf(" metric=%u", ntohl(*(u_int32_t *)(bp + 4)));
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 1999/11/29 11:12:13 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 1999/09/25 00:00:38 shin Exp $	*/
 
 /*
  * Mach Operating System
@@ -185,7 +185,7 @@ kdb_trap(type, tfp)
 }
 
 void
-cpu_Debugger()
+Debugger()
 {
 	asm("break");
 }
@@ -284,7 +284,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 		int i;
 		extern void mips1_TLBRead __P((int, struct mips1_tlb *));
 
-		for (i = 0; i < mips_num_tlb_entries; i++) {
+		for (i = 0; i < MIPS1_TLB_NUM_TLB_ENTRIES; i++) {
 			mips1_TLBRead(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
 				(tlb.tlb_lo & MIPS1_PG_V) ? ' ' : '*',
@@ -304,15 +304,15 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 
 		for (i = 0; i < mips_num_tlb_entries; i++) {
 			mips3_TLBRead(i, &tlb);
-			db_printf("TLB%c%2d Hi 0x%08x ",
+			db_printf("TLB%c%2d Hi 0%x08x ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
-			db_printf("Lo0=0x%08x %c%c attr %x ",
+			db_printf("Lo0=0x%08x %c%c attr %x",
 				(unsigned)pfn_to_vad(tlb.tlb_lo0),
 				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo0 >> 3) & 7);
-			db_printf("Lo1=0x%08x %c%c attr %x sz=%x\n",
+			db_printf("Lo1=0x%08x %c%c atr %x sz=%x\n",
 				(unsigned)pfn_to_vad(tlb.tlb_lo1),
 				(tlb.tlb_lo1 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
@@ -356,8 +356,8 @@ db_kvtophys_cmd(addr, have_addr, count, modif)
 struct db_command mips_db_command_table[] = {
 	{ "halt",	db_halt_cmd,		0,	0 },
 	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
-	{ "tlb",	db_tlbdump_cmd,		0,	0 },
 	{ "trapdump",	db_trapdump_cmd,	0,	0 },
+	{ "tlb",	db_tlbdump_cmd,		0,	0 },
 	{ (char *)0, }
 };
 

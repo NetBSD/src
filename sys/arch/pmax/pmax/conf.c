@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1999/11/16 06:00:13 nisimura Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1999/04/26 04:42:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,7 +151,8 @@ cdev_decl(raid);
 cdev_decl(bpf);
 #include "dtop.h"
 cdev_decl(dtop);
-#include "dc.h"
+#include "dc_ioasic.h"
+#include "dc_ds.h"
 cdev_decl(dc);
 #include "scc.h"
 cdev_decl(scc);
@@ -169,17 +170,23 @@ cdev_decl(cfb);
 cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
-#include "px.h"
-cdev_decl(px);
 dev_decl(filedesc,open);
 #include "tun.h"
 cdev_decl(tun);
 cdev_decl(vnd);
 #include "ipfilter.h"
 #include "rnd.h"
+#include "px.h"
+cdev_decl(px);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
+
+#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+# define NDC 1
+#else
+# define NDC 0
+#endif
 
 
 /* a framebuffer with an attached mouse: */
@@ -431,7 +438,6 @@ static int chrtoblktbl[] =  {
 	/* 95 */	NODEV,
 	/* 96 */	32,
 	/* 97 */	17,
-	/* 98 */	NODEV,
 };
 
 /*

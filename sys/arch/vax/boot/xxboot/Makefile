@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/10/23 14:40:39 ragge Exp $
+#	$NetBSD: Makefile,v 1.1 1999/03/06 16:36:06 ragge Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,9 +11,7 @@ LINKS+=	${BINDIR}/xxboot ${BINDIR}/hpboot
 SRCS=	start.s bootxx.c romread.s urem.s udiv.s str.s
 
 STRIPFLAG=
-CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
-	-DLIBSA_NO_TWIDDLE -DLIBSA_SINGLE_DEVICE=rom \
-	-DLIBSA_SINGLE_FILESYSTEM=ufs
+CPPFLAGS+=-D_STANDALONE
 BINDIR=	/usr/mdec
 NOMAN=	1
 

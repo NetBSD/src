@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_20.h,v 1.5 1999/11/06 17:42:31 thorpej Exp $	*/
+/*	$NetBSD: cacheops_20.h,v 1.4 1998/09/02 11:16:32 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,14 +85,14 @@ void ICIA_20 __P((void));
 extern __inline void
 ICIA_20()
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
 }
 
 void ICPA_20 __P((void));
 extern __inline void
 ICPA_20()
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
+	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
 }
 
 /*
@@ -113,5 +113,5 @@ void PCIA_20 __P((void));
 extern __inline void
 PCIA_20()
 {
-	__asm __volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
+	__asm __volatile (" movc %0,cacr;" : : "d" (DC_CLEAR));
 }

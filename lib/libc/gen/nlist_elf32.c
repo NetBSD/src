@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.19 1999/11/04 02:00:17 erh Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.15 1999/09/20 04:39:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,6 +55,12 @@
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
+
+#define	CONCAT(x,y)	__CONCAT(x,y)
+#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 /* No need to check for off < 0 because it is unsigned */
 #define	check(off, size)	(off + size > mappedsize)
@@ -118,8 +124,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		BADUNMAP;
 	ehdrp = (Elf_Ehdr *)(void *)&mappedfile[0];
 
-	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
+	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
 		BADUNMAP;
 
 	switch (ehdrp->e_machine) {
@@ -142,7 +147,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	shdrp = (Elf_Shdr *)(void *)&mappedfile[shdr_off];
 
 	for (i = 0; i < nshdr; i++) {
-		if (shdrp[i].sh_type == SHT_SYMTAB) {
+		if (shdrp[i].sh_type == Elf_sht_symtab) {
 			symshdrp = &shdrp[i];
 			symstrshdrp = &shdrp[shdrp[i].sh_link];
 		}
@@ -196,25 +201,25 @@ ELFNAMEEND(__fdnlist)(fd, list)
 				 * Translate (roughly) from ELF to nlist
 				 */
 				p->n_value = symp[i].st_value;
-				switch (ELFDEFNNAME(ST_TYPE)(symp[i].st_info)) {
-				case STT_NOTYPE:
+				switch(ELF_SYM_TYPE(symp[i].st_info)) {
+				case Elf_estt_notype:
 					p->n_type = N_UNDF;
 					break;
-				case STT_OBJECT:
+				case Elf_estt_object:
 					p->n_type = N_DATA;
 					break;
-				case STT_FUNC:
+				case Elf_estt_func:
 					p->n_type = N_TEXT;
 					break;
-				case STT_FILE:
+				case Elf_estt_file:
 					p->n_type = N_FN;
 					break;
 				default:
 					/* catch other enumerations for gcc */
 					break;
 				}
-				if (ELFDEFNNAME(ST_BIND)(symp[i].st_info) !=
-				    STB_LOCAL)
+				if (ELF_SYM_BIND(symp[i].st_info) !=
+				    Elf_estb_local)
 					p->n_type |= N_EXT;
 				p->n_desc = 0;			/* XXX */
 				p->n_other = 0;			/* XXX */

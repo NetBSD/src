@@ -1,15 +1,44 @@
-/*	$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.58 1999/09/22 07:18:31 lukem Exp $	*/
+
+/*
+ * Copyright (C) 1997 and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,41 +102,12 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Copyright (C) 1997 and 1998 WIDE Project.
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.58 1999/09/22 07:18:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,11 +121,11 @@ __RCSID("$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $");
 #include <arpa/ftp.h>
 
 #include <ctype.h>
+#include <signal.h>
 #include <err.h>
 #include <glob.h>
 #include <limits.h>
 #include <netdb.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -133,7 +133,11 @@ __RCSID("$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $");
 #include <unistd.h>
 
 #include "ftp_var.h"
-#include "version.h"
+#include "pathnames.h"
+
+jmp_buf	jabort;
+char   *mname;
+char   *home = "/";
 
 struct	types {
 	char	*t_name;
@@ -149,61 +153,6 @@ struct	types {
 	{ NULL }
 };
 
-sigjmp_buf	 jabort;
-char		*mname;
-
-static int	confirm __P((const char *, const char *));
-
-static int
-confirm(cmd, file)
-	const char *cmd, *file;
-{
-	char line[BUFSIZ];
-
-	if (!interactive || confirmrest)
-		return (1);
-	while (1) {
-		fprintf(ttyout, "%s %s [anpqy?]? ", cmd, file);
-		(void)fflush(ttyout);
-		if (fgets(line, sizeof(line), stdin) == NULL) {
-			mflag = 0;
-			fprintf(ttyout, "\nEOF received; %s aborted\n", mname);
-			clearerr(stdin);
-			return (0);
-		}
-		switch (tolower(*line)) {
-			case 'a':
-				confirmrest = 1;
-				fprintf(ttyout,
-				    "Prompting off for duration of %s.\n", cmd);
-				break;
-			case 'p':
-				interactive = 0;
-				fputs("Interactive mode: off.\n", ttyout);
-				break;
-			case 'q':
-				mflag = 0;
-				fprintf(ttyout, "%s aborted.\n", mname);
-				/* FALLTHROUGH */
-			case 'n':
-				return (0);
-			case '?':
-				fprintf(ttyout,
-				    "  confirmation options:\n"
-				    "\ta  answer `yes' for the duration of %s\n"
-				    "\tn  answer `no' for this file\n"
-				    "\tp  turn off `prompt' mode\n"
-				    "\tq  stop the current %s\n"
-				    "\ty  answer `yes' for this file\n"
-				    "\t?  this help list\n",
-				    cmd, cmd);
-				continue;	/* back to while(1) */
-		}
-		return (1);
-	}
-	/* NOTREACHED */
-}
-
 /*
  * Set transfer type.
  */
@@ -215,7 +164,7 @@ settype(argc, argv)
 	struct types *p;
 	int comret;
 
-	if ((argc == 0 && argv != NULL) || argc > 2) {
+	if (argc > 2) {
 		char *sep;
 
 		fprintf(ttyout, "usage: %s [", argv[0]);
@@ -246,7 +195,7 @@ settype(argc, argv)
 	else
 		comret = command("TYPE %s", p->t_mode);
 	if (comret == COMPLETE) {
-		(void)strlcpy(typename, p->t_name, sizeof(typename));
+		(void)strcpy(typename, p->t_name);
 		curtype = type = p->t_type;
 	}
 }
@@ -301,11 +250,6 @@ setbinary(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	stype[1] = "binary";
 	settype(2, stype);
 }
@@ -320,11 +264,6 @@ setascii(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	stype[1] = "ascii";
 	settype(2, stype);
 }
@@ -339,11 +278,6 @@ settenex(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	stype[1] = "tenex";
 	settype(2, stype);
 }
@@ -358,11 +292,6 @@ setftmode(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 0 && argv != NULL) || argc != 2) {
-		fprintf(ttyout, "usage: %s mode-name\n", argv[0]);
-		code = -1;
-		return;
-	}
 	fprintf(ttyout, "We only support %s mode, sorry.\n", modename);
 	code = -1;
 }
@@ -377,11 +306,6 @@ setform(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 0 && argv != NULL) || argc != 2) {
-		fprintf(ttyout, "usage: %s format\n", argv[0]);
-		code = -1;
-		return;
-	}
 	fprintf(ttyout, "We only support %s format, sorry.\n", formname);
 	code = -1;
 }
@@ -396,11 +320,6 @@ setstruct(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 0 && argv != NULL) || argc != 2) {
-		fprintf(ttyout, "usage: %s struct-mode\n", argv[0]);
-		code = -1;
-		return;
-	}
 	fprintf(ttyout, "We only support %s structure, sorry.\n", structname);
 	code = -1;
 }
@@ -415,38 +334,46 @@ put(argc, argv)
 {
 	char *cmd;
 	int loc = 0;
-	char *locfile, *remfile;
+	char *oldargv1, *oldargv2;
 
 	if (argc == 2) {
 		argc++;
 		argv[2] = argv[1];
 		loc++;
 	}
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "local-file")))
+	if (argc < 2 && !another(&argc, &argv, "local-file"))
 		goto usage;
 	if ((argc < 3 && !another(&argc, &argv, "remote-file")) || argc > 3) {
 usage:
-		fprintf(ttyout, "usage: %s local-file [remote-file]\n",
+		fprintf(ttyout, "usage: %s local-file [ remote-file ]\n",
 		    argv[0]);
 		code = -1;
 		return;
 	}
-	if ((locfile = globulize(argv[1])) == NULL) {
+	oldargv1 = argv[1];
+	oldargv2 = argv[2];
+	if (!globulize(&argv[1])) {
 		code = -1;
 		return;
 	}
-	remfile = argv[2];
-	if (loc)	/* If argv[2] is a copy of the old argv[1], update it */
-		remfile = locfile;
+	/*
+	 * If "globulize" modifies argv[1], and argv[2] is a copy of
+	 * the old argv[1], make it a copy of the new argv[1].
+	 */
+	if (argv[1] != oldargv1 && argv[2] == oldargv1) {
+		argv[2] = argv[1];
+	}
 	cmd = (argv[0][0] == 'a') ? "APPE" : ((sunique) ? "STOU" : "STOR");
-	if (loc && ntflag)
-		remfile = dotrans(remfile);
-	if (loc && mapflag)
-		remfile = domap(remfile);
-	sendrequest(cmd, locfile, remfile,
-	    locfile != argv[1] || remfile != argv[2]);
-	free(locfile);
+	if (loc && ntflag) {
+		argv[2] = dotrans(argv[2]);
+	}
+	if (loc && mapflag) {
+		argv[2] = domap(argv[2]);
+	}
+	sendrequest(cmd, argv[1], argv[2],
+	    argv[1] != oldargv1 || argv[2] != oldargv2);
+	if (oldargv1 != argv[1])	/* free up after globulize() */
+		free(argv[1]);
 }
 
 /*
@@ -462,33 +389,50 @@ mput(argc, argv)
 	int ointer;
 	char *tp;
 
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "local-files"))) {
+	if (argc < 2 && !another(&argc, &argv, "local-files")) {
 		fprintf(ttyout, "usage: %s local-files\n", argv[0]);
 		code = -1;
 		return;
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mintr);
-	if (sigsetjmp(jabort, 1))
-		mabort();
+	oldintr = signal(SIGINT, mabort);
+	(void)setjmp(jabort);
 	if (proxy) {
-		char *cp;
+		char *cp, *tp2, tmpbuf[MAXPATHLEN];
 
 		while ((cp = remglob(argv, 0, NULL)) != NULL) {
-			if (*cp == '\0' || !connected) {
+			if (*cp == '\0') {
 				mflag = 0;
 				continue;
 			}
 			if (mflag && confirm(argv[0], cp)) {
 				tp = cp;
-				if (mcase)
-					tp = docase(tp);
-				if (ntflag)
+				if (mcase) {
+					while (*tp &&
+					       !islower((unsigned char)*tp)) {
+						tp++;
+					}
+					if (!*tp) {
+						tp = cp;
+						tp2 = tmpbuf;
+						while ((*tp2 = *tp) != '\0') {
+						     if (isupper((unsigned char)*tp2)) {
+							    *tp2 =
+								tolower(*tp2);
+						     }
+						     tp++;
+						     tp2++;
+						}
+					}
+					tp = tmpbuf;
+				}
+				if (ntflag) {
 					tp = dotrans(tp);
-				if (mapflag)
+				}
+				if (mapflag) {
 					tp = domap(tp);
+				}
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    cp, tp, cp != tp || !interactive);
 				if (!mflag && fromatty) {
@@ -501,9 +445,11 @@ mput(argc, argv)
 				}
 			}
 		}
-		goto cleanupmput;
+		(void)signal(SIGINT, oldintr);
+		mflag = 0;
+		return;
 	}
-	for (i = 1; i < argc && connected; i++) {
+	for (i = 1; i < argc; i++) {
 		char **cpp;
 		glob_t gl;
 		int flags;
@@ -533,8 +479,7 @@ mput(argc, argv)
 			globfree(&gl);
 			continue;
 		}
-		for (cpp = gl.gl_pathv; cpp && *cpp != NULL && connected;
-		    cpp++) {
+		for (cpp = gl.gl_pathv; cpp && *cpp != NULL; cpp++) {
 			if (mflag && confirm(argv[0], *cpp)) {
 				tp = (ntflag) ? dotrans(*cpp) : *cpp;
 				tp = (mapflag) ? domap(tp) : tp;
@@ -552,8 +497,7 @@ mput(argc, argv)
 		}
 		globfree(&gl);
 	}
-cleanupmput:
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 	mflag = 0;
 }
 
@@ -587,43 +531,60 @@ getit(argc, argv, restartit, mode)
 {
 	int loc = 0;
 	int rval = 0;
-	char *remfile, *locfile, *olocfile;
+	char *oldargv1, *oldargv2, *globargv2;
 
 	if (argc == 2) {
 		argc++;
 		argv[2] = argv[1];
 		loc++;
 	}
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "remote-file")))
+	if (argc < 2 && !another(&argc, &argv, "remote-file"))
 		goto usage;
 	if ((argc < 3 && !another(&argc, &argv, "local-file")) || argc > 3) {
 usage:
-		fprintf(ttyout, "usage: %s remote-file [local-file]\n",
+		fprintf(ttyout, "usage: %s remote-file [ local-file ]\n",
 		    argv[0]);
 		code = -1;
 		return (0);
 	}
-	remfile = argv[1];
-	if ((olocfile = globulize(argv[2])) == NULL) {
+	oldargv1 = argv[1];
+	oldargv2 = argv[2];
+	if (!globulize(&argv[2])) {
 		code = -1;
 		return (0);
 	}
-	locfile = olocfile;
-	if (loc && mcase)
-		locfile = docase(locfile);
+	globargv2 = argv[2];
+	if (loc && mcase) {
+		char *tp = argv[1], *tp2, tmpbuf[MAXPATHLEN];
+
+		while (*tp && !islower((unsigned char)*tp)) {
+			tp++;
+		}
+		if (!*tp) {
+			tp = argv[2];
+			tp2 = tmpbuf;
+			while ((*tp2 = *tp) != '\0') {
+				if (isupper((unsigned char)*tp2)) {
+					*tp2 = tolower(*tp2);
+				}
+				tp++;
+				tp2++;
+			}
+			argv[2] = tmpbuf;
+		}
+	}
 	if (loc && ntflag)
-		locfile = dotrans(locfile);
+		argv[2] = dotrans(argv[2]);
 	if (loc && mapflag)
-		locfile = domap(locfile);
+		argv[2] = domap(argv[2]);
 	if (restartit) {
 		struct stat stbuf;
 		int ret;
 
-		ret = stat(locfile, &stbuf);
+		ret = stat(argv[2], &stbuf);
 		if (restartit == 1) {
 			if (ret < 0) {
-				warn("local: %s", locfile);
+				warn("local: %s", argv[2]);
 				goto freegetit;
 			}
 			restart_point = stbuf.st_size;
@@ -642,31 +603,24 @@ usage:
 		}
 	}
 
-	recvrequest("RETR", locfile, remfile, mode,
-	    remfile != argv[1] || locfile != argv[2], loc);
+	recvrequest("RETR", argv[2], argv[1], mode,
+	    argv[1] != oldargv1 || argv[2] != oldargv2, loc);
 	restart_point = 0;
 freegetit:
-	(void)free(olocfile);
+	if (oldargv2 != globargv2)	/* free up after globulize() */
+		free(globargv2);
 	return (rval);
 }
 
 /* ARGSUSED */
 void
-mintr(signo)
+mabort(signo)
 	int signo;
-{
-
-	alarmtimer(0);
-	if (fromatty)
-		write(fileno(ttyout), "\n", 1);
-	siglongjmp(jabort, 1);
-}
-
-void
-mabort()
 {
 	int ointer, oconf;
 
+	alarmtimer(0);
+	putc('\n', ttyout);
 	if (mflag && fromatty) {
 		ointer = interactive;
 		oconf = confirmrest;
@@ -675,12 +629,13 @@ mabort()
 		if (confirm("Continue with", mname)) {
 			interactive = ointer;
 			confirmrest = oconf;
-			return;
+			longjmp(jabort, 0);
 		}
 		interactive = ointer;
 		confirmrest = oconf;
 	}
 	mflag = 0;
+	longjmp(jabort, 0);
 }
 
 /*
@@ -695,19 +650,17 @@ mget(argc, argv)
 	int ch, ointer;
 	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN];
 
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "remote-files"))) {
+	if (argc < 2 && !another(&argc, &argv, "remote-files")) {
 		fprintf(ttyout, "usage: %s remote-files\n", argv[0]);
 		code = -1;
 		return;
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mintr);
-	if (sigsetjmp(jabort, 1))
-		mabort();
+	oldintr = signal(SIGINT, mabort);
+	(void)setjmp(jabort);
 	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
-		if (*cp == '\0' || !connected) {
+		if (*cp == '\0') {
 			mflag = 0;
 			continue;
 		}
@@ -737,7 +690,7 @@ mget(argc, argv)
 			}
 		}
 	}
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 	mflag = 0;
 }
 
@@ -760,11 +713,6 @@ status(argc, argv)
 {
 	int i;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	if (connected)
 		fprintf(ttyout, "Connected %sto %s.\n",
 		    connected == -1 ? "and logged in" : "", hostname);
@@ -783,8 +731,7 @@ status(argc, argv)
 	}
 	fprintf(ttyout, "Gate ftp: %s, server %s, port %s.\n", onoff(gatemode),
 	    *gateserver ? gateserver : "(none)", gateport);
-	fprintf(ttyout, "Passive mode: %s; fallback to active mode: %s.\n",
-	    onoff(passivemode), onoff(activefallback));
+	fprintf(ttyout, "Passive mode: %s.\n", onoff(passivemode));
 	fprintf(ttyout, "Mode: %s; Type: %s; Form: %s; Structure: %s.\n",
 	    modename, typename, formname, structname);
 	fprintf(ttyout, "Verbose: %s; Bell: %s; Prompting: %s; Globbing: %s.\n",
@@ -819,16 +766,10 @@ status(argc, argv)
 	    "Socket buffer sizes: send %d, receive %d.\n",
 	    sndbuf_size, rcvbuf_size);
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
-	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
-	    epsv4bad ? " (disabled for this connection)" : "");
-	fprintf(ttyout, "Command line editing: %s.\n",
-#ifdef NO_EDITCOMPLETE
-	    "support not compiled in"
-#else	/* !def NO_EDITCOMPLETE */
-	    onoff(editing)
-#endif	/* !def NO_EDITCOMPLETE */
-	    );
-	fprintf(ttyout, "Version: %s %s\n", FTP_PRODUCT, FTP_VERSION);
+	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s.\n", onoff(epsv4));
+#ifndef NO_EDITCOMPLETE
+	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
+#endif /* !NO_EDITCOMPLETE */
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
@@ -848,7 +789,7 @@ togglevar(argc, argv, var, mesg)
 	int  *var;
 	const char *mesg;
 {
-	if (argc == 1) {
+	if (argc < 2) {
 		*var = !*var;
 	} else if (argc == 2 && strcasecmp(argv[1], "on") == 0) {
 		*var = 1;
@@ -876,6 +817,7 @@ setbell(argc, argv)
 	code = togglevar(argc, argv, &bell, "Bell mode");
 }
 
+#ifndef NO_EDITCOMPLETE
 /*
  * Set command line editing
  */
@@ -886,20 +828,10 @@ setedit(argc, argv)
 	char *argv[];
 {
 
-#ifdef NO_EDITCOMPLETE
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
-	if (verbose)
-		fputs("Editing support not compiled in; ignoring command.\n",
-		    ttyout);
-#else	/* !def NO_EDITCOMPLETE */
 	code = togglevar(argc, argv, &editing, "Editing mode");
 	controlediting();
-#endif	/* !def NO_EDITCOMPLETE */
 }
+#endif /* !NO_EDITCOMPLETE */
 
 /*
  * Turn on packet tracing.
@@ -1021,9 +953,9 @@ setgate(argc, argv)
 {
 	static char gsbuf[MAXHOSTNAMELEN];
 
-	if ((argc == 0 && argv != NULL) || argc > 3) {
+	if (argc > 3) {
 		fprintf(ttyout,
-		    "usage: %s [ on | off | gateserver [port] ]\n", argv[0]);
+		    "usage: %s [ on | off | gateserver [ port ] ]\n", argv[0]);
 		code = -1;
 		return;
 	} else if (argc < 2) {
@@ -1034,9 +966,27 @@ setgate(argc, argv)
 		else if (argc == 2 && strcasecmp(argv[1], "off") == 0)
 			gatemode = 0;
 		else {
-			if (argc == 3)
+			if (argc == 3) {
+#if 0
+				char *ep;
+				long port;
+
+				port = strtol(argv[2], &ep, 10);
+				if (port < 0 || port > MAX_IN_PORT_T ||
+				    *ep != '\0') {
+					fprintf(ttyout,
+					    "%s: bad gateport value.\n",
+					    argv[2]);
+					code = -1;
+					return;
+				}
+				gateport = htons(port);
+#else
 				gateport = strdup(argv[2]);
-			(void)strlcpy(gsbuf, argv[1], sizeof(gsbuf));
+#endif
+			}
+			strncpy(gsbuf, argv[1], sizeof(gsbuf) - 1);
+			gsbuf[sizeof(gsbuf) - 1] = '\0';
 			gateserver = gsbuf;
 			gatemode = 1;
 		}
@@ -1088,7 +1038,7 @@ setdebug(argc, argv)
 	int argc;
 	char *argv[];
 {
-	if ((argc == 0 && argv != NULL) || argc > 2) {
+	if (argc > 2) {
 		fprintf(ttyout, "usage: %s [ on | off | debuglevel ]\n",
 		    argv[0]);
 		code = -1;
@@ -1130,8 +1080,8 @@ cd(argc, argv)
 {
 	int r;
 
-	if ((argc == 1 && !another(&argc, &argv, "remote-directory")) ||
-	    (argc == 0 && argv != NULL) || argc > 2) {
+	if ((argc < 2 && !another(&argc, &argv, "remote-directory")) ||
+	    argc > 2) {
 		fprintf(ttyout, "usage: %s remote-directory\n", argv[0]);
 		code = -1;
 		return;
@@ -1143,10 +1093,8 @@ cd(argc, argv)
 			    ttyout);
 		r = command("XCWD %s", argv[1]);
 	}
-	if (r == COMPLETE) {
+	if (r == COMPLETE)
 		dirchange = 1;
-		updateremotepwd();
-	}
 }
 
 /*
@@ -1158,29 +1106,32 @@ lcd(argc, argv)
 	char *argv[];
 {
 	char buf[MAXPATHLEN];
-	char *locdir;
+	char *oldargv1;
 
-	code = -1;
-	if (argc == 1) {
-		argc++;
-		argv[1] = home;
-	}
+	if (argc < 2)
+		argc++, argv[1] = home;
 	if (argc != 2) {
-		fprintf(ttyout, "usage: %s [local-directory]\n", argv[0]);
+		fprintf(ttyout, "usage: %s local-directory\n", argv[0]);
+		code = -1;
 		return;
 	}
-	if ((locdir = globulize(argv[1])) == NULL)
+	oldargv1 = argv[1];
+	if (!globulize(&argv[1])) {
+		code = -1;
 		return;
-	if (chdir(locdir) < 0)
-		warn("local: %s", locdir);
-	else {
-		if (getcwd(buf, sizeof(buf)) != NULL) {
+	}
+	if (chdir(argv[1]) < 0) {
+		warn("local: %s", argv[1]);
+		code = -1;
+	} else {
+		if (getcwd(buf, sizeof(buf)) != NULL)
 			fprintf(ttyout, "Local directory now %s\n", buf);
-			code = 0;
-		} else
-			warn("getcwd: %s", locdir);
+		else
+			warn("getcwd: %s", argv[1]);
+		code = 0;
 	}
-	(void)free(locdir);
+	if (oldargv1 != argv[1])	/* free up after globulize() */
+		free(argv[1]);
 }
 
 /*
@@ -1192,8 +1143,7 @@ delete(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 1 && !another(&argc, &argv, "remote-file")) ||
-	    (argc == 0 && argv != NULL) || argc > 2) {
+	if ((argc < 2 && !another(&argc, &argv, "remote-file")) || argc > 2) {
 		fprintf(ttyout, "usage: %s remote-file\n", argv[0]);
 		code = -1;
 		return;
@@ -1213,17 +1163,15 @@ mdelete(argc, argv)
 	int ointer;
 	char *cp;
 
-	if ((argc == 1 && !another(&argc, &argv, "remote-files")) ||
-	    (argc == 0 && argv != NULL)) {
-		fprintf(ttyout, "usage: %s [remote-files]\n", argv[0]);
+	if (argc < 2 && !another(&argc, &argv, "remote-files")) {
+		fprintf(ttyout, "usage: %s remote-files\n", argv[0]);
 		code = -1;
 		return;
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mintr);
-	if (sigsetjmp(jabort, 1))
-		mabort();
+	oldintr = signal(SIGINT, mabort);
+	(void)setjmp(jabort);
 	while ((cp = remglob(argv, 0, NULL)) != NULL) {
 		if (*cp == '\0') {
 			mflag = 0;
@@ -1241,7 +1189,7 @@ mdelete(argc, argv)
 			}
 		}
 	}
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 	mflag = 0;
 }
 
@@ -1254,8 +1202,7 @@ renamefile(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "from-name")))
+	if (argc < 2 && !another(&argc, &argv, "from-name"))
 		goto usage;
 	if ((argc < 3 && !another(&argc, &argv, "to-name")) || argc > 3) {
 usage:
@@ -1276,66 +1223,37 @@ ls(argc, argv)
 	char *argv[];
 {
 	const char *cmd;
-	char *remdir, *locfile;
-	int freelocfile, pagecmd;
+	char *oldargv2, *globargv2;
 
-	remdir = NULL;
-	locfile = "-";
-	freelocfile = pagecmd = 0;
-			/*
-			 * assume all `pager' versions of the commands
-			 * are the only ones that start with `p'
-			 */
-	if (argv[0][0] == 'p')
-		pagecmd = 1;
-	if (argc == 0 && argv != NULL)
-		goto usage;
-
-	cmd = "NLST";
-	if (strcmp(argv[0] + pagecmd, "dir") == 0)
-		cmd = "LIST";
-
-	if (argc > 1)
-		remdir = argv[1];
-	if (argc > 2)
-		locfile = argv[2];
-	if (argc > 3 || (pagecmd && argc > 2)) {
- usage:
-		if (pagecmd)
-			fprintf(ttyout,
-			    "usage: %s [remote-directory]\n", argv[0]);
-		else
-			fprintf(ttyout,
-			    "usage: %s [remote-directory [local-file]]\n",
-			    argv[0]);
+	if (argc < 2)
+		argc++, argv[1] = NULL;
+	if (argc < 3)
+		argc++, argv[2] = "-";
+	if (argc > 3) {
+		fprintf(ttyout, "usage: %s remote-directory local-file\n",
+		    argv[0]);
 		code = -1;
-		goto freels;
+		return;
 	}
-
-	if (pagecmd) {
-		char *p;
-		int len;
-
-		p = getoptionvalue("pager");
-		if (EMPTYSTRING(p))
-			p = DEFAULTPAGER;
-		len = strlen(p) + 2;
-		locfile = xmalloc(len);
-		locfile[0] = '|';
-		(void)strlcpy(locfile + 1, p, len - 1);
-		freelocfile = 1;
-	} else if ((strcmp(locfile, "-") != 0) && *locfile != '|') {
-		if ((locfile = globulize(locfile)) == NULL ||
-		    !confirm("output to local-file:", locfile)) {
+	cmd = strcmp(argv[0], "dir") == 0 ? "LIST" : "NLST";
+	oldargv2 = argv[2];
+	if (strcmp(argv[2], "-") && !globulize(&argv[2])) {
+		code = -1;
+		return;
+	}
+	globargv2 = argv[2];
+	if (strcmp(argv[2], "-") && *argv[2] != '|')
+		if (!globulize(&argv[2]) || !confirm("output to local-file:",
+		    argv[2])) {
 			code = -1;
 			goto freels;
-		}
-		freelocfile = 1;
 	}
-	recvrequest(cmd, locfile, remdir, "w", 0, 0);
+	recvrequest(cmd, argv[2], argv[1], "w", 0, 0);
 freels:
-	if (freelocfile && locfile)
-		(void)free(locfile);
+	if (argv[2] != globargv2)		/* free up after globulize() */
+		free(argv[2]);
+	if (globargv2 != oldargv2)
+		free(globargv2);
 }
 
 /*
@@ -1351,8 +1269,6 @@ mls(argc, argv)
 	int dolist;
 	char mode[1], *dest, *odest;
 
-	if (argc == 0 && argv != NULL)
-		goto usage;
 	if (argc < 2 && !another(&argc, &argv, "remote-files"))
 		goto usage;
 	if (argc < 3 && !another(&argc, &argv, "local-file")) {
@@ -1364,7 +1280,7 @@ usage:
 	odest = dest = argv[argc - 1];
 	argv[argc - 1] = NULL;
 	if (strcmp(dest, "-") && *dest != '|')
-		if (((dest = globulize(dest)) == NULL) ||
+		if (!globulize(&dest) ||
 		    !confirm("output to local-file:", dest)) {
 			code = -1;
 			return;
@@ -1372,10 +1288,9 @@ usage:
 	dolist = strcmp(argv[0], "mls");
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mintr);
-	if (sigsetjmp(jabort, 1))
-		mabort();
-	for (i = 1; mflag && i < argc-1 && connected; i++) {
+	oldintr = signal(SIGINT, mabort);
+	(void)setjmp(jabort);
+	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
 		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
 		    0, 0);
@@ -1388,7 +1303,7 @@ usage:
 			interactive = ointer;
 		}
 	}
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 	mflag = 0;
 	if (dest != odest)			/* free up after globulize() */
 		free(dest);
@@ -1404,29 +1319,28 @@ shell(argc, argv)
 	char *argv[];
 {
 	pid_t pid;
-	sig_t old1;
+	sig_t old1, old2;
 	char shellnam[MAXPATHLEN], *shell, *namep;
 	int wait_status;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s [command [args]]\n", argv[0]);
-		code = -1;
-		return;
-	}
-	old1 = xsignal(SIGINT, SIG_IGN);
+	old1 = signal (SIGINT, SIG_IGN);
+	old2 = signal (SIGQUIT, SIG_IGN);
 	if ((pid = fork()) == 0) {
 		for (pid = 3; pid < 20; pid++)
 			(void)close(pid);
-		(void)xsignal(SIGINT, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
 		shell = getenv("SHELL");
 		if (shell == NULL)
 			shell = _PATH_BSHELL;
 		namep = strrchr(shell, '/');
 		if (namep == NULL)
 			namep = shell;
-		else
-			namep++;
-		(void)strlcpy(shellnam, namep, sizeof(shellnam));
+		shellnam[0] = '-';
+		(void)strncpy(shellnam + 1, ++namep, sizeof(shellnam) - 2);
+		shellnam[sizeof(shellnam) - 1] = '\0';
+		if (strcmp(namep, "sh") != 0)
+			shellnam[0] = '+';
 		if (debug) {
 			fputs(shell, ttyout);
 			putc('\n', ttyout);
@@ -1444,12 +1358,15 @@ shell(argc, argv)
 	if (pid > 0)
 		while (wait(&wait_status) != pid)
 			;
-	(void)xsignal(SIGINT, old1);
+	(void)signal(SIGINT, old1);
+	(void)signal(SIGQUIT, old2);
 	if (pid == -1) {
 		warn("Try again later");
 		code = -1;
-	} else
+	}
+	else {
 		code = 0;
+	}
 }
 
 /*
@@ -1463,13 +1380,10 @@ user(argc, argv)
 	char acct[80];
 	int n, aflag = 0;
 
-	if (argc == 0 && argv != NULL)
-		goto usage;
 	if (argc < 2)
 		(void)another(&argc, &argv, "username");
 	if (argc < 2 || argc > 4) {
- usage:
-		fprintf(ttyout, "usage: %s username [password [account]]\n",
+		fprintf(ttyout, "usage: %s username [password] [account]\n",
 		    argv[0]);
 		code = -1;
 		return;
@@ -1489,7 +1403,6 @@ user(argc, argv)
 			if (fgets(acct, sizeof(acct) - 1, stdin) == NULL) {
 				fprintf(ttyout,
 				    "\nEOF received; login aborted.\n");
-				clearerr(stdin);
 				code = -1;
 				return;
 			}
@@ -1520,11 +1433,6 @@ pwd(argc, argv)
 {
 	int oldverbose = verbose;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	/*
 	 * If we aren't verbose, this doesn't do anything!
 	 */
@@ -1546,18 +1454,11 @@ lpwd(argc, argv)
 {
 	char buf[MAXPATHLEN];
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
-	if (getcwd(buf, sizeof(buf)) != NULL) {
+	if (getcwd(buf, sizeof(buf)) != NULL)
 		fprintf(ttyout, "Local directory %s\n", buf);
-		code = 0;
-	} else {
+	else
 		warn("getcwd");
-		code = -1;
-	}
+	code = 0;
 }
 
 /*
@@ -1569,8 +1470,8 @@ makedir(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 1 && !another(&argc, &argv, "directory-name")) ||
-	    (argc == 0 && argv != NULL) || argc > 2) {
+	if ((argc < 2 && !another(&argc, &argv, "directory-name")) ||
+	    argc > 2) {
 		fprintf(ttyout, "usage: %s directory-name\n", argv[0]);
 		code = -1;
 		return;
@@ -1592,8 +1493,8 @@ removedir(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 1 && !another(&argc, &argv, "directory-name")) ||
-	    (argc == 0 && argv != NULL) || argc > 2) {
+	if ((argc < 2 && !another(&argc, &argv, "directory-name")) ||
+	    argc > 2) {
 		fprintf(ttyout, "usage: %s directory-name\n", argv[0]);
 		code = -1;
 		return;
@@ -1615,8 +1516,7 @@ quote(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 1 && !another(&argc, &argv, "command line to send")) ||
-	    (argc == 0 && argv != NULL)) {
+	if (argc < 2 && !another(&argc, &argv, "command line to send")) {
 		fprintf(ttyout, "usage: %s line-to-send\n", argv[0]);
 		code = -1;
 		return;
@@ -1635,8 +1535,7 @@ site(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 1 && !another(&argc, &argv, "arguments to SITE command"))
-	    || (argc == 0 && argv != NULL)) {
+	if (argc < 2 && !another(&argc, &argv, "arguments to SITE command")) {
 		fprintf(ttyout, "usage: %s line-to-send\n", argv[0]);
 		code = -1;
 		return;
@@ -1654,15 +1553,23 @@ quote1(initial, argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i;
+	int i, len;
 	char buf[BUFSIZ];		/* must be >= sizeof(line) */
 
-	(void)strlcpy(buf, initial, sizeof(buf));
-	for (i = 1; i < argc; i++) {
-		(void)strlcat(buf, argv[i], sizeof(buf));
-		if (i < (argc - 1))
-			(void)strlcat(buf, " ", sizeof(buf));
+	(void)strncpy(buf, initial, sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = '\0';
+	if (argc > 1) {
+		len = strlen(buf);
+		len += strlen(strncpy(&buf[len], argv[1],
+		    sizeof(buf) - len - 1));
+		for (i = 2; i < argc && len < sizeof(buf); i++) {
+			buf[len++] = ' ';
+			len += strlen(strncpy(&buf[len], argv[i],
+			    sizeof(buf) - len) - 1);
+		}
 	}
+		/* Ensure buf is NUL terminated */
+	buf[sizeof(buf) - 1] = '\0';
 	if (command("%s", buf) == PRELIM) {
 		while (getreply(0) == PRELIM)
 			continue;
@@ -1675,12 +1582,11 @@ do_chmod(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "mode")))
+	if (argc < 2 && !another(&argc, &argv, "mode"))
 		goto usage;
-	if ((argc < 3 && !another(&argc, &argv, "remote-file")) || argc > 3) {
+	if ((argc < 3 && !another(&argc, &argv, "file-name")) || argc > 3) {
 usage:
-		fprintf(ttyout, "usage: %s mode remote-file\n", argv[0]);
+		fprintf(ttyout, "usage: %s mode file-name\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -1694,28 +1600,18 @@ do_umask(argc, argv)
 {
 	int oldverbose = verbose;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s [umask]\n", argv[0]);
-		code = -1;
-		return;
-	}
 	verbose = 1;
 	(void)command(argc == 1 ? "SITE UMASK" : "SITE UMASK %s", argv[1]);
 	verbose = oldverbose;
 }
 
 void
-idlecmd(argc, argv)
+idle(argc, argv)
 	int argc;
 	char *argv[];
 {
 	int oldverbose = verbose;
 
-	if (argc < 1 || argc > 2) {
-		fprintf(ttyout, "usage: %s [seconds]\n", argv[0]);
-		code = -1;
-		return;
-	}
 	verbose = 1;
 	(void)command(argc == 1 ? "SITE IDLE" : "SITE IDLE %s", argv[1]);
 	verbose = oldverbose;
@@ -1731,11 +1627,6 @@ rmthelp(argc, argv)
 {
 	int oldverbose = verbose;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	verbose = 1;
 	(void)command(argc == 1 ? "HELP" : "HELP %s", argv[1]);
 	verbose = oldverbose;
@@ -1751,16 +1642,12 @@ quit(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	if (connected)
-		disconnect(0, NULL);
+		disconnect(0, 0);
 	pswitch(1);
-	if (connected)
-		disconnect(0, NULL);
+	if (connected) {
+		disconnect(0, 0);
+	}
 	exit(0);
 }
 
@@ -1773,15 +1660,18 @@ disconnect(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	if (!connected)
 		return;
 	(void)command("QUIT");
-	cleanuppeer();
+	if (cout) {
+		(void)fclose(cout);
+	}
+	cout = NULL;
+	connected = 0;
+	data = -1;
+	if (!proxy) {
+		macnum = 0;
+	}
 }
 
 void
@@ -1791,7 +1681,7 @@ account(argc, argv)
 {
 	char *ap;
 
-	if ((argc == 0 && argv != NULL) || argc > 2) {
+	if (argc > 2) {
 		fprintf(ttyout, "usage: %s [password]\n", argv[0]);
 		code = -1;
 		return;
@@ -1803,7 +1693,7 @@ account(argc, argv)
 	(void)command("ACCT %s", ap);
 }
 
-sigjmp_buf abortprox;
+jmp_buf abortprox;
 
 void
 proxabort(notused)
@@ -1821,7 +1711,7 @@ proxabort(notused)
 		proxflag = 0;
 	}
 	pswitch(0);
-	siglongjmp(abortprox, 1);
+	longjmp(abortprox, 1);
 }
 
 void
@@ -1833,8 +1723,7 @@ doproxy(argc, argv)
 	int cmdpos;
 	sig_t oldintr;
 
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "command"))) {
+	if (argc < 2 && !another(&argc, &argv, "command")) {
 		fprintf(ttyout, "usage: %s command\n", argv[0]);
 		code = -1;
 		return;
@@ -1855,16 +1744,16 @@ doproxy(argc, argv)
 		code = -1;
 		return;
 	}
-	if (sigsetjmp(abortprox, 1)) {
+	if (setjmp(abortprox)) {
 		code = -1;
 		return;
 	}
-	oldintr = xsignal(SIGINT, proxabort);
+	oldintr = signal(SIGINT, proxabort);
 	pswitch(1);
 	if (c->c_conn && !connected) {
 		fputs("Not connected.\n", ttyout);
 		pswitch(0);
-		(void)xsignal(SIGINT, oldintr);
+		(void)signal(SIGINT, oldintr);
 		code = -1;
 		return;
 	}
@@ -1879,7 +1768,7 @@ doproxy(argc, argv)
 		proxflag = 0;
 	}
 	pswitch(0);
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 }
 
 void
@@ -1889,33 +1778,6 @@ setcase(argc, argv)
 {
 
 	code = togglevar(argc, argv, &mcase, "Case mapping");
-}
-
-/*
- * convert the given name to lower case if it's all upper case, into
- * a static buffer which is returned to the caller
- */
-char *
-docase(name)
-	char *name;
-{
-	static char new[MAXPATHLEN];
-	int i, dochange;
-
-	dochange = 1;
-	for (i = 0; name[i] != '\0' && i < sizeof(new) - 1; i++) {
-		new[i] = name[i];
-		if (islower((unsigned char)new[i]))
-			dochange = 0;
-	}
-	new[i] = '\0';
-
-	if (dochange) {
-		for (i = 0; new[i] != '\0'; i++)
-			if (isupper((unsigned char)new[i]))
-				new[i] = tolower(new[i]);
-	}
-	return (new);
 }
 
 void
@@ -1932,12 +1794,6 @@ setntrans(argc, argv)
 	int argc;
 	char *argv[];
 {
-
-	if ((argc == 0 && argv != NULL) || argc > 3) {
-		fprintf(ttyout, "usage: %s [inchars [outchars]]\n", argv[0]);
-		code = -1;
-		return;
-	}
 	if (argc == 1) {
 		ntflag = 0;
 		fputs("Ntrans off.\n", ttyout);
@@ -1946,12 +1802,14 @@ setntrans(argc, argv)
 	}
 	ntflag++;
 	code = ntflag;
-	(void)strlcpy(ntin, argv[1], sizeof(ntin));
+	(void)strncpy(ntin, argv[1], sizeof(ntin) - 1);
+	ntin[sizeof(ntin) - 1] = '\0';
 	if (argc == 2) {
 		ntout[0] = '\0';
 		return;
 	}
-	(void)strlcpy(ntout, argv[2], sizeof(ntout));
+	(void)strncpy(ntout, argv[2], sizeof(ntout) - 1);
+	ntout[sizeof(ntout) - 1] = '\0';
 }
 
 char *
@@ -1996,8 +1854,7 @@ setnmap(argc, argv)
 		code = mapflag;
 		return;
 	}
-	if ((argc == 0 && argv != NULL) ||
-	    (argc < 3 && !another(&argc, &argv, "mapout")) || argc > 3) {
+	if ((argc < 3 && !another(&argc, &argv, "mapout")) || argc > 3) {
 		fprintf(ttyout, "usage: %s [mapin mapout]\n", argv[0]);
 		code = -1;
 		return;
@@ -2012,10 +1869,10 @@ setnmap(argc, argv)
 		cp = strchr(altarg, ' ');
 	}
 	*cp = '\0';
-	(void)strlcpy(mapin, altarg, MAXPATHLEN);
+	(void)strncpy(mapin, altarg, MAXPATHLEN - 1);
 	while (*++cp == ' ')
 		continue;
-	(void)strlcpy(mapout, cp, MAXPATHLEN);
+	(void)strncpy(mapout, cp, MAXPATHLEN - 1);
 }
 
 char *
@@ -2199,39 +2056,8 @@ setpassive(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 1) {
-		passivemode = !passivemode;
-		activefallback = passivemode;
-	} else if (argc != 2) {
- passiveusage:
-		fprintf(ttyout, "usage: %s [ on | off | auto ]\n", argv[0]);
-		code = -1;
-		return;
-	} else if (strcasecmp(argv[1], "on") == 0) {
-		passivemode = 1;
-		activefallback = 0;
-	} else if (strcasecmp(argv[1], "off") == 0) {
-		passivemode = 0;
-		activefallback = 0;
-	} else if (strcasecmp(argv[1], "auto") == 0) {
-		passivemode = 1;
-		activefallback = 1;
-	} else
-		goto passiveusage;
-	fprintf(ttyout, "Passive mode: %s; fallback to active mode: %s.\n",
-	    onoff(passivemode), onoff(activefallback));
-	code = passivemode;
-}
-
-void
-setepsv4(argc, argv)
-	int argc;
-	char *argv[];
-{
-
-	code = togglevar(argc, argv, &epsv4,
-	    verbose ? "EPSV/EPRT on IPv4" : NULL);
-	epsv4bad = 0;
+	code = togglevar(argc, argv, &passivemode,
+	    verbose ? "Passive mode" : NULL);
 }
 
 void
@@ -2265,18 +2091,18 @@ parserate(argc, argv, cmdlineopt)
 usage:
 		if (cmdlineopt)
 			fprintf(ttyout,
-	"usage: %s (all|get|put),maximum-bytes[,increment-bytes]]\n",
+			    "usage: %s (all|get|put),maximum[,increment]]\n",
 			    argv[0]);
 		else
 			fprintf(ttyout,
-	"usage: %s (all|get|put) [maximum-bytes [increment-bytes]]\n",
+			    "usage: %s (all|get|put) [maximum [increment]]\n",
 			    argv[0]);
 		return -1;
 	}
 	dir = max = incr = showonly = 0;
-#define	RATE_GET	1
-#define	RATE_PUT	2
-#define	RATE_ALL	(RATE_GET | RATE_PUT)
+#define RATE_GET	1
+#define RATE_PUT	2
+#define RATE_ALL	(RATE_GET | RATE_PUT)
 
 	if (strcasecmp(argv[1], "all") == 0)
 		dir = RATE_ALL;
@@ -2299,8 +2125,8 @@ usage:
 	} else
 		incr = DEFAULTINCR;
 
-	oldusr1 = xsignal(SIGUSR1, SIG_IGN);
-	oldusr2 = xsignal(SIGUSR2, SIG_IGN);
+	oldusr1 = signal(SIGUSR1, SIG_IGN);
+	oldusr2 = signal(SIGUSR2, SIG_IGN);
 	if (dir & RATE_GET) {
 		if (!showonly) {
 			rate_get = max;
@@ -2321,8 +2147,8 @@ usage:
 		"Put transfer rate throttle: %s; maximum: %d; increment %d.\n",
 			    onoff(rate_put), rate_put, rate_put_incr);
 	}
-	(void)xsignal(SIGUSR1, oldusr1);
-	(void)xsignal(SIGUSR2, oldusr2);
+	(void)signal(SIGUSR1, oldusr1);
+	(void)signal(SIGUSR2, oldusr2);
 	return 0;
 }
 
@@ -2343,11 +2169,6 @@ cdup(argc, argv)
 {
 	int r;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	r = command("CDUP");
 	if (r == ERROR && code == 500) {
 		if (verbose)
@@ -2355,10 +2176,8 @@ cdup(argc, argv)
 			    ttyout);
 		r = command("XCUP");
 	}
-	if (r == COMPLETE) {
+	if (r == COMPLETE)
 		dirchange = 1;
-		updateremotepwd();
-	}
 }
 
 /*
@@ -2370,13 +2189,17 @@ restart(argc, argv)
 	char *argv[];
 {
 
-	if ((argc == 0 && argv != NULL) || argc > 2) {
+	if (argc > 2) {
 		fprintf(ttyout, "usage: %s [restart_point]\n", argv[0]);
 		code = -1;
 		return;
 	}
 	if (argc == 2) {
-		off_t rp;
+#ifndef NO_QUAD
+		quad_t	rp;
+#else
+		long	rp;
+#endif
 		char *ep;
 
 #ifndef NO_QUAD
@@ -2395,7 +2218,7 @@ restart(argc, argv)
 	else
 		fprintf(ttyout,
 #ifndef NO_QUAD
-		    "Restarting at %lld for next get, put or append\n",
+		    "Restarting at %qd for next get, put or append\n",
 		    (long long)restart_point);
 #else
 		    "Restarting at %ld for next get, put or append\n",
@@ -2412,11 +2235,6 @@ syst(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	(void)command("SYST");
 }
 
@@ -2428,8 +2246,6 @@ macdef(argc, argv)
 	char *tmp;
 	int c;
 
-	if (argc == 0 && argv != NULL)
-		goto usage;
 	if (macnum == 16) {
 		fputs("Limit of 16 macros have already been defined.\n",
 		    ttyout);
@@ -2437,7 +2253,6 @@ macdef(argc, argv)
 		return;
 	}
 	if ((argc < 2 && !another(&argc, &argv, "macro name")) || argc > 2) {
- usage:
 		fprintf(ttyout, "usage: %s macro_name\n", argv[0]);
 		code = -1;
 		return;
@@ -2446,8 +2261,9 @@ macdef(argc, argv)
 		fputs(
 		"Enter macro line by line, terminating it with a null line.\n",
 		    ttyout);
-	(void)strlcpy(macros[macnum].mac_name, argv[1],
-	    sizeof(macros[macnum].mac_name));
+	(void)strncpy(macros[macnum].mac_name, argv[1],
+	    sizeof(macros[macnum].mac_name) - 1);
+	macros[macnum].mac_name[sizeof(macros[macnum].mac_name) - 1] = '\0';
 	if (macnum == 0)
 		macros[macnum].mac_start = macbuf;
 	else
@@ -2496,9 +2312,8 @@ sizecmd(argc, argv)
 {
 	off_t size;
 
-	if ((argc == 1 && !another(&argc, &argv, "remote-file")) ||
-	    (argc == 0 && argv != NULL) || argc > 2) {
-		fprintf(ttyout, "usage: %s remote-file\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
+		fprintf(ttyout, "usage: %s filename\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -2506,11 +2321,11 @@ sizecmd(argc, argv)
 	if (size != -1)
 		fprintf(ttyout,
 #ifndef NO_QUAD
-		    "%s\t%lld\n", argv[1], (long long)size);
+		    "%s\t%qd\n", argv[1], (long long)size);
 #else
 		    "%s\t%ld\n", argv[1], (long)size);
 #endif
-	code = (size > 0);
+	code = size;
 }
 
 /*
@@ -2523,16 +2338,15 @@ modtime(argc, argv)
 {
 	time_t mtime;
 
-	if ((argc == 1 && !another(&argc, &argv, "remote-file")) ||
-	    (argc == 0 && argv != NULL) || argc > 2) {
-		fprintf(ttyout, "usage: %s remote-file\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
+		fprintf(ttyout, "usage: %s filename\n", argv[0]);
 		code = -1;
 		return;
 	}
 	mtime = remotemodtime(argv[1], 1);
 	if (mtime != -1)
 		fprintf(ttyout, "%s\t%s", argv[1], asctime(localtime(&mtime)));
-	code = (mtime > 0);
+	code = mtime;
 }
 
 /*
@@ -2544,11 +2358,6 @@ rmtstatus(argc, argv)
 	char *argv[];
 {
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s [remote-file]\n", argv[0]);
-		code = -1;
-		return;
-	}
 	(void)command(argc > 1 ? "STAT %s" : "STAT" , argv[1]);
 }
 
@@ -2568,42 +2377,7 @@ newer(argc, argv)
 }
 
 /*
- * Display one local file through $PAGER.
- */
-void
-lpage(argc, argv)
-	int argc;
-	char *argv[];
-{
-	int len;
-	char *p, *pager, *locfile;
-
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "local-file")) || argc > 2) {
-		fprintf(ttyout, "usage: %s local-file\n", argv[0]);
-		code = -1;
-		return;
-	}
-	if ((locfile = globulize(argv[1])) == NULL) {
-		code = -1;
-		return;
-	}
-	p = getoptionvalue("pager");
-	if (EMPTYSTRING(p))
-		p = DEFAULTPAGER;
-	len = strlen(p) + strlen(locfile) + 2;
-	pager = xmalloc(len);
-	(void)strlcpy(pager, p,		len);
-	(void)strlcat(pager, " ",	len);
-	(void)strlcat(pager, locfile,	len);
-	system(pager);
-	code = 0;
-	(void)free(pager);
-	(void)free(locfile);
-}
-
-/*
- * Display one remote file through $PAGER.
+ * Display one file through $PAGER (defaults to "more").
  */
 void
 page(argc, argv)
@@ -2611,31 +2385,37 @@ page(argc, argv)
 	char *argv[];
 {
 	int ohash, orestart_point, overbose, len;
-	char *p, *pager;
+	char *p, *pager, *oldargv1;
 
-	if ((argc == 0 && argv != NULL) ||
-	    (argc == 1 && !another(&argc, &argv, "remote-file")) || argc > 2) {
-		fprintf(ttyout, "usage: %s remote-file\n", argv[0]);
+	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
+		fprintf(ttyout, "usage: %s filename\n", argv[0]);
 		code = -1;
 		return;
 	}
-	p = getoptionvalue("pager");
-	if (EMPTYSTRING(p))
-		p = DEFAULTPAGER;
+	oldargv1 = argv[1];
+	if (!globulize(&argv[1])) {
+		code = -1;
+		return;
+	}
+	p = getenv("PAGER");
+	if (p == NULL || p[0] == '\0')
+		p = PAGER;
 	len = strlen(p) + 2;
 	pager = xmalloc(len);
 	pager[0] = '|';
-	(void)strlcpy(pager + 1, p, len - 1);
+	strlcpy(pager + 1, p, len - 1);
 
 	ohash = hash;
 	orestart_point = restart_point;
 	overbose = verbose;
 	hash = restart_point = verbose = 0;
 	recvrequest("RETR", pager, argv[1], "r+w", 1, 0);
+	(void)free(pager);
 	hash = ohash;
 	restart_point = orestart_point;
 	verbose = overbose;
-	(void)free(pager);
+	if (oldargv1 != argv[1])	/* free up after globulize() */
+		free(argv[1]);
 }
 
 /*
@@ -2677,68 +2457,15 @@ setxferbuf(argc, argv)
 		rcvbuf_size = size;
 	fprintf(ttyout, "Socket buffer sizes: send %d, receive %d.\n",
 	    sndbuf_size, rcvbuf_size);
-	code = 0;
 }
 
-/*
- * Set or display options (defaults are provided by various env vars)
- */
+
 void
-setoption(argc, argv)
+setepsv4(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct option *o;
 
-	code = -1;
-	if ((argc == 0 && argv != NULL) || (argc != 1 && argc != 3)) {
-		fprintf(ttyout, "usage: %s [option value]\n", argv[0]);
-		return;
-	}
-
-#define	OPTIONINDENT ((int) sizeof("http_proxy"))
-	if (argc == 1) {
-		for (o = optiontab; o->name != NULL; o++) {
-			fprintf(ttyout, "%-*s\t%s\n", OPTIONINDENT,
-			    o->name, o->value ? o->value : "");
-		}
-	} else {
-		o = getoption(argv[1]);
-		if (o == NULL) {
-			fprintf(ttyout, "No such option `%s'.\n", argv[1]);
-			return;
-		}
-		FREEPTR(o->value);
-		o->value = xstrdup(argv[2]);
-		if (verbose)
-			fprintf(ttyout, "Setting `%s' to `%s'.\n",
-			    o->name, o->value);
-	}
-	code = 0;
-}
-
-/*
- * Unset an option
- */
-void
-unsetoption(argc, argv)
-	int argc;
-	char *argv[];
-{
-	struct option *o;
-
-	code = -1;
-	if ((argc == 0 && argv != NULL) || argc !=  2) {
-		fprintf(ttyout, "usage: %s option\n", argv[0]);
-		return;
-	}
-
-	o = getoption(argv[1]);
-	if (o == NULL) {
-		fprintf(ttyout, "No such option `%s'.\n", argv[1]);
-		return;
-	}
-	FREEPTR(o->value);
-	fprintf(ttyout, "Unsetting `%s'.\n", o->name);
-	code = 0;
+	code = togglevar(argc, argv, &epsv4,
+	    verbose ? "EPSV/EPRT on IPv4" : NULL);
 }

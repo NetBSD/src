@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.13 1999/11/07 07:44:21 enami Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.12 1999/07/11 00:34:37 bad Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -540,28 +540,27 @@ pcmcia_print_cis(sc)
 			if (cfe->num_iospace) {
 				printf("; iomask %lx, iospace", cfe->iomask);
 
-				for (i = 0; i < cfe->num_iospace; i++) {
-					printf(" %lx", cfe->iospace[i].start);
+				for (i = 0; i < cfe->num_iospace; i++)
+					printf(" %lx",
+					    cfe->iospace[i].start);
 					if (cfe->iospace[i].length)
 						printf("-%lx",
 						    cfe->iospace[i].start +
-						    cfe->iospace[i].length - 1);
-				}
+						      cfe->iospace[i].length - 1);
 			}
 			if (cfe->num_memspace) {
 				printf("; memspace");
 
-				for (i = 0; i < cfe->num_memspace; i++) {
+				for (i = 0; i < cfe->num_memspace; i++)
 					printf(" %lx",
 					    cfe->memspace[i].cardaddr);
 					if (cfe->memspace[i].length)
 						printf("-%lx",
 						    cfe->memspace[i].cardaddr +
-						    cfe->memspace[i].length - 1);
+						      cfe->memspace[i].length - 1);
 					if (cfe->memspace[i].hostaddr)
 						printf("@%lx",
 						    cfe->memspace[i].hostaddr);
-				}
 			}
 			if (cfe->maxtwins)
 				printf("; maxtwins %d", cfe->maxtwins);

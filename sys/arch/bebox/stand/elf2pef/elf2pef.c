@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2pef.c,v 1.7 1999/12/03 15:44:41 sakamoto Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.5 1999/06/28 01:03:55 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -117,17 +117,16 @@ main(argc, argv)
 	/*
 	 * ELF file operation
 	 */
-	if (read(elf_fd, &hdr, sizeof (hdr)) != sizeof (hdr)) {
+	if (read(elf_fd, &hdr, ELF32_HDR_SIZE) != ELF32_HDR_SIZE) {
 		fprintf(stderr, "Can't read input '%s' : %s\n",
 			argv[1], strerror(errno));
 		exit(3);
 	}
-	if (bcmp(hdr.e_ident, ELFMAG, SELFMAG) != 0 ||
-	    hdr.e_ident[EI_CLASS] != ELFCLASS32) {
+	if (bcmp(hdr.e_ident, Elf32_e_ident, Elf32_e_siz)) {
 		fprintf(stderr, "input '%s' is not ELF32 format\n", argv[1]);
 		exit(3);
 	}
-	if (_BE_short(hdr.e_machine) != EM_PPC) {
+	if (_BE_short(hdr.e_machine) != Elf_em_ppc) {
 		fprintf(stderr, "input '%s' is not PowerPC exec binary\n",
 			argv[1]);
 		exit(3);

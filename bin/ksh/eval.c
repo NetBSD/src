@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: eval.c,v 1.2 1997/01/12 19:11:48 tls Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -40,7 +40,7 @@ typedef struct Expand {
 #define IFS_WS		1	/* have seen IFS white-space */
 #define IFS_NWS		2	/* have seen IFS non-white-space */
 
-static	int	varsub ARGS((Expand *xp, char *sp, char *word, int *stypep, int *slenp));
+static	int	varsub ARGS((Expand *xp, char *sp, char *word, int *stypep));
 static	int	comsub ARGS((Expand *xp, char *cp));
 static	char   *trimsub ARGS((char *str, char *pat, int how));
 static	void	glob ARGS((char *cp, XPtrV *wp, int markdirs));
@@ -265,7 +265,7 @@ expand(cp, wp, f)
 					v.type = 10; /* not default */
 					v.name[0] = '\0';
 					v_evaluate(&v, substitute(sp, 0),
-						KSH_UNWIND_ERROR);
+						FALSE);
 					sp = strchr(sp, 0) + 1;
 					for (p = str_val(&v); *p; ) {
 						Xcheck(ds, dp);
@@ -275,23 +275,21 @@ expand(cp, wp, f)
 				continue;
 			  case OSUBST: /* ${{#}var{:}[=+-?#%]word} */
 			  /* format is:
-			   *   OSUBST [{x] plain-variable-part \0
-			   *     compiled-word-part CSUBST [}x]
+			   *   OSUBST plain-variable-part \0
+			   *     compiled-word-part CSUBST
 			   * This is were all syntax checking gets done...
 			   */
 			  {
-				char *varname = ++sp; /* skip the { or x (}) */
+				char *varname = sp;
 				int stype;
-				int slen;
 
 				sp = strchr(sp, '\0') + 1; /* skip variable */
-				type = varsub(&x, varname, sp, &stype, &slen);
+				type = varsub(&x, varname, sp, &stype);
 				if (type < 0) {
 					char endc;
 					char *str, *end;
 
 					end = (char *) wdscan(sp, CSUBST);
-					/* ({) the } or x is already skipped */
 					endc = *end;
 					*end = EOS;
 					str = snptreef((char *) 0, 64, "%S",
@@ -319,8 +317,12 @@ expand(cp, wp, f)
 					st->var = x.var;
 					st->quote = quote;
 					/* skip qualifier(s) */
-					if (stype)
-						sp += slen;
+					if (stype) {
+						sp += 2;
+						/* :[-+=?] or double [#%] */
+						if (stype & 0x80)
+							sp += 2;
+					}
 					switch (stype & 0x7f) {
 					  case '#':
 					  case '%':
@@ -328,12 +330,6 @@ expand(cp, wp, f)
 						f = DOPAT | (f&DONTRUNCOMMAND)
 						    | DOTEMP_;
 						quote = 0;
-						/* Prepend open pattern (so |
-						 * in a trim will work as
-						 * expected)
-						 */
-						*dp++ = MAGIC;
-						*dp++ = '@' + 0x80;
 						break;
 					  case '=':
 						/* Enabling tilde expansion
@@ -349,9 +345,13 @@ expand(cp, wp, f)
 						 * sense though, since ~ is
 						 * a arithmetic operator.
 						 */
+#if !defined(__hppa) || __GNUC__ != 2	/* gcc 2.3.3 on hp-pa dies on this - ifdef goes away as soon as I get a new version of gcc.. */
 						if (!(x.var->flag & INTEGER))
 							f |= DOASNTILDE|DOTILDE;
 						f |= DOTEMP_;
+#else
+						f |= DOTEMP_|DOASNTILDE|DOTILDE;
+#endif
 						/* These will be done after the
 						 * value has been assigned.
 						 */
@@ -373,7 +373,6 @@ expand(cp, wp, f)
 				continue;
 			  }
 			  case CSUBST: /* only get here if expanding word */
-				sp++; /* ({) skip the } or x */
 				tilde_ok = 0;	/* in case of ${unset:-} */
 				*dp = '\0';
 				quote = st->quote;
@@ -383,8 +382,6 @@ expand(cp, wp, f)
 				switch (st->stype&0x7f) {
 				  case '#':
 				  case '%':
-					/* Append end-pattern */
-					*dp++ = MAGIC; *dp++ = ')'; *dp = '\0';
 					dp = Xrestpos(ds, dp, st->base);
 					/* Must use st->var since calling
 					 * global would break things
@@ -398,6 +395,12 @@ expand(cp, wp, f)
 					st = st->prev;
 					continue;
 				  case '=':
+					if (st->var->flag & RDONLY)
+						/* XXX POSIX says this is only
+						 * fatal for special builtins
+						 */
+						errorf("%s: is read only",
+							st->var->name);
 					/* Restore our position and substitute
 					 * the value of st->var (may not be
 					 * the assigned value in the presence
@@ -408,17 +411,9 @@ expand(cp, wp, f)
 					 * global would cause with things
 					 * like x[i+=1] to be evaluated twice.
 					 */
-					/* Note: not exported by FEXPORT
-					 * in at&t ksh.
-					 */
-					/* XXX POSIX says readonly is only
-					 * fatal for special builtins (setstr
-					 * does readonly check).
-					 */
 					setstr(st->var, debunk(
 						(char *) alloc(strlen(dp) + 1,
-							ATEMP), dp),
-						KSH_UNWIND_ERROR);
+							ATEMP), dp));
 					x.str = str_val(st->var);
 					type = XSUB;
 					if (f&DOBLANK)
@@ -686,17 +681,15 @@ expand(cp, wp, f)
  * Prepare to generate the string returned by ${} substitution.
  */
 static int
-varsub(xp, sp, word, stypep, slenp)
+varsub(xp, sp, word, stypep)
 	Expand *xp;
 	char *sp;
 	char *word;
-	int *stypep;	/* becomes qualifier type */
-	int *slenp;	/* " " len (=, :=, etc.) valid iff *stypep != 0 */
+	int *stypep;
 {
 	int c;
 	int state;	/* next state: XBASE, XARG, XSUB, XNULLSUB */
 	int stype;	/* substitution type */
-	int slen;
 	char *p;
 	struct tbl *vp;
 
@@ -715,17 +708,13 @@ varsub(xp, sp, word, stypep, slenp)
 		sp++;
 		/* Check for size of array */
 		if ((p=strchr(sp,'[')) && (p[1]=='*'||p[1]=='@') && p[2]==']') {
-			int n = 0;
-			int max = 0;
+			c = 0;
 			vp = global(arrayname(sp));
 			if (vp->flag & (ISSET|ARRAY))
 				zero_ok = 1;
 			for (; vp; vp = vp->u.array)
-				if (vp->flag & ISSET) {
-					max = vp->index + 1;
-					n++;
-				}
-			c = n; /* ksh88/ksh93 go for number, not max index */
+				if (vp->flag&ISSET)
+					c = vp->index+1;
 		} else if (c == '*' || c == '@')
 			c = e->loc->argc;
 		else {
@@ -742,34 +731,29 @@ varsub(xp, sp, word, stypep, slenp)
 
 	/* Check for qualifiers in word part */
 	stype = 0;
-	c = word[slen = 0] == CHAR ? word[1] : 0;
+	c = *word == CHAR ? word[1] : 0;
 	if (c == ':') {
-		slen += 2;
 		stype = 0x80;
-		c = word[slen + 0] == CHAR ? word[slen + 1] : 0;
+		c = word[2] == CHAR ? word[3] : 0;
 	}
-	if (ctype(c, C_SUBOP1)) {
-		slen += 2;
+	if (ctype(c, C_SUBOP1))
 		stype |= c;
-	} else if (ctype(c, C_SUBOP2)) { /* Note: ksh88 allows :%, :%%, etc */
-		slen += 2;
-		stype = c;
-		if (word[slen + 0] == CHAR && c == word[slen + 1]) {
-			stype |= 0x80;
-			slen += 2;
-		}
-	} else if (stype)	/* : is not ok */
+	else if (stype)	/* :, :# or :% is not ok */
 		return -1;
+	else if (ctype(c, C_SUBOP2)) {
+		stype = c;
+		if (word[2] == CHAR && c == word[3])
+			stype |= 0x80;
+	}
 	if (!stype && *word != CSUBST)
 		return -1;
 	*stypep = stype;
-	*slenp = slen;
 
 	c = sp[0];
 	if (c == '*' || c == '@') {
 		switch (stype & 0x7f) {
 		  case '=':	/* can't assign to a vector */
-		  case '%':	/* can't trim a vector (yet) */
+		  case '%':	/* can't trim a vector */
 		  case '#':
 			return -1;
 		}
@@ -788,7 +772,7 @@ varsub(xp, sp, word, stypep, slenp)
 
 			switch (stype & 0x7f) {
 			  case '=':	/* can't assign to a vector */
-			  case '%':	/* can't trim a vector (yet) */
+			  case '%':	/* can't trim a vector */
 			  case '#':
 				return -1;
 			}
@@ -1184,12 +1168,11 @@ debunk(dp, sp)
 		memcpy(dp, sp, s - sp);
 		for (d = dp + (s - sp); *s; s++)
 			if (!ISMAGIC(*s) || !(*++s & 0x80)
-			    || !strchr("*+?@! ", *s & 0x7f))
+			    || !strchr("*+?@!", *s & 0x7f))
 				*d++ = *s;
 			else {
 				/* extended pattern operators: *+?@! */
-				if ((*s & 0x7f) != ' ')
-					*d++ = *s & 0x7f;
+				*d++ = *s & 0x7f;
 				*d++ = '(';
 			}
 		*d = '\0';

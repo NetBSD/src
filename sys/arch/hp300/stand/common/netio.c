@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.7 1999/11/13 21:21:38 thorpej Exp $	*/
+/*	$NetBSD: netio.c,v 1.5 1999/05/07 16:19:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

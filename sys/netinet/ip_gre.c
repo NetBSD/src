@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.8 1999/01/19 23:03:21 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@
 #if NGRE > 0
 
 #include "opt_inet.h"
-#include "opt_ns.h"
-#include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

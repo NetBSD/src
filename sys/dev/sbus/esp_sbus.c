@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.7 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.6 1999/03/26 06:48:40 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -221,15 +221,6 @@ espattach_sbus(parent, self, aux)
 		}
 	}
 
-	if (sa->sa_nintr == 0) {
-		/*
-		 * No interrupt properties: we quit; this might
-		 * happen on e.g. a Sparc X terminal.
-		 */
-		printf("\n%s: no interrupt property\n", self->dv_xname);
-		return;
-	}
-
 	esc->sc_pri = sa->sa_pri;
 
 	/* add me to the sbus structures */
@@ -288,15 +279,7 @@ espattach_dma(parent, self, aux)
 		}
 	}
 
-	if (sa->sa_nintr == 0) {
-		/*
-		 * No interrupt properties: we quit; this might
-		 * happen on e.g. a Sparc X terminal.
-		 */
-		printf("\n%s: no interrupt property\n", self->dv_xname);
-		return;
-	}
-
+	/* Establish interrupt handler */
 	esc->sc_pri = sa->sa_pri;
 
 	/* Assume SBus is grandparent */

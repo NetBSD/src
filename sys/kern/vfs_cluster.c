@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.23 1999/12/03 21:43:20 ragge Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.21.18.1 1999/12/21 23:19:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -330,10 +330,10 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 	 * is no way of doing the necessary page moving, so
 	 * terminate early.
 	 */
-	if (size != roundup(size, NBPG))
+	if (size != roundup(size, CLBYTES))
 		return (bp);
 
-	inc = btodb(size);
+	inc = btodb(size, bp->b_bshift);
 	for (bn = blkno + inc, i = 1; i <= run; ++i, bn += inc) {
 		/*
 		 * If a component of the cluster is already in core,
@@ -510,7 +510,7 @@ cluster_write(bp, filesize)
 		vp->v_lasta = vp->v_clen = vp->v_cstart = vp->v_lastw = 0;
 
         if (vp->v_clen == 0 || lbn != vp->v_lastw + 1 ||
-	    (bp->b_blkno != vp->v_lasta + btodb(bp->b_bcount))) {
+	    (bp->b_blkno != vp->v_lasta + btodb(bp->b_bcount, bp->b_bshift))) {
 		maxclen = MAXBSIZE / vp->v_mount->mnt_stat.f_iosize - 1;
 		if (vp->v_clen != 0) {
 			/*
@@ -715,7 +715,8 @@ redo:
 		++b_save->bs_nchildren;
 
 		/* Move memory from children to parent */
-		if (tbp->b_blkno != (bp->b_blkno + btodb(bp->b_bufsize))) {
+		if (tbp->b_blkno != (bp->b_blkno +
+					btodb(bp->b_bufsize, bp->b_bshift))) {
 			printf("Clustered Block: %d addr %x bufsize: %ld\n",
 			    bp->b_lblkno, bp->b_blkno, bp->b_bufsize);
 			printf("Child Block: %d addr: %x\n", tbp->b_lblkno,
@@ -723,21 +724,17 @@ redo:
 			panic("Clustered write to wrong blocks");
 		}
 
+		pagemove(tbp->b_data, cp, size);
+		bp->b_bcount += size;
+		bp->b_bufsize += size;
+
+		tbp->b_bufsize -= size;
 		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR | B_DELWRI);
 		/*
 		 * We might as well AGE the buffer here; it's either empty, or
 		 * contains data that we couldn't get rid of (but wanted to).
 		 */
 		tbp->b_flags |= (B_ASYNC | B_AGE);
-
-		if (LIST_FIRST(&tbp->b_dep) != NULL && bioops.io_start)
-			(*bioops.io_start)(tbp);
-
-		pagemove(tbp->b_data, cp, size);
-		bp->b_bcount += size;
-		bp->b_bufsize += size;
-
-		tbp->b_bufsize -= size;
 		s = splbio();
 		reassignbuf(tbp, tbp->b_vp);		/* put on clean list */
 		++tbp->b_vp->v_numoutput;

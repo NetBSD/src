@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.22 1999/11/16 02:13:02 enami Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.20 1999/09/27 03:20:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -118,11 +118,6 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_REVISION_MASK			0xff
 #define	PCI_REVISION(cr) \
 	    (((cr) >> PCI_REVISION_SHIFT) & PCI_REVISION_MASK)
-
-#define	PCI_CLASS_CODE(class, subclass, interface) \
-	    ((((class) & PCI_CLASS_MASK) << PCI_CLASS_SHIFT) | \
-	     (((subclass) & PCI_SUBCLASS_MASK) << PCI_SUBCLASS_SHIFT) | \
-	     (((interface) & PCI_INTERFACE_MASK) << PCI_INTERFACE_SHIFT))
 
 /* base classes */
 #define	PCI_CLASS_PREHISTORIC			0x00

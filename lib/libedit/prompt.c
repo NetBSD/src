@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.6 1999/11/12 01:05:07 lukem Exp $	*/
+/*	$NetBSD: prompt.c,v 1.5 1999/07/02 15:21:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.6 1999/11/12 01:05:07 lukem Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.5 1999/07/02 15:21:26 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: prompt.c,v 1.6 1999/11/12 01:05:07 lukem Exp $");
 #include "el.h"
 
 private char *prompt_default	__P((EditLine *));
-private char *prompt_default_r	__P((EditLine *));
 
 /* prompt_default():
  *	Just a default prompt, in case the user did not provide one
@@ -67,18 +66,6 @@ prompt_default(el)
     return a;
 }
 
-/* prompt_default_r():
- *	Just a default rprompt, in case the user did not provide one
- */
-private char *
-/*ARGSUSED*/
-prompt_default_r(el)
-    EditLine *el;
-{
-    static char a[1] = { '\0' };
-    return a;
-}
-
 
 /* prompt_print():
  *	Print the prompt and update the prompt position.
@@ -87,23 +74,16 @@ prompt_default_r(el)
  *	bit to flag them
  */
 protected void
-prompt_print(el, op)
+prompt_print(el)
     EditLine *el;
-    int op;
 {
-    el_prompt_t	*elp;
-    char	*p;
-
-    if (op == EL_PROMPT)
-	elp = &el->el_prompt;
-    else
-	elp = &el->el_rprompt;
-    p = (elp->p_func)(el);
+    char *p = (*el->el_prompt.p_func)(el);
     while (*p)
 	re_putc(el, *p++);
 
-    elp->p_pos.v = el->el_refresh.r_cursor.v;
-    elp->p_pos.h = el->el_refresh.r_cursor.h;
+    el->el_prompt.p_pos.v = el->el_refresh.r_cursor.v;
+    el->el_prompt.p_pos.h = el->el_refresh.r_cursor.h;
+
 } /* end prompt_print */
 
 
@@ -117,9 +97,6 @@ prompt_init(el)
     el->el_prompt.p_func = prompt_default;
     el->el_prompt.p_pos.v = 0;
     el->el_prompt.p_pos.h = 0;
-    el->el_rprompt.p_func = prompt_default_r;
-    el->el_rprompt.p_pos.v = 0;
-    el->el_rprompt.p_pos.h = 0;
     return 0;
 } /* end prompt_init */
 
@@ -139,26 +116,16 @@ prompt_end(el)
  *	Install a prompt printing function
  */
 protected int
-prompt_set(el, prf, op)
+prompt_set(el, prf)
     EditLine *el;
     el_pfunc_t prf;
-    int op;
 {
-    el_prompt_t *p;
-
-    if (op == EL_PROMPT)
-	p = &el->el_prompt;
+    if (prf == NULL)
+	el->el_prompt.p_func = prompt_default;
     else
-	p = &el->el_rprompt;
-    if (prf == NULL) {
-	if (op == EL_PROMPT)
-	    p->p_func = prompt_default;
-	else
-	    p->p_func = prompt_default_r;
-    } else
-	p->p_func = prf;
-    p->p_pos.v = 0;
-    p->p_pos.h = 0;
+	el->el_prompt.p_func = prf;
+    el->el_prompt.p_pos.v = 0;
+    el->el_prompt.p_pos.h = 0;
     return 0;
 } /* end prompt_set */
 
@@ -167,16 +134,12 @@ prompt_set(el, prf, op)
  *	Retrieve the prompt printing function
  */
 protected int
-prompt_get(el, prf, op)
+prompt_get(el, prf)
     EditLine *el;
     el_pfunc_t *prf;
-    int op;
 {
     if (prf == NULL)
 	return -1;
-    if (op == EL_PROMPT)
-    	*prf = el->el_prompt.p_func;
-    else
-    	*prf = el->el_rprompt.p_func;
+    *prf = el->el_prompt.p_func;
     return 0;
 } /* end prompt_get */

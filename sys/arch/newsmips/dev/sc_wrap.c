@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.14 1999/12/18 05:00:56 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.11 1999/09/30 23:01:12 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -41,7 +41,7 @@ static int sc_scsi_cmd __P((struct scsipi_xfer *));
 static int sc_poll __P((struct sc_softc *, int, int));
 static void sc_sched __P((struct sc_softc *));
 void sc_done __P((struct sc_scb *));
-int sc_intr __P((void *));
+int sc_intr __P((struct sc_softc *));
 static void cxd1185_timeout __P((void *));
 
 extern void sc_send __P((struct sc_scb *, int, int));
@@ -80,19 +80,7 @@ cxd1185_attach(parent, self, aux)
 {
 	struct sc_softc *sc = (void *)self;
 	struct sc_scb *scb;
-	int i, intlevel;
-
-	intlevel = sc->sc_dev.dv_cfdata->cf_level;
-	if (intlevel == -1) {
-#if 0
-		printf(": interrupt level not configured\n");
-		return;
-#else
-		printf(": interrupt level not configured; using");
-		intlevel = 0;
-#endif
-	}
-	printf(" level %d\n", intlevel);
+	int i;
 
 	if (sc_idenr & 0x08)
 		sc->scsi_1185AQ = 1;
@@ -124,8 +112,7 @@ cxd1185_attach(parent, self, aux)
 	cxd1185_init(sc);
 	DELAY(100000);
 
-	hb_intr_establish(intlevel, IPL_BIO, sc_intr, sc);
-
+	printf("\n");
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
 
@@ -362,13 +349,10 @@ sc_done(scb)
 	xs->status = 0;
 
 	if (scb->istatus != INST_EP) {
-		if (scb->istatus == INST_EP|INST_TO)
-			xs->error = XS_SELTIMEOUT;
-		else {
+		if (! cold)
 			printf("SC(i): [istatus=0x%x, tstatus=0x%x]\n",
 				scb->istatus, scb->tstatus);
-			xs->error = XS_DRIVER_STUFFUP;
-		}
+		xs->error = XS_DRIVER_STUFFUP;
 	}
 
 	switch (scb->tstatus) {
@@ -401,34 +385,10 @@ sc_done(scb)
 }
 
 int
-sc_intr(v)
-	void *v;
+sc_intr(sc)
+	struct sc_softc *sc;
 {
-	/* struct sc_softc *sc = v; */
-	volatile u_char *gsp = (u_char *)DMAC_GSTAT;
-	u_int gstat = *gsp;
-	int mrqb, i;
-
-	if ((gstat & CH_INT(CH_SCSI)) == 0)
-		return 0;
-
-	/*
-	 * when DMA interrupt occurs there remain some untransferred data.
-	 * wait data transfer completion.
-	 */
-	mrqb = (gstat & CH_INT(CH_SCSI)) << 1;
-	if (gstat & mrqb) {
-		/*
-		 * XXX SHOULD USE DELAY()
-		 */
-		for (i = 0; i < 50; i++)
-			;
-		if (*gsp & mrqb)
-			printf("sc_intr: MRQ\n");
-	}
-	scintr();
-
-	return 1;
+	return scintr();
 }
 
 

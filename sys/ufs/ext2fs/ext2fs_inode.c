@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.13 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.13.14.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -290,7 +290,7 @@ ext2fs_truncate(v)
 	lastiblock[SINGLE] = lastblock - NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
-	nblocks = btodb(fs->e2fs_bsize);
+	nblocks = btodb(fs->e2fs_bsize, UFS_BSHIFT);
 	/*
 	 * Update file and block pointers on disk before we start freeing
 	 * blocks.  If we crash before free'ing blocks below, the blocks
@@ -353,7 +353,7 @@ ext2fs_truncate(v)
 			continue;
 		oip->i_e2fs_blocks[i] = 0;
 		ext2fs_blkfree(oip, bn);
-		blocksreleased += btodb(fs->e2fs_bsize);
+		blocksreleased += btodb(fs->e2fs_bsize, UFS_BSHIFT);
 	}
 	if (lastblock < 0)
 		goto done;
@@ -420,7 +420,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	last = lastbn;
 	if (lastbn > 0)
 		last /= factor;
-	nblocks = btodb(fs->e2fs_bsize);
+	nblocks = btodb(fs->e2fs_bsize, UFS_BSHIFT);
 	/*
 	 * Get buffer of block pointers, zero those entries corresponding
 	 * to blocks to be free'd, and update on disk copy first.  Since

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.6 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.6.14.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -113,7 +113,7 @@ ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 	bno = (ufs_daddr_t)ext2fs_hashalloc(ip, cg, bpref, fs->e2fs_bsize,
 						 ext2fs_alloccg);
 	if (bno > 0) {
-		ip->i_e2fs_nblock += btodb(fs->e2fs_bsize);
+		ip->i_e2fs_nblock += btodb(fs->e2fs_bsize, UFS_BSHIFT);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
 		return (0);

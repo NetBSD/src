@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.4 1999/11/26 18:34:58 msaitoh Exp $ */
+/* 	$NetBSD: cdplay.c,v 1.3 1999/09/18 21:15:23 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -56,13 +56,12 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.4 1999/11/26 18:34:58 msaitoh Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.3 1999/09/18 21:15:23 ad Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <histedit.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,12 +130,6 @@ const char *cdname;
 int     fd = -1;
 int     msf = 1;
 
-/* for histedit */
-extern char *__progname;	/* from crt0.o */
-History *hist;
-HistEvent he;
-EditLine *elptr;
-
 int	setvol __P((int, int));
 int	read_toc_entrys __P((int));
 int	play_msf __P((int, int, int, int, int, int));
@@ -147,7 +140,7 @@ int	opencd __P((void));
 int	play __P((char *));
 int	info __P((char *));
 int	pstatus __P((char *));
-char	*prompt __P((void));
+char  	*input __P((int *));
 void	prtrack __P((struct cd_toc_entry *, int));
 void	lba2msf __P((u_long, u_char *, u_char *, u_char *));
 u_int	msf2lba __P((u_char, u_char, u_char));
@@ -200,9 +193,6 @@ main(argc, argv)
 {
 	char *arg, *p, buf[80];
 	int cmd, len;
-	char *line;
-	const char *elline;
-	int scratch;
 
 	cdname = getenv("MUSIC_CD");
 	if (!cdname)
@@ -260,30 +250,8 @@ main(argc, argv)
 	
 	printf("Type `?' for command list\n\n");
 
-	hist = history_init();
-	history(hist, &he, H_SETSIZE, 100);	/* 100 elt history buffer */
-	elptr = el_init(__progname, stdin, stdout, stderr);
-	el_set(elptr, EL_EDITOR, "emacs");
-	el_set(elptr, EL_PROMPT, prompt);
-	el_set(elptr, EL_HIST, history, hist);
-	el_source(elptr, NULL);
-
 	for (;;) {
-		line = NULL;
-		do {
-			if (((elline = el_gets(elptr, &scratch)) != NULL)
-			    && (scratch != 0)){
-				history(hist, &he, H_ENTER, elline);
-				line = strdup(elline);
-				arg = parse(line, &cmd);
-			} else {
-				cmd = CMD_QUIT;
-				fprintf(stderr, "\r\n");
-				arg = 0;
-				break;
-			}
-		} while (!arg);
-
+		arg = input(&cmd);
 		if (run(cmd, arg) < 0) {
 			/* XXX damned -Wall */
 			char   *null = NULL;
@@ -292,11 +260,7 @@ main(argc, argv)
 			fd = -1;
 		}
 		fflush(stdout);
-		if (line != NULL)
-			free(line);
 	}
-	el_end(elptr);
-	history_end(hist);
 }
 
 int 
@@ -984,9 +948,23 @@ status(trk, min, sec, frame)
 }
 
 char *
-prompt()
+input(cmd)
+	int *cmd;
 {
-	return ("cdplay> ");
+	static char buf[80];
+	char *p;
+
+	do {
+		fprintf(stderr, "cdplay> ");
+		
+		if (!fgets(buf, sizeof(buf), stdin)) {
+			*cmd = CMD_QUIT;
+			fprintf(stderr, "\r\n");
+			return (0);
+		}
+		p = parse(buf, cmd);
+	} while (!p);
+	return (p);
 }
 
 char *

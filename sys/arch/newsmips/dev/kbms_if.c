@@ -1,5 +1,4 @@
-/*	$NetBSD: kbms_if.c,v 1.4 1999/12/18 06:54:05 tsubai Exp $	*/
-
+/*	$NetBSD: kbms_if.c,v 1.3 1999/02/15 04:36:34 hubertf Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

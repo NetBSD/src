@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.13 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: intro.4,v 1.10 1999/04/06 20:24:41 pk Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -126,27 +126,10 @@ isa I/O bus.
 .It speaker
 console speaker device interface
 .El
-.\"
-.\"
-.\"
-.Pp
-PCMCIA devices are supported through the
-.Xr pcmcia 4
-bus and associated device drivers.
-.\"
-.\"
-.\"
-.Pp
-Cardbus devices are supported through the
-.Xr cardbus 4
-bus and associated device drivers.
-.\"
-.\"
-.\"
-.Pp
-USB devices are supported through the
-.Xr usb 4
-bus and associated device drivers.
+
+There is no  explicit support for PCMCIA. Many PCMCIA devices can
+be preconfigured as ISA equivalents and used with the corresponding
+ISA driver.
 .\"
 .\"
 .\"
@@ -221,7 +204,7 @@ Ethernet driver for the ISA Intel EtherExpress PR0/10  adaptor.
 Ethernet driver for BICC Isolan, Novell NE2100,  Digital DEPCA cards,
 and PCnet-PCI cards.
 .It tl
-Ethernet driver for ThunderLAN-based Ethernet adaptor.
+Ethernet driver for ThunderLAN-based ethernet adaptor.
 .El
 .\"
 .\"

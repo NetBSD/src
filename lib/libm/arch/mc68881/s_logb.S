@@ -1,5 +1,3 @@
-/*	$NetBSD: s_logb.S,v 1.6 1999/11/10 16:45:40 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,32 +40,32 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_logb.S,v 1.6 1999/11/10 16:45:40 thorpej Exp $")
+RCSID("$NetBSD: s_logb.S,v 1.5 1999/08/15 18:45:18 kleink Exp $")
 
 | logb(x)
 | returns the unbiased exponent of x, a signed integer in double precision,
 | except that logb(0) is -INF, logb(INF) is +INF, and logb(NAN) is that NAN.
 ENTRY(logb)
-	movw	%sp@(4),%d0
-	movw	#0x7FF0,%d1	| exponent bits
-	andw	%d1,%d0		| mask off all else
-	cmpw	%d1,%d0		| max exponent?
+	movw	sp@(4),d0
+	movw	#0x7FF0,d1	| exponent bits
+	andw	d1,d0		| mask off all else
+	cmpw	d1,d0		| max exponent?
 	bne	Lfinite		| no, is finite
-	fmoved	%sp@(4),%fp0	| yes, infinite or NaN
+	fmoved	sp@(4),fp0	| yes, infinite or NaN
 	fbun	Ldone		| NaN returns NaN
-	fabsx	%fp0		| +-inf returns inf
+	fabsx	fp0		| +-inf returns inf
 	jra	Ldone
 Lfinite:
-	fmoved	%sp@(4),%fp0	| get entire number
+	fmoved	sp@(4),fp0	| get entire number
 	fbne	Lnonz		| zero?
-	flog2x	%fp0		| yes, log(0) a convenient source of -inf
+	flog2x	fp0		| yes, log(0) a convenient source of -inf
 	jra	Ldone
 Lnonz:
-	fgetexpx %fp0		| get exponent
+	fgetexpx	fp0	| get exponent
 Ldone:
 #ifndef __SVR4_ABI__
-	fmoved	%fp0,%sp@-
-	movel	%sp@+,%d0
-	movel	%sp@+,%d1
+	fmoved	fp0,sp@-
+	movel	sp@+,d0
+	movel	sp@+,d1
 #endif
 	rts

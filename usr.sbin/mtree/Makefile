@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/12/07 18:42:06 wennmach Exp $
+#	$NetBSD: Makefile,v 1.13 1998/10/10 07:50:27 mrg Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	mtree

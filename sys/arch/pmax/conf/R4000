@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.17 1999/11/15 09:50:49 nisimura Exp $
+# 	$NetBSD: R4000,v 1.16 1999/07/29 10:37:22 augustss Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -88,35 +88,19 @@ config		netbsd		root on ? type ?
 mainbus0	at root
 cpu*		at mainbus0
 
-## Peripheral Bus Support (for devices to attach to)
-## ----------------------------------------------------------------------------
 
-# TURBOchannel bus support
-tc*	at	mainbus0
+#########################################################################
+# I/O bus and device options						#
+#########################################################################
 
-# 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
-ioasic0	at	tc?
-mcclock0 at	ioasic? offset ?	# DS1287 RTC
-asc0	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
-le0	at	ioasic? offset ?	# LANCE
-scc0	at	ioasic? offset ?	# Z85C30
-scc1	at	ioasic? offset ?	# Z85C30
-dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
-#isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
-#fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
+# TC bus and supported options. (All but PMAXes have a turbochannel.)
+include 	"arch/pmax/conf/tc.std"
 
-# TURBOchannel devices
-mfb*	at	tc?			# PMAG-A MX Monochrome Framebuffer
-cfb*	at	tc?			# PMAG-B CX Color Framebuffer
-#tfb*	at	tc?			# PMAG-RO TX True Color Framebuffer
-sfb*	at	tc?			# PMAGB-B HX Smart Framebuffer
-#sfbp*	at	tc?			# PMAGD HX+ Smart Framebuffer
-xcfb0	at	tc?			# PMAG-DV Color Framebuffer at MAXINE
-asc*	at	tc?			# PMAZ-A single channel SCSI
-le*	at	tc?			# PMAD-A LANCE
-fta*	at	tc?			# PMAF-F FDDI
-#tcds*	at	tc?			# PMAZB/PMAZC dual channel SCSI
-#asc*	at	tcds? chip ?
+# ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
+include 	"arch/pmax/conf/builtin.ioasic"
+
+# MAXINE-only ioasic baseboard devices and on-baseboard "options"
+include 	"arch/pmax/conf/builtin.maxine"
 
 #########################################################################
 # SCSI configuration							#

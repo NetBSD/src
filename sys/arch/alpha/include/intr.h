@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.23 1999/12/02 01:09:13 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.21 1999/08/10 18:53:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,6 @@
 #define _ALPHA_INTR_H_
 
 #include <sys/queue.h>
-#include <machine/atomic.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_BIO		1	/* disable block I/O interrupts */
@@ -97,14 +96,13 @@ extern u_int64_t ssir;
 /*
  * Interprocessor interrupts.  In order how we want them processed.
  */
-#define	ALPHA_IPI_HALT		0x0000000000000001UL
-#define	ALPHA_IPI_TBIA		0x0000000000000002UL
-#define	ALPHA_IPI_TBIAP		0x0000000000000004UL
-#define	ALPHA_IPI_SHOOTDOWN	0x0000000000000008UL
-#define	ALPHA_IPI_IMB		0x0000000000000010UL
-#define	ALPHA_IPI_AST		0x0000000000000020UL
+#define	ALPHA_IPI_HALT		0x0000000000000000UL
+#define	ALPHA_IPI_TBIA		0x0000000000000001UL
+#define	ALPHA_IPI_TBIAP		0x0000000000000002UL
+#define	ALPHA_IPI_SHOOTDOWN	0x0000000000000004UL
+#define	ALPHA_IPI_IMB		0x0000000000000008UL
 
-#define	ALPHA_NIPIS		6	/* must not exceed 64 */
+#define	ALPHA_NIPIS		5	/* must not exceed 64 */
 
 typedef void (*ipifunc_t) __P((void));
 extern	ipifunc_t ipifuncs[ALPHA_NIPIS];
@@ -128,7 +126,6 @@ struct alpha_shared_intrhand {
 struct alpha_shared_intr {
 	TAILQ_HEAD(,alpha_shared_intrhand)
 		intr_q;
-	void	*intr_private;
 	int	intr_sharetype;
 	int	intr_dfltsharetype;
 	int	intr_nstrays;
@@ -156,10 +153,6 @@ void	alpha_shared_intr_set_maxstrays __P((struct alpha_shared_intr *,
 	    unsigned int, int));
 void	alpha_shared_intr_stray __P((struct alpha_shared_intr *, unsigned int,
 	    const char *));
-void	alpha_shared_intr_set_private __P((struct alpha_shared_intr *,
-	    unsigned int, void *));
-void	*alpha_shared_intr_get_private __P((struct alpha_shared_intr *,
-	    unsigned int));
 
 #endif /* _KERNEL */
 #endif /* ! _ALPHA_INTR_H_ */

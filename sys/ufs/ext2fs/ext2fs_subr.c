@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.3 1998/03/04 06:50:25 cgd Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.3.20.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -94,7 +94,7 @@ ext2fs_checkoverlap(bp, ip)
 
 	ebp = &buf[nbuf];
 	start = bp->b_blkno;
-	last = start + btodb(bp->b_bcount) - 1;
+	last = start + btodb(bp->b_bcount, bp->b_bshift) - 1;
 	for (ep = buf; ep < ebp; ep++) {
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 			ep->b_vp == NULLVP)
@@ -105,12 +105,14 @@ ext2fs_checkoverlap(bp, ip)
 			continue;
 		/* look for overlap */
 		if (ep->b_bcount == 0 || ep->b_blkno > last ||
-			ep->b_blkno + btodb(ep->b_bcount) <= start)
+			start >= ep->b_blkno +
+				btodb(ep->b_bcount, bp->b_bshift))
 			continue;
 		vprint("Disk overlap", vp);
 		printf("\tstart %d, end %d overlap start %d, end %ld\n",
 			start, last, ep->b_blkno,
-			ep->b_blkno + btodb(ep->b_bcount) - 1);
+			ep->b_blkno +
+			btodb(ep->b_bcount, bp->b_bshift) - 1);
 		panic("Disk buffer overlap");
 	}
 }

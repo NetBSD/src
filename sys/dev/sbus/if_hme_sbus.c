@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.3 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.1 1999/06/27 12:47:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,8 +81,7 @@ hmematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
-	    strcmp("SUNW,hme", sa->sa_name) == 0);
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
 }
 
 void
@@ -189,8 +188,6 @@ hmeattach_sbus(parent, self, aux)
 
 	hme_config(sc);
 
-	/* Establish interrupt handler */
-	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
-					 hme_intr, sc);
+	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
+				 hme_intr, sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.19 1999/12/08 19:16:52 sommerfeld Exp $	*/
+/*	$NetBSD: specdev.h,v 1.17.20.1 1999/12/21 23:20:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,9 +43,11 @@
 struct specinfo {
 	struct	vnode **si_hashchain;
 	struct	vnode *si_specnext;
-	struct	mount *si_mountpoint;
+	long	si_flags;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
+	int	si_bshift;	/* for disk devices, block shift value */
+				/* valid after device opened */
 };
 /*
  * Exported shorthand
@@ -53,8 +55,14 @@ struct specinfo {
 #define v_rdev		v_specinfo->si_rdev
 #define v_hashchain	v_specinfo->si_hashchain
 #define v_specnext	v_specinfo->si_specnext
+#define v_specflags	v_specinfo->si_flags
 #define v_speclockf	v_specinfo->si_lockf
-#define v_specmountpoint v_specinfo->si_mountpoint
+#define v_specbshift	v_specinfo->si_bshift
+
+/*
+ * Flags for specinfo
+ */
+#define	SI_MOUNTEDON	0x0001	/* block special device is mounted on */
 
 /*
  * Special device management
@@ -90,7 +98,6 @@ int	spec_close	__P((void *));
 int	spec_read	__P((void *));
 int	spec_write	__P((void *));
 #define	spec_lease_check genfs_nullop
-#define spec_fcntl	genfs_fcntl
 int	spec_ioctl	__P((void *));
 int	spec_poll	__P((void *));
 #define spec_revoke	genfs_revoke

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.126 1999/11/13 00:32:13 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125 1999/10/04 19:27:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -321,8 +321,8 @@ bootstrap()
 		/* Map Interrupt Enable Register */
 		pmap_enter(pmap_kernel(), INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE, 1,
+		    VM_PROT_READ | VM_PROT_WRITE);
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.4 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: history.c,v 1.3 1997/07/20 17:42:05 christos Exp $	*/
 
 /*
  * command history
@@ -27,7 +27,7 @@
 #   ifdef OS2
 #    define HISTFILE "history.ksh"
 #   else /* OS2 */
-#    define HISTFILE ".pdksh_history"
+#    define HISTFILE ".pdksh_hist"
 #   endif /* OS2 */
 #  endif
 
@@ -225,7 +225,8 @@ c_fc(wp)
 
 	/* Run editor on selected lines, then run resulting commands */
 
-	tf = maketemp(ATEMP, TT_HIST_EDIT, &e->temps);
+	tf = maketemp(ATEMP);
+	tf->next = e->temps; e->temps = tf;
 	if (!(shf = tf->shf)) {
 		bi_errorf("cannot create temp file %s - %s",
 			tf->name, strerror(errno));
@@ -239,8 +240,7 @@ c_fc(wp)
 		return 1;
 	}
 
-	/* Ignore setstr errors here (arbitrary) */
-	setstr(local("_", FALSE), tf->name, KSH_RETURN_ERROR);
+	setstr(local("_", FALSE), tf->name);
 
 	/* XXX: source should not get trashed by this.. */
 	{
@@ -485,7 +485,7 @@ histnum(n)
 		current = histptr;
 		curpos = last;
 		return last;
-	} else {
+	}  else {
 		current = &history[n];
 		curpos = n;
 		return n;
@@ -632,9 +632,9 @@ histsave(lno, cmd, dowrite)
  * commands
  */
 void
-histappend(cmd, nl_separate)
+histappend(cmd, nl_seperate)
 	const char *cmd;
-	int	nl_separate;
+	int	nl_seperate;
 {
 	int	hlen, clen;
 	char	*p;
@@ -645,7 +645,7 @@ histappend(cmd, nl_separate)
 		clen--;
 	p = *histptr = (char *) aresize(*histptr, hlen + clen + 2, APERM);
 	p += hlen;
-	if (nl_separate)
+	if (nl_seperate)
 		*p++ = '\n';
 	memcpy(p, cmd, clen);
 	p[clen] = '\0';

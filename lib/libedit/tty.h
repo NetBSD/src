@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.7 1999/09/26 14:37:47 lukem Exp $	*/
+/*	$NetBSD: tty.h,v 1.6 1999/07/02 15:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,6 @@
 
 #include "histedit.h"
 #include <termios.h>
-#include <unistd.h>
 
 /* Define our own since everyone gets it wrong! */
 #define CONTROL(A)	((A) & 037)

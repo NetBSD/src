@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.7 1999/12/09 00:16:14 simonb Exp $ */
+/*	$NetBSD: fbvar.h,v 1.5 1999/07/25 22:50:50 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -54,7 +54,7 @@ struct hw_cursor {
 	int	x, y;			/* Position of cursor... */
 	int	depth;			/* Depth in bits of cursor... */
 	caddr_t	bitmap;			/* Cursor bitmap... */
-	u_char *cmap;			/* Cursor colormap... */
+	caddr_t cmap;			/* Cursor colormap... */
 	int	cmap_size;		/* Size of cursor colormap... */
 };
 
@@ -95,8 +95,8 @@ struct fbdriver {
 	int	(*fbd_unblank) __P((struct fbinfo *));
 	int	(*fbd_blank) __P((struct fbinfo *));
 	void	(*fbd_initcmap) __P ((struct fbinfo *));
-	int	(*fbd_getcmap) __P ((struct fbinfo *, u_char *, int, int));
-	int	(*fbd_putcmap) __P ((struct fbinfo *, const u_char *, int, int));
+	int	(*fbd_getcmap) __P ((struct fbinfo *, caddr_t, int, int));
+	int	(*fbd_putcmap) __P ((struct fbinfo *, caddr_t, int, int));
 	void	(*fbd_poscursor) __P ((struct fbinfo *fi, int x, int y));
 	void	(*fbd_loadcursor) __P ((struct fbinfo *fi, u_short *cursor));
 	void	(*fbd_cursorcolor) __P ((struct fbinfo *fi, u_int *color));

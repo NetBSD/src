@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex.4,v 1.7 1999/12/15 23:44:55 abs Exp $
+.\"	$NetBSD: ex.4,v 1.5 1999/03/16 01:19:23 garbled Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm ex
 .Nd Excelan 10 Mb/s Ethernet interface
 .Sh SYNOPSIS
-.Cd "ex0 at uba0 csr 164000 vector excdint"
+.Cd "device ex0 at uba0 csr 164000 vector excdint"
 .Sh DESCRIPTION
 The
 .Nm ex
@@ -80,7 +80,7 @@ autoconfiguration.
 There was a failure in allocating unibus resources for the device.
 .Pp
 .It "ex%d: configuration failed; cc = %x."
-The hardware indicated an error when trying to initialize itself.
+The hardware indicated an error when trying to initalize itself.
 The error code returned is described at length in the device
 Reference Manual.
 .Pp

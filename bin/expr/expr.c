@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.11 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: expr.c,v 1.10 1998/11/04 14:11:12 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -62,7 +62,7 @@ make_int(i)
 
 	vp = (struct val *) malloc(sizeof(*vp));
 	if (vp == NULL) {
-		err(2, NULL);
+		err(2, "%s", "");
 	}
 	vp->type = integer;
 	vp->u.i = i;
@@ -78,7 +78,7 @@ make_str(s)
 
 	vp = (struct val *) malloc(sizeof(*vp));
 	if (vp == NULL || ((vp->u.s = strdup(s)) == NULL)) {
-		err(2, NULL);
+		err(2, "%s", "");
 	}
 	vp->type = string;
 	return vp;
@@ -172,7 +172,7 @@ to_string(vp)
 
 	tmp = malloc(25);
 	if (tmp == NULL) {
-		err(2, NULL);
+		err(2, "%s", "");
 	}
 	(void)snprintf(tmp, 25, "%d", vp->u.i);
 	vp->type = string;

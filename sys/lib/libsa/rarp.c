@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.19 1999/11/13 21:17:57 thorpej Exp $	*/
+/*	$NetBSD: rarp.c,v 1.16 1997/07/07 15:52:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -114,7 +114,7 @@ rarp_getipaddress(sock)
 	}
 #ifdef RARP_DEBUG
  	if (debug)
-		printf("rarp: d=%lx\n", (u_long)d);
+		printf("rarp: d=%x\n", (u_int)d);
 #endif
 
 	bzero((char*)&wbuf.data, sizeof(wbuf.data));

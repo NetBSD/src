@@ -1,4 +1,4 @@
-$NetBSD: POSIX,v 1.10 1999/11/18 19:16:34 kristerw Exp $
+$NetBSD: POSIX,v 1.9 1995/03/21 09:04:32 cgd Exp $
 
 This version of ed(1) is not strictly POSIX compliant, as described in
 the POSIX 1003.2 document.  The following is a summary of the omissions,
@@ -85,7 +85,7 @@ DEVIATIONS
 
    The global/undo combination is useful for masking errors that
    would otherwise cause a script to fail.  For instance, an ed script
-   to remove any occurrences of either `censor1' or `censor2' might be
+   to remove any occurences of either `censor1' or `censor2' might be
    written as:
    	ed - file <<EOF
 	1g/.*/u\

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.6 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,6 +68,9 @@
 #define _NETINET6_IN6_PCB_H_
 
 #include <sys/queue.h>
+#if 1 /*IPSEC*/
+#include <netinet6/ipsec.h>
+#endif
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -155,16 +158,12 @@ struct	in6pcb *
 int	in6_pcbnotify __P((struct in6pcb *, struct sockaddr *,
 			   u_int, struct in6_addr *, u_int, int,
 			   void (*)(struct in6pcb *, int)));
-int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
 void	in6_rtchange __P((struct in6pcb *, int));
 void	in6_setpeeraddr __P((struct in6pcb *, struct mbuf *));
 void	in6_setsockaddr __P((struct in6pcb *, struct mbuf *));
 struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
-				     struct ip6_pktopts *,
-				     struct ip6_moptions *,
-				     struct route_in6 *,
-				     struct in6_addr *, int *));
-int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
+			struct ip6_pktopts *, struct ip6_moptions *,
+			struct route_in6 *, int *));
 
 #ifndef TCP6
 extern struct rtentry *

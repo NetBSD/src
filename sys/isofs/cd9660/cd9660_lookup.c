@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.25 1999/09/06 10:10:05 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.25.8.1 1999/12/21 23:19:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -271,7 +271,11 @@ searchloop:
 					if (isonum_711(ep->flags)&2)
 						ino = isodirino(ep, imp);
 					else
+#if 1
+					    ino = (bp->b_blkno<<imp->im_bshift)
+#else
 						ino = dbtob(bp->b_blkno)
+#endif
 							+ entryoffsetinblock;
 					saveoffset = dp->i_offset;
 				} else if (ino)
@@ -288,7 +292,12 @@ searchloop:
 			if (isonum_711(ep->flags)&2)
 				ino = isodirino(ep, imp);
 			else
+#if 1
+				ino = (bp->b_blkno << imp->im_bshift)
+						+ entryoffsetinblock;
+#else
 				ino = dbtob(bp->b_blkno) + entryoffsetinblock;
+#endif
 			dp->i_ino = ino;
 			cd9660_rrip_getname(ep,altname,&namelen,&dp->i_ino,imp);
 			if (namelen == cnp->cn_namelen

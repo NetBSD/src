@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.52 1999/06/26 08:25:25 augustss Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.52.8.1 1999/12/21 23:19:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1059,4 +1059,76 @@ format_bytes(buf, len, bytes)
 			buf[nlen] = '\0';
 	}
 	return (rv);
+}
+
+/*
+ * Routine to determine the most significant bit set in the passed number.
+ * calculates int(log2(i)). -1 is returned when 0 is the passed in value.
+ */
+int
+intlog2(i)
+	u_int32_t i;
+{
+	if (i & 0xffff0000) {
+		if (i & 0xff000000) {
+			if (i & 0xf0000000) {
+				if (i & 0xc0000000) {
+					return (i & 0x80000000) ? 31 : 30;
+				} else {
+					return (i & 0x20000000) ? 29 : 28;
+				}
+			} else {
+				if (i & 0x0c000000) {
+					return (i & 0x08000000) ? 27 : 26;
+				} else {
+					return (i & 0x02000000) ? 25 : 24;
+				}
+			}
+		} else {	/* 0x00ff0000 */
+			if (i & 0x00f00000) {
+				if (i & 0x00c00000) {
+					return (i & 0x00800000) ? 23 : 22;
+				} else {
+					return (i & 0x00200000) ? 21 : 20;
+				}
+			} else {
+				if (i & 0x000c0000) {
+					return (i & 0x00080000) ? 19 : 18;
+				} else {
+					return (i & 0x00020000) ? 17 : 16;
+				}
+			}
+		}
+	} else {	/* 0x0000ffff */
+		if (i & 0x0000ff00) {
+			if (i & 0x0000f000) {
+				if (i & 0x0000c000) {
+					return (i & 0x00008000) ? 15 : 14;
+				} else {
+					return (i & 0x00002000) ? 13 : 12;
+				}
+			} else {
+				if (i & 0x00000c00) {
+					return (i & 0x00000800) ? 11 : 10;
+				} else {
+					return (i & 0x00000200) ? 9 : 8;
+				}
+			}
+		} else {	/* 0x000000ff */
+			if (i & 0x000000f0) {
+				if (i & 0x000000c0) {
+					return (i & 0x00000080) ? 7 : 6;
+				} else {
+					return (i & 0x00000020) ? 5 : 4;
+				}
+			} else {
+				if (i & 0x0000000c) {
+					return (i & 0x00000008) ? 3 : 2;
+				} else {
+					return (i & 0x00000002) ? 1 : \
+						( i ? 0 : -1);
+				}
+			}
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.53 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.53.8.1 1999/12/21 23:19:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -558,13 +558,13 @@ fdesc_getattr(v)
 			vap->va_type = VDIR;
 			vap->va_rdev = 0;
 			vap->va_nlink = 2;
-			vap->va_size = DEV_BSIZE;
+			vap->va_size = vp->v_mount->mnt_bshift;
 			break;
 		}
 		vap->va_uid = 0;
 		vap->va_gid = 0;
 		vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
-		vap->va_blocksize = DEV_BSIZE;
+		vap->va_blocksize = vp->v_mount->mnt_bshift;
 		vap->va_atime.tv_sec = boottime.tv_sec;
 		vap->va_atime.tv_nsec = 0;
 		vap->va_mtime = vap->va_atime;

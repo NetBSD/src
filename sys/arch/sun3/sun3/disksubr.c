@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 1998/06/20 03:45:55 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19.20.1 1999/12/21 23:16:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -78,11 +78,12 @@ static int disklabel_bsd_to_sun(struct disklabel *, char *);
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -102,6 +103,8 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* next, dig out disk label */
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
@@ -114,6 +117,8 @@ readdisklabel(dev, strat, lp, clp)
 		/* Save the whole block in case it has info we need. */
 		bcopy(bp->b_un.b_addr, clp->cd_block, sizeof(clp->cd_block));
 	}
+
+out:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	if (error)
@@ -190,11 +195,12 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
+writedisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp;
 	int error;
@@ -217,12 +223,16 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* Write out the updated label. */
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
+
+out:
 	brelse(bp);
 
 	return (error);

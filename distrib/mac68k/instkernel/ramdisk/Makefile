@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/12/17 20:48:08 fredb Exp $
+#	$NetBSD: Makefile,v 1.2 1999/05/11 20:46:59 veego Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,7 +20,7 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-all: notes ${CBIN} 
+all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=5120
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 #	disklabel -rw ${VND_CDEV} ${DISKTYPE}
@@ -40,11 +40,6 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-notes:
-	cd ${.CURDIR}/../../../notes/mac68k && ${MAKE} && \
-	    cp ${.OBJDIR}/../../../notes/mac68k${__usrobjdirpf}/INSTALL.more \
-	    ${.OBJDIR}/
-
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
@@ -52,10 +47,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    *.o *.cro *.c INSTALL.more
-
-.INTERRUPT: unconfig
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

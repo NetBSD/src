@@ -1,29 +1,19 @@
-#	$NetBSD: Makefile,v 1.2 1999/12/17 20:48:08 fredb Exp $
+#	$NetBSD: Makefile,v 1.1 1999/03/26 08:34:37 ender Exp $
 
 RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 	${MAKE} -s -f-
 
-INSTALL_KERNEL?=INSTALL
-KERNEL=${BSDSRCDIR}/sys/arch/mac68k/compile/${INSTALL_KERNEL}/netbsd
+KERNEL=${BSDSRCDIR}/sys/arch/mac68k/compile/INSTALL/netbsd
 
 all:
-	cp ${KERNEL} netbsd-${INSTALL_KERNEL}
-	mdsetimage -T 0x0 -v netbsd-${INSTALL_KERNEL} ${RAMDISK}
-# XXX Doesn't boot with this. Why?
-#	strip netbsd-${INSTALL_KERNEL}
-# XXX Reported not to boot on some machines.
-#	gzip -9 -f netbsd-${INSTALL_KERNEL}
-	gzip -f netbsd-${INSTALL_KERNEL}
+	cp ${KERNEL} netbsd
+	mdsetimage -T 0x0 -v netbsd ${RAMDISK}
+	strip netbsd
+	gzip -f netbsd
 
 clean cleandir distclean:
-	rm -f netbsd*
-
-release: all
-	${INSTALL} -d -o root -g wheel -m 755 \
-		${RELEASEDIR}/installation/instkernel/	
-	${INSTALL} -c -o root -g wheel -m 644 netbsd-${INSTALL_KERNEL}.gz \
-		${RELEASEDIR}/installation/instkernel/	
+	rm -f netbsd
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

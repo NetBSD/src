@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.28.1 1999/12/21 23:15:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -56,11 +56,12 @@
  * string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -75,6 +76,8 @@ readdisklabel(dev, strat, lp, osdep)
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -98,6 +101,7 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
+out:
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
@@ -148,11 +152,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -167,6 +172,8 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;

@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.88 1999/12/12 11:53:42 soren Exp $
+#	$NetBSD: TRINITY,v 1.87 1999/10/05 03:31:43 mycroft Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -261,7 +261,7 @@ sysbeep0	at pcppi?
 # Serial Devices
 
 # PCI serial interfaces
-#com*	at puc? port ?			# 16x50s on "universal" comm boards
+#com*	at puc? port ?			# 16x450s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces

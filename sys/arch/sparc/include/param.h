@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 1999/12/04 21:21:28 ragge Exp $ */
+/*	$NetBSD: param.h,v 1.39.8.1 1999/12/21 23:16:16 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,17 +92,21 @@ extern int nbpg, pgofset, pgshift;
 #define PROM_LOADADDR	0x00004000	/* where the prom loads us */
 #define	KERNTEXTOFF	(KERNBASE+PROM_LOADADDR)/* start of kernel text */
 
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEF_BSIZE	512
+#define	DEF_BSHIFT	9		/* log2(DEF_BSIZE) */
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)
 
+#define	CLSIZE		1
+#define	CLSIZELOG2	0
+
+/* NOTE: SSIZE must be multiple of CLSIZE */
 #define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * MCLBYTES must be no larger than CLBYTES (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -112,11 +116,13 @@ extern int nbpg, pgofset, pgshift;
 #define	MCLSHIFT	11		/* log2(MCLBYTES) */
 #define	MCLOFSET	(MCLBYTES - 1)
 
+#ifndef NMBCLUSTERS
+
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
+#include "opt_non_po2_blocks.h"
 #endif /* _KERNEL && ! _LKM */
 
-#ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
@@ -127,23 +133,30 @@ extern int nbpg, pgofset, pgshift;
 #define MSGBUFSIZE	4096
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages.
+ * Size of kernel malloc arena in CLBYTES-sized logical pages.
  */
 #ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
+#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x, sh)		((x) << (PGSHIFT - (sh)))
+#define	dtoc(x, sh)		((x) >> (PGSHIFT - (sh)))
 
 /* pages to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
 #define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
+#if defined(_LKM) || defined(NON_PO2_BLOCKS)
+#define	dbtob(x, sh)	(((sh) >= 0) ? ((x) << (sh)) : ((x) * (-sh)))
+#define	btodb(x, sh)	(((sh) >= 0) ? ((x) >> (sh)) : ((x) / (-sh)))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (-sh))
+#else
+#define	dbtob(x, sh)	((x) << (sh))
+#define	btodb(x, sh)	((x) >> (sh))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (0))
+#endif
 
 /*
  * Map a ``block device block'' to a file system block.

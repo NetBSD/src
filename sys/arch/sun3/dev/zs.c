@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.59 1999/11/22 18:34:01 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.57 1999/03/27 01:21:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@
 #undef  NZS
 #define NZS 2
 #endif
+
+extern void Debugger __P((void));
 
 /*
  * Some warts needed by z8530tty.c -

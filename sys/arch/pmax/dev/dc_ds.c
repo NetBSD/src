@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.12 1999/12/08 04:03:28 simonb Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.9 1999/04/24 08:01:03 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -26,12 +26,8 @@
 
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/dev/dcvar.h>
-#include <pmax/dev/dc_cons.h>
 #include <pmax/dev/dc_ds_cons.h>
 #include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn02.h>
-#include <pmax/pmax/kn230.h>
-#include <pmax/pmax/pmaxtype.h>
 
 /*
  * Autoconfig definition of driver front-end
@@ -51,26 +47,14 @@ int
 dc_ds_consinit(dev)
 	dev_t dev;
 {
-	u_int32_t dcaddr;
-
-	switch (systype) {
-	  case DS_PMAX:
-		dcaddr = KN01_SYS_DZ;
-		break;
-	  case DS_3MAX:
-		dcaddr = KN02_SYS_DZ;
-		break;
-	  case DS_MIPSMATE:
-		dcaddr = KN230_SYS_DZ0;
-		break;
-	  default:
-		/* XXX error?? */
-		break;
-	}
-
-	/* let any pending PROM output from boot drain */
+#if defined(DEBUG) && 1			/* XXX untested */
+	printf("dc_ds(%d,%d): serial console at 0x%x\n",
+	       minor(dev) >> 2, minor(dev) & 03,
+	       MIPS_PHYS_TO_KSEG1(KN01_SYS_DZ));
+#endif
+	/* let any  pending PROM output from boot drain */
 	DELAY(100000);
-	dc_consinit(dev, (void *)MIPS_PHYS_TO_KSEG1(dcaddr));
+	dc_consinit(dev, (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_DZ));
 	return (1);
 }
 
@@ -118,6 +102,6 @@ dc_ds_attach(parent, self, aux)
 			0x0,
 			0, DCCOMM_PORT);
 
-	ibus_intr_establish(parent, (void*)iba->ia_cookie, IPL_TTY, dcintr, sc);
+	ibus_intr_establish((void*)iba->ia_cookie, IPL_TTY, dcintr, sc);
 	printf("\n");
 }

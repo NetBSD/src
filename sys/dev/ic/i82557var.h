@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.9 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.6 1999/08/05 01:35:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -159,7 +159,6 @@ struct fxp_softc {
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */
 	struct ethercom sc_ethercom;	/* ethernet common part */
 	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power hook */
 	void *sc_ih;			/* interrupt handler cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
@@ -199,16 +198,9 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
-
-	int	sc_enabled;	/* boolean; power enabled on interface */
-	int	(*sc_enable) __P((struct fxp_softc *));
-	void	(*sc_disable) __P((struct fxp_softc *));
-
-	int sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
-	
 };
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
@@ -269,16 +261,13 @@ do {									\
 	    RFA_ALIGNMENT_FUDGE;					\
 									\
 	__rfa = FXP_MTORFA((m));					\
-	__rfa->size = htole16(FXP_RXBUFSIZE((m)));			\
-	/* BIG_ENDIAN: no need to swap to store 0 */			\
+	__rfa->size = FXP_RXBUFSIZE((m));				\
 	__rfa->rfa_status = 0;						\
-	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
-	/* BIG_ENDIAN: no need to swap to store 0 */			\
+	__rfa->rfa_control = FXP_RFA_CONTROL_EL;			\
 	__rfa->actual_size = 0;						\
 									\
 	/* NOTE: the RFA is misaligned, so we must copy. */		\
-	/* BIG_ENDIAN: no need to swap to store 0xffffffff */		\
-	__v = 0xffffffff;						\
+	__v = -1;							\
 	memcpy((void *)&__rfa->link_addr, &__v, sizeof(__v));		\
 	memcpy((void *)&__rfa->rbd_addr, &__v, sizeof(__v));		\
 									\
@@ -289,13 +278,12 @@ do {									\
 									\
 	if ((__p_m = (sc)->sc_rxq.ifq_tail) != NULL) {			\
 		__p_rfa = FXP_MTORFA(__p_m);				\
-		__v = htole32(__rxmap->dm_segs[0].ds_addr +		\
-		    RFA_ALIGNMENT_FUDGE);				\
+		__v = __rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
 		memcpy((void *)&__p_rfa->link_addr, &__v,		\
 		    sizeof(__v));					\
-		__p_rfa->rfa_control &= htole16(~FXP_RFA_CONTROL_EL);	\
+		__p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;		\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
 	}								\
@@ -318,7 +306,3 @@ do {									\
 
 void	fxp_attach __P((struct fxp_softc *));
 int	fxp_intr __P((void *));
-
-int	fxp_enable __P((struct fxp_softc*));
-void	fxp_disable __P((struct fxp_softc*));
-

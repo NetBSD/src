@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.30 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.28.2.1 1999/12/21 23:20:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -577,7 +577,7 @@ sys_swapctl(p, v, retval)
 				 * with NetBSD 1.3.
 				 */
 				sdp->swd_ose.ose_inuse = 
-				    btodb(sdp->swd_npginuse << PAGE_SHIFT);
+				    btodb(sdp->swd_npginuse << PAGE_SHIFT, DEF_BSHIFT);
 				error = copyout((caddr_t)&sdp->swd_ose,
 				    (caddr_t)sep, sizeof(struct oswapent));
 
@@ -881,7 +881,7 @@ swap_on(p, sdp)
 	case VREG:
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 			goto bad;
-		nblocks = (int)btodb(va.va_size);
+		nblocks = (int)btodb(va.va_size, DEF_BSHIFT);
 		if ((error =
 		     VFS_STATFS(vp->v_mount, &vp->v_mount->mnt_stat, p)) != 0)
 			goto bad;
@@ -910,7 +910,7 @@ swap_on(p, sdp)
 	 */
 
 	sdp->swd_ose.ose_nblks = nblocks;
-	npages = dbtob((u_int64_t)nblocks) >> PAGE_SHIFT;
+	npages = dbtob((u_int64_t)nblocks, DEF_BSHIFT) >> PAGE_SHIFT;
 
 	/*
 	 * for block special files, we want to make sure that leave
@@ -975,8 +975,8 @@ swap_on(p, sdp)
 
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
-		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
-		rootpages = round_page(dbtob(rootblocks)) >> PAGE_SHIFT;
+		rootblocks = sp->f_blocks * btodb(sp->f_bsize, DEF_BSHIFT);
+		rootpages = round_page(dbtob(rootblocks, DEF_BSHIFT)) >> PAGE_SHIFT;
 		if (rootpages > npages)
 			panic("swap_on: miniroot larger than swap?");
 
@@ -1049,11 +1049,8 @@ bad:
 	/*
 	 * failure: close device if necessary and return error.
 	 */
-	if (vp != rootvp) {
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (vp != rootvp)
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
-		VOP_UNLOCK(vp, 0);
-	}
 	return (error);
 }
 
@@ -1102,11 +1099,8 @@ swap_off(p, sdp)
 	extent_destroy(sdp->swd_ex);
 	free(name, M_VMSWAP);
 	free((caddr_t)sdp->swd_ex, M_VMSWAP);
-	if (sdp->swp_vp != rootvp) {
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (sdp->swp_vp != rootvp)
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
-		VOP_UNLOCK(vp, 0);
-	}
 	if (sdp->swd_vp)
 		vrele(sdp->swd_vp);
 	free((caddr_t)sdp, M_VMSWAP);
@@ -1131,7 +1125,8 @@ swread(dev, uio, ioflag)
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio,
+			DEF_BSHIFT));
 }
 
 /*
@@ -1147,7 +1142,8 @@ swwrite(dev, uio, ioflag)
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio,
+			DEF_BSHIFT));
 }
 
 /*
@@ -1169,7 +1165,7 @@ swstrategy(bp)
 	 * be yanked out from under us because we are holding resources
 	 * in it (i.e. the blocks we are doing I/O on).
 	 */
-	pageno = dbtob(bp->b_blkno) >> PAGE_SHIFT;
+	pageno = dbtob(bp->b_blkno, DEF_BSHIFT) >> PAGE_SHIFT;
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(pageno);
 	simple_unlock(&uvm.swap_data_lock);
@@ -1186,7 +1182,7 @@ swstrategy(bp)
 	 */
 
 	pageno = pageno - sdp->swd_drumoffset;	/* page # on swapdev */
-	bn = btodb(pageno << PAGE_SHIFT);	/* convert to diskblock */
+	bn = btodb(pageno << PAGE_SHIFT, DEF_BSHIFT);	/* convert to diskblock */
 
 	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld\n",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
@@ -1284,7 +1280,7 @@ sw_reg_strategy(sdp, bp, bn)
 	error = 0;
 	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
 	addr = bp->b_data;		/* current position in buffer */
-	byteoff = dbtob(bn);
+	byteoff = dbtob(bn, DEF_BSHIFT);
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf	*nbp;
@@ -1357,14 +1353,13 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_bufsize  = sz;
 		nbp->vb_buf.b_error    = 0;
 		nbp->vb_buf.b_data     = addr;
-		nbp->vb_buf.b_blkno    = nbn + btodb(off);
+		nbp->vb_buf.b_blkno    = nbn + btodb(off, DEF_BSHIFT);
 		nbp->vb_buf.b_proc     = bp->b_proc;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = NULLVP;
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
 		nbp->vb_buf.b_rcred    = sdp->swd_cred;
 		nbp->vb_buf.b_wcred    = sdp->swd_cred;
-		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		/* 
 		 * set b_dirtyoff/end and b_validoff/end.   this is
@@ -1766,7 +1761,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * convert starting drum slot to block number
 	 */
-	startblk = btodb(startslot << PAGE_SHIFT);
+	startblk = btodb(startslot << PAGE_SHIFT, DEF_BSHIFT);
 
 	/*
 	 * first, map the pages into the kernel (XXX: currently required
@@ -1816,7 +1811,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if (swapdev_vp->v_type == VBLK)
 		bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bcount = npages << PAGE_SHIFT;
-	LIST_INIT(&bp->b_dep);
 
 	/* 
 	 * for pageouts we must set "dirtyoff" [NFS client code needs it].

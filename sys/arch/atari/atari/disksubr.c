@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 1999/09/22 07:20:44 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17.8.1 1999/12/21 23:15:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -141,11 +141,12 @@ bounds_check_with_label(bp, lp, wlabel)
  * Returns NULL on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, bshift)
 	dev_t			dev;
 	void			(*strat)(struct buf *);
 	struct disklabel	*lp;
 	struct cpu_disklabel	*clp;
+	int			bshift;
 {
 	int			e;
 
@@ -155,7 +156,7 @@ readdisklabel(dev, strat, lp, clp)
 	 * Give some guaranteed validity to the disk label.
 	 */
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = blocksize(bshift);
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	if (lp->d_secpercyl == 0)
@@ -263,11 +264,12 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
+writedisklabel(dev, strat, lp, clp, bshift)
 	dev_t			dev;
 	void			(*strat)(struct buf *);
 	struct disklabel	*lp;
 	struct cpu_disklabel	*clp;
+	int			bshift;
 {
 	struct buf		*bp;
 	u_int			blk;
@@ -279,6 +281,8 @@ writedisklabel(dev, strat, lp, clp)
 
 	bp = geteblk(BBMINSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_bshift   = bshift;
+	bp->b_bsize    = blocksize(bp->b_bshift);
 	bp->b_flags    = B_BUSY | B_READ;
 	bp->b_bcount   = BBMINSIZE;
 	bp->b_blkno    = blk;
@@ -306,6 +310,7 @@ writedisklabel(dev, strat, lp, clp)
 		(*strat)(bp);
 		rv = biowait(bp);
 	}
+out:
 	bp->b_flags |= B_INVAL | B_AGE;
 	brelse(bp);
 	return(rv);
@@ -320,18 +325,21 @@ writedisklabel(dev, strat, lp, clp)
  *          +1 if no valid label was found.
  */
 static int
-bsd_label(dev, strat, label, blkno, offset)
+bsd_label(dev, strat, label, blkno, offset, bshift, bsize)
 	dev_t			dev;
 	void			(*strat)(struct buf *);
 	struct disklabel	*label;
 	u_int			blkno,
 				*offset;
+	int			bshift, bsize;
 {
 	struct buf		*bp;
 	int			rv;
 
 	bp = geteblk(BBMINSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_bshift   = bshift;
+	bp->b_bsize    = blocksize(bp->b_bshift);
 	bp->b_flags    = B_BUSY | B_READ;
 	bp->b_bcount   = BBMINSIZE;
 	bp->b_blkno    = blkno;
@@ -372,6 +380,7 @@ bsd_label(dev, strat, label, blkno, offset)
 		}
 	}
 
+out:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return(rv);
@@ -615,12 +624,13 @@ ahdi_to_bsd(dl, apt)
  *           number of the offending block is returned.
  */
 static u_int
-ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
+ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt, bshift, bsize)
 	dev_t			dev;
 	void			(*strat)(struct buf *);
 	u_int			secpercyl,
 				rsec, esec;
 	struct ahdi_ptbl	*apt;
+	int			bshift, bsize;
 {
 	struct ahdi_part	*part, *end;
 	struct ahdi_root	*root;
@@ -629,6 +639,8 @@ ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
 
 	bp = geteblk(AHDI_BSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_bshift   = bshift;
+	bp->b_bsize    = blocksize(bp->b_bshift);
 	bp->b_flags    = B_BUSY | B_READ;
 	bp->b_bcount   = AHDI_BSIZE;
 	bp->b_blkno    = rsec;

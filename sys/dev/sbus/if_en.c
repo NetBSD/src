@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.9 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.8 1999/03/29 12:04:43 cjs Exp $	*/
 
 /*
  *
@@ -145,10 +145,8 @@ en_sbus_attach(parent, self, aux)
 		return;
 	}
 
-	/* Establish interrupt handler */
-	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri,
-					 0, en_intr, sc);
+	/* Establish interrupt channel */
+	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, en_intr, sc);
 
 	sc->ipl = sa->sa_pri;	/* appropriate? */
 

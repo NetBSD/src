@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.371 1999/12/13 16:30:15 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.365.2.1 1999/12/21 23:16:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -170,7 +170,6 @@ extern struct proc *npxproc;
 #endif
 
 #include "vga.h"
-#include "ega.h"
 #include "pcdisplay.h"
 #if (NVGA > 0) || (NPCDISPLAY > 0)
 #include <dev/ic/mc6845reg.h>
@@ -179,9 +178,6 @@ extern struct proc *npxproc;
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 #endif
-#if (NEGA > 0)
-#include <dev/isa/egavar.h>
-#endif
 #if (NPCDISPLAY > 0)
 #include <dev/isa/pcdisplayvar.h>
 #endif
@@ -189,7 +185,7 @@ extern struct proc *npxproc;
 
 #include "pckbc.h"
 #if (NPCKBC > 0)
-#include <dev/ic/pckbcvar.h>
+#include <dev/isa/pckbcvar.h>
 #endif
 
 #include "pc.h"
@@ -230,7 +226,6 @@ int	dumpmem_low;
 int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
-int	i386_fpu_present = 0;
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
@@ -466,7 +461,7 @@ cpu_startup()
 	 */
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 #if NBIOSCALL > 0
@@ -543,7 +538,7 @@ i386_bufinit()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			/*
@@ -721,7 +716,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
-			cyrix6x86_cpu_setup
+			NULL
 		} }
 	},
 	{
@@ -965,9 +960,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_NKPDE:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
-
-	case CPU_FPU_PRESENT:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_fpu_present));
 
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
@@ -1272,7 +1264,7 @@ cpu_dumpsize()
 
 	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
 	    ALIGN(mem_cluster_cnt * sizeof(phys_ram_seg_t));
-	if (roundup(size, dbtob(1)) != dbtob(1))
+	if (roundup(size, dbtob(1, DEF_BSHIFT)) != dbtob(1, DEF_BSHIFT))
 		return (-1);
 
 	return (1);
@@ -1299,7 +1291,7 @@ int
 cpu_dump()
 {
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	char buf[dbtob(1)];
+	char buf[dbtob(1, DEF_BSHIFT)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
@@ -1317,7 +1309,7 @@ cpu_dump()
 	 * Generate a segment header.
 	 */
 	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+	segp->c_size = dbtob(1, DEF_BSHIFT) - ALIGN(sizeof(*segp));
 
 	/*
 	 * Add the machine-dependent header info.
@@ -1333,12 +1325,12 @@ cpu_dump()
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1, DEF_BSHIFT)));
 }
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1357,16 +1349,16 @@ cpu_dumpconf()
 	if (bdevsw[maj].d_psize == NULL)
 		goto bad;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
+	if (nblks <= ctod(1, DEF_BSHIFT))
 		goto bad;
 
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
 		goto bad;
-	dumpblks += ctod(cpu_dump_mempagecnt());
+	dumpblks += ctod(cpu_dump_mempagecnt(), DEF_BSHIFT);
 
 	/* If dump won't fit (incl. room for possible label), punt. */
-	if (dumpblks > (nblks - ctod(1)))
+	if (dumpblks > (nblks - ctod(1, DEF_BSHIFT)))
 		goto bad;
 
 	/* Put dump at end of partition */
@@ -1469,7 +1461,7 @@ dumpsys()
 			if (error)
 				goto err;
 			maddr += n;
-			blkno += btodb(n);		/* XXX? */
+			blkno += btodb(n, DEF_BSHIFT);		/* XXX? */
 
 #if 0	/* XXX this doesn't work.  grr. */
 			/* operator aborting dump? */
@@ -1714,16 +1706,16 @@ init386(first_avail)
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
-	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
-	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
+	    VM_PROT_READ, TRUE, VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 	gdt = idt + NIDT;
@@ -1998,15 +1990,11 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
 				  -1, 1))
-			goto dokbd;
-#endif
-#if (NEGA > 0)
-		if (!ega_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
 #if (NPCDISPLAY > 0)
@@ -2019,7 +2007,7 @@ consinit()
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, PCKBC_KBD_SLOT);
+		pckbc_cnattach(I386_BUS_SPACE_IO, PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
@@ -2721,8 +2709,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 

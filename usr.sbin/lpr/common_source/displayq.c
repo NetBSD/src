@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.17 1999/12/07 14:54:44 mrg Exp $	*/
+/*	$NetBSD: displayq.c,v 1.15 1998/09/14 21:23:07 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.17 1999/12/07 14:54:44 mrg Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.15 1998/09/14 21:23:07 frueauf Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,10 +86,6 @@ static long	totsize;	/* total print job size in bytes */
 
 static char	*head0 = "Rank   Owner      Job  Files";
 static char	*head1 = "Total Size\n";
-
-static	void	alarmer __P((int));
-
-int wait_time = 300;	/* time out after 5 minutes by default */
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
@@ -152,7 +148,7 @@ displayq(format)
 			if (fd >= 0) {
 				(void)flock(fd, LOCK_SH);
 				while ((i = read(fd, line, sizeof(line))) > 0)
-					(void)fwrite(line, 1, (size_t)i, stdout);
+					(void)fwrite(line, 1, i, stdout);
 				(void)close(fd);	/* unlocks as well */
 			} else
 				putchar('\n');
@@ -203,7 +199,7 @@ displayq(format)
 				if (fd >= 0) {
 					(void)flock(fd, LOCK_SH);
 					while ((i = read(fd, line, sizeof(line))) > 0)
-						(void)fwrite(line, 1, (size_t)i, stdout);
+						(void)fwrite(line, 1, i, stdout);
 					(void)close(fd);	/* unlocks as well */
 				} else
 					putchar('\n');
@@ -239,7 +235,7 @@ displayq(format)
 	cp = line;
 	for (i = 0; i < requests && cp-line+10 < sizeof(line) - 1; i++) {
 		cp += strlen(cp);
-		(void)snprintf(cp, (size_t)(line - cp), " %d", requ[i]);
+		(void)snprintf(cp, line - cp, " %d", requ[i]);
 	}
 	for (i = 0; i < users && cp - line + 1 + strlen(user[i]) <
 	    sizeof(line) - 1; i++) {
@@ -261,32 +257,13 @@ displayq(format)
 		(void)printf("connection to %s is down\n", RM);
 	}
 	else {
-		struct sigaction osa, nsa;
-
 		i = strlen(line);
-		if (write(fd, line, (size_t)i) != i)
+		if (write(fd, line, i) != i)
 			fatal("Lost connection");
-		nsa.sa_handler = alarmer;
-		sigemptyset(&nsa.sa_mask);
-		sigaddset(&nsa.sa_mask, SIGALRM);
-		nsa.sa_flags = 0;
-		(void)sigaction(SIGALRM, &nsa, &osa);
-		alarm(wait_time);
-		while ((i = read(fd, line, sizeof(line))) > 0) {
-			(void)fwrite(line, 1, (size_t)i, stdout);
-			alarm(wait_time);
-		}
-		alarm(0);
-		(void)sigaction(SIGALRM, &osa, NULL);
+		while ((i = read(fd, line, sizeof(line))) > 0)
+			(void)fwrite(line, 1, i, stdout);
 		(void)close(fd);
 	}
-}
-
-static void
-alarmer(s)
-	int s;
-{
-	/* nothing */
 }
 
 /*
@@ -460,7 +437,7 @@ dump(nfile, file, copies)
 	}
 	seteuid(euid);
 	if (*file && !stat(file, &lbuf))
-		totsize += copies * (long)lbuf.st_size;
+		totsize += copies * lbuf.st_size;
 	seteuid(uid);
 }
 

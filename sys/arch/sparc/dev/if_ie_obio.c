@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.12 1999/11/13 00:32:12 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.11 1999/07/08 18:08:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -374,7 +374,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
 	    pa | PMAP_NC /*| PMAP_IOC*/,
-	    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+	    VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 
 	/* Map iscp at location 0 (relative to `maddr') */
 	sc->iscp = 0;

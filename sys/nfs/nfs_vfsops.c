@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.85 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.84.8.1 1999/12/21 23:20:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -261,7 +261,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 				nmp->nm_readdirsize = max;
 		}
 		/* XXX */
-		nmp->nm_maxfilesize = (u_int64_t)0x80000000 * DEV_BSIZE - 1;
+		nmp->nm_maxfilesize = (u_int64_t)0x80000000 * NFS_FABLKSIZE - 1;
 		maxfsize = fxdr_hyper(&fsp->fs_maxfilesize);
 		if (maxfsize > 0 && maxfsize < nmp->nm_maxfilesize)
 			nmp->nm_maxfilesize = maxfsize;
@@ -626,6 +626,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	}
 	vfs_getnewfsid(mp, MOUNT_NFS);
 	nmp->nm_mountp = mp;
+	mp->mnt_bshift = intlog2(NFS_FABLKSIZE);
 
 	if (argp->flags & NFSMNT_NQNFS)
 		/*
@@ -849,8 +850,7 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL ||
-		    waitfor == MNT_LAZY)
+		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;

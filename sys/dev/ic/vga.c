@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.23 1999/12/13 14:04:06 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.20 1999/09/29 17:29:24 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -98,10 +98,6 @@ struct vga_config {
 	bus_space_handle_t vc_bioshdl;
 
 	struct vgafont *vc_fonts[8];
-
-	struct vgascreen *wantedscreen;
-	void (*switchcb) __P((void *, int, int));
-	void *switchcbarg;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -235,11 +231,8 @@ static int	vga_mmap __P((void *, off_t, int));
 static int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	vga_free_screen __P((void *, void *));
-static int	vga_show_screen __P((void *, void *, int,
-				     void (*) (void *, int, int), void *));
+static void	vga_show_screen __P((void *, void *));
 static int	vga_load_font __P((void *, void *, struct wsdisplay_font *));
-
-void vga_doswitch __P((struct vga_config *));
 
 const struct wsdisplay_accessops vga_accessops = {
 	vga_ioctl,
@@ -507,7 +500,7 @@ vga_init(vc, iot, memt)
 	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
 
 	vc->vc_fonts[0] = &vga_builtinfont;
-	for (i = 1; i < 8; i++)
+	for (i = 1; i < 7; i++)
 		vc->vc_fonts[i] = 0;
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
@@ -711,49 +704,16 @@ vga_setfont(vc, scr)
 	}
 }
 
-int
-vga_show_screen(v, cookie, waitok, cb, cbarg)
+void
+vga_show_screen(v, cookie)
 	void *v;
 	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
 {
 	struct vgascreen *scr = cookie, *oldscr;
 	struct vga_config *vc = scr->cfg;
-
-	oldscr = vc->active; /* can be NULL! */
-	if (scr == oldscr) {
-		return (0);
-	}
-
-	vc->wantedscreen = cookie;
-	vc->switchcb = cb;
-	vc->switchcbarg = cbarg;
-	if (cb) {
-		timeout((void(*)(void *))vga_doswitch, vc, 0);
-		return (EAGAIN);
-	}
-
-	vga_doswitch(vc);
-	return (0);
-}
-
-void
-vga_doswitch(vc)
-	struct vga_config *vc;
-{
-	struct vgascreen *scr, *oldscr;
 	struct vga_handle *vh = &vc->hdl;
-	const struct wsscreen_descr *type;
+	const struct wsscreen_descr *type = scr->pcs.type;
 
-	scr = vc->wantedscreen;
-	if (!scr) {
-		printf("vga_doswitch: disappeared\n");
-		(*vc->switchcb)(vc->switchcbarg, EIO, 0);
-		return;
-	}
-	type = scr->pcs.type;
 	oldscr = vc->active; /* can be NULL! */
 #ifdef DIAGNOSTIC
 	if (oldscr) {
@@ -803,10 +763,6 @@ vga_doswitch(vc)
 
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
 			 scr->pcs.vc_crow, scr->pcs.vc_ccol);
-
-	vc->wantedscreen = 0;
-	if (vc->switchcb)
-		(*vc->switchcb)(vc->switchcbarg, 0, 0);
 }
 
 static int
@@ -922,9 +878,8 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 #ifdef PCDISPLAY_SOFTCURSOR
 			int cursoron = scr->pcs.cursoron;
 
-			if (cursoron)
-				pcdisplay_cursor(&scr->pcs, 0,
-				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+			pcdisplay_cursor(&scr->pcs, 0, scr->pcs.vc_crow, 
+			    scr->pcs.vc_ccol);
 #endif
 			/* scroll up whole screen */
 			if ((scr->pcs.dispoffset + srcrow * ncols * 2)
@@ -942,9 +897,8 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 			vga_6845_write(&scr->cfg->hdl, startadrl,
 				       scr->pcs.dispoffset >> 1);
 #ifdef PCDISPLAY_SOFTCURSOR
-			if (cursoron)
-				pcdisplay_cursor(&scr->pcs, 1,
-				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+			pcdisplay_cursor(&scr->pcs, cursoron,
+			    scr->pcs.vc_crow, scr->pcs.vc_ccol);
 #endif
 		} else {
 			bus_space_copy_region_2(memt, memh,

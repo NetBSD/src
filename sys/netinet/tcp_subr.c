@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.85 1999/12/15 06:28:43 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.81 1999/09/23 04:02:27 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -139,7 +139,6 @@
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6protosw.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -311,8 +310,7 @@ tcp_template(tp)
 			ip6->ip6_flow |= 
 				(htonl(ip6_flow_seq++) & IPV6_FLOWLABEL_MASK);
 		}
-		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-		ip6->ip6_vfc |= IPV6_VERSION;
+		ip6->ip6_vfc = IPV6_VERSION;
 		break;
 	    }
 #endif
@@ -440,12 +438,13 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 			th = (struct tcphdr *)(ip6 + 1);
 			break;
 #endif
-#if 0
-		default:
-			/* noone will visit here */
-			m_freem(m);
-			return EAFNOSUPPORT;
+		default:	/*pacify gcc*/
+			ip = NULL;
+#ifdef INET6
+			ip6 = NULL;
 #endif
+			th = NULL;
+			break;
 		}
 		flags = TH_ACK;
 	} else {
@@ -462,7 +461,8 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 			break;
 #endif
 		default:
-			m_freem(m);
+			if (m)
+				m_freem(m);
 			return EAFNOSUPPORT;
 		}
 
@@ -536,13 +536,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 				tlen);
 		ip6->ip6_plen = ntohs(tlen);
-		if (tp && tp->t_in6pcb) {
-			struct ifnet *oifp;
-			ro = (struct route *)&tp->t_in6pcb->in6p_route;
-			oifp = ro->ro_rt ? ro->ro_rt->rt_ifp : NULL;
-			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb, oifp);
-		} else
-			ip6->ip6_hlim = ip6_defhlim;
+		ip6->ip6_hlim = ip6_defhlim;
 		ip6->ip6_flow &= ~IPV6_FLOWINFO_MASK;
 		if (ip6_auto_flowlabel) {
 			ip6->ip6_flow |= 
@@ -660,8 +654,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL,
-			NULL);
+		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL);
 		break;
 #endif
 	default:
@@ -752,9 +745,7 @@ tcp_newtcpcb(family, aux)
 #ifdef INET6
 	else if (family == AF_INET6) {
 		struct in6pcb *in6p = (struct in6pcb *)aux;
-		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
-			in6p->in6p_route.ro_rt ? in6p->in6p_route.ro_rt->rt_ifp
-					       : NULL);
+		in6p->in6p_ip6.ip6_hlim = ip6_defhlim;
 		in6p->in6p_ppcb = (caddr_t)tp;
 	}
 #endif
@@ -1053,10 +1044,12 @@ tcp6_notify(in6p, error)
 
 #if defined(INET6) && !defined(TCP6)
 void
-tcp6_ctlinput(cmd, sa, d)
+tcp6_ctlinput(cmd, sa, ip6, m, off)
 	int cmd;
 	struct sockaddr *sa;
-	void *d;
+	register struct ip6_hdr *ip6;
+	struct mbuf *m;
+	int off;
 {
 	register struct tcphdr *thp;
 	struct tcphdr th;
@@ -1064,42 +1057,22 @@ tcp6_ctlinput(cmd, sa, d)
 	int nmatch;
 	extern struct in6_addr zeroin6_addr;	/* netinet6/in6_pcb.c */
 	struct sockaddr_in6 sa6;
-	register struct ip6_hdr *ip6;
-	struct mbuf *m;
-	int off;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
 		return;
-	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
-	else if (cmd == PRC_QUENCH) {
-		/* XXX there's no PRC_QUENCH in IPv6 */
+	if (cmd == PRC_QUENCH)
 		notify = tcp6_quench;
-	} else if (PRC_IS_REDIRECT(cmd))
-		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_MSGSIZE)
-		notify = tcp6_mtudisc, d = NULL;
-	else if (cmd == PRC_HOSTDEAD)
-		d = NULL;
-	else if (inet6ctlerrmap[cmd] == 0)
+		notify = tcp6_mtudisc;
+	else if (!PRC_IS_REDIRECT(cmd) &&
+		 ((unsigned)cmd > PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
 		return;
 
 	/* translate addresses into internal form */
 	sa6 = *(struct sockaddr_in6 *)sa;
 	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
 		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
-
-	/* if the parameter is from icmp6, decode it. */
-	if (d != NULL) {
-		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
-		m = ip6cp->ip6c_m;
-		ip6 = ip6cp->ip6c_ip6;
-		off = ip6cp->ip6c_off;
-	} else {
-		m = NULL;
-		ip6 = NULL;
-	}
 
 	if (ip6) {
 		/*

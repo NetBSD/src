@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.11 1999/11/20 00:38:00 thorpej Exp $	*/
+/*	$NetBSD: tcp.h,v 1.10 1998/10/04 21:33:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,7 +66,7 @@ struct tcphdr {
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
-} __attribute__((__packed__));
+};
 
 #define	TCPOPT_EOL		0
 #define	TCPOPT_NOP		1

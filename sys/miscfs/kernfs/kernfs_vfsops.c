@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.35 1999/02/26 23:44:45 wrstuden Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.35.14.1 1999/12/21 23:19:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -148,6 +148,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
+	mp->mnt_bshift = DEF_BSHIFT;
 	vfs_getnewfsid(mp, MOUNT_KERNFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -262,8 +263,8 @@ kernfs_statfs(mp, sbp, p)
 	printf("kernfs_statfs(mp = %p)\n", mp);
 #endif
 
-	sbp->f_bsize = DEV_BSIZE;
-	sbp->f_iosize = DEV_BSIZE;
+	sbp->f_bsize = blocksize(mp->mnt_bshift);
+	sbp->f_iosize = sbp->f_bsize;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;

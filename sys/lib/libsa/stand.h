@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.39 1999/11/13 21:08:32 thorpej Exp $	*/
+/*	$NetBSD: stand.h,v 1.33 1999/09/09 15:52:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

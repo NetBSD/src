@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.49 1999/12/05 18:33:28 fredb Exp $	*/
+/*	$NetBSD: print.c,v 1.43 1999/07/23 08:56:14 veego Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.49 1999/12/05 18:33:28 fredb Exp $");
+__RCSID("$NetBSD: print.c,v 1.43 1999/07/23 08:56:14 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,9 @@ __RCSID("$NetBSD: print.c,v 1.49 1999/12/05 18:33:28 fredb Exp $");
 #include <unistd.h>
 
 #include "ps.h"
+
+extern kvm_t *kd;
+extern int needenv, needcomm, commandonly;
 
 static char *cmdpart __P((char *));
 static void  printval __P((char *, VAR *));
@@ -153,8 +156,7 @@ command(ki, ve)
 			left = v->width;
 	} else
 		left = -1;
-	if (needenv && (myuid == 0 || KI_EPROC(ki)->e_ucred.cr_uid == myuid) &&
-	    kd) {
+	if (needenv) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
@@ -167,11 +169,7 @@ command(ki, ve)
 	if (needcomm) {
 		name = KI_PROC(ki)->p_comm;
 		if (!commandonly) {
-			argv = NULL;
-			if (!use_procfs)
-				argv = kvm_getargv(kd, ki->ki_p, termwidth);
-			else
-				argv = procfs_getargv(ki->ki_p, termwidth);
+			argv = kvm_getargv(kd, ki->ki_p, termwidth);
 			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
@@ -183,10 +181,6 @@ command(ki, ve)
 				fmt_putc('(', &left);
 				fmt_puts(name, &left);
 				fmt_putc(')', &left);
-			}
-			if (use_procfs && argv) {
-				free(argv[0]);
-				free(argv);
 			}
 		} else {
 			fmt_puts(name, &left);
@@ -368,8 +362,7 @@ tname(k, ve)
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL)
 		(void)printf("%-*s", v->width, "??");
 	else {
-		if (strncmp(ttname, "tty", 3) == 0 ||
-		    strncmp(ttname, "dty", 3) == 0)
+		if (strncmp(ttname, "tty", 3) == 0)
 			ttname += 3;
 		(void)printf("%*.*s%c", v->width-1, v->width-1, ttname,
 			KI_EPROC(k)->e_flag & EPROC_CTTY ? ' ' : '-');
@@ -555,7 +548,7 @@ getpcpu(k)
 	static int failure;
 
 	if (!nlistread)
-		failure = (kd) ? donlist() : 1;
+		failure = donlist();
 	if (failure)
 		return (0.0);
 
@@ -594,7 +587,7 @@ getpmem(k)
 	int szptudot;
 
 	if (!nlistread)
-		failure = (kd) ? donlist() : 1;
+		failure = donlist();
 	if (failure)
 		return (0.0);
 
@@ -605,7 +598,7 @@ getpmem(k)
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/mempages;
+	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
 	return (100.0 * fracmem);
 }
 

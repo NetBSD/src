@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.35 1999/10/31 13:24:05 is Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.34 1998/11/22 19:13:45 bad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.35 1999/10/31 13:24:05 is Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.34 1998/11/22 19:13:45 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ die_you_gravy_sucking_pig_dog()
 		*arg++ = "-l";
 		*arg++ = 0;
 #ifndef DEBUG
-		execve(path, args, (char **)0);
+		exect(path, args, (char **)0);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m", path);
 		perror("shutdown");
 #else

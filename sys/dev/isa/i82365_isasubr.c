@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.4 1999/10/15 06:07:27 haya Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.3 1999/02/19 03:14:01 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -217,8 +217,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	void *arg;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
-	isa_chipset_tag_t ic = sc->intr_est;
+	isa_chipset_tag_t ic = h->sc->intr_est;
 	int irq, ist;
 	void *ih;
 	int reg;
@@ -255,8 +254,7 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	void *ih;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
-	isa_chipset_tag_t ic = sc->intr_est;
+	isa_chipset_tag_t ic = h->sc->intr_est;
 	int reg;
 
 	h->ih_irq = 0;

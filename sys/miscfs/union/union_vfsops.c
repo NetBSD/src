@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.23 1999/07/31 23:56:15 sommerfeld Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.23.8.1 1999/12/21 23:20:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -215,6 +215,7 @@ union_mount(mp, path, data, ndp, p)
 	 */
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
+	mp->mnt_bshift = DEF_BSHIFT;	/* XXX */
 	mp->mnt_data = (qaddr_t)um;
 	vfs_getnewfsid(mp, MOUNT_UNION);
 

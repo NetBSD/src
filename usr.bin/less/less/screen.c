@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.9 1999/10/04 23:34:06 lukem Exp $	*/
+/*	$NetBSD: screen.c,v 1.8 1999/04/06 05:57:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -224,7 +224,7 @@ static void get_clock __P((void));
 static void dummy_func __P((void));
 static void delay __P((int));
 #endif
-static int inc_costcount __P((int));
+static void inc_costcount __P((int));
 static int cost __P((char *));
 static char *cheaper __P((char *, char *, char *));
 static void tmodes __P((char *, char *, char **, char **, char *, char *, char **));
@@ -1330,12 +1330,12 @@ get_term()
 static int costcount;
 
 /*ARGSUSED*/
-	static int
+	static void
 inc_costcount(c)
 	int c;
 {
 	costcount++;
-	return (0);
+	return;
 }
 
 	static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.2 1998/04/13 12:10:26 ragge Exp $	*/
+/*	$NetBSD: cfl.c,v 1.2.20.1 1999/12/21 23:16:20 wrstuden Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -105,6 +105,8 @@ cflopen(dev, flag, p)
 		return (EALREADY);
 	cfltab.cfl_state = OPEN;
 	cfltab.cfl_buf = geteblk(512);
+	cfltab.cfl_buf->b_bsize = 512;
+	cfltab.cfl_buf->b_bshift = 9;
 	return (0);
 }
 

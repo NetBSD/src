@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1999/11/21 14:00:42 itojun Exp $
+#	$NetBSD: GENERIC,v 1.4.8.1 1999/12/21 23:16:12 wrstuden Exp $
 #
 # GENERIC: generic kernel for most machines
 #
@@ -19,6 +19,7 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	SHMMAXPGS=1024
 options 	LKM			# loadable kernel modules
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
+#options	NON_PO2_BLOCKS	# non-2**n block size support
 
 # compatibility options
 options 	COMPAT_11		# NetBSD 1.1,
@@ -37,28 +38,10 @@ file-system	NFS			# Network File System client
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 #options 	FFS_EI			# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # networking options
 #options 	GATEWAY			# packet forwarding
 options 	INET			# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
 options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
@@ -81,7 +64,5 @@ pseudo-device	bpfilter 4		# packet filter
 pseudo-device	sl 1			# compressed SLIP
 pseudo-device	ppp 1			# Point-to-Point Protocol
 pseudo-device	tun 1			# network tunneling
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	ccd 4			# Concatenated Disk Driver
 pseudo-device   rnd                     # kernel random number generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.14 1999/10/22 20:59:08 is Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.13 1999/03/03 18:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.14 1999/10/22 20:59:08 is Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.13 1999/03/03 18:06:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,8 +88,6 @@ static int can_unlnk = 0;		/* do we unlink null archives?  */
 const char *arcname;                  	/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
 time_t starttime;			/* time the run started */
-int minusCfd = -1;			/* active -C directory */
-int curdirfd = -1;			/* original current directory */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
@@ -116,6 +114,7 @@ ar_open(name)
 #endif
 {
         struct mtget mb;
+	static int minusCfd = -1, curdirfd = -1;
 
 	/*
 	 * change back to the current directory (for now).
@@ -210,13 +209,6 @@ ar_open(name)
 	 */
 	if (artyp != ISREG)
 		can_unlnk = 0;
-
-	/*
-	 * change directory if necessary
-	 */
-	if (minusCfd != -1)
-		fchdir(minusCfd);
-
 	/*
 	 * if we are writing, we are done
 	 */
@@ -224,6 +216,27 @@ ar_open(name)
 		blksz = rdblksz = wrblksz;
 		lstrval = 1;
 		return(0);
+	}
+
+	/*
+	 * change directory if necessary
+	 */
+	if (chdir_dir) {
+		if (curdirfd == -1)
+			curdirfd = open(".", O_RDONLY);
+		if (curdirfd < 1) {
+			syswarn(0, errno, "failed to open directory .");
+			return (-1);
+		}
+
+		if (minusCfd == -1)
+			minusCfd = open(chdir_dir, O_RDONLY);
+		if (minusCfd < 1) {
+			syswarn(0, errno, "failed to open directory %s",
+			    chdir_dir);
+			return (-1);
+		}
+		fchdir(minusCfd);
 	}
 
 	/*
@@ -1463,63 +1476,4 @@ ar_summary(n)
 		(void)fprintf(outf, "%s: %s", argv0, buf);
 	else
 		(void)write(STDERR_FILENO, buf, strlen(buf));
-}
-
-/*
- * ar_dochdir(name)
- *	change directory to name, and remember where we came from and
- *	where we change to (for ar_open).
- *
- *	Maybe we could try to be smart and only do the actual chdir
- *	when necessary to write a file read from the archive, but this
- *	is not easy to get right given the pax code structure.
- *
- *	Be sure to not leak descriptors!
- *
- *	We are called N * M times when extracting, and N times when
- *	writing archives, where
- *	N:	number of -C options
- *	M:	number of files in archive
- *    
- * Returns 0 if all went well, else -1.
- */
-
-#ifdef __STDC__
-int
-ar_dochdir(char *name)
-#else
-int
-ar_dochdir(name)
-	char *name;
-#endif
-{
-	if (curdirfd == -1) {
-		/* first time. remember where we came from */
-		curdirfd = open(".", O_RDONLY);
-		if (curdirfd < 0) {
-			syswarn(0, errno, "failed to open directory .");
-			return (-1);
-		}
-	} else /* XXX if (*name != '/') XXX */ {
-		/*
-		 * relative chdir. Make sure to get the same directory
-		 * each time by fchdir-ing back first.
-		 */
-		fchdir(curdirfd);
-	}
-
-	if (minusCfd != -1) {
-		/* don't leak descriptors */
-		close(minusCfd);
-		minusCfd = -1;
-	}
-
-	minusCfd = open(name, O_RDONLY);
-	if (minusCfd < 0) {
-		syswarn(0, errno, "failed to open directory %s", name);
-		return (-1);
-	}
-
-	fchdir(minusCfd);
-	return (0);
 }

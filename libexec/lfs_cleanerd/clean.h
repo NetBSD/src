@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.9 1999/11/09 20:33:37 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.7 1999/03/10 00:57:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,9 +73,6 @@
 #define	FIVE_MIN	1
 #define	FIFTEEN_MIN	2
 
-#define TIME_THRESHOLD	5	/* Time to tell looping from running */
-#define LOOP_THRESHOLD	5	/* Number of looping respawns before exit */
-
 #include <sys/time.h>
 
 typedef struct fs_info {
@@ -97,7 +94,7 @@ typedef struct fs_info {
 #define seg_size(fs) ((fs)->lfs_ssize << (fs)->lfs_bshift)
 
 /* daddr -> byte offset */
-#define datobyte(fs, da) (((off_t)(da)) << (fs)->fi_daddr_shift)
+#define datobyte(fs, da) ((da) << (fs)->fi_daddr_shift)
 #define bytetoda(fs, byte) ((byte) >> (fs)->fi_daddr_shift)
 
 #define CLEANSIZE(fsp)	(fsp->fi_lfs.lfs_cleansz << fsp->fi_lfs.lfs_bshift)

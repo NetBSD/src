@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.16 1999/12/05 22:10:57 jdolecek Exp $	*/
+/*	$NetBSD: common.c,v 1.14 1998/07/09 18:35:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.16 1999/12/05 22:10:57 jdolecek Exp $");
+__RCSID("$NetBSD: common.c,v 1.14 1998/07/09 18:35:35 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,14 @@ long	 XC;		/* flags to clear for local mode */
 long	 XS;		/* flags to set for local mode */
 
 char	line[BUFSIZ];
+char	*bp;		/* pointer into printcap buffer. */
+char	*name;		/* program name */
+char	*printer;	/* printer name */
+			/* host machine name */
+char	host[MAXHOSTNAMELEN + 1];
+char	*from = host;	/* client's machine name */
 int	remote;		/* true if sending files to a remote host */
+char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
 
 extern uid_t	uid, euid;
 
@@ -131,8 +138,7 @@ getport(rhost, rport)
 	struct hostent *hp;
 	struct servent *sp;
 	struct sockaddr_in sin;
-	u_int timo = 1;
-	int s, lport = IPPORT_RESERVED - 1;
+	int s, timo = 1, lport = IPPORT_RESERVED - 1;
 	int err;
 
 	/*
@@ -140,14 +146,14 @@ getport(rhost, rport)
 	 */
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
-	memset(&sin, 0, sizeof(sin));
+	memset((char *)&sin, 0, sizeof(sin));
 	if (inet_aton(rhost, &sin.sin_addr) == 1)
 		sin.sin_family = AF_INET;
 	else {
 		hp = gethostbyname(rhost);
 		if (hp == NULL)
 			fatal("unknown host %s", rhost);
-		memmove(&sin.sin_addr, hp->h_addr, (size_t)hp->h_length);
+		memmove((caddr_t)&sin.sin_addr, hp->h_addr, hp->h_length);
 		sin.sin_family = hp->h_addrtype;
 	}
 	if (rport == 0) {
@@ -167,7 +173,7 @@ retry:
 	seteuid(uid);
 	if (s < 0)
 		return(-1);
-	if (connect(s, (const struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		err = errno;
 		(void)close(s);
 		errno = err;
@@ -227,7 +233,7 @@ getq(namelist)
 	struct queue *q, **queue;
 	struct stat stbuf;
 	DIR *dirp;
-	u_int nitems, arraysz;
+	int nitems, arraysz;
 
 	seteuid(euid);
 	if ((dirp = opendir(SD)) == NULL)
@@ -240,7 +246,7 @@ getq(namelist)
 	 * Estimate the array size by taking the size of the directory file
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
-	arraysz = (int)(stbuf.st_size / 24);
+	arraysz = (stbuf.st_size / 24);
 	queue = (struct queue **)malloc(arraysz * sizeof(struct queue *));
 	if (queue == NULL)
 		goto errdone;
@@ -264,7 +270,7 @@ getq(namelist)
 		 */
 		if (++nitems > arraysz) {
 			arraysz *= 2;
-			queue = (struct queue **)realloc(queue,
+			queue = (struct queue **)realloc((char *)queue,
 				arraysz * sizeof(struct queue *));
 			if (queue == NULL)
 				goto errdone;
@@ -303,24 +309,24 @@ compar(p1, p2)
 char *
 checkremote()
 {
-	char hname[MAXHOSTNAMELEN + 1];
+	char name[MAXHOSTNAMELEN + 1];
 	struct hostent *hp;
 	static char errbuf[128];
 
 	remote = 0;	/* assume printer is local */
 	if (RM != NULL) {
 		/* get the official name of the local host */
-		gethostname(hname, sizeof(hname));
-		hname[sizeof(hname)-1] = '\0';
-		hp = gethostbyname(hname);
+		gethostname(name, sizeof(name));
+		name[sizeof(name)-1] = '\0';
+		hp = gethostbyname(name);
 		if (hp == (struct hostent *) NULL) {
 		    (void)snprintf(errbuf, sizeof(errbuf),
 			"unable to get official name for local machine %s",
-			hname);
+			name);
 		    return errbuf;
 		} else {
-			(void)strncpy(hname, hp->h_name, sizeof(hname) - 1);
-			hname[sizeof(hname) - 1] = '\0';
+			(void)strncpy(name, hp->h_name, sizeof(name) - 1);
+			name[sizeof(name) - 1] = '\0';
 		}
 
 		/* get the official name of RM */
@@ -336,7 +342,7 @@ checkremote()
 		 * if the two hosts are not the same,
 		 * then the printer must be remote.
 		 */
-		if (strcasecmp(hname, hp->h_name) != 0)
+		if (strcasecmp(name, hp->h_name) != 0)
 			remote = 1;
 	}
 	return NULL;
@@ -354,4 +360,36 @@ delay(n)
 	tdelay.tv_sec = n / 1000;
 	tdelay.tv_usec = n * 1000 % 1000000;
 	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
+}
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#ifdef __STDC__
+fatal(const char *msg, ...)
+#else
+fatal(msg, va_alist)
+	char *msg;
+        va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, msg);
+#else
+	va_start(ap);
+#endif
+	if (from != host)
+		(void)printf("%s: ", host);
+	(void)printf("%s: ", name);
+	if (printer)
+		(void)printf("%s: ", printer);
+	(void)vprintf(msg, ap);
+	va_end(ap);
+	(void)putchar('\n');
+	exit(1);
 }

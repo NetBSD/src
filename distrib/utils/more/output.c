@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.5 1999/10/19 23:09:45 dan Exp $	*/
+/*	$NetBSD: output.c,v 1.4 1998/02/04 11:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.5 1999/10/19 23:09:45 dan Exp $");
+__RCSID("$NetBSD: output.c,v 1.4 1998/02/04 11:09:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ purge()
 /*
  * Output a character.
  */
-int
+void
 putchr(c)
 	int c;
 {

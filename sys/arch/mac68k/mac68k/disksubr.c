@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 1999/05/01 09:26:32 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32.8.1 1999/12/21 23:16:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -110,9 +110,9 @@ static void setpartition __P((struct part_map_entry *,
 static int getNamedType __P((struct part_map_entry *, int,
 		struct disklabel *, int, int, int *));
 static char *read_mac_label __P((dev_t, void (*)(struct buf *),
-		struct disklabel *, struct cpu_disklabel *));
+		struct disklabel *, struct cpu_disklabel *, int, int));
 static char *read_dos_label __P((dev_t, void (*)(struct buf *),
-		struct disklabel *, struct cpu_disklabel *));
+		struct disklabel *, struct cpu_disklabel *, int, int));
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -258,11 +258,12 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
  *	disk.  This whole algorithm should probably be changed in the future.
  */
 static char *
-read_mac_label(dev, strat, lp, osdep)
+read_mac_label(dev, strat, lp, osdep, bshift, bsize)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift, bsize;
 {
 	struct part_map_entry *part;
 	struct partition *pp;
@@ -273,12 +274,14 @@ read_mac_label(dev, strat, lp, osdep)
 	/* get buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize * NUM_PARTS);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* read partition map */
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
 	bp->b_bcount = lp->d_secsize * NUM_PARTS;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylin = 0;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -347,11 +350,12 @@ done:
  * this should suffice to mount_msdos Zip and other removable media.
  */
 static char *
-read_dos_label(dev, strat, lp, osdep)
+read_dos_label(dev, strat, lp, osdep, bshift, bsize)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift, bsize;
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -362,6 +366,8 @@ read_dos_label(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
@@ -418,11 +424,12 @@ read_dos_label(dev, strat, lp, osdep)
  * then we assume that it's a real disklabel and return it.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct buf *bp;
 	char *msg = NULL;
@@ -437,11 +444,13 @@ readdisklabel(dev, strat, lp, osdep)
 	bp = geteblk((int)lp->d_secsize);
 
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylin = 0;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -451,10 +460,12 @@ readdisklabel(dev, strat, lp, osdep)
 
 		sbSigp = (u_int16_t *)bp->b_un.b_addr;
 		if (*sbSigp == 0x4552) {
-			msg = read_mac_label(dev, strat, lp, osdep);
+			msg = read_mac_label(dev, strat, lp, osdep, bshift,
+						bsize);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
 			   == MBR_MAGIC) {
-			msg = read_dos_label(dev, strat, lp, osdep);
+			msg = read_dos_label(dev, strat, lp, osdep, bshift,
+						bsize);
 		} else {
 			dlp = (struct disklabel *)(bp->b_un.b_addr + 0);
 			if (dlp->d_magic == DISKMAGIC) {
@@ -465,6 +476,7 @@ readdisklabel(dev, strat, lp, osdep)
 		}
 	}
 
+out:
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (msg);
@@ -520,11 +532,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  *  we want to write dos disklabels some day. Really!
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 #if 0
 	struct buf *bp;
@@ -540,6 +553,8 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;

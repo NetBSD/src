@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1999/01/31 14:06:40 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.14.1 1999/12/21 23:16:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -107,11 +107,12 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp;
 	char *msg = NULL;
@@ -121,6 +122,8 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -133,6 +136,7 @@ readdisklabel(dev, strat, lp, clp)
 		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
 	}
 
+out:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 
@@ -222,11 +226,12 @@ setdisklabel(olp, nlp, openmask, clp)
 /*
  * Write disk label back to device after modification.
  */
-writedisklabel(dev, strat, lp, clp)
+writedisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp;
 	int error;
@@ -242,6 +247,8 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -278,6 +285,8 @@ writedisklabel(dev, strat, lp, clp)
 
 		/* request no partition relocation by driver on I/O operations */
 		bp->b_dev = dev;
+		bp->b_bshift = bshift;
+		bp->b_bsize = blocksize(bp->b_bshift);
 		bp->b_blkno = 0; /* contained in block 0 */
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_WRITE;
@@ -286,6 +295,7 @@ writedisklabel(dev, strat, lp, clp)
 
 		error = biowait(bp);
 
+out1:
 		bp->b_flags = B_INVAL | B_AGE | B_READ;
 		brelse(bp);
 	}

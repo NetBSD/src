@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.13 1999/11/03 15:32:45 chs Exp $	*/
+/*	$NetBSD: copystr.S,v 1.9 1998/06/17 20:10:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 	.text
 	.align	0
 Lcurpcb:
-	.word	_C_LABEL(curpcb)
+	.word	_curpcb
 
 Lvm_min_address:
 	.word	VM_MIN_ADDRESS
@@ -66,9 +66,11 @@ Lvm_maxkern_address:
 ENTRY(copystr)
 	stmfd	sp!, {r4-r5}
 	teq	r2, #0x00000000
-	mov	r5, #0x00000000
-	moveq	r0, #ENAMETOOLONG
+	moveq	r4, #0x00000000
+	moveq	r5, #0x00000000
 	beq	Lcopystrexit
+
+	mov 	r5, #0x00000000
 
 Lcopystr_loop:
 	ldrb	r4, [r0], #0x0001
@@ -78,13 +80,13 @@ Lcopystr_loop:
 	teqne	r5, r2
 	bne	Lcopystr_loop
 
-	teq	r4, #0x00000000
-	moveq	r0, #0x00000000
-	movne	r0, #ENAMETOOLONG
-
 Lcopystrexit:
 	teq	r3, #0x00000000
 	strne	r5, [r3]
+
+	teq	r4, #0x00000000
+	moveq	r0, #0x00000000
+	movne	r0, #ENAMETOOLONG
 
 	ldmfd	sp!, {r4-r5}
 	mov	pc, lr
@@ -146,8 +148,8 @@ ENTRY(copyoutstr)
 	/* Do the actual copy */
 do_copyinoutstr:
 	teq	r2, #0x00000000
-	mov	r6, #0x00000000
-	moveq	r0, #ENAMETOOLONG
+	moveq	r5, #0x00000000
+	moveq	r6, #0x00000000
 	beq	Lcopyinoutstrexit
 
 	ldr	r4, Lcurpcb
@@ -160,6 +162,7 @@ do_copyinoutstr:
 
 	add	r5, pc, #Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
+	mov 	r6, #0x00000000
 
 Lcopyinoutstr_loop:
 	ldrb	r5, [r0], #0x0001
@@ -169,17 +172,16 @@ Lcopyinoutstr_loop:
 	teqne	r6, r2
 	bne	Lcopyinoutstr_loop
 
-	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
+Lcopyinoutstrexit:
+	teq	r3, #0x00000000
+	strne	r6, [r3]
 
 	teq	r5, #0x00000000
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-Lcopyinoutstrexit:
-	teq	r3, #0x00000000
-	strne	r6, [r3]
-
+	mov	r6, #0x00000000
+	str	r6, [r4, #PCB_ONFAULT]
 	ldmfd	sp!, {r4-r6}
 	mov	pc, lr
 
@@ -201,7 +203,7 @@ Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
-	b	_C_LABEL(panic)
+	b	_panic
 
 Lcopystrpcbfaulttext:
 	.asciz	"No valid PCB during copyinoutstr() addr1=%08x addr2=%08x\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.9 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.8 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -82,12 +82,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-#include <sys/kernel.h>
-#endif
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-#include <machine/pcpu.h>
-#endif
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -95,23 +89,15 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#if defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
 #include <netinet6/ip6.h>
 #include <netinet6/icmp6.h>
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-#include <netinet/in_pcb.h>
-#else
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
+#else
+#include <netinet/in_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
-
-#ifdef __OpenBSD__ /*KAME IPSEC*/
-#undef IPSEC
-#endif
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -119,19 +105,7 @@
 #include <netkey/key_debug.h>
 #endif /* IPSEC */
 
-#ifndef __bsdi__
 #include "loop.h"
-#endif
-
-#include <net/net_osdep.h>
-
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-static MALLOC_DEFINE(M_IPMOPTS, "ip6_moptions", "internet multicast options");
-#endif
 
 struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;
@@ -150,12 +124,8 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 				  struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
-#if (defined(__bsdi__) && _BSDI_VERSION < 199802) || defined(__OpenBSD__)
+#ifdef __bsdi__
 extern struct ifnet loif;
-struct ifnet *loifp = &loif;
-#endif
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-extern struct ifnet *loifp;
 #endif
 
 #ifdef __NetBSD__
@@ -171,13 +141,12 @@ extern struct ifnet loif[NLOOP];
  * The mbuf opt, if present, will not be freed.
  */
 int
-ip6_output(m0, opt, ro, flags, im6o, ifpp)
+ip6_output(m0, opt, ro, flags, im6o)
 	struct mbuf *m0;
 	struct ip6_pktopts *opt;
 	struct route_in6 *ro;
 	int flags;
 	struct ip6_moptions *im6o;
-	struct ifnet **ifpp;		/* XXX: just for statistics */
 {
 	struct ip6_hdr *ip6, *mhip6;
 	struct ifnet *ifp;
@@ -277,11 +246,10 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	 * Calculate the total length of the extension header chain.
 	 * Keep the length of the unfragmentable part for fragmentation.
 	 */
-	optlen = 0;
 	if (exthdrs.ip6e_hbh) optlen += exthdrs.ip6e_hbh->m_len;
 	if (exthdrs.ip6e_dest1) optlen += exthdrs.ip6e_dest1->m_len;
 	if (exthdrs.ip6e_rthdr) optlen += exthdrs.ip6e_rthdr->m_len;
-	unfragpartlen = optlen + sizeof(struct ip6_hdr);
+	unfragpartlen = plen + sizeof(struct ip6_hdr);
 	/* NOTE: we don't add AH/ESP length here. do that later. */
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
 
@@ -326,12 +294,11 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	/*
 	 * Concatenate headers and fill in next header fields.
 	 * Here we have, on "m"
-	 *	IPv6 payload
+	 *	IPv6 payload  or
+	 *	IPv6 [esp* dest2 payload]
 	 * and we insert headers accordingly.  Finally, we should be getting:
+	 *	IPv6 hbh dest1 rthdr ah* dest2 payload  or
 	 *	IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
-	 *
-	 * during the header composing process, "m" points to IPv6 header.
-	 * "mprev" points to an extension header prior to esp.
 	 */
 	{
 		u_char *nexthdrp = &ip6->ip6_nxt;
@@ -340,15 +307,10 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		/*
 		 * we treat dest2 specially.  this makes IPsec processing
 		 * much easier.
-		 *
-		 * result: IPv6 dest2 payload
-		 * m and mprev will point to IPv6 header.
 		 */
 		if (exthdrs.ip6e_dest2) {
 			if (!hdrsplit)
 				panic("assumption failed: hdr not split");
-			exthdrs.ip6e_dest2->m_next = m->m_next;
-			m->m_next = exthdrs.ip6e_dest2;
 			*mtod(exthdrs.ip6e_dest2, u_char *) = ip6->ip6_nxt;
 			ip6->ip6_nxt = IPPROTO_DSTOPTS;
 		}
@@ -366,11 +328,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		(mp) = (m);\
 	}\
     }
-		/*
-		 * result: IPv6 hbh dest1 rthdr dest2 payload
-		 * m will point to IPv6 header.  mprev will point to the
-		 * extension header prior to dest2 (rthdr in the above case).
-		 */
 		MAKE_CHAIN(exthdrs.ip6e_hbh, mprev,
 			   nexthdrp, IPPROTO_HOPOPTS);
 		MAKE_CHAIN(exthdrs.ip6e_dest1, mprev,
@@ -565,9 +522,9 @@ skip_ipsec2:;
 		 * ifp must point it.
 		 */
 		if (ro->ro_rt == 0) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#ifdef __NetBSD__
 			/*
-			 * NetBSD/OpenBSD always clones routes, if parent is
+			 * NetBSD always clones routes, if parent is
 			 * PRF_CLONING.
 			 */
 			rtalloc((struct route *)ro);
@@ -581,7 +538,6 @@ skip_ipsec2:;
 		if (ro->ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
 			error = EHOSTUNREACH;
-			/* XXX in6_ifstat_inc(ifp, ifs6_out_discard); */
 			goto bad;
 		}
 		ia = ifatoia6(ro->ro_rt->rt_ifa);
@@ -590,8 +546,6 @@ skip_ipsec2:;
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
-
-		in6_ifstat_inc(ifp, ifs6_out_request);
 
 		/*
 		 * Check if there is the outgoing interface conflicts with
@@ -605,7 +559,6 @@ skip_ipsec2:;
 			if (!(ifp->if_flags & IFF_LOOPBACK)
 			 && ifp->if_index != opt->ip6po_pktinfo->ipi6_ifindex) {
 				ip6stat.ip6s_noroute++;
-				in6_ifstat_inc(ifp, ifs6_out_discard);
 				error = EHOSTUNREACH;
 				goto bad;
 			}
@@ -650,8 +603,6 @@ skip_ipsec2:;
 			if (ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
 				ip6stat.ip6s_badscope++;
 				error = ENETUNREACH; /* XXX: better error? */
-				/* XXX correct ifp? */
-				in6_ifstat_inc(ifp, ifs6_out_discard);
 				goto bad;
 			}
 			else {
@@ -675,34 +626,29 @@ skip_ipsec2:;
 		 */
 		if (ifp == NULL) {
 			if (ro->ro_rt == 0) {
-				ro->ro_rt = rtalloc1((struct sockaddr *)
-						&ro->ro_dst, 0
 #ifdef __FreeBSD__
-						, 0UL
-#endif
-						);
+				ro->ro_rt = rtalloc1((struct sockaddr *)
+						&ro->ro_dst, 0, 0UL);
+#endif /*__FreeBSD__*/
+#if defined(__bsdi__) || defined(__NetBSD__)
+				ro->ro_rt = rtalloc1((struct sockaddr *)
+						&ro->ro_dst, 0);
+#endif /*__bsdi__*/
 			}
 			if (ro->ro_rt == 0) {
 				ip6stat.ip6s_noroute++;
 				error = EHOSTUNREACH;
-				/* XXX in6_ifstat_inc(ifp, ifs6_out_discard) */
 				goto bad;
 			}
 			ia = ifatoia6(ro->ro_rt->rt_ifa);
 			ifp = ro->ro_rt->rt_ifp;
 			ro->ro_rt->rt_use++;
 		}
-
-		if ((flags & IPV6_FORWARDING) == 0)
-			in6_ifstat_inc(ifp, ifs6_out_request);
-		in6_ifstat_inc(ifp, ifs6_out_mcast);
-
 		/*
 		 * Confirm that the outgoing interface supports multicast.
 		 */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
 			ip6stat.ip6s_noroute++;
-			in6_ifstat_inc(ifp, ifs6_out_discard);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -750,13 +696,6 @@ skip_ipsec2:;
 	}
 
 	/*
-	 * Fill the outgoing inteface to tell the upper layer
-	 * to increment per-interface statistics.
-	 */
-	if (ifpp)
-		*ifpp = ifp;
-
-	/*
 	 * Determine path MTU.
 	 */
 	if (ro_pmtu != ro) {
@@ -775,7 +714,7 @@ skip_ipsec2:;
 			sin6_fin->sin6_len = sizeof(struct sockaddr_in6);
 			sin6_fin->sin6_addr = finaldst;
 
-#ifdef __FreeBSD__
+#if 0
 			rtcalloc((struct route *)ro_pmtu);
 #else
 			rtalloc((struct route *)ro_pmtu);
@@ -866,22 +805,11 @@ skip_ipsec2:;
 #endif
 	    )
 	{
-#if defined(__NetBSD__) && defined(IFA_STATS)
-		if (IFA_STATS) {
-			struct in6_ifaddr *ia6;
-			ip6 = mtod(m, struct ip6_hdr *);
-			ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
-			if (ia6) {
-				ia->ia_ifa.ifa_data.ifad_outbytes +=
-					m->m_pkthdr.len;
-			}
-		}
-#endif
-#ifdef OLDIP6OUTPUT
+#ifdef NEWIP6OUTPUT
+		error = nd6_output(ifp, m, dst, ro->ro_rt);
+#else
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
-#else
-		error = nd6_output(ifp, m, dst, ro->ro_rt);
 #endif
 		goto done;
 	} else if (mtu < IPV6_MMTU) {
@@ -890,11 +818,9 @@ skip_ipsec2:;
 		 * (see icmp6_input).
 		 */
 		error = EMSGSIZE;
-		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else if (ip6->ip6_plen == 0) { /* jumbo payload cannot be fragmented */
 		error = EMSGSIZE;
-		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else {
 		struct mbuf **mnext, *m_frgpart;
@@ -913,7 +839,6 @@ skip_ipsec2:;
 		len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
 		if (len < 8) {
 			error = EMSGSIZE;
-			in6_ifstat_inc(ifp, ifs6_out_fragfail);
 			goto bad;
 		}
 
@@ -984,10 +909,7 @@ skip_ipsec2:;
 			ip6f->ip6f_ident = id;
 			ip6f->ip6f_nxt = nextproto;
 			ip6stat.ip6s_ofragments++;
-			in6_ifstat_inc(ifp, ifs6_out_fragcreat);
 		}
-
-		in6_ifstat_inc(ifp, ifs6_out_fragok);
 	}
 
 	/*
@@ -1001,23 +923,12 @@ sendorfree:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {
-#if defined(__NetBSD__) && defined(IFA_STATS)
-			if (IFA_STATS) {
-				struct in6_ifaddr *ia6;
-				ip6 = mtod(m, struct ip6_hdr *);
-				ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
-				if (ia6) {
-					ia->ia_ifa.ifa_data.ifad_outbytes +=
-						m->m_pkthdr.len;
-				}
-			}
-#endif
-#ifdef OLDIP6OUTPUT
+#ifdef NEWIP6OUTPUT
+			error = nd6_output(ifp, m, dst, ro->ro_rt);
+#else
 			error = (*ifp->if_output)(ifp, m,
 						  (struct sockaddr *)dst,
 						  ro->ro_rt);
-#else
-			error = nd6_output(ifp, m, dst, ro->ro_rt);
 #endif
 		}
 		else
@@ -1624,7 +1535,7 @@ ip6_setmoptions(optname, im6op, m)
 			break;
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
-		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
+		if (IN6_IS_ADDR_ANY(&mreq->ipv6mr_multiaddr)) {
 			/*
 			 * We use the unspecified address to specify to accept
 			 * all multicast addresses. Only super user is allowed
@@ -1740,7 +1651,7 @@ ip6_setmoptions(optname, im6op, m)
 			break;
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
-		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
+		if (IN6_IS_ADDR_ANY(&mreq->ipv6mr_multiaddr)) {
 			if (suser(p->p_ucred, &p->p_acflag)) {
 				error = EACCES;
 				break;
@@ -1928,7 +1839,7 @@ ip6_setpktoptions(control, opt, priv)
 				return(ENXIO);
 			}
 
-			if (!IN6_IS_ADDR_UNSPECIFIED(&opt->ip6po_pktinfo->ipi6_addr)) {
+			if (!IN6_IS_ADDR_ANY(&opt->ip6po_pktinfo->ipi6_addr)) {
 				struct ifaddr *ia;
 				struct sockaddr_in6 sin6;
 

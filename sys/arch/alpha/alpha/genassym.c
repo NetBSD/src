@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.26 1999/12/16 20:20:11 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.24 1999/08/10 23:35:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.26 1999/12/16 20:20:11 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.24 1999/08/10 23:35:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -217,10 +217,11 @@ struct nv assyms[] = {
 #if defined(MULTIPROCESSOR)
 	/* CPU info */
 	def1(ALPHA_MAXPROCS),
+	def(SIZEOF_CPU_INFO, sizeof(struct cpu_info)),
 	off(CPU_INFO_CURPROC, struct cpu_info, ci_curproc),
 	off(CPU_INFO_FPCURPROC, struct cpu_info, ci_fpcurproc),
 	off(CPU_INFO_CURPCB, struct cpu_info, ci_curpcb),
-	off(CPU_INFO_IDLE_PCB_PADDR, struct cpu_info, ci_idle_pcb_paddr),
+	off(CPU_INFO_IDLE_THREAD, struct cpu_info, ci_idle_thread),
 #endif
 };
 int nassyms = sizeof(assyms)/sizeof(assyms[0]);

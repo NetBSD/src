@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.8 1999/10/04 23:24:05 lukem Exp $	*/
+/*	$NetBSD: term.h,v 1.7 1999/07/02 15:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ protected int  term_settc		__P((EditLine *, int, char **));
 protected int  term_telltc		__P((EditLine *, int, char **));
 protected int  term_echotc		__P((EditLine *, int, char **));
 
-protected int  term__putc		__P((int));
+protected void term__putc		__P((int));
 protected void term__flush		__P((void));
 
 /*

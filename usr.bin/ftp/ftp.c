@@ -1,12 +1,9 @@
-/*	$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.64 1999/09/22 07:18:34 lukem Exp $	*/
 
-/*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+/*
+ * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,25 +12,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -69,41 +62,12 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Copyright (C) 1997 and 1998 WIDE Project.
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.64 1999/09/22 07:18:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +87,7 @@ __RCSID("$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $");
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,12 +104,14 @@ __RCSID("$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $");
 
 #include "ftp_var.h"
 
-volatile int	abrtflag = 0;
-volatile int	timeoutflag = 0;
-sigjmp_buf	ptabort;
+extern int h_errno;
+
+int	data = -1;
+int	abrtflag = 0;
+jmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
-char	pasv[BUFSIZ];	/* passive port for proxy data connection */
+off_t	restart_point = 0;
 
 static int empty __P((FILE *, FILE *, int));
 
@@ -174,11 +141,13 @@ union sockunion {
 #endif
 };
 
-#define	su_len		su_si.si_len
-#define	su_family	su_si.si_family
-#define	su_port		su_si.si_port
+#define su_len		su_si.si_len
+#define su_family	su_si.si_family
+#define su_port		su_si.si_port
 
 union sockunion myctladdr, hisctladdr, data_addr;
+
+FILE	*cin, *cout;
 
 char *
 hookup(host, port)
@@ -191,9 +160,9 @@ hookup(host, port)
 	char hbuf[MAXHOSTNAMELEN];
 #else
 	struct hostent *hp = NULL;
-	char **ptr, *ep;
+	struct servent *sp = NULL;
+	char **ptr;
 	struct sockaddr_in sin;
-	long nport;
 #endif
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
@@ -214,10 +183,10 @@ hookup(host, port)
 	}
 
 	if (res0->ai_canonname)
-		(void)strlcpy(hostnamebuf, res0->ai_canonname,
-		    sizeof(hostnamebuf));
+		strncpy(hostnamebuf, res0->ai_canonname, sizeof(hostnamebuf));
 	else
-		(void)strlcpy(hostnamebuf, host, sizeof(hostnamebuf));
+		strncpy(hostnamebuf, host, sizeof(hostnamebuf));
+	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 	hostname = hostnamebuf;
 	
 	for (res = res0; res; res = res->ai_next) {
@@ -277,23 +246,14 @@ hookup(host, port)
 		return 0;
 	}
 
-	nport = strtol(port, &ep, 10);
-	if (*ep != '\0' && ep == port) {
-		struct servent	*svp;
+	if ((sp = getservbyname(port, "tcp")) == NULL) {
+		sin.sin_port = htons(21);
+	}
+	else
+		sin.sin_port = sp->s_port;
 
-		svp = getservbyname(port, "tcp");
-		if (svp == NULL) {
-			warnx("hookup: unknown port `%s'", port);
-			sin.sin_port = htons(FTP_PORT);
-		} else
-			sin.sin_port = svp->s_port;
-	} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
-		warnx("hookup: invalid port `%s'", port);
-		sin.sin_port = htons(FTP_PORT);
-	} else
-		sin.sin_port = htons(nport);
-
-	(void)strlcpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
+	strncpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
+	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 	hostname = hostnamebuf;
 
 	if (hp->h_length > sizeof(sin.sin_addr))
@@ -348,12 +308,14 @@ hookup(host, port)
 	if (myctladdr.su_len == 0)
 		myctladdr.su_len = len;
 
+#if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (family == AF_INET) {
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 	}
+#endif
 	cin = fdopen(s, "r");
 	cout = fdopen(s, "w");
 	if (cin == NULL || cout == NULL) {
@@ -367,7 +329,7 @@ hookup(host, port)
 	}
 	if (verbose)
 		fprintf(ttyout, "Connected to %s.\n", hostname);
-	if (getreply(0) > 2) {	/* read startup message from server */
+	if (getreply(0) > 2) { 	/* read startup message from server */
 		if (cin)
 			(void)fclose(cin);
 		if (cout)
@@ -375,6 +337,7 @@ hookup(host, port)
 		code = -1;
 		goto bad;
 	}
+#ifdef SO_OOBINLINE
 	{
 	int on = 1;
 
@@ -383,6 +346,7 @@ hookup(host, port)
 			warn("setsockopt");
 		}
 	}
+#endif /* SO_OOBINLINE */
 
 	return (hostname);
 bad:
@@ -394,32 +358,13 @@ void
 cmdabort(notused)
 	int notused;
 {
-	int oerrno = errno;
 
 	alarmtimer(0);
-	if (fromatty)
-		write(fileno(ttyout), "\n", 1);
+	putc('\n', ttyout);
 	abrtflag++;
 	if (ptflag)
-		siglongjmp(ptabort, 1);
-	errno = oerrno;
+		longjmp(ptabort, 1);
 }
-
-void
-cmdtimeout(notused)
-	int notused;
-{
-	int oerrno = errno;
-
-	alarmtimer(0);
-	if (fromatty)
-		write(fileno(ttyout), "\n", 1);
-	timeoutflag++;
-	if (ptflag)
-		siglongjmp(ptabort, 1);
-	errno = oerrno;
-}
-
 
 /*VARARGS*/
 int
@@ -432,11 +377,12 @@ command(va_alist)
 {
 	va_list ap;
 	int r;
-	sig_t oldsigint;
+	sig_t oldintr;
 #ifndef __STDC__
 	const char *fmt;
 #endif
 
+	abrtflag = 0;
 	if (debug) {
 		fputs("---> ", ttyout);
 #ifdef __STDC__
@@ -459,11 +405,7 @@ command(va_alist)
 		code = -1;
 		return (0);
 	}
-
-	abrtflag = 0;
-
-	oldsigint = xsignal(SIGINT, cmdabort);
-
+	oldintr = signal(SIGINT, cmdabort);
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
@@ -476,11 +418,13 @@ command(va_alist)
 	(void)fflush(cout);
 	cpend = 1;
 	r = getreply(!strcmp(fmt, "QUIT"));
-	if (abrtflag && oldsigint != SIG_IGN)
-		(*oldsigint)(SIGINT);
-	(void)xsignal(SIGINT, oldsigint);
+	if (abrtflag && oldintr != SIG_IGN)
+		(*oldintr)(SIGINT);
+	(void)signal(SIGINT, oldintr);
 	return (r);
 }
+
+char reply_string[BUFSIZ];		/* first line of previous reply */
 
 int
 getreply(expecteof)
@@ -490,20 +434,15 @@ getreply(expecteof)
 	int c, n, line;
 	int dig;
 	int originalcode = 0, continuation = 0;
-	sig_t oldsigint, oldsigalrm;
+	sig_t oldintr;
 	int pflag = 0;
 	char *cp, *pt = pasv;
 
-	abrtflag = 0;
-	timeoutflag = 0;
-
-	oldsigint = xsignal(SIGINT, cmdabort);
-	oldsigalrm = xsignal(SIGALRM, cmdtimeout);
-
+	oldintr = signal(SIGINT, cmdabort);
 	for (line = 0 ;; line++) {
 		dig = n = code = 0;
 		cp = current_line;
-		while (alarmtimer(60),((c = getc(cin)) != '\n')) {
+		while ((c = getc(cin)) != '\n') {
 			if (c == IAC) {     /* handle telnet commands */
 				switch (c = getc(cin)) {
 				case WILL:
@@ -525,40 +464,18 @@ getreply(expecteof)
 			}
 			dig++;
 			if (c == EOF) {
-				/*
-				 * these will get trashed by pswitch()
-				 * in lostpeer()
-				 */
-				int reply_timeoutflag = timeoutflag;
-				int reply_abrtflag = abrtflag;
-
-				alarmtimer(0);
-				if (expecteof && feof(cin)) {
-					(void)xsignal(SIGINT, oldsigint);
-					(void)xsignal(SIGALRM, oldsigalrm);
+				if (expecteof) {
+					(void)signal(SIGINT, oldintr);
 					code = 221;
 					return (0);
 				}
-				cpend = 0;
-				lostpeer(0);
+				lostpeer();
 				if (verbose) {
-					if (reply_timeoutflag)
-						fputs(
-    "421 Service not available, remote server timed out. Connection closed\n",
-						    ttyout);
-					else if (reply_abrtflag)
-						fputs(
-    "421 Service not available, user interrupt. Connection closed.\n",
-						    ttyout);
-					else
-						fputs(
-    "421 Service not available, remote server has closed connection.\n",
-						    ttyout);
-					(void)fflush(ttyout);
+					fputs(
+	    "421 Service not available, remote server has closed connection.\n",
+					    ttyout);
 				}
 				code = 421;
-				(void)xsignal(SIGINT, oldsigint);
-				(void)xsignal(SIGALRM, oldsigalrm);
 				return (4);
 			}
 			if (c != '\r' && (verbose > 0 ||
@@ -609,7 +526,8 @@ getreply(expecteof)
 			if (len > sizeof(reply_string))
 				len = sizeof(reply_string);
 
-			(void)strlcpy(reply_string, current_line, len);
+			(void)strncpy(reply_string, current_line, len);
+			reply_string[len] = '\0';
 		}
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
@@ -619,16 +537,11 @@ getreply(expecteof)
 		*cp = '\0';
 		if (n != '1')
 			cpend = 0;
-		alarmtimer(0);
-		(void)xsignal(SIGINT, oldsigint);
-		(void)xsignal(SIGALRM, oldsigalrm);
+		(void)signal(SIGINT, oldintr);
 		if (code == 421 || originalcode == 421)
-			lostpeer(0);
-		if (abrtflag && oldsigint != cmdabort && oldsigint != SIG_IGN)
-			(*oldsigint)(SIGINT);
-		if (timeoutflag && oldsigalrm != cmdtimeout &&
-		    oldsigalrm != SIG_IGN)
-			(*oldsigalrm)(SIGINT);
+			lostpeer();
+		if (abrtflag && oldintr != cmdabort && oldintr != SIG_IGN)
+			(*oldintr)(SIGINT);
 		return (n - '0');
 	}
 }
@@ -646,7 +559,7 @@ empty(cin, din, sec)
 	struct timeval t;
 	fd_set rmask;
 
-	FD_ZERO(&rmask);
+	FD_ZERO(&cin);
 	if (cin) {
 		if (nfd < fileno(cin))
 			nfd = fileno(cin);
@@ -695,33 +608,18 @@ empty(cin, din, sec)
 	return nr;
 }
 
-sigjmp_buf	xferabort;
+jmp_buf	sendabort;
 
 void
-abortxfer(notused)
+abortsend(notused)
 	int notused;
 {
-	char msgbuf[100];
-	int len;
 
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	switch (direction[0]) {
-	case 'r':
-		strlcpy(msgbuf, "\nreceive", sizeof(msgbuf));
-		break;
-	case 's':
-		strlcpy(msgbuf, "\nsend", sizeof(msgbuf));
-		break;
-	default:
-		errx(1, "abortxfer called with unknown direction `%s'",
-		    direction);
-	}
-	len = strlcat(msgbuf, " aborted. Waiting for remote to finish abort.\n",
-	    sizeof(msgbuf));
-	write(fileno(ttyout), msgbuf, len);
-	siglongjmp(xferabort, 1);
+	fputs("\nsend aborted\nwaiting for remote to finish abort.\n", ttyout);
+	longjmp(sendabort, 1);
 }
 
 void
@@ -733,7 +631,7 @@ sendrequest(cmd, local, remote, printnames)
 	int c, d;
 	FILE *fin, *dout;
 	int (*closefunc) __P((FILE *));
-	sig_t oldintr, oldintp;
+	sig_t oldinti, oldintr, oldintp;
 	volatile off_t hashbytes;
 	char *lmode, *bufp;
 	static size_t bufsize;
@@ -744,6 +642,7 @@ sendrequest(cmd, local, remote, printnames)
 	(void)&fin;
 	(void)&dout;
 	(void)&closefunc;
+	(void)&oldinti;
 	(void)&oldintr;
 	(void)&oldintp;
 	(void)&lmode;
@@ -770,23 +669,38 @@ sendrequest(cmd, local, remote, printnames)
 	closefunc = NULL;
 	oldintr = NULL;
 	oldintp = NULL;
+	oldinti = NULL;
 	lmode = "w";
-	if (sigsetjmp(xferabort, 1)) {
-		while (cpend)
+	if (setjmp(sendabort)) {
+		while (cpend) {
 			(void)getreply(0);
+		}
+		if (data >= 0) {
+			(void)close(data);
+			data = -1;
+		}
+		if (oldintr)
+			(void)signal(SIGINT, oldintr);
+		if (oldintp)
+			(void)signal(SIGPIPE, oldintp);
+		if (oldinti)
+			(void)xsignal(SIGINFO, oldinti);
 		code = -1;
 		goto cleanupsend;
 	}
-	(void)xsignal(SIGQUIT, psummary);
-	oldintr = xsignal(SIGINT, abortxfer);
+	oldintr = signal(SIGINT, abortsend);
+	oldinti = xsignal(SIGINFO, psummary);
 	if (strcmp(local, "-") == 0) {
 		fin = stdin;
 		progress = 0;
 	} else if (*local == '|') {
-		oldintp = xsignal(SIGPIPE, SIG_IGN);
+		oldintp = signal(SIGPIPE, SIG_IGN);
 		fin = popen(local + 1, "r");
 		if (fin == NULL) {
 			warn("%s", local + 1);
+			(void)signal(SIGINT, oldintr);
+			(void)signal(SIGPIPE, oldintp);
+			(void)xsignal(SIGINFO, oldinti);
 			code = -1;
 			goto cleanupsend;
 		}
@@ -796,22 +710,33 @@ sendrequest(cmd, local, remote, printnames)
 		fin = fopen(local, "r");
 		if (fin == NULL) {
 			warn("local: %s", local);
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
 			code = -1;
 			goto cleanupsend;
 		}
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode)) {
 			fprintf(ttyout, "%s: not a plain file.\n", local);
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
+			fclose(fin);
 			code = -1;
 			goto cleanupsend;
 		}
 		filesize = st.st_size;
 	}
 	if (initconn()) {
+		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINFO, oldinti);
+		if (oldintp)
+			(void)signal(SIGPIPE, oldintp);
 		code = -1;
+		if (closefunc != NULL)
+			(*closefunc)(fin);
 		goto cleanupsend;
 	}
-	if (sigsetjmp(xferabort, 1))
+	if (setjmp(sendabort))
 		goto abort;
 
 	if (restart_point &&
@@ -830,24 +755,42 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		if (rc < 0) {
 			warn("local: %s", local);
+			if (closefunc != NULL)
+				(*closefunc)(fin);
 			goto cleanupsend;
 		}
 #ifndef NO_QUAD
-		if (command("REST %lld", (long long) restart_point) !=
+		if (command("REST %qd", (long long) restart_point) !=
 #else
 		if (command("REST %ld", (long) restart_point) !=
 #endif
-		    CONTINUE)
+		    CONTINUE) {
+			if (closefunc != NULL)
+				(*closefunc)(fin);
 			goto cleanupsend;
+		}
 		lmode = "r+w";
 	}
 	if (remote) {
-		if (command("%s %s", cmd, remote) != PRELIM)
+		if (command("%s %s", cmd, remote) != PRELIM) {
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
+			if (oldintp)
+				(void)signal(SIGPIPE, oldintp);
+			if (closefunc != NULL)
+				(*closefunc)(fin);
 			goto cleanupsend;
-	} else {
-		if (command("%s", cmd) != PRELIM)
+		}
+	} else
+		if (command("%s", cmd) != PRELIM) {
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
+			if (oldintp)
+				(void)signal(SIGPIPE, oldintp);
+			if (closefunc != NULL)
+				(*closefunc)(fin);
 			goto cleanupsend;
-	}
+		}
 	dout = dataconn(lmode);
 	if (dout == NULL)
 		goto abort;
@@ -858,58 +801,30 @@ sendrequest(cmd, local, remote, printnames)
 		bufsize = sndbuf_size;
 		buf = xmalloc(bufsize);
 	}
+	if (debug)
+		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
 
 	progressmeter(-1);
-	oldintp = xsignal(SIGPIPE, SIG_IGN);
+	oldintp = signal(SIGPIPE, SIG_IGN);
 
 	switch (curtype) {
 
 	case TYPE_I:
 	case TYPE_L:
-		if (rate_put) {		/* rate limited */
-			while (1) {
-				struct timeval then, now, td;
-				off_t bufrem;
+		while (1) {
+			struct timeval then, now, td;
+			off_t bufrem;
 
+			if (rate_put)
 				(void)gettimeofday(&then, NULL);
-				errno = c = d = 0;
-				bufrem = rate_put;
-				while (bufrem > 0) {
-					if ((c = read(fileno(fin), buf,
-					    MIN(bufsize, bufrem))) <= 0)
-						goto senddone;
-					bytes += c;
-					bufrem -= c;
-					for (bufp = buf; c > 0;
-					    c -= d, bufp += d)
-						if ((d = write(fileno(dout),
-						    bufp, c)) <= 0)
-							break;
-					if (d < 0)
-						goto senddone;
-					if (hash &&
-					    (!progress || filesize < 0) ) {
-						while (bytes >= hashbytes) {
-							(void)putc('#', ttyout);
-							hashbytes += mark;
-						}
-						(void)fflush(ttyout);
-					}
-				}
-				while (1) {
-					(void)gettimeofday(&now, NULL);
-					timersub(&now, &then, &td);
-					if (td.tv_sec > 0)
-						break;
-					usleep(1000000 - td.tv_usec);
-				}
-			}
-		} else {		/* simpler/faster no rate limit */
-			while (1) {
-				errno = c = d = 0;
-				if ((c = read(fileno(fin), buf, bufsize)) <= 0)
+			errno = c = d = 0;
+			bufrem = rate_put ? rate_put : bufsize;
+			while (bufrem > 0) {
+				if ((c = read(fileno(fin), buf,
+				    MIN(bufsize, bufrem))) <= 0)
 					goto senddone;
 				bytes += c;
+				bufrem -= c;
 				for (bufp = buf; c > 0; c -= d, bufp += d)
 					if ((d = write(fileno(dout), bufp, c))
 					    <= 0)
@@ -922,6 +837,15 @@ sendrequest(cmd, local, remote, printnames)
 						hashbytes += mark;
 					}
 					(void)fflush(ttyout);
+				}
+			}
+			if (rate_put) {
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
 				}
 			}
 		}
@@ -977,55 +901,57 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		break;
 	}
-
 	progressmeter(1);
-	if (closefunc != NULL) {
+	if (closefunc != NULL)
 		(*closefunc)(fin);
-		fin = NULL;
-	}
 	(void)fclose(dout);
-	dout = NULL;
 	(void)getreply(0);
+	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINFO, oldinti);
+	if (oldintp)
+		(void)signal(SIGPIPE, oldintp);
 	if (bytes > 0)
 		ptransfer(0);
 	goto cleanupsend;
-
 abort:
-	(void)xsignal(SIGINT, oldintr);
-	oldintr = NULL;
+	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINFO, oldinti);
+	if (oldintp)
+		(void)signal(SIGPIPE, oldintp);
 	if (!cpend) {
 		code = -1;
-		goto cleanupsend;
+		return;
 	}
 	if (data >= 0) {
 		(void)close(data);
 		data = -1;
 	}
-	if (dout) {
-		(void)fclose(dout);
-		dout = NULL;
-	}
-	(void)getreply(0);
-	code = -1;
-	if (bytes > 0)
-		ptransfer(0);
-
-cleanupsend:
-	if (oldintr)
-		(void)xsignal(SIGINT, oldintr);
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
-	if (data >= 0) {
-		(void)close(data);
-		data = -1;
-	}
-	if (closefunc != NULL && fin != NULL)
-		(*closefunc)(fin);
 	if (dout)
 		(void)fclose(dout);
+	(void)getreply(0);
+	code = -1;
+	if (closefunc != NULL && fin != NULL)
+		(*closefunc)(fin);
+	if (bytes > 0)
+		ptransfer(0);
+cleanupsend:
 	progress = oprogress;
 	restart_point = 0;
-	bytes = 0;
+}
+
+jmp_buf	recvabort;
+
+void
+abortrecv(notused)
+	int notused;
+{
+
+	alarmtimer(0);
+	mflag = 0;
+	abrtflag = 0;
+	fputs("\nreceive aborted\nwaiting for remote to finish abort.\n",
+	    ttyout);
+	longjmp(recvabort, 1);
 }
 
 void
@@ -1035,7 +961,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 {
 	FILE *fout, *din;
 	int (*closefunc) __P((FILE *));
-	sig_t oldintr, oldintp;
+	sig_t oldinti, oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;
 	static size_t bufsize;
@@ -1052,12 +978,14 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	(void)&fout;
 	(void)&din;
 	(void)&closefunc;
+	(void)&oldinti;
 	(void)&oldintr;
 	(void)&oldintp;
 #endif
 
 	fout = NULL;
 	din = NULL;
+	oldinti = NULL;
 	hashbytes = mark;
 	direction = "received";
 	bytes = 0;
@@ -1080,22 +1008,35 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	oldintr = NULL;
 	oldintp = NULL;
 	tcrflag = !crflag && is_retr;
-	if (sigsetjmp(xferabort, 1)) {
-		while (cpend)
+	if (setjmp(recvabort)) {
+		while (cpend) {
 			(void)getreply(0);
+		}
+		if (data >= 0) {
+			(void)close(data);
+			data = -1;
+		}
+		if (oldintr)
+			(void)signal(SIGINT, oldintr);
+		if (oldinti)
+			(void)xsignal(SIGINFO, oldinti);
+		progress = oprogress;
+		preserve = opreserve;
 		code = -1;
-		goto cleanuprecv;
+		return;
 	}
-	(void)xsignal(SIGQUIT, psummary);
-	oldintr = xsignal(SIGINT, abortxfer);
+	oldintr = signal(SIGINT, abortrecv);
+	oldinti = xsignal(SIGINFO, psummary);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
 		if (access(local, W_OK) < 0) {
 			char *dir = strrchr(local, '/');
 
 			if (errno != ENOENT && errno != EACCES) {
 				warn("local: %s", local);
+				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
-				goto cleanuprecv;
+				return;
 			}
 			if (dir != NULL)
 				*dir = 0;
@@ -1105,24 +1046,32 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 				*dir = '/';
 			if (d < 0) {
 				warn("local: %s", local);
+				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
-				goto cleanuprecv;
+				return;
 			}
 			if (!runique && errno == EACCES &&
 			    chmod(local, (S_IRUSR|S_IWUSR)) < 0) {
 				warn("local: %s", local);
+				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
-				goto cleanuprecv;
+				return;
 			}
 			if (runique && errno == EACCES &&
 			   (local = gunique(local)) == NULL) {
+				(void)signal(SIGINT, oldintr);
+				(void)xsignal(SIGINFO, oldinti);
 				code = -1;
-				goto cleanuprecv;
+				return;
 			}
 		}
 		else if (runique && (local = gunique(local)) == NULL) {
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
 			code = -1;
-			goto cleanuprecv;
+			return;
 		}
 	}
 	if (!is_retr) {
@@ -1132,28 +1081,34 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		if (curtype != type)
 			changetype(type, 0);
 		filesize = remotesize(remote, 0);
-		if (code == 421 || code == -1)
-			goto cleanuprecv;
 	}
 	if (initconn()) {
+		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINFO, oldinti);
 		code = -1;
-		goto cleanuprecv;
+		return;
 	}
-	if (sigsetjmp(xferabort, 1))
+	if (setjmp(recvabort))
 		goto abort;
 	if (is_retr && restart_point &&
 #ifndef NO_QUAD
-	    command("REST %lld", (long long) restart_point) != CONTINUE)
+	    command("REST %qd", (long long) restart_point) != CONTINUE)
 #else
 	    command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
-		goto cleanuprecv;
-	if (! EMPTYSTRING(remote)) {
-		if (command("%s %s", cmd, remote) != PRELIM)
-			goto cleanuprecv;
+		return;
+	if (remote) {
+		if (command("%s %s", cmd, remote) != PRELIM) {
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
+			return;
+		}
 	} else {
-		if (command("%s", cmd) != PRELIM)
-			goto cleanuprecv;
+		if (command("%s", cmd) != PRELIM) {
+			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINFO, oldinti);
+			return;
+		}
 	}
 	din = dataconn("r");
 	if (din == NULL)
@@ -1163,7 +1118,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		progress = 0;
 		preserve = 0;
 	} else if (!ignorespecial && *local == '|') {
-		oldintp = xsignal(SIGPIPE, SIG_IGN);
+		oldintp = signal(SIGPIPE, SIG_IGN);
 		fout = popen(local + 1, "w");
 		if (fout == NULL) {
 			warn("%s", local+1);
@@ -1191,6 +1146,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		bufsize = rcvbuf_size;
 		buf = xmalloc(bufsize);
 	}
+	if (debug)
+		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
 
 	progressmeter(-1);
 
@@ -1201,48 +1158,26 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		if (is_retr && restart_point &&
 		    lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			warn("local: %s", local);
-			goto cleanuprecv;
+			progress = oprogress;
+			preserve = opreserve;
+			if (closefunc != NULL)
+				(*closefunc)(fout);
+			return;
 		}
-		if (rate_get) {		/* rate limiting */
-			while (1) {
-				struct timeval then, now, td;
-				off_t bufrem;
+		while (1) {
+			struct timeval then, now, td;
+			off_t bufrem;
 
+			if (rate_get)
 				(void)gettimeofday(&then, NULL);
-				errno = c = d = 0;
-				for (bufrem = rate_get; bufrem > 0; ) {
-					if ((c = read(fileno(din), buf,
-					    MIN(bufsize, bufrem))) <= 0)
-						goto recvdone;
-					bytes += c;
-					bufrem -=c;
-					if ((d = write(fileno(fout), buf, c))
-					    != c)
-						goto recvdone;
-					if (hash &&
-					    (!progress || filesize < 0)) {
-						while (bytes >= hashbytes) {
-							(void)putc('#', ttyout);
-							hashbytes += mark;
-						}
-						(void)fflush(ttyout);
-					}
-				}
-					/* sleep until time is up */
-				while (1) {
-					(void)gettimeofday(&now, NULL);
-					timersub(&now, &then, &td);
-					if (td.tv_sec > 0)
-						break;
-					usleep(1000000 - td.tv_usec);
-				}
-			}
-		} else {		/* faster code (no limiting) */
-			while (1) {
-				errno = c = d = 0;
-				if ((c = read(fileno(din), buf, bufsize)) <= 0)
+			errno = c = d = 0;
+			bufrem = rate_get ? rate_get : bufsize;
+			while (bufrem > 0) {
+				if ((c = read(fileno(din), buf,
+				    MIN(bufsize, bufrem))) <= 0)
 					goto recvdone;
 				bytes += c;
+				bufrem -=c;
 				if ((d = write(fileno(fout), buf, c)) != c)
 					goto recvdone;
 				if (hash && (!progress || filesize < 0)) {
@@ -1251,6 +1186,15 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 						hashbytes += mark;
 					}
 					(void)fflush(ttyout);
+				}
+			}
+			if (rate_get) {
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
 				}
 			}
 		}
@@ -1290,7 +1234,11 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			if (fseek(fout, 0L, SEEK_CUR) < 0) {
 done:
 				warn("local: %s", local);
-				goto cleanuprecv;
+				progress = oprogress;
+				preserve = opreserve;
+				if (closefunc != NULL)
+					(*closefunc)(fout);
+				return;
 			}
 		}
 		while ((c = getc(din)) != EOF) {
@@ -1335,14 +1283,14 @@ break2:
 			warn("local: %s", local);
 		break;
 	}
-
 	progressmeter(1);
-	if (closefunc != NULL) {
+	if (closefunc != NULL)
 		(*closefunc)(fout);
-		fout = NULL;
-	}
+	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINFO, oldinti);
+	if (oldintp)
+		(void)signal(SIGPIPE, oldintp);
 	(void)fclose(din);
-	din = NULL;
 	(void)getreply(0);
 	if (bare_lfs) {
 		fprintf(ttyout,
@@ -1367,30 +1315,28 @@ break2:
 			}
 		}
 	}
-	goto cleanuprecv;
+	progress = oprogress;
+	preserve = opreserve;
+	return;
 
 abort:
-			/*
-			 * abort using RFC 959 recommended IP,SYNC sequence
-			 */
-	if (! sigsetjmp(xferabort, 1)) {
-			/* this is the first call */
-		(void)xsignal(SIGINT, abort_squared);
-		if (!cpend) {
-			code = -1;
-			goto cleanuprecv;
-		}
-		abort_remote(din);
-	}
-	code = -1;
-	if (bytes > 0)
-		ptransfer(0);
 
-cleanuprecv:
-	if (oldintr)
-		(void)xsignal(SIGINT, oldintr);
+/* abort using RFC 959 recommended IP,SYNC sequence */
+
+	progress = oprogress;
+	preserve = opreserve;
 	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
+		(void)signal(SIGPIPE, oldintp);
+	(void)signal(SIGINT, SIG_IGN);
+	if (!cpend) {
+		code = -1;
+		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINFO, oldinti);
+		return;
+	}
+
+	abort_remote(din);
+	code = -1;
 	if (data >= 0) {
 		(void)close(data);
 		data = -1;
@@ -1399,9 +1345,10 @@ cleanuprecv:
 		(*closefunc)(fout);
 	if (din)
 		(void)fclose(din);
-	progress = oprogress;
-	preserve = opreserve;
-	bytes = 0;
+	if (bytes > 0)
+		ptransfer(0);
+	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINFO, oldinti);
 }
 
 /*
@@ -1441,10 +1388,8 @@ reinit:
 		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
 		case AF_INET:
-			if (epsv4 && !epsv4bad) {
+			if (epsv4) {
 				result = command(pasvcmd = "EPSV");
-				if (!connected)
-					return (1);
 				/*
 				 * this code is to be friendly with broken
 				 * BSDI ftpd
@@ -1455,25 +1400,13 @@ reinit:
 						ttyout);
 					result = COMPLETE + 1;
 				}
-				if (result != COMPLETE) {
-					epsv4bad = 1;
-					if (debug)
-						fputs(
-					"disabling epsv4 for this connection\n",
-						    ttyout);
-				}
 			}
-			if (result != COMPLETE) {
+			if (result != COMPLETE)
 				result = command(pasvcmd = "PASV");
-				if (!connected)
-					return (1);
-			}
 			break;
 #ifdef INET6
 		case AF_INET6:
 			result = command(pasvcmd = "EPSV");
-			if (!connected)
-				return (1);
 			/* this code is to be friendly with broken BSDI ftpd */
 			if (code / 10 == 22 && code != 229) {
 				fputs(
@@ -1483,8 +1416,6 @@ reinit:
 			}
 			if (result != COMPLETE)
 				result = command(pasvcmd = "LPSV");
-			if (!connected)
-				return (1);
 			break;
 #endif
 		default:
@@ -1496,18 +1427,16 @@ reinit:
 				(void)close(data);
 				data = -1;
 				passivemode = 0;
-#if 0
 				activefallback = 0;
-#endif
 				goto reinit;
 			}
 			fputs("Passive mode refused.\n", ttyout);
 			goto bad;
 		}
 
-#define	pack2(var, off) \
+#define pack2(var, off) \
 	(((var[(off) + 0] & 0xff) << 8) | ((var[(off) + 1] & 0xff) << 0))
-#define	pack4(var, off) \
+#define pack4(var, off) \
 	(((var[(off) + 0] & 0xff) << 24) | ((var[(off) + 1] & 0xff) << 16) | \
 	 ((var[(off) + 2] & 0xff) << 8) | ((var[(off) + 3] & 0xff) << 0))
 
@@ -1657,20 +1586,20 @@ reinit:
 				(void)close(data);
 				data = -1;
 				passivemode = 0;
-#if 0
 				activefallback = 0;
-#endif
 				goto reinit;
 			}
 			warn("connect");
 			goto bad;
 		}
+#if defined(IPPROTO_IP) && defined(IP_TOS)
 		if (data_addr.su_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 				       sizeof(int)) < 0)
 				warn("setsockopt TOS (ignored)");
 		}
+#endif
 		return (0);
 	}
 
@@ -1719,7 +1648,7 @@ noport:
 
 		switch (data_addr.su_family) {
 		case AF_INET:
-			if (!epsv4 || epsv4bad) {
+			if (!epsv4) {
 				result = COMPLETE + 1;
 				break;
 			}
@@ -1732,17 +1661,8 @@ noport:
 					NULL, 0, NI_NUMERICHOST)) {
 				result = ERROR;
 			} else {
-				result = command("EPRT |%d|%s|%d|", af, hname,
-						ntohs(data_addr.su_port));
-				if (!connected)
-					return (1);
-				if (result != COMPLETE) {
-					epsv4bad = 1;
-					if (debug)
-						fputs(
-					"disabling epsv4 for this connection\n",
-						    ttyout);
-				}
+				result = command("EPRT |%d|%s|%d|",
+					af, hname, ntohs(data_addr.su_port));
 			}
 			break;
 #endif
@@ -1766,7 +1686,7 @@ noport:
 			a = (char *)&data_addr.su_sin6.sin6_addr;
 			p = (char *)&data_addr.su_port;
 			result = command(
-	"LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+"LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 				 6, 16,
 				 UC(a[0]),UC(a[1]),UC(a[2]),UC(a[3]),
 				 UC(a[4]),UC(a[5]),UC(a[6]),UC(a[7]),
@@ -1778,8 +1698,6 @@ noport:
 		default:
 			result = COMPLETE + 1; /* xxx */
 		}
-		if (!connected)
-			return (1);
 	skip_port:
 		
 		if (result == ERROR && sendport == -1) {
@@ -1791,12 +1709,14 @@ noport:
 	}
 	if (tmpno)
 		sendport = 1;
+#if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 	}
+#endif
 	return (0);
 bad:
 	(void)close(data), data = -1;
@@ -1823,6 +1743,7 @@ dataconn(lmode)
 	}
 	(void)close(data);
 	data = s;
+#if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (from.su_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
@@ -1830,18 +1751,29 @@ dataconn(lmode)
 			warn("setsockopt TOS (ignored)");
 		}
 	}
+#endif
 	return (fdopen(data, lmode));
+}
+
+void
+psummary(notused)
+	int notused;
+{
+	int oerrno;
+
+	oerrno = errno;
+	if (bytes > 0)
+		ptransfer(1);
+	errno = oerrno;
 }
 
 void
 psabort(notused)
 	int notused;
 {
-	int oerrno = errno;
 
 	alarmtimer(0);
 	abrtflag++;
-	errno = oerrno;
 }
 
 void
@@ -1872,7 +1804,7 @@ pswitch(flag)
 	struct comvars *ip, *op;
 
 	abrtflag = 0;
-	oldintr = xsignal(SIGINT, psabort);
+	oldintr = signal(SIGINT, psabort);
 	if (flag) {
 		if (proxy)
 			return;
@@ -1888,9 +1820,10 @@ pswitch(flag)
 	}
 	ip->connect = connected;
 	connected = op->connect;
-	if (hostname)
-		(void)strlcpy(ip->name, hostname, sizeof(ip->name));
-	else
+	if (hostname) {
+		(void)strncpy(ip->name, hostname, sizeof(ip->name) - 1);
+		ip->name[sizeof(ip->name) - 1] = '\0';
+	} else
 		ip->name[0] = '\0';
 	hostname = op->name;
 	ip->hctl = hisctladdr;
@@ -1915,17 +1848,21 @@ pswitch(flag)
 	mcase = op->mcse;
 	ip->ntflg = ntflag;
 	ntflag = op->ntflg;
-	(void)strlcpy(ip->nti, ntin, sizeof(ip->nti));
-	(void)strlcpy(ntin, op->nti, sizeof(ntin));
-	(void)strlcpy(ip->nto, ntout, sizeof(ip->nto));
-	(void)strlcpy(ntout, op->nto, sizeof(ntout));
+	(void)strncpy(ip->nti, ntin, sizeof(ip->nti) - 1);
+	(ip->nti)[sizeof(ip->nti) - 1] = '\0';
+	(void)strcpy(ntin, op->nti);
+	(void)strncpy(ip->nto, ntout, sizeof(ip->nto) - 1);
+	(ip->nto)[sizeof(ip->nto) - 1] = '\0';
+	(void)strcpy(ntout, op->nto);
 	ip->mapflg = mapflag;
 	mapflag = op->mapflg;
-	(void)strlcpy(ip->mi, mapin, sizeof(ip->mi));
-	(void)strlcpy(mapin, op->mi, sizeof(mapin));
-	(void)strlcpy(ip->mo, mapout, sizeof(ip->mo));
-	(void)strlcpy(mapout, op->mo, sizeof(mapout));
-	(void)xsignal(SIGINT, oldintr);
+	(void)strncpy(ip->mi, mapin, sizeof(ip->mi) - 1);
+	(ip->mi)[sizeof(ip->mi) - 1] = '\0';
+	(void)strcpy(mapin, op->mi);
+	(void)strncpy(ip->mo, mapout, sizeof(ip->mo) - 1);
+	(ip->mo)[sizeof(ip->mo) - 1] = '\0';
+	(void)strcpy(mapout, op->mo);
+	(void)signal(SIGINT, oldintr);
 	if (abrtflag) {
 		abrtflag = 0;
 		(*oldintr)(SIGINT);
@@ -1938,12 +1875,11 @@ abortpt(notused)
 {
 
 	alarmtimer(0);
-	if (fromatty)
-		write(fileno(ttyout), "\n", 1);
+	putc('\n', ttyout);
 	ptabflg++;
 	mflag = 0;
 	abrtflag = 0;
-	siglongjmp(ptabort, 1);
+	longjmp(ptabort, 1);
 }
 
 void
@@ -1992,17 +1928,17 @@ proxtrans(cmd, local, remote)
 		pswitch(1);
 		return;
 	}
-	if (sigsetjmp(ptabort, 1))
+	if (setjmp(ptabort))
 		goto abort;
-	oldintr = xsignal(SIGINT, abortpt);
+	oldintr = signal(SIGINT, abortpt);
 	if ((restart_point &&
 #ifndef NO_QUAD
-	    (command("REST %lld", (long long) restart_point) != CONTINUE)
+	    (command("REST %qd", (long long) restart_point) != CONTINUE)
 #else
 	    (command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
 	    ) || (command("%s %s", cmd, remote) != PRELIM)) {
-		(void)xsignal(SIGINT, oldintr);
+		(void)signal(SIGINT, oldintr);
 		pswitch(1);
 		return;
 	}
@@ -2011,7 +1947,7 @@ proxtrans(cmd, local, remote)
 	secndflag++;
 	if ((restart_point &&
 #ifndef NO_QUAD
-	    (command("REST %lld", (long long) restart_point) != CONTINUE)
+	    (command("REST %qd", (long long) restart_point) != CONTINUE)
 #else
 	    (command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
@@ -2021,17 +1957,13 @@ proxtrans(cmd, local, remote)
 	(void)getreply(0);
 	pswitch(0);
 	(void)getreply(0);
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 	pswitch(1);
 	ptflag = 0;
 	fprintf(ttyout, "local: %s remote: %s\n", local, remote);
 	return;
 abort:
-	if (sigsetjmp(xferabort, 1)) {
-		(void)xsignal(SIGINT, oldintr);
-		return;
-	}
-	(void)xsignal(SIGINT, abort_squared);
+	(void)signal(SIGINT, SIG_IGN);
 	ptflag = 0;
 	if (strcmp(cmd, "RETR") && !proxy)
 		pswitch(1);
@@ -2046,7 +1978,7 @@ abort:
 		pswitch(1);
 		if (ptabflg)
 			code = -1;
-		(void)xsignal(SIGINT, oldintr);
+		(void)signal(SIGINT, oldintr);
 		return;
 	}
 	if (cpend)
@@ -2060,7 +1992,7 @@ abort:
 			pswitch(1);
 			if (ptabflg)
 				code = -1;
-			(void)xsignal(SIGINT, oldintr);
+			(void)signal(SIGINT, oldintr);
 			return;
 		}
 	}
@@ -2069,11 +2001,12 @@ abort:
 	pswitch(!proxy);
 	if (cpend) {
 		if ((nfnd = empty(cin, NULL, 10)) <= 0) {
-			if (nfnd < 0)
+			if (nfnd < 0) {
 				warn("abort");
+			}
 			if (ptabflg)
 				code = -1;
-			lostpeer(0);
+			lostpeer();
 		}
 		(void)getreply(0);
 		(void)getreply(0);
@@ -2083,7 +2016,7 @@ abort:
 	pswitch(1);
 	if (ptabflg)
 		code = -1;
-	(void)xsignal(SIGINT, oldintr);
+	(void)signal(SIGINT, oldintr);
 }
 
 void
@@ -2093,18 +2026,15 @@ reset(argc, argv)
 {
 	int nfnd = 1;
 
-	if (argc == 0 && argv != NULL) {
-		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
-		return;
-	}
 	while (nfnd > 0) {
 		if ((nfnd = empty(cin, NULL, 0)) < 0) {
 			warn("reset");
 			code = -1;
-			lostpeer(0);
-		} else if (nfnd)
+			lostpeer();
+		}
+		else if (nfnd) {
 			(void)getreply(0);
+		}
 	}
 }
 
@@ -2114,7 +2044,7 @@ gunique(local)
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
-	int d, count=0, len;
+	int d, count=0;
 	char ext = '1';
 
 	if (cp)
@@ -2126,9 +2056,9 @@ gunique(local)
 		warn("local: %s", local);
 		return (NULL);
 	}
-	len = strlcpy(new, local, sizeof(new));
-	cp = &new[len];
-	*cp++ = '.';    
+	(void)strcpy(new, local);
+	cp = new + strlen(new);
+	*cp++ = '.';
 	while (!d) {
 		if (++count == 100) {
 			fputs("runique: can't find unique file name.\n",
@@ -2155,39 +2085,18 @@ gunique(local)
 	return (new);
 }
 
-/*
- * abort_squared --
- *	aborts abort_remote(). lostpeer() is called because if the user is
- *	too impatient to wait or there's another problem then ftp really
- *	needs to get back to a known state.
- */
-void
-abort_squared(dummy)
-	int dummy;
-{
-	char msgbuf[100];
-	int len;
-
-	alarmtimer(0);
-	len = strlcpy(msgbuf, "\nremote abort aborted; closing connection.\n",
-	    sizeof(msgbuf));
-	write(fileno(ttyout), msgbuf, len);
-	lostpeer(0);
-	siglongjmp(xferabort, 1);
-}
-
 void
 abort_remote(din)
 	FILE *din;
 {
-	char buf[BUFSIZ];
+	char buf[MIN(4, BUFSIZ)];
 	int nfnd;
 
 	if (cout == NULL) {
 		warnx("Lost control connection for abort.");
 		if (ptabflg)
 			code = -1;
-		lostpeer(0);
+		lostpeer();
 		return;
 	}
 	/*
@@ -2202,11 +2111,12 @@ abort_remote(din)
 	fprintf(cout, "%cABOR\r\n", DM);
 	(void)fflush(cout);
 	if ((nfnd = empty(cin, din, 10)) <= 0) {
-		if (nfnd < 0)
+		if (nfnd < 0) {
 			warn("abort");
+		}
 		if (ptabflg)
 			code = -1;
-		lostpeer(0);
+		lostpeer();
 	}
 	if (din && (nfnd & 2)) {
 		while (read(fileno(din), buf, BUFSIZ) > 0)

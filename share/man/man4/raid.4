@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
+.\"     $NetBSD: raid.4,v 1.6 1999/09/05 02:17:24 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .Os
 .Sh NAME
 .Nm raid
-.Nd RAIDframe disk driver
+.Nd RAIDframe Disk Driver
 .Sh SYNOPSIS
 .Cd "pseudo-device raid" Op Ar count
 .Sh DESCRIPTION
@@ -135,10 +135,10 @@ The driver supports
 disks which are on-line, but are not
 actively used in an existing filesystem.  Should a disk fail, the
 driver is capable of reconstructing the failed disk onto a hot spare
-or back onto a replacement drive.
+or back onto a replacment drive.
 If the components are hot swapable, the failed disk can then be
-removed, a new disk put in its place, and a copyback operation
-performed.  The copyback operation, as its name indicates, will copy
+removed, a new disk put in it's place, and a copyback operation
+performed.  The copyback operation, as it's name indicates, will copy
 the reconstructed data from the hot spare to the previously failed
 (and now replaced) disk.  Hot spares can also be hot-added using
 .Xr raidctl 8 .
@@ -221,7 +221,7 @@ In all cases the
 .Sq raw
 partitions of the disks
 .Pa must not
-be combined.  Rather, each component partition should be offset by at least one
+be combined.  Rather, each component parition should be offset by at least one
 cylinder from the beginning of that component disk.  This ensures that 
 the disklabels for the component disks do not conflict with the
 disklabel for the 
@@ -285,7 +285,7 @@ structures developed by the folks at the Parallel Data Laboratory at
 Carnegie Mellon University (CMU).  RAIDframe, as originally distributed
 by CMU, provides a RAID simulator for a number of different
 architectures, and a user-level device driver and a kernel device
-driver for Digital Unix.  The 
+driver for for Digital Unix.  The 
 .Nm
 driver is a kernelized version of RAIDframe v1.1.
 .Pp

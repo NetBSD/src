@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.9 1999/11/05 20:16:56 erh Exp $
+#	$NetBSD: checkver,v 1.8 1999/07/02 15:12:15 simonb Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,10 +37,6 @@
 #
 
 #--------------------------------------------------------------------#
-# checkver - 
-#	Check for libraries that appear to be newer than the
-#	one we're about to install.
-#
 # checkver [-q] [-v shlib_version_file] -d [installedlibdir [library name]]"
 # checkver [-q] [-v shlib_version_file] -s [setlistdir [library name]]"
 # checkver [-q] [-v shlib_version_file] -f liblistfile [library name]"
@@ -80,12 +76,9 @@ trap "exit 2" 1 2 3 4 5 6 7 8 10 12 13 14 15
 trap "[ -d $TMP ] && rm -rf $TMP" 0
 
 Usage() {
-    echo "Usage: $1 [-q] [-v version_file] -d [installedlibdir [library name]]"
-    echo "       $1 [-q] [-v version_file] -s [setlistdir [library name]]"
-    echo "       $1 [-q] [-v version_file] -f liblistfile [library name]"
-    echo "	$1 is a script that looks for installed libraries with"
-    echo "	   versions greater than that in the version file."
-    echo "	For more information, read the comments."
+    echo "Usage: $1 [-q] -d [installedlibdir [library name]]"
+    echo "       $1 [-q] -s [setlistdir [library name]]"
+    echo "       $1 [-q] -f liblistfile [library name]"
 }
 
 basedir=/usr/src

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.15 1999/10/25 13:55:08 kleink Exp $	*/
+/*	$NetBSD: elf.c,v 1.14 1999/04/30 23:02:06 cgd Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -176,36 +176,36 @@ elf_copyargs(pack, arginfo, stack, argp)
 	a = (Aux32Info *) cpp;
 	if ((ap = (struct elf_args *) pack->ep_emul_arg)) {
 
-		a->a_type = AT_PHDR;
-		a->a_v = ap->arg_phaddr;
+		a->au_id = AUX_phdr;
+		a->au_v = ap->arg_phaddr;
 		a++;
 
-		a->a_type = AT_PHENT; 
-		a->a_v = ap->arg_phentsize;
+		a->au_id = AUX_phent;
+		a->au_v = ap->arg_phentsize;
 		a++;
 
-		a->a_type = AT_PHNUM;
-		a->a_v = ap->arg_phnum;
+		a->au_id = AUX_phnum;
+		a->au_v = ap->arg_phnum;
 		a++;
 
-		a->a_type = AT_PAGESZ;
-		a->a_v = NBPG;
+		a->au_id = AUX_pagesz;
+		a->au_v = NBPG;
 		a++;
 
-		a->a_type = AT_BASE;
-		a->a_v = ap->arg_interp;
+		a->au_id = AUX_base;
+		a->au_v = ap->arg_interp;
 		a++;
 
-		a->a_type = AT_FLAGS;
-		a->a_v = 0;
+		a->au_id = AUX_flags;
+		a->au_v = 0;
 		a++;
 
-		a->a_type = AT_ENTRY;
-		a->a_v = ap->arg_entry;
+		a->au_id = AUX_entry;
+		a->au_v = ap->arg_entry;
 		a++;
 
-		a->a_type = AT_NULL;
-		a->a_v = 0;
+		a->au_id = AUX_null;
+		a->au_v = 0;
 		a++;
 
 		free((char *) ap, M_TEMP);
@@ -228,21 +228,20 @@ elf_check_header(eh, type)
 	int type;
 {
 
-	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    eh->eh_ident[EI_CLASS] != ELFCLASS)
+	if (bcmp(eh->e_ident, Elf32_e_ident, Elf32_e_siz) != 0)
 		return ENOEXEC;
 
 	switch (eh->e_machine) {
 	/* XXX */
 #ifdef i386
-	case EM_386:
-	case EM_486:
+	case Elf_em_386:
+	case Elf_em_486:
 #endif
 #ifdef sparc
-	case EM_sparc:
+	case Elf_em_sparc:
 #endif
 #ifdef mips
-	case EM_mips:
+	case Elf_em_mips:
 #endif
 		break;
 
@@ -290,16 +289,16 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 		diff = uaddr - *addr;
 	}
 
-	*prot |= (ph->p_flags & PF_R) ? VM_PROT_READ : 0;
-	*prot |= (ph->p_flags & PF_W) ? VM_PROT_WRITE : 0;
-	*prot |= (ph->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
+	*prot |= (ph->p_flags & Elf_pf_r) ? VM_PROT_READ : 0;
+	*prot |= (ph->p_flags & Elf_pf_w) ? VM_PROT_WRITE : 0;
+	*prot |= (ph->p_flags & Elf_pf_x) ? VM_PROT_EXECUTE : 0;
 
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
 	psize = round_page(*size);
 
-	if(ph->p_flags & PF_W) {
+	if(ph->p_flags & Elf_pf_w) {
 		psize = trunc_page(*size);
 
 #ifdef ELF_DEBUG
@@ -470,7 +469,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 				    sizeof(eh))) != 0)
 		goto bad;
 
-	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
+	if ((error = elf_check_header(&eh, Elf_et_dyn)) != 0)
 		goto bad;
 
 	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
@@ -488,7 +487,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 		int prot = 0;
 
 		switch (ph[i].p_type) {
-		case PT_LOAD:
+		case Elf_pt_load:
 			elf_load_psection(vcset, nd.ni_vp, &ph[i], &addr,
 						&size, &prot);
 			/* Assume that the text segment is r-x only */
@@ -499,9 +498,9 @@ elf_load_file(p, path, vcset, entry, ap, last)
 			addr += size;
 			break;
 
-		case PT_DYNAMIC:
-		case PT_PHDR:
-		case PT_NOTE:
+		case Elf_pt_dynamic:
+		case Elf_pt_phdr:
+		case Elf_pt_note:
 			break;
 
 		default:
@@ -542,7 +541,7 @@ exec_elf_makecmds(p, epp)
 	if (epp->ep_hdrvalid < sizeof(Elf32_Ehdr))
 		return ENOEXEC;
 
-	if (elf_check_header(eh, ET_EXEC))
+	if (elf_check_header(eh, Elf_et_exec))
 		return ENOEXEC;
 
 	/*
@@ -575,7 +574,7 @@ exec_elf_makecmds(p, epp)
 
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
-		if (pp->p_type == PT_INTERP) {
+		if (pp->p_type == Elf_pt_interp) {
 			if (pp->p_filesz >= sizeof(interp))
 				goto bad;
 			if ((error = elf_read_from(p, epp->ep_vp, pp->p_offset,
@@ -621,7 +620,7 @@ exec_elf_makecmds(p, epp)
 		pp = &ph[i];
 
 		switch (ph[i].p_type) {
-		case PT_LOAD:
+		case Elf_pt_load:
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
 				&ph[i], &addr, &size, &prot);
 			if ((error = elf_set_segment(epp, addr, size,
@@ -638,15 +637,15 @@ exec_elf_makecmds(p, epp)
 			}
 			break;
 
-		case PT_SHLIB:
+		case Elf_pt_shlib:
 			error = ENOEXEC;
 			goto bad;
 
-		case PT_INTERP:
+		case Elf_pt_interp:
 			/* Already did this one */
-		case PT_DYNAMIC:
-		case PT_PHDR:
-		case PT_NOTE:
+		case Elf_pt_dynamic:
+		case Elf_pt_phdr:
+		case Elf_pt_note:
 			break;
 
 		default:

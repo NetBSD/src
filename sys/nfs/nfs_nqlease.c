@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.30 1999/10/10 02:44:55 sommerfeld Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.29 1999/03/25 04:07:33 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -698,15 +698,12 @@ nqnfsrv_getlease(nfsd, slp, procp, mrq)
 	nfsd->nd_duration = fxdr_unsigned(int, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
 		(nfsd->nd_flag & ND_KERBAUTH), FALSE);
-	if (error) {
+	if (error)
 		nfsm_reply(0);
-		return 0;
-	}
 	if (rdonly && flags == ND_WRITE) {
 		vput(vp);
 		error = EROFS;
 		nfsm_reply(0);
-		return 0;
 	}
 	(void) nqsrv_getlease(vp, &nfsd->nd_duration, flags, slp, procp,
 		nam, &cache, &frev, cred);

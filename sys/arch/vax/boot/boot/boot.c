@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.3 1999/06/30 18:33:33 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -39,6 +39,8 @@
 #include "lib/libsa/stand.h"
 
 #define V750UCODE(x)    ((x>>8)&255)
+
+#include <a.out.h>
 
 #include "vaxstand.h"
 

@@ -1,6 +1,7 @@
-/* $NetBSD: ispvar.h,v 1.27 1999/12/16 05:35:44 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.23 1999/07/05 20:31:36 mjacob Exp $ */
+/* release_6_5_99 */
 /*
- * Copyright (C) 1999 National Aeronautics & Space Administration
+ * Copyright (C) XXXX National Aeronautics & Space Administration
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,25 +36,16 @@
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/ic/ispmbox.h>
-#ifdef	ISP_TARGET_MODE
-#include <dev/ic/isp_target.h>
-#endif
 #endif
 #ifdef	__FreeBSD__
 #include <dev/isp/ispmbox.h>
-#ifdef	ISP_TARGET_MODE
-#include <dev/isp/isp_target.h>
-#endif
 #endif
 #ifdef	__linux__
 #include "ispmbox.h"
-#ifdef	ISP_TARGET_MODE
-#include "isp_target.h"
-#endif
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	11
+#define	ISP_CORE_VERSION_MINOR	9
 
 /*
  * Vector for bus specific code to provide specific services.
@@ -64,7 +56,7 @@ struct ispmdvec {
 	void		(*dv_wr_reg) __P((struct ispsoftc *, int, u_int16_t));
 	int		(*dv_mbxdma) __P((struct ispsoftc *));
 	int		(*dv_dmaset) __P((struct ispsoftc *,
-		ISP_SCSI_XFER_T *, ispreq_t *, u_int16_t *, u_int16_t));
+		ISP_SCSI_XFER_T *, ispreq_t *, u_int8_t *, u_int8_t));
 	void		(*dv_dmaclr)
 		__P((struct ispsoftc *, ISP_SCSI_XFER_T *, u_int32_t));
 	void		(*dv_reset0) __P((struct ispsoftc *));
@@ -73,7 +65,7 @@ struct ispmdvec {
 	const u_int16_t *dv_ispfw;	/* ptr to f/w */
 	u_int16_t 	dv_fwlen;	/* length of f/w */
 	u_int16_t	dv_codeorg;	/* code ORG for f/w */
-	u_int32_t	dv_fwrev;	/* f/w revision */
+	u_int16_t	dv_fwrev;	/* f/w revision */
 	/*
 	 * Initial values for conf1 register
 	 */
@@ -88,79 +80,24 @@ struct ispmdvec {
 #define	MAX_FC_TARG	126
 #endif
 
-#define	ISP_MAX_TARGETS(isp)	(IS_FC(isp)? MAX_FC_TARG : MAX_TARGETS)
-#ifdef	ISP2100_SCCLUN
-#define	_ISP_FC_LUN(isp)	65536
-#else
-#define	_ISP_FC_LUN(isp)	16
-#endif
-#define	_ISP_SCSI_LUN(isp)	\
-	((ISP_FW_REVX(isp->isp_fwrev) >= ISP_FW_REV(7, 55, 0))? 32 : 8)
-#define	ISP_MAX_LUNS(isp)	\
-	(IS_FC(isp)? _ISP_FC_LUN(isp) : _ISP_SCSI_LUN(isp))
-
-
-/*
- * Macros to read, write ISP registers through bus specific code.
- */
-
-#define	ISP_READ(isp, reg)	\
-	(*(isp)->isp_mdvec->dv_rd_reg)((isp), (reg))
-
-#define	ISP_WRITE(isp, reg, val)	\
-	(*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), (val))
-
-#define	ISP_MBOXDMASETUP(isp)	\
-	(*(isp)->isp_mdvec->dv_mbxdma)((isp))
-
-#define	ISP_DMASETUP(isp, xs, req, iptrp, optr)	\
-	(*(isp)->isp_mdvec->dv_dmaset)((isp), (xs), (req), (iptrp), (optr))
-
-#define	ISP_DMAFREE(isp, xs, hndl)	\
-	if ((isp)->isp_mdvec->dv_dmaclr) \
-	    (*(isp)->isp_mdvec->dv_dmaclr)((isp), (xs), (hndl))
-
-#define	ISP_RESET0(isp)	\
-	if ((isp)->isp_mdvec->dv_reset0) (*(isp)->isp_mdvec->dv_reset0)((isp))
-#define	ISP_RESET1(isp)	\
-	if ((isp)->isp_mdvec->dv_reset1) (*(isp)->isp_mdvec->dv_reset1)((isp))
-#define	ISP_DUMPREGS(isp)	\
-	if ((isp)->isp_mdvec->dv_dregs) (*(isp)->isp_mdvec->dv_dregs)((isp))
-
-#define	ISP_SETBITS(isp, reg, val)	\
- (*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), ISP_READ((isp), (reg)) | (val))
-
-#define	ISP_CLRBITS(isp, reg, val)	\
- (*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), ISP_READ((isp), (reg)) & ~(val))
-
-/* this is the size of a queue entry (request and response) */
+/* queue length must be a power of two */
 #define	QENTRY_LEN			64
-/* both request and result queue length must be a power of two */
 #define	RQUEST_QUEUE_LEN		MAXISPREQUEST
-/* I've seen wierdnesses with the result queue < 64 */
-#if	MAXISPREQUEST > 64
 #define	RESULT_QUEUE_LEN		(MAXISPREQUEST/2)
-#else
-#define	RESULT_QUEUE_LEN		MAXISPREQUEST
-#endif
 #define	ISP_QUEUE_ENTRY(q, idx)		((q) + ((idx) * QENTRY_LEN))
 #define	ISP_QUEUE_SIZE(n)		((n) * QENTRY_LEN)
 #define	ISP_NXT_QENTRY(idx, qlen)	(((idx) + 1) & ((qlen)-1))
-#define	ISP_QAVAIL(in, out, qlen)	\
+#define ISP_QAVAIL(in, out, qlen)	\
 	((in == out)? (qlen - 1) : ((in > out)? \
-	((qlen - 1) - (in - out)) : (out - in - 1)))
-
-#define	ISP_ADD_REQUEST(isp, iptr)	\
-	ISP_WRITE(isp, INMAILBOX4, iptr), isp->isp_reqidx = iptr
-
+		((qlen - 1) - (in - out)) : (out - in - 1)))
 /*
  * SCSI Specific Host Adapter Parameters- per bus, per target
  */
 
 typedef struct {
 	u_int		isp_gotdparms		: 1,
-			isp_req_ack_active_neg	: 1,
-			isp_data_line_active_neg: 1,
+        		isp_req_ack_active_neg	: 1,	
+	        	isp_data_line_active_neg: 1,
 			isp_cmd_dma_burst_enable: 1,
 			isp_data_dma_burst_enabl: 1,
 			isp_fifo_threshold	: 3,
@@ -169,13 +106,13 @@ typedef struct {
 			isp_lvdmode		: 1,
 						: 1,
 			isp_initiator_id	: 4,
-			isp_async_data_setup	: 4;
-	u_int16_t	isp_selection_timeout;
-	u_int16_t	isp_max_queue_depth;
+        		isp_async_data_setup	: 4;
+        u_int16_t	isp_selection_timeout;
+        u_int16_t	isp_max_queue_depth;
 	u_int8_t	isp_tag_aging;
-	u_int8_t	isp_bus_reset_delay;
-	u_int8_t	isp_retry_count;
-	u_int8_t	isp_retry_delay;
+       	u_int8_t	isp_bus_reset_delay;
+        u_int8_t	isp_retry_count;
+        u_int8_t	isp_retry_delay;
 	struct {
 		u_int	dev_enable	:	1,	/* ignored */
 					:	1,
@@ -210,21 +147,17 @@ typedef struct {
 
 /* technically, not really correct, as they need to be rated based upon clock */
 #define	ISP_40M_SYNCPARMS	0x080a
-#define	ISP_20M_SYNCPARMS	0x080c
-#define	ISP_10M_SYNCPARMS	0x0c19
-#define	ISP_08M_SYNCPARMS	0x0c25
-#define	ISP_05M_SYNCPARMS	0x0c32
-#define	ISP_04M_SYNCPARMS	0x0c41
+#define ISP_20M_SYNCPARMS	0x080c
+#define ISP_10M_SYNCPARMS	0x0c19
+#define ISP_08M_SYNCPARMS	0x0c25
+#define ISP_05M_SYNCPARMS	0x0c32
+#define ISP_04M_SYNCPARMS	0x0c41
 
 /*
  * Fibre Channel Specifics
  */
-#define	FL_PORT_ID		0x7e	/* FL_Port Special ID */
-#define	FC_PORT_ID		0x7f	/* Fabric Controller Special ID */
-#define	FC_SNS_ID		0x80	/* SNS Server Special ID */
-
 typedef struct {
-	u_int32_t		isp_fwoptions	: 16,
+	u_int			isp_fwoptions	: 16,
 						: 7,
 				loop_seen_once	: 1,
 				isp_loopstate	: 3,	/* Current Loop State */
@@ -233,12 +166,10 @@ typedef struct {
 				isp_onfabric	: 1;
 	u_int8_t		isp_loopid;	/* hard loop id */
 	u_int8_t		isp_alpa;	/* ALPA */
-	volatile u_int16_t	isp_lipseq;	/* LIP sequence # */
 	u_int32_t		isp_portid;
 	u_int8_t		isp_execthrottle;
-	u_int8_t		isp_retry_delay;
-	u_int8_t		isp_retry_count;
-	u_int8_t		isp_reserved;
+        u_int8_t		isp_retry_delay;
+        u_int8_t		isp_retry_count;
 	u_int16_t		isp_maxalloc;
 	u_int16_t		isp_maxfrmlen;
 	u_int64_t		isp_nodewwn;
@@ -253,16 +184,16 @@ typedef struct {
 	 * to move around.
 	 */
 	struct lportdb {
-		u_int
+		u_int	
 					loopid	: 8,
 						: 4,
 					fabdev	: 1,
 					roles	: 2,
 					valid	: 1;
-		u_int32_t		portid;
+		u_int32_t		portid;	
 		u_int64_t		node_wwn;
 		u_int64_t		port_wwn;
-	} portdb[MAX_FC_TARG], tport[FL_PORT_ID];
+	} portdb[MAX_FC_TARG];
 
 	/*
 	 * Scratch DMA mapped in area to fetch Port Database stuff, etc.
@@ -285,6 +216,46 @@ typedef struct {
 #define	LOOP_PDB_RCVD		2
 #define	LOOP_READY		7
 
+#define	FL_PORT_ID		0x7e	/* FL_Port Special ID */
+#define	FC_PORT_ID		0x7f	/* Fabric Controller Special ID */
+#define	FC_SNS_ID		0x80	/* SNS Server Special ID */
+
+#ifdef	ISP_TARGET_MODE
+/*
+ * Some temporary Target Mode definitions
+ */
+typedef struct tmd_cmd {
+	u_int8_t	cd_iid;		/* initiator */
+	u_int8_t	cd_tgt;		/* target */
+	u_int8_t	cd_lun;		/* LUN for this command */
+	u_int8_t	cd_state;
+	u_int8_t	cd_cdb[16];	/* command bytes */
+	u_int8_t	cd_sensedata[20];
+	u_int16_t	cd_rxid;
+	u_int32_t	cd_datalen;
+	u_int32_t	cd_totbytes;
+	void *		cd_hba;
+} tmd_cmd_t;
+
+/*
+ * Async Target Mode Event Definitions
+ */
+#define	TMD_BUS_RESET	0
+#define	TMD_BDR		1
+
+/*
+ * Immediate Notify data structure.
+ */
+#define NOTIFY_MSGLEN	5
+typedef struct {
+	u_int8_t	nt_iid;			/* initiator */
+	u_int8_t	nt_tgt;			/* target */
+	u_int8_t	nt_lun;			/* LUN for this command */
+	u_int8_t	nt_msg[NOTIFY_MSGLEN];	/* SCSI message byte(s) */
+} tmd_notify_t;
+
+#endif
+
 /*
  * Soft Structure per host adapter
  */
@@ -295,62 +266,89 @@ struct ispsoftc {
 	struct isposinfo	isp_osinfo;
 
 	/*
-	 * Pointer to bus specific functions and data
+	 * Pointer to bus specific data
 	 */
 	struct ispmdvec *	isp_mdvec;
 
 	/*
-	 * (Mostly) nonvolatile state. Board specific parameters
-	 * may contain some volatile state (e.g., current loop state).
+	 * Mostly nonvolatile state.
 	 */
 
-	void * 			isp_param;	/* type specific */
-	u_int16_t		isp_fwrev[3];	/* Loaded F/W revision */
-	u_int16_t		isp_romfw_rev[3]; /* PROM F/W revision */
-	u_int16_t		isp_maxcmds;	/* max possible I/O cmds */
-	u_int8_t		isp_type;	/* HBA Chip Type */
-	u_int8_t		isp_revision;	/* HBA Chip H/W Revision */
+	u_int		isp_clock	: 8,
+			isp_confopts	: 8,
+			isp_fast_mttr	: 1,
+					: 1,
+			isp_used	: 1,
+			isp_dblev	: 3,
+			isp_dogactive	: 1,
+			isp_bustype	: 1,	/* BUS Implementation */
+			isp_type	: 8;	/* HBA Type and Revision */
 
-	u_int32_t				: 4,
-				isp_touched	: 1,	/* board ever seen? */
-				isp_fast_mttr	: 1,	/* fast sram */
-				isp_bustype	: 1,	/* SBus or PCI */
-				isp_dogactive	: 1,	/* watchdog running */
-				isp_dblev	: 8,	/* debug level */
-				isp_clock	: 8,	/* input clock */
-				isp_confopts	: 8;	/* config options */
+	u_int16_t		isp_fwrev[3];	/* Running F/W revision */
+	u_int16_t		isp_romfw_rev[3]; /* 'ROM' F/W revision */
+	void * 			isp_param;
 
 	/*
 	 * Volatile state
 	 */
 
-	volatile u_int32_t	:	9,
+	volatile u_int
+				:	13,
 		isp_state	:	3,
+				:	2,
 		isp_sendmarker	:	2,	/* send a marker entry */
 		isp_update	:	2,	/* update parameters */
-		isp_nactive	:	16;	/* how many commands active */
-
-	volatile u_int16_t	isp_reqodx;	/* index of last ISP pickup */
-	volatile u_int16_t	isp_reqidx;	/* index of next request */
-	volatile u_int16_t	isp_residx;	/* index of next result */
-	volatile u_int16_t	isp_lasthdls;	/* last handle seed */
+		isp_nactive	:	10;	/* how many commands active */
 
 	/*
-	 * Active commands are stored here, indexed by handle functions.
+	 * Result and Request Queue indices.
 	 */
-	ISP_SCSI_XFER_T **isp_xflist;
+	volatile u_int8_t	isp_reqodx;	/* index of last ISP pickup */
+	volatile u_int8_t	isp_reqidx;	/* index of next request */
+	volatile u_int8_t	isp_residx;	/* index of next result */
+	volatile u_int8_t	isp_seqno;	/* rolling sequence # */
 
 	/*
-	 * request/result queue pointers and dma handles for them.
+	 * Sheer laziness, but it gets us around the problem
+	 * where we don't have a clean way of remembering
+	 * which transaction is bound to which ISP queue entry.
+	 *
+	 * There are other more clever ways to do this, but,
+	 * jeez, so I blow a couple of KB per host adapter...
+	 * and it *is* faster.
+	 */
+	ISP_SCSI_XFER_T *isp_xflist[RQUEST_QUEUE_LEN];
+
+	/*
+	 * request/result queues and dma handles for them.
 	 */
 	caddr_t			isp_rquest;
 	caddr_t			isp_result;
 	u_int32_t		isp_rquest_dma;
 	u_int32_t		isp_result_dma;
-};
 
-#define	SDPARAM(isp)	((sdparam *) (isp)->isp_param)
-#define	FCPARAM(isp)	((fcparam *) (isp)->isp_param)
+#ifdef	ISP_TARGET_MODE
+	/*
+	 * Vectors for handling target mode support.
+	 *
+	 * isp_tmd_newcmd is for feeding a newly arrived command to some
+	 * upper layer.
+	 *
+	 * isp_tmd_event is for notifying some upper layer that an event has
+	 * occurred that is not necessarily tied to any target (e.g., a SCSI
+	 * Bus Reset).
+	 *
+	 * isp_tmd_notify is for notifying some upper layer that some
+	 * event is now occurring that is either pertinent for a specific
+	 * device or for a specific command (e.g., BDR or ABORT TAG).
+	 *
+	 * It is left undefined (for now) how pools of commands are managed.
+	 */
+	void		(*isp_tmd_newcmd) __P((void *, tmd_cmd_t *));
+	void		(*isp_tmd_event) __P((void *, int));
+	void		(*isp_tmd_notify) __P((void *, tmd_notify_t *));
+#endif	   
+};
 
 /*
  * ISP States
@@ -365,12 +363,12 @@ struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
-#define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
-#define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
+#define	ISP_CFG_FULL_DUPLEX	0x01	/* Fibre Channel Only */
 
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
 #define	ISP_FW_REVX(xp)	((xp[0]<<24) | (xp[1] << 16) | xp[2])
 
+ 
 /*
  * Bus (implementation) types
  */
@@ -388,23 +386,49 @@ struct ispsoftc {
 #define	ISP_HA_SCSI_1040A	0x5
 #define	ISP_HA_SCSI_1040B	0x6
 #define	ISP_HA_SCSI_1040C	0x7
-#define	ISP_HA_SCSI_1240	0x8
-#define	ISP_HA_SCSI_1080	0x9
-#define	ISP_HA_SCSI_1280	0xa
+#define	ISP_HA_SCSI_1080	0xd
+#define	ISP_HA_SCSI_12X0	0xe
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
 #define	ISP_HA_FC_2200		0x20
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
-#define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
 #define	IS_1080(isp)	(isp->isp_type == ISP_HA_SCSI_1080)
-#define	IS_1280(isp)	(isp->isp_type == ISP_HA_SCSI_1280)
-#define	IS_12X0(isp)	\
-	(isp->isp_type == ISP_HA_SCSI_1240 || isp->isp_type == ISP_HA_SCSI_1280)
-#define	IS_DUALBUS(isp)	IS_12X0(isp)
-#define	IS_ULTRA2(isp)	\
-	(isp->isp_type == ISP_HA_SCSI_1080 || isp->isp_type == ISP_HA_SCSI_1280)
+#define	IS_12X0(isp)	(isp->isp_type == ISP_HA_SCSI_12X0)
 #define	IS_FC(isp)	(isp->isp_type & ISP_HA_FC)
+
+/*
+ * Macros to read, write ISP registers through bus specific code.
+ */
+
+#define	ISP_READ(isp, reg)	\
+	(*(isp)->isp_mdvec->dv_rd_reg)((isp), (reg))
+
+#define	ISP_WRITE(isp, reg, val)	\
+	(*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), (val))
+
+#define	ISP_MBOXDMASETUP(isp)	\
+	(*(isp)->isp_mdvec->dv_mbxdma)((isp))
+
+#define	ISP_DMASETUP(isp, xs, req, iptrp, optr)	\
+	(*(isp)->isp_mdvec->dv_dmaset)((isp), (xs), (req), (iptrp), (optr))
+
+#define	ISP_DMAFREE(isp, xs, seqno)	\
+	if ((isp)->isp_mdvec->dv_dmaclr) \
+		 (*(isp)->isp_mdvec->dv_dmaclr)((isp), (xs), (seqno))
+
+#define	ISP_RESET0(isp)	\
+	if ((isp)->isp_mdvec->dv_reset0) (*(isp)->isp_mdvec->dv_reset0)((isp))
+#define	ISP_RESET1(isp)	\
+	if ((isp)->isp_mdvec->dv_reset1) (*(isp)->isp_mdvec->dv_reset1)((isp))
+#define	ISP_DUMPREGS(isp)	\
+	if ((isp)->isp_mdvec->dv_dregs) (*(isp)->isp_mdvec->dv_dregs)((isp))
+
+#define	ISP_SETBITS(isp, reg, val)	\
+ (*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), ISP_READ((isp), (reg)) | (val))
+
+#define	ISP_CLRBITS(isp, reg, val)	\
+ (*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), ISP_READ((isp), (reg)) & ~(val))
 
 /*
  * Function Prototypes
@@ -447,10 +471,6 @@ typedef enum {
 	ISPCTL_RESET_DEV,		/* Reset Device */
 	ISPCTL_ABORT_CMD,		/* Abort Command */
 	ISPCTL_UPDATE_PARAMS,		/* Update Operating Parameters */
-#ifdef	ISP_TARGET_MODE
-	ISPCTL_ENABLE_LUN,		/* enable a LUN */
-	ISPCTL_MODIFY_LUN,		/* enable a LUN */
-#endif
 	ISPCTL_FCLINK_TEST		/* Test FC Link Status */
 } ispctl_t;
 int isp_control __P((struct ispsoftc *, ispctl_t, void *));
@@ -472,8 +492,6 @@ typedef enum {
 	ISPASYNC_PDB_CHANGED,		/* FC Port Data Base Changed */
 	ISPASYNC_CHANGE_NOTIFY,		/* FC SNS Change Notification */
 	ISPASYNC_FABRIC_DEV,		/* FC New Fabric Device */
-	ISPASYNC_TARGET_CMD,		/* New target command */
-	ISPASYNC_TARGET_EVENT		/* New target event */
 } ispasync_t;
 int isp_async __P((struct ispsoftc *, ispasync_t, void *));
 
@@ -481,5 +499,6 @@ int isp_async __P((struct ispsoftc *, ispasync_t, void *));
  * lost command routine (XXXX IN TRANSITION XXXX)
  */
 void isp_lostcmd __P((struct ispsoftc *, ISP_SCSI_XFER_T *));
+
 
 #endif	/* _ISPVAR_H */

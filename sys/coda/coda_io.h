@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_io.h,v 1.5 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: coda_io.h,v 1.4 1998/09/15 02:02:58 rvb Exp $	*/
 
 /*
  * 
@@ -42,6 +42,78 @@
 /*
  * This code was written for the Coda file system at Carnegie Mellon University.
  * Contributers include David Steere, James Kistler, and M. Satyanarayanan.
+ */
+
+/* 
+ * HISTORY
+ * $Log: coda_io.h,v $
+ * Revision 1.4  1998/09/15 02:02:58  rvb
+ * Final piece of rename cfs->coda
+ *
+ * Revision 1.3  1998/09/12 15:05:50  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
+ * Revision 1.2  1998/09/08 17:12:48  rvb
+ * Pass2 complete
+ *
+ * Revision 1.1.1.1  1998/08/29 21:26:46  rvb
+ * Very Preliminary Coda
+ *
+ * Revision 1.5  1998/08/18 17:05:23  rvb
+ * Don't use __RCSID now
+ *
+ * Revision 1.4  1998/08/18 16:31:47  rvb
+ * Sync the code for NetBSD -current; test on 1.3 later
+ *
+ * Revision 1.3  98/01/23  11:53:49  rvb
+ * Bring RVB_CODA1_1 to HEAD
+ * 
+ * Revision 1.2.38.1  97/12/16  12:40:22  rvb
+ * Sync with 1.3
+ * 
+ * Revision 1.2  96/01/02  16:57:15  bnoble
+ * Added support for Coda MiniCache and raw inode calls (final commit)
+ * 
+ * Revision 1.1.2.1  1995/12/20 01:57:42  bnoble
+ * Added CODA-specific files
+ *
+ * Revision 3.1.1.1  1995/03/04  19:08:20  bnoble
+ * Branch for NetBSD port revisions
+ *
+ * Revision 3.1  1995/03/04  19:08:20  bnoble
+ * Bump to major revision 3 to prepare for NetBSD port
+ *
+ * Revision 2.1  1994/07/21  16:25:25  satya
+ * Conversion to C++ 3.0; start of Coda Release 2.0
+ *
+ * Revision 1.3  94/06/14  16:53:47  dcs
+ * Added support for ODY-like mounting in the kernel (SETS)
+ * 
+ * Revision 1.3  94/06/14  16:48:03  dcs
+ * Added support for ODY-like mounting in the kernel (SETS)
+ * 
+ * Revision 1.2  92/10/27  17:58:28  lily
+ * merge kernel/latest and alpha/src/cfs
+ * 
+ * Revision 1.1  92/04/03  17:35:34  satya
+ * Initial revision
+ * 
+ * Revision 1.5  91/02/09  12:53:26  jjk
+ * Substituted rvb's history blurb so that we agree with Mach 2.5 sources.
+ * 
+ * Revision 2.2.1.1  91/01/06  22:08:22  rvb
+ * 	Created for the Coda File System.
+ * 	[90/05/23            dcs]
+ * 
+ * Revision 1.3  90/07/19  10:23:05  dcs
+ * Added ; to cfs_resize definition for port to 386.
+ * 
+ * Revision 1.2  90/05/31  17:02:09  dcs
+ * Prepare for merge with facilities kernel.
+ * 
+ * 
+ * 
  */
 
 #ifndef _CODAIO_H_

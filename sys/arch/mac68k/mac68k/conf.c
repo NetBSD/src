@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.53 1999/11/05 09:54:07 fredb Exp $	*/
+/*	$NetBSD: conf.c,v 1.51 1999/07/29 19:14:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #include "raid.h"
 #include "sd.h"
 #include "st.h"
-#include "vcoda.h"
 #include "vnd.h"
 
 /* No cdev for md */
@@ -114,7 +113,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "tun.h"
 #include "uk.h"
 #if 0
-#include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
@@ -160,12 +158,10 @@ cdev_decl(vnd);
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
 cdev_decl(wsmux);
-cdev_decl(wsdisplay);
 #endif
 cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
-cdev_decl(vc_nb_);
 
 dev_decl(filedesc,open);
 
@@ -223,13 +219,10 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
 #if 0
-	cdev_mouse_init(NWSMUX, wsmux),	/* 45: ws multiplexor */
-	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 44: ws multiplexor */
 #else
-	cdev_notdef(),			/* 45 */
-	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 44 */
 #endif
-	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -316,9 +309,6 @@ static int chrtoblktab[] = {
 	/* 42 */	20,
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
-	/* 45 */	NODEV,
-	/* 46 */	NODEV,
-	/* 47 */	NODEV,
 };
 
 dev_t

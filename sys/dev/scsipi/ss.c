@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.26 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.26.8.1 1999/12/21 23:19:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -317,7 +317,8 @@ ssread(dev, uio, flag)
 		ss->flags |= SSF_TRIGGERED;
 	}
 
-	return (physio(ssstrategy, NULL, dev, B_READ, ssminphys, uio));
+	return (physio(ssstrategy, NULL, dev, B_READ, ssminphys, uio,
+			DEF_BSHIFT));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.31 1999/02/26 23:44:46 wrstuden Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.31.14.1 1999/12/21 23:20:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -102,6 +102,7 @@ procfs_mount(mp, path, data, ndp, p)
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = 0;
+	mp->mnt_bshift = DEF_BSHIFT;
 	vfs_getnewfsid(mp, MOUNT_PROCFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.189 1999/12/16 20:17:22 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.183 1999/09/17 19:59:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 1999/12/16 20:17:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 1999/09/17 19:59:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,14 +292,6 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	alpha_pal_wrfen(0);
 	ALPHA_TBIA();
 	alpha_pal_imb();
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Set our SysValue to the address of our cpu_info structure.
-	 * Secondary processors do this in their spinup trampoline.
-	 */
-	alpha_pal_wrval((u_long)&cpu_info[alpha_pal_whami()]);
-#endif
 
 	/*
 	 * Get critical system information (if possible, from the
@@ -726,15 +718,6 @@ nobootinfo:
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Initialize the primary CPU's idle PCB to proc0's, until
-	 * autoconfiguration runs (it will get its own idle PCB there).
-	 */
-	curcpu()->ci_idle_pcb = &proc0paddr->u_pcb;
-	curcpu()->ci_idle_pcb_paddr = (u_long)proc0.p_md.md_pcbpaddr;
-#endif
-
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
@@ -875,7 +858,7 @@ consinit()
 #include "pckbd.h"
 #if (NPCKBC > 0) && (NPCKBD == 0)
 
-#include <dev/ic/pckbcvar.h>
+#include <dev/isa/pckbcvar.h>
 
 /*
  * This is called by the pbkbc driver if no pckbd is configured.
@@ -912,18 +895,18 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ptoa(totalphysmem));
+	format_bytes(pbuf, sizeof(pbuf), totalphysmem << PAGE_SHIFT);
 	printf("total memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(resvmem));
 	printf("(%s reserved for PROM, ", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("%s used by NetBSD)\n", pbuf);
 	if (unusedmem) {
-		format_bytes(pbuf, sizeof(pbuf), ptoa(unusedmem));
+		format_bytes(pbuf, sizeof(pbuf), ctob(unusedmem));
 		printf("WARNING: unused memory = %s\n", pbuf);
 	}
 	if (unknownmem) {
-		format_bytes(pbuf, sizeof(pbuf), ptoa(unknownmem));
+		format_bytes(pbuf, sizeof(pbuf), ctob(unknownmem));
 		printf("WARNING: %s of memory with unknown purpose\n", pbuf);
 	}
 
@@ -952,7 +935,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -1005,7 +988,7 @@ cpu_startup()
 		printf("stolen memory for VM structures = %s\n", pbuf);
 	}
 #endif
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %ld buffers containing %s of memory\n", (long)nbuf, pbuf);
 
 	/*
@@ -1177,7 +1160,7 @@ haltsys:
 #endif
 
 	/* Finally, powerdown/halt/reboot the system. */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN &&
+	if ((howto && RB_POWERDOWN) == RB_POWERDOWN &&
 	    platform.powerdown != NULL) {
 		(*platform.powerdown)();
 		printf("WARNING: powerdown failed!\n");
@@ -1271,7 +1254,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -2031,16 +2014,8 @@ delay(n)
 {
 	long N = cycles_per_usec * (n);
 
-	/*
-	 * XXX Should be written to use RPCC?
-	 */
-
-	__asm __volatile(
-		"# The 2 corresponds to the insn count\n"
-		"1:	subq	%2, %1, %0	\n"
-		"	bgt	%0, 1b"
-		: "=r" (N)
-		: "i" (2), "0" (N));
+	while (N > 0)				/* XXX */
+		N -= 3;				/* XXX */
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.153 1999/11/03 20:50:17 matt Exp $	*/
+/*	$NetBSD: sd.c,v 1.149.2.1 1999/12/21 23:19:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ sdattach(parent, sd, sc_link, ops)
 	struct scsipi_link *sc_link;
 	const struct sd_ops *ops;
 {
-	int error, result;
+	int error, result, i;
 	struct disk_parms *dp = &sd->params;
 	char pbuf[9];
 
@@ -154,7 +154,7 @@ sdattach(parent, sd, sc_link, ops)
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
 
-#if !defined(__i386__) && !defined(__vax__)
+#if !defined(i386)
 	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
 #endif
 
@@ -183,6 +183,8 @@ sdattach(parent, sd, sc_link, ops)
 		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %ld sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    dp->disksize);
+		i = intlog2(dp->blksize);
+		sd->sc_dk.dk_byteshift = (dp->blksize & ((1 << i) -1)) ? 0 : i;
 		break;
 
 	case SDGP_RESULT_OFFLINE:
@@ -401,8 +403,9 @@ sdopen(dev, flag, fmt, p)
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 		    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
 		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR)
+			if (part != RAW_PART || fmt != S_IFCHR) {
 				goto bad3;
+			}
 			else
 				goto out;
 		}
@@ -432,6 +435,17 @@ sdopen(dev, flag, fmt, p)
 				goto bad2;
 			}
 			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
+			if powerof2(sd->params.blksize) {
+				sd->sc_dk.dk_byteshift =
+					intlog2(sd->params.blksize);
+			} else if (blocksize(-1) == 1) {
+				sd->sc_dk.dk_byteshift = -sd->params.blksize;
+			} else {
+				/* kernel only supports 2**n disks which this
+				 * isn't. Too bad. */
+				error = ENXIO;
+				goto bad2;
+			}
 
 			/* Load the partition info if not already loaded. */
 			sdgetdisklabel(sd);
@@ -691,12 +705,15 @@ sdstart(v)
 		 * First, translate the block to absolute and put it in terms
 		 * of the logical blocksize of the device.
 		 */
-		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+		blkno = bp->b_blkno;
 		if (SDPART(bp->b_dev) != RAW_PART) {
 			p = &lp->d_partitions[SDPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
-		nblks = howmany(bp->b_bcount, lp->d_secsize);
+#if 0
+		blkno *= lp->d_secsize / sd->params.blksize;
+#endif
+		nblks = howmany(bp->b_bcount, sd->params.blksize);
 
 #if NSD_SCSIBUS > 0
 		/*
@@ -811,8 +828,10 @@ sdread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 
-	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
+	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio,
+			sd->sc_dk.dk_byteshift));
 }
 
 int
@@ -821,8 +840,10 @@ sdwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 
-	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
+	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio,
+			sd->sc_dk.dk_byteshift));
 }
 
 /*
@@ -882,6 +903,10 @@ sdioctl(dev, cmd, addr, flag, p)
 		    &sd->sc_dk.dk_label->d_partitions[part];
 		return (0);
 
+	case DIOCGBSHIFT:
+		*(int *)addr = sd->sc_dk.dk_byteshift;
+		return (0);
+
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
@@ -898,7 +923,8 @@ sdioctl(dev, cmd, addr, flag, p)
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(SDLABELDEV(dev),
 				    sdstrategy, sd->sc_dk.dk_label,
-				    sd->sc_dk.dk_cpulabel);
+				    sd->sc_dk.dk_cpulabel,
+				    sd->sc_dk.dk_byteshift);
 		}
 
 		sd->flags &= ~SDF_LABELLING;
@@ -929,7 +955,7 @@ sdioctl(dev, cmd, addr, flag, p)
 			if ((sd->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
 			    sd->sc_dk.dk_bopenmask + sd->sc_dk.dk_copenmask ==
 			    sd->sc_dk.dk_openmask) {
-				error = scsipi_prevent(sd->sc_link, PR_ALLOW,
+				error =  scsipi_prevent(sd->sc_link, PR_ALLOW,
 				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
 					return (error);
@@ -991,8 +1017,7 @@ sdgetdefaultlabel(sd, lp)
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -1025,7 +1050,7 @@ sdgetdisklabel(sd)
 	 * Call the generic disklabel extraction routine
 	 */
 	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-	    sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	    sdstrategy, lp, sd->sc_dk.dk_cpulabel, sd->sc_dk.dk_byteshift);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
@@ -1126,7 +1151,7 @@ sd_interpret_sense(xs)
 				printf("%s: respinning up disk\n",
 				    sd->sc_dev.dv_xname);
 				retval = scsipi_start(sd->sc_link, SSS_START,
-				    XS_CTL_URGENT | XS_CTL_NOSLEEP);
+				   XS_CTL_URGENT | XS_CTL_NOSLEEP);
 				if (retval != 0) {
 					printf(
 					    "%s: respin of disk failed - %d\n",
@@ -1171,7 +1196,7 @@ sdsize(dev)
 		size = -1;
 	else
 		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
-		    (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+		    (sd->sc_dk.dk_label->d_secsize / DEF_BSIZE);
 	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 	return (size);
@@ -1205,6 +1230,9 @@ sddump(dev, blkno, va, size)
 	struct scsipi_xfer *xs;	/* ... convenience */
 	int	retval;
 
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
+
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
 		return (EFAULT);
@@ -1219,9 +1247,6 @@ sddump(dev, blkno, va, size)
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (ENODEV);
-
 	/* Make sure it was initialized. */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
 		return (ENXIO);
@@ -1232,7 +1257,7 @@ sddump(dev, blkno, va, size)
 	if ((size % sectorsize) != 0)
 		return (EFAULT);
 	totwrt = size / sectorsize;
-	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+	blkno = dbtob(blkno, DEF_BSHIFT) / sectorsize;	/* blkno in DEV_BSIZE units */
 
 	nsects = lp->d_partitions[part].p_size;
 	sectoff = lp->d_partitions[part].p_offset;

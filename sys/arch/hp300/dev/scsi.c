@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.26 1999/10/31 12:36:30 he Exp $	*/
+/*	$NetBSD: scsi.c,v 1.25 1999/02/06 03:30:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -487,14 +487,13 @@ scsi_print(aux, pnp)
 	switch (inqbuf->version) {
 	case 1:
 	case 2:
-	case 3:
 		scsi_str(inqbuf->vendor_id, vendor, sizeof(inqbuf->vendor_id));
 		scsi_str(inqbuf->product_id, product,
 		    sizeof(inqbuf->product_id));
 		scsi_str(inqbuf->rev, revision, sizeof(inqbuf->rev));
 		printf("<%s, %s, %s>", vendor, product, revision);
-		if (inqbuf->version >= 2)
-			printf(" (SCSI-%d)", inqbuf->version);
+		if (inqbuf->version == 2)
+			printf(" (SCSI-2)");
 		break;
 	default:
 		printf("type 0x%x, qual 0x%x, ver %d",

@@ -1,5 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1999/12/05 15:50:46 tsubai Exp $	*/
-
+/*	$NetBSD: clock.c,v 1.4 1999/07/11 12:44:05 tsubai Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -43,12 +42,11 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  */
 
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
-#include <dev/clock_subr.h>
 
 #include <machine/autoconf.h>
 #include <machine/adrsmap.h>
@@ -62,9 +60,11 @@ void cpu_initclocks __P((void));
 void inittodr __P((time_t));
 void resettodr __P((void));
 
-struct cfattach mkclock_ca = {
+struct cfattach mkclock_ca = {	/* aboid name crash with mips_mcclock.c */
 	sizeof(struct device), clockmatch, clockattach
 };
+
+extern struct cfdriver mkclock_cd;
 
 int
 clockmatch(parent, cf, aux)
@@ -87,6 +87,7 @@ clockattach(parent, self, aux)
 {
 	printf("\n");
 }
+
 
 /*
  * Machine-dependent clock routines.
@@ -133,6 +134,14 @@ cpu_initclocks()
 	*(char *)INTEN0 |= (char)INTEN0_TIMINT;
 }
 
+/*
+ * This code is defunct after 2099.
+ * Will Unix still be here then??
+ */
+static short dayyr[12] = {
+	0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+};
+
 #define	bcd_to_int(BCD)	(i = BCD, (((i) >> 4) & 0xf) * 10 + ((i) & 0xf))
 #define	int_to_bcd(INT)	(i = INT, ((((i) / 10) % 10) << 4) + (i) % 10)
 
@@ -147,10 +156,10 @@ inittodr(base)
 {
 	register volatile u_char *rtc_port = (u_char *)RTC_PORT;
 	register volatile u_char *rtc_data = (u_char *)DATA_PORT;
+	register int days, yr;
 	int sec, min, hour, week, day, mon, year;
 	int deltat, badbase = 0;
 	register u_int i;
-	struct clock_ymdhms dt;
 
 	if (base < 5*SECYR) {
 		printf("WARNING: preposterous time in file system\n");
@@ -170,7 +179,7 @@ inittodr(base)
 	*rtc_port = 0;
 
 	/* simple sanity checks */
-	if (mon < 1 || mon > 12 || day < 1 || day > 31 ||
+	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31 ||
 	    hour > 23 || min > 59 || sec > 59) {
 		printf("WARNING: preposterous clock chip time\n");
 		/*
@@ -182,15 +191,14 @@ inittodr(base)
 			resettodr();
 		return;
 	}
-
-	dt.dt_year = year + (year >= 70 ? 1900 : 2000);
-	dt.dt_mon = mon;
-	dt.dt_day = day;
-	dt.dt_hour = hour;
-	dt.dt_min = min;
-	dt.dt_sec = sec;
-
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
+	days = 0;
+	for (yr = 70; yr < year; yr++)
+		days += LEAPYEAR(yr) ? 366 : 365;
+	days += dayyr[mon - 1] + day - 1;
+	if (LEAPYEAR(yr) && mon > 2)
+		days++;
+	/* now have days since Jan 1, 1970; the rest is easy... */
+	time.tv_sec = days * SECDAY + hour * 3600 + min * 60 + sec;
 
 	if (!badbase) {
 		/*
@@ -202,7 +210,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
+		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 	printf(" -- CHECK AND RESET THE DATE!\n");
@@ -220,18 +228,50 @@ resettodr()
 {
 	register volatile u_char *rtc_port = (u_char *)RTC_PORT;
 	register volatile u_char *rtc_data = (u_char *)DATA_PORT;
+	int sec, min, hour, week, day, mon, year;
+	register int t, t2, t3;
 	register int i;
-	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	/* compute the year */
+	t3 = t2 = time.tv_sec / SECDAY;
+	t = 69;
+	while (t2 >= 0) {	/* whittle off years */
+		t3 = t2;
+		t++;
+		t2 -= LEAPYEAR(t) ? 366 : 365;
+	}
+
+	year = t;
+
+	/* t3 = month + day; separate */
+	t = LEAPYEAR(t);
+	for (t2 = 1; t2 < 12; t2++)
+		if (t3 < dayyr[t2] + (t && t2 > 1))
+			break;
+
+	/* t2 is month */
+	mon = t2;
+	t3 = t3 - dayyr[t2 - 1] + 1;
+	if (t && t2 > 2)
+		t3--;
+	day = t3;
+
+	week = 0;
+
+	/* the rest is easy */
+	t = time.tv_sec % SECDAY;
+	hour = t / 3600;
+	t %= 3600;
+	min = t / 60;
+	sec = t % 60;
 
 	*rtc_port = SET_CLOCK;
-	*rtc_data++ = int_to_bcd(dt.dt_sec);
-	*rtc_data++ = int_to_bcd(dt.dt_min);
-	*rtc_data++ = int_to_bcd(dt.dt_hour);
-	*rtc_data++ = int_to_bcd(dt.dt_wday);
-	*rtc_data++ = int_to_bcd(dt.dt_day);
-	*rtc_data++ = int_to_bcd(dt.dt_mon);
-	*rtc_data   = int_to_bcd(dt.dt_year);
+	*rtc_data++ = int_to_bcd(sec);
+	*rtc_data++ = int_to_bcd(min);
+	*rtc_data++ = int_to_bcd(hour);
+	*rtc_data++ = int_to_bcd(week);
+	*rtc_data++ = int_to_bcd(day);
+	*rtc_data++ = int_to_bcd(mon);
+	*rtc_data   = int_to_bcd(year);
 	*rtc_port = 0;
 }

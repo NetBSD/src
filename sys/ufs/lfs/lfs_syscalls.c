@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.37 1999/11/23 23:52:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.33.8.1 1999/12/21 23:20:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -475,10 +475,10 @@ sys_lfs_markv(p, v, retval)
 	lfs_vunref(vp);
 	/* Free up fakebuffers -- have to take these from the LOCKED list */
  again:
-	s = splbio();
 	for(bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp=nbp) {
 		nbp = bp->b_freelist.tqe_next;
 		if(bp->b_flags & B_CALL) {
+			s = splbio();
 			if(bp->b_flags & B_BUSY) { /* not bloody likely */
 				bp->b_flags |= B_WANTED;
 				tsleep(bp, PRIBIO+1, "markv", 0);
@@ -488,10 +488,8 @@ sys_lfs_markv(p, v, retval)
 			bremfree(bp);
 			splx(s);
 			brelse(bp);
-			s = splbio();
 		}
 	}
-	splx(s);
 	free(start, M_SEGMENT);
 	lfs_segunlock(fs);
 	vfs_unbusy(mntp);
@@ -767,8 +765,8 @@ sys_lfs_segclean(p, v, retval)
 	}
 	
 	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize) - 1;
-	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEV_BSIZE) +
-		sup->su_ninos * btodb(fs->lfs_bsize);
+	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEF_BSIZE) +
+		sup->su_ninos * btodb(fs->lfs_bsize, DEF_BSHIFT);
 	sup->su_flags &= ~SEGUSE_DIRTY;
 #ifdef DEBUG_LFS
 	/* XXX KS - before we return, really empty the segment (i.e., fill
@@ -784,7 +782,7 @@ sys_lfs_segclean(p, v, retval)
 		sizeleft = fs->lfs_ssize * fs->lfs_bsize - offset;
 		while(sizeleft > 0) {
 			bufsize = (sizeleft < MAXPHYS) ? sizeleft : MAXPHYS;
-			zbp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, start+(offset/DEV_BSIZE), bufsize);
+			zbp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, start+(offset/DEF_BSIZE), bufsize);
 			memset(zbp->b_data, 'Z', bufsize);
 			zbp->b_saveaddr = (caddr_t)fs;
 			s = splbio();
@@ -995,7 +993,6 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			*lfs_ifind(ump->um_lfs, ino, (struct dinode *)bp->b_data);
 		brelse(bp);
 	}
-	ip->i_ffs_effnlink = ip->i_ffs_nlink;
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.4 1999/11/06 17:42:33 thorpej Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.3 1998/09/02 11:16:33 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,17 +54,17 @@ extern __inline void
 TBIS_60(va)
 	vaddr_t	va;
 {
-	register vaddr_t	r_va __asm("%a0") = va;
+	register vaddr_t	r_va __asm("a0") = va;
 	int	tmp;
 
-	__asm __volatile (" movc   %1, %%dfc;"	/* select supervisor	*/
-			  " .word 0xf508;"	/* pflush %a0@		*/
+	__asm __volatile (" movc   %1, dfc;"	/* select supervisor	*/
+			  " .word 0xf508;"	/* pflush a0@		*/
 			  " moveq  %3, %1;"	/* select user		*/
-			  " movc   %1, %%dfc;"
-			  " .word 0xf508;"	/* pflush %a0@		*/
-			  " movc   %%cacr,%1;"
+			  " movc   %1, dfc;"
+			  " .word 0xf508;"	/* pflush a0@		*/
+			  " movc   cacr,%1;"
 			  " orl    %4,%1;"
-			  " movc   %1,%%cacr" : "=d" (tmp) :
+			  " movc   %1,cacr" : "=d" (tmp) :
 			  "0" (FC_SUPERD), "a" (r_va), "i" (FC_USERD),
 			  "i" (IC60_CABC));
 }
@@ -81,10 +81,9 @@ TBIAS_60()
 	 * Cannot specify supervisor/user on pflusha, so we flush all
 	 */
 	__asm __volatile (" .word 0xf518;"
-			  " movc  %%cacr,%0;"
+			  " movc  cacr,%0;"
 			  " orl   %1,%0;"
-			  " movc  %0,%%cacr" /* clear all branch cache
-			 		        entries */
+			  " movc  %0,cacr" /* clear all branch cache entries */
 			  : "=d" (tmp) : "i" (IC60_CABC) );
 }
 
@@ -100,10 +99,9 @@ TBIAU_60()
 	 * Cannot specify supervisor/user on pflusha, so we flush all
 	 */
 	__asm __volatile (" .word 0xf518;"
-			  " movc  %%cacr,%0;"
+			  " movc  cacr,%0;"
 			  " orl   %1,%0;"
-			  " movc  %0,%%cacr" /* clear all branch cache
-			 		        entries */
+			  " movc  %0,cacr" /* clear all branch cache entries */
 			  : "=d" (tmp) : "i" (IC60_CUBC) );
 }
 
@@ -155,9 +153,9 @@ extern __inline void
 DCIAS_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
 void PCIA_60 __P((void));
@@ -180,9 +178,9 @@ extern __inline void
 ICPL_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,%a0@ */
+	__asm __volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,a0@ */
 }
 
 /* invalidate instruction physical cache page */
@@ -191,9 +189,9 @@ extern __inline void
 ICPP_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,%a0@ */
+	__asm __volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,a0@ */
 }
 
 /* invalidate data physical cache line */
@@ -202,9 +200,9 @@ extern __inline void
 DCPL_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,%a0@ */
+	__asm __volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,a0@ */
 }
 
 /* invalidate data physical cache page */
@@ -213,9 +211,9 @@ extern __inline void
 DCPP_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,%a0@ */
+	__asm __volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,a0@ */
 }
 
 /* invalidate data physical all */
@@ -232,9 +230,9 @@ extern __inline void
 DCFL_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
 /* data cache flush page */
@@ -243,7 +241,7 @@ extern __inline void
 DCFP_60(pa)
 	paddr_t	pa;
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,%a0@ */
+	__asm __volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,a0@ */
 }

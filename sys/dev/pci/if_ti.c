@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.2 1999/10/06 11:23:33 drochner Exp $ */
+/* $NetBSD: if_ti.c,v 1.1 1999/09/01 11:47:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -117,11 +117,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if 0
@@ -1588,7 +1583,7 @@ static int ti_gibinit(sc)
 	rcb = &sc->ti_rdata->ti_info.ti_mini_rx_rcb;
 	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
 	    ((caddr_t)&sc->ti_rdata->ti_rx_mini_ring - (caddr_t)sc->ti_rdata);
-	rcb->ti_max_len = MHLEN - ETHER_ALIGN;
+	rcb->ti_max_len = MHLEN;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		rcb->ti_flags = TI_RCB_FLAG_RING_DISABLED;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.15 1999/12/07 03:53:11 simonb Exp $	*/
+/*	$NetBSD: getch.c,v 1.14 1999/06/28 13:32:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.15 1999/12/07 03:53:11 simonb Exp $");
+__RCSID("$NetBSD: getch.c,v 1.14 1999/06/28 13:32:43 simonb Exp $");
 #endif
 #endif					/* not lint */
 
@@ -510,14 +510,7 @@ wgetch(win)
 		}
 	}
 #ifdef DEBUG
-	if (inp > 255)
-		  /* we have a key symbol - treat it differently */
-		  /* XXXX perhaps __unctrl should be expanded to include
-		   * XXXX the keysyms in the table....
-		   */
-		__CTRACE("wgetch assembled keysym 0x%x\n", inp);
-	else
-		__CTRACE("wgetch got '%s'\n", unctrl(inp));
+	__CTRACE("wgetch got '%s'\n", unctrl(inp));
 #endif
 	if (win->delay > -1) {
 		if (__delay() == ERR) {

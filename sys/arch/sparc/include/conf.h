@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.17 1999/12/15 08:01:00 garbled Exp $	*/
+/*	$NetBSD: conf.h,v 1.16 1999/08/01 00:23:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,14 +48,6 @@ cdev_decl(mm);
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(openprom);
-
-#define	cdev_tctrl_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
-
-cdev_decl(tctrl);
 
 cdev_decl(cn);
 

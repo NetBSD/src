@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59 1999/11/21 14:00:38 itojun Exp $
+#	$NetBSD: GENERIC,v 1.57.8.1 1999/12/21 23:15:55 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -58,30 +58,12 @@ file-system	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -125,6 +107,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+#options	NON_PO2_BLOCKS	# non-2**n block size support
 
 # Development and Debugging options
 
@@ -277,8 +260,6 @@ pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter 1		# ip filter
-pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
 #pseudo-device	strip	4		# STRIP 
 pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline

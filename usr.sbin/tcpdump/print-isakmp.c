@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.3 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,10 +33,10 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-isakmp.c,v 1.3 1999/12/01 01:41:25 itojun Exp";
+    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-isakmp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $ (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-isakmp.c,v 1.3 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $");
 #endif
 #endif
 
@@ -254,7 +254,6 @@ cookie_sidecheck(int i, const u_char *bp2, int initiator)
 	struct ip6_hdr *ip6;
 	struct sockaddr_in6 *sin6;
 #endif
-	struct sockaddr *sa1, *sa2;
 
 	memset(&ss, 0, sizeof(ss));
 	ip = (struct ip *)bp2;
@@ -279,19 +278,20 @@ cookie_sidecheck(int i, const u_char *bp2, int initiator)
 	}
 
 	if (initiator) {
-		sa1 = (struct sockaddr *)&ss;
-		sa2 = (struct sockaddr *)&cookiecache[i].iaddr;
+		if (ss.__ss_family != cookiecache[i].iaddr.__ss_family)
+			return 0;
+		if (ss.__ss_len != cookiecache[i].iaddr.__ss_len)
+			return 0;
+		if (memcmp(&ss, &cookiecache[i].iaddr, ss.__ss_len) == 0)
+			return 1;
 	} else {
-		sa1 = (struct sockaddr *)&ss;
-		sa2 = (struct sockaddr *)&cookiecache[i].raddr;
+		if (ss.__ss_family != cookiecache[i].raddr.__ss_family)
+			return 0;
+		if (ss.__ss_len != cookiecache[i].raddr.__ss_len)
+			return 0;
+		if (memcmp(&ss, &cookiecache[i].raddr, ss.__ss_len) == 0)
+			return 1;
 	}
-
-	if (sa1->sa_family != sa2->sa_family)
-		return 0;
-	if (sa1->sa_len != sa2->sa_len)
-		return 0;
-	if (memcmp(sa1, sa2, sa1->sa_len) == 0)
-		return 1;
 	return 0;
 }
 
@@ -307,9 +307,9 @@ rawprint(caddr_t loc, size_t len)
 }
 
 struct attrmap {
-	char *type;
+	u_char *type;
 	int nvalue;
-	char *value[30];	/*XXX*/
+	u_char *value[30];	/*XXX*/
 };
 
 static u_char *
@@ -472,7 +472,7 @@ static char *ipcomp_p_map[] = {
 };
 
 struct attrmap ipsec_t_map[] = {
-	{ NULL,	0, },
+	{ NULL,	0 },
 	{ "lifetype", 3, { NULL, "sec", "kb", }, },
 	{ "life", 0, },
 	{ "group desc", 5,	{ NULL, "modp768", "modp1024", "EC2N 2^155",
@@ -713,7 +713,7 @@ isakmp_id_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 		printf(" len=%d", len);
 		if (2 < vflag) {
 			printf(" ");
-			rawprint((caddr_t)data, len);
+			rawprint(data, len);
 		}
 	}
 	return (u_char *)ext + ntohs(ext->len);
@@ -881,7 +881,7 @@ isakmp_d_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 	for (i = 0; i < ntohs(p->num_spi); i++) {
 		if (i != 0)
 			printf(",");
-		rawprint((caddr_t)q, p->spi_size);
+		rawprint(q, p->spi_size);
 		q += p->spi_size;
 	}
 	return q;

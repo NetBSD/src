@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.15 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.8 1999/08/05 01:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,8 +67,7 @@
  */
 
 /*
- * Device driver for the Intel i82557 fast Ethernet controller,
- * and its successors, the i82558 and i82559.
+ * Device driver for the Intel i82557 fast Ethernet controller.
  */
 
 #include "opt_inet.h"
@@ -85,8 +84,6 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <machine/endian.h>
 
 #include <vm/vm.h>		/* for PAGE_SIZE */
 
@@ -184,19 +181,14 @@ int	fxp_add_rfabuf __P((struct fxp_softc *, bus_dmamap_t, int));
 int	fxp_mdi_read __P((struct device *, int, int));
 void	fxp_statchg __P((struct device *));
 void	fxp_mdi_write __P((struct device *, int, int, int));
-void	fxp_autosize_eeprom __P((struct fxp_softc*));
 void	fxp_read_eeprom __P((struct fxp_softc *, u_int16_t *, int, int));
 void	fxp_get_info __P((struct fxp_softc *, u_int8_t *));
 void	fxp_tick __P((void *));
 void	fxp_mc_setup __P((struct fxp_softc *));
 
 void	fxp_shutdown __P((void *));
-void	fxp_power __P((int, void *));
 
 int	fxp_copy_small = 0;
-
-int	fxp_enable __P((struct fxp_softc*));
-void	fxp_disable __P((struct fxp_softc*));
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
@@ -352,13 +344,6 @@ fxp_attach(sc)
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	/* 
-  	 * Add suspend hook, for similar reasons..
-	 */
-	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
-	if (sc->sc_powerhook == NULL) 
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -401,8 +386,7 @@ fxp_mii_initmedia(sc)
 	sc->sc_mii.mii_statchg = fxp_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -440,36 +424,7 @@ fxp_shutdown(arg)
 {
 	struct fxp_softc *sc = arg;
 
-	/*
-	 * Since the system's going to halt shortly, don't bother
-	 * freeing mbufs.
-	 */
-	fxp_stop(sc, 0);
-}
-/*
- * Power handler routine. Called when the system is transitioning
- * into/out of power save modes.  As with fxp_shutdown, the main
- * purpose of this routine is to shut off receiver DMA so it doesn't
- * clobber kernel memory at the wrong time.
- */
-void
-fxp_power(why, arg)
-	int why;
-	void *arg;
-{
-	struct fxp_softc *sc = arg;
-	struct ifnet *ifp;
-	int s;
-
-	s = splnet();
-	if (why != PWR_RESUME)
-		fxp_stop(sc, 0);
-	else {
-		ifp = &sc->sc_ethercom.ec_if;
-		if (ifp->if_flags & IFF_UP)
-			fxp_init(sc);
-	}
-	splx(s);
+	fxp_stop(sc, 1);
 }
 
 /*
@@ -488,18 +443,6 @@ fxp_get_info(sc, enaddr)
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
 	DELAY(10);
 
-	sc->sc_eeprom_size = 0;
-	fxp_autosize_eeprom(sc);
-	if(sc->sc_eeprom_size == 0) {
-	    printf("%s: failed to detect EEPROM size", sc->sc_dev.dv_xname);
-	    sc->sc_eeprom_size = 6; /* XXX panic here? */
-	}
-#ifdef DEBUG
-	printf("%s: detected %d word EEPROM\n", 
-	       sc->sc_dev.dv_xname, 
-	       1 << sc->sc_eeprom_size);
-#endif
-
 	/*
 	 * Get info about the primary PHY
 	 */
@@ -513,83 +456,6 @@ fxp_get_info(sc, enaddr)
 	 */
 	fxp_read_eeprom(sc, myea, 0, 3);
 	bcopy(myea, enaddr, ETHER_ADDR_LEN);
-}
-
-/*
- * Figure out EEPROM size.
- *
- * 559's can have either 64-word or 256-word EEPROMs, the 558
- * datasheet only talks about 64-word EEPROMs, and the 557 datasheet
- * talks about the existance of 16 to 256 word EEPROMs.
- *
- * The only known sizes are 64 and 256, where the 256 version is used
- * by CardBus cards to store CIS information.
- *
- * The address is shifted in msb-to-lsb, and after the last
- * address-bit the EEPROM is supposed to output a `dummy zero' bit,
- * after which follows the actual data. We try to detect this zero, by
- * probing the data-out bit in the EEPROM control register just after
- * having shifted in a bit. If the bit is zero, we assume we've
- * shifted enough address bits. The data-out should be tri-state,
- * before this, which should translate to a logical one.
- *
- * Other ways to do this would be to try to read a register with known
- * contents with a varying number of address bits, but no such
- * register seem to be available. The high bits of register 10 are 01
- * on the 558 and 559, but apparently not on the 557.
- * 
- * The Linux driver computes a checksum on the EEPROM data, but the
- * value of this checksum is not very well documented.
- */
-
-void
-fxp_autosize_eeprom(sc)
-	struct fxp_softc *sc;
-{
-	u_int16_t reg;
-	int x;
-
-	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-	/*
-	 * Shift in read opcode.
-	 */
-	for (x = 3; x > 0; x--) {
-		if (FXP_EEPROM_OPC_READ & (1 << (x - 1))) {
-			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-		} else {
-			reg = FXP_EEPROM_EECS;
-		}
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-		DELAY(1);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		DELAY(1);
-	}
-	/*
-	 * Shift in address, wait for the dummy zero following a correct
-	 * address shift.
-	 */
-	for (x = 1; x <=  8; x++) {
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
-		DELAY(1);
-		if((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) & 
-		    FXP_EEPROM_EEDO) == 0)
-			break;
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		DELAY(1);
-	}
-	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-	DELAY(1);
-	if(x != 6 && x != 8) {
-#ifdef DEBUG
-		printf("%s: strange EEPROM size (%d)\n", 
-		       sc->sc_dev.dv_xname, 1 << x);
-#endif
-	} else
-		sc->sc_eeprom_size = x;
 }
 
 /*
@@ -630,15 +496,15 @@ fxp_read_eeprom(sc, data, offset, words)
 		/*
 		 * Shift in address.
 		 */
-		for (x = sc->sc_eeprom_size; x > 0; x--) {
+		for (x = 6; x > 0; x--) {
 			if ((i + offset) & (1 << (x - 1))) {
-			    reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
+				reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
 			} else {
-			    reg = FXP_EEPROM_EECS;
+				reg = FXP_EEPROM_EECS;
 			}
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-				    reg | FXP_EEPROM_EESK);
+			    reg | FXP_EEPROM_EESK);
 			DELAY(1);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			DELAY(1);
@@ -759,9 +625,9 @@ fxp_start(ifp)
 		/* Initialize the fraglist. */
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 			tbd->tbd_d[seg].tb_addr =
-			    htole32(dmamap->dm_segs[seg].ds_addr);
+			    dmamap->dm_segs[seg].ds_addr;
 			tbd->tbd_d[seg].tb_size =
-			    htole32(dmamap->dm_segs[seg].ds_len);
+			    dmamap->dm_segs[seg].ds_len;
 		}
 
 		FXP_CDTBDSYNC(sc, nexttx, BUS_DMASYNC_PREWRITE);
@@ -778,10 +644,9 @@ fxp_start(ifp)
 		/*
 		 * Initialize the transmit descriptor.
 		 */
-		/* BIG_ENDIAN: no need to swap to store 0 */
 		txd->cb_status = 0;
 		txd->cb_command =
-		    htole16(FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF);
+		    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF;
 		txd->tx_threshold = tx_threshold;
 		txd->tbd_number = dmamap->dm_nsegs;
 
@@ -820,7 +685,7 @@ fxp_start(ifp)
 		 * has been transmitted.
 		 */
 		FXP_CDTX(sc, sc->sc_txlast)->cb_command |=
-		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
+		    FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
 		FXP_CDTXSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -830,7 +695,7 @@ fxp_start(ifp)
 		 */
 		FXP_CDTXSYNC(sc, lasttx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		FXP_CDTX(sc, lasttx)->cb_command &= htole16(~FXP_CB_COMMAND_S);
+		FXP_CDTX(sc, lasttx)->cb_command &= ~FXP_CB_COMMAND_S;
 		FXP_CDTXSYNC(sc, lasttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -861,21 +726,8 @@ fxp_intr(arg)
 	struct fxp_rfa *rfa;
 	struct ether_header *eh;
 	int i, claimed = 0;
-	u_int16_t len, rxstat, txstat;
+	u_int16_t len;
 	u_int8_t statack;
-
-	/*
-	 * If the interface isn't running, don't try to
-	 * service the interrupt.. just ack it and bail.
-	 */
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK);
-		if (statack) {
-			claimed = 1;
-			CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
-		}
-		return claimed;
-	}
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
 		claimed = 1;
@@ -899,9 +751,7 @@ fxp_intr(arg)
 			FXP_RFASYNC(sc, m,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-			rxstat = le16toh(rfa->rfa_status);
-
-			if ((rxstat & FXP_RFA_STATUS_C) == 0) {
+			if ((rfa->rfa_status & FXP_RFA_STATUS_C) == 0) {
 				/*
 				 * We have processed all of the
 				 * receive buffers.
@@ -913,8 +763,7 @@ fxp_intr(arg)
 
 			FXP_RXBUFSYNC(sc, m, BUS_DMASYNC_POSTREAD);
 
-			len = le16toh(rfa->actual_size) &
-			    (m->m_ext.ext_size - 1);
+			len = rfa->actual_size & (m->m_ext.ext_size - 1);
 
 			if (len < sizeof(struct ether_header)) {
 				/*
@@ -965,7 +814,8 @@ fxp_intr(arg)
 				bpf_mtap(ifp->if_bpf, m);
 
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    (rxstat & FXP_RFA_STATUS_IAMATCH) != 0 &&
+				    (rfa->rfa_status &
+				     FXP_RFA_STATUS_IAMATCH) != 0 &&
 				    (eh->ether_dhost[0] & 1) == 0) {
 					m_freem(m);
 					goto rcvloop;
@@ -1002,9 +852,7 @@ fxp_intr(arg)
 				FXP_CDTXSYNC(sc, i,
 				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-				txstat = le16toh(txd->cb_status);
-
-				if ((txstat & FXP_CB_STATUS_C) == 0)
+				if ((txd->cb_status & FXP_CB_STATUS_C) == 0)
 					break;
 
 				FXP_CDTBDSYNC(sc, i, BUS_DMASYNC_POSTWRITE);
@@ -1070,25 +918,25 @@ fxp_tick(arg)
 
 	s = splnet();
 
-	ifp->if_opackets += le32toh(sp->tx_good);
-	ifp->if_collisions += le32toh(sp->tx_total_collisions);
+	ifp->if_opackets += sp->tx_good;
+	ifp->if_collisions += sp->tx_total_collisions;
 	if (sp->rx_good) {
-		ifp->if_ipackets += le32toh(sp->rx_good);
+		ifp->if_ipackets += sp->rx_good;
 		sc->sc_rxidle = 0;
 	} else {
 		sc->sc_rxidle++;
 	}
 	ifp->if_ierrors +=
-	    le32toh(sp->rx_crc_errors) +
-	    le32toh(sp->rx_alignment_errors) +
-	    le32toh(sp->rx_rnr_errors) +
-	    le32toh(sp->rx_overrun_errors);
+	    sp->rx_crc_errors +
+	    sp->rx_alignment_errors +
+	    sp->rx_rnr_errors +
+	    sp->rx_overrun_errors;
 	/*
 	 * If any transmit underruns occured, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {
-		ifp->if_oerrors += le32toh(sp->tx_underruns);
+		ifp->if_oerrors += sp->tx_underruns;
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
@@ -1125,7 +973,6 @@ fxp_tick(arg)
 		 * Just zero our copy of the stats and wait for the
 		 * next timer event to update them.
 		 */
-		/* BIG_ENDIAN: no swap required to store 0 */
 		sp->tx_good = 0;
 		sp->tx_underruns = 0;
 		sp->tx_total_collisions = 0;
@@ -1185,20 +1032,9 @@ fxp_stop(sc, drain)
 	int i;
 
 	/*
-	 * Turn down interface (done early to avoid bad interactions
-	 * between panics, shutdown hooks, and the watchdog timer)
-	 */
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	/*
 	 * Cancel stats updater.
 	 */
 	untimeout(fxp_tick, sc);
-	if (sc->sc_flags & FXPF_MII) {
-		/* Down the MII. */
-		mii_down(&sc->sc_mii);
-	}
 
 	/*
 	 * Issue software reset
@@ -1226,6 +1062,8 @@ fxp_stop(sc, drain)
 		fxp_rxdrain(sc);
 	}
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 }
 
 /*
@@ -1305,12 +1143,9 @@ fxp_init(sc)
 	 */
 	memcpy(cbp, fxp_cb_config_template, sizeof(fxp_cb_config_template));
 
-	/* BIG_ENDIAN: no need to swap to store 0 */
 	cbp->cb_status =	0;
-	cbp->cb_command =	htole16(FXP_CB_COMMAND_CONFIG |
-				    FXP_CB_COMMAND_EL);
-	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
-	cbp->link_addr =	0xffffffff; /* (no) next command */
+	cbp->cb_command =	FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL;
+	cbp->link_addr =	-1;	/* (no) next command */
 	cbp->byte_count =	22;	/* (22) bytes to config */
 	cbp->rx_fifo_limit =	8;	/* rx fifo threshold (32 bytes) */
 	cbp->tx_fifo_limit =	0;	/* tx fifo threshold (0 bytes) */
@@ -1360,11 +1195,9 @@ fxp_init(sc)
 	 * Initialize the station address.
 	 */
 	cb_ias = &sc->sc_control_data->fcd_iascb;
-	/* BIG_ENDIAN: no need to swap to store 0 */
 	cb_ias->cb_status = 0;
-	cb_ias->cb_command = htole16(FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL);
-	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
-	cb_ias->link_addr = 0xffffffff;
+	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
+	cb_ias->link_addr = -1;
 	memcpy((void *)cb_ias->macaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
 	FXP_CDIASSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1389,10 +1222,9 @@ fxp_init(sc)
 	for (i = 0; i < FXP_NTXCB; i++) {
 		txd = FXP_CDTX(sc, i);
 		memset(txd, 0, sizeof(struct fxp_cb_tx));
-		txd->cb_command =
-		    htole16(FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S);
-		txd->tbd_array_addr = htole32(FXP_CDTBDADDR(sc, i));
-		txd->link_addr = htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(i)));
+		txd->cb_command = FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S;
+		txd->tbd_array_addr = FXP_CDTBDADDR(sc, i);
+		txd->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(i));
 		FXP_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txpending = 0;
@@ -1493,12 +1325,6 @@ fxp_mii_mediastatus(ifp, ifmr)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
-	if(sc->sc_enabled == 0) {
-		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
-		ifmr->ifm_status = 0;
-		return;
-	}
-	
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
@@ -1640,8 +1466,6 @@ fxp_ioctl(ifp, command, data)
 
 	switch (command) {
 	case SIOCSIFADDR:
-		if ((error = fxp_enable(sc)) != 0)
-			break;
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -1689,33 +1513,24 @@ fxp_ioctl(ifp, command, data)
 			 * stop it.
 			 */
 			fxp_stop(sc, 1);
-			fxp_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			if((error = fxp_enable(sc)) != 0)
-				break;
 			error = fxp_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up change in any other
 			 * flags that affect the hardware state.
 			 */
-			if((error = fxp_enable(sc)) != 0)
-				break;
 			error = fxp_init(sc);
 		}
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if(sc->sc_enabled == 0) {
-			error = EIO;
-			break;
-		}
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
@@ -1802,11 +1617,10 @@ fxp_mc_setup(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	/* BIG_ENDIAN: no need to swap to store 0 */
 	mcsp->cb_status = 0;
-	mcsp->cb_command = htole16(FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL);
-	mcsp->link_addr = htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast)));
-	mcsp->mc_cnt = htole16(nmcasts * ETHER_ADDR_LEN);
+	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL;
+	mcsp->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast));
+	mcsp->mc_cnt = nmcasts * ETHER_ADDR_LEN;
 
 	FXP_CDMCSSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1830,32 +1644,4 @@ fxp_mc_setup(sc)
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while ((mcsp->cb_status & FXP_CB_STATUS_C) == 0);
-}
-
-int
-fxp_enable(sc)
-	struct fxp_softc *sc;
-{
-
-	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
-		if ((*sc->sc_enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
-			       sc->sc_dev.dv_xname);
-			return (EIO);
-		}
-	}
-	
-	sc->sc_enabled = 1;
-
-	return 0;
-}
-
-void
-fxp_disable(sc)
-	struct fxp_softc *sc;
-{
-	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
-		(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
-	}
 }

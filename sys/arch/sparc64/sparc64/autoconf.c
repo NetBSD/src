@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1999/11/21 11:47:51 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.22 1999/09/17 20:07:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -198,9 +198,7 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
-#if defined(DDB) && defined(DB_ELF_SYMBOLS)
 	extern void *ssym, *esym;
-#endif
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
@@ -405,6 +403,7 @@ altbootpath_store(storep, bp)
 	retval = save;
 	if (storep)
 		save = bp;
+
 	return (retval);
 }
 /* END TEMP */
@@ -515,27 +514,6 @@ cpu_rootconf()
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
-#if 1
-	/*
-	 * Old bootpath code no longer works now that SCSI autoconfiguration
-	 * can be delayed.  device_register() is the One True Way.
-	 */
-	bootdv = altbootdev;
-#else
-	if (bootdv != altbootdev) {
-		int c;
-		printf("device_register boot device mismatch\n");
-		printf("\tbootdv=%s\n",
-			bootdv==NULL?"NOT FOUND":bootdv->dv_xname);
-		printf("\taltbootdev=%s\n",
-			altbootdev==NULL?"NOT FOUND":altbootdev->dv_xname);
-		printf("RETURN to continue ");
-		cnpollc(1);
-		while ((c = cngetc()) != '\r' && c != '\n');
-		printf("\n");
-		cnpollc(0);
-	}
-#endif
 
 	setroot(bootdv, bootpartition);
 }
@@ -680,9 +658,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	node = findroot();
 
-	/* Establish the first component of the boot path */
-	altbootpath_store(1, bootpath);
-
 	/* the first early device to be configured is the cpu */
 	{
 		/* XXX - what to do on multiprocessor machines? */
@@ -737,7 +712,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = getpropstringA(node, "name", namebuf);
 		ma.ma_node = node;
-		ma.ma_upaid = getpropint(node, "upa-portid", -1);
 
 		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
@@ -1053,7 +1027,6 @@ static struct {
 	int	class;
 } bus_class_tab[] = {
 	{ "mainbus",	BUSCLASS_MAINBUS },
-	{ "upa",	BUSCLASS_MAINBUS },
 	{ "obio",	BUSCLASS_OBIO },
 	{ "iommu",	BUSCLASS_IOMMU },
 	{ "sbus",	BUSCLASS_SBUS },
@@ -1062,7 +1035,7 @@ static struct {
 	{ "dma",	BUSCLASS_SBUS },
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
-	{ "psycho",	BUSCLASS_PCI },
+	{ "psycho",	BUSCLASS_MAINBUS },
 	{ "simba",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "vme",	BUSCLASS_VME }
@@ -1117,7 +1090,7 @@ instance_match(dev, aux, bp)
 	switch (bus_class(dev)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
-		if (bp->val[0] == ma->ma_upaid)
+		if (bp->val[0] == ma->ma_address)
 			return (1);
 		break;
 	case BUSCLASS_SBUS:

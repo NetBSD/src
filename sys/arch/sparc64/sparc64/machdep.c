@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1999/12/04 21:21:35 ragge Exp $ */
+/*	$NetBSD: machdep.c,v 1.50 1999/09/17 20:07:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -215,9 +215,9 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (long)allocsys(NULL, mdallocsys);
-printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
+
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for %lx bytes of tables", sz);
+		panic("startup: no room for tables");
 	if (allocsys(v, mdallocsys) - v != sz)
 		panic("startup: table size inconsistency");
 
@@ -253,7 +253,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -262,7 +262,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -293,7 +293,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -311,7 +311,7 @@ mdallocsys(v)
 	caddr_t v;
 {
 
-#if 0	/* XXX this is from allocsys().  we have a copy as we use nbuf */
+#if 1	/* XXX this is from allocsys().  we have a copy as we use nbuf */
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -325,11 +325,13 @@ mdallocsys(v)
  */
 
 #ifdef __arch64__
+#define rwindow		rwindow64
 #define STACK_OFFSET	BIAS
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #undef CCFSZ
 #define CCFSZ	CC64FSZ
 #else
+#define rwindow		rwindow32
 #define STACK_OFFSET	0
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #endif
@@ -341,8 +343,8 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	vaddr_t stack;
 {
-	register struct trapframe64 *tf = p->p_md.md_tf;
-	register struct fpstate64 *fs;
+	register struct trapframe *tf = p->p_md.md_tf;
+	register struct fpstate *fs;
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
@@ -418,41 +420,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	u_int chosen;
-	char bootargs[256];
-	char *cp = NULL;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);	/* overloaded */
 
 	switch (name[0]) {
-	case CPU_BOOTED_KERNEL:
-		if (((chosen = OF_finddevice("/chosen")) != -1) &&
-		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
-		      >= 0)) {
-			/*
-			 * bootargs is of the form: [kernelname] [args...]
-			 * It can be the empty string if we booted from the default
-			 * kernel name.
-			 */
-			for (cp = bootargs; 
-			     *cp && *cp != ' ' && *cp != '\t' && *cp != '\n';
-			     cp++);
-			*cp = 0;
-			/* Now we've separated out the kernel name from the args */
-			cp = bootargs;
-			if (*cp == 0 || *cp == '-') 
-				/*
-				 * We can leave it NULL && let userland handle
-				 * the failure or set it to the default name,
-				 * `netbsd' 
-				 */
-				cp = "netbsd";
-		}
-		if (cp == NULL || cp[0] == '\0')
-			return (ENOENT);
-		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -472,7 +445,7 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	vaddr_t addr; 
 	struct rwindow *oldsp, *newsp;
 #ifdef NOT_DEBUG
@@ -630,7 +603,7 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
-	register struct trapframe64 *tf;
+	register struct trapframe *tf;
 #ifndef TRAPWIN
 	int i;
 #endif
@@ -907,7 +880,7 @@ dumpsys()
 				printf("%d ", i / (1024*1024));
 
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
-					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+					VM_PROT_READ, 1, VM_PROT_READ);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
@@ -946,13 +919,13 @@ dumpsys()
 	}
 }
 
-void trapdump __P((struct trapframe64*));
+void trapdump __P((struct trapframe*));
 /*
  * dump out a trapframe.
  */
 void
 trapdump(tf)
-	struct trapframe64* tf;
+	struct trapframe* tf;
 {
 	printf("TRAPFRAME: tstate=%x:%x pc=%x:%x npc=%x:%x y=%x\n",
 	       tf->tf_tstate, tf->tf_pc, tf->tf_npc, tf->tf_y);
@@ -1381,8 +1354,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ | VM_PROT_WRITE);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
@@ -1531,7 +1504,7 @@ static	vaddr_t iobase = IODEV_BASE;
 #endif
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
-				: VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+				: VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

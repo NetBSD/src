@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.51 1999/12/06 02:53:50 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.47.8.1 1999/12/21 23:16:14 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.51 1999/12/06 02:53:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.47.8.1 1999/12/21 23:16:14 wrstuden Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -158,7 +158,7 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 
 extern char *
 readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		   struct disklabel *lp, struct cpu_disklabel *osdep));
+		   struct disklabel *lp, struct cpu_disklabel *osdep, int));
 
 /*
  * Ultrix disklabel declarations
@@ -520,8 +520,7 @@ rzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s (SCSI-%d)", vid, pid, revl,
-		    inqbuf.version);
+		printf(" %s %s rev %s", vid, pid, revl);
 	}
 
 	printf ("%s\n",
@@ -703,12 +702,8 @@ rzstrategy(bp)
 			/* otherwise, truncate */
 			bp->b_bcount = dbtob(sz);
 		}
-		/*
-		 * Check for write to write protected label (except on the
-		 * raw partition).
-		 */
-		if (part != RAW_PART &&
-		    bn + pp->p_offset <= LABELSECTOR &&
+		/* check for write to write protected label */
+		if (bn + pp->p_offset <= LABELSECTOR &&
 #if LABELSECTOR != 0
 		    bn + pp->p_offset + sz > LABELSECTOR &&
 #endif
@@ -946,7 +941,7 @@ rzgetinfo(dev)
 	}
 
 	lp->d_type = DTYPE_SCSI;
-	lp->d_secsize = DEV_BSIZE;
+	lp->d_secsize = DEF_BSIZE;
 	lp->d_secpercyl = 1 << sc->sc_bshift;
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_partitions[part].p_offset = 0;
@@ -955,19 +950,19 @@ rzgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(dev, rzstrategy, lp, &cd);
+	msg = readdisklabel(dev, rzstrategy, lp, &cd, DEF_BSHIFT);
 
 	/*
 	 * If this is an installation diskimage, the label geometry
 	 * is from a vnd(4) diskimage, not the real SCSI disk, and so
-	 * the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
+	 the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
 	 */
 	if (msg == NULL &&
 	    strncmp(lp->d_typename, "install diskimag", 16) == 0 &&
 	    strlen(lp->d_packname) == 0 &&
 	    lp->d_npartitions == RAW_PART+1 &&
 	    lp->d_partitions[0].p_offset == 0 &&
-	    (lp->d_partitions[0].p_size < 32768 ||
+	    (lp->d_partitions[0].p_size == 4096 ||
 	     lp->d_partitions[0].p_size == 65536 ) &&
 #if 0
 	    lp->d_partitions[0].p_size == lp->d_partitions[RAW_PART].p_size &&

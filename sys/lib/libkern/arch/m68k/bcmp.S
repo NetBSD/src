@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.7 1999/11/11 01:32:10 thorpej Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.6 1997/05/15 16:20:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,88 +79,88 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.7 1999/11/11 01:32:10 thorpej Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.6 1997/05/15 16:20:54 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(bcmp)
-	movl	%sp@(4),%a0		| string 1
-	movl	%sp@(8),%a1		| string 2
-	movl	%sp@(12),%d1		| length
+	movl	sp@(4),a0		| string 1
+	movl	sp@(8),a1		| string 2
+	movl	sp@(12),d1		| length
 
 	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
-	cmpl	#8,%d1
+	cmpl	#8,d1
 	jlt	Lbcbyte			
 
 	/* word align */
-	movl	%a0,%d0
-	btst	#0,%d0
+	movl	a0,d0
+	btst	#0,d0
 	jeq	Lbcalgndw
-	cmpmb	%a0@+,%a1@+
+	cmpmb	a0@+,a1@+
 	jne	Lbcnoteq
-	subql	#1,%d1
+	subql	#1,d1
 Lbcalgndw:
 	/* long word align */
-	btst	#1,%d0
+	btst	#1,d0
 	jeq	Lbcalgndl
-	cmpmw	%a0@+,%a1@+
+	cmpmw	a0@+,a1@+
 	jne	Lbcnoteq
-	subql	#2,%d1
+	subql	#2,d1
 Lbcalgndl:
 	/* compare by 8 longwords */
-	movl	%d1,%d0
-	lsrl	#5,%d0			| cnt = len / 32
+	movl	d1,d0
+	lsrl	#5,d0			| cnt = len / 32
 	jeq	Lbclong			| if (cnt)
-	andl	#31,%d1			|	len %= 32
-	subql	#1,%d0			|	set up for dbf
+	andl	#31,d1			|	len %= 32
+	subql	#1,d0			|	set up for dbf
 Lbc32loop:
-	cmpml	%a0@+,%a1@+		|	compare 8 longwords
+	cmpml	a0@+,a1@+		|	compare 8 longwords
 	jne	Lbcnoteq		|	not equal, return non-zero
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	a0@+,a1@+
 	jne	Lbcnoteq
-	dbf	%d0,Lbc32loop		|	till done
-	clrw	%d0
-	subql	#1,%d0
+	dbf	d0,Lbc32loop		|	till done
+	clrw	d0
+	subql	#1,d0
 	jcc	Lbc32loop
 
 Lbclong:
 	/* compare by longwords */
-	movl	%d1,%d0
-	lsrl	#2,%d0			| cnt = len / 4
+	movl	d1,d0
+	lsrl	#2,d0			| cnt = len / 4
 	jeq	Lbcbyte			| if (cnt)
-	subql	#1,%d0			|	set up for dbf
+	subql	#1,d0			|	set up for dbf
 Lbclloop:
-	cmpml	%a0@+,%a1@+		|	compare a longword
+	cmpml	a0@+,a1@+		|	compare a longword
 	jne	Lbcnoteq		|	not equal, return non-zero
-	dbf	%d0,Lbclloop		|	till done
-	andl	#3,%d1			|	len %= 4
+	dbf	d0,Lbclloop		|	till done
+	andl	#3,d1			|	len %= 4
 	jeq	Lbcdone 
 
-	subql	#1,%d1			| set up for dbf
+	subql	#1,d1			| set up for dbf
 Lbcbloop:
-	cmpmb	%a0@+,%a1@+		| compare a byte
+	cmpmb	a0@+,a1@+		| compare a byte
 	jne	Lbcnoteq		| not equal, return non-zero
 Lbcbyte:
-	dbf	%d1,Lbcbloop
+	dbf	d1,Lbcbloop
 Lbcdone:
-	movql	#0,%d0
+	movql	#0,d0
 	rts
 
 Lbcnoteq:
-	movql	#1,%d0
+	movql	#1,d0
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.10 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.9 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,9 +93,7 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-#ifndef __bsdi__
 #include "loop.h"
-#endif
 #ifdef __NetBSD__
 extern struct ifnet loif[NLOOP];
 #endif
@@ -149,7 +147,7 @@ in6_pcbbind(in6p, nam)
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
 
-	if (in6p->in6p_lport || !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
+	if (in6p->in6p_lport || !IN6_IS_ADDR_ANY(&in6p->in6p_laddr))
 		return(EINVAL);
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
 	   ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
@@ -218,16 +216,11 @@ in6_pcbbind(in6p, nam)
 				sizeof(sin.sin_addr));
 			if (ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
 				return EADDRNOTAVAIL;
-		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+		} else if (!IN6_IS_ADDR_ANY(&sin6->sin6_addr)) {
 			struct ifaddr *ia = NULL;
 
 			sin6->sin6_port = 0;		/* yech... */
-#if defined(NFAITH) && NFAITH > 0
-			if ((in6p->in6p_flags & IN6P_FAITH) == 0
-			 && (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
-#else
 			if ((ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
-#endif
 				return(EADDRNOTAVAIL);
 
 			/*
@@ -269,74 +262,47 @@ in6_pcbbind(in6p, nam)
 		}
 		in6p->in6p_laddr = sin6->sin6_addr;
 	}
-
 	if (lport == 0) {
-		int e;
-		if ((e = in6_pcbsetport(&in6p->in6p_laddr, in6p)) != 0)
-			return(e);
-	}
-	else
-		in6p->in6p_lport = lport;
+		u_short last_port;
+		void *t;
 
+		/* XXX IN6P_LOWPORT */
+
+		/* value out of range */
+		if (head->in6p_lport < IPV6PORT_ANONMIN)
+			head->in6p_lport = IPV6PORT_ANONMIN;
+		else if (head->in6p_lport > IPV6PORT_ANONMAX)
+			head->in6p_lport = IPV6PORT_ANONMIN;
+		last_port = head->in6p_lport;
+		goto startover;	/*to randomize*/
+		for (;;) {
+			lport = htons(head->in6p_lport);
+			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
+#if 0
+				t = in_pcblookup_bind(&tcbtable,
+					(struct in_addr *)&in6p->in6p_laddr.s6_addr32[3],
+					lport);
+#else
+				t = NULL;
+#endif
+			} else {
+				t = in6_pcblookup(head, &zeroin6_addr, 0,
+					  &in6p->in6p_laddr, lport, wild);
+			}
+			if (t == 0)
+				break;
+startover:
+			if (head->in6p_lport >= IPV6PORT_ANONMAX)
+				head->in6p_lport = IPV6PORT_ANONMIN;
+			else
+				head->in6p_lport++;
+			if (head->in6p_lport == last_port)
+				return (EADDRINUSE);
+		}
+	}
+	in6p->in6p_lport = lport;
 	in6p->in6p_flowinfo = sin6 ? sin6->sin6_flowinfo : 0;	/*XXX*/
 	return(0);
-}
-
-/*
- * Find an empty port and set it to the specified PCB.
- * XXX IN6P_LOWPORT
- */
-int
-in6_pcbsetport(laddr, in6p)
-	struct in6_addr *laddr;
-	struct in6pcb *in6p;
-{
-	struct socket *so = in6p->in6p_socket;
-	struct in6pcb *head = in6p->in6p_head;
-	u_short last_port, lport = 0;
-	int wild = 0;
-	void *t;
-
-	/* XXX: this is redundant when called from in6_pcbbind */
-	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
-	   ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-	    (so->so_options & SO_ACCEPTCONN) == 0))
-		wild = IN6PLOOKUP_WILDCARD;
-
-	/* value out of range */
-	if (head->in6p_lport < IPV6PORT_ANONMIN)
-		head->in6p_lport = IPV6PORT_ANONMIN;
-	else if (head->in6p_lport > IPV6PORT_ANONMAX)
-		head->in6p_lport = IPV6PORT_ANONMIN;
-	last_port = head->in6p_lport;
-	goto startover;	/*to randomize*/
-	for (;;) {
-		lport = htons(head->in6p_lport);
-		if (IN6_IS_ADDR_V4MAPPED(laddr)) {
-#if 0
-			t = in_pcblookup_bind(&tcbtable,
-					      (struct in_addr *)&in6p->in6p_laddr.s6_addr32[3],
-					      lport);
-#else
-			t = NULL;
-#endif
-		} else {
-			t = in6_pcblookup(head, &zeroin6_addr, 0, laddr,
-					  lport, wild);
-		}
-		if (t == 0)
-			break;
-	  startover:
-		if (head->in6p_lport >= IPV6PORT_ANONMAX)
-			head->in6p_lport = IPV6PORT_ANONMIN;
-		else
-			head->in6p_lport++;
-		if (head->in6p_lport == last_port)
-			return (EADDRINUSE);
-	}
-
-	in6p->in6p_lport = lport;
-	return(0);		/* success */
 }
 
 /*
@@ -429,16 +395,10 @@ in6_pcbconnect(in6p, nam)
 		mapped.s6_addr16[5] = htons(0xffff);
 		bcopy(&sinp->sin_addr, &mapped.s6_addr32[3], sizeof(sinp->sin_addr));
 		in6a = &mapped;
-	} else {
-		/*
-		 * XXX: in6_selectsrc might replace the bound local address
-		 * with the address specified by setsockopt(IPV6_PKTINFO).
-		 * Is it the intended behavior?
-		 */
+	} else if (IN6_IS_ADDR_ANY(&in6p->in6p_laddr)) {
 		in6a = in6_selectsrc(sin6, in6p->in6p_outputopts,
-				     in6p->in6p_moptions,
-				     &in6p->in6p_route,
-				     &in6p->in6p_laddr, &error);
+				  in6p->in6p_moptions, &in6p->in6p_route,
+				  &error);
 		if (in6a == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
@@ -448,17 +408,29 @@ in6_pcbconnect(in6p, nam)
 	if (in6p->in6p_route.ro_rt)
 		ifp = in6p->in6p_route.ro_rt->rt_ifp;
 
-	in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
+	/*
+	 * Default hop limit selection. If a hoplimit was specified via ioctl,
+	 * use it. Else if the outgoing interface is detected and the current
+	 * hop limit of the interface was specified by router advertisement,
+	 * use the value.
+	 * Otherwise, use the system default hoplimit.
+	 */
+	if (in6p->in6p_hops >= 0)
+		in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6p->in6p_hops;
+	else if (ifp)
+		in6p->in6p_ip6.ip6_hlim = nd_ifinfo[ifp->if_index].chlim;
+	else
+		in6p->in6p_ip6.ip6_hlim = ip6_defhlim;
 
 	if (in6_pcblookup(in6p->in6p_head,
 			 &sin6->sin6_addr,
 			 sin6->sin6_port,
-			 IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) ?
+			 IN6_IS_ADDR_ANY(&in6p->in6p_laddr) ?
 			  in6a : &in6p->in6p_laddr,
 			 in6p->in6p_lport,
 			 0))
 		return(EADDRINUSE);
-	if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
+	if (IN6_IS_ADDR_ANY(&in6p->in6p_laddr)
 	 || (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
 	  && in6p->in6p_laddr.s6_addr32[3] == 0)) {
 		if (in6p->in6p_lport == 0)
@@ -482,17 +454,16 @@ in6_pcbconnect(in6p, nam)
  * an entry to the caller for later use.
  */
 struct in6_addr *
-in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
+in6_selectsrc(dstsock, opts, mopts, ro, errorp)
 	struct sockaddr_in6 *dstsock;
 	struct ip6_pktopts *opts;
 	struct ip6_moptions *mopts;
 	struct route_in6 *ro;
-	struct in6_addr *laddr;
 	int *errorp;
 {
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = 0;
-	struct in6_pktinfo *pi = NULL;
+	struct in6_pktinfo *pi;
 
 	dst = &dstsock->sin6_addr;
 	*errorp = 0;
@@ -500,61 +471,23 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	/*
 	 * If the source address is explicitly specified by the caller,
 	 * use it.
-	 */
-	if (opts && (pi = opts->ip6po_pktinfo) &&
-	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr))
-		return(&pi->ipi6_addr);
-
-	/*
-	 * If the source address is not specified but the socket(if any)
-	 * is already bound, use the bound address.
-	 */
-	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr))
-		return(laddr);
-
-	/*
 	 * If the caller doesn't specify the source address but
 	 * the outgoing interface, use an address associated with
 	 * the interface.
 	 */
-	if (pi && pi->ipi6_ifindex) {
-		/* XXX boundary check is assumed to be already done. */
-		ia6 = in6_ifawithscope(ifindex2ifnet[pi->ipi6_ifindex],
-				       dst);
-		if (ia6 == 0) {
-			*errorp = EADDRNOTAVAIL;
-			return(0);
+	if (opts && (pi = opts->ip6po_pktinfo)) {
+		if (!IN6_IS_ADDR_ANY(&pi->ipi6_addr))
+			return(&pi->ipi6_addr);
+		else if (pi->ipi6_ifindex) {
+			/* XXX boundary check is assumed to be already done. */
+			ia6 = in6_ifawithscope(ifindex2ifnet[pi->ipi6_ifindex],
+					       dst);
+			if (ia6 == 0) {
+				*errorp = EADDRNOTAVAIL;
+				return(0);
+			}
+			return(&satosin6(&ia6->ia_addr)->sin6_addr);
 		}
-		return(&satosin6(&ia6->ia_addr)->sin6_addr);
-	}
-
-	/*
-	 * If the destination address is a link-local unicast address or
-	 * a multicast address, and if the outgoing interface is specified
-	 * by the sin6_scope_id filed, use an address associated with the
-	 * interface.
-	 * XXX: We're now trying to define more specific semantics of
-	 *      sin6_scope_id field, so this part will be rewritten in
-	 *      the near future.
-	 */
-	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MULTICAST(dst)) &&
-	    dstsock->sin6_scope_id) {
-		/*
-		 * I'm not sure if boundary check for scope_id is done
-		 * somewhere...
-		 */
-		if (dstsock->sin6_scope_id < 0 ||
-		    if_index < dstsock->sin6_scope_id) {
-			*errorp = ENXIO; /* XXX: better error? */
-			return(0);
-		}
-		ia6 = in6_ifawithscope(ifindex2ifnet[dstsock->sin6_scope_id],
-				       dst);
-		if (ia6 == 0) {
-			*errorp = EADDRNOTAVAIL;
-			return(0);
-		}
-		return(&satosin6(&ia6->ia_addr)->sin6_addr);
 	}
 
 	/*
@@ -589,6 +522,10 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			return(&satosin6(&ia6->ia_addr)->sin6_addr);
 		}
 	}
+
+	/*
+	 * XXX How should we use sin6_scope_id???
+	 */
 
 	/*
 	 * If the next hop address for the packet is specified
@@ -641,8 +578,13 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 				ro->ro_rt = rtalloc1(&((struct route *)ro)
 						     ->ro_dst, 0);
 #endif /*__bsdi__*/
-			} else
+			} else {
+#if 0 /* XXX Is this correct? */
+				rtcalloc((struct route *)ro);
+#else
 				rtalloc((struct route *)ro);
+#endif
+			}
 		}
 
 		/*
@@ -685,26 +627,6 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 
 	*errorp = EADDRNOTAVAIL;
 	return(0);
-}
-
-/*
- * Default hop limit selection. The precedence is as follows:
- * 1. Hoplimit valued specified via ioctl.
- * 2. (If the outgoing interface is detected) the current
- *     hop limit of the interface specified by router advertisement.
- * 3. The system default hoplimit.
-*/
-int
-in6_selecthlim(in6p, ifp)
-	struct in6pcb *in6p;
-	struct ifnet *ifp;
-{
-	if (in6p && in6p->in6p_hops >= 0)
-		return(in6p->in6p_hops);
-	else if (ifp)
-		return(nd_ifinfo[ifp->if_index].chlim);
-	else
-		return(ip6_defhlim);
 }
 
 void
@@ -826,7 +748,7 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
 		return 0;
 	faddr6 = ((struct sockaddr_in6 *)dst)->sin6_addr;
-	if (IN6_IS_ADDR_UNSPECIFIED(&faddr6))
+	if (IN6_IS_ADDR_ANY(&faddr6))
 		return 0;
 
 	/*
@@ -850,7 +772,7 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 		if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,&faddr6) ||
 		   in6p->in6p_socket == 0 ||
 		   (lport && in6p->in6p_lport != lport) ||
-		   (!IN6_IS_ADDR_UNSPECIFIED(laddr6) &&
+		   (!IN6_IS_ADDR_ANY(laddr6) &&
 		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6)) ||
 		   (fport && in6p->in6p_fport != fport)) {
 			in6p = in6p->in6p_next;
@@ -932,23 +854,23 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 		if (in6p->in6p_lport != lport)
 			continue;
 		wildcard = 0;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-			if (IN6_IS_ADDR_UNSPECIFIED(laddr6))
+		if (!IN6_IS_ADDR_ANY(&in6p->in6p_laddr)) {
+			if (IN6_IS_ADDR_ANY(laddr6))
 				wildcard++;
 			else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6))
 				continue;
 		} else {
-			if (!IN6_IS_ADDR_UNSPECIFIED(laddr6))
+			if (!IN6_IS_ADDR_ANY(laddr6))
 				wildcard++;
 		}
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-			if (IN6_IS_ADDR_UNSPECIFIED(faddr6))
+		if (!IN6_IS_ADDR_ANY(&in6p->in6p_faddr)) {
+			if (IN6_IS_ADDR_ANY(faddr6))
 				wildcard++;
 			else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, faddr6)
 			      || in6p->in6p_fport != fport)
 				continue;
 		} else {
-			if (!IN6_IS_ADDR_UNSPECIFIED(faddr6))
+			if (!IN6_IS_ADDR_ANY(faddr6))
 				wildcard++;
 		}
 		if (wildcard && (flags & IN6PLOOKUP_WILDCARD) == 0)

@@ -1,12 +1,8 @@
-#	$NetBSD: std.vax,v 1.10 1999/11/15 19:00:31 fvdl Exp $
+#	$NetBSD: std.vax,v 1.9 1999/09/12 01:17:28 chs Exp $
 #
 # Std vaxfiles
 #
 machine	vax
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.67 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.67.8.1 1999/12/21 23:19:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -464,7 +464,7 @@ kernfs_getattr(v)
 	vap->va_gid = 0;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = 0;
-	vap->va_blocksize = DEV_BSIZE;
+	vap->va_blocksize = blocksize(vp->v_mount->mnt_bshift);
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
@@ -482,7 +482,7 @@ kernfs_getattr(v)
 		vap->va_mode = DIR_MODE;
 		vap->va_nlink = 2;
 		vap->va_fileid = 2;
-		vap->va_size = DEV_BSIZE;
+		vap->va_size = vap->va_blocksize;
 	} else {
 		struct kern_target *kt = VTOKERN(vp)->kf_kt;
 		int nbytes, total;

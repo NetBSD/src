@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1999/11/13 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 1999/07/08 18:08:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -162,8 +162,7 @@ pagemove(from, to, size)
 		(void) pmap_extract(pmap_kernel(), va, &pa);
 		pmap_remove(pmap_kernel(), va, va + NBPG);
 		pmap_enter(pmap_kernel(), (vaddr_t)to, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
 		va += NBPG;
 		to += NBPG;
 	}
@@ -254,7 +253,7 @@ vmapbuf(bp, len)
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &pa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ|VM_PROT_WRITE, 1, 0);
 		faddr += NBPG;
 		taddr += NBPG;
 	}

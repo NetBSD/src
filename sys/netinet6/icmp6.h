@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.6 1999/12/13 15:17:21 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.4 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,12 +222,10 @@ struct nd_neighbor_advert {	/* neighbor advertisement */
 #define ND_NA_FLAG_ROUTER		0x80000000
 #define ND_NA_FLAG_SOLICITED		0x40000000
 #define ND_NA_FLAG_OVERRIDE		0x20000000
-#else
-#if BYTE_ORDER == LITTLE_ENDIAN
+#elif BYTE_ORDER == LITTLE_ENDIAN
 #define ND_NA_FLAG_ROUTER		0x80
 #define ND_NA_FLAG_SOLICITED		0x40
 #define ND_NA_FLAG_OVERRIDE		0x20
-#endif
 #endif
 
 struct nd_redirect {		/* redirect */
@@ -327,7 +325,6 @@ struct icmp6_nodeinfo {
 #define NI_NODEADDR_FLAG_GLOBAL		0x4
 #define NI_NODEADDR_FLAG_ALL		0x8
 #define NI_NODEADDR_FLAG_TRUNCATE	0x10
-#define NI_NODEADDR_FLAG_ANYCAST	0x20 /* just experimental. not in spec */
 #elif BYTE_ORDER == LITTLE_ENDIAN
 #define NI_SUPTYPE_FLAG_COMPRESS	0x0100
 #define NI_FQDN_FLAG_VALIDTTL		0x0100
@@ -336,7 +333,6 @@ struct icmp6_nodeinfo {
 #define NI_NODEADDR_FLAG_GLOBAL		0x0400
 #define NI_NODEADDR_FLAG_ALL		0x0800
 #define NI_NODEADDR_FLAG_TRUNCATE	0x1000
-#define NI_NODEADDR_FLAG_ANYCAST	0x2000 /* just experimental. not in spec */
 #endif
 
 struct ni_reply_fqdn {
@@ -493,24 +489,25 @@ struct icmp6_filter {
 #define	ICMP6_FILTER_WILLBLOCK(type, filterp) \
 	((((filterp)->icmp6_filter[(type) >> 5]) & (1 << ((type) & 31))) == 0)
 
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 /*
  * Variables related to this implementation
  * of the internet control message protocol version 6.
  */
 struct icmp6stat {
 /* statistics related to icmp6 packets generated */
-	u_quad_t icp6s_error;		/* # of calls to icmp6_error */
-	u_quad_t icp6s_canterror;	/* no error 'cuz old was icmp */
-	u_quad_t icp6s_toofreq;		/* no error 'cuz rate limitation */
-	u_quad_t icp6s_outhist[256];
-/* statistics related to input message processed */
-	u_quad_t icp6s_badcode;		/* icmp6_code out of range */
-	u_quad_t icp6s_tooshort;	/* packet < sizeof(struct icmp6_hdr) */
-	u_quad_t icp6s_checksum;	/* bad checksum */
-	u_quad_t icp6s_badlen;		/* calculated bound mismatch */
-	u_quad_t icp6s_reflect;		/* number of responses */
-	u_quad_t icp6s_inhist[256];	
-	u_quad_t icp6s_nd_toomanyopt;	/* too many ND options */
+	u_long	icp6s_error;		/* # of calls to icmp6_error */
+	u_long	icp6s_canterror;	/* no error 'cuz old was icmp */
+	u_long	icp6s_toofreq;		/* no error 'cuz rate limitation */
+	u_long	icp6s_outhist[256];
+/* statistics related to input messages proccesed */
+	u_long	icp6s_badcode;		/* icmp6_code out of range */
+	u_long	icp6s_tooshort;		/* packet < sizeof(struct icmp6_hdr) */
+	u_long	icp6s_checksum;		/* bad checksum */
+	u_long	icp6s_badlen;		/* calculated bound mismatch */
+	u_long	icp6s_reflect;		/* number of responses */
+	u_long	icp6s_inhist[256];	
 };
 
 /*
@@ -519,6 +516,7 @@ struct icmp6stat {
 #define ICMPV6CTL_STATS		1
 #define ICMPV6CTL_REDIRACCEPT	2	/* accept/process redirects */
 #define ICMPV6CTL_REDIRTIMEOUT	3	/* redirect cache time */
+#define ICMPV6CTL_PRINTFS	4
 #define ICMPV6CTL_ERRRATELIMIT	5	/* ICMPv6 error rate limitation */
 #define ICMPV6CTL_ND6_PRUNE	6
 #define ICMPV6CTL_ND6_DELAY	8
@@ -533,7 +531,7 @@ struct icmp6stat {
 	{ 0, 0 }, \
 	{ "rediraccept", CTLTYPE_INT }, \
 	{ "redirtimeout", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ "printfs", CTLTYPE_INT }, \
 	{ "errratelimit", CTLTYPE_INT }, \
 	{ "nd6_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
@@ -543,13 +541,72 @@ struct icmp6stat {
 	{ "nd6_useloopback", CTLTYPE_INT }, \
 	{ "nd6_proxyall", CTLTYPE_INT }, \
 }
+#endif /*__FreeBSD__*/
+#ifdef __bsdi__
+/*
+ * Variables related to this implementation
+ * of the internet control message protocol version 6.
+ */
+struct icmp6stat {
+/* statistics related to icmp6 packets generated */
+	u_quad_t icp6s_error;		/* # of calls to icmp6_error */
+	u_quad_t icp6s_canterror;	/* no error 'cuz old was icmp */
+	u_quad_t icp6s_toofreq;		/* no error 'cuz rate limitation */
+	u_quad_t icp6s_outhist[256];
+/* statistics related to input messages proccesed */
+	u_quad_t icp6s_badcode;		/* icmp6_code out of range */
+	u_quad_t icp6s_tooshort;	/* packet < sizeof(struct icmp6_hdr) */
+	u_quad_t icp6s_checksum;	/* bad checksum */
+	u_quad_t icp6s_badlen;		/* calculated bound mismatch */
+	u_quad_t icp6s_reflect;		/* number of responses */
+	u_quad_t icp6s_inhist[256];	
+};
+
+/*
+ * Names for ICMP sysctl objects
+ */
+#define ICMPV6CTL_REDIRACCEPT		2	/* accept/process redirects */
+#define ICMPV6CTL_REDIRTIMEOUT		3	/* redirect cache time */
+#define ICMPV6CTL_PRINTFS		4	/* redirect cache time */
+#define ICMPV6CTL_STATS			5	/* statistics */
+#define ICMPV6CTL_ERRRATELIMIT		6	/* ICMPv6 error rate limitation */
+#define ICMPV6CTL_ND6_PRUNE		7
+#define ICMPV6CTL_ND6_DELAY		9
+#define ICMPV6CTL_ND6_UMAXTRIES		10
+#define ICMPV6CTL_ND6_MMAXTRIES		11
+#define ICMPV6CTL_ND6_USELOOPBACK	12
+#define ICMPV6CTL_ND6_PROXYALL		13
+#define ICMPV6CTL_MAXID			14
+
+#ifdef ICMP6PRINTFS
+#define __ICMP6PRINTFS	&icmp6printfs
+#else
+#define __ICMP6PRINTFS	0
+#endif
+
+#define ICMPV6CTL_NAMES { \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "rediraccept",   CTLTYPE_INT }, 	\
+	{ "redirtimeout",  CTLTYPE_INT }, 	\
+	{ "printfs", CTLTYPE_INT },		\
+	{ 0, 0 },		\
+	{ "errratelimit", CTLTYPE_INT }, \
+	{ "nd6_prune", CTLTYPE_INT },		\
+	{ 0, 0 }, \
+	{ "nd6_delay", CTLTYPE_INT },		\
+	{ "nd6_umaxtries", CTLTYPE_INT },	\
+	{ "nd6_mmaxtries", CTLTYPE_INT },	\
+	{ "nd6_useloopback", CTLTYPE_INT },	\
+	{ "nd6_proxyall", CTLTYPE_INT },	\
+}
 
 #define ICMPV6CTL_VARS { \
 	0, \
 	0, \
 	&icmp6_rediraccept,   \
 	&icmp6_redirtimeout,  \
-	0, \
+	__ICMP6PRINTFS, \
 	0, \
 	&icmp6errratelim, \
 	&nd6_prune,	\
@@ -560,6 +617,7 @@ struct icmp6stat {
 	&nd6_useloopback, \
 	&nd6_proxyall, \
 }
+#endif /*__bsdi__*/
 
 #define RTF_PROBEMTU	RTF_PROTO1
 
@@ -582,73 +640,11 @@ void	icmp6_redirect_output __P((struct mbuf *, struct rtentry *));
 int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	icmp6_mtuexpire __P((struct rtentry *, struct rttimer *));
 #endif /*__bsdi__*/
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#ifdef __NetBSD__
 int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
+#endif /* __NetBSD__ */
 
-/* XXX: is this the right place for these macros? */
-#define icmp6_ifstat_inc(ifp, tag) \
-do {								\
-	if ((ifp) && (ifp)->if_index <= if_index			\
-	 && (ifp)->if_index < icmp6_ifstatmax			\
-	 && icmp6_ifstat && icmp6_ifstat[(ifp)->if_index]) {	\
-		icmp6_ifstat[(ifp)->if_index]->tag++;		\
-	}							\
-} while (0)
-
-#define icmp6_ifoutstat_inc(ifp, type, code) \
-do { \
-		icmp6_ifstat_inc(ifp, ifs6_out_msg); \
- 		if (type < ICMP6_INFOMSG_MASK) \
- 			icmp6_ifstat_inc(ifp, ifs6_out_error); \
-		switch(type) { \
-		 case ICMP6_DST_UNREACH: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_dstunreach); \
-			 if (code == ICMP6_DST_UNREACH_ADMIN) \
-				 icmp6_ifstat_inc(ifp, ifs6_out_adminprohib); \
-			 break; \
-		 case ICMP6_PACKET_TOO_BIG: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_pkttoobig); \
-			 break; \
-		 case ICMP6_TIME_EXCEEDED: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_timeexceed); \
-			 break; \
-		 case ICMP6_PARAM_PROB: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_paramprob); \
-			 break; \
-		 case ICMP6_ECHO_REQUEST: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_echo); \
-			 break; \
-		 case ICMP6_ECHO_REPLY: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_echoreply); \
-			 break; \
-		 case MLD6_LISTENER_QUERY: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_mldquery); \
-			 break; \
-		 case MLD6_LISTENER_REPORT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_mldreport); \
-			 break; \
-		 case MLD6_LISTENER_DONE: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_mlddone); \
-			 break; \
-		 case ND_ROUTER_SOLICIT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_routersolicit); \
-			 break; \
-		 case ND_ROUTER_ADVERT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_routeradvert); \
-			 break; \
-		 case ND_NEIGHBOR_SOLICIT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit); \
-			 break; \
-		 case ND_NEIGHBOR_ADVERT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert); \
-			 break; \
-		 case ND_REDIRECT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_redirect); \
-			 break; \
-		} \
-} while (0)
-
+extern struct	icmp6stat icmp6stat;
 extern int	icmp6_rediraccept;	/* accept/process redirects */
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 #endif /* _KERNEL */

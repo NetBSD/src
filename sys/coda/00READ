@@ -1,72 +1,9 @@
-What needs to be done to port Coda to a different Architecture.
-
-    I. Fixes for the Coda applications
-
-Coda is a package under net/coda_*; so it should be easy enough to
-build.  But there are a few specific files that need to be changed
-first.  Of course, setting it up and using it is harder.
-
-	1.  coda/lib-src/mlwp/process.s
-
-Coda coda/mlwp/ implements light weight user threads. The process.s
-file contains stack switching code.  It needs to be recoded for your
-architecture.  There is some old dead code in the file that you might
-be able to resurrect for other platforms.  At present, only the x86
-case, ns32k case and arm32 case  (and possibly linux sparc) work.
-
-	2. coda/coda-src/venus/fso_cfscalls2.cc
-
-The Coda file system expands the strings @cputype and @sys in file
-names in a platform specific way.  In fso_cfscalls2.cc, under a
-__NetBSD__ conditional, there is platform conditional that defines:
-	static char cputype []
-	static char systype []
-Add the values for these strings under a conditional for your
-architecture.
-
-    II. Fixes for the Coda kernel
-
-The coda/ directory in the kernel is machine independent.  The various
-pieces of glue code, viz. conf/files, sys/vnode.h, are in place.  You
-do have a few platform changes:
-
-	1. src/sys/arch/xxx/conf/GENERIC or others
-
-It would be best to take the few lines that define Coda and its communications
-pseudo device from the x86 GENERIC and put them into your platform GENERIC.
-They should look something like:
-	file-system     CODA            # Coda File System; also needs vcoda (below)
-	# a pseudo device needed for Coda       # also needs CODA (above)
-	pseudo-device   vcoda           4       # coda minicache <-> venus comm.
+WARNING:A version of this code has run on 1.3 for a while now.
+	The code has been recently ported to current.  It is mostly
+	working, but hasn't been run long enough to be sure all the
+	bugs are sorted out.  Let me know if there are any problems.
+	In particular, killing venus (or rebooting) when/if venus
+	is hung, may not work correctly.
 
 
-	2. src/sys/arch/xxx/xxx/conf.c
-
-Coda needs a pseudodevice, vc_nb_, to communicate between the kernel and the
-out of kernel client program, venus.  sys/conf.h defines it:
-	#define cdev_vc_nb_init \...
-You must include this device in your platform conf.c
-
-By way of example for the x86, you add:
-#include "vcoda.h"
-cdev_decl(vc_nb_);
-to the "header" area  and 
-        cdev_vc_nb_init(NVCODA,vc_nb_),  /* 60: coda file system psdev */
-to the cdev switch.
-
-	3. src/etc/xxx/MAKEDEV
-
-Something like the the code below should work;  The chr device
-that is appropriate for your platform should be used instead of 60.
-cfs0)
-	name=cfs; unit=${i#cfs};  chr=60
-	rm -f $name$unit
-	mknod $name$unit c $chr $unit
-	chown root.wheel $name$unit
-	;;
-We only support one device currently, but historically it is cfs0.
-
-
-    III. More?
-
-There still may be a couple of other problems.  If so, let us know.
+						rvb@cmu.edu

@@ -1,4 +1,4 @@
-.\"	$NetBSD: isp.4,v 1.5 1999/12/18 18:33:05 mjacob Exp $
+.\"	$NetBSD: isp.4,v 1.3 1999/03/26 00:47:03 mjacob Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -32,26 +32,29 @@
 .Os
 .Sh NAME
 .Nm isp
-.Nd Qlogic based SCSI and FibreChannel SCSI Host Adapters
+.Nd Qlogic based SCSI or FibreChannel SCSI Host Adapters
 .Sh SYNOPSIS
 .Cd "isp* at pci? dev? function?" Pq PCI
 .Cd "isp* at sbus? slot ? offset ?" Pq SBus
 .Cd scsibus* at isp?
 .Sh DESCRIPTION
-This driver provides access to
+This driver provides access to a
 .Tn SCSI
-or
+bus or a
 .Tn FibreChannel
-devices.
+connected to
+.Tn Qlogic
+ISP1000 (SBus), ISP1020 (PCI), ISP1040(PCI), ISP1080(PCI),
+.Tn SCSI
+host adapters or ISP2100(PCI)
+.Tn FibreChannel
+host adapters.
 .Pp
-SCSI features include support for Ultra SCSI and wide mode transactions for
+Features include support for UltraSCSI and wide mode transactions for
 .Tn SCSI ,
-and LVD (for the ISP1080 and ISP1280),
-.Pp
-Fibre Channel support uses FCP SCSI profile for
+and LVD (for the ISP1080),
+and the FCP SCSI profile for
 .Tn FibreChannel .
-and utilizes Class 3 connections only. Support is available for Public
-and Private loops.
 Command tagging is supported for all (in fact,
 .Tn FibreChannel
 requires tagging).
@@ -62,63 +65,14 @@ appended to the above
 .Tn isp*
 declarations will disable the download of driver f/w, which means you
 use whatever F/W is running on the card. If no firmware is running on the card,
-the driver cannot operate the card.
-.Pp
-An optional
-.Tn flags 0x40
-appended to the above
-.Tn isp*
-declarations (can be OR'd in with the other config flags option)
-will keep the driver from looking at device or bus NVRAM settings (this
-is in case NVRAM is just wrong and you have the card in a platform where
-it is inconvenient to change NVRAM settings on the card).
-.Sh HARDWARE
-Supported cards include:
-.Pp
-.Bl -tag -width xxxxxx -offset indent
-.It ISP1000
-SBus Fast Wide, Ultra Fast Wide cards, Single Ended or Differential cards.
-.It PTI SBS440
-Perfomance Technology ISP1000 variants.
-.It ISP1020
-Qlogic 1020 Fast Wide and Differential Fast Wide PCI cards.
-.It ISP1040
-Qlogic 1040 Ultra Wide and Differential Ultra Wide PCI cards.
-.It PTI SBS450
-Perfomance Technology ISP1040 variants.
-.It Qlogic 1240
-Qlogic 1240 Dual Bus Ultra Wide and Differential Ultra Wide PCI cards.
-.It Qlogic 1080
-Qlogic 1280 LVD Ultra2 Wide PCI cards.
-.It Qlogic 1280
-Qlogic 1280 Dual Bus LVD Ultra2 Wide PCI cards.
-.It Qlogic 2100
-Qlogic 2100 and 2100A Copper and Optical Fibre Channel Arbitrated Loop
-.It Qlogic 2102
-Qlogic Dual Loop 2100A Optical Fibre Channel Arbitrated Loop PCI cards.
-.It Qlogic 2200
-Qlogic 2200 Copper and Optical Fibre Channel Arbitrated Loop PCI cards.
-.It Qlogic 2202
-Qlogic 2200 Dual Bus Optical Fibre Channel Arbitrated Loop PCI cards.
-.It PTI SBS470
-Perfomance Technology ISP2100 variants.
-.It Antares P-0033
-Antares Microsystems ISP2100 variants.
-.El
+you will lose.
 .Sh BUGS
 The driver currently ignores some NVRAM settings.
 .Pp
 The driver currently doesn't do error recovery for timed out commands
 very gracefully.
 .Pp
-Fabric (public loop) support isn't very well debugged yet.
-.Pp
-Sometimes, when booting, the driver gets stuck waiting for the Fibre Channel
-f/w to tell it that the loop port database is ready. In this case you'll
-see an announcement that the loop state has a value of 0x1. To unwedge
-the system, unplug and replug the fibre channel connection, or otherwise
-cause a LIP (Loop Initialization Primitive sequence)- this will kick the f/w
-into getting unstuck.
+Fabric Support (for FibreChannel) is not supported yet.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr cd 4 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.S,v 1.5 1999/11/16 18:17:39 matthias Exp $	*/
+/*	$NetBSD: strncpy.S,v 1.4 1998/10/01 22:46:37 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strncpy.S,v 1.5 1999/11/16 18:17:39 matthias Exp $")
+	RCSID("$NetBSD: strncpy.S,v 1.4 1998/10/01 22:46:37 matthias Exp $")
 #endif
 
 /*
@@ -28,9 +28,7 @@ KENTRY(strncpy, 12)
 	movd	r0,tos
 	movd	r2,tos
 	bsr	_C_LABEL(bzero)
-#if !defined(MRTD)
 	adjspd	-8
-#endif
 0:	movd	B_ARG0,r0
 	exit	[r4]
 	ret	ARGS

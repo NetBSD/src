@@ -27,14 +27,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sn.4,v 1.5 1999/12/15 23:44:53 abs Exp $
+.\"	$NetBSD: sn.4,v 1.4 1999/03/16 01:19:22 garbled Exp $
 .\"
 .Dd June 7, 1997
 .Os
 .Dt SN 4 mac68k
 .Sh NAME
 .Nm sn
-.Nd Ethernet driver for SONIC-based Ethernet adapters
+.Nd Ethernet driver for SONIC-based ethernet adapters
 .Sh SYNOPSIS
 .Cd "sn* at obio?"
 .Cd "sn* at nubus?"
@@ -70,13 +70,13 @@ Dayna DaynaPort/E30
 .Pp
 In addition, the
 .Nm
-interface supports on-board Ethernet for 500-series PowerBooks and
+interface supports on-board ethernet for 500-series PowerBooks and
 non-AV Quadras.
 .Sh DIAGNOSTICS
 .Bl -diag -compact
 .It sn%d at %s%d: address %s, type %s  %dKB memory.
 This is a normal autoconfiguration message noting the 6 byte physical
-Ethernet address of the adapter, its manufacturer, and how much buffer
+ethernet address of the adapter, its manufacturer, and how much buffer
 memory it has.
 .El
 .\" .Sh ERRORS

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 1999/12/12 08:18:49 scottr Exp $	*/
+/*	$NetBSD: pte.h,v 1.9 1996/05/05 06:17:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,6 +150,6 @@ typedef int	pt_entry_t;	/* Mach page table entry */
 #define	ptetokv(pt) \
 	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 #define	kvtophys(va) \
-	((kvtopte(va)->pg_pfnum << PGSHIFT) | m68k_page_offset(va))
+	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
 #endif /* _PTE_MACHINE_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.21 1999/12/05 15:40:17 minoura Exp $
+#	$NetBSD: INSTALL,v 1.18 1999/08/05 15:05:11 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -12,9 +12,9 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
+#options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a 90mm floppy
-#options 	MINIROOTSIZE=2048
+options 	MINIROOTSIZE=2048
 options 	BUFCACHE=5		# Reserve 5% of the RAM as the cache.
 
 ## System kernel configuration.  See options(4) for more detail.
@@ -95,7 +95,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions 	DEBUG="-g"
-makeoptions	COPTS="-Os"
+makeoptions	COPTS="-Os -fno-inline"
 
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
@@ -162,7 +162,6 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -307,7 +306,7 @@ pseudo-device	sl		1
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-pseudo-device	pty		2	# pseudo-ttys (for network, etc.)
+#pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

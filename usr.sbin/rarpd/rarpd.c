@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.34 1999/09/26 10:40:32 kleink Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.33 1999/06/06 02:58:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.34 1999/09/26 10:40:32 kleink Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.33 1999/06/06 02:58:23 thorpej Exp $");
 #endif
 
 
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: rarpd.c,v 1.34 1999/09/26 10:40:32 kleink Exp $");
  *		rarpd [-d|-f] [-l] interface
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 1999/11/09 10:03:20 scw Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 1996/05/16 17:52:51 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -42,6 +42,15 @@
 #define LABELOFFSET	0			/* offset of label in sector */
 #define MAXPARTITIONS	(1 << PARTITIONSHIFT)	/* number of partitions */
 #define RAW_PART	2			/* raw partition: xx?c */
+
+/* 
+ * used to encode disk minor numbers
+ * this should probably be moved to sys/disklabel.h
+ */
+#define DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
+#define DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
+#define MAKEDISKDEV(maj, unit, part) \
+    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
 
 /*
  * a cpu_disklabel is a disklabel that the bug (prom) can understand

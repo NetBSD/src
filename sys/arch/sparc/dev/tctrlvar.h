@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrlvar.h,v 1.2 1999/12/15 08:12:31 garbled Exp $ */
+/*	$NetBSD: tctrlvar.h,v 1.1 1999/08/09 18:39:58 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,20 +38,7 @@
 #ifndef _SPARC_DEV_TCTRLVAR_H
 #define	_SPARC_DEV_TCTRLVAR_H
 
-struct tctlrdriver {
-        int     (*tctrld_open) __P((dev_t, int, int, struct proc *));
-        int     (*tctrld_close) __P((dev_t, int, int, struct proc *));
-        int     (*tctrld_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int	(*tctrld_poll) __P((dev_t, int, struct proc *));
-};
-
-struct envsys_sensor {
-	char		desc[33];
-	u_int		units;
-};
-
 extern void tadpole_powerdown(void);
 extern void tadpole_set_video(int enabled);
-extern void tadpole_request(struct tctrl_req *req, int spin);
 
 #endif /* _SPARC_DEV_TCTRLVAR_H */

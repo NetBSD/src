@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.15 1999/04/06 19:31:37 pk Exp $ */
+/*	$NetBSD: lpt.c,v 1.15.8.1 1999/12/21 23:15:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -211,6 +211,8 @@ lpopen(dev, flag, mode, p)
 	}
 
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
+	sc->sc_inbuf->b_bsize = LPT_BSIZE;
+	sc->sc_inbuf->b_bshift = intlog2(LPT_BSIZE);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 

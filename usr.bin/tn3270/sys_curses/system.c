@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.13 1999/09/30 12:35:53 soren Exp $	*/
+/*	$NetBSD: system.c,v 1.12 1999/08/24 09:16:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.13 1999/09/30 12:35:53 soren Exp $");
+__RCSID("$NetBSD: system.c,v 1.12 1999/08/24 09:16:36 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -773,11 +773,11 @@ char	*argv[];
 
 	    cmdname = getenv("SHELL");
 	    execlp(cmdname, cmdname, 0);
-	    perror("Exec'ing new shell");
+	    perror("Exec'ing new shell...\n");
 	    _exit(1);
 	} else {
 	    execvp(argv[1], &argv[1]);
-	    perror("Exec'ing command");
+	    perror("Exec'ing command.\n");
 	    _exit(1);
 	}
 	/*NOTREACHED*/

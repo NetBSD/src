@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.7 1999/11/14 17:02:21 augustss Exp $
+.\"	$NetBSD: com.4,v 1.6 1999/03/16 01:19:21 garbled Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -46,12 +46,6 @@ serial communications interface
 .Sh SYNOPSIS
 .Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
 .Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
-.Cd "com* at isapnp?"
-.Cd "com* at mhzc?"
-.Cd "com* at pcmcia?"
-.Cd "com* at pcmcom?"
-.Cd "com* at pnpbios? index ?"
-.Cd "com* at puc? port ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -85,13 +79,6 @@ with the code listed.
 .El
 .Sh SEE ALSO
 .Xr ast 4 ,
-.Xr isa 4 ,
-.Xr isapnp 4 ,
-.Xr mhzc 4 ,
-.Xr pcmcia 4 ,
-.Xr pcmcom 4 ,
-.Xr pnpbios 4 ,
-.Xr puc 4 ,
 .Xr rtfps 4 ,
 .Xr tty 4
 .Sh HISTORY

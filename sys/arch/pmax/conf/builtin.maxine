@@ -1,0 +1,9 @@
+#	$NetBSD: builtin.maxine,v 1.4 1998/11/27 00:09:33 simonb Exp $
+
+#########################################################################
+# MAXINE-only baseboard devices and on-baseboard "options"		#
+#########################################################################
+xcfb0	at tc?				# TC framebuffer "option"
+dtop0	at ioasic0	offset ?	# destop bus, lk501 kbd, mouse
+#isdn	at ioasic0	offset ?	# ISDN/audio (not supported)
+#fdc	at ioasic0	offset ?	# floppy disk (not supported)

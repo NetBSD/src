@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1998/06/08 20:21:17 mark Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11.20.1 1999/12/21 23:15:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -94,11 +94,12 @@
  */
 
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -110,7 +111,7 @@ readdisklabel(dev, strat, lp, osdep)
 	/* minimal requirements for archtypal disk label */
 
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = bsize;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -132,10 +133,16 @@ readdisklabel(dev, strat, lp, osdep)
 	/* obtain buffer to probe drive with */
     
 	bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		msg = "I/O error";
+		goto done;
+	}
 	
 	/* request no partition relocation by driver on I/O operations */
 
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do netbsd partitions in the process of getting disklabel? */
 
@@ -304,11 +311,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  */
  
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -318,7 +326,13 @@ writedisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 
 	bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		error = EINVAL;
+		goto done;
+	}
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do netbsd partitions in the process of getting disklabel? */
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: uha.4,v 1.6 1999/12/17 16:23:22 abs Exp $
+.\"	$NetBSD: uha.4,v 1.5 1999/03/16 01:19:19 garbled Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Cd "uha0 at isa? port 0x330 irq ? drq ?"
 .Cd "uha* at eisa? slot ? irq ?"
 .Cd "scsibus* at uha?"
-.Sh HARDWARE
+.Sh DESCRIPTION
 The
 .Nm
 driver provides support for the following
@@ -41,9 +41,9 @@ driver provides support for the following
 adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Ultrastor ISA 14f
-.It Ultrastor EISA 24f
-.It Ultrastor ISA 34f
+.It Ultrastor 14f
+.It Ultrastor 24f
+.It Ultrastor 34f
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,

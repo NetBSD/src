@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: le.4,v 1.4 1997/10/19 12:57:17 mrg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Tn LANCE
 Ethernet interface
 .Sh SYNOPSIS
-.Cd "le0 at scode?"
+.Cd "device le0 at scode?"
 .Sh DESCRIPTION
 The
 .Nm le
@@ -86,7 +86,7 @@ flag with an
 .Bl -diag
 .It le%d: hardware address %s.
 This is a normal autoconfiguration message noting the 6 byte physical
-Ethernet address of the adapter.
+ethernet address of the adapter.
 .Pp
 .It de%d: can't handle af%d.
 The interface was handed

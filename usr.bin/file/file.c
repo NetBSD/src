@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.15 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.14 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -26,10 +26,7 @@
  *
  * 4. This notice may not be removed or altered.
  */
-#include "file.h"
-#ifdef __CYGWIN__
-#include <errno.h>
-#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,44 +45,38 @@
 #  endif
 # endif
 #endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* for read() */
-#endif
 
 #include <netinet/in.h>		/* for byte swapping */
 
 #include "patchlevel.h"
+#include "file.h"
 
 #ifndef	lint
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.42 1998/09/12 13:17:52 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.15 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.14 1998/09/20 15:27:16 christos Exp $");
 #endif
 #endif	/* lint */
 
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-bcnvzL] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-vbczL] [-f namefile] [-m magicfiles] file...\n"
 #else
-# define USAGE  "Usage: %s [-bcnvz] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-vbcz] [-f namefile] [-m magicfiles] file...\n"
 #endif
 
 #ifndef MAGIC
 # define MAGIC "/etc/magic"
 #endif
 
-#ifndef MAXPATHLEN
-#define	MAXPATHLEN	512
-#endif
-
 int 			/* Global command-line options 		*/
 	debug = 0, 	/* debugging 				*/
 	lflag = 0,	/* follow Symlinks (BSD only) 		*/
 	bflag = 0,	/* brief output format	 		*/
-	zflag = 0,	/* follow (uncompress) compressed files */
-	sflag = 0,	/* read block special files		*/
-	nobuffer = 0;   /* Do not buffer stdout */
+	zflag = 0;	/* follow (uncompress) compressed files */
+
 int			/* Misc globals				*/
 	nmagic = 0;	/* number of valid magic[]s 		*/
 
@@ -124,22 +115,17 @@ main(argc, argv)
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = MAGIC;
 
-	while ((c = getopt(argc, argv, "bcdnf:m:svzL")) != EOF)
+	while ((c = getopt(argc, argv, "vbcdf:Lm:z")) != EOF)
 		switch (c) {
 		case 'v':
 			(void) fprintf(stdout, "%s-%d.%d\n", progname,
 				       FILE_VERSION_MAJOR, patchlevel);
-			(void) fprintf(stdout, "magic file from %s\n",
-				       magicfile);
 			return 1;
 		case 'b':
 			++bflag;
 			break;
 		case 'c':
 			++check;
-			break;
-		case 'n':
-			++nobuffer;
 			break;
 		case 'd':
 			++debug;
@@ -164,9 +150,6 @@ main(argc, argv)
 			break;
 		case 'z':
 			zflag++;
-			break;
-		case 's':
-			sflag++;
 			break;
 		case '?':
 		default:
@@ -239,8 +222,6 @@ char *fn;
 	while (fgets(buf, MAXPATHLEN, f) != NULL) {
 		buf[strlen(buf)-1] = '\0';
 		process(buf, wid);
-		if(nobuffer)
-			(void) fflush(stdout);
 	}
 
 	(void) fclose(f);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.9 1999/12/08 22:39:25 perseant Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.8 1999/06/25 19:28:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.9 1999/12/08 22:39:25 perseant Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.8 1999/06/25 19:28:36 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,10 +115,9 @@ main(argc, argv)
 
 #define DEFAULT_ROOTUID	-2
 	args.export.ex_root = DEFAULT_ROOTUID;
-	if (mntflags & MNT_RDONLY) {
+	if (mntflags & MNT_RDONLY)
 		args.export.ex_flags = MNT_EXRDONLY;
-		noclean = 1;
-	} else
+	else
 		args.export.ex_flags = 0;
 
 	if (mount(MOUNT_LFS, fs_name, mntflags, &args)) {

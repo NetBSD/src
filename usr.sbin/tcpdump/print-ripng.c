@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ripng.c,v 1.4 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-ripng.c,v 1.3 1999/09/04 03:36:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-rip.c,v 2.1 1995/02/03 18:15:05 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-ripng.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-ripng.c,v 1.3 1999/09/04 03:36:42 itojun Exp $");
 #endif
 #endif
 
@@ -54,16 +54,14 @@ __RCSID("$NetBSD: print-ripng.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
 #include "interface.h"
 #include "addrtoname.h"
 
-static int
+static void
 rip6_entry_print(register const struct netinfo6 *ni, int metric)
 {
-	int l;
-	l = printf("%s/%d", ip6addr_string(&ni->rip6_dest), ni->rip6_plen);
+	printf(" %s/%d", ip6addr_string(&ni->rip6_dest), ni->rip6_plen);
 	if (ni->rip6_tag)
-		l += printf(" [%d]", ntohs(ni->rip6_tag));
+		printf(" [%d]", ntohs(ni->rip6_tag));
 	if (metric)
-		l += printf(" (%d)", ni->rip6_metric);
-	return l;
+		printf(" (%d)", ni->rip6_metric);
 }
 
 void
@@ -86,7 +84,7 @@ ripng_print(const u_char *dat, int length)
 		j = length / sizeof(*ni);
 		if (j == 1
 		    &&  rp->rip6_nets->rip6_metric == HOPCNT_INFINITY6
-		    &&  IN6_IS_ADDR_UNSPECIFIED(&rp->rip6_nets->rip6_dest)) {
+		    &&  IN6_IS_ADDR_ANY(&rp->rip6_nets->rip6_dest)) {
 			printf(" ripng-req dump");
 			break;
 		}
@@ -95,13 +93,8 @@ ripng_print(const u_char *dat, int length)
 		else
 			printf(" ripng-req %d:", j);
 		trunc = ((i / sizeof(*ni)) * sizeof(*ni) != i);
-		for (ni = rp->rip6_nets; (i -= sizeof(*ni)) >= 0; ++ni) {
-			if (vflag)
-				printf("\n\t");
-			else
-				printf(" ");
+		for (ni = rp->rip6_nets; (i -= sizeof(*ni)) >= 0; ++ni)
 			rip6_entry_print(ni, 0);
-		}
 		break;
 	case RIP6_RESPONSE:
 		j = length / sizeof(*ni);
@@ -110,13 +103,8 @@ ripng_print(const u_char *dat, int length)
 		else
 			printf(" ripng-resp %d:", j);
 		trunc = ((i / sizeof(*ni)) * sizeof(*ni) != i);
-		for (ni = rp->rip6_nets; (i -= sizeof(*ni)) >= 0; ++ni) {
-			if (vflag)
-				printf("\n\t");
-			else
-				printf(" ");
+		for (ni = rp->rip6_nets; (i -= sizeof(*ni)) >= 0; ++ni)
 			rip6_entry_print(ni, ni->rip6_metric);
-		}
 		if (trunc)
 			printf("[|rip]");
 		break;

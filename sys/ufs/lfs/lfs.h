@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.19 1999/12/15 07:10:34 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.16 1999/06/15 22:25:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,14 +80,14 @@
 /* #define DEBUG_LFS */              /* Intensive debugging of LFS subsystem */
 
 /* #define LFS_ATIME_IFILE */         /* Store atime in Ifile, don't push */
+/* #define LFS_HONOR_RDONLY */        /* Don't write blocks if mounted ro */
 
 /*
  * Parameters and generic definitions
  */
-#define BW_CLEAN	1
-#define MIN_FREE_SEGS	4
-#define LFS_MAX_ACTIVE	10
-#define LFS_MAXDIROP	(desiredvnodes>>2)
+#define BW_CLEAN 1
+#define MIN_FREE_SEGS 4
+#define LFS_MAX_ACTIVE          10
 
 #ifndef LFS_ATIME_IFILE
 # define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
@@ -184,13 +184,13 @@ struct dlfs {
         u_int32_t dlfs_frag;      /* 28: number of frags in a block in fs */
 
 /* Checkpoint region. */
-        u_int32_t dlfs_free;      /* 32: start of the free list */
+        ino_t     dlfs_free;      /* 32: start of the free list */
         u_int32_t dlfs_bfree;     /* 36: number of free disk blocks */
         u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
         int32_t   dlfs_avail;     /* 44: blocks available for writing */
         u_int32_t dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
         ufs_daddr_t  dlfs_idaddr; /* 52: inode file disk address */
-        u_int32_t dlfs_ifile;     /* 56: inode file inode number */
+        ino_t     dlfs_ifile;     /* 56: inode file inode number */
         ufs_daddr_t  dlfs_lastseg; /* 60: address of last segment written */
         ufs_daddr_t  dlfs_nextseg; /* 64: address of next segment to write */
         ufs_daddr_t  dlfs_curseg; /* 68: current segment being written */
@@ -309,6 +309,8 @@ struct lfs {
 #ifdef LFS_TRACK_IOS
 	daddr_t   lfs_pending[LFS_THROTTLE]; /* daddrs of pending writes */
 #endif /* LFS_TRACK_IOS */
+# define LFS_MAXDIROP 32
+	int       lfs_dirvcount;        /* number of VDIROP-marked vnodes */
 #ifdef LFS_CANNOT_ROLLFW
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 #endif

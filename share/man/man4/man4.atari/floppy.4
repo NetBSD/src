@@ -1,4 +1,4 @@
-.\"	$NetBSD: floppy.4,v 1.5 1999/12/16 11:54:44 jdc Exp $
+.\"	$NetBSD: floppy.4,v 1.3 1999/03/10 09:31:18 erh Exp $
 .\"
 .\" Copyright (c) 1995 Leo Weppelman
 .\" All rights reserved.
@@ -42,10 +42,10 @@ floppy interface
 .Cd "fd0 at fdc0 unit 0"
 .Cd "fd1 at fdc0 unit 1"
 .Sh DESCRIPTION
-This is an interface to the builtin and external floppy drives on the Atari.
+This is an interface to the buildin and external floppy drives on the Atari.
 Currently, there is no disklabel support for the floppy drives. Instead, the
 floppy interface uses the partition number embedded in the minor device number
-to distinguish between various floppy formats.
+to distinguise between various floppy formats.
 .Pp
 Currently, the following formats are supported:
 .Bl -column header Partition Size sides tracks sectors/track

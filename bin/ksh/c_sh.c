@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.2 1997/01/12 19:11:40 tls Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -10,7 +10,6 @@
 #include "ksh_times.h"
 
 static	char *clocktos ARGS((clock_t t));
-
 
 /* :, false and true */
 int
@@ -34,7 +33,7 @@ c_shift(wp)
 	arg = wp[builtin_opt.optind];
 
 	if (arg) {
-		evaluate(arg, &val, KSH_UNWIND_ERROR);
+		evaluate(arg, &val, FALSE);
 		n = val;
 	} else
 		n = 1;
@@ -180,16 +179,15 @@ c_dot(wp)
 	char **argv;
 	int argc;
 	int i;
-	int err;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
 
 	if ((cp = wp[builtin_opt.optind]) == NULL)
 		return 0;
-	file = search(cp, path, R_OK, &err);
+	file = search(cp, path, R_OK, (int *) 0);
 	if (file == NULL) {
-		bi_errorf("%s: %s", cp, err ? strerror(err) : "not found");
+		bi_errorf("%s: not found", cp);
 		return 1;
 	}
 
@@ -355,7 +353,7 @@ c_read(wp)
 				expanding = 0;
 				if (c == '\n') {
 					c = 0;
-					if (Flag(FTALKING_I) && isatty(fd)) {
+					if (Flag(FTALKING) && isatty(fd)) {
 						/* set prompt in case this is
 						 * called from .profile or $ENV
 						 */
@@ -387,7 +385,6 @@ c_read(wp)
 				cp--;
 		Xput(cs, cp, '\0');
 		vp = global(*wp);
-		/* Must be done before setting export. */
 		if (vp->flag & RDONLY) {
 			shf_flush(shf);
 			bi_errorf("%s is read only", *wp);
@@ -395,10 +392,7 @@ c_read(wp)
 		}
 		if (Flag(FEXPORT))
 			typeset(*wp, EXPORT, 0, 0, 0);
-		if (!setstr(vp, Xstring(cs, cp), KSH_RETURN_ERROR)) {
-		    shf_flush(shf);
-		    return 1;
-		}
+		setstr(vp, Xstring(cs, cp));
 	}
 
 	shf_flush(shf);
@@ -430,34 +424,6 @@ c_eval(wp)
 		return 1;
 	s = pushs(SWORDS, ATEMP);
 	s->u.strv = wp + builtin_opt.optind;
-	if (!Flag(FPOSIX)) {
-		/*
-		 * Handle case where the command is empty due to failed
-		 * command substitution, eg, eval "$(false)".
-		 * In this case, shell() will not set/change exstat (because
-		 * compiled tree is empty), so will use this value.
-		 * subst_exstat is cleared in execute(), so should be 0 if
-		 * there were no substitutions.
-		 *
-		 * A strict reading of POSIX says we don't do this (though
-		 * it is traditionally done). [from 1003.2-1992]
-		 *    3.9.1: Simple Commands
-		 *	... If there is a command name, execution shall
-		 *	continue as described in 3.9.1.1.  If there
-		 *	is no command name, but the command contained a command
-		 *	substitution, the command shall complete with the exit
-		 *	status of the last command substitution
-		 *    3.9.1.1: Command Search and Execution
-		 *	...(1)...(a) If the command name matches the name of
-		 *	a special built-in utility, that special built-in
-		 *	utility shall be invoked.
-		 * 3.14.5: Eval
-		 *	... If there are no arguments, or only null arguments,
-		 *	eval shall return an exit status of zero.
-		 */
-		exstat = subst_exstat;
-	}
-
 	return shell(s, FALSE);
 }
 
@@ -500,18 +466,13 @@ c_trap(wp)
 		return 0;
 	}
 
-	/*
-	 * Use case sensitive lookup for first arg so the
-	 * command 'exit' isn't confused with the pseudo-signal
-	 * 'EXIT'.
-	 */
-	s = (gettrap(*wp, FALSE) == NULL) ? *wp++ : NULL; /* get command */
+	s = (gettrap(*wp) == NULL) ? *wp++ : NULL; /* get command */
 	if (s != NULL && s[0] == '-' && s[1] == '\0')
 		s = NULL;
 
 	/* set/clear traps */
 	while (*wp != NULL) {
-		p = gettrap(*wp++, TRUE);
+		p = gettrap(*wp++);
 		if (p == NULL) {
 			bi_errorf("bad signal %s", wp[-1]);
 			return 1;
@@ -526,19 +487,15 @@ c_exitreturn(wp)
 	char **wp;
 {
 	int how = LEXIT;
-	int n;
 	char *arg;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
 	arg = wp[builtin_opt.optind];
 
-	if (arg) {
-	    if (!getn(arg, &n)) {
-		    exstat = 1;
-		    warningf(TRUE, "%s: bad number", arg);
-	    } else
-		    exstat = n;
+	if (arg != NULL && !getn(arg, &exstat)) {
+		exstat = 1;
+		warningf(TRUE, "%s: bad number", arg);
 	}
 	if (wp[0][0] == 'r') { /* return */
 		struct env *ep;
@@ -699,10 +656,10 @@ c_times(wp)
 	struct tms all;
 
 	(void) ksh_times(&all);
-	shprintf("Shell: %8ss user ", clocktos(all.tms_utime));
-	shprintf("%8ss system\n", clocktos(all.tms_stime));
-	shprintf("Kids:  %8ss user ", clocktos(all.tms_cutime));
-	shprintf("%8ss system\n", clocktos(all.tms_cstime));
+	shprintf("Shell: %8s user ", clocktos(all.tms_utime));
+	shprintf("%8s system\n", clocktos(all.tms_stime));
+	shprintf("Kids:  %8s user ", clocktos(all.tms_cutime));
+	shprintf("%8s system\n", clocktos(all.tms_cstime));
 
 	return 0;
 }
@@ -715,109 +672,40 @@ timex(t, f)
 	struct op *t;
 	int f;
 {
-#define TF_NOARGS	BIT(0)
-#define TF_NOREAL	BIT(1)		/* don't report real time */
-#define TF_POSIX	BIT(2)		/* report in posix format */
-	int rv = 0;
-	struct tms t0, t1, tms;
-	clock_t t0t, t1t = 0;
-	int tf = 0;
+	int rv;
+	struct tms t0, t1;
+	clock_t t0t, t1t;
 	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
-	char opts[1];
 
+	j_usrtime = j_systime = 0;
 	t0t = ksh_times(&t0);
-	if (t->left) {
-		/*
-		 * Two ways of getting cpu usage of a command: just use t0
-		 * and t1 (which will get cpu usage from other jobs that
-		 * finish while we are executing t->left), or get the
-		 * cpu usage of t->left. at&t ksh does the former, while
-		 * pdksh tries to do the later (the j_usrtime hack doesn't
-		 * really work as it only counts the last job).
-		 */
-		j_usrtime = j_systime = 0;
-		if (t->left->type == TCOM)
-			t->left->str = opts;
-		opts[0] = 0;
-		rv = execute(t->left, f | XTIME);
-		tf |= opts[0];
-		t1t = ksh_times(&t1);
-	} else
-		tf = TF_NOARGS;
+	rv = execute(t->left, f);
+	t1t = ksh_times(&t1);
 
-	if (tf & TF_NOARGS) { /* ksh93 - report shell times (shell+kids) */
-		tf |= TF_NOREAL;
-		tms.tms_utime = t0.tms_utime + t0.tms_cutime;
-		tms.tms_stime = t0.tms_stime + t0.tms_cstime;
-	} else {
-		tms.tms_utime = t1.tms_utime - t0.tms_utime + j_usrtime;
-		tms.tms_stime = t1.tms_stime - t0.tms_stime + j_systime;
-	}
-
-	if (!(tf & TF_NOREAL))
-		shf_fprintf(shl_out,
-			tf & TF_POSIX ? "real %8s\n" : "%8ss real ",
-			clocktos(t1t - t0t));
-	shf_fprintf(shl_out, tf & TF_POSIX ? "user %8s\n" : "%8ss user ",
-		clocktos(tms.tms_utime));
-	shf_fprintf(shl_out, tf & TF_POSIX ? "sys  %8s\n" : "%8ss system\n",
-		clocktos(tms.tms_stime));
-	shf_flush(shl_out);
+	shf_fprintf(shl_out, "%8s real ", clocktos(t1t - t0t));
+	shf_fprintf(shl_out, "%8s user ",
+	       clocktos(t1.tms_utime - t0.tms_utime + j_usrtime));
+	shf_fprintf(shl_out, "%8s system ",
+	       clocktos(t1.tms_stime - t0.tms_stime + j_systime));
+	shf_fprintf(shl_out, newline);
 
 	return rv;
-}
-
-void
-timex_hook(t, app)
-	struct op *t;
-	char ** volatile *app;
-{
-	char **wp = *app;
-	int optc;
-	int i, j;
-	Getopt opt;
-
-	ksh_getopt_reset(&opt, 0);
-	opt.optind = 0;	/* start at the start */
-	while ((optc = ksh_getopt(wp, &opt, ":p")) != EOF)
-		switch (optc) {
-		  case 'p':
-			t->str[0] |= TF_POSIX;
-			break;
-		  case '?':
-			errorf("time: -%s unknown option", opt.optarg);
-		  case ':':
-			errorf("time: -%s requires an argument",
-				opt.optarg);
-		}
-	/* Copy command words down over options. */
-	if (opt.optind != 0) {
-		for (i = 0; i < opt.optind; i++)
-			afree(wp[i], ATEMP);
-		for (i = 0, j = opt.optind; (wp[i] = wp[j]); i++, j++)
-			;
-	}
-	if (!wp[0])
-		t->str[0] |= TF_NOARGS;
-	*app = wp;
 }
 
 static char *
 clocktos(t)
 	clock_t t;
 {
-	static char temp[22]; /* enough for 64 bit clock_t */
+	static char temp[20];
 	register int i;
 	register char *cp = temp + sizeof(temp);
 
-	/* note: posix says must use max precision, ie, if clk_tck is
-	 * 1000, must print 3 places after decimal (if non-zero, else 1).
-	 */
 	if (CLK_TCK != 100)	/* convert to 1/100'ths */
 	    t = (t < 1000000000/CLK_TCK) ?
 		    (t * 100) / CLK_TCK : (t / CLK_TCK) * 100;
 
 	*--cp = '\0';
+	*--cp = 's';
 	for (i = -2; i <= 0 || t > 0; i++) {
 		if (i == 0)
 			*--cp = '.';
@@ -839,16 +727,9 @@ c_exec(wp)
 		for (i = 0; i < NUFILE; i++) {
 			if (e->savefd[i] > 0)
 				close(e->savefd[i]);
-			/*
-			 * For ksh keep anything > 2 private,
-			 * for sh, let them be (POSIX says what
-			 * happens is unspecified and the bourne shell
-			 * keeps them open).
-			 */
-#ifdef KSH
+			/* keep anything > 2 private */
 			if (i > 2 && e->savefd[i])
 				fd_clexec(i);
-#endif /* KSH */
 		}
 		e->savefd = NULL; 
 	}

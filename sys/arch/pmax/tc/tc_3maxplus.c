@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3maxplus.c,v 1.4 1999/12/01 08:41:41 nisimura Exp $	*/
+/*	$NetBSD: tc_3maxplus.c,v 1.2 1999/04/24 08:01:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,38 +31,69 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3maxplus.c,v 1.4 1999/12/01 08:41:41 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3maxplus.c,v 1.2 1999/04/24 08:01:13 simonb Exp $ ");
 
-#include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
 #include <sys/device.h>
-
+#include <dev/cons.h>
 #include <dev/tc/tcvar.h>
+#include <machine/autoconf.h>
+
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/kn03.h>
 
+
+int	tcbus_match_3maxplus(struct device *, struct cfdata *, void *);
+void	tcbus_attach_3maxplus(struct device *, struct device *, void *);
+
 /*
- * 3MAX+ has 4 TC option slot address space starting at 0x1e00.0000.
- * TC slot size is 8MB.  Three option slots are available.  IOASIC,
- * which governs various baseboard devices like keyboard/mouse, RTC,
- * DMA assisted ASC SCSI, LANCE Ether, forms a system base.  IOASIC
- * is designed as a TC device and sits in slot #3 space.
+ * The only builtin Turbochannel device on the kn03 (and kmin)
+ * is the IOCTL asic, which is mapped into TC slot 3.
  */
+const struct tc_builtin tc_kn03_builtins[] = {
+	{ "IOCTL   ",	3, 0x0, TC_C(3), /*TC_C(3)*/ }
+};
+
+
+/* 3MAXPLUS TC slot addresses */
 static struct tc_slotdesc tc_kn03_slots [4] = {
        	{ TC_KV(KN03_PHYS_TC_0_START), TC_C(0) },  /* 0 - tc option slot 0 */
 	{ TC_KV(KN03_PHYS_TC_1_START), TC_C(1) },  /* 1 - tc option slot 1 */
 	{ TC_KV(KN03_PHYS_TC_2_START), TC_C(2) },  /* 2 - tc option slot 2 */
-	{ TC_KV(KN03_PHYS_TC_3_START), TC_C(3) }   /* 3 - IOASIC on b'board */
+	{ TC_KV(KN03_PHYS_TC_3_START), TC_C(3) }   /* 3 - IOasic on b'board */
 };
+int tc_kn03_nslots =
+    sizeof(tc_kn03_slots) / sizeof(tc_kn03_slots[0]);
 
-const struct tc_builtin tc_kn03_builtins[] = {
-	{ "IOCTL   ",	3, 0x0, TC_C(3), }
-};
 
-struct tcbus_attach_args kn03_tc_desc = {
-	NULL, 0,
+/*
+ * 3MAXPLUS turbochannel autoconfiguration table
+ */
+struct tcbus_attach_args kn03_tc_desc =
+{
+	"tc",				/* XXX common substructure */
+	0,				/* XXX bus_space_tag */
 	TC_SPEED_25_MHZ,
 	KN03_TC_NSLOTS, tc_kn03_slots,
 	1, tc_kn03_builtins,
-	NULL, NULL,
-	NULL,
+	0, /*,tc_ds_ioasic_intr_establish, */
+	0 /* tc_ds_ioasic_intr_disestablish */
 };
+
+int
+tcbus_match_3maxplus(parent, cfdata, aux)
+        struct device *parent;
+        struct cfdata *cfdata;
+        void *aux;
+{
+	return (systype == DS_3MAXPLUS);
+}
+
+
+void
+tcbus_attach_3maxplus(parent, self, aux)
+        struct device *parent;
+        struct device *self;
+        void *aux;
+{
+}

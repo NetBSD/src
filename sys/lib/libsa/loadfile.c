@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.6 1999/11/13 21:17:56 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.2 1999/04/28 09:12:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,8 +149,7 @@ loadfile(fname, marks, flags)
 	} else
 #endif
 #ifdef BOOT_ELF
-	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
-	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
+	if (memcmp(Elf_e_ident, hdr.elf.e_ident, Elf_e_siz) == 0) {
 		rval = elf_exec(fd, &hdr.elf, marks, flags);
 	} else
 #endif
@@ -289,12 +288,12 @@ elf_exec(fd, elf, marks, flags)
 			WARN(("read phdr"));
 			return 1;
 		}
-		if (phdr.p_type != PT_LOAD ||
-		    (phdr.p_flags & (PF_W|PF_X)) == 0)
+		if (phdr.p_type != Elf_pt_load ||
+		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
 			continue;
 
-#define IS_TEXT(p)	(p.p_type & PF_X)
-#define IS_DATA(p)	(p.p_type & PF_W)
+#define IS_TEXT(p)	(p.p_type & Elf_pf_x)
+#define IS_DATA(p)	(p.p_type & Elf_pf_w)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
 		/*
 		 * XXX: Assume first address is lowest
@@ -376,12 +375,12 @@ elf_exec(fd, elf, marks, flags)
 		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
 
 		for (havesyms = i = 0; i < elf->e_shnum; i++)
-			if (shp[i].sh_type == SHT_SYMTAB)
+			if (shp[i].sh_type == Elf_sht_symtab)
 				havesyms = 1;
 
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-			if (shp[i].sh_type == SHT_SYMTAB ||
-			    shp[i].sh_type == SHT_STRTAB) {
+			if (shp[i].sh_type == Elf_sht_symtab ||
+			    shp[i].sh_type == Elf_sht_strtab) {
 				if (havesyms && (flags & LOAD_SYM)) {
 					PROGRESS(("%s%ld", first ? " [" : "+",
 					    (u_long)shp[i].sh_size));
@@ -451,8 +450,8 @@ aout_exec(fd, x, marks, flags)
 	u_long magic = N_GETMAGIC(*x);
 	int sub;
 
-	/* In OMAGIC and NMAGIC, exec header isn't part of text segment */
-	if (magic == OMAGIC || magic == NMAGIC)
+	/* In OMAGIC, exec header isn't part of text segment */
+	if (magic == OMAGIC)
 		sub = 0;
 	else
 		sub = sizeof(*x);
@@ -469,7 +468,7 @@ aout_exec(fd, x, marks, flags)
 	 * The kernel may use this to verify that the
 	 * symbols were loaded by this boot program.
 	 */
-	if (magic == OMAGIC || magic == NMAGIC) {
+	if (magic == OMAGIC) {
 		if (flags & LOAD_HDR)
 			BCOPY(x, maxp - sizeof(*x), sizeof(*x));
 	}
@@ -503,7 +502,7 @@ aout_exec(fd, x, marks, flags)
 	 * Provide alignment if required
 	 */
 	if (magic == ZMAGIC || magic == NMAGIC) {
-		int size = -(unsigned int)maxp & (__LDPGSZ - 1);
+		int size = (int)maxp & __LDPGSZ;
 
 		if (flags & LOAD_TEXTA) {
 			PROGRESS(("/%d", size));

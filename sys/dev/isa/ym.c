@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.12 1999/10/07 08:16:51 itohy Exp $	*/
+/*	$NetBSD: ym.c,v 1.10 1999/10/05 03:46:08 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,19 +111,6 @@
 #define YM_POWER_OFF_SEC	5
 #endif
 
-/* Default mixer settings. */
-#ifndef YM_VOL_MASTER
-#define YM_VOL_MASTER		220
-#endif
-
-#ifndef YM_VOL_DAC
-#define YM_VOL_DAC		224
-#endif
-
-#ifndef YM_VOL_OPL3
-#define YM_VOL_OPL3		184
-#endif
-
 #ifdef __i386__		/* XXX */
 # include "joy.h"
 #else
@@ -199,14 +186,8 @@ ym_attach(sc)
 	struct ym_softc *sc;
 {
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
-	static struct ad1848_volume vol_master = {YM_VOL_MASTER, YM_VOL_MASTER};
-	static struct ad1848_volume vol_dac    = {YM_VOL_DAC,    YM_VOL_DAC};
-	static struct ad1848_volume vol_opl3   = {YM_VOL_OPL3,   YM_VOL_OPL3};
+	struct ad1848_volume vol_mid = {220, 220};
 	struct audio_attach_args arg;
-
-	/* Mute the output to reduce noise during initialization. */
-	ym_mute(sc, SA3_VOL_L, 1);
-	ym_mute(sc, SA3_VOL_R, 1);
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq,
 						 IST_EDGE, IPL_AUDIO,
@@ -221,16 +202,14 @@ ym_attach(sc)
 	ac->parent = sc;
 
 	/* Establish chip in well known mode */
-	ym_set_master_gain(sc, &vol_master);
+	ym_set_master_gain(sc, &vol_mid);
 	ym_set_mic_gain(sc, 0);
 	sc->master_mute = 0;
+	ym_mute(sc, SA3_VOL_L, sc->master_mute);
+	ym_mute(sc, SA3_VOL_R, sc->master_mute);
 
 	sc->mic_mute = 1;
 	ym_mute(sc, SA3_MIC_VOL, sc->mic_mute);
-
-	/* Override ad1848 settings. */
-	ad1848_set_channel_gain(ac, AD1848_DAC_CHANNEL, &vol_dac);
-	ad1848_set_channel_gain(ac, AD1848_AUX2_CHANNEL, &vol_opl3);
 
 	sc->sc_version = ym_read(sc, SA3_MISC) & SA3_MISC_VER;
 
@@ -263,6 +242,9 @@ ym_attach(sc)
 	ym_init(sc);
 
 #ifndef AUDIO_NO_POWER_CTL
+	/* 3D enhancement is unused at startup time. */
+	ym_write(sc, SA3_APWRDWN, ym_read(sc, SA3_APWRDWN) | SA3_APWRDWN_WIDE);
+
 	/*
 	 * Initialize power control.
 	 */
@@ -271,22 +253,15 @@ ym_attach(sc)
 
 	sc->sc_on_blocks = sc->sc_turning_off =
 		YM_POWER_CODEC_P | YM_POWER_CODEC_R |
-		YM_POWER_OPL3 | YM_POWER_MPU401 | YM_POWER_3D |
+		YM_POWER_OPL3 | YM_POWER_MPU401 | YM_POWER_JOYSTICK |
 		YM_POWER_CODEC_DA | YM_POWER_CODEC_AD | YM_POWER_OPL3_DA;
 #if NJOY > 0
-	sc->sc_on_blocks |= YM_POWER_JOYSTICK;	/* prevents chip powerdown */
+	sc->sc_on_blocks |= YM_POWER_JOYSTICK;	/* prevents global powerdown */
 #endif
 	ym_powerdown_blocks(sc);
 
 	powerhook_establish(ym_power_hook, sc);
-
-	if (sc->sc_on_blocks /* & YM_POWER_ACTIVE */)
 #endif
-	{
-		/* Unmute the output now if the chip is on. */
-		ym_mute(sc, SA3_VOL_L, sc->master_mute);
-		ym_mute(sc, SA3_VOL_R, sc->master_mute);
-	}
 }
 
 static __inline int

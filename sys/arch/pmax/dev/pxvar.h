@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxvar.h,v 1.8 1999/11/03 13:45:11 ad Exp $ */
+/* 	$NetBSD: pxvar.h,v 1.6 1999/05/18 21:51:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,14 +98,14 @@ struct px_info {
 	struct px_cliplist pxi_cliplist;/* cliplist for Xserver */
 };
 
-/* Map returned by ioctl QIOCGINFO for Xserver */
+/* Map returned by ioctl QIOCGMAP for Xserver */
 typedef struct px_map {
-	struct stic_regs stic;
-	u_char		__pad1[NBPG - sizeof(struct stic_regs)];
-	int32_t		poll[4096];
 	struct px_info	info;
 	u_char		__pad0[NBPG - sizeof(struct px_info)];
-	u_char		rbuf[81920];
+	u_char		rbuf[65536];
+	u_char		ibuf[16384];
+	struct stic_regs stic;
+	u_char		__pad1[NBPG - sizeof(struct stic_regs)];
 } px_map;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.17 1999/12/14 17:51:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16 1998/12/11 18:46:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -61,8 +61,7 @@ extern char *extiobase, *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 extern vaddr_t CLKbase, MMUbase;
-extern paddr_t bootinfo_pa;
-extern vaddr_t bootinfo_va;
+extern paddr_t pagezero;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
@@ -314,13 +313,12 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = PG_NV;
 
 	/*
-	 * The page of kernel text is zero-filled in locore.s,
-	 * and not mapped (at VA 0).  The boot loader places the
-	 * bootinfo here after the kernel is loaded.  Remember
-	 * the physical address; we'll map it to a virtual address
-	 * later.
+	 * Save the physical address of `page zero'.  This is
+	 * a page of memory at the beginning of kernel text
+	 * not mapped at VA 0.  But, we might want to use it
+	 * for something later.
 	 */
-	RELOC(bootinfo_pa, paddr_t) = firstpa;
+	RELOC(pagezero, paddr_t) = firstpa;
 
 	/*
 	 * Validate PTEs for kernel text (RO).  The first page
@@ -517,8 +515,6 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
-		RELOC(bootinfo_va, vaddr_t) = (vaddr_t)va;
-		va += NBPG;
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
 		va += NBPG;
 		RELOC(CADDR2, caddr_t) = (caddr_t)va;

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.27 1999/12/09 02:11:55 simonb Exp $
+# 	$NetBSD: INSTALL,v 1.23 1999/07/29 10:37:22 augustss Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -22,7 +22,7 @@ options 	MIPS3			# R4000/R4400 support
 
 # Support for specific models of DECstation
 options 	DEC_3100		# kn01: DECstation 2100, 3100
-options 	DEC_5100		# kn230: DECsystem 5100
+#options 	DEC_5100		# kn230: DECsystem 5100
 options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
 options 	DEC_3MIN		#  5000/1xx (kn02ba), 5000/150 (kn04)
 options 	DEC_3MAX		# kn02: 5000/200 support
@@ -79,52 +79,32 @@ config		nfsnetbsd	root on ? type nfs
 mainbus0	at root
 cpu*		at mainbus0
 
-## Peripheral Bus Support (for devices to attach to)
-## ----------------------------------------------------------------------------
 
-# TURBOchannel bus support
-tc*	at	mainbus0
+#########################################################################
+# I/O bus and device options						#
+#########################################################################
 
-# 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
-ioasic0	at	tc?
-mcclock0 at	ioasic? offset ?	# DS1287 RTC
-le0	at	ioasic? offset ?	# LANCE
-scc0	at	ioasic? offset ?	# Z85C30
-scc1	at	ioasic? offset ?	# Z85C30
-#isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
-dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
-#fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
-asc0	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
+# TC bus and supported options. (All but PMAXes have a turbochannel.)
+include 	"arch/pmax/conf/tc.std"
 
-# 3MAX has TURBOchannel but no IOASIC
-ibus0	at	tc? slot ? offset ?	# 3MAX system slot
-mcclock0 at	ibus0 addr ?		# DS1287 RTC
-dc0	at	ibus0 addr ?		# DC7085 quad line serial device
-asc0	at	tc? slot ? offset ?	# NCR53C94 SCSI
-le0	at	tc? slot ? offset ?	# LANCE
+# ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
+include 	"arch/pmax/conf/builtin.ioasic"
 
-# TURBOchannel devices
-mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
-cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
-#tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
-sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-px0	at	tc? slot ? offset ?	# PMAG-C PX family
-#sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
-xcfb0	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
-asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
-le*	at	tc? slot ? offset ?	# PMAD-A LANCE
-fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
-#tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
-#asc*	at	tcds? chip ?
+# MAXINE-only ioasic baseboard devices and on-baseboard "options"
+include 	"arch/pmax/conf/builtin.maxine"
 
-# PMAX and MIPSMATE
-ibus0	at	mainbus0
-pm0	at	ibus0 addr ?		# 3100 onboard fb
-dc0	at	ibus0 addr ?		# DC7085 quad line serial device
-le0	at	ibus0 addr ?		# 3100 onboard LANCE
-sii0	at	ibus0 addr ?		# DC7061 onboard SCSI
-mcclock0 at	ibus0 addr ?		# MC146818 RTC
-dc*	at	ibus0 addr ?		# 5100 optional serial devices
+# 5000/200-only (aka 3MAX aka KN02) baseboard devices.
+# (KN02 has turbochannel but no	IOASIC).
+include 	"arch/pmax/conf/builtin.3max"
+
+# 2100/3100-only (aka PMAX aka KN01) baseboard devices.
+# (may also be present on a 5100).
+include 	"arch/pmax/conf/builtin.3100"
+#include 	"arch/pmax/conf/builtin.5100"
+
+# baseboard devices on 5100, 3100 "ibus" virtual bus
+include 	"arch/pmax/conf/ibus.std"
+
 
 #########################################################################
 # SCSI configuration							#

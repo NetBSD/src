@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.3 1999/02/08 16:33:18 bouyer Exp $	*/
+/*	$NetBSD: dkio.h,v 1.3.14.1 1999/12/21 23:20:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -46,6 +46,9 @@
 #define DIOCSDINFO	_IOW('d', 102, struct disklabel)/* set */
 #define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
 #define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
+
+/* Get partition's block shift factor */
+#define	DIOCGBSHIFT	_IOR('d', 100, int)
 
 /* do format operation, read or write */
 #define DIOCRFORMAT	_IOWR('d', 105, struct format_op)

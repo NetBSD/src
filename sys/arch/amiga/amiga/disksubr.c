@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 1999/06/02 21:09:03 is Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31.8.1 1999/12/21 23:15:53 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -105,11 +105,12 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct adostype adt;
 	struct partition *pp = NULL;
@@ -154,6 +155,8 @@ readdisklabel(dev, strat, lp, clp)
 #else
 	bp->b_dev = dev;
 #endif
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	msg = NULL;
 
 	/*
@@ -165,8 +168,10 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
+#if 0
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
+#endif
 #endif
 		strat(bp);
 
@@ -492,11 +497,12 @@ setdisklabel(olp, nlp, openmask, clp)
  * label.  Hope the user was carefull.
  */
 int
-writedisklabel(dev, strat, lp, clp)
+writedisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct rdbmap *bmap;
 	struct buf *bp;
@@ -662,11 +668,13 @@ getadostype(dostype)
  * lseg or end the chain for part, badb, fshd)
  */
 struct rdbmap *
-getrdbmap(dev, strat, lp, clp)
+getrdbmap(dev, strat, lp, clp, bshift, bsize)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
+	int bsize;
 {
 	struct buf *bp;
 
@@ -676,6 +684,8 @@ getrdbmap(dev, strat, lp, clp)
 	 */
 
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	/* XXX finish */
 	brelse(bp);
 	return(NULL);

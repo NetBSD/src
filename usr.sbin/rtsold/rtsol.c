@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.3 1999/12/09 15:08:33 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ sockopen()
 
 	memset(&sin6_allrouters, 0, sizeof(struct sockaddr_in6));
 	if (inet_pton(AF_INET6, ALLROUTER,
-		      &sin6_allrouters.sin6_addr.s6_addr) != 1) {
+		      &sin6_allrouters.sin6_addr.s6_addr) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "inet_pton failed for %s",
 		       ALLROUTER);
 		return(-1);
@@ -176,15 +176,8 @@ sendpacket(struct ifinfo *ifinfo)
 
 	i = sendmsg(rssock, &sndmhdr, 0);
 
-	if (i < 0 || i != ifinfo->rs_datalen) {
-		/*
-		 * ENETDOWN is not so serious, especially when using several
-		 * network cards on a mobile node. We ignore it.
-		 */
-		if (errno != ENETDOWN || dflag > 0)
-			warnmsg(LOG_ERR, __FUNCTION__, "sendmsg on %s: %s",
-				ifinfo->ifname, strerror(errno));
-	}
+	if (i < 0 || i != ifinfo->rs_datalen)
+		warnmsg(LOG_ERR, __FUNCTION__, "sendmsg: %s", strerror(errno));
 
 	/* update counter */
 	ifinfo->probes++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.10 1999/11/07 00:21:13 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.5 1999/08/06 22:33:49 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -33,14 +33,18 @@
 
 #include <errno.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 
 #include "rtld.h"
+
+#define CONCAT(x,y)     __CONCAT(x,y)
+#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 static int protflags __P((int));	/* Elf flags -> mmap protection */
 
@@ -52,10 +56,9 @@ static int protflags __P((int));	/* Elf flags -> mmap protection */
  * for the shared object.  Returns NULL on failure.
  */
 Obj_Entry *
-_rtld_map_object(path, fd, sb)
+_rtld_map_object(path, fd)
 	const char *path;
 	int fd;
-	const struct stat *sb;
 {
 	Obj_Entry      *obj;
 	union {
@@ -69,7 +72,6 @@ _rtld_map_object(path, fd, sb)
 	int             nsegs;
 	Elf_Phdr       *phdyn;
 	Elf_Phdr       *phphdr;
-	Elf_Phdr       *phinterp;
 	caddr_t         mapbase;
 	size_t          mapsize;
 	Elf_Off         base_offset;
@@ -95,19 +97,18 @@ _rtld_map_object(path, fd, sb)
 	}
 	/* Make sure the file is valid */
 	if (nbytes < sizeof(Elf_Ehdr) ||
-	    memcmp(ELFMAG, u.hdr.e_ident, SELFMAG) != 0 ||
-	    u.hdr.e_ident[EI_CLASS] != ELFCLASS) {
+	    memcmp(Elf_e_ident, u.hdr.e_ident, Elf_e_siz) != 0) {
 		_rtld_error("%s: unrecognized file format", path);
 		return NULL;
 	}
 	/* Elf_e_ident includes class */
-	if (u.hdr.e_ident[EI_VERSION] != EV_CURRENT ||
-	    u.hdr.e_version != EV_CURRENT ||
-	    u.hdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
+	if (u.hdr.e_ident[Elf_ei_version] != Elf_ev_current ||
+	    u.hdr.e_version != Elf_ev_current ||
+	    u.hdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
 		_rtld_error("%s: Unsupported file version", path);
 		return NULL;
 	}
-	if (u.hdr.e_type != ET_EXEC && u.hdr.e_type != ET_DYN) {
+	if (u.hdr.e_type != Elf_et_exec && u.hdr.e_type != Elf_et_dyn) {
 		_rtld_error("%s: Unsupported file type", path);
 		return NULL;
 	}
@@ -136,14 +137,12 @@ _rtld_map_object(path, fd, sb)
 	phdr = (Elf_Phdr *) (u.buf + u.hdr.e_phoff);
 	phlimit = phdr + u.hdr.e_phnum;
 	nsegs = 0;
-	phdyn = phphdr = phinterp = NULL;
+	phdyn = NULL;
+	phphdr = NULL;
 	while (phdr < phlimit) {
 		switch (phdr->p_type) {
-		case PT_INTERP:
-			phinterp = phdr;
-			break;
 
-		case PT_LOAD:
+		case Elf_pt_load:
 #ifdef __mips__
 			/* NetBSD/pmax 1.1 elf toolchain peculiarity */
 			if (nsegs >= 2) {
@@ -156,11 +155,11 @@ _rtld_map_object(path, fd, sb)
 			++nsegs;
 			break;
 
-		case PT_PHDR:
+		case Elf_pt_phdr:
 			phphdr = phdr;
 			break;
 
-		case PT_DYNAMIC:
+		case Elf_pt_dynamic:
 			phdyn = phdr;
 			break;
 		}
@@ -191,7 +190,7 @@ _rtld_map_object(path, fd, sb)
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
 	mapsize = base_vlimit - base_vaddr;
 #ifdef RTLD_LOADER
-	base_addr = u.hdr.e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
+	base_addr = u.hdr.e_type == Elf_et_exec ? (caddr_t) base_vaddr : NULL;
 #else
 	base_addr = NULL;
 #endif
@@ -251,11 +250,7 @@ _rtld_map_object(path, fd, sb)
 	/* Non-file portion of BSS mapped above. */
 #endif
 
-	obj = _rtld_obj_new();
-	if (sb != NULL) {
-		obj->dev = sb->st_dev;
-		obj->ino = sb->st_ino;
-	}
+	obj = CNEW(Obj_Entry);
 	obj->mapbase = mapbase;
 	obj->mapsize = mapsize;
 	obj->textsize = round_up(segs[0]->p_vaddr + segs[0]->p_memsz) -
@@ -270,45 +265,6 @@ _rtld_map_object(path, fd, sb)
 		    (obj->relocbase + phphdr->p_vaddr);
 		obj->phsize = phphdr->p_memsz;
 	}
-	if (phinterp != NULL)
-		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
-
-	return obj;
-}
-
-void
-_rtld_obj_free(obj)
-	Obj_Entry *obj;
-{
-	Objlist_Entry *elm;
-
-	free(obj->path);
-	while (obj->needed != NULL) {
-		Needed_Entry *needed = obj->needed;
-		obj->needed = needed->next;
-		free(needed);
-	}
-	while (SIMPLEQ_FIRST(&obj->dldags) != NULL) {
-		elm = SIMPLEQ_FIRST(&obj->dldags);
-		SIMPLEQ_REMOVE_HEAD(&obj->dldags, elm, link);
-		free(elm);
-	}
-	while (SIMPLEQ_FIRST(&obj->dagmembers) != NULL) {
-		elm = SIMPLEQ_FIRST(&obj->dagmembers);
-		SIMPLEQ_REMOVE_HEAD(&obj->dagmembers, elm, link);
-		free(elm);
-	}
-	free(obj);
-}
-
-Obj_Entry *
-_rtld_obj_new(void)
-{
-	Obj_Entry *obj;
-
-	obj = CNEW(Obj_Entry);
-	SIMPLEQ_INIT(&obj->dldags);
-	SIMPLEQ_INIT(&obj->dagmembers);
 	return obj;
 }
 
@@ -321,13 +277,13 @@ protflags(elfflags)
 	int elfflags;
 {
 	int prot = 0;
-	if (elfflags & PF_R)
+	if (elfflags & Elf_pf_r)
 		prot |= PROT_READ;
 #ifdef RTLD_LOADER
-	if (elfflags & PF_W)
+	if (elfflags & Elf_pf_w)
 		prot |= PROT_WRITE;
 #endif
-	if (elfflags & PF_X)
+	if (elfflags & Elf_pf_x)
 		prot |= PROT_EXEC;
 	return prot;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.25 1999/12/04 21:19:56 ragge Exp $ */
+/* $NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25 1999/12/04 21:19:56 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -177,10 +177,10 @@ kmemphys:
 			 */
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(zeropage, NBPG);
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
+				bzero(zeropage, CLBYTES);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);
 			break;
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.33 1999/11/16 22:03:25 hubertf Exp $
+.\"	$NetBSD: sh.1,v 1.30 1999/07/06 14:01:01 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -42,7 +42,7 @@
 sh \- command interpreter (shell)
 .Sh SYNOPSIS
 .Nm sh
-.Op Fl /+aCefnuvxIimqsVEbc
+.Op Fl /+aCefnuvxIimqsVEb
 .Op Fl o Ar longname
 .Bk -words
 .Op Ar target ...
@@ -82,10 +82,7 @@ the file can be executed directly by the shell.
 If no args are present and if the standard input of the shell
 is connected to a terminal (or if the
 .Fl i
-flag is set),
-and the 
-.Fl c
-option is not present, the shell is considered an interactive shell.  An
+flag is set), the shell is considered an interactive shell.  An
 interactive shell generally prompts before each command and handles
 programming and command errors differently (as described below). When
 first starting, the shell inspects argument 0, and if it begins with a
@@ -170,9 +167,6 @@ builtin (described later).
 .Bl -tag -width aaaallexportfoo -offset indent
 .It Fl a Em allexport
 Export all variables assigned to. (UNIMPLEMENTED for 4.4alpha)
-.It Fl c
-Read commands from the command line.
-No commands will be read from the standard input.
 .It Fl C Em noclobber
 Don't overwrite existing files with
 .Dq > .
@@ -1268,8 +1262,6 @@ characters in
 that separated them) are assigned to the last variable. If there are more
 variables than pieces, the remaining variables are assigned the null
 string.
-The 'read' builtin will indicate success unless EOF is encountered
-on input, in which case failure is returned. 
 .Pp
 By default, unless the
 .Fl r
@@ -1397,10 +1389,6 @@ If none of these is specified, it is the limit on file size that is shown
 or set. If value is specified, the limit is set to that number; otherwise
 the current limit is displayed.
 .Pp
-Limits of an arbitrary process can be displayed or set using the
-.Xr sysctl 8
-utility.
-.Pp
 .It umask Op Ar mask
 Set the value of umask (see
 .Xr umask 2 )
@@ -1512,7 +1500,6 @@ The number of lines in the history buffer for the shell.
 .Xr passwd 4 ,
 .Xr profile 4 ,
 .Xr environ 5
-.Xr sysctl 8
 .Sh HISTORY
 A
 .Nm

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.16 1999/10/23 04:02:09 msaitoh Exp $	*/
+/*	$NetBSD: kvm_mkdb.c,v 1.14 1997/10/18 08:49:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: kvm_mkdb.c,v 1.16 1999/10/23 04:02:09 msaitoh Exp $");
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.14 1997/10/18 08:49:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,6 @@ HASHINFO openinfo = {
 };
 
 static DB *db;
-static char *dbname = NULL;
 static char dbtemp[MAXPATHLEN];
 
 int
@@ -85,15 +84,10 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	char *p, *nlistpath, *nlistname;
-	int docheck = 0;
+	char *p, *nlistpath, *nlistname, dbname[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "o:")) != -1)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
-		case 'o':
-			dbname = optarg;
-			break;
-
 		case '?':
 		default:
 			usage();
@@ -104,26 +98,16 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	if (dbname == NULL) {
-		dbname = _PATH_KVMDB;
-		docheck = 1;
-	} else 	if (strncmp(_PATH_KVMDB, dbname, sizeof(_PATH_KVMDB)) == 0) {
-		docheck = 1;
-	}
-	if (docheck) {
-		/*
-		 * If the existing db file matches the currently running
-		 * kernel, exit
-		 */
-		if (testdb())
-			exit(0);
-	}
+	/* If the existing db file matches the currently running kernel, exit */
+	if (testdb())
+		exit(0);
 
 #define	basename(cp)	((p = strrchr((cp), '/')) != NULL ? p + 1 : (cp))
 	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
 	nlistname = basename(nlistpath);
 
-	(void)snprintf(dbtemp, sizeof(dbtemp), "%s.tmp", dbname);
+	(void)snprintf(dbname, sizeof(dbname), "%s", _PATH_KVMDB);
+	(void)snprintf(dbtemp, sizeof(dbtemp), "%s.tmp", _PATH_KVMDB);
 	(void)umask(0);
 	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, &openinfo);
@@ -146,7 +130,7 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: kvm_mkdb [-o database] [file]\n");
+	(void)fprintf(stderr, "usage: kvm_mkdb [file]\n");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.70 1999/10/20 15:22:27 enami Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.69 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,22 +153,4 @@ scsi_print_addr(sc_link)
 	    ((struct device *)sc_link->device_softc)->dv_xname : "probe",
 	    ((struct device *)sc_link->adapter_softc)->dv_xname,
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
-}
-
-/*
- * Kill off all pending xfers for a scsipi_link.
- *
- * Must be called at splbio().
- */
-void
-scsi_kill_pending(sc_link)
-	struct scsipi_link *sc_link;
-{
-	struct scsipi_xfer *xs;
-
-	while ((xs = TAILQ_FIRST(&sc_link->pending_xfers)) != NULL) {
-		xs->xs_status |= XS_STS_DONE;
-		xs->error = XS_DRIVER_STUFFUP;
-		scsipi_done(xs);
-	}
 }

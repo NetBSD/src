@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 1999/11/13 18:01:27 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 1999/09/17 20:04:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -361,7 +361,7 @@ KENTRY(copystr, 16)
 	movd	B_ARG1,r2		/* to */
 	movd	B_ARG2,r0		/* maxlen */
 	cmpqd	0,r0
-	beq	0f			/* anything to do? */
+	beq	2f			/* anything to do? */
 
 	movqd	0,r4			/* Set match value. */
 	movsb	u
@@ -372,7 +372,7 @@ KENTRY(copystr, 16)
 	 * Terminated due to limit count.
 	 * Return ENAMETOOLONG. 
 	 */
-0:	movd	ENAMETOOLONG,r0
+	movd	ENAMETOOLONG,r0
 	br	2f
 
 1:	/*

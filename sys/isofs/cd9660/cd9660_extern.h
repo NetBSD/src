@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.7 1999/07/13 11:12:05 scw Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.7.8.1 1999/12/21 23:19:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -62,6 +62,11 @@ struct iso_mnt {
 	int logical_block_size;
 	int im_bshift;
 	int im_bmask;
+
+#if 1
+	int system_block_size;
+	int im_sshift;
+#endif
 	
 	int volume_space_size;
 	struct netexport im_export;

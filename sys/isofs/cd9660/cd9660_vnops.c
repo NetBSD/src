@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.55 1999/08/03 20:19:18 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.55.8.1 1999/12/21 23:19:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -536,7 +536,11 @@ cd9660_readdir(v)
 		if (isonum_711(ep->flags)&2)
 			idp->current.d_fileno = isodirino(ep, imp);
 		else
+#if 1
+			idp->current.d_fileno = (bp->b_blkno << imp->im_bshift)+
+#else
 			idp->current.d_fileno = dbtob(bp->b_blkno) +
+#endif
 				entryoffsetinblock;
 
 		idp->curroff += reclen;
@@ -650,7 +654,11 @@ cd9660_readlink(v)
 	 */
 	error = bread(imp->im_devvp,
 		      (ip->i_number >> imp->im_bshift) <<
+#if 1
+		      imp->im_sshift,
+#else
 		      (imp->im_bshift - DEV_BSHIFT),
+#endif
 		      imp->logical_block_size, NOCRED, &bp);
 	if (error) {
 		brelse(bp);

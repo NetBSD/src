@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.25 1999/12/07 08:59:54 sakamoto Exp $
+.\"	$NetBSD: packages.7,v 1.20 1999/09/12 18:47:12 kleink Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -63,8 +63,6 @@ to each package).  The default is
 .Pa ${PKGSRCDIR}/packages .
 .It GMAKE
 Set to path of GNU make if not in $PATH (default: gmake).
-.It PKG_FC
-Set to the path of the desired fortran compiler (default: f2c-f77).
 .It XMKMF
 Set to path of
 .Dq xmkmf
@@ -291,20 +289,6 @@ to retrieve distribution files.
 Says that the package uses
 .Pa libtool
 to manage building of libraries and shared objects, where applicable.
-.It LTCONFIG_OVERRIDE
-If set, override the specified
-.Pa ltconfig
-for using
-.Pa pkglibtool
-instead of the pkg's own
-.Pa libtool .
-.It LIBTOOL_OVERRIDE
-If set, override the specified
-.Pa libtool
-with our
-.Pa pkglibtool .
-.It USE_FORTRAN
-Says that the package uses a fortran compiler for building.
 .It USE_GMAKE	
 Says that the package uses
 .Pa gmake .
@@ -318,8 +302,6 @@ Says that the package uses
 .It USE_X11BASE	
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
-This is necessary for packages that install X11 fonts, application
-default files or Imake rule or template files. 
 .It USE_GTEXINFO	
 Says that the package uses gtexinfo.
 .It USE_MOTIF
@@ -392,10 +374,15 @@ stages, inclusive).  The test done to
 determine the existence of the dependency is the same as
 .Dv FETCH_DEPENDS .
 .It RUN_DEPENDS
-This definition is deprecated, and is no longer used in the packages
-collection. It should be replaced by a simple
-.Dq DEPENDS
-definition.  
+A list of
+.Dq path:dir
+pairs of other packages this package depends to run.
+The test done to determine the existence of the dependency is the same as
+.Dv FETCH_DEPENDS .
+This will be checked during the
+.Dq install
+stage and the name of the
+dependency will be put into the package as well.
 .It LIB_DEPENDS
 This definition is deprecated, and is no longer used in the packages
 collection. It should be replaced by a simple
@@ -514,19 +501,10 @@ Used to print all the
 style prompts - override this
 to turn them off.  The default is
 .Pa /bin/echo .
-.It CLEAR_DIRLIST
-If set, cause the
-.Dq clean-update
-target to completely clean up and lose the list of dependent packages.  Use
-with care!
 .It DEPENDS_TARGET
 The target to execute when a package is calling a dependency.  The default
 is
 .Dq install .
-.It NOCLEAN
-If set, prevent the 
-.Dq update
-target from cleaning up after itself.
 .It PATCH_DEBUG
 If set, print out more information about the patches as it attempts to
 apply them.
@@ -623,17 +601,9 @@ flag.
 .It deinstall	
 Remove the installation.
 .It update	
-Update the installation of the current and all dependent packages that
-are installed on the system.
+Update the installation of the current and all dependent packages.
 .It package	
 Create a binary package other people can use.
-.It clean	
-Clean the source tree for a package.
-.It clean-depends	
-Clean the source tree for a package and the packages it depends upon.
-.It clean-update	
-Clean the source tree for a package and all dependent packages that
-are installed on the system.
 .It describe
 Try to generate a one-line description for each package for
 use in INDEX files and the like.

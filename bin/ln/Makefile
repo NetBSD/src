@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 1999/09/27 17:44:50 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.9 1997/07/20 22:37:15 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 5/31/93
 
 PROG=	ln
-MAN=	ln.1
+MAN=	ln.1 symlink.7
 
 .include <bsd.prog.mk>

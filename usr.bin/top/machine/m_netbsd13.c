@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.9 1999/11/05 07:25:14 lukem Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.8 1999/07/23 18:40:27 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.9 1999/11/05 07:25:14 lukem Exp $
+ * $Id: m_netbsd13.c,v 1.8 1999/07/23 18:40:27 christos Exp $
  */
 #define UVM
 
@@ -189,8 +189,8 @@ char *cpustatenames[] = {
 
 int memory_stats[7];
 char *memorynames[] = {
-    "K Act, ", "K Inact, ", "K Wired, ", "K Free, ",
-    "K Swap, ", "K Swap free, ",
+    "K Act ", "K Inact ", "K Wired ", "K Free ",
+    "K Swap ", "K Swap free ",
     NULL
 };
 

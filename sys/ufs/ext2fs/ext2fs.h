@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.8 1999/02/17 13:09:43 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.8.14.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -59,7 +59,9 @@
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
 #define	BBLOCK		((ufs_daddr_t)(0))
+#if 0
 #define	SBLOCK		((ufs_daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#endif
 
 /*
  * Addresses stored in inodes are capable of addressing blocks

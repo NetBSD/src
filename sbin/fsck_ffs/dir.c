@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.26 1999/11/15 19:18:24 fvdl Exp $	*/
+/*	$NetBSD: dir.c,v 1.25 1998/03/18 17:01:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.26 1999/11/15 19:18:24 fvdl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.25 1998/03/18 17:01:23 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,18 +364,16 @@ adjust(idesc, lcnt)
 			clri(idesc, "UNREF", 0);
 	} else {
 		pwarn("LINK COUNT %s", (lfdir == idesc->id_number) ? lfname :
-			((iswap16(dp->di_mode) & IFMT) == IFDIR ? "DIR" :
-			    "FILE"));
+			((iswap16(dp->di_mode) & IFMT) == IFDIR ? "DIR" : "FILE"));
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d",
-			dp->di_nlink, dp->di_nlink - lcnt);
-		if (preen || usedsoftdep) {
+			iswap16(dp->di_nlink), (iswap16(dp->di_nlink) - lcnt) & 0xffff);
+		if (preen) {
 			if (lcnt < 0) {
 				printf("\n");
 				pfatal("LINK COUNT INCREASING");
 			}
-			if (preen)
-				printf(" (ADJUSTED)\n");
+			printf(" (ADJUSTED)\n");
 		}
 		if (preen || reply("ADJUST") == 1) {
 			dp->di_nlink = iswap16(iswap16(dp->di_nlink) - lcnt);
@@ -464,7 +462,7 @@ linkup(orphan, parentdir)
 	lostdir = (iswap16(dp->di_mode) & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
-	if ((preen || usedsoftdep) && dp->di_size == 0)
+	if (preen && dp->di_size == 0)
 		return (0);
 	if (preen)
 		printf(" (RECONNECTED)\n");
@@ -473,8 +471,6 @@ linkup(orphan, parentdir)
 			markclean = 0;
 			return (0);
 		}
-	if (parentdir != 0)
-		lncntp[parentdir]++;
 	if (lfdir == 0) {
 		dp = ginode(ROOTINO);
 		idesc.id_name = lfname;

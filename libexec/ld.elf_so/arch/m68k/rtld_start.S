@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/10/18 03:26:53 itohy Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1999/08/23 09:13:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,11 +62,7 @@ _rtld_bind_start:
 	movel	(16+4)(%sp),-(%sp)	| push obj
 	jbsr	_rtld_bind@PLTPC	| %a0 = _rtld_bind(obj, reloff)
 	addql	#8,%sp			| pop args
-#ifdef __SVR4_ABI__
 	movel	%a0,(16+4)(%sp)		| write fake `return' address over obj
-#else
-	movel	%d0,(16+4)(%sp)		| write fake `return' address over obj
-#endif
 	moveml	(%sp)+,%d0-%d1/%a0-%a1	| restore caller-saved registers
 	addql	#4,%sp			| skip reloff
 	rts				| `return' right into function

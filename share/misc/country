@@ -1,14 +1,3 @@
-# $NetBSD: country,v 1.5 1999/12/02 14:01:46 kleink Exp $
-#
-# ISO 3166-1 Country Codes
-#
-# The format of an entry is:
-# <Country name><TAB><Alpha-2-code><TAB><Alpha-3-code><Numeric-3-code>
-#
-# Further information can be found at the ISO 3166 Maintenance Agency
-# (ISO 3166/MA) web site, <http://www.din.de/gremien/nas/nabd/iso3166ma/>.
-# This list is up-to-date as of 1999-10-01.
-#
 Afghanistan	AF	AFG	004
 Albania	AL	ALB	008
 Algeria	DZ	DZA	012
@@ -58,7 +47,6 @@ Cocos (Keeling) Islands	CC	CCK	166
 Colombia	CO	COL	170
 Comoros	KM	COM	174
 Congo	CG	COG	178
-Congo, The Democratic Republic of the	CD	COD	180
 Cook Islands	CK	COK	184
 Costa Rica	CR	CRI	188
 Cote d'Ivoire	CI	CIV	384
@@ -104,7 +92,6 @@ Guinea-Bissau	GW	GNB	624
 Guyana	GY	GUY	328
 Haiti	HT	HTI	332
 Heard and Mc Donald Islands	HM	HMD	334
-Holy See (Vatican City State)	VA	VAT	336
 Honduras	HN	HND	340
 Hong Kong	HK	HKG	344
 Hungary	HU	HUN	348
@@ -174,7 +161,6 @@ Norway	NO	NOR	578
 Oman	OM	OMN	512
 Pakistan	PK	PAK	586
 Palau	PW	PLW	585
-Palestinian Territory, Occupied	PS	PSE	275
 Panama	PA	PAN	591
 Papua New Guinea	PG	PNG	598
 Paraguay	PY	PRY	600
@@ -189,10 +175,8 @@ Reunion	RE	REU	638
 Romania	RO	ROM	642
 Russian Federation	RU	RUS	643
 Rwanda	RW	RWA	646
-Saint Helena	SH	SHN	654
 Saint Kitts and Nevis	KN	KNA	659
 Saint Lucia	LC	LCA	662
-Saint Pierre and Miquelon	PM	SPM	666
 Saint Vincent and the Grenadines	VC	VCT	670
 Samoa	WS	WSM	882
 San Marino	SM	SMR	674
@@ -210,6 +194,8 @@ South Africa	ZA	ZAF	710
 South Georgia and the South Sandwich Islands	GS	SGS	239
 Spain	ES	ESP	724
 Sri Lanka	LK	LKA	144
+St. Helena	SH	SHN	654
+St. Pierre and Miquelon	PM	SPM	666
 Sudan	SD	SDN	736
 Suriname	SR	SUR	740
 Svalbard and Jan Mayen Islands	SJ	SJM	744
@@ -239,6 +225,7 @@ United States Minor Outlying Islands	UM	UMI	581
 Uruguay	UY	URY	858
 Uzbekistan	UZ	UZB	860
 Vanuatu	VU	VUT	548
+Vatican City State (Holy See)	VA	VAT	336
 Venezuela	VE	VEN	862
 Viet Nam	VN	VNM	704
 Virgin Islands (British)	VG	VGB	092
@@ -247,5 +234,6 @@ Wallis and Futuna Islands	WF	WLF	876
 Western Sahara	EH	ESH	732
 Yemen	YE	YEM	887
 Yugoslavia	YU	YUG	891
+Zaire	ZR	ZAR	180
 Zambia	ZM	ZMB	894
 Zimbabwe	ZW	ZWE	716

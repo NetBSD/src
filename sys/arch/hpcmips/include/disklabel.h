@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1999/10/11 05:29:05 shin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -38,15 +38,47 @@
 #define	MAXPARTITIONS	8		/* number of partitions */
 #define	RAW_PART	3		/* raw partition: XX?d (XXX) */
 
-/* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+/* DOS partition table -- located in boot block */
+#define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
+#define	DOSPARTOFF	446
+#define	NDOSPART	4
+
+#ifndef __ASSEMBLER__
+struct dos_partition {
+	u_int8_t	dp_flag;	/* bootstrap flags */
+	u_int8_t	dp_shd;		/* starting head */
+	u_int8_t	dp_ssect;	/* starting sector */
+	u_int8_t	dp_scyl;	/* starting cylinder */
+	u_int8_t	dp_typ;		/* partition type (see below) */
+	u_int8_t	dp_ehd;		/* end head */
+	u_int8_t	dp_esect;	/* end sector */
+	u_int8_t	dp_ecyl;	/* end cylinder */
+	u_int32_t	dp_start;	/* absolute starting sector number */
+	u_int32_t	dp_size;	/* partition size in sectors */
+};
+#endif
+
+/* Known DOS partition types. */
+#define DOSPTYP_NETBSD	0xa9		/* NetBSD partition type */
+#define	DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
+#define DOSPTYP_FAT12	0x01		/* 12-bit FAT */
+#define DOSPTYP_FAT16S	0x04		/* 16-bit FAT, less than 32M */
+#define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
+#define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
+#define DOSPTYP_FAT32L	0x0c		/* 32-bit FAT, LBA-mapped */
+#define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
+#define DOSPTYP_LNXEXT2	0x83		/* Linux native */
 
 #ifndef __ASSEMBLER__
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct mbr_partition dosparts[NMBRPART];
+	struct dos_partition dosparts[NDOSPART];
 	struct dkbad bad;
 };
+
+/* Isolate the relevant bits to get sector and cylinder. */
+#define	DPSECT(s)	((s) & 0x3f)
+#define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 #endif
 
 #ifdef _KERNEL

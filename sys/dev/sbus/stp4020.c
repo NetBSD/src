@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.7 1999/11/21 15:01:51 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.5 1999/07/06 21:44:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,9 +129,6 @@ struct cfattach nell_ca = {
 	sizeof(struct stp4020_softc), stp4020match, stp4020attach
 };
 
-#ifdef STP4020_DEBUG
-static void	stp4020_dump_regs __P((struct stp4020_socket *));
-#endif
 
 static int	stp4020_rd_sockctl __P((struct stp4020_socket *, int));
 static void	stp4020_wr_sockctl __P((struct stp4020_socket *, int, int));
@@ -353,13 +350,39 @@ stp4020attach(parent, self, aux)
 	 * The higher level we use for status change interrupts;
 	 * the lower level for PC card I/O.
 	 */
-	if (sa->sa_nintr != 0) {
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-				   0, stp4020_statintr, sc);
+	bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
+			   0, stp4020_statintr, sc);
 
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-				   0, stp4020_iointr, sc);
+	bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
+			   0, stp4020_iointr, sc);
+
+#ifdef STP4020_DEBUG
+	/*
+	 * Dump control and status registers.
+	 */
+	for (i = 0; i < STP4020_NSOCK; i++) {
+		char bits[64];
+		struct stp4020_socket *h;
+
+		h = &sc->sc_socks[i];
+		printf("socket[%d] registers:\n", i);
+		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR0_IDX),
+				 STP4020_ICR0_BITS, bits, sizeof(bits));
+		printf("\tICR0=%s\n", bits);
+
+		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR1_IDX),
+				 STP4020_ICR1_BITS, bits, sizeof(bits));
+		printf("\tICR1=%s\n", bits);
+
+		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR0_IDX),
+				 STP4020_ISR0_IOBITS, bits, sizeof(bits));
+		printf("\tISR0=%s\n", bits);
+
+		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR1_IDX),
+				 STP4020_ISR1_BITS, bits, sizeof(bits));
+		printf("\tISR1=%s\n", bits);
 	}
+#endif
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &
 		STP4020_ISR1_REV_M;
@@ -378,9 +401,6 @@ stp4020attach(parent, self, aux)
 		struct stp4020_socket *h = &sc->sc_socks[i];
 		h->sock = i;
 		h->sc = sc;
-#ifdef STP4020_DEBUG
-		stp4020_dump_regs(h);
-#endif
 		stp4020_attach_socket(h);
 	}
 }
@@ -990,31 +1010,3 @@ extern	int cold;
 #endif
 	tsleep(&ticks, 0, "stp4020_delay", ticks);
 }
-
-#ifdef STP4020_DEBUG
-void
-stp4020_dump_regs(h)
-	struct stp4020_socket *h;
-{
-	char bits[64];
-	/*
-	 * Dump control and status registers.
-	 */
-	printf("socket[%d] registers:\n", h->sock);
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR0_IDX),
-			 STP4020_ICR0_BITS, bits, sizeof(bits));
-	printf("\tICR0=%s\n", bits);
-
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR1_IDX),
-			 STP4020_ICR1_BITS, bits, sizeof(bits));
-	printf("\tICR1=%s\n", bits);
-
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR0_IDX),
-			 STP4020_ISR0_IOBITS, bits, sizeof(bits));
-	printf("\tISR0=%s\n", bits);
-
-	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR1_IDX),
-			 STP4020_ISR1_BITS, bits, sizeof(bits));
-	printf("\tISR1=%s\n", bits);
-}
-#endif /* STP4020_DEBUG */

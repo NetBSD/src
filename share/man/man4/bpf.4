@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.11 1999/12/15 22:07:30 abs Exp $
+.\"	$NetBSD: bpf.4,v 1.10 1997/07/11 07:41:32 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -25,12 +25,11 @@
 .\" distributed with 4.3BSD Unix.
 .\"
 .TH BPF 4  "28 June 1994"
-.Sh NAME
-.Nm bpf
-.Nd Berkeley Packet Filter raw network interface
-.Sh SYNOPSIS
-.Cd "pseudo-device bpfilter 16"
-.Sh DESCRIPTION
+.SH NAME
+bpf \- Berkeley Packet Filter
+.SH SYNOPSIS
+.B "pseudo-device bpfilter 16"
+.SH DESCRIPTION
 The Berkeley Packet Filter
 provides a raw interface to data link layers in a protocol
 independent fashion.
@@ -84,7 +83,7 @@ A packet can be sent out on the network by writing to a
 file descriptor.  The writes are unbuffered, meaning only one
 packet can be processed per write.
 Currently, only writes to Ethernets and SLIP links are supported.
-.Sh IOCTLS
+.SH IOCTLS
 The
 .I ioctl
 command codes below are defined in <net/bpf.h>.  All commands require
@@ -253,7 +252,7 @@ or haphazard packet matching).
 .B BIOCSRSIG BIOCGRSIG (u_int signal)
 Set or get the receive signal.  This signal will be sent to the process or process group
 specified by FIOSETOWN.  It defaults to SIGIO.
-.Sh STANDARD IOCTLS
+.SH STANDARD IOCTLS
 .I bpf
 now supports several standard
 .I ioctls
@@ -286,7 +285,7 @@ The signal may be changed via BIOCSRSIG.
 .B FIOSETOWN FIOGETOWN (int)
 Set or get the process or process group (if negative) that should receive SIGIO
 when packets are available.  The signal may be changed using BIOCSRSIG (see above).
-.Sh BPF HEADER
+.SH BPF HEADER
 The following structure is prepended to each packet returned by
 .I read(2):
 .in 15
@@ -360,7 +359,7 @@ must itself be word aligned.
 .I malloc(3)
 will always return an aligned buffer.
 .ft R
-.Sh FILTER MACHINE
+.SH FILTER MACHINE
 A filter program is an array of instructions, with all branches forwardly
 directed, terminated by a \fBreturn\fP instruction.
 Each instruction performs some action on the pseudo-machine state,
@@ -625,7 +624,7 @@ and
 \fBBPF_JUMP\fI(opcode, operand, true_offset, false_offset)\fR
 .RE
 .PP
-.Sh EXAMPLES
+.SH EXAMPLES
 The following filter is taken from the Reverse ARP Daemon.  It accepts
 only Reverse ARP requests.
 .RS
@@ -688,16 +687,16 @@ struct bpf_insn insns[] = {
 };
 .fi
 .RE
-.Sh SEE ALSO
+.SH SEE ALSO
 tcpdump(8), signal(3), ioctl(2), read(2), select(2)
 .LP
 McCanne, S. and Jacobson V.
 .RI "The BSD Packet Filter: A New Architecture for User-level Packet Capture".
 Proceedings of the 1993 Winter USENIX
 Technical Conference, San Diego, CA.
-.Sh FILES
+.SH FILES
 /dev/bpf0, /dev/bpf1, ...
-.Sh BUGS
+.SH BUGS
 The read buffer must be of a fixed size (returned by the BIOCGBLEN ioctl).
 .PP
 A file that does not request promiscuous mode may receive promiscuously
@@ -716,14 +715,14 @@ or lseek to 0 when read fails for this reason.
 "Immediate mode" and the "read timeout" are misguided features.
 This functionality can be emulated with non-blocking mode and
 .I select(2).
-.Sh HISTORY
+.SH HISTORY
 .PP
 The Enet packet filter was created in 1980 by Mike Accetta and
 Rick Rashid at Carnegie-Mellon University.  Jeffrey Mogul, at
 Stanford, ported the code to BSD and continued its development from
 1983 on.  Since then, it has evolved into the Ultrix Packet Filter
 at DEC, a STREAMS NIT module under SunOS 4.1, and BPF.
-.Sh AUTHORS
+.SH AUTHORS
 .PP
 Steven McCanne, of Lawrence Berkeley Laboratory, implemented BPF in
 Summer 1990.  The design was in collaboration with Van Jacobson,

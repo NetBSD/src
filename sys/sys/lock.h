@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.25 1999/10/23 23:00:06 ross Exp $	*/
+/*	$NetBSD: lock.h,v 1.24 1999/08/14 06:56:07 ross Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  * order for it to work on the widest range of processor types.
  */
 struct simplelock {
-	int lock_data;
+	int lock_data __attribute__((__aligned__));
 #ifdef LOCKDEBUG
 	const char *lock_file;
 	const char *unlock_file;

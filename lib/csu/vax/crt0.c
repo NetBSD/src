@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.11 1999/11/02 10:07:13 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10 1998/10/23 00:52:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ struct kframe {
 	asm("		calls $1,___start");	/* do the real start */
 	asm("		halt");
 
-void
+static void
 __start(kfp)
 	struct kframe *kfp;
 {
@@ -117,7 +117,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.11 1999/11/02 10:07:13 lukem Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10 1998/10/23 00:52:53 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0

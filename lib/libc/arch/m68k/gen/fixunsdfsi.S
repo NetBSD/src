@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.4 1999/10/25 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.3 1997/04/25 00:58:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,19 +43,19 @@
 #if 0
 	RCSID("from: @(#)fixunsdfsi.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.4 1999/10/25 23:48:10 thorpej Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.3 1997/04/25 00:58:51 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* (unsigned) double */
 ENTRY(__fixunsdfsi)
-	fintrzd	%sp@(4),%fp0
-	fcmpd	#0r2147483648.0,%fp0
+	fintrzd	sp@(4),fp0
+	fcmpd	#0r2147483648.0,fp0
 	fbge	Lwaybig
-	fmovel	%fp0,%d0
+	fmovel	fp0,d0
 	rts
 Lwaybig:
-	fsubd	#0r2147483648.0,%fp0
-	fmovel	%fp0,%d0
-	bset	#31,%d0
+	fsubd	#0r2147483648.0,fp0
+	fmovel	fp0,d0
+	bset	#31,d0
 	rts

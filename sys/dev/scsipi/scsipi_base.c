@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.27 1999/10/20 15:22:28 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.24 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -201,12 +201,13 @@ void
 scsipi_kill_pending(sc_link)
 	struct scsipi_link *sc_link;
 {
+	struct scsipi_xfer *xs;
 
-	(*sc_link->scsipi_kill_pending)(sc_link);
-#ifdef DIAGNOSTIC
-	if (TAILQ_FIRST(&sc_link->pending_xfers) != NULL)
-		panic("scsipi_kill_pending");
-#endif
+	while ((xs = TAILQ_FIRST(&sc_link->pending_xfers)) != NULL) {
+		xs->xs_status |= XS_STS_DONE;
+		xs->error = ENODEV;
+		scsipi_done(xs);
+	}
 }
 
 /*
@@ -543,7 +544,7 @@ scsipi_start(sc_link, type, flags)
 	scsipi_cmd.how = type;
 	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, (type & SSS_START) ? 60000 : 10000, NULL, flags));
+	    0, 0, 2, (type & SSS_START) ? 30000 : 10000, NULL, flags));
 }
 
 /*
@@ -756,7 +757,7 @@ sc_err1(xs, async)
 		if (xs->retries) {
 			if ((xs->xs_control & XS_CTL_POLL) != 0)
 				delay(1000000);
-			else if ((xs->xs_control & (XS_CTL_NOSLEEP|XS_CTL_DISCOVERY)) == 0)
+			else if ((xs->xs_control & XS_CTL_NOSLEEP) == 0)
 				tsleep(&lbolt, PRIBIO, "scbusy", 0);
 			else
 #if 0

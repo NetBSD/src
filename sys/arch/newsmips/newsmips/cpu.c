@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 1999/12/06 06:58:30 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1 1998/02/18 13:48:30 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -44,6 +44,8 @@ struct cfattach cpu_ca = {
 
 extern struct cfdriver cpu_cd;
 
+extern void cpu_identify __P((void));
+
 static int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
@@ -66,6 +68,7 @@ cpuattach(parent, dev, aux)
 	void *aux;
 {
 
-	printf("\n");
+	printf(": ");
+
 	cpu_identify();
 }

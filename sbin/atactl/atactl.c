@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.6 1999/11/01 02:30:58 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 
 struct command {
 	const char *cmd_name;
-	const char *arg_names;
 	void (*cmd_func) __P((int, char *[]));
 };
 
@@ -75,7 +74,6 @@ int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
 char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
-const	char *argnames;			/* helpstring: expected arguments */
 
 extern const char *__progname;		/* from crt0.o */
 
@@ -85,14 +83,14 @@ void	device_idle __P((int, char *[]));
 void	device_checkpower __P((int, char *[]));
 
 struct command commands[] = {
-	{ "identify",	"",			device_identify },
-	{ "setidle",	"idle-timer",		device_setidle },
-	{ "setstandby",	"standby-timer",	device_setidle },
-	{ "idle",	"",			device_idle },
-	{ "standby",	"",			device_idle },
-	{ "sleep",	"",			device_idle },
-	{ "checkpower",	"",			device_checkpower },
-	{ NULL,		NULL,			NULL },
+	{ "identify",	device_identify },
+	{ "setidle",	device_setidle },
+	{ "setstandby",	device_setidle },
+	{ "idle",	device_idle },
+	{ "standby",	device_idle },
+	{ "sleep",	device_idle },
+	{ "checkpower",	device_checkpower },
+	{ NULL,		NULL },
 };
 
 /*
@@ -137,7 +135,7 @@ struct bitinfo ata_cmd_set2[] = {
 	{ WDC_CMD2_RMSN, "Removable Media Status Notification feature set" },
 	{ ATA_CMD2_APM, "Advanced Power Management feature set" },
 	{ ATA_CMD2_CFA, "CFA feature set" },
-	{ ATA_CMD2_RWQ, "READ/WRITE DMA QUEUED commands" },
+	{ ATA_CMD2_RWQ, "READ/WRITE DMS QUEUED commands" },
 	{ WDC_CMD2_DM, "DOWNLOAD MICROCODE command" },
 	{ NULL, NULL },
 };
@@ -192,8 +190,6 @@ main(argc, argv)
 	if (commands[i].cmd_name == NULL)
 		errx(1, "unknown command: %s\n", cmdname);
 
-	argnames = commands[i].arg_names;
-
 	(*commands[i].cmd_func)(argc, argv);
 	exit(0);
 }
@@ -201,16 +197,9 @@ main(argc, argv)
 void
 usage()
 {
-	int i;
 
-	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "usage: %s device command [arg [...]]\n",
 	    __progname);
-
-	fprintf(stderr, "   Available device commands:\n");
-	for (i=0; commands[i].cmd_name != NULL; i++)
-		fprintf(stderr, "\t%s %s\n", commands[i].cmd_name,
-					    commands[i].arg_names);
-
 	exit(1);
 }
 
@@ -294,7 +283,7 @@ device_identify(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		usage();
+		goto usage;
 
 	memset(&inbuf, 0, sizeof(inbuf));
 	memset(&req, 0, sizeof(req));
@@ -406,6 +395,10 @@ device_identify(argc, argv)
 	}
 
 	return;
+
+usage:
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
+	exit(1);
 }
 
 /*
@@ -423,7 +416,7 @@ device_idle(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		usage();
+		goto usage;
 
 	memset(&req, 0, sizeof(req));
 
@@ -439,6 +432,9 @@ device_idle(argc, argv)
 	ata_command(&req);
 
 	return;
+usage:
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
+	exit(1);
 }
 
 /*
@@ -457,7 +453,7 @@ device_setidle(argc, argv)
 
 	/* Only one argument */
 	if (argc != 1)
-		usage();
+		goto usage;
 
 	idle = strtoul(argv[0], &end, 0);
 
@@ -490,6 +486,11 @@ device_setidle(argc, argv)
 	ata_command(&req);
 
 	return;
+
+usage:
+	fprintf(stderr, "usage; %s device %s idle-time\n", __progname,
+		cmdname);
+	exit(1);
 }
 
 /*
@@ -505,7 +506,7 @@ device_checkpower(argc, argv)
 
 	/* No arguments. */
 	if (argc != 0)
-		usage();
+		goto usage;
 
 	memset(&req, 0, sizeof(req));
 
@@ -532,4 +533,7 @@ device_checkpower(argc, argv)
 	}
 
 	return;
+usage:
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
+	exit(1);
 }

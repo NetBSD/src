@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/10/18 01:35:17 simonb Exp $
+#	$NetBSD: Makefile,v 1.10 1999/05/06 20:50:13 simonb Exp $
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -46,7 +46,6 @@ ${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
-	rm -f ${IMAGE}.gz
 	gzip -9 ${IMAGE}
 
 realinstall:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.20 1999/11/12 18:13:01 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.18 1999/07/14 23:57:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -137,6 +137,16 @@ nsphyattach(parent, self, aux)
 	    mii->mii_instance == 0)
 		sc->mii_flags |= MIIF_NOISOLATE;
 
+#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+
+#if 0
+	/* Can't do this on the i82557! */
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
+	    BMCR_ISO);
+#endif
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
+	    BMCR_LOOP|BMCR_S100);
+
 	mii_phy_reset(sc);
 
 	sc->mii_capabilities =
@@ -145,8 +155,10 @@ nsphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_add_media(mii, sc->mii_capabilities,
+		    sc->mii_inst);
 	printf("\n");
+#undef ADD
 }
 
 int
@@ -225,8 +237,18 @@ nsphy_service(sc, mii, cmd)
 				return (0);
 			(void) mii_phy_auto(sc, 1);
 			break;
+		case IFM_100_T4:
+			/*
+			 * XXX Not supported as a manual setting right now.
+			 */
+			return (EINVAL);
 		default:
-			mii_phy_setmedia(sc);
+			/*
+			 * BMCR data is stored in the ifmedia entry.
+			 */
+			PHY_WRITE(sc, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -270,10 +292,6 @@ nsphy_service(sc, mii, cmd)
 		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
 		break;
-
-	case MII_DOWN:
-		mii_phy_down(sc);
-		return (0);
 	}
 
 	/* Update the media status. */
@@ -292,7 +310,6 @@ nsphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
-	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, par, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -362,5 +379,5 @@ nsphy_status(sc)
 			mii->mii_media_active |= IFM_FDX;
 #endif
 	} else
-		mii->mii_media_active = ife->ifm_media;
+		mii->mii_media_active = mii_media_from_bmcr(bmcr);
 }

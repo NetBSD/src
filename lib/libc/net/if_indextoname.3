@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
-.\"	KAME Id: if_indextoname.3,v 1.4 1999/12/10 04:07:00 itojun Exp
+.\"	$Id: if_indextoname.3,v 1.2 1999/07/03 13:58:31 kleink Exp $
 .\"
 .Dd May 21, 1998
 .Dt IF_NAMETOINDEX 3
@@ -57,23 +57,17 @@
 The functions map interface index to readable interface name
 .Po
 such as
-.Dq Li lo0
+.Li ``lo0''
 .Pc
 , and vice versa.
 .Pp
-The
 .Fn if_nametoindex
-function
-converts an interface name specified by the
-.Fa ifname
-argument to an interface index
-.Pq positive integer value .
+converts readable interface name to interface index
+.Pp positive integer value .
 If the specified interface does not exist, 0 will be returned.
 .Pp
 .Fn if_indextoname
-converts an interface index specified by the
-.Fa ifindex
-argument to an interface name.
+converts interface index to readable interface name.
 The
 .Fa ifname
 argument must point to a buffer of at least
@@ -83,7 +77,7 @@ returned.
 .Po
 .Dv IF_NAMESIZE
 is also defined in
-.Aq Li net/if.h
+.Li <net/if.h>
 and its value includes a terminating null byte at the end of the
 interface name.
 .Pc
@@ -98,7 +92,7 @@ returns an array of
 structures.
 .Fa if_nametoindex
 is also defined in
-.Aq Li net/if.h ,
+.Li <net/if.h> ,
 and is as follows:
 .Bd -literal -offset
 struct if_nameindex {
@@ -141,18 +135,10 @@ return
 .Dv NULL
 on errors.
 .Sh SEE ALSO
-.Rs
-.%A R. Gilligan
-.%A S. Thomson
-.%A J. Bound
-.%A W. Stevens
-.%T Basic Socket Interface Extensions for IPv6
-.%R RFC2553
-.%D March 1999
-.Re
+R. Gilligan, S.  Thomson, J. Bound, and W. Stevens,
+``Basic Socket Interface Extensions for IPv6,'' RFC2553, March 1999.
 .Sh HISTORY
 The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .Sh STANDARDS
-These functions are defined in
-.Dq Basic Socket Interface Extensions for IPv6
+These functions are defined in ``Basic Socket Interface Extensions for IPv6''
 .Pq RFC2533 .

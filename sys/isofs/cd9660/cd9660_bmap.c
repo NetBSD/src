@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.7 1997/01/24 00:27:29 cgd Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.7.32.1 1999/12/21 23:19:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -84,7 +84,11 @@ cd9660_bmap(v)
 	 * Compute the requested block number
 	 */
 	bshift = ip->i_mnt->im_bshift;
+#if 1
+	*ap->a_bnp = (ip->iso_start + lblkno) << ip->i_mnt->im_sshift;
+#else
 	*ap->a_bnp = (ip->iso_start + lblkno) << (bshift - DEV_BSHIFT);
+#endif
 
 	/*
 	 * Determine maximum number of readahead blocks following the

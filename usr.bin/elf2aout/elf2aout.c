@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.7 1999/11/02 21:13:17 drochner Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.6 1998/11/27 05:09:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -48,6 +48,13 @@
 #include <string.h>
 #include <unistd.h>
 
+
+/* Elf Program segment permissions, in program header flags field */
+
+#define PF_X            (1 << 0)/* Segment is executable */
+#define PF_W            (1 << 1)/* Segment is writable */
+#define PF_R            (1 << 2)/* Segment is readable */
+#define PF_MASKPROC     0xF0000000	/* Processor-specific reserved bits */
 
 struct sect {
 	unsigned long vaddr;
@@ -156,12 +163,12 @@ usage:
 	qsort(ph, ex.e_phnum, sizeof(Elf32_Phdr), phcmp);
 	for (i = 0; i < ex.e_phnum; i++) {
 		/* Section types we can ignore... */
-		if (ph[i].p_type == PT_NULL || ph[i].p_type == PT_NOTE ||
-		    ph[i].p_type == PT_PHDR || ph[i].p_type == PT_MIPS_REGINFO)
+		if (ph[i].p_type == Elf_pt_null || ph[i].p_type == Elf_pt_note ||
+		    ph[i].p_type == Elf_pt_phdr || ph[i].p_type == Elf_pt_mips_reginfo)
 			continue;
 		/* Section types we can't handle... */
 		else
-			if (ph[i].p_type != PT_LOAD)
+			if (ph[i].p_type != Elf_pt_load)
 				errx(1, "Program header %d type %d can't be converted.", i, ph[i].p_type);
 		/* Writable (data) segment? */
 		if (ph[i].p_flags & PF_W) {
@@ -241,7 +248,7 @@ usage:
 	for (i = 0; i < ex.e_phnum; i++) {
 		/* Unprocessable sections were handled above, so just verify
 		 * that the section can be loaded before copying. */
-		if (ph[i].p_type == PT_LOAD && ph[i].p_filesz) {
+		if (ph[i].p_type == Elf_pt_load && ph[i].p_filesz) {
 			if (cur_vma != ph[i].p_vaddr) {
 				unsigned long gap = ph[i].p_vaddr - cur_vma;
 				char    obuf[1024];
@@ -348,26 +355,26 @@ translate_syms(out, in, symoff, symsize, stroff, strsize)
 			outbuf[i].n_un.n_strx = nsp - newstrings + 4;
 			nsp += strlen(nsp) + 1;
 
-			type = ELF32_ST_TYPE(inbuf[i].st_info);
-			binding = ELF32_ST_BIND(inbuf[i].st_info);
+			type = ELF_SYM_TYPE(inbuf[i].st_info);
+			binding = ELF_SYM_BIND(inbuf[i].st_info);
 
 			/* Convert ELF symbol type/section/etc info into a.out
 			 * type info. */
-			if (type == STT_FILE)
+			if (type == Elf_estt_file)
 				outbuf[i].n_type = N_FN;
 			else
-				if (inbuf[i].st_shndx == SHN_UNDEF)
+				if (inbuf[i].st_shndx == Elf_eshn_undefined)
 					outbuf[i].n_type = N_UNDF;
 				else
-					if (inbuf[i].st_shndx == SHN_ABS)
+					if (inbuf[i].st_shndx == Elf_eshn_absolute)
 						outbuf[i].n_type = N_ABS;
 					else
-						if (inbuf[i].st_shndx == SHN_COMMON ||
-						    inbuf[i].st_shndx == SHN_MIPS_ACOMMON)
+						if (inbuf[i].st_shndx == Elf_eshn_common ||
+						    inbuf[i].st_shndx == Elf_eshn_mips_acommon)
 							outbuf[i].n_type = N_COMM;
 						else
 							outbuf[i].n_type = symTypeTable[inbuf[i].st_shndx];
-			if (binding == STB_GLOBAL)
+			if (binding == Elf_estb_global)
 				outbuf[i].n_type |= N_EXT;
 			/* Symbol values in executables should be compatible. */
 			outbuf[i].n_value = inbuf[i].st_value;
