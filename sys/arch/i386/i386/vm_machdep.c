@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.103 2002/10/01 12:57:02 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.104 2002/10/06 12:35:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,11 +46,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2002/10/01 12:57:02 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2002/10/06 12:35:16 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 #include "opt_mtrr.h"
+#include "opt_noredzone.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2002/10/01 12:57:02 fvdl Exp $"
 
 #include "npx.h"
 
-void	setredzone __P((u_short *, caddr_t));
+#ifndef NOREDZONE
+static void setredzone __P((struct proc *p));
+#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -147,6 +150,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
 
+#ifndef NOREDZONE
+	setredzone(p2);
+#endif
 	/*
 	 * If specified, give the child a different stack.
 	 */
@@ -159,6 +165,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
 	pcb->pcb_ebp = 0;
+}
+
+void
+cpu_swapin(p)
+	struct proc *p;
+{
+#ifndef NOREDZONE
+	setredzone(p);
+#endif
 }
 
 void
@@ -281,23 +296,15 @@ cpu_coredump(p, vp, cred, chdr)
 	return 0;
 }
 
-#if 0
+#ifndef NOREDZONE
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
-void
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
+static void
+setredzone(struct proc *p)
 {
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
+	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
+	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
 }
 #endif
 
