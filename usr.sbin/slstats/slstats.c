@@ -23,8 +23,8 @@
 
 #ifndef lint
 /*static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.4 1994/04/16 08:12:12 cgd Exp $ (LBL)";*/
-static char rcsid[] = "$Id: slstats.c,v 1.4 1994/04/16 08:12:12 cgd Exp $";
+    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.5 1994/05/14 18:50:57 cgd Exp $ (LBL)";*/
+static char rcsid[] = "$Id: slstats.c,v 1.5 1994/05/14 18:50:57 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -214,7 +214,7 @@ catchalarm()
 #include <kvm.h>
 #include <fcntl.h>
 
-int kd;
+kvm_t *kd;
 
 kopen(system, kmemf, errstr)
 	char *system;
@@ -226,13 +226,9 @@ kopen(system, kmemf, errstr)
 		system = 0;
 		kmemf = 0;
 	}
-	kd = kvm_openfiles(system, kmemf, (void *)0);
-	if (kd != 0) {
-		kd = 0;
+	kd = kvm_open(system, kmemf, NULL, O_RDONLY, "slstats");
+	if (kd == NULL) 
 		return -1;
-	}
-
-	kd = 1;
 	return 0;
 }
 
@@ -246,7 +242,7 @@ knlist(system, nl, errstr)
 		/* kopen() must be called first */
 		abort();
 		
-	if (kvm_nlist(nl) < 0 || nl[0].n_type == 0) {
+	if (kvm_nlist(kd, nl) < 0 || nl[0].n_type == 0) {
 		fprintf(stderr, "%s: %s: no namelist\n", errstr, system);
 		return -1;
 	}
@@ -259,7 +255,7 @@ kread(addr, buf, size)
 	char *buf;
 	int size;
 {
-	if (kvm_read((char *)(long)addr, buf, size) != size)
+	if (kvm_read(kd, (u_long)addr, buf, size) != size)
 		return -1;
 	return 0;
 }
