@@ -1,4 +1,4 @@
-/*	$NetBSD: huffman.c,v 1.5 1999/08/20 02:21:49 simonb Exp $	*/
+/*	$NetBSD: huffman.c,v 1.6 1999/08/30 05:12:58 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Huffman coding low-level stuff                        ---*/
@@ -101,10 +101,10 @@
 
 
 /*---------------------------------------------------*/
-void __BZhbMakeCodeLengths ( UChar *len, 
-                             Int32 *freq,
-                             Int32 alphaSize,
-                             Int32 maxLen )
+void _BZhbMakeCodeLengths ( UChar *len, 
+                            Int32 *freq,
+                            Int32 alphaSize,
+                            Int32 maxLen )
 {
    /*--
       Nodes and heap entries run from 1.  Entry 0
@@ -173,11 +173,11 @@ void __BZhbMakeCodeLengths ( UChar *len,
 
 
 /*---------------------------------------------------*/
-void __BZhbAssignCodes ( Int32 *code,
-                         UChar *length,
-                         Int32 minLen,
-                         Int32 maxLen,
-                         Int32 alphaSize )
+void _BZhbAssignCodes ( Int32 *code,
+                        UChar *length,
+                        Int32 minLen,
+                        Int32 maxLen,
+                        Int32 alphaSize )
 {
    Int32 n, vec, i;
 
@@ -191,13 +191,13 @@ void __BZhbAssignCodes ( Int32 *code,
 
 
 /*---------------------------------------------------*/
-void __BZhbCreateDecodeTables ( Int32 *limit,
-                                Int32 *base,
-                                Int32 *perm,
-                                UChar *length,
-                                Int32 minLen,
-                                Int32 maxLen,
-                                Int32 alphaSize )
+void _BZhbCreateDecodeTables ( Int32 *limit,
+                               Int32 *base,
+                               Int32 *perm,
+                               UChar *length,
+                               Int32 minLen,
+                               Int32 maxLen,
+                               Int32 alphaSize )
 {
    Int32 pp, i, j, vec;
 
