@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.1 2003/09/30 00:35:31 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.2 2003/10/06 18:02:54 shige Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -52,3 +52,8 @@ file	dev/i2c/lm75.c				lmtemp
 device	dsrtc
 attach	dsrtc at iic
 file	dev/i2c/ds1307.c			dsrtc
+
+# Xicor X1226 Real Time Clock
+device	xrtc
+attach	xrtc at iic
+file	dev/i2c/x1226.c				xrtc
