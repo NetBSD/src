@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.481 2004/05/19 10:29:21 itojun Exp $
+# $NetBSD: mi,v 1.482 2004/05/19 19:32:24 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -178,7 +178,6 @@
 ./sbin/reboot					base-sysutil-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
-./sbin/rndc-confgen				base-bind-root
 ./sbin/route					base-netutil-root
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
@@ -1084,6 +1083,7 @@
 ./usr/sbin/revnetgroup				base-nis-bin		yp
 ./usr/sbin/rip6query				base-netutil-bin
 ./usr/sbin/rndc					base-bind-bin
+./usr/sbin/rndc-confgen				base-bind-bin
 ./usr/sbin/rmt					base-sysutil-bin
 ./usr/sbin/route6d				base-router-bin
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
