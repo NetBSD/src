@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 1997/05/07 17:11:58 mycroft Exp $
+# $NetBSD: Makefile,v 1.21 1998/09/05 14:46:13 lukem Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -93,7 +93,7 @@ x11.tar.gz: mount-fs build-fs
 .endif
 
 # clean dependencies in case somebody decides to shortcut the build.
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f ${TARGETS}
 	/bin/rm -f mount-fs build-fs unmount-fs
 

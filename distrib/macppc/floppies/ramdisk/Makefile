@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/07/03 11:20:09 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2 1998/09/05 14:46:18 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -53,7 +53,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/03/19 00:07:27 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/09/05 14:46:13 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -60,7 +60,7 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
 .include <bsd.own.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 1998/07/22 16:37:54 perry Exp $
+#	$NetBSD: Makefile,v 1.88 1998/09/05 14:48:38 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -39,7 +39,7 @@ BIN3+=	hosts.equiv
 NAMEDB=	localhost.rev named.boot root.cache
 PCS=	pcs750.bin
 
-all clean cleandir depend etc includes install lint:
+all clean cleandir depend distclean etc includes install lint:
 
 .ifndef DESTDIR
 distribution distrib-dirs snapshot:
