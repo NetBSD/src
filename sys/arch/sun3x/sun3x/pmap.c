@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1997/03/13 17:40:41 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 1997/03/21 22:46:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@
 #include <vm/vm_page.h>
 
 #include <machine/cpu.h>
+#include <machine/kcore.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/machdep.h>
@@ -300,7 +301,7 @@ vm_offset_t tmp_vpages[2];
  * RAM, this list will have only one entry, which will describe the entire
  * range of available memory.
  */
-struct pmap_physmem_struct avail_mem[SUN3X_80_MEM_BANKS];
+struct pmap_physmem_struct avail_mem[NPHYS_RAM_SEGS];
 u_int total_phys_mem;
 
 /*************************************************************************/
@@ -930,7 +931,7 @@ pmap_alloc_pv()
 	 * pv_heads in spite of the non-contiguity.
 	 */
 	total_mem = 0;
-	for (i = 0; i < SUN3X_80_MEM_BANKS; i++) {
+	for (i = 0; i < NPHYS_RAM_SEGS; i++) {
 		avail_mem[i].pmem_pvbase = _btop(total_mem);
 		total_mem += avail_mem[i].pmem_end -
 			avail_mem[i].pmem_start;
@@ -3585,6 +3586,30 @@ pmap_update()
 	/* not implemented. */
 }
 
+/*
+ * Fill in the cpu_kcore header for dumpsys()
+ * (See machdep.c)
+ */
+void
+pmap_set_kcore_hdr(chdr_p)
+	cpu_kcore_hdr_t *chdr_p;
+{
+	u_long spa, len;
+	int i;
+
+	chdr_p->ckh_contig_end = virtual_contig_end;
+	chdr_p->ckh_kernCbase = kernCbase;
+	for (i = 0; i < NPHYS_RAM_SEGS; i++) {
+		spa = avail_mem[i].pmem_start;
+		spa = _trunc_page(spa);
+		len = avail_mem[i].pmem_end - spa;
+		len = _round_page(len);
+		chdr_p->ram_segs[i].start = spa;
+		chdr_p->ram_segs[i].size  = len;
+	}
+}
+
+
 /* pmap_virtual_space			INTERFACE
  **
  * Return the current available range of virtual addresses in the
@@ -3620,7 +3645,7 @@ pmap_free_pages()
 			return 0;
 		i++;
 	}
-	while (i < SUN3X_80_MEM_BANKS) {
+	while (i < NPHYS_RAM_SEGS) {
 		if (avail < avail_mem[i].pmem_start) {
 			/* Avail is inside a hole, march it
 			 * up to the next bank.
