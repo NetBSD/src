@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.28 2004/11/11 03:10:57 christos Exp $	*/
+/*	$NetBSD: paths.h,v 1.29 2004/12/01 22:51:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,6 +57,7 @@
 #define	_PATH_AUDIO0	"/dev/audio0"
 #define	_PATH_AUDIOCTL	"/dev/audioctl"
 #define	_PATH_AUDIOCTL0	"/dev/audioctl0"
+#define	_PATH_BPF	"/dev/bpf"
 #define	_PATH_CLOCKCTL	"/dev/clockctl"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_CONSTTY	"/dev/constty"
