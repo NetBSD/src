@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.2.2 2002/01/08 00:34:50 nathanw Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.2.3 2002/06/20 03:50:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,11 +73,18 @@
 /*
  * Compile-time options for LFS.
  */
+#define LFS_IFIND_RETRIES	16
 #define LFS_EAGAIN_FAIL          /* markv fail with EAGAIN if ino is locked */
-#define LFS_TRACK_IOS            /* attempt to avoid cleaning segments not yet fully written to disk */
 #define LFS_DEBUG_RFW            /* print roll-forward debugging info */
+#define LFS_NO_PAGEMOVE          /* Use malloc/copy to write clusters */
+#define LFS_AGGRESSIVE_SEGLOCK
+#define LFS_LOGLENGTH 1024
 
 /* #define DEBUG_LFS */              /* Intensive debugging of LFS subsystem */
+
+#ifdef LFS_NO_PAGEMOVE
+# define LFS_MALLOC_SUMMARY
+#endif
 
 /*
  * Parameters and generic definitions
@@ -120,6 +127,20 @@
 	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
 
+#ifdef DEBUG_LOCKED_LIST
+# define LFS_DEBUG_COUNTLOCKED(m) do {                                  \
+	int _s;                                                         \
+	extern int locked_queue_count;					\
+	extern long locked_queue_bytes;					\
+        _s = splbio();							\
+        lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m));	\
+        splx(_s);							\
+        wakeup(&locked_queue_count);					\
+} while (0)
+#else
+# define LFS_DEBUG_COUNTLOCKED(m)
+#endif
+
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
 
@@ -146,7 +167,42 @@
 	}                                                               \
 } while (0)
 
+#ifdef DEBUG
+struct lfs_log_entry {
+	char *op;
+	char *file;
+	int line;
+	ufs_daddr_t block;
+	unsigned long flags;
+};
+extern int lfs_lognum;
+extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
+# define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
+# define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags) do { \
+	int _s;							\
+								\
+	_s = splbio();						\
+	lfs_log[lfs_lognum].op = theop;				\
+	lfs_log[lfs_lognum].file = thefile;			\
+	lfs_log[lfs_lognum].line = (theline);			\
+	lfs_log[lfs_lognum].block = (lbn);			\
+	lfs_log[lfs_lognum].flags = (theflags);			\
+	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;		\
+	splx(_s);						\
+} while (0)
+
+# define LFS_BCLEAN_LOG(fs, bp) do {					\
+	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
+		LFS_ENTER_LOG("clear", __FILE__, __LINE__, bp->b_lblkno, bp->b_flags); \
+} while (0)
+#else
+# define LFS_BCLEAN_LOG(fs, bp)
+# define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+#endif
+	
 #define LFS_ITIMES(ip, acc, mod, cre)  do {				\
+	struct lfs *_fs = (ip)->i_lfs;					\
+									\
        	if ((ip)->i_flag & IN_ACCESS) {                        		\
 		(ip)->i_ffs_atime = (acc)->tv_sec;			\
 		(ip)->i_ffs_atimensec = (acc)->tv_nsec;			\
@@ -157,7 +213,8 @@
 			LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);	\
 			ifp->if_atime_sec = (acc)->tv_sec;		\
 			ifp->if_atime_nsec = (acc)->tv_nsec;		\
-			VOP_BWRITE(ibp);				\
+			LFS_BWRITE_LOG(ibp);				\
+			_fs->lfs_flags |= LFS_IFDIRTY;			\
 		} else {						\
 			LFS_SET_UINO(ip, IN_ACCESSED);			\
 		}                                              		\
@@ -310,7 +367,7 @@ struct dlfs {
 };
 
 /* Maximum number of io's we can have pending at once */
-#define LFS_THROTTLE  16 /* XXX should be better paramtrized - ? */
+#define LFS_THROTTLE  32 /* XXX should be better paramtrized - ? */
 
 /* In-memory super block. */
 struct lfs {
@@ -388,7 +445,9 @@ struct lfs {
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
-#define LFS_NOTYET 0x01
+#define LFS_NOTYET  0x01
+#define LFS_IFDIRTY 0x02
+#define LFS_WARNED  0x04
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_int16_t lfs_activesb;         /* toggle between superblocks */
 #ifdef LFS_TRACK_IOS
@@ -570,13 +629,13 @@ struct segsum {
 	((ufs_daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
 
 /* Read in the block with the cleaner info from the ifile. */
-#define LFS_CLEANERINFO(CP, F, BP) {					\
+#define LFS_CLEANERINFO(CP, F, BP) do {					\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if (bread((F)->lfs_ivnode,					\
 	    (ufs_daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))		\
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
-}
+} while(0)
 
 /* Synchronize the Ifile cleaner info with current avail and bfree */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {                \
@@ -584,7 +643,9 @@ struct segsum {
         (cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail) {    \
 	(cip)->bfree = (fs)->lfs_bfree;                          \
         (cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail;       \
-	(void) VOP_BWRITE(bp); /* Ifile */                       \
+        if (((bp)->b_flags & B_GATHERED) == 0)			 \
+		(fs)->lfs_flags |= LFS_IFDIRTY;                  \
+	(void) LFS_BWRITE_LOG(bp); /* Ifile */                       \
     } else                                                       \
 	brelse(bp);                                              \
 } while (0)
@@ -603,7 +664,8 @@ struct segsum {
 	if ((FS)->lfs_version > 1) {                                    \
 		LFS_CLEANERINFO((CIP), (FS), (BP));                     \
 		(CIP)->free_head = (VAL);                 		\
-		VOP_BWRITE(BP);                                         \
+		LFS_BWRITE_LOG(BP);                                         \
+		(FS)->lfs_flags |= LFS_IFDIRTY;                          \
 	}                                                               \
 } while (0)
 
@@ -616,7 +678,8 @@ struct segsum {
 #define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {                         \
 	LFS_CLEANERINFO((CIP), (FS), (BP));                     	\
 	(CIP)->free_tail = (VAL);                 			\
-	VOP_BWRITE(BP);                                         	\
+	LFS_BWRITE_LOG(BP);                                         	\
+	(FS)->lfs_flags |= LFS_IFDIRTY;                          \
 } while (0)
 
 /*
@@ -624,7 +687,7 @@ struct segsum {
  * may not be mapped!
  */
 /* Read in the block with a specific inode from the ifile. */
-#define	LFS_IENTRY(IP, F, IN, BP) {					\
+#define	LFS_IENTRY(IP, F, IN, BP) do {					\
 	int _e;								\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
@@ -635,10 +698,10 @@ struct segsum {
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data + (IN) % (F)->lfs_ifpb); \
 	else								\
 		(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;	\
-}
+} while(0)
 
 /* Read in the block with a specific segment usage entry from the ifile. */
-#define	LFS_SEGENTRY(SP, F, IN, BP) {					\
+#define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
 	int _e;								\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
@@ -650,7 +713,7 @@ struct segsum {
 			((IN) & ((F)->lfs_sepb - 1)));			\
 	else								\
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % (F)->lfs_sepb);	\
-}
+} while(0)
 
 /* Determine if a buffer belongs to the ifile */
 #define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
@@ -702,6 +765,21 @@ struct segment {
 #define	SEGM_SYNC	0x04		/* wait for segment */
 #define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
+	u_int32_t seg_iocount;		/* number of ios pending */
+};
+
+struct lfs_cluster {
+	struct buf **bpp;      /* Array of kept buffers */
+	int bufcount;          /* Number of kept buffers */
+	size_t bufsize;        /* Size of kept data */
+#define LFS_CL_MALLOC	0x00000001
+#define LFS_CL_SHIFT	0x00000002
+#define LFS_CL_SYNC	0x00000004
+	u_int32_t flags;       /* Flags */
+	struct lfs *fs;        /* LFS that this belongs to */
+	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
+	void *saveaddr;        /* Original contents of saveaddr */
+	char *olddata;		/* Original b_data, if LFS_CL_MALLOC */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.21.2.1 2001/11/14 19:18:30 nathanw Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.21.2.2 2002/06/20 03:49:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.21.2.1 2001/11/14 19:18:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.21.2.2 2002/06/20 03:49:47 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -260,6 +260,8 @@ struct isopcb   tp_isopcb;
 struct isopcb   tp_isopcb;
 #endif				/* TPCONS */
 
+struct tp_stat tp_stat;
+u_int tp_start_win;
 
 struct nl_protosw nl_protosw[] = {
 	/* ISO_CLNS */

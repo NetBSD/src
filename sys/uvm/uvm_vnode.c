@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.8 2002/01/08 00:35:08 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.9 2002/06/20 03:50:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.8 2002/01/08 00:35:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.9 2002/06/20 03:50:47 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -313,7 +313,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  * => returned pages will be BUSY.
  */
 
-void
+int
 uvn_findpages(uobj, offset, npagesp, pgs, flags)
 	struct uvm_object *uobj;
 	voff_t offset;
@@ -321,28 +321,33 @@ uvn_findpages(uobj, offset, npagesp, pgs, flags)
 	struct vm_page **pgs;
 	int flags;
 {
-	int i, count, npages, rv;
+	int i, count, found, npages, rv;
 
-	count = 0;
+	count = found = 0;
 	npages = *npagesp;
 	if (flags & UFP_BACKWARD) {
 		for (i = npages - 1; i >= 0; i--, offset -= PAGE_SIZE) {
 			rv = uvn_findpage(uobj, offset, &pgs[i], flags);
-			if (flags & UFP_DIRTYONLY && rv == 0) {
-				break;
-			}
+			if (rv == 0) {
+				if (flags & UFP_DIRTYONLY)
+					break;
+			} else
+				found++;
 			count++;
 		}
 	} else {
 		for (i = 0; i < npages; i++, offset += PAGE_SIZE) {
 			rv = uvn_findpage(uobj, offset, &pgs[i], flags);
-			if (flags & UFP_DIRTYONLY && rv == 0) {
-				break;
-			}
+			if (rv == 0) {
+				if (flags & UFP_DIRTYONLY)
+					break;
+			} else
+				found++;
 			count++;
 		}
 	}
 	*npagesp = count;
+	return (found);
 }
 
 int
@@ -401,6 +406,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 				return 0;
 			}
 			pg->flags |= PG_WANTED;
+			UVMHIST_LOG(ubchist, "wait %p", pg,0,0,0);
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
 			simple_lock(&uobj->vmobjlock);
@@ -419,6 +425,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 				(pg->flags & PG_CLEAN) == 0;
 			pg->flags |= PG_CLEAN;
 			if (!dirty) {
+				UVMHIST_LOG(ubchist, "dirtonly", 0,0,0,0);
 				return 0;
 			}
 		}

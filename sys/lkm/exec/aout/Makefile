@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3.10.2 2002/04/01 18:48:10 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3.10.3 2002/06/20 03:47:42 nathanw Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/kern
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_AOUT
+CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_AOUT
 
 KMOD=	exec_a.out
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.18 2002/05/29 21:33:12 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.19 2002/06/20 03:47:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.18 2002/05/29 21:33:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.19 2002/06/20 03:47:17 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -647,7 +647,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 /*
  * Debugging related system variables.
  */
-struct ctldebug debug0, debug1, debug2, debug3, debug4;
+struct ctldebug /* debug0, */ /* debug1, */ debug2, debug3, debug4;
 struct ctldebug debug5, debug6, debug7, debug8, debug9;
 struct ctldebug debug10, debug11, debug12, debug13, debug14;
 struct ctldebug debug15, debug16, debug17, debug18, debug19;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45.2.4 2002/05/29 21:33:12 nathanw Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.2.5 2002/06/20 03:47:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.4 2002/05/29 21:33:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.5 2002/06/20 03:47:20 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -117,10 +117,10 @@ scdebug_call(l, code, args)
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= SYS_NSYSENT)
-		printf("OUT OF RANGE (%d)", code);
+	if (code < 0 || code >= em->e_nsysent)
+		printf("OUT OF RANGE (%ld)", (long)code);
 	else {
-		printf("%d call: %s", code, em->e_syscallnames[code]);
+		printf("%ld call: %s", (long)code, em->e_syscallnames[code]);
 		if (scdebug & SCDEBUG_SHOWARGS) {
 			printf("(");
 			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
@@ -154,10 +154,10 @@ scdebug_ret(l, code, error, retval)
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= SYS_NSYSENT)
-		printf("OUT OF RANGE (%d)", code);
+	if (code < 0 || code >= em->e_nsysent)
+		printf("OUT OF RANGE (%ld)", (long)code);
 	else
-		printf("%d ret: err = %d, rv = 0x%lx,0x%lx", code,
+		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,
 		    error, (long)retval[0], (long)retval[1]);
 	printf("\n");
 }

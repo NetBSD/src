@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.1.1.1.4.3 2002/04/17 00:06:26 nathanw Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.1.1.1.4.4 2002/06/20 03:49:35 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,17 +77,17 @@ struct isdn_layer1_bri_driver {
  */
 
 /* Process a rx'd frame */
-int isdn_layer2_data_ind(struct l2_softc * t, struct mbuf *m);
+int isdn_layer2_data_ind(struct l2_softc * t, struct isdn_l3_driver *, struct mbuf *m);
 
 /* Pass a layer 1 activation/deactivation to layer 2. */
-int isdn_layer2_activate_ind(struct l2_softc *, int);
+int isdn_layer2_activate_ind(struct l2_softc *, struct isdn_l3_driver *, int);
 
 /* Pass trace data to layer 2. */
 struct i4b_trace_hdr;	/* from i4b_trace.h */
-int isdn_layer2_trace_ind(struct l2_softc *, struct i4b_trace_hdr *, size_t, unsigned char *);
+int isdn_layer2_trace_ind(struct l2_softc *, struct isdn_l3_driver *, struct i4b_trace_hdr *, size_t, unsigned char *);
 
 /* Pass status informations to layer 2. */
-int isdn_layer2_status_ind(struct l2_softc *, int, int);
+int isdn_layer2_status_ind(struct l2_softc *, struct isdn_l3_driver *, int, int);
 	
 #endif /* !_I4B_L1L2_H_ */
 

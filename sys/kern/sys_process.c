@@ -1,6 +1,7 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.13 2002/05/29 21:33:15 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.14 2002/06/20 03:47:22 nathanw Exp $	*/
 
 /*-
+ * Copyright (c) 1993 Jan-Simon Pendry.
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -9,6 +10,9 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.13 2002/05/29 21:33:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.14 2002/06/20 03:47:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.13 2002/05/29 21:33:15 nathan
 #include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
-
-#include <miscfs/procfs/procfs.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -269,7 +271,7 @@ sys_ptrace(l, v, retval)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		error = procfs_domem(p, t, NULL, &uio);
+		error = process_domem(p, t, &uio);
 		if (!write)
 			*retval = tmp;
 		return (error);
@@ -298,7 +300,7 @@ sys_ptrace(l, v, retval)
 		default:
 			return (EINVAL);
 		}
-		error = procfs_domem(p, t, NULL, &uio);
+		error = process_domem(p, t, &uio);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
@@ -409,7 +411,7 @@ sys_ptrace(l, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-		if (!procfs_validregs(lt, NULL))
+		if (!process_validregs(lt))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -421,7 +423,7 @@ sys_ptrace(l, v, retval)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_doregs(p, lt, NULL, &uio));
+			return (process_doregs(p, lt, &uio));
 		}
 #endif
 
@@ -434,7 +436,7 @@ sys_ptrace(l, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-		if (!procfs_validfpregs(lt, NULL))
+		if (!process_validfpregs(lt))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -446,7 +448,7 @@ sys_ptrace(l, v, retval)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_dofpregs(p, lt, NULL, &uio));
+			return (process_dofpregs(p, lt, &uio));
 		}
 #endif
 
@@ -462,4 +464,208 @@ sys_ptrace(l, v, retval)
 	panic("ptrace: impossible");
 #endif
 	return 0;
+}
+
+int
+process_doregs(curp, p, uio)
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
+	struct uio *uio;
+{
+#if defined(PT_GETREGS) || defined(PT_SETREGS)
+	int error;
+	struct reg r;
+	char *kv;
+	int kl;
+
+	if ((error = process_checkioperm(curp, p)) != 0)
+		return error;
+
+	kl = sizeof(r);
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	PHOLD(p);
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_read_regs(p, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (p->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			error = process_write_regs(p, &r);
+	}
+
+	PRELE(p);
+
+	uio->uio_offset = 0;
+	return (error);
+#else
+	return (EINVAL);
+#endif
+}
+
+int
+process_validregs(p)
+	struct proc *p;
+{
+
+#if defined(PT_SETREGS) || defined(PT_GETREGS)
+	return ((p->p_flag & P_SYSTEM) == 0);
+#else
+	return (0);
+#endif
+}
+
+int
+process_dofpregs(curp, p, uio)
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
+	struct uio *uio;
+{
+#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	int error;
+	struct fpreg r;
+	char *kv;
+	int kl;
+
+	if ((error = process_checkioperm(curp, p)) != 0)
+		return (error);
+
+	kl = sizeof(r);
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	PHOLD(p);
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_read_fpregs(p, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (p->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			error = process_write_fpregs(p, &r);
+	}
+
+	PRELE(p);
+
+	uio->uio_offset = 0;
+	return (error);
+#else
+	return (EINVAL);
+#endif
+}
+
+int
+process_validfpregs(p)
+	struct proc *p;
+{
+
+#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+	return ((p->p_flag & P_SYSTEM) == 0);
+#else
+	return (0);
+#endif
+}
+
+int
+process_domem(curp, p, uio)
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
+	struct uio *uio;
+{
+	int error;
+
+	size_t len;
+#ifdef PMAP_NEED_PROCWR
+	vaddr_t	addr;
+#endif
+
+	len = uio->uio_resid;
+
+	if (len == 0)
+		return (0);
+
+#ifdef PMAP_NEED_PROCWR
+	addr = uio->uio_offset;
+#endif
+
+	if ((error = process_checkioperm(curp, p)) != 0)
+		return (error);
+
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
+		return(EFAULT);
+	p->p_vmspace->vm_refcnt++;  /* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, uio);
+	uvmspace_free(p->p_vmspace);
+
+#ifdef PMAP_NEED_PROCWR
+	if (uio->uio_rw == UIO_WRITE)
+		pmap_procwr(p, addr, len);
+#endif
+	return (error);
+}
+
+/*
+ * Ensure that a process has permission to perform I/O on another.
+ * Arguments:
+ *	p	The process wishing to do the I/O (the tracer).
+ *	t	The process who's memory/registers will be read/written.
+ */
+int
+process_checkioperm(p, t)
+	struct proc *p, *t;
+{
+	int error;
+
+	/*
+	 * You cannot attach to a processes mem/regs if:
+	 *
+	 *	(1) It is currently exec'ing
+	 */
+	if (ISSET(t->p_flag, P_INEXEC))
+		return (EAGAIN);
+
+	/*
+	 *	(2) it's not owned by you, or is set-id on exec
+	 *	    (unless you're root), or...
+	 */
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+		ISSET(t->p_flag, P_SUGID)) &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	/*
+	 *	(3) ...it's init, which controls the security level
+	 *	    of the entire system, and the system was not
+	 *	    compiled with permanetly insecure mode turned on.
+	 */
+	if (t == initproc && securelevel > -1)
+		return (EPERM);
+
+	/*
+	 *	(4) the tracer is chrooted, and its root directory is
+	 * 	    not at or above the root directory of the tracee
+	 */
+	if (!proc_isunder(t, p))
+		return (EPERM);
+	
+	return (0);
 }

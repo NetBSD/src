@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164.2.8 2002/05/29 21:33:19 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.164.2.9 2002/06/20 03:47:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.164.2.8 2002/05/29 21:33:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.164.2.9 2002/06/20 03:47:29 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -207,7 +207,6 @@ sys_mount(l, v, retval)
 			vput(vp);
 			return (EPERM);
 		}                     
-		VOP_UNLOCK(vp, 0);
 		goto update;
 	} else {
 		if (securelevel >= 2) {
@@ -313,7 +312,6 @@ update:
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
 	if (mp->mnt_flag & MNT_UPDATE) {
-		vrele(vp);
 		if (mp->mnt_flag & MNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
 		mp->mnt_flag &=~
@@ -328,6 +326,8 @@ update:
 				vfs_deallocate_syncvnode(mp);
 		}
 		vfs_unbusy(mp);
+		VOP_UNLOCK(vp, 0);
+		vrele(vp);
 		return (error);
 	}
 	/*

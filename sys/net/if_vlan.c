@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.30.2.4 2001/11/14 19:17:28 nathanw Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.30.2.5 2002/06/20 03:48:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.4 2001/11/14 19:17:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.5 2002/06/20 03:48:19 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -659,7 +659,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 }
 
 /*
- * Delete any multicast address we have asked to add form parent
+ * Delete any multicast address we have asked to add from parent
  * interface.  Called when the vlan is being unconfigured.
  */
 static void
@@ -742,7 +742,7 @@ vlan_start(struct ifnet *ifp)
 			n->m_len = sizeof(int);
 		} else {
 			/*
-			 * insert the tag ourselve
+			 * insert the tag ourselves
 			 */
 			M_PREPEND(m, ifv->ifv_encaplen, M_DONTWAIT);
 			if (m == NULL) {
@@ -790,7 +790,7 @@ vlan_start(struct ifnet *ifp)
 
 		/*
 		 * Send it, precisely as the parent's output routine
-		 * would have.  We are already running at splimp.
+		 * would have.  We are already running at splnet.
 		 */
 		IFQ_ENQUEUE(&p->if_snd, m, &pktattr, error);
 		if (error) {

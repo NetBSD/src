@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.3.6.1 2001/09/21 22:37:00 nathanw Exp $	*/
+/*	$NetBSD: endian.h,v 1.3.6.2 2002/06/20 03:50:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -76,11 +76,19 @@
 #ifndef _LOCORE
 /* C-family endian-ness definitions */
 
+#include <sys/ansi.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-typedef u_int32_t	in_addr_t;
-typedef u_int16_t	in_port_t;
+#ifndef in_addr_t
+typedef __in_addr_t	in_addr_t;
+#define	in_addr_t	__in_addr_t
+#endif
+
+#ifndef in_port_t
+typedef __in_port_t	in_port_t;
+#define	in_port_t	__in_port_t
+#endif
 
 __BEGIN_DECLS
 uint32_t	htonl __P((uint32_t)) __attribute__((__const__));

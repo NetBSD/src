@@ -1,9 +1,9 @@
-/*	$NetBSD: tcp_timer.c,v 1.48.2.2 2001/11/14 19:17:58 nathanw Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.48.2.3 2002/06/20 03:48:59 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.48.2.2 2001/11/14 19:17:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.48.2.3 2002/06/20 03:48:59 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -302,8 +302,8 @@ tcp_timer_rexmt(void *arg)
 	TCPT_RANGESET(tp->t_rxtcur, rto * tcp_backoff[tp->t_rxtshift],
 	    tp->t_rttmin, TCPTV_REXMTMAX);
 	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
-#if 0
-	/* 
+
+	/*
 	 * If we are losing and we are trying path MTU discovery,
 	 * try turning it off.  This will avoid black holes in
 	 * the network which suppress or fail to send "packet
@@ -311,21 +311,23 @@ tcp_timer_rexmt(void *arg)
 	 * lots more sophisticated searching to find the right
 	 * value here...
 	 */
-	if (ip_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
-		struct rtentry *rt = NULL;
+	if (tp->t_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
+		tcpstat.tcps_pmtublackhole++;
 
 #ifdef INET
+		/* try turning PMTUD off */
 		if (tp->t_inpcb)
-			rt = in_pcbrtentry(tp->t_inpcb);
+			tp->t_mtudisc = 0;
 #endif
 #ifdef INET6
+		/* try using IPv6 minimum MTU */
 		if (tp->t_in6pcb)
-			rt = in6_pcbrtentry(tp->t_in6pcb);
+			tp->t_mtudisc = 0;
 #endif
 
-		/* XXX:  Black hole recovery code goes here */
+		/* XXX: more sophisticated Black hole recovery code? */
 	}
-#endif /* 0 */
+
 	/*
 	 * If losing, let the lower level know and try for
 	 * a better route.  Also, if we backed off this far,
@@ -371,7 +373,7 @@ tcp_timer_rexmt(void *arg)
 	 * size increase exponentially with time.  If the
 	 * window is larger than the path can handle, this
 	 * exponential growth results in dropped packet(s)
-	 * almost immediately.  To get more time between 
+	 * almost immediately.  To get more time between
 	 * drops but still "push" the network to take advantage
 	 * of improving conditions, we switch from exponential
 	 * to linear window opening at some threshhold size.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.12 2002/04/17 00:06:28 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.13 2002/06/20 03:50:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.12 2002/04/17 00:06:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.13 2002/06/20 03:50:01 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1113,9 +1113,10 @@ nfs_getpages(v)
 	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
-	struct vm_page *pg, **pgs;
+	const int npages = *ap->a_count;
+	struct vm_page *pg, **pgs, *opgs[npages];
 	off_t origoffset, len;
-	int i, error, npages;
+	int i, error;
 	boolean_t v3 = NFS_ISV3(vp);
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
@@ -1131,13 +1132,28 @@ nfs_getpages(v)
 	crhold(np->n_rcred);
 
 	/*
-	 * call the genfs code to get the pages.
+	 * call the genfs code to get the pages.  `pgs' may be NULL
+	 * when doing read-ahead.
 	 */
 
-	npages = *ap->a_count;
+	pgs = ap->a_m;
+	if (write && locked && v3) {
+		KASSERT(pgs != NULL);
+#ifdef DEBUG
+
+		/*
+		 * If PGO_LOCKED is set, real pages shouldn't exists
+		 * in the array.
+		 */
+
+		for (i = 0; i < npages; i++)
+			KDASSERT(pgs[i] == NULL || pgs[i] == PGO_DONTCARE);
+#endif
+		memcpy(opgs, pgs, npages * sizeof(struct vm_pages *));
+	}
 	error = genfs_getpages(v);
 	if (error) {
-		return error;
+		return (error);
 	}
 
 	/*
@@ -1147,7 +1163,6 @@ nfs_getpages(v)
 	 * this fault.
 	 */
 
-	pgs = ap->a_m;
 	if (!write && (np->n_flag & NMODIFIED) == 0 && pgs != NULL) {
 		if (!locked) {
 			simple_lock(&uobj->vmobjlock);
@@ -1164,7 +1179,7 @@ nfs_getpages(v)
 		}
 	}
 	if (!write) {
-		return error;
+		return (0);
 	}
 
 	/*
@@ -1174,12 +1189,31 @@ nfs_getpages(v)
 	origoffset = ap->a_offset;
 	len = npages << PAGE_SHIFT;
 
-	np->n_flag |= NMODIFIED;
 	if (v3) {
-		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		error = lockmgr(&np->n_commitlock,
+		    LK_EXCLUSIVE | (locked ? LK_NOWAIT : 0), NULL);
+		if (error) {
+			KASSERT(locked != 0);
+
+			/*
+			 * Since PGO_LOCKED is set, we need to unbusy
+			 * all pages fetched by genfs_getpages() above,
+			 * tell the caller that there are no pages
+			 * available and put back original pgs array.
+			 */
+
+			uvm_lock_pageq();
+			uvm_page_unbusy(pgs, npages);
+			uvm_unlock_pageq();
+			*ap->a_count = 0;
+			memcpy(pgs, opgs,
+			    npages * sizeof(struct vm_pages *));
+			return (error);
+		}
 		nfs_del_committed_range(vp, origoffset, len);
 		nfs_del_tobecommitted_range(vp, origoffset, len);
 	}
+	np->n_flag |= NMODIFIED;
 	if (!locked) {
 		simple_lock(&uobj->vmobjlock);
 	}
@@ -1196,5 +1230,5 @@ nfs_getpages(v)
 	if (v3) {
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 	}
-	return 0;
+	return (0);
 }

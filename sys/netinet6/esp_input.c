@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.16.2.5 2002/04/01 07:48:47 nathanw Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.16.2.6 2002/06/20 03:49:07 nathanw Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.5 2002/04/01 07:48:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.6 2002/06/20 03:49:07 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -794,7 +794,7 @@ noreplaycheck:
 		}
 
 		key_sa_recordxfer(sav, m);
-		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 || 
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 ||
 		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
 			ipsec6stat.in_nomem++;
 			goto bad;

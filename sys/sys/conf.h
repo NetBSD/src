@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.84.2.7 2002/04/01 07:49:09 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.84.2.8 2002/06/20 03:50:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -333,6 +333,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap) }
 
+/* open, close, read, write, ioctl */
+#define	cdev_systrace_init(c,n) { \
+	dev_init(c,n,open), dev_noimpl(close,enodev), \
+	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
+	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
+	0, seltrue, dev_noimpl(mmap,enodev) }
+
 /* (open), (close), read, write */
 #define cdev_swap_init(c,n) { \
 	dev_noimpl(open,nullop), dev_noimpl(close,nullop), \
@@ -416,6 +423,7 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, read, write, ioctl, poll */
 #define cdev_vc_nb_init(c,n)	cdev__ocrwip_init(c,n)
+#define cdev_irix_usema_init(c,n)	cdev__ocrwip_init(c,n)
 
 /* open, close, read, write, ioctl, stop, poll */
 #define	cdev_esh_init(c,n)	cdev__ocrwisp_init(c,n)
@@ -619,6 +627,8 @@ cdev_decl(ipl);
 # define NSVR4_NET	0
 #endif
 cdev_decl(svr4_net);
+
+cdev_decl(systrace);
 
 cdev_decl(tun);
 

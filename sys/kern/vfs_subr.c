@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.13 2002/05/29 21:33:18 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.14 2002/06/20 03:47:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.13 2002/05/29 21:33:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.14 2002/06/20 03:47:28 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"

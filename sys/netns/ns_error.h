@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.h,v 1.7.32.1 2001/09/21 22:36:55 nathanw Exp $	*/
+/*	$NetBSD: ns_error.h,v 1.7.32.2 2002/06/20 03:49:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -88,5 +88,5 @@ struct	ns_errstat {
 };
 
 #ifdef _KERNEL
-struct	ns_errstat ns_errstat;
+extern	struct	ns_errstat ns_errstat;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.24.2.1 2001/11/14 19:18:27 nathanw Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.24.2.2 2002/06/20 03:49:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,13 +63,14 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.24.2.1 2001/11/14 19:18:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.24.2.2 2002/06/20 03:49:46 nathanw Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -97,9 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.24.2.1 2001/11/14 19:18:27 nathanw E
 #include <netiso/argo_debug.h>
 
 int             iso_systype = SNPA_ES;	/* default to be an ES */
-extern short    esis_holding_time, esis_config_time, esis_esconfig_time;
-extern struct timeval time;
-extern int      hz;
 
 LIST_HEAD(, llinfo_llc) llinfo_llc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.19.2.1 2002/01/08 00:34:01 nathanw Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.19.2.2 2002/06/20 03:48:29 nathanw Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ struct icmp6stat {
 	 * for netinet6 code, it is already available in icp6s_outhist[].
 	 */
 	u_quad_t icp6s_reflect;
-	u_quad_t icp6s_inhist[256];	
+	u_quad_t icp6s_inhist[256];
 	u_quad_t icp6s_nd_toomanyopt;	/* too many ND options */
 	struct icmp6errstat icp6s_outerrhist;
 #define icp6s_odst_unreach_noroute \
@@ -570,7 +570,9 @@ struct icmp6stat {
 #define ICMPV6CTL_MTUDISC_HIWAT	16
 #define ICMPV6CTL_MTUDISC_LOWAT	17
 #define ICMPV6CTL_ND6_DEBUG	18
-#define ICMPV6CTL_MAXID		19
+#define ICMPV6CTL_ND6_DRLIST	19
+#define ICMPV6CTL_ND6_PRLIST	20
+#define ICMPV6CTL_MAXID		21
 
 #define ICMPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -592,6 +594,8 @@ struct icmp6stat {
 	{ "mtudisc_hiwat", CTLTYPE_INT }, \
 	{ "mtudisc_lowat", CTLTYPE_INT }, \
 	{ "nd6_debug", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1
@@ -620,11 +624,8 @@ void	icmp6_mtudisc_callback_register __P((void (*)(struct in6_addr *)));
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \
 do {								\
-	if ((ifp) && (ifp)->if_index <= if_index			\
-	 && (ifp)->if_index < icmp6_ifstatmax			\
-	 && icmp6_ifstat && icmp6_ifstat[(ifp)->if_index]) {	\
-		icmp6_ifstat[(ifp)->if_index]->tag++;		\
-	}							\
+	if (ifp)						\
+		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->icmp6_ifstat->tag++; \
 } while (0)
 
 #define icmp6_ifoutstat_inc(ifp, type, code) \

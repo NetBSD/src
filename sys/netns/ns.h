@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.15 2000/04/10 02:19:29 chs Exp $	*/
+/*	$NetBSD: ns.h,v 1.15.6.1 2002/06/20 03:49:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -132,14 +132,16 @@ struct sockaddr_ns {
 
 #ifdef _KERNEL
 extern struct domain nsdomain;
-union ns_host ns_thishost;
-union ns_host ns_zerohost;
-union ns_host ns_broadhost;
-union ns_net ns_zeronet;
-union ns_net ns_broadnet;
+extern union ns_host ns_thishost;
+extern union ns_host ns_zerohost;
+extern union ns_host ns_broadhost;
+extern union ns_net ns_zeronet;
+extern union ns_net ns_broadnet;
 
 #define	satosns(sa)	((struct sockaddr_ns *)(sa))
 #define	snstosa(sns)	((struct sockaddr *)(sns))
+
+extern struct sockaddr_ns ns_netmask, ns_hostmask;
 #else
 
 #include <sys/cdefs.h>

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.4.1 2002/01/08 00:33:11 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.4.2 2002/06/20 03:47:48 nathanw Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/netbsd32
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_AOUT -DCOMPAT_NETBSD32
+CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_AOUT -DCOMPAT_NETBSD32
 
 KMOD=	exec_netbsd32_aout
 

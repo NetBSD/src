@@ -1,9 +1,9 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.60.2.6 2002/04/01 07:48:45 nathanw Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.60.2.7 2002/06/20 03:49:00 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.60.2.6 2002/04/01 07:48:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.60.2.7 2002/06/20 03:49:00 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -697,7 +697,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 			break;
 
 		case TCP_MAXSEG:
-			if (m && (i = *mtod(m, int *)) > 0 && 
+			if (m && (i = *mtod(m, int *)) > 0 &&
 			    i <= tp->t_peermss)
 				tp->t_peermss = i;  /* limit on send size */
 			else
@@ -940,7 +940,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
 	    && tcp_ctlvars[name[0]].valid) {
 		if (tcp_ctlvars[name[0]].rdonly) {
-			return (sysctl_rdint(oldp, oldlenp, newp, 
+			return (sysctl_rdint(oldp, oldlenp, newp,
 			    tcp_ctlvars[name[0]].val));
 		} else {
 			switch (name[0]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.19.6.2 2001/11/14 19:18:27 nathanw Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.19.6.3 2002/06/20 03:49:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.19.6.2 2001/11/14 19:18:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.19.6.3 2002/06/20 03:49:45 nathanw Exp $");
 
 #include "opt_iso.h"
 
@@ -102,6 +102,9 @@ struct iso_addr zeroiso_addr = {
 	0
 };
 
+#ifdef ARGO_DEBUG
+unsigned char   argo_debug[128];
+#endif
 
 /*
  * FUNCTION:		iso_pcballoc

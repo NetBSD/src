@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.4.46.2 2001/11/14 19:18:32 nathanw Exp $	*/
+/*	$NetBSD: llparse.c,v 1.4.46.3 2002/06/20 03:49:49 nathanw Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.4.46.2 2001/11/14 19:18:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.4.46.3 2002/06/20 03:49:49 nathanw Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -362,8 +362,8 @@ dump_parse_stack()
 	}
 }
 
-#endif DEBUG
-#endif LINT
+#endif /* DEBUG */
+#endif /* !LINT */
 
 void
 prt_token(t)
@@ -376,5 +376,5 @@ prt_token(t)
 #ifdef LINT
 	/* to make lint shut up */
 	fprintf(stdout, "", llnterms, llnsyms, llnprods, llinfinite);
-#endif LINT
+#endif /* LINT */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.38.2.4 2001/11/14 19:17:20 nathanw Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.38.2.5 2002/06/20 03:48:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.38.2.4 2001/11/14 19:17:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.38.2.5 2002/06/20 03:48:12 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -852,6 +852,7 @@ fddi_input(ifp, m)
 		IF_ENQUEUE(inq, m);
 	splx(s);
 }
+
 /*
  * Perform common duties while attaching to interface list
  */

@@ -1,0 +1,6 @@
+#	$NetBSD: files.portal,v 1.1.6.2 2002/06/20 03:47:59 nathanw Exp $
+
+deffs					PORTAL
+
+file	miscfs/portal/portal_vfsops.c	portal
+file	miscfs/portal/portal_vnops.c	portal

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.22 2001/01/05 22:25:27 jdolecek Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.22.2.1 2002/06/20 03:50:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -189,7 +189,7 @@ void ktremul __P((struct proc *));
 void ktrgenio __P((struct proc *, int, enum uio_rw, struct iovec *, int, int));
 void ktrnamei __P((struct proc *, char *));
 void ktrpsig __P((struct proc *, int, sig_t, sigset_t *, int));
-void ktrsyscall __P((struct proc *, register_t, size_t, register_t []));
+void ktrsyscall __P((struct proc *, register_t, register_t []));
 void ktrsysret __P((struct proc *, register_t, int, register_t));
 void ktruser __P((struct proc *, const char *, void *, size_t, int));
 void ktrderef __P((struct proc *));

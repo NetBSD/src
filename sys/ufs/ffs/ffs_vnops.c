@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.37.2.5 2002/01/08 00:34:48 nathanw Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.37.2.6 2002/06/20 03:50:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.37.2.5 2002/01/08 00:34:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.37.2.6 2002/06/20 03:50:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.37.2.5 2002/01/08 00:34:48 nathanw E
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+#include <uvm/uvm.h>
 
 static int ffs_full_fsync __P((void *));
 
@@ -116,7 +118,7 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
-	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ &vop_putpages_desc, ffs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_vnodeop_opv_desc =
@@ -499,6 +501,60 @@ ffs_getpages(void *v)
 		return EINVAL;
 	}
 	return genfs_getpages(v);
+}
+
+int
+ffs_putpages(void *v)
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct uvm_object *uobj = &vp->v_uobj;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	struct vm_page *pg;
+	off_t off;
+	ufs_lbn_t lbn;
+
+	if (!DOINGSOFTDEP(vp) || (ap->a_flags & PGO_CLEANIT) == 0) {
+		return genfs_putpages(v);
+	}
+
+	/*
+	 * for softdep files, force the pages in a block to be written together.
+	 * if we're the pagedaemon and we would have to wait for other pages,
+	 * just fail the request.  the pagedaemon will pick a different page.
+	 */
+
+	ap->a_offlo &= ~fs->fs_qbmask;
+	lbn = lblkno(fs, ap->a_offhi);
+	ap->a_offhi = blkroundup(fs, ap->a_offhi);
+	if (curproc == uvm.pagedaemon_proc) {
+		for (off = ap->a_offlo; off < ap->a_offhi; off += PAGE_SIZE) {
+			pg = uvm_pagelookup(uobj, off);
+
+			/*
+			 * we only have missing pages here because the
+			 * calculation of offhi above doesn't account for
+			 * fragments.  so once we see one missing page,
+			 * the rest should be missing as well, but we'll
+			 * check for the rest just to be paranoid.
+			 */
+
+			if (pg == NULL) {
+				continue;
+			}
+			if (pg->flags & PG_BUSY) {
+				simple_unlock(&uobj->vmobjlock);
+				return EBUSY;
+			}
+		}
+	}
+	return genfs_putpages(v);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.17.2.1 2001/06/21 20:09:55 nathanw Exp $	*/
+/*	$NetBSD: sockio.h,v 1.17.2.2 2002/06/20 03:50:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -80,11 +80,11 @@
 #define	SIOCDIFADDR	 _IOW('i', 25, struct ifreq)	/* delete IF addr */
 
 #define	SIOCAIFADDR	 _IOW('i', 26, struct ifaliasreq)/* add/chg IF alias */
-#define SIOCGIFALIAS	_IOWR('i', 27, struct ifaliasreq)/* get IF alias */
+#define	SIOCGIFALIAS	_IOWR('i', 27, struct ifaliasreq)/* get IF alias */
   
-#define SIOCALIFADDR	 _IOW('i', 28, struct if_laddrreq) /* add IF addr */
-#define SIOCGLIFADDR	_IOWR('i', 29, struct if_laddrreq) /* get IF addr */
-#define SIOCDLIFADDR	 _IOW('i', 30, struct if_laddrreq) /* delete IF addr */
+#define	SIOCALIFADDR	 _IOW('i', 28, struct if_laddrreq) /* add IF addr */
+#define	SIOCGLIFADDR	_IOWR('i', 29, struct if_laddrreq) /* get IF addr */
+#define	SIOCDLIFADDR	 _IOW('i', 30, struct if_laddrreq) /* delete IF addr */
 
 #define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
@@ -98,12 +98,16 @@
 #define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
 
-#define SIOCSIFPHYADDR	 _IOW('i', 70, struct ifaliasreq) /* set gif addres */
+#define	SIOCSIFPHYADDR	 _IOW('i', 70, struct ifaliasreq) /* set gif addres */
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
-#define SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
+#define	SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
 #define	SIOCSLIFPHYADDR	 _IOW('i', 74, struct if_laddrreq) /* set gif addrs */
 #define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
+
+#define	SIOCZIFDATA	_IOWR('i', 129, struct ifdatareq) /* get if_data then
+							     zero ctrs*/
+#define	SIOCGIFDATA	_IOWR('i', 128, struct ifdatareq) /* get if_data */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
@@ -111,9 +115,9 @@
 #define	SIOCSIFASYNCMAP  _IOW('i', 125, struct ifreq)	/* set ppp asyncmap */
 #define	SIOCGIFASYNCMAP _IOWR('i', 124, struct ifreq)	/* get ppp asyncmap */
 
-#define SIOCSDRVSPEC     _IOW('i', 123, struct ifdrv)   /* set driver-specific
+#define	SIOCSDRVSPEC     _IOW('i', 123, struct ifdrv)   /* set driver-specific
 							   parameters */
-#define SIOCGDRVSPEC    _IOWR('i', 123, struct ifdrv)   /* get driver-specific
+#define	SIOCGDRVSPEC    _IOWR('i', 123, struct ifdrv)   /* get driver-specific
 							   parameters */
 
 #define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */

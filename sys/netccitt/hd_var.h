@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_var.h,v 1.9 1998/09/13 16:21:17 christos Exp $	*/
+/*	$NetBSD: hd_var.h,v 1.9.24.1 2002/06/20 03:48:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -100,16 +100,16 @@ struct	hdcb {
 };
 
 #ifdef _KERNEL
-struct	hdcb *hdcbhead;		/* head of linked list of hdcb's */
-struct	Frmr_frame hd_frmr;	/* rejected frame diagnostic info */
-struct	ifqueue hdintrq;	/* hdlc packet input queue */
+extern struct	hdcb *hdcbhead;		/* head of linked list of hdcb's */
+extern struct	Frmr_frame hd_frmr;	/* rejected frame diagnostic info */
+extern struct	ifqueue hdintrq;	/* hdlc packet input queue */
 struct	Hdlc_frame;
 struct	Hdlc_iframe;
 struct	Hdlc_sframe;
 
-int	hd_t1;			/* timer T1 value */
-int	hd_t3;			/* RR send timer */
-int	hd_n2;			/* frame retransmission limit */
+extern int	hd_t1;			/* timer T1 value */
+extern int	hd_t3;			/* RR send timer */
+extern int	hd_n2;			/* frame retransmission limit */
 
 
 /* hd_debug.c */

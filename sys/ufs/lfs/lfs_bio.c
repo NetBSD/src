@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.2.5 2002/02/28 04:15:28 nathanw Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.6 2002/06/20 03:50:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.5 2002/02/28 04:15:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.6 2002/06/20 03:50:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.5 2002/02/28 04:15:28 nathanw Exp
  * No write cost accounting is done.
  * This is almost certainly wrong for synchronous operations and NFS.
  */
-int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	locked_queue_count   = 0;	/* XXX Count of locked-down buffers. */
 long	locked_queue_bytes   = 0L;	/* XXX Total size of locked buffers. */
 int	lfs_writing          = 0;	/* Set if already kicked off a writer
@@ -300,11 +299,10 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		bp->b_flags |= B_DELWRI;
 
 		LFS_LOCK_BUF(bp);
-		bp->b_flags &= ~(B_READ | B_ERROR);
+		bp->b_flags &= ~(B_READ | B_DONE | B_ERROR);
 		s = splbio();
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
-
 	}
 	
 	if (bp->b_flags & B_CALL)
@@ -353,7 +351,6 @@ lfs_flush_fs(struct lfs *fs, int flags)
 void
 lfs_flush(struct lfs *fs, int flags)
 {
-	int s;
 	struct mount *mp, *nmp;
 	
 	if (lfs_dostats) 
@@ -380,12 +377,7 @@ lfs_flush(struct lfs *fs, int flags)
 	}
 	simple_unlock(&mountlist_slock);
 
-#if 1 || defined(DEBUG)
-	s = splbio();
-	lfs_countlocked(&locked_queue_count, &locked_queue_bytes);
-	splx(s);
-	wakeup(&locked_queue_count);
-#endif /* 1 || DEBUG */
+	LFS_DEBUG_COUNTLOCKED("flush");
 
 	lfs_writing = 0;
 }
@@ -490,9 +482,8 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size)
 	
 	bp = DOMALLOC(sizeof(struct buf), M_SEGMENT, M_WAITOK);
 	bzero(bp, sizeof(struct buf));
-	if (nbytes)
-		bp->b_data = DOMALLOC(nbytes, M_SEGMENT, M_WAITOK);
 	if (nbytes) {
+		bp->b_data = DOMALLOC(nbytes, M_SEGMENT, M_WAITOK);
 		bzero(bp->b_data, nbytes);
 	}
 #ifdef DIAGNOSTIC	
@@ -505,6 +496,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size)
 	bgetvp(vp, bp);
 	splx(s);
 	
+	bp->b_saveaddr = (caddr_t)fs;
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
 	bp->b_lblkno = daddr;
@@ -557,7 +549,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
  * Don't count malloced buffers, since they don't detract from the total.
  */
 void
-lfs_countlocked(int *count, long *bytes)
+lfs_countlocked(int *count, long *bytes, char *msg)
 {
 	struct buf *bp;
 	int n = 0;
@@ -575,14 +567,14 @@ lfs_countlocked(int *count, long *bytes)
 			      " buffers locked than exist");
 #endif
 	}
-#ifdef DEBUG
+#ifdef DEBUG_LOCKED_LIST
 	/* Theoretically this function never really does anything */
 	if (n != *count)
-		printf("lfs_countlocked: adjusted buf count from %d to %d\n",
-		       *count, n);
+		printf("lfs_countlocked: %s: adjusted buf count from %d to %d\n",
+		       msg, *count, n);
 	if (size != *bytes)
-		printf("lfs_countlocked: adjusted byte count from %ld to %ld\n",
-		       *bytes, size);
+		printf("lfs_countlocked: %s: adjusted byte count from %ld to %ld\n",
+		       msg, *bytes, size);
 #endif
 	*count = n;
 	*bytes = size;

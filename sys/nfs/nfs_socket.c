@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.66.2.6 2002/04/01 07:49:06 nathanw Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.66.2.7 2002/06/20 03:50:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.6 2002/04/01 07:49:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.7 2002/06/20 03:50:02 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -113,7 +113,6 @@ extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
 	rpc_auth_kerb;
 extern u_int32_t nfs_prog, nqnfs_prog;
 extern time_t nqnfsstarttime;
-extern struct nfsstats nfsstats;
 extern int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
 
@@ -148,6 +147,7 @@ static const int proct[NFS_NPROCS] = {
 static const int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
+struct nfsreqhead nfs_reqq;
 
 struct callout nfs_timer_ch = CALLOUT_INITIALIZER;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.19.2.4 2002/01/08 00:34:23 nathanw Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.19.2.5 2002/06/20 03:49:26 nathanw Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
  *	0 to (~0 - 1): is one of the number of each value.
  */
 struct secpolicyindex {
-	u_int8_t dir;			/* direction of packet flow, see blow */
 	struct sockaddr_storage src;	/* IP src address for SP */
 	struct sockaddr_storage dst;	/* IP dst address for SP */
 	u_int8_t prefs;			/* prefix length in bits for src */
@@ -70,10 +69,13 @@ struct secpolicyindex {
 
 /* Security Policy Data Base */
 struct secpolicy {
-	LIST_ENTRY(secpolicy) chain;
+	TAILQ_ENTRY(secpolicy) tailq;	/* all SPD entries, both pcb/table */
+	LIST_ENTRY(secpolicy) chain;	/* SPD entries on table */
 
+	u_int8_t dir;			/* direction of packet flow */
+	int readonly;			/* write prohibited */
 	int refcnt;			/* reference count */
-	struct secpolicyindex spidx;	/* selector */
+	struct secpolicyindex *spidx;	/* selector - NULL if not valid */
 	u_int32_t id;			/* It's unique number on the system. */
 	u_int state;			/* 0: dead, others: alive */
 #define IPSEC_SPSTATE_DEAD	0
@@ -121,7 +123,7 @@ struct inpcbpolicy {
 	struct secpolicy *cache[3];
 	struct secpolicyindex cacheidx[3];
 	int cachegen[3]; 	/* cache generation #, the time we filled it */
-	int cacheflags;	
+	int cacheflags;
 #define IPSEC_PCBSP_CONNECTED	1
 };
 
@@ -302,7 +304,7 @@ extern int ipsec_debug;
 
 #ifdef INET
 extern struct ipsecstat ipsecstat;
-extern struct secpolicy ip4_def_policy;
+extern struct secpolicy *ip4_def_policy;
 extern int ip4_esp_trans_deflev;
 extern int ip4_esp_net_deflev;
 extern int ip4_ah_trans_deflev;
@@ -315,7 +317,7 @@ extern int ip4_ipsec_ecn;
 
 #ifdef INET6
 extern struct ipsecstat ipsec6stat;
-extern struct secpolicy ip6_def_policy;
+extern struct secpolicy *ip6_def_policy;
 extern int ip6_esp_trans_deflev;
 extern int ip6_esp_net_deflev;
 extern int ip6_ah_trans_deflev;
@@ -345,10 +347,10 @@ struct inpcb;
 #ifdef INET6
 struct in6pcb;
 #endif
-extern int ipsec_init_policy __P((struct socket *so, struct inpcbpolicy **));
-extern int ipsec_copy_policy
+extern int ipsec_init_pcbpolicy __P((struct socket *so, struct inpcbpolicy **));
+extern int ipsec_copy_pcbpolicy
 	__P((struct inpcbpolicy *, struct inpcbpolicy *));
-extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *));
+extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *, int));
 
 extern int ipsec4_set_policy __P((struct inpcb *inp, int optname,
 	caddr_t request, size_t len, int priv));
@@ -410,7 +412,7 @@ extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
 extern void ipsec_delaux __P((struct mbuf *));
 extern int ipsec_setsocket __P((struct mbuf *, struct socket *));
 extern struct socket *ipsec_getsocket __P((struct mbuf *));
-extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t)); 
+extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t));
 extern int ipsec_getnhist __P((struct mbuf *));
 extern struct ipsec_history *ipsec_gethist __P((struct mbuf *, int *));
 extern void ipsec_clearhist __P((struct mbuf *));

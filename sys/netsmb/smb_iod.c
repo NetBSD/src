@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.2.4.2 2002/01/11 23:39:48 nathanw Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.2.4.3 2002/06/20 03:49:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -612,7 +612,7 @@ smb_iod_main(struct smbiod *iod)
 			SMB_IOD_EVUNLOCK(iod);
 			break;
 		}
-		SIMPLEQ_REMOVE_HEAD(&iod->iod_evlist, evp, ev_link);
+		SIMPLEQ_REMOVE_HEAD(&iod->iod_evlist, ev_link);
 		evp->ev_type |= SMBIOD_EV_PROCESSING;
 		SMB_IOD_EVUNLOCK(iod);
 		switch (evp->ev_type & SMBIOD_EV_MASK) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.17.2.4 2001/11/15 07:05:11 thorpej Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.17.2.5 2002/06/20 03:48:11 nathanw Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.17.2.4 2001/11/15 07:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.17.2.5 2002/06/20 03:48:11 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -257,16 +257,8 @@ faithrtrequest(cmd, rt, info)
 	struct rtentry *rt;
 	struct rt_addrinfo *info;
 {
-	if (rt) {
+	if (rt)
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
-		/*
-		 * For optimal performance, the send and receive buffers
-		 * should be at least twice the MTU plus a little more for
-		 * overhead.
-		 */
-		rt->rt_rmx.rmx_recvpipe =
-			rt->rt_rmx.rmx_sendpipe = 3 * FAITHMTU;
-	}
 }
 
 /*

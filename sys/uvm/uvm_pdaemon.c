@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.9 2002/02/28 04:15:31 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.10 2002/06/20 03:50:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.29.2.9 2002/02/28 04:15:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.29.2.10 2002/06/20 03:50:44 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.29.2.9 2002/02/28 04:15:31 nathanw
  */
 
 void		uvmpd_scan __P((void));
-boolean_t	uvmpd_scan_inactive __P((struct pglist *));
+void		uvmpd_scan_inactive __P((struct pglist *));
 void		uvmpd_tune __P((void));
 
 /*
@@ -354,7 +354,7 @@ uvm_aiodone_daemon(void *arg)
  * => we return TRUE if we are exiting because we met our target
  */
 
-boolean_t
+void
 uvmpd_scan_inactive(pglst)
 	struct pglist *pglst;
 {
@@ -536,7 +536,7 @@ uvmpd_scan_inactive(pglst)
 				    PGO_CLEANIT|PGO_FREE);
 				uvm_lock_pageq();
 				if (nextpg &&
-				    (nextpg->flags & PQ_INACTIVE) == 0) {
+				    (nextpg->pqflags & PQ_INACTIVE) == 0) {
 					nextpg = TAILQ_FIRST(pglst);
 				}
 				continue;
@@ -716,7 +716,6 @@ uvmpd_scan_inactive(pglst)
 			nextpg = TAILQ_FIRST(pglst);
 		}
 	}
-	return (error);
 }
 
 /*
@@ -772,7 +771,7 @@ uvmpd_scan(void)
 	 */
 
 	pages_freed = uvmexp.pdfreed;
-	(void) uvmpd_scan_inactive(&uvm.page_inactive);
+	uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*

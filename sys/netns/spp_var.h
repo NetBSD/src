@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.9 1998/09/13 15:21:33 christos Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.9.24.1 2002/06/20 03:49:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -188,14 +188,14 @@ struct	spp_istat {
 };
 
 #ifdef _KERNEL
-struct spp_istat spp_istat;
+extern	struct spp_istat spp_istat;
 
 /* Following was struct sppstat sppstat; */
 #ifndef sppstat
 #define sppstat spp_istat.newstats
 #endif
 
-u_short spp_iss;
+extern	u_short spp_iss;
 struct sppcb;
 struct spidp;
 

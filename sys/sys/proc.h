@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.14 2002/05/04 17:15:15 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.15 2002/06/20 03:50:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -195,7 +195,10 @@ struct proc {
 	u_quad_t 	p_iticks;	/* Statclock hits processing intr */
 
 	int		p_traceflag;	/* Kernel trace points */
-	struct file 	*p_tracep;	/* Trace to file */
+	struct file	*p_tracep;	/* Trace to file */
+	void		*p_systrace;	/* Back pointer to systrace */
+
+	struct vnode	*p_textvp;	/* Vnode of executable */
 
 	struct vnode 	*p_textvp;	/* Vnode of executable */
 
@@ -278,6 +281,7 @@ struct proc {
 #define	P_NOCLDWAIT	0x020000 /* No zombies if child dies */
 #define	P_32		0x040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
+#define	P_SYSTRACE	0x200000 /* Process system call tracing active */
 
 
 /*

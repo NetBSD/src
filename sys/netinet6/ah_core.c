@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.23.2.2 2001/11/14 19:18:00 nathanw Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.23.2.3 2002/06/20 03:49:03 nathanw Exp $	*/
 /*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.23.2.2 2001/11/14 19:18:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.23.2.3 2002/06/20 03:49:03 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -174,7 +174,7 @@ ah_sumsiz_1216(sav)
 	struct secasvar *sav;
 {
 	if (!sav)
-		return -1;
+		panic("ah_sumsiz_1216: null pointer is passed");
 	if (sav->flags & SADB_X_EXT_OLD)
 		return 16;
 	else
@@ -186,7 +186,7 @@ ah_sumsiz_zero(sav)
 	struct secasvar *sav;
 {
 	if (!sav)
-		return -1;
+		panic("ah_sumsiz_zero: null pointer is passed");
 	return 0;
 }
 

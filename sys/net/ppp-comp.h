@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.5 2001/02/23 21:16:19 christos Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.5.2.1 2002/06/20 03:48:20 nathanw Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -103,6 +103,8 @@ struct compressor {
  */
 #define CCP_CONFREQ	1
 #define CCP_CONFACK	2
+#define	CCP_CONFNAK	3
+#define	CCP_CONFREJ	4
 #define CCP_TERMREQ	5
 #define CCP_TERMACK	6
 #define CCP_RESETREQ	14

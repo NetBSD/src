@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.8 2002/04/01 07:48:18 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.9 2002/06/20 03:48:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.8 2002/04/01 07:48:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.9 2002/06/20 03:48:08 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -138,23 +138,17 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.8 2002/04/01 07:48:18 nathanw Exp $");
 #endif
 
 #ifdef INET6
-/*XXX*/
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
 #endif
 
 int	ifqmaxlen = IFQ_MAXLEN;
 struct	callout if_slowtimo_ch;
 
-#ifdef INET6
-/*
- * XXX: declare here to avoid to include many inet6 related files..
- * should be more generalized?
- */
-extern void nd6_setmtu __P((struct ifnet *));
-#endif 
+int netisr;			/* scheduling bits for network */
 
-int	if_rt_walktree __P((struct radix_node *, void *));
+int if_rt_walktree __P((struct radix_node *, void *));
 
 struct if_clone *if_clone_lookup __P((const char *, int *));
 int if_clone_list __P((struct if_clonereq *));
@@ -377,7 +371,7 @@ if_attach(ifp)
 			 * If we hit USHRT_MAX, we skip back to 0 since
 			 * there are a number of places where the value
 			 * of if_index or if_index itself is compared
-			 * to to or stored in an unsigned short.  By
+			 * to or stored in an unsigned short.  By
 			 * jumping back, we won't botch those assignments
 			 * or comparisons.
 			 */
@@ -464,8 +458,43 @@ if_attach(ifp)
 		    ifp->if_xname);
 #endif
 
+	if (domains)
+		if_attachdomain1(ifp);
+
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
+}
+
+void
+if_attachdomain()
+{
+	struct ifnet *ifp;
+	int s;
+
+	s = splnet();
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+		if_attachdomain1(ifp);
+	splx(s);
+}
+
+void
+if_attachdomain1(ifp)
+	struct ifnet *ifp;
+{
+	struct domain *dp;
+	int s;
+
+	s = splnet();
+
+	/* address family dependent data region */
+	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
+	for (dp = domains; dp; dp = dp->dom_next) {
+		if (dp->dom_ifattach)
+			ifp->if_afdata[dp->dom_family] =
+			    (*dp->dom_ifattach)(ifp);
+	}
+
+	splx(s);
 }
 
 /*
@@ -597,6 +626,12 @@ if_detach(ifp)
 	for (i = 0; i <= AF_MAX; i++) {
 		if ((rnh = rt_tables[i]) != NULL)
 			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
+	}
+
+	for (dp = domains; dp; dp = dp->dom_next) {
+		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
+			(*dp->dom_ifdetach)(ifp,
+			    ifp->if_afdata[dp->dom_family]);
 	}
 
 	/* Announce that the interface is gone. */
@@ -1235,6 +1270,28 @@ ifunit(name)
 	const char *name;
 {
 	struct ifnet *ifp;
+	const char *cp = name;
+	u_int unit = 0;
+	u_int i;
+
+	/*
+	 * If the entire name is a number, treat it as an ifindex.
+	 */
+	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++) {
+		unit = unit * 10 + (*cp - '0');
+	}
+
+	/*
+	 * If the number took all of the name, then it's a valid ifindex.
+	 */
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
+		if (unit >= if_index)
+			return (NULL);
+		ifp = ifindex2ifnet[unit];
+		if (ifp == NULL || ifp->if_output == if_nulloutput)
+			return (NULL);
+		return (ifp);
+	}
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -1259,6 +1316,7 @@ ifioctl(so, cmd, data, p)
 	struct ifnet *ifp;
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
+	struct ifdatareq *ifdr;
 	int s, error = 0;
 	short oif_flags;
 
@@ -1270,6 +1328,7 @@ ifioctl(so, cmd, data, p)
 	}
 	ifr = (struct ifreq *)data;
 	ifcr = (struct ifcapreq *)data;
+	ifdr = (struct ifdatareq *)data;
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -1392,6 +1451,22 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		ifp->if_metric = ifr->ifr_metric;
+		break;
+
+	case SIOCGIFDATA:
+		ifdr->ifdr_data = ifp->if_data;
+		break;
+
+	case SIOCZIFDATA:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+		ifdr->ifdr_data = ifp->if_data;
+		/*
+		 * Assumes that the volatile counters that can be
+		 * zero'ed are at the end of if_data.
+		 */
+		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
+		    offsetof(struct if_data, ifi_ipackets));
 		break;
 
 	case SIOCSIFMTU:

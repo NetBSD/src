@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.14.6.3 2001/11/14 19:17:35 nathanw Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.14.6.4 2002/06/20 03:48:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.14.6.3 2001/11/14 19:17:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.14.6.4 2002/06/20 03:48:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.14.6.3 2001/11/14 19:17:35 nathanw Ex
 #include <netccitt/hd_var.h>
 #include <netccitt/x25.h>
 #include <netccitt/pk_extern.h>
+
+struct	hdcb *hdcbhead;		/* head of linked list of hdcb's */
+struct	Frmr_frame hd_frmr;	/* rejected frame diagnostic info */
+struct	ifqueue hdintrq;	/* hdlc packet input queue */
 
 static void frame_reject __P((struct hdcb *, int, struct Hdlc_iframe *));
 static void rej_routine __P((struct hdcb *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.10.2.2 2001/11/14 19:18:06 nathanw Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.10.2.3 2002/06/20 03:49:13 nathanw Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.10.2.2 2001/11/14 19:18:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.10.2.3 2002/06/20 03:49:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -106,7 +106,7 @@ in6_cksum(m, nxt, off, len)
 #if 0
 	int srcifid = 0, dstifid = 0;
 #endif
-	struct ip6_hdr *ip6;	
+	struct ip6_hdr *ip6;
 	union {
 		u_int16_t phs[4];
 		struct {
@@ -244,7 +244,7 @@ in6_cksum(m, nxt, off, len)
 	/*
 	 * Lastly calculate a summary of the rest of mbufs.
 	 */
-	
+
 	for (;m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;

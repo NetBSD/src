@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_netbios_pxy.c,v 1.1.1.1.6.3 2002/04/17 00:06:25 nathanw Exp $	*/
+/*	$NetBSD: ip_netbios_pxy.c,v 1.1.1.1.6.4 2002/06/20 03:48:48 nathanw Exp $	*/
 
 /*
  * Simple netbios-dgm transparent proxy for in-kernel use.
@@ -34,7 +34,7 @@
  * Id: ip_netbios_pxy.c,v 1.1.2.3 2002/01/09 09:28:37 darrenr Exp
  */
 
-__KERNEL_RCSID(1, "$NetBSD: ip_netbios_pxy.c,v 1.1.1.1.6.3 2002/04/17 00:06:25 nathanw Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_netbios_pxy.c,v 1.1.1.1.6.4 2002/06/20 03:48:48 nathanw Exp $");
 
 #define	IPF_NETBIOS_PROXY
 
@@ -78,16 +78,16 @@ nat_t *nat;
 	/*
 	 * no net bios datagram could possibly be shorter than this
 	 */
-	if (dlen < 11) 
+	if (dlen < 11)
 		return 0;
 
 	udp = (udphdr_t *)fin->fin_dp;
 
-	/* 
+	/*
 	 * move past the
 	 *	ip header;
 	 *	udp header;
-	 *	4 bytes into the net bios dgm header. 
+	 *	4 bytes into the net bios dgm header.
 	 *  According to rfc1002, this should be the exact location of
 	 *  the source address/port
 	 */

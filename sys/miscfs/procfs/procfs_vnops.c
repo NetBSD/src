@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.78.2.7 2002/02/28 04:14:57 nathanw Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.78.2.8 2002/06/20 03:48:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.7 2002/02/28 04:14:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.8 2002/06/20 03:48:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.7 2002/02/28 04:14:57 nathan
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
 #include <sys/stat.h>
+#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -257,7 +258,7 @@ procfs_open(v)
 		    ((pfs->pfs_flags & O_EXCL) && (ap->a_mode & FWRITE)))
 			return (EBUSY);
 
-		if ((error = procfs_checkioperm(p1, p2)) != 0)
+		if ((error = process_checkioperm(p1, p2)) != 0)
 			return (error);
 
 		if (ap->a_mode & FWRITE)

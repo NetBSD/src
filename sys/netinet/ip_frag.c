@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.21.4.6 2002/05/04 19:51:49 thorpej Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.21.4.7 2002/06/20 03:48:41 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -93,7 +93,7 @@ extern struct timeout ipfr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.6 2002/05/04 19:51:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.7 2002/06/20 03:48:41 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.21 2002/04/10 04:56:10 darrenr Exp";
@@ -287,7 +287,7 @@ ipfr_t *table[];
 {
 	ipfr_t	*f, frag;
 	u_int idx;
- 
+
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
 	 * (these should all be the same for all fragments of a packet).
@@ -589,7 +589,7 @@ void ipfr_slowtimer()
 #if defined(_KERNEL) && SOLARIS
 	extern	int	fr_running;
 
-	if (fr_running <= 0) 
+	if (fr_running <= 0)
 		return;
 	READ_ENTER(&ipf_solaris);
 #endif

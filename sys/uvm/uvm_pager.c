@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.41.2.7 2002/01/08 00:35:05 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41.2.8 2002/06/20 03:50:44 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.7 2002/01/08 00:35:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.8 2002/06/20 03:50:44 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -59,11 +59,7 @@ struct pool *uvm_aiobuf_pool;
  * list of uvm pagers in the system
  */
 
-extern struct uvm_pagerops uvm_deviceops;
-extern struct uvm_pagerops uvm_vnodeops;
-extern struct uvm_pagerops ubc_pager;
-
-struct uvm_pagerops *uvmpagerops[] = {
+struct uvm_pagerops * const uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
@@ -299,7 +295,7 @@ uvm_aio_aiodone(bp)
 	struct uvm_object *uobj;
 	struct simplelock *slock;
 	int s, i, error, swslot;
-	boolean_t write, swap, pageout;
+	boolean_t write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
@@ -322,7 +318,6 @@ uvm_aio_aiodone(bp)
 	pg = pgs[0];
 	swap = (pg->uanon != NULL && pg->uobject == NULL) ||
 		(pg->pqflags & PQ_AOBJ) != 0;
-	pageout = (pg->flags & PG_PAGEOUT) != 0;
 	if (!swap) {
 		uobj = pg->uobject;
 		slock = &uobj->vmobjlock;
@@ -339,7 +334,6 @@ uvm_aio_aiodone(bp)
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		KASSERT(swap || pg->uobject == uobj);
-		KASSERT(pageout ^ ((pg->flags & PG_PAGEOUT) == 0));
 		UVMHIST_LOG(ubchist, "pg %p", pg, 0,0,0);
 
 		/*
@@ -421,7 +415,6 @@ uvm_aio_aiodone(bp)
 		simple_unlock(slock);
 	} else {
 		KASSERT(write);
-		KASSERT(pageout);
 
 		/* these pages are now only in swap. */
 		simple_lock(&uvm.swap_data_lock);
