@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.1.1.6 1999/02/19 21:58:17 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.7 1999/02/24 04:11:06 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -76,7 +76,7 @@ struct server_list {
 static char copyright [] =
 "Copyright 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl14";
+static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl15";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -293,12 +293,10 @@ void relay (ip, packet, length, from_port, from, hfrom)
 			return;
 		}
 
-		if (send_packet (out,
-				 (struct packet *)0,
-				 packet, length, out -> primary_address,
-				 &to, &hto) < 0)
-			debug ("sendpkt: %m");
-		else
+		if (!send_packet (out,
+				  (struct packet *)0,
+				  packet, length, out -> primary_address,
+				  &to, &hto) < 0)
 			debug ("forwarded BOOTREPLY for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
@@ -323,13 +321,11 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp -> next) {
-		if (send_packet ((fallback_interface
-				  ? fallback_interface : interfaces),
-				 (struct packet *)0,
-				 packet, length, ip -> primary_address,
-				 &sp -> to, (struct hardware *)0) < 0) {
-			debug ("send_packet: %m");
-		} else {
+		if (!send_packet ((fallback_interface
+				   ? fallback_interface : interfaces),
+				  (struct packet *)0,
+				  packet, length, ip -> primary_address,
+				  &sp -> to, (struct hardware *)0) < 0) {
 			debug ("forwarded BOOTREQUEST for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
