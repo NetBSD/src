@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.34 2001/07/10 20:43:57 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.35 2001/07/28 13:28:08 chris Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -58,11 +58,25 @@ file	arch/arm/arm/undefined.c
 file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm32 implementations
+file	arch/arm/arm32/arm32_machdep.c		arm32
 file	arch/arm/arm32/ast.c			arm32
+file	arch/arm/arm32/bus_dma.c		arm32
 file	arch/arm/arm32/cpu.c			arm32 & cpu
+file	arch/arm/arm32/cpuswitch.S		arm32
+file	arch/arm/arm32/exception.S		arm32
+file	arch/arm/arm32/fault.c			arm32
+file	arch/arm/arm32/fusu.S			arm32
+file	arch/arm/arm32/intr.c			arm32
+file	arch/arm/arm32/mem.c			arm32
 file	arch/arm/arm32/pmap.c			arm32
+file	arch/arm/arm32/procfs_machdep.c		arm32 & procfs
+file	arch/arm/arm32/setcpsr.S		arm32
+file	arch/arm/arm32/setstack.S		arm32
+file	arch/arm/arm32/spl.S			arm32
+file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/syscall.c		arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
+file	arch/arm/arm32/vm_machdep.c		arm32
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32

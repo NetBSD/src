@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.57 2001/07/19 16:13:00 wiz Exp $	*/
+/*	$NetBSD: fault.c,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

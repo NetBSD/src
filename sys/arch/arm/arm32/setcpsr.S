@@ -1,4 +1,4 @@
-/*	$NetBSD: setstack.S,v 1.4 1998/04/01 23:00:14 mark Exp $	*/
+/*	$NetBSD: setcpsr.S,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -36,57 +36,43 @@
  *
  * RiscBSD kernel project
  *
- * setstack.S
+ * setcpsr.S
  *
- * Miscellaneous routine to play with the stack pointer in different CPU modes
+ * Miscellaneous routines to play with the CPSR register
  *
  * Eventually this routine can be inline assembly.
  *
- * Created      : 17/09/94
+ * Created      : 12/09/94
  *
- * Based of kate/display/setstack.s
+ * Based of kate/display/setcpsr.s
  */
 
-#include <machine/cpu.h>
 #include <machine/asm.h>
 
-/* To set the stack pointer for a particular mode we must switch
- * to that mode update the banked r13 and then switch back.
- * This routine provides an easy way of doing this for any mode
+/* Sets and clears bits in the CPSR register
  *
- * r0 = CPU mode
- * r1 = stackptr
+ *  r0 - bic mask
+ *  r1 - eor mask
  */
 
-ENTRY(set_stackptr)
-        mrs	r3, cpsr_all		/* Switch to the appropriate mode */
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, r0
-        msr	cpsr_all, r2
+ENTRY_NP(SetCPSR)
+        mrs     r3, cpsr_all		/* Set the CPSR */
+	bic	r2, r3, r0
+        eor     r2, r2, r1
+        msr     cpsr_all, r2
 
-	mov	sp, r1			/* Set the stack pointer */
+        mov	r0, r3			/* Return the old CPSR */
 
-        msr	cpsr_all, r3		/* Restore the old mode */
+	mov	pc, lr
 
-	mov	pc, lr			/* Exit */
 
-/* To get the stack pointer for a particular mode we must switch
- * to that mode copy the banked r13 and then switch back.
- * This routine provides an easy way of doing this for any mode
+/* Gets the CPSR register
  *
- * r0 = CPU mode
+ * Returns the CPSR in r0
  */
 
-ENTRY(get_stackptr)
-        mrs	r3, cpsr_all		/* Switch to the appropriate mode */
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, r0
-        msr	cpsr_all, r2
+ENTRY_NP(GetCPSR)
+        mrs     r0, cpsr_all		/* Get the CPSR */
 
-	mov	r0, sp			/* Set the stack pointer */
+	mov	pc, lr
 
-        msr	cpsr_all, r3		/* Restore the old mode */
-
-	mov	pc, lr			/* Exit */
-
-/* End of setstack.S */

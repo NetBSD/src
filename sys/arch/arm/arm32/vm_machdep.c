@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 2001/06/02 18:09:10 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1 2001/07/28 13:28:04 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -276,8 +276,8 @@ pagemove(from, to, size)
 		printf("pagemove: V%p to %p size %08x\n", from, to, size);
 #endif	/* PMAP_DEBUG */
 
-	fpte = vtopte(from);
-	tpte = vtopte(to);
+	fpte = vtopte((vaddr_t)from);
+	tpte = vtopte((vaddr_t)to);
 
 	/*
 	 * Make sure the cache does not have dirty data for the
@@ -293,7 +293,7 @@ pagemove(from, to, size)
 		*fpte++ = 0;
 		size -= NBPG;
 	}
-	cpu_tlb_flushD();
+	//cpu_tlb_flushD();
 }
 
 extern struct vm_map *phys_map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.7 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: spl.S,v 1.1 2001/07/28 13:28:04 chris Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.

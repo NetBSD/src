@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.33 2001/03/31 12:22:38 toshii Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1 2001/07/28 13:28:04 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
