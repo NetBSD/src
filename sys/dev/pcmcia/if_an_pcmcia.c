@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.19 2004/07/07 06:43:22 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.20 2004/08/08 23:17:12 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.19 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.20 2004/08/08 23:17:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,8 @@ an_pcmcia_attach(parent, self, aux)
 		goto fail1;
 	}
 
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window) != 0) {
+	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
+	    &psc->sc_io_window) != 0) {
 		printf("%s: failed to map io space\n", sc->sc_dev.dv_xname);
 		goto fail2;
 	}
