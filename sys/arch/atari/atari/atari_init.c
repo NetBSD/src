@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.5 1995/05/14 15:44:19 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.6 1995/05/28 19:10:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -95,9 +95,11 @@ vm_offset_t	page_zero;
  * setup the controller at the time the vm-system is not yet operational so
  * 'kvtop()' cannot be used.
  */
-#define	ST_POOL_SIZE	(40*NBPG)	/* XXX: enough? */
+#ifndef ST_POOL_SIZE
+#define	ST_POOL_SIZE	40			/* XXX: enough? */
+#endif
 
-u_long	st_pool_size = ST_POOL_SIZE;	/* Patchable	*/
+u_long	st_pool_size = ST_POOL_SIZE * NBPG;	/* Patchable	*/
 u_long	st_pool_virt, st_pool_phys;
 
 /*
