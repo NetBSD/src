@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.41 2000/05/27 00:40:45 sommerfeld Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.42 2000/08/17 14:37:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -201,15 +201,13 @@ procinit()
 void
 proclist_lock_read()
 {
-	int error, s;
+	int error;
 
-	s = splclock();
 	error = spinlockmgr(&proclist_lock, LK_SHARED, NULL);
 #ifdef DIAGNOSTIC
 	if (__predict_false(error != 0))
 		panic("proclist_lock_read: failed to acquire lock");
 #endif
-	splx(s);
 }
 
 /*
@@ -218,11 +216,8 @@ proclist_lock_read()
 void
 proclist_unlock_read()
 {
-	int s;
 
-	s = splclock();
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
-	splx(s);
 }
 
 /*
@@ -231,7 +226,7 @@ proclist_unlock_read()
 int
 proclist_lock_write()
 {
-	int error, s;
+	int s, error;
 
 	s = splclock();
 	error = spinlockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
