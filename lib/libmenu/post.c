@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.9 2002/02/04 13:02:06 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.10 2002/07/29 13:03:51 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -72,10 +72,12 @@ post_menu(MENU *menu)
 	if ((menu->cols * menu->max_item_width + menu->cols - 1) > maxx)
 		return E_NO_ROOM;
 
-	for (i = 0; i < menu->item_count; i++) {
-		menu->items[i]->selected = 0;
+	if ((menu->opts & O_RADIO) != O_RADIO) {
+		for (i = 0; i < menu->item_count; i++) {
+			menu->items[i]->selected = 0;
+		}
 	}
-
+	
 	menu->posted = 1;
 	return _menui_draw_menu(menu);
 	

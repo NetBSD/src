@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.11 2002/02/04 13:02:05 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.12 2002/07/29 13:03:51 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -306,10 +306,33 @@ menu_opts(MENU *menu)
 int
 set_menu_opts(MENU *param_menu, OPTIONS opts)
 {
+	int i, seen;
 	MENU *menu = (param_menu != NULL) ? param_menu : &_menui_default_menu;
 	OPTIONS old_opts = menu->opts;
 	
         menu->opts = opts;
+
+	  /*
+	   * If the radio option is selected then make sure only one
+	   * item is actually selected in the items.
+	   */
+	if (((opts & O_RADIO) == O_RADIO) && (menu->items != NULL) &&
+	    (menu->items[0] != NULL)) {
+		seen = 0;
+		for (i = 0; i < menu->item_count; i++) {
+			if (menu->items[i]->selected == 1) {
+				if (seen == 0) {
+					seen = 1;
+				} else {
+					menu->items[i]->selected = 0;
+				}
+			}
+		}
+
+		  /* if none selected, select the first item */
+		if (seen == 0)
+			menu->items[0]->selected = 1;
+	}
 
  	if ((menu->opts & O_ROWMAJOR) != (old_opts &  O_ROWMAJOR))
 		  /* changed menu layout - need to recalc neighbours */
@@ -324,10 +347,32 @@ set_menu_opts(MENU *param_menu, OPTIONS opts)
 int
 menu_opts_on(MENU *param_menu, OPTIONS opts)
 {
+	int i, seen;
 	MENU *menu = (param_menu != NULL) ? param_menu : &_menui_default_menu;
 	OPTIONS old_opts = menu->opts;
 
         menu->opts |= opts;
+
+	  /*
+	   * If the radio option is selected then make sure only one
+	   * item is actually selected in the items.
+	   */
+	if (((opts & O_RADIO) == O_RADIO) && (menu->items != NULL) &&
+	    (menu->items[0] != NULL)) {
+		seen = 0;
+		for (i = 0; i < menu->item_count; i++) {
+			if (menu->items[i]->selected == 1) {
+				if (seen == 0) {
+					seen = 1;
+				} else {
+					menu->items[i]->selected = 0;
+				}
+			}
+		}
+		  /* if none selected then select the top item */
+		if (seen == 0)
+			menu->items[0]->selected = 1;
+	}
 
 	if ((menu->items != NULL) &&
 	    (menu->opts & O_ROWMAJOR) != (old_opts &  O_ROWMAJOR))
@@ -485,7 +530,7 @@ int
 set_menu_items(MENU *param_menu, ITEM **items)
 {
 	MENU *menu = (param_menu != NULL) ? param_menu : &_menui_default_menu;
-	int i, new_count = 0;
+	int i, new_count = 0, sel_count = 0;
 	
 	  /* don't change if menu is posted */
 	if (menu->posted == 1)
@@ -496,10 +541,19 @@ set_menu_items(MENU *param_menu, ITEM **items)
 		if ((items[new_count]->parent != NULL) &&
 		    (items[new_count]->parent != menu))
 			return E_CONNECTED;
+		if (items[new_count]->selected == 1)
+			sel_count++;
 		new_count++;
 	}
-	
 
+	  /*
+	   * don't allow multiple selected items if menu is radio
+	   * button style.
+	   */
+	if (((menu->opts & O_RADIO) == O_RADIO) &&
+	    (sel_count > 1))
+		return E_BAD_ARGUMENT;
+	
 	  /* if there were items connected then disconnect them. */
 	if (menu->items != NULL) {
 		for (i = 0; i < menu->item_count; i++) {
@@ -524,6 +578,14 @@ set_menu_items(MENU *param_menu, ITEM **items)
 		menu->plen = 0;
 		menu->match_len = 0;
 	}
+	
+	  /*
+	   * make sure at least one item is selected on a radio
+	   * button style menu.
+	   */
+	if (((menu->opts & O_RADIO) == O_RADIO) && (sel_count == 0))
+		menu->items[0]->selected = 1;
+	
 	
 	_menui_stitch_items(menu); /* recalculate the item neighbours */
 	
