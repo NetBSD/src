@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.19 2000/06/30 20:45:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.20 2000/07/05 22:25:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_extern.h	8.6 (Berkeley) 5/8/95
  */
+
+/* Copied from ext2fs for ITIMES.  XXX This is a bogus use of v_tag. */
+#define IS_LFS_VNODE(vp)   (vp->v_tag == VT_LFS)
 
 /*
  * Sysctl values for LFS.
@@ -183,6 +186,8 @@ int lfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 
 /* lfs_vnops.c */
 void lfs_unmark_vnode __P((struct vnode *));
+void lfs_itimes __P((struct inode *, struct timespec *, struct timespec *,
+		     struct timespec *));
 
 int lfs_balloc		__P((void *));
 int lfs_valloc		__P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.41 2000/07/03 08:20:58 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.42 2000/07/05 22:25:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -287,7 +287,6 @@ lfs_vcreate(mp, ino, vp)
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_devvp = ump->um_devvp;
-	ip->i_flag = IN_MODIFIED;
 	ip->i_dev = ump->um_dev;
 	ip->i_number = ip->i_din.ffs_din.di_inumber = ino;
 	ip->i_lfs = ump->um_lfs;
@@ -301,7 +300,8 @@ lfs_vcreate(mp, ino, vp)
 	ip->i_ffs_size = 0;
 	ip->i_ffs_blocks = 0;
 	ip->i_lfs_effnblks = 0;
-	++ump->um_lfs->lfs_uinodes;
+	ip->i_flag = 0;
+	LFS_SET_UINO(ip, IN_MODIFIED);
 }
 
 /* Free an inode. */
@@ -354,19 +354,9 @@ lfs_vfree(v)
 		ip->i_flag &= ~IN_ADIROP;
 	}
 
-	if (ip->i_flag & IN_CLEANING) {
-		--fs->lfs_uinodes;
-	}
-	if (ip->i_flag & (IN_MODIFIED | IN_ACCESSED)) {
-		--fs->lfs_uinodes;
-	}
+	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
 	ip->i_flag &= ~IN_ALLMOD;
-#ifdef DEBUG_LFS	
-	if((int32_t)fs->lfs_uinodes<0) {
-		printf("U1");
-		fs->lfs_uinodes=0;
-	}
-#endif
+
 	/*
 	 * Set the ifile's inode entry to unused, increment its version number
 	 * and link it into the free chain.

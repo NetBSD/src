@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.46 2000/07/04 22:30:37 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.47 2000/07/05 22:25:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -353,9 +353,7 @@ sys_lfs_markv(p, v, retval)
                                 if(ifp->if_daddr == blkp->bi_daddr
 				   || blkp->bi_daddr == LFS_FORCE_WRITE)
 				{
-					if(!(ip->i_flag & IN_CLEANING))
-						fs->lfs_uinodes++;
-				        ip->i_flag |= IN_CLEANING;
+					LFS_SET_UINO(ip, IN_CLEANING);
 				}
                                 brelse(bp);
                         }

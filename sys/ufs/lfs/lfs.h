@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.28 2000/07/04 22:30:37 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.29 2000/07/05 22:25:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,22 +91,64 @@
 
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
+#define LFS_SET_UINO(ip, flags) do {                                    \
+        if (((flags) & IN_ACCESSED) && !((ip)->i_flag & IN_ACCESSED))   \
+                ++(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_CLEANING) && !((ip)->i_flag & IN_CLEANING))   \
+                ++(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_MODIFIED) && !((ip)->i_flag & IN_MODIFIED))   \
+                ++(ip)->i_lfs->lfs_uinodes;                             \
+        (ip)->i_flag |= (flags);                                        \
+} while(0)
+
+#define LFS_CLR_UINO(ip, flags) do {                                    \
+        if (((flags) & IN_ACCESSED) && ((ip)->i_flag & IN_ACCESSED))    \
+                --(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_CLEANING) && ((ip)->i_flag & IN_CLEANING))    \
+                --(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_MODIFIED) && ((ip)->i_flag & IN_MODIFIED))    \
+                --(ip)->i_lfs->lfs_uinodes;                             \
+        (ip)->i_flag &= ~(flags);                                       \
+	if ((ip)->i_lfs->lfs_uinodes < 0) {                             \
+		panic("lfs_uinodes < 0");                               \
+	}                                                               \
+} while(0)
+
 
 #ifndef LFS_ATIME_IFILE
-# define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
+#define	LFS_ITIMES(ip, acc, mod, cre) {					\
+	if ((ip)->i_flag & IN_ACCESS) {					\
+		(ip)->i_ffs_atime = (acc)->tv_sec;			\
+		(ip)->i_ffs_atimensec = (acc)->tv_nsec;			\
+		LFS_SET_UINO(ip, IN_ACCESSED);				\
+	}								\
+	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {			\
+		if ((ip)->i_flag & IN_UPDATE) {				\
+			(ip)->i_ffs_mtime = (mod)->tv_sec;		\
+			(ip)->i_ffs_mtimensec = (mod)->tv_nsec;		\
+			(ip)->i_modrev++;				\
+		}							\
+		if ((ip)->i_flag & IN_CHANGE) {				\
+			(ip)->i_ffs_ctime = (cre)->tv_sec;		\
+			(ip)->i_ffs_ctimensec = (cre)->tv_nsec;		\
+		}							\
+		LFS_SET_UINO(ip, IN_MODIFIED);				\
+	}								\
+	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);		\
+}
 #else
 # define LFS_ITIMES(ip, acc, mod, cre) {                                \ 
 	struct buf *ibp;						\
 	IFILE *ifp;							\
 									\
         if ((ip)->i_flag & IN_ACCESS) {                         	\
-	LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);			\
+		LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);		\
        		ifp->if_atime = (mod);					\
        		VOP_BWRITE(bp);						\
 		(ip)->i_flag &= ~IN_ACCESS;				\
         }                                                       	\
         if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {       		\
-                (ip)->i_flag |= IN_MODIFIED;                            \
+		LFS_SET_UINO(ip, IN_MODIFIED);				\
                 if ((ip)->i_flag & IN_UPDATE) {                         \
                         (ip)->i_ffs_mtime = (mod)->tv_sec;		\
                         (ip)->i_ffs_mtimensec = (mod)->tv_nsec;         \
@@ -175,7 +217,7 @@ struct dlfs {
         u_int32_t dlfs_bfree;     /* 36: number of free disk blocks */
         u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
         int32_t   dlfs_avail;     /* 44: blocks available for writing */
-        u_int32_t dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
+        int32_t   dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
         ufs_daddr_t  dlfs_idaddr; /* 52: inode file disk address */
         u_int32_t dlfs_ifile;     /* 56: inode file inode number */
         ufs_daddr_t  dlfs_lastseg; /* 60: address of last segment written */

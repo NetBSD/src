@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.55 2000/07/04 22:30:37 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.56 2000/07/05 22:25:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -197,11 +197,9 @@ lfs_vflush(vp)
 #ifdef DEBUG_LFS
 		ivndebug(vp,"vflush/in_cleaning");
 #endif
-		ip->i_flag &= ~IN_CLEANING;
-		if(ip->i_flag & (IN_MODIFIED | IN_ACCESSED)) {
-			fs->lfs_uinodes--;
-		} else
-			ip->i_flag |= IN_MODIFIED;
+		LFS_CLR_UINO(ip, IN_CLEANING);
+		LFS_SET_UINO(ip, IN_MODIFIED);
+
 		/*
 		 * Toss any cleaning buffers that have real counterparts
 		 * to avoid losing new data
@@ -259,10 +257,8 @@ lfs_vflush(vp)
 			}
 		}
 		splx(s);
-		if(ip->i_flag & IN_CLEANING)
-			fs->lfs_uinodes--;
-		if(ip->i_flag & (IN_MODIFIED | IN_ACCESSED))
-			fs->lfs_uinodes--;
+		LFS_CLR_UINO(ip, IN_CLEANING);
+		LFS_CLR_UINO(ip, IN_MODIFIED | IN_ACCESSED);
 		ip->i_flag &= ~IN_ALLMOD;
 		printf("lfs_vflush: done not flushing ino %d\n",
 			ip->i_number);
@@ -437,8 +433,7 @@ lfs_writevnodes(fs, mp, sp, op)
 #ifdef DEBUG_LFS
 					printf("<%d>",ip->i_number);
 #endif
-					ip->i_flag |= IN_MODIFIED;
-					++fs->lfs_uinodes;
+					LFS_SET_UINO(ip, IN_MODIFIED);
 				}
 			}
 			(void) lfs_writeinode(fs, sp, ip);
@@ -735,8 +730,6 @@ lfs_writeinode(fs, sp, ip)
 	}
 
 	/* Update the inode times and copy the inode onto the inode page. */
-	if (ip->i_flag & (IN_CLEANING | IN_MODIFIED | IN_ACCESSED))
-		--fs->lfs_uinodes;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip, &ts, &ts, &ts);
 
@@ -777,16 +770,14 @@ lfs_writeinode(fs, sp, ip)
 		}
 	}
 	
-	/* XXX IN_ALLMOD */
 	if(ip->i_flag & IN_CLEANING)
-		ip->i_flag &= ~IN_CLEANING;
+		LFS_CLR_UINO(ip, IN_CLEANING);
 	else {
-		ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE |
-				IN_ACCESSED);
-		if (ip->i_lfs_effnblks == ip->i_ffs_blocks) {
-			ip->i_flag &= ~IN_MODIFIED;
-		} else if (ip->i_flag & IN_MODIFIED)
-			fs->lfs_uinodes++;
+		/* XXX IN_ALLMOD */
+		LFS_CLR_UINO(ip, IN_ACCESSED | IN_ACCESS | IN_CHANGE |
+			     IN_UPDATE);
+		if (ip->i_lfs_effnblks == ip->i_ffs_blocks)
+			LFS_CLR_UINO(ip, IN_MODIFIED);
 	}
 
 	if(ip->i_number == LFS_IFILE_INUM) /* We know sp->idp == NULL */
@@ -1525,14 +1516,10 @@ lfs_writeseg(fs, sp)
 #ifdef DEBUG_LFS
 				printf("lfs_writeseg: marking ino %d\n",ip->i_number);
 #endif
-		       		if(!(ip->i_flag & (IN_CLEANING | IN_MODIFIED |
-				                   IN_ACCESSED))) {
-					fs->lfs_uinodes++;
-					if(bp->b_flags & B_CALL)
-						ip->i_flag |= IN_CLEANING;
-					else
-						ip->i_flag |= IN_MODIFIED;
-				}
+				if(bp->b_flags & B_CALL)
+					LFS_SET_UINO(ip, IN_CLEANING);
+				else
+					LFS_SET_UINO(ip, IN_MODIFIED);
 			}
 			/* if(vn->v_dirtyblkhd.lh_first == NULL) */
 				wakeup(vn);

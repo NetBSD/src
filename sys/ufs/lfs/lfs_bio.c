@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.25 2000/07/03 01:45:49 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.26 2000/07/05 22:25:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -159,9 +159,17 @@ lfs_bwrite(v)
 inline static int
 lfs_fits(struct lfs *fs, int db)
 {
-	if(((db + fsbtodb(fs, roundup(fs->lfs_uinodes,INOPB(fs)) + 1) +
-	     btodb(LFS_SUMMARY_SIZE) + fs->lfs_segtabsz)) >= fs->lfs_avail)
-	{
+	int needed;
+
+	needed = db + btodb(LFS_SUMMARY_SIZE) +
+		fsbtodb(fs, howmany(fs->lfs_uinodes, INOPB(fs)) +
+			    fs->lfs_segtabsz + 1);
+	if (needed >= fs->lfs_avail) {
+#ifdef DEBUG_LFS
+		printf("lfs_fits: no fit: db = %d, uinodes = %d, "
+		       "needed = %d, avail = %d\n",
+		       db, fs->lfs_uinodes, needed, fs->lfs_avail);
+#endif
 		return 0;
 	}
 
@@ -187,6 +195,8 @@ lfs_bwrite_ext(bp, flags)
 	struct lfs *fs;
 	struct inode *ip;
 	int db, error, s;
+	struct buf *cbp;
+	CLEANERINFO *cip;
 	
 	/*
 	 * Don't write *any* blocks if we're mounted read-only.
@@ -232,8 +242,17 @@ lfs_bwrite_ext(bp, flags)
 		}
 #endif
 		while (!lfs_fits(fs, db) && !CANT_WAIT(bp,flags)) {
-			/* Out of space, need cleaner to run */
-			
+			/*
+			 * Out of space, need cleaner to run.
+			 * Update the cleaner info, then wake it up.
+			 * Note the cleanerinfo block is on the ifile
+			 * so it CANT_WAIT.
+			 */
+			LFS_CLEANERINFO(cip, fs, cbp);
+			cip->bfree = fs->lfs_bfree;
+			cip->avail = fs->lfs_avail;
+			(void) VOP_BWRITE(cbp);
+
 			wakeup(&lfs_allclean_wakeup);
 			wakeup(&fs->lfs_nextseg);
 			error = tsleep(&fs->lfs_avail, PCATCH | PUSER,
@@ -247,13 +266,9 @@ lfs_bwrite_ext(bp, flags)
 		
 		ip = VTOI(bp->b_vp);
 		if (bp->b_flags & B_CALL) {
-			if(!(ip->i_flag & IN_CLEANING))
-				++fs->lfs_uinodes;
-			ip->i_flag |= IN_CLEANING;
+			LFS_SET_UINO(ip, IN_CLEANING);
 		} else {
-			if(!(ip->i_flag & (IN_MODIFIED | IN_ACCESSED)))
-				++fs->lfs_uinodes;
-			ip->i_flag |= IN_CHANGE | IN_MODIFIED | IN_UPDATE;
+			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 		}
 		fs->lfs_avail -= db;
 		++locked_queue_count;
