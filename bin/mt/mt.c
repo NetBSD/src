@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.13 1996/05/21 10:09:10 mrg Exp $	*/
+/*	$NetBSD: mt.c,v 1.14 1996/05/21 10:23:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.13 1996/05/21 10:09:10 mrg Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.14 1996/05/21 10:23:54 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,10 @@ struct commands {
 	int c_code;
 	int c_ronly;
 } com[] = {
+	{ "blocksize",	MTSETBSIZ, 1 },
 	{ "bsf",	MTBSF,	1 },
 	{ "bsr",	MTBSR,	1 },
+	{ "density",	MTSETDNSTY, 1 },
 	{ "eof",	MTWEOF,	0 },
 	{ "eom",	MTEOM,	1 },
 	{ "erase",	MTERASE, 0 },
@@ -227,6 +229,12 @@ status(bp)
 	printreg("ds", bp->mt_dsreg, mt->t_dsbits);
 	printreg("\ner", bp->mt_erreg, mt->t_erbits);
 	(void)putchar('\n');
+	(void)printf("blocksize: %ld (%ld, %ld, %ld, %ld)\n",
+		bp->mt_blksiz, bp->mt_mblksiz[0], bp->mt_mblksiz[1],
+		bp->mt_mblksiz[2], bp->mt_mblksiz[3]);
+	(void)printf("density: %ld (%ld, %ld, %ld, %ld)\n",
+		bp->mt_density, bp->mt_mdensity[0], bp->mt_mdensity[1],
+		bp->mt_mdensity[2], bp->mt_mdensity[3]);
 }
 
 /*
