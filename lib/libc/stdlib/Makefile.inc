@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2003/04/07 17:18:20 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2004/05/27 02:58:48 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -10,8 +10,8 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c jrand48.c \
 	l64a.c lldiv.c lcong48.c lrand48.c malloc.c merge.c mrand48.c \
-	nrand48.c putenv.c qabs.c qdiv.c qsort.c radixsort.c \
-	rand.c rand_r.c random.c seed48.c setenv.c srand48.c \
+	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
+	radixsort.c rand.c rand_r.c random.c seed48.c setenv.c srand48.c \
 	strsuftoll.c strtod.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
@@ -25,9 +25,10 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getopt_long.3 getsubopt.3 \
-	hcreate.3 labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 qabs.3 \
+	grantpt.3 hcreate.3 labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 \
+	posix_openpt.3 ptsname.3 qabs.3 \
 	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 \
-	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3
+	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3 unlockpt.3
 
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
