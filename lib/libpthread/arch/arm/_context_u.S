@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/18 03:20:42 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/11/20 03:18:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -86,6 +86,7 @@
 	SAVE_FLAGS(reg, tmp)					;	\
 	ldr	tmp, [reg, #(UC_FLAGS)]				;	\
 	orr	tmp, tmp, #(_UC_USER)				;	\
+	orr	tmp, tmp, #(_UC_CPU)				;	\
 	str	tmp, [reg, #(UC_FLAGS)]				;	\
 	add	reg, reg, #(_REG_R4)				;	\
 	stmia	reg, {r4-r15}
