@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/10 14:24:48 leo Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/14 19:47:58 leo Exp $
 
 PROG	= loadbsd.ttp
 
-OBJS	= loadbsd.o cread.o
+OBJS	= loadbsd.o
 HEADERS	= ../libtos/kparamb.h ../libtos/tosdefs.h
 
 #
