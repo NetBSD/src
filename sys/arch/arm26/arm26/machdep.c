@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10 2001/06/02 18:09:10 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.11 2001/06/30 16:49:16 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -33,10 +33,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2001/06/02 18:09:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2001/06/30 16:49:16 bjh21 Exp $");
 
 #include <sys/buf.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
+#include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
@@ -56,15 +58,49 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL; /* and ever more shall be so */
 
+int waittime = -1;
+
 void
 cpu_reboot(howto, b)
 	int howto;
 	char *b;
 {
-	/* FIXME This needs much more sophistication */
+
+	/* If "always halt" was specified as a boot flag, obey. */
+	if ((boothowto & RB_HALT) != 0)
+		howto |= RB_HALT;
+
+	boothowto = howto;
+
+	/* If system is cold, just halt. */
+	if (cold) {
+		boothowto |= RB_HALT;
+		goto haltsys;
+	}
+
+	if ((boothowto & RB_NOSYNC) == 0 && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		resettodr();
+	}
+
+	/* Disable interrupts. */
 	splhigh();
-	/* XXX Temporary measure */
-	howto |= RB_HALT;
+
+#if 0
+	/* XXX Need to implement this */
+	if (boothowto & RB_DUMP)
+		dumpsys();
+#endif
+
+	/* run any shutdown hooks */
+	doshutdownhooks();
+
+haltsys:
 	if (howto & RB_HALT) {
 		printf("system halted\n");
 		for (;;);
