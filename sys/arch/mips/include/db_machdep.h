@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.7 1999/03/23 22:07:06 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.8 1999/04/10 15:10:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -82,13 +82,6 @@ void 	kdb_kbd_trap __P((db_regs_t *));
 int 	kdb_trap __P((int type, mips_reg_t *));
 void	db_machine_init __P((void));
 
-/*
- * Make sure at least one DDB symbol type is defined.
- *
- */
-#if !(defined(DB_AOUT_SYMBOLS) || defined(DB_ELF_SYMBOLS))
-#error Must define at least one of DB_AOUT_SYMBOLS or DB_ELF_SYMBOLS
-#endif
 
 /*
  * MIPS cpus have no hardware single-step.
