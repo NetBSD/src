@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.13 2000/01/18 19:46:55 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.14 2000/01/19 00:25:23 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -155,6 +155,10 @@ int	auedebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+int aue_cutoff = AUE_CUTOFF;
+#undef AUE_CUTOFF
+#define AUE_CUTOFF aue_cutoff
 
 /*
  * Various supported device vendors/products.
@@ -1521,7 +1525,8 @@ aue_init(xsc)
 	}
 	err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
 	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
-	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr);
+	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr, 
+	    AUE_INTR_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
 		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
