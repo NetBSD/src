@@ -1889,13 +1889,28 @@ sh_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
   return NULL;
 }
 
+#ifndef TARGET_BIG_SYM
 #define TARGET_BIG_SYM		bfd_elf32_sh_vec
+#endif
+
+#ifndef TARGET_BIG_NAME
 #define TARGET_BIG_NAME		"elf32-sh"
+#endif
+
+#ifndef TARGET_LITTLE_SYM
 #define TARGET_LITTLE_SYM	bfd_elf32_shl_vec
+#endif
+
+#ifndef TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME	"elf32-shl"
+#endif
+
 #define ELF_ARCH		bfd_arch_sh
 #define ELF_MACHINE_CODE	EM_SH
+
+#ifndef ELF_MAXPAGESIZE
 #define ELF_MAXPAGESIZE		0x1
+#endif
 
 #define elf_symbol_leading_char '_'
 
