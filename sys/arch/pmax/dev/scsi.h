@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.5 1995/03/28 18:19:00 jtc Exp $	*/
+/*	$NetBSD: scsi.h,v 1.6 1996/01/30 04:47:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -380,6 +380,7 @@ typedef struct ScsiInquiryData {
 	u_char	revLevel[4];	/* Revision level (ASCII) */
 	u_char	revData[8];	/* Revision data (ASCII) */
 #endif
+	u_char	pading[1024];	/* newer SCSI II drives give additional data */
 } ScsiInquiryData;
 
 /*
