@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.9 2004/04/20 11:59:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,14 +152,14 @@ IDTVEC(doreti)
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb   $SEL_RPL,TF_CS(%esp)
-	jnz	doreti_checkast
+	jnz	.Ldoreti_checkast
 #ifdef VM86
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 	jz	6f
 #else
 	jmp	6f
 #endif
-doreti_checkast:
+.Ldoreti_checkast:
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 4:	CLEAR_ASTPENDING(%eax)
@@ -180,4 +180,4 @@ doreti_checkast:
 	sti
 	call	_C_LABEL(pmap_load)
 	cli
-	jmp	doreti_checkast	/* recheck ASTs */
+	jmp	.Ldoreti_checkast	/* recheck ASTs */

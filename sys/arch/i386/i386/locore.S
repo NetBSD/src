@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2004/04/12 13:17:46 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.27 2004/04/20 11:59:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2178,7 +2178,7 @@ syscall1:
 	pushl	%esp
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 	addl	$4,%esp
-syscall_checkast:
+.Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%eax)
@@ -2190,7 +2190,7 @@ syscall_checkast:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	jmp	syscall_checkast	/* re-check ASTs */
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
 1:	CHECK_DEFERRED_SWITCH(%eax)
 	jnz	9f
 #ifndef DIAGNOSTIC
@@ -2214,7 +2214,7 @@ syscall_checkast:
 #endif /* DIAGNOSTIC */
 9:	sti
 	call	_C_LABEL(pmap_load)
-	jmp	syscall_checkast	/* re-check ASTs */
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 #if NNPX > 0
 /*
