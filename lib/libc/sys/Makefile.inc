@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.13 1993/11/14 12:40:53 cgd Exp $
+#	$Id: Makefile.inc,v 1.14 1993/11/21 19:32:11 mycroft Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/sys ${.CURDIR}/sys
@@ -118,6 +118,7 @@ MLINKS+=mount.2 unmount.2
 MLINKS+=read.2 readv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2
+MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
 MLINKS+=statfs.2 fstatfs.2
 MLINKS+=truncate.2 ftruncate.2
