@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.10 2002/10/02 05:47:18 thorpej Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.11 2002/10/03 03:02:11 uwe Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.10 2002/10/02 05:47:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.11 2002/10/03 03:02:11 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ wss_pnpbios_attach(parent, self, aux)
 	}
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->wss_recdrq)) {
 		printf(": can't get recording DMA channel");
-		sc->wss_recdrq = -1;
+		sc->wss_recdrq = sc->wss_playdrq;
 	}
 
 	sc->sc_ad1848.sc_ad1848.sc_iot = sc->sc_iot;
