@@ -4,10 +4,6 @@
  * map dvi fonts to X fonts
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: font.c,v 1.2 1993/08/02 17:46:00 mycroft Exp $";
-#endif /* not lint */
-
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

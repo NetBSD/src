@@ -15,11 +15,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
-
-#ifndef lint
-static char rcsid[] = "$Id: itoa.c,v 1.2 1993/08/02 17:44:04 mycroft Exp $";
-#endif /* not lint */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #define INT_DIGITS 19		/* enough for 64 bit integer */
 

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1995/03/22 17:30:04 glass Exp $
+#	$NetBSD: Makefile,v 1.6 1996/08/13 07:04:41 explorer Exp $
 
 MAN=		grog.1
 

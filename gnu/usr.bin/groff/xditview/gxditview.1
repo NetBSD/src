@@ -1,4 +1,4 @@
-.\"	$Id: gxditview.1,v 1.2 1993/08/02 17:46:01 mycroft Exp $	-*- nroff -*-
+.\" -*- nroff -*-
 .TH GXDITVIEW 1 "Release 5" "X Version 11"
 .SH NAME
 gxditview \- display gtroff output files
@@ -188,6 +188,35 @@ Specifies the default foreground color.
 .TP
 .BR font\  (class\  Font )
 Specifies the font to be used for error messages.
+.TP
+.BR fontMap\  (class\  FontMap )
+Specifies the mapping from groff font names to X font names.  This
+must be a string containing a sequence of lines.  Each line contains
+two whitespace separated fields: first the groff font name, and
+secondly the X font name.  The default is
+.nf
+"\e
+TR	-adobe-times-medium-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+TI	-adobe-times-medium-i-normal--*-100-*-*-*-*-iso8859-1\en\e
+TB	-adobe-times-bold-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+TBI	-adobe-times-bold-i-normal--*-100-*-*-*-*-iso8859-1\en\e
+CR	-adobe-courier-medium-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+CI	-adobe-courier-medium-o-normal--*-100-*-*-*-*-iso8859-1\en\e
+CB	-adobe-courier-bold-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+CBI	-adobe-courier-bold-o-normal--*-100-*-*-*-*-iso8859-1\en\e
+HR	-adobe-helvetica-medium-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+HI	-adobe-helvetica-medium-o-normal--*-100-*-*-*-*-iso8859-1\en\e
+HB	-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+HBI	-adobe-helvetica-bold-o-normal--*-100-*-*-*-*-iso8859-1\en\e
+NR	-adobe-new century schoolbook-medium-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+NI	-adobe-new century schoolbook-medium-i-normal--*-100-*-*-*-*-iso8859-1\en\e
+NB	-adobe-new century schoolbook-bold-r-normal--*-100-*-*-*-*-iso8859-1\en\e
+NBI	-adobe-new century schoolbook-bold-i-normal--*-100-*-*-*-*-iso8859-1\en\e
+S	-adobe-symbol-medium-r-normal--*-100-*-*-*-*-adobe-fontspecific\en\e
+SS	-adobe-symbol-medium-r-normal--*-100-*-*-*-*-adobe-fontspecific\en\e
+"
+.fi
+
 .SH "SEE ALSO"
 .IR X (1),
 .IR xrdb (1),
@@ -210,7 +239,7 @@ Richard L. Hyde (Purdue)
 .br
 David Slattengren (Berkeley)
 .br
-Malcom Slaney (Schlumberger Palo Alto Research)
+Malcolm Slaney (Schlumberger Palo Alto Research)
 .br
 Mark Moraes (University of Toronto)
 .br

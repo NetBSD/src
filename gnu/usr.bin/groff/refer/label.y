@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 %{
 
@@ -119,23 +119,23 @@ public:
   }
 };
 
-typedef void map_t(const char *, const char *, string &);
+typedef void map_func(const char *, const char *, string &);
 
 class map_expr : public unary_expr {
-  map_t *func;
+  map_func *func;
 public:
-  map_expr(expression *e, map_t *f) : unary_expr(e), func(f) { }
+  map_expr(expression *e, map_func *f) : unary_expr(e), func(f) { }
   void evaluate(int, const reference &, string &, substring_position &);
 };
   
-typedef const char *extractor_t(const char *, const char *, const char **);
+typedef const char *extractor_func(const char *, const char *, const char **);
 
 class extractor_expr : public unary_expr {
   int part;
-  extractor_t *func;
+  extractor_func *func;
 public:
   enum { BEFORE = +1, MATCH = 0, AFTER = -1 };
-  extractor_expr(expression *e, extractor_t *f, int pt)
+  extractor_expr(expression *e, extractor_func *f, int pt)
     : unary_expr(e), func(f), part(pt) { }
   void evaluate(int, const reference &, string &, substring_position &);
 };
@@ -872,7 +872,8 @@ int reference::merge_labels_by_number(reference **v, int n, label_type type,
   if (v[0]->get_number() != num + 1
       || v[1]->get_number() != num + 2)
     return 0;
-  int i; for (i = 2; i < n; i++)
+  int i;
+  for (i = 2; i < n; i++)
     if (v[i]->get_number() != num + i + 1)
       break;
   result = get_label(type);
@@ -945,7 +946,8 @@ label_info *lookup_label(const string &label)
       label_table[i] = 0;
   }
   unsigned h = hash_string(label.contents(), label.length()) % label_table_size;
-  label_info **ptr; for (ptr = label_table + h;
+  label_info **ptr;
+  for (ptr = label_table + h;
        *ptr != 0;
        (ptr == label_table)
        ? (ptr = label_table + label_table_size - 1)
@@ -970,7 +972,8 @@ label_info *lookup_label(const string &label)
       if (old_table[i]) {
 	unsigned h = hash_string(label_pool.contents() + old_table[i]->start,
 				 old_table[i]->length);
-	label_info **p; for (p = label_table + (h % label_table_size);
+	label_info **p;
+	for (p = label_table + (h % label_table_size);
 	     *p != 0;
 	     (p == label_table)
 	     ? (p = label_table + label_table_size - 1)
@@ -1165,7 +1168,8 @@ int reference::get_nauthors() const
 {
   if (nauthors < 0) {
     const char *dummy;
-    int na; for (na = 0; get_author(na, &dummy) != 0; na++)
+    int na;
+    for (na = 0; get_author(na, &dummy) != 0; na++)
       ;
     ((reference *)this)->nauthors = na;
   }

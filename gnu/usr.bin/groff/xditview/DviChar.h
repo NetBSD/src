@@ -6,10 +6,8 @@
  * 256 elements (actually only 256-32 are usable).
  *
  * The encoding names are taken from X -
- * case insensitive, a dash seperating the
+ * case insensitive, a dash separating the
  * CharSetRegistry from the CharSetEncoding
- *
- *	$Id: DviChar.h,v 1.2 1993/08/02 17:45:52 mycroft Exp $
  */
 
 # define DVI_MAX_SYNONYMS	10

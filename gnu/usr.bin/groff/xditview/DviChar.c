@@ -5,10 +5,6 @@
  * font indexes and back
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: DviChar.c,v 1.2 1993/08/02 17:45:52 mycroft Exp $";
-#endif /* not lint */
-
 #include   "DviChar.h"
 
 extern char *xmalloc();
@@ -496,7 +492,7 @@ static DviCharNameMap Adobe_Symbol_map = {
 {	"]", "rB", 	/* 93 */},
 {	"pp", 	/* 94 */},
 {	"_", 	/* 95 */},
-{	"rn",	/* 96 */},
+{	"radicalex",	/* 96 */},
 {	"*a", 	/* 97 */},
 {	"*b", 	/* 98 */},
 {	"*x", 	/* 99 */},
@@ -603,7 +599,7 @@ static DviCharNameMap Adobe_Symbol_map = {
 {	"cu", 	/* 200 */},
 {	"sp", 	/* 201 */},
 {	"ip", 	/* 202 */},
-{	0,	/* 203 */},
+{	"nb",	/* 203 */},
 {	"sb", 	/* 204 */},
 {	"ib", 	/* 205 */},
 {	"mo", 	/* 206 */},

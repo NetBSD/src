@@ -1,7 +1,3 @@
-#ifndef lint
-static char rcsid[] = "$Id: lex.c,v 1.2 1993/08/02 17:46:02 mycroft Exp $";
-#endif /* not lint */
-	
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
@@ -33,7 +29,7 @@ GetLine(dw, Buffer, Length)
 	int 	i = 0, c;
 	
 	Length--;		     /* Save room for final '\0' */
-
+	
 	while (DviGetC (dw, &c) != EOF) {
 		if (Buffer && i < Length)
 			Buffer[i++] = c;

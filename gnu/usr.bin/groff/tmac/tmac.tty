@@ -1,9 +1,8 @@
 .nr _C \n(.C
 .cp 0
 .nroff
-.ftr CW B
-.ftr C B
-.ftr CR B
+.\" Don't warn about non-existent fonts.
+.warn \n[.warn]-(\n[.warn]/131072%2*131072)
 .po 0
 .if c\[char173] .shc \[char173]
 .de tty-char

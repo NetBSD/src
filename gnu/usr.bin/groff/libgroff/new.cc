@@ -15,7 +15,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -37,21 +37,23 @@ void *operator new(size_t size)
     size++;
 #ifdef COOKIE_BUG
   char *p = (char *)malloc(unsigned(size + 8));
-  if (p != 0) {
-    ((unsigned *)p)[1] = 0;
-    return p + 8;
-  }
 #else /* not COOKIE_BUG */
   char *p = (char *)malloc(unsigned(size));
-  if (p != 0)
-    return p;
 #endif /* not COOKIE_BUG */
-  if (program_name) {
-    ewrite(program_name);
-    ewrite(": ");
+  if (p == 0) {
+    if (program_name) {
+      ewrite(program_name);
+      ewrite(": ");
+    }
+    ewrite("out of memory\n");
+    _exit(-1);
   }
-  ewrite("out of memory\n");
-  _exit(-1);
+#ifdef COOKIE_BUG
+  ((unsigned *)p)[1] = 0;
+  return p + 8;
+#else /* not COOKIE_BUG */
+  return p;
+#endif /* not COOKIE_BUG */
 }
 
 #ifdef COOKIE_BUG
