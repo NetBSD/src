@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.23 1994/05/21 08:23:02 deraadt Exp $
+ * $Id: machdep.c,v 1.24 1994/05/24 02:26:12 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -163,7 +163,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-	    &maxaddr, size, FALSE);
+	    &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
