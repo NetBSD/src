@@ -7,8 +7,8 @@ SRCS=	parse.c scan.c memory.c main.c hash.c execute.c code.c \
 	fin.c files.c  scancode.c matherr.c  fcall.c version.c
 SRCS+=	rexp.c rexp0.c rexp1.c rexp2.c rexp3.c rexpdb.c
 
-LDADD=	-lm -ly
-DPADD=	${LIBMATH} ${LIB
+LDADD=	-lm
+DPADD=	${LIBMATH}
 CLEANFILES+=parse.c parse.h
 .PATH: ${.CURDIR}/rexp
 
