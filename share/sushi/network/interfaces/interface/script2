@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script2,v 1.1 2001/04/25 03:43:34 garbled Exp $
+# $NetBSD: script2,v 1.2 2001/07/12 19:08:05 garbled Exp $
 
 if [ "$1" = "4" ]; then
 	IPV4=`ifconfig $2 | grep 'inet ' | \
@@ -141,11 +141,12 @@ if [ "$1" = "pre" ]; then
 	exit 0
 fi
 if [ "$1" = "i" ]; then
-	NWID=`ifconfig $2 | grep 'nwid ' | sed -e 's/.*nwid \([0-9a-zA-Z_]*\)/\1/'`
+	NWID=`ifconfig $2 | grep 'nwid ' | \
+	    sed -f /usr/share/sushi/network/interfaces/interface/nwid.sed`
 	if [ -z "$NWID" ]; then
 		if [ -f "/etc/ifconfig.$2" ]; then
 			NWID=`cat /etc/ifconfig.$2 | grep nwid | \
-			     sed -e 's/.*nwid *\([0-9a-zA-Z_]*\).*/\1/'`
+			     sed -f /usr/share/sushi/network/interfaces/interface/nwid.sed`
 		else
 			NWID=""
 		fi
