@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.40 2001/05/06 01:54:20 hubertf Exp $
+#	$NetBSD: ALL,v 1.41 2001/07/07 15:59:31 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"ALL-$Revision: 1.40 $"
+#ident 		"ALL-$Revision: 1.41 $"
 
 maxusers	32
 
@@ -30,7 +30,7 @@ options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
-options 	JUPITER			# support for "Jupiter-X" accelerator
+#options 	JUPITER			# support for "Jupiter-X" accelerator
 options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
@@ -59,6 +59,10 @@ options 	KMEMSTATS
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
