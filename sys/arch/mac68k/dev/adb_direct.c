@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.20.2.5 1999/11/28 10:13:17 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.20.2.6 1999/12/12 08:25:45 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -252,7 +252,7 @@ struct	ADBDevEntry ADBDevTable[16];	/* our ADB device table */
 int	ADBNumDevices;		/* num. of ADB devices found with ADBReInit */
 
 struct	adbCommand adbInbound[ADB_QUEUE];	/* incoming queue */
-int	adbInCount = 0;			/* how many packets in in queue */
+volatile int	adbInCount = 0;		/* how many packets in in queue */
 int	adbInHead = 0;			/* head of in queue */
 int	adbInTail = 0;			/* tail of in queue */
 struct	adbCommand adbOutbound[ADB_QUEUE]; /* outgoing queue - not used yet */
