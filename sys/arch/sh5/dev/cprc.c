@@ -1,4 +1,4 @@
-/*	$NetBSD: cprc.c,v 1.2 2002/09/27 20:35:27 thorpej Exp $	*/
+/*	$NetBSD: cprc.c,v 1.3 2002/10/01 19:24:47 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -65,9 +65,8 @@ static int cprcmatch(struct device *, struct cfdata *, void *);
 static void cprcattach(struct device *, struct device *, void *);
 static int cprcprint(void *, const char *);
 
-const struct cfattach cprc_ca = {
-	sizeof(struct cprc_softc), cprcmatch, cprcattach
-};
+CFATTACH_DECL(cprc, sizeof(struct cprc_softc),
+    cprcmatch, cprcattach, NULL, NULL)
 
 static u_int32_t cprc_reg_read(u_int);
 #ifdef notyet
@@ -165,9 +164,8 @@ cprc_reg_write(u_int off, u_int32_t value)
  */
 static int clockmatch(struct device *, struct cfdata *, void *);
 static void clockattach(struct device *, struct device *, void *);
-const struct cfattach clock_ca = {
-	sizeof(struct device), clockmatch, clockattach
-};
+CFATTACH_DECL(clock, sizeof(struct device),
+    clockmatch, clockattach, NULL, NULL)
 extern struct cfdriver clock_cd;
 struct cprc_clocks cprc_clocks;
 
@@ -239,9 +237,8 @@ struct watchdog_softc {
 static int watchdogmatch(struct device *, struct cfdata *, void *);
 static void watchdogattach(struct device *, struct device *, void *);
 static int watchdogint(void *);
-const struct cfattach watchdog_ca = {
-	sizeof(struct watchdog_softc), watchdogmatch, watchdogattach
-};
+CFATTACH_DECL(watchdog, sizeof(struct watchdog_softc),
+    watchdogmatch, watchdogattach, NULL, NULL)
 extern struct cfdriver watchdog_cd;
 
 /*ARGSUSED*/
@@ -290,9 +287,8 @@ watchdogint(void *arg)
  */
 static int powermatch(struct device *, struct cfdata *, void *);
 static void powerattach(struct device *, struct device *, void *);
-const struct cfattach power_ca = {
-	sizeof(struct device), powermatch, powerattach
-};
+CFATTACH_DECL(power, sizeof(struct device),
+    powermatch, powerattach, NULL, NULL)
 extern struct cfdriver power_cd;
 
 /*ARGSUSED*/
@@ -321,9 +317,8 @@ powerattach(struct device *parent, struct device *self, void *args)
  */
 static int resetmatch(struct device *, struct cfdata *, void *);
 static void resetattach(struct device *, struct device *, void *);
-const struct cfattach reset_ca = {
-	sizeof(struct device), resetmatch, resetattach
-};
+CFATTACH_DECL(reset, sizeof(struct device),
+    resetmatch, resetattach, NULL, NULL)
 extern struct cfdriver reset_cd;
 
 /*ARGSUSED*/

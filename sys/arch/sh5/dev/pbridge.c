@@ -1,4 +1,4 @@
-/*	$NetBSD: pbridge.c,v 1.4 2002/09/28 10:43:36 scw Exp $	*/
+/*	$NetBSD: pbridge.c,v 1.5 2002/10/01 19:24:48 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,9 +60,8 @@ static int pbridgematch(struct device *, struct cfdata *, void *);
 static void pbridgeattach(struct device *, struct device *, void *);
 static int pbridgeprint(void *, const char *);
 
-const struct cfattach pbridge_ca = {
-	sizeof(struct device), pbridgematch, pbridgeattach
-};
+CFATTACH_DECL(pbridge, sizeof(struct device),
+    pbridgematch, pbridgeattach, NULL, NULL)
 extern struct cfdriver pbridge_cd;
 
 /*

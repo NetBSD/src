@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfcons.c,v 1.2 2002/09/27 20:35:28 thorpej Exp $	*/
+/*	$NetBSD: dtfcons.c,v 1.3 2002/10/01 19:24:48 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -71,9 +71,8 @@ cons_decl(dtfcons);
 static int dtfconsmatch(struct device *, struct cfdata *, void *);
 static void dtfconsattach(struct device *, struct device *, void *);
 
-const struct cfattach dtfcons_ca = {
-	sizeof(struct device), dtfconsmatch, dtfconsattach
-};
+CFATTACH_DECL(dtfcons, sizeof(struct device),
+    dtfconsmatch, dtfconsattach, NULL, NULL)
 extern struct cfdriver dtfcons_cd;
 
 static int dtf_is_console;
