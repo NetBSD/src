@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.54 1996/02/27 00:20:54 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.55 1996/02/27 00:31:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -417,13 +417,13 @@ ahbmatch(parent, self, aux)
 	void *aux;
 {
 	struct ahb_softc *ahb = (void *)self;
-	struct eisa_attach_args *eda = aux;
+	struct eisa_attach_args *ea = aux;
 
 	/* must match one of our known ID strings */
-	if (strcmp(eda->ea_idstring, "ADP0000") &&
-	    strcmp(eda->ea_idstring, "ADP0001") &&
-	    strcmp(eda->ea_idstring, "ADP0002") &&
-	    strcmp(eda->ea_idstring, "ADP0400"))
+	if (strcmp(ea->ea_idstring, "ADP0000") &&
+	    strcmp(ea->ea_idstring, "ADP0001") &&
+	    strcmp(ea->ea_idstring, "ADP0002") &&
+	    strcmp(ea->ea_idstring, "ADP0400"))
 		return (0);
 
 #ifdef notyet
@@ -435,7 +435,7 @@ ahbmatch(parent, self, aux)
 	delay(1000);
 #endif
 
-	if (ahb_find(eda->ea_slot, NULL))
+	if (ahb_find(ea->ea_slot, NULL))
 		return (0);
 
 	return 1;
@@ -454,13 +454,13 @@ ahbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct eisa_attach_args *eda = aux;
+	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *ahb = (void *)self;
 	char *model;
 
-	if (ahb_find(eda->ea_slot, ahb))
+	if (ahb_find(ea->ea_slot, ahb))
 		panic("ahbattach: ahb_find failed!");
-	ahb->sc_iobase = EISA_SLOT_ADDR(eda->ea_slot);
+	ahb->sc_iobase = EISA_SLOT_ADDR(ea->ea_slot);
 
 	ahb_init(ahb);
 	TAILQ_INIT(&ahb->free_ecb);
@@ -474,13 +474,13 @@ ahbattach(parent, self, aux)
 	ahb->sc_link.device = &ahb_dev;
 	ahb->sc_link.openings = 2;
 
-	if (!strcmp(eda->ea_idstring, "ADP0000"))
+	if (!strcmp(ea->ea_idstring, "ADP0000"))
 		model = EISA_PRODUCT_ADP0000;
-	else if (!strcmp(eda->ea_idstring, "ADP0001"))
+	else if (!strcmp(ea->ea_idstring, "ADP0001"))
 		model = EISA_PRODUCT_ADP0001;
-	else if (!strcmp(eda->ea_idstring, "ADP0002"))
+	else if (!strcmp(ea->ea_idstring, "ADP0002"))
 		model = EISA_PRODUCT_ADP0002;
-	else if (!strcmp(eda->ea_idstring, "ADP0400"))
+	else if (!strcmp(ea->ea_idstring, "ADP0400"))
 		model = EISA_PRODUCT_ADP0400;
 	else
 		model = "unknown model!";
