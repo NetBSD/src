@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.22 2002/10/02 10:48:35 wiz Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.23 2003/04/16 13:34:41 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]netdb.h\*[Gt]
+.In netdb.h
 .Fd extern int h_errno;
 .Ft struct hostent *
 .Fn gethostbyname "const char *name"

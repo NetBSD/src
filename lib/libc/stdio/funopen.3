@@ -1,4 +1,4 @@
-.\"	$NetBSD: funopen.3,v 1.12 2003/01/18 11:29:54 thorpej Exp $
+.\"	$NetBSD: funopen.3,v 1.13 2003/04/16 13:34:44 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]stdio.h\*[Gt]
+.In stdio.h
 .Ft FILE *
 .Fn funopen "void  *cookie" "int  (*readfn)(void *, char *, int)" "int (*writefn)(void *, const char *, int)" "fpos_t (*seekfn)(void *, fpos_t, int)" "int (*closefn)(void *)"
 .Ft FILE *

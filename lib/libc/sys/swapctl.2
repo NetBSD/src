@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.25 2003/01/18 11:33:15 thorpej Exp $
+.\"	$NetBSD: swapctl.2,v 1.26 2003/04/16 13:34:57 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -41,8 +41,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]unistd.h\*[Gt]
-.Fd #include \*[Lt]sys/swap.h\*[Gt]
+.In unistd.h
+.In sys/swap.h
 .Ft int
 .Fn swapctl "int cmd" "const void *arg" "int misc"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.3,v 1.4 2002/10/01 19:28:21 wiz Exp $
+.\"	$NetBSD: pmc.3,v 1.5 2003/04/16 13:35:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .Sh LIBRARY
 .Lb libpmc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]pmc.h\*[Gt]
+.In pmc.h
 .Ft int
 .Fn pmc_configure_counter "int ctr" "const char *evname" \
     "pmc_ctr_t reset_val" "uint32_t flags"

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.14 2003/04/06 15:58:15 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.15 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,9 @@
 .Nm vn_writechk
 .Nd high-level convenience functions for vnode operations
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/lock.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/param.h
+.In sys/lock.h
+.In sys/vnode.h
 .Ft int
 .Fn vn_bwrite "void *ap"
 .Ft int

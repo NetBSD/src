@@ -1,4 +1,4 @@
-.\" $NetBSD: linedisc.9,v 1.8 2003/02/14 15:20:21 grant Exp $
+.\" $NetBSD: linedisc.9,v 1.9 2003/04/16 13:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm ttyldisc_remove
 .Nd extensible line discipline framework
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/conf.h\*[Gt]
+.In sys/conf.h
 .Ft int
 .Fn ttyldisc_add "struct linesw *disc" "int no"
 .Ft struct linesw *

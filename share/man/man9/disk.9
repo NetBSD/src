@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.21 2003/02/14 15:20:21 grant Exp $
+.\"	$NetBSD: disk.9,v 1.22 2003/04/16 13:35:27 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .Nm disk_resetstat
 .Nd generic disk framework
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/disklabel.h\*[Gt]
-.Fd #include \*[Lt]sys/disk.h\*[Gt]
+.In sys/types.h
+.In sys/disklabel.h
+.In sys/disk.h
 .Ft void
 .Fn disk_init "void"
 .Ft void

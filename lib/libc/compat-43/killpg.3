@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)killpg.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: killpg.3,v 1.14 2002/10/01 16:04:47 wiz Exp $
+.\"	$NetBSD: killpg.3,v 1.15 2003/04/16 13:34:35 wiz Exp $
 .\"
 .Dd June 2, 1993
 .Dt KILLPG 3
@@ -41,7 +41,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]signal.h\*[Gt]
+.In signal.h
 .Ft int
 .Fn killpg "pid_t pgrp" "int sig"
 .Sh DESCRIPTION

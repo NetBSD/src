@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.21 2003/04/07 07:08:47 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.22 2003/04/16 13:35:32 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm pmap
 .Nd machine-dependent portion of the virtual memory system
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]uvm/uvm_extern.h\*[Gt]
+.In sys/param.h
+.In uvm/uvm_extern.h
 .Ft void
 .Fn "pmap_init" "void"
 .Ft void

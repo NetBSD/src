@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_iopl.2,v 1.13 2002/10/01 16:02:42 wiz Exp $
+.\"	$NetBSD: i386_iopl.2,v 1.14 2003/04/16 13:34:34 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
+.In sys/types.h
+.In machine/sysarch.h
 .Ft int
 .Fn i386_iopl "int iopl"
 .Sh DESCRIPTION

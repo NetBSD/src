@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.12 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.13 2003/04/16 13:35:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,10 +45,10 @@
 .Nm wsemuldisplaydevprint
 .Nd wscons display support
 .Sh SYNOPSIS
-.Fd #include \*[Lt]dev/wscons/wsconsio.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wsdisplayvar.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wsemulvar.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wsemul_vt100var.h\*[Gt]
+.In dev/wscons/wsconsio.h
+.In dev/wscons/wsdisplayvar.h
+.In dev/wscons/wsemulvar.h
+.In dev/wscons/wsemul_vt100var.h
 .Ft void
 .Fn wsdisplay_switchtoconsole ""
 .Ft void

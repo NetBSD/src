@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.18 2003/04/07 07:08:46 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.19 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm ioctl
 .Nd "how to implement a new ioctl call to access device drivers"
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
-.Fd #include \*[Lt]sys/ioccom.h\*[Gt]
+.In sys/ioctl.h
+.In sys/ioccom.h
 .Ft int
 .Fn ioctl "int" "unsigned long" "..."
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getfiles.3,v 1.8 2002/10/01 19:18:13 wiz Exp $
+.\"	$NetBSD: kvm_getfiles.3,v 1.9 2003/04/16 13:35:07 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,10 +46,10 @@
 .Sh LIBRARY
 .Lb libkvm
 .Sh SYNOPSIS
-.Fd #include \*[Lt]kvm.h\*[Gt]
-.Fd #include \*[Lt]sys/kinfo.h\*[Gt]
+.In kvm.h
+.In sys/kinfo.h
 .Fd #define _KERNEL
-.Fd #include \*[Lt]sys/file.h\*[Gt]
+.In sys/file.h
 .Fd #undef _KERNEL
 .\" .Fa kvm_t *kd
 .br

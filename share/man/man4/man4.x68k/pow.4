@@ -1,4 +1,4 @@
-.\"	$NetBSD: pow.4,v 1.9 2002/02/13 08:18:08 ross Exp $
+.\"	$NetBSD: pow.4,v 1.10 2003/04/16 13:35:22 wiz Exp $
 .\"
 .\" Copyright (c) 1995 MINOURA Makoto.
 .\" All rights reserved.
@@ -56,8 +56,8 @@ Setting signal number which is sent at changing the power status
 .El
 .Sh GETTING POWER SWITCH STATUS
 .Bd -literal
-.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
-.Fd #include \*[Lt]machine/powioctl.h\*[Gt]
+.In sys/ioctl.h
+.In machine/powioctl.h
 
 .Fd ioctl (fd, POWIOCGPOWERINFO, \*[Am]powerinfo);
 .Fd struct x68k_powerinfo powerinfo;
@@ -102,8 +102,8 @@ Total usage in count (pow_bootcount) and second (pow_usedtotal).
 .El
 .Sh ACCESSING RTC ALARM TIMER
 .Bd -literal
-.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
-.Fd #include \*[Lt]machine/powioctl.h\*[Gt]
+.In sys/ioctl.h
+.In machine/powioctl.h
 
 .Fd ioctl (fd, POWIOCGALARMINFO, \*[Am]alarminfo);
 .Fd struct x68k_alarminfo alarminfo;
@@ -146,8 +146,8 @@ Sets the alarm timer according to the argument
 (see above).
 .Sh SIGNAL
 .Bd -literal
-.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
-.Fd #include \*[Lt]machine/powioctl.h\*[Gt]
+.In sys/ioctl.h
+.In machine/powioctl.h
 
 .Fd ioctl (fd, POWIOCSSIGNAL, \*[Am]signum);
 .Fd int signum;
