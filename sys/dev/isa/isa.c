@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.76 1996/01/16 07:52:38 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.77 1996/02/28 01:43:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -38,6 +38,43 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+int isamatch __P((struct device *, void *, void *));
+void isaattach __P((struct device *, struct device *, void *));
+
+struct cfdriver isacd = {
+	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
+};
+
+int
+isamatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct isabus_attach_args *iba = aux;
+
+	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
+		return (0);
+
+	/* XXX check other indicators */
+
+        return (1);
+}
+
+void
+isaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_softc *sc = (struct isa_softc *)self;
+	struct isabus_attach_args *iba = aux;
+
+	printf("\n");
+
+	TAILQ_INIT(&sc->sc_subdevs);
+	config_scan(isascan, self);
+}
 
 int
 isaprint(aux, isa)
