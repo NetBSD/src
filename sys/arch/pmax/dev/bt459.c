@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: bt459.c,v 1.1 1995/09/11 08:11:20 jonathan Exp $
+ *      $Id: bt459.c,v 1.2 1996/02/15 19:18:22 jonathan Exp $
  */
 
 /*
@@ -52,7 +52,7 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: bt459.c,v 1.1 1995/09/11 08:11:20 jonathan Exp $
+ * $Id: bt459.c,v 1.2 1996/02/15 19:18:22 jonathan Exp $
  */
 /*
  * Mach Operating System
@@ -350,11 +350,11 @@ bt459PosCursor(fi, x, y)
 	fbu->scrInfo.cursor.x = x;		/* keep track of real cursor */
 	fbu->scrInfo.cursor.y = y;		/* position, indep. of mouse */
 
-#ifdef MELLON	/* perhaps this is right for sfb ? */
-	x += 369;	/* is this correct for rcons on an sfb?? */
-#else
-	x += 219;	/* this is right for old pmax fb drivers on a cfb */
-#endif
+	/* XXX is this a linear function of x-dimension screen size? */
+	if (fi->fi_type.fb_boardtype == PMAX_FBTYPE_SFB)
+		x += 369;	/* is this correct for rcons on an sfb?? */
+	else
+		x += 219;	/* correct for a cfb */
 	y += 34;
 
 	
