@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.10.2.2 2000/07/07 11:33:34 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.19 2000/06/29 01:17:29 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.10.2.3 2000/10/18 17:01:51 tv Exp $	*/
+/*	$KAME: faithd.c,v 1.31 2000/10/05 22:20:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
