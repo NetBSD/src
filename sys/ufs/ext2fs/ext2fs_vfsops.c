@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.24.2.1 1999/06/21 23:03:07 perry Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.24.2.2 1999/10/18 05:05:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -609,7 +609,9 @@ ext2fs_mountfs(devvp, mp, p)
 out:
 	if (bp)
 		brelse(bp);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
+	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -645,9 +647,10 @@ ext2fs_unmount(mp, mntflags, p)
 		(void) ext2fs_sbupdate(ump, MNT_WAIT);
 	}
 	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
-	vrele(ump->um_devvp);
+	vput(ump->um_devvp);
 	free(fs->e2fs_gd, M_UFSMNT);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
