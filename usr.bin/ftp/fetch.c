@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.97 1999/11/26 21:41:55 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.98 1999/12/03 06:10:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.97 1999/11/26 21:41:55 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.98 1999/12/03 06:10:01 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -451,8 +451,10 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	char		*wwwauth;
 {
 #ifdef NI_NUMERICHOST
-	struct addrinfo		hints, *res = NULL;
+	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
+	const char		*reason;
+	char			hbuf[NI_MAXHOST];
 #else
 	struct sockaddr_in	sin;
 	struct hostent		*hp = NULL;
@@ -728,45 +730,51 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = 0;
-		error = getaddrinfo(host, port, &hints, &res);
+		error = getaddrinfo(host, port, &hints, &res0);
 		if (error) {
 			warnx(gai_strerror(error));
 			goto cleanup_fetch_url;
 		}
+		if (res0->ai_canonname)
+			host = res0->ai_canonname;
 
-		while (1) {
-			s = socket(res->ai_family,
-				   res->ai_socktype, res->ai_protocol);
+		reason = NULL;
+		s = -1;
+		for (res = res0; res; res = res->ai_next) {
+			if (getnameinfo(res->ai_addr, res->ai_addrlen,
+					hbuf, sizeof(hbuf), NULL, 0,
+					NI_NUMERICHOST) != 0)
+				strncpy(hbuf, "invalid", sizeof(hbuf));
+
+			if (verbose && res != res0)
+				fprintf(ttyout, "Trying %s...\n", hbuf);
+
+			s = socket(res->ai_family, res->ai_socktype,
+				res->ai_protocol);
 			if (s < 0) {
+				reason = "socket";
 				warn("Can't create socket");
-				goto cleanup_fetch_url;
+				continue;
 			}
 
 			if (xconnect(s, res->ai_addr, res->ai_addrlen) < 0) {
-				char hbuf[MAXHOSTNAMELEN];
-				getnameinfo(res->ai_addr, res->ai_addrlen,
-					hbuf, sizeof(hbuf), NULL, 0,
-					NI_NUMERICHOST);
+				reason = "connect";
 				warn("Connect to address `%s'", hbuf);
 				close(s);
-				res = res->ai_next;
-				if (res) {
-					getnameinfo(res->ai_addr,
-					    res->ai_addrlen, hbuf, sizeof(hbuf),
-					    NULL, 0, NI_NUMERICHOST);
-					if (verbose)
-						fprintf(ttyout,
-						    "Trying %s...\n", hbuf);
-					continue;
-				}
-				warn("Can't connect to %s", host);
-				goto cleanup_fetch_url;
+				s = -1;
+				continue;
 			}
-		
+
+			/* success */
 			break;
 		}
-#endif
+		freeaddrinfo(res0);
 
+		if (s < 0) {
+			warn("Can't connect to %s", host);
+			goto cleanup_fetch_url;
+		}
+#endif
 
 		fin = fdopen(s, "r+");
 		/*
