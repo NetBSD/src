@@ -1,4 +1,4 @@
-.\"	$NetBSD: gzip.1,v 1.3 2003/12/23 15:02:40 mrg Exp $
+.\"	$NetBSD: gzip.1,v 1.4 2003/12/23 23:20:37 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2003 Matthew R. Green
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd compression/decompression tool using Lempel-Ziv coding (LZ77)
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdfhnqrtvVN
+.Op Fl cdfhNnqrtVv
 .Op Fl S Ar suffix
 .Ar file
 .Oo
@@ -42,7 +42,7 @@
 .Oc
 .Oc
 .Nm gunzip
-.Op Fl cfhNqrtvV
+.Op Fl cfhNqrtVv
 .Op Fl S Ar suffix
 .Ar file
 .Oo
@@ -59,7 +59,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-program compresses and decompresses files using Lempel-Ziv coding (LZ77).
+program compresses and decompresses files using Lempel-Ziv coding
+(LZ77).
 If no
 .Ar files
 are specified,
@@ -72,7 +73,8 @@ will be replaced with another file with the suffix, set by the
 option, added, if possible.
 In decompression mode, each
 .Ar file
-will be checked for existance, as will the file with the suffix added.
+will be checked for existence, as will the file with the suffix
+added.
 .Pp
 If invoked as
 .Nm gunzip
@@ -84,52 +86,13 @@ If invoked as
 or
 .Nm gzcat
 then both the
-.Fl d
-and
 .Fl c
+and
+.Fl d
 options are enabled.
 .Sh OPTIONS
 The following options are available:
-.Bl -tag -width Sxxxsuffix
-.It Fl c , -stdout , -to-stdout
-This option specifies that output will go to the standard output stream,
-leaving files intact.
-.It Fl d , -decompress , -uncompress
-This option selects decompression rather than compression.
-.It Fl f , -force
-This option turns on force mode.
-This allows files with multiple links, overwriting of pre-existing files,
-reading from or writing to a terminal,
-and when combined with the
-.Fl c
-option, allowing non-compressed data to pass through unchanged.
-.It Fl h , -help
-This option prints a usage summary and exits.
-.It Fl n , -no-name
-This option stops the filename from being stored in the output file.
-.It Fl N , -name
-This option causes the stored filename in the input file to be used
-as the output file.
-.It Fl q , -quiet
-With this option, no warnings or errors are printed.
-.It Fl r , -recursive
-This option is used to
-.Nm
-the files in a directory tree individually, using the
-.Xr fts 3
-library.
-.It Fl S Ar suffix , Fl -suffix Ar suffix
-This option changes the default suffix from .gz to
-.Ar suffix .
-.It Fl t , -test
-This option will test compressed files for integrity.
-.It Fl v , -verbose
-This option turns on verbose mode, which prints the compression ratio
-for each files compressed.
-.It Fl V , -version
-This option prints the version of the
-.Nm
-program.
+.Bl -tag -width XXrXXXrecursiveX
 .It Fl 1 , -fast
 .It Fl 2
 .It Fl 3
@@ -144,6 +107,46 @@ These options change the compression level used, with the
 option being the fastest, with less compression, and the
 .Fl 9
 option being the slowest, with optimal compression.
+.It Fl c , -stdout , -to-stdout
+This option specifies that output will go to the standard output
+stream, leaving files intact.
+.It Fl d , -decompress , -uncompress
+This option selects decompression rather than compression.
+.It Fl f , -force
+This option turns on force mode.
+This allows files with multiple links, overwriting of pre-existing
+files, reading from or writing to a terminal, and when combined
+with the
+.Fl c
+option, allowing non-compressed data to pass through unchanged.
+.It Fl h , -help
+This option prints a usage summary and exits.
+.It Fl N , -name
+This option causes the stored filename in the input file to be used
+as the output file.
+.It Fl n , -no-name
+This option stops the filename from being stored in the output
+file.
+.It Fl q , -quiet
+With this option, no warnings or errors are printed.
+.It Fl r , -recursive
+This option is used to
+.Nm
+the files in a directory tree individually, using the
+.Xr fts 3
+library.
+.It Fl S Ar suffix , Fl -suffix Ar suffix
+This option changes the default suffix from .gz to
+.Ar suffix .
+.It Fl t , -test
+This option will test compressed files for integrity.
+.It Fl V , -version
+This option prints the version of the
+.Nm
+program.
+.It Fl v , -verbose
+This option turns on verbose mode, which prints the compression
+ratio for each file compressed.
 .El
 .Sh SEE ALSO
 .Xr fts 3 ,
@@ -151,12 +154,13 @@ option being the slowest, with optimal compression.
 .Sh HISTORY
 The
 .Nm
-program was originally written by Jean-loup Gailly, licensed under the GNU Public
-Licence.
-Matthew R. Green wrote a simple front end for 
+program was originally written by Jean-loup Gailly, licensed under
+the GNU Public Licence.
+Matthew R. Green wrote a simple front end for
 .Nx 1.3
-distribution media, based on the freely redistributable zlib library.
-It was enhanced to be mostly feature-compatible with the original GNU
+distribution media, based on the freely re-distributable zlib library.
+It was enhanced to be mostly feature-compatible with the original
+GNU
 .Nm
 program for
 .Nx 2.0 .
@@ -186,7 +190,7 @@ program does not support long options supported by the GNU
 The
 .Nx
 .Nm
-program depends on 
+program depends on
 .Nx
 specific enhancements to the
 .Xr zlib 3
