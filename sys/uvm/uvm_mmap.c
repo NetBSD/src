@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.64 2002/05/31 16:49:50 atatat Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.64 2002/05/31 16:49:50 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ sys_mmap(p, v, retval)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
-		if (vp->v_type == VCHR && iszerodev(vp->v_rdev)) {
+		if (vp->v_type == VCHR && vp->v_rdev == zerodev) {
 			flags |= MAP_ANON;
 			goto is_anon;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2001/01/15 20:19:56 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -33,9 +33,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 #include <machine/icu.h>
 
 static int	mbprobe __P((struct device *, struct cfdata *, void *));

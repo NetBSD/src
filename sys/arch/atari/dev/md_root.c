@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.17 2002/05/23 14:59:28 leo Exp $	*/
+/*	NetBSD: md_root.c,v 1.17 2002/05/23 14:59:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -156,9 +156,13 @@ struct proc		*proc;
 {
 	struct buf		buf;
 	int			error;
-	struct bdevsw		*bdp = &bdevsw[major(ld_dev)];
+	const struct bdevsw	*bdp;
 	struct disklabel	dl;
 	struct read_info	rs;
+
+	bdp = bdevsw_lookup(ld_dev);
+	if (bdp == NULL)
+		return (ENXIO);
 
 	/*
 	 * Initialize our buffer header:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.17 2002/08/29 08:28:59 leo Exp $	*/
+/*	$NetBSD: ser.c,v 1.18 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -221,8 +221,6 @@ struct ser_softc {
  */
 #define	SER_HW_CONSOLE	0x01
 
-cdev_decl(ser);
-
 void	ser_break __P((struct ser_softc *, int));
 void	ser_hwiflow __P((struct ser_softc *, int));
 void	ser_iflush __P((struct ser_softc *));
@@ -253,7 +251,6 @@ static void sersoft __P((void *));
 static void sertxint __P((struct ser_softc *, struct tty*));
 
 static volatile int ser_softintr_scheduled = 0;
-static int	sermajor;
 
 /*
  * Autoconfig stuff
@@ -266,6 +263,20 @@ struct cfattach ser_ca = {
 };
 
 extern struct cfdriver ser_cd;
+
+dev_type_open(seropen);
+dev_type_close(serclose);
+dev_type_read(serread);
+dev_type_write(serwrite);
+dev_type_ioctl(serioctl);
+dev_type_stop(serstop);
+dev_type_tty(sertty);
+dev_type_poll(serpoll);
+
+const struct cdevsw ser_cdevsw = {
+	seropen, serclose, serread, serwrite, serioctl,
+	serstop, sertty, serpoll, nommap, D_TTY
+};
 
 /*ARGSUSED*/
 static	int
@@ -1423,12 +1434,10 @@ sercnprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-	for (sermajor = 0; sermajor < nchrdev; sermajor++)
-		if (cdevsw[sermajor].d_open == seropen)
-			break;
 
 	/* initialize required fields */
-	cp->cn_dev = makedev(sermajor, 0); /* XXX: LWP What unit? */
+	/* XXX: LWP What unit? */
+	cp->cn_dev = makedev(cdevsw_lookup_major(&ser_cdevsw), 0);
 #if SERCONSOLE > 0
 	cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
 #else

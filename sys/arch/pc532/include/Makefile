@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2002/08/07 05:15:48 briggs Exp $
+#	$NetBSD: Makefile,v 1.15 2002/09/06 13:18:43 gehenna Exp $
 
 KDIR=	/sys/arch/pc532/include
 INCSDIR= /usr/include/pc532
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h byte_swap.h \
-	cdefs.h conf.h cpu.h cpufunc.h \
+	cdefs.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	endian.h endian_machdep.h \
 	float.h fpu.h frame.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.100 2002/07/30 07:40:15 soren Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.101 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.100 2002/07/30 07:40:15 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.101 2002/09/06 13:18:43 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.100 2002/07/30 07:40:15 soren Exp $
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/sysctl.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -227,7 +228,7 @@ ffs_mount(mp, path, data, ndp, p)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (major(devvp->v_rdev) >= nblkdev)
+			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
 				error = ENXIO;
 		} else {
 			/*

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.64 2002/06/26 23:05:36 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.64 2002/06/26 23:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -155,8 +155,21 @@ struct cfattach wsdisplay_noemul_ca = {
 	wsdisplay_noemul_attach,
 };
  
-/* Exported tty- and cdevsw-related functions. */
-cdev_decl(wsdisplay);
+dev_type_open(wsdisplayopen);
+dev_type_close(wsdisplayclose);
+dev_type_read(wsdisplayread);
+dev_type_write(wsdisplaywrite);
+dev_type_ioctl(wsdisplayioctl);
+dev_type_stop(wsdisplaystop);
+dev_type_tty(wsdisplaytty);
+dev_type_poll(wsdisplaypoll);
+dev_type_mmap(wsdisplaymmap);
+
+const struct cdevsw wsdisplay_cdevsw = {
+	wsdisplayopen, wsdisplayclose, wsdisplayread, wsdisplaywrite,
+	wsdisplayioctl, wsdisplaystop, wsdisplaytty, wsdisplaypoll,
+	wsdisplaymmap, D_TTY
+};
 
 static void wsdisplaystart(struct tty *);
 static int wsdisplayparam(struct tty *, struct termios *);
@@ -383,9 +396,7 @@ wsdisplay_closescreen(struct wsdisplay_softc *sc, struct wsscreen *scr)
 	}
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 	/* locate the screen index */
 	for (idx = 0; idx < WSDISPLAY_MAXSCREEN; idx++)
 		if (scr == sc->sc_scr[idx])
@@ -493,9 +504,7 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == wsdisplayopen)
-				break;
+		maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
 	}

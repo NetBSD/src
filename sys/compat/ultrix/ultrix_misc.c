@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.77 2002/07/04 23:32:14 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.78 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.77 2002/07/04 23:32:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.78 2002/09/06 13:18:43 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -139,7 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.77 2002/07/04 23:32:14 thorpej Exp
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
-#include <sys/conf.h>					/* iszerodev() */
 #include <sys/socketvar.h>				/* sosetopt() */
 
 #include <compat/ultrix/ultrix_flock.h>
@@ -363,7 +362,7 @@ ultrix_sys_mmap(p, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    iszerodev(vp->v_rdev)) {					/*XXX*/
+	    vp->v_rdev == zerodev) {					/*XXX*/
 		SCARG(&ouap, flags) |= MAP_ANON;
 		SCARG(&ouap, fd) = -1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.52 2002/07/29 16:53:30 atatat Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.53 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.52 2002/07/29 16:53:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.53 2002/09/06 13:18:43 gehenna Exp $");
 
 #include "tun.h"
 
@@ -90,6 +90,18 @@ static void tuninit __P((struct tun_softc *));
 static void tunstart __P((struct ifnet *));
 #endif
 static struct tun_softc *tun_find_unit __P((dev_t));
+
+dev_type_open(tunopen);
+dev_type_close(tunclose);
+dev_type_read(tunread);
+dev_type_write(tunwrite);
+dev_type_ioctl(tunioctl);
+dev_type_poll(tunpoll);
+
+const struct cdevsw tun_cdevsw = {
+	tunopen, tunclose, tunread, tunwrite, tunioctl,
+	nostop, notty, tunpoll, nommap,
+};
 
 void
 tunattach(unused)

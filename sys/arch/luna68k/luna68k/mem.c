@@ -1,5 +1,4 @@
-/* $NetBSD: mem.c,v 1.6 2002/02/27 01:20:53 christos Exp $ */
-/*	$NetBSD: mem.c,v 1.6 2002/02/27 01:20:53 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2002/02/27 01:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $");
 
 /*
  * Memory special file
@@ -64,27 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2002/02/27 01:20:53 christos Exp $");
 extern u_int lowram;
 static caddr_t devzeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.21 2002/09/01 23:04:47 thorpej Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.22 2002/09/06 13:18:43 gehenna Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -111,7 +111,7 @@ LIBCOMPAT?=	${COMPATLIB_PROF}
 ## Each port should have a corresponding section with settings for
 ## MD_CFILES, MD_SFILES, and MD_OBJS, along with build rules for same.
 ##
-MI_CFILES=ioconf.c param.c
+MI_CFILES=devsw.c ioconf.c param.c
 # the need for a MI_SFILES variable is dubitable at best
 MI_OBJS=${MI_CFILES:S/.c/.o/}
 

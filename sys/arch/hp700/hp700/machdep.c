@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/08/25 20:21:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1590,6 +1590,7 @@ cpu_dump()
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 	cpu_kcore_hdr_t	*cpuhdrp;
+	const struct bdevsw *bdev;
 
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp)) / sizeof (long)];
@@ -1605,8 +1606,11 @@ cpu_dump()
 	 */
 	/* nothing for now */
 
-	return (bdevsw[major(dumpdev)].d_dump)
-	    (dumpdev, dumplo, (caddr_t)buf, dbtob(1));
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (-1);
+
+	return (*bdev->d_dump)(dumpdev, dumplo, (caddr_t)buf, dbtob(1));
 }
 
 /*
@@ -1617,6 +1621,7 @@ cpu_dump()
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	int psize, bytes, i, n;
 	register caddr_t maddr;
 	register daddr_t blkno;
@@ -1624,6 +1629,9 @@ dumpsys()
 	register int error;
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		return;
 
 	/* Save registers
@@ -1637,7 +1645,7 @@ dumpsys()
 	}
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1650,7 +1658,7 @@ dumpsys()
 		bytes = ctob(physmem);
 		maddr = NULL;
 		blkno = dumplo + cpu_dumpsize();
-		dump = bdevsw[major(dumpdev)].d_dump;
+		dump = bdev->d_dump;
 		/* TODO block map the whole physical memory */
 		for (i = 0; i < bytes; i += n) {
 		

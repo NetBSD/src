@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.86 2002/08/24 05:26:57 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.87 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 #include <machine/bsd_openprom.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/conf.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/z8530var.h>
@@ -91,7 +90,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The Sun provides a 4.9152 MHz clock to the ZS chips.

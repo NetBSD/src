@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.13 2002/06/02 14:44:44 drochner Exp $	*/
+/*	$NetBSD: maple.c,v 1.14 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -83,11 +84,8 @@ static void	maple_check_responses(struct maple_softc *);
 int	maple_alloc_dma(size_t, vaddr_t *, paddr_t *);
 void	maple_free_dma(paddr_t, size_t);
 
-int	mapleopen(dev_t, int, int, struct proc *);
-int	mapleclose(dev_t, int, int, struct proc *);
 int	maple_internal_ioctl(struct maple_softc *,  int, int, u_long, caddr_t,
 	    int, struct proc *);
-int	mapleioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /*
  * Global variables.
@@ -102,6 +100,15 @@ struct cfattach maple_ca = {
 };
 
 extern struct cfdriver maple_cd;
+
+dev_type_open(mapleopen);
+dev_type_close(mapleclose);
+dev_type_ioctl(mapleioctl);
+
+const struct cdevsw maple_cdevsw = {
+	mapleopen, mapleclose, noread, nowrite, mapleioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 static int
 maplematch(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.22 2002/07/04 23:32:10 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.23 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@ __END_DECLS
  * ugly patch to fake device numbers.
  */
 #define LINUX_CONS_MAJOR   4
-#define NETBSD_WSCONS_MAJOR 47
 
 /*
  * Linux ioctl calls for the keyboard.

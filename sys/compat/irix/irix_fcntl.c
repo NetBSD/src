@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.9 2002/06/01 16:16:36 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.9 2002/06/01 16:16:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -294,6 +294,7 @@ irix_sys_open(p, v, retval)
 		syscallarg(int) flags;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
+	extern const struct cdevsw irix_usema_cdevsw;
 	int error;
 	int fd;
 	struct file *fp;
@@ -319,7 +320,9 @@ irix_sys_open(p, v, retval)
 	 * The original vnode is stored in the v_data field of the cloned
 	 * vnode.
 	 */
-	if (vp->v_type == VCHR && vp->v_rdev == irix_usemaclonedev) {
+	if (vp->v_type == VCHR &&
+	    cdevsw_lookup(vp->v_rdev) == &irix_usema_cdevsw &&
+	    minor(vp->v_rdev) == IRIX_USEMACLNDEV_MINOR) {
 		if ((error = getnewvnode(VCHR, vp->v_mount, 
 		    irix_usema_vnodeop_p, 
 		    (struct vnode **)&fp->f_data)) != 0) {

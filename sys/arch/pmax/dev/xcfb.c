@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.35 2001/09/19 19:04:17 thorpej Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.36 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,8 +100,7 @@ xcfb needs dtop device
 #include <pmax/dev/ims332.h>
 #include <pmax/dev/xcfbvar.h>
 
-#include <pmax/pmax/cons.h>
-
+#include <dev/cons.h>
 #include <dev/tc/tcvar.h>
 
 

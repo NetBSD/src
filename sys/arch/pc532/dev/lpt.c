@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.34 2001/04/13 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.35 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -72,9 +72,9 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #if defined(INET) && defined(PLIP)
 #include "bpfilter.h"
@@ -210,6 +210,16 @@ struct cfattach lpt_ca = {
 };
 
 extern struct cfdriver lpt_cd;
+
+dev_type_open(lptopen);
+dev_type_close(lptclose);
+dev_type_write(lptwrite);
+dev_type_ioctl(lptioctl);
+
+const struct cdevsw lpt_cdevsw = {
+	lptopen, lptclose, noread, lptwrite, lptioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 static int
 lptmatch(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 2002/06/05 10:56:17 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -314,6 +314,19 @@ struct prefix {
 };
 
 /*
+ * Device major informations.
+ */
+struct devm {
+	TAILQ_ENTRY(devm) dm_next;
+	const char	*dm_srcfile;	/* the name of the "majors" file */
+	u_short		dm_srcline;	/* the line number */
+	const char	*dm_name;	/* [bc]devsw name */
+	int		dm_cmajor;	/* character major */
+	int		dm_bmajor;	/* block major */
+	struct nvlist	*dm_opts;	/* options */
+};
+
+/*
  * Hash tables look up name=value pairs.  The pointer value of the name
  * is assumed to be constant forever; this can be arranged by interning
  * the name.  (This is fairly convenient since our lexer does this for
@@ -352,13 +365,19 @@ struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+struct	hashtab *fixdevmtab;	/* duplication fixed devm lookup */
+struct	hashtab *bdevmtab;	/* block devm lookup */
+struct	hashtab *cdevmtab;	/* character devm lookup */
 
 TAILQ_HEAD(, devbase)	allbases;	/* list of all devbase structures */
 TAILQ_HEAD(, deva)	alldevas;	/* list of all devbase attachments */
 TAILQ_HEAD(, config)	allcf;		/* list of configured kernels */
 TAILQ_HEAD(, devi)	alldevi,	/* list of all instances */
 			allpseudo;	/* list of all pseudo-devices */
+TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
 int	ndevi;				/* number of devi's (before packing) */
+int	maxbdevm;			/* max number of block major */
+int	maxcdevm;			/* max number of character major */
 
 TAILQ_HEAD(, files)	allfiles;	/* list of all kernel source files */
 TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and
@@ -384,6 +403,7 @@ void	initfiles(void);
 void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
+int	fixdevsw(void);
 void	addfile(const char *, struct nvlist *, int, const char *);
 void	addobject(const char *, struct nvlist *, int);
 
@@ -424,6 +444,9 @@ void	setupdirs(void);
 
 /* main.c */
 void	logconfig_include(FILE *, const char *);
+
+/* mkdevsw.c */
+int	mkdevsw(void);
 
 /* mkheaders.c */
 int	mkheaders(void);

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.156 2002/05/27 23:41:33 lukem Exp $
+# $NetBSD: files.alpha,v 1.157 2002/09/06 13:18:43 gehenna Exp $
 #
 # alpha-specific configuration info
 
@@ -70,25 +70,15 @@ include "dev/i2o/files.i2o"
 #
 
 include "dev/scsipi/files.scsipi"
-major { cd = 3 }
-major { sd = 8 }
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major { wd = 4 }
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
-major { md = 6 }
-
-# RAIDframe
-major { raid = 16 }
-
-# Logical disks
-major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -256,7 +246,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-major	{ fd = 0 }
 
 # ISA Plug 'n Play devices
 file	arch/alpha/isa/isapnp_machdep.c	isapnp
@@ -608,3 +597,5 @@ include "dev/usb/files.usb"
 # Machine-independent IEEE 1394 device support
 #
 include "dev/ieee1394/files.ieee1394"
+
+include	"arch/alpha/conf/majors.alpha"
