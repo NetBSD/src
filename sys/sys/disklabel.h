@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.44 1998/06/13 04:20:24 tv Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.45 1998/07/26 11:18:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -198,7 +198,7 @@ struct disklabel {
 #define DTYPE_ATAPI		13		/* ATAPI */
 
 #ifdef DKTYPENAMES
-static char *dktypenames[] = {
+static const char *const dktypenames[] = {
 	"unknown",
 	"SMD",
 	"MSCP",

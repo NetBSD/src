@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.12 1997/07/13 19:54:57 christos Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.13 1998/07/26 11:17:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.12 1997/07/13 19:54:57 christos Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.13 1998/07/26 11:17:28 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: setlocale.c,v 1.12 1997/07/13 19:54:57 christos Exp $");
 /*
  * Category names for getenv()
  */
-static char *categories[_LC_LAST] = {
+static const char *const categories[_LC_LAST] = {
     "LC_ALL",
     "LC_COLLATE",
     "LC_CTYPE",
