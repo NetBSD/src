@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.32 2000/10/07 18:58:14 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.33 2001/02/09 14:33:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -327,6 +327,7 @@ typedef u_int8_t pci_revision_t;
  */
 #define	PCI_MAPREG_START		0x10
 #define	PCI_MAPREG_END			0x28
+#define	PCI_MAPREG_ROM			0x30
 #define	PCI_MAPREG_PPB_END		0x18
 #define	PCI_MAPREG_PCB_END		0x14
 
@@ -336,6 +337,7 @@ typedef u_int8_t pci_revision_t;
 
 #define	PCI_MAPREG_TYPE_MEM			0x00000000
 #define	PCI_MAPREG_TYPE_IO			0x00000001
+#define	PCI_MAPREG_TYPE_ROM			0x00000001
 
 #define	PCI_MAPREG_MEM_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_MEM_TYPE_MASK)
@@ -429,6 +431,16 @@ typedef u_int8_t pci_intr_grant_t;
 typedef u_int8_t pci_intr_pin_t;
 typedef u_int8_t pci_intr_line_t;
 
+#define PCI_MAX_LAT_SHIFT			24
+#define	PCI_MAX_LAT_MASK			0xff
+#define	PCI_MAX_LAT(icr) \
+	    (((icr) >> PCI_MAX_LAT_SHIFT) & PCI_MAX_LAT_MASK)
+
+#define PCI_MIN_GNT_SHIFT			16
+#define	PCI_MIN_GNT_MASK			0xff
+#define	PCI_MIN_GNT(icr) \
+	    (((icr) >> PCI_MIN_GNT_SHIFT) & PCI_MIN_GNT_MASK)
+
 #define	PCI_INTERRUPT_GRANT_SHIFT		24
 #define	PCI_INTERRUPT_GRANT_MASK		0xff
 #define	PCI_INTERRUPT_GRANT(icr) \
@@ -461,5 +473,58 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_PIN_C			0x03
 #define	PCI_INTERRUPT_PIN_D			0x04
 #define	PCI_INTERRUPT_PIN_MAX			0x04
+
+/* Header Type 1 (Bridge) configuration registers */
+#define PCI_BRIDGE_BUS_REG		0x18
+#define   PCI_BRIDGE_BUS_PRIMARY_SHIFT		0
+#define   PCI_BRIDGE_BUS_SECONDARY_SHIFT	8
+#define   PCI_BRIDGE_BUS_SUBORDINATE_SHIFT	16
+
+#define PCI_BRIDGE_STATIO_REG		0x1C
+#define	  PCI_BRIDGE_STATIO_IOBASE_SHIFT	0
+#define	  PCI_BRIDGE_STATIO_IOLIMIT_SHIFT	8
+#define	  PCI_BRIDGE_STATIO_STATUS_SHIFT	16
+#define	  PCI_BRIDGE_STATIO_IOBASE_MASK		0xf0
+#define	  PCI_BRIDGE_STATIO_IOLIMIT_MASK	0xf0
+#define	  PCI_BRIDGE_STATIO_STATUS_MASK		0xffff
+#define	  PCI_BRIDGE_IO_32BITS(reg)		(((reg) & 0xf) == 1)
+
+#define PCI_BRIDGE_MEMORY_REG		0x20
+#define	  PCI_BRIDGE_MEMORY_BASE_SHIFT		4
+#define	  PCI_BRIDGE_MEMORY_LIMIT_SHIFT		20
+#define	  PCI_BRIDGE_MEMORY_BASE_MASK		0xffff
+#define	  PCI_BRIDGE_MEMORY_LIMIT_MASK		0xffff
+
+#define PCI_BRIDGE_PREFETCHMEM_REG	0x24
+#define	  PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT	4
+#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT	20
+#define	  PCI_BRIDGE_PREFETCHMEM_BASE_MASK	0xffff
+#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK	0xffff
+
+#define PCI_BRIDGE_PREFETCHBASE32_REG	0x28
+#define PCI_BRIDGE_PREFETCHLIMIT32_REG	0x2C
+
+#define PCI_BRIDGE_IOHIGH_REG		0x30
+#define	  PCI_BRIDGE_IOHIGH_BASE_SHIFT		0
+#define	  PCI_BRIDGE_IOHIGH_LIMIT_SHIFT		16
+#define	  PCI_BRIDGE_IOHIGH_BASE_MASK		0xffff
+#define	  PCI_BRIDGE_IOHIGH_LIMIT_MASK		0xffff
+
+#define PCI_BRIDGE_CONTROL_REG		0x3C
+#define	  PCI_BRIDGE_CONTROL_SHIFT		16
+#define	  PCI_BRIDGE_CONTROL_MASK		0xffff
+#define   PCI_BRIDGE_CONTROL_PERE		(1 <<  0)
+#define   PCI_BRIDGE_CONTROL_SERR		(1 <<  1)
+#define   PCI_BRIDGE_CONTROL_ISA		(1 <<  2)
+#define   PCI_BRIDGE_CONTROL_VGA		(1 <<  3)
+/* Reserved					(1 <<  4) */
+#define   PCI_BRIDGE_CONTROL_MABRT		(1 <<  5)
+#define   PCI_BRIDGE_CONTROL_SECBR		(1 <<  6)
+#define   PCI_BRIDGE_CONTROL_SECFASTB2B		(1 <<  7)
+#define   PCI_BRIDGE_CONTROL_PRI_DISC_TIMER	(1 <<  8)
+#define   PCI_BRIDGE_CONTROL_SEC_DISC_TIMER	(1 <<  9)
+#define   PCI_BRIDGE_CONTROL_DISC_TIMER_STAT	(1 << 10)
+#define   PCI_BRIDGE_CONTROL_DISC_TIMER_SERR	(1 << 11)
+/* Reserved					(1 << 12) - (1 << 15) */
 
 #endif /* _DEV_PCI_PCIREG_H_ */
