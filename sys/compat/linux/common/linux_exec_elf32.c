@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.64 2003/06/29 22:29:28 fvdl Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.65 2003/10/27 07:07:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.64 2003/06/29 22:29:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.65 2003/10/27 07:07:34 chs Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -108,10 +108,10 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	Elf_Ehdr *eh;
 {
 	size_t shsize;
-	int	strndx;
+	int strndx;
 	size_t i;
 	static const char signature[] = "__libc_atexit";
-	char* strtable;
+	char *strtable = NULL;
 	Elf_Shdr *sh;
 	
 	int error;
@@ -159,7 +159,8 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 
 out:
 	free(sh, M_TEMP);
-	free(strtable, M_TEMP);
+	if (strtable)
+		free(strtable, M_TEMP);
 	return (error);
 }
 #endif
