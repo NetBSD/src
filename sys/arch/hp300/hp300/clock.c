@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1997/10/12 18:37:56 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.21.26.1 2001/11/12 23:24:42 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -396,17 +396,20 @@ inittodr(base)
 void
 resettodr()
 {
-	int i;
+	int i, year;
 	struct bbc_tm *tmptr;
 
 	tmptr = gmt_to_bbc(time.tv_sec);
+	year = tmptr->tm_year - 1900;
+	if (year >= 100)
+		year -= 100;
 
 	decimal_to_bbc(0, 1,  tmptr->tm_sec);
 	decimal_to_bbc(2, 3,  tmptr->tm_min);
 	decimal_to_bbc(4, 5,  tmptr->tm_hour);
 	decimal_to_bbc(7, 8,  tmptr->tm_mday);
 	decimal_to_bbc(9, 10, tmptr->tm_mon);
-	decimal_to_bbc(11, 12, tmptr->tm_year);
+	decimal_to_bbc(11, 12, year);
 
 	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
 	bbc_registers[5] = ((tmptr->tm_hour / 10) & 0x03) + 8;
@@ -437,7 +440,7 @@ gmt_to_bbc(tim)
 	rt.tm_sec  = (hms % 3600) % 60;
 
 	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
+	for (i = STARTOFTIME; day >= days_in_year(i); i++)
 	  	day -= days_in_year(i);
 	rt.tm_year = i;
 	
@@ -475,11 +478,12 @@ bbc_to_gmt(timbuf)
 	day   = bbc_to_decimal(8, 7);
 	month = bbc_to_decimal(10, 9);
 	year  = bbc_to_decimal(12, 11) + 1900;
+	if (year < STARTOFTIME)
+		year += 100;
 
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
 
 	tmp = 0;
 
