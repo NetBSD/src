@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.7 1996/08/30 20:10:26 thorpej Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.8 1996/10/04 19:00:31 cgd Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -333,7 +333,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 #endif
 			/* See if this line's client is the one we are
 			 * looking for */
-			if (strcmp(word, client) != 0) {
+			if (strcasecmp(word, client) != 0) {
 				/*
 				 * If it didn't match, try getting the
 				 * canonical host name of the client
@@ -341,7 +341,8 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				 * the client we are looking for
 				 */
 				struct hostent *hp = gethostbyname(word);
-				if (hp == NULL || strcmp(hp->h_name, client))
+				if (hp == NULL ||
+				    strcasecmp(hp->h_name, client))
 					continue;
 			}
 			contin *= -1;
