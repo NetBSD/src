@@ -1,5 +1,5 @@
 # This is the Makefile for the Taylor UUCP uuconf library
-# $Id: Makefile,v 1.3 1993/10/28 05:00:19 cgd Exp $
+# $Id: Makefile,v 1.4 1994/10/24 22:20:16 jtc Exp $
 
 LIB=		uuconf
 SRCS=		addblk.c addstr.c allblk.c alloc.c base.c bool.c callin.c \
@@ -13,7 +13,7 @@ SRCS=		addblk.c addstr.c allblk.c alloc.c base.c bool.c callin.c \
 		snams.c split.c spool.c stafil.c syssub.c tcalou.c tdial.c \
 		tdialc.c tdnams.c tgcmp.c thread.c time.c tinit.c tlocnm.c \
 		tport.c tportc.c tsinfo.c tsnams.c tsys.c tval.c ugtlin.c \
-		unk.c val.c vinit.c vport.c vsinfo.c vsnams.c vsys.c
+		unk.c val.c vinit.c vport.c vsinfo.c vsnams.c vsys.c runuxq.c
 CFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DNEWCONFIGLIB=\"$(newconfigdir)\"\
 		-DOLDCONFIGLIB=\"$(oldconfigdir)\"

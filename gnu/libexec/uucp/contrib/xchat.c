@@ -9,6 +9,9 @@
  *   Bob Denny (denny@alisa.com)
  *   Based on code in DECUS UUCP (for VAX/VMS)
  *
+ * Small modification by:
+ *   Daniel Hagerty (hag@eddie.mit.edu)
+ *
  * History:
  *   Version 1.0 shipped with Taylor 1.03. No configuration info inside.
  *
@@ -18,6 +21,12 @@
  *            for timed reads. Use Taylor UUCP "conf.h" file to set
  *            configuration for this program. Add defaulting of script
  *            and log file paths.
+ *   
+ *   Daniel Hagerty - Mon Nov 22 18:17:38 1993
+ *     V1.2 - Added a new opcode to xchat. "expectstr" is a cross between
+ *            sendstr and expect, looking for a parameter supplied string.
+ *            Useful where a prompt could change for different dial in
+ *            lines and such.
  *
  * Bugs:
  *   Does not support BSD terminal I/O. Anyone care to add it?
@@ -130,7 +139,8 @@ struct script_opdef {
 #define SC_PEVN 39	/* Set port for 7-bit, even parity */
 #define SC_PODD 40	/* Set port for 7-bit, odd parity */
 #define SC_HUPS 41	/* Change state on HUP signal */
-#define	SC_END	42	/* end of array */
+#define SC_XPST	42	/* Expect a param string */
+#define	SC_END	43	/* end of array */
 
 	/* values for prmtype, prm2type */
 
@@ -186,6 +196,7 @@ static struct	script_opdef	sc_opdef[] =
 	{"sendstr",	SC_SNDP,	SC_INT,		SC_NONE},
 	{"ifstr",	SC_IF1P,	SC_INT,		SC_NWST},
 	{"ifnstr",	SC_IF0P,	SC_INT,		SC_NWST},
+	{"expectstr",	SC_XPST,	SC_INT,		SC_NWST},
 	{"table end",	SC_END,		SC_NONE,	SC_NONE}
       };
 
@@ -1029,6 +1040,7 @@ int do_script(begin)
 	case SC_TIMO:	/* these are "expects", don't bother */
 	case SC_XPCT:	/* with them yet, other than noting that */
 	case SC_CARR:	/* they exist */
+	case SC_XPST:
 	  expcnt++;
 	  break;
 	}
@@ -1132,7 +1144,24 @@ int do_script(begin)
 	}
     }
 }
-
+	      /* New opcode added by hag@eddie.mit.edu for expecting a 
+		 parameter supplied string */
+	     case SC_XPST:
+	      if(curscr->intprm >paramc-1)
+	      {
+		sprintf(tempstr,"expectstr - param#%d",curscr->intprm);
+		logit(tempstr, " not present");
+		return(FAIL);
+	      }
+	      prmlen=xlat_str(tempstr,paramv[curscr->intprm]);
+	      if((expin >= prmlen) &&
+		 (strncmp(tempstr,&expbuf[expin-prmlen],
+			  prmlen) == SAME))
+	      {
+		charlog(tempstr,prmlen,DB_LGI, "Matched");
+		goto _chgstate;
+	      }
+	      break;
 /*
  * SIGNAL HANDLERS
  */
