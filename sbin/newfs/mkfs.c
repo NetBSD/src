@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.72 2003/08/15 15:07:16 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.73 2003/08/15 15:24:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.72 2003/08/15 15:07:16 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.73 2003/08/15 15:24:21 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,12 @@ union {
 	char pad[SBLOCKSIZE];
 } fsun;
 #define	sblock	fsun.fs
-struct	csum *fscs;
+
+struct	csum *fscs_0;		/* first block of cylinder summaries */
+struct	csum *fscs_next;	/* place for next summary */
+struct	csum *fscs_end;		/* end of summary buffer */
+struct	csum *fscs_reset;	/* place for next summary after write */
+uint	fs_csaddr;		/* fragment number to write to */
 
 union {
 	struct cg cg;
@@ -161,7 +166,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	int32_t cylno, i, csfrags;
 	struct timeval tv;
 	long long sizepb;
-	char *writebuf2;		/* dynamic buffer */
 	int nprintcols, printcolwidth;
 
 #ifndef STANDALONE
@@ -432,14 +436,27 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	}
 
 	/*
-	 * fill in remaining fields of the super block
+	 * Cylinder group summary information for each cylinder is written
+	 * into the first cylinder group.
+	 * Write this fragment by fragment, but doing the first CG last
+	 * (after we've taken stuff off for the structure itself and the
+	 * root directory.
 	 */
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
-	fscs = (struct csum *)calloc(1, sblock.fs_cssize);
-	if (fscs == NULL)
+	if (512 % sizeof *fscs_0)
+		errx(1, "cylinder group summary doesn't fit in sectors");
+	fscs_0 = calloc(1, 2 * sblock.fs_fsize);
+	if (fscs_0 == NULL)
 		exit(39);
+	fs_csaddr = sblock.fs_csaddr;
+	fscs_next = fscs_0;
+	fscs_end = (void *)((char *)fscs_0 + 2 * sblock.fs_fsize);
+	fscs_reset = (void *)((char *)fscs_0 + sblock.fs_fsize);
+	/*
+	 * fill in remaining fields of the super block
+	 */
 	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
 	if (sblock.fs_sbsize > SBLOCKSIZE)
 		sblock.fs_sbsize = SBLOCKSIZE;
@@ -567,24 +584,17 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		ffs_sb_swap(&sblock, (struct fs*)writebuf);
         wtfs(sblock.fs_sblockloc / sectorsize, sbsize, writebuf);
 
-	/*
-	 * if we need to swap, create a buffer for the cylinder summaries
-	 * to get swapped to.
-	 */
-	if (needswap) {
-		if ((writebuf2 = malloc(sblock.fs_cssize)) == NULL)
-			exit(12);
-		ffs_csum_swap(fscs, (struct csum*)writebuf2, sblock.fs_cssize);
-	} else
-		writebuf2 = (char *)fscs;
+	/* Write out first and last cylinder summary sectors */
+	if (needswap)
+		ffs_csum_swap(fscs_0, fscs_0, sblock.fs_fsize);
+	wtfs(fsbtodb(&sblock, sblock.fs_csaddr), sblock.fs_fsize, fscs_0);
 
-	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize)
-		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
-			sblock.fs_cssize - i < sblock.fs_bsize ?
-			    sblock.fs_cssize - i : sblock.fs_bsize,
-			((char *)writebuf2) + i);
-	if (writebuf2 != (char *)fscs)
-		free(writebuf2);
+	if (fscs_next > fscs_reset) {
+		if (needswap)
+			ffs_csum_swap(fscs_reset, fscs_reset, sblock.fs_fsize);
+		fs_csaddr++;
+		wtfs(fsbtodb(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
+	}
 
 	/*
 	 * Update information about this partion in pack
@@ -607,7 +617,6 @@ initcg(int cylno, const struct timeval *tv)
 {
 	daddr_t cbase, dmax;
 	int32_t i, j, d, dlower, dupper, blkno;
-	struct csum *cs;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	int start;
@@ -631,7 +640,6 @@ initcg(int cylno, const struct timeval *tv)
 			exit(40);
 		}
 	}
-	cs = fscs + cylno;
 	memset(&acg, 0, sblock.fs_cgsize);
 	acg.cg_time = tv->tv_sec;
 	acg.cg_magic = CG_MAGIC;
@@ -755,7 +763,15 @@ initcg(int cylno, const struct timeval *tv)
 			sump[run]++;
 		}
 	}
-	*cs = acg.cg_cs;
+	*fscs_next++ = acg.cg_cs;
+	if (fscs_next == fscs_end) {
+		if (needswap)
+			ffs_csum_swap(fscs_reset, fscs_reset, sblock.fs_fsize);
+		fs_csaddr++;
+		wtfs(fsbtodb(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
+		fscs_next = fscs_reset;
+		memset(fscs_next, 0, sblock.fs_fsize);
+	}
 	/*
 	 * Write out the duplicate super block, the cylinder group map
 	 * and two blocks worth of inodes in a single write.
@@ -1029,15 +1045,15 @@ goth:
 		clrbit(cg_clustersfree(&acg, 0), blkno);
 	acg.cg_cs.cs_nbfree--;
 	sblock.fs_cstotal.cs_nbfree--;
-	fscs[0].cs_nbfree--;
+	fscs_0->cs_nbfree--;
 	if (mode & IFDIR) {
 		acg.cg_cs.cs_ndir++;
 		sblock.fs_cstotal.cs_ndir++;
-		fscs[0].cs_ndir++;
+		fscs_0->cs_ndir++;
 	}
 	if (size != sblock.fs_bsize) {
 		frag = howmany(size, sblock.fs_fsize);
-		fscs[0].cs_nffree += sblock.fs_frag - frag;
+		fscs_0->cs_nffree += sblock.fs_frag - frag;
 		sblock.fs_cstotal.cs_nffree += sblock.fs_frag - frag;
 		acg.cg_cs.cs_nffree += sblock.fs_frag - frag;
 		acg.cg_frsum[sblock.fs_frag - frag]++;
@@ -1078,7 +1094,7 @@ iput(union dinode *ip, ino_t ino)
 		ffs_cg_swap(&acg, &acg, &sblock);
 	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	sblock.fs_cstotal.cs_nifree--;
-	fscs[0].cs_nifree--;
+	fscs_0->cs_nifree--;
 	if (ino >= sblock.fs_ipg * sblock.fs_ncg) {
 		printf("fsinit: inode value out of range (%d).\n", ino);
 		exit(32);
