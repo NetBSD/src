@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.10.4.2 1996/12/10 10:36:06 mycroft Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -91,19 +91,9 @@
 		 NFS_MAXDGRAMDATA : NFS_MAXDATA) : NFS_V2MAXDATA)
 
 /*
- * sys/malloc.h needs M_NFSDIROFF, M_NFSRVDESC and M_NFSBIGFH added.
  * The VA_EXCLUSIVE flag should be added for va_vaflags and set for an
  * exclusive create.
  */
-#ifndef M_NFSRVDESC
-#define M_NFSRVDESC	M_TEMP
-#endif
-#ifndef M_NFSDIROFF
-#define M_NFSDIROFF	M_TEMP
-#endif
-#ifndef M_NFSBIGFH
-#define M_NFSBIGFH	M_TEMP
-#endif
 #ifndef VA_EXCLUSIVE
 #define VA_EXCLUSIVE	0
 #endif
