@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.9 1999/12/03 00:14:06 itohy Exp $	*/
+/*	$NetBSD: kbd.c,v 1.10 2000/05/25 03:33:27 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -326,12 +326,18 @@ int
 kbdintr(arg)
 	void *arg;
 {
-	u_char c, in;
+	u_char c, st;
 	struct kbd_softc *k = arg; /* XXX */
 	struct firm_event *fe;
 	int put;
 
-	c = in = mfp_get_udr();
+	/* clear receiver error if any */
+	st = mfp_get_rsr();
+
+	c = mfp_get_udr();
+
+	if ((st & MFP_RSR_BF) == 0)
+		return 0;	/* intr caused by an err -- no char received */
 
 	/* if not in event mode, deliver straight to ite to process key stroke */
 	if (! k->sc_event_mode) {
