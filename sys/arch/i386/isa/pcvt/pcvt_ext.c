@@ -73,7 +73,7 @@ static union {
 	u_char tri9000[13];
 	u_char v7_1024i[17];
 	u_char s3_928[32];	
-	u_char cirrus[12];
+	u_char cirrus[13];
 }
 savearea;
 
@@ -1905,6 +1905,11 @@ cl_gd542x_col(int cols)
 	byte = inb(addr_6845+1);
 	outb(addr_6845, CRTC_VSYNCE);
 	outb(addr_6845+1, byte & 0x7f);
+
+	/* enable access to cirrus extension registers */
+
+	outb(TS_INDEX, 6);
+	outb(TS_DATA, 0x12);
 	
 	if(cols == SCR_COL132)		/* switch 80 -> 132 */
 	{
@@ -1952,13 +1957,19 @@ cl_gd542x_col(int cols)
 			outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
 			*sp++ = inb(ATC_DATAR);
 
-			*sp++ = inb(GN_MISCOUTR);	/* Misc output register */
-			outb(addr_6845, 0x1b); /* Extended Diplay Controls */
-			*sp++ = inb(addr_6845+1);
+			/* VCLK2 Numerator Register */
+			outb(TS_INDEX, 0xd);
+			*sp++ = inb(TS_DATA);
+
+			/* VCLK2 Denominator and Post-Scalar Value Register */
+			outb(TS_INDEX, 0x1d);
+			*sp++ = inb(TS_DATA);
+
+			/* Misc output register */
+			*sp++ = inb(GN_MISCOUTR);
 		}
 
 		/* setup chipset for 132 column operation */
-
 
 		outb(addr_6845, 0x00);	/* Horizontal Total */
 		outb(addr_6845+1, 0x9f);
@@ -1976,11 +1987,16 @@ cl_gd542x_col(int cols)
 		outb(addr_6845, 0x13);	/* Row Offset Register */
 		outb(addr_6845+1, 0x42);
 
-		outb(addr_6845, 0x1b);
-		byte = inb(addr_6845+1);
-		outb(addr_6845, 0x1b);
-		outb(addr_6845+1, byte | (1 << 6));
-	
+		/* set VCLK2 to 41.164 MHz ..... */
+		outb(TS_INDEX, 0xd);	/* VCLK2 Numerator Register */
+		outb(TS_DATA, 0x45);
+
+		outb(TS_INDEX, 0x1d);	/* VCLK2 Denominator and */
+		outb(TS_DATA, 0x30);	/* Post-Scalar Value Register */
+
+		/* and use it. */
+		outb(GN_MISCOUTW, (inb(GN_MISCOUTR) & ~0x0c) | (2 << 2));
+
 		outb(TS_INDEX, TS_MODE);/* Timing Sequencer */
 		outb(TS_DATA, 0x01);	/* 8 dot char clock */
 	
@@ -1997,9 +2013,6 @@ cl_gd542x_col(int cols)
 			inb(GN_INPSTAT1M);
 		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); /* ATC Horizontal Pixel Panning */
 		outb(ATC_DATAW, 0x00);
-		/* Misc output register */
-		/* use the 41.164 MHz clock */
-		outb(GN_MISCOUTW, (inb(GN_MISCOUTR) & ~0x0c) | (2 << 2));
 	}
 	else	/* switch 132 -> 80 */
 	{
@@ -2008,6 +2021,9 @@ cl_gd542x_col(int cols)
 			/* disable access to first 7 CRTC registers */
 			outb(addr_6845, CRTC_VSYNCE);
 			outb(addr_6845+1, byte);
+			/* disable access to cirrus extension registers */
+			outb(TS_INDEX, 6);
+			outb(TS_DATA, 0);
 			vga_screen_on();
 			return(0);
 		}
@@ -2049,11 +2065,22 @@ cl_gd542x_col(int cols)
 		outb(ATC_INDEX, ATC_HORPIXPAN | ATC_ACCESS); 
 		outb(ATC_DATAW, *sp++);
 
-		outb(GN_MISCOUTW, *sp++);	/* Misc output register */
+		/* VCLK2 Numerator Register */
+		outb(TS_INDEX, 0xd);
+		outb(TS_DATA, *sp++);
 
-		outb(addr_6845, 0x1b);
-		outb(addr_6845+1, *sp++); /* Extended Display Register */
+		/* VCLK2 Denominator and Post-Scalar Value Register */
+		outb(TS_INDEX, 0x1d);
+		outb(TS_DATA, *sp++);
+
+		/* Misc output register */
+		outb(GN_MISCOUTW, *sp++);
 	}			
+
+	/* disable access to cirrus extension registers */
+
+	outb(TS_INDEX, 6);
+	outb(TS_DATA, 0);
 	
 	/* disable access to first 7 CRTC registers */
 	
