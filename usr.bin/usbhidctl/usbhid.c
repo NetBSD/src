@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.9 1999/05/11 21:02:25 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.10 1999/05/12 00:05:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,16 +181,16 @@ rev(struct hid_item **p)
 void
 prdata(u_char *buf, struct hid_item *h)
 {
-	u_long data;
+	u_int data;
 	int i, pos;
 
 	pos = h->pos;
 	for (i = 0; i < h->report_count; i++) {
-		data = getdata(buf, h);
+		data = get_data(buf, h);
 		if (h->logical_minimum < 0)
-			printf("%ld", (long)data);
+			printf("%d", (int)data);
 		else
-			printf("%lu", data);
+			printf("%u", data);
 		pos += h->report_size;
 	}
 }
