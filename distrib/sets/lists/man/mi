@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.187 1999/12/21 09:27:43 fair Exp $
+# $NetBSD: mi,v 1.188 1999/12/23 14:38:12 abs Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -372,6 +372,7 @@
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/clcs.0
 ./usr/share/man/cat4/cltp.0
+./usr/share/man/cat4/cnw.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/drum.0
@@ -593,6 +594,7 @@
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
+./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/nsswitch.conf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/phones.0
@@ -657,6 +659,7 @@
 ./usr/share/man/cat8/chroot.0
 ./usr/share/man/cat8/chrtbl.0
 ./usr/share/man/cat8/clri.0
+./usr/share/man/cat8/cnwctl.0
 ./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
@@ -1288,6 +1291,7 @@
 ./usr/share/man/man4/clnp.4
 ./usr/share/man/man4/clcs.4
 ./usr/share/man/man4/cltp.4
+./usr/share/man/man4/cnw.4
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
 ./usr/share/man/man4/drum.4
@@ -1572,6 +1576,7 @@
 ./usr/share/man/man8/chroot.8
 ./usr/share/man/man8/chrtbl.8
 ./usr/share/man/man8/clri.8
+./usr/share/man/man8/cnwctl.8
 ./usr/share/man/man8/compat_freebsd.8
 ./usr/share/man/man8/compat_ibcs2.8
 ./usr/share/man/man8/compat_linux.8
