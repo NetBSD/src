@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 2000/01/14 14:38:37 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -173,13 +173,10 @@ void	bootstrap __P((int));
 int	firstchild __P((int));
 int	nextsibling __P((int));
 void	callrom __P((void));
-void	romboot __P((char *));
-void	romhalt __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
 int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));
-int	opennode __P((char *));
 int	node_has_property __P((int, const char *));
 
