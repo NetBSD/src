@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.22 1998/10/27 00:55:46 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.23 1998/11/04 06:41:57 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.20 1998/10/27 00:55:30 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.21 1998/11/04 06:40:54 itohy Exp 
  */
 
 /*-
@@ -140,7 +140,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_LINKSYS_ECARD_1,
 	    0,
 	    "Linksys Corporation",
-	    "Linksys EthernetCard"	},
+	    "Linksys EthernetCard or D-Link DE-650"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,

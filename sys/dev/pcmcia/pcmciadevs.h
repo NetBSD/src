@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.22 1998/10/27 00:55:46 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.23 1998/11/04 06:41:57 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.20 1998/10/27 00:55:30 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.21 1998/11/04 06:40:54 itohy Exp 
  */
 
 /*-
@@ -124,7 +124,7 @@
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_1	0x0265
-#define	PCMCIA_STR_LINKSYS_ECARD_1	"Linksys EthernetCard"
+#define	PCMCIA_STR_LINKSYS_ECARD_1	"Linksys EthernetCard or D-Link DE-650"
 #define	PCMCIA_CIS_LINKSYS_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
 #define	PCMCIA_STR_LINKSYS_COMBO_ECARD	"Linksys Combo EthernetCard"
