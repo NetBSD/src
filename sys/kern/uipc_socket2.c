@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.58.2.1 2004/05/30 07:02:16 tron Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.58.2.2 2004/06/16 18:10:32 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.58.2.1 2004/05/30 07:02:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.58.2.2 2004/06/16 18:10:32 tron Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -760,22 +760,32 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
  * an mbuf chain.
  */
 static __inline struct mbuf *
-m_prepend_sockaddr(struct mbuf *m0, const struct sockaddr *asa)
+m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
+		   const struct sockaddr *asa)
 {
 	struct mbuf *m;
-	const int mlen = asa->sa_len;
+	const int salen = asa->sa_len;
 
 	/* only the first in each chain need be a pkthdr */
 	MGETHDR(m, M_DONTWAIT, MT_SONAME);
 	if (m == 0)
 		return (0);
 	MCLAIM(m, sb->sb_mowner);
-	KASSERT(mlen <= MLEN);
-
-	m->m_len = mlen;
-	bcopy((caddr_t)asa, mtod(m, caddr_t), mlen);
+#ifdef notyet
+	if (salen > MHLEN) {
+		MEXTMALLOC(m, salen, M_NOWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return (0);
+		}
+	}
+#else
+	KASSERT(salen <= MHLEN);
+#endif
+	m->m_len = salen;
+	memcpy(mtod(m, caddr_t), (caddr_t)asa, salen);
 	m->m_next = m0;
-	m->m_pkthdr.len = mlen + m0->m_pkthdr.len;
+	m->m_pkthdr.len = salen + m0->m_pkthdr.len;
 
 	return m;
 }
@@ -819,8 +829,12 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 	for (m = m0; m; m = m->m_nextpkt) {
 		struct mbuf *np;
 
+#ifdef MBUFTRACE
+		m_claim(m, sb->sb_mowner);
+#endif
+
 		/* Prepend sockaddr to this record (m) of input chain m0 */
-	  	n = m_prepend_sockaddr(m, asa);
+	  	n = m_prepend_sockaddr(sb, m, asa);
 		if (n == NULL) {
 			error = ENOBUFS;
 			goto bad;
@@ -839,17 +853,36 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 			sballoc(sb, np);
 	}
 
+	SBLASTRECORDCHK(sb, "sbappendaddrchain 1");
+
 	/* Drop the entire chain of (asa+m) records onto the socket */
 	SBLINKRECORDCHAIN(sb, n0, nlast);
+
+	SBLASTRECORDCHK(sb, "sbappendaddrchain 2");
+
 	for (m = nlast; m->m_next; m = m->m_next)
 		;
 	sb->sb_mbtail = m;
-	
+	SBLASTMBUFCHK(sb, "sbappendaddrchain");
+
 	return (1);
 
 bad:
-	if (n)
-		m_freem(n);
+	/*
+	 * On error, free the prepended addreseses. For consistency
+	 * with sbappendaddr(), leave it to our caller to free
+	 * the input record chain passed to us as m0.
+	 */
+	while ((n = n0) != NULL) {
+	  	struct mbuf *np;
+
+		/* Undo the sballoc() of this record */
+		for (np = n; np; np = np->m_next)
+			sbfree(sb, np);
+
+		n0 = n->m_nextpkt;	/* iterate at next prepended address */
+		MFREE(n, np);		/* free prepended address (not data) */
+	}
 	return 0;	
 }
 
