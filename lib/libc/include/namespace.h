@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.62 2001/03/31 18:58:41 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.63 2001/04/13 14:18:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define asctime_r		_asctime_r
+#define asprintf		_asprintf
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
