@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.4 2003/03/15 19:51:48 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.5 2003/03/16 06:56:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -270,7 +270,7 @@ xsoftnet(void)
 		"	stwcx.  %1,0,%2\n"
 		"	bne-    1b\n"
 		"	sync"
-	   :	"=r"(pendisr)
+	   :	"=&r"(pendisr)
 	   :	"r"(0), "r"(&netisr)
 	   :	"cr0");
 	softnet(pendisr);
