@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.24 1996/02/28 23:45:16 jtc Exp $
+#	$NetBSD: sys.mk,v 1.25 1996/02/29 19:06:57 jtc Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -29,9 +29,7 @@ COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CPP?=		cpp
-.if defined(DESTDIR)
-CPPFLAGS+=	-nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
+CPPFLAGS?=	
 
 FC?=		f77
 FFLAGS?=		-O
