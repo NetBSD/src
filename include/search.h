@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.8 1995/07/30 22:10:45 jtc Exp $	*/
+/*	$NetBSD: search.h,v 1.9 1995/08/08 21:14:45 jtc Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -15,6 +15,15 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
+typedef struct entry {
+	char *key;
+	char *data;
+} ENTRY;
+
+typedef enum {
+	FIND, ENTER
+} ACTION;
+
 typedef enum {
 	preorder,
 	postorder,
@@ -25,6 +34,10 @@ typedef enum {
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
 			      int (*)(const void *, const void *)));
+extern int	 hcreate __P((unsigned int));
+extern void	 hdestroy __P((void));
+extern ENTRY	*hsearch __P((ENTRY, ACTION));
+
 extern void	*lfind __P((const void *, const void *, size_t *, size_t,
 			      int (*)(const void *, const void *)));
 extern void	*lsearch __P((const void *, const void *, size_t *, size_t,
