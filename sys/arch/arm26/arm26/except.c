@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.26 2001/01/22 22:10:42 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.27 2001/02/25 23:07:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.26 2001/01/22 22:10:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27 2001/02/25 23:07:51 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -253,10 +253,7 @@ syscall(struct trapframe *tf)
 	default:
 		nregargs = 4; nextreg = 0;
 	}
-	if (code > p->p_emul->e_nsysent)
-		sy = p->p_emul->e_sysent + p->p_emul->e_nosys;
-	else
-		sy = p->p_emul->e_sysent + code;
+	code &= (SYS_NSYSENT - 1);
 
 	nargs = sy->sy_argsize / sizeof(register_t);
 	nregargs = min(nregargs, nargs);
