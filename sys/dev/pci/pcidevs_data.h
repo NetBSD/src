@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.305 2001/02/18 05:59:24 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.306 2001/02/18 17:54:50 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.301 2001/02/18 05:58:41 matt Exp 
+ *	NetBSD: pcidevs,v 1.302 2001/02/18 17:54:18 bouyer Exp 
  */
 
 /*
@@ -2804,6 +2804,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_IDE,
+	    0,
+	    "Intel",
+	    "82801BAM IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE,
