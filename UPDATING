@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.51 2002/02/23 11:06:53 pooka Exp $
+$NetBSD: UPDATING,v 1.52 2002/02/23 17:06:24 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -39,7 +39,7 @@ Recent changes:
 20011201:
 	In order for a sparc64 build to work you must have a working awk. If
 	you've built and installed a system with the new toolchain up to this
-	point you do not have a working awk as it's abililty to do floating
+	point you do not have a working awk as its ability to do floating
 	point is broken. 
 
 	To build:
@@ -108,7 +108,7 @@ Recent changes:
 20010803:
 	(i386 only): i386 kernel now uses new instructions like
         `fxsave' which old gas doesn't understand.  To build the
-	kernel successfuly, you need to build and install new gas
+	kernel successfully, you need to build and install new gas
 	(gnu/usr.bin/gas.new), or (temporarily) comment out
 	"options I686_CPU" from your kernel configuration until you
 	rebuilt your userland (and got a new gas).
@@ -159,7 +159,7 @@ Recent changes:
 	Now a make build should progress.
 
 20010219:
-	get/setprogname() added. Any hostprog's that may use this will need
+	get/setprogname() added. Any hostprogs that may use this will need
         to be bootstrapped manually until the host system is current.
 
         Known problems: sys/arch/macppc/stand/fixcoff
