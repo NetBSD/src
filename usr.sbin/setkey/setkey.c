@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.5 2000/03/15 00:24:31 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.6 2000/04/16 16:15:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: setkey.c,v 1.9 2000/02/06 10:56:11 itojun Exp */
+/* KAME Id: setkey.c,v 1.11 2000/04/16 16:14:09 itojun Exp */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,6 +65,7 @@ void shortdump __P((struct sadb_msg *));
 #define MODE_SCRIPT	1
 #define MODE_CMDDUMP	2
 #define MODE_CMDFLUSH	3
+#define MODE_PROMISC	4
 
 int so;
 
@@ -75,7 +76,6 @@ int f_verbose = 0;
 int f_mode = 0;
 int f_cmddump = 0;
 int f_policy = 0;
-int f_promisc = 0;
 int f_hexdump = 0;
 char *pname;
 
@@ -139,9 +139,8 @@ main(ac, av)
 			f_hexdump = 1;
 			break;
 		case 'x':
-			f_promisc = 1;
-			promisc();
-			/*NOTREACHED*/
+			f_mode = MODE_PROMISC;
+			break;
 		case 'P':
 			f_policy = 1;
 			break;
@@ -173,8 +172,12 @@ main(ac, av)
 		if (parse(&fp))
 			exit (1);
 		break;
+	case MODE_PROMISC:
+		promisc();
+		/*NOTREACHED*/
 	default:
 		Usage();
+		/*NOTREACHED*/
 	}
 
 	exit(0);
