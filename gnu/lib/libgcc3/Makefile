@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2003/10/27 17:19:58 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -28,10 +28,23 @@ LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
-		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
+		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS} \
+		${G_LIB2FUNCS_EXTRA}
 
 DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
+
+# XXX
+.if ${MACHINE_ARCH} == "m68000"
+CPICFLAGS:=
+COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
+_TRADIONAL_CPP=
+fpgnulib.c: ${DIST}/gcc/config/m68k/fpgnulib.c
+	cp ${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
+xfgnulib.c: ${DIST}/gcc/config/m68k/fpgnulib.c
+	echo '#define EXTFLOAT' > xfgnulib.c
+	cat ${DIST}/gcc/config/m68k/fpgnulib.c >> xfgnulib.c
+.endif
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
@@ -55,11 +68,6 @@ ${G_LIB2ADD:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
 		cp $$i $$j; \
 	done
 	@echo copying ${G_LIB2ADD} complete
-
-# XXX
-.if ${MACHINE_ARCH} == "m68000"
-CPICFLAGS:=
-.endif
 
 ${LIB2_EH:.c=.o}:
 	${_MKTARGET_COMPILE}
