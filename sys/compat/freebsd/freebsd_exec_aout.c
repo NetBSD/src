@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.10 2000/12/01 19:13:47 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.1 2000/12/01 19:13:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -33,28 +33,53 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <machine/freebsd_machdep.h>
+#include <sys/exec.h>
 
-#include <compat/freebsd/freebsd_syscall.h>
 #include <compat/freebsd/freebsd_exec.h>
-#include <compat/common/compat_util.h>
 
-extern struct sysent freebsd_sysent[];
-extern const char * const freebsd_syscallnames[];
+/*
+* exec_aout_makecmds(): Check if it's an a.out-format executable.
+*
+* Given a proc pointer and an exec package pointer, see if the referent
+* of the epp is in a.out format.  First check 'standard' magic numbers for
+* this architecture.  If that fails, try a cpu-dependent hook.
+ *
+ * This function, in the former case, or the hook, in the latter, is
+ * responsible for creating a set of vmcmds which can be used to build
+ * the process's vm space and inserting them into the exec package.
+ */
 
-const struct emul emul_freebsd = {
-	"freebsd",
-	"/emul/freebsd",
-	NULL,
-	freebsd_sendsig,
-	FREEBSD_SYS_syscall,
-	FREEBSD_SYS_MAXSYSCALL,
-	freebsd_sysent,
-	freebsd_syscallnames,
-	freebsd_sigcode,
-	freebsd_esigcode,
-	NULL,
-	NULL,
-	NULL,
-	EMUL_HAS_SYS___syscall|EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
-};
+int
+exec_freebsd_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	u_long midmag;
+	int error = ENOEXEC;
+	struct exec *execp = epp->ep_hdr;
+
+	if (epp->ep_hdrvalid < sizeof(struct exec))
+		return ENOEXEC;
+
+	midmag = FREEBSD_N_GETMID(*execp) << 16 | FREEBSD_N_GETMAGIC(*execp);
+
+	/* assume FreeBSD's MID_MACHINE and [ZQNO]MAGIC is same as NetBSD's */
+	switch (midmag) {
+	case (MID_MACHINE << 16) | ZMAGIC:
+		error = exec_aout_prep_oldzmagic(p, epp);
+		break;
+	case (MID_MACHINE << 16) | QMAGIC:
+		error = exec_aout_prep_zmagic(p, epp);
+		break;
+	case (MID_MACHINE << 16) | NMAGIC:
+		error = exec_aout_prep_nmagic(p, epp);
+		break;
+	case (MID_MACHINE << 16) | OMAGIC:
+		error = exec_aout_prep_omagic(p, epp);
+		break;
+	}
+	if (error)
+		kill_vmcmds(&epp->ep_vmcmds);
+
+	return error;
+}
