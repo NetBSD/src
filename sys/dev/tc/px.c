@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.19 2003/06/29 22:30:52 fvdl Exp $	*/
+/* 	$NetBSD: px.c,v 1.20 2003/10/23 23:25:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19 2003/06/29 22:30:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.20 2003/10/23 23:25:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ px_attach(struct device *parent, struct device *self, void *aux)
 		si = &stic_consinfo;
 		console = 1;
 	} else {
-		if (stic_consinfo.si_slotbase == NULL)
+		if (stic_consinfo.si_slotbase == 0)
 			si = &stic_consinfo;
 		else {
 			si = malloc(sizeof(*si), M_DEVBUF, M_NOWAIT|M_ZERO);
