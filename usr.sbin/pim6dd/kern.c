@@ -1,4 +1,5 @@
-/*	$NetBSD: kern.c,v 1.2 1999/08/19 17:31:06 itojun Exp $	*/
+/*	$NetBSD: kern.c,v 1.3 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: kern.c,v 1.2 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -35,8 +36,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: kern.c,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.

@@ -1,4 +1,5 @@
-/*	$NetBSD: vif.h,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
+/*	$NetBSD: vif.h,v 1.4 2000/12/04 07:05:49 itojun Exp $	*/
+/*	$KAME: vif.h,v 1.3 2000/12/04 06:33:11 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -35,8 +36,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: vif.h,v 1.2 1999/08/24 16:45:23 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.

@@ -1,4 +1,5 @@
-/*	$NetBSD: config.c,v 1.3 2000/02/25 06:30:54 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2000/12/04 07:05:47 itojun Exp $	*/
+/*	$KAME: config.c,v 1.7 2000/12/04 06:33:09 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -35,8 +36,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: config.c,v 1.6 2000/02/23 16:10:26 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.

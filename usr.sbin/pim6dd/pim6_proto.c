@@ -1,4 +1,5 @@
-/*	$NetBSD: pim6_proto.c,v 1.6 2000/10/06 00:13:02 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.c,v 1.7 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: pim6_proto.c,v 1.7 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -62,8 +63,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
- *
- *  KAME Id: pim6_proto.c,v 1.5 2000/04/30 10:50:31 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
