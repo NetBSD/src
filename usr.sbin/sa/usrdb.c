@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.1 1994/03/24 18:42:01 cgd Exp $";
+static char rcsid[] = "$Id: usrdb.c,v 1.2 1995/03/08 21:39:03 pk Exp $";
 #endif
 
 #include <sys/types.h>
@@ -223,7 +223,7 @@ void
 usracct_print()
 {
 	DBT key, data;
-	struct userinfo *ui;
+	struct userinfo uistore, *ui = &uistore;
 	double t;
 	int rv;
 
@@ -232,7 +232,7 @@ usracct_print()
 		warn("retrieving user accounting stats");
 
 	while (rv == 0) {
-		ui = (struct userinfo *) data.data;
+		bcopy(data.data, ui, sizeof(struct userinfo));
 
 		printf("%-8s %9qu ",
 		    user_from_uid(ui->ui_uid, 0), ui->ui_calls);
