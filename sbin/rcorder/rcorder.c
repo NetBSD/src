@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.4.4.1 2000/07/18 16:29:58 mrg Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.4.4.2 2000/07/22 01:45:39 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -107,8 +107,8 @@ struct f_reqnode {
 
 struct strnodelist {
 	filenode	*node;
-	char		*s;
 	strnodelist	*next;
+	char		s[1];
 };
 
 struct filenode {
@@ -213,9 +213,9 @@ strnode_add(listp, s, fnode)
 {
 	strnodelist *ent;
 
-	ent = emalloc(sizeof *ent);
+	ent = emalloc(sizeof *ent + strlen(s));
 	ent->node = fnode;
-	ent->s = s;
+	strcpy(ent->s, s);
 	ent->next = *listp;
 	*listp = ent;
 }
@@ -369,9 +369,9 @@ add_before(fnode, s)
 {
 	strnodelist *bf_ent;
 
-	bf_ent = emalloc(sizeof *bf_ent);
+	bf_ent = emalloc(sizeof *bf_ent + strlen(s));
 	bf_ent->node = fnode;
-	bf_ent->s = s;
+	strcpy(bf_ent->s, s);
 	bf_ent->next = bl_list;
 	bl_list = bf_ent;
 }
@@ -462,13 +462,10 @@ crunch_file(filename)
 {
 	FILE *fp;
 	char *buf;
-	int require_flag, provide_flag, before_flag, keywords_flag,
-	    directive_flag;
+	int require_flag, provide_flag, before_flag, keywords_flag;
 	filenode *node;
 	char delims[3] = { '\\', '\\', '\0' };
 	struct stat st;
-
-	directive_flag = 0;
 
 	if ((fp = fopen(filename, "r")) == NULL) {
 		warn("could not open %s", filename);
@@ -512,15 +509,13 @@ crunch_file(filename)
 
 		if (require_flag)
 			parse_require(node, buf + require_flag);
-
-		if (provide_flag)
+		else if (provide_flag)
 			parse_provide(node, buf + provide_flag);
-
-		if (before_flag)
+		else if (before_flag)
 			parse_before(node, buf + before_flag);
-
-		if (keywords_flag)
+		else if (keywords_flag)
 			parse_keywords(node, buf + keywords_flag);
+		free(buf);
 	}
 	fclose(fp);
 }
