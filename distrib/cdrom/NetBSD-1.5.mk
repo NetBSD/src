@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.5.mk,v 1.1 2000/11/29 16:35:03 tv Exp $
+# $NetBSD: NetBSD-1.5.mk,v 1.2 2000/11/29 19:56:19 tv Exp $
 #
 # Configuration file for the NetBSD 1.5 binary release.
 
@@ -36,10 +36,6 @@ MKISOFS_ARGS.sparc=	-hide-hfs ./installation -hide-joliet ./installation
 # BOOTFILE.sparc64 is absolute
 BOOTFILE.sparc64=	${EXTFILEDIR}/sparc64-boot.fs
 EXTFILES.sparc64=	sparc64-boot.fs:sparc64/installation/ramdisk/ramdisk.fs.gz
-
-# BOOTFILE.sun3 is absolute
-BOOTFILE.sun3=		${EXTFILEDIR}/sun3-boot.fs
-EXTFILES.sun3=		sun3-boot.fs:sun3/installation/miniroot/miniroot.gz
 
 # BOOTFILE.vax is absolute
 BOOTFILE.vax=		${EXTFILEDIR}/vax.xxboot

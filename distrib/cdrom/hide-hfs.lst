@@ -14,9 +14,11 @@ TRANS.TBL
 ./hp300
 ./hpcmips
 ./i386
+./mac68k
 ./mac68k/binary/kernel
 ./mac68k/installation/misc/*.hqx
-./macppc
+./macppc/binary
+./macppc/installation
 ./mvme68k
 ./news68k
 ./next68k
