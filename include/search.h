@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.13 2000/06/13 01:21:53 simonb Exp $	*/
+/*	$NetBSD: search.h,v 1.14 2000/12/20 18:35:21 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -40,8 +40,12 @@ typedef struct node {
 #endif
 
 __BEGIN_DECLS
+#ifndef __BSEARCH_DECLARED
+#define __BSEARCH_DECLARED
+/* also in stdlib.h */
 void	*bsearch __P((const void *, const void *, size_t, size_t,
 		      int (*)(const void *, const void *)));
+#endif /* __BSEARCH_DECLARED */
 int	 hcreate __P((size_t));
 void	 hdestroy __P((void));
 ENTRY	*hsearch __P((ENTRY, ACTION));
