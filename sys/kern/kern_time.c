@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.75 2003/09/13 22:39:18 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.76 2003/09/14 06:56:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.75 2003/09/13 22:39:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.76 2003/09/14 06:56:22 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1024,6 +1024,7 @@ sys_setitimer(struct lwp *l, void *v, register_t *retval)
 	if (p->p_timers->pts_timers[which] == NULL) {
 		pt = pool_get(&ptimer_pool, PR_WAITOK);
 		pt->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		pt->pt_ev.sigev_value.sival_int = which;
 		pt->pt_overruns = 0;
 		pt->pt_proc = p;
 		pt->pt_type = which;
