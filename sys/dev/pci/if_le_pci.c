@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.1 1996/05/07 02:03:02 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.2 1996/05/07 23:22:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -79,6 +79,8 @@ struct cfattach le_pci_ca = {
 hide void le_pci_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_pci_rdcsr __P((struct am7990_softc *, u_int16_t));
 
+extern vm_offset_t kvtop __P((caddr_t));	/* XXX */
+
 hide void
 le_pci_wrcsr(sc, port, val)
 	struct am7990_softc *sc;
@@ -144,7 +146,7 @@ le_pci_attach(parent, self, aux)
 		model = "unknown model!";
 	}
 
-	printf(": %s\n", sc->sc_dev.dv_xname, model);
+	printf("%s: %s\n", sc->sc_dev.dv_xname, model);
 
 	if (pci_map_io(pa->pa_tag, 0x10, &iobase))
 		return;
