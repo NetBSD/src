@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.28 2002/05/10 15:25:13 uch Exp $
+#	$NetBSD: files.sh3,v 1.29 2003/05/08 12:37:36 christos Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -15,7 +15,7 @@ file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
 file	arch/sh3/sh3/exception.c
 file	arch/sh3/sh3/exception_vector.S
-file	arch/sh3/sh3/Locore.c
+file	arch/sh3/sh3/locore_c.c
 file	arch/sh3/sh3/locore_subr.S
 file	arch/sh3/sh3/mem.c
 file	netns/ns_cksum.c		ns
