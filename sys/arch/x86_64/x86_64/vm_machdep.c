@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2002/03/04 02:43:26 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2002/05/28 23:11:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -152,7 +152,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf->sf_ppl = 0;
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	sf->sf_rip = (u_int64_t)proc_trampoline;
+	if (func == child_return && (p1->p_md.md_flags & MDP_SYSCALL))
+		sf->sf_rip = (u_int64_t)child_trampoline;
+	else
+		sf->sf_rip = (u_int64_t)proc_trampoline;
 	pcb->pcb_rsp = (u_int64_t)sf;
 	pcb->pcb_rbp = 0;
 }

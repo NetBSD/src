@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2001/07/22 13:34:09 wiz Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2002/05/28 23:11:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,16 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()			(&cpu_info_store)
+
+/*
+ * per-CPU private data. Present in kernel image, but remapped privately
+ * for non-boot CPUs.
+ */
+struct cpu_privdata {
+	struct trapframe cpriv_regs;	/* scratch storage for registers */
+};
+
+extern struct cpu_privdata cpu_privata;
 #endif
 
 /*
@@ -89,7 +99,7 @@ extern struct cpu_info cpu_info_store;
  */
 #define clockframe intrframe
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_rip)
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
@@ -154,6 +164,7 @@ struct pcb;
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
+void	child_trampoline __P((void));
 
 /* clock.c */
 void	initrtclock __P((void));
