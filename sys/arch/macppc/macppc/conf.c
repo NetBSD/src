@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 2001/01/09 20:51:05 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 2001/01/14 11:17:30 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -172,7 +172,7 @@ cdev_decl(openfirm);
 /* open, close, read, write, poll */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 

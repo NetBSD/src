@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.54 2001/01/08 21:46:33 martin Exp $ */
+/* $NetBSD: conf.c,v 1.55 2001/01/14 11:17:28 martin Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.54 2001/01/08 21:46:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.55 2001/01/14 11:17:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ cdev_decl(uscanner);
 /* open, close, read, write, poll */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 

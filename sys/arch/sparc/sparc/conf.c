@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.65 2001/01/08 21:46:38 martin Exp $ */
+/*	$NetBSD: conf.c,v 1.66 2001/01/14 11:17:30 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,7 @@ cdev_decl(vc_nb_);
 /* open, close, read, write, poll */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
