@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.19 2000/04/18 22:45:23 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.20 2000/04/28 22:44:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.19 2000/04/18 22:45:23 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.20 2000/04/28 22:44:33 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -148,25 +148,8 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 					break;
 			}
 
-			attributes = '\0';
-			if (win->wattr & __STANDOUT || attr & __STANDOUT)
-				attributes |= __STANDOUT;
-			if (win->wattr & __UNDERSCORE || attr & __UNDERSCORE)
-				attributes |= __UNDERSCORE;
-			if (win->wattr & __REVERSE || attr & __REVERSE)
-				attributes |= __REVERSE;
-			if (win->wattr & __BLINK || attr & __BLINK)
-				attributes |= __BLINK;
-			if (win->wattr & __DIM || attr & __DIM)
-				attributes |= __DIM;
-			if (win->wattr & __BOLD || attr & __BOLD)
-				attributes |= __BOLD;
-			if (win->wattr & __BLANK || attr & __BLANK)
-				attributes |= __BLANK;
-			if (win->wattr & __PROTECT || attr & __PROTECT)
-				attributes |= __PROTECT;
-			if (win->wattr & __ALTCHARSET || attr & __ALTCHARSET)
-				attributes |= __ALTCHARSET;
+			attributes = (win->wattr | attr) &
+			    (__ATTRIBUTES & ~__COLOR);
 			if (attr & __COLOR)
 				attributes |= attr & __COLOR;
 			else if (win->wattr & __COLOR)
@@ -181,8 +164,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			    lp->line[x].bch != win->bch ||
 			    lp->line[x].battr != win->battr) {
 				newx = x + win->ch_off;
-				if (!(lp->flags & __ISDIRTY))
-					lp->flags |= __ISDIRTY;
+				lp->flags |= __ISDIRTY;
 				/*
 				 * firstchp/lastchp are shared between
 				 * parent window and sub-window.
@@ -200,47 +182,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			}
 			lp->line[x].ch = c;
 			lp->line[x].bch = win->bch;
-			if (attributes & __STANDOUT)
-				lp->line[x].attr |= __STANDOUT;
-			else
-				lp->line[x].attr &= ~__STANDOUT;
-			if (attributes & __UNDERSCORE)
-				lp->line[x].attr |= __UNDERSCORE;
-			else
-				lp->line[x].attr &= ~__UNDERSCORE;
-			if (attributes & __REVERSE)
-				lp->line[x].attr |= __REVERSE;
-			else
-				lp->line[x].attr &= ~__REVERSE;
-			if (attributes & __BLINK)
-				lp->line[x].attr |= __BLINK;
-			else
-				lp->line[x].attr &= ~__BLINK;
-			if (attributes & __DIM)
-				lp->line[x].attr |= __DIM;
-			else
-				lp->line[x].attr &= ~__DIM;
-			if (attributes & __BOLD)
-				lp->line[x].attr |= __BOLD;
-			else
-				lp->line[x].attr &= ~__BOLD;
-			if (attributes & __BLANK)
-				lp->line[x].attr |= __BLANK;
-			else
-				lp->line[x].attr &= ~__BLANK;
-			if (attributes & __PROTECT)
-				lp->line[x].attr |= __PROTECT;
-			else
-				lp->line[x].attr &= ~__PROTECT;
-			if (attributes & __ALTCHARSET)
-				lp->line[x].attr |= __ALTCHARSET;
-			else
-				lp->line[x].attr &= ~__ALTCHARSET;
-			if (attributes & __COLOR) {
-				lp->line[x].attr &= ~__COLOR;
-				lp->line[x].attr |= attributes & __COLOR;
-			} else
-				lp->line[x].attr &= ~__COLOR;
+			lp->line[x].attr = attributes;
 			lp->line[x].battr = win->battr;
 			if (x == win->maxx - 1)
 				lp->flags |= __ISPASTEOL;
