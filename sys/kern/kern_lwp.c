@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.4 2003/01/29 23:27:54 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.5 2003/01/30 05:51:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -459,6 +459,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	 * initialized in the low-level context switch code when the
 	 * process runs.
 	 */
+	KASSERT(l1->l_cpu != NULL);
 	l2->l_cpu = l1->l_cpu;
 #else
 	/*
