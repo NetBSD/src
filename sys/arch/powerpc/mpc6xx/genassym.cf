@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2001/07/01 21:41:02 matt Exp $
+#	$NetBSD: genassym.cf,v 1.1 2002/04/18 20:08:10 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,10 +35,12 @@ include <sys/param.h>
 include <sys/time.h>
 include <sys/proc.h>
 
-include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
 
 include <machine/pcb.h>
 include <machine/pmap.h>
+
+include <powerpc/cpu.h>
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
@@ -55,6 +57,29 @@ define	FRAME_DAR	offsetof(struct trapframe, dar)
 define	FRAME_DSISR	offsetof(struct trapframe, dsisr)
 define	FRAME_EXC	offsetof(struct trapframe, exc)
 
+define	IFRAMELEN		IFRAMELEN
+define	IFRAME_R1		offsetof(struct intrframe, r1)
+define	IFRAME_SRR1		offsetof(struct intrframe, srr1)
+define	IFRAME_SRR0		offsetof(struct intrframe, srr0)
+define	IFRAME_PRI		offsetof(struct intrframe, pri)
+define	IFRAME_INTR_DEPTH	offsetof(struct intrframe, intr_depth)
+define	IFRAME_VRSAVE		offsetof(struct intrframe, vrsave)
+define	IFRAME_CTR		offsetof(struct intrframe, ctr)
+define	IFRAME_XER		offsetof(struct intrframe, xer)
+define	IFRAME_CR		offsetof(struct intrframe, cr)
+define	IFRAME_LR		offsetof(struct intrframe, lr)
+define	IFRAME_R12		offsetof(struct intrframe, r12)
+define	IFRAME_R11		offsetof(struct intrframe, r11)
+define	IFRAME_R10		offsetof(struct intrframe, r10)
+define	IFRAME_R9		offsetof(struct intrframe, r9)
+define	IFRAME_R8		offsetof(struct intrframe, r8)
+define	IFRAME_R7		offsetof(struct intrframe, r7)
+define	IFRAME_R6		offsetof(struct intrframe, r6)
+define	IFRAME_R5		offsetof(struct intrframe, r5)
+define	IFRAME_R4		offsetof(struct intrframe, r4)
+define	IFRAME_R3		offsetof(struct intrframe, r3)
+define	IFRAME_R0		offsetof(struct intrframe, r0)
+
 define	SFRAMELEN	roundup(sizeof(struct switchframe), 16)
 
 define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
@@ -70,5 +95,24 @@ define	P_FORW		offsetof(struct proc, p_forw)
 define	P_BACK		offsetof(struct proc, p_back)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_STAT		offsetof(struct proc, p_stat)
+define	P_CPU		offsetof(struct proc, p_cpu)
 
 define	SONPROC		SONPROC
+
+define	CI_SIZE		sizeof(struct cpu_info)
+define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
+define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
+define	CI_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
+define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
+define	CI_INTRDEPTH	offsetof(struct cpu_info, ci_intrdepth)
+define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
+define	CI_SPILLSTK	offsetof(struct cpu_info, ci_spillstk)
+define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
+define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
+define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
+define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
+
+define	CACHELINESIZE	CACHELINESIZE
