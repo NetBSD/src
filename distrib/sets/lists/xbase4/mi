@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.3 2002/08/03 23:53:11 chris Exp $
+# $NetBSD: mi,v 1.4 2002/08/03 23:58:07 chris Exp $
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/cxpm
 ./usr/X11R6/bin/dga
@@ -289,7 +289,6 @@
 ./usr/X11R6/man/cat1/pswrap.0
 ./usr/X11R6/man/cat1/revpath.0
 ./usr/X11R6/man/cat1/rman.0
-./usr/X11R6/man/cat1/scanpci.0
 ./usr/X11R6/man/cat1/sxpm.0
 ./usr/X11R6/man/cat1/texteroids.0
 ./usr/X11R6/man/cat1/xfsinfo.0
