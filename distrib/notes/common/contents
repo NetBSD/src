@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.16 2002/07/22 17:26:52 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.17 2002/07/22 18:01:53 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -778,7 +778,7 @@ client environment.
 This does not include the X servers.
 .\" Shareable within MACHINE_ARCH, except atari
 .setsize -unknown-machine-arch- -unknown-machine-arch-
-.if \n[alpha] .setsize -unknown- -unknown-
+.if \n[alpha] .setsize 4 11
 .if \n[arm] .setsize 3 8
 .if \n[i386] .setsize 5 12
 .if \n[m68000] .setsize -unknown- -unknown-
@@ -800,7 +800,7 @@ This does not include the X servers.
 The extra libraries and include files needed to compile X source code.
 .\" Shareable within MACHINE_ARCH
 .setsize -unknown-machine-arch- -unknown-machine-arch-
-.if \n[alpha] .setsize -unknown- -unknown-
+.if \n[alpha] .setsize 3 11
 .if \n[arm] .setsize 2 8
 .if \n[i386] .setsize 4 14
 .if \n[m68000] .setsize -unknown- -unknown-
@@ -846,7 +846,7 @@ The Xarm32VIDC and Xprt servers.
 .
 .if \n[alpha] \{\
 .It Sy xserver
-.showsize -unknown- -unknown-
+.showsize 3 6
 .\}
 .
 .if \n[amiga] \{\
