@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.192 2001/09/01 21:52:23 atatat Exp $
+# $NetBSD: GENERIC,v 1.193 2001/09/15 04:33:37 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.192 $"
+#ident 		"GENERIC-$Revision: 1.193 $"
 
 maxusers 32
 
@@ -40,6 +40,11 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
 #makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
+
+#options 	KGDB			# Remote kernel GDB support
+#options 	"KGDB_DEVNAME=\"com\""	# device to use for KGDB
+#options 	KGDB_DEVADDR=0x2f8	# at this address
+#options 	KGDB_DEVRATE=57600	# at this comm. rate
 
 # File systems
 file-system	FFS		# Fast file system
@@ -205,6 +210,9 @@ pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
 pci*	at	ttwopci?
+
+# AGP support
+agp*	at	irongate?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI

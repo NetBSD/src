@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.142 2001/08/23 01:16:52 nisimura Exp $
+# $NetBSD: files.alpha,v 1.143 2001/09/15 04:33:38 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -240,6 +240,7 @@ file	dev/tc/asc_tcds.c		asc_tcds
 #
 
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
+include "dev/pci/files.agp"
 include "dev/isa/files.isa"
 
 #
@@ -344,7 +345,7 @@ file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_dma.c	dwlpx
 file	arch/alpha/pci/dwlpx_pci.c	dwlpx
 
-device	irongate: pcibus, isadma_bounce
+device	irongate: pcibus, agpbus, agp_amd, isadma_bounce
 attach	irongate at mainbus
 file	arch/alpha/pci/irongate.c		irongate
 file	arch/alpha/pci/irongate_bus_io.c	irongate
@@ -436,6 +437,7 @@ file	arch/alpha/pci/pci_6600.c	dec_6600
 #
 
 file	arch/alpha/pci/pci_machdep.c	pci
+file	arch/alpha/pci/agp_machdep.c	agp
 
 device	sio: isabus, alpha_shared_intr, cy82c693
 attach	sio at pci
