@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2003/08/02 19:35:26 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2003/08/04 22:26:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -104,6 +104,7 @@ struct cpu_info {
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
 	struct evcnt ci_ev_udsi_fatal;	/* user DSI trap failures */
+	struct evcnt ci_ev_kisi;	/* kernel ISI traps */
 	struct evcnt ci_ev_isi;		/* user ISI traps */
 	struct evcnt ci_ev_isi_fatal;	/* user ISI trap failures */
 	struct evcnt ci_ev_pgm;		/* user PGM traps */

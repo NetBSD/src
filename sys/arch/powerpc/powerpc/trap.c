@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 2003/07/15 02:54:49 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 2003/08/04 22:27:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2003/07/15 02:54:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2003/08/04 22:27:00 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -241,6 +241,17 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_ISI:
+		ci->ci_ev_kisi.ev_count++;
+		/*
+		 * Try to spill an evicted pte into the page table
+		 * if the pmap has some evicted pte's.  Now that LKMs
+		 * are supported, this is a real possibility.
+		 */
+		if (pmap_kernel()->pm_evictions > 0 &&
+		    pmap_pte_spill(pmap_kernel(), trunc_page(frame->srr0))) {
+			break;
+		}
+
 		printf("trap: kernel ISI by %#lx (SRR1 %#lx)\n",
 		    frame->srr0, frame->srr1);
 		goto brain_damage2;
