@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2003/05/18 07:57:33 lukem Exp $
+# $NetBSD: Makefile,v 1.15 2004/06/22 02:44:11 jmc Exp $
 
 NOLINT= # defined
 
@@ -17,9 +17,11 @@ YHEADER=	1
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/com_err		\
-	-I${NETBSDSRCDIR}/include/heimdal	\
-	-I${DESTDIR}/usr/include/krb5		\
-	-DHAVE_CONFIG_H
+	-I${NETBSDSRCDIR}/include/heimdal	
+.ifndef HOSTPROG
+CPPFLAGS+=	-I${DESTDIR}/usr/include/krb5
+.endif
+CPPFLAGS+=	-DHAVE_CONFIG_H
 
 .ifndef HOSTPROG
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
