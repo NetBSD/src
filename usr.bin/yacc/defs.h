@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 2000/10/11 14:46:24 is Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 2001/01/23 15:35:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -234,11 +234,11 @@ extern char *line;
 extern int lineno;
 extern int outline;
 
-extern char *banner[];
-extern char *tables[];
-extern char *header[];
-extern char *body[];
-extern char *trailer[];
+extern const char * const banner[];
+extern const char * const tables[];
+extern const char * const header[];
+extern const char * const body[];
+extern const char * const trailer[];
 
 extern char *action_file_name;
 extern char *code_file_name;
@@ -366,7 +366,7 @@ extern void make_parser __P((void));
 extern void verbose __P((void));
 extern void output __P((void));
 extern void free_parser __P((void));
-extern void write_section __P((char *[]));
+extern void write_section __P((const char * const []));
 
 extern void create_symbol_table __P((void));
 extern void free_symbol_table __P((void));
