@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.150 2003/01/03 16:27:23 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.151 2003/01/07 10:57:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -663,7 +663,18 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		return;
 	}
 
-	s = splvm();	/* XXX - should validate this level */
+	/* prevent interrupts that grab the kernel lock */
+	s = splclock();
+#ifdef DEBUG
+	if (!cold) {
+		u_int pc, lvl = ((u_int)s & PSR_PIL) >> 8;
+		if (lvl > IPL_CLOCK) {
+			__asm("mov %%i7, %0" : "=r" (pc) : );
+			printf("%d: xcall at lvl %u from 0x%x\n",
+				cpu_number(), lvl, pc);
+		}
+	}
+#endif
 	LOCK_XPMSG();
 
 	/*
