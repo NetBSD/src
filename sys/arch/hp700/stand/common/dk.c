@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.4 2003/10/21 12:24:11 itohy Exp $	*/
+/*	$NetBSD: dk.c,v 1.5 2004/06/28 16:40:44 jkunz Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -78,7 +78,26 @@ dkopen(struct open_file *f, ...)
 		if (debug)
 			printf ("dkopen: %s\n", st);
 #endif
-		return ERDLAB;
+	/*
+	 * Ignore disklabel errors for this two reasons:
+	 * 1. It is possible to dd(1) a LIF image containing the bootloader
+	 * and a kernel with attached RAM disk to disk and boot it. That way
+	 * the netboot installation LIF image is also usable as disk boot 
+	 * image.
+	 * 2. Some old 700 machines report a wrong device class in 
+	 * PAGE0->mem_boot.pz_class when net booting. (PCL_RANDOM instead 
+	 * PCL_NET_MASK|PCL_SEQU) So the bootloader thinks it is booting 
+	 * from disk when it is actually net booting. The net boot LIF image 
+	 * contains no disklabel so the test for the disklabel will fail. 
+	 * If the device open fails if there is no disklabel we are not able
+	 * to netboot those machines. 
+	 * Therefore the error is ignored. The bootloader will fall back to 
+	 * LIF later when there is no disklabel / FFS partition.
+	 * At the moment it doesn't matter that the wrong device type ("dk"
+	 * instead "lf") is used, as all I/O is abstracted by the firmware.
+	 * To get the correct device type it would be necessary to add a 
+	 * quirk table to the switch() in dev_hppa.c:devboot().
+	 */
 	} else {
 		i = B_PARTITION(dp->bootdev);
 #ifdef DEBUG
