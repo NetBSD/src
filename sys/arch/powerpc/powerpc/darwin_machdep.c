@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.13 2004/04/15 21:07:07 matt Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.14 2004/04/18 23:32:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.13 2004/04/15 21:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.14 2004/04/18 23:32:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 	/* Check for security abuse */
 	tf = trapframe(l);
-	if (!PSL_USEROK_P(mctx.ss.srr1))
+	if (!PSL_USEROK_P(mctx.ss.srr1)) {
 		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08lx\n",
 		    mctx.ss.srr1, tf->srr1));
 		return (EINVAL);
