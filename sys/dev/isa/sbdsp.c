@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.76 1997/10/19 07:42:39 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.77 1997/12/02 13:17:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -378,7 +378,7 @@ sbdsp_attach(sc)
 				v = 0;
 				break;
 			default:
-				v = SB_ADJUST_GAIN(sc, AUDIO_MAX_GAIN * 3 / 4);
+				v = SB_ADJUST_GAIN(sc, AUDIO_MAX_GAIN / 2);
 				break;
 			}
 			sc->gain[i][SB_LEFT] = sc->gain[i][SB_RIGHT] = v;
