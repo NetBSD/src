@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.2 1996/08/26 23:40:38 mrg Exp $
+#	$NetBSD: SALMON,v 1.3 1996/10/23 07:49:58 matthias Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -25,6 +25,9 @@ options		"COMPAT_09"		# NetBSD-0.9
 options		"COMPAT_10"		# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
+
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
 
 # file system options
 #options	QUOTA			# file system quotas
