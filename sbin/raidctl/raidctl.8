@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.21 2000/08/10 15:14:14 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.22 2000/10/27 02:40:37 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -581,12 +581,9 @@ serial numbers between RAID sets is
 as using the same serial number for all RAID sets will only serve to
 decrease the usefulness of the component label checking.
 .Pp
-Initializing the RAID set is done via:
-.Bd -unfilled -offset indent
-raidctl -i raid0
-.Ed
-.Pp
-This initialization 
+Initializing the RAID set is done via the
+.Fl i
+option.  This initialization 
 .Ar MUST
 be done for 
 .Ar all
@@ -595,7 +592,11 @@ any) on the RAID set is correct.  Since this initialization may be
 quite time-consuming, the
 .Fl v
 option may be also used in conjunction with
-.Fl i .  
+.Fl i :
+.Bd -unfilled -offset indent
+raidctl -iv raid0
+.Ed
+.Pp
 This will give more verbose output on the
 status of the initialization:
 .Bd -unfilled -offset indent
@@ -623,6 +624,45 @@ or
 .Xr fsck 8
 on the device or its filesystems, and then to mount the filesystems
 for use.
+.Pp
+Under certain circumstances (e.g. the additional component has not
+arrived, or data is being migrated off of a disk destined to become a
+component) it may be desirable to to configure a RAID 1 set with only
+a single component.  This can be achieved by configuring the set with
+a physically existing component (as either the first or second
+component) and with a
+.Sq fake
+component.  In the following:
+.Bd -unfilled -offset indent
+START array
+# numRow numCol numSpare
+1 2 0
+
+START disks
+/dev/sd6e
+/dev/sd0e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_1
+128 1 1 1
+
+START queue
+fifo 100
+.Ed
+.Pp
+/dev/sd0e is the real component, and will be the second disk of a RAID 1
+set.  The component /dev/sd6e, which must exist, but have no physical
+device associated with it, is simply used as a placeholder.
+Configuration (using 
+.Fl C
+and 
+.Fl I Ar 12345
+as above) proceeds normally, but initialization of the RAID set will
+have to wait until all physical components are present.  After
+configuration, this set can be used normally, but will be operating 
+in degraded mode.  Once a second physical component is obtained, it
+can be hot-added, the existing data mirrored, and normal operation
+resumed.
 .Pp
 .Ss Maintenance of the RAID set
 After the parity has been initialized for the first time, the command:
@@ -887,6 +927,31 @@ Components:
 No spares.
 .Ed
 .Pp
+In circumstances where a particular component is completely
+unavailable after a reboot, a special component name will be used to
+indicate the missing component.  For example:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd2e: optimal
+          component1: failed
+No spares.
+.Ed
+.Pp
+indicates that the second component of this RAID set was not detected
+at all by the auto-configuration code.  The name
+.Sq component1
+can be used anywhere a normal component name would be used.  For
+example, to add a hot spare to the above set, and rebuild to that hot
+spare, the following could be done:
+.Bd -unfilled -offset indent
+raidctl -a /dev/sd3e raid0
+raidctl -F component1 raid0
+.Ed
+.Pp
+at which point the data missing from 
+.Sq component1 
+would be reconstructed onto /dev/sd3e.
+.Pp
 .Ss RAID on RAID
 RAID sets can be layered to create more complex and much larger RAID
 sets.  A RAID 0 set, for example, could be constructed from four RAID
@@ -947,16 +1012,24 @@ To use raid0a as the root filesystem, simply use:
 raidctl -A root raid0
 .Ed
 .Pp
-Note that since kernels cannot (currently) be directly read from RAID
-components or RAID sets, some other mechanism must be used to get a
-kernel booting.  For example, a small partition containing only the
-secondary boot-blocks and an alternate kernel (or two) could be used.
-Once a kernel is booting however, and an auto-configuring RAID set is
-found that is eligible to be root, then that RAID set will be
-auto-configured and used as the root device.  If two or more RAID sets
-claim to be root devices, then the user will be prompted to select the
-root device.  At this time, RAID 0, 1, 4, and 5 sets are all supported
-as root devices.
+To return raid0a to be just an auto-configuring set simply use the
+.Fl A Ar yes
+arguments.
+.Pp
+Note that kernels can only be directly read from RAID 1 components on
+alpha and pmax architectures.  On those architectures, the 
+.Dv FS_RAID
+filesystem is recognized by the bootblocks, and will properly load the
+kernel directly from a RAID 1 component.  For other architectures, or
+to support the root filesystem on other RAID sets, some other
+mechanism must be used to get a kernel booting.  For example, a small
+partition containing only the secondary boot-blocks and an alternate
+kernel (or two) could be used.  Once a kernel is booting however, and
+an auto-configuring RAID set is found that is eligible to be root,
+then that RAID set will be auto-configured and used as the root
+device.  If two or more RAID sets claim to be root devices, then the
+user will be prompted to select the root device.  At this time, RAID
+0, 1, 4, and 5 sets are all supported as root devices.
 .Pp
 A typical RAID 1 setup with root on RAID might be as follows:
 .Bl -enum
@@ -1021,6 +1094,87 @@ raidctl -u raid0
 .Ed
 .Pp
 at which point the device is ready to be reconfigured.
+.Pp
+.Ss Performance Tuning
+Selection of the various parameter values which result in the best
+performance can be quite tricky, and often requires a bit of
+trial-and-error to get those values most appropriate for a given system.
+A whole range of factors come into play, including:
+.Bl -enum
+.It
+Types of components (e.g. SCSI vs. IDE) and their bandwidth
+.It
+Types of controller cards and their bandwidth
+.It
+Distribution of components among controllers
+.It
+IO bandwidth
+.It
+Filesystem access patterns
+.It 
+CPU speed
+.El
+.Pp
+As with most performance tuning, benchmarking under real-life loads
+may be the only way to measure expected performance.  Understanding
+some of the underlying technology is also useful in tuning.  The goal
+of this section is to provide pointers to those parameters which may
+make significant differences in performance.
+.Pp
+For a RAID 1 set, a SectPerSU value of 64 or 128 is typically
+sufficient.  Since data in a RAID 1 set is arranged in a linear
+fashion on each component, selecting an appropriate stripe size is
+somewhat less critical than it is for a RAID 5 set.  However: a stripe
+size that is too small will cause large IO's to be broken up into a
+number of smaller ones, hurting performance.  At the same time, a
+large stripe size may cause problems with concurrent accesses to
+stripes, which may also affect performance.  Thus values in the range
+of 32 to 128 are often the most effective.
+.Pp
+Tuning RAID 5 sets is trickier.  In the best case, IO is presented to
+the RAID set one stripe at a time.  Since the entire stripe is
+available at the beginning of the IO, the parity of that stripe can
+be calculated before the stripe is written, and then the stripe data
+and parity can be written in parallel.  When the amount of data being
+written is less than a full stripe worth, the
+.Sq small write
+problem occurs.  Since a 
+.Sq small write
+means only a portion of the stripe on the components is going to
+change, the data (and parity) on the components must be updated
+slightly differently.  First, the 
+.Sq old parity
+and 
+.Sq old data
+must be read from the components.  Then the new parity is constructed,
+using the new data to be written, and the old data and old parity.
+Finally, the new data and new parity are written.  All this extra data
+shuffling results in a serious loss of performance, and is typically 2
+to 4 times slower than a full stripe write (or read).  To combat this
+problem in the real world, it may be useful to ensure that stripe
+sizes are small enough that a
+.Sq large IO
+from the system will use exactly one large stripe write. As is seen
+later, there are some filesystem dependencies which may come into play
+here as well.
+.Pp
+Since the size of a 
+.Sq large IO
+is often (currently) only 32K or 64K, on a 5-drive RAID 5 set it may
+be desirable to select a SectPerSU value of 16 blocks (8K) or 32
+blocks (16K).  Since there are 4 data sectors per stripe, the maximum
+data per stripe is 64 blocks (32K) or 128 blocks (64K).  Again,
+empirical measurement will provide the best indicators of which
+values will yeild better performance.
+.Pp
+The parameters used for the filesystem are also critical to good
+performance.  For 
+.Xr newfs 8 , 
+for example, increasing the block size to 32K or 64K may improve
+performance dramatically.  As well, changing the cylinders-per-group
+parameter from 16 to 32 or higher is often not only necessary for
+larger filesystems, but may also have positive performance
+implications.
 .Pp
 .Ss Summary
 Despite the length of this man-page, configuring a RAID set is a
