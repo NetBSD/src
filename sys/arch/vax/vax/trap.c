@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2002/09/29 16:49:45 thorpej Exp $     */
+/*	$NetBSD: trap.c,v 1.74 2002/11/16 07:40:40 uebayasi Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -401,7 +401,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 			goto bad;
 	}
 
-	if ((err = trace_enter(p, frame->code, args, rval)) != 0)
+	if ((err = trace_enter(p, frame->code, frame->code, args, rval)) != 0)
 		goto bad;
 
 	err = (*callp->sy_call)(curproc, args, rval);
