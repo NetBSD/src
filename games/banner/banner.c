@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.6 1997/03/04 05:48:42 mikel Exp $	*/
+/*	$NetBSD: banner.c,v 1.7 1997/10/10 09:48:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: banner.c,v 1.6 1997/03/04 05:48:42 mikel Exp $";
+__RCSID("$NetBSD: banner.c,v 1.7 1997/10/10 09:48:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1029,6 +1029,9 @@ char	print[DWIDTH];
 int	debug, i, j, linen, max, nchars, pc, term, trace, x, y;
 int	width = DWIDTH;	/* -w option: scrunch letters to 80 columns */
 
+
+int main __P((int, char *[]));
+
 int
 main(argc, argv)
 	int argc;
@@ -1036,7 +1039,7 @@ main(argc, argv)
 { 
 	int ch;
 
-	while ((ch = getopt(argc, argv, "w:td")) != EOF)
+	while ((ch = getopt(argc, argv, "w:td")) != -1)
 		switch (ch) {
 		case 'd':
 			debug = 1;
