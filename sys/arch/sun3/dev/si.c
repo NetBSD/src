@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.44.2.1 2000/11/20 20:27:52 bouyer Exp $	*/
+/*	$NetBSD: si.c,v 1.44.2.2 2001/01/22 18:25:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -110,7 +110,6 @@
 
 int si_debug = 0;
 #ifdef	DEBUG
-static int si_link_flags = 0 /* | SDEV_DB2 */ ;
 #endif
 
 /* How long to wait for DMA before declaring an error. */
@@ -152,12 +151,6 @@ si_attach(sc)
 #endif
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-#ifdef	DEBUG
-	if (si_debug)
-		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
-	ncr_sc->sc_link.flags |= si_link_flags;
-#endif
-
 	/*
 	 * Initialize fields used by the MI code
 	 */
@@ -183,7 +176,7 @@ si_attach(sc)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_channel.chan_id = 7;
 	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
 
 	/*

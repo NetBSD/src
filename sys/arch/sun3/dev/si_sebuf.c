@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.8.8.1 2000/11/20 20:27:53 bouyer Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.8.8.2 2001/01/22 18:25:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,10 +151,6 @@ int se_options = SE_DISABLE_DMA | SE_FORCE_POLLING | 0xff;
 int se_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 int se_debug = 0;
-#ifdef	DEBUG
-static int se_link_flags = 0 /* | SDEV_DB2 */ ;
-#endif
-
 
 static int
 se_match(parent, cf, args)
@@ -245,12 +241,6 @@ se_attach(parent, self, args)
 #endif
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-#ifdef	DEBUG
-	if (se_debug)
-		printf("se: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
-	ncr_sc->sc_link.flags |= se_link_flags;
-#endif
-
 	/*
 	 * Initialize fields used by the MI code
 	 */
@@ -276,7 +266,7 @@ se_attach(parent, self, args)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_channel.chan_id = 7;
 	ncr_sc->sc_adapter.scsipi_minphys = se_minphys;
 
 	/*

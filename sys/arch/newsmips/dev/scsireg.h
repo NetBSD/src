@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.3.10.1 2000/12/08 09:28:51 bouyer Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.3.10.2 2001/01/22 18:25:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,7 +248,7 @@ struct sc_scb {
 
 struct sc_softc {
 	struct device sc_dev;
-	struct scsipi_link sc_link;
+	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;
 
 	TAILQ_HEAD(scb_list, sc_scb) ready_list, free_list;
