@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: collect.c,v 8.136.4.3 2000/06/22 22:13:45 geir Exp";
+static char id[] = "@(#)Id: collect.c,v 8.136.4.15 2001/02/21 01:05:59 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -84,7 +84,6 @@ collect(fp, smtpmode, hdrp, e)
 	volatile int hdrslen = 0;
 	volatile int numhdrs = 0;
 	volatile int dfd;
-	volatile int afd;
 	volatile int rstat = EX_OK;
 	u_char *volatile pbp;
 	u_char peekbuf[8];
@@ -102,6 +101,8 @@ collect(fp, smtpmode, hdrp, e)
 	if (!headeronly)
 	{
 		struct stat stbuf;
+		long sff = SFF_OPENASROOT;
+
 
 		(void) strlcpy(dfname, queuename(e, 'd'), sizeof dfname);
 #if _FFR_QUEUE_FILE_MODE
@@ -110,18 +111,21 @@ collect(fp, smtpmode, hdrp, e)
 
 			if (bitset(S_IWGRP, QueueFileMode))
 				oldumask = umask(002);
-			df = bfopen(dfname, QueueFileMode, DataFileBufferSize,
-				    SFF_OPENASROOT);
+			df = bfopen(dfname, QueueFileMode,
+				    DataFileBufferSize, sff);
 			if (bitset(S_IWGRP, QueueFileMode))
 				(void) umask(oldumask);
 		}
 #else /* _FFR_QUEUE_FILE_MODE */
-		df = bfopen(dfname, FileMode, DataFileBufferSize,
-			    SFF_OPENASROOT);
+		df = bfopen(dfname, FileMode, DataFileBufferSize, sff);
 #endif /* _FFR_QUEUE_FILE_MODE */
 		if (df == NULL)
 		{
-			syserr("Cannot create %s", dfname);
+			HoldErrs = FALSE;
+			if (smtpmode)
+				syserr("421 4.3.5 Unable to create data file");
+			else
+				syserr("Cannot create %s", dfname);
 			e->e_flags |= EF_NO_BODY_RETN;
 			finis(TRUE, ExitStat);
 			/* NOTREACHED */
@@ -195,9 +199,14 @@ collect(fp, smtpmode, hdrp, e)
 				{
 					errno = 0;
 					c = getc(fp);
-					if (errno != EINTR)
-						break;
-					clearerr(fp);
+
+					if (c == EOF && errno == EINTR)
+					{
+						/* Interrupted, retry */
+						clearerr(fp);
+						continue;
+					}
+					break;
 				}
 				CollectProgress = TRUE;
 				if (TrafficLogFile != NULL && !headeronly)
@@ -286,13 +295,22 @@ collect(fp, smtpmode, hdrp, e)
 
 bufferchar:
 			if (!headeronly)
-				e->e_msgsize++;
+			{
+				/* no overflow? */
+				if (e->e_msgsize >= 0)
+				{
+					e->e_msgsize++;
+					if (MaxMessageSize > 0 &&
+					    !bitset(EF_TOOBIG, e->e_flags) &&
+					    e->e_msgsize > MaxMessageSize)
+						 e->e_flags |= EF_TOOBIG;
+				}
+			}
 			switch (mstate)
 			{
 			  case MS_BODY:
 				/* just put the character out */
-				if (MaxMessageSize <= 0 ||
-				    e->e_msgsize <= MaxMessageSize)
+				if (!bitset(EF_TOOBIG, e->e_flags))
 					(void) putc(c, df);
 
 				/* FALLTHROUGH */
@@ -332,8 +350,9 @@ bufferchar:
 			else if (c != '\0')
 			{
 				*bp++ = c;
+				hdrslen++;
 				if (MaxHeadersLength > 0 &&
-				    ++hdrslen > MaxHeadersLength)
+				    hdrslen > MaxHeadersLength)
 				{
 					sm_syslog(LOG_NOTICE, e->e_id,
 						  "headers too large (%d max) from %s during message collect",
@@ -384,7 +403,7 @@ nextstate:
 				clearerr(fp);
 				errno = 0;
 				c = getc(fp);
-			} while (errno == EINTR);
+			} while (c == EOF && errno == EINTR);
 			if (c != EOF)
 				(void) ungetc(c, fp);
 			if (c == ' ' || c == '\t')
@@ -422,7 +441,7 @@ nextstate:
 				dprintf("collect: rscheck(\"check_eoh\", \"%s $| %s\")\n",
 					hnum, hsize);
 			rstat = rscheck("check_eoh", hnum, hsize, e, FALSE,
-					TRUE, 4);
+					TRUE, 4, NULL);
 
 			bp = buf;
 
@@ -436,8 +455,7 @@ nextstate:
 			}
 
 			/* if not a blank separator, write it out */
-			if (MaxMessageSize <= 0 ||
-			    e->e_msgsize <= MaxMessageSize)
+			if (!bitset(EF_TOOBIG, e->e_flags))
 			{
 				while (*bp != '\0')
 					(void) putc(*bp++, df);
@@ -483,13 +501,6 @@ readerr:
 		/* skip next few clauses */
 		/* EMPTY */
 	}
-	else if ((afd = fileno(df)) >= 0 && fsync(afd) < 0)
-	{
-		dferror(df, "fsync", e);
-		flush_errors(TRUE);
-		finis(TRUE, ExitStat);
-		/* NOTREACHED */
-	}
 	else if (bfcommit(df) < 0)
 	{
 		int save_errno = errno;
@@ -504,7 +515,7 @@ readerr:
 				st.st_size = -1;
 			errno = EEXIST;
 			syserr("collect: bfcommit(%s): already on disk, size = %ld",
-			       dfile, st.st_size);
+			       dfile, (long) st.st_size);
 			dfd = fileno(df);
 			if (dfd >= 0)
 				dumpfd(dfd, TRUE, TRUE);
@@ -513,6 +524,13 @@ readerr:
 		dferror(df, "bfcommit", e);
 		flush_errors(TRUE);
 		finis(save_errno != EEXIST, ExitStat);
+	}
+	else if (bffsync(df) < 0)
+	{
+		dferror(df, "bffsync", e);
+		flush_errors(TRUE);
+		finis(TRUE, ExitStat);
+		/* NOTREACHED */
 	}
 	else if (bfclose(df) < 0)
 	{
@@ -650,7 +668,7 @@ readerr:
 	}
 
 	/* check for message too large */
-	if (MaxMessageSize > 0 && e->e_msgsize > MaxMessageSize)
+	if (bitset(EF_TOOBIG, e->e_flags))
 	{
 		e->e_flags |= EF_NO_BODY_RETN|EF_CLRQUEUE;
 		e->e_status = "5.2.3";
@@ -841,6 +859,11 @@ eatfrom(fm, e)
 			p++;
 		while (*p == ' ')
 			p++;
+		if (strlen(p) < 17)
+		{
+			/* no room for the date */
+			return;
+		}
 		if (!(isascii(*p) && isupper(*p)) ||
 		    p[3] != ' ' || p[13] != ':' || p[16] != ':')
 			continue;
@@ -853,8 +876,10 @@ eatfrom(fm, e)
 			continue;
 
 		for (dt = MonthList; *dt != NULL; dt++)
+		{
 			if (strncmp(*dt, &p[4], 3) == 0)
 				break;
+		}
 		if (*dt != NULL)
 			break;
 	}
