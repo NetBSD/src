@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.2 2003/08/07 16:30:27 agc Exp $ */
+/*	$NetBSD: kbio.h,v 1.3 2004/05/08 08:40:08 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _X68K_KBIO_H_
+#define _X68K_KBIO_H_
 
 /*
  * The following is a minimal emulation of Sun's `kio' structures
@@ -126,3 +129,5 @@ struct kbiocbell {
 #define	TR_ASCII		1	/* X compat, unsupported */
 #define	TR_EVENT		2	/* X compat, unsupported */
 #define	TR_UNTRANS_EVENT	3
+
+#endif
