@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.26 2000/03/23 07:01:28 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.27 2000/03/23 17:51:51 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -492,8 +492,6 @@ aha_init_ccb(sc, ccb)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum, error;
-
-	callout_init(&ccb->xs->xs_callout);
 
 	/*
 	 * Create the DMA map for this CCB.
