@@ -47,6 +47,7 @@ mips*)	targ_archs=bfd_mips_arch ;;
 pj*)	targ_archs="bfd_pj_arch bfd_i386_arch";;
 powerpc*) targ_archs="bfd_rs6000_arch bfd_powerpc_arch" ;;
 rs6000)	targ_archs="bfd_rs6000_arch bfd_powerpc_arch" ;;
+sh*)	targ_archs="bfd_sh_arch" ;;
 sparc*) targ_archs=bfd_sparc_arch ;;
 v850*)	targ_archs=bfd_v850_arch ;;
 z8k*)	targ_archs=bfd_z8k_arch ;;
@@ -761,6 +762,16 @@ case "${targ}" in
   sh-*-linux*)
     targ_defvec=bfd_elf32_shblin_vec
     targ_selvecs=bfd_elf32_shlin_vec
+    ;;
+
+  sh-*-netbsdelf*)
+    targ_defvec=bfd_elf32_shnbsd_vec
+    targ_selvecs="bfd_elf32_shlnbsd_vec bfd_elf32_sh_vec bfd_elf32_shl_vec shcoff_vec shlcoff_vec shcoff_small_vec shlcoff_small_vec"
+    ;;
+
+  shle-*-netbsdelf*)
+    targ_defvec=bfd_elf32_shlnbsd_vec
+    targ_selvecs="bfd_elf32_shnbsd_vec bfd_elf32_sh_vec bfd_elf32_shl_vec shcoff_vec shlcoff_vec shcoff_small_vec shlcoff_small_vec"
     ;;
 
   sh-*-elf* | sh-*-rtemself*)
