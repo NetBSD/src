@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.22 1999/03/24 05:51:34 mrg Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.23 1999/03/31 12:29:51 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -191,6 +191,7 @@ struct vm_map {
 	simple_unlock(&(map)->lk_interlock); \
 }
 
+#ifdef _KERNEL
 /* XXX: clean up later */
 static __inline boolean_t vm_map_lock_try __P((vm_map_t));
 
@@ -203,6 +204,7 @@ vm_map_lock_try(map)
 	map->timestamp++;
 	return(TRUE);
 }
+#endif
 
 /*
  *	Functions implemented as macros
