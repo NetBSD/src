@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.5 2003/03/16 06:56:47 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.6 2003/03/17 16:54:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -140,13 +140,16 @@ struct intrsource {
  * the list.  The handler is called with its (single) argument.
  */
 struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
 	struct	intrsource *ih_source;
+	int	ih_flags;
 	int	ih_level;	/* sanity only */
 	u_long	ih_count;
+	int	ih_softimask;
 };
+#define	IH_ACTIVE	0x01
 
 struct intrsource intr_sources[NIRQ];
 
@@ -262,7 +265,7 @@ cntlzw(int x)
 }
 
 static void
-xsoftnet(void)
+xsoftnet(void *arg)
 {
 	int pendisr;
 	__asm __volatile(
@@ -276,25 +279,19 @@ xsoftnet(void)
 	softnet(pendisr);
 }
 
+void *softnet_si;
+
 /*
  * softintr_init - establish softclock, softnet; reserve SIR_HWCLOCK
  */
 STATIC void
 softintr_init(void)
 {
-	void *p;
-
 	intr_sources[SIR_HWCLOCK].is_type = IST_CLOCK;	/* exclusive */
 
-	p = intr_establish(SIR_SOFTCLOCK, IST_SOFT, IPL_SOFTCLOCK,
-		(int (*) __P((void *)))softclock, NULL);
-	if (p == NULL)
-		panic("softintr_init: cannot intr_establish SIR_SOFTCLOCK");
-
-	p = intr_establish(SIR_NET, IST_SOFT, IPL_SOFTNET, 
-		(int (*) __P((void *)))xsoftnet, NULL);
-	if (p == NULL)
-		panic("softintr_init: cannot intr_establish SIR_NET");
+	softnet_si = softintr_establish(IPL_SOFTNET, xsoftnet, NULL);
+	if (softnet_si == NULL)
+		panic("softintr_init: cannot softintr_establish IPL_SOFTNET");
 }
 
 /*
@@ -391,6 +388,13 @@ intr_establish(
 	ih->ih_source = is;
 	ih->ih_next = NULL;
 	ih->ih_count = 0;
+	if (irq >= SIR_BASE) {
+		ih->ih_flags = 0;
+		ih->ih_softimask = SIBIT(irq);
+	} else {
+		ih->ih_flags = IH_ACTIVE;
+		ih->ih_softimask = 0;
+	}
 	*p = ih;
 
 	intr_calculatemasks();
@@ -745,11 +749,13 @@ loop:
 			for (ih = is->is_hand; ih != NULL; ih = ih->ih_next) {
 				int rv;
 
-				(void)extintr_enable();
-
-				rv = (*ih->ih_fun)(ih->ih_arg);
-
-				(void)extintr_disable();
+				if (ih->ih_flags & IH_ACTIVE) {
+					if (irq >= SIR_BASE)
+						ih->ih_flags &= ~IH_ACTIVE;
+					(void)extintr_enable();
+					rv = (*ih->ih_fun)(ih->ih_arg);
+					(void)extintr_disable();
+				}
 
 				KASSERT(ci->ci_cpl == ipl);
 				if (rv != 0)
@@ -775,6 +781,39 @@ loop:
 	goto loop;
 }
 
+void *
+softintr_establish(int level, void (*fun)(void *), void *arg)
+{
+	int irq = 200;
+	switch (level) {
+	case IPL_SOFTNET:	irq = SIR_SOFTNET; break;
+	case IPL_SOFTCLOCK:	irq = SIR_SOFTCLOCK; break;
+	case IPL_SOFTSERIAL:	irq = SIR_SOFTSERIAL; break;
+	case IPL_SOFTI2C:	irq = SIR_SOFTI2C; break;
+	default:
+		panic("softintr_establish: bad level %d", level);
+	}
+
+	return intr_establish(irq, IST_SOFT, level, (int (*)(void *))fun, arg);
+}
+
+void
+softintr_disestablish(void *ih)
+{
+	intr_disestablish(ih);
+}
+
+void
+softintr_schedule(void *vih)
+{
+	struct intrhand *ih = vih;
+	register_t omsr;
+
+	omsr = extintr_disable();
+	ih->ih_flags |= IH_ACTIVE;
+	ipending[IMASK_SOFTINT] |= ih->ih_softimask;
+	extintr_restore(omsr);
+}
 
 #ifdef EXT_INTR_STATS
 /*
@@ -1256,15 +1295,5 @@ spllower(int ncpl)
 	extintr_restore(omsr);
 
 	return (ocpl);
-}
-
-void
-softintr(int sibit)
-{
-	int omsr;
-
-	omsr = extintr_disable();
-	ipending[IMASK_SOFTINT] |= sibit;
-	extintr_restore(omsr);
 }
 #endif
