@@ -1,7 +1,7 @@
-/*	$NetBSD: featuretest.h,v 1.6 2003/10/22 15:52:07 kleink Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.7 2003/12/04 12:42:54 keihan Exp $	*/
 
 /*
- * Written by Klaus Klein <kleink@NetBSD.ORG>, February 2, 1998.
+ * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
  * Public domain.
  *
  * NOTE: Do not protect this header against multiple inclusion.  Doing

@@ -1,8 +1,8 @@
-/*	$NetBSD: md5.h,v 1.2 1997/04/30 00:50:10 thorpej Exp $	*/
+/*	$NetBSD: md5.h,v 1.3 2003/12/04 12:42:54 keihan Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
- * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.ORG>
+ * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.org>
  * for portability and formatting.
  */
 

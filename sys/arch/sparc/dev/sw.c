@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.13 2003/07/15 00:04:56 lukem Exp $	*/
+/*	$NetBSD: sw.c,v 1.14 2003/12/04 12:42:54 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,12 +87,12 @@
  * bahve the way the 5380 code expects.  For this reason, only
  * DMA is enabled by default in this driver.
  *
- *	Jason R. Thorpe <thorpej@NetBSD.ORG>
+ *	Jason R. Thorpe <thorpej@NetBSD.org>
  *	December 8, 1995
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.13 2003/07/15 00:04:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.14 2003/12/04 12:42:54 keihan Exp $");
 
 #include "opt_ddb.h"
 

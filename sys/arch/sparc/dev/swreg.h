@@ -1,4 +1,4 @@
-/*	$NetBSD: swreg.h,v 1.2 2003/05/03 18:11:00 wiz Exp $	*/
+/*	$NetBSD: swreg.h,v 1.3 2003/12/04 12:42:54 keihan Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  * SCSI Bus Interface Controller (SBIC).  The rest is a
  * DMA controller and custom logic for the OBIO interface (3/50,3/60,4/110)
  *
- * Modified for Sun 4 systems by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * Modified for Sun 4 systems by Jason R. Thorpe <thorpej@NetBSD.org>.
  */
 
 /*
