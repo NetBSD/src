@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/21 23:23:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/04 06:18:26 wdk Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -90,4 +90,3 @@ clean cleandir distclean:
 	rm -f ${CLEANFILES}
 
 .include <bsd.obj.mk>
-.include <bsd.depall.mk>
