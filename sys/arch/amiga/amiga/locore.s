@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 1996/09/30 16:10:03 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 1996/10/08 22:56:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1478,9 +1478,16 @@ Lswnochg:
 	pflusha				| flush entire TLB
 	jra	Lres3
 Lres2:
-	.word	0xf518		| pflusha (68040)
+	.word	0xf518			| pflusha (68040)
 |	movl	#CACHE40_ON,d0
 |	movc	d0,cacr			| invalidate cache(s)
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Lres3
+	movc	cacr,d2
+	orl	#0x00200000,d2		| clear user branch cache entries
+	movc	d2,cacr
+#endif
 Lres3:
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
