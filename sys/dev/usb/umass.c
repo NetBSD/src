@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.24 2000/02/02 13:18:47 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.25 2000/02/29 21:37:01 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -233,9 +233,9 @@ USB_MATCH(umass)
 
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id != NULL
-	    && id->bInterfaceClass == UCLASS_MASS
-	    && id->bInterfaceSubClass == USUBCLASS_SCSI
-	    && id->bInterfaceProtocol == UPROTO_MASS_BULK_P)
+	    && id->bInterfaceClass == UICLASS_MASS
+	    && id->bInterfaceSubClass == UISUBCLASS_SCSI
+	    && id->bInterfaceProtocol == UIPROTO_MASS_BULK_P)
 		return(UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 
 	return(UMATCH_NONE);
@@ -267,24 +267,24 @@ USB_ATTACH(umass)
 
 	switch (sc->sc_subclass) {
 #if 0
-	case USUBCLASS_RBC:		subclass = "RBC";	break;
-	case USUBCLASS_SFF8020I:	subclass = "8020i";	break;
-	case USUBCLASS_QIC157:		subclass = "QIC157";	break;
-	case USUBCLASS_UFI:		subclass = "UFI";	break;
-	case USUBCLASS_SFF8070I:	subclass = "8070i";	break;
+	case UISUBCLASS_RBC:		subclass = "RBC";	break;
+	case UISUBCLASS_SFF8020I:	subclass = "8020i";	break;
+	case UISUBCLASS_QIC157:		subclass = "QIC157";	break;
+	case UISUBCLASS_UFI:		subclass = "UFI";	break;
+	case UISUBCLASS_SFF8070I:	subclass = "8070i";	break;
 #endif
-	case USUBCLASS_SCSI:		subclass = "SCSI";	break;
+	case UISUBCLASS_SCSI:		subclass = "SCSI";	break;
 	default:
 		panic("umass_attach: impossible subclass");
 	}
 
 	switch (sc->sc_protocol) {
 #if 0
-	case UPROTO_MASS_CBI_I:		protocol = "CBI with CCI"; break;
-	case UPROTO_MASS_CBI:		protocol = "CBI";	break;
+	case UIPROTO_MASS_CBI_I:	protocol = "CBI with CCI"; break;
+	case UIPROTO_MASS_CBI:		protocol = "CBI";	break;
 #endif
-	case UPROTO_MASS_BULK:		/* XXX Is this really right? */
-	case UPROTO_MASS_BULK_P:	protocol = "Bulk-Only";	break;
+	case UIPROTO_MASS_BULK:		/* XXX Is this really right? */
+	case UIPROTO_MASS_BULK_P:	protocol = "Bulk-Only";	break;
 	default:
 		panic("umass_attach: impossible protocol");
 	}

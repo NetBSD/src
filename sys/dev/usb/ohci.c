@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.73 2000/02/22 22:59:49 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.74 2000/02/29 21:37:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1897,8 +1897,8 @@ static usb_device_descriptor_t ohci_devd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE,		/* type */
 	{0x00, 0x01},		/* USB version */
-	UCLASS_HUB,		/* class */
-	USUBCLASS_HUB,		/* subclass */
+	UDCLASS_HUB,		/* class */
+	UDSUBCLASS_HUB,		/* subclass */
 	0,			/* protocol */
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
@@ -1925,8 +1925,8 @@ static usb_interface_descriptor_t ohci_ifcd = {
 	0,
 	0,
 	1,
-	UCLASS_HUB,
-	USUBCLASS_HUB,
+	UICLASS_HUB,
+	UISUBCLASS_HUB,
 	0,
 	0
 };

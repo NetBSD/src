@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.22 2000/02/08 09:18:02 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.23 2000/02/29 21:37:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,9 +148,9 @@ USB_MATCH(umodem)
 
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL ||
-	    id->bInterfaceClass != UCLASS_CDC ||
-	    id->bInterfaceSubClass != USUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    id->bInterfaceProtocol != UPROTO_CDC_AT)
+	    id->bInterfaceClass != UICLASS_CDC ||
+	    id->bInterfaceSubClass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
+	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
 		return (UMATCH_NONE);
 	
 	umodem_get_caps(uaa->device, &cm, &acm);
