@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.13 1999/02/12 11:25:24 drochner Exp $ */
+/*	$NetBSD: smg.c,v 1.14 1999/03/09 11:43:13 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -203,7 +203,7 @@ smg_cursor(id, on, row, col)
 	ss->ss_cury = row;
 }
 
-unsigned int
+int
 smg_mapchar(id, uni, index)
 	void *id;
 	int uni;
