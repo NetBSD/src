@@ -21,9 +21,6 @@ Bugs to fix:
 - Consider moving pthread__signal_tramp() to its own file, and building
   it with -fasync-unwind-tables, so that DWARF2 EH unwinding works through
   it.  (This is required for e.g. GCC's libjava.)
-- locks: Add support for RAS on uniprocessors.
-- pthread_lock.c: pthread_spin_lock() should use a loop around
-  __cpu_simple_lock_try() so that it is easy to add support for RAS.
 - Add locking to ld.elf_so so that multiple threads doing lazy binding
   doesn't trash things.
 - Verify the cancel stub symbol trickery.

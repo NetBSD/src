@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.36 2002/12/20 01:06:16 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.37 2002/12/30 22:24:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,6 +124,9 @@ void pthread_init(void)
 	pthread_t first;
 	extern int __isthreaded;
 	extern pthread_ops_t *__libc_pthread_ops;
+
+	/* Initialize locks first; they're needed elsewhere. */
+	pthread__lockprim_init();
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);

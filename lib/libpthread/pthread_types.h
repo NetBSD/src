@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.9 2002/10/28 00:06:09 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.10 2002/12/30 22:24:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct	pthread_mutex_st {
 	unsigned int	ptm_magic;
 
 	/* Not a real spinlock; will never be spun on. Locked with
-	 * __cpu_simple_lock_try() or not at all. Therefore, not
+	 * pthread__simple_lock_try() or not at all. Therefore, not
 	 * subject to preempted-spinlock-continuation.
 	 * 
 	 * Open research question: Would it help threaded applications if

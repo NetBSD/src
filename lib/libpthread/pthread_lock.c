@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.13 2002/12/18 22:53:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.14 2002/12/30 22:24:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/ras.h>
+#include <sys/sysctl.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <unistd.h>
@@ -56,11 +60,111 @@
 
 static int nspins = NSPINS;
 
+extern char pthread__lock_ras_start[], pthread__lock_ras_end[];
+
+static void
+pthread__ras_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static int
+pthread__ras_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	__cpu_simple_lock_t old;
+
+	/* This is the atomic sequence. */
+	__asm __volatile("pthread__lock_ras_start:");
+	old = *alp;
+	*alp = __SIMPLELOCK_LOCKED;
+	__asm __volatile("pthread__lock_ras_end:");
+
+	return (old == __SIMPLELOCK_UNLOCKED);
+}
+
+static void
+pthread__ras_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static const struct pthread_lock_ops pthread__lock_ops_ras = {
+	pthread__ras_simple_lock_init,
+	pthread__ras_simple_lock_try,
+	pthread__ras_simple_unlock,
+};
+
+static void
+pthread__atomic_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_lock_init(alp);
+}
+
+static int
+pthread__atomic_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+
+	return (__cpu_simple_lock_try(alp));
+}
+
+static void
+pthread__atomic_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	__cpu_simple_unlock(alp);
+}
+
+static const struct pthread_lock_ops pthread__lock_ops_atomic = {
+	pthread__atomic_simple_lock_init,
+	pthread__atomic_simple_lock_try,
+	pthread__atomic_simple_unlock,
+};
+
+/*
+ * We default to pointing to the RAS primitives; we might need to use
+ * locks early, but before main() starts.  This is safe, since no other
+ * threads will be active for the process, so atomicity will not be
+ * required.
+ */
+const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
+
+/*
+ * Initialize the locking primitives.  On uniprocessors, we always
+ * use Restartable Atomic Sequences if they are available.  Otherwise,
+ * we fall back onto machine-dependent atomic lock primitives.
+ */
+void
+pthread__lockprim_init(void)
+{
+	int mib[2];
+	size_t len; 
+	int ncpu;
+ 
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU; 
+ 
+	len = sizeof(ncpu);
+	sysctl(mib, 2, &ncpu, &len, NULL, 0);
+
+	if (ncpu == 1 &&
+	    rasctl(pthread__lock_ras_start,
+	    	   (caddr_t)pthread__lock_ras_end -
+	    	   (caddr_t)pthread__lock_ras_start, RAS_INSTALL) == 0) {
+		pthread__lock_ops = &pthread__lock_ops_ras;
+		return;
+	}
+
+	pthread__lock_ops = &pthread__lock_ops_atomic;
+}
+
 void
 pthread_lockinit(pthread_spin_t *lock)
 {
 
-	__cpu_simple_lock_init(lock);
+	pthread__simple_lock_init(lock);
 }
 
 void
@@ -80,7 +184,7 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 	++thread->pt_spinlocks;
 
 	do {
-		while (((ret = __cpu_simple_lock_try(lock)) == 0) && --count)
+		while (((ret = pthread__simple_lock_try(lock)) == 0) && --count)
 			;
 
 		if (ret == 1)
@@ -126,7 +230,7 @@ pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 		thread, thread->pt_spinlocks));
 	++thread->pt_spinlocks;
 
-	ret = __cpu_simple_lock_try(lock);
+	ret = pthread__simple_lock_try(lock);
 	
 	if (ret == 0) {
 	SDPRINTF(("(pthread_spintrylock %p) decrementing spinlock from %d\n",
@@ -147,7 +251,7 @@ void
 pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 {
 
-	__cpu_simple_unlock(lock);
+	pthread__simple_unlock(lock);
 	SDPRINTF(("(pthread_spinunlock %p) decrementing spinlock %p (count %d)\n",
 		thread, lock, thread->pt_spinlocks));
 	--thread->pt_spinlocks;
@@ -228,7 +332,8 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 		return EINVAL;
 #endif
 
-	__cpu_simple_lock(&lock->pts_spin);
+	while (pthread__simple_lock_try(&lock->pts_spin) == 0)
+		/* spin */ ;
 
 	return 0;
 }
@@ -242,7 +347,7 @@ pthread_spin_trylock(pthread_spinlock_t *lock)
 		return EINVAL;
 #endif
 
-	if (__cpu_simple_lock_try(&lock->pts_spin) == 0)
+	if (pthread__simple_lock_try(&lock->pts_spin) == 0)
 		return EBUSY;
 
 	return 0;
@@ -257,7 +362,7 @@ pthread_spin_unlock(pthread_spinlock_t *lock)
 		return EINVAL;
 #endif
 
-	__cpu_simple_unlock(&lock->pts_spin);
+	pthread__simple_unlock(&lock->pts_spin);
 
 	return 0;
 }
