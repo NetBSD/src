@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.65 2005/01/02 20:43:23 mhitch Exp $ */
+/* $NetBSD: sfb.c,v 1.66 2005/02/26 12:51:16 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.65 2005/01/02 20:43:23 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.66 2005/02/26 12:51:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -879,11 +879,11 @@ set_curpos(sc, curpos)
 
 	if (y < 0)
 		y = 0;
-	else if (y > ri->ri_height);
+	else if (y > ri->ri_height)
 		y = ri->ri_height;
 	if (x < 0)
 		x = 0;
-	else if (x > ri->ri_width);
+	else if (x > ri->ri_width)
 		x = ri->ri_width;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
