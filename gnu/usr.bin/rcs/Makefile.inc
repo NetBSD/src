@@ -1,7 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1993/08/02 17:48:11 mycroft Exp $
+#	$Id: Makefile.inc,v 1.3 1993/12/28 11:31:15 davidb Exp $
 
-.if exists(${.CURDIR}/../lib/obj)
-LIBRCS=	${.CURDIR}/../lib/obj/librcs.a
-.else
-LIBRCS=	${.CURDIR}/../lib/librcs.a
-.endif
+LIBRCS!=cd $(.CURDIR)/../lib; \
+	printf "xxx:\n\techo \$${.OBJDIR}/librcs.a\n" | make -r -s -f - xxx

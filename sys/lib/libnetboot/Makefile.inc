@@ -1,14 +1,11 @@
-#	$Id: Makefile.inc,v 1.4 1993/10/23 02:33:50 cgd Exp $
+#	$Id: Makefile.inc,v 1.5 1993/12/28 11:59:20 davidb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 NETBOOTDIR=	$S/lib/libnetboot
 
-.if exists($(NETBOOTDIR)/obj.${MACHINE})
-NETBOOTLIBDIR=	$(NETBOOTDIR)/obj.${MACHINE}
-.else
-NETBOOTLIBDIR=  $(NETBOOTDIR)
-.endif
+NETBOOTLIBDIR!=cd $(NETBOOTDIR); \
+	printf "xxx:\n\techo \$${.OBJDIR}\n" | make -r -s -f - xxx
 
 NETBOOTLIB=	$(NETBOOTLIBDIR)/libnetboot.a
 

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1993/12/21 22:16:58 davidb Exp $
+#	$Id: Makefile,v 1.8 1993/12/28 11:38:14 davidb Exp $
 
 .include <../../Makefile.inc>
 
@@ -16,13 +16,8 @@ DEPSRCS += astosc.OUT map3270.c mset.c
 
 PROG = mset
 
-.if exists(${.CURDIR}/../tools/mkastosc/obj.${MACHINE})
-MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj.${MACHINE}/mkastosc
-.elif exists(${.CURDIR}/../tools/mkastosc/obj)
-MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj/mkastosc
-.else
-MKASTOSC=	$(.CURDIR)/../tools/mkastosc/mkastosc
-.endif
+MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | make -r -s -f - xxx
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out

@@ -1,4 +1,5 @@
-ED=	../obj/ed
+ED!=cd $(.CURDIR)/..; \
+	printf "xxx:\n\techo \$${.OBJDIR}/ed\n" | make -r -s -f - xxx
 
 all: build test
 	@echo done

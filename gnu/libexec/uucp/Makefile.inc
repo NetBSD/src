@@ -1,26 +1,11 @@
-.if exists(${.CURDIR}/../libunix/obj.${MACHINE})
-LIBUNIX=	$(.CURDIR)/../libunix/obj.${MACHINE}/libunix.a
-.elif exists(${.CURDIR}/../libunix/obj)
-LIBUNIX=	$(.CURDIR)/../libunix/obj/libunix.a
-.else
-LIBUNIX=	$(.CURDIR)/../libunix/libunix.a
-.endif
+LIBUNIX!=cd $(.CURDIR)/../libunix; \
+	printf "xxx:\n\techo \$${.OBJDIR}/libunix.a\n" | make -r -s -f - xxx
 
-.if exists(${.CURDIR}/../libuuconf/obj.${MACHINE})
-LIBUUCONF=	$(.CURDIR)/../libuuconf/obj.${MACHINE}/libuuconf.a
-.elif exists(${.CURDIR}/../libuuconf/obj)
-LIBUUCONF=	$(.CURDIR)/../libuuconf/obj/libuuconf.a
-.else
-LIBUUCONF=	$(.CURDIR)/../libuuconf/libuuconf.a
-.endif
+LIBUUCONF!=cd $(.CURDIR)/../libuuconf; \
+	printf "xxx:\n\techo \$${.OBJDIR}/libuuconf.a\n" | make -r -s -f - xxx
 
-.if exists(${.CURDIR}/../libuucp/obj.${MACHINE})
-LIBUUCP=	$(.CURDIR)/../libuucp/obj.${MACHINE}/libuucp.a
-.elif exists(${.CURDIR}/../libuucp/obj)
-LIBUUCP=	$(.CURDIR)/../libuucp/obj/libuucp.a
-.else
-LIBUUCP=	$(.CURDIR)/../libuucp/libuucp.a
-.endif
+LIBUUCP!=cd $(.CURDIR)/../libuucp; \
+	printf "xxx:\n\techo \$${.OBJDIR}/libuucp.a\n" | make -r -s -f - xxx
 
 VERSION=	1.04
 owner=		uucp
