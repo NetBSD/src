@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.7 2002/12/16 18:19:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.8 2003/01/11 09:14:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,6 @@ pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm,
 		    self, it.it_value.tv_sec, it.it_value.tv_nsec/1000));
 		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, 
 		    &it, NULL);
-		assert(retval == 0);
 		if (retval)
 			err(1, "timer_settime");
 			

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.17 2003/01/09 19:27:51 thorpej Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.18 2003/01/11 09:14:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -110,11 +110,17 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
-	else
+	else {
 		if (cond->ptc_mutex != mutex) {
 			pthread_spinunlock(self, &cond->ptc_lock);
 			return EINVAL;
 		}
+		/* Check the mutex is actually locked */
+	        if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
+			pthread_spinunlock(self, &cond->ptc_lock);
+			return EPERM;
+		}
+	}
 #endif
 	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
 	    self, cond, mutex));
@@ -162,17 +168,26 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
 	    (mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
+	if ((abstime == NULL) || (abstime->tv_sec < 0 ||
+	    abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000))
+		return EINVAL;
 #endif
 	self = pthread__self();
 	pthread_spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
-	else
+	else {
 		if (cond->ptc_mutex != mutex) {
 			pthread_spinunlock(self, &cond->ptc_lock);
 			return EINVAL;
 		}
+		/* Check the mutex is actually locked */
+	        if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
+			pthread_spinunlock(self, &cond->ptc_lock);
+			return EPERM;
+		}
+	}
 #endif
 	wait.ptw_thread = self;
 	wait.ptw_cond = cond;
