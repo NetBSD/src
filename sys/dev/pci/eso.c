@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.32 2004/02/17 17:34:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.32 2004/02/17 17:34:21 kleink Exp $");
 
 #include "mpu.h"
 
@@ -1556,13 +1556,13 @@ eso_allocm(hdl, direction, size, type, flags)
 	/*
 	 * Apparently the Audio 1 DMA controller's current address
 	 * register can't roll over a 64K address boundary, so we have to
-	 * take care of that ourselves.  The second channel DMA controller
-	 * doesn't have that restriction, however.
+	 * take care of that ourselves.  Similarly, the Audio 2 DMA
+	 * controller needs a 1M address boundary.
 	 */
 	if (direction == AUMODE_RECORD)
 		boundary = 0x10000;
 	else
-		boundary = 0;
+		boundary = 0x100000;
 
 #ifdef alpha
 	/*
