@@ -35,7 +35,7 @@
 #include <sl.h>
 
 __RCSID("$Heimdal: kadmin.c,v 1.41 2001/08/10 08:06:13 joda Exp $"
-        "$NetBSD: kadmin.c,v 1.6 2002/09/12 13:18:59 joda Exp $");
+        "$NetBSD: kadmin.c,v 1.7 2003/03/31 09:34:09 wiz Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -52,7 +52,7 @@ static struct getargs args[] = {
     {	"principal", 	'p',	arg_string,	&client_name,
 	"principal to authenticate as" },
     {   "keytab",	'K',	arg_string,	&keytab,
-   	"keytab for authentication pricipal" },
+   	"keytab for authentication principal" },
     { 
 	"config-file",	'c',	arg_string,	&config_file, 
 	"location of config file",	"file" 
