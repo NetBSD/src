@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.4 1997/12/18 11:54:11 fvdl Exp $	*/
+/*	$NetBSD: label.c,v 1.5 1998/06/20 13:05:49 mrg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.4 1997/12/18 11:54:11 fvdl Exp $");
+__RCSID("$NetBSD: label.c,v 1.5 1998/06/20 13:05:49 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,7 +68,11 @@ void	translate_partinfo __P((partinfo *lp, struct partition *pp));
  * for  overlapping partitions.
  */
 static int
-boringpart(partinfo *lp, int i, int rawpart, int bsdpart)
+boringpart(lp, i, rawpart, bsdpart)
+	partinfo *lp;
+	int i;
+	int rawpart;
+	int bsdpart;
 {
 
 	if (i == rawpart || i == bsdpart ||
@@ -86,8 +90,13 @@ boringpart(partinfo *lp, int i, int rawpart, int bsdpart)
  * overlapping partitions if any are found.
  */
 int
-checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart, 
-	   int *ovly1, int *ovly2)
+checklabel(lp, nparts, rawpart, bsdpart, ovly1, ovly2)
+	partinfo *lp;
+	int nparts;
+	int rawpart;
+	int bsdpart;
+	int *ovly1;
+	int *ovly2;
 {
 	int i;
 	int j;
@@ -96,7 +105,7 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 	*ovly2 = -1;
 
 	for (i = 0; i < nparts - 1; i ++ ) {
-		int  *ip = lp[i];
+		int *ip = lp[i];
 		int istart, istop;
 
 		/* skip unused or reserved partitions */
@@ -126,12 +135,12 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 			    (jstart <= istart && istart < jstop)) {
 				*ovly1 = i;
 				*ovly2 = j;
-				return(1);
+				return (1);
 			}
 		}
 	}
 
-	return(0);
+	return (0);
 }
 
 
@@ -141,13 +150,17 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
  * Ask the user if they want to edit the parittion or give up.
  */
 int
-edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
+edit_and_check_label(lp, nparts, rawpart, bsdpart)
+	partinfo *lp;
+	int nparts;
+	int rawpart;
+	int bsdpart;
 {
 	 while (1) {
 		 int i, j;
 
 		 /* first give the user the option to edit the label... */
-		 process_menu (MENU_fspartok);
+		 process_menu(MENU_fspartok);
 
 		 /* User thinks the label is OK. check for overlaps.*/
 		 if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
@@ -168,7 +181,9 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 }
 
 	
-void emptylabel(partinfo *lp)
+void
+emptylabel(lp)
+	partinfo *lp;
 {
 	register int i, maxpart;
 
@@ -184,39 +199,41 @@ void emptylabel(partinfo *lp)
 }
 
 int
-savenewlabel(partinfo *lp, int nparts)
+savenewlabel(lp, nparts)
+	partinfo *lp;
+	int nparts;
 {
 	FILE *f;
 	int i;
 
 #ifdef DEBUG
-	f = fopen ("/tmp/disktab", "a");
+	f = fopen("/tmp/disktab", "a");
 #else
-	f = fopen ("/etc/disktab", "a");
+	f = fopen("/etc/disktab", "a");
 #endif
 	if (f == NULL) {
 		endwin();
-		(void) fprintf (stderr, "Could not open /etc/disktab");
+		(void)fprintf(stderr, "Could not open /etc/disktab");
 		exit (1);
 	}
-	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	for (i=0; i < nparts; i++) {
-		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i][D_SIZE],
-			       'a'+i, bsdlabel[i][D_OFFSET],
-			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
+	(void)fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
+	(void)fprintf(f, "\t:dt=%s:ty=winchester:\\\n", disktype);
+	(void)fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
+	(void)fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
+	(void)fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
+	for (i = 0; i < nparts; i++) {
+		(void)fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
+		    'a'+i, bsdlabel[i][D_SIZE],
+		    'a'+i, bsdlabel[i][D_OFFSET],
+		    'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
 				       'a'+i, bsdlabel[i][D_BSIZE],
 				       'a'+i, bsdlabel[i][D_FSIZE]);
 		if (i < 7)
-			(void)fprintf (f, "\\\n");
+			(void)fprintf(f, "\\\n");
 		else
-			(void)fprintf (f, "\n");
+			(void)fprintf(f, "\n");
 	}
 	fclose (f);
 
@@ -225,8 +242,11 @@ savenewlabel(partinfo *lp, int nparts)
 
 
 void
-translate_partinfo(partinfo *lp, struct partition *pp)
+translate_partinfo(lp, pp)
+	partinfo *lp;
+	struct partition *pp;
 {
+
 	switch (pp->p_fstype) {
 
 	case FS_UNUSED:				/* XXX */
@@ -260,7 +280,10 @@ translate_partinfo(partinfo *lp, struct partition *pp)
 /*
  * Read a label from disk into a sysist label structure.
  */
-int incorelabel(const char *dkname, partinfo *lp)
+int
+incorelabel(dkname, lp)
+	const char *dkname;
+	partinfo *lp;
 {
 	struct disklabel lab;
 	int fd;
@@ -277,7 +300,8 @@ int incorelabel(const char *dkname, partinfo *lp)
 	close(fd);
 
 	maxpart = getmaxpartitions();
-	if (maxpart > 16) maxpart = 16;
+	if (maxpart > 16)
+		maxpart = 16;
 
 
 	/* XXX set globals used by MD code to compute disk size? */
