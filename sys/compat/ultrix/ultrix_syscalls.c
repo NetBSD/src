@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_syscalls.c,v 1.28 1998/02/19 03:34:20 thorpej Exp $	*/
+/*	$NetBSD: ultrix_syscalls.c,v 1.29 1998/06/25 22:20:04 thorpej Exp $	*/
 
 /*
  * System call names.
@@ -8,6 +8,7 @@
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
+#include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #include <sys/param.h>
 #include <sys/systm.h>
