@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.41 2001/09/10 07:29:54 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.42 2001/09/14 01:10:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -89,31 +89,6 @@ struct vgascreen {
 	/* palette */
 
 	int mindispoffset, maxdispoffset;
-};
-
-struct vga_config {
-	struct vga_handle hdl;
-
-	int nscreens;
-	LIST_HEAD(, vgascreen) screens;
-	struct vgascreen *active; /* current display */
-	const struct wsscreen_descr *currenttype;
-	int currentfontset1, currentfontset2;
-
-	int vc_biosmapped;
-	bus_space_tag_t vc_biostag;
-	bus_space_handle_t vc_bioshdl;
-
-	struct egavga_font *vc_fonts[8]; /* currently loaded */
-	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
-
-	struct vgascreen *wantedscreen;
-	void (*switchcb) __P((void *, int, int));
-	void *switchcbarg;
-
-	paddr_t (*vc_mmap) __P((void *, off_t, int));
-
-	struct callout vc_switch_callout;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -628,11 +603,11 @@ vga_init(vc, iot, memt)
 }
 
 void
-vga_common_attach(self, iot, memt, type, map)
-	struct device *self;
+vga_common_attach(sc, iot, memt, type, vf)
+	struct vga_softc *sc;
 	bus_space_tag_t iot, memt;
 	int type;
-	paddr_t (*map) __P((void *, off_t, int));
+	const struct vga_funcs *vf;
 {
 	int console;
 	struct vga_config *vc;
@@ -648,14 +623,18 @@ vga_common_attach(self, iot, memt, type, map)
 		vga_init(vc, iot, memt);
 	}
 
-	vc->vc_mmap = map;
+	vc->vc_type = type;
+	vc->vc_funcs = vf;
+
+	sc->sc_vc = vc;
+	vc->softc = sc;
 
 	aa.console = console;
 	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
 
-        config_found(self, &aa, wsemuldisplaydevprint);
+        config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -712,23 +691,18 @@ vga_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if 0
 	struct vga_config *vc = v;
-#endif
+	const struct vga_funcs *vf = vc->vc_funcs;
 
 	switch (cmd) {
-#if 0
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = vc->vc_type;
-		/* XXX should get detailed hardware information here */
 		return 0;
-#else
-	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;
-		return 0;
-#endif
 
 	case WSDISPLAYIO_GINFO:
+		/* XXX should get detailed hardware information here */
+		return ENOTTY;
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 	case WSDISPLAYIO_GVIDEO:
@@ -742,7 +716,13 @@ vga_ioctl(v, cmd, data, flag, p)
 		return ENOTTY;
 	}
 
-	return -1;
+	if (vc->vc_funcs == NULL)
+		return (-1);
+
+	if (vf->vf_ioctl == NULL)
+		return (-1);
+
+	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
 }
 
 static paddr_t
@@ -751,13 +731,16 @@ vga_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-
 	struct vga_config *vc = v;
+	const struct vga_funcs *vf = vc->vc_funcs;
 
-	if (vc->vc_mmap != NULL)
-		return (*vc->vc_mmap)(v, offset, prot);
+	if (vc->vc_funcs == NULL)
+		return (-1);
 
-	return -1;
+	if (vf->vf_mmap == NULL)
+		return (-1);
+
+	return ((*vf->vf_mmap)(v, offset, prot));
 }
 
 int
