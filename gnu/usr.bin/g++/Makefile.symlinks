@@ -14,6 +14,7 @@ tm.h config.h md aux-output.c:
 	*)	echo $(MACHINE)': unsupported GCC platform'; exit 1;; \
 	esac; \
 	D=$(.CURDIR)/../../gcc/cc1/config; \
+	rm -f tm.h config.h md aux-output.c; \
 	ln -s $$D/$$T tm.h; \
 	ln -s $$D/$$C config.h; \
 	ln -s $$D/$$M md; \
