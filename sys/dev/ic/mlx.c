@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.8 2001/05/06 19:53:04 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.9 2001/05/15 12:49:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -302,8 +302,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		return;
 	}
 
-	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, size, 1, 0, 
-	    BUS_DMA_NOWAIT, &mlx->mlx_dmamap)) != 0) {
+	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0, 
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mlx->mlx_dmamap)) != 0) {
 		printf("%s: unable to create sglist DMA map, rv = %d\n",
 		    mlx->mlx_dv.dv_xname, rv);
 		return;
@@ -328,7 +328,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	for (i = 0; i < MLX_MAX_QUEUECNT; i++, mc++) {
 		mc->mc_ident = i;
 		rv = bus_dmamap_create(mlx->mlx_dmat, MLX_MAX_XFER,
-		    MLX_MAX_SEGS, PAGE_SIZE, 0,
+		    MLX_MAX_SEGS, MLX_MAX_XFER, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &mc->mc_xfer_map);
 		if (rv != 0)
@@ -1537,20 +1537,12 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 		mlx_ccb_enqueue(mlx, mc);
 	} else {
 		/* Run the command in either polled or wait mode. */
-		if (waitok) {
-			if ((rv = mlx_ccb_wait(mlx, mc)) != 0)
-				goto out;
-		} else {
-			if ((rv = mlx_ccb_poll(mlx, mc, 5000)) != 0)
-				goto out;
-		}
-
-		/* Command completed OK? */
-		if (mc->mc_status != 0)
-			goto out;
+		if (waitok)
+			rv = mlx_ccb_wait(mlx, mc);
+		else
+			rv = mlx_ccb_poll(mlx, mc, 5000);
 	}
 
-	rv = 0;
  out:
 	/* We got a command, but nobody else will free it. */
 	if (handler == NULL && mc != NULL) {

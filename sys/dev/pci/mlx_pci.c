@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.2 2001/02/18 21:02:54 mjacob Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.3 2001/05/15 12:49:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,6 +94,9 @@ static int	mlx_v3_submit(struct mlx_softc *, struct mlx_ccb *);
 static int	mlx_v3_findcomplete(struct mlx_softc *, u_int *, u_int *);
 static void	mlx_v3_intaction(struct mlx_softc *, int);
 static int	mlx_v3_fw_handshake(struct mlx_softc *, int *, int *, int *);
+#ifdef	MLX_RESET
+static int	mlx_v3_reset(struct mlx_softc *);
+#endif
 
 static int	mlx_v4_submit(struct mlx_softc *, struct mlx_ccb *);
 static int	mlx_v4_findcomplete(struct mlx_softc *, u_int *, u_int *);
@@ -270,6 +273,9 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 		mlx->mlx_findcomplete = mlx_v3_findcomplete;
 		mlx->mlx_intaction = mlx_v3_intaction;
 		mlx->mlx_fw_handshake = mlx_v3_fw_handshake;
+#ifdef MLX_RESET
+		mlx->mlx_reset = mlx_v3_reset;
+#endif
 		break;
 
 	case 4:
@@ -396,6 +402,48 @@ mlx_v3_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 	return (2);
 }
 
+#ifdef MLX_RESET
+/*
+ * Reset the controller.  Return non-zero on failure.
+ */
+static int 
+mlx_v3_reset(struct mlx_softc *mlx)
+{
+	int i;
+
+	mlx_outb(mlx, MLX_V3REG_IDB, MLX_V3_IDB_SACK);
+	delay(1000000);
+
+	/* Wait up to 2 minutes for the bit to clear. */
+	for (i = 120; i != 0; i--) {
+		delay(1000000);
+		if ((mlx_inb(mlx, MLX_V3REG_IDB) & MLX_V3_IDB_SACK) == 0)
+			break;
+	}
+	if (i == 0) {
+		/* ZZZ */
+		printf("mlx0: SACK didn't clear\n");
+		return (-1);
+	}
+
+	mlx_outb(mlx, MLX_V3REG_IDB, MLX_V3_IDB_RESET);
+
+	/* Wait up to 5 seconds for the bit to clear. */
+	for (i = 5; i != 0; i--) {
+		delay(1000000);
+		if ((mlx_inb(mlx, MLX_V3REG_IDB) & MLX_V3_IDB_RESET) == 0)
+			break;
+	}
+	if (i == 0) {
+		/* ZZZ */
+		printf("mlx0: RESET didn't clear\n");
+		return (-1);
+	}
+
+	return (0);
+}
+#endif	/* MLX_RESET */
+
 /*
  * ================= V4 interface linkage =================
  */
@@ -413,9 +461,8 @@ mlx_v4_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	/* Ready for our command? */
 	if ((mlx_inl(mlx, MLX_V4REG_IDB) & MLX_V4_IDB_FULL) == 0) {
 		/* Copy mailbox data to window. */
-		bus_space_write_region_4(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V4REG_MAILBOX, (const u_int32_t *)mc->mc_mbox,
-		    MLX_V4_MAILBOX_LEN >> 2);
+		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
+		    MLX_V4REG_MAILBOX, mc->mc_mbox, MLX_V4_MAILBOX_LEN);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
 		    MLX_V4REG_MAILBOX, MLX_V4_MAILBOX_LEN,
 		    BUS_SPACE_BARRIER_WRITE);
@@ -525,9 +572,8 @@ mlx_v5_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	/* Ready for our command? */
 	if ((mlx_inb(mlx, MLX_V5REG_IDB) & MLX_V5_IDB_EMPTY) != 0) {
 		/* Copy mailbox data to window. */
-		bus_space_write_region_4(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V5REG_MAILBOX, (const u_int32_t *)mc->mc_mbox,
-		    MLX_V5_MAILBOX_LEN >> 2);
+		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
+		    MLX_V5REG_MAILBOX, mc->mc_mbox, MLX_V5_MAILBOX_LEN);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
 		    MLX_V5REG_MAILBOX, MLX_V5_MAILBOX_LEN,
 		    BUS_SPACE_BARRIER_WRITE);
