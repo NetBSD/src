@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.4 2002/02/05 03:04:26 thorpej Exp $	*/
+/*	$NetBSD: lint.h,v 1.5 2002/03/07 18:29:56 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -35,13 +35,17 @@
 #include "config.h"
 #else
 #define HAVE_DECL_SYS_SIGNAME 1
+#define HAVE_INTTYPES_H 1
 #endif
 
 #include <sys/types.h>
 #include <stddef.h>
 #include <err.h>
-#include <inttypes.h>
 #include <stdio.h>
+
+#if HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #include "param.h"
 
