@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.97 2000/02/27 01:27:48 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.98 2000/03/03 20:34:17 veego Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1368,6 +1368,11 @@ amiga
 # ./usr/share/man/cat8/amiga
 ..
 
+# ./usr/share/man/cat8/arc
+arc
+# ./usr/share/man/cat8/arc
+..
+
 # ./usr/share/man/cat8/arm32
 arm32
 # ./usr/share/man/cat8/arm32
@@ -1677,6 +1682,11 @@ alpha
 # ./usr/share/man/man8/amiga
 amiga
 # ./usr/share/man/man8/amiga
+..
+
+# ./usr/share/man/man8/arc
+arc
+# ./usr/share/man/man8/arc
 ..
 
 # ./usr/share/man/man8/arm32
