@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.2 1994/01/10 14:04:46 deraadt Exp $
+ * $Id: bootparamd.c,v 1.3 1994/01/23 21:55:56 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -337,7 +337,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				 * the client we are looking for
 				 */
 				struct hostent *hp = gethostbyname(word);
-				if (hp == NULL || !strcmp(hp->h_name, client))
+				if (hp == NULL || strcmp(hp->h_name, client))
 					continue;
 			}
 			contin *= -1;
