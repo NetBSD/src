@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.4 1993/08/01 05:40:41 mycroft Exp $
+#	$Id: Makefile.inc,v 1.5 1993/09/17 19:23:38 phil Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/${MACHINE}/stdlib ${.CURDIR}/stdlib
@@ -13,6 +13,8 @@ SRCS+=	abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c div.c exit.c \
 SRCS+=	abs.s atof.c
 .elif (${MACHINE} == "i386")
 SRCS+=	abs.s
+.elif (${MACHINE} == "pc532")
+SRCS+=	abs.s atof.c
 .elif (${MACHINE} == "tahoe")
 SRCS+=	abs.s atof.s
 .elif (${MACHINE} == "vax")
