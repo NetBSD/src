@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.10 2001/12/13 23:56:00 augustss Exp $	*/
+/*	$NetBSD: main1.c,v 1.11 2002/01/29 02:43:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main1.c,v 1.10 2001/12/13 23:56:00 augustss Exp $");
+__RCSID("$NetBSD: main1.c,v 1.11 2002/01/29 02:43:38 tv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: main1.c,v 1.10 2001/12/13 23:56:00 augustss Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <err.h>
 #include <errno.h>
 #include <limits.h>
 
