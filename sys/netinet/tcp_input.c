@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.179 2003/08/22 22:00:37 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.180 2003/08/22 22:49:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.179 2003/08/22 22:00:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.180 2003/08/22 22:49:34 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3691,8 +3691,6 @@ syn_cache_respond(sc, m)
 	m->m_data += max_linkhdr;
 	m->m_len = m->m_pkthdr.len = tlen;
 	if (sc->sc_tp) {
-		struct socket *so;
-
 		tp = sc->sc_tp;
 		if (tp->t_inpcb)
 			so = tp->t_inpcb->inp_socket;
@@ -3702,7 +3700,8 @@ syn_cache_respond(sc, m)
 #endif
 		else
 			so = NULL;
-	}
+	} else
+		so = NULL;
 	m->m_pkthdr.rcvif = NULL;
 	memset(mtod(m, u_char *), 0, tlen);
 
