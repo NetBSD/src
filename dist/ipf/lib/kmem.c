@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: kmem.c,v 1.2 2004/03/28 14:15:38 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -134,7 +134,7 @@ char	*kern, *core;
 		perror("openkmem:open");
 		return -1;
 	    }
-	return (int)kvm_f;
+	return kvm_f != NULL;
 }
 
 int	kmemcpy(buf, pos, n)
