@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.29 1996/02/26 23:17:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -151,8 +151,7 @@ ip_output(m0, va_alist)
 	 * short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
-		if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
-		    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
+		if ((ia = ifatoia(ifa_ifwithladdr(sintosa(dst)))) == 0) {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;

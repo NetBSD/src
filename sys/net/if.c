@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.25 1996/02/21 14:28:33 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.26 1996/02/26 23:16:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -227,6 +227,20 @@ ifa_ifwithnet(addr)
 				ifa_maybe = ifa;
 		}
 	return (ifa_maybe);
+}
+/*
+ * Find the interface of the addresss.
+ */
+struct ifaddr *
+ifa_ifwithladdr(addr)
+	struct sockaddr *addr;
+{
+	struct ifaddr *ia;
+
+	if ((ia = ifa_ifwithaddr(addr)) || (ia = ifa_ifwithdstaddr(addr))
+	    || (ia = ifa_ifwithnet(addr)))
+		return (ia);
+	return (NULL);
 }
 
 /*

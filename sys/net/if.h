@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.21 1996/02/17 12:32:50 pk Exp $	*/
+/*	$NetBSD: if.h,v 1.22 1996/02/26 23:16:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -343,6 +343,7 @@ struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));
 struct	ifaddr *ifa_ifwithdstaddr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithnet __P((struct sockaddr *));
+struct	ifaddr *ifa_ifwithladdr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
 					struct sockaddr *));
 struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
