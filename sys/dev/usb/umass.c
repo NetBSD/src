@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.61 2001/04/26 03:59:32 enami Exp $	*/
+/*	$NetBSD: umass.c,v 1.62 2001/06/04 06:01:40 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -1238,6 +1238,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			panic("%s: transferred %d bytes instead of %d bytes\n",
 				USBDEVNAME(sc->sc_dev),
 				sc->transfer_actlen, sc->transfer_datalen);
+#if 0
 		} else if (sc->transfer_datalen - sc->transfer_actlen
 			   != UGETDW(sc->csw.dCSWDataResidue)) {
 			DPRINTF(UDMASS_BBB, ("%s: actlen=%d != residue=%d\n",
@@ -1247,7 +1248,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
-
+#endif
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_FAILED) {
 			DPRINTF(UDMASS_BBB, ("%s: Command Failed, res = %d\n",
 				USBDEVNAME(sc->sc_dev),
