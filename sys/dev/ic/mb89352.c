@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.26 2004/01/06 18:07:17 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.26.2.1 2004/08/12 04:19:08 jmc Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.26 2004/01/06 18:07:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.26.2.1 2004/08/12 04:19:08 jmc Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -970,9 +970,6 @@ nextbyte:
 		}
 
 		bus_space_write_1(iot, ioh, PCTL, PH_MSGIN);
-		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
-		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
-			continue;	/* XXX needs timeout */
 		msg = bus_space_read_1(iot, ioh, TEMP);
 #endif
 
@@ -1007,6 +1004,9 @@ nextbyte:
 
 #ifndef NO_MANUAL_XFER /* XXX */
 		/* Ack the last byte read. */
+		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
+		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
+			continue;	/* XXX needs timeout */
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 #endif
 	}
@@ -1181,6 +1181,9 @@ nextbyte:
 
 #ifndef NO_MANUAL_XFER /* XXX */
 	/* Ack the last message byte. */
+	bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
+	while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
+		continue;	/* XXX needs timeout */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 #endif
 
@@ -1188,8 +1191,10 @@ nextbyte:
 	goto nextmsg;
 
 out:
+#ifdef NO_MANUAL_XFER /* XXX */
 	/* Ack the last message byte. */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+#endif
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
 }
 
@@ -1998,10 +2003,10 @@ dophase:
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
 			continue;	/* XXX needs timeout */
 		bus_space_write_1(iot, ioh, PCTL, PH_STAT);
+		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
 		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
 			continue;	/* XXX needs timeout */
-		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 #endif
 
