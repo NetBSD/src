@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.65 1996/03/15 02:43:54 paulus Exp $
+#	$NetBSD: files.oldconf,v 1.66 1996/03/19 01:02:37 paulus Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -133,10 +133,10 @@ net/if_arcsubr.c      optional arc device-driver
 net/if_ethersubr.c	optional ether device-driver
 net/if_loop.c		optional loop device-driver
 net/if_ppp.c		optional ppp device-driver
-net/bsd-comp.c		optional ppp
+net/bsd-comp.c		optional ppp_bsdcomp
 net/ppp_tty.c		optional ppp
-net/ppp-deflate.c	optional ppp
-net/zlib.c		optional ppp
+net/ppp-deflate.c	optional ppp_deflate
+net/zlib.c		optional ppp_deflate
 net/if_sl.c		optional sl device-driver
 net/if_tun.c		optional tun device-driver
 net/radix.c		standard
