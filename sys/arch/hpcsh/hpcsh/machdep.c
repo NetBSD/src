@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2001/02/21 16:28:03 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2001/02/24 20:17:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
+#include "hpcfb.h"
+#include "pfckbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +60,7 @@
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/autoconf.h>		/* makebootdev() */
 
 #include <sh3/intcreg.h>
 
@@ -67,6 +70,15 @@
 #define DPRINTF(arg) printf arg
 #else
 #define DPRINTF(arg)
+#endif
+
+#if NHPCFB > 0
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <dev/hpc/hpcfbvar.h>
+#endif
+#if NPFCKBD > 0
+#include <hpcsh/dev/pfckbdvar.h>
 #endif
 
 /* 
@@ -155,7 +167,6 @@ int		physmem;	/* in hpcsh port, page unit */
 
 void main(void);
 void machine_startup(int, char *[], struct bootinfo *);
-void makebootdev(const char *);
 struct bootinfo *bootinfo;
 
 void
@@ -227,24 +238,18 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		kernend += fssz;
 	}
 #endif
+	/* console requires platform information */
+	if (bootinfo->magic == BOOTINFO_MAGIC) {
+		platid.dw.dw0 = bootinfo->platid_cpu;
+		platid.dw.dw1 = bootinfo->platid_machine;
+	}
 
 	/* start console */
 	consinit();
 	
 	/* print kernel option */
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < argc; i++)
 		DPRINTF(("option [%d]: %s\n", i, argv[i]));
-	}
-	if (bootinfo->magic == BOOTINFO_MAGIC) {
-		if (bootinfo->platid_cpu != 0) {
-			platid.dw.dw0 = bootinfo->platid_cpu;
-		}
-		if (bootinfo->platid_machine != 0) {
-			platid.dw.dw1 = bootinfo->platid_machine;
-		}
-	} else {
-		panic("invalid boot info magic. use lates bootloader.\n");
-	}
 	DPRINTF(("platid(cpu/machine) = %08lx/%08lx\n",
 		 bootinfo->platid_cpu, bootinfo->platid_machine));
 	DPRINTF(("display=%dx%d-(%d) %p type=%d \n",
@@ -624,9 +629,22 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 void
 consinit()
 {
+	static int initted;
+
+	if (initted)
+		return;
+	initted = 1;
 #if NBICONSDEV > 0
 	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL))
 		bicons_set_priority(CN_REMOTE + 1); /* set highest */
 #endif
 	cninit();
+	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
+#if NPFCKBD > 0
+		pfckbd_cnattach();
+#endif
+#if NHPCFB > 0
+		hpcfb_cnattach(0);
+#endif
+	}
 }
