@@ -34,6 +34,7 @@ sparc*-*-linux*)	targ_emul=elf32_sparc
 			;;
 sparc*-*-lynxos*)	targ_emul=sparclynx ;;
 sparc64-*-netbsd*)	targ_emul=elf64_sparc ;;
+sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc ;;
 sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
 sparc*-*-solaris2*)	targ_emul=elf32_sparc ;;
 sparc*-wrs-vxworks*)	targ_emul=sparcaout ;;
