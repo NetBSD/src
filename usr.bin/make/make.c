@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.26 2000/02/15 04:41:45 sjg Exp $	*/
+/*	$NetBSD: make.c,v 1.27 2000/02/29 22:00:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.26 2000/02/15 04:41:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.27 2000/02/29 22:00:02 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.26 2000/02/15 04:41:45 sjg Exp $");
+__RCSID("$NetBSD: make.c,v 1.27 2000/02/29 22:00:02 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -212,8 +212,8 @@ Make_OODate (gn)
 	 * always out of date if no children and :: target
 	 * or non-existent.
 	 */
-	oodate = (gn->cmtime == 0 || Arch_LibOODate (gn)
-		  || gn->type & OP_DOUBLEDEP);
+	oodate = (gn->cmtime == 0 || Arch_LibOODate (gn) || 
+		  (gn->cmtime == 0 && (gn->type & OP_DOUBLEDEP)));
     } else if (gn->type & OP_JOIN) {
 	/*
 	 * A target with the .JOIN attribute is only considered
