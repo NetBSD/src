@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.18 1998/12/05 19:43:35 mjacob Exp $	*/
+/*	$NetBSD: empsc.c,v 1.19 1999/01/10 13:35:39 tron Exp $	*/
 
 /*
 
@@ -107,7 +107,7 @@ empscattach(pdp, dp, auxp)
 	zap = auxp;
 	
 	sc = (struct sci_softc *)dp;
-	rp = zap->va + 0x5000;
+	rp = (u_char *)zap->va + 0x5000;
 
 	sc->sci_data = rp;
 	sc->sci_odata = rp;
