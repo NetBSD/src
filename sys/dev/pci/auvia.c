@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.36.2.2 2004/09/22 20:58:15 jmc Exp $	*/
+/*	$NetBSD: auvia.c,v 1.36.2.2.2.1 2005/01/30 13:17:07 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.36.2.2 2004/09/22 20:58:15 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.36.2.2.2.1 2005/01/30 13:17:07 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ int	auvia_trigger_output(void *, void *, void *, int, void (*)(void *),
 	void *, struct audio_params *);
 int	auvia_trigger_input(void *, void *, void *, int, void (*)(void *),
 	void *, struct audio_params *);
-
-int	auvia_intr __P((void *));
+void	auvia_powerhook(int, void *);
+int	auvia_intr(void *);
 
 CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, NULL, NULL);
@@ -366,6 +366,10 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
 	}
+
+	/* Watch for power change */
+	sc->sc_suspend = PWR_RESUME;
+	sc->sc_powerhook = powerhook_establish(auvia_powerhook, sc);
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
 }
@@ -1143,4 +1147,37 @@ auvia_intr(void *arg)
 	}
 
 	return rval;
+}
+
+void
+auvia_powerhook(int why, void *addr)
+{
+	struct auvia_softc *sc = (struct auvia_softc *)addr;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		/* Power down */
+		sc->sc_suspend = why;
+		break;
+
+	case PWR_RESUME:
+		/* Wake up */
+		if (sc->sc_suspend == PWR_RESUME) {
+			printf("%s: resume without suspend.\n",
+			    sc->sc_dev.dv_xname);
+			sc->sc_suspend = why;
+			return;
+		}
+		sc->sc_suspend = why;
+		auvia_reset_codec(sc);
+		DELAY(1000);
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		break;
+
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
 }
