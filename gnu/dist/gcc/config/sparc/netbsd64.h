@@ -1,5 +1,10 @@
 /* netbsd sparc64 ELF configuration */
 
+/* Name the target CPU (this must be before <sparc/sparc.h>) */
+#ifndef TARGET_CPU_DEFAULT
+#define TARGET_CPU_DEFAULT    TARGET_CPU_ultrasparc
+#endif
+
 #include <sparc/sp64-elf.h>
 
 /* maybe remove __sparc__ ? */
@@ -73,8 +78,3 @@
 /* XXX Redefine this; <sparc/sparc.h> mucks with it. */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);
-
-/* Name the target CPU. */
-#ifndef TARGET_CPU_DEFAULT
-#define TARGET_CPU_DEFAULT	TARGET_CPU_ultrasparc
-#endif
