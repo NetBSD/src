@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.3 1996/04/18 08:52:12 leo Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.4 1996/10/16 12:57:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -68,6 +68,6 @@ dev_type_close(viewclose);
 dev_type_ioctl(viewioctl);
 dev_type_open(viewopen);
 dev_type_mmap(viewmmap);
-dev_type_select(viewselect);
+dev_type_poll(viewpoll);
 
 #endif /* _KERNEL */

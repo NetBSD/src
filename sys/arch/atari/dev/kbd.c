@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.12 1996/10/13 04:11:03 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.13 1996/10/16 12:57:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -72,7 +72,7 @@ dev_type_open(kbdopen);
 dev_type_close(kbdclose);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
-dev_type_select(kbdselect);
+dev_type_poll(kbdpoll);
 
 /* Interrupt handler */
 void	kbdintr __P((int));
@@ -253,9 +253,9 @@ kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
 }
 
 int
-kbdselect (dev_t dev, int rw, struct proc *p)
+kbdpoll (dev_t dev, int events, struct proc *p)
 {
-  return ev_select (&kbd_softc.k_events, rw, p);
+  return ev_poll (&kbd_softc.k_events, events, p);
 }
 
 /*
