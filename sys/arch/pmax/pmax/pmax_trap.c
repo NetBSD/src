@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.33 1996/03/25 06:44:19 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.34 1996/04/10 17:38:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,6 @@
 
 /* XXX */
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
@@ -89,7 +88,16 @@
 
 #include <pmax/pmax/trap.h>
 
+#include <machine/autoconf.h>
+
+#ifdef DS3100
+#include <pmax/pmax/kn01.h>
+#include <pmax/pmax/kn01var.h>
+#endif /* DS3100 */
+
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
+
+
 
 
 
@@ -144,6 +152,24 @@ typedef enum {
 } decstation_intr_t;
 
 
+#ifdef DS3100
+
+/*
+ *  The pmax (3100) has no option bus. Each device is wired to
+ * a separate interrupt.  For historical reasons, we call interrupt
+ * routines directly, if they're enabled.
+ */
+
+#if NLE > 0
+int leintr __P((void *));
+#endif
+#if NSII > 0
+int siiintr __P((void *));
+#endif
+#if NDC > 0
+int dcintr __P((void *));
+#endif
+
 /*
  * Handle pmax (DECstation 2100/3100) interrupts.
  */
@@ -172,14 +198,16 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		/* keep clock interrupts enabled */
 		causeReg &= ~MACH_INT_MASK_3;
 	}
-	/* Re-enable clock interrupts */
+	/* Re-enable clock interrupts ASAP*/
 	splx(MACH_INT_MASK_3 | MACH_SR_INT_ENA_CUR);
+
 #if NSII > 0
 	if (mask & MACH_INT_MASK_0) {
 		intrcnt[SCSI_INTR]++;
 		siiintr(sii_cd.cd_devs[0]);
 	}
-#endif
+#endif /* NSII */
+
 #if NLE > 0
 	if (mask & MACH_INT_MASK_1) {
 
@@ -192,13 +220,15 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		leintr(le_cd.cd_devs[0]);
 		intrcnt[LANCE_INTR]++;
 	}
-#endif
+#endif /* NLE */
+
 #if NDC > 0
 	if (mask & MACH_INT_MASK_2) {
 		dcintr(dc_cd.cd_devs[0]);
 		intrcnt[SERIAL0_INTR]++;
 	}
-#endif
+#endif /* NDC */
+
 	if (mask & MACH_INT_MASK_4) {
 		pmax_errintr();
 		intrcnt[ERROR_INTR]++;
@@ -206,6 +236,8 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
 		MACH_SR_INT_ENA_CUR);
 }
+#endif	/* DS3100 */
+
 
 /*
  * Handle hardware interrupts for the KN02. (DECstation 5000/200)
@@ -747,12 +779,11 @@ static void
 kn02_errintr()
 {
 	u_int erradr, chksyn, physadr;
-	int i;
 
 	erradr = *(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR);
 	chksyn = *(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN);
 	*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR) = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	if (!(erradr & KN02_ERR_VALID))
 		return;
@@ -768,7 +799,7 @@ kn02_errintr()
 		physadr);
 	if (erradr & KN02_ERR_ECCERR) {
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 		printf("ECC 0x%08x\n", chksyn);
 
 		/* check for a corrected, single bit, read error */
@@ -792,12 +823,11 @@ static void
 kn03_errintr()
 {
 	u_int erradr, errsyn, physadr;
-	int i;
 
 	erradr = *(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR);
 	errsyn = *(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRSYN);
 	*(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	if (!(erradr & KN03_ERR_VALID))
 		return;
@@ -813,7 +843,7 @@ kn03_errintr()
 		physadr);
 	if (erradr & KN03_ERR_ECCERR) {
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRSYN) = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 		printf("   ECC 0x%08x\n", errsyn);
 
 		/* check for a corrected, single bit, read error */

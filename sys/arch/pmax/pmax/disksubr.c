@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1996/02/02 18:07:47 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1996/04/10 17:38:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -38,6 +38,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
@@ -47,11 +49,18 @@
 #include "../../stand/dec_boot.h"
 
 extern char *
-compat_label __P((dev_t dev, void (*strat)(),
+compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		  struct disklabel *lp, struct cpu_disklabel *osdep));
 
 #endif
 
+char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+		       register struct disklabel *lp,
+		       struct cpu_disklabel *osdep));
+
+int	dk_establish __P((struct disk *dk, struct device *dev));
+int	bounds_check_with_label __P((struct buf *bp, struct disklabel *lp,
+				     int wlabel));
 
 /*
  * Attempt to read a disk label from a device
@@ -188,6 +197,7 @@ done:
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -233,6 +243,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)();
@@ -256,7 +267,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
-	if (error = biowait(bp))
+	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_un.b_addr;
 	    dlp <= (struct disklabel *)
