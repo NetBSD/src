@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.2 1999/12/14 23:58:15 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.3 1999/12/15 10:33:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -498,12 +498,33 @@ hme_init(sc)
 	v |= HME_ETX_CFG_DMAENABLE;
 	bus_space_write_4(t, etx, HME_ETXI_CFG, v);
 
-	/* Descriptor ring size: in increments of 16 */
-	bus_space_write_4(t, etx, HME_ETXI_RSIZE, _HME_NDESC / 16);
+	/* Transmit Descriptor ring size: in increments of 16 */
+	bus_space_write_4(t, etx, HME_ETXI_RSIZE, _HME_NDESC / 16 - 1);
 
 
-	/* step 10. ERX Configuration: use default values; enable DMA */
+	/* step 10. ERX Configuration */
 	v = bus_space_read_4(t, erx, HME_ERXI_CFG);
+
+	/* Encode Receive Descriptor ring size: four possible values */
+	switch (_HME_NDESC /*XXX*/) {
+	case 32:
+		v |= HME_ERX_CFG_RINGSIZE32;
+		break;
+	case 64:
+		v |= HME_ERX_CFG_RINGSIZE64;
+		break;
+	case 128:
+		v |= HME_ERX_CFG_RINGSIZE128;
+		break;
+	case 256:
+		v |= HME_ERX_CFG_RINGSIZE256;
+		break;
+	default:
+		printf("hme: invalid Receive Descriptor ring size\n");
+		break;
+	}
+
+	/* Enable DMA */
 	v |= HME_ERX_CFG_DMAENABLE;
 	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
 
@@ -758,6 +779,7 @@ hme_start(ifp)
 			HME_XD_OWN | HME_XD_SOP | HME_XD_EOP |
 			HME_XD_ENCODE_TSIZE(len));
 
+		/*if (sc->sc_rb.rb_td_nbusy <= 0)*/
 		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
 				  HME_ETX_TP_DMAWAKEUP);
 
@@ -817,12 +839,13 @@ hme_tint(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
 
-		if (++ri == sc->sc_rb.rb_nrbuf)
+		if (++ri == sc->sc_rb.rb_ntbuf)
 			ri = 0;
 
 		--sc->sc_rb.rb_td_nbusy;
 	}
 
+	/* Update ring */
 	sc->sc_rb.rb_tdtail = ri;
 
 	hme_start(ifp);
@@ -992,6 +1015,11 @@ static void
 hme_mii_statchg(dev)
 	struct device *dev;
 {
+#ifdef HMEDEBUG
+	struct hme_softc *sc = (void *)dev;
+	if (sc->sc_debug)
+		printf("hme_mii_statchg: status change\n");
+#endif
 }
 
 int
