@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.46 2001/07/19 16:25:26 thorpej Exp $	*/
+/*	$NetBSD: siop.c,v 1.47 2001/10/14 20:37:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -88,7 +88,7 @@ int	siop_scsicmd __P((struct scsipi_xfer *));
 void	siop_scsipi_request __P((struct scsipi_channel *,
 			scsipi_adapter_req_t, void *));
 void	siop_dump_script __P((struct siop_softc *));
-int	siop_morecbd __P((struct siop_softc *));
+void	siop_morecbd __P((struct siop_softc *));
 struct siop_lunsw *siop_get_lunsw __P((struct siop_softc *));
 void	siop_add_reselsw __P((struct siop_softc *, int));
 void	siop_update_scntl3 __P((struct siop_softc *, struct siop_target *));
@@ -201,7 +201,7 @@ siop_attach(sc)
 
 	sc->sc_adapt.adapt_dev = &sc->sc_dev;
 	sc->sc_adapt.adapt_nchannels = 1;
-	sc->sc_adapt.adapt_openings = 225;
+	sc->sc_adapt.adapt_openings = 0;
 	sc->sc_adapt.adapt_max_periph = SIOP_NTAG - 1;
 	sc->sc_adapt.adapt_ioctl = siop_ioctl;
 	sc->sc_adapt.adapt_minphys = minphys;
@@ -211,6 +211,7 @@ siop_attach(sc)
 	sc->sc_chan.chan_adapter = &sc->sc_adapt;
 	sc->sc_chan.chan_bustype = &scsi_bustype;
 	sc->sc_chan.chan_channel = 0;
+	sc->sc_chan.chan_flags = SCSIPI_CHAN_CANGROW;
 	sc->sc_chan.chan_ntargets = (sc->features & SF_BUS_WIDE) ? 16 : 8;
 	sc->sc_chan.chan_nluns = 8;
 	sc->sc_chan.chan_id = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
@@ -1190,24 +1191,13 @@ siop_scsipi_request(chan, req, arg)
 		printf("starting cmd for %d:%d\n", target, lun);
 #endif
 		siop_cmd = TAILQ_FIRST(&sc->free_list);
-		if (siop_cmd) {
-			TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
-		} else {
-			if (siop_morecbd(sc) == 0) {
-				siop_cmd = TAILQ_FIRST(&sc->free_list);
-#ifdef DIAGNOSTIC
-				if (siop_cmd == NULL)
-					panic("siop_morecbd succeed and does nothing");
-#endif
-				TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
-			}
-		}
 		if (siop_cmd == NULL) {
 			xs->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(xs);
 			splx(s);
 			return;
 		}
+		TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 #ifdef DIAGNOSTIC
 		if (siop_cmd->status != CMDST_FREE)
 			panic("siop_scsicmd: new cmd not free");
@@ -1316,7 +1306,11 @@ siop_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
-		/* XXX Not supported. */
+#ifdef SIOP_DEBUG
+		printf("%s grow resources (%d)\n", sc->sc_dev.dv_xname,
+		    sc->sc_adapt.adapt_openings);
+#endif
+		siop_morecbd(sc);
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
@@ -1525,7 +1519,7 @@ siop_dump_script(sc)
 	}
 }
 
-int
+void
 siop_morecbd(sc)
 	struct siop_softc *sc;
 {
@@ -1541,7 +1535,7 @@ siop_morecbd(sc)
 	if (newcbd == NULL) {
 		printf("%s: can't allocate memory for command descriptors "
 		    "head\n", sc->sc_dev.dv_xname);
-		return ENOMEM;
+		return;
 	}
 	memset(newcbd, 0, sizeof(struct siop_cbd));
 
@@ -1551,7 +1545,6 @@ siop_morecbd(sc)
 	if (newcbd->cmds == NULL) {
 		printf("%s: can't allocate memory for command descriptors\n",
 		    sc->sc_dev.dv_xname);
-		error = ENOMEM;
 		goto bad3;
 	}
 	memset(newcbd->cmds, 0, sizeof(struct siop_cmd) * SIOP_NCMDPB);
@@ -1587,7 +1580,6 @@ siop_morecbd(sc)
 	printf("%s: alloc newcdb at PHY addr 0x%lx\n", sc->sc_dev.dv_xname,
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
-	
 	for (i = 0; i < SIOP_NCMDPB; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SIOP_NSG,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
@@ -1664,8 +1656,10 @@ siop_morecbd(sc)
 #endif
 	}
 	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
-	return 0;
+	sc->sc_adapt.adapt_openings += SIOP_NCMDPB;
+	return;
 bad0:
+	bus_dmamap_unload(sc->sc_dmat, newcbd->xferdma);
 	bus_dmamap_destroy(sc->sc_dmat, newcbd->xferdma);
 bad1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -1673,7 +1667,7 @@ bad2:
 	free(newcbd->cmds, M_DEVBUF);
 bad3:
 	free(newcbd, M_DEVBUF);
-	return error;
+	return;
 }
 
 struct siop_lunsw *
