@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.20 2003/08/11 21:18:18 fvdl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.21 2003/08/20 13:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.20 2003/08/11 21:18:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.21 2003/08/20 13:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1169,7 +1169,7 @@ sa_vp_repossess(struct lwp *l)
 	SCHED_ASSERT_UNLOCKED();
 
 	while(sa->sa_vp != l) {
-		tsleep((caddr_t) l, PWAIT, "sa processor", 0);
+		tsleep((caddr_t) l, PWAIT, "saprocessor", 0);
 		
 		/* XXXUPSXXX NEED TO STOP THE LWP HERE ON REQUEST ??? */
 	       	if (p->p_flag & P_WEXIT) {
