@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.15 1998/08/28 20:05:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.16 1998/08/28 21:16:23 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -1029,6 +1029,16 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	vaddr_t va;
 	int s;
 
+	/*
+	 * NOTE: We may be called with a map that doens't require splimp
+	 * protection (e.g. kernel_map).  However, it does not hurt to
+	 * go to splimp in this case (since unprocted maps will never be
+	 * accessed in interrupt context).
+	 *
+	 * XXX We may want to consider changing the interface to this
+	 * XXX function.
+	 */
+
 	s = splimp();
 	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, waitok ? 0 : UVM_KMF_NOWAIT);
 	splx(s);
@@ -1055,6 +1065,16 @@ uvm_km_free_poolpage1(map, addr)
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 #else
 	int s;
+
+	/*
+	 * NOTE: We may be called with a map that doens't require splimp
+	 * protection (e.g. kernel_map).  However, it does not hurt to
+	 * go to splimp in this case (since unprocted maps will never be
+	 * accessed in interrupt context).
+	 *
+	 * XXX We may want to consider changing the interface to this
+	 * XXX function.
+	 */
 
 	s = splimp();
 	uvm_km_free(map, addr, PAGE_SIZE);
