@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2005/01/27 12:35:53 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2005/02/25 07:09:58 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2005/01/27 12:35:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2005/02/25 07:09:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -527,7 +527,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			if (!uvm_page_physget(&pg))
 				panic("pmap_growkernel: no memory");
 		}
-		if (!pg) panic("pmap_growkernel: no pages");
+		if (!pg)
+			panic("pmap_growkernel: no pages");
 		pmap_zero_page((paddr_t)pg);
 
 		/* XXX This is based on all phymem being addressable */
