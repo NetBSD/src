@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1998/11/11 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 1999/01/08 09:20:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1384,61 +1384,6 @@ Lcpyloop:
 Lcpydone:
 	movl	_curpcb,a1		|  current pcb
 	clrl	a1@(PCB_ONFAULT)	|  clear error catch
-	rts
-
-/*
- * Copy 1 relocation unit (NBPG bytes)
- * from physical address to physical address
- */
-ENTRY(physcopyseg)
-	movl	sp@(4),d0		|  source page number 
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			|  convert to address 
-	orl	#PG_CI+PG_RW+PG_V,d0	|  make sure valid and writable 
-	movl	_CMAP1,a0
-	movl	d0,a0@			|  load in page table 
-	movl	_CADDR1,sp@-		|  destination kernel VA 
-	jbsr	_TBIS			|  invalidate any old mapping 
-	addql	#4,sp
-
-	movl	sp@(8),d0		|  destination page number 
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			|  convert to address 
-	orl	#PG_CI+PG_RW+PG_V,d0	|  make sure valid and writable 
-	movl	_CMAP2,a0
-	movl	d0,a0@			|  load in page table 
-	movl	_CADDR2,sp@-		|  destination kernel VA 
-	jbsr	_TBIS			|  invalidate any old mapping 
-	addql	#4,sp
-
-	movl	_CADDR1,a0		|  source addr 
-	movl	_CADDR2,a1		|  destination addr 
-	movl	#NBPG/4-1,d0		|  count 
-Lpcpy:
-	movl	a0@+,a1@+		|  copy longword 
-	dbf	d0,Lpcpy		|  continue until done 
-	rts
-
-/*
- * zero out physical memory
- * specified in relocation units (NBPG bytes)
- */
-ENTRY(clearseg)
-	movl	sp@(4),d0		|  destination page number
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			|  convert to address
-	orl	#PG_CI+PG_RW+PG_V,d0	|  make sure valid and writable
-	movl	_CMAP1,a0
-	movl	_CADDR1,sp@-		|  destination kernel VA
-	movl	d0,a0@			|  load in page map
-	jbsr	_TBIS			|  invalidate any old mapping
-	addql	#4,sp
-	movl	_CADDR1,a1		|  destination addr
-	movl	#NBPG/4-1,d0		|  count
-	/* simple clear loop is fastest on 68020 */
-Lclrloop:
-	clrl	a1@+			|  clear a longword
-	dbf		d0,Lclrloop	|  continue til done
 	rts
 
 /*
