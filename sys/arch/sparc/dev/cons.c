@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.4 1993/10/13 03:27:52 deraadt Exp $
+ * $Id: cons.c,v 1.5 1993/11/10 15:06:41 deraadt Exp $
  */
 
 /*
@@ -74,7 +74,7 @@ extern struct promvec *promvec;
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
-struct tty *cntty[1] = { &cons };
+struct tty *cn_tty[1] = { &cons };
 static void (*fcnstop) __P((struct tty *, int));
 
 static void cnstart __P((struct tty *));
