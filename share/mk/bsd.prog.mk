@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.190 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.191 2003/10/19 03:00:55 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -179,7 +179,7 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
 
 ${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
-	${_MKMSG} "   link  ${PROG}"
+	${_MKMSGLINK.m} ${PROG}
 .if defined(DESTDIR)
 	${_MKCMD}\
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
@@ -233,7 +233,7 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 
 __proginstall: .USE
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${STRIPFLAG} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
@@ -265,7 +265,7 @@ scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRI
 .PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 
 __scriptinstall: .USE
-	${_MKMSG} "install  ${.TARGET}"
+	${_MKMSGINSTALL}
 	${_MKCMD}\
 	${INSTALL_FILE} \
 	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
