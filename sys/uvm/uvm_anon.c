@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.30 2004/09/01 10:09:26 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.31 2004/09/01 11:53:38 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.30 2004/09/01 10:09:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.31 2004/09/01 11:53:38 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -278,6 +278,9 @@ uvm_anfree(anon)
 	 * now that we've stripped the data areas from the anon,
 	 * free the anon itself.
 	 */
+
+	KASSERT(anon->u.an_page == NULL);
+	KASSERT(anon->an_swslot == 0);
 
 	simple_lock(&uvm.afreelock);
 	anon->u.an_nxt = uvm.afree;
