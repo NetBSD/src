@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.114 2000/12/28 11:16:49 jdolecek Exp $ */
+/* $NetBSD: syscall.h,v 1.115 2001/01/01 16:45:07 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -66,9 +66,6 @@
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	SYS_getpid	20
 
-/* syscall: "getpid" ret: "pid_t" args: */
-#define	SYS_getpid	20
-
 /* syscall: "mount" ret: "int" args: "const char *" "const char *" "int" "void *" */
 #define	SYS_mount	21
 
@@ -77,9 +74,6 @@
 
 /* syscall: "setuid" ret: "int" args: "uid_t" */
 #define	SYS_setuid	23
-
-/* syscall: "getuid" ret: "uid_t" args: */
-#define	SYS_getuid	24
 
 /* syscall: "getuid" ret: "uid_t" args: */
 #define	SYS_getuid	24
@@ -147,9 +141,6 @@
 
 				/* 45 is excluded ktrace */
 #define	SYS_compat_13_sigaction13	46
-
-/* syscall: "getgid" ret: "gid_t" args: */
-#define	SYS_getgid	47
 
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	SYS_getgid	47
