@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.2 1996/03/08 20:58:40 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.3 1996/03/13 21:16:15 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -82,8 +82,10 @@ extern pv_addr_t systempage;
 extern int pmap_debug_level;
 
 void	switch_exit	__P((struct proc */*p*/, struct proc */*proc0*/));
-int	savectx		__P((struct user */*up*/, int /*altreturn*/));
+int	savectx		__P((struct pcb *pcb));
 void	pmap_activate	__P((pmap_t /*pmap*/, struct pcb */*pcbp*/));
+extern void proc_trampoline	__P(());
+extern void child_return	__P(());
 
 /*
  * Special compilation symbols
@@ -100,12 +102,15 @@ void	pmap_activate	__P((pmap_t /*pmap*/, struct pcb */*pcbp*/));
  * the frame pointers on the stack after copying.
  */
 
-int
+void
 cpu_fork(p1, p2)
-	register struct proc *p1;
-	register struct proc *p2;
+	struct proc *p1;
+	struct proc *p2;
 {
-	register struct user *up = p2->p_addr;
+	struct user *up = p2->p_addr;
+	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	int loop;
 	vm_offset_t addr;
 	u_char *ptr;
@@ -118,14 +123,15 @@ cpu_fork(p1, p2)
 		   (u_int) curproc, (u_int)&proc0);
 #endif
 
-/* Copy the pcb. */
+/* Sync the pcb */
+	savectx(curpcb);
 
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	p2->p_md.md_regs = p1->p_md.md_regs;
+/* Copy the pcb */
+	*pcb = p1->p_addr->u_pcb;
 
 /* Set up the undefined stack for the process. Note: this stack is not in use if we are forking */
-
-	p2->p_addr->u_pcb.pcb_und_sp = (u_int)p2->p_addr + USPACE_UNDEF_STACK_TOP;
+	pcb->pcb_und_sp = (u_int)p2->p_addr + USPACE_UNDEF_STACK_TOP;
+	pcb->pcb_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
 
 /* Fill the undefined stack with a known pattern */
 
@@ -163,39 +169,15 @@ cpu_fork(p1, p2)
 	}
 #endif
 
-/* Double map the p2->p_addr space */
-
-/* ream out old pagetables and kernel stack */
+/* ream out old pagetables */
 
 	vp = &p2->p_vmspace->vm_map;
 	(void)vm_deallocate(vp, muaddr, VM_MAX_ADDRESS - muaddr);
 	(void)vm_allocate(vp, &muaddr, VM_MAX_ADDRESS - muaddr, FALSE);
 	(void)vm_map_inherit(vp, muaddr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
 
-/* Get the address of the page table containing USRSTACK */
 
-	addr = trunc_page((u_int)vtopte(USRSTACK));
-
-	if (pmap_debug_level >= 0)
-		printf("paging in %08x\n", (u_int)addr);
-
-/* Wire down a page to cover the page table the USRSTACK address is in */
-
-	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
-
-/* Map the user area and kernel stack above USRSTACK */
-
-	for (loop = 0; loop < UPAGES; ++loop){
-		if (pmap_debug_level >= 0)
-			printf("Paging in %08x\n", (u_int)(USRSTACK + loop * NBPG));
-		pmap_enter(&p2->p_vmspace->vm_pmap,
-		    (vm_offset_t)USRSTACK + loop * NBPG,
-		    pmap_extract(kernel_pmap,
-		    (vm_offset_t)p2->p_addr + loop * NBPG),
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-	}
-	
-/* Get the address of the page table containing USRSTACK */
+/* Get the address of the page table containing 0x00000000 */
 
 	addr = trunc_page((u_int)vtopte(0));
 
@@ -218,7 +200,15 @@ cpu_fork(p1, p2)
 
 /* Wire down a page to cover the page table zero page and the start of the user are in */
 
-	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
+#ifdef DEBUG_VMMACHDEP
+	if (pmap_debug_level >= 0) {
+		printf("vm_map_pageable: addr=%08x\n", addr);
+	}
+#endif
+
+	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0) {
+		panic("Failed to fault in system page PT\n");
+	}
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
@@ -241,42 +231,27 @@ cpu_fork(p1, p2)
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
 #endif
 
-/*
- * When we first switch to the child, this will return from cpu_switch()
- * rather than savectx().  cpu_switch returns a pointer to the current
- * process; savectx() returns 0.  Thus we can look for a non-zero
- * return value to indicate that we're in the child.
- */
+	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
 
-	if (pmap_debug_level >= -1) {
-		printf("parent %08x sp=%08x\n", (u_int)p1->p_addr,
-		    p1->p_addr->u_pcb.pcb_sp);
-		printf("child  %08x sp=%08x\n", (u_int)p2->p_addr,
-		    p2->p_addr->u_pcb.pcb_sp);
-	}
+	*tf = *p1->p_md.md_regs;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_spl = SPL_0;
+	sf->sf_r4 = (u_int)child_return;
+	sf->sf_r5 = (u_int)p2;
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcb->pcb_sp = (u_int)sf;
+}
 
-/*
-	printf("p1->procaddr=%08x %d %d\n", p1->p_addr, p1->p_pid, __LINE__);
-	printf("p2->procaddr=%08x %d %d\n", p2->p_addr, p2->p_pid, __LINE__);
-*/
 
-	if (savectx(up, 1)) {
-	/*
-	 * Return 1 in child.
-	 */
-#ifdef DEBUG_VMMACHDEP
-		if (pmap_debug_level >= -1)
-			printf("returning as child %08x sp=%08x\n",
-			    (u_int)p2->p_addr, p2->p_addr->u_pcb.pcb_sp);
-#endif
-		 return (1);
-	}
-#ifdef DEBUG_VMMACHDEP        
-	if (pmap_debug_level >= -1)
-		printf("returning as parent %08x sp=%08x\n", (u_int)p1->p_addr,
-		    p1->p_addr->u_pcb.pcb_sp);
-#endif
-	return (0);
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	u_long pc;
+{
+	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
+
+	sf->sf_r4 = pc;
+	sf->sf_r5 = (u_int)p;
 }
 
 
@@ -349,28 +324,7 @@ cpu_swapin(p)
 	pmap_debug_level = 10;
 #endif
 
-	addr = trunc_page((u_int)vtopte(USRSTACK));
-
-#ifdef DEBUG_VMMACHDEP
-	if (pmap_debug_level >= 0)
-		printf("paging in %08x\n", (u_int)addr);
-#endif
-
-	vm_map_pageable(&p->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
-
-	idcflush();
-
-	for (loop = 0; loop < UPAGES; ++loop){
-		if (pmap_debug_level >= 0)
-			printf("Paging in %08x\n", (u_int)(USRSTACK + loop * NBPG));
-		pmap_enter(&p->p_vmspace->vm_pmap,
-		    (vm_offset_t)USRSTACK + loop * NBPG,
-		    pmap_extract(kernel_pmap,
-		    (vm_offset_t)p->p_addr + loop * NBPG),
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-	}
-
-/* Get the address of the page table containing USRSTACK */
+/* Get the address of the page table containing 0x00000000 */
 
 	addr = trunc_page((u_int)vtopte(0));
 
