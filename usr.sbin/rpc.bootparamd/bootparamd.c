@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.24 2000/06/03 14:25:20 fvdl Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.25 2000/06/04 03:49:49 perry Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.24 2000/06/03 14:25:20 fvdl Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.25 2000/06/04 03:49:49 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,7 +134,7 @@ main(argc, argv)
 
 	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS, bootparamprog_1,
 	    IPPROTO_UDP))
-		errx(1, "unable to register BOOTPARAMPROG version %u, udp",
+		errx(1, "unable to register BOOTPARAMPROG version %lu, udp",
 		    BOOTPARAMVERS);
 
 	svc_run();
