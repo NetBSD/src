@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.23 1995/12/28 08:58:15 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.24 1996/02/24 21:09:38 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1256,7 +1256,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.23 1995/12/28 08:58:15 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.24 1996/02/24 21:09:38 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -1389,7 +1389,7 @@ static	struct script script0 = {
 	**	Claim to be still alive ...
 	*/
 	SCR_COPY (sizeof (((struct ncb *)0)->heartbeat)),
-		(ncrcmd) &time.tv_sec,
+		(ncrcmd) &mono_time.tv_sec,
 		NADDR (heartbeat),
 	/*
 	**      Make data structure address invalid.
@@ -1631,7 +1631,7 @@ static	struct script script0 = {
 	**      Set a time stamp for this selection
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &time,
+		(ncrcmd) &mono_time,
 		NADDR (header.stamp.select),
 	/*
 	**      load the savep (saved pointer) into
@@ -1813,7 +1813,7 @@ static	struct script script0 = {
 	**	... set a timestamp ...
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &time,
+		(ncrcmd) &mono_time,
 		NADDR (header.stamp.command),
 	/*
 	**	... and send the command
@@ -1835,7 +1835,7 @@ static	struct script script0 = {
 	**	set the timestamp.
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &time,
+		(ncrcmd) &mono_time,
 		NADDR (header.stamp.status),
 	/*
 	**	If this is a GETCC transfer,
@@ -2400,7 +2400,7 @@ static	struct script script0 = {
 	**	and count the disconnects.
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &time,
+		(ncrcmd) &mono_time,
 		NADDR (header.stamp.disconnect),
 	SCR_COPY (4),
 		NADDR (disc_phys),
@@ -2784,7 +2784,7 @@ static	struct script script0 = {
 **	SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_IN)),
 **		PADDR (no_data),
 **	SCR_COPY (sizeof (struct timeval)),
-**		(ncrcmd) &time,
+**		(ncrcmd) &mono_time,
 **		NADDR (header.stamp.data),
 **	SCR_MOVE_TBL ^ SCR_DATA_IN,
 **		offsetof (struct dsb, data[ 0]),
@@ -2811,7 +2811,7 @@ static	struct script script0 = {
 **	SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_IN)),
 **		PADDR (no_data),
 **	SCR_COPY (sizeof (struct timeval)),
-**		(ncrcmd) &time,
+**		(ncrcmd) &mono_time,
 **		NADDR (header.stamp.data),
 **	SCR_MOVE_TBL ^ SCR_DATA_OUT,
 **		offsetof (struct dsb, data[ 0]),
@@ -2928,7 +2928,7 @@ void ncr_script_fill (struct script * scr)
 	*p++ =SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_IN));
 	*p++ =PADDR (no_data);
 	*p++ =SCR_COPY (sizeof (struct timeval));
-	*p++ =(ncrcmd) &time;
+	*p++ =(ncrcmd) &mono_time;
 	*p++ =NADDR (header.stamp.data);
 	*p++ =SCR_MOVE_TBL ^ SCR_DATA_IN;
 	*p++ =offsetof (struct dsb, data[ 0]);
@@ -2952,7 +2952,7 @@ void ncr_script_fill (struct script * scr)
 	*p++ =SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_OUT));
 	*p++ =PADDR (no_data);
 	*p++ =SCR_COPY (sizeof (struct timeval));
-	*p++ =(ncrcmd) &time;
+	*p++ =(ncrcmd) &mono_time;
 	*p++ =NADDR (header.stamp.data);
 	*p++ =SCR_MOVE_TBL ^ SCR_DATA_OUT;
 	*p++ =offsetof (struct dsb, data[ 0]);
@@ -3682,7 +3682,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	*/
 
 	bzero (&cp->phys.header.stamp, sizeof (struct tstamp));
-	cp->phys.header.stamp.start = time;
+	cp->phys.header.stamp.start = mono_time;
 
 	/*----------------------------------------------------
 	**
@@ -3985,7 +3985,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	*/
 
 	cp->jump_ccb.l_cmd	= (SCR_JUMP ^ IFFALSE (DATA (cp->tag)));
-	cp->tlimit		= time.tv_sec + xp->timeout / 1000 + 2;
+	cp->tlimit		= mono_time.tv_sec + xp->timeout / 1000 + 2;
 	cp->magic		= CCB_MAGIC;
 
 	/*
@@ -4825,7 +4825,7 @@ static void ncr_usercmd (ncb_p np)
 
 static void ncr_timeout (ncb_p np)
 {
-	u_long	thistime = time.tv_sec;
+	u_long	thistime = mono_time.tv_sec;
 	u_long	step  = np->ticks;
 	u_long	count = 0;
 	long signed   t;
@@ -5075,9 +5075,9 @@ void ncr_exception (ncb_p np)
 	**========================================
 	*/
 
-	if (time.tv_sec - np->regtime.tv_sec>10) {
+	if (mono_time.tv_sec - np->regtime.tv_sec>10) {
 		int i;
-		np->regtime = time;
+		np->regtime = mono_time;
 		for (i=0; i<sizeof(np->regdump); i++)
 			((char*)&np->regdump)[i] = ((char*)np->reg)[i];
 		np->regdump.nc_dstat = dstat;
@@ -6671,7 +6671,7 @@ static	void ncb_profile (ncb_p np, ccb_p cp)
 	int co, da, st, en, di, se, post,work,disc;
 	u_long diff;
 
-	PROFILE.end = time;
+	PROFILE.end = mono_time;
 
 	st = ncr_delta (&PROFILE.start,&PROFILE.status);
 	if (st<0) return;	/* status  not reached  */
