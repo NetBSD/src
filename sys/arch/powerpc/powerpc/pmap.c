@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 1998/08/31 14:43:41 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 1998/10/13 11:30:47 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -197,12 +197,8 @@ pa_to_pv(pa)
 	int bank, pg;
 
 	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1) {
-#ifdef DIAGNOSTIC
-		panic("pa_to_pv (pa = 0x%x)", pa);
-#endif
+	if (bank == -1)
 		return NULL;
-	}
 	return &vm_physmem[bank].pmseg.pvent[pg];
 }
 
@@ -213,12 +209,8 @@ pa_to_attr(pa)
 	int bank, pg;
 
 	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1) {
-#ifdef DIAGNOSTIC
-		panic("pa_to_attrib (pa = 0x%x)", pa);
-#endif
+	if (bank == -1)
 		return NULL;
-	}
 	return &vm_physmem[bank].pmseg.attrs[pg];
 }
 #endif
