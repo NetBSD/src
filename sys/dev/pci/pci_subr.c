@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.56 2003/06/29 22:30:26 fvdl Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.57 2004/02/04 06:58:24 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.56 2003/06/29 22:30:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.57 2004/02/04 06:58:24 soren Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -809,8 +809,8 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_AGP:
 			printf("AGP, rev. %d.%d",
-			       (rval >> 24) & 0x0f,
-			       (rval >> 20) & 0x0f);
+				PCI_CAP_AGP_MAJOR(rval),
+				PCI_CAP_AGP_MINOR(rval));
 			break;
 		case PCI_CAP_VPD:
 			printf("VPD");

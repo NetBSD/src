@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.44 2003/12/02 16:31:06 briggs Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.45 2004/02/04 06:58:24 soren Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -405,7 +405,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_SUBSYS_ID_REG 0x2c
 
 /*
- * capabilities link list (PCI rev. 2.2)
+ * Capabilities link list (PCI rev. 2.2)
  */
 #define	PCI_CAPLISTPTR_REG		0x34	/* header type 0 */
 #define	PCI_CARDBUS_CAPLISTPTR_REG	0x14	/* header type 2 */
@@ -416,6 +416,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_RESERVED0	0x00
 #define	PCI_CAP_PWRMGMT		0x01
 #define	PCI_CAP_AGP		0x02
+#define PCI_CAP_AGP_MAJOR(cr)	(((cr) >> 20) & 0xf)
+#define PCI_CAP_AGP_MINOR(cr)	(((cr) >> 16) & 0xf)
 #define	PCI_CAP_VPD		0x03
 #define	PCI_CAP_SLOTID		0x04
 #define	PCI_CAP_MSI		0x05
