@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.42 1997/04/23 18:59:53 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.43 1997/04/28 02:51:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -242,11 +242,6 @@ exit1(p, rv)
 	 */
 	psignal(p->p_pptr, SIGCHLD);
 	wakeup((caddr_t)p->p_pptr);
-	/*
-	 * Notify procfs debugger
-	 */
-	if (p->p_flag & P_FSTRACE)
-		wakeup((caddr_t)p);
 
 	/*
 	 * Clear curproc after we've done all operations
