@@ -1,5 +1,7 @@
-#	$NetBSD: bsd.prog.mk,v 1.165 2003/03/30 00:35:07 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.166 2003/05/18 07:36:23 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
+
+.ifndef HOSTPROG
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -266,3 +268,5 @@ lint: ${LOBJS}
 .include <bsd.sys.mk>
 
 ${TARGETS}:	# ensure existence
+
+.endif	# HOSTPROG
