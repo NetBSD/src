@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.125 2000/04/10 02:22:14 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.126 2000/05/28 04:13:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -596,7 +596,8 @@ vwakeup(bp)
 
 /*
  * Flush out and invalidate all buffers associated with a vnode.
- * Called with the underlying object locked.
+ * Called with the underlying vnode locked, which should prevent new dirty
+ * buffers from being queued.
  */
 int
 vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
@@ -606,79 +607,131 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct proc *p;
 	int slpflag, slptimeo;
 {
-	struct buf *bp;
-	struct buf *nbp, *blist;
+	struct buf *bp, *nbp;
 	int s, error;
 
 	if (flags & V_SAVE) {
-		s = splbio();
-		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
-			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1,
-			    "vbwait", 0);
-		}
-		splx(s);
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, p);
-		if (error != 0)
+		if (error)
 		        return (error);
+#ifdef DIAGNOSTIC
 		s = splbio();
-		if (vp->v_numoutput > 0 ||
-		    vp->v_dirtyblkhd.lh_first != NULL)
+		if (vp->v_numoutput > 0 || !LIST_EMPTY(&vp->v_dirtyblkhd))
 		        panic("vinvalbuf: dirty bufs, vp %p", vp);
 		splx(s);
+#endif
 	}
 
 	s = splbio();
 
-	for (;;) {
-		if ((blist = vp->v_cleanblkhd.lh_first) && (flags & V_SAVEMETA))
-			while (blist && blist->b_lblkno < 0)
-				blist = blist->b_vnbufs.le_next;
-		if (!blist && (blist = vp->v_dirtyblkhd.lh_first) &&
-		    (flags & V_SAVEMETA)) {
-			while (blist && blist->b_lblkno < 0)
-				blist = blist->b_vnbufs.le_next;
-		}
-		if (!blist)
-			break;
-
-		for (bp = blist; bp; bp = nbp) {
-			nbp = bp->b_vnbufs.le_next;
-			if (flags & V_SAVEMETA && bp->b_lblkno < 0)
-				continue;
-			if (bp->b_flags & B_BUSY) {
-				bp->b_flags |= B_WANTED;
-				error = tsleep((caddr_t)bp,
-					slpflag | (PRIBIO + 1), "vinvalbuf",
-					slptimeo);
-				if (error) {
-					splx(s);
-					return (error);
-				}
-				break;
+restart:
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
+			    "vinvalbuf", slptimeo);
+			if (error) {
+				splx(s);
+				return (error);
 			}
-			bp->b_flags |= B_BUSY | B_VFLUSH;
-			/*
-			 * XXX Since there are no node locks for NFS, I believe
-			 * there is a slight chance that a delayed write will
-			 * occur while sleeping just above, so check for it.
-			 */
-			if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
-				VOP_BWRITE(bp);
-#ifdef DEBUG
-				printf("buffer still DELWRI\n");
-#endif
-				/* VOP_FSYNC(vp, cred, FSYNC_WAIT, p); */
-				continue;
-			}
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			goto restart;
 		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		brelse(bp);
 	}
 
-	if (!(flags & V_SAVEMETA) &&
-	    (vp->v_dirtyblkhd.lh_first || vp->v_cleanblkhd.lh_first))
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
+			    "vinvalbuf", slptimeo);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		/*
+		 * XXX Since there are no node locks for NFS, I believe
+		 * there is a slight chance that a delayed write will
+		 * occur while sleeping just above, so check for it.
+		 */
+		if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
+#ifdef DEBUG
+			printf("buffer still DELWRI\n");
+#endif
+			bp->b_flags |= B_BUSY | B_VFLUSH;
+			VOP_BWRITE(bp);
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		brelse(bp);
+	}
+
+#ifdef DIAGNOSTIC
+	if (!LIST_EMPTY(&vp->v_cleanblkhd) || !LIST_EMPTY(&vp->v_dirtyblkhd))
 		panic("vinvalbuf: flush failed, vp %p", vp);
+#endif
+
+	splx(s);
+
+	return (0);
+}
+
+/*
+ * Destroy any in core blocks past the truncation length.
+ * Called with the underlying vnode locked, which should prevent new dirty
+ * buffers from being queued.
+ */
+int
+vtruncbuf(vp, lbn, slpflag, slptimeo)
+	struct vnode *vp;
+	daddr_t lbn;
+	int slpflag, slptimeo;
+{
+	struct buf *bp, *nbp;
+	int s, error;
+
+	s = splbio();
+
+restart:
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_lblkno < lbn)
+			continue;
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
+			    "vtruncbuf", slptimeo);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		brelse(bp);
+	}
+
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_lblkno < lbn)
+			continue;
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
+			    "vtruncbuf", slptimeo);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		brelse(bp);
+	}
 
 	splx(s);
 
@@ -695,8 +748,8 @@ vflushbuf(vp, sync)
 
 loop:
 	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_flags & B_BUSY))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
@@ -722,7 +775,7 @@ loop:
 		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0);
 	}
 	splx(s);
-	if (vp->v_dirtyblkhd.lh_first != NULL) {
+	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		vprint("vflushbuf: dirty", vp);
 		goto loop;
 	}
