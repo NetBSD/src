@@ -7,7 +7,13 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the Author may not be used to endorse or promote products
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Adam Glass.
+ * 4. The name of the Author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
@@ -22,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ipcrm.c,v 1.3 1994/05/11 07:43:59 cgd Exp $
+ * $Id: ipcrm.c,v 1.4 1994/08/07 18:27:42 glass Exp $
  */
 
 #include <stdio.h>
@@ -33,15 +39,20 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
-#ifndef NOSHM
 #include <sys/shm.h>
-#endif
 
 #define IPC_TO_STR(x) (x == 'Q' ? "msq" : (x == 'M' ? "shm" : "sem"))
 #define IPC_TO_STRING(x) (x == 'Q' ? "message queue" : \
 	(x == 'M' ? "shared memory segment" : "semaphore"))
 
 int signaled;
+
+void usage()
+{
+        fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
+	fprintf(stderr, "        [-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
+	exit(1);
+}
 
 int msgrm(key, id)
     key_t key;
@@ -55,7 +66,6 @@ int msgrm(key, id)
     return msgctl(id, IPC_RMID, NULL);    
 }
 
-#ifndef NOSHM
 int shmrm(key, id)
     key_t key;
     int id;
@@ -67,7 +77,6 @@ int shmrm(key, id)
     }
     return shmctl(id, IPC_RMID, NULL);
 }
-#endif
 
 int semrm(key, id)
     key_t key;
@@ -108,10 +117,8 @@ int main(argc, argv)
 	    target_id = atoi(optarg);
 	    if (c == 'q')
 		result = msgrm(0, target_id);
-#ifndef NOSHM
 	    else if (c == 'm')
 		result = shmrm(0, target_id);
-#endif
 	    else
 		result = semrm(0, target_id);
 	    if (result < 0) {
@@ -133,10 +140,8 @@ int main(argc, argv)
 	    }
 	    if (c == 'Q')
 		result = msgrm(target_key, 0);
-#ifndef NOSHM
 	    else if (c == 'M')
 		result = shmrm(target_key, 0);
-#endif
 	    else
 		result = semrm(target_key, 0);
 	    if (result < 0) {
@@ -149,15 +154,17 @@ int main(argc, argv)
 	    }
 	    break;
 	case ':':
-	    errx(1, "option -%c requires an argument", optopt);
+	    fprintf(stderr, "option -%c requires an argument\n", optopt);
+	    usage();
 	case '?':
-	    errx(1, "unrecognized option: -%c", optopt);
+	    fprintf(stderr, "unrecognized option: -%c\n", optopt);
+	    usage();
 	}
     }
+
     if (optind != argc) {
-	fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
-	fprintf(stderr, "        [-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
-	exit(1);
+	    fprintf(stderr, "unknown argument: %s\n", argv[optind]);
+	    usage();
     }
     exit(errflg);
 }
