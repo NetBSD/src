@@ -1,7 +1,7 @@
 /* Output routines for GCC for ARM/RISCiX.
-   Copyright (C) 1991, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1991, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
-   	      and Martin Simmons (@harleqn.co.uk).
+   and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rwe11@cl.cam.ac.uk)
 
 This file is part of GNU CC.
@@ -21,10 +21,9 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
     
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
-#include "assert.h"
-#include "config.h"
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -176,7 +175,7 @@ static struct processors all_procs[] =
   {"arm600",	PROCESSOR_ARM6, FL_CO_PROC | FL_MODE32 | FL_MODE26},
   {"arm610",	PROCESSOR_ARM6, FL_MODE32 | FL_MODE26},
   {"arm7",	PROCESSOR_ARM7, FL_CO_PROC | FL_MODE32 | FL_MODE26},
-  /* arm7m doesn't exist on its own, only in conjuction with D, (and I), but
+  /* arm7m doesn't exist on its own, only in conjunction with D, (and I), but
      those don't alter the code, so it is sometimes known as the arm7m */
   {"arm7m",	PROCESSOR_ARM7, (FL_CO_PROC | FL_FAST_MULT | FL_MODE32
 				 | FL_MODE26)},
@@ -376,7 +375,8 @@ use_return_insn ()
 
   if (!reload_completed ||current_function_pretend_args_size
       || current_function_anonymous_args
-      || (get_frame_size () && !(TARGET_APCS || frame_pointer_needed)))
+      || ((get_frame_size () + current_function_outgoing_args_size != 0)
+	  && !(TARGET_APCS || frame_pointer_needed)))
     return 0;
 
   /* Can't be done if interworking with Thumb, and any registers have been
@@ -407,6 +407,13 @@ const_ok_for_arm (i)
 {
   unsigned HOST_WIDE_INT mask = ~0xFF;
 
+  /* For machines with >32 bit HOST_WIDE_INT, the bits above bit 31 must 
+     be all zero, or all one.  */
+  if ((i & ~(unsigned HOST_WIDE_INT) 0xffffffff) != 0
+      && ((i & ~(unsigned HOST_WIDE_INT) 0xffffffff) 
+	  != (((HOST_WIDE_INT) -1) & ~(unsigned HOST_WIDE_INT) 0xffffffff)))
+    return FALSE;
+  
   /* Fast return for 0 and powers of 2 */
   if ((i & (i - 1)) == 0)
     return TRUE;
@@ -1294,10 +1301,12 @@ arm_finalize_pic ()
   l1 = gen_label_rtx ();
 
   global_offset_table = gen_rtx (SYMBOL_REF, Pmode, "_GLOBAL_OFFSET_TABLE_");
+  /* The PC contains 'dot'+8, but the label L1 is on the next
+     instruction, so the offset is only 'dot'+4.  */
   pic_tmp = gen_rtx (CONST, VOIDmode, 
 		     gen_rtx (PLUS, Pmode, 
 			      gen_rtx (LABEL_REF, VOIDmode, l1),
-			      GEN_INT (8)));
+			      GEN_INT (4)));
   pic_tmp2 = gen_rtx (CONST, VOIDmode,
 		      gen_rtx (PLUS, Pmode,
 			       global_offset_table,
@@ -1500,6 +1509,17 @@ arm_rtx_costs (x, code, outer_code)
       return (((tune_flags & FL_FAST_MULT) ? 8 : 30)
 	      + (REG_OR_SUBREG_REG (XEXP (x, 0)) ? 0 : 4)
 	      + (REG_OR_SUBREG_REG (XEXP (x, 1)) ? 0 : 4));
+
+    case TRUNCATE:
+      if (arm_fast_multiply && mode == SImode
+	  && GET_CODE (XEXP (x, 0)) == LSHIFTRT
+	  && GET_CODE (XEXP (XEXP (x, 0), 0)) == MULT
+	  && (GET_CODE (XEXP (XEXP (XEXP (x, 0), 0), 0))
+	      == GET_CODE (XEXP (XEXP (XEXP (x, 0), 0), 1)))
+	  && (GET_CODE (XEXP (XEXP (XEXP (x, 0), 0), 0)) == ZERO_EXTEND
+	      || GET_CODE (XEXP (XEXP (XEXP (x, 0), 0), 0)) == SIGN_EXTEND))
+	return 8;
+      return 99;
 
     case NEG:
       if (GET_MODE_CLASS (mode) == MODE_FLOAT)
@@ -2555,6 +2575,10 @@ store_multiple_sequence (operands, nops, regs, base, load_offset)
       rtx reg;
       rtx offset;
 
+      /* Convert a subreg of a mem into the mem itself.  */
+      if (GET_CODE (operands[nops + i]) == SUBREG)
+	operands[nops + i] = alter_subreg(operands[nops + i]);
+
       if (GET_CODE (operands[nops + i]) != MEM)
 	abort ();
 
@@ -2765,16 +2789,20 @@ arm_naked_function_p (func)
 /* Routines for use in generating RTL */
 
 rtx
-arm_gen_load_multiple (base_regno, count, from, up, write_back)
+arm_gen_load_multiple (base_regno, count, from, up, write_back, unchanging_p,
+		       in_struct_p)
      int base_regno;
      int count;
      rtx from;
      int up;
      int write_back;
+     int unchanging_p;
+     int in_struct_p;
 {
   int i = 0, j;
   rtx result;
   int sign = up ? 1 : -1;
+  rtx mem;
 
   result = gen_rtx (PARALLEL, VOIDmode,
                     rtvec_alloc (count + (write_back ? 2 : 0)));
@@ -2789,10 +2817,13 @@ arm_gen_load_multiple (base_regno, count, from, up, write_back)
 
   for (j = 0; i < count; i++, j++)
     {
-      XVECEXP (result, 0, i)
-	= gen_rtx (SET, VOIDmode, gen_rtx (REG, SImode, base_regno + j),
-		   gen_rtx (MEM, SImode,
-			    plus_constant (from, j * 4 * sign)));
+      mem = gen_rtx (MEM, SImode, plus_constant (from, j * 4 * sign));
+      RTX_UNCHANGING_P (mem) = unchanging_p;
+      MEM_IN_STRUCT_P (mem) = in_struct_p;
+
+      XVECEXP (result, 0, i) = gen_rtx (SET, VOIDmode,
+					gen_rtx (REG, SImode, base_regno + j),
+					mem);
     }
 
   if (write_back)
@@ -2802,16 +2833,20 @@ arm_gen_load_multiple (base_regno, count, from, up, write_back)
 }
 
 rtx
-arm_gen_store_multiple (base_regno, count, to, up, write_back)
+arm_gen_store_multiple (base_regno, count, to, up, write_back, unchanging_p,
+			in_struct_p)
      int base_regno;
      int count;
      rtx to;
      int up;
      int write_back;
+     int unchanging_p;
+     int in_struct_p;
 {
   int i = 0, j;
   rtx result;
   int sign = up ? 1 : -1;
+  rtx mem;
 
   result = gen_rtx (PARALLEL, VOIDmode,
                     rtvec_alloc (count + (write_back ? 2 : 0)));
@@ -2826,10 +2861,12 @@ arm_gen_store_multiple (base_regno, count, to, up, write_back)
 
   for (j = 0; i < count; i++, j++)
     {
-      XVECEXP (result, 0, i)
-	= gen_rtx (SET, VOIDmode,
-		   gen_rtx (MEM, SImode, plus_constant (to, j * 4 * sign)),
-		   gen_rtx (REG, SImode, base_regno + j));
+      mem = gen_rtx (MEM, SImode, plus_constant (to, j * 4 * sign));
+      RTX_UNCHANGING_P (mem) = unchanging_p;
+      MEM_IN_STRUCT_P (mem) = in_struct_p;
+
+      XVECEXP (result, 0, i) = gen_rtx (SET, VOIDmode, mem,
+					gen_rtx (REG, SImode, base_regno + j));
     }
 
   if (write_back)
@@ -2847,6 +2884,8 @@ arm_gen_movstrqi (operands)
   rtx src, dst;
   rtx st_src, st_dst, end_src, end_dst, fin_src, fin_dst;
   rtx part_bytes_reg = NULL;
+  rtx mem;
+  int dst_unchanging_p, dst_in_struct_p, src_unchanging_p, src_in_struct_p;
   extern int optimize;
 
   if (GET_CODE (operands[2]) != CONST_INT
@@ -2857,6 +2896,12 @@ arm_gen_movstrqi (operands)
 
   st_dst = XEXP (operands[0], 0);
   st_src = XEXP (operands[1], 0);
+
+  dst_unchanging_p = RTX_UNCHANGING_P (operands[0]);
+  dst_in_struct_p = MEM_IN_STRUCT_P (operands[0]);
+  src_unchanging_p = RTX_UNCHANGING_P (operands[1]);
+  src_in_struct_p = MEM_IN_STRUCT_P (operands[1]);
+
   fin_dst = dst = copy_to_mode_reg (SImode, st_dst);
   fin_src = src = copy_to_mode_reg (SImode, st_src);
 
@@ -2870,24 +2915,32 @@ arm_gen_movstrqi (operands)
   for (i = 0; in_words_to_go >= 2; i+=4)
     {
       if (in_words_to_go > 4)
-	emit_insn (arm_gen_load_multiple (0, 4, src, TRUE, TRUE));
+	emit_insn (arm_gen_load_multiple (0, 4, src, TRUE, TRUE,
+					  src_unchanging_p, src_in_struct_p));
       else
 	emit_insn (arm_gen_load_multiple (0, in_words_to_go, src, TRUE, 
-					  FALSE));
+					  FALSE, src_unchanging_p,
+					  src_in_struct_p));
 
       if (out_words_to_go)
 	{
 	  if (out_words_to_go > 4)
-	    emit_insn (arm_gen_store_multiple (0, 4, dst, TRUE, TRUE));
+	    emit_insn (arm_gen_store_multiple (0, 4, dst, TRUE, TRUE,
+					       dst_unchanging_p,
+					       dst_in_struct_p));
 	  else if (out_words_to_go != 1)
 	    emit_insn (arm_gen_store_multiple (0, out_words_to_go,
 					       dst, TRUE, 
 					       (last_bytes == 0
-						? FALSE : TRUE)));
+						? FALSE : TRUE),
+					       dst_unchanging_p,
+					       dst_in_struct_p));
 	  else
 	    {
-	      emit_move_insn (gen_rtx (MEM, SImode, dst),
-			      gen_rtx (REG, SImode, 0));
+	      mem = gen_rtx (MEM, SImode, dst);
+	      RTX_UNCHANGING_P (mem) = dst_unchanging_p;
+	      MEM_IN_STRUCT_P (mem) = dst_in_struct_p;
+	      emit_move_insn (mem, gen_rtx (REG, SImode, 0));
 	      if (last_bytes != 0)
 		emit_insn (gen_addsi3 (dst, dst, GEN_INT (4)));
 	    }
@@ -2902,9 +2955,16 @@ arm_gen_movstrqi (operands)
   {
     rtx sreg;
 
-    emit_move_insn (sreg = gen_reg_rtx (SImode), gen_rtx (MEM, SImode, src));
+    mem = gen_rtx (MEM, SImode, src);
+    RTX_UNCHANGING_P (mem) = src_unchanging_p;
+    MEM_IN_STRUCT_P (mem) = src_in_struct_p;
+    emit_move_insn (sreg = gen_reg_rtx (SImode), mem);
     emit_move_insn (fin_src = gen_reg_rtx (SImode), plus_constant (src, 4));
-    emit_move_insn (gen_rtx (MEM, SImode, dst), sreg);
+
+    mem = gen_rtx (MEM, SImode, dst);
+    RTX_UNCHANGING_P (mem) = dst_unchanging_p;
+    MEM_IN_STRUCT_P (mem) = dst_in_struct_p;
+    emit_move_insn (mem, sreg);
     emit_move_insn (fin_dst = gen_reg_rtx (SImode), plus_constant (dst, 4));
     in_words_to_go--;
 
@@ -2917,7 +2977,10 @@ arm_gen_movstrqi (operands)
       if (in_words_to_go < 0)
 	abort ();
 
-      part_bytes_reg = copy_to_mode_reg (SImode, gen_rtx (MEM, SImode, src));
+      mem = gen_rtx (MEM, SImode, src);
+      RTX_UNCHANGING_P (mem) = src_unchanging_p;
+      MEM_IN_STRUCT_P (mem) = src_in_struct_p;
+      part_bytes_reg = copy_to_mode_reg (SImode, mem);
     }
 
   if (BYTES_BIG_ENDIAN && last_bytes)
@@ -2934,9 +2997,10 @@ arm_gen_movstrqi (operands)
       
       while (last_bytes)
 	{
-	  emit_move_insn (gen_rtx (MEM, QImode, 
-				   plus_constant (dst, last_bytes - 1)),
-			  gen_rtx (SUBREG, QImode, part_bytes_reg, 0));
+	  mem = gen_rtx (MEM, QImode, plus_constant (dst, last_bytes - 1));
+	  RTX_UNCHANGING_P (mem) = dst_unchanging_p;
+	  MEM_IN_STRUCT_P (mem) = dst_in_struct_p;
+	  emit_move_insn (mem, gen_rtx (SUBREG, QImode, part_bytes_reg, 0));
 	  if (--last_bytes)
 	    {
 	      tmp = gen_reg_rtx (SImode);
@@ -2953,8 +3017,10 @@ arm_gen_movstrqi (operands)
 	  if (part_bytes_reg == NULL)
 	    abort ();
 
-	  emit_move_insn (gen_rtx (MEM, QImode, dst),
-			  gen_rtx (SUBREG, QImode, part_bytes_reg, 0));
+	  mem = gen_rtx (MEM, QImode, dst);
+	  RTX_UNCHANGING_P (mem) = dst_unchanging_p;
+	  MEM_IN_STRUCT_P (mem) = dst_in_struct_p;
+	  emit_move_insn (mem, gen_rtx (SUBREG, QImode, part_bytes_reg, 0));
 	  if (--last_bytes)
 	    {
 	      rtx tmp = gen_reg_rtx (SImode);
@@ -2985,7 +3051,7 @@ gen_rotated_half_load (memref)
       base = XEXP (base, 0);
     }
 
-  /* If we aren't allowed to generate unalligned addresses, then fail.  */
+  /* If we aren't allowed to generate unaligned addresses, then fail.  */
   if (TARGET_SHORT_BY_BYTES
       && ((BYTES_BIG_ENDIAN ? 1 : 0) ^ ((offset & 2) == 0)))
     return NULL;
@@ -3010,7 +3076,7 @@ select_dominance_cc_mode (op, x, y, cond_or)
 
   /* Currently we will probably get the wrong result if the individual
      comparisons are not simple.  This also ensures that it is safe to
-     reverse a comparions if necessary.  */
+     reverse a comparison if necessary.  */
   if ((arm_select_cc_mode (cond1 = GET_CODE (x), XEXP (x, 0), XEXP (x, 1))
        != CCmode)
       || (arm_select_cc_mode (cond2 = GET_CODE (y), XEXP (y, 0), XEXP (y, 1))
@@ -3126,10 +3192,10 @@ arm_select_cc_mode (op, x, y)
 	  || GET_CODE (x) == ROTATERT))
     return CC_SWPmode;
 
-  /* This is a special case, that is used by combine to alow a 
-     comarison of a shifted byte load to be split into a zero-extend
+  /* This is a special case that is used by combine to allow a 
+     comparison of a shifted byte load to be split into a zero-extend
      followed by a comparison of the shifted integer (only valid for
-     equalities and unsigned inequalites.  */
+     equalities and unsigned inequalities).  */
   if (GET_MODE (x) == SImode
       && GET_CODE (x) == ASHIFT
       && GET_CODE (XEXP (x, 1)) == CONST_INT && INTVAL (XEXP (x, 1)) == 24
@@ -3205,6 +3271,16 @@ arm_reload_in_hi (operands)
   rtx base = find_replacement (&XEXP (operands[1], 0));
 
   emit_insn (gen_zero_extendqisi2 (operands[2], gen_rtx (MEM, QImode, base)));
+  /* Handle the case where the address is too complex to be offset by 1.  */
+  if (GET_CODE (base) == MINUS
+      || (GET_CODE (base) == PLUS && GET_CODE (XEXP (base, 1)) != CONST_INT))
+    {
+      rtx base_plus = gen_rtx (REG, SImode, REGNO (operands[0]));
+
+      emit_insn (gen_rtx (SET, VOIDmode, base_plus, base));
+      base = base_plus;
+    }
+
   emit_insn (gen_zero_extendqisi2 (gen_rtx (SUBREG, SImode, operands[0], 0),
 				   gen_rtx (MEM, QImode, 
 					    plus_constant (base, 1))));
@@ -3458,6 +3534,7 @@ find_barrier (from, max_count)
 {
   int count = 0;
   rtx found_barrier = 0;
+  rtx last = from;
 
   while (from && count < max_count)
     {
@@ -3471,11 +3548,12 @@ find_barrier (from, max_count)
 	  && CONSTANT_POOL_ADDRESS_P (SET_SRC (PATTERN (from))))
 	{
 	  rtx src = SET_SRC (PATTERN (from));
-	  count += 2;
+	  count += 8;
 	}
       else
 	count += get_attr_length (from);
 
+      last = from;
       from = NEXT_INSN (from);
     }
 
@@ -3486,7 +3564,7 @@ find_barrier (from, max_count)
       rtx label = gen_label_rtx ();
 
       if (from)
-	from = PREV_INSN (from);
+	from = PREV_INSN (last);
       else
 	from = get_last_insn ();
 
@@ -3968,7 +4046,21 @@ output_move_double (operands)
 	}
       else if (code1 == CONST_INT)
 	{
-	  /* sign extend the intval into the high-order word */
+#if HOST_BITS_PER_WIDE_INT > 32
+	  /* If HOST_WIDE_INT is more than 32 bits, the intval tells us
+	     what the upper word is.  */
+	  if (WORDS_BIG_ENDIAN)
+	    {
+	      otherops[1] = GEN_INT (ARM_SIGN_EXTEND (INTVAL (operands[1])));
+	      operands[1] = GEN_INT (INTVAL (operands[1]) >> 32);
+	    }
+	  else
+	    {
+	      otherops[1] = GEN_INT (INTVAL (operands[1]) >> 32);
+	      operands[1] = GEN_INT (ARM_SIGN_EXTEND (INTVAL (operands[1])));
+	    }
+#else
+	  /* Sign extend the intval into the high-order word */
 	  if (WORDS_BIG_ENDIAN)
 	    {
 	      otherops[1] = operands[1];
@@ -3977,6 +4069,7 @@ output_move_double (operands)
 	    }
 	  else
 	    otherops[1] = INTVAL (operands[1]) < 0 ? constm1_rtx : const0_rtx;
+#endif
 	  output_mov_immediate (otherops);
 	  output_mov_immediate (operands);
 	}
@@ -4766,10 +4859,9 @@ output_func_epilogue (f, frame_size)
 
   if (use_return_insn() && return_used_this_function)
     {
-      if (frame_size && !(frame_pointer_needed || TARGET_APCS))
-        {
-          abort ();
-        }
+      if ((frame_size + current_function_outgoing_args_size) != 0
+	  && !(frame_pointer_needed || TARGET_APCS))
+	abort ();
       goto epilogue_done;
     }
 
@@ -4857,10 +4949,11 @@ output_func_epilogue (f, frame_size)
   else
     {
       /* Restore stack pointer if necessary.  */
-      if (frame_size)
+      if (frame_size + current_function_outgoing_args_size != 0)
 	{
 	  operands[0] = operands[1] = stack_pointer_rtx;
-	  operands[2] = gen_rtx (CONST_INT, VOIDmode, frame_size);
+	  operands[2] = GEN_INT (frame_size
+				 + current_function_outgoing_args_size);
 	  output_add_immediate (operands);
 	}
 
@@ -4939,8 +5032,7 @@ output_func_epilogue (f, frame_size)
 	    {
 	      /* Unwind the pre-pushed regs */
 	      operands[0] = operands[1] = stack_pointer_rtx;
-	      operands[2] = gen_rtx (CONST_INT, VOIDmode,
-				     current_function_pretend_args_size);
+	      operands[2] = GEN_INT (current_function_pretend_args_size);
 	      output_add_immediate (operands);
 	    }
 	  /* And finally, go home */
@@ -5032,7 +5124,8 @@ void
 arm_expand_prologue ()
 {
   int reg;
-  rtx amount = GEN_INT (- get_frame_size ());
+  rtx amount = GEN_INT (-(get_frame_size ()
+			  + current_function_outgoing_args_size));
   rtx push_insn;
   int num_regs;
   int live_regs_mask = 0;
@@ -5299,34 +5392,6 @@ arm_print_operand (stream, x, code)
     }
 }
 
-/* Output a label definition.  */
-
-void
-arm_asm_output_label (stream, name)
-     FILE *stream;
-     char *name;
-{
-  ARM_OUTPUT_LABEL (stream, name);
-}
-
-/* Output code resembling an .lcomm directive.  /bin/as doesn't have this
-   directive hence this hack, which works by reserving some `.space' in the
-   bss segment directly.
-
-   XXX This is a severe hack, which is guaranteed NOT to work since it doesn't
-   define STATIC COMMON space but merely STATIC BSS space.  */
-
-void
-output_lcomm_directive (stream, name, size, align)
-     FILE *stream;
-     char *name;
-     int size, align;
-{
-  bss_section ();
-  ASM_OUTPUT_ALIGN (stream, floor_log2 (align / BITS_PER_UNIT));
-  ARM_OUTPUT_LABEL (stream, name);
-  fprintf (stream, "\t.space\t%d\n", size);
-}
 
 /* A finite state machine takes care of noticing whether or not instructions
    can be conditionally executed, and thus decrease execution time and code
@@ -5887,7 +5952,7 @@ aof_data_section ()
 
 /* The AOF assembler is religiously strict about declarations of
    imported and exported symbols, so that it is impossible to declare
-   a function as imported near the begining of the file, and then to
+   a function as imported near the beginning of the file, and then to
    export it later on.  It is, however, possible to delay the decision
    until all the functions in the file have been compiled.  To get
    around this, we maintain a list of the imports and exports, and

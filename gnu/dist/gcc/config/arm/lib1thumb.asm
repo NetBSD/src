@@ -33,20 +33,14 @@ Boston, MA 02111-1307, USA.  */
    This exception does not however invalidate any other reasons why
    the executable file might be covered by the GNU General Public License.  */
 
-#ifdef __APCS_26__
-#define RET	movs
-#define RETc(x)	mov##x##s
-#define RETCOND ^
-#else
-#define RET	mov
-#define RETc(x)	mov##x
-#define RETCOND
-#endif
-
+	.code	 16
+	
 #ifndef __USER_LABEL_PREFIX__
-#define __USER_LABEL_PREFIX__ _
+#error USER_LABEL_PREFIX not defined
 #endif
 
+#define RET	mov	pc, lr
+	
 /* ANSI concatenation macros.  */
 
 #define CONCAT1(a, b) CONCAT2(a, b)
@@ -55,6 +49,8 @@ Boston, MA 02111-1307, USA.  */
 /* Use the right prefix for global labels.  */
 
 #define SYM(x) CONCAT1 (__USER_LABEL_PREFIX__, x)
+
+work		.req	r4	@ XXXX is this safe ?
 
 #ifdef L_udivsi3
 
@@ -66,36 +62,50 @@ ip		.req	r12
 sp		.req	r13
 lr		.req	r14
 pc		.req	r15
+	
 	.text
 	.globl SYM (__udivsi3)
 	.align 0
-
+	.thumb_func
 SYM (__udivsi3):
 	cmp	divisor, #0
 	beq	Ldiv0
 	mov	curbit, #1
 	mov	result, #0
+	
+	push	{ work }
 	cmp	dividend, divisor
 	bcc	Lgot_result
+
+	@ Load the constant 0x10000000 into our work register
+	mov	work, #1
+	lsl	work, #28
 Loop1:
 	@ Unless the divisor is very big, shift it up in multiples of
 	@ four bits, since this is the amount of unwinding in the main
 	@ division loop.  Continue shifting until the divisor is 
 	@ larger than the dividend.
-	cmp	divisor, #0x10000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #4
-	movcc	curbit, curbit, lsl #4
-	bcc	Loop1
+	cmp	divisor, work
+	bcs     Lbignum
+	cmp	divisor, dividend
+	bcs     Lbignum
+	lsl	divisor, #4
+	lsl	curbit,  #4
+	b	Loop1
 
 Lbignum:
+	@ Set work to 0x80000000
+	lsl	work, #3
+Loop2:		
 	@ For very big divisors, we must shift it a bit at a time, or
 	@ we will be in danger of overflowing.
-	cmp	divisor, #0x80000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #1
-	movcc	curbit, curbit, lsl #1
-	bcc	Lbignum
+	cmp	divisor, work
+	bcs	Loop3
+	cmp	divisor, dividend
+	bcs	Loop3
+	lsl	divisor, #1
+	lsl	curbit,  #1
+	b	Loop2
 
 Loop3:
 	@ Test for possible subtractions, and note which bits
@@ -103,30 +113,47 @@ Loop3:
 	@ too much from the dividend, but the result will be ok, since the
 	@ "bit" will have been shifted out at the bottom.
 	cmp	dividend, divisor
-	subcs	dividend, dividend, divisor
-	orrcs	result, result, curbit
-	cmp	dividend, divisor, lsr #1
-	subcs	dividend, dividend, divisor, lsr #1
-	orrcs	result, result, curbit, lsr #1
-	cmp	dividend, divisor, lsr #2
-	subcs	dividend, dividend, divisor, lsr #2
-	orrcs	result, result, curbit, lsr #2
-	cmp	dividend, divisor, lsr #3
-	subcs	dividend, dividend, divisor, lsr #3
-	orrcs	result, result, curbit, lsr #3
+	bcc     Over1
+	sub	dividend, dividend, divisor
+	orr	result, result, curbit
+Over1:	
+	lsr	work, divisor, #1
+	cmp	dividend, work
+	bcc	Over2
+	sub	dividend, dividend, work
+	lsr	work, curbit, #1
+	orr	result, work
+Over2:	
+	lsr	work, divisor, #2
+	cmp	dividend, work
+	bcc	Over3
+	sub	dividend, dividend, work
+	lsr	work, curbit, #2
+	orr	result, work
+Over3:	
+	lsr	work, divisor, #3
+	cmp	dividend, work
+	bcc	Over4
+	sub	dividend, dividend, work
+	lsr	work, curbit, #3
+	orr	result, work
+Over4:	
 	cmp	dividend, #0			@ Early termination?
-	movnes	curbit, curbit, lsr #4		@ No, any more bits to do?
-	movne	divisor, divisor, lsr #4
-	bne	Loop3
+	beq	Lgot_result
+	lsr	curbit,  #4			@ No, any more bits to do?
+	beq	Lgot_result
+	lsr	divisor, #4
+	b	Loop3
 Lgot_result:
 	mov	r0, result
-	RET	pc, lr
+	pop	{ work }
+	RET
 
 Ldiv0:
-	str	lr, [sp, #-4]!
+	push	{ lr }
 	bl	SYM (__div0)
 	mov	r0, #0			@ about as wrong as it could be
-	ldmia	sp!, {pc}RETCOND
+	pop	{ pc }
 
 #endif /* L_udivsi3 */
 
@@ -143,32 +170,46 @@ pc		.req	r15
 	.text
 	.globl SYM (__umodsi3)
 	.align 0
-
+	.thumb_func
 SYM (__umodsi3):
 	cmp	divisor, #0
 	beq	Ldiv0
 	mov	curbit, #1
 	cmp	dividend, divisor
-	RETc(cc)	pc, lr
+	bcs	Over1
+	RET	
+
+Over1:	
+	@ Load the constant 0x10000000 into our work register
+	push	{ work }
+	mov	work, #1
+	lsl	work, #28
 Loop1:
 	@ Unless the divisor is very big, shift it up in multiples of
 	@ four bits, since this is the amount of unwinding in the main
 	@ division loop.  Continue shifting until the divisor is 
 	@ larger than the dividend.
-	cmp	divisor, #0x10000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #4
-	movcc	curbit, curbit, lsl #4
-	bcc	Loop1
+	cmp	divisor, work
+	bcs	Lbignum
+	cmp	divisor, dividend
+	bcs	Lbignum
+	lsl	divisor, #4
+	lsl	curbit, #4
+	b	Loop1
 
 Lbignum:
+	@ Set work to 0x80000000
+	lsl	work, #3
+Loop2:
 	@ For very big divisors, we must shift it a bit at a time, or
 	@ we will be in danger of overflowing.
-	cmp	divisor, #0x80000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #1
-	movcc	curbit, curbit, lsl #1
-	bcc	Lbignum
+	cmp	divisor, work
+	bcs	Loop3
+	cmp	divisor, dividend
+	bcs	Loop3
+	lsl	divisor, #1
+	lsl	curbit, #1
+	b	Loop2
 
 Loop3:
 	@ Test for possible subtractions.  On the final pass, this may 
@@ -176,43 +217,94 @@ Loop3:
 	@ subtractions are done, we can fix them up afterwards...
 	mov	overdone, #0
 	cmp	dividend, divisor
-	subcs	dividend, dividend, divisor
-	cmp	dividend, divisor, lsr #1
-	subcs	dividend, dividend, divisor, lsr #1
-	orrcs	overdone, overdone, curbit, ror #1
-	cmp	dividend, divisor, lsr #2
-	subcs	dividend, dividend, divisor, lsr #2
-	orrcs	overdone, overdone, curbit, ror #2
-	cmp	dividend, divisor, lsr #3
-	subcs	dividend, dividend, divisor, lsr #3
-	orrcs	overdone, overdone, curbit, ror #3
+	bcc	Over2
+	sub	dividend, dividend, divisor
+Over2:
+	lsr	work, divisor, #1
+	cmp	dividend, work
+	bcc	Over3
+	sub	dividend, dividend, work
+	mov	ip, curbit
+	mov	work, #1
+	ror	curbit, work
+	orr	overdone, curbit
+	mov	curbit, ip
+Over3:
+	lsr	work, divisor, #2
+	cmp	dividend, work
+	bcc	Over4
+	sub	dividend, dividend, work
+	mov	ip, curbit
+	mov	work, #2
+	ror	curbit, work
+	orr	overdone, curbit
+	mov	curbit, ip
+Over4:
+	lsr	work, divisor, #3
+	cmp	dividend, work
+	bcc	Over5
+	sub	dividend, dividend, work
+	mov	ip, curbit
+	mov	work, #3
+	ror	curbit, work
+	orr	overdone, curbit
+	mov	curbit, ip
+Over5:
 	mov	ip, curbit
 	cmp	dividend, #0			@ Early termination?
-	movnes	curbit, curbit, lsr #4		@ No, any more bits to do?
-	movne	divisor, divisor, lsr #4
-	bne	Loop3
+	beq	Over6
+	lsr	curbit, #4			@ No, any more bits to do?
+	beq	Over6
+	lsr	divisor, #4
+	b	Loop3
 
+Over6:	
 	@ Any subtractions that we should not have done will be recorded in
 	@ the top three bits of "overdone".  Exactly which were not needed
 	@ are governed by the position of the bit, stored in ip.
 	@ If we terminated early, because dividend became zero,
 	@ then none of the below will match, since the bit in ip will not be
 	@ in the bottom nibble.
-	ands	overdone, overdone, #0xe0000000
-	RETc(eq)	pc, lr				@ No fixups needed
-	tst	overdone, ip, ror #3
-	addne	dividend, dividend, divisor, lsr #3
-	tst	overdone, ip, ror #2
-	addne	dividend, dividend, divisor, lsr #2
-	tst	overdone, ip, ror #1
-	addne	dividend, dividend, divisor, lsr #1
-	RET	pc, lr
+
+	mov	work, #0xe
+	lsl	work, #28	
+	and	overdone, work
+	bne	Over7
+	pop	{ work }
+	RET					@ No fixups needed
+Over7:
+	mov	curbit, ip
+	mov	work, #3
+	ror	curbit, work
+	tst	overdone, curbit
+	beq	Over8
+	lsr	work, divisor, #3
+	add	dividend, dividend, work
+Over8:
+	mov	curbit, ip
+	mov	work, #2
+	ror	curbit, work
+	tst	overdone, curbit
+	beq	Over9
+	lsr	work, divisor, #2
+	add	dividend, dividend, work
+Over9:
+	mov	curbit, ip
+	mov	work, #1
+	ror	curbit, work
+	tst	overdone, curbit
+	beq	Over10
+	lsr	work, divisor, #1
+	add	dividend, dividend, work
+Over10:
+	pop	{ work }
+	RET	
 
 Ldiv0:
-	str	lr, [sp, #-4]!
+	push	{ lr }
 	bl	SYM (__div0)
 	mov	r0, #0			@ about as wrong as it could be
-	ldmia	sp!, {pc}RETCOND
+	pop	{ pc }
 
 #endif /* L_umodsi3 */
 
@@ -229,38 +321,55 @@ pc		.req	r15
 	.text
 	.globl SYM (__divsi3)
 	.align 0
-
+	.thumb_func
 SYM (__divsi3):
-	eor	ip, dividend, divisor		@ Save the sign of the result.
+	cmp	divisor, #0
+	beq	Ldiv0
+	
+	push	{ work }
+	mov	work, dividend
+	eor	work, divisor		@ Save the sign of the result.
+	mov	ip, work
 	mov	curbit, #1
 	mov	result, #0
 	cmp	divisor, #0
-	rsbmi	divisor, divisor, #0		@ Loops below use unsigned.
-	beq	Ldiv0
+	bpl	Over1
+	neg	divisor, divisor	@ Loops below use unsigned.
+Over1:	
 	cmp	dividend, #0
-	rsbmi	dividend, dividend, #0
+	bpl	Over2
+	neg	dividend, dividend
+Over2:	
 	cmp	dividend, divisor
 	bcc	Lgot_result
 
+	mov	work, #1
+	lsl	work, #28
 Loop1:
 	@ Unless the divisor is very big, shift it up in multiples of
 	@ four bits, since this is the amount of unwinding in the main
 	@ division loop.  Continue shifting until the divisor is 
 	@ larger than the dividend.
-	cmp	divisor, #0x10000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #4
-	movcc	curbit, curbit, lsl #4
-	bcc	Loop1
+	cmp	divisor, work
+	Bcs	Lbignum
+	cmp	divisor, dividend
+	Bcs	Lbignum
+	lsl	divisor, #4
+	lsl	curbit, #4
+	b	Loop1
 
 Lbignum:
 	@ For very big divisors, we must shift it a bit at a time, or
 	@ we will be in danger of overflowing.
-	cmp	divisor, #0x80000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #1
-	movcc	curbit, curbit, lsl #1
-	bcc	Lbignum
+	lsl	work, #3
+Loop2:		
+	cmp	divisor, work
+	Bcs	Loop3
+	cmp	divisor, dividend
+	Bcs	Loop3
+	lsl	divisor, #1
+	lsl	curbit, #1
+	b	Loop2
 
 Loop3:
 	@ Test for possible subtractions, and note which bits
@@ -268,32 +377,53 @@ Loop3:
 	@ too much from the dividend, but the result will be ok, since the
 	@ "bit" will have been shifted out at the bottom.
 	cmp	dividend, divisor
-	subcs	dividend, dividend, divisor
-	orrcs	result, result, curbit
-	cmp	dividend, divisor, lsr #1
-	subcs	dividend, dividend, divisor, lsr #1
-	orrcs	result, result, curbit, lsr #1
-	cmp	dividend, divisor, lsr #2
-	subcs	dividend, dividend, divisor, lsr #2
-	orrcs	result, result, curbit, lsr #2
-	cmp	dividend, divisor, lsr #3
-	subcs	dividend, dividend, divisor, lsr #3
-	orrcs	result, result, curbit, lsr #3
+	Bcc	Over3
+	sub	dividend, dividend, divisor
+	orr	result, result, curbit
+Over3:
+	lsr	work, divisor, #1
+	cmp	dividend, work
+	Bcc	Over4
+	sub	dividend, dividend, work
+	lsr	work, curbit, #1
+	orr	result, work
+Over4:	
+	lsr	work, divisor, #2
+	cmp	dividend, work
+	Bcc	Over5
+	sub	dividend, dividend, work
+	lsr	work, curbit, #2
+	orr	result, result, work
+Over5:	
+	lsr	work, divisor, #3
+	cmp	dividend, work
+	Bcc	Over6
+	sub	dividend, dividend, work
+	lsr	work, curbit, #3
+	orr	result, result, work
+Over6:	
 	cmp	dividend, #0			@ Early termination?
-	movnes	curbit, curbit, lsr #4		@ No, any more bits to do?
-	movne	divisor, divisor, lsr #4
-	bne	Loop3
+	Beq	Lgot_result
+	lsr	curbit, #4			@ No, any more bits to do?
+	Beq	Lgot_result
+	lsr	divisor, #4
+	b	Loop3
+	
 Lgot_result:
 	mov	r0, result
-	cmp	ip, #0
-	rsbmi	r0, r0, #0
-	RET	pc, lr
+	mov	work, ip
+	cmp	work, #0
+	Bpl	Over7
+	neg	r0, r0
+Over7:
+	pop	{ work }
+	RET	
 
 Ldiv0:
-	str	lr, [sp, #-4]!
+	push	{ lr }
 	bl	SYM (__div0)
 	mov	r0, #0			@ about as wrong as it could be
-	ldmia	sp!, {pc}RETCOND
+	pop	{ pc }
 
 #endif /* L_divsi3 */
 
@@ -310,39 +440,53 @@ pc		.req	r15
 	.text
 	.globl SYM (__modsi3)
 	.align 0
-
+	.thumb_func
 SYM (__modsi3):
 	mov	curbit, #1
 	cmp	divisor, #0
-	rsbmi	divisor, divisor, #0		@ Loops below use unsigned.
 	beq	Ldiv0
+	Bpl	Over1
+	neg	divisor, divisor		@ Loops below use unsigned.
+Over1:	
+	push	{ work }
 	@ Need to save the sign of the dividend, unfortunately, we need
-	@ ip later on; this is faster than pushing lr and using that.
-	str	dividend, [sp, #-4]!
+	@ ip later on.  Must do this after saving the original value of
+	@ the work register, because we will pop this value off first.
+	push	{ dividend }
 	cmp	dividend, #0
-	rsbmi	dividend, dividend, #0
+	Bpl	Over2
+	neg	dividend, dividend
+Over2:	
 	cmp	dividend, divisor
 	bcc	Lgot_result
-
+	mov	work, #1
+	lsl	work, #28
 Loop1:
 	@ Unless the divisor is very big, shift it up in multiples of
 	@ four bits, since this is the amount of unwinding in the main
 	@ division loop.  Continue shifting until the divisor is 
 	@ larger than the dividend.
-	cmp	divisor, #0x10000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #4
-	movcc	curbit, curbit, lsl #4
-	bcc	Loop1
+	cmp	divisor, work
+	bcs	Lbignum
+	cmp	divisor, dividend
+	bcs	Lbignum
+	lsl	divisor, #4
+	lsl	curbit, #4
+	b	Loop1
 
 Lbignum:
+	@ Set work to 0x80000000
+	lsl	work, #3
+Loop2:
 	@ For very big divisors, we must shift it a bit at a time, or
 	@ we will be in danger of overflowing.
-	cmp	divisor, #0x80000000
-	cmpcc	divisor, dividend
-	movcc	divisor, divisor, lsl #1
-	movcc	curbit, curbit, lsl #1
-	bcc	Lbignum
+	cmp	divisor, work
+	bcs	Loop3
+	cmp	divisor, dividend
+	bcs	Loop3
+	lsl	divisor, #1
+	lsl	curbit, #1
+	b	Loop2
 
 Loop3:
 	@ Test for possible subtractions.  On the final pass, this may 
@@ -350,82 +494,110 @@ Loop3:
 	@ subtractions are done, we can fix them up afterwards...
 	mov	overdone, #0
 	cmp	dividend, divisor
-	subcs	dividend, dividend, divisor
-	cmp	dividend, divisor, lsr #1
-	subcs	dividend, dividend, divisor, lsr #1
-	orrcs	overdone, overdone, curbit, ror #1
-	cmp	dividend, divisor, lsr #2
-	subcs	dividend, dividend, divisor, lsr #2
-	orrcs	overdone, overdone, curbit, ror #2
-	cmp	dividend, divisor, lsr #3
-	subcs	dividend, dividend, divisor, lsr #3
-	orrcs	overdone, overdone, curbit, ror #3
+	bcc	Over3
+	sub	dividend, dividend, divisor
+Over3:
+	lsr	work, divisor, #1
+	cmp	dividend, work
+	bcc	Over4
+	sub	dividend, dividend, work
+	mov	ip, curbit
+	mov	work, #1
+	ror	curbit, work
+	orr	overdone, curbit
+	mov	curbit, ip
+Over4:
+	lsr	work, divisor, #2
+	cmp	dividend, work
+	bcc	Over5
+	sub	dividend, dividend, work
+	mov	ip, curbit
+	mov	work, #2
+	ror	curbit, work
+	orr	overdone, curbit
+	mov	curbit, ip
+Over5:
+	lsr	work, divisor, #3
+	cmp	dividend, work
+	bcc	Over6
+	sub	dividend, dividend, work
+	mov	ip, curbit
+	mov	work, #3
+	ror	curbit, work
+	orr	overdone, curbit
+	mov	curbit, ip
+Over6:
 	mov	ip, curbit
 	cmp	dividend, #0			@ Early termination?
-	movnes	curbit, curbit, lsr #4		@ No, any more bits to do?
-	movne	divisor, divisor, lsr #4
-	bne	Loop3
+	beq	Over7
+	lsr	curbit, #4			@ No, any more bits to do?
+	beq	Over7
+	lsr	divisor, #4
+	b	Loop3
 
+Over7:	
 	@ Any subtractions that we should not have done will be recorded in
 	@ the top three bits of "overdone".  Exactly which were not needed
 	@ are governed by the position of the bit, stored in ip.
 	@ If we terminated early, because dividend became zero,
 	@ then none of the below will match, since the bit in ip will not be
 	@ in the bottom nibble.
-	ands	overdone, overdone, #0xe0000000
+	mov	work, #0xe
+	lsl	work, #28
+	and	overdone, work
 	beq	Lgot_result
-	tst	overdone, ip, ror #3
-	addne	dividend, dividend, divisor, lsr #3
-	tst	overdone, ip, ror #2
-	addne	dividend, dividend, divisor, lsr #2
-	tst	overdone, ip, ror #1
-	addne	dividend, dividend, divisor, lsr #1
+	
+	mov	curbit, ip
+	mov	work, #3
+	ror	curbit, work
+	tst	overdone, curbit
+	beq	Over8
+	lsr	work, divisor, #3
+	add	dividend, dividend, work
+Over8:
+	mov	curbit, ip
+	mov	work, #2
+	ror	curbit, work
+	tst	overdone, curbit
+	beq	Over9
+	lsr	work, divisor, #2
+	add	dividend, dividend, work
+Over9:
+	mov	curbit, ip
+	mov	work, #1
+	ror	curbit, work
+	tst	overdone, curbit
+	beq	Lgot_result
+	lsr	work, divisor, #1
+	add	dividend, dividend, work
 Lgot_result:
-	ldr	ip, [sp], #4
-	cmp	ip, #0
-	rsbmi	dividend, dividend, #0
-	RET	pc, lr
+	pop	{ work }
+	cmp	work, #0
+	bpl	Over10
+	neg	dividend, dividend
+Over10:
+	pop	{ work }
+	RET	
 
 Ldiv0:
-	str	lr, [sp, #-4]!
+	push    { lr }
 	bl	SYM (__div0)
 	mov	r0, #0			@ about as wrong as it could be
-	ldmia	sp!, {pc}RETCOND
-
+	pop	{ pc }
+	
 #endif /* L_modsi3 */
 
 #ifdef L_dvmd_tls
 
 	.globl SYM (__div0)
 	.align 0
+	.thumb_func
 SYM (__div0):
-	RET	pc, lr
+	RET	
 
 #endif /* L_divmodsi_tools */
 
-#ifdef L_dvmd_lnx
-@ GNU/Linux division-by zero handler.  Used in place of L_dvmd_tls
-
-#include <asm/unistd.h>
-#define SIGFPE	8			@ cant use <asm/signal.h> as it
-					@ contains too much C rubbish
-	.globl SYM (__div0)
-	.align 0
-SYM (__div0):
-	stmfd	sp!, {r1, lr}
-	swi	__NR_getpid
-	cmn	r0, #1000
-	ldmgefd	sp!, {r1, pc}RETCOND	@ not much we can do
-	mov	r1, #SIGFPE
-	swi	__NR_kill
-	ldmfd	sp!, {r1, pc}RETCOND
-
-#endif /* L_dvmd_lnx */
-
-/* These next two sections are here despite the fact that they contain Thumb 
-   assembler because their presence allows interworked code to be linked even
-   when the GCC library is this one.  */
-		
+	
 #ifdef L_call_via_rX
 
 /* These labels & instructions are used by the Arm/Thumb interworking code. 
@@ -436,7 +608,7 @@ SYM (__div0):
 	
 	.text
 	.align 0
-	.code 16
+
 .macro call_via register
 	.globl	SYM (_call_via_\register)
 	.thumb_func
@@ -479,27 +651,27 @@ SYM (_call_via_\register):
 	.text
 	.align 0
 
-	.code   32
+	.code 32
 _arm_return:		
 	ldmia 	r13!, {r12}
 	bx 	r12
-	.code   16
+	.code 16
 
 .macro interwork register					
-	.code   16
 	.globl	SYM (_interwork_call_via_\register)
 	.thumb_func
 SYM (_interwork_call_via_\register):
 	bx 	pc
 	nop
 	
-	.code   32
+	.code 32
 	.globl .Lchange_\register
 .Lchange_\register:
 	tst	\register, #1
 	stmeqdb	r13!, {lr}
 	adreq	lr, _arm_return
 	bx	\register
+	.code 16
 .endm
 	
 	interwork r0
@@ -519,3 +691,5 @@ SYM (_interwork_call_via_\register):
 	interwork lr
 		
 #endif /* L_interwork_call_via_rX */
+
+	
