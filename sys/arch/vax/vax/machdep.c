@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.95 2000/03/07 00:05:59 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.96 2000/03/19 14:56:53 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -51,6 +51,7 @@
 #include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +121,15 @@ extern int virtual_avail, virtual_end;
  * We do these external declarations here, maybe they should be done
  * somewhere else...
  */
+#if defined(MULTIPROCESSOR)
+static int dummy_cpu_number(void);
+static struct cpu_info *dummy_curcpu(void);
+
+int (*vax_cpu_number)(void) = dummy_cpu_number;
+struct cpu_info *(*vax_curcpu)(void) = dummy_curcpu;
+#else
 int		want_resched;
+#endif
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
@@ -750,3 +759,23 @@ vax_unmap_physmem(addr, size)
 	else
 		rmfree(iomap, size, pageno);
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Default functions that returns CPU numbers etc on non-MP systems
+ * and for just the master CPU.
+ */
+int
+dummy_cpu_number()
+{ 
+	return 0;
+}
+   
+struct cpu_info *
+dummy_curcpu()
+{
+	extern char *scratch;
+
+	return (struct cpu_info *)(scratch + VAX_NBPG);
+}
+#endif 

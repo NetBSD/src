@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.48 2000/03/19 14:56:54 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,7 @@
 		
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -266,7 +267,11 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	while ((sig = CURSIG(p)) !=0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
+#if defined(MULTIPROCESSOR)
+	if (curcpu()->ci_want_resched) {
+#else
 	if (want_resched) {
+#endif
 		/*
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
@@ -392,7 +397,11 @@ bad:
 	while ((sig = CURSIG(p)) !=0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
+#if defined(MULTIPROCESSOR)
+	if (curcpu()->ci_want_resched) {
+#else
 	if (want_resched) {
+#endif
 		/*
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 2000/03/04 07:27:48 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.39 2000/03/19 14:56:53 ragge Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -70,7 +70,7 @@ typedef struct pmap {
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
-	int		 pm_lock;	/* Lock entry in MP environment */
+	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
 	u_char		 pm_refcnt[NPTEPGS];	/* Refcount per pte page */
 } *pmap_t;
