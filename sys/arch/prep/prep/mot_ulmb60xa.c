@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.4 2002/05/02 15:18:00 nonaka Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.5 2002/05/15 21:06:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
     (((ct) >> MOT_CPUTYPE_BOARDID_SHIFT) & MOT_CPUTYPE_BOARDID_MASK)
 
 #define	MOT_CPUTYPE_BOARDID_ULTRA	4
+#define	MOT_CPUTYPE_BOARDID_MTX		14
 
 
 static int mot_ulmb60xa_match(struct platform *);
