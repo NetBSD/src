@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.57 2005/01/30 16:56:26 chs Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.58 2005/02/18 00:17:13 peter Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.57 2005/01/30 16:56:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.58 2005/02/18 00:17:13 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,7 +644,7 @@ sa_yield(struct lwp *l)
 	}
 
 	/*
-	 * If we're the last running LWP, stick around to recieve
+	 * If we're the last running LWP, stick around to receive
 	 * signals.
 	 */
 	KDASSERT((l->l_flag & L_SA_YIELD) == 0);
