@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.5 2000/06/24 19:50:28 thorpej Exp $ */
+/* $NetBSD: envsys.h,v 1.6 2002/12/31 05:27:29 explorer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,6 +91,10 @@ enum envsys_units {
 	ENVSYS_SOHMS,
 	ENVSYS_SWATTS,
 	ENVSYS_SAMPS,
+	ENVSYS_SWATTHOUR,
+	ENVSYS_SAMPHOUR,
+	ENVSYS_INDICATOR,	/* boolean indicator */
+	ENVSYS_INTEGER,		/* generic integer return */
 	ENVSYS_NSENSORS,
 };
 
@@ -100,6 +104,7 @@ enum envsys_units {
 #define ENVSYS_FMINVALID	0x00000004  /* min for this sens is valid */
 #define ENVSYS_FMAXVALID	0x00000008  /* max for this sens is valid */
 #define ENVSYS_FAVGVALID	0x00000010  /* avg for this sens is valid */
+#define ENVSYS_FFRACVALID	0x00000020  /* display fraction of max */
 
 #define ENVSYS_GTREDATA _IOWR('E', 2, envsys_temp_data_t)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.5 2001/02/19 23:22:43 cgd Exp $ */
+/*	$NetBSD: envstat.c,v 1.6 2002/12/31 05:27:44 explorer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.5 2001/02/19 23:22:43 cgd Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.6 2002/12/31 05:27:44 explorer Exp $");
 #endif
 
 #include <fcntl.h>
@@ -67,6 +67,10 @@ void header __P((unsigned, int, envsys_basic_info_t *, const int * const,
 void values __P((unsigned, int, envsys_tre_data_t *, const int * const, int));
 void usage __P((void));
 
+int rflag = 0;
+
+static const char *unit_str[] = {"degC", "RPM", "VAC", "V", "Ohms", "W",
+				 "A", "Wh", "Ah", "bool", "Unk"};
 
 int
 main(argc, argv)
@@ -89,8 +93,11 @@ main(argc, argv)
 	sensors = NULL;
 	headrep = 22;
 
-	while ((c = getopt(argc, argv, "cfi:ln:s:w:")) != -1) {
+	while ((c = getopt(argc, argv, "cfi:ln:rs:w:r")) != -1) {
 		switch(c) {
+		case 'r':
+			rflag= 1;
+			break;
 		case 'i':	/* wait time between displays */
 			interval = atoi(optarg);
 			break;
@@ -160,6 +167,43 @@ main(argc, argv)
 	if (marksensors(ebis, cetds, sensors, ns) == -1)
 		exit(1);
 
+	if (rflag) {
+		int i;
+
+		for (i = 0 ; i < ns ; i++) {
+			if (ebis[i].units == ENVSYS_INDICATOR) {
+				if (etds[i].cur.data_s) {
+					printf("%*.*s\n",
+					    (int)width,
+					    (int)width,
+					    ebis[i].desc);
+				}
+				continue;
+			}
+
+			if (ebis[i].units == ENVSYS_INTEGER) {
+				printf("%*.*s:", (int)width, (int)width,
+				       ebis[i].desc);
+				printf(" %10d\n", etds[i].cur.data_s);
+				continue;
+			}
+
+			printf("%*.*s:", (int)width, (int)width, ebis[i].desc);
+			printf(" %10.3f %s", etds[i].cur.data_s / 1000000.0,
+			    unit_str[ebis[i].units]);
+			if (etds[i].validflags & ENVSYS_FFRACVALID) {
+				printf(" (%5.2f%%)",
+				    (etds[i].cur.data_s * 100.0) /
+				    etds[i].max.data_s);
+			}
+
+			printf("\n");
+		}
+		exit(1);
+	}
+
+
+
 	/* If we didn't specify an interval value, print the sensors once */
 	if (!interval) {
 		if (headrep)
@@ -191,9 +235,6 @@ main(argc, argv)
 }
 
 
-static const char *unit_str[] = {"degC", "RPM", "VAC", "Vcc", "Ohms", "Watts",
-				 "Amps", "Ukn"};
-
 /*
  * pre:  cetds[i] != 0 iff sensor i should appear in the output
  * post: a column header line is displayed on stdout
@@ -222,11 +263,11 @@ header(width, celsius, ebis, cetds, ns)
 			if ((ebis[i].units == ENVSYS_STEMP) &&
 			    !celsius)
 				s = "degF";
-			else if (ebis[i].units > 6)
-				s = unit_str[7];
+			else if (ebis[i].units >= ENVSYS_NSENSORS)
+				s = unit_str[ENVSYS_NSENSORS];
 			else
 				s = unit_str[ebis[i].units];
-			
+
 			printf(" %*.*s", (int)width, (int)width, s);
 		}
 	printf("\n");
@@ -242,7 +283,7 @@ values(width, celsius, etds, cetds, ns)
 {
 	int i;
 	double temp;
-	
+
 	for (i = 0; i < ns; ++i)
 		if (cetds[i]) {
 
@@ -253,6 +294,10 @@ values(width, celsius, etds, cetds, ns)
 			}
 
 			switch(etds[i].units) {
+			case ENVSYS_INDICATOR:
+				printf(" %*.*s", (int)width, (int)width,
+				    etds[i].cur.data_us ? "ON" : "OFF");
+				break;
 			case ENVSYS_STEMP:
 				temp = (etds[i].cur.data_us / 1000000.0) -
 				    273.15;
@@ -302,7 +347,7 @@ listsensors(ebis, ns)
 			printf("%s\n", ebis[i].desc);
 }
 
-		
+
 /*
  * pre:  fd contains a valid file descriptor of an envsys(4) supporting device
  * post: returns the number of valid sensors provided by the device
@@ -428,7 +473,7 @@ marksensors(ebis, cetds, sensors, ns)
 	fprintf(stderr, "envstat: no sensors selected for display\n");
 	return (-1);
 }
-	
+
 
 /*
  * returns -1 if s is not a valid sensor name for the device
