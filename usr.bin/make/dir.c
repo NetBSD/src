@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	5.6 (Berkeley) 12/28/90";*/
-static char rcsid[] = "$Id: dir.c,v 1.2 1993/08/01 18:11:51 mycroft Exp $";
+static char rcsid[] = "$Id: dir.c,v 1.3 1993/12/08 00:37:37 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -84,8 +84,8 @@ static char rcsid[] = "$Id: dir.c,v 1.2 1993/08/01 18:11:51 mycroft Exp $";
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/dir.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include "make.h"
 #include "hash.h"
 
@@ -998,7 +998,7 @@ Dir_AddDir (path, name)
     LstNode       ln;	      /* node in case Path structure is found */
     register Path *p;	      /* pointer to new Path structure */
     DIR     	  *d;	      /* for reading directory */
-    register struct direct *dp; /* entry in directory */
+    register struct dirent *dp; /* entry in directory */
     Hash_Entry	  *he;
     char	  *fName;
     
@@ -1028,7 +1028,7 @@ Dir_AddDir (path, name)
 	    (void)readdir(d);
 	    (void)readdir(d);
 	    
-	    while ((dp = readdir (d)) != (struct direct *) NULL) {
+	    while ((dp = readdir (d)) != (struct dirent *) NULL) {
 #ifdef sun
 		/*
 		 * The sun directory library doesn't check for a 0 inode
