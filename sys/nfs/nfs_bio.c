@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	8.5 (Berkeley) 1/4/94
- *	$Id: nfs_bio.c,v 1.13 1994/06/15 19:59:52 mycroft Exp $
+ *	$Id: nfs_bio.c,v 1.14 1994/06/22 14:07:37 pk Exp $
  */
 
 #include <sys/param.h>
@@ -685,11 +685,30 @@ nfs_doio(bp, cr, p)
 	uiop->uio_procp = p;
 
 	/*
-	 * Historically, paging was done with physio, but no more.
+	 * Historically, paging was done with physio, but no more...
 	 */
-	if (bp->b_flags & B_PHYS)
-	    panic("doio phys");
-	if (bp->b_flags & B_READ) {
+	if (bp->b_flags & B_PHYS) {
+	    /*
+	     * ...though reading /dev/drum still gets us here.
+	     */
+	    io.iov_len = uiop->uio_resid = bp->b_bcount;
+	    /* mapping was done by vmapbuf() */
+	    io.iov_base = bp->b_data;
+	    uiop->uio_offset = bp->b_blkno * DEV_BSIZE;
+	    if (bp->b_flags & B_READ) {
+		uiop->uio_rw = UIO_READ;
+		nfsstats.read_physios++;
+		error = nfs_readrpc(vp, uiop, cr);
+	    } else {
+		uiop->uio_rw = UIO_WRITE;
+		nfsstats.write_physios++;
+		error = nfs_writerpc(vp, uiop, cr);
+	    }
+	    if (error) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = error;
+	    }
+	} else if (bp->b_flags & B_READ) {
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
 	    io.iov_base = bp->b_data;
 	    uiop->uio_rw = UIO_READ;
