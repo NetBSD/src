@@ -1,0 +1,24 @@
+#!/bin/sh
+
+for x in $(
+${MAKE:-make} -f- all <<EOF
+.include <bsd.own.mk>
+all:
+	@echo krb=\${MKKERBEROS}
+	@echo krb4=\${MKKERBEROS4}
+	@echo machine=\${MACHINE}
+	@echo machine_arch=\${MACHINE_ARCH}
+	@echo machine_cpu=\${MACHINE_CPU}
+	@echo object_fmt=\${OBJECT_FMT}
+	@echo toolchain_missing=\${TOOLCHAIN_MISSING}
+	@echo have_gcc3=\${HAVE_GCC3}
+.if defined(USE_XF86_4) && (\${USE_XF86_4} != no)
+	@echo x11_version=4
+.else
+	@echo x11_version=3
+.endif
+
+EOF
+); do
+	eval $x
+done
