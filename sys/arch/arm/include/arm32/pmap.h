@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.74 2003/06/15 18:18:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.75 2003/06/18 02:58:09 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -71,9 +71,11 @@
 #ifdef _KERNEL
 
 #include <arm/cpuconf.h>
-#include <arm/cpufunc.h>
 #include <arm/arm32/pte.h>
+#ifndef _LOCORE
+#include <arm/cpufunc.h>
 #include <uvm/uvm_object.h>
+#endif
 
 /*
  * a pmap describes a processes' 4GB virtual address space.  this
@@ -116,6 +118,8 @@
  */
 #define	L2_LOG2		((32 - L1_S_SHIFT) - L2_BUCKET_LOG2)
 #define	L2_SIZE		(1 << L2_LOG2)
+
+#ifndef _LOCORE
 
 struct l1_ttable;
 struct l2_dtable;
@@ -438,6 +442,8 @@ extern pt_entry_t		pte_l2_s_proto;
 
 extern void (*pmap_copy_page_func)(paddr_t, paddr_t);
 extern void (*pmap_zero_page_func)(paddr_t);
+
+#endif /* !_LOCORE */
 
 /*****************************************************************************/
 
