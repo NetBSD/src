@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $	 */
+/*	$NetBSD: yplib.c,v 1.25 1996/12/24 15:08:39 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.25 1996/12/24 15:08:39 christos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ _yp_dobind(dom, ypdb)
 	int             clnt_sock, fd, gpid;
 	CLIENT         *client;
 	int             new = 0, r;
-	int             count = 0;
+	int             nerrs = 0;
 
 	if (dom == NULL || *dom == 0)
 		return YPERR_BADARGS;
@@ -191,11 +191,12 @@ trynet:
 		    xdr_ypdomain_wrap_string, &dom, xdr_ypbind_resp,
 		    &ypbr, _yplib_timeout);
 		if (r != RPC_SUCCESS) {
-			if (new == 0 || count)
+			if (new == 0 && ++nerrs == _yplib_nerrs) {
+				nerrs = 0;
 				fprintf(stderr,
 		    "YP server for domain %s not responding, still trying\n",
-					dom);
-			count++;
+				    dom);
+			}
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
 			goto again;
