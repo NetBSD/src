@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.30 2003/08/25 21:55:29 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.31 2003/08/25 22:03:33 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -218,7 +218,7 @@ while [ $# -gt 0 ]; do
 		fi
 		if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
 			$doit $chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
-			$doit envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
+			$doit $envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
 			ec=$?
 			if [ $ec != 0 ]; then
 				echo "pkg_view: de-install script returned an error." 1>&2
