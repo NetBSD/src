@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.47 2001/02/19 23:03:52 cgd Exp $	*/
+/*	$NetBSD: su.c,v 1.48 2001/04/23 06:52:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.47 2001/02/19 23:03:52 cgd Exp $");
+__RCSID("$NetBSD: su.c,v 1.48 2001/04/23 06:52:22 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -331,7 +331,7 @@ badlogin:
 			p = getenv("TERM");
 			/* Create an empty environment */
 			if ((environ = malloc(sizeof(char *))) == NULL)
-				err(1, "fuck");
+				err(1, NULL);
 			environ[0] = NULL;
 #ifdef LOGIN_CAP
 			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
