@@ -8,11 +8,11 @@
  *
  *
  * from: Id: route.c,v 1.5 1993/06/24 05:11:16 deering Exp
- *      $Id: route.c,v 1.1 1994/01/11 20:16:02 brezak Exp $
+ *      $Id: route.c,v 1.2 1994/05/08 15:08:56 brezak Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: route.c,v 1.1 1994/01/11 20:16:02 brezak Exp $";
+static char rcsid[] = "$Id: route.c,v 1.2 1994/05/08 15:08:56 brezak Exp $";
 #endif
 
 #include "defs.h"
@@ -30,7 +30,7 @@ int delay_change_reports;		/* 1=>postpone change reports  */
  */
 static struct rtentry *routing_table;	/* pointer to list of route entries */
 static struct rtentry *rtp;		/* pointer to a route entry         */
-static unsigned nroutes;		/* current number of route entries  */
+unsigned nroutes;			/* current number of route entries  */
 
 
 /*
@@ -388,14 +388,14 @@ void update_route(origin, mask, metric, src, vifi)
 	 */
 	if ((prev_r = find_conflicting_route(origin, mask)) != NULL ) {
 	    if (src != 0) {
-		log(LOG_WARNING, 0,
+		log(LOG_INFO, 0,
 		    "%s reports a conflicting origin (%s) and mask (%08x)",
 		    inet_fmt(src, s1), inet_fmt(origin, s2), ntohl(mask));
 		return;
 	    }
 	    else {
 		r = prev_r->rt_next;
-		log(LOG_WARNING, 0,
+		log(LOG_INFO, 0,
 		   "deleting route with conflicting origin (%s), mask (%08x)",
 		   inet_fmt(r->rt_origin, s1), ntohl(r->rt_originmask));
 
@@ -683,6 +683,35 @@ void accept_probe(src, dst)
     report(ALL_ROUTES, vifi, src);
 }
 
+struct newrt {
+	u_long mask;
+	u_long origin;
+	int metric;
+	int pad;
+}; 
+
+int compare_rts(r1, r2)
+    register struct newrt *r1;
+    register struct newrt *r2;
+{
+    register unsigned long m1 = ntohl(r1->mask);
+    register unsigned long m2 = ntohl(r2->mask);
+    register unsigned long o1, o2;
+
+    if (m1 > m2)
+	return (1);
+    if (m1 < m2)
+	return (-1);
+
+    /* masks are equal */
+    o1 = ntohl(r1->origin);
+    o2 = ntohl(r2->origin);
+    if (o1 > o2)
+	return (1);
+    if (o1 < o2)
+	return (-1);
+    return (0);
+}
 
 /*
  * Process an incoming route report message.
@@ -693,10 +722,11 @@ void accept_report(src, dst, p, datalen)
     register int datalen;
 {
     vifi_t vifi;
-    register int width, i;
+    register int width, i, nrt = 0;
     int metric;
     u_long mask;
     u_long origin;
+    struct newrt rt[4096];
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
 	log(LOG_INFO, 0,
@@ -707,10 +737,14 @@ void accept_report(src, dst, p, datalen)
     if (!update_neighbor(vifi, src, DVMRP_REPORT))
 	return;
 
-    start_route_updates();
+    if (datalen > 2*4096) {
+	log(LOG_INFO, 0,
+    	    "ignoring oversize (%d bytes) route report from %s",
+	    datalen, inet_fmt(src, s1));
+	return;
+    }
 
     while (datalen > 0) {	/* Loop through per-mask lists. */
-
 	if (datalen < 3) {
 	    log(LOG_WARNING, 0,
 		"received truncated route report from %s", inet_fmt(src, s1));
@@ -723,7 +757,6 @@ void accept_report(src, dst, p, datalen)
 	datalen -= 3;
 
 	do {			/* Loop through (origin, metric) pairs */
-
 	    if (datalen < width + 1) {
 		log(LOG_WARNING, 0,
 		"received truncated route report from %s", inet_fmt(src, s1));
@@ -734,11 +767,16 @@ void accept_report(src, dst, p, datalen)
 		((char *)&origin)[i] = *p++;
 	    metric = *p++;
 	    datalen -= width + 1;
-
-	    update_route(origin, mask, (metric & 0x7f), src, vifi);
-
+	    rt[nrt].mask   = mask;
+	    rt[nrt].origin = origin;
+	    rt[nrt].metric = metric;
+	    ++nrt;
 	} while (!(metric & 0x80));
     }
+    qsort((char*)rt, nrt, sizeof(rt[0]), compare_rts);
+    start_route_updates();
+    for (i = 0; i < nrt; ++i)
+	update_route(rt[i].origin, rt[i].mask, (rt[i].metric & 0x7f), src, vifi);
 
     if (routes_changed && !delay_change_reports)
 	report_to_all_neighbors(CHANGED_ROUTES);
@@ -863,6 +901,108 @@ void report_to_all_neighbors(which_routes)
      * next timer interrupt.  This is to alleviate update storms.
      */
     delay_change_reports = TRUE;
+}
+
+/*
+ * Send a route report message to destination 'dst', via virtual interface
+ * 'vifi'.  'which_routes' specifies ALL_ROUTES or CHANGED_ROUTES.
+ */
+int report_chunk(start_rt, vifi, dst)
+    register struct rtentry *start_rt;
+    vifi_t vifi;
+    u_long dst;
+{
+    register struct rtentry *r;
+    register char *p;
+    register int i;
+    register int nrt = 0;
+    int datalen;
+    int width;
+    u_long mask;
+    u_long src;
+
+    src = uvifs[vifi].uv_lcl_addr;
+    p = send_buf + MIN_IP_HEADER_LEN + IGMP_MINLEN;
+    datalen = 0;
+    mask = 0;
+
+    for (r = start_rt; r != NULL; r = r->rt_next) {
+	/*
+	 * If there is no room for this route in the current message,
+	 * send it & return how many routes we sent.
+	 */
+	if (datalen + ((r->rt_originmask == mask) ?
+			(width + 1) :
+			(r->rt_originwidth + 4)) > MAX_DVMRP_DATA_LEN) {
+	    *(p-1) |= 0x80;
+	    send_igmp(src, dst, IGMP_DVMRP, DVMRP_REPORT,
+			htonl(MROUTED_LEVEL), datalen);
+	    return (nrt);
+	}
+	if(r->rt_originmask != mask) {
+	    mask  = r->rt_originmask;
+	    width = r->rt_originwidth;
+	    if (datalen != 0) *(p-1) |= 0x80;
+	    *p++ = ((char *)&mask)[1];
+	    *p++ = ((char *)&mask)[2];
+	    *p++ = ((char *)&mask)[3];
+	    datalen += 3;
+	}
+	for (i = 0; i < width; ++i)
+	    *p++ = ((char *)&(r->rt_origin))[i];
+
+	*p++ = (r->rt_parent == vifi && r->rt_metric != UNREACHABLE) ?
+		(char)(r->rt_metric + UNREACHABLE) :  /* "poisoned reverse" */
+		(char)(r->rt_metric);
+	++nrt;
+	datalen += width + 1;
+    }
+    if (datalen != 0) {
+	*(p-1) |= 0x80;
+	send_igmp(src, dst, IGMP_DVMRP, DVMRP_REPORT,
+			htonl(MROUTED_LEVEL), datalen);
+    }
+    return (nrt);
+}
+
+/*
+ * send the next chunk of our routing table to all neighbors.
+ */
+int report_next_chunk()
+{
+    register vifi_t vifi;
+    register struct uvif *v;
+    register struct rtentry *r;
+    register struct rtentry *sr;
+    register int i, n = 0;
+    static int start_rt;
+
+    if (nroutes <= 0)
+	return (0);
+
+    /*
+     * find this round's starting route.
+     */
+    for (sr = routing_table, i = start_rt; --i >= 0; ) {
+	sr = sr->rt_next;
+	if (sr == NULL)
+	    sr = routing_table;
+    }
+    /*
+     * send one chunk of routes starting at this round's start to
+     * all our neighbors.
+     */
+    for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
+	if (v->uv_neighbors != NULL) {
+	    n = report_chunk(sr, vifi,
+		   (v->uv_flags & VIFF_TUNNEL) ? v->uv_rmt_addr
+					      : dvmrp_group);
+	}
+    }
+    if (debug)
+	printf("update %d starting at %d of %d\n", n, start_rt, nroutes);
+    start_rt = (start_rt + n) % nroutes;
+    return (n);
 }
 
 

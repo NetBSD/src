@@ -57,28 +57,28 @@
  * or implied warranty of any kind.
  * 
  * These notices must be retained in any copies of any part of this software.
+ *
+ * original rcsid:
+ *   Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)
+ * From: Id: mrinfo.c,v 1.3 1993/06/24 05:11:16 deering Exp
+ *      $Id: mrinfo.c,v 1.2 1994/05/08 15:08:58 brezak Exp $
  */
 
 #ifndef lint
-#ifdef __orig
-static char rcsid[] =
-    "@(#) $Id: mrinfo.c,v 1.1 1994/01/11 20:16:18 brezak Exp $";
-/*  original rcsid:
-    "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
-*/
-#endif
-static char rcsid[] = "$Id: mrinfo.c,v 1.1 1994/01/11 20:16:18 brezak Exp $";
+static char rcsid[] = "$Id: mrinfo.c,v 1.2 1994/05/08 15:08:58 brezak Exp $";
 #endif
 
 #include <netdb.h>
 #include <sys/time.h>
 #include "defs.h"
+#include <arpa/inet.h>
 
 #define DEFAULT_TIMEOUT	4	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to ask each router */
 
 u_long  our_addr, target_addr = 0;	/* in NET order */
 int     debug = 0;
+int	nflag = 0;
 int     retries = DEFAULT_RETRIES;
 int     timeout = DEFAULT_TIMEOUT;
 int	target_level;
@@ -88,13 +88,17 @@ inet_name(addr)
 	u_long  addr;
 {
 	struct hostent *e;
+	struct in_addr in;
 
 	if (addr == 0)
 		return "local";
 
-	e = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
-
-	return e ? e->h_name : "?";
+	if (nflag ||
+	    (e = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET)) == NULL) {
+		in.s_addr = addr;
+		return (inet_ntoa(in));
+	}
+	return (e->h_name);
 }
 
 /*
@@ -266,24 +270,24 @@ u_long
 host_addr(name)
 	char   *name;
 {
-	struct hostent *e = gethostbyname(name);
-	int     addr;
+	struct hostent *e;
+	u_long addr;
 
-	if (e)
+	addr = inet_addr(name);
+	if ((int)addr == -1) {
+		e = gethostbyname(name);
+		if (e == NULL || e->h_length != sizeof(addr))
+			return (0);
 		memcpy(&addr, e->h_addr_list[0], e->h_length);
-	else {
-		addr = inet_addr(name);
-		if (addr == -1)
-			addr = 0;
 	}
-
-	return addr;
+	return (addr);
 }
 
 void
 usage()
 {
-	fprintf(stderr, "Usage: mrinfo [-t timeout] [-r retries] router\n");
+	fprintf(stderr,
+	    "Usage: mrinfo [-n] [-t timeout] [-r retries] [router]\n");
 	exit(1);
 }
 
@@ -304,6 +308,9 @@ main(argc, argv)
 			if (!get_number(&debug, DEFAULT_DEBUG, &argv, &argc))
 				usage();
 			break;
+		case 'n':
+			++nflag;
+			break;
 		case 'r':
 			if (!get_number(&retries, -1, &argv, &argc))
 				usage();
@@ -317,10 +324,13 @@ main(argc, argv)
 		}
 		argv++, argc--;
 	}
-	if (argc != 1)
+	if (argc > 1)
 		usage();
+	if (argc == 1)
+		target_addr = host_addr(argv[0]);
+	else
+		target_addr = host_addr("127.0.0.1");
 
-	target_addr = host_addr(argv[0]);
 	if (target_addr == 0) {
 		fprintf(stderr, "mrinfo: %s: no such host\n", argv[0]);
 		exit(1);

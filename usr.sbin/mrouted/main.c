@@ -7,7 +7,8 @@
  * Leland Stanford Junior University.
  *
  *
- * from: Id: main.c,v 1.5 1993/06/24 05:11:16 deering Exp
+ * From: Id: main.c,v 1.5 1993/06/24 05:11:16 deering Exp $
+ *      $Id: main.c,v 1.2 1994/05/08 15:08:55 brezak Exp $
  */
 
 /*
@@ -20,7 +21,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.1 1994/01/11 20:15:58 brezak Exp $";
+static char rcsid[] = "$Id: main.c,v 1.2 1994/05/08 15:08:55 brezak Exp $";
 #endif
 
 #include "defs.h"
@@ -30,12 +31,13 @@ extern char *configfilename;
 static char pidfilename[]  = _PATH_MROUTED_PID;
 static char dumpfilename[] = _PATH_MROUTED_DUMP;
 
-static int debug = 0;
+int debug = 0;
 
 
 /*
  * Forward declarations.
  */
+static void fasttimer();
 static void timer();
 static void hup();
 static void dump();
@@ -119,8 +121,6 @@ usage:	fprintf(stderr, "usage: mrouted [-c configfile] [-d [debug_level]]\n");
 	(void) fclose(fp);
     }
 
-    srandom(gethostid());
-
     init_igmp();
     k_init_dvmrp();		/* enable DVMRP routing in kernel */
     init_routes();
@@ -128,7 +128,7 @@ usage:	fprintf(stderr, "usage: mrouted [-c configfile] [-d [debug_level]]\n");
 
     if (debug >= 2) dump();
 
-    (void)signal(SIGALRM, timer);
+    (void)signal(SIGALRM, fasttimer);
     (void)signal(SIGHUP,  hup);
     (void)signal(SIGTERM, hup);
     (void)signal(SIGINT,  hup);
@@ -136,7 +136,7 @@ usage:	fprintf(stderr, "usage: mrouted [-c configfile] [-d [debug_level]]\n");
     if (debug != 0)
 	(void)signal(SIGQUIT, dump);
 
-    (void)alarm(TIMER_INTERVAL);	 /* schedule first timer interrupt */
+    (void)alarm(1);	 /* schedule first timer interrupt */
 
     /*
      * Main receive loop.
@@ -155,6 +155,48 @@ usage:	fprintf(stderr, "usage: mrouted [-c configfile] [-d [debug_level]]\n");
     }
 }
 
+
+/*
+ * routine invoked every second.  It's main goal is to cycle through
+ * the routing table and send partial updates to all neighbors at a
+ * rate that will cause the entire table to be sent in ROUTE_REPORT_INTERVAL
+ * seconds.  Also, every TIMER_INTERVAL seconds it calls timer() to
+ * do all the other time-based processing.
+ */
+static void fasttimer()
+{
+    static unsigned int tlast;
+    static unsigned int nsent;
+    register unsigned int t = tlast + 1;
+    register int n;
+
+    /*
+     * if we're in the last second, send everything that's left.
+     * otherwise send at least the fraction we should have sent by now.
+     */
+    if (t >= ROUTE_REPORT_INTERVAL) {
+	register int nleft = nroutes - nsent;
+	while (nleft > 0) {
+	    if ((n = report_next_chunk()) <= 0)
+		break;
+	    nleft -= n;
+	}
+	tlast = 0;
+	nsent = 0;
+    } else {
+	register unsigned int ncum = nroutes * t / ROUTE_REPORT_INTERVAL;
+	while (nsent < ncum) {
+	    if ((n = report_next_chunk()) <= 0)
+		break;
+	    nsent += n;
+	}
+	tlast = t;
+    }
+    if ((t % TIMER_INTERVAL) == 0)
+	timer();
+
+    alarm(1);
+}
 
 /*
  * The 'virtual_time' variable is initialized to a value that will cause the
@@ -183,8 +225,6 @@ static u_long virtual_time = 0;
  */
 static void timer()
 {
-    int next_interval;
-
     age_routes();	/* Advance the timers in the route entries     */
     age_vifs();		/* Advance the timers for neighbors and groups */
 
@@ -210,23 +250,7 @@ static void timer()
     }
 
     delay_change_reports = FALSE;
-    next_interval = TIMER_INTERVAL;
-
-    if (virtual_time % ROUTE_REPORT_INTERVAL == 0) {
-	/*
-	 * Time for the periodic report of all routes to all neighbors.
-	 */
-	report_to_all_neighbors(ALL_ROUTES);
-
-	/*
-	 * Schedule the next timer interrupt for a random time between
-	 * 1 and TIMER_INTERVAL seconds from now.  This randomization is
-	 * intended to counteract the undesirable synchronizing tendency
-	 * of periodic transmissions from multiple sources.
-	 */
-	next_interval = (random() % TIMER_INTERVAL) + 1;
-    }
-    else if (routes_changed) {
+    if (routes_changed) {
 	/*
 	 * Some routes have changed since the last timer interrupt, but
 	 * have not been reported yet.  Report the changed routes to all
@@ -236,10 +260,9 @@ static void timer()
     }
 
     /*
-     * Advance virtual time and schedule the next timer interrupt.
+     * Advance virtual time
      */
     virtual_time += TIMER_INTERVAL;
-    (void)alarm(next_interval);
 }
 
 
