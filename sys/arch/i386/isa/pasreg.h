@@ -1,4 +1,4 @@
-/*	$NetBSD: pasreg.h,v 1.1 1995/02/21 02:27:19 brezak Exp $	*/
+/*	$NetBSD: pasreg.h,v 1.2 1995/03/15 18:45:58 brezak Exp $	*/
 
 /* Port addresses and bit fields for the Media Vision Pro AudioSpectrum
  * second generation sound cards.
@@ -138,6 +138,7 @@
 #define PAS_PLUS	1
 #define PAS_CDPC	2
 #define PAS_16		3
+#define PAS_16BASIC     4        /* no CDrom */
 
 #ifdef DEFINE_TRANSLATIONS
 	char I_C_2_PCM_DMA_translate[] = 		/* R W  PCM		PCM DMA channel value translations		*/
@@ -151,7 +152,7 @@
 	char E_C_SB_DMA_translate[] = 			/* R W	PCM		SB emulation DMA translate			*/
 		{ 0x00, 0x40, 0x80, 0xC0 };
 	char O_M_1_to_card[] = 				/* R W	Control		Translate (OM1 & 0x0f) to card type		*/
-		{ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 3 };   
+		{ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 0, 2, 3 };   
 #else
 	extern char I_C_2_PCM_DMA_translate[];		/* R W  PCM		PCM DMA channel value translations		*/
 	extern char I_C_3_PCM_IRQ_translate[];		/* R W	PCM		PCM IRQ level value translation			*/
