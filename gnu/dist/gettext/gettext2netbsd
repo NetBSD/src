@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gettext2netbsd,v 1.1 2000/10/31 14:58:00 itojun Exp $
+#	$NetBSD: gettext2netbsd,v 1.2 2000/10/31 15:00:07 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,25 +38,25 @@
 # works on current directory.
 
 ### Remove the $'s around the Header:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
+find . -type f -print | grep -v CVS | grep -v gettext2netbsd | while read f; do
 	sed -e ' s/\$\(Header[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
 	echo removed Header tag from $f
 done
 
 ### Remove the $'s around the Id:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
+find . -type f -print | grep -v CVS | grep -v gettext2netbsd | while read f; do
 	sed -e ' s/\$\(Id[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
 	echo removed Id tag from $f
 done
 
 ### Remove the $'s around the Date:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
+find . -type f -print | grep -v CVS | grep -v gettext2netbsd | while read f; do
 	sed -e ' s/\$\(Date[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
 	echo removed Date tag from $f
 done
 
 ### Remove the $'s around the Revision:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
+find . -type f -print | grep -v CVS | grep -v gettext2netbsd | while read f; do
 	sed -e ' s/\$\(Revision[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
 	echo removed Revision tag from $f
 done
