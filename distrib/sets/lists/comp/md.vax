@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.21 2002/04/06 18:24:23 bjh21 Exp $
+# $NetBSD: md.vax,v 1.22 2002/08/07 21:21:03 briggs Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
@@ -43,6 +43,7 @@
 ./usr/include/vax/param.h	comp-c-include
 ./usr/include/vax/pcb.h	comp-c-include
 ./usr/include/vax/pmap.h	comp-c-include
+./usr/include/vax/pmc.h	comp-c-include
 ./usr/include/vax/proc.h	comp-c-include
 ./usr/include/vax/profile.h	comp-c-include
 ./usr/include/vax/psl.h	comp-c-include

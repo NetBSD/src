@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.3 2002/05/09 18:15:13 uch Exp $
+# $NetBSD: md.dreamcast,v 1.4 2002/08/07 21:20:54 briggs Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-c-include
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/dreamcast/param.h			comp-c-include
 ./usr/include/dreamcast/pcb.h			comp-c-include
 ./usr/include/dreamcast/pmap.h			comp-c-include
+./usr/include/dreamcast/pmc.h			comp-c-include
 ./usr/include/dreamcast/proc.h			comp-c-include
 ./usr/include/dreamcast/profile.h		comp-c-include
 ./usr/include/dreamcast/psl.h			comp-c-include

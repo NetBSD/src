@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.14 2001/09/27 08:01:25 shin Exp $
+# $NetBSD: md.hpcmips,v 1.15 2002/08/07 21:20:56 briggs Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/hpcmips/param.h	comp-c-include
 ./usr/include/hpcmips/pcb.h	comp-c-include
 ./usr/include/hpcmips/pmap.h	comp-c-include
+./usr/include/hpcmips/pmc.h	comp-c-include
 ./usr/include/hpcmips/proc.h	comp-c-include
 ./usr/include/hpcmips/profile.h	comp-c-include
 ./usr/include/hpcmips/psl.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.2 2002/07/14 17:34:01 jdolecek Exp $
+# $NetBSD: md.hpcarm,v 1.3 2002/08/07 21:20:56 briggs Exp $
 ./usr/include/hpcarm	comp-c-include
 ./usr/include/hpcarm/ansi.h	comp-c-include
 ./usr/include/hpcarm/aout_machdep.h	comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/hpcarm/param.h	comp-c-include
 ./usr/include/hpcarm/pcb.h	comp-c-include
 ./usr/include/hpcarm/pmap.h	comp-c-include
+./usr/include/hpcarm/pmc.h	comp-c-include
 ./usr/include/hpcarm/proc.h	comp-c-include
 ./usr/include/hpcarm/profile.h	comp-c-include
 ./usr/include/hpcarm/ptrace.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.walnut,v 1.1 2002/07/11 19:40:02 jdolecek Exp $
+# $NetBSD: md.walnut,v 1.2 2002/08/07 21:21:03 briggs Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/walnut			comp-c-include
 ./usr/include/walnut/_G_config.h	comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/walnut/pcb.h		comp-c-include
 ./usr/include/walnut/pio.h		comp-c-include
 ./usr/include/walnut/pmap.h		comp-c-include
+./usr/include/walnut/pmc.h		comp-c-include
 ./usr/include/walnut/powerpc.h		comp-c-include
 ./usr/include/walnut/proc.h		comp-c-include
 ./usr/include/walnut/profile.h		comp-c-include

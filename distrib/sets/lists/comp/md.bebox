@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.17 2002/05/04 04:50:46 briggs Exp $
+# $NetBSD: md.bebox,v 1.18 2002/08/07 21:20:53 briggs Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
@@ -39,6 +39,7 @@
 ./usr/include/bebox/pccons.h	comp-c-include
 ./usr/include/bebox/pio.h	comp-c-include
 ./usr/include/bebox/pmap.h	comp-c-include
+./usr/include/bebox/pmc.h	comp-c-include
 ./usr/include/bebox/powerpc.h	comp-c-include
 ./usr/include/bebox/proc.h	comp-c-include
 ./usr/include/bebox/profile.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.23 2001/11/28 13:29:29 kleink Exp $
+# $NetBSD: md.mvme68k,v 1.24 2002/08/07 21:20:58 briggs Exp $
 ./usr/include/mvme68k	comp-c-include
 ./usr/include/mvme68k/_G_config.h	comp-c-include
 ./usr/include/mvme68k/ansi.h	comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/mvme68k/param.h	comp-c-include
 ./usr/include/mvme68k/pcb.h	comp-c-include
 ./usr/include/mvme68k/pmap.h	comp-c-include
+./usr/include/mvme68k/pmc.h	comp-c-include
 ./usr/include/mvme68k/proc.h	comp-c-include
 ./usr/include/mvme68k/profile.h	comp-c-include
 ./usr/include/mvme68k/prom.h	comp-c-include

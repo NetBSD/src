@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.15 2002/05/09 18:15:13 uch Exp $
+# $NetBSD: md.mmeye,v 1.16 2002/08/07 21:20:57 briggs Exp $
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/mmeye/param.h	comp-c-include
 ./usr/include/mmeye/pcb.h	comp-c-include
 ./usr/include/mmeye/pmap.h	comp-c-include
+./usr/include/mmeye/pmc.h	comp-c-include
 ./usr/include/mmeye/proc.h	comp-c-include
 ./usr/include/mmeye/profile.h	comp-c-include
 ./usr/include/mmeye/psl.h	comp-c-include

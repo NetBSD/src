@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.2 2001/10/04 00:11:22 hubertf Exp $
+# $NetBSD: md.sgimips,v 1.3 2002/08/07 21:21:01 briggs Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/sgimips			comp-c-include
 ./usr/include/sgimips/_G_config.h	comp-c-include
@@ -37,6 +37,7 @@
 ./usr/include/sgimips/pcb.h		comp-c-include
 ./usr/include/sgimips/pci_machdep.h	comp-c-include
 ./usr/include/sgimips/pmap.h		comp-c-include
+./usr/include/sgimips/pmc.h		comp-c-include
 ./usr/include/sgimips/proc.h		comp-c-include
 ./usr/include/sgimips/profile.h		comp-c-include
 ./usr/include/sgimips/psl.h		comp-c-include

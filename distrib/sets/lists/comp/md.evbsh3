@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.16 2002/05/09 18:15:13 uch Exp $
+# $NetBSD: md.evbsh3,v 1.17 2002/08/07 21:20:55 briggs Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/evbsh3/param.h	comp-c-include
 ./usr/include/evbsh3/pcb.h	comp-c-include
 ./usr/include/evbsh3/pmap.h	comp-c-include
+./usr/include/evbsh3/pmc.h	comp-c-include
 ./usr/include/evbsh3/proc.h	comp-c-include
 ./usr/include/evbsh3/profile.h	comp-c-include
 ./usr/include/evbsh3/psl.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.sandpoint,v 1.3 2002/04/14 09:50:39 bjh21 Exp $
+# $NetBSD: md.sandpoint,v 1.4 2002/08/07 21:21:01 briggs Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sandpoint	comp-c-include
 ./usr/include/sandpoint/_G_config.h	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/sandpoint/pcb.h	comp-c-include
 ./usr/include/sandpoint/pio.h	comp-c-include
 ./usr/include/sandpoint/pmap.h	comp-c-include
+./usr/include/sandpoint/pmc.h	comp-c-include
 ./usr/include/sandpoint/powerpc.h	comp-c-include
 ./usr/include/sandpoint/proc.h	comp-c-include
 ./usr/include/sandpoint/profile.h	comp-c-include

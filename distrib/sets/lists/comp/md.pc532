@@ -1,4 +1,4 @@
-# $NetBSD: md.pc532,v 1.37 2001/04/15 17:14:28 kleink Exp $
+# $NetBSD: md.pc532,v 1.38 2002/08/07 21:20:59 briggs Exp $
 ./usr/include/pc532	comp-c-include
 ./usr/include/pc532/_G_config.h	comp-c-include
 ./usr/include/pc532/ansi.h	comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/pc532/param.h	comp-c-include
 ./usr/include/pc532/pcb.h	comp-c-include
 ./usr/include/pc532/pmap.h	comp-c-include
+./usr/include/pc532/pmc.h	comp-c-include
 ./usr/include/pc532/proc.h	comp-c-include
 ./usr/include/pc532/profile.h	comp-c-include
 ./usr/include/pc532/psl.h	comp-c-include

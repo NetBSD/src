@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.1 2002/03/31 21:13:24 thorpej Exp $
+# $NetBSD: md.cats,v 1.2 2002/08/07 21:20:54 briggs Exp $
 ./usr/include/cats			comp-c-include
 ./usr/include/cats/_G_config.h		comp-c-include
 ./usr/include/cats/ansi.h		comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/cats/param.h		comp-c-include
 ./usr/include/cats/pcb.h		comp-c-include
 ./usr/include/cats/pmap.h		comp-c-include
+./usr/include/cats/pmc.h		comp-c-include
 ./usr/include/cats/proc.h		comp-c-include
 ./usr/include/cats/profile.h		comp-c-include
 ./usr/include/cats/ptrace.h		comp-c-include
