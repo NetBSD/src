@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.123 2004/07/23 14:35:52 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.124 2004/07/23 15:07:55 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1256,4 +1256,104 @@ usr.sbin/sunlabel/Makefile			patch
 
 	Fix building the netbsd-1-6 branch under Darwin/MacOS.
 	[dbj, ticket #1723]
+
+bin/dd/strsuftoull.c				patch
+bin/ed/re.c					patch
+crypto/dist/ssh/auth-krb4.c			patch
+crypto/dist/ssh/auth-options.c			patch
+crypto/dist/ssh/auth-rh-rsa.c			patch
+crypto/dist/ssh/auth-rhosts.c			patch
+crypto/dist/ssh/auth-rsa.c			patch
+crypto/dist/ssh/auth.c				patch
+crypto/dist/ssh/auth1.c				patch
+crypto/dist/ssh/auth2-hostbased.c		patch
+crypto/dist/ssh/auth2-passwd.c			patch
+crypto/dist/ssh/auth2-pubkey.c			patch
+crypto/dist/ssh/auth2.c				patch
+crypto/dist/ssh/authfd.c			patch
+crypto/dist/ssh/bufaux.c			patch
+crypto/dist/ssh/canohost.c			patch
+crypto/dist/ssh/channels.c			patch
+crypto/dist/ssh/clientloop.c			patch
+crypto/dist/ssh/compat.c			patch
+crypto/dist/ssh/dh.c				patch
+crypto/dist/ssh/dispatch.c			patch
+crypto/dist/ssh/groupaccess.c			patch
+crypto/dist/ssh/hostfile.c			patch
+crypto/dist/ssh/log.c				patch
+crypto/dist/ssh/log.h				patch
+crypto/dist/ssh/monitor.c			patch
+crypto/dist/ssh/nchan.c				patch
+crypto/dist/ssh/packet.c			patch
+crypto/dist/ssh/packet.h			patch
+crypto/dist/ssh/scard.c				patch
+crypto/dist/ssh/servconf.c			patch
+crypto/dist/ssh/session.c			patch
+crypto/dist/ssh/sftp-client.c			patch
+crypto/dist/ssh/sftp-server.c			patch
+crypto/dist/ssh/ssh-agent.c			patch
+crypto/dist/ssh/ssh-keygen.c			patch
+crypto/dist/ssh/ssh.c				patch
+crypto/dist/ssh/sshconnect.c			patch
+crypto/dist/ssh/sshconnect1.c			patch
+crypto/dist/ssh/sshconnect2.c			patch
+crypto/dist/ssh/sshd.c				patch
+crypto/dist/ssh/sshlogin.c			patch
+crypto/dist/ssh/ttymodes.c			patch
+dist/am-utils/fsinfo/fsi_util.c			patch
+dist/am-utils/fsinfo/fsi_analyze.c		patch
+dist/am-utils/fsinfo/fsinfo.c			patch
+dist/am-utils/fsinfo/fsinfo.h			patch
+dist/am-utils/fsinfo/wr_fstab.c			patch
+games/cribbage/cribbage.h			patch
+games/cribbage/extern.c				patch
+games/cribbage/score.c				patch
+games/cribbage/support.c			patch
+gnu/dist/map-mbone/mapper.c			patch
+gnu/dist/mrinfo/mrinfo.c			patch
+gnu/dist/mrouted/callout.c			patch
+gnu/dist/mrouted/cfparse.y			patch
+gnu/dist/mrouted/config.c			patch
+gnu/dist/mrouted/defs.h				patch
+gnu/dist/mrouted/igmp.c				patch
+gnu/dist/mrouted/kern.c				patch
+gnu/dist/mrouted/main.c				patch
+gnu/dist/mrouted/prune.c			patch
+gnu/dist/mrouted/route.c			patch
+gnu/dist/mrouted/rsrr.c				patch
+gnu/dist/mrouted/vif.c				patch
+gnu/dist/mtrace/mtrace.c			patch
+gnu/usr.sbin/mrouted/Makefile			patch
+lib/libcompat/regexp/regexp.c			patch
+libexec/ftpd/ftpd.c				patch
+libexec/rexecd/rexecd.c				patch
+libexec/uucpd/uucpd.c				patch
+sbin/savecore/savecore.c			patch
+sys/arch/sbmips/sbmips/sb1250_icu.c		patch
+usr.bin/make/suff.c				patch
+usr.bin/rdist/defs.h				patch
+usr.bin/rdist/docmd.c				patch
+usr.bin/rdist/server.c				patch
+usr.bin/xlint/xlint/xlint.c			patch
+usr.sbin/isdn/isdnd/alias.c			patch
+usr.sbin/isdn/isdnd/controller.c		patch
+usr.sbin/isdn/isdnd/curses.c			patch
+usr.sbin/isdn/isdnd/dial.c			patch
+usr.sbin/isdn/isdnd/exec.c			patch
+usr.sbin/isdn/isdnd/fsm.c			patch
+usr.sbin/isdn/isdnd/holiday.c			patch
+usr.sbin/isdn/isdnd/isdnd.h			patch
+usr.sbin/isdn/isdnd/log.c			patch
+usr.sbin/isdn/isdnd/main.c			patch
+usr.sbin/isdn/isdnd/monitor.c			patch
+usr.sbin/isdn/isdnd/msghdl.c			patch
+usr.sbin/isdn/isdnd/process.c			patch
+usr.sbin/isdn/isdnd/rates.c			patch
+usr.sbin/isdn/isdnd/rc_config.c			patch
+usr.sbin/isdn/isdnd/support.c			patch
+usr.sbin/isdn/isdnd/timer.c			patch
+usr.sbin/pppd/chat/chat.c			patch
+
+	Fix problems when building the netbsd-1-6 branch with GCC 3.3.3.
+	[dbj, ticket #1724]
 
