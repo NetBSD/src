@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.5 2002/06/04 11:14:21 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.6 2002/06/05 14:59:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ IDTVEC(syscall)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)
-	movq	$0,TF_ERR(%rsp)
+	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
 	movq    _C_LABEL(curproc)(%rip),%r15
