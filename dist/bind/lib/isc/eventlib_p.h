@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.1.2.2 1999/12/04 17:06:18 he Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.1.2.3 2000/10/10 21:19:29 he Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -186,7 +186,8 @@ typedef struct {
 
 /* eventlib.c */
 #define evPrintf __evPrintf
-void evPrintf(const evContext_p *ctx, int level, const char *fmt, ...);
+void evPrintf(const evContext_p *ctx, int level, const char *fmt, ...)
+     __attribute__((__format__(__printf__, 3, 4)));
 
 /* ev_timers.c */
 #define evCreateTimers __evCreateTimers

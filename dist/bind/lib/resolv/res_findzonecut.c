@@ -1,4 +1,4 @@
-/*	$NetBSD: res_findzonecut.c,v 1.1.1.1.2.2 1999/12/04 17:07:42 he Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.1.1.1.2.3 2000/10/10 21:19:32 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: res_findzonecut.c,v 8.8 1999/10/15 19:49:11 vixie Exp";
@@ -80,7 +80,8 @@ static void	free_nsrr(rrset_ns *, rr_ns *);
 static rr_ns *	find_ns(rrset_ns *, const char *);
 static int	do_query(res_state, const char *, ns_class, ns_type,
 			 u_char *, ns_msg *);
-static void	dprintf(const char *, ...);
+static void	dprintf(const char *, ...) 
+     __attribute__((__format__(__printf__, 1, 2)));
 
 /* Macros. */
 
@@ -371,7 +372,7 @@ get_ns(res_state statp, const char *zname, ns_class class, rrset_ns *nsrrsp) {
 	/* Go and get the NS RRs for this zone. */
 	n = do_query(statp, zname, class, ns_t_ns, resp, &msg);
 	if (n != 0) {
-		DPRINTF(("get_ns: do_query('zname', %s) failed (%d)",
+		DPRINTF(("get_ns: do_query('%s', %s) failed (%d)",
 			 zname, p_class(class), n));
 		return (-1);
 	}
@@ -403,7 +404,7 @@ get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 				     resp, &msg);
 			if (n != 0) {
 				DPRINTF(("get_glue: do_query('%s', %s') failed",
-					 nsrr->name, p_class(class), n));
+					 nsrr->name, p_class(class)));
 				return (-1);
 			}
 			if (save_a(statp, &msg, ns_s_an, nsrr->name, class,

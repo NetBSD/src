@@ -1,4 +1,4 @@
-/*	$NetBSD: named-xfer.c,v 1.1.1.1.2.2 1999/12/04 16:57:02 he Exp $	*/
+/*	$NetBSD: named-xfer.c,v 1.1.1.1.2.3 2000/10/10 21:18:50 he Exp $	*/
 
 /*
  * The original version of named-xfer by Kevin Dunlap.
@@ -1767,7 +1767,7 @@ writemsg(int rfd, const u_char *msg, int msglen) {
 	iov[1].iov_len = msglen;
 	ret = writev(rfd, iov, 2);
 	if (ret != INT16SZ + msglen) {
-		syslog(LOG_DEBUG, "writemsg(%d,%#x,%d) failed: %s",
+		syslog(LOG_DEBUG, "writemsg(%d,%p,%d) failed: %s",
 		       rfd, msg, msglen, strerror(errno));
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ndc.c,v 1.1.1.1.2.2 1999/12/04 16:57:07 he Exp $	*/
+/*	$NetBSD: ndc.c,v 1.1.1.1.2.3 2000/10/10 21:18:53 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ndc.c,v 1.13 1999/10/13 16:39:16 vixie Exp";
@@ -77,19 +77,28 @@ static void		channel_loop(char *, int, closure, void *);
 static void		getpid_closure(void *, const char *, int);
 static void		banner(struct ctl_cctx *, void *, const char *, u_int);
 static void		done(struct ctl_cctx *, void *, const char *, u_int);
-static void		logger(enum ctl_severity, const char *fmt, ...);
+static void		logger(enum ctl_severity, const char *fmt, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
 static void		command_signals(void);
 static void		stop_named(pid_t);
 static void		start_named(const char *, int);
 static int		fgetpid(const char *, pid_t *);
 static int		get_sockaddr(char *, sockaddr_t *);
 static size_t		impute_addrlen(const struct sockaddr *);
-static void		vtrace(const char *, va_list);
-static void		trace(const char *, ...);
-static void		result(const char *, ...);
-static void		fatal(const char *, ...);
-static void		verror(const char *, va_list);
-static void		error(const char *, ...);
+static void		vtrace(const char *, va_list)
+     __attribute__((__format__(__printf__, 1, 0)));
+static void		trace(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
+static void		result(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
+static void		fatal(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
+static void		verror(const char *, va_list)
+     __attribute__((__format__(__printf__, 1, 0)));
+static void		error(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
+static void usage(const char *fmt, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
 
 static void
 usage(const char *fmt, ...) {
