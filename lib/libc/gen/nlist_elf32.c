@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.5 1996/10/03 04:55:31 cgd Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.6 1997/07/17 00:54:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -88,6 +88,8 @@ ELFNAMEEND(__fdnlist)(fd, list)
 
 	rv = -1;
 
+	symshdrp = symstrshdrp = NULL;
+
 	/*
 	 * If we can't fstat() the file, something bad is going on.
 	 */
@@ -145,7 +147,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	}
 
 	/* Make sure we're not stripped. */
-	if (symshdrp->sh_offset == 0)
+	if (symshdrp == NULL || symshdrp->sh_offset == 0)
 		BADUNMAP;
 
 	/* Make sure the symbols and strings are safely mapped. */
@@ -204,6 +206,9 @@ ELFNAMEEND(__fdnlist)(fd, list)
 					break;
 				case Elf_estt_file:
 					p->n_type = N_FN;
+					break;
+				default:
+					/* catch other enumerations for gcc */
 					break;
 				}
 				if (ELF_SYM_BIND(symp[i].st_info) !=
