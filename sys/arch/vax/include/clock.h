@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.4 1999/09/06 19:52:53 ragge Exp $ */
+/*	$NetBSD: clock.h,v 1.5 2000/07/26 11:54:34 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,7 +69,9 @@ extern	volatile short *clk_page;
 extern	int clk_adrshift, clk_tweak;
 
 /* Prototypes */
-int	generic_clkread __P((time_t));
-void	generic_clkwrite __P((void));
-int	chip_clkread __P((time_t));
-void	chip_clkwrite __P((void));
+int generic_clkread(time_t);
+void generic_clkwrite(void);
+int chip_clkread(time_t);
+void chip_clkwrite(void);
+int yeartonum(int);
+int numtoyear(int);

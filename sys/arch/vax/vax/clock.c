@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2000/06/12 11:13:15 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.38 2000/07/26 11:54:32 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,9 +44,6 @@
 #include <machine/uvax.h>
 
 #include "opt_cputype.h"
-
-int	yeartonum __P((int));
-int	numtoyear __P((int));
 
 struct evcnt clock_intrcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
