@@ -1,4 +1,4 @@
-/*	$NetBSD: initfini_asm.S,v 1.1 2001/07/17 05:49:11 thorpej Exp $	*/
+/*	$NetBSD: initfini_asm.S,v 1.2 2001/07/17 15:24:28 simonb Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -7,23 +7,13 @@
 
 #include <mips/asm.h>
 
-	.abicalls
-
 	.section .init, "ax", @progbits
-	.set noreorder
-	.cpload t9
-	.set reorder
-	.cprestore
 	la	t9, i_am_init
 	jal	t9
 	.align	5
 	.previous
 
 	.section .fini, "ax", @progbits
-	.set noreorder
-	.cpload t9
-	.set reorder
-	.cprestore
 	la	t9, i_am_fini
 	jal	t9
 	.align	5
