@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.56 1999/10/06 13:30:59 drochner Exp $	
+.\"	$NetBSD: hardware,v 1.57 1999/10/28 14:32:41 bouyer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -159,7 +159,7 @@ Supported devices include:
 			Compaq Integrated NetFlex 3/P
 			Compaq NetFlex 3/P in baseboard variant (the PCI
 				(variant doesn't use the same chip !).
-			Compaq Dual Port Netelligent 10/100 TX (untested)
+			Compaq Dual Port Netelligent 10/100 TX
 			Compaq Deskpro 4000 5233MMX (untested)
 			Texas Instruments TravelMate 5000 series laptop
 				docking station Ethernet board
