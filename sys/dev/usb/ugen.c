@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.15 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.16 1999/08/19 19:57:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -514,7 +514,7 @@ ugen_do_write(sc, endpt, uio, flag)
 	int flag;
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
-	size_t n;
+	u_int32_t n;
 	int error = 0;
 	char buf[UGEN_BBSIZE];
 	usbd_request_handle reqh;
