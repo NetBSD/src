@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.51 2004/01/05 23:23:39 jmmv Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.52 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.51 2004/01/05 23:23:39 jmmv Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.52 2004/09/07 13:20:40 jrf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -186,8 +186,7 @@ makebinding(const char *dm)
 	}
 
 	(void)memset(ypdb, 0, sizeof *ypdb);
-	(void)strncpy(ypdb->dom_domain, dm, sizeof ypdb->dom_domain);
-	ypdb->dom_domain[sizeof(ypdb->dom_domain) - 1] = '\0';
+	(void)strlcpy(ypdb->dom_domain, dm, sizeof ypdb->dom_domain);
 	return ypdb;
 }
 

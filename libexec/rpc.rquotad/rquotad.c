@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.21 2003/09/20 22:25:29 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.22 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.21 2003/09/20 22:25:29 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.22 2004/09/07 13:20:40 jrf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -376,8 +376,7 @@ hasquota(struct fstab *fs, char **uqfnamep, char **gqfnamep)
 
 	*uqfnamep = NULL;
 	*gqfnamep = NULL;
-	strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
+	(void)strlcpy(buf, fs->fs_mntops, sizeof(buf));
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';

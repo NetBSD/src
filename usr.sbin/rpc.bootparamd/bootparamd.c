@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.42 2003/12/25 19:01:35 wiz Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.43 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.42 2003/12/25 19:01:35 wiz Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.43 2004/09/07 13:20:40 jrf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -181,11 +181,9 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	    sizeof(haddr));
 	he = gethostbyaddr((char *) &haddr, sizeof(haddr), AF_INET);
 	if (he) {
-		strncpy(askname, he->h_name, sizeof(askname));
-		askname[sizeof(askname)-1] = 0;
+		(void)strlcpy(askname, he->h_name, sizeof(askname));
 	} else {
-		strncpy(askname, inet_ntoa(haddr), sizeof(askname));
-		askname[sizeof(askname)-1] = 0;
+		(void)strlcpy(askname, inet_ntoa(haddr), sizeof(askname));
 	}
 
 	if (debug)
@@ -259,8 +257,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 		return (NULL);
 	}
 
-	strncpy(askname, he->h_name, sizeof(askname));
-	askname[sizeof(askname)-1] = 0;
+	(void)strlcpy(askname, he->h_name, sizeof(askname));
 	err = lookup_bootparam(askname, NULL, getfile->file_id,
 	    &res.server_name, &res.server_path);
 	if (err == 0) {

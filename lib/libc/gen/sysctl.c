@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.26 2004/04/25 05:47:52 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.27 2004/09/07 13:20:39 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.26 2004/04/25 05:47:52 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.27 2004/09/07 13:20:39 jrf Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -317,10 +317,9 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			if (sysctl_usermib[ni].sysctl_desc == NULL)
 				d1->descr_len = 1;
 			else {
-				strncpy(d1->descr_str,
+				(void)strlcpy(d1->descr_str,
 					sysctl_usermib[ni].sysctl_desc,
 					sizeof(buf) - sizeof(*d1));
-				buf[sizeof(buf) - 1] = '\0';
 				d1->descr_len = strlen(d1->descr_str) + 1;
 			}
 			d = (size_t)__sysc_desc_adv(NULL, d1->descr_len);

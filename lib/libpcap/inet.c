@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.8 2000/04/13 05:14:19 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.9 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: inet.c,v 1.21 97/07/17 14:24:58 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: inet.c,v 1.8 2000/04/13 05:14:19 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.9 2004/09/07 13:20:40 jrf Exp $");
 #endif
 #endif
 
@@ -137,8 +137,7 @@ pcap_lookupdev(errbuf)
 		return (NULL);
 	}
 
-	(void)strncpy(device, mp->ifa_name, sizeof(device) - 1);
-	device[sizeof(device) - 1] = '\0';
+	(void)strlcpy(device, mp->ifa_name, sizeof(device));
 	freeifaddrs(ifap);
 	return (device);
 #else
@@ -220,8 +219,7 @@ pcap_lookupdev(errbuf)
 		return (NULL);
 	}
 
-	(void)strncpy(device, mp->ifr_name, sizeof(device) - 1);
-	device[sizeof(device) - 1] = '\0';
+	(void)strlcpy(device, mp->ifr_name, sizeof(device));
 	return (device);
 #endif
 }

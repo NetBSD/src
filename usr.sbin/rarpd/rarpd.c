@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.51 2004/05/12 16:48:44 tron Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.52 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.51 2004/05/12 16:48:44 tron Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.52 2004/09/07 13:20:40 jrf Exp $");
 #endif
 
 
@@ -337,8 +337,7 @@ rarp_open(char *device)
 	if (ioctl(fd, BIOCSBLEN, &bufsize) < 0) {
 		rarperr(NONFATAL, "BIOCSBLEN:%d: %s", bufsize, strerror(errno));
 	}
-	(void)strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name - 1);
-	ifr.ifr_name[sizeof ifr.ifr_name - 1] = '\0';
+	(void)strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
 		if (aflag) {	/* for -a skip non-ethernet interfaces */
 			close(fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.15 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: ypset.c,v 1.16 2004/09/07 13:20:41 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypset.c,v 1.15 2003/12/10 12:06:26 agc Exp $");
+__RCSID("$NetBSD: ypset.c,v 1.16 2004/09/07 13:20:41 jrf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,8 +130,7 @@ bind_tohost(sin, dom, server)
 
 	gethostaddr(server, &ypsd.ypsetdom_addr);
 
-	(void) strncpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
-	ypsd.ypsetdom_domain[sizeof(ypsd.ypsetdom_domain) - 1] = '\0';
+	(void) strlcpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
 	ypsd.ypsetdom_port = port;
 	ypsd.ypsetdom_vers = YPVERS;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.26 2004/04/23 22:24:34 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.27 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.26 2004/04/23 22:24:34 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.27 2004/09/07 13:20:40 jrf Exp $");
 #endif /* not lint */
 
 /*
@@ -133,8 +133,7 @@ main(argc, argv)
 			(int)sizeof(PNbuf) - 1);
 		exit(1);
 	}
-	strncpy(PNbuf, System, sizeof PNbuf - 1);
-	PNbuf[sizeof PNbuf - 1] = '\0';
+	(void)strlcpy(PNbuf, System, sizeof(PNbuf));
 	for (p = System; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
