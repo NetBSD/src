@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/03/21 11:08:52 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.12 2001/03/21 13:43:59 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -16,12 +16,5 @@ LDSTATIC?=	-static
 .PATH.c: ${LIBSA}
 
 SRCS=	installboot.c loadfile.c
-
-# for machine/loadfile_machdep.h
-CLEANFILES+= machine m68k
-
-.BEGIN: machine m68k
-.NOPATH: machine m68k
-realdepend realall: machine m68k
 
 .include <bsd.prog.mk>
