@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.1.1.3 1994/01/20 02:47:29 jtc Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.2 1994/08/31 19:28:50 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -654,7 +654,7 @@ arpadate(clock)
 #endif /*MAIL_DATE*/
 
 
-#ifdef HAVE_SAVED_SUIDS
+#ifdef HAVE_SAVED_UIDS
 static int save_euid;
 int swap_uids() { save_euid = geteuid(); return seteuid(getuid()); }
 int swap_uids_back() { return seteuid(save_euid); }
