@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 2000/05/26 20:59:00 mhitch Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13 2000/05/27 02:13:12 soren Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,6 +27,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <vm/vm_param.h>		/* XXX boolean_t */
 
 #include <mips/mips_opcode.h>
@@ -143,7 +144,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			pr);
 #else
 /*
- * Imcomplete but practically useful stack backtrace.
+ * Incomplete but practically useful stack backtrace.
  */
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
