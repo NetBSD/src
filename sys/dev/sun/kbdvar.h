@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.12 2003/08/07 16:31:26 agc Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.13 2003/08/27 01:37:38 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,9 +92,6 @@ struct kbd_ops {
  * XXX - does not belong in this header; but for now, kbd is the only user...
  */
 struct cons_channel {
-	/* XXX: only used by PROM console, probably belongs to kd.c */
-	struct callout cc_callout;
-
 	/*
 	 * Callbacks provided by underlying device (e.g. keyboard driver).
 	 * Console driver will call these before console is opened/closed.

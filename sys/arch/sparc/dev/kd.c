@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.29 2003/08/27 00:23:32 uwe Exp $	*/
+/*	$NetBSD: kd.c,v 1.30 2003/08/27 01:37:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.29 2003/08/27 00:23:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.30 2003/08/27 01:37:39 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -504,14 +504,22 @@ static int kd_rom_iopen(struct cons_channel *);
 static int kd_rom_iclose(struct cons_channel *);
 static void kd_rom_intr(void *);
 
-static struct cons_channel prom_cons_channel;
+static struct cons_channel prom_cons_channel = {
+	NULL,			/* no private data */
+	kd_rom_iopen,
+	kd_rom_iclose,
+	NULL			/* will be set by kd driver */
+};
+
+static struct callout prom_cons_callout = CALLOUT_INITIALIZER;
 
 int
 kd_rom_iopen(cc)
 	struct cons_channel *cc;
 {
+
 	/* Poll for ROM input 4 times per second */
-	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
+	callout_reset(&prom_cons_callout, hz / 4, kd_rom_intr, cc);
 	return (0);
 }
 
@@ -520,7 +528,7 @@ kd_rom_iclose(cc)
 	struct cons_channel *cc;
 {
 
-	callout_stop(&cc->cc_callout);
+	callout_stop(&prom_cons_callout);
 	return (0);
 }
 
@@ -534,8 +542,7 @@ kd_rom_intr(arg)
 	struct cons_channel *cc = arg;
 	int s, c;
 
-	/* Re-schedule */
-	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
+	callout_schedule(&prom_cons_callout, hz / 4);
 
 	s = spltty();
 
@@ -715,9 +722,6 @@ consinit()
 	cn_tab->cn_pri = CN_INTERNAL;
 
 	/* Set up initial PROM input channel for /dev/console */
-	prom_cons_channel.cc_dev = NULL;
-	prom_cons_channel.cc_iopen = kd_rom_iopen;
-	prom_cons_channel.cc_iclose = kd_rom_iclose;
 	cons_attach_input(&prom_cons_channel, cn_tab);
 
 #ifdef	KGDB
