@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.11 2001/03/10 23:52:46 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.12 2002/12/06 02:18:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: radix.c,v 1.11 2001/03/10 23:52:46 christos Exp $");
+__RCSID("$NetBSD: radix.c,v 1.12 2002/12/06 02:18:37 thorpej Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -891,7 +891,7 @@ rn_init(void)
 	addmask_key = cplim = rn_ones + max_keylen;
 	while (cp < cplim)
 		*cp++ = -1;
-	if (rn_inithead((void **)&mask_rnhead, 0) == 0)
+	if (rn_inithead((void *)&mask_rnhead, 0) == 0)
 		panic("rn_init 2");
 }
 
