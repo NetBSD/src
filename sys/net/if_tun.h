@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.8 1998/03/18 21:21:48 tv Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.9 2000/12/12 18:00:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -38,9 +38,6 @@ struct tun_softc {
 	int	tun_pgrp;		/* the process group - if any */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
-#if NBPFILTER > 0
-	caddr_t		tun_bpf;
-#endif
 };
 #endif	/* _KERNEL */
 

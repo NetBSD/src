@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.22 2000/03/30 09:45:35 augustss Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.23 2000/12/12 18:00:25 thorpej Exp $       */
 
 /*
  *
@@ -39,6 +39,8 @@
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_natm.h"
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,6 +371,9 @@ atm_ifattach(ifp)
 			break;
 		}
 
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
+#endif
 }
 
 #ifdef ATM_PVCEXT

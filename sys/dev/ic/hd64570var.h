@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.3 2000/01/04 06:36:29 chopps Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.4 2000/12/12 18:00:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -130,10 +130,6 @@ struct sca_port {
 	struct ifqueue linkq;		/* link-level packets are high prio */
 #ifdef SCA_USE_FASTQ
 	struct ifqueue fastq;		/* interactive packets */
-#endif
-
-#if NBPFILTER > 0
-	caddr_t	sp_bpf;			/* hook for BPF */
 #endif
 
 	struct sca_softc *sca;		/* pointer to parent */

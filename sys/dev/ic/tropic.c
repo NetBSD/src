@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.14 2000/10/31 01:22:08 mjl Exp $	*/
+/*	$NetBSD: tropic.c,v 1.15 2000/12/12 18:00:24 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -438,10 +438,6 @@ tr_attach(sc)
 
 	printf("%s: address %s ring speed %d Mbps\n", sc->sc_dev.dv_xname,
 	    token_sprintf(myaddr), (sc->sc_init_status & RSP_16) ? 16 : 4);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_IEEE802, sizeof(struct token_header));
-#endif
 
 	callout_init(&sc->sc_init_callout);
 	callout_init(&sc->sc_reinit_callout);
@@ -1820,10 +1816,6 @@ tr_detach(self, flags)
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 
 	token_ifdetach(ifp);
 	if_detach(ifp);

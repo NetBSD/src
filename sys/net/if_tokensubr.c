@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.11 2000/10/02 03:53:07 itojun Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.12 2000/12/12 18:00:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -46,6 +46,8 @@
 #include "opt_ns.h"
 #include "opt_gateway.h"
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -65,6 +67,10 @@
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <net/if_ether.h>
 #include <net/if_token.h>
@@ -694,6 +700,9 @@ token_ifattach(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_IEEE802, sizeof(struct token_header));
+#endif
 }
 
 void    
@@ -701,5 +710,7 @@ token_ifdetach(ifp)
         struct ifnet *ifp;
 {
 
-        /* Nothing. */
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 }

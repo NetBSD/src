@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.31 2000/04/12 10:36:38 itojun Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.32 2000/12/12 18:00:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -39,6 +39,8 @@
  */
 #include "opt_inet.h"
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -60,6 +62,10 @@
 #include <net/if_arc.h>
 #include <net/if_arp.h>
 #include <net/if_ether.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -701,4 +707,8 @@ arc_ifattach(ifp, lla)
 	arc_storelladdr(ifp, lla);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
+
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_ARCNET, ARC_HDRLEN);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.46 2000/10/10 10:15:00 itojun Exp $	*/
+/*	$NetBSD: midway.c,v 1.47 2000/12/12 18:00:23 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -906,9 +906,6 @@ done_probe:
   if_attach(ifp);
   atm_ifattach(ifp); 
 
-#if NBPFILTER > 0 
-  BPFATTACH(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
-#endif
 #ifdef ATM_PVCEXT
   rrp_add(sc, ifp);
 #endif
@@ -3736,9 +3733,6 @@ en_pvcattach(ifp)
 	if_attach(pvc_ifp);
 	atm_ifattach(pvc_ifp); 
 
-#if NBPFILTER > 0 
-	BPFATTACH(pvc_ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
-#endif
 #ifdef ATM_PVCEXT
 	rrp_add(sc, pvc_ifp);
 #endif
