@@ -64,7 +64,7 @@
 .Sh 1 "Summary of facilities
 .sp 1
 .ta \w'8.8\ \ 'u +0.25i +\w'gettimeofday\ \ 'u
-.so Toc
+'so Toc
 .pn 2
 .bp
 .de L0
@@ -107,5 +107,5 @@
 \s+4\fBContents\fP\s0
 .sp 2
 .ta \w'8.8.8.88\ \ 'uR +\w'\ \ \ 'u 6iR
-.so Toc
+'so Toc
 .sy mv toc Toc
