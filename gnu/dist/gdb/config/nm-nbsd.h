@@ -17,6 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+/* "Support" the NetBSD-specific "-k" option. */
+#define	ADDITIONAL_OPTIONS		{"k", no_argument, 0, 'k'},
+#define	ADDITIONAL_OPTION_CASES case 'k': \
+	fprintf_unfiltered (gdb_stderr, \
+"-k: obsolete option.  For kernel debugging, start gdb\n"	\
+"with just the kernel name as an argument (no core file)\n"	\
+"and then use the gdb command `target kcore COREFILE'.\n");	\
+	exit (1);
+/* End of "-k" stuff. */
+
 #define ATTACH_DETACH
 
 /* Use this instead of KERNEL_U_ADDR (See gdb/infptrace.c) */
