@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/06/30 20:18:52 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1998/07/27 01:51:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@ void	fatal __P((char *));
 int	ftpd_pclose __P((FILE *));
 FILE   *ftpd_popen __P((char *, char *, int));
 char   *getline __P((char *, int, FILE *));
-void	logwtmp __P((char *, char *, char *));
+void	logwtmp __P((const char *, const char *, const char *));
 void	lreply __P((int, const char *, ...));
 void	makedir __P((char *));
 void	nack __P((char *));

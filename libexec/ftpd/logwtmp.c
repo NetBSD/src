@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.6 1998/04/01 14:35:23 kleink Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.7 1998/07/27 01:51:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.6 1998/04/01 14:35:23 kleink Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.7 1998/07/27 01:51:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ static int fd = -1;
  */
 void
 logwtmp(line, name, host)
-	char *line, *name, *host;
+	const char *line, *name, *host;
 {
 	struct utmp ut;
 	struct stat buf;
