@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.79 2000/02/09 13:32:23 enami Exp $
+$NetBSD: pcmciadevs,v 1.80 2000/02/27 11:14:03 uch Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,6 +222,7 @@ vendor AMBICOM			-1	AmbiCom Inc
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
 vendor ICOM			-1	ICOM Inc
+vendor BILLIONTON		-1	Billionton Systems Inc.
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -257,3 +258,4 @@ product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL } EXP IDE/ATAPI
 product MELCO WLI_PCM		{ "AMD", "Am79C930", NULL, NULL } Melco WLI-PCM
 product ICOM SL200		{ "Icom", "SL-200", NULL, NULL } Icom SL-200
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
+product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
