@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.2 1997/11/27 10:19:10 sakamoto Exp $	*/
+/*	$NetBSD: icu.h,v 1.3 1997/12/01 07:01:52 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,11 +47,6 @@
 #define	_I386_ISA_ICU_H_
 
 #ifndef	_LOCORE
-
-/*
- * Interrupt "level" mechanism variables, masks, and macros
- */
-extern	unsigned imen;		/* interrupt mask enable */
 
 #endif /* !_LOCORE */
 
