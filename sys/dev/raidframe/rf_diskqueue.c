@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.9 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.10 2000/02/24 03:48:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -280,6 +280,7 @@ rf_ConfigureDiskQueues(
 		RF_ERRORMSG2("Unknown queue type \"%s\".  Using %s\n", cfgPtr->diskQueueType, diskqueuesw[0].queueType);
 		p = &diskqueuesw[0];
 	}
+	raidPtr->qType = p;
 	RF_CallocAndAdd(diskQueues, raidPtr->numRow, sizeof(RF_DiskQueue_t *), (RF_DiskQueue_t **), raidPtr->cleanupList);
 	if (diskQueues == NULL) {
 		return (ENOMEM);
