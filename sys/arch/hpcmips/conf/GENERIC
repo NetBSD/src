@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.20 2000/01/01 02:22:35 shin Exp $
+# 	$NetBSD: GENERIC,v 1.21 2000/01/09 07:55:57 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -180,10 +180,16 @@ vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
 isa2    at vrisab2
 pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 #
+# Vadem Clio and Sharp Tripad
+#
+vrisab3 at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
+isa3    at vrisab3
+pcic0   at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
+#
 # Unknown machines
 #
-vrisab3 at vrgiu?
-isa3	at vrisab3
+vrisab4 at vrgiu?
+isa4	at vrisab3
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
