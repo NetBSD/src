@@ -43,8 +43,8 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
-#elsej
-__RCSID("$NetBSD: fsplit.c,v 1.5 1997/10/18 15:14:52 lukem Exp $");
+#else
+__RCSID("$NetBSD: fsplit.c,v 1.6 1998/10/08 01:29:49 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
