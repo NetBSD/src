@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.2 2000/01/08 02:57:24 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.3 2000/01/10 14:08:03 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -37,6 +37,7 @@
 
 #include <machine/bus.h>
 
+#include <hpcmips/dev/tpcalibvar.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>
@@ -53,8 +54,6 @@ int	vrpiu_debug = 0;
 #define	DPRINTF(arg)
 #endif
 
-#define SCALE	(1024*1024)
-
 /*
  * data types
  */
@@ -70,7 +69,6 @@ static void	vrpiu_write __P((struct vrpiu_softc *, int, unsigned short));
 static u_short	vrpiu_read __P((struct vrpiu_softc *, int));
 
 static int	vrpiu_intr __P((void *));
-static void	vrpiu_reset_param __P((struct vrpiu_softc *sc));
 #ifdef DEBUG
 static void	vrpiu_dump_cntreg __P((unsigned int cmd));
 #endif
@@ -152,42 +150,24 @@ vrpiuattach(parent, self, aux)
 	 */
 	sc->sc_stat = VRPIU_STAT_DISABLE;
 
-	vrpiu_reset_param(sc);
+	tpcalib_init(&sc->sc_tpcalib);
 #if 1
 	/*
 	 * XXX, calibrate parameters
 	 */
 	{
-		static struct sample {
-			int xraw, yraw, x, y;
-		} D[] = {
+		static struct wsmouse_calibcoords D = {
 			/* samples got on my MC-R500 */
-			{ 502, 486, 320, 120 },
-			{  55, 109,   0,   0 },
-			{  54, 913,   0, 239 },
-			{ 973, 924, 639, 239 },
-			{ 975, 123, 639,   0 },
+			0, 0, 639, 239,
+			5,
+			{ { 502, 486, 320, 120 },
+			  {  55, 109,   0,   0 },
+			  {  54, 913,   0, 239 },
+			  { 973, 924, 639, 239 },
+			  { 975, 123, 639,   0 } }
 		};
-		int s = sizeof(*D);
-		int n = sizeof(D)/s;
-
-		sc->sc_prmxs = 640;
-		sc->sc_prmys = 240;
-
-		if (mra_Y_AX1_BX2_C(&D->x, s, &D->xraw, s, &D->yraw, s, n,
-				    SCALE, &sc->sc_prmax, &sc->sc_prmbx,
-				    &sc->sc_prmcx) ||
-		    mra_Y_AX1_BX2_C(&D->y, s, &D->xraw, s, &D->yraw, s, n,
-				    SCALE, &sc->sc_prmay,
-				    &sc->sc_prmby, &sc->sc_prmcy)) {
-			printf(": MRA error");
-			vrpiu_reset_param(sc);
-		} else {
-			DPRINTF(("Ax=%d Bx=%d Cx=%d\n",
-				 sc->sc_prmax, sc->sc_prmbx, sc->sc_prmcx));
-			DPRINTF(("Ay=%d By=%d Cy=%d\n",
-				 sc->sc_prmay, sc->sc_prmby, sc->sc_prmcy));
-		}
+		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+			      (caddr_t)&D, 0, 0);
 	}
 #endif
 
@@ -305,6 +285,10 @@ vrpiu_ioctl(v, cmd, data, flag, p)
 		printf("%s(%d): WSMOUSRIO_SRES is not supported",
 		       __FILE__, __LINE__);
 		break;
+
+	case WSMOUSEIO_SCALIBCOORDS:
+	case WSMOUSEIO_GCALIBCOORDS:
+                return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
 		return (-1);
@@ -422,16 +406,9 @@ vrpiu_intr(arg)
 				yraw = tpx1 * 1024 / (tpx0 + tpx1);
 				DPRINTF(("%3d %3d", xraw, yraw));
 
-				x = (sc->sc_prmax*xraw + sc->sc_prmbx*yraw) /
-					SCALE + sc->sc_prmcx;
-				y = (sc->sc_prmay*xraw + sc->sc_prmby*yraw) /
-					SCALE + sc->sc_prmcy;
-				if (x < 0) x = 0;
-				if (y < 0) y = 0;
-				if (sc->sc_prmxs <= x)
-					x = sc->sc_prmxs - 1;
-				if (sc->sc_prmys <= y)
-					y = sc->sc_prmys - 1;
+				tpcalib_trans(&sc->sc_tpcalib,
+					      xraw, yraw, &x, &y);
+
 				DPRINTF(("->%4d %4d", x, y));
 				wsmouse_input(sc->sc_wsmousedev,
 					      (cnt & PIUCNT_PENSTC) ? 1 : 0,
@@ -451,20 +428,6 @@ vrpiu_intr(arg)
 	}
 
 	return 0;
-}
-
-void
-vrpiu_reset_param(sc)
-        struct vrpiu_softc *sc;
-{
-	sc->sc_prmax = SCALE;
-	sc->sc_prmbx = 0;
-	sc->sc_prmcx = 0;
-	sc->sc_prmxs = PIUPB_PADDATA_MAX;
-	sc->sc_prmay = 0;
-	sc->sc_prmby = SCALE;
-	sc->sc_prmcy = 0;
-	sc->sc_prmys = PIUPB_PADDATA_MAX;
 }
 
 #ifdef DEBUG
