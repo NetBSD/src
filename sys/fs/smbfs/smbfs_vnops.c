@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.33 2004/02/28 09:19:53 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.34 2004/02/29 11:47:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.33 2004/02/28 09:19:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.34 2004/02/29 11:47:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,16 +223,18 @@ smbfs_open(v)
 	u_int32_t sv_caps = SMB_CAPS(SSTOVC(np->n_mount->sm_share));
 	int error, accmode;
 
-	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, np->n_opencount);
+	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name,
+	    (np->n_flag & NOPEN) != 0);
 	if (vp->v_type != VREG && vp->v_type != VDIR) { 
 		SMBFSERR("open eacces vtype=%d\n", vp->v_type);
 		return EACCES;
 	}
 	if (vp->v_type == VDIR) {
 		if ((sv_caps & SMB_CAP_NT_SMBS) == 0) {
-			np->n_opencount++;
+			np->n_flag |= NOPEN;
 			return 0;
 		}
+
 		goto do_open;	/* skip 'modified' check */
 	}
 
@@ -257,10 +259,9 @@ smbfs_open(v)
 	}
 
 do_open:
-	if (np->n_opencount) {
-		np->n_opencount++;
+	if ((np->n_flag & NOPEN) != 0)
 		return 0;
-	}
+
 	smb_makescred(&scred, ap->a_p, ap->a_cred);
 	if (vp->v_type == VDIR)
 		error = smbfs_smb_ntcreatex(np, SMB_AM_OPENREAD, &scred);
@@ -277,60 +278,8 @@ do_open:
 		}
 	}
 	if (!error)
-		np->n_opencount++;
+		np->n_flag |= NOPEN;
 	smbfs_attr_cacheremove(vp);
-	return error;
-}
-
-static int
-smbfs_closel(struct vop_close_args *ap)
-{
-	struct vnode *vp = ap->a_vp;
-	struct smbnode *np = VTOSMB(vp);
-	struct proc *p = ap->a_p;
-	struct smb_cred scred;
-	int error = 0;
-
-	SMBVDEBUG("name=%.*s, pid=%d, c=%d\n",
-		(int)np->n_nmlen, np->n_name, p->p_pid, np->n_opencount);
-
-#ifdef DIAGNOSTIC
-	if (np->n_opencount == 0)
-		panic("smbfs_closel: negative opencount");
-#endif
-
-	np->n_opencount--;
-	smbfs_attr_cacheremove(vp);
-
-	if (np->n_opencount) {
-		simple_unlock(&vp->v_interlock);
-		return (error);
-	}
-
-	smb_makescred(&scred, p, ap->a_cred);
-	if (vp->v_type == VDIR) {
-		struct smb_share *ssp = np->n_mount->sm_share;
-
-		if (np->n_dirseq) {
-			struct smbfs_fctx *dctx = np->n_dirseq;
-
-			np->n_dirseq = NULL;
-			simple_unlock(&vp->v_interlock);
-			smbfs_findclose(dctx, &scred);
-		} else
-			simple_unlock(&vp->v_interlock);
-
-		if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS) {
-			error = smbfs_smb_close(ssp, np->n_fid,
-				&np->n_mtime, &scred);
-		} else
-			error = 0;
-	} else {
-		simple_unlock(&vp->v_interlock);
-
-		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
-			   &np->n_mtime, &scred);
-	}
 	return error;
 }
 
@@ -348,17 +297,9 @@ smbfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	int error;
 
-	error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
-	if (error)
-		return (error);
-
-	simple_lock(&vp->v_interlock);
-	error = smbfs_closel(ap);
-
-	return error;
+	/* Flush all file data */
+	return smbfs_vinvalbuf(ap->a_vp, V_SAVE, ap->a_cred, ap->a_p, 1);
 }
 
 /*
@@ -398,7 +339,7 @@ smbfs_getattr(v)
 	}
 	smbfs_attr_cacheenter(vp, &fattr);
 	smbfs_attr_cachelookup(vp, va);
-	if (np->n_opencount)
+	if ((np->n_flag & NOPEN) != 0)
 		np->n_size = oldsize;
 	return 0;
 }
@@ -450,7 +391,7 @@ smbfs_setattr(v)
  		tsize = np->n_size;
  		np->n_size = vap->va_size;
 		uvm_vnp_setsize(vp, vap->va_size);
-		if (np->n_opencount == 0) {
+		if ((np->n_flag & NOPEN) == 0) {
 			error = smbfs_smb_open(np, SMB_AM_OPENRW, &scred);
 			if (error == 0)
 				doclose = 1;
@@ -481,7 +422,7 @@ smbfs_setattr(v)
 		 * If file is opened, then we can use handle based calls.
 		 * If not, use path based ones.
 		 */
-		if (np->n_opencount == 0) {
+		if ((np->n_flag & NOPEN) == 0) {
 			if (vcp->vc_flags & SMBV_WIN95) {
 				error = VOP_OPEN(vp, FWRITE, ap->a_cred, ap->a_p);
 				if (!error) {
@@ -636,7 +577,8 @@ smbfs_remove(v)
 	struct smb_cred scred;
 	int error;
 
-	if (vp->v_type == VDIR || np->n_opencount || vp->v_usecount != 1)
+	if (vp->v_type == VDIR || (np->n_flag & NOPEN) != 0
+	    || vp->v_usecount != 1)
 		error = EPERM;
 	else {
 		smb_makescred(&scred, cnp->cn_proc, cnp->cn_cred);
@@ -910,10 +852,10 @@ smbfs_print(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 
-	printf("tag VT_SMBFS, name = %.*s, parent = %p, opencount = %d\n",
+	printf("tag VT_SMBFS, name = %.*s, parent = %p, open = %d\n",
 	    (int)np->n_nmlen, np->n_name,
 	    np->n_parent ? SMBTOV(np->n_parent) : NULL,
-	    np->n_opencount);
+	    (np->n_flag & NOPEN) != 0);
 	printf("       ");
 	lockmgr_printinfo(vp->v_vnlock);
 	printf("\n");

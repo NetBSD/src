@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.19 2003/10/30 01:58:18 simonb Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.20 2004/02/29 11:47:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.19 2003/10/30 01:58:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.20 2004/02/29 11:47:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,8 @@ smbfs_reclaim(v)
 	
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 
+	KASSERT((np->n_flag & NOPEN) == 0);
+
 	smbfs_hash_lock(smp);
 
 	dvp = (np->n_parent && (np->n_flag & NREFPARENT)) ?
@@ -275,12 +277,23 @@ smbfs_inactive(v)
 	struct smb_cred scred;
 
 	SMBVDEBUG("%.*s: %d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
-	if (np->n_opencount) {
+	if ((np->n_flag & NOPEN) != 0) {
+		struct smb_share *ssp = np->n_mount->sm_share;
+
 		smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 		smb_makescred(&scred, p, cred);
-		smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
-		   &np->n_mtime, &scred);
-		np->n_opencount = 0;
+
+		if (vp->v_type == VDIR && np->n_dirseq) {
+			smbfs_findclose(np->n_dirseq, &scred);
+			np->n_dirseq = NULL;
+		}
+
+		if (vp->v_type != VDIR
+		    || SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS)
+			smbfs_smb_close(ssp, np->n_fid, &np->n_mtime, &scred);
+
+		np->n_flag &= ~NOPEN;
+		smbfs_attr_cacheremove(vp);
 	}
 	VOP_UNLOCK(vp, 0);
 	return (0);
