@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.108 2004/04/21 01:05:37 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.109 2004/04/21 02:40:05 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.108 2004/04/21 01:05:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.109 2004/04/21 02:40:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1281,7 +1281,7 @@ svr4_sys_statvfs(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_statvfs_args *uap = v;
-	struct sys_statvfs_args	fs_args;
+	struct sys_statvfs1_args	fs_args;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
@@ -1292,8 +1292,9 @@ svr4_sys_statvfs(l, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
+	SCARG(&fs_args, flags) = ST_WAIT;
 
-	if ((error = sys_statvfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_statvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
@@ -1313,7 +1314,7 @@ svr4_sys_fstatvfs(l, v, retval)
 {
 	struct svr4_sys_fstatvfs_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_fstatvfs_args	fs_args;
+	struct sys_fstatvfs1_args	fs_args;
 	caddr_t sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	struct statvfs bfs;
@@ -1322,8 +1323,9 @@ svr4_sys_fstatvfs(l, v, retval)
 
 	SCARG(&fs_args, fd) = SCARG(uap, fd);
 	SCARG(&fs_args, buf) = fs;
+	SCARG(&fs_args, flags) = ST_WAIT;
 
-	if ((error = sys_fstatvfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_fstatvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
@@ -1343,7 +1345,7 @@ svr4_sys_statvfs64(l, v, retval)
 {
 	struct svr4_sys_statvfs64_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_statvfs_args	fs_args;
+	struct sys_statvfs1_args	fs_args;
 	caddr_t sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	struct statvfs bfs;
@@ -1353,8 +1355,9 @@ svr4_sys_statvfs64(l, v, retval)
 	CHECK_ALT_EXIST(l->l_proc, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
+	SCARG(&fs_args, flags) = ST_WAIT;
 
-	if ((error = sys_statvfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_statvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
@@ -1374,7 +1377,7 @@ svr4_sys_fstatvfs64(l, v, retval)
 {
 	struct svr4_sys_fstatvfs64_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_fstatvfs_args	fs_args;
+	struct sys_fstatvfs1_args	fs_args;
 	caddr_t sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	struct statvfs bfs;
@@ -1383,8 +1386,9 @@ svr4_sys_fstatvfs64(l, v, retval)
 
 	SCARG(&fs_args, fd) = SCARG(uap, fd);
 	SCARG(&fs_args, buf) = fs;
+	SCARG(&fs_args, flags) = ST_WAIT;
 
-	if ((error = sys_fstatvfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_fstatvfs1(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
