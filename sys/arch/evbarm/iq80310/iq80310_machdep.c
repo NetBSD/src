@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.15 2002/01/18 19:47:05 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.16 2002/01/20 03:41:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -97,6 +97,8 @@
 #include <machine/frame.h>
 #include <arm/undefined.h>
 
+#include <arm/arm32/machdep.h>
+
 #include <arm/xscale/i80312reg.h>
 #include <arm/xscale/i80312var.h>
 
@@ -126,7 +128,6 @@ u_int cpu_reset_address = 0;
 #endif
 
 BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[MAX_BOOT_STRING + 1];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
@@ -175,23 +176,6 @@ struct user *proc0paddr;
 /* Prototypes */
 
 void	consinit(void);
-
-void	map_section(vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-	    int cacheable);
-void	map_pagetable(vm_offset_t pt, vm_offset_t va, vm_offset_t pa);
-void	map_entry(vm_offset_t pt, vm_offset_t va, vm_offset_t pa);
-void	map_entry_nc(vm_offset_t pt, vm_offset_t va, vm_offset_t pa);
-void	map_entry_ro(vm_offset_t pt, vm_offset_t va, vm_offset_t pa);
-vm_size_t map_chunk(vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-	    vm_offset_t pa, vm_size_t size, u_int acc, u_int flg);
-
-void	process_kernel_args(char *);
-void	data_abort_handler(trapframe_t *frame);
-void	prefetch_abort_handler(trapframe_t *frame);
-void	undefinedinstruction_bounce(trapframe_t *frame);
-
-extern void parse_mi_bootargs(char *args);
-extern void dumpsys(void);
 
 #include "com.h"
 #if NCOM > 0
@@ -244,7 +228,6 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -323,7 +306,7 @@ struct l1_sec_map {
  *   Relocating the kernel to the bottom of physical memory
  */
 u_int
-initarm(void)
+initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr, xscale_minidata_clean_addr;
 	extern vsize_t xscale_minidata_clean_size;
@@ -859,9 +842,11 @@ initarm(void)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+#if 0
 void
 process_kernel_args(char *args)
 {
+	static char bootargs[MAX_BOOT_STRING + 1];
 
 	boothowto = 0;
 
@@ -888,6 +873,7 @@ process_kernel_args(char *args)
 
 	parse_mi_bootargs(boot_args);
 }
+#endif
 
 void
 consinit(void)

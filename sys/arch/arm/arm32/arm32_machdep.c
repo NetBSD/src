@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.10 2002/01/12 13:37:55 chris Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.11 2002/01/20 03:41:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -103,13 +103,6 @@ char *booted_kernel;
 
 
 /* Prototypes */
-
-void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
-			     int cacheable));
-void map_pagetable	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry		__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry_nc	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry_ro	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
 
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
