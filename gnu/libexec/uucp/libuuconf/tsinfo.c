@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_tsinfo_rcsid[] = "$Id: tsinfo.c,v 1.3 1995/08/24 05:22:15 jtc Exp $";
+const char _uuconf_tsinfo_rcsid[] = "$Id: tsinfo.c,v 1.4 2002/12/06 09:57:59 scw Exp $";
 #endif
 
 #include <errno.h>
@@ -331,13 +331,13 @@ uiset_call (qsys)
      struct uuconf_system *qsys;
 {
   qsys->uuconf_fcall =
-    (qsys->uuconf_qtimegrade != (struct uuconf_timespan *) &_uuconf_unset
-     || qsys->uuconf_zport != (char *) &_uuconf_unset
-     || qsys->uuconf_qport != (struct uuconf_port *) &_uuconf_unset
+    (qsys->uuconf_qtimegrade != (void *) &_uuconf_unset
+     || qsys->uuconf_zport != (void *) &_uuconf_unset
+     || qsys->uuconf_qport != (void *) &_uuconf_unset
      || qsys->uuconf_ibaud >= 0
-     || qsys->uuconf_zphone != (char *) &_uuconf_unset
-     || qsys->uuconf_schat.uuconf_pzchat != (char **) &_uuconf_unset
-     || qsys->uuconf_schat.uuconf_pzprogram != (char **) &_uuconf_unset);
+     || qsys->uuconf_zphone != (void *) &_uuconf_unset
+     || qsys->uuconf_schat.uuconf_pzchat != (void *) &_uuconf_unset
+     || qsys->uuconf_schat.uuconf_pzprogram != (void *) &_uuconf_unset);
 
   qsys->uuconf_fcalled =
     qsys->uuconf_zcalled_login != (char *) &_uuconf_unset;
@@ -779,7 +779,7 @@ iiproto_param (pglobal, argc, argv, pvar, pinfo)
   struct uuconf_proto_param **pqparam = (struct uuconf_proto_param **) pvar;
   struct sinfo *qinfo = (struct sinfo *) pinfo;
 
-  if (*pqparam == (struct uuconf_proto_param *) &_uuconf_unset)
+  if (*pqparam == (void *) &_uuconf_unset)
     *pqparam = NULL;
   return _uuconf_iadd_proto_param (qglobal, argc - 1, argv + 1, pqparam,
 				   qinfo->qsys->uuconf_palloc);

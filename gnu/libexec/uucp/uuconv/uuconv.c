@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char uuconv_rcsid[] = "$Id: uuconv.c,v 1.3 1995/08/24 05:23:16 jtc Exp $";
+const char uuconv_rcsid[] = "$Id: uuconv.c,v 1.4 2002/12/06 09:57:59 scw Exp $";
 #endif
 
 #include "getopt.h"
@@ -624,7 +624,7 @@ uvwrite_size (e, qtime, zcmd)
      struct uuconf_timespan *qtime;
      const char *zcmd;
 {
-  if (qtime != (struct uuconf_timespan *) &_uuconf_unset)
+  if (qtime != (void *) &_uuconf_unset)
     {
       for (; qtime != NULL; qtime = qtime->uuconf_qnext)
 	{
@@ -759,7 +759,7 @@ uvwrite_proto_params (e, qparams, zprefix)
   const struct uuconf_proto_param *qp;
 
   if (qparams == NULL
-      || qparams == (struct uuconf_proto_param *) &_uuconf_unset)
+      || qparams == (void *) &_uuconf_unset)
     return;
 
   for (qp = qparams; qp->uuconf_bproto != '\0'; qp++)
@@ -813,7 +813,7 @@ uvwrite_taylor_system (e, q)
 
       if (CHANGED (uuconf_qtimegrade)
 	  && (q->uuconf_qtimegrade
-	      != (struct uuconf_timespan *) &_uuconf_unset))
+	      != (void *) &_uuconf_unset))
 	{
 	  if (q->uuconf_qtimegrade == NULL)
 	    fprintf (e, "time never\n");
@@ -837,7 +837,7 @@ uvwrite_taylor_system (e, q)
 
       if (CHANGED (uuconf_qcalltimegrade)
 	  && (q->uuconf_qcalltimegrade
-	      != (struct uuconf_timespan *) &_uuconf_unset))
+	      != (void *) &_uuconf_unset))
 	{
 	  for (qtime = q->uuconf_qcalltimegrade;
 	       qtime != NULL;
@@ -851,7 +851,7 @@ uvwrite_taylor_system (e, q)
 
       if (CHANGED (uuconf_qcalledtimegrade)
 	  && (q->uuconf_qcalledtimegrade
-	      != (struct uuconf_timespan *) &_uuconf_unset))
+	      != (void *) &_uuconf_unset))
 	{
 	  for (qtime = q->uuconf_qcalledtimegrade;
 	       qtime != NULL;
@@ -1035,7 +1035,7 @@ uvwrite_v2_system (e, q)
     {
       fprintf (e, "%s", q->uuconf_zname);
 
-      if (q->uuconf_qtimegrade != (struct uuconf_timespan *) &_uuconf_unset)
+      if (q->uuconf_qtimegrade != (void *) &_uuconf_unset)
 	{
 	  fprintf (e, " ");
 	  uvwrite_time (e, q->uuconf_qtimegrade);
@@ -1120,7 +1120,7 @@ uvwrite_hdb_system (e, qsys)
 	  fprintf (e, "%s", q->uuconf_zname);
 
 	  if (q->uuconf_qtimegrade
-	      != (struct uuconf_timespan *) &_uuconf_unset)
+	      != (void *) &_uuconf_unset)
 	    {
 	      const char *zport;
 

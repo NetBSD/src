@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_syssub_rcsid[] = "$Id: syssub.c,v 1.3 1995/08/24 05:22:00 jtc Exp $";
+const char _uuconf_syssub_rcsid[] = "$Id: syssub.c,v 1.4 2002/12/06 09:57:58 scw Exp $";
 #endif
 
 #include <errno.h>
@@ -136,7 +136,7 @@ _uuconf_uclear_system (q)
 #define CLEAR(x) q->x = (char **) &_uuconf_unset
   SYSTEM_STRING_ARRAYS (CLEAR);
 #undef CLEAR
-#define CLEAR(x) q->x = (struct uuconf_timespan *) &_uuconf_unset
+#define CLEAR(x) q->x = (void *) &_uuconf_unset
   SYSTEM_TIMESPANS (CLEAR);
 #undef CLEAR
 #define CLEAR(x) q->x = -1
@@ -146,7 +146,7 @@ _uuconf_uclear_system (q)
   q->uuconf_qalternate = NULL;
   q->uuconf_zport = (char *) &_uuconf_unset;
   q->uuconf_qport = (struct uuconf_port *) &_uuconf_unset;
-  q->uuconf_qproto_params = (struct uuconf_proto_param *) &_uuconf_unset;
+  q->uuconf_qproto_params = (void *) &_uuconf_unset;
   q->uuconf_palloc = NULL;
 }
 
@@ -211,7 +211,7 @@ _uuconf_isystem_default (qglobal, qset, qdefault, faddalternates)
       SYSTEM_STRING_ARRAYS (DEFAULT);
 #undef DEFAULT
 #define DEFAULT(x) \
-  if (qalt->x == (struct uuconf_timespan *) &_uuconf_unset) \
+  if (qalt->x == (void *) &_uuconf_unset) \
     qalt->x = qdefault->x
       SYSTEM_TIMESPANS (DEFAULT);
 #undef DEFAULT
@@ -230,7 +230,7 @@ _uuconf_isystem_default (qglobal, qset, qdefault, faddalternates)
 	qalt->uuconf_qport = qdefault->uuconf_qport;
 
       if (qalt->uuconf_qproto_params
-	  == (struct uuconf_proto_param *) &_uuconf_unset)
+	  == (void *) &_uuconf_unset)
 	qalt->uuconf_qproto_params = qdefault->uuconf_qproto_params;
       else if (qdefault->uuconf_qproto_params != NULL)
 	{
@@ -503,7 +503,7 @@ _uuconf_isystem_basic_default (qglobal, q)
       SYSTEM_STRING_ARRAYS(SET);
 #undef SET
 #define SET(x) \
-  if (q->x == (struct uuconf_timespan *) &_uuconf_unset) q->x = NULL
+  if (q->x == (void *) &_uuconf_unset) q->x = NULL
       SYSTEM_TIMESPANS (SET);
 #undef SET
 #define SET(x) if (q->x < 0) q->x = 0
@@ -516,7 +516,7 @@ _uuconf_isystem_basic_default (qglobal, q)
       if (q->uuconf_qport == (struct uuconf_port *) &_uuconf_unset)
 	q->uuconf_qport = NULL;
       if (q->uuconf_qproto_params
-	  == (struct uuconf_proto_param *) &_uuconf_unset)
+	  == (void *) &_uuconf_unset)
 	q->uuconf_qproto_params = NULL;
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.67 2002/11/01 19:26:22 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.68 2002/12/06 10:02:40 scw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.67 2002/11/01 19:26:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.68 2002/12/06 10:02:40 scw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1700,7 +1700,7 @@ netbsd32_mmap(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(pad, long);
 	NETBSD32TOX_UAP(pos, off_t);
-	error = sys_mmap(p, &ua, (register_t *)&rt);
+	error = sys_mmap(p, &ua, (void *)&rt);
 	if ((u_long)rt > (u_long)UINT_MAX) {
 		printf("netbsd32_mmap: retval out of range: %p", rt);
 		/* Should try to recover and return an error here. */

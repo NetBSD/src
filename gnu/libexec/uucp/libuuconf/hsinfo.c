@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_hsinfo_rcsid[] = "$Id: hsinfo.c,v 1.3 1995/08/24 05:21:23 jtc Exp $";
+const char _uuconf_hsinfo_rcsid[] = "$Id: hsinfo.c,v 1.4 2002/12/06 09:57:58 scw Exp $";
 #endif
 
 #include <errno.h>
@@ -582,7 +582,7 @@ _uuconf_ihdb_system_internal (qglobal, zsystem, qsys)
   /* HDB does not have a maximum number of retries if a retry time is
      given in the time field.  */
   if (qsys->uuconf_qtimegrade != NULL
-      && qsys->uuconf_qtimegrade != (struct uuconf_timespan *) &_uuconf_unset
+      && qsys->uuconf_qtimegrade != (void *) &_uuconf_unset
       && qsys->uuconf_qtimegrade->uuconf_cretry > 0)
     qsys->uuconf_cmax_retries = 0;
 
