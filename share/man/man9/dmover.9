@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.6 2002/10/14 13:43:21 wiz Exp $
+.\"	$NetBSD: dmover.9,v 1.7 2003/02/05 03:00:39 briggs Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -588,15 +588,15 @@ hw_bzero(void *buf, size_t len)
 	dreq->dreq_flags = DMOVER_REQ_WAIT;
 	dreq->dreq_callback = NULL;
 	dreq->dreq_outbuf.dreq_outbuf_type = DMOVER_BUF_LINEAR;
-	dreq->dreq_outbuf.dreq_outbuf_linear = buf;
-	dreq->dreq_outbuf.dreq_outbuf_len = len;
+	dreq->dreq_outbuf.dmbuf_linear.l_addr = buf;
+	dreq->dreq_outbuf.dmbuf_linear.l_len = len;
 
 	dmover_process(dreq);
 
 	error = (dreq->dreq_flags & DMOVER_REQ_ERROR) ?
 	    dreq->dreq_error : 0;
 
-	dmover_request_free(dreq, NULL);
+	dmover_request_free(dreq);
 	dmover_session_destroy(dses);
 
 	return (error);
