@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.33 1997/06/19 06:30:07 mhitch Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.34 1997/06/21 04:18:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1300,7 +1300,7 @@ LEAF(mips3_TLBFlush)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t1, MACH_COP_0_TLB_WIRED
-	li	t2, VMMACH_NUM_TLB_ENTRIES
+	li	t2, MIPS3_TLB_NUM_TLB_ENTRIES
 	li	v0, MACH_CACHED_MEMORY_ADDR	# invalid address
 	dmfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
 
@@ -1582,7 +1582,7 @@ END(mips3_TLBRead)
 LEAF(mips3_TLBGetPID)
 	dmfc0	v0, MACH_COP_0_TLB_HI		# get PID
 	j	ra
-	and	v0, v0, VMMACH_TLB_PID		# mask off PID
+	and	v0, v0, MIPS3_TLB_PID		# mask off PID
 END(mips3_TLBGetPID)
 
 
@@ -1861,7 +1861,6 @@ END(mips3_FlushDCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_HitFlushDCache)
-ALEAF(MachHitFlushDCache) /* XXX */
 	beq	a1, zero, 2f
 	addu	a1, 127		# Align
 	addu	a1, a1, a0
