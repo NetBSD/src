@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.9 2004/04/27 05:07:46 heas Exp $
+#	$NetBSD: main.cf,v 1.10 2004/05/17 06:00:14 agc Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all 300+ parameters. See the postconf(5) manual page for a
@@ -621,7 +621,7 @@ setgid_group = maildrop
 
 # html_directory: The location of the Postfix HTML documentation.
 #
-html_directory =
+html_directory = /usr/share/doc/html/postfix
 
 # manpage_directory: The location of the Postfix on-line manual pages.
 #
