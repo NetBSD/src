@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.356 2000/06/30 17:10:17 itojun Exp $
+#	$NetBSD: GENERIC,v 1.357 2000/07/03 01:17:35 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.356 $"
+#ident 		"GENERIC-$Revision: 1.357 $"
 
 maxusers	32		# estimated number of users
 
@@ -219,7 +219,7 @@ mainbus0 at root
 #fdc*		at pnpbios? index ?	# floppy controller
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios? index ?
+#pciide*	at pnpbios? index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
@@ -334,7 +334,7 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? function ?		# Modems and serial cards
+#com*	at cardbus? dev ? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -356,6 +356,7 @@ com2	at isa? port 0x3e8 irq 5
 #addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
 #com*	at addcom? slave ?
 
+
 # Parallel Printer Interfaces
 
 # PCI parallel printer interfaces
@@ -366,12 +367,15 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
+# Hardware monitors 
+
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
 #viaenv* at viapm?
+
 
 # SCSI Controllers and Devices
 
@@ -453,6 +457,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 cac*	at pci? dev ? function ?	# Compaq array controller
 ca*	at cac? unit ?			# Compaq array disk device
+
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -619,6 +624,7 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+
 # USB Controller and Devices
 
 # PCI USB controllers
@@ -684,6 +690,7 @@ ucom*	at uvisor?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
 
 # Audio Devices
 
@@ -763,10 +770,12 @@ midi*	at sb?			# SB1 MIDI port
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
+
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
+
 
 # Mice
 
