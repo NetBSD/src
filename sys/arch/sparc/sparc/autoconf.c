@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.188 2003/01/18 06:45:00 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.189 2003/01/20 20:51:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -391,7 +391,8 @@ bootstrap4m()
 		/* Duplicate existing mapping */
 		setpte4m(PI_INTR_VA + (_MAXNBPG * i), pte);
 	}
-	cpuinfo.intreg_4m = (struct icr_pi *)(PI_INTR_VA);
+	cpuinfo.intreg_4m = (struct icr_pi *)
+		(PI_INTR_VA + (_MAXNBPG * CPU_MID2CPUNO(bootmid)));
 
 	/*
 	 * That was the processor register...now get system register;
@@ -409,7 +410,7 @@ bootstrap4m()
 	icr_si_bis(SINTR_MA);
 
 	/* Send all interrupts to primary processor */
-	*((u_int *)ICR_ITR) = 0;
+	*((u_int *)ICR_ITR) = CPU_MID2CPUNO(bootmid);
 
 #ifdef DEBUG
 /*	printf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int*)ICR_SI_MASK,
@@ -1231,19 +1232,41 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	/* the first early device to be configured is the cpu */
 	if (CPU_ISSUN4M) {
-		/* XXX - what to do on multiprocessor machines? */
 		const char *cp;
+		int mid, bootnode = 0;
 
+		/*
+		 * Configure all CPUs.
+		 * Make sure to configure the boot CPU as cpu0.
+		 */
+	rescan:
 		for (node = firstchild(node); node; node = nextsibling(node)) {
 			cp = PROM_getpropstringA(node, "device_type",
 					    namebuf, sizeof namebuf);
-			if (strcmp(cp, "cpu") == 0) {
-				bzero(&ma, sizeof(ma));
-				ma.ma_bustag = &mainbus_space_tag;
-				ma.ma_dmatag = &mainbus_dma_tag;
-				ma.ma_node = node;
-				ma.ma_name = "cpu";
-				config_found(dev, (void *)&ma, mbprint);
+			if (strcmp(cp, "cpu") != 0)
+				continue;
+
+			mid = PROM_getpropint(node, "mid", -1);
+			if (bootnode == 0) {
+				/* We're looking for the boot CPU */
+				if (bootmid != 0 && mid != bootmid)
+					continue;
+				bootnode = node;
+			} else {
+				if (node == bootnode)
+					continue;
+			}
+
+			bzero(&ma, sizeof(ma));
+			ma.ma_bustag = &mainbus_space_tag;
+			ma.ma_dmatag = &mainbus_dma_tag;
+			ma.ma_node = node;
+			ma.ma_name = "cpu";
+			config_found(dev, (void *)&ma, mbprint);
+			if (node == bootnode && bootmid != 0) {
+				/* Re-enter loop to find all remaining CPUs */
+				node = findroot();
+				goto rescan;
 			}
 		}
 	} else if (CPU_ISSUN4C) {
