@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp_var.h,v 1.5 1995/09/12 20:07:52 thorpej Exp $	*/
+/*	$NetBSD: rmp_var.h,v 1.6 1995/09/19 06:27:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -144,13 +144,8 @@ typedef	u_int		u_word;
 
 #else
 
-#if BYTE_ORDER == BIG_ENDIAN
-# define	_WORD_HIGHPART	0
-# define	_WORD_LOWPART	1
-#else
-# define	_WORD_HIGHPART	1
-# define	_WORD_LOWPART	0
-#endif
+#define	_WORD_HIGHPART	0
+#define	_WORD_LOWPART	1
 
 typedef	struct _uword { u_short val[2]; }	u_word;
 
@@ -163,11 +158,10 @@ typedef	struct _uword { u_short val[2]; }	u_word;
 	  (w2).val[_WORD_LOWPART] = (w1).val[_WORD_LOWPART]; \
 	}
 #define	GETWORD(w, i) \
-	(i) = ntohl((((u_int)(w).val[_WORD_HIGHPART]) << 16) | (w).val[_WORD_LOWPART])
+	(i) = (((u_int)ntohs((w).val[_WORD_HIGHPART])) << 16) | ntohs((w).val[_WORD_LOWPART])
 #define	PUTWORD(i, w) \
-	{ int xx = htonl(i); \
-	  (w).val[_WORD_HIGHPART] = (u_short) ((xx >> 16) & 0xffff); \
-	  (w).val[_WORD_LOWPART] = (u_short) (xx & 0xffff); \
+	{ (w).val[_WORD_HIGHPART] = htons((u_short) ((i >> 16) & 0xffff)); \
+	  (w).val[_WORD_LOWPART] = htons((u_short) (i & 0xffff)); \
 	}
 
 #endif
