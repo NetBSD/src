@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.3 2000/03/01 00:24:02 he Exp $
+#	$NetBSD: Makefile,v 1.8.2.4 2000/06/03 15:17:46 he Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -20,7 +20,7 @@ IMAGE?=		ramdisk-${REV}.fs
 LISTS=		list
 MTREE=		mtree.conf
 
-CYLS=		98
+CYLS=		90
 SECS=		18
 TRKS=		2
 TOTALSECT !=	expr ${CYLS} '*' ${SECS} '*' ${TRKS}

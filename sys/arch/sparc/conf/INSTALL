@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4.2.2 2000/03/01 00:24:46 he Exp $
+#	$NetBSD: INSTALL,v 1.4.2.3 2000/06/03 15:17:44 he Exp $
 #
 # from: NetBSD: GENERIC,v 1.67 1998/05/20 11:50:54 pk Exp
 #
@@ -15,7 +15,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=3312	# 1.44M * 1.15.  this must allow for
-options		MINIROOTSIZE=3528	# what is in distrib/sparc/ramdisk*
+options		MINIROOTSIZE=3240	# what is in distrib/sparc/ramdisk*
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 
