@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.9 2002/09/18 19:40:34 mycroft Exp $	*/
+/*	$NetBSD: network.c,v 1.10 2002/09/18 19:48:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.9 2002/09/18 19:40:34 mycroft Exp $");
+__RCSID("$NetBSD: network.c,v 1.10 2002/09/18 19:48:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,9 @@ stilloob()
     struct pollfd set[0];
     int value;
 
+    set[0].fd = net;
+    set[0].events = POLLPRI;
     do {
-	set[0].fd = net;
-	set[0].events = POLLPRI;
 	value = poll(set, 1, 0);
     } while ((value == -1) && (errno == EINTR));
 
