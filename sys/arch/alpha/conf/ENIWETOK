@@ -1,11 +1,11 @@
-# $NetBSD: ENIWETOK,v 1.30 2000/11/26 17:44:07 ad Exp $
-# From: GENERIC,v 1.168 2000/10/19 14:35:44 ad Exp
+# $NetBSD: ENIWETOK,v 1.31 2000/12/14 20:46:06 mycroft Exp $
+# From: GENERIC,v 1.174 2000/12/14 18:28:30 mycroft Exp
 #
 # Mycroft's AS200.
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"ENIWETOK-$Revision: 1.30 $"
+#ident 		"ENIWETOK-$Revision: 1.31 $"
 
 maxusers 32
 
@@ -45,8 +45,8 @@ file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 #file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
-#file-system	KERNFS
-#file-system	PROCFS
+#file-system	KERNFS		# Kernel variable file system (/kern)
+#file-system	PROCFS		# Process file system (/proc)
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
@@ -76,6 +76,9 @@ options 	COMPAT_14
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
   
+# Linux binary compatibility
+options 	COMPAT_LINUX
+
 # System V-like message queues
 options 	SYSVMSG
 
@@ -147,18 +150,20 @@ cpu*	at	mainbus0
 #mcclock* at	jensenio? port ?
 #pckbc*	at	jensenio? port ?
 
-# TurboChannel host bus adapter support
+# TURBOchannel host bus adapter support
 #tcasic*	at	mainbus0
 
-# TurboChannel bus support
+# TURBOchannel bus support
 #tc*	at	tcasic?
 
-# TurboChannel devices
+# TURBOchannel devices
 #ioasic*	at	tc? slot ? offset ?
 #mcclock* at	ioasic? offset ?
 #le*	at	ioasic? offset ?
 #scc0	at	ioasic? offset ?
 #scc1	at	ioasic? offset ?
+#bba0	at	ioasic? offset ?
+#audio*	at	bba?
 #tcds*	at	tc? slot ? offset ?
 #asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?
@@ -177,11 +182,11 @@ apecs*	at	mainbus?
 #ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-#ttwopci* at	ttwoga? hose ?  
-#sableio* at	ttwopci? bus ?  
-#com*	at	sableio? port ? 
-#lpt*	at	sableio? port ? 
-#pckbc*	at	sableio? port ? 
+#ttwopci* at	ttwoga? hose ?
+#sableio* at	ttwopci? bus ?
+#com*	at	sableio? port ?
+#lpt*	at	sableio? port ?
+#pckbc*	at	sableio? port ?
 #fdc*	at	sableio? port ?
 
 # PCI bus support
@@ -283,7 +288,7 @@ midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
-#ec0	at	isa? port 0x250 iomem 0xd8000 irq 9  # 3Com 3c503 Ethernet
+#ec0	at	isa? port 0x250 iomem 0xd8000 irq 9 # 3Com 3c503 Ethernet
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 #ep*	at	isapnp?
 #ix0	at	isa? port 0x300 irq 10		# EtherExpress/16
@@ -343,7 +348,6 @@ ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 
 # SCSI bus support
 #scsibus* at	adv?
-#scsibus* at	aic?
 #scsibus* at	adw?
 #scsibus* at	aha?
 #scsibus* at	ahb?
@@ -417,6 +421,9 @@ fd*	at	fdc? drive ?
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
+# USB scanners
+#uscanner* at uhub? port ?
+
 # USB Generic driver
 #ugen*	at uhub? port ?
 
@@ -444,7 +451,5 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
-
-# rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
