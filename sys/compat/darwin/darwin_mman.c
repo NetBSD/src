@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.13 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.14 2004/10/27 19:29:57 david Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.13 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.14 2004/10/27 19:29:57 david Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,6 +139,8 @@ darwin_sys_load_shared_file(l, v, retval)
 	vref(vp);
 
 	/* XXX maximum count ? */
+	if (SCARG(uap, count) < 0)
+		return EINVAL;
 	maplen = sizeof(*mapp) * SCARG(uap, count);
 	if (maplen > PAGE_SIZE) {
 		error = ENOMEM;
