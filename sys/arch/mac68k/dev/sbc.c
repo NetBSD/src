@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.20 1997/02/26 22:29:08 gwr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.21 1997/02/28 07:47:01 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -341,8 +341,8 @@ sbc_attach(parent, self, args)
 		ncr_sc->sc_dma_start = sbc_dma_start;
 		ncr_sc->sc_dma_eop   = sbc_dma_eop;
 		ncr_sc->sc_dma_stop  = sbc_dma_stop;
-		mac68k_register_scsi_drq(sbc_drq_intr, ncr_sc);
-		mac68k_register_scsi_irq(sbc_irq_intr, ncr_sc);
+		via2_register_irq(VIA2_SCSIDRQ, sbc_drq_intr, ncr_sc);
+		via2_register_irq(VIA2_SCSIIRQ, sbc_irq_intr, ncr_sc);
 	} else
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 
