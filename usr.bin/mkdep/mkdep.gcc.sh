@@ -75,7 +75,7 @@ if [ "x${SED}" != "x" ]
 then
 	cpp -M "$@" | sed -e "${SED}" > $TMP
 else
-	cpp -M "$*" > $TMP
+	cpp -M "$@" > $TMP
 fi
 
 if [ $? != 0 ]; then
