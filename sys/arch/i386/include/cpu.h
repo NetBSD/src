@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.97 2003/02/26 21:29:00 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.98 2003/03/01 16:37:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -364,6 +364,17 @@ void	cpu_reset __P((void));
 void	i386_init_pcb_tss_ldt __P((struct cpu_info *));
 void	i386_proc0_tss_ldt_init __P((void));
 void	i386_bufinit __P((void));
+
+/* identcpu.c */
+extern int tmx86_has_longrun;
+extern u_int crusoe_longrun;
+extern u_int crusoe_frequency;
+extern u_int crusoe_voltage; 
+extern u_int crusoe_percentage;
+extern u_int tmx86_set_longrun_mode(u_int);
+void tmx86_get_longrun_status_all(void);
+u_int tmx86_get_longrun_mode(void);
+void identifycpu __P((struct cpu_info *));
 
 /* vm_machdep.c */
 void	cpu_proc_fork __P((struct proc *, struct proc *));

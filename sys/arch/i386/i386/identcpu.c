@@ -1,0 +1,1619 @@
+/*	$NetBSD: identcpu.c,v 1.1 2003/03/01 16:37:52 fvdl Exp $	*/
+
+/*-
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Frank van der Linden,  and by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include "opt_cputype.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <machine/specialreg.h>
+#include <machine/pio.h>
+#include <machine/cpu.h>
+
+static const struct i386_cache_info
+intel_cpuid_cache_info[] = {
+	{ CAI_ITLB, 	0x01,	 4, 32, 4 * 1024 },
+	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024 },
+	{ CAI_DTLB, 	0x03,    4, 64, 4 * 1024 },
+	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024 },
+	{ CAI_ITLB,     0x50, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_ITLB,     0x51, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_ITLB,     0x52, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
+	{ CAI_DTLB,     0x5b, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_DTLB,     0x5c, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_DTLB,     0x5d, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
+
+	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
+	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
+	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
+	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
+	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
+	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
+	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32 },
+	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32 },
+	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
+	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
+	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
+	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
+	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
+	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
+	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
+	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
+	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
+	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
+	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
+	{ 0,               0,  0,	        0,  0 },
+};
+
+static const struct i386_cache_info *
+cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc);
+
+/*
+ * Map Brand ID from cpuid instruction to brand name.
+ * Source: Intel Processor Identification and the CPUID Instruction, AP-485
+ */
+static const char * const i386_intel_brand[] = {
+	"",		    /* Unsupported */
+	"Celeron",	    /* Intel (R) Celeron (TM) processor */
+	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
+	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"",		    /* Reserved */
+	"Mobile Pentium III", /* Mobile Intel (R) Pentium (R) III processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
+	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
+	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
+	"Celeron",	    /* Intel (R) Celeron (TM) processor */
+	"Xeon",		    /* Intel (R) Xeon (TM) processor */
+	"Xeon MP",	    /* Intel (R) Xeon (TM) processor MP */
+	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
+};
+
+/*
+ * AMD processors don't have Brand IDs, so we need these names for probe.
+ */
+static const char * const amd_brand[] = {
+	"",
+	"Duron",	/* AMD Duron(tm) */
+	"MP",		/* AMD Athlon(tm) MP */
+	"XP",		/* AMD Athlon(tm) XP */
+	"4"		/* AMD Athlon(tm) 4 */
+};
+
+u_int cpu_serial[3];
+static char amd_brand_name[48];
+
+void cyrix6x86_cpu_setup __P((struct cpu_info *));
+void winchip_cpu_setup __P((struct cpu_info *));
+void amd_family5_setup __P((struct cpu_info *));
+void transmeta_cpu_setup __P((struct cpu_info *));
+
+static void via_cpu_probe __P((struct cpu_info *));
+static void amd_family6_probe __P((struct cpu_info *));
+
+static const char *intel_family6_name __P((struct cpu_info *));
+
+static void transmeta_cpu_info __P((struct cpu_info *));
+static void amd_cpu_cacheinfo __P((struct cpu_info *));
+
+static __inline u_char
+cyrix_read_reg(u_char reg)
+{
+	outb(0x22, reg);
+	return inb(0x23);
+}
+
+static __inline void
+cyrix_write_reg(u_char reg, u_char data)
+{
+	outb(0x22, reg);
+	outb(0x23, data);
+}
+
+static char *
+print_cache_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
+{
+	char cbuf[7];
+	struct i386_cache_info *cai = &ci->ci_cinfo[cache_tag];
+
+	if (cai->cai_totalsize == 0)
+		return sep;
+
+	if (sep == NULL)
+		printf("%s: ", ci->ci_dev->dv_xname);
+	else
+		printf("%s", sep);
+	if (name != NULL)
+		printf("%s ", name);
+
+	if (cai->cai_string != NULL) {
+		printf("%s ", cai->cai_string);
+	} else {
+		format_bytes(cbuf, sizeof(cbuf), cai->cai_totalsize);
+		printf("%s %db/line ", cbuf, cai->cai_linesize);
+	}
+	switch (cai->cai_associativity) {
+	case    0:
+		printf("disabled");
+		break;
+	case    1:
+		printf("direct-mapped");
+		break;
+	case 0xff:
+		printf("fully associative");
+		break;
+	default:
+		printf("%d-way", cai->cai_associativity);
+		break;
+	}
+	return ", ";
+}
+
+static char *
+print_tlb_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
+{
+	char cbuf[7];
+	struct i386_cache_info *cai = &ci->ci_cinfo[cache_tag];
+
+	if (cai->cai_totalsize == 0)
+		return sep;
+
+	if (sep == NULL)
+		printf("%s: ", ci->ci_dev->dv_xname);
+	else
+		printf("%s", sep);
+	if (name != NULL)
+		printf("%s ", name);
+
+	if (cai->cai_string != NULL) {
+		printf("%s", cai->cai_string);
+	} else {
+		format_bytes(cbuf, sizeof(cbuf), cai->cai_linesize);
+		printf("%d %s entries ", cai->cai_totalsize, cbuf);
+		switch (cai->cai_associativity) {
+		case 0:
+			printf("disabled");
+			break;
+		case 1:
+			printf("direct-mapped");
+			break;
+		case 0xff:
+			printf("fully associative");
+			break;
+		default:
+			printf("%d-way", cai->cai_associativity);
+			break;
+		}
+	}
+	return ", ";
+}
+/*
+ * Info for CTL_HW
+ */
+char	cpu_model[120];
+
+/*
+ * Note: these are just the ones that may not have a cpuid instruction.
+ * We deal with the rest in a different way.
+ */
+const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
+	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
+		NULL, NULL},			/* CPU_386SX */
+	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
+		NULL, NULL},			/* CPU_386   */
+	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
+		NULL, NULL},			/* CPU_486SX */
+	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
+		NULL, NULL},			/* CPU_486   */
+	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
+		NULL, NULL},			/* CPU_486DLC */
+	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
+		cyrix6x86_cpu_setup, NULL},	/* CPU_6x86 */
+	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
+		NULL, NULL},			/* CPU_NX586 */
+};
+
+const char *classnames[] = {
+	"386",
+	"486",
+	"586",
+	"686"
+};
+
+const char *modifiers[] = {
+	"",
+	"OverDrive",
+	"Dual",
+	""
+};
+
+const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
+	{
+		"GenuineIntel",
+		CPUVENDOR_INTEL,
+		"Intel",
+		/* Family 4 */
+		{ {
+			CPUCLASS_486,
+			{
+				"486DX", "486DX", "486SX", "486DX2", "486SL",
+				"486SX2", 0, "486DX2 W/B Enhanced",
+				"486DX4", 0, 0, 0, 0, 0, 0, 0,
+				"486"		/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				"Pentium (P5 A-step)", "Pentium (P5)",
+				"Pentium (P54C)", "Pentium (P24T)",
+				"Pentium/MMX", "Pentium", 0,
+				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
+				0, 0, 0, 0, 0, 0, 0,
+				"Pentium"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 6 */
+		{
+			CPUCLASS_686,
+			{
+				"Pentium Pro (A-step)", "Pentium Pro", 0,
+				"Pentium II (Klamath)", "Pentium Pro",
+				"Pentium II/Celeron (Deschutes)",
+				"Celeron (Mendocino)",
+				"Pentium III (Katmai)",
+				"Pentium III (Coppermine)",
+				0, "Pentium III Xeon (Cascades)",
+				"Pentium III (Tualatin)", 0, 0, 0, 0,
+				"Pentium Pro, II or III"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family > 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium 4"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{
+		"AuthenticAMD",
+		CPUVENDOR_AMD,
+		"AMD",
+		/* Family 4 */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, "Am486DX2 W/T",
+				0, 0, 0, "Am486DX2 W/B",
+				"Am486DX4 W/T or Am5x86 W/T 150",
+				"Am486DX4 W/B or Am5x86 W/B 150", 0, 0,
+				0, 0, "Am5x86 W/T 133/160",
+				"Am5x86 W/B 133/160",
+				"Am486 or Am5x86"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				"K5", "K5", "K5", "K5", 0, 0, "K6",
+				"K6", "K6-2", "K6-III", 0, 0, 0,
+				"K6-2+/III+", 0, 0,
+				"K5 or K6"		/* Default */
+			},
+			amd_family5_setup,
+			NULL,
+			amd_cpu_cacheinfo,
+		},
+		/* Family 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, "Athlon Model 1", "Athlon Model 2",
+				"Duron", "Athlon Model 4 (Thunderbird)",
+				0, "Athlon", "Duron", "Athlon", 0, 0, 0,
+				0, 0, 0, 0,
+				"K7 (Athlon)"	/* Default */
+			},
+			NULL,
+			amd_family6_probe,
+			amd_cpu_cacheinfo,
+		},
+		/* Family > 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Unknown K7 (Athlon)"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{
+		"CyrixInstead",
+		CPUVENDOR_CYRIX,
+		"Cyrix",
+		/* Family 4 */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0,
+				"MediaGX",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"486"		/* Default */
+			},
+			cyrix6x86_cpu_setup, /* XXX ?? */
+			NULL,
+			NULL,
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, "6x86", 0,
+				"MMX-enhanced MediaGX (GXm)", /* or Geode? */
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"6x86"		/* Default */
+			},
+			cyrix6x86_cpu_setup,
+			NULL,
+			NULL,
+		},
+		/* Family 6 */
+		{
+			CPUCLASS_686,
+			{
+				"6x86MX", 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"6x86MX"		/* Default */
+			},
+			cyrix6x86_cpu_setup,
+			NULL,
+			NULL,
+		},
+		/* Family > 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Unknown 6x86MX"		/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{	/* MediaGX is now owned by National Semiconductor */
+		"Geode by NSC",
+		CPUVENDOR_CYRIX, /* XXX */
+		"National Semiconductor",
+		/* Family 4, NSC never had any of these */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5: Geode family, formerly MediaGX */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0,
+				"Geode GX1",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Geode"		/* Default */
+			},
+			cyrix6x86_cpu_setup,
+			NULL,
+			NULL,
+		},
+		/* Family 6, not yet available from NSC */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible" /* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family > 6, not yet available from NSC */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{
+		"CentaurHauls",
+		CPUVENDOR_IDT,
+		"IDT",
+		/* Family 4, IDT never had any of these */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0, "WinChip C6", 0, 0, 0,
+				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
+				"WinChip"		/* Default */
+			},
+			winchip_cpu_setup,
+			NULL,
+			NULL,
+		},
+		/* Family 6, VIA acquired IDT Centaur design subsidiary */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, "C3 Samuel",
+				"C3 Samuel 2/Ezra", "C3 Ezra-T",
+				0, 0, 0, 0, 0, 0, 0,
+				"C3"	/* Default */
+			},
+			NULL,
+			via_cpu_probe,
+			NULL,
+		},
+		/* Family > 6, not yet available from VIA */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{
+		"GenuineTMx86",
+		CPUVENDOR_TRANSMETA,
+		"Transmeta",
+		/* Family 4, Transmeta never had any of these */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Crusoe"		/* Default */
+			},
+			transmeta_cpu_setup,
+			NULL,
+			transmeta_cpu_info,
+		},
+		/* Family 6, not yet available from Transmeta */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family > 6, not yet available from Transmeta */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	}
+};
+
+void
+cyrix6x86_cpu_setup(ci)
+	struct cpu_info *ci;
+{
+	/*
+	 * i8254 latch check routine:
+	 *     National Geode (formerly Cyrix MediaGX) has a serious bug in
+	 *     its built-in i8254-compatible clock module.
+	 *     Set the variable 'clock_broken_latch' to indicate it.
+	 */
+
+	extern int clock_broken_latch;
+
+	switch (ci->ci_signature) {
+	case 0x440:     /* Cyrix MediaGX */
+	case 0x540:     /* GXm */
+		clock_broken_latch = 1;
+		break;
+	}
+
+	/* set up various cyrix registers */
+	/* Enable suspend on halt */
+	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+	/* enable access to ccr4/ccr5 */
+	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) | 0x10);
+	/* cyrix's workaround  for the "coma bug" */
+	cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
+	cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
+	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
+	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
+	/* disable access to ccr4/ccr5 */
+	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+
+	/*
+	 * XXX disable page zero in the idle loop, it seems to
+	 * cause panics on these CPUs.
+	 */
+	vm_page_zero_enable = FALSE;
+}
+
+void
+winchip_cpu_setup(ci)
+	struct cpu_info *ci;
+{
+#if defined(I586_CPU)
+	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
+	case 4:	/* WinChip C6 */
+		cpu_feature &= ~CPUID_TSC;
+		printf("WARNING: WinChip C6: broken TSC disabled\n");
+	}
+#endif
+}
+
+#define CPUID(code, eax, ebx, ecx, edx) 			\
+	__asm("cpuid"						\
+	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
+	    : "a" (code));
+
+void
+via_cpu_probe(struct cpu_info *ci)
+{
+	u_int descs[4];
+	u_int lfunc;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature_flags = descs[3];
+	}
+}
+
+const char *
+intel_family6_name(struct cpu_info *ci)
+{
+	int model = CPUID2MODEL(ci->ci_signature);
+	const char *ret = NULL;
+	u_int l2cache = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
+
+	if (model == 5) {
+		switch (l2cache) {
+		case 0:
+		case 128 * 1024:
+			ret = "Celeron (Covington)";
+			break;
+		case 256 * 1024:
+			ret = "Mobile Pentium II (Dixon)";
+			break;
+		case 512 * 1024:
+			ret = "Pentium II";
+			break;
+		case 1 * 1024 * 1024:
+		case 2 * 1024 * 1024:
+			ret = "Pentium II Xeon";
+			break;
+		}
+	} else if (model == 6) {
+		switch (l2cache) {
+		case 256 * 1024:
+		case 512 * 1024:
+			ret = "Mobile Pentium II";
+			break;
+		}
+	} else if (model == 7) {
+		switch (l2cache) {
+		case 512 * 1024:
+			ret = "Pentium III";
+			break;
+		case 1 * 1024 * 1024:
+		case 2 * 1024 * 1024:
+			ret = "Pentium III Xeon";
+			break;
+		}
+	} else if (model >= 8) {
+		if (ci->ci_brand_id && ci->ci_brand_id < 0x10) {
+			switch (ci->ci_brand_id) {
+			case 0x3:
+				if (ci->ci_signature == 0x6B1)
+					ret = "Celeron";
+				break;
+			case 0x08:
+				if (ci->ci_signature >= 0xF13)
+					ret = "genuine processor";
+				break;
+			case 0x0E:
+				if (ci->ci_signature < 0xF13)
+					ret = "Xeon";
+				break;
+			}
+			if (ret == NULL)
+				ret = i386_intel_brand[ci->ci_brand_id];
+		}
+	}
+
+	return ret;
+}
+
+static void
+cpu_probe_base_features(struct cpu_info *ci)
+{
+	const struct i386_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	u_int8_t desc;
+	u_int32_t dummy1, dummy2, miscbytes;
+
+	if (ci->ci_cpuid_level < 0)
+		return;
+
+	CPUID(0, ci->ci_cpuid_level,
+	    ci->ci_vendor[0],
+	    ci->ci_vendor[2],
+	    ci->ci_vendor[1]);
+	ci->ci_vendor[3] = 0;
+
+	if (ci->ci_cpuid_level < 1)
+		return;
+
+	CPUID(1, ci->ci_signature, miscbytes, dummy1, ci->ci_feature_flags);
+
+	/* Brand is low order 8 bits of ebx */
+	ci->ci_brand_id = miscbytes & 0xff;
+
+	/* CLFLUSH line size is next 8 bits */
+	if (ci->ci_feature_flags & CPUID_CFLUSH)
+		ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
+
+	if (ci->ci_cpuid_level < 2)
+		return;
+
+	/*
+	 * Parse the cache info from `cpuid', if we have it.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+
+	CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+
+	iterations = descs[0] & 0xff;
+	while (iterations-- > 0) {
+		for (i = 0; i < 4; i++) {
+			if (descs[i] & 0x80000000)
+				continue;
+			for (j = 0; j < 4; j++) {
+				if (i == 0 && j == 0)
+					continue;
+				desc = (descs[i] >> (j * 8)) & 0xff;
+				if (desc == 0)
+					continue;
+				cai = cache_info_lookup(intel_cpuid_cache_info,
+				    desc);
+				if (cai != NULL)
+					ci->ci_cinfo[cai->cai_index] = *cai;
+			}
+		}
+		CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+	}
+
+	if (ci->ci_cpuid_level < 3)
+		return;
+
+	/*
+	 * If the processor serial number misfeature is present and supported,
+	 * extract it here.
+	 */
+	if ((ci->ci_feature_flags & CPUID_PN) != 0)
+	{
+		ci->ci_cpu_serial[0] = ci->ci_signature;
+		CPUID(3, dummy1, dummy2,
+		    ci->ci_cpu_serial[2],
+		    ci->ci_cpu_serial[1]);
+	}
+}
+
+void
+cpu_probe_features(struct cpu_info *ci)
+{
+	const struct cpu_cpuid_nameclass *cpup = NULL;
+	int i, max, family;
+
+	cpu_probe_base_features(ci);
+
+	if (ci->ci_cpuid_level < 1)
+		return;
+
+	max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+	for (i = 0; i < max; i++) {
+		if (!strncmp((char *)ci->ci_vendor,
+		    i386_cpuid_cpus[i].cpu_id, 12)) {
+			cpup = &i386_cpuid_cpus[i];
+			break;
+		}
+	}
+
+	if (cpup == NULL)
+		return;
+
+	family = (ci->ci_signature >> 8) & 0xf;
+
+	if (family > CPU_MAXFAMILY) {
+		family = CPU_MAXFAMILY;
+	}
+	i = family - CPU_MINFAMILY;
+
+	if (cpup->cpu_family[i].cpu_probe == NULL)
+		return;
+
+	(*cpup->cpu_family[i].cpu_probe)(ci);
+}
+
+void
+amd_family6_probe(struct cpu_info *ci)
+{
+	u_int32_t lfunc;
+	u_int32_t descs[4];
+	u_int32_t brand[12];
+	char *p;
+	int i;
+
+	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature_flags |= descs[3];
+	}
+
+	if (lfunc < 0x80000004)
+		return;
+	
+	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
+	CPUID(0x80000003, brand[4], brand[5], brand[6], brand[7]);
+	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
+
+	for (i = 1; i < sizeof(amd_brand) / sizeof(amd_brand[0]); i++)
+		if ((p = strstr((char *)brand, amd_brand[i])) != NULL) {
+			ci->ci_brand_id = i;
+			strcpy(amd_brand_name, p);
+			break;
+		}
+}
+
+void
+amd_family5_setup(struct cpu_info *ci)
+{
+
+	switch (CPUID2MODEL(ci->ci_signature)) {
+	case 0:		/* AMD-K5 Model 0 */
+		/*
+		 * According to the AMD Processor Recognition App Note,
+		 * the AMD-K5 Model 0 uses the wrong bit to indicate
+		 * support for global PTEs, instead using bit 9 (APIC)
+		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 */
+		if (cpu_feature & CPUID_APIC)
+			cpu_feature = (cpu_feature & ~CPUID_APIC) | CPUID_PGE;
+		/*
+		 * XXX But pmap_pg_g is already initialized -- need to kick
+		 * XXX the pmap somehow.  How does the MP branch do this?
+		 */
+		break;
+	}
+}
+
+/*
+ * Transmeta Crusoe LongRun Support by Tamotsu Hattori.
+ * Port from FreeBSD-current(August, 2001) to NetBSD by tshiozak.
+ */
+
+#define	MSR_TMx86_LONGRUN		0x80868010
+#define	MSR_TMx86_LONGRUN_FLAGS		0x80868011
+
+#define	LONGRUN_MODE_MASK(x)		((x) & 0x0000007f)
+#define	LONGRUN_MODE_RESERVED(x)	((x) & 0xffffff80)
+#define	LONGRUN_MODE_WRITE(x, y)	(LONGRUN_MODE_RESERVED(x) | \
+					    LONGRUN_MODE_MASK(y))
+
+#define	LONGRUN_MODE_MINFREQUENCY	0x00
+#define	LONGRUN_MODE_ECONOMY		0x01
+#define	LONGRUN_MODE_PERFORMANCE	0x02
+#define	LONGRUN_MODE_MAXFREQUENCY	0x03
+#define	LONGRUN_MODE_UNKNOWN		0x04
+#define	LONGRUN_MODE_MAX		0x04
+
+union msrinfo {
+	u_int64_t	msr;
+	u_int32_t	regs[2];
+};
+
+u_int32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
+	/*  MSR low, MSR high, flags bit0 */
+	{	  0,	  0,		0},	/* LONGRUN_MODE_MINFREQUENCY */
+	{	  0,	100,		0},	/* LONGRUN_MODE_ECONOMY */
+	{	  0,	100,		1},	/* LONGRUN_MODE_PERFORMANCE */
+	{	100,	100,		1},	/* LONGRUN_MODE_MAXFREQUENCY */
+};
+
+u_int
+tmx86_get_longrun_mode(void)
+{
+	u_long		eflags;
+	union msrinfo	msrinfo;
+	u_int		low, high, flags, mode;
+
+	eflags = read_eflags();
+	disable_intr();
+
+	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
+	low = LONGRUN_MODE_MASK(msrinfo.regs[0]);
+	high = LONGRUN_MODE_MASK(msrinfo.regs[1]);
+	flags = rdmsr(MSR_TMx86_LONGRUN_FLAGS) & 0x01;
+
+	for (mode = 0; mode < LONGRUN_MODE_MAX; mode++) {
+		if (low   == longrun_modes[mode][0] &&
+		    high  == longrun_modes[mode][1] &&
+		    flags == longrun_modes[mode][2]) {
+			goto out;
+		}
+	}
+	mode = LONGRUN_MODE_UNKNOWN;
+out:
+	write_eflags(eflags);
+	return (mode);
+}
+
+static u_int
+tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
+{
+	u_long		eflags;
+	u_int		eax, ebx, ecx, edx;
+
+	eflags = read_eflags();
+	disable_intr();
+
+	CPUID(0x80860007, eax, ebx, ecx, edx);
+	*frequency = eax;
+	*voltage = ebx;
+	*percentage = ecx;
+
+	write_eflags(eflags);
+	return (1);
+}
+
+u_int
+tmx86_set_longrun_mode(u_int mode)
+{
+	u_long		eflags;
+	union msrinfo	msrinfo;
+
+	if (mode >= LONGRUN_MODE_UNKNOWN) {
+		return (0);
+	}
+
+	eflags = read_eflags();
+	disable_intr();
+
+	/* Write LongRun mode values to Model Specific Register. */
+	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
+	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0],
+	    longrun_modes[mode][0]);
+	msrinfo.regs[1] = LONGRUN_MODE_WRITE(msrinfo.regs[1],
+	    longrun_modes[mode][1]);
+	wrmsr(MSR_TMx86_LONGRUN, msrinfo.msr);
+
+	/* Write LongRun mode flags to Model Specific Register. */
+	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN_FLAGS);
+	msrinfo.regs[0] = (msrinfo.regs[0] & ~0x01) | longrun_modes[mode][2];
+	wrmsr(MSR_TMx86_LONGRUN_FLAGS, msrinfo.msr);
+
+	write_eflags(eflags);
+	return (1);
+}
+
+u_int crusoe_longrun;
+u_int crusoe_frequency;
+u_int crusoe_voltage;
+u_int crusoe_percentage;
+
+void
+tmx86_get_longrun_status_all(void)
+{
+
+	tmx86_get_longrun_status(&crusoe_frequency,
+	    &crusoe_voltage, &crusoe_percentage);
+}
+
+
+static void
+transmeta_cpu_info(struct cpu_info *ci)
+{
+	u_int eax, ebx, ecx, edx, nreg = 0;
+
+	CPUID(0x80860000, eax, ebx, ecx, edx);
+	nreg = eax;
+	if (nreg >= 0x80860001) {
+		CPUID(0x80860001, eax, ebx, ecx, edx);
+		printf("%s: Processor revision %u.%u.%u.%u\n",
+		    ci->ci_dev->dv_xname,
+		    (ebx >> 24) & 0xff,
+		    (ebx >> 16) & 0xff,
+		    (ebx >> 8) & 0xff,
+		    ebx & 0xff);
+	}
+	if (nreg >= 0x80860002) {
+		CPUID(0x80860002, eax, ebx, ecx, edx);
+		printf("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
+		    (ebx >> 16) & 0xff,
+		    (ebx >> 8) & 0xff,
+		    ebx & 0xff,
+		    ecx);
+	}
+	if (nreg >= 0x80860006) {
+		union {
+			char text[65];
+			struct
+			{
+				u_int eax;
+				u_int ebx;
+				u_int ecx;
+				u_int edx;
+			} regs[4];
+		} info;
+		int i;
+
+		for (i=0; i<4; i++) {
+			CPUID(0x80860003 + i,
+			    info.regs[i].eax, info.regs[i].ebx,
+			    info.regs[i].ecx, info.regs[i].edx);
+		}
+		info.text[64] = 0;
+		printf("%s: %s\n", ci->ci_dev->dv_xname, info.text);
+	}
+
+	if (nreg >= 0x80860007) {
+		crusoe_longrun = tmx86_get_longrun_mode();
+		tmx86_get_longrun_status(&crusoe_frequency,
+		    &crusoe_voltage, &crusoe_percentage);
+		printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
+		    ci->ci_dev->dv_xname,
+		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
+		    crusoe_percentage);
+	}
+}
+
+void
+transmeta_cpu_setup(struct cpu_info *ci)
+{
+	u_int nreg = 0, dummy;
+
+	CPUID(0x80860000, nreg, dummy, dummy, dummy);
+	if (nreg >= 0x80860007)
+		tmx86_has_longrun = 1;
+}
+
+
+/* ---------------------------------------------------------------------- */
+
+static const struct i386_cache_info *
+cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc)
+{
+	int i;
+
+	for (i = 0; cai[i].cai_desc != 0; i++) {
+		if (cai[i].cai_desc == desc)
+			return (&cai[i]);
+	}
+
+	return (NULL);
+}
+
+/*
+ * AMD Cache Info:
+ *
+ *	Athlon, Duron:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- L1 TLB 2/4MB pages
+ *		EBX -- L1 TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *		Function 8000.0006 L2 TLB/Cache Information
+ *		EAX -- L2 TLB 2/4MB pages
+ *		EBX -- L2 TLB 4K pages
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ *
+ *	K5, K6:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- reserved
+ *		EBX -- TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *	K6-III:
+ *
+ *		Function 8000.0006 L2 Cache Information
+ *		EAX -- reserved
+ *		EBX -- reserved
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ */
+
+/* L1 TLB 2/4MB pages */
+#define	AMD_L1_EAX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	AMD_L1_EAX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	AMD_L1_EAX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	AMD_L1_EAX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 TLB 4K pages */
+#define	AMD_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	AMD_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	AMD_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	AMD_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 Data Cache */
+#define	AMD_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
+
+/* L1 Instruction Cache */
+#define	AMD_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
+
+/* Note for L2 TLB -- if the upper 16 bits are 0, it is a unified TLB */
+
+/* L2 TLB 2/4MB pages */
+#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
+#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+
+/* L2 TLB 4K pages */
+#define	AMD_L2_EBX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
+#define	AMD_L2_EBX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EBX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+
+/* L2 Cache */
+#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
+#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
+#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+#define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
+	{ 0, 0x01,    1 },
+	{ 0, 0x02,    2 },
+	{ 0, 0x04,    4 },
+	{ 0, 0x06,    8 },
+	{ 0, 0x08,   16 },
+	{ 0, 0x0f, 0xff },
+	{ 0, 0x00,    0 },
+};
+
+void
+amd_cpu_cacheinfo(struct cpu_info *ci)
+{
+	const struct i386_cache_info *cp;
+	struct i386_cache_info *cai;
+	int family, model;
+	u_int descs[4];
+	u_int lfunc;
+
+	family = (ci->ci_signature >> 8) & 15;
+	if (family < CPU_MINFAMILY)
+		panic("amd_cpu_cacheinfo: strange family value");
+	model = CPUID2MODEL(ci->ci_signature);
+
+	/*
+	 * K5 model 0 has none of this info.
+	 */
+	if (family == 5 && model == 0)
+		return;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+
+	/*
+	 * Determine L1 cache/TLB info.
+	 */
+	if (lfunc < 0x80000005) {
+		/* No L1 cache info available. */
+		return;
+	}
+
+	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
+
+	/*
+	 * K6-III and higher have large page TLBs.
+	 */
+	if ((family == 5 && model >= 9) || family >= 6) {
+		cai = &ci->ci_cinfo[CAI_ITLB2];
+		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
+		cai->cai_linesize = (4 * 1024 * 1024);
+
+		cai = &ci->ci_cinfo[CAI_DTLB2];
+		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
+		cai->cai_linesize = (4 * 1024 * 1024);
+	}
+
+	cai = &ci->ci_cinfo[CAI_ITLB];
+	cai->cai_totalsize = AMD_L1_EBX_ITLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_ITLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DTLB];
+	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DCACHE];
+	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
+
+	cai = &ci->ci_cinfo[CAI_ICACHE];
+	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
+	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
+
+	/*
+	 * Determine L2 cache/TLB info.
+	 */
+	if (lfunc < 0x80000006) {
+		/* No L2 cache info available. */
+		return;
+	}
+
+	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
+
+	cai = &ci->ci_cinfo[CAI_L2CACHE];
+	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
+
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+}
+
+static const char n_support[] __attribute__((__unused__)) =
+    "NOTICE: this kernel does not support %s CPU class\n";
+static const char n_lower[] __attribute__((__unused__)) =
+    "NOTICE: lowering CPU class to %s\n";
+
+void
+identifycpu(struct cpu_info *ci)
+{
+	const char *name, *modifier, *vendorname, *brand = "";
+	int class = CPUCLASS_386, vendor, i, max;
+	int modif, family, model, step;
+	const struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_family *cpufam;
+	char *cpuname = ci->ci_dev->dv_xname;
+	char buf[1024];
+	char *sep;
+	char *feature_str[3];
+
+	if (ci->ci_cpuid_level == -1) {
+#ifdef DIAGNOSTIC
+		if (cpu < 0 || cpu >=
+		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
+			panic("unknown cpu type %d", cpu);
+#endif
+		name = i386_nocpuid_cpus[cpu].cpu_name;
+		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
+		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
+		class = i386_nocpuid_cpus[cpu].cpu_class;
+		ci->cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
+		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
+		modifier = "";
+	} else {
+		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		modif = (ci->ci_signature >> 12) & 0x3;
+		family = CPUID2FAMILY(ci->ci_signature);
+		if (family < CPU_MINFAMILY)
+			panic("identifycpu: strange family value");
+		model = CPUID2MODEL(ci->ci_signature);
+		step = CPUID2STEPPING(ci->ci_signature);
+
+		for (i = 0; i < max; i++) {
+			if (!strncmp((char *)ci->ci_vendor,
+			    i386_cpuid_cpus[i].cpu_id, 12)) {
+				cpup = &i386_cpuid_cpus[i];
+				break;
+			}
+		}
+
+		if (cpup == NULL) {
+			vendor = CPUVENDOR_UNKNOWN;
+			if (ci->ci_vendor[0] != '\0')
+				vendorname = (char *)&ci->ci_vendor[0];
+			else
+				vendorname = "Unknown";
+			if (family > CPU_MAXFAMILY)
+				family = CPU_MAXFAMILY;
+			class = family - 3;
+			modifier = "";
+			name = "";
+			ci->cpu_setup = NULL;
+			ci->ci_info = NULL;
+		} else {
+			vendor = cpup->cpu_vendor;
+			vendorname = cpup->cpu_vendorname;
+			modifier = modifiers[modif];
+			if (family > CPU_MAXFAMILY) {
+				family = CPU_MAXFAMILY;
+				model = CPU_DEFMODEL;
+			} else if (model > CPU_MAXMODEL)
+				model = CPU_DEFMODEL;
+			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
+			name = cpufam->cpu_models[model];
+			if (name == NULL)
+			    name = cpufam->cpu_models[CPU_DEFMODEL];
+			class = cpufam->cpu_class;
+			ci->cpu_setup = cpufam->cpu_setup;
+			ci->ci_info = cpufam->cpu_info;
+
+			if (vendor == CPUVENDOR_INTEL && family == 6 &&
+			    model >= 5) {
+				const char *tmp = intel_family6_name(ci);
+				if (tmp != NULL)
+					name = tmp;
+			}
+
+			if (vendor == CPUVENDOR_AMD && family == 6 &&
+			    model >= 6) {
+				if (ci->ci_brand_id == 1)
+					/* 
+					 * It's Duron. We override the 
+					 * name, since it might have been 
+					 * misidentified as Athlon.
+					 */
+					name = amd_brand[ci->ci_brand_id];
+				else
+					brand = amd_brand_name;
+			}
+			
+			if (vendor == CPUVENDOR_IDT && family >= 6)
+				vendorname = "VIA";
+		}
+	}
+
+	cpu_class = class;
+	ci->ci_cpu_class = class;
+
+#if defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * If we have a cycle counter, compute the approximate
+	 * CPU speed in MHz.
+	 * XXX this needs to run on the CPU being probed..
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		u_int64_t last_tsc;
+
+		last_tsc = rdtsc();
+		delay(100000);
+		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+		microtime_func = cc_microtime;
+	}
+	/* XXX end XXX */
+#endif
+
+	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
+	    vendorname,
+	    *modifier ? " " : "", modifier,
+	    *name ? " " : "", name,
+	    *brand ? " " : "", brand,
+	    classnames[class]);
+	printf("%s: %s", cpuname, cpu_model);
+
+	if (ci->ci_tsc_freq != 0)
+		printf(", %qd.%02qd MHz", (ci->ci_tsc_freq + 4999) / 1000000,
+		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	if (ci->ci_signature != 0)
+		printf(", id 0x%x", ci->ci_signature);
+	printf("\n");
+
+	if (ci->ci_info)
+		(*ci->ci_info)(ci);
+
+	if (vendor == CPUVENDOR_INTEL) {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_FLAGS2;
+		feature_str[2] = CPUID_FLAGS3;
+	} else {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_EXT_FLAGS2;
+		feature_str[2] = CPUID_EXT_FLAGS3;
+	}	
+	
+	if (ci->ci_feature_flags) {
+		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags,
+			    feature_str[0], buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags,
+			    feature_str[1], buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags,
+			    feature_str[2], buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+	}
+
+	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
+	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
+		sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
+		if (sep != NULL)
+			printf("\n");
+	}
+	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", NULL);
+		if (sep != NULL)
+			printf("\n");
+	}
+	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
+		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
+		if (sep != NULL)
+			printf("\n");
+	}
+	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
+		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
+		if (sep != NULL)
+			printf("\n");
+	}
+
+	if (ci->ci_cpuid_level >= 3 && (ci->ci_feature_flags & CPUID_PN)) {
+		printf("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
+		    cpuname,
+		    ci->ci_cpu_serial[0] / 65536, ci->ci_cpu_serial[0] % 65536,
+		    ci->ci_cpu_serial[1] / 65536, ci->ci_cpu_serial[1] % 65536,
+		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
+	}
+
+	/*
+	 * Now that we have told the user what they have,
+	 * let them know if that machine type isn't configured.
+	 */
+	switch (cpu_class) {
+#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
+#error No CPU classes configured.
+#endif
+#ifndef I686_CPU
+	case CPUCLASS_686:
+		printf(n_support, "Pentium Pro");
+#ifdef I586_CPU
+		printf(n_lower, "i586");
+		cpu_class = CPUCLASS_586;
+		break;
+#endif
+#endif
+#ifndef I586_CPU
+	case CPUCLASS_586:
+		printf(n_support, "Pentium");
+#ifdef I486_CPU
+		printf(n_lower, "i486");
+		cpu_class = CPUCLASS_486;
+		break;
+#endif
+#endif
+#ifndef I486_CPU
+	case CPUCLASS_486:
+		printf(n_support, "i486");
+#ifdef I386_CPU
+		printf(n_lower, "i386");
+		cpu_class = CPUCLASS_386;
+		break;
+#endif
+#endif
+#ifndef I386_CPU
+	case CPUCLASS_386:
+		printf(n_support, "i386");
+		panic("no appropriate CPU class available");
+#endif
+	default:
+		break;
+	}
+
+	/*
+	 * Now plug in optimized versions of various routines we
+	 * might have.
+	 */
+	switch (cpu_class) {
+#if defined(I686_CPU)
+	case CPUCLASS_686:
+		copyout_func = i486_copyout;
+		break;
+#endif
+#if defined(I586_CPU)
+	case CPUCLASS_586:
+		copyout_func = i486_copyout;
+		break;
+#endif
+#if defined(I486_CPU)
+	case CPUCLASS_486:
+		copyout_func = i486_copyout;
+		break;
+#endif
+	default:
+		/* We just inherit the default i386 versions. */
+		break;
+	}
+
+	if (cpu == CPU_486DLC) {
+#ifndef CYRIX_CACHE_WORKS
+		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
+#else
+#ifndef CYRIX_CACHE_REALLY_WORKS
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED IN HOLD-FLUSH MODE.\n");
+#else
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED.\n");
+#endif
+#endif
+	}
+
+#if defined(I686_CPU)
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		i386_use_fxsave = 1;
+
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions, and
+		 * notify userland.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2)) {
+			if (cpu_feature & CPUID_SSE)
+				i386_has_sse = 1;
+			if (cpu_feature & CPUID_SSE2)
+				i386_has_sse2 = 1;
+		}
+	} else
+		i386_use_fxsave = 0;
+#endif /* I686_CPU */
+}
