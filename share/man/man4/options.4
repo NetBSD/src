@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.24 1997/09/19 19:41:15 leo Exp $
+.\"	$NetBSD: options.4,v 1.25 1997/09/27 20:09:42 hubertf Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -57,7 +57,7 @@ This enables support for
 32-bit identifiers),
 It also allows the use of the deprecated getdomainname, setdomainname,
 and uname syscalls.
-This option also allows using numeric fileystem identifiers rather
+This option also allows using numeric filesystem identifiers rather
 than strings.  Post 0.9 versions use string identifiers.
 .It Cd options COMPAT_10
 Enable binary compatibility with
@@ -77,7 +77,7 @@ architectures.  This option also enables
 .Dq sgtty
 compatibility, without which programs using the old interface produce
 an
-.Dq inapropriate ioctl
+.Dq inappropriate ioctl
 error.
 .It Cd options COMPAT_11
 Enable binary compatibility with
@@ -114,7 +114,7 @@ This adds an old syscall for lseek.  It also adds the ioctls for
 TIOCGETP and TIOCSETP.  The return values for getpid, getgid, and
 getuid syscalls are modified as well, to return the parent's pid and
 uid as well as the current process's.  It also enables the deprecated
-NTTYDISC terminal line disipline.
+NTTYDISC terminal line discipline.
 It also provides backwards compatibility with 
 .Dq old
 SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
@@ -244,7 +244,7 @@ buffer overflows before
 .Xr syslogd 8
 was able to read it.
 Note that not all systems are capable of obtaining a variable sized message
-buffer. There are also some systems on wich memory contents are not preserved
+buffer. There are also some systems on which memory contents are not preserved
 accross reboots.
 .El
 .Ss File Systems
@@ -440,7 +440,7 @@ for a file on an
 .Em EXT2FS 
 filesystem. Without this option, the superuser or owner of the file can
 set and clear them. With this option, only the superuser can set them, and
-they can't be cleared if the securelevel is greather than 0. See also
+they can't be cleared if the securelevel is greater than 0. See also
 .Xr chflags 1 .
 .El
 .Ss Miscellaneous Options
@@ -758,11 +758,11 @@ This option turns on the packet filter interface hooks.  See
 for details.
 .It Cd options IPFILTER
 This option enables the IP filtering on the packet level using the
-ip-filter package.  This option requies that the
+ip-filter package.  This option requires that the
 .Em PFIL_HOOKS
 option also be included.
 .It Cd options IPFILTER_LOG
-This option, in conjuction with
+This option, in conjunction with
 .Em IPFILTER ,
 enables logging of IP packets using ip-filter.
 .It Cd options IPFILTER_DEFAULT_BLOCK
