@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.83 1998/12/15 19:50:13 itohy Exp $
+#	$NetBSD: GENERIC,v 1.84 1999/02/18 07:35:07 scottr Exp $
 #
 # GENERIC
 
@@ -109,6 +109,8 @@ options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
 
+options 	ADB_DEBUG
+
 options 	NFS_BOOT_BOOTP
 
 # Kernel root file system and dump configuration.
@@ -179,6 +181,13 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 se*	at scsibus? target ? lun ?	# SCSI ethernet
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+
+# Miscellaneous mass storage devices
+
+# IWM floppy disk controller
+iwm0	at obio?			# Sony driver (800K GCR)
+fd*	at iwm? drive ?
 
 
 # Network Interfaces
