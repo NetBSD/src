@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.81 2003/09/27 21:29:37 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.82 2003/10/23 15:58:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.81 2003/09/27 21:29:37 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.82 2003/10/23 15:58:29 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.81 2003/09/27 21:29:37 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.82 2003/10/23 15:58:29 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -129,6 +129,7 @@ __RCSID("$NetBSD: var.c,v 1.81 2003/09/27 21:29:37 sjg Exp $");
 #endif
 #include    <ctype.h>
 #include    <stdlib.h>
+#include    <limits.h>
 
 #include    "make.h"
 #include    "buf.h"
@@ -2489,9 +2490,22 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			goto bad_modifier;
 		    } else if (estr[0] == '#' && estr[1] == '\0') {
 			/* Found ":[#]" */
-			if (parsestate.oneBigWord)
-			    asprintf(&newStr, "1");
-			else {
+
+			/*
+			 * We will need enough space for the decimal
+			 * representation of an int.  We calculate the
+			 * space needed for the octal representation,
+			 * and add enough slop to cope with a '-' sign
+			 * (which should never be needed) and a '\0'
+			 * string terminator.
+			 */
+			 int newStrSize =
+				 (sizeof(int) * CHAR_BIT + 2) / 3 + 2;
+
+			newStr = emalloc(newStrSize);
+			if (parsestate.oneBigWord) {
+				strncpy(newStr, "1", newStrSize);
+			} else {
 			    /* XXX: brk_string() is a rather expensive
 			     * way of counting words. */
 			    char **av;
@@ -2499,7 +2513,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			    int ac;
 
 			    av = brk_string(nstr, &ac, FALSE, &as);
-			    asprintf(&newStr, "%d", ac);
+			    snprintf(newStr, newStrSize,  "%d", ac);
 			    free(as);
 			    free(av);
 			}
