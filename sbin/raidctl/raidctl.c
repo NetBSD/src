@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.13 2000/02/24 23:52:46 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.14 2000/02/25 22:24:11 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@ static  void set_autoconfig __P((int, int, char *));
 static  void add_hot_spare __P((int, char *));
 static  void remove_hot_spare __P((int, char *));
 static  void rebuild_in_place __P((int, char *));
-static  void check_status __P((int));
+static  void check_status __P((int,int));
 static  void check_parity __P((int,int,char *));
 static  void do_meter __P((int, int));
 static  void get_bar __P((char *, double, int));
@@ -306,7 +306,7 @@ main(argc,argv)
 		}
 		break;
 	case RAIDFRAME_CHECK_RECON_STATUS:
-		check_status(fd);
+		check_status(fd,1);
 		break;
 	case RAIDFRAME_GET_INFO:
 		rf_get_device_status(fd);
@@ -434,6 +434,15 @@ rf_get_device_status(fd)
 	} else {
 		printf("No spares.\n");
 	}
+	for(i=0; i < device_config.ndevs; i++) {
+		if (device_config.devs[i].status == rf_ds_optimal) {
+			get_component_label(fd, device_config.devs[i].devname);
+		} else {
+			printf("%s status is: %s.  Skipping label.\n",
+			       device_config.devs[i].devname,
+			       device_status(device_config.devs[i].status));
+		}
+	}
 	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
 		 "RAIDFRAME_CHECK_PARITY");
 	if (is_clean) {
@@ -441,7 +450,7 @@ rf_get_device_status(fd)
 	} else {
 		printf("Parity status: DIRTY\n");
 	}
-	check_status(fd);
+	check_status(fd,0);
 }
 
 static void
@@ -548,21 +557,6 @@ get_component_label(fd, component)
 	printf("   Autoconfig: %s\n", 
 	       component_label.autoconfigure ? "Yes" : "No" );
 	printf("   Last configured as: raid%d\n", component_label.last_unit );
-#if 0
-	printf("   Config order: %d\n", component_label.config_order);
-#endif
-#if 0
-	/* old version */
-	printf("Version: %d\n",component_label.version);
-	printf("Serial Number: %d\n",component_label.serial_number);
-	printf("Mod counter: %d\n",component_label.mod_counter);
-	printf("Row: %d\n", component_label.row);
-	printf("Column: %d\n", component_label.column);
-	printf("Num Rows: %d\n", component_label.num_rows);
-	printf("Num Columns: %d\n", component_label.num_columns);
-	printf("Clean: %d\n", component_label.clean);
-	printf("Status: %s\n", device_status(component_label.status));
-#endif
 }
 
 static void
@@ -765,8 +759,9 @@ check_parity( fd, do_rewrite, dev_name )
 
 
 static void
-check_status( fd )
+check_status( fd, meter )
 	int fd;
+	int meter;
 {
 	int recon_percent_done = 0;
 	int parity_percent_done = 0;
@@ -783,16 +778,18 @@ check_status( fd )
 		 "RAIDFRAME_CHECK_COPYBACK_STATUS");
 	printf("Copyback is %d%% complete.\n", copyback_percent_done);
 
-	/* These 3 should be mutually exclusive at this point */
-	if (recon_percent_done < 100) {
-		printf("Reconstruction status:\n");
-		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
-	} else if (parity_percent_done < 100) {
-		printf("Parity Re-write status:\n");
-		do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
-	} else if (copyback_percent_done < 100) {
-		printf("Copyback status:\n");
-		do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+	if (meter) {
+		/* These 3 should be mutually exclusive at this point */
+		if (recon_percent_done < 100) {
+			printf("Reconstruction status:\n");
+			do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+		} else if (parity_percent_done < 100) {
+			printf("Parity Re-write status:\n");
+			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+		} else if (copyback_percent_done < 100) {
+			printf("Copyback status:\n");
+			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+		}
 	}
 }
 
