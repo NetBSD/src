@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.44 2001/10/24 14:07:32 augustss Exp $ */
+/* $NetBSD: wsconsio.h,v 1.45 2001/11/05 08:22:24 enami Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -40,7 +40,7 @@
  *	0-31	keyboard ioctls (WSKBDIO)
  *	32-63	mouse ioctls (WSMOUSEIO)
  *	64-95	display ioctls (WSDISPLAYIO)
- *	96-f127	mux ioctls (WSMUXIO)
+ *	96-127	mux ioctls (WSMUXIO)
  *	128-255	reserved for future use
  */
 
