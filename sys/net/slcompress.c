@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.19 1999/03/12 22:42:31 perry Exp $   */
+/*	$NetBSD: slcompress.c,v 1.20 1999/03/13 14:09:46 drochner Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -462,7 +462,7 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	 */
 	if ((long)cp & 3) {
 		if (len > 0)
-			memmove(((long)cp &~ 3), cp, len);
+			memmove((caddr_t)((long)cp &~ 3), cp, len);
 		cp = (u_char *)((long)cp &~ 3);
 	}
 	cp -= hlen;
