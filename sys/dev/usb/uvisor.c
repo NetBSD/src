@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.11 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.12 2001/11/13 06:24:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Handspring Visor (Palmpilot compatible PDA) driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.12 2001/11/13 06:24:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

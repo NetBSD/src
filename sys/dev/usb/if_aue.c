@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.67 2001/10/10 02:14:16 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.68 2001/11/13 06:24:53 lukem Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -75,6 +75,9 @@
  * investigate short rx problem
  * proper cleanup on errors
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.68 2001/11/13 06:24:53 lukem Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.40 2001/03/25 23:02:34 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.41 2001/11/13 06:24:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,9 @@
  * - Implement a Call Device for modems without multiplexed commands.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.41 2001/11/13 06:24:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

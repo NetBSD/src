@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.71 2001/11/07 02:52:47 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.72 2001/11/13 06:24:55 lukem Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.72 2001/11/13 06:24:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

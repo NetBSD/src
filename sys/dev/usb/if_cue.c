@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.35 2001/04/13 23:30:09 thorpej Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.36 2001/11/13 06:24:53 lukem Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -54,6 +54,9 @@
 /*
  * Ported to NetBSD and somewhat rewritten by Lennart Augustsson.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.36 2001/11/13 06:24:53 lukem Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"

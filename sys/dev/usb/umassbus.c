@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.11 2001/11/11 23:21:18 atatat Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.12 2001/11/13 06:24:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.12 2001/11/13 06:24:56 lukem Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.63 2001/10/25 22:43:24 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.64 2001/11/13 06:24:55 lukem Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -92,6 +92,9 @@
  * in use. When the transfer has finished, these routines call
  * umass_cam_cb again to complete the CAM command.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.64 2001/11/13 06:24:55 lukem Exp $");
 
 #include "atapibus.h"
 

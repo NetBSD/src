@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.3 2001/11/10 17:06:11 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.4 2001/11/13 06:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.4 2001/11/13 06:24:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

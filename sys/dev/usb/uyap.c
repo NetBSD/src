@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.4 2001/07/11 04:53:18 augustss Exp $	*/
+/*	$NetBSD: uyap.c,v 1.5 2001/11/13 06:24:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.5 2001/11/13 06:24:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

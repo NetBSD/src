@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.142 2001/10/25 02:08:13 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.143 2001/11/13 06:24:55 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -47,6 +47,9 @@
  * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.143 2001/11/13 06:24:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.9 2001/09/29 22:00:47 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.10 2001/11/13 06:24:56 lukem Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.10 2001/11/13 06:24:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

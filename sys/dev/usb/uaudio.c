@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.43 2001/10/03 00:04:53 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.44 2001/11/13 06:24:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *                  http://www.usb.org/developers/data/devclass/frmts10.pdf
  *                  http://www.usb.org/developers/data/devclass/termt10.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.44 2001/11/13 06:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

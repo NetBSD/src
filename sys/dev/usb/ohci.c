@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.107 2001/11/10 17:09:28 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.108 2001/11/13 06:24:54 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  * OHCI spec: http://www.compaq.com/productinfo/development/openhci.html
  * USB spec: http://www.usb.org/developers/data/usbspec.zip
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.108 2001/11/13 06:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
