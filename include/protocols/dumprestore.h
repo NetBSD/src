@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
- *
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -36,35 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dumprestore.h	5.8 (Berkeley) 6/20/92
- *	$Id: dumprestore.h,v 1.4 1994/05/16 10:59:12 cgd Exp $
+ *	from: @(#)dumprestore.h	8.2 (Berkeley) 1/21/94
+ *	$Id: dumprestore.h,v 1.5 1994/06/15 04:31:49 cgd Exp $
  */
 
 #ifndef _DUMPRESTORE_H_
 #define _DUMPRESTORE_H_
-
-/* XXX */
-#ifndef BSD44
-#define DT_UNKNOWN 0
-#define DT_LNK     1
-#define DT_DIR     2
-#define DT_REG     3
-#define DT_FIFO    4
-#define DT_SOCK    5
-#define DT_CHR     6
-#define DT_BLK     7
-#undef  IFTODT
-#define IFTODT(m) \
-	( (((m)&IFMT) == IFLNK) ? DT_LNK : \
-	  (((m)&IFMT) == IFDIR) ? DT_DIR : \
-	  (((m)&IFMT) == IFREG) ? DT_REG : \
-	  (((m)&IFMT) == IFIFO) ? DT_FIFO : \
-	  (((m)&IFMT) == IFSOCK) ? DT_SOCK : \
-	  (((m)&IFMT) == IFCHR) ? DT_CHR : \
-	  (((m)&IFMT) == IFBLK) ? DT_BLK : DT_UNKNOWN \
-	)
-#endif /* !BSD44 */
-/* XXX */
 
 /*
  * TP_BSIZE is the size of file blocks on the dump tapes.
@@ -93,8 +69,8 @@ union u_spcl {
 	char dummy[TP_BSIZE];
 	struct	s_spcl {
 		long	c_type;		    /* record type (see below) */
-		time_t	c_date;		    /* date of previous dump */
-		time_t	c_ddate;	    /* date of this dump */
+		time_t	c_date;		    /* date of this dump */
+		time_t	c_ddate;	    /* date of previous dump */
 		long	c_volume;	    /* dump volume number */
 		daddr_t	c_tapea;	    /* logical block of this record */
 		ino_t	c_inumber;	    /* number of inode */
