@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.8 1995/05/08 22:01:34 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.9 1995/06/04 15:33:50 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1111,7 +1111,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
-		error = hw->setfd(sc->hw_hdl, (int)addr);
+		error = hw->setfd(sc->hw_hdl, *(int *)addr);
 		break;
 
 	default:
