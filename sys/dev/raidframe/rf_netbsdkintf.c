@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.60 2000/02/25 19:56:56 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.61 2000/02/25 20:11:00 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -400,9 +400,6 @@ if (raidautoconfig) {
 
 	kthread_create(rf_buildroothack,config_sets);
 
-	/* 4. make sure we get our mud.. I mean root.. hooks in.. */
-	/* XXXX pick raid0 for now... and this should be only done
-	   if we find something that's bootable!!! */
 #if 0
 	mountroothook_establish(rf_mountroot_hook, &raidrootdev[0]);
 #endif
@@ -440,40 +437,23 @@ rf_buildroothack(arg)
 				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
 #endif
 				rf_release_all_vps(cset);
-#if DEBUG
-				printf("Done cleanup\n");
-#endif
 			}
 		} else {
 			/* we're not autoconfiguring this set...  
 			   release the associated resources */
-#if DEBUG
-			printf("Releasing vp's\n");
-#endif
 			rf_release_all_vps(cset);
-#if DEBUG
-			printf("Done.\n");
-#endif
 		}
 		/* cleanup */
-#if DEBUG
-		printf("Cleaning up config set\n");
-#endif
 		rf_cleanup_config_set(cset);
-#if DEBUG
-		printf("Done cleanup\n");
-#endif
 		cset = next_cset;
 	}
 	if (boothowto & RB_ASKNAME) {
 		/* We don't auto-config... */
 	} else {
 		/* They didn't ask, and we found something bootable... */
-		/* XXX pretend for now.. */
+
 		if (num_root == 1) {
-#if 1
 			booted_device = &raidrootdev[rootID]; 
-#endif
 		} else if (num_root > 1) {
 			/* we can't guess.. require the user to answer... */
 			boothowto |= RB_ASKNAME;
@@ -647,7 +627,7 @@ raidclose(dev, flags, fmt, p)
 		   Device shutdown has taken care of setting the 
 		   clean bits if RAIDF_INITED is not set 
 		   mark things as clean... */
-#ifdef DEBUG
+#if 0
 		printf("Last one on raid%d.  Updating status.\n",unit);
 #endif
 		rf_update_component_labels( raidPtrs[unit] );
@@ -2289,19 +2269,10 @@ rf_update_component_labels( raidPtr )
 				/* make sure status is noted */
 				clabel.status = rf_ds_optimal;
 				/* bump the counter */
-#if 0				
-				clabel.mod_counter++;
-#endif
 				clabel.mod_counter = raidPtr->mod_counter;
 #if 0
 				/* note where this set was configured last */
 				clabel.last_unit = raidPtr->raidid;
-#endif
-#if DEBUG
-				if (raidPtr->mod_counter != 
-				    clabel.mod_counter) {
-					printf("raid%d: mod_counter for row: %d col: %d not in sync\n", raidPtr->raidid, r, c);
-				}
 #endif
 
 				raidwrite_component_label( 
@@ -3089,10 +3060,7 @@ rf_auto_config_set(cset,unit)
 	retcode = rf_Configure(raidPtr, config, cset->ac);
 	
 	if (retcode == 0) {
-#if DEBUG
-		printf("Calling raidinit()\n");
-#endif
-				/* XXX the 0 below is bogus! */
+
 		raidinit(raidPtrs[raidID]);
 
 		rf_markalldirty(raidPtrs[raidID]);
