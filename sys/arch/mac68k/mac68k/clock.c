@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 1997/09/03 06:14:42 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,6 +94,10 @@
 #include <mac68k/mac68k/pram.h>
 #include <mac68k/mac68k/clockreg.h>
 #include <machine/viareg.h>
+
+#ifdef DEBUG
+int	clock_debug = 0;
+#endif
 
 void	rtclock_intr __P((void));
 
@@ -401,10 +405,10 @@ resettodr()
 		 * (gmtbias is in minutes, multiply by 60).
 		 */
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
-#if DIAGNOSTIC
-	else
+#ifdef DEBUG
+	else if (clock_debug)
 		printf("NetBSD/mac68k does not trust itself to try and write "
-		    "to the pram on this system.\n");
+		    "to the PRAM on this system.\n");
 #endif
 }
 /*
@@ -490,6 +494,11 @@ mac68k_calibrate_delay()
 	via_reg(VIA1, vIFR) = V1IF_T1;	/* (this is needed for IIsi) */
 	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
 
+#ifdef DEBUG
+	if (clock_debug)
+		printf("mac68k_calibrate_delay(): entering timing loop\n");
+#endif
+
 	for (sum = 0, n = 8; n > 0; n--) {
 		delay_flag = 1;
 		via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
@@ -521,4 +530,9 @@ mac68k_calibrate_delay()
 
 	/* Reset the delay_flag for normal use */
 	delay_flag = 1;
+
+#ifdef DEBUG
+	if (clock_debug)
+		printf("mac68k_calibrate_delay(): delay_factor calibrated\n");
+#endif
 }
