@@ -1,6 +1,6 @@
-#	$Id: mkioctls,v 1.4 1994/12/24 16:47:28 cgd Exp $
+#	$Id: mkioctls,v 1.5 1995/01/15 07:51:08 mycroft Exp $
 #
-awk '
+cpp -dM ${1+"$@"} | awk '
 BEGIN {
 	print "#include <sys/param.h>"
 	print "#include <sys/socket.h>"
@@ -13,7 +13,7 @@ BEGIN {
 	print ""
 	print "char *"
 	print "ioctlname(val)"
-	print "long val;"
+	print "\tlong val;"
 	print "{"
 	print ""
 }
@@ -26,11 +26,11 @@ BEGIN {
 			break;
 	++i;
 	# 
-	printf("\tif (val ==  %s)\n\t\treturn(\"%s\");\n", $i, $i);
+	printf("\tif (val == %s)\n\t\treturn (\"%s\");\n", $i, $i);
 
 }
 END {
-	print "\n\treturn(NULL);"
+	print "\n\treturn (NULL);"
 	print "}"
 }
-' $1 $2
+'
