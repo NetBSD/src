@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.228 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.229 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -463,6 +463,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sparc64: Switch to GCC 3.3.1.  [mrg 20030919]
 	alpha: Switch to GCC 3.3.1.  [mrg 20030919]
 	arm: Switch to GCC 3.3.1.  [matt 20030921]
+	amiga: added wsmouse support to mouse driver.  [jandberg 20030922]
 	powerpc: Switch to GCC 3.3.1.  [matt 20030923]
 	powerpc: Switch to GDB 5.3.  [matt 20030923]
 	alpha: Switch to GDB 5.3.  [matt 20030924]
