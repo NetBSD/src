@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 1999/01/31 00:55:42 castor Exp $
+#	$NetBSD: genassym.cf,v 1.9 1999/02/27 02:54:05 jonathan Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -168,48 +168,39 @@ define	FRAME_FP29		sizeof(mips_fpreg_t) * 29
 define	FRAME_FP30		sizeof(mips_fpreg_t) * 30
 define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 
-# 
-# trapframe synthesized on stack and pointed by 5th arg {
-# 	register_t cf_args[4 + 2];	arg0 - arg3 and arg4 and arg5 (ignored)
-# 	register_t cf_sp;		frame pointer on trap
-# 	register_t cf_ra;		return address on trap
-# 	mips_reg_t tf_regs[17];		- trapframe begin here
-#	mips_reg_t tf_ra;		-
-#	mips_reg_t tf_sr;		-
-#	mips_reg_t tf_mullo;		-
-#	mips_reg_t tf_mulhi;		-
-#	mips_reg_t tf_epc;		- might be modified prior to return
-# };
 
-#define	KERNFRAME_SIZ	sizeof(struct kernframe)
-define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
-define	KERNFRAME_ARG5	sizeof(register_t) * 4
-define	KERNFRAME_ARG6	sizeof(register_t) * 5
-define	KERNFRAME_SP	sizeof(register_t) * 6
-define	KERNFRAME_RA	sizeof(register_t) * 7
-define	TF_BASE		sizeof(register_t) * 8
-define	TF_REG_AST	sizeof(mips_reg_t) * 0
-define	TF_REG_V0	sizeof(mips_reg_t) * 1
-define	TF_REG_V1	sizeof(mips_reg_t) * 2
-define	TF_REG_A0	sizeof(mips_reg_t) * 3
-define	TF_REG_A1	sizeof(mips_reg_t) * 4
-define	TF_REG_A2	sizeof(mips_reg_t) * 5
-define	TF_REG_A3	sizeof(mips_reg_t) * 6
-define	TF_REG_T0	sizeof(mips_reg_t) * 7
-define	TF_REG_T1	sizeof(mips_reg_t) * 8
-define	TF_REG_T2	sizeof(mips_reg_t) * 9
-define	TF_REG_T3	sizeof(mips_reg_t) * 10
-define	TF_REG_T4	sizeof(mips_reg_t) * 11
-define	TF_REG_T5	sizeof(mips_reg_t) * 12
-define	TF_REG_T6	sizeof(mips_reg_t) * 13
-define	TF_REG_T7	sizeof(mips_reg_t) * 14
-define	TF_REG_T8	sizeof(mips_reg_t) * 15
-define	TF_REG_T9	sizeof(mips_reg_t) * 16
-define	TF_REG_RA	sizeof(mips_reg_t) * 17
-define	TF_REG_SR	sizeof(mips_reg_t) * 18
-define	TF_REG_MULLO	sizeof(mips_reg_t) * 19
-define	TF_REG_MULHI	sizeof(mips_reg_t) * 20
-define	TF_REG_EPC	sizeof(mips_reg_t) * 21
+#define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
+define	KERNFRAME_SIZ	sizeof(struct kernframe)
+define	KERNFRAME_ARG5	offsetof(struct kernframe, cf_args[4])
+define	KERNFRAME_ARG6	offsetof(struct kernframe, cf_args[5])
+define	KERNFRAME_SP	offsetof(struct kernframe, cf_sp)
+define	KERNFRAME_RA	offsetof(struct kernframe, cf_ra)
+
+#  offset of trapframe in struct kernframe
+define	TF_BASE		offsetof(struct kernframe, cf_frame)
+
+define	TF_REG_AST	offsetof(struct trapframe, tf_regs[0])
+define	TF_REG_V0	offsetof(struct trapframe, tf_regs[1])
+define	TF_REG_V1	offsetof(struct trapframe, tf_regs[2])
+define	TF_REG_A0	offsetof(struct trapframe, tf_regs[3])
+define	TF_REG_A1	offsetof(struct trapframe, tf_regs[4])
+define	TF_REG_A2	offsetof(struct trapframe, tf_regs[5])
+define	TF_REG_A3	offsetof(struct trapframe, tf_regs[6])
+define	TF_REG_T0	offsetof(struct trapframe, tf_regs[7])
+define	TF_REG_T1	offsetof(struct trapframe, tf_regs[8])
+define	TF_REG_T2	offsetof(struct trapframe, tf_regs[9])
+define	TF_REG_T3	offsetof(struct trapframe, tf_regs[10])
+define	TF_REG_T4	offsetof(struct trapframe, tf_regs[11])
+define	TF_REG_T5	offsetof(struct trapframe, tf_regs[12])
+define	TF_REG_T6	offsetof(struct trapframe, tf_regs[13])
+define	TF_REG_T7	offsetof(struct trapframe, tf_regs[14])
+define	TF_REG_T8	offsetof(struct trapframe, tf_regs[15])
+define	TF_REG_T9	offsetof(struct trapframe, tf_regs[16])
+define	TF_REG_RA	offsetof(struct trapframe, tf_ra)
+define	TF_REG_SR	offsetof(struct trapframe, tf_sr)
+define	TF_REG_MULLO	offsetof(struct trapframe, tf_mullo)
+define	TF_REG_MULHI	offsetof(struct trapframe, tf_mulhi)
+define	TF_REG_EPC	offsetof(struct trapframe, tf_epc)
 
 define	CTXSWFRAME_SIZ	sizeof(mips_reg_t) * 12
 define	SF_REG_ST	sizeof(mips_reg_t) * 11
