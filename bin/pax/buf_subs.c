@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.11 1999/10/22 10:43:11 mrg Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.12 2000/02/17 03:06:13 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.11 1999/10/22 10:43:11 mrg Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.12 2000/02/17 03:06:13 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -699,7 +699,7 @@ wr_rdfile(arcn, ifd, left)
 			return(-1);
 		}
 		cnt = MIN(cnt, size);
-		if ((res = read(ifd, bufpt, cnt)) <= 0)
+		if ((res = read_with_restart(ifd, bufpt, cnt)) <= 0)
 			break;
 		size -= res;
 		bufpt += res;
@@ -884,10 +884,10 @@ cp_file(arcn, fd1, fd2)
 	 * read the source file and copy to destination file until EOF
 	 */
 	for(;;) {
-		if ((cnt = read(fd1, buf, blksz)) <= 0)
+		if ((cnt = read_with_restart(fd1, buf, blksz)) <= 0)
 			break;
 		if (no_hole)
-			res = write(fd2, buf, cnt);
+			res = xwrite(fd2, buf, cnt);
 		else
 			res = file_write(fd2, buf, cnt, &rem, &isem, sz, fnm);
 		if (res != cnt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.10 1999/11/01 01:35:59 mrg Exp $	*/
+/*	$NetBSD: tables.c,v 1.11 2000/02/17 03:06:13 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.10 1999/11/01 01:35:59 mrg Exp $");
+__RCSID("$NetBSD: tables.c,v 1.11 2000/02/17 03:06:13 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,7 +446,7 @@ chk_ftime(arcn)
 					    "Failed ftime table seek");
 					return(-1);
 				}
-				if (read(ffd, ckname, namelen) != namelen) {
+				if (xread(ffd, ckname, namelen) != namelen) {
 					syswarn(1, errno,
 					    "Failed ftime table read");
 					return(-1);
@@ -492,7 +492,7 @@ chk_ftime(arcn)
 		 * offset. add the file to the head of the hash chain
 		 */
 		if ((pt->seek = lseek(ffd, (off_t)0, SEEK_END)) >= 0) {
-			if (write(ffd, arcn->name, namelen) == namelen) {
+			if (xwrite(ffd, arcn->name, namelen) == namelen) {
 				pt->mtime = arcn->sb.st_mtime;
 				pt->namelen = namelen;
 				pt->fow = ftab[indx];
@@ -1288,8 +1288,8 @@ add_dir(name, nlen, psb, frc_mode)
 	dblk.atime = psb->st_atime;
 	dblk.fflags = psb->st_flags;
 	dblk.frc_mode = frc_mode;
-	if ((write(dirfd, name, dblk.nlen) == dblk.nlen) &&
-	    (write(dirfd, (char *)&dblk, sizeof(dblk)) == sizeof(dblk))) {
+	if ((xwrite(dirfd, name, dblk.nlen) == dblk.nlen) &&
+	    (xwrite(dirfd, (char *)&dblk, sizeof(dblk)) == sizeof(dblk))) {
 		++dircnt;
 		return;
 	}
@@ -1329,11 +1329,11 @@ proc_dir()
 		 */
 		if (lseek(dirfd, -((off_t)sizeof(dblk)), SEEK_CUR) < 0) 
 			break;
-		if (read(dirfd,(char *)&dblk, sizeof(dblk)) != sizeof(dblk))
+		if (xread(dirfd,(char *)&dblk, sizeof(dblk)) != sizeof(dblk))
 			break;
 		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0) 
 			break;
-		if (read(dirfd, name, dblk.nlen) != dblk.nlen)
+		if (xread(dirfd, name, dblk.nlen) != dblk.nlen)
 			break;
 		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0) 
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.15 1999/11/07 15:48:24 mycroft Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.16 2000/02/17 03:06:13 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.15 1999/11/07 15:48:24 mycroft Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.16 2000/02/17 03:06:13 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -948,7 +948,7 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 			}
 			strncpy(gnu_hack_string, st, wcnt);
 			gnu_hack_string[wcnt] = 0;
-		} else if (write(fd, st, wcnt) != wcnt) {
+		} else if (xwrite(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
 		}
@@ -992,7 +992,7 @@ file_flush(fd, fname, isempt)
 		return;
 	}
 
-	if (write(fd, blnk, 1) < 0)
+	if (write_with_restart(fd, blnk, 1) < 0)
 		syswarn(1, errno, "Failed write to file %s", fname);
 	return;
 }
