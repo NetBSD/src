@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.56.2.1 2001/07/10 13:48:47 lukem Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.56.2.2 2001/09/07 22:01:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -59,11 +59,11 @@ static void	filt_sowdetach(struct knote *kn);
 static int	filt_sowrite(struct knote *kn, long hint);
 static int	filt_solisten(struct knote *kn, long hint);
 
-static struct filterops solisten_filtops =
+static const struct filterops solisten_filtops =
 	{ 1, NULL, filt_sordetach, filt_solisten };
-struct filterops soread_filtops =
+const struct filterops soread_filtops =
 	{ 1, NULL, filt_sordetach, filt_soread };
-struct filterops sowrite_filtops =
+const struct filterops sowrite_filtops =
 	{ 1, NULL, filt_sowdetach, filt_sowrite };
 
 struct pool	socket_pool;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30.4.1 2001/07/10 14:00:00 lukem Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.4.2 2001/09/07 22:01:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -71,9 +71,9 @@ static int	filt_fiforead(struct knote *kn, long hint);
 static void	filt_fifowdetach(struct knote *kn);
 static int	filt_fifowrite(struct knote *kn, long hint);
 
-struct filterops fiforead_filtops =
+const struct filterops fiforead_filtops =
 	{ 1, NULL, filt_fifordetach, filt_fiforead };
-struct filterops fifowrite_filtops =
+const struct filterops fifowrite_filtops =
 	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
 
 int (**fifo_vnodeop_p) __P((void *));

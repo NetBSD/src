@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78.4.3 2001/08/25 06:17:19 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.4 2001/09/07 22:01:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -2068,9 +2068,9 @@ static int	filt_ufsread(struct knote *kn, long hint);
 static int	filt_ufsvnode(struct knote *kn, long hint);
 static void	filt_ufsdetach(struct knote *kn);
 
-static struct filterops ufsread_filtops = 
+static const struct filterops ufsread_filtops = 
 	{ 1, NULL, filt_ufsdetach, filt_ufsread };
-static struct filterops ufsvnode_filtops = 
+static const struct filterops ufsvnode_filtops = 
 	{ 1, NULL, filt_ufsdetach, filt_ufsvnode };
 
 int

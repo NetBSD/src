@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.3 2001/09/07 19:45:03 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.4 2001/09/07 22:01:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1053,9 +1053,9 @@ ttpoll(struct tty *tp, int events, struct proc *p)
 	return (revents);
 }
 
-static struct filterops ttyread_filtops =
+static const struct filterops ttyread_filtops =
 	{ 1, NULL, filt_ttyrdetach, filt_ttyread };
-static struct filterops ttywrite_filtops =
+static const struct filterops ttywrite_filtops =
 	{ 1, NULL, filt_ttywdetach, filt_ttywrite };
 
 int

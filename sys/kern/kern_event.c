@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.4 2001/09/07 21:16:03 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.5 2001/09/07 22:01:52 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -85,11 +85,11 @@ static void	filt_procdetach(struct knote *kn);
 static int	filt_proc(struct knote *kn, long hint);
 static int	filt_fileattach(struct knote *kn);
 
-static struct filterops kqread_filtops =
+static const struct filterops kqread_filtops =
 	{ 1, NULL, filt_kqdetach, filt_kqueue };
-static struct filterops proc_filtops =
+static const struct filterops proc_filtops =
 	{ 0, filt_procattach, filt_procdetach, filt_proc };
-static struct filterops file_filtops =
+static const struct filterops file_filtops =
 	{ 1, filt_fileattach, NULL, NULL };
 
 struct pool	kqueue_pool;
@@ -105,7 +105,7 @@ do {									\
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
 #define	KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
 
-extern struct filterops sig_filtops;
+extern const struct filterops sig_filtops;
 
 /*
  * Table for for all system-defined filters.
@@ -114,9 +114,9 @@ extern struct filterops sig_filtops;
  * End of list is when name is NULL.
  */
 struct kfilter {
-	char		 *name;		/* name of filter */
+	const char	 *name;		/* name of filter */
 	uint32_t	  filter;	/* id of filter */
-	struct filterops *filtops;	/* operations for filter */
+	const struct filterops *filtops;/* operations for filter */
 };
 
 		/* System defined filters */
@@ -216,9 +216,11 @@ kfilter_byfilter(uint32_t filter)
  * If retfilter != NULL, the new filterid is returned in it.
  */
 int
-kfilter_register(const char *name, struct filterops *filtops, int *retfilter)
+kfilter_register(const char *name, const struct filterops *filtops,
+    int *retfilter)
 {
 	struct kfilter *kfilter;
+	void *space;
 	int len;
 
 	if (name == NULL || name[0] == '\0' || filtops == NULL)
@@ -253,14 +255,17 @@ kfilter_register(const char *name, struct filterops *filtops, int *retfilter)
 		user_kfilters = kfilter;
 	}
 	len = strlen(name) + 1;		/* copy name */
-	user_kfilters[user_kfilterc].name = (char *)
-	    malloc(len, M_KEVENT, M_WAITOK);
-	memcpy(user_kfilters[user_kfilterc].name, name, len);
+	space = malloc(len, M_KEVENT, M_WAITOK);
+	memcpy(space, name, len);
+	user_kfilters[user_kfilterc].name = space;
+
 	user_kfilters[user_kfilterc].filter = user_kfilterc + EVFILT_SYSCOUNT;
+
 	len = sizeof(struct filterops);	/* copy filtops */
-	user_kfilters[user_kfilterc].filtops = (struct filterops *)
-	    malloc(len, M_KEVENT, M_WAITOK);
-	memcpy(user_kfilters[user_kfilterc].filtops, filtops, len);
+	space = malloc(len, M_KEVENT, M_WAITOK);
+	memcpy(space, filtops, len);
+	user_kfilters[user_kfilterc].filtops = space;
+
 	if (retfilter != NULL)
 		*retfilter = user_kfilters[user_kfilterc].filter;
 	user_kfilterc++;		/* finally, increment count */
@@ -289,11 +294,13 @@ kfilter_unregister(const char *name)
 		return (ENOENT);
 
 	if (kfilter->name[0] != '\0') {
-		free(kfilter->name, M_KEVENT);
+		/* XXX Cast away const (but we know it's safe. */
+		free((void *) kfilter->name, M_KEVENT);
 		kfilter->name = "";	/* mark as `not implemented' */
 	}
 	if (kfilter->filtops != NULL) {
-		free(kfilter->filtops, M_KEVENT);
+		/* XXX Cast away const (but we know it's safe. */
+		free((void *) kfilter->filtops, M_KEVENT);
 		kfilter->filtops = NULL; /* mark as `not implemented' */
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.2 2001/09/07 15:54:14 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.3 2001/09/07 22:01:55 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -181,7 +181,7 @@ struct knote {
 		struct proc	*p_proc;	/* proc pointer */
 		void		*p_opaque;	/* opaque/misc pointer */
 	} kn_ptr;
-	struct filterops	*kn_fop;
+	const struct filterops	*kn_fop;
 	caddr_t			kn_hook;
 
 #define	KN_ACTIVE	0x01			/* event has been triggered */
@@ -207,8 +207,8 @@ extern void	knote_fdclose(struct proc *p, int fd);
 extern int 	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
 
-extern int	kfilter_register(const char *name, struct filterops *filtops,
-		    int *retfilter);
+extern int	kfilter_register(const char *name,
+		    const struct filterops *filtops, int *retfilter);
 extern int	kfilter_unregister(const char *name);
 
 #else 	/* !_KERNEL */
