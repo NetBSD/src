@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.3 2001/11/16 00:13:22 thorpej Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.4 2001/11/17 19:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct sched_param {
 int	sched_setparam(pid_t pid, const struct sched_param *param);
 int	sched_getparam(pid_t pid, struct sched_param *param);
 int	sched_setscheduler(pid_t pid, int policy,
-    const struct sched_param *param);
+	    const struct sched_param *param);
 int	sched_getscheduler(pid_t pid);
 int	sched_get_priority_max(int policy);
 int	sched_get_priority_min(int policy);
