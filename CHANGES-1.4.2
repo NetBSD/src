@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.123 2000/02/15 10:09:08 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.124 2000/02/18 22:22:46 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1117,12 +1117,6 @@ lib/libc/net/inet_pton.c			1.14
 
   Do proper overflow checking of IPv4 addresses, fixing PR#8314.
 
-usr.sbin/mountd/mountd.c			1.58 via patch
-
-  Avoid spurious inaccessibility of exported file systems while
-  mountd is restarted or told to reload the exports file, fixing
-  PR#8791.
-
 usr.sbin/rwhod/rwhod.c				1.16
 
   Fix possible Denial-of-Service attack triggered by sending short
@@ -1777,7 +1771,7 @@ sys/arch/vax/vax/machdep.c			patch (part of 1.91)
 
   In process_write_regs(), no checks were made to which bits in
   the PSL that was altered. This means that the traced process
-  could gain any hardware privileges.
+  could gain any hardware privileges.  Fixes SA#1999-012.
 
 sys/arch/mac68k/mac68k/sys_machdep.c		patch
 
@@ -3120,11 +3114,6 @@ lib/libc/arch/powerpc/sys/cerror.S		1.5
 
   Implement *__errno() indirection.
 
-usr.sbin/mountd/mountd.c			1.59 via patch
-
-  Fix reexportation problem when options are being used or modified,
-  or if export point was globally exported.
-
 usr.sbin/pkg_install/lib/ftpio.c		1.16
 
   Initialize buffer properly, so that the expect-routine doesn't
@@ -3444,12 +3433,29 @@ sys/arch/alpha/alpha/dec_550.c			patch
 
   Make this compile when NPCKBD > 0.
 
-lib/libc/gen/errno.c				1.3
-
-  Arrange for a linker warning to be displayed when the errno datum
-  is accessed directly (not using <errno.h>).
-
 sys/arch/amiga/include/vmparam.h		1.26
 
   Enlarge initial kernel page table.  Needed to boot some 128 MB
   machines.
+
+usr.bin/su/su.1					1.18
+usr.bin/su/su.c					1.39
+etc/root/dot.login				1.5
+
+  Have su set SU_FROM environment variable, and use to avoid
+  incorrect 'use su' warning in root's .login.
+  Also do not prompt for terminal type unless it is unknown.
+
+sys/arch/amiga/dev/grf.c			1.34
+sys/arch/amiga/dev/grfvar.h			1.16
+
+  Implement GRFIOGLANK ioctl, which is nowadays needed by
+  screenblank(8).
+
+sys/kern/kern_time.c				1.42-1.43
+sys/sys/time.h					1.29 via patch
+share/man/man9/ratecheck.9			1.1 (new)
+share/man/man9/Makefile				1.57 via patch
+
+  Implement ratecheck(), a function which can help kernel programmers
+  implement rate-limited actions.
