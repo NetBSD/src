@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.11 1995/02/25 13:41:01 cgd Exp $	*/
+/*	$NetBSD: err.c,v 1.12 1995/02/25 17:19:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: err.c,v 1.11 1995/02/25 13:41:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.12 1995/02/25 17:19:26 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,24 @@ static char rcsid[] = "$NetBSD: err.c,v 1.11 1995/02/25 13:41:01 cgd Exp $";
 #endif
 
 extern char *__progname;		/* Program name, from crt0. */
+
+__dead void
+_verr(eval, fmt, ap)
+	int eval;
+	const char *fmt;
+	va_list ap;
+{
+	int sverrno;
+
+	sverrno = errno;
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+	exit(eval);
+}
 
 __dead void
 #ifdef __STDC__
@@ -79,20 +97,15 @@ _err(va_alist)
 }
 
 __dead void
-_verr(eval, fmt, ap)
+_verrx(eval, fmt, ap)
 	int eval;
 	const char *fmt;
 	va_list ap;
 {
-	int sverrno;
-
-	sverrno = errno;
 	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL) {
+	if (fmt != NULL)
 		(void)vfprintf(stderr, fmt, ap);
-		(void)fprintf(stderr, ": ");
-	}
-	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+	(void)fprintf(stderr, "\n");
 	exit(eval);
 }
 
@@ -119,19 +132,22 @@ _errx(va_alist)
 	va_end(ap);
 }
 
-__dead void
-_verrx(eval, fmt, ap)
-	int eval;
+
+void
+_vwarn(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL)
-		(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, "\n");
-	exit(eval);
-}
+	int sverrno;
 
+	sverrno = errno;
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+}
 
 void
 #if __STDC__
@@ -155,19 +171,14 @@ _warn(va_alist)
 }
 
 void
-_vwarn(fmt, ap)
+_vwarnx(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	int sverrno;
-
-	sverrno = errno;
 	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL) {
+	if (fmt != NULL)
 		(void)vfprintf(stderr, fmt, ap);
-		(void)fprintf(stderr, ": ");
-	}
-	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+	(void)fprintf(stderr, "\n");
 }
 
 void
@@ -189,15 +200,4 @@ _warnx(va_alist)
 #endif
 	_vwarnx(fmt, ap);
 	va_end(ap);
-}
-
-void
-_vwarnx(fmt, ap)
-	const char *fmt;
-	va_list ap;
-{
-	(void)fprintf(stderr, "%s: ", __progname);
-	if (fmt != NULL)
-		(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, "\n");
 }
