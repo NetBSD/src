@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.18 1998/09/01 04:33:56 thorpej Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.19 1999/03/22 17:01:55 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,6 +69,10 @@
 LIST_HEAD(nchashhead, namecache) *nchashtbl;
 u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* number of cache entries allocated */
+
+LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
+u_long	ncvhash;			/* size of hash table - 1 */
+
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
@@ -163,8 +167,82 @@ cache_lookup(dvp, vpp, cnp)
 	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 	LIST_REMOVE(ncp, nc_hash);
 	ncp->nc_hash.le_prev = 0;
+	if (ncp->nc_vhash.le_prev != NULL) {
+		LIST_REMOVE(ncp, nc_vhash);
+		ncp->nc_vhash.le_prev = 0;
+	}
 	TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
 	return (0);
+}
+
+/*
+ * Scan cache looking for name of directory entry pointing at vp.
+ *
+ * Fill in dvpp.
+ *
+ * If bufp is non-NULL, also place the name in the buffer which starts
+ * at bufp, immediately before *bpp, and move bpp backwards to point
+ * at the start of it.  (Yes, this is a little baroque, but it's done
+ * this way to cater to the whims of getcwd).
+ *
+ * Returns 0 on success, -1 on cache miss, positive errno on failure.
+ */
+int
+cache_revlookup (vp, dvpp, bpp, bufp)
+	struct vnode *vp, **dvpp;
+	char **bpp;
+	char *bufp;
+{
+	struct namecache *ncp;
+	struct vnode *dvp;
+	struct ncvhashhead *nvcpp;
+	
+	if (!doingcache)
+		goto out;
+
+	nvcpp = &ncvhashtbl[(vp->v_id & ncvhash)];
+
+	for (ncp = nvcpp->lh_first; ncp != 0; ncp = ncp->nc_vhash.le_next) {
+		if ((ncp->nc_vp == vp) &&
+		    (ncp->nc_vpid == vp->v_id) &&
+		    ((dvp = ncp->nc_dvp) != 0) &&
+		    (dvp != vp) && 		/* avoid pesky . entries.. */
+		    (dvp->v_id == ncp->nc_dvpid))
+		{
+			char *bp;
+		  
+#ifdef DIAGNOSTIC
+			if ((ncp->nc_nlen == 1) &&
+			    (ncp->nc_name[0] == '.'))
+				panic("cache_revlookup: found entry for .");
+
+			if ((ncp->nc_nlen == 2) &&
+			    (ncp->nc_name[0] == '.') &&
+			    (ncp->nc_name[1] == '.'))
+				panic("cache_revlookup: found entry for ..");
+#endif
+			nchstats.ncs_revhits++;
+
+			if (bufp) {
+				bp = *bpp;
+				bp -= ncp->nc_nlen;
+				if (bp <= bufp) {
+					*dvpp = 0;
+					return ERANGE;
+				}
+				memcpy(bp, ncp->nc_name, ncp->nc_nlen);
+				*bpp = bp;
+			}
+			
+			/* XXX MP: how do we know dvp won't evaporate? */
+			*dvpp = dvp;
+			return 0;
+		}
+	}
+	nchstats.ncs_revmiss++;
+ out:
+	*dvpp = 0;
+	return -1;
 }
 
 /*
@@ -178,6 +256,7 @@ cache_enter(dvp, vp, cnp)
 {
 	register struct namecache *ncp;
 	register struct nchashhead *ncpp;
+	register struct ncvhashhead *nvcpp;
 
 #ifdef DIAGNOSTIC
 	if (cnp->cn_namelen > NCHNAMLEN)
@@ -197,6 +276,10 @@ cache_enter(dvp, vp, cnp)
 		if (ncp->nc_hash.le_prev != 0) {
 			LIST_REMOVE(ncp, nc_hash);
 			ncp->nc_hash.le_prev = 0;
+		}
+		if (ncp->nc_vhash.le_prev != 0) {
+			LIST_REMOVE(ncp, nc_vhash);
+			ncp->nc_vhash.le_prev = 0;
 		}
 	} else
 		return;
@@ -219,6 +302,24 @@ cache_enter(dvp, vp, cnp)
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
 	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
+
+	ncp->nc_vhash.le_prev = 0;
+	ncp->nc_vhash.le_next = 0;
+	
+	/*
+	 * Create reverse-cache entries (used in getcwd) for directories.
+	 */
+	if (vp &&
+	    (vp != dvp) &&
+	    (vp->v_type == VDIR) &&
+	    ((ncp->nc_nlen > 2) ||
+	     ((ncp->nc_nlen == 2) && (ncp->nc_name[0] != '.') && (ncp->nc_name[1] != '.')) ||
+	     ((ncp->nc_nlen == 1) && (ncp->nc_name[0] != '.'))))
+	{
+		nvcpp = &ncvhashtbl[(vp->v_id & ncvhash)];
+		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
+	}
+	
 }
 
 /*
@@ -230,6 +331,7 @@ nchinit()
 
 	TAILQ_INIT(&nclruhead);
 	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
+	ncvhashtbl = hashinit(desiredvnodes/8, M_CACHE, M_WAITOK, &ncvhash);	
 	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
 	    "ncachepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_CACHE);
@@ -285,8 +387,13 @@ cache_purgevfs(mp)
 			LIST_REMOVE(ncp, nc_hash);
 			ncp->nc_hash.le_prev = 0;
 		}
+		if (ncp->nc_vhash.le_prev != 0) {
+			LIST_REMOVE(ncp, nc_vhash);
+			ncp->nc_vhash.le_prev = 0;
+		}
 		/* cause rescan of list, it may have altered */
 		nxtcp = nclruhead.tqh_first;
 		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
 	}
 }
+
