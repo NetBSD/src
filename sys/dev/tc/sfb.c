@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.33 2000/01/07 02:57:17 enami Exp $ */
+/* $NetBSD: sfb.c,v 1.34 2000/02/18 06:51:51 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.33 2000/01/07 02:57:17 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.34 2000/02/18 06:51:51 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1086,14 +1086,14 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 
 		shift = alignd - aligns;
 		if (shift < 0) {
-			dp -= 8;		/* prime left edge */
-			alignd += 8;		/* compensate it */
-			width = aligns + w + 8; /* adjust total width */
 			shift = 8 + shift;	/* enforce right rotate */
+			alignd += 8;		/* bearing on left edge */
+			w += 8;			/* enlarge to left */
 		}
-		else if (shift > 0)
-			width = aligns + w + 8; /* enfore drain at right edge */
+		width = aligns + w;
 
+		sp -= aligns;
+		dp -= alignd;
 		lmasks = SFBCOPYALL1 << aligns;
 		rmasks = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
 		lmaskd = SFBCOPYALL1 << alignd;
@@ -1140,10 +1140,13 @@ WRITE_MB();
 
 		shift = alignd - aligns;
 		if (shift > 0) {
-			shift = shift - 8;
-			w += 8;
+			shift = shift - 8;	/* force left rotate */
+			aligns += 8;		/* flush edge at left end */
 		}
-		width = w + aligns;
+		width = aligns + w;
+
+		sp -= aligns;
+		dp -= alignd;
 		lmasks = SFBCOPYALL1 << aligns;
 		rmasks = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
 		lmaskd = SFBCOPYALL1 << alignd;
@@ -1154,8 +1157,8 @@ WRITE_MB();
 
 		SFBPIXELSHIFT(sfb, shift);
 		w = width;
-		sq = (sp += width);
-		dq = (dp += width);
+		sq = sp += ((width - 1) & ~31);
+		dq = dp += (((w + alignd) - 1) & ~31);
 		while (height > 0) {
 			*(u_int32_t *)sp = rmasks;
 WRITE_MB();
