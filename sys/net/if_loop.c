@@ -45,6 +45,8 @@
 #include "ioctl.h"
 #include "protosw.h"
 
+#include "loop.h"
+
 #include "../net/if.h"
 #include "../net/if_types.h"
 #include "../net/netisr.h"
@@ -78,25 +80,31 @@ static caddr_t lo_bpf;
 
 #define	LOMTU	(1024+512)
 
-struct	ifnet loif;
+struct	ifnet loif[NLOOP];
 int	looutput(), loioctl();
 
 loattach()
 {
-	register struct ifnet *ifp = &loif;
+	register int i;
+	register struct ifnet *ifp;
 
-	ifp->if_name = "lo";
-	ifp->if_mtu = LOMTU;
-	ifp->if_flags = IFF_LOOPBACK;
-	ifp->if_ioctl = loioctl;
-	ifp->if_output = looutput;
-	ifp->if_type = IFT_LOOP;
-	ifp->if_hdrlen = 0;
-	ifp->if_addrlen = 0;
-	if_attach(ifp);
+	for (i = 0; i < NLOOP; i++)
+	{
+		ifp = &loif[i];
+		ifp->if_unit = i;
+		ifp->if_name = "lo";
+		ifp->if_mtu = LOMTU;
+		ifp->if_flags = IFF_LOOPBACK;
+		ifp->if_ioctl = loioctl;
+		ifp->if_output = looutput;
+		ifp->if_type = IFT_LOOP;
+		ifp->if_hdrlen = 0;
+		ifp->if_addrlen = 0;
+		if_attach(ifp);
 #if NBPFILTER > 0
-	bpfattach(&lo_bpf, ifp, DLT_NULL, sizeof(u_int));
+		bpfattach(&lo_bpf, ifp, DLT_NULL, sizeof(u_int));
 #endif
+	}
 }
 
 looutput(ifp, m, dst, rt)
