@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.9 1998/07/28 11:41:41 mycroft Exp $	*/
+/* $NetBSD: alloc.c,v 1.10 2001/09/14 14:03:59 wiz Exp $ */
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.9 1998/07/28 11:41:41 mycroft Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.10 2001/09/14 14:03:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <unistd.h>
 #include <stdlib.h>
+
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -54,14 +56,13 @@ __RCSID("$NetBSD: alloc.c,v 1.9 1998/07/28 11:41:41 mycroft Exp $");
 #include "csh.h"
 #include "extern.h"
 
-char   *memtop = NULL;		/* PWP: top of current memory */
-char   *membot = NULL;		/* PWP: bottom of allocatable memory */
+char *memtop = NULL;		/* PWP: top of current memory */
+char *membot = NULL;		/* PWP: bottom of allocatable memory */
 
 ptr_t
-Malloc(n)
-    size_t  n;
+Malloc(size_t n)
 {
-    ptr_t   ptr;
+    ptr_t ptr;
 
     if (membot == NULL)
 	memtop = membot = sbrk(0);
@@ -73,11 +74,9 @@ Malloc(n)
 }
 
 ptr_t
-Realloc(p, n)
-    ptr_t   p;
-    size_t  n;
+Realloc(ptr_t p, size_t n)
 {
-    ptr_t   ptr;
+    ptr_t ptr;
 
     if (membot == NULL)
 	memtop = membot = sbrk(0);
@@ -89,10 +88,9 @@ Realloc(p, n)
 }
 
 ptr_t
-Calloc(s, n)
-    size_t  s, n;
+Calloc(size_t s, size_t n)
 {
-    ptr_t   ptr;
+    ptr_t ptr;
 
     if (membot == NULL)
 	memtop = membot = sbrk(0);
@@ -100,13 +98,11 @@ Calloc(s, n)
 	child++;
 	stderror(ERR_NOMEM);
     }
-
     return (ptr);
 }
 
 void
-Free(p)
-    ptr_t   p;
+Free(ptr_t p)
 {
     if (p)
 	free(p);
@@ -121,12 +117,10 @@ Free(p)
  */
 void
 /*ARGSUSED*/
-showall(v, t)
-    Char **v;
-    struct command *t;
+showall(Char **v, struct command *t)
 {
-    memtop = (char *) sbrk(0);
-    (void) fprintf(cshout, "Allocated memory from 0x%lx to 0x%lx (%ld).\n",
-	    (unsigned long) membot, (unsigned long) memtop, 
-	    (unsigned long) (memtop - membot));
+    memtop = (char *)sbrk(0);
+    (void)fprintf(cshout, "Allocated memory from 0x%lx to 0x%lx (%ld).\n",
+	    (unsigned long)membot, (unsigned long)memtop, 
+	    (unsigned long)(memtop - membot));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.18 2000/12/14 00:13:07 simonb Exp $	*/
+/* $NetBSD: lex.c,v 1.19 2001/09/14 14:04:00 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,17 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.18 2000/12/14 00:13:07 simonb Exp $");
+__RCSID("$NetBSD: lex.c,v 1.19 2001/09/14 14:04:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <termios.h>
+#include <sys/types.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -64,24 +66,20 @@ __RCSID("$NetBSD: lex.c,v 1.18 2000/12/14 00:13:07 simonb Exp $");
  * of input buffering, and especially because of history substitution.
  */
 
-static Char	*word __P((void));
-static int	 getC1 __P((int));
-static void	 getdol __P((void));
-static void	 getexcl __P((int));
-static struct Hist
-		*findev __P((Char *, bool));
-static void	 setexclp __P((Char *));
-static int	 bgetc __P((void));
-static void	 bfree __P((void));
-static struct wordent
-		*gethent __P((int));
-static int	 matchs __P((Char *, Char *));
-static int	 getsel __P((int *, int *, int));
-static struct wordent
-		*getsub __P((struct wordent *));
-static Char	*subword __P((Char *, int, bool *));
-static struct wordent
-		*dosub __P((int, struct wordent *, bool));
+static Char *word(void);
+static int getC1(int);
+static void getdol(void);
+static void getexcl(int);
+static struct Hist *findev(Char *, bool);
+static void setexclp(Char *);
+static int bgetc(void);
+static void bfree(void);
+static struct wordent *gethent(int);
+static int matchs(Char *, Char *);
+static int getsel(int *, int *, int);
+static struct wordent *getsub(struct wordent *);
+static Char *subword(Char *, int, bool *);
+static struct wordent *dosub(int, struct wordent *, bool);
 
 /*
  * Peekc is a peek character for getC, peekread for readc.
@@ -141,16 +139,15 @@ int     hleft;
 
 static Char getCtmp;
 
-#define getC(f)		((getCtmp = peekc) ? (peekc = 0, getCtmp) : getC1(f))
-#define	ungetC(c)	peekc = c
-#define	ungetD(c)	peekd = c
+#define getC(f) ((getCtmp = peekc) ? (peekc = 0, getCtmp) : getC1(f))
+#define	ungetC(c) peekc = c
+#define	ungetD(c) peekd = c
 
 int
-lex(hp)
-    struct wordent *hp;
+lex(struct wordent *hp)
 {
     struct wordent *wdp;
-    int     c;
+    int c;
 
     btell(&lineloc);
     hp->next = hp->prev = hp;
@@ -172,7 +169,7 @@ lex(hp)
     do {
 	struct wordent *new;
 
-	new = (struct wordent *) xmalloc((size_t) sizeof(*wdp));
+	new = (struct wordent *)xmalloc((size_t)sizeof(*wdp));
 	new->word = 0;
 	new->prev = wdp;
 	new->next = hp;
@@ -185,14 +182,13 @@ lex(hp)
 }
 
 void
-prlex(fp, sp0)
-    FILE *fp;
-    struct wordent *sp0;
+prlex(FILE *fp, struct wordent *sp0)
 {
-    struct wordent *sp = sp0->next;
+    struct wordent *sp;
 
+    sp = sp0->next;
     for (;;) {
-	(void) fprintf(fp, "%s", vis_str(sp->word));
+	(void)fprintf(fp, "%s", vis_str(sp->word));
 	sp = sp->next;
 	if (sp == sp0)
 	    break;
@@ -202,9 +198,7 @@ prlex(fp, sp0)
 }
 
 void
-copylex(hp, fp)
-    struct wordent *hp;
-    struct wordent *fp;
+copylex(struct wordent *hp, struct wordent *fp)
 {
     struct wordent *wdp;
 
@@ -213,7 +207,7 @@ copylex(hp, fp)
     do {
 	struct wordent *new;
 
-	new = (struct wordent *) xmalloc((size_t) sizeof(*wdp));
+	new = (struct wordent *)xmalloc((size_t)sizeof(*wdp));
 	new->prev = wdp;
 	new->next = hp;
 	wdp->next = new;
@@ -225,8 +219,7 @@ copylex(hp, fp)
 }
 
 void
-freelex(vp)
-    struct wordent *vp;
+freelex(struct wordent *vp)
 {
     struct wordent *fp;
 
@@ -240,13 +233,12 @@ freelex(vp)
 }
 
 static Char *
-word()
+word(void)
 {
-    Char c, c1;
-    Char *wp;
-    Char    wbuf[BUFSIZE];
-    bool dolflg;
+    Char wbuf[BUFSIZE], *wp;
     int i;
+    Char c, c1;
+    bool dolflg;
 
     wp = wbuf;
     i = BUFSIZE - 4;
@@ -363,8 +355,7 @@ ret:
 }
 
 static int
-getC1(flag)
-    int flag;
+getC1(int flag)
 {
     Char c;
 
@@ -420,14 +411,13 @@ getC1(flag)
 }
 
 static void
-getdol()
+getdol(void)
 {
-    Char *np, *ep;
-    Char    name[4 * MAXVARLEN + 1];
-    int c;
-    int     sc;
-    bool    special = 0, toolong;
+    Char name[4*MAXVARLEN+1], *ep, *np;
+    int c, sc;
+    bool special, toolong;
 
+    special = 0;
     np = name, *np++ = '$';
     c = sc = getC(DOEXCL);
     if (any("\t \n", c)) {
@@ -441,7 +431,6 @@ getdol()
 	special++, *np++ = c, c = getC(DOEXCL);
     *np++ = c;
     switch (c) {
-
     case '<':
     case '$':
     case '!':
@@ -450,7 +439,6 @@ getdol()
 	*np = 0;
 	addla(name);
 	return;
-
     case '\n':
 	ungetD(c);
 	np--;
@@ -458,14 +446,12 @@ getdol()
 	*np = 0;
 	addla(name);
 	return;
-
     case '*':
 	if (special)
 	    seterror(ERR_SPSTAR);
 	*np = 0;
 	addla(name);
 	return;
-
     default:
 	toolong = 0;
 	if (Isdigit(c)) {
@@ -556,9 +542,10 @@ getdol()
 	 * if the :g modifier is followed by a newline, then error right away!
 	 * -strike
 	 */
+	int amodflag, gmodflag;
 
-	int     gmodflag = 0, amodflag = 0;
-
+	amodflag = 0;
+	gmodflag = 0;
 	do {
 	    *np++ = c, c = getC(DOEXCL);
 	    if (c == 'g' || c == 'a') {
@@ -629,10 +616,9 @@ getdol()
 }
 
 void
-addla(cp)
-    Char   *cp;
+addla(Char *cp)
 {
-    Char    buf[BUFSIZE];
+    Char buf[BUFSIZE];
 
     if (Strlen(cp) + (lap ? Strlen(lap) : 0) >=
 	(sizeof(labuf) - 4) / sizeof(Char)) {
@@ -640,10 +626,10 @@ addla(cp)
 	return;
     }
     if (lap)
-	(void) Strcpy(buf, lap);
-    (void) Strcpy(labuf, cp);
+	(void)Strcpy(buf, lap);
+    (void)Strcpy(labuf, cp);
     if (lap)
-	(void) Strcat(labuf, buf);
+	(void)Strcat(labuf, buf);
     lap = labuf;
 }
 
@@ -653,12 +639,10 @@ static Char rhsb[64];
 static int quesarg;
 
 static void
-getexcl(sc)
-    int    sc;
+getexcl(int sc)
 {
     struct wordent *hp, *ip;
-    int     left, right, dol;
-    int c;
+    int c, dol, left, right;
 
     if (sc == 0) {
 	sc = getC(0);
@@ -730,15 +714,12 @@ subst:
 }
 
 static struct wordent *
-getsub(en)
-    struct wordent *en;
+getsub(struct wordent *en)
 {
+    Char orhsb[sizeof(rhsb) / sizeof(Char)];
     Char *cp;
-    int     delim;
-    int c;
-    int     sc;
+    int c, delim, sc;
     bool global;
-    Char    orhsb[sizeof(rhsb) / sizeof(Char)];
 
     do {
 	exclnxt = 0;
@@ -757,18 +738,15 @@ getsub(en)
 	case 'p':
 	    justpr++;
 	    return (en);
-
 	case 'x':
 	case 'q':
 	    global |= 1;
 	    /* FALLTHROUGH */
-
 	case 'h':
 	case 'r':
 	case 't':
 	case 'e':
 	    break;
-
 	case '&':
 	    if (slhs[0] == 0) {
 		seterror(ERR_NOSUBST);
@@ -776,14 +754,12 @@ getsub(en)
 	    }
 	    (void) Strcpy(lhsb, slhs);
 	    break;
-
 #ifdef notdef
 	case '~':
 	    if (lhsb[0] == 0)
 		goto badlhs;
 	    break;
 #endif
-
 	case 's':
 	    delim = getC(0);
 	    if (letter(delim) || Isdigit(delim) || any(" \t\n", delim)) {
@@ -820,7 +796,7 @@ getsub(en)
 		return (en);
 	    }
 	    cp = rhsb;
-	    (void) Strcpy(orhsb, cp);
+	    (void)Strcpy(orhsb, cp);
 	    for (;;) {
 		c = getC(0);
 		if (c == '\n') {
@@ -834,7 +810,7 @@ getsub(en)
 		    if (&cp[Strlen(orhsb)] > &rhsb[sizeof(rhsb) /
 						   sizeof(Char) - 2])
 			goto toorhs;
-		    (void) Strcpy(cp, orhsb);
+		    (void)Strcpy(cp, orhsb);
 		    cp = Strend(cp);
 		    continue;
 		}
@@ -852,14 +828,13 @@ getsub(en)
 	    }
 	    *cp++ = 0;
 	    break;
-
 	default:
 	    if (c == '\n')
 		unreadc(c);
 	    seterror(ERR_BADBANGMOD, c);
 	    return (en);
 	}
-	(void) Strcpy(slhs, lhsb);
+	(void)Strcpy(slhs, lhsb);
 	if (exclc)
 	    en = dosub(sc, en, global);
     }
@@ -869,21 +844,20 @@ getsub(en)
 }
 
 static struct wordent *
-dosub(sc, en, global)
-    int     sc;
-    struct wordent *en;
-    bool global;
+dosub(int sc, struct wordent *en, bool global)
 {
-    struct wordent lexi;
-    bool    didsub = 0, didone = 0;
-    struct wordent *hp = &lexi;
-    struct wordent *wdp;
-    int i = exclc;
+    struct wordent lexi, *hp, *wdp;
+    int i;
+    bool didone, didsub;
+
+    didone = 0;
+    didsub = 0;
+    i = exclc;
+    hp = &lexi;
 
     wdp = hp;
     while (--i >= 0) {
-	struct wordent *new = 
-		(struct wordent *) xcalloc(1, sizeof *wdp);
+	struct wordent *new = (struct wordent *)xcalloc(1, sizeof *wdp);
 
 	new->word = 0;
 	new->prev = wdp;
@@ -907,7 +881,7 @@ dosub(sc, en, global)
 			    break;
 			}
 			else
-			    xfree((ptr_t) otword);
+			    xfree((ptr_t)otword);
 		    }
 		}
 	    }
@@ -923,18 +897,14 @@ dosub(sc, en, global)
 }
 
 static Char *
-subword(cp, type, adid)
-    Char   *cp;
-    int     type;
-    bool   *adid;
+subword(Char *cp, int type, bool *adid)
 {
-    Char    wbuf[BUFSIZE];
-    Char *wp, *mp, *np;
+    Char wbuf[BUFSIZE];
+    Char *mp, *np, *wp;
     int i;
 
     *adid = 0;
     switch (type) {
-
     case 'r':
     case 'e':
     case 'h':
@@ -946,7 +916,6 @@ subword(cp, type, adid)
 	    return (Strsave(cp));
 	*adid = 1;
 	return (wp);
-
     default:
 	wp = wbuf;
 	i = BUFSIZE - 4;
@@ -956,12 +925,10 @@ subword(cp, type, adid)
 		    *wp++ = *np++, --i;
 		for (np = rhsb; *np; np++)
 		    switch (*np) {
-
 		    case '\\':
 			if (np[1] == '&')
 			    np++;
 			/* FALLTHROUGH */
-
 		    default:
 			if (--i < 0) {
 			    seterror(ERR_SUBOVFL);
@@ -969,7 +936,6 @@ subword(cp, type, adid)
 			}
 			*wp++ = *np;
 			continue;
-
 		    case '&':
 			i -= Strlen(lhsb);
 			if (i < 0) {
@@ -996,16 +962,13 @@ subword(cp, type, adid)
     }
 }
 
-Char   *
-domod(cp, type)
-    Char   *cp;
-    int     type;
+Char *
+domod(Char *cp, int type)
 {
     Char *wp, *xp;
     int c;
 
     switch (type) {
-
     case 'x':
     case 'q':
 	wp = Strsave(cp);
@@ -1013,7 +976,6 @@ domod(cp, type)
 	    if ((c != ' ' && c != '\t') || type == 'q')
 		*xp |= QUOTE;
 	return (wp);
-
     case 'h':
     case 't':
 	if (!any(short2str(cp), '/'))
@@ -1026,7 +988,6 @@ domod(cp, type)
 	else
 	    xp = Strsave(wp + 1);
 	return (xp);
-
     case 'e':
     case 'r':
 	wp = Strend(cp);
@@ -1046,8 +1007,7 @@ domod(cp, type)
 }
 
 static int
-matchs(str, pat)
-    Char *str, *pat;
+matchs(Char *str, Char *pat)
 {
     while (*str && *pat && *str == *pat)
 	str++, pat++;
@@ -1055,16 +1015,15 @@ matchs(str, pat)
 }
 
 static int
-getsel(al, ar, dol)
-    int *al, *ar;
-    int     dol;
+getsel(int *al, int *ar, int dol)
 {
-    int c = getC(0);
-    int i;
-    bool    first = *al < 0;
+    int c, i;
+    bool first;
+
+    c = getC(0);
+    first = *al < 0;
 
     switch (c) {
-
     case '%':
 	if (quesarg == -1) {
 	    seterror(ERR_BADBANGARG);
@@ -1074,7 +1033,6 @@ getsel(al, ar, dol)
 	    *al = quesarg;
 	*ar = quesarg;
 	break;
-
     case '-':
 	if (*al < 0) {
 	    *al = 0;
@@ -1082,19 +1040,16 @@ getsel(al, ar, dol)
 	    unreadc(c);
 	}
 	return (1);
-
     case '^':
 	if (*al < 0)
 	    *al = 1;
 	*ar = 1;
 	break;
-
     case '$':
 	if (*al < 0)
 	    *al = dol;
 	*ar = dol;
 	break;
-
     case '*':
 	if (*al < 0)
 	    *al = 1;
@@ -1105,7 +1060,6 @@ getsel(al, ar, dol)
 	    return (1);
 	}
 	break;
-
     default:
 	if (Isdigit(c)) {
 	    i = 0;
@@ -1141,15 +1095,14 @@ getsel(al, ar, dol)
 }
 
 static struct wordent *
-gethent(sc)
-    int     sc;
+gethent(int sc)
 {
     struct Hist *hp;
     Char *np;
-    int c;
-    int     event;
-    bool    back = 0;
+    int c, event;
+    bool back;
 
+    back = 0;
     c = sc == HISTSUB ? HIST : getC(0);
     if (c == HIST) {
 	if (alhistp)
@@ -1158,7 +1111,6 @@ gethent(sc)
     }
     else
 	switch (c) {
-
 	case ':':
 	case '^':
 	case '$':
@@ -1169,7 +1121,6 @@ gethent(sc)
 		return (alhistp);
 	    event = lastev;
 	    break;
-
 	case '#':		/* !# is command being typed in (mrh) */
 	    if (--hleft == 0) {
 		seterror(ERR_HISTLOOP);
@@ -1178,12 +1129,10 @@ gethent(sc)
 	    else
 		return (&paraml);
 	    /* NOTREACHED */
-
 	case '-':
 	    back = 1;
 	    c = getC(0);
 	    /* FALLTHROUGH */
-
 	default:
 	    if (any("(=~", c)) {
 		unreadc(c);
@@ -1219,7 +1168,6 @@ gethent(sc)
 	    if (hp)
 		lastev = hp->Hnum;
 	    return (&hp->Hlex);
-
 	case '?':
 	    np = lhsb;
 	    for (;;) {
@@ -1259,17 +1207,17 @@ gethent(sc)
 }
 
 static struct Hist *
-findev(cp, anyarg)
-    Char   *cp;
-    bool    anyarg;
+findev(Char *cp, bool anyarg)
 {
     struct Hist *hp;
 
     for (hp = Histlist.Hnext; hp; hp = hp->Hnext) {
-	Char   *dp;
-	Char *p, *q;
-	struct wordent *lp = hp->Hlex.next;
-	int     argno = 0;
+	Char *dp, *p, *q;
+	struct wordent *lp;
+	int argno;
+
+	lp = hp->Hlex.next;
+	argno = 0;
 
 	/*
 	 * The entries added by alias substitution don't have a newline but do
@@ -1311,8 +1259,7 @@ findev(cp, anyarg)
 
 
 static void
-setexclp(cp)
-    Char *cp;
+setexclp(Char *cp)
 {
     if (cp && cp[0] == '\n')
 	return;
@@ -1320,18 +1267,16 @@ setexclp(cp)
 }
 
 void
-unreadc(c)
-    int    c;
+unreadc(int c)
 {
     peekread = c;
 }
 
 int
-readc(wanteof)
-    bool    wanteof;
+readc(bool wanteof)
 {
-    int c;
     static int sincereal;
+    int c;
 
     aret = F_SEEK;
     if ((c = peekread) != '\0') {
@@ -1415,17 +1360,17 @@ reread:
 		if (tpgrp != -1 &&
 		    (ctpgrp = tcgetpgrp(FSHTTY)) != -1 &&
 		    tpgrp != ctpgrp) {
-		    (void) tcsetpgrp(FSHTTY, tpgrp);
-		    (void) kill(-ctpgrp, SIGHUP);
-		    (void) fprintf(csherr, "Reset tty pgrp from %ld to %ld\n",
+		    (void)tcsetpgrp(FSHTTY, tpgrp);
+		    (void)kill(-ctpgrp, SIGHUP);
+		    (void)fprintf(csherr, "Reset tty pgrp from %ld to %ld\n",
 				   (long)ctpgrp, (long)tpgrp);
 		    goto reread;
 		}
 		if (adrof(STRignoreeof)) {
 		    if (loginsh)
-			(void) fprintf(csherr,"\nUse \"logout\" to logout.\n");
+			(void)fprintf(csherr,"\nUse \"logout\" to logout.\n");
 		    else
-			(void) fprintf(csherr,"\nUse \"exit\" to leave csh.\n");
+			(void)fprintf(csherr,"\nUse \"exit\" to leave csh.\n");
 		    reset();
 		}
 		if (chkstop == 0)
@@ -1443,23 +1388,26 @@ reread:
 }
 
 static int
-bgetc()
+bgetc(void)
 {
-    int buf, off, c;
-
 #ifdef FILEC
-    int numleft = 0, roomleft;
-    Char    ttyline[BUFSIZE];
-#endif
-    char    tbuf[BUFSIZE + 1];
+    char tbuf[BUFSIZE + 1];
+    Char ttyline[BUFSIZE];
+    int c, buf, numleft, off, roomleft;
+
+    numleft = 0; 
+#else /* FILEC */
+    char tbuf[BUFSIZE + 1];
+    int c, buf, off;        
+#endif /* !FILEC */
 
     if (cantell) {
 	if (fseekp < fbobp || fseekp > feobp) {
 	    fbobp = feobp = fseekp;
-	    (void) lseek(SHIN, fseekp, SEEK_SET);
+	    (void)lseek(SHIN, fseekp, SEEK_SET);
 	}
 	if (fseekp == feobp) {
-	    int     i;
+	    int i;
 
 	    fbobp = feobp;
 	    do
@@ -1479,16 +1427,15 @@ bgetc()
 again:
     buf = (int) fseekp / BUFSIZE;
     if (buf >= fblocks) {
-	Char **nfbuf =
-	(Char **) xcalloc((size_t) (fblocks + 2),
-			  sizeof(Char **));
+	Char **nfbuf;
 
+	nfbuf = (Char **)xcalloc((size_t) (fblocks + 2), sizeof(char **));
 	if (fbuf) {
-	    (void) blkcpy(nfbuf, fbuf);
+	    (void)blkcpy(nfbuf, fbuf);
 	    xfree((ptr_t) fbuf);
 	}
 	fbuf = nfbuf;
-	fbuf[fblocks] = (Char *) xcalloc(BUFSIZE, sizeof(Char));
+	fbuf[fblocks] = (Char *)xcalloc(BUFSIZE, sizeof(Char));
 	fblocks++;
 	if (!intty)
 	    goto again;
@@ -1510,7 +1457,7 @@ again:
 		    goto again;
 		}
 		if (c > 0)
-		    (void) memcpy(fbuf[buf] + off, ttyline, c * sizeof(Char));
+		    (void)memcpy(fbuf[buf] + off, ttyline, c * sizeof(Char));
 		numleft = 0;
 	    }
 	    else {
@@ -1531,7 +1478,7 @@ again:
 	    if (errno == EWOULDBLOCK) {
 		int     off = 0;
 
-		(void) ioctl(SHIN, FIONBIO, (ioctl_t) & off);
+		(void)ioctl(SHIN, FIONBIO, (ioctl_t) & off);
 	    }
 	    else if (errno != EINTR)
 		break;
@@ -1546,25 +1493,25 @@ again:
 	    goto again;
 #endif
     }
-    c = fbuf[buf][(int) fseekp % BUFSIZE];
+    c = fbuf[buf][(int)fseekp % BUFSIZE];
     fseekp++;
     return (c);
 }
 
 static void
-bfree()
+bfree(void)
 {
-    int sb, i;
+    int i, sb;
 
     if (cantell)
 	return;
     if (whyles)
 	return;
-    sb = (int) (fseekp - 1) / BUFSIZE;
+    sb = (int)(fseekp - 1) / BUFSIZE;
     if (sb > 0) {
 	for (i = 0; i < sb; i++)
 	    xfree((ptr_t) fbuf[i]);
-	(void) blkcpy(fbuf, &fbuf[sb]);
+	(void)blkcpy(fbuf, &fbuf[sb]);
 	fseekp -= BUFSIZE * sb;
 	feobp -= BUFSIZE * sb;
 	fblocks -= sb;
@@ -1572,54 +1519,52 @@ bfree()
 }
 
 void
-bseek(l)
-    struct Ain   *l;
+bseek(struct Ain *l)
 {
     switch (aret = l->type) {
-    case E_SEEK:
-	evalvec = l->a_seek;
-	evalp = l->c_seek;
-	return;
     case A_SEEK:
 	alvec = l->a_seek;
 	alvecp = l->c_seek;
+	return;
+    case E_SEEK:
+	evalvec = l->a_seek;
+	evalp = l->c_seek;
 	return;
     case F_SEEK:
 	fseekp = l->f_seek;
 	return;
     default:
-	(void) fprintf(csherr, "Bad seek type %d\n", aret);
+	(void)fprintf(csherr, "Bad seek type %d\n", aret);
 	abort();
     }
 }
 
 void
-btell(l)
-    struct Ain *l;
+btell(struct Ain *l)
 {
     switch (l->type = aret) {
-    case E_SEEK:
-	l->a_seek = evalvec;
-	l->c_seek = evalp;
-	return;
     case A_SEEK:
 	l->a_seek = alvec;
 	l->c_seek = alvecp;
+	return;
+    case E_SEEK:
+	l->a_seek = evalvec;
+	l->c_seek = evalp;
 	return;
     case F_SEEK:
 	l->f_seek = fseekp;
 	l->a_seek = NULL;
 	return;
     default:
-	(void) fprintf(csherr, "Bad seek type %d\n", aret);
+	(void)fprintf(csherr, "Bad seek type %d\n", aret);
 	abort();
     }
 }
 
 void
-btoeof()
+btoeof(void)
 {
-    (void) lseek(SHIN, (off_t) 0, SEEK_END);
+    (void)lseek(SHIN, (off_t) 0, SEEK_END);
     aret = F_SEEK;
     fseekp = feobp;
     alvec = NULL;
@@ -1631,16 +1576,16 @@ btoeof()
 }
 
 void
-settell()
+settell(void)
 {
     cantell = 0;
     if (arginp || onelflg || intty)
 	return;
     if (lseek(SHIN, (off_t) 0, SEEK_CUR) < 0 || errno == ESPIPE)
 	return;
-    fbuf = (Char **) xcalloc(2, sizeof(Char **));
+    fbuf = (Char **)xcalloc(2, sizeof(Char **));
     fblocks = 1;
-    fbuf[0] = (Char *) xcalloc(BUFSIZE, sizeof(Char));
+    fbuf[0] = (Char *)xcalloc(BUFSIZE, sizeof(Char));
     fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, SEEK_CUR);
     cantell = 1;
 }

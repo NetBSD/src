@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 1998/07/28 02:47:20 mycroft Exp $	*/
+/* $NetBSD: misc.c,v 1.12 2001/09/14 14:04:00 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.11 1998/07/28 02:47:20 mycroft Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2001/09/14 14:04:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+
 #include <stdlib.h>
 #include <unistd.h>
+
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -54,12 +56,10 @@ __RCSID("$NetBSD: misc.c,v 1.11 1998/07/28 02:47:20 mycroft Exp $");
 #include "csh.h"
 #include "extern.h"
 
-static int	renum __P((int, int));
+static int renum(int, int);
 
 int
-any(s, c)
-    char *s;
-    int c;
+any(char *s, int c)
 {
     if (!s)
 	return (0);		/* Check for nil pointer */
@@ -69,28 +69,24 @@ any(s, c)
     return (0);
 }
 
-char   *
-strsave(s)
-    char *s;
+char *
+strsave(char *s)
 {
-    char   *n;
-    char *p;
+    char *n, *p;
 
     if (s == NULL)
 	s = "";
     for (p = s; *p++;)
 	continue;
-    n = p = (char *) xmalloc((size_t) ((p - s) * sizeof(char)));
+    n = p = (char *)xmalloc((size_t)((p - s) * sizeof(char)));
     while ((*p++ = *s++) != '\0')
 	continue;
     return (n);
 }
 
-Char  **
-blkend(up)
-    Char **up;
+Char **
+blkend(Char **up)
 {
-
     while (*up)
 	up++;
     return (up);
@@ -98,56 +94,50 @@ blkend(up)
 
 
 void
-blkpr(fp, av)
-    FILE *fp;
-    Char **av;
+blkpr(FILE *fp, Char **av)
 {
-
     for (; *av; av++) {
-	(void) fprintf(fp, "%s", vis_str(*av));
+	(void)fprintf(fp, "%s", vis_str(*av));
 	if (av[1])
-	    (void) fprintf(fp, " ");
+	    (void)fprintf(fp, " ");
     }
 }
 
 int
-blklen(av)
-    Char **av;
+blklen(Char **av)
 {
-    int i = 0;
+    int i;
 
+    i = 0;
     while (*av++)
 	i++;
     return (i);
 }
 
-Char  **
-blkcpy(oav, bv)
-    Char  **oav;
-    Char **bv;
+Char **
+blkcpy(Char **oav, Char **bv)
 {
-    Char **av = oav;
+    Char **av;
 
+    av = oav;
     while ((*av++ = *bv++) != NULL)
 	continue;
     return (oav);
 }
 
-Char  **
-blkcat(up, vp)
-    Char  **up, **vp;
+Char **
+blkcat(Char **up, Char **vp)
 {
-
-    (void) blkcpy(blkend(up), vp);
+    (void)blkcpy(blkend(up), vp);
     return (up);
 }
 
 void
-blkfree(av0)
-    Char  **av0;
+blkfree(Char **av0)
 {
-    Char **av = av0;
+    Char **av;
 
+    av = av0;
     if (!av0)
 	return;
     for (; *av; av++)
@@ -155,27 +145,28 @@ blkfree(av0)
     xfree((ptr_t) av0);
 }
 
-Char  **
-saveblk(v)
-    Char **v;
+Char **
+saveblk(Char **v)
 {
-    Char **newv =
-    (Char **) xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
-    Char  **onewv = newv;
+    Char **newv, **onewv;
 
+    newv = (Char **)xcalloc((size_t)(blklen(v) + 1), sizeof(Char **));
+    onewv = newv;
     while (*v)
 	*newv++ = Strsave(*v++);
     return (onewv);
 }
 
 #ifdef NOTUSED
-char   *
-strstr(s, t)
-    char *s, *t;
+char *
+strstr(char *s, char *t)
 {
     do {
-	char *ss = s;
-	char *tt = t;
+	char *ss;
+	char *tt;
+
+	ss = s;
+	tt = t;
 
 	do
 	    if (*tt == '\0')
@@ -188,12 +179,10 @@ strstr(s, t)
 #endif /* NOTUSED */
 
 #ifndef SHORT_STRINGS
-char   *
-strspl(cp, dp)
-    char   *cp, *dp;
+char *
+strspl(char *cp, char *dp)
 {
-    char   *ep;
-    char *p, *q;
+    char *ep, *p, *q;
 
     if (!cp)
 	cp = "";
@@ -203,7 +192,7 @@ strspl(cp, dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = (char *) xmalloc((size_t) (((p - cp) + (q - dp) - 1) * sizeof(char)));
+    ep = (char *) xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(char)));
     for (p = ep, q = cp; *p++ = *q++;)
 	continue;
     for (p--, q = dp; *p++ = *q++;)
@@ -213,23 +202,20 @@ strspl(cp, dp)
 
 #endif
 
-Char  **
-blkspl(up, vp)
-    Char **up, **vp;
+Char **
+blkspl(Char **up, Char **vp)
 {
-    Char **wp =
-    (Char **) xcalloc((size_t) (blklen(up) + blklen(vp) + 1),
-		      sizeof(Char **));
+    Char **wp;
 
-    (void) blkcpy(wp, up);
+    wp = (Char **)xcalloc((size_t)(blklen(up) + blklen(vp) + 1),
+        sizeof(Char **));
+    (void)blkcpy(wp, up);
     return (blkcat(wp, vp));
 }
 
 Char
-lastchr(cp)
-    Char *cp;
+lastchr(Char *cp)
 {
-
     if (!cp)
 	return (0);
     if (!*cp)
@@ -244,7 +230,7 @@ lastchr(cp)
  * any units which may have been left open accidentally.
  */
 void
-closem()
+closem(void)
 {
     int f;
 
@@ -255,11 +241,11 @@ closem()
 }
 
 void
-donefds()
+donefds(void)
 {
-    (void) close(0);
-    (void) close(1);
-    (void) close(2);
+    (void)close(0);
+    (void)close(1);
+    (void)close(2);
 
     didfds = 0;
 }
@@ -270,52 +256,48 @@ donefds()
  * i.e. to a unit > 2.  This also happens in dcopy.
  */
 int
-dmove(i, j)
-    int i, j;
+dmove(int i, int j)
 {
-
     if (i == j || i < 0)
 	return (i);
     if (j >= 0) {
-	(void) dup2(i, j);
+	(void)dup2(i, j);
 	if (j != i)
-	    (void) close(i);
+	    (void)close(i);
 	return (j);
     }
     j = dcopy(i, j);
     if (j != i)
-	(void) close(i);
+	(void)close(i);
     return (j);
 }
 
 int
-dcopy(i, j)
-    int i, j;
+dcopy(int i, int j)
 {
-
     if (i == j || i < 0 || (j < 0 && i > 2))
 	return (i);
     if (j >= 0) {
-	(void) dup2(i, j);
+	(void)dup2(i, j);
 	return (j);
     }
-    (void) close(j);
+    (void)close(j);
     return (renum(i, j));
 }
 
 static int
-renum(i, j)
-    int i, j;
+renum(int i, int j)
 {
-    int k = dup(i);
+    int k;
 
+    k = dup(i);
     if (k < 0)
 	return (-1);
     if (j == -1 && k > 2)
 	return (k);
     if (k != j) {
 	j = renum(k, j);
-	(void) close(k);
+	(void)close(k);
 	return (j);
     }
     return (k);
@@ -327,20 +309,17 @@ renum(i, j)
  * as well as by commands like "repeat".
  */
 void
-lshift(v, c)
-    Char **v;
-    int c;
+lshift(Char **v, int c)
 {
     Char **u;
 
     for (u = v; *u && --c >= 0; u++)
 	xfree((ptr_t) *u);
-    (void) blkcpy(v, u);
+    (void)blkcpy(v, u);
 }
 
 int
-number(cp)
-    Char   *cp;
+number(Char *cp)
 {
     if (!cp)
 	return(0);
@@ -355,19 +334,19 @@ number(cp)
     return (*cp == 0);
 }
 
-Char  **
-copyblk(v)
-    Char **v;
+Char **
+copyblk(Char **v)
 {
-    Char  **nv = (Char **) xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
+    Char **nv;
+
+    nv = (Char **)xcalloc((size_t)(blklen(v) + 1), sizeof(Char **));
 
     return (blkcpy(nv, v));
 }
 
 #ifndef SHORT_STRINGS
-char   *
-strend(cp)
-    char *cp;
+char *
+strend(char *cp)
 {
     if (!cp)
 	return (cp);
@@ -378,12 +357,12 @@ strend(cp)
 
 #endif /* SHORT_STRINGS */
 
-Char   *
-strip(cp)
-    Char   *cp;
+Char *
+strip(Char *cp)
 {
-    Char *dp = cp;
+    Char *dp;
 
+    dp = cp;
     if (!cp)
 	return (cp);
     while ((*dp++ &= TRIM) != '\0')
@@ -391,12 +370,12 @@ strip(cp)
     return (cp);
 }
 
-Char   *
-quote(cp)
-    Char   *cp;
+Char *
+quote(Char *cp)
 {
-    Char *dp = cp;
+    Char *dp;
 
+    dp = cp;
     if (!cp)
 	return (cp);
     while (*dp != '\0')
@@ -405,20 +384,16 @@ quote(cp)
 }
 
 void
-udvar(name)
-    Char   *name;
+udvar(Char *name)
 {
-
     setname(vis_str(name));
     stderror(ERR_NAME | ERR_UNDVAR);
     /* NOTREACHED */
 }
 
 int
-prefix(sub, str)
-    Char *sub, *str;
+prefix(Char *sub, Char *str)
 {
-
     for (;;) {
 	if (*sub == 0)
 	    return (1);

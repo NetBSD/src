@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.7 1997/07/04 21:24:04 christos Exp $	*/
+/* $NetBSD: init.c,v 1.8 2001/09/14 14:04:00 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.7 1997/07/04 21:24:04 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.8 2001/09/14 14:04:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ struct biltins bfunc[] =
     { "which",		dowhich, 	1, INF	},
     { "while", 		dowhile, 	1, INF	}
 };
-int     nbfunc = sizeof bfunc / sizeof *bfunc;
+int nbfunc = sizeof(bfunc) / sizeof(*bfunc);
 
 struct srch srchn[] =
 {
@@ -137,5 +137,4 @@ struct srch srchn[] =
     { "switch", 	T_SWITCH	},
     { "while", 		T_WHILE		}
 };
-int     nsrchn = sizeof srchn / sizeof *srchn;
-
+int nsrchn = sizeof(srchn) / sizeof(*srchn);

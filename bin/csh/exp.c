@@ -1,4 +1,4 @@
-/*	$NetBSD: exp.c,v 1.11 1998/07/28 11:41:43 mycroft Exp $	*/
+/* $NetBSD: exp.c,v 1.12 2001/09/14 14:04:00 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,17 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.11 1998/07/28 11:41:43 mycroft Exp $");
+__RCSID("$NetBSD: exp.c,v 1.12 2001/09/14 14:04:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <stdlib.h>
 #include <unistd.h>
+
 #ifndef SHORT_STRINGS
 #include <string.h>
 #endif /* SHORT_STRINGS */
+
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -75,39 +78,37 @@ __RCSID("$NetBSD: exp.c,v 1.11 1998/07/28 11:41:43 mycroft Exp $");
 #define EQMATCH 7
 #define NOTEQMATCH 8
 
-static int	exp1	__P((Char ***, bool));
-static int	exp2	__P((Char ***, bool));
-static int	exp2a	__P((Char ***, bool));
-static int	exp2b	__P((Char ***, bool));
-static int	exp2c	__P((Char ***, bool));
-static Char *	exp3	__P((Char ***, bool));
-static Char *	exp3a	__P((Char ***, bool));
-static Char *	exp4	__P((Char ***, bool));
-static Char *	exp5	__P((Char ***, bool));
-static Char *	exp6	__P((Char ***, bool));
-static void	evalav	__P((Char **));
-static int	isa	__P((Char *, int));
-static int	egetn	__P((Char *));
+static int exp1(Char ***, bool);
+static int exp2(Char ***, bool);
+static int exp2a(Char ***, bool);
+static int exp2b(Char ***, bool);
+static int exp2c(Char ***, bool);
+static Char *exp3(Char ***, bool);
+static Char *exp3a(Char ***, bool);
+static Char *exp4(Char ***, bool);
+static Char *exp5(Char ***, bool);
+static Char *exp6(Char ***, bool);
+static void evalav(Char **);
+static int isa(Char *, int);
+static int egetn(Char *);
 
 #ifdef EDEBUG
-static void	etracc	__P((char *, Char *, Char ***));
-static void	etraci	__P((char *, int, Char ***));
+static void etracc(char *, Char *, Char ***);
+static void etraci(char *, int, Char ***);
 #endif
 
 int
-expr(vp)
-    Char ***vp;
+expr(Char ***vp)
 {
     return (exp0(vp, 0));
 }
 
 int
-exp0(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp0(Char ***vp, bool ignore)
 {
-    int p1 = exp1(vp, ignore);
+    int p1;
 
+    p1 = exp1(vp, ignore);
 #ifdef EDEBUG
     etraci("exp0 p1", p1, vp);
 #endif
@@ -125,12 +126,11 @@ exp0(vp, ignore)
 }
 
 static int
-exp1(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp1(Char ***vp, bool ignore)
 {
-    int p1 = exp2(vp, ignore);
+    int p1;
 
+    p1 = exp2(vp, ignore);
 #ifdef EDEBUG
     etraci("exp1 p1", p1, vp);
 #endif
@@ -148,12 +148,11 @@ exp1(vp, ignore)
 }
 
 static int
-exp2(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp2(Char ***vp, bool ignore)
 {
-    int p1 = exp2a(vp, ignore);
+    int p1;
 
+    p1 = exp2a(vp, ignore);
 #ifdef EDEBUG
     etraci("exp3 p1", p1, vp);
 #endif
@@ -171,12 +170,11 @@ exp2(vp, ignore)
 }
 
 static int
-exp2a(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp2a(Char ***vp, bool ignore)
 {
-    int p1 = exp2b(vp, ignore);
+    int p1;
 
+    p1 = exp2b(vp, ignore);
 #ifdef EDEBUG
     etraci("exp2a p1", p1, vp);
 #endif
@@ -194,12 +192,11 @@ exp2a(vp, ignore)
 }
 
 static int
-exp2b(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp2b(Char ***vp, bool ignore)
 {
-    int p1 = exp2c(vp, ignore);
+    int p1;
 
+    p1 = exp2c(vp, ignore);
 #ifdef EDEBUG
     etraci("exp2b p1", p1, vp);
 #endif
@@ -217,14 +214,12 @@ exp2b(vp, ignore)
 }
 
 static int
-exp2c(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp2c(Char ***vp, bool ignore)
 {
-    Char *p1 = exp3(vp, ignore);
-    Char *p2;
+    Char *p1, *p2;
     int i;
 
+    p1 = exp3(vp, ignore);
 #ifdef EDEBUG
     etracc("exp2c p1", p1, vp);
 #endif
@@ -238,19 +233,15 @@ exp2c(vp, ignore)
 #endif
 	if (!(ignore & IGNORE))
 	    switch (i) {
-
 	    case EQEQ:
 		i = eq(p1, p2);
 		break;
-
-	    case NOTEQ:
-		i = !eq(p1, p2);
-		break;
-
 	    case EQMATCH:
 		i = Gmatch(p1, p2);
 		break;
-
+	    case NOTEQ:
+		i = !eq(p1, p2);
+		break;
 	    case NOTEQMATCH:
 		i = !Gmatch(p1, p2);
 		break;
@@ -265,9 +256,7 @@ exp2c(vp, ignore)
 }
 
 static Char *
-exp3(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp3(Char ***vp, bool ignore)
 {
     Char *p1, *p2;
     int i;
@@ -286,19 +275,15 @@ exp3(vp, ignore)
 #endif
 	if (!(ignore & IGNORE))
 	    switch (i) {
-
 	    case GTR:
 		i = egetn(p1) > egetn(p2);
 		break;
-
 	    case GTR | 1:
 		i = egetn(p1) >= egetn(p2);
 		break;
-
 	    case LSS:
 		i = egetn(p1) < egetn(p2);
 		break;
-
 	    case LSS | 1:
 		i = egetn(p1) <= egetn(p2);
 		break;
@@ -311,11 +296,9 @@ exp3(vp, ignore)
 }
 
 static Char *
-exp3a(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp3a(Char ***vp, bool ignore)
 {
-    Char *p1, *p2, *op;
+    Char *op, *p1, *p2;
     int i;
 
     p1 = exp4(vp, ignore);
@@ -341,31 +324,29 @@ exp3a(vp, ignore)
 }
 
 static Char *
-exp4(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp4(Char ***vp, bool ignore)
 {
     Char *p1, *p2;
-    int i = 0;
+    int i;
 
+    i = 0;
     p1 = exp5(vp, ignore);
 #ifdef EDEBUG
     etracc("exp4 p1", p1, vp);
 #endif
     if (isa(**vp, ADDOP)) {
-	Char *op = *(*vp)++;
+	Char *op;
 
+	op = *(*vp)++;
 	p2 = exp4(vp, ignore);
 #ifdef EDEBUG
 	etracc("exp4 p2", p2, vp);
 #endif
 	if (!(ignore & IGNORE))
 	    switch (op[0]) {
-
 	    case '+':
 		i = egetn(p1) + egetn(p2);
 		break;
-
 	    case '-':
 		i = egetn(p1) - egetn(p2);
 		break;
@@ -378,38 +359,35 @@ exp4(vp, ignore)
 }
 
 static Char *
-exp5(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp5(Char ***vp, bool ignore)
 {
     Char *p1, *p2;
-    int i = 0;
+    int i;
 
+    i = 0;
     p1 = exp6(vp, ignore);
 #ifdef EDEBUG
     etracc("exp5 p1", p1, vp);
 #endif
     if (isa(**vp, MULOP)) {
-	Char *op = *(*vp)++;
+	Char *op;
 
+	op = *(*vp)++;
 	p2 = exp5(vp, ignore);
 #ifdef EDEBUG
 	etracc("exp5 p2", p2, vp);
 #endif
 	if (!(ignore & IGNORE))
 	    switch (op[0]) {
-
 	    case '*':
 		i = egetn(p1) * egetn(p2);
 		break;
-
 	    case '/':
 		i = egetn(p2);
 		if (i == 0)
 		    stderror(ERR_DIV0);
 		i = egetn(p1) / i;
 		break;
-
 	    case '%':
 		i = egetn(p2);
 		if (i == 0)
@@ -425,13 +403,12 @@ exp5(vp, ignore)
 }
 
 static Char *
-exp6(vp, ignore)
-    Char ***vp;
-    bool    ignore;
+exp6(Char ***vp, bool ignore)
 {
-    int     ccode, i = 0;
     Char *cp, *dp, *ep;
+    int ccode, i;
 
+    i = 0;
     if (**vp == 0)
 	stderror(ERR_NAME | ERR_EXPRESSION);
     if (eq(**vp, STRbang)) {
@@ -466,9 +443,9 @@ exp6(vp, ignore)
 	return (putn(ccode));
     }
     if (eq(**vp, STRLbrace)) {
-	Char **v;
 	struct command faket;
-	Char   *fakecom[2];
+	Char *fakecom[2];
+	Char **v;
 
 	faket.t_dtyp = NODE_COMMAND;
 	faket.t_dflg = 0;
@@ -522,19 +499,15 @@ exp6(vp, ignore)
 	    return (Strsave(STRNULL));
 	ep = globone(dp, G_ERROR);
 	switch (cp[1]) {
-
 	case 'r':
 	    i = !access(short2str(ep), R_OK);
 	    break;
-
 	case 'w':
 	    i = !access(short2str(ep), W_OK);
 	    break;
-
 	case 'x':
 	    i = !access(short2str(ep), X_OK);
 	    break;
-
 	default:
 	    if (cp[1] == 'l' ?
 		lstat(short2str(ep), &stb) : stat(short2str(ep), &stb)) {
@@ -542,23 +515,15 @@ exp6(vp, ignore)
 		return (Strsave(STR0));
 	    }
 	    switch (cp[1]) {
-
-	    case 'f':
-		i = S_ISREG(stb.st_mode);
-		break;
-
 	    case 'd':
 		i = S_ISDIR(stb.st_mode);
 		break;
-
-	    case 'p':
-#ifdef S_ISFIFO
-		i = S_ISFIFO(stb.st_mode);
-#else
-		i = 0;
-#endif
+	    case 'e':
+		i = 1;
 		break;
-
+	    case 'f':
+		i = S_ISREG(stb.st_mode);
+		break;
 	    case 'l':
 #ifdef S_ISLNK
 		i = S_ISLNK(stb.st_mode);
@@ -566,7 +531,16 @@ exp6(vp, ignore)
 		i = 0;
 #endif
 		break;
-
+	    case 'o':
+		i = stb.st_uid == uid;
+		break;
+	    case 'p':
+#ifdef S_ISFIFO
+		i = S_ISFIFO(stb.st_mode);
+#else
+		i = 0;
+#endif
+		break;
 	    case 's':
 #ifdef S_ISSOCK
 		i = S_ISSOCK(stb.st_mode);
@@ -574,17 +548,8 @@ exp6(vp, ignore)
 		i = 0;
 #endif
 		break;
-
 	    case 'z':
 		i = stb.st_size == 0;
-		break;
-
-	    case 'e':
-		i = 1;
-		break;
-
-	    case 'o':
-		i = stb.st_uid == uid;
 		break;
 	    }
 	}
@@ -601,21 +566,20 @@ exp6(vp, ignore)
 }
 
 static void
-evalav(v)
-    Char **v;
+evalav(Char **v)
 {
-    struct wordent paraml1;
-    struct wordent *hp = &paraml1;
+    struct wordent *hp, paraml1, *wdp;
     struct command *t;
-    struct wordent *wdp = hp;
 
+    hp = &paraml1;
+    wdp = hp;
     set(STRstatus, Strsave(STR0));
     hp->prev = hp->next = hp;
     hp->word = STRNULL;
     while (*v) {
-	struct wordent *new =
-	(struct wordent *) xcalloc(1, sizeof *wdp);
+	struct wordent *new;
 
+	new = (struct wordent *)xcalloc(1, sizeof *wdp);
 	new->prev = wdp;
 	new->next = hp;
 	wdp->next = new;
@@ -632,9 +596,7 @@ evalav(v)
 }
 
 static int
-isa(cp, what)
-    Char *cp;
-    int what;
+isa(Char *cp, int what)
 {
     if (cp == 0)
 	return ((what & RESTOP) != 0);
@@ -681,8 +643,7 @@ isa(cp, what)
 }
 
 static int
-egetn(cp)
-    Char *cp;
+egetn(Char *cp)
 {
     if (*cp && *cp != '-' && !Isdigit(*cp))
 	stderror(ERR_NAME | ERR_EXPRESSION);
@@ -693,23 +654,17 @@ egetn(cp)
 
 #ifdef EDEBUG
 static void
-etraci(str, i, vp)
-    char   *str;
-    int     i;
-    Char ***vp;
+etraci(char *str, int i, Char ***vp)
 {
-    (void) fprintf(csherr, "%s=%d\t", str, i);
+    (void)fprintf(csherr, "%s=%d\t", str, i);
     blkpr(csherr, *vp);
-    (void) fprintf(csherr, "\n");
+    (void)fprintf(csherr, "\n");
 }
 static void
-etracc(str, cp, vp)
-    char   *str;
-    Char   *cp;
-    Char ***vp;
+etracc(char *str, Char *cp, Char ***vp)
 {
-    (void) fprintf(csherr, "%s=%s\t", str, vis_str(cp));
+    (void)fprintf(csherr, "%s=%s\t", str, vis_str(cp));
     blkpr(csherr, *vp);
-    (void) fprintf(csherr, "\n");
+    (void)fprintf(csherr, "\n");
 }
 #endif
