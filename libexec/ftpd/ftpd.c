@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.158 2004/08/09 12:56:47 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.159 2004/11/05 21:45:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.158 2004/08/09 12:56:47 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.159 2004/11/05 21:45:36 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -916,7 +916,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 
 			*p++ = '\0';
 					/* check against network or CIDR */
-			if (isdigit(*p) &&
+			if (isdigit((unsigned char)*p) &&
 			    (bits = inet_net_pton(AF_INET, p,
 			    &net, sizeof(net))) != -1) {
 				net = ntohl(net);
@@ -1343,7 +1343,7 @@ pass(const char *passwd)
 			/* store guest password reply into pw_passwd */
 		REASSIGN(pw->pw_passwd, xstrdup(passwd));
 		for (p = pw->pw_passwd; *p; p++)
-			if (!isgraph(*p))
+			if (!isgraph((unsigned char)*p))
 				*p = '_';
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
