@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 1998/12/17 06:17:45 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 1999/01/16 20:48:45 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1855,9 +1855,7 @@ pmap_bootstrap(nextva)
 
 	pmeg_clean_free();
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	pmap_page_upload();
-#endif
 }
 
 /*
@@ -1902,8 +1900,6 @@ pmap_virtual_space(v_start, v_end)
 	*v_end   = virtual_end;
 }
 
-#if defined(MACHINE_NEW_NONCONTIG)
-
 /* Provide memory to the VM system. */
 static void
 pmap_page_upload()
@@ -1940,55 +1936,6 @@ pmap_page_upload()
 #endif
 	}
 }
-
-#else	/* MACHINE_NEW_NONCONTIG */
-
-/*
- * Return the number of page indices in the range of
- * possible return values for pmap_page_index() for
- * all addresses provided by pmap_next_page().  This
- * return value is used to allocate per-page data.
- *
- * Machines with a small "hole" in physical memory may
- * include the pages in the hole in this count, and
- * skip the pages in the hole in pmap_next_page().
- */
-u_int
-pmap_free_pages()
-{
-	int bytes;
-
-	bytes = avail_end - avail_next;
-	return(atop(bytes));
-}
-
-/*
- * If there are still physical pages available, put the address of
- * the next available one at paddr and return TRUE.  Otherwise,
- * return FALSE to indicate that there are no more free pages.
- * Note that avail_next is set to avail_start in pmap_bootstrap().
- *
- * Important:  The page indices of the pages returned here must be
- * in ascending order.
- */
-boolean_t
-pmap_next_page(paddr)
-	vm_offset_t *paddr;
-{
-	/* Is it time to skip over the hole? */
-	if (avail_next == hole_start)
-		avail_next += hole_size;
-
-	/* Any available memory remaining? */
-	if (avail_next >= avail_end)
-		return FALSE;
-
-	/* Have memory, will travel... */
-	*paddr = avail_next;
-	avail_next += NBPG;
-	return TRUE;
-}
-#endif /* ! MACHINE_NEW_NONCONTIG */
 
 /*
  * pmap_page_index()
