@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.18 2004/02/13 10:05:50 wiz Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.19 2004/03/11 12:19:14 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.18 2004/02/13 10:05:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.19 2004/03/11 12:19:14 kanaoka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -418,6 +418,7 @@ rtk_cardbus_disable(sc)
 
 	/* Unhook the interrupt handler. */
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+	csc->sc_ih = NULL;
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
