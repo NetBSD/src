@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.16 1997/11/04 01:39:03 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.17 1997/11/05 01:23:06 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,6 +79,7 @@ typedef struct distinfo {
 
 EXTERN char rel[SSTRSIZE] INIT(REL);
 EXTERN char rels[SSTRSIZE] INIT(REL);
+EXTERN char machine[SSTRSIZE] INIT(MACH);
 
 EXTERN int yesno;
 EXTERN int layoutkind;
@@ -151,7 +152,7 @@ EXTERN int  got_dist;
 EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");
 EXTERN int  clean_dist_dir INIT(0);
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
-EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-" REL "/" MACH);
+EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
 
@@ -159,7 +160,7 @@ EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
-EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-" REL "/" MACH);
+EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-");
 
 EXTERN int  mnt2_mounted INIT(0);
 
