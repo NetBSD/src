@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 1997/05/25 10:01:38 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 1997/06/15 01:08:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -358,8 +358,9 @@ extern void softintr __P((unsigned statusReg, unsigned pc));
 
 
 #ifdef DEBUG /* stack trace code, also useful to DDB one day */
-extern void stacktrace __P(()); /*XXX*/
-extern void logstacktrace __P(()); /*XXX*/
+int	kdbpeek __P((vm_offset_t addr));
+extern void stacktrace __P((void)); /*XXX*/
+extern void logstacktrace __P((void)); /*XXX*/
 
 /* extern functions printed by name in stack backtraces */
 extern void idle __P((void)),  cpu_switch __P(( struct proc *p));
@@ -1430,9 +1431,10 @@ mips_singlestep(p)
 #ifdef DEBUG
 int
 kdbpeek(addr)
+	vm_offset_t addr;
 {
 	if (addr & 3) {
-		printf("kdbpeek: unaligned address %x\n", addr);
+		printf("kdbpeek: unaligned address %lx\n", addr);
 		return (-1);
 	}
 	return (*(int *)addr);
@@ -1447,22 +1449,10 @@ char *fn_name(unsigned addr);
 void stacktrace_subr __P((int, int, int, int, void (*)(const char*, ...)));
 
 /*
- * Print a stack backtrace.
+ * Do a stack backtrace.
+ * (*printfn)()  prints the output to either the system log,
+ * the console, or both.
  */
-void
-stacktrace(a0, a1, a2, a3)
-	int a0, a1, a2, a3;
-{
-	stacktrace_subr(a0, a1, a2, a3, printf);
-}
-
-void
-logstacktrace(a0, a1, a2, a3)
-	int a0, a1, a2, a3;
-{
-	stacktrace_subr(a0, a1, a2, a3, addlog);
-}
-
 void
 stacktrace_subr(a0, a1, a2, a3, printfn)
 	int a0, a1, a2, a3;
