@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.15 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: ofb.c,v 1.16 2000/10/01 19:08:30 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -129,7 +129,7 @@ ofbattach(parent, self, aux)
 	struct ofb_softc *sc = (struct ofb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args a;
-	int console;
+	int console, node;
 	struct ofb_devconfig *dc;
 	char devinfo[256];
 
@@ -137,9 +137,10 @@ ofbattach(parent, self, aux)
 
 	if (console) {
 		dc = &ofb_console_dc;
+		node = dc->dc_node;
 		sc->nscreens = 1;
 	} else {
-		int node, i, screenbytes;
+		int i, len, screenbytes;
 
 		dc = malloc(sizeof(struct ofb_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(dc, sizeof(struct ofb_devconfig));
@@ -148,6 +149,14 @@ ofbattach(parent, self, aux)
 			printf(": ofdev not found\n");
 			return;
 		}
+
+		/* XXX There are two child screens on PowerBook. */
+		bzero(devinfo, sizeof(devinfo));
+		OF_getprop(node, "device_type", devinfo, sizeof(devinfo));
+		len = strlen(devinfo);
+		if (strcmp(devinfo + len - 7, "-parent") == 0)
+			node = OF_child(node);
+
 		ofb_common_init(node, dc);
 
 		screenbytes = dc->dc_ri.ri_stride * dc->dc_ri.ri_height;
@@ -156,8 +165,13 @@ ofbattach(parent, self, aux)
 	}
 	sc->sc_dc = dc;
 
-	OF_getprop(dc->dc_node, "assigned-addresses", sc->sc_addrs,
-	    sizeof(sc->sc_addrs));
+	/* XXX */
+	if (OF_getprop(node, "assigned-addresses", sc->sc_addrs,
+	    sizeof(sc->sc_addrs)) == -1) {
+		node = OF_parent(node);
+		OF_getprop(node, "assigned-addresses", sc->sc_addrs,
+		    sizeof(sc->sc_addrs));
+	}
 
 	if (dc->dc_paddr == 0) {
 		printf(": cannot map framebuffer\n");
