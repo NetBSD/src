@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.1.1.3 2005/03/16 23:52:42 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.2 2005/04/04 21:43:26 manu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.26.2.1 2005/03/16 00:13:38 manubsd Exp */
 
@@ -637,7 +637,7 @@ isakmp_cfg_set(iph1, attrpl)
 			attr++;
 		} else {
 			alen = ntohs(attr->lorv);
-			tlen -= alen;
+			tlen -= (sizeof(*attr) + alen);
 			npp = (char *)attr;
 			attr = (struct isakmp_data *)
 			    (npp + sizeof(*attr) + alen);
