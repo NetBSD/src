@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.418 2004/05/12 16:56:43 cl Exp $
+#	$NetBSD: bsd.own.mk,v 1.419 2004/05/23 01:45:23 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -564,7 +564,7 @@ MK${var}?=	yes
 # MK* options which default to "no".
 #
 .for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 \
-	MANZ OBJDIRS SOFTFLOAT UNPRIVED UPDATE X11
+	MANZ OBJDIRS PRIVATELIB SOFTFLOAT UNPRIVED UPDATE X11
 MK${var}?=	no
 .endfor
 
