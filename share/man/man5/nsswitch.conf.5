@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.15 1999/07/29 00:11:28 lukem Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.16 1999/12/27 00:42:38 lukem Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 29, 1999
+.Dd December 27, 1999
 .Dt NSSWITCH.CONF 5
 .Os
 .Sh NAME
@@ -208,11 +208,11 @@ will default to an entry of
 .Dq files
 for the requested database.
 Exceptions are:
-.Bl -column passwd_compat "dns files" -offset indent
+.Bl -column passwd_compat "files dns" -offset indent
 .Sy Database	Default source list
 .It group	compat
 .It group_compat	nis
-.It hosts	dns files
+.It hosts	files dns
 .It netgroup	files [notfound=return] nis
 .It passwd	compat
 .It passwd_compat	nis
