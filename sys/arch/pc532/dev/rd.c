@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rd.c,v 1.2 1996/01/07 22:02:46 thorpej Exp $
+ *	$Id: rd.c,v 1.3 1996/03/17 01:39:02 thorpej Exp $
  */
 
 #include <sys/param.h>
@@ -46,15 +46,12 @@ struct rdsoftc {
 	struct	disk sc_dkdev;		/* generic disk glue */
 };
 
-struct cfdriver rdcd = {
-	NULL,
-	"rd",
-	rdmatch,
-	rdattach,
-	DV_DISK,
-	sizeof(struct rdsoftc),
-	NULL,
-	0
+struct cfattach rd_ca = {
+	sizeof(struct rdsoftc), rdmatch, rdattach
+};
+
+struct cfdriver rd_cd = {
+	NULL, "rd", DV_DISK, NULL, 0
 };
 
 void rdstrategy __P((struct buf *));

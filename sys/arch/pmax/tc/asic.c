@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.8 1996/01/31 08:47:14 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.9 1996/03/17 01:47:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -75,8 +75,13 @@ int     asicprint(void *, char *);
 
 #define	IOASIC_OFFSET_UNKNOWN	-1
 
-struct cfdriver ioasiccd =
-    { NULL, "asic", asicmatch, asicattach, DV_DULL, sizeof(struct asic_softc) };
+struct cfattach ioasic_ca = {
+	sizeof(struct asic_softc), asicmatch, asicattach
+};
+
+struct cfdriver ioasic_cd = {
+	NULL, "asic", DV_DULL
+};
 
 void    asic_intr_establish __P((struct confargs *, intr_handler_t,
 				 intr_arg_t));

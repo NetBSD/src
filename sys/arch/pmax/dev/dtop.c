@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.12 1996/02/13 18:23:46 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.13 1996/03/17 01:46:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -175,7 +175,7 @@ struct dtop_softc {
 };
 
 #define DTOP_TTY(unit) \
-	( ((struct dtop_softc*) dtopcd.cd_devs[(unit)]) -> dtop_tty)
+	( ((struct dtop_softc*) dtop_cd.cd_devs[(unit)]) -> dtop_tty)
 
 typedef struct dtop_softc *dtop_softc_t;
 
@@ -205,9 +205,15 @@ int  dtopmatch  __P((struct device * parent, void *cfdata, void *aux));
 void dtopattach __P((struct device *parent, struct device *self, void *aux));
 int dtopintr	__P((void *sc));
 
-extern struct cfdriver dtopcd;
-struct  cfdriver dtopcd =
-  { NULL, "dtop", dtopmatch, dtopattach, DV_DULL, sizeof(struct dtop_softc) };
+extern struct cfdriver dtop_cd;
+
+struct cfattach dtop_ca = {
+	sizeof(struct dtop_softc), dtopmatch, dtopattach
+};
+
+struct  cfdriver dtop_cd = {
+	NULL, "dtop", DV_DULL
+};
 
 /*
  * match driver based on name
@@ -272,7 +278,7 @@ dtopopen(dev, flag, mode, p)
 	int s, error = 0;
 
 	unit = minor(dev);
-	if (unit >= dtopcd.cd_ndevs)
+	if (unit >= dtop_cd.cd_ndevs)
 		return (ENXIO);
 	tp = DTOP_TTY(unit);
 	if (tp == NULL)
@@ -603,7 +609,7 @@ dtopKBDGetc()
 	register int c;
 	dtop_softc_t dtop;
 
-	dtop = dtopcd.cd_devs[0];
+	dtop = dtop_cd.cd_devs[0];
 again:
 	c = -1;
 

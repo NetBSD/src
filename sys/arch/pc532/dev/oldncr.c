@@ -1,4 +1,4 @@
-/*	$NetBSD: oldncr.c,v 1.2 1995/08/27 04:07:54 phil Exp $	*/
+/*	$NetBSD: oldncr.c,v 1.3 1996/03/17 01:39:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -163,9 +163,13 @@ extern int	matchbyname();
 static int	ncrprobe();
 static void	ncrattach();
 
-struct cfdriver oldncrcd =
-      {	NULL, "ncr", ncrprobe, ncrattach,
-	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0 };
+struct cfdriver oldncr_ca = {
+	sizeof(struct ncr5380_softc), ncrprobe, ncrattach
+};
+
+struct cfdriver oldncr_cd = {
+	NULL, "ncr", DV_DULL, NULL, 0
+};
 
 static int
 ncrprobe(parent, self, aux)

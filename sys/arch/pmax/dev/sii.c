@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.9 1996/01/29 22:52:23 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.10 1996/03/17 01:46:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -118,9 +118,14 @@ int sii_doprobe __P((void *addr, int unit, int flags, int pri,
 		     struct device *self));
 int siiintr __P((void *sc));
 
-extern struct cfdriver siicd;
-struct  cfdriver siicd = {
-	NULL, "sii", siimatch, siiattach, DV_DULL, sizeof(struct siisoftc)
+extern struct cfdriver sii_cd;
+
+struct cfattach sii_ca = {
+	sizeof(struct siisoftc), siimatch, siiattach
+};
+
+struct  cfdriver sii_cd = {
+	NULL, "sii", DV_DULL
 };
 
 #ifdef USE_NEW_SCSI
@@ -293,7 +298,7 @@ siistart(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
 	register struct pmax_scsi_device *sdp = scsicmd->sd;
-	register struct siisoftc *sc = siicd.cd_devs[sdp->sd_ctlr];
+	register struct siisoftc *sc = sii_cd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();

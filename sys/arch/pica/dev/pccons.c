@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.1.1.1 1996/03/13 04:58:06 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.2 1996/03/17 01:42:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -141,16 +141,24 @@ int pcmatch __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 
-struct cfdriver pccd = {
-	NULL, "pc", pcmatch, pcattach, DV_TTY, sizeof(struct pc_softc)
+struct cfattach pc_ca = {
+	sizeof(struct pc_softc), pcmatch, pcattach
+};
+
+struct cfdriver pc_cd = {
+	NULL, "pc", DV_TTY
 };
 
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
-struct cfdriver pmscd = {
-	NULL, "pms", pmsprobe, pmsattach, DV_TTY, sizeof(struct pms_softc)
+struct cfattch pms_ca = {
+	sizeof(struct pms_softc), pmsprobe, pmsattach
+};
+
+struct cfdriver pms_cd = {
+	NULL, "pms", DV_TTY
 };
 
 #define	PMSUNIT(dev)	(minor(dev))
@@ -514,9 +522,9 @@ pcopen(dev, flag, mode, p)
 	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pccd.cd_ndevs)
+	if (unit >= pc_cd.cd_ndevs)
 		return ENXIO;
-	sc = pccd.cd_devs[unit];
+	sc = pc_cd.cd_devs[unit];
 	if (sc == 0)
 		return ENXIO;
 
@@ -553,7 +561,7 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -570,7 +578,7 @@ pcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -582,7 +590,7 @@ pcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -592,7 +600,7 @@ struct tty *
 pctty(dev)
 	dev_t dev;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -635,7 +643,7 @@ pcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -818,8 +826,8 @@ pccnpollc(dev, on)
 		 * interrupts.
 		 */
 		unit = PCUNIT(dev);
-		if (pccd.cd_ndevs > unit) {
-			sc = pccd.cd_devs[unit];
+		if (pc_cd.cd_ndevs > unit) {
+			sc = pc_cd.cd_devs[unit];
 			if (sc != 0) {
 				s = spltty();
 				pcintr(sc);
@@ -1859,7 +1867,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.1.1.1 1996/03/13 04:58:06 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.2 1996/03/17 01:42:18 thorpej Exp $	*/
 
 #include <machine/mouse.h>
 
@@ -1966,9 +1974,9 @@ pmsopen(dev, flag)
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
 
-	if (unit >= pmscd.cd_ndevs)
+	if (unit >= pms_cd.cd_ndevs)
 		return ENXIO;
-	sc = pmscd.cd_devs[unit];
+	sc = pms_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -2003,7 +2011,7 @@ pmsclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
 	pms_dev_cmd(PMS_DEV_DISABLE);
@@ -2023,7 +2031,7 @@ pmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
 	int error;
 	size_t length;
@@ -2071,7 +2079,7 @@ pmsioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -2200,7 +2208,7 @@ pmsselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
 	int ret;
 
