@@ -56,8 +56,6 @@
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
-./sbin/dumpfs
-./sbin/dumplfs
 ./sbin/fastboot
 ./sbin/fasthalt
 ./sbin/fsck
@@ -96,7 +94,6 @@
 ./sbin/newlfs
 ./sbin/nologin
 ./sbin/ping
-./sbin/quotacheck
 ./sbin/rdump
 ./sbin/reboot
 ./sbin/restore
@@ -471,6 +468,8 @@
 ./usr/sbin/dig
 ./usr/sbin/diskpart
 ./usr/sbin/dnsquery
+./usr/sbin/dumpfs
+./usr/sbin/dumplfs
 ./usr/sbin/edquota
 ./usr/sbin/fsinfo
 ./usr/sbin/gettable
@@ -530,6 +529,7 @@
 ./usr/sbin/pstat
 ./usr/sbin/pwd_mkdb
 ./usr/sbin/quot
+./usr/sbin/quotacheck
 ./usr/sbin/quotaoff
 ./usr/sbin/quotaon
 ./usr/sbin/rarpd
