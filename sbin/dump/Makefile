@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2001/12/23 12:29:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2001/12/25 11:56:14 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -6,6 +6,7 @@
 #	main.c			driver
 #	optr.c			operator interface
 #	dumprmt.c		handles remote tape via rmt(8)
+#	rcache.c		read cache
 #	tape.c			handles the mag tape and opening/closing
 #	traverse.c		traverses the file system
 #	unctime.c		undo ctime
@@ -14,6 +15,10 @@
 #
 #	DEBUG			use local directory to find ddate and dumpdates
 #	TDEBUG			trace out the process forking
+#	FDEBUG			trace dumpdates parsing
+#	WRITEDEBUG		trace slave writes
+#	STATS			read cache statistics
+#	DIAGNOSTICS		read cache diagnostic checks
 
 PROG=	dump
 LINKS=	${BINDIR}/dump ${BINDIR}/rdump
