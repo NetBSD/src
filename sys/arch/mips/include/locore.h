@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.58 2001/11/14 18:15:20 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.59 2002/03/05 15:36:51 simonb Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -29,6 +29,8 @@
 #include "opt_mips_cache.h"
 #endif
 
+#include <mips/cpuregs.h>
+
 struct tlb;
 
 /*
@@ -36,11 +38,12 @@ struct tlb;
  * only to print them by name in stack tracebacks
  */
 
-u_int32_t mips_cp0_cause_read(void);
-void	mips_cp0_cause_write(u_int32_t);
-u_int32_t mips_cp0_status_read(void);
-void	mips_cp0_status_write(u_int32_t);
+uint32_t mips_cp0_cause_read(void);
+void	mips_cp0_cause_write(uint32_t);
+uint32_t mips_cp0_status_read(void);
+void	mips_cp0_status_write(uint32_t);
 
+#ifdef MIPS1
 void	mips1_SetPID(int);
 void	mips1_TBIA(int);
 void	mips1_TBIAP(int);
@@ -51,7 +54,9 @@ void	mips1_proc_trampoline(void);
 void	mips1_cpu_switch_resume(void);
 
 uint32_t tx3900_cp0_config_read(void);
+#endif
 
+#if defined(MIPS3) || defined(MIPS4)
 void	mips3_SetPID(int);
 void	mips3_TBIA(int);
 void	mips3_TBIAP(int);
@@ -62,20 +67,121 @@ void	mips3_wbflush(void);
 void	mips3_proc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
 
-u_int32_t mips3_cp0_compare_read(void);
-void	mips3_cp0_compare_write(u_int32_t);
+#ifdef MIPS3_5900
+void	mips5900_SetPID(int);
+void	mips5900_TBIA(int);
+void	mips5900_TBIAP(int);
+void	mips5900_TBIS(vaddr_t);
+int	mips5900_TLBUpdate(u_int, u_int);
+void	mips5900_TLBRead(int, struct tlb *);
+void	mips5900_wbflush(void);
+void	mips5900_proc_trampoline(void);
+void	mips5900_cpu_switch_resume(void);
+#endif
+#endif
 
-u_int32_t mips3_cp0_config_read(void);
-void	mips3_cp0_config_write(u_int32_t);
+#ifdef MIPS32
+void	mips32_SetPID(int);
+void	mips32_TBIA(int);
+void	mips32_TBIAP(int);
+void	mips32_TBIS(vaddr_t);
+int	mips32_TLBUpdate(u_int, u_int);
+void	mips32_TLBRead(int, struct tlb *);
+void	mips32_wbflush(void);
+void	mips32_proc_trampoline(void);
+void	mips32_cpu_switch_resume(void);
+#endif
 
-u_int32_t mips3_cp0_count_read(void);
-void	mips3_cp0_count_write(u_int32_t);
+#ifdef MIPS64
+void	mips64_SetPID(int);
+void	mips64_TBIA(int);
+void	mips64_TBIAP(int);
+void	mips64_TBIS(vaddr_t);
+int	mips64_TLBUpdate(u_int, u_int);
+void	mips64_TLBRead(int, struct tlb *);
+void	mips64_wbflush(void);
+void	mips64_proc_trampoline(void);
+void	mips64_cpu_switch_resume(void);
+#endif
 
-u_int32_t mips3_cp0_wired_read(void);
-void	mips3_cp0_wired_write(u_int32_t);
+uint32_t mips3_cp0_compare_read(void);
+void	mips3_cp0_compare_write(uint32_t);
 
-u_int64_t mips3_ld(u_int64_t *);
-void	mips3_sd(u_int64_t *, u_int64_t);
+uint32_t mips3_cp0_config_read(void);
+void	mips3_cp0_config_write(uint32_t);
+uint32_t mipsNN_cp0_config1_read(void);
+void	mipsNN_cp0_config1_write(uint32_t);
+
+uint32_t mips3_cp0_count_read(void);
+void	mips3_cp0_count_write(uint32_t);
+
+uint32_t mips3_cp0_wired_read(void);
+void	mips3_cp0_wired_write(uint32_t);
+
+uint64_t mips3_ld(uint64_t *);
+void	mips3_sd(uint64_t *, uint64_t);
+
+static inline uint32_t	mips3_lw_a64(uint64_t addr)
+		    __attribute__((__unused__));
+static inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
+		    __attribute__ ((__unused__));
+
+static inline uint32_t
+mips3_lw_a64(uint64_t addr)
+{
+	uint32_t addrlo, addrhi;
+	uint32_t rv;
+	uint32_t sr;
+
+	sr = mips_cp0_status_read();
+	mips_cp0_status_write(sr | MIPS3_SR_KX);
+
+	addrlo = addr & 0xffffffff;
+	addrhi = addr >> 32;
+	__asm__ __volatile__ ("		\n\
+		.set push		\n\
+		.set mips3		\n\
+		.set noreorder		\n\
+		.set noat		\n\
+		dsll32	$3, %1, 0	\n\
+		dsll32	$1, %2, 0	\n\
+		dsrl32	$3, $3, 0	\n\
+		or	$1, $1, $3	\n\
+		lw	%0, 0($1)	\n\
+		.set pop		\n\
+	" : "=r"(rv) : "r"(addrlo), "r"(addrhi) : "$1", "$3" );
+
+	mips_cp0_status_write(sr);
+
+	return (rv);
+}
+
+static inline void
+mips3_sw_a64(uint64_t addr, uint32_t val)
+{
+	uint32_t addrlo, addrhi;
+	uint32_t sr;
+
+	sr = mips_cp0_status_read();
+	mips_cp0_status_write(sr | MIPS3_SR_KX);
+
+	addrlo = addr & 0xffffffff;
+	addrhi = addr >> 32;
+	__asm__ __volatile__ ("			\n\
+		.set push			\n\
+		.set mips3			\n\
+		.set noreorder			\n\
+		.set noat			\n\
+		dsll32	$3, %1, 0		\n\
+		dsll32	$1, %2, 0		\n\
+		dsrl32	$3, $3, 0		\n\
+		or	$1, $1, $3		\n\
+		sw	%0, 0($1)		\n\
+		.set pop			\n\
+	" : : "r"(val), "r"(addrlo), "r"(addrhi) : "$1", "$3" );
+
+	mips_cp0_status_write(sr);
+}
 
 /*
  * A vector with an entry for each mips-ISA-level dependent
@@ -104,29 +210,38 @@ void	logstacktrace(void);
  * The "active" locore-fuction vector, and
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
-extern mips_locore_jumpvec_t r2000_locore_vec;
-extern mips_locore_jumpvec_t r4000_locore_vec;
 extern long *mips_locoresw[];
 
-#if defined(MIPS3) && !defined(MIPS1)
-#define MachSetPID		mips3_SetPID
-#define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
-#define MIPS_TBIS		mips3_TBIS
-#define MachTLBUpdate		mips3_TLBUpdate
-#define wbflush()		mips3_wbflush()
-#define proc_trampoline		mips3_proc_trampoline
-#endif
-
-#if !defined(MIPS3) && defined(MIPS1)
+#if    defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
 #define MachSetPID		mips1_SetPID
 #define MIPS_TBIAP()		mips1_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips1_TBIS
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
 #define proc_trampoline		mips1_proc_trampoline
-#endif
-
-#if defined(MIPS3) && defined(MIPS1)
+#elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
+#define MachSetPID		mips3_SetPID
+#define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
+#define MIPS_TBIS		mips3_TBIS
+#define MachTLBUpdate		mips3_TLBUpdate
+#define proc_trampoline		mips3_proc_trampoline
+#define wbflush()		mips3_wbflush()
+#elif !defined(MIPS1) && !defined(MIPS3) &&  defined(MIPS32) && !defined(MIPS64)
+#define	MachSetPID		mips32_SetPID
+#define	MIPS_TBIAP()		mips32_TBIAP(mips_num_tlb_entries)
+#define	MIPS_TBIS		mips32_TBIS
+#define	MachTLBUpdate		mips32_TLBUpdate
+#define proc_trampoline		mips32_proc_trampoline
+#define wbflush()		mips32_wbflush()
+#elif !defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) &&  defined(MIPS64)
+ /* all common with mips3 */
+#define MachSetPID		mips64_SetPID
+#define MIPS_TBIAP()		mips64_TBIAP(mips_num_tlb_entries)
+#define MIPS_TBIS		mips64_TBIS
+#define MachTLBUpdate		mips64_TLBUpdate
+#define proc_trampoline		mips64_proc_trampoline
+#define wbflush()		mips64_wbflush()
+#else
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
 #define MIPS_TBIAP()		(*(mips_locore_jumpvec.TBIAP))(mips_num_tlb_entries)
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
@@ -147,20 +262,22 @@ typedef int mips_prid_t;
 #define	MIPS_PRID_REV(x)	(((x) >>  0) & 0x00ff)
 #define	MIPS_PRID_IMPL(x)	(((x) >>  8) & 0x00ff)
 
-/* pre-MIPS32 */
+/* pre-MIPS32/64 */
 #define	MIPS_PRID_RSVD(x)	(((x) >> 16) & 0xffff)
 #define	MIPS_PRID_REV_MIN(x)	((MIPS_PRID_REV(x) >> 0) & 0x0f)
 #define	MIPS_PRID_REV_MAJ(x)	((MIPS_PRID_REV(x) >> 4) & 0x0f)
 
-/* MIPS32 */
+/* MIPS32/64 */
 #define	MIPS_PRID_CID(x)	(((x) >> 16) & 0x00ff)	/* Company ID */
-#define	    MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32 */
+#define	    MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32/64 */
 #define	    MIPS_PRID_CID_MTI		0x01	/* MIPS Technologies, Inc. */
+#define	    MIPS_PRID_CID_BROADCOM	0x02	/* Broadcom */
 #define	    MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
 #define	    MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
+#define	    MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
+#define	MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL
-
 /*
  * Global variables used to communicate CPU type, and parameters
  * such as cache size, from locore to higher-level code (e.g., pmap).
@@ -172,6 +289,10 @@ extern int	mips_num_tlb_entries;
 
 void mips_pagecopy(caddr_t dst, caddr_t src);
 void mips_pagezero(caddr_t dst);
+
+#ifdef __HAVE_MIPS_MACHDEP_CACHE_CONFIG
+void mips_machdep_cache_config(void);
+#endif
 
 /*
  * trapframe argument passed to trap()
@@ -200,7 +321,5 @@ struct kernframe {
 	register_t cf_ra;
 	struct trapframe cf_frame;
 };
-
 #endif
-
 #endif	/* _MIPS_LOCORE_H */
