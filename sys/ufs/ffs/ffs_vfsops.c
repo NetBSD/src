@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ffs_vfsops.c	8.8 (Berkeley) 4/18/94
- *	$Id: ffs_vfsops.c,v 1.2 1994/06/22 03:01:40 mycroft Exp $
+ *	$Id: ffs_vfsops.c,v 1.3 1994/06/28 21:50:24 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -283,6 +283,7 @@ ffs_reload(mountp, cred, p)
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
+	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	ffs_oldfscompat(fs);
 	/*
 	 * Step 3: re-read summary information from disk.
