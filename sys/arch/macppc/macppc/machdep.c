@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1999/03/26 23:41:31 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1999/04/01 00:17:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -570,21 +570,6 @@ cpu_startup()
 	 * Set up the buffers.
 	 */
 	bufinit();
-
-	/*
-	 * Configure devices.
-	 */
-	configure();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	{
-		int msr;
-
-		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
-	}
 }
 
 /*

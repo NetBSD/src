@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1999/02/02 16:37:51 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1999/04/01 00:17:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,6 +91,16 @@ configure()
 
 	(void)spl0();
 	cold = 0;
+
+	/*
+	 * Now allow hardware interrupts.
+	 */
+	{
+		int msr;
+
+		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
+	}
 }
 
 /*

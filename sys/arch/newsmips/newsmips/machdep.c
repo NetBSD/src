@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1999/03/26 23:41:32 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1999/04/01 00:17:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 1999/03/26 23:41:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 1999/04/01 00:17:48 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -424,11 +424,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 

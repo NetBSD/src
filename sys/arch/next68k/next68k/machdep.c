@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1999/03/27 02:59:41 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1999/04/01 00:17:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -467,11 +467,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 /*
