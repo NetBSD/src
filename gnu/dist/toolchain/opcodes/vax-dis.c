@@ -1,5 +1,5 @@
 /* Print VAX instructions.
-   Copyright (C) 1995, 1998, 2001 Free Software Foundation, Inc.
+   Copyright 1995, 1998, 2000, 2001 Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
 This program is free software; you can redistribute it and/or modify

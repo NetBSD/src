@@ -1,6 +1,6 @@
 /* cg_print.c -  Print routines for displaying call graphs.
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -47,7 +47,7 @@ DEFUN_VOID (print_header)
     first_output = FALSE;
   else
     printf ("\f\n");
-  
+
   if (!bsd_style_output)
     {
       if (print_descriptions)
@@ -55,21 +55,21 @@ DEFUN_VOID (print_header)
       else
 	printf (_("\t\t\tCall graph\n\n"));
     }
-  
+
   printf (_("\ngranularity: each sample hit covers %ld byte(s)"),
 	  (long) hist_scale * sizeof (UNIT));
-  
+
   if (print_time > 0.0)
     printf (_(" for %.2f%% of %.2f seconds\n\n"),
 	    100.0 / print_time, print_time / hz);
   else
     {
       printf (_(" no time propagated\n\n"));
-      
+
       /* This doesn't hurt, since all the numerators will be 0.0.  */
       print_time = 1.0;
     }
-  
+
   if (bsd_style_output)
     {
       printf ("%6.6s %5.5s %7.7s %11.11s %7.7s/%-7.7s     %-8.8s\n",
@@ -100,7 +100,7 @@ DEFUN (print_cycle, (cyc), Sym * cyc)
 	  : "%-6.6s %5.1f %7.2f %7.2f %7lu", buf,
 	  100 * (cyc->cg.prop.self + cyc->cg.prop.child) / print_time,
 	  cyc->cg.prop.self / hz, cyc->cg.prop.child / hz, cyc->ncalls);
-  
+
   if (cyc->cg.self_calls != 0)
     printf ("+%-7lu", cyc->cg.self_calls);
   else
@@ -141,22 +141,22 @@ static void
 DEFUN (sort_members, (cyc), Sym * cyc)
 {
   Sym *todo, *doing, *prev;
-  
+
   /* Detach cycle members from cyclehead,
      and insertion sort them back on.  */
   todo = cyc->cg.cyc.next;
   cyc->cg.cyc.next = 0;
-  
+
   for (doing = todo; doing && doing->cg.cyc.next; doing = todo)
     {
       todo = doing->cg.cyc.next;
-      
+
       for (prev = cyc; prev->cg.cyc.next; prev = prev->cg.cyc.next)
 	{
 	  if (cmp_member (doing, prev->cg.cyc.next) == GREATERTHAN)
 	    break;
 	}
-      
+
       doing->cg.cyc.next = prev->cg.cyc.next;
       prev->cg.cyc.next = doing;
     }
@@ -170,7 +170,7 @@ DEFUN (print_members, (cyc), Sym * cyc)
   Sym *member;
 
   sort_members (cyc);
-  
+
   for (member = cyc->cg.cyc.next; member; member = member->cg.cyc.next)
     {
       printf (bsd_style_output
@@ -178,7 +178,7 @@ DEFUN (print_members, (cyc), Sym * cyc)
 	      : "%6.6s %5.5s %7.2f %7.2f %7lu",
 	      "", "", member->cg.prop.self / hz, member->cg.prop.child / hz,
 	      member->ncalls);
-      
+
       if (member->cg.self_calls != 0)
 	printf ("+%-7lu", member->cg.self_calls);
       else
@@ -191,12 +191,12 @@ DEFUN (print_members, (cyc), Sym * cyc)
 }
 
 /* Compare two arcs to/from the same child/parent.
-        - if one arc is a self arc, it's least.
-        - if one arc is within a cycle, it's less than.
-        - if both arcs are within a cycle, compare arc counts.
-        - if neither arc is within a cycle, compare with
-                time + child_time as major key
-                arc count as minor key.  */
+	- if one arc is a self arc, it's least.
+	- if one arc is within a cycle, it's less than.
+	- if both arcs are within a cycle, compare arc counts.
+	- if neither arc is within a cycle, compare with
+		time + child_time as major key
+		arc count as minor key.  */
 
 static int
 DEFUN (cmp_arc, (left, right), Arc * left AND Arc * right)
@@ -222,7 +222,7 @@ DEFUN (cmp_arc, (left, right), Arc * left AND Arc * right)
 	       right->count, right_child->ncalls);
        printf ("\n");
     );
-  
+
   if (left_parent == left_child)
     return LESSTHAN;		/* Left is a self call.  */
 
@@ -265,7 +265,7 @@ DEFUN (cmp_arc, (left, right), Arc * left AND Arc * right)
 	  /* Neither is a call within a cycle.  */
 	  left_time = left->time + left->child_time;
 	  right_time = right->time + right->child_time;
-	  
+
 	  if (left_time < right_time)
 	    return LESSTHAN;
 
@@ -291,12 +291,12 @@ DEFUN (sort_parents, (child), Sym * child)
 
   /* Unlink parents from child, then insertion sort back on to
      sorted's parents.
-          *arc        the arc you have detached and are inserting.
-          *detached   the rest of the arcs to be sorted.
-          sorted      arc list onto which you insertion sort.
-          *prev       arc before the arc you are comparing.  */
+	  *arc        the arc you have detached and are inserting.
+	  *detached   the rest of the arcs to be sorted.
+	  sorted      arc list onto which you insertion sort.
+	  *prev       arc before the arc you are comparing.  */
   sorted.next_parent = 0;
-  
+
   for (arc = child->cg.parents; arc; arc = detached)
     {
       detached = arc->next_parent;
@@ -307,7 +307,7 @@ DEFUN (sort_parents, (child), Sym * child)
 	  if (cmp_arc (arc, prev->next_parent) != GREATERTHAN)
 	    break;
 	}
-      
+
       arc->next_parent = prev->next_parent;
       prev->next_parent = arc;
     }
@@ -328,7 +328,7 @@ DEFUN (print_parents, (child), Sym * child)
     cycle_head = child->cg.cyc.head;
   else
     cycle_head = child;
-  
+
   if (!child->cg.parents)
     {
       printf (bsd_style_output
@@ -337,9 +337,9 @@ DEFUN (print_parents, (child), Sym * child)
 	      "", "", "", "", "", "");
       return;
     }
-  
+
   sort_parents (child);
-  
+
   for (arc = child->cg.parents; arc; arc = arc->next_parent)
     {
       parent = arc->parent;
@@ -375,15 +375,15 @@ static void
 DEFUN (sort_children, (parent), Sym * parent)
 {
   Arc *arc, *detached, sorted, *prev;
-  
+
   /* Unlink children from parent, then insertion sort back on to
      sorted's children.
-          *arc        the arc you have detached and are inserting.
-          *detached   the rest of the arcs to be sorted.
-          sorted      arc list onto which you insertion sort.
-          *prev       arc before the arc you are comparing.  */
+	  *arc        the arc you have detached and are inserting.
+	  *detached   the rest of the arcs to be sorted.
+	  sorted      arc list onto which you insertion sort.
+	  *prev       arc before the arc you are comparing.  */
   sorted.next_child = 0;
-  
+
   for (arc = parent->cg.children; arc; arc = detached)
     {
       detached = arc->next_child;
@@ -394,7 +394,7 @@ DEFUN (sort_children, (parent), Sym * parent)
 	  if (cmp_arc (arc, prev->next_child) != LESSTHAN)
 	    break;
 	}
-      
+
       arc->next_child = prev->next_child;
       prev->next_child = arc;
     }
@@ -412,7 +412,7 @@ DEFUN (print_children, (parent), Sym * parent)
 
   sort_children (parent);
   arc = parent->cg.children;
-  
+
   for (arc = parent->cg.children; arc; arc = arc->next_child)
     {
       child = arc->child;
@@ -454,11 +454,11 @@ DEFUN (print_line, (np), Sym * np)
 	  : "%-6.6s %5.1f %7.2f %7.2f", buf,
 	  100 * (np->cg.prop.self + np->cg.prop.child) / print_time,
 	  np->cg.prop.self / hz, np->cg.prop.child / hz);
-  
+
   if ((np->ncalls + np->cg.self_calls) != 0)
     {
       printf (" %7lu", np->ncalls);
-      
+
       if (np->cg.self_calls != 0)
 	  printf ("+%-7lu ", np->cg.self_calls);
       else
@@ -468,7 +468,7 @@ DEFUN (print_line, (np), Sym * np)
     {
       printf (" %7.7s %7.7s ", "", "");
     }
-  
+
   print_name (np);
   printf ("\n");
 }
@@ -490,14 +490,14 @@ DEFUN (cg_print, (timesortsym), Sym ** timesortsym)
   for (index = 0; index < symtab.len + num_cycles; ++index)
     {
       parent = timesortsym[index];
-      
+
       if ((ignore_zeros && parent->ncalls == 0
 	   && parent->cg.self_calls == 0 && parent->cg.prop.self == 0
 	   && parent->cg.prop.child == 0)
 	  || !parent->cg.print_flag
 	  || (line_granularity && ! parent->is_func))
 	continue;
-      
+
       if (!parent->name && parent->cg.cyc.num != 0)
 	{
 	  /* Cycle header.  */
@@ -510,18 +510,18 @@ DEFUN (cg_print, (timesortsym), Sym ** timesortsym)
 	  print_line (parent);
 	  print_children (parent);
 	}
-      
+
       if (bsd_style_output)
 	printf ("\n");
-      
+
       printf ("-----------------------------------------------\n");
-      
+
       if (bsd_style_output)
 	printf ("\n");
     }
-  
+
   free (timesortsym);
-  
+
   if (print_descriptions && !bsd_style_output)
     fsf_callg_blurb (stdout);
 }
@@ -547,11 +547,11 @@ DEFUN_VOID (cg_print_index)
   const char *filename;
   char buf[20];
   int column_width = (output_width - 1) / 3;	/* Don't write in last col!  */
-  
+
   /* Now, sort regular function name
      alphabetically to create an index.  */
   name_sorted_syms = (Sym **) xmalloc ((symtab.len + num_cycles) * sizeof (Sym *));
-  
+
   for (index = 0, nnames = 0; index < symtab.len; index++)
     {
       if (ignore_zeros && symtab.base[index].ncalls == 0
@@ -560,25 +560,25 @@ DEFUN_VOID (cg_print_index)
 
       name_sorted_syms[nnames++] = &symtab.base[index];
     }
-  
+
   qsort (name_sorted_syms, nnames, sizeof (Sym *), cmp_name);
-  
+
   for (index = 1, todo = nnames; index <= num_cycles; index++)
     name_sorted_syms[todo++] = &cycle_header[index];
 
   printf ("\f\n");
   printf (_("Index by function name\n\n"));
   index = (todo + 2) / 3;
-  
+
   for (i = 0; i < index; i++)
     {
       col = 0;
       starting_col = 0;
-      
+
       for (j = i; j < todo; j += index)
 	{
 	  sym = name_sorted_syms[j];
-	  
+
 	  if (sym->cg.print_flag)
 	    sprintf (buf, "[%d]", sym->cg.index);
 	  else
@@ -593,27 +593,27 @@ DEFUN_VOID (cg_print_index)
 	      else
 		{
 		  col += strlen (buf);
-		  
+
 		  for (; col < starting_col + 5; ++col)
 		    putchar (' ');
 
 		  printf (" %s ", buf);
 		  col += print_name_only (sym);
-		  
+
 		  if (!line_granularity && sym->is_static && sym->file)
 		    {
 		      filename = sym->file->name;
-		      
+
 		      if (!print_path)
 			{
 			  filename = strrchr (filename, '/');
-			  
+
 			  if (filename)
 			    ++filename;
 			  else
 			    filename = sym->file->name;
 			}
-		      
+
 		      printf (" (%s)", filename);
 		      col += strlen (filename) + 3;
 		    }
@@ -638,13 +638,13 @@ DEFUN_VOID (cg_print_index)
 		  col += strlen (buf);
 		}
 	    }
-	  
+
 	  starting_col += column_width;
 	}
-      
+
       printf ("\n");
     }
-  
+
   free (name_sorted_syms);
 }
 
@@ -714,7 +714,7 @@ DEFUN (cmp_fun_nuses, (left, right), const PTR left AND const PTR right)
    Of course, profiling errors, machine limitations (PA long calls), and
    poor cutoff values for the placement algorithm may limit the usefullness
    of the resulting function order.  Improvements would be greatly appreciated.
-   
+
    Suggestions:
 
 	* Place the functions with many callers near the middle of the
@@ -749,7 +749,7 @@ DEFUN (cmp_fun_nuses, (left, right), const PTR left AND const PTR right)
 	ordering which shares the same arc placement algorithm with
 	the function ordering code (in fact it is a degenerate case
 	of function ordering).  */
-	
+
 void
 DEFUN_VOID (cg_print_function_ordering)
 {
@@ -856,13 +856,13 @@ DEFUN_VOID (cg_print_function_ordering)
 	 Unfortunately, we don't know all these functions
 	 until we're done.  So we keep track of all the arcs
 	 to the functions we care about, then prune out those
-	 which are uninteresting. 
+	 which are uninteresting.
 
 	 An interesting variation would be to quit when we found
 	 multi-call site functions which account for some percentage
 	 of the arcs.  */
       arc = sym->cg.children;
-      
+
       while (arc)
 	{
 	  if (arc->parent != arc->child)
@@ -872,7 +872,7 @@ DEFUN_VOID (cg_print_function_ordering)
 	}
 
       arc = sym->cg.parents;
-      
+
       while (arc)
 	{
 	  if (arc->parent != arc->child)
@@ -992,7 +992,7 @@ order_and_dump_functions_by_arcs (arcs, numarcs, all,
     total_arcs = 0;
 
   tmp_arcs = 0;
-  
+
   for (index = 0; index < numarcs; index++)
     {
       Sym *sym1, *sym2;
@@ -1049,7 +1049,7 @@ order_and_dump_functions_by_arcs (arcs, numarcs, all,
 	      prev = prev->prev;
 	      prev_count++;
 	    }
-	  
+
 	  /* Choose the closest.  */
 	  child = next_count < prev_count ? next : prev;
 	}
@@ -1263,5 +1263,5 @@ DEFUN_VOID (cg_print_file_ordering)
       if (index2 == symtab.len)
 	printf ("%s\n", symbol_map[index].file_name);
       last = symbol_map[index].file_name;
-    } 
+    }
 }
