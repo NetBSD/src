@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.37 2000/08/22 16:23:15 tron Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.38 2000/09/21 10:27:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.37 2000/08/22 16:23:15 tron Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.38 2000/09/21 10:27:34 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -105,8 +105,9 @@ struct conf_entry {
 	char	logfile[MAXPATHLEN];	/* Path to log file */
 };
 
-int     verbose = 0;			/* Be verbose */
-int	noaction = 0;			/* Take no action */
+int	verbose;			/* Be verbose */
+int	noaction;			/* Take no action */
+int	nosignal;			/* Do not send signals */
 char    hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
 uid_t	myeuid;				/* EUID we are running with */
 
@@ -150,7 +151,7 @@ main(int argc, char **argv)
 		*p = '\0';
 
 	/* Parse command line options. */
-	while ((c = getopt(argc, argv, "f:nrvF")) != -1) {
+	while ((c = getopt(argc, argv, "f:nrsvF")) != -1) {
 		switch (c) {
 		case 'f':
 			cfile = optarg;
@@ -161,6 +162,9 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			needroot = 0;
+			break;
+		case 's':
+			nosignal = 1;
 			break;
 		case 'v':
 			verbose = 1;
@@ -571,7 +575,7 @@ log_trim(struct conf_entry *log)
 			err(EXIT_FAILURE, "%s", log->logfile);
 
 	/* Do we need to signal a daemon? */
-	if ((log->flags & CE_NOSIGNAL) == 0) {
+	if (!nosignal && (log->flags & CE_NOSIGNAL) == 0) {
 		if (log->pidfile[0] != '\0')
 			pid = readpidfile(log->pidfile);
 		else
@@ -681,7 +685,7 @@ usage(void)
 {
 
 	fprintf(stderr, 
-	    "usage: newsyslog [-nrvF] [-f config-file] [file ...]\n");
+	    "usage: newsyslog [-nrsvF] [-f config-file] [file ...]\n");
 	exit(EXIT_FAILURE);
 }
 
