@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 1998/09/13 11:12:36 pk Exp $
+#	$NetBSD: genassym.cf,v 1.11 1998/09/20 19:39:18 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,9 +145,11 @@ define	V_FAULTS	offsetof(struct vmmeter, v_faults)
 endif
 
 # CPU info structure
-define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_info, get_faultstatus)
+define	CPUINFO_GETSYNCFLT	offsetof(struct cpu_info, get_syncflt)
+define	CPUINFO_GETASYNCFLT	offsetof(struct cpu_info, get_asyncflt)
 define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_info, pure_vcache_flush)
 define	CPUINFO_MEMERR		offsetof(struct cpu_info, memerr)
+define	CPUINFO_SYNCFLTDUMP	offsetof(struct cpu_info, syncfltdump)
 
 # PTE bits and related information
 define	PG_W		PG_W
