@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.24 2002/10/12 15:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.24 2002/10/12 15:39:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $");
 #include <stdlib.h>
 #include "pax.h"
 #include "extern.h"
+#include "options.h"
 
 static int
 mk_link(char *,struct stat *,char *, int);
@@ -121,7 +122,7 @@ file_creat(ARCHD *arcn)
 		    file_mode)) >= 0)
 			break;
 		oerrno = errno;
-		if (chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			syswarn(1, oerrno, "Unable to create %s", arcn->name);
 			return(-1);
 		}
@@ -357,6 +358,9 @@ node_creat(ARCHD *arcn)
 	int pass = 0;
 	mode_t file_mode;
 	struct stat sb;
+	char target[MAXPATHLEN];
+	char *nm = arcn->name;
+	int len;
 
 	/*
 	 * create node based on type, if that fails try to unlink the node and
@@ -369,20 +373,43 @@ node_creat(ARCHD *arcn)
 	for (;;) {
 		switch(arcn->type) {
 		case PAX_DIR:
-			res = mkdir(arcn->name, file_mode);
+			/*
+			 * If -h (or -L) was given in tar-mode, follow the
+			 * potential symlink chain before trying to create the
+			 * directory.
+			 */
+			if (strcmp(NM_TAR, argv0) == 0 && Lflag) {
+				while (lstat(nm, &sb) == 0 &&
+				    S_ISLNK(sb.st_mode)) {
+					len = readlink(nm, target,
+					    sizeof target - 1);
+					if (len == -1) {
+						syswarn(0, errno,
+						   "cannot follow symlink %s in chain for %s",
+						    nm, arcn->name);
+						res = -1;
+						goto badlink;
+					}
+					target[len] = '\0';
+					nm = target;
+				}
+			}
+			res = mkdir(nm, file_mode);
+
+badlink:
 			if (ign)
 				res = 0;
 			break;
 		case PAX_CHR:
 			file_mode |= S_IFCHR;
-			res = mknod(arcn->name, file_mode, arcn->sb.st_rdev);
+			res = mknod(nm, file_mode, arcn->sb.st_rdev);
 			break;
 		case PAX_BLK:
 			file_mode |= S_IFBLK;
-			res = mknod(arcn->name, file_mode, arcn->sb.st_rdev);
+			res = mknod(nm, file_mode, arcn->sb.st_rdev);
 			break;
 		case PAX_FIF:
-			res = mkfifo(arcn->name, file_mode);
+			res = mkfifo(nm, file_mode);
 			break;
 		case PAX_SCK:
 			/*
@@ -390,10 +417,10 @@ node_creat(ARCHD *arcn)
 			 */
 			tty_warn(0,
 			    "%s skipped. Sockets cannot be copied or extracted",
-			    arcn->name);
+			    nm);
 			return(-1);
 		case PAX_SLK:
-			res = symlink(arcn->ln_name, arcn->name);
+			res = symlink(arcn->ln_name, nm);
 			break;
 		case PAX_CTG:
 		case PAX_HLK:
@@ -404,7 +431,7 @@ node_creat(ARCHD *arcn)
 			 * we should never get here
 			 */
 			tty_warn(0, "%s has an unknown file type, skipping",
-				arcn->name);
+			    nm);
 			return(-1);
 		}
 
@@ -420,14 +447,14 @@ node_creat(ARCHD *arcn)
 		 * we failed to make the node
 		 */
 		oerrno = errno;
-		if ((ign = unlnk_exist(arcn->name, arcn->type)) < 0)
+		if ((ign = unlnk_exist(nm, arcn->type)) < 0)
 			return(-1);
 
 		if (++pass <= 1)
 			continue;
 
-		if (chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Could not create: %s", arcn->name);
+		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+			syswarn(1, oerrno, "Could not create: %s", nm);
 			return(-1);
 		}
 	}
@@ -440,7 +467,7 @@ node_creat(ARCHD *arcn)
 #else
 	if (pids && arcn->type != PAX_SLK)
 #endif
-		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
+		res = set_ids(nm, arcn->sb.st_uid, arcn->sb.st_gid);
 	else
 		res = 0;
 
@@ -458,7 +485,7 @@ node_creat(ARCHD *arcn)
 #endif
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
-	if (arcn->type == PAX_DIR) {
+	if (arcn->type == PAX_DIR && strcmp(NM_CPIO, argv0) != 0) {
 		/*
 		 * Dirs must be processed again at end of extract to set times
 		 * and modes to agree with those stored in the archive. However
@@ -468,11 +495,11 @@ node_creat(ARCHD *arcn)
 		 * and modes will be fixed after the entire archive is read and
 		 * before pax exits.
 		 */
-		if (access(arcn->name, R_OK | W_OK | X_OK) < 0) {
-			if (lstat(arcn->name, &sb) < 0) {
+		if (access(nm, R_OK | W_OK | X_OK) < 0) {
+			if (lstat(nm, &sb) < 0) {
 				syswarn(0, errno,"Could not access %s (stat)",
 				    arcn->name);
-				set_pmode(arcn->name,file_mode | S_IRWXU);
+				set_pmode(nm,file_mode | S_IRWXU);
 			} else {
 				/*
 				 * We have to add rights to the dir, so we make
@@ -480,7 +507,7 @@ node_creat(ARCHD *arcn)
 				 * restored AS CREATED and not as stored if
 				 * pmode is not set.
 				 */
-				set_pmode(arcn->name,
+				set_pmode(nm,
 				    ((sb.st_mode & FILEBITS) | S_IRWXU));
 				if (!pmode)
 					arcn->sb.st_mode = sb.st_mode;
@@ -490,9 +517,9 @@ node_creat(ARCHD *arcn)
 			 * we have to force the mode to what was set here,
 			 * since we changed it from the default as created.
 			 */
-			add_dir(arcn->name, arcn->nlen, &(arcn->sb), 1);
+			add_dir(nm, arcn->nlen, &(arcn->sb), 1);
 		} else if (pmode || patime || pmtime)
-			add_dir(arcn->name, arcn->nlen, &(arcn->sb), 0);
+			add_dir(nm, arcn->nlen, &(arcn->sb), 0);
 	}
 
 #if HAVE_LUTIMES

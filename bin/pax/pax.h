@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.13 2002/01/31 22:43:36 tv Exp $	*/
+/*	$NetBSD: pax.h,v 1.14 2002/10/12 15:39:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -80,6 +80,7 @@
 #define ISBLK		2	/* block device */
 #define ISTAPE		3	/* tape drive */
 #define ISPIPE		4	/* pipe/socket */
+#define	ISRMT		5	/* rmt */
 
 
 /*
@@ -90,11 +91,11 @@
 typedef struct pattern {
 	char		*pstr;		/* pattern to match, user supplied */
 	char		*pend;		/* end of a prefix match */
+	char		*chdname;	/* the dir to change to if not NULL. */
 	int		plen;		/* length of pstr */
 	int		flgs;		/* processing/state flags */
 #define MTCH		0x1		/* pattern has been matched */
 #define DIR_MTCH	0x2		/* pattern matched a directory */
-#define PTCHDIR		0x4		/* not pattern but chdir */
 	struct pattern	*fow;		/* next pattern */
 } PATTERN;
 
@@ -259,7 +260,7 @@ typedef struct oplist {
  * Pathname base component of the temporary file template, to be created in
  * ${TMPDIR} or, as a fall-back, _PATH_TMP.
  */
-#define TMPFILE	"paxXXXXXX"
+#define _TFILE_BASE	"paxXXXXXXXXXX"
 
 /*
  * Macros to manipulate off_t as a unsigned long or unsigned long long
