@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1996/06/17 07:55:13 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 1996/08/09 05:11:02 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
+
+#include "ppp.h"
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
