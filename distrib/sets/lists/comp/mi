@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.466 2002/08/07 14:39:51 tron Exp $
+#	$NetBSD: mi,v 1.467 2002/08/07 14:47:09 tron Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1195,6 +1195,8 @@
 ./usr/share/man/cat2/open.0		comp-c-catman
 ./usr/share/man/cat2/pathconf.0		comp-c-catman
 ./usr/share/man/cat2/pipe.0		comp-c-catman
+./usr/share/man/cat2/pmc_control.0	comp-c-catman
+./usr/share/man/cat2/pmc_get_info.0	comp-c-catman
 ./usr/share/man/cat2/poll.0		comp-c-catman
 ./usr/share/man/cat2/pread.0		comp-c-catman
 ./usr/share/man/cat2/preadv.0		comp-c-catman
@@ -3792,6 +3794,8 @@
 ./usr/share/man/man2/open.2		comp-c-man
 ./usr/share/man/man2/pathconf.2		comp-c-man
 ./usr/share/man/man2/pipe.2		comp-c-man
+./usr/share/man/man2/pmc_control.2	comp-c-man
+./usr/share/man/man2/pmc_get_info.2	comp-c-man
 ./usr/share/man/man2/poll.2		comp-c-man
 ./usr/share/man/man2/pread.2		comp-c-man
 ./usr/share/man/man2/preadv.2		comp-c-man
