@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2000/08/22 19:46:31 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2000/11/22 08:55:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ static __inline void set_sint __P((int));
 extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];
 extern long intrcnt[];
+extern struct intrhand *intrhand[];
+extern int intrtype[];
 
 /*
  *  Reorder protection in the following inline functions is
