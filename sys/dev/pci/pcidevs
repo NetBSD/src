@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.444 2002/06/26 09:33:50 cjs Exp $
+$NetBSD: pcidevs,v 1.445 2002/06/26 10:03:58 cjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -765,6 +765,7 @@ product ALTEON BCM5701		0x0004	ACEnic BCM5701 10/100/1000 Ethernet
 
 /* Altima products */
 product ALTIMA AC1000	0x03e8	AC1000 Gigabit Ethernet
+product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
