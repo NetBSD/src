@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.23 2004/01/01 19:27:36 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.24 2004/01/05 01:19:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -264,10 +264,11 @@ struct RF_Raid_s {
          * somewhere else, or at least hung off this
          * in some generic way
          */
+#if RF_INCLUDE_CHAINDECLUSTER > 0
 
 	/* used by rf_compute_workload_shift */
 	RF_RowCol_t hist_diskreq[RF_MAXCOL];
-
+#endif
 	/* used by declustering */
 	int     noRotate;
 
