@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.94 2003/06/05 10:41:33 simonb Exp $	 */
+/*	$NetBSD: rtld.c,v 1.95 2003/06/30 00:49:25 marcus Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -156,8 +156,8 @@ _rtld_init(mapbase, relocbase)
 	_rtld_digest_dynamic(&_rtld_objself);
 	assert(!_rtld_objself.needed && !_rtld_objself.pltrel &&
 	    !_rtld_objself.pltrela);
-#ifndef __mips__
-	/* MIPS has a bogus DT_TEXTREL. */
+#if !defined(__mips__) && !defined(__sh__)
+	/* MIPS and SH have a bogus DT_TEXTREL. */
 	assert(!_rtld_objself.pltgot && !_rtld_objself.textrel);
 #endif
 
