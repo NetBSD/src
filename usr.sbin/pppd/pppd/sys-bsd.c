@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.32 1999/08/25 16:28:41 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.33 2000/04/12 10:38:46 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.46 1999/08/13 06:46:18 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.32 1999/08/25 16:28:41 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.33 2000/04/12 10:38:46 itojun Exp $");
 #endif
 #endif
 
@@ -529,11 +529,11 @@ sif6addr(unit, our_eui64, his_eui64)
     /* KAME ifindex hack */
     *(u_int16_t *)&addreq6.ifra_dstaddr.sin6_addr.s6_addr[2] = htons(ifindex);
 
-    /* prefix mask: 128bit (correct?) */
+    /* prefix mask: 64bit */
     addreq6.ifra_prefixmask.sin6_family = AF_INET6;
     addreq6.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
     memset(&addreq6.ifra_prefixmask.sin6_addr, 0xff,
-	sizeof(addreq6.ifra_prefixmask.sin6_addr));
+	sizeof(addreq6.ifra_prefixmask.sin6_addr) / 2);
 
     /* address lifetime (infty) */
     addreq6.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
