@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.42.2.1 1994/07/21 05:10:47 cgd Exp $
+ *	$Id: if_ep.c,v 1.42.2.2 1994/07/29 01:12:56 cgd Exp $
  */
 
 #include "bpfilter.h"
@@ -120,7 +120,7 @@ static int epbusyeeprom __P((struct ep_softc *));
 #define MAXEPCARDS 20	/* if you have 21 cards in your machine... you lose */
 
 static struct epcard {
-	u_short	port;
+	u_short	iobase;
 	u_short	irq;
 	char	available;
 	char	bus32bit;
@@ -135,7 +135,7 @@ epaddcard(p, i, mode)
 {
 	if (nepcards >= sizeof(epcards)/sizeof(epcards[0]))
 		return;
-	epcards[nepcards].port = p;
+	epcards[nepcards].iobase = p;
 	epcards[nepcards].irq = 1 << ((i == 2) ? 9 : i);
 	epcards[nepcards].available = 1;
 	epcards[nepcards].bus32bit = mode;
@@ -157,23 +157,23 @@ epprobe(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	static int firsttime;
-	int slot, port, i;
+	static int probed;
+	int slot, iobase, i;
 	u_short vendor, model;
 	u_short k, k2;
 
-	if (firsttime==0) {
-		firsttime = 1;
+	if (!probed) {
+		probed = 1;
 
 		/* find all EISA cards */
 		for (slot = 1; slot < 16; slot++) {
-			port = 0x1000 * slot;
+			iobase = 0x1000 * slot;
 
-			vendor = htons(inw(port + EISA_VENDOR));
+			vendor = htons(inw(iobase + EISA_VENDOR));
 			if (vendor != MFG_ID)
 				continue;
 
-			model = htons(inw(port + EISA_MODEL));
+			model = htons(inw(iobase + EISA_MODEL));
 			if ((model & 0xfff0) != PROD_ID) {
 #ifndef trusted
 				printf("epprobe: ignoring model %04x\n", model);
@@ -181,14 +181,19 @@ epprobe(parent, self, aux)
 				continue;
 			}
 
-			outw(port + EP_COMMAND, GLOBAL_RESET);
+			printf("epprobe: resetting card\n");
+
+			outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+			delay(10);
+			outb(iobase + EISA_CONTROL, EISA_ENABLE);
+			/* Wait for reset? */
 			delay(1000);
 
-			k = inw(port + EP_W0_ADDRESS_CFG);
+			k = inw(iobase + EP_W0_ADDRESS_CFG);
 			k = (k & 0x1f) * 0x10 + 0x200;
-			k2 = inw(port + EP_W0_RESOURCE_CFG);
+			k2 = inw(iobase + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(port, k2, 0);
+			epaddcard(iobase, k2, 0);
 		}
 
 		/* find all isa cards */
@@ -206,8 +211,6 @@ epprobe(parent, self, aux)
 
 			vendor =
 			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID));
-			if (vendor == 0xff00)
-				continue;	/* no more isa cards */
 			if (vendor != MFG_ID)
 				continue;
 
@@ -241,49 +244,23 @@ epprobe(parent, self, aux)
 		/* XXX should we sort by ethernet address? */
 	}
 
-	/*
-	 * a very specific search order:
-	 * 	exact port & irq
-	 * 	exact port, wildcard irq
-	 * 	wildcard port, exact irq
-	 *	wildcard port & irq
-	 * else fail..
-	 */
-	if (ia->ia_iobase != (u_short)-1 && ia->ia_irq != (u_short)-1) {
-		for (i = 0; i<nepcards; i++) {
-			if (epcards[i].available == 0)
-				continue;
-			if (ia->ia_iobase == epcards[i].port &&
-			    ia->ia_irq == epcards[i].irq)
-				goto good;
-		}
-	}
-	if (ia->ia_iobase != (u_short)-1 && ia->ia_irq == (u_short)-1) {
-		for (i = 0; i<nepcards; i++) {
-			if (epcards[i].available == 0)
-				continue;
-			if (ia->ia_iobase == epcards[i].port)
-				goto good;
-		}
-	}
-	if (ia->ia_iobase == (u_short)-1 && ia->ia_irq != (u_short)-1) {
-		for (i = 0; i<nepcards; i++) {
-			if (epcards[i].available == 0)
-				continue;
-			if (ia->ia_irq == epcards[i].irq)
-				goto good;
-		}
-	}
-	for (i = 0; i<nepcards; i++)
-		if (epcards[i].available != 0) {
-			goto good;
+	for (i = 0; i < nepcards; i++) {
+		if (epcards[i].available == 0)
+			continue;
+		if (ia->ia_iobase != IOBASEUNK &&
+		    ia->ia_iobase != epcards[i].iobase)
+			continue;
+		if (ia->ia_irq != IRQUNK &&
+		    ia->ia_irq != epcards[i].irq)
+			continue;
+		goto good;
 	}
 	return 0;
 
 good:
 	epcards[i].available = 0;
 	sc->bus32bit = epcards[i].bus32bit;
-	ia->ia_iobase = epcards[i].port;
+	ia->ia_iobase = epcards[i].iobase;
 	ia->ia_irq = epcards[i].irq;
 	ia->ia_iosize = 0x10;
 	ia->ia_msize = 0;
