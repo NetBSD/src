@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.5 1999/10/26 06:53:42 cgd Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.6 1999/11/03 22:13:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -45,8 +45,9 @@
 #define NAME(func)	__C(BUS_SPACE,__C(_bs_,func))
 #define LNAME(func)	__C(L,NAME(func))
 
-#define GLOBAL(func)	.global	_C_LABEL(NAME(func))
-#define LABEL(func)	_C_LABEL(NAME(func)):
+#define	__L(x)		_C_LABEL(x)
+#define GLOBAL(func)	.global	__L(NAME(func))
+#define LABEL(func)	__L(NAME(func)):
 #define LLABEL(func)	LNAME(func):
 
 #define FTEXT(func,text)	__S(__C(NAME(func),text))
