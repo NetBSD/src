@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.32 1998/11/27 18:32:09 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.33 1998/11/27 18:33:21 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1552,7 +1552,6 @@ svr4_sys_putmsg(p, v, retval)
 #endif
 	                DPRINTF(("putmsg: Invalid inet length %ld\n", sc.len));
 	                return EINVAL;
->>>>>>> 1.31
 		}
 		netaddr_to_sockaddr_in(&sain, &sc);
 		skp = &sain;
