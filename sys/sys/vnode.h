@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.127 2004/11/10 17:30:56 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.128 2004/12/18 03:08:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,17 +57,26 @@ struct namecache;
  */
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 
+#define VNODE_TYPES \
+    "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD"
+
 /*
  * Vnode tag types.
  * These are for the benefit of external programs only (e.g., pstat)
  * and should NEVER be inspected by the kernel.
  */
 enum vtagtype	{
-	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
-	VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS,
-	VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA, VT_FILECORE, VT_NTFS, VT_VFS,
-	VT_OVERLAY, VT_SMBFS, VT_PTYFS
+	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS,
+	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
+	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
+	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS
 };
+
+#define VNODE_TAGS \
+    "VT_NON", "VT_UFS", "VT_NFS", "VT_MFS", "VT_MSDOSFS", "VT_LFS", "VT_LOFS", \
+    "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
+    "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
+    "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -153,6 +162,11 @@ struct vnode {
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 #define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
+
+#define VNODE_FLAGBITS \
+    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP" \
+    "\10VLOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
+    "\15DIROP\16LAYER\17ONWORKLIST\20DIRTY"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
