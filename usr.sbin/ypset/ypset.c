@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypset.c,v 1.3 1993/06/12 00:02:37 deraadt Exp $";
+static char rcsid[] = "ypset.c,v 1.3 1993/06/12 00:02:37 deraadt Exp";
 #endif
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$Id: ypset.c,v 1.3 1993/06/12 00:02:37 deraadt Exp $";
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include <arpa/inet.h>
 
 extern bool_t xdr_domainname();
 
@@ -56,9 +57,11 @@ char *dom, *server;
 {
 	struct ypbind_setdom ypsd;
 	struct timeval tv;
+	struct hostent *hp;
 	CLIENT *client;
 	int sock, port;
 	int r;
+	unsigned long server_addr;
 	
 	if( (port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
 		fprintf(stderr, "%s not running ypserv.\n", server);
@@ -66,10 +69,21 @@ char *dom, *server;
 	}
 
 	bzero(&ypsd, sizeof ypsd);
+
+	if( (hp = gethostbyname (server)) != NULL ) {
+		/* is this the most compatible way?? */
+		bcopy (hp->h_addr_list[0], &ypsd.ypsetdom_addr,
+		       sizeof (ypsd.ypsetdom_addr));
+	} else if( (long)(server_addr = inet_addr (server)) == -1) {
+		fprintf(stderr, "can't find address for %s\n", server);
+		exit(1);
+	} else
+		bcopy (&server_addr, &ypsd.ypsetdom_addr,
+		       sizeof (server_addr));
+
 	strncpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
-	ypsd.ypsetdom_addr = sin->sin_addr;
-	ypsd.ypsetdom_vers = YPVERS;
 	ypsd.ypsetdom_port = port;
+	ypsd.ypsetdom_vers = YPVERS;
 	
 	tv.tv_sec = 15;
 	tv.tv_usec = 0;
