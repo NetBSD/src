@@ -1,3 +1,4 @@
+/*	$NetBSD: nchan.c,v 1.1.1.5 2001/04/10 07:13:57 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Markus Friedl.  All rights reserved.
  *

@@ -1,3 +1,4 @@
+/*	$NetBSD: sshconnect.c,v 1.1.1.8 2001/04/10 07:14:15 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.100 2001/03/12 22:02:02 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.103 2001/04/06 21:00:14 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -45,7 +46,7 @@ extern int IPv4or6;
  * Connect to the given ssh server using a proxy command.
  */
 int
-ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
+ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 		  const char *proxy_command)
 {
 	Buffer command;
@@ -96,7 +97,7 @@ ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 		char *argv[10];
 
 		/* Child.  Permanently give up superuser privileges. */
-		permanently_set_uid(original_real_uid);
+		permanently_set_uid(pw);
 
 		/* Redirect stdin and stdout. */
 		close(pin[1]);
@@ -145,7 +146,7 @@ ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
 int
-ssh_create_socket(uid_t original_real_uid, int privileged, int family)
+ssh_create_socket(struct passwd *pw, int privileged, int family)
 {
 	int sock;
 
@@ -165,7 +166,7 @@ ssh_create_socket(uid_t original_real_uid, int privileged, int family)
 		 * Just create an ordinary socket on arbitrary port.  We use
 		 * the user's uid to create the socket.
 		 */
-		temporarily_use_uid(original_real_uid);
+		temporarily_use_uid(pw);
 		sock = socket(family, SOCK_STREAM, 0);
 		if (sock < 0)
 			error("socket: %.100s", strerror(errno));
@@ -188,7 +189,7 @@ ssh_create_socket(uid_t original_real_uid, int privileged, int family)
 int
 ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	    u_short port, int connection_attempts,
-	    int anonymous, uid_t original_real_uid,
+	    int anonymous, struct passwd *pw,
 	    const char *proxy_command)
 {
 	int gaierr;
@@ -212,7 +213,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	}
 	/* If a proxy command is given, connect using it. */
 	if (proxy_command != NULL)
-		return ssh_proxy_connect(host, port, original_real_uid, proxy_command);
+		return ssh_proxy_connect(host, port, pw, proxy_command);
 
 	/* No proxy command. */
 
@@ -248,7 +249,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				host, ntop, strport);
 
 			/* Create a socket for connecting. */
-			sock = ssh_create_socket(original_real_uid,
+			sock = ssh_create_socket(pw,
 			    !anonymous && geteuid() == 0,
 			    ai->ai_family);
 			if (sock < 0)
@@ -258,10 +259,10 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			 * hope that it will help with tcp_wrappers showing
 			 * the remote uid as root.
 			 */
-			temporarily_use_uid(original_real_uid);
+			temporarily_use_uid(pw);
 			if (connect(sock, ai->ai_addr, ai->ai_addrlen) >= 0) {
 				/* Successful connection. */
-				memcpy(hostaddr, ai->ai_addr, ai->ai_addrlen); 
+				memcpy(hostaddr, ai->ai_addr, ai->ai_addrlen);
 				restore_uid();
 				break;
 			} else {
@@ -730,17 +731,12 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
  * This function does not require super-user privileges.
  */
 void
-ssh_login(int host_key_valid, RSA *own_host_key, const char *orighost,
-    struct sockaddr *hostaddr, uid_t original_real_uid)
+ssh_login(Key *own_host_key, const char *orighost,
+    struct sockaddr *hostaddr, struct passwd *pw)
 {
-	struct passwd *pw;
 	char *host, *cp;
 	char *server_user, *local_user;
 
-	/* Get local user name.  Use it as server user if no user name was given. */
-	pw = getpwuid(original_real_uid);
-	if (!pw)
-		fatal("User id %u not found from user database.", original_real_uid);
 	local_user = xstrdup(pw->pw_name);
 	server_user = options.user ? options.user : local_user;
 
@@ -763,7 +759,7 @@ ssh_login(int host_key_valid, RSA *own_host_key, const char *orighost,
 		ssh_userauth2(server_user, host);
 	} else {
 		ssh_kex(host, hostaddr);
-		ssh_userauth(local_user, server_user, host, host_key_valid, own_host_key);
+		ssh_userauth(local_user, server_user, host, own_host_key);
 	}
 }
 

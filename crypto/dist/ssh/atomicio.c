@@ -1,3 +1,4 @@
+/*	$NetBSD: atomicio.c,v 1.1.1.5 2001/04/10 07:13:48 itojun Exp $	*/
 /*
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
  * All rights reserved.

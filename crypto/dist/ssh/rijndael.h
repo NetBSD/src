@@ -1,3 +1,4 @@
+/*	$NetBSD: rijndael.h,v 1.1.1.4 2001/04/10 07:14:00 itojun Exp $	*/
 /*	$OpenBSD: rijndael.h,v 1.7 2001/03/01 03:38:33 deraadt Exp $	*/
 
 /* This is an independent implementation of the encryption algorithm:   */

@@ -1,3 +1,4 @@
+/*	$NetBSD: auth2.c,v 1.1.1.7 2001/04/10 07:13:50 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.46 2001/03/11 13:25:36 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.51 2001/04/06 21:00:08 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -77,6 +78,7 @@ char	*authmethods_get(void);
 
 /* auth */
 void	userauth_banner(void);
+void	userauth_reply(Authctxt *authctxt, int authenticated);
 int	userauth_none(Authctxt *authctxt);
 int	userauth_passwd(Authctxt *authctxt);
 int	userauth_pubkey(Authctxt *authctxt);
@@ -116,7 +118,7 @@ do_authentication2()
 	dispatch_init(&protocol_error);
 	dispatch_set(SSH2_MSG_SERVICE_REQUEST, &input_service_request);
 	dispatch_run(DISPATCH_BLOCK, &authctxt->success, authctxt);
-	do_authenticated2(authctxt);
+	do_authenticated(authctxt);
 }
 
 void
@@ -208,6 +210,12 @@ input_userauth_request(int type, int plen, void *ctxt)
 	/* reset state */
 	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, &protocol_error);
 	authctxt->postponed = 0;
+#ifdef BSD_AUTH
+	if (authctxt->as) {
+		auth_close(authctxt->as);
+		authctxt->as = NULL;
+	}
+#endif
 
 	/* try to authenticate user */
 	m = authmethod_lookup(method);
@@ -215,6 +223,16 @@ input_userauth_request(int type, int plen, void *ctxt)
 		debug2("input_userauth_request: try method %s", method);
 		authenticated =	m->userauth(authctxt);
 	}
+	userauth_finish(authctxt, authenticated, method);
+
+	xfree(service);
+	xfree(user);
+	xfree(method);
+}
+
+void
+userauth_finish(Authctxt *authctxt, int authenticated, char *method)
+{
 	if (!authctxt->valid && authenticated)
 		fatal("INTERNAL ERROR: authenticated invalid user %s",
 		    authctxt->user);
@@ -229,10 +247,6 @@ input_userauth_request(int type, int plen, void *ctxt)
 
 	if (!authctxt->postponed)
 		userauth_reply(authctxt, authenticated);
-
-	xfree(service);
-	xfree(user);
-	xfree(method);
 }
 
 void
@@ -245,11 +259,8 @@ userauth_banner(void)
 
 	if (options.banner == NULL || (datafellows & SSH_BUG_BANNER))
 		return;
-	if ((fd = open(options.banner, O_RDONLY)) < 0) {
-		error("userauth_banner: open %s failed: %s",
-		    options.banner, strerror(errno));
+	if ((fd = open(options.banner, O_RDONLY)) < 0)
 		return;
-	}
 	if (fstat(fd, &st) < 0)
 		goto done;
 	len = st.st_size;
@@ -305,7 +316,7 @@ userauth_none(Authctxt *authctxt)
 		m->enabled = NULL;
 	packet_done();
 	userauth_banner();
-	return authctxt->valid ? auth_password(authctxt->pw, "") : 0;
+	return authctxt->valid ? auth_password(authctxt, "") : 0;
 }
 
 int
@@ -321,7 +332,7 @@ userauth_passwd(Authctxt *authctxt)
 	password = packet_get_string(&len);
 	packet_done();
 	if (authctxt->valid &&
-	    auth_password(authctxt->pw, password) == 1)
+	    auth_password(authctxt, password) == 1)
 		authenticated = 1;
 	memset(password, 0, len);
 	xfree(password);
@@ -522,7 +533,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 		return 0;
 
 	/* Temporarily use the user's uid. */
-	temporarily_use_uid(pw->pw_uid);
+	temporarily_use_uid(pw);
 
 	/* The authorized keys. */
 	snprintf(file, sizeof file, "%.500s/%.100s", pw->pw_dir,

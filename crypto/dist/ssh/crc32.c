@@ -1,3 +1,4 @@
+/*	$NetBSD: crc32.c,v 1.1.1.4 2001/04/10 07:13:54 itojun Exp $	*/
 /*
  *  COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
  *  code or tables extracted from it, as desired without restriction.

@@ -1,3 +1,4 @@
+/*	$NetBSD: auth.c,v 1.1.1.6 2001/04/10 07:13:49 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *

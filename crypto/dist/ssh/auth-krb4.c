@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-krb4.c,v 1.1.1.4 2001/04/10 07:13:48 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *

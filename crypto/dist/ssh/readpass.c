@@ -1,3 +1,4 @@
+/*	$NetBSD: readpass.c,v 1.1.1.5 2001/04/10 07:13:59 itojun Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *      The Regents of the University of California.  All rights reserved.
