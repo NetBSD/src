@@ -1,6 +1,6 @@
-/*	$NetBSD: nfsfh.h,v 1.1.1.2 2002/02/18 09:07:41 itojun Exp $	*/
+/*	$NetBSD: nfsfh.h,v 1.1.1.2.2.1 2002/06/02 15:47:24 tv Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/nfsfh.h,v 1.12 2001/09/17 21:57:52 fenner Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/nfsfh.h,v 1.13 2002/04/24 06:27:05 guy Exp (LBL) */
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -67,4 +67,4 @@ typedef	struct {
 #define	fsid_eq(a,b)	((a.fsid_code == b.fsid_code) &&\
 			 dev_eq(a.Fsid_dev, b.Fsid_dev))
 
-extern void Parse_fh(caddr_t *, int, my_fsid *, ino_t *, const char **, const char **, int);
+extern void Parse_fh(const unsigned char *, int, my_fsid *, ino_t *, const char **, const char **, int);
