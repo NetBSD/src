@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: kernfs_vnops.c,v 1.2 1993/03/25 06:00:24 cgd Exp $
+ * $Id: kernfs_vnops.c,v 1.3 1993/03/25 17:34:52 cgd Exp $
  */
 
 /*
@@ -200,9 +200,8 @@ kernfs_lookup(dvp, ndp, p)
 	}
 	
 	if (ndp->ni_namelen == 4 && bcmp(pname, "root", 4) == 0) {
-		ndp->ni_dvp = rootdir;
+		ndp->ni_dvp = dvp;
 		ndp->ni_vp = rootdir;
-		VREF(rootdir);
 		VREF(rootdir);
 		VOP_LOCK(rootdir);
 		return (0);
