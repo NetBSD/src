@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_tran.h,v 1.2 2002/01/04 02:39:45 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_tran.h,v 1.2 2001/12/02 08:47:29 bp Exp $
+ * FreeBSD: src/sys/netsmb/smb_tran.h,v 1.2 2001/12/02 08:47:29 bp Exp
  */
 
 #ifndef _NETSMB_SMB_TRAN_H_
@@ -54,20 +56,20 @@ struct smb_tran_ops;
 
 struct smb_tran_desc {
 	sa_family_t	tr_type;
-	int	(*tr_create)(struct smb_vc *vcp, struct thread *td);
-	int	(*tr_done)(struct smb_vc *vcp, struct thread *td);
-	int	(*tr_bind)(struct smb_vc *vcp, struct sockaddr *sap, struct thread *td);
-	int	(*tr_connect)(struct smb_vc *vcp, struct sockaddr *sap, struct thread *td);
-	int	(*tr_disconnect)(struct smb_vc *vcp, struct thread *td);
-	int	(*tr_send)(struct smb_vc *vcp, struct mbuf *m0, struct thread *td);
-	int	(*tr_recv)(struct smb_vc *vcp, struct mbuf **mpp, struct thread *td);
+	int	(*tr_create)(struct smb_vc *vcp, struct proc *p);
+	int	(*tr_done)(struct smb_vc *vcp, struct proc *p);
+	int	(*tr_bind)(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p);
+	int	(*tr_connect)(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p);
+	int	(*tr_disconnect)(struct smb_vc *vcp, struct proc *p);
+	int	(*tr_send)(struct smb_vc *vcp, struct mbuf *m0, struct proc *p);
+	int	(*tr_recv)(struct smb_vc *vcp, struct mbuf **mpp, struct proc *p);
 	void	(*tr_timo)(struct smb_vc *vcp);
 	void	(*tr_intr)(struct smb_vc *vcp);
 	int	(*tr_getparam)(struct smb_vc *vcp, int param, void *data);
 	int	(*tr_setparam)(struct smb_vc *vcp, int param, void *data);
 	int	(*tr_fatal)(struct smb_vc *vcp, int error);
 #ifdef notyet
-	int	(*tr_poll)(struct smb_vc *vcp, struct thread *td);
+	int	(*tr_poll)(struct smb_vc *vcp, struct proc *p);
 	int	(*tr_cmpaddr)(void *addr1, void *addr2);
 #endif
 	LIST_ENTRY(smb_tran_desc)	tr_link;
