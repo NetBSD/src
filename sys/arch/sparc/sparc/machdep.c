@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.22 1994/05/19 07:13:03 deraadt Exp $
+ * $Id: machdep.c,v 1.23 1994/05/21 08:23:02 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -59,7 +59,6 @@
 #include <sys/file.h>
 #include <sys/clist.h>
 #include <sys/callout.h>
-#include <sys/vmmeter.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
