@@ -126,8 +126,8 @@
  */
 #define ACPI_UINT8_MAX                  (UINT8)  0xFF
 #define ACPI_UINT16_MAX                 (UINT16) 0xFFFF
-#define ACPI_UINT32_MAX                 (UINT32) 0xFFFFFFFF
-#define ACPI_UINT64_MAX                 (UINT64) 0xFFFFFFFFFFFFFFFF
+#define ACPI_UINT32_MAX                 (UINT32) 0xFFFFFFFFU
+#define ACPI_UINT64_MAX                 (UINT64) 0xFFFFFFFFFFFFFFFFULL
 #define ACPI_ASCII_MAX                  0x7F
 
 
@@ -392,7 +392,7 @@ typedef UINT32                          ACPI_INTEGER;
 typedef UINT64                          ACPI_INTEGER;
 #define ACPI_INTEGER_MAX                ACPI_UINT64_MAX
 #define ACPI_INTEGER_BIT_SIZE           64
-#define ACPI_MAX_BCD_VALUE              9999999999999999
+#define ACPI_MAX_BCD_VALUE              9999999999999999ULL
 #define ACPI_MAX_BCD_DIGITS             16
 #define ACPI_MAX_DECIMAL_DIGITS         19
 
