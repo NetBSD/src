@@ -1,4 +1,4 @@
-#	$NetBSD: files.darwin,v 1.1 2002/11/12 23:40:23 manu Exp $
+#	$NetBSD: files.darwin,v 1.2 2002/11/14 21:47:15 manu Exp $
 #
 # Config file description for machine-independent Darwin compat code.
 # Included by ports that need it.
@@ -8,3 +8,4 @@
 
 file	compat/darwin/darwin_exec.c		compat_darwin
 file	compat/darwin/darwin_sysent.c		compat_darwin
+file	compat/freebsd/freebsd_file.c		compat_darwin

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.2 2002/11/12 23:40:23 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.3 2002/11/14 21:47:15 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -27,224 +27,6 @@
 		} be;							\
 	}
 
-struct compat_43_sys_creat_args {
-	syscallarg(const char *) path;
-	syscallarg(mode_t) mode;
-};
-
-struct compat_43_sys_lseek_args {
-	syscallarg(int) fd;
-	syscallarg(long) offset;
-	syscallarg(int) whence;
-};
-
-struct compat_43_sys_stat_args {
-	syscallarg(const char *) path;
-	syscallarg(struct stat43 *) ub;
-};
-
-struct compat_43_sys_lstat_args {
-	syscallarg(const char *) path;
-	syscallarg(struct stat43 *) ub;
-};
-
-struct compat_13_sys_sigaction_args {
-	syscallarg(int) signum;
-	syscallarg(const struct sigaction13 *) nsa;
-	syscallarg(struct sigaction13 *) osa;
-};
-
-struct compat_13_sys_sigprocmask_args {
-	syscallarg(int) how;
-	syscallarg(int) mask;
-};
-
-struct compat_13_sys_sigaltstack_args {
-	syscallarg(const struct sigaltstack13 *) nss;
-	syscallarg(struct sigaltstack13 *) oss;
-};
-
-struct compat_12_sys_reboot_args {
-	syscallarg(int) opt;
-};
-
-struct compat_43_sys_fstat_args {
-	syscallarg(int) fd;
-	syscallarg(struct stat43 *) sb;
-};
-
-struct compat_12_sys_msync_args {
-	syscallarg(caddr_t) addr;
-	syscallarg(size_t) len;
-};
-
-struct compat_43_sys_mmap_args {
-	syscallarg(caddr_t) addr;
-	syscallarg(size_t) len;
-	syscallarg(int) prot;
-	syscallarg(int) flags;
-	syscallarg(int) fd;
-	syscallarg(long) pos;
-};
-
-struct compat_12_sys_swapon_args {
-	syscallarg(const char *) name;
-};
-
-struct compat_43_sys_gethostname_args {
-	syscallarg(char *) hostname;
-	syscallarg(u_int) len;
-};
-
-struct compat_43_sys_sethostname_args {
-	syscallarg(char *) hostname;
-	syscallarg(u_int) len;
-};
-
-struct compat_43_sys_accept_args {
-	syscallarg(int) s;
-	syscallarg(caddr_t) name;
-	syscallarg(int *) anamelen;
-};
-
-struct compat_43_sys_send_args {
-	syscallarg(int) s;
-	syscallarg(caddr_t) buf;
-	syscallarg(int) len;
-	syscallarg(int) flags;
-};
-
-struct compat_43_sys_recv_args {
-	syscallarg(int) s;
-	syscallarg(caddr_t) buf;
-	syscallarg(int) len;
-	syscallarg(int) flags;
-};
-
-struct compat_13_sys_sigreturn_args {
-	syscallarg(struct sigcontext13 *) sigcntxp;
-};
-
-struct compat_43_sys_sigvec_args {
-	syscallarg(int) signum;
-	syscallarg(struct sigvec *) nsv;
-	syscallarg(struct sigvec *) osv;
-};
-
-struct compat_43_sys_sigblock_args {
-	syscallarg(int) mask;
-};
-
-struct compat_43_sys_sigsetmask_args {
-	syscallarg(int) mask;
-};
-
-struct compat_13_sys_sigsuspend_args {
-	syscallarg(int) mask;
-};
-
-struct compat_43_sys_sigstack_args {
-	syscallarg(struct sigstack *) nss;
-	syscallarg(struct sigstack *) oss;
-};
-
-struct compat_43_sys_recvmsg_args {
-	syscallarg(int) s;
-	syscallarg(struct omsghdr *) msg;
-	syscallarg(int) flags;
-};
-
-struct compat_43_sys_sendmsg_args {
-	syscallarg(int) s;
-	syscallarg(caddr_t) msg;
-	syscallarg(int) flags;
-};
-
-struct compat_43_sys_recvfrom_args {
-	syscallarg(int) s;
-	syscallarg(caddr_t) buf;
-	syscallarg(size_t) len;
-	syscallarg(int) flags;
-	syscallarg(caddr_t) from;
-	syscallarg(int *) fromlenaddr;
-};
-
-struct compat_43_sys_truncate_args {
-	syscallarg(const char *) path;
-	syscallarg(long) length;
-};
-
-struct compat_43_sys_ftruncate_args {
-	syscallarg(int) fd;
-	syscallarg(long) length;
-};
-
-struct compat_43_sys_getpeername_args {
-	syscallarg(int) fdes;
-	syscallarg(caddr_t) asa;
-	syscallarg(int *) alen;
-};
-
-struct compat_43_sys_getrlimit_args {
-	syscallarg(int) which;
-	syscallarg(struct orlimit *) rlp;
-};
-
-struct compat_43_sys_setrlimit_args {
-	syscallarg(int) which;
-	syscallarg(const struct orlimit *) rlp;
-};
-
-struct compat_43_sys_killpg_args {
-	syscallarg(int) pgid;
-	syscallarg(int) signum;
-};
-
-struct compat_43_sys_getsockname_args {
-	syscallarg(int) fdec;
-	syscallarg(caddr_t) asa;
-	syscallarg(int *) alen;
-};
-
-struct compat_43_sys_getdirentries_args {
-	syscallarg(int) fd;
-	syscallarg(char *) buf;
-	syscallarg(u_int) count;
-	syscallarg(long *) basep;
-};
-
-struct compat_09_sys_getdomainname_args {
-	syscallarg(char *) domainname;
-	syscallarg(int) len;
-};
-
-struct compat_09_sys_setdomainname_args {
-	syscallarg(char *) domainname;
-	syscallarg(int) len;
-};
-
-struct compat_12_sys_stat_args {
-	syscallarg(const char *) path;
-	syscallarg(struct stat12 *) ub;
-};
-
-struct compat_12_sys_fstat_args {
-	syscallarg(int) fd;
-	syscallarg(struct stat12 *) sb;
-};
-
-struct compat_12_sys_lstat_args {
-	syscallarg(const char *) path;
-	syscallarg(struct stat12 *) ub;
-};
-
-struct compat_12_sys_getdirentries_args {
-	syscallarg(int) fd;
-	syscallarg(char *) buf;
-	syscallarg(u_int) count;
-	syscallarg(long *) basep;
-};
-
 /*
  * System call prototypes.
  */
@@ -253,20 +35,20 @@ int	sys_exit(struct proc *, void *, register_t *);
 int	sys_fork(struct proc *, void *, register_t *);
 int	sys_read(struct proc *, void *, register_t *);
 int	sys_write(struct proc *, void *, register_t *);
-int	sys_open(struct proc *, void *, register_t *);
+int	freebsd_sys_open(struct proc *, void *, register_t *);
 int	sys_close(struct proc *, void *, register_t *);
 int	sys_wait4(struct proc *, void *, register_t *);
-int	compat_43_sys_creat(struct proc *, void *, register_t *);
-int	sys_link(struct proc *, void *, register_t *);
-int	sys_unlink(struct proc *, void *, register_t *);
-int	sys_chdir(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_creat(struct proc *, void *, register_t *);
+int	freebsd_sys_link(struct proc *, void *, register_t *);
+int	freebsd_sys_unlink(struct proc *, void *, register_t *);
+int	freebsd_sys_chdir(struct proc *, void *, register_t *);
 int	sys_fchdir(struct proc *, void *, register_t *);
-int	sys_mknod(struct proc *, void *, register_t *);
-int	sys_chmod(struct proc *, void *, register_t *);
-int	sys_chown(struct proc *, void *, register_t *);
+int	freebsd_sys_mknod(struct proc *, void *, register_t *);
+int	freebsd_sys_chmod(struct proc *, void *, register_t *);
+int	freebsd_sys_chown(struct proc *, void *, register_t *);
 int	sys_obreak(struct proc *, void *, register_t *);
 int	sys_getfsstat(struct proc *, void *, register_t *);
-int	compat_43_sys_lseek(struct proc *, void *, register_t *);
+int	sys_lseek(struct proc *, void *, register_t *);
 #ifdef COMPAT_43
 int	sys_getpid_with_ppid(struct proc *, void *, register_t *);
 #else
@@ -288,14 +70,14 @@ int	sys_recvfrom(struct proc *, void *, register_t *);
 int	sys_accept(struct proc *, void *, register_t *);
 int	sys_getpeername(struct proc *, void *, register_t *);
 int	sys_getsockname(struct proc *, void *, register_t *);
-int	sys_access(struct proc *, void *, register_t *);
-int	sys_chflags(struct proc *, void *, register_t *);
+int	freebsd_sys_access(struct proc *, void *, register_t *);
+int	freebsd_sys_chflags(struct proc *, void *, register_t *);
 int	sys_fchflags(struct proc *, void *, register_t *);
 int	sys_sync(struct proc *, void *, register_t *);
 int	sys_kill(struct proc *, void *, register_t *);
-int	compat_43_sys_stat(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_stat(struct proc *, void *, register_t *);
 int	sys_getppid(struct proc *, void *, register_t *);
-int	compat_43_sys_lstat(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_lstat(struct proc *, void *, register_t *);
 int	sys_dup(struct proc *, void *, register_t *);
 int	sys_pipe(struct proc *, void *, register_t *);
 int	sys_getegid(struct proc *, void *, register_t *);
@@ -317,20 +99,20 @@ int	sys_acct(struct proc *, void *, register_t *);
 int	compat_13_sys_sigpending(struct proc *, void *, register_t *);
 int	compat_13_sys_sigaltstack(struct proc *, void *, register_t *);
 int	sys_ioctl(struct proc *, void *, register_t *);
-int	compat_12_sys_reboot(struct proc *, void *, register_t *);
-int	sys_revoke(struct proc *, void *, register_t *);
-int	sys_symlink(struct proc *, void *, register_t *);
-int	sys_readlink(struct proc *, void *, register_t *);
-int	sys_execve(struct proc *, void *, register_t *);
+int	sys_reboot(struct proc *, void *, register_t *);
+int	freebsd_sys_revoke(struct proc *, void *, register_t *);
+int	freebsd_sys_symlink(struct proc *, void *, register_t *);
+int	freebsd_sys_readlink(struct proc *, void *, register_t *);
+int	freebsd_sys_execve(struct proc *, void *, register_t *);
 int	sys_umask(struct proc *, void *, register_t *);
-int	sys_chroot(struct proc *, void *, register_t *);
+int	freebsd_sys_chroot(struct proc *, void *, register_t *);
 int	compat_43_sys_fstat(struct proc *, void *, register_t *);
 int	compat_43_sys_getpagesize(struct proc *, void *, register_t *);
 int	compat_12_sys_msync(struct proc *, void *, register_t *);
 int	sys_vfork(struct proc *, void *, register_t *);
 int	sys_sbrk(struct proc *, void *, register_t *);
 int	sys_sstk(struct proc *, void *, register_t *);
-int	compat_43_sys_mmap(struct proc *, void *, register_t *);
+int	sys_mmap(struct proc *, void *, register_t *);
 int	sys_ovadvise(struct proc *, void *, register_t *);
 int	sys_munmap(struct proc *, void *, register_t *);
 int	sys_mprotect(struct proc *, void *, register_t *);
@@ -380,16 +162,16 @@ int	sys_fchmod(struct proc *, void *, register_t *);
 int	compat_43_sys_recvfrom(struct proc *, void *, register_t *);
 int	sys_setreuid(struct proc *, void *, register_t *);
 int	sys_setregid(struct proc *, void *, register_t *);
-int	sys_rename(struct proc *, void *, register_t *);
-int	compat_43_sys_truncate(struct proc *, void *, register_t *);
+int	freebsd_sys_rename(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_truncate(struct proc *, void *, register_t *);
 int	compat_43_sys_ftruncate(struct proc *, void *, register_t *);
 int	sys_flock(struct proc *, void *, register_t *);
-int	sys_mkfifo(struct proc *, void *, register_t *);
+int	freebsd_sys_mkfifo(struct proc *, void *, register_t *);
 int	sys_sendto(struct proc *, void *, register_t *);
 int	sys_shutdown(struct proc *, void *, register_t *);
 int	sys_socketpair(struct proc *, void *, register_t *);
-int	sys_mkdir(struct proc *, void *, register_t *);
-int	sys_rmdir(struct proc *, void *, register_t *);
+int	freebsd_sys_mkdir(struct proc *, void *, register_t *);
+int	freebsd_sys_rmdir(struct proc *, void *, register_t *);
 int	sys_utimes(struct proc *, void *, register_t *);
 int	sys_adjtime(struct proc *, void *, register_t *);
 int	compat_43_sys_getpeername(struct proc *, void *, register_t *);
@@ -404,25 +186,28 @@ int	sys_nfssvc(struct proc *, void *, register_t *);
 #else
 #endif
 int	compat_43_sys_getdirentries(struct proc *, void *, register_t *);
-int	sys_statfs(struct proc *, void *, register_t *);
+int	freebsd_sys_statfs(struct proc *, void *, register_t *);
 int	sys_fstatfs(struct proc *, void *, register_t *);
-int	sys_getfh(struct proc *, void *, register_t *);
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+int	freebsd_sys_getfh(struct proc *, void *, register_t *);
+#else
+#endif
 int	compat_09_sys_getdomainname(struct proc *, void *, register_t *);
 int	compat_09_sys_setdomainname(struct proc *, void *, register_t *);
 int	sys_setgid(struct proc *, void *, register_t *);
 int	sys_setegid(struct proc *, void *, register_t *);
 int	sys_seteuid(struct proc *, void *, register_t *);
-int	compat_12_sys_stat(struct proc *, void *, register_t *);
+int	freebsd_sys_stat(struct proc *, void *, register_t *);
 int	compat_12_sys_fstat(struct proc *, void *, register_t *);
-int	compat_12_sys_lstat(struct proc *, void *, register_t *);
-int	sys_pathconf(struct proc *, void *, register_t *);
+int	freebsd_sys_lstat(struct proc *, void *, register_t *);
+int	freebsd_sys_pathconf(struct proc *, void *, register_t *);
 int	sys_fpathconf(struct proc *, void *, register_t *);
 int	sys_getrlimit(struct proc *, void *, register_t *);
 int	sys_setrlimit(struct proc *, void *, register_t *);
 int	compat_12_sys_getdirentries(struct proc *, void *, register_t *);
 int	sys_mmap(struct proc *, void *, register_t *);
-int	sys_lseek(struct proc *, void *, register_t *);
-int	sys_truncate(struct proc *, void *, register_t *);
+int	compat_43_sys_lseek(struct proc *, void *, register_t *);
+int	freebsd_sys_truncate(struct proc *, void *, register_t *);
 int	sys_ftruncate(struct proc *, void *, register_t *);
 int	sys___sysctl(struct proc *, void *, register_t *);
 int	sys_mlock(struct proc *, void *, register_t *);

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.2 2002/11/12 23:40:23 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.3 2002/11/14 21:47:15 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.2 2002/11/12 23:40:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.3 2002/11/14 21:47:15 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -23,48 +23,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.2 2002/11/12 23:40:23 manu Exp $
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#ifdef COMPAT_43
-#define	compat_43(func) __CONCAT(compat_43_,func)
-#else
-#define	compat_43(func) sys_nosys
-#endif
-
-#ifdef COMPAT_09
-#define	compat_09(func) __CONCAT(compat_09_,func)
-#else
-#define	compat_09(func) sys_nosys
-#endif
-
-#ifdef COMPAT_10
-#define	compat_10(func) __CONCAT(compat_10_,func)
-#else
-#define	compat_10(func) sys_nosys
-#endif
-
-#ifdef COMPAT_11
-#define	compat_11(func) __CONCAT(compat_11_,func)
-#else
-#define	compat_11(func) sys_nosys
-#endif
-
-#ifdef COMPAT_12
-#define	compat_12(func) __CONCAT(compat_12_,func)
-#else
-#define	compat_12(func) sys_nosys
-#endif
-
-#ifdef COMPAT_13
-#define	compat_13(func) __CONCAT(compat_13_,func)
-#else
-#define	compat_13(func) sys_nosys
-#endif
-
-#ifdef COMPAT_14
-#define	compat_14(func) __CONCAT(compat_14_,func)
-#else
-#define	compat_14(func) sys_nosys
-#endif
+#include <compat/freebsd/freebsd_syscallargs.h>
 
 #define	s(type)	sizeof(type)
 
@@ -79,36 +38,36 @@ struct sysent darwin_sysent[] = {
 	    sys_read },				/* 3 = read */
 	{ 3, s(struct sys_write_args), 0,
 	    sys_write },			/* 4 = write */
-	{ 3, s(struct sys_open_args), 0,
-	    sys_open },				/* 5 = open */
+	{ 3, s(struct freebsd_sys_open_args), 0,
+	    freebsd_sys_open },			/* 5 = open */
 	{ 1, s(struct sys_close_args), 0,
 	    sys_close },			/* 6 = close */
 	{ 4, s(struct sys_wait4_args), 0,
 	    sys_wait4 },			/* 7 = wait4 */
-	{ 2, s(struct compat_43_sys_creat_args), 0,
-	    compat_43(sys_creat) },		/* 8 = compat_43 ocreat */
-	{ 2, s(struct sys_link_args), 0,
-	    sys_link },				/* 9 = link */
-	{ 1, s(struct sys_unlink_args), 0,
-	    sys_unlink },			/* 10 = unlink */
+	{ 2, s(struct compat_43_freebsd_sys_creat_args), 0,
+	    compat_43_freebsd_sys_creat },	/* 8 = ocreat */
+	{ 2, s(struct freebsd_sys_link_args), 0,
+	    freebsd_sys_link },			/* 9 = link */
+	{ 1, s(struct freebsd_sys_unlink_args), 0,
+	    freebsd_sys_unlink },		/* 10 = unlink */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 11 = unimplemented execv */
-	{ 1, s(struct sys_chdir_args), 0,
-	    sys_chdir },			/* 12 = chdir */
+	{ 1, s(struct freebsd_sys_chdir_args), 0,
+	    freebsd_sys_chdir },		/* 12 = chdir */
 	{ 1, s(struct sys_fchdir_args), 0,
 	    sys_fchdir },			/* 13 = fchdir */
-	{ 3, s(struct sys_mknod_args), 0,
-	    sys_mknod },			/* 14 = mknod */
-	{ 2, s(struct sys_chmod_args), 0,
-	    sys_chmod },			/* 15 = chmod */
-	{ 3, s(struct sys_chown_args), 0,
-	    sys_chown },			/* 16 = chown */
+	{ 3, s(struct freebsd_sys_mknod_args), 0,
+	    freebsd_sys_mknod },		/* 14 = mknod */
+	{ 2, s(struct freebsd_sys_chmod_args), 0,
+	    freebsd_sys_chmod },		/* 15 = chmod */
+	{ 3, s(struct freebsd_sys_chown_args), 0,
+	    freebsd_sys_chown },		/* 16 = chown */
 	{ 1, s(struct sys_obreak_args), 0,
 	    sys_obreak },			/* 17 = break */
 	{ 3, s(struct sys_getfsstat_args), 0,
 	    sys_getfsstat },			/* 18 = getfsstat */
-	{ 3, s(struct compat_43_sys_lseek_args), 0,
-	    compat_43(sys_lseek) },		/* 19 = compat_43 olseek */
+	{ 3, s(struct sys_lseek_args), 0,
+	    sys_lseek },			/* 19 = olseek */
 #ifdef COMPAT_43
 	{ 0, 0, 0,
 	    sys_getpid_with_ppid },		/* 20 = getpid */
@@ -145,22 +104,22 @@ struct sysent darwin_sysent[] = {
 	    sys_getpeername },			/* 31 = getpeername */
 	{ 3, s(struct sys_getsockname_args), 0,
 	    sys_getsockname },			/* 32 = getsockname */
-	{ 2, s(struct sys_access_args), 0,
-	    sys_access },			/* 33 = access */
-	{ 2, s(struct sys_chflags_args), 0,
-	    sys_chflags },			/* 34 = chflags */
+	{ 2, s(struct freebsd_sys_access_args), 0,
+	    freebsd_sys_access },		/* 33 = access */
+	{ 2, s(struct freebsd_sys_chflags_args), 0,
+	    freebsd_sys_chflags },		/* 34 = chflags */
 	{ 2, s(struct sys_fchflags_args), 0,
 	    sys_fchflags },			/* 35 = fchflags */
 	{ 0, 0, 0,
 	    sys_sync },				/* 36 = sync */
 	{ 2, s(struct sys_kill_args), 0,
 	    sys_kill },				/* 37 = kill */
-	{ 2, s(struct compat_43_sys_stat_args), 0,
-	    compat_43(sys_stat) },		/* 38 = compat_43 stat43 */
+	{ 2, s(struct compat_43_freebsd_sys_stat_args), 0,
+	    compat_43_freebsd_sys_stat },	/* 38 = stat43 */
 	{ 0, 0, 0,
 	    sys_getppid },			/* 39 = getppid */
-	{ 2, s(struct compat_43_sys_lstat_args), 0,
-	    compat_43(sys_lstat) },		/* 40 = compat_43 lstat43 */
+	{ 2, s(struct compat_43_freebsd_sys_lstat_args), 0,
+	    compat_43_freebsd_sys_lstat },	/* 40 = lstat43 */
 	{ 1, s(struct sys_dup_args), 0,
 	    sys_dup },				/* 41 = dup */
 	{ 0, 0, 0,
@@ -177,7 +136,7 @@ struct sysent darwin_sysent[] = {
 	    sys_nosys },			/* 45 = excluded ktrace */
 #endif
 	{ 3, s(struct compat_13_sys_sigaction_args), 0,
-	    compat_13(sys_sigaction) },		/* 46 = compat_13 sigaction13 */
+	    compat_13_sys_sigaction },		/* 46 = sigaction13 */
 #ifdef COMPAT_43
 	{ 0, 0, 0,
 	    sys_getgid_with_egid },		/* 47 = getgid */
@@ -186,7 +145,7 @@ struct sysent darwin_sysent[] = {
 	    sys_getgid },			/* 47 = getgid */
 #endif
 	{ 2, s(struct compat_13_sys_sigprocmask_args), 0,
-	    compat_13(sys_sigprocmask) },	/* 48 = compat_13 sigprocmask13 */
+	    compat_13_sys_sigprocmask },	/* 48 = sigprocmask13 */
 	{ 2, s(struct sys___getlogin_args), 0,
 	    sys___getlogin },			/* 49 = __getlogin */
 	{ 1, s(struct sys_setlogin_args), 0,
@@ -194,33 +153,33 @@ struct sysent darwin_sysent[] = {
 	{ 1, s(struct sys_acct_args), 0,
 	    sys_acct },				/* 51 = acct */
 	{ 0, 0, 0,
-	    compat_13(sys_sigpending) },	/* 52 = compat_13 sigpending13 */
+	    compat_13_sys_sigpending },		/* 52 = sigpending13 */
 	{ 2, s(struct compat_13_sys_sigaltstack_args), 0,
-	    compat_13(sys_sigaltstack) },	/* 53 = compat_13 sigaltstack13 */
+	    compat_13_sys_sigaltstack },	/* 53 = sigaltstack13 */
 	{ 3, s(struct sys_ioctl_args), 0,
 	    sys_ioctl },			/* 54 = ioctl */
-	{ 1, s(struct compat_12_sys_reboot_args), 0,
-	    compat_12(sys_reboot) },		/* 55 = compat_12 oreboot */
-	{ 1, s(struct sys_revoke_args), 0,
-	    sys_revoke },			/* 56 = revoke */
-	{ 2, s(struct sys_symlink_args), 0,
-	    sys_symlink },			/* 57 = symlink */
-	{ 3, s(struct sys_readlink_args), 0,
-	    sys_readlink },			/* 58 = readlink */
-	{ 3, s(struct sys_execve_args), 0,
-	    sys_execve },			/* 59 = execve */
+	{ 1, s(struct sys_reboot_args), 0,
+	    sys_reboot },			/* 55 = oreboot */
+	{ 1, s(struct freebsd_sys_revoke_args), 0,
+	    freebsd_sys_revoke },		/* 56 = revoke */
+	{ 2, s(struct freebsd_sys_symlink_args), 0,
+	    freebsd_sys_symlink },		/* 57 = symlink */
+	{ 3, s(struct freebsd_sys_readlink_args), 0,
+	    freebsd_sys_readlink },		/* 58 = readlink */
+	{ 3, s(struct freebsd_sys_execve_args), 0,
+	    freebsd_sys_execve },		/* 59 = execve */
 	{ 1, s(struct sys_umask_args), 0,
 	    sys_umask },			/* 60 = umask */
-	{ 1, s(struct sys_chroot_args), 0,
-	    sys_chroot },			/* 61 = chroot */
+	{ 1, s(struct freebsd_sys_chroot_args), 0,
+	    freebsd_sys_chroot },		/* 61 = chroot */
 	{ 2, s(struct compat_43_sys_fstat_args), 0,
-	    compat_43(sys_fstat) },		/* 62 = compat_43 fstat43 */
+	    compat_43_sys_fstat },		/* 62 = fstat43 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 63 = unimplemented */
 	{ 0, 0, 0,
-	    compat_43(sys_getpagesize) },	/* 64 = compat_43 ogetpagesize */
+	    compat_43_sys_getpagesize },	/* 64 = ogetpagesize */
 	{ 2, s(struct compat_12_sys_msync_args), 0,
-	    compat_12(sys_msync) },		/* 65 = compat_12 msync */
+	    compat_12_sys_msync },		/* 65 = msync */
 	{ 0, 0, 0,
 	    sys_vfork },			/* 66 = vfork */
 	{ 0, 0, 0,
@@ -231,8 +190,8 @@ struct sysent darwin_sysent[] = {
 	    sys_sbrk },				/* 69 = sbrk */
 	{ 1, s(struct sys_sstk_args), 0,
 	    sys_sstk },				/* 70 = sstk */
-	{ 6, s(struct compat_43_sys_mmap_args), 0,
-	    compat_43(sys_mmap) },		/* 71 = compat_43 ommap */
+	{ 6, s(struct sys_mmap_args), 0,
+	    sys_mmap },				/* 71 = ommap */
 	{ 1, s(struct sys_ovadvise_args), 0,
 	    sys_ovadvise },			/* 72 = vadvise */
 	{ 2, s(struct sys_munmap_args), 0,
@@ -258,17 +217,17 @@ struct sysent darwin_sysent[] = {
 	{ 3, s(struct sys_setitimer_args), 0,
 	    sys_setitimer },			/* 83 = setitimer */
 	{ 0, 0, 0,
-	    compat_43(sys_wait) },		/* 84 = compat_43 owait */
+	    compat_43_sys_wait },		/* 84 = owait */
 	{ 1, s(struct compat_12_sys_swapon_args), 0,
-	    compat_12(sys_swapon) },		/* 85 = compat_12 oswapon */
+	    compat_12_sys_swapon },		/* 85 = oswapon */
 	{ 2, s(struct sys_getitimer_args), 0,
 	    sys_getitimer },			/* 86 = getitimer */
 	{ 2, s(struct compat_43_sys_gethostname_args), 0,
-	    compat_43(sys_gethostname) },	/* 87 = compat_43 ogethostname */
+	    compat_43_sys_gethostname },	/* 87 = ogethostname */
 	{ 2, s(struct compat_43_sys_sethostname_args), 0,
-	    compat_43(sys_sethostname) },	/* 88 = compat_43 osethostname */
+	    compat_43_sys_sethostname },	/* 88 = osethostname */
 	{ 0, 0, 0,
-	    compat_43(sys_getdtablesize) },	/* 89 = compat_43 ogetdtablesize */
+	    compat_43_sys_getdtablesize },	/* 89 = ogetdtablesize */
 	{ 2, s(struct sys_dup2_args), 0,
 	    sys_dup2 },				/* 90 = dup2 */
 	{ 0, 0, 0,
@@ -288,15 +247,15 @@ struct sysent darwin_sysent[] = {
 	{ 3, s(struct sys_connect_args), 0,
 	    sys_connect },			/* 98 = connect */
 	{ 3, s(struct compat_43_sys_accept_args), 0,
-	    compat_43(sys_accept) },		/* 99 = compat_43 oaccept */
+	    compat_43_sys_accept },		/* 99 = oaccept */
 	{ 2, s(struct sys_getpriority_args), 0,
 	    sys_getpriority },			/* 100 = getpriority */
 	{ 4, s(struct compat_43_sys_send_args), 0,
-	    compat_43(sys_send) },		/* 101 = compat_43 osend */
+	    compat_43_sys_send },		/* 101 = osend */
 	{ 4, s(struct compat_43_sys_recv_args), 0,
-	    compat_43(sys_recv) },		/* 102 = compat_43 orecv */
+	    compat_43_sys_recv },		/* 102 = orecv */
 	{ 1, s(struct compat_13_sys_sigreturn_args), 0,
-	    compat_13(sys_sigreturn) },		/* 103 = compat_13 sigreturn13 */
+	    compat_13_sys_sigreturn },		/* 103 = sigreturn13 */
 	{ 3, s(struct sys_bind_args), 0,
 	    sys_bind },				/* 104 = bind */
 	{ 5, s(struct sys_setsockopt_args), 0,
@@ -306,19 +265,19 @@ struct sysent darwin_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 107 = unimplemented */
 	{ 3, s(struct compat_43_sys_sigvec_args), 0,
-	    compat_43(sys_sigvec) },		/* 108 = compat_43 osigvec */
+	    compat_43_sys_sigvec },		/* 108 = osigvec */
 	{ 1, s(struct compat_43_sys_sigblock_args), 0,
-	    compat_43(sys_sigblock) },		/* 109 = compat_43 osigblock */
+	    compat_43_sys_sigblock },		/* 109 = osigblock */
 	{ 1, s(struct compat_43_sys_sigsetmask_args), 0,
-	    compat_43(sys_sigsetmask) },	/* 110 = compat_43 osigsetmask */
+	    compat_43_sys_sigsetmask },		/* 110 = osigsetmask */
 	{ 1, s(struct compat_13_sys_sigsuspend_args), 0,
-	    compat_13(sys_sigsuspend) },	/* 111 = compat_13 sigsuspend13 */
+	    compat_13_sys_sigsuspend },		/* 111 = sigsuspend13 */
 	{ 2, s(struct compat_43_sys_sigstack_args), 0,
-	    compat_43(sys_sigstack) },		/* 112 = compat_43 osigstack */
+	    compat_43_sys_sigstack },		/* 112 = osigstack */
 	{ 3, s(struct compat_43_sys_recvmsg_args), 0,
-	    compat_43(sys_recvmsg) },		/* 113 = compat_43 orecvmsg */
+	    compat_43_sys_recvmsg },		/* 113 = orecvmsg */
 	{ 3, s(struct compat_43_sys_sendmsg_args), 0,
-	    compat_43(sys_sendmsg) },		/* 114 = compat_43 osendmsg */
+	    compat_43_sys_sendmsg },		/* 114 = osendmsg */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 115 = unimplemented */
 	{ 2, s(struct sys_gettimeofday_args), 0,
@@ -340,31 +299,31 @@ struct sysent darwin_sysent[] = {
 	{ 2, s(struct sys_fchmod_args), 0,
 	    sys_fchmod },			/* 124 = fchmod */
 	{ 6, s(struct compat_43_sys_recvfrom_args), 0,
-	    compat_43(sys_recvfrom) },		/* 125 = compat_43 orecvfrom */
+	    compat_43_sys_recvfrom },		/* 125 = orecvfrom */
 	{ 2, s(struct sys_setreuid_args), 0,
 	    sys_setreuid },			/* 126 = setreuid */
 	{ 2, s(struct sys_setregid_args), 0,
 	    sys_setregid },			/* 127 = setregid */
-	{ 2, s(struct sys_rename_args), 0,
-	    sys_rename },			/* 128 = rename */
-	{ 2, s(struct compat_43_sys_truncate_args), 0,
-	    compat_43(sys_truncate) },		/* 129 = compat_43 otruncate */
+	{ 2, s(struct freebsd_sys_rename_args), 0,
+	    freebsd_sys_rename },		/* 128 = rename */
+	{ 2, s(struct compat_43_freebsd_sys_truncate_args), 0,
+	    compat_43_freebsd_sys_truncate },	/* 129 = otruncate */
 	{ 2, s(struct compat_43_sys_ftruncate_args), 0,
-	    compat_43(sys_ftruncate) },		/* 130 = compat_43 oftruncate */
+	    compat_43_sys_ftruncate },		/* 130 = oftruncate */
 	{ 2, s(struct sys_flock_args), 0,
 	    sys_flock },			/* 131 = flock */
-	{ 2, s(struct sys_mkfifo_args), 0,
-	    sys_mkfifo },			/* 132 = mkfifo */
+	{ 2, s(struct freebsd_sys_mkfifo_args), 0,
+	    freebsd_sys_mkfifo },		/* 132 = mkfifo */
 	{ 6, s(struct sys_sendto_args), 0,
 	    sys_sendto },			/* 133 = sendto */
 	{ 2, s(struct sys_shutdown_args), 0,
 	    sys_shutdown },			/* 134 = shutdown */
 	{ 4, s(struct sys_socketpair_args), 0,
 	    sys_socketpair },			/* 135 = socketpair */
-	{ 2, s(struct sys_mkdir_args), 0,
-	    sys_mkdir },			/* 136 = mkdir */
-	{ 1, s(struct sys_rmdir_args), 0,
-	    sys_rmdir },			/* 137 = rmdir */
+	{ 2, s(struct freebsd_sys_mkdir_args), 0,
+	    freebsd_sys_mkdir },		/* 136 = mkdir */
+	{ 1, s(struct freebsd_sys_rmdir_args), 0,
+	    freebsd_sys_rmdir },		/* 137 = rmdir */
 	{ 2, s(struct sys_utimes_args), 0,
 	    sys_utimes },			/* 138 = utimes */
 	{ 0, 0, 0,
@@ -372,17 +331,17 @@ struct sysent darwin_sysent[] = {
 	{ 2, s(struct sys_adjtime_args), 0,
 	    sys_adjtime },			/* 140 = adjtime */
 	{ 3, s(struct compat_43_sys_getpeername_args), 0,
-	    compat_43(sys_getpeername) },	/* 141 = compat_43 ogetpeername */
+	    compat_43_sys_getpeername },	/* 141 = ogetpeername */
 	{ 0, 0, 0,
-	    compat_43(sys_gethostid) },		/* 142 = compat_43 ogethostid */
+	    compat_43_sys_gethostid },		/* 142 = ogethostid */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 143 = unimplemented */
 	{ 2, s(struct compat_43_sys_getrlimit_args), 0,
-	    compat_43(sys_getrlimit) },		/* 144 = compat_43 ogetrlimit */
+	    compat_43_sys_getrlimit },		/* 144 = ogetrlimit */
 	{ 2, s(struct compat_43_sys_setrlimit_args), 0,
-	    compat_43(sys_setrlimit) },		/* 145 = compat_43 osetrlimit */
+	    compat_43_sys_setrlimit },		/* 145 = osetrlimit */
 	{ 2, s(struct compat_43_sys_killpg_args), 0,
-	    compat_43(sys_killpg) },		/* 146 = compat_43 okillpg */
+	    compat_43_sys_killpg },		/* 146 = okillpg */
 	{ 0, 0, 0,
 	    sys_setsid },			/* 147 = setsid */
 	{ 0, 0, 0,
@@ -390,7 +349,7 @@ struct sysent darwin_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 149 = unimplemented */
 	{ 3, s(struct compat_43_sys_getsockname_args), 0,
-	    compat_43(sys_getsockname) },	/* 150 = compat_43 ogetsockname */
+	    compat_43_sys_getsockname },	/* 150 = ogetsockname */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 151 = unimplemented getpgid */
 	{ 0, 0, 0,
@@ -407,21 +366,26 @@ struct sysent darwin_sysent[] = {
 	    sys_nosys },			/* 155 = excluded nfssvc */
 #endif
 	{ 4, s(struct compat_43_sys_getdirentries_args), 0,
-	    compat_43(sys_getdirentries) },	/* 156 = compat_43 ogetdirentries */
-	{ 2, s(struct sys_statfs_args), 0,
-	    sys_statfs },			/* 157 = statfs */
+	    compat_43_sys_getdirentries },	/* 156 = ogetdirentries */
+	{ 2, s(struct freebsd_sys_statfs_args), 0,
+	    freebsd_sys_statfs },		/* 157 = statfs */
 	{ 2, s(struct sys_fstatfs_args), 0,
 	    sys_fstatfs },			/* 158 = fstatfs */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 159 = unimplemented unmount */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
-	{ 2, s(struct sys_getfh_args), 0,
-	    sys_getfh },			/* 161 = getfh */
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+	{ 2, s(struct freebsd_sys_getfh_args), 0,
+	    freebsd_sys_getfh },		/* 161 = getfh */
+#else
+	{ 0, 0, 0,
+	    sys_nosys },			/* 161 = excluded getfh */
+#endif
 	{ 2, s(struct compat_09_sys_getdomainname_args), 0,
-	    compat_09(sys_getdomainname) },	/* 162 = compat_09 ogetdomainname */
+	    compat_09_sys_getdomainname },	/* 162 = ogetdomainname */
 	{ 2, s(struct compat_09_sys_setdomainname_args), 0,
-	    compat_09(sys_setdomainname) },	/* 163 = compat_09 osetdomainname */
+	    compat_09_sys_setdomainname },	/* 163 = osetdomainname */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 164 = unimplemented */
 	{ 0, 0, 0,
@@ -470,14 +434,14 @@ struct sysent darwin_sysent[] = {
 	    sys_nosys },			/* 186 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 187 = unimplemented */
-	{ 2, s(struct compat_12_sys_stat_args), 0,
-	    compat_12(sys_stat) },		/* 188 = compat_12 stat12 */
+	{ 2, s(struct freebsd_sys_stat_args), 0,
+	    freebsd_sys_stat },			/* 188 = stat12 */
 	{ 2, s(struct compat_12_sys_fstat_args), 0,
-	    compat_12(sys_fstat) },		/* 189 = compat_12 fstat12 */
-	{ 2, s(struct compat_12_sys_lstat_args), 0,
-	    compat_12(sys_lstat) },		/* 190 = compat_12 lstat12 */
-	{ 2, s(struct sys_pathconf_args), 0,
-	    sys_pathconf },			/* 191 = pathconf */
+	    compat_12_sys_fstat },		/* 189 = fstat12 */
+	{ 2, s(struct freebsd_sys_lstat_args), 0,
+	    freebsd_sys_lstat },		/* 190 = lstat12 */
+	{ 2, s(struct freebsd_sys_pathconf_args), 0,
+	    freebsd_sys_pathconf },		/* 191 = pathconf */
 	{ 2, s(struct sys_fpathconf_args), 0,
 	    sys_fpathconf },			/* 192 = fpathconf */
 	{ 0, 0, 0,
@@ -487,15 +451,15 @@ struct sysent darwin_sysent[] = {
 	{ 2, s(struct sys_setrlimit_args), 0,
 	    sys_setrlimit },			/* 195 = setrlimit */
 	{ 4, s(struct compat_12_sys_getdirentries_args), 0,
-	    compat_12(sys_getdirentries) },	/* 196 = compat_12 getdirentries */
+	    compat_12_sys_getdirentries },	/* 196 = getdirentries */
 	{ 7, s(struct sys_mmap_args), 0,
 	    sys_mmap },				/* 197 = mmap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 198 = unimplemented */
-	{ 4, s(struct sys_lseek_args), 0,
-	    sys_lseek },			/* 199 = lseek */
-	{ 3, s(struct sys_truncate_args), 0,
-	    sys_truncate },			/* 200 = truncate */
+	{ 4, s(struct compat_43_sys_lseek_args), 0,
+	    compat_43_sys_lseek },		/* 199 = lseek */
+	{ 3, s(struct freebsd_sys_truncate_args), 0,
+	    freebsd_sys_truncate },		/* 200 = truncate */
 	{ 3, s(struct sys_ftruncate_args), 0,
 	    sys_ftruncate },			/* 201 = ftruncate */
 	{ 6, s(struct sys___sysctl_args), 0,
