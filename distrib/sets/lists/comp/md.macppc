@@ -22,7 +22,6 @@
 ./usr/include/macppc/ieeefp.h
 ./usr/include/macppc/intr.h
 ./usr/include/macppc/ipkdb.h
-./usr/include/macppc/iteioctl.h
 ./usr/include/macppc/kcore.h
 ./usr/include/macppc/keyboard.h
 ./usr/include/macppc/limits.h
