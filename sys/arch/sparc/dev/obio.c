@@ -1,7 +1,7 @@
-/*	$NetBSD: obio.c,v 1.42 1998/03/29 22:05:05 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.43 1998/04/07 20:20:03 pk Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,12 +84,15 @@ struct cfattach obio_ca = {
 #if defined(SUN4)
 static	int obioprint  __P((void *, const char *));
 static	int obiosearch   __P((struct device *, struct cfdata *, void *));
-static	int obio_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
-static	int _obio_bus_map __P((void *, bus_type_t, bus_addr_t, bus_size_t,
-			       int, vm_offset_t, bus_space_handle_t *));
+static	int obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+			       int, bus_space_handle_t *));
+static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+			       bus_size_t, int,
+			       vm_offset_t, bus_space_handle_t *));
 
 static struct sparc_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
+	NULL,				/* parent bus tag */
 	_obio_bus_map,			/* bus_space_map */ 
 	NULL,				/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */
@@ -143,12 +146,7 @@ obioattach(parent, self, aux)
 		sc->sc_dmatag = ma->ma_dmatag;
 
 		obio_space_tag.cookie = sc;
-
-		/* Propagate assorted parent functions */
-		obio_space_tag.sparc_intr_establish =
-			ma->ma_bustag->sparc_intr_establish;
-		obio_space_tag.sparc_bus_unmap =
-			ma->ma_bustag->sparc_bus_unmap;
+		obio_space_tag.parent = sc->sc_bustag;
 
 		(void)config_search(obiosearch, self, aux);
 #endif
@@ -200,8 +198,8 @@ obioprint(args, busname)
 }
 
 int
-_obio_bus_map(cookie, btype, paddr, size, flags, vaddr, hp)
-	void	*cookie;
+_obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
+	bus_space_tag_t t;
 	bus_type_t btype;
 	bus_addr_t paddr;
 	bus_size_t size;
@@ -209,7 +207,7 @@ _obio_bus_map(cookie, btype, paddr, size, flags, vaddr, hp)
 	vm_offset_t vaddr;
 	bus_space_handle_t *hp;
 {
-	struct obio4_softc *sc = cookie;
+	struct obio4_softc *sc = t->cookie;
 
 	if ((flags & OBIO_BUS_MAP_USE_ROM) != 0 &&
 	     obio_find_rom_map(paddr, PMAP_OBIO, size, hp) == 0)
@@ -220,15 +218,16 @@ _obio_bus_map(cookie, btype, paddr, size, flags, vaddr, hp)
 }
 
 int
-obio_bus_mmap(cookie, btype, paddr, flags)
-	void *cookie;
+obio_bus_mmap(t, btype, paddr, flags, hp)
+	bus_space_tag_t t;
 	bus_type_t btype;
 	bus_addr_t paddr;
 	int flags;
+	bus_space_handle_t *hp;
 {
-	struct obio4_softc *sc = cookie;
+	struct obio4_softc *sc = t->cookie;
 
-	return (bus_space_mmap(sc->sc_bustag, PMAP_OBIO, paddr, flags));
+	return (bus_space_mmap(sc->sc_bustag, PMAP_OBIO, paddr, flags, hp));
 }
 
 int
