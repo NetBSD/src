@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.94 1998/01/09 06:35:17 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.95 1998/01/09 21:34:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 1998/01/09 06:35:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 1998/01/09 21:34:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 
+caddr_t	allocsys __P((caddr_t));
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 void	dumpsys __P((void));
@@ -215,11 +216,14 @@ alpha_init(pfn, ptb, bim, bip)
 	u_long bim;		/* bootinfo magic */
 	u_long bip;		/* bootinfo pointer */
 {
-	extern char _end[];
-	caddr_t start, v;
+	extern char kernel_text[], _end[];
 	struct mddt *mddtp;
 	int i, mddtweird;
+	vm_offset_t kernstart, kernend;
+	vm_size_t size;
 	char *p;
+	caddr_t v;
+	caddr_t start, w;
 
 	/*
 	 * Turn off interrupts (not mchecks) and floating point.
@@ -286,6 +290,38 @@ alpha_init(pfn, ptb, bim, bip)
 	 */
 	alpha_pal_wrmces(alpha_pal_rdmces() &
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
+
+	/*
+	 * find out this CPU's page size
+	 */
+	PAGE_SIZE = hwrpb->rpb_page_size;
+	if (PAGE_SIZE != 8192)
+		panic("page size %d != 8192?!", PAGE_SIZE);
+
+	/*
+	 * Initialize PAGE_SIZE-dependent variables.
+	 */
+	vm_set_page_size();
+
+	/*
+	 * Find the beginning and end of the kernel.
+	 */
+	kernstart = trunc_page(kernel_text);
+#ifdef DDB
+	if (bootinfo_valid) {
+		/*
+		 * Save the kernel symbol table.
+		 */
+		switch (bootinfo.version) {
+		case 1:
+			ksym_start = (void *)bootinfo.un.v1.ssym;
+			ksym_end   = (void *)bootinfo.un.v1.esym;
+			break;
+		}
+		kernend = (vm_offset_t)round_page(ksym_end);
+	} else
+#endif
+		kernend = (vm_offset_t)round_page(_end);
 
 	/*
 	 * Find out how much memory is available, by looking at
@@ -420,44 +456,6 @@ alpha_init(pfn, ptb, bim, bip)
 	}
 
 	/*
-	 * find out this CPU's page size
-	 */
-	PAGE_SIZE = hwrpb->rpb_page_size;
-	if (PAGE_SIZE != 8192)
-		panic("page size %d != 8192?!", PAGE_SIZE);
-
-	/*
-	 * Initialize PAGE_SIZE-dependent variables.
-	 */
-	vm_set_page_size();
-
-	/*
-	 * Find the first free page.
-	 */
-#ifdef DDB
-	if (bootinfo_valid) {
-		/*
-		 * Save the kernel symbol table.
-		 */
-		switch (bootinfo.version) {
-		case 1:
-			ksym_start = (void *)bootinfo.un.v1.ssym;
-			ksym_end   = (void *)bootinfo.un.v1.esym;
-			break;
-		}
-		v = (caddr_t)alpha_round_page(ksym_end);
-	} else
-#endif
-		v = (caddr_t)alpha_round_page(_end);
-
-	/*
-	 * Init mapping for u page(s) for proc 0
-	 */
-	start = v;
-	curproc->p_addr = proc0paddr = (struct user *)v;
-	v += UPAGES * NBPG;
-
-	/*
 	 * Find out what hardware we're on, and remember its type name.
 	 */
 	cputype = hwrpb->rpb_type;
@@ -501,61 +499,25 @@ alpha_init(pfn, ptb, bim, bip)
 	lastusablepage -= btoc(MSGBUFSIZE);
 	msgbufaddr = (caddr_t) ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
 	initmsgbuf(msgbufaddr, alpha_round_page(MSGBUFSIZE));
-	
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 *
-	 * These data structures are allocated here instead of cpu_startup()
-	 * because physical memory is directly addressable. We don't have
-	 * to map these into virtual address space.
+	 * Init mapping for u page(s) for proc 0
 	 */
-#define valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-#define valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
+	start = v = (caddr_t)kernend;
+	curproc->p_addr = proc0paddr = (struct user *)v;
+	v += UPAGES * NBPG;
 
 	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate 10% of memory for buffer space.  Insure a
-	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
-	 * headers as file i/o buffers.
+	 * Allocate space for system data structures.  These data structures
+	 * are allocated here instead of cpu_startup() because physical
+	 * memory is directly addressable.  We don't have to map these into
+	 * virtual address space.
 	 */
-	if (bufpages == 0)
-		bufpages = (physmem * 10) / (CLSIZE * 100);
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(swbuf, struct buf, nswbuf);
-	valloc(buf, struct buf, nbuf);
+	size = (vm_size_t)allocsys(0);
+	w = allocsys(v);
+	if ((w - v) != size)
+		panic("alpha_init: table size inconsistency");
+	v = w;
 
 	/*
 	 * Clear allocated memory.
@@ -690,6 +652,67 @@ alpha_init(pfn, ptb, bim, bip)
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
 			ncpus++;
 	}
+}
+
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and the call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+	caddr_t v;
+{
+
+#define valloc(name, type, num) \
+	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
+#define valloclim(name, type, num, lim) \
+	    (name) = (type *)v; v = (caddr_t)ALIGN((lim) = ((name)+(num)))
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+
+	/*
+	 * Determine how many buffers to allocate.
+	 * We allocate 10% of memory for buffer space.  Insure a
+	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
+	 * headers as file i/o buffers.
+	 */
+	if (bufpages == 0)
+		bufpages = (physmem * 10) / (CLSIZE * 100);
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+	return (v);
 }
 
 void
