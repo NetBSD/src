@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.15 2000/12/30 17:20:55 martin Exp $	*/
+/*	$NetBSD: scanw.c,v 1.16 2002/05/26 17:01:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.15 2000/12/30 17:20:55 martin Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.16 2002/05/26 17:01:38 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,11 +46,7 @@ __RCSID("$NetBSD: scanw.c,v 1.15 2000/12/30 17:20:55 martin Exp $");
  * scanw and friends.
  */
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "curses.h"
 
@@ -59,22 +55,12 @@ __RCSID("$NetBSD: scanw.c,v 1.15 2000/12/30 17:20:55 martin Exp $");
  *	Implement a scanf on the standard screen.
  */
 int
-#ifdef __STDC__
 scanw(const char *fmt,...)
-#else
-scanw(fmt, va_alist)
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwscanw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -84,23 +70,12 @@ va_dcl
  *	Implements a scanf on the given window.
  */
 int
-#ifdef __STDC__
 wscanw(WINDOW *win, const char *fmt,...)
-#else
-wscanw(win, fmt, va_alist)
-	WINDOW *win;
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwscanw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -111,51 +86,28 @@ va_dcl
  *	arguments, they cannot be macros.  Another sigh....
  */
 int
-#ifdef __STDC__
 mvscanw(int y, int x, const char *fmt,...)
-#else
-mvscanw(y, x, fmt, va_alist)
-	int     y, x;
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
 	if (move(y, x) != OK)
 		return (ERR);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwscanw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
 
 int
-#ifdef __STDC__
 mvwscanw(WINDOW * win, int y, int x, const char *fmt,...)
-#else
-mvwscanw(win, y, x, fmt, va_alist)
-	WINDOW *win;
-	int     y, x;
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
 	if (move(y, x) != OK)
 		return (ERR);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwscanw(win, fmt, ap);
 	va_end(ap);
 	return (ret);

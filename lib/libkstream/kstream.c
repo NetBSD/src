@@ -1,4 +1,4 @@
-/*	$NetBSD: kstream.c,v 1.3 2001/11/05 15:01:02 lukem Exp $	*/
+/*	$NetBSD: kstream.c,v 1.4 2002/05/26 17:04:44 wiz Exp $	*/
 
 /* Encrypted-stream implementation for MIT Kerberos.
    Written by Ken Raeburn (Raeburn@Cygnus.COM).
@@ -53,19 +53,8 @@
 #endif
 
 #include <kerberosIV/kstream.h>
-#ifdef __STDC__
 int krb_net_write (int, char *, int);
 int krb_net_read (int, char *, int);
-#else
-int krb_net_write ();
-int krb_net_read ();
-void abort ();
-char *memmove ();
-void *memcpy ();
-char *malloc ();
-char *realloc ();
-void free ();
-#endif
 
 #ifdef sun
 #ifndef solaris20
