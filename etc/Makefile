@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.289 2004/06/20 21:30:26 christos Exp $
+#	$NetBSD: Makefile,v 1.290 2004/06/22 18:21:55 itojun Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -296,6 +296,12 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 	    /dev/null ${DESTDIR}/var/run/utmp
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 \
 	    /dev/null ${DESTDIR}/var/run/utmpx
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    pf.os ${DESTDIR}/etc
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    pf.conf ${DESTDIR}/etc
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    spamd.conf ${DESTDIR}/etc
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/atc_score
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
