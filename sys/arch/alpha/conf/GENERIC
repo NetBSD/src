@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.86 1998/05/14 21:53:40 matt Exp $
+# $NetBSD: GENERIC,v 1.87 1998/05/24 23:45:30 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -116,9 +116,8 @@ mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
-tcds0	at	tc? slot ? offset ?
-asc0	at	tcds? slot ?
-asc1	at	tcds? slot ?
+tcds*	at	tc? slot ? offset ?
+asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?
 #sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?

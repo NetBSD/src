@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.76 1998/05/23 22:42:14 matt Exp $
+# $NetBSD: files.alpha,v 1.77 1998/05/24 23:45:30 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -161,14 +161,14 @@ attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty		needs-flag
 
 # the TCDS ASIC
-device	tcds { slot = -1 }
+device	tcds { chip = -1 }
 attach	tcds at tc
-file	arch/alpha/tc/tcds.c		tcds		needs-count
+file	arch/alpha/tc/tcds.c		tcds
 
 # 53C[F]90 SCSI
 device	asc: scsi, ncr53c9x
 attach	asc at tcds
-file	arch/alpha/tc/asc.c		asc		needs-count
+file	arch/alpha/tc/asc.c		asc
 file	arch/alpha/tc/tcds_dma.c	asc
 
 # TC and baseboard ioasic Lance ethernet are in files.tc

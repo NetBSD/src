@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.13 1998/05/13 22:03:08 thorpej Exp $
+# $NetBSD: INSTALL,v 1.14 1998/05/24 23:45:30 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -86,9 +86,8 @@ mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
-tcds0	at	tc? slot ? offset ?
-asc0	at	tcds? slot ?
-asc1	at	tcds? slot ?
+tcds*	at	tc? slot ? offset ?
+asc*	at	tcds? chip ?
 le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
