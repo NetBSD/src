@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.1 2001/06/27 17:24:35 fredette Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.2 2001/08/17 20:27:12 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -494,6 +494,15 @@ ec_recv(sc, intbit)
 		total_length = doff - EC_PKT_RDOFF;
 		buf += EC_PKT_RDOFF;
 
+		/* XXX - sometimes the card reports a large data offset. */
+		if (total_length > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+#ifdef DEBUG
+			printf("%s: fixing too-large length of %d\n",
+			    sc->sc_dev.dv_xname, total_length);
+#endif
+			total_length = (ETHER_MAX_LEN - ETHER_CRC_LEN);
+		}
+
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == 0)
 			break;
@@ -548,6 +557,8 @@ ec_recv(sc, intbit)
 	}
 
 	/* Give the receive buffer back to the card. */
+	buf = EC_CSR_INT_BUF(intbit);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, buf, 0);
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_INTPA) | EC_CSR_INT_BSW(intbit) | intbit);
 }
 
