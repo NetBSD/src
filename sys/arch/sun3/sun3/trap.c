@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 1999/12/05 11:56:36 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.88 2000/05/24 16:48:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -188,7 +188,7 @@ userret(p, tf, oticks)
 	register struct trapframe *tf;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -198,18 +198,9 @@ userret(p, tf, oticks)
 
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we mi_switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
