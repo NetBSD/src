@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.1 2001/11/07 00:33:23 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.2 2001/11/07 02:06:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@ extern void set_spl_masks(void);
 
 /* Called only from assembler code. */
 uint32_t iq80310_intstat_read(void);
-void	 stray_irqhandler(void);
+void	 stray_irqhandler(int);
 
 /*
  * We have 8 interrupt source bits -- 5 in the XINT3 register, and 3
@@ -115,10 +115,11 @@ iq80310_intstat_read(void)
 {
 	uint32_t intstat;
 
-	intstat = bus_space_read_1(&obio_bs_tag, IQ80310_XINT3_STATUS, 0);
+	intstat = bus_space_read_1(&obio_bs_tag, IQ80310_XINT3_STATUS,
+	    0) & 0x1f;
 	if (1/*rev F or later board*/)
-		intstat |= bus_space_read_1(&obio_bs_tag,
-		    IQ80310_XINT0_STATUS, 0) << 5;
+		intstat |= (bus_space_read_1(&obio_bs_tag,
+		    IQ80310_XINT0_STATUS, 0) & 0x7) << 5;
 
 	return (intstat);
 }
@@ -172,10 +173,10 @@ disable_irq(int irq)
 }
 
 void
-stray_irqhandler(void)
+stray_irqhandler(int irq)
 {
 
-	panic("stray IRQ\n");
+	panic("no handlers for IRQ %d\n", irq);
 }
 
 void *
