@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 1997/01/09 20:21:02 tls Exp $
+#	$NetBSD: Makefile,v 1.9 1997/02/21 07:52:37 mikel Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	rlogin
 SRCS=	rlogin.c
-CFLAGS=	-g
+
 .if defined(KERBEROS)
 SRCS+=	krcmd.c kcmd.c
 DPADD=	${LIBKSTREAM} ${LIBKRB} ${LIBDES}
