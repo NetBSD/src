@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.h,v 1.1 2003/11/11 17:31:59 manu Exp $ */
+/*	$NetBSD: mach_machdep.h,v 1.2 2003/12/03 18:25:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,14 @@
 #ifndef	_MACH_MACHDEP_H_
 #define	_MACH_MACHDEP_H_
 
+/* Exception codes */
+#define MACH_BUS_ADRALN		1
+#define MACH_SEGV_MAPERR	2
+#define MACH_TRAP_BRKPT		1
+#define MACH_ILL_ILLOPC		2
+#define MACH_ILL_PRVOPC		3
+
+/* process and thread state */
 #define MACH_PPC_THREAD_STATE		1
 #define MACH_PPC_FLOAT_STATE		2
 #define MACH_PPC_EXCEPTION_STATE	3
