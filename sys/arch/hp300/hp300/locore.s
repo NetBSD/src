@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 1997/12/31 10:12:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 1998/01/05 23:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1293,63 +1293,18 @@ Lswnofpsave:
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
 
-	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a2	| vmspace = p->p_vmspace
-#ifdef DIAGNOSTIC
-	tstl	a2			| map == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
-#endif
-	movl	a2@(VM_PMAP),a2		| pmap = vmspace->vm_map.pmap
-	tstl	a2@(PM_STCHG)		| pmap->st_changed?
-	jeq	Lswnochg		| no, skip
+	/*
+	 * Activate process's address space.
+	 * XXX Should remember the last USTP value loaded, and call this
+	 * XXX only if it has changed.
+	 */
 	pea	a0@			| push proc
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
-Lswnochg:
 
 	lea	_ASM_LABEL(tmpstk),sp	| now goto a tmp stack for NMI
-#if defined(M68040)
-#if defined(M68020) || defined(M68030)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lres1a			| no, skip
-#endif
-	.word	0xf518			| yes, pflusha
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	.long	0x4e7b0806		| movc d0,urp
-	jra	Lcxswdone
-Lres1a:
-#endif
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s)
-#if defined(M68K_MMU_MOTOROLA)
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu4			| yes, skip
-#endif
-	pflusha				| flush entire TLB
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	lea	_C_LABEL(protorp),a0	| CRP prototype
-	movl	d0,a0@(4)		| stash USTP
-	pmove	a0@,crp			| load new user root pointer
-	jra	Lcxswdone		| thats it
-Lhpmmu4:	
-#endif
-#if defined(M68K_MMU_HP)
-	MMUADDR(a0)
-	movl	a0@(MMUTBINVAL),d1	| invalidate TLB
-	tstl	_C_LABEL(ectype)	| got external VAC?
-	jle	Lnocache1		| no, skip
-	andl	#~MMU_CEN,a0@(MMUCMD)	| toggle cache enable
-	orl	#MMU_CEN,a0@(MMUCMD)	| to clear data cache
-Lnocache1:
-	movl	a1@(PCB_USTP),a0@(MMUUSTP) | context switch
-#endif
-Lcxswdone:
+
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
@@ -1763,20 +1718,30 @@ ENTRY(loadustp)
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip
+	.word	0xf518			| yes, pflusha
 	.long	0x4e7b0806		| movc d0,urp
 	rts
 LmotommuC:
 #endif
+	pflusha				| flush entire TLB
 	lea	_C_LABEL(protorp),a0	| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts				|   since pmove flushes TLB
+	movl	#CACHE_CLR,d0
+	movc	d0,cacr			| invalidate cache(s)
+	rts
 Lhpmmu9:
 #endif
 #if defined(M68K_MMU_HP)
+	movl	#CACHE_CLR,d0
+	movc	d0,cacr			| invalidate cache(s)
 	MMUADDR(a0)
+	movl	a0@(MMUTBINVAL),d1	| invalidate TLB
+	tstl	_C_LABEL(ectype)	| have external VAC?
+	jle	1f			| no, skip
+	andl	#~MMU_CEN,a0@(MMUCMD)	| toggle cache enable
+	orl	#MMU_CEN,a0@(MMUCMD)	| to clear data cache
+1:
 	movl	sp@(4),a0@(MMUUSTP)	| load a new USTP
 #endif
 	rts

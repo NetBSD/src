@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 1998/01/01 19:53:08 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 1998/01/05 23:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1135,43 +1135,18 @@ Lswnofpsave:
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
 
-	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a2	| vmspace = p->p_vmspace
-#ifdef DIAGNOSTIC
-	tstl	a2			| map == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
-#endif
-	movl	a2@(VM_PMAP),a2		| pmap = vmspace->vm_map.pmap
-	tstl	a2@(PM_STCHG)		| pmap->st_changed?
-	jeq	Lswnochg		| no, skip
+	/*
+	 * Activate process's address space.
+	 * XXX Should remember the last USTP value loaded, and call this
+	 * XXX only of it has changed.
+	 */
 	pea	a0@			| push proc
 	jbsr	_pmap_activate		| pmap_activate(p)
 	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
-Lswnochg:
 
 	lea     tmpstk,sp               | now goto a tmp stack for NMI
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lres1a			| no, skip
-	.word	0xf518			| yes, pflusha
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	.long	0x4e7b0806		| movc d0,urp
-	jra	Lcxswdone
-Lres1a:
-#endif
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s)
-	pflusha				| flush entire TLB
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	lea	_protorp,a0		| CRP prototype
-	movl	d0,a0@(4)		| stash USTP
-	pmove	a0@,crp			| load new user root pointer
-Lcxswdone:
+
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
@@ -1512,16 +1487,18 @@ ENTRY(loadustp)
 #if defined(M68040)
 	cmpl    #MMU_68040,_mmutype     | 68040?
 	jne     LmotommuC               | no, skip
+	.word	0xf518			| pflusha
 	.long   0x4e7b0806              | movc d0,urp
 	rts
 LmotommuC:
 #endif
+	pflusha				| flush entire TLB
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts				|   since pmove flushes TLB
+	movl	#CACHE_CLR,d0
+	movc	d0,cacr			| invalidate cache(s)
+	rts
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		| address to load
