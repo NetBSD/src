@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.30 2000/06/08 13:51:34 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.31 2000/06/28 03:04:04 mrg Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.52 2000/06/05 00:41:58 itojun Exp $	*/
 
 /*
@@ -963,7 +963,7 @@ udp6_detach(in6p)
 	splx(s);
 }
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 int
