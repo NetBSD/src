@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.3 2000/06/26 16:16:42 kleink Exp $	*/
+/*	$NetBSD: at.h,v 1.4 2000/07/28 12:13:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -33,7 +33,7 @@
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
-#define sa_family_t	sa_family_t
+#define sa_family_t	__sa_family_t
 #endif
 
 /*
