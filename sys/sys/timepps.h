@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.1 1998/06/10 08:18:58 jonathan Exp $	*/
+/*	$NetBSD: timepps.h,v 1.2 1999/11/04 05:34:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,24 +34,34 @@
 #ifndef _SYS_TIMEPPS_H_
 #define _SYS_TIMEPPS_H_
 
+/*
+ * This header file complies with "Pulse-Per-Second API for UNIX-like
+ * Operating Systems, Version 1.0", draft-mogul-pps-api-05.txt
+ */
+
 #include <sys/ioccom.h>
 
-typedef int32_t pps_handle_t;
-typedef u_int32_t pps_seq_t;
+#define PPS_API_VERS_1	1	/* API version number */
+
+/*
+ * PPSAPI type definitions
+ */
+typedef int32_t pps_handle_t;	/* represents a PPS source */
+typedef u_int32_t pps_seq_t;	/* sequence number, at least 32 bits */
 
 typedef union pps_timeu {
 	struct timespec	tspec;
- 	struct {        /* NTP long fixed-point format */
+	struct {        /* NTP long fixed-point format */
 		unsigned int     integral;
 		unsigned int     fractional;
 	} ntplfp;
 	unsigned long   longpair[2];
 } pps_timeu_t;
 
-#define assert_timestamp	assert_tu.tspec
-#define clear_timestamp		clear_tu.tspec
 
-
+/*
+ * timestamp information
+ */
 typedef struct {
 	pps_seq_t	assert_sequence;	/* assert event seq # */
 	pps_seq_t	clear_sequence;		/* clear event seq # */
@@ -60,8 +70,15 @@ typedef struct {
 	int		current_mode;		/* current mode bits */
 } pps_info_t;
 
+#define assert_timestamp	assert_tu.tspec
+#define clear_timestamp		clear_tu.tspec
 
+
+/*
+ * Parameter structure
+ */
 typedef struct {
+	int api_version;			/* API version number */
 	int mode;				/* mode bits */
 	pps_timeu_t	assert_off_tu;
 	pps_timeu_t	clear_off_tu;
@@ -69,47 +86,126 @@ typedef struct {
 #define assert_offset		assert_off_tu.tspec
 #define clear_offset		clear_off_tu.tspec
 
-struct pps_wait_args {
-	struct timespec	timeout;
-	pps_info_t	pps_info_buf;
-};
 
+/*
+ * Device/implementation parameters (mode, edge bits)
+ */
 #define PPS_CAPTUREASSERT	0x01
 #define PPS_CAPTURECLEAR	0x02
 #define PPS_CAPTUREBOTH		0x03
-
-#define PPS_HARDPPSONASSERT	0x04
-#define PPS_HARDPPSONCLEAR	0x08
-
 #define PPS_OFFSETASSERT	0x10
 #define PPS_OFFSETCLEAR		0x20
+#define PPS_CANWAIT		0x100
+#define PPS_CANPOLL		0x200
 
+/*
+ * Kernel actions
+ */
 #define PPS_ECHOASSERT		0x40
 #define PPS_ECHOCLEAR		0x80
 
-#define PPS_CANWAIT		0x100
 
+/*
+ * timestamp formats (tsformat, mode)
+ */
 #define PPS_TSFMT_TSPEC		0x1000
 #define PPS_TSFMT_NTPLFP	0x2000
 
-#define PPS_CREATE		_IO('1', 1)
-#define PPS_DESTROY		_IO('1', 2)
-#define PPS_SETPARAMS		_IOW('1', 3, pps_params_t)
-#define PPS_GETPARAMS		_IOR('1', 4, pps_params_t)
-#define PPS_GETCAP		_IOR('1', 5, int)
-#define PPS_FETCH		_IOWR('1', 6, pps_info_t)
-#define PPS_WAIT		_IOWR('1', 6, struct pps_wait_args)
+/*
+ * Kernel discipline actions (kernel_consumer)
+ */
+#define PPS_KC_HARDPPS		0
+#define PPS_KC_HARDPPS_PLL	1
+#define PPS_KC_HARDPPS_FLL	2
+
+/*
+ * IOCTL definitions
+ */
+#define PPS_IOC_CREATE		_IO('1', 1)
+#define PPS_IOC_DESTROY		_IO('1', 2)
+#define PPS_IOC_SETPARAMS	_IOW('1', 3, pps_params_t)
+#define PPS_IOC_GETPARAMS	_IOR('1', 4, pps_params_t)
+#define PPS_IOC_GETCAP		_IOR('1', 5, int)
+#define PPS_IOC_FETCH		_IOWR('1', 6, pps_info_t)
+#define PPS_IOC_KCBIND		_IOWR('1', 7, int)
 
 #ifndef _KERNEL
-int time_pps_create __P((int filedes, pps_handle_t *handle));
-int time_pps_destroy __P((pps_handle_t handle));
-int time_pps_setparams __P((pps_handle_t handle, 
+
+#include <sys/cdefs.h>
+#include <sys/ioctl.h>
+
+static __inline int time_pps_create __P((int filedes, pps_handle_t *handle));
+static __inline int time_pps_destroy __P((pps_handle_t handle));
+static __inline int time_pps_setparams __P((pps_handle_t handle, 
 	const pps_params_t *ppsparams));
-int time_pps_getparams __P((pps_handle_t handle, pps_params_t *ppsparams));
-int time_pps_getcap __P((pps_handle_t handle, int *mode));
-int time_pps_fetch __P((pps_handle_t handle, pps_info_t *ppsinfobuf));
-int time_pps_wait __P((pps_handle_t handle, const struct timespec *timeout,
-	pps_info_t *ppsinfobuf));
+static __inline int time_pps_getparams __P((pps_handle_t handle,
+	pps_params_t *ppsparams));
+static __inline int time_pps_getcap __P((pps_handle_t handle, int *mode));
+static __inline int time_pps_fetch __P((pps_handle_t handle,
+	const int tsformat, pps_info_t *ppsinfobuf,
+	const struct timespec *timeout));
+static __inline int time_pps_wait __P((pps_handle_t handle,
+       const struct timespec *timeout, pps_info_t *ppsinfobuf));
+
+static __inline int
+time_pps_create(filedes, handle)
+	int filedes;
+	pps_handle_t *handle;
+{
+	*handle = filedes;
+	return (0);
+}
+
+static __inline int
+time_pps_destroy(handle)
+	pps_handle_t handle;
+{
+	return (0);
+}
+
+static __inline int
+time_pps_setparams(handle, ppsparams)
+	pps_handle_t handle;
+	const pps_params_t *ppsparams;
+{
+	return (ioctl(handle, PPS_IOC_SETPARAMS, ppsparams));
+}
+
+static __inline int
+time_pps_getparams(handle, ppsparams)
+	pps_handle_t handle;
+	pps_params_t *ppsparams;
+{
+	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
+}
+
+static __inline int 
+time_pps_getcap(handle, mode)
+	pps_handle_t handle;
+	int *mode;
+{
+	return (ioctl(handle, PPS_IOC_GETCAP, mode));
+}
+
+static __inline int
+time_pps_fetch(handle, tsformat, ppsinfobuf, timeout)
+	pps_handle_t handle;
+	const int tsformat;
+	pps_info_t *ppsinfobuf;
+	const struct timespec *timeout;
+{
+	return (ioctl(handle, PPS_IOC_FETCH, ppsinfobuf));
+}
+
+static __inline int
+time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
+	pps_handle_t handle;
+	const int kernel_consumer;
+	const int edge;
+	const int tsformat;
+{
+	return (ioctl(handle, PPS_IOC_KCBIND, edge));
+}
 #endif /* !_KERNEL*/
 
 #endif /* SYS_TIMEPPS_H_ */
