@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.vax,v 1.4 2002/04/18 13:23:55 wiz Exp $
+# $NetBSD: obsolete.vax,v 1.5 2002/05/14 15:08:26 lukem Exp $
 /usr/include/machine
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h
@@ -50,5 +50,4 @@
 /usr/include/machine/vsbus.h
 /usr/include/vax
 /usr/mdec/boot.mop
-/usr/mdec/raboot
-/usr/mdec/xxboot
+/usr/mdec/installboot
