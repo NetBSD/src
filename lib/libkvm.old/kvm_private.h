@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.2 1996/05/13 02:30:25 thorpej Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.3 1997/08/13 20:10:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,6 +55,8 @@ struct __kvm {
 	int	swfd;		/* swap file (e.g., /dev/drum) */
 	int	nlfd;		/* namelist file (e.g., /vmunix) */
 	struct kinfo_proc *procbase;
+	u_long	usrstack;		/* address of end of user stack */
+	u_long	min_uva, max_uva;	/* min/max user virtual address */
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
 	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */
