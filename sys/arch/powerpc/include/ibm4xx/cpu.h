@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2005/01/18 17:11:25 shige Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2005/01/21 19:24:11 shige Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -67,6 +67,7 @@ extern char bootpath[];
 extern void (*md_device_register) __P((struct device *dev, void *aux));
 
 /* export from ibm4xx/machdep.c */
+extern void (*md_consinit) __P((void));
 extern void (*md_cpu_startup) __P((void));
 
 /* export from ibm4xx/ibm40x_machdep.c */
@@ -81,7 +82,10 @@ extern void ibm4xx_install_extint(void (*)(void));
 /* export from ibm4xx/ibm4xx_autoconf.c */
 extern void ibm4xx_device_register(struct device *dev, void *aux);
 
+/* export from ibm4xx/clock.c */
 extern void calc_delayconst(void);
+
+/* export from ibm4xx/4xx_locore.S */
 extern void ppc4xx_reset(void) __attribute__((__noreturn__));
 
 #endif /* _KERNEL */
