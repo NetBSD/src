@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.13 1996/08/23 04:35:41 cgd Exp $
+$NetBSD: pcidevs,v 1.14 1996/08/26 20:12:16 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -474,9 +474,11 @@ product DEC 21030	0x0004	DECchip 21030 (\"TGA\")
 product DEC NVRAM	0x0007	Zephyr NV-RAM
 product DEC KZPSA	0x0008	KZPSA
 product DEC 21140	0x0009	DECchip 21140 (\"FasterNet\")
+product DEC PBXGB	0x000d	TGA2
 product DEC DEFPA	0x000f	DEFPA
 /* product DEC ???	0x0010	??? VME Interface */
 product DEC 21041	0x0014  DECchip 21041 (\"Tulip Pass 3\")
+product DEC DGLPB	0x0016	DGLPB (\"OPPO\")
 
 /* Diamond products */
 product DIAMOND vIPER	0x9001	Viper/PCI
