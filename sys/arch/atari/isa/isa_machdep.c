@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.25 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.26 2002/12/08 21:31:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -74,7 +74,7 @@ struct isabus_softc {
 	struct atari_isa_chipset sc_chipset;
 };
 
-CFATTACH_DECL(isabus, sizeof(struct isabus_softc),
+CFATTACH_DECL(isab, sizeof(struct isabus_softc),
     isabusmatch, isabusattach, NULL, NULL);
 
 /*
@@ -91,7 +91,7 @@ void		*auxp;
 {
 	static int	nmatched = 0;
 
-	if (strcmp((char *)auxp, "isabus"))
+	if (strcmp((char *)auxp, "isab"))
 		return (0); /* Wrong number... */
 
 	if(atari_realconfig == 0)
