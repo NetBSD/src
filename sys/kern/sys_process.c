@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.61.18.2 2001/03/30 21:47:02 he Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.61.18.3 2002/01/12 01:03:07 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -104,6 +104,10 @@ sys_ptrace(p, v, retval)
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 	}
+
+	/* Can't trace a process that's currently exec'ing. */
+	if ((t->p_flag & P_INEXEC) != 0)
+		return EAGAIN;
 
 	/* Make sure we can operate on it. */
 	switch (SCARG(uap, req)) {
