@@ -1,4 +1,4 @@
-/*	$NetBSD: overwrite.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: overwrite.c,v 1.13 2000/04/18 12:23:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)overwrite.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overwrite.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: overwrite.c,v 1.13 2000/04/18 12:23:01 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,29 +55,9 @@ __RCSID("$NetBSD: overwrite.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 int
 overwrite(const WINDOW *win1, WINDOW *win2)
 {
-	int     x, y, endy, endx, starty, startx;
-
 #ifdef DEBUG
 	__CTRACE("overwrite: (%0.2o, %0.2o);\n", win1, win2);
 #endif
-	starty = max(win1->begy, win2->begy);
-	startx = max(win1->begx, win2->begx);
-	endy = min(win1->maxy + win1->begy, win2->maxy + win2->begx);
-	endx = min(win1->maxx + win1->begx, win2->maxx + win2->begx);
-	if (starty >= endy || startx >= endx)
-		return (OK);
-#ifdef DEBUG
-	__CTRACE("overwrite: from (%d, %d) to (%d, %d)\n",
-	    starty, startx, endy, endx);
-#endif
-	x = endx - startx;
-	for (y = starty; y < endy; y++) {
-		(void) memcpy(
-		    &win2->lines[y - win2->begy]->line[startx - win2->begx],
-		    &win1->lines[y - win1->begy]->line[startx - win1->begx],
-		    (size_t) x * __LDATASIZE);
-		__touchline(win2, y, (int) (startx - win2->begx), (int) (endx - win2->begx),
-		    0);
-	}
-	return (OK);
+	return copywin(win1, win2, win1->begy, win1->begx, win2->begy,
+		       win2->begx, win2->maxy, win2->maxx, FALSE);
 }

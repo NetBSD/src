@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.37 2000/04/17 12:25:45 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.38 2000/04/18 12:23:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -489,9 +489,13 @@ int	 cbreak(void);
 int	 clearok(WINDOW *win, bool flag);
 bool	 can_change_colors(void);
 int	 color_content(short colour, short *redp, short *greenp, short *bluep);
+int      copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
+		 int smincol, int dminrow, int dmincol, int dmaxrow, 
+		 int dmaxcol, int overlay);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
 int	 delwin(WINDOW *win);
+WINDOW  *derwin(WINDOW *orig, int nlines, int ncols, int by, int bx);
 int	 echo(void);
 int	 endwin(void);
 int	 flash(void);

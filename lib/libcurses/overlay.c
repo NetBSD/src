@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: overlay.c,v 1.13 2000/04/18 12:23:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)overlay.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overlay.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.13 2000/04/18 12:23:01 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,35 +55,9 @@ int
 overlay(const WINDOW *win1, WINDOW *win2)
 {
 
-	int     x, y, y1, y2, endy, endx, starty, startx;
-	__LDATA *sp, *end;
-
 #ifdef DEBUG
 	__CTRACE("overlay: (%0.2o, %0.2o);\n", win1, win2);
 #endif
-	starty = max(win1->begy, win2->begy);
-	startx = max(win1->begx, win2->begx);
-	endy = min(win1->maxy + win1->begy, win2->maxy + win2->begx);
-	endx = min(win1->maxx + win1->begx, win2->maxx + win2->begx);
-#ifdef DEBUG
-	__CTRACE("overlay: from (%d,%d) to (%d,%d)\n",
-	    starty, startx, endy, endx);
-#endif
-	if (starty >= endy || startx >= endx)
-		return (OK);
-	y1 = starty - win1->begy;
-	y2 = starty - win2->begy;
-	for (y = starty; y < endy; y++, y1++, y2++) {
-		end = &win1->lines[y1]->line[endx - win1->begx];
-		x = startx - win2->begx;
-		for (sp = &win1->lines[y1]->line[startx - win1->begx];
-		    sp < end; sp++) {
-			if (!isspace(sp->ch)) {
-				wmove(win2, y2, x);
-				__waddch(win2, sp);
-			}
-			x++;
-		}
-	}
-	return (OK);
+	return copywin(win1, win2, win1->begy, win1->begx, win2->begy,
+		       win2->begx, win2->maxy, win2->maxx, TRUE);
 }
