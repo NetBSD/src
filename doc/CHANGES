@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.353 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.354 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -96,3 +96,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	groff(1): Updated to 1.19.1. [wiz 20040730]
 	i386: Support Intel ICH-based SpeedStep(TM) in ichlpcib(4).
 		[mrg 20040731]
+	/etc/postinstall: check for obsolete minor/teeny shared libraries.
+		[lukem 20040812]
