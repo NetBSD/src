@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.16 1996/12/11 09:10:40 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.17 1997/01/06 08:48:36 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -53,6 +53,7 @@ options		INET		# Internet protocols
 options		GATEWAY		# IP forwarding + larger mb_map
 options		MROUTING	# Multicast routing
 options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options 	PFIL_HOOKS	# packet processing hooks
 
 # Options for HP hardware
 options		FPSP		# floating point interface for 68040
@@ -72,6 +73,8 @@ options	COMPAT_HPUX		# HP-UX binary compatibility
 #options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
 
 # Debugging options
+options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
 options		DDB		# Kernel Dynamic Debugger
 
 config		netbsd swap generic
@@ -130,3 +133,4 @@ pseudo-device	ccd		4	# concatenated disk devices
 pseudo-device	ite			# terminal emulation on grf
 pseudo-device	loop			# loopback network interface
 pseudo-device	ether			# basic ethernet support
+pseudo-device	ipl			# IP Filter package
