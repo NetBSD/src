@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.27 1995/10/07 06:27:44 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.28 1995/10/09 11:24:17 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -206,6 +206,8 @@ svr4_sys_getdents(p, v, retval)
 	struct svr4_dirent idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
+	u_long *cookiebuf, *cookie;
+	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -220,6 +222,8 @@ svr4_sys_getdents(p, v, retval)
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	ncookies = buflen / 16;
+	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
 	VOP_LOCK(vp);
 	off = fp->f_offset;
 again:
@@ -236,7 +240,8 @@ again:
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
          */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *) 0, 0);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
+	    ncookies);
 	if (error)
 		goto out;
 
@@ -246,12 +251,12 @@ again:
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
-	for (; len > 0; len -= reclen) {
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("svr4_getdents");
-		off += reclen;	/* each entry points to next */
+		off = *cookie++;	/* each entry points to the next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;
@@ -289,6 +294,7 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp);
+	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
 }

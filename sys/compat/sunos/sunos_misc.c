@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.55 1995/10/07 06:27:33 mycroft Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.56 1995/10/09 11:24:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
 #include <compat/sunos/sunos_util.h>
+#include <compat/sunos/sunos_dirent.h>
 
 #include <netinet/in.h>
 
@@ -322,30 +323,37 @@ sunos_sys_getdents(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_getdents_args *uap = v;
-	register struct vnode *vp;
-	register caddr_t inp, buf;	/* BSD-format */
-	register int len, reclen;	/* BSD-format */
-	register caddr_t outp;		/* Sun-format */
-	register int resid;		/* Sun-format */
+	struct sunos_sys_getdents_args *uap = v;
+	struct dirent *bdp;
+	struct vnode *vp;
+	caddr_t inp, buf;	/* BSD-format */
+	int len, reclen;	/* BSD-format */
+	caddr_t outp;		/* Sun-format */
+	int resid, sunos_reclen;/* Sun-format */
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
+	struct sunos_dirent idb;
 	off_t off;			/* true file offset */
-	long soff;			/* Sun file offset */
 	int buflen, error, eofflag;
-#define	BSD_DIRENT(cp) ((struct dirent *)(cp))
-#define	SUNOS_RECLEN(reclen) (reclen + sizeof(long))
+	u_long *cookiebuf, *cookie;
+	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
+
 	vp = (struct vnode *)fp->f_data;
+
 	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
 		return (EINVAL);
+
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	ncookies = buflen / 16;
+	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
 	VOP_LOCK(vp);
 	off = fp->f_offset;
 again:
@@ -362,24 +370,29 @@ again:
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
-	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag,
-	    (u_long *)0, 0))
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
+	    ncookies);
+	if (error)
 		goto out;
+
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
-	for (; len > 0; len -= reclen) {
-		reclen = ((struct dirent *)inp)->d_reclen;
+
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("sunos_getdents");
-		off += reclen;		/* each entry points to next */
-		if (BSD_DIRENT(inp)->d_fileno == 0) {
+		off = *cookie++;	/* each entry points to next */
+		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;
 		}
-		if (reclen > len || resid < SUNOS_RECLEN(reclen)) {
+		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
+		if (reclen > len || resid < sunos_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
 			break;
@@ -389,28 +402,30 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
-		BSD_DIRENT(inp)->d_reclen = SUNOS_RECLEN(reclen);
-#if notdef
-		BSD_DIRENT(inp)->d_type = 0; 	/* 4.4 specific */
-#endif
-		soff = off;
-		if ((error = copyout((caddr_t)&soff, outp, sizeof soff)) != 0 ||
-		    (error = copyout(inp, outp + sizeof soff, reclen)) != 0)
+		idb.d_fileno = bdp->d_fileno;
+		idb.d_off = off;
+		idb.d_reclen = sunos_reclen;
+		idb.d_namlen = bdp->d_namlen;
+		strcpy(idb.d_name, bdp->d_name);
+		if ((error = copyout((caddr_t)&idb, outp, sunos_reclen)) != 0)
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
 		/* advance output past Sun-shaped entry */
-		outp += SUNOS_RECLEN(reclen);
-		resid -= SUNOS_RECLEN(reclen);
+		outp += sunos_reclen;
+		resid -= sunos_reclen;
 	}
+
 	/* if we squished out the whole block, try again */
 	if (outp == SCARG(uap, buf))
 		goto again;
 	fp->f_offset = off;		/* update the vnode offset */
+
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp);
+	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }

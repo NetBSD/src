@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_dirent.h,v 1.3 1995/10/09 11:23:57 mycroft Exp $	*/
+/*	$NetBSD: sunos_dirent.h,v 1.1 1995/10/09 11:24:10 mycroft Exp $	 */
 
 /*
- * Copyright (c) 1994 Scott Bartram
+ * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Scott Bartram.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,23 +27,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_SUNOS_DIRENT_H_
+#define	_SUNOS_DIRENT_H_
 
-#ifndef _IBCS2_DIRENT_H
-#define _IBCS2_DIRENT_H 1
+#define SUNOS_MAXNAMLEN	255
 
-#include <compat/ibcs2/ibcs2_types.h>
-
-#define IBCS2_MAXNAMLEN		512
-
-struct ibcs2_dirent {
-	ibcs2_ino_t	d_ino;
-	short		d_pad;
-	ibcs2_off_t	d_off;
+struct sunos_dirent {
+	long		d_off;
+	u_long		d_fileno;
 	u_short		d_reclen;
-	char		d_name[IBCS2_MAXNAMLEN + 1];
+	u_short		d_namlen;
+	char		d_name[SUNOS_MAXNAMLEN + 1];
 };
 
-#define IBCS2_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
-#define IBCS2_RECLEN(de,namlen) ALIGN((IBCS2_NAMEOFF(de) + (namlen) + 1))
+#define SUNOS_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
+#define SUNOS_RECLEN(de,namlen) ALIGN((SUNOS_NAMEOFF(de) + (namlen) + 1))
 
-#endif /* _IBCS2_DIRENT_H */
+#endif /* !_SVR4_DIRENT_H_ */
