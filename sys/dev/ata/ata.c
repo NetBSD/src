@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.32 2004/08/03 22:37:19 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.33 2004/08/04 18:24:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.32 2004/08/03 22:37:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.33 2004/08/04 18:24:10 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -147,7 +147,7 @@ atabus_thread(void *arg)
 	for (;;) {
 		s = splbio();
 		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
-		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
+		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
 			chp->ch_flags &= ~WDCF_TH_RUN;
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
@@ -164,13 +164,13 @@ atabus_thread(void *arg)
 			 */
 			chp->ch_queue->queue_freeze--;
 			wdc_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
-		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
+		} else if (chp->ch_queue->active_xfer != NULL &&
 			   chp->ch_queue->queue_freeze == 1) {
 			/*
 			 * Caller has bumped queue_freeze, decrease it.
 			 */
 			chp->ch_queue->queue_freeze--;
-			xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+			xfer = chp->ch_queue->active_xfer;
 			KASSERT(xfer != NULL);
 			(*xfer->c_start)(chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)
