@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.3 1996/08/30 18:45:30 thorpej Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.4 1998/07/26 18:29:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -50,9 +50,9 @@
 #define _NG_GROUP	 2
 
 struct netgroup {
-	char		*ng_host;	/* host name */
-	char		*ng_user;	/* user name */
-	char		*ng_domain;	/* domain name */
+	const char	*ng_host;	/* host name */
+	const char	*ng_user;	/* user name */
+	const char	*ng_domain;	/* domain name */
 	struct netgroup	*ng_next;	/* thread */
 };
 

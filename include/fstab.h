@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.h,v 1.5 1998/02/02 21:07:24 perry Exp $	*/
+/*	$NetBSD: fstab.h,v 1.6 1998/07/26 18:29:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -59,13 +59,13 @@
 #define	FSTAB_XX	"xx"		/* ignore totally */
 
 struct fstab {
-	char	*fs_spec;		/* block special device name */
-	char	*fs_file;		/* file system path prefix */
-	char	*fs_vfstype;		/* File system type, ufs, nfs */
-	char	*fs_mntops;		/* Mount options ala -o */
-	char	*fs_type;		/* FSTAB_* from fs_mntops */
-	int	fs_freq;		/* dump frequency, in days */
-	int	fs_passno;		/* pass number on parallel fsck */
+	const char *fs_spec;		/* block special device name */
+	const char *fs_file;		/* file system path prefix */
+	const char *fs_vfstype;		/* File system type, ufs, nfs */
+	const char *fs_mntops;		/* Mount options ala -o */
+	const char *fs_type;		/* FSTAB_* from fs_mntops */
+	int	    fs_freq;		/* dump frequency, in days */
+	int	    fs_passno;		/* pass number on parallel fsck */
 };
 
 #include <sys/cdefs.h>

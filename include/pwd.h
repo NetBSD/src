@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.14 1998/06/22 13:29:43 msaitoh Exp $	*/
+/*	$NetBSD: pwd.h,v 1.15 1998/07/26 18:29:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -79,16 +79,16 @@
 #endif
 
 struct passwd {
-	char	*pw_name;		/* user name */
-	char	*pw_passwd;		/* encrypted password */
-	uid_t	pw_uid;			/* user uid */
-	gid_t	pw_gid;			/* user gid */
-	time_t	pw_change;		/* password change time */
-	char	*pw_class;		/* user access class */
-	char	*pw_gecos;		/* Honeywell login info */
-	char	*pw_dir;		/* home directory */
-	char	*pw_shell;		/* default shell */
-	time_t	pw_expire;		/* account expiration */
+	const char *pw_name;		/* user name */
+	const char *pw_passwd;		/* encrypted password */
+	uid_t	    pw_uid;		/* user uid */
+	gid_t	    pw_gid;		/* user gid */
+	time_t	    pw_change;		/* password change time */
+	const char *pw_class;		/* user access class */
+	const char *pw_gecos;		/* Honeywell login info */
+	const char *pw_dir;		/* home directory */
+	const char *pw_shell;		/* default shell */
+	time_t	    pw_expire;		/* account expiration */
 };
 
 #include <sys/cdefs.h>
