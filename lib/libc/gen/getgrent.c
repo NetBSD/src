@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getgrent.c	5.9 (Berkeley) 4/1/91";*/
-static char *rcsid = "$Id: getgrent.c,v 1.7 1994/03/06 09:04:11 deraadt Exp $";
+static char *rcsid = "$Id: getgrent.c,v 1.8 1994/03/07 00:58:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -240,18 +240,26 @@ parse:
 		_gr_group.gr_gid = atoi(cp);
 		if (search && name == NULL && _gr_group.gr_gid != gid)
 			continue;
-		for (m = _gr_group.gr_mem = members;; ++m) {
-			if (m == &members[MAXGRP - 1]) {
-				*m = NULL;
+		cp = NULL;
+		for (m = _gr_group.gr_mem = members;; bp++) {
+			if (m == &members[MAXGRP - 1])
 				break;
-			}
-			if ((*m = strsep(&bp, ", \n")) == NULL)
+			if (*bp == ',') {
+				if (cp) {
+					*bp = '\0';
+					*m++ = cp;
+					cp = NULL;
+				}
+			} else if (*bp == '\0' || *bp == '\n' || *bp == ' ') {
+				if (cp) {
+					*bp = '\0';
+					*m++ = cp;
+				}
 				break;
-			if (**m == '\0') {
-				*m = NULL;
-				break;
-			}
+			} else if (cp == NULL)
+				cp = bp;
 		}
+		*m = NULL;
 		return(1);
 	}
 	/* NOTREACHED */
