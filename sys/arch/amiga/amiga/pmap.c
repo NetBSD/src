@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1996/05/19 21:04:24 veego Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1996/07/29 20:53:41 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -330,6 +330,8 @@ pmap_bootstrap(firstaddr, loadaddr)
 		if (avail_start >= sp->ms_start && avail_start <
 		    sp->ms_start + sp->ms_size)
 			continue;		/* skip kernel segment */
+		if (sp->ms_size == 0)
+			continue;		/* skip zero size segments */
 		phys_segs[i].start = sp->ms_start;
 		phys_segs[i].end = sp->ms_start + sp->ms_size;
 #ifdef DEBUG_A4000
@@ -342,12 +344,17 @@ pmap_bootstrap(firstaddr, loadaddr)
 		if (phys_segs[i].end == 0x08000000)
 			continue;	/* skip A4000 motherboard mem */
 #endif
+#if 0
 		/*
 		 * Deal with Zorro II memory stolen for DMA bounce buffers.
 		 * This needs to be handled better.
+		 *
+		 * XXX is: disabled. This is handled now in amiga_init.c
+		 * by removing the stolen memory from the memlist.
 		 */
 		if (phys_segs[i].start == 0x00200000)
 			phys_segs[i].end -= MAXPHYS;
+#endif
 		phys_segs[i].first_page = phys_segs[i - 1].first_page +
 		    (phys_segs[i - 1].end - phys_segs[i - 1].start) / NBPG;
 		avail_remaining += (phys_segs[i].end - phys_segs[i].start) / NBPG;
