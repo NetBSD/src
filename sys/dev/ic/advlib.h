@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.10 1999/06/06 17:33:18 dante Exp $        */
+/*      $NetBSD: advlib.h,v 1.11 1999/08/07 07:20:16 thorpej Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -854,7 +854,7 @@ typedef struct asc_softc
 
 	TAILQ_HEAD(, scsipi_xfer) sc_queue;
 
-	u_int8_t		*overrun_buf;
+	bus_addr_t		overrun_buf;
 
 	u_int16_t		sc_flags;	/* see below sc_flags values */
 
