@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2002/10/03 03:58:56 lukem Exp $
+# $NetBSD: Makefile,v 1.11 2002/10/03 05:26:49 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -366,14 +366,14 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	${MACPPC_IBOOTDIR}/macppc_installboot $@ $$blknum 756
 	dd if=${EXTFILEDIR}/macppc.ofwboot bs=64k count=1 conv=sync >>$@ 2>/dev/null
 .endif
-.if !empty(BASE_PORTS.${image}:Malpha)
-	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
-.endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
 	${PMAX_IBOOT} $@ ${BOOTFILE.pmax}
 .endif
 .if !empty(BASE_PORTS.${image}:Mvax)
 	${VAX_IBOOT} $@ ${BOOTFILE.vax}
+.endif
+.if !empty(BASE_PORTS.${image}:Malpha)
+	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
 	@size=`ls -l $@ | awk '{print $$5}'` && \
