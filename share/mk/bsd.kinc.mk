@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.29 2003/08/03 09:23:16 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.30 2003/10/18 16:41:19 lukem Exp $
 
 # Variables:
 #
@@ -42,7 +42,8 @@ ${DESTDIR}${INCSDIR}:
 # -c is forced on here, in order to preserve modtimes for "make depend"
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
+	    (${_MKSHMSG} "install  ${.TARGET}"; ${_MKSHCMD}\
+	     echo "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})

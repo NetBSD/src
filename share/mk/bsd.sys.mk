@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.96 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.97 2003/10/18 16:41:19 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -8,14 +8,20 @@ _BSD_SYS_MK_=1
 MAKEVERBOSE?=	2
 
 .if ${MAKEVERBOSE} == 0
-_MKMSG=	@\#
-_MKCMD=	@
+_MKMSG=		@\#
+_MKCMD=		@
+_MKSHMSG=	: echo
+_MKSHCMD=	:
 .elif ${MAKEVERBOSE} == 1
-_MKMSG=	@echo '   '
-_MKCMD=	@
+_MKMSG=		@echo '   '
+_MKCMD=		@
+_MKSHMSG=	echo '   '
+_MKSHCMD=	:
 .else	# MAKEVERBOSE == 2 ?
-_MKMSG=	@echo '\#  '
+_MKMSG=		@echo '\#  '
 _MKCMD=	
+_MKSHMSG=	echo '\#  '
+_MKSHCMD=
 .endif
 
 .if defined(WARNS)
