@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.7 2000/12/28 05:27:35 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.8 2000/12/30 05:05:57 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: iso2022.c,v 1.18 2000/12/28 03:08:39 itojun Exp
+ *	citrus Id: iso2022.c,v 1.19 2000/12/30 04:51:34 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.7 2000/12/28 05:27:35 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.8 2000/12/30 05:05:57 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -103,7 +103,7 @@ typedef struct {
 } _Iso2022Info;
 
 typedef struct {
-	void *locale;		/* reserved for future thread-safeness */
+	void *runelocale;	/* reserved for future thread-safeness */
 	_Iso2022Charset	g[4];
 	/* need 3 bits to hold -1, 0, ..., 3 */
 	int	gl:3,
