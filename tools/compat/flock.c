@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.3 2002/03/07 23:14:02 tv Exp $	*/
+/*	$NetBSD: flock.c,v 1.4 2002/06/07 21:13:55 mason Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /*
  * Emulate flock() with fcntl(), where available.
- * Otherwise, don't do lokcing; just pretend success.
+ * Otherwise, don't do locking; just pretend success.
  */
 
 #include "config.h"
