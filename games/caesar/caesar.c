@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $	*/
+/*	$NetBSD: caesar.c,v 1.5 1997/10/10 12:07:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,25 +41,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $";
+__RCSID("$NetBSD: caesar.c,v 1.5 1997/10/10 12:07:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <ctype.h>
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 
 #define	LINELENGTH	2048
 #define	ROTATE(ch, perm) \
@@ -76,15 +78,20 @@ double stdf[26] = {
 	2.62, 0.81, 1.88, 0.23,  2.07, 0.06,
 };
 
+
+int	main __P((int, char *[]));
+void	printit __P((char *));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch, dot, i, nread, winnerdot;
-	register char *inbuf;
+	int ch, dot, i, nread, winnerdot;
+	char *inbuf;
 	int obs[26], try, winner;
-	char *malloc(), *strerror();
 
+	winnerdot = 0;
 	if (argc > 1)
 		printit(argv[1]);
 
@@ -98,7 +105,7 @@ main(argc, argv)
 		stdf[i] = log(stdf[i]) + log(26.0 / 100.0);
 
 	/* zero out observation table */
-	bzero(obs, 26 * sizeof(int));
+	memset(obs, 0, 26 * sizeof(int));
 
 	if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0) {
 		(void)fprintf(stderr, "caesar: %s\n", strerror(errno));
@@ -145,10 +152,11 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 printit(arg)
 	char *arg;
 {
-	register int ch, rot;
+	int ch, rot;
 
 	if ((rot = atoi(arg)) < 0) {
 		(void)fprintf(stderr, "caesar: bad rotation value.\n");
