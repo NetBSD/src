@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.50 2003/09/05 08:53:23 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.51 2003/10/23 17:41:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.50 2003/09/05 08:53:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.51 2003/10/23 17:41:59 fvdl Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1167,18 +1167,18 @@ bge_chipinit(sc)
 		 * the low-order MINDMA bits.  In addition, the 5704
 		 * uses a different encoding of read/write watermarks.
 		 */
-		if (sc->bge_asicrev == BGE_ASICREV_BCM5704_A0 ||
-		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A1 ||
-		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A2 ||
-		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A3) {
+		if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0 ||
+		    sc->bge_chipid == BGE_CHIPID_BCM5704_A1 ||
+		    sc->bge_chipid == BGE_CHIPID_BCM5704_A2 ||
+		    sc->bge_chipid == BGE_CHIPID_BCM5704_A3) {
 			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 			  /* should be 0x1f0000 */
 			  (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 			  (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
 		}
-		else if ((sc->bge_asicrev >> 28) ==
-			 (BGE_ASICREV_BCM5703_A0 >> 28)) {
+		else if ((sc->bge_chipid >> 28) ==
+			 (BGE_CHIPID_BCM5703_A0 >> 28)) {
 			dma_rw_ctl &=  0xfffffff0;
 			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
 		}
@@ -1191,8 +1191,7 @@ bge_chipinit(sc)
 	 */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
-		    BGE_MODECTL_NO_RX_CRC|BGE_MODECTL_TX_NO_PHDR_CSUM|
-		    BGE_MODECTL_RX_NO_PHDR_CSUM);
+		    BGE_MODECTL_TX_NO_PHDR_CSUM| BGE_MODECTL_RX_NO_PHDR_CSUM);
 
 	/* Get cache line size. */
 	cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ);
@@ -1601,7 +1600,7 @@ bge_blockinit(sc)
 
 #if defined(not_quite_yet)
 	/* Linux driver enables enable gpio pin #1 on 5700s */
-	if (sc->bge_asicrev == BGE_ASICREV_BCM5700) {
+	if (sc->bge_chipid == BGE_CHIPID_BCM5700) {
 		sc->bge_local_ctrl_reg |= 
 		  (BGE_MLC_MISCIO_OUT1|BGE_MLC_MISCIO_OUTEN1);
 	}
@@ -1676,97 +1675,145 @@ bge_blockinit(sc)
 }
 
 static const struct bge_revision {
-	uint32_t		br_asicrev;
+	uint32_t		br_chipid;
 	uint32_t		br_quirks;
 	const char		*br_name;
 } bge_revisions[] = {
-	{ BGE_ASICREV_BCM5700_A0,
+	{ BGE_CHIPID_BCM5700_A0,
 	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 A0" },
 
-	{ BGE_ASICREV_BCM5700_A1,
+	{ BGE_CHIPID_BCM5700_A1,
 	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 A1" },
 
-	{ BGE_ASICREV_BCM5700_B0,
+	{ BGE_CHIPID_BCM5700_B0,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_CSUM_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B0" },
 
-	{ BGE_ASICREV_BCM5700_B1,
+	{ BGE_CHIPID_BCM5700_B1,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B1" },
 
-	{ BGE_ASICREV_BCM5700_B2,
+	{ BGE_CHIPID_BCM5700_B2,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B2" },
 
 	/* This is treated like a BCM5700 Bx */
-	{ BGE_ASICREV_BCM5700_ALTIMA,
+	{ BGE_CHIPID_BCM5700_ALTIMA,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 Altima" },
 
-	{ BGE_ASICREV_BCM5700_C0,
+	{ BGE_CHIPID_BCM5700_C0,
 	  0,
 	  "BCM5700 C0" },
 
-	{ BGE_ASICREV_BCM5701_A0,
+	{ BGE_CHIPID_BCM5701_A0,
 	  0, /*XXX really, just not known */
 	  "BCM5701 A0" },
 
-	{ BGE_ASICREV_BCM5701_B0,
+	{ BGE_CHIPID_BCM5701_B0,
 	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B0" },
 
-	{ BGE_ASICREV_BCM5701_B2,
+	{ BGE_CHIPID_BCM5701_B2,
 	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
-	{ BGE_ASICREV_BCM5701_B5,
+	{ BGE_CHIPID_BCM5701_B5,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B5" },
 
-	{ BGE_ASICREV_BCM5703_A0,
+	{ BGE_CHIPID_BCM5703_A0,
 	  0,
 	  "BCM5703 A0" },
 
-	{ BGE_ASICREV_BCM5703_A1,
+	{ BGE_CHIPID_BCM5703_A1,
 	  0,
 	  "BCM5703 A1" },
 
-	{ BGE_ASICREV_BCM5703_A2,
+	{ BGE_CHIPID_BCM5703_A2,
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5703 A2" },
 
-	{ BGE_ASICREV_BCM5704_A0,
+	{ BGE_CHIPID_BCM5704_A0,
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A0" },
 
-	{ BGE_ASICREV_BCM5704_A1,
+	{ BGE_CHIPID_BCM5704_A1,
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A1" },
 
-	{ BGE_ASICREV_BCM5704_A2,
+	{ BGE_CHIPID_BCM5704_A2,
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A2" },
 
-	{ BGE_ASICREV_BCM5704_A3,
+	{ BGE_CHIPID_BCM5704_A3,
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A3" },
 
-	{ BGE_ASICREV_BCM5705_A1,
+	{ BGE_CHIPID_BCM5705_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A0" },
+
+	{ BGE_CHIPID_BCM5705_A1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5705 A1" },
+
+	{ BGE_CHIPID_BCM5705_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A2" },
+
+	{ BGE_CHIPID_BCM5705_A3,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A3" },
 
 	{ 0, 0, NULL }
 };
 
+/*
+ * Some defaults for major revisions, so that newer steppings
+ * that we don't know about have a shot at working.
+ */
+static const struct bge_revision bge_majorrevs[] = {
+	{ BGE_ASICREV_BCM5700,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
+	  "unknown BCM5700" },
+
+	{ BGE_ASICREV_BCM5701,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  "unknown BCM5701" },
+
+	{ BGE_ASICREV_BCM5703,
+	  0,
+	  "unknown BCM5703" },
+
+	{ BGE_ASICREV_BCM5704,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "unknown BCM5704" },
+
+	{ BGE_ASICREV_BCM5705,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5705" },
+
+	{ 0,
+	  0,
+	  NULL }
+};
+
+
 static const struct bge_revision *
-bge_lookup_rev(uint32_t asicrev)
+bge_lookup_rev(uint32_t chipid)
 {
 	const struct bge_revision *br;
 
 	for (br = bge_revisions; br->br_name != NULL; br++) {
-		if (br->br_asicrev == asicrev)
+		if (br->br_chipid == chipid)
+			return (br);
+	}
+
+	for (br = bge_majorrevs; br->br_name != NULL; br++) {
+		if (br->br_chipid == BGE_ASICREV(chipid))
 			return (br);
 	}
 
@@ -1786,56 +1833,96 @@ static const struct bge_product {
 	 */
 	{ PCI_VENDOR_ALTEON,
 	  PCI_PRODUCT_ALTEON_BCM5700,
-	  "Broadcom BCM5700 Gigabit Ethernet" },
+	  "Broadcom BCM5700 Gigabit Ethernet",
+	  },
 	{ PCI_VENDOR_ALTEON,
 	  PCI_PRODUCT_ALTEON_BCM5701,
-	  "Broadcom BCM5701 Gigabit Ethernet" },
+	  "Broadcom BCM5701 Gigabit Ethernet",
+	  },
 
 	{ PCI_VENDOR_ALTIMA,
 	  PCI_PRODUCT_ALTIMA_AC1000,
-	  "Altima AC1000 Gigabit Ethernet" },
+	  "Altima AC1000 Gigabit Ethernet",
+	  },
 	{ PCI_VENDOR_ALTIMA,
 	  PCI_PRODUCT_ALTIMA_AC1001,
-	  "Altima AC1001 Gigabit Ethernet" },
+	  "Altima AC1001 Gigabit Ethernet",
+	   },
 	{ PCI_VENDOR_ALTIMA,
 	  PCI_PRODUCT_ALTIMA_AC9100,
-	  "Altima AC9100 Gigabit Ethernet" },
+	  "Altima AC9100 Gigabit Ethernet",
+	  },
 
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5700,
-	  "Broadcom BCM5700 Gigabit Ethernet" },
+	  "Broadcom BCM5700 Gigabit Ethernet",
+	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5701,
-	  "Broadcom BCM5701 Gigabit Ethernet" },
+	  "Broadcom BCM5701 Gigabit Ethernet",
+	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5702,
-	  "Broadcom BCM5702 Gigabit Ethernet" },
+	  "Broadcom BCM5702 Gigabit Ethernet",
+	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5702X,
 	  "Broadcom BCM5702X Gigabit Ethernet" },
+
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5703,
-	  "Broadcom BCM5703 Gigabit Ethernet" },
+	  "Broadcom BCM5703 Gigabit Ethernet",
+	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5703X,
-	  "Broadcom BCM5703X Gigabit Ethernet" },
+	  "Broadcom BCM5703X Gigabit Ethernet",
+	  },
+
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5704C,
-	  "Broadcom BCM5704C Dual Gigabit Ethernet" },
+	  "Broadcom BCM5704C Dual Gigabit Ethernet",
+	  },
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5704S,
-	  "Broadcom BCM5704S Dual Gigabit Ethernet" },
+	  "Broadcom BCM5704S Dual Gigabit Ethernet",
+	  },
+
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5705,
+	  "Broadcom BCM5705 Gigabit Ethernet",
+	  },
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5705_ALT,
+	  "Broadcom BCM5705 Gigabit Ethernet",
+	  },
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705M,
-	  "Broadcom BCM5705M Gigabit Ethernet" },
+	  "Broadcom BCM5705M Gigabit Ethernet",
+	  },
+
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5901,
+	  "Broadcom BCM5901 Fast Ethernet",
+	  },
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5901A2,
+	  "Broadcom BCM5901A2 Fast Ethernet",
+	  },
+
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5782,
+	  "Broadcom BCM5782 Gigabit Ethernet",
+	  },
 
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
-	  "SysKonnect SK-9Dx1 Gigabit Ethernet" },
+	  "SysKonnect SK-9Dx1 Gigabit Ethernet",
+	  },
 
 	{ PCI_VENDOR_3COM,
 	  PCI_PRODUCT_3COM_3C996,
-	  "3Com 3c996 Gigabit Ethernet" },
+	  "3Com 3c996 Gigabit Ethernet",
+	  },
 
 	{ 0,
 	  0,
@@ -2062,18 +2149,18 @@ bge_attach(parent, self, aux)
 	 * Save ASIC rev.  Look up any quirks associated with this
 	 * ASIC.
 	 */
-	sc->bge_asicrev =
+	sc->bge_chipid =
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
 	    BGE_PCIMISCCTL_ASICREV;
-	br = bge_lookup_rev(sc->bge_asicrev);
+	br = bge_lookup_rev(sc->bge_chipid);
 
 	aprint_normal("%s: ", sc->bge_dev.dv_xname);
+
 	if (br == NULL) {
-		aprint_normal("unknown ASIC 0x%08x", sc->bge_asicrev);
-		sc->bge_quirks = 0;
+		aprint_normal("unknown ASIC 0x%08x", sc->bge_chipid);
 	} else {
 		aprint_normal("ASIC %s", br->br_name);
-		sc->bge_quirks = br->br_quirks;
+		sc->bge_quirks |= br->br_quirks;
 	}
 	aprint_normal(", Ethernet address %s\n", ether_sprintf(eaddr));
 
