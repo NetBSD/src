@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.8 1996/07/11 03:33:25 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.9 1996/08/20 22:38:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -118,7 +118,7 @@ tcds_dma_start(sc, addr, len, datain)
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
 		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1996/07/14 20:00:32 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 1996/08/20 22:38:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -147,12 +147,14 @@ cpu_fork(p1, p2)
 	 * Cache the physical address of the pcb, so we can
 	 * swap to it easily.
 	 */
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	ptep = kvtopte(up);
 	p2->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
 #else
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
+	    p2->p_pid, p2->p_md.md_pcbpaddr, &p2->p_vmspace->vm_pmap);
 #endif
 
 	/*
@@ -182,8 +184,10 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
+#else
+printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
 #endif
 
 	/*
@@ -214,6 +218,7 @@ cpu_fork(p1, p2)
 		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
 		    sizeof(struct trapframe));
 
+printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[FRAME_RA]);
 		/*
 		 * Set up return-value registers as fork() libc stub expects.
 		 */
@@ -283,7 +288,7 @@ cpu_swapin(p)
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	ptep = kvtopte(up);
 	p->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
@@ -339,7 +344,7 @@ pagemove(from, to, size)
 
 	if (size % CLBYTES)
 		panic("pagemove");
-#ifdef OLD_PMAP
+#ifndef NEW_PMAP
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 #else
