@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.4 2001/08/22 08:52:36 itojun Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.5 2001/12/27 13:22:01 wiz Exp $	*/
 /*	$KAME: quip_client.c,v 1.5 2001/08/20 06:41:33 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -45,7 +45,7 @@
  * quip (queue information protocol) is a http-like protocol
  * in order to retrieve information from the server.
  * a unix domain TCP socket "/var/run/altq_quip" is used for
- * clinet-server style communication.
+ * client-server style communication.
  *
  * there are 2 quip message types: request and response.
  * request format: (only single-line request message is used at this moment)
