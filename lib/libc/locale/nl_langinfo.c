@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_langinfo.c,v 1.5 1997/07/13 19:54:56 christos Exp $	*/
+/*	$NetBSD: nl_langinfo.c,v 1.6 1998/11/13 15:49:04 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nl_langinfo.c,v 1.5 1997/07/13 19:54:56 christos Exp $");
+__RCSID("$NetBSD: nl_langinfo.c,v 1.6 1998/11/13 15:49:04 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -36,7 +36,7 @@ nl_langinfo(item)
 		break;
 	case AM_STR:
 	case PM_STR:
-		s = _CurrentTimeLocale->am_pm[item - AM_STR];
+		s = _CurrentTimeLocale->am_pm[(size_t)(item - AM_STR)];
 		break;
 	case DAY_1:
 	case DAY_2:
@@ -45,7 +45,7 @@ nl_langinfo(item)
 	case DAY_5:
 	case DAY_6:
 	case DAY_7:
-		s = _CurrentTimeLocale->day[item - DAY_1];
+		s = _CurrentTimeLocale->day[(size_t)(item - DAY_1)];
 		break;
 	case ABDAY_1:
 	case ABDAY_2:
@@ -54,7 +54,7 @@ nl_langinfo(item)
 	case ABDAY_5:
 	case ABDAY_6:
 	case ABDAY_7:
-		s = _CurrentTimeLocale->abday[item - ABDAY_1];
+		s = _CurrentTimeLocale->abday[(size_t)(item - ABDAY_1)];
 		break;
 	case MON_1:
 	case MON_2:
@@ -68,7 +68,7 @@ nl_langinfo(item)
 	case MON_10:
 	case MON_11:
 	case MON_12:
-		s = _CurrentTimeLocale->mon[item - MON_1];
+		s = _CurrentTimeLocale->mon[(size_t)(item - MON_1)];
 		break;
 	case ABMON_1:
 	case ABMON_2:
@@ -82,7 +82,7 @@ nl_langinfo(item)
 	case ABMON_10:
 	case ABMON_11:
 	case ABMON_12:
-		s = _CurrentTimeLocale->abmon[item - ABMON_1];
+		s = _CurrentTimeLocale->abmon[(size_t)(item - ABMON_1)];
 		break;
 	case RADIXCHAR:
 		s = _CurrentNumericLocale->decimal_point;
@@ -110,5 +110,7 @@ nl_langinfo(item)
 		break;
 	}
 
+	/* The return value should be really const, but the interface says OW */
+	/* LINTED const castaway. */
 	return (char *) s;
 }

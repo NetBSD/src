@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.12 1998/10/16 20:26:03 kleink Exp $	*/
+/*	$NetBSD: herror.c,v 1.13 1998/11/13 15:46:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -59,7 +59,7 @@
 static char rcsid[] = "Id: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: herror.c,v 1.12 1998/10/16 20:26:03 kleink Exp $");
+__RCSID("$NetBSD: herror.c,v 1.13 1998/11/13 15:46:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,6 +97,7 @@ herror(s)
 	register struct iovec *v = iov;
 
 	if (s && *s) {
+		/* LINTED base does not get written */
 		v->iov_base = (char *)s;
 		v->iov_len = strlen(s);
 		v++;
@@ -104,6 +105,7 @@ herror(s)
 		v->iov_len = 2;
 		v++;
 	}
+	/* LINTED base does not get written */
 	v->iov_base = (char *)hstrerror(h_errno);
 	v->iov_len = strlen(v->iov_base);
 	v++;

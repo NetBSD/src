@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.19 1998/10/14 19:33:49 kleink Exp $	*/
+/*	$NetBSD: res_query.c,v 1.20 1998/11/13 15:46:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.19 1998/10/14 19:33:49 kleink Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.20 1998/11/13 15:46:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,7 +110,7 @@ res_query(name, class, type, answer, anslen)
 	int anslen;		/* size of answer buffer */
 {
 	u_char buf[MAXPACKET];
-	register HEADER *hp = (HEADER *) answer;
+	register HEADER *hp = (HEADER *)(void *)answer;
 	int n;
 
 	hp->rcode = NOERROR;	/* default */
@@ -186,7 +186,7 @@ res_search(name, class, type, answer, anslen)
 	int anslen;		/* size of answer */
 {
 	const char *cp, * const *domain;
-	HEADER *hp = (HEADER *) answer;
+	HEADER *hp = (HEADER *)(void *)answer;
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
@@ -329,7 +329,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	int n, d;
+	size_t n, d;
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;

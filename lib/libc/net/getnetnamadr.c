@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.5 1998/01/06 05:01:19 perry Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.6 1998/11/13 15:46:53 christos Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.5 1998/01/06 05:01:19 perry Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.6 1998/11/13 15:46:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -197,8 +197,8 @@ static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 				if (nchar != 1 || *in != '0' || flag) {
 					flag = 1;
 					(void)strncpy(paux1,
-						      (i==0) ? in : in-1,
-						      (i==0) ?nchar : nchar+1);
+					    (i==0) ? in : in-1,
+					    (size_t)((i==0) ? nchar : nchar+1));
 					paux1[(i==0) ? nchar : nchar+1] = '\0';
 					pauxt = paux2;
 					paux2 = strcat(paux1, paux2);
@@ -246,7 +246,7 @@ getnetbyaddr(net, net_type)
 		switch (lookups[i]) {
 		case 'b':
 			for (nn = 4, net2 = net; net2; net2 >>= 8)
-				netbr[--nn] = net2 & 0xff;
+				netbr[--nn] = (unsigned int)(net2 & 0xff);
 			switch (nn) {
 			case 3: 	/* Class A */
 				sprintf(qbuf, "0.0.0.%u.in-addr.arpa",
@@ -265,8 +265,8 @@ getnetbyaddr(net, net_type)
 				     netbr[3], netbr[2], netbr[1], netbr[0]);
 				break;
 			}
-			anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf,
-			    sizeof(buf));
+			anslen = res_query(qbuf, C_IN, T_PTR,
+			    (u_char *)(void *)&buf, sizeof(buf));
 			if (anslen < 0) {
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
@@ -277,7 +277,7 @@ getnetbyaddr(net, net_type)
 			net_entry = getnetanswer(&buf, anslen, BYADDR);
 			if (net_entry) {
 				/* maybe net should be unsigned? */
-				unsigned u_net = net;
+				unsigned long u_net = net;
 
 				/* Strip trailing zeros */
 				while ((u_net & 0xff) == 0 && u_net != 0)
@@ -320,8 +320,8 @@ getnetbyname(net)
 		switch (lookups[i]) {
 		case 'b':
 			strcpy(&qbuf[0], net);
-			anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf,
-			    sizeof(buf));
+			anslen = res_search(qbuf, C_IN, T_PTR,
+			    (u_char *)(void *)&buf, sizeof(buf));
 			if (anslen < 0) {
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
