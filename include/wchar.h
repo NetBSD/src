@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
+/*	$NetBSD: wchar.h,v 1.17 2003/03/11 09:21:22 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -144,10 +144,21 @@ int	wcswidth __P((const wchar_t *, size_t));
 int	wctob __P((wint_t));
 int	wcwidth __P((wchar_t));
 
-unsigned long int wcstoul __P((const wchar_t * __restrict, wchar_t ** __restrict,
-		int base));
-long int wcstol __P((const wchar_t * __restrict, wchar_t ** __restrict, int base));
+unsigned long int wcstoul __P((const wchar_t * __restrict,
+	wchar_t ** __restrict, int base));
+long int wcstol __P((const wchar_t * __restrict,
+	wchar_t ** __restrict, int base));
 double wcstod __P((const wchar_t * __restrict, wchar_t ** __restrict));
+
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L
+/* LONGLONG */
+long long int wcstoll __P((const wchar_t * __restrict,
+	wchar_t ** __restrict, int base));
+/* LONGLONG */
+unsigned long long int wcstoull __P((const wchar_t * __restrict,
+	wchar_t ** __restrict, int base));
+#endif
 
 wint_t ungetwc __P((wint_t, FILE *));
 wint_t fgetwc __P((FILE *));
