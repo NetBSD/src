@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.2 2000/03/01 20:24:53 groo Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.3 2000/06/24 00:37:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,8 @@
 
 #include <i386/pnpbios/pnpbiosvar.h>
 
-#include <sys/envsys.h>
+#include <dev/sysmon/sysmonvar.h>
+
 #include <dev/ic/nslm7xvar.h>
 
 
