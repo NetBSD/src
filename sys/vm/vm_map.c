@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.34 1998/03/01 02:24:00 fvdl Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.35 1998/03/19 04:19:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -240,6 +240,7 @@ vmspace_unshare(p)
 		return;
 
 	nvm = vmspace_fork(ovm);
+	pmap_deactivate(p);
 	p->p_vmspace = nvm;
 	pmap_activate(p);
 	vmspace_free(ovm);
@@ -291,6 +292,7 @@ vmspace_exec(p)
 		    VM_INHERIT_NONE);
 		}
 #endif
+		pmap_deactivate(p);
 		p->p_vmspace = nvm;
 		pmap_activate(p);
 		vmspace_free(ovm);
