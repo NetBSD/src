@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1 1996/05/18 01:51:54 oki Exp $
+#	$Id: upgrade.sh,v 1.2 1996/07/08 19:33:40 oki Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +38,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -61,7 +61,7 @@ echo	"program can cause SIGNIFICANT data loss, and you are advised"
 echo	"to make sure your hard drive is backed up before beginning the"
 echo	"upgrade process."
 echo	""
-echo	"Default answers are displyed in brackets after the questions."
+echo	"Default answers are displayed in brackets after the questions."
 echo	"You can hit Control-C at any time to quit, but if you do so at a"
 echo	"prompt, you may have to hit return.  Also, quitting in the middle of"
 echo	"the upgrade may leave your system in an inconsistent (and unusable)"
@@ -211,16 +211,23 @@ fi
 
 echo	""
 echo	"Updating boot blocks on ${drivename}..."
-disklabel -r $drivename > /mnt/tmp/${drivename}.label
+disklabel $drivename > /mnt/tmp/${drivename}.label
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: READ OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
 fi
-disklabel -R -B $drivename /mnt/tmp/${drivename}.label
+disklabel -R $drivename /mnt/tmp/${drivename}.label
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
+	echo	"It in unclear why this error would occur.  It looks"
+	echo	"like you may end up having to upgrade by hand."
+	exit 1
+fi
+dd if=/usr/mdec/sdboot of=/dev/r${drivename}a conv=sync
+if [ $? != 0 ]; then
+	echo	"FATAL ERROR: UPDATE OF BOOT PROGRAM FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
