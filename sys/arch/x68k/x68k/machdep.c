@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2000/07/28 14:58:01 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 2000/08/26 23:04:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -471,7 +471,6 @@ identifycpu()
 		mmu = ", unknown MMU";
 		break;
 	}
-	fputype = fpu_probe();
 	if (fputype >= 0 && fputype < sizeof(fpu_descr)/sizeof(fpu_descr[0]))
 		fpu = fpu_descr[fputype];
 	else

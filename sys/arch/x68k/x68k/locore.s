@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 2000/08/20 21:50:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 2000/08/26 23:04:44 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -780,24 +780,18 @@ Lnot68030:
 	movl	#MMU_68040,a0@		| with a 68040 compatible MMU 
 	RELOC(cputype, a0)
 	movl	#CPU_68060,a0@		| and a 68060 CPU
-	RELOC(fputype, a0)
-	movl	#FPU_68060,a0@		| and a 68060 FPU
 	jra	Lstart1
 Lis68040:
 	RELOC(mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 	RELOC(cputype, a0)
 	movl	#CPU_68040,a0@		| and a 68040 CPU
-	RELOC(fputype, a0)
-	movl	#FPU_68040,a0@		| and a 68040 FPU
 	jra	Lstart1
 Lis68020:
 	RELOC(mmutype, a0)
 	movl	#MMU_68851,a0@		| we have PMMU
 	RELOC(cputype, a0)
 	movl	#CPU_68020,a0@		| and a 68020 CPU
-	RELOC(fputype, a0)
-	movl	#FPU_68881,a0@		| and a 68881 FPU
 
 Lstart1:
 /* initialize source/destination control registers for movs */
@@ -918,6 +912,9 @@ Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+/* detect FPU type */
+	jbsr	_C_LABEL(fpu_probe)
+	movl	d0,_C_LABEL(fputype)
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
