@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2002/10/30 18:34:15 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9 2002/11/01 00:02:40 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -81,7 +81,7 @@ extern struct sysent mach_sysent[];
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2002/10/30 18:34:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2002/11/01 00:02:40 matt Exp $");
 
 void
 child_return(void *arg)
@@ -137,7 +137,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 #endif /* DEBUG_MACH */
 		code = -code;
 		callp = mach_sysent;
-		nsysent = MACH_SYS_NSYSENT;
+		nsysent = MACH_SYS_MAXSYSCALL;
 	} else
 #endif /* MACH_SYSCALL */
 	{
@@ -165,7 +165,10 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 		}
 	}
 
-	code &= (nsysent - 1);
+	if (code >= nsysent) {
+		error = ENOSYS;
+		goto syscall_bad;
+	}
 	callp += code;
 	argsize = callp->sy_argsize;
 
@@ -250,7 +253,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 #endif /* DEBUG_MACH */
 		code = -code;
 		callp = mach_sysent;
-		nsysent = MACH_SYS_NSYSENT;
+		nsysent = MACH_SYS_MAXSYSCALL;
 	} else 
 #endif /* MACH_SYSCALL */
 	{
@@ -278,7 +281,10 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		}
 	}
 
-	code &= (nsysent - 1);
+	if (code >= nsysent) {
+		error = ENOSYS;
+		goto syscall_bad;
+	}
 	callp += code;
 	argsize = callp->sy_argsize;
 
