@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 2000/02/09 05:48:29 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147 2000/02/21 20:38:46 erh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1030,48 +1030,17 @@ badbaddr(addr)
 static void
 netintr()
 {
-#ifdef INET
-#if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
+
+#define DONETISR(bit, fn) do {		\
+	if (netisr & (1 << bit)) {	\
+		netisr &= ~(1 << bit);	\
+		fn();			\
+	}				\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }
 
 

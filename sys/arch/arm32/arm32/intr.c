@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2000/02/09 05:48:30 shin Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2000/02/21 20:38:47 erh Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -203,66 +203,17 @@ dosoftints()
 		INC_SINTRCNT(SOFTIRQ_NET);
 		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_NET));
 
-#ifdef INET
-#if NARP > 0
-		if (netisr & (1 << NETISR_ARP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ARP));
-			arpintr();
-		}
-#endif
-		if (netisr & (1 << NETISR_IP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IP));
-			ipintr();
-		}
-#endif
-#ifdef INET6
-		if (netisr & (1 << NETISR_IPV6)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IPV6));
-			ip6intr();
-		}
-#endif
-#ifdef NETATALK
-		if (netisr & (1 << NETISR_ATALK)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ATALK));
-			atintr();
-		}
-#endif
-#ifdef NS
-		if (netisr & (1 << NETISR_NS)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_NS));
-			nsintr();
-		}
-#endif
-#ifdef IMP
-		if (netisr & (1 << NETISR_IMP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_IMP));
-			impintr();
-		}
-#endif
-#ifdef ISO
-		if (netisr & (1 << NETISR_ISO)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_ISO));
-			clnlintr();
-		}
-#endif
-#ifdef CCITT
-		if (netisr & (1 << NETISR_CCITT)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_CCITT));
-			ccittintr();
-		}
-#endif
-#ifdef NATM
-		if (netisr & (1 << NETISR_NATM)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_NATM));
-			natmintr();
-		}
-#endif
-#if NPPP > 0
-		if (netisr & (1 << NETISR_PPP)) {
-			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
-			pppintr();
-		}
-#endif
+#define DONETISR(bit, fn) do {					\
+		if (netisr & (1 << bit)) {			\
+			atomic_clear_bit(&netisr, (1 << bit));	\
+			fn();					\
+		}						\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 		(void)splx(s);
 	}
 	/*
