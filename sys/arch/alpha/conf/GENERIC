@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.175 2000/12/19 10:42:02 bouyer Exp $
+# $NetBSD: GENERIC,v 1.176 2000/12/21 23:05:47 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,15 +6,15 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.175 $"
+#ident 		"GENERIC-$Revision: 1.176 $"
 
 maxusers 32
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-#options 	DEC_2100_A500	# Sable:	AlphaServer 2100
-#options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
+options 	DEC_2100_A500	# Sable:	AlphaServer 2100
+options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
 options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options 	DEC_3000_300	# Pelican etc:	3000/300*
 options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
@@ -177,15 +177,15 @@ lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
 tsp*	at	tsc?
-#ttwoga*	at	mainbus?
+ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-#ttwopci* at	ttwoga? hose ?
-#sableio* at	ttwopci? bus ?
-#com*	at	sableio? port ?
-#lpt*	at	sableio? port ?
-#pckbc*	at	sableio? port ?
-#fdc*	at	sableio? port ?
+ttwopci* at	ttwoga? hose ?
+sableio* at	ttwopci? bus ?
+com*	at	sableio? port ?
+lpt*	at	sableio? port ?
+pckbc*	at	sableio? port ?
+fdc*	at	sableio? port ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -196,7 +196,7 @@ pci*	at	ppb?
 pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
-#pci*	at	ttwopci?
+pci*	at	ttwopci?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
