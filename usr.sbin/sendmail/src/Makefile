@@ -1,5 +1,4 @@
-<<<<<<< Makefile
-#	$NetBSD: Makefile,v 1.30 1997/07/13 19:42:06 cjs Exp $
+#	$NetBSD: Makefile,v 1.31 1997/07/13 20:15:16 cjs Exp $
 #
 #  NetBSD Makefile
 #
