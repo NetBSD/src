@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.15 2000/06/04 12:25:25 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.16 2000/06/05 03:17:24 simonb Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -304,6 +304,9 @@
 /usr/lib/libgnumalloc_pic.a
 /usr/lib/libkvm_pic.a
 /usr/lib/libm_pic.a
+/usr/lib/libntp.a
+/usr/lib/libntp.so
+/usr/lib/libntp_p.a
 /usr/lib/libntp_pic.a
 /usr/lib/libossaudio_pic.a
 /usr/lib/libpcap_pic.a
@@ -316,6 +319,7 @@
 /usr/lib/libutil_pic.a
 /usr/lib/libwrap_pic.a
 /usr/lib/libz_pic.a
+/usr/libdata/lint/llib-lntp.ln
 /usr/sbin/config.new
 /usr/share/man/cat1/flexdoc.0
 /usr/share/man/cat1/lexdoc.0
