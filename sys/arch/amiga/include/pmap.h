@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1998/02/18 02:05:32 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 1998/03/22 23:12:50 is Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -124,13 +124,6 @@ pv_entry_t	pv_table;	/* array of entries, one per page */
 u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
 struct pmap	kernel_pmap_store;
-
-#ifdef MACHINE_NONCONTIG
-#define pa_index(pa)		pmap_page_index(pa)
-#else
-#define pa_index(pa)		atop(pa - vm_first_phys)
-#endif
-#define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
 #define	pmap_kernel()		(&kernel_pmap_store)
 

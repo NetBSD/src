@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 1998/02/19 04:18:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 1998/03/22 23:12:50 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,11 +135,6 @@
 #include <net/if_ppp.h>
 #endif
 
-
-/* vm_map_t buffer_map; */
-extern vm_offset_t avail_end;
-extern vm_offset_t avail_start;
-
 /* prototypes */
 void identifycpu __P((void));
 vm_offset_t reserve_dumppages __P((vm_offset_t));
@@ -158,9 +153,9 @@ void fdintr __P((int));
 #endif
 
 /*
- * patched by some devices at attach time (currently, only drcom)
+ * patched by some devices at attach time (currently, only the coms)
  */
-u_int16_t amiga_ttyspl = PSL_S|PSL_IPL4;
+u_int16_t amiga_serialspl = PSL_S|PSL_IPL4;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -177,6 +172,7 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 caddr_t	msgbufaddr;
+vm_offset_t msgbufpa;
 
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -248,13 +244,6 @@ cpu_startup()
 #endif
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size = 0;
-#if defined(MACHINE_NONCONTIG) && defined(DEBUG)
-	extern struct {
-		vm_offset_t start;
-		vm_offset_t end;
-		int first_page;
-	} phys_segs[16];
-#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -262,10 +251,14 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
+	/*
+	 * pmap_bootstrap has positioned this at the end of kernel
+	 * memory segment - map and initialize it now.
+	 */
+
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-				avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+				msgbufpa + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -433,14 +426,6 @@ again:
 			printf("memory segment %d at %x size %x\n", i,
 			    memlist->m_seg[i].ms_start, 
 			    memlist->m_seg[i].ms_size);
-#if defined(MACHINE_NONCONTIG) && defined(DEBUG)
-	printf("Physical memory segments:\n");
-	for (i = 0; i < memlist->m_nseg && phys_segs[i].start; ++i)
-		printf("Physical segment %d at %08lx size %ld offset %d\n", i,
-		    phys_segs[i].start,
-		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
-		    phys_segs[i].first_page);
-#endif
 
 #ifdef DEBUG_KERNEL_START
 	printf("calling initcpu...\n");
