@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 1996/12/10 18:41:00 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.17 1997/01/16 17:30:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "assym.h"
+#include <machine/trap.h>
 
 /*
  * Temporary stack for a variety of purposes.
