@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.16 1994/10/15 06:01:20 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.17 1994/10/26 07:12:18 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -79,8 +79,8 @@ file	arch/sparc/dev/bt_subr.c	cgsix cgthree
 device le at sbus, ledma, obio: ifnet, ether
 file	arch/sparc/dev/if_le.c		le
 
-#device ie at vmes: ifnet, ether
-#file	arch/sparc/dev/if_ie.c		ie
+device ie at obio, vmes: ifnet, ether
+file	arch/sparc/dev/if_ie.c		ie
 
 
 pseudo-device	kbd
@@ -132,10 +132,10 @@ file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
 file	arch/sparc/sparc/disksubr.c
 
-file	compat/sunos/sun_misc.c		compat_sunos
-file	compat/sunos/sun_sysent.c	compat_sunos
-file	compat/sunos/sun_ioctl.c	compat_sunos
-file	compat/sunos/sun_exec.c		compat_sunos
+file	compat/sunos/sunos_misc.c	compat_sunos
+file	compat/sunos/sunos_init_sysent.c	compat_sunos
+file	compat/sunos/sunos_ioctl.c	compat_sunos
+file	compat/sunos/sunos_exec.c	compat_sunos
 
 file	kludge_for_in_proto.c		hy needs-flag
 
