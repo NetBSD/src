@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.37 2003/09/10 05:25:22 briggs Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.38 2004/04/10 02:32:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.37 2003/09/10 05:25:22 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.38 2004/04/10 02:32:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,8 +114,9 @@ mii_phy_setmedia(struct mii_softc *sc)
 	int bmcr, anar, gtcr;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		/* Force renegotiation if MIIF_DOPAUSE. */
 		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0 ||
-		    (sc->mii_flags & MIIF_FORCEANEG))
+		    (sc->mii_flags & (MIIF_FORCEANEG|MIIF_DOPAUSE)))
 			(void) mii_phy_auto(sc, 1);
 		return;
 	}
@@ -141,6 +142,19 @@ mii_phy_setmedia(struct mii_softc *sc)
 
 		default:
 			panic("mii_phy_setmedia: MASTER on wrong media");
+		}
+	}
+
+	if (mii->mii_media.ifm_media & IFM_FLOW) {
+		if (sc->mii_flags & MIIF_IS_1000X)
+			anar |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
+		else {
+			anar |= ANAR_FC;
+			/* XXX Only 1000BASE-T has PAUSE_ASYM? */
+			if ((sc->mii_flags & MIIF_HAVE_GTCR) &&
+			    (sc->mii_extcapabilities &
+			     (EXTSR_1000THDX|EXTSR_1000TFDX)))
+				anar |= ANAR_X_PAUSE_ASYM;
 		}
 	}
 
@@ -182,8 +196,14 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 
 			anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) |
 			    ANAR_CSMA;
-			if (sc->mii_flags & MIIF_DOPAUSE)
+			if (sc->mii_flags & MIIF_DOPAUSE) {
 				anar |= ANAR_FC;
+				/* XXX Only 1000BASE-T has PAUSE_ASYM? */
+				if ((sc->mii_flags & MIIF_HAVE_GTCR) &&
+				    (sc->mii_extcapabilities &
+				     (EXTSR_1000THDX|EXTSR_1000TFDX)))
+					anar |= ANAR_X_PAUSE_ASYM;
+			}
 			PHY_WRITE(sc, MII_ANAR, anar);
 			if (sc->mii_flags & MIIF_HAVE_GTCR) {
 				uint16_t gtcr = 0;
@@ -416,6 +436,7 @@ mii_phy_add_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	const char *sep = "";
+	int fdx = 0;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
@@ -448,6 +469,7 @@ mii_phy_add_media(struct mii_softc *sc)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
 		    MII_MEDIA_10_T_FDX);
 		PRINT("10baseT-FDX");
+		fdx = 1;
 	}
 	if (sc->mii_capabilities & BMSR_100TXHDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
@@ -458,6 +480,7 @@ mii_phy_add_media(struct mii_softc *sc)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
 		    MII_MEDIA_100_TX_FDX);
 		PRINT("100baseTX-FDX");
+		fdx = 1;
 	}
 	if (sc->mii_capabilities & BMSR_100T4) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, sc->mii_inst),
@@ -487,6 +510,7 @@ mii_phy_add_media(struct mii_softc *sc)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_X_FDX);
 			PRINT("1000baseSX-FDX");
+			fdx = 1;
 		}
 
 		/*
@@ -512,6 +536,7 @@ mii_phy_add_media(struct mii_softc *sc)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_T_FDX);
 			PRINT("1000baseT-FDX");
+			fdx = 1;
 		}
 	}
 
@@ -522,6 +547,8 @@ mii_phy_add_media(struct mii_softc *sc)
 	}
 #undef ADD
 #undef PRINT
+	if (fdx != 0 && (sc->mii_flags & MIIF_DOPAUSE))
+		mii->mii_media.ifm_mask |= IFM_ETH_FMASK;
 }
 
 void
@@ -574,4 +601,45 @@ mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 			return (mpd);
 	}
 	return (NULL);
+}
+
+/*
+ * Return the flow control status flag from MII_ANAR & MII_ANLPAR.
+ * (1000BASE only?)
+ */
+u_int
+gmii_phy_getflowcontrol(struct mii_softc *sc)
+{
+	u_int anar, anlpar;
+
+	anar = PHY_READ(sc, MII_ANAR);
+	anlpar = PHY_READ(sc, MII_ANLPAR);
+
+	if ((anar & ANAR_X_PAUSE_SYM) == 0) {
+		if ((anar & ANAR_X_PAUSE_ASYM) &&
+		    ((anlpar &
+		      ANLPAR_X_PAUSE_TOWARDS) == ANLPAR_X_PAUSE_TOWARDS))
+			return (IFM_FLOW|IFM_ETH_TXPAUSE);
+		else
+			return (0);
+	}
+
+	if ((anar & ANAR_X_PAUSE_ASYM) == 0) {
+		if (anlpar & ANLPAR_X_PAUSE_SYM)
+			return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
+		else
+			return (0);
+	}
+
+	switch ((anlpar & ANLPAR_X_PAUSE_TOWARDS)) {
+	case ANLPAR_X_PAUSE_NONE:
+		return (0);
+	
+	case ANLPAR_X_PAUSE_ASYM:
+		return (IFM_FLOW|IFM_ETH_RXPAUSE);
+	
+	default:
+		return (IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
+	}
+	/* NOTREACHED */
 }
