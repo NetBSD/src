@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.22 2003/01/20 05:30:06 simonb Exp $ */
+/* $NetBSD: isp_target.c,v 1.23 2003/03/03 20:54:12 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.22 2003/01/20 05:30:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.23 2003/03/03 20:54:12 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -417,6 +417,8 @@ isp_target_put_atio(struct ispsoftc *isp, void *arg)
 		} else {
 			atun._atio2.at_lun = (u_int8_t) aep->at_lun;
 		}
+		atun._atio2.at_iid = aep->at_iid;
+		atun._atio2.at_rxid = aep->at_rxid;
 		atun._atio2.at_status = CT_OK;
 	} else {
 		at_entry_t *aep = arg;
@@ -794,7 +796,7 @@ isp_handle_atio(struct ispsoftc *isp, at_entry_t *aep)
 
 	case AT_RESET:
 		/*
-		 * A bus reset came along an blew away this command. Why
+		 * A bus reset came along and blew away this command. Why
 		 * they do this in addition the async event code stuff,
 		 * I dunno.
 		 *
@@ -940,7 +942,7 @@ isp_handle_ctio(struct ispsoftc *isp, ct_entry_t *ct)
 		 * Bus Device Reset message received or the SCSI Bus has
 		 * been Reset; the firmware has gone to Bus Free.
 		 *
-		 * The firmware generates an async mailbox interrupt to
+		 * The firmware generates an async mailbox interupt to
 		 * notify us of this and returns outstanding CTIOs with this
 		 * status. These CTIOs are handled in that same way as
 		 * CT_ABORTED ones, so just fall through here.
@@ -1093,7 +1095,7 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 		/*
 		 * Target Reset function received.
 		 *
-		 * The firmware generates an async mailbox interrupt to
+		 * The firmware generates an async mailbox interupt to
 		 * notify us of this and returns outstanding CTIOs with this
 		 * status. These CTIOs are handled in that same way as
 		 * CT_ABORTED ones, so just fall through here.
