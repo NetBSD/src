@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.31 1999/04/11 23:58:17 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.32 1999/04/12 00:47:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -372,6 +372,7 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Check the basics. */
 	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
+	    dfs->dlfs_version > LFS_VERSION ||
 	    dfs->dlfs_bsize < sizeof(struct dlfs)) {
 		error = EINVAL;		/* XXX needs translation */
 		goto out;
