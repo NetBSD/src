@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2002/04/01 12:16:14 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.9 2002/04/03 06:06:43 lukem Exp $
 
 IMAGESIZE=	7m
 MAKEFS_FLAGS=	-o density=5k
@@ -14,8 +14,4 @@ IMAGEDEPENDS+=	${ARCHDIR}/../install.md \
 		${_SRC_TOP_}/share/termcap/termcap.src
 
 image_md_post:
-.if ${USETOOLS} == "yes"
-	${TOOLDIR}/bin/nbvax-installboot ${IMAGE} ${DESTDIR}/usr/mdec/xxboot
-.else
-	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${DESTDIR}/usr/mdec/xxboot
-.endif
+	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/xxboot
