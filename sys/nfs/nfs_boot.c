@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.42 1998/01/12 21:27:12 scottr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.43 1998/02/28 01:45:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,11 @@ nfs_boot_init(nd, procp)
 	error = EADDRNOTAVAIL; /* ??? */
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
 	if (nfs_boot_rfc951) {
-		printf("nfs_boot: trying BOOTP/DHCP\n");
+#if defined(NFS_BOOT_DHCP)
+		printf("nfs_boot: trying DHCP/BOOTP\n");
+#else
+		printf("nfs_boot: trying BOOTP\n");
+#endif
 		error = nfs_bootdhcp(ifp, nd, procp);
 		if (!error)
 			goto ok;
