@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.56 2002/09/22 07:53:51 chs Exp $	   */
+/*	$NetBSD: pmap.h,v 1.57 2003/02/26 21:54:38 ragge Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -55,7 +55,11 @@
  */
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
+#if USE_TOPDOWN_VM==0
+#define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ) / VAX_NBPG)
+#else
 #define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
+#endif
 #define	NPTEPGS		(PROCPTSIZE / (NBPG / (sizeof(struct pte) * LTOHPN)))
 
 /*
