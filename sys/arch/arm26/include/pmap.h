@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.3 2000/12/27 18:38:50 bjh21 Exp $ */
+/* $NetBSD: pmap.h,v 1.4 2001/04/25 18:03:19 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -48,6 +48,8 @@ extern struct pmap kernel_pmap_store;
 #define pmap_kernel()	(&kernel_pmap_store)
 
 extern boolean_t pmap_fault(pmap_t, vaddr_t, vm_prot_t);
+
+#define	pmap_resident_count(pmap)	0	/* XXX XXX XXX */
 
 /* Save on hassle and kernel VM */
 #define PMAP_MAP_POOLPAGE(pa)	((vaddr_t)MEMC_PHYS_BASE + (pa))
