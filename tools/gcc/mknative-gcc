@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.10 2003/11/27 10:21:24 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.11 2004/01/02 11:58:32 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -38,7 +38,7 @@ get_libg2c () {
 ##### gnu/lib/libgcc #####
 
 get_libgcc () {
-	mkdir -p $_TOP/gnu/lib/libgcc3
+	mkdir -p $_TOP/gnu/lib/libgcc3/arch
 
 	# DPBIT, FPBIT only used on mn10[23]00, we don't need them.
 	# XXX we should probably grab everything Just In Case for
@@ -50,7 +50,7 @@ get_libgcc () {
 		LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
 		LIBGCC2_CFLAGS MAYBE_USE_COLLECT2 \
 		tm_defines xm_file xm_defines \
-		| write_mk gnu/lib/libgcc3/$MACHINE_ARCH.mk
+		| write_mk gnu/lib/libgcc3/arch/$MACHINE_ARCH.mk
 }
 
 ##### gnu/usr.bin/gcc3/libiberty #####
