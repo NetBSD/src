@@ -1,3 +1,5 @@
+/*	$NetBSD: getcwd.h,v 1.2 2002/02/21 07:38:20 itojun Exp $	*/
+
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
