@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 1999/11/13 00:32:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 1999/11/22 19:15:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -152,7 +152,7 @@ consinit()
 
 		ddb_init(end[0], end + 1, (int*)esym);
 	}
-#endif DDB
+#endif /* DDB */
 
 	/*
 	 * Now that the console can do input as well as
