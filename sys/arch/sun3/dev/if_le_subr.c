@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_subr.c,v 1.11 1995/01/03 15:43:39 gwr Exp $	*/
+/*	$NetBSD: if_le_subr.c,v 1.12 1995/09/26 04:02:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,6 +53,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/dvma.h>
 #include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
@@ -60,8 +61,6 @@
 #include "if_lereg.h"
 #include "if_le.h"
 #include "if_le_subr.h"
-
-extern caddr_t dvma_malloc();	/* XXX */
 
 int
 le_md_match(parent, vcf, args)

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.28 1995/05/24 21:02:53 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.29 1995/09/26 04:02:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -56,6 +56,7 @@
 #include <machine/control.h>
 #include <machine/mon.h>
 #include <machine/vmparam.h>
+#include <machine/dvma.h>
 
 #include "intersil7170.h"
 #include "interreg.h"

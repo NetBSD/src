@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 1995/08/08 20:56:45 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 1995/09/26 04:02:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,12 +45,20 @@
  */
 
 /*
- * Machine dependent constants for Sun-4c SPARC
+ * Machine dependent constants for Sun3
+ *
+ * The Sun3 has limited total kernel virtual space (32MB) and
+ * can not use main memory for page tables.  (All active PTEs
+ * must be installed in special translation RAM in the MMU).
+ * Therefore, parameters that would normally configure the
+ * size of various page tables are irrelevant.  Only things
+ * that consume portions of kernel virtual (KV) space matter,
+ * and those things should be chosen to conserve KV space.
  */
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
+ * USRTEXT is the start of the user text/data space, while
+ * USRSTACK is the top (end) of the user stack.
  */
 #define	USRTEXT 	NBPG		/* Start of user text */
 #define	USRSTACK	KERNBASE	/* High end of user stack */
@@ -86,11 +94,12 @@
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
- * [this figure is based on the assumption that you can put ptes in real
- *  memory.  this is a false assumption on a sun3]
+ * The actual limitation for physio requests will be the DVMA space,
+ * and that is fixed by hardware design at 1MB.  We could make the
+ * physio map larger than that, but it would not buy us much.
  */
 #ifndef USRIOSIZE
-#define USRIOSIZE	1
+#define USRIOSIZE	128		/* 1 MB */
 #endif
 
 /*
@@ -98,7 +107,7 @@
  * This is basically slop for kmempt which we actually allocate (malloc) from.
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	1024
+#define SHMMAXPGS	512 	/* 4 MB */
 #endif
 
 /*
@@ -128,15 +137,15 @@
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
 
-#define DVMA_SPACE_SIZE  0x00100000
-#define DVMA_SPACE_START 0x0FD00000	
-#define DVMA_SPACE_END   0x0FE00000 /* mon start */
-
-/* This is where access by other VME masters starts. */
-#define DVMA_SLAVE_BASE  0x0F000000
-
 /*
- * Mach derived constants
+ * Mach-derived constants, virtual memory map:
+ *
+ * 0000.0000  user space
+ * 0E00.0000  kernel space
+ * 0FE0.0000  monitor map (devices)
+ * 0FF0.0000  DVMA space
+ * 0FFE.0000  monitor RAM seg.
+ * 0FFF.E000  monitor RAM page
  */
 
 /* user/kernel map constants */
@@ -144,7 +153,7 @@
 #define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)DVMA_SPACE_START)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FE00000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
