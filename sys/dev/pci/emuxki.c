@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.31 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.32 2004/04/03 10:51:43 martti Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.31 2003/11/10 08:51:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.32 2004/04/03 10:51:43 martti Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -367,8 +367,11 @@ emuxki_match(struct device *parent, struct cfdata *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CREATIVELABS &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBLIVE)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBLIVE ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBLIVE2))
+	{
 		return (1);
+	}
 
 	return (0);
 }
