@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.5 1996/02/28 20:38:16 thorpej Exp $	*/
+/*	$NetBSD: slc.c,v 1.6 1997/10/08 08:45:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: slc.c,v 1.5 1996/02/28 20:38:16 thorpej Exp $";
+__RCSID("$NetBSD: slc.c,v 1.6 1997/10/08 08:45:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +53,10 @@ static int		def_slclen = 0;
 static int		slcchange;	/* change to slc is requested */
 static unsigned char	*slcptr;	/* pointer into slc buffer */
 static unsigned char	slcbuf[NSLC*6];	/* buffer for slc negotiation */
+
+void default_slc __P((void));
+int end_slc __P((unsigned char **));
+void process_slc __P((u_int, u_int, cc_t));
 
 /*
  * send_slc
@@ -162,7 +167,7 @@ start_slc(getit)
 	slcchange = 0;
 	if (getit)
 		init_termbuf();
-	(void) sprintf((char *)slcbuf, "%c%c%c%c",
+	(void)snprintf((char *)slcbuf, sizeof slcbuf, "%c%c%c%c",
 					IAC, SB, TELOPT_LINEMODE, LM_SLC);
 	slcptr = slcbuf + 4;
 
@@ -178,7 +183,6 @@ end_slc(bufp)
 	register unsigned char **bufp;
 {
 	register int len;
-	void netflush();
 
 	/*
 	 * If a change has occured, store the new terminal control
@@ -222,10 +226,10 @@ end_slc(bufp)
  */
 	void
 process_slc(func, flag, val)
-	register unsigned char func, flag;
-	register cc_t val;
+	u_int func, flag;
+	cc_t val;
 {
-	register int hislevel, mylevel, ack;
+	int hislevel, mylevel, ack;
 
 	/*
 	 * Ensure that we know something about this function
@@ -288,10 +292,10 @@ process_slc(func, flag, val)
  */
 	void
 change_slc(func, flag, val)
-	register char func, flag;
-	register cc_t val;
+	int func, flag;
+	cc_t val;
 {
-	register int hislevel, mylevel;
+	int hislevel, mylevel;
 	
 	hislevel = flag & SLC_LEVELBITS;
 	mylevel = slctab[func].defset.flag & SLC_LEVELBITS;
@@ -458,7 +462,7 @@ do_opt_slc(ptr, len)
 			if (ptr >= end) break;
 			val = (cc_t)*ptr++;
 
-			process_slc(func, flag, val);
+			process_slc((u_int)func, (u_int)flag, val);
 
 		}
 	} else {
