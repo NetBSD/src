@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35 2002/12/11 12:02:08 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.36 2002/12/16 16:22:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -143,10 +143,6 @@ splraise(int nlevel)
 	__splbarrier();
 	return (olevel);
 }
-
-void    cpu_Debugger(void);
-void    printf(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
 
 /*
  * Restore a value to cpl (unmasking interrupts).  If any unmasked
