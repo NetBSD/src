@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.1 2005/01/23 09:47:43 manu Exp $       */
+/*     $NetBSD: login_pam.c,v 1.2 2005/02/01 17:57:16 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.1 2005/01/23 09:47:43 manu Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.2 2005/02/01 17:57:16 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -299,6 +299,8 @@ main(int argc, char *argv[])
 		 */
 		PAM_SET_ITEM(PAM_RHOST, hostname);
 		PAM_SET_ITEM(PAM_TTY, tty); 
+		if (have_ss)
+			PAM_SET_ITEM(PAM_SOCKADDR, &ss); 
 
 		pwd = getpwnam(username);
 
