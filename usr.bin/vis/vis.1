@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.5 1994/11/17 07:56:00 jtc Exp $
+.\"	$NetBSD: vis.1,v 1.6 1997/10/20 03:06:48 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,12 +40,12 @@
 .Nm vis
 .Nd display non-printable characters in a visual format
 .Sh SYNOPSIS
-.Nm vis
+.Nm
 .Op Fl cbflnostw
 .Op Fl F Ar foldwidth
 .Op Ar file ...
 .Sh DESCRIPTION
-.Nm Vis
+.Nm
 is a filter for converting non-printable characters
 into a visual representation.  It differs from
 .Ql cat -v
@@ -69,7 +69,7 @@ Request a format which displays a small subset of the
 non-printable characters using C-style backslash sequences.
 .It Fl F
 Causes
-.Nm vis
+.Nm
 to fold output lines to foldwidth columns (default 80), like
 .Xr fold 1 ,
 except
@@ -97,7 +97,7 @@ or
 is selected.  When combined with the
 .Fl f
 flag,
-.Nm vis
+.Nm
 becomes like
 an invertible version of the
 .Xr fold 1
