@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1999/04/08 05:07:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,6 +110,8 @@
  * alias and a 22 entry cache.  So sadly (or happily), the first paragraph
  * of the previous note does not apply to the sun3x pmap.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
