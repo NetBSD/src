@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_pwd.h,v 1.3 2004/05/18 22:14:35 sjg Exp $	*/
+/*	$NetBSD: compat_pwd.h,v 1.4 2005/02/01 05:26:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,11 @@
 
 #define passwd __nbcompat_passwd
 #define pw_scan __nbcompat_pw_scan
+#ifdef LOGIN_NAME_MAX
+#undef LOGIN_NAME_MAX
+#endif
+/* Taken from syslimits.h. Need the NetBSD def, not the local system def */
+#define LOGIN_NAME_MAX	17
 
 /* All elements exactly sized: */
 struct passwd {
