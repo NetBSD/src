@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.36 2004/03/24 11:32:09 kanaoka Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.36.2.1 2004/07/02 17:27:10 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.36 2004/03/24 11:32:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.36.2.1 2004/07/02 17:27:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,6 +672,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	case ACPI_NOTIFY_BusCheck:
 		break;
 
+	case ACPI_NOTIFY_DeviceCheck:
 	case ACPI_NOTIFY_BatteryInformationChanged:
 		ABAT_LOCK(sc, s);
 		acpibat_clear_presence(sc);
