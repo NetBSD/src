@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 1995/05/31 00:15:46 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.14 1995/06/27 19:54:49 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -464,9 +464,6 @@ leinit(unit)
 	register struct ifaddr *ifa;
 	int s;
 
-	/* not yet, if address still unknown */
-	if (ifp->if_addrlist == NULL)
-	        return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splnet();
 		ifp->if_flags |= IFF_RUNNING;
