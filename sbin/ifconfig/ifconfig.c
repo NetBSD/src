@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.28 1997/03/24 00:45:30 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.29 1997/03/25 01:37:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.28 1997/03/24 00:45:30 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.29 1997/03/25 01:37:11 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -939,7 +939,7 @@ status()
 	}
 
 	if (ifmr.ifm_count == 0) {
-		warnx("%s: no media types?", ifr.ifr_name);
+		warnx("%s: no media types?", name);
 		goto proto_status;
 	}
 
