@@ -1,4 +1,4 @@
-.\"	$NetBSD: whereis.1,v 1.12 2001/12/01 16:43:27 wiz Exp $
+.\"	$NetBSD: whereis.1,v 1.13 2003/04/03 18:16:45 perry Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)whereis.1	8.3 (Berkeley) 4/27/95
 .\"
-.Dd April 27, 1995
+.Dd April 3, 2003
 .Dt WHEREIS 1
 .Os
 .Sh NAME
@@ -61,7 +61,13 @@ option is specified, then the value of the environment
 variable
 .Ev PATH
 is used instead.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, 1 on general error, 2 if only some
+programs were located and 3 if none were.
 .Sh SEE ALSO
+.Xr whatis 1 ,
 .Xr which 1 ,
 .Xr sysctl 8
 .Sh COMPATIBILITY
