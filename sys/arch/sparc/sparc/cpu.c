@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.140 2002/12/19 10:38:28 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.141 2002/12/19 11:20:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -463,7 +463,8 @@ cpu_boot_secondary_processors()
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+			(cpi->flags & CPUFLG_HATCHED) == 0)
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
@@ -551,6 +552,7 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	for (n = 10000; n != 0; n--) {
 		cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
 		if (cpu_hatched != 0) {
+			cpi->flags |= CPUFLG_HATCHED;
 			return;
 		}
 		delay(100);
