@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.85 1998/10/22 04:36:50 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.86 1998/10/23 01:16:22 ender Exp $
 
 # mac68k-specific configuration info
 
@@ -26,13 +26,24 @@ device	nubus { }
 attach	nubus at mainbus
 file	arch/mac68k/nubus/nubus.c	nubus
 
-device	adb
+device	adb { }
 attach	adb at obio_norm
 file	arch/mac68k/dev/adb.c		adb
-file	arch/mac68k/dev/adbsys.c
 file	arch/mac68k/dev/adbsysasm.s
 file	arch/mac68k/dev/adb_direct.c
 file	arch/mac68k/dev/pm_direct.c
+
+device	aed
+attach	aed at adb
+file	arch/mac68k/dev/aed.c		aed needs-flag
+
+device	kbd
+attach	kbd at adb
+file	arch/mac68k/dev/kbd.c		kbd needs-flag
+
+device	ms
+attach	ms at adb
+file	arch/mac68k/dev/ms.c		ms needs-flag
 
 device	asc
 attach	asc at obio_norm

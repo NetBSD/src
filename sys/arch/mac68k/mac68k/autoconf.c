@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 1998/07/05 22:29:52 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 1998/10/23 01:16:24 ender Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,6 @@
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/adbsys.h>
 #include <machine/viareg.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -94,7 +93,7 @@ configure()
 	extern int	cold;
 
 	mrg_init();		/* Init Mac ROM Glue */
-	startrtclock();		/* start before adb_init() */
+	startrtclock();		/* start before ADB attached */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
