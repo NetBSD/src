@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.26 1999/11/24 18:28:49 drochner Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.27 1999/11/30 18:34:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -208,9 +208,9 @@ void
 uvm_page_init(kvm_startp, kvm_endp)
 	vaddr_t *kvm_startp, *kvm_endp;
 {
-	int freepages, pagecount;
+	vsize_t freepages, pagecount, n;
 	vm_page_t pagearray;
-	int lcv, n, i;  
+	int lcv, i;  
 	paddr_t paddr;
 
 
@@ -288,8 +288,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 
 		n = vm_physmem[lcv].end - vm_physmem[lcv].start;
 		if (n > pagecount) {
-			printf("uvm_page_init: lost %d page(s) in init\n",
-			    n - pagecount);
+			printf("uvm_page_init: lost %ld page(s) in init\n",
+			    (long)(n - pagecount));
 			panic("uvm_page_init");  /* XXXCDC: shouldn't happen? */
 			/* n = pagecount; */
 		}
