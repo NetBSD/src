@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 1996/02/27 03:17:00 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 1996/03/12 23:46:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1486,14 +1486,16 @@ ENTRY(TBIS)
 	rts
 Lmotommu4:
 #endif
+#if defined(M68020)
 	tstl	_mmutype
-	jgt	Ltbis851
+	jle	Ltbis851
+	pflushs	#0,#0,a0@		| flush address from both sides
+	rts
+Ltbis851:
+#endif
 	pflush	#0,#0,a0@		| flush address from both sides
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip data cache
-	rts
-Ltbis851:
-	pflushs	#0,#0,a0@		| flush address from both sides
 	rts
 
 /*
@@ -1511,14 +1513,16 @@ ENTRY(TBIAS)
 	rts
 Lmotommu5:
 #endif
+#if defined(M68020)
 	tstl	_mmutype
-	jgt	Ltbias851
+	jle	Ltbias851
+	pflushs	#4,#4			| flush supervisor TLB entries
+	rts
+Ltbias851:
+#endif
 	pflush	#4,#4			| flush supervisor TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Ltbias851:
-	pflushs	#4,#4			| flush supervisor TLB entries
 	rts
 
 /*
