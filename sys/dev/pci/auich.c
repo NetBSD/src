@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.86 2005/01/26 21:53:42 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.87 2005/01/27 13:35:05 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.86 2005/01/26 21:53:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.87 2005/01/27 13:35:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,6 +340,7 @@ static const struct audio_format auich_formats[AUICH_NFORMATS] = {
 #define PCIID_NFORCE2		PCI_ID_CODE0(NVIDIA, NFORCE2_MCPT_AC)
 #define PCIID_NFORCE3		PCI_ID_CODE0(NVIDIA, NFORCE3_MCPT_AC)
 #define PCIID_NFORCE3_250	PCI_ID_CODE0(NVIDIA, NFORCE3_250_MCPT_AC)
+#define PCIID_NFORCE4		PCI_ID_CODE0(NVIDIA, NFORCE4_AC)
 #define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
 #define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
 
@@ -361,6 +362,7 @@ static const struct auich_devtype {
 	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
 	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
 	{ PCIID_NFORCE3_250, "nForce3 250 MCP-T AC-97 Audio", "nForce3" },
+	{ PCIID_NFORCE4, "nForce4 AC-97 Audio",		"nForce4" },
 	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
 	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
 	{ 0,		NULL,				NULL },
