@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.52 2000/02/25 20:45:43 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.53 2000/02/26 17:24:44 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -174,6 +174,8 @@ pcic_attach(sc)
 	int count, i, reg, chip, socket, intr;
 
 	DPRINTF(("pcic ident regs:"));
+
+	lockinit(&sc->sc_pcic_lock, PWAIT, "pciclk", 0, 0);
 
 	/* find and configure for the available sockets */
 	count = 0;
@@ -463,6 +465,12 @@ pcic_event_thread(arg)
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 
 	while (h->shutdown == 0) {
+		/*
+		 * Serialize event processing on the PCIC.  We may
+		 * sleep while we hold this lock.
+		 */
+		(void) lockmgr(&sc->sc_pcic_lock, LK_EXCLUSIVE, NULL);
+
 		s = splhigh();
 		if ((pe = SIMPLEQ_FIRST(&h->events)) == NULL) {
 			splx(s);
@@ -470,6 +478,10 @@ pcic_event_thread(arg)
 				first = 0;
 				config_pending_decr();
 			}
+			/*
+			 * No events to process; release the PCIC lock.
+			 */
+			(void) lockmgr(&sc->sc_pcic_lock, LK_RELEASE, NULL);
 			(void) tsleep(&h->events, PWAIT, "pcicev", 0);
 			continue;
 		} else {
@@ -542,6 +554,8 @@ pcic_event_thread(arg)
 			    pe->pe_type);
 		}
 		free(pe, M_TEMP);
+
+		(void) lockmgr(&sc->sc_pcic_lock, LK_RELEASE, NULL);
 	}
 
 	h->event_thread = NULL;
