@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.32.2.2 2004/08/03 10:56:49 skrll Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.32.2.3 2004/08/18 06:24:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -61,7 +61,7 @@ struct ufs1_dinode;
 struct ufs2_dinode;
 struct mount;
 struct nameidata;
-struct proc;
+struct lwp;
 struct statvfs;
 struct timeval;
 struct timespec;
