@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.3 1997/01/13 00:35:47 mark Exp $ */
+/* $NetBSD: mainbus.h,v 1.4 1997/07/17 01:48:40 jtk Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -56,9 +56,8 @@ struct mainbus_attach_args {
 	bus_space_tag_t	mb_iot;		/* bus space tag */
 };
 
-#define DRQUNK -1
-#define INTUNK -1
-#define IRQUNK -1
+#define DRQUNK MAINBUSCF_DACK_DEFAULT
+#define IRQUNK MAINBUSCF_IRQ_DEFAULT
 
 /* End of mainbus.h */
 
