@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.181 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.182 2000/10/29 18:38:47 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -180,6 +180,7 @@ main(void)
 	struct proc *p;
 	struct pdevinit *pdev;
 	int i, s, error;
+	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
 	extern void disk_init(void);
@@ -302,10 +303,10 @@ main(void)
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
 	    maxproc < MAXUPRC ? maxproc : MAXUPRC;
 
-	i = ptoa(uvmexp.free);
-	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = i;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = i;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = i / 3;
+	lim = ptoa(uvmexp.free);
+	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 	limit0.pl_corename = defcorename;
 	limit0.p_refcnt = 1;
 
