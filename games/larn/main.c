@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.3 1993/08/02 17:20:07 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/10/21 21:26:10 mycroft Exp $";
 #endif /* not lint */
 
 /*	main.c		*/
@@ -438,9 +438,8 @@ show1(idx,str2)
 	register int idx;
 	register char *str2[];
 	{
-	if (str2==0)  lprintf("\n%c)   %s",idx+'a',objectname[iven[idx]]);
-	else if (*str2[ivenarg[idx]]==0)  lprintf("\n%c)   %s",idx+'a',objectname[iven[idx]]);
-	else lprintf("\n%c)   %s of%s",idx+'a',objectname[iven[idx]],str2[ivenarg[idx]]);
+	lprintf("\n%c)   %s",idx+'a',objectname[iven[idx]]);
+	if (str2!=0 && str2[ivenarg[idx]][0]!=0)  lprintf(" of%s",str2[ivenarg[idx]]);
 	}
 
 show3(index)

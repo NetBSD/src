@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: object.c,v 1.3 1993/08/02 17:20:16 mycroft Exp $";
+static char rcsid[] = "$Id: object.c,v 1.4 1994/10/21 21:26:12 mycroft Exp $";
 #endif /* not lint */
 
 /*	object.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -26,11 +26,12 @@ switch(i)
 
 	case OPOTION:	lprcat("\n\nYou have found a magic potion");
 				i = iarg[playerx][playery];
-				if (potionname[i][0]) lprintf(" of %s",&potionname[i][1]);  opotion(i);  break;
+				if (potionname[i][0]!=0)	lprintf(" of%s", potionname[i]);
+				opotion(i);  break;
 
 	case OSCROLL:	lprcat("\n\nYou have found a magic scroll");
 				i = iarg[playerx][playery];
-				if (scrollname[i][0])	lprintf(" of %s",&scrollname[i][1]);
+				if (scrollname[i][0]!=0)	lprintf(" of%s", scrollname[i]);
 				oscroll(i);  break;
 
 	case OALTAR:	if (nearbymonst()) return;
