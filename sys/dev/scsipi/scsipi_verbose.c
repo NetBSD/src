@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.1 1998/03/28 21:57:09 christos Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.2 1998/04/15 16:52:37 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -303,7 +303,7 @@ scsi_print_sense_data(sense, verbosity)
 	/*
 	 * Basics- print out SENSE KEY
 	 */
-	printf("	SENSE KEY:  %s", scsi_decode_sense(s, 0));
+	printf("    SENSE KEY:  %s", scsi_decode_sense(s, 0));
 
 	/*
 	 * Print out, unqualified but aligned, FMK, EOM and ILI status.
