@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31 2001/10/05 21:53:56 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.32 2002/03/14 20:54:18 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ zs_attach_mainbus(parent, self, aux)
 					 sa->sa_offset,
 					 sa->sa_size,
 					 BUS_SPACE_MAP_LINEAR,
-					 0, &kvaddr) != 0) {
+					 &kvaddr) != 0) {
 				printf("%s @ sbus: cannot map registers\n",
 				       self->dv_xname);
 				return;
