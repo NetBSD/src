@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.35 1997/10/11 08:43:34 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.36 1997/12/21 15:40:37 christos Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -31,12 +31,12 @@ all: paper.ps
 
 .if !target(paper.ps)
 paper.ps: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+	${ROFF} ${.ALLSRC} > ${.TARGET}
 .endif
 
 .if !target(print)
 print: paper.ps
-	lpr -P${PRINTER} paper.ps
+	lpr -P${PRINTER} ${.ALLSRC}
 .endif
 
 cleandoc:
@@ -65,6 +65,8 @@ docinstall::
 .endif
 
 spell: ${SRCS}
-	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
+	spell ${.ALLSRC} | sort | comm -23 - spell.ok > paper.spell
 
 depend includes lint obj tags:
+
+.include <bsd.obj.mk>
