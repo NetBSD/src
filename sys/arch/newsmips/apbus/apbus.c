@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.6 2001/07/26 22:55:13 wiz Exp $	*/
+/*	$NetBSD: apbus.c,v 1.7 2001/09/28 12:36:50 chs Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.28 2001/09/10 21:19:11 chris Exp $	*/
+/*	$NetBSD: bus.c,v 1.29 2001/09/28 12:36:49 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

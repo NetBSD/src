@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.18 2001/09/18 18:15:52 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.19 2001/09/28 12:36:48 chs Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -192,6 +192,7 @@ typedef unsigned int uintptr_t;
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
