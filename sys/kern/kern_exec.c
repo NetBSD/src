@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.105 1999/12/30 15:59:26 eeh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.106 2000/01/05 08:11:31 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -346,11 +346,11 @@ sys_execve(p, v, retval)
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
 		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
 		       sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
 		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
 		       sizeof(struct ps_strings)) - argp;
 
