@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1996/11/17 01:59:35 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1996/12/03 17:34:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1431,16 +1431,29 @@ netintr()
 void
 do_sir()
 {
+	u_int64_t n;
+	int s;
 
-	if (ssir & SIR_NET) {
-		siroff(SIR_NET);
-		cnt.v_soft++;
-		netintr();
-	}
-	if (ssir & SIR_CLOCK) {
-		siroff(SIR_CLOCK);
-		cnt.v_soft++;
-		softclock();
+	while (ssir) {
+		s = splhigh();
+		n = ssir;
+		ssir = 0;
+		splx(s);
+
+		if (n & SIR_NET) {
+			cnt.v_soft++;
+			netintr();
+		}
+		if (n & SIR_CLOCK) {
+			cnt.v_soft++;
+			softclock();
+		}
+		if (n & SIR_TTY) {
+			extern void comsoft __P((void));
+
+			cnt.v_soft++;
+			comsoft();
+		}
 	}
 }
 
