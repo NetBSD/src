@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.49 2003/01/12 21:49:50 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.50 2003/03/18 01:13:23 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -410,77 +410,23 @@ foundffs(struct data *list, size_t num)
 	}
 }
 
-static int
-inode_kind(char *dev)
-{
-	union {
-		struct fs fs;
-		char pad[SBSIZE];
-	} fs;
-	int fd;
-
-	fd = open(dev, O_RDONLY, 0);
-	if (fd < 0)
-		return fd;
-        if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1) {
-		close(fd);
-                return -1;
-	}
-        if (read(fd, &fs, SBSIZE) != SBSIZE) {
-		close(fd);
-                return -2;
-	}
-	close(fd);
-	if (fs_is_lfs(&fs.fs))
-		return -4;
-	if (fs.fs.fs_magic != FS_MAGIC)
-		return -3;
-	if (fs.fs.fs_inodefmt < FS_44INODEFMT)
-		return 0;
-	return 1;
-}
-
 /*
- * Do an fsck. For now, assume ffs filesystems.
- * Returns zero if the fsck completed with no errors.
- * Returns a negative numbe to indicate a bad inode type,
- * and a positive  non-zero value  if exec'ing fsck returns an error.
- * If the filesystem is an out-of-date version, prompt the user
- * whether to upgrade the filesystem  level.
- * 
+ * Run a check on the specified filesystem.
  */
 static int
 do_fsck(const char *diskpart)
 {
 	char rraw[SSTRSIZE];
-	int inodetype;
-	char *upgr = "", *prog = "/sbin/fsck_ffs";
+	char *prog = "/sbin/fsck";
 	int err;
 
 	/* cons up raw partition name. */
 	snprintf (rraw, sizeof(rraw), "/dev/r%s", diskpart);
-	inodetype = inode_kind (rraw);
 
-	if (inodetype == -4) {
-		if (check_lfs_progs() == 0)
-			return EOPNOTSUPP;	/* XXX */
-		prog = "/sbin/fsck_lfs";
-	} else if (inodetype < 0) {
-		/* error */
-		return inodetype;
-	} else if (inodetype == 0) {
-		/* Ask to upgrade */
-		msg_display(MSG_upgrinode, rraw);
-		process_menu(MENU_yesno);
-		if (yesno)
-			upgr = "-c 3 ";
-	}
-
-	/*endwin();*/
 #ifndef	DEBUG_SETS
-	err = run_prog(RUN_DISPLAY, NULL, "%s %s%s", prog, upgr, rraw);
+	err = run_prog(RUN_DISPLAY, NULL, "%s %s", prog, rraw);
 #else
-	err = run_prog(RUN_DISPLAY, NULL, "%s -f %s%s", prog, upgr, rraw);
+	err = run_prog(RUN_DISPLAY, NULL, "%s -f %s", prog, rraw);
 #endif	
 	wrefresh(stdscr);
 	return err;
