@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.1 2002/10/04 18:37:20 elric Exp $ */
+/* $NetBSD: params.c,v 1.2 2002/10/12 21:02:18 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ params_init(struct params *p)
 	p->keygen_salt = NULL;
 	p->keygen_saltlen = -1;
 	p->keygen_iterations = -1;
+	p->verify_method = VERIFY_UNKNOWN;
 	p->key_hash = NULL;
 	p->key_hashlen = -1;
 	p->xor_key = NULL;
@@ -113,6 +114,8 @@ params_filldefaults(struct params *p)
 
 	if (p->keygen_method == KEYGEN_UNKNOWN)
 		p->keygen_method = KEYGEN_PKCS5_PBKDF2;
+	if (p->verify_method == VERIFY_UNKNOWN)
+		p->verify_method = VERIFY_NONE;
 	if (!p->ivmeth)
 		params_setivmeth(p, "encblkno");
 	if (p->keylen == -1)
@@ -297,6 +300,37 @@ params_setkeygen_salt_b64(struct params *p, const char *in)
 }
 
 int
+params_setverify_method(struct params *p, int in)
+{
+
+	switch (in) {
+	case VERIFY_NONE:
+	case VERIFY_DISKLABEL:
+		break;
+	default:
+		fprintf(stderr, "params_setverify_method: unsupported "
+		    "verify_method (%d)\n", in);
+		return -1;
+	}
+	p->verify_method = in;
+	return 0;
+}
+
+int
+params_setverify_method_str(struct params *p, const char *in)
+{
+
+	if (!strcmp("none", in))
+		return params_setverify_method(p, VERIFY_NONE);
+	if (!strcmp("disklabel", in))
+		return params_setverify_method(p, VERIFY_DISKLABEL);
+
+	fprintf(stderr, "params_setverify_method: unrecognized verify method "
+	    "\"%s\"\n", in);
+	return -1;
+}
+
+int
 params_setxor_key(struct params *p, const char *in, int len)
 {
 
@@ -365,6 +399,8 @@ take_action(struct params *c, FILE *f, const char *key, char *val)
 			fprintf(stderr, "xor_key improperly encoded\n");
 			return -1;
 		}
+	} else if (!strcmp(key, "verify_method")) {
+		return params_setverify_method_str(c, val);
 	} else if (!strcmp(key, "key_hash")) {
 		ret = params_setkey_hash_b64(c, val);
 		if (ret < 0) {
@@ -502,6 +538,18 @@ params_fput(struct params *p, FILE *f)
 	print_kvpair_str(f, "iv-method", p->ivmeth);
 	print_kvpair_int(f, "keylength", p->keylen);
 	print_kvpair_int(f, "blocksize", p->bsize);
+	switch (p->verify_method) {
+	case VERIFY_NONE:
+		print_kvpair_str(f, "verify_method", "none");
+		break;
+	case VERIFY_DISKLABEL:
+		print_kvpair_str(f, "verify_method", "disklabel");
+		break;
+	default:
+		fprintf(stderr, "unsupported verify_method (%d)\n",
+		    p->verify_method);
+		return -1;
+	}
 	switch (p->keygen_method) {
 	case KEYGEN_RANDOMKEY:
 		print_kvpair_str(f, "keygen_method", "randomkey");
