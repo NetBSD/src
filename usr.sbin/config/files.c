@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
+/*	$NetBSD: files.c,v 1.7 1996/11/07 22:59:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,12 +120,12 @@ addfile(path, optx, flags, rule)
 	}
 
 	/* find last part of pathname, and same without trailing suffix */
-	tail = rindex(path, '/');
+	tail = strrchr(path, '/');
 	if (tail == NULL)
 		tail = path;
 	else
 		tail++;
-	dotp = rindex(tail, '.');
+	dotp = strrchr(tail, '.');
 	if (dotp == NULL || dotp[1] == 0 ||
 	    (baselen = dotp - tail) >= sizeof(base)) {
 		error("invalid pathname `%s'", path);

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.26 1996/08/31 21:15:05 mycroft Exp $	*/
+/*	$NetBSD: config.h,v 1.27 1996/11/07 22:59:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,38 @@
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
+
+/*
+ * config.h:  Global definitions for "config"
+ */
+
+#include <sys/types.h>
+#include <sys/param.h>
+
+#if !defined(MAKE_BOOTSTRAP) && defined(BSD)
+#include <sys/cdefs.h>
+#include <paths.h>
+#else /* ...BSD */
+#if defined(__STDC__) || defined(__cplusplus)
+#define	__P(protos)	protos		/* full-blown ANSI C */
+#else /* ...STDC */
+#define	__P(protos)	()		/* traditional C preprocessor */    
+#endif /* ...STDC */
+#endif /* ...BSD */
+
+#if __STDC__
+#include <stdlib.h>
+#include <unistd.h>
+#endif
+
+/* These are really for MAKE_BOOTSTRAP but harmless. */
+#ifndef __dead
+#define __dead
+#endif
+#ifndef _PATH_DEVNULL
+#define _PATH_DEVNULL "/dev/null"
+#endif
+
 
 /*
  * Name/value lists.  Values can be strings or pointers and/or can carry
@@ -203,7 +235,7 @@ struct files {
 	u_char	fi_flags;	/* as below */
 	char	fi_lastc;	/* last char from path */
 	const char *fi_path;	/* full file path */
-	const char *fi_tail;	/* name, i.e., rindex(fi_path, '/') + 1 */
+	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
 	struct  nvlist *fi_optx;/* options expression */
 	struct  nvlist *fi_optf;/* flattened version of above, if needed */
@@ -308,6 +340,7 @@ void	pack __P((void));
 
 /* scan.l */
 int	currentline __P((void));
+int	include __P((const char *, int));
 
 /* sem.c, other than for yacc actions */
 void	initsem __P((void));

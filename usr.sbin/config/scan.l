@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.7 1996/08/31 21:15:13 mycroft Exp $	*/
+/*	$NetBSD: scan.l,v 1.8 1996/11/07 22:59:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,8 +57,6 @@
 int	yyline;
 const char *yyfile;
 const char *lastfile;
-
-int	include __P((const char *, int));
 
 /*
  * Data for returning to previous files from include files.
