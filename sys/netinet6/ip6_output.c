@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.70 2003/09/06 03:36:33 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.71 2003/10/03 20:56:11 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.70 2003/09/06 03:36:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.71 2003/10/03 20:56:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2270,6 +2270,7 @@ ip6_splithdr(m, exthdrs)
 		}
 		M_COPY_PKTHDR(mh, m);
 		MH_ALIGN(mh, sizeof(*ip6));
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);

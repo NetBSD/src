@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.122 2003/10/01 23:54:40 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.123 2003/10/03 20:56:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.122 2003/10/01 23:54:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.123 2003/10/03 20:56:11 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -1029,12 +1029,13 @@ ip_insertoptions(m, opt, phlen)
 		return (m);		/* XXX should fail */
 	if (!in_nullhost(p->ipopt_dst))
 		ip->ip_dst = p->ipopt_dst;
-	if (m->m_flags & M_EXT || m->m_data - optlen < m->m_pktdat) {
+	if (M_READONLY(m) || M_LEADINGSPACE(m) < optlen) {
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
 		if (n == 0)
 			return (m);
 		MCLAIM(n, m->m_owner);
 		M_COPY_PKTHDR(n, m);
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
