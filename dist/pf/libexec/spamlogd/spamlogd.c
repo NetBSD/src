@@ -1,4 +1,4 @@
-/*	$NetBSD: spamlogd.c,v 1.4 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$NetBSD: spamlogd.c,v 1.5 2004/11/16 05:14:12 yamt Exp $	*/
 /*	$OpenBSD: spamlogd.c,v 1.9 2004/08/10 16:06:01 otto Exp $	*/
 
 /*
@@ -35,9 +35,7 @@
 #include "grey.h"
 #define PATH_TCPDUMP "/usr/sbin/tcpdump"
 
-#ifdef HAVE_SYSLOG_R
 struct syslog_data sdata = SYSLOG_DATA_INIT;
-#endif
 int inbound; /* do we only whitelist inbound smtp? */
 
 extern char *__progname;
