@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 1999/03/27 00:30:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,12 +156,13 @@ mmrw(dev, uio, flags)
 			/* Temporarily map the memory at vmmap. */
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, TRUE, prot);
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 			break;
 
 		case 1:                        /*  /dev/kmem  */
