@@ -24,11 +24,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aout_machdep.h,v 1.5 1994/01/28 23:43:26 jtc Exp $
+ *	$Id: aout_machdep.h,v 1.6 1994/04/10 02:06:39 chopps Exp $
  */
-
-#ifndef _AMIGA_EXEC_H_
-#define _AMIGA_EXEC_H_
+#ifndef _MACHINE_EXEC_H
+#define _MACHINE_EXEC_H
 
 #define __LDPGSZ	8192
 
@@ -46,5 +45,4 @@ struct relocation_info_m68k {
 };
 #define relocation_info	relocation_info_m68k
 
-
-#endif  /* _AMIGA_EXEC_H_ */
+#endif  /* _MACHINE_EXEC_H */

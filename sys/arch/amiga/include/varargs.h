@@ -1,6 +1,9 @@
 /*
- *	$Id: varargs.h,v 1.1 1994/01/27 15:26:40 mycroft Exp $
+ *	$Id: varargs.h,v 1.2 1994/04/10 02:06:55 chopps Exp $
  */
+#ifndef _MACHINE_VARARGS_H
+#define _MACHINE_VARARGS_H
 
-/* Just use the common m68k definition */
 #include <m68k/varargs.h>
+
+#endif

@@ -38,9 +38,10 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.7 1994/02/23 06:47:39 chopps Exp $
+ *	$Id: vmparam.h,v 1.8 1994/04/10 02:06:56 chopps Exp $
  */
-
+#ifndef _MACHINE_VMPARAM_H
+#define _MACHINE_VMPARAM_H
 
 #include <machine/pte.h>
 
@@ -243,3 +244,5 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+#endif /* !_MACHINE_VMPARAM_H */
