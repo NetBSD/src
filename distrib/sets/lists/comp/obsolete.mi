@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.95 2003/08/02 18:49:12 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.96 2003/09/18 09:16:29 jdolecek Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -753,6 +753,7 @@
 ./usr/share/man/cat3/list_next.0
 ./usr/share/man/cat3/list_remove.0
 ./usr/share/man/cat3/mdc2.0
+./usr/share/man/cat3/pw_dup.0
 ./usr/share/man/cat3/rc4.0
 ./usr/share/man/cat3/regsterrpc.0
 ./usr/share/man/cat3/ripemd.0
@@ -848,6 +849,7 @@
 ./usr/share/man/man3/list_next.3
 ./usr/share/man/man3/list_remove.3
 ./usr/share/man/man3/mdc2.3
+./usr/share/man/man3/pw_dup.3
 ./usr/share/man/man3/rc4.3
 ./usr/share/man/man3/regsterrpc.3
 ./usr/share/man/man3/ripemd.3
