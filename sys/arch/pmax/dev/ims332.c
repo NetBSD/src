@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.2 1996/04/08 00:57:37 jonathan Exp $	*/
+/*	$NetBSD: ims332.c,v 1.3 1996/09/02 17:35:52 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -198,13 +198,13 @@ ims332LoadColorMap(fi, bits, index, count)
 
 	for (i = 0; i < count; i++) {
 		ims332_write_register (fi,
-				       IMS332_REG_LUT_BASE + i,
-				       (cmap_bits [i * 3 + 1] << 16) |
+				       IMS332_REG_LUT_BASE + i + index,
+				       (cmap_bits [i * 3 + 2] << 16) |
 				       (cmap_bits [i * 3 + 1] << 8) |
 				       (cmap_bits [i * 3]));
-		cmap [(i + index) * 3] = cmap_bits [i * 3];
-		cmap [(i + index) * 3 + 1] = cmap_bits [i * 3 + 1];
-		cmap [(i + index) * 3 + 2] = cmap_bits [i * 3 + 2];
+		cmap [i * 3] = cmap_bits [i * 3];
+		cmap [i * 3 + 1] = cmap_bits [i * 3 + 1];
+		cmap [i * 3 + 2] = cmap_bits [i * 3 + 2];
 	}
 	return 0;
 }
