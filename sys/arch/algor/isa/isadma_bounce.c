@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_bounce.c,v 1.2 2001/11/14 18:15:12 thorpej Exp $	*/
+/*	$NetBSD: isadma_bounce.c,v 1.3 2003/05/05 12:55:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -57,11 +57,6 @@
 #include <uvm/uvm_extern.h>
 
 extern	paddr_t avail_end;
-
-/*
- * ISA can only DMA to 0-16M.
- */
-#define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
 /*
  * Cookie used by bouncing ISA DMA.  A pointer to one of these is stashed

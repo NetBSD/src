@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_dma.c,v 1.1 2001/03/09 20:55:47 leo Exp $	*/
+/*	$NetBSD: isa_dma.c,v 1.2 2003/05/05 12:55:42 fvdl Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -54,11 +54,6 @@
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
-
-/*
- * ISA can only DMA to 0-16M.
- */
-#define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
 extern	paddr_t avail_end;
 
