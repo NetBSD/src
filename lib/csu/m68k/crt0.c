@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.8 1994/04/05 02:26:16 cgd Exp $
+ *	$Id: crt0.c,v 1.9 1994/07/31 19:57:46 mycroft Exp $
  */
 
 
@@ -110,9 +110,6 @@ char			*__progname = empty;
 	write(2, str, sizeof(str)), \
 	_exit(1);
 
-
-/* do we really need this? */
-asm(".text; orb #0,d0");	/* 32 bits of zero at location 0 */
 
 start()
 {
