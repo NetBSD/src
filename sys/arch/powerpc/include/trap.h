@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.2 2000/01/19 03:30:12 danw Exp $	*/
+/*	$NetBSD: trap.h,v 1.3 2000/05/25 21:10:14 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_TRAP_H_
-#define	_MACHINE_TRAP_H_
+#ifndef	_POWERPC_TRAP_H_
+#define	_POWERPC_TRAP_H_
 
 #define	EXC_RSVD	0x0000		/* Reserved */
 #define	EXC_RST		0x0100		/* Reset */
@@ -82,4 +82,4 @@
 #define EXC_ALI_RST(dsisr) ((dsisr >> 5) & 0x1f)   /* source or target */
 #define EXC_ALI_RA(dsisr) (dsisr & 0x1f)
 
-#endif	/* _MACHINE_TRAP_H_ */
+#endif	/* _POWERPC_TRAP_H_ */
