@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.25 2002/06/15 02:50:11 mbw Exp $
+.\"$NetBSD: hardware,v 1.26 2002/06/20 20:05:16 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -105,7 +105,7 @@ models with ATI Rage Pro: Desktop, Mini Tower, and All-in-One)
 .It Em "Open Firmware 3"
 .Pp
 .(bullet -compact
-Apple original iBook, iBook SE, and iBook (Dual USB)
+Apple original iBook, iBook SE, iBook (Dual USB), and iBook (Summer 2002)
 .It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
 5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), iMac (Slot Loading), 
@@ -335,9 +335,8 @@ On-board video on most models
 .(Note
 Several models have been reported to not work with
 .Nx
-if the on-board video is in use, such as the Performa 4400, 54xx, 6360,
-6400, Motorola Starmax 3000 and 4000, PowerComputing PowerCenter and
-PowerTower, APS Tech M*Power 604e/200, and UMAX C600 and Apus 3000.  
+if the on-board video is in use, such as the Performa 54xx, 6360, 6400,
+PowerComputing PowerCenter and PowerTower, and UMAX C600 and Apus 3000.  
 Also, the video
 card that shipped with the PowerMacintosh 9500/150, 9500/180, and 9500/200
 systems is reported to have the same problem.
