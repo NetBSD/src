@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.1.1.2 2001/01/27 06:18:27 itojun Exp $	*/
+/*	$NetBSD: list.c,v 1.2 2001/01/27 07:22:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989

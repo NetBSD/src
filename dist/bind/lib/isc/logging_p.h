@@ -1,4 +1,4 @@
-/*	$NetBSD: logging_p.h,v 1.1.1.2 2001/01/27 06:20:12 itojun Exp $	*/
+/*	$NetBSD: logging_p.h,v 1.2 2001/01/27 07:22:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: eay_dss_link.c,v 1.1.1.3 2001/01/27 06:19:02 itojun Exp $	*/
+/*	$NetBSD: eay_dss_link.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 #ifdef EAY_DSS
 static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/eay_dss_link.c,v 1.4 1999/10/13 16:39:23 vixie Exp";

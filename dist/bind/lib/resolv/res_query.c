@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.1.1.2 2001/01/27 06:20:42 itojun Exp $	*/
+/*	$NetBSD: res_query.c,v 1.2 2001/01/27 07:22:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993

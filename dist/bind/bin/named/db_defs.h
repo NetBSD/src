@@ -1,4 +1,4 @@
-/*	$NetBSD: db_defs.h,v 1.1.1.2 2001/01/27 06:16:35 itojun Exp $	*/
+/*	$NetBSD: db_defs.h,v 1.2 2001/01/27 07:21:58 itojun Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90

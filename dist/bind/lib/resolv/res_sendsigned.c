@@ -1,4 +1,4 @@
-/*	$NetBSD: res_sendsigned.c,v 1.1.1.2 2001/01/27 06:20:44 itojun Exp $	*/
+/*	$NetBSD: res_sendsigned.c,v 1.2 2001/01/27 07:22:05 itojun Exp $	*/
 
 #include "port_before.h"
 #include "fd_setsize.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnskeygen.c,v 1.1.1.2 2001/01/27 06:16:18 itojun Exp $	*/
+/*	$NetBSD: dnskeygen.c,v 1.2 2001/01/27 07:21:57 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: dnskeygen.c,v 1.11 2000/12/23 08:14:31 vixie Exp";

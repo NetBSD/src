@@ -1,4 +1,4 @@
-/*	$NetBSD: irpmarshall.c,v 1.1.1.2 2001/01/27 06:19:51 itojun Exp $	*/
+/*	$NetBSD: irpmarshall.c,v 1.2 2001/01/27 07:22:04 itojun Exp $	*/
 
 /*
  * Copyright(c) 1989, 1993, 1995

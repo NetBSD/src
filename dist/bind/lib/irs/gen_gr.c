@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_gr.c,v 1.1.1.2 2001/01/27 06:19:26 itojun Exp $	*/
+/*	$NetBSD: gen_gr.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.

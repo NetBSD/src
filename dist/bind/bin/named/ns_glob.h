@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_glob.h,v 1.2 2000/10/08 19:41:18 is Exp $	*/
+/*	$NetBSD: ns_glob.h,v 1.3 2001/01/27 07:21:59 itojun Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	Id: ns_glob.h,v 8.51 1999/10/15 21:53:32 vixie Exp
+ *	Id: ns_glob.h,v 8.56 2000/12/02 18:39:25 vixie Exp
  */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -127,8 +127,11 @@ DECL	time_t			resettime;
 	/* next query to retry */
 DECL	struct qinfo		*retryqp;
 
-	/* default configuration file */
+	/* configuration file name */
 DECL	char			*conffile;
+
+	/* configuration file mtime */
+DECL	time_t			confmtime;
 
 	/* default debug output file */
 DECL	char			*debugfile;
@@ -158,16 +161,16 @@ DECL	u_char			*dnptrs[40];
 DECL	u_char			**dnptrs_end
 				INIT(dnptrs + sizeof dnptrs / sizeof(u_char*));
 
+	/* data about all forwarders */
+DECL    struct fwddata          **fwddata;
+	/* how many forwarders are there in fwddata? */
+DECL	int			fwddata_count;
+
 	/* number of names in addinfo */
 DECL	int			addcount;
 
 	/* name of cache file */
 DECL	const char		*cache_file;
-
-#ifdef SLAVE_FORWARD
-	/* retry time when a slave */
-DECL	int			slave_retry	INIT(4);
-#endif
 
 #ifdef BIND_UPDATE
 DECL	const char *		LogSignature	INIT(";BIND LOG V8\n");
@@ -211,7 +214,6 @@ DECL	options			server_options		INIT(NULL);
 DECL	server_info		nameserver_info		INIT(NULL);
 DECL	key_info_list		secretkey_info		INIT(NULL);
 
-DECL	int			main_needs_exit		INIT(0);
 DECL	ip_match_list		bogus_nameservers	INIT(NULL);
 
 DECL	log_context 		log_ctx;

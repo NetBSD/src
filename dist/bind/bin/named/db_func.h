@@ -1,4 +1,4 @@
-/*	$NetBSD: db_func.h,v 1.1.1.2 2001/01/27 06:16:38 itojun Exp $	*/
+/*	$NetBSD: db_func.h,v 1.2 2001/01/27 07:21:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990

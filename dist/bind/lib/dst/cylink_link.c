@@ -1,4 +1,4 @@
-/*	$NetBSD: cylink_link.c,v 1.1.1.3 2001/01/27 06:18:58 itojun Exp $	*/
+/*	$NetBSD: cylink_link.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 #ifdef CYLINK_DSS
 static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/cylink_link.c,v 1.7 1999/10/13 16:39:22 vixie Exp";

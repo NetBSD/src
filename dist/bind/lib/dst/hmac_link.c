@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.3 2001/01/27 06:19:04 itojun Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 #ifdef HMAC_MD5
 #ifndef LINT

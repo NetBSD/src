@@ -1,4 +1,4 @@
-/*	$NetBSD: prandom.c,v 1.1.1.3 2001/01/27 06:19:10 itojun Exp $	*/
+/*	$NetBSD: prandom.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 #ifndef LINT
 static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/prandom.c,v 1.9 2000/07/17 07:36:53 vixie Exp";

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.1.1.2 2001/01/27 06:20:36 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.2 2001/01/27 07:22:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
