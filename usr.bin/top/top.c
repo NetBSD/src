@@ -711,7 +711,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 			    case CMD_help2:
 				reset_display();
 				clear();
-				show_help();
+				show_help(&statics);
 				standout("Hit any key to continue: ");
 				fflush(stdout);
 				(void) read(0, &ch, 1);
