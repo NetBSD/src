@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 1998/09/05 13:20:08 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 1998/10/19 01:37:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,29 +41,32 @@
 #include "common.h"
 
 extern void	start __P((void)) asm("start");
+struct kframe {
+	int	kargc;
+	char	*kargv[1];	/* size depends on kargc */
+	char	kargstr[1];	/* size varies */
+	char	kenvstr[1];	/* size varies */
+};
 
-void
-start()
+	asm("	.text");
+	asm("	.align 2");
+	asm("	.globl _start");
+	asm("	.type _start,@function");
+	asm("	_start:");
+	asm("		.word 0x0101");		/* two nops just in case */
+	asm("		pushl sp");		/* no registers to save */
+	asm("		calls $1,___start");	/* do the real start */
+	asm("		halt");
+
+static void
+__start(kfp)
+	struct kframe *kfp;
 {
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
 	/*
 	 *	ALL REGISTER VARIABLES!!!
 	 */
-	struct kframe *kfp;
 	char **argv, *ap;
 
-#ifdef lint
-	kfp = 0;
-	initcode = initcode = 0;
-#else /* not lint */
-	/* make kfp point to the arguments on stack */
-	asm ("movl sp, %0" : "=r" (kfp));
-#endif /* not lint */
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
@@ -97,20 +100,24 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #ifdef DYNAMIC
 	asm("	___syscall:");
 	asm("		.word 0");		/* no registers to save */
-	asm("		movl 4(ap), r0");	/* get syscall number */
-	asm("		subl3 $1,(ap)+,(ap)");	/* n-1 args to syscall */
+	asm("		addl2 $4,ap");		/* n-1 args to syscall */
+	asm("		movl (ap),r0");		/* get syscall number */
+	asm("		subl3 $1,-4(ap),(ap)");	/* n-1 args to syscall */
 	asm("		chmk r0");		/* do system call */
-	asm("		jcs 1f");		/* check error */
-	asm("		ret");			/* return */
-	asm("	1:	movl $-1, r0");
+	asm("		jcc 1f");		/* check error */
+	asm("		mnegl $1,r0");
 	asm("		ret");
+	asm("	1:	movpsl -(sp)");		/* flush the icache */
+	asm("		pushab 2f");		/* by issueing an REI */
+	asm("		rei");
+	asm("	2:	ret");
 
 #endif /* DYNAMIC */
 
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.8 1998/09/05 13:20:08 pk Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.9 1998/10/19 01:37:35 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
