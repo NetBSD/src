@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.2 1997/03/20 16:15:15 is Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.3 1997/07/15 12:45:25 drochner Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -36,10 +36,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
+#else
 #include <string.h>
-#include <time.h>
+#endif
 
 #include <net/if.h>
 

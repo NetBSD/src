@@ -1,4 +1,4 @@
-/*	$NetBSD: nfswrapper.c,v 1.3 1997/06/13 13:36:10 drochner Exp $	 */
+/*	$NetBSD: nfswrapper.c,v 1.4 1997/07/15 12:45:24 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  *  - path to mount in globel rootpath
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
