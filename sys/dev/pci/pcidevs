@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.174 1999/12/04 05:41:08 castor Exp $
+$NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -519,7 +519,8 @@ vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor DELTA		0x1500	Delta Electronics
-vendor SOLIDUM          0x1588  Solidum Systems Corp. www.solidum.com/pcisig.html
+vendor TERRATEC		0x153b	TerraTec Electronic
+vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -897,6 +898,7 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* ESS Technology Inc products */
+product ESSTECH	MAESTRO2	0x1968	Maestro 2
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E
 
