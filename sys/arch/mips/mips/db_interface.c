@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42 2002/03/11 16:39:40 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.43 2002/05/31 21:09:03 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -402,7 +402,8 @@ do {									\
 	uint32_t __val;							\
 									\
 	asm volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));		\
-	printf("  %s:%*s %#x\n", name, FLDWIDTH - strlen(name), "", __val); \
+	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
+	    "", __val);							\
 } while (0)
 
 /* XXX not 64-bit ABI safe! */
@@ -420,7 +421,8 @@ do {									\
 		"dsrl %M0,$1,32			\n\t"			\
 		".set pop"						\
 	    : "=r"(__val));						\
-	printf("  %s:%*s %#llx\n", name, FLDWIDTH - strlen(name), "", __val); \
+	printf("  %s:%*s %#llx\n", name, FLDWIDTH - (int) strlen(name),	\
+	    "", __val);							\
 } while (0)
 
 void
