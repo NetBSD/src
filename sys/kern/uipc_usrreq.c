@@ -1,4 +1,41 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.29 1998/01/07 04:03:38 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.30 1998/01/07 22:57:09 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -63,10 +100,13 @@
 struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_UNIX };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
+struct mbuf *unp_addsockcred __P((struct proc *, struct mbuf *));
+
 int
-unp_output(m, control, unp)
+unp_output(m, control, unp, p)
 	struct mbuf *m, *control;
 	struct unpcb *unp;
+	struct proc *p;
 {
 	struct socket *so2;
 	struct sockaddr_un *sun;
@@ -76,6 +116,8 @@ unp_output(m, control, unp)
 		sun = unp->unp_addr;
 	else
 		sun = &sun_noname;
+	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
+		control = unp_addsockcred(p, control);
 	if (sbappendaddr(&so2->so_rcv, (struct sockaddr *)sun, m,
 	    control) == 0) {
 		m_freem(control);
@@ -221,6 +263,12 @@ uipc_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SEND:
+		/*
+		 * Note: unp_internalize() rejects any control message
+		 * other than SCM_RIGHTS, and only allows one.  This
+		 * has the side-effect of preventing a caller from
+		 * forging SCM_CREDS.
+		 */
 		if (control && (error = unp_internalize(control, p)))
 			break;
 		switch (so->so_type) {
@@ -244,7 +292,7 @@ uipc_usrreq(so, req, m, nam, control, p)
 					goto die;
 				}
 			}
-			error = unp_output(m, control, unp);
+			error = unp_output(m, control, unp, p);
 			if (nam)
 				unp_disconnect(unp);
 			break;
@@ -256,6 +304,14 @@ uipc_usrreq(so, req, m, nam, control, p)
 			if (unp->unp_conn == 0)
 				panic("uipc 3");
 			so2 = unp->unp_conn->unp_socket;
+			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
+				/*
+				 * Credentials are passed only once on
+				 * SOCK_STREAM.
+				 */
+				unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
+				control = unp_addsockcred(p, control);
+			}
 			/*
 			 * Send to paired receive port, and then reduce
 			 * send buffer hiwater marks to maintain backpressure.
@@ -323,6 +379,82 @@ uipc_usrreq(so, req, m, nam, control, p)
 	}
 
 release:
+	return (error);
+}
+
+/*
+ * Unix domain socket option processing.
+ */
+int
+uipc_ctloutput(op, so, level, optname, mp)
+	int op;
+	struct socket *so;
+	int level, optname;
+	struct mbuf **mp;
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct mbuf *m = *mp;
+	int optval = 0, error = 0;
+
+	if (level != 0) {
+		error = EINVAL;
+		if (op == PRCO_SETOPT && m)
+			(void) m_free(m);
+	} else switch (op) {
+
+	case PRCO_SETOPT:
+		switch (optname) {
+		case LOCAL_CREDS:
+			if (m == NULL || m->m_len != sizeof(int))
+				error = EINVAL;
+			else {
+				optval = *mtod(m, int *);
+				switch (optname) {
+#define	OPTSET(bit) \
+	if (optval) \
+		unp->unp_flags |= (bit); \
+	else \
+		unp->unp_flags &= ~(bit);
+
+				case LOCAL_CREDS:
+					OPTSET(UNP_WANTCRED);
+					break;
+				}
+			}
+			break;
+#undef OPTSET
+
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		if (m)
+			(void) m_free(m);
+		break;
+
+	case PRCO_GETOPT:
+		switch (optname) {
+		case LOCAL_CREDS:
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			switch (optname) {
+
+#define	OPTBIT(bit)	(unp->unp_flags & (bit) ? 1 : 0)
+
+			case LOCAL_CREDS:
+				optval = OPTBIT(UNP_WANTCRED);
+				break;
+			}
+			*mtod(m, int *) = optval;
+			break;
+#undef OPTBIT
+
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		break;
+	}
 	return (error);
 }
 
@@ -534,6 +666,7 @@ unp_connect(so, nam, p)
 			    unp2->unp_addrlen);
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
+		unp3->unp_flags = unp2->unp_flags;
 		so2 = so3;
 	}
 	error = unp_connect2(so, so2);
@@ -773,6 +906,58 @@ morespace:
 		unp_rights++;
 	}
 	return (0);
+}
+
+struct mbuf *
+unp_addsockcred(p, control)
+	struct proc *p;
+	struct mbuf *control;
+{
+	struct cmsghdr *cmp;
+	struct sockcred *sc;
+	struct mbuf *m, *n;
+	int len, i;
+
+	len = sizeof(struct cmsghdr) + SOCKCREDSIZE(p->p_ucred->cr_ngroups);
+
+	m = m_get(M_WAIT, MT_CONTROL);
+	if (len > MLEN) {
+		if (len > MCLBYTES)
+			MEXTMALLOC(m, len, M_WAITOK);
+		else
+			MCLGET(m, M_WAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return (control);
+		}
+	}
+
+	m->m_len = len;
+	m->m_next = NULL;
+	cmp = mtod(m, struct cmsghdr *);
+	sc = (struct sockcred *)CMSG_DATA(cmp);
+	cmp->cmsg_len = len;
+	cmp->cmsg_level = SOL_SOCKET;
+	cmp->cmsg_type = SCM_CREDS;
+	sc->sc_uid = p->p_cred->p_ruid;
+	sc->sc_euid = p->p_ucred->cr_uid;
+	sc->sc_gid = p->p_cred->p_rgid;
+	sc->sc_egid = p->p_ucred->cr_gid;
+	sc->sc_ngroups = p->p_ucred->cr_ngroups;
+	for (i = 0; i < sc->sc_ngroups; i++)
+		sc->sc_groups[i] = p->p_ucred->cr_groups[i];
+
+	/*
+	 * If a control message already exists, append us to the end.
+	 */
+	if (control != NULL) {
+		for (n = control; n->m_next != NULL; n = n->m_next)
+			;
+		n->m_next = m;
+	} else
+		control = m;
+
+	return (control);
 }
 
 int	unp_defer, unp_gcing;
