@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.1 2001/10/05 22:27:43 reinoud Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -119,36 +119,6 @@ struct vidc_state vidc_current[1];
  * move to a constants header file ?
  */
 
-#ifdef RC7500
-struct vfreq {
-	u_int frqcon;
-	int freq;
-};
-
-static struct vfreq vfreq[] = {
-	{ VIDFREQ_25_18, 25175},
-	{ VIDFREQ_25_18, 25180},
-	{ VIDFREQ_28_32, 28320},
-	{ VIDFREQ_31_50, 31500},
-	{ VIDFREQ_36_00, 36000},
-	{ VIDFREQ_40_00, 40000},
-	{ VIDFREQ_44_90, 44900},
-	{ VIDFREQ_50_00, 50000},
-	{ VIDFREQ_65_00, 65000},
-	{ VIDFREQ_72_00, 72000},
-	{ VIDFREQ_75_00, 75000},
-	{ VIDFREQ_77_00, 77000},
-	{ VIDFREQ_80_00, 80000},
-	{ VIDFREQ_94_50, 94500},
-	{ VIDFREQ_110_0, 110000},
-	{ VIDFREQ_120_0, 120000},
-	{ VIDFREQ_130_0, 130000}
-};
-
-#define NFREQ	(sizeof (vfreq) / sizeof(struct vfreq))
-u_int vfreqcon = 0;
-#else /* RC7500 */
-
 struct fsyn {
 	int r, v, f;
 };
@@ -166,7 +136,6 @@ static struct fsyn fsyn_pref[] = {
 	{ 12, 35, 70000 },
 	{ 0,   0, 00000 }
 };
-#endif /* RC7500 */
 
 
 /*
@@ -514,11 +483,8 @@ vidcvideo_setmode(struct vidc_mode *mode)
 {    
 	register int acc;
 	int bpp_mask;
-#ifndef RC7500
         int ereg;
-
 	int best_r, best_v, best_match;
-#endif
 
 #ifdef NC
 return;
@@ -534,29 +500,6 @@ return;
 	newmode = *mode;
 	vidc_currentmode = &newmode;
 
-#ifdef RC7500
-	{
-		int i;
-		int old, new;
-		u_int nfreq;
-
-		old = vfreq[0].freq;
-		nfreq = vfreq[0].frqcon;
-		for (i = 0; i < (NFREQ - 1); i++) {
-			new = vfreq[i].freq - mode->pixel_rate;
-			if (new < 0)
-				new = -new;
-			if (new < old) {
-				nfreq = vfreq[i].frqcon;
-				old = new;
-			}
-			if (new == 0)
-				break;
-		}
-		nfreq |= (vfreqcon & 0xf0);
-		vfreqcon = nfreq;
-	}
-#else /* RC7500 */
 	/* Program the VCO Look-up to a preferred value before choosing one */
 	{
 		int least_error = mod(fsyn_pref[0].f - vidc_currentmode->pixel_rate);
@@ -597,29 +540,9 @@ return;
 		if (best_v < 1)  best_v= 1;
     
 	}
-#endif /* RC7500 */
 
-#ifdef RC7500
-	outb(FREQCON, vfreqcon);
-	/*
-	 * Need to program the control register first.
-	 */
-	if (dispsize>1024*1024) {
-		if (vidc_currentmode->hder>=800)
-			vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-		else
-			vidcvideo_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
-	} else {
-		vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-	}
-
-	/*
-	 * We don't use VIDC_FSYNREG.  Program it low.
-	 */
-	vidcvideo_write(VIDC_FSYNREG, 0x2020);
-#else /* RC7500 */
 	vidcvideo_write(VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0);
-#endif /* RC7500 */
+
 	acc=0;
 	acc+=vidc_currentmode->hswr;	vidcvideo_write(VIDC_HSWR, (acc - 8 ) & (~1));
 	acc+=vidc_currentmode->hbsr;	vidcvideo_write(VIDC_HBSR, (acc - 12) & (~1));
@@ -636,13 +559,6 @@ return;
 	acc+=vidc_currentmode->vber;	vidcvideo_write(VIDC_VBER, (acc - 1));
 	acc+=vidc_currentmode->vcr;	vidcvideo_write(VIDC_VCR,  (acc - 1));
 
-#ifdef RC7500
-	vidcvideo_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
-	if (vidc_currentmode->hder>=800)
-		vidcvideo_write(VIDC_EREG, 0x41<<12);
-	else
-		vidcvideo_write(VIDC_EREG, 0x51<<12);
-#else
 	IOMD_WRITE_WORD(IOMD_FSIZE, vidc_currentmode->vcr
 	    + vidc_currentmode->vswr
 	    + vidc_currentmode->vber
@@ -667,7 +583,6 @@ return;
 	} else {
 		vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 	}
-#endif
 }
 
 
@@ -865,11 +780,7 @@ vidcvideo_blank(video_off)
 		ereg |= 1<<18;
 
 	if (!video_off) {
-#ifdef RC7500
-		vidcvideo_write(VIDC_EREG, 0x51<<12);
-#else
     		vidcvideo_write(VIDC_EREG, ereg);
-#endif
 	} else {
 		vidcvideo_write(VIDC_EREG, 0);
 	};
