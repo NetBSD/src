@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.15 2002/08/28 09:38:08 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.16 2002/09/02 13:37:35 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -402,7 +402,7 @@ struct ieee80211com {
 	void			(*ic_recv_mgmt[16])(struct ieee80211com *,
 				    struct mbuf *, int, u_int32_t);
 	int			(*ic_send_mgmt[16])(struct ieee80211com *,
-				    struct ieee80211_bss *, int);
+				    struct ieee80211_bss *, int, int);
 	int			(*ic_newstate)(void *, enum ieee80211_state);
 	int			(*ic_chancheck)(void *, u_char *);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
@@ -430,10 +430,10 @@ struct ieee80211com {
 #define	ic_if		ic_ec.ec_if
 #define	ic_softc	ic_ec.ec_if.if_softc
 
-#define	IEEE80211_SEND_MGMT(ic,bs,type,flag)	do {			      \
+#define	IEEE80211_SEND_MGMT(ic,bs,type,arg)	do {			      \
 	if ((ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT] != NULL)  \
 		(*(ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT])    \
-		    (ic,bs,flag);					      \
+		    (ic,bs,type,arg);					      \
 } while (0)
 
 /* ic_flags */
@@ -444,9 +444,11 @@ struct ieee80211com {
 #define	IEEE80211_F_PMGTON	0x00000400	/* CONF: Power mgmt enable */
 #define	IEEE80211_F_ADHOC	0x00000800	/* CONF: adhoc mode */
 #define	IEEE80211_F_SCANAP	0x00001000	/* CONF: scan AP mode */
+#define	IEEE80211_F_HOSTAP	0x00002000	/* CONF: AP mode */
 #define	IEEE80211_F_HASWEP	0x00010000	/* CAPABILITY: WEP available */
 #define	IEEE80211_F_HASIBSS	0x00020000	/* CAPABILITY: IBSS available */
 #define	IEEE80211_F_HASPMGT	0x00040000	/* CAPABILITY: Power mgmt */
+#define	IEEE80211_F_HASHAP	0x00080000	/* CAPABILITY: HOSTAP avail */
 #define	IEEE80211_F_FH		0x01000000	/* PHY: FH */
 #define	IEEE80211_F_DS		0x02000000	/* PHY: DS */
 #define	IEEE80211_F_OFDM	0x04000000	/* PHY: OFDM */
@@ -475,6 +477,8 @@ void	ieee80211_free_scan(struct ifnet *);
 int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_bss *, int);
 int	ieee80211_new_state(struct ifnet *, enum ieee80211_state, int);
 struct mbuf *ieee80211_wep_crypt(struct ifnet *, struct mbuf *, int);
+int	ieee80211_rate2media(int, int);
+int	ieee80211_media2rate(int, int);
 
 int	ieee80211_cfgget(struct ifnet *, u_long, caddr_t);
 int	ieee80211_cfgset(struct ifnet *, u_long, caddr_t);
