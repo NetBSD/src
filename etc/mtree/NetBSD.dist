@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.212 2003/01/14 11:29:02 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.213 2003/01/17 15:50:44 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -324,6 +324,10 @@
 ./usr/share/locale/fr_CH.ISO8859-15
 ./usr/share/locale/fr_FR.ISO8859-1
 ./usr/share/locale/fr_FR.ISO8859-15
+./usr/share/locale/he
+./usr/share/locale/he/LC_MESSAGES
+./usr/share/locale/hr
+./usr/share/locale/hr/LC_MESSAGES
 ./usr/share/locale/hr_HR.ISO8859-2
 ./usr/share/locale/hu_HU.ISO8859-2
 ./usr/share/locale/id
@@ -384,10 +388,14 @@
 ./usr/share/locale/tr
 ./usr/share/locale/tr/LC_MESSAGES
 ./usr/share/locale/uk_UA.KOI8-U
+./usr/share/locale/zh_CN
 ./usr/share/locale/zh_CN.eucCN
+./usr/share/locale/zh_CN/LC_MESSAGES
+./usr/share/locale/zh_TW
 ./usr/share/locale/zh_TW.BIG5
 ./usr/share/locale/zh_TW.Big5
 ./usr/share/locale/zh_TW.eucTW
+./usr/share/locale/zh_TW/LC_MESSAGES
 ./usr/share/man
 ./usr/share/man/cat1
 ./usr/share/man/cat1/atari
