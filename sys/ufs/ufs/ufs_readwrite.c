@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.49 2003/03/08 21:52:57 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.50 2003/03/15 07:24:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.49 2003/03/08 21:52:57 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.50 2003/03/15 07:24:37 perseant Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -280,10 +280,18 @@ WRITE(void *v)
 	bsize = fs->fs_bsize;
 	error = 0;
 
+	usepc = vp->v_type == VREG;
 #ifdef LFS_READWRITE
 	async = TRUE;
+
+	/* Account writes.  This overcounts if pages are already dirty. */
+	if (usepc) {
+		simple_lock(&lfs_subsys_lock);
+		lfs_subsys_pages += round_page(uio->uio_resid) >> PAGE_SHIFT;
+		simple_unlock(&lfs_subsys_lock);
+	}
+	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
-	usepc = vp->v_type == VREG;
 	if (!usepc) {
 		goto bcache;
 	}
