@@ -1,5 +1,5 @@
-/*	$NetBSD: prefix.c,v 1.3 2001/11/21 06:52:35 itojun Exp $	*/
-/*	$KAME: prefix.c,v 1.9 2001/07/02 14:36:49 itojun Exp $	*/
+/*	$NetBSD: prefix.c,v 1.4 2002/06/07 00:20:45 itojun Exp $	*/
+/*	$KAME: prefix.c,v 1.11 2001/11/13 12:38:45 jinmei Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -55,11 +55,7 @@ static void config_show __P((void));
 #endif
 
 struct config *config_list = NULL;
-#ifdef NI_WITHSCOPEID
-const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 const int niflags = NI_NUMERICHOST;
-#endif
 
 static int
 prefix_set(s, prefix, slash)
