@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.12 1996/03/11 15:07:06 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.13 1996/03/14 03:04:17 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -108,6 +108,7 @@
 
 #if defined(__NetBSD__)
 #include <machine/bus.h>
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
 #ifdef __i386__	/* XXX -- fix later -- cgd */
