@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2003/06/14 16:15:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2003/07/15 01:31:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2003/07/15 01:31:41 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
