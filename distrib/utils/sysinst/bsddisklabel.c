@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.18 2003/06/14 12:58:45 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.19 2003/07/07 12:30:19 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -145,17 +145,19 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 	bsdlabel[ptn].pi_offset = start;
 	bsdlabel[ptn].pi_size = size;
 	if (fstype == FS_BSDFFS) {
-		bsdlabel[ptn].pi_bsize = 8192;
+		bsdlabel[ptn].pi_frag = 8;
 		bsdlabel[ptn].pi_fsize = 1024;
-		bsdlabel[ptn].pi_newfs = 1;
+		bsdlabel[ptn].pi_flags |= PIF_NEWFS;
 	}
 
 	if (mountpt != NULL) {
-		for (p = 0; p < maxptn; p++)
+		for (p = 0; p < maxptn; p++) {
 			if (strcmp(bsdlabel[p].pi_mount, mountpt) == 0)
-				bsdlabel[p].pi_mount[0] = 0;
+				bsdlabel[p].pi_flags &= ~PIF_MOUNT;
+		}
 		strlcpy(bsdlabel[ptn].pi_mount, mountpt,
 			sizeof bsdlabel[0].pi_mount);
+		bsdlabel[ptn].pi_flags |= PIF_MOUNT;
 	}
 
 	return ptn;
@@ -440,7 +442,8 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 
 		pi.menu_no = new_menu(0, pi.ptn_menus, NUM_PTN_MENU,
 			0, 9, 12, sizeof pi.ptn_titles[0],
-			MC_SCROLL | MC_NOBOX | MC_NOCLEAR, NULL, NULL,
+			MC_SCROLL | MC_NOBOX | MC_NOCLEAR,
+			NULL, NULL, NULL,
 			"help", pi.exit_msg);
 
 		if (pi.menu_no < 0)
@@ -496,11 +499,10 @@ make_bsd_partitions(void)
 	int i;
 	int part;
 	int maxpart = getmaxpartitions();
-	struct disklabel l;
 	int partstart;
 	int part_raw, part_bsd;
 	int ptend;
-	struct partition *p;
+	partinfo *p;
 
 	/*
 	 * Initialize global variables that track space used on this disk.
@@ -570,41 +572,35 @@ make_bsd_partitions(void)
 	bsdlabel[PART_REST].pi_size = ptstart;
 #endif
 
-	if (get_real_geom(diskdev, &l) == 0) {
+	/*
+	 * Save any partitions that are outside the area we are
+	 * going to use.
+	 * In particular this saves details of the other MBR
+	 * partitons on a multiboot i386 system.
+	 */
+	 for (i = maxpart; i--;) {
+		if (bsdlabel[i].pi_size != 0)
+			/* Don't overwrite special partitions */
+			continue;
+		p = &oldlabel[i];
+		if (p->pi_fstype == FS_UNUSED || p->pi_size == 0)
+			continue;
 		if (layoutkind == 4) {
-			/* Must have an old label to do 'existing' */
-			msg_display(MSG_abort);	/* XXX more informative */
-			return 0;
+			if (PI_ISBSDFS(p))
+				p->pi_flags |= PIF_MOUNT;
+		} else {
+		    if (p->pi_offset < ptstart + ptsize &&
+			p->pi_offset + p->pi_size > ptstart)
+			    /* Not outside area we are allocating */
+			    continue;
 		}
-	} else {
-		/*
-		 * Save any partitions that are outside the area we are
-		 * going to use.
-		 * In particular this saves details of the other MBR
-		 * partitons on a multiboot i386 system.
-		 */
-		 for (i = MIN(l.d_npartitions, maxpart); i--;) {
-			if (bsdlabel[i].pi_size != 0)
-				/* Don't overwrite special partitions */
-				continue;
-			p = &l.d_partitions[i];
-			if (p->p_fstype == FS_UNUSED || p->p_size == 0)
-				continue;
-			if (layoutkind != 4 &&
-			    p->p_offset < ptstart + ptsize &&
-			    p->p_offset + p->p_size > ptstart)
-				/* Not outside area we are allocating */
-				continue;
-			bsdlabel[i].pi_size = p->p_size;
-			bsdlabel[i].pi_offset = p->p_offset;
-			bsdlabel[i].pi_fstype = p->p_fstype;
-			bsdlabel[i].pi_bsize = p->p_fsize * p->p_frag;
-			bsdlabel[i].pi_fsize = p->p_fsize;
-			/* XXX get 'last mounted' */
-		 }
-	}
+		bsdlabel[i] = oldlabel[i];
+	 }
 
-	if (layoutkind != 4)
+	if (layoutkind == 4) {
+		/* XXX Check we have a sensible layout */
+		;
+	} else
 		get_ptn_sizes(layoutkind, partstart, ptend - partstart);
 
 	/*

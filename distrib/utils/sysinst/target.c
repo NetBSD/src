@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.36 2003/06/25 15:45:22 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.37 2003/07/07 12:30:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,14 +75,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.36 2003/06/25 15:45:22 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.37 2003/07/07 12:30:22 dsl Exp $");
 #endif
 
 /*
  * target.c -- path-prefixing routines to access the target installation
  *  filesystems. Makes the install tools more independent of whether
- *  we're installing into a separate filesystem hierarchy mounted under /mnt,
- *  or into the currently active root mounted on /.
+ *  we're installing into a separate filesystem hierarchy mounted under
+ * /targetroot, or into the currently active root mounted on /.
  */
 
 #include <sys/param.h>			/* XXX vm_param.h always defines TRUE*/
@@ -358,7 +358,7 @@ is_active_rootpart(const char *devpart)
  * Pathname  prefixing glue to support installation either 
  * from in-ramdisk miniroots or on-disk diskimages.
  * If our root is on the target disk, the install target is mounted
- * on /mnt and we need to prefix installed pathnames with /mnt.
+ * on /targetroot and we need to prefix installed pathnames with /targetroot.
  * otherwise we are installing to the currently-active root and
  * no prefix is needed.
  */
@@ -369,7 +369,7 @@ target_prefix(void)
 	 * XXX fetch sysctl variable for current root, and compare 
 	 * to the devicename of the install target disk.
 	 */
-	return(target_already_root() ? "" : "/mnt");
+	return(target_already_root() ? "" : targetroot_mnt);
 }
 
 /*
@@ -417,7 +417,7 @@ target_expand(const char *tgtpath)
 	return concat_paths(target_prefix(), tgtpath);
 }
 
-/* Make a directory, with a prefix like "/mnt" or possibly just "". */
+/* Make a directory, with a prefix like "/targetroot" or possibly just "". */
 static void 
 make_prefixed_dir(const char *prefix, const char *path)
 {
@@ -768,10 +768,11 @@ target_symlink_exists_p(const char *path)
 }
 
 /*
- * XXXX had to include this to deal with symlinks in some places. When the target
- * disk is mounted under /mnt, absolute symlinks on it don't work right. This
- * function will resolve them using the mountpoint as prefix. Copied verbatim
- * from libc, with added prefix handling.
+ * XXXX had to include this to deal with symlinks in some places.
+ * When the target * disk is mounted under /targetroot, absolute symlinks
+ * on it don't work right.
+ * This function will resolve them using the mountpoint as prefix.
+ * Copied verbatim from libc, with added prefix handling.
  *
  * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);
  *
