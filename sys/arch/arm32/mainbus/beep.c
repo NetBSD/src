@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.7 1996/10/15 21:20:15 mark Exp $ */
+/* $NetBSD: beep.c,v 1.8 1996/11/23 03:37:35 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -114,7 +114,7 @@ beepprobe(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
 
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
+	id = IOMD_ID;
 
 /* So far I only know about this IOMD */
 
