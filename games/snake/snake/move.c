@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.14 1997/10/12 01:49:24 lukem Exp $	*/
+/*	$NetBSD: move.c,v 1.15 1997/10/14 01:02:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,16 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.14 1997/10/12 01:49:24 lukem Exp $");
+__RCSID("$NetBSD: move.c,v 1.15 1997/10/14 01:02:48 lukem Exp $");
 #endif
 #endif				/* not lint */
-
-int	tgetent __P((char *, char *));
-int	tgetnum __P((char *));
-char   *tgetstr __P((char *, char **));
-int	tgetflag __P((char *));
-char   *tgoto __P((char *, int, int));
-void	tputs __P((char *, int, void (*outc) __P((int))));
 
 /*************************************************************************
  *
