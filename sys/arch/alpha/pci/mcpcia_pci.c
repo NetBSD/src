@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.2 1998/04/30 04:25:22 mjacob Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.3 1998/05/05 22:01:54 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.2 1998/04/30 04:25:22 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.3 1998/05/05 22:01:54 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,20 +42,23 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.2 1998/04/30 04:25:22 mjacob Exp $"
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/tlsb/tlsbreg.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
 
 #define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-void		mcpcia_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		mcpcia_bus_maxdevs __P((void *, int));
-pcitag_t	mcpcia_make_tag __P((void *, int, int, int));
-void		mcpcia_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	mcpcia_conf_read __P((void *, pcitag_t, int));
-void		mcpcia_conf_write __P((void *, pcitag_t, int, pcireg_t));
+static void mcpcia_attach_hook __P((struct device *, struct device *,
+	struct pcibus_attach_args *));
+static int
+mcpcia_bus_maxdevs __P((void *, int));
+static pcitag_t
+mcpcia_make_tag __P((void *, int, int, int));
+static void
+mcpcia_decompose_tag __P((void *, pcitag_t, int *, int *, int *));
+static pcireg_t
+mcpcia_conf_read __P((void *, pcitag_t, int));
+static void
+mcpcia_conf_write __P((void *, pcitag_t, int, pcireg_t));
 
 void
 mcpcia_pci_init(pc, v)
@@ -71,18 +74,14 @@ mcpcia_pci_init(pc, v)
 	pc->pc_conf_write = mcpcia_conf_write;
 }
 
-void
+static void
 mcpcia_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
-#if	0
-	struct mcpcia_config *ccp = pba->pba_pc->pc_conf_v;
-	printf("mcpcia_attach_hook for %s\n", ccp->cc_sc->mcpcia_dev.dv_xname);
-#endif
 }
 
-int
+static int
 mcpcia_bus_maxdevs(cpv, busno)
 	void *cpv;
 	int busno;
@@ -90,7 +89,7 @@ mcpcia_bus_maxdevs(cpv, busno)
 	return (MCPCIA_MAXDEV);
 }
 
-pcitag_t
+static pcitag_t
 mcpcia_make_tag(cpv, b, d, f)
 	void *cpv;
 	int b, d, f;
@@ -100,7 +99,7 @@ mcpcia_make_tag(cpv, b, d, f)
 	return (tag);
 }
 
-void
+static void
 mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
 	void *cpv;
 	pcitag_t tag;
@@ -114,7 +113,7 @@ mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
 		*fp = (tag >> 13) & 0x7;
 }
 
-pcireg_t
+static pcireg_t
 mcpcia_conf_read(cpv, tag, offset)
 	void *cpv;
 	pcitag_t tag;
@@ -138,20 +137,14 @@ mcpcia_conf_read(cpv, tag, offset)
 	paddr |= ((unsigned long) ((offset >> 2) << 7));
 	paddr |= MCPCIA_PCI_CONF;
 	paddr |= ccp->cc_sysbase;
-
-#if	0
-	printf("mcpcia_conf_read: read paddr %lx\n", paddr);
-#endif
-
 	dp = (pcireg_t *)KV(paddr);
-	alpha_mb();
 	if (badaddr(dp, sizeof (*dp)) == 0) {
 		data = *dp;
 	}
 	return (data);
 }
 
-void
+static void
 mcpcia_conf_write(cpv, tag, offset, data)
 	void *cpv;
 	pcitag_t tag;
@@ -177,12 +170,6 @@ mcpcia_conf_write(cpv, tag, offset, data)
 	paddr |= MCPCIA_PCI_CONF;
 	paddr |= ccp->cc_sysbase;
 
-#if	0
-	printf("mcpcia_conf_write: write paddr %lx\n", paddr);
-#endif
-
 	dp = (pcireg_t *)KV(paddr);
-	alpha_mb();
 	*dp = data;
-	alpha_mb();
 }
