@@ -1,4 +1,4 @@
-/*	$NetBSD: eisadevs.h,v 1.19.12.1 2000/07/12 23:08:38 thorpej Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.19.12.2 2001/10/25 17:58:42 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -39,7 +39,7 @@
  */
 
 /*
- * List of known products, grouped by vendor.
+ * List of known products, grouped and sorted by vendor code.
  */
 
 /* Adaptec products */
@@ -61,6 +61,16 @@
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
+#define	EISA_PRODUCT_BUS6001	"BusLogic Bt760 Ethernet"
+#define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
+
+/* Compaq products */
+#define	EISA_PRODUCT_CPQ4001	"Compaq IDA array controller"
+#define	EISA_PRODUCT_CPQ4002	"Compaq IDA-2 array controller"
+#define	EISA_PRODUCT_CPQ4010	"Compaq IEAS array controller"
+#define	EISA_PRODUCT_CPQ4020	"Compaq SMART array controller"
+#define	EISA_PRODUCT_CPQ4030	"Compaq SMART-2/E array controller"
+#define	EISA_PRODUCT_CPQ6101	"Compaq NetFlex-2 ENET-TR"
 
 /* Digital Equipment products */
 #define	EISA_PRODUCT_DEC4220	"Digital Equipment DE422 Ethernet"
@@ -83,10 +93,29 @@
 #define	EISA_PRODUCT_DPTA701	"Distributed Processing Technology PM2011B1/9X EATA SCSI controller"
 #define	EISA_PRODUCT_DPTBC01	"Distributed Processing Technology PM3011/7X ESDI controller"
 
+/* DeskStation Technology, Inc. products */
+#define	EISA_PRODUCT_DTI0000	"DeskStation Technology, Inc. Evolution RISC PC"
+
+/* ETI products */
+#define	EISA_PRODUCT_ETI1001	"Microdyne NE3300 Ethernet Rev. C & D"
+
 /* FORE Systems products */
 #define	EISA_PRODUCT_FSI2001	"FORE Systems ESA-200 ATM"
 #define	EISA_PRODUCT_FSI2002	"FORE Systems ESA-200A ATM"
 #define	EISA_PRODUCT_FSI2003	"FORE Systems ESA-200E ATM"
+
+/* HP products */
+#define	EISA_PRODUCT_HWP0C70	"Hewlett-Packard HP-IB Host Adapter"
+#define	EISA_PRODUCT_HWP0C80	"Hewlett-Packard SCSI Host Adapter (Cirrus-II) -- 25525A"
+#define	EISA_PRODUCT_HWP1850	"Hewlett-Packard LAN AdapterCard -- 25567A"
+#define	EISA_PRODUCT_HWP1980	"Hewlett-Packard ATM Adapter -- J2802A"
+#define	EISA_PRODUCT_HWP2051	"Hewlett-Packard EISA Test Adapter Card"
+#define	EISA_PRODUCT_HWPC000	"Hewlett-Packard Series 700 EISA System Board"
+#define	EISA_PRODUCT_HWPC010	"Hewlett-Packard Series 700 EISA System Board"
+#define	EISA_PRODUCT_HWPC051	"Hewlett-Packard Series 700 EISA System Board"
+#define	EISA_PRODUCT_HWPC091	"Hewlett-Packard EISA System Board"
+#define	EISA_PRODUCT_HWPC0D1	"Hewlett-Packard EISA System Board"
+#define	EISA_PRODUCT_HWPC0E1	"Hewlett-Packard EISA System Board"
 
 /* Interphase products */
 #define	EISA_PRODUCT_INP25D0	"Interphase Seahawk 4811 FDDI Controller"
@@ -94,21 +123,21 @@
 /* Intel products */
 #define	EISA_PRODUCT_INT1010	"Intel EtherExpress 32 Flash Ethernet"
 
-/* ETI products */
-#define	EISA_PRODUCT_ETI1001	"Microdyne NE3300 Ethernet Rev. C & D"
+/* Madge products */
+#define	EISA_PRODUCT_MDG0002	"Madge Networks Smart 16/4 EISA Ringnode"
+
+/* Mylex products */
+#define	EISA_PRODUCT_MLX0070	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0071	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0072	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0073	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0074	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0075	"Mylex DAC960-A RAID controller"
+#define	EISA_PRODUCT_MLX0076	"Mylex DAC960-A RAID controller"
+#define	EISA_PRODUCT_MLX0077	"Mylex DAC960-A RAID controller"
 
 /* NEC products */
 #define	EISA_PRODUCT_NEC8200	"NEC EATA SCSI controller"
-
-/* 3Com products */
-#define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
-#define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
-#define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
-#define	EISA_PRODUCT_TCM5094	"3Com 3C509 Ethernet Combo"
-#define	EISA_PRODUCT_TCM5920	"3Com 3C592 Etherlink III"
-#define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Etherlink TX"
-#define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
-#define	EISA_PRODUCT_TCM5972	"3Com 3C597 Fast Etherlink MII"
 
 /* Standard Microsystems (SMC) */
 #define	EISA_PRODUCT_SMC8010	"Standard Microsystems Corp. Ethercard Elite32C Ultra"
@@ -116,3 +145,16 @@
 
 /* UltraStor products */
 #define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"
+
+/* 3Com products */
+#define	EISA_PRODUCT_TCM5090	"3Com 3C509-TP Ethernet"
+#define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
+#define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
+#define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
+#define	EISA_PRODUCT_TCM5094	"3Com 3C509 Ethernet Combo"
+#define	EISA_PRODUCT_TCM5095	"3Com 3C509-TP Ethernet"
+#define	EISA_PRODUCT_TCM5098	"3Com 3C509-TP Ethernet"
+#define	EISA_PRODUCT_TCM5920	"3Com 3C592 Etherlink III"
+#define	EISA_PRODUCT_TCM5970	"3Com 3C597 Fast Etherlink TX"
+#define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
+#define	EISA_PRODUCT_TCM5972	"3Com 3C597 Fast Etherlink MII"

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.20 2001/06/18 16:51:54 jhawk Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.21 2001/10/25 17:58:39 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.236.2.20 2001/06/18 16:48:57 jhawk Exp 
  */
 
 /*
@@ -254,6 +254,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3ware",
 	    "Escalade IDE RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
+	    0,
+	    "3ware",
+	    "Escalade IDE RAID (ASIC)",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -1702,6 +1708,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Compaq SMART RAID 42xx",
 	},
 	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,
+	    0,
+	    "Digital Equipment",
+	    "SWXCR RAID",
+	},
+	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 	    0,
 	    "Delta Electronics",
@@ -2824,10 +2836,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MPC106 \"Grackle\" Host Bridge",
 	},
 	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
 	    0,
 	    "Mylex",
-	    "DAC960P RAID controller",
+	    "DAC960 RAID (v2 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V3,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v3 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V4,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v4 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V5,
+	    0,
+	    "Mylex",
+	    "DAC960 RAID (v5 interface)",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
