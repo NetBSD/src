@@ -1,5 +1,6 @@
-# $NetBSD: obsolete.atari,v 1.1 1999/06/05 20:17:42 bouyer Exp $
+# $NetBSD: obsolete.atari,v 1.2 2000/08/09 10:34:37 tv Exp $
 /usr/include/atari
+/usr/include/machine
 /usr/include/machine/_G_config.h
 /usr/include/machine/ahdilabel.h
 /usr/include/machine/ansi.h
@@ -44,4 +45,3 @@
 /usr/include/machine/varargs.h
 /usr/include/machine/vmparam.h
 /usr/include/machine/vuid_event.h
-/usr/include/machine
