@@ -1,5 +1,5 @@
-/*	$NetBSD: bpp.c,v 1.6 2000/10/31 06:32:07 eeh Exp $ */
-#define DEBUG
+/*	$NetBSD: bpp.c,v 1.7 2000/10/31 08:06:15 eeh Exp $ */
+
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
