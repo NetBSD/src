@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2 1998/09/05 14:42:05 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.3 1999/03/22 09:38:57 mycroft Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,9 +94,15 @@ function checkdecl() {
 	done = 1
 	if (!decl) {
 		decl = 1;
+		printf("struct isapnp_matchinfo {\n") > hfile
+		printf("\tconst char *name;\n") > hfile
+		printf("\tint variant;\n") > hfile
+		printf("};\n\n") > hfile
 		printf("struct isapnp_devinfo {\n") > hfile
-		printf("\tconst char *const *devlogic;\n") > hfile
-		printf("\tconst char *const *devcompat;\n") > hfile
+		printf("\tconst struct isapnp_matchinfo *devlogic;\n") > hfile
+		printf("\tint nlogic;\n") > hfile
+		printf("\tconst struct isapnp_matchinfo *devcompat;\n") > hfile
+		printf("\tint ncompat;\n") > hfile
 		printf("};\n\n") > hfile
 		printf("#include <sys/param.h>\n") > cfile
 		printf("#include <dev/isapnp/isapnpdevs.h>\n\n") > cfile
@@ -149,7 +155,8 @@ $1 == "devlogic" {
 
 	logicals[nlogicals, 1] = $2;
 	logicals[nlogicals, 2] = $3;
-	logicals[nlogicals, 3] = collectline(4, line);
+	logicals[nlogicals, 3] = $4;
+	logicals[nlogicals, 4] = collectline(5, line);
 	next
 }
 $1 == "devcompat" {
@@ -158,7 +165,8 @@ $1 == "devcompat" {
 
 	compats[ncompats, 1] = $2;
 	compats[ncompats, 2] = $3;
-	compats[ncompats, 3] = collectline(4, line);
+	compats[ncompats, 3] = $4;
+	compats[ncompats, 4] = collectline(5, line);
 	next
 }
 {
@@ -176,30 +184,47 @@ END {
 	printf("\n") > cfile
 
 	for (i = 1; i <= ndriver; i++) {
+		nlogical = ncompat = 0;
 		printf("/* %s */\n", driver[i, 2]) > cfile
-		printf("static const char *isapnp_%s_devlogic[] = {\n",
-		    driver[i, 1]) > cfile
 		for (j = 1; j <= nlogicals; j++) {
 			if (logicals[j, 1] == driver[i, 1]) {
-				printf("\t\"%s\",\t/* %s */\n", logicals[j, 2],
-				    logicals[j, 3]) > cfile
+				if (nlogical == 0)
+					printf("static const struct isapnp_matchinfo isapnp_%s_devlogic[] = {\n",
+					    driver[i, 1]) > cfile
+				nlogical++;
+				printf("\t{\"%s\", %d},\t/* %s */\n",
+				    logicals[j, 2], logicals[j, 3],
+				    logicals[j, 4]) > cfile
 			}
 		}
-		printf("\tNULL\n};\n") > cfile
-		printf("static const char *isapnp_%s_devcompat[] = {\n",
-		    driver[i, 1]) > cfile
+		if (nlogical != 0)
+			printf("};\n") > cfile
 		for (j = 1; j <= ncompats; j++) {
 			if (compats[j, 1] == driver[i, 1]) {
-				printf("\t\"%s\",\t/* %s */\n", compats[j, 2],
-				    compats[j, 3]) > cfile
+				if (ncompat == 0)
+					printf("static const struct isapnp_matchinfo isapnp_%s_devcompat[] = {\n",
+					    driver[i, 1]) > cfile
+				ncompat++;
+				printf("\t{\"%s\", %d},\t/* %s */\n",
+				    compats[j, 2], compats[j, 3],
+				    compats[j, 4]) > cfile
 			}
 		}
-		printf("\tNULL\n};\n") > cfile
+		if (ncompat != 0)
+			printf("};\n") > cfile
 		printf("const struct isapnp_devinfo isapnp_%s_devinfo = {\n",
 		    driver[i, 1]) > cfile
-		printf("\tisapnp_%s_devlogic, isapnp_%s_devcompat\n};\n",
-		    driver[i, 1], driver[i, 1]) > cfile
-		printf("\n") > cfile;
+		if (nlogical != 0)
+			printf("\tisapnp_%s_devlogic, %d,\n",
+			    driver[i, 1], nlogical) > cfile
+		else
+			printf("\tNULL, 0,\n") > cfile
+		if (ncompat != 0)
+			printf("\tisapnp_%s_devcompat, %d,\n",
+			    driver[i, 1], ncompat) > cfile
+		else
+			printf("\tNULL, 0,\n") > cfile
+		printf("};\n\n") > cfile;
 
 	}
 }
