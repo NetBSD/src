@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.2 1998/11/19 21:52:59 thorpej Exp $        */
+/*      $NetBSD: adwlib.h,v 1.3 1998/12/09 08:47:18 thorpej Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -697,8 +697,7 @@ typedef struct adw_softc {
 	struct scsipi_link	sc_link;     /* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
 
-	LIST_HEAD(, scsipi_xfer) sc_queue;
-	struct scsipi_xfer	*sc_queuelast;
+	TAILQ_HEAD(, scsipi_xfer) sc_queue;
 
 	u_int32_t		sc_flags;	/* see below sc_flags values */
 
