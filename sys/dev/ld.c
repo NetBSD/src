@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.22 2003/05/17 16:11:52 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.23 2003/06/07 23:37:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.22 2003/05/17 16:11:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.23 2003/06/07 23:37:24 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -73,7 +73,7 @@ static void	ldgetdisklabel(struct ld_softc *);
 static int	ldlock(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
 static void	ldshutdown(void *);
-static int	ldstart(struct ld_softc *, struct buf *);
+static void	ldstart(struct ld_softc *);
 static void	ldunlock(struct ld_softc *);
 
 extern struct	cfdriver ld_cd;
@@ -470,35 +470,18 @@ void
 ldstrategy(struct buf *bp)
 {
 	struct ld_softc *sc;
-	int s;
+	struct disklabel *lp;
+	daddr_t blkno;
+	int s, part;
 
 	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
-
-	s = splbio();
-	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt) {
-		BUFQ_PUT(&sc->sc_bufq, bp);
-		splx(s);
-		return;
-	}
-	splx(s);
-	ldstart(sc, bp);
-}
-
-static int
-ldstart(struct ld_softc *sc, struct buf *bp)
-{
-	struct disklabel *lp;
-	int part, s, rv;
+	part = DISKPART(bp->b_dev);
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return (-1);
+		goto bad;
 	}
 
-	part = DISKPART(bp->b_dev);
 	lp = sc->sc_dk.dk_label;
 
 	/*
@@ -506,19 +489,13 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	 * not be negative.
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
-		return (-1);
+		bp->b_error = EINVAL;
+		goto bad;
 	}
 
-	/*
-	 * If it's a null transfer, return.
-	 */
-	if (bp->b_bcount == 0) {
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return (-1);
-	}
+	/* If it's a null transfer, return immediately. */
+	if (bp->b_bcount == 0)
+		goto done;
 
 	/*
 	 * Do bounds checking and adjust the transfer.  If error, process.
@@ -527,38 +504,80 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	if (part != RAW_PART &&
 	    bounds_check_with_label(&sc->sc_dk, bp,
 	    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0) {
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return (-1);
+		goto done;
 	}
 
 	/*
-	 * Convert the logical block number to a physical one and put it in
-	 * terms of the device's logical block size.
+	 * Convert the block number to absolute and put it in terms
+	 * of the device's logical block size.
 	 */
-	if (lp->d_secsize >= DEV_BSIZE)
-		bp->b_rawblkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	if (lp->d_secsize == DEV_BSIZE)
+		blkno = bp->b_blkno;
+	else if (lp->d_secsize > DEV_BSIZE)
+		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
 	else
-		bp->b_rawblkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
+		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 
 	if (part != RAW_PART)
-		bp->b_rawblkno += lp->d_partitions[part].p_offset;
+		blkno += lp->d_partitions[part].p_offset;
+
+	bp->b_rawblkno = blkno;
 
 	s = splbio();
-	disk_busy(&sc->sc_dk);
-	sc->sc_queuecnt++;
+	BUFQ_PUT(&sc->sc_bufq, bp);
+	ldstart(sc);
 	splx(s);
+	return;
 
-	if ((rv = (*sc->sc_start)(sc, bp)) != 0) {
-		bp->b_error = rv;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		s = splbio();
-		lddone(sc, bp);
-		splx(s);
+ bad:
+	bp->b_flags |= B_ERROR;
+ done:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
+}
+
+static void
+ldstart(struct ld_softc *sc)
+{
+	struct buf *bp;
+	int error;
+
+	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
+		/* See if there is work to do. */
+		if ((bp = BUFQ_PEEK(&sc->sc_bufq)) == NULL)
+			break;
+
+		disk_busy(&sc->sc_dk);
+		sc->sc_queuecnt++;
+
+		if (__predict_true((error = (*sc->sc_start)(sc, bp)) == 0)) {
+			/*
+			 * The back-end is running the job; remove it from
+			 * the queue.
+			 */
+			(void) BUFQ_GET(&sc->sc_bufq);
+		} else  {
+			disk_unbusy(&sc->sc_dk, 0, (bp->b_flags & B_READ));
+			sc->sc_queuecnt--;
+			if (error == EAGAIN) {
+				/*
+				 * Temporary resource shortage in the
+				 * back-end; just defer the job until
+				 * later.
+				 *
+				 * XXX We might consider a watchdog timer
+				 * XXX to make sure we are kicked into action.
+				 */
+				break;
+			} else {
+				(void) BUFQ_GET(&sc->sc_bufq);
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
+			}
+		}
 	}
-
-	return (0);
 }
 
 void
@@ -580,10 +599,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
 		if ((sc->sc_flags & LDF_DRAIN) != 0)
 			wakeup(&sc->sc_queuecnt);
-		while ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
-			if (!ldstart(sc, bp))
-				break;
-		}
+		ldstart(sc);
 	}
 }
 

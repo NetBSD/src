@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.6 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.7 2003/06/07 23:37:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.6 2003/05/13 15:42:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.7 2003/06/07 23:37:25 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -183,13 +183,8 @@ ld_icp_dobio(struct ld_icp_softc *sc, void *data, int datasize, int blkno,
 	/*
 	 * Allocate a command control block.
 	 */
-	if (__predict_false((ic = icp_ccb_alloc(icp)) == NULL)) {
-		/*
-		 * XXX Redo the way buffer queueing is done in
-		 * XXX the ld driver.
-		 */
+	if (__predict_false((ic = icp_ccb_alloc(icp)) == NULL))
 		return (EAGAIN);
-	}
 
 	/*
 	 * Map the data transfer.
