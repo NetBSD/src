@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/12 12:24:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/24 08:18:54 lukem Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.12 2001/12/12 12:24:29 lukem Exp $
+#	$Id: Makefile,v 1.13 2002/04/24 08:18:54 lukem Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -123,11 +123,9 @@ CRYPTODIST=	${.CURDIR}/../../crypto/dist
 ssleay.o:	ssleay.c
 	${CC} ${CFLAGS} -UMONOLITH -o ${.TARGET} -c ${.IMPSRC}
 
-.include <bsd.prog.mk>
-
 .if ${MKSHARE} != "no"
 FILES=  CA.sh CA.pl der_chop openssl.cnf
 FILESDIR=/usr/share/examples/openssl
 .endif
 
-.include <bsd.files.mk>
+.include <bsd.prog.mk>

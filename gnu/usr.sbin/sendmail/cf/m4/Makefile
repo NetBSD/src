@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/03 10:50:56 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/24 08:18:49 lukem Exp $
 #	install these sources in /usr/share/sendmail/m4
 
 DIST=		${.CURDIR}/../../../../dist
@@ -9,5 +9,4 @@ FILES=		cf.m4 cfhead.m4 proto.m4 version.m4
 
 all:
 
-.include <bsd.own.mk>
-.include <bsd.files.mk>
+.include <bsd.prog.mk>

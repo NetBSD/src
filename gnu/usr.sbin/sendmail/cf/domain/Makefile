@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:37 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/24 08:18:48 lukem Exp $
 #	install these sources in /usr/share/sendmail/domain
 
 DIST=		${.CURDIR}/../../../../dist
@@ -11,5 +11,4 @@ FILES=		Berkeley.EDU.m4 CS.Berkeley.EDU.m4 EECS.Berkeley.EDU.m4 \
 
 all:
 
-.include <bsd.own.mk>
-.include <bsd.files.mk>
+.include <bsd.prog.mk>
