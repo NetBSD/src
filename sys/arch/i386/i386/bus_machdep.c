@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1.2.2 2000/08/07 01:08:32 sommerfeld Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.3 2000/11/18 22:56:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -275,6 +275,10 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
+#ifdef MULTIPROCESSOR
+	pt_entry_t opte;
+#endif
+	
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page(bpa + size);
@@ -300,14 +304,22 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 		 *
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
+		 *
+		 * XXX extreme paranoia suggests tlb shootdown belongs here.
 		 */
 		if (cpu_class != CPUCLASS_386) {
 			pte = kvtopte(va);
+#ifdef MULTIPROCESSOR
+			opte = *pte;
+#endif
 			if (cacheable)
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
 			pmap_update_pg(va);
+#ifdef MULTIPROCESSOR
+			pmap_tlb_shootdown(pmap_kernel(), va, opte);
+#endif
 		}
 	}
  
