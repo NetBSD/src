@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.134 2001/11/13 07:48:48 lukem Exp $	*/
+/*	$NetBSD: pciide.c,v 1.135 2001/11/15 20:48:17 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.134 2001/11/13 07:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.135 2001/11/15 20:48:17 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2431,6 +2431,10 @@ cmd0643_9_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_CMDTECH_649:
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.irqack = cmd646_9_irqack;
+			break;
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
