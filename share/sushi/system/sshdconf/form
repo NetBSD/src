@@ -1,5 +1,7 @@
-# $NetBSD: form,v 1.1 2001/08/02 05:41:19 garbled Exp $
+# $NetBSD: form,v 1.2 2004/03/09 21:36:37 garbled Exp $
 list:yes,no				Restart sshd now?
+blank:blank				BLANK
+script:script7				Enable the sftp server?
 script:script2,AFSTokenPassing		Pass AFS Tokens to server?
 escript:50,script4,AllowGroups		Space separated list of groups to allow
 script:script2,AllowTcpForwarding	TCP forwarding permitted?
@@ -7,7 +9,6 @@ escript:50,script4,AllowUsers		Space separated list of users to allow
 escript:50,script1,AuthorizedKeysFile	File that contains the public RSA keys
 escript:50,script1,Banner		File containing warning banner
 script:script2,ChallengeResponseAuthentication	Challenge response authentication allowed?
-script:script2,CheckMail		Check new mail on login?
 escript:60,script1,Ciphers		Comma separated list of ciphers to use
 escript:4,script1,ClientAliveInterval	Timeout interval in seconds
 escript:4,script1,ClientAliveCountMax	Maximum number of timeouts allowed
@@ -47,6 +48,7 @@ escript:5,script1,ServerKeyBits		Bits to use in the V1 server key
 script:script2,StrictModes		Strict file permission checking?
 script:script6,SyslogFacility		Facility to log messages via
 script:script2,UseLogin			Use login(1) for login sessions
+script:script2,UsePrivilegeSeparation	Use separate privileges for sshd?
 escript:5,script1,X11DisplayOffset	Offset for X11 forwarding
 script:script2,X11Forwarding		Allow X11 forwarding?
 escript:50,script1,XAuthLocation	Location of xauth(1) program
