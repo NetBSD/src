@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_ext2fs.8,v 1.2 1997/06/12 09:09:30 bouyer Exp $
+.\"	$NetBSD: mount_ext2fs.8,v 1.3 1997/07/09 05:54:15 mikel Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Os NetBSD
 .Sh NAME
 .Nm mount_ext2fs
-.Nd mount a EXT2FS file system
+.Nd Mount an EXT2FS file system
 .Sh SYNOPSIS
 .Nm mount_ext2fs
 .Op Fl o Ar options
@@ -46,7 +46,7 @@
 .Sh DESCRIPTION
 The
 .Nm mount_ext2fs
-command attaches a EXT2FS file system
+command attaches an EXT2FS file system
 .Ar special
 device on to the file system tree at the point
 .Ar node .
@@ -60,16 +60,16 @@ The options are as follows:
 .It Fl o
 Options are specified with a
 .Fl o
-flag followed by a comma separated string of options.
+flag followed by a comma-separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
 .El
 .Sh BUGS
-The EXT2FS specific options, features or file flags are not supported.
+The EXT2FS-specific options, features or file flags are not supported.
 .Pp
 Because of EXT2FS limitations, an EXT2FS file system can't be used with
-UID or GID greather that 65535.
+any UID or GID greater than 65535.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
@@ -79,4 +79,4 @@ UID or GID greather that 65535.
 .Sh HISTORY
 The
 .Nm mount_ext2fs
-function first appeared in FreeBSD 2.2.
+utility first appeared in FreeBSD 2.2.
