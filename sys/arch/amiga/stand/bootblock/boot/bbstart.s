@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.8 2001/03/02 16:43:26 mhitch Exp $ */
+/* $NetBSD: bbstart.s,v 1.9 2001/09/24 20:27:08 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,6 +74,11 @@ ENTRY_NOPROFILE(start)
 
 Lreltab:
 	.word 0			| aout2bb puts the reloc table address here
+
+	.globl _C_LABEL(default_command)
+_C_LABEL(default_command):
+	.asciz	"netbsd -ASn2"
+	.org	(_C_LABEL(default_command)+32)
 
 #ifdef AUTOLOAD
 /*
