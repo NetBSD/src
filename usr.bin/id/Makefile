@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.3 1994/05/05 23:24:26 cgd Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 12:29:56 cgd Exp $
 
 PROG=	id
-MAN1=   id.0 groups.0 whoami.0
+MAN=	id.1 groups.1 whoami.1
 
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

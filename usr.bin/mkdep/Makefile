@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.4 1994/02/21 18:18:35 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 12:30:21 cgd Exp $
 
-MAN1=	mkdep.0
+MAN=	mkdep.1
 
 #.if (${MACHINE} != "somebody")
 beforeinstall:
