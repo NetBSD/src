@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.8 1999/05/19 20:07:34 ad Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.9 1999/05/19 20:34:19 ad Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -171,8 +171,9 @@ rcons_belltmr(p)
 }
 
 void
-rcons_init(rc)
+rcons_init(rc, clear)
 	struct rconsole *rc;
+	int clear;
 {
 	/* XXX this should go away */
 	struct winsize *ws;
@@ -190,10 +191,8 @@ rcons_init(rc)
 	rcons_init_ops(rc);
 	rc->rc_col = 0;
 	rc->rc_row = 0;
-#ifdef pmax
-	/* XXX remedies quirky behaviour with the px boards */
-	rcons_clear2eop(rc);
-#endif
+	if (clear)
+		rcons_clear2eop(rc);
 	rcons_cursor(rc);
 
 	/* Initialization done; hook us up */
