@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.20 1997/01/22 00:37:23 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.21 1997/06/13 14:30:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -119,6 +119,7 @@ void	sprintf __P((char *, const char *, ...));
 void	vprintf __P((const char *, _BSD_VA_LIST_));
 void	twiddle __P((void));
 void	gets __P((char *));
+char	*strerror __P((int));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
