@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/08/28 15:31:29 tv Exp $
-
-HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
-
-.if (${HAVE_GCC28} != "")
+#	$NetBSD: Makefile,v 1.8 1999/02/11 17:30:46 tv Exp $
 
 LIB=		stdc++
 
@@ -36,6 +32,8 @@ CPPFLAGS+=	-I${DESTDIR}/usr/include/g++ -I${DIST}/libstdc++
 
 NOMAN=
 NOLINT=		nolint (c++)
+
+TEXINFO=	iostream.texi
 
 .PATH:	${DIST}/libstdc++ ${DIST}/libstdc++/stl ${DIST}/libio
 
@@ -72,18 +70,11 @@ ${_TYPE_}inst.cc: cinst.cc
 .cc:
 	@true
 
+.include <bsd.info.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
 
 .if (${OBJECT_FMT} == "a.out")
 LDADD=	${DESTDIR}/usr/lib/c++rt0.o
 DPADD=	${DESTDIR}/usr/lib/c++rt0.o
-.endif
-
-.else
-
-# XXX Temporary: during an egcs bootstrap, don't try to build with gcc 2.7
-.include <bsd.own.mk>
-${TARGETS}:
-
 .endif
