@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.12 2003/04/12 05:00:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.13 2003/06/29 13:35:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -37,7 +37,7 @@
 			data = (caddr_t)stkbuf; \
 		__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
 			data32, (struct type *)data, cmd); \
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p); \
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, l); \
 		__CONCAT(netbsd32_from_, type)((struct type *)data, \
 			(struct __CONCAT(netbsd32_, type) *)data32); \
 		break

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.6 2003/06/29 13:35:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.6 2003/06/29 13:35:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ struct coredump_state {
 	off_t offset;
 };
 
-int	coredump_writesegs_netbsd32(struct proc *, struct vnode *,
+int	coredump_writesegs_netbsd32(struct lwp *, struct vnode *,
 	    struct ucred *, struct uvm_coredump_state *);
 
 int
@@ -106,7 +106,7 @@ coredump_netbsd32(struct lwp *l, struct vnode *vp, struct ucred *cred)
 
 	cs.offset = cs.core.c_hdrsize + cs.core.c_seghdrsize +
 	    cs.core.c_cpusize;
-	error = uvm_coredump_walkmap(p, vp, cred, coredump_writesegs_netbsd32,
+	error = uvm_coredump_walkmap(l, vp, cred, coredump_writesegs_netbsd32,
 	    &cs);
 	if (error)
 		return (error);
@@ -114,13 +114,13 @@ coredump_netbsd32(struct lwp *l, struct vnode *vp, struct ucred *cred)
 	/* Now write out the core header. */
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cs.core,
 	    (int)cs.core.c_hdrsize, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 
 	return (error);
 }
 
 int
-coredump_writesegs_netbsd32(struct proc *p, struct vnode *vp,
+coredump_writesegs_netbsd32(struct lwp *l, struct vnode *vp,
     struct ucred *cred, struct uvm_coredump_state *us)
 {
 	struct coredump_state *cs = us->cookie;
@@ -145,7 +145,7 @@ coredump_writesegs_netbsd32(struct proc *p, struct vnode *vp,
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)&cseg, cs->core.c_seghdrsize,
 	    cs->offset, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (error)
 		return (error);
 
@@ -153,7 +153,7 @@ coredump_writesegs_netbsd32(struct proc *p, struct vnode *vp,
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t) us->start, (int) cseg.c_size,
 	    cs->offset, UIO_USERSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (error)
 		return (error);
 

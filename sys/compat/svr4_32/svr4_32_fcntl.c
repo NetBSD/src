@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.7 2003/06/28 14:21:28 darrenr Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.8 2003/06/29 13:35:43 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.7 2003/06/28 14:21:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.8 2003/06/29 13:35:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ fd_revoke(l, fd, retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
 		goto out;
 
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
@@ -324,7 +324,7 @@ fd_truncate(l, fd, flp, retval)
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
 		return ESPIPE;
 
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
 		return error;
 
 	length = vattr.va_size;
@@ -394,7 +394,7 @@ svr4_32_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
+			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, l);
 	}
 	return 0;
 }

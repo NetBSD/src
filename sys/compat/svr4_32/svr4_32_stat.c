@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.9 2003/06/28 14:21:28 darrenr Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.10 2003/06/29 13:35:43 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.9 2003/06/28 14:21:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.10 2003/06/29 13:35:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ svr4_32_sys_systeminfo(l, v, retval)
 				  sizeof(buf), &len);
 		if (error)
 			return error;
-		error = kern_sysctl(&name, 1, 0, 0, buf, len, p);
+		error = kern_sysctl(&name, 1, 0, 0, buf, len, l);
 	}
 
 	*retval = len;
