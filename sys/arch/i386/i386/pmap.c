@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.1 2000/02/20 18:14:44 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.2 2000/02/21 18:44:50 sommerfeld Exp $	*/
 
 /*
  *
@@ -910,10 +910,6 @@ pmap_bootstrap(kva_start)
 
 	if (cpu_feature & CPUID_PGE) {
 		pmap_pg_g = PG_G;		/* enable software */
-
-#if 0
-		lcr4(rcr4() | CR4_PGE);	/* enable hardware (via %cr4) */
-#endif
 
 		/* add PG_G attribute to already mapped kernel pages */
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
