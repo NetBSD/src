@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.3 1994/11/02 04:55:59 deraadt Exp $
+ *	$Id: if_ie.c,v 1.4 1994/11/02 23:16:02 deraadt Exp $
  */
 
 /*
@@ -136,8 +136,8 @@
  * ugly byte-order hack for SUNs
  */
 
-#define SWAP(x) ((u_short)(XSWAP((u_short) (x))))
-#define XSWAP(y) ( ((y) >> 8) | ((y) << 8) )
+#define SWAP(x)		((u_short)(XSWAP((u_short)(x))))
+#define XSWAP(y)	( ((y) >> 8) | ((y) << 8) )
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -233,9 +233,9 @@ struct ie_softc {
 
 	struct arpcom sc_arpcom;/* system arpcom structure */
 
-	void    (*reset_586) ();/* card dependent reset function */
-	void    (*chan_attn) ();/* card dependent attn function */
-	void    (*run_586) ();	/* card dependent "go on-line" function */
+	void    (*reset_586)();	/* card dependent reset function */
+	void    (*chan_attn)();	/* card dependent attn function */
+	void    (*run_586)();	/* card dependent "go on-line" function */
 
 	enum ie_hardware hard_type;	/* card type */
 
@@ -327,7 +327,7 @@ struct cfdriver iecd = {
 #define MK_24(base, ptr) ((caddr_t)((u_long)ptr - (u_long)base))
 #define MK_16(base, ptr) SWAP((u_short)( ((u_long)(ptr)) - ((u_long)(base)) ))
 #define ST_24(to, from) { \
-			    u_long fval = (u_long) (from); \
+			    u_long fval = (u_long)(from); \
 			    u_char *t = (u_char *)&(to), *f = (u_char *)&fval; \
 			    t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*t[3] = f[0];*/ \
 			}
@@ -365,10 +365,10 @@ static inline caddr_t
 Align(ptr)
 	caddr_t ptr;
 {
-	u_long  l = (u_long) ptr;
+	u_long  l = (u_long)ptr;
 
 	l = (l + 3) & ~3L;
-	return (caddr_t) l;
+	return (caddr_t)l;
 }
 
 static inline void
@@ -379,7 +379,7 @@ ie_ack(sc, mask)
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
 	scb->ie_command = scb->ie_status & mask;
-	(sc->chan_attn) (sc);
+	(sc->chan_attn)(sc);
 }
 
 
@@ -511,10 +511,10 @@ ieattach(parent, self, aux)
 		    ca->ca_bustype);
 		iev = (struct ievme *) sc->sc_reg;
 		/* top 12 bits */
-		rampaddr = (u_long) ca->ca_ra.ra_paddr & 0xfff00000;
+		rampaddr = (u_long)ca->ca_ra.ra_paddr & 0xfff00000;
 		/* 4 more */
 		rampaddr = rampaddr | ((iev->status & IEVME_HADDR) << 16);
-		sc->sc_maddr = mapiodev((caddr_t) rampaddr, sc->sc_msize,
+		sc->sc_maddr = mapiodev((caddr_t)rampaddr, sc->sc_msize,
 		    ca->ca_bustype);
 		sc->sc_iobase = sc->sc_maddr;
 
@@ -575,13 +575,13 @@ ieattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(" pri %d vec 0x%x\n", pri, ca->ca_ra.ra_intr[0].int_vec);
-	printf("\taddress %s, type %s\n",
+	printf(" address %s, type %s\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ie_hardware_names[sc->hard_type]);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	    sizeof(struct ether_header));
 #endif
 
 	switch (ca->ca_bustype) {
@@ -603,8 +603,8 @@ ieattach(parent, self, aux)
 }
 
 /*
- * Device timeout/watchdog routine.  Entered if the device neglects to generate
- * an interrupt after a transmit has been started on it.
+ * Device timeout/watchdog routine.  Entered if the device neglects to
+ * generate an interrupt after a transmit has been started on it.
  */
 int
 iewatchdog(unit)
@@ -634,10 +634,11 @@ ieintr(v)
 	 * check for parity error
 	 */
 	if (sc->hard_type == IE_VME) {
-		volatile struct ievme *iev = (volatile struct ievme *) sc->sc_reg;
+		volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
 		if (iev->status & IEVME_PERR) {
 			printf("%s: parity error (ctrl %x @ %02x%04x)\n",
-			    iev->pectrl, iev->pectrl & IEVME_HADDR, iev->peaddr);
+			    iev->pectrl, iev->pectrl & IEVME_HADDR,
+			    iev->peaddr);
 			iev->pectrl = iev->pectrl | IEVME_PARACK;
 		}
 	}
@@ -707,9 +708,9 @@ ierint(sc)
 				    SWAP(scb->ie_err_align) +
 				    SWAP(scb->ie_err_resource) +
 				    SWAP(scb->ie_err_overrun);
-				scb->ie_err_crc = scb->ie_err_align =
-				    scb->ie_err_resource = scb->ie_err_overrun =
-				    0;
+				scb->ie_err_crc = scb->ie_err_align = 0;
+				scb->ie_err_resource = 0;
+				scb->ie_err_overrun = 0;
 				timesthru = 1024;
 			}
 			ie_readframe(sc, i);
@@ -771,11 +772,12 @@ ietint(sc)
 	sc->xmit_count = 0;
 
 	/*
-	 * If multicast addresses were added or deleted while we were transmitting,
-	 * mc_reset() set the want_mcsetup flag indicating that we should do it.
+	 * If multicast addresses were added or deleted while we
+	 * were transmitting, mc_reset() set the want_mcsetup flag
+	 * indicating that we should do it.
 	 */
 	if (sc->want_mcsetup) {
-		mc_setup(sc, (caddr_t) sc->xmit_cbuffs[0]);
+		mc_setup(sc, (caddr_t)sc->xmit_cbuffs[0]);
 		sc->want_mcsetup = 0;
 	}
 	/* Wish I knew why this seems to be necessary... */
@@ -1009,7 +1011,7 @@ ieget(sc, mp, ehp, to_bpf)
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	wcopy((caddr_t) sc->cbuffs[i], (caddr_t) ehp, sizeof *ehp);
+	wcopy((caddr_t)sc->cbuffs[i], (caddr_t)ehp, sizeof *ehp);
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -1095,8 +1097,8 @@ ieget(sc, mp, ehp, to_bpf)
 		 */
 		if (thislen > m->m_len - thismboff) {
 			int     newlen = m->m_len - thismboff;
-			wcopy((caddr_t) (sc->cbuffs[head] + offset),
-			    mtod(m, caddr_t) + thismboff, (u_int) newlen);
+			wcopy((caddr_t)(sc->cbuffs[head] + offset),
+			    mtod(m, caddr_t) + thismboff, (u_int)newlen);
 			m = m->m_next;
 			thismboff = 0;	/* new mbuf, so no offset */
 			offset += newlen;	/* we are now this far into
@@ -1111,8 +1113,8 @@ ieget(sc, mp, ehp, to_bpf)
 		 * and so on.
 		 */
 		if (thislen < m->m_len - thismboff) {
-			wcopy((caddr_t) (sc->cbuffs[head] + offset),
-			    mtod(m, caddr_t) + thismboff, (u_int) thislen);
+			wcopy((caddr_t)(sc->cbuffs[head] + offset),
+			    mtod(m, caddr_t) + thismboff, (u_int)thislen);
 			thismboff += thislen;	/* we are this far into the
 						 * mbuf */
 			resid -= thislen;	/* and this much is left */
@@ -1123,8 +1125,8 @@ ieget(sc, mp, ehp, to_bpf)
 		 * contents into the current mbuf.  Do the combination of the above
 		 * actions.
 		 */
-		wcopy((caddr_t) (sc->cbuffs[head] + offset),
-		    mtod(m, caddr_t) + thismboff, (u_int) thislen);
+		wcopy((caddr_t)(sc->cbuffs[head] + offset),
+		    mtod(m, caddr_t) + thismboff, (u_int)thislen);
 		m = m->m_next;
 		thismboff = 0;	/* new mbuf, start at the beginning */
 		resid -= thislen;	/* and we are this far through */
@@ -1171,7 +1173,7 @@ ie_readframe(sc, num)
 	int     bpf_gets_it = 0;
 #endif
 
-	wcopy((caddr_t) (sc->rframes[num]), &rfd,
+	wcopy((caddr_t)(sc->rframes[num]), &rfd,
 	    sizeof(struct ie_recv_frame_desc));
 
 	/* Immediately advance the RFD list, since we have copied ours now. */
@@ -1194,7 +1196,7 @@ ie_readframe(sc, num)
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
 		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
-		    ether_sprintf(eh.ether_shost), (u_int) eh.ether_type);
+		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
 	if (!m)
@@ -1216,7 +1218,7 @@ ie_readframe(sc, num)
 	if (bpf_gets_it) {
 		struct mbuf m0;
 		m0.m_len = sizeof eh;
-		m0.m_data = (caddr_t) & eh;
+		m0.m_data = (caddr_t)&eh;
 		m0.m_next = m;
 
 		/* Pass it up */
@@ -1459,7 +1461,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 	volatile int timedout = 0;
 	extern int hz;
 
-	scb->ie_command = (u_short) cmd;
+	scb->ie_command = (u_short)cmd;
 
 	if (IE_ACTION_COMMAND(cmd) && pcmd) {
 		(sc->chan_attn) (sc);
@@ -1476,7 +1478,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 		 * .369 seconds, which we round up to .4.
 		 */
 
-		timeout(chan_attn_timeout, (caddr_t) & timedout, 2 * hz / 5);
+		timeout(chan_attn_timeout, (caddr_t)&timedout, 2 * hz / 5);
 
 		/*
 		 * Now spin-lock waiting for status.  This is not a very nice
@@ -1489,7 +1491,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 			if ((cc->ie_cmd_status & mask) || timedout)
 				break;
 
-		untimeout(chan_attn_timeout, (caddr_t) & timedout);
+		untimeout(chan_attn_timeout, (caddr_t)&timedout);
 
 		return timedout;
 	} else {
@@ -1592,14 +1594,14 @@ setup_bufs(sc)
 	wzero(ptr, sc->buf_area_sz);
 	ptr = Align(ptr);	/* set alignment and stick with it */
 
-	n = (int) Align(sizeof(struct ie_xmit_cmd)) +
-	    (int) Align(sizeof(struct ie_xmit_buf)) + IE_TBUF_SIZE;
+	n = (int)Align(sizeof(struct ie_xmit_cmd)) +
+	    (int)Align(sizeof(struct ie_xmit_buf)) + IE_TBUF_SIZE;
 	n *= NTXBUF;		/* n = total size of xmit area */
 
 	n = sc->buf_area_sz - n;/* n = free space for recv stuff */
 
-	r = (int) Align(sizeof(struct ie_recv_frame_desc)) +
-	    (((int) Align(sizeof(struct ie_recv_buf_desc)) + IE_RBUF_SIZE) * B_PER_F);
+	r = (int)Align(sizeof(struct ie_recv_frame_desc)) +
+	    (((int)Align(sizeof(struct ie_recv_buf_desc)) + IE_RBUF_SIZE) * B_PER_F);
 
 	/* r = size of one R frame */
 
@@ -1709,7 +1711,7 @@ mc_setup(sc, ptr)
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
 	cmd->com.ie_cmd_link = SWAP(0xffff);
 
-	wcopy((caddr_t) sc->mcast_addrs, (caddr_t) cmd->ie_mcast_addrs,
+	wcopy((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
 	    sc->mcast_count * sizeof *sc->mcast_addrs);
 
 	cmd->ie_mcast_bytes =
@@ -1772,7 +1774,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		wcopy(sc->sc_arpcom.ac_enaddr, (caddr_t) & cmd->ie_address,
+		wcopy(sc->sc_arpcom.ac_enaddr, (caddr_t)&cmd->ie_address,
 		    sizeof cmd->ie_address);
 
 		scb->ie_command_list = MK_16(MEM, cmd);
@@ -1951,7 +1953,7 @@ mc_reset(sc)
 		if (sc->mcast_count >= MAXMCAST ||
 		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			sc->sc_arpcom.ac_if.if_flags |= IFF_ALLMULTI;
-			ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, (void *) 0);
+			ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, (void *)0);
 			goto setflag;
 		}
 		bcopy(enm->enm_addrlo, &sc->mcast_addrs[sc->mcast_count], 6);
@@ -1969,7 +1971,7 @@ print_rbd(rbd)
 {
 
 	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
-	    "length %04x, mbz %04x\n", (u_long) rbd, rbd->ie_rbd_actual,
+	    "length %04x, mbz %04x\n", (u_long)rbd, rbd->ie_rbd_actual,
 	    rbd->ie_rbd_next, rbd->ie_rbd_buffer, rbd->ie_rbd_length,
 	    rbd->mbz);
 }
