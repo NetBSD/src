@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.5 1999/03/04 20:46:23 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.6 1999/03/05 20:33:08 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ aout_exec(fd, x, marks, flags)
 		if (flags & (LOAD_SYM|COUNT_SYM))
 			maxp += x->a_syms;
 
-		if (READ(fd, &cc, sizeof(cc)) != sizeof(cc)) {
+		if (read(fd, &cc, sizeof(cc)) != sizeof(cc)) {
 			WARN(("read string table"));
 			return 1;
 		}
