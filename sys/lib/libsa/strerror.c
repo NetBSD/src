@@ -30,19 +30,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: strerror.c,v 1.1 1994/01/26 02:04:00 brezak Exp $
+ *	$Id: strerror.c,v 1.2 1994/02/26 10:29:44 pk Exp $
  */
 
 #include <sys/errno.h>
 #include "saerrno.h"
 
+
 char *
 strerror(err)
 	int err;
 {
-	char ebuf[1024] = "Unknown error: code ";
 	char *p;
 	int length;
+static	char ebuf[1024];
 
 	switch (err) {
 	case EADAPT:
@@ -67,6 +68,7 @@ strerror(err)
 		return "Stale NFS file handle";
 
 	default:
+		strcpy(ebuf, "Unknown error: code ");
 		length = strlen(ebuf);
 		p = ebuf+length;
 		do {
