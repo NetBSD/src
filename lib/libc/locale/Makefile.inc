@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.26 2000/12/22 02:18:58 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2000/12/22 04:59:41 itojun Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -22,7 +22,7 @@ SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c \
 #		-D_PATH_LOCALEMODULE=\"/usr/lib/runemodule\"
 # to be dynamically loaded
 #SRCS+=	big5.c euc.c euctw.c iso2022.c mskanji.c utf2.c utf8.c
-MAN+=	iswalnum.3 towlower.3
+MAN+=	iswalnum.3 towlower.3 wmemchr.3
 
 MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
 	iswalnum.3 iswcntrl.3 iswalnum.3 iswdigit.3 \
@@ -31,3 +31,12 @@ MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
 	iswalnum.3 iswspace.3 iswalnum.3 iswupper.3 \
 	iswalnum.3 iswxdigit.3
 MLINKS+=towlower.3 towupper.3
+MLINKS+=wmemchr.3 wmemcmp.3 wmemchr.3 wmemcpy.3 \
+	wmemchr.3 wmemmove.3 wmemchr.3 wmemset.3 \
+	wmemchr.3 wcscat.3 wmemchr.3 wcschr.3 \
+	wmemchr.3 wcscmp.3 wmemchr.3 wcscpy.3 \
+	wmemchr.3 wcscspn.3 wmemchr.3 wcslen.3 \
+	wmemchr.3 wcsncat.3 wmemchr.3 wcsncmp.3 \
+	wmemchr.3 wcsncpy.3 wmemchr.3 wcspbrk.3 \
+	wmemchr.3 wcsrchr.3 wmemchr.3 wcsspn.3 \
+	wmemchr.3 wcsstr.3

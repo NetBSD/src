@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.289 2000/12/22 02:18:58 itojun Exp $
+#	$NetBSD: mi,v 1.290 2000/12/22 04:59:41 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2804,6 +2804,24 @@
 ./usr/share/man/cat3/vwarnx.0	comp-c-catman
 ./usr/share/man/cat3/warn.0	comp-c-catman
 ./usr/share/man/cat3/warnx.0	comp-c-catman
+./usr/share/man/cat3/wcscat.0		comp-c-catman
+./usr/share/man/cat3/wcschr.0		comp-c-catman
+./usr/share/man/cat3/wcscmp.0		comp-c-catman
+./usr/share/man/cat3/wcscpy.0		comp-c-catman
+./usr/share/man/cat3/wcscspn.0		comp-c-catman
+./usr/share/man/cat3/wcslen.0		comp-c-catman
+./usr/share/man/cat3/wcsncat.0		comp-c-catman
+./usr/share/man/cat3/wcsncmp.0		comp-c-catman
+./usr/share/man/cat3/wcsncpy.0		comp-c-catman
+./usr/share/man/cat3/wcspbrk.0		comp-c-catman
+./usr/share/man/cat3/wcsrchr.0		comp-c-catman
+./usr/share/man/cat3/wcsspn.0		comp-c-catman
+./usr/share/man/cat3/wcsstr.0		comp-c-catman
+./usr/share/man/cat3/wmemchr.0		comp-c-catman
+./usr/share/man/cat3/wmemcmp.0		comp-c-catman
+./usr/share/man/cat3/wmemcpy.0		comp-c-catman
+./usr/share/man/cat3/wmemmove.0		comp-c-catman
+./usr/share/man/cat3/wmemset.0		comp-c-catman
 ./usr/share/man/cat3/xdr.0	comp-c-catman
 ./usr/share/man/cat3/xdr_accepted_reply.0	comp-c-catman
 ./usr/share/man/cat3/xdr_array.0	comp-c-catman
@@ -4587,6 +4605,24 @@
 ./usr/share/man/man3/vwarnx.3		comp-c-man
 ./usr/share/man/man3/warn.3		comp-c-man
 ./usr/share/man/man3/warnx.3		comp-c-man
+./usr/share/man/man3/wcscat.3		comp-c-man
+./usr/share/man/man3/wcschr.3		comp-c-man
+./usr/share/man/man3/wcscmp.3		comp-c-man
+./usr/share/man/man3/wcscpy.3		comp-c-man
+./usr/share/man/man3/wcscspn.3		comp-c-man
+./usr/share/man/man3/wcslen.3		comp-c-man
+./usr/share/man/man3/wcsncat.3		comp-c-man
+./usr/share/man/man3/wcsncmp.3		comp-c-man
+./usr/share/man/man3/wcsncpy.3		comp-c-man
+./usr/share/man/man3/wcspbrk.3		comp-c-man
+./usr/share/man/man3/wcsrchr.3		comp-c-man
+./usr/share/man/man3/wcsspn.3		comp-c-man
+./usr/share/man/man3/wcsstr.3		comp-c-man
+./usr/share/man/man3/wmemchr.3		comp-c-man
+./usr/share/man/man3/wmemcmp.3		comp-c-man
+./usr/share/man/man3/wmemcpy.3		comp-c-man
+./usr/share/man/man3/wmemmove.3		comp-c-man
+./usr/share/man/man3/wmemset.3		comp-c-man
 ./usr/share/man/man3/xdr.3		comp-c-man
 ./usr/share/man/man3/xdr_accepted_reply.3		comp-c-man
 ./usr/share/man/man3/xdr_array.3		comp-c-man
