@@ -557,6 +557,13 @@
 ./usr/include/netccitt/x25err.h
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
+./usr/include/netatalk/aarp.h
+./usr/include/netatalk/at.h
+./usr/include/netatalk/at_extern.h
+./usr/include/netatalk/at_var.h
+./usr/include/netatalk/ddp.h
+./usr/include/netatalk/ddp_var.h
+./usr/include/netatalk/phase2.h
 ./usr/include/netinet/icmp_var.h
 ./usr/include/netinet/if_atm.h
 ./usr/include/netinet/if_inarp.h
@@ -894,6 +901,8 @@
 ./usr/lib/libl_p.a
 ./usr/lib/libm.a
 ./usr/lib/libm_p.a
+./usr/lib/libntp.a
+./usr/lib/libntp_p.a
 ./usr/lib/libobjc.a
 ./usr/lib/libpcap.a
 ./usr/lib/libpcap_p.a
