@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.19 2004/02/23 03:44:29 jschauma Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.20 2004/05/08 14:25:59 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -167,7 +167,3 @@ message set_kernel_5
 {Kernel (GENERIC_DIAGNOSTIC)}
 message set_kernel_6
 {Kernel (GENERIC_PS2TINY)}
-
-message set_md_1        
-{GNU toolchain}          /* for amd64 */
-
