@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1994/11/21 21:38:16 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1994/11/23 07:01:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -119,7 +119,7 @@ void configure()
 
 int always_match(parent, cf, args)
 	struct device *parent;
-	struct cfdata *cf;
+	void *cf;
 	void *args;
 {
 	return 1;
