@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.46 2000/01/21 12:28:25 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.47 2000/02/14 07:12:34 scottr Exp $
 #
 ###########################################################################
 #
@@ -52,6 +52,13 @@
 # Terminal ports:
 #	ttye*	ite consoles
 #	tty*	standard built-in serial ports (2)
+#	ttyE*	wscons
+#
+# Pointing devices:
+#	wsmouse* wscons mouse events
+#
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -92,6 +99,7 @@ all)
 	sh $0 bpf8 bpf9 bpf10 bpf11 random
 	sh $0 tun0 tun1 tun2 tun3 asc0 lkm ipl local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3 cfs0
+	sh $0 wscons
 	;;
 
 std)
@@ -136,6 +144,48 @@ adb)
 	rm -f adb
 	mknod adb c 23 0
 	chmod 666 adb
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 ttyEcfg
+	;;
+
+ttyEcfg)
+	chr=46
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
+	;;
+
+ttyE*)
+	chr=46; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	chown root.wheel ttyE$unit
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=41
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chown root.wheel $wsmouse
+	chmod 600 $wsmouse
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=40
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
 	;;
 
 fd)
