@@ -5670,28 +5670,35 @@ ENTRY(microtime)
 	retl
 	 st	%o3, [%o0+4]
 
-
-/* 
- * delay(n): wait for about n microseconds to pass.
+/*
+ * delay function
+ *
+ * void delay(N)  -- delay N microseconds
+ *
+ * Register usage: %o0 = "N" number of usecs to go (counts down to zero)
+ *		   %o1 = "timerblurb" (stays constant)
+ *		   %o2 = counter for 1 usec (counts down from %o1 to zero)
+ *
  */
-ENTRY(delay)
-	sethi	%hi(_timerblurb), %o1		! load calibration factor
-	ld	[%o1 + %lo(_timerblurb)], %o1	!  computed in clock.c
 
-1:
-	mov	%o1, %o2			! while (n-- != 0) {
-	tst	%o0				!   i = timerblurb;
-	be	3f				!
-	 sub	%o0, 1, %o0
+ENTRY(delay)			! %o0 = n
+	sethi	%hi(_timerblurb), %o1
+	ld	[%o1 + %lo(_timerblurb)], %o1	! %o1 = timerblurb
 
-2:
-	tst	%o2				!    while (i-- != 0)
-	bne	2b				!         <do nothing>;
-	 sub	%o2, 1, %o2
-	ba,a	1b				! }
-3:
-	retl
-	 nop
+	addcc	%o1, %g0, %o2		! %o2 = cntr (start @ %o1), clear CCs
+					! first time through only
+
+					! delay 1 usec
+1:	bne	1b			! come back here if not done
+	 subcc	%o2, 1, %o2		! %o2 = %o2 - 1 [delay slot]
+
+	subcc	%o0, 1, %o0		! %o0 = %o0 - 1
+	bne	1b			! done yet?
+	 addcc	%o1, %g0, %o2		! reinit %o2 and CCs  [delay slot]
+					! harmless if not branching
+
+	retl				! return
+	 nop				! [delay slot]
 
 #if defined(KGDB) || defined(DDB)
 /*
