@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:39 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/12/08 20:19:58 thorpej Exp $
 
-HOSTPROGNAME=	nbcompile_et
+HOSTPROGNAME=	${_TOOL_PREFIX}compile_et
 HOST_SRCDIR=	usr.bin/compile_et
 HOST_SRCS=	getarg.c print_version.c warnerr.c strupr.c get_window_size.c
 HOST_CPPFLAGS=	-I${DIST}/heimdal/lib/roken

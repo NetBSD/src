@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/10 16:35:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:20:05 thorpej Exp $
 
-HOSTPROGNAME=	nbsunlabel
+HOSTPROGNAME=	${_TOOL_PREFIX}sunlabel
 HOST_SRCDIR=	usr.sbin/sunlabel
 HOST_CPPFLAGS=	-DDISTRIB
 

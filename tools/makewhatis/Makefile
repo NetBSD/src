@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/11/29 23:51:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:20:02 thorpej Exp $
 
-HOSTPROGNAME=	nbmakewhatis
+HOSTPROGNAME=	${_TOOL_PREFIX}makewhatis
 HOST_SRCDIR=	libexec/makewhatis
 
 .include "${.CURDIR}/../Makefile.host"
