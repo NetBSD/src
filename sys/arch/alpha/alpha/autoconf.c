@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1996/09/17 20:58:58 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1996/10/03 18:42:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,8 @@ char			boot_dev[128];
 void	parse_prom_bootdev __P((void));
 int	atoi __P((char *));
 
-struct device *parsedisk __P((char *str, int len, int defpart, dev_t *devp));
+static struct device *parsedisk __P((char *str, int len, int defpart,
+				     dev_t *devp));
 static struct device *getdisk __P((char *str, int len, int defpart,
 				   dev_t *devp));
 static int findblkmajor __P((struct device *dv));
@@ -125,6 +126,7 @@ struct nam2blk {
 } nam2blk[] = {
 	{ "st",		2 },
 	{ "cd",		3 },
+	{ "rd",		6 },
 	{ "sd",		8 },
 #if 0
 	{ "fd",		XXX },
@@ -176,12 +178,12 @@ getdisk(str, len, defpart, devp)
 				printf(" %s", dv->dv_xname);
 #endif
 		}
-		printf("\n");
+		printf(" halt\n");
 	}
 	return (dv);
 }
 
-struct device *
+static struct device *
 parsedisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
@@ -193,6 +195,10 @@ parsedisk(str, len, defpart, devp)
 
 	if (len == 0)
 		return (NULL);
+
+	if (len == 4 && !strcmp(str, "halt"))
+		boot(RB_HALT, NULL);
+
 	cp = str + len - 1;
 	c = *cp;
 	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
@@ -276,8 +282,6 @@ setroot()
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
 			}
-			if (len == 4 && !strcmp(buf, "halt"))
-				boot(RB_HALT, NULL);
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
@@ -305,7 +309,7 @@ setroot()
 		for (;;) {
 			printf("swap device");
 			printf(" (default %s", rootdv->dv_xname);
-			if (dv->dv_class == DV_DISK)
+			if (rootdv->dv_class == DV_DISK)
 				printf("b");
 			printf(")");
 			printf(": ");
@@ -328,8 +332,6 @@ setroot()
 				swapdv = rootdv;
 				break;
 			}
-			if (len == 4 && !strcmp(buf, "halt"))
-				boot(RB_HALT, NULL);
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)
