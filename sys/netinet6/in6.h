@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.22 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.23 2001/03/02 04:52:54 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.57 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  * Identification of the network protocol stack
  */
 #define __KAME__
-#define __KAME_VERSION		"19991213/NetBSD-current"
+#define __KAME_VERSION		"NetBSD-current"
 
 /*
  * Local port number conventions:
