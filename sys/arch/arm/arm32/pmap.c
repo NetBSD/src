@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2002/07/31 17:34:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2002/08/06 21:43:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2002/07/31 17:34:23 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2002/08/06 21:43:51 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2284,7 +2284,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		pte++;
 	}
 
-	pmap_unmap_ptes(pmap);
 	/*
 	 * Now, if we've fallen through down to here, chances are that there
 	 * are less than PMAP_REMOVE_CLEAN_LIST_SIZE mappings left.
@@ -2303,6 +2302,9 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			pmap_pte_delref(pmap, cleanlist[cnt].va);
 		}
 	}
+
+	pmap_unmap_ptes(pmap);
+
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
@@ -2580,6 +2582,14 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 		/* Are we mapping the same page ? */
 		if (opa == pa) {
+			/* Check to see if we're doing rw->ro. */
+			if ((opte & L2_S_PROT_W) != 0 &&
+			    (prot & VM_PROT_WRITE) == 0) {
+				/* Yup, flush the cache if current pmap. */
+				if (pmap_is_curpmap(pmap))
+					cpu_dcache_wb_range(va, NBPG);
+			}
+
 			/* Has the wiring changed ? */
 			if (pg != NULL) {
 				simple_lock(&pg->mdpage.pvh_slock);
@@ -2956,7 +2966,7 @@ static void
 pmap_clearbit(struct vm_page *pg, u_int maskbits)
 {
 	struct pv_entry *pv;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, npte, opte;
 	vaddr_t va;
 	int tlbentry;
 
@@ -2987,6 +2997,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 		pv->pv_flags &= ~maskbits;
 		ptes = pmap_map_ptes(pv->pv_pmap);	/* locks pmap */
 		KASSERT(pmap_pde_v(pmap_pde(pv->pv_pmap, va)));
+		npte = opte = ptes[arm_btop(va)];
 		if (maskbits & (PVF_WRITE|PVF_MOD)) {
 			if ((pv->pv_flags & PVF_NC)) {
 				/* 
@@ -3006,8 +3017,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 *
 				 */
 				if (maskbits & PVF_WRITE) {
-					ptes[arm_btop(va)] |=
-					    pte_l2_s_cache_mode;
+					npte |= pte_l2_s_cache_mode;
 					pv->pv_flags &= ~PVF_NC;
 				}
 			} else if (pmap_is_curpmap(pv->pv_pmap)) {
@@ -3020,22 +3030,40 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			}
 
 			/* make the pte read only */
-			ptes[arm_btop(va)] &= ~L2_S_PROT_W;
+			npte &= ~L2_S_PROT_W;
 		}
 
-		if (maskbits & PVF_REF)
-			ptes[arm_btop(va)] =
-			    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_INV;
+		if (maskbits & PVF_REF) {
+			if (pmap_is_curpmap(pv->pv_pmap) &&
+			    (pv->pv_flags & PVF_NC) == 0) {
+				/*
+				 * Check npte here; we may have already
+				 * done the wbinv above, and the validity
+				 * of the PTE is the same for opte and
+				 * npte.
+				 */
+				if (npte & L2_S_PROT_W) {
+					cpu_idcache_wbinv_range(pv->pv_va,
+					    NBPG);
+				} else if ((npte & L2_TYPE_MASK)
+					   != L2_TYPE_INV) {
+					/* XXXJRT need idcache_inv_range */
+					cpu_idcache_wbinv_range(pv->pv_va,
+					    NBPG);
+				}
+			}
 
-		if (pmap_is_curpmap(pv->pv_pmap)) {
-			/* 
-			 * if we had cacheable pte's we'd clean the
-			 * pte out to memory here
-			 *
-			 * flush tlb entry as it's in the current pmap
-			 */
-			cpu_tlb_flushID_SE(pv->pv_va); 
+			/* make the pte invalid */
+			npte = (npte & ~L2_TYPE_MASK) | L2_TYPE_INV;
 		}
+
+		if (npte != opte) {
+			ptes[arm_btop(va)] = npte;
+			/* Flush the TLB entry if a current pmap. */
+			if (pmap_is_curpmap(pv->pv_pmap))
+				cpu_tlb_flushID_SE(pv->pv_va);
+		}
+
 		pmap_unmap_ptes(pv->pv_pmap);		/* unlocks pmap */
 	}
 	cpu_cpwait();
