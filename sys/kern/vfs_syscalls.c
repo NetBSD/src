@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.133 1999/03/31 19:18:45 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.133.2.1 2000/02/01 23:10:54 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -926,7 +926,6 @@ sys_open(p, v, retval)
 	int type, indx, error;
 	struct flock lf;
 	struct nameidata nd;
-	extern struct fileops vnops;
 
 	flags = FFLAGS(SCARG(uap, flags));
 	if ((flags & (FREAD | FWRITE)) == 0)
