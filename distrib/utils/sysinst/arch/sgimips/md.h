@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2004/01/17 05:30:02 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,7 +74,7 @@
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
  *      base, etc, comp, games, man, misc, text,
- *      xbase, xfont, xserver, xcontrib, xcomp.
+ *      xbase, xcomp, xfont, xserver.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC32_IP2x"
 #define SET_KERNEL_2_NAME	"kern-GENERIC32_IP3x"

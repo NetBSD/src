@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.96 2003/12/15 16:10:58 martin Exp $
+.\"	$NetBSD: contents,v 1.97 2004/01/17 05:30:01 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -442,7 +442,7 @@ subdirectory
 of the
 .Nx \*V
 distribution tree, and are as follows:
-.(tag xcontrib
+.(tag xserver
 .
 .It Sy base
 The
@@ -807,7 +807,7 @@ They are currently equivalent to XFree86 3.3.6.
 Binary sets for the X Window System are distributed with
 .Nx .
 The sets are:
-.(tag xcontrib
+.(tag xserver
 .
 .It Sy xbase
 The basic files needed for a complete X
@@ -854,12 +854,6 @@ The extra libraries and include files needed to compile X source code.
 .if \n[x86_64] .setsize -unknown- -unknown-
 .showsize
 .
-.It Sy xcontrib
-Programs that were contributed to X.
-.\" Shareable within MACHINE_ARCH.
-.\" Not MI, but close enough to the same size on all ports...
-.showsize 1 1
-.
 .It Sy xfont
 Fonts needed by X.
 .\" MI, except for i386 and shark
@@ -868,13 +862,6 @@ Fonts needed by X.
 .if \n[i386] .setsize 15 19
 .if \n[shark] .setsize 6 8
 .showsize
-.
-.It Sy xmisc
-Miscellaneous X programs.
-.\" MI
-.\" Shareable within MACHINE_ARCH
-.\" Not MI, but close enough to the same size on all ports...
-.showsize 1 1
 .
 .if \n[acorn32] \{\
 .It Sy xserver
