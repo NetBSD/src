@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.3 2003/04/15 18:27:28 darrenr Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.4 2003/04/15 19:07:37 darrenr Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -309,6 +309,7 @@ disk_badsectors(int argc, char *argv[])
 				printf("%s: blocks %d - %d failed at %s",
 					dvname, dbs->dbs_min, dbs->dbs_max,
 					ctime(&dbs->dbs_failedat.tv_sec));
+				dbs++;
 			}
 			dbsi.dbsi_skip += dbsi.dbsi_copied;
 		} while (dbsi.dbsi_left != 0);
@@ -355,6 +356,7 @@ disk_badsectors(int argc, char *argv[])
 				dbs2 = malloc(sizeof(*dbs2));
 				*dbs2 = *dbs;
 				SLIST_INSERT_HEAD(&dbstop, dbs2, dbs_next);
+				dbs++;
 			}
 			dbsi.dbsi_skip += dbsi.dbsi_copied;
 		} while (dbsi.dbsi_left != 0);
