@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.5 1999/11/29 15:04:23 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.6 2000/01/18 16:50:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -63,16 +63,15 @@
 /*
  * HBA registers
  */
-#define HA_BASE			0x10
-#define HA_DATA			(HA_BASE + 0)
-#define HA_ERROR		(HA_BASE + 1)
-#define HA_DMA_BASE		(HA_BASE + 2)
-#define HA_ICMD_CODE2	       	(HA_BASE + 4)
-#define HA_ICMD_CODE1	       	(HA_BASE + 5)
-#define HA_ICMD			(HA_BASE + 6)
+#define HA_DATA			0
+#define HA_ERROR		1
+#define HA_DMA_BASE		2
+#define HA_ICMD_CODE2	       	4
+#define HA_ICMD_CODE1	       	5
+#define HA_ICMD			6
 
 /* EATA commands. There are many more that we don't define or use. */
-#define HA_COMMAND		(HA_BASE + 7)
+#define HA_COMMAND		7
 #define   CP_PIO_GETCFG		0xf0	/* Read configuration data, PIO */
 #define   CP_PIO_CMD		0xf2	/* Execute command, PIO */
 #define   CP_DMA_GETCFG		0xfd	/* Read configuration data, DMA */
@@ -93,7 +92,7 @@
 #define     CPI_RESET_MSKD_BUS	0x09	/* Reset masked bus */
 #define     CPI_POWEROFF_WARN	0x0a	/* Power about to fail */
 
-#define HA_STATUS		(HA_BASE + 7)
+#define HA_STATUS		7
 #define   HA_ST_ERROR		0x01
 #define   HA_ST_MORE		0x02
 #define   HA_ST_CORRECTD	0x04
@@ -104,7 +103,7 @@
 #define   HA_ST_BUSY		0x80
 #define   HA_ST_DATA_RDY	(HA_ST_SEEK_COMPLETE|HA_ST_READY|HA_ST_DRQ)
 
-#define HA_AUX_STATUS		(HA_BASE + 8)
+#define HA_AUX_STATUS		8
 #define   HA_AUX_BUSY		0x01
 #define   HA_AUX_INTR		0x02
 

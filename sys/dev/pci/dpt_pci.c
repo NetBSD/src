@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.3 2000/01/05 16:28:39 ad Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.4 2000/01/18 16:50:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.3 2000/01/05 16:28:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.4 2000/01/18 16:50:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ dpt_pci_attach(parent, self, aux)
 	struct dpt_softc *sc;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
+	bus_space_handle_t ioh;
 	const char *intrstr;
 	pcireg_t csr;
 
@@ -98,8 +99,14 @@ dpt_pci_attach(parent, self, aux)
 	printf(": ");
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot, 
-	    &sc->sc_ioh, NULL, NULL)) {
+	    &ioh, NULL, NULL)) {
 		printf("can't map i/o space\n");
+		return;
+	}
+	
+	/* Need to map in by 16 registers */
+	if (bus_space_subregion(sc->sc_iot, ioh, 16, 16, &sc->sc_ioh)) {
+		printf("can't map i/o subregion\n");
 		return;
 	}
 
