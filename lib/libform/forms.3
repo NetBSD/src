@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: forms.3,v 1.2 2001/08/05 02:13:19 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -185,4 +185,30 @@ E_CURRENT		The field is the active one on the form.
 .ne 8
 .Sh SEE ALSO
 .Xr curses 3
-
+.Sh NOTES
+This implementation of the forms library does depart in behaviour
+subtly from the original AT & T implementation.  Some of the more
+notable departures are:
+.Pp
+.Bl -tag -width "circular fields" -compact
+.It field wrapping
+For multiline fields the data will be wrapped as it is entered, this
+does not happen in the AT&T implementation.
+.It buffer 0
+In this implementation, the contents of buffer 0 are always current
+regardless of whether the field has been validated or not.
+.It circular fields
+In the AT&T implementation fields are circular on a page, that is, a
+next field from the last field will go to the first field on the
+curent page.  In this implementation a next field request on the last
+field of a page will result in the forms library positioning the
+cursor on the first field of the next page.  If the field is the last
+field in the form then going to the next field will be denied, in the
+AT&T it would result in the cursor being placed on the first field of
+the first page.
+.It buffer returns
+In this implementation only the data entered by the user in the form
+field will be returned, unlike the AT&T library which would return the
+contents of the field padded to the size of the field with the pad
+character.
+.El
