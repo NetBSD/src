@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2003/07/05 08:05:51 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2003/08/03 12:14:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.33 2003/07/05 08:05:51 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2003/08/03 12:14:58 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -187,11 +187,12 @@ main(int argc, char **argv)
 		(void)setegid(getgid());
 
 	if (kvm_nlist(kd, namelist)) {
-		nlisterr(namelist);
-		exit(1);
+		if (nlistf)
+			errx(1, "%s: no namelist", nlistf);
+		else
+			errx(1, "no namelist");
 	}
-	if (namelist[X_FIRST].n_type == 0)
-		errx(1, "couldn't read namelist");
+
 	signal(SIGINT, die);
 	signal(SIGQUIT, die);
 	signal(SIGTERM, die);
@@ -407,6 +408,7 @@ nlisterr(struct nlist namelist[])
 	move(CMDLINE, 0);
 	clrtoeol();
 	refresh();
+	sleep(5);
 	endwin();
 	exit(1);
 }
