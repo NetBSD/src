@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.54 2002/06/27 06:26:53 junyoung Exp $ */
+/* $NetBSD: vga.c,v 1.55 2002/06/28 03:38:13 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.54 2002/06/27 06:26:53 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.55 2002/06/28 03:38:13 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,9 +850,12 @@ loadit:
 #ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
 	if (slot == 1) {
 		/* Load the builtin font to slot 1. */
-		vga_loadchars(&vc->hdl, slot, 0, 256, f->wsfont->fontheight,
-			      NULL);
+		vga_loadchars(&vc->hdl, slot, 0, 256, 16, NULL);
+		vga_builtinfont.slot = slot;
+		vga_builtinfont.usecount++;
 		vc->vc_fonts[slot] = &vga_builtinfont;
+		TAILQ_REMOVE(&vc->vc_fontlist, &vga_builtinfont, next);
+		TAILQ_INSERT_TAIL(&vc->vc_fontlist, &vga_builtinfont, next);
 		slot++;
 	}
 #endif
