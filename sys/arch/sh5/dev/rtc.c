@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.7 2003/07/15 03:35:58 lukem Exp $	*/
+/*	$NetBSD: rtc.c,v 1.8 2003/07/18 21:41:24 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2003/07/15 03:35:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2003/07/18 21:41:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ rtcattach(struct device *parent, struct device *self, void *args)
 
 	printf(" Real-time Clock\n");
 
-	clock_rtc_config(&sc->sc_todr);
+	todr_attach(&sc->sc_todr);
 }
 
 static int
