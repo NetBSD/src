@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1.2.1 1999/06/26 23:57:05 cgd Exp $
+#	$NetBSD: dot.profile.m4,v 1.1.2.2 1999/06/26 23:56:47 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -32,10 +32,16 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=vt100
+
+ifelse(MACHINE,i386,TERM=pc3)
+ifelse(MACHINE,sparc,TERM=sun)
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
 
 umask 022
 
@@ -50,6 +56,12 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
+	echo -n "Terminal type (just hit ENTER for '$TERM'): "
+	read ans
+	if [ -n "$ans" ];then
+	    TERM=$ans
+	fi
+
 	# run update, so that installed software is written as it goes.
 	update
 
@@ -58,10 +70,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern
-
-	# pull in the functions that people will use from the shell prompt.
-	# . /.commonutils
-	# . /.instutils
 
 	# run the installation or upgrade script.
 	sysinst
