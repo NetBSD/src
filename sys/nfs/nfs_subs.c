@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.93 2001/03/23 21:11:44 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.94 2001/04/21 21:35:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1599,16 +1599,19 @@ nfs_loadattrcache(vpp, fp, vaper)
 				 * Since the nfsnode does not have a lock, its
 				 * vnode lock has to be carried over.
 				 */
+				/*
+				 * XXX is the old node sure to be locked here?
+				 */
+				KASSERT(lockstatus(&vp->v_lock) ==
+				    LK_EXCLUSIVE);
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				VOP_UNLOCK(vp, 0);
 				vp->v_op = spec_vnodeop_p;
 				vrele(vp);
 				vgone(vp);
-				/*
-				 * XXX When nfs starts locking, we need to
-				 * lock the new node here.
-				 */
+				lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
+				    &nvp->v_interlock);
 				/*
 				 * Reinitialize aliased node.
 				 */
