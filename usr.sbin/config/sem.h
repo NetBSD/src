@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.8 1997/05/25 18:42:57 thorpej Exp $	*/
+/*	$NetBSD: sem.h,v 1.9 1997/06/14 04:25:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,5 +68,5 @@ const char     *wildref __P((const char *name));
 int		has_attr __P((struct nvlist *, const char *));
 
 extern const char *s_qmark;
-extern const char *s_nfs;
+extern const char *s_none;
 extern const char *s_ifnet;
