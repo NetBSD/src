@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.16 1998/08/13 21:36:04 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.17 1998/08/25 01:46:01 thorpej Exp $	*/
 
 /*
  *
@@ -66,6 +66,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -355,6 +356,12 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
 
 static struct pmap_head pmaps;
 static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
+
+/*
+ * pool that pmap structures are allocated from
+ */
+
+struct pool pmap_pmap_pool;
 
 /*
  * special VAs and the PTEs that map them
@@ -886,6 +893,13 @@ vaddr_t kva_start;
   LIST_INIT(&pmaps);
   TAILQ_INIT(&pv_freepages);
   TAILQ_INIT(&pv_unusedpgs);
+
+  /*
+   * initialize the pmap pool.
+   */
+
+  pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+    0, NULL, NULL, M_VMPMAP);
   
   /*
    * we must call uvm_page_physload() after we are done playing with
@@ -1720,7 +1734,7 @@ struct pmap *pmap_create()
 {
   struct pmap *pmap;
 
-  MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
+  pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
   pmap_pinit(pmap);
   return(pmap);
 }
@@ -1804,7 +1818,7 @@ struct pmap *pmap;
    * reference count is zero, free pmap resources and then free pmap.
    */
   pmap_release(pmap);
-  free((caddr_t)pmap, M_VMPMAP);
+  pool_put(&pmap_pmap_pool, pmap);
 
   /*
    * done: pmap is gone!
