@@ -1,3 +1,4 @@
+/*	$NetBSD: ftp-proxy.c,v 1.2 2004/06/22 22:19:36 itojun Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
 
 /*
@@ -98,8 +99,8 @@ int allow_severity = LOG_INFO;
 int deny_severity = LOG_NOTICE;
 #endif /* LIBWRAP */
 
-int min_port = IPPORT_HIFIRSTAUTO;
-int max_port = IPPORT_HILASTAUTO;
+int min_port = IPPORT_ANONMIN;
+int max_port = IPPORT_ANONMAX;
 
 #define STARTBUFSIZE  1024	/* Must be at least 3 */
 

@@ -1,3 +1,4 @@
+/*	$NetBSD: getline.c,v 1.2 2004/06/22 22:19:36 itojun Exp $	*/
 /*	$OpenBSD: getline.c,v 1.15 2003/06/28 01:04:57 deraadt Exp $ */
 
 /*
