@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.18 1994/06/14 05:49:25 jtc Exp $";
+static char *rcsid = "$Id: parser.c,v 1.19 1994/07/07 20:53:32 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -451,8 +451,16 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		checkkwd = 1;
 		break;
 	/* Handle an empty command like other simple commands.  */
+	case TSEMI:
+		/*
+		 * An empty command before a ; doesn't make much sense, and
+		 * should certainly be disallowed in the case of `if ;'.
+		 */
+		if (!redir)
+			synexpect(-1);
 	case TNL:
 	case TWORD:
+	case TRP:
 		tokpushback++;
 		return simplecmd(rpp, redir);
 	default:
