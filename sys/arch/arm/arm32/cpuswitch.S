@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.32 2003/04/26 17:50:21 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.33 2003/05/21 18:04:42 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -105,7 +105,6 @@
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
 
-#ifdef ARM32_PMAP_NEW
 /*
  * These are used for switching the translation table/DACR.
  * Since the vector page can be invalid for a short time, we must
@@ -122,7 +121,6 @@
 	mrs	r14, cpsr ; \
 	bic	r14, r14, #(I32_bit | F32_bit) ; \
 	msr	cpsr_c, r14
-#endif
 
 	.text
 
@@ -176,13 +174,11 @@ _C_LABEL(curpcb):
 .Lcpu_do_powersave:
 	.word	_C_LABEL(cpu_do_powersave)
 
-#ifdef ARM32_PMAP_NEW
 .Lpmap_kernel_cstate:
 	.word	(kernel_pmap_store + PMAP_CSTATE)
 
 .Llast_cache_state_ptr:
 	.word	_C_LABEL(pmap_cache_state)
-#endif
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
@@ -525,56 +521,6 @@ ENTRY(cpu_switch)
 	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 
-#ifndef ARM32_PMAP_NEW
-	ldr	r3, .Lblock_userspace_access
-	mov	r1, #0x00000001
-	mov	r2, #0x00000000
-	teq	r10, r11			/* r10 == r11? */
-	beq	.Lcs_context_switched		/* yes! */
-
-	/*
-	 * Don't allow user space access between the purge and the switch.
-	 */
-	ldr	r3, .Lblock_userspace_access
-	mov	r1, #0x00000001
-	mov	r2, #0x00000000
-	str	r1, [r3]
-
-	stmfd	sp!, {r0-r3}
-	ldr	r1, .Lcpufuncs
-	mov	lr, pc
-	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
-	ldmfd	sp!, {r0-r3}
-
-.Lcs_cache_purge_skipped:
-	/* At this point we need to kill IRQ's again. */
-	IRQdisable
-
-	/* rem: r2 = 0 */
-	/* rem: r3 = &block_userspace_access */
-	/* rem: r4 = return value */
-	/* rem: r6 = new lwp */
-	/* rem: r9 = new PCB */
-	/* rem: r11 == new L1 */
-
-	/*
-	 * Interrupts are disabled so we can allow user space accesses again
-	 * as none will occur until interrupts are re-enabled after the
-	 * switch.
-	 */
-	str	r2, [r3]
-
-	/* Switch the memory to the new process */
-	ldr	r3, .Lcpufuncs
-	mov	r0, r11
-	mov	lr, pc
-	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
-
-.Lcs_context_switched:
-
-
-#else	/* ARM32_PMAP_NEW */
-
 	ldr	r0, [r8, #(PCB_DACR)]		/* r0 = old DACR */
 	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
 	ldr	r8, [r9, #(PCB_CSTATE)]		/* r8 = &new_pmap->pm_cstate */
@@ -680,7 +626,7 @@ ENTRY(cpu_switch)
 	ldr	pc, [r2, #CF_DCACHE_WB_RANGE]
 
 .Lcs_same_vector:
-#endif
+#endif /* PMAP_INCLUDE_PTE_SYNC */
 
 	cmp	r10, r11		/* Switching to the same L1? */
 	ldr	r10, .Lcpufuncs
@@ -729,8 +675,6 @@ ENTRY(cpu_switch)
 	cmp	r5, r8
 	strne	r8, [r0]
 
-#endif	/* ARM32_PMAP_NEW */
-
 	/* rem: r4 = return value */
 	/* rem: r6 = new lwp */
 	/* rem: r9 = new PCB */
@@ -768,11 +712,7 @@ ENTRY(cpu_switch)
 #endif
 
 	/* We can enable interrupts again */
-#ifndef ARM32_PMAP_NEW
-	IRQenable
-#else
 	IRQenableALL
-#endif
 
 	/* rem: r4 = return value */
 	/* rem: r5 = new lwp's proc */
@@ -819,14 +759,10 @@ ENTRY(cpu_switch)
 	 */
 	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
 	ldr	r3, .Lblock_userspace_access
-#ifndef ARM32_PMAP_NEW
-	mov	r2, #0x00000000
-#else
 	mrc	p15, 0, r10, c2, c0, 0		/* r10 = old L1 */
 	mov	r5, #0				/* No previous cache state */
 	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
 	ldr	r8, [r9, #(PCB_CSTATE)]		/* r8 = new cache state */
-#endif
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 	b	.Lcs_cache_purge_skipped
 
@@ -922,7 +858,6 @@ ENTRY(switch_exit)
 	mov	r2, #0x00000000		/* curlwp = NULL */
 	str	r2, [r0]
 
-#ifdef ARM32_PMAP_NEW
 	/*
 	 * We're about to clear both the cache and the TLB.
 	 * Make sure to zap the 'last cache state' pointer since the
@@ -939,7 +874,6 @@ ENTRY(switch_exit)
 	ldr	r3, [r3, #(PCB_CSTATE)]		/* lwp0's cache state */
 	mov	r2, #-1
 	str	r2, [r3, #(CS_ALL)]		/* lwp0 is in da cache! */
-#endif
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
@@ -947,39 +881,6 @@ ENTRY(switch_exit)
 	mov	r2, #0x00000001
 	str	r2, [r1]
 
-#ifndef ARM32_PMAP_NEW
-	/* Switch to lwp0 context */
-
-	ldr	r0, .Lcpufuncs
-	mov	lr, pc
-	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
-
-	ldr	r2, [r5, #(L_ADDR)]
-
-	/*
-	 * r2 = lwp0's PCB
-	 */
-
-	IRQdisable
-
-	ldr	r0, [r2, #(PCB_PAGEDIR)]
-
-	/* Switch the memory to the new process */
-	ldr	r1, .Lcpufuncs
-	mov	lr, pc
-	ldr	pc, [r1, #CF_CONTEXT_SWITCH]
-
-	ldr	r0, .Lcurpcb
-   
-	/* Restore all the save registers */
-	add	r7, r2, #PCB_R8
-	ldmia	r7, {r8-r13}
-
-	str	r2, [r0]	/* curpcb = lwp0's PCB */
-
-	IRQenable
-
-#else	/* ARM32_PMAP_NEW */
 	/* Switch to lwp0 context */
 
 	ldr	r9, .Lcpufuncs
@@ -1019,7 +920,7 @@ ENTRY(switch_exit)
 	movne	r1, #4
 	movne	lr, pc
 	ldrne	pc, [r9, #CF_DCACHE_WB_RANGE]
-#endif
+#endif /* PMAP_INCLUDE_PTE_SYNC */
 
 	/*
 	 * Note: We don't do the same optimisation as cpu_switch() with
@@ -1042,7 +943,6 @@ ENTRY(switch_exit)
 	str	r7, [r0]	/* curpcb = lwp0's PCB */
 
 	IRQenableALL
-#endif
 
 	/*
 	 * Schedule the vmspace and stack to be freed.

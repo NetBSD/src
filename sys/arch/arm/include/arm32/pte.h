@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
+/*	$NetBSD: pte.h,v 1.7 2003/05/21 18:04:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -118,7 +118,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 
 #define	L1_TABLE_SIZE	0x4000		/* 16K */
 #define	L2_TABLE_SIZE	0x1000		/* 4K */
-#ifdef ARM32_PMAP_NEW
 /*
  * The new pmap deals with the 1KB coarse L2 tables by
  * allocating them from a pool. Until every port has been converted,
@@ -126,7 +125,6 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * should use L2_TABLE_SIZE_REAL until then.
  */
 #define	L2_TABLE_SIZE_REAL	0x400	/* 1K */
-#endif
 
 /*
  * ARM L1 Descriptors

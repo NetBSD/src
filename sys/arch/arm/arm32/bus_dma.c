@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.29 2003/04/18 11:08:25 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30 2003/05/21 18:04:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -878,9 +878,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pt_entry_t pte;
 	int seg;
 	pmap_t pmap;
-#ifdef ARM32_PMAP_NEW
 	pt_entry_t *ptep;
-#endif
 
 #ifdef DEBUG_DMA
 	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d, 1st=%d)\n",
@@ -903,11 +901,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * XXX in user address space.
 		 */
 		if (__predict_true(pmap == pmap_kernel())) {
-#ifndef ARM32_PMAP_NEW
-			pde = pmap_pde(pmap, vaddr);
-#else
 			(void) pmap_get_pde_pte(pmap, vaddr, &pde, &ptep);
-#endif
 			if (__predict_false(pmap_pde_section(pde))) {
 				curaddr = (*pde & L1_S_FRAME) |
 				    (vaddr & L1_S_OFFSET);
@@ -916,11 +910,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 					    ~ARM32_DMAMAP_COHERENT;
 				}
 			} else {
-#ifndef ARM32_PMAP_NEW
-				pte = *vtopte(vaddr);
-#else
 				pte = *ptep;
-#endif
 				KDASSERT((pte & L2_TYPE_MASK) != L2_TYPE_INV);
 				if (__predict_false((pte & L2_TYPE_MASK)
 						    == L2_TYPE_L)) {

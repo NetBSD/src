@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.29 2003/04/28 15:57:23 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.30 2003/05/21 18:04:43 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.29 2003/04/28 15:57:23 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.30 2003/05/21 18:04:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,6 @@ badaddr_read(void *addr, size_t size, void *rptr)
 #define TRAP_CODE ((fault_status & 0x0f) | (fault_address & 0xfffffff0))
 
 /* Determine if we can recover from a fault */
-#ifdef ARM32_PMAP_NEW
 #define	IS_FATAL_FAULT(x)					\
 	(((1 << (x)) &						\
 	  ((1 << FAULT_WRTBUF_0) | (1 << FAULT_WRTBUF_1) |	\
@@ -248,16 +247,6 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	   (1 << FAULT_BUSERR_2) | (1 << FAULT_BUSERR_3) |	\
 	   (1 << FAULT_BUSTRNL1) | (1 << FAULT_BUSTRNL2) |	\
 	   (1 << FAULT_ALIGN_0)  | (1 << FAULT_ALIGN_1))) != 0)
-#else
-#define	IS_FATAL_FAULT(x)					\
-	(((1 << (x)) &						\
-	  ((1 << FAULT_WRTBUF_0) | (1 << FAULT_WRTBUF_1) |	\
-	   (1 << FAULT_BUSERR_0) | (1 << FAULT_BUSERR_1) |	\
-	   (1 << FAULT_BUSERR_2) | (1 << FAULT_BUSERR_3) |	\
-	   (1 << FAULT_BUSTRNL1) | (1 << FAULT_BUSTRNL2) |	\
-	   (1 << FAULT_DOMAIN_S) | (1 << FAULT_DOMAIN_P) |	\
-	   (1 << FAULT_ALIGN_0)  | (1 << FAULT_ALIGN_1))) != 0)
-#endif
 
 void
 data_abort_handler(frame)
@@ -436,9 +425,6 @@ we_re_toast:
 	 *  FAULT_PERM_P	Page Permission Fault
 	 *  FAULT_TRANS_S	Section Translation Fault
 	 *  FAULT_PERM_S	Section Permission Fault
-	 *
-	 * And if ARM32_PMAP_NEW is in effect:
-	 *
 	 *  FAULT_DOMAIN_P	Page Domain Error Fault
 	 *  FAULT_DOMAIN_S	Section Domain Error Fault
 	 *
@@ -522,15 +508,8 @@ we_re_toast:
 		printf("fault protection = %d\n", ftype);
 #endif
             
-#ifndef ARM32_PMAP_NEW
-	if ((ftype & VM_PROT_WRITE) ?
-	    pmap_modified_emulation(map->pmap, va) :
-	    pmap_handled_emulation(map->pmap, va))
-		goto out;
-#else
 	if (pmap_fault_fixup(map->pmap, va, ftype, user))
 		goto out;
-#endif
 
 	if (current_intr_depth > 0) {
 #if defined(DDB) || defined(KGDB)
@@ -670,50 +649,11 @@ prefetch_abort_handler(frame)
 		return;
 	}
 
-#ifndef ARM32_PMAP_NEW
-#ifdef CPU_SA110
-	/*
-	 * There are bugs in the rev K SA110.  This is a check for one
-	 * of them.
-	 */
-	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
-	    curcpu()->ci_arm_cpurev < 3) {
-		/* Always current pmap */
-		pt_entry_t *pte = vtopte((vaddr_t) fault_pc);
-		struct pmap *pmap = p->p_vmspace->vm_map.pmap;
-
-		if (pmap_pde_v(pmap_pde(pmap, (vaddr_t) fault_pc)) &&
-		    pmap_pte_v(pte)) {
-			extern int kernel_debug;
-			if (kernel_debug & 1) {
-				printf("prefetch_abort: page is already "
-				    "mapped - pte=%p *pte=%08x\n", pte, *pte);
-				printf("prefetch_abort: pc=%08lx proc=%p "
-				    "process=%s\n", fault_pc, p, p->p_comm);
-				printf("prefetch_abort: far=%08x fs=%x\n",
-				    cpu_faultaddress(), cpu_faultstatus());
-				printf("prefetch_abort: trapframe=%08x\n",
-				    (u_int)frame);
-			}
-#ifdef DDB
-			if (kernel_debug & 2)
-				Debugger();
-#endif
-		}
-	}
-#endif /* CPU_SA110 */
-
-	if (pmap_handled_emulation(map->pmap, va))
-		goto out;
-
-#else	/* ARM32_PMAP_NEW */
-
 	/*
 	 * See if the pmap can handle this fault on its own...
 	 */
 	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1))
 		goto out;
-#endif
 
 	if (current_intr_depth > 0) {
 #ifdef DDB
