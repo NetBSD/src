@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 1996/06/16 23:28:18 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 1996/06/20 20:12:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1694,6 +1694,10 @@ fd_do_eject()
 	auxregbisc(AUXIO_FEJ, AUXIO_FDS);
 }
 
+#ifdef RAMDISK_HOOKS
+int	fd_read_rd_image __P((size_t *, caddr_t *));
+#endif
+
 /* ARGSUSED */
 void
 fd_mountroot_hook(dev)
@@ -1707,7 +1711,70 @@ fd_mountroot_hook(dev)
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
 			printf("\n");
-			return;
+			break;
 		}
 	}
+#ifdef RAMDISK_HOOKS
+	{
+	extern int (*rd_read_image) __P((size_t *, caddr_t *));
+	rd_read_image = fd_read_rd_image;
+	}
+#endif
 }
+
+#ifdef RAMDISK_HOOKS
+#include <sys/malloc.h>
+#include <sys/proc.h>
+
+#define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
+
+int
+fd_read_rd_image(sizep, addrp)
+	size_t	*sizep;
+	caddr_t	*addrp;
+{
+	struct buf buf, *bp = &buf;
+	dev_t dev;
+	off_t offset;
+	caddr_t addr;
+
+	dev = makedev(54,0);	/* XXX */
+
+	MALLOC(addr, caddr_t, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
+	*addrp = addr;
+
+	if (fdopen(dev, 0, S_IFCHR, NULL))
+		panic("fd: mountroot: fdopen");
+
+	offset = 0;
+
+	for (;;) {
+		bp->b_dev = dev;
+		bp->b_error = 0;
+		bp->b_resid = 0;
+		bp->b_proc = NULL;
+		bp->b_flags = B_BUSY | B_PHYS | B_RAW | B_READ;
+		bp->b_blkno = btodb(offset);
+		bp->b_bcount = DEV_BSIZE;
+		bp->b_data = addr;
+		fdstrategy(bp);
+		while ((bp->b_flags & B_DONE) == 0) {
+			tsleep((caddr_t)bp, PRIBIO + 1, "physio", 0);
+		}
+		if (bp->b_error)
+			panic("fd: mountroot: fdread error %d", bp->b_error);
+
+		if (bp->b_resid != 0)
+			break;
+
+		addr += DEV_BSIZE;
+		offset += DEV_BSIZE;
+		if (offset + DEV_BSIZE > FDMICROROOTSIZE)
+			break;
+	}
+	(void)fdclose(dev, 0, S_IFCHR, NULL);
+	*sizep = offset;
+	fd_do_eject();
+	return 0;
+}
+#endif
