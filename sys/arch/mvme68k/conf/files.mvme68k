@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.5 1996/04/26 18:47:38 chuck Exp $
+#	$NetBSD: files.mvme68k,v 1.6 1996/05/16 19:00:06 thorpej Exp $
 
 # config file for mvme68k
 
@@ -28,7 +28,7 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
 
-device le: ifnet, ether
+# device defined in sys/conf/files
 attach le at pcc with le_pcc
 file arch/mvme68k/dev/if_le.c			le
 
