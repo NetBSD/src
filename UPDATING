@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.15 2001/02/04 19:50:26 christos Exp $
+$NetBSD: UPDATING,v 1.16 2001/02/17 16:11:00 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -38,7 +38,7 @@ Recent changes:
 	The following make directives are obsoleted.
 	MKCRYPTO_RSA NOCRYPTO_RSA NOCRYPTO_RC5 NOCRYPTO_IDEA 
 	By default, RSA is built into libcrypto.  IDEA and RC5 will not be
-	bulit into libcrypto.  By using MKCRYPTO_{RC5,IDEA}, you can build
+	built into libcrypto.  By using MKCRYPTO_{RC5,IDEA}, you can build
 	additional library libcrypto_{idea,rc5}.
 
 20000623:
