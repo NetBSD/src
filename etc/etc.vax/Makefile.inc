@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2002/10/10 16:58:07 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2002/12/02 13:18:14 lukem Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -10,14 +10,6 @@ BUILD_KERNELS=		INSTALL
 INSTALLATION_DIRS+=	installation/bootfs	\
 			installation/miniroot	\
 			installation/netboot
-
-snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/vax && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 
 iso-image_md_pre:
 	cp -f ${RELEASEDIR}/installation/netboot/netbsd.ram.gz \
