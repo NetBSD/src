@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/02/07 01:52:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2003/03/01 13:09:09 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,15 +25,17 @@ INSTALL_TARGET+=install-gdb
 
 CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
+NEWCONFIGDIR?=	${.CURDIR}/../..
+
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
 	@MAKE=${MAKE:Q} sh ${.CURDIR}/mknative libgcc \
-		${.OBJDIR}/build ${.CURDIR}/../.. ${MACHINE_GNU_PLATFORM}
+		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 native: .native/.configure_done
 	@echo 'Extracting GNU configury for a native toolchain.'
-	@MAKE=${MAKE:Q} sh ${.CURDIR}/mknative all \
-		${.OBJDIR}/.native ${.CURDIR}/../.. ${MACHINE_GNU_PLATFORM}
+	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative all \
+		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	@mkdir .native 2>/dev/null || true
