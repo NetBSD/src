@@ -5,8 +5,8 @@
  * created from: syscalls.master,v 1.10 1993/12/12 19:28:21
  */
 
-#include "param.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/systm.h>
 
 int	nosys();
 

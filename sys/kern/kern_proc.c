@@ -31,23 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_proc.c	7.16 (Berkeley) 6/28/91
- *	$Id: kern_proc.c,v 1.4 1993/06/27 06:01:40 andrew Exp $
+ *	$Id: kern_proc.c,v 1.5 1993/12/18 04:20:57 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "buf.h"
-#include "acct.h"
-#include "wait.h"
-#include "file.h"
-#include "../ufs/quota.h"
-#include "uio.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "ioctl.h"
-#include "tty.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/acct.h>
+#include <sys/wait.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+
+#include <ufs/quota.h>
 
 /* static */ void pgdelete __P((struct pgrp *pgrp));
 

@@ -31,14 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_mcount.c	7.10 (Berkeley) 5/7/91
- *	$Id: subr_mcount.c,v 1.3 1993/05/20 02:54:56 cgd Exp $
+ *	$Id: subr_mcount.c,v 1.4 1993/12/18 04:21:27 mycroft Exp $
  */
 
 #ifdef GPROF
-#include "gprof.h"
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/gprof.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos
