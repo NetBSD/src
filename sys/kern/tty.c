@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.109 1998/08/04 04:03:16 perry Exp $	*/
+/*	$NetBSD: tty.c,v 1.110 1998/08/18 06:29:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -900,7 +900,7 @@ ttioctl(tp, cmd, data, flag, p)
 		}
 		if (cmd != TIOCSETAF) {
 			if (ISSET(t->c_lflag, ICANON) !=
-			    ISSET(tp->t_lflag, ICANON))
+			    ISSET(tp->t_lflag, ICANON)) {
 				if (ISSET(t->c_lflag, ICANON)) {
 					SET(tp->t_lflag, PENDIN);
 					ttwakeup(tp);
@@ -913,6 +913,7 @@ ttioctl(tp, cmd, data, flag, p)
 					tp->t_canq = tq;
 					CLR(tp->t_lflag, PENDIN);
 				}
+			}
 		}
 		tp->t_iflag = t->c_iflag;
 		tp->t_oflag = t->c_oflag;

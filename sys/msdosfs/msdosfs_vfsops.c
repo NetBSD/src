@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.58 1998/08/09 20:52:21 perry Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.59 1998/08/18 06:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -858,12 +858,13 @@ msdosfs_sync(mp, waitfor, cred, p)
 	 * If we ever switch to not updating all of the fats all the time,
 	 * this would be the place to update them from the first one.
 	 */
-	if (pmp->pm_fmod != 0)
+	if (pmp->pm_fmod != 0) {
 		if (pmp->pm_flags & MSDOSFSMNT_RONLY)
 			panic("msdosfs_sync: rofs mod");
 		else {
 			/* update fats here */
 		}
+	}
 	/*
 	 * Write back each (modified) denode.
 	 */

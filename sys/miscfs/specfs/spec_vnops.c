@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.41 1998/08/03 14:20:00 kleink Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.42 1998/08/18 06:30:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -418,11 +418,12 @@ spec_ioctl(v)
 		    ap->a_fflag, ap->a_p));
 
 	case VBLK:
-		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE)
+		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
 			if (bdevsw[maj].d_type == D_TAPE)
 				return (0);
 			else
 				return (1);
+		}
 		return ((*bdevsw[maj].d_ioctl)(dev, ap->a_command, ap->a_data,
 		   ap->a_fflag, ap->a_p));
 
