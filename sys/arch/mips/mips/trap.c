@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93.2.1 1998/10/15 03:16:48 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.2.2 1998/10/30 08:33:36 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.1 1998/10/15 03:16:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.2 1998/10/30 08:33:36 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -837,7 +837,6 @@ interrupt(status, cause, pc)
 #endif
 	/* real device interrupt */
 	if ((mask & INT_MASK_REAL_DEV) && mips_hardware_intr) {
-		cnt.v_intr++;
 		splx((*mips_hardware_intr)(mask, pc, status, cause));
 	}
 
