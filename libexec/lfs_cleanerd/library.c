@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.22 2001/07/13 20:30:22 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.23 2001/07/18 05:46:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.22 2001/07/13 20:30:22 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.23 2001/07/18 05:46:44 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: library.c,v 1.22 2001/07/13 20:30:22 perseant Exp $");
 
 #include "clean.h"
 
-void	 add_blocks(FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
+void	 add_blocks(FS_INFO *, BLOCK_INFO_15 *, int *, SEGSUM *, caddr_t,
 	     daddr_t, daddr_t);
-void	 add_inodes(FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
+void	 add_inodes(FS_INFO *, BLOCK_INFO_15 *, int *, SEGSUM *, caddr_t,
 	     daddr_t);
 int	 bi_compare(const void *, const void *);
 int	 bi_toss(const void *, const void *, const void *);
@@ -340,9 +340,9 @@ pseg_size(daddr_t pseg_addr, FS_INFO *fsp, SEGSUM *sp)
  * pair will be listed at most once.
  */
 int
-lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bcount)
+lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int *bcount)
 {
-	BLOCK_INFO *bip, *_bip;
+	BLOCK_INFO_15 *bip, *_bip;
 	SEGSUM *sp;
 	SEGUSE *sup;
 	FINFO *fip;
@@ -355,7 +355,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 	bip = NULL;
 	lfsp = &fsp->fi_lfs;
 	nelem = 2 * lfsp->lfs_ssize;
-	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO))))
+	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO_15))))
 		goto err0;
 
 	sup = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, seg);
@@ -363,6 +363,14 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 	seg_addr = sntod(lfsp, seg);
 	pseg_addr = seg_addr + (sup->su_flags & SEGUSE_SUPERBLOCK ? 
 		btofsb(lfsp, LFS_SBPAD) : 0);
+	if (seg == 0 && lfsp->lfs_version > 1) {
+		if (fsbtob(lfsp, pseg_addr) < LFS_LABELPAD + LFS_SBPAD) {
+			pseg_addr = btofsb(lfsp, LFS_LABELPAD + LFS_SBPAD);
+			s = seg_buf + LFS_LABELPAD + LFS_SBPAD;
+			syslog(LOG_DEBUG, "adj segment 0 offset to 0x%x\n",
+			       pseg_addr);
+		}
+	}
 
         if(debug > 1)
             syslog(LOG_DEBUG, "\tsegment buffer at: %p\tseg_addr 0x%x", s, seg_addr);
@@ -403,7 +411,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 
 		if (*bcount + nblocks + sp->ss_ninos > nelem) {
 			nelem = *bcount + nblocks + sp->ss_ninos;
-			bip = realloc (bip, nelem * sizeof(BLOCK_INFO));
+			bip = realloc (bip, nelem * sizeof(BLOCK_INFO_15));
 			if (!bip)
 				goto err0;
 		}
@@ -419,8 +427,8 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 		       nsegs, seg, sup->su_nsums);
 		goto err0;
 	}
-	qsort(bip, *bcount, sizeof(BLOCK_INFO), bi_compare);
-	toss(bip, bcount, sizeof(BLOCK_INFO), bi_toss, NULL);
+	qsort(bip, *bcount, sizeof(BLOCK_INFO_15), bi_compare);
+	toss(bip, bcount, sizeof(BLOCK_INFO_15), bi_toss, NULL);
 
         if(debug > 1) {
             syslog(LOG_DEBUG, "BLOCK INFOS");
@@ -440,21 +448,21 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 }
 
 /*
- * This will parse a partial segment and fill in BLOCK_INFO structures
+ * This will parse a partial segment and fill in BLOCK_INFO_15 structures
  * for each block described in the segment summary.  It will not include
  * blocks or inodes from files with new version numbers.
  */
 void
-add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
+add_blocks (FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
 	    caddr_t seg_buf, daddr_t segaddr, daddr_t psegaddr)
 {
 	IFILE	*ifp;
 	FINFO	*fip;
 	caddr_t	bp;
 	daddr_t	*dp, *iaddrp;
-	int fsb_per_block, i, j;
-	int fsb_frag;
-	u_long page_size;
+	int fsb_per_block, fsb_per_iblock, i, j;
+	int fsb_frag, iblks_seen;
+	u_long iblk_size, blk_size;
 	struct lfs *lfsp;
 
         if(debug > 1)
@@ -462,7 +470,9 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 
 	lfsp = &fsp->fi_lfs;
 	fsb_per_block = fragstofsb(lfsp, lfsp->lfs_frag);
-	page_size = fsp->fi_lfs.lfs_bsize;
+	fsb_per_iblock = btofsb(lfsp, lfsp->lfs_ibsize);
+	blk_size = fsp->fi_lfs.lfs_bsize;
+	iblk_size = fsp->fi_lfs.lfs_ibsize;
 	bp = seg_buf + fsbtob(lfsp, psegaddr - segaddr) + lfsp->lfs_sumsize;
 	bip += *countp;
 	psegaddr += btofsb(lfsp, lfsp->lfs_sumsize);
@@ -472,19 +482,20 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 		fip = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
 	else
 		fip = (FINFO *)(sp + 1);
+	iblks_seen = 0;
 	for (i = 0; i < sp->ss_nfinfo;
 	    ++i, fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks])) {
 
 		ifp = IFILE_ENTRY(&fsp->fi_lfs, fsp->fi_ifilep, fip->fi_ino);
 		PRINT_FINFO(fip, ifp);
-		if (ifp->if_version > fip->fi_version)
-			continue;
 		dp = &(fip->fi_blocks[0]);
 		for (j = 0; j < fip->fi_nblocks; j++, dp++) {
 			/* Skip over intervening inode blocks */
 			while (psegaddr == *iaddrp) {
-				psegaddr += fsb_per_block;
-				bp += page_size;
+				/* syslog(LOG_DEBUG, "skipping ino block at 0x%x",
+				       psegaddr); */
+				psegaddr += fsb_per_iblock;
+				bp += iblk_size;
 				--iaddrp;
 			}
 			bip->bi_inode = fip->fi_ino;
@@ -494,15 +505,18 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 				bip->bi_segcreate = (time_t)(sp->ss_ident);
 			else
 				bip->bi_segcreate = (time_t)(sp->ss_create);
+			/* syslog(LOG_DEBUG, "ino %d lbn %d 0x%x %p",
+				bip->bi_inode, bip->bi_lbn, bip->bi_daddr,
+				bp); */
 			bip->bi_bp = bp;
 			bip->bi_version = ifp->if_version;
 
 			if (j < fip->fi_nblocks-1
-			    || fip->fi_lastlength == page_size)
+			    || fip->fi_lastlength == blk_size)
 			{
-				bip->bi_size = page_size;
+				bip->bi_size = blk_size;
 				psegaddr += fsb_per_block;
-				bp += page_size;
+				bp += blk_size;
 			} else {
 				fsb_frag = fragstofsb(&(fsp->fi_lfs),
 				    numfrags(&(fsp->fi_lfs),
@@ -517,8 +531,10 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 				bp += fip->fi_lastlength;
 				psegaddr += fsb_frag;
 			}
-			++bip;
-			++(*countp);
+			if (ifp->if_version == fip->fi_version) {
+				++bip;
+				++(*countp);
+			}
 		}
 	}
 }
@@ -529,13 +545,13 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
  * actually added.
  */
 void
-add_inodes (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
+add_inodes (FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
 	    caddr_t seg_buf, daddr_t seg_addr)
 {
 	struct dinode *di = NULL;	/* XXX gcc */
 	struct lfs *lfsp;
 	IFILE *ifp;
-	BLOCK_INFO *bp;
+	BLOCK_INFO_15 *bp;
 	daddr_t	*daddrp;
 	ino_t inum;
 	int i;
@@ -720,7 +736,7 @@ print_SEGSUM (struct lfs *lfsp, SEGSUM *p, daddr_t addr)
 int
 bi_compare(const void *a, const void *b)
 {
-	const BLOCK_INFO *ba, *bb;
+	const BLOCK_INFO_15 *ba, *bb;
 	int diff;
 
 	ba = a;
@@ -751,7 +767,7 @@ bi_compare(const void *a, const void *b)
 int
 bi_toss(const void *dummy, const void *a, const void *b)
 {
-	const BLOCK_INFO *ba, *bb;
+	const BLOCK_INFO_15 *ba, *bb;
 
 	ba = a;
 	bb = b;
