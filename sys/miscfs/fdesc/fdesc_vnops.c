@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.37 1996/10/13 02:21:27 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.38 1996/10/25 21:57:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,7 +265,7 @@ fdesc_lookup(v)
 	} */ *ap = v;
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
-	char *pname;
+	const char *pname;
 	struct proc *p;
 	int nfiles;
 	unsigned fd = 0;
