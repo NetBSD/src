@@ -1,4 +1,4 @@
-/*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
+/*	$NetBSD: unimpl_emul.s,v 1.3 2000/08/26 02:31:02 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -59,7 +59,7 @@
 #
 # Emulation of instruction trapped via SCB vector 0x18. (reserved op)
 #
-unimemu:.globl unimemu
+ALTENTRY(unimemu)
 	pushl	r0
 	movl	8(sp),r0	# get trap address
 	movzbl	(r0),r0		# fetch insn generating trap
