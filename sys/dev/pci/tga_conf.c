@@ -1,4 +1,4 @@
-/* $NetBSD: tga_conf.c,v 1.2 2000/03/04 10:28:00 elric Exp $ */
+/* $NetBSD: tga_conf.c,v 1.3 2000/03/12 05:32:29 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -109,15 +109,19 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 #undef MB
 
 int
-tga_identify(regs)
-	tga_reg_t *regs;
+tga_identify(dc)
+	struct tga_devconfig *dc;
 {
 	int type;
+	int gder;
 	int deep, addrmask, wide;
 
-	deep = (regs[TGA_REG_GDER] & 0x1) != 0;		/* XXX */
-	addrmask = ((regs[TGA_REG_GDER] >> 2) & 0x7);	/* XXX */
-	wide = (regs[TGA_REG_GDER] & 0x200) == 0;	/* XXX */
+	gder = TGARREG(dc, TGA_REG_GDER);
+
+	deep = (gder & 0x1) != 0; /* XXX */
+	addrmask = (gder >> 2) & 0x7; /* XXX */
+	wide = (gder & 0x200) == 0; /* XXX */
+
 
 	type = TGA_TYPE_UNKNOWN;
 
