@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.82 2004/04/24 13:38:36 minoura Exp $	*/
+/*	$NetBSD: clock.c,v 1.83 2004/07/01 13:00:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,12 +121,13 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.82 2004/04/24 13:38:36 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.83 2004/07/01 13:00:39 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
 
 #include "opt_multiprocessor.h"
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,9 +599,21 @@ sysbeep(pitch, period)
 #endif
 }
 
+#ifdef NTP
+extern int fixtick; /* XXX */
+#endif /* NTP */
+
 void
 i8254_initclocks()
 {
+
+#ifdef NTP
+	/*
+	 * we'll actually get (TIMER_FREQ/rtclock_tval) interrupts/sec.
+	 */
+	fixtick = 1000000 -
+	    (tick * TIMER_FREQ + rtclock_tval / 2) / rtclock_tval;
+#endif /* NTP */
 
 	/*
 	 * XXX If you're doing strange things with multiple clocks, you might
