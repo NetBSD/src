@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)nfsd.c	5.10 (Berkeley) 4/24/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsd/Attic/nfsd.c,v 1.4 1993/04/10 20:16:04 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsd/Attic/nfsd.c,v 1.5 1993/05/11 07:14:24 glass Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -63,6 +63,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsd/Attic/nfsd.c,v 1.4 1993/0
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
+#include <err.h>
 
 /* Global defs */
 #ifdef DEBUG
@@ -201,6 +202,8 @@ main(argc, argv, envp)
 	}
 	signal(SIGCHLD, reapchild);
 	signal(SIGSYS, not_nfsserver);
+	if (nfssvc(-1, NULL, 0, NULL, 0) >= 0)
+	    err(1, "bad arguments didn't cause error");
 	if (reregister) {
 		if (udpflag && !pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_UDP,
 		    NFS_PORT)) {
@@ -364,6 +367,5 @@ setproctitle(a, sin)
 
 void not_nfsserver()
 {
-    (void) fprintf(stderr, "nfsd: not configured as NFS server\n");
-    exit(1);
+    err(1, "not configured as NFS server\n");
 }
