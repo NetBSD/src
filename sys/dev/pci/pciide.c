@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.67 2000/06/12 21:20:51 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68 2000/06/12 21:25:01 bouyer Exp $	*/
 
 
 /*
@@ -387,7 +387,7 @@ const struct pciide_product_desc pciide_opti_products[] =  {
 const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,
 	  IDE_PCI_CLASS_OVERRIDE,
-	  "Triones/Highpoint HPT366/370 UDMA/66 IDE Controller",
+	  "Triones/Highpoint HPT366/370 IDE Controller",
 	  hpt_chip_map,
 	},
 	{ 0,
