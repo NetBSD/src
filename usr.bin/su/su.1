@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.40 2005/02/28 02:30:54 christos Exp $
+.\"	$NetBSD: su.1,v 1.41 2005/04/05 18:46:33 christos Exp $
 .\"
-.Dd August 20, 2003
+.Dd April 5, 2005
 .Dt SU 1
 .Os
 .Sh NAME
@@ -196,35 +196,73 @@ By default (unless the prompt is reset by a startup file) the super-user
 prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
-.Sh COMPILATION OPTIONS
-Several compilation time options are available that alter the program's
-behavior.
-These options are:
-.Bl -tag -width "SU_INDIRECT_GROUP"
-.It SU_GROUP
-If defined, it changes the default group that is allowed to become
-.Dq root
-from
-.Dq wheel
-to the specified string.
-.\" For pam this can be done by adding a line to /etc/pam.d/su such as:
-.\" auth requisite pam_group.so no_warn group=groupname root_only fail_safe
-.It SU_ROOTAUTH
-If defined, it specifies a group whose members are allowed to become
-.Dq root
-by supplying their own password instead of the
-.Dq root
-one.
-.\" For pam this can be done by adding a line to /etc/pam.d/su such as
-.\" auth sufficient pam_group.so no_warn group=rootauth root_only fail_safe authenticate
-.It SU_INDIRECT_GROUP
-If defined, the
+.Sh CUSTOMIZATION
+.Bl -tag -width ""
+.It Changing required group
+For the
+.Xr pam 8
+version of
+.Nm
+the name of the required group can be changed by setting
+.Ar gname
+in 
+.Xr pam.conf 5 :
+.sp
+.nf
+ auth requisite pam_group.so no_warn group=gname root_only fail_safe
+.fi
+.sp
+For the non
+.Xr pam 8
+version of
+.Nm
+the same can be achieved by compiling with
+.Dv SU_GROUP
+set to the desired group name.
+.It Supplying own password
+.Nm
+can be configured so that users in a particular group can supply their
+own password to become
+.Dq root .
+For the
+.Xr pam 8
+version of
+.Nm
+this can be done by adding a line to 
+.Xr pam.conf 5
+such as:
+.sp
+.nf
+ auth sufficient pam_group.so no_warn group=gname root_only authenticate
+.fi
+.sp
+where
+.Ar gname
+is the name of the desired group.
+For the non
+.Xr pam 8
+version of
+.Nm
+the same can be achieved by compiling with
+.Dv SU_ROOTAUTH
+set to the desired group name.
+.It Indirect groups
+This option is not available with the
+.Xr pam 8
+version of
+.Nm .
+For the non
+.Xr pam 8
+version of
+.Nm ,
+if 
+.Dv SU_INDIRECT_GROUP
+is defined, the
 .Ar SU_GROUP
 and
 .Ar SU_ROOTAUTH
 groups are treated as indirect groups.
 The group members of those two groups are treated as groups themselves.
-.\" This option is not supported under pam.
 .El
 .Sh EXIT STATUS
 .Nm
