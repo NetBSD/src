@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.4 2001/01/04 14:42:18 lukem Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.5 2001/05/08 23:21:17 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -470,7 +470,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 						perror("sendto");
 #endif
 						warnx("clnt_bcast: cannot send"
-						      "broadcast packet");
+						      " broadcast packet");
 						stat = RPC_CANTSEND;
 						continue;
 					};
