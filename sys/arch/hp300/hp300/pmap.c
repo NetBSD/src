@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 1998/12/21 08:51:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 1998/12/21 09:02:43 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1645,27 +1645,36 @@ pmap_update()
  *	collected.
  *
  *	Called by the pageout daemon when pages are scarce.
- *
- *	Note: THIS IMPLEMENTATION IS BOGUS!  When we're called, the
- *	process using this pmap is about to be swapped out!  So, we
- *	should free all of the page tables being used by that process!
  */
 void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-	int bank, s;
-
-	if (pmap != pmap_kernel())
-		return;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_collect(%p)\n", pmap));
 
-	s = splimp();
-	for (bank = 0; bank < vm_nphysseg; bank++)
-		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
-		    ptoa(vm_physmem[bank].end));
-	splx(s);
+	if (pmap == pmap_kernel()) {
+		int bank, s;
+
+		/*
+		 * XXX This is very bogus.  We should handle kernel PT
+		 * XXX pages much differently.
+		 */
+
+		s = splimp();
+		for (bank = 0; bank < vm_nphysseg; bank++)
+			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
+			    ptoa(vm_physmem[bank].end));
+		splx(s);
+	} else {
+		/*
+		 * This process is about to be swapped out; free all of
+		 * the PT pages by removing the physical mappings for its
+		 * entire address space.  Note: pmap_remove() performs
+		 * all necessary locking.
+		 */
+		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+	}
 
 #ifdef notyet
 	/* Go compact and garbage-collect the pv_table. */
