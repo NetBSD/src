@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.37 1999/03/23 10:45:37 lukem Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.38 1999/04/22 04:50:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,9 +41,7 @@
 #include <sys/select.h>			/* for struct selinfo */
 #include <sys/queue.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_sb_max.h"
-#else
+#if !defined(_KERNEL) || defined(LKM)
 struct uio;
 #endif
 
@@ -225,7 +223,7 @@ struct socket {
 			} while (0)
 
 #ifdef _KERNEL
-u_long	sb_max;
+extern	u_long sb_max;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
 struct	socket *sonewconn1 __P((struct socket *head, int connstatus));

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.25 1998/10/23 19:37:32 jonathan Exp $	*/
+/*	$NetBSD: param.c,v 1.26 1999/04/22 04:50:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -41,11 +41,13 @@
  */
 
 #include "opt_rtc_offset.h"
+#include "opt_sb_max.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -102,6 +104,7 @@ int	ncallout = 16 + NPROC;
 int	nclist = 60 + 12 * MAXUSERS;
 #endif
 int	nmbclusters = NMBCLUSTERS;
+u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
 /*
