@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/24 17:48:43 drochner Exp $
 
 DIST=		${.CURDIR}/../../dist
 
@@ -8,7 +8,13 @@ MKMAN=		no
 
 .PATH:		${DIST}/gas
 
-CPPFLAGS+=	-I${.CURDIR}/../gas.new/arch/${MACHINE_ARCH} \
+.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
+ARCHSUBDIR= mips
+.else
+ARCHSUBDIR= ${MACHINE_ARCH}
+.endif
+
+CPPFLAGS+=	-I${.CURDIR}/../gas.new/arch/${ARCHSUBDIR} \
 		-I${.CURDIR}/../gas.new -I${DIST}/gas/config -I${DIST}/gas \
 		-I${DIST}/include -D_GNU_SOURCE \
 		-DTARGET_ALIAS=\"${MACHINE_GNU_ARCH}-netbsd\" \

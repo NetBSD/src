@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/09 17:50:35 tv Exp $
+#	$NetBSD: Makefile,v 1.8 1999/02/24 17:48:43 drochner Exp $
 #
 
 .include <bsd.own.mk>
 
 # Override to make a cross assembler.
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+TARGET_ARCH ?=	mips
+.else
 TARGET_ARCH ?=	${MACHINE_ARCH}
+.endif
 
 PROG=		as
 MAN=		as.1

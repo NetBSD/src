@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 1999/02/13 02:54:25 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.18 1999/02/24 17:48:42 drochner Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -21,8 +21,14 @@ COMMON=		${.CURDIR}/../common
 COMMONOBJ!=	cd ${.CURDIR}/../common; ${MAKE} print-objdir
 .endif
 
+.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
+ARCHSUBDIR= mips
+.else
+ARCHSUBDIR= ${MACHINE_ARCH}
+.endif
+
 CPPFLAGS+=	-I${.CURDIR}/../arch \
-		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../arch/${ARCHSUBDIR} \
 		-I${COMMONOBJ} \
 		-I${DIST} \
 		-I${DIST}/config \
