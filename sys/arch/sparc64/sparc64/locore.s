@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.185 2003/12/02 22:44:17 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.186 2004/01/04 19:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7460,17 +7460,10 @@ ENTRY(switchexit)
 	set	_C_LABEL(idle_u), %l6
 	SET_SP_REDZONE(%l6, %l5)
 #endif
-	brz,pn	%l3, 0f				! Are we a lwp?
-	 wrpr	%g0, PSTATE_INTR, %pstate	! and then enable traps
-	
-	call	_C_LABEL(exit2)			! exit2(p)
-	 mov	%l2, %o0
-	ba,a,pt	%icc, 1f
-	 nop
-0:
+
+	wrpr	%g0, PSTATE_INTR, %pstate	! and then enable traps
 	call	_C_LABEL(lwp_exit2)		! lwp_exit2(p)
 	 mov	%l2, %o0
-1:	
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
