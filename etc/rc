@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.51 1995/09/02 17:19:22 thorpej Exp $
+#	$Id: rc,v 1.52 1995/09/02 17:30:43 thorpej Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -225,6 +225,13 @@ fi
 # bootparamd isn't run.
 if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
 	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
+fi
+
+# $rbootd_flags is imported from /etc/netstart;
+# If $rbootd_flags == NO or /etc/rbootd.conf doesn't exist, then
+# rbootd isn't run.
+if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
+	echo -n ' rbootd';		rbootd ${rbootd_flags}
 fi
 
 echo '.'
