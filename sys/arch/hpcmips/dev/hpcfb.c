@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.32 2001/01/04 06:07:43 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.33 2001/01/05 09:04:55 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.32 2001/01/04 06:07:43 sato Exp $";
+    "$Id: hpcfb.c,v 1.33 2001/01/05 09:04:55 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -611,15 +611,19 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 	
 	case WSDISPLAYIO_SMODE:
 		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){ 
-			if (sc->sc_mapping)
+			if (sc->sc_mapping){
+				sc->sc_mapping = 0;
 				hpcfb_refresh_screen(sc);
-			sc->sc_mapping = 0;
+			}
 		} else {
 #ifdef HPCFB_JUMP
-			if (!sc->sc_mapping)
+			if (!sc->sc_mapping) {
+				sc->sc_mapping = 1;
 				hpcfb_check_scroll(dc);
-#endif /* HPCFB_JUMP */
+			}
+#else /* HPCFB_JUMP */
 			sc->sc_mapping = 1;
+#endif /* HPCFB_JUMP */
 		}
 		if (sc && sc->sc_accessops->iodone)
 			(*sc->sc_accessops->iodone)(sc->sc_accessctx);
@@ -700,6 +704,9 @@ hpcfb_refresh_screen(sc)
 {
 	struct hpcfb_devconfig *dc = sc->sc_dc;
 	int x, y;
+
+	if (dc == NULL)
+		return;
 
 #ifdef HPCFB_JUMP
 	if (dc->dc_state&HPCFB_DC_SCROLLPENDING) {
@@ -840,7 +847,7 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 #endif /* HPCFB_JUMP */
 	odc = sc->sc_dc;
 
-	if (odc == dc) {
+	if (dc == NULL || odc == dc) {
 		hpcfb_refresh_screen(sc);
 		return 0;
 	}
@@ -856,15 +863,9 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	dc->dc_rinfo.ri_bits = dc->dc_fbaddr;
 	sc->sc_dc = dc;
 
+#endif /* HPCFB_MULTI */
 	/* redraw screen image */
-	if (dc->dc_curx >= 0 && dc->dc_cury >= 0)
-		hpcfb_cursor_raw(dc, 0,  dc->dc_cury, dc->dc_curx); /* disable cursor */
-	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
-	if (dc->dc_curx >= 0 && dc->dc_cury >= 0)
-		hpcfb_cursor_raw(dc, 1,  dc->dc_cury, dc->dc_curx); /* re enable cursor */
-#else /* HPCFB_MULTI */
 	hpcfb_refresh_screen(sc);
-#endif /* !HPCFB_MULTI */
 
 	return (0);
 }
