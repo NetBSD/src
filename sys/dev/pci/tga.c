@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.49 2002/10/02 16:51:55 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.50 2002/10/29 17:01:16 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.49 2002/10/02 16:51:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.50 2002/10/29 17:01:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,13 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.49 2002/10/02 16:51:55 thorpej Exp $");
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
 #include <uvm/uvm_extern.h>
-
-#ifdef __alpha__
-#include <machine/pte.h>
-#endif
-#ifdef __mips__
-#include <mips/pte.h>
-#endif
 
 int	tgamatch __P((struct device *, struct cfdata *, void *));
 void	tgaattach __P((struct device *, struct device *, void *));
