@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.8 1994/12/23 17:00:14 cgd Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.9 1995/07/04 23:47:32 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -49,13 +49,21 @@ static char rcsid[] = "$Id: auth.c,v 1.8 1994/12/23 17:00:14 cgd Exp $";
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "ppp.h"
+#ifdef HAS_SHADOW
+#include <shadow.h>
+#include <shadow/pwauth.h>
+#ifndef PW_PPP
+#define PW_PPP PW_LOGIN
+#endif
+#endif
+
 #include "pppd.h"
 #include "fsm.h"
 #include "lcp.h"
 #include "upap.h"
 #include "chap.h"
 #include "ipcp.h"
+#include "ccp.h"
 #include "pathnames.h"
 
 #if defined(sun) && defined(sparc)
@@ -77,20 +85,10 @@ struct wordlist {
 #define FALSE	0
 #define TRUE	1
 
-extern char user[];
-extern char passwd[];
-extern char devnam[];
-extern char our_name[];
-extern char remote_name[];
-extern char hostname[];
-extern int uselogin;
-extern int usehostname;
-extern int auth_required;
-
 /* Records which authentication operations haven't completed yet. */
-static int auth_pending[NPPP];
+static int auth_pending[NUM_PPP];
 static int logged_in;
-static struct wordlist *addresses[NPPP];
+static struct wordlist *addresses[NUM_PPP];
 
 /* Bits in auth_pending[] */
 #define UPAP_WITHPEER	1
@@ -99,19 +97,20 @@ static struct wordlist *addresses[NPPP];
 #define CHAP_PEER	8
 
 /* Prototypes */
-void check_access __ARGS((FILE *, char *));
+void check_access __P((FILE *, char *));
 
-static int  login __ARGS((char *, char *, char **, int *));
-static void logout __ARGS((void));
-static int  null_login __ARGS((int));
-static int  get_upap_passwd __ARGS((void));
-static int  have_upap_secret __ARGS((void));
-static int  have_chap_secret __ARGS((char *, char *));
-static int  scan_authfile __ARGS((FILE *, char *, char *, char *,
+static void network_phase __P((int));
+static int  login __P((char *, char *, char **, int *));
+static void logout __P((void));
+static int  null_login __P((int));
+static int  get_upap_passwd __P((void));
+static int  have_upap_secret __P((void));
+static int  have_chap_secret __P((char *, char *));
+static int  scan_authfile __P((FILE *, char *, char *, char *,
 				  struct wordlist **, char *));
-static void free_wordlist __ARGS((struct wordlist *));
+static void free_wordlist __P((struct wordlist *));
 
-extern char *crypt __ARGS((char *, char *));
+extern char *crypt __P((char *, char *));
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
@@ -131,6 +130,8 @@ void
 link_terminated(unit)
     int unit;
 {
+    if (phase == PHASE_DEAD)
+	return;
     if (logged_in)
 	logout();
     phase = PHASE_DEAD;
@@ -144,6 +145,8 @@ void
 link_down(unit)
     int unit;
 {
+    ipcp_close(0);
+    ccp_close(0);
     phase = PHASE_TERMINATE;
 }
 
@@ -166,7 +169,7 @@ link_established(unit)
 	 * treat it as though it authenticated with PAP using a username
 	 * of "" and a password of "".  If that's not OK, boot it out.
 	 */
-	if (wo->neg_upap && !null_login(unit)) {
+	if (!wo->neg_upap || !null_login(unit)) {
 	    syslog(LOG_WARNING, "peer refused to authenticate");
 	    lcp_close(unit);
 	    phase = PHASE_TERMINATE;
@@ -192,10 +195,20 @@ link_established(unit)
     }
     auth_pending[unit] = auth;
 
-    if (!auth) {
-	phase = PHASE_NETWORK;
-	ipcp_open(unit);
-    }
+    if (!auth)
+	network_phase(unit);
+}
+
+/*
+ * Proceed to the network phase.
+ */
+static void
+network_phase(unit)
+    int unit;
+{
+    phase = PHASE_NETWORK;
+    ipcp_open(unit);
+    ccp_open(unit);
 }
 
 /*
@@ -222,10 +235,10 @@ auth_peer_success(unit, protocol)
     int bit;
 
     switch (protocol) {
-    case CHAP:
+    case PPP_CHAP:
 	bit = CHAP_PEER;
 	break;
-    case UPAP:
+    case PPP_PAP:
 	bit = UPAP_PEER;
 	break;
     default:
@@ -241,6 +254,7 @@ auth_peer_success(unit, protocol)
     if ((auth_pending[unit] &= ~bit) == 0) {
 	phase = PHASE_NETWORK;
 	ipcp_open(unit);
+	ccp_open(unit);
     }
 }
 
@@ -268,10 +282,10 @@ auth_withpeer_success(unit, protocol)
     int bit;
 
     switch (protocol) {
-    case CHAP:
+    case PPP_CHAP:
 	bit = CHAP_WITHPEER;
 	break;
-    case UPAP:
+    case PPP_PAP:
 	bit = UPAP_WITHPEER;
 	break;
     default:
@@ -284,10 +298,8 @@ auth_withpeer_success(unit, protocol)
      * If there is no more authentication still being done,
      * proceed to the network phase.
      */
-    if ((auth_pending[unit] &= ~bit) == 0) {
-	phase = PHASE_NETWORK;
-	ipcp_open(unit);
-    }
+    if ((auth_pending[unit] &= ~bit) == 0)
+	network_phase(unit);
 }
 
 
@@ -387,7 +399,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
     } else {
 	check_access(f, filename);
 	if (scan_authfile(f, user, our_name, secret, &addrs, filename) < 0
-	    || (secret[0] != 0 && strcmp(passwd, secret) != 0
+	    || (secret[0] != 0 && (cryptpap || strcmp(passwd, secret) != 0)
 		&& strcmp(crypt(passwd, secret), secret) != 0)) {
 	    syslog(LOG_WARNING, "upap authentication failure for %s", user);
 	    ret = UPAP_AUTHNAK;
@@ -453,9 +465,22 @@ login(user, passwd, msg, msglen)
     char *epasswd;
     char *tty;
 
+#ifdef HAS_SHADOW
+    struct spwd *spwd;
+    struct spwd *getspnam();
+#endif
+
     if ((pw = getpwnam(user)) == NULL) {
 	return (UPAP_AUTHNAK);
     }
+
+#ifdef HAS_SHADOW
+    if ((spwd = getspnam(user)) == NULL) {
+        pw->pw_passwd = "";
+    } else {
+	pw->pw_passwd = spwd->sp_pwdp;
+    }
+#endif
 
     /*
      * XXX If no passwd, let them login without one.
@@ -464,10 +489,18 @@ login(user, passwd, msg, msglen)
 	return (UPAP_AUTHACK);
     }
 
+#ifdef HAS_SHADOW
+    if ((pw->pw_passwd && pw->pw_passwd[0] == '@'
+	 && pw_auth (pw->pw_passwd+1, pw->pw_name, PW_PPP, NULL))
+	|| !valid (passwd, pw)) {
+	return (UPAP_AUTHNAK);
+    }
+#else
     epasswd = crypt(passwd, pw->pw_passwd);
     if (strcmp(epasswd, pw->pw_passwd)) {
 	return (UPAP_AUTHNAK);
     }
+#endif
 
     syslog(LOG_INFO, "user %s logged in", user);
 
@@ -689,9 +722,9 @@ get_secret(unit, client, server, secret, secret_len, save_addrs)
 int
 auth_ip_addr(unit, addr)
     int unit;
-    u_long addr;
+    u_int32_t addr;
 {
-    u_long a;
+    u_int32_t a;
     struct hostent *hp;
     struct wordlist *addrs;
 
@@ -712,7 +745,7 @@ auth_ip_addr(unit, addr)
 		       addrs->word);
 		continue;
 	    } else
-		a = *(u_long *)hp->h_addr;
+		a = *(u_int32_t *)hp->h_addr;
 	}
 	if (addr == a)
 	    return 1;
@@ -727,7 +760,7 @@ auth_ip_addr(unit, addr)
  */
 int
 bad_ip_adrs(addr)
-    u_long addr;
+    u_int32_t addr;
 {
     addr = ntohl(addr);
     return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
