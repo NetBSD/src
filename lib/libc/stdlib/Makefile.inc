@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2000/12/21 11:29:48 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2001/01/08 14:06:09 lukem Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -37,6 +37,7 @@ MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
 MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
 MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
+MLINKS+=radixsort.3 sradixsort.3
 MLINKS+=strtol.3 strtoll.3
 MLINKS+=strtol.3 strtoq.3
 MLINKS+=strtoul.3 strtoull.3
