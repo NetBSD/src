@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.12 2000/05/30 21:57:22 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13 2000/05/31 00:16:16 mycroft Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -3804,6 +3804,7 @@ softdep_fsync(vp)
 #ifdef __FreeBSD__
 			error = UFS_UPDATE(pvp, 1);
 #else
+			VTOI(pvp)->i_flag |= IN_MODIFIED;
 			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 #endif
 			if (error) {
@@ -4266,6 +4267,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 #ifdef __FreeBSD__
 			error = UFS_UPDATE(pvp, 1);
 #else
+			VTOI(pvp)->i_flag |= IN_MODIFIED;
 			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 #endif
 			if (error)
