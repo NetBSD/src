@@ -1,4 +1,4 @@
-/*	$NetBSD: scnreg.h,v 1.7 1996/10/23 07:52:38 matthias Exp $	*/
+/*	$NetBSD: scnreg.h,v 1.8 1996/12/23 08:37:10 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Phil Budne.
@@ -66,6 +66,13 @@
 /*
  * MR (mode register) -- per channel
  */
+
+/* MR0 (scn26c92 only) */
+#define MR0_BR_EXTND1 1
+#define MR0_BR_EXTEND2 4
+#define MR0_TXINT 0x30
+#define MR0_RXINT 0x40
+#define MR0_RXWD  0x80
 
 /* MR1 (need to use CR_CMD_MR1 before each access) */
 #define MR1_BITS5	0x00
@@ -187,6 +194,10 @@
 #define CR_CMD_TIM_OFF	0xc0	/* reset timeout mode */
 #define CR_CMD_PDN_ON	0xe0	/* power down mode on */
 #define CR_CMD_PDN_RUN	0xf0	/* power down mode off (normal run) */
+
+/* 26C92-only commands */
+#define CR_CMD_MR0	0xb0	/* MR0 select */
+
 
 /*
  * SR (status register) -- per channel
