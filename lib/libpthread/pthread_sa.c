@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.26 2002/08/31 00:08:43 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.27 2002/10/16 19:30:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ int	recycle_threshold;
 int	recycle_side;
 pthread_spin_t recycle_lock;
 
+int pthread__maxlwps;
+
 extern struct pthread_queue_t runqueue;
 
 #define pthread__sa_id(sap) (pthread__id((sap)->sa_context))
@@ -92,6 +94,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	self = pthread__self();
 	self->pt_state = PT_STATE_RUNNING;
 
+	if (sas[0]->sa_id > pthread__maxlwps)
+		pthread__maxlwps = sas[0]->sa_id;
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
 	    type, sas[0]->sa_id, ev ? sas[1]->sa_id : 0, 
 	    intr ? sas[ev+intr]->sa_id : 0));
