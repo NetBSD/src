@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.45 1999/05/05 20:01:09 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.46 2000/03/17 00:01:48 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -525,7 +525,7 @@ sys_ioctl(p, v, retval)
 	caddr_t data, memp;
 	int tmp;
 #define STK_PARAMS	128
-	char stkbuf[STK_PARAMS];
+	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -564,7 +564,7 @@ sys_ioctl(p, v, retval)
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
-		data = stkbuf;
+		data = (caddr_t)stkbuf;
 	if (com&IOC_IN) {
 		if (size) {
 			error = copyin(SCARG(uap, data), data, size);
