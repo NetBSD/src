@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.43 1998/02/19 21:26:10 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.44 1998/02/22 03:25:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -638,6 +638,8 @@ zsioctl(dev, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 #endif	/* ZS_MD_IOCTL */
+
+	error = 0;
 
 	s = splzs();
 

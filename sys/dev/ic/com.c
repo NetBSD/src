@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.137 1998/02/19 09:33:33 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.138 1998/02/22 03:24:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -856,6 +856,8 @@ comioctl(dev, cmd, data, flag, p)
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
+
+	error = 0;
 
 	s = splserial();
 
