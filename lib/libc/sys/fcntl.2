@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.14 1999/03/22 19:45:02 garbled Exp $
+.\"	$NetBSD: fcntl.2,v 1.15 1999/03/24 06:34:58 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -152,7 +152,6 @@ upon availability of data to be read.
 .Pp
 Several commands are available for doing advisory file locking;
 they all operate on the following structure:
-.ne 7v
 .Bd -literal
 struct flock {
 	off_t	l_start;	/* starting offset */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.19 1999/01/13 23:55:26 sommerfe Exp $
+.\"	$NetBSD: stty.1,v 1.20 1999/03/24 06:27:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,7 +126,6 @@ If
 the output baud rate is set to
 zero, modem control is
 no longer asserted.
-.ne 1i
 .It Cm speed Ar number
 This sets both
 .Cm ispeed
@@ -204,7 +203,6 @@ receives
 or if
 .Cm ixany
 is set, any character restarts output.
-.ne 1i
 .It Cm ixoff Pq Fl ixoff
 Request that the system send (not
 send)
@@ -310,7 +308,6 @@ Echo (do not echo)
 after
 .Dv KILL
 character.
-.ne 1i
 .It Cm echoke Pq Fl echoke
 The
 .Dv KILL
@@ -462,7 +459,6 @@ columns.
 .It Cm cols Ar number
 is an alias for
 .Cm columns.
-.ne 1i
 .It Cm rows Ar number
 The terminal size is recorded as having
 .Ar number
@@ -548,7 +544,6 @@ Same as
 .It Cm decctlq Pq Fl decctlq
 The converse of
 .Cm ixany .
-.ne 1i
 .It Cm crterase Pq Fl crterase
 Same as
 .Cm echoe .
