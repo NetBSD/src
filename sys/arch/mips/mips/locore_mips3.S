@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.73 2001/12/27 04:03:37 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.74 2001/12/27 04:19:17 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1663,7 +1663,6 @@ END(mips3_TLBRead)
  *----------------------------------------------------------------------------
  */
 LEAF_NOPROFILE(mips3_VCED)
-XLEAF(mips3_VCEI)	/* XXXX */
 	.set	noat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
 	li	k1, -16
@@ -1672,12 +1671,12 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	cache	C_HINV_D, 0(k0)
 #ifdef DEBUG
 	mfc0	k0, MIPS_COP_0_BAD_VADDR
-	la	k1, VCE_vaddr
+	la	k1, VCED_vaddr
 	sw	k0, 0(k1)
 	mfc0	k0, MIPS_COP_0_EXC_PC
-	la	k1, VCE_epc
+	la	k1, VCED_epc
 	sw	k0, 0(k1)
-	la	k1, VCE_count		# count number of exceptions
+	la	k1, VCED_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
 	add	k1, k0			# get address of count table
@@ -1689,17 +1688,47 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	.set	at
 
 	.data
-	.globl	_C_LABEL(VCE_count)
-_C_LABEL(VCE_count):
+	.globl	_C_LABEL(VCED_count)
+_C_LABEL(VCED_count):
 	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.globl	_C_LABEL(VCE_epc)
-_C_LABEL(VCE_epc):
+	.globl	_C_LABEL(VCED_epc)
+_C_LABEL(VCED_epc):
 	.word	0
-	.globl	_C_LABEL(VCE_vaddr)
-_C_LABEL(VCE_vaddr):
+	.globl	_C_LABEL(VCED_vaddr)
+_C_LABEL(VCED_vaddr):
 	.word	0
 	.text
 END(mips3_VCED)
+
+LEAF_NOPROFILE(mips3_VCEI)
+	.set	noat
+	mfc0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
+	cache	C_HWBINV_SD, 0(k0)
+	cache	C_HINV_I, 0(k0)
+#ifdef DEBUG
+	mfc0	k0, MIPS_COP_0_BAD_VADDR
+	la	k1, VCEI_vaddr
+	sw	k0, 0(k1)
+	la	k1, VCEI_count		# count number of exceptions
+	srl	k0, k0, 26		# position upper 4 bits of VA
+	and	k0, k0, 0x3c		# mask it off
+	add	k1, k0			# get address of count table
+	lw	k0, 0(k1)
+	addu	k0, 1
+	sw	k0, 0(k1)
+#endif
+	eret
+	.set	at
+
+	.data
+	.globl	_C_LABEL(VCEI_count)
+_C_LABEL(VCEI_count):
+	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.globl	_C_LABEL(VCEI_vaddr)
+_C_LABEL(VCEI_vaddr):
+	.word	0
+	.text
+END(mips3_VCEI)
 #endif /* !MIPS3_5900 */	
 
 /*----------------------------------------------------------------------------
