@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script,v 1.1 2001/03/06 21:18:42 garbled Exp $
+# $NetBSD: script,v 1.2 2001/08/01 08:11:33 garbled Exp $
 
 BIGLIST="ftp,tcp telnet,tcp shell,tcp login,tcp exec,tcp uucpd,tcp nntp,tcp \
 finger,tcp ident,tcp tftp,udp comsat,udp ntalk,udp bootps,udp hunt,udp \
@@ -11,6 +11,11 @@ ftp,tcp6 telnet,tcp6 shell,tcp6 login,tcp6 finger,tcp6 tftp,udp6 \
 kpasswd,udp6 rstatd/1-3,rpc/udp6 rusersd/2-3,rpc/udp6"
 
 INETDCONF="/etc/inetd.conf"
+
+if [ "$1" = "YES" ]; then
+	restart=YES
+fi
+shift
 
 IFS=" "
 CONF=`cat $INETDCONF`
@@ -47,3 +52,7 @@ do
 done
 echo "Writing modified version to $INETDCONF"
 echo $CONF >$INETDCONF
+
+if [ "$restart" = "YES" ]; then
+	/etc/rc.d/inetd reload
+fi
