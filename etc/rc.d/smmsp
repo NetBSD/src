@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# $NetBSD: smmsp,v 1.1 2003/03/24 15:19:28 atatat Exp $
+#
+
+# REQUIRE: mail
+
+. /etc/rc.subr
+
+name="smmsp"
+rcvar=$name
+command="/usr/sbin/sendmail"
+pidfile="/var/spool/clientmqueue/sm-client.pid"
+required_files="/etc/mail/submit.cf"
+start_precmd="smmsp_precmd"
+
+smmsp_precmd()
+{
+	if ! checkyesno sendmail; then
+		warn "sendmail client queue runner not started, sendmail" \
+			"not enabled"
+		return 1
+	fi
+	
+	_suidroot="${sendmail_suidroot:-NO}"
+	if checkyesno _suidroot; then
+		_owner_fmt="%p %Su"
+		_def_owner="104555 root"
+		_def_cqueuemode=""
+	else
+		_owner_fmt="%p %Su %Sg"
+		_def_owner="102555 root smmsp"
+		_def_cqueuemode="40770 smmsp smmsp"
+	fi
+	_def_version="10"
+	_cqueuemode="${_def_cqueuemode}"	# changed later if needed
+
+	# check owner and mode of real sendmail binary
+	_owner=$(stat -qf"${_owner_fmt}" /usr/libexec/sendmail/sendmail)
+	if [ "${_owner}" != "${_def_owner}" ]; then
+		warn "${name} not started; binary has wrong owner/mode"
+		return 1
+	fi
+
+	# check submit.cf existence
+	if checkyesno _suidroot; then
+		if [ -f /etc/mail/submit.cf ]; then
+			warn "${name} is suid root, but submit.cf exists"
+			return 1
+		else
+			warn "No need for ${name} service when sendmail is" \
+				"suid root; not started"
+			return 1
+		fi
+	else
+		if [ ! -f /etc/mail/submit.cf ]; then
+			warn "${name} is sgid smmsp, but submit.cf is missing"
+			return 1
+		else
+			_cqueue=$(sed -n 's/^O *QueueDirectory=\(.*\)/\1/p' \
+				/etc/mail/submit.cf)
+			_cqueuemode=$(stat -qf"%p %Su %Sg" "${_cqueue}")
+		fi
+	fi
+
+	# check .cf file version
+	_cfversion=$(sed -n 's/^V *\([0-9]*\).*/\1/p' /etc/mail/submit.cf)
+	if [ "${_cfversion}" != "${_def_version}" ]; then
+		warn "${name} not started; /etc/mail/submit.cf has wrong " \
+			"version (have ${_cfversion}, should be ${_def_version})"
+		return 1
+	fi
+
+	# look at clientmqueue's owner, group, and mode
+	if [ "${_cqueuemode}" != "${_def_cqueuemode}" ]; then
+		warn "sendmail client queue ${_cqueue} has wrong owner/mode"
+		return 1
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

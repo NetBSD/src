@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.14 2002/02/12 01:26:36 lukem Exp $
+# $NetBSD: sendmail,v 1.15 2003/03/24 15:19:28 atatat Exp $
 #
 
 # PROVIDE: mail
@@ -14,7 +14,7 @@ name="sendmail"
 rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
-required_files="/etc/mail/${name}.cf"
+required_files="/etc/mail/sendmail.cf"
 start_precmd="sendmail_precmd"
 
 sendmail_precmd()
@@ -44,7 +44,7 @@ sendmail_precmd()
 	fi
 
 	# check couple of common db files, too
-	for f in genericstable virtusertable domaintable mailertable; do
+	for f in access genericstable virtusertable domaintable mailertable; do
 		if [ -r "/etc/mail/$f" -a \
 		    "/etc/mail/$f" -nt "/etc/mail/$f.db" ]; then
 			echo \
@@ -52,6 +52,59 @@ sendmail_precmd()
 			/usr/sbin/makemap hash /etc/mail/$f < /etc/mail/$f
 		fi
 	done
+
+	if checkyesno sendmail_suidroot; then
+		_owner_fmt="%p %Su"
+		_def_owner="104555 root"
+		_sm_root="true"
+	else
+		_owner_fmt="%p %Su %Sg"
+		_def_owner="102555 root smmsp"
+		_sm_root="false"
+	fi
+	_def_version="10"
+	_def_cqueuemode="40770 smmsp smmsp"
+
+	_owner=$(stat -qf"${_owner_fmt}" /usr/libexec/sendmail/sendmail)
+	_cfversion=$(sed -n 's/^V *\([0-9]*\).*/\1/p' /etc/mail/sendmail.cf)
+	_cqueuemode="${_def_cqueuemode}"	# changed later, if needed
+
+	# check owner and mode of real sendmail binary
+	if [ "${_owner}" != "${_def_owner}" ]; then
+		warn "${name} not started; binary has wrong owner/mode"
+		return 1
+	fi
+
+	# check .cf file version
+	if [ "${_cfversion}" != "${_def_version}" ]; then
+		warn "${name} not started; ${name}.cf has wrong version " \
+			"(have ${_cfversion}, should be ${_def_version})"
+		return 1
+	fi
+
+	# check submit.cf existence
+	if ${_sm_root}; then
+		if [ -f "/etc/mail/submit.cf" ]; then
+			warn "${name} is suid root, but submit.cf exists"
+			return 1
+		fi
+	else
+		if [ ! -f "/etc/mail/submit.cf" ]; then
+			warn "${name} is sgid smmsp, but submit.cf is missing"
+			return 1
+		else
+			_cqueue=$(awk 'match($0,"^O *QueueDirectory=") {
+				print(substr($0, RSTART+RLENGTH))
+				}' "/etc/mail/submit.cf")
+			_cqueuemode=$(stat -qf"%p %Su %Sg" "${_cqueue}")
+		fi
+	fi
+		
+	# look at clientmqueue's owner, group, and mode
+	if [ "${_cqueuemode}" != "${_def_cqueuemode}" ]; then
+		warn "sendmail client queue ${_cqueue} has wrong owner/mode"
+		return 1
+	fi
 }
 
 load_rc_config $name
