@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.17 1997/03/15 18:09:25 is Exp $	*/
+/*	$NetBSD: if_es.c,v 1.18 1997/03/17 17:55:54 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #ifdef INET
