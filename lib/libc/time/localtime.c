@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.17 1998/07/28 20:28:04 mycroft Exp $	*/
+/*	$NetBSD: localtime.c,v 1.18 1998/09/10 15:58:39 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -9,9 +9,9 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)localtime.c	7.64";
+static char	elsieid[] = "@(#)localtime.c	7.66";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.17 1998/07/28 20:28:04 mycroft Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.18 1998/09/10 15:58:39 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -30,6 +30,9 @@ __RCSID("$NetBSD: localtime.c,v 1.17 1998/07/28 20:28:04 mycroft Exp $");
 #include "fcntl.h"
 
 #ifdef __weak_alias
+__weak_alias(ctime_r,_ctime_r);
+__weak_alias(gmtime_r,_gmtime_r);
+__weak_alias(localtime_r,_localtime_r);
 __weak_alias(offtime,_offtime);
 __weak_alias(posix2time,_posix2time);
 __weak_alias(time2posix,_time2posix);
@@ -1082,6 +1085,18 @@ const time_t * const	timep;
 }
 
 /*
+ * Re-entrant version of localtime
+ */
+struct tm *
+localtime_r(timep, tm)
+const time_t * const	timep;
+struct tm *		tm;
+{
+	localsub(timep, 0L, tm);
+	return tm;
+}
+
+/*
 ** gmtsub is to gmtime as localsub is to localtime.
 */
 
@@ -1127,6 +1142,18 @@ const time_t * const	timep;
 {
 	gmtsub(timep, 0L, &tm);
 	return &tm;
+}
+
+/*
+ * Re-entrant version of gmtime
+ */
+struct tm *
+gmtime_r(timep, tm)
+const time_t * const	timep;
+struct tm *		tm;
+{
+	gmtsub(timep, 0L, tm);
+	return tm;
 }
 
 #ifdef STD_INSPIRED
@@ -1249,11 +1276,21 @@ const time_t * const	timep;
 {
 /*
 ** Section 4.12.3.2 of X3.159-1989 requires that
-**	The ctime funciton converts the calendar time pointed to by timer
+**	The ctime function converts the calendar time pointed to by timer
 **	to local time in the form of a string.  It is equivalent to
 **		asctime(localtime(timer))
 */
 	return asctime(localtime(timep));
+}
+
+char *
+ctime_r(timep, buf)
+const time_t * const	timep;
+char *			buf;
+{
+	struct tm	tm;
+
+	return asctime_r(localtime_r(timep, &tm), buf);
 }
 
 /*

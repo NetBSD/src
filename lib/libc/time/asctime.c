@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.6 1997/07/13 20:26:47 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.7 1998/09/10 15:58:39 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	7.8";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.6 1997/07/13 20:26:47 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.7 1998/09/10 15:58:39 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -21,13 +21,27 @@ __RCSID("$NetBSD: asctime.c,v 1.6 1997/07/13 20:26:47 christos Exp $");
 #include "private.h"
 #include "tzfile.h"
 
+#ifdef __weak_alias
+__weak_alias(asctime_r,_asctime_r);
+#endif
+
 /*
-** A la X3J11, with core dump avoidance.
+** A la ISO/IEC 9945-1, ANSI/IEEE Std 1003.1, Second Edition, 1996-07-12.
 */
 
+/*
+** Big enough for something such as
+** ??? ???-2147483648 -2147483648:-2147483648:-2147483648 -2147483648\n
+** (two three-character abbreviations, five strings denoting integers,
+** three explicit spaces, two explicit colons, a newline,
+** and a trailing ASCII nul).
+*/
+#define	ASCTIME_BUFLEN	(3 * 2 + 5 * INT_STRLEN_MAXIMUM(int) + 3 + 2 + 1 + 1)
+
 char *
-asctime(timeptr)
+asctime_r(timeptr, buf)
 register const struct tm *	timeptr;
+char *				buf;
 {
 	static const char	wday_name[][3] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -36,15 +50,6 @@ register const struct tm *	timeptr;
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-	/*
-	** Big enough for something such as
-	** ??? ???-2147483648 -2147483648:-2147483648:-2147483648 -2147483648\n
-	** (two three-character abbreviations, five strings denoting integers,
-	** three explicit spaces, two explicit colons, a newline,
-	** and a trailing ASCII nul).
-	*/
-	static char		result[3 * 2 + 5 * INT_STRLEN_MAXIMUM(int) +
-					3 + 2 + 1 + 1];
 	register const char *	wn;
 	register const char *	mn;
 
@@ -59,10 +64,25 @@ register const struct tm *	timeptr;
 	**	"%.3s %.3s%3d %02.2d:%02.2d:%02.2d %d\n"
 	** Since the .2 in 02.2d is ignored, we drop it.
 	*/
-	(void)snprintf(result, sizeof result,"%.3s %.3s%3d %02d:%02d:%02d %d\n",
+	(void)snprintf(buf,
+		sizeof (char[ASCTIME_BUFLEN]),
+		"%.3s %.3s%3d %02d:%02d:%02d %d\n",
 		wn, mn,
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec,
 		TM_YEAR_BASE + timeptr->tm_year);
-	return result;
+	return buf;
+}
+
+/*
+** A la X3J11, with core dump avoidance.
+*/
+
+char *
+asctime(timeptr)
+register const struct tm *	timeptr;
+{
+	static char		result[ASCTIME_BUFLEN];
+
+	return asctime_r(timeptr, result);
 }
