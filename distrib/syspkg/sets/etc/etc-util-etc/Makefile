@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 2004/06/30 03:37:50 jmc Exp $
+
 PKGBASE=etc-util-etc
 TINY_VERSION=0
 

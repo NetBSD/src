@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 2004/06/30 03:37:37 jmc Exp $
+
 PKGBASE=comp-util-catman
 TINY_VERSION=0
 
