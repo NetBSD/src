@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.10 1996/02/02 18:08:40 mycroft Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.11 1996/02/11 13:24:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -245,6 +245,10 @@ extern	struct	uba_device ubdinit[];
 extern	struct cfdriver	ubacd;
 
 void	ubainit __P((struct uba_softc *));
+void    ubasetvec __P((struct device *, int, void (*)()));
+int	uballoc __P((int, caddr_t, int, int));
+void	ubarelse __P((int, int *));
+
 
 #endif /* _KERNEL */
 #endif !_LOCORE
