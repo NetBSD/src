@@ -1,7 +1,13 @@
-#	$NetBSD: Makefile,v 1.20 1998/02/22 12:55:44 christos Exp $
+#	$NetBSD: Makefile,v 1.21 1998/02/23 01:03:25 jonathan Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/29/93
 
+WARNS=	0
+# XXX not ELF?
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && \
+     ${MACHINE_ARCH} != "powerpc")
 PROG=	gprof
+.endif
+
 SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE_ARCH}.c hertz.c \
 	printgprof.c printlist.c
 CPPFLAGS+= -D${MACHINE_ARCH}
