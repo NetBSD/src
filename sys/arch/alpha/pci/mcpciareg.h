@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciareg.h,v 1.3 1999/04/15 22:27:40 thorpej Exp $ */
+/* $NetBSD: mcpciareg.h,v 1.4 2003/09/26 22:25:21 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -329,7 +329,7 @@ struct mcpcia_iodsnap {
 #define	PCI_LAT_SHIFT	8	/* it's in the 2nd byte. */
 
 /*
- * CAP Control Register Defintions
+ * CAP Control Register Definitions
  */
 #define	CAP_LED_ON	0x00000001	/* Selftest LED passed */
 #define	CAP_EV56_BW_EN	0x00000002	/* BW Enables (EV56, EV6 only) */
