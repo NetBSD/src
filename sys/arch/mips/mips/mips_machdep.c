@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.14 1997/06/22 03:17:42 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.15 1997/06/22 07:43:01 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -72,7 +72,7 @@ mips1_vector_init()
 	 */
 	if (mips1_UTLBMissEnd - mips1_UTLBMiss > 0x80)
 		panic("startup: UTLB code too large");
-	bcopy(mips1_UTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+	bcopy(mips1_UTLBMiss, (char *)MIPS_UTLB_MISS_EXC_VEC,
 		mips1_UTLBMissEnd - mips1_UTLBMiss);
 	bcopy(mips1_exception, (char *)MIPS1_GEN_EXC_VEC,
 	      mips1_exceptionEnd - mips1_exception);
@@ -137,7 +137,7 @@ mips3_vector_init()
 	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
 		panic("startup: UTLB code too large");
 #endif
-	bcopy(mips3_TLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+	bcopy(mips3_TLBMiss, (char *)MIPS_UTLB_MISS_EXC_VEC,
 	      mips3_TLBMissEnd - mips3_TLBMiss);
 
 	bcopy(mips3_exception, (char *)MIPS3_GEN_EXC_VEC,
@@ -208,7 +208,7 @@ mips_vector_init()
 		cpu_arch = 1;
 		mips1_TLBFlush();
 		for (i = 0; i < MIPS1_TLB_FIRST_RAND_ENTRY; ++i)
-			mips1_TLBWriteIndexed(i, MACH_CACHED_MEMORY_ADDR, 0);
+			mips1_TLBWriteIndexed(i, MIPS_KSEG0_START, 0);
 		mips1_vector_init();
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nameglue.h,v 1.3 1996/10/13 03:39:52 christos Exp $	*/
+/*	$NetBSD: nameglue.h,v 1.4 1997/06/22 07:42:41 jonathan Exp $	*/
 
 /*
  * Use macros to glue names for "machine-independent" functions 
@@ -25,7 +25,7 @@
 /*
  * Map physical addresses to kernel-virtual addresses.
  */
-#define KV(x) ((void *)MACH_PHYS_TO_UNCACHED(x))
+#define KV(x) ((void *)MIPS_PHYS_TO_KSEG1(x))
 
 /*
  * Print debugging messages only if DEBUG defined on a pmax.

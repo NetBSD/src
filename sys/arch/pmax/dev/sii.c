@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.25 1997/06/16 02:54:00 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.26 1997/06/22 07:42:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -240,7 +240,7 @@ old_siiattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct siisoftc *sc = (struct siisoftc *) self;
 
-	sc->sc_regs = (SIIRegs *)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ca->ca_addr);
 	sc->sc_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	siiattach(sc);
