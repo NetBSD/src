@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.5 2002/02/09 11:14:21 fair Exp $
+.\"     $NetBSD: intro.4,v 1.6 2002/02/09 23:03:21 fair Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,6 +97,7 @@ A list of the supported devices is given below.
 .Sh HARDWARE
 .\" http://www.support.compaq.com/alpha-tools/info/system-codes.html
 .\" http://members.tripod.com/kmi9000/kmi_proc.htm
+.\" http://www.phys.ufl.edu/~prescott/linux/alpha/dec3000-sysinfo.html
 .Pp
 .Tn DEC
 and
@@ -177,19 +178,57 @@ AlphaServer 2000 4/200
 .br
 AlphaServer 2100 4/200
 .Pq Sable
-.It DEC 3000/300-family Systems
-.Pq Pelican ;
-.Pp
-Low-end series of
+.It Pelican family
+.br
+Low-end
 .Tn TURBOchannel
-based workstations including the 300, 300L, 300X and 300LX.
-.It DEC 3000/x00-family Systems
-.Pq Flamingo ;
+based workstations.
 .Pp
-High-end family of
+DEC 3000/300
+.Pq 150 Tn MHz
+.Pq Pelican
+.br
+DEC 3000/300X
+.Pq 175 Tn MHz
+.Pq Pelican+
+.br
+DEC 3000/300L
+.Pq 100 Tn MHz
+.Pq Pelica
+.br
+DEC 3000/300LX
+.Pq 125 Tn MHz
+.Pq Pelica+
+.It Sandpiper family
+.br
+High-end
 .Tn TURBOchannel
-based workstations including the 400,
-500, 600, 700, 800 and 900 as well as several minor variations.
+based workstations.
+.Pp
+DEC 3000/400
+.Pq 133 Tn MHz
+.Pq Sandpiper
+.br
+DEC 3000/600
+.Pq 175 Tn MHz
+.Pq Sandpiper+
+.It Flamingo family
+.br
+High-end
+.Tn TURBOchannel
+based workstations.
+.Pp
+DEC 3000/500
+.Pq 150 Tn MHz
+.Pq Flamingo
+.br
+DEC 3000/500X
+.Pq 200 Tn MHz
+.Pq Hot Pink
+.br
+DEC 3000/800
+.Pq 200 Tn MHz
+.Pq Flamingo II
 .El
 .br
 .It 21064-A
@@ -199,6 +238,14 @@ based workstations including the 400,
 .Tn MHz ,
 0.50 micron
 .Pc
+.Pp
+DEC 3000/700
+.Pq 225 Tn MHz
+.Pq Sandpiper45
+.br
+DEC 3000/900
+.Pq 275 Tn MHz
+.Pq Flamingo45
 .Pp
 Alpha XL 233-266
 .Pq XL
@@ -436,7 +483,12 @@ APi AlphaPC 164UX motherboard
 .Pp
 AlphaPC 164SX motherboard
 .Pq EB164
+.Pp
+PWS 466au
+.Pq Miata
 .br
+PWS 550au
+.Pq Miata
 .It 21264
 .Sy EV6
 .Po
