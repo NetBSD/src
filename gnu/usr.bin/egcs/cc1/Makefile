@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/02 06:39:51 mrg Exp $
 
 PROG=	cc1
-SRCS=	c-parse.c
-
-CLEANFILES+=	c-parse.c
+SRCS=	c-parse.y
 
 .include "../Makefile.cc1"
