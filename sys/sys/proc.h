@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.36 1995/01/08 22:53:30 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.37 1995/02/28 23:04:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -214,6 +214,7 @@ struct	proc {
 #define	EMUL_IBCS2_COFF	5		/* Intel Binary compat; SCO Unix */
 #define	EMUL_IBCS2_XOUT	6		/* Intel Binary compat; SCO Xenix */
 #define	EMUL_OSF1	7		/* OSF/1 binaries */
+#define	EMUL_LINUX	9		/* Linux a.out binaries */
 
 /*
  * MOVE TO ucred.h?
