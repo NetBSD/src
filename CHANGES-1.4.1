@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.1,v 1.1.2.2 1999/08/08 20:48:41 cgd Exp $
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.3 1999/08/08 21:12:41 cgd Exp $
 
 Woefully incomplete partial list of changes from NetBSD 1.4 to NetBSD 1.4.1:
 
@@ -406,3 +406,7 @@ sys/arch/alpha/tc/sccvar.h			1.6
   firmware was using the display.  Tell users what's happening when
   we switch, otherwise almost everyone just thinks the installation
   has locked up.  (ross)
+
+distrib/utils/sysinst/arch/pmax/md.c		1.33
+
+  Remove md_copy_filesystem()'s contents for NetBSD/pmax.  (simonb)
