@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)startup.c	5.19 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: startup.c,v 1.4 1993/08/01 18:24:23 mycroft Exp $";
+static char rcsid[] = "$Id: startup.c,v 1.5 1993/12/11 01:47:32 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -101,7 +101,8 @@ ifinit()
 			    ifr->ifr_name);
                         continue;
                 }
-		ifs.int_flags = ifreq.ifr_flags | IFF_INTERFACE;
+		ifs.int_flags =
+		    (ifreq.ifr_flags & IFF_FLAGMASK) | IFF_INTERFACE;
 		if ((ifs.int_flags & IFF_UP) == 0 ||
 		    ifr->ifr_addr.sa_family == AF_UNSPEC) {
 			lookforinterfaces = 1;
