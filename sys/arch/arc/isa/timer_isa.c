@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.4 2002/10/02 04:59:48 thorpej Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.5 2003/06/14 02:57:03 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -141,6 +141,8 @@ timer_isa_attach(parent, self, aux)
 	struct timer_isa_softc *sc = (struct timer_isa_softc *)self;
 	struct isa_attach_args *ia = aux;
 	void *ih;
+
+	printf("\n");
 
 	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
