@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.11 2002/07/09 19:47:46 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.12 2002/07/09 21:05:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,18 +40,14 @@
  *
  * TODO (in order of importance):
  *
- *	- Fix hw VLAN assist.
+ *	- Fix TCP/UDP checksums.
  *
  *	- Make GMII work on the i82543.
  *
- *	- Fix out-bound IP header checksums.
- *
- *	- Fix UDP checksums.
+ *	- Fix hw VLAN assist.
  *
  *	- Jumbo frames -- requires changes to network stack due to
  *	  lame buffer length handling on chip.
- *
- * ...and, of course, performance tuning.
  */
 
 #include "bpfilter.h"
@@ -968,7 +964,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= htole32(WTX_IXSM);
 		ipcs = htole32(WTX_TCPIP_IPCSS(offset) |
-		    WTX_TCPIP_IPCSO(offsetof(struct ip, ip_sum)) |
+		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
 		    WTX_TCPIP_IPCSE(offset + iphl - 1));
 	} else
 		ipcs = 0;
@@ -1962,9 +1958,12 @@ wm_init(struct ifnet *ifp)
 	else
 		reg &= ~RXCSUM_IPOFL;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4))
-		reg |= RXCSUM_TUOFL;
-	else
+		reg |= RXCSUM_IPOFL | RXCSUM_TUOFL;
+	else {
 		reg &= ~RXCSUM_TUOFL;
+		if ((ifp->if_capenable & IFCAP_CSUM_IPv4) == 0)
+			reg &= ~RXCSUM_IPOFL;
+	}
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
 	/*
