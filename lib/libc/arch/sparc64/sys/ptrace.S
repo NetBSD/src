@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.3 2000/07/21 03:14:15 eeh Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.4 2000/07/24 00:11:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.3 2000/07/21 03:14:15 eeh Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.4 2000/07/24 00:11:10 mycroft Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@
 
 ENTRY(ptrace)
 	save	%sp, -CC64FSZ, %sp
-	call	_C_LABEL(_errno)
+	call	_C_LABEL(__errno)
 	 nop
 	st	%g0, [%o0]
 	restore
