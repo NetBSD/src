@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 1995/09/03 21:55:36 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.25 1995/10/08 11:44:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -228,11 +228,17 @@ eeprom_match(parent, vcf, aux)
 		if (cf->cf_unit != 0)
 			return (0);
 
-		if (cpumod == SUN4_100 || cpumod == SUN4_200)
-			return (strcmp(eepromcd.cd_name,
-				       ca->ca_ra.ra_name) == 0);
-
-		return (0);
+		if (cpumod == SUN4_100 || cpumod == SUN4_200) {
+			if (strcmp(eepromcd.cd_name, ca->ca_ra.ra_name))
+				return (0);
+			/*
+			 * Make sure there's something there...
+			 * This is especially important if we want to
+			 * use the same kernel on a 4/100 as a 4/200.
+			 */
+			if (probeget(ca->ca_ra.ra_vaddr, 1) != -1)
+				return (1);
+		}
 	}
 #endif /* SUN4 */
 	return (0);
