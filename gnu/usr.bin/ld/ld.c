@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.11 1993/11/05 12:47:11 pk Exp $
+ *	$Id: ld.c,v 1.12 1993/11/10 21:53:30 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -635,10 +635,15 @@ each_file(function, arg)
 
 	for (i = 0; i < number_of_files; i++) {
 		register struct file_entry *entry = &file_table[i];
+		if (entry->scrapped)
+			continue;
 		if (entry->library_flag) {
 			register struct file_entry *subentry = entry->subfiles;
-			for (; subentry; subentry = subentry->chain)
+			for (; subentry; subentry = subentry->chain) {
+				if (subentry->scrapped)
+					continue;
 				(*function) (subentry, arg);
+			}
 		} else
 			(*function) (entry, arg);
 	}
@@ -663,11 +668,16 @@ check_each_file(function, arg)
 
 	for (i = 0; i < number_of_files; i++) {
 		register struct file_entry *entry = &file_table[i];
+		if (entry->scrapped)
+			continue;
 		if (entry->library_flag) {
 			register struct file_entry *subentry = entry->subfiles;
-			for (; subentry; subentry = subentry->chain)
+			for (; subentry; subentry = subentry->chain) {
+				if (subentry->scrapped)
+					continue;
 				if (return_val = (*function) (subentry, arg))
 					return return_val;
+			}
 		} else if (return_val = (*function) (entry, arg))
 			return return_val;
 	}
@@ -685,7 +695,8 @@ each_full_file(function, arg)
 
 	for (i = 0; i < number_of_files; i++) {
 		register struct file_entry *entry = &file_table[i];
-		if (entry->just_syms_flag || entry->is_dynamic)
+		if (entry->scrapped ||
+				entry->just_syms_flag || entry->is_dynamic)
 			continue;
 		if (entry->library_flag) {
 			register struct file_entry *subentry = entry->subfiles;
@@ -815,6 +826,7 @@ read_entry_symbols (desc, entry)
 		entry->symbols[i].next = NULL;
 		entry->symbols[i].gotslot_offset = -1;
 		entry->symbols[i].gotslot_claimed = 0;
+		entry->symbols[i].rename = 0;
 	}
 
 	entry->strings_offset = N_STROFF(entry->header) +
@@ -839,7 +851,8 @@ read_entry_strings (desc, entry)
 	int buffer;
 
 	if (!entry->header_read_flag || !entry->strings_offset)
-		fatal("internal error: %s", "cannot read string table");
+		fatal_with_file("internal error: cannot read string table for ",
+					entry);
 
 	if (lseek (desc, entry->strings_offset, L_SET) != entry->strings_offset)
 		fatal_with_file ("read_strings: lseek failure ", entry);
@@ -917,7 +930,7 @@ read_entry_relocation (desc, entry)
 
 /* Read in the symbols of all input files.  */
 
-void read_file_symbols (), read_entry_symbols (), read_entry_strings ();
+void read_file_symbols (), read_entry_symbols ();
 void enter_file_symbols (), enter_global_ref ();
 
 void
@@ -966,8 +979,10 @@ read_file_symbols (entry)
 				return;
 			}
 			entry->is_dynamic = 1;
-			read_shared_object(desc, entry);
-			rrs_add_shobj(entry);
+			if (rrs_add_shobj(entry))
+				read_shared_object(desc, entry);
+			else
+				entry->scrapped = 1;
 		} else {
 			read_entry_symbols (desc, entry);
 			entry->strings = (char *) alloca (entry->string_size);
@@ -1319,7 +1334,7 @@ digest_symbols ()
 	defined_global_sym_count = 0;
 	digest_pass1();
 
-	if (!relocatable_output) {
+	if (1 || !relocatable_output) {
 		each_full_file(consider_relocation, 0);	/* Text */
 		each_full_file(consider_relocation, 1); /* Data */
 	}
@@ -1504,7 +1519,7 @@ digest_pass1()
 			register int    type = p->n_type;
 
 			if ((type & N_EXT) && type != (N_UNDF | N_EXT)
-			    && (type & N_TYPE) != N_FN) {
+						&& (type & N_TYPE) != N_FN) {
 				/* non-common definition */
 				sp->def_nlist = p;
 				sp->so_defined = type;
@@ -1672,6 +1687,14 @@ consider_relocation (entry, dataseg)
 
 	for (; reloc < end; reloc++) {
 
+		if (relocatable_output) {
+			lsp = &entry->symbols[reloc->r_symbolnum];
+			if (RELOC_BASEREL_P(reloc) && !RELOC_EXTERN_P(reloc)) {
+				lsp->rename = 1;
+			}
+			continue;
+		}
+
 		/*
 		 * First, do the PIC specific relocs.
 		 * r_relative and r_copy should not occur at this point
@@ -1772,6 +1795,14 @@ consider_relocation (entry, dataseg)
 
 				/* Call to shared library procedure */
 				alloc_rrs_jmpslot(sp);
+#ifdef EXPERIMENTAL
+				if (!RELOC_PCREL_P(reloc)) {
+#ifdef DEBUG
+printf("%s: FUNC flag set\n", sp->name);
+#endif
+					sp->aux = RRS_FUNC;
+				}
+#endif
 
 			} else if (sp->size &&
 					(sp->so_defined == N_DATA + N_EXT ||
@@ -2371,12 +2402,12 @@ printf("%s: BSS found in so_defined\n", sp->name);
 /* For relocatable_output only: write out the relocation,
    relocating the addresses-to-be-relocated.  */
 
-void coptxtrel (), copdatrel ();
+void coptxtrel(), copdatrel(), assign_symbolnums();
 
 void
 write_rel ()
 {
-	register int count = 0;
+	int count = 0;
 
 	if (trace_files)
 		fprintf (stderr, "Writing text relocation:\n\n");
@@ -2404,6 +2435,8 @@ write_rel ()
 							+ special_sym_count)
 		fatal ("internal error: write_rel: count = %d", count);
 
+	each_full_file (assign_symbolnums, &count);
+
 	/* Write out the relocations of all files, remembered from copy_text. */
 	each_full_file (coptxtrel, 0);
 
@@ -2414,6 +2447,25 @@ write_rel ()
 
 	if (trace_files)
 		fprintf (stderr, "\n");
+}
+
+/*
+ * Assign symbol ordinal numbers to local symbols in each entry.
+ */
+void
+assign_symbolnums(entry, countp)
+	struct file_entry	*entry;
+	int			*countp;
+{
+	struct localsymbol	*lsp, *lspend;
+	int			n = *countp;
+
+	lspend = entry->symbols + entry->nsymbols;
+
+	for (lsp = entry->symbols; lsp < lspend; lsp++) {
+		lsp->symbolnum = n++;
+	}
+	*countp = n;
 }
 
 void
@@ -2893,12 +2945,25 @@ write_file_syms(entry, syms_written_addr)
 		register struct nlist *p = &lsp->nzlist.nlist;
 		register int    type = p->n_type;
 		register int    write = 0;
+		char		*name;
+
+		if (p->n_un.n_strx == 0)
+			name = NULL;
+		else if (lsp->rename == 0)
+			name = p->n_un.n_strx + entry->strings;
+		else {
+			char *cp = p->n_un.n_strx + entry->strings;
+			name = (char *)alloca(
+					strlen(entry->local_sym_name) +
+					strlen(cp) + 2 );
+			(void)sprintf(name, "%s.%s", entry->local_sym_name, cp);
+(void)printf("%s.%s\n", entry->local_sym_name, cp);
+		}
 
 		/*
 		 * WRITE gets 1 for a non-global symbol that should be
 		 * written.
 		 */
-
 		if (SET_ELEMENT_P (type))
 			/*
 			 * This occurs even if global. These types of
@@ -2906,17 +2971,21 @@ write_file_syms(entry, syms_written_addr)
 			 * they are stored globally.
 			 */
 			write = relocatable_output;
+		else if (name == NULL)
+			write = ((discard_locals != DISCARD_ALL)
+						 && type != N_WARNING);
 		else if (!(type & (N_STAB | N_EXT)))
 			/* ordinary local symbol */
-			write = ((discard_locals != DISCARD_ALL)
-				 && !(discard_locals == DISCARD_L &&
-			    (p->n_un.n_strx + entry->strings)[0] == LPREFIX)
-				 && type != N_WARNING);
+			write = (lsp->rename || (
+					discard_locals != DISCARD_ALL &&
+					!(discard_locals == DISCARD_L &&
+						    name[0] == LPREFIX) &&
+					type != N_WARNING) );
 		else if (!(type & N_EXT))
 			/* debugger symbol */
 			write = (strip_symbols == STRIP_NONE) &&
 				!(discard_locals == DISCARD_L &&
-				(p->n_un.n_strx + entry->strings)[0] == LPREFIX);
+							name[0] == LPREFIX);
 
 		if (write) {
 			/*
@@ -2924,9 +2993,8 @@ write_file_syms(entry, syms_written_addr)
 			 * in the output string table.
 			 */
 
-			if (p->n_un.n_strx)
-				p->n_un.n_strx = assign_string_table_index(
-						p->n_un.n_strx + entry->strings);
+			if (name)
+				p->n_un.n_strx = assign_string_table_index(name);
 
 			/* Output this symbol to the buffer and count it.  */
 
