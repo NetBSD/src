@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.341 2004/07/17 16:56:07 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.342 2004/07/19 09:15:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5851,3 +5851,22 @@ usr.bin/netstat/fast_ipsec.c			1.6
 	Rework netstat to find the stats nodes under the new names.
 	Fixes PR#25526.
 	[atatat, ticket #674]
+
+sys/compat/pecoff/pecoff_exec.c			1.25
+sys/compat/pecoff/pecoff_exec.h			1.7
+
+	Pass the whole of pecoff_opthdr, not only pecoff_imghdr.
+	[kent, ticket #675]
+
+lib/libc/dlfcn/dlfcn_elf.c			1.5
+libexec/ld.elf_so/rtld.c			1.106
+libexec/ld.elf_so/symbol.c			1.36
+
+	Make i18n dynamic modules work.
+	[thorpej, ticket #676]
+
+sys/arch/mipsco/stand/Makefile.booters		1.10
+
+	Include bsd.own.mk so this builds again.
+	[chs, ticket #677]
+
