@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.28 2000/06/04 19:14:18 cgd Exp $ */
+/* $NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2000/06/04 19:14:18 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,10 +99,6 @@ clockattach(dev, fns)
 		panic("clockattach: multiple clocks");
 	clockdev = dev;
 	clockfns = fns;
-#ifdef EVCNT_COUNTERS
-	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    dev->dv_xname, "intr");
-#endif
 }
 
 /*
