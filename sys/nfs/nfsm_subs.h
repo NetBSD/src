@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.24 2003/02/26 07:33:57 matt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.25 2003/03/28 13:05:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -296,26 +296,24 @@
 				
 
 #define	nfsm_strsiz(s,m) \
-		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(int32_t,*tl)) > (m)) { \
+		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
+		if (((s) = fxdr_unsigned(uint32_t,*tl)) > (m)) { \
 			m_freem(mrep); \
 			error = EBADRPC; \
 			goto nfsmout; \
 		} }
 
 #define	nfsm_srvstrsiz(s,m) \
-		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(int32_t,*tl)) > (m) || (s) <= 0) { \
+		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
+		if (((s) = fxdr_unsigned(uint32_t,*tl)) > (m) || (s) <= 0) { \
 			error = EBADRPC; \
 			nfsm_reply(0); \
 		} }
 
 #define	nfsm_srvnamesiz(s) \
-		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(int32_t,*tl)) > NFS_MAXNAMLEN) \
+		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
+		if (((s) = fxdr_unsigned(uint32_t,*tl)) > NFS_MAXNAMLEN) \
 			error = NFSERR_NAMETOL; \
-		if ((s) <= 0) \
-			error = EBADRPC; \
 		if (error) \
 			nfsm_reply(0); \
 		}
