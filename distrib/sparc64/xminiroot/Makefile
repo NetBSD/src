@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/07 09:30:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/07 09:33:17 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -39,7 +39,7 @@ VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
 VND_CDEV=	/dev/${VND}${RAW_PART}
 VND_CRDEV=	/dev/r${VND}${RAW_PART}
-IMAGE?=		ramdisk.fs
+IMAGE?=		miniroot.fs
 CSIZE?=         3312
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -109,9 +109,9 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	@mkdir -p $(RELEASEDIR)/installation/ramdisk
-	gzip -c -9 < $(.OBJDIR)/ramdisk.fs \
-		> $(RELEASEDIR)/installation/ramdisk/ramdisk.fs.gz
+	@mkdir -p $(RELEASEDIR)/installation/miniroot
+	gzip -c -9 < $(.OBJDIR)/miniroot.fs \
+		> $(RELEASEDIR)/installation/miniroot/miniroot.fs.gz
 .endif	# RELEASEDIR check
 
 .include <bsd.own.mk>
