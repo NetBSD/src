@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.2 1996/05/06 00:09:28 mark Exp $ */
+/* $NetBSD: sfasvar.h,v 1.3 1997/01/18 01:38:05 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -110,7 +110,6 @@ struct nexus {
 
 	u_char			 lun_unit;	/* (Lun<<4) | Unit of nexus */
 	u_char			 status;	/* Status byte from unit*/
-
 };
 
 /* SCSI nexus_states */
@@ -149,6 +148,8 @@ struct nexus {
 
 #define SFAS_NF_RESET		0x0100	/* Reset this nexus */
 #define SFAS_NF_IMMEDIATE	0x0200	/* We are operating from sfasicmd */
+
+#define SFAS_NF_RETRY_SELECT	0x1000	/* Selection needs retrying */
 
 #define SFAS_NF_DEBUG		0x8000	/* As it says: DEBUG */
 
