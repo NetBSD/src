@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.28 2001/01/17 15:53:43 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.29 2001/01/28 10:41:44 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -217,6 +217,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = vlan_ioctl;
 
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 
 	return (0);
 }
