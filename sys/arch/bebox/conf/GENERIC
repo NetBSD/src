@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2005/01/31 16:54:33 hannken Exp $
+# $NetBSD: GENERIC,v 1.78 2005/02/11 08:25:53 dsl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 maxusers	32
 
@@ -77,6 +77,7 @@ file-system 	UNION
 options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 options 	INET
 options 	INET6		# IPV6
