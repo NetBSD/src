@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.6.2.1 1998/06/04 16:54:11 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.6.2.2 1998/06/09 13:04:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -60,15 +60,12 @@
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	channel_softc wdc_channel;
+	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdc_isa_probe	__P((struct device *, void *, void *));
-#else
 int	wdc_isa_probe	__P((struct device *, struct cfdata *, void *));
-#endif
 void	wdc_isa_attach	__P((struct device *, struct device *, void *));
 
 struct cfattach wdc_isa_ca = {
@@ -83,11 +80,7 @@ static int	wdc_isa_dma_finish __P((void*, int, int, int));
 int
 wdc_isa_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 #if 0 /* XXX memset */
@@ -137,6 +130,7 @@ wdc_isa_attach(parent, self, aux)
 
 	sc->wdc_channel.cmd_iot = ia->ia_iot;
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
+	sc->sc_ic = ia->ia_ic;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_iobase,
 	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
@@ -179,7 +173,7 @@ static void
 wdc_isa_dma_setup(sc)
 	struct wdc_isa_softc *sc;
 {
-	if (isa_dmamap_create(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
@@ -196,7 +190,7 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 {
 	struct wdc_isa_softc *sc = v;
 
-	isa_dmastart(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq, databuf,
+	isa_dmastart(sc->sc_ic, sc->sc_drq, databuf,
 	    datalen, NULL, read ? DMAMODE_READ : DMAMODE_WRITE,
 	    BUS_DMA_NOWAIT);
 	return 0;
@@ -218,6 +212,6 @@ wdc_isa_dma_finish(v, channel, drive, read)
 {
 	struct wdc_isa_softc *sc = v;
 
-	isa_dmadone(sc->sc_wdcdev.sc_dev.dv_parent, sc->sc_drq);
+	isa_dmadone(sc->sc_ic, sc->sc_drq);
 	return 0;
 }
