@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 1997/04/11 20:00:10 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.81 1997/05/15 19:19:49 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -908,7 +908,7 @@ mmu_reservemon4_4c(nrp, nsp)
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
-		panic("mmu_reservemon called on Sun4M machine");
+		panic("mmu_reservemon4_4c called on Sun4M machine");
 		return;
 	}
 #endif
@@ -1089,7 +1089,7 @@ mmu_setup4m_L1(regtblptd, kpmap)
 
 		case SRMMU_TEPTE:
 #ifdef DEBUG
-			printf("mmu_reservemon4m: "
+			printf("mmu_setup4m_L1: "
 			       "converting region 0x%x from L1->L3\n", i);
 #endif
 			/*
@@ -1147,7 +1147,7 @@ mmu_setup4m_L2(segtblptd, rp)
 
 		case SRMMU_TEPTE:
 #ifdef DEBUG
-			printf("mmu_reservemon4m: converting L2 entry at segment 0x%x to L3\n",i);
+			printf("mmu_setup4m_L2: converting L2 entry at segment 0x%x to L3\n",i);
 #endif
 			/*
 			 * This segment entry covers 256KB of memory -- or
@@ -1934,7 +1934,10 @@ pv_changepte4_4c(pv0, bis, bic)
 	flags = pv0->pv_flags;
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		pm = pv->pv_pmap;
-if(pm==NULL)panic("pv_changepte 1");
+#ifdef DIAGNOSTIC
+		if(pm == NULL)
+			panic("pv_changepte: pm == NULL");
+#endif
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -1948,7 +1951,7 @@ if(pm==NULL)panic("pv_changepte 1");
 		if (sp->sg_pmeg == seginval) {
 			/* not in hardware: just fix software copy */
 			if (pte == NULL)
-				panic("pv_changepte 2");
+				panic("pv_changepte: pte == NULL");
 			pte += VA_VPG(va);
 			*pte = (*pte | bis) & ~bic;
 		} else {
@@ -2096,7 +2099,7 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
-			free(npv, M_VMPVENT);
+			FREE(npv, M_VMPVENT);
 		} else
 			pv->pv_pmap = NULL;
 	} else {
@@ -2110,7 +2113,7 @@ pv_unlink4_4c(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		free(npv, M_VMPVENT);
+		FREE(npv, M_VMPVENT);
 	}
 	if (pv->pv_flags & PV_NC) {
 		/*
@@ -2173,7 +2176,7 @@ pv_link4_4c(pv, pm, va)
 			}
 		}
 	}
-	npv = (struct pvlist *)malloc(sizeof *npv, M_VMPVENT, M_WAITOK);
+	MALLOC(npv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2221,8 +2224,10 @@ pv_changepte4m(pv0, bis, bic)
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		register int tpte;
 		pm = pv->pv_pmap;
+#ifdef DIAGNOSTIC
 		if (pm == NULL)
-			panic("pv_changepte 1");
+			panic("pv_changepte: pm == NULL");
+#endif
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		rp = &pm->pm_regmap[vr];
@@ -2365,7 +2370,7 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
-			free(npv, M_VMPVENT);
+			FREE(npv, M_VMPVENT);
 		} else
 			pv->pv_pmap = NULL;
 	} else {
@@ -2379,7 +2384,7 @@ pv_unlink4m(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		free(npv, M_VMPVENT);
+		FREE(npv, M_VMPVENT);
 	}
 	if (!(pv->pv_flags & PV_C4M)) {
 		/*
@@ -2443,7 +2448,7 @@ pv_link4m(pv, pm, va)
 			}
 		}
 	}
-	npv = (struct pvlist *)malloc(sizeof *npv, M_VMPVENT, M_WAITOK);
+	MALLOC(npv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -3879,7 +3884,8 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 #ifdef DEBUG
 			if ((pmapdebug & PDB_SANITYCHK) &&
 			    (getpte4m(va) & SRMMU_TETYPE) == SRMMU_TEPTE)
-				panic("Spurious kTLB entry for %lx", va);
+				panic("pmap_rmk: Spurious kTLB entry for %lx",
+				      va);
 #endif
 			va += NBPG;
 			continue;
@@ -4157,7 +4163,8 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			if ((pmapdebug & PDB_SANITYCHK) &&
 			    pm->pm_ctx &&
 			    (getpte4m(va) & SRMMU_TEPTE) == SRMMU_TEPTE)
-				panic("Spurious uTLB entry for %lx", va);
+				panic("pmap_rmu: Spurious uTLB entry for %lx",
+				      va);
 #endif
 			continue;
 		}
@@ -4380,7 +4387,7 @@ pmap_page_protect4_4c(pa, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			free(pv, M_VMPVENT);
+			FREE(pv, M_VMPVENT);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -4688,8 +4695,9 @@ pmap_page_protect4m(pa, prot)
 				tlb_flush_segment(vr, vs); /* Paranoid? */
 				if (va < virtual_avail) {
 #ifdef DEBUG
-					printf("pmap_rmk4m: attempt to free "
-					       "base kernel allocation\n");
+					printf(
+					 "pmap_page_protect: attempt to free"
+					 " base kernel allocation\n");
 #endif
 					goto nextpv;
 				}
@@ -4719,7 +4727,7 @@ pmap_page_protect4m(pa, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			free(pv, M_VMPVENT);
+			FREE(pv, M_VMPVENT);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -4992,7 +5000,7 @@ pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
 			splx(s);
-			pmap_changeprot(pm, va, prot, wired);
+			pmap_changeprot4_4c(pm, va, prot, wired);
 			return;
 		}
 
@@ -5221,7 +5229,7 @@ printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
 	 * Update hardware & software PTEs.
 	 */
 	if ((pmeg = sp->sg_pmeg) != seginval) {
-		/* ptes are in hardare */
+		/* ptes are in hardware */
 		if (CTX_USABLE(pm,rp))
 			setcontext4(pm->pm_ctxnum);
 		else {
@@ -5356,7 +5364,7 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 		if ((tpte & SRMMU_PPNMASK) == (pteproto & SRMMU_PPNMASK)) {
 			/* just changing protection and/or wiring */
 			splx(s);
-			pmap_changeprot(pm, va, prot, wired);
+			pmap_changeprot4m(pm, va, prot, wired);
 			return;
 		}
 
