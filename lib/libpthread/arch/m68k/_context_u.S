@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/11/20 23:49:58 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.5 2001/11/21 20:10:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,17 +43,15 @@
  * Save the current context into the ucontext_t structure pointed to
  * by %a0. The value of %pc to save is passed in %a1.
  *
- * We only need to save the `callee' saved registers. In fact, saving
- * the %ccr here is probably overkill, but might as well put a sane
- * value in there...
+ * We only need to save the `callee' saved registers.
  */
 #define	GETC	\
-	movw	%cc,%a0@(UC_REGS + (_REG_PS * 4) + 2)	;	\
 	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
 	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
 	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
+	clrl	%a0@(UC_REGS + (_REG_PS * 4))		;	\
 	moveql	#_UC_CPU,%d0				;	\
-	orl	%d0,%a0@(UC_FLAGS)
+	movl	%d0,%a0@(UC_FLAGS)
 
 /*
  * Restore the complete context from the ucontext_t structure pointed
