@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.5 1999/03/15 16:02:55 hubertf Exp $
+/	$NetBSD: units.lib,v 1.6 2001/01/30 00:22:29 mjl Exp $
 
 / primitive units
 
@@ -451,7 +451,7 @@ mgd			megagal/day
 mh			millihenry
 mhz			1e+6 /sec
 mil			1e-3 in
-millenium		1000 year
+millennium		1000 year
 minersinch		1.5 ft3/min
 minim			1|60 fldr
 mo			month
