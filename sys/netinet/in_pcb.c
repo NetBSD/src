@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.80 2002/10/22 02:31:16 simonb Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.81 2003/03/16 03:33:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.80 2002/10/22 02:31:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.81 2003/03/16 03:33:28 lukem Exp $");
 
 #include "opt_ipsec.h"
 
@@ -235,14 +235,8 @@ in_pcbbind(v, nam, p)
 	sin = mtod(nam, struct sockaddr_in *);
 	if (nam->m_len != sizeof (*sin))
 		return (EINVAL);
-#ifdef notdef
-	/*
-	 * We should check the family, but old programs
-	 * incorrectly fail to initialize it.
-	 */
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
-#endif
 	lport = sin->sin_port;
 	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 		/*
