@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.457 2002/03/24 22:21:06 bjh21 Exp $
+# $NetBSD: mi,v 1.458 2002/03/25 19:19:46 martin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -684,6 +684,7 @@
 ./usr/share/man/cat4/icsphy.0			man-sys-catman
 ./usr/share/man/cat4/idp.0			man-sys-catman
 ./usr/share/man/cat4/ifmedia.0			man-sys-catman
+./usr/share/man/cat4/ifpci.0			man-sys-catman
 ./usr/share/man/cat4/iha.0			man-sys-catman
 ./usr/share/man/cat4/inet.0			man-sys-catman
 ./usr/share/man/cat4/inet6.0			man-sys-catman
@@ -2360,6 +2361,7 @@
 ./usr/share/man/man4/icsphy.4			man-sys-man
 ./usr/share/man/man4/idp.4			man-sys-man
 ./usr/share/man/man4/ifmedia.4			man-sys-man
+./usr/share/man/man4/ifpci.4			man-sys-man
 ./usr/share/man/man4/iha.4			man-sys-man
 ./usr/share/man/man4/inet.4			man-sys-man
 ./usr/share/man/man4/inet6.4			man-sys-man
@@ -2973,8 +2975,8 @@
 ./usr/share/man/man8/eeprom.8			man-sysutil-man
 ./usr/share/man/man8/envstat.8			man-sysutil-man
 ./usr/share/man/man8/error.8			man-postfix-man
-./usr/share/man/man8/etcupdate.8		man-sysutil-man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man
+./usr/share/man/man8/etcupdate.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/makedev.8		man-sysutil-man
 ./usr/share/man/man8/faithd.8			man-router-man
