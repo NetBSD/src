@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.46 2002/10/06 08:51:44 tls Exp $	*/
+/*	$NetBSD: libkern.h,v 1.47 2002/10/24 20:53:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -219,7 +219,8 @@ tolower(int ch)
 #endif
 
 #ifndef offsetof
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#define	offsetof(type, member) \
+    ((size_t)(unsigned long)(&(((type *)0)->member)))
 #endif
 
 /* Prototypes for non-quad routines. */
