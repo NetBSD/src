@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.104 1997/01/09 04:30:08 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.105 1997/03/15 01:34:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -73,6 +73,8 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -244,6 +246,8 @@ void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+
+void	fd_mountroot_hook __P((struct device *));
 
 int
 fdcprobe(parent, match, aux)
@@ -483,6 +487,11 @@ fdattach(parent, self, aux)
 	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
 	disk_attach(&fd->sc_dk);
+
+	/*
+	 * Establish a mountroot hook.
+	 */
+	mountroothook_establish(fd_mountroot_hook, &fd->sc_dev);
 
 #ifdef NEWCONFIG
 	/* XXX Need to do some more fiddling with sc_dk. */
@@ -1523,4 +1532,24 @@ fdformat(dev, finfo, p)
 	PRELE(p);
 	free(bp, M_TEMP);
 	return rv;
+}
+
+/*
+ * Mountroot hook: prompt the user to enter the root file system
+ * floppy.
+ */
+void
+fd_mountroot_hook(dev)
+	struct device *dev;
+{
+	int c;
+
+	printf("Insert filesystem floppy and press return.");
+	for (;;) {
+		c = cngetc();
+		if ((c == '\r') || (c == '\n')) {
+			printf("\n");
+			break;
+		}
+	}
 }
