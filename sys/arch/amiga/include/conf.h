@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 1996/04/21 21:13:16 veego Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 1996/05/05 16:17:27 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -57,13 +57,6 @@ cdev_decl(fd);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl */
-#define	cdev_ss_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
 
 cdev_decl(ms);
 
