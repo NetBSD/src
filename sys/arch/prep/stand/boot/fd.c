@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1 2000/02/29 15:21:49 nonaka Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 2001/11/17 19:00:25 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -229,13 +229,14 @@ fdopen(f, ctlr, unit, part)
 	int ctlr, unit, part;
 {
 	FD_UNIT	*un;
-	int *stat = un->stat;
+	int *stat;
 
 	if (ctlr >= CTLR_MAX)
 		return (ENXIO);
 	if (unit >= UNIT_MAX)
 		return (ENXIO);
 	un = &fd_unit[ctlr][unit];
+	stat = un->stat;
 
 	if (!(un->un_flags & INT_ALIVE)) {
 		if (fdinit(un) != SUCCESS)
@@ -720,6 +721,7 @@ irq_polling(irq_no, timeout)
 
 	outb(irc_no ? INT2_CTL1 : INT_CTL1, ~(1 << (irq_no >> (irc_no * 3))));
 
+	ret = FAIL;
 	while (--timeout > 0) {
 		outb(irc_no ? INT2_CTL0 : INT_CTL0, OCW3_PL);
 						/* set polling mode */
@@ -731,7 +733,6 @@ irq_polling(irq_no, timeout)
 			}
 		}
 	}
-	if (!timeout) ret = FAIL;
 
 	if (irc_no) {				/* interrupt clear */
 		outb(INT2_CTL0, OCW2_CLEAR | (irq_no >> 3));
