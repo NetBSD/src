@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.3 1995/02/13 00:46:15 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.4 1995/02/23 17:54:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -215,7 +215,7 @@ swapconf()
         register int nblks;
 
         for (swp = swdevt; swp->sw_dev; swp++)
-                if (bdevsw[major(swp->sw_dev)].d_psize) {
+		if (swp->sw_dev != NODEV &&bdevsw[major(swp->sw_dev)].d_psize){
                         nblks =
                           (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
                         if (nblks != -1 &&
