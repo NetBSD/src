@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.16 2003/01/02 15:43:15 pooka Exp $
+.\" $NetBSD: pcap.3,v 1.17 2003/01/03 12:50:44 pooka Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Fn pcap_lookupdev "char *errbuf"
 .Ft int
 .Fn pcap_lookupnet "char *device" "bpf_u_int32 *netp" \
-bpf_u_int32 *maskp" "char *errbuf"
+"bpf_u_int32 *maskp" "char *errbuf"
 .Ft int
 .Fn pcap_dispatch "pcap_t *p" "int cnt" \
 "pcap_handler callback" "u_char *user"
