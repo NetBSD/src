@@ -61,6 +61,44 @@
   ""
   "tstf %0")
 
+(define_expand "cmpdi"
+  [(parallel
+    [(set (cc0)
+	  (compare (match_operand:DI 0 "nonimmediate_operand" "")
+		   (match_operand:DI 1 "general_operand" "")))
+     (clobber (match_dup 2))])]
+  ""
+  "operands[2] = gen_reg_rtx (DImode);")
+
+(define_insn "*cmpdi2"
+  [(set (cc0)
+	(compare (match_operand:DI 1 "nonimmediate_operand" "0,For>")
+		 (match_operand:DI 2 "general_operand" "For>,0")))
+   (clobber (match_operand:DI 0 "register_operand" "=r,r"))]
+  ""
+  "*
+{
+  rtx low[3];
+  const char *low_pattern, *high_pattern;
+
+  split_quadword_operands (operands, low, 3);
+
+  /* Subtract low parts.  */
+  if (rtx_equal_p (operands[0], operands[1]))
+    {
+	low_pattern  = \"subl2 %2,%0\";
+	high_pattern = \"sbwc %2,%0\";
+    }
+  else
+    {
+        cc_status.flags |= CC_REVERSED;
+	low_pattern  = \"subl2 %1,%0\";
+	high_pattern = \"sbwc %1,%0\";
+    }
+  output_asm_insn (low_pattern, low);
+  return high_pattern;
+}")
+
 (define_insn "cmpsi"
   [(set (cc0)
 	(compare (match_operand:SI 0 "nonimmediate_operand" "g")
