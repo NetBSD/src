@@ -40,7 +40,6 @@
 static char sccsid[] = "@(#)buf.c	5.5 (Berkeley) 3/28/93";
 #endif /* not lint */
 
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +52,8 @@ extern char errmsg[];
 extern line_t line0;
 
 FILE *sfp;				/* scratch file pointer */
+char *sfbuf = NULL;			/* scratch file input buffer */
+int sfbufsz = 0;			/* scratch file input buffer size */
 off_t sfseek;				/* scratch file position */
 int seek_write;				/* seek before writing */
 
@@ -62,7 +63,6 @@ char *
 gettxt(lp)
 	line_t *lp;
 {
-	static char buf[MAXLINE];
 	int len, ct;
 
 	if (lp == &line0)
@@ -74,18 +74,19 @@ gettxt(lp)
 		if (fseek(sfp, sfseek, SEEK_SET) < 0) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			sprintf(errmsg, "cannot seek temp file");
-			return (char *) ERR;
+			return NULL;
 		}
 	}
 	len = lp->len & ~ACTV;
-	if ((ct = fread(buf, sizeof(char), len, sfp)) <  0 || ct != len) {
+	CKBUF(sfbuf, sfbufsz, len + 1, NULL);
+	if ((ct = fread(sfbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot read temp file");
-		return (char *) ERR;
+		return NULL;
 	}
 	sfseek += len;				/* update file position */
-	buf[len] = '\0';
-	return buf;
+	sfbuf[len] = '\0';
+	return sfbuf;
 }
 
 
@@ -105,18 +106,22 @@ puttxt(cs)
 	if ((lp = (line_t *) malloc(sizeof(line_t))) == NULL) {
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "out of memory");
-		return (char *) ERR;
+		return NULL;
 	}
 	/* assert: cs is '\n' terminated */
 	for (s = cs; *s != '\n'; s++)
 		;
+	if (s - cs >= LINECHARS) {
+		sprintf(errmsg, "line too long");
+		return NULL;
+	}
 	len = (s - cs) & ~ACTV;
 	/* out of position */
 	if (seek_write) {
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			sprintf(errmsg, "cannot seek temp file");
-			return (char *) ERR;
+			return NULL;
 		}
 		sfseek = ftell(sfp);
 		seek_write = 0;
@@ -126,13 +131,13 @@ puttxt(cs)
 		sfseek = -1;
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot write temp file");
-		return (char *) ERR;
+		return NULL;
 	}
 	lp->len = len;
 	lp->seek  = sfseek;
 	lpqueue(lp);
 	sfseek += len;			/* update file position */
-	return (*++s == '\0') ? NULL : s;
+	return ++s;
 }
 
 
@@ -143,7 +148,7 @@ lpqueue(lp)
 {
 	line_t *cp;
 
-	cp = getptr(curln);				/* this getptr last! */
+	cp = getlp(curln);				/* this getlp last! */
 	insqueue(lp, cp);
 	lastln++;
 	curln++;
@@ -164,12 +169,9 @@ getaddr(lp)
 }
 
 
-extern int mutex;
-extern int sigflags;
-
-/* getptr: return pointer to a line node in the editor buffer */
+/* getlp: return pointer to a line node in the editor buffer */
 line_t *
-getptr(n)
+getlp(n)
 	long n;
 {
 	static line_t *lp = &line0;
@@ -237,8 +239,8 @@ quit(n)
 	int n;
 {
 	if (sfp) {
-		unlink(sfn);
 		fclose(sfp);
+		unlink(sfn);
 	}
 	exit(n);
 }
