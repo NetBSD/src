@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.17.4.3 2001/03/11 21:12:19 he Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.17.4.4 2003/09/09 10:36:20 msaitoh Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ struct ip6protosw inet6sw[] = {
   0,            0,              0,              0,
 },
 /* raw wildcard */
-{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
   rip6_init,	0,		0,		0,
