@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.166 2004/04/25 16:42:45 simonb Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.167 2004/04/27 09:45:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.166 2004/04/25 16:42:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.167 2004/04/27 09:45:02 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1314,11 +1314,11 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 /*
  * uvm_map_findspace: find "length" sized space in "map".
  *
- * => "hint" is a hint about where we want it, unless FINDSPACE_FIXED is
- *	set (in which case we insist on using "hint").
+ * => "hint" is a hint about where we want it, unless UVM_FLAG_FIXED is
+ *	set in "flags" (in which case we insist on using "hint").
  * => "result" is VA returned
  * => uobj/uoffset are to be used to handle VAC alignment, if required
- * => if `align' is non-zero, we attempt to align to that value.
+ * => if "align" is non-zero, we attempt to align to that value.
  * => caller must at least have read-locked map
  * => returns NULL on failure, or pointer to prev. map entry if success
  * => note this is a cross between the old vm_map_findspace and vm_map_find
