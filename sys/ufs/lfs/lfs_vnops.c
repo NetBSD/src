@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.25.2.5 2000/01/15 17:52:33 he Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25.2.6 2000/01/15 17:55:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -337,16 +337,6 @@ static int lfs_set_dirop(fs)
         (dvp)->v_flag |= VDIROP;					\
 } while(0)
 
-#define MAYBE_INACTIVE(fs,vp) do {                                      \
-        if((vp) && ((vp)->v_flag & VDIROP) && (vp)->v_usecount == 1     \
-           && VTOI(vp) && VTOI(vp)->i_ffs_nlink == 0)                   \
-        {                                                               \
-		if (VOP_LOCK((vp), LK_EXCLUSIVE) == 0) { 		\
-                        VOP_INACTIVE((vp),curproc);                     \
-		}                                                       \
-        }                                                               \
-} while(0)
-
 int
 lfs_symlink(v)
 	void *v;
@@ -360,11 +350,12 @@ lfs_symlink(v)
 	} */ *ap = v;
 	int ret;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+		vput(ap->a_dvp);
 		return ret;
+	}
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_symlink(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symilnk");
 	return (ret);
 }
@@ -384,8 +375,10 @@ lfs_mknod(v)
         struct inode *ip;
         int error;
 
-	if((error=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if((error=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+		vput(ap->a_dvp);
 		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
             ap->a_dvp, vpp, ap->a_cnp);
@@ -446,11 +439,12 @@ lfs_create(v)
 	} */ *ap = v;
 	int ret;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+		vput(ap->a_dvp);
 		return ret;
+	}
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_create(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
 	return (ret);
 }
@@ -467,6 +461,7 @@ lfs_whiteout(v)
 	int ret;
 
 	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		/* XXX no unlock here? */
 		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_whiteout(ap);
@@ -486,11 +481,12 @@ lfs_mkdir(v)
 	} */ *ap = v;
 	int ret;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+		vput(ap->a_dvp);
 		return ret;
+	}
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_mkdir(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mkdir");
 	return (ret);
 }
@@ -504,14 +500,23 @@ lfs_remove(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
+	struct vnode *dvp, *vp;
 	int ret;
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+
+	dvp = ap->a_dvp;
+	vp = ap->a_vp;
+	if((ret=SET_DIROP(VTOI(dvp)->i_lfs))!=0) {
+		if (dvp == vp)
+			vrele(vp);
+		else
+			vput(vp);
+		vput(dvp);
 		return ret;
-	MARK_VNODE(ap->a_dvp);
-	MARK_VNODE(ap->a_vp);
+	}
+	MARK_VNODE(dvp);
+	MARK_VNODE(vp);
 	ret = ufs_remove(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"remove");
+	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
 	return (ret);
 }
 
@@ -527,12 +532,16 @@ lfs_rmdir(v)
 	} */ *ap = v;
 	int ret;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+		vrele(ap->a_dvp);
+		if (ap->a_vp->v_mountedhere != NULL)
+			VOP_UNLOCK(ap->a_dvp, 0);
+		vput(ap->a_vp);
 		return ret;
+	}
 	MARK_VNODE(ap->a_dvp);
 	MARK_VNODE(ap->a_vp);
 	ret = ufs_rmdir(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
 	return (ret);
 }
@@ -548,8 +557,10 @@ lfs_link(v)
 	} */ *ap = v;
 	int ret;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+		vput(ap->a_dvp);
 		return ret;
+	}
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_link(ap);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"link");
@@ -589,26 +600,27 @@ lfs_rename(v)
 	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		error = EXDEV;
-		VOP_ABORTOP(tdvp, ap->a_tcnp); /* XXX, why not in NFS? */
-		if (tdvp == tvp)
-			vrele(tdvp);
-		else
-			vput(tdvp);
-		if (tvp)
-			vput(tvp);
-		VOP_ABORTOP(fdvp, ap->a_fcnp); /* XXX, why not in NFS? */
-		vrele(fdvp);
-		vrele(fvp);
-		return (error);
+		goto errout;
 	}
-	if((error=SET_DIROP(fs))!=0)
-		return (error);
+	if ((error = SET_DIROP(fs))!=0)
+		goto errout;
 	MARK_VNODE(fdvp);
 	MARK_VNODE(tdvp);
 	error = ufs_rename(ap);
-	MAYBE_INACTIVE(fs,fvp);
-	MAYBE_INACTIVE(fs,tvp);
 	SET_ENDOP(fs,fdvp,"rename");
+	return (error);
+
+    errout:
+	VOP_ABORTOP(tdvp, ap->a_tcnp); /* XXX, why not in NFS? */
+	if (tdvp == tvp)
+		vrele(tdvp);
+	else
+		vput(tdvp);
+	if (tvp)
+		vput(tvp);
+	VOP_ABORTOP(fdvp, ap->a_fcnp); /* XXX, why not in NFS? */
+	vrele(fdvp);
+	vrele(fvp);
 	return (error);
 }
 
