@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.130 2004/12/01 23:55:19 christos Exp $
+$NetBSD: UPDATING,v 1.131 2004/12/02 00:00:11 wiz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,7 +18,7 @@ Recent changes:
 20041201:
 	Userland programs have been changed to use /dev/bpf instead of
 	/dev/bpfX. You need to create that device by installing a new
-	MAKEDEV and running it, or mv /dev/bpf0 /dev/bpf && rm /dev/bpf*
+	MAKEDEV and running it, or mv /dev/bpf0 /dev/bpf && rm /dev/bpf[0-9]*
 
 20041006:
 
