@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.9 2003/10/21 10:01:20 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.10 2003/10/26 03:49:39 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
 BINDIR?=	/usr/bin
-SHELL=		/bin/sh
 ECHO=		echo
 
 # Define `page' to be letter if your PostScript printer uses 8.5x11
