@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2005/01/17 17:14:56 shige Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.2.1 2005/02/13 10:40:48 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/01/17 17:14:56 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.1 2005/02/13 10:40:48 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -365,7 +365,8 @@ cpu_startup(void)
 	 * Besides, do we really have to put it at the end of core?
 	 * Let's use static buffer for now
 	 */
-	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
+	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE), 0,
+	    UVM_KMF_VAONLY)))
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,

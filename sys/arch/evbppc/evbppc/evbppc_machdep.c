@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.5 2004/05/06 10:51:15 scw Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.5.6.1 2005/02/13 10:40:48 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.5 2004/05/06 10:51:15 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.5.6.1 2005/02/13 10:40:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ mapiodev(paddr_t pa, psize_t len)
 	faddr = trunc_page(pa);
 	off = pa - faddr;
 	len = round_page(off + len);
-	va = taddr = uvm_km_valloc(kernel_map, len);
+	va = taddr = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return NULL;
