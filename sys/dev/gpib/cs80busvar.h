@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80busvar.h,v 1.1 2003/06/02 03:51:05 gmcgarry Exp $	*/
+/*	$NetBSD: cs80busvar.h,v 1.2 2004/04/19 12:44:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ struct cs80_description {
 	u_int16_t	d_access;	/* unit: access time (1/100-sec) */
 	u_int8_t	d_maxint;	/* unit: max interleave */
 	u_int8_t	d_fvbyte;	/* unit: fixed volume byte */
-	u_int8_t	d_rvbyte;	/* unit: removeable volume byte */
+	u_int8_t	d_rvbyte;	/* unit: removable volume byte */
 	u_int32_t	d_maxcylhead;	/* volume: max cylinder/head */
 	u_int16_t	d_maxsect;	/* volume: max sector on track */
 	u_int16_t	d_maxvsecth;	/* volume: max volume block (MSW) */

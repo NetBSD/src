@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.13 2002/10/02 16:33:53 thorpej Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.14 2004/04/19 12:44:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.13 2002/10/02 16:33:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.14 2004/04/19 12:44:10 wiz Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -235,10 +235,10 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	if ((le32toh(param.p.bdi.capabilities) & I2O_RBS_CAP_REMOVEABLE_MEDIA)
+	if ((le32toh(param.p.bdi.capabilities) & I2O_RBS_CAP_REMOVABLE_MEDIA)
 	    != 0) {
-		/* ld->sc_flags = LDF_REMOVEABLE; */
-		fixedstr = "removeable";
+		/* ld->sc_flags = LDF_REMOVABLE; */
+		fixedstr = "removable";
 		enable = 0;
 	} else
 		fixedstr = "fixed";

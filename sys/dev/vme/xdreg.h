@@ -1,4 +1,4 @@
-/*	$NetBSD: xdreg.h,v 1.3 2003/05/03 18:11:42 wiz Exp $	*/
+/*	$NetBSD: xdreg.h,v 1.4 2004/04/19 12:44:10 wiz Exp $	*/
 
 /*
  *
@@ -168,7 +168,7 @@ struct xd_iopb {
 #define XDFUN_DM  0xa0           /* XDCMD_{XWR,XRD}: defect map */
 #define XDFUN_DMX 0xa1           /* XDCMD_{XWR,XRD}: defect map extended */
                                  /* section 4.1.6: byte 5 */
-  volatile u_char fixd:1;        /* fixed media (vs removeable) */
+  volatile u_char fixd:1;        /* fixed media (vs removable) */
   volatile u_char reserved1:4;   /* reserved */
   volatile u_char unit:3;        /* unit number */
                                  /* note: 6 to 13 are overloaded (see below) */

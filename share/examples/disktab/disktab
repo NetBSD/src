@@ -1,4 +1,4 @@
-# $NetBSD: disktab,v 1.1 2002/12/17 15:16:43 jdolecek Exp $
+# $NetBSD: disktab,v 1.2 2004/04/19 12:44:10 wiz Exp $
 #
 # Example disktab, containing example entries for historic disks
 # and/or entries showing special features of disktab entries.
@@ -7,7 +7,7 @@
 # Disk geometry and partition layout tables. 
 # Key:
 #       dt      controller type
-#       ty      type of disk (fixed, removeable, simulated)
+#       ty      type of disk (fixed, removable, simulated)
 #       d[0-4]  drive-type-dependent parameters
 #       ns      #sectors/track
 #       nt      #tracks/cylinder

@@ -1,4 +1,4 @@
-/*	$NetBSD: xyreg.h,v 1.3 2003/05/03 18:11:43 wiz Exp $	*/
+/*	$NetBSD: xyreg.h,v 1.4 2004/04/19 12:44:10 wiz Exp $	*/
 
 /*
  *
@@ -169,7 +169,7 @@ struct xy_iopb {
 					/* section 2.4.14: byte 11 */
 	volatile u_char subfn;		/* sub-function */
 					/* section 2.4.13: byte 10 */
-	volatile u_char hoff;		/* head offset for fixed/removeable drives */
+	volatile u_char hoff;		/* head offset for fixed/removable drives */
 					/* section 2.4.15: byte 12,13 */
 	volatile u_short nxtiopb;	/* next iopb address (same relocation) */
 					/* section 2.4.16: byte 14,15 */
