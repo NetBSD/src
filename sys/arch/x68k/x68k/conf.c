@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1997/02/04 10:35:41 oki Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1997/06/01 01:27:51 oki Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -186,7 +186,6 @@ cdev_decl(ch);
 #include "uk.h"
 cdev_decl(uk);
 #include "ipfilter.h"
-cdev_decl(ipfilter);
 
 struct cdevsw	cdevsw[] =
 {
@@ -230,7 +229,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 35: SCSI scanner */
 	cdev_ch_init(NCH,ch),		/* 36: SCSI changer device */
 	cdev_ch_init(NUK,uk),		/* 37: SCSI unknown device */
-	cdev_ch_init(NIPFILTER,ipfilter), /* 38: IP filter device */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 38: IP filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
