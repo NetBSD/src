@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.12 1998/02/21 22:52:50 mark Exp $	*/
+/*	$NetBSD: ast.c,v 1.13 1998/05/08 23:24:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -58,7 +58,7 @@ int want_resched = 0;
 
 void
 userret(p, pc, oticks)
-	register struct proc *p;
+	struct proc *p;
 	int pc;
 	u_quad_t oticks;
 {
@@ -66,7 +66,7 @@ userret(p, pc, oticks)
 
 #ifdef DIAGNOSTIC
 	if (p == NULL)
-		panic("userret: p=0 curproc=%08x", (u_int)curproc);
+		panic("userret: p=0 curproc=%p", curproc);
     
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
 		panic("userret called in non SVC mode !");
@@ -148,14 +148,18 @@ void
 ast(frame)
 	trapframe_t *frame;
 {
-	register struct proc *p;
+	struct proc *p = curproc;
 
 	cnt.v_trap++;
 
-	if ((p = curproc) == 0)
+#ifdef DIAGNOSTIC
+	if (p == NULL) {
 		p = &proc0;
+		printf("ast: curproc=NULL\n");
+	}
 	if (&p->p_addr->u_pcb == 0)
 		panic("ast: nopcb!");
+#endif	
 
 	cnt.v_soft++;
 	if (p->p_flag & P_OWEUPC) {
