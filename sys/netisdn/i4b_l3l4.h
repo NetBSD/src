@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.7 2002/03/24 20:36:00 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.8 2002/03/25 12:07:34 martin Exp $
  *
  * $FreeBSD$
  *
@@ -242,7 +242,7 @@ struct isdn_l3_driver_functions {
  *	is just one of those BRIs)
  *---------------------------------------------------------------------------*/
 struct isdn_l3_driver {
-	SIMPLEQ_ENTRY(isdn_l3_driver) l3drvq;
+	SLIST_ENTRY(isdn_l3_driver) l3drvq;
 	void*	l1_token;		/* softc of hardware driver, actually
 					 * this is the l2_softc (!!) for
 					 * passive cards, and something else

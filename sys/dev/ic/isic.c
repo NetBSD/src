@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.4 2002/03/24 20:35:46 martin Exp $ 
+ *	$Id: isic.c,v 1.5 2002/03/25 12:07:33 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.4 2002/03/24 20:35:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.5 2002/03/25 12:07:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -132,7 +132,8 @@ isicintr(void *arg)
 	
 			if(isac_irq_stat)
 			{
-				isic_isac_irq(sc, isac_irq_stat); /* isac handler */
+				if (isic_isac_irq(sc, isac_irq_stat)) /* isac handler */
+					break;	/* bad IRQ */
 				was_isac_irq = 1;
 			}
 		}
@@ -192,7 +193,8 @@ isicintr(void *arg)
 			if(ipac_irq_stat & IPAC_ISTA_EXD)
 			{
 				/* force ISAC interrupt handling */
-				isic_isac_irq(sc, ISAC_ISTA_EXI);
+				if (isic_isac_irq(sc, ISAC_ISTA_EXI))
+					break;	/* bad IRQ */
 				was_ipac_irq = 1;
 			}
 	

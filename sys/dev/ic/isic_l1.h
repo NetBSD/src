@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.4 2002/03/24 20:35:47 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.5 2002/03/25 12:07:33 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -206,7 +206,7 @@ struct isic_softc
 
 	int		sc_init_tries;	/* no of out tries to access S0 */
 	int		sc_maddr;	/* some stupid ISA cards need this */
-	
+
 	u_char		sc_isac_mask;	/* ISAC IRQ mask	*/
 #define ISAC_IMASK	(sc->sc_isac_mask)
 
@@ -340,7 +340,7 @@ extern void isic_hscx_cmd __P(( struct isic_softc *sc, int h_chan, unsigned char
 extern void isic_hscx_waitxfw __P(( struct isic_softc *sc, int h_chan ));
 extern void isic_init_linktab __P((struct isic_softc *sc));
 extern int isic_isac_init __P((struct isic_softc *sc));
-extern void isic_isac_irq __P((struct isic_softc *sc, int r));
+extern int isic_isac_irq __P((struct isic_softc *sc, int r));
 extern void isic_isac_l1_cmd __P((struct isic_softc *sc, int command));
 extern void isic_next_state __P((struct isic_softc *sc, int event));
 extern char * isic_printstate __P((struct isic_softc *sc));

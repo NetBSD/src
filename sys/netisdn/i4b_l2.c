@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.7 2002/03/24 20:35:58 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.8 2002/03/25 12:07:34 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.7 2002/03/24 20:35:58 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.8 2002/03/25 12:07:34 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.7 2002/03/24 20:35:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.8 2002/03/25 12:07:34 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -226,6 +226,9 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 	switch(status)
 	{
 		case STI_ATTACH:
+			if (parm == 0) 	/* detach */
+				break;
+
 			l2sc->i_queue.ifq_maxlen = IQUEUE_MAXLEN;
 			l2sc->ua_frame = NULL;
 			memset(&l2sc->stat, 0, sizeof(lapdstat_t));			
