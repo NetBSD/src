@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.2 2003/09/24 11:48:18 shige Exp $
+#	$NetBSD: files.obs405,v 1.3 2003/10/06 18:20:54 shige Exp $
 #
 # obs405-specific configuration info
 
@@ -22,17 +22,6 @@ include "dev/wscons/files.wscons"
 # Raster operations
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
-
-define	todservice {}
-
-device	todclock
-attach	todclock at todservice
-file	arch/powerpc/ibm4xx/dev/todclock.c	todclock	needs-count
-#file	arch/evbppc/obs405/dev/todclock.c	todclock	needs-count
-
-device	rtc: todservice
-attach	rtc at iic
-file	arch/evbppc/obs405/dev/x1226.c		rtc
 
 #
 # Machine-independent CardBus drivers
