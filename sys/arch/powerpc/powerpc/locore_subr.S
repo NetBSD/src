@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.21 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.22 2003/10/17 21:08:57 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -142,6 +142,8 @@ GLOBAL(powersave)
 	.rodata
 .Lqspanic:
 	.string	"cpu_switch: queue %d [%08x] is empty!" 
+.Lcurpcbpanic:
+	.string "cpu_switch: curpcb is null!"
 
 	.text
 	.align 2
@@ -388,9 +390,9 @@ switch_exited:
 	GET_CPUINFO(%r6)
 	stptru	%r4,CI_CURPCB(%r6)
 #ifdef PPC_OEA64
-	stdcx.	%r5,%r0,%r6		/* clear possible reservation */
+	stdcx.	%r4,%r0,%r6		/* clear possible reservation */
 #else
-	stwcx.	%r5,%r0,%r6		/* clear possible reservation */
+	stwcx.	%r4,%r0,%r6		/* clear possible reservation */
 #endif
 	isync
 
@@ -434,6 +436,17 @@ switch_return:
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+#if defined(DIAGNOSTIC)
+	GET_CPUINFO(%r3)
+	ldptr	%r0,CI_CURPCB(%r3)	/* load curcpu()->ci_curpcb */
+	or.	%r0,%r0,%r0		/* is it NULL? */
+	bne	2f			/*    nope, that's good. */
+	lis	%r3,.Lcurpcbpanic@ha	/* get panic string (HI) */
+	addi	%r3,%r3,.Lcurpcbpanic@l	/* get panic string (LO) */
+	bl	_C_LABEL(panic)
+2:
 #endif
 
 	mr	%r3,%r30		/* restore return value */
@@ -494,10 +507,12 @@ ENTRY(cpu_switchto)
 	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
 
 1:
-#endif
+#endif /* MULTIPROCESSOR */
+#if 0
 	li	%r0,0
 	streg	%r0,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
 	ldreg	%r0,CI_CURPCB(%r7)
+#endif
 
 /* Lock the scheduler. */
 #if defined(PPC_IBM4XX)
