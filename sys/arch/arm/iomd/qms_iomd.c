@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.1 2001/10/05 22:27:42 reinoud Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -119,7 +119,7 @@ qms_iomd_intenable(sc, enable)
 
 #ifdef DIAGNOSTIC
 #include <arm/iomd/iomdreg.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 void
 qms_console_freeze()
 {

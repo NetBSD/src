@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.22 2001/02/28 18:15:44 bjh21 Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.23 2001/11/22 18:34:31 thorpej Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -51,7 +51,7 @@
 
 #include <machine/cpu.h>
 #include <machine/cpus.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/frame.h>
 
 #include <arm32/fpe-arm/armfpe.h>	/* Prototypes for things */

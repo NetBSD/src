@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.2 2001/10/17 23:28:19 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.3 2001/11/22 18:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/irqhandler.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/pmap.h>
 #include <machine/beep.h>
 #include <arm/mainbus/mainbus.h>

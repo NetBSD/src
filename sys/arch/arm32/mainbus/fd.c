@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 2001/07/08 18:06:43 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 2001/11/22 18:34:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include <machine/irqhandler.h>
 #include <machine/conf.h>
 #include <machine/io.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/bus.h>
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/mainbus/piocvar.h>
