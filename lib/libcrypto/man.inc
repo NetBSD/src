@@ -71,8 +71,6 @@ MAN+=	SSL_COMP_add_compression_method.3 SSL_CTX_ctrl.3 \
 
 MAN+=	openssl.cnf.5
 
-MAN+=	des_modes.7
-
 MLINKS+=openssl_des.3 des_cbc_cksum.3 \
 	openssl_des.3 des_cfb64_encrypt.3 \
 	openssl_des.3 des_cfb_encrypt.3 \

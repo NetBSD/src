@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/07/23 05:43:44 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2003/07/23 05:46:00 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ INCS=	des.h
 INCSDIR=/usr/include
 
 # pod2man --section=3 --center=libdes --release=0.9.6j des.pod > des.3
-MAN=	des.3
+# pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod > des_modes.7
+MAN=	des.3 des_modes.7
 
 .include <bsd.lib.mk>
