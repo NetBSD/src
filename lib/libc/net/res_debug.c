@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.19 1998/08/19 20:58:42 ross Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.20 1998/09/13 16:05:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.19 1998/08/19 20:58:42 ross Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.20 1998/09/13 16:05:34 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1552,13 +1552,13 @@ __p_secstodate (secs)
 {
 	static char output[15];		/* YYYYMMDDHHMMSS and null */
 	time_t clock = secs;
-	struct tm *time;
+	struct tm time;
 	
-	time = gmtime(&clock);
-	time->tm_year += 1900;
-	time->tm_mon += 1;
+	(void)gmtime_r(&clock, &time);
+	time.tm_year += 1900;
+	time.tm_mon += 1;
 	sprintf(output, "%04d%02d%02d%02d%02d%02d",
-		time->tm_year, time->tm_mon, time->tm_mday,
-		time->tm_hour, time->tm_min, time->tm_sec);
+		time.tm_year, time.tm_mon, time.tm_mday,
+		time.tm_hour, time.tm_min, time.tm_sec);
 	return (output);
 }
