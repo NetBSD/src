@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.13 2001/11/02 18:27:00 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.14 2002/05/26 00:12:13 wiz Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.13 2001/11/02 18:27:00 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.14 2002/05/26 00:12:13 wiz Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -116,11 +116,7 @@ static char     saveeof, saveeol;
 #endif	/* not TERMIO or TERMIOS */
 
 #ifndef NOVARARGS	/* if we have varargs */
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #else	/* NOVARARGS */	/* if we don't have varargs */
 typedef char   *va_list;
 #define va_dcl int va_alist;
@@ -249,26 +245,14 @@ sprintf(str)
 }
 #else	/* lint */
 /* VARARGS */
-#ifdef __STDC__
 void lprintf(const char *fmt, ...)
-#else
-void
-lprintf(va_alist)
-va_dcl
-#endif
 {
 	va_list         ap;	/* pointer for variable argument list */
 	char  *outb, *tmpb;
 	long   wide, left, cont, n;	/* data for lprintf	 */
 	char            db[12];	/* %d buffer in lprintf	 */
-#ifndef __STDC__
-	char  *fmt;
 
-	va_start(ap);		/* initialize the var args pointer */
-	fmt = va_arg(ap, char *);	/* pointer to format string */
-#else
 	va_start(ap, fmt);
-#endif
 	if (lpnt >= lpend)
 		lflush();
 	outb = lpnt;
