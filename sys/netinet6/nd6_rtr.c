@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.39 2003/05/15 14:57:58 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.40 2003/05/16 02:53:28 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.39 2003/05/15 14:57:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.40 2003/05/16 02:53:28 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1963,14 +1963,6 @@ rt6_deleteroute(rn, arg)
 		return (0);
 
 	if (!IN6_ARE_ADDR_EQUAL(gate, &SIN6(rt->rt_gateway)->sin6_addr))
-		return (0);
-
-	/*
-	 * Do not delete a static route.
-	 * XXX: this seems to be a bit ad-hoc. Should we consider the
-	 * 'cloned' bit instead?
-	 */
-	if ((rt->rt_flags & RTF_STATIC) != 0)
 		return (0);
 
 	/*
