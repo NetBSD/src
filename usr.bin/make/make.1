@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.84 2003/08/07 11:14:54 agc Exp $
+.\"	$NetBSD: make.1,v 1.85 2003/09/05 06:52:12 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July 31, 2003
+.Dd September 4, 2003
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -227,6 +227,11 @@ Do not build any targets.
 Multiple instances of this option may be specified;
 the variables will be printed one per line,
 with a blank line for each null or undefined variable.
+If
+.Ar variable
+contains a
+.Ql \&$
+then the value will be expanded before printing.
 .It Fl W
 Treat any warnings during makefile parsing as errors.
 .It Fl X
