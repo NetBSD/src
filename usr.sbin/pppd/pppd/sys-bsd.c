@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.46 2003/09/01 16:54:27 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.47 2003/09/13 18:55:17 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.46 2003/09/01 16:54:27 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.47 2003/09/13 18:55:17 christos Exp $");
 #endif
 #endif
 
@@ -1792,7 +1792,7 @@ get_ether_addr(ipaddr, hwaddr)
 	/*
 	 * Found the link-level address - copy it out
 	 */
-	dla = (struct sockaddr_dl *) &ifa->ifa_addr;
+	dla = (struct sockaddr_dl *) ifa->ifa_addr;
 	BCOPY(dla, hwaddr, dla->sdl_len);
 	freeifaddrs(ifap);
 	return 1;
