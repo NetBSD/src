@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_fs.c,v 1.2 2000/11/20 03:19:35 wiz Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.3 2001/05/13 18:07:00 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mount_fs.c,v 1.11 2000/02/15 00:12:31 ezk Exp
+ * Id: mount_fs.c,v 1.11.2.5 2001/04/14 21:08:25 ezk Exp
  *
  */
 
@@ -106,6 +106,14 @@ struct opt_tab mnt_flags[] =
 #if defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY)
   {MNTTAB_OPT_OVERLAY, MNT2_GEN_OPT_OVERLAY},
 #endif /* defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY) */
+
+#if defined(MNT2_NFS_OPT_PROPLIST) && defined(MNTTAB_OPT_PROPLIST)
+  {MNTTAB_OPT_PROPLIST, MNT2_NFS_OPT_PROPLIST},
+#endif /* defined(MNT2_NFS_OPT_PROPLIST) && defined(MNTTAB_OPT_PROPLIST) */
+
+#if defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK)
+  {MNTTAB_OPT_NOLOCK, MNT2_NFS_OPT_NONLM},
+#endif /* defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK) */
 
   {0, 0}
 };
@@ -697,6 +705,11 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct sockaddr_
   }
 #endif /* MNT2_NFS_OPT_POSIX && MNTTAB_OPT_POSIX */
 
+#if defined(MNT2_NFS_OPT_PROPLIST) && defined(MNTTAB_OPT_PROPLIST)
+  if (hasmntopt(mntp, MNTTAB_OPT_PROPLIST) != NULL)
+    nap->flags |= MNT2_NFS_OPT_PROPLIST;
+#endif /* defined(MNT2_NFS_OPT_PROPLIST) && defined(MNTTAB_OPT_PROPLIST) */
+
 #if defined(MNT2_NFS_OPT_MAXGRPS) && defined(MNTTAB_OPT_MAXGROUPS)
   nap->maxgrouplist = hasmntval(mntp, MNTTAB_OPT_MAXGROUPS);
   if (nap->maxgrouplist != NULL)
@@ -732,7 +745,7 @@ compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp)
    * Don't let the kernel cache symbolic links we generate, or else lookups
    * will bypass amd and fail to remount stuff as needed.
    */
-  plog(XLOG_INFO, "turning on NFS option symttl and setting value to %d", 0);
+  plog(XLOG_INFO, "turning on NFS option symttl and setting value to 0");
   nap->flags |= MNT2_NFS_OPT_SYMTTL;
   nap->symttl = 0;
 #endif /* MNT2_NFS_OPT_SYMTTL */
@@ -754,8 +767,8 @@ compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp)
 
 #ifdef MNT2_NFS_OPT_DUMBTIMR
   /*
-   * Don't let the kernel start computing throughput of Amd The numbers will
-   * be meaningless because of the way Amd does mount retries.
+   * Don't let the kernel start computing throughput of Amd.  The numbers
+   * will be meaningless because of the way Amd does mount retries.
    */
   plog(XLOG_INFO, "%s: disabling nfs congestion window", mntp->mnt_dir);
   nap->flags |= MNT2_NFS_OPT_DUMBTIMR;

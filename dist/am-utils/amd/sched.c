@@ -1,7 +1,7 @@
-/*	$NetBSD: sched.c,v 1.2 2000/11/20 03:19:34 wiz Exp $	*/
+/*	$NetBSD: sched.c,v 1.3 2001/05/13 18:06:57 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: sched.c,v 1.4 2000/01/12 16:44:26 ezk Exp
+ * Id: sched.c,v 1.4.2.2 2001/01/10 03:23:12 ezk Exp
  *
  */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.c,v 1.2 2000/11/20 03:19:33 wiz Exp $	*/
+/*	$NetBSD: amd.c,v 1.3 2001/05/13 18:06:57 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amd.c,v 1.8.2.1 2000/05/26 23:40:50 ionut Exp
+ * Id: amd.c,v 1.8.2.3 2001/01/10 03:22:59 ezk Exp
  *
  */
 
