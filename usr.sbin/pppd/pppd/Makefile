@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/05/06 20:46:36 gwr Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/09 04:43:01 mycroft Exp $
 
 PCAPDIR=${.CURDIR}/../../lib/libpcap
 
@@ -8,7 +8,6 @@ SRCS=	auth.c cbcp.c ccp.c chap.c chap_ms.c demand.c fsm.c ipcp.c \
 
 .PATH.c: ${PCAPDIR} ${.CURDIR}/../../sys/net
 MAN=	pppd.8 pppd.cbcp.8
-SUBDIR=	pppstats chat
 BINMODE=4555
 BINOWN=	root
 
