@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.8 1999/04/12 20:48:07 pk Exp $
+.\"	$NetBSD: sup.1,v 1.9 1999/06/17 05:11:47 christos Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -108,6 +108,12 @@ When this flag is given,
 will print the time
 that each collection was last upgraded, rather than
 performing actual upgrades.
+.TP
+.B -u
+When this flag is given,
+.I sup
+will not try to restore the user access and modified times of files in
+the collections from the server.
 .TP
 .B -S
 Operate silently printing messages only on errors.

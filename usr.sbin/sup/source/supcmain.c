@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.12 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.13 1999/06/17 05:11:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -44,6 +44,11 @@
  *			When this flag is given, Sup will print the time
  *			that each collection was last upgraded, rather than
  *			performing actual upgrades.
+ *
+ *	-u	"utimes" flag
+ *			When this flags is given sup will not attempt to
+ *			restore access and modification files on the collection
+ *			files from the server.
  *
  *	-R	"resource pause" flag
  *			Sup will not disable resource pausing and will not
@@ -334,6 +339,7 @@ extern int scmdebug;			/* SCM debugging flag */
 int silent;				/* Silent run, print only errors */
 int sysflag;				/* system upgrade flag */
 int timeflag;				/* print times flag */
+int noutime;				/* Don't preserve utimes */
 #if	MACH
 int rpauseflag;				/* don't disable resource pausing */
 #endif	/* MACH */
@@ -553,6 +559,9 @@ int *oflagsp,*aflagsp;
 		case 'O':
 			oflags &= ~CFOLD;
 			aflags |= CFOLD;
+			break;
+		case 'u':
+			noutime = TRUE;
 			break;
 		case 'v':
 			oflags |= CFVERBOSE;
