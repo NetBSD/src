@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.h,v 1.1.1.1 1995/03/26 07:12:21 leo Exp $	*/
+/*	$NetBSD: stalloc.h,v 1.2 1996/04/12 08:46:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps (allocator stuff)
