@@ -35,7 +35,7 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$Id: SYS.h,v 1.4 1994/05/03 20:39:55 phil Exp $
+ *	$Id: SYS.h,v 1.5 1996/10/18 00:49:03 jtc Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
@@ -44,20 +44,30 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#define SYSTRAP(x) \
+	movd CAT(SYS_,x),r0; \
+	SVC
+
 #define	SYSCALL(x) \
 	ENTRY(x); \
-	movd CAT(SYS_,x),r0; \
-	SVC; \
+	SYSTRAP(x); \
 	bcs cerror
 
 #define	RSYSCALL(x) \
 	SYSCALL(x); \
 	ret 0
 
+#define SYSCALL_NOERROR(x) \
+	ENTRY(x); \
+	SYSTRAP(x); 
+
+#define RSYSCALL_NOERROR(x) \
+	SYSCALL_NOERROR(x); \
+	ret 0
+
 #define	PSEUDO(x,y) \
 	ENTRY(x); \
-	movd CAT(SYS_,y),r0; \
-	SVC; \
+	SYSTRAP(y); \
 	ret 0
 
 #define	CALL(x,y) \
