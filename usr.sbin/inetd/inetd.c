@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.56 2000/01/13 15:53:00 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.57 2000/01/27 19:52:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.56 2000/01/13 15:53:00 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.57 2000/01/27 19:52:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,6 +275,11 @@ int	options;
 int	timingout;
 struct	servent *sp;
 char	*curdom;
+#ifdef NI_WITHSCOPEID
+const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
+#else
+const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
+#endif
 
 #ifndef OPEN_MAX
 #define OPEN_MAX	64
@@ -645,7 +650,7 @@ run_service(ctrl, sep)
 {
 	struct passwd *pwd;
 	struct group *grp = NULL;	/* XXX gcc */
-	char buf[7];
+	char buf[NI_MAXSERV];
 #ifdef LIBWRAP
 	struct request_info req;
 	int denied;
@@ -1768,13 +1773,14 @@ inetd_setproctitle(a, s)
 	char *cp;
 	struct sockaddr_storage ss;
 	char buf[80];
-	char hbuf[80];
+	char hbuf[NI_MAXHOST];
 
 	cp = Argv[0];
 	size = sizeof(ss);
 	if (getpeername(s, (struct sockaddr *)&ss, &size) == 0) {
-		getnameinfo((struct sockaddr *)&ss, ss.ss_len,
-			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+		if (getnameinfo((struct sockaddr *)&ss, ss.ss_len,
+				hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
+			strcpy(hbuf, "?");
 		(void)snprintf(buf, sizeof buf, "-%s [%s]", a, hbuf);
 	} else
 		(void)snprintf(buf, sizeof buf, "-%s", a);
@@ -2245,7 +2251,8 @@ dolog(sep, ctrl)
 		return;
 	}
 
-	getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0);
+	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0) != 0)
+		strcpy(buf, "?");
 	host = buf;
 
 	switch (sep->se_log & ~MULOG_RFC931) {
@@ -2448,7 +2455,7 @@ port_good_dg(sa)
 {
 	u_int16_t port;
 	int i, bad;
-	char hbuf[80];
+	char hbuf[NI_MAXHOST];
 
 	bad = 0;
 
@@ -2471,8 +2478,9 @@ port_good_dg(sa)
 		}
 
 	if (bad) {
-		getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf),
-			NULL, 0, NI_NUMERICHOST);
+		if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf),
+				NULL, 0, niflags) != 0)
+			strcpy(hbuf, "?");
 		syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
 			hbuf, port);
 		return (0);
