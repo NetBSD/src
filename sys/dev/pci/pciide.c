@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.49 1999/12/12 02:53:56 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.50 1999/12/26 21:46:23 soren Exp $	*/
 
 
 /*
@@ -902,13 +902,13 @@ pciide_dma_finish(v, channel, drive, flags)
 	    status);
 
 	if ((status & IDEDMA_CTL_ERR) != 0) {
-		printf("%s:%d:%d: Bus-Master DMA error: status=0x%x\n",
+		printf("%s:%d:%d: bus-master DMA error: status=0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, channel, drive, status);
 		return -1;
 	}
 
 	if ((flags & WDC_DMA_POLL) == 0 && (status & IDEDMA_CTL_INTR) == 0) {
-		printf("%s:%d:%d: Bus-Master DMA error: missing interrupt, "
+		printf("%s:%d:%d: bus-master DMA error: missing interrupt, "
 		    "status=0x%x\n", sc->sc_wdcdev.sc_dev.dv_xname, channel,
 		    drive, status);
 		return -1;
