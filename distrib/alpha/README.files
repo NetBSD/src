@@ -1,4 +1,4 @@
-$NetBSD: README.files,v 1.10 1999/03/25 13:09:20 ross Exp $
+$NetBSD: README.files,v 1.11 1999/03/25 19:58:37 ross Exp $
 
 	   Tape, CD, Disk, and Netboot Images
 	   ----- --- ----- --- ------- ------
@@ -25,6 +25,13 @@ or loaded off the root directory of an existing installation.
 
 Note:	The netboot loader can load the netbsd.gz file directly; it
 	is not necessary to ungzip this kernel first.
+
+This release or snapshot also contains a GENERIC kernel in a bootable
+filesystem image. This is intended for use when the SRM console cannot
+read the root device. This can happen for IDE attached roots, or
+on diskless systems where SRM bugs prevent netbooting. See:
+
+	misc/GENERIC.fs
 
 To copy the boot images to a magnetic disk under unix, the dd(1)
 command can be used:
