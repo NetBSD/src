@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.28 1998/11/19 01:41:36 ross Exp $ */
+/* $NetBSD: rpb.h,v 1.29 1999/03/17 18:58:51 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -50,32 +50,33 @@ struct rpb {
 	char		rpb_ssn[16];		/*  40: only first 10 valid */
 
 #define	ST_ADU			1		/* Alpha Demo. Unit (?) */
-#define	ST_DEC_4000		2		/* "Cobra" (?) */
-#define	ST_DEC_7000		3		/* "Ruby" (?) */
+#define	ST_DEC_4000		2		/* "Cobra" */
+#define	ST_DEC_7000		3		/* "Ruby" */
 #define	ST_DEC_3000_500		4		/* "Flamingo" family (TC) */
 #define	ST_DEC_2000_300		6		/* "Jensen" (EISA/ISA) */
 #define	ST_DEC_3000_300		7		/* "Pelican" (TC) */
 #define	ST_AVALON_A12		8		/* XXX Avalon Multicomputer */
-#define	ST_DEC_2100_A500	9		/* "Sable" (?) */
-#define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
+#define	ST_DEC_2100_A500	9		/* "Sable" */
+#define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME) */
 #define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA) */
 #define	ST_DEC_21000		12		/* "TurboLaser" (PCI/EISA) */
 #define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
-#define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
+#define	ST_DEC_MUSTANG		14		/* "Mustang" */
 #define	ST_DEC_KN20AA		15		/* kn20aa (PCI/EISA) */
 #define	ST_DEC_1000		17		/* "Mikasa" (PCI/EISA) */
 #define	ST_EB66			19		/* EB66 (PCI/ISA?) */
 #define	ST_EB64P		20		/* EB64+ (PCI/ISA?) */
-#define	ST_ALPHABOOK1		21		/* Alphabook (?) */
+#define	ST_ALPHABOOK1		21		/* Alphabook1 */
 #define	ST_DEC_4100		22		/* "Rawhide" (PCI/EISA) */
-#define	ST_DEC_EV45_PBP		23		/* "Lego" (?) */
-#define	ST_DEC_2100A_A500	24		/* "Lynx" (?) */
+#define	ST_DEC_EV45_PBP		23		/* "Lego" K2 Passive SBC */
+#define	ST_DEC_2100A_A500	24		/* "Lynx" */
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
 #define	ST_DEC_1000A		27		/* "Noritake" (PCI/EISA)*/
-#define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
+#define	ST_DEC_ALPHAVME_224	28		/* "Cortex" */
 #define	ST_DEC_550		30		/* "Miata" (PCI/ISA) */
-#define	ST_DEC_EV56_PBP		32		/* "Takara" (?) */
-#define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME?) */
+#define	ST_DEC_EV56_PBP		32		/* "Takara" */
+#define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME) */
+#define	ST_DEC_6600		34		/* EV6-Typhoon based systems */
 
 	u_int64_t	rpb_type;		/*  50: */
 
