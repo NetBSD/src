@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.35 2005/01/23 01:00:51 enami Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.36 2005/01/30 22:37:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.35 2005/01/23 01:00:51 enami Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.36 2005/01/30 22:37:32 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,10 +46,7 @@ __RCSID("$NetBSD: getcwd.c,v 1.35 2005/01/23 01:00:51 enami Exp $");
 #include <sys/stat.h>
 
 #include <assert.h>
-#include <dirent.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -62,137 +59,145 @@ __weak_alias(realpath,_realpath)
 #endif
 
 /*
- * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);
+ * char *realpath(const char *path, char resolved[MAXPATHLEN]);
  *
  * Find the real name of path, by removing all ".", ".." and symlink
  * components.  Returns (resolved) on success, or (NULL) on failure,
  * in which case the path which caused trouble is left in (resolved).
  */
 char *
-realpath(path, resolved)
-	const char *path;
-	char *resolved;
+realpath(const char *path, char *resolved)
 {
 	struct stat sb;
-	int fd, n, rootd, serrno, nlnk = 0;
-	char *p, *q, wbuf[MAXPATHLEN];
+	int idx = 0, n, nlnk = 0, serrno = errno;
+	const char *q;
+	char *p, wbuf[2][MAXPATHLEN];
+	size_t len;
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(resolved != NULL);
 
-	/* Save the starting point. */
-	if ((fd = open(".", O_RDONLY)) < 0) {
-		(void)strlcpy(resolved, ".", MAXPATHLEN);
+	/*
+	 * Build real path one by one with paying an attention to .,
+	 * .. and symbolic link.
+	 */
+
+	/*
+	 * `p' is where we'll put a new component with prepending
+	 * a delimiter.
+	 */
+	p = resolved;
+
+	if (*path == 0) {
+		*p = 0;
+		errno = ENOENT;
 		return (NULL);
 	}
 
-	/*
-	 * Find the dirname and basename from the path to be resolved.
-	 * Change directory to the dirname component.
-	 * lstat the basename part.
-	 *     if it is a symlink, read in the value and loop.
-	 *     if it is a directory, then change to that directory.
-	 * get the current directory name and append the basename.
-	 */
-	if (strlcpy(resolved, path, MAXPATHLEN) >= MAXPATHLEN) {
-		errno = ENAMETOOLONG;
-		goto err1;
-	}
-loop:
-	q = strrchr(resolved, '/');
-	if (q != NULL) {
-		p = q + 1;
-		if (q == resolved)
-			q = "/";
-		else {
-			do {
-				--q;
-			} while (q > resolved && *q == '/');
-			q[1] = '\0';
-			q = resolved;
+	/* If relative path, start from current working directory. */
+	if (*path != '/') {
+		if (getcwd(resolved, MAXPATHLEN) == NULL) {
+			p[0] = '.';
+			p[1] = 0;
+			return (NULL);
 		}
-		if (chdir(q) < 0)
-			goto err1;
-	} else
-		p = resolved;
+		len = strlen(resolved);
+		if (len > 1)
+			p += len;
+	}
 
-	/* Deal with the last component. */
-	if (lstat(p, &sb) == 0) {
-		if (S_ISLNK(sb.st_mode)) {
-			if (nlnk++ >= MAXSYMLINKS) {
-				errno = ELOOP;
-				goto err1;
-			}
-			n = readlink(p, resolved, MAXPATHLEN-1);
-			if (n < 0)
-				goto err1;
-			resolved[n] = '\0';
+loop:
+	/* Skip any slash. */
+	while (*path == '/')
+		path++;
+
+	if (*path == 0) {
+		if (p == resolved)
+			*p++ = '/';
+		*p = 0;
+		return (resolved);
+	}
+
+	/* Find the end of this component. */
+	q = path;
+	do
+		q++;
+	while (*q != '/' && *q != 0);
+
+	/* Test . or .. */
+	if (path[0] == '.') {
+		if (q - path == 1) {
+			path = q;
 			goto loop;
 		}
-		if (S_ISDIR(sb.st_mode)) {
-			if (chdir(p) < 0)
-				goto err1;
-			p = "";
+		if (path[1] == '.' && q - path == 2) {
+			/* Trim the last component. */
+			if (p != resolved)
+				while (*--p != '/')
+					;
+			path = q;
+			goto loop;
 		}
 	}
 
-	/*
-	 * Save the last component name and get the full pathname of
-	 * the current directory.
-	 */
-	if (strlcpy(wbuf, p, sizeof(wbuf)) >= sizeof(wbuf)) {
+	/* Append this component. */
+	if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
 		errno = ENAMETOOLONG;
-		goto err1;
+		if (p == resolved)
+			*p++ = '/';
+		*p = 0;
+		return (NULL);
 	}
+	p[0] = '/';
+	memcpy(&p[1], path,
+	    /* LINTED We know q > path. */
+	    q - path);
+	p[1 + q - path] = 0;
 
 	/*
-	 * Call the inernal internal version of getcwd which
-	 * does a physical search rather than using the $PWD short-cut
+	 * If this component is a symlink, toss it and prepend link
+	 * target to unresolved path.
 	 */
-	if (getcwd(resolved, MAXPATHLEN) == 0)
-		goto err1;
-
-	/*
-	 * Join the two strings together, ensuring that the right thing
-	 * happens if the last component is empty, or the dirname is root.
-	 */
-	if (resolved[0] == '/' && resolved[1] == '\0')
-		rootd = 1;
-	else
-		rootd = 0;
-
-	if (*wbuf) {
-		if (strlen(resolved) + strlen(wbuf) + (rootd ? 0 : 1) + 1 >
-		    MAXPATHLEN) {
-			errno = ENAMETOOLONG;
-			goto err1;
+	if (lstat(resolved, &sb) == -1) {
+		/* Allow nonexistent component if this is the last one. */
+		if (*q == 0 && errno == ENOENT) {
+			errno = serrno;
+			return (resolved);
 		}
-		if (rootd == 0)
-			if (strlcat(resolved, "/", MAXPATHLEN) >= MAXPATHLEN) {
-				errno = ENAMETOOLONG;
-				goto err1;
-			}
-		if (strlcat(resolved, wbuf, MAXPATHLEN) >= MAXPATHLEN) {
-			errno = ENAMETOOLONG;
-			goto err1;
+		return (NULL);
+	}
+	if (S_ISLNK(sb.st_mode)) {
+		if (nlnk++ >= MAXSYMLINKS) {
+			errno = ELOOP;
+			return (NULL);
 		}
+		n = readlink(resolved, wbuf[idx], sizeof(wbuf[0]) - 1);
+		if (n < 0)
+			return (NULL);
+		if (n == 0) {
+			errno = ENOENT;
+			return (NULL);
+		}
+
+		/* Append unresolved path to link target and switch to it. */
+		if (n + (len = strlen(q)) + 1 > sizeof(wbuf[0])) {
+			errno = ENAMETOOLONG;
+			return (NULL);
+		}
+		memcpy(&wbuf[idx][n], q, len + 1);
+		path = wbuf[idx];
+		idx ^= 1;
+
+		/* If absolute symlink, start from root. */
+		if (*path == '/')
+			p = resolved;
+		goto loop;
 	}
 
-	/* Go back to where we came from. */
-	if (fchdir(fd) < 0) {
-		serrno = errno;
-		goto err2;
-	}
-
-	/* It's okay if the close fails, what's an fd more or less? */
-	(void)close(fd);
-	return (resolved);
-
-err1:	serrno = errno;
-	(void)fchdir(fd);
-err2:	(void)close(fd);
-	errno = serrno;
-	return (NULL);
+	/* Advance both resolved and unresolved path. */
+	p += 1 + q - path;
+	path = q;
+	goto loop;
 }
 
 char *
