@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.50 2001/10/11 02:06:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.50 2001/10/11 02:06:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $");
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -62,7 +63,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
+#include <vis.h>
 
 #include "pathnames.h"
 #include "stat_flags.h"
@@ -70,17 +71,18 @@ __RCSID("$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $");
 #define STRIP_ARGS_MAX 32
 #define BACKUP_SUFFIX ".old"
 
-struct passwd *pp;
-struct group *gp;
-int dobackup=0, docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0,
-    dorename = 0, unpriv = 0;
-static int numberedbackup = 0;
-int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-char pathbuf[MAXPATHLEN];
-uid_t uid;
-gid_t gid;
-char *stripArgs=NULL;
-char *suffix=BACKUP_SUFFIX;
+int	dobackup, docopy, dodir, dostrip, dolink, dopreserve, dorename,
+	    dounpriv;
+int	numberedbackup;
+int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+char	pathbuf[MAXPATHLEN];
+uid_t	uid;
+gid_t	gid;
+FILE	*metafp;
+char	*metafile;
+u_long	fileflags;
+char	*stripArgs;
+char	*suffix = BACKUP_SUFFIX;
 
 #define LN_ABSOLUTE	0x01
 #define LN_RELATIVE	0x02
@@ -90,22 +92,25 @@ char *suffix=BACKUP_SUFFIX;
 
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
+#define	HASUID		0x04		/* Tell install the uid was given */
+#define	HASGID		0x08		/* Tell install the gid was given */
 
-void	copy(int, char *, int, char *, off_t);
-void	makelink(char *, char *);
-void	install(char *, char *, u_long, u_int);
-void	install_dir(char *);
-void	strip(char *);
 void	backup(const char *);
-void	usage(void);
+void	copy(int, char *, int, char *, off_t);
+void	install(char *, char *, u_int);
+void	install_dir(char *, u_int);
 int	main(int, char *[]);
+void	makelink(char *, char *);
+int	parseid(char *, id_t *);
+void	strip(char *);
+void	metadata_log(const char *, mode_t, u_int, struct timeval *);
+void	usage(void);
 
 int
 main(int argc, char *argv[])
 {
 	struct stat from_sb, to_sb;
 	void *set;
-	u_long fset;
 	u_int iflags;
 	int ch, no_target;
 	char *p;
@@ -114,7 +119,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:prsS:U")) != -1)
+	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:M:o:prsS:U")) != -1)
 		switch((char)ch) {
 		case 'B':
 			suffix = optarg;
@@ -144,7 +149,7 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			flags = optarg;
-			if (string_to_flags(&flags, &fset, NULL))
+			if (string_to_flags(&flags, &fileflags, NULL))
 				errx(1, "%s: invalid flag", flags);
 			iflags |= SETFLAGS;
 			break;
@@ -185,6 +190,9 @@ main(int argc, char *argv[])
 			mode = getmode(set, 0);
 			free(set);
 			break;
+		case 'M':
+			metafile = optarg;
+			break;
 		case 'o':
 			owner = optarg;
 			break;
@@ -203,7 +211,7 @@ main(int argc, char *argv[])
 			dostrip = 1;
 			break;
 		case 'U':
-			unpriv = 1;
+			dounpriv = 1;
 			break;
 		case '?':
 		default:
@@ -225,29 +233,40 @@ main(int argc, char *argv[])
 		usage();
 
 	/* get group and owner id's */
-	if (unpriv)
-		uid = gid = -1;
-	else {
-		if (group && !(gp = getgrnam(group)) &&
-		    !isdigit((unsigned char)*group))
+	if (group) {
+		struct group *gp;
+
+		if ((gp = getgrnam(group)) != NULL)
+			gid = gp->gr_gid;
+		else if (! parseid(group, &gid))
 			errx(1, "unknown group %s", group);
-		gid = (group) ? ((gp) ? gp->gr_gid : atoi(group)) : -1;
-		if (owner && !(pp = getpwnam(owner)) &&
-		    !isdigit((unsigned char)*owner))
+		iflags |= HASGID;
+	}
+	if (owner) {
+		struct passwd *pp;
+
+		if ((pp = getpwnam(owner)) != NULL)
+			uid = pp->pw_uid;
+		else if (! parseid(owner, &uid))
 			errx(1, "unknown user %s", owner);
-		uid = (owner) ? ((pp) ? pp->pw_uid : atoi(owner)) : -1;
+		iflags |= HASUID;
+	}
+
+	if (metafile) {
+		if ((metafp = fopen(metafile, "a")) == NULL)
+			warn("open %s", metafile);
 	}
 
 	if (dodir) {
 		for (; *argv != NULL; ++argv)
-			install_dir(*argv);
+			install_dir(*argv, iflags);
 		exit (0);
 	}
 
 	no_target = stat(to_name = argv[argc - 1], &to_sb);
 	if (!no_target && S_ISDIR(to_sb.st_mode)) {
 		for (; *argv != to_name; ++argv)
-			install(*argv, to_name, fset, iflags | DIRECTORY);
+			install(*argv, to_name, iflags | DIRECTORY);
 		exit(0);
 	}
 
@@ -277,8 +296,24 @@ main(int argc, char *argv[])
 		else if (!dorename)
 			(void)unlink(to_name);
 	}
-	install(*argv, to_name, fset, iflags);
+	install(*argv, to_name, iflags);
 	exit(0);
+}
+
+/*
+ * parseid --
+ *	parse uid or gid from arg into id, returning non-zero if successful
+ */
+int
+parseid(char *name, id_t *id)
+{
+	char	*ep;
+
+	errno = 0;
+	*id = (id_t)strtoul(name, &ep, 10);
+	if (errno || *ep != '\0')
+		return (0);
+	return (1);
 }
 
 /*
@@ -351,9 +386,10 @@ makelink(char *from_name, char *to_name)
  *	build a path name and install the file
  */
 void
-install(char *from_name, char *to_name, u_long fset, u_int flags)
+install(char *from_name, char *to_name, u_int flags)
 {
 	struct stat from_sb, to_sb;
+	struct timeval tv[2];
 	int devnull, from_fd, to_fd, serrno;
 	char *p, tmpl[MAXPATHLEN], *oto_name;
 
@@ -449,33 +485,22 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	 * Set owner, group, mode for target; do the chown first,
 	 * chown may lose the setuid bits.
 	 */
-	if ((gid != -1 || uid != -1) && fchown(to_fd, uid, gid)) {
+	if (!dounpriv &&
+	    (flags & (HASUID | HASGID)) && fchown(to_fd, uid, gid) == -1) {
 		serrno = errno;
 		(void)unlink(to_name);
 		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
 	}
-	if (fchmod(to_fd, mode)) {
+	if (!dounpriv && fchmod(to_fd, mode) == -1) {
 		serrno = errno;
 		(void)unlink(to_name);
 		errx(1, "%s: chmod: %s", to_name, strerror(serrno));
 	}
 
 	/*
-	 * If provided a set of flags, set them, otherwise, preserve the
-	 * flags, except for the dump flag.
-	 */
-	if (fchflags(to_fd,
-	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
-		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
-			warn("%s: chflags", to_name);
-	}
-
-	/*
 	 * Preserve the date of the source file.
 	 */
 	if (dopreserve) {
-		struct timeval tv[2];
-
 #ifdef BSD4_4
 		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
@@ -485,18 +510,32 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 		tv[1].tv_sec = from_sb.st_mtime;
 		tv[1].tv_usec = 0;
 #endif
-		if (futimes(to_fd, tv) == -1)
+		if (!dounpriv && futimes(to_fd, tv) == -1)
 			warn("%s: futimes", to_name);
 	}
 
 	(void)close(to_fd);
 
-	if (dorename)
+	if (dorename) {
 		if (rename(to_name, oto_name) == -1)
 			err(1, "%s: rename", to_name);
+		to_name = oto_name;
+	}
 
 	if (!docopy && !devnull && unlink(from_name))
 		err(1, "%s", from_name);
+
+	/*
+	 * If provided a set of flags, set them, otherwise, preserve the
+	 * flags, except for the dump flag.
+	 */
+	if (!dounpriv && chflags(to_name,
+	    flags & SETFLAGS ? fileflags : from_sb.st_flags & ~UF_NODUMP) != -1) {
+		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
+			warn("%s: chflags", to_name);
+	}
+
+	metadata_log(to_name, S_IFREG, flags, dopreserve ? tv : NULL);
 }
 
 /*
@@ -581,7 +620,10 @@ strip(char *to_name)
 			stripprog = _PATH_STRIP;
 
 		if (stripArgs) {
-			/* build up a command line and let /bin/sh parse the arguments */
+			/*
+			 * build up a command line and let /bin/sh
+			 * parse the arguments
+			 */
 			char* cmd = (char*)malloc(sizeof(char)*
 						  (3+strlen(stripprog)+
 						     strlen(stripArgs)+
@@ -621,7 +663,8 @@ backup(const char *to_name)
 		
 		cnt=0;
 		do {
-			(void)snprintf(suffix_expanded, FILENAME_MAX, suffix, cnt);
+			(void)snprintf(suffix_expanded, FILENAME_MAX, suffix,
+			    cnt);
 			(void)snprintf(backup, FILENAME_MAX, "%s%s",
 				       to_name, suffix_expanded);
 			cnt++;
@@ -639,7 +682,7 @@ backup(const char *to_name)
  *	build directory hierarchy
  */
 void
-install_dir(char *path)
+install_dir(char *path, u_int flags)
 {
         char *p;
         struct stat sb;
@@ -659,11 +702,59 @@ install_dir(char *path)
 				break;
                 }
 
-	if (((gid != -1 || uid != -1) && chown(path, uid, gid)) ||
-            chmod(path, mode)) {
+	if (!dounpriv && (
+	    ((flags & (HASUID | HASGID)) && chown(path, uid, gid) == -1)
+	    || chmod(path, mode) == -1 )) {
                 warn("%s", path);
 	}
+	metadata_log(path, S_IFDIR, flags & ~SETFLAGS, NULL);
 }
+
+/*
+ * metadata_log --
+ *	if metafp is not NULL, output mtree(8) full path name and settings to
+ *	metafp, to allow permissions to be set correctly by other tools.
+ */
+void
+metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
+{
+	const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
+	char	*buf;
+
+	if (!metafp)	
+		return;
+	buf = (char *)malloc(4 * strlen(path) + 1);	/* buf for strsvis(3) */
+	if (buf == NULL) {
+		warnx("%s", strerror(ENOMEM));
+		return;
+	}
+	if (flock(fileno(metafp), LOCK_EX) == -1) {	/* lock log file */
+		warn("can't lock %s", metafile);
+		return;
+	}
+
+	strsvis(buf, path, VIS_CSTYLE, extra);		/* encode name */
+	fprintf(metafp, ".%s%s type=%s mode=%#o",	/* print details */
+	    buf[0] == '/' ? "" : "/", buf,
+	    S_ISDIR(type) ? "dir" : "file", mode);
+	if (flags & HASUID)
+		fprintf(metafp, " uid=%d", uid);
+	if (flags & HASGID)
+		fprintf(metafp, " gid=%d", gid);
+	if (flags & SETFLAGS)
+		fprintf(metafp, " flags=%s",
+		    flags_to_string(fileflags, "none"));
+	if (tv != NULL)
+		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
+	fputc('\n', metafp);
+	fflush(metafp);					/* flush output */
+	if (flock(fileno(metafp), LOCK_UN) == -1) {	/* unlock log file */
+		warn("can't unlock %s", metafile);
+	}
+	free(buf);
+}
+
+
 
 /*
  * usage --
@@ -673,8 +764,11 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "\
-usage: install [-Ubcprs] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
-       install [-Ubcprs] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 ... fileN directory\n\
-       install [-Up] -d [-m mode] [-o owner] [-g group] directory ...\n");
+usage: install [-Ubcprs] [-M log] [-B suffix] [-f flags] [-m mode]\n\
+	    [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
+       install [-Ubcprs] [-M log] [-B suffix] [-f flags] [-m mode]\n\
+	    [-o owner] [-g group] [-l linkflags] [-S stripflags] \n\
+	    file1 ... fileN directory\n\
+       install [-Up] [-M log] -d [-m mode] [-o owner] [-g group] directory ...\n");
 	exit(1);
 }
