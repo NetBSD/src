@@ -1,7 +1,7 @@
 #
 # @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
 #
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.2 1993/04/26 05:04:58 deraadt Exp $
+# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.3 1993/05/05 18:45:34 proven Exp $
 #
 
 .SUFFIXES: .x
@@ -22,19 +22,20 @@ all:	${HDRS}
 install:
 	@echo "Creating RPC service headers directory"
 	@/bin/rm -rf ${DESTDIR}/usr/include/rpcsvc
-	@-mkdir ${DESTDIR}/usr/include/rpcsvc && \
-		chown bin ${DESTDIR}/usr/include/rpcsvc && \
-		chmod 755 ${DESTDIR}/usr/include/rpcsvc
+	@-mkdir ${DESTDIR}/usr/include/rpcsvc
 	@echo "Installing RPC service header and definition files"
 	@for i in $(XFILES); do \
-		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
+		(install -c ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
 	@for i in $(HDRS); do \
-		(install -c -m 644 $$i ${DESTDIR}/usr/include/rpcsvc) done
+		(install -c $$i ${DESTDIR}/usr/include/rpcsvc) done
 	@for i in $(HFILES); do \
-		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
+		(install -c ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
+	@chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/rpcsvc
+	@chmod -R a-w ${DESTDIR}/usr/include/rpcsvc
 
 .x.h:
 	@echo generating $@...
 	@PWD=`pwd` ; cd ${.CURDIR} ; ${RPCCOM} -h $*.x -o $$PWD/$@
 
 .include <bsd.prog.mk>
+prog.mk>

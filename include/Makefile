@@ -20,7 +20,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
 MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
 
-DIRS=arpa protocols
+DIRS=	arpa protocols
 LDIRS=	net netinet netccitt netiso netns nfs sys ufs vm 
 
 NOOBJ=	noobj
@@ -35,8 +35,7 @@ install: beforeinstall _PROGSUBDIR ${SHARED}
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		    ${DESTDIR}/usr/include/$$i; \
+		    install -c $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
@@ -45,32 +44,28 @@ install: beforeinstall _PROGSUBDIR ${SHARED}
 			mkdir ${DESTDIR}/usr/include/$$i; \
 		fi; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
-		chmod 755 ${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
-			    ${DESTDIR}/usr/include/$$i/$$j; \
+			install -c 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
 		done); \
 	done
 	@echo installing ${LFILES}
 	@-for i in ${LFILES}; do \
 		rm -f ${DESTDIR}/usr/include/$$i; \
 		ln -s sys/$$i ${DESTDIR}/usr/include/$$i; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${MFILES}
 	@-for i in ${MFILES}; do \
 		rm -f ${DESTDIR}/usr/include/$$i; \
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
 	done
+	@chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include
+	@chmod -R a-w ${DESTDIR}/usr/include
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}/usr/include ]; then \
                 /bin/rm -f ${DESTDIR}/usr/include ; \
                 mkdir -p ${DESTDIR}/usr/include ; \
-                chown root.wheel ${DESTDIR}/usr/include ; \
-                chmod 755 ${DESTDIR}/usr/include ; \
         else \
                 true ; \
         fi
@@ -89,6 +84,15 @@ copies:
 
 symlinks:
 	@echo symlinks: ${LDIRS}
+	@for i in ${LDIRS}; do \
+		rm -rf ${DESTDIR}/usr/include/$$i; \
+		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
+	done
+	rm -rf ${DESTDIR}/usr/include/machine
+	ln -s /sys/${MACHINE}/include ${DESTDIR}/usr/include/machine
+
+.include <bsd.prog.mk>
+nks: ${LDIRS}
 	@for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
 		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
