@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.17 2004/07/19 13:46:23 dbj Exp $ */
+/* $NetBSD: cgd.c,v 1.18 2004/08/23 05:37:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.17 2004/07/19 13:46:23 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.18 2004/08/23 05:37:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.17 2004/07/19 13:46:23 dbj Exp $");
 
 void	cgdattach(int);
 
-dev_type_open(cgdopen);
-dev_type_close(cgdclose);
-dev_type_read(cgdread);
-dev_type_write(cgdwrite);
-dev_type_ioctl(cgdioctl);
-dev_type_strategy(cgdstrategy);
-dev_type_dump(cgddump);
-dev_type_size(cgdsize);
+static dev_type_open(cgdopen);
+static dev_type_close(cgdclose);
+static dev_type_read(cgdread);
+static dev_type_write(cgdwrite);
+static dev_type_ioctl(cgdioctl);
+static dev_type_strategy(cgdstrategy);
+static dev_type_dump(cgddump);
+static dev_type_size(cgdsize);
 
 const struct bdevsw cgd_bdevsw = {
 	cgdopen, cgdclose, cgdstrategy, cgdioctl,
@@ -196,7 +196,7 @@ cgdattach(int num)
 		cgdsoftc_init(&cgd_softc[i], i);
 }
 
-int
+static int
 cgdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct	cgd_softc *cs;
@@ -206,7 +206,7 @@ cgdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	return dk_open(di, &cs->sc_dksc, dev, flags, fmt, p);
 }
 
-int
+static int
 cgdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct	cgd_softc *cs;
@@ -216,7 +216,7 @@ cgdclose(dev_t dev, int flags, int fmt, struct proc *p)
 	return dk_close(di, &cs->sc_dksc, dev, flags, fmt, p);
 }
 
-void
+static void
 cgdstrategy(struct buf *bp)
 {
 	struct	cgd_softc *cs = getcgd_softc(bp->b_dev);
@@ -228,7 +228,7 @@ cgdstrategy(struct buf *bp)
 	return;
 }
 
-int
+static int
 cgdsize(dev_t dev)
 {
 	struct cgd_softc *cs = getcgd_softc(dev);
@@ -358,7 +358,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 }
 
 /* expected to be called at splbio() */
-void
+static void
 cgdiodone(struct buf *nbp)
 {
 	struct	buf *obp = nbp->b_private;
@@ -407,7 +407,7 @@ cgdiodone(struct buf *nbp)
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
-int
+static int
 cgdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct	cgd_softc *cs;
@@ -423,7 +423,7 @@ cgdread(dev_t dev, struct uio *uio, int flags)
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
-int
+static int
 cgdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct	cgd_softc *cs;
@@ -438,7 +438,7 @@ cgdwrite(dev_t dev, struct uio *uio, int flags)
 	return physio(cgdstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
-int
+static int
 cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct	cgd_softc *cs;
@@ -488,7 +488,7 @@ cgdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return ret;
 }
 
-int
+static int
 cgddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct	cgd_softc *cs;
