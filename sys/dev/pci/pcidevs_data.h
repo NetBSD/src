@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.698 2005/03/15 16:18:34 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.699 2005/03/16 03:08:44 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.699 2005/03/15 16:16:59 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.700 2005/03/16 03:07:44 uwe Exp
  */
 
 /*
@@ -3424,6 +3424,30 @@ const struct pci_product pci_products[] = {
 	    "IXP AC'97 Audio Controller",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_PPB,
+	    "SB200 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_EHCI,
+	    "SB200 USB2 Host Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_1,
+	    "SB200 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_2,
+	    "SB200 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA,
+	    "SB200 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB,
+	    "SB200 SMBus Controller",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300,
 	    "IXP AC'97 Audio Controller",
 	},
@@ -3810,6 +3834,18 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT4,
 	    "Mach64 VT4",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_HB,
+	    "RS300 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_IGP,
+	    "Radeon 9100 IGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_AGP,
+	    "RS300 AGP Interface",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200,
@@ -10056,4 +10092,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1935;
+const int pci_nproducts = 1944;

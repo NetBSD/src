@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.700 2005/03/15 16:18:34 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.701 2005/03/16 03:08:44 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.699 2005/03/15 16:16:59 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.700 2005/03/16 03:07:44 uwe Exp
  */
 
 /*
@@ -964,6 +964,12 @@
 #define	PCI_PRODUCT_ATI_RADEON_U1	0x4336		/* Radeon Mobility U1 */
 #define	PCI_PRODUCT_ATI_RADEON_M6_U2	0x4337		/* Radeon Mobility M6 */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_200	0x4341		/* IXP AC'97 Audio Controller */
+#define	PCI_PRODUCT_ATI_SB200_PPB	0x4342		/* SB200 PCI-PCI Bridge */
+#define	PCI_PRODUCT_ATI_SB200_EHCI	0x4345		/* SB200 USB2 Host Controller */
+#define	PCI_PRODUCT_ATI_SB200_OHCI_1	0x4347		/* SB200 USB Host Controller */
+#define	PCI_PRODUCT_ATI_SB200_OHCI_2	0x4348		/* SB200 USB Host Controller */
+#define	PCI_PRODUCT_ATI_SB200_ISA	0x434c		/* SB200 PCI-ISA Bridge */
+#define	PCI_PRODUCT_ATI_SB200_SMB	0x4353		/* SB200 SMBus Controller */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_300	0x4361		/* IXP AC'97 Audio Controller */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_400	0x4370		/* IXP AC'97 Audio Controller */
 #define	PCI_PRODUCT_ATI_IXP_IDE_200	0x4349		/* IXP IDE Controller */
@@ -1061,6 +1067,9 @@
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VTB	0x5655		/* Mach64 VTB */
 #define	PCI_PRODUCT_ATI_MACH64_VT4	0x5656		/* Mach64 VT4 */
+#define	PCI_PRODUCT_ATI_RS300_HB	0x5833		/* RS300 Host Bridge */
+#define	PCI_PRODUCT_ATI_RADEON_9100_IGP	0x5834		/* Radeon 9100 IGP */
+#define	PCI_PRODUCT_ATI_RS300_AGP	0x5838		/* RS300 AGP Interface */
 #define	PCI_PRODUCT_ATI_RADEON_9200	0x5961		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_9200_2	0x5962		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_9200_3	0x5963		/* Radeon 9200 */
