@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.11 2001/05/01 13:18:27 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.12 2003/07/15 02:15:03 lukem Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.12 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

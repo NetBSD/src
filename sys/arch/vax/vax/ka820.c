@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.36 2003/01/18 07:10:34 thorpej Exp $	*/
+/*	$NetBSD: ka820.c,v 1.37 2003/07/15 02:15:04 lukem Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -41,6 +41,9 @@
  * KA820 specific CPU code.  (Note that the VAX8200 uses a KA820, not
  * a KA8200.  Sigh.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.37 2003/07/15 02:15:04 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

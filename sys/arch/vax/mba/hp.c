@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.34 2003/05/10 23:12:41 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.35 2003/07/15 02:15:01 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,10 @@
  *  Handle disk media changes.
  *  Dual-port operations should be supported.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.35 2003/07/15 02:15:01 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

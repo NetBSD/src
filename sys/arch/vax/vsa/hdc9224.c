@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.29 2003/06/18 08:58:42 drochner Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.30 2003/07/15 02:15:06 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,6 +49,9 @@
  *	- Statistics collection.
  */
 #undef	RDDEBUG
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.30 2003/07/15 02:15:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
