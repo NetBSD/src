@@ -1355,7 +1355,7 @@ numbers in the @code{"C"} locale format.  In some situation, it might
 also be a problem with the notation itself which makes it impossible to
 recognize whether the number is in the @code{"C"} locale or the local
 format.  This can happen if thousands separator characters are used.
-Some locales define this character accordfing to the national
+Some locales define this character according to the national
 conventions to @code{'.'} which is the same character used in the
 @code{"C"} locale to denote the decimal point.
 
