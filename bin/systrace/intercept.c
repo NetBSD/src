@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.19 2003/08/25 09:12:45 cb Exp $	*/
+/*	$NetBSD: intercept.c,v 1.20 2004/01/24 03:44:46 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.19 2003/08/25 09:12:45 cb Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.20 2004/01/24 03:44:46 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -604,6 +604,13 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 {
 	static char cwd[2*MAXPATHLEN];
 	int havecwd = 0;
+
+	/* 
+	 * The empty filename does not receive normalization.
+	 * System calls are supposed to fail on it.
+	 */
+	if (strcmp(name, "") == 0)
+		return (name);
 
 	if (fd != -1 && intercept.setcwd(fd, pid) == -1) {
 		if (errno == EBUSY)
