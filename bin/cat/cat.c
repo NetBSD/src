@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.25 2001/01/03 14:29:24 mjl Exp $	*/
+/*	$NetBSD: cat.c,v 1.26 2001/01/03 14:32:40 mjl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.25 2001/01/03 14:29:24 mjl Exp $");
+__RCSID("$NetBSD: cat.c,v 1.26 2001/01/03 14:32:40 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,16 +68,14 @@ int bflag, eflag, fflag, nflag, sflag, tflag, vflag;
 int rval;
 const char *filename;
 
-int main __P((int, char *[]));
-void cook_args __P((char *argv[]));
-void cook_buf __P((FILE *));
-void raw_args __P((char *argv[]));
-void raw_cat __P((int));
+int main(int, char *[]);
+void cook_args(char *argv[]);
+void cook_buf(FILE *);
+void raw_args(char *argv[]);
+void raw_cat(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -129,8 +127,7 @@ main(argc, argv)
 }
 
 void
-cook_args(argv)
-	char **argv;
+cook_args(char **argv)
 {
 	FILE *fp;
 
@@ -156,8 +153,7 @@ cook_args(argv)
 }
 
 void
-cook_buf(fp)
-	FILE *fp;
+cook_buf(FILE *fp)
 {
 	int ch, gobble, line, prev;
 
@@ -228,8 +224,7 @@ cook_buf(fp)
 }
 
 void
-raw_args(argv)
-	char **argv;
+raw_args(char **argv)
 {
 	int fd;
 
@@ -271,8 +266,7 @@ skip:
 }
 
 void
-raw_cat(rfd)
-	int rfd;
+raw_cat(int rfd)
 {
 	int wfd;
 	static char *buf;
