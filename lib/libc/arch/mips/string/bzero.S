@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.5 1996/09/17 01:32:33 jonathan Exp $	*/
+/*	$NetBSD: bzero.S,v 1.6 1997/10/19 01:19:58 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: bzero.S,v 1.5 1996/09/17 01:32:33 jonathan Exp $")
+	ASMSTR("$NetBSD: bzero.S,v 1.6 1997/10/19 01:19:58 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+
+#define _LOCORE		/* XXX not really, just assembly-code source */
+#include <machine/endian.h>
 
 #ifdef ABICALLS
 	.abicalls
@@ -56,7 +60,7 @@ LEAF(bzero)
 	and	a3, a3, 3
 	beq	a3, zero, 1f		# skip if word aligned
 	subu	a1, a1, a3		# subtract from remaining count
-	swr	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
+	SWHI	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
 	addu	a0, a0, a3
 1:
 	and	v0, a1, 3		# compute number of words left
