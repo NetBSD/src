@@ -24,9 +24,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: apmd.8,v 1.1 1996/08/25 23:41:01 jtk Exp $
+.\"	$NetBSD: apmd.8,v 1.2 1996/09/13 01:10:14 jtk Exp $
 .\"
-.Dd March 24, 1996
+.Dd September 12, 1996
 .Dt APMD 8
 .Os NetBSD
 .Sh NAME
@@ -40,6 +40,8 @@
 .Op Fl q
 .Op Fl t Ar seconds
 .Op Fl S Ar sockname
+.Op Fl m Ar sockmode
+.Op Fl o Ar sockowner:sockgroup
 .Op Fl f Ar devname
 .Sh DESCRIPTION
 .Nm
@@ -151,8 +153,12 @@ is the default UNIX-domain socket used for communication with
 The
 .Fl S
 flag may be used to specify an alternate socket name.
-The socket is protected to mode 0660, UID 0, GID 0; this protects access
-to suspend requests to authorized users only.
+The socket is protected by default to mode 0660, UID 0, GID 0;
+the
+.Fl m
+and
+.Fl o
+flags may be used to specify different modes or owners/groups, respectively.
 .Pp
 .Pa /dev/apmctl
 is the default device used to control the APM kernel driver.
