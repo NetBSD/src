@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.5 1999/02/20 16:18:11 scw Exp $
+.\"	$NetBSD: install,v 1.6 1999/04/10 16:16:11 scw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,9 @@ Create the NetBSD/mvme68k _VER boot tape as described in the section
 entitled "Preparing a boot tape". Then, with the tape in the drive,
 type the following at the 1x7Bug prompt:
 .Pp
-.Dl 1x7-Bug\*> Ic bo 5
+.Dl 147-Bug\*> Ic bo 5
+.Pp
+.Dl 167-Bug\*> Ic bo 0,50
 .Pp
 As mentioned earlier, this assumes your tape is jumpered for SCSI-id 5.
 .Pp
@@ -80,7 +82,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.5 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.6 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -128,7 +130,7 @@ The easiest is loading from tape, which is done as follows:
 
 To reboot using the swap partition after running installboot, first
 use "halt", then at the Bug monitor prompt use a command like:
-        147Bug> bo 0,,b:   OR   167Bug> bo 0,,,b:
+        	1x7Bug> bo 0,,b:
 
 To view this message again, type:  cat /.welcome
 ssh:
@@ -413,7 +415,7 @@ For both boards, the boot messages are very similar:
 .Pp
 .Bd -literal -offset indent
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.5 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.6 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
