@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vfsops.c,v 1.7.2.1 1993/11/14 22:35:05 mycroft Exp $
+ *	$Id: procfs_vfsops.c,v 1.7.2.2 1993/12/28 16:23:51 pk Exp $
  */
 
 /*
@@ -205,7 +205,7 @@ pfs_quotactl(mp, cmds, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
-	return EOPNOTSUPP;
+	return ENODEV;
 }
 
 pfs_sync(mp, waitfor)
