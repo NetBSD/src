@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.48 2002/10/22 11:37:34 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.49 2002/12/05 17:22:13 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.48 2002/10/22 11:37:34 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.49 2002/12/05 17:22:13 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -109,7 +109,8 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win)
 	screen->__virtscr->flags &= ~__LEAVEOK;
 	screen->__virtscr->flags |= win->flags;
 
-	for (wy = 0; wy < win->maxy && wy < screen->__virtscr->maxy - win->begy; wy++) {
+	for (wy = 0; wy < win->maxy &&
+	    wy < screen->__virtscr->maxy - win->begy; wy++) {
 		wlp = win->lines[wy];
 #ifdef DEBUG
 		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
@@ -122,7 +123,9 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win)
 		if (*wlp->firstchp < win->maxx + win->ch_off &&
 		    *wlp->lastchp >= win->ch_off) {
 			/* Copy line from "win" to "__virtscr". */
-			for (wx = 0, x_off = win->begx; wx < win->maxx &&
+			for (wx = *wlp->firstchp - win->ch_off,
+			    x_off = win->begx + *wlp->firstchp - win->ch_off;
+			    wx <= *wlp->lastchp && wx < win->maxx &&
 			    x_off < screen->__virtscr->maxx; wx++, x_off++) {
 				vlp->line[x_off].attr = wlp->line[wx].attr;
 				if (wlp->line[wx].attr & __COLOR)
