@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.60 2003/11/05 01:20:56 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.61 2004/01/13 06:17:14 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.60 2003/11/05 01:20:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.61 2004/01/13 06:17:14 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -479,11 +479,11 @@ in6_pcbdisconnect(in6p)
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-	if (in6p->in6p_socket->so_state & SS_NOFDREF)
-		in6_pcbdetach(in6p);
 #ifdef IPSEC
 	ipsec_pcbdisconn(in6p->in6p_sp);
 #endif
+	if (in6p->in6p_socket->so_state & SS_NOFDREF)
+		in6_pcbdetach(in6p);
 }
 
 void

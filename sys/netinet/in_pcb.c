@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.92 2004/01/02 15:51:45 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.93 2004/01/13 06:17:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.92 2004/01/02 15:51:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.93 2004/01/13 06:17:14 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -479,11 +479,11 @@ in_pcbdisconnect(v)
 	inp->inp_faddr = zeroin_addr;
 	inp->inp_fport = 0;
 	in_pcbstate(inp, INP_BOUND);
-	if (inp->inp_socket->so_state & SS_NOFDREF)
-		in_pcbdetach(inp);
 #if defined(IPSEC) /*|| defined(FAST_IPSEC)*/ /*XXX*/
 	ipsec_pcbdisconn(inp->inp_sp);
 #endif
+	if (inp->inp_socket->so_state & SS_NOFDREF)
+		in_pcbdetach(inp);
 }
 
 void
