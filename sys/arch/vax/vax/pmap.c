@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.75 1999/12/11 17:51:35 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -146,6 +146,7 @@ pmap_bootstrap()
 	 * size calculations must be done now.
 	 * Remember: sysptsize is in PTEs and nothing else!
 	 */
+	physmem = btoc(avail_end);
 
 #define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
 	/* Kernel alloc area */
