@@ -1,6 +1,6 @@
 .\" @(#)rpc.3n 1.31 93/08/31 SMI; from SVr4
 .\" Copyright 1989 AT&T
-.\"	$NetBSD: rpc.3,v 1.10 2000/06/02 23:11:12 fvdl Exp $
+.\"	$NetBSD: rpc.3,v 1.10.2.1 2001/04/26 12:15:11 he Exp $
 .Dd May 7, 1993
 .Dt RPC 3
 .Os
@@ -43,7 +43,7 @@ string as one of the parameters
 This string defines a class of transports which can be used
 for a particular application.
 .Pp
-.Fa nettype 
+.Fa nettype
 can be one of the following:
 .Bl -tag -width datagram_v
 .It netpath
@@ -70,7 +70,7 @@ This is same as
 .Fa visible
 except that it chooses only the connection oriented transports
 (semantics
-.Fa tpi_cots 
+.Fa tpi_cots
 or
 .Fa tpi_cots_ord )
 from the entries in the
@@ -90,24 +90,24 @@ This is same as
 .Fa netpath
 except that it chooses only the connection oriented datagram transports
 (semantics
-.Fa tpi_cots 
+.Fa tpi_cots
 or
-.Fa tpi_cots_ord ).
+.Fa tpi_cots_ord ) .
 .It datagram_n
 This is same as
 .Fa netpath
 except that it chooses only the connectionless datagram transports
 (semantics
-.Fa tpi_clts ).
+.Fa tpi_clts ) .
 .It udp
 This refers to Internet UDP, both version 4 and 6.
 .It tcp
 This refers to Internet TCP, both version 4 and 6.
 .El
 .Pp
-If 
+If
 .I nettype
-is 
+is
 .Dv NULL ,
 it defaults to
 .Fa netpath .
@@ -147,7 +147,7 @@ typedef struct {
     struct    opaque_auth    ah_cred;
     struct    opaque_auth    ah_verf;
     struct auth_ops {
-        void    (*ah_nextverf)(\|);    
+        void    (*ah_nextverf)(\|);
         int    (*ah_marshal)(\|);    /* nextverf & serialize */
         int    (*ah_validate)(\|);    /* validate verifier */
         int    (*ah_refresh)(\|);    /* refresh credentials */
@@ -162,19 +162,19 @@ typedef struct {
 /*
  * Client rpc handle.
  * Created by individual implementations.
- * Client is responsible for initializing auth. 
+ * Client is responsible for initializing auth.
  */
 
 typedef struct {
     AUTH    *cl_auth;    /* authenticator */
-    struct clnt_ops {        
+    struct clnt_ops {
         enum clnt_stat    (*cl_call)();    /* call remote procedure */
         void    (*cl_abort)();        /* abort a call */
         void    (*cl_geterr)();        /* get specific error code */
         bool_t    (*cl_freeres)();    /* frees results */
         void    (*cl_destroy)();    /* destroy this structure */
         bool_t    (*cl_control)();    /* the ioctl() of rpc */
-    } *cl_ops;        
+    } *cl_ops;
     caddr_t    cl_private;    /* private stuff */
     char    *cl_netid;    /* network identifier */
     char    *cl_tp;        /* device name */
@@ -194,19 +194,19 @@ enum xprt_stat {
 typedef struct {
     int    xp_fd;    /* file descriptor for the server handle */
     u_short    xp_port;    /* obsolete */
-    const struct xp_ops {        
+    const struct xp_ops {
         bool_t    (*xp_recv)();    /* receive incoming requests */
         enum xprt_stat    (*xp_stat)();    /* get transport status */
         bool_t    (*xp_getargs)();    /* get arguments */
         bool_t    (*xp_reply)();      /* send reply */
         bool_t    (*xp_freeargs)(); /* free mem allocated for args */
         void    (*xp_destroy)();    /* destroy this struct */
-    } *xp_ops;        
+    } *xp_ops;
     int    xp_addrlen;    /* length of remote addr.  Obsolete */
     struct sockaddr_in    xp_raddr; /* Obsolete */
-    const struct xp_ops2 {        
+    const struct xp_ops2 {
         bool_t    (*xp_control)();    /* catch-all function */
-    } *xp_ops2;        
+    } *xp_ops2;
     char    *xp_tp;    /* transport provider device name */
     char    *xp_netid;    /* network identifier */
     struct netbuf    xp_ltaddr;    /* local transport address */
@@ -256,7 +256,7 @@ enum xdr_op {
  * an opaque pointer.  The opaque pointer generally points to a
  * structure of the data type to be decoded.  If this points to 0,
  * then the type routines should allocate dynamic storage of the
- * appropriate size and return it. 
+ * appropriate size and return it.
  * bool_t  (*xdrproc_t)(XDR *, caddr_t *);
  */
 typedef  bool_t (*xdrproc_t)();
@@ -277,7 +277,7 @@ typedef struct {
         bool_t    (*x_setpostn)(); /* lets you reposition the stream */
         long *    (*x_inline)();    /* buf quick ptr to buffered data */
         void    (*x_destroy)();    /* free privates of this xdr_stream */
-    } *x_ops;        
+    } *x_ops;
     caddr_t    x_public;    /* users' data */
     caddr_t    x_private;    /* pointer to private data */
     caddr_t    x_base;    /* private used for position info */
@@ -505,4 +505,4 @@ pages on which they are described:
 .Xr rpc_xdr 3 ,
 .Xr rpcbind 3 ,
 .Xr xdr 3 ,
-.Xr netconfig 4
+.Xr netconfig 5
