@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.166 2002/07/03 02:46:15 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.167 2002/07/07 13:24:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,12 +79,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2002/07/03 02:46:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2002/07/07 13:24:36 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
+#include "opt_kvm86.h"
 #include "opt_cputype.h"
 #include "opt_kstack_dr0.h"
 
@@ -125,6 +126,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2002/07/03 02:46:15 yamt Exp $");
 void trap __P((struct trapframe));
 #if defined(I386_CPU)
 int trapwrite __P((unsigned));
+#endif
+
+#ifdef KVM86
+#include <machine/kvm86.h>
+#define KVM86MODE (kvm86_incall)
+#else
+#define KVM86MODE (0)
 #endif
 
 const char *trap_type[] = {
@@ -193,7 +201,7 @@ trap(frame)
 	}
 #endif
 
-	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
+	if (!KVM86MODE && !KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
 		p->p_md.md_regs = &frame;
 		pcb->pcb_cr2 = 0;
@@ -248,6 +256,12 @@ trap(frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
+#ifdef KVM86
+		if (KVM86MODE) {
+			kvm86_gpfault(&frame);
+			return;
+		}
+#endif
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
