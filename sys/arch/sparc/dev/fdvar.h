@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.9 2000/01/17 16:57:15 pk Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.10 2000/01/21 13:22:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,8 @@ struct fdcio {
 	/*
 	 * Interrupt state.
 	 */
-	int	fdcio_istate;
+	int	fdcio_itask;
+	int	fdcio_istatus;
 
 	/*
 	 * IO state.
@@ -72,12 +73,17 @@ struct fdcio {
 };
 #endif /* _LOCORE */
 
-/* istate values */
-#define ISTATE_IDLE		0	/* No HW interrupt expected */
-#define ISTATE_SPURIOUS		1	/* Spurious HW interrupt detected */
-#define ISTATE_SENSEI		2	/* Do SENSEI on next HW interrupt */
-#define ISTATE_DMA		3	/* Pseudo-DMA in progress */
-#define ISTATE_DONE		4	/* Interrupt processing complete */
+/* itask values */
+#define FDC_ITASK_NONE		0	/* No HW interrupt expected */
+#define FDC_ITASK_SENSEI	1	/* Do SENSEI on next HW interrupt */
+#define FDC_ITASK_DMA		2	/* Do Pseudo-DMA */
+#define FDC_ITASK_RESULT	3	/* Pick up command results */
+
+/* istatus values */
+#define FDC_ISTATUS_NONE	0	/* No status available */
+#define FDC_ISTATUS_SPURIOUS	1	/* Spurious HW interrupt detected */
+#define FDC_ISTATUS_ERROR	2	/* Operation completed abnormally */
+#define FDC_ISTATUS_DONE	3	/* Operation completed normally */
 
 
 #define FD_MAX_NSEC 36		/* highest known number of spt - allow for */
