@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.9,v 1.4 2001/09/04 02:51:15 wiz Exp $
+.\"	$NetBSD: altq.9,v 1.5 2001/10/29 23:04:29 jdolecek Exp $
 .\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
 .\"
 .\" Copyright (C) 2001
@@ -260,7 +260,7 @@ looks as follows:
                                        |                 error);
          IF_DROP(&ifp->if_snd);        |     if (error != 0) {
          splx(s);                      |         splx(s);
-         senderr(ENOBUFS);             |         retuen (error);
+         senderr(ENOBUFS);             |         return (error);
      }                                 |     }
      IF_ENQUEUE(&ifp->if_snd, m);      |
      ifp->if_obytes +=                 |     ifp->if_obytes += len;
