@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2001/05/09 15:58:50 matt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2 2001/11/27 01:10:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>

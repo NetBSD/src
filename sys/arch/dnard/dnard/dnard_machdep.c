@@ -1,4 +1,4 @@
-/*	$NetBSD: dnard_machdep.c,v 1.6 2001/11/23 21:18:33 thorpej Exp $	*/
+/*	$NetBSD: dnard_machdep.c,v 1.7 2001/11/27 01:10:12 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -58,7 +58,7 @@
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <arm/undefined.h>
 

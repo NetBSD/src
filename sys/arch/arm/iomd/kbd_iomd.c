@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.1 2001/10/05 22:27:41 reinoud Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.2 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -53,7 +53,7 @@
 #include <sys/poll.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/kbd.h>
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/kbdvar.h>
