@@ -39,14 +39,17 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nice.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: nice.c,v 1.3 1993/08/01 18:10:32 mycroft Exp $";
+static char rcsid[] = "$Id: nice.c,v 1.4 1993/08/27 20:22:06 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <err.h>
 
 #define	DEFNICE	10
 
@@ -55,48 +58,49 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno;
-	int niceness;
+	int niceness = DEFNICE;
+	int c;
 
-	if (!argv[1])
-		usage();
+        /* handle obsolete -number syntax */
+        if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
+		niceness = atoi (argv[1] + 1);
+                argc--; argv++;
+        }
 
-	niceness = DEFNICE;
-	if (argv[1][0] == '-')
-		if (isdigit(argv[1][1]) || argv[1][1] == '-') {
-			niceness = atoi(argv[1] + 1);
-			++argv;
-		}
-		else {
-			(void)fprintf(stderr, "nice: illegal option -- %c\n",
-			    argv[1][1]);
+	while ((c = getopt (argc, argv, "n:")) != -1) {
+		switch (c) {
+		case 'n':
+			niceness = atoi (optarg);
+			break;
+
+		case '?':
+		default:
 			usage();
+			break;
 		}
+	}
+	argc -= optind; argv += optind;
 
-	if (!argv[1])
+	if (argc == 0)
 		usage();
 
 	errno = 0;
 	niceness += getpriority(PRIO_PROCESS, 0);
 	if (errno) {
-		(void)fprintf(stderr, "nice: getpriority: %s\n",
-		    strerror(errno));
-		exit(1);
+		err (1, "getpriority");
+		/* NOTREACHED */
 	}
 	if (setpriority(PRIO_PROCESS, 0, niceness)) {
-		(void)fprintf(stderr, "nice: setpriority: %s\n",
-		    strerror(errno));
-		exit(1);
+		warn ("setpriority");
 	}
-	execvp(argv[1], &argv[1]);
-	(void)fprintf(stderr,
-	    "nice: %s: %s\n", argv[1], strerror(errno));
-	exit(1);
+	execvp(argv[0], &argv[0]);
+	err ((errno == ENOENT) ? 127 : 126, argv[0]);
 }
 
 usage()
 {
 	(void)fprintf(stderr,
-	    "nice [ -# ] command [ options ] [ operands ]\n");
+	    "usage: nice [ -n increment ] utility [ argument ...]\n");
+	
 	exit(1);
 }
