@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.3 2001/09/30 16:04:04 manu Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.4 2001/09/30 20:44:49 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ linux_sys_truncate64(p, v, retval)
 	return sys_truncate(p, uap, retval);
 }
 
-#ifndef __alpha__
+#ifdef __mips__ /* i386 and powerpc could use it too */
 int
 linux_sys_fcntl64(p, v, retval)
 	struct proc *p;
@@ -259,4 +259,4 @@ linux_sys_fcntl64(p, v, retval)
 
 	return error;
 }
-#endif /* __alpha__ */
+#endif /* __mips__ */
