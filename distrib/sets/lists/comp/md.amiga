@@ -1,7 +1,10 @@
 ./usr/include/m68k
 ./usr/include/m68k/ansi.h
+./usr/include/m68k/aout_machdep.h
 ./usr/include/m68k/asm.h
+./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
+./usr/include/m68k/cpu.h
 ./usr/include/m68k/db_machdep.h
 ./usr/include/m68k/endian.h
 ./usr/include/m68k/float.h
@@ -10,12 +13,14 @@
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
+./usr/include/m68k/pcb.h
 ./usr/include/m68k/psl.h
 ./usr/include/m68k/ptrace.h
 ./usr/include/m68k/reg.h
 ./usr/include/m68k/setjmp.h
 ./usr/include/m68k/signal.h
 ./usr/include/m68k/stdarg.h
+./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
