@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.15 1993/08/28 00:03:51 brezak Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.16 1993/09/13 15:27:40 brezak Exp $";
 #endif /* not lint */
 
 /*
@@ -49,7 +49,6 @@ static char rcsid[] = "$Id: mkmakefile.c,v 1.15 1993/08/28 00:03:51 brezak Exp $
 #include "config.h"
 
 #define DEF_MAXFDESCS	2048
-#define	DEF_LOADADDRESS	KERNBASE
 
 #define next_word(fp, wd) \
 	{ register char *word = get_word(fp); \
@@ -191,11 +190,11 @@ makefile()
 		maxusers = up->u_min;
 	} else if (maxusers > up->u_max)
 		printf("warning: maxusers > %d (%d)\n", up->u_max, maxusers);
-	if (loadaddress == 0)
-		loadaddress = DEF_LOADADDRESS;
-	fprintf(ofp, "PARAM=-DTIMEZONE=%d -DDST=%d -DMAXUSERS=%d -DMAXFDESCS=%d -DLOAD_ADDRESS=0x%x\n",
-	    zone, dst, maxusers, maxfdescs, loadaddress);
-	fprintf(ofp, "LOAD_ADDRESS=%X\n", loadaddress);
+        fprintf(ofp, "PARAM=-DTIMEZONE=%d -DDST=%d -DMAXUSERS=%d -DMAXFDESCS=%d\n",
+                zone, dst, maxusers, maxfdescs);
+	if (loadaddress != -1) {
+                fprintf(ofp, "LOAD_ADDRESS=%X\n", loadaddress);
+        }
 	for (op = mkopt; op; op = op->op_next)
 		fprintf(ofp, "%s=%s\n", op->op_name, op->op_value);
 	if (debugging)
