@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.46 2004/06/08 19:25:16 cjep Exp $	*/
+/*	$NetBSD: modload.c,v 1.47 2004/06/28 19:27:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.46 2004/06/08 19:25:16 cjep Exp $");
+__RCSID("$NetBSD: modload.c,v 1.47 2004/06/28 19:27:06 nathanw Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -240,7 +240,6 @@ loadsym(void *buf, size_t len)
 	}
 }
 
-/* Transfer some empty space. */
 int
 main(int argc, char **argv)
 {
