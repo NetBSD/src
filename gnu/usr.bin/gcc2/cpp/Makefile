@@ -2,8 +2,9 @@
 PROG=		cpp
 BINDIR=		/usr/libexec
 SRCS=		cccp.c cexp.y version.c
-MAN1=		gcpp.0
+MAN1=		cpp.0
 CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common \
+                -I$(.CURDIR)/../$(MACHINE) -I$(.CURDIR)/.. \
 		-DGCC_INCLUDE_DIR=\"\" \
 		-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
 YFLAGS=
