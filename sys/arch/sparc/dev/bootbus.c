@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.1 2002/08/24 05:26:57 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.2 2002/08/25 16:05:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 
 #include <sparc/sparc/cpuunitvar.h>
 #include <sparc/dev/bootbusvar.h>
-#include <machine/autoconf.h>
 
 #include "locators.h"
 
@@ -235,28 +235,6 @@ bootbus_destroy_attach_args(struct bootbus_attach_args *baa)
 }
 
 static int
-bootbus_translate_address(struct bootbus_softc *sc, bus_addr_t addr,
-    bus_addr_t *addrp)
-{
-	int space = BUS_ADDR_IOSPACE(addr);
-	int i;
-
-	for (i = 0; i < sc->sc_nrange; i++) {
-		struct openprom_range *rp = &sc->sc_range[i];
-
-		if (rp->or_child_space != space)
-			continue;
-
-		/* We've found the connection to the parent bus. */
-		*addrp = BUS_ADDR(rp->or_parent_space,
-		    rp->or_parent_base + BUS_ADDR_PADDR(addr));
-		return (0);
-	}
-
-	return (EINVAL);
-}
-
-static int
 bootbus_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size,
     int flags, vaddr_t va, bus_space_handle_t *hp)
 {
@@ -264,7 +242,8 @@ bootbus_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size,
 	bus_addr_t addr;
 	int error;
 
-	error = bootbus_translate_address(sc, ba, &addr);
+	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
+	    ba, &addr);
 	if (error)
 		return (error);
 	return (bus_space_map2(sc->sc_st, addr, size, flags, va, hp));
@@ -278,7 +257,8 @@ bootbus_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off, int prot,
 	bus_addr_t addr;
 	int error;
 
-	error = bootbus_translate_address(sc, ba, &addr);
+	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
+	    ba, &addr);
 	if (error)
 		return (-1);
 	return (bus_space_mmap(sc->sc_st, addr, off, prot, flags));
