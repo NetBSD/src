@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.6 1993/10/12 05:26:04 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.7 1993/12/12 09:08:43 glass Exp $
  */
 
 .globl _cnt
@@ -41,6 +41,9 @@ _intrcnt:
 .globl _clock_turn
 _clock_turn:
 	.long 0	
+.globl	timebomb
+timebomb:
+	.long	0
 .text
 
 #define INTERRUPT_BEGIN(interrupt_num) \
@@ -65,20 +68,6 @@ _clock_turn:
 	INTERRUPT_INTRHAND \
 	INTERRUPT_END
 
-#if 0
-#define INTERRUPT_HANDLE(interrupt_num) \
-	clrw	sp@-		;	/* ???? stack alignment?*/\
-	moveml	#0xC0C0,sp@-	;	/* save a0 a1, d0, d1 */\
-	addql #1,_intrcnt+interrupt_num	;/*increment interrupt counter */\
-	movw	sr,sp@-		;	/* push current SR value */\
-	clrw	sp@-		;	/*    padded to longword */\
-	jbsr	_intrhand	;	/* handle interrupt 	 */\
-	addql	#4,sp		;	/* pop SR		 */\
-	moveml	sp@+,#0x0303	;	/* restore a0, a1, d0, d1*/\
-	addql	#2,sp		;	/* undo stack alignment? hanck*/\
-	addql #1, _cnt+V_INTR	;	/* more statistics gathering */\
-	jra rei
-#endif
 .globl _level0intr, _level1intr, _level2intr, _level3intr, _level4intr
 .globl _level5intr, _level6intr, _level7intr
 
@@ -120,10 +109,55 @@ _level5intr_clock:
 	notl _clock_turn
 	jeq cont
 	rte
-cont:	INTERRUPT_BEGIN(5)	| stack aligned, a0, a1, d0, d1 saved
-	movl sp, a1
-	movl a1@(16), sp@-	| clockframe.sr (ps)
-	movl a1@(16+4), sp@-	| clockframe.pc
+cont:
+	INTERRUPT_BEGIN(5)	| stack aligned, a0, a1, d0, d1 saved
+#define CLOCK_DEBUG
+#ifdef CLOCK_DEBUG
+	.globl	_panicstr, _regdump, _panic
+	tstl	timebomb		| set to go off?
+	jeq	Lnobomb			| no, skip it
+	subql	#1,timebomb		| decrement
+	jne	Lnobomb			| not ready to go off
+	moveml	sp@+,#0x0303		| temporarily restore regs
+	jra	Lbomb			| go die
+Lnobomb:
+	cmpl	#_kstack+NBPG,sp	| are we still in stack pages?
+	jcc	Lstackok		| yes, continue normally
+	tstl	_curproc		| if !curproc could have swtch_exit'ed,
+	jeq	Lstackok		|     might be on tmpstk
+	tstl	_panicstr		| have we paniced?
+	jne	Lstackok		| yes, do not re-panic
+	lea	tmpstk,sp		| no, switch to tmpstk
+	moveml	#0xFFFF,sp@-		| push all registers
+	movl	#Lstkrip,sp@-		| push panic message
+	jbsr	_printf			| preview
+	addql	#4,sp
+	movl	sp,a0			| remember this spot
+	movl	#256,sp@-		| longword count
+	movl	a0,sp@-			| and reg pointer
+	jbsr	_regdump		| dump core
+	addql	#8,sp			| pop params
+	movl	#Lstkrip,sp@-		| push panic message
+	jbsr	_panic			| ES and D
+Lbomb:
+	moveml	#0xFFFF,sp@-		| push all registers
+	movl	sp,a0			| remember this spot
+	movl	#256,sp@-		| longword count
+	movl	a0,sp@-			| and reg pointer
+	jbsr	_regdump		| dump core
+	addql	#8,sp			| pop params
+	movl	#Lbomrip,sp@-		| push panic message
+	jbsr	_panic			| ES and D
+Lstkrip:
+	.asciz	"k-stack overflow"
+Lbomrip:
+	.asciz	"timebomb"
+	.even
+Lstackok:
+#endif
+	lea sp@(16), a1
+	movl a1@, sp@-		| clockframe.sr (ps)
+	movl a1@(4), sp@-	| clockframe.pc
 	jbsr _clock_intr
 	addl #8,sp		| pop clockframe
 	INTERRUPT_END

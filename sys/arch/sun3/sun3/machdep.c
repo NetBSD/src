@@ -57,6 +57,7 @@
 #include "mbuf.h"
 #include "msgbuf.h"
 #include "user.h"
+#include "exec.h"
 #ifdef SYSVSHM
 #include "shm.h"
 #endif
@@ -79,12 +80,15 @@
 #include "machine/isr.h"
 #include "net/netisr.h"
 
-
+#ifdef COMPAT_SUNOS
+void sun_sendsig();
+#endif
 
 extern char *cpu_string;
 int physmem;
 int cold;
 extern char kstack[];
+
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -409,6 +413,26 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
 };
 
+#ifdef COMPAT_SUNOS
+/* sigh.. I guess it's too late to change now, but "our" sigcontext
+   is plain vax, not very 68000 (ap, for example..) */
+struct sun_sigcontext {
+	int 	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
+	int	sc_sp;			/* sp to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_ps;			/* psl to restore */
+};
+struct sun_sigframe {
+	int	ssf_signum;		/* signo for handler */
+	int	ssf_code;		/* additional info for handler */
+	struct sun_sigcontext *ssf_scp;	/* context pointer for handler */
+	u_int	ssf_addr;		/* even more info for handler */
+	struct sun_sigcontext ssf_sc;	/* I don't know if that's what 
+					   comes here */
+};
+#endif	
+
 #ifdef HPUXCOMPAT
 struct	hpuxsigcontext {
 	int	hsc_syscall;
@@ -468,6 +492,29 @@ sendsig(catcher, sig, mask, code)
 	frame = (struct frame *)p->p_regs;
 	ft = frame->f_format;
 	oonstack = ps->ps_onstack;
+
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS)
+	  {
+	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
+	       can't currently handle it. Reset signal actions and
+	       have the process die unconditionally. */
+	    if (ft >= FMT9)
+	      {
+		SIGACTION(p, sig) = SIG_DFL;
+		mask = sigmask(sig);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, sig);
+		return;
+	      }
+
+	    /* else build the short SunOS frame instead */
+	    sun_sendsig (catcher, sig, mask, code);
+	    return;
+	  }
+#endif
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -617,7 +664,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	frame->f_pc = USRSTACK - (esigcode - sigcode);
+	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
@@ -625,6 +672,104 @@ sendsig(catcher, sig, mask, code)
 #endif
 	free((caddr_t)kfp, M_TEMP);
 }
+
+#ifdef COMPAT_SUNOS
+/* much simpler sendsig() for SunOS processes, as SunOS does the whole
+   context-saving in usermode. For now, no hardware information (ie.
+   frames for buserror etc) is saved. This could be fatal, so I take 
+   SIG_DFL for "dangerous" signals. */
+
+void
+sun_sendsig(catcher, sig, mask, code)
+	sig_t catcher;
+	int sig, mask;
+	unsigned code;
+{
+	register struct proc *p = curproc;
+	register struct sun_sigframe *fp;
+	struct sun_sigframe kfp;
+	register struct frame *frame;
+	register struct sigacts *ps = p->p_sigacts;
+	register short ft;
+	int oonstack, fsize;
+
+	frame = (struct frame *)p->p_regs;
+	ft = frame->f_format;
+	oonstack = ps->ps_onstack;
+	/*
+	 * Allocate and validate space for the signal handler
+	 * context. Note that if the stack is in P0 space, the
+	 * call to grow() is a nop, and the useracc() check
+	 * will fail if the process has not already allocated
+	 * the space with a `brk'.
+	 */
+	fsize = sizeof(struct sun_sigframe);
+	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigsp - fsize);
+		ps->ps_onstack = 1;
+	} else
+		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)grow(p, (unsigned)fp);
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sun_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->ssf_sc, ft);
+#endif
+	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sun_sendsig(%d): useracc failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	kfp.ssf_signum = sig;
+	kfp.ssf_code = code;
+	kfp.ssf_scp = &fp->ssf_sc;
+	kfp.ssf_addr = ~0;		/* means: not computable */
+
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	kfp.ssf_sc.sc_onstack = oonstack;
+	kfp.ssf_sc.sc_mask = mask;
+	kfp.ssf_sc.sc_sp = frame->f_regs[SP];
+	kfp.ssf_sc.sc_pc = frame->f_pc;
+	kfp.ssf_sc.sc_ps = frame->f_sr;
+	(void) copyout((caddr_t)&kfp, (caddr_t)fp, fsize);
+	frame->f_regs[SP] = (int)fp;
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sun_sendsig(%d): sig %d scp %x sc_sp %x\n",
+		       p->p_pid, sig, kfp.ssf_sc.sc_sp);
+#endif
+
+	/* have the user-level trampoline code sort out what registers it
+	   has to preserve. */
+	frame->f_pc = catcher;
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sun_sendsig(%d): sig %d returns\n",
+		       p->p_pid, sig);
+#endif
+}
+
+#endif	/* COMPAT_SUNOS */
 
 struct sigreturn_args {
     struct sigcontext *sigcntxp;
@@ -661,12 +806,12 @@ sigreturn(p, uap, retval)
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/*
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
 	 */
-	if (p->p_flag & SHPUX) {
+	if (p->p_emul == COMPAT_HPUX) {
 		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
 		struct hpuxsigcontext htsigc;
 
@@ -719,9 +864,18 @@ sigreturn(p, uap, retval)
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_regs;
 	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_regs[A6] = scp->sc_fp;
+#ifdef COMPAT_SUNOS
+	if (p->p_emul != EMUL_SUNOS)
+	        frame->f_regs[A6] = scp->sc_fp;
+#endif
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
+
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS)	
+		return EJUSTRETURN;
+#endif
+
 	/*
 	 * Grab pointer to hardware state information.
 	 * If zero, the user is probably doing a longjmp.
@@ -971,6 +1125,33 @@ cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
+#ifdef COMPAT_SUNOS
+struct sunos_aout_magic {
+	u_char	a_dynamic:1;	/* has a __DYNAMIC */
+	u_char	a_toolversion:7;/* version of toolset used to create this file */
+	u_char	a_machtype;	/* machine type */
+
+	u_short	a_magic;	/* magic number */
+};
+
+	struct sunos_aout_magic sunmag;
+
+	bcopy(&epp->ep_execp->a_midmag, &sunmag, sizeof(sunmag));
+	if((sunmag.a_machtype != MID_SUN010) &&
+	   (sunmag.a_machtype != MID_SUN020))
+		return (ENOEXEC);
+	epp->ep_emul = EMUL_SUNOS;
+	switch (sunmag.a_magic) {
+	case ZMAGIC:
+		return sun_exec_aout_prep_zmagic(p, epp);
+	case NMAGIC:
+		return sun_exec_aout_prep_nmagic(p, epp);
+	case OMAGIC:
+		return sun_exec_aout_prep_omagic(p, epp);
+	default:
+		break;
+	}
+#endif /* COMPAT_SUNOS */
 	return ENOEXEC;
 }
 

@@ -1,5 +1,5 @@
 #
-# $Id: files.sun3.newconf,v 1.4 1993/11/10 07:42:14 deraadt Exp $
+# $Id: files.sun3.newconf,v 1.5 1993/12/12 09:08:28 glass Exp $
 # sun3-specific configuration info
 
 maxusers 2 8 64
@@ -61,3 +61,9 @@ file arch/sun3/sun3/sun3_startup.c
 file arch/sun3/sun3/trap.c		
 file arch/sun3/sun3/vector.c		
 file arch/sun3/sun3/vm_machdep.c	
+
+file	compat/sunos/sun_exec_aout.c	compat_sunos
+file	compat/sunos/sun_ioctl.c	compat_sunos
+file	compat/sunos/sun_misc.c		compat_sunos
+file	compat/sunos/sun_syscalls.c	compat_sunos
+file	compat/sunos/sun_sysent.c	compat_sunos
