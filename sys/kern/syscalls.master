@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.48 1997/04/16 14:41:31 jtc Exp $
+	$NetBSD: syscalls.master,v 1.49 1997/05/18 19:56:48 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -408,7 +408,7 @@
 218	UNIMPL
 219	UNIMPL
 #endif	/* !LKM */
-; System calls 220-240 are reserved for use by NetBSD
+; System calls 220-300 are reserved for use by NetBSD
 #ifdef SYSVSEM
 220	STD		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); }
@@ -450,15 +450,46 @@
 231	UNIMPL		shmget
 #endif
 232	STD		{ int sys_clock_gettime(clockid_t clock_id, \
-				struct timespec *tp); }
+			    struct timespec *tp); }
 233	STD		{ int sys_clock_settime(clockid_t clock_id, \
-				const struct timespec *tp); }
+			    const struct timespec *tp); }
 234	STD		{ int sys_clock_getres(clockid_t clock_id, \
-				struct timespec *tp); }
+			    struct timespec *tp); }
 235	UNIMPL		timer_create
 236	UNIMPL		timer_delete
 237	UNIMPL		timer_settime
 238	UNIMPL		timer_gettime
 239	UNIMPL		timer_getoverrun
 240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+			    struct timespec *rmtp); }
+241	UNIMPL
+242	UNIMPL
+243	UNIMPL
+244	UNIMPL
+245	UNIMPL
+246	UNIMPL
+247	UNIMPL
+248	UNIMPL
+249	UNIMPL
+250	UNIMPL
+251	UNIMPL
+252	UNIMPL
+253	UNIMPL
+254	UNIMPL
+255	UNIMPL
+256	UNIMPL
+257	UNIMPL
+258	UNIMPL
+259	UNIMPL
+260	UNIMPL
+261	UNIMPL
+262	UNIMPL
+263	UNIMPL
+264	UNIMPL
+265	UNIMPL
+266	UNIMPL
+267	UNIMPL
+268	UNIMPL
+269	UNIMPL
+270	STD		{ int sys_posix_rename(const char *from, \
+			    const char *to); }
