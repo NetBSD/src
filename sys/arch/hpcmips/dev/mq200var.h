@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200var.h,v 1.3 2001/02/27 08:54:18 sato Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.4 2001/03/09 08:54:19 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -47,8 +47,9 @@ struct mq200_softc {
 	config_hook_tag		sc_hardpowerhook;
 	int			sc_powerstate;
 #define	PWRSTAT_SUSPEND		(1<<0)
-#define	PWRSTAT_LCD		(1<<1)
-#define	PWRSTAT_BACKLIGHT	(1<<2)
+#define	PWRSTAT_VIDEOOFF	(1<<1)
+#define	PWRSTAT_LCD		(1<<2)
+#define	PWRSTAT_BACKLIGHT	(1<<3)
 #define PWRSTAT_ALL		(0xffffffff)
 	int			sc_brightness;
 	int			sc_brightness_save;
