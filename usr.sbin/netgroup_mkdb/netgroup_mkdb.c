@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christos Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.6 1997/01/19 03:30:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christos Exp $";
+static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.6 1997/01/19 03:30:14 lukem Exp $";
 #endif
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christo
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stringlist.h>
 #define _NETGROUP_PRIVATE
 #include <netgroup.h>
 #include <assert.h>
@@ -72,7 +73,7 @@ struct nentry {
 
 static DB       *ng_insert __P((DB *, const char *));
 static void	 ng_reventry __P((DB *, DB *, struct nentry *, char *,
-				  size_t, struct stringlist *));
+				  size_t, StringList *));
 
 static void	 ng_print __P((struct nentry *, struct string *));
 static void	 ng_rprint __P((DB *, struct string *));
@@ -361,7 +362,7 @@ ng_reventry(db, udb, fe, name, s, ss)
 	struct nentry  *fe;
 	char           *name;
 	size_t          s;
-	struct stringlist *ss;
+	StringList	*ss;
 {
 	DBT             key, data;
 	struct nentry  *e;
@@ -369,11 +370,11 @@ ng_reventry(db, udb, fe, name, s, ss)
 	char           *p;
 	DB             *xdb;
 
-	if (_ng_sl_find(ss, name) != NULL) {
+	if (sl_find(ss, name) != NULL) {
 		warnx("Cycle in netgroup `%s'", name);
 		return;
 	}
-	_ng_sl_add(ss, name);
+	sl_add(ss, name);
 
 	for (e = fe->n_next; e != NULL; e = e->n_next)
 		switch (e->n_type) {
@@ -440,7 +441,7 @@ ng_reverse(db, s)
 	size_t          s;
 {
 	int             pos;
-	struct stringlist *sl;
+	StringList	*sl;
 	DBT             key, data;
 	struct nentry  *fe;
 	DB             *udb = dbopen(NULL, O_RDWR | O_CREAT | O_EXCL, 0,
@@ -452,10 +453,10 @@ ng_reverse(db, s)
 	for (pos = R_FIRST;; pos = R_NEXT)
 		switch ((db->seq)(db, &key, &data, pos)) {
 		case 0:
-			sl = _ng_sl_init();
+			sl = sl_init();
 			memcpy(&fe, data.data, sizeof(fe));
 			ng_reventry(db, udb, fe, (char *) key.data, s, sl);
-			_ng_sl_free(sl, 0);
+			sl_free(sl, 0);
 			break;
 
 		case 1:
