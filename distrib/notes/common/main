@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.22 1999/08/27 21:35:07 perseant Exp $
+.\" $NetBSD: main,v 1.23 1999/08/28 01:32:33 lukem Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -743,7 +743,10 @@ them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD core group:"
 .It Ta Ta
-.It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG
+.It Ta Alistair Crooks Ta Mt agc@NetBSD.ORG
+.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.ORG
+.It Ta Frank van der Linden Ta Mt fvdl@NetBSD.ORG
+.It Ta Luke Mewburn Ta Mt lukem@NetBSD.ORG
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.ORG
 .It Ta Ta
@@ -797,7 +800,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Dave Carrel Ta Mt carrel@NetBSD.ORG
 .It Ta Bill Coldwell Ta Mt billc@NetBSD.ORG
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.ORG
-.It Ta Alistair Crooks Ta Mt agc@NetBSD.ORG
 .It Ta Aidan Cully Ta Mt aidan@NetBSD.ORG
 .It Ta Rob Deker Ta Mt deker@NetBSD.ORG
 .It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.ORG
@@ -839,7 +841,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Paul Mackerras Ta Mt paulus@NetBSD.ORG
 .It Ta Neil J. McRae Ta Mt neil@NetBSD.ORG
 .It Ta Perry Metzger Ta Mt perry@NetBSD.ORG
-.It Ta Luke Mewburn Ta Mt lukem@NetBSD.ORG
 .It Ta der Mouse Ta Mt mouse@NetBSD.ORG
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.ORG
 .It Ta Masaru Oki Ta Mt oki@NetBSD.ORG
