@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,8 +38,8 @@
 /* error reporting and handling */
 
 #ifdef _KERNEL
-#include<sys/systm.h> /* printf, sprintf, and friends */
-#endif 
+#include<sys/systm.h>		/* printf, sprintf, and friends */
+#endif
 
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
@@ -54,7 +54,7 @@ extern char rf_panicbuf[];
 #ifdef _KERNEL
 #ifdef RF_ASSERT
 #undef RF_ASSERT
-#endif /* RF_ASSERT */
+#endif				/* RF_ASSERT */
 #ifndef NOASSERT
 #define RF_ASSERT(_x_) { \
   if (!(_x_)) { \
@@ -64,12 +64,12 @@ extern char rf_panicbuf[];
     panic(rf_panicbuf); \
   } \
 }
-#else /* !NOASSERT */
+#else				/* !NOASSERT */
 #define RF_ASSERT(x) {/*noop*/}
-#endif /* !NOASSERT */
-#else /* _KERNEL */
+#endif				/* !NOASSERT */
+#else				/* _KERNEL */
 #define RF_ASSERT(x) {/*noop*/}
-#endif /* _KERNEL */
+#endif				/* _KERNEL */
 
 /* random stuff */
 #define RF_MAX(a,b) (((a) > (b)) ? (a) : (b))
@@ -86,12 +86,13 @@ extern char rf_panicbuf[];
  * those which in the kernel may have a user address
  */
 
-#define RF_BZERO(_bp,_b,_l)  bzero(_b,_l)  /* XXX This is likely incorrect. GO*/
+#define RF_BZERO(_bp,_b,_l)  bzero(_b,_l)	/* XXX This is likely
+						 * incorrect. GO */
 
 
 #define RF_UL(x)           ((unsigned long) (x))
 #define RF_PGMASK          RF_UL(NBPG-1)
-#define RF_BLIP(x)         (NBPG - (RF_UL(x) & RF_PGMASK))    /* bytes left in page */
+#define RF_BLIP(x)         (NBPG - (RF_UL(x) & RF_PGMASK))	/* bytes left in page */
 #define RF_PAGE_ALIGNED(x) ((RF_UL(x) & RF_PGMASK) == 0)
 
 #if DKUSAGE > 0
@@ -103,14 +104,14 @@ extern char rf_panicbuf[];
 			(_bp_)->b_bcount); \
 	splx(s); \
 }
-#else /* DKUSAGE > 0 */
+#else				/* DKUSAGE > 0 */
 #define RF_DKU_END_IO(unit) { /* noop */ }
-#endif /* DKUSAGE > 0 */
+#endif				/* DKUSAGE > 0 */
 
 #ifdef __STDC__
 #define RF_STRING(_str_) #_str_
-#else /* __STDC__ */
+#else				/* __STDC__ */
 #define RF_STRING(_str_) "_str_"
-#endif /* __STDC__ */
+#endif				/* __STDC__ */
 
-#endif /* !_RF__RF_GENERAL_H_ */
+#endif				/* !_RF__RF_GENERAL_H_ */

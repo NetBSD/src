@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstub.c,v 1.2 1999/01/26 02:34:02 oster Exp $	*/
+/*	$NetBSD: rf_reconstub.c,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,24 +43,60 @@
 
 #if RAIDFRAME_RECON == 0
 
-int rf_ConfigureReconstruction() { return(0); }
-int rf_ConfigureReconEvent()     { return(0); }
-int rf_ConfigurePSStatus()       { return(0); }
-int rf_ConfigureNWayXor()        { return(0); }
-int rf_ConfigureCopyback()       { return(0); }
-int rf_ShutdownCopyback()        { return(0); }
-int rf_ShutdownReconstruction()  { return(0); }
-int rf_ShutdownReconEvent()      { return(0); }
-int rf_ShutdownPSStatus()        { return(0); }
-int rf_ShutdownNWayXor()         { return(0); }
+int     rf_ConfigureReconstruction() {
+	return (0);
+}
+int     rf_ConfigureReconEvent() {
+	return (0);
+}
+int     rf_ConfigurePSStatus() {
+	return (0);
+}
+int     rf_ConfigureNWayXor() {
+	return (0);
+}
+int     rf_ConfigureCopyback() {
+	return (0);
+}
+int     rf_ShutdownCopyback() {
+	return (0);
+}
+int     rf_ShutdownReconstruction() {
+	return (0);
+}
+int     rf_ShutdownReconEvent() {
+	return (0);
+}
+int     rf_ShutdownPSStatus() {
+	return (0);
+}
+int     rf_ShutdownNWayXor() {
+	return (0);
+}
 
-int rf_ForceOrBlockRecon()       { return(0); }
-int rf_UnblockRecon()            { return(0); }
-int rf_ReconstructFailedDisk()   { return(ENOTTY); }
-int rf_CheckRUReconstructed()    { return(0); }
+int     rf_ForceOrBlockRecon() {
+	return (0);
+}
+int     rf_UnblockRecon() {
+	return (0);
+}
+int     rf_ReconstructFailedDisk() {
+	return (ENOTTY);
+}
+int     rf_CheckRUReconstructed() {
+	return (0);
+}
 
-void rf_start_cpu_monitor()  {}
-void rf_stop_cpu_monitor()   {}
-void rf_print_cpu_util()     {}
-
-#endif /* RAIDFRAME_RECON == 0 */
+void 
+rf_start_cpu_monitor()
+{
+}
+void 
+rf_stop_cpu_monitor()
+{
+}
+void 
+rf_print_cpu_util()
+{
+}
+#endif				/* RAIDFRAME_RECON == 0 */

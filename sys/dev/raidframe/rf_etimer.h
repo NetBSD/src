@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_etimer.h,v 1.2 1999/01/26 02:33:57 oster Exp $	*/
+/*	$NetBSD: rf_etimer.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,13 +51,13 @@ extern unsigned int rpcc(void);
 #define RF_DEF_TIMER_MAX_VAL            0xFFFFFFFF
 
 typedef struct RF_EtimerVal_s {
-  unsigned  ccnt; /* cycle count */
-} RF_EtimerVal_t;
+	unsigned ccnt;		/* cycle count */
+}       RF_EtimerVal_t;
 
 struct RF_Etimer_s {
-  RF_EtimerVal_t  st;
-  RF_EtimerVal_t  et;
-  unsigned long   ticks; /* elapsed time in ticks */
+	RF_EtimerVal_t st;
+	RF_EtimerVal_t et;
+	unsigned long ticks;	/* elapsed time in ticks */
 };
 
 extern long rf_timer_max_val;
@@ -79,4 +79,4 @@ extern unsigned long rf_timer_ticks_per_usec;
 #define RF_ETIMER_VAL_MS(_t_)      (RF_ETIMER_TICKS2US((_t_).ticks)/1000)
 
 
-#endif /* !_RF__RF_TIMER_H_ */
+#endif				/* !_RF__RF_TIMER_H_ */

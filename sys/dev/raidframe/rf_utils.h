@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.h,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
+/*	$NetBSD: rf_utils.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,15 +40,15 @@
 #include "rf_alloclist.h"
 #include "rf_threadstuff.h"
 
-char *rf_find_non_white(char *p);
-char *rf_find_white(char *p);
-RF_RowCol_t **rf_make_2d_array(int b, int k, RF_AllocListElem_t *allocList);
-RF_RowCol_t *rf_make_1d_array(int c, RF_AllocListElem_t *allocList);
-void rf_free_2d_array(RF_RowCol_t **a, int b, int k);
-void rf_free_1d_array(RF_RowCol_t *a, int n);
-int rf_gcd(int m, int n);
-int rf_atoi(char *p);
-int rf_htoi(char *p);
+char   *rf_find_non_white(char *p);
+char   *rf_find_white(char *p);
+RF_RowCol_t **rf_make_2d_array(int b, int k, RF_AllocListElem_t * allocList);
+RF_RowCol_t *rf_make_1d_array(int c, RF_AllocListElem_t * allocList);
+void    rf_free_2d_array(RF_RowCol_t ** a, int b, int k);
+void    rf_free_1d_array(RF_RowCol_t * a, int n);
+int     rf_gcd(int m, int n);
+int     rf_atoi(char *p);
+int     rf_htoi(char *p);
 
 #define RF_USEC_PER_SEC 1000000
 #define RF_TIMEVAL_DIFF(_start_,_end_,_diff_) { \
@@ -63,4 +63,4 @@ int rf_htoi(char *p);
 	} \
 }
 
-#endif /* !_RF__RF_UTILS_H_ */
+#endif				/* !_RF__RF_UTILS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.h,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,21 +40,20 @@
 #define RF_POINTERS_PER_ALLOC_LIST_ELEMENT 20
 
 struct RF_AllocListElem_s {
-  void                *pointers[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
-  int                  sizes[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
-  int                  numPointers;
-  RF_AllocListElem_t  *next;
+	void   *pointers[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
+	int     sizes[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
+	int     numPointers;
+	RF_AllocListElem_t *next;
 };
-
 #define rf_MakeAllocList(_ptr_) _ptr_ = rf_real_MakeAllocList(1);
 #define rf_AddToAllocList(_l_,_ptr_,_sz_) rf_real_AddToAllocList((_l_), (_ptr_), (_sz_), 1)
 
-int rf_ConfigureAllocList(RF_ShutdownList_t **listp);
+int     rf_ConfigureAllocList(RF_ShutdownList_t ** listp);
 
 #if RF_UTILITY == 0
-void rf_real_AddToAllocList(RF_AllocListElem_t *l, void *p, int size, int lockflag);
-void rf_FreeAllocList(RF_AllocListElem_t *l);
+void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size, int lockflag);
+void    rf_FreeAllocList(RF_AllocListElem_t * l);
 RF_AllocListElem_t *rf_real_MakeAllocList(int lockflag);
-#endif /* RF_UTILITY == 0 */
+#endif				/* RF_UTILITY == 0 */
 
-#endif /* !_RF__RF_ALLOCLIST_H_ */
+#endif				/* !_RF__RF_ALLOCLIST_H_ */
