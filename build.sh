@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.34 2001/12/11 23:57:49 lukem Exp $
+#  $NetBSD: build.sh,v 1.35 2001/12/12 23:50:27 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -243,7 +243,7 @@ if $do_rebuildmake; then
 fi
 
 USE_NEW_TOOLCHAIN=`getmakevar USE_NEW_TOOLCHAIN`
-if [ "${USE_NEW_TOOLCHAIN}" != "nowarn" ]; then
+if [ "${USE_NEW_TOOLCHAIN}" = "" ]; then
 	echo "ERROR: build.sh (new toolchain) is not yet enabled for"
 	echo
 	echo "MACHINE: ${MACHINE}"
@@ -343,7 +343,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.34 2001/12/11 23:57:49 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.35 2001/12/12 23:50:27 jmc Exp $
 #
 
 EOF
