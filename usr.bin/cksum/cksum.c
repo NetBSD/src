@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.9 1997/06/26 23:24:01 kleink Exp $	*/
+/*	$NetBSD: cksum.c,v 1.10 1997/10/17 11:36:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: cksum.c,v 1.9 1997/06/26 23:24:01 kleink Exp $";
+__RCSID("$NetBSD: cksum.c,v 1.10 1997/10/17 11:36:59 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -65,9 +65,10 @@ static char rcsid[] = "$NetBSD: cksum.c,v 1.9 1997/06/26 23:24:01 kleink Exp $";
 
 #include "extern.h"
 
-int md5_digest_file __P((char *));
-void requiremd5 __P((const char *));
-void usage __P((void));
+int	main __P((int, char **));
+int	md5_digest_file __P((char *));
+void	requiremd5 __P((const char *));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -81,6 +82,8 @@ main(argc, argv)
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
 	extern char *__progname;
 
+	cfncn = NULL;
+	pfncn = NULL;
 	dosum = domd5 = pflag = nomd5stdin = 0;
 
 	setlocale(LC_ALL, "");
