@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.7.2.2 1999/03/11 18:31:05 scottr Exp $	*/
+/*	$NetBSD: aed.c,v 1.7.2.3 1999/11/09 01:44:10 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -60,11 +60,6 @@ static void	aed_kbdrpt __P((void *kstate));
 static void	aed_dokeyupdown __P((adb_event_t *event));
 static void	aed_handoff __P((adb_event_t *event));
 static void	aed_enqevent __P((adb_event_t *event));
-
-/*
- * Global variables.
- */
-extern int adb_polling;			/* Are we polling?  (Debugger mode) */
 
 /*
  * Local variables.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.2.2 1999/11/01 06:19:13 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.3 1999/11/09 01:44:19 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ intr_init()
 
 	g_inames = (char *) &intrnames;
 	if (mac68k_machine.aux_interrupts) {
-
 		inames = AUX_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
@@ -133,7 +132,8 @@ intr_init()
 		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL6);
 
-		/* Non-standard interrupt priority */
+		/* Non-standard interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL5);
 
 	} else {
@@ -148,7 +148,8 @@ intr_init()
 		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL3);
 
-		/* Non-standard interrupt priority */
+		/* Non-standard interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL2);
 
 		if (current_mac_model->class == MACH_CLASSAV) {
