@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.10 1999/07/28 23:09:45 hubertf Exp $	*/
+/*	$NetBSD: worm.c,v 1.11 1999/08/08 03:08:08 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.10 1999/07/28 23:09:45 hubertf Exp $");
+__RCSID("$NetBSD: worm.c,v 1.11 1999/08/08 03:08:08 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,11 @@ leave(dummy)
 	int dummy;
 {
 	endwin();
+
+	if (dummy == 0){	/* called via crash() */
+		printf("\nWell, you ran into something and the game is over.\n");
+		printf("Your final score was %d\n\n", score);
+	}
 	exit(0);
 }
 
@@ -298,8 +303,6 @@ crash()
 	clear();
 	move(23, 0);
 	refresh();
-	printf("Well, you ran into something and the game is over.\n");
-	printf("Your final score was %d\n", score);
 	leave(0);
 }
 
