@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.1 1997/11/01 22:56:23 pk Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.2 1998/01/25 15:53:18 pk Exp $	*/
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,12 +68,15 @@ struct vme_chipset_tag {
 	int	(*vct_map) __P((void *, vme_addr_t, vme_size_t, vme_mod_t,
 				bus_space_tag_t, bus_space_handle_t *));
 	void	(*vct_unmap) __P((void *));
+	int	(*vct_mmap_cookie) __P((void *, vme_addr_t, vme_mod_t,
+				bus_space_tag_t, int *));
 
 	int	(*vct_intr_map) __P((void *, int, int, vme_intr_handle_t *));
 
 	void	*(*vct_intr_establish) __P((void *, vme_intr_handle_t,
 					int (*) __P((void *)), void *));
 	void	(*vct_intr_disestablish) __P((void *, void *));
+	void	(*vct_bus_establish) __P((void *, struct device *));
 
 };
 typedef struct vme_chipset_tag *vme_chipset_tag_t;
@@ -82,10 +85,14 @@ typedef struct vme_chipset_tag *vme_chipset_tag_t;
 	(*ct->vct_probe)(ct->cookie, bt, addr, size, mod)
 #define vme_bus_map(ct, addr, size, mod, bt, bhp) \
 	(*ct->vct_map)(ct->cookie, addr, size, mod, bt, bhp)
+#define vme_bus_mmap_cookie(ct, addr, mod, bt, hp) \
+	(*ct->vct_mmap_cookie)(ct->cookie, addr, mod, bt, hp)
 #define vme_intr_map(ct, vec, pri, hp) \
 	(*ct->vct_intr_map)(ct->cookie, vec, pri, hp)
 #define vme_intr_establish(ct, h, f, a) \
 	(*ct->vct_intr_establish)(ct->cookie, h, f, a)
+#define vme_bus_establish(ct, d) \
+	(*ct->vct_bus_establish)(ct->cookie, d)
 
 struct vme_busattach_args {
 	bus_space_tag_t		vba_bustag;
