@@ -1,9 +1,10 @@
-/*	$NetBSD: ispvar.h,v 1.1.1.1 1997/03/12 20:44:51 cgd Exp $ */
+/*	$NetBSD: ispvar.h,v 1.2 1997/03/12 21:07:07 cgd Exp $	*/
 
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob (for NASA/Ames Research Center)
+ * Copyright (c) 1997 by Matthew Jacob
+ * NASA/Ames Research Center
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +30,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
+
 #ifndef	_ISPVAR_H
 #define	_ISPVAR_H
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.1.1.1 1997/03/12 20:44:51 cgd Exp $ */
+/*	$NetBSD: isp.c,v 1.2 1997/03/12 21:06:51 cgd Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -33,8 +33,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
+
 /*
  * Inspiration and ideas about this driver are from Erik Moe's Linux driver
  * (qlogicisp.c) and Dave Miller's SBus version of same (qlogicisp.c)

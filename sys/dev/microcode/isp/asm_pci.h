@@ -1,9 +1,13 @@
+/*	$NetBSD: asm_pci.h,v 1.2 1997/03/12 21:07:25 cgd Exp $	*/
+
 /*
  * Copyright (c) 1997 by Matthew Jacob 
  * NASA AMES Research Center
  * All rights reserved.
  *
  *	Version 2.10 Initiator Firmware (16:13 Oct 18, 1995)
+ *
+ *	[from Qlogic]
  */
 
 #define	ISP_CODE_ORG	0x1000
