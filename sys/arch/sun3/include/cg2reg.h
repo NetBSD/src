@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2reg.h,v 1.4 2003/05/03 18:11:05 wiz Exp $ */
+/*	$NetBSD: cg2reg.h,v 1.5 2003/09/28 23:14:42 cl Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -122,7 +122,7 @@ struct dblbufreg {
  */
 struct cg2_zoom {
 	union {
-		u_int short reg;
+		u_short reg;
 		u_char reg_pad[4096];
 	} wordpan;
 	union {
