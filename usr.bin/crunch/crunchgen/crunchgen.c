@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.34 2002/03/31 07:48:15 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.35 2002/03/31 08:02:08 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.34 2002/03/31 07:48:15 lukem Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.35 2002/03/31 08:02:08 lukem Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -88,7 +88,7 @@ char line[MAXLINELEN];
 
 char confname[MAXPATHLEN], infilename[MAXPATHLEN];
 char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
-char tempfname[MAXPATHLEN], cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
+char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
 char topdir[MAXPATHLEN];
 char libdir[MAXPATHLEN] = "/usr/lib";
 char dbg[MAXPATHLEN] = "-Os";
@@ -192,7 +192,6 @@ int main(int argc, char **argv)
 	(void)snprintf(execfname, sizeof(execfname), "%s", confname);
 
     (void)snprintf(cachename, sizeof(cachename), "%s.cache", confname);
-    (void)snprintf(tempfname, sizeof(tempfname), "/tmp/%sXXXXXX", confname);
 
     parse_conf_file();
     gen_outputs();
@@ -598,9 +597,11 @@ void fillin_program_objs(prog_t *p, char *dirpath)
     int rc;
     int fd;
     FILE *f;
+    char tempfname[MAXPATHLEN];
 
     /* discover the objs from the srcdir Makefile */
 
+    (void)snprintf(tempfname, sizeof(tempfname), "/tmp/%sXXXXXX", confname);
     if((fd = mkstemp(tempfname)) < 0) {
 	perror(tempfname);
 	exit(1);
