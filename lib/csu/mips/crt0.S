@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)crt0.s	8.2 (Berkeley) 3/21/94
- *	$Id: crt0.S,v 1.5 1995/06/15 21:56:58 mellon Exp $    
+ *	$Id: crt0.S,v 1.6 1995/06/15 21:58:44 mellon Exp $    
  */
 
 #include <machine/regdef.h>
@@ -95,7 +95,7 @@ eprol:
 	move	a0, v0
 	break	0
 	.set	reorder
-END(start)
+END(__start)
 
 #ifndef MCRT0
 LEAF(moncontrol)
