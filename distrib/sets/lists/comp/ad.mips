@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.18 2000/04/29 03:46:25 thorpej Exp $
+# $NetBSD: ad.mips,v 1.19 2000/05/18 07:02:00 shin Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips			comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/mips/ecoff_machdep.h		comp-c-include
 ./usr/include/mips/elf_machdep.h		comp-c-include
 ./usr/include/mips/endian.h		comp-c-include
+./usr/include/mips/endian_machdep.h		comp-c-include
 ./usr/include/mips/float.h		comp-c-include
 ./usr/include/mips/ieee.h		comp-c-include
 ./usr/include/mips/ieeefp.h		comp-c-include
