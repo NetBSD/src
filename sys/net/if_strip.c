@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.24 2000/12/12 18:00:30 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.25 2000/12/18 19:50:45 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -360,6 +360,7 @@ stripattach(n)
 		sc->sc_if.if_type = IFT_SLIP;
 		sc->sc_if.if_ioctl = stripioctl;
 		sc->sc_if.if_output = stripoutput;
+		sc->sc_if.if_dlt = DLT_SLIP;
 		sc->sc_if.if_snd.ifq_maxlen = 50;
 		sc->sc_fastq.ifq_maxlen = 32;
 

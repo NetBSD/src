@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.13 2000/12/13 22:07:51 thorpej Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.14 2000/12/18 19:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -699,6 +699,7 @@ token_ifattach(ifp, lla)
 	ifp->if_type = IFT_ISO88025;
 	ifp->if_addrlen = ISO88025_ADDR_LEN;
 	ifp->if_hdrlen = 14;
+	ifp->if_dlt = DLT_IEEE802;
 	ifp->if_mtu = ISO88025_MTU;
 	ifp->if_output = token_output;
 	ifp->if_input = token_input;

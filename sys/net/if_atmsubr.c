@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.25 2000/12/13 22:07:50 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.26 2000/12/18 19:44:33 thorpej Exp $       */
 
 /*
  *
@@ -352,6 +352,7 @@ atm_ifattach(ifp)
 	ifp->if_type = IFT_ATM;
 	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = 0;
+	ifp->if_dlt = DLT_ATM_RFC1483;
 	ifp->if_mtu = ATMMTU;
 	ifp->if_output = atm_output;
 #if 0 /* XXX XXX XXX */
