@@ -1,4 +1,4 @@
-/*	$NetBSD: ptmx.c,v 1.3 2004/05/27 03:18:19 christos Exp $	*/
+/*	$NetBSD: ptmx.c,v 1.4 2004/11/11 15:57:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptmx.c,v 1.3 2004/05/27 03:18:19 christos Exp $");
+__RCSID("$NetBSD: ptmx.c,v 1.4 2004/11/11 15:57:47 christos Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,6 +44,14 @@ __RCSID("$NetBSD: ptmx.c,v 1.3 2004/05/27 03:18:19 christos Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+
+/*
+ * On NetBSD /dev/ptyp0 == /dev/pts/0 so we can check for major
+ * and minor device numbers. This check is non-portable. This
+ * check is now disabled because we might not have /dev/ptyp0
+ * at all.
+ */
+#undef PTY_DEVNO_CHECK
 
 int
 main(int argc, char *argv[])
@@ -62,14 +70,19 @@ main(int argc, char *argv[])
 	if (fstat(fdm, &stm) == -1)
 		err(1, "fstat master");
 
+#ifdef PTY_DEVNO_CHECK
 	if (stat("/dev/ptyp0", &sts) == -1)
-		err(1, "stat example");
+		err(1, "stat `%s'", /dev/ptyp0);
 
 	if (major(stm.st_rdev) != major(sts.st_rdev))
 		errx(1, "bad master major number %d", major(stm.st_rdev));
+#endif
 
 	if (grantpt(fdm) == -1)
 		err(1, "grantpt");
+
+	if (unlockpt(fdm) == -1)
+		err(1, "unlockpt");
 
 	if ((pty = ptsname(fdm)) == NULL)
 		err(1, "ptsname");
@@ -80,8 +93,10 @@ main(int argc, char *argv[])
 	if (fstat(fds, &sts) == -1)
 		err(1, "fstat slave");
 
+#ifdef PTY_DEVNO_CHECK
 	if (minor(stm.st_rdev) != minor(sts.st_rdev))
 		errx(1, "bad slave minor number %d", major(stm.st_rdev));
+#endif
 
 	if (sts.st_uid != getuid())
 		errx(1, "bad slave uid %lu != %lu", (unsigned long)stm.st_uid,
