@@ -972,6 +972,7 @@
 ./usr/share/man/cat9/uvm_setpagesize.0
 ./usr/share/man/cat9/uvm_swap_init.0
 ./usr/share/man/cat9/uvm_swapin.0
+./usr/share/man/cat9/uvm_swapout.0
 ./usr/share/man/cat9/uvm_sysctl.0
 ./usr/share/man/cat9/uvm_useracc.0
 ./usr/share/man/cat9/uvm_vnp_setsize.0
@@ -1964,6 +1965,7 @@
 ./usr/share/man/man9/uvm_setpagesize.9
 ./usr/share/man/man9/uvm_swap_init.9
 ./usr/share/man/man9/uvm_swapin.9
+./usr/share/man/man9/uvm_swapout.9
 ./usr/share/man/man9/uvm_sysctl.9
 ./usr/share/man/man9/uvm_useracc.9
 ./usr/share/man/man9/uvm_vnp_setsize.9
