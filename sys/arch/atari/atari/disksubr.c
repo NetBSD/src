@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 1998/03/06 09:06:51 fvdl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 1998/04/15 09:02:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -158,7 +158,17 @@ readdisklabel(dev, strat, lp, clp)
 		lp->d_secperunit = 0x1fffffff;
 	if (lp->d_secpercyl == 0)
 		return("Zero secpercyl");
+
+	/*
+	 * Some parts of the kernel (see scsipi/cd.c for an example)
+	 * assume that stuff they already had setup in d_partitions
+	 * is still there after reading the disklabel. Hence the
+	 * 'if 0'
+	 */
+#if 0
 	bzero(lp->d_partitions, sizeof lp->d_partitions);
+#endif
+
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_npartitions                 = RAW_PART + 1;
 	lp->d_bbsize                      = BBSIZE;
