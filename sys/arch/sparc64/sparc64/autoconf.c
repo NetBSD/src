@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 2001/05/30 15:24:37 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.49 2001/07/19 23:40:36 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,6 +133,7 @@ struct intrmap intrmap[] = {
 	{ "network",	PIL_NET },
 	{ "display",	PIL_VIDEO },
 	{ "audio",	PIL_AUD },
+	{ "ide",	PIL_SCSI },
 /* The following devices don't have device types: */
 	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
@@ -140,6 +141,7 @@ struct intrmap intrmap[] = {
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
+#define	ACDB_PROBE	0x2
 int autoconf_debug = 0x0;
 #define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
 #else
@@ -619,7 +621,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char namebuf[32];
 	const char *const *ssp, *sp = NULL;
-	int node0, node;
+	int node0, node, rv;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -694,11 +696,13 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	for (node = node0; node; node = nextsibling(node)) {
 		const char *cp;
 
+		DPRINTF(ACDB_PROBE, ("Node: %x", node));
 		if (node_has_property(node, "device_type") &&
 		    strcmp(getpropstringA(node, "device_type", namebuf),
 			   "cpu") == 0)
 			continue;
 		cp = getpropstringA(node, "name", namebuf);
+		DPRINTF(ACDB_PROBE, (" name %s\n", cp));
 		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
 			if (strcmp(cp, sp) == 0)
 				break;
@@ -715,23 +719,54 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 			continue;
-
-		if (getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
-			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
+#ifdef DEBUG
+		if (autoconf_debug & ACDB_PROBE) {
+			if (ma.ma_nreg)
+				printf(" reg %08lx.%08lx\n",
+					(long)ma.ma_reg->ur_paddr, 
+					(long)ma.ma_reg->ur_len);
+			else
+				printf(" no reg\n");
+		}
+#endif
+		rv = getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
+			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
+		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			continue;
 		}
-		if (getprop(node, "address", sizeof(*ma.ma_address), 
-			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
+#ifdef DEBUG
+		if (autoconf_debug & ACDB_PROBE) {
+			if (ma.ma_interrupts)
+				printf(" interrupts %08x\n", 
+					*ma.ma_interrupts);
+			else
+				printf(" no interrupts\n");
+		}
+#endif
+		rv = getprop(node, "address", sizeof(*ma.ma_address), 
+			&ma.ma_naddress, (void**)&ma.ma_address);
+		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
-			free(ma.ma_interrupts, M_DEVBUF);
+			if (ma.ma_ninterrupts)
+				free(ma.ma_interrupts, M_DEVBUF);
 			continue;
 		}
-
+#ifdef DEBUG
+		if (autoconf_debug & ACDB_PROBE) {
+			if (ma.ma_naddress)
+				printf(" address %08x\n", 
+					*ma.ma_address);
+			else
+				printf(" no address\n");
+		}
+#endif
 		(void) config_found(dev, (void *)&ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF);
-		free(ma.ma_interrupts, M_DEVBUF);
-		free(ma.ma_address, M_DEVBUF);
+		if (ma.ma_ninterrupts)
+			free(ma.ma_interrupts, M_DEVBUF);
+		if (ma.ma_naddress)
+			free(ma.ma_address, M_DEVBUF);
 	}
 	/* Try to attach PROM console */
 	bzero(&ma, sizeof ma);
@@ -754,6 +789,7 @@ getprop(node, name, size, nitem, bufp)
 	void	*buf;
 	long	len;
 
+	*nitem = 0;
 	len = getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
