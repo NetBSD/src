@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.9 1998/08/31 01:54:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.10 1998/10/11 23:14:48 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -120,7 +120,6 @@ uvm_map_setup(map, min, max, pageable)
 	map->nentries = 0;
 	map->size = 0;
 	map->ref_count = 1;
-	map->is_main_map = TRUE; 
 	map->min_offset = min;
 	map->max_offset = max;
 	map->entries_pageable = pageable;
@@ -149,23 +148,22 @@ uvm_map_setup(map, min, max, pageable)
  */
 
 MAP_INLINE int
-uvm_unmap(map, start, end, mainonly)
+uvm_unmap(map, start, end)
 	vm_map_t map;
 	vaddr_t start,end;
-	boolean_t mainonly;
 {
 	int result;
 	vm_map_entry_t dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x, mainonly=%d)",
-	map, start, end, mainonly);
+	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x)",
+	map, start, end, 0);
 	/*
 	 * work now done by helper functions.   wipe the pmap's and then
 	 * detach from the dead entries...
 	 */
 	vm_map_lock(map);
-	result = uvm_unmap_remove(map, start, end, mainonly, &dead_entries);
+	result = uvm_unmap_remove(map, start, end, &dead_entries);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)
@@ -236,7 +234,7 @@ uvm_map_deallocate(map)
 	 * all references gone.   unmap and free.
 	 */
 
-	uvm_unmap(map, map->min_offset, map->max_offset, TRUE);
+	uvm_unmap(map, map->min_offset, map->max_offset);
 	pmap_destroy(map->pmap);
 
 	FREE(map, M_VMMAP);
