@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70 1997/03/31 17:21:00 mycroft Exp $ */
+/*	$NetBSD: autoconf.c,v 1.71 1997/04/08 20:08:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1022,17 +1022,6 @@ romprop(rp, cp, node)
 #endif
 
 	}
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		len = getprop(node, "ranges", (void *)&rp->ra_range,
-			      sizeof rp->ra_range);
-		if (len == -1)
-			len = 0;
-		rp->ra_nrange = len / sizeof(struct rom_range);
-	} else
-#endif
-		rp->ra_nrange = 0;
-
 	return (1);
 }
 
@@ -1500,6 +1489,19 @@ getprop(node, name, buf, bufsiz)
 	no->no_getprop(node, name, buf);
 	return (len);
 #endif
+}
+
+/*
+ * Internal form of proplen().  Returns the property length.
+ */
+int
+getproplen(node, name)
+	int node;
+	char *name;
+{
+	register struct nodeops *no = promvec->pv_nodeops;
+
+	return (no->no_proplen(node, name));
 }
 
 /*
