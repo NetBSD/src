@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2000/04/02 20:39:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2000/04/10 06:34:13 thorpej Exp $	*/
 
 /*
  *
@@ -1454,17 +1454,18 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 	struct vm_page *ptp;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
-			    UVM_PGA_USERESERVE);
+			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (ptp == NULL) {
 		if (just_try)
 			return(NULL);
 		ptp = pmap_steal_ptp(&pmap->pm_obj, ptp_i2o(pde_index));
+		/* stole one; zero it. */
+		pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
 	}
 
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
-	pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
 	pmap->pm_pdir[pde_index] =
 		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
