@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.7 2001/01/30 06:44:42 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.8 2001/02/10 14:53:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -204,6 +204,8 @@ extern FIELDTYPE *TYPE_ENUM;
 extern FIELDTYPE *TYPE_INTEGER;
 extern FIELDTYPE *TYPE_NUMERIC;
 extern FIELDTYPE *TYPE_REGEXP;
+extern FIELDTYPE *TYPE_IPV4;
+extern FIELDTYPE *TYPE_IPV6;
 extern FIELDTYPE *TYPE_USER;
 
 /* definition of a field type. */
