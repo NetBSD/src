@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.21 1998/04/13 02:51:32 scottr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.22 1998/05/14 10:15:44 dbj Exp $	*/
 
 /* 
  * Mach Operating System
@@ -534,8 +534,10 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			pos.k_pc = 0;
 		} else {
 			db_find_sym_and_offset(pos.k_pc, &name, &val);
-			if (name == 0)
+			if (name == 0) {
 				name = "?";
+				val = MAXINT;
+			}
 		}
 		db_printf("%s", name);
 		if (pos.k_entry != MAXINT && name) {
