@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.131 1995/02/27 01:08:01 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.132 1995/03/23 11:33:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -137,9 +137,10 @@ struct wd_softc {
 	int sc_flags;		/* drive characteistics found */
 #define	WDF_LOCKED	0x01
 #define	WDF_WANTED	0x02
-#define	WDF_LOADED	0x04
-#define	WDF_WLABEL	0x08		/* label is writable */
-#define	WDF_32BIT	0x10		/* can do 32-bit transfer */
+#define	WDF_WLABEL	0x04		/* label is writable */
+#define	WDF_LABELLING	0x08		/* writing label */
+#define	WDF_LOADED	0x10
+#define	WDF_32BIT	0x20		/* can do 32-bit transfer */
 
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
 	daddr_t	sc_badsect[127];	/* 126 plus trailing -1 marker */
@@ -412,7 +413,7 @@ wdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (bounds_check_with_label(bp, &wd->sc_dk.dk_label,
-	    (wd->sc_flags & WDF_WLABEL) != 0) <= 0)
+	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
     
 	/* Don't bother doing rotational optimization. */
@@ -851,6 +852,32 @@ restart:
 	return 1;
 }
 
+int
+wdlockwait(wd)
+	struct wd_softc *wd;
+{
+	int error;
+
+	while ((wd->sc_flags & WDF_LOCKED) != 0) {
+		wd->sc_flags |= WDF_WANTED;
+		if ((error = tsleep(wd, PRIBIO | PCATCH, "wdlck", 0)) != 0)
+			return error;
+	}
+	return 0;
+}
+
+void
+wdunlock(wd)
+	struct wd_softc *wd;
+{
+
+	wd->sc_flags &= ~WDF_LOCKED;
+	if ((wd->sc_flags & WDF_WANTED) != 0) {
+		wd->sc_flags &= ~WDF_WANTED;
+		wakeup(wd);
+	}
+}
+
 /*
  * Initialize a drive.
  */
@@ -872,11 +899,8 @@ wdopen(dev, flag, fmt)
     
 	part = WDPART(dev);
 
-	while ((wd->sc_flags & WDF_LOCKED) != 0) {
-		wd->sc_flags |= WDF_WANTED;
-		if ((error = tsleep(wd, PRIBIO | PCATCH, "wdopn", 0)) != 0)
-			return error;
-	}
+	if (error = wdlockwait(wd))
+		return error;
 
 	if (wd->sc_dk.dk_openmask != 0) {
 		/*
@@ -901,11 +925,7 @@ wdopen(dev, flag, fmt)
 			wdgetdisklabel(wd);
 		}
 
-		wd->sc_flags &= ~WDF_LOCKED;
-		if ((wd->sc_flags & WDF_WANTED) != 0) {
-			wd->sc_flags &= ~WDF_WANTED;
-			wakeup(wd);
-		}
+		wdunlock(wd);
 	}
 
 	/* Check that the partition exists. */
@@ -934,11 +954,7 @@ bad2:
 
 bad:
 	if (wd->sc_dk.dk_openmask == 0) {
-		wd->sc_flags &= ~WDF_LOCKED;
-		if ((wd->sc_flags & WDF_WANTED) != 0) {
-			wd->sc_flags &= ~WDF_WANTED;
-			wakeup(wd);
-		}
+		wdunlock(wd);
 	}
 
 	return error;
@@ -1277,6 +1293,10 @@ wdclose(dev, flag, fmt)
 	wd->sc_dk.dk_openmask = wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	if (wd->sc_dk.dk_openmask == 0) {
+		/*
+		 * If we're closing the last partition, nobody else could be
+		 * holding the lock, so don't bother to check.
+		 */
 		wd->sc_flags |= WDF_LOCKED;
 
 #if 0
@@ -1289,20 +1309,16 @@ wdclose(dev, flag, fmt)
 		splx(s);
 #endif
 
-		wd->sc_flags &= ~WDF_LOCKED;
-		if ((wd->sc_flags & WDF_WANTED) != 0) {
-			wd->sc_flags &= WDF_WANTED;
-			wakeup(wd);
-		}
+		wdunlock(wd);
 	}
 
 	return 0;
 }
 
 int
-wdioctl(dev, command, addr, flag, p)
+wdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	u_long command;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -1313,7 +1329,7 @@ wdioctl(dev, command, addr, flag, p)
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
 
-	switch (command) {
+	switch (cmd) {
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1332,16 +1348,29 @@ wdioctl(dev, command, addr, flag, p)
 		    &wd->sc_dk.dk_label.d_partitions[WDPART(dev)];
 		return 0;
 	
+	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
+
+		if (error = wdlockwait(wd))
+			return error;
+		wd->sc_flags |= WDF_LOCKED | WDF_LABELLING;
+
 		error = setdisklabel(&wd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
 		    &wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (wd->sc_state > GEOMETRY)
 				wd->sc_state = GEOMETRY;
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(WDLABELDEV(dev),
+				    wdstrategy, &wd->sc_dk.dk_label,
+				    &wd->sc_dk.dk_cpulabel);
 		}
+
+		wd->sc_flags &= ~WDF_LABELLING;
+		wdunlock(wd);
 		return error;
 	
 	case DIOCWLABEL:
@@ -1352,25 +1381,6 @@ wdioctl(dev, command, addr, flag, p)
 		else
 			wd->sc_flags &= ~WDF_WLABEL;
 		return 0;
-	
-	case DIOCWDINFO:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		error = setdisklabel(&wd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
-		    &wd->sc_dk.dk_cpulabel);
-		if (error == 0) {
-			if (wd->sc_state > GEOMETRY)
-				wd->sc_state = GEOMETRY;
-	    
-			/* Simulate opening partition 0 so write succeeds. */
-			wd->sc_dk.dk_openmask |= (1 << 0);	/* XXX */
-			error = writedisklabel(WDLABELDEV(dev), wdstrategy,
-			    &wd->sc_dk.dk_label, &wd->sc_dk.dk_cpulabel);
-			wd->sc_dk.dk_openmask =
-			    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
-		}
-		return error;
 	
 #ifdef notyet
 	case DIOCGDINFOP:
