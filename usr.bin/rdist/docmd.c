@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.10 1996/08/13 03:24:18 explorer Exp $	*/
+/*	$NetBSD: docmd.c,v 1.11 1997/10/08 19:16:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: docmd.c,v 1.10 1996/08/13 03:24:18 explorer Exp $";
+static char *rcsid = "$NetBSD: docmd.c,v 1.11 1997/10/08 19:16:24 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,10 +45,13 @@ static char *rcsid = "$NetBSD: docmd.c,v 1.10 1996/08/13 03:24:18 explorer Exp $
 #include <setjmp.h>
 #include <netdb.h>
 #include <regex.h>
+#include <sys/ioctl.h>
 
 FILE	*lfp;			/* log file for recording files updated */
 struct	subcmd *subcmds;	/* list of sub-commands for current cmd */
 jmp_buf	env;
+
+static int	 remerr = -1;	/* Remote stderr */
 
 static int	 makeconn __P((char *));
 static int	 okname __P((char *));
@@ -160,7 +163,7 @@ doarrow(filev, files, rhost, cmds)
 			for (cpp = filev; *cpp; cpp++)
 				if (strcmp(f->n_name, *cpp) == 0)
 					goto found;
-			if (!nflag)
+			if (!nflag && lfp)
 				(void) fclose(lfp);
 			continue;
 		}
@@ -180,7 +183,8 @@ doarrow(filev, files, rhost, cmds)
 done:
 	if (!nflag) {
 		(void) signal(SIGPIPE, cleanup);
-		(void) fclose(lfp);
+		if (lfp)
+			(void) fclose(lfp);
 		lfp = NULL;
 	}
 	for (sc = cmds; sc != NULL; sc = sc->sc_next)
@@ -192,8 +196,9 @@ done:
 			free(ihead);
 			if ((opts & IGNLNKS) || ihead->count == 0)
 				continue;
-			log(lfp, "%s: Warning: missing links\n",
-				ihead->pathname);
+			if (lfp)
+				log(lfp, "%s: Warning: missing links\n",
+					ihead->pathname);
 		}
 	}
 }
@@ -256,7 +261,7 @@ makeconn(rhost)
 
 	fflush(stdout);
 	seteuid(0);
-	rem = rcmd(&rhost, port, user, ruser, buf, 0);
+	rem = rcmd(&rhost, port, user, ruser, buf, &remerr);
 	seteuid(userid);
 	if (rem < 0)
 		return(0);
@@ -299,7 +304,9 @@ closeconn()
 	if (rem >= 0) {
 		(void) write(rem, "\2\n", 2);
 		(void) close(rem);
+		(void) close(remerr);
 		rem = -1;
+		remerr = -1;
 	}
 }
 
@@ -307,9 +314,29 @@ void
 lostconn(signo)
 	int signo;
 {
+	char buf[BUFSIZ];
+	int nr = -1;
+
+	if (remerr != -1)
+		if (ioctl(remerr, FIONREAD, &nr) != -1) {
+			if (nr >= sizeof(buf))
+				nr = sizeof(buf) - 1;
+			if ((nr = read(remerr, buf, nr)) > 0) {
+				buf[nr] = '\0';
+				if (buf[nr - 1] == '\n')
+					buf[--nr] = '\0';
+			}
+		}
+
+	if (nr <= 0)
+		(void) strcpy(buf, "lost connection");
+
 	if (iamremote)
 		cleanup(0);
-	log(lfp, "rdist: lost connection\n");
+	if (lfp)
+		log(lfp, "rdist: %s\n", buf);
+	else
+		error("%s\n", buf);
 	longjmp(env, 1);
 }
 
