@@ -20,7 +20,7 @@ BINMODE?=	555
 
 # prefer .s to a .c, add .po, remove stuff not used in the BSD libraries
 .SUFFIXES:
-.SUFFIXES: .out .o .po .s .c .f .y .l .8 .7 .6 .5 .4 .3 .2 .1 .0
+.SUFFIXES: .out .o .po .s .c .cc .C .f .y .l .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 .8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
 	nroff -mandoc ${.IMPSRC} > ${.TARGET}
@@ -32,6 +32,26 @@ BINMODE?=	555
 
 .c.po:
 	${CC} -p ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+.cc.o:
+	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+.cc.po:
+	${CXX} -p ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+.C.o:
+	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+.C.po:
+	${CXX} -p ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
