@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.111 2004/04/26 03:54:29 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.112 2004/05/18 14:44:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -583,6 +583,8 @@ struct	tcpstat {
 	u_quad_t tcps_sc_delayed_free;	/* # of delayed pool_put()s */
 
 	u_quad_t tcps_selfquench;	/* # of ENOBUFS we get on output */
+	u_quad_t tcps_badsig;		/* # of drops due to bad signature */
+	u_quad_t tcps_goodsig;		/* # of packets with good signature */
 };
 
 /*
@@ -725,6 +727,8 @@ extern	struct mowner tcp_mowner;
 #define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t)(th)) & 3) == 0)
 #endif
 
+struct secasvar;
+
 int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
 int	 tcp_timers_invoking(struct tcpcb*);
@@ -740,8 +744,14 @@ struct tcpcb *
 	 tcp_disconnect(struct tcpcb *);
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
-void	 tcp_dooptions(struct tcpcb *,
-	    u_char *, int, struct tcphdr *, struct tcp_opt_info *);
+#ifdef TCP_SIGNATURE
+int	 tcp_signature_apply(void *, caddr_t, u_int);
+struct secasvar *tcp_signature_getsav(struct mbuf *, struct tcphdr *);
+int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
+	    char *);
+#endif
+int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
+	    struct mbuf *, int, struct tcp_opt_info *);
 void	 tcp_drain(void);
 void	 tcp_established(struct tcpcb *);
 void	 tcp_init(void);
