@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.4 2000/05/27 21:44:35 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.5 2000/06/04 06:16:57 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -52,7 +52,7 @@
 
 #include <dev/qbus/ubavar.h>
 
-#include <arch/vax/uba/uba_common.h>
+#include <vax/uba/uba_common.h>
 
 #include "ioconf.h"
 
@@ -157,7 +157,9 @@ dw780_attach(parent, self, aux)
 	 */
 	for (i = 0; i < 4; i++)
 		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
-		    sc, SCB_ISTACK);
+		    sc, SCB_ISTACK, &sc->uv_sc.uh_intrcnt);
+	evcnt_attach(&sc->uv_sc.uh_dev, "intr", &sc->uv_sc.uh_intrcnt);
+
 	/*
 	 * Fill in variables used by the sgmap system.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.11 2000/06/04 02:19:28 matt Exp $ */
+/*	$NetBSD: scb.c,v 1.12 2000/06/04 06:16:59 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,12 +45,10 @@
 #include <machine/sid.h>
 #include <machine/mtpr.h>
 
-static	void scb_stray __P((void *));
+struct scb *scb;
+struct ivec_dsp *scb_vec;
 
-#if 0
-static	struct evcnt scb_stray_intrcnt;
-#endif
-static	struct ivec_dsp *scb_vec;
+static	void scb_stray __P((void *));
 static	volatile int vector, ipl, gotintr;
 
 /*
