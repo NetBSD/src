@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.32 1996/04/22 02:42:02 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.33 1996/04/29 12:07:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -483,7 +483,7 @@ fdmatch(parent, match, aux)
 	struct fdc_softc *fdc = (void *)parent;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
-	int n;
+	int n, ok;
 
 	if (drive > 0)
 		/* XXX - for now, punt > 1 drives */
@@ -501,8 +501,8 @@ fdmatch(parent, match, aux)
 	out_fdc(fdc, NE7CMD_RECAL);
 	out_fdc(fdc, drive);
 	/* wait for recalibrate */
-	for (n = 0; n < 100000; n++) {
-		delay(10);
+	for (n = 0; n < 10000; n++) {
+		delay(1000);
 		if ((*fdc->sc_reg_msr & (NE7_RQM|NE7_DIO|NE7_CB)) == NE7_RQM) {
 			/* wait a bit longer till device *really* is ready */
 			delay(100000);
@@ -528,8 +528,8 @@ fdmatch(parent, match, aux)
 		printf("\n");
 	}
 #endif
-	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
-		return 0;
+	ok = (n == 2 && (fdc->sc_status[0] & 0xf8) == 0x20) ? 1 : 0;
+
 	/* turn off motor */
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
@@ -538,7 +538,7 @@ fdmatch(parent, match, aux)
 		auxregbisc(0, AUXIO_FDS);
 	}
 
-	return 1;
+	return ok;
 }
 
 /*
