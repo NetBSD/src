@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.24 1999/06/10 01:37:10 nisimura Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.25 1999/08/13 06:21:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.24 1999/06/10 01:37:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.25 1999/08/13 06:21:39 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -532,5 +532,26 @@ kn03_wbflush()
 unsigned
 kn03_clkread()
 {
-	return *(u_int32_t *)(ioasic_base + IOASIC_CTR);
+	u_int32_t usec, cycles;
+
+	cycles = *(u_int32_t*)(ioasic_base + IOASIC_CTR);
+	cycles = cycles - latched_cycle_cnt;
+
+	/*
+	 * Scale from 40ns to microseconds.
+	 * Avoid a kernel FP divide (by 25) using the approximation
+	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
+	 */
+	usec = cycles + (cycles << 3) + (cycles << 5);
+	usec = usec >> 10;
+
+#ifdef CLOCK_DEBUG
+	if (usec > 3906 +4) {
+		addlog("clkread: usec %d, counter=%lx\n",
+		    usec, latched_cycle_cnt);
+		stacktrace();
+	}
+#endif /*CLOCK_DEBUG*/
+
+	return usec;
 }
