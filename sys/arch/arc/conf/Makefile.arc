@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.35 2000/02/25 13:20:43 soda Exp $
-#	$OpenBSD: Makefile.arc,v 1.13 1999/08/15 20:43:57 niklas Exp $
+#	$NetBSD: Makefile.arc,v 1.36 2000/05/09 00:32:20 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -50,13 +49,15 @@ S=	../../../..
 ARC=	$S/arch/arc
 MIPS=	$S/arch/mips
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darc
-# XXX: -Werror
-CWARNFLAGS?=	-Wall -Wmissing-prototypes -Wstrict-prototypes \
+CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0 # -G 30 # XXX: check this

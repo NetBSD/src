@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.43 2000/04/23 05:49:14 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.44 2000/05/09 00:32:27 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ S!=	cd ../../../..; pwd
 .endif
 X68K=	$S/arch/x68k
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
 .if empty(IDENT:M-DM68060)
@@ -54,7 +54,10 @@ CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .endif
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CMACHFLAGS} ${CWARNFLAGS} -msoft-float
