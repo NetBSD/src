@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.6 1999/10/28 09:50:07 tsubai Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.7 1999/11/07 06:41:49 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <machine/cpu.h>
 
 #include "debug.h"
@@ -113,7 +114,7 @@ _rtld_bind_pltgot(obj, rela)
 {
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym *def;
-	const Obj_Entry *defobj;
+	Obj_Entry *defobj;
 	Elf_Addr targ_addr;
 	int distance;
 
