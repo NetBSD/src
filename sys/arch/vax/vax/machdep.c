@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.97 2000/03/28 23:57:31 simonb Exp $	 */
+/* $NetBSD: machdep.c,v 1.98 2000/04/16 09:41:51 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -513,6 +513,7 @@ cpu_reboot(howto, b)
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
+		doshutdownhooks();
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
