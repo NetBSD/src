@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.41 2002/08/02 04:49:35 soren Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.42 2002/10/22 03:35:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.41 2002/08/02 04:49:35 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.42 2002/10/22 03:35:10 simonb Exp $");
 
 #include "opt_ktrace.h"
 
@@ -661,7 +661,6 @@ relookup(dvp, vpp, cnp)
 	struct componentname *cnp;
 {
 	struct vnode *dp = 0;		/* the directory we are searching */
-	int docache;			/* == 0 do not cache last component */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
@@ -674,10 +673,6 @@ relookup(dvp, vpp, cnp)
 	 * Setup: break out flag bits into variables.
 	 */
 	wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
-	docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
-	if (cnp->cn_nameiop == DELETE ||
-	    (wantparent && cnp->cn_nameiop != CREATE))
-		docache = 0;
 	rdonly = cnp->cn_flags & RDONLY;
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = dvp;
