@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.48 1994/12/11 16:20:59 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.49 1994/12/15 16:14:50 mycroft Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -110,9 +110,9 @@ scsibus* at aha?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt0	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt*	at eisa? slot ? irq ?
-#scsibus* at bt?
+scsibus* at bt?
 #ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
