@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 2002/06/17 21:07:40 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 2002/06/27 21:15:35 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -339,18 +339,6 @@ syscall_bad:
 		enable_fpu(p);
 		break;
 
-#ifdef ALTIVEC
-	case EXC_VEC|EXC_USER:
-		curcpu()->ci_ev_vec.ev_count++;
-		if (vecproc) {
-			curcpu()->ci_ev_vecsw.ev_count++;
-			save_vec(vecproc);
-		}
-		vecproc = p;
-		enable_vec(p);
-		break;
-#endif
-
 	case EXC_AST|EXC_USER:
 		astpending = 0;		/* we are about to do it */
 		KERNEL_PROC_LOCK(p);
@@ -382,10 +370,24 @@ syscall_bad:
 		KERNEL_PROC_UNLOCK(p);
 		break;
 
+	case EXC_VEC|EXC_USER:
+#ifdef ALTIVEC
+		curcpu()->ci_ev_vec.ev_count++;
+		if (vecproc) {
+			curcpu()->ci_ev_vecsw.ev_count++;
+			save_vec(vecproc);
+		}
+		vecproc = p;
+		enable_vec(p);
+		break;
+#else
+		/* FALLTHROUGH */
+#endif
+
 	case EXC_PGM|EXC_USER:
 /* XXX temporarily */
-		KERNEL_PROC_LOCK(p);
 		curcpu()->ci_ev_pgm.ev_count++;
+		KERNEL_PROC_LOCK(p);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user PGM trap @ %#x "
 			    "(SSR1=%#x)\n",
