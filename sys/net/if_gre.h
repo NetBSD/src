@@ -1,7 +1,7 @@
-/*	$NetBSD: if_gre.h,v 1.2 1998/09/30 05:59:28 hwr Exp $ */
+/*	$NetBSD: if_gre.h,v 1.3 1998/10/07 23:35:19 thorpej Exp $ */
 
 /*
- * (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved
  *
  * This code is derived from software contributed to The NetBSD Foundation
