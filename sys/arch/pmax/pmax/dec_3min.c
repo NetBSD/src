@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.35 2000/02/29 04:41:52 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.36 2000/03/01 00:44:53 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.35 2000/02/29 04:41:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.36 2000/03/01 00:44:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,8 +287,8 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-	printf("3MIN: imask %x, %sabling slot %d, sc %p handler %p\n",
-	    kmin_tc3_imask, (on? "en" : "dis"), (int)cookie, sc, handler);
+	printf("3MIN: imask %x, enabling slot %d, dev %p handler %p\n",
+	    kmin_tc3_imask, (int)cookie, dev, handler);
 #endif
 
 	/*
