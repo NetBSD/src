@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.5 2002/09/27 20:35:15 thorpej Exp $	*/
+/*	$NetBSD: imc.c,v 1.6 2002/10/01 21:29:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -51,9 +51,8 @@ static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
 
-const struct cfattach imc_ca = {
-	sizeof(struct imc_softc), imc_match, imc_attach
-};
+CFATTACH_DECL(imc, sizeof(struct imc_softc),
+    imc_match, imc_attach, NULL, NULL)
 
 struct imc_attach_args {
 	const char* iaa_name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.5 2002/09/27 20:35:17 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.6 2002/10/01 21:29:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -52,9 +52,8 @@ static void	gio_attach(struct device *, struct device *, void *);
 static int	gio_print(void *, const char *);
 static int	gio_search(struct device *, struct cfdata *, void *);
 
-const struct cfattach gio_ca = {
-	sizeof(struct gio_softc), gio_match, gio_attach
-};
+CFATTACH_DECL(gio, sizeof(struct gio_softc),
+    gio_match, gio_attach, NULL, NULL)
 
 static int
 gio_match(parent, match, aux)
