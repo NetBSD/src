@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.13.2.2 2000/11/01 16:24:01 tv Exp $	*/
+/*	$NetBSD: ofb.c,v 1.13.2.3 2001/08/16 16:52:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -515,8 +515,8 @@ ofb_putcmap(sc, cm)
 	struct wsdisplay_cmap *cm;
 {
 	struct ofb_devconfig *dc = sc->sc_dc;
-	int index = cm->index;
-	int count = cm->count;
+	u_int index = cm->index;
+	u_int count = cm->count;
 	int i;
 	u_char *r, *g, *b;
 
