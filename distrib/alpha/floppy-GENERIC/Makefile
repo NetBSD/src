@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/09 00:37:38 ross Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/13 13:26:45 lukem Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -45,7 +45,7 @@ GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx.old
 ${GZKERNEL}: ${KERNEL}
 	cp ${KERNEL} ${.TARGET}
 	${STRIP} ${.TARGET}
-	gzip -9 ${.TARGET}
+	gzip -9f ${.TARGET}
 	mv ${.TARGET}.gz ${.TARGET}
 
 unconfig:

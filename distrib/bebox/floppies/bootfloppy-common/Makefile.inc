@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/03/05 21:23:29 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/04/13 13:26:46 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -58,7 +58,7 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
+	gzip -9f netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir:
