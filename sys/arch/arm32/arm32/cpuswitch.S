@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.5 1996/03/13 21:39:10 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.6 1996/03/27 21:24:39 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -518,10 +518,6 @@ findqueue:
 	add	r7, r1, #(PCB_R8)
 	stmia	r7, {r8-r13}
 
-/* Don't really need to do this. as the stmia above does it */
-
-/*	str	sp, [r1, #(PCB_SP)]*/	
-
 /*
  * This can be optimised... We know we want to go from SVC32 mode to UND32
  * mode
@@ -600,10 +596,6 @@ switch_exited:
 	add	r7, r1, #PCB_R8
 	ldmia	r7, {r8-r13}
 
-/* This is not really needed ! */
-
-/*	ldr	sp, [r1, #(PCB_SP)]*/
-
 /* Remember the pcb currently in use */
 
 	ldr	r7, Lcurpcb
@@ -646,18 +638,6 @@ switch_return:
  * was called and return.
  */
 	ldmfd	sp!, {r4-r7, pc}
-
-Ltext30:
-	.asciz	"nkt: cpu_switch: sp=%08x pcb=%08x\n"
-	.align	0
-
-Ltext31:
-	.asciz	"nkt: process facing firing squad\ncpu_switch: sp=%08x saved sp=%08x\n"
-	.align	0
-
-Ltext32:
-	.asciz	"nkt: process checksum failure was %08x instead of %08x\n"
-	.align	0
 
 Lproc0:
 	.word	_proc0
@@ -737,7 +717,7 @@ _switch_exit:
 	ldr	r0, [sp]
 
 /*
- * Have top wait until we have switched to proc0 as the pmap gets released
+ * Have to wait until we have switched to proc0 as the pmap gets released
  * in vmspace_free()
  */
 
@@ -776,21 +756,10 @@ _savectx:
 
 	stmfd	sp!, {r4-r7, lr}
 
-/* Push the current spl level onto the stack */
-
-	ldr	r2, Lcurrent_spl_level
-	ldr	r2, [r2] 
-
-	str	r2, [sp, #-0x0004]!
-
 /* Store all the registers in the process's pcb */
 
 	add	r2, r0, #(PCB_R8)
 	stmia	r2, {r8-r13}
-
-/* Skip the pushed spl mask */
-
-	add	sp, sp, #0x0000004
 
 /* Pull the regs of the stack */
 
