@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.138 2003/11/07 14:50:18 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.139 2003/11/07 14:52:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.138 2003/11/07 14:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.139 2003/11/07 14:52:28 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1669,7 +1669,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		ip->i_ffs1_atimensec = ts.tv_nsec;
 	}
 
-	lfs_vinit(mp, vp);
+	lfs_vinit(mp, &vp);
 
 	*vpp = vp;
 
@@ -2054,8 +2054,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
  * used by lfs_vget and lfs_fastvget.
  */
 void
-lfs_vinit(struct mount *mp, struct vnode *vp)
+lfs_vinit(struct mount *mp, struct vnode **vpp)
 {
+	struct vnode *vp = *vpp;
 	struct inode *ip = VTOI(vp);
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int i;
@@ -2119,4 +2120,6 @@ inconsistent:
 	VREF(ip->i_devvp);
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
+
+	*vpp = vp;
 }
