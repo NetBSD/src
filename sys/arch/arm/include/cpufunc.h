@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.30 2004/01/26 15:54:16 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -313,23 +313,25 @@ void	arm9_setttb		__P((u_int));
 
 void	arm9_tlb_flushID_SE	__P((u_int va));
 
-void	arm9_cache_flushID	__P((void));
-void	arm9_cache_flushID_SE	__P((u_int));
-void	arm9_cache_flushI	__P((void));
-void	arm9_cache_flushI_SE	__P((u_int));
-void	arm9_cache_flushD	__P((void));
-void	arm9_cache_flushD_SE	__P((u_int));
+void	arm9_icache_sync_all	__P((void));
+void	arm9_icache_sync_range	__P((vaddr_t, vsize_t));
 
-void	arm9_cache_cleanID	__P((void));
+void	arm9_dcache_wbinv_all	__P((void));
+void	arm9_dcache_wbinv_range __P((vaddr_t, vsize_t));
+void	arm9_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	arm9_dcache_wb_range	__P((vaddr_t, vsize_t));
 
-void	arm9_cache_syncI	__P((void));
-void	arm9_cache_flushID_rng	__P((vaddr_t, vsize_t));
-void	arm9_cache_flushD_rng	__P((vaddr_t, vsize_t));
-void	arm9_cache_syncI_rng	__P((vaddr_t, vsize_t));
+void	arm9_idcache_wbinv_all	__P((void));
+void	arm9_idcache_wbinv_range __P((vaddr_t, vsize_t));
 
 void	arm9_context_switch	__P((void));
 
 void	arm9_setup		__P((char *string));
+
+extern unsigned arm9_dcache_sets_max;
+extern unsigned arm9_dcache_sets_inc;
+extern unsigned arm9_dcache_index_max;
+extern unsigned arm9_dcache_index_inc;
 #endif
 
 #ifdef CPU_ARM10
