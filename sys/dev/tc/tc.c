@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.9 1996/03/02 02:44:29 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.10 1996/03/05 23:15:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -291,7 +291,7 @@ tc_intr_disestablish(dev, cookie)
  * Descriptions of of known devices.
  */     
 struct tc_knowndev {
-	const char *id, *name;
+	const char *id, *driver, *description;
 };      
 
 #include <dev/tc/tcdevs_data.h>
@@ -302,7 +302,7 @@ tc_devinfo(id, cp)
 	const char *id;
 	char *cp;
 {
-	const char *name;
+	const char *driver, *description;
 #ifdef TCVERBOSE
 	struct tc_knowndev *tdp;
 	int match;
@@ -311,7 +311,8 @@ tc_devinfo(id, cp)
 	const char *unmatched = "";
 #endif
 
-	name = NULL;
+	driver = NULL;
+	description = id;
 
 #ifdef TCVERBOSE
 	/* find the device in the table, if possible. */
@@ -320,15 +321,16 @@ tc_devinfo(id, cp)
 		/* check this entry for a match */
 		match = !strcmp(tdp->id, id);
 		if (match) {
-			name = tdp->name;
+			driver = tdp->driver;
+			description = tdp->description;
 			break;
 		}
 		tdp++;
 	}
 #endif
 
-	if (name == NULL)
+	if (driver == NULL)
 		cp += sprintf(cp, "%sdevice %s", unmatched, id);
 	else
-		cp += sprintf(cp, "%s (%s)", name, id);
+		cp += sprintf(cp, "%s (%s)", driver, description);
 }
