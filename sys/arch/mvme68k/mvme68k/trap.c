@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1999/07/08 18:08:56 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 1999/08/03 10:52:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,10 @@
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+
+#ifdef DEBUG
+#include <dev/cons.h>
 #endif
 
 #include <machine/db_machdep.h>
@@ -187,7 +191,7 @@ int mmupid = -1;
 
 
 #define NSIR	32
-void (*sir_routines[NSIR])();
+void (*sir_routines[NSIR])(void *);
 void *sir_args[NSIR];
 int next_sir;
 
@@ -533,7 +537,7 @@ trap(type, code, v, frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		while (bit = ffs(ssir)) {
+		while ((bit = ffs(ssir))) {
 			--bit;
 			ssir &= ~(1 << bit);
 			uvmexp.softs++;
@@ -1200,7 +1204,7 @@ child_return(arg)
  */
 u_long
 allocate_sir(proc, arg)
-	void (*proc)();
+	void (*proc)(void *);
 	void *arg;
 {
 	int bit;
@@ -1216,9 +1220,9 @@ allocate_sir(proc, arg)
 void
 init_sir()
 {
-	extern void netintr();
+	extern void netintr(void);
 
-	sir_routines[0] = netintr;
-	sir_routines[1] = softclock;
+	sir_routines[0] = (void (*)(void *))netintr;
+	sir_routines[1] = (void (*)(void *))softclock;
 	next_sir = 2;
 }
