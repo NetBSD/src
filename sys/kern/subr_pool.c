@@ -1,11 +1,12 @@
-/*	$NetBSD: subr_pool.c,v 1.19 1999/03/24 05:51:25 mrg Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.20 1999/03/31 01:14:06 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg; by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,6 +45,7 @@
 #include <sys/malloc.h>
 #include <sys/lock.h>
 #include <sys/pool.h>
+#include <sys/syslog.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -104,6 +106,7 @@ struct pool_item {
 static struct pool_item_header
 		*pr_find_pagehead __P((struct pool *, caddr_t));
 static void	pr_rmpage __P((struct pool *, struct pool_item_header *));
+static int	pool_catchup __P((struct pool *));
 static int	pool_prime_page __P((struct pool *, caddr_t));
 static void	*pool_page_alloc __P((unsigned long, int, int));
 static void	pool_page_free __P((void *, unsigned long, int));
@@ -143,7 +146,7 @@ pr_log(pp, v, action, file, line)
 	int n = pp->pr_curlogentry;
 	struct pool_log *pl;
 
-	if ((pp->pr_flags & PR_LOGGING) == 0)
+	if ((pp->pr_roflags & PR_LOGGING) == 0)
 		return;
 
 	/*
@@ -167,7 +170,7 @@ pr_printlog(pp)
 	int i = pp->pr_logsize;
 	int n = pp->pr_curlogentry;
 
-	if ((pp->pr_flags & PR_LOGGING) == 0)
+	if ((pp->pr_roflags & PR_LOGGING) == 0)
 		return;
 
 	pool_print(pp, "printlog");
@@ -205,7 +208,7 @@ pr_find_pagehead(pp, page)
 {
 	struct pool_item_header *ph;
 
-	if ((pp->pr_flags & PR_PHINPAGE) != 0)
+	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
 		return ((struct pool_item_header *)(page + pp->pr_phoffset));
 
 	for (ph = LIST_FIRST(&pp->pr_hashtab[PR_HASH_INDEX(pp, page)]);
@@ -233,9 +236,13 @@ pr_rmpage(pp, ph)
 #ifdef DIAGNOSTIC
 		if (pp->pr_nidle == 0)
 			panic("pr_rmpage: nidle inconsistent");
+		if (pp->pr_nitems < pp->pr_itemsperpage)
+			panic("pr_rmpage: nitems inconsistent");
 #endif
 		pp->pr_nidle--;
 	}
+
+	pp->pr_nitems -= pp->pr_itemsperpage;
 
 	/*
 	 * Unlink a page from the pool and release it.
@@ -245,7 +252,7 @@ pr_rmpage(pp, ph)
 	pp->pr_npages--;
 	pp->pr_npagefree++;
 
-	if ((pp->pr_flags & PR_PHINPAGE) == 0) {
+	if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
 		LIST_REMOVE(ph, ph_hashlist);
 		pool_put(&phpool, ph);
 	}
@@ -361,7 +368,8 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_minitems = 0;
 	pp->pr_minpages = 0;
 	pp->pr_maxpages = UINT_MAX;
-	pp->pr_flags = flags;
+	pp->pr_roflags = flags;
+	pp->pr_flags = 0;
 	pp->pr_size = ALIGN(size);
 	pp->pr_align = align;
 	pp->pr_wchan = wchan;
@@ -371,6 +379,13 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_pagesz = pagesz;
 	pp->pr_pagemask = ~(pagesz - 1);
 	pp->pr_pageshift = ffs(pagesz) - 1;
+	pp->pr_nitems = 0;
+	pp->pr_nout = 0;
+	pp->pr_hardlimit = UINT_MAX;
+	pp->pr_hardlimit_warning = NULL;
+	pp->pr_hardlimit_ratecap = 0;
+	memset(&pp->pr_hardlimit_warning_last, 0,
+	    sizeof(pp->pr_hardlimit_warning_last));
 
 	/*
 	 * Decide whether to put the page header off page to avoid
@@ -381,7 +396,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	 */
 	if (pp->pr_size < pagesz/16) {
 		/* Use the end of the page for the page header */
-		pp->pr_flags |= PR_PHINPAGE;
+		pp->pr_roflags |= PR_PHINPAGE;
 		pp->pr_phoffset = off =
 			pagesz - ALIGN(sizeof(struct pool_item_header));
 	} else {
@@ -424,7 +439,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 		pp->pr_log = malloc(pool_logsize * sizeof(struct pool_log),
 				    M_TEMP, M_NOWAIT);
 		if (pp->pr_log == NULL)
-			pp->pr_flags &= ~PR_LOGGING;
+			pp->pr_roflags &= ~PR_LOGGING;
 		pp->pr_curlogentry = 0;
 		pp->pr_logsize = pool_logsize;
 	}
@@ -454,15 +469,15 @@ pool_destroy(pp)
 	struct pool_item_header *ph;
 
 #ifdef DIAGNOSTIC
-	if (pp->pr_nget - pp->pr_nput != 0) {
+	if (pp->pr_nout != 0) {
 		pr_printlog(pp);
-		panic("pool_destroy: pool busy: still out: %lu\n",
-		      pp->pr_nget - pp->pr_nput);
+		panic("pool_destroy: pool busy: still out: %u\n",
+		    pp->pr_nout);
 	}
 #endif
 
 	/* Remove all pages */
-	if ((pp->pr_flags & PR_STATIC) == 0)
+	if ((pp->pr_roflags & PR_STATIC) == 0)
 		while ((ph = pp->pr_pagelist.tqh_first) != NULL)
 			pr_rmpage(pp, ph);
 
@@ -471,11 +486,11 @@ pool_destroy(pp)
 	drainpp = NULL;
 
 #ifdef POOL_DIAGNOSTIC
-	if ((pp->pr_flags & PR_LOGGING) != 0)
+	if ((pp->pr_roflags & PR_LOGGING) != 0)
 		free(pp->pr_log, M_TEMP);
 #endif
 
-	if (pp->pr_flags & PR_FREEHEADER)
+	if (pp->pr_roflags & PR_FREEHEADER)
 		free(pp, M_POOL);
 }
 
@@ -502,15 +517,59 @@ pool_get(pp, flags)
 	struct pool_item_header *ph;
 
 #ifdef DIAGNOSTIC
-	if ((pp->pr_flags & PR_STATIC) && (flags & PR_MALLOCOK)) {
+	if ((pp->pr_roflags & PR_STATIC) && (flags & PR_MALLOCOK)) {
 		pr_printlog(pp);
 		panic("pool_get: static");
 	}
 #endif
 
-	simple_lock(&pp->pr_lock);
 	if (curproc == NULL && (flags & PR_WAITOK) != 0)
 		panic("pool_get: must have NOWAIT");
+
+	simple_lock(&pp->pr_lock);
+
+ startover:
+	/*
+	 * Check to see if we've reached the hard limit.  If we have,
+	 * and we can wait, then wait until an item has been returned to
+	 * the pool.
+	 */
+#ifdef DIAGNOSTIC
+	if (pp->pr_nout > pp->pr_hardlimit) {
+		simple_unlock(&pp->pr_lock);
+		panic("pool_get: %s: crossed hard limit", pp->pr_wchan);
+	}
+#endif
+	if (pp->pr_nout == pp->pr_hardlimit) {
+		if (flags & PR_WAITOK) {
+			/*
+			 * XXX: A warning isn't logged in this case.  Should
+			 * it be?
+			 */
+			pp->pr_flags |= PR_WANTED;
+			simple_unlock(&pp->pr_lock);
+			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
+			simple_lock(&pp->pr_lock);
+			goto startover;
+		}
+		if (pp->pr_hardlimit_warning != NULL) {
+			/*
+			 * Log a message that the hard limit has been hit.
+			 */
+			struct timeval curtime, logdiff;
+			int s = splclock();
+			curtime = mono_time;
+			splx(s);
+			timersub(&curtime, &pp->pr_hardlimit_warning_last,
+			    &logdiff);
+			if (logdiff.tv_sec >= pp->pr_hardlimit_ratecap) {
+				pp->pr_hardlimit_warning_last = curtime;
+				log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
+			}
+		}
+		simple_unlock(&pp->pr_lock);
+		return (NULL);
+	}
 
 	/*
 	 * The convention we use is that if `curpage' is not NULL, then
@@ -518,10 +577,19 @@ pool_get(pp, flags)
 	 * never points at a page header which has PR_PHINPAGE set and
 	 * has no items in its bucket.
 	 */
-	while ((ph = pp->pr_curpage) == NULL) {
+	if ((ph = pp->pr_curpage) == NULL) {
 		void *v;
 		int lkflags = LK_EXCLUSIVE | LK_INTERLOCK |
 			      ((flags & PR_WAITOK) == 0 ? LK_NOWAIT : 0);
+
+#ifdef DIAGNOSTIC
+		if (pp->pr_nitems != 0) {
+			simple_unlock(&pp->pr_lock);
+			printf("pool_get: %s: curpage NULL, nitems %u\n",
+			    pp->pr_wchan, pp->pr_nitems);
+			panic("pool_get: nitems inconsistent\n");
+		}
+#endif
 
 		/* Get long-term lock on pool */
 		if (lockmgr(&pp->pr_resourcelock, lkflags, &pp->pr_lock) != 0)
@@ -548,27 +616,42 @@ pool_get(pp, flags)
 			 * the page allocator has memory again. Depending
 			 * on this pool's usage, we might get stuck here
 			 * for a long time.
+			 *
+			 * XXX: maybe we should wake up once a second and
+			 * try again?
 			 */
+			simple_lock(&pp->pr_lock);
+			(void) lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 			pp->pr_flags |= PR_WANTED;
-			lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
+			simple_unlock(&pp->pr_lock);
 			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
 			simple_lock(&pp->pr_lock);
-			continue;
+			goto startover;
 		}
 
 		/* We have more memory; add it to the pool */
 		pp->pr_npagealloc++;
 		pool_prime_page(pp, v);
 
-again:
+ again:
 		/* Re-acquire pool interlock */
 		simple_lock(&pp->pr_lock);
 		lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
+		
+		/* Start the allocation process over. */
+		goto startover;
 	}
 
 	if ((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)
 		panic("pool_get: %s: page empty", pp->pr_wchan);
-
+#ifdef DIAGNOSTIC
+	if (pp->pr_nitems == 0) {
+		simple_unlock(&pp->pr_lock);
+		printf("pool_get: %s: items on itemlist, nitems %u\n",
+		    pp->pr_wchan, pp->pr_nitems);
+		panic("pool_get: nitems inconsistent\n");
+	}
+#endif
 	pr_log(pp, v, PRLOG_GET, file, line);
 
 #ifdef DIAGNOSTIC
@@ -584,6 +667,8 @@ again:
 	 * Remove from item list.
 	 */
 	TAILQ_REMOVE(&ph->ph_itemlist, pi, pi_list);
+	pp->pr_nitems--;
+	pp->pr_nout++;
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
 		if (pp->pr_nidle == 0)
@@ -611,6 +696,19 @@ again:
 	}
 
 	pp->pr_nget++;
+
+	/*
+	 * If we have a low water mark and we are now below that low
+	 * water mark, add more items to the pool.
+	 */
+	if (pp->pr_nitems < pp->pr_minitems && pool_catchup(pp) != 0) {
+		/*
+		 * XXX: Should we log a warning?  Should we set up a timeout
+		 * to try again in a second or so?  The latter could break
+		 * a caller's assumptions about interrupt protection, etc.
+		 */
+	}
+
 	simple_unlock(&pp->pr_lock);
 	return (v);
 }
@@ -656,6 +754,8 @@ pool_put(pp, v)
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	ph->ph_nmissing--;
 	pp->pr_nput++;
+	pp->pr_nitems++;
+	pp->pr_nout--;
 
 	/* Cancel "pool empty" condition if it exists */
 	if (pp->pr_curpage == NULL)
@@ -713,7 +813,7 @@ pool_prime(pp, n, storage)
 	int newnitems, newpages;
 
 #ifdef DIAGNOSTIC
-	if (storage && !(pp->pr_flags & PR_STATIC))
+	if (storage && !(pp->pr_roflags & PR_STATIC))
 		panic("pool_prime: static");
 	/* !storage && static caught below */
 #endif
@@ -726,7 +826,7 @@ pool_prime(pp, n, storage)
 
 	while (newpages-- > 0) {
 
-		if (pp->pr_flags & PR_STATIC) {
+		if (pp->pr_roflags & PR_STATIC) {
 			cp = storage;
 			storage += pp->pr_pagesz;
 		} else {
@@ -754,7 +854,7 @@ pool_prime(pp, n, storage)
 /*
  * Add a page worth of items to the pool.
  */
-int
+static int
 pool_prime_page(pp, storage)
 	struct pool *pp;
 	caddr_t storage;
@@ -768,7 +868,7 @@ pool_prime_page(pp, storage)
 
 	simple_lock(&pp->pr_lock);
 
-	if ((pp->pr_flags & PR_PHINPAGE) != 0) {
+	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
 	} else {
 		ph = pool_get(&phpool, PR_URGENT);
@@ -804,6 +904,7 @@ pool_prime_page(pp, storage)
 	 * Insert remaining chunks on the bucket list.
 	 */
 	n = pp->pr_itemsperpage;
+	pp->pr_nitems += n;
 
 	while (n--) {
 		pi = (struct pool_item *)cp;
@@ -829,11 +930,83 @@ pool_prime_page(pp, storage)
 	return (0);
 }
 
+/*
+ * Like pool_prime(), except this is used by pool_get() when nitems
+ * drops below the low water mark.  This is used to catch up nitmes
+ * with the low water mark.
+ *
+ * Note 1, we never wait for memory or locks here, we let the caller
+ * decide what to do.
+ *
+ * Note 2, this doesn't work with static pools.
+ *
+ * Note 3, we must be called with the pool already locked, and we return
+ * with it locked.
+ */
+static int
+pool_catchup(pp)
+	struct pool *pp;
+{
+	caddr_t cp;
+	int error = 0;
+	u_long nitems;
+
+	if (pp->pr_roflags & PR_STATIC) {
+		/*
+		 * We dropped below the low water mark, and this is not a
+		 * good thing.  Log a warning.
+		 */
+		printf("WARNING: static pool `%s' dropped below low water "
+		    "mark\n", pp->pr_wchan);
+		return (0);
+	}
+
+	for (;;) {
+		/*
+		 * Pool is locked; get the current number of items
+		 * availabler.
+		 */
+		nitems = pp->pr_nitems;
+
+		/* Acquire the resource lock and release the interlock. */
+		error = lockmgr(&pp->pr_resourcelock,
+		    LK_EXCLUSIVE | LK_INTERLOCK | LK_NOWAIT, &pp->pr_lock);
+		if (error)
+			break;
+
+		if (nitems >= pp->pr_minitems) {
+			simple_lock(&pp->pr_lock);
+			(void) lockmgr(&pp->pr_resourcelock, LK_RELEASE,
+			    NULL);
+			break;
+		}
+
+		/* Call the page back-end allocator for more memory. */
+		cp = (*pp->pr_alloc)(pp->pr_pagesz, 0, pp->pr_mtype);
+		if (cp == NULL) {
+			simple_lock(&pp->pr_lock);
+			(void) lockmgr(&pp->pr_resourcelock, LK_RELEASE,
+			    NULL);
+			error = ENOMEM;
+			break;
+		}
+
+		pool_prime_page(pp, cp);
+
+		simple_lock(&pp->pr_lock);
+		(void) lockmgr(&pp->pr_resourcelock, LK_RELEASE,
+		    NULL);
+	}
+
+	return (error);
+}
+
 void
 pool_setlowat(pp, n)
 	pool_handle_t	pp;
 	int n;
 {
+	int error;
 
 	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE, NULL);
 	pp->pr_minitems = n;
@@ -841,6 +1014,19 @@ pool_setlowat(pp, n)
 		? 0
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
+
+	/* Make sure we're caught up with the newly-set low water mark. */
+	simple_lock(&pp->pr_lock);
+	error = pool_catchup(pp);
+	simple_unlock(&pp->pr_lock);
+
+	if (error) {
+		/*
+		 * XXX: Should we log a warning?  Should we set up a timeout
+		 * to try again in a second or so?  The latter could break
+		 * a caller's assumptions about interrupt protection, etc.
+		 */
+	}
 }
 
 void
@@ -856,6 +1042,33 @@ pool_sethiwat(pp, n)
 	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 }
 
+void
+pool_sethardlimit(pp, n, warnmess, ratecap)
+	pool_handle_t pp;
+	int n;
+	const char *warnmess;
+	int ratecap;
+{
+
+	simple_lock(&pp->pr_lock);
+
+	pp->pr_hardlimit = n;
+	pp->pr_hardlimit_warning = warnmess;
+	pp->pr_hardlimit_ratecap = ratecap;
+	memset(&pp->pr_hardlimit_warning_last, 0,
+	    sizeof(pp->pr_hardlimit_warning_last));
+
+	/*
+	 * In-line version of pool_sethiwat(), because we need to release
+	 * the interlock.
+	 */
+	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE | LK_INTERLOCK,
+	    &pp->pr_lock);
+	pp->pr_maxpages = (n == 0)
+		? 0
+		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
+	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
+}
 
 /*
  * Default page allocator.
@@ -921,7 +1134,7 @@ pool_reclaim (pp)
 	struct pool_item_header *ph, *phnext;
 	struct timeval curtime = time;
 
-	if (pp->pr_flags & PR_STATIC)
+	if (pp->pr_roflags & PR_STATIC)
 		return;
 
 	if (simple_lock_try(&pp->pr_lock) == 0)
@@ -1018,7 +1231,8 @@ pool_chk(pp, label)
 		caddr_t page;
 
 		page = (caddr_t)((u_long)ph & pp->pr_pagemask);
-		if (page != ph->ph_page && (pp->pr_flags & PR_PHINPAGE) != 0) {
+		if (page != ph->ph_page &&
+		    (pp->pr_roflags & PR_PHINPAGE) != 0) {
 			if (label != NULL)
 				printf("%s: ", label);
 			printf("pool(%p:%s): page inconsistency: page %p;"
