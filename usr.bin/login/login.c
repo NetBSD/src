@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.24 1997/08/16 13:50:46 lukem Exp $	*/
+/*	$NetBSD: login.c,v 1.25 1997/08/19 17:26:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.24 1997/08/16 13:50:46 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.25 1997/08/19 17:26:15 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -75,6 +75,10 @@ __RCSID("$NetBSD: login.c,v 1.24 1997/08/16 13:50:46 lukem Exp $");
 #include <unistd.h>
 #include <utmp.h>
 #include <util.h>
+
+#ifdef KERBEROS5
+#include <krb5.h>		/* Solely for definition of kcontext */
+#endif
 
 #include "pathnames.h"
 
@@ -112,6 +116,9 @@ char	*instance;
 char	*krbtkfile_env;
 int	authok;
 #endif
+#ifdef KERBEROS5
+extern krb5_context kcontext;
+#endif
 
 struct	passwd *pwd;
 int	failures;
@@ -138,6 +145,9 @@ main(argc, argv)
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
 	int need_chpass;
+#ifdef KERBEROS5
+	krb5_error_code kerror;
+#endif
 
 	tbuf[0] = '\0';
 	rval = 0;
@@ -222,6 +232,15 @@ main(argc, argv)
 		++tty;
 	else
 		tty = ttyn;
+
+#ifdef KERBEROS5
+	kerror = krb5_init_context(&kcontext);
+	if (kerror) {
+		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
+		    error_message(kerror));
+		exit(1);
+	}
+#endif KERBEROS5
 
 	for (cnt = 0;; ask = 1) {
 #ifdef SKEY
