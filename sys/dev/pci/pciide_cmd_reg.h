@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.2 1998/10/12 16:09:21 bouyer Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.3 1998/11/09 09:21:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -38,27 +38,41 @@
  * Available from http://www.cmd.com/
  */
 
-/* Configuration and drive 0 setup */
-#define CMD_CONF_CTRL0 0x50
-#define CMD_CONF_REV_MASK	0x00000003
-#define CMD_CONF_DRV0_INTR	0x00000004
-#define CMD_CONF_DEVID		0x00000018
-#define CMD_CONF_VESAPRT	0x00000020
-#define CMD_CONF_DSA1		0x00000040
-#define CMD_CONF_DSA0		0x00000080
+/* Configuration (RO) */
+#define CMD_CONF 0x50
+#define CMD_CONF_REV_MASK	0x03
+#define CMD_CONF_DRV0_INTR	0x04
+#define CMD_CONF_DEVID		0x18
+#define CMD_CONF_VESAPRT	0x20
+#define CMD_CONF_DSA1		0x40
+#define CMD_CONF_DSA0		0x80
 
-#define CMD_CONF_HR_FIFO	0x00000100
-#define CMD_CONF_HW_FIFO	0x00000200
-#define CMD_CONF_DEVSEL		0x00000400
-#define CMD_CONF_2PORT		0x00000800
-#define CMD_CONF_PAR		0x00001000
-#define CMD_CONF_HW_HLD		0x00002000
-#define CMD_CONF_DRV0_RAHEAD	0x00004000
-#define CMD_CONF_DRV1_RAHEAD	0x00008000
+/* Control register (RW) */
+#define CMD_CTRL 0x51
+#define CMD_CTRL_HR_FIFO		0x01
+#define CMD_CTRL_HW_FIFO		0x02
+#define CMD_CTRL_DEVSEL			0x04
+#define CMD_CTRL_2PORT			0x08
+#define CMD_CTRL_PAR			0x10
+#define CMD_CTRL_HW_HLD			0x20
+#define CMD_CTRL_DRV0_RAHEAD		0x40
+#define CMD_CTRL_DRV1_RAHEAD		0x80
 
-#define CMD_CONF_CB_TIM_OFF	16
-#define CMD_CONF_CB_REC_OFF	20
+/*
+ * data read/write timing registers . 0640 uses the same for drive 0 and 1
+ * on the secondary channel
+ */
+#define CMD_DATA_TIM(chan, drive) \
+	(((chan) == 0) ? \
+		((drive) == 0) ? 0x54: 0x56 \
+		: \
+		((drive) == 0) ? 0x58 : 0x5b)
+		
 
-#define CMD_DRV0_ADDRSET_OFF	30
-
-
+/*
+ * timings values for the 0643 and 0x646
+ * for all dma_mode we have to have
+ * DMA_timings(dma_mode) >= PIO_timings(dma_mode + 2)
+ */
+static int8_t cmd0643_6_data_tim_pio[] = {0xA9, 0x57, 0x44, 0x32, 0x3F};
+static int8_t cmd0643_6_data_tim_dma[] = {0x87, 0x32, 0x3F};
