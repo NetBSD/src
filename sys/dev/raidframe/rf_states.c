@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.10 1999/12/12 20:52:37 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.11 2000/01/07 03:47:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -575,11 +575,9 @@ rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
 	RF_AccessStripeMap_t *asm_p;
 	RF_DagHeader_t *dag_h;
 	RF_Etimer_t timer;
-	int     tid, i;
+	int i;
 
 	desc->state++;
-
-	rf_get_threadid(tid);
 
 	timer = tracerec->timer;
 	RF_ETIMER_STOP(timer);
@@ -619,8 +617,9 @@ rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
 			    asm_p->parityInfo &&
 			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
 				RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
-				rf_ReleaseStripeLock(raidPtr->lockTable, asm_p->stripeID,
-				    &asm_p->lockReqDesc);
+				rf_ReleaseStripeLock(raidPtr->lockTable, 
+						     asm_p->stripeID,
+						     &asm_p->lockReqDesc);
 			}
 			if (asm_p->flags & RF_ASM_FLAGS_RECON_BLOCKED) {
 				rf_UnblockRecon(raidPtr, asm_p);
