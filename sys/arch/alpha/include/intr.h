@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1996/11/17 02:03:10 cgd Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1996/12/03 17:34:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -66,7 +66,6 @@ extern u_int64_t ssir;
 #define	SIR_NET		0x1
 #define	SIR_CLOCK	0x2
 
-#define	siroff(x)	ssir &= ~(x)
 #define	setsoftnet()	ssir |= SIR_NET
 #define	setsoftclock()	ssir |= SIR_CLOCK
 
