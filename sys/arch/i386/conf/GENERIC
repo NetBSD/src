@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.167 1998/07/27 18:42:27 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.168 1998/07/27 23:55:23 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -202,7 +202,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	FRENCH_KBD
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
-#options 	NORVEGIAN_KBD
+#options 	NORWEGIAN_KBD
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
