@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.306 1998/06/03 06:35:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.307 1998/06/06 21:27:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1306,7 +1306,7 @@ cpu_reboot(howto, bootstr)
 haltsys:
 	doshutdownhooks();
 
-	if (howto & RB_HALT) {
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
 		 * wait a bit first--some disk drives are slow to clean up
@@ -1316,7 +1316,14 @@ haltsys:
 		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+		printf("WARNING: powerdown failed!\n");
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
 #endif
+	}
+
+	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
