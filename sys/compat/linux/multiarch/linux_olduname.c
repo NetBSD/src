@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.47 1998/10/01 04:05:55 erh Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.48 1998/10/01 18:57:05 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,12 +110,14 @@ linux_sys_olduname(p, v, retval)
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp)
-		if (*cp == '\n' || *cp == '\t')
+	for (cp = luts.l_version; len--; ++cp) {
+		if (*cp == '\n' || *cp == '\t') {
 			if (len > 1)
 				*cp = ' ';
 			else
 				*cp = '\0';
+		}
+	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
