@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.65 1998/05/05 17:22:20 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.66 1998/05/13 15:51:36 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.59 1998/05/05 17:22:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.60 1998/05/13 15:50:58 augustss Exp 
  */
 
 /*
@@ -864,6 +864,7 @@
 #define	PCI_PRODUCT_OPTI_82C558	0xc558		/* 82C558 */
 #define	PCI_PRODUCT_OPTI_82C621	0xc621		/* 82C621 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
+#define	PCI_PRODUCT_OPTI_RM861HA	0xc861		/* RM861HA */
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
