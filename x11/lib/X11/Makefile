@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 19:12:01 lukem Exp $
 
 #XTODO	support disabling optimization aka "$(_NOOP_)" on some files?
 #XTODO	STATICI18NSTATICOBJS for libX11.a only
@@ -143,19 +143,6 @@ CPPFLAGS.PutImage.c=	$(XCURSOR_DEFINES)
 
 LNFILES=	transport.c x11trans.c \
 		transport.c ximtrans.c
-
-#	KeysymStr.c StrKeysym.c:	ks_tables.h
-#	
-#	MAKEKEYSDIR!=	cd ${.CURDIR}/makekeys && ${PRINTOBJDIR}
-#	MAKEKEYS=	${MAKEKEYSDIR}/makekeys
-#	
-#	${MAKEKEYS}:
-#		(cd ${.CURDIR}/makekeys && ${MAKE})
-#	
-#	ks_tables.h: ${MAKEKEYS} ${X11SRCDIR.xc}/include/keysymdef.h
-#		rm -f ${.TARGET}
-#		${MAKEKEYS} < ${X11SRCDIR.xc}/include/keysymdef.h > ${.TARGET}
-#	CLEANFILES+=	ks_tables.h
 
 FILES=	XErrorDB XKeysymDB Xcms.txt
 FILESDIR=${X11LIBDIR}
