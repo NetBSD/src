@@ -1,9 +1,9 @@
-/*	$NetBSD: substring.c,v 1.1.1.2 2003/01/17 14:54:30 wiz Exp $	*/
+/*	$NetBSD: substring.c,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
 
 /* substring.c -- extract substring.
-   Id: substring.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: substring.c,v 1.2 2004/02/19 00:13:00 karl Exp
 
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,13 +22,11 @@
 #include "system.h"
 
 char *
-substring (start, end)
-     char *start;
-     char *end;
+substring (const char *start, const char *end)
 {
   char *result = xmalloc (end - start + 1);
   char *scan_result = result;
-  char *scan = start;
+  const char *scan = start;
 
   while (scan < end)
     *scan_result++ = *scan++;

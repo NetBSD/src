@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.9 2003/04/02 13:26:02 karl Exp
+# Id: Makefile.am,v 1.1.1.1 2003/12/06 01:31:15 karl Exp
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -14,10 +14,8 @@
 info_TEXINFOS = texinfo.txi info-stnd.texi info.texi
 DISTCLEANFILES = texinfo texinfo-* info*.info*
 
-man_MANS = info.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
+man_MANS = info.1 infokey.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
            info.5 texinfo.5
-HELP2MAN = help2man
-noinst_SCRIPTS = $(HELP2MAN)
 
 # Use the programs built in our distribution.
 MAKEINFO = ../makeinfo/makeinfo
@@ -29,7 +27,7 @@ TXI_XLATE = txi-cs.tex txi-de.tex txi-en.tex txi-es.tex txi-fr.tex \
 # Include our texinfo.tex, not Automake's.
 EXTRA_DIST = epsf.tex pdfcolor.tex texinfo.tex \
              fdl.texi \
-	     $(man_MANS) $(noinst_SCRIPTS) $(TXI_XLATE)
+	     $(man_MANS) $(TXI_XLATE)
 
 install-data-local:
 	@echo
@@ -57,11 +55,13 @@ install-tex:
 	  $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(texmf_texinfo)/$$f; done
 
 # The man pages depend on the --help strings and the version number.
-if TEXINFO_MAINT
-common_mandeps = $(top_srcdir)/configure.ac $(HELP2MAN)
+if MAINTAINER_MODE
+common_mandeps = $(top_srcdir)/configure.ac
 info.1: $(top_srcdir)/info/info.c $(common_mandeps)
 	$(HELP2MAN) --name="read Info documents" `basename $< .c` >$@
-install-info.1: $(top_srcdir)/util/install-info.c $(top_srcdir)/configure.ac $(HELP2MAN)
+infokey.1: $(top_srcdir)/info/infokey.c $(common_mandeps)
+	$(HELP2MAN) --name="compile customizations for Info" `basename $< .c` >$@
+install-info.1: $(top_srcdir)/util/install-info.c $(common_mandeps)
 	$(HELP2MAN) --name="update info/dir entries" `basename $< .c` >$@
 makeinfo.1: $(top_srcdir)/makeinfo/makeinfo.c $(common_mandeps)
 	$(HELP2MAN) --name="translate Texinfo documents" `basename $< .c` >$@
@@ -71,11 +71,5 @@ texindex.1: $(top_srcdir)/util/texindex.c $(common_mandeps)
 	$(HELP2MAN) --name="sort Texinfo index files" `basename $< .c` >$@
 endif
 
-# Do not create info files for distribution, but do create man pages.
+# Do not create info files for distribution.
 dist-info:
-
-# Do not try to build the info files in $(srcdir), since we don't
-# distribute them.  (This will be fixed for no-suffix info files such as
-# `texinfo' in automake 1.7.2, and is already fixed for normal info files.)
-texinfo: $(srcdir)/texinfo.txi version.texi
-	$(MAKEINFO) -I$(srcdir) texinfo.txi

@@ -1,9 +1,9 @@
-/*	$NetBSD: variables.c,v 1.1.1.3 2003/01/17 14:54:33 wiz Exp $	*/
+/*	$NetBSD: variables.c,v 1.1.1.4 2004/07/12 23:26:53 wiz Exp $	*/
 
 /* variables.c -- how to manipulate user visible variables in Info.
-   Id: variables.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: variables.c,v 1.3 2004/03/14 00:57:30 karl Exp
 
-   Copyright (C) 1993, 1997, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 2001, 2002, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ DECLARE_INFO_COMMAND (describe_variable, _("Explain the use of a variable"))
   char *description;
 
   /* Get the variable's name. */
-  var = read_variable_name (_("Describe variable: "), window);
+  var = read_variable_name ((char *) _("Describe variable: "), window);
 
   if (!var)
     return;
@@ -94,7 +94,7 @@ DECLARE_INFO_COMMAND (describe_variable, _("Explain the use of a variable"))
     sprintf (description, "%s (%d): %s.",
 	     var->name, *(var->value), _(var->doc));
 
-  window_message_in_echo_area ("%s", description);
+  window_message_in_echo_area ("%s", description, NULL);
   free (description);
 }
 
@@ -104,7 +104,7 @@ DECLARE_INFO_COMMAND (set_variable, _("Set the value of an Info variable"))
   char *line;
 
   /* Get the variable's name and value. */
-  var = read_variable_name (_("Set variable: "), window);
+  var = read_variable_name ((char *) _("Set variable: "), window);
 
   if (!var)
     return;
@@ -203,9 +203,7 @@ DECLARE_INFO_COMMAND (set_variable, _("Set the value of an Info variable"))
    address of a VARIABLE_ALIST member.  A return value of NULL indicates
    that no variable could be read. */
 VARIABLE_ALIST *
-read_variable_name (prompt, window)
-     char *prompt;
-     WINDOW *window;
+read_variable_name (char *prompt, WINDOW *window)
 {
   register int i;
   char *line;
@@ -251,7 +249,7 @@ read_variable_name (prompt, window)
 /* Make an array of REFERENCE which actually contains the names of the
    variables available in Info. */
 REFERENCE **
-make_variable_completions_array ()
+make_variable_completions_array (void)
 {
   register int i;
   REFERENCE **array = (REFERENCE **)NULL;
@@ -276,9 +274,7 @@ make_variable_completions_array ()
 #if defined(INFOKEY)
 
 void
-set_variable_to_value(name, value)
-	char *name;
-	char *value;
+set_variable_to_value(char *name, char *value)
 {
 	register int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: plural.c,v 1.1.1.2 2003/07/03 14:59:12 wiz Exp $	*/
+/*	$NetBSD: plural.c,v 1.1.1.3 2004/07/12 23:27:15 wiz Exp $	*/
 
 /* A Bison parser, made from plural.y
    by GNU bison 1.35.  */
@@ -21,7 +21,7 @@
 #line 1 "plural.y"
 
 /* Expression parsing for plural form selection.
-   Copyright (C) 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 2000-2001, 2003 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
    This program is free software; you can redistribute it and/or modify it
@@ -77,28 +77,13 @@ typedef union {
 #line 55 "plural.y"
 
 /* Prototypes for local functions.  */
-static struct expression *new_exp PARAMS ((int nargs, enum operator op,
-					   struct expression * const *args));
-static inline struct expression *new_exp_0 PARAMS ((enum operator op));
-static inline struct expression *new_exp_1 PARAMS ((enum operator op,
-						   struct expression *right));
-static struct expression *new_exp_2 PARAMS ((enum operator op,
-					     struct expression *left,
-					     struct expression *right));
-static inline struct expression *new_exp_3 PARAMS ((enum operator op,
-						   struct expression *bexp,
-						   struct expression *tbranch,
-						   struct expression *fbranch));
-static int yylex PARAMS ((YYSTYPE *lval, const char **pexp));
-static void yyerror PARAMS ((const char *str));
+static int yylex (YYSTYPE *lval, const char **pexp);
+static void yyerror (const char *str);
 
 /* Allocation of expressions.  */
 
 static struct expression *
-new_exp (nargs, op, args)
-     int nargs;
-     enum operator op;
-     struct expression * const *args;
+new_exp (int nargs, enum operator op, struct expression * const *args)
 {
   int i;
   struct expression *newp;
@@ -127,16 +112,13 @@ new_exp (nargs, op, args)
 }
 
 static inline struct expression *
-new_exp_0 (op)
-     enum operator op;
+new_exp_0 (enum operator op)
 {
   return new_exp (0, op, NULL);
 }
 
 static inline struct expression *
-new_exp_1 (op, right)
-     enum operator op;
-     struct expression *right;
+new_exp_1 (enum operator op, struct expression *right)
 {
   struct expression *args[1];
 
@@ -145,10 +127,7 @@ new_exp_1 (op, right)
 }
 
 static struct expression *
-new_exp_2 (op, left, right)
-     enum operator op;
-     struct expression *left;
-     struct expression *right;
+new_exp_2 (enum operator op, struct expression *left, struct expression *right)
 {
   struct expression *args[2];
 
@@ -158,11 +137,8 @@ new_exp_2 (op, left, right)
 }
 
 static inline struct expression *
-new_exp_3 (op, bexp, tbranch, fbranch)
-     enum operator op;
-     struct expression *bexp;
-     struct expression *tbranch;
-     struct expression *fbranch;
+new_exp_3 (enum operator op, struct expression *bexp,
+	   struct expression *tbranch, struct expression *fbranch)
 {
   struct expression *args[3];
 
@@ -238,8 +214,8 @@ static const short yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined. */
 static const short yyrline[] =
 {
-       0,   174,   182,   186,   190,   194,   198,   202,   206,   210,
-     214,   218,   223
+       0,   150,   158,   162,   166,   170,   174,   178,   182,   186,
+     190,   194,   199
 };
 #endif
 
@@ -1029,7 +1005,7 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 175 "plural.y"
+#line 151 "plural.y"
 {
 	    if (yyvsp[0].exp == NULL)
 	      YYABORT;
@@ -1037,68 +1013,68 @@ case 1:
 	  }
     break;
 case 2:
-#line 183 "plural.y"
+#line 159 "plural.y"
 {
 	    yyval.exp = new_exp_3 (qmop, yyvsp[-4].exp, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 3:
-#line 187 "plural.y"
+#line 163 "plural.y"
 {
 	    yyval.exp = new_exp_2 (lor, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 4:
-#line 191 "plural.y"
+#line 167 "plural.y"
 {
 	    yyval.exp = new_exp_2 (land, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 5:
-#line 195 "plural.y"
+#line 171 "plural.y"
 {
 	    yyval.exp = new_exp_2 (yyvsp[-1].op, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 6:
-#line 199 "plural.y"
+#line 175 "plural.y"
 {
 	    yyval.exp = new_exp_2 (yyvsp[-1].op, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 7:
-#line 203 "plural.y"
+#line 179 "plural.y"
 {
 	    yyval.exp = new_exp_2 (yyvsp[-1].op, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 8:
-#line 207 "plural.y"
+#line 183 "plural.y"
 {
 	    yyval.exp = new_exp_2 (yyvsp[-1].op, yyvsp[-2].exp, yyvsp[0].exp);
 	  }
     break;
 case 9:
-#line 211 "plural.y"
+#line 187 "plural.y"
 {
 	    yyval.exp = new_exp_1 (lnot, yyvsp[0].exp);
 	  }
     break;
 case 10:
-#line 215 "plural.y"
+#line 191 "plural.y"
 {
 	    yyval.exp = new_exp_0 (var);
 	  }
     break;
 case 11:
-#line 219 "plural.y"
+#line 195 "plural.y"
 {
 	    if ((yyval.exp = new_exp_0 (num)) != NULL)
 	      yyval.exp->val.num = yyvsp[0].num;
 	  }
     break;
 case 12:
-#line 224 "plural.y"
+#line 200 "plural.y"
 {
 	    yyval.exp = yyvsp[-1].exp;
 	  }
@@ -1336,13 +1312,12 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 229 "plural.y"
+#line 205 "plural.y"
 
 
 void
 internal_function
-FREE_EXPRESSION (exp)
-     struct expression *exp;
+FREE_EXPRESSION (struct expression *exp)
 {
   if (exp == NULL)
     return;
@@ -1368,9 +1343,7 @@ FREE_EXPRESSION (exp)
 
 
 static int
-yylex (lval, pexp)
-     YYSTYPE *lval;
-     const char **pexp;
+yylex (YYSTYPE *lval, const char **pexp)
 {
   const char *exp = *pexp;
   int result;
@@ -1513,8 +1486,7 @@ yylex (lval, pexp)
 
 
 static void
-yyerror (str)
-     const char *str;
+yyerror (const char *str)
 {
   /* Do nothing.  We don't print error messages here.  */
 }

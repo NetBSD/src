@@ -1,6 +1,6 @@
-/*	$NetBSD: memcpy.c,v 1.1.1.2 2003/01/17 14:54:30 wiz Exp $	*/
+/*	$NetBSD: memcpy.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
 
-/* Copyright (C) 1995, 1997, 2000 Free Software Foundation, Inc.
+/* Copyright (C) 1995, 1997, 2000, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,16 +22,19 @@
 # include <config.h>
 #endif
 
+#include <stddef.h>
+
 /* Copy LEN bytes starting at SRCADDR to DESTADDR.  Result undefined
    if the source overlaps with the destination.
    Return DESTADDR. */
 
-char *
-memcpy (char *destaddr, const char *srcaddr, int len)
+void *
+memcpy (void *destaddr, void const *srcaddr, size_t len)
 {
   char *dest = destaddr;
+  char const *src = srcaddr;
 
   while (len-- > 0)
-    *destaddr++ = *srcaddr++;
-  return dest;
+    *dest++ = *src++;
+  return destaddr;
 }

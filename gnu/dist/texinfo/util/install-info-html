@@ -1,5 +1,5 @@
 #!@BASH@
-# Id: install-info-html,v 1.2 2003/02/01 14:18:59 karl Exp
+# Id: install-info-html,v 1.1.1.1 2003/12/06 01:35:48 karl Exp
 
 name=install-info-html
 version=1.0
