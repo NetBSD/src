@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.196 2002/04/13 17:05:16 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.196.4.1 2004/04/06 07:59:18 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.196 2002/04/13 17:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.196.4.1 2004/04/06 07:59:18 tron Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2196,12 +2196,24 @@ again:	do {
 
 			sc->sc_st_check = 1;
 		}
-	} while (ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_RXRDY)
-	    || ((iir & IIR_IMASK) == 0));
+	} while (!ISSET((iir =
+	    bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND) &&
+	    /*
+	     * Since some device (e.g., ST16C1550) doesn't clear IIR_TXRDY
+	     * by IIR read, so we can't do this way: `process all interrupts,
+	     * then do TX if possble'.
+	     */
+	    (iir & IIR_IMASK) != IIR_TXRDY);
 
 	/*
-	 * Done handling any receive interrupts. See if data can be
-	 * transmitted as well. Schedule tx done event if no data left
+	 * Read LSR again, since there may be an interrupt between
+	 * the last LSR read and IIR read above.
+	 */
+	lsr = bus_space_read_1(iot, ioh, com_lsr);
+
+	/*
+	 * See if data can be transmitted as well.
+	 * Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
 	if (ISSET(lsr, LSR_TXRDY)) {
