@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2000/09/13 15:00:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2000/09/15 15:55:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1115,7 +1115,6 @@ allocate_sir(proc, arg)
 void
 init_sir()
 {
-	extern void netintr __P((void));
 
 	sir_routines[SIR_NET]   = (void (*) __P((void *)))netintr;
 	sir_routines[SIR_CLOCK] = (void (*) __P((void *)))softclock;
