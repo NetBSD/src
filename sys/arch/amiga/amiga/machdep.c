@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 1998/08/20 19:55:06 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 1998/10/12 03:51:59 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@
 #include <sys/user.h>
 #include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
+#include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
