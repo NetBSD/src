@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.6 2003/07/25 18:47:47 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.7 2003/07/28 21:55:36 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,7 +155,7 @@ that should ignored when adding or removing the package from
 is a space-separated list of shell glob patterns that match files relative
 to the
 .Ar package
-directory, and it defaults to "info/dir *[~#] *.OLD *.orig".
+directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
 .It Ev PKG_VIEW
 The default view can be specified in the
 .Ev PKG_VIEW
