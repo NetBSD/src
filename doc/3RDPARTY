@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.268 2004/12/16 02:20:17 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.269 2004/12/22 20:41:24 reed Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -735,7 +735,7 @@ Notes:
 
 Package:      Vinum
 Version:      2003-10-10
-Current:      2003-10-10
+Current Vers: 2003-10-10
 Maintainer:   grog
 URL:          http://www.vinumvm.org/
 Archive Site: none
