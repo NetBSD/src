@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: do_command.c,v 1.9 1993/12/06 03:35:56 cgd Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.10 1993/12/06 23:57:11 cgd Exp $";
 #endif
 
 
@@ -168,7 +168,7 @@ child_process(cmd, u)
 		 * the actual user command shell was going to get and the
 		 * PID is part of the log message.
 		 */
-#ifdef LOG_FILE || defined(SYSLOG)
+#if defined(LOG_FILE) || defined(SYSLOG)
 		{
 			extern char *mkprints();
 			char *x = mkprints(cmd, strlen(cmd));
