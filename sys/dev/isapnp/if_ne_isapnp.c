@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.6 1998/07/05 06:49:14 jonathan Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 static int ne_isapnp_match __P((struct device *, struct cfdata *, void *));
 static void ne_isapnp_attach __P((struct device *, struct device *, void *));
@@ -102,38 +103,13 @@ struct cfattach ne_isapnp_ca = {
 	sizeof(struct ne_isapnp_softc), ne_isapnp_match, ne_isapnp_attach
 };
 
-
-/*
- * Names accepted by the match routine.
- */
-static const struct ne_pnpid {
-    const char *id_devlogic;
-    const char *id_devcompat;
-} if_ne_isapnp_pnpids[] = {
-    { NULL, "PNP80D6" },		/* Digital DE305 ISAPnP */
-    { NULL, NULL }
-};
-
 static int
-ne_isapnp_match(
-	struct device *parent,
-	struct cfdata *match,
-	void *aux)
+ne_isapnp_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-	const struct ne_pnpid *pnpid = if_ne_isapnp_pnpids;
-
-	while (pnpid->id_devlogic != NULL || pnpid->id_devcompat != NULL) {
-	    if (pnpid->id_devlogic != NULL
-			&& !strcmp(ipa->ipa_devlogic, pnpid->id_devlogic))
-		return(1);
-	    if (pnpid->id_devcompat != NULL
-			&& !strcmp(ipa->ipa_devcompat, pnpid->id_devcompat))
-		return(1);
-	    pnpid++;
-	}
-
-	return (0);
+	return isapnp_devmatch(aux, &isapnp_ne_devinfo);
 }
 
 static void

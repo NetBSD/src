@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.14 1998/07/05 06:49:14 jonathan Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.15 1998/07/23 19:30:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -74,6 +74,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -91,16 +92,7 @@ ep_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devlogic, "TCM5090") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5091") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5094") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5095") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5098"))
-		return (0);
-
-	return (1);
+	return isapnp_devmatch(aux, &isapnp_ep_devinfo);
 }
 
 void

@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.8 1998/06/09 07:28:30 thorpej Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.9 1998/07/23 19:30:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 
 #include <dev/ic/interwavevar.h>
@@ -133,14 +134,11 @@ gus_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
+	if (!isapnp_devmatch(aux, &isapnp_gus_devinfo))
+		return 0;
 
-	if (!strcmp(ipa->ipa_devlogic, "GRV0000")) {
-		gus_0 = 1;
-		return 1;
-		/* we'll add support for other logical devices later */
-	}
-	return 0;
+	gus_0 = 1;
+	return 1;
 }
 
 
