@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.31 1999/04/22 18:00:34 ender Exp $	*/
+/*	$NetBSD: asc.c,v 1.32 1999/06/28 01:56:58 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -189,7 +189,11 @@ ascattach(parent, self, aux)
 
 	mac68k_set_bell_callback(asc_ring_bell, sc);
 #if __notyet__
-	via2_register_irq(VIA2_ASC, asc_intr, sc);
+	if (mac68k_machine.aux_interrupts) {
+		intr_establish((int (*)(void *))asc_intr, sc, 5);
+	} else {
+		via2_register_irq(VIA2_ASC, asc_intr, sc);
+	}
 	asc_intr_enable();
 #endif
 }

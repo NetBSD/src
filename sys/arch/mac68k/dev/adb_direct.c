@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.23 1999/05/15 19:29:12 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.24 1999/06/28 01:56:56 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -70,6 +70,7 @@
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
+#include <machine/iopreg.h>			/* required for IOP support */
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
@@ -100,6 +101,7 @@
 #define ADB_ACTION_OUT		0x3	/* sending out a command */
 #define ADB_ACTION_IN		0x4	/* receiving data */
 #define ADB_ACTION_POLLING	0x5	/* polling - II only */
+#define ADB_ACTION_RUNNING	0x6	/* running - IOP only */
 
 /*
  * These describe the state of the ADB bus itself, although they
@@ -210,6 +212,7 @@ char	*adbHardwareDescr[MAX_ADB_HW + 1] = {
 	"IIsi series",
 	"PowerBook",
 	"Cuda",
+	"IOP",
 };
 
 /*
@@ -265,8 +268,9 @@ extern struct mac68k_machine_S mac68k_machine;
 extern int ite_polling;			/* Are we polling?  (Debugger mode) */
 
 void	pm_setup_adb __P((void));
+void	pm_hw_setup __P((void));
 void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void));
+void	pm_intr __P((void *));
 int	pm_adb_op __P((u_char *, void *, void *, int));
 void	pm_init_adb_device __P((void));
 
@@ -276,10 +280,10 @@ void	pm_init_adb_device __P((void));
 #ifdef ADB_DEBUG
 void	print_single __P((u_char *));
 #endif
-void	adb_intr __P((void));
-void	adb_intr_II __P((void));
-void	adb_intr_IIsi __P((void));
-void	adb_intr_cuda __P((void));
+void	adb_intr __P((void *));
+void	adb_intr_II __P((void *));
+void	adb_intr_IIsi __P((void *));
+void	adb_intr_cuda __P((void *));
 void	adb_soft_intr __P((void));
 int	send_adb_II __P((u_char *, u_char *, void *, void *, int));
 int	send_adb_IIsi __P((u_char *, u_char *, void *, void *, int));
@@ -307,6 +311,8 @@ int	adb_prog_switch_enable __P((void));
 int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
 int	send_adb __P((u_char *, void *, void *));
+void	adb_iop_recv __P((IOP *, struct iop_msg *));
+int	send_adb_iop __P((int, u_char *, void *, void *));
 
 #ifdef ADB_DEBUG
 /*
@@ -374,7 +380,7 @@ adb_cuda_tickle(void)
  * grab serial interrupts?
  */
 void
-adb_intr_cuda(void)
+adb_intr_cuda(void *arg)
 {
 	volatile int i, ending;
 	volatile unsigned int s;
@@ -682,7 +688,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_cuda();	/* process it */
+				adb_intr_cuda(NULL);	/* process it */
 				adb_soft_intr();
 				}
 
@@ -691,7 +697,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 
 
 void
-adb_intr_II(void)
+adb_intr_II(void *arg)
 {
 	struct adbCommand packet;
 	int i, intr_on = 0;
@@ -706,6 +712,8 @@ adb_intr_II(void)
 	ADB_VIA_INTR_DISABLE();	/* disable ADB interrupt on IIs. */
 
 	delay(ADB_DELAY);	/* yuck (don't remove) */
+
+if (!mac68k_machine.aux_interrupts)
 	(void)intr_dispatch(0x70); /* grab any serial interrupts */
 
 	if (ADB_INTR_IS_ON)
@@ -753,6 +761,7 @@ switch_start:
 			adbActionState = ADB_ACTION_IN;
 		}
 		delay(ADB_DELAY);
+if (!mac68k_machine.aux_interrupts)
 		(void)intr_dispatch(0x70); /* grab any serial interrupts */
 		goto switch_start;
 		break;
@@ -1123,7 +1132,7 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
-				adb_intr_II();	/* go process "interrupt" */
+				adb_intr_II(NULL); /* go process "interrupt" */
 				adb_soft_intr();
 			}
 
@@ -1187,22 +1196,25 @@ adb_guess_next_device(void)
  * code for the machine we are running on.
  */
 void
-adb_intr(void)
+adb_intr(void *arg)
 {
 	switch (adbHardware) {
 	case ADB_HW_II:
-		adb_intr_II();
+		adb_intr_II(arg);
 		break;
 
 	case ADB_HW_IISI:
-		adb_intr_IIsi();
+		adb_intr_IIsi(arg);
 		break;
 
-	case ADB_HW_PB:
+	case ADB_HW_PB:		/* Should not come through here. */
 		break;
 
 	case ADB_HW_CUDA:
-		adb_intr_cuda();
+		adb_intr_cuda(arg);
+		break;
+
+	case ADB_HW_IOP:	/* Should not come through here. */
 		break;
 
 	case ADB_HW_UNKNOWN:
@@ -1218,7 +1230,7 @@ adb_intr(void)
  *
  */
 void
-adb_intr_IIsi(void)
+adb_intr_IIsi(void *arg)
 {
 	struct adbCommand packet;
 	int i, ending;
@@ -1502,13 +1514,77 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_IIsi();	/* process it */
+				adb_intr_IIsi(NULL);	/* process it */
 				adb_soft_intr();
 			}
 
 	 return 0;
 }				/* send_adb_IIsi */
 
+void
+adb_iop_recv(IOP *iop, struct iop_msg *msg)
+{
+	struct adbCommand	pkt;
+	unsigned		flags;
+
+	if (adbActionState != ADB_ACTION_RUNNING)
+		return;
+
+	switch (msg->status) {
+	case IOP_MSGSTAT_SENT:
+		if (0 == adb_cmd_result(msg->msg + 1)) {
+			adbWaiting = 1;
+			adbWaitingCmd = msg->msg[2];
+		}
+		break;
+	case IOP_MSGSTAT_RECEIVED:
+	case IOP_MSGSTAT_UNEXPECTED:
+		flags = msg->msg[0];
+		if (flags != 0) {
+			printf("ADB FLAGS 0x%x", flags);
+			break;
+		}
+		if (adbWaiting &&
+		    (msg->msg[2] == adbWaitingCmd)) {
+			pkt.saveBuf = msg->msg + 1;
+			pkt.compRout = adbCompRout;
+			pkt.compData = adbCompData;
+			pkt.unsol = 0;
+			pkt.ack_only = 0;
+			adb_pass_up(&pkt);
+
+			adbWaitingCmd = 0;
+			adbWaiting = 0;
+		} else {
+			pkt.unsol = 1;
+			pkt.ack_only = 0;
+			adb_pass_up(&pkt);
+		}
+		break;
+	default:
+		return;
+	}
+}
+
+int
+send_adb_iop(int cmd, u_char * buffer, void *compRout, void *data)
+{
+	u_char	buff[32];
+	int	i, cnt;
+
+	if (adbActionState != ADB_ACTION_RUNNING)
+		return -1;
+
+	buff[0] = IOP_ADB_FL_EXPLICIT;
+	buff[1] = buffer[0];
+	buff[2] = cmd;
+	cnt = (int) buff[1];
+	for (i=0; i<cnt ; i++) {
+		buff[i+3] = buffer[i+1];
+	}
+	return iop_send_msg(ISM_IOP, IOP_CHAN_ADB, buff, cnt+3,
+			    adb_iop_recv, NULL);
+}
 
 /* 
  * adb_pass_up is called by the interrupt-time routines.
@@ -1559,6 +1635,7 @@ adb_pass_up(struct adbCommand *in)
 		start = 0;
 	} else {
 		switch (adbHardware) {
+		case ADB_HW_IOP:
 		case ADB_HW_II:
 			cmd = in->data[1];
 			if (in->data[0] < 2)
@@ -1776,6 +1853,17 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 			return -1;
 		break;
 
+	case ADB_HW_IOP:
+#if 0
+		result = send_adb_iop((int)command, (u_char *)buffer,
+		    (void *)compRout, (void *)data);
+		if (result == 0)
+			return 0;
+		else
+#endif
+			return -1;
+		break;
+
 	case ADB_HW_IISI:
 		result = send_adb_IIsi((u_char *)0, (u_char *)buffer,
 		    (void *)compRout, (void *)data, (int)command);
@@ -1831,6 +1919,8 @@ adb_hw_setup(void)
 
 	switch (adbHardware) {
 	case ADB_HW_II:
+		via1_register_irq(2, adb_intr_II, NULL);
+
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -1847,7 +1937,14 @@ adb_hw_setup(void)
 		ADB_VIA_CLR_INTR();	/* clear interrupt */
 		break;
 
+	case ADB_HW_IOP:
+		/* adbActionState = ADB_ACTION_RUNNING; */
+		via_reg(VIA1, vIER) = 0x84;
+		via_reg(VIA1, vIFR) = 0x04;
+		break;
+
 	case ADB_HW_IISI:
+		via1_register_irq(2, adb_intr_IIsi, NULL);
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -1882,10 +1979,11 @@ adb_hw_setup(void)
 		 * XXX - really PM_VIA_CLR_INTR - should we put it in
 		 * pm_direct.h?
 		 */
-		via_reg(VIA1, vIFR) = 0x90;	/* clear interrupt */
+		pm_hw_setup();
 		break;
 
 	case ADB_HW_CUDA:
+		via1_register_irq(2, adb_intr_cuda, NULL);
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -2013,7 +2111,8 @@ adb_reinit(void)
 	(void)(&s);		/* work around lame GCC bug */
 
 	/* Make sure we are not interrupted while building the table. */
-	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
+	/* ints must be on for PB & IOP (at least, for now) */
+	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)
 		s = splhigh();
 
 	ADBNumDevices = 0;	/* no devices yet */
@@ -2034,7 +2133,7 @@ adb_reinit(void)
 
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
-	delay(3000);
+	delay(4000);
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine
@@ -2198,7 +2297,8 @@ adb_reinit(void)
 	if (adbHardware == ADB_HW_CUDA)
 		timeout((void *)adb_cuda_tickle, 0, ADB_TICKLE_TICKS);
 
-	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
+	/* ints must be on for PB & IOP (at least, for now) */
+	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)
 		splx(s);
 
 	return;
@@ -2255,6 +2355,7 @@ int
 adb_cmd_result(u_char *in)
 {
 	switch (adbHardware) {
+	case ADB_HW_IOP:
 	case ADB_HW_II:
 		/* was it an ADB talk command? */
 		if ((in[1] & 0x0c) == 0x0c)
@@ -2294,7 +2395,8 @@ int
 adb_cmd_extra(u_char *in)
 {
 	switch (adbHardware) {
-		case ADB_HW_II:
+	case ADB_HW_II:
+	case ADB_HW_IOP:
 		if ((in[1] & 0x0c) == 0x08)	/* was it a listen command? */
 			return 0;
 		return 1;
@@ -2401,8 +2503,6 @@ adb_setup_hw_type(void)
 	case MACH_MACIIVX:		/* IIvx */
 	case MACH_MACP460:		/* Performa 460/465/467 */
 	case MACH_MACP600:		/* Performa 600 */
-	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
-	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbHardware = ADB_HW_IISI;
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -2461,6 +2561,18 @@ adb_setup_hw_type(void)
 			printf_intr("adb: using Cuda series hardware support\n");
 #endif
 		break;
+
+	case MACH_MACQ900:		/* Quadra 900 */
+	case MACH_MACQ950:		/* Quadra 950 */
+	case MACH_MACIIFX:		/* Mac IIfx   */
+		adbHardware = ADB_HW_IOP;
+		iop_register_listener(ISM_IOP, IOP_CHAN_ADB, adb_iop_recv, NULL);
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using IOP-based ADB\n");
+#endif
+		break;
+
 	default:
 		adbHardware = ADB_HW_UNKNOWN;
 #ifdef ADB_DEBUG
@@ -2488,8 +2600,6 @@ adb_setup_hw_type(void)
 	case MACH_MACP600:		/* Performa 600 */
 	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
 	case MACH_MACQ840AV:		/* Quadra 840AV */
-	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
-	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbSoftPower = 1;
 		break;
 	}
@@ -2576,14 +2686,14 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 long
 mrg_adbintr(void)
 {
-	adb_intr();
+	adb_intr(NULL);
 	return 1;	/* mimic mrg_adbintr in macrom.h just in case */
 }
 
 long
 mrg_pmintr(void)
 {
-	pm_intr();
+	pm_intr(NULL);
 	return 1;	/* mimic mrg_pmintr in macrom.h just in case */
 }
 
@@ -2598,6 +2708,9 @@ adb_read_date_time(unsigned long *time)
 
 	switch (adbHardware) {
 	case ADB_HW_II:
+		return -1;
+
+	case ADB_HW_IOP:
 		return -1;
 
 	case ADB_HW_IISI:
@@ -2650,6 +2763,9 @@ adb_set_date_time(unsigned long time)
 
 	switch (adbHardware) {
 	case ADB_HW_II:
+		return -1;
+
+	case ADB_HW_IOP:
 		return -1;
 
 	case ADB_HW_IISI:
@@ -2738,6 +2854,7 @@ adb_poweroff(void)
 		return 0;
 
 	case ADB_HW_II:			/* II models don't do ADB soft power */
+	case ADB_HW_IOP:		/* IOP models don't do ADB soft power */
 	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
@@ -2771,6 +2888,7 @@ adb_prog_switch_enable(void)
 		return -1;
 
 	case ADB_HW_II:		/* II models don't do prog. switch */
+	case ADB_HW_IOP:	/* IOP models don't do prog. switch */
 	case ADB_HW_CUDA:	/* cuda doesn't do prog. switch TO DO: verify this */
 	case ADB_HW_UNKNOWN:
 	default:
@@ -2805,6 +2923,7 @@ adb_prog_switch_disable(void)
 		return -1;
 
 	case ADB_HW_II:		/* II models don't do prog. switch */
+	case ADB_HW_IOP:	/* IOP models don't do prog. switch */
 	case ADB_HW_CUDA:	/* cuda doesn't do prog. switch */
 	case ADB_HW_UNKNOWN:
 	default:

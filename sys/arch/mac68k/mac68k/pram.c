@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.17 1998/02/21 00:37:08 scottr Exp $	*/
+/*	$NetBSD: pram.c,v 1.18 1999/06/28 01:56:58 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -176,6 +176,7 @@ getPramTime(void)
 	unsigned long time;
 
 	switch (adbHardware) {
+	case ADB_HW_IOP:
 	case ADB_HW_II:		/* access PRAM via VIA interface */
 		time = (long)getPramTimeII();
 		return time;
@@ -207,6 +208,7 @@ void
 setPramTime(unsigned long time)
 {
 	switch (adbHardware) {
+	case ADB_HW_IOP:
 	case ADB_HW_II:		/* access PRAM via ADB interface */
 		setPramTimeII(time);
 		return;
