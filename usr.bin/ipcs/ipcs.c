@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.14 1997/10/19 03:23:48 lukem Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.15 1998/04/01 21:10:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -52,6 +52,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 void	cvt_time __P((time_t, char *, int));
