@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.13 1997/08/26 19:27:24 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.14 1997/08/28 00:02:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -134,6 +134,9 @@ sbfind(parent, sc, ia)
 		ia->ia_iosize = SBP_NPORT;
 	else
 		ia->ia_iosize = SB_NPORT;
+
+	if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
+		ia->ia_drq2 = -1;
 
 	ia->ia_irq = sc->sc_irq;
 
