@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 1999/01/05 10:02:21 itohy Exp $	*/
+/*	$NetBSD: md.h,v 1.8.8.1 2000/06/22 15:58:26 minoura Exp $	*/
 
 /*
  *	- m68k dependent definitions
@@ -35,7 +35,6 @@ void _cachectl __P((void *, size_t));
 
 #define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
 #define JMPSLOT_NEEDS_RELOC			(0)
-#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
 #define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 #define md_got_reloc(r)			(0)

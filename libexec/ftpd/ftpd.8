@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.51 2000/05/16 00:59:12 itojun Exp $
+.\"	$NetBSD: ftpd.8,v 1.51.2.1 2000/06/22 15:58:16 minoura Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 13, 2000
+.Dd June 20, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -197,9 +197,11 @@ The case of the requests is ignored.
 .It EPRT Ta "specify data connection port"
 .It FEAT Ta "list extra features that are not defined in" Cm "RFC 959"
 .It HELP Ta "give help information"
-.It LIST Ta "give list files in a directory" Pq Dq Li "ls -lgA"
+.It LIST Ta "give list files in a directory" Pq Dq Li "ls -lA"
 .It LPSV Ta "prepare for server-to-server transfer"
 .It LPRT Ta "specify data connection port"
+.It MLSD Ta "list contents of directory in a machine-processable form"
+.It MLST Ta "show a pathname in a machine-processable form"
 .It MKD Ta "make a directory"
 .It MDTM Ta "show last modification time of file"
 .It MODE Ta "specify data transfer" Em mode
@@ -543,18 +545,25 @@ recognizes all commands in
 .Cm RFC 2228
 (although they are not supported yet),
 and supports the extensions from
-.Cm RFC 2389.
+.Cm RFC 2389 ,
+.Cm RFC 2428
+and
+.Cm draft-ietf-ftpext-mlst-10 .
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
 .Pp
-The
+Various features such as the
 .Xr ftpd.conf 5
-functionality was implemented in
+functionality,
+.Cm RFC 2389 ,
+and
+.Cm draft-ietf-ftpext-mlst-10
+support was implemented in
 .Nx 1.3
-and later releases by Luke Mewburn, based on work by Simon Burge.
+and later releases by Luke Mewburn <lukem@netbsd.org>.
 .Sh BUGS
 The server must run as the super-user to create sockets with
 privileged port numbers.

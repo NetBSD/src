@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpcmd.y,v 1.46 2000/05/20 02:20:18 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.46.2.1 2000/06/22 15:58:16 minoura Exp $	*/
 
 /*-
- * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.46 2000/05/20 02:20:18 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.46.2.1 2000/06/22 15:58:16 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ char	*fromname;
 
 	FEAT	OPTS
 
-	SIZE	MDTM
+	SIZE	MDTM	MLST	MLSD
 
 	LPRT	LPSV	EPRT	EPSV
 
@@ -225,12 +225,12 @@ cmd
 	| QUIT CRLF
 		{
 			if (logged_in) {
-				lreply(221, "");
-				lreply(0,
+				reply(-221, "");
+				reply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
 				    (qdfmt_t)total_data, PLURAL(total_data),
 				    (qdfmt_t)total_files, PLURAL(total_files));
-				lreply(0,
+				reply(0,
 	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
 				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
 				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
@@ -952,11 +952,8 @@ cmd
 						/* RFC 2389 */
 	| FEAT CRLF
 		{
-			lreply(211, "Features supported");
-			lreply(-1,  " MDTM");
-			lreply(-1,  " REST STREAM");
-			lreply(-1,  " SIZE");
-			reply(211,  "End");
+
+			feat();
 		}
 
 	| OPTS SP STRING CRLF
@@ -967,12 +964,9 @@ cmd
 		}
 
 
-						/* BSD extensions */
+				/* extensions from draft-ietf-ftpext-mlst-10 */
 
 		/*
-		 * SIZE is not in RFC 959, but Postel has blessed it and
-		 * it will be in the updated RFC.
-		 *
 		 * Return size of file in a format suitable for
 		 * using with RESTART (we just count bytes).
 		 */
@@ -985,9 +979,6 @@ cmd
 		}
 
 		/*
-		 * MDTM is not in RFC 959, but Postel has blessed it and
-		 * it will be in the updated RFC.
-		 *
 		 * Return modification time of file as an ISO 3307
 		 * style time. E.g. YYYYMMDDHHMMSS or YYYYMMDDHHMMSS.xxx
 		 * where xxx is the fractional second (of any precision,
@@ -1003,6 +994,7 @@ cmd
 					reply(550, "%s: not a plain file.", $4);
 				} else {
 					struct tm *t;
+
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
 					    "%04d%02d%02d%02d%02d%02d",
@@ -1013,6 +1005,32 @@ cmd
 			}
 			if ($4 != NULL)
 				free($4);
+		}
+
+	| MLST check_login SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				mlst($4);
+			if ($4 != NULL)
+				free($4);
+		}
+		
+	| MLST check_login CRLF
+		{
+			mlst(NULL);
+		}
+
+	| MLSD check_login SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				mlsd($4);
+			if ($4 != NULL)
+				free($4);
+		}
+		
+	| MLSD check_login CRLF
+		{
+			mlsd(NULL);
 		}
 
 	| error CRLF
@@ -1373,111 +1391,100 @@ check_upload
 #define	NSTR	8	/* Number followed by a string */
 #define NOARGS	9	/* No arguments allowed */
 
-struct tab {
-	char	*name;
-	short	 token;
-	short	 state;
-	short	 implemented;	/* 1 if command is implemented */
-	short	 hasopts;	/* 1 if command takes options */
-	char	*help;
-	char	*options;
-};
-
 struct tab cmdtab[] = {
 				/* From RFC 959, in order defined (5.3.1) */
-	{ "USER", USER, STR1,	1, 0,	"<sp> username" },
-	{ "PASS", PASS, ZSTR1,	1, 0,	"<sp> password" },
-	{ "ACCT", ACCT, STR1,	0, 0,	"(specify account)" },
-	{ "CWD",  CWD,  OSTR,	1, 0,	"[ <sp> directory-name ]" },
-	{ "CDUP", CDUP, NOARGS,	1, 0,	"(change to parent directory)" },
-	{ "SMNT", SMNT, ARGS,	0, 0,	"(structure mount)" },
-	{ "QUIT", QUIT, NOARGS,	1, 0,	"(terminate service)" },
-	{ "REIN", REIN, NOARGS,	0, 0,	"(reinitialize server state)" },
-	{ "PORT", PORT, ARGS,	1, 0,	"<sp> b0, b1, b2, b3, b4" },
-	{ "LPRT", LPRT, ARGS,	1, 0,	"<sp> af, hal, h1, h2, h3,..., pal, p1, p2..." },
-	{ "EPRT", EPRT, STR1,	1, 0,	"<sp> |af|addr|port|" },
-	{ "PASV", PASV, NOARGS,	1, 0,	"(set server in passive mode)" },
-	{ "LPSV", LPSV, ARGS,	1, 0,	"(set server in passive mode)" },
-	{ "EPSV", EPSV, ARGS,	1, 0,	"[<sp> af|ALL]" },
-	{ "TYPE", TYPE, ARGS,	1, 0,	"<sp> [ A | E | I | L ]" },
-	{ "STRU", STRU, ARGS,	1, 0,	"(specify file structure)" },
-	{ "MODE", MODE, ARGS,	1, 0,	"(specify transfer mode)" },
-	{ "RETR", RETR, STR1,	1, 0,	"<sp> file-name" },
-	{ "STOR", STOR, STR1,	1, 0,	"<sp> file-name" },
-	{ "STOU", STOU, STR1,	1, 0,	"<sp> file-name" },
-	{ "APPE", APPE, STR1,	1, 0,	"<sp> file-name" },
-	{ "ALLO", ALLO, ARGS,	1, 0,	"allocate storage (vacuously)" },
-	{ "REST", REST, ARGS,	1, 0,	"<sp> offset (restart command)" },
-	{ "RNFR", RNFR, STR1,	1, 0,	"<sp> file-name" },
-	{ "RNTO", RNTO, STR1,	1, 0,	"<sp> file-name" },
-	{ "ABOR", ABOR, NOARGS,	1, 0,	"(abort operation)" },
-	{ "DELE", DELE, STR1,	1, 0,	"<sp> file-name" },
-	{ "RMD",  RMD,  STR1,	1, 0,	"<sp> path-name" },
-	{ "MKD",  MKD,  STR1,	1, 0,	"<sp> path-name" },
-	{ "PWD",  PWD,  NOARGS,	1, 0,	"(return current directory)" },
-	{ "LIST", LIST, OSTR,	1, 0,	"[ <sp> path-name ]" },
-	{ "NLST", NLST, OSTR,	1, 0,	"[ <sp> path-name ]" },
-	{ "SITE", SITE, SITECMD, 1, 0,	"site-cmd [ <sp> arguments ]" },
-	{ "SYST", SYST, NOARGS,	1, 0,	"(get type of operating system)" },
-	{ "STAT", STAT, OSTR,	1, 0,	"[ <sp> path-name ]" },
-	{ "HELP", HELP, OSTR,	1, 0,	"[ <sp> <string> ]" },
-	{ "NOOP", NOOP, NOARGS,	1, 1,	"" },
+	{ "USER", USER, STR1,	1,	"<sp> username" },
+	{ "PASS", PASS, ZSTR1,	1,	"<sp> password" },
+	{ "ACCT", ACCT, STR1,	0,	"(specify account)" },
+	{ "CWD",  CWD,  OSTR,	1,	"[ <sp> directory-name ]" },
+	{ "CDUP", CDUP, NOARGS,	1,	"(change to parent directory)" },
+	{ "SMNT", SMNT, ARGS,	0,	"(structure mount)" },
+	{ "QUIT", QUIT, NOARGS,	1,	"(terminate service)" },
+	{ "REIN", REIN, NOARGS,	0,	"(reinitialize server state)" },
+	{ "PORT", PORT, ARGS,	1,	"<sp> b0, b1, b2, b3, b4" },
+	{ "LPRT", LPRT, ARGS,	1,	"<sp> af, hal, h1, h2, h3,..., pal, p1, p2..." },
+	{ "EPRT", EPRT, STR1,	1,	"<sp> |af|addr|port|" },
+	{ "PASV", PASV, NOARGS,	1,	"(set server in passive mode)" },
+	{ "LPSV", LPSV, ARGS,	1,	"(set server in passive mode)" },
+	{ "EPSV", EPSV, ARGS,	1,	"[<sp> af|ALL]" },
+	{ "TYPE", TYPE, ARGS,	1,	"<sp> [ A | E | I | L ]" },
+	{ "STRU", STRU, ARGS,	1,	"(specify file structure)" },
+	{ "MODE", MODE, ARGS,	1,	"(specify transfer mode)" },
+	{ "RETR", RETR, STR1,	1,	"<sp> file-name" },
+	{ "STOR", STOR, STR1,	1,	"<sp> file-name" },
+	{ "STOU", STOU, STR1,	1,	"<sp> file-name" },
+	{ "APPE", APPE, STR1,	1,	"<sp> file-name" },
+	{ "ALLO", ALLO, ARGS,	1,	"allocate storage (vacuously)" },
+	{ "REST", REST, ARGS,	1,	"<sp> offset (restart command)" },
+	{ "RNFR", RNFR, STR1,	1,	"<sp> file-name" },
+	{ "RNTO", RNTO, STR1,	1,	"<sp> file-name" },
+	{ "ABOR", ABOR, NOARGS,	1,	"(abort operation)" },
+	{ "DELE", DELE, STR1,	1,	"<sp> file-name" },
+	{ "RMD",  RMD,  STR1,	1,	"<sp> path-name" },
+	{ "MKD",  MKD,  STR1,	1,	"<sp> path-name" },
+	{ "PWD",  PWD,  NOARGS,	1,	"(return current directory)" },
+	{ "LIST", LIST, OSTR,	1,	"[ <sp> path-name ]" },
+	{ "NLST", NLST, OSTR,	1,	"[ <sp> path-name ]" },
+	{ "SITE", SITE, SITECMD, 1,	"site-cmd [ <sp> arguments ]" },
+	{ "SYST", SYST, NOARGS,	1,	"(get type of operating system)" },
+	{ "STAT", STAT, OSTR,	1,	"[ <sp> path-name ]" },
+	{ "HELP", HELP, OSTR,	1,	"[ <sp> <string> ]" },
+	{ "NOOP", NOOP, NOARGS,	2,	"" },
 
 				/* From RFC 2228, in order defined */
-	{ "AUTH", AUTH, STR1,	1, 0,	"<sp> mechanism-name" },
-	{ "ADAT", ADAT, STR1,	1, 0,	"<sp> base-64-data" },
-	{ "PROT", PROT, STR1,	1, 0,	"<sp> prot-code" },
-	{ "PBSZ", PBSZ, ARGS,	1, 0,	"<sp> decimal-integer" },
-	{ "CCC",  CCC,  NOARGS,	1, 0,	"(Disable data protection)" },
-	{ "MIC",  MIC,  STR1,	1, 0,	"<sp> base64data" },
-	{ "CONF", CONF, STR1,	1, 0,	"<sp> base64data" },
-	{ "ENC",  ENC,  STR1,	1, 0,	"<sp> base64data" },
+	{ "AUTH", AUTH, STR1,	1,	"<sp> mechanism-name" },
+	{ "ADAT", ADAT, STR1,	1,	"<sp> base-64-data" },
+	{ "PROT", PROT, STR1,	1,	"<sp> prot-code" },
+	{ "PBSZ", PBSZ, ARGS,	1,	"<sp> decimal-integer" },
+	{ "CCC",  CCC,  NOARGS,	1,	"(Disable data protection)" },
+	{ "MIC",  MIC,  STR1,	1,	"<sp> base64data" },
+	{ "CONF", CONF, STR1,	1,	"<sp> base64data" },
+	{ "ENC",  ENC,  STR1,	1,	"<sp> base64data" },
 
 				/* From RFC 2389, in order defined */
-	{ "FEAT", FEAT, NOARGS,	1, 0,	"(display extended features)" },
-	{ "OPTS", OPTS, STR1,	1, 0,	"<sp> command [ <sp> options ]" },
+	{ "FEAT", FEAT, NOARGS,	1,	"(display extended features)" },
+	{ "OPTS", OPTS, STR1,	1,	"<sp> command [ <sp> options ]" },
 
-				/* Non standardized extensions */
-	{ "SIZE", SIZE, OSTR,	1, 0,	"<sp> path-name" },
-	{ "MDTM", MDTM, OSTR,	1, 0,	"<sp> path-name" },
+				/* from draft-ietf-ftpext-mlst-10 */
+	{ "MDTM", MDTM, OSTR,	1,	"<sp> path-name" },
+	{ "SIZE", SIZE, OSTR,	1,	"<sp> path-name" },
+	{ "MLST", MLST, OSTR,	2,	"[ <sp> path-name ]" },
+	{ "MLSD", MLSD, OSTR,	1,	"[ <sp> directory-name ]" },
 
 				/* obsolete commands */
-	{ "MAIL", MAIL, OSTR,	0, 0,	"(mail to user)" },
-	{ "MLFL", MLFL, OSTR,	0, 0,	"(mail file)" },
-	{ "MRCP", MRCP, STR1,	0, 0,	"(mail recipient)" },
-	{ "MRSQ", MRSQ, OSTR,	0, 0,	"(mail recipient scheme question)" },
-	{ "MSAM", MSAM, OSTR,	0, 0,	"(mail send to terminal and mailbox)" },
-	{ "MSND", MSND, OSTR,	0, 0,	"(mail send to terminal)" },
-	{ "MSOM", MSOM, OSTR,	0, 0,	"(mail send to terminal or mailbox)" },
-	{ "XCUP", CDUP, NOARGS,	1, 0,	"(change to parent directory)" },
-	{ "XCWD", CWD,  OSTR,	1, 0,	"[ <sp> directory-name ]" },
-	{ "XMKD", MKD,  STR1,	1, 0,	"<sp> path-name" },
-	{ "XPWD", PWD,  NOARGS,	1, 0,	"(return current directory)" },
-	{ "XRMD", RMD,  STR1,	1, 0,	"<sp> path-name" },
+	{ "MAIL", MAIL, OSTR,	0,	"(mail to user)" },
+	{ "MLFL", MLFL, OSTR,	0,	"(mail file)" },
+	{ "MRCP", MRCP, STR1,	0,	"(mail recipient)" },
+	{ "MRSQ", MRSQ, OSTR,	0,	"(mail recipient scheme question)" },
+	{ "MSAM", MSAM, OSTR,	0,	"(mail send to terminal and mailbox)" },
+	{ "MSND", MSND, OSTR,	0,	"(mail send to terminal)" },
+	{ "MSOM", MSOM, OSTR,	0,	"(mail send to terminal or mailbox)" },
+	{ "XCUP", CDUP, NOARGS,	1,	"(change to parent directory)" },
+	{ "XCWD", CWD,  OSTR,	1,	"[ <sp> directory-name ]" },
+	{ "XMKD", MKD,  STR1,	1,	"<sp> path-name" },
+	{ "XPWD", PWD,  NOARGS,	1,	"(return current directory)" },
+	{ "XRMD", RMD,  STR1,	1,	"<sp> path-name" },
 
-	{ NULL,   0,    0,	0, 0,	0 }
+	{  NULL,  0,	0,	0,	0 }
 };
 
 struct tab sitetab[] = {
-	{ "CHMOD", CHMOD, NSTR,	1, 0,	"<sp> mode <sp> file-name" },
-	{ "HELP",  HELP,  OSTR,	1, 0,	"[ <sp> <string> ]" },
-	{ "IDLE",  IDLE,  ARGS,	1, 0,	"[ <sp> maximum-idle-time ]" },
-	{ "RATEGET", RATEGET, OSTR, 1,0,"[ <sp> get-throttle-rate ]" },
-	{ "RATEPUT", RATEPUT, OSTR, 1,0,"[ <sp> put-throttle-rate ]" },
-	{ "UMASK", UMASK, ARGS,	1, 0,	"[ <sp> umask ]" },
-	{ NULL,    0,     0,	0, 0,	0 }
+	{ "CHMOD",   	CHMOD,	NSTR, 1,	"<sp> mode <sp> file-name" },
+	{ "HELP",    	HELP,	OSTR, 1,	"[ <sp> <string> ]" },
+	{ "IDLE",    	IDLE,	ARGS, 1,	"[ <sp> maximum-idle-time ]" },
+	{ "RATEGET", 	RATEGET,OSTR, 1,	"[ <sp> get-throttle-rate ]" },
+	{ "RATEPUT", 	RATEPUT,OSTR, 1,	"[ <sp> put-throttle-rate ]" },
+	{ "UMASK",   	UMASK,	ARGS, 1,	"[ <sp> umask ]" },
+	{ NULL,		0,     0,     0,	NULL }
 };
 
-static	void	 	help(struct tab *, const char *);
-static	struct tab     *lookup(struct tab *, const char *);
-static	void		opts(const char *);
-static	void		sizecmd(char *);
+static	void		help(struct tab *, const char *);
 static	void		toolong(int);
 static	int		yylex(void);
 
 extern int epsvall;
 
-static struct tab *
+struct tab *
 lookup(struct tab *p, const char *cmd)
 {
 
@@ -1495,7 +1502,6 @@ lookup(struct tab *p, const char *cmd)
 char *
 getline(char *s, int n, FILE *iop)
 {
-	off_t b;
 	int c;
 	char *cs;
 
@@ -1528,9 +1534,7 @@ getline(char *s, int n, FILE *iop)
 				c = getc(iop);
 				total_bytes++;
 				total_bytes_in++;
-				b = printf("%c%c%c", IAC, DONT, 0377&c);
-				total_bytes += b;
-				total_bytes_out += b;
+				cprintf(stdout, "%c%c%c", IAC, DONT, 0377&c);
 				(void) fflush(stdout);
 				continue;
 			case DO:
@@ -1538,9 +1542,7 @@ getline(char *s, int n, FILE *iop)
 				c = getc(iop);
 				total_bytes++;
 				total_bytes_in++;
-				b = printf("%c%c%c", IAC, WONT, 0377&c);
-				total_bytes += b;
-				total_bytes_out += b;
+				cprintf(stdout, "%c%c%c", IAC, WONT, 0377&c);
 				(void) fflush(stdout);
 				continue;
 			case IAC:
@@ -1630,7 +1632,7 @@ yylex(void)
 		p = lookup(cmdtab, cbuf);
 		cbuf[cpos] = c;
 		if (p != NULL) {
-			if (p->implemented == 0) {
+			if (! CMD_IMPLEMENTED(p)) {
 				reply(502, "%s command not implemented.",
 				    p->name);
 				hasyyerrored = 1;
@@ -1655,7 +1657,7 @@ yylex(void)
 		p = lookup(sitetab, cp);
 		cbuf[cpos] = c;
 		if (p != NULL) {
-			if (p->implemented == 0) {
+			if (!CMD_IMPLEMENTED(p)) {
 				reply(502, "SITE %s command not implemented.",
 				    p->name);
 				hasyyerrored = 1;
@@ -1846,7 +1848,6 @@ help(struct tab *ctab, const char *s)
 {
 	struct tab *c;
 	int width, NCMDS;
-	off_t b;
 	char *type;
 
 	if (ctab == sitetab)
@@ -1866,47 +1867,35 @@ help(struct tab *ctab, const char *s)
 		int i, j, w;
 		int columns, lines;
 
-		lreply(214, "");
-		lreply(0, "The following %scommands are recognized.", type);
-		lreply(0, "(`-' = not implemented, `+' = supports options)");
+		reply(-214, "");
+		reply(0, "The following %scommands are recognized.", type);
+		reply(0, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
 		lines = (NCMDS + columns - 1) / columns;
 		for (i = 0; i < lines; i++) {
-			b = printf("    ");
-			total_bytes += b;
-			total_bytes_out += b;
+			cprintf(stdout, "    ");
 			for (j = 0; j < columns; j++) {
 				c = ctab + j * lines + i;
-				b = printf("%s", c->name);
-				total_bytes += b;
-				total_bytes_out += b;
+				cprintf(stdout, "%s", c->name);
 				w = strlen(c->name);
-				if (! c->implemented) {
-					putchar('-');
-					total_bytes++;
-					total_bytes_out++;
+				if (! CMD_IMPLEMENTED(c)) {
+					CPUTC('-', stdout);
 					w++;
 				}
-				if (c->hasopts) {
-					putchar('+');
-					total_bytes++;
-					total_bytes_out++;
+				if (CMD_HAS_OPTIONS(c)) {
+					CPUTC('+', stdout);
 					w++;
 				}
 				if (c + lines >= &ctab[NCMDS])
 					break;
 				while (w < width) {
-					putchar(' ');
-					total_bytes++;
-					total_bytes_out++;
+					CPUTC(' ', stdout);
 					w++;
 				}
 			}
-			b = printf("\r\n");
-			total_bytes += b;
-			total_bytes_out += b;
+			cprintf(stdout, "\r\n");
 		}
 		(void) fflush(stdout);
 		reply(214, "Direct comments to ftp-bugs@%s.", hostname);
@@ -1917,83 +1906,9 @@ help(struct tab *ctab, const char *s)
 		reply(502, "Unknown command %s.", s);
 		return;
 	}
-	if (c->implemented)
+	if (CMD_IMPLEMENTED(c))
 		reply(214, "Syntax: %s%s %s", type, c->name, c->help);
 	else
 		reply(214, "%s%-*s\t%s; not implemented.", type, width,
 		    c->name, c->help);
-}
-
-static void
-sizecmd(char *filename)
-{
-	switch (type) {
-	case TYPE_L:
-	case TYPE_I: {
-		struct stat stbuf;
-		if (stat(filename, &stbuf) < 0 || !S_ISREG(stbuf.st_mode))
-			reply(550, "%s: not a plain file.", filename);
-		else
-			reply(213, "%qu", (qufmt_t)stbuf.st_size);
-		break; }
-	case TYPE_A: {
-		FILE *fin;
-		int c;
-		off_t count;
-		struct stat stbuf;
-		fin = fopen(filename, "r");
-		if (fin == NULL) {
-			perror_reply(550, filename);
-			return;
-		}
-		if (fstat(fileno(fin), &stbuf) < 0 || !S_ISREG(stbuf.st_mode)) {
-			reply(550, "%s: not a plain file.", filename);
-			(void) fclose(fin);
-			return;
-		}
-
-		count = 0;
-		while((c=getc(fin)) != EOF) {
-			if (c == '\n')	/* will get expanded to \r\n */
-				count++;
-			count++;
-		}
-		(void) fclose(fin);
-
-		reply(213, "%qd", (qdfmt_t)count);
-		break; }
-	default:
-		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
-	}
-}
-
-static void
-opts(const char *command)
-{
-	struct tab *c;
-	char *ep;
-
-	if ((ep = strchr(command, ' ')) != NULL)
-		*ep++ = '\0';
-	c = lookup(cmdtab, command);
-	if (c == NULL) {
-		reply(502, "Unknown command %s.", command);
-		return;
-	}
-	if (c->implemented == 0) {
-		reply(502, "%s command not implemented.", c->name);
-		return;
-	}
-	if (c->hasopts == 0) {
-		reply(501, "%s command does not support persistent options.",
-		    c->name);
-		return;
-	}
-
-	if (ep != NULL && *ep != '\0')
-		REASSIGN(c->options, xstrdup(ep));
-	if (c->options != NULL)
-		reply(200, "Options for %s are '%s'.", c->name, c->options);
-	else
-		reply(200, "No options defined for %s.", c->name);
 }

@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.40 2000/03/05 06:12:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.40.2.1 2000/06/22 15:58:14 minoura Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
-SRCTOP=	../..
-.include <bsd.crypto.mk>
-
 PROG=	ftpd
-SRCS=	conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
+SRCS=	cmds.c conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
 CPPFLAGS+=-DHASSETPROCTITLE
+# CPPFLAGS+=-DDEBUG		# XXX for lukem testing
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
 MAN=	ftpd.conf.5 ftpusers.5 ftpd.8
@@ -27,8 +25,19 @@ LDADD+= -lskey
 
 ftpd.o ftpcmd.o: version.h
 
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/libexec/ftpd/Makefile.frag"
-.endif
+# XXX Kerberos support is broken right now.
+#.PATH:	${.CURDIR}/../../usr.bin/login
+
+#.ifdef KERBEROS5
+#SRCS+=	k5login.c
+#CPPFLAGS+=-DKERBEROS5
+#DPADD+= ${LIBKRB5} ${LIBK5CRYPTO} ${LIBCOM_ERR}
+#LDADD+= -lkrb5 -lk5crypto -lcom_err
+#.else
+#SRCS+=	klogin.c
+#CPPFLAGS+=-DKERBEROS
+#DPADD+= ${LIBKRB} ${LIBDES} ${LIBCOM_ERR}
+#LDADD+= -lkrb -kdes -lcom_err
+#.endif
 
 .include <bsd.prog.mk>

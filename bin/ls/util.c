@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 1999/02/17 15:28:09 kleink Exp $	*/
+/*	$NetBSD: util.c,v 1.17.8.1 2000/06/22 15:03:44 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.17 1999/02/17 15:28:09 kleink Exp $");
+__RCSID("$NetBSD: util.c,v 1.17.8.1 2000/06/22 15:03:44 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,16 +58,16 @@ __RCSID("$NetBSD: util.c,v 1.17 1999/02/17 15:28:09 kleink Exp $");
 #include "extern.h"
 
 void
-prcopy(src, dest, len)
-	char *src, *dest;
-	int len;
+printescaped(src)
+	const char *src;
 {
-	int ch;
+	int c;
 
-	while (len--) {
-		ch = *src++;
-		*dest++ = isprint(ch) ? ch : '?';
-	}
+	while ((c = *src++) != '\0')
+		if (isprint(c))
+			(void)putchar(c);
+		else
+			(void)putchar('?');
 }
 
 void

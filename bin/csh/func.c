@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.17 1998/08/19 01:31:46 thorpej Exp $	*/
+/*	$NetBSD: func.c,v 1.17.8.1 2000/06/22 15:03:42 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.17 1998/08/19 01:31:46 thorpej Exp $");
+__RCSID("$NetBSD: func.c,v 1.17.8.1 2000/06/22 15:03:42 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -639,7 +639,7 @@ search(type, level, goal)
     int level;
     Char   *goal;
 {
-    Char    wordbuf[BUFSIZ];
+    Char    wordbuf[BUFSIZE];
     Char *aword = wordbuf;
     Char *cp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.14 1999/11/29 10:59:02 pk Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.14.2.1 2000/06/22 15:58:33 minoura Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.14 1999/11/29 10:59:02 pk Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.14.2.1 2000/06/22 15:58:33 minoura Exp $");
 #endif
 
 #include <sys/param.h>
@@ -36,14 +36,14 @@ __RCSID("$NetBSD: rquotad.c,v 1.14 1999/11/29 10:59:02 pk Exp $");
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
 
-void rquota_service __P((struct svc_req *request, SVCXPRT *transp));
-void sendquota __P((struct svc_req *request, SVCXPRT *transp));
-void printerr_reply __P((SVCXPRT *transp));
-void initfs __P((void));
-int getfsquota __P((long id, char *path, struct dqblk *dqblk));
-int hasquota __P((struct fstab *fs, char **qfnamep));
-void cleanup __P((int));
-int main __P((int, char *[]));
+void rquota_service(struct svc_req *request, SVCXPRT *transp);
+void sendquota(struct svc_req *request, SVCXPRT *transp);
+void printerr_reply(SVCXPRT *transp);
+void initfs(void);
+int getfsquota(long id, char *path, struct dqblk *dqblk);
+int hasquota(struct fstab *fs, char **qfnamep);
+void cleanup(int);
+int main(int, char *[]);
 
 /*
  * structure containing informations about ufs filesystems
@@ -61,36 +61,28 @@ char *qfextension[] = INITQFNAMES;
 int from_inetd = 1;
 
 void 
-cleanup(dummy)
-	int dummy;
+cleanup(int dummy)
 {
 
-	(void)pmap_unset(RQUOTAPROG, RQUOTAVERS);
+	(void)rpcb_unset(RQUOTAPROG, RQUOTAVERS, NULL);
 	exit(0);
 }
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
-	int sock = 0;
-	int proto = 0;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen;
 
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0)
 		from_inetd = 0;
-		sock = RPC_ANYSOCK;
-		proto = IPPROTO_UDP;
-	}
 
 	if (!from_inetd) {
 		daemon(0, 0);
 
-		(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
+		(void) rpcb_unset(RQUOTAPROG, RQUOTAVERS, NULL);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
@@ -100,17 +92,24 @@ main(argc, argv)
 	openlog("rpc.rquotad", LOG_PID, LOG_DAEMON);
 
 	/* create and register the service */
-	transp = svcudp_create(sock);
-	if (transp == NULL) {
-		syslog(LOG_ERR, "couldn't create udp service.");
-		exit(1);
-	}
-	if (!svc_register(transp, RQUOTAPROG, RQUOTAVERS, rquota_service,
-	    proto)) {
-		syslog(LOG_ERR,
-		    "unable to register (RQUOTAPROG, RQUOTAVERS, %s).",
-		    proto ? "udp" : "(inetd)");
-		exit(1);
+	if (from_inetd) {
+		transp = svc_dg_create(0, 0, 0);
+		if (transp == NULL) {
+			syslog(LOG_ERR, "couldn't create udp service.");
+			exit(1);
+		}
+		if (!svc_reg(transp, RQUOTAPROG, RQUOTAVERS, rquota_service,
+		    NULL)) {
+			syslog(LOG_ERR,
+			    "unable to register (RQUOTAPROG, RQUOTAVERS).");
+			exit(1);
+		}
+	} else {
+		if (!svc_create(rquota_service, RQUOTAPROG, RQUOTAVERS, "udp")){
+			syslog(LOG_ERR,
+			    "unable to create (RQUOTAPROG, RQUOTAVERS).");
+			exit(1);
+		}
 	}
 
 	initfs();		/* init the fs_stat list */
@@ -120,9 +119,7 @@ main(argc, argv)
 }
 
 void 
-rquota_service(request, transp)
-	struct svc_req *request;
-	SVCXPRT *transp;
+rquota_service(struct svc_req *request, SVCXPRT *transp)
 {
 	switch (request->rq_proc) {
 	case NULLPROC:
@@ -144,9 +141,7 @@ rquota_service(request, transp)
 
 /* read quota for the specified id, and send it */
 void 
-sendquota(request, transp)
-	struct svc_req *request;
-	SVCXPRT *transp;
+sendquota(struct svc_req *request, SVCXPRT *transp)
 {
 	struct getquota_args getq_args;
 	struct getquota_rslt getq_rslt;
@@ -196,8 +191,7 @@ sendquota(request, transp)
 }
 
 void 
-printerr_reply(transp)	/* when a reply to a request failed */
-	SVCXPRT *transp;
+printerr_reply(SVCXPRT *transp)	/* when a reply to a request failed */
 {
 	char   *name;
 	struct sockaddr_in *caller;
@@ -264,10 +258,7 @@ initfs()
  * Return 0 if fail, 1 otherwise
  */
 int
-getfsquota(id, path, dqblk)
-	long id;
-	char   *path;
-	struct dqblk *dqblk;
+getfsquota(long id, char *path, struct dqblk *dqblk)
 {
 	struct stat st_path;
 	struct fs_stat *fs;
@@ -323,9 +314,7 @@ getfsquota(id, path, dqblk)
  * Comes from quota.c, NetBSD 0.9
  */
 int
-hasquota(fs, qfnamep)
-	struct fstab *fs;
-	char  **qfnamep;
+hasquota(struct fstab *fs, char **qfnamep)
 {
 	static char initname, usrname[100];
 	static char buf[MAXPATHLEN];
