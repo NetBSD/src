@@ -35,12 +35,14 @@
 #include "make_cmds.h"
 #include "parse.h"
 
-RCSID("$Id: lex.l,v 1.2 2001/02/11 16:08:42 assar Exp $");
+RCSID("$Id: lex.l,v 1.3 2001/02/11 17:59:15 assar Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);
 
 #define YY_NO_UNPUT
+
+#undef ECHO
 
 %}
 
