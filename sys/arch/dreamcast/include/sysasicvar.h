@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasicvar.h,v 1.2 2002/03/24 18:21:09 uch Exp $	*/
+/*	$NetBSD: sysasicvar.h,v 1.3 2002/11/15 13:29:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,13 +39,17 @@
 #ifndef _DREAMCAST_SYSASICVAR_H_
 #define	_DREAMCAST_SYSASICVAR_H_
 
-#define SYSASIC_EVENT_GDROM  32
-#define SYSASIC_EVENT_AICA   33
-#define SYSASIC_EVENT_EXT    35
-#define SYSASIC_EVENT_MAX    63
+#define SYSASIC_EVENT_MAPLE_DMADONE	12
+#define SYSASIC_EVENT_MAPLE_ERROR	13
+#define SYSASIC_EVENT_GDROM		32
+#define SYSASIC_EVENT_AICA		33
+#define SYSASIC_EVENT_EXT		35
+#define SYSASIC_EVENT_MAX		65
 
-void	*sysasic_intr_establish(int, int (*ih_fun)(void *), void *);
-void    sysasic_intr_disestablish(void *);
+const char *__pure sysasic_intr_string(int /*ipl*/) __attribute__((__const__));
+void	*sysasic_intr_establish(int /*event*/, int /*ipl*/,
+	    int (*ih_fun)(void *), void *);
+void	sysasic_intr_disestablish(void *);
+void	sysasic_intr_enable(void *, int /*on*/);
 
 #endif /* !_DREAMCAST_SYSASICVAR_H_ */
-

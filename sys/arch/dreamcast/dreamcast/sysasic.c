@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.3 2002/09/27 15:35:58 provos Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.4 2002/11/15 13:29:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,66 +36,131 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/syslog.h>
 
 #include <sh3/exception.h>
 
 #include <machine/intr.h>
 #include <machine/sysasicvar.h>
 
+#define SYSASIC_INTR_ST		0xa05f6900
+#define SYSASIC_INTR_EN(level)	(0xa05f6910 + ((level) << 4))
+
 #define SYSASIC_IRQ_LEVEL_13	0
 #define SYSASIC_IRQ_LEVEL_11	1
 #define SYSASIC_IRQ_LEVEL_9	2
 #define SYSASIC_IRQ_LEVEL_MAX	2
+#define SYSASIC_IRQ_INDEX_TO_IRQ(i)	(13 - 2 * (i))
 
+#define IPL_IRL9	IPL_BIO
+#define IPL_IRL11	IPL_NET
+#define IPL_IRL13	IPL_TTY
+
+/* per-irq */
 struct sysasic_intrhand {
+	/* for quick check on interrupt */
+	unsigned	syh_events[(SYSASIC_EVENT_MAX + 1 + (32 - 1)) / 32];
+#define SYSASIC_EVENT_NMAP	((SYSASIC_EVENT_MAX + 1 + (32 - 1)) / 32)
+#define SYSASIC_EVENT_INTR_MAP(ev)	((ev) >> 5)
+#define SYSASIC_EVENT_INTR_BIT(ev)	((unsigned) 1 << ((ev) & 31))
+
 	void	*syh_intc;
-	int	syh_event;
 	int	syh_idx;
 } sysasic_intrhand[SYSASIC_IRQ_LEVEL_MAX + 1];
 
-void sysasic_intr_enable(struct sysasic_intrhand *, int);
+/* per-event */
+struct	syh_eventhand {
+	int	(*hnd_fn)(void *);	/* sub handler */
+	void	*hnd_arg;
+	struct sysasic_intrhand *hnd_syh;
+} sysasic_eventhand[SYSASIC_EVENT_MAX + 1];
+
+int sysasic_intr(void *);
+
+const char * __pure
+sysasic_intr_string(int ipl)
+{
+
+	switch (ipl) {
+	default:
+#ifdef DEBUG
+		panic("sysasic_intr_string: unknown ipl %d", ipl);
+#endif
+	case IPL_IRL9:
+		return "SH4 IRL 9";
+	case IPL_IRL11:
+		return "SH4 IRL 11";
+	case IPL_IRL13:
+		return "SH4 IRL 13";
+	}
+	/* NOTREACHED */
+}
 
 /*
  * Set up an interrupt handler to start being called.
  */
 void *
-sysasic_intr_establish(int event, int (*ih_fun)(void *), void *ih_arg)
+sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
 {
 	struct sysasic_intrhand *syh;
-	int evtcode, ipl, idx;
+	struct syh_eventhand *hnd;
+	int idx;
+	static const int idx2evt[3] = {
+		SH_INTEVT_IRL13, SH_INTEVT_IRL11, SH_INTEVT_IRL9
+	};
+#ifdef DEBUG
+	int i;
+#endif
 
-	if (event < 0 || event > SYSASIC_EVENT_MAX)
-		panic("invalid sysasic event %d", event);
+	KDASSERT(event >= 0 && event <= SYSASIC_EVENT_MAX);
+	KDASSERT(ih_fun);
 
 	/*
-	 * Dreamcast use SH4 INTC as IRL mode. if INTEVT code is specified,
+	 * Dreamcast use SH4 INTC as IRL mode.  If IRQ is specified,
 	 * its priority level is fixed.
+	 *
+	 * We use IPL to specify the IRQ to trap programming errors. :D
 	 */
-	switch (event) {
-	case SYSASIC_EVENT_EXT:
-		idx = SYSASIC_IRQ_LEVEL_11;
-		ipl = IPL_NET;
-		evtcode = SH_INTEVT_IRL11;
-		break;
-	case SYSASIC_EVENT_GDROM:
-		idx = SYSASIC_IRQ_LEVEL_9;
-		ipl = IPL_BIO;
-		evtcode = SH_INTEVT_IRL9;
-		break;
+	switch (ipl) {
 	default:
-		panic("vaild but unknown event %d", event);
+#ifdef DEBUG
+		panic("sysasic_intr_establish: unknown ipl %d", ipl);
+#endif
+	case IPL_IRL9:
+		idx = SYSASIC_IRQ_LEVEL_9;
+		break;
+	case IPL_IRL11:
+		idx = SYSASIC_IRQ_LEVEL_11;
+		break;
+	case IPL_IRL13:
+		idx = SYSASIC_IRQ_LEVEL_13;
+		break;
 	}
 
 	syh = &sysasic_intrhand[idx];
 
-	syh->syh_event	= event;
-	syh->syh_idx	= idx;
-	syh->syh_intc	= intc_intr_establish(evtcode, IST_LEVEL, ipl,
-	    ih_fun, ih_arg);
+	if (syh->syh_intc == NULL) {
+		syh->syh_idx	= idx;
+		syh->syh_intc	= intc_intr_establish(idx2evt[idx], IST_LEVEL,
+		    ipl, sysasic_intr, syh);
+	}
 
-	sysasic_intr_enable(syh, 1);
+#ifdef DEBUG
+	/* check if the event handler is already installed */
+	for (i = 0; i <= SYSASIC_IRQ_LEVEL_MAX; i++)
+		if ((sysasic_intrhand[i].syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+		    SYSASIC_EVENT_INTR_BIT(event)) != 0)
+			panic("sysasic_intr_establish: event %d already insatlled irq %d",
+			    event, SYSASIC_IRQ_INDEX_TO_IRQ(i));
+#endif
 
-	return (void *)syh;
+	hnd = &sysasic_eventhand[event];
+	hnd->hnd_fn = ih_fun;
+	hnd->hnd_arg = ih_arg;
+	hnd->hnd_syh = syh;
+	sysasic_intr_enable(hnd, 1);
+
+	return (void *)hnd;
 }
 
 /*
@@ -104,27 +169,146 @@ sysasic_intr_establish(int event, int (*ih_fun)(void *), void *ih_arg)
 void
 sysasic_intr_disestablish(void *arg)
 {
-	struct sysasic_intrhand *syh = arg;
+	struct syh_eventhand *hnd = arg;
+	struct sysasic_intrhand *syh;
 	int event;
+	int i;
 
-	event = syh->syh_event;
+	event = hnd - sysasic_eventhand;
+	KDASSERT(event >= 0 && event <= SYSASIC_EVENT_MAX);
+	syh = hnd->hnd_syh;
 
-	if (event < 0 || event > SYSASIC_EVENT_MAX)
-		panic("invalid sysasic event %d", event);
+#ifdef DISAGNOSTIC
+	if (syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
+		panic("sysasic_intr_disestablish: event %d not installed for irq %d",
+		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
+#endif
 
-	sysasic_intr_enable(syh, 0);
+	sysasic_intr_enable(hnd, 0);
+	hnd->hnd_fn = 0;
+	hnd->hnd_arg = 0;
+	hnd->hnd_syh = 0;
+
+	/* deinstall intrc if no event exists */
+	for (i = 0; i < SYSASIC_EVENT_NMAP; i++)
+		if (syh->syh_events[i])
+			return;
 	intc_intr_disestablish(syh->syh_intc);
+	syh->syh_intc = 0;
 }
 
 void
-sysasic_intr_enable(struct sysasic_intrhand *syh, int on)
+sysasic_intr_enable(void *arg, int on)
 {
-	int event = syh->syh_event;
-	__volatile u_int32_t *masks =
-	    (__volatile u_int32_t *)(0xa05f6910 + (syh->syh_idx << 4));
+	struct syh_eventhand *hnd = arg;
+	struct sysasic_intrhand *syh;
+	int event;
+	__volatile u_int32_t *masks, *stats;
+	int evmap;
+	unsigned evbit;
 
-	masks[0] = 0;
-	masks[1] = 0;
-	if (on)
-		masks[event >> 5] = 1 << (event & 31);
+	event = hnd - sysasic_eventhand;
+	KDASSERT(event >= 0 && event <= SYSASIC_EVENT_MAX);
+	syh = hnd->hnd_syh;
+
+#ifdef DISAGNOSTIC
+	if (syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
+		panic("sysasic_intr_enable: event %d not installed for irq %d",
+		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
+#endif
+
+	masks = (__volatile u_int32_t *) SYSASIC_INTR_EN(syh->syh_idx);
+	stats = (__volatile u_int32_t *) SYSASIC_INTR_ST;
+	evmap = SYSASIC_EVENT_INTR_MAP(event);
+	evbit = SYSASIC_EVENT_INTR_BIT(event);
+
+	if (on) {
+		/* clear pending event if any */
+		stats[evmap] = evbit;
+
+		/* set event map */
+		syh->syh_events[evmap] |= evbit;
+
+		/* enable interrupt */
+		masks[evmap] = syh->syh_events[evmap];
+	} else {
+		/* disable interrupt */
+		masks[evmap] = syh->syh_events[evmap] & ~evbit;
+
+		/* clear pending event if any */
+		stats[evmap] = evbit;
+
+		/* clear event map */
+		syh->syh_events[evmap] &= ~evbit;
+	}
+}
+
+int
+sysasic_intr(void *arg)
+{
+	struct sysasic_intrhand *syh = arg;
+	unsigned ev;
+	int n, pos;
+	u_int32_t *evwatched;
+	__volatile u_int32_t *evmap;
+	struct syh_eventhand *evh;
+#ifdef DEBUG
+	int handled = 0;
+	static int reportcnt = 10;
+#endif
+
+	/* bitmap of watched events */
+	evwatched = syh->syh_events;
+
+	/* status / clear */
+	evmap = (__volatile u_int32_t *) SYSASIC_INTR_ST;
+
+	for (n = 0; n < (SYSASIC_EVENT_NMAP << 5); n |= 31, n++, evmap++) {
+		if ((ev = *evwatched++) && (ev &= *evmap)) {
+
+			/* clear interrupts */
+			*evmap = ev;
+
+			n--;	/* to point at current bit after  n += pos */
+
+			/* call handlers */
+			do {
+				pos = ffs(ev);
+				n += pos;
+#ifdef __OPTIMIZE__
+				/* optimized, assuming 1 <= pos <= 32 */
+				asm("shld	%2,%0"
+				    : "=r" (ev) : "0" (ev), "r" (-pos));
+#else
+				/* ``shift count >= bit width'' is undefined */
+				if (pos >= 32)
+					ev = 0;
+				else
+					ev >>= pos;
+#endif
+
+				evh = &sysasic_eventhand[n];
+#ifdef DEBUG
+				KDASSERT(evh->hnd_fn);
+				if ((*evh->hnd_fn)(evh->hnd_arg))
+					handled = 1;
+#else
+				(*evh->hnd_fn)(evh->hnd_arg);
+#endif
+			} while (ev);
+		}
+	}
+
+#ifdef DEBUG
+	if (!handled && reportcnt > 0) {
+		reportcnt--;
+		log(LOG_ERR, "sysasic_intr: stray irq%d interrupt%s\n",
+		    SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx),
+		    reportcnt == 0 ? "; stopped logging" : "");
+	}
+#endif
+
+	return 0;
 }
