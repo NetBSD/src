@@ -1,4 +1,4 @@
-/* $NetBSD: local.h,v 1.1.1.3 2004/03/25 19:02:09 atatat Exp $ */
+/* $NetBSD: local.h,v 1.1.1.4 2005/03/15 02:05:54 atatat Exp $ */
 /*
  * Copyright (c) 2000-2002, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
@@ -12,7 +12,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: local.h,v 1.51.2.2 2004/01/09 18:32:44 ca Exp
+ *	Id: local.h,v 1.53 2004/01/09 18:34:22 ca Exp
  */
 
 /*

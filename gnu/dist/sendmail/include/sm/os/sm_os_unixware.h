@@ -1,4 +1,4 @@
-/* $NetBSD: sm_os_unixware.h,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $ */
+/* $NetBSD: sm_os_unixware.h,v 1.1.1.3 2005/03/15 02:05:52 atatat Exp $ */
 /*
  * Copyright (c) 2001, 2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: sm_os_unixware.h,v 1.7.2.1 2002/10/24 18:02:14 ca Exp
+ *	Id: sm_os_unixware.h,v 1.8 2002/10/24 18:04:54 ca Exp
  */
 
 #define SM_OS_NAME	"unixware"

@@ -1,4 +1,4 @@
-/* $NetBSD: errstring.h,v 1.1.1.3 2004/03/25 19:01:45 atatat Exp $ */
+/* $NetBSD: errstring.h,v 1.1.1.4 2005/03/15 02:05:51 atatat Exp $ */
 /*
  * Copyright (c) 1998-2001, 2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: errstring.h,v 1.4.4.3 2003/06/24 17:16:10 ca Exp
+ *	Id: errstring.h,v 1.9 2003/12/10 03:19:06 gshapiro Exp
  */
 
 /*
@@ -18,7 +18,9 @@
 # define SM_ERRSTRING_H
 
 #include <errno.h>
+#if NEEDINTERRNO
 extern int errno;
+#endif /* NEEDINTERRNO */
 
 /*
 **  These are used in a few cases where we need some special
@@ -45,6 +47,7 @@ extern int errno;
 #define E_DNSBASE	(E_PSEUDOBASE + 20)	/* base for DNS h_errno */
 #define E_SMDBBASE	(E_PSEUDOBASE + 40)	/* base for libsmdb errors */
 #define E_LDAPBASE	(E_PSEUDOBASE + 70)	/* base for LDAP errors */
+#define E_LDAPURLBASE	(E_PSEUDOBASE + 200)	/* base for LDAP URL errors */
 
 
 /* libsmdb */

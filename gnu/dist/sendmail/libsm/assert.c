@@ -1,7 +1,7 @@
-/* $NetBSD: assert.c,v 1.1.1.3 2004/03/25 19:02:00 atatat Exp $ */
+/* $NetBSD: assert.c,v 1.1.1.4 2005/03/15 02:05:53 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: assert.c,v 1.1.1.3 2004/03/25 19:02:00 atatat Exp $");
+__RCSID("$NetBSD: assert.c,v 1.1.1.4 2005/03/15 02:05:53 atatat Exp $");
 #endif
 
 /*
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: assert.c,v 1.1.1.3 2004/03/25 19:02:00 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: assert.c,v 1.25.2.1 2003/12/05 22:44:17 ca Exp")
+SM_RCSID("@(#)Id: assert.c,v 1.26 2003/12/05 22:45:24 ca Exp")
 
 /*
 **  Abnormal program termination and assertion checking.

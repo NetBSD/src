@@ -1,7 +1,7 @@
-/* $NetBSD: refill.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $ */
+/* $NetBSD: refill.c,v 1.1.1.3 2005/03/15 02:05:55 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: refill.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $");
+__RCSID("$NetBSD: refill.c,v 1.1.1.3 2005/03/15 02:05:55 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: refill.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: refill.c,v 1.49.2.1 2002/09/09 21:38:08 gshapiro Exp")
+SM_RCSID("@(#)Id: refill.c,v 1.50 2002/09/09 21:50:10 gshapiro Exp")
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>

@@ -6,8 +6,8 @@ NNAAMMEE
        makemap - create database maps for sendmail
 
 SSYYNNOOPPSSIISS
-       mmaakkeemmaapp  [--CC  _f_i_l_e]  [--NN]  [--cc _c_a_c_h_e_s_i_z_e] [--dd] [--ee] [--ff] [--ll] [--oo] [--rr]
-       [--ss] [--tt _d_e_l_i_m] [--uu] [--vv] _m_a_p_t_y_p_e _m_a_p_n_a_m
+       mmaakkeemmaapp  [--CC  _f_i_l_e] [--NN] [--cc _c_a_c_h_e_s_i_z_e] [--dd] [--DD _c_o_m_m_e_n_t_c_h_a_r] [--ee] [--ff]
+       [--ll] [--oo] [--rr] [--ss] [--tt _d_e_l_i_m] [--uu] [--vv] _m_a_p_t_y_p_e _m_a_p_n_a_m
 
 DDEESSCCRRIIPPTTIIOONN
        MMaakkeemmaapp creates the database maps used by  the  keyed  map  lookups  in
@@ -46,27 +46,30 @@ DDEESSCCRRIIPPTTIIOONN
 
        --cc     Use the specified hash and B-Tree cache size.
 
+       --DD     Use to specify the character to use to indicate a comment (which
+              is ignored) instead of the default of '#'.
+
        --dd     Allow duplicate keys in the map.  This is only allowed on B-Tree
-              format  maps.  If two identical keys are read, they will both be
+              format maps.  If two identical keys are read, they will both  be
               inserted into the map.
 
        --ee     Allow empty value (right hand side).
 
-       --ff     Normally all upper case letters in the key are folded  to  lower
-              case.   This  flag disables that behaviour.  This is intended to
-              mesh with the -f flag in the KK line in sendmail.cf.   The  value
+       --ff     Normally  all  upper case letters in the key are folded to lower
+              case.  This flag disables that behaviour.  This is  intended  to
+              mesh  with  the -f flag in the KK line in sendmail.cf.  The value
               is never case folded.
 
        --ll     List supported map types.
 
-       --oo     Append  to  an old file.  This allows you to augment an existing
+       --oo     Append to an old file.  This allows you to augment  an  existing
               file.
 
-       --rr     Allow replacement of existing keys.  Normally mmaakkeemmaapp  complains
+       --rr     Allow  replacement of existing keys.  Normally mmaakkeemmaapp complains
               if you repeat a key, and does not do the insert.
 
-       --ss     Ignore  safety  checks  on  maps  being  created.  This includes
-              checking for hard or symbolic links in world  writable  directo-
+       --ss     Ignore safety checks  on  maps  being  created.   This  includes
+              checking  for  hard or symbolic links in world writable directo-
               ries.
 
        --tt     Use the specified delimiter instead of white space.
@@ -83,4 +86,4 @@ HHIISSTTOORRYY
 
 
 
-                         Date: 2001/10/10 03:23:02               MAKEMAP(8)
+                         Date: 2002/06/27 23:41:04               MAKEMAP(8)

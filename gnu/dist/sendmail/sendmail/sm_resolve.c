@@ -1,11 +1,11 @@
-/* $NetBSD: sm_resolve.c,v 1.1.1.2 2003/06/01 14:01:30 atatat Exp $ */
+/* $NetBSD: sm_resolve.c,v 1.1.1.3 2005/03/15 02:05:49 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sm_resolve.c,v 1.1.1.2 2003/06/01 14:01:30 atatat Exp $");
+__RCSID("$NetBSD: sm_resolve.c,v 1.1.1.3 2005/03/15 02:05:49 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: sm_resolve.c,v 1.1.1.2 2003/06/01 14:01:30 atatat Exp $");
 # if NAMED_BIND
 #  include "sm_resolve.h"
 
-SM_RCSID("Id: sm_resolve.c,v 8.24.4.7 2003/03/22 22:55:37 ca Exp")
+SM_RCSID("Id: sm_resolve.c,v 8.33 2004/08/04 21:17:57 ca Exp")
 
 static struct stot
 {
@@ -75,6 +75,8 @@ static struct stot
 	{	"SRV",		T_SRV		},
 	{	NULL,		0		}
 };
+
+static DNS_REPLY_T *parse_dns_reply __P((unsigned char *, int));
 
 /*
 **  DNS_STRING_TO_TYPE -- convert resource record name into type

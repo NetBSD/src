@@ -1,11 +1,11 @@
-/* $NetBSD: fclose.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+/* $NetBSD: fclose.c,v 1.1.1.3 2005/03/15 02:05:53 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fclose.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.1.1.3 2005/03/15 02:05:53 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: fclose.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: fclose.c,v 1.42 2002/02/01 02:28:00 ca Exp")
+SM_RCSID("@(#)Id: fclose.c,v 1.43 2004/08/03 20:17:38 ca Exp")
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -32,6 +32,7 @@ SM_RCSID("@(#)Id: fclose.c,v 1.42 2002/02/01 02:28:00 ca Exp")
 #include <sm/clock.h>
 #include "local.h"
 
+static void	closealrm __P((int));
 static jmp_buf CloseTimeOut;
 
 /*

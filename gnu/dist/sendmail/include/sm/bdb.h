@@ -1,4 +1,4 @@
-/* $NetBSD: bdb.h,v 1.1.1.2 2003/06/01 14:01:32 atatat Exp $ */
+/* $NetBSD: bdb.h,v 1.1.1.3 2005/03/15 02:05:51 atatat Exp $ */
 /*
  * Copyright (c) 2002, 2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -8,7 +8,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: bdb.h,v 1.1.2.4 2003/03/06 16:27:38 ca Exp
+ *	Id: bdb.h,v 1.4 2003/03/06 16:30:05 ca Exp
  */
 
 #ifndef	SM_BDB_H

@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+# Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,8 +10,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`Id: authinfo.m4,v 1.7 2001/03/16 00:51:25 gshapiro Exp')
-VERSIONID(`$NetBSD: authinfo.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
+VERSIONID(`Id: authinfo.m4,v 1.9 2002/06/27 23:23:57 gshapiro Exp')
+VERSIONID(`$NetBSD: authinfo.m4,v 1.1.1.3 2005/03/15 02:06:02 atatat Exp $')
 divert(-1)
 
 define(`_AUTHINFO_TABLE_', `')
@@ -19,5 +19,5 @@ define(`_AUTHINFO_TABLE_', `')
 LOCAL_CONFIG
 # authinfo list database: contains info for authentication as client
 Kauthinfo ifelse(defn(`_ARG_'), `', DATABASE_MAP_TYPE MAIL_SETTINGS_DIR`authinfo',
-		 defn(`_ARG_'), `LDAP', `ldap -1 -v sendmailMTAMapValue -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=authinfo)(sendmailMTAKey=%0))',
+		 defn(`_ARG_'), `LDAP', `ldap -1 -v sendmailMTAMapValue,sendmailMTAMapSearch:FILTER:sendmailMTAMapObject,sendmailMTAMapURL:URL:sendmailMTAMapObject -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=authinfo)(sendmailMTAKey=%0))',
 		 `_ARG_')

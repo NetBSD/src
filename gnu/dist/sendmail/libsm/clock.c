@@ -1,11 +1,11 @@
-/* $NetBSD: clock.c,v 1.1.1.3 2004/03/25 19:02:01 atatat Exp $ */
+/* $NetBSD: clock.c,v 1.1.1.4 2005/03/15 02:05:53 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: clock.c,v 1.1.1.3 2004/03/25 19:02:01 atatat Exp $");
+__RCSID("$NetBSD: clock.c,v 1.1.1.4 2005/03/15 02:05:53 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -18,7 +18,7 @@ __RCSID("$NetBSD: clock.c,v 1.1.1.3 2004/03/25 19:02:01 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: clock.c,v 1.35.2.10 2003/06/26 16:36:49 ca Exp")
+SM_RCSID("@(#)Id: clock.c,v 1.46 2004/08/03 19:57:22 ca Exp")
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -69,7 +69,7 @@ static SM_EVENT	*volatile SmFreeEventList;	/* list of free events */
 SM_EVENT *
 sm_seteventm(intvl, func, arg)
 	int intvl;
-	void (*func)();
+	void (*func)__P((int));
 	int arg;
 {
 	ENTER_CRITICAL();
@@ -92,7 +92,7 @@ sm_seteventm(intvl, func, arg)
 SM_EVENT *
 sm_sigsafe_seteventm(intvl, func, arg)
 	int intvl;
-	void (*func)();
+	void (*func)__P((int));
 	int arg;
 {
 	register SM_EVENT **evp;
@@ -400,7 +400,7 @@ sm_tick(sig)
 #endif /* SM_CONF_SETITIMER */
 		))
 	{
-		void (*f)();
+		void (*f)__P((int));
 		int arg;
 		pid_t pid;
 
@@ -503,7 +503,7 @@ sm_tick(sig)
 
 
 # if !HAVE_NANOSLEEP
-static void	sm_endsleep __P((void));
+static void	sm_endsleep __P((int));
 static bool	volatile SmSleepDone;
 # endif /* !HAVE_NANOSLEEP */
 
@@ -529,11 +529,14 @@ sleep(intvl)
 	SM_EVENT *ev;
 #if _FFR_SLEEP_USE_SELECT > 0
 	int r;
+# if _FFR_SLEEP_USE_SELECT > 0
+	struct timeval sm_io_to;
+# endif /* _FFR_SLEEP_USE_SELECT > 0 */
 #endif /* _FFR_SLEEP_USE_SELECT > 0 */
 #if SM_CONF_SETITIMER
 	struct timeval now, begin, diff;
 # if _FFR_SLEEP_USE_SELECT > 0
-	struct timeval sm_io_to, slpv;
+	struct timeval slpv;
 # endif /* _FFR_SLEEP_USE_SELECT > 0 */
 #else /*  SM_CONF_SETITIMER */
 	time_t begin, now;
@@ -602,7 +605,7 @@ sleep(intvl)
 		sm_io_to.tv_sec = intvl - (now - begin);
 		if (sm_io_to.tv_sec <= 0)
 			sm_io_to.tv_sec = 1;
-		sm_io_to.utv_sec = 0;
+		sm_io_to.tv_usec = 0;
 # endif /* _FFR_SLEEP_USE_SELECT > 0 */
 #endif /* SM_CONF_SETITIMER */
 #if _FFR_SLEEP_USE_SELECT > 0
@@ -628,7 +631,8 @@ sleep(intvl)
 
 #if !HAVE_NANOSLEEP
 static void
-sm_endsleep()
+sm_endsleep(ignore)
+	int ignore;
 {
 	/*
 	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD

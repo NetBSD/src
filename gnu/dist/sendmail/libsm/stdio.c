@@ -1,11 +1,11 @@
-/* $NetBSD: stdio.c,v 1.1.1.3 2004/03/25 19:02:20 atatat Exp $ */
+/* $NetBSD: stdio.c,v 1.1.1.4 2005/03/15 02:05:55 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdio.c,v 1.1.1.3 2004/03/25 19:02:20 atatat Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.1.1.4 2005/03/15 02:05:55 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: stdio.c,v 1.1.1.3 2004/03/25 19:02:20 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: stdio.c,v 1.56.2.13 2003/09/04 01:18:08 ca Exp")
+SM_RCSID("@(#)Id: stdio.c,v 1.69 2004/08/03 20:46:34 ca Exp")
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -34,6 +34,9 @@ SM_RCSID("@(#)Id: stdio.c,v 1.56.2.13 2003/09/04 01:18:08 ca Exp")
 #include <sm/conf.h>
 #include <sm/fdset.h>
 #include "local.h"
+
+static int	sm_stdsetmode __P((SM_FILE_T *, const int *));
+static int	sm_stdgetmode __P((SM_FILE_T *, int *));
 
 /*
 **  Overall:
@@ -266,7 +269,7 @@ sm_stdsetmode(fp, mode)
 **		Success: external mode value
 */
 
-int
+static int
 sm_stdgetmode(fp, mode)
 	SM_FILE_T *fp;
 	int *mode;

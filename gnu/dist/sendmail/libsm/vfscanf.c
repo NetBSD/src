@@ -1,11 +1,11 @@
-/* $NetBSD: vfscanf.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $ */
+/* $NetBSD: vfscanf.c,v 1.1.1.3 2005/03/15 02:05:56 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vfscanf.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.1.1.3 2005/03/15 02:05:56 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2001, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)Id: vfscanf.c,v 1.51 2001/09/11 04:04:49 gshapiro Exp")
+SM_IDSTR(id, "@(#)Id: vfscanf.c,v 1.52 2004/08/03 20:56:32 ca Exp")
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -66,8 +66,9 @@ SM_IDSTR(id, "@(#)Id: vfscanf.c,v 1.51 2001/09/11 04:04:49 gshapiro Exp")
 #define CT_INT		3	/* integer, i.e., strtoll or strtoull */
 #define CT_FLOAT	4	/* floating, i.e., strtod */
 
-static unsigned char *sm_sccl __P((char *, unsigned char *));
-static jmp_buf ScanTimeOut;
+static void		scanalrm __P((int));
+static unsigned char	*sm_sccl __P((char *, unsigned char *));
+static jmp_buf		ScanTimeOut;
 
 /*
 **  SCANALRM -- handler when timeout activated for sm_io_vfscanf()

@@ -54,7 +54,7 @@ FFIILLEESS
        Solaris
 
        /usr/libexec/sm.bin - directory for restricted programs on FreeBSD  (>=
-       3.3)
+       3.3) and DragonFly BSD
 
 
 SSEEEE AALLSSOO
@@ -62,4 +62,4 @@ SSEEEE AALLSSOO
 
 
 
-                         Date: 2003/10/07 18:05:37                 SMRSH(8)
+                         Date: 2004/08/06 03:55:35                 SMRSH(8)

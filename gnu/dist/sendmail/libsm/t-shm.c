@@ -1,11 +1,11 @@
-/* $NetBSD: t-shm.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $ */
+/* $NetBSD: t-shm.c,v 1.1.1.3 2005/03/15 02:05:55 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t-shm.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
+__RCSID("$NetBSD: t-shm.c,v 1.1.1.3 2005/03/15 02:05:55 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: t-shm.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: t-shm.c,v 1.18 2002/01/31 04:11:41 ca Exp")
+SM_RCSID("@(#)Id: t-shm.c,v 1.20 2004/08/03 20:51:36 ca Exp")
 
 #include <stdio.h>
 
@@ -51,7 +51,7 @@ shminter(owner)
 	bool owner;
 {
 	int *shm, shmid;
-	int i, j, t;
+	int i, t;
 
 	shm = (int *) sm_shmstart(T_SHMKEY, SHMSIZE, 0, &shmid, owner);
 	if (shm == (int *) 0)
@@ -80,7 +80,6 @@ shminter(owner)
 			t = *shm;
 			for (i = 0; i < SHM_MAX; i++)
 			{
-				j += i;
 				++*shm;
 			}
 			if (*shm != SHM_MAX + t)
@@ -151,6 +150,8 @@ shmbig(owner, size)
 */
 
 # define MAX_CNT	10
+
+int shmtest __P((int));
 
 int
 shmtest(owner)

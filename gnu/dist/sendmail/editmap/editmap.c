@@ -1,11 +1,11 @@
-/* $NetBSD: editmap.c,v 1.1.1.2 2003/06/01 14:01:47 atatat Exp $ */
+/* $NetBSD: editmap.c,v 1.1.1.3 2005/03/15 02:06:05 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: editmap.c,v 1.1.1.2 2003/06/01 14:01:47 atatat Exp $");
+__RCSID("$NetBSD: editmap.c,v 1.1.1.3 2005/03/15 02:06:05 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002, 2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1992 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -28,7 +28,7 @@ SM_UNUSED(static char copyright[]) =
 #endif /* ! lint */
 
 #ifndef lint
-SM_UNUSED(static char id[]) = "@(#)Id: editmap.c,v 1.23 2002/03/28 17:49:33 gshapiro Exp";
+SM_UNUSED(static char id[]) = "@(#)Id: editmap.c,v 1.24 2004/08/03 18:40:10 ca Exp";
 #endif /* ! lint */
 
 
@@ -62,6 +62,8 @@ BITMAP256 DontBlameSendmail;
 #define BUFSIZE		1024
 #define ISSEP(c) (isascii(c) && isspace(c))
 
+
+static void usage __P((char *));
 
 static void
 usage(progname)

@@ -1,11 +1,11 @@
-/* $NetBSD: b-strcmp.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+/* $NetBSD: b-strcmp.c,v 1.1.1.3 2005/03/15 02:05:53 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: b-strcmp.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+__RCSID("$NetBSD: b-strcmp.c,v 1.1.1.3 2005/03/15 02:05:53 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2001, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: b-strcmp.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: b-strcmp.c,v 1.12 2001/09/11 04:04:47 gshapiro Exp")
+SM_RCSID("@(#)Id: b-strcmp.c,v 1.13 2004/08/03 20:07:59 ca Exp")
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -26,6 +26,10 @@ SM_RCSID("@(#)Id: b-strcmp.c,v 1.12 2001/09/11 04:04:47 gshapiro Exp")
 #define SIZE	512
 #define LOOPS	4000000L	/* initial number of loops */
 #define MAXTIME	30L	/* "maximum" time to run single test */
+
+void fatal __P((char *));
+void purpose __P((void));
+int main __P((int, char *[]));
 
 void
 fatal(str)

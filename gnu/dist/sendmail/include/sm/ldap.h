@@ -1,4 +1,4 @@
-/* $NetBSD: ldap.h,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $ */
+/* $NetBSD: ldap.h,v 1.1.1.3 2005/03/15 02:05:52 atatat Exp $ */
 /*
  * Copyright (c) 2001-2002 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: ldap.h,v 1.22 2002/03/05 02:17:26 ca Exp
+ *	Id: ldap.h,v 1.27 2003/12/20 09:23:47 gshapiro Exp
  */
 
 #ifndef	SM_LDAP_H
@@ -33,34 +33,26 @@
 
 # if LDAPMAP
 
-#  if _FFR_LDAP_RECURSION
-
 /* Attribute types */
-#   define SM_LDAP_ATTR_NONE		(-1)
-#   define SM_LDAP_ATTR_OBJCLASS	0
-#   define SM_LDAP_ATTR_NORMAL		1
-#   define SM_LDAP_ATTR_DN		2
-#   define SM_LDAP_ATTR_FILTER		3
-#   define SM_LDAP_ATTR_URL		4
+#  define SM_LDAP_ATTR_NONE		(-1)
+#  define SM_LDAP_ATTR_OBJCLASS	0
+#  define SM_LDAP_ATTR_NORMAL		1
+#  define SM_LDAP_ATTR_DN		2
+#  define SM_LDAP_ATTR_FILTER		3
+#  define SM_LDAP_ATTR_URL		4
 
 /* sm_ldap_results() flags */
-#   define SM_LDAP_SINGLEMATCH	0x0001
-#   define SM_LDAP_MATCHONLY	0x0002
-#   define SM_LDAP_USE_ALLATTR	0x0004
-
-#  endif /* _FFR_LDAP_RECURSION */
+#  define SM_LDAP_SINGLEMATCH	0x0001
+#  define SM_LDAP_MATCHONLY	0x0002
+#  define SM_LDAP_USE_ALLATTR	0x0004
 
 struct sm_ldap_struct
 {
 	/* needed for ldap_open or ldap_init */
-	char		*ldap_target;
+	char		*ldap_uri;
+	char		*ldap_host;
 	int		ldap_port;
-#  if _FFR_LDAP_URI
-	bool		ldap_uri;
-#  endif /* _FFR_LDAP_URI */
-#  if _FFR_LDAP_SETVERSION
 	int		ldap_version;
-#  endif /* _FFR_LDAP_SETVERSION */
 	pid_t		ldap_pid;
 
 	/* options set in ld struct before ldap_bind_s */
@@ -80,10 +72,8 @@ struct sm_ldap_struct
 	int		ldap_scope;
 	char		*ldap_filter;
 	char		*ldap_attr[LDAPMAP_MAX_ATTR + 1];
-#  if _FFR_LDAP_RECURSION
 	int		ldap_attr_type[LDAPMAP_MAX_ATTR + 1];
 	char		*ldap_attr_needobjclass[LDAPMAP_MAX_ATTR + 1];
-#  endif /* _FFR_LDAP_RECURSION */
 	bool		ldap_attrsonly;
 
 	/* args for ldap_result */
@@ -99,11 +89,12 @@ struct sm_ldap_struct
 
 typedef struct sm_ldap_struct		SM_LDAP_STRUCT;
 
-#  if _FFR_LDAP_RECURSION
 struct sm_ldap_recurse_entry
 {
 	char *lr_search;
 	int lr_type;
+	LDAPURLDesc *lr_ludp;
+	char **lr_attrs;
 	bool lr_done;
 };
 
@@ -116,17 +107,14 @@ struct sm_ldap_recurse_list
 
 typedef struct sm_ldap_recurse_entry	SM_LDAP_RECURSE_ENTRY;
 typedef struct sm_ldap_recurse_list	SM_LDAP_RECURSE_LIST;
-#  endif /* _FFR_LDAP_RECURSION */
 
 /* functions */
 extern void	sm_ldap_clear __P((SM_LDAP_STRUCT *));
 extern bool	sm_ldap_start __P((char *, SM_LDAP_STRUCT *));
 extern int	sm_ldap_search __P((SM_LDAP_STRUCT *, char *));
-#  if _FFR_LDAP_RECURSION
 extern int	sm_ldap_results __P((SM_LDAP_STRUCT *, int, int, int,
 				     SM_RPOOL_T *, char **, int *, int *,
 				     SM_LDAP_RECURSE_LIST *));
-#  endif /* _FFR_LDAP_RECURSION */
 extern void	sm_ldap_setopts __P((LDAP *, SM_LDAP_STRUCT *));
 extern int	sm_ldap_geterrno __P((LDAP *));
 extern void	sm_ldap_close __P((SM_LDAP_STRUCT *));
