@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.10 2003/12/29 07:09:44 jmc Exp $
+$NetBSD: README,v 1.11 2004/06/22 01:51:22 jmc Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -12,6 +12,11 @@ In addition all hosts must provide the following local tools:
 gzip
 
 =====
+
+NetBSD:
+
+* _NETBSD_SOURCE is *not* to be defined/pulled in during compat/tools builds.
+  compat_defs.h will error out if it finds it defined. 
 
 HP-UX:
 
