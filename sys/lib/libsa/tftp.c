@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.2 1999/02/25 20:21:08 ross Exp $	 */
+/*	$NetBSD: tftp.c,v 1.3 1999/02/26 22:46:32 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -91,6 +91,13 @@ static int tftperrors[8] = {
 	EEXIST,
 	EINVAL			/* ??? */
 };
+
+static ssize_t recvtftp __P((struct iodesc *, void *, ssize_t, time_t));
+static int tftp_makereq __P((struct tftp_handle *));
+static int tftp_getnextblock __P((struct tftp_handle *));
+#ifndef TFTP_NOTERMINATE
+static void tftp_terminate __P((struct tftp_handle *));
+#endif
 
 static ssize_t 
 recvtftp(d, pkt, len, tleft)
