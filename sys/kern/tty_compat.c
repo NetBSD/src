@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.6 1993/06/27 06:01:57 andrew Exp $
+ *	$Id: tty_compat.c,v 1.6.4.1 1993/10/18 06:46:50 deraadt Exp $
  */
 
 /* 
  * mapping routines for old line discipline (yuck)
  */
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 
 #include "param.h"
 #include "systm.h"
