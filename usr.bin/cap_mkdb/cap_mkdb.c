@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.9 1998/07/28 19:27:00 mycroft Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.10 1999/06/27 05:49:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.9 1998/07/28 19:27:00 mycroft Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.10 1999/06/27 05:49:02 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,11 +89,18 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int c;
+	int c, byteorder;
 
 	capname = NULL;
-	while ((c = getopt(argc, argv, "f:v")) != -1) {
+	byteorder = 0;
+	while ((c = getopt(argc, argv, "bf:lv")) != -1) {
 		switch(c) {
+		case 'b':
+		case 'l':
+			if (byteorder != 0)
+				usage();
+			byteorder = c == 'b' ? 4321 : 1234;
+			break;
 		case 'f':
 			capname = optarg;
 			break;
@@ -110,6 +117,9 @@ main(argc, argv)
 
 	if (*argv == NULL)
 		usage();
+
+	/* Set byte order */
+	openinfo.lorder = byteorder;
 
 	/*
 	 * The database file is the first argument if no name is specified.
@@ -260,6 +270,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: cap_mkdb [-v] [-f outfile] file1 [file2 ...]\n");
+	    "usage: cap_mkdb [-b|-l] [-v] [-f outfile] file1 [file2 ...]\n");
 	exit(1);
 }
