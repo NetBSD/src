@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.3 1995/02/20 11:04:04 mycroft Exp $	*/
+/*	$NetBSD: bootp.c,v 1.4 1995/02/21 10:14:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -94,15 +94,18 @@ bootp(sock)
  	if (debug)
 		printf("bootp: d=%x\n", (u_int)d);
 #endif
+
 	bp = &wbuf.wbootp;
 	bzero(bp, sizeof(*bp));
 
 	bp->bp_op = BOOTREQUEST;
 	bp->bp_htype = 1;		/* 10Mb Ethernet (48 bits) */
 	bp->bp_hlen = 6;
+	bp->bp_xid = d->xid;
 	MACPY(d->myea, bp->bp_chaddr);
+	bzero(bp->bp_file, sizeof(bp->bp_file));
+	bcopy(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048));
 
-	d->xid = 0;
 	d->myip = myip;
 	d->myport = IPPORT_BOOTPC;
 	d->destip = INADDR_BROADCAST;
@@ -111,6 +114,9 @@ bootp(sock)
 	(void)sendrecv(d,
 	    bootpsend, bp, sizeof(*bp),
 	    bootprecv, &rbuf.rbootp, sizeof(rbuf.rbootp));
+
+	/* Bump xid so next request will be unique. */
+	++d->xid;
 }
 
 /* Transmit a bootp request */
@@ -128,10 +134,6 @@ bootpsend(d, pkt, len)
 #endif
 
 	bp = pkt;
-	bzero(bp->bp_file, sizeof(bp->bp_file));
-
-	bcopy(vm_rfc1048, bp->bp_vend, sizeof(long));
-	bp->bp_xid = d->xid;
 	bp->bp_secs = (u_long)(getsecs() - bot);
 
 #ifdef BOOTP_DEBUG
@@ -179,9 +181,6 @@ bootprecv(d, pkt, len, tleft)
 		goto bad;
 	}
 
-	/* Bump xid so next request will be unique. */
-	++d->xid;
-	
 #ifdef BOOTP_DEBUG
 	if (debug)
 		printf("bootprecv: got one!\n");
