@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.h,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
+/*	$NetBSD: modload.h,v 1.2 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -63,6 +63,7 @@ void	a_out_mod_symload __P((int));
 
 void loadbuf(void*, size_t);
 void loadspace(size_t);
+void loadsym(void*, size_t);
 
 extern int debug;
 extern int verbose;
