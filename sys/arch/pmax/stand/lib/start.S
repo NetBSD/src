@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 1995/01/18 06:19:01 mellon Exp $	*/
+/*	$NetBSD: start.S,v 1.2 1997/06/16 01:24:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,9 +55,9 @@
  *	v 1.1 90/02/16 16:19:39 shirriff Exp  SPRITE (DECWRL)
  */
 
-#include <machine/regdef.h>
-#include <machine/machConst.h>
-#include <machine/machAsmDefs.h>
+#include <mips/regdef.h>
+#include <mips/asm.h>
+#include <mips/cpuregs.h>
 #include <pmax/stand/dec_prom.h>
 
 /*
