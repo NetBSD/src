@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2001/08/16 16:59:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/15 03:37:37 thorpej Exp $
 
 # XXX - This gdb.new directory should be renamed to "gdb" after all platforms
 # have been migrated to the new toolchain.
+
+.if !defined(BOOTSTRAP_NEW_TOOLCHAIN)
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
 
@@ -9,6 +11,7 @@ TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
 
 PROG=		gdb
+COPTS+=-g
 
 SRCS=		${G_LIBGDB_OBS:.o=.c} ${G_OBJECTS:Nxmalloc.o:.o=.c} main.c
 CPPFLAGS=	-I${.CURDIR}/../arch/${MACHINE_ARCH} \
@@ -22,6 +25,8 @@ DPADD=		${LIBTERMCAP} ${LIBINTL} ${LIBM} ${LIBKVM}
 TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/doc -I${.CURDIR}/..
+
+.endif
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
