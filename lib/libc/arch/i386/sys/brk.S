@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)brk.s	5.2 (Berkeley) 12/17/90
- *	$Id: brk.S,v 1.5 1994/01/27 04:14:50 mycroft Exp $
+ *	$Id: brk.S,v 1.6 1994/01/27 04:30:34 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: brk.S,v 1.5 1994/01/27 04:14:50 mycroft Exp $"
+	.asciz "$Id: brk.S,v 1.6 1994/01/27 04:30:34 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -61,7 +61,7 @@ ENTRY(brk)
 	movl	(%ecx),%eax
 	movl	%eax,4(%esp)
 ok:
-	movl	$(SYS_brk),%eax
+	movl	$(SYS_break),%eax
 	LCALL(7,0)
 	jb	err
 	movl	4(%esp),%eax
@@ -79,7 +79,7 @@ err:
 	movl	minbrk,%eax
 	movl	%eax,4(%esp)
 ok:
-	movl	$(SYS_brk),%eax
+	movl	$(SYS_break),%eax
 	LCALL(7,0)
 	jb	err
 	movl	4(%esp),%eax
