@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2001/02/06 12:53:49 ad Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2002/08/26 17:04:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ extern const char	*mlxname;
 extern const char	*nlistf;
 extern const char	*memf;
 extern int	verbosity;
+extern struct mlx_cinfo	ci;
 
 void	usage(void) __attribute__ ((__noreturn__));
 
