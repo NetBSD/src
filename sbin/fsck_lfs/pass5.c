@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.10 2002/05/23 04:05:11 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.11 2003/02/23 04:32:05 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -151,8 +151,10 @@ pass5()
 			sbdirty();
 		}
 	}
-	labelskew = (sblock.lfs_version == 1 ? 0 : 
-		btofsb(&sblock, LFS_LABELPAD));
+	labelskew = 0;
+	if (sblock.lfs_version > 1 &&
+	    sblock.lfs_start < btofsb(&sblock, LFS_LABELPAD))
+		labelskew = btofsb(&sblock, LFS_LABELPAD);
 	if (sblock.lfs_bfree > sblock.lfs_dsize - bb - labelskew ||
 	    sblock.lfs_bfree < sblock.lfs_dsize - ubb - labelskew) {
 		pwarn("bfree given as %d, should be between %ld and %ld\n",
