@@ -1,8 +1,11 @@
-#	$NetBSD: std.atari,v 1.2 1995/04/28 11:36:33 leo Exp $
+#	$NetBSD: std.atari,v 1.3 1995/06/09 19:43:23 leo Exp $
 #
 # standard atari information
 #
-machine atari m68k
+machine		atari m68k
+
+options		MACHINE_NONCONTIG	# Non-contiguous memory support
+					# (required)
 
 mainbus0	at root
 
