@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.8 2002/12/09 07:23:43 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.9 2002/12/09 23:42:53 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.8 2002/12/09 07:23:43 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.9 2002/12/09 23:42:53 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,7 +94,7 @@ static struct simplelock sbp2_maps_lock = SIMPLELOCK_INITIALIZER;
 #ifdef SBP2_DEBUG
 #define DPRINTF(x)      if (sbp2debug) printf x
 #define DPRINTFN(n,x)   if (sbp2debug>(n)) printf x
-int     sbp2debug = 3;
+int     sbp2debug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -779,7 +779,7 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	toporb->cmd.ab_data[0] = IEEE1394_CREATE_ADDR_HIGH(addr);
 	toporb->cmd.ab_data[1] = IEEE1394_CREATE_ADDR_LOW(addr);
 	if (lun->state == SBP2_STATE_SUSPENDED) {
-		DPRINTF(("Ringing doorbell\n"));
+		DPRINTFN(1, ("Ringing doorbell\n"));
 		sbp2->sc->sc1394_callback.sc1394_write(&lun->doorbell);
 		lun->state = SBP2_STATE_ACTIVE;
 	} else if (lun->state == SBP2_STATE_DEAD) {
@@ -905,7 +905,7 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 #endif
 			DPRINTF(("Got a status block for an unknown orb addr:"
 			    " 0x%016qx\n", addr));
-			DPRINTF(("resp: 0x%x status: 0x%x len: 0x%x",
+			DPRINTF(("resp: 0x%x status: 0x%x len: 0x%x\n",
 				    SBP2_STATUS_GET_RESP(i),
 				    SBP2_STATUS_GET_STATUS(i),
 				    SBP2_STATUS_GET_LEN(i) - 1));
@@ -1182,13 +1182,10 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 
 	/* Allocate bytes at a time */
 	if (size) {
-		for (byte = startbyte; byte < (startbyte + (size / CHAR_BIT)); 
-		    byte++) {
-			for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
-				bit = 0x1 << bitpos;
-				size--;
-				sbp2->map->datamap[byte] |= bit;
-			}
+		count = startbyte + (size / CHAR_BIT);
+		for (byte = startbyte; byte < count; byte++) {
+			sbp2->map->datamap[byte] = 0xff;
+			size -= CHAR_BIT;
 		}
 		/* If any bits are left allocate them out of the next byte */
 		if (size) {
@@ -1298,19 +1295,15 @@ sbp2_free_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map)
 	}
 
 	if (size) {
-		for (byte = startbyte; byte < (startbyte + (size / CHAR_BIT)); 
-		    byte++) {
-			for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
-				bit = 0x1 << bitpos;
+		count = startbyte + (size / CHAR_BIT);
+		for (byte = startbyte; byte < count; byte++) {
 #ifdef DIAGNOSTIC
-				if (!(sbp2->map->datamap[byte] & bit))
-					panic("Freeing addr not allocated: "
-					    "0x%016qx", map->fwaddr);
+			if (!(sbp2->map->datamap[byte]))
+				panic("Freeing addr not allocated: 0x%016qx", 
+				    map->fwaddr);
 #endif
-				bit = ~bit;
-				size--;
-				sbp2->map->datamap[byte] &= bit;
-			}
+			size -= CHAR_BIT;
+			sbp2->map->datamap[byte] = 0;
 		}
 		/* If any bits are left free them out of the next byte */
 		if (size) {
