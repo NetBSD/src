@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_usrreq.c	7.26 (Berkeley) 6/3/91
- *	$Id: uipc_usrreq.c,v 1.5.4.1 1993/09/14 18:24:28 mycroft Exp $
+ *	$Id: uipc_usrreq.c,v 1.5.4.2 1993/11/10 20:05:36 mycroft Exp $
  */
 
 #include "param.h"
@@ -62,7 +62,7 @@ void unp_gc __P((void));
  *	rethink name space problems
  *	need a proper out-of-band
  */
-struct	sockaddr sun_noname = { sizeof(sun_noname), AF_UNIX };
+struct	sockaddr sun_noname = { sizeof(sun_noname), AF_LOCAL };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
 /*ARGSUSED*/

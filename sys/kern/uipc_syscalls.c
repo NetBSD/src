@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
- *	$Id: uipc_syscalls.c,v 1.5.4.1 1993/09/24 08:51:58 mycroft Exp $
+ *	$Id: uipc_syscalls.c,v 1.5.4.2 1993/11/10 20:05:34 mycroft Exp $
  */
 
 #include "param.h"
@@ -1015,9 +1015,9 @@ pipe(p, uap, retval)
 	struct socket *rso, *wso;
 	int fd, error;
 
-	if (error = socreate(AF_UNIX, &rso, SOCK_STREAM, 0))
+	if (error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0))
 		return (error);
-	if (error = socreate(AF_UNIX, &wso, SOCK_STREAM, 0))
+	if (error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0))
 		goto free1;
 	if (error = falloc(p, &rf, &fd))
 		goto free2;
