@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.18 2000/07/02 04:40:41 cgd Exp $	*/
+/*	$NetBSD: isr.c,v 1.19 2000/07/20 20:40:40 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@ void
 isrinit()
 {
 	int i;
+
+	/* No soft interrupts pending */
+	ssir = 1;
 
 	/* Initialize the autovector lists. */
 	for (i = 0; i < NISRAUTOVEC; ++i) {
@@ -289,6 +292,8 @@ netintr()
 	n = netisr;
 	netisr = 0;
 	splx(s);
+
+printf("netintr() netisr=0x%x\n", n);
 
 #define DONETISR(bit, fn) do {		\
 		if (n & (1 << bit)) 	\
