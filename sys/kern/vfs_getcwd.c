@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.3 1999/03/25 04:45:57 sommerfe Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.4 1999/04/05 03:33:31 sommerfe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ static int getcwd_common (dvp, rvp, bpp, bufp, limit, flags, p)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct vnode *pvp = NULL;
-	char *bp;
+	char *bp = NULL;
 	int error;
 	
 	if (rvp == NULL) {
