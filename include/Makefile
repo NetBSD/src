@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.22 1993/08/15 23:31:16 mycroft Exp $
+#	$Id: Makefile,v 1.23 1993/08/16 00:26:07 mycroft Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -29,8 +29,6 @@ NOOBJ=	noobj
 .if !defined(SYS_INCLUDE)
 SYS_INCLUDE=	copies
 .endif
-
-afterinstall: ${SYS_INCLUDE}
 
 realinstall:
 	@echo installing ${FILES}
@@ -63,12 +61,7 @@ realinstall:
 	@chmod -R a-w ${DESTDIR}/usr/include
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}/usr/include ]; then \
-                /bin/rm -f ${DESTDIR}/usr/include ; \
-                mkdir -p ${DESTDIR}/usr/include ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/include
 
 copies:
 	@echo copies: ${LDIRS}
@@ -92,3 +85,5 @@ symlinks:
 	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/machine
 
 .include <bsd.prog.mk>
+
+realinstall: ${SYS_INCLUDE}
