@@ -27,7 +27,7 @@
  *	i4b_l4timer.c - timer and timeout handling for layer 4
  *	--------------------------------------------------------
  *
- *	$Id: i4b_l4timer.c,v 1.1.1.1 2001/01/05 12:50:00 martin Exp $ 
+ *	$Id: i4b_l4timer.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -94,15 +94,15 @@ T400_start(call_desc_t *cd)
 void
 T400_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 
 	if(cd->T400 == TIMER_ACTIVE)
 	{
 		STOP_TIMER(cd->T400_callout, T400_timeout, cd);
 		cd->T400 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	NDBGL4(L4_MSG, "cr = %d", cd->cr);
 }
 

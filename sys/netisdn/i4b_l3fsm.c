@@ -27,7 +27,7 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.1.1.1 2001/01/05 12:50:05 martin Exp $ 
+ *	$Id: i4b_l3fsm.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -551,7 +551,7 @@ static void F_06F(call_desc_t *cd)
 	}
 	else
 	{
-		int s = SPLI4B();
+		int s = splnet();
 		i4b_l3_tx_release_complete(cd, 1);
 		cd->Q931state = ST_U0;
 		freecd_by_cd(cd);
