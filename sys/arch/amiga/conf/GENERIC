@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.41 1995/08/20 15:13:20 chopps Exp $
+#	$NetBSD: GENERIC,v 1.42 1995/09/30 01:52:46 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -149,6 +149,7 @@ ite2		at grf2			# terminal emulators for grf's
 ite3		at grf3			# terminal emulators for grf's
 ite4		at grf4			# terminal emulators for grf's
 
+msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
 mfcs0		at mfc0 unit 0		# MFC serial
 mfcs1		at mfc0 unit 1		# MFC serial

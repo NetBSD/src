@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1995/08/17 17:40:45 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1995/09/30 01:52:37 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -136,6 +136,8 @@ cdev_decl(grf);
 cdev_decl(par);
 #include "ser.h"
 cdev_decl(ser);
+#include "msc.h"
+cdev_decl(msc);
 #include "ite.h"
 cdev_decl(ite);
 #include "kbd.h"
@@ -199,6 +201,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 28 */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
+ 	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -291,6 +294,7 @@ static int chrtoblktab[] = {
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
++ 	/* 31 */	NODEV,
 };
 
 /*
