@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.26 1997/08/19 12:08:35 lukem Exp $
+#	$NetBSD: security,v 1.27 1997/08/22 09:40:17 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -26,16 +26,18 @@ fi
 ERR=secure1.$$
 TMP1=secure2.$$
 TMP2=secure3.$$
-TMP3=secure4.$$
-LIST=secure5.$$
-OUTPUT=secure6.$$
+MPUID=secure4.$$
+MPPATH=secure5.$$
+LIST=secure6.$$
+OUTPUT=secure7.$$
 
-trap 'rm -rf $SECUREDIR' 0
+trap '/bin/rm -rf $SECUREDIR ; exit 0' 0 2 3
 
 MP=/etc/master.passwd
 
-# this is used several times.
-awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $TMP1
+# these is used several times.
+awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $MPUID
+awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPPATH
 
 # Check the master password file syntax.
 if [ "$check_passwd" = YES ]; then
@@ -65,7 +67,7 @@ if [ "$check_passwd" = YES ]; then
 			printf "Login %s has no password.\n", $1;
 		if (length($2) != 13 && $2 != "") {
 			if ($10 == "" || shells[$10])
-				printf "Login %s is off but still has a valid shell (%s)\n",
+		    printf "Login %s is off but still has a valid shell (%s)\n",
 				    $1, $10;
 		} else if (! shells[$10])
 			printf "Login %s does not have a valid shell (%s)\n",
@@ -88,11 +90,11 @@ if [ "$check_passwd" = YES ]; then
 		column $OUTPUT
 	fi
 
-	< $TMP1 uniq -d -f 1 | awk '{ print $2 }' > $TMP2
+	< $MPUID uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 	if [ -s $TMP2 ] ; then
 		printf "\n$MP has duplicate user id's.\n"
 		while read uid; do
-			grep -w $uid $TMP1
+			grep -w $uid $MPUID
 		done < $TMP2 | column
 	fi
 fi
@@ -161,9 +163,10 @@ if [ "$check_rootdotfiles" = YES ]; then
 			fi
 			egrep umask $i |
 			awk '$2 % 100 < 20 \
-				{ print "Root umask is group writeable" }
+				{ print "\tRoot umask is group writeable" }
 			     $2 % 10 < 2 \
-				{ print "Root umask is other writeable" }' >> $OUTPUT
+				{ print "\tRoot umask is other writeable" }' \
+			    >> $OUTPUT
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/csh -f -s << end-of-csh > /dev/null 2>&1
@@ -173,24 +176,24 @@ end-of-csh
 			PATH=$SAVE_PATH
 			awk '{
 				if ($10 ~ /^\.$/) {
-					print "The root path includes .";
+					print "\tThe root path includes .";
 					next;
 				}
 			     }
 			     $1 ~ /^d....w/ \
-		{ print "Root path directory " $10 " is group writeable." } \
+		{ print "\tRoot path directory " $10 " is group writeable." } \
 			     $1 ~ /^d.......w/ \
-		{ print "Root path directory " $10 " is other writeable." }' \
+		{ print "\tRoot path directory " $10 " is other writeable." }' \
 			< $TMP1 >> $OUTPUT
 		fi
 	done
 	if [ $umaskset = "no" -o -s $OUTPUT ] ; then
-		printf "\nChecking root csh paths, umask values:\n$list\n"
+		printf "\nChecking root csh paths, umask values:\n$list\n\n"
 		if [ -s $OUTPUT ]; then
 			cat $OUTPUT
 		fi
 		if [ $umaskset = "no" ] ; then
-			printf "\nRoot csh startup files do not set the umask.\n"
+		    printf "\tRoot csh startup files do not set the umask.\n"
 		fi
 	fi
 
@@ -205,9 +208,10 @@ end-of-csh
 			fi
 			egrep umask $i |
 			awk '$2 % 100 < 20 \
-				{ print "Root umask is group writeable" } \
+				{ print "\tRoot umask is group writeable" } \
 			     $2 % 10 < 2 \
-				{ print "Root umask is other writeable" }' >> $OUTPUT
+				{ print "\tRoot umask is other writeable" }' \
+			    >> $OUTPUT
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/sh << end-of-sh > /dev/null 2>&1
@@ -219,14 +223,14 @@ end-of-sh
 			PATH=$SAVE_PATH
 			awk '{
 				if ($10 ~ /^\.$/) {
-					print "The root path includes .";
+					print "\tThe root path includes .";
 					next;
 				}
 			     }
 			     $1 ~ /^d....w/ \
-		{ print "Root path directory " $10 " is group writeable." } \
+		{ print "\tRoot path directory " $10 " is group writeable." } \
 			     $1 ~ /^d.......w/ \
-		{ print "Root path directory " $10 " is other writeable." }' \
+		{ print "\tRoot path directory " $10 " is other writeable." }' \
 			< $TMP1 >> $OUTPUT
 
 		fi
@@ -237,23 +241,20 @@ end-of-sh
 			cat $OUTPUT
 		fi
 		if [ $umaskset = "no" ] ; then
-			printf "\nRoot sh startup files do not set the umask.\n"
+			printf "\tRoot sh startup files do not set the umask.\n"
 		fi
 	fi
 fi
 
 # Root and uucp should both be in /etc/ftpusers.
+# XXX This should be updated to support the new format...
 if [ "$check_ftpusers" = YES ]; then
-	if egrep root /etc/ftpusers > /dev/null ; then
-		:
-	else
-		printf "\nRoot not listed in /etc/ftpusers file.\n"
-	fi
-	if egrep uucp /etc/ftpusers > /dev/null ; then
-		:
-	else
-		printf "\nUucp not listed in /etc/ftpusers file.\n"
-	fi
+	list="root uucp"
+	for i in $list; do
+		if ! egrep "^$i$" /etc/ftpusers > /dev/null ; then
+			printf "\n$i is not listed in /etc/ftpusers file.\n"
+		fi
+	done
 fi
 
 # Uudecode should not be in the /etc/aliases file.
@@ -289,14 +290,12 @@ if [ "$check_rhosts" = YES ]; then
 		cat $OUTPUT
 	fi
 
-	awk -F: '{ print $1 " " $9 }' $MP |
-	sort -k2 |
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts ] && \
 		    egrep '\+' ${homedir}/.rhosts > /dev/null ; then
 			printf "$uid: + in .rhosts file.\n"
 		fi
-	done > $OUTPUT
+	done < $MPPATH > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking .rhosts files syntax.\n"
 		cat $OUTPUT
@@ -306,29 +305,26 @@ fi
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
 if [ "$check_homes" = YES ]; then
-	awk -F: '{ print $1 " " $9 }' $MP |
-	sort -k2 |
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
 			file=`ls -ldgT ${homedir}`
 			printf "$uid $file\n"
 		fi
-	done |
+	done < $MPPATH |
 	awk '$1 != $4 && $4 != "root" \
 		{ print "user " $1 " home directory is owned by " $4 }
 	     $2 ~ /^-....w/ \
 		{ print "user " $1 " home directory is group writeable" }
 	     $2 ~ /^-.......w/ \
-		{ print "user " $1 " home directory is other writeable" }' > $OUTPUT
+		{ print "user " $1 " home directory is other writeable" }' \
+	    > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking home directories.\n"
 		cat $OUTPUT
 	fi
 
 	# Files that should not be owned by someone else or readable.
-	list=".Xauthority .netrc .rhosts"
-	awk -F: '{ print $1 " " $9 }' $MP |
-	sort -k2 |
+	list=".Xauthority .netrc"
 	while read uid homedir; do
 		for f in $list ; do
 			file=${homedir}/${f}
@@ -336,7 +332,7 @@ if [ "$check_homes" = YES ]; then
 				printf "$uid $f `ls -ldgT $file`\n"
 			fi
 		done
-	done |
+	done < $MPPATH |
 	awk '$1 != $5 && $5 != "root" \
 		{ print "user " $1 " " $2 " file is owned by " $5 }
 	     $3 ~ /^-...r/ \
@@ -346,14 +342,14 @@ if [ "$check_homes" = YES ]; then
 	     $3 ~ /^-....w/ \
 		{ print "user " $1 " " $2 " file is group writeable" }
 	     $3 ~ /^-.......w/ \
-		{ print "user " $1 " " $2 " file is other writeable" }' > $OUTPUT
+		{ print "user " $1 " " $2 " file is other writeable" }' \
+	    > $OUTPUT
 
 	# Files that should not be owned by someone else or writeable.
 	list=".bash_history .bash_login .bash_logout .bash_profile .bashrc \
 	      .cshrc .emacs .exrc .forward .history .klogin .login .logout \
-	      .profile .qmail .rc_history .tcshrc .twmrc .xinitrc .xsession"
-	awk -F: '{ print $1 " " $9 }' $MP |
-	sort -k2 |
+	      .profile .qmail .rc_history .rhosts .tcshrc .twmrc .xinitrc \
+	      .xsession"
 	while read uid homedir; do
 		for f in $list ; do
 			file=${homedir}/${f}
@@ -361,13 +357,14 @@ if [ "$check_homes" = YES ]; then
 				printf "$uid $f `ls -ldgT $file`\n"
 			fi
 		done
-	done |
+	done < $MPPATH |
 	awk '$1 != $5 && $5 != "root" \
 		{ print "user " $1 " " $2 " file is owned by " $5 }
 	     $3 ~ /^-....w/ \
 		{ print "user " $1 " " $2 " file is group writeable" }
 	     $3 ~ /^-.......w/ \
-		{ print "user " $1 " " $2 " file is other writeable" }' >> $OUTPUT
+		{ print "user " $1 " " $2 " file is other writeable" }' \
+	    >> $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking dot files.\n"
 		cat $OUTPUT
@@ -462,7 +459,8 @@ if [ "$check_devices" = YES ]; then
 				fi
 
 				sort -k10 $TMP2 $CUR $TMP1 | \
-				    sed -e 's/[	 ][	 ]*/ /g' | uniq -u > $OUTPUT
+				    sed -e 's/[	 ][	 ]*/ /g' | \
+				    uniq -u > $OUTPUT
 				if [ -s $OUTPUT ] ; then
 					printf "Setuid changes:\n"
 					column -t $OUTPUT
@@ -480,10 +478,12 @@ if [ "$check_devices" = YES ]; then
 		fi
 	fi
 
-	# Check for block and character disk devices that are readable or writeable
-	# or not owned by root.operator.
+	# Check for block and character disk devices that are readable or
+	# writeable or not owned by root.operator.
 	>$TMP1
-	DISKLIST="dk fd hd hk hp jb kra ra rb rd rl rx rz sd up wd xd xy"
+	DISKLIST="acd ccd cd ch fd hk hp mcd md ra rb rd rl rx rz \
+	    sd se ss tz uk up vnd wd xd xy"
+#	DISKLIST="$DISKLIST ct mt st wt"
 	for i in $DISKLIST; do
 		egrep "^b.*/${i}[0-9][0-9]*[a-p]$"  $LIST >> $TMP1
 		egrep "^c.*/r${i}[0-9][0-9]*[a-p]$"  $LIST >> $TMP1
@@ -523,13 +523,14 @@ if [ "$check_devices" = YES ]; then
 					printf "\n"
 				fi
 
-				# Report any block device change.  Ignore character
-				# devices, only the name is significant.
+				# Report any block device change. Ignore
+				# character devices, only the name is
+				# significant.
 				cat $TMP2 $CUR $TMP1 | \
-				sed -e '/^c/d' | \
-				sort -k11 | \
-				sed -e 's/[	 ][	 ]*/ /g' | \
-				uniq -u > $OUTPUT
+				    sed -e '/^c/d' | \
+				    sort -k11 | \
+				    sed -e 's/[	 ][	 ]*/ /g' | \
+				    uniq -u > $OUTPUT
 				if [ -s $OUTPUT ] ; then
 					printf "Block device changes:\n"
 					column -t $OUTPUT
@@ -588,7 +589,7 @@ fi
 # file is expected to have two backups, /var/backups/file.{current,backup}.
 # Any changes cause the files to rotate.
 if [ "$check_changelist" = YES ] && [ -s /etc/changelist ] ; then
-	for file in `cat /etc/changelist`; do
+	for file in `egrep -v "^#|$MP" /etc/changelist`; do
 		CUR=/var/backups/`basename $file`.current
 		BACK=/var/backups/`basename $file`.backup
 		if [ -s $file ]; then
