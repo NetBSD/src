@@ -19,5 +19,5 @@ HDRS=\
   $(srcdir)/command.h \
   $(srcdir)/ref.h
 GRAM=$(srcdir)/label.y
-YTABC=$(srcdir)/label.cc
+YTABC=label.cc
 NAMEPREFIX=$(g)
