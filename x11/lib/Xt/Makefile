@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/02/07 04:02:01 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/02/07 04:15:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -35,14 +35,11 @@ DPADD+=	${LIBX11} ${LIBSM} ${LIBICE}
 MAKESTRSDIR!=	cd ${NETBSDSRCDIR}/x11/tools/makestrs && ${PRINTOBJDIR}
 MAKESTRS=	${MAKESTRSDIR}/makestrs
 
-${MAKESTRS}:
-	(cd ${.CURDIR}/makestrs && ${MAKE})
-
 STRINGS_FILES=	StringDefs.c StringDefs.h Shell.h
 STRINGS_TMPLS=	util/StrDefs.ct util/StrDefs.ht util/Shell.ht
 STRINGS_LIST=	util/string.list
 
-${STRINGS_FILES}: ${MAKESTRS} ${STRINGS_LIST} ${STRINGS_TMPLS}
+${STRINGS_FILES}: ${STRINGS_LIST} ${STRINGS_TMPLS}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET} util
 	ln -s ${X11SRCDIR.xc}/lib/${LIB}/util util
