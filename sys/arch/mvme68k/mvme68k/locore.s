@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.88.6.4 2001/11/18 20:05:20 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.88.6.5 2001/11/25 10:25:41 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,9 +53,6 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
-
-/* XXXX: Temporary */
-#define FPCOPROC
 
 
 /*
@@ -1241,6 +1238,7 @@ Laststkadj:
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
+#define	FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
 
