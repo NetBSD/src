@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.15 2000/05/05 21:08:01 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2000/05/05 21:25:58 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
-
-COMMONDIR=	${TOP}/fdset-common
-
-.include <bsd.kernobj.mk>
 
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}d
 VND_CRDEV=	/dev/r${VND}d
-BASENAME=	boot
-IMAGE1=		${BASENAME}1.fs
+BASENAME?=	boot
+IMAGE1?=	${BASENAME}1.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE=	${MDEC}/biosboot.sym
@@ -45,14 +41,7 @@ realall:	netbsd boot
 				echo; \
 				echo Making disk number $$d.; \
 				IMAGE=${BASENAME}$${d}.fs; \
-				PIMAGE=${BASENAME}$$(($$d - 1)).fs; \
 				echo USTARFS $$d > $${IMAGE}; \
-				(echo 'Prototype image created on: ';   \
-					echo -n '     '; date;          \
-					echo -n '     '; date -u)	\
-					>> $${IMAGE}; \
-				(echo Hash value of corresponding volume:; \
-					md5 $${PIMAGE}) >> $${IMAGE}; \
 				skip=$$((($$d - 1) * ${BLOCK8K})); \
 				if test $$d -eq $$disks; then \
 					dd bs=8k seek=1 skip=$${skip} \
