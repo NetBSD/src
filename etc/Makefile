@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.228 2002/10/05 15:23:19 grant Exp $
+#	$NetBSD: Makefile,v 1.229 2002/10/16 02:30:48 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -330,13 +330,19 @@ snap_pre: check_DESTDIR check_RELEASEDIR
 # "netbsd.ecoff" and "netbsd.srec").  It is not an error if kernels
 # with these suffixes do not exist in the kernel build directory.
 #
+#
+# A list of all the kernels to build, which can be overridden from
+# external sources (such as make(1)'s environment or command line)
+#
+ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
+#
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 #
 .if !target(snap_kern)
 snap_kern: check_DESTDIR check_RELEASEDIR
 .if !defined(KERNELS_DONE)						# {
-.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
+.for configfile in ${ALL_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile:C/.*\///} -s ${KERNSRCDIR} ${configfile}
 .if !defined(UPDATE)
