@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.11 2000/06/12 16:31:53 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.29 2000/06/12 16:29:18 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.12 2000/06/30 18:58:42 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.30 2000/06/30 18:56:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.11 2000/06/12 16:31:53 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.12 2000/06/30 18:58:42 itojun Exp $");
 #endif
 #endif
 
@@ -898,7 +898,7 @@ setpolicy(so, policy)
 
 	buf = ipsec_set_policy(policy, strlen(policy));
 	if (buf == NULL) {
-		warnx(ipsec_strerror());
+		warnx("%s", ipsec_strerror());
 		return -1;
 	}
 	(void)setsockopt(so, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
