@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.8 1999/11/14 22:40:13 augustss Exp $
+.\" $NetBSD: pcmcia.4,v 1.9 1999/11/14 23:14:45 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,7 @@
 .Cd "pcic0   at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000"
 .Cd "pcic1   at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000"
 .Cd "pcmcia* at pcic? controller ? socket ?"
+.Cd "pcmcia* at cardslot?"
 .Cd "XX*     at pcmcia? function ?"
 .Pp
 .Sh INTRODUCTION
@@ -111,6 +112,7 @@ devices in the kernel config file to accomodate these cards.
 .Xr intro 4 ,
 .Xr aic 4 ,
 .Xr awi 4 ,
+.Xr cardbus 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
 .Xr isa 4 ,
