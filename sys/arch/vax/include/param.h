@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.50 2002/04/21 21:00:29 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.51 2003/02/26 06:21:09 matt Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -145,12 +145,12 @@
 
 /* clicks to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	btop(x)		((x) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	btodb(x)	((unsigned long)(x) >> DEV_BSHIFT)
-#define	dbtob(x)	((unsigned long)(x) << DEV_BSHIFT)
+#define	btodb(x)	((x) >> DEV_BSHIFT)
+#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /* MD conversion macros */
 #define	vax_btoc(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)
