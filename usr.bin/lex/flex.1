@@ -190,9 +190,11 @@ scanner table representation should be used (and stdio bypassed).
 This representation is about as fast as the full table representation
 .B (-f),
 and for some sets of patterns will be considerably smaller (and for
-others, larger).  See
+others, larger).  It cannot be used with the
+.B \-+
+option.  See
 .B flexdoc(1)
-for details.
+for more details.
 .IP
 This option is equivalent to
 .B \-CFr
@@ -325,7 +327,8 @@ different states.
 .B \-CF
 specifies that the alternate fast scanner representation (described in
 .B flexdoc(1))
-should be used.
+should be used.  This option cannot be used with
+.B \-+.
 .IP
 .B \-Cm
 directs
@@ -525,9 +528,9 @@ of the scanner's actions it will slow down
 of the scanner's matching.  Furthermore,
 .B REJECT
 cannot be used with the
-.I -f
+.B \-f
 or
-.I -F
+.B \-F
 options.
 .IP
 Note also that unlike the other special actions,
@@ -807,10 +810,9 @@ scanner complaining about the following missing routines:
 .ds
     yywrap
     yy_flex_alloc
-    yy_flex_realloc
-    yy_flex_free
+    ...
 .de
-then you forgot to link your program with
+(and various others) then you forgot to link your program with
 .B \-lfl.
 .PP
 .I reject_used_but_not_detected undefined
@@ -995,9 +997,9 @@ and somewhat greater than the number of states if it does.
 .PP
 .B REJECT
 cannot be used with the
-.I -f
+.B \-f
 or
-.I -F
+.B \-F
 options.
 .PP
 The
