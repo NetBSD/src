@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.26 1998/09/10 10:46:33 mouse Exp $
+.\"	$NetBSD: sysctl.8,v 1.27 1999/03/28 17:18:45 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,6 +138,8 @@ privilege can change the value.
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
 .It kern.shortcorename	integer	yes
+.It kern.synchronized_io	integer	no
+.It kern.iov_max	integer	no
 .It vm.loadavg	struct	no
 .It machdep.console_device	dev_t	no
 .It net.inet.ip.forwarding	integer	yes
