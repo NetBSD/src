@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.38 1996/10/11 00:46:40 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.39 1996/10/13 02:59:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -314,7 +314,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		kprintf(" drive %d", fa->fa_drive);
+		printf(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 
@@ -408,7 +408,7 @@ fdcattach(parent, self, aux)
 	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&
 	    fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x90) {
 		if (fdc_debug)
-			kprintf("[version cmd]");
+			printf("[version cmd]");
 	}
 #endif
 
@@ -423,12 +423,12 @@ fdcattach(parent, self, aux)
 		/* Lock configuration across soft resets. */
 		out_fdc(fdc, NE7CMD_LOCK | CFG_LOCK);
 		if (fdcresult(fdc) != 1)
-			kprintf(" CFGLOCK: unexpected response");
+			printf(" CFGLOCK: unexpected response");
 	}
 
 	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
 
-	kprintf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
+	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 
 	/*
 	 * Controller and drives are represented by one and the same
@@ -530,10 +530,10 @@ fdmatch(parent, match, aux)
 #ifdef FD_DEBUG
 	if (fdc_debug) {
 		int i;
-		kprintf("fdprobe: %d stati:", n);
+		printf("fdprobe: %d stati:", n);
 		for (i = 0; i < n; i++)
-			kprintf(" %x", fdc->sc_status[i]);
-		kprintf("\n");
+			printf(" %x", fdc->sc_status[i]);
+		printf("\n");
 	}
 #endif
 	ok = (n == 2 && (fdc->sc_status[0] & 0xf8) == 0x20) ? 1 : 0;
@@ -566,10 +566,10 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		kprintf(": %s %d cyl, %d head, %d sec\n", type->name,
+		printf(": %s %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
-		kprintf(": density unknown\n");
+		printf(": density unknown\n");
 
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
@@ -658,7 +658,7 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    kprintf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
+	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
 		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin);
 #endif
 
@@ -672,7 +672,7 @@ fdstrategy(bp)
 	else {
 		struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 		if (fdc->sc_state == DEVIDLE) {
-			kprintf("fdstrategy: controller inactive\n");
+			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
 		}
 	}
@@ -747,7 +747,7 @@ fdc_reset(fdc)
 	*fdc->sc_reg_drs = 0;
 #ifdef FD_DEBUG
 	if (fdc_debug)
-		kprintf("fdc reset\n");
+		printf("fdc reset\n");
 #endif
 }
 
@@ -955,7 +955,7 @@ fdcstart(fdc)
 	/* only got here if controller's drive queue was inactive; should
 	   be in idle state */
 	if (fdc->sc_state != DEVIDLE) {
-		kprintf("fdcstart: not idle\n");
+		printf("fdcstart: not idle\n");
 		return;
 	}
 #endif
@@ -984,19 +984,19 @@ fdcstatus(dv, n, s)
 	/* Just print last status */
 	n = fdc->sc_nstat;
 
-	kprintf("%s: %s: state %d", dv->dv_xname, s, fdc->sc_state);
+	printf("%s: %s: state %d", dv->dv_xname, s, fdc->sc_state);
 
 	switch (n) {
 	case 0:
-		kprintf("\n");
+		printf("\n");
 		break;
 	case 2:
-		kprintf(" (st0 %b cyl %d)\n",
+		printf(" (st0 %b cyl %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
-		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1004,7 +1004,7 @@ fdcstatus(dv, n, s)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		kprintf(" fdcstatus: weird size: %d\n", n);
+		printf(" fdcstatus: weird size: %d\n", n);
 		break;
 #endif
 	}
@@ -1068,13 +1068,13 @@ fdchwintr(fdc)
 		auxregbisc(0, AUXIO_FDS);	/* Does this help? */
 		fdcresult(fdc);
 		fdc->sc_istate = ISTATE_SPURIOUS;
-		kprintf("fdc: stray hard interrupt... ");
+		printf("fdc: stray hard interrupt... ");
 		ienab_bis(IE_FDSOFT);
 		return 1;
 	case ISTATE_DMA:
 		break;
 	default:
-		kprintf("fdc: goofed ...\n");
+		printf("fdc: goofed ...\n");
 		return 1;
 	}
 
@@ -1091,20 +1091,20 @@ fdchwintr(fdc)
 			fdcresult(fdc);
 			fdc->sc_istate = ISTATE_IDLE;
 			ienab_bis(IE_FDSOFT);
-			kprintf("fdc: overrun: tc = %d\n", fdc->sc_tc);
+			printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
 			break;
 		}
 
 		if (msr & NE7_DIO) {
 #ifdef DIAGNOSTIC
 			if (!read)
-				kprintf("fdxfer: false read\n");
+				printf("fdxfer: false read\n");
 #endif
 			*fdc->sc_data++ = *fdc->sc_reg_fifo;
 		} else {
 #ifdef DIAGNOSTIC
 			if (read)
-				kprintf("fdxfer: false write\n");
+				printf("fdxfer: false write\n");
 #endif
 			*fdc->sc_reg_fifo = *fdc->sc_data++;
 		}
@@ -1140,7 +1140,7 @@ fdcswintr(fdc)
 
 	if (fdc->sc_istate != ISTATE_IDLE) {
 		/* Trouble... */
-		kprintf("fdc: spurious interrupt: state %d, istate=%d\n",
+		printf("fdc: spurious interrupt: state %d, istate=%d\n",
 			fdc->sc_state, fdc->sc_istate);
 		fdc->sc_istate = ISTATE_IDLE;
 		if (fdc->sc_state == RESETCOMPLETE ||
@@ -1248,7 +1248,7 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 kprintf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
@@ -1263,7 +1263,7 @@ loop:
 		*fdc->sc_reg_drs = type->rate;
 #ifdef FD_DEBUG
 		if (fdc_debug > 1)
-			kprintf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
+			printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 				read ? "read" : "write", fd->sc_drive,
 				fd->sc_cylin, head, sec, nblks);
 #endif
@@ -1336,7 +1336,7 @@ loop:
 				fdcstatus(&fd->sc_dv, 7,
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
-				kprintf("blkno %d nblks %d tc %d\n",
+				printf("blkno %d nblks %d tc %d\n",
 				       fd->sc_blkno, fd->sc_nblks, fdc->sc_tc);
 			}
 #endif
@@ -1354,7 +1354,7 @@ loop:
 					fdc->sc_cfg |= (thr & CFG_THRHLD_MASK);
 #ifdef FD_DEBUG
 					if (fdc_debug)
-						kprintf("fdc: %d -> threshold\n", thr);
+						printf("fdc: %d -> threshold\n", thr);
 #endif
 					fdconf(fdc);
 					fdc->sc_overruns = 0;
@@ -1370,7 +1370,7 @@ loop:
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-			kprintf("\n");
+			printf("\n");
 			fdc->sc_errors = 0;
 		} else {
 			if (--fdc->sc_overruns < -20) {
@@ -1381,7 +1381,7 @@ loop:
 					fdc->sc_cfg |= (thr & CFG_THRHLD_MASK);
 #ifdef FD_DEBUG
 					if (fdc_debug)
-						kprintf("fdc: %d -> threshold\n", thr);
+						printf("fdc: %d -> threshold\n", thr);
 #endif
 					fdconf(fdc);
 				}
@@ -1496,7 +1496,7 @@ fdcretry(fdc)
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 
-		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1586,10 +1586,10 @@ fdioctl(dev, cmd, addr, flag, p)
 
 		out_fdc(fdc, NE7CMD_DUMPREG);
 		fdcresult(fdc);
-		kprintf("dumpreg(%d regs): <", fdc->sc_nstat);
+		printf("dumpreg(%d regs): <", fdc->sc_nstat);
 		for (i = 0; i < fdc->sc_nstat; i++)
-			kprintf(" %x", fdc->sc_status[i]);
-		kprintf(">\n");
+			printf(" %x", fdc->sc_status[i]);
+		printf(">\n");
 		}
 
 		return 0;
@@ -1607,11 +1607,11 @@ fdioctl(dev, cmd, addr, flag, p)
 					fd->sc_dv.dv_parent;
 		out_fdc(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
-		kprintf("sensei(%d regs): <", fdc->sc_nstat);
+		printf("sensei(%d regs): <", fdc->sc_nstat);
 		for (i=0; i< fdc->sc_nstat; i++)
-			kprintf(" 0x%x", fdc->sc_status[i]);
+			printf(" 0x%x", fdc->sc_status[i]);
 		}
-		kprintf(">\n");
+		printf(">\n");
 		return 0;
 #endif
 	default:
@@ -1706,11 +1706,11 @@ fd_mountroot_hook(dev)
 	int c;
 
 	fd_do_eject();
-	kprintf("Insert filesystem floppy and press return.");
+	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
-			kprintf("\n");
+			printf("\n");
 			break;
 		}
 	}
