@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.10 1997/09/02 12:40:20 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.11 1997/09/02 12:54:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.10 1997/09/02 12:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.11 1997/09/02 12:54:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,8 @@ dwlpxattach(parent, self, aux)
 	 * Attach PCI bus
 	 */
 	pba.pba_busname = "pci";
-	pba.pba_iot = sc->dwlpx_cc.cc_iot;
-	pba.pba_memt = sc->dwlpx_cc.cc_memt;
+	pba.pba_iot = &sc->dwlpx_cc.cc_iot;
+	pba.pba_memt = &sc->dwlpx_cc.cc_memt;
 	pba.pba_dmat =	/* start with direct, may change... */
 	    alphabus_dma_get_tag(&sc->dwlpx_cc.cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &sc->dwlpx_cc.cc_pc;

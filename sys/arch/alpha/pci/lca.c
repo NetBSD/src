@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.21 1997/09/02 12:40:21 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.22 1997/09/02 12:54:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.21 1997/09/02 12:40:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.22 1997/09/02 12:54:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,8 +180,8 @@ lcaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = lcp->lc_iot;
-	pba.pba_memt = lcp->lc_memt;
+	pba.pba_iot = &lcp->lc_iot;
+	pba.pba_memt = &lcp->lc_memt;
 	pba.pba_dmat = &lcp->lc_dmat_direct;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.24 1997/09/02 12:51:20 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.25 1997/09/02 12:54:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.24 1997/09/02 12:51:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.25 1997/09/02 12:54:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,8 @@ apecsattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = acp->ac_iot;
-	pba.pba_memt = acp->ac_memt;
+	pba.pba_iot = &acp->ac_iot;
+	pba.pba_memt = &acp->ac_memt;
 	pba.pba_dmat = &acp->ac_dmat_direct;
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
