@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.47 1994/05/13 06:13:43 mycroft Exp $
+ *	$Id: if_ed.c,v 1.48 1994/05/19 07:47:34 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -477,32 +477,6 @@ ed_probe_WD80x3(sc, cf, ia)
 		    inb(sc->asic_addr + ED_WD_PROM + i);
 
 	if (sc->mem_shared) {
-		/* Set address and enable interface shared memory. */
-		if (!sc->is790) {
-#ifdef TOSH_ETHER
-			outb(sc->asic_addr + ED_WD_MSR + 1,
-			    ((kvtop(sc->mem_start) >> 8) & 0xe0) | 4);
-			outb(sc->asic_addr + ED_WD_MSR + 2,
-			    ((kvtop(sc->mem_start) >> 16) & 0x0f));
-			sc->wd_msr_proto = ED_WD_MSR_POW;
-#else
-			sc->wd_msr_proto =
-			    (kvtop(sc->mem_start) >> 13) & ED_WD_MSR_ADDR;
-#endif
-		} else {
-			outb(sc->asic_addr + 0x04,
-			    inb(sc->asic_addr + 0x04) | 0x80);
-			outb(sc->asic_addr + 0x0b,
-			    ((kvtop(sc->mem_start) >> 13) & 0x0f) |
-			    ((kvtop(sc->mem_start) >> 11) & 0x40) |
-			    (inb(sc->asic_addr + 0x0b) & 0xb0));
-			outb(sc->asic_addr + 0x04,
-			    inb(sc->asic_addr + 0x04) & ~0x80);
-			sc->wd_msr_proto = 0x00;
-		}
-		outb(sc->asic_addr + ED_WD_MSR,
-		    sc->wd_msr_proto | ED_WD_MSR_MENB);
-
 		/*
 		 * Set upper address bits and 8/16 bit access to shared memory.
 		 */
@@ -534,6 +508,33 @@ ed_probe_WD80x3(sc, cf, ia)
 				    sc->wd_laar_proto);
 			}
 		}
+
+		/* Set address and enable interface shared memory. */
+		if (!sc->is790) {
+#ifdef TOSH_ETHER
+			outb(sc->asic_addr + ED_WD_MSR + 1,
+			    ((kvtop(sc->mem_start) >> 8) & 0xe0) | 4);
+			outb(sc->asic_addr + ED_WD_MSR + 2,
+			    ((kvtop(sc->mem_start) >> 16) & 0x0f));
+			sc->wd_msr_proto = ED_WD_MSR_POW;
+#else
+			sc->wd_msr_proto =
+			    (kvtop(sc->mem_start) >> 13) & ED_WD_MSR_ADDR;
+#endif
+		} else {
+			outb(sc->asic_addr + 0x04,
+			    inb(sc->asic_addr + 0x04) | 0x80);
+			outb(sc->asic_addr + 0x0b,
+			    ((kvtop(sc->mem_start) >> 13) & 0x0f) |
+			    ((kvtop(sc->mem_start) >> 11) & 0x40) |
+			    (inb(sc->asic_addr + 0x0b) & 0xb0));
+			outb(sc->asic_addr + 0x04,
+			    inb(sc->asic_addr + 0x04) & ~0x80);
+			sc->wd_msr_proto = 0x00;
+		}
+		outb(sc->asic_addr + ED_WD_MSR,
+		    sc->wd_msr_proto | ED_WD_MSR_MENB);
+
 		(void) inb(0x84);
 		(void) inb(0x84);
 
@@ -547,11 +548,11 @@ ed_probe_WD80x3(sc, cf, ia)
 				    kvtop(sc->mem_start + i));
 
 				/* Disable 16 bit access to shared memory. */
+				outb(sc->asic_addr + ED_WD_MSR,
+				    sc->wd_msr_proto);
 				if (isa16bit)
 					outb(sc->asic_addr + ED_WD_LAAR,
 					    sc->wd_laar_proto);
-				outb(sc->asic_addr + ED_WD_MSR,
-				    sc->wd_msr_proto);
 				(void) inb(0x84);
 				(void) inb(0x84);
 				return 0;
@@ -565,9 +566,9 @@ ed_probe_WD80x3(sc, cf, ia)
 		 * and 2) so that other 8 bit devices with shared memory can be
 		 * used in this 128k region, too.
 		 */
+		outb(sc->asic_addr + ED_WD_MSR, sc->wd_msr_proto);
 		if (isa16bit)
 			outb(sc->asic_addr + ED_WD_LAAR, sc->wd_laar_proto);
-		outb(sc->asic_addr + ED_WD_MSR, sc->wd_msr_proto);
 		(void) inb(0x84);
 		(void) inb(0x84);
 	}
@@ -1415,11 +1416,11 @@ outloop:
 				    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
 			break;
 		case ED_VENDOR_WD_SMC:
+			outb(sc->asic_addr + ED_WD_MSR,
+			    sc->wd_msr_proto);
 			if (sc->isa16bit)
 				outb(sc->asic_addr + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			outb(sc->asic_addr + ED_WD_MSR,
-			    sc->wd_msr_proto);
 			(void) inb(0x84);
 			(void) inb(0x84);
 			break;
@@ -1683,11 +1684,11 @@ edintr(sc)
 
 				/* Disable 16-bit access. */
 				if (sc->vendor == ED_VENDOR_WD_SMC) {
+					outb(sc->asic_addr + ED_WD_MSR,
+					    sc->wd_msr_proto);
 					if (sc->isa16bit)
 						outb(sc->asic_addr + ED_WD_LAAR,
 						    sc->wd_laar_proto);
-					outb(sc->asic_addr + ED_WD_MSR,
-					    sc->wd_msr_proto);
 					(void) inb(0x84);
 					(void) inb(0x84);
 				}
