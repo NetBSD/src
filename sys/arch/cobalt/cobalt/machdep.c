@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2004/01/07 12:43:43 cdi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50.2.1 2004/04/11 04:01:33 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2004/01/07 12:43:43 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50.2.1 2004/04/11 04:01:33 jmc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -272,7 +272,7 @@ cpu_startup()
 	 */
 	printf(version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
 	/*
@@ -294,7 +294,7 @@ cpu_startup()
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
+	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
