@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/18 05:59:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1998/02/09 04:22:20 lukem Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
 
-TMACOWN?=	bin
-TMACGRP?=	bin
-TMACMODE?=	444
+TMACOWN?=	${FILESOWN}
+TMACGRP?=	${FILESGRP}
+TMACMODE?=	${FILESMODE}
 
 MAN=		groff_mm.7 groff_mmse.7
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
@@ -13,9 +13,6 @@ MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
 FILES=		tmac.m
 LINKS=		${TMACDIR}/tmac.m ${TMACDIR}/tmac.mse
 FILESDIR=	${TMACDIR}
-FILESOWN=	${TMACOWN}
-FILESGRP=	${TMACGRP}
-FILESMODE=	${TMACMODE}
 
 SUBDIR=		mm
 

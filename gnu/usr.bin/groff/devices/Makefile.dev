@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$NetBSD: Makefile.dev,v 1.19 1997/10/18 05:58:29 lukem Exp $
+#	$NetBSD: Makefile.dev,v 1.20 1998/02/09 04:22:14 lukem Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -11,9 +11,9 @@ DEVICES_=no_libraries
 FONTDIR=	/usr/share/groff_font
 
 DEVICEDIR?=	$(FONTDIR)/dev$(DEVICE)
-FONTOWN?=	bin
-FONTGRP?=	bin
-FONTMODE?=	444
+FONTOWN?=	${FILESOWN}
+FONTGRP?=	${FILESGRP}
+FONTMODE?=	${FILESMODE}
 
 .MAIN: all
 
@@ -29,9 +29,6 @@ COPY=	-c
 .if !target(install)
 FILES=${FONTFILES}
 FILESDIR=${DEVICEDIR}
-FILESOWN=${FONTOWN}
-FILESGRP=${FONTGRP}
-FILESMODE=${FONTMODE}
 GENFILES=${FONTFILES:Mgenerate/*}
 .for i in ${GENFILES}
 FILESDIR_$i=${DEVICEDIR}/generate
