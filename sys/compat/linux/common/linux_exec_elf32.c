@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.38 1998/10/23 03:53:19 erh Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.39 1998/10/23 10:54:58 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_errno.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
