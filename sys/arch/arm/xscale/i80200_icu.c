@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.2 2002/01/24 01:12:40 thorpej Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.3 2002/01/25 19:05:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
 #include <arm/xscale/i80200var.h>
 
 /* Software shadow copy of INTCTL. */
-static uint32_t intctl;
+static __volatile uint32_t intctl;
 
 /* Pointer to board-specific external IRQ dispatcher. */
 void	(*i80200_extirq_dispatch)(struct clockframe *);
