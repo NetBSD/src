@@ -1,10 +1,10 @@
 %{
+/*	$NetBSD: cfparse.y,v 1.3 1995/10/09 03:51:35 thorpej Exp $	*/
+
 /*
  * Configuration file parser for mrouted.
  *
  * Written by Bill Fenner, NRL, 1994
- *
- * $Id: cfparse.y,v 1.2 1995/06/07 17:39:37 cgd Exp $
  */
 #include <stdio.h>
 #include <string.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: config.c,v 1.5 1995/10/09 03:51:37 thorpej Exp $	*/
+
 /*
  * The mrouted program is covered by the license in the accompanying file
  * named "LICENSE".  Use of the mrouted program represents acceptance of
@@ -5,9 +7,6 @@
  *
  * The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
  * Leland Stanford Junior University.
- *
- *
- * $Id: config.c,v 1.4 1995/06/01 02:25:49 mycroft Exp $
  */
 
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: snmp.c,v 1.2 1995/10/09 03:51:58 thorpej Exp $	*/
+
 /*
  * snmp.c
  *

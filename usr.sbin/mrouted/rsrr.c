@@ -1,3 +1,5 @@
+/*	$NetBSD: rsrr.c,v 1.2 1995/10/09 03:51:56 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993 by the University of Southern California
  * All rights reserved.
