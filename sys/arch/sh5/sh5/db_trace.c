@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 2002/09/19 10:05:25 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 2002/09/19 11:25:13 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -239,7 +239,10 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		if (strcmp(symp, "idle") == 0)
 			break;
 
-		if (strcmp(symp, "Lsh5_event_sync") == 0) {
+		if (strcmp(symp, "Lsh5_event_sync") == 0 ||
+		    strcmp(symp, "Ltrapagain") == 0 ||
+		    strcmp(symp, "Ltrapepilogue") == 0 ||
+		    strcmp(symp, "Ltrapexit") == 0) {
 			/*
 			 * We're tracing back through a syncronous exception.
 			 * The previous PC and FP are available from the
@@ -250,7 +253,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			fp = (db_addr_t) tf->tf_caller.r14;
 			cur_intrframe = &tf->tf_ifr;
 		} else
-		if (strcmp(symp, "Lsh5_event_interrupt") == 0) {
+		if (strcmp(symp, "Lsh5_event_interrupt") == 0 ||
+		    strcmp(symp, "Lintrexit") == 0) {
 			/*
 			 * We're tracing back through an asyncronous
 			 * exception (hardware interrupt). The previous PC
@@ -508,14 +512,6 @@ prev_frame(db_addr_t curfp, db_addr_t curpc,
 
 	/* Fetch the saved r14 (caller's frame pointer) */
 	db_read_bytes(r14off + prevfp, sizeof(long), (char *)&v);
-
-	/*
-	 * If all is well, the value we read will be identical to the
-	 * caller's frame pointer we calculated in the loop above.
-	 */
-	if (v != prevfp)
-		return (0);
-
 	*pprevfp = (db_addr_t)v;
 
 	/*
