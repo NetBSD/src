@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.13 1995/07/12 05:15:31 briggs Exp $
+#	$Id: MAKEDEV,v 1.14 1995/08/17 18:02:36 thorpej Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -39,6 +39,8 @@
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
 #	ch*	SCSI changers
+#	vnd*	vnode pseudo-disks
+#	ccd*	concatenated disk driver
 #
 # Terminal ports:
 #	ttye*	ite consoles
@@ -66,6 +68,7 @@ all)
 	sh MAKEDEV std fd
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV adb grf0 grf1 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
@@ -108,11 +111,12 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|vnd*)
+sd*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=4; chr=13;;
 	vnd*) name=vnd; blk=8; chr=19;;
+	ccd*) name=ccd; blk=9; chr=20;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in

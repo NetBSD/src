@@ -45,6 +45,7 @@
 #	ch*	SCSI changer
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
+#	ccd*	concatenated disk devices
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -75,6 +76,7 @@ case $i in
 all)
 	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 cd0 st0 st1 pty0
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgfour0 cgsix0
 	sh MAKEDEV cgeight0
 	sh MAKEDEV lkm local
@@ -159,9 +161,10 @@ vnd*)
 	chmod 640 ${name}${unit}c r${name}${unit}c
 	;;
 
-fd*|sd*)
+ccd*|fd*|sd*)
 	umask 2
 	case $i in
+	ccd*) name=ccd; blk=9; chr=23;;
 	fd*) name=fd; blk=16; chr=54;;
 	sd*) name=sd; blk=7; chr=17;;
 	esac
