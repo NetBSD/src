@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.25 1996/10/04 22:22:15 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.26 1996/10/05 05:22:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +93,13 @@ int 	hildebug = 0;
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
 #endif
+
+/* XXX ITE interface */
+char *kbd_keymap; 
+char *kbd_shiftmap;
+char *kbd_ctrlmap; 
+char *kbd_ctrlshiftmap;
+char **kbd_stringmap;
 
 /* symbolic sleep message strings */
 char hilin[] = "hilin";
@@ -1115,26 +1122,84 @@ kbddisable(unit)
 }
 
 /*
+ * The following chunk of code implements HIL console keyboard
+ * support.
+ */
+
+struct	hil_dev *hilkbd_cn_device;
+char	*kbd_cn_keymap;
+char	*kbd_cn_shiftmap;
+char	*kbd_cn_ctrlmap;
+
+/*
  * XXX: read keyboard directly and return code.
  * Used by console getchar routine.  Could really screw up anybody
  * reading from the keyboard in the normal, interrupt driven fashion.
  */
-kbdgetc(unit, statp)
-	int unit, *statp;
+int
+kbdgetc(statp)
+	int *statp;
 {
-	struct hil_softc *hilp = &hil_softc[unit];
-	register struct hil_dev *hildevice = hilp->hl_addr;
 	register int c, stat;
 	int s;
 
+	if (hilkbd_cn_device == NULL)
+		return (0);
+
+	/*
+	 * XXX needs to be splraise because we could be called
+	 * XXX at splhigh, e.g. in DDB.
+	 */
 	s = splhil();
-	while (((stat = READHILSTAT(hildevice)) & HIL_DATA_RDY) == 0)
+	while (((stat = READHILSTAT(hilkbd_cn_device)) & HIL_DATA_RDY) == 0)
 		;
-	c = READHILDATA(hildevice);
+	c = READHILDATA(hilkbd_cn_device);
 	splx(s);
 	*statp = stat;
-	return(c);
+	return (c);
 }
+
+/*
+ * Perform basic initialization of the HIL keyboard, suitable
+ * for early console use.
+ */
+void
+kbdcninit()
+{
+	struct hil_dev *h = HILADDR;	/* == VA (see hilreg.h) */
+	struct kbdmap *km;
+	u_char lang;
+
+	/* XXX from hil_keymaps.c */
+	extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
+
+	hilkbd_cn_device = h;
+
+	/* Default to US-ASCII keyboard. */
+	kbd_cn_keymap = us_keymap;
+	kbd_cn_shiftmap = us_shiftmap;
+	kbd_cn_ctrlmap = us_ctrlmap;
+
+	HILWAIT(h);
+	WRITEHILCMD(h, HIL_SETARR);
+	HILWAIT(h);
+	WRITEHILDATA(h, ar_format(KBD_ARR));
+	HILWAIT(h);
+	WRITEHILCMD(h, HIL_READKBDLANG);
+	HILDATAWAIT(h);
+	lang = READHILDATA(h);
+	for (km = kbd_map; km->kbd_code; km++) {
+		if (km->kbd_code == lang) {
+			kbd_cn_keymap = km->kbd_keymap;
+			kbd_cn_shiftmap = km->kbd_shiftmap;
+			kbd_cn_ctrlmap = km->kbd_ctrlmap;
+		}
+	}
+	HILWAIT(h);
+	WRITEHILCMD(h, HIL_INTON);
+}
+
+/* End of HIL console keyboard code. */
 
 /*
  * Recoginize and clear keyboard generated NMIs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.30 1996/06/06 15:36:13 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.31 1996/10/05 05:22:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -116,7 +116,7 @@ void	itestart __P((struct tty *));
  * found. Secondary displays alloc the attribute buffer as needed.
  * Size is based on a 68x128 display, which is currently our largest.
  */
-u_char  console_attributes[0x2200];
+u_char  ite_console_attributes[0x2200];
 
 #define ite_erasecursor(ip, sp)	{ \
 	if ((ip)->flags & ITE_CURSORON) \
@@ -937,6 +937,31 @@ ite_major()
  * framebuffer drivers.
  */
 
+void
+itecninit(gp, isw)
+	struct grf_data *gp;
+	struct itesw *isw;
+{
+	extern void kbdcninit __P((void));	/* XXX */
+	struct ite_data *ip = &ite_cn;
+
+	/*
+	 * Set up required ite data and initialize ite.
+	 */
+	ip->isw = isw;
+	ip->grf = gp;
+	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
+	ip->attrbuf = ite_console_attributes;
+	iteinit(ip);
+
+	/*
+	 * Initialize the console keyboard.
+	 */
+	kbdcninit();
+
+	kbd_ite = ip;		/* XXX */
+}
+
 /*ARGSUSED*/
 int
 itecngetc(dev)
@@ -945,16 +970,16 @@ itecngetc(dev)
 	register int c;
 	int stat;
 
-	c = kbdgetc(0, &stat);	/* XXX always read from keyboard 0 for now */
+	c = kbdgetc(&stat);
 	switch ((stat >> KBD_SSHIFT) & KBD_SMASK) {
 	case KBD_SHIFT:
-		c = kbd_shiftmap[c & KBD_CHARMASK];
+		c = kbd_cn_shiftmap[c & KBD_CHARMASK];
 		break;
 	case KBD_CTRL:
-		c = kbd_ctrlmap[c & KBD_CHARMASK];
+		c = kbd_cn_ctrlmap[c & KBD_CHARMASK];
 		break;
 	case KBD_KEY:
-		c = kbd_keymap[c & KBD_CHARMASK];
+		c = kbd_cn_keymap[c & KBD_CHARMASK];
 		break;
 	default:
 		c = 0;
