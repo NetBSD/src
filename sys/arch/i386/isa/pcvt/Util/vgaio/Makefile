@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1994/10/27 04:20:46 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/09/16 15:52:38 jtc Exp $
 
 .if !exists(${.CURDIR}/../Makefile.inc)
 error:
@@ -19,7 +19,7 @@ YFLAGS+= -yd
 #YFLAGS+= -v	# verbose
 LFLAGS+= -I
 
-MAN8= vgaio.0
+MAN=	vgaio.8
 
 CFLAGS+= -I ${.CURDIR}/obj -I ${.CURDIR} -g
 
