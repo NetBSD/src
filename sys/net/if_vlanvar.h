@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.2 2000/09/28 07:20:56 enami Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.3 2000/10/03 23:33:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,33 +70,6 @@
 #ifndef _NET_IF_VLANVAR_H_
 #define	_NET_IF_VLANVAR_H_
 
-#ifdef _KERNEL
-struct vlan_mc_entry {
-	LIST_ENTRY(vlan_mc_entry)	mc_entries;
-	/*
-	 * A key to identify this entry.  The mc_addr below can't be
-	 * used since multiple sockaddr may mapped into the same
-	 * ether_multi (e.g., AF_UNSPEC).
-	 */
-	struct ether_multi		*mc_enm;
-	struct sockaddr_storage		mc_addr;
-};
-
-struct	ifvlan {
-	struct	ethercom ifv_ec;
-	struct	ifnet *ifv_p;	/* parent interface of this vlan */
-	struct	ifv_linkmib {
-		int	ifvm_parent;
-		u_int16_t ifvm_proto; /* encapsulation ethertype */
-		u_int16_t ifvm_tag; /* tag to apply on packets leaving if */
-	} ifv_mib;
-	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	ifv_mc_listhead;
-	LIST_ENTRY(ifvlan)	ifv_list;
-};
-#define	ifv_if		ifv_ec.ec_if
-#define	ifv_tag		ifv_mib.ifvm_tag
-#endif /* _KERNEL */
-
 struct ether_vlan_header {
 	u_int8_t	evl_dhost[ETHER_ADDR_LEN];
 	u_int8_t	evl_shost[ETHER_ADDR_LEN];
@@ -107,10 +80,6 @@ struct ether_vlan_header {
 
 #define	EVL_VLANOFTAG(tag)	((tag) & 4095)
 #define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)
-#define	EVL_ENCAPLEN		4
-
-/* When these sorts of interfaces get their own identifier... */
-#define	IFT_8021_VLAN	IFT_PROPVIRTUAL
 
 /* Configuration structure for SIOCSETVLAN and SIOCGETVLAN ioctls. */
 struct vlanreq {

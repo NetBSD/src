@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.62 2000/10/01 23:43:44 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.63 2000/10/03 23:33:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -511,6 +511,16 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	eh = mtod(m, struct ether_header *);
+	etype = ntohs(eh->ether_type);
+
+	/*
+	 * Determine if the packet is within its size limits.
+	 */
+	if (m->m_pkthdr.len > ETHER_MAX_FRAME(etype, m->m_flags & M_HASFCS)) {
+		printf("%s: discarding oversize frame\n", ifp->if_xname);
+		m_freem(m);
+		return;
+	}
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
@@ -528,8 +538,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	etype = ntohs(eh->ether_type);
-
 	/*
 	 * Handle protocols that expect to have the Ethernet header
 	 * (and possibly FCS) intact.
@@ -541,7 +549,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * vlan_input() will either recursively call ether_input()
 		 * or drop the packet.
 		 */
-		vlan_input(ifp, m);
+		if (((struct ethercom *)ifp)->ec_nvlans != 0)
+			vlan_input(ifp, m);
 		return;
 #endif /* NVLAN > 0 */
 	default:
@@ -802,8 +811,22 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 void
 ether_ifdetach(struct ifnet *ifp)
 {
+	struct ethercom *ec = (void *) ifp;
+	struct sockaddr_dl *sdl = ifp->if_sadl;
+	struct ether_multi *enm;
+	int s;
 
-	/* Nothing. */
+	s = splimp();
+	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
+		LIST_REMOVE(enm, enm_list);
+		free(enm, M_IFADDR);
+		ec->ec_multicnt--;
+	}
+	splx(s);
+
+	memset(LLADDR(sdl), 0, ETHER_ADDR_LEN);
+	sdl->sdl_alen = 0;
+	sdl->sdl_type = 0;
 }
 
 #if 0
