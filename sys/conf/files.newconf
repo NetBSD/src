@@ -84,7 +84,6 @@ file kern/kern_synch.c
 file kern/kern_time.c
 file kern/kern_xxx.c
 file kern/spec_vnops.c
-file kern/subr_acct.c	 	accounting
 file kern/subr_autoconf.c
 file kern/subr_log.c
 file kern/subr_mcount.c	 	profiling-routine
