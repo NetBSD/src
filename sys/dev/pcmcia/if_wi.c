@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21.2.1 2000/07/03 22:34:42 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.2 2000/07/21 18:45:47 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -155,10 +155,11 @@ static void wi_disable __P((struct wi_softc *));
 static int wi_media_change __P((struct ifnet *));
 static void wi_media_status __P((struct ifnet *, struct ifmediareq *));
 
-static int wi_set_ssid __P((struct wi_ssid *, u_int8_t *, int));
-static void wi_request_fill_ssid __P((struct wi_req *, struct wi_ssid *));
+static int wi_set_ssid __P((struct ieee80211_nwid *, u_int8_t *, int));
+static void wi_request_fill_ssid __P((struct wi_req *,
+    struct ieee80211_nwid *));
 static int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
-    struct wi_ssid *));
+    struct ieee80211_nwid *));
 
 struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
@@ -1112,14 +1113,13 @@ static int wi_ioctl(ifp, command, data)
 	u_long			command;
 	caddr_t			data;
 {
-	int			s, len, error = 0;
+	int			s, error = 0;
 	struct wi_softc		*sc = ifp->if_softc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
 	struct proc *p = curproc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct wi_ssid ssid, *ws;
-	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
+	struct ieee80211_nwid nwid;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENXIO);
@@ -1260,45 +1260,36 @@ static int wi_ioctl(ifp, command, data)
 		}
 		break;
 	case SIOCG80211NWID:
-		/*
-		 * Actually, the SSID is a variable length octet sequence
-		 * up to 32 octets, and we should have a way to pass length
-		 * separately.  But for now, we treat as if it is terminated
-		 * by NUL.  XXX.
-		 */
-		if (sc->sc_enabled == 0)
+		if (sc->sc_enabled == 0) {
 			/* Return the desired ID */
-			ws = &sc->wi_netid;
-		else {
+			error = copyout(&sc->wi_netid, ifr->ifr_data,
+			    sizeof(sc->wi_netid));
+		} else {
 			wreq.wi_type = WI_RID_CURRENT_SSID;
 			wreq.wi_len = WI_MAX_DATALEN;
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) ||
 			    wreq.wi_val[0] > IEEE80211_NWID_LEN)
 				error = EINVAL;
 			else {
-				ws = &ssid;
-				wi_set_ssid(ws, (u_int8_t *)&wreq.wi_val[1],
+				wi_set_ssid(&nwid, (u_int8_t *)&wreq.wi_val[1],
 				    wreq.wi_val[0]);
+				error = copyout(&nwid, ifr->ifr_data,
+				    sizeof(nwid));
 			}
-		}
-		if (error == 0) {
-			/* The caller expects NUL terminated. XXX */
-			if (ws->ws_len < IEEE80211_NWID_LEN)
-				ws->ws_id[ws->ws_len] = 0;
-			error = copyout(ws->ws_id, ifr->ifr_data,
-			    IEEE80211_NWID_LEN);
 		}
 		break;
 	case SIOCS80211NWID:
-		memset(nwid, 0, sizeof(nwid));
-		error = copyin(ifr->ifr_data, nwid, IEEE80211_NWID_LEN);
+		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
 		if (error != 0)
 			break;
-		len = strlen(nwid);			/* XXX */
-		if (sc->wi_netid.ws_len == len &&
-		    memcmp(sc->wi_netid.ws_id, nwid, len) == 0)
+		if (nwid.i_len > IEEE80211_NWID_LEN) {
+			error = EINVAL;
 			break;
-		wi_set_ssid(&sc->wi_netid, nwid, len);
+		}
+		if (sc->wi_netid.i_len == nwid.i_len &&
+		    memcmp(sc->wi_netid.i_nwid, nwid.i_nwid, nwid.i_len) == 0)
+			break;
+		wi_set_ssid(&sc->wi_netid, nwid.i_nwid, nwid.i_len);
 		if (sc->sc_enabled != 0)
 			/* Reinitialize WaveLAN. */
 			wi_init(sc);
@@ -1635,28 +1626,28 @@ wi_detach(self, flags)
 
 static int
 wi_set_ssid(ws, id, len)
-	struct wi_ssid *ws;
+	struct ieee80211_nwid *ws;
 	u_int8_t *id;
 	int len;
 {
 
 	if (len > IEEE80211_NWID_LEN)
 		return (EINVAL);
-	ws->ws_len = len;
-	memcpy(ws->ws_id, id, len);
+	ws->i_len = len;
+	memcpy(ws->i_nwid, id, len);
 	return (0);
 }
 
 static void
 wi_request_fill_ssid(wreq, ws)
 	struct wi_req *wreq;
-	struct wi_ssid *ws;
+	struct ieee80211_nwid *ws;
 {
 
 	memset(&wreq->wi_val[0], 0, sizeof(wreq->wi_val));
-	wreq->wi_val[0] = ws->ws_len;
+	wreq->wi_val[0] = ws->i_len;
 	wreq->wi_len = roundup(wreq->wi_val[0], 2) / 2 + 2;
-	memcpy(&wreq->wi_val[1], ws->ws_id, wreq->wi_val[0]);
+	memcpy(&wreq->wi_val[1], ws->i_nwid, wreq->wi_val[0]);
 }
 
 static int
@@ -1664,7 +1655,7 @@ wi_write_ssid(sc, type, wreq, ws)
 	struct wi_softc *sc;
 	int type;
 	struct wi_req *wreq;
-	struct wi_ssid *ws;
+	struct ieee80211_nwid *ws;
 {
 
 	wreq->wi_type = type;

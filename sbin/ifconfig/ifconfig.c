@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.79.4.1 2000/06/30 18:12:46 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.79.4.2 2000/07/21 18:45:44 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.79.4.1 2000/06/30 18:12:46 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.79.4.2 2000/07/21 18:45:44 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1049,12 +1049,41 @@ setifnwid(val, d)
 	const char *val;
 	int d;
 {
-	u_int8_t nwid[IEEE80211_NWID_LEN];
+	struct ieee80211_nwid nwid;
+	int len;
+	u_int8_t *p;
 
 	memset(&nwid, 0, sizeof(nwid));
-	(void)strncpy(nwid, val, sizeof(nwid));
+	if (val[0] == '0' && (val[1] == 'x' || val[1] == 'X')) {
+		val += 2;
+		p = nwid.i_nwid;
+		while (isxdigit((u_char)val[0]) && isxdigit((u_char)val[1])) {
+			if (p >= nwid.i_nwid + sizeof(nwid.i_nwid)) {
+				warnx("SIOCS80211NWID: Too long nwid.");
+				return;
+			}
+#define	tohex(x)	(isdigit(x) ? (x) - '0' : tolower(x) - 'a' + 10)
+			*p++ = (tohex((u_char)val[0]) << 4) |
+			    tohex((u_char)val[1]);
+#undef tohex
+			val += 2;
+		}
+		if (*val != '\0') {
+			warnx("SIOCS80211NWID: Bad hexadecimal digits.");
+			return;
+		}
+		nwid.i_len = p - nwid.i_nwid;
+	} else {
+		len = strlen(val);
+		if (len > sizeof(nwid.i_nwid)) {
+			warnx("SIOCS80211NWID: Too long nwid.");
+			return;
+		}
+		nwid.i_len = len;
+		memcpy(nwid.i_nwid, val, len);
+	}
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_data = (caddr_t)nwid;
+	ifr.ifr_data = (caddr_t)&nwid;
 	if (ioctl(s, SIOCS80211NWID, (caddr_t)&ifr) < 0)
 		warn("SIOCS80211NWID");
 }
@@ -1062,14 +1091,33 @@ setifnwid(val, d)
 void
 ieee80211_status()
 {
-	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
+	int i;
+	struct ieee80211_nwid nwid;
 
 	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_data = (caddr_t)nwid;
+	ifr.ifr_data = (caddr_t)&nwid;
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	nwid[IEEE80211_NWID_LEN] = 0;
-	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) == 0)
-		printf("\tnwid %s\n", nwid);
+	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) != 0)
+		return;
+	if (nwid.i_len > IEEE80211_NWID_LEN) {
+		warnx("SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
+		return;
+	}
+	i = 0;
+	if (nwid.i_nwid[0] != '0' || tolower(nwid.i_nwid[1]) != 'x') {
+		for (; i < nwid.i_len; i++) {
+			if (!isprint(nwid.i_nwid[i]))
+				break;
+		}
+	}
+	if (i == nwid.i_len)
+		printf("\tnwid \"%.*s\"\n", nwid.i_len, nwid.i_nwid);
+	else {
+		printf("\tnwid 0x");
+		for (i = 0; i < nwid.i_len; i++)
+			printf("%02x", nwid.i_nwid[i]);
+		printf("\n");
+	}
 }
 
 void
