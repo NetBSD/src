@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2003/01/10 03:22:49 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2003/01/10 03:48:40 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -910,12 +910,6 @@ void ddb_trap_hook(int where)
 }
 
 #endif
-
-/* XXXrkb: does this belong elsewhere??? */
-void mips_machdep_cache_config(void);
-extern void r5k_sdcache_wbinv_all(void);
-extern void sgimips_find_l2cache(struct arcbios_component *comp, 
-				 struct arcbios_treewalk_context *atc);
 
 void mips_machdep_cache_config(void)
 {
