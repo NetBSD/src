@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.334 2004/07/14 11:40:06 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.335 2004/07/14 12:46:08 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5457,4 +5457,15 @@ sbin/savecore/savecore.c			1.64
 	Fix an integer overflow that prevented saving cores from machines with
 	more than 2GB of RAM.
 	[tls, ticket #650]
+
+distrib/sets/lists/comp/mi			1.717
+
+	Fix distribution set list inconsistency caused by ticket #649.
+	[agc, ticket #651]
+
+crypto/dist/heimdal/lib/krb5/krb5_set_password.3	1.4
+
+	Remove superfluous comma; grammar fixes; split sentence
+	in two for better understanding.
+	[wiz, ticket #653]
 
