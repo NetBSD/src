@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2002/04/23 12:41:05 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2002/04/25 19:32:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -218,6 +218,9 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
 		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+	/* BAT1 used for primary I/O 256 MB segment */
+	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
+		      :: "r"(battable[8].batl), "r"(battable[8].batu));
 
 	/*
 	 * Set up battable to map all RAM regions.
