@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.45 2001/01/28 02:52:26 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.46 2001/01/28 03:09:41 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -398,7 +398,7 @@ attach com at vrip with com_vrip
 file	arch/hpcmips/vr/com_vrip.c			com_vrip
 
 # Memory Disk for boot tape
-file arch/hpcmips/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 major	{md = 6}
 
 include "dev/usb/files.usb"
