@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.16 1997/03/26 17:26:48 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.17 1997/04/09 04:38:49 jeremy Exp $
 
 #
 # sun3x-specific configuration info
@@ -53,12 +53,12 @@ attach mainbus at root
 file	arch/sun3x/sun3x/mainbus.c	mainbus
 
 # On-board I/O space
-device obio {addr = -1, [ipl = -1]}
+device obio {addr = -1, [ipl = -1], [vect = -1]}
 attach obio at mainbus
 file arch/sun3x/dev/obio.c		obio
 
 # On-board MEMory space
-device obmem {addr = -1, [ipl = -1]}
+device obmem {addr = -1, [ipl = -1], [vect = -1]}
 attach obmem at mainbus
 file arch/sun3x/dev/obmem.c		obmem
 
@@ -122,7 +122,7 @@ device fd: disk
 attach fd at fdc
 file arch/sun3x/dev/fd.c		fdc | fd needs-flag
 
-# Printer port
+# Parallel printer port (3/80 only)
 device pp
 attach pp at obio
 file arch/sun3x/dev/pp.c		pp needs-flag
