@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.625 2003/08/08 18:54:39 christos Exp $
+#	$NetBSD: files,v 1.626 2003/08/24 19:19:54 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -85,12 +85,6 @@ defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 # Cryptography support.  Include this early, since several things
 # use it.
 #
-# First, define the pseudo-device for the opencrypto framework,
-# so that defining opencrypto can automatically pull in required
-# transforms from the list immediately below.
-#
-defpseudo opencrypto	
-include "opencrypto/files.opencrypto"
 
 # Individual crypto transforms
 include "crypto/arc4/files.arc4"
@@ -100,6 +94,10 @@ include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/ripemd160/files.ripemd160"
 include "crypto/sha2/files.sha2"
+
+# General-purpose crypto processing framework.
+defpseudo opencrypto: des
+include "opencrypto/files.opencrypto"
 
 #
 # System monitoring framework
@@ -1205,7 +1203,7 @@ file	net/raw_usrreq.c
 file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | ipsec
+file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
