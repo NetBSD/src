@@ -32,7 +32,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	genassym.c,v 1.2 1993/05/22 07:57:23 cgd Exp
+ *	from: genassym.c,v 1.2 1993/05/22 07:57:23 cgd Exp
+ *	$Id: genassym.c,v 1.16 1994/05/05 03:09:11 gwr Exp $
  */
 
 #define KERNEL
@@ -109,7 +110,8 @@ main()
 	/* kernel-isms */
 	printf("#define\tINTERSIL_INTR_OFFSET %d\n",
 		   &intersil_addr->interrupt_reg);
-	printf("#define\tINTERSIL_INTER_CSECONDS %d\n", INTERSIL_INTER_CSECONDS);
+	printf("#define\tINTERSIL_INTER_CSECONDS %d\n",
+		   INTERSIL_INTER_CSECONDS);
 	printf("#define\tCLOCK_VA %d\n", CLOCK_VA);
 	printf("#define\tINTERREG_VA %d\n", INTERREG_VA);
 	printf("#define\tKERNBASE %d\n",        KERNBASE);
@@ -173,12 +175,6 @@ main()
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
 	printf("#define\tV_SOFT %d\n", &vm->v_soft);
 	printf("#define\tV_FAULTS %d\n", &vm->v_faults);
-#if 0
-	/* XXX - Went away sometime in April '94 -gwr */
-	printf("#define\tV_PDMA %d\n", &vm->v_pdma);
-	printf("#define\tV_PGREC %d\n", &vm->v_pgrec);
-	printf("#define\tV_FASTPGREC %d\n", &vm->v_fastpgrec);
-#endif
 
 	exit(0);
 }
