@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.127 2002/11/24 11:37:55 scw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.128 2002/11/28 21:00:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.127 2002/11/24 11:37:55 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.128 2002/11/28 21:00:27 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1180,9 +1180,11 @@ issignal(struct proc *p)
 			 * to take action on an ignored signal other
 			 * than SIGCONT, unless process is traced.
 			 */
+#ifdef DEBUG_ISSIGNAL
 			if ((prop & SA_CONT) == 0 &&
 			    (p->p_flag & P_TRACED) == 0)
 				printf("issignal\n");
+#endif
 			break;		/* == ignore */
 
 		default:
