@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.131 1999/06/19 04:49:52 augustss Exp $
+$NetBSD: pcidevs,v 1.132 1999/06/27 15:13:54 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -503,10 +503,12 @@ vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor LMC		0x1376	LAN Media Corporation
+vendor DELTA		0x1500	Delta Electronics
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
+vendor ADDTRON		0x4033	Addtron Technology
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
 vendor S3		0x5333	S3
@@ -572,6 +574,9 @@ product ACARD AEC6712S  0x8030  AEC6712S SCSI
 product ACARD AEC6712D  0x8040  AEC6712D SCSI
 product ACARD AEC6712SUW 0x8050 AEC6712SUW SCSI
 
+/* Accton products */
+product ACCTON MPX5030	0x1211	MPX 5030/5038 Ethernet
+
 /* Acer products */
 product ACER M1435	0x1435	M1435 VL-PCI Bridge
 
@@ -612,6 +617,9 @@ product ADP2 2940U2	0x0010	AHA-2940 Ultra2
 product ADP2 7890	0x001f	AIC-7890/1
 product ADP2 3940U2	0x0050	AHA-3940 Ultra2
 product ADP2 7896	0x005f	AIC-7896/7
+
+/* Addtron Products */
+product ADDTRON 8139	0x1360	8139 Ethernet
 
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
@@ -799,6 +807,9 @@ product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
 product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
 product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
 product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
+
+/* Delta products */
+product DELTA 8139	0x1360	8139 Ethernet
 
 /* Diamond products */
 product DIAMOND VIPER	0x9001	Viper/PCI
