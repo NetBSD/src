@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.108 2002/03/12 04:48:29 uwe Exp $
+#	$NetBSD: files.sparc,v 1.109 2002/03/28 11:54:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -20,7 +20,7 @@ attach mainbus at root
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
-device msiiep: pcibus
+device msiiep {}: pcibus
 attach msiiep at mainbus
 file	arch/sparc/sparc/msiiep.c		msiiep
 file	arch/sparc/sparc/pci_machdep.c		msiiep
@@ -62,16 +62,21 @@ file	arch/sparc/sparc/auxiotwo.c
 device clock: mk48txx
 attach clock at mainbus with clock_mainbus
 attach clock at obio with clock_obio
+file	arch/sparc/sparc/mkclock.c		clock
 
 device oclock: intersil7170
 attach oclock at obio
+file	arch/sparc/sparc/oclock.c		oclock
 
 device timer
 attach timer at mainbus with timer_mainbus
 attach timer at obio with timer_obio
+attach timer at msiiep with timer_msiiep
+file	arch/sparc/sparc/timer.c		timer
 
 device eeprom
 attach eeprom at obio
+file	arch/sparc/sparc/eeprom.c		eeprom
 
 file	arch/sparc/sparc/clock.c
 file	dev/clock_subr.c
