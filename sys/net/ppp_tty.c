@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.15 1998/12/12 18:21:32 christos Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.16 1999/05/11 02:18:52 thorpej Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -106,7 +106,8 @@
 #include <net/slcompress.h>
 #endif
 
-#ifdef PPP_FILTER
+#include "bpfilter.h"
+#if NBPFILTER > 0 || defined(PPP_FILTER)
 #include <net/bpf.h>
 #endif
 #include <net/ppp_defs.h>
@@ -195,6 +196,11 @@ pppopen(dev, tp)
     if (sc->sc_relinq)
 	(*sc->sc_relinq)(sc);	/* get previous owner to relinquish the unit */
 
+#if NBPFILTER > 0
+    /* Switch DLT to PPP-over-serial. */
+    bpf_change_type(&sc->sc_bpf, DLT_PPP_SERIAL, PPP_HDRLEN);
+#endif
+
     sc->sc_ilen = 0;
     sc->sc_m = NULL;
     bzero(sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
@@ -254,6 +260,9 @@ pppasyncrelinq(sc)
     struct ppp_softc *sc;
 {
     int s;
+
+    /* Change DLT to back none. */
+    bpf_change_type(&sc->sc_bpf, DLT_NULL, 0);
 
     s = spltty();
     if (sc->sc_outm) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.50 1999/01/09 21:47:09 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.51 1999/05/11 02:18:52 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -209,7 +209,7 @@ pppattach()
 	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
+	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_NULL, 0);
 #endif
     }
 }
@@ -770,16 +770,16 @@ pppoutput(ifp, m0, dst, rtp)
 #endif /* PPP_FILTER */
     }
 
+#if defined(PPP_FILTER) || NBPFILTER > 0
+    *mtod(m0, u_char *) = address;
+#endif
+
 #if NBPFILTER > 0
     /*
      * See if bpf wants to look at the packet.
      */
     if (sc->sc_bpf)
 	bpf_mtap(sc->sc_bpf, m0);
-#endif
-
-#if defined(PPP_FILTER) || NBPFILTER > 0
-    *mtod(m0, u_char *) = address;
 #endif
 
     /*
@@ -1415,14 +1415,14 @@ ppp_inproc(sc, m)
 #endif /* PPP_FILTER */
     }
 
+#if defined(PPP_FILTER) || NBPFILTER > 0
+    *mtod(m, u_char *) = adrs;
+#endif
+
 #if NBPFILTER > 0
     /* See if bpf wants to look at the packet. */
     if (sc->sc_bpf)
 	bpf_mtap(sc->sc_bpf, m);
-#endif
-
-#if defined(PPP_FILTER) || NBPFILTER > 0
-    *mtod(m, u_char *) = adrs;
 #endif
 
     rv = 0;
