@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.7 2005/03/19 22:50:51 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.8 2005/03/20 12:12:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -100,4 +100,14 @@ sys/dev/cgd_crypto.c				1.4
 
 	Clear freed memory.
 	[dan, ticket #26]
+
+distrib/sets/lists/base/shl.mi			1.305
+lib/libc/shlib_version				1.162
+lib/libc/sys/Makefile.inc			1.157
+lib/libpthread/pthread_cancelstub.c		1.11
+lib/libpthread/shlib_version			1.8
+
+	Interpose cancellation points in pollts() and pselect(), bringing us
+	to libc.so.12.127 and libpthread.so.0.6.
+	[kleink, ticket #27]
 
