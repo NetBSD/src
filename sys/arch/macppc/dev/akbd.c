@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.21 2002/02/24 20:20:20 dbj Exp $	*/
+/*	$NetBSD: akbd.c,v 1.22 2002/03/12 03:40:12 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -106,6 +106,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 };
 
 static int akbd_is_console;
+static int akbd_console_attached;
 static int pcmcia_soft_eject;
 
 static int
@@ -243,8 +244,9 @@ akbdattach(parent, self, aux)
 		printf("akbd: returned %d from SetADBInfo\n", error);
 #endif
 
-	if (akbd_is_console) {
+	if (akbd_is_console && !akbd_console_attached) {
 		wskbd_cnattach(&akbd_consops, sc, &akbd_keymapdata);
+		akbd_console_attached = 1;
 	}
 
 	a.console = akbd_is_console;
