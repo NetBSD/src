@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.2 1998/03/27 18:22:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.1 1998/03/22 14:24:03 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.2 1998/03/27 18:22:36 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -174,7 +174,7 @@ wsemul_sun_output_normal(edp, c)
 		break;
 
 	case ASCII_HT:		/* "Tab (TAB)" */
-		n = max(8 - (edp->ccol & 7), COLS_LEFT);
+		n = min(8 - (edp->ccol & 7), COLS_LEFT);
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
 		    edp->ccol, n);
 		edp->ccol += n;
@@ -370,7 +370,7 @@ wsemul_sun_control(edp, c)
 		break;
 
 	case 'r':		/* "Set Scrolling (SUNSCRL)" */
-		edp->scrolldist = max(ARG(0), edp->nrows);
+		edp->scrolldist = min(ARG(0), edp->nrows);
 		break;
 
 	case 's':		/* "Reset Terminal Emulator (SUNRESET)" */
