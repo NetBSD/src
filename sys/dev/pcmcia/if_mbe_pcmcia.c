@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.22 2001/12/15 13:23:22 soren Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.23 2001/12/16 05:44:33 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.22 2001/12/15 13:23:22 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.23 2001/12/16 05:44:33 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,10 @@ const struct mbe_pcmcia_product {
 	{ { PCMCIA_STR_FUJITSU_LA10S,		PCMCIA_VENDOR_FUJITSU,
 	    PCMCIA_PRODUCT_FUJITSU_LA10S,	0 },
 	  0, -1 },
+
+	{ { PCMCIA_STR_FUJITSU_ITCFJ182A,	PCMCIA_VENDOR_FUJITSU,
+	    PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,	0 },
+	  0, 0x1cc },
 
 	{ { PCMCIA_STR_RATOC_REX_R280,		PCMCIA_VENDOR_RATOC,
 	    PCMCIA_PRODUCT_RATOC_REX_R280,	0 },
