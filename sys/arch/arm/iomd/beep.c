@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.9 2002/06/16 12:24:23 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.9 2002/06/16 12:24:23 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $");
 struct beep_softc {
 	struct device sc_device;
 	irqhandler_t sc_ih;
-	int sc_iobase;
 	int sc_open;
 	int sc_count;
 	u_int sc_sound_cur0; 
@@ -104,7 +103,6 @@ beepprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-/*	struct mainbus_attach_args *mb = aux;*/
 	int id;
 
 	/* Make sure we have an IOMD we understand */
@@ -134,9 +132,7 @@ beepattach(parent, self, aux)
 	void *aux;
 {
 	struct beep_softc *sc = (void *)self;
-	struct mainbus_attach_args *mb = aux;
     
-	sc->sc_iobase = mb->mb_iobase;
 	sc->sc_open = 0;
 	sc->sc_count = 0;
 
