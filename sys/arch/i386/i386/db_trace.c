@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.37 2003/05/12 13:16:11 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.38 2003/05/12 13:38:49 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2003/05/12 13:16:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2003/05/12 13:38:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,9 +469,11 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
-			lastframe = (int *)(ddb_regs.tf_esp-4);
+			struct i386_frame *fp = (void *)(ddb_regs.tf_esp-4);
+
+			lastframe = (int *)fp;
 			callpc = (db_addr_t)
-				 db_get_value((int)lastframe, 4, FALSE);
+			    db_get_value((db_addr_t)&fp->f_retaddr, 4, FALSE);
 			continue;
 		}
 
