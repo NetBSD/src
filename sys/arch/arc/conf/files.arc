@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.16 2000/02/22 11:25:59 soda Exp $
+#	$NetBSD: files.arc,v 1.17 2000/03/03 12:31:33 soda Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -24,6 +24,11 @@ file	arch/arc/arc/arcbios.c
 ##
 include "dev/ata/files.ata"
 major	{ wd = 4 }
+
+#
+# "Workstation Console" glue.
+#
+include "dev/wscons/files.wscons"
 
 #
 #	System BUS types
