@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.39 1998/06/09 07:46:31 scottr Exp $	*/
+/*	$NetBSD: advnops.c,v 1.40 1998/06/25 22:20:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -79,12 +79,7 @@ int	adosfs_pathconf	__P((void *));
 
 #define adosfs_close 	genfs_nullop
 #define adosfs_fsync 	genfs_nullop
-#ifdef NFSSERVER
-int	lease_check __P((void *));
-#define	adosfs_lease_check	lease_check
-#else
-#define adosfs_lease_check 	genfs_nullop
-#endif
+#define	adosfs_lease_check	genfs_lease_check
 #define adosfs_seek 	genfs_seek
 #define adosfs_vfree 	genfs_nullop
 
