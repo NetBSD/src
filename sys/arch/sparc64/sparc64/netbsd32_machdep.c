@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.37 2003/09/28 10:16:41 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.38 2003/10/14 00:28:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37 2003/09/28 10:16:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.38 2003/10/14 00:28:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -424,12 +424,12 @@ compat_13_netbsd32_sigreturn(l, v, retval)
  */
 /* ARGSUSED */
 int
-netbsd32___sigreturn14(l, v, retval)
+compat_16_netbsd32___sigreturn14(l, v, retval)
 	register struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___sigreturn14_args /* {
+	struct compat_16_netbsd32___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -1093,5 +1093,168 @@ netbsd32_sysarch(l, v, retval)
 	default:
 		printf("(%s) netbsd32_sysarch(%d)\n", MACHINE, SCARG(uap, op));
 		return EINVAL;
+	}
+}
+
+
+int
+cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
+{
+	struct trapframe *tf = l->l_md.md_tf;
+	__greg32_t *gr = mcp->__gregs;
+
+	/* First ensure consistent stack state (see sendsig). */
+	write_user_windows();
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
+
+	/* Restore register context, if any. */
+	if ((flags & _UC_CPU) != 0) {
+		/*
+	 	 * Only the icc bits in the psr are used, so it need not be
+	 	 * verified.  pc and npc must be multiples of 4.  This is all
+	 	 * that is required; if it holds, just do it.
+		 */
+		if (((gr[_REG32_PC] | gr[_REG32_nPC]) & 3) != 0 ||
+		    gr[_REG32_PC] == 0 || gr[_REG32_nPC] == 0)
+			return (EINVAL);
+
+		/* Restore general register context. */
+		/* take only tstate CCR (and ASI) fields */
+		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
+		    PSRCC_TO_TSTATE(gr[_REG32_PSR]);
+		tf->tf_pc        = (u_int64_t)gr[_REG32_PC];
+		tf->tf_npc       = (u_int64_t)gr[_REG32_nPC];
+		tf->tf_y         = (u_int64_t)gr[_REG32_Y];
+		tf->tf_global[1] = (u_int64_t)gr[_REG32_G1];
+		tf->tf_global[2] = (u_int64_t)gr[_REG32_G2];
+		tf->tf_global[3] = (u_int64_t)gr[_REG32_G3];
+		tf->tf_global[4] = (u_int64_t)gr[_REG32_G4];
+		tf->tf_global[5] = (u_int64_t)gr[_REG32_G5];
+		tf->tf_global[6] = (u_int64_t)gr[_REG32_G6];
+		tf->tf_global[7] = (u_int64_t)gr[_REG32_G7];
+		tf->tf_out[0]    = (u_int64_t)gr[_REG32_O0];
+		tf->tf_out[1]    = (u_int64_t)gr[_REG32_O1];
+		tf->tf_out[2]    = (u_int64_t)gr[_REG32_O2];
+		tf->tf_out[3]    = (u_int64_t)gr[_REG32_O3];
+		tf->tf_out[4]    = (u_int64_t)gr[_REG32_O4];
+		tf->tf_out[5]    = (u_int64_t)gr[_REG32_O5];
+		tf->tf_out[6]    = (u_int64_t)gr[_REG32_O6];
+		tf->tf_out[7]    = (u_int64_t)gr[_REG32_O7];
+		/* %asi restored above; %fprs not yet supported. */
+
+		/* XXX mcp->__gwins */
+	}
+
+	/* Restore floating point register context, if any. */
+	if ((flags & _UC_FPU) != 0) {
+#ifdef notyet
+		struct fpstate64 *fsp;
+		const __fpregset_t *fpr = &mcp->__fpregs;
+
+		/*
+		 * If we're the current FPU owner, simply reload it from
+		 * the supplied context.  Otherwise, store it into the
+		 * process' FPU save area (which is used to restore from
+		 * by lazy FPU context switching); allocate it if necessary.
+		 */
+		if ((fsp = l->l_md.md_fpstate) == NULL) {
+			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			l->l_md.md_fpstate = fsp;
+		} else if (l == fplwp) {
+			/* Drop the live context on the floor. */
+			savefpstate(fsp);
+		}
+		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
+		memcpy(fsp->fs_regs, &fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
+		fsp->fs_fsr = mcp->__fpregs.__fpu_fsr;
+		fsp->fs_qsize = 0;
+
+#if 0
+		/* Need more info! */
+		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
+		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
+#endif
+#endif
+	}
+#ifdef _UC_SETSTACK
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+#endif
+	return (0);
+}
+
+
+void
+cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
+{
+	const struct trapframe *tf = l->l_md.md_tf;
+	__greg32_t *gr = mcp->__gregs;
+
+	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
+	write_user_windows();
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
+
+	/* For now: Erase any random indicators for optional state. */
+	(void)memset(mcp, '0', sizeof (*mcp));
+
+	/* Save general register context. */
+	gr[_REG32_PSR] = TSTATECCR_TO_PSR(tf->tf_tstate);
+	gr[_REG32_PC]  = tf->tf_pc;
+	gr[_REG32_nPC] = tf->tf_npc;
+	gr[_REG32_Y]   = tf->tf_y;
+	gr[_REG32_G1]  = tf->tf_global[1];
+	gr[_REG32_G2]  = tf->tf_global[2];
+	gr[_REG32_G3]  = tf->tf_global[3];
+	gr[_REG32_G4]  = tf->tf_global[4];
+	gr[_REG32_G5]  = tf->tf_global[5];
+	gr[_REG32_G6]  = tf->tf_global[6];
+	gr[_REG32_G7]  = tf->tf_global[7];
+	gr[_REG32_O0]  = tf->tf_out[0];
+	gr[_REG32_O1]  = tf->tf_out[1];
+	gr[_REG32_O2]  = tf->tf_out[2];
+	gr[_REG32_O3]  = tf->tf_out[3];
+	gr[_REG32_O4]  = tf->tf_out[4];
+	gr[_REG32_O5]  = tf->tf_out[5];
+	gr[_REG32_O6]  = tf->tf_out[6];
+	gr[_REG32_O7]  = tf->tf_out[7];
+	*flags |= _UC_CPU;
+
+	mcp->__gwins = NULL;
+	mcp->__xrs.__xrs_id = 0;	/* Solaris extension? */
+	*flags |= _UC_CPU;
+
+	/* Save FP register context, if any. */
+	if (l->l_md.md_fpstate != NULL) {
+#ifdef notyet
+		struct fpstate64 fs, *fsp;
+		__fpregset_t *fpr = &mcp->__fpregs;
+
+		/*
+		 * If our FP context is currently held in the FPU, take a
+		 * private snapshot - lazy FPU context switching can deal
+		 * with it later when it becomes necessary.
+		 * Otherwise, get it from the process's save area.
+		 */
+		if (l == fplwp) {
+			fsp = &fs;
+			savefpstate(fsp);
+		} else {
+			fsp = l->l_md.md_fpstate;
+		}
+		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
+		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
+		mcp->__fpregs.__fpu_fsr = fs.fs_fsr;
+		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
+		mcp->__fpregs.__fpu_q_entrysize =
+		    (unsigned char) sizeof (*mcp->__fpregs.__fpu_q);
+		mcp->__fpregs.__fpu_en = 1;
+		*flags |= _UC_FPU;
+#endif
+	} else {
+		mcp->__fpregs.__fpu_en = 0;
 	}
 }
