@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111 1995/02/05 13:13:42 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.112 1995/02/05 14:54:18 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -2077,9 +2077,8 @@ syscall1:
 
 ENTRY(bzero)
 	pushl	%edi
-	pushl	%ebx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
+	movl	8(%esp),%edi
+	movl	12(%esp),%edx
 
 	cld				/* set fill direction forward */
 	xorl	%eax,%eax		/* set fill data to 0 */
@@ -2089,17 +2088,14 @@ ENTRY(bzero)
 	 * of aligning to word boundries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
-	cmpl	$0x0f,%ecx
-	jle	9f
+	cmpl	$16,%edx
+	jb	7f
 
-	movl	%edi,%edx		/* compute misalignment */
-	negl	%edx
-	andl	$3,%edx
-	movl	%ecx,%ebx
-	subl	%edx,%ebx
-
-	movl	%edx,%ecx		/* zero until word aligned */
-	rep
+	movl	%edi,%ecx		/* compute misalignment */
+	negl	%ecx
+	andl	$3,%ecx
+	subl	%ecx,%edx
+	rep				/* zero until word aligned */
 	stosb
 
 #if defined(I486_CPU)
@@ -2108,10 +2104,10 @@ ENTRY(bzero)
 	jne	8f
 #endif
 
-	movl	%ebx,%ecx
+	movl	%edx,%ecx
 	shrl	$6,%ecx
 	jz	8f
-	andl	$63,%ebx
+	andl	$63,%edx
 1:	movl	%eax,(%edi)
 	movl	%eax,4(%edi)
 	movl	%eax,8(%edi)
@@ -2133,16 +2129,15 @@ ENTRY(bzero)
 	jnz	1b
 #endif
 
-8:	movl	%ebx,%ecx		/* zero by words */
+8:	movl	%edx,%ecx		/* zero by words */
 	shrl	$2,%ecx
-	andl	$3,%ebx
+	andl	$3,%edx
 	rep
 	stosl
 
-7:	movl	%ebx,%ecx		/* zero remainder bytes */
-9:	rep
+7:	movl	%edx,%ecx		/* zero remainder bytes */
+	rep
 	stosb
 
-	popl	%ebx
 	popl	%edi
 	ret
