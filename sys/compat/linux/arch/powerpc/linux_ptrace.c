@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.4 2001/05/22 21:09:20 manu Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.5 2001/05/27 21:15:07 manu Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/* 
- * Function linux_sys_ptrace_arch() is taken from NetBSD/i386 
- * with some stuff deleted to get it compiling. It is not expected to 
- * work, and it should be checked with care or re-writen.
  */
 
 #include <sys/types.h>
@@ -102,6 +96,7 @@ struct linux_user {
 };
 
 #define LUSR_OFF(member) offsetof(struct linux_user, member)
+#define LUSR_REG_OFF(member) offsetof(struct linux_pt_regs, member)
 #define ISSET(t, f) ((t) & (f))
 
 int
@@ -126,15 +121,15 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	int i;
 
 	switch (request = SCARG(uap, request)) {
-	case LINUX_PTRACE_PEEKUSR:
-	case LINUX_PTRACE_POKEUSR:
-	case LINUX_PTRACE_GETREGS:
-	case LINUX_PTRACE_SETREGS:
-	case LINUX_PTRACE_GETFPREGS:
-	case LINUX_PTRACE_SETFPREGS:
-		break;
-	default:
-		return EIO;
+		case LINUX_PTRACE_PEEKUSR:
+		case LINUX_PTRACE_POKEUSR:
+		case LINUX_PTRACE_GETREGS:
+		case LINUX_PTRACE_SETREGS:
+		case LINUX_PTRACE_GETFPREGS:
+		case LINUX_PTRACE_SETFPREGS:
+			break;
+		default:
+			return EIO;
 	}
 
 	/* Find the process we're supposed to be operating on. */
@@ -259,13 +254,17 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 	case  LINUX_PTRACE_PEEKUSR:
 		addr = SCARG(uap, addr);
+		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
+		error = process_read_regs(t, regs);
+		if (error)
+			goto out;
 
 		PHOLD(t);	/* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) || 
-		    (addr > LUSR_OFF(lu_comm_end))) { 
+		    (addr > LUSR_OFF(lu_comm_end))) 
 		 	error = 1;
-		} else if (addr == LUSR_OFF(u_tsize))
+		else if (addr == LUSR_OFF(u_tsize))
 			*retval = p->p_vmspace->vm_tsize;
 		else if (addr == LUSR_OFF(u_dsize))
 			*retval = p->p_vmspace->vm_dsize;
@@ -275,17 +274,28 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			*retval = (register_t) p->p_vmspace->vm_taddr;
 		else if (addr == LUSR_OFF(start_stack))
 			*retval = (register_t) p->p_vmspace->vm_minsaddr;
-		else if ((addr >=0 ) && (addr < LUSR_OFF(u_tsize)))
-			*retval = LUSR_OFF(regs);
-		else if (addr == LUSR_OFF(signal)) {
+		else if ((addr >= LUSR_REG_OFF(lpt_regs_fixreg_begin)) && 
+		    (addr <= LUSR_REG_OFF(lpt_regs_fixreg_end)))
+			*retval = regs->fixreg[addr / sizeof (register_t)];
+		else if (addr == LUSR_REG_OFF(lnip))
+			*retval = regs->pc;
+		else if (addr == LUSR_REG_OFF(lctr))
+			*retval = regs->ctr;
+		else if (addr == LUSR_REG_OFF(llink))
+			*retval = regs->lr;
+		else if (addr == LUSR_REG_OFF(lxer))
+			*retval = regs->xer;
+		else if (addr == LUSR_REG_OFF(lccr))
+			*retval = regs->cr;
+		else if (addr == LUSR_OFF(signal))
 			error = 1;
-		} else if (addr == LUSR_OFF(signal)) {
+		else if (addr == LUSR_OFF(signal))
 			error = 1;
-		} else if (addr == LUSR_OFF(magic)) {
+		else if (addr == LUSR_OFF(magic))
 			error = 1;
-		} else if (addr == LUSR_OFF(u_comm)) {
+		else if (addr == LUSR_OFF(u_comm))
 			error = 1;
-		} else {
+		else {
 #ifdef DEBUG_LINUX
 			printf("linux_ptrace: unsupported address: %d\n", addr);
 #endif
@@ -294,14 +304,68 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		PRELE(t);
 
-		if (!error)
-			return 0;
+		error = copyout (retval, 
+		    (caddr_t)SCARG(uap, data), sizeof retval);
+		*retval = SCARG(uap, data);
+		goto out;
 
-	case  LINUX_PTRACE_POKEUSR:
-		/* 
-		 * XXX NetBSD/i386 only handle debugregs here. It seems these 
-		 * debugregs are not availlable on powerpc. Hence we do nothing.
-		 */
+		break;
+
+	case  LINUX_PTRACE_POKEUSR: /* XXX Not tested */
+		addr = SCARG(uap, addr);
+		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
+		error = process_read_regs(t, regs);
+		if (error)
+			goto out;
+
+		PHOLD(t);       /* need full process info */
+		error = 0;
+		if ((addr < LUSR_OFF(lusr_startgdb)) || 
+		    (addr > LUSR_OFF(lu_comm_end)))
+		 	error = 1;
+		else if (addr == LUSR_OFF(u_tsize))
+			error = 1;
+		else if (addr == LUSR_OFF(u_dsize))
+			error = 1;
+		else if (addr == LUSR_OFF(u_ssize))
+			error = 1;
+		else if (addr == LUSR_OFF(start_code))
+			error = 1;
+		else if (addr == LUSR_OFF(start_stack))
+			error = 1;
+		else if ((addr >= LUSR_REG_OFF(lpt_regs_fixreg_begin)) && 
+		    (addr <= LUSR_REG_OFF(lpt_regs_fixreg_end)))
+			regs->fixreg[addr / sizeof (register_t)] = 
+			    (register_t)SCARG(uap, data);
+		else if (addr == LUSR_REG_OFF(lnip))
+			regs->pc = (register_t)SCARG(uap, data);
+		else if (addr == LUSR_REG_OFF(lctr))
+			regs->ctr = (register_t)SCARG(uap, data);
+		else if (addr == LUSR_REG_OFF(llink))
+			regs->lr = (register_t)SCARG(uap, data);
+		else if (addr == LUSR_REG_OFF(lxer))
+			regs->xer = (register_t)SCARG(uap, data);
+		else if (addr == LUSR_REG_OFF(lccr))
+			regs->cr = (register_t)SCARG(uap, data);
+		else if (addr == LUSR_OFF(signal))
+			error = 1;
+		else if (addr == LUSR_OFF(magic))
+			error = 1;
+		else if (addr == LUSR_OFF(u_comm))
+			error = 1;
+		else {
+#ifdef DEBUG_LINUX
+			printf("linux_ptrace: unsupported address: %d\n", addr);
+#endif
+			error = 1;
+		}
+
+		PRELE(t);
+
+		error = process_write_regs(t,regs);
+		if (error) 
+			goto out;
+
 		break;
 	default:
 		/* never reached */
