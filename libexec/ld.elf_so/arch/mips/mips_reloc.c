@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.13 2002/09/06 03:12:06 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.14 2002/09/06 12:00:41 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -46,7 +46,7 @@ _rtld_bind_mips(a0, a1, a2, a3)
 	Elf_Addr a1, a2, a3;
 {
 	Elf_Addr *u = (Elf_Addr *)(a2 - 0x7ff0);
-	Obj_Entry *obj = (Obj_Entry *)(u[1] & 0x7fffffff);
+	const Obj_Entry *obj = (Obj_Entry *)(u[1] & 0x7fffffff);
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
