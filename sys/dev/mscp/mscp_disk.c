@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.30.8.1 2002/05/16 12:07:28 gehenna Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30.8.1 2002/05/16 12:07:28 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $")
 #include "ioconf.h"
 #include "ra.h"
 
-#define RAMAJOR 9	/* RA major device number XXX */
-
 /*
  * Drive status, per drive
  */
@@ -102,18 +100,28 @@ void	rrmakelabel __P((struct disklabel *, long));
 
 int	ramatch __P((struct device *, struct cfdata *, void *));
 void	raattach __P((struct device *, struct device *, void *));
-int	raopen __P((dev_t, int, int, struct proc *));
-int	raclose __P((dev_t, int, int, struct proc *));
-void	rastrategy __P((struct buf *));
-int	raread __P((dev_t, struct uio *));
-int	rawrite __P((dev_t, struct uio *));
-int	raioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	radump __P((dev_t, daddr_t, caddr_t, size_t));
-int	rasize __P((dev_t));
 int	ra_putonline __P((struct ra_softc *));
 
 struct	cfattach ra_ca = {
 	sizeof(struct ra_softc), ramatch, rxattach
+};
+
+dev_type_open(raopen);
+dev_type_close(raclose);
+dev_type_read(raread);
+dev_type_write(rawrite);
+dev_type_ioctl(raioctl);
+dev_type_strategy(rastrategy);
+dev_type_dump(radump);
+dev_type_size(rasize);
+
+const struct bdevsw ra_bdevsw = {
+	raopen, raclose, rastrategy, raioctl, radump, rasize, D_DISK
+};
+
+const struct cdevsw ra_cdevsw = {
+	raopen, raclose, raread, rawrite, raioctl,
+	nostop, notty, nopoll, nommap, D_DISK
 };
 
 /*
@@ -153,6 +161,7 @@ ra_putonline(ra)
 {
 	struct	disklabel *dl;
 	char *msg;
+	int maj;
 
 	if (rx_putonline(ra) != MSCP_DONE)
 		return MSCP_FAILED;
@@ -161,7 +170,8 @@ ra_putonline(ra)
 
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
-	if ((msg = readdisklabel(MAKEDISKDEV(RAMAJOR, ra->ra_dev.dv_unit,
+	maj = cdevsw_lookup_major(&ra_cdevsw);
+	if ((msg = readdisklabel(MAKEDISKDEV(maj, ra->ra_dev.dv_unit,
 	    RAW_PART), rastrategy, dl, NULL)) != NULL)
 		printf(": %s", msg);
 	else {
@@ -354,7 +364,7 @@ rawrite(dev, uio)
 int
 raioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -500,17 +510,26 @@ rasize(dev)
 #if NRX
 
 int	rxmatch __P((struct device *, struct cfdata *, void *));
-int	rxopen __P((dev_t, int, int, struct proc *));
-int	rxclose __P((dev_t, int, int, struct proc *));
-void	rxstrategy __P((struct buf *));
-int	rxread __P((dev_t, struct uio *));
-int	rxwrite __P((dev_t, struct uio *));
-int	rxioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	rxdump __P((dev_t, daddr_t, caddr_t, size_t));
-int	rxsize __P((dev_t));
 
 struct	cfattach rx_ca = {
 	sizeof(struct rx_softc), rxmatch, rxattach
+};
+
+dev_type_open(rxopen);
+dev_type_read(rxread);
+dev_type_write(rxwrite);
+dev_type_ioctl(rxioctl);
+dev_type_strategy(rxstrategy);
+dev_type_dump(rxdump);
+dev_type_size(rxsize);
+
+const struct bdevsw rx_bdevsw = {
+	rxopen, nullclose, rxstrategy, rxioctl, rxdump, rxsize, D_DISK
+};
+
+const struct cdevsw rx_cdevsw = {
+	rxopen, nullclose, rxread, rxwrite, rxioctl,
+	nostop, notty, nopoll, nommap, D_DISK
 };
 
 /*
@@ -648,16 +667,6 @@ rxopen(dev, flag, fmt, p)
 	return 0;
 }
 
-/* ARGSUSED */
-int
-rxclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct	proc *p;
-{
-	return (0);
-}
-
 /*
  * Queue a transfer request, and if possible, hand it to the controller.
  *
@@ -710,18 +719,20 @@ done:
 }
 
 int
-rxread(dev, uio)
+rxread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 
 	return (physio(rxstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rxwrite(dev, uio)
+rxwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 
 	return (physio(rxstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -733,7 +744,7 @@ rxwrite(dev, uio)
 int
 rxioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -1002,11 +1013,11 @@ rrfillin(bp, mp)
 	int part = DISKPART(bp->b_dev);
 
 #if NRA
-	if (major(bp->b_dev) == RAMAJOR)
+	if (cdevsw_lookup(bp->b_dev) == &ra_cdevsw)
 		rx = ra_cd.cd_devs[unit];
 #endif
 #if NRX
-	if (major(bp->b_dev) != RAMAJOR)
+	if (cdevsw_lookup(bp->b_dev) == &rx_cdevsw)
 		rx = rx_cd.cd_devs[unit];
 #endif
 	lp = rx->ra_disk.dk_label;
