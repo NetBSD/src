@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.50 2000/12/30 06:14:53 itojun Exp $
+# $NetBSD: mi,v 1.51 2001/01/04 11:12:24 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -410,7 +410,6 @@
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi
 ./usr/share/examples/supfiles/ftp.cs.umn.edu
 ./usr/share/examples/supfiles/sup.au.netbsd.org
-./usr/share/examples/supfiles/sup.de.netbsd.org
 ./usr/share/examples/supfiles/sup.jp.netbsd.org
 ./usr/share/examples/supfiles/sup.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org
