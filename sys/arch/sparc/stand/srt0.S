@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.5 1995/12/13 23:35:18 pk Exp $	*/
+/*	$NetBSD: srt0.S,v 1.5.4.1 1996/07/03 00:10:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -103,11 +103,12 @@ start:
 	 sub    %o1, %o0, %o1
 
 	/*
-	 * Enable interrupts.
+	 * Enable interrupts above level 11. This enables "L1-A", but
+	 * avoids spurious interrupt bites from most other devices
 	 */
 	rd	%psr, %o0
 	andn	%o0, PSR_PIL, %o0
-	wr	%g0, %o0, %psr
+	wr	%g0, 0xb00, %psr	! (11 << 8)
 	nop; nop; nop
 
 	/*
