@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1996/11/06 20:19:51 cgd Exp $ */
+/*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -229,6 +229,10 @@ void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 /* iommu.c */
 void	iommu_enter __P((u_int, u_int));
 void	iommu_remove __P((u_int, u_int));
+/* emul.c */
+struct trapframe;
+int fixalign __P((struct proc *, struct trapframe *));
+int emulinstr __P((int, struct trapframe *));
 
 /*
  *
