@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.13 2002/11/17 02:59:56 lukem Exp $
+# $NetBSD: makeobsolete,v 1.14 2002/11/17 03:04:53 lukem Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -64,7 +64,7 @@ fi
 arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3e,`
 
 if [ ! -d $target ] ; then
-	echo "target directory [$target] doesn't exists"
+	echo "target directory [$target] doesn't exist"
 	exit 1
 fi
 
