@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.23 2004/08/30 15:05:17 drochner Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.24 2005/02/03 21:17:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.23 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.24 2005/02/03 21:17:01 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,8 +97,8 @@ struct x86_isa_dma_cookie {
 };
 
 #ifdef UNUSED
-static void	_mca_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+static void	_mca_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 #endif
 
 /*
@@ -161,9 +161,8 @@ static bus_space_handle_t dmaiot, dmacmdh, dmaexech;
  * Map the MCA DMA controller registers.
  */
 void
-mca_attach_hook(parent, self, mba)
-	struct device *parent, *self;
-	struct mcabus_attach_args *mba;
+mca_attach_hook(struct device *parent, struct device *self,
+    struct mcabus_attach_args *mba)
 {
 	dmaiot = mba->mba_iot;
 
@@ -177,9 +176,7 @@ mca_attach_hook(parent, self, mba)
  */
 
 int
-mca_conf_read(mc, slot, reg)
-	mca_chipset_tag_t mc;
-	int slot, reg;
+mca_conf_read(mca_chipset_tag_t mc, int slot, int reg)
 {
 	int	data;
 
@@ -197,9 +194,7 @@ mca_conf_read(mc, slot, reg)
  */
 
 void
-mca_conf_write(mc, slot, reg, data)
-	mca_chipset_tag_t mc;
-	int slot, reg, data;
+mca_conf_write(mca_chipset_tag_t mc, int slot, int reg, int data)
 {
 	slot&=7;	/* slot must be in range 0-7 */	
 	outb(MCA_MB_SETUP_REG, 0xff); /* ensure m/board setup is disabled */
@@ -223,11 +218,8 @@ mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih)
 #endif
 
 void *
-mca_intr_establish(mc, ih, level, func, arg)
-	mca_chipset_tag_t mc;
-	mca_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
+mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg)
 {
 	if (ih == 0 || ih >= NUM_LEGACY_IRQS || ih == 2)
 		panic("mca_intr_establish: bogus handle 0x%x", ih);
@@ -237,9 +229,7 @@ mca_intr_establish(mc, ih, level, func, arg)
 }
 
 void
-mca_intr_disestablish(mc, cookie)
-	mca_chipset_tag_t mc;
-	void *cookie;
+mca_intr_disestablish(mca_chipset_tag_t mc, void *cookie)
 {
 	isa_intr_disestablish(NULL, cookie);
 }
@@ -250,7 +240,7 @@ mca_intr_disestablish(mc, cookie)
  * return true to panic system, false to ignore.
  */
 int
-mca_nmi()
+mca_nmi(void)
 {
 	/*
 	* PS/2 MCA devices can generate NMIs - we can find out which
@@ -302,7 +292,7 @@ mca_nmi()
  * first feature byte.
  */
 void
-mca_busprobe()
+mca_busprobe(void)
 {
 	struct bioscallregs regs;
 	struct bios_config *scp;
@@ -385,12 +375,8 @@ mca_disk_unbusy(void)
  * Synchronize a MCA DMA map.
  */
 static void
-_mca_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+_mca_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 	struct x86_isa_dma_cookie *cookie;
 	bus_addr_t phys;
@@ -473,12 +459,8 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
  * Allocate a DMA map, and set up DMA channel.
  */
 int
-mca_dmamap_create(t, size, flags, dmamp, dmach)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int flags;
-	bus_dmamap_t *dmamp;
-	int dmach;
+mca_dmamap_create(bus_dma_tag_t t, bus_size_t size, int flags,
+    bus_dmamap_t *dmamp, int dmach)
 {
 	int error;
 	struct x86_isa_dma_cookie *cookie;
@@ -539,9 +521,7 @@ mca_dmamap_create(t, size, flags, dmamp, dmach)
  * so that it's available for one-shot setup.
  */
 void
-mca_dma_set_ioport(dma, port)
-	int dma;
-	u_int16_t port;
+mca_dma_set_ioport(int dma, u_int16_t port)
 {
 	/* Disable access to dma channel. */
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK | dma);
