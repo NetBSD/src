@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.1 1997/05/04 15:19:36 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.79.2.2 1997/06/01 05:16:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -871,27 +871,18 @@ stackdump()
 	}
 }
 
-int bt2pmt[] = {
-	PMAP_OBIO,
-	PMAP_OBIO,
-	PMAP_VME16,
-	PMAP_VME32,
-	PMAP_OBIO
-};
-
 /*
  * Map an I/O device given physical address and size in bytes, e.g.,
  *
  *	mydev = (struct mydev *)mapdev(myioaddr, 0,
- *				       0, sizeof(struct mydev), pmtype);
+ *				       0, sizeof(struct mydev));
  *
  * See also machine/autoconf.h.
  */
 void *
-mapdev(phys, virt, offset, size, bustype)
+mapdev(phys, virt, offset, size)
 	register struct rom_reg *phys;
 	register int offset, virt, size;
-	register int bustype;
 {
 	register vm_offset_t v;
 	register vm_offset_t pa;
@@ -917,9 +908,7 @@ mapdev(phys, virt, offset, size, bustype)
 			/* note: preserve page offset */
 
 	pa = trunc_page(phys->rr_paddr + offset);
-	pmtype = (CPU_ISSUN4M)
-			? (phys->rr_iospace << PMAP_SHFT4M)
-			: bt2pmt[bustype];
+	pmtype = PMAP_IOENC(phys->rr_iospace);
 
 	do {
 		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
