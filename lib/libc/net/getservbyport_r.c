@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $	*/
+/*	$NetBSD: getservbyport_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyport_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $");
+__RCSID("$NetBSD: getservbyport_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,9 @@ getservbyport_r(int port, const char *proto, struct servent *sp,
 			break;
 	}
 	if (!sd->stayopen)
-		endservent_r(sd);
+		if (sd->fp != NULL) {
+			(void)fclose(sd->fp);
+			sd->fp = NULL;
+		}
 	return s;
 }
