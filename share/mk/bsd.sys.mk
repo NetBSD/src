@@ -1,10 +1,10 @@
-#	$NetBSD: bsd.sys.mk,v 1.11 1997/10/08 13:17:00 mycroft Exp $
+#	$NetBSD: bsd.sys.mk,v 1.12 1997/10/12 01:37:50 mikel Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
 CFLAGS+= -Werror
 .if defined(WARNS) && ${WARNS} == 1
-CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 .endif
 
 .if defined(DESTDIR)
