@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.15 1994/05/17 00:04:39 cgd Exp $
+ *	$Id: kern_xxx.c,v 1.16 1994/05/17 08:22:13 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -112,7 +112,7 @@ osethostname(p, uap, retval)
 }
 #endif /* COMPAT_43 || COMPAT_SUNOS */
 
-#if defined(COMPAT_09) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_09) || defined(COMPAT_SUNOS) || defined(COMPAT_HPUX)
 struct ogetdomainname_args {
 	char	*domainname;
 	u_int	len;
@@ -151,7 +151,7 @@ osetdomainname(p, uap, retval)
 	domainname[domainnamelen] = 0;
 	return (error);
 }
-#endif /* COMPAT_09 || COMPAT_SUNOS */
+#endif /* COMPAT_09 || COMPAT_SUNOS || COMPAT_HPUX */
 
 #ifdef COMPAT_09
 struct outsname {
