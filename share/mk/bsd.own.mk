@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.77 1998/08/09 14:46:20 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.78 1998/08/27 14:05:58 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -106,12 +106,14 @@ OBJECT_FMT?=ELF
 OBJECT_FMT?=a.out
 .endif
 
-# Uncomment to turn off lint library generation.
-#NOLINT=
-
 # Profiling doesn't work on PowerPC yet.
 .if (${MACHINE_ARCH} == "powerpc")
 NOPROFILE=
+.endif
+
+# Some platforms are already transitioned to egcs.
+.if (${MACHINE_ARCH} == "alpha")
+USE_EGCS=1
 .endif
 
 # GNU sources and packages sometimes see architecture names differently.
