@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.9.4.1 1997/10/27 22:21:26 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.9.4.2 1997/10/27 23:43:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -51,7 +51,7 @@ static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
 static int isapnp_findcard __P((struct isapnp_softc *));
 static void isapnp_free_region __P((bus_space_tag_t, struct isapnp_region *));
 static int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
-static int isapnp_alloc_irq __P((struct device *, struct isapnp_pin *));
+static int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
 static int isapnp_alloc_drq __P((struct device *, struct isapnp_pin *));
 static int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
     struct isapnp_attach_args *, int));
@@ -221,25 +221,28 @@ isapnp_alloc_region(t, r)
 
 /* isapnp_alloc_irq():
  *	Allocate an irq
- *	XXX: No resource conflict checks!
  */
 static int
-isapnp_alloc_irq(isa, i)
-	struct device *isa;
+isapnp_alloc_irq(ic, i)
+	isa_chipset_tag_t ic;
 	struct isapnp_pin *i;
 {
-	int b;
+	int irq;
 
 	if (i->bits == 0) {
 		i->num = 0;
 		return 0;
 	}
 
-	for (b = 0; b < 16; b++)
-		if (i->bits & (1 << b)) {
-			i->num = b;
-			return 0;
-		}
+	/*
+	 * XXX Are there any PnP cards with level triggered interrupts?
+	 * XXX If so, we'll have to change the interface that configures
+	 * XXX the cards to convey that information.
+	 */
+	if (isa_intr_alloc(ic, i->bits, IST_EDGE, &irq) == 0) {
+		i->num = irq;
+		return 0;
+	}
 
 	return EINVAL;
 }
@@ -303,7 +306,7 @@ isapnp_testconfig(iot, memt, ipa, alloc)
 	}
 
 	for (; nirq < ipa->ipa_nirq; nirq++) {
-		error = isapnp_alloc_irq(ipa->ipa_isa, &ipa->ipa_irq[nirq]);
+		error = isapnp_alloc_irq(ipa->ipa_ic, &ipa->ipa_irq[nirq]);
 		if (error)
 			goto bad;
 	}
