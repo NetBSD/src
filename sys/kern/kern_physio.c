@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.43 2000/06/27 17:41:24 mrg Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.44 2000/09/29 13:27:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -166,8 +166,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			(*minphys)(bp);
 			todo = bp->b_bcount;
 #ifdef DIAGNOSTIC
-			if (todo < 0)
-				panic("todo < 0; minphys broken");
+			if (todo <= 0)
+				panic("todo <= 0; minphys broken");
 			if (todo > MAXPHYS)
 				panic("todo > MAXPHYS; minphys broken");
 #endif
