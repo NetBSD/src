@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbrsdt.c,v 1.2 2003/02/13 14:16:25 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbrsdt.c,v 1.3 2003/05/11 21:20:23 fvdl Exp $");
 
 #define __TBRSDT_C__
 
@@ -163,7 +163,7 @@ AcpiTbVerifyRsdp (
          * Obtain access to the RSDP structure
          */
         Status = AcpiOsMapMemory (Address->Pointer.Physical, sizeof (RSDP_DESCRIPTOR),
-                                    (void **) &Rsdp);
+                                    (void *) &Rsdp);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
