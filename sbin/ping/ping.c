@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.44 1999/02/24 19:31:38 jwise Exp $	*/
+/*	$NetBSD: ping.c,v 1.45 1999/02/25 03:35:34 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.44 1999/02/24 19:31:38 jwise Exp $");
+__RCSID("$NetBSD: ping.c,v 1.45 1999/02/25 03:35:34 jwise Exp $");
 #endif
 
 #include <stdio.h>
@@ -1111,12 +1111,12 @@ summary(int header)
 	if (nreceived && (pingflags & F_TIMING)) {
 		double n = nreceived + nrepeats;
 		double avg = (tsum / n);
-		double variance = (tsumsq / (n - (avg * avg)));
+		double variance = ((tsumsq/n) - avg*avg) * (n/(n-1));
 
 		printf("round-trip min/avg/max/stddev = "
 			"%.3f/%.3f/%.3f/%.3f ms\n",
 			tmin * 1000.0, avg * 1000.0,
-			tmax * 1000.0, sqrt(variance * 1000.0));
+			tmax * 1000.0, sqrt(variance) * 1000.0);
 		if (pingflags & F_FLOOD) {
 			double r = diffsec(&last_rx, &first_rx);
 			double t = diffsec(&last_tx, &first_tx);
