@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2000/06/04 19:30:14 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.13 2000/07/10 10:38:23 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,21 +54,42 @@ void scb_stray(void *);
 void longjmp(int *);
 void rtimer(void *);
 
+long *bootregs;
+
 /*
- * Autoconf routine is really stupid; but it actually don't
- * need any intelligence. We just assume that all possible
- * devices exists on each cpu. Fast & easy.
+ * Do some initial setup. Also create a fake RPB for net-booted machines
+ * that don't have an in-prom VMB.
  */
 
 void
 autoconf()
 {
+	int copyrpb = 1;
+	int fromnet = (bootregs[12] != -1);
 
 	findcpu(); /* Configures CPU variables */
 	consinit(); /* Allow us to print out things */
 	scbinit(); /* Fix interval clock etc */
 
+printf("fromnet %d bootregs[12] %ld &bootrpb %p\n", fromnet, bootregs[12], &bootrpb);
+for (copyrpb = 0; copyrpb < 13; copyrpb++)
+	printf("r%d: %lx\n", copyrpb, bootregs[copyrpb]);
 	switch (vax_boardtype) {
+
+	case VAX_BTYP_8000:
+	case VAX_BTYP_9CC:
+	case VAX_BTYP_9RR:
+	case VAX_BTYP_1202:
+		if (fromnet == 0)
+			break;
+		copyrpb = 0;
+		bootrpb.devtyp = bootregs[0];
+		bootrpb.adpphy = bootregs[1];
+		bootrpb.csrphy = bootregs[2];
+		bootrpb.unit = bootregs[3];
+		bootrpb.rpb_bootr5 = bootregs[5];
+		bootrpb.pfncnt = 0;
+		break;
 
 	case VAX_BTYP_46:
 	case VAX_BTYP_48:
@@ -82,6 +103,16 @@ autoconf()
 		}break;
 
 		break;
+	}
+
+	if (copyrpb) {
+		struct rpb *prpb = (struct rpb *)bootregs[11];
+		bcopy((caddr_t)prpb, &bootrpb, sizeof(struct rpb));
+		if (prpb->iovec) {
+			bootrpb.iovec = (int)alloc(prpb->iovecsz);
+			bcopy((caddr_t)prpb->iovec, (caddr_t)bootrpb.iovec,
+			    prpb->iovecsz);
+		}
 	}
 }
 

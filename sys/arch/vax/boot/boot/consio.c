@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.9 2000/05/20 13:35:07 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.10 2000/07/10 10:38:23 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,16 +61,16 @@ static int rom_putc;		/* ROM-address of put-routine */
 static int rom_getc;		/* ROM-address of get-routine */
 
 /* Location of address of KA630 console page */
-#define NVR_ADRS        0x200B8024
+#define NVR_ADRS	0x200B8024
 /* Definitions for various locations in the KA630 console page */
 #define KA630_PUTC_POLL 0x20
-#define KA630_PUTC      0x24
-#define KA630_GETC      0x1C
+#define KA630_PUTC	0x24
+#define KA630_GETC	0x1C
 #define KA630_ROW	0x4C
 #define KA630_MINROW	0x4D
 #define KA630_MAXROW	0x4E
 #define KA630_COL	0x50
-#define KA630_MINCOL    0x51
+#define KA630_MINCOL	0x51
 #define KA630_MAXCOL	0x52
 /* Pointer to KA630 console page, initialized by ka630_consinit */
 unsigned char  *ka630_conspage; 
@@ -161,8 +161,8 @@ consinit()
 		break;
 
 	case VAX_BTYP_630:
-	        ka630_consinit();
-	        break;
+		ka630_consinit();
+		break;
 
 	case VAX_BTYP_46:
 	case VAX_BTYP_48:
@@ -197,11 +197,27 @@ consinit()
 void
 pr_putchar(int c)
 {
-	int     timeout = 1<<15;	/* don't hang the machine! */
-        while ((mfpr(PR_TXCS) & GC_RDY) == 0)  /* Wait until xmit ready */
+	int	timeout = 1<<15;	/* don't hang the machine! */
+
+	/*
+	 * On KA88 we may get C-S/C-Q from the console.
+	 * Must obey it.
+	 */
+	while (mfpr(PR_RXCS) & GC_DON) {
+		if ((mfpr(PR_RXDB) & 0x7f) == 19) {
+			while (1) {
+				while ((mfpr(PR_RXCS) & GC_DON) == 0)
+					;
+				if ((mfpr(PR_RXDB) & 0x7f) == 17)
+					break;
+			}
+		}
+	}
+
+	while ((mfpr(PR_TXCS) & GC_RDY) == 0)  /* Wait until xmit ready */
 		if (--timeout < 0)
 			break;
-        mtpr(c, PR_TXDB);		/* xmit character */
+	mtpr(c, PR_TXDB);		/* xmit character */
 }
 
 /*
@@ -210,7 +226,8 @@ pr_putchar(int c)
 int
 pr_getchar()
 {
-	while ((mfpr(PR_RXCS) & GC_DON) == 0);	/* wait for char */
+	while ((mfpr(PR_RXCS) & GC_DON) == 0)
+		;	/* wait for char */
 	return (mfpr(PR_RXDB));			/* now get it */
 }
 
@@ -272,41 +289,41 @@ _rtt()
  */
 void ka630_consinit()
 {
-        register short *NVR;
-        register int i;
+	register short *NVR;
+	register int i;
 
-        /* Find the console page */
-        NVR = (short *) NVR_ADRS;
+	/* Find the console page */
+	NVR = (short *) NVR_ADRS;
    
-        i = *NVR++ & 0xFF;
-        i |= (*NVR++ & 0xFF) << 8;
-        i |= (*NVR++ & 0xFF) << 16;
-        i |= (*NVR++ & 0xFF) << 24;
+	i = *NVR++ & 0xFF;
+	i |= (*NVR++ & 0xFF) << 8;
+	i |= (*NVR++ & 0xFF) << 16;
+	i |= (*NVR++ & 0xFF) << 24;
 
-        ka630_conspage = (char *) i;
+	ka630_conspage = (char *) i;
 
-        /* Go to last row to minimize confusion */
+	/* Go to last row to minimize confusion */
 	ka630_conspage[KA630_ROW] = ka630_conspage[KA630_MAXROW];
 	ka630_conspage[KA630_COL] = ka630_conspage[KA630_MINCOL];
 
-        /* Use KA630 ROM console I/O routines */
+	/* Use KA630 ROM console I/O routines */
 	put_fp = ka630_rom_putchar;
 	get_fp = ka630_rom_getchar;
 	test_fp = ka630_rom_testchar;
 }
-   	
+	
 
 /*
- * int ka630_rom_getchar (void)	==> getchar() using ROM-routines on KA630
+ * int ka630_rom_getchar (void) ==> getchar() using ROM-routines on KA630
  */
 asm("
 	.globl _ka630_rom_getchar
 	_ka630_rom_getchar:
 		.word 0x802		# save-mask: R1, R11
-		movl    _ka630_conspage,r11  # load location of console page
-        loop630g:		       	# do {
+		movl	_ka630_conspage,r11  # load location of console page
+	loop630g:			# do {
 		jsb	*0x1C(r11)	#   call the getc-routine (KA630_GETC)
-	        blbc    r0, loop630g    # } while (R0 == 0)
+		blbc	r0, loop630g	# } while (R0 == 0)
 		movl	r1, r0		# R1 holds char
 		ret			# we're done
 
@@ -326,12 +343,12 @@ asm("
 	.globl _ka630_rom_putchar
 	_ka630_rom_putchar:
 		.word 0x802		# save-mask: R1, R11
-		movl    _ka630_conspage,r11  # load location of console page
-        loop630p:		       	# do {
+		movl	_ka630_conspage,r11  # load location of console page
+	loop630p:			# do {
 		jsb	*0x20(r11)	#   is rom ready? (KA630_PUTC_POLL)
-	        blbc    r0, loop630p    # } while (R0 == 0)
+		blbc	r0, loop630p	# } while (R0 == 0)
 		movl	4(ap), r1	# R1 holds char
-		jsb     *0x24(r11)      # output character (KA630_PUTC)
+		jsb	*0x24(r11)	# output character (KA630_PUTC)
 		ret			# we're done
 ");
 
@@ -349,26 +366,26 @@ void ka53_consinit()
 
 
 /*
- * int ka53_rom_getchar (void)  ==> getchar() using ROM-routines on KA53
+ * int ka53_rom_getchar (void)	==> getchar() using ROM-routines on KA53
  */
 asm("
 	.globl _ka53_rom_getchar
 	_ka53_rom_getchar:
-	        .word 0x802             # save-mask: R1, R11
-	        movl    _ka53_conspage,r11      # load location of console page
-	loop53g:                        # do {
-	        jsb     *0x64(r11)      #   test for char
-	        blbc    r0, loop53g     # } while (R0 == 0)
-	        jsb     *0x6c(r11)      # get the char
-	        ret                     # we're done
+		.word 0x802		# save-mask: R1, R11
+		movl	_ka53_conspage,r11	# load location of console page
+	loop53g:			# do {
+		jsb	*0x64(r11)	#   test for char
+		blbc	r0, loop53g	# } while (R0 == 0)
+		jsb	*0x6c(r11)	# get the char
+		ret			# we're done
 
 	_ka53_rom_testchar:
-	        .word   0
-	        movl    _ka53_conspage,r3
-	        jsb     *0x64(r3)
-	        blbc    r0,1f
-	        jsb     *0x6c(r3)       # get the char
-	1:      ret
+		.word	0
+		movl	_ka53_conspage,r3
+		jsb	*0x64(r3)
+		blbc	r0,1f
+		jsb	*0x6c(r3)	# get the char
+	1:	ret
 ");
 
 /*
@@ -377,13 +394,13 @@ asm("
 asm("
 	.globl _ka53_rom_putchar
 	_ka53_rom_putchar:
-	        .word 0x802             # save-mask: R1, R11
-	        movl    _ka53_conspage,r11      # load location of console page
-	loop53p:                        # do {
-	        jsb     *0x20(r11)      #   is rom ready?
-	        blbc    r0, loop53p     # } while (R0 == 0)
-	        movl    4(ap), r1       # R1 holds char
-	        jsb     *0x24(r11)      # output character
-                ret                     # we're done
+		.word 0x802		# save-mask: R1, R11
+		movl	_ka53_conspage,r11	# load location of console page
+	loop53p:			# do {
+		jsb	*0x20(r11)	#   is rom ready?
+		blbc	r0, loop53p	# } while (R0 == 0)
+		movl	4(ap), r1	# R1 holds char
+		jsb	*0x24(r11)	# output character
+		ret			# we're done
 ");
 
