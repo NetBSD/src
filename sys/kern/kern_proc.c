@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.33 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.34 1999/07/25 06:30:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ procinit()
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
-	lockinit(&proclist_lock, PZERO, "proclk", 0, 0);
+	spinlockinit(&proclist_lock, "proclk", 0);
 
 	LIST_INIT(&deadproc);
 	simple_lock_init(&deadproc_slock);
@@ -198,27 +198,16 @@ procinit()
  * Acquire a read lock on the proclist.
  */
 void
-proclist_lock_read(flags)
-	int flags;
+proclist_lock_read()
 {
 	int error, s;
 
-	/* Block schedcpu() while we acquire the lock. */
-	s = splsoftclock();
-
-	/*
-	 * We spin here if called with LK_NOWAIT; schedcpu() uses that
-	 * to prevent sleeping.
-	 */
-	do {
-		error = lockmgr(&proclist_lock, LK_SHARED | flags, NULL);
+	s = splstatclock();
+	error = spinlockmgr(&proclist_lock, LK_SHARED, NULL);
 #ifdef DIAGNOSTIC
-		if (error != 0 && error != EBUSY)
-			panic("proclist_lock_read: failed to acquire lock");
+	if (error)
+		panic("proclist_lock_read: failed to acquire lock");
 #endif
-	} while (error != 0);
-
-	/* Let schedcpu() back in. */
 	splx(s);
 }
 
@@ -230,12 +219,8 @@ proclist_unlock_read()
 {
 	int s;
 
-	/* Block schedcpu() while we release the lock. */
-	s = splsoftclock();
-
-	(void) lockmgr(&proclist_lock, LK_RELEASE, NULL);
-
-	/* Let schedcpu() back in. */
+	s = splstatclock();
+	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
 	splx(s);
 }
 
@@ -247,15 +232,12 @@ proclist_lock_write()
 {
 	int error, s;
 
-	/* Block schedcpu() while lock is held. */
-	s = splsoftclock();
-
-	error = lockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
+	s = splstatclock();
+	error = spinlockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
 #ifdef DIAGNOSTIC
 	if (error != 0)
 		panic("proclist_lock: failed to acquire lock");
 #endif
-
 	return (s);
 }
 
@@ -267,9 +249,7 @@ proclist_unlock_write(s)
 	int s;
 {
 
-	(void) lockmgr(&proclist_lock, LK_RELEASE, NULL);
-
-	/* Let schedcpu() back in. */
+	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
 	splx(s);
 }
 
@@ -334,7 +314,7 @@ pfind(pid)
 {
 	struct proc *p;
 
-	proclist_lock_read(0);
+	proclist_lock_read();
 	for (p = PIDHASH(pid)->lh_first; p != 0; p = p->p_hash.le_next)
 		if (p->p_pid == pid)
 			goto out;
