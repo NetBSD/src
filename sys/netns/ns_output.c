@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_output.c	7.8 (Berkeley) 12/16/90
- *	$Id: ns_output.c,v 1.3 1993/12/18 00:44:32 mycroft Exp $
+ *	$Id: ns_output.c,v 1.4 1994/01/20 18:17:02 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -49,9 +49,6 @@
 #include <netns/idp.h>
 #include <netns/idp_var.h>
 
-#ifdef vax
-#include <vax/include/mtpr.h>
-#endif
 int ns_hold_output = 0;
 int ns_copy_output = 0;
 int ns_output_cnt = 0;
