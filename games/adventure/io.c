@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.7 1998/08/29 22:40:07 hubertf Exp $	*/
+/*	$NetBSD: io.c,v 1.8 1998/09/13 00:07:24 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.7 1998/08/29 22:40:07 hubertf Exp $");
+__RCSID("$NetBSD: io.c,v 1.8 1998/09/13 00:07:24 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,8 @@ char   *inptr;			/* Pointer into virtual disk    */
 
 int     outsw = 0;		/* putting stuff to data file?  */
 
-char    iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
-char   *tape = iotape;		/* pointer to encryption tape   */
+const char    iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
+const char   *tape = iotape;		/* pointer to encryption tape   */
 
 int
 next()
@@ -508,7 +508,7 @@ mspeak(msg)
 void
 speak(msg)			/* read, decrypt, and print a message (not
 				 * ptext)      */
-	struct text *msg;	/* msg is a pointer to seek address and length
+	const struct text *msg;	/* msg is a pointer to seek address and length
 				 * of mess */
 {
 	char   *s, nonfirst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1998/09/11 12:46:26 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1998/09/13 00:07:24 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -33,7 +33,7 @@
 
 /* crc.c */
 void crc_start __P((void));
-unsigned long crc __P((char *, int));
+unsigned long crc __P((const char *, int));
 
 /* done.c */
 int score __P((void));
@@ -67,12 +67,12 @@ void rhints __P((void));
 void rspeak __P((int));
 void mspeak __P((int));
 struct text;
-void speak __P((struct text *));
+void speak __P((const struct text *));
 void pspeak __P((int, int));
 
 /* save.c */
-int save __P((char *));
-int restore __P((char *));
+int save __P((const char *));
+int restore __P((const char *));
 
 /* subr.c */
 int toting __P((int));
@@ -112,7 +112,7 @@ void move __P((int, int));
 int put __P((int, int, int));
 void carry __P((int, int));
 void drop __P((int, int));
-int vocab __P((char *, int, int));
+int vocab __P((const char *, int, int));
 
 /* These three used to be functions in vocab.c */
 #define copystr(src, dest)	strcpy((dest), (src))
