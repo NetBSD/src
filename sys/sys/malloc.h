@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.29.2.1 1997/02/12 12:26:21 mrg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.29.6.1 1997/05/04 15:20:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993

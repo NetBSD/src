@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68.2.1 1997/02/12 12:47:15 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.1 1997/05/04 15:19:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -393,7 +393,7 @@ mach_init(argc, argv, code, cv)
 	/* check for MIPS based platform */
 	if (((i >> 24) & 0xFF) != 0x82) {
 		printf("Unknown System type '%s' 0x%x\n", cp, i);
-		boot(RB_HALT | RB_NOSYNC, NULL);
+		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -617,7 +617,7 @@ mach_init(argc, argv, code, cv)
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
-		boot(RB_HALT | RB_NOSYNC, NULL);
+		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -822,12 +822,8 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 	/*
@@ -1114,7 +1110,7 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;
 
@@ -1155,7 +1151,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
@@ -1223,7 +1219,7 @@ prom_halt(howto, bootstr)
 }
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18.2.1 1997/02/12 12:47:00 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.2.1 1997/05/04 15:18:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -256,7 +256,7 @@ halt()
 
 
 /*
- * void boot(int howto, char *bootstr)
+ * void cpu_reboot(int howto, char *bootstr)
  *
  * Reboots the system
  *
@@ -279,7 +279,7 @@ extern int userret_count0;
 extern int userret_count1;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -2286,13 +2286,9 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
 
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
@@ -2333,10 +2329,6 @@ cpu_startup()
 	 */
  
 	configure();
-
-	/* Set the root, swap and dump devices from the boot args */
-
-	set_boot_devs();
 
 	dump_spl_masks();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56.2.1 1997/02/12 12:47:11 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.1 1997/05/04 15:19:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -42,8 +42,6 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
-static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp";
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -57,6 +55,9 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/callout.h>
+#ifdef REAL_CLISTS
+#include <sys/clist.h>
+#endif
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -90,6 +91,39 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <machine/pmap.h>
 #include <machine/icu.h>
 #include <machine/kcore.h>
+
+#include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_inarp.h>
+#include <netinet/ip_var.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+#include "arp.h"
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -140,12 +174,17 @@ vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
 extern	int nkpde;
+extern	int ieee_handler_disable;
 extern	struct user *proc0paddr;
 
-caddr_t	allocsys __P((caddr_t));
-void	dumpsys __P((void));
-void	consinit __P((void));
-void	cpu_reset __P((void));
+static vm_offset_t alloc_pages __P((int));
+static caddr_t 	allocsys __P((caddr_t));
+static int	cpu_dump __P((void));
+static int	cpu_dumpsize __P((void));
+static void	cpu_reset __P((void));
+static void	dumpsys __P((void));
+void		init532 __P((void));
+static void	map __P((pd_entry_t *, vm_offset_t, vm_offset_t, int, int));
 
 /*
  * Machine-dependent startup code
@@ -160,7 +199,6 @@ cpu_startup()
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-	int x;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -233,12 +271,8 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 
@@ -283,7 +317,7 @@ cpu_startup()
  * allocate that much and fill it with zeroes, and then call
  * allocsys() again with the correct base virtual address.
  */
-caddr_t
+static caddr_t
 allocsys(v)
 	register caddr_t v;
 {
@@ -367,6 +401,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_NKPDE:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
+	case CPU_IEEE_DISABLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ieee_handler_disable));
 
 	default:
 		return (EOPNOTSUPP);
@@ -525,7 +563,7 @@ int waittime = -1;
 static struct switchframe dump_sf;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -619,7 +657,7 @@ long	dumplo = 0; 		/* blocks */
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
-int
+static int
 cpu_dumpsize()
 {
 	int size;
@@ -634,7 +672,7 @@ cpu_dumpsize()
 /*
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
-int
+static int
 cpu_dump()
 {
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
@@ -665,14 +703,14 @@ cpu_dump()
 }
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks, dumpblks;	/* size of dump area */
 	int maj;
@@ -742,7 +780,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0) {
 		printf("\ndump to dev %x not possible\n", dumpdev);
 		return;
@@ -933,9 +971,12 @@ map(pd, virtual, physical, protection, size)
 void
 init532()
 {
-	extern void icu_init();
+	extern void main __P((void *));
 	extern int inttab[];
-	extern char etext[], edata[], end[], *esym;
+	extern char etext[], end[];
+#ifdef DDB
+	extern char *esym;
+#endif
 	pd_entry_t *pd;
 
 #if VERYLOWDEBUG
@@ -970,7 +1011,7 @@ init532()
 #endif
 		avail_start = kppa(end);
 
-	avail_end   = ram_size(avail_start);
+	avail_end   = ram_size((void *)avail_start);
 	if (maxphysmem != 0 && avail_end > maxphysmem)
 		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
@@ -1056,10 +1097,6 @@ init532()
 	/* Jump to high memory */
 	__asm __volatile("jump @1f; 1:");
 
-	/* Set up the ICU. */
-	icu_init();
-	intr_init();
-
 	/* Initialize the pmap module. */
 	pmap_bootstrap(avail_start + KERNBASE);
 
@@ -1141,7 +1178,6 @@ cpu_exec_aout_makecmds(p, epp)
 void
 consinit()
 {
-	extern void cninit();
 	cninit();
 
 #ifdef KGDB
@@ -1157,7 +1193,7 @@ consinit()
 #endif
 }
 
-void
+static void
 cpu_reset()
 {
 	/* Mask all ICU interrupts. */
@@ -1191,3 +1227,42 @@ cpu_reset()
 	/* Jump into ROM copy. */
 	__asm __volatile("jump @0");
 }
+
+/*
+ * Network software interrupt routine
+ */
+void
+softnet(arg)
+	void *arg;
+{
+	register int isr;
+
+	di(); isr = netisr; netisr = 0; ei();
+	if (isr == 0) return;
+
+#ifdef INET
+#if NARP > 0
+	if (isr & (1 << NETISR_ARP)) arpintr();
+#endif
+	if (isr & (1 << NETISR_IP)) ipintr();
+#endif
+#ifdef NETATALK
+	if (isr & (1 << NETISR_ATALK)) atintr();
+#endif
+#ifdef NS
+	if (isr & (1 << NETISR_NS)) nsintr();
+#endif
+#ifdef ISO
+	if (isr & (1 << NETISR_ISO)) clnlintr();
+#endif
+#ifdef CCITT
+	if (isr & (1 << NETISR_CCITT)) ccittintr();
+#endif
+#ifdef NATM
+	if (isr & (1 << NETISR_NATM)) natmintr();
+#endif
+#if NPPP > 0
+	if (isr & (1 << NETISR_PPP)) pppintr();
+#endif
+}
+

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35.4.1 1997/02/12 12:47:21 mrg Exp $  */
+/* $NetBSD: machdep.c,v 1.41.2.1 1997/05/04 15:19:54 mrg Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -82,8 +82,10 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #ifdef NS
 #include <netns/ns_var.h>
@@ -234,12 +236,8 @@ cpu_startup()
 				 16 * NCARGS, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.	 Since mclrefcnt is an off-size we
-	 * use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *) malloc(NMBCLUSTERS + CLBYTES / MCLBYTES,
-				    M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES / MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *) & mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
@@ -340,7 +338,7 @@ long	dumplo = 0;
 long	dumpmag = 0x8fca0101;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int		nblks;
 	extern int	dumpdev;
@@ -367,7 +365,7 @@ dumpconf()
 void
 cpu_initclocks()
 {
-	(cpu_calls[vax_cputype].cpu_clock) ();
+	(*dep_call->cpu_clock) ();
 }
 
 int
@@ -391,6 +389,7 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
+	cninit();
 #ifdef DDB
 /*	db_machine_init(); */
 	ddb_init();
@@ -528,7 +527,7 @@ int	waittime = -1;
 static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register howto;
 	char *bootstr;
 {
@@ -611,6 +610,12 @@ netintr()
 		ipintr();
 	}
 #endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
+	}
+#endif
 #ifdef NS
 	if (netisr & (1 << NETISR_NS)) {
 		netisr &= ~(1 << NETISR_NS);
@@ -640,9 +645,9 @@ void
 machinecheck(frame)
 	caddr_t frame;
 {
-	if ((*cpu_calls[vax_cputype].cpu_mchk) (frame) == 0)
+	if ((*dep_call->cpu_mchk) (frame) == 0)
 		return;
-	(*cpu_calls[vax_cputype].cpu_memerr) ();
+	(*dep_call->cpu_memerr) ();
 	panic("machine check");
 }
 
@@ -659,7 +664,7 @@ dumpsys()
 	 * configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, (int)dumplo);
@@ -790,5 +795,5 @@ process_sstep(p, sstep)
 void
 cmrerr()
 {
-	(*cpu_calls[vax_cputype].cpu_memerr) ();
+	(*dep_call->cpu_memerr) ();
 }
