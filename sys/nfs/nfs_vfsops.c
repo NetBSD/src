@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.7 1993/12/07 23:29:27 pk Exp $
+ *	$Id: nfs_vfsops.c,v 1.8 1993/12/07 23:37:43 pk Exp $
  */
 
 #include "param.h"
@@ -276,9 +276,12 @@ nfs_decode_flags(argp, nmp)
 struct nfs_args	*argp;
 struct nfsmount	*nmp;
 {
+	int	s = splnet();
+
 	/* Don't touch the lock flags */
 	nmp->nm_flag = (argp->flags & ~(NFSMNT_LOCKBITS)) |
 				(nmp->nm_flag & NFSMNT_LOCKBITS);
+	splx(s);
 
 	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
 		nmp->nm_rto = argp->timeo;
