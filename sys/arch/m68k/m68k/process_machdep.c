@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: process_machdep.c,v 1.4 1994/01/28 23:45:21 jtc Exp $
+ *	$Id: process_machdep.c,v 1.5 1994/05/04 03:41:31 cgd Exp $
  */
 
 /*
@@ -74,7 +74,7 @@ process_read_regs(p, regs)
 {
 	struct frame *frame;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return EIO;
 
 	frame = (struct frame *)
@@ -94,7 +94,7 @@ process_write_regs(p, regs)
 {
 	struct frame *frame;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return EIO;
 
 	frame = (struct frame *)
