@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.17 2000/03/05 11:35:22 lukem Exp $
+.\"	$NetBSD: swapctl.8,v 1.18 2000/11/17 11:43:41 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -57,6 +57,8 @@
 .Nm ""
 .Fl l | Fl s
 .Op Fl k
+.Nm ""
+.Fl z
 .Nm swapon
 .Fl a | Ar path
 .Nm swapoff
@@ -195,6 +197,10 @@ causes all non-block devices in
 to be added.  This option is useful in early system startup, where swapping
 may be needed before all file systems are available, such as during
 disk checks of large file systems.
+.It Fl z
+The
+.Fl z
+option displays the current dump device.
 .El
 .Sh SWAP OPTIONS
 When parsing the
