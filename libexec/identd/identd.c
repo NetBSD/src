@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.4 1995/06/03 22:46:26 mycroft Exp $
+**	$Id: identd.c,v 1.5 1995/06/07 17:14:21 cgd Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
@@ -23,6 +23,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
