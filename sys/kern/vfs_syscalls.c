@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.183 2003/02/23 14:37:34 pk Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.184 2003/03/21 23:11:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.183 2003/02/23 14:37:34 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.184 2003/03/21 23:11:25 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -356,7 +356,7 @@ update:
 		vp->v_mountedhere = (struct mount *)0;
 		vfs->vfs_refcount--;
 		vfs_unbusy(mp);
-		free((caddr_t)mp, M_MOUNT);
+		free(mp, M_MOUNT);
 		vput(vp);
 	}
 	return (error);
@@ -535,7 +535,7 @@ dounmount(mp, flags, p)
 		if (used_syncer)
 			lockmgr(&syncer_lock, LK_RELEASE, NULL);
 		while (mp->mnt_wcnt > 0) {
-			wakeup((caddr_t)mp);
+			wakeup(mp);
 			tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1", 0);
 		}
 		return (error);
@@ -553,10 +553,10 @@ dounmount(mp, flags, p)
 	if (used_syncer)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 	while(mp->mnt_wcnt > 0) {
-		wakeup((caddr_t)mp);
+		wakeup(mp);
 		tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0);
 	}
-	free((caddr_t)mp, M_MOUNT);
+	free(mp, M_MOUNT);
 	return (0);
 }
 
@@ -1051,7 +1051,7 @@ sys_open(l, v, retval)
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
-	fp->f_data = (caddr_t)vp;
+	fp->f_data = vp;
 	if (flags & (O_EXLOCK | O_SHLOCK)) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1064,7 +1064,7 @@ sys_open(l, v, retval)
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
 		VOP_UNLOCK(vp, 0);
-		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			FILE_UNUSE(fp, p);
@@ -1113,13 +1113,13 @@ sys_getfh(l, v, retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	memset((caddr_t)&fh, 0, sizeof(fh));
+	memset(&fh, 0, sizeof(fh));
 	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 	error = VFS_VPTOFH(vp, &fh.fh_fid);
 	vput(vp);
 	if (error)
 		return (error);
-	error = copyout((caddr_t)&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
+	error = copyout(&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
 	return (error);
 }
 
@@ -1223,7 +1223,7 @@ sys_fhopen(l, v, retval)
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
-	fp->f_data = (caddr_t)vp;
+	fp->f_data = vp;
 	if (flags & (O_EXLOCK | O_SHLOCK)) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1236,7 +1236,7 @@ sys_fhopen(l, v, retval)
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
 		VOP_UNLOCK(vp, 0);
-		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			FILE_UNUSE(fp, p);

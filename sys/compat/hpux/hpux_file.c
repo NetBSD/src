@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.21 2003/01/18 07:36:57 thorpej Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.22 2003/03/21 23:11:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.21 2003/01/18 07:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.22 2003/03/21 23:11:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,8 +300,7 @@ hpux_sys_fcntl(l, v, retval)
 		vp = (struct vnode *)fp->f_data;
 
 		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&hfl,
-		    sizeof (hfl));
+		error = copyin((caddr_t)SCARG(uap, arg), &hfl, sizeof (hfl));
 		if (error)
 			return (error);
 
@@ -319,16 +318,16 @@ hpux_sys_fcntl(l, v, retval)
 				return (EBADF);
 
 			p->p_flag |= P_ADVLOCK;
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
+			return (VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg));
 
 		case F_WRLCK:
 			if ((fp->f_flag & FWRITE) == 0)
 				return (EBADF);
 			p->p_flag |= P_ADVLOCK;
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
+			return (VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg));
 
 		case F_UNLCK:
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
+			return (VOP_ADVLOCK(vp, p, F_UNLCK, &fl,
 			    F_POSIX));
 
 		default:
@@ -343,8 +342,7 @@ hpux_sys_fcntl(l, v, retval)
 		vp = (struct vnode *)fp->f_data;
 
 		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&hfl,
-		    sizeof (hfl));
+		error = copyin((caddr_t)SCARG(uap, arg), &hfl, sizeof (hfl));
 		if (error)
 			return (error);
 
@@ -356,8 +354,7 @@ hpux_sys_fcntl(l, v, retval)
 		if (fl.l_whence == SEEK_CUR)
 			fl.l_start += fp->f_offset;
 
-		if ((error =
-		    VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX)))
+		if ((error = VOP_ADVLOCK(vp, p, F_GETLK, &fl, F_POSIX)))
 			return (error);
 
 		hfl.hl_start = fl.l_start;
@@ -365,7 +362,7 @@ hpux_sys_fcntl(l, v, retval)
 		hfl.hl_pid = fl.l_pid;
 		hfl.hl_type = fl.l_type;
 		hfl.hl_whence = fl.l_whence;
-		return (copyout((caddr_t)&hfl, (caddr_t)SCARG(uap, arg),
+		return (copyout(&hfl, (caddr_t)SCARG(uap, arg),
 		    sizeof (hfl)));
 
 	default:
@@ -597,7 +594,7 @@ bsd_to_hpux_stat(sb, hsb)
 	struct hpux_stat *hsb;
 {
 
-	memset((caddr_t)hsb, 0, sizeof(struct hpux_stat));
+	memset(hsb, 0, sizeof(struct hpux_stat));
 	hsb->hst_dev = (long)sb->st_dev;
 	hsb->hst_ino = (u_long)sb->st_ino;
 	hsb->hst_mode = (u_short)sb->st_mode;

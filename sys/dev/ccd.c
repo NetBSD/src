@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.83 2003/02/25 20:35:33 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.84 2003/03/21 23:11:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.83 2003/02/25 20:35:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.84 2003/03/21 23:11:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ ccdinit(cs, cpaths, vpp, p)
 		/*
 		 * Get partition information for the component.
 		 */
-		error = VOP_IOCTL(vpp[ix], DIOCGPART, (caddr_t)&dpart,
+		error = VOP_IOCTL(vpp[ix], DIOCGPART, &dpart,
 		    FREAD, p->p_ucred, p);
 		if (error) {
 #ifdef DEBUG
@@ -1058,7 +1058,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		vpp = malloc(ccio->ccio_ndisks * sizeof(struct vnode *),
 		    M_DEVBUF, M_WAITOK);
 
-		error = copyin((caddr_t)ccio->ccio_disks, (caddr_t)cpp,
+		error = copyin(ccio->ccio_disks, cpp,
 		    ccio->ccio_ndisks * sizeof(char **));
 		if (error) {
 			free(vpp, M_DEVBUF);

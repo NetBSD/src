@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.40 2002/10/23 09:16:46 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.41 2003/03/21 23:11:27 dsl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.40 2002/10/23 09:16:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.41 2003/03/21 23:11:27 dsl Exp $");
 
 
 /*
@@ -479,7 +479,7 @@ int
 VOP_IOCTL(vp, command, data, fflag, cred, p)
 	struct vnode *vp;
 	u_long command;
-	caddr_t data;
+	void *data;
 	int fflag;
 	struct ucred *cred;
 	struct proc *p;
@@ -516,7 +516,7 @@ int
 VOP_FCNTL(vp, command, data, fflag, cred, p)
 	struct vnode *vp;
 	u_int command;
-	caddr_t data;
+	void *data;
 	int fflag;
 	struct ucred *cred;
 	struct proc *p;
@@ -1281,7 +1281,7 @@ const struct vnodeop_desc vop_advlock_desc = {
 int
 VOP_ADVLOCK(vp, id, op, fl, flags)
 	struct vnode *vp;
-	caddr_t id;
+	void *id;
 	int op;
 	struct flock *fl;
 	int flags;

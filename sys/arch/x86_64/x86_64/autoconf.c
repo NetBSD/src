@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2003/03/05 23:56:06 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2003/03/21 23:11:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -310,7 +310,7 @@ match_harddisk(dv, bid)
 		vput(tmpvn);
 		return(0);
 	}
-	error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0);
+	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED, 0);
 	if (error) {
 		/*
 		 * XXX can't happen - open() would

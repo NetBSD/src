@@ -1,4 +1,5 @@
-/*	$NetBSD: autoconf.c,v 1.66 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67 2003/03/21 23:11:19 dsl Exp $	*/
+#define GEOM_DEBUG
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2003/01/17 23:10:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2003/03/21 23:11:19 dsl Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -225,6 +226,11 @@ matchbiosdisks()
 		i386_alldisks->dl_biosdisks[i].bi_cyl = big->disk[i].cyl;
 		i386_alldisks->dl_biosdisks[i].bi_lbasecs = big->disk[i].totsec;
 		i386_alldisks->dl_biosdisks[i].bi_flags = big->disk[i].flags;
+#ifdef GEOM_DEBUG
+		printf("disk %x: flags %x, interface %x, device %llx\n",
+			big->disk[i].dev, big->disk[i].flags,
+			big->disk[i].interface_path, big->disk[i].device_path);
+#endif
 	}
 
 	/*
@@ -273,7 +279,7 @@ matchbiosdisks()
 			for (m = i = 0; i < big->num; i++) {
 				be = &big->disk[i];
 #ifdef GEOM_DEBUG
-				printf("match %s with %d\n", dv->dv_xname, i);
+				printf("match %s with %d ", dv->dv_xname, i);
 				printf("dev ck %x bios ck %x\n", ck, be->cksum);
 #endif
 				if (be->flags & BI_GEOM_INVALID)
@@ -284,7 +290,7 @@ matchbiosdisks()
 					    sizeof (struct mbr_partition))) {
 #ifdef GEOM_DEBUG
 					printf("matched bios disk %x with %s\n",
-					    be->dev, be->devname);
+					    be->dev, dv->dv_xname);
 #endif
 					i386_alldisks->dl_nativedisks[n].
 					    ni_biosmatches[m++] = i;
@@ -351,7 +357,7 @@ match_harddisk(dv, bid)
 		vput(tmpvn);
 		return(0);
 	}
-	error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0);
+	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED, 0);
 	if (error) {
 		/*
 		 * XXX can't happen - open() would

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.39 2002/10/23 09:16:48 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.40 2003/03/21 23:11:28 dsl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -391,7 +391,7 @@ struct vop_ioctl_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	u_long a_command;
-	caddr_t a_data;
+	void *a_data;
 	int a_fflag;
 	struct ucred *a_cred;
 	struct proc *a_p;
@@ -400,7 +400,7 @@ extern const struct vnodeop_desc vop_ioctl_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_IOCTL(struct vnode *, u_long, caddr_t, int, struct ucred *, 
+int VOP_IOCTL(struct vnode *, u_long, void *, int, struct ucred *, 
     struct proc *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
@@ -410,7 +410,7 @@ __attribute__((__unused__))
 static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	struct vnode *vp;
 	u_long command;
-	caddr_t data;
+	void *data;
 	int fflag;
 	struct ucred *cred;
 	struct proc *p;
@@ -431,7 +431,7 @@ struct vop_fcntl_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	u_int a_command;
-	caddr_t a_data;
+	void *a_data;
 	int a_fflag;
 	struct ucred *a_cred;
 	struct proc *a_p;
@@ -440,7 +440,7 @@ extern const struct vnodeop_desc vop_fcntl_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_FCNTL(struct vnode *, u_int, caddr_t, int, struct ucred *, 
+int VOP_FCNTL(struct vnode *, u_int, void *, int, struct ucred *, 
     struct proc *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
@@ -450,7 +450,7 @@ __attribute__((__unused__))
 static __inline int VOP_FCNTL(vp, command, data, fflag, cred, p)
 	struct vnode *vp;
 	u_int command;
-	caddr_t data;
+	void *data;
 	int fflag;
 	struct ucred *cred;
 	struct proc *p;
@@ -1180,7 +1180,7 @@ static __inline int VOP_PATHCONF(vp, name, retval)
 struct vop_advlock_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	caddr_t a_id;
+	void *a_id;
 	int a_op;
 	struct flock *a_fl;
 	int a_flags;
@@ -1189,7 +1189,7 @@ extern const struct vnodeop_desc vop_advlock_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_ADVLOCK(struct vnode *, caddr_t, int, struct flock *, int)
+int VOP_ADVLOCK(struct vnode *, void *, int, struct flock *, int)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
@@ -1197,7 +1197,7 @@ __attribute__((__unused__))
 #ifndef VNODE_OP_NOINLINE
 static __inline int VOP_ADVLOCK(vp, id, op, fl, flags)
 	struct vnode *vp;
-	caddr_t id;
+	void *id;
 	int op;
 	struct flock *fl;
 	int flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.155 2003/02/25 20:35:36 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.156 2003/03/21 23:11:23 dsl Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.155 2003/02/25 20:35:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.156 2003/03/21 23:11:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -885,8 +885,7 @@ raidioctl(dev, cmd, data, flag, p)
 		if (k_cfg == NULL) {
 			return (ENOMEM);
 		}
-		retcode = copyin((caddr_t) u_cfg, (caddr_t) k_cfg,
-		    sizeof(RF_Config_t));
+		retcode = copyin(u_cfg, k_cfg, sizeof(RF_Config_t));
 		if (retcode) {
 			RF_Free(k_cfg, sizeof(RF_Config_t));
 			db1_printf(("rf_ioctl: retcode=%d copyin.1\n",
@@ -907,8 +906,7 @@ raidioctl(dev, cmd, data, flag, p)
 				RF_Free(k_cfg, sizeof(RF_Config_t));
 				return (ENOMEM);
 			}
-			retcode = copyin(k_cfg->layoutSpecific,
-			    (caddr_t) specific_buf,
+			retcode = copyin(k_cfg->layoutSpecific, specific_buf,
 			    k_cfg->layoutSpecificSize);
 			if (retcode) {
 				RF_Free(k_cfg, sizeof(RF_Config_t));
@@ -1021,10 +1019,9 @@ raidioctl(dev, cmd, data, flag, p)
 				raidPtr->raid_cinfo[row][column].ci_vp, 
 				clabel );
 
-		retcode = copyout((caddr_t) clabel, 
-				  (caddr_t) *clabel_ptr,
+		retcode = copyout(clabel, *clabel_ptr,
 				  sizeof(RF_ComponentLabel_t));
-		RF_Free( clabel, sizeof(RF_ComponentLabel_t));
+		RF_Free(clabel, sizeof(RF_ComponentLabel_t));
 		return (retcode);
 
 	case RAIDFRAME_SET_COMPONENT_LABEL:
@@ -1252,8 +1249,7 @@ raidioctl(dev, cmd, data, flag, p)
 		for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++) {
 			d_cfg->spares[i] = raidPtr->Disks[0][j];
 		}
-		retcode = copyout((caddr_t) d_cfg, (caddr_t) * ucfgp,
-				  sizeof(RF_DeviceConfig_t));
+		retcode = copyout(d_cfg, *ucfgp, sizeof(RF_DeviceConfig_t));
 		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
 
 		return (retcode);
@@ -1370,8 +1366,7 @@ raidioctl(dev, cmd, data, flag, p)
 			progressInfo.remaining = progressInfo.total -
 				progressInfo.completed;
 		}
-		retcode = copyout((caddr_t) &progressInfo,
-				  (caddr_t) *progressInfoPtr,
+		retcode = copyout(&progressInfo, *progressInfoPtr,
 				  sizeof(RF_ProgressInfo_t));
 		return (retcode);
 
@@ -1404,8 +1399,7 @@ raidioctl(dev, cmd, data, flag, p)
 			progressInfo.completed = 100;
 			progressInfo.total = 100;
 		}
-		retcode = copyout((caddr_t) &progressInfo,
-				  (caddr_t) *progressInfoPtr,
+		retcode = copyout(&progressInfo, *progressInfoPtr,
 				  sizeof(RF_ProgressInfo_t));
 		return (retcode);
 
@@ -1436,8 +1430,7 @@ raidioctl(dev, cmd, data, flag, p)
 			progressInfo.completed = 100;
 			progressInfo.total = 100;
 		}
-		retcode = copyout((caddr_t) &progressInfo,
-				  (caddr_t) *progressInfoPtr,
+		retcode = copyout(&progressInfo, *progressInfoPtr,
 				  sizeof(RF_ProgressInfo_t));
 		return (retcode);
 
@@ -2726,8 +2719,7 @@ rf_find_raid_components()
 		}
 
 		/* Ok, the disk exists.  Go get the disklabel. */
-		error = VOP_IOCTL(vp, DIOCGDINFO, (caddr_t)&label, 
-				  FREAD, NOCRED, 0);
+		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED, 0);
 		if (error) {
 			/*
 			 * XXX can't happen - open() would

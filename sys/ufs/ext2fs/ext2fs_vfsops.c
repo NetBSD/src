@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.53 2003/01/24 21:55:20 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.54 2003/03/21 23:11:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.53 2003/01/24 21:55:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.54 2003/03/21 23:11:28 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -234,7 +234,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 		return copyout(&args, data, sizeof(args));
 	}
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
+	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
 	/*
@@ -406,7 +406,7 @@ ext2fs_reload(mountp, cred, p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -543,7 +543,7 @@ ext2fs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -563,9 +563,9 @@ ext2fs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	memset((caddr_t)ump, 0, sizeof *ump);
+	memset(ump, 0, sizeof *ump);
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
-	memset((caddr_t)ump->um_e2fs, 0, sizeof(struct m_ext2fs));
+	memset(ump->um_e2fs, 0, sizeof(struct m_ext2fs));
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
 	brelse(bp);
 	bp = NULL;
