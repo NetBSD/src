@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.9 2001/11/26 00:13:24 lukem Exp $	*/
+/*	$NetBSD: dd.h,v 1.10 2002/01/10 03:25:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ typedef struct {
 	u_char		*db;		/* buffer address */
 	u_char		*dbp;		/* current buffer I/O address */
 	uint64_t	dbcnt;		/* current buffer byte count */
-	uint64_t	dbrcnt;		/* last read byte count */
+	int64_t		dbrcnt;		/* last read byte count */
 	uint64_t	dbsz;		/* buffer size */
 
 #define	ISCHR		0x01		/* character device (warn on short) */
