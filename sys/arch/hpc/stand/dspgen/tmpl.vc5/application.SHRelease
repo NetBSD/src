@@ -1,0 +1,17 @@
+CPP=shcl.exe
+# ADD BASE CPP /nologo /MT /W3 /O2 %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "SHx" /D "SH3" /D "_SH3_" /D UNDER_CE=$(CEVersion) /D "UNICODE"  %%% CPPDEFS %%% /c
+# ADD CPP /nologo /MT /W3 /O2 %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "SHx" /D "SH3" /D "_SH3_" /D UNDER_CE=$(CEVersion) /D "UNICODE" %%% CPPDEFS %%% /c
+RSC=rc.exe
+# ADD BASE RSC /l 0x411 /r /d "SHx" /d "SH3" /d "_SH3_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "NDEBUG"
+# ADD RSC /l 0x411 /r /d "SHx" /d "SH3" /d "_SH3_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "NDEBUG"
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
+LINK32=link.exe
+# ADD BASE LINK32 commctrl.lib coredll.lib %%% LIBRARIES %%% /nologo /machine:SH3 /subsystem:$(CESubsystem)
+# SUBTRACT BASE LINK32 /pdb:none /nodefaultlib
+# ADD LINK32 commctrl.lib coredll.lib %%% LIBRARIES %%% /nologo /machine:SH3 /subsystem:$(CESubsystem)
+# SUBTRACT LINK32 /pdb:none /nodefaultlib
+PFILE=pfile.exe
+# ADD BASE PFILE COPY
+# ADD PFILE COPY
