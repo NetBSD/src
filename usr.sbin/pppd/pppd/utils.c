@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.5 2000/09/23 22:39:40 christos Exp $	*/
+/*	$NetBSD: utils.c,v 1.6 2002/01/23 18:23:02 thorpej Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.10 2000/03/27 01:36:48 paulus Exp "
 #else
-__RCSID("$NetBSD: utils.c,v 1.5 2000/09/23 22:39:40 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.6 2002/01/23 18:23:02 thorpej Exp $");
 #endif
 #endif
 
@@ -258,12 +258,15 @@ vslprintf(buf, buflen, fmt, args)
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
 	    str = num;
 	    break;
-	case 'r':
+	case 'r': {
+	    va_list vlist;
 	    f = va_arg(args, char *);
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
+	    vlist = va_arg(args, va_list);
+	    n = vslprintf(buf, buflen + 1, f, vlist);
 	    buf += n;
 	    buflen -= n;
 	    continue;
+	}
 	case 't':
 	    time(&t);
 	    str = ctime(&t);
