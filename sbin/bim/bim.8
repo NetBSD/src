@@ -1,4 +1,4 @@
-.\"	$NetBSD: bim.8,v 1.6 2000/07/05 15:45:30 msaitoh Exp $
+.\"	$NetBSD: bim.8,v 1.7 2001/04/21 14:44:13 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -24,18 +24,18 @@
 .\" THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
 .\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
-.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+.\" ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 .\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd July 16, 1997
 .Os
-.Dt BIM 8
+.Dt BIM 8 pc532
 .Sh NAME
 .Nm bim
 .Nd pc532 boot image manager
@@ -55,14 +55,14 @@ images.  The image directory and the image partition is managed by
 The
 .Ar device
 is the raw disk partition that includes the disklabel.  The default
-value of 
+value of
 .Ar device
 is
 .Pa /dev/rsd0c .
 .Nm
 directly accesses both the disklabel and the image partition directly
 from the raw disk device.  It does not open the device corresponding
-to the boot partition.  
+to the boot partition.
 .Pp
 The
 .Fl y
@@ -71,11 +71,11 @@ argument assumes a yes response to any questions
 would normally ask the user.  It is mainly useful for
 scripting.
 .Pp
-The 
+The
 .Cm -c command
-argument allows 
+argument allows
 .Nm
-to execute commands given via the command line.  This allows 
+to execute commands given via the command line.  This allows
 .Nm
 to be used from scripts.  The
 .Cm -c command
@@ -88,12 +88,12 @@ The disk must be partitioned by using
 .Xr disklabel 8 ,
 making sure there is a boot boot partition.  This boot
 partition is often just after the disklabel.  It must not include
-the disklabel.  If 
+the disklabel.  If
 .Nm
 does not detect a boot image directory, it asks if the user wants
 one created.  From there, the operation of
 .Nm
-is completely command driven.  The command interpreter is 
+is completely command driven.  The command interpreter is
 .Sh COMMANDS
 .Nm
 supports the following commands.
@@ -107,7 +107,7 @@ Deletes an image from the image partition.
 .It default
 Sets the default image boot.
 .It exit
-Exit 
+Exit
 .Nm "" .
 .It header
 Print a small section of the disklabel.
@@ -120,7 +120,7 @@ Initialize the image partition and associated partition table.
 .It partitions
 Print the disklabel.
 .It quit
-Terminate 
+Terminate
 .Nm "" .
 .It ?
 Print help.
@@ -133,6 +133,6 @@ For the details on these commands, ask for help from
 .Sh AUTHORS
 Bruce Culbertson wrote the basic command interpreter for the pc532
 ROM monitor.  Philip A. Nelson took the command interpreter, modified
-it to be a more generic command interpreter and added the 
-.Nm 
+it to be a more generic command interpreter and added the
+.Nm
 specific code.
