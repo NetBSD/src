@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/08/19 13:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2002/08/20 13:12:00 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ CPPFLAGS+=-DINET6
 
 PROG=	telnetd
 CPPFLAGS+=-DLINEMODE -DKLUDGELINEMODE -DUSE_TERMIO -DDIAGNOSTICS -DOPENPTY_PTY
-CPPFLAGS+=-DOLD_ENVIRON -DENV_HACK -DSECURELOGIN
+CPPFLAGS+=-DOLD_ENVIRON -DENV_HACK -DSECURELOGIN -DSUPPORT_UTMP -DSUPPORT_UTMPX
 SRCS=	authenc.c global.c slc.c state.c sys_term.c telnetd.c \
 	termstat.c utility.c
 DPADD=	${LIBUTIL} ${LIBTERMCAP} ${LIBTELNET}
