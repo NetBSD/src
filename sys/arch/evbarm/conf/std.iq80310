@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.14 2003/01/03 02:16:28 thorpej Exp $
+#	$NetBSD: std.iq80310,v 1.15 2003/04/08 20:50:05 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -14,7 +14,6 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-makeoptions	LOADADDRESS="0xa0200000"
 makeoptions	BOARDTYPE="iq80310"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80310"
 
