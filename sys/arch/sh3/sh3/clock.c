@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2001/01/21 23:53:09 marcus Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2001/01/22 07:04:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -372,22 +372,21 @@ inittodr(base)
 	}
 
 #ifdef DREAMCAST
-
-	for(;;) {
-	  int i;
-	  for(i=0; i<3; i++) {
-	    new = ((rtc[0]&0xffff)<<16)|(rtc[1]&0xffff);
-	    if(new != old)
-	      break;
-	  }
-	  if(i<3)
-	    old = new;
-	  else
-	    break;
+	for (;;) {
+		int i;
+		for (i = 0; i < 3; i++) {
+			new = ((rtc[0] & 0xffff) << 16) | (rtc[1] & 0xffff);
+			if (new != old)
+				break;
+		}
+		if (i < 3)
+			old = new;
+		else
+			break;
 	}
-	
-	time.tv_sec = new-631152000;
-	
+
+	/* offset 20 years */
+	time.tv_sec = new - 631152000;
 #else
 #ifdef SH4
 #define	FROMBCD2(x)	((((x) & 0xf000) >> 12) * 1000 + \
