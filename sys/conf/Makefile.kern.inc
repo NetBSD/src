@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.55 2004/07/15 03:35:20 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.56 2004/07/31 00:55:51 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -127,12 +127,12 @@ LIBKERNLN?=	${KERNLIBLN}
 ### find out what to use for libcompat
 .include "$S/compat/common/Makefile.inc"
 .ifndef PROF
-LIBCOMPAT?=	${COMPATLIB}
+SYSLIBCOMPAT?=	${COMPATLIB}
 .else
-LIBCOMPAT?=	${COMPATLIB_PROF}
+SYSLIBCOMPAT?=	${COMPATLIB_PROF}
 .endif
 
-LIBCOMPATLN?=	${COMPATLIBLN}
+SYSLIBCOMPATLN?=	${COMPATLIBLN}
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -169,7 +169,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
+SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
@@ -311,7 +311,7 @@ KERNLINTFLAGS?=	-bcehnxzFS
 NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $<
 
 _lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
-LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${LIBCOMPATLN}
+LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
 
 .for _sfile in ${ALLSFILES}
 LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
