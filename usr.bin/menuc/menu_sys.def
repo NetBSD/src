@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.41 2003/06/16 20:57:43 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.42 2003/06/27 22:06:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,7 +208,8 @@ init_menu(menudesc *m)
 	if (m->mw == NULL) {
 		endwin();
 		(void)fprintf(stderr,
-			"Could not create window for menu \"%s\"\n", title);
+			"Could not create window (%d + %d, %d + %d, %d, %d) for menu \"%s\"\n",
+			m->h, hadd, m->w, wadd, m->y, m->x, title);
 		exit(1);
 	}
 	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
