@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.1 2000/03/18 17:59:52 mycroft Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.2 2000/03/18 21:11:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@ struct cfattach nca_pcmcia_ca = {
 #define NCA_NO_PARITY_CHK	0xff00
 
 const struct pcmcia_product nca_pcmcia_products[] = {
-	{ PCMCIA_STR_PANASONIC_KXLC002,		PCMCIA_VENDOR_PANASONIC,
-	  PCMCIA_PRODUCT_PANASONIC_KXLC002,	0 },
 
 	{ NULL }
 };
