@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.65 2003/04/18 11:08:27 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.66 2003/04/18 22:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -621,6 +621,16 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
 				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : 0))
+
+/*
+ * Macros to test if a mapping is mappable with an L1 Section mapping
+ * or an L2 Large Page mapping.
+ */
+#define	L1_S_MAPPABLE_P(va, pa, size)					\
+	((((va) | (pa)) & L1_S_OFFSET) == 0 && (size) >= L1_S_SIZE)
+
+#define	L2_L_MAPPBLE_P(va, pa, size)					\
+	((((va) | (pa)) & L2_S_OFFSET) == 0 && (size) >= L2_L_SIZE)
 
 /*
  * Hooks for the pool allocator.
