@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/12/07 20:08:57 dsl Exp $
+#	$NetBSD: Makefile,v 1.24 2005/01/18 12:38:45 lukem Exp $
 
 BOOTMODEL=	big
 IMAGE=		ramdisk-${BOOTMODEL}.fs
@@ -9,5 +9,9 @@ USE_SYSINST=	yes
 SMALLPROG_INET6=1
 
 .include "${.CURDIR}/../common/Makefile.ramdisk"
+
+.if ${USE_INET6} != "no"
+LISTS+=		${.CURDIR}/list.inet6
+.endif
 
 MAKEFS_FLAGS+=	-f 20
