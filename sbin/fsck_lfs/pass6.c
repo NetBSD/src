@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.1 2003/03/28 08:09:54 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.2 2003/03/29 00:09:43 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -658,6 +658,8 @@ pass6(void)
 	idesc.id_func = pass6check;
 	idesc.id_lblkno = 0;
 	LIST_FOREACH(vp, &vnodelist, v_mntvnodes) {
+		if ((vp->v_flag & VDIROP) == 0)
+			--n_files; /* Don't double count */
 		checkinode(VTOI(vp)->i_number, &idesc);
 	}
 
