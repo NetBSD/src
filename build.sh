@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.58.2.6 2003/08/12 18:27:23 tron Exp $
+#  $NetBSD: build.sh,v 1.58.2.7 2004/03/12 04:00:47 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -226,7 +226,8 @@ fi
 validatearch
 
 # Set up default make(1) environment.
-makeenv="$makeenv TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
+NETBSDSRCDIR=${TOP}
+makeenv="$makeenv TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS NETBSDSRCDIR"
 if [ ! -z "$BUILDID" ]; then
 	makeenv="$makeenv BUILDID"
 fi
@@ -386,7 +387,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.58.2.6 2003/08/12 18:27:23 tron Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58.2.7 2004/03/12 04:00:47 jmc Exp $
 #
 
 EOF
