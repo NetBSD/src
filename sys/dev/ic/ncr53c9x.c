@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.11.2.3 1997/07/30 16:23:34 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.11.2.4 1997/08/14 11:06:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -2009,7 +2009,7 @@ ncr53c9x_timeout(arg)
 	struct scsipi_xfer *xs = ecb->xs;
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
-	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
+	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 	int s;
 
 	scsi_print_addr(sc_link);
@@ -2042,9 +2042,9 @@ ncr53c9x_timeout(arg)
 		if (ecb == sc->sc_nexus &&
 		    (ti->flags & T_SYNCMODE) != 0 &&
 		    (sc->sc_phase & (MSGI|CDI)) == 0) {
-			sc_print_addr(sc_link);
+			scsi_print_addr(sc_link);
 			printf("sync negotiation disabled\n");
-			sc->sc_cfflags |= (1<<(sc_link->target+8));
+			sc->sc_cfflags |= (1<<(sc_link->scsipi_scsi.target+8));
 		}
 	}
 
