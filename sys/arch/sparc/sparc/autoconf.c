@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.194 2003/04/26 11:05:20 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.195 2003/04/26 14:12:22 ragge Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -247,9 +247,10 @@ void
 bootstrap()
 {
 	extern struct user *proc0paddr;
-	extern int end[];
 #if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
+#else
+	extern int end[];
 #endif
 
 	prom_init();
