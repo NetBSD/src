@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7870.c,v 1.5 1995/12/28 08:58:19 thorpej Exp $	*/
+
 /*
  * Product specific probe and attach routines for:
  *      294X and aic7870 motherboard SCSI controllers
@@ -18,8 +20,6 @@
  *    Justin T. Gibbs.
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
- *
- *	$Id: aic7870.c,v 1.4 1995/12/24 02:32:09 mycroft Exp $
  */
 
 #include <sys/param.h>

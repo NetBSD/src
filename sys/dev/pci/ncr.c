@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.22 1995/12/24 02:32:24 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.23 1995/12/28 08:58:15 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1256,7 +1256,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.22 1995/12/24 02:32:24 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.23 1995/12/28 08:58:15 thorpej Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
