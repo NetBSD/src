@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.7.2.1 2002/05/16 04:30:50 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7.2.1 2002/05/16 04:30:50 gehenna Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -267,6 +267,7 @@ irix_sys_fchmod(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(int) mode;
 	} */ *uap = v;
+	extern const struct cdevsw irix_usema_cdevsw;
 	struct sys_fchmod_args cup;
 	struct file *fp;
 	int error;
@@ -291,7 +292,7 @@ irix_sys_fchmod(p, v, retval)
 		major = major(vp->v_specinfo->si_rdev);
 		minor = minor(vp->v_specinfo->si_rdev);
 		/* XXX is there a better way to identify a given driver ? */
-		if (cdevsw[major].d_open == *irix_usemaopen &&
+		if (major == cdevsw_lookup_major(&irix_usema_cdevsw) &&
 		    minor == IRIX_USEMACLNDEV_MINOR)
 			error = 0;
 	}
