@@ -1,3 +1,5 @@
+#	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
+
 # regular expression test set
 # Lines are at least three fields, separated by one or more tabs.  "" stands
 # for an empty field.  First field is an RE.  Second field is flags.  If

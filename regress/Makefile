@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/12/21 04:09:56 brezak Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/20 22:37:12 cgd Exp $
 
 # missing: bin libexec sbin usr.bin usr.sbin share games gnu
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: round.c,v 1.2 1995/04/20 22:39:37 cgd Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 18, 1995
  * Public domain.

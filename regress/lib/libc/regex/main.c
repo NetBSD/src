@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>

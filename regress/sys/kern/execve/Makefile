@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1995/03/01 18:29:04 glass Exp $
+#	$NetBSD: Makefile,v 1.4 1995/04/20 22:43:03 cgd Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
