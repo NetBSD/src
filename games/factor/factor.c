@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.10 2002/06/15 02:12:23 simonb Exp $	*/
+/*	$NetBSD: factor.c,v 1.11 2002/06/16 22:24:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.10 2002/06/15 02:12:23 simonb Exp $");
+__RCSID("$NetBSD: factor.c,v 1.11 2002/06/16 22:24:01 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,17 @@ __RCSID("$NetBSD: factor.c,v 1.10 2002/06/15 02:12:23 simonb Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef HAVE_OPENSSL
 #include <openssl/bn.h>
+#else
+typedef long	BIGNUM;
+typedef u_long	BN_ULONG;
+#define BN_new()	((BIGNUM *)calloc(sizeof(BIGNUM), 1))
+#define BN_dec2bn(pp, str)	(**(pp) = atol(str))
+#define BN_is_zero(v)	(*(v) == 0)
+#define BN_is_one(v)	(*(v) == 1)
+#define BN_mod_word(a, b)	(*(a) % (b))
+#endif
 
 #include "primes.h"
 
@@ -95,8 +105,13 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 int	main(int, char *[]);
 void	pr_fact(BIGNUM *);			/* print factors of a value */
 void	BN_print_dec_fp(FILE *, const BIGNUM *);
-void	pollard_pminus1(BIGNUM *);		/* print factors for big numbers */
 void	usage(void) __attribute__((__noreturn__));
+#ifdef HAVE_OPENSSL
+void	pollard_pminus1(BIGNUM *);		/* print factors for big numbers */
+#else
+char	*BN_bn2dec(const BIGNUM *);
+BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
+#endif
 
 int
 main(int argc, char *argv[])
@@ -186,7 +201,11 @@ pr_fact(BIGNUM *val)
 
 		/* Watch for primes larger than the table. */
 		if (fact > pr_limit) {
+#ifdef HAVE_OPENSSL
 			pollard_pminus1(val);
+#else
+			(void)printf(" %s", BN_bn2dec(val));
+#endif
 			break;
 		}
 
@@ -227,6 +246,7 @@ usage(void)
 
 
 
+#ifdef HAVE_OPENSSL
 /* pollard rho, algorithm from Jim Gillogly, May 2000 */
 
 void
@@ -276,3 +296,26 @@ pollard_pminus1(BIGNUM *val)
 		BN_add_word(i, 1);
 	}
 }
+#else
+char *
+BN_bn2dec(const BIGNUM *val)
+{
+	char *buf;
+
+	buf = malloc(100);
+	if (!buf)
+		return buf;
+	snprintf(buf, 100, "%ld", (long)*val);
+	return buf;
+}
+
+BN_ULONG
+BN_div_word(BIGNUM *a, BN_ULONG b)
+{
+	BN_ULONG mod;
+
+	mod = *a % b;
+	*a /= b;
+	return mod;
+}
+#endif
