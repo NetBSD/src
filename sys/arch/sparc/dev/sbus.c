@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.20 1998/03/21 22:03:33 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.21 1998/03/29 22:06:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -625,6 +625,7 @@ sbus_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->sparc_bus_map = _sbus_bus_map;
+	sbt->sparc_bus_unmap = sc->sc_bustag->sparc_bus_unmap;
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
