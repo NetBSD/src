@@ -1,5 +1,4 @@
-/*	$NetBSD: usb.h,v 1.36 1999/10/13 08:10:58 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.13 1999/10/07 19:26:34 n_hibma Exp $	*/
+/*	$NetBSD: usb.h,v 1.37 1999/10/13 18:52:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +42,7 @@
 #define _USB_H_
 
 #include <sys/types.h>
+#include <sys/time.h>
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
