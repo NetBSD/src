@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.11 2004/03/31 08:11:35 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.12 2004/03/31 09:12:24 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -125,3 +125,12 @@ distrib/hp300/miniroot/list			1.12
 	Catch up with the removal of gawk, so that the miniroot builds again.
 	[he, ticket #24]
 
+usr.bin/gzip/gzip.c				1.30
+usr.bin/gzip/unbzip2.c				1.2-1.3
+
+	patch from tron@ to convert to using public bz interfaces.  simonb says
+	no reason not to and this fixes PR#24964.
+
+	backout previous.  fix the bug it inspired instead.  we will want this
+	version of the code when doing file-type detection.
+	[tron, ticket #21]
