@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/12/06 21:31:42 agc Exp $
+# $NetBSD: Makefile,v 1.2 1999/12/06 22:28:12 simonb Exp $
 #
 CPPFLAGS+= -DEXTENSIONS
 
@@ -8,13 +8,13 @@ EXAMPLE_DIR=	${DESTDIR}/usr/share/examples/usermgmt
 INSTALL_DATA?= ${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m 0444
 
 PROG= user
-LINKS=	${BINDIR}/user ${BINDIR}/useradd
-LINKS=	${BINDIR}/user ${BINDIR}/userdel
-LINKS=	${BINDIR}/user ${BINDIR}/usermod
-LINKS=	${BINDIR}/user ${BINDIR}/group
-LINKS=	${BINDIR}/user ${BINDIR}/groupadd
-LINKS=	${BINDIR}/user ${BINDIR}/groupdel
-LINKS=	${BINDIR}/user ${BINDIR}/groupmod
+LINKS+=	${BINDIR}/user ${BINDIR}/useradd
+LINKS+=	${BINDIR}/user ${BINDIR}/userdel
+LINKS+=	${BINDIR}/user ${BINDIR}/usermod
+LINKS+=	${BINDIR}/user ${BINDIR}/group
+LINKS+=	${BINDIR}/user ${BINDIR}/groupadd
+LINKS+=	${BINDIR}/user ${BINDIR}/groupdel
+LINKS+=	${BINDIR}/user ${BINDIR}/groupmod
 LDADD+= -lutil 
 DPADD+= -lutil
 MAN= user.8 useradd.8 userdel.8 usermod.8 group.8 groupadd.8 groupdel.8 groupmod.8
