@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.12 2003/07/22 11:59:55 simonb Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.13 2003/08/26 17:28:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.12 2003/07/22 11:59:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.13 2003/08/26 17:28:13 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,13 +351,13 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 	pcireg_t reg;
 
 	switch (isc->chiptype) {
-        case CHIP_I850:
-        case CHIP_I845:
-        case CHIP_I840:
+	case CHIP_I850:
+	case CHIP_I845:
+	case CHIP_I840:
 	case CHIP_I443:
 		{
 		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL);
-                reg &= ~AGPCTRL_GTLB;
+		reg &= ~AGPCTRL_GTLB;
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
 			reg);
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
