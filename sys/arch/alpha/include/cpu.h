@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.h,v 1.55 2001/04/26 03:10:46 ross Exp $ */
+/* $NetBSD: cpu.h,v 1.56 2001/04/28 06:10:50 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -130,6 +130,15 @@ struct cpu_info {
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
+
+	/*
+	 * Variables used by microtime().
+	 */
+	struct timeval ci_pcc_time;
+	long ci_pcc_pcc;
+	long ci_pcc_ms_delta;
+	long ci_pcc_denom;
+
 #if defined(MULTIPROCESSOR)
 	__volatile u_long ci_flags;	/* flags; see below */
 	__volatile u_long ci_ipis;	/* interprocessor interrupts pending */
@@ -272,6 +281,7 @@ struct rpb;
 struct trapframe;
 
 int	badaddr(void *, size_t);
+void	microset(struct cpu_info *, struct trapframe *);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */

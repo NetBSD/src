@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.27 2001/04/21 16:27:10 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.28 2001/04/28 06:10:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.27 2001/04/21 16:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.28 2001/04/28 06:10:49 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -78,6 +78,7 @@ void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
  */
 ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_halt,
+	microset,
 	alpha_ipi_tbia,
 	alpha_ipi_tbiap,
 	pmap_do_tlb_shootdown,
@@ -91,6 +92,7 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 
 const char *ipinames[ALPHA_NIPIS] = {
 	"halt ipi",
+	"microset ipi",
 	"tbia ipi",
 	"tbiap ipi",
 	"shootdown ipi",
