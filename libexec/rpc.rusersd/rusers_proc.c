@@ -1,38 +1,33 @@
 /*-
- * Copyright (c) 1993, John Brezak
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *  Copyright (c) 1993 John Brezak
+ *  All rights reserved.
+ * 
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *  3. The name of the author may not be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.5 1993/08/02 17:50:46 mycroft Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.6 1993/11/21 18:56:35 brezak Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -50,9 +45,8 @@ static char rcsid[] = "$Id: rusers_proc.c,v 1.5 1993/08/02 17:50:46 mycroft Exp 
 #include <X11/Xlib.h>
 #include <X11/extensions/xidle.h>
 #endif
-#define utmp rutmp
-#include <rpcsvc/rnusers.h>
-#undef utmp
+#include <rpcsvc/rusers.h>	/* New version */
+#include <rpcsvc/rnusers.h>	/* Old version */
 
 #define	IGNOREUSER	"sleeper"
 
@@ -82,8 +76,9 @@ typedef char ut_line_t[UT_LINESIZE];
 typedef char ut_name_t[UT_NAMESIZE];
 typedef char ut_host_t[UT_HOSTSIZE];
 
-utmpidle utmp_idle[MAXUSERS];
-rutmp old_utmp[MAXUSERS];
+struct rusers_utmp utmps[MAXUSERS];
+struct utmpidle *utmp_idlep[MAXUSERS];
+struct utmpidle utmp_idle[MAXUSERS];
 ut_line_t line[MAXUSERS];
 ut_name_t name[MAXUSERS];
 ut_host_t host[MAXUSERS];
@@ -187,50 +182,6 @@ getidle(char *tty, char *display)
         return(idle);
 }
         
-static utmpidlearr *
-do_names_2(int all)
-{
-        static utmpidlearr ut;
-	struct utmp usr;
-        int nusers = 0;
-        
-        bzero((char *)&ut, sizeof(ut));
-        ut.utmpidlearr_val = &utmp_idle[0];
-        
-	ufp = fopen(_PATH_UTMP, "r");
-        if (!ufp) {
-                syslog(LOG_ERR, "%m");
-                return(&ut);
-        }
-
-        /* only entries with both name and line fields */
-        while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
-               nusers < MAXUSERS)
-                if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-                            sizeof(usr.ut_name))
-#ifdef OSF
-                    && usr.ut_type == USER_PROCESS
-#endif
-                    ) {
-                        utmp_idle[nusers].ui_utmp.ut_time =
-                                usr.ut_time;
-                        utmp_idle[nusers].ui_idle =
-                                getidle(usr.ut_line, usr.ut_host);
-                        utmp_idle[nusers].ui_utmp.ut_line = line[nusers];
-                        strncpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
-                        utmp_idle[nusers].ui_utmp.ut_name = name[nusers];
-                        strncpy(name[nusers], usr.ut_name, sizeof(name[nusers]));
-                        utmp_idle[nusers].ui_utmp.ut_host = host[nusers];
-                        strncpy(host[nusers], usr.ut_host, sizeof(host[nusers]));
-                        nusers++;
-                }
-
-        ut.utmpidlearr_len = nusers;
-        fclose(ufp);
-        return(&ut);
-}
-
 int *
 rusers_num()
 {
@@ -259,50 +210,116 @@ rusers_num()
         return(&num_users);
 }
 
-static utmparr *
-do_names_1(int all)
+static utmp_array *
+do_names_3(int all)
 {
-        utmpidlearr *utidle;
-        utmparr ut;
-        int i;
+        static utmp_array ut;
+	struct utmp usr;
+        int nusers = 0;
         
         bzero((char *)&ut, sizeof(ut));
+        ut.utmp_array_val = &utmps[0];
         
-        utidle = do_names_2(all);
-        if (utidle) {
-                ut.utmparr_len = utidle->utmpidlearr_len;
-                ut.utmparr_val = &old_utmp[0];
-                for (i = 0; i < ut.utmparr_len; i++)
-                        bcopy(&utmp_idle[i].ui_utmp, &old_utmp[i],
-                              sizeof(old_utmp[0]));
-                
+	ufp = fopen(_PATH_UTMP, "r");
+        if (!ufp) {
+                syslog(LOG_ERR, "%m");
+                return(&ut);
         }
-        
+
+        /* only entries with both name and line fields */
+        while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
+               nusers < MAXUSERS)
+                if (*usr.ut_name && *usr.ut_line &&
+		    strncmp(usr.ut_name, IGNOREUSER,
+                            sizeof(usr.ut_name))
+#ifdef OSF
+                    && usr.ut_type == USER_PROCESS
+#endif
+                    ) {
+                        utmps[nusers].ut_type = RUSERS_USER_PROCESS;
+                        utmps[nusers].ut_time =
+                                usr.ut_time;
+                        utmps[nusers].ut_idle =
+                                getidle(usr.ut_line, usr.ut_host);
+                        utmps[nusers].ut_line = line[nusers];
+                        strncpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
+                        utmps[nusers].ut_user = name[nusers];
+                        strncpy(name[nusers], usr.ut_name, sizeof(name[nusers]));
+                        utmps[nusers].ut_host = host[nusers];
+                        strncpy(host[nusers], usr.ut_host, sizeof(host[nusers]));
+                        nusers++;
+                }
+        ut.utmp_array_len = nusers;
+
+        fclose(ufp);
         return(&ut);
 }
 
-utmpidlearr *
+utmp_array *
+rusersproc_names_3()
+{
+        return(do_names_3(0));
+}
+
+utmp_array *
+rusersproc_allnames_3()
+{
+        return(do_names_3(1));
+}
+
+static struct utmpidlearr *
+do_names_2(int all)
+{
+        static struct utmpidlearr ut;
+	struct utmp usr;
+        int nusers = 0;
+        
+        bzero((char *)&ut, sizeof(ut));
+        ut.uia_arr = utmp_idlep;
+        ut.uia_cnt = 0;
+        
+	ufp = fopen(_PATH_UTMP, "r");
+        if (!ufp) {
+                syslog(LOG_ERR, "%m");
+                return(&ut);
+        }
+
+        /* only entries with both name and line fields */
+        while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
+               nusers < MAXUSERS)
+                if (*usr.ut_name && *usr.ut_line &&
+		    strncmp(usr.ut_name, IGNOREUSER,
+                            sizeof(usr.ut_name))
+#ifdef OSF
+                    && usr.ut_type == USER_PROCESS
+#endif
+                    ) {
+                        utmp_idlep[nusers] = &utmp_idle[nusers];
+                        utmp_idle[nusers].ui_utmp.ut_time =
+                                usr.ut_time;
+                        utmp_idle[nusers].ui_idle =
+                                getidle(usr.ut_line, usr.ut_host);
+                        strncpy(utmp_idle[nusers].ui_utmp.ut_line, usr.ut_line, sizeof(utmp_idle[nusers].ui_utmp.ut_line));
+                        strncpy(utmp_idle[nusers].ui_utmp.ut_name, usr.ut_name, sizeof(utmp_idle[nusers].ui_utmp.ut_name));
+                        strncpy(utmp_idle[nusers].ui_utmp.ut_host, usr.ut_host, sizeof(utmp_idle[nusers].ui_utmp.ut_host));
+                        nusers++;
+                }
+
+        ut.uia_cnt = nusers;
+        fclose(ufp);
+        return(&ut);
+}
+
+struct utmpidlearr *
 rusersproc_names_2()
 {
         return(do_names_2(0));
 }
 
-utmpidlearr *
+struct utmpidlearr *
 rusersproc_allnames_2()
 {
         return(do_names_2(1));
-}
-
-utmparr *
-rusersproc_names_1()
-{
-        return(do_names_1(0));
-}
-
-utmparr *
-rusersproc_allnames_1()
-{
-        return(do_names_1(1));
 }
 
 void
@@ -325,21 +342,33 @@ rusers_service(rqstp, transp)
 	case RUSERSPROC_NUM:
 		xdr_argument = xdr_void;
 		xdr_result = xdr_int;
-                local = (char *(*)()) rusers_num;
+                switch (rqstp->rq_vers) {
+                case RUSERSVERS_3:
+                case RUSERSVERS_IDLE:
+                        local = (char *(*)()) rusers_num;
+                        break;
+                default:
+                        svcerr_progvers(transp, RUSERSVERS_IDLE, RUSERSVERS_3);
+                        goto leave;
+                        /*NOTREACHED*/
+                }
 		break;
 
 	case RUSERSPROC_NAMES:
 		xdr_argument = xdr_void;
-		xdr_result = xdr_utmpidlearr;
+		xdr_result = xdr_utmp_array;
                 switch (rqstp->rq_vers) {
-                case RUSERSVERS_ORIG:
-                        local = (char *(*)()) rusersproc_names_1;
+                case RUSERSVERS_3:
+                        local = (char *(*)()) rusersproc_names_3;
                         break;
+
                 case RUSERSVERS_IDLE:
+                        xdr_result = xdr_utmpidlearr;
                         local = (char *(*)()) rusersproc_names_2;
                         break;
+
                 default:
-                        svcerr_progvers(transp, RUSERSVERS_ORIG, RUSERSVERS_IDLE);
+                        svcerr_progvers(transp, RUSERSVERS_IDLE, RUSERSVERS_3);
                         goto leave;
                         /*NOTREACHED*/
                 }
@@ -347,16 +376,19 @@ rusers_service(rqstp, transp)
 
 	case RUSERSPROC_ALLNAMES:
 		xdr_argument = xdr_void;
-		xdr_result = xdr_utmpidlearr;
+		xdr_result = xdr_utmp_array;
                 switch (rqstp->rq_vers) {
-                case RUSERSVERS_ORIG:
-                        local = (char *(*)()) rusersproc_allnames_1;
+                case RUSERSVERS_3:
+                        local = (char *(*)()) rusersproc_allnames_3;
                         break;
+
                 case RUSERSVERS_IDLE:
+                        xdr_result = xdr_utmpidlearr;
                         local = (char *(*)()) rusersproc_allnames_2;
                         break;
+
                 default:
-                        svcerr_progvers(transp, RUSERSVERS_ORIG, RUSERSVERS_IDLE);
+                        svcerr_progvers(transp, RUSERSVERS_IDLE, RUSERSVERS_3);
                         goto leave;
                         /*NOTREACHED*/
                 }
