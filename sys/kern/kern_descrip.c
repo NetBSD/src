@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.27 1994/12/04 03:09:50 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.28 1994/12/14 18:42:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -848,31 +848,38 @@ flock(p, uap, retval)
  * references to this file will be direct to the other driver.
  */
 /* ARGSUSED */
-fdopen(dev, mode, type, p, fp)
+int
+fdopen(dev, mode, type, p)
 	dev_t dev;
 	int mode, type;
 	struct proc *p;
 	struct file *fp;
 {
 
-	return (fddupopen(minor(dev), mode, p, fp));
+	/*
+	 * XXX Kludge: set curproc->p_dupfd to contain the value of the
+	 * the file descriptor being sought for duplication. The error 
+	 * return ensures that the vnode for this device will be released
+	 * by vn_open. Open will detect this special error and take the
+	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
+	 * will simply report the error.
+	 */
+	p->p_dupfd = minor(dev);
+	return (ENODEV);
 }
 
+/*
+ * Duplicate the specified descriptor to a free descriptor.
+ */
 int
-fddupopen(fd, mode, p, fp)
-	int fd;
+dupfdopen(fdp, indx, dfd, mode, error)
+	register struct filedesc *fdp;
+	register int indx, dfd;
 	int mode;
-	struct proc *p;
-	struct file *fp;
+	int error;
 {
-	struct filedesc *fdp = p->p_fd;
-	struct file *ofp;
-
-	/*
-	 * If we're not being called from open(), abort.
-	 */
-	if (p->p_dupfd >= 0)
-		return (ENODEV);
+	register struct file *wfp;
+	struct file *fp;
 
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
@@ -881,53 +888,57 @@ fddupopen(fd, mode, p, fp)
 	 * falloc could allocate an already closed to-be-dup'd descriptor
 	 * as the new descriptor.
 	 */
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (ofp = fdp->fd_ofiles[fd]) == NULL || ofp == fp)
+	fp = fdp->fd_ofiles[indx];
+	if ((u_int)dfd >= fdp->fd_nfiles ||
+	    (wfp = fdp->fd_ofiles[dfd]) == NULL || fp == wfp)
 		return (EBADF);
 
 	/*
-	 * Check that the mode the file is being opened for is a subset of
-	 * the mode of the existing descriptor.
+	 * There are two cases of interest here.
+	 *
+	 * For ENODEV simply dup (dfd) to file descriptor
+	 * (indx) and return.
+	 *
+	 * For ENXIO steal away the file structure from (dfd) and
+	 * store it in (indx).  (dfd) is effectively closed by
+	 * this operation.
+	 *
+	 * Any other error code is just returned.
 	 */
-	if (((mode & (FREAD|FWRITE)) | ofp->f_flag) != ofp->f_flag)
-		return (EACCES);
+	switch (error) {
+	case ENODEV:
+		/*
+		 * Check that the mode the file is being opened for is a
+		 * subset of the mode of the existing descriptor.
+		 */
+		if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag)
+			return (EACCES);
+		fdp->fd_ofiles[indx] = wfp;
+		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
+		wfp->f_count++;
+		fd_used(fdp, indx);
+		return (0);
 
-	/*
-	 * XXX Kludge: set curproc->p_dupfd to contain the value of the
-	 * the file descriptor being sought for duplication.  The error 
-	 * return ensures that the vnode for this device will be released
-	 * by vn_open().  open() will detect this special error and call
-	 * finishdup().
-	 */
-	p->p_dupfd = fd;
-	return (ENODEV);
-}
+	case ENXIO:
+		/*
+		 * Steal away the file pointer from dfd, and stuff it into indx.
+		 */
+		fdp->fd_ofiles[indx] = fdp->fd_ofiles[dfd];
+		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
+		fdp->fd_ofiles[dfd] = NULL;
+		fdp->fd_ofileflags[dfd] = 0;
+		/*
+		 * Complete the clean up of the filedesc structure by
+		 * recomputing the various hints.
+		 */
+		fd_used(fdp, indx);
+		fd_unused(fdp, dfd);
+		return (0);
 
-/*
- * Duplicate the specified descriptor to a free descriptor.
- */
-int
-finishmove(fdp, old, new, retval)
-	register struct filedesc *fdp;
-	register int old, new;
-	register_t *retval;
-{
-
-	/*
-	 * Steal away the file pointer from old, and stuff it into new.
-	 */
-	fdp->fd_ofiles[new] = fdp->fd_ofiles[old];
-	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old];
-	fdp->fd_ofiles[old] = NULL;
-	fdp->fd_ofileflags[old] = 0;
-	/*
-	 * Complete the clean up of the filedesc structure by
-	 * recomputing the various hints.
-	 */
-	fd_used(fdp, new);
-	fd_unused(fdp, old);
-	*retval = new;
-	return (0);
+	default:
+		return (error);
+	}
+	/* NOTREACHED */
 }
 
 /*
