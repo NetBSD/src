@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $	*/
+/*	$NetBSD: check.c,v 1.11 2000/09/15 22:11:41 abs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $");
+__RCSID("$NetBSD: check.c,v 1.11 2000/09/15 22:11:41 abs Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -81,6 +81,7 @@ checkfilesys(fname)
 
 	if (readboot(dosfs, &boot) != FSOK) {
 		close(dosfs);
+		printf("\n");
 		return 8;
 	}
 
