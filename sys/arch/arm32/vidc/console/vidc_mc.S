@@ -1,4 +1,4 @@
-/* $NetBSD: vidc_mc.S,v 1.3 1996/03/18 19:33:08 mark Exp $ */
+/* $NetBSD: vidc_mc.S,v 1.4 1996/10/15 00:55:26 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -44,80 +44,32 @@
 #include "assym.h"
 #include <machine/iomd.h>
 
+ip	.req	r12
+sp	.req	r13
 lr	.req	r14
 pc	.req	r15
-sp	.req	r13
 
-.text
-	.global _vidcconsole_loadtab
-_vidcconsole_loadtab:
-	mov	r0, r0
-	ldmia	r0!, { r2     }
-	ldmia	r0!, { r2-r3  }
-	ldmia	r0!, { r2-r4  }
-	ldmia	r0!, { r2-r5  }
-	ldmia	r0!, { r2-r6  }
-	ldmia	r0!, { r2-r7  }
-	ldmia	r0!, { r2-r8  }
-	ldmia	r0!, { r2-r9  }
-	ldmia	r0!, { r2-r10 }
-	ldmia	r0!, { r2-r11 }
-	ldmia	r0!, { r2-r12 }
-	ldmia	r0!, { r2-r12, r14 }
+	.text
+	.align 0
 
-	.global _vidcconsole_storetab
-_vidcconsole_storetab:
-	mov 	r0, r0
-	stmia	r0!, { r2     }
-	stmia	r0!, { r2-r3  }
-	stmia	r0!, { r2-r4  }
-	stmia	r0!, { r2-r5  }
-	stmia	r0!, { r2-r6  }
-	stmia	r0!, { r2-r7  }
-	stmia	r0!, { r2-r8  }
-	stmia	r0!, { r2-r9  }
-	stmia	r0!, { r2-r10 }
-	stmia	r0!, { r2-r11 }
-	stmia	r0!, { r2-r12 }
-	stmia	r0!, { r2-r12, r14 }
+/*
+ * On entry:
+ *	r0 = addr
+ *	r1 = font
+ *	r2 = col
+ *	r3 = xres
+ */
 
-	.global _vidcconsole_pushtab
-_vidcconsole_pushtab:
-	mov	r0, r0
-	stmfd	r13!, { r0-r3 }
-	stmfd	r13!, { r0-r7 }
-	stmfd	r13!, { r0-r11 }
-	stmfd	r13!, { r0-r14 }
-
-	.global _vidcconsole_poptab
-_vidcconsole_poptab:
-	mov 	r0, r0
-	ldmfd	r13!, { r0-r3 }
-	ldmfd	r13!, { r0-r7 }
-	ldmfd	r13!, { r0-r11 }
-	ldmfd	r13!, { r0-r14 }
-
-	.global _vidcconsole_enter
-_vidcconsole_enter:
-	stmfd r13!, { r15 }
-
-	.global _vidcconsole_exit
-_vidcconsole_exit:
-	stmfd r13!, { r15 }
+/* Optimised for 8x16 font at the moment */
 
 	.global	_vidcconsolemc_render
-
-	/* On entry r0 = addr */
-	/* 	    r1 = font */
-	/*	    r2 = col  */
-	/*	    r3 = xres */
-
-	/* Optimise for 8x16 font */
-	/* At the moment */
-
 _vidcconsolemc_render:
+	stmfd	sp!, {r0-r9, lr}
 
-	stmfd	r13!, {r0-r9, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 
 	/* Generate colour mask */
 
@@ -135,8 +87,8 @@ xloop:
 	mov	r7, #0
 	mov	r8, #0
 
-/* This loop will get *SOOOO* much faster with */
-/* the new algorithmn */
+	/* This loop will get *SO* much faster with the new algorithmn */
+
 	tst	r5, #8
 	orrne	r7, r2, r7, lsl #8
 	orreq	r7, r4, r7, lsl #8
@@ -168,17 +120,23 @@ xloop:
 	subs	r9, r9, #1
 	bne	xloop
 
-	ldmfd	r13!, {r0-r9, pc}
+	ldmfd	sp!, {r0-r9, pc}
+	
+/*
+ * On entry:
+ *	r0 = start
+ *	r1 = end
+ *	r2 = col
+ */
 
 	.global _vidcconsolemc_cls
-	
-	/* On entry r0 = start */
-	/*          r1 = end   */
-	/*	    r2 = col   */
-
-
 _vidcconsolemc_cls:
-	stmfd	r13!, {r0-r9, lr}
+	stmfd	sp!, {r0-r9, lr}
+
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	
 	mov	r3, r2
 	mov	r4, r2
@@ -189,25 +147,24 @@ _vidcconsolemc_cls:
 	mov	r9, r2
 
 loop:
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
-	stmia	r0!, { r2-r9 }
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
+	stmia	r0!, {r2-r9}
 	
 	cmp	r0, r1
 	ble	loop
 
-	ldmfd	r13!, {r0-r9, pc}
-
+	ldmfd	sp!, {r0-r9, pc}
