@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.25 2000/09/21 23:31:14 eeh Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.26 2000/09/22 01:24:07 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -101,6 +101,15 @@ int	stripinput __P((int c, struct tty *tp));
 int	stripstart __P((struct tty *tp));
 #endif
 
+/*
+ * XXXXXX
+ *
+ * The implementation for the following is currently in
+ * sys/dev/sun.  I expect it will be moved out of there
+ * eventually, but until then add yourself to the list if
+ * you want to use the Sun Keyboard or Mouse line disciplines.
+ */
+#if defined(__sparc__) || defined(__sparc_v9__) || defined(sun3) || defined(sun3x)
 #include "kbd.h"
 #if NKBD > 0
 int	sunkbdinput __P((int c, struct tty *tp));
@@ -111,6 +120,8 @@ int	sunkbdstart __P((struct tty *tp));
 #include "ms.h"
 #if NMS > 0
 int	sunmsinput __P((int c, struct tty *tp));
+#endif
+#endif
 #endif
 
 struct	linesw linesw[] =
