@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.14 1997/09/17 23:33:28 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.15 1997/09/20 19:02:34 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -108,6 +108,17 @@ struct alpha_pcb {
 /* Convenience constants: what must be set/clear in user mode */
 #define	ALPHA_PSL_USERSET	ALPHA_PSL_USERMODE
 #define	ALPHA_PSL_USERCLR	(ALPHA_PSL_MUST_BE_ZERO | ALPHA_PSL_IPL_MASK)
+
+/*
+ * Interrupt Type Code Definitions [OSF/1 PALcode Specific]
+ */
+ 
+#define	ALPHA_INTR_XPROC	0	/* interprocessor interrupt */
+#define	ALPHA_INTR_CLOCK	1	/* clock interrupt */
+#define	ALPHA_INTR_ERROR	2	/* correctable error or mcheck */
+#define	ALPHA_INTR_DEVICE	3	/* device interrupt */
+#define	ALPHA_INTR_PERF		4	/* performance counter */
+#define	ALPHA_INTR_PASSIVE	5	/* passive release */
 
 /*
  * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
