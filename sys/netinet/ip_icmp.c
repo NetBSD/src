@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.11 1995/04/13 06:31:59 cgd Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.12 1995/05/15 01:25:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -132,9 +132,8 @@ icmp_error(n, type, code, dest, destifp)
 			icp->icmp_pptr = code;
 			code = 0;
 		} else if (type == ICMP_UNREACH &&
-			code == ICMP_UNREACH_NEEDFRAG && destifp) {
+		    code == ICMP_UNREACH_NEEDFRAG && destifp)
 			icp->icmp_nextmtu = htons(destifp->if_mtu);
-		}
 	}
 
 	icp->icmp_code = code;
@@ -379,9 +378,9 @@ reflect:
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rtredirect((struct sockaddr *)&icmpsrc,
-		  (struct sockaddr *)&icmpdst,
-		  (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		  (struct sockaddr *)&icmpgw, (struct rtentry **)0);
+		    (struct sockaddr *)&icmpdst,
+		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
+		    (struct sockaddr *)&icmpgw, (struct rtentry **)0);
 		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&icmpsrc);
 		break;
 
@@ -424,7 +423,7 @@ icmp_reflect(m)
 	    ((ntohl(ip->ip_src.s_addr) & IN_CLASSA_NET) !=
 	     (IN_LOOPBACKNET << IN_CLASSA_NSHIFT))) {
 		m_freem(m);	/* Bad return address */
-		goto done;	/* Ip_output() will check for broadcast */
+		goto done;	/* ip_output() will check for broadcast */
 	}
 	t = ip->ip_dst;
 	ip->ip_dst = ip->ip_src;
