@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.57 2004/05/10 01:35:01 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.58 2004/05/10 12:10:31 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -3696,8 +3696,7 @@ u_32_t nflags;
 	csump = NULL;
 	np = nat->nat_ptr;
 
-	if ((natadd != 0) && (fin->fin_flx & FI_FRAG) && (np != NULL) &&
-	    (np->in_flags & IPN_FRAG))
+	if ((natadd != 0) && (fin->fin_flx & FI_FRAG) && (np != NULL))
 		(void) fr_nat_newfrag(fin, 0, nat);
 
 	MUTEX_ENTER(&nat->nat_lock);
@@ -3977,8 +3976,7 @@ u_32_t nflags;
 	fin->fin_fr = nat->nat_fr;
 
 	if (np != NULL) {
-		if ((natadd != 0) && (fin->fin_flx & FI_FRAG) &&
-		    (np->in_flags & IPN_FRAG))
+		if ((natadd != 0) && (fin->fin_flx & FI_FRAG))
 			(void) fr_nat_newfrag(fin, 0, nat);
 
 	/* ------------------------------------------------------------- */
