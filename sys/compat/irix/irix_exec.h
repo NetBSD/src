@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.15 2002/10/14 21:14:24 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.16 2002/11/30 13:18:13 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ struct irix_emuldata {
 
 #define IRIX_ELF_AUX_ENTRIES 7
 
-int irix_check_exec __P((struct proc *p));
+#define irix_check_exec(p)	((p)->p_emul == &emul_irix)
 
 #ifdef EXEC_ELF32
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
@@ -104,7 +104,9 @@ int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 #endif
 
-extern const struct emul emul_irix_o32;
-extern const struct emul emul_irix_n32;
+void irix_n32_setregs __P((struct proc *, struct exec_package *, u_long));
+
+extern const struct emul emul_irix;
+extern const struct emul emul_irix;
 
 #endif /* !_IRIX_EXEC_H_ */

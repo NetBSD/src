@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.4 2002/08/26 21:05:59 christos Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.5 2002/11/30 13:18:13 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.4 2002/08/26 21:05:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.5 2002/11/30 13:18:13 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/null.h>
@@ -50,10 +51,91 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.4 2002/08/26 21:05:59 christos
 #include <sys/syslimits.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/errno.h>
 
 #include <machine/vmparam.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <compat/common/compat_util.h>
+
 #include <compat/irix/irix_exec.h>
+
+/*
+ * IRIX o32 ABI probe function
+ */
+int
+ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	void *eh;
+	char *itp; 
+	vaddr_t *pos; 
+{
+	int error;
+
+#ifdef DEBUG_IRIX
+	printf("irix_probe_o32()\n");
+#endif
+	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
+	    IRIX_EF_IRIX_ABIO32)
+		return error;
+
+	if (itp[0]) {
+		/* o32 binaries use /lib/libc.so.1 */
+		if (strncmp(itp, "/lib/libc.so", 12) && 
+		    strncmp(itp, "/usr/lib/libc.so", 16))
+			return ENOEXEC;
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
+			return error;
+	}
+	*pos = ELF_NO_ADDR;
+#ifdef DEBUG_IRIX
+	printf("irix_probe_o32: returning 0\n");
+	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
+#endif
+	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
+	return 0;
+}
+
+/*
+ * IRIX n32 ABI probe function
+ */
+int
+ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	void *eh;
+	char *itp; 
+	vaddr_t *pos; 
+{
+	int error;
+
+#ifdef DEBUG_IRIX
+	printf("irix_probe_n32()\n");
+#endif
+	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
+	    IRIX_EF_IRIX_ABIN32)
+		return error;
+
+	if (itp[0]) {
+		/* n32 binaries use /lib32/libc.so.1 */
+		if (strncmp(itp, "/lib32/libc.so", 14) &&
+		    strncmp(itp, "/usr/lib32/libc.so", 18))
+			return ENOEXEC;
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
+			return error;
+	}
+	*pos = ELF_NO_ADDR;
+#ifdef DEBUG_IRIX
+	printf("irix_probe_n32: returning 0\n");
+	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
+#endif
+	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
+	return 0;
+}
 
 int
 ELFNAME2(irix,copyargs)(p, pack, arginfo, stackp, argp)
@@ -67,7 +149,7 @@ ELFNAME2(irix,copyargs)(p, pack, arginfo, stackp, argp)
 	size_t len;
 	void *nullp;
 	long argc, envc;
-	AuxInfo ai[ELF_AUX_ENTRIES], *a;
+	AuxInfo ai[IRIX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
 	int error;
 
