@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,27 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_argv.c	8.26 (Berkeley) 1/2/94"; */
-static char *rcsid = "$Id: ex_argv.c,v 1.2 1994/01/24 06:40:08 cgd Exp $";
+static char sccsid[] = "@(#)ex_argv.c	8.28 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -216,13 +226,11 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 	char *cmd;
 	size_t cmdlen;
 {
-	CHAR_T vlit;
 	EX_PRIVATE *exp;
 	size_t len;
 	int ch, off;
 	char *ap, *p;
 
-	(void)term_key_ch(sp, K_VLNEXT, &vlit);
 	for (exp = EXP(sp); cmdlen > 0; ++exp->argsoff) {
 		/* Skip any leading whitespace. */
 		for (; cmdlen > 0; --cmdlen, ++cmd) {
@@ -235,20 +243,22 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 
 		/*
 		 * Determine the length of this whitespace delimited
-		 * argument.  
+		 * argument.
 		 *
 		 * QUOTING NOTE:
 		 *
 		 * Skip any character preceded by the user's quoting
 		 * character.
 		 */
-		for (ap = cmd, len = 0; cmdlen > 0; ++cmd, --cmdlen, ++len)
-			if ((ch = *cmd) == vlit && cmdlen > 1) {
-				++cmd; 
+		for (ap = cmd, len = 0; cmdlen > 0; ++cmd, --cmdlen, ++len) {
+			ch = *cmd;
+			if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
+				++cmd;
 				--cmdlen;
 			} else if (isblank(ch))
 				break;
-				
+		}
+
 		/*
 		 * Copy the argument into place.
 		 *
@@ -260,7 +270,7 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 		off = exp->argsoff;
 		exp->args[off]->len = len;
 		for (p = exp->args[off]->bp; len > 0; --len, *p++ = *ap++)
-			if (*ap == vlit) {
+			if (IS_ESCAPE(sp, *ap)) {
 				++ap;
 				--exp->args[off]->len;
 			}
@@ -381,7 +391,7 @@ argv_alloc(sp, len)
 	SCR *sp;
 	size_t len;
 {
-	ARGS *ap;					
+	ARGS *ap;
 	EX_PRIVATE *exp;
 	int cnt, off;
 
@@ -407,33 +417,33 @@ argv_alloc(sp, len)
 	if (exp->args[off] == NULL) {
 		CALLOC(sp, exp->args[off], ARGS *, 1, sizeof(ARGS));
 		if (exp->args[off] == NULL)
-			goto mem;				
-	}						
+			goto mem;
+	}
 
 	/* First argument buffer. */
-	ap = exp->args[off];			
-	ap->len = 0;					
-	if (ap->blen < len + 1) {			
-		ap->blen = len + 1;			
+	ap = exp->args[off];
+	ap->len = 0;
+	if (ap->blen < len + 1) {
+		ap->blen = len + 1;
 		REALLOC(sp, ap->bp, CHAR_T *, ap->blen * sizeof(CHAR_T));
 		if (ap->bp == NULL) {
-			ap->bp = NULL;		
-			ap->blen = 0;			
-			F_CLR(ap, A_ALLOCATED);	
-mem:			msgq(sp, M_SYSERR, NULL);	
-			return (1);			
-		}					
-		F_SET(ap, A_ALLOCATED);		
-	}						
+			ap->bp = NULL;
+			ap->blen = 0;
+			F_CLR(ap, A_ALLOCATED);
+mem:			msgq(sp, M_SYSERR, NULL);
+			return (1);
+		}
+		F_SET(ap, A_ALLOCATED);
+	}
 
 	/* Second argument. */
 	if (exp->args[++off] == NULL) {
 		CALLOC(sp, exp->args[off], ARGS *, 1, sizeof(ARGS));
 		if (exp->args[off] == NULL)
-			goto mem;				
-	}						
+			goto mem;
+	}
 	/* 0 length serves as end-of-argument marker. */
-	exp->args[off]->len = 0;			
+	exp->args[off]->len = 0;
 	return (0);
 }
 
@@ -506,7 +516,7 @@ argv_sexp(sp, bpp, blenp, lenp)
 		msgq(sp, M_SYSERR, "fdopen");
 		goto err;
 	}
-		
+
 	/*
 	 * Do the minimal amount of work possible, the shell is going
 	 * to run briefly and then exit.  Hopefully.

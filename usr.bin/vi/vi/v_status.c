@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,24 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_status.c	8.10 (Berkeley) 11/20/93"; */
-static char *rcsid = "$Id: v_status.c,v 1.2 1994/01/24 06:41:58 cgd Exp $";
+static char sccsid[] = "@(#)v_status.c	8.12 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -49,11 +59,10 @@ static char *rcsid = "$Id: v_status.c,v 1.2 1994/01/24 06:41:58 cgd Exp $";
  *	Show the file status.
  */
 int
-v_status(sp, ep, vp, fm, tm, rp)
+v_status(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 
 	/*
@@ -61,7 +70,7 @@ v_status(sp, ep, vp, fm, tm, rp)
 	 * non-blank character in the line.  This doesn't seem of
 	 * any usefulness whatsoever, so I don't bother.
 	 */
-	return (status(sp, ep, fm->lno, 1));
+	return (status(sp, ep, vp->m_start.lno, 1));
 }
 
 int

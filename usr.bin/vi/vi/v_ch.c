@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,51 +32,54 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_ch.c	8.2 (Berkeley) 12/20/93"; */
-static char *rcsid = "$Id: v_ch.c,v 1.2 1994/01/24 06:41:30 cgd Exp $";
+static char sccsid[] = "@(#)v_ch.c	8.7 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
 
-#define	NOPREV {							\
-	msgq(sp, M_BERR, "No previous F, f, T or t search.");		\
-	return (1);							\
-}
-
-#define	NOTFOUND(ch) {							\
-	msgq(sp, M_BERR, "%s not found.", charname(sp, ch));		\
-	return (1);							\
-}
+static void notfound __P((SCR *, ARG_CHAR_T));
+static void noprev __P((SCR *));
 
 /*
  * v_chrepeat -- [count];
  *	Repeat the last F, f, T or t search.
  */
 int
-v_chrepeat(sp, ep, vp, fm, tm, rp)
+v_chrepeat(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	vp->character = sp->lastckey;
+	vp->character = VIP(sp)->lastckey;
 
-	switch (sp->csearchdir) {
+	switch (VIP(sp)->csearchdir) {
 	case CNOTSET:
-		NOPREV;
+		noprev(sp);
+		return (1);
 	case FSEARCH:
-		return (v_chF(sp, ep, vp, fm, tm, rp));
+		return (v_chF(sp, ep, vp));
 	case fSEARCH:
-		return (v_chf(sp, ep, vp, fm, tm, rp));
+		return (v_chf(sp, ep, vp));
 	case TSEARCH:
-		return (v_chT(sp, ep, vp, fm, tm, rp));
+		return (v_chT(sp, ep, vp));
 	case tSEARCH:
-		return (v_cht(sp, ep, vp, fm, tm, rp));
+		return (v_cht(sp, ep, vp));
 	default:
 		abort();
 	}
@@ -88,72 +91,74 @@ v_chrepeat(sp, ep, vp, fm, tm, rp)
  *	Repeat the last F, f, T or t search in the reverse direction.
  */
 int
-v_chrrepeat(sp, ep, vp, fm, tm, rp)
+v_chrrepeat(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	int rval;
 	enum cdirection savedir;
+	int rval;
 
-	vp->character = sp->lastckey;
-	savedir = sp->csearchdir;
+	vp->character = VIP(sp)->lastckey;
+	savedir = VIP(sp)->csearchdir;
 
-	switch (sp->csearchdir) {
+	switch (VIP(sp)->csearchdir) {
 	case CNOTSET:
-		NOPREV;
+		noprev(sp);
+		return (1);
 	case FSEARCH:
-		rval = v_chf(sp, ep, vp, fm, tm, rp);
+		rval = v_chf(sp, ep, vp);
 		break;
 	case fSEARCH:
-		rval = v_chF(sp, ep, vp, fm, tm, rp);
+		rval = v_chF(sp, ep, vp);
 		break;
 	case TSEARCH:
-		rval = v_cht(sp, ep, vp, fm, tm, rp);
+		rval = v_cht(sp, ep, vp);
 		break;
 	case tSEARCH:
-		rval = v_chT(sp, ep, vp, fm, tm, rp);
+		rval = v_chT(sp, ep, vp);
 		break;
 	default:
 		abort();
 	}
-	sp->csearchdir = savedir;
+	VIP(sp)->csearchdir = savedir;
 	return (rval);
 }
 
 /*
  * v_cht -- [count]tc
  *	Search forward in the line for the next occurrence of the character.
- *	Place the cursor on it if a motion command, to its left if its not.
+ *	Place the cursor on it if it's a motion command, to its left if not.
  */
 int
-v_cht(sp, ep, vp, fm, tm, rp)
+v_cht(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	int rval;
+	if (v_chf(sp, ep, vp))
+		return (1);
 
-	rval = v_chf(sp, ep, vp, fm, tm, rp);
-	if (!rval)
-		--rp->cno;	/* XXX: Motion interaction with v_chf. */
-	sp->csearchdir = tSEARCH;
-	return (rval);
+	/*
+	 * v_chf places the cursor on the character, and the 't' command
+	 * wants it to its left.  We know this is safe since we had to
+	 * have moved right for v_chf() to have succeeded.
+	 */
+	--vp->m_stop.cno;
+
+	VIP(sp)->csearchdir = tSEARCH;
+	return (0);
 }
-	
+
 /*
  * v_chf -- [count]fc
  *	Search forward in the line for the next occurrence of the character.
- *	Place the cursor to its right if a motion command, on it if its not.
  */
 int
-v_chf(sp, ep, vp, fm, tm, rp)
+v_chf(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	size_t len;
 	recno_t lno;
@@ -163,39 +168,47 @@ v_chf(sp, ep, vp, fm, tm, rp)
 
 	/*
 	 * !!!
-	 * If it's a dot command, it doesn't reset the key for which
-	 * we're searching, e.g. in "df1|f2|.|;", the ';' searches
-	 * for a '2'.
+	 * If it's a dot command, it doesn't reset the key for which we're
+	 * searching, e.g. in "df1|f2|.|;", the ';' searches for a '2'.
 	 */
 	key = vp->character;
 	if (!F_ISSET(vp, VC_ISDOT))
-		sp->lastckey = key;
-	sp->csearchdir = fSEARCH;
+		VIP(sp)->lastckey = key;
+	VIP(sp)->csearchdir = fSEARCH;
 
-	if ((p = file_gline(sp, ep, fm->lno, &len)) == NULL) {
+	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
 		if (file_lline(sp, ep, &lno))
 			return (1);
-		if (lno == 0)
-			NOTFOUND(key);
-		GETLINE_ERR(sp, fm->lno);
+		if (lno == 0) {
+			notfound(sp, key);
+			return (1);
+		}
+		GETLINE_ERR(sp, vp->m_start.lno);
 		return (1);
 	}
 
-	if (len == 0)
-		NOTFOUND(key);
+	if (len == 0) {
+		notfound(sp, key);
+		return (1);
+	}
 
-	startp = p;
-	endp = p + len;
-	p += fm->cno;
+	endp = (startp = p) + len;
+	p += vp->m_start.cno;
 	for (cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt--;) {
 		while (++p < endp && *p != key);
-		if (p == endp)
-			NOTFOUND(key);
+		if (p == endp) {
+			notfound(sp, key);
+			return (1);
+		}
 	}
-	rp->lno = fm->lno;
-	rp->cno = p - startp;
-	if (F_ISSET(vp, VC_C | VC_D | VC_Y))
-		++rp->cno;
+
+	vp->m_stop.cno = p - startp;
+
+	/*
+	 * Non-motion commands move to the end of the range.  VC_D and
+	 * VC_Y stay at the start.  Ignore VC_C and VC_S.
+	 */
+	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	return (0);
 }
 
@@ -205,18 +218,23 @@ v_chf(sp, ep, vp, fm, tm, rp)
  *	Place the cursor to its right.
  */
 int
-v_chT(sp, ep, vp, fm, tm, rp)
+v_chT(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
-	int rval;
+	if (v_chF(sp, ep, vp))
+		return (1);
 
-	rval = v_chF(sp, ep, vp, fm, tm, rp);
-	if (!rval)
-		++rp->cno;
-	sp->csearchdir = TSEARCH;
+	/*
+	 * v_chF places the cursor on the character, and the 'T' command
+	 * wants it to its right.  We know this is safe since we had to
+	 * have moved left for v_chF() to have succeeded.
+	 */
+	++vp->m_stop.cno;
+	++vp->m_final.cno;
+
+	VIP(sp)->csearchdir = TSEARCH;
 	return (0);
 }
 
@@ -226,17 +244,16 @@ v_chT(sp, ep, vp, fm, tm, rp)
  *	Place the cursor on it.
  */
 int
-v_chF(sp, ep, vp, fm, tm, rp)
+v_chF(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t lno;
 	size_t len;
 	u_long cnt;
 	int key;
-	char *p, *endp;
+	char *endp, *p;
 
 	/*
 	 * !!!
@@ -246,29 +263,60 @@ v_chF(sp, ep, vp, fm, tm, rp)
 	 */
 	key = vp->character;
 	if (!F_ISSET(vp, VC_ISDOT))
-		sp->lastckey = key;
-	sp->csearchdir = FSEARCH;
+		VIP(sp)->lastckey = key;
+	VIP(sp)->csearchdir = FSEARCH;
 
-	if ((p = file_gline(sp, ep, fm->lno, &len)) == NULL) {
+	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
 		if (file_lline(sp, ep, &lno))
 			return (1);
-		if (lno == 0)
-			NOTFOUND(key);
-		GETLINE_ERR(sp, fm->lno);
+		if (lno == 0) {
+			notfound(sp, key);
+			return (1);
+		}
+		GETLINE_ERR(sp, vp->m_start.lno);
 		return (1);
 	}
 
-	if (len == 0)
-		NOTFOUND(key);
+	if (len == 0) {
+		notfound(sp, key);
+		return (1);
+	}
 
 	endp = p - 1;
-	p += fm->cno;
+	p += vp->m_start.cno;
 	for (cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt--;) {
 		while (--p > endp && *p != key);
-		if (p == endp)
-			NOTFOUND(key);
+		if (p == endp) {
+			notfound(sp, key);
+			return (1);
+		}
 	}
-	rp->lno = fm->lno;
-	rp->cno = (p - endp) - 1;
+
+	vp->m_stop.cno = (p - endp) - 1;
+
+	/*
+	 * VC_D and non-motion commands move to the end of the range,
+	 * VC_Y stays at the start.  Ignore VC_C and VC_S.  Motion
+	 * commands adjust the starting point to the character before
+	 * the current one.
+	 */
+	vp->m_final = F_ISSET(vp, VC_Y) ? vp->m_start : vp->m_stop;
+	if (ISMOTION(vp))
+		--vp->m_start.cno;
 	return (0);
+}
+
+static void
+noprev(sp)
+	SCR *sp;
+{
+	msgq(sp, M_BERR, "No previous F, f, T or t search.");
+}
+
+static void
+notfound(sp, ch)
+	SCR *sp;
+	ARG_CHAR_T ch;
+{
+	msgq(sp, M_BERR, "%s not found.", charname(sp, ch));
 }

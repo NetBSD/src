@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,23 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_usage.c	8.11 (Berkeley) 12/17/93"; */
-static char *rcsid = "$Id: ex_usage.c,v 1.2 1994/01/24 06:40:45 cgd Exp $";
+static char sccsid[] = "@(#)ex_usage.c	8.14 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -77,7 +88,8 @@ ex_usage(sp, ep, cmdp)
 {
 	ARGS *ap;
 	EXCMDLIST const *cp;
-	
+	char *name;
+
 	switch (cmdp->argc) {
 	case 1:
 		ap = cmdp->argv[0];
@@ -107,9 +119,16 @@ ex_usage(sp, ep, cmdp)
 		}
 		break;
 	case 0:
-		for (cp = cmds; cp->name != NULL; ++cp)
+		F_SET(sp, S_INTERRUPTIBLE);
+		for (cp = cmds; cp->name != NULL; ++cp) {
+			/* The ^D command has an unprintable name. */
+			if (cp == &cmds[C_SCROLL])
+				name = "^D";
+			else
+				name = cp->name;
 			(void)ex_printf(EXCOOKIE,
-			    "%*s: %s\n", MAXCMDNAMELEN, cp->name, cp->help);
+			    "%*s: %s\n", MAXCMDNAMELEN, name, cp->help);
+		}
 		break;
 	default:
 		abort();
@@ -151,6 +170,7 @@ nokey:			(void)ex_printf(EXCOOKIE,
 			    isblank(*kp->help) ? "" : " ", kp->help, kp->usage);
 		break;
 	case 0:
+		F_SET(sp, S_INTERRUPTIBLE);
 		for (key = 0; key <= MAXVIKEY; ++key) {
 			kp = &vikeys[key];
 			if (kp->help != NULL)

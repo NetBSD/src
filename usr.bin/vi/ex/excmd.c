@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,22 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)excmd.c	8.36 (Berkeley) 1/22/94"; */
-static char *rcsid = "$Id: excmd.c,v 1.2 1994/01/24 06:40:53 cgd Exp $";
+static char sccsid[] = "@(#)excmd.c	8.41 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -49,7 +60,7 @@ static char *rcsid = "$Id: excmd.c,v 1.2 1994/01/24 06:40:53 cgd Exp $";
  * e.g. "r" means "read", not "rewind", because "read" is listed before
  * "rewind".
  *
- * The syntax of the ex commands is unbelievably irregular, and a special 
+ * The syntax of the ex commands is unbelievably irregular, and a special
  * case from beginning to end.  Each command has an associated "syntax
  * script" which describes the "arguments" that are possible.  The script
  * syntax is as follows:
@@ -68,6 +79,11 @@ static char *rcsid = "$Id: excmd.c,v 1.2 1994/01/24 06:40:53 cgd Exp $";
  *	w[N#][or]	-- word (a number or N, optional or required)
  */
 EXCMDLIST const cmds[] = {
+/* C_SCROLL */
+	{"\004",	ex_pr,		E_ADDR2|E_NORC,
+	    "",
+	    "^D",
+	    "scroll lines"},
 /* C_BANG */
 	{"!",		ex_bang,	E_ADDR2_NONE|E_NORC,
 	    "S",
@@ -120,7 +136,7 @@ EXCMDLIST const cmds[] = {
 	    "specify an input abbreviation"},
 /* C_ARGS */
 	{"args",	ex_args,	E_NOGLOBAL|E_NORC,
-	    "",	
+	    "",
 	    "ar[gs]",
 	    "display file argument list"},
 /* C_BG */
@@ -155,12 +171,12 @@ EXCMDLIST const cmds[] = {
 	    "delete lines from the file"},
 /* C_DISPLAY */
 	{"display",	ex_display,	E_NOGLOBAL|E_NORC,
-	    "w1r",	
+	    "w1r",
 	    "display b[uffers] | s[creens] | t[ags]",
 	    "display buffers, screens or tags"},
 /* C_DIGRAPH */
 	{"digraph",	ex_digraph,	E_NOGLOBAL|E_NOPERM|E_NORC,
-	    "",	
+	    "",
 	    "digraph",
 	    "specify digraphs (not implemented)"},
 /* C_EDIT */
@@ -191,8 +207,8 @@ EXCMDLIST const cmds[] = {
 /* C_GLOBAL */
 	{"global",	ex_global,	E_ADDR2_ALL|E_NOGLOBAL|E_NORC,
 	    "!s",
-	    "[line [,line]] g[lobal][!] [;/]pattern[;/] [commands]",
-	    "execute a global command on lines matching a pattern"},
+	    "[line [,line]] g[lobal][!] [;/]RE[;/] [commands]",
+	    "execute a global command on lines matching an RE"},
 /* C_HELP */
 	{"help",	ex_help,	E_NOGLOBAL|E_NORC,
 	    "",
@@ -251,7 +267,7 @@ EXCMDLIST const cmds[] = {
 /* C_OPEN */
 	{"open",	ex_open,	E_ADDR1,
 	    "s",
-	    "[line] o[pen] [/pattern/] [flags]",
+	    "[line] o[pen] [/RE/] [flags]",
 	    "enter \"open\" mode (not implemented)"},
 /* C_PRINT */
 	{"print",	ex_pr,		E_ADDR2|E_F_PRCLEAR|E_NORC|E_SETLAST,
@@ -260,7 +276,7 @@ EXCMDLIST const cmds[] = {
 	    "display lines"},
 /* C_PRESERVE */
 	{"preserve",	ex_preserve,	E_NOGLOBAL|E_NORC,
-	    "",	
+	    "",
 	    "pre[serve]",
 	    "preserve an edit session for recovery"},
 /* C_PREVIOUS */
@@ -286,7 +302,7 @@ EXCMDLIST const cmds[] = {
 /* C_RESIZE */
 	{"resize",	ex_resize,	E_NOGLOBAL|E_NORC,
 	    "c+",
-	    "resize [change]",
+	    "resize [+-]rows",
 	    "grow or shrink the current screen"},
 /* C_REWIND */
 	{"rewind",	ex_rew,		E_NOGLOBAL|E_NORC,
@@ -296,8 +312,8 @@ EXCMDLIST const cmds[] = {
 /* C_SUBSTITUTE */
 	{"substitute",	ex_substitute,	E_ADDR2|E_NORC,
 	    "s",
-"[line [,line]] s[ubstitute] [[/;]pat[/;]/repl[/;] [cgr] [count] [#lp]]",
-	    "substitute on lines matching a pattern"},
+"[line [,line]] s[ubstitute] [[/;]RE[/;]/repl[/;] [cgr] [count] [#lp]]",
+	    "substitute on lines matching an RE"},
 /* C_SCRIPT */
 	{"script",	ex_script,	E_NOGLOBAL|E_NORC,
 	    "!f1o",
@@ -310,12 +326,12 @@ EXCMDLIST const cmds[] = {
 	    "set options (use \":set all\" to see all options)"},
 /* C_SHELL */
 	{"shell",	ex_shell,	E_NOGLOBAL|E_NORC,
-	    "", 
+	    "",
 	    "sh[ell]",
 	    "suspend editing and run a shell"},
 /* C_SOURCE */
 	{"source",	ex_source,	E_NOGLOBAL,
-	    "f1r", 
+	    "f1r",
 	    "so[urce] file",
 	    "read a file of ex commands"},
 /* C_SPLIT */
@@ -335,57 +351,57 @@ EXCMDLIST const cmds[] = {
 	    "suspend the edit session"},
 /* C_T */
 	{"t",		ex_copy,	E_ADDR2|E_AUTOPRINT|E_NORC,
-	    "l1", 
+	    "l1",
 	    "[line [,line]] t line [flags]",
 	    "move lines elsewhere in the file"},
 /* C_TAG */
 	{"tag",		ex_tagpush,	E_NOGLOBAL,
-	    "!w1o", 
+	    "!w1o",
 	    "ta[g][!] [string]",
 	    "edit the file containing the tag"},
 /* C_TAGPOP */
 	{"tagpop",	ex_tagpop,	E_NOGLOBAL|E_NORC,
-	    "!w1o", 
+	    "!w1o",
 	    "tagp[op][!] [number | file]",
 	    "return to a previous tag"},
 /* C_TAGTOP */
 	{"tagtop",	ex_tagtop,	E_NOGLOBAL|E_NORC,
-	    "!", 
+	    "!",
 	    "tagt[op][!]",
 	    "return to the first tag"},
 /* C_UNDOL */
 	{"Undo",	ex_undol,	E_AUTOPRINT|E_NOGLOBAL|E_NORC,
-	    "", 
+	    "",
 	    "U[ndo]",
 	    "undo all the changes to this line"},
 /* C_UNDO */
 	{"undo",	ex_undo,	E_AUTOPRINT|E_NOGLOBAL|E_NORC,
-	    "", 
+	    "",
 	    "u[ndo]",
 	    "undo the most recent change"},
 /* C_UNABBREVIATE */
 	{"unabbreviate",ex_unabbr,	E_NOGLOBAL,
-	    "w1r", 
+	    "w1r",
 	    "una[bbrev] word",
 	    "delete an abbreviation"},
 /* C_UNMAP */
 	{"unmap",	ex_unmap,	E_NOGLOBAL,
-	    "!w1r", 
+	    "!w1r",
 	    "unm[ap][!] word",
 	    "delete an input or command map"},
 /* C_VGLOBAL */
 	{"vglobal",	ex_vglobal,	E_ADDR2_ALL|E_NOGLOBAL|E_NORC,
-	    "s", 
-	    "[line [,line]] v[global] [;/]pattern[;/] [commands]",
-	    "execute a global command on lines NOT matching a pattern"},
+	    "s",
+	    "[line [,line]] v[global] [;/]RE[;/] [commands]",
+	    "execute a global command on lines NOT matching an RE"},
 /* C_VERSION */
 	{"version",	ex_version,	E_NOGLOBAL|E_NORC,
-	    "", 
+	    "",
 	    "version",
 	    "display the program version information"},
 /* C_VISUAL_EX */
 	{"visual",	ex_visual,	E_ADDR1|E_NOGLOBAL|E_NORC|E_ZERODEF,
-	    "2c11", 
+	    "2c11",
 	    "[line] vi[sual] [-|.|+|^] [window_size] [flags]",
 	    "enter visual (vi) mode from ex mode"},
 /* C_VISUAL_VI */

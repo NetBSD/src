@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,23 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_join.c	8.3 (Berkeley) 8/29/93"; */
-static char *rcsid = "$Id: v_join.c,v 1.2 1994/01/24 06:41:39 cgd Exp $";
+static char sccsid[] = "@(#)v_join.c	8.5 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -49,11 +59,10 @@ static char *rcsid = "$Id: v_join.c,v 1.2 1994/01/24 06:41:39 cgd Exp $";
  *	Join lines together.
  */
 int
-v_join(sp, ep, vp, fm, tm, rp)
+v_join(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	EXCMDARG cmd;
 	int lno;
@@ -67,10 +76,10 @@ v_join(sp, ep, vp, fm, tm, rp)
 	 * we never test for EOF -- historically going past the end of file
 	 * worked just fine.
 	 */
-	lno = fm->lno + 1;
+	lno = vp->m_start.lno + 1;
 	if (F_ISSET(vp, VC_C1SET) && vp->count > 2)
-		lno = fm->lno + (vp->count - 1);
+		lno = vp->m_start.lno + (vp->count - 1);
 
-	SETCMDARG(cmd, C_JOIN, 2, fm->lno, lno, 0, NULL);
-	return (sp->s_ex_cmd(sp, ep, &cmd, rp));
+	SETCMDARG(cmd, C_JOIN, 2, vp->m_start.lno, lno, 0, NULL);
+	return (sp->s_ex_cmd(sp, ep, &cmd, &vp->m_final));
 }

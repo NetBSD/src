@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,22 +32,31 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)filter.c	8.26 (Berkeley) 1/2/94"; */
-static char *rcsid = "$Id: filter.c,v 1.2 1994/01/24 06:40:56 cgd Exp $";
+static char sccsid[] = "@(#)filter.c	8.31 (Berkeley) 3/23/94";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
+#include <bitstring.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
+#include <pathnames.h>
 
 #include "vi.h"
 #include "excmd.h"
-#include "pathnames.h"
 
 static int	filter_ldisplay __P((SCR *, FILE *));
 
@@ -65,13 +74,10 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 	char *cmd;
 	enum filtertype ftype;
 {
-	struct sigaction act, oact;
-	struct stat osb, sb;
-	struct termios term;
 	FILE *ifp, *ofp;		/* GCC: can't be uninitialized. */
 	pid_t parent_writer_pid, utility_pid;
 	recno_t lno, nread;
-	int input[2], isig, output[2], rval;
+	int input[2], output[2], rval, teardown;
 	char *name;
 
 	/* Set return cursor position; guard against a line number of zero. */
@@ -95,6 +101,7 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 	 * input.  Redirect its input from /dev/null.  Otherwise open
 	 * up utility input pipe.
 	 */
+	teardown = 0;
 	ifp = ofp = NULL;
 	input[0] = input[1] = output[0] = output[1] = -1;
 	if (ftype == FILTER_READ) {
@@ -128,7 +135,7 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 	 * Save ex/vi terminal settings, and restore the original ones.
 	 * Restoration so that users can do things like ":r! cat /dev/tty".
 	 */
-	EX_LEAVE(sp, isig, act, oact, sb, osb, term);
+	teardown = !ex_sleave(sp);
 
 	/* Fork off the utility process. */
 	switch (utility_pid = vfork()) {
@@ -307,8 +314,8 @@ err:		if (input[0] != -1)
 uwait:	rval |= proc_wait(sp, (long)utility_pid, cmd, 0);
 
 	/* Restore ex/vi terminal settings. */
-ret:	EX_RETURN(sp, isig, act, oact, sb, osb, term);
-
+ret:	if (teardown)
+		ex_rleave(sp);
 	return (rval);
 }
 
