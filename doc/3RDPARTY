@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.42 2003/01/26 00:56:51 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.43 2003/01/26 01:05:49 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -128,8 +128,8 @@ Responsible:	thorpej
 Notes:
 
 Package:	bsd-family-tree
-Version:	1.67
-Current Vers:	1.67
+Version:	1.68
+Current Vers:	1.68
 Maintainer:	
 Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
@@ -220,6 +220,8 @@ Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	wiz
 Notes:
+Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
+for the import.
 
 Package:	dtoa.c
 Version:	Jan 4, 1995
