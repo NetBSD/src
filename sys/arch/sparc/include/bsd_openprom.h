@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.20 2003/08/07 16:29:38 agc Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.21 2004/03/16 22:45:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -344,9 +344,6 @@ struct nodeops {
 				   int len));
 	char	*(*no_nextprop) __P((int node, char *name));
 };
-
-/* Frequently used options node */
-extern int optionsnode;
 
 /*
  *  OBP Module mailbox messages for multi processor machines.
