@@ -1178,7 +1178,7 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 			 * sure that we don't have any residual state
 			 */
 			if(!silent)
-				printf("sd%d: Unit attention.\n ", unit); 
+				printf("sd%d: reset\n", unit); 
 			sd->flags &= ~(SDVALID | SDHAVELABEL);
 			if (sd->openparts)
 				return EIO;
