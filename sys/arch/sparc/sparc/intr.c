@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.63 2002/12/10 12:03:08 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.64 2002/12/11 13:21:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -604,8 +604,8 @@ intr_disestablish(level, ih)
  * bit to set in the interrupt enable register with ienab_bis().
  */
 struct softintr_cookie {
-	int sic_pilreq;		/* MUST be first! */
-	int sic_level;
+	int sic_pilreq;		/* CPU-specific bits; MUST be first! */
+	int sic_pil;		/* Actual machine PIL that is used */
 	struct intrhand sic_hand;
 };
 
@@ -632,6 +632,7 @@ softintr_establish(level, fun, arg)
 	struct softintr_cookie *sic;
 	struct intrhand *ih;
 	int pilreq;
+	int pil;
 
 	/*
 	 * On a sun4m, the processor interrupt level is stored
@@ -641,20 +642,23 @@ softintr_establish(level, fun, arg)
 	 * in the interrupt enable register is stored in
 	 * the softintr cookie to be passed to ienab_bis().
 	 */
-	pilreq = level;
+	pil = pilreq = level;
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/* Select the most suitable of three available softint levels */
-		if (level >= 1 && level < 4)
+		if (level >= 1 && level < 4) {
+			pil = 1;
 			pilreq = IE_L1;
-		else if (level >= 4 && level < 6)
+		} else if (level >= 4 && level < 6) {
+			pil = 4;
 			pilreq = IE_L4;
-		else {
+		} else {
+			pil = 6;
 			pilreq = IE_L6;
 		}
 	}
 
 	sic = malloc(sizeof(*sic), M_DEVBUF, 0);
-	sic->sic_level = level;
+	sic->sic_pil = pil;
 	sic->sic_pilreq = pilreq;
 	ih = &sic->sic_hand;
 	ih->ih_fun = (int (*) __P((void *)))fun;
@@ -668,13 +672,13 @@ softintr_establish(level, fun, arg)
 	 */
 	ih->ih_classipl = (level << 8) & PSR_PIL;
 
-	if (fastvec & (1 << level)) {
+	if (fastvec & (1 << pil)) {
 		printf("softintr_establish: untie fast vector at level %d\n",
-		    level);
+		    pil);
 		uninst_fasttrap(level);
 	}
 
-	ih_insert(&sintrhand[level], ih);
+	ih_insert(&sintrhand[pil], ih);
 	return (void *)sic;
 }
 
@@ -688,7 +692,7 @@ softintr_disestablish(cookie)
 {
 	struct softintr_cookie *sic = cookie;
 
-	ih_remove(&sintrhand[sic->sic_level], &sic->sic_hand);
+	ih_remove(&sintrhand[sic->sic_pil], &sic->sic_hand);
 	free(cookie, M_DEVBUF);
 }
 
