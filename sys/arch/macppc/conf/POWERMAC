@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.29 2001/05/27 23:52:41 wiz Exp $
+#	$NetBSD: POWERMAC,v 1.30 2001/06/10 15:41:13 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -39,7 +39,6 @@ file-system 	PROCFS		# /proc
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
 options 	IPFILTER_LOG	# ipmon(8) log support
-options 	NMBCLUSTERS=1024
 
 # These options enable verbose messages for several subsystems.
 options 	SCSIVERBOSE	# Verbose SCSI errors
