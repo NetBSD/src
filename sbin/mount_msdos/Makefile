@@ -1,10 +1,8 @@
 #
-#	$Id: Makefile,v 1.3 1993/08/09 06:22:46 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/04/07 02:31:20 cgd Exp $
 #
 
 PROG = mount_msdos
 MAN8 = mount_msdos.0
-
-CFLAGS += -DMSDOSFS
 
 .include <bsd.prog.mk>
