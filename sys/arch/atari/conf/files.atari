@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.88 2001/07/09 14:49:49 leo Exp $
+#	$NetBSD: files.atari,v 1.89 2001/09/08 11:19:06 thomas Exp $
 
 maxpartitions 16
 
@@ -229,6 +229,9 @@ include "arch/m68k/fpe/files.fpe"
 include "arch/m68k/060sp/files.060sp"
 
 # Compatibility modules
+
+# a.out compatibility
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

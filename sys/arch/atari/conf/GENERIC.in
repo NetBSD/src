@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.8 2001/09/01 23:08:41 atatat Exp $
+#	$NetBSD: GENERIC.in,v 1.9 2001/09/08 11:19:06 thomas Exp $
 #
 # Generic atari
 #
@@ -134,9 +134,10 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #endif
+options		COMPAT_AOUT_M68K # Compatibility to a.out executables
+options		EXEC_AOUT	# a.out format executables
 
 #ifndef INSTALL_KERNEL
 #
