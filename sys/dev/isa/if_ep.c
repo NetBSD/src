@@ -21,12 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.28 1994/04/11 11:09:00 deraadt Exp $
- */
-/*
- * TODO:
- *	Multi-509 configs.
- *	deallocate mbufs when ifconfig'd down.
+ *	$Id: if_ep.c,v 1.29 1994/04/13 06:09:00 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -106,7 +101,8 @@ static int epstart __P((struct ifnet *));
 static int epwatchdog __P((int));
 static void epreset __P((struct ep_softc *));
 static void epread __P((struct ep_softc *));
-static void epmbufqueue __P((struct ep_softc *));
+static void epmbuffill __P((struct ep_softc *));
+static void epmbufempty __P((struct ep_softc *));
 static void epstop __P((struct ep_softc *));
 
 static u_short epreadeeprom __P((int id_port, int offset));
@@ -440,7 +436,7 @@ epinit(sc)
 	 */
 	sc->last_mb = 0;
 	sc->next_mb = 0;
-	epmbufqueue(sc);
+	epmbuffill(sc);
 
 	epstart(ifp);
 	splx(s);
@@ -748,7 +744,7 @@ epread(sc)
 				if (m == 0)
 					goto out;
 			} else {
-				timeout(epmbufqueue, sc, 1);
+				timeout(epmbuffill, sc, 1);
 				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 			}
 			if (totlen >= MINCLSIZE)
@@ -876,6 +872,7 @@ epioctl(ifp, cmd, data)
 		if ((ifp->if_flags & IFF_UP) == 0 && ifp->if_flags & IFF_RUNNING) {
 			ifp->if_flags &= ~IFF_RUNNING;
 			epstop(sc);
+			epmbufempty(sc);
 			break;
 		}
 		if (ifp->if_flags & IFF_UP && (ifp->if_flags & IFF_RUNNING) == 0)
@@ -989,24 +986,37 @@ epbusyeeprom(sc)
 }
 
 static void
-epmbufqueue(sc)
+epmbuffill(sc)
 	struct ep_softc *sc;
 {
-	int     i = 0;
-	int	s;
+	int s, i;
 
 	s = splimp();
 	i = sc->last_mb;
-	if (sc->mb[i]) {
-		splx(s);
-		return;
-	}
 	do {
-		MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
-		if (!sc->mb[i])
+		if (sc->mb[i] == NULL)
+			MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
+		if (sc->mb[i] == NULL)
 			break;
 		i = (i + 1) % MAX_MBS;
 	} while (i != sc->next_mb);
 	sc->last_mb = i;
+	splx(s);
+}
+
+static void
+epmbufempty(sc)
+	struct ep_softc *sc;
+{
+	int s, i;
+
+	s = splimp();
+	for (i = 0; i<MAX_MBS; i++) {
+		if (sc->mb[i]) {
+			m_freem(sc->mb[i]);
+			sc->mb[i] = NULL;
+		}
+	}
+	sc->last_mb = sc->next_mb = 0;
 	splx(s);
 }
