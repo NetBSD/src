@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.12 1998/09/12 13:34:38 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.13 1998/09/26 18:20:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
  */
+
+#ifndef _BSD_OPENPROM_H_
+#define _BSD_OPENPROM_H_
 
 /*
  * This file defines the interface between the kernel and the Openboot PROM.
@@ -175,6 +178,15 @@ struct v2bootargs {
 };
 
 /*
+ * The format used by the PROM to describe a physical address.
+ */
+struct openprom_addr {
+	int	oa_space;		/* address space (may be relative) */
+	u_int	oa_base;		/* address within space */
+	u_int	oa_size;		/* extent (number of bytes) */
+};
+
+/*
  * The following structure defines the primary PROM vector interface.
  * The Boot PROM hands the kernel a pointer to this structure in %o0.
  * There are numerous substructures defined below.
@@ -262,7 +274,8 @@ struct promvec {
 	 * The following are V3 ROM functions to handle MP machines in the
 	 * Sun4m series. They have undefined results when run on a uniprocessor!
 	 */
-	int	(*pv_v3cpustart) __P((u_int module, u_int ctxtbl,
+	int	(*pv_v3cpustart) __P((u_int module,
+				      struct openprom_addr *ctxtbl,
 				      int context, caddr_t pc));
 	int 	(*pv_v3cpustop) __P((u_int module));
 	int	(*pv_v3cpuidle) __P((u_int module));
@@ -284,8 +297,8 @@ struct promvec {
  * sometimes not, depending on the the interface version; v0 seems to
  * terminate and v2 not.  Many others are simply integers stored as four
  * bytes in machine order: you just get them and go.  The third popular
- * format is an `address', which is made up of one or more sets of three
- * integers as defined below.
+ * format is an `physical address', which is made up of one or more sets
+ * of three integers as defined above.
  *
  * N.B.: for the `next' functions, next(0) = first, and next(last) = 0.
  * Whoever designed this part had good taste.  On the other hand, these
@@ -293,11 +306,6 @@ struct promvec {
  * are not in the openprom vectors but rather found by indirection from
  * there.  So the taste balances out.
  */
-struct openprom_addr {
-	int	oa_space;		/* address space (may be relative) */
-	u_int	oa_base;		/* address within space */
-	u_int	oa_size;		/* extent (number of bytes) */
-};
 
 struct nodeops {
 	/*
@@ -318,9 +326,33 @@ struct nodeops {
 	caddr_t	(*no_nextprop) __P((int node, caddr_t name));
 };
 
-void	romhalt __P((void))
-    __attribute__((__noreturn__));
-void	romboot __P((char *))
-    __attribute__((__noreturn__));
+void	romhalt __P((void))	__attribute__((__noreturn__));
+void	romboot __P((char *))	__attribute__((__noreturn__));
+void	rominterpret __P((char *));
+void	callrom __P((void));
+
+int	findroot __P((void));
+int	findnode __P((int, const char *));
+int	opennode __P((char *));
+int	firstchild __P((int));
+int	nextsibling __P((int));
+
+/*
+ * The various getprop* functions obtain `properties' from the ROMs.
+ * getprop() obtains a property as a byte-sequence, and returns its
+ * length; the others convert or make some other guarantee.
+ */
+int	getproplen __P((int node, char *name));
+int	getprop __P((int, char *, int, int *, void **));
+int	getpropint __P((int node, char *name, int deflt));
+char	*getpropstring __P((int node, char *name));
+char	*getpropstringA __P((int, char *, char *));
+int	search_prom __P((int, char *));
+int	node_has_property __P((int, const char *));
+
 
 extern struct promvec *promvec;
+/* Frequently used options node */
+extern int optionsnode;
+
+#endif /* _BSD_OPENPROM_H_ */
