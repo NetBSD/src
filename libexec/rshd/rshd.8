@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.10 2000/05/30 05:21:49 itojun Exp $
+.\"	$NetBSD: rshd.8,v 1.11 2002/01/15 02:27:42 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 The
 .Nm
 server
-is the server for the 
+is the server for the
 .Xr rcmd 3
 routine and, consequently, for the
 .Xr rsh 1
@@ -75,7 +75,7 @@ number, base 10.
 .It
 If the number received in step 2 is non-zero,
 it is interpreted as the port number of a secondary
-stream to be used for the 
+stream to be used for the
 .Em stderr .
 A second connection is then created to the specified
 port on the client's machine.  The source port of this
@@ -114,7 +114,7 @@ machine.
 A null terminated command to be passed to a
 shell is retrieved on the initial socket.  The length of
 the command is limited by the upper bound on the size of
-the system's argument list.  
+the system's argument list.
 .It
 .Nm
 then validates the user using
@@ -130,7 +130,7 @@ option prevents
 from doing any validation based on the user's ``.rhosts'' file,
 unless the user is the superuser.
 .It
-If the file 
+If the file
 .Pa /etc/nologin
 exists and the user is not the superuser,
 the connection is closed.
@@ -177,16 +177,16 @@ list (as configured into the system).
 .It Sy Login incorrect.
 No password file entry for the user name existed.
 .It Sy Remote directory.
-The 
+The
 .Xr chdir 2
 to the home directory failed.
 .It Sy Permission denied.
 The authentication procedure described above failed.
 .It Sy Can't make pipe.
-The pipe needed for the 
+The pipe needed for the
 .Em stderr ,
 wasn't created.
-.It Sy Can't fork; try again. 
+.It Sy Can't fork; try again.
 A
 .Xr fork 2
 by the server failed.
