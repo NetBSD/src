@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.5 2003/08/16 12:27:54 agc Exp $
+#	$NetBSD: TODO,v 1.6 2003/08/18 16:52:21 agc Exp $
 
 THINGS TO BE DONE:
 
@@ -59,7 +59,6 @@ This is a list of suggested smaller projects (in no particular order):
 
 + implement Unix98 ptys
 + speed up sort(1) by using mmap(2) rather than temp files
-+ autoconf version of our sed, for use in non-NetBSD pkgsrc
 + autoconf version of nawk, for use in non-NetBSD pkgsrc
 + port valgrind to NetBSD for pkgsrc, then use it to do an audit of
   any memory leakage
