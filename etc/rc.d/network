@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.27 2000/11/26 06:46:42 nisimura Exp $
+# $NetBSD: network,v 1.28 2001/01/03 17:54:05 itojun Exp $
 #
 
 # PROVIDE: network
@@ -211,7 +211,9 @@ network_start()
 		# permissible config for routers that are not on scope
 		# boundary), you may want to comment the following one out.
 		#
-		route add -inet6 fec0:: -prefixlen 10 ::1 -reject
+		if ! checkyesno ip6sitelocal; then
+			route add -inet6 fec0:: -prefixlen 10 ::1 -reject
+		fi
 
 		# disallow "internal" addresses to appear on the wire.
 		#
