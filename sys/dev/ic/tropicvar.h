@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.2 1999/03/22 23:01:36 bad Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.3 1999/04/29 15:47:02 bad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,16 @@
 /*
  * HISTORY
  * $Log: tropicvar.h,v $
+ * Revision 1.3  1999/04/29 15:47:02  bad
+ * From Onno van der Linden:
+ * Reorganise the driver some what.
+ * Rename tr_reset() to the more appropriate tr_stop().
+ * Create a common tropic reset routine and use it in the frontends.
+ * Move the code in tr_config() which is only used in the card attachment
+ * routines into a new tr_attach() function.
+ * Take adapter off the ring through tr_shutdown() in a shutdown hook.
+ * This simplifies the bus-specific frontend.
+ *
  * Revision 1.2  1999/03/22 23:01:36  bad
  * Oops. RcsID police.
  *
@@ -48,11 +58,11 @@
  * 
  */
 
-/* $Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.2 1999/03/22 23:01:36 bad Exp $ */
+/* $Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.3 1999/04/29 15:47:02 bad Exp $ */
 /* $ACIS:if_lanvar.h 12.0$ */
 
 #if !defined(lint) && !defined(LOCORE)  && defined(RCS_HDRS)
-static char    *rcsidif_lanvar = "$Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.2 1999/03/22 23:01:36 bad Exp $";
+static char    *rcsidif_lanvar = "$Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.3 1999/04/29 15:47:02 bad Exp $";
 #endif
 
 /*
@@ -100,6 +110,7 @@ struct	tr_softc {
 	bus_size_t sc_arb;	/* offset of Adapter Request Block */
 	bus_size_t sc_srb;	/* offset of System Request Block */
 	bus_size_t sc_asb;	/* offset of Adapter Status Block */
+	u_int sc_maddr;		/* mapped shared memory address */
 	u_int sc_memwinsz;	/* mapped shared memory window size */
 	u_int sc_memsize;	/* memory installed on adapter */
 	u_int sc_memreserved;	/* reserved memory on adapter */
@@ -107,15 +118,17 @@ struct	tr_softc {
 	int sc_dhb16maxsz;	/* max. dbh size at 16MBIT ring speed */
 	int sc_maxmtu;		/* max. MTU supported by adapter */
 	unsigned char	sc_init_status;
-	caddr_t  trsleep_event;     	/* tr event signalled on successful */
+	caddr_t  tr_sleepevent;     	/* tr event signalled on successful */
 					/* open of adapter  */
 	unsigned short exsap_station;	/* station assigned by open sap cmd */
 };
 
 int tr_config __P((struct tr_softc *));
+int tr_attach __P((struct tr_softc *));
 int tr_intr __P((void *));
 void tr_init __P((void *));
 int tr_ioctl __P((struct ifnet *, u_long, caddr_t));
-void tr_reset __P((struct tr_softc *));
+void tr_stop __P((struct tr_softc *));
+int tr_reset __P((struct tr_softc *));
 void tr_sleep __P((struct tr_softc *));
 int tr_setspeed __P((struct tr_softc *, u_int8_t));
