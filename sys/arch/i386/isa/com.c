@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.23 1994/03/12 07:43:03 cgd Exp $
+ *	$Id: com.c,v 1.24 1994/03/12 08:04:19 cgd Exp $
  */
 
 /*
@@ -185,7 +185,7 @@ comattach(isa_dev)
 		delay(1000);
 
 	sc->sc_iobase = iobase;
-	sc->sc_hwflags = 0;
+	sc->sc_hwflags = isa_dev->id_flags & COM_HW_CONFIGBITS;
 	sc->sc_swflags = 0;
 
 	printf("%s: ", sc->sc_dev.dv_xname);
