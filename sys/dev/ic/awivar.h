@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.18 2003/07/06 20:01:17 dyoung Exp $	*/
+/*	$NetBSD: awivar.h,v 1.19 2003/10/13 08:10:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,15 @@ struct awi_softc {
 	int			(*sc_enable)(struct awi_softc *);
 	void			(*sc_disable)(struct awi_softc *);
 	void			(*sc_power)(struct awi_softc *, int);
+
+	int			(*sc_newstate)(struct ieee80211com *,
+				    enum ieee80211_state, int);
+	void			(*sc_recv_mgmt)(struct ieee80211com *,
+				    struct mbuf *, struct ieee80211_node *,
+				    int, int, u_int32_t);
+	int			(*sc_send_mgmt)(struct ieee80211com *,
+				    struct ieee80211_node *, int, int);
+
 	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
 	unsigned int		sc_attached:1,
