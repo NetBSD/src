@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.57 2002/11/03 13:16:11 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.58 2002/11/15 01:15:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,11 @@
 #define	_MIPS_CPUREGS_H_
 
 #include <sys/cdefs.h>		/* For __CONCAT() */
+
+#if defined(_KERNEL_OPT)
+#include "opt_cputype.h"
+#endif
+
 /*
  * Address space.
  * 32-bit mips CPUS partition their 32-bit address space into four segments:
@@ -98,7 +103,8 @@
 #define	MIPS_XKPHYS_TO_PHYS(x)	((x) & 0x0effffffffffffffULL)
 
 /* CPU dependent mtc0 hazard hook */
-#define	COP0_SYNC	/* nothing */
+#define	COP0_SYNC		/* nothing */
+#define	COP0_HAZARD_FPUENABLE	nop; nop; nop; nop;
 
 /*
  * The bits in the cause register.
@@ -768,6 +774,9 @@
 #endif
 #ifdef MIPS3_5900
 #include <mips/r5900regs.h>
+#endif
+#ifdef MIPS64_SB1
+#include <mips/sb1regs.h>
 #endif
 
 #endif /* _MIPS_CPUREGS_H_ */
