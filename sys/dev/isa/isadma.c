@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.31 1997/08/30 17:33:49 augustss Exp $	*/
+/*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -662,8 +662,6 @@ isa_mappage(mem, off, prot)
 	int off;
 	int prot;
 {
-	/* XXX switch to bus_mmap when it works */
-#if 0
 	struct isa_mem *m;
 
 	for(m = isa_mem_head; m && m->kva != (caddr_t)mem; m = m->next)
@@ -674,11 +672,4 @@ isa_mappage(mem, off, prot)
 	}
 	return isa_dmamem_mmap(m->isadev, m->chan, m->addr, 
 			       m->size, off, prot, BUS_DMA_WAITOK);
-#else
-#ifdef i386
-	return i386_btop(vtophys((caddr_t)mem + off));
-#else
-        return -1;
-#endif
-#endif
 }
