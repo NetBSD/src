@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.45 1998/12/16 11:01:01 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.46 1999/04/25 02:56:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -47,7 +47,6 @@
 #include <sys/select.h>		/* For struct selinfo. */
 #include <sys/queue.h>
 
-#ifndef REAL_CLISTS
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
  * exactly the same behaviour as in true clists.
@@ -65,17 +64,6 @@ struct clist {
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
 };
-#else
-/*
- * Clists are character lists, which is a variable length linked list
- * of cblocks, with a count of the number of characters in the list.
- */
-struct clist {
-	int	c_cc;		/* Number of characters in the clist. */
-	u_char	*c_cf;		/* Pointer to the first cblock. */
-	u_char	*c_cl;		/* Pointer to the last cblock. */
-};
-#endif /* !REAL_CLISTS */
 
 /*
  * Per-tty structure.
