@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.344 2001/07/31 22:30:08 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.345 2001/08/17 23:14:41 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp 
+ *	NetBSD: pcidevs,v 1.342 2001/08/17 23:14:00 matt Exp 
  */
 
 /*
@@ -464,6 +464,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M5243 PCI-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
+	    0,
+	    "Acer Labs",
+	    "M5451 AC-Link Controller Audio Device",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5453,
+	    0,
+	    "Acer Labs",
+	    "M5453 AC-Link Controller Modem Device",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
@@ -950,6 +962,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "Pangea Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_AGP,
+	    0,
+	    "Apple Computer",
+	    "Uni-N AGP Interface",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI1,
+	    0,
+	    "Apple Computer",
+	    "Uni-N Host-External PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI2,
+	    0,
+	    "Apple Computer",
+	    "Uni-N Host-Internal PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -5302,6 +5332,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Fast Infrared Type DO",
 	},
 	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE,
+	    0,
+	    "Transmeta Corp",
+	    "Virtual Northbridge",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_LONGRUN,
+	    0,
+	    "Transmeta Corp",
+	    "LongRun Northbridge",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_SDRAM,
+	    0,
+	    "Transmeta Corp",
+	    "SDRAM Controller",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_BIOS_SCRATCH,
+	    0,
+	    "Transmeta Corp",
+	    "BIOS Scratchpad",
+	},
+	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
 	    0,
 	    "Trident Microsystems",
@@ -8971,6 +9025,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETAPP, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Network Appliance",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Transmeta Corp",
 	    NULL,
 	},
 	{
