@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.93 2003/02/20 22:16:07 atatat Exp $	*/
+/*	$NetBSD: exec.h,v 1.94 2003/02/26 21:18:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -241,20 +241,6 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 	vcp->ev_offset = (offset); \
 	vcp->ev_prot = (prot); \
 	vcp->ev_flags = (flags); \
-	if (((flags) & (VMCMD_TOPDOWN|VMCMD_RELATIVE)) == \
-	    (VMCMD_TOPDOWN|VMCMD_RELATIVE)) { \
-		int i = (evsp)->evs_used - 2; \
-		while (i >= 0) { \
-			vcp = &(evsp)->evs_cmds[i--]; \
-			if (vcp->ev_flags & VMCMD_BASE) { \
-				if ((vcp->ev_flags & \
-				    (VMCMD_TOPDOWN|VMCMD_FIXED)) == \
-				    (VMCMD_TOPDOWN)) \
-					vcp->ev_addr -= round_page(len); \
-				break; \
-			} \
-		} \
-	} \
 } while (/* CONSTCOND */ 0)
 #endif /* DEBUG */
 
