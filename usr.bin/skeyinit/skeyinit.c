@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.19 2002/08/01 22:43:34 christos Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.20 2002/11/16 05:24:44 itojun Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -89,8 +89,7 @@ int main(int argc, char **argv)
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %ld", (u_long)getuid());
-	(void)strncpy(me, pp->pw_name, sizeof(me) - 1);
-	me[sizeof(me) - 1] = '\0';
+	(void)strlcpy(me, pp->pw_name, sizeof(me));
 
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
@@ -164,14 +163,14 @@ int main(int argc, char **argv)
 		if (l > 0) {
 			lastc = skey.seed[l - 1];
 			if (isdigit((unsigned char)lastc) && lastc != '9') {
-				(void)strncpy(defaultseed, skey.seed,
-				    sizeof(defaultseed) - 1);
+				(void)strlcpy(defaultseed, skey.seed,
+				    sizeof(defaultseed));
 				defaultseed[l - 1] = lastc + 1;
 			}
 			if (isdigit((unsigned char)lastc) && lastc == '9' &&
 			    l < 16) {
 				(void)strncpy(defaultseed, skey.seed,
-				    sizeof(defaultseed) - 1);
+				    sizeof(defaultseed));
 				defaultseed[l - 1] = '0';
 				defaultseed[l] = '0';
 				defaultseed[l + 1] = '\0';
@@ -233,7 +232,7 @@ int main(int argc, char **argv)
 			seed[SKEY_MAX_SEED_LEN] = '\0';
 		}
 		if (seed[0] == '\0')
-			(void)strcpy(seed, defaultseed);
+			(void)strlcpy(seed, defaultseed, sizeof(seed));
 
 		for (i = 0;; i++) {
 			if (i >= 2)
@@ -297,7 +296,7 @@ int main(int argc, char **argv)
 		}
 
 		/* Crunch seed and password into starting key */
-		(void)strcpy(seed, defaultseed);
+		(void)strlcpy(seed, defaultseed, sizeof(seed));
 		if (keycrunch(key, seed, passwd) != 0)
 			err(2, "key crunch failed");
 		nn = n;
