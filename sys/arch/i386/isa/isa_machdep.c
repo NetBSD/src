@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.18 1997/02/28 16:24:07 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19 1997/03/21 04:34:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -199,11 +199,13 @@ intr_calculatemasks()
 	 */
 	imask[IPL_IMP] |= imask[IPL_TTY];
 
+	imask[IPL_AUDIO] |= imask[IPL_IMP];
+
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_IMP];
+	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
