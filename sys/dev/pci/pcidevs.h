@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.225 2000/05/18 13:04:27 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.226 2000/05/26 05:07:02 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.218 2000/05/18 13:03:31 drochner Exp 
+ *	NetBSD: pcidevs,v 1.219 2000/05/26 05:06:27 matt Exp 
  */
 
 /*
@@ -1156,6 +1156,9 @@
 /* NEC products */
 #define	PCI_PRODUCT_NEC_USB	0x0035		/* USB Host Controller */
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
+#define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI PCI Controller */
+#define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI PCI Controller */
+#define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI PCI Controller */
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
