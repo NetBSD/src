@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.42 2003/05/05 13:04:29 fvdl Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.43 2003/10/21 16:22:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -456,25 +456,31 @@ typedef u_int8_t pci_revision_t;
 
 /*
  * Command. 16 bits at offset 2 (e.g. upper 16 bits of the first 32-bit
- * word at the capability).
+ * word at the capability; the lower 16 bits are the capability ID and
+ * next capability pointer).
+ *
+ * Since we always read PCI config space in 32-bit words, we define these
+ * as 32-bit values, offset and shifted appropriately.  Make sure you perform
+ * the appropriate R/M/W cycles!
  */
-#define PCI_PCIX_CMD			0x02
-#define PCI_PCIX_CMD_PERR_RECOVER	0x0001
-#define PCI_PCIX_CMD_RELAXED_ORDER	0x0002
-#define PCI_PCIX_CMD_BYTECNT_MASK	0x000c
-#define		PCI_PCIX_CMD_BCNT_512		0x0000
-#define		PCI_PCIX_CMD_BCNT_1024		0x0004
-#define		PCI_PCIX_CMD_BCNT_2048		0x0008
-#define		PCI_PCIX_CMD_BCNT_4096		0x000c
-#define PCI_PCIX_CMD_SPLTRANS_MASK	0x0070
-#define		PCI_PCIX_CMD_SPLTRANS_1		0x0000
-#define		PCI_PCIX_CMD_SPLTRANS_2		0x0010
-#define		PCI_PCIX_CMD_SPLTRANS_3		0x0020
-#define		PCI_PCIX_CMD_SPLTRANS_4		0x0030
-#define		PCI_PCIX_CMD_SPLTRANS_8		0x0040
-#define		PCI_PCIX_CMD_SPLTRANS_12	0x0050
-#define		PCI_PCIX_CMD_SPLTRANS_16	0x0060
-#define		PCI_PCIX_CMD_SPLTRANS_32	0x0070
+#define PCI_PCIX_CMD			0x00
+#define PCI_PCIX_CMD_PERR_RECOVER	0x00010000
+#define PCI_PCIX_CMD_RELAXED_ORDER	0x00020000
+#define PCI_PCIX_CMD_BYTECNT_MASK	0x000c0000
+#define	PCI_PCIX_CMD_BYTECNT_SHIFT	18
+#define		PCI_PCIX_CMD_BCNT_512		0x00000000
+#define		PCI_PCIX_CMD_BCNT_1024		0x00040000
+#define		PCI_PCIX_CMD_BCNT_2048		0x00080000
+#define		PCI_PCIX_CMD_BCNT_4096		0x000c0000
+#define PCI_PCIX_CMD_SPLTRANS_MASK	0x00700000
+#define		PCI_PCIX_CMD_SPLTRANS_1		0x00000000
+#define		PCI_PCIX_CMD_SPLTRANS_2		0x00100000
+#define		PCI_PCIX_CMD_SPLTRANS_3		0x00200000
+#define		PCI_PCIX_CMD_SPLTRANS_4		0x00300000
+#define		PCI_PCIX_CMD_SPLTRANS_8		0x00400000
+#define		PCI_PCIX_CMD_SPLTRANS_12	0x00500000
+#define		PCI_PCIX_CMD_SPLTRANS_16	0x00600000
+#define		PCI_PCIX_CMD_SPLTRANS_32	0x00700000
 
 /*
  * Status. 32 bits at offset 4.
@@ -489,6 +495,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIX_STATUS_SPLUNEX		0x00080000
 #define PCI_PCIX_STATUS_DEVCPLX		0x00100000
 #define PCI_PCIX_STATUS_MAXB_MASK	0x00600000
+#define	PCI_PCIX_STATUS_MAXB_SHIFT	21
 #define		PCI_PCIX_STATUS_MAXB_512	0x00000000
 #define		PCI_PCIX_STATUS_MAXB_1024	0x00200000
 #define		PCI_PCIX_STATUS_MAXB_2048	0x00400000
