@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.67 1999/11/19 18:17:14 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.68 2000/02/02 08:00:21 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -520,7 +520,7 @@ epconfig(sc, chipset, enaddr)
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
 	/*  Establish callback to reset card when we reboot. */
-	shutdownhook_establish(epshutdown, sc);
+	sc->shutdown_hook = shutdownhook_establish(epshutdown, sc);
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
@@ -2130,6 +2130,20 @@ ep_activate(self, act)
 	}
 	splx(s);
 	return (rv);
+}
+
+int
+ep_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct ep_softc *sc = (struct ep_softc *)self;
+
+	shutdownhook_disestablish(sc->shutdown_hook);
+
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	return (0);
 }
 
 u_int32_t
