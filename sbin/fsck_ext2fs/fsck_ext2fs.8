@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_ext2fs.8,v 1.2 1997/07/09 05:48:34 mikel Exp $
+.\"	$NetBSD: fsck_ext2fs.8,v 1.3 1997/09/14 14:27:23 lukem Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -41,7 +41,7 @@
 .Nm fsck_ext2fs
 .Nd EXT2 File System consistency check and interactive repair
 .Sh SYNOPSIS
-.Nm fsck_ext2fs
+.Nm
 .Op Fl b Ar block#
 .Op Fl c Ar level
 .Op Fl d
@@ -53,7 +53,7 @@
 .Ar filesystem
 .Ar ...
 .Sh DESCRIPTION
-.Nm Fsck_ext2fs
+.Nm
 performs interactive filesystem consistency checks and repair for each of
 the filesystems specified on the command line. It is normally invoked from
 .Xr fsck 8 .
@@ -76,7 +76,7 @@ Counts in the super-block wrong
 .El
 .Pp
 These are the only inconsistencies that
-.Nm fsck_ext2fs
+.Nm
 in ``preen''
 mode (with the
 .Fl p
@@ -85,20 +85,20 @@ with an abnormal return status.
 For each corrected inconsistency one or more lines will be printed
 identifying the filesystem on which the correction will take place,
 and the nature of the correction.  After successfully correcting a filesystem,
-.Nm fsck_ext2fs
+.Nm
 will print the number of files on that filesystem
 and the number of used and free blocks.
 .Pp
 If sent a
 .Dv QUIT
 signal,
-.Nm fsck_ext2fs
+.Nm
 will finish the filesystem checks, then exit with an abnormal return status.
 .Pp
 Without the
 .Fl p
 option,
-.Nm fsck_ext2fs
+.Nm
 audits and interactively repairs inconsistent conditions for filesystems. 
 If the filesystem is inconsistent the operator is prompted for concurrence
 before each correction is attempted.
@@ -114,7 +114,7 @@ is to wait for the operator to respond
 or
 .Li no .
 If the operator does not have write permission on the filesystem
-.Nm fsck_ext2fs
+.Nm
 will default to a 
 .Fl n
 action.
@@ -147,7 +147,7 @@ by all users on the system should use a more restrictive
 set of permissions such as 700.
 .It Fl n
 Assume a no response to all questions asked by 
-.Nm fsck_ext2fs
+.Nm
 except for
 .Ql CONTINUE? ,
 which is assumed to be affirmative;
@@ -219,7 +219,7 @@ Because of inconsistencies between the block device and the buffer cache,
 the raw device should always be used.
 .Sh DIAGNOSTICS
 The diagnostics produced by 
-.Nm fsck_ext2fs
+.Nm
 are fully enumerated and explained in Appendix A of
 .Rs
 .%T "Fsck \- The UNIX File System Check Program"

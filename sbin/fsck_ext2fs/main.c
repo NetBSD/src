@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1997/09/14 14:27:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,17 +34,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1986, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $";
+__RCSID("$NetBSD: main.c,v 1.2 1997/09/14 14:27:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,6 @@ int	main __P((int, char *[]));
 
 static int	argtoi __P((int, char *, char *, int));
 static int	checkfilesys __P((char *, char *, long, int));
-static int	docheck __P((struct fstab *));
 static  void usage __P((void));
 
 
@@ -86,7 +85,7 @@ main(argc, argv)
 
 	sync();
 	skipclean = 1;
-	while ((ch = getopt(argc, argv, "b:c:dfm:npy")) != EOF) {
+	while ((ch = getopt(argc, argv, "b:c:dfm:npy")) != -1) {
 		switch (ch) {
 		case 'b':
 			skipclean = 0;
@@ -164,22 +163,6 @@ argtoi(flag, req, str, base)
 }
 
 /*
- * Determine whether a filesystem should be checked.
- */
-static int
-docheck(fsp)
-	register struct fstab *fsp;
-{
-
-	if ( strcmp(fsp->fs_vfstype, "ext2fs") ||
-	    (strcmp(fsp->fs_type, FSTAB_RW) &&
-	     strcmp(fsp->fs_type, FSTAB_RO)) ||
-	    fsp->fs_passno == 0)
-		return (0);
-	return (1);
-}
-
-/*
  * Check the specified filesystem.
  */
 /* ARGSUSED */
@@ -192,7 +175,6 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	daddr_t n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
-	int cylno;
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
