@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.119 2003/05/13 06:48:56 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.120 2003/05/13 06:51:10 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.119 2003/05/13 06:48:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.120 2003/05/13 06:51:10 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1203,6 +1203,9 @@ wi_rx_intr(struct wi_softc *sc)
 		DPRINTF(("wi_rx_intr: read fid %x failed\n", fid));
 		return;
 	}
+
+	if (IFF_DUMPPKTS(ifp))
+		wi_dump_pkt(&frmhdr, NULL, frmhdr.wi_rx_signal);
 
 	/*
 	 * Drop undecryptable or packets with receive errors here
