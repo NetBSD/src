@@ -1,7 +1,7 @@
-/* $NetBSD: _setjmp.S,v 1.2 1996/05/12 20:25:39 mark Exp $ */
+/*	$NetBSD: _setjmp.S,v 1.3 1997/10/06 00:10:32 mark Exp $	*/
 
 /*
- * Copyright (c) 1995 Mark Brinicombe
+ * Copyright (c) 1997 Mark Brinicombe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,53 +32,75 @@
  * SUCH DAMAGE.
  */
 
-# include "DEFS.h"
+#include <machine/asm.h>
+#include <machine/setjmp.h>
 
-	.text
-	.align	0
+/*
+ * C library -- _setjmp, _longjmp
+ *
+ *	_longjmp(a,v)
+ * will generate a "return(v)" from the last call to
+ *	_setjmp(a)
+ * by restoring registers from the stack.
+ * The previous signal state is NOT restored.
+ *
+ * Note: r0 is the return value
+ *       r1-r3 are scratch registers in functions
+ */
 
 ENTRY(_setjmp)
-/*        LDR     a4,[pc,#|__fpflag_ptr|-.-8]
-        LDR     a4,[a4,#0]
-        CMP     a4,#0
-        ADDEQ   a1,a1,#48
-        BEQ     |__setjmp_l1|
-        STFE    f4,[a1],#12
-        STFE    f5,[a1],#12
-        STFE    f6,[a1],#12
-        STFE    f7,[a1],#12
-|__setjmp_l1|*/
-	add	r0, r0, #48
-        stmia	r0, {r1-r12, r13, r14}
+	ldr	r1, L_setjmp_magic
+	str	r1, [r0], #4
+#ifdef SOFTFLOAT
+	add	r0, r0, #52
+#else
+	/* Store fp registers */
+	sfm	f4, 4, [r0], #48
+	/* Store fpsr */
+	rfs	r1
+	str	r1, [r0], #0x0004
+#endif	/* SOFTFLOAT */
+	/* Store integer registers */
+        stmia	r0, {r4-r14}
+
         mov	r0, #0x00000000
         mov	r15, r14
 
+L_setjmp_magic:
+	.word	JMPBUF_MAGIC__SETJMP
+
 ENTRY(_longjmp)
-	ldr	r2, L_longjmpret
-	str	r1, [r2]
-/*        LDR     a4,[pc,#|__fpflag_ptr|-.-8]
-        LDR     a4,[a4,#0]
-        CMP     a4,#0
-        ADDEQ   a1,a1,#48
-        BEQ     |__longjmp_l1|
-        LDFE    f4,[a1],#12
-        LDFE    f5,[a1],#12
-        LDFE    f6,[a1],#12
-        LDFE    f7,[a1],#12
-|__longjmp_l1|*/
-	add	r0, r0, #48
-        ldmia	r0, {r1-r12, r13, r14}
-	ldr	r0, L_longjmpret
-	ldr	r0, [r0]
+	ldr	r2, L_setjmp_magic
+	ldr	r3, [r0], #4
+	teq	r2, r3
+	bne	botch
+
+#ifdef SOFTFLOAT
+	add	r0, r0, #52
+#else
+	/* Restore fp registers */
+	lfm	f4, 4, [r0], #48
+	/* Restore fpsr */
+	ldr	r4, [r0], #0x0004
+	wfs	r4
+#endif	/* SOFTFLOAT */
+       	/* Restore integer registers */
+        ldmia	r0, {r4-r14}
+
+	/* Validate r13 and r14 */
+	teq	r13, #0
+	beq	botch
+	teq	r14, #0
+	beq	botch
+
+	/* Set return value */
+	mov	r0, r1
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001
 	mov	r15, r14
 
-L_longjmpret:
-	.word	_longjmpret
-
-	.data
-	.align	0
-
-_longjmpret:
-	.word	0x00000000
+	/* validation failed, die die die. */
+botch:
+	bl	_longjmperror
+	bl	_abort
+	b	. - 8		/* Cannot get here */
