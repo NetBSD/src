@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.106 2000/11/05 06:46:03 thorpej Exp $
+#	$NetBSD: files.pci,v 1.107 2000/11/08 19:20:34 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -45,7 +45,7 @@ file	dev/pci/twe.c			twe
 defopt	opt_twe.h	TWE_MAX_QUEUECNT TWE_MAX_PU_QUEUECNT
 
 attach	lsu at twe with lsu_twe
-file	dev/lsu/lsu_twe.c		lsu_twe
+file	dev/pci/lsu_twe.c		lsu_twe
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci

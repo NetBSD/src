@@ -1,4 +1,4 @@
-/*	$NetBSD: lsuvar.h,v 1.1 2000/10/19 14:06:02 ad Exp $	*/
+/*	$NetBSD$	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,9 +42,11 @@
 struct lsu_softc {
 	struct	device sc_dv;
 	struct	disk sc_dk;
+	struct	buf_queue sc_bufq;
 #if NRND > 0
 	rndsource_element_t	sc_rnd_source;
 #endif
+	int	sc_queuecnt;
 
 	/*
 	 * The following are filled by hardware specific attachment code.
@@ -56,6 +58,7 @@ struct lsu_softc {
 	int	sc_nsectors;			/* # sectors per track */
 	int	sc_secsize;			/* sector size in bytes */
 	int	sc_maxxfer;			/* max xfer size in bytes */
+	int	sc_maxqueuecnt;			/* maximum h/w queue count */
 
 	int	(*sc_dump)(struct lsu_softc *, void *, int, int);
 	int	(*sc_flush)(struct lsu_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.13 2000/10/19 14:28:46 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.14 2000/11/08 19:20:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		return (-1);
 	}
 
+	sc->sc_nunits = cinfo.num_drvs;
 	for (i = 0; i < cinfo.num_drvs; i++) {
 		caca.caca_unit = i;
 		config_found_sm(&sc->sc_dv, &caca, cac_print, cac_submatch);
@@ -401,7 +402,9 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 static void
 cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 {
+	struct device *dv;
 	const char *errdvn;
+	void *context;
 	int error;
 
 	error = 0;
@@ -436,8 +439,10 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 	}
 
 	if (ccb->ccb_context.cc_handler != NULL) {
-		(*ccb->ccb_context.cc_handler)(ccb, error);
+		dv = ccb->ccb_context.cc_dv;
+		context = ccb->ccb_context.cc_context;
 		cac_ccb_free(sc, ccb);
+		(*ccb->ccb_context.cc_handler)(dv, context, error);
 	}
 }
 

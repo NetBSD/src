@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.7 2000/10/19 14:28:47 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.8 2000/11/08 19:20:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct cac_softc;
 struct cac_ccb;
 
 struct cac_context {
-	void		(*cc_handler)(struct cac_ccb *, int);
+	void		(*cc_handler)(struct device *, void *, int);
 	struct device	*cc_dv;
 	void 		*cc_context;
 };
@@ -112,6 +112,7 @@ struct cac_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmamap;
+	int			sc_nunits;
 	void			*sc_ih;
 	const struct cac_linkage	*sc_cl;
 	caddr_t			sc_ccbs;
