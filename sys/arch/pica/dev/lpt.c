@@ -1,7 +1,7 @@
-/*	$NetBSD: lpt.c,v 1.5 1998/01/12 20:04:29 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.6 1998/08/15 03:02:42 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
  *

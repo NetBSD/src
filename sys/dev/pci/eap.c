@@ -1,11 +1,11 @@
-/*	$NetBSD: eap.c,v 1.14 1998/08/12 19:09:55 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.15 1998/08/15 03:02:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author:      Lennart Augustsson <augustss@cs.chalmers.se>
- *		Charles Hannum     <mycroft@netbsd.org>
+ *		Charles M. Hannum  <mycroft@netbsd.org>
  *
  * Debugging:   Andreas Gustafsson <gson@araneus.fi>
  * Testing:     Chuck Cranor       <chuck@maria.wustl.edu>

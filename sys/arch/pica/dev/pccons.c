@@ -1,14 +1,14 @@
-/*	$NetBSD: pccons.c,v 1.10 1998/03/21 22:53:00 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.11 1998/08/15 03:02:42 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz and Don Ahn.
  *
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994 Charles M. Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1864,7 +1864,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.10 1998/03/21 22:53:00 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.11 1998/08/15 03:02:42 mycroft Exp $	*/
 
 #include <machine/mouse.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: random.S,v 1.1 1998/02/22 08:14:59 mycroft Exp $	*/
+/*	$NetBSD: random.S,v 1.2 1998/08/15 03:02:49 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1995 Charles Hannum.
+ * Copyright (c) 1995 Charles M. Hannum.
  * Copyright (c) 1990,1993 The Regents of the University of California.
  * All rights reserved.
  *

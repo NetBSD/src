@@ -1,8 +1,8 @@
-/*	$NetBSD: pci_machdep.h,v 1.10 1998/08/13 21:36:06 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.11 1998/08/15 03:02:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

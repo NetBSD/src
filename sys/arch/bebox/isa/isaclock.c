@@ -1,7 +1,7 @@
-/*	$NetBSD: isaclock.c,v 1.5 1998/01/19 11:39:57 drochner Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.6 1998/08/15 03:02:35 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

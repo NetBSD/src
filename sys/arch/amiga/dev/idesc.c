@@ -1,8 +1,8 @@
-/*	$NetBSD: idesc.c,v 1.31 1998/01/12 10:39:46 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.32 1998/08/15 03:02:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

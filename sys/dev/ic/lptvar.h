@@ -1,7 +1,7 @@
-/*	$NetBSD: lptvar.h,v 1.48 1998/02/02 22:55:06 cgd Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.49 1998/08/15 03:02:46 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
  *

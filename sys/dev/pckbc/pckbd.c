@@ -1,7 +1,7 @@
-/* $NetBSD: pckbd.c,v 1.11 1998/08/07 10:28:36 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.12 1998/08/15 03:02:47 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

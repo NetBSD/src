@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1998/06/08 17:49:42 tv Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1998/08/15 03:02:33 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

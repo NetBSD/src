@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm32.c,v 1.1 1997/10/14 09:32:29 mark Exp $	*/
+/*	$NetBSD: in_cksum_arm32.c,v 1.2 1998/08/15 03:02:33 mycroft Exp $	*/
 
 /*
  * ARM version:
@@ -14,7 +14,7 @@
  *
  * Copyright (c) 1995 Zubin Dittia.
  * Copyright (c) 1995 Matthew R. Green.
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994 Charles M. Hannum.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

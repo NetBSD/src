@@ -1,9 +1,9 @@
-/*	$NetBSD: extintr.c,v 1.7 1998/06/09 05:41:19 sakamoto Exp $	*/
+/*	$NetBSD: extintr.c,v 1.8 1998/08/15 03:02:35 mycroft Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

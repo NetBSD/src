@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.2 1998/05/01 21:14:47 cgd Exp $        */
+/*      $NetBSD: pms.c,v 1.3 1998/08/15 03:02:34 mycroft Exp $        */
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994 Charles M. Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *

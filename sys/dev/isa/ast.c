@@ -1,8 +1,8 @@
-/*	$NetBSD: ast.c,v 1.43 1998/06/09 07:24:57 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.44 1998/08/15 03:02:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * This code is derived from public-domain software written by
  * Roland McGrath.
@@ -17,7 +17,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

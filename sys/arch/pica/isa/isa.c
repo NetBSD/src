@@ -1,8 +1,8 @@
-/*	$NetBSD: isa.c,v 1.2 1996/08/11 22:36:05 jonathan Exp $	*/
+/*	$NetBSD: isa.c,v 1.3 1998/08/15 03:02:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

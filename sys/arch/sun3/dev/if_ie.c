@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ie.c,v 1.26 1998/07/05 06:49:09 jonathan Exp $ */
+/*	$NetBSD: if_ie.c,v 1.27 1998/08/15 03:02:44 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
  *  Agricultural College.
  * Copyright (c) 1992, 1993, Garrett A. Wollman.
@@ -23,7 +23,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum, by the
+ *	This product includes software developed by Charles M. Hannum, by the
  *	University of Vermont and State Agricultural College and Garrett A.
  *	Wollman, by William F. Jolitz, and by the University of California,
  *	Berkeley, Lawrence Berkeley Laboratory, and its contributors.

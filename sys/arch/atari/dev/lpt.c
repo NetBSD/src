@@ -1,8 +1,8 @@
-/*	$NetBSD: lpt.c,v 1.13 1998/01/15 13:06:27 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.14 1998/08/15 03:02:34 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
  *

@@ -1,7 +1,7 @@
-/* $NetBSD: psm_intelli.c,v 1.2 1998/07/29 20:44:32 augustss Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.3 1998/08/15 03:02:47 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994 Charles M. Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *

@@ -1,7 +1,7 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.2 1998/01/22 17:23:43 mycroft Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.3 1998/08/15 03:02:45 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Adam Glass and Charles
+ *	This product includes software developed by Adam Glass and Charles M.
  *	Hannum.
  * 4. The names of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.

@@ -1,9 +1,9 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 1998/05/25 10:43:05 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.13 1998/08/15 03:02:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
