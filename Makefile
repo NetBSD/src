@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 1998/02/06 23:11:57 perry Exp $
+#	$NetBSD: Makefile,v 1.46 1998/02/10 04:38:13 thorpej Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -72,6 +72,12 @@ build: beforeinstall
 	(cd ${.CURDIR}/usr.bin/xlint && \
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+# libtelnet depends on libdes and libkrb.  libkrb depends on
+# libcom_err.
+	(cd ${.CURDIR}/domestic/lib/libdes && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/domestic/lib/libcom_err && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/domestic/lib/libkrb && \
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/domestic/lib/ && ${MAKE} depend && ${MAKE} && \
