@@ -1,5 +1,6 @@
-.\"	$NetBSD: aic.4,v 1.2 1997/02/23 22:20:22 jonathan Exp $
+.\"	$NetBSD: aic.4,v 1.2.2.1 1997/11/11 03:55:54 thorpej Exp $
 .\"
+.\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
 .\"
@@ -23,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 29, 1994
+.Dd November 10, 1997
 .Dt AIC 4
 .Os NetBSD 
 .Sh NAME
@@ -31,16 +32,26 @@
 .Nd Adaptec AIC-6260 and AIC-6360 SCSI driver
 .Sh SYNOPSIS
 .Cd "aic0 at isa? port 0x340 irq 12"
+.Cd "aic* at pcmcia? function ?"
 .Cd "scsibus* at aic?"
 .Sh DESCRIPTION
 The
-.Nm aic
+.Nm
 driver provides support for the Adaptec AIC-6260 and AIC-6360 SCSI
-controller chips.  This includes the Adaptec 152x and the Creative
-Labs SoundBlaster SCSI host adapter.
+controller chips.
 .Pp
-Many systems that use these controller chips do not have a boot ROM
-and therefore cannot be booted from.
+The ISA attachment of the
+.Nm
+driver supports the Adaptec 152x, the Creative Labs SoundBlaster SCSI
+host adapter, and compatibles.  Many ISA cards that use this chip do
+not have boot ROMs, and therefore cannot be used to connect the boot
+device.
+.Pp
+The PCMCIA attachment of the
+.Nm
+driver supports the Adaptec APA-1460.  These SCSI host adapters
+do not include boot ROMs and therefore cannot be used to connect the
+boot device.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
