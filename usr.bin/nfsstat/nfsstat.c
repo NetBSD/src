@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.10 1998/03/25 19:54:20 hubertf Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.11 1998/03/27 02:40:38 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.10 1998/03/25 19:54:20 hubertf Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.11 1998/03/27 02:40:38 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,6 +399,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: nfsstat [-M core] [-N system] [-w interval]\n");
+	    "usage: nfsstat [-cs] [-M core] [-N system] [-w interval]\n");
 	exit(1);
 }
