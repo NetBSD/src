@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2001/12/12 00:51:05 tv Exp $
+#	$NetBSD: Makefile,v 1.35 2002/01/29 11:22:25 tv Exp $
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
@@ -17,7 +17,7 @@ NOPIC=		# defined
 .include <bsd.lib.mk>
 
 # Resolve rpcgen's path, to allow it to be a dependency.
-_RPCGEN:=	${RPCGEN}
+_RPCGEN:=	${RPCGEN:M*rpcgen}
 .if ${_RPCGEN:M/*} == ""
 _RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
 .endif
