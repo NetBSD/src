@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2000/06/09 04:18:19 soda Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 2000/11/14 18:55:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,14 @@
 /*
  * Machine dependent VM constants for MIPS.
  */
+
+/*
+ * We use a 4K page on MIPS systems.  Override PAGE_* definitions
+ * to compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
