@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.2 2000/05/22 07:40:41 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
 
 
 /*
- * DEcstation-specific mips locore code.
+ * hpcmips-specific mips locore code.
  */
 
 #include <mips/asm.h>
