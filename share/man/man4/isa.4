@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.23 2000/06/12 11:24:36 ad Exp $
+.\"	$NetBSD: isa.4,v 1.24 2000/07/26 17:30:59 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -56,8 +56,7 @@ Your system may support additional
 devices.
 Drivers for
 .Tn ISA
-device not listed here are machine-dependent.
-Consult your system's
+devices not listed here are machine-dependent.  Consult your system's
 .Xr intro 4
 for additional information.
 .Sh SUPPORTED DEVICES
@@ -66,11 +65,19 @@ includes machine-independent
 .Tn ISA
 drivers, sorted by device type and driver name:
 .Pp
-.Ss SCSI controllers
-.Bl -tag -width speaker -offset indent
+.Ss SCSI interfaces
+.Bl -tag -width pcdisplay -offset indent
+.It adv
+Advansys
+.Tn SCSI
+interfaces.
 .It aha
 Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
 BusLogic BT54x
+.Tn SCSI
+interfaces.
+.It ahc
+Adaptec 29xx, 39xx, and other AIC-7xxx-based
 .Tn SCSI
 interfaces.
 .It aic
@@ -85,7 +92,13 @@ BusLogic BT-445
 .Tn SCSI
 interfaces.
 .It dpt
-DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+DPT SmartCache/SmartRAID III and IV
+.Tn SCSI
+interfaces.
+.It esp
+NCR 53C9x, Emulex ESP406, and Qlogic FAS408
+.Tn SCSI
+interfaces.
 .It nca
 NCR-5380/NCR-53C400
 .It sea
@@ -103,7 +116,7 @@ WD-7000 family of bus-mastering
 interfaces.
 .El
 .Ss Disk and tape controllers
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
 .It mcd
 Mitsumi CD-ROM drives.
 .It wdc
@@ -114,27 +127,50 @@ Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
 .Pp
 .Ss Serial and parallel interfaces
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
 .It ast
 Multi-port serial communications card first made by AST.
 .It boca
 Boca BB100[48] and BB2016 multiplexing serial communications cards.
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
+.It ioat
+.Tn BOCA Research 
+IOAT66 
+serial interfaces.
 .It lpt
 Standard
 .Tn ISA
 parallel port interface.
 .It rtfps
-IBM RT four-port serial cards.
+IBM RT four-port serial interfaces.
+.It tcom
+Byte Runner Technologies TC-400 and TC-800 series serial interfaces.
 .El
 .Pp
 .Ss Network interfaces
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
+.It ai
+.Tn AT&T
+.Tn StarLan
+.Tn Ethernet
+interfaces.
 .It ate
-Allied Telesis AT1700 series and RE2000 series.
+Allied Telesis AT1700 series and RE2000 series
+.Tn Ethernet
+interfaces.
+.It cs
+.Tn Cirrus Logic
+Crystal CS8900
+.Tn Ethernet
+interfaces.
 .It ec
 3Com Etherlink II (3c503)
+.Tn Ethernet
+interfaces.
+.It ef
+.Tn 3Com
+EtherLink II (3c507)
 .Tn Ethernet
 interfaces.
 .It eg
@@ -156,10 +192,15 @@ Fujitsu FMV-181 and FMV-182 interfaces.
 .\" .Tn Ethernet
 .\" cards.
 .It ie
-Ethernet interfaces based on Intel 82586
+.Tn Ethernet
+interfaces based on Intel 82586
 .Tn Ethernet
 chip,
 including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
+.It ix
+Intel EtherExpress/16
+.Tn Ethernet
+interfaces.
 .It iy
 Intel i82595-based
 .Tn Ethernet
@@ -169,7 +210,8 @@ DEC EtherWORKS III
 .Tn Ethernet
 interfaces (DE203, DE204, and DE205).
 .It le
-Ethernet interfaces based on the AMD LANCE chip,
+.Tn Ethernet
+interfaces based on the AMD LANCE chip,
 including BICC Isolan, Novell NE2100, Digital DEPCA, and PCnet-ISA.
 .It ne
 Novel NE2000 and compatible
@@ -188,8 +230,8 @@ Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ
 .Tn Ethernet
 interfaces.
 .El
-.Ss Sound cards
-.Bl -tag -width speaker -offset indent
+.Ss Sound cards and MIDI interfaces
+.Bl -tag -width pcdisplay -offset indent
 .It aria
 Sierra's Aria based sound cards.
 .It cms
@@ -198,6 +240,10 @@ Creative Music System.
 ESS Technology AudioDrive 1788-, 1888-, 1887-, and 888-based sound cards.
 .It gus
 Gravis Ultrasound sound cards.
+.It mpu
+Roland MPU401 (and compatible) MIDI UARTs.
+.It opl
+Yamaha OPL2 and OPL3 FM MIDI synthesizers.
 .It pas
 ProAudio Spectrum sound cards.
 .It pss
@@ -208,6 +254,31 @@ Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
 .It wss
 Windows Sound System-compatible sound cards based on the AD1848 and
 compatible chips.
+.El
+.Ss Miscellaneous devices
+.Bl -tag -width pcdisplay -offset indent
+.It lm
+National Semiconductor LM78, LM79 and compatible hardware monitors.
+.It pcdisplay
+PC display adapters.
+.It pcic
+.Tn PCI
+.Tn PCMCIA
+controllers, including the Cirrus Logic GD6729.
+.It pckbc
+PC keyboard controllers.
+.It pcppi
+PC control and timer ports.
+.It pms
+PS/2 auxiliary port mice.
+.It pmsi
+PS/2 auxiliary port wheel mice.
+.It tcic
+Databook DB86082, DB86084, DB86184, and DB86072
+.Tn PCMCIA
+controllers.
+.It vga
+VGA graphics boards.
 .El
 .Pp
 Note that some
@@ -224,6 +295,7 @@ to attach
 devices.
 .Sh SEE ALSO
 .Xr aha 4 ,
+.Xr ahc 4 ,
 .Xr aic 4 ,
 .Xr aria 4 ,
 .Xr ast 4 ,
@@ -243,8 +315,10 @@ devices.
 .Xr le 4 ,
 .Xr lpt 4 ,
 .Xr mcd 4 ,
+.Xr mpu 4 ,
 .Xr nca 4 ,
 .Xr ne 4 ,
+.Xr opl 4 ,
 .Xr pas 4 ,
 .Xr pnpbios 4 ,
 .Xr pss 4 ,
@@ -253,6 +327,7 @@ devices.
 .Xr sea 4 ,
 .Xr sm 4 ,
 .Xr uha 4 ,
+.Xr vga 4 ,
 .Xr wd 4 ,
 .Xr wdc 4 ,
 .Xr wds 4 ,
