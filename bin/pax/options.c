@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.54 2002/10/17 00:42:02 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.55 2002/10/18 13:45:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.54 2002/10/17 00:42:02 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.55 2002/10/18 13:45:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1069,6 +1069,7 @@ tar_options(int argc, char **argv)
 	default:
 		{
 			int sawpat = 0;
+			int dirisnext = 0;
 			char *file, *dir;
 
 			while (nincfiles || *argv != NULL) {
@@ -1102,10 +1103,22 @@ tar_options(int argc, char **argv)
 						tar_usage();
 					}
 					while ((str = getline(fp)) != NULL) {
+						if (dirisnext) {
+							dir = str;
+							dirisnext = 0;
+							continue;
+						}
+						if (strcmp(str, "-C") == 0) {
+							dirisnext = 1;
+							continue;
+						}
 						if (pat_add(str, dir) < 0)
 							tar_usage();
 						sawpat = 1;
 					}
+					/* Bomb if given -C w/out a dir. */
+					if (dirisnext)
+						tar_usage();
 					if (strcmp(file, "-") != 0)
 						fclose(fp);
 					if (getline_error) {
@@ -1161,6 +1174,7 @@ tar_options(int argc, char **argv)
 			if (file != NULL) {
 				FILE *fp;
 				char *str;
+				int dirisnext = 0;
 
 				/* Set directory if needed */
 				if (dir) {
@@ -1175,9 +1189,22 @@ tar_options(int argc, char **argv)
 					tar_usage();
 				}
 				while ((str = getline(fp)) != NULL) {
+					if (dirisnext) {
+						if (ftree_add(str, 1) < 0)
+							tar_usage();
+						dirisnext = 0;
+						continue;
+					}
+					if (strcmp(str, "-C") == 0) {
+						dirisnext = 1;
+						continue;
+					}
 					if (ftree_add(str, 0) < 0)
 						tar_usage();
 				}
+				/* Bomb if given -C w/out a dir. */
+				if (dirisnext)
+					tar_usage();
 				if (strcmp(file, "-") != 0)
 					fclose(fp);
 				if (getline_error) {
