@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.4 1993/10/06 11:58:23 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.5 1993/10/09 08:53:27 mycroft Exp $
  */
 
 /*
@@ -68,7 +68,8 @@ extern	volatile int cpl;		/* current priority level mask */
 extern	int ttymask,			/* interrupt mask for spltty() */
 	    biomask,			/* interrupt mask for splbio() */
 	    netmask,			/* interrupt mask for splnet() */
-	    impmask;			/* interrupt mask for splimp() */
+	    impmask,			/* interrupt mask for splimp() */
+	    astmask;			/* interrupt mask for splast() */
 
 #define SPL(name, newipl) \
 static __inline int name() { \
@@ -81,13 +82,14 @@ SPL(spltty, ttymask)
 SPL(splbio, biomask)
 SPL(splnet, netmask)
 SPL(splimp, impmask)
+SPL(splast, astmask)
 SPL(splhigh, -1)
-#define	splclock()	splhigh()	/* should not include fast vectors */
-#define spl0()		splnone()
-
-int splsoftclock __P((void));		/* XXXX */
-int splstatclock __P((void));		/* XXXX */
 
 int splnone __P((void));
 int splx __P((int));
+
+#define	splclock()	splhigh()	/* should not include fast vectors */
+#define	splstatclock()	splclock()
+#define	splsoftclock()	splast()
+#define spl0()		splnone()
 #endif
