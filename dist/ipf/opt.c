@@ -1,4 +1,4 @@
-/*	$NetBSD: opt.c,v 1.4 2002/03/14 12:32:38 martti Exp $	*/
+/*	$NetBSD: opt.c,v 1.5 2002/04/09 02:32:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -29,8 +29,10 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: opt.c,v 2.2.2.2 2002/02/22 15:32:56 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)opt.c	1.8 4/10/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: opt.c,v 2.2.2.2 2002/02/22 15:32:56 darrenr Exp";
 #endif
 
 extern	int	opts;

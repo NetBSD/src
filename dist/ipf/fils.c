@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.14 2002/03/14 12:32:36 martti Exp $	*/
+/*	$NetBSD: fils.c,v 1.15 2002/04/09 02:32:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -95,8 +95,10 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.34 2002/02/22 15:32:45 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: fils.c,v 2.21.2.34 2002/02/22 15:32:45 darrenr Exp";
 #endif
 
 extern	char	*optarg;
