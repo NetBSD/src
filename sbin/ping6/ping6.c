@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.30 2001/01/12 19:13:41 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.112 2001/01/12 19:11:49 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.31 2001/01/26 13:18:45 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.118 2001/01/26 13:14:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.30 2001/01/12 19:13:41 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.31 2001/01/26 13:18:45 itojun Exp $");
 #endif
 #endif
 
@@ -249,9 +249,11 @@ struct iovec smsgiov;
 char *scmsg = 0;
 
 volatile int signo;
-volatile int seenalrm;
-volatile int seenint;
-volatile int seeninfo;
+volatile sig_atomic_t seenalrm;
+volatile sig_atomic_t seenint;
+#ifdef SIGINFO
+volatile sig_atomic_t seeninfo;
+#endif
 
 int	 main __P((int, char *[]));
 void	 fill __P((char *, char *));
@@ -259,10 +261,9 @@ int	 get_hoplim __P((struct msghdr *));
 struct in6_pktinfo *get_rcvpktinfo __P((struct msghdr *));
 void	 onsignal __P((int));
 void	 retransmit __P((void));
-void	 oninfo __P((int));
 void	 onint __P((int));
 void	 pinger __P((void));
-const char *pr_addr __P((struct sockaddr_in6 *));
+const char *pr_addr __P((struct sockaddr *, int));
 void	 pr_icmph __P((struct icmp6_hdr *, u_char *));
 void	 pr_iph __P((struct ip6_hdr *));
 void	 pr_suptypes __P((struct icmp6_nodeinfo *, size_t));
@@ -360,8 +361,14 @@ main(argc, argv)
 					naflags |= NI_NODEADDR_FLAG_GLOBAL;
 					break;
 				case 'A': /* experimental. not in the spec */
+#ifdef NI_NODEADDR_FLAG_ANYCAST
 					naflags |= NI_NODEADDR_FLAG_ANYCAST;
 					break;
+#else
+					errx(1,
+"-a A is not supported on the platform");
+					/*NOTREACHED*/
+#endif
 				default:
 					usage();
 					/*NOTREACHED*/
@@ -960,8 +967,8 @@ main(argc, argv)
 #endif
 
 	printf("PING6(%d=40+8+%d bytes) ", datalen + 48, datalen);
-	printf("%s --> ", pr_addr(&src));
-	printf("%s\n", pr_addr(&dst));
+	printf("%s --> ", pr_addr((struct sockaddr *)&src, sizeof(src)));
+	printf("%s\n", pr_addr((struct sockaddr *)&dst, sizeof(dst)));
 
 	while (preload--)		/* Fire off them quickies. */
 		pinger();
@@ -983,13 +990,35 @@ main(argc, argv)
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
 
-	signo = seenalrm = seenint = seeninfo = 0;
+	signo = seenalrm = seenint = 0;
+#ifdef SIGINFO
+	seeninfo = 0;
+#endif
 
 	for (;;) {
 		struct msghdr m;
 		struct cmsghdr *cm;
 		u_char buf[1024];
 		struct iovec iov[2];
+
+		/* signal handling */
+		if (seenalrm) {
+			retransmit();
+			seenalrm = 0;
+			continue;
+		}
+		if (seenint) {
+			onint(SIGINT);
+			seenint = 0;
+			continue;
+		}
+#ifdef SIGINFO
+		if (seeninfo) {
+			summary();
+			seeninfo = 0;
+			continue;
+		}
+#endif
 
 		if (options & F_FLOOD) {
 			pinger();
@@ -1001,26 +1030,15 @@ main(argc, argv)
 		memset(fdmaskp, 0, fdmasks);
 		FD_SET(s, fdmaskp);
 		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
-		if ((cc < 0 && errno == EINTR) || ((options & F_FLOOD) && signo)) {
-			if (seenalrm) {
-				retransmit();
-				seenalrm = 0;
+		if (cc < 0) {
+			if (errno != EINTR) {
+				warn("recvmsg");
+				sleep(1);
 			}
-			if (seenint) {
-				onint(SIGINT);
-				seenint = 0;
-			}
-			if (seeninfo) {
-				oninfo(SIGINFO);
-				seeninfo = 0;
-			}
-			signo = 0;
 			continue;
-		} else if (cc == 0)
-			continue;
+		}
 
 		fromlen = sizeof(from);
-
 		m.msg_name = (caddr_t)&from;
 		m.msg_namelen = sizeof(from);
 		memset(&iov, 0, sizeof(iov));
@@ -1036,21 +1054,7 @@ main(argc, argv)
 		if (cc < 0) {
 			if (errno != EINTR) {
 				warn("recvmsg");
-				continue;
-			}
-			if (!signo)
-				continue;
-			if (seenalrm) {
-				retransmit();
-				seenalrm = 0;
-			}
-			if (seenint) {
-				onint(SIGINT);
-				seenint = 0;
-			}
-			if (seeninfo) {
-				oninfo(SIGINFO);
-				seeninfo = 0;
+				sleep(1);
 			}
 			continue;
 		} else {
@@ -1078,9 +1082,11 @@ onsignal(sig)
 	case SIGINT:
 		seenint++;
 		break;
+#ifdef SIGINFO
 	case SIGINFO:
 		seeninfo++;
 		break;
+#endif
 	}
 }
 
@@ -1329,7 +1335,8 @@ pr_pack(buf, cc, mhdr)
 	struct icmp6_nodeinfo *ni;
 	int i;
 	int hoplim;
-	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
+	struct sockaddr *from;
+	int fromlen;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct timeval tv, *tp;
@@ -1342,10 +1349,18 @@ pr_pack(buf, cc, mhdr)
 
 	(void)gettimeofday(&tv, NULL);
 
+	if (!mhdr || !mhdr->msg_name || mhdr->msg_namelen != sizeof(*from) ||
+	    ((struct sockaddr *)mhdr->msg_name)->sa_family != AF_INET6) {
+		if (options & F_VERBOSE)
+			warnx("invalid peername\n");
+		return;
+	}
+	from = (struct sockaddr *)mhdr->msg_name;
+	fromlen = mhdr->msg_namelen;
 	if (cc < sizeof(struct icmp6_hdr)) {
 		if (options & F_VERBOSE)
 			warnx("packet too short (%d bytes) from %s\n", cc,
-			    pr_addr(from));
+			    pr_addr(from, fromlen));
 		return;
 	}
 	icp = (struct icmp6_hdr *)buf;
@@ -1395,17 +1410,21 @@ pr_pack(buf, cc, mhdr)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s, icmp_seq=%u", cc,
-			    pr_addr(from), seq);
+			    pr_addr(from, fromlen), seq);
 			(void)printf(" hlim=%d", hoplim);
 			if ((options & F_VERBOSE) != 0) {
 				struct sockaddr_in6 dstsa;
 
 				memset(&dstsa, 0, sizeof(dstsa));
 				dstsa.sin6_family = AF_INET6;
+#ifdef SIN6_LEN
 				dstsa.sin6_len = sizeof(dstsa);
+#endif
 				dstsa.sin6_scope_id = pktinfo->ipi6_ifindex;
 				dstsa.sin6_addr = pktinfo->ipi6_addr;
-				(void)printf(" dst=%s", pr_addr(&dstsa));
+				(void)printf(" dst=%s",
+				    pr_addr((struct sockaddr *)&dstsa,
+				    sizeof(dstsa)));
 			}
 			if (timing)
 				(void)printf(" time=%g ms", triptime);
@@ -1436,7 +1455,7 @@ pr_pack(buf, cc, mhdr)
 		if (options & F_QUIET)
 			return;
 
-		(void)printf("%d bytes from %s: ", cc, pr_addr(from));
+		(void)printf("%d bytes from %s: ", cc, pr_addr(from, fromlen));
 
 		switch (ntohs(ni->ni_code)) {
 		case ICMP6_NI_SUCCESS:
@@ -1571,7 +1590,7 @@ pr_pack(buf, cc, mhdr)
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
 			return;
-		(void)printf("%d bytes from %s: ", cc, pr_addr(from));
+		(void)printf("%d bytes from %s: ", cc, pr_addr(from, fromlen));
 		pr_icmph(icp, end);
 	}
 
@@ -1960,19 +1979,6 @@ tvsub(out, in)
 }
 
 /*
- * oninfo --
- *	SIGINFO handler.
- */
-/* ARGSUSED */
-void
-oninfo(notused)
-	int notused;
-{
-
-	summary();
-}
-
-/*
  * onint --
  *	SIGINT handler.
  */
@@ -2310,20 +2316,22 @@ pr_iph(ip6)
  * a hostname.
  */
 const char *
-pr_addr(addr)
-	struct sockaddr_in6 *addr;
+pr_addr(addr, addrlen)
+	struct sockaddr *addr;
+	int addrlen;
 {
-	static char buf[MAXHOSTNAMELEN];
-	int flag = 0;
+	static char buf[NI_MAXHOST];
+	int flag;
 
+#ifdef NI_WITHSCOPEID
+	flag = NI_WITHSCOPEID;
+#else
+	flag = 0;
+#endif
 	if ((options & F_HOSTNAME) == 0)
 		flag |= NI_NUMERICHOST;
-#ifdef NI_WITHSCOPEID
-	flag |= NI_WITHSCOPEID;
-#endif
 
-	if (getnameinfo((struct sockaddr *)addr, addr->sin6_len,
-	    buf, sizeof(buf), NULL, 0, flag) == 0)
+	if (getnameinfo(addr, addrlen, buf, sizeof(buf), NULL, 0, flag) == 0)
 		return (buf);
 	else
 		return "?";
