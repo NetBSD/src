@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2001/03/05 20:19:54 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2001/03/05 20:26:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2001/03/05 20:19:54 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2001/03/05 20:26:18 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,7 +498,7 @@ initkwds()
 	char *k;
 
 	for (i = 0; i < MAXKEYS; i++) {
-		k = keywrds[i].knam;
+		k = (char *)keywrds[i].knam;
 		if (m4prefix && asprintf(&k, "m4_%s", k) == -1)
 			err(1, "asprintf");
 		h = hash(k);

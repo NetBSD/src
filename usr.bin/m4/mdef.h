@@ -1,4 +1,4 @@
-/*	$NetBSD: mdef.h,v 1.9 2000/10/18 17:23:18 jdolecek Exp $	*/
+/*	$NetBSD: mdef.h,v 1.10 2001/03/05 20:26:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -129,7 +129,7 @@ struct ndblock {                /* hastable structure         */
 #define nil     ((ndptr) 0)
 
 struct keyblk {
-        char    *knam;          /* keyword name */
+        const char *knam;       /* keyword name */
         int     ktyp;           /* keyword type */
 };
 
