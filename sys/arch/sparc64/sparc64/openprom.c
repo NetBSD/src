@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.3 2001/09/26 20:53:13 eeh Exp $ */
+/*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,11 +99,9 @@ static int
 openpromcheckid(sid, tid)
 	register int sid, tid;
 {
-	register struct nodeops *no;
 
-	no = promvec->pv_nodeops;
-	for (; sid != 0; sid = no->no_nextnode(sid))
-		if (sid == tid || openpromcheckid(no->no_child(sid), tid))
+	for (; sid != 0; sid = nextsibling(sid))
+		if (sid == tid || openpromcheckid(firstchild(sid), tid))
 			return (1);
 
 	return (0);
