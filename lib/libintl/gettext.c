@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.2 2000/10/31 11:05:22 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.3 2000/10/31 11:08:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.2 2000/10/31 11:05:22 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.3 2000/10/31 11:08:18 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -558,10 +558,8 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 
 	/* try to find appropriate file, from $LANGUAGE */
 	if (lookup_mofile(path, sizeof(path), __domainpath, lpath, cname,
-	    domainname) != NULL)
-		goto found;
-
-	goto fail;
+	    domainname) == NULL)
+		goto fail;
 
 found:
 	v = lookup(msgid);
