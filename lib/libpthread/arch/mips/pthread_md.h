@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.4 2002/12/05 06:35:35 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/12/20 15:56:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,8 +65,6 @@ pthread__sp(void)
  * are the same as are used in the "frame" structure in the kernel.
  * These do NOT, in all cases, match the indices used in the
  * "mcontext" structure.
- *
- * Thankfully, the "fpreg" and mcontext have the same FP layout.
  */
 #include <mips/regnum.h>
 
@@ -78,6 +76,7 @@ do {									\
 	(reg)->r_regs[MULHI] = (uc)->uc_mcontext.__gregs[_REG_MDHI];	\
 	(reg)->r_regs[CAUSE] = (uc)->uc_mcontext.__gregs[_REG_CAUSE];	\
 	(reg)->r_regs[PC] = (uc)->uc_mcontext.__gregs[_REG_EPC];	\
+	(reg)->r_regs[SR] = (uc)->uc_mcontext.__gregs[_REG_SR];		\
 } while (/*CONSTCOND*/0)
 
 #define PTHREAD_REG_TO_UCONTEXT(uc, reg)				\
@@ -88,18 +87,26 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_MDHI] = (reg)->r_regs[MULHI];	\
 	(uc)->uc_mcontext.__gregs[_REG_CAUSE] = (reg)->r_regs[CAUSE];	\
 	(uc)->uc_mcontext.__gregs[_REG_EPC] = (reg)->r_regs[PC];	\
+	(uc)->uc_mcontext.__gregs[_REG_SR] = (reg)->r_regs[SR];		\
 									\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
 } while (/*CONSTCOND*/0)
 
 #define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
-	memcpy((freg), &(uc)->uc_mcontext.__fpregs,			\
-	    sizeof(struct fpreg))					\
+do {									\
+	memcpy((freg), &(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32,	\
+	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32));	\
+	(freg)->r_regs[FSR - FPBASE] =					\
+	    (uc)->uc_mcontext.__fpregs.__fp_csr;			\
+} while (/*CONSTCOND*/0)
 
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, freg)				\
 do {						       	       		\
-	memcpy(&(uc)->uc_mcontext.__fpregs, (freg),			\
-	    sizeof(struct fpreg));					\
+	memcpy(&(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32, (freg),	\
+	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32));	\
+	(uc)->uc_mcontext.__fpregs.__fp_csr =				\
+	    (freg)->r_regs[FSR - FPBASE];				\
+									\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 } while (/*CONSTCOND*/0)
 
