@@ -1,4 +1,4 @@
-/* $NetBSD: lca_bus_io.c,v 1.5 1997/04/10 23:21:34 cgd Exp $ */
+/* $NetBSD: lca_bus_io.c,v 1.6 1997/09/02 10:43:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: lca_bus_io.c,v 1.5 1997/04/10 23:21:34 cgd Exp $");
+__KERNEL_RCSID(1, "$NetBSD: lca_bus_io.c,v 1.6 1997/09/02 10:43:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,4 +55,4 @@ __KERNEL_RCSID(1, "$NetBSD: lca_bus_io.c,v 1.5 1997/04/10 23:21:34 cgd Exp $");
 #define	CHIP_IO_W1_SYS_START(v)	LCA_PCI_SIO
 #define	CHIP_IO_W1_SYS_END(v)	(LCA_PCI_SIO + ((0x00ffffffUL + 1) << 5) - 1)
 
-#include "pci_swiz_io_chipdep.c"
+#include "pci_swiz_bus_io_chipdep.c"
