@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2001/10/04 04:51:27 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2001/10/05 01:03:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.13 2001/10/04 04:51:27 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2001/10/05 01:03:24 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,4 +144,73 @@ mtree_err(const char *fmt, ...)
 		    (u_long) lineno);
 	exit(1);
 	/* NOTREACHED */
+}
+
+void
+addtag(slist_t *list, char *elem)
+{
+
+#define	TAG_CHUNK 20
+
+	if ((list->count % TAG_CHUNK) == 0) {
+		char **new;
+
+		new = (char **)realloc(list->list, (list->count + TAG_CHUNK)
+		    * sizeof(char *));
+		if (new == NULL)
+			mtree_err("memory allocation error");
+		list->list = new;
+	}
+	list->list[list->count] = elem;
+	list->count++;
+}
+
+void
+parsetags(slist_t *list, char *args)
+{
+	char	*p, *e;
+	int	len;
+
+	if (args == NULL) {
+		addtag(list, NULL);
+		return;
+	}
+	while ((p = strsep(&args, ",")) != NULL) {
+		if (*p == '\0')
+			continue;
+		len = strlen(p) + 3;	/* "," + p + ",\0" */
+		if ((e = malloc(len)) == NULL)
+			mtree_err("memory allocation error");
+		snprintf(e, len, ",%s,", p);
+		addtag(list, e);
+	}
+}
+
+/*
+ * matchtags
+ *	returns 0 if there's a match from the exclude list in the node's tags,
+ *	or there's an include list and no match.
+ *	return 1 otherwise.
+ */
+int
+matchtags(NODE *node)
+{
+	int	i;
+
+	if (node->tags) {
+		for (i = 0; i < excludetags.count; i++)
+			if (strstr(node->tags, excludetags.list[i]))
+				break;
+		if (i < excludetags.count) 
+			return (0);
+
+		for (i = 0; i < includetags.count; i++)
+			if (strstr(node->tags, includetags.list[i]))
+				break;
+		if (i > 0 && i == includetags.count)
+			return (0);
+	} else if (includetags.count > 0) {
+		return (0);
+	}
+	return (1);
 }
