@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.2 1993/12/22 07:25:10 cgd Exp $
+ *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.3 1993/12/23 20:13:15 jtc Exp $
  */
 
 #ifndef lint
-static char *rcsid = "$Id: asa.c,v 1.2 1993/12/22 07:25:10 cgd Exp $";
+static char *rcsid = "$Id: asa.c,v 1.3 1993/12/23 20:13:15 jtc Exp $";
 #endif
 
 #include <stdio.h>
@@ -84,7 +84,9 @@ asa(f)
 			break;
 		}
 
-		fputs (&buf[1], stdout);
+		if (buf[0] && buf[1]) {
+			fputs (&buf[1], stdout);
+		}
 
 		while ((buf = fgetline(f, &len)) != NULL) {
 			buf[len - 1] = '\0';
@@ -105,7 +107,9 @@ asa(f)
 				break;
 			}
 
-			fputs (&buf[1], stdout);
+			if (buf[0] && buf[1]) {
+				fputs (&buf[1], stdout);
+			}
 		}
 
 		putchar ('\n');
