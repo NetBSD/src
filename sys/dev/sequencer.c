@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.17 2001/11/13 05:32:50 lukem Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.18 2001/11/13 06:07:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.17 2001/11/13 05:32:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.18 2001/11/13 06:07:13 lukem Exp $");
 
 #include "sequencer.h"
-#if NSEQUENCER > 0
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1383,6 +1382,3 @@ midi_writebytes(unit, buf, cc)
 	return (ENXIO);
 }
 #endif /* NMIDI == 0 */
-
-#endif /* NSEQUENCER > 0 */
-
