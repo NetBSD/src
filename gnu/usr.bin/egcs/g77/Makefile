@@ -1,5 +1,5 @@
-#	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.3 1998/04/02 01:11:06 tv Exp $
+#	from: @{#}Makefile    6.2 (Berkeley) 3/25/91
+#	$NetBSD: Makefile,v 1.4 1998/04/03 02:20:30 tv Exp $
 
 PROG=	g77
 SRCS=	gcc.c g77spec.c version.c choose-temp.c pexecute.c obstack.c
@@ -12,5 +12,5 @@ MLINKS=	g77.1 f77.1
 
 .include <bsd.prog.mk>
 
-.PATH: $(DIST)/f $(DIST)
-CPPFLAGS+= -I$(DIST)/f -I$(DIST)
+.PATH: ${DIST}/f ${DIST}
+CPPFLAGS+= -I${DIST}/f -I${DIST} -DLANG_SPECIFIC_DRIVER

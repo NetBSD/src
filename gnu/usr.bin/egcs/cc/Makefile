@@ -1,5 +1,5 @@
-#	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.2 1998/03/30 04:15:36 mrg Exp $
+#	from: @{#}Makefile    6.2 (Berkeley) 3/25/91
+#	$NetBSD: Makefile,v 1.3 1998/04/03 02:20:29 tv Exp $
 
 PROG=           gcc
 SRCS=	gcc.c obstack.c version.c pexecute.c choose-temp.c
