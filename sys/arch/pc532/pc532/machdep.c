@@ -35,14 +35,14 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  *
- *	$Id: machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp $
+ *	machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp
  */
 
 /*
  * Modified for the pc532 by Phil Nelson.  2/3/93
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp $";
+static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp";
 
 #include "param.h"
 #include "systm.h"
@@ -385,11 +385,50 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
+
+#if 1
+	/*
+	 * Now allocate buffers proper.  They are different than the above
+	 * in that they usually occupy more virtual memory than physical.
+	 */
+	size = MAXBSIZE * nbuf;
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
+				   &maxaddr, size, FALSE);
+	minaddr = (vm_offset_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+			&minaddr, size, FALSE) != KERN_SUCCESS)
+		panic("startup: cannot allocate buffers");
+	base = bufpages / nbuf;
+	residual = bufpages % nbuf;
+	if (base >= MAXBSIZE) {
+		/* don't want to alloc more physical mem than needed */
+		base = MAXBSIZE;
+		residual = 0;
+	}
+	for (i = 0; i < nbuf; i++) {
+		vm_size_t curbufsize;
+		vm_offset_t curbuf;
+
+		/*
+		 * First <residual> buffers get (base+1) physical pages
+		 * allocated for them.  The rest get (base) physical pages.
+		 *
+		 * The rest of each buffer occupies virtual space,
+		 * but has no physical memory allocated for it.
+		 */
+		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
+		vm_map_simplify(buffer_map, curbuf);
+	}
+#else
 	/*
 	 * Allocate a submap for buffer space allocations.
 	 */
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 bufpages*CLBYTES, TRUE);
+#endif
+
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -447,14 +486,15 @@ vmtime(otime, olbolt, oicr)
 }
 #endif
 
+/*
 struct sigframe {
 	int	sf_signum;
 	int	sf_code;
 	struct	sigcontext *sf_scp;
 	sig_t	sf_handler;
-	int	sf_reg[8];
 	struct	sigcontext sf_sc;
 } ;
+*/
 
 /*
  * Send an interrupt to process.
@@ -525,7 +565,7 @@ sendsig(catcher, sig, mask, code)
 	fp->sf_handler = catcher;
 
 	/* save registers */
-	bcopy (regs, fp->sf_reg, 8*sizeof(int));
+	bcopy (regs, fp->sf_scp->sc_reg, 8*sizeof(int));
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -554,6 +594,7 @@ struct sigreturn_args {
 	struct sigcontext *sigcntxp;
 };
 
+int
 sigreturn(p, uap, retval)
 	struct proc *p;
 	struct sigreturn_args *uap;
@@ -569,7 +610,7 @@ sigreturn(p, uap, retval)
 		return(EINVAL);
 
 	/* restore registers */
-	bcopy (fp->sf_reg, regs, 8*sizeof(int));
+	bcopy (fp->sf_scp->sc_reg, regs, 8*sizeof(int));
 
 	scp = fp->sf_scp;
 	if (useracc((caddr_t)scp, sizeof (*scp), 0) == 0)
@@ -753,7 +794,7 @@ setregs(p, entry, stack, retval)
 	r->pcb_usp = stack;
 	r->pcb_fp = stack;
 	r->pcb_pc = entry;
-	r->pcb_psr = USER_PSR;
+	r->pcb_psr = PSL_USERSET;
 	for (i=0; i<8; i++) r->pcb_reg[i] = 0;
 
 	p->p_addr->u_pcb.pcb_flags = 0;
@@ -1022,4 +1063,13 @@ void reboot_cpu()
 {
 	printf ("Should be rebooting!  Hit reset!\n");
 	while (1);
+}
+
+int
+sysarch(p, uap, retval)
+	struct proc *p;
+	void  *uap;
+	int *retval;
+{
+	return ENOSYS;
 }
