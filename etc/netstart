@@ -1,18 +1,26 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.33 1997/04/29 04:55:05 scottr Exp $
+#	$NetBSD: netstart,v 1.34 1997/05/12 11:26:10 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
 	. /etc/rc.conf
 fi
 
-# /etc/myname contains my symbolic name
-#
-hostname=`cat /etc/myname`
+# If $hostname is set, use it for my symbolic name, otherwise use /etc/myname
+if [ -z "$hostname" ]; then
+	hostname=`cat /etc/myname`
+fi
+echo "hostname: $hostname"
 hostname $hostname
-if [ -f /etc/defaultdomain ]; then
-	domainname `cat /etc/defaultdomain`
+
+# Check $domainname first, then /etc/defaultdomain, for domain name
+if [ -z "$domainname" -a -f /etc/defaultdomain ]; then
+	domainname=`cat /etc/defaultdomain`
+fi
+if [ -n "$domainname" ]; then
+	echo "domainname: $domainname"
+	domainname $domainname
 fi
 
 # enable, flush and install packet filter rules before configuring interfaces.
@@ -43,52 +51,88 @@ if [ "$net_interfaces" != NO ]; then
 	else
 		tmp="$net_interfaces"
 	fi
-	echo -n "configuring network interfaces:"
-	for i in $tmp; do
-		eval `echo 'args=$ifconfig_'$i`
-		if [ ! -z "$args" ]; then
-			echo -n " $i"
-			ifconfig $i $args
-		elif [ -f /etc/ifconfig.$i ]; then
-			echo -n " $i"
+	echo -n 'configuring network interfaces:'
+	for int in $tmp; do
+		eval `echo 'args=$ifconfig_'$int`
+		if [ -n "$args" ]; then
+			echo -n " $int"
+			ifconfig $int $args
+		elif [ -f /etc/ifconfig.$int ]; then
+			echo -n " $int"
 			(while read args; do
-				ifconfig $i $args
-			done) < /etc/ifconfig.$i
+				ifconfig $int $args
+			done) < /etc/ifconfig.$int
 		elif [ "$net_interfaces" != DEFAULT ]; then
 			echo
-			echo -n "/etc/ifconfig.$i missing"
- 			echo -n "& ifconfig_$i not set"
-			echo "; interface $i can't be configured"
+			echo -n "/etc/ifconfig.$int missing"
+ 			echo -n "& ifconfig_$int not set"
+			echo "; interface $int can't be configured"
+			continue
 		fi
+		if [ "$int" = "lo0" ]; then
+			configured_lo0=yes
+		fi
+		configured_interfaces="$configured_interfaces $int"
 	done
-	echo "."
+	echo '.'
 fi
 
-
-# set the address for the loopback interface
-ifconfig lo0 inet localhost
+# set the address for the loopback interface if it's not configured
+if [ $configured_lo0 != "yes" ]; then
+	ifconfig lo0 inet localhost
+fi
 
 # use loopback, not the wire
 route add $hostname localhost
 
-# /etc/mygate, if it exists, contains the name of my gateway host
-# that name must be in /etc/hosts.
-if [ -f /etc/mygate ]; then
-	route add default `cat /etc/mygate`
+# Check $defaultroute, then /etc/mygate, for the name of my gateway host.
+# That name must be in /etc/hosts.
+if [ -z "$defaultroute" -a -f /etc/mygate ]; then
+	defaultroute=`cat /etc/mygate`
 fi
+if [ -n "$defaultroute" ]; then
+	route add default $defaultroute
+fi
+
+# Check if each configured interface xxN has an $ifaliases_xxN variable
+# associated, then configure additional IP addresses for that interface.
+# The variable contains a list of "address netmask" pairs, with "netmask"
+# set to "-" if the interface default netmask is to be used.
+# 
+if [ -n "$configured_interfaces" ]; then
+	echo 'adding interface aliases:';
+fi
+for int in $configured_interfaces; do
+	eval `echo 'args=$ifaliases_'$int`
+	if [ -n "$args" ]; then
+		set -- $args
+		while [ $# -ge 2 ]; do
+			addr=$1 ; net=$2 ; shift 2
+			if [ "$net" = "-" ]; then
+				ifconfig $int inet alias $addr
+			else
+				ifconfig $int inet alias $addr netmask $net
+			fi
+			# use loopback, not the wire
+			route add $addr localhost
+		done
+	fi
+done
 
 # /etc/ifaliases, if it exists, contains the names of additional IP
 # addresses for each interface. It is formatted as a series of lines
 # that contain
 #	address interface netmask
 if [ -f /etc/ifaliases ]; then
+	echo 'adding interface aliases:';
 (
 	while read addr int net; do
-		if [ ! -n "$net" ]; then
+		if [ -z "$net" ]; then
 			ifconfig $int inet alias $addr
 		else
 			ifconfig $int inet alias $addr netmask $net
 		fi
+		# use loopback, not the wire
 		route add $addr localhost
 	done
 ) < /etc/ifaliases
