@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.6 1996/05/17 19:32:09 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.7 1996/10/09 00:50:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,8 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -321,15 +323,15 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-msselect(dev, rw, p)
+mspoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct ms_softc *ms;
 
 	ms = ms_cd.cd_devs[minor(dev)];
-	return (ev_select(&ms->ms_events, rw, p));
+	return (ev_poll(&ms->ms_events, events, p));
 }
 
 
