@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.22 1994/10/20 04:22:47 cgd Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.23 1995/02/23 23:41:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -252,9 +252,7 @@ again:
 		 * Child process.  Set start time and get to work.
 		 */
 		(void) splclock();
-		p2->p_stats->p_start = time;
 		(void) spl0();
-		p2->p_acflag = AFORK;
 		return (0);
 	}
 
@@ -262,6 +260,8 @@ again:
 	 * Make child runnable and add to run queue.
 	 */
 	(void) splhigh();
+	p2->p_stats->p_start = time;
+	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
 	(void) spl0();
