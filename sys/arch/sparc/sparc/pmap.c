@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.186 2001/03/26 23:12:03 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.187 2001/04/17 20:14:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -446,9 +446,9 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 
 /*static*/ void pmap_rmk4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
 /*static*/ void pmap_rmu4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_enk4m __P((struct pmap *, vaddr_t, vm_prot_t,
+/*static*/ int  pmap_enk4m __P((struct pmap *, vaddr_t, vm_prot_t,
 				int, struct pvlist *, int));
-/*static*/ void pmap_enu4m __P((struct pmap *, vaddr_t, vm_prot_t,
+/*static*/ int  pmap_enu4m __P((struct pmap *, vaddr_t, vm_prot_t,
 				int, struct pvlist *, int));
 /*static*/ void pv_changepte4m __P((struct pvlist *, int, int));
 /*static*/ int  pv_syncflags4m __P((struct pvlist *));
@@ -460,9 +460,9 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 /*static*/ void	mmu_reservemon4_4c __P((int *, int *));
 /*static*/ void pmap_rmk4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
 /*static*/ void pmap_rmu4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_enk4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
+/*static*/ int  pmap_enk4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
 				  int, struct pvlist *, int));
-/*static*/ void pmap_enu4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
+/*static*/ int  pmap_enu4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
 				  int, struct pvlist *, int));
 /*static*/ void pv_changepte4_4c __P((struct pvlist *, int, int));
 /*static*/ int  pv_syncflags4_4c __P((struct pvlist *));
@@ -5157,7 +5157,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	struct pvlist *pv;
 	int pteproto, ctx;
 	u_int pfn;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	int error;
 
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
@@ -5170,7 +5170,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
-		    pm, va, pa, prot, wired);
+		    pm, va, pa, prot, flags);
 #endif
 
 	pteproto = PG_V | PMAP_T2PTE_4(pa);
@@ -5192,20 +5192,20 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 
 	ctx = getcontext4();
 	if (pm == pmap_kernel())
-		pmap_enk4_4c(pm, va, prot, wired, pv, pteproto | PG_S);
+		error = pmap_enk4_4c(pm, va, prot, flags, pv, pteproto | PG_S);
 	else
-		pmap_enu4_4c(pm, va, prot, wired, pv, pteproto);
+		error = pmap_enu4_4c(pm, va, prot, flags, pv, pteproto);
 	setcontext4(ctx);
-	return 0;
+	return (error);
 }
 
 /* enter new (or change existing) kernel mapping */
-void
-pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
+int
+pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 	struct pmap *pm;
 	vaddr_t va;
 	vm_prot_t prot;
-	int wired;
+	int flags;
 	struct pvlist *pv;
 	int pteproto;
 {
@@ -5244,8 +5244,9 @@ pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
 			splx(s);
-			pmap_changeprot4_4c(pm, va, prot, wired);
-			return;
+			pmap_changeprot4_4c(pm, va, prot, 
+					    (flags & PMAP_WIRED) != 0);
+			return (0);
 		}
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
@@ -5322,19 +5323,21 @@ printf("pmap_enk: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x\n",
 	/* ptes kept in hardware only */
 	setpte4(va, pteproto);
 	splx(s);
+	return (0);
 }
 
 /* enter new (or change existing) user mapping */
-void
-pmap_enu4_4c(pm, va, prot, wired, pv, pteproto)
+int
+pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 	struct pmap *pm;
 	vaddr_t va;
 	vm_prot_t prot;
-	int wired;
+	int flags;
 	struct pvlist *pv;
 	int pteproto;
 {
 	int vr, vs, *pte, tpte, pmeg, s, doflush;
+	int error = 0;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -5363,18 +5366,26 @@ pmap_enu4_4c(pm, va, prot, wired, pv, pteproto)
 	}
 #endif
 
-rretry:
 	if (rp->rg_segmap == NULL) {
 		/* definitely a new mapping */
 		int i;
 		int size = NSEGRG * sizeof (struct segmap);
+		int mflag = M_NOWAIT;
 
-		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
-		if (rp->rg_segmap != NULL) {
-printf("pmap_enter: segment filled during sleep\n");	/* can this happen? */
-			free(sp, M_VMPMAP);
+	rretry:
+		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, mflag);
+		if (sp == NULL) {
+			if ((flags & PMAP_CANFAIL) != 0) {
+				error = ENOMEM;
+				goto out;
+			}
+			mflag = M_WAITOK;
 			goto rretry;
 		}
+#ifdef DEBUG
+		if (rp->rg_segmap != NULL)
+			panic("pmap_enter: segment filled during sleep");
+#endif
 		qzero((caddr_t)sp, size);
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
@@ -5384,18 +5395,24 @@ printf("pmap_enter: segment filled during sleep\n");	/* can this happen? */
 
 	sp = &rp->rg_segmap[vs];
 
-sretry:
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
 		int size = NPTESG * sizeof *pte;
+		int mflag = M_NOWAIT;
 
-		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
-		if (sp->sg_pte != NULL) {
-printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
-			free(pte, M_VMPMAP);
+	sretry:
+		pte = (int *)malloc((u_long)size, M_VMPMAP, mflag);
+		if (pte == NULL) {
+			if ((flags & PMAP_CANFAIL) != 0) {
+				error = ENOMEM;
+				goto out;
+			}
+			mflag = M_WAITOK;
 			goto sretry;
 		}
 #ifdef DEBUG
+		if (sp->sg_pte != NULL)
+			panic("pmap_enter: pte filled during sleep");
 		if (sp->sg_pmeg != seginval)
 			panic("pmap_enter: new ptes, but not seginval");
 #endif
@@ -5424,20 +5441,21 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				tpte = getpte4(VA_VPG(va) << PGSHIFT);
 			}
 		}
-		if (tpte & PG_V) {
 
+		if (tpte & PG_V) {
 			/* old mapping exists, and is of the same pa type */
 			if ((tpte & (PG_PFNUM|PG_TYPE)) ==
 			    (pteproto & (PG_PFNUM|PG_TYPE))) {
 				/* just changing prot and/or wiring */
 				splx(s);
 				/* caller should call this directly: */
-				pmap_changeprot4_4c(pm, va, prot, wired);
-				if (wired)
+				pmap_changeprot4_4c(pm, va, prot,
+						    (flags & PMAP_WIRED) != 0);
+				if ((flags & PMAP_WIRED) != 0)
 					pm->pm_stats.wired_count++;
 				else
 					pm->pm_stats.wired_count--;
-				return;
+				return (0);
 			}
 			/*
 			 * Switcheroo: changing pa for this va.
@@ -5445,8 +5463,9 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 * If old page was cached, flush cache.
 			 */
 #if 0
-printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
-	curproc->p_comm, curproc->p_pid, va);
+			printf("%s[%d]: pmap_enu: changing existing "
+				"va(0x%x)=>pa entry\n",
+				curproc->p_comm, curproc->p_pid, va);
 #endif
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
 				struct pvlist *pv;
@@ -5463,7 +5482,7 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
 			/*
 			 * Increment counters
 			 */
-			if (wired)
+			if ((flags & PMAP_WIRED) != 0)
 				pm->pm_stats.wired_count++;
 		}
 	}
@@ -5492,7 +5511,9 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
 	pte += VA_VPG(va);
 	*pte = pteproto;
 
+out:
 	splx(s);
+	return (error);
 }
 
 void
@@ -5555,7 +5576,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	struct pvlist *pv;
 	int pteproto, ctx;
 	u_int pfn;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	int error;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
@@ -5563,7 +5584,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 			"(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
 			curproc==NULL ? -1 : curproc->p_pid,
 			pm->pm_ctx==NULL ? -1 : pm->pm_ctxnum,
-			pm, va, pa, prot, wired);
+			pm, va, pa, prot, flags);
 #endif
 
 	/* Initialise pteproto with cache bit */
@@ -5601,21 +5622,21 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	ctx = getcontext4m();
 
 	if (pm == pmap_kernel())
-		pmap_enk4m(pm, va, prot, wired, pv, pteproto | PPROT_S);
+		error = pmap_enk4m(pm, va, prot, flags, pv, pteproto | PPROT_S);
 	else
-		pmap_enu4m(pm, va, prot, wired, pv, pteproto);
+		error = pmap_enu4m(pm, va, prot, flags, pv, pteproto);
 
 	setcontext4m(ctx);
-	return 0;
+	return (error);
 }
 
 /* enter new (or change existing) kernel mapping */
-void
-pmap_enk4m(pm, va, prot, wired, pv, pteproto)
+int
+pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 	struct pmap *pm;
 	vaddr_t va;
 	vm_prot_t prot;
-	int wired;
+	int flags;
 	struct pvlist *pv;
 	int pteproto;
 {
@@ -5645,8 +5666,9 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 		if ((tpte & SRMMU_PPNMASK) == (pteproto & SRMMU_PPNMASK)) {
 			/* just changing protection and/or wiring */
 			splx(s);
-			pmap_changeprot4m(pm, va, prot, wired);
-			return;
+			pmap_changeprot4m(pm, va, prot,
+					  (flags & PMAP_WIRED) != 0);
+			return (0);
 		}
 
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
@@ -5690,19 +5712,21 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
 	splx(s);
+	return (0);
 }
 
 /* enter new (or change existing) user mapping */
-void
-pmap_enu4m(pm, va, prot, wired, pv, pteproto)
+int
+pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 	struct pmap *pm;
 	vaddr_t va;
 	vm_prot_t prot;
-	int wired;
+	int flags;
 	struct pvlist *pv;
 	int pteproto;
 {
 	int vr, vs, *pte, tpte, s;
+	int error = 0;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -5717,37 +5741,49 @@ pmap_enu4m(pm, va, prot, wired, pv, pteproto)
 	rp = &pm->pm_regmap[vr];
 	s = splvm();			/* XXX conservative */
 
-rretry:
 	if (rp->rg_segmap == NULL) {
 		/* definitely a new mapping */
 		int size = NSEGRG * sizeof (struct segmap);
+		int mflag = M_NOWAIT;
 
-		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
-		if (rp->rg_segmap != NULL) {
-#ifdef DEBUG
-printf("pmap_enu4m: segment filled during sleep\n");	/* can this happen? */
-#endif
-			free(sp, M_VMPMAP);
+	rretry:
+		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, mflag);
+		if (sp == NULL) {
+			if ((flags & PMAP_CANFAIL) != 0) {
+				error = ENOMEM;
+				goto out;
+			}
+			mflag = M_WAITOK;
 			goto rretry;
 		}
+#ifdef DEBUG
+		if (rp->rg_segmap != NULL)
+			panic("pmap_enu4m: segment filled during sleep");
+#endif
 		qzero((caddr_t)sp, size);
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
 		rp->rg_seg_ptps = NULL;
 	}
-rgretry:
 	if (rp->rg_seg_ptps == NULL) {
 		/* Need a segment table */
 		int i, *ptd;
+		int mflag = PR_NOWAIT;
 
-		ptd = pool_get(&L23_pool, PR_WAITOK);
-		if (rp->rg_seg_ptps != NULL) {
-#ifdef DEBUG
-printf("pmap_enu4m: bizarre segment table fill during sleep\n");
-#endif
-			pool_put(&L23_pool, ptd);
+	rgretry:
+		ptd = pool_get(&L23_pool, mflag);
+		if (ptd == NULL) {
+			if ((flags & PMAP_CANFAIL) != 0) {
+				error = ENOMEM;
+				goto out;
+			}
+			mflag = PR_WAITOK;
 			goto rgretry;
 		}
+#ifdef DEBUG
+		if (rp->rg_seg_ptps != NULL)
+			panic("pmap_enu4m: segment table fill during sleep");
+#endif
 
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
@@ -5768,17 +5804,25 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 
 	sp = &rp->rg_segmap[vs];
 
-sretry:
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
 		int i;
+		int mflag = PR_NOWAIT;
 
-		pte = pool_get(&L23_pool, PR_WAITOK);
-		if (sp->sg_pte != NULL) {
-printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
-			pool_put(&L23_pool, pte);
+	sretry:
+		pte = pool_get(&L23_pool, mflag);
+		if (pte == NULL) {
+			if ((flags & PMAP_CANFAIL) != 0) {
+				error = ENOMEM;
+				goto out;
+			}
+			mflag = PR_WAITOK;
 			goto sretry;
 		}
+#ifdef DEBUG
+		if (sp->sg_pte != NULL)
+			panic("pmap_enter: pte filled during sleep");
+#endif
 
 		sp->sg_pte = pte;
 		sp->sg_npte = 1;
@@ -5805,12 +5849,13 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				/* just changing prot and/or wiring */
 				splx(s);
 				/* caller should call this directly: */
-				pmap_changeprot4m(pm, va, prot, wired);
-				if (wired)
+				pmap_changeprot4m(pm, va, prot,
+						  (flags & PMAP_WIRED) != 0);
+				if ((flags & PMAP_WIRED) != 0)
 					pm->pm_stats.wired_count++;
 				else
 					pm->pm_stats.wired_count--;
-				return;
+				return (0);
 			}
 			/*
 			 * Switcheroo: changing pa for this va.
@@ -5818,9 +5863,11 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 * If old page was cached, flush cache.
 			 */
 #ifdef DEBUG
-if (pmapdebug & PDB_SWITCHMAP)
-printf("%s[%d]: pmap_enu: changing existing va 0x%x: pte 0x%x=>0x%x\n",
-	curproc->p_comm, curproc->p_pid, (int)va, tpte, pteproto);
+			if (pmapdebug & PDB_SWITCHMAP)
+				printf("%s[%d]: pmap_enu: changing existing "
+					"va 0x%x: pte 0x%x=>0x%x\n",
+					curproc->p_comm, curproc->p_pid,
+					(int)va, tpte, pteproto);
 #endif
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 				struct pvlist *pv;
@@ -5840,7 +5887,7 @@ printf("%s[%d]: pmap_enu: changing existing va 0x%x: pte 0x%x=>0x%x\n",
 			/*
 			 * Increment counters
 			 */
-			if (wired)
+			if ((flags & PMAP_WIRED) != 0)
 				pm->pm_stats.wired_count++;
 		}
 	}
@@ -5856,7 +5903,9 @@ printf("%s[%d]: pmap_enu: changing existing va 0x%x: pte 0x%x=>0x%x\n",
 	}
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
+out:
 	splx(s);
+	return (error);
 }
 
 void
