@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.14 1994/09/05 09:09:51 pk Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.15 1995/10/05 00:40:33 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -235,7 +235,7 @@ setflags(n)
 #define BICS(v,c,s)	BIC(v,c),BIS(v,s)
 
 	iflag = omode.c_iflag;
-	oflag = omode.c_oflag;
+	oflag = 0;
 	cflag = omode.c_cflag;
 	lflag = omode.c_lflag;
 
@@ -274,7 +274,10 @@ setflags(n)
 
 	if (NL) {
 		iflag |= ICRNL;
-		oflag |= ONLCR;
+		oflag |= ONLCR|OPOST;
+	} else {
+		iflag &= ~ICRNL;
+		oflag &= ~ONLCR;
 	}
 
 #ifdef XXX_DELAY
@@ -296,7 +299,7 @@ setflags(n)
 	if (HT)
 		oflag &= ~OXTABS;
 	else
-		oflag |= OXTABS;
+		oflag |= OXTABS|OPOST;
 
 	if (n == 0)
 		goto out;
