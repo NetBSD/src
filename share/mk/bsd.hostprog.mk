@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.25 2002/09/17 23:18:29 thorpej Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.26 2003/05/14 00:24:06 dbj Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -73,7 +73,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS} ${HOSTPROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
-${HOSTPROG}: ${DPSRCS} ${OBJS} ${LIBC} ${DPADD}
+${HOSTPROG}: ${DPSRCS} ${OBJS} ${DPADD}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(OBJS) && !empty(OBJS)
