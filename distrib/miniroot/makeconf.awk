@@ -1,18 +1,26 @@
-#	$NetBSD: makeconf.awk,v 1.1 1995/12/18 22:47:31 pk Exp $
+#	$NetBSD: makeconf.awk,v 1.2 1995/12/19 00:54:08 pk Exp $
 
 BEGIN {
 	# a list of `aliases'
-	links["chgrp",0] = "chown";
+	links["[",0] = "test";
 	links["awk",0] = "gawk";
+	links["chgrp",0] = "chown";
+	links["egrep",0] = "grep";
+	links["fgrep",0] = "grep";
 	links["gzcat",0] = "gzip";
 	links["gunzip",0] = "gzip";
-	links["-sh",0] = "sh";		# init invokes the shell this way
-	links["[",0] = "test";
-	links["cd9660",0] = "mount_cd9660";
-	links["ffs",0] = "mount_ffs";
-	links["nfs",0] = "mount_nfs";
 	links["halt",0] = "reboot";
+	links["reset",0] = "tset";
+	links["rrestore",0] = "restore";
+	links["sum",0] = "cksum";
+	links["uncompress",0] = "compress";
 	links["vi",0] = "common";	# XXX catch vi
+	links["zcat",0] = "compress";
+
+	argvlinks["mount_ffs"] = "ffs";	# mount invokes mount_* this way
+	argvlinks["mount_nfs"] = "nfs";
+	argvlinks["mount_cd9660"] = "cd9660";
+	argvlinks["sh"] = "-sh";	# init invokes the shell this way
 }
 
 ($1 == "LINK" || $1 == "SYMLINK") && index($2,CBIN) {
@@ -22,9 +30,9 @@ BEGIN {
 		links[p,1] = links[p,0];
 		p = links[p,0];
 	}
-	if (p == "sh")			# XXX - catch `-sh'
-		links["-sh",1] = "sh";
 	progs[p] = 1;
+	if (argvlinks[p])
+		links[argvlinks[p],1] = p;
 }
 
 END {
