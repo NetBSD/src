@@ -1,6 +1,7 @@
-#	$NetBSD: KLONDIKE,v 1.2 1995/09/26 20:16:01 phil Exp $
 #
-# KLONDIKE: Matthias Pfaller's pc532
+# DEFAULT: default install kernel
+#	Only has scn0-5 are configured.
+#	Instead of scn6/7 the lpt0/1 devices get into the kernel.
 #
 
 machine		pc532
@@ -21,7 +22,10 @@ options		FIFO			# fifos; recommended
 #options	LKM			# loadable kernel modules
 
 # compatibility options
-options		COMPAT_43		# 4.3 system calls
+#options 	COMPAT_09		# NetBSD 0.9,
+#options 	COMPAT_10		# NetBSD 1.0,
+options 	COMPAT_43		# and 4.3BSD
+#options 	TCP_COMPAT_42		# TCP bug compatibility with 4.2BSD
 
 # file system options
 #options	QUOTA			# file system quotas
@@ -34,10 +38,10 @@ options		NULLFS			# loopback file system
 #options	UMAPFS			# NULLFS + uid and gid remapping
 options		UNION			# union file system
 #options	PORTAL			# /portal
-#options	FDESC			# /dev/fd
+options		FDESC			# /dev/fd
 options		KERNFS			# /kern
 options		PROCFS			# /proc
-options		NFSSERVER		# Network File System server
+#options	NFSSERVER		# Network File System server
 options		NFSCLIENT		# Network File System client
 
 # networking options
@@ -49,15 +53,15 @@ options		INET			# IP + ICMP + TCP + UDP
 #options	CCITT,LLC,HDLC		# X.25
 
 # pc532 specific options
-options		COMDEF_SPEED=B19200	# default baud on the scn chips
+#options	COMDEF_SPEED=B19200	# default baud on the scn chips
 options		PLIP			# PLIP driver in dev/lpt.c
 options		DEV_RTC			# RTC driver in pc532/mem.c
+options		NO_INLINE_SPLX		# don't inline splx calls
 
-config		netbsd root on sd0a swap on sd0b and sd1b
+config		netbsd	swap generic
+options		GENERIC
 
 membus0 at root
-#clock0 at membus?
-#timer0 at membus?
 
 ncr0 at membus?
 
@@ -71,14 +75,16 @@ scn0 at membus?
 scn1 at membus?
 scn2 at membus?
 scn3 at membus?
+scn4 at membus?
+scn5 at membus?
 
 lpt0 at membus? addr 0xffc80030 irq 7
 lpt1 at membus? addr 0xffc80034 irq 6
 
 pseudo-device	pty 16			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
-pseudo-device	vnd 2			# vnode  devices
-#pseudo-device	bpfilter 4		# packet filter
-#pseudo-device	sl 1			# compressed SLIP
-#pseudo-device	ppp 1			# Point-to-Point Protocol
-#pseudo-device	tun 1			# ip tunneling
+pseudo-device	vnd 2			# vnode devices
+pseudo-device	bpfilter 4		# packet filter
+pseudo-device	sl 1			# compressed SLIP
+pseudo-device	ppp 1			# Point-to-Point Protocol
+pseudo-device	tun 1			# network tunneling

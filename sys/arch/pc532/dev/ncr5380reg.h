@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.2 1995/08/29 22:44:42 phil Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.3 1995/09/26 20:16:13 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -159,6 +159,18 @@
 struct	ncr_softc {
 	struct	device		sc_dev;
 	struct	scsi_link	sc_link;
+
+	/*
+	 * Some (pre-SCSI2) devices don't support select with ATN.
+	 * If the device responds to select with ATN by going into
+	 * command phase (ignoring ATN), then we flag it in the
+	 * following bitmask.
+	 * We also keep track of which devices have been selected
+	 * before.  This allows us to not even try raising ATN if
+	 * the target doesn't respond to it the first time.
+	 */
+	u_int8_t	sc_noselatn;
+	u_int8_t	sc_selected;
 };
 
 /*
@@ -195,7 +207,7 @@ typedef struct	req_q {
     struct dma_chain	*dm_cur;    /* current dma-request		    */
     struct dma_chain	*dm_last;   /* last dma-request			    */
     long		xdata_len;  /* length of transfer		    */
-    u_char		*xdata_ptr; /* physical address of transfer	    */
+    u_char		*xdata_ptr; /* virtual address of transfer	    */
     struct scsi_generic	xcmd;	    /* command to execute		    */
 } SC_REQ;
 
@@ -216,11 +228,13 @@ static SC_REQ	*connected = NULL;	/* Command currently connected	*/
 /*
  * Function decls:
  */
-static int  transfer_pio __P((u_char *, u_char *, u_long *));
+static int  transfer_pio __P((u_char *, u_char *, u_long *, int));
 static int  wait_req_true __P((void));
 static int  wait_req_false __P((void));
 static int  scsi_select __P((SC_REQ *, int));
 static int  handle_message __P((SC_REQ *, u_int));
+static void ack_message __P((void));
+static void nack_message __P((SC_REQ *));
 static int  information_transfer __P((void));
 static void reselect __P((struct ncr_softc *));
 static int  dma_ready __P((void));
@@ -239,6 +253,6 @@ static void ncr_aprint __P((struct ncr_softc *, char *, ...));
 
 static void show_request __P((SC_REQ *, char *));
 static void show_phase __P((SC_REQ *, int));
-static void show_signals __P((void));
+static void show_signals __P((u_char, u_char));
 
 #endif /* _NCR5380REG_H */

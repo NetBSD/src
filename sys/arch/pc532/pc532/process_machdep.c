@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7 1995/08/29 22:37:51 phil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.8 1995/09/26 20:16:32 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -127,7 +127,7 @@ process_read_fpregs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	memcpy(regs, &p->p_addr->u_pcb.pcb_fsr, sizeof(*regs));
+	bcopy(&p->p_addr->u_pcb.pcb_fsr, regs, sizeof(*regs));
 	return (0);
 }
 
@@ -139,7 +139,7 @@ process_write_fpregs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	memcpy(&p->p_addr->u_pcb.pcb_fsr, regs, sizeof(*regs));
+	bcopy(regs, &p->p_addr->u_pcb.pcb_fsr, sizeof(*regs));
 	return (0);
 }
 

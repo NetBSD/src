@@ -2,11 +2,15 @@
 #include "stand.h"
 #include "samachdep.h"
 
+#ifndef RD_START
+#define RD_START 0x288000
+#endif
+
 rdopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
 {
-	f->f_devdata = (void *) 0x200000;
+	f->f_devdata = (void *) RD_START;
 	return(0);
 }
 
