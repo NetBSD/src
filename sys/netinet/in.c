@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.49 1999/12/12 15:57:07 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.50 2000/02/01 22:52:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -383,8 +383,10 @@ in_control(so, cmd, data, ifp, p)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
+			IFAREF(&ia->ia_ifa);
+			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 			    ifa_list);
+			IFAREF(&ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
@@ -512,12 +514,7 @@ in_control(so, cmd, data, ifp, p)
 		return 0;
 
 	case SIOCDIFADDR:
-		in_ifscrub(ifp, ia);
-		LIST_REMOVE(ia, ia_hash);
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-		IFAFREE((&ia->ia_ifa));
-		in_setmaxmtu();
+		in_purgeaddr(&ia->ia_ifa, ifp);
 		break;
 
 #ifdef MROUTING
@@ -534,6 +531,22 @@ in_control(so, cmd, data, ifp, p)
 		return(error);
 	}
 	return (0);
+}
+
+void
+in_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct in_ifaddr *ia = (void *) ifa;
+
+	in_ifscrub(ifp, ia);
+	LIST_REMOVE(ia, ia_hash);
+	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
+	IFAFREE(&ia->ia_ifa);
+	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+	IFAFREE(&ia->ia_ifa);
+	in_setmaxmtu();
 }
 
 /*
