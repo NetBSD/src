@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.17 1993/10/27 19:33:26 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.18 1993/10/27 21:25:07 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -166,11 +166,11 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-STATIC int fdmatch __P((struct device *, struct cfdata *, void *));
+STATIC int fdprobe __P((struct device *, struct cfdata *, void *));
 STATIC void fdattach __P((struct device *, struct device *, void *));
 
 struct	cfdriver fdcd =
-{ NULL, "fd", fdmatch, fdattach, DV_DISK, sizeof(struct fd_softc) };
+{ NULL, "fd", fdprobe, fdattach, DV_DISK, sizeof(struct fd_softc) };
 
 void fdstrategy __P((struct buf *));
 
@@ -234,9 +234,7 @@ fdcforceintr(aux)
 }
 
 /*
- * Arguments passed between fdcattach and fdmatch.  Note that fdcattach
- * effectively does the probing for each of the two drives (hence the
- * name fdmatch, rather than fdprobe).
+ * Arguments passed between fdcattach and fdprobe.
  */
 struct fdc_attach_args {
 	int	fa_drive;
@@ -298,10 +296,7 @@ fdcattach(parent, self, aux)
 		if (type >= 0) {
 			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
 			    type, fa.fa_drive);
-			if (fa.fa_deftype == NULL)	/* none or error */
-				continue;
 		} else {
-			/* XXXX should probe drive to make sure it exists */
 			fa.fa_deftype = NULL;		/* unknown */
 		}
 		(void)config_found(self, (void *)&fa, fdprint);
@@ -309,16 +304,37 @@ fdcattach(parent, self, aux)
 }
 
 STATIC int
-fdmatch(parent, cf, aux)
+fdprobe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
 	struct fdc_attach_args *fa = aux;
+	struct fdc_softc *fdc;
+	u_short iobase;
 
 #define cf_drive cf_loc[0]
-	return cf->cf_drive < 0 || cf->cf_drive == fa->fa_drive;
+	if (cf->cf_drive != -1 && cf->cf_drive != fa->fa_drive)
+		return 0;
 #undef cf_drive
+
+	fdc = (struct fdc_softc *)parent;
+	iobase = fdc->sc_iobase;
+	out_fdc(iobase, NE7CMD_SENSED);
+	out_fdc(iobase, fa->fa_drive);
+#if 0 /* XXXX */
+	if (fdc_result(fdc) != 1)
+		return 0;
+#else
+	{int n, i;
+	 n = fdc_result(fdc);
+	 printf("fdprobe: status");
+	 for (i = 0; i < n; i++)
+		 printf(" %x", fdc->sc_status[i]);
+	 printf("\n");}
+#endif
+
+	return 1;
 }
 
 /*
