@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.14 1995/12/27 07:51:40 chopps Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.15 1996/03/17 01:17:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -169,8 +169,8 @@ struct bah_softc {
 #endif
 };
 
-int	bahmatch __P((struct device *, void *, void *));
-void	bahattach __P((struct device *, struct device *, void *));
+int	bah_zbus_match __P((struct device *, void *, void *));
+void	bah_zbus_attach __P((struct device *, struct device *, void *));
 void	bah_init __P((struct bah_softc *));
 void	bah_reset __P((struct bah_softc *));
 void	bah_stop __P((struct bah_softc *));
@@ -187,12 +187,16 @@ void	callstart __P((void *vsc, void *dummy));
 int	clkread();
 #endif
 
-struct cfdriver bahcd = {
-	NULL, "bah", bahmatch, bahattach, DV_IFNET, sizeof(struct bah_softc)
+struct cfattach bah_zbus_ca = {
+	sizeof(struct bah_softc), bah_zbus_match, bah_zbus_attach
+};
+
+struct cfdriver bah_cd = {
+	NULL, "bah", DV_IFNET
 };
 
 int
-bahmatch(parent, match, aux)
+bah_zbus_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -205,7 +209,7 @@ bahmatch(parent, match, aux)
 }
 
 void
-bahattach(parent, self, aux)
+bah_zbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -263,7 +267,7 @@ bahattach(parent, self, aux)
 	bah_stop(sc); 
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = bahcd.cd_name;
+	ifp->if_name = bah_cd.cd_name;
 	ifp->if_output = arc_output;
 	ifp->if_start = bah_start;
 	ifp->if_ioctl = bah_ioctl;
@@ -530,7 +534,7 @@ bah_start(ifp)
 	u_long copystart, lencopy, perbyte;
 #endif
 
-	sc = bahcd.cd_devs[ifp->if_unit];
+	sc = bah_cd.cd_devs[ifp->if_unit];
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 3)
 	printf("%s: start(0x%x)\n", sc->sc_dev.dv_xname, ifp);
@@ -1128,7 +1132,7 @@ bah_ioctl(ifp, command, data)
 	int s, error;
 
 	error = 0;
-	sc = bahcd.cd_devs[ifp->if_unit];
+	sc = bah_cd.cd_devs[ifp->if_unit];
 	ifa = (struct ifaddr *)data;
 	s = splnet();
 
@@ -1201,7 +1205,7 @@ int unit;
 	struct bah_softc *sc;
 	struct ifnet *ifp;
 
-	sc = bahcd.cd_devs[unit];
+	sc = bah_cd.cd_devs[unit];
 	ifp = &(sc->sc_arccom.ac_if);
 
 	sc->sc_base->command = ARC_TXDIS;

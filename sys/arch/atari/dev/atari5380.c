@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.9 1996/03/08 21:54:53 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.10 1996/03/17 01:26:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -100,7 +100,7 @@
 
 static u_char	*alloc_bounceb __P((u_long));
 static void	free_bounceb __P((u_char *));
-static int	machine_match __P((struct device *, struct cfdata *, void *,
+static int	machine_match __P((struct device *, void *, void *,
 							struct cfdriver *));
        void	scsi_ctrl __P((int));
        void	scsi_dma __P((int));
@@ -858,9 +858,11 @@ u_long	*bytes_left;
  * Our autoconfig matching function
  */
 static int
-machine_match(struct device *pdp, struct cfdata *cdp, void *auxp,
+machine_match(struct device *pdp, void *match, void *auxp,
 						struct cfdriver *cd)
 {
+	struct cfdata *cdp = match;
+
 	if (strcmp(auxp, cd->cd_name))
 		return(0);
 	if (cdp->cf_unit != 0)	/* Only one unit	*/

@@ -57,7 +57,7 @@
 
 int  flscprint  __P((void *auxp, char *));
 void flscattach __P((struct device *, struct device *, void *));
-int  flscmatch  __P((struct device *, struct cfdata *, void *));
+int  flscmatch  __P((struct device *, void *, void *));
 
 struct scsi_adapter flsc_scsiswitch = {
 	sfas_scsicmd,
@@ -73,10 +73,13 @@ struct scsi_device flsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
+struct cfattach flsc_ca = {
+	sizeof(struct flsc_softc), flscmatch, flscattach
+};
 
-struct cfdriver flsccd = {
-	NULL, "flsc", (cfmatch_t)flscmatch, flscattach, 
-	DV_DULL, sizeof(struct flsc_softc), NULL, 0 };
+struct cfdriver flsc_cd = {
+	NULL, "flsc", DV_DULL, NULL, 0
+};
 
 int flsc_intr		 __P((struct sfas_softc *dev));
 int flsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,
@@ -90,10 +93,9 @@ void flsc_led		 __P((struct sfas_softc *sc, int mode));
  * if we are an Advanced Systems & Software FastlaneZ3
  */
 int
-flscmatch(pdp, cdp, auxp)
+flscmatch(pdp, void, auxp)
 	struct device	*pdp;
-	struct cfdata	*cdp;
-	void		*auxp;
+	void		*match, *auxp;
 {
 	struct zbus_args *zap;
 

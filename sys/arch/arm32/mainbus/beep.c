@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.2 1996/03/06 23:26:20 mark Exp $ */
+/* $NetBSD: beep.c,v 1.3 1996/03/17 01:24:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -86,8 +86,12 @@ int	beepclose	__P((dev_t, int, int, struct proc *));
 int	beepintr	__P((struct beep_softc *sc));
 void	beepdma		__P((struct beep_softc *sc, int buf));
 
-struct cfdriver	beepcd = {
-	NULL, "beep", beepprobe, beepattach, DV_TTY, sizeof(struct beep_softc)
+struct cfattach beep_ca = {
+	sizeof(struct beep_softc), beepprobe, beepattach
+};
+
+struct cfdriver	beep_cd = {
+	NULL, "beep", DV_TTY
 };
 
 
@@ -202,10 +206,10 @@ beepopen(dev, flag, mode, p)
 	int unit = minor(dev);
 	int s;
     
-	if (unit >= beepcd.cd_ndevs)
+	if (unit >= beep_cd.cd_ndevs)
 		return(ENXIO);
 
-	sc = beepcd.cd_devs[unit];
+	sc = beep_cd.cd_devs[unit];
 	if (!sc) return(ENXIO);
 
 /* HACK hack hack */
@@ -231,7 +235,7 @@ beepclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct beep_softc *sc = beepcd.cd_devs[unit];
+	struct beep_softc *sc = beep_cd.cd_devs[unit];
 	int s;
 
 	if (sc->sc_open == 0) return(ENXIO);
@@ -249,7 +253,7 @@ beepclose(dev, flag, mode, p)
 void
 beep_generate(void)
 {
-	struct beep_softc *sc = beepcd.cd_devs[0];
+	struct beep_softc *sc = beep_cd.cd_devs[0];
 /*	int status;*/
 
 	if (sc->sc_count > 0) {
@@ -275,7 +279,7 @@ beepioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct beep_softc *sc = beepcd.cd_devs[minor(dev)];
+	struct beep_softc *sc = beep_cd.cd_devs[minor(dev)];
 	int rate;
 	struct wavebuffer *wave = (struct wavebuffer *)data;
 

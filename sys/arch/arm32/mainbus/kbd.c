@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.4 1996/03/13 21:51:32 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.5 1996/03/17 01:24:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -608,8 +608,12 @@ int kbdintr __P((struct kbd_softc *));
 void autorepeatstart __P((void *));
 void autorepeat __P((void *));
 
-struct cfdriver	kbdcd = {
-	NULL, "kbd", kbdprobe, kbdattach, DV_TTY, sizeof(struct kbd_softc)
+struct cfattach kbd_ca = {
+	sizeof(struct kbd_softc), kbdprobe, kbdattach
+};
+
+struct cfdriver	kbd_cd = {
+	NULL, "kbd", DV_TTY
 };
 
 
@@ -668,10 +672,10 @@ kbdopen(dev, flag, mode, p)
 	struct kbd_softc *sc;
 	int unit = KBDUNIT(dev);
 
-	if (unit >= kbdcd.cd_ndevs)
+	if (unit >= kbd_cd.cd_ndevs)
 		return(ENXIO);
 
-	sc = kbdcd.cd_devs[unit];
+	sc = kbd_cd.cd_devs[unit];
 
 	if (!sc) return(ENXIO);
 
@@ -709,7 +713,7 @@ kbdclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = KBDUNIT(dev);
-	struct kbd_softc *sc = kbdcd.cd_devs[unit];
+	struct kbd_softc *sc = kbd_cd.cd_devs[unit];
 
 	switch (KBDFLAG(dev)) {
 	case KBDFLAG_RAWUNIT :
@@ -737,7 +741,7 @@ kbdread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct kbd_softc *sc = kbdcd.cd_devs[KBDUNIT(dev)];
+	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
 	int s;
 	int error = 0;
 	size_t length;
@@ -786,7 +790,7 @@ kbdselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct kbd_softc *sc = kbdcd.cd_devs[KBDUNIT(dev)];
+	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
 	int s;
 	int ret;
 
@@ -815,7 +819,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-/*	struct kbd_softc *sc = kbdcd.cd_devs[KBDUNIT(dev)];*/
+/*	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];*/
 	struct kbd_autorepeat *kbdar = (void *)data;
 	int *leds = (int *)data;
 	int s;

@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.2 1996/03/08 16:22:38 mark Exp $ */
+/* $NetBSD: oak.c,v 1.3 1996/03/17 01:24:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -212,9 +212,12 @@ oakminphys(bp)
 	return (minphys(bp));
 }
 
-struct cfdriver oakcd = {
-	NULL, "oak", oakprobe, oakattach, DV_DISK, sizeof(struct oak_softc),
-	NULL, 0,
+struct cfattach oak_ca = {
+	sizeof(struct oak_softc), oakprobe, oakattach
+};
+
+struct cfdriver oak_cd = {
+	NULL, "oak", DV_DISK, NULL, 0,
 };
 
 #ifdef USE_OWN_PIO_ROUTINES
