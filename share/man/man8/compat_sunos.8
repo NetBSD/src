@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.11 1999/03/17 20:31:19 garbled Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.12 2001/06/07 15:25:31 mrg Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -30,13 +30,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 15, 1994
+.Dd February 3, 2001
 .Dt COMPAT_SUNOS 8
 .Os
 .Sh NAME
 .Nm compat_sunos
-.Nd setup procedure for m68k and sparc architectures
+.Nd setup procedure for m68k, sparc and sparc64 architectures
 .Sh DESCRIPTION
+.Nx Ns Tn /sparc64 ,
 .Nx Ns Tn /sparc
 and some of the
 .Nx Ns Tn /m68k
@@ -112,6 +113,14 @@ in a location where the
 compatibility code will look for
 first, where they do not conflict with the standard libraries.
 .Pp
+.Sh NOTES
+When using
+.Nm
+on
+.Nx Ns Tn /sparc64 ,
+the
+.Sy COMPAT_NETBSD32
+option must also be used.
 .Sh BUGS
 A list of things which fail to work in compatibility mode should
 be here.
@@ -132,4 +141,7 @@ The
 option to
 .Xr mount_nfs 8
 will also have the desired effect, but is less preferable.
-
+.Pp
+The
+.Nx Ns Tn /sparc64
+support is less complete than the other ports.
