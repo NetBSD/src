@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 1999/11/07 07:12:07 mycroft Exp $	*/
+/*	$NetBSD: asm.h,v 1.15 1999/11/17 18:08:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,7 +100,7 @@
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg ## ,30,0,0,0 ;					\
 	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
-#elifdef __ELF__
+#elif defined(__ELF__)
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
