@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.2 1996/11/17 13:33:40 leo Exp $
+#	$NetBSD: HADES,v 1.3 1996/12/16 21:24:23 leo Exp $
 #
 # Medusa-Hades
 #
@@ -19,8 +19,6 @@ maxusers	16
 options		"M68030"	# support for 030
 options		"M68040"	# support for 040
 
-options		TIMEZONE=0	# Set the timezone that the kernel will use
-options		DST=0		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
 
 options	FPSP			# 68040 Floatingpoint support
