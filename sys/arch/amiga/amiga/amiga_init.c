@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.53 1996/11/30 01:20:14 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.54 1997/01/31 23:18:56 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -69,6 +69,7 @@ extern u_int	virtual_avail;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
+extern u_long boot_partition;
 
 extern char *esym;
 
@@ -111,13 +112,13 @@ static u_long boot_flags;
 u_long scsi_nosync;
 int shift_nosync;
 
-void  start_c __P((int, u_int, u_int, u_int, char *, u_int, u_long));
+void  start_c __P((int, u_int, u_int, u_int, char *, u_int, u_long, u_long));
 void rollcolor __P((int));
 static int kernel_image_magic_size __P((void));
 static void kernel_image_magic_copy __P((u_char *));
 int kernel_reload_write __P((struct uio *));
 extern void kernel_reload __P((char *, u_long, u_long, u_long, u_long,
-	u_long, u_long, u_long, u_long, u_long));
+	u_long, u_long, u_long, u_long, u_long, u_long));
 extern void etext __P((void));
 void start_c_cleanup __P((void));
 
@@ -180,12 +181,13 @@ alloc_z2mem(amount)
 int kernel_copyback = 1;
 
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
+start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part)
 	int id;
 	u_int fphystart, fphysize, cphysize;
 	char *esym_addr;
 	u_int flags;
 	u_long inh_sync;
+	u_long boot_part;
 {
 	extern char end[];
 	extern u_int protorp[2];
@@ -227,6 +229,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	RELOC(chipmem_end, vm_offset_t) = cphysize;
 	RELOC(esym, char *) = esym_addr;
 	RELOC(boot_flags, u_long) = flags;
+	RELOC(boot_partition, u_long) = boot_part;
 #ifdef GRF_AGA
 	if (flags & 1)
 		RELOC(aga_enable, u_long) |= 1;
@@ -1183,7 +1186,7 @@ kernel_reload_write(uio)
 		    kernel_load_ofs + kernel_image_magic_size(),
 		    kernel_exec.a_entry, boot_fphystart, boot_fphysize,
 		    boot_cphysize, kernel_symbol_esym, eclockfreq,
-		    boot_flags, scsi_nosync);
+		    boot_flags, scsi_nosync, boot_partition);
 		/*
 		 * kernel_reload() now checks to see if the reload_code
 		 * is at the same location in the new kernel.
