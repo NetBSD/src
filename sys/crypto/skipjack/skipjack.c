@@ -1,4 +1,4 @@
-/*	$NetBSD: skipjack.c,v 1.2 2003/08/27 00:20:56 thorpej Exp $ */
+/*	$NetBSD: skipjack.c,v 1.1 2003/11/16 12:07:50 tls Exp $ */
 /*	$OpenBSD: skipjack.c,v 1.3 2001/05/05 00:31:34 angelos Exp $	*/
 
 /* 
@@ -15,10 +15,10 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: skipjack.c,v 1.2 2003/08/27 00:20:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: skipjack.c,v 1.1 2003/11/16 12:07:50 tls Exp $");
 
 #include <sys/param.h>
-#include <opencrypto/skipjack.h>
+#include <crypto/skipjack/skipjack.h>
 #include <sys/malloc.h>
 #include <opencrypto/cryptodev.h>
 
