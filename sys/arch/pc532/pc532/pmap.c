@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1999/07/28 05:37:55 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1999/07/28 06:54:42 thorpej Exp $	*/
 
 /*
  *
@@ -374,8 +374,8 @@ static struct pv_entry	*pmap_alloc_pvpage __P((struct pmap *, int));
 static void		 pmap_enter_pv __P((struct pv_head *,
 					    struct pv_entry *, struct pmap *,
 					    vaddr_t, struct vm_page *));
-static void		 pmap_free_pv __P((struct pv_entry *));
-static void		 pmap_free_pvs __P((struct pv_entry *));
+static void		 pmap_free_pv __P((struct pmap *, struct pv_entry *));
+static void		 pmap_free_pvs __P((struct pmap *, struct pv_entry *));
 static void		 pmap_free_pv_doit __P((struct pv_entry *));
 static void		 pmap_free_pvpage __P((void));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
@@ -1324,13 +1324,19 @@ pmap_free_pv_doit(pv)
  */
 
 __inline static void
-pmap_free_pv(pv)
+pmap_free_pv(pmap, pv)
+	struct pmap *pmap;
 	struct pv_entry *pv;
 {
 	simple_lock(&pvalloc_lock);
 	pmap_free_pv_doit(pv);
 
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL)
+	/*
+	 * Can't free the PV page if the PV entries were associated with
+	 * the kernel pmap; the pmap is already locked.
+	 */
+	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
 	simple_unlock(&pvalloc_lock);
@@ -1343,7 +1349,8 @@ pmap_free_pv(pv)
  */
 
 __inline static void
-pmap_free_pvs(pvs)
+pmap_free_pvs(pmap, pvs)
+	struct pmap *pmap;
 	struct pv_entry *pvs;
 {
 	struct pv_entry *nextpv;
@@ -1355,7 +1362,12 @@ pmap_free_pvs(pvs)
 		pmap_free_pv_doit(pvs);
 	}
 
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL)
+	/*
+	 * Can't free the PV page if the PV entries were associated with
+	 * the kernel pmap; the pmap is already locked.
+	 */
+	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
 	simple_unlock(&pvalloc_lock);
@@ -2061,7 +2073,7 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 		/* end of "for" loop: time for next pte */
 	}
 	if (pv_tofree)
-		pmap_free_pvs(pv_tofree);
+		pmap_free_pvs(pmap, pv_tofree);
 }
 
 
@@ -2126,7 +2138,7 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	simple_unlock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 
 	if (pve)
-		pmap_free_pv(pve);
+		pmap_free_pv(pmap, pve);
 	return(TRUE);
 }
 
@@ -2389,7 +2401,7 @@ pmap_page_remove(pg)
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 	}
-	pmap_free_pvs(pvh->pvh_list);
+	pmap_free_pvs(NULL, pvh->pvh_list);
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
@@ -3312,7 +3324,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		/* new mapping is not PG_PVLIST.   free pve if we've got one */
 		pvh = NULL;		/* ensure !PG_PVLIST */
 		if (pve)
-			pmap_free_pv(pve);
+			pmap_free_pv(pmap, pve);
 	}
 
 enter_now:
