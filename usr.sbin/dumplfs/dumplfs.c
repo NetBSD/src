@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.11 1998/08/30 01:40:15 nathanw Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.12 1998/09/11 21:22:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.11 1998/08/30 01:40:15 nathanw Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.12 1998/09/11 21:22:53 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(argc, argv)
 		err(1, "%s", special);
 
 	/* Read the first superblock */
-	get(fd, LFS_LABELPAD, &lfs_sb1, sizeof(struct lfs));
+	get(fd, LFS_LABELPAD, &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
 	daddr_shift = lfs_sb1.lfs_bshift - lfs_sb1.lfs_fsbtodb;
 
 	/*
@@ -159,7 +159,7 @@ main(argc, argv)
 	 * most up to date.
 	 */
 	get(fd,
-	    lfs_sb1.lfs_sboffs[1] << daddr_shift, &lfs_sb2, sizeof(struct lfs));
+	    lfs_sb1.lfs_sboffs[1] << daddr_shift, &(lfs_sb2.lfs_dlfs), sizeof(struct dlfs));
 
 	lfs_master = &lfs_sb1;
 	if (lfs_sb1.lfs_tstamp < lfs_sb2.lfs_tstamp)
@@ -514,7 +514,7 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 	} while (sum_offset);
 
 	if (dump_sb && sb)  {
-		get(fd, super_off, &lfs_sb, sizeof(struct lfs));
+		get(fd, super_off, &(lfs_sb.lfs_dlfs), sizeof(struct dlfs));
 		dump_super(&lfs_sb);
 	}
 	return;
@@ -591,6 +591,7 @@ dump_super(lfsp)
 		"curseg   ", lfsp->lfs_curseg,
 		"offset   ", lfsp->lfs_offset);
 	(void)printf("tstamp   %s", ctime((time_t *)&lfsp->lfs_tstamp));
+#if 0  /* This is no longer stored on disk! --ks */
 	(void)printf("\nIn-Memory Information\n");
 	(void)printf("%s%d\t%s0x%X\t%s%d%s%d\t%s%d\n",
 		"seglock  ", lfsp->lfs_seglock,
@@ -603,6 +604,7 @@ dump_super(lfsp)
 		"fmod     ", lfsp->lfs_fmod,
 		"clean    ", lfsp->lfs_clean,
 		"ronly    ", lfsp->lfs_ronly);
+#endif
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1998/03/01 02:20:53 fvdl Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1998/09/11 21:23:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,6 +35,9 @@
  *	@(#)extern.h	8.2 (Berkeley) 5/24/95
  */
 
+struct dlfs;
+
+u_long  lfs_sb_cksum __P((struct dlfs *));
 u_long	cksum __P((void *, size_t));
 u_short	dkcksum __P((struct disklabel *));
 void	fatal __P((const char *fmt, ...));
