@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.2 1998/07/15 09:35:35 drochner Exp $	*/
+/*	$NetBSD: uhci.c,v 1.3 1998/07/23 00:27:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1626,7 +1626,7 @@ uhci_bulk_done(ii)
 		dma = &upipe->u.bulk.datadma;
 		if (upipe->u.bulk.isread && len != 0)
 			memcpy(reqh->buffer, KERNADDR(dma), len);
-		uhci_free_std_chain(sc, htd->link.std, ii->stdend);
+		uhci_free_std_chain(sc, htd->link.std, 0);
 		uhci_freemem(sc, dma);
 	}
 	DPRINTFN(4, ("uhci_bulk_done: length=%d\n", reqh->actlen));
