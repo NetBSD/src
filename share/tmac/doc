@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc,v 1.3 1997/07/02 02:55:41 phil Exp $
+.\"	$NetBSD: doc,v 1.4 1997/09/15 00:32:34 lukem Exp $
 .\"
 .\" .mdoc-parse - attempt to parse troff request arguments
 .\"     %beginstrip%
@@ -742,18 +742,19 @@
 .	\}
 .	el \{\
 .		ds mN Nm
-.               ds A1 \\$1
-.               ds A2 \\$2
-.               ds A3 \\$3
-.               ds A4 \\$4
-.               ds A5 \\$5
-.               ds A6 \\$6
-.               ds A7 \\$7
-.               ds A8 \\$8
-.               ds A9 \\$9
-.               nr fV \\n(.$
-.               fV
-.       \}
+.		ie "\\$1"" .ds A1 \\*(n1
+.		el .ds A1 \\$1
+.		ds A2 \\$2
+.		ds A3 \\$3
+.		ds A4 \\$4
+.		ds A5 \\$5
+.		ds A6 \\$6
+.		ds A7 \\$7
+.		ds A8 \\$8
+.		ds A9 \\$9
+.		nr fV \\n(.$
+.		fV
+.	\}
 .\}
 .if \\n(aC>0 \{\
 .	ie \\n(aC==\\n(aP \{\
