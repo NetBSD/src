@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.4 2002/05/18 14:09:44 jdolecek Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.5 2002/05/20 20:19:36 jdolecek Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -58,6 +58,8 @@ struct mb8795_softc {
 	u_char *sc_txbuf; 	/* to solve alignment problems, we
 				 * copy the mbuf into this buffer before
 				 * trying to dma it */
+
+	struct ifaltq sc_tx_snd;
 
 	bus_dma_tag_t sc_rx_dmat;
 	bus_dmamap_t sc_rx_dmamap[MB8795_NRXBUFS];

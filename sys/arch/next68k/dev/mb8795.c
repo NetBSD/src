@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.25 2002/05/18 14:33:35 jdolecek Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.26 2002/05/20 20:19:36 jdolecek Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -124,6 +124,7 @@ void mb8795_txdma_completed __P((bus_dmamap_t,void *));
 void mb8795_rxdma_shutdown __P((void *));
 void mb8795_txdma_shutdown __P((void *));
 bus_dmamap_t mb8795_txdma_restart __P((bus_dmamap_t,void *));
+void mb8795_start_dma __P((struct ifnet *));
 
 void
 mb8795_config(sc)
@@ -551,8 +552,8 @@ mb8795_init(sc)
 
 	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 
-	if (ifp->if_snd.ifq_head != NULL) {
-		mb8795_start(ifp);
+	if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
+		mb8795_start_dma(ifp);
 	}
 }
 
@@ -712,13 +713,63 @@ void
 mb8795_start(ifp)
 	struct ifnet *ifp;
 {
+	struct mb8795_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+	int s;
+
+	DPRINTF(("%s: mb8795_start()\n",sc->sc_dev.dv_xname));
+
+#ifdef DIAGNOSTIC
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == 0) {
+		panic("%s: No packet to start\n",
+		      sc->sc_dev.dv_xname);
+	}
+#endif
+
+	while (1) {
+		if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+			return;
+
+#if 0
+		return;	/* @@@ Turn off xmit for debugging */
+#endif
+
+		ifp->if_flags |= IFF_OACTIVE;
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == 0) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			return;
+		}
+
+#if NBPFILTER > 0
+		/*
+		 * Pass packet to bpf if there is a listener.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		s = spldma();
+		IF_ENQUEUE(&sc->sc_tx_snd, m);
+		if (sc->sc_tx_loaded == 0)
+			mb8795_start_dma(ifp);
+		splx(s);
+
+		ifp->if_flags &= ~IFF_OACTIVE;
+	}
+
+}
+
+void
+mb8795_start_dma(ifp)
+	struct ifnet *ifp;
+{
 	int error;
 	struct mb8795_softc *sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
-	DPRINTF(("%s: mb8795_start()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: mb8795_start_dma()\n",sc->sc_dev.dv_xname));
 
 #if (defined(DIAGNOSTIC))
 	{
@@ -740,14 +791,16 @@ mb8795_start(ifp)
 	return;	/* @@@ Turn off xmit for debugging */
 #endif
 
-	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT, XE_TXSTAT_CLEAR);
-
-	IF_DEQUEUE(&ifp->if_snd, sc->sc_tx_mb_head);
+	IF_DEQUEUE(&sc->sc_tx_snd, sc->sc_tx_mb_head);
 	if (sc->sc_tx_mb_head == 0) {
-		DPRINTF(("%s: No packet to start\n",
-			sc->sc_dev.dv_xname));
+#ifdef DIAGNOSTIC
+		panic("%s: No packet to start_dma\n",
+		      sc->sc_dev.dv_xname);
+#endif
 		return;
 	}
+
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT, XE_TXSTAT_CLEAR);
 
 	ifp->if_timer = 5;
 
@@ -805,20 +858,12 @@ mb8795_start(ifp)
 	}
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
-
 	bus_dmamap_sync(sc->sc_tx_dmat, sc->sc_tx_dmamap, 0,
 			sc->sc_tx_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	nextdma_start(sc->sc_tx_nd, DMACSR_SETWRITE);
 	
-#if NBPFILTER > 0
-	/*
-	 * Pass packet to bpf if there is a listener.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, sc->sc_tx_mb_head);
-#endif
+	ifp->if_opackets++;
 }
 
 /****************************************************************/
@@ -878,12 +923,10 @@ mb8795_txdma_shutdown(arg)
 		}
 #endif
 
-		ifp->if_flags &= ~IFF_OACTIVE;
-
 		ifp->if_timer = 0;
 
-		if (ifp->if_snd.ifq_head != NULL) {
-			mb8795_start(ifp);
+		if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
+			mb8795_start_dma(ifp);
 		}
 
 	}
