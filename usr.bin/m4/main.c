@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1998/12/19 19:54:26 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1999/04/20 08:05:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 1998/12/19 19:54:26 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 1999/04/20 08:05:52 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,7 @@ main(argc,argv)
 {
 	int c;
 	int n;
+	int fd;
 	char *p;
 	FILE *ifp;
 
@@ -191,7 +192,11 @@ main(argc,argv)
 
 	active = stdout;		/* default active output     */
 					/* filename for diversions   */
-	m4temp = mktemp(xstrdup(_PATH_DIVNAME));
+	m4temp = xstrdup(_PATH_DIVNAME);
+	fd = mkstemp(m4temp);
+	if (fd == -1)
+		err(1, "mkstemp failed");
+	close(fd);
 
 	bbase[0] = bufbase;
         if (!argc) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.10 1997/10/19 04:39:51 lukem Exp $	*/
+/*	$NetBSD: eval.c,v 1.11 1999/04/20 08:05:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.10 1997/10/19 04:39:51 lukem Exp $");
+__RCSID("$NetBSD: eval.c,v 1.11 1999/04/20 08:05:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,8 +296,15 @@ eval(argv, argc, td)
 	/*
 	 * dotemp - create a temporary file
 	 */
-		if (argc > 2)
-			pbstr(mktemp(argv[2]));
+		if (argc > 2) {
+			int fd;
+
+			fd = mkstemp(argv[2]);
+			if (fd == -1)
+				err(1, "mkstemp failed");
+			close(fd);
+			pbstr(argv[2]);
+		}
 		break;
 
 	case TRNLTYPE:
