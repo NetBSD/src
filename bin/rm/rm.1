@@ -1,4 +1,4 @@
-.\"	$NetBSD: rm.1,v 1.17 2003/08/07 09:05:28 agc Exp $
+.\"	$NetBSD: rm.1,v 1.18 2004/01/11 02:04:05 tls Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,11 @@ options.
 .It Fl P
 Overwrite regular files before deleting them.
 Files are overwritten three times, first with the byte pattern 0xff,
-then 0x00, and then 0xff again, before they are deleted.
+then 0x00, and then with random data, before they are deleted.  Some
+care is taken to ensure that the data are actually written to disk,
+but this cannot be guaranteed, even on traditional filesystems; on
+log-structured filesystems or if any block-journaling scheme is in
+use, this option is completely useless.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
 The
@@ -137,6 +141,14 @@ system.
 UFS is a fixed-block file system, LFS is not.
 In addition, only regular files are overwritten, other types of files
 are not.
+Recent research indicates that as many as 35 overwrite passes with carefully
+chosen data patterns may be necessary to actually prevent recovery of data
+from a magnetic disk.  Thus the
+.Fl P
+option is likely both insufficient for its design purpose and far too
+costly for default operation.  However, it will at least prevent the
+recovery of data from UFS volumes with
+.Xr fsdb 8 .
 .Sh COMPATIBILITY
 The
 .Nm
@@ -158,3 +170,16 @@ compatible.
 The
 .Fl v
 option is an extension.
+.Pp
+The
+.Fl P
+option attempts to conform to U.S. DoD 5220-22.M, "National
+Industrial Security Program Operating Manual" ("NISPOM") as updated by 
+Change 2 and the July 23, 2003 "Clearing & Sanitization Matrix".  However,
+unlike earlier revisions of NISPOM, the 2003 matrix imposes requirements
+which make it clear that the standard does not and can not apply to the
+erasure of individual files, in particular requirements relating to spare
+sector management for an entire magnetic disk.  
+.Em Because these requirements are not met, the 
+.Fl P 
+.Em option does not conform to the standard.
