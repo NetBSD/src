@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.40 2003/06/13 22:27:03 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.41 2003/06/14 12:58:45 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -426,7 +426,7 @@ disp_cur_part(struct mbr_partition *part, int sel, int disp)
 }
 
 int
-read_mbr(const char *disk, mbr_sector_t *mbr, size_t len)
+read_mbr(const char *disk, mbr_sector_t *mbr)
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i;
@@ -435,39 +435,41 @@ read_mbr(const char *disk, mbr_sector_t *mbr, size_t len)
 	/* Open the disk. */
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
 	if (fd < 0) 
-		return -1;
+		goto bad_mbr;
 
-	if (lseek(fd, (off_t)(MBR_BBSECTOR * MBR_SECSIZE), SEEK_SET) < 0) {
-		close(fd);
-		return -1;
-	}
-	if (read(fd, mbr, len) < len) {
-		close(fd);
-		return -1;
-	}
+	if (pread(fd, mbr, sizeof *mbr, 0) < sizeof *mbr)
+		goto bad_mbr;
 
-	if (valid_mbr(mbr)) {
-		mbrp = &mbr->mbr_parts[0];
-		for (i = 0; i < NMBRPART; i++) {
-			if (mbrp[i].mbrp_typ != 0) {
-				mbrp[i].mbrp_start =
-				    le_to_native32(mbrp[i].mbrp_start);
-				mbrp[i].mbrp_size =
-				    le_to_native32(mbrp[i].mbrp_size);
-			} else {
-				/* type is unused, discard scum */
-				mbrp[i].mbrp_start = 0;
-				mbrp[i].mbrp_size  = 0;
-			}
+	if (!valid_mbr(mbr))
+		goto bad_mbr;
+
+	mbrp = &mbr->mbr_parts[0];
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbrp[i].mbrp_typ != 0) {
+			mbrp[i].mbrp_start =
+			    le_to_native32(mbrp[i].mbrp_start);
+			mbrp[i].mbrp_size =
+			    le_to_native32(mbrp[i].mbrp_size);
+		} else {
+			/* type is unused, discard scum */
+			mbrp[i].mbrp_start = 0;
+			mbrp[i].mbrp_size  = 0;
 		}
 	}
 
 	(void)close(fd);
 	return 0;
+
+    bad_mbr:
+	if (fd >= 0)
+		close(fd);
+	memset(&mbr->mbr_parts, 0, sizeof mbr->mbr_parts);
+	mbr->mbr_signature = native_to_le16(MBR_MAGIC);
+	return -1;
 }
 
 int
-write_mbr(const char *disk, mbr_sector_t *mbr, size_t len, int convert)
+write_mbr(const char *disk, mbr_sector_t *mbr, int convert)
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i, ret = 0;
@@ -478,11 +480,6 @@ write_mbr(const char *disk, mbr_sector_t *mbr, size_t len, int convert)
 	fd = opendisk(disk, O_WRONLY, diskpath, sizeof(diskpath), 0);
 	if (fd < 0) 
 		return -1;
-
-	if (lseek(fd, (off_t)(MBR_BBSECTOR * MBR_SECSIZE), SEEK_SET) < 0) {
-		close(fd);
-		return -1;
-	}
 
 	mbrp = &mbr->mbr_parts[0];
 	for (i = 0; i < NMBRPART; i++) {
@@ -510,7 +507,7 @@ write_mbr(const char *disk, mbr_sector_t *mbr, size_t len, int convert)
 		}
 	}
 
-	if (write(fd, mbr, len) < 0)
+	if (pwrite(fd, mbr, sizeof *mbr, 0) < 0)
 		ret = -1;
 
 	(void)close(fd);

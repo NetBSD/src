@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.17 2003/06/13 11:45:49 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.18 2003/06/14 12:58:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,6 +101,7 @@ struct ptn_info {
 		char	mount[20];
 		int	dflt_size;
 		int	size;
+		int	limit;
 		char	changed;
 	}		ptn_sizes[NUM_PTN_MENU];
 	int		menu_no;
@@ -299,8 +300,10 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 	size = NUMSEC(size, mult, dlcylsize);
 	if (p == pi->pool_part)
 		pi->pool_part = NULL;
-	if (size != 0 && *cp == '+')
+	if (size != 0 && *cp == '+' && p->limit == 0)
 		pi->pool_part = p;
+	if (p->limit != 0 && size > p->limit)
+		size = p->limit;
     adjust_free:
 	if (size != p->size)
 		p->changed = 1;
@@ -369,8 +372,20 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 		if (sets_selected & SET_X11)
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
 
-		/* Make size of root include default size of /usr */
-		pi.ptn_sizes[PI_ROOT].size += pi.ptn_sizes[PI_USR].dflt_size;
+		if (root_limit != 0 && part_start + sectors > root_limit) {
+			/* root can't have all the space... */
+			pi.ptn_sizes[PI_USR].size =
+						pi.ptn_sizes[PI_USR].dflt_size;
+			/* Give free space to /usr */
+			pi.pool_part = &pi.ptn_sizes[PI_USR];
+			pi.ptn_sizes[PI_ROOT].limit = root_limit - part_start;
+		} else {
+			/* Make size of root include default size of /usr */
+			pi.ptn_sizes[PI_ROOT].size +=
+						pi.ptn_sizes[PI_USR].dflt_size;
+			/* Give free space to / */
+			pi.pool_part = &pi.ptn_sizes[PI_ROOT];
+		}
 
 		/* Change preset sizes from MB to sectors */
 		sm = MEG / sectorsize;
@@ -400,15 +415,19 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 			pi.free_space -= i;
 		}
 
+		/* Ensure all of / is readable by the system boot code */
+		i = pi.ptn_sizes[PI_ROOT].limit;
+		if (i != 0 && (i -= pi.ptn_sizes[PI_ROOT].size) < 0) {
+			pi.ptn_sizes[PI_ROOT].size += i;
+			pi.free_space -= i;
+		}
+
 		/* Count free partition slots */
 		pi.free_parts = -2;		/* allow for root and swap */
 		for (i = 0; i < maxpart; i++) {
 			if (bsdlabel[i].pi_size == 0)
 				pi.free_parts++;
 		}
-
-		/* Give free space to one of the partitions */
-		pi.pool_part = &pi.ptn_sizes[PI_ROOT];
 
 		/* Link data areas together for menu */
 		for (i = 0; i < NUM_PTN_MENU; i++) {

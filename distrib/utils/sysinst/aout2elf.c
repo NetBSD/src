@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.4 2003/06/03 11:54:48 dsl Exp $
+/*	$NetBSD: aout2elf.c,v 1.5 2003/06/14 12:58:45 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -57,6 +57,9 @@
 static int is_aout_shared_lib(const char *name);
 static void handle_aout_x_libs(const char *srcdir, const char *tgtdir);
 static int handle_aout_libs(const char *dir, int op, const void *arg);
+
+#define LIB_COUNT	0
+#define LIB_MOVE	1
 
 /* XXX NAH. This probably needs moving to arch/<foo>/md.h
  *

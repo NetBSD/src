@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.43 2003/06/13 22:27:07 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.44 2003/06/14 12:58:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,7 @@
 
 /* constants and defines */
 
+#define DEFROOTSIZE	32
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
@@ -110,9 +111,6 @@ EXTERN	char *fdtype INIT("msdos");
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE
 
 extern struct mbr_bootsel *mbs;
- 
-#define LIB_COUNT	0
-#define LIB_MOVE	1
  
 
 /*

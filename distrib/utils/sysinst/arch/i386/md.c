@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.87 2003/06/13 22:27:07 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.88 2003/06/14 12:58:49 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,6 @@
 #endif
 
 mbr_sector_t mbr;
-int mbr_len;
 struct nativedisk_info *nativedisk;
 static struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
@@ -71,8 +70,7 @@ int netbsd_mbr_installed = 0;
 
 static int md_read_bootcode(const char *, mbr_sector_t *);
 static int count_mbr_parts(struct mbr_partition *);
-static int mbr_part_above_chs(struct mbr_partition *);
-static int mbr_partstart_above_chs(struct mbr_partition *);
+static int mbr_root_above_chs(struct mbr_partition *);
 static void md_upgrade_mbrtype(void);
 #if defined(__i386__)
 static unsigned int get_bootmodel(void);
@@ -82,54 +80,44 @@ static unsigned int get_bootmodel(void);
 int
 md_get_info(void)
 {
-	read_mbr(diskdev, &mbr, sizeof mbr);
-	if (!valid_mbr(&mbr)) {
-		memset(&mbr, 0, sizeof mbr);
-		/* XXX check result and give up if < 0 */
-		mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
-		netbsd_mbr_installed = 1;
-	} else
-		mbr_len = MBR_SECSIZE;
+	if (read_mbr(diskdev, &mbr) < 0)
+		memset(&mbr, 0, sizeof mbr - 2);
 	md_bios_info(diskdev);
 
 edit:
 	edit_mbr(&mbr);
 
-	if (mbr_part_above_chs(part) &&
-	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
-		msg_display(MSG_partabovechs);
-		process_menu(MENU_noyes, NULL);
-		if (!yesno)
-			goto edit;
+	root_limit = 0;
+	if (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13)) {
+		if (mbr_root_above_chs(part)) {
+			msg_display(MSG_partabovechs);
+			process_menu(MENU_noyes, NULL);
+			if (!yesno)
+				goto edit;
+			/* The user is shooting themselves in the foot here...*/
+		} else
+			root_limit = bcyl * bhead * bsec;
 	}
 
 	if (count_mbr_parts(part) > 1) {
 		msg_display(MSG_installbootsel);
 		process_menu(MENU_yesno, NULL);
-		if (yesno) {
-			mbr_len = md_read_bootcode(_PATH_BOOTSEL, &mbr);
+		if (yesno && !md_read_bootcode(_PATH_BOOTSEL, &mbr)) {
 			configure_bootsel();
 			netbsd_mbr_installed = 2;
-		} else {
-			msg_display(MSG_installnormalmbr);
-			process_menu(MENU_yesno, NULL);
-			if (yesno) {
-				mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
-				netbsd_mbr_installed = 1;
-			}
 		}
-	} else {
-		mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
-		netbsd_mbr_installed = 1;
 	}
 
-	if (mbr_partstart_above_chs(part) && netbsd_mbr_installed == 0) {
-		msg_display(MSG_installmbr);
+	if (!netbsd_mbr_installed) {
+		if (mbr_root_above_chs(part))
+			msg_display(MSG_installlbambr);
+		else if (count_mbr_parts(part) > 1)
+			msg_display(MSG_installnormalmbr);
+		else
+			msg_display(MSG_installmbr);
 		process_menu(MENU_yesno, NULL);
-		if (yesno) {
-			mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
+		if (yesno && !md_read_bootcode(_PATH_MBR, &mbr))
 			netbsd_mbr_installed = 1;
-		}
 	}
 
 	return 1;
@@ -142,7 +130,7 @@ edit:
 static int
 md_read_bootcode(const char *path, mbr_sector_t *mbr)
 {
-	int fd, cc;
+	int fd;
 	struct stat st;
 	size_t len;
 	mbr_sector_t new_mbr;
@@ -160,6 +148,10 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 		close(fd);
 		return -1;
 	}
+	close(fd);
+
+	if (new_mbr.mbr_bootsel.mbrb_magic != native_to_le16(MBR_MAGIC))
+		return -1;
 
 	if (mbr->mbr_bootsel.mbrb_magic == native_to_le16(MBR_MAGIC)) {
 		len = offsetof(mbr_sector_t, mbr_bootsel);
@@ -177,9 +169,7 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 	mbr->mbr_bootsel.mbrb_flags = new_mbr.mbr_bootsel.mbrb_flags;
 	mbr->mbr_signature = native_to_le16(MBR_MAGIC);
 
-	close(fd);
-
-	return (cc + MBR_MAGICOFF);
+	return 0;
 }
 
 int
@@ -188,7 +178,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -311,7 +301,7 @@ md_upgrade_mbrtype(void)
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
 
-	if (read_mbr(diskdev, &mbr, sizeof mbr) < 0)
+	if (read_mbr(diskdev, &mbr) < 0)
 		return;
 
 	mbrp = &mbr.mbr_parts[0];
@@ -326,7 +316,7 @@ md_upgrade_mbrtype(void)
 
 	if (netbsdpart == -1 && oldbsdcount == 1) {
 		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, &mbr, sizeof mbr, 0);
+		write_mbr(diskdev, &mbr, 0);
 	}
 }
 
@@ -482,16 +472,11 @@ count_mbr_parts(pt)
 }
 
 static int
-mbr_part_above_chs(mbr_partition_t *pt)
+mbr_root_above_chs(mbr_partition_t *pt)
 {
-	return ((pt[bsdpart].mbrp_start + pt[bsdpart].mbrp_size) >=
-		bcyl * bhead * bsec);
-}
 
-static int
-mbr_partstart_above_chs(mbr_partition_t *pt)
-{
-	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
+	return pt[bsdpart].mbrp_start + DEFROOTSIZE * (MEG / 512)
+							>= bcyl * bhead * bsec;
 }
 
 #if defined(__i386__)

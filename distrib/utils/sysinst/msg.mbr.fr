@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.3 2003/06/13 22:27:03 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.4 2003/06/14 12:58:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -229,7 +229,7 @@ message installbootsel
 Voulez-vous installer un selecteur de boot qui vous permettra de choisir
 quel système chargé lorsque votre ordinateur est (re)démarré?}
 
-message installmbr
+message installlbambr
 {Le début de la partition de votre disque réservée à NetBSD se trouve en-dehors
 de l'espace que le BIOS peut adresser. Le programme d'amorcage du secteur de
 demmarage doit utiliser l'interface étendue du BIOS pour ammorcer depuis cette
@@ -243,6 +243,9 @@ already have a bootselector installed, no further action is needed.
 However, if no bootselector is installed, the normal bootcode must be
 used, or your system will not boot properly. Do you want to use the normal
 NetBSD bootcode?}
+
+message installmbr /* XXX translate */
+{Voulez-vous installer le programme d'amorcage de NetBSD?}
 
 message configbootsel
 {Configurez les differents choix du selecteur de boot. Vous pouvez changer

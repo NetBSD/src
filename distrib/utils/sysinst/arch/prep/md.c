@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2003/06/13 22:27:09 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.16 2003/06/14 12:58:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,8 +54,7 @@
 
 mbr_sector_t mbr;
 
-int mbr_present, mbr_len;
-int netbsd_mbr_installed = 0;
+int mbr_present;
 
 
 /* prototypes */
@@ -65,15 +64,7 @@ int
 md_get_info(void)
 {
 
-	read_mbr(diskdev, &mbr, sizeof mbr);
-	if (!valid_mbr(&mbr)) {
-		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
-		/* XXX check result and give up if < 0 */
-		mbr.mbr_signature = le_to_native16(MBR_MAGIC);
-		netbsd_mbr_installed = 1;
-	} else
-		mbr_len = MBR_SECSIZE;
-
+	read_mbr(diskdev, &mbr);
 	edit_mbr(&mbr);
 
 	return 1;
@@ -86,7 +77,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 2003/06/13 22:27:05 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.17 2003/06/14 12:58:47 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,6 @@
 
 
 mbr_sector_t mbr;
-int mbr_len;
 
 static void md_upgrade_mbrtype (void);
 
@@ -65,16 +64,8 @@ static void md_upgrade_mbrtype (void);
 int
 md_get_info(void)
 {
-	read_mbr(diskdev, &mbr, sizeof mbr);
-	if (!valid_mbr(&mbr)) {
-		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
-		/* XXX check result and give up if < 0 */
-		mbr.mbr_signature = MBR_MAGIC;
-		mbr_len = MBR_SECSIZE;
-	} else
-		mbr_len = MBR_SECSIZE;
+	read_mbr(diskdev, &mbr);
 	md_bios_info(diskdev);
-
 	edit_mbr(&mbr);
 
 	return 1;
@@ -86,7 +77,7 @@ md_pre_disklabel(void)
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -167,7 +158,7 @@ md_upgrade_mbrtype(void)
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
 
-	if (read_mbr(diskdev, &mbr, sizeof mbr) < 0)
+	if (read_mbr(diskdev, &mbr) < 0)
 		return;
 
 	mbrp = &mbr.mbr_parts[0];
@@ -182,7 +173,7 @@ md_upgrade_mbrtype(void)
 
 	if (netbsdpart == -1 && oldbsdcount == 1) {
 		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, &mbr, sizeof mbr, 0);
+		write_mbr(diskdev, &mbr, 0);
 	}
 }
 

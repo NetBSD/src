@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.3 2003/06/13 22:27:03 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.4 2003/06/14 12:58:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -223,7 +223,7 @@ message installbootsel
 na dysku. Czy chcesz zainstalowac program pozwalajacy na wybranie, ktory
 system ma sie uruchomic kiedy wlaczasz/restartujesz komputer?}
 
-message installmbr
+message installlbambr
 {Poczatek dysku NetBSD lezy poza zakresem, ktory BIOS moze zaadresowac.
 Inicjujacy bootcode w MBR musi miec mozliwosc korzystania z rozszerzonego
 interfejsu  BIOS aby  uruchomic system z tej partycji.  Czy  chcesz
@@ -236,6 +236,9 @@ masz juz taki program zainstalowany, nic wiecej nie musisz robic.
 Jakkolwiek, jesli nie masz bootselectora, normalny bootcode musi byc
 uzyty, aby system mogl sie prawidlowo uruchomic. Czy chcesz uzyc normalnego
 bootcode NetBSD?}
+
+message installmbr
+{Czy chcesz uzyc normalnego bootcode NetBSD?}
 
 message configbootsel
 {Skonfiguruj rozne opcje bootselectora. Mozesz zmienic podstawowe wpisy

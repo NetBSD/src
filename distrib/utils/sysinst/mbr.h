@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.13 2003/05/16 19:38:18 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.14 2003/06/14 12:58:45 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -80,8 +80,8 @@ int 	partsoverlap (struct mbr_partition *, int, int);
 
 /* from mbr.c */
  
-int     read_mbr (const char *, mbr_sector_t *, size_t);
-int     write_mbr (const char *, mbr_sector_t *, size_t, int);
+int     read_mbr (const char *, mbr_sector_t *);
+int     write_mbr (const char *, mbr_sector_t *, int);
 int     valid_mbr (mbr_sector_t *);
 int	guess_biosgeom_from_mbr (mbr_sector_t *, int *, int *, int *);
 int	md_bios_info (char *);
