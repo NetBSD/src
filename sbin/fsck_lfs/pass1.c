@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.6 2000/05/23 01:48:54 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.7 2000/05/30 04:33:15 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -170,8 +170,10 @@ pass1()
 		printf("counting blocks...\n");
 	for (i = 0; i <= maxino; i++) {
 		inumber = dins[i]->ino;
-		if (inumber == 0 || dins[i]->daddr == 0)
+		if (inumber == 0 || dins[i]->daddr == 0) {
+			statemap[inumber] = USTATE;
 			continue;
+		}
 		ifp = lfs_ientry(inumber, &bp);
 		if (ifp && ifp->if_daddr != LFS_UNUSED_DADDR) {
 			bp->b_flags &= ~B_INUSE;
