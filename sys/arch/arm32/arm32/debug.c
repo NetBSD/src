@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.1 1996/01/31 23:15:42 mark Exp $ */
+/* $NetBSD: debug.c,v 1.2 1996/03/08 20:14:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Melvin Tang-Richardson (Nut)
@@ -39,9 +39,6 @@
  * Debugging functions
  *
  * Created      : 11/10/94
- * Last updated : 28/06/95
- *
- *    $Id: debug.c,v 1.1 1996/01/31 23:15:42 mark Exp $
  */
 
 #include <sys/param.h>
@@ -108,7 +105,7 @@ debug_show_all_procs(argc, argv)
 	if (argc > 1)
 		printf("  pid   proc     addr      map      pcb     pmap     comm       wchan\n");
 	else
-		printf("  pid   proc     addr   uid  ppid  pgrp    flag  stat comm          cputime  \n");
+		printf("  pid   proc     addr     uid  ppid  pgrp    flag  stat comm          cputime  \n");
 	while (--np >= 0) {
 		pp = p->p_pptr;
 		if (pp == 0)
@@ -121,7 +118,7 @@ debug_show_all_procs(argc, argv)
 				    (u_int) &p->p_addr->u_pcb, (p->p_vmspace ? (u_int)&p->p_vmspace->vm_pmap : 0),
 				    ((p->p_comm == 0) ? "..." : p->p_comm));
 			else
-				printf("%5d %08x %08x %3d %5d %5d  %08x  %d  %12s %5u.%02d  ",
+				printf("%5d %08x %08x %5d %5d %5d  %08x  %d  %12s %5u.%02d  ",
 				    p->p_pid, (u_int) ap, (u_int) p->p_addr,
 				    p->p_cred->p_ruid,
 				    pp->p_pid, p->p_pgrp->pg_id, p->p_flag,
@@ -252,4 +249,3 @@ debug_show_pmap(pmap)
 }
 
 /* End of debug.c */
-  
