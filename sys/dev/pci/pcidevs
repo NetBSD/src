@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.684 2005/01/15 08:40:07 jdolecek Exp $
+$NetBSD: pcidevs,v 1.685 2005/01/15 13:21:31 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1823,6 +1823,7 @@ product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
 product INTEL 82830MP_IO_2	0x3578	82830MP CPU to I/O Bridge 2
 product INTEL PRO_WL_2200BG	0x4220	PRO/Wireless LAN 2200BG Mini-PCI Adapter
+product INTEL PRO_WL_2915ABG	0x4223	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB (PIIX3) PCI-ISA Bridge
 product INTEL 82371SB_IDE	0x7010	82371SB (PIIX3) IDE Interface
