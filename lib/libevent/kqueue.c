@@ -1,4 +1,4 @@
-/*	$NetBSD: kqueue.c,v 1.3 2003/06/13 04:11:31 itojun Exp $	*/
+/*	$NetBSD: kqueue.c,v 1.4 2003/10/11 18:30:09 provos Exp $	*/
 /*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 		}
 		kqop->changes = newchange;
 
-		newresult = realloc(kqop->changes,
+		newresult = realloc(kqop->events,
 				    nevents * sizeof(struct kevent));
 
 		/*
