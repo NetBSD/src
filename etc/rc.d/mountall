@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountall,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: mountall,v 1.2 2000/04/27 21:00:50 veego Exp $
 #
 
 # PROVIDE: mountall
@@ -11,6 +11,6 @@
 
 name="mountall"
 start_cmd="echo 'Mounting all filesystems...'; mount -a"
-stop_cmd=":"
+stop_cmd="echo 'Unmounting all filesystems...'; umount -a"
 
 run_rc_command "$1"
