@@ -1,3 +1,4 @@
+/*	$NetBSD: getput.h,v 1.1.1.1.2.3 2001/12/10 23:53:20 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
