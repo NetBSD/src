@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.247 2004/06/03 21:07:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.248 2004/06/03 23:06:44 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3449,3 +3449,13 @@ lib/libc/sys/close.2				patch
 
 	Dont refer to errno as "global integer variable".
 	[kleink, ticket #432]
+
+distrib/acorn32/mksparkive.sh			0-1.2
+distrib/acorn32/stand/Makefile			1.12
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites.uue	deleted
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites22.uue	deleted
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/pling.Sprites.uue	0-1.3
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/pling.Sprites22.uue	0-1.3
+
+	Updated bootloader packaging tools for acorn32
+	[abs, ticket #433]
