@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.14 2003/04/01 23:19:11 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.15 2003/10/26 11:45:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.14 2003/04/01 23:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.15 2003/10/26 11:45:46 jdolecek Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -217,7 +217,7 @@ vidcaudio_attach(parent, self, aux)
 
 	/* Program the silence buffer and reset the DMA channel */
 	ag.silence = uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (ag.silence == NULL)
+	if (ag.silence == 0)
 		panic("vidcaudio: Cannot allocate memory");
 
 	memset((char *)ag.silence, 0, PAGE_SIZE);
