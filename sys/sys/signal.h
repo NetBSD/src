@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.2 2001/06/21 20:09:53 nathanw Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.3 2001/11/17 00:28:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -303,6 +303,36 @@ struct	sigstack {
 
 #define	BADSIG		SIG_ERR
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+union	sigval {
+	int	sival_int;
+	void	*sival_ptr;
+};
+
+struct	sigevent {
+	int	sigev_notify;
+	int	sigev_signo;
+	union sigval	sigev_value;
+	void	(*sigev_notify_function)(union sigval *);
+	void /* pthread_attr_t */	*sigev_notify_attributes;
+};
+
+#define SIGEV_NONE	0
+#define SIGEV_SIGNAL	1
+#define SIGEV_THREAD	2
+#define SIGEV_SA	3
+	      
+typedef struct {
+	int	si_signo;	/* signal number */
+	int	si_errno;	/* if non-zero, associated errno value */
+	int	si_code;	/* signal code */
+	pid_t	si_pid;		/* sending proces ID */
+	uid_t	si_uid;		/* real UID of sending process */
+	void	*si_addr;	/* address of faulting instruction */
+	int	si_status;	/* exit value or signal */
+	long	si_band;
+	union sigval	si_value;
+} siginfo_t;
 
 #endif	/* !_ANSI_SOURCE */
 
