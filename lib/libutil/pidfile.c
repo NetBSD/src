@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.2 1999/06/06 17:31:09 thorpej Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.3 2000/07/05 11:46:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.2 1999/06/06 17:31:09 thorpej Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.3 2000/07/05 11:46:41 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,13 +50,12 @@ __RCSID("$NetBSD: pidfile.c,v 1.2 1999/06/06 17:31:09 thorpej Exp $");
 
 static char *pidfile_path;
 
-static void pidfile_cleanup __P((void));
+static void pidfile_cleanup(void);
 
 extern const char *__progname;		/* from crt0.o */
 
 void
-pidfile(basename)
-	const char *basename;
+pidfile(const char *basename)
 {
 	FILE *f;
 
@@ -81,7 +80,7 @@ pidfile(basename)
 }
 
 static void
-pidfile_cleanup()
+pidfile_cleanup(void)
 {
 
 	if (pidfile_path != NULL)

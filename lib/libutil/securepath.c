@@ -1,4 +1,4 @@
-/* $NetBSD: securepath.c,v 1.2 2000/01/13 06:48:14 mjl Exp $ */
+/*	$NetBSD: securepath.c,v 1.3 2000/07/05 11:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -33,7 +33,11 @@
  *
  *	BSDI login_cap.c,v 2.13 1998/02/07 03:17:05 prb Exp
  */
- 
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: securepath.c,v 1.3 2000/07/05 11:46:42 ad Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.12 1999/09/20 04:48:06 lukem Exp $	*/
+/*	$NetBSD: login.c,v 1.13 2000/07/05 11:46:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login.c,v 1.12 1999/09/20 04:48:06 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.13 2000/07/05 11:46:40 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: login.c,v 1.12 1999/09/20 04:48:06 lukem Exp $");
 #include <utmp.h>
 
 void
-login(ut)
-	const struct utmp *ut;
+login(const struct utmp *ut)
 {
 	int fd;
 	int tty;

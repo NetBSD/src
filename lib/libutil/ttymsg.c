@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.14 1999/09/20 04:48:11 lukem Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.15 2000/07/05 11:46:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.14 1999/09/20 04:48:11 lukem Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.15 2000/07/05 11:46:42 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,11 +65,7 @@ __RCSID("$NetBSD: ttymsg.c,v 1.14 1999/09/20 04:48:11 lukem Exp $");
  * ignored (exclusive-use, lack of permission, etc.).
  */
 char *
-ttymsg(iov, iovcnt, line, tmout)
-	struct iovec *iov;
-	int iovcnt;
-	const char *line;
-	int tmout;
+ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
