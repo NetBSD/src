@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.c,v 1.4 2003/07/02 17:48:57 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper.c,v 1.5 2004/01/08 19:23:19 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper.c,v 1.4 2003/07/02 17:48:57 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper.c,v 1.5 2004/01/08 19:23:19 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -383,7 +383,9 @@ _citrus_mapper_close(struct _citrus_mapper *cm)
 			_CITRUS_HASH_REMOVE(cm, cm_entry);
 			free(cm->cm_key);
 		}
+		rwlock_unlock(&lock);
 		mapper_close(cm);
+		return;
 quit:
 		rwlock_unlock(&lock);
 	}
