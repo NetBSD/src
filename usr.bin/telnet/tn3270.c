@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.12 2002/09/18 19:48:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.12 2002/09/18 19:48:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,10 +135,10 @@ DataToNetwork(buffer, count, done)
 	if (NETROOM() < 6) {
 	    struct pollfd set[1];
 
+	    set[0].fd = net;
+	    set[0].events = POLLOUT;
 	    netflush();
 	    while (NETROOM() < 6) {
-		set[0].fd = net;
-		set[0].events = POLLOUT;
 		(void) poll(set, 1, INFTIM);
 		netflush();
 	    }
@@ -218,12 +218,12 @@ DataToTerminal(buffer, count)
 #if	defined(unix)
 	    struct pollfd set[1];
 
+	    set[0].fd = tout;
+	    set[0].events = POLLOUT;
 #endif	/* defined(unix) */
 	    (void) ttyflush(0);
 	    while (TTYROOM() == 0) {
 #if	defined(unix)
-		set[0].fd = tout;
-		set[0].events = POLLOUT;
 		(void) poll(set, 1, INFTIM);
 #endif	/* defined(unix) */
 		(void) ttyflush(0);
