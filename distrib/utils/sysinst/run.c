@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.19 1999/06/21 02:47:41 cgd Exp $	*/
+/*	$NetBSD: run.c,v 1.20 1999/06/21 02:55:27 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -443,7 +443,7 @@ run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
 			    " status box.\n");
 			exit(1);
 		}
-		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 3,
+		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 2,
 		   4, 1);
 		if (actionwin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
@@ -452,7 +452,7 @@ run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
 		}
 		scrollok(actionwin, TRUE);
 
-		win.ws_col -= 3;
+		win.ws_col -= 2;
 		win.ws_row -= 5;
 
 		wclear(statuswin);
