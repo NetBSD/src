@@ -1,5 +1,5 @@
-/*	$NetBSD: arctype.h,v 1.4 2000/01/23 21:01:50 soda Exp $	*/
-/*	$OpenBSD: arctype.h,v 1.4 1997/03/12 19:16:37 pefo Exp $	*/
+/*	$NetBSD: arctype.h,v 1.5 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.6 1999/01/27 04:46:04 imp Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -33,11 +33,31 @@
  *
  */
 /*
- * Mother board type byte of "systype" environment variable.
+ * Define architectural identitys for the different Mips machines.
  */
-#define	ACER_PICA_61		0x1	/* Acer Labs Pica 61 */
-#define	MAGNUM			0x2	/* Mips MAGNUM R4000 */
-#define	DESKSTATION_RPC44	0x3	/* Deskstation xxx */
-#define	DESKSTATION_TYNE	0x4	/* Deskstation xxx */
-#define	NKK_AQUARIUS		0x5	/* NKK R4{67}00 PC */
-#define	ALGOR_P4032		0x6	/* ALGORITHMICS P-4032 VR4300 */
+#define	ARC_CLASS		0x00	/* Arch class ARC */
+#define	ACER_PICA_61		0x01	/* Acer Labs Pica 61 */
+#define	MAGNUM			0x02	/* Mips MAGNUM R4000 */
+#define	DESKSTATION_RPC44	0x03	/* Deskstation xxx */
+#define	DESKSTATION_TYNE	0x04	/* Deskstation xxx */
+#define	NKK_AQUARIUS		0x05	/* NKK R4{67}00 PC */
+#define NEC_R94			0x06	/* NEC Magnum class */
+#define	SNI_RM200		0x07	/* Siemens Nixdorf RM200 */
+
+#if 0 /* XXX */
+#define	SGI_CLASS		0x10	/* Silicon Graphics Class */
+#define	SGI_CRIMSON		0x11	/* Crimson */
+#define	SGI_ONYX		0x12	/* Onyx (!S model Challenge) */
+#define	SGI_INDIGO		0x13	/* Indigo */
+#define	SGI_POWER		0x14	/* POWER Challenge, POWER Onyx */
+#define	SGI_INDY		0x15	/* Indy, Indigo2, Challenge S */
+#define	SGI_POWER10		0x16	/* POWER Challenge R10k */
+#define	SGI_POWERI		0x17	/* POWER Indigo2 */
+#define	SGI_O2			0x18	/* O2/Moosehead */
+#endif
+
+#define	ALGOR_CLASS		0x20	/* Algorithmics Class */
+#define	ALGOR_P4032		0x21	/* ALGORITHMICS P-4032 */
+#define	ALGOR_P5064		0x22	/* ALGORITHMICS P-5064 */
+
+extern int cputype;			/* Global system type indicator */

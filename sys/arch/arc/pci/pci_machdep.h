@@ -1,5 +1,5 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
-/*	$OpenBSD: pci_machdep.h,v 1.2 1997/04/19 17:20:02 pefo Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 2000/02/22 11:26:04 soda Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.4 1998/03/18 12:06:18 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -62,6 +62,7 @@ struct arc_pci_chipset {
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
 	int		(*pc_ether_hw_addr) __P((u_int8_t *));
+	void		(*pc_sync_cache) __P((vaddr_t, int));
 };
 
 /*
@@ -89,6 +90,10 @@ struct arc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_ether_hw_addr(c, p)						\
     (*(c)->pc_ether_hw_addr)((p))
+#define	pci_sync_cache(c, p, s)						\
+    (*(c)->pc_sync_cache)((p), (s))
 
-vm_offset_t vtophys __P((void *));
+paddr_t vtophysaddr __P((struct device *, vaddr_t));
 
+#define	TULIP_KVATOPHYS(sc, va)	vtophysaddr(&sc->tulip_dev, (vaddr_t)va)
+#define	NCR_KVATOPHYS(sc, va)	vtophysaddr(&sc->sc_dev, (vaddr_t)va)
