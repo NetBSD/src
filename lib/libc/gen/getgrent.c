@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.19.2.1 1997/05/24 04:50:54 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.19.2.2 1997/05/26 16:33:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.1 1997/05/24 04:50:54 lukem Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.2 1997/05/26 16:33:32 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -389,10 +389,12 @@ __grscancompat(search, gid, name)
 {
 	static ns_dtab	dtab;
 
-	NS_FILES_CB(dtab, _bad_grscan, "files");
-	NS_DNS_CB(dtab, _dns_grscan, NULL);
-	NS_NIS_CB(dtab, _nis_grscan, NULL);
-	NS_COMPAT_CB(dtab, _bad_grscan, "compat");
+	if (dtab[NS_FILES].cb == NULL) {
+		NS_FILES_CB(dtab, _bad_grscan, "files");
+		NS_DNS_CB(dtab, _dns_grscan, NULL);
+		NS_NIS_CB(dtab, _nis_grscan, NULL);
+		NS_COMPAT_CB(dtab, _bad_grscan, "compat");
+	}
 
 	return nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, search, gid, name);
 }
@@ -491,10 +493,12 @@ grscan(search, gid, name)
 	int		r;
 	static ns_dtab	dtab;
 
-	NS_FILES_CB(dtab, _local_grscan, NULL);
-	NS_DNS_CB(dtab, _dns_grscan, NULL);
-	NS_NIS_CB(dtab, _nis_grscan, NULL);
-	NS_COMPAT_CB(dtab, _compat_grscan, NULL);
+	if (dtab[NS_FILES].cb == NULL) {
+		NS_FILES_CB(dtab, _local_grscan, NULL);
+		NS_DNS_CB(dtab, _dns_grscan, NULL);
+		NS_NIS_CB(dtab, _nis_grscan, NULL);
+		NS_COMPAT_CB(dtab, _compat_grscan, NULL);
+	}
 
 	r = nsdispatch(NULL, dtab, NSDB_GROUP, search, gid, name);
 	return (r == NS_SUCCESS) ? 1 : 0;

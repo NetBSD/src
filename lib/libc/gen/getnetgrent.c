@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.11.2.1 1997/05/24 04:51:54 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.11.2.2 1997/05/26 16:33:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.11.2.1 1997/05/24 04:51:54 lukem Exp $";
+static char *rcsid = "$NetBSD: getnetgrent.c,v 1.11.2.2 1997/05/26 16:33:34 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -286,8 +286,10 @@ lookup(name, line, bywhat)
 	int		r;
 	static ns_dtab	dtab;
 
-	NS_FILES_CB(dtab, _local_lookup, NULL);
-	NS_NIS_CB(dtab, _nis_lookup, NULL);
+	if (dtab[NS_FILES].cb == NULL) {
+		NS_FILES_CB(dtab, _local_lookup, NULL);
+		NS_NIS_CB(dtab, _nis_lookup, NULL);
+	}
 
 	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, name, line, bywhat);
 	return (r == NS_SUCCESS) ? 1 : 0;
