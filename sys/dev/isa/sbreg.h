@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.18 1997/03/20 21:42:16 mycroft Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.19 1997/05/18 00:36:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -104,8 +104,8 @@
 #define		SBP_FROM_MIC		0x00
 #define		SBP_FROM_CD		0x02
 #define		SBP_FROM_LINE		0x06
-#define sbdsp_mono_vol(left) (((left) << 4) | (left))
-#define sbdsp_stereo_vol(left, right) (((left) << 4) | (right))
+#define sbdsp_mono_vol(left) ((((left) << 4) | (left)) & 0xee)
+#define sbdsp_stereo_vol(left, right) ((((left) << 4) | (right)) & 0xee)
 #define SBP_MAXVOL 0xf			/* per channel */
 #define SBP_MINVOL 0x0			/* per channel */
 #define SBP_AGAIN_TO_SBGAIN(again)	((again) >> 4) /* per channel */

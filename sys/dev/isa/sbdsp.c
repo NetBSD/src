@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.48 1997/05/17 23:26:36 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.49 1997/05/18 00:36:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1322,6 +1322,7 @@ sbdsp_intr(arg)
 	void *arg;
 {
 	register struct sbdsp_softc *sc = arg;
+	u_char x;
 
 #ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
@@ -1494,7 +1495,7 @@ sbdsp_mixer_set_port(addr, cp)
 			return EINVAL;
 		}
 
-		sbdsp_mix_write(sc, src, gain & 0xee);
+		sbdsp_mix_write(sc, src, gain);
 		sc->gain[cp->dev] = gain;
 		break;
 
