@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.80 2004/10/06 00:04:01 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.81 2004/10/06 05:23:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.80 2004/10/06 00:04:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.81 2004/10/06 05:23:05 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1693,10 +1693,6 @@ wm_start(struct ifnet *ifp)
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
 
-		/* Sync the DMA map. */
-		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
-
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: packet has %d (%d) DMA segments\n",
 		    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed));
@@ -1734,6 +1730,10 @@ wm_start(struct ifnet *ifp)
 		}
 
 		cksumcmd |= WTX_CMD_IDE;
+
+		/* Sync the DMA map. */
+		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Initialize the transmit descriptor.
