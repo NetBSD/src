@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.17 1998/05/08 16:55:15 kleink Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.18 1998/08/05 02:45:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -292,7 +292,7 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 
 	fregs->freebsd_ptrace_fpregs.sv_env =
 		*(struct freebsd_env87 *)&nframe->sv_env;
-	bcopy(nframe->sv_ac, fregs->freebsd_ptrace_fpregs.sv_ac,
+	memcpy(fregs->freebsd_ptrace_fpregs.sv_ac, nframe->sv_ac,
 	      sizeof(fregs->freebsd_ptrace_fpregs.sv_ac));
 	fregs->freebsd_ptrace_fpregs.sv_ex_sw = 
 		nframe->sv_ex_sw;
@@ -306,14 +306,15 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 		      "sizeof(freebsd_save87) >= sizeof(save87)");
 	}
 #endif
-	bcopy(&nframe->sv_ex_tw, fregs->freebsd_ptrace_fpregs.sv_pad,
+	memcpy(fregs->freebsd_ptrace_fpregs.sv_pad, &nframe->sv_ex_tw,
 	      sizeof(nframe->sv_ex_tw));
-	bcopy(nframe->sv_pad,
-	      (caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
+	memcpy((caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
 	      sizeof(nframe->sv_ex_tw),
+	      nframe->sv_pad,
 	      sizeof(nframe->sv_pad));
-	bzero((caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
+	memset((caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
 	      sizeof(nframe->sv_ex_tw) + sizeof(nframe->sv_pad),
+	      0,
 	      sizeof(fregs->freebsd_ptrace_fpregs.sv_pad) -
 	      sizeof(nframe->sv_ex_tw) - sizeof(nframe->sv_pad));
 }
@@ -345,18 +346,19 @@ freebsd_to_netbsd_ptrace_regs(fregs, nregs, nfpregs)
 
 	nframe->sv_env =
 		*(struct env87 *)&fregs->freebsd_ptrace_fpregs.sv_env;
-	bcopy(fregs->freebsd_ptrace_fpregs.sv_ac, nframe->sv_ac,
+	memcpy(nframe->sv_ac, fregs->freebsd_ptrace_fpregs.sv_ac,
 	      sizeof(nframe->sv_ac));
 	nframe->sv_ex_sw =
 		fregs->freebsd_ptrace_fpregs.sv_ex_sw;
 	/*
 	 * fortunately, sizeof(freebsd_save87) >= sizeof(save87)
 	 */
-	bcopy(fregs->freebsd_ptrace_fpregs.sv_pad, &nframe->sv_ex_tw,
+	memcpy(&nframe->sv_ex_tw, fregs->freebsd_ptrace_fpregs.sv_pad,
 	      sizeof(nframe->sv_ex_tw));
-	bcopy((caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
+	memcpy(nframe->sv_pad,
+	      (caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
 	      sizeof(nframe->sv_ex_tw),
-	      nframe->sv_pad, sizeof(nframe->sv_pad));
+	      sizeof(nframe->sv_pad));
 }
 
 /* random value, except FREEBSD_U_AR0_OFFSET..., FREEBSD_U_SAVEFP_OFFSET... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.35 1998/05/08 16:55:16 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.36 1998/08/05 02:45:09 perry Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -88,7 +88,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 	struct svr4_sigaltstack *s = &uc->uc_stack;
 	struct sigaltstack *sf = &psp->ps_sigstk;
 
-	bzero(uc, sizeof(struct svr4_ucontext));
+	memset(uc, 0, sizeof(struct svr4_ucontext));
 
 	/*
 	 * Set the general purpose registers

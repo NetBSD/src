@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 1998/05/04 18:49:33 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27 1998/08/05 02:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -126,7 +126,7 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
-	if (bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
+	if (memcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
 	    eisa_has_been_seen == 0) {
 		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_iot = I386_BUS_SPACE_IO;

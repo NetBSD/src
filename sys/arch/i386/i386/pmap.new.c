@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.14 1998/07/08 04:37:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.15 1998/08/05 02:45:09 perry Exp $	*/
 
 /*
  *
@@ -796,7 +796,7 @@ vm_offset_t kva_start;
   TAILQ_INIT(&kpm->pm_obj.memq);
   kpm->pm_obj.uo_npages = 0;
   kpm->pm_obj.uo_refs = 1;
-  bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
+  memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
   kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
   kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
   kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
@@ -954,7 +954,7 @@ void pmap_init()
     panic("pmap_init: unable to allocate pv_heads");
 
   /*
-   * init all pv_head's and attrs in one bzero
+   * init all pv_head's and attrs in one memset
    */
 
   /* allocate pv_head stuff first */
@@ -1750,7 +1750,7 @@ struct pmap *pmap;
 
   /* init PDP */
   /* zero init area */
-  bzero(pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
+  memset(pmap->pm_pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
   /* put in recursive PDE to map the PTEs */
   pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
 
@@ -1762,10 +1762,10 @@ struct pmap *pmap;
    */
   simple_lock(&pmaps_lock);
   /* put in kernel VM PDEs */
-  bcopy(&PDP_BASE[PDSLOT_KERN], &pmap->pm_pdir[PDSLOT_KERN],
+  memcpy(&pmap->pm_pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
 	nkpde * sizeof(pd_entry_t));
   /* zero the rest */
-  bzero(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 
+  memset(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 0,
 	NBPG - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
   LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
   if (pmaps_hand == NULL)
@@ -1989,7 +1989,7 @@ vm_offset_t pa;
 #endif
 
   *zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
-  bzero(zerop, NBPG);				/* zero */
+  memset(zerop, 0, NBPG);				/* zero */
   *zero_pte = 0;				/* zap! */
   pmap_update_pg((vm_offset_t)zerop);		/* flush TLB */
   simple_unlock(&pmap_zero_page_lock);
@@ -2012,7 +2012,7 @@ vm_offset_t srcpa, dstpa;
 
   *csrc_pte = (srcpa & PG_FRAME) | PG_V | PG_RW;
   *cdst_pte = (dstpa & PG_FRAME) | PG_V | PG_RW;
-  bcopy(csrcp, cdstp, NBPG);
+  memcpy(cdstp, csrcp, NBPG);
   *csrc_pte = *cdst_pte = 0;			/* zap! */
   pmap_update_2pg((vm_offset_t)csrcp, (vm_offset_t)cdstp);
   simple_unlock(&pmap_copy_page_lock);

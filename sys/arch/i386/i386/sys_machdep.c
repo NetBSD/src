@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.41 1998/02/25 21:41:56 perry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.42 1998/08/05 02:45:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -261,8 +261,8 @@ i386_set_ldt(p, args, retval)
 #else
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, new_len);
 #endif
-		bcopy(old_ldt, new_ldt, old_len);
-		bzero((caddr_t)new_ldt + old_len, new_len - old_len);
+		memcpy(new_ldt, old_ldt, old_len);
+		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
 		pcb->pcb_ldt = new_ldt;
 
 		if (pcb->pcb_flags & PCB_USER_LDT)

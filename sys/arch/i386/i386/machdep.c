@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.312 1998/07/17 21:10:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.313 1998/08/05 02:45:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -548,7 +548,7 @@ cpu_startup()
 		   VM_PROT_ALL,		/* protection */
 		   TRUE);		/* wired down */
 #endif
-	bcopy(biostramp_image, (caddr_t)BIOSTRAMP_BASE, biostramp_image_size);
+	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #ifdef DEBUG
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
 #endif
@@ -1398,7 +1398,7 @@ cpu_dump()
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
 	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
@@ -1812,7 +1812,7 @@ init386(first_avail)
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
-	bzero(vtopte(0), NBPG);  /* make sure it is clean before using */
+	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr, VM_PROT_ALL, TRUE);
@@ -2211,7 +2211,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by making the IDT
 	 * invalid and causing a fault.
 	 */
-	bzero((caddr_t)idt, NIDT * sizeof(idt[0]));
+	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0
@@ -2219,7 +2219,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space and doing a TLB flush.
 	 */
-	bzero((caddr_t)PTD, NBPG);
+	memset((caddr_t)PTD, 0, NBPG);
 	pmap_update(); 
 #endif
 
@@ -2556,7 +2556,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct i386_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;

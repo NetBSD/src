@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.27 1998/01/24 14:22:44 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.28 1998/08/05 02:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -165,14 +165,14 @@ process_read_fpregs(p, regs)
 		 * save it temporarily.
 		 */
 		cw = frame->sv_env.en_cw;
-		bzero(frame, sizeof(*regs));
+		memset(frame, 0, sizeof(*regs));
 		frame->sv_env.en_cw = cw;
 		frame->sv_env.en_sw = 0x0000;
 		frame->sv_env.en_tw = 0xffff;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	bcopy(frame, regs, sizeof(*regs));
+	memcpy(regs, frame, sizeof(*regs));
 	return (0);
 }
 
@@ -259,7 +259,7 @@ process_write_fpregs(p, regs)
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	bcopy(regs, frame, sizeof(*regs));
+	memcpy(frame, regs, sizeof(*regs));
 	return (0);
 }
 

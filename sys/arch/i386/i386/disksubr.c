@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 1998/06/22 21:12:52 sommerfe Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31 1998/08/05 02:45:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -122,11 +122,11 @@ readdisklabel(dev, strat, lp, osdep)
 	} else {
 		struct dos_partition *ourdp = NULL;
 
-		if (bcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+		if (memcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
 			goto nombrpart;
 
 		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + DOSPARTOFF, dp,
+		memcpy(dp, bp->b_data + DOSPARTOFF,
 		      NDOSPART * sizeof(*dp));
 
 		/* look for NetBSD partition */
@@ -348,11 +348,11 @@ writedisklabel(dev, strat, lp, osdep)
 	if ((error = biowait(bp)) == 0) {
 		struct dos_partition *ourdp = NULL;
 
-		if (bcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+		if (memcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
 			goto nombrpart;
 
 		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + DOSPARTOFF, dp,
+		memcpy(dp, bp->b_data + DOSPARTOFF,
 		      NDOSPART * sizeof(*dp));
 
 		/* look for NetBSD partition */
