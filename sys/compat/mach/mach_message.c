@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.9 2002/12/24 16:40:46 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.10 2002/12/26 11:41:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.9 2002/12/24 16:40:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.10 2002/12/26 11:41:46 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -152,6 +152,12 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			goto out1;
 		}
 
+		if (mach_right_check((struct mach_right *)sm->msgh_local_port,
+		    p, MACH_PORT_TYPE_RECEIVE) == 0) {
+			*retval = MACH_SEND_INVALID_RIGHT;
+			goto out1;
+		}
+
 		/*
 		 * If the remote port is a special port (host, kernel or
 		 * bootstrap), the message will be handled by the kernel.
@@ -198,7 +204,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
 			if ((*retval = (*map->map_handler)(&args)) != 0) 
-				goto out2;
+				goto out3;
 			
 			/* 
 			 * Catch potential bug in the handler
@@ -209,29 +215,18 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 				rcv_size = SCARG(uap, rcv_size);
 			}
 
-			/* 
-			 * copyout the reply message, and return
-			 * without handling a potential receive operation
-			 * since we already done everything.
+			/*
+			 * Queue the reply
 			 */
-			if (SCARG(uap, rcv_msg) != NULL)
-				urm = SCARG(uap, rcv_msg);
-			else
-				urm = SCARG(uap, msg);
-			if ((error = copyout(rm, urm, rcv_size)) != 0) {
-				*retval = MACH_RCV_INVALID_DATA;
-				goto out2;
-			}
-#ifdef KTRACE
-			/* Dump the Mach message */
-			if (KTRPOINT(p, KTR_MMSG))
-				ktrmmsg(p, (char *)rm, rcv_size); 
+			mr = (struct mach_right *)sm->msgh_local_port;
+			mp = mr->mr_port;
+			(void)mach_message_get(rm, rcv_size, mp);
+#ifdef DEBUG_MACH
+			printf("pid %d: message queued on port %p (id %d)\n", 
+			    p->p_pid, mp, rm->msgh_id);
 #endif
-
-out2:			free(rm, M_EMULDATA);
+			wakeup(mp->mp_recv);
 out3:			free(sm, M_EMULDATA);
-
-			return 0;
 
 		} else {
 
@@ -244,7 +239,8 @@ out3:			free(sm, M_EMULDATA);
 			mp = mr->mr_port;
 			(void)mach_message_get(sm, send_size, mp);
 #ifdef DEBUG_MACH
-			printf("pid %d: Mach message queued\n", p->p_pid);
+			printf("pid %d: message queued on port %p (%d)\n", 
+			    p->p_pid, mp, sm->msgh_id);
 #endif
 			wakeup(mp->mp_recv);
 
@@ -327,6 +323,10 @@ out1:
 			 * some or until we get a timeout.
 			 */
 			if (cmr == NULL) {
+#ifdef DEBUG_MACH
+				printf("pid %d: wait on port %p\n", 
+				    p->p_pid, mp);
+#endif
 				error = tsleep(mr, PZERO, "mach_msg", timeout);
 				if ((error == ERESTART) || (error == EINTR)) {
 					*retval = MACH_RCV_INTERRUPTED;
@@ -377,6 +377,9 @@ out1:
 				uprintf("mach_msg_trap: bad receive "
 				    "port/right\n");
 #endif
+#ifdef DEBUG_MACH
+			printf("pid %d: wait on port %p\n", p->p_pid, mp);
+#endif
 			if (mp->mp_count == 0) {
 				error = tsleep(mr, PZERO, "mach_msg", timeout);
 				if ((error == ERESTART) || (error == EINTR)) {
@@ -409,6 +412,10 @@ out1:
 		 */
 		lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
 		mm = TAILQ_FIRST(&mp->mp_msglist);
+#ifdef DEBUG_MACH
+		printf("pid %d: dequeue message on port %p (id %d)\n", 
+		    p->p_pid, mp, mm->mm_msg->msgh_id);
+#endif
 
 		if (mm->mm_size > rcv_size) {
 			/* 
