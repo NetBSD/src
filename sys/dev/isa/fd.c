@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: fd.c,v 1.26 2002/09/11 07:22:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.25 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2002/09/11 07:22:19 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -581,7 +581,7 @@ fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
 {
-	int type = FDTYPE(dev);
+	u_int type = FDTYPE(dev);
 
 	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
 		return NULL;
@@ -787,8 +787,8 @@ fdcresult(fdc)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	u_char i;
-	int j = 100000,
-	    n = 0;
+	u_int j = 100000,
+	      n = 0;
 
 	for (; j; j--) {
 		i = bus_space_read_1(iot, ioh, fdsts) &
