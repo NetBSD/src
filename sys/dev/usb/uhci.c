@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.74 2000/01/16 13:14:43 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.75 2000/01/17 01:01:07 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1107,7 +1107,7 @@ uhci_idone(ii)
 		      actlen, status));
 	xfer->actlen = actlen;
 	if (status != 0) {
-		DPRINTFN((status&UHCI_TD_STALLED)*10,
+		DPRINTFN((status == UHCI_TD_STALLED)*10,
 			 ("uhci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%b\n",
 			  xfer->pipe->device->address,
