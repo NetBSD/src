@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.34 1998/01/23 09:47:57 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.35 1998/01/23 16:48:23 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -719,6 +719,8 @@ CKSUMFILES!=	\
 		done; \
 		if [ "$$ignore" = 0 ]; then \
 			echo "$$file"; \
+		else \
+			echo ""; \
 		fi; \
 	done
 .else
