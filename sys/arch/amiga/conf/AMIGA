@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.48 2002/04/12 08:10:49 gmcgarry Exp $
+# $NetBSD: AMIGA,v 1.49 2002/04/19 16:14:01 heinz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.174 2002/02/13 12:08:57 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.48 $"
+#ident  		"GENERIC-$Revision: 1.49 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -142,9 +142,9 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USERCONF	# userconf(4) support
 
 options 	NTP		# NTP phase/frequency locked loop
-#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
@@ -196,6 +196,11 @@ options 	GRF_SUPER72	# AGA Super-72
 
 #options 	KFONT_8X11	# 8x11 font
 
+#select a font for the console according to the character set and keymap
+#you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
+
 #This is how you would tell the kernel the A2410 oscillator frequencies:
 #The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
@@ -228,7 +233,7 @@ grfrt0		at zbus0		# retina II
 
 grfrh0		at zbus0		# retina III
 
-grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 grful0		at zbus0		# A2410
 grfcv0		at zbus0		# CyberVision 64
 grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
