@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.48 2004/04/07 04:54:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.49 2004/04/07 05:00:18 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -532,3 +532,9 @@ sys/kern/kern_sysctl.c				1.171
 	instantiated elsewhere.  Or not, depending on the other that the setup
 	functions are called.
 	[atatat, ticket #77]
+
+share/termcap/termcap.src			1.89
+
+	Move the attribute end escape sequence to the start of the xterm
+	initialisation sequence capability. PR#11052
+	[jdc, ticket #78]
