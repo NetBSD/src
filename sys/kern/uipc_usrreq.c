@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.26 1997/06/24 19:12:55 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.27 1997/06/26 06:06:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -99,6 +99,8 @@ unp_setsockaddr(unp, nam)
 	else
 		sun = &sun_noname;
 	nam->m_len = sun->sun_len;
+	if (nam->m_len > MLEN)
+		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
 	bcopy(sun, mtod(nam, caddr_t), (size_t)nam->m_len);
 }
 
@@ -114,6 +116,8 @@ unp_setpeeraddr(unp, nam)
 	else
 		sun = &sun_noname;
 	nam->m_len = sun->sun_len;
+	if (nam->m_len > MLEN)
+		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
 	bcopy(sun, mtod(nam, caddr_t), (size_t)nam->m_len);
 }
 
@@ -413,26 +417,32 @@ unp_bind(unp, nam, p)
 	struct mbuf *nam;
 	struct proc *p;
 {
-	struct sockaddr_un *sun = mtod(nam, struct sockaddr_un *);
+	struct sockaddr_un *sun;
 	register struct vnode *vp;
 	struct vattr vattr;
+	size_t addrlen;
 	int error;
 	struct nameidata nd;
 
-	if (nam->m_len > sizeof(struct sockaddr_un))
-		return (EINVAL);
 	if (unp->unp_vnode != 0)
 		return (EINVAL);
+
+	/*
+	 * Allocate the new sockaddr.  We have to allocate one
+	 * extra byte so that we can ensure that the pathname
+	 * is nul-terminated.
+	 */
+	addrlen = nam->m_len + 1;
+	sun = malloc(addrlen, M_SONAME, M_WAITOK);
+	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
+	*(((char *)sun) + nam->m_len) = '\0';
+
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    sun->sun_path, p);
-	if (nam->m_data + nam->m_len == &nam->m_dat[MLEN]) {	/* XXX */
-		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
-			return (EINVAL);
-	} else
-		*(mtod(nam, caddr_t) + nam->m_len) = 0;
+
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto bad;
 	vp = nd.ni_vp;
 	if (vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -441,7 +451,8 @@ unp_bind(unp, nam, p)
 		else
 			vput(nd.ni_dvp);
 		vrele(vp);
-		return (EADDRINUSE);
+		error = EADDRINUSE;
+		goto bad;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
@@ -449,15 +460,18 @@ unp_bind(unp, nam, p)
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
-		return (error);
+		goto bad;
 	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
-	unp->unp_addrlen = nam->m_len;
-	unp->unp_addr = malloc(unp->unp_addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, unp->unp_addrlen, (caddr_t)unp->unp_addr);
+	unp->unp_addrlen = addrlen;
+	unp->unp_addr = sun;
 	VOP_UNLOCK(vp);
 	return (0);
+
+ bad:
+	free(sun, M_SONAME);
+	return (error);
 }
 
 int
@@ -466,21 +480,29 @@ unp_connect(so, nam, p)
 	struct mbuf *nam;
 	struct proc *p;
 {
-	register struct sockaddr_un *sun = mtod(nam, struct sockaddr_un *);
+	register struct sockaddr_un *sun;
 	register struct vnode *vp;
 	register struct socket *so2, *so3;
 	struct unpcb *unp2, *unp3;
+	size_t addrlen;
 	int error;
 	struct nameidata nd;
 
+	/*
+	 * Allocate a temporary sockaddr.  We have to allocate one extra
+	 * byte so that we can ensure that the pathname is nul-terminated.
+	 * When we establish the connection, we copy the other PCB's
+	 * sockaddr to our own.
+	 */
+	addrlen = nam->m_len + 1;
+	sun = malloc(addrlen, M_SONAME, M_WAITOK);
+	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
+	*(((char *)sun) + nam->m_len) = '\0';
+
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, p);
-	if (nam->m_data + nam->m_len == &nam->m_dat[MLEN]) {	/* XXX */
-		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
-			return (EINVAL);
-	} else
-		*(mtod(nam, caddr_t) + nam->m_len) = 0;
+
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto bad2;
 	vp = nd.ni_vp;
 	if (vp->v_type != VSOCK) {
 		error = ENOTSOCK;
@@ -515,8 +537,10 @@ unp_connect(so, nam, p)
 		so2 = so3;
 	}
 	error = unp_connect2(so, so2);
-bad:
+ bad:
 	vput(vp);
+ bad2:
+	free(sun, M_SONAME);
 	return (error);
 }
 
