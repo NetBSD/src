@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.179 2002/12/29 12:06:34 jdc Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.180 2003/01/16 15:20:18 kanaoka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1413,6 +1413,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Standard Microsystems Corporation",
 	    "SMC 2632 EZ Connect Wireless PC Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SMC_8041,
+	    PCMCIA_CIS_SMC_8041,
+	    0,
+	    "Standard Microsystems Corporation",
+	    "SMC 8041TX 10/100 PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
