@@ -107,6 +107,17 @@ standard (port 67), the
 .B -p
 flag may used.  It should be followed by the udp port number that
 dhcrelay should use.  This is mostly useful for debugging purposes.
+If the
+.B -p
+flag is specified, the relay agent will transmit responses to clients
+at a port number that is one greater than the one specified - i.e., if
+you specify
+.B -p
+67, then the relay agent will listen on port 67 and transmit to port
+68.   Transmissions to servers will be sent to the same port number
+that it specified in the
+.B -p
+flag.
 .PP
 Dhcrelay will normally run in the foreground until it has configured
 an interface, and then will revert to running in the background.
