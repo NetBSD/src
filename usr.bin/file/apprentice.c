@@ -26,7 +26,7 @@
  */
 
 #ifndef	lint
-static char rcsid[] = "$Id: apprentice.c,v 1.4 1993/11/03 04:04:21 mycroft Exp $";
+static char rcsid[] = "$Id: apprentice.c,v 1.5 1993/11/03 04:40:04 mycroft Exp $";
 #endif	/* not lint */
 
 #include <stdio.h>
@@ -120,6 +120,8 @@ unsigned long v;
 		case BELONG:
 		case LELONG:
 			v = (long) v;
+			break;
+		case STRING:
 			break;
 		default:
 			magwarn("can't happen: m->type=%d\n",
