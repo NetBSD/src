@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpnam.c,v 1.10 1998/07/27 16:39:11 mycroft Exp $	*/
+/*	$NetBSD: tmpnam.c,v 1.11 1998/10/13 14:19:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,12 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)tmpnam.c	8.3 (Berkeley) 3/28/94";
 #else
-__RCSID("$NetBSD: tmpnam.c,v 1.10 1998/07/27 16:39:11 mycroft Exp $");
+__RCSID("$NetBSD: tmpnam.c,v 1.11 1998/10/13 14:19:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
-
 #include <stdio.h>
 #include <unistd.h>
 #include "local.h"
