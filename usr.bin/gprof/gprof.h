@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
- *	$Id: gprof.h,v 1.7 1994/03/09 00:40:39 cgd Exp $
+ *	$Id: gprof.h,v 1.8 1994/05/14 06:26:07 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/gmon.h>
 #include <a.out.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "gmon.h"
 
 #ifdef vax
 #   include "vax.h"
