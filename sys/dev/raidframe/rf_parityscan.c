@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.14 2002/09/14 17:11:30 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.15 2002/09/21 01:08:38 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.14 2002/09/14 17:11:30 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.15 2002/09/21 01:08:38 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -382,6 +382,7 @@ rf_TryToRedirectPDA(raidPtr, pda, parity)
  * course not the case for the new parity.
  *
  ****************************************************************************************/
+#if 0
 int 
 rf_VerifyDegrModeWrite(raidPtr, asmh)
 	RF_Raid_t *raidPtr;
@@ -389,6 +390,7 @@ rf_VerifyDegrModeWrite(raidPtr, asmh)
 {
 	return (0);
 }
+#endif
 /* creates a simple DAG with a header, a block-recon node at level 1,
  * nNodes nodes at level 2, an unblock-recon node at level 3, and
  * a terminator node at level 4.  The stripe address field in
