@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.23 2000/12/12 18:00:25 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.24 2000/12/12 18:22:39 thorpej Exp $       */
 
 /*
  *
@@ -62,6 +62,10 @@
 #include <net/if_types.h>
 #include <net/if_atm.h>
 #include <net/ethertypes.h> /* XXX: for ETHERTYPE_* */
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/if_atm.h>
