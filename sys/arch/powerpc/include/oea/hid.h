@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.5 2005/01/21 00:09:30 matt Exp $	*/
+/*	$NetBSD: hid.h,v 1.6 2005/01/21 00:45:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -59,6 +59,7 @@
 #define HID0_DCFI	0x00000400  /* d-cache flush invalidate */
 #define HID0_SPD	0x00000200  /* Disable speculative cache access */
 #define HID0_IFEM	0x00000100  /* Enable M-bit for I-fetch */
+#define HID0_XBSEN	0x00000100  /* Extended BAT block size enable (7455+) */
 #define HID0_SGE	0x00000080  /* Enable store gathering */
 #define HID0_DCFA	0x00000040  /* Data cache flush assist */
 #define HID0_BTIC	0x00000020  /* Enable BTIC */
@@ -77,7 +78,7 @@
 #define HID0_7450_BITMASK "\020" \
     "\040EMCP\037b1\036b2\035b3\034b4\033TBEN\032b6\031STEN" \
     "\030HIGH_BAT_EN\027NAP\026SLEEP\025DPM\024b12\023BHTCLR\022XAEN\021NHR" \
-    "\020ICE\017DCE\016ILOCK\015DLOCK\014ICFI\013DCFI\012SPD\011b23" \
+    "\020ICE\017DCE\016ILOCK\015DLOCK\014ICFI\013DCFI\012SPD\011XBSEN" \
     "\010SGE\007b25\006BTIC\005LRSTK\004FOLD\003BHT\002NOPDST\001NOPTI"
 
 /*
@@ -107,7 +108,7 @@
  *  20	ICFI	ICFI	ICFI	ICFI	ICFI	ICFI
  *  21	DCFI	DCFI	DCFI	DCFI	DCFI	DCFI
  *  22	-	-	SPD	SPD	SPG	SPD
- *  23	-	-	IFEM	IFTT	IFTT	-
+ *  23	-	-	IFEM	IFTT	IFTT	XBSEN
  *  24	-	SIE	SGE	SGE	SGE	SGE
  *  25	-	-	DCFA	DCFA	DCFA	-
  *  26	-	-	BTIC	BTIC	BTIC	BTIC
@@ -125,5 +126,16 @@
  * 7450: LRSTK = Link Register Stack Enable
  * 7450: FOLD = Branch folding enable
  */
+
+#define	HID1_EMCP	0x80000000	/* Machine Check Signal Enable */
+#define	HID1_EBA	0x20000000	/* Enable/Disable 60x/MPX Bus Address
+					   Parity Checking */
+#define	HID1_EBD	0x10000000	/* Enable/Disable 60x/MPX Bus Data
+					   Parity Checking */
+#define	HID1_BCLK	0x08000000	/* CLK_OUT */
+#define	HID1_ECLK	0x02000000	/* CLK_OUT */
+#define	HID1_PAR	0x01000000	/* Disable Precharge for ... */
+#define	HID1_DFS4	0x00800000	/* Dynamic Freq Switch / 4 (7448) */
+#define	HID1_DFS2	0x00400000	/* Dynamic Freq Switch / 2 (7447A) */
 
 #endif /* _POWERPC_OEA_HID_H_ */
