@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.5 1996/10/13 09:54:44 jonathan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.6 1997/06/15 17:24:24 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,13 +92,13 @@ typedef union pt_entry {
 #define	PG_HVPN		0xffffe000	/* Hardware page no mask */
 #define	PG_ODDPG	0x00001000	/* Odd even pte entry */
 #define	PG_ASID		0x000000ff	/* Address space ID */
-#define	PG_G		0x00000001	/* HW */
-#define	PG_V		0x00000002
+#define	PG_G		0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
+#define	PG_V		0x00000002	/* Valid */
 #define	PG_NV		0x00000000
-#define	PG_M		0x00000004
+#define	PG_M		0x00000004	/* Dirty; i.e. writable */
 #define	PG_ATTR		0x0000003f
 #define	PG_UNCACHED	0x00000010
-#define	PG_CACHED	0x00000018
+#define	PG_CACHED	0x00000018	/* Cacheable noncoherent */
 #define	PG_CACHEMODE	0x00000038
 #define	PG_ROPAGE	(PG_V | PG_RO | PG_CACHED) /* Write protected */
 #define	PG_RWPAGE	(PG_V | PG_M | PG_CACHED)  /* Not wr-prot not clean */
