@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rain.c	5.6 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: rain.c,v 1.2 1993/08/01 18:52:54 mycroft Exp $";
+static char rcsid[] = "$Id: rain.c,v 1.3 1993/12/08 08:18:22 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -64,7 +64,7 @@ static struct termio sg, old_tty;
 static struct sgttyb sg, old_tty;
 #endif
 
-int	fputchar();
+static void fputchar();
 char	*LL, *TE, *tgoto();
 
 main(argc, argv)
@@ -238,7 +238,7 @@ onsig()
 	exit(0);
 }
 
-static
+static void
 fputchar(c)
 	char c;
 {
