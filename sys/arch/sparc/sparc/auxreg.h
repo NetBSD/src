@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.7 1997/05/17 17:52:52 pk Exp $ */
+/*	$NetBSD: auxreg.h,v 1.8 2000/01/21 13:25:12 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,9 +103,8 @@
 
 #define FTC_FLIP	do {						\
 	if (CPU_ISSUN4M) {						\
-		auxio_regval |= AUXIO4M_FTC;				\
-		*AUXIO4M_REG = auxio_regval;				\
-		*AUXIO4M_REG = *AUXIO4M_REG | AUXIO4M_MB1 | AUXIO4M_FTC;\
+		/* AUXIO4M_FTC bit is auto-clear */			\
+		*AUXIO4M_REG = auxio_regval | AUXIO4M_FTC;		\
 	} else {							\
 		auxio_regval |= AUXIO4C_FTC;				\
 		*AUXIO4C_REG = auxio_regval;				\
