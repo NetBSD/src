@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/11/16 16:29:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2003/11/16 22:49:48 lukem Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c} main.c
@@ -14,7 +14,7 @@ DPSRCS+=	str-${f}.h
 fini: fini.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${HOSTLIBIBERTY}
-CLEANFILES+=	fini
+CLEANFILES+=	fini fini.lo
 
 .include "../Makefile.backend"
 
