@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1995/04/10 12:42:16 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1995/04/27 07:16:41 phil Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -93,9 +93,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-/* XXX where should this really go? */
+/* Prototypes of routines used here. */
 
 vm_offset_t pmap_extract(pmap_t, vm_offset_t);
+void pmap_activate(register pmap_t, struct pcb *);
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
@@ -611,7 +612,8 @@ pmap_pinit(pmap)
 
 	/* install self-referential address mapping entry */
 	*(int *)(pmap->pm_pdir+PTDPTDI) =
-		(int)pmap_extract(pmap_kernel(), pmap->pm_pdir) | PG_V | PG_KW;
+		(int)pmap_extract(pmap_kernel(), (vm_offset_t) pmap->pm_pdir)
+		  | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
