@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/21 11:31:38 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/01/22 13:52:48 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -50,6 +50,13 @@
  * as well as some utility code used by these routines. 
  */
 
+/*
+ * Utility macro to switch to the stack of another thread.
+ */
+#define STACK_SWITCH(pt,tmp)		\
+	LDPTR	pt, PT_UC, tmp		;\
+	addi	tmp, -STACKSPACE, r15
+
 
 /*
  * void	pthread__switch(pthread_t self, pthread_t next);
@@ -59,51 +66,20 @@
  * main purpose is to be a basic switch engine when the MI code is
  * already dealing with spin-preemption or other gunk.  
  */
-
 ENTRY(pthread__switch)
-	LINK_BIG_FRAME(RND_CTXSIZE)	/* Make space for a ucontext_t */
 	pta/l	_C_LABEL(_swapcontext_u), tr0
-	STPTR	r2, PT_UC, r15		/* self->pt_uc = &ucontext_t */
+	movi	RND_CTXSIZE+8, r0
+	sub	r15, r0, r15
+	st.q	r15, RND_CTXSIZE, r18
+	STPTR	r2, PT_UC, r15
+	LDPTR	r3, PT_UC, r3
+	or	r15, r63, r2
 	blink	tr0, r18
-	UNLINK_BIG_FRAME(RND_CTXSIZE)
+	ld.q	r15, RND_CTXSIZE, r18
 	ptabs/l	r18, tr0
-	blink	tr0, r18
-
-
-/*
- * Utility macro to switch to the stack of another thread.
- */
-#define STACK_SWITCH(pt,tmp)		\
-	LDPTR	pt, PT_UC, tmp		;\
-	or	tmp, r63, r15
-
-/*
- * Helper switch code used by pthread__locked_switch() and 
- * pthread__upcall_switch() when they discover spinlock preemption.
- *
- * Call with:
- *   r20 = from, r23 = to
- */
-Lpthread__switch_away_decrement:
-	STACK_SWITCH(r23,r2)
-
-	/* If we're invoked from the switch-to-next provisions of
-	 * pthread__locked_switch or pthread__upcall_switch, there
-	 * may be a fake spinlock-count set. If so, we decrement it
-	 * once we're no longer using the old stack.
-	 */ 
-	pta/l	_C_LABEL(_setcontext_u), tr0
-	ld.l	r20, PT_SPINLOCKS, r0
-	addi	r0, -1, r0
-	st.l	r20, PT_SPINLOCKS, r0
+	movi	RND_CTXSIZE+8, r0
+	add	r15, r0, r15
 	blink	tr0, r63
-	/* NOTREACHED */
-
-Lpthread__switch_away_no_decrement:
-	STACK_SWITCH(r23,r2)
-	pta/l	_C_LABEL(_setcontext_u), tr0
-	blink	tr0, r63
-	/* NOTREACHED */
 
 
 /*
@@ -115,7 +91,12 @@ Lpthread__switch_away_no_decrement:
  * r2 = self, r3 = next, r4 = lock
  */
 ENTRY(pthread__locked_switch)
-	LINK_BIG_FRAME(RND_CTXSIZE)
+	movi	RND_CTXSIZE+32, r0
+	sub	r15, r0, r15
+	st.q	r15, RND_CTXSIZE, r28
+	st.q	r15, RND_CTXSIZE+8, r29
+	st.q	r15, RND_CTXSIZE+16, r30
+	st.q	r15, RND_CTXSIZE+24, r18
 
 	/* Make sure we get continued */
 	ld.l	r3, PT_SPINLOCKS, r0
@@ -124,20 +105,15 @@ ENTRY(pthread__locked_switch)
 
 	/*
 	 * Keep r2-r4, and r15 safe for later.
-	 * We know that r19-r22 are not clobbered by libc's context routines.
-	 *
-	 * XXX: This might not remain the case once the dynamic linker gets
-	 * XXX: in the way of things.
 	 */
-	or	r2, r63, r19		/* self */
-	or	r3, r63, r20		/* next */
-	or	r4, r63, r21		/* lock */
-	or	r15, r63, r22		/* Our ucontext_t structure */
-	STPTR	r2, PT_UC, r22
+	pta/l	_C_LABEL(_getcontext_u), tr0
+	or	r2, r63, r28		/* self */
+	or	r3, r63, r29		/* next */
+	or	r4, r63, r30		/* lock */
+	STPTR	r2, PT_UC, r15		/* self->pt_uc = ctx */
 
 	/* Save the current context */
-	pta/l	_C_LABEL(_getcontext_u), tr0
-	or	r22, r63, r2
+	or	r15, r63, r2
 	blink	tr0, r18
 
 	/*
@@ -146,18 +122,19 @@ ENTRY(pthread__locked_switch)
 	 */
 	pta/u	Llocked_return_point, tr0
 	gettr	tr0, r0
-	st.q	r22, UC_REGS_PC, r0
+	st.q	r15, UC_REGS_PC, r0
+	or	r15, r63 ,r3
 
-	STACK_SWITCH(r20,r2)		/* r2 = next->pt_uc */
+	pta/l	Llocked_no_old_preempt, tr0
+	STACK_SWITCH(r29, r2)		/* r2 = next->pt_uc */
 
 	/* Now running on `next's stack. */
 
 	/* Check if the original thread was preempted while holding
 	 * its queue lock.
 	 */
-	pta/l	Llocked_no_old_preempt, tr0
-	LDPTR	r19, PT_NEXT, r23		/* self->pt_next == NULL? */
-	beq/l	r23, r63, tr0			/* Jump if not preempted */
+	LDPTR	r28, PT_NEXT, r1		/* self->pt_next == NULL? */
+	beq/l	r1, r63, tr0			/* Jump if not preempted */
 
 	/* Yes, it was. Stash the thread we were going to
 	 * switch to, the lock the original thread was holding, 
@@ -168,59 +145,73 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	STPTR	r19, PT_SWITCHTO, r20		/* self->pt_switchto = next */
-	STPTR	r19, PT_SWITCHTOUC, r2		/* self->pt_switchtouc = uc */
-	STPTR	r19, PT_HELDLOCK, r21		/* self->pt_heldlock = lock */
-	ld.l	r19, PT_SPINLOCKS, r0
+	STPTR	r28, PT_SWITCHTO, r29		/* self->pt_switchto = next */
+	STPTR	r28, PT_SWITCHTOUC, r2		/* self->pt_switchtouc = uc */
+	STPTR	r28, PT_HELDLOCK, r30		/* self->pt_heldlock = lock */
+	ld.l	r28, PT_SPINLOCKS, r0
 	addi	r0, -1, r0
-	st.l	r19, PT_SPINLOCKS, r0
+	st.l	r28, PT_SPINLOCKS, r0
 
 	/* Save the context we previously stored in self->pt_uc
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere. 
 	 */
-	pta/l	Lpthread__switch_away_decrement, tr0
-	STPTR	r19, PT_SLEEPUC, r22
+	STPTR	r28, PT_SLEEPUC, r3
+
+	pta/l	_C_LABEL(_setcontext_u), tr0
+	STACK_SWITCH(r1, r2)
+
+	/* If we're invoked from the switch-to-next provisions of
+	 * pthread__locked_switch or pthread__upcall_switch, there
+	 * may be a fake spinlock-count set. If so, we decrement it
+	 * once we're no longer using the old stack.
+	 */ 
+	ld.l	r29, PT_SPINLOCKS, r0
+	addi	r0, -1, r0
+	st.l	r29, PT_SPINLOCKS, r0
 	blink	tr0, r63
 	/* NOTREACHED */
 
-
 Llocked_no_old_preempt:
-	/* r21 = lock, r20 = next, r19 = self, r2 = next->pt_uc */
+	/* r30 = lock, r29 = next, r28 = self, r2 = next->pt_uc */
 
 	/* We've moved to the new stack, and the old context has been 
 	 * saved. The queue lock can be released.
 	 */
-	ld.l	r19, PT_SPINLOCKS, r0	/* self->pt_spinlocks-- */
+	ld.l	r28, PT_SPINLOCKS, r0	/* self->pt_spinlocks-- */
 	addi	r0, -1, r0
-	st.l	r19, PT_SPINLOCKS, r0
+	st.l	r28, PT_SPINLOCKS, r0
 
 	/* We happen to know that this is the right way to release a lock. */
-	st.q	r21, 0, r63		/* *lock = 0 */
+	st.q	r30, 0, r63		/* *lock = 0 */
+	pta/l	_C_LABEL(_setcontext_u), tr0
 
 	/* Remove the fake lock */
-	ld.l	r20, PT_SPINLOCKS, r0	/* next->pt_spinlocks-- */
+	ld.l	r29, PT_SPINLOCKS, r0	/* next->pt_spinlocks-- */
 	addi	r0, -1, r0
-	st.l	r20, PT_SPINLOCKS, r0
+	st.l	r29, PT_SPINLOCKS, r0
 
 	/* Check if we were preempted while holding the fake lock. */
-	pta/l	_C_LABEL(_setcontext_u), tr0
-	LDPTR	r20, PT_NEXT, r23	/* next->pt_next == NULL? */
-	beq/l	r23, r63, tr0		/* Jump if not preempted */
+	LDPTR	r29, PT_NEXT, r1	/* next->pt_next == NULL? */
+	beq/l	r1, r63, tr0		/* _setcontext() if not preempted */
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	pta/l	Lpthread__switch_away_no_decrement, tr0
-	STPTR	r20, PT_SWITCHTO, r20	/* next->pt_switchto = next */
-	STPTR	r20, PT_SWITCHTOUC, r2
+	STPTR	r29, PT_SWITCHTO, r29	/* next->pt_switchto = next */
+	STPTR	r29, PT_SWITCHTOUC, r2
+	STACK_SWITCH(r1, r2)
 	blink	tr0, r63
 	/* NOTREACHED */
 
 Llocked_return_point:
 	/* We're back on the original stack. */
-	UNLINK_BIG_FRAME(RND_CTXSIZE)
+	ld.q	r15, RND_CTXSIZE+24, r18
+	movi	RND_CTXSIZE+32, r0
+	ld.q	r15, RND_CTXSIZE+16, r30
 	ptabs/l	r18, tr0
+	ld.q	r15, RND_CTXSIZE+8, r29
+	ld.q	r15, RND_CTXSIZE, r28
+	add	r15, r0, r15
 	blink	tr0, r18
-
 
 
 /*
@@ -233,50 +224,49 @@ Llocked_return_point:
 ENTRY(pthread__upcall_switch)
 	/* Create a `fake' lock count so we are `continued' */
 	ld.l	r3, PT_SPINLOCKS, r0
+	pta/l	Lupcall_no_old_preempt, tr0
 	addi	r0, 1, r0
 	st.l	r3, PT_SPINLOCKS, r0
 
-	STACK_SWITCH(r3,r28)		/* r28 = next->pt_uc */
-
-	/* a4 = r19 */
+	STACK_SWITCH(r3, r28)		/* r28 = next->pt_uc */
 
 	/* Check if the upcall was preempted and continued. */
-	pta/l	Lupcall_no_old_preempt, tr0
-	LDPTR	r2, PT_NEXT, r23
-	beq/l	r23, r63, tr0
+	pta/l	_C_LABEL(pthread__sa_recycle), tr1
+	LDPTR	r2, PT_NEXT, r1
+	beq/l	r1, r63, tr0
 
 	/* Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
+	movi	PT_STATE_RECYCLABLE, r0
 	STPTR	r2, PT_SWITCHTO, r3
 	STPTR	r2, PT_SWITCHTOUC, r28
-	movi	PT_STATE_RECYCLABLE, r0
-	pta/l	Lpthread__switch_away_decrement, tr0
 	st.l	r2, PT_STATE, r0
-	or	r3, r63, r20
+	pta/l	_C_LABEL(_setcontext_u), tr0
+	STACK_SWITCH(r1, r2)
+	ld.l	r3, PT_SPINLOCKS, r0
+	addi	r0, -1, r0
+	st.l	r3, PT_SPINLOCKS, r0
 	blink	tr0, r63
-	/* NOTREACHED */
 
 Lupcall_no_old_preempt:		
-	pta/l	_C_LABEL(pthread__sa_recycle), tr0
 	or	r3, r63, r29
 	/* pthread__sa_recycle(old, new) */
-	blink	tr0, r18
+	blink	tr1, r18
 
 	/* Release the fake lock */
 	ld.l	r29, PT_SPINLOCKS, r0
+	pta/l	_C_LABEL(_setcontext_u), tr0
 	addi	r0, -1, r0
 	st.l	r29, PT_SPINLOCKS, r0
 
 	/* Check if we were preempted while holding the fake lock. */
-	pta/l	_C_LABEL(_setcontext_u), tr0
 	or	r28, r63, r2
-	LDPTR	r29, PT_NEXT, r23
-	beq/l	r23, r63, tr0
+	LDPTR	r29, PT_NEXT, r1
+	beq/l	r1, r63, tr0
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	pta/l	Lpthread__switch_away_no_decrement, tr0
 	STPTR	r29, PT_SWITCHTO, r29
 	STPTR	r29, PT_SWITCHTOUC, r2
+	STACK_SWITCH(r1, r2)
 	blink	tr0, r63
-	/* NOTREACHED */
