@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ibcs2.8,v 1.1 1998/02/09 05:12:45 scottb Exp $
+.\"	$NetBSD: compat_ibcs2.8,v 1.2 1998/04/28 04:36:26 fair Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -40,19 +40,22 @@
 .Nd setup procedure for running iBCS2 binaries
 .Sh DESCRIPTION
 .Nx
-supports running Intel Binary Compatibilty Standard 2 (iBCS2)
-binaries.  This only applies to i386 systems for now.  Binaries
-are suported from SCO UNIX and other systems derived from UNIX
-System V Release 3. iBCS2 support is only well tested using SCO
-binaries. XENIX binaries are also supported although not as well
-tested.  SVR4 binaries are supported by the
+supports running Intel Binary Compatibilty Standard 2 (iBCS2) binaries.
+This only applies to i386 systems for now.
+Binaries are suported from SCO
+.Ux
+and other systems derived from
+.At V.3 .
+iBCS2 support is only well tested using SCO binaries.
+XENIX binaries are also supported although not as well tested.
+SVR4 binaries are supported by the
 .Dv COMPAT_SVR4
 option.
 .Pp
-iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats. Binaries
-from SCO OpenServer (version 5.x) are the only ELF binaries that have
-been tested.  Most programs should work, but not ones that use or
-depend on:
+iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats.
+Binaries from SCO OpenServer (version 5.x) are the only ELF binaries
+that have been tested.
+Most programs should work, but not ones that use or depend on:
 .sp
 .Bl -tag -width 123 -compact -offset indent
 .It kernel internal data structures
@@ -76,28 +79,46 @@ option should be enabled in addition to
 Many COFF-format programs and most ELF-format programs are dynamically
 linked. This means that you will also need the shared libraries that
 the program depends on.  Also, you will need to create a "shadow root"
-directory for iBCS2 binaries on your NetBSD system. This directory is
-named /emul/ibcs2.  Any file operations done by iBCS2 programs run
-under NetBSD will look in this directory first. So, if an iBCS2
-program opens, for example, /etc/passwd, NetBSD will first try to open
-/emul/ibcs2/etc/passwd, and if that does not exist open the 'real'
-/etc/passwd file. It is recommended that you install iBCS2 packages
-that include configuration files, etc. under /emul/ibcs2, to avoid
-naming conflicts with possible NetBSD counterparts. Shared libraries
-should also be installed in the shadow tree.
+directory for iBCS2 binaries on your
+.Nx
+system.
+This directory is named
+.Pa /emul/ibcs2 .
+Any file operations done by iBCS2 programs run under 
+.Nx
+will look in this directory first.
+So, if an iBCS2
+program opens, for example,
+.Pa /etc/passwd ,
+.Nx
+will first try to open
+.Pa /emul/ibcs2/etc/passwd ,
+and if that does not exist open the 'real'
+.Pa /etc/passwd
+file. It is recommended that you install iBCS2 packages
+that include configuration files, etc. under
+.Pa /emul/ibcs2 ,
+to avoid naming conflicts with possible
+.Nx
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that
 iBCS2 binaries depend on only the first few times that you install
-an iBCS2 program on your NetBSD system. After a while, you will
-have a sufficient set of iBCS2 shared libraries on your system to
-be able to run newly imported iBCS2 binaries without any extra
-work.
+an iBCS2 program on your
+.Nx
+system.
+After a while, you will have a sufficient set of iBCS2 shared
+libraries on your system to be able to run newly imported iBCS2
+binaries without any extra work.
 
 .Ss Setting up shared libraries
 How to get to know which shared libraries iBCS2 binaries need, and
 where to get them? Depending on the file type of the executable, there
 are different possibilities (when following these instructions: you
-will need to be root on your NetBSD system to do the necessary
+will need to be root on your
+.Nx
+system to do the necessary
 installation steps).
 
 .Bl -tag -width 123 -compact
@@ -117,9 +138,9 @@ After copying the shared libraries, you should have at least the
 following files on your system:
 .Pp
 .nf
-/emul/ibcs2/shlib/libc_s
-/emul/ibcs2/shlib/libnsl_s
-/emul/ibcs2/shlib/protlib_s
+.Pa /emul/ibcs2/shlib/libc_s
+.Pa /emul/ibcs2/shlib/libnsl_s
+.Pa /emul/ibcs2/shlib/protlib_s
 .fi
 .Pp
 .It 2. ELF binaries
@@ -131,18 +152,18 @@ After copying the shared libraries, you should have at least the
 following files on your system:
 .Pp
 .nf
-/emul/ibcs2/usr/lib/libc.so.1
-/emul/ibcs2/usr/lib/libcrypt.so
-/emul/ibcs2/usr/lib/libndbm.so
-/emul/ibcs2/usr/lib/libsocket.so.1
+.Pa /emul/ibcs2/usr/lib/libc.so.1
+.Pa /emul/ibcs2/usr/lib/libcrypt.so
+.Pa /emul/ibcs2/usr/lib/libndbm.so
+.Pa /emul/ibcs2/usr/lib/libsocket.so.1
 .fi
 .Pp
 .El
 If you don't have access to a SCO system, you will need to get the
 extra files you need from a SCO distribution. As of January 1998, SCO
 sells a copy of SCO OpenServer (iBCS2) and/or SCO UnixWare (SVR4) for
-personal/non-commercial use for only the cost of shipping (about
-$20US). The distribution comes on an ISO9660-format CDROM which can be
+personal/non-commercial use for only the cost of shipping (about $20US).
+The distribution comes on an ISO9660-format CDROM which can be
 mounted and used to copy the necessary files.
 .Pp
 Run the following script to copy the basic set of files from a SCO
