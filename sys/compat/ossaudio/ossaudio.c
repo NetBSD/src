@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.42 2003/03/21 21:13:54 dsl Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.43 2003/06/23 21:53:10 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.42 2003/03/21 21:13:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.43 2003/06/23 21:53:10 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -766,11 +766,12 @@ oss_ioctl_mixer(p, uap, retval)
 	case OSS_SOUND_OLD_MIXER_INFO:
 		error = ioctlf(fp, AUDIO_GETDEV, (caddr_t)&adev, p);
 		if (error)
-			return (error);
+			goto out;
 		omi.modify_counter = 1;
 		strncpy(omi.id, adev.name, sizeof omi.id);
 		strncpy(omi.name, adev.name, sizeof omi.name);
-		return copyout(&omi, SCARG(uap, data), OSS_IOCTL_SIZE(com));
+		error = copyout(&omi, SCARG(uap, data), OSS_IOCTL_SIZE(com));
+		goto out;
 	case OSS_SOUND_MIXER_READ_RECSRC:
 		if (di->source == -1) {
 			error = EINVAL;
@@ -823,16 +824,20 @@ oss_ioctl_mixer(p, uap, retval)
 				if (idat & (1 << i))
 					break;
 			if (i >= OSS_SOUND_MIXER_NRDEVICES ||
-			    di->devmap[i] == -1)
-				return EINVAL;
+			    di->devmap[i] == -1) {
+				error = EINVAL;
+				goto out;
+			}
 			mc.un.ord = enum_to_ord(di, di->devmap[i]);
 		} else {
 			mc.type = AUDIO_MIXER_SET;
 			mc.un.mask = 0;
 			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++) {
 				if (idat & (1 << i)) {
-					if (di->devmap[i] == -1)
-						return EINVAL;
+					if (di->devmap[i] == -1) {
+						error = EINVAL;
+						goto out;
+					}
 					mc.un.mask |= enum_to_mask(di, di->devmap[i]);
 				}
 			}
