@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.20 2000/09/13 15:50:26 thorpej Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.21 2000/09/13 16:09:27 thorpej Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -160,6 +160,15 @@ echo -n "$copyright"
 echo ''
 echo '#ifndef _SYS_VNODE_IF_H_'
 echo '#define _SYS_VNODE_IF_H_'
+echo ''
+echo '#ifdef _KERNEL'
+echo '#ifdef _LKM'
+echo '/* LKMs always use non-inlined vnode ops. */'
+echo '#define	VNODE_OP_NOINLINE'
+echo '#else'
+echo '#include "opt_vnode_op_noinline.h"'
+echo '#endif'
+echo '#endif /* _KERNEL */'
 echo '
 extern struct vnodeop_desc vop_default_desc;
 '
@@ -252,6 +261,14 @@ exec > $out_c
 echo -n "$warning" | sed -e 's/\$//g;s/@/\$/g'
 echo ""
 echo -n "$copyright"
+echo '
+/*
+ * If we have LKM support, always include the non-inline versions for
+ * LKMs.  Otherwise, do it based on the option.
+ */
+#ifdef LKM
+#define	VNODE_OP_NOINLINE
+#endif'
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>
