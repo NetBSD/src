@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.13 2003/07/15 00:24:47 lukem Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.14 2003/12/06 22:05:33 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.13 2003/07/15 00:24:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.14 2003/12/06 22:05:33 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ mainbus_bs_subregion(t, bsh, offset, size, nbshp)
 	bus_space_handle_t *nbshp;
 {
 
-	*nbshp = bsh + offset;
+	*nbshp = bsh + (offset << 2);
 	return (0);
 }
 
