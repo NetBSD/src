@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.27 1998/08/13 02:11:09 eeh Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.28 1998/08/13 21:20:47 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -127,7 +127,7 @@ struct pagerops *dfltpagerops = NULL;	/* default pager */
 
 vm_map_t pager_map;
 boolean_t pager_map_wanted;
-vm_offset_t pager_sva, pager_eva;
+vaddr_t pager_sva, pager_eva;
 
 void
 vm_pager_init()
@@ -160,7 +160,7 @@ vm_pager_allocate(type, handle, size, prot, off)
 	caddr_t handle;
 	vsize_t size;
 	vm_prot_t prot;
-	vm_offset_t off;
+	vaddr_t off;
 {
 	struct pagerops *ops;
 
@@ -182,17 +182,17 @@ vm_pager_deallocate(pager)
 int
 vm_pager_remove(pager, from, to)
 	vm_pager_t	pager;
-	vm_offset_t	from, to;
+	vaddr_t		from, to;
 {
 	if (pager == NULL)
 		panic("vm_pager_remove: null pager");
 	return (*pager->pg_ops->pgo_remove)(pager, from, to);
 }
 
-vm_offset_t
+vaddr_t
 vm_pager_next(pager, offset)
 	vm_pager_t	pager;
-	vm_offset_t	offset;
+	vaddr_t		offset;
 {
 	if (pager == NULL)
 		panic("vm_pager_next: null pager");
@@ -265,7 +265,7 @@ vm_pager_put(pager, m, sync)
 boolean_t
 vm_pager_has_page(pager, offset)
 	vm_pager_t	pager;
-	vm_offset_t	offset;
+	vaddr_t		offset;
 {
 	if (pager == NULL)
 		panic("vm_pager_has_page: null pager");
@@ -289,9 +289,9 @@ vm_pager_sync()
 void
 vm_pager_cluster(pager, offset, loff, hoff)
 	vm_pager_t	pager;
-	vm_offset_t	offset;
-	vm_offset_t	*loff;
-	vm_offset_t	*hoff;
+	vaddr_t		offset;
+	vaddr_t		*loff;
+	vaddr_t		*hoff;
 {
 	if (pager == NULL)
 		panic("vm_pager_cluster: null pager");
@@ -301,20 +301,20 @@ vm_pager_cluster(pager, offset, loff, hoff)
 void
 vm_pager_clusternull(pager, offset, loff, hoff)
 	vm_pager_t	pager;
-	vm_offset_t	offset;
-	vm_offset_t	*loff;
-	vm_offset_t	*hoff;
+	vaddr_t		offset;
+	vaddr_t		*loff;
+	vaddr_t		*hoff;
 {
 	panic("vm_pager_nullcluster called");
 }
 
-vm_offset_t
+vaddr_t
 vm_pager_map_pages(mlist, npages, canwait)
 	vm_page_t	*mlist;
 	int		npages;
 	boolean_t	canwait;
 {
-	vm_offset_t kva, va;
+	vaddr_t kva, va;
 	vsize_t size;
 	vm_page_t m;
 
@@ -357,13 +357,13 @@ vm_pager_map_pages(mlist, npages, canwait)
 
 void
 vm_pager_unmap_pages(kva, npages)
-	vm_offset_t	kva;
+	vaddr_t		kva;
 	int		npages;
 {
 	vsize_t size = npages * PAGE_SIZE;
 
 #ifdef DEBUG
-	vm_offset_t va;
+	vaddr_t va;
 	vm_page_t m;
 	int np = npages;
 
@@ -386,9 +386,9 @@ vm_pager_unmap_pages(kva, npages)
 
 vm_page_t
 vm_pager_atop(kva)
-	vm_offset_t	kva;
+	vaddr_t		kva;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 
 	pa = pmap_extract(vm_map_pmap(pager_map), kva);
 	if (pa == 0)
