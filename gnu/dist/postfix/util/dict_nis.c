@@ -77,7 +77,7 @@ static char *dict_nis_domain;
 
 static void dict_nis_init(void)
 {
-    char   *myname = "dict_nis_init";
+    const char *myname = "dict_nis_init";
 
     if (yp_get_default_domain(&dict_nis_domain) != 0
 	|| dict_nis_domain == 0 || *dict_nis_domain == 0

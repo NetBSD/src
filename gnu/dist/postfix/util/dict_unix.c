@@ -133,7 +133,7 @@ DICT   *dict_unix_open(const char *map, int unused_flags, int dict_flags)
 {
     DICT_UNIX *dict_unix;
     struct dict_unix_lookup {
-	char   *name;
+	const char *name;
 	const char *(*lookup) (DICT *, const char *);
     };
     static struct dict_unix_lookup dict_unix_lookup[] = {

@@ -170,7 +170,7 @@
   * lookup table for available map types.
   */
 typedef struct {
-    char   *type;
+    const char *type;
     struct DICT *(*open) (const char *, int, int);
 } DICT_OPEN_INFO;
 
