@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.14 2002/04/17 17:34:48 martin Exp $ 
+ *	$Id: isac.c,v 1.15 2002/04/18 12:19:05 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.14 2002/04/17 17:34:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.15 2002/04/18 12:19:05 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -102,7 +102,8 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 	if(ista & ISAC_ISTA_EXI)	/* extended interrupt */
 	{
 		u_int8_t exirstat = ISAC_READ(I_EXIR);
-		c |= isic_isac_exir_hdlr(sc, exirstat);
+		if (sc->sc_intr_valid == ISIC_INTR_VALID)
+			c |= isic_isac_exir_hdlr(sc, exirstat);
 	}
 	
 	if(ista & ISAC_ISTA_RME)	/* receive message end */
