@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.10 2003/07/25 10:12:44 scw Exp $ */
+/* $NetBSD: plb.c,v 1.11 2003/07/25 10:50:13 scw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.10 2003/07/25 10:12:44 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.11 2003/07/25 10:50:13 scw Exp $");
 
 #include "locators.h"
 
@@ -105,7 +105,6 @@ CFATTACH_DECL(plb, sizeof(struct device),
  * "generic" DMA struct, nothing special.
  */
 struct powerpc_bus_dma_tag ibm4xx_default_bus_dma_tag = {
-	NULL,
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,
