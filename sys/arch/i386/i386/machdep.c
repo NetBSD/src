@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.11 1993/05/16 03:42:46 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.12 1993/05/17 22:31:21 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -492,7 +492,8 @@ boot(arghowto)
 	splhigh();
 	devtype = major(rootdev);
 	if (howto&RB_HALT) {
-		pg("\nThe operating system has halted. Please press any key to reboot.\n\n");
+		printf("\nThe operating system has halted. Please press any key to reboot.\n\n");
+		cngetc();
 	} else {
 		if (howto & RB_DUMP) {
 			savectx(&dumppcb, 0);
