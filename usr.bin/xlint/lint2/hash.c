@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.7 2002/01/21 19:49:52 tv Exp $	*/
+/*	$NetBSD: hash.c,v 1.8 2002/01/31 19:36:55 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,8 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.7 2002/01/21 19:49:52 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: hash.c,v 1.8 2002/01/31 19:36:55 tv Exp $");
 #endif
 
 /*
