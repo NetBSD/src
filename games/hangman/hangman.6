@@ -30,22 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)hangman.6	6.3 (Berkeley) 6/23/90
-.\"	$Id: hangman.6,v 1.2 1993/08/01 07:46:49 mycroft Exp $
+.\"	$Id: hangman.6,v 1.3 1993/08/05 01:46:45 jtc Exp $
 .\"
-.TH HANGMAN 6 "June 23, 1990"
-.UC 4
-.SH NAME
-hangman \- Computer version of the game hangman
-.SH SYNOPSIS
-.B /usr/games/hangman
-.SH DESCRIPTION
+.Dd June 23, 1990
+.Dt HANGMAN 6
+.Os
+.Sh NAME
+.Nm hangman
+.Nd Computer version of the game hangman
+.Sh SYNOPSIS
+.Nm /usr/games/hangman
+.Sh DESCRIPTION
 In
-.I hangman,
+.Nm hangman,
 the computer picks a word from the on-line word list
 and you must try to guess it.
 The computer keeps track of which letters have been guessed
 and how many wrong guesses you have made on the screen in a graphic fashion.
-.SH FILES
-/usr/dict/words     On-line word list
-.SH AUTHOR
+.Sh FILES
+.Bl -tag -width /usr/dict/words -compact
+.It Pa /usr/dict/words
+On-line word list
+.El
+.Sh AUTHOR
 Ken Arnold

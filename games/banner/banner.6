@@ -30,44 +30,44 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)banner.6	6.4 (Berkeley) 6/23/90
-.\"	$Id: banner.6,v 1.2 1993/08/01 07:47:32 mycroft Exp $
+.\"	$Id: banner.6,v 1.3 1993/08/05 01:46:28 jtc Exp $
 .\"
-.TH BANNER 6 "June 23, 1990"
-.UC
-.SH NAME
-banner \- print large banner on printer
-.SH SYNOPSIS
-.B /usr/games/banner
-[
-.BI \-w n
-]
-message ...
-.SH DESCRIPTION
-.I Banner
+.Dd June 23, 1990
+.Dt BANNER 6
+.Os
+.Sh NAME
+.Nm banner 
+.Nd print large banner on printer
+.Sh SYNOPSIS
+.Nm banner
+.Op Fl w Op Ar n
+.Ar message ...
+.Sh DESCRIPTION
+.Nm Banner
 prints a large, high quality banner on the standard output.
 If the message is omitted, it prompts for and
 reads one line of its standard input.  If
-.B \-w
+.Fl w
 is given, the output is scrunched down from a width of 132 to
-.I n ,
+.Ar n ,
 suitable for a narrow terminal.  If
-.I n
+.Ar n
 is omitted, it defaults to 80.
-.PP
+.Pp
 The output should be printed on a hard-copy device, up to 132 columns wide,
 with no breaks between the pages. The volume is great enough that you 
 may want
 a printer or a fast hardcopy terminal, but if you are patient, a
 decwriter or other 300 baud terminal will do.
-.SH BUGS
+.Sh BUGS
 Several ASCII characters are not defined, notably <, >, [, ], \\,
 ^, _, {, }, |, and ~.  Also, the characters ", ', and & are funny
 looking (but in a useful way.)
-.PP
+.Pp
 The
-.B \-w
+.Fl w
 option is implemented by skipping some rows and columns.
 The smaller it gets, the grainier the output.
 Sometimes it runs letters together.
-.SH AUTHOR
+.Sh AUTHOR
 Mark Horton

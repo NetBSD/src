@@ -30,23 +30,39 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)bcd.6	6.7 (Berkeley) 6/23/90
-.\"	$Id: bcd.6,v 1.2 1993/08/01 07:47:24 mycroft Exp $
+.\"	$Id: bcd.6,v 1.3 1993/08/05 01:46:31 jtc Exp $
 .\"
-.TH "BCD" 6 "June 23, 1990"
-.UC 7
-.SH NAME
-bcd \- format input as punch cards
+.Dd June 23, 1990
+.Dt BCD 6
+.Os
+.Sh NAME
+.Nm bcd 
+.Nd format input as punch cards
 .br
-ppt \- format input as paper tape
+.Nm ppt
+.Nd format input as paper tape
 .br
-morse \- format input as morse code
-.SH SYNOPSIS
-\fBbcd\fP [string ...]
+.Nm morse 
+.Nd format input as morse code
+.Sh SYNOPSIS
+.Nm bcd
+.Op Ar string ...
 .br
-\fBppt\fP [string ...]
+.Nm ppt
+.Op Ar string ...
 .br
-\fBmorse\fP [-s] [string ...]
-.SH DESCRIPTION
-\fIBcd\fP, \fIppt\fP and \fImorse\fP convert command line arguments, if
-provided, or standard input into a form familiar to old-timers.  The
-\fI-s\fP option for morse produces dots and dashes rather than words.
+.Nm morse
+.Op Fl s
+.Op Ar string ...
+.Sh DESCRIPTION
+.Nm Bcd ,
+.Nm ppt
+and
+.Nm morse
+convert command line arguments, if provided, or standard input into a form
+familiar to old-timers.
+The
+.Fl s
+option for
+.Nm morse
+produces dots and dashes rather than words.
