@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.54 1998/01/26 23:30:44 bad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.55 1998/02/19 00:47:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,8 @@
  *
  * NOTE 3: Doesn't interact with leases, should it?
  */
+
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

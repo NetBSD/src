@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.116 1998/02/14 00:37:30 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.117 1998/02/19 00:49:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,7 @@
  *	@(#)init_main.c	8.9 (Berkeley) 1/21/94
  */
 
+#include "fs_nfs.h"
 #include "opt_uvm.h"
 
 #include "rnd.h"
