@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/07 16:01:44 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6 1997/09/30 23:15:45 is Exp $
 
-SUBDIR+= kern
+SUBDIR= kern
 .if exists(arch/${MACHINE})
-SUBDIR+= arch/${MACHINE}
+SUBDIR= arch/${MACHINE}
 .endif
-
-regress: _SUBDIRUSE
+.if exists(arch/${MACHINE_ARCH})
+SUBDIR= arch/${MACHINE_ARCH}
+.endif
 
 .include <bsd.subdir.mk>
