@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.44 2004/07/21 14:18:16 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.45 2004/07/21 17:49:49 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.44 2004/07/21 14:18:16 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.45 2004/07/21 17:49:49 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,6 +105,7 @@ static char current_locale_string[_LC_LAST * 33];
 char *_PathLocale;
 
 static char *currentlocale __P((void));
+static int load_locale_sub __P((int, const char *));
 static char *loadlocale __P((int));
 static const char *__get_locale_env __P((int));
 
