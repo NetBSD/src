@@ -288,6 +288,9 @@ static const char *const config_contents[] = {
     "# level of the new working directory when using the `cvs checkout'\n",
     "# command.\n",
     "#TopLevelAdmin=no\n",
+    "\n",
+    "# Set this to the name of a local tag to use in addition to Id\n",
+    "#tag=OurTag\n",
     NULL
 };
 
