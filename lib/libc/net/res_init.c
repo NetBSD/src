@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.31 2000/04/25 08:56:06 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.32 2000/04/25 13:57:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.31 2000/04/25 08:56:06 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.32 2000/04/25 13:57:08 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,13 +94,17 @@ static const char sort_mask[] = "/&";
 /*
  * Resolver state default settings
  */
-
+/* #define __RES_IN_BSS */
+#ifdef __RES_IN_BSS
+struct __res_state _res;
+#else
 struct __res_state _res = {
 	RES_TIMEOUT,               	/* retransmition time interval */
 	4,                         	/* number of times to retransmit */
 	RES_DEFAULT,			/* options flags */
 	1,                         	/* number of name servers */
 };
+#endif
 #ifdef INET6
 struct __res_state_ext _res_ext;
 #endif /* INET6 */
@@ -130,26 +134,63 @@ int
 res_init()
 {
 	register FILE *fp;
-	register char *cp, **pp, *net;
+	register char *cp, **pp;
 	register int n;
 	char buf[MAXDNAME];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
 	int nsort = 0;
-#ifdef SEARCH_LOCAL_DOMAINS
+	char *net;
+#ifndef RFC1535
 	int dots;
 #endif
 
+#ifdef __RES_IN_BSS
+	/*
+	 * These three fields used to be statically initialized.  This made
+	 * it hard to use this code in a shared library.  It is necessary,
+	 * now that we're doing dynamic initialization here, that we preserve
+	 * the old semantics: if an application modifies one of these three
+	 * fields of _res before res_init() is called, res_init() will not
+	 * alter them.  Of course, if an application is setting them to
+	 * _zero_ before calling res_init(), hoping to override what used
+	 * to be the static default, we can't detect it and unexpected results
+	 * will follow.  Zero for any of these fields would make no sense,
+	 * so one can safely assume that the applications were already getting
+	 * unexpected results.
+	 *
+	 * _res.options is tricky since some apps were known to diddle the bits
+	 * before res_init() was first called. We can't replicate that semantic
+	 * with dynamic initialization (they may have turned bits off that are
+	 * set in RES_DEFAULT).  Our solution is to declare such applications
+	 * "broken".  They could fool us by setting RES_INIT but none do (yet).
+	 */
+	if (!_res.retrans)
+		_res.retrans = RES_TIMEOUT;
+	if (!_res.retry)
+		_res.retry = 4;
+	if (!(_res.options & RES_INIT))
+		_res.options = RES_DEFAULT;
+
+	/*
+	 * This one used to initialize implicitly to zero, so unless the app
+	 * has set it to something in particular, we can randomize it now.
+	 */
+	if (!_res.id)
+		_res.id = res_randomid();
+#else
 	_res.id = res_randomid();
-	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
-	_res.nsaddr.sin_family = AF_INET;
-	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
+#endif
+
 #ifdef USELOOPBACK
 	_res.nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
 #else
 	_res.nsaddr.sin_addr.s_addr = INADDR_ANY;
 #endif
+	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
+	_res.nsaddr.sin_family = AF_INET;
+	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
 #ifdef INET6
 	if (sizeof(_res_ext.nsaddr) >= _res.nsaddr.sin_len)
 		memcpy(&_res_ext.nsaddr, &_res.nsaddr, _res.nsaddr.sin_len);
@@ -161,6 +202,7 @@ res_init()
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
 		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			*cp = '\0';
 		haveenv++;
@@ -176,7 +218,7 @@ res_init()
 		pp = _res.dnsrch;
 		*pp++ = cp;
 		for (n = 0; *cp && pp < _res.dnsrch + MAXDNSRCH; cp++) {
-			if (*cp == '\n')        /* silly backwards compat */
+			if (*cp == '\n')	/* silly backwards compat */
 				break;
 			else if (*cp == ' ' || *cp == '\t') {
 				*cp = 0;
@@ -214,8 +256,8 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    (void)strncpy(_res.defdname, cp,
-				  sizeof(_res.defdname) - 1);
+		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		    if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
@@ -233,8 +275,8 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    (void)strncpy(_res.defdname, cp,
-				  sizeof(_res.defdname) - 1);
+		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		    if ((cp = strchr(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    /*
@@ -434,22 +476,22 @@ res_init()
 	if (havesearch == 0) {
 		pp = _res.dnsrch;
 		*pp++ = _res.defdname;
-#ifndef SEARCH_LOCAL_DOMAINS
 		*pp = NULL;
-#else
+
+#ifndef RFC1535
 		dots = 0;
-		for (cp = _res.defdname, n = 0; *cp; cp++)
+		for (cp = _res.defdname; *cp; cp++)
 			dots += (*cp == '.');
 
 		cp = _res.defdname;
 		while (pp < _res.dnsrch + MAXDFLSRCH) {
 			if (dots < LOCALDOMAINPARTS)
 				break;
-			cp = strchr(cp, '.') + 1;
+			cp = strchr(cp, '.') + 1;    /* we know there is one */
 			*pp++ = cp;
 			dots--;
 		}
-		*pp++ = 0;
+		*pp = NULL;
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG) {
 			printf(";; res_init()... default dnsrch list:\n");
@@ -458,7 +500,7 @@ res_init()
 			printf(";;\t..END..\n");
 		}
 #endif /* DEBUG */
-#endif
+#endif /* !RFC1535 */
 	}
 
 	if ((cp = getenv("RES_OPTIONS")) != NULL)
@@ -488,7 +530,7 @@ res_setoptions(options, source)
 		while (*cp == ' ' || *cp == '\t')
 			cp++;
 		/* search for and process individual options */
-		if (!strncmp(cp, "ndots:", sizeof("ndots:")-1)) {
+		if (!strncmp(cp, "ndots:", sizeof("ndots:") - 1)) {
 			i = atoi(cp + sizeof("ndots:") - 1);
 			if (i <= RES_MAXNDOTS)
 				_res.ndots = i;
@@ -498,7 +540,7 @@ res_setoptions(options, source)
 			if (_res.options & RES_DEBUG)
 				printf(";;\tndots=%d\n", _res.ndots);
 #endif
-		} else if (!strncmp(cp, "debug", sizeof("debug")-1)) {
+		} else if (!strncmp(cp, "debug", sizeof("debug") - 1)) {
 #ifdef DEBUG
 			if (!(_res.options & RES_DEBUG)) {
 				printf(";; res_setoptions(\"%s\", \"%s\")..\n",
@@ -527,7 +569,7 @@ net_mask(in)		/* XXX - should really use system's version of this */
 
 	if (IN_CLASSA(i))
 		return (htonl(IN_CLASSA_NET));
-	if (IN_CLASSB(i))
+	else if (IN_CLASSB(i))
 		return (htonl(IN_CLASSB_NET));
 	return (htonl(IN_CLASSC_NET));
 }
