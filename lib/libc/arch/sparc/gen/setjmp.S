@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.5 1997/12/04 21:00:18 tv Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.6 1998/07/01 02:16:27 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.5 1997/12/04 21:00:18 tv Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.6 1998/07/01 02:16:27 tv Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,6 +115,6 @@ ENTRY(longjmp)
 
 Lbotch:
 	/* oops, caller botched it */
-	call	_longjmperror
+	call	_C_LABEL(longjmperror)
 	 nop
 	unimp	0
