@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.38 2001/11/06 07:15:34 simonb Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.39 2001/11/10 13:24:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,6 +28,8 @@
  *	Id: ntfs_vfsops.c,v 1.7 1999/05/31 11:28:30 phk Exp
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.39 2001/11/10 13:24:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

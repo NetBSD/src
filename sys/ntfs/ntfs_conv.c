@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.1 2001/02/14 08:44:24 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.2 2001/11/10 13:24:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
  *
  * The utf-8 routines were derived from basesrc/lib/libc/locale/utf2.c.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.2 2001/11/10 13:24:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.51 2001/11/06 07:18:14 simonb Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.52 2001/11/10 13:26:45 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,9 @@
  *
  * October 1992
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.52 2001/11/10 13:26:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
