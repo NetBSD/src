@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.23 2002/11/24 22:35:43 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.24 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.23 2002/11/24 22:35:43 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.24 2003/01/22 20:36:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,7 @@ FILE *tracefile;
 void
 trputc(int c)
 {
-	if (!debug)
+	if (debug != 1)
 		return;
 	putc(c, tracefile);
 }
@@ -288,11 +288,21 @@ trace(const char *fmt, ...)
 #ifdef DEBUG
 	va_list va;
 
-	if (!debug)
+	if (debug != 1)
 		return;
 	va_start(va, fmt);
 	(void) vfprintf(tracefile, fmt, va);
 	va_end(va);
+#endif
+}
+
+void
+tracev(const char *fmt, va_list va)
+{
+#ifdef DEBUG
+	if (debug != 1)
+		return;
+	(void) vfprintf(tracefile, fmt, va);
 #endif
 }
 
@@ -301,7 +311,7 @@ trace(const char *fmt, ...)
 void
 trputs(const char *s)
 {
-	if (!debug)
+	if (debug != 1)
 		return;
 	fputs(s, tracefile);
 }
@@ -313,7 +323,7 @@ trstring(char *s)
 	char *p;
 	char c;
 
-	if (!debug)
+	if (debug != 1)
 		return;
 	putc('"', tracefile);
 	for (p = s ; *p ; p++) {
@@ -352,7 +362,7 @@ void
 trargs(char **ap)
 {
 #ifdef DEBUG
-	if (!debug)
+	if (debug != 1)
 		return;
 	while (*ap) {
 		trstring(*ap++);
@@ -374,7 +384,7 @@ opentrace(void)
 	int flags;
 #endif
 
-	if (!debug) {
+	if (debug != 1) {
 		if (tracefile)
 			fflush(tracefile);
 		/* leave open because libedit might be using it */

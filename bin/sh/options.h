@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.15 2002/11/24 22:35:42 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.16 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -99,9 +99,11 @@ DEF_OPT( "quietprofile", 'q' )
 #define	qflag optlist[15].val
 DEF_OPT( "nolog",	0 )	/* [U] no functon defs in command history */
 #define	nolog optlist[16].val
+DEF_OPT( "cdprint",	0 )	/* always print result of cd */
+#define	cdprint optlist[17].val
 #ifdef DEBUG
-DEF_OPT( "debug",	0 )
-#define	debug optlist[17].val
+DEF_OPT( "debug",	0 )	/* enable debug prints */
+#define	debug optlist[18].val
 #endif
 
 #ifdef DEFINE_OPTIONS

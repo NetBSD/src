@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2003/01/09 13:57:26 christos Exp $
+#	$NetBSD: Makefile,v 1.63 2003/01/22 20:36:03 dsl Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -21,6 +21,7 @@ YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 #XXX: For testing only.
+#CPPFLAGS+=-DDEBUG=1
 #CFLAGS+=-funsigned-char
 #TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char" -funsigned-char
 

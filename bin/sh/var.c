@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.31 2002/11/25 12:13:03 agc Exp $	*/
+/*	$NetBSD: var.c,v 1.32 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.31 2002/11/25 12:13:03 agc Exp $");
+__RCSID("$NetBSD: var.c,v 1.32 2003/01/22 20:36:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: var.c,v 1.31 2002/11/25 12:13:03 agc Exp $");
 #include "error.h"
 #include "mystring.h"
 #include "parser.h"
+#include "show.h"
 #ifndef SMALL
 #include "myhistedit.h"
 #endif
@@ -96,6 +97,7 @@ struct var vmpath;
 struct var vpath;
 struct var vps1;
 struct var vps2;
+struct var vps4;
 struct var vvers;
 struct var voptind;
 
@@ -121,11 +123,13 @@ const struct varinit varinit[] = {
 	 */
 	{ &vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> ",
 	  NULL },
+	{ &vps4,	VSTRFIXED|VTEXTFIXED,		"PS4=+ ",
+	  NULL },
 #ifndef SMALL
 	{ &vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM=",
 	  setterm },
 #endif
-	{ &voptind,	VSTRFIXED|VTEXTFIXED,		"OPTIND=1",
+	{ &voptind,	VSTRFIXED|VTEXTFIXED|VNOFUNC,	"OPTIND=1",
 	  getoptsreset },
 	{ NULL,	0,				NULL,
 	  NULL }
@@ -297,7 +301,7 @@ setvareq(char *s, int flags)
 				ckfree(vp->text);
 
 			vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
-			vp->flags |= flags;
+			vp->flags |= flags & ~VNOFUNC;
 			vp->text = s;
 
 			/*
@@ -314,7 +318,7 @@ setvareq(char *s, int flags)
 	if (flags & VNOSET)
 		return;
 	vp = ckmalloc(sizeof (*vp));
-	vp->flags = flags;
+	vp->flags = flags & ~VNOFUNC;
 	vp->text = s;
 	vp->next = *vpp;
 	vp->func = NULL;
@@ -339,6 +343,14 @@ listsetvar(struct strlist *list, int flags)
 	INTON;
 }
 
+void
+listmklocal(struct strlist *list, int flags)
+{
+	struct strlist *lp;
+
+	for (lp = list ; lp ; lp = lp->next)
+		mklocal(lp->text, flags);
+}
 
 
 /*
@@ -628,7 +640,7 @@ localcmd(int argc, char **argv)
  */
 
 void
-mklocal(char *name, int flags)
+mklocal(const char *name, int flags)
 {
 	struct localvar *lvp;
 	struct var **vpp;
@@ -680,12 +692,15 @@ poplocalvars(void)
 	while ((lvp = localvars) != NULL) {
 		localvars = lvp->next;
 		vp = lvp->vp;
+		TRACE(("poplocalvar %s", vp ? vp->text : "-"));
 		if (vp == NULL) {	/* $- saved */
 			memcpy(optlist, lvp->text, sizeof_optlist);
 			ckfree(lvp->text);
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
 			(void)unsetvar(vp->text, 0);
 		} else {
+			if (vp->func && (vp->flags & VNOFUNC) == 0)
+				(*vp->func)(strchr(lvp->text, '=') + 1);
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			vp->flags = lvp->flags;

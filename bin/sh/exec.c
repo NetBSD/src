@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.34 2002/11/24 22:35:39 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.35 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.34 2002/11/24 22:35:39 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.35 2003/01/22 20:36:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,7 +428,7 @@ printentry(struct tblentry *cmdp, int verbose)
 void
 find_command(char *name, struct cmdentry *entry, int act, const char *path)
 {
-	struct tblentry *cmdp;
+	struct tblentry *cmdp, loc_cmd;
 	int idx;
 	int prev;
 	char *fullname;
@@ -436,7 +436,7 @@ find_command(char *name, struct cmdentry *entry, int act, const char *path)
 	int e;
 	int (*bltin)(int,char **);
 
-	/* If name contains a slash, don't use the hash table */
+	/* If name contains a slash, don't use PATH or hash table */
 	if (strchr(name, '/') != NULL) {
 		if (act & DO_ABS) {
 			while (stat(name, &statb) < 0) {
@@ -459,19 +459,45 @@ find_command(char *name, struct cmdentry *entry, int act, const char *path)
 		return;
 	}
 
-	/* If name is in the table, and not invalidated by cd, we're done */
-	if ((cmdp = cmdlookup(name, 0)) != NULL && cmdp->rehash == 0)
-		goto success;
+	if (path != pathval())
+		act |= DO_ALTPATH;
+
+	if (act & DO_ALTPATH && strstr(path, "%builtin") != NULL)
+		act |= DO_ALTBLTIN;
+
+	/* If name is in the table, check answer will be ok */
+	if ((cmdp = cmdlookup(name, 0)) != NULL) {
+		do {
+			switch (cmdp->cmdtype) {
+			case CMDNORMAL:
+				if (act & DO_ALTPATH) {
+					cmdp = NULL;
+					continue;
+				}
+				break;
+			case CMDFUNCTION:
+				if (act & DO_NOFUNC) {
+					cmdp = NULL;
+					continue;
+				}
+				break;
+			case CMDBUILTIN:
+				if ((act & DO_ALTBLTIN) || builtinloc >= 0) {
+					cmdp = NULL;
+					continue;
+				}
+				break;
+			}
+			/* if not invalidated by cd, we're done */
+			if (cmdp->rehash == 0)
+				goto success;
+		} while (0);
+	}
 
 	/* If %builtin not in path, check for builtin next */
-	if (builtinloc < 0 && (bltin = find_builtin(name)) != 0) {
-		INTOFF;
-		cmdp = cmdlookup(name, 1);
-		cmdp->cmdtype = CMDBUILTIN;
-		cmdp->param.bltin = bltin;
-		INTON;
-		goto success;
-	}
+	if ((act & DO_ALTPATH ? !(act & DO_ALTBLTIN) : builtinloc < 0) &&
+	    (bltin = find_builtin(name)) != 0)
+		goto builtin_success;
 
 	/* We have to search path. */
 	prev = -1;		/* where to start */
@@ -492,16 +518,12 @@ loop:
 			if (prefix("builtin", pathopt)) {
 				if ((bltin = find_builtin(name)) == 0)
 					goto loop;
-				INTOFF;
-				cmdp = cmdlookup(name, 1);
-				cmdp->cmdtype = CMDBUILTIN;
-				cmdp->param.bltin = bltin;
-				INTON;
-				goto success;
+				goto builtin_success;
 			} else if (prefix("func", pathopt)) {
 				/* handled below */
 			} else {
-				goto loop;	/* ignore unimplemented options */
+				/* ignore unimplemented options */
+				goto loop;
 			}
 		}
 		/* if rehash, don't redo absolute path names */
@@ -524,14 +546,19 @@ loop:
 		if (!S_ISREG(statb.st_mode))
 			goto loop;
 		if (pathopt) {		/* this is a %func directory */
+			if (act & DO_NOFUNC)
+				goto loop;
 			stalloc(strlen(fullname) + 1);
 			readcmdfile(fullname);
-			if ((cmdp = cmdlookup(name, 0)) == NULL || cmdp->cmdtype != CMDFUNCTION)
+			if ((cmdp = cmdlookup(name, 0)) == NULL ||
+			    cmdp->cmdtype != CMDFUNCTION)
 				error("%s not defined in %s", name, fullname);
 			stunalloc(fullname);
 			goto success;
 		}
 #ifdef notdef
+		/* XXX this code stops root executing stuff, and is buggy
+		   if you need a group from the group list. */
 		if (statb.st_uid == geteuid()) {
 			if ((statb.st_mode & 0100) == 0)
 				goto loop;
@@ -545,7 +572,11 @@ loop:
 #endif
 		TRACE(("searchexec \"%s\" returns \"%s\"\n", name, fullname));
 		INTOFF;
-		cmdp = cmdlookup(name, 1);
+		if (act & DO_ALTPATH) {
+			stalloc(strlen(fullname) + 1);
+			cmdp = &loc_cmd;
+		} else
+			cmdp = cmdlookup(name, 1);
 		cmdp->cmdtype = CMDNORMAL;
 		cmdp->param.index = idx;
 		INTON;
@@ -560,6 +591,15 @@ loop:
 	entry->cmdtype = CMDUNKNOWN;
 	return;
 
+builtin_success:
+	INTOFF;
+	if (act & DO_ALTPATH)
+		cmdp = &loc_cmd;
+	else
+		cmdp = cmdlookup(name, 1);
+	cmdp->cmdtype = CMDBUILTIN;
+	cmdp->param.bltin = bltin;
+	INTON;
 success:
 	cmdp->rehash = 0;
 	entry->cmdtype = cmdp->cmdtype;
@@ -643,9 +683,10 @@ hashcd(void)
 
 
 /*
+ * Fix command hash table when PATH changed.
  * Called before PATH is changed.  The argument is the new value of PATH;
- * pathval() still returns the old value at this point.  Called with
- * interrupts off.
+ * pathval() still returns the old value at this point.
+ * Called with interrupts off.
  */
 
 void
@@ -844,7 +885,7 @@ getcmdentry(char *name, struct cmdentry *entry)
  * the same name - except special builtins.
  */
 
-void
+STATIC void
 addcmdentry(char *name, struct cmdentry *entry)
 {
 	struct tblentry *cmdp;
@@ -888,7 +929,8 @@ unsetfunc(char *name)
 {
 	struct tblentry *cmdp;
 
-	if ((cmdp = cmdlookup(name, 0)) != NULL && cmdp->cmdtype == CMDFUNCTION) {
+	if ((cmdp = cmdlookup(name, 0)) != NULL &&
+	    cmdp->cmdtype == CMDFUNCTION) {
 		freefunc(cmdp->param.func);
 		delete_cmd_entry();
 		return (0);
@@ -898,6 +940,7 @@ unsetfunc(char *name)
 
 /*
  * Locate and print what a word is...
+ * also used for 'command -[v|V]'
  */
 
 int
@@ -907,72 +950,111 @@ typecmd(int argc, char **argv)
 	struct tblentry *cmdp;
 	char * const *pp;
 	struct alias *ap;
-	int i;
 	int err = 0;
+	char *arg;
+	int c;
+	int V_flag = 0;
+	int v_flag = 0;
+	int p_flag = 0;
 
-	for (i = 1; i < argc; i++) {
-		out1str(argv[i]);
+	while ((c = nextopt("vVp")) != 0) {
+		switch (c) {
+		case 'v': v_flag = 1; break;
+		case 'V': V_flag = 1; break;
+		case 'p': p_flag = 1; break;
+		}
+	}
+
+	if (p_flag && (v_flag || V_flag))
+		error("cannot specify -p with -v or -V");
+
+	while ((arg = *argptr++)) {
+		if (!v_flag)
+			out1str(arg);
 		/* First look at the keywords */
 		for (pp = parsekwd; *pp; pp++)
-			if (**pp == *argv[i] && equal(*pp, argv[i]))
+			if (**pp == *arg && equal(*pp, arg))
 				break;
 
 		if (*pp) {
-			out1str(" is a shell keyword\n");
+			if (v_flag)
+				err = 1;
+			else
+				out1str(" is a shell keyword\n");
 			continue;
 		}
 
 		/* Then look at the aliases */
-		if ((ap = lookupalias(argv[i], 1)) != NULL) {
-			out1fmt(" is an alias for %s\n", ap->val);
+		if ((ap = lookupalias(arg, 1)) != NULL) {
+			if (!v_flag)
+				out1fmt(" is an alias for \n");
+			out1fmt("%s\n", ap->val);
 			continue;
 		}
 
 		/* Then check if it is a tracked alias */
-		if ((cmdp = cmdlookup(argv[i], 0)) != NULL) {
+		if ((cmdp = cmdlookup(arg, 0)) != NULL) {
 			entry.cmdtype = cmdp->cmdtype;
 			entry.u = cmdp->param;
-		}
-		else {
+		} else {
 			/* Finally use brute force */
-			find_command(argv[i], &entry, DO_ABS, pathval());
+			find_command(arg, &entry, DO_ABS, pathval());
 		}
 
 		switch (entry.cmdtype) {
 		case CMDNORMAL: {
-			if (strchr(argv[i], '/') == NULL) {
+			if (strchr(arg, '/') == NULL) {
 				const char *path = pathval();
 				char *name;
 				int j = entry.u.index;
 				do {
-					name = padvance(&path, argv[i]);
+					name = padvance(&path, arg);
 					stunalloc(name);
 				} while (--j >= 0);
-				out1fmt(" is%s %s\n",
-				    cmdp ? " a tracked alias for" : "", name);
+				if (!v_flag)
+					out1fmt(" is%s ",
+					    cmdp ? " a tracked alias for" : "");
+				out1fmt("%s\n", name);
 			} else {
-				if (access(argv[i], X_OK) == 0)
-					out1fmt(" is %s\n", argv[i]);
-				else
-					out1fmt(": %s\n", strerror(errno));
+				if (access(arg, X_OK) == 0) {
+					if (!v_flag)
+						out1fmt(" is ");
+					out1fmt("%s\n", arg);
+				} else {
+					if (!v_flag)
+						out1fmt(": %s\n",
+						    strerror(errno));
+					else
+						err = 126;
+				}
 			}
  			break;
 		}
 		case CMDFUNCTION:
-			out1str(" is a shell function\n");
+			if (!v_flag)
+				out1str(" is a shell function\n");
+			else
+				out1fmt("%s\n", arg);
 			break;
 
 		case CMDBUILTIN:
-			out1str(" is a shell builtin\n");
+			if (!v_flag)
+				out1str(" is a shell builtin\n");
+			else
+				out1fmt("%s\n", arg);
 			break;
 
 		case CMDSPLBLTIN:
-			out1str(" is a special shell builtin\n");
+			if (!v_flag)
+				out1str(" is a special shell builtin\n");
+			else
+				out1fmt("%s\n", arg);
 			break;
 
 		default:
-			out1str(": not found\n");
-			err |= 127;
+			if (!v_flag)
+				out1str(": not found\n");
+			err = 127;
 			break;
 		}
 	}

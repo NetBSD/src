@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.32 2002/11/24 22:35:42 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.33 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.32 2002/11/24 22:35:42 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.33 2003/01/22 20:36:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,8 +118,13 @@ procargs(int argc, char **argv)
 		commandname = arg0;
 	}
 	/* POSIX 1003.2: first arg after -c cmd is $0, remainder $1... */
-	if (argptr && minusc && *argptr)
-	        arg0 = *argptr++;
+	if (minusc != NULL) {
+		if (argptr == NULL || *argptr == NULL)
+			error("Bad -c option");
+		minusc = *argptr++;
+		if (*argptr != 0)
+			arg0 = *argptr++;
+	}
 
 	shellparam.p = argptr;
 	shellparam.reset = 1;
@@ -179,17 +184,7 @@ options(int cmdline)
 		}
 		while ((c = *p++) != '\0') {
 			if (c == 'c' && cmdline) {
-				char *q;
-#ifdef NOHACK	/* removing this code allows sh -ce 'foo' for compat */
-				if (*p == '\0')
-#endif
-					q = *argptr++;
-				if (q == NULL || minusc != NULL)
-					error("Bad -c option");
-				minusc = q;
-#ifdef NOHACK
-				break;
-#endif
+				minusc = "";	/* command is after shell args*/
 			} else if (c == 'o') {
 				minus_o(*argptr, val);
 				if (*argptr)
