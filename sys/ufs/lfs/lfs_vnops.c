@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.128 2004/01/26 10:39:30 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.129 2004/02/26 22:41:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.128 2004/01/26 10:39:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.129 2004/02/26 22:41:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1799,24 +1799,23 @@ again:
 		       dtosn(fs, fs->lfs_offset));
 #endif
 		/* If nothing to write, short-circuit */
-		if (sp->cbpp - sp->bpp == 1) {
-			preempt(1);
-			goto again;
+		if (sp->cbpp - sp->bpp > 1) {
+			/* Write gathered pages */
+			lfs_updatemeta(sp);
+			(void) lfs_writeseg(fs, sp);
+	 
+			/*
+			 * Reinitialize brand new FIP and add us to it.
+			 * (This should duplicate the fixup in
+			 * lfs_gatherpages().)
+			 */
+			KASSERT(sp->vp == vp);
+			sp->fip->fi_version = ip->i_gen;
+			sp->fip->fi_ino = ip->i_number;
+			/* Add us to the new segment summary. */
+			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+			sp->sum_bytes_left -= FINFOSIZE;
 		}
-		/* Write gathered pages */
-		lfs_updatemeta(sp);
-		(void) lfs_writeseg(fs, sp);
- 
-		/*
-		 * Reinitialize brand new FIP and add us to it.
-		 * (This should duplicate the fixup in lfs_gatherpages().)
-		 */
-		KASSERT(sp->vp == vp);
-		sp->fip->fi_version = ip->i_gen;
-		sp->fip->fi_ino = ip->i_number;
-		/* Add us to the new segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= FINFOSIZE;
 
 		/* Give the write a chance to complete */
 		preempt(1);
