@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.20 1998/02/13 00:12:46 thorpej Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.21 1998/03/26 02:43:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,25 +33,30 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.20 1998/02/13 00:12:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.21 1998/03/26 02:43:22 thorpej Exp $");
+
+#include "opt_new_scc_driver.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/rpb.h>
+#include <sys/termios.h>
 
+#include <machine/rpb.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
 
 #include <alpha/tc/tcdsvar.h>
+#include <alpha/tc/zs_ioasicvar.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
 void dec_3000_300_init __P((void));
+static void dec_3000_300_cons_init __P((void));
 static void dec_3000_300_device_register __P((struct device *, void *));
 
 const struct alpha_variation_table dec_3000_300_variations[] = {
@@ -77,7 +82,58 @@ dec_3000_300_init()
 	}
 
 	platform.iobus = "tcasic";
+	platform.cons_init = dec_3000_300_cons_init;
 	platform.device_register = dec_3000_300_device_register;
+}
+
+static void
+dec_3000_300_cons_init()
+{
+#if defined(NEW_SCC_DRIVER)
+	struct ctb *ctb;
+
+	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+
+	switch (ctb->ctb_term_type) {
+	case CTB_PRINTERPORT:
+		/* serial console ... */
+		/*
+		 * XXX This could stand some cleanup...
+		 */
+		{
+			/*
+			 * Delay to allow PROM putchars to complete.
+			 * FIFO depth * character time.
+			 * character time = (1000000 / (defaultrate / 10))
+			 */
+			DELAY(160000000 / 9600);	/* XXX */
+
+			/*
+			 * Console is channel B of the first SCC.
+			 * XXX Should use ctb_line_off to get the
+			 * XXX line parameters.
+			 */
+			if (zs_ioasic_cnattach(0x1a0000000, 0x00100000, 1,
+			    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
+				panic("can't init serial console");
+			break;
+		}
+
+	case CTB_GRAPHICS:
+		/* display console ... */
+		/* XXX */
+		printf("WARNING: display console not supported, "
+		    "using promcons\n");
+		break;
+
+	default:
+		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+
+		panic("consinit: unknown console type %d\n",
+		    ctb->ctb_term_type);
+	}
+#endif /* NEW_SCC_DRIVER */
 }
 
 static void
