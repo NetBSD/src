@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.9 1993/10/09 00:03:32 jtc Exp $
+#	$Id: Makefile.inc,v 1.10 1993/10/09 00:08:02 jtc Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/stdlib ${.CURDIR}/stdlib
@@ -34,3 +34,6 @@ MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=qsort.3 heapsort.3
 MLINKS+=rand.3 srand.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
+MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
+MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
+MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
