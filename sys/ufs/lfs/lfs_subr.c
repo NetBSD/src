@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.31 2003/02/17 23:48:20 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.32 2003/02/19 12:58:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.31 2003/02/17 23:48:20 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.32 2003/02/19 12:58:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,11 +270,15 @@ lfs_free(struct lfs *fs, void *p, int type)
 	int s;
 	unsigned int h;
 	res_t *re;
+#ifdef DEBUG
+	int i;
+#endif
 
 	h = lfs_mhash(p);
 	s = splbio();
 	LIST_FOREACH(re, &fs->lfs_reshash[h], res) {
 		if (re->p == p) {
+			KASSERT(re->inuse == 1);
 			LIST_REMOVE(re, res);
 			re->inuse = 0;
 			wakeup(&fs->lfs_resblk);
@@ -282,6 +286,12 @@ lfs_free(struct lfs *fs, void *p, int type)
 			return;
 		}
 	}
+#ifdef DEBUG
+	for (i = 0; i < LFS_N_TOTAL; i++) {
+		if (fs->lfs_resblk[i].p == p)
+			panic("lfs_free: inconsist reserved block");
+	}
+#endif
 	splx(s);
 
 	/*
