@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any  model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.4 1996/10/13 05:40:44 jonathan Exp $
+# 	$NetBSD: DSG,v 1.5 1996/11/16 23:10:58 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -26,11 +26,6 @@ options		DS5000_240		# 3MAXPLUS (kn03) support
 options		TIMEZONE=0
 options		DST=0			# use daylight savings rules
 
-
-# Standard system options
-options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
-options		DEVPAGER		# device pager (mapped devices)
 
 #options	DDB			# in-kernel debugger (not mips)
 #options	DIAGNOSTIC		# extra kernel debugging checks

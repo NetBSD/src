@@ -3,7 +3,7 @@
 #    root on NFS  to boot diskless for installation,
 #    disk drivers for labelling disks and installation on local disk.
 #
-# 	$NetBSD: NFSINSTALL,v 1.1 1996/10/13 05:57:19 jonathan Exp $
+# 	$NetBSD: NFSINSTALL,v 1.2 1996/11/16 23:10:51 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -30,9 +30,6 @@ options		DST=0			# use daylight savings rules
 
 
 # Standard system options
-options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
-options		DEVPAGER		# device pager (mapped devices)
 #options	DIAGNOSTIC		# extra kernel debugging checks
 #options	DEBUG			# extra kernel debugging support
 #options	"COMPAT_43"		# compatibility with 4.3BSD binaries

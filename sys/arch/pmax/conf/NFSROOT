@@ -3,7 +3,7 @@
 # via NFS booting: root and swap on NFS, but disk drivers included too.
 # Prune out other optiosn to stay small and avoid PROM tftp bugs.
 #
-# 	$NetBSD: NFSROOT,v 1.1 1996/09/18 14:10:24 jonathan Exp $
+# 	$NetBSD: NFSROOT,v 1.2 1996/11/16 23:10:50 jonathan Exp $
 #
 include		"std.pmax"
 
@@ -28,9 +28,6 @@ options		DST=0			# use daylight savings rules
 
 
 # Standard system options
-options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
-options		DEVPAGER		# device pager (mapped devices)
 
 #options	DDB			# in-kernel debugger (not mips)
 #options	DIAGNOSTIC		# extra kernel debugging checks
