@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.113.2.1 2004/11/12 06:27:27 jmc Exp $
+.\"	$NetBSD: hardware,v 1.113.2.2 2004/11/29 05:51:41 jmc Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -575,6 +575,8 @@ DELL RAID controllers
 PERC 2/SC
 .It
 PERC 2/DC
+.It
+PERC 4/Di
 .It
 PERC 4/SC
 .It
