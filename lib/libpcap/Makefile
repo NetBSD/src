@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1996/08/10 22:31:19 explorer Exp $
+#	$NetBSD: Makefile,v 1.5 1996/10/18 05:45:04 thorpej Exp $
 
 LIB=	pcap
 MAN=	pcap.3
@@ -16,7 +16,7 @@ CLEANFILES+= grammar.c scanner.c y.tab.h
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include"; \
 	    echo $$j; \
 	    eval "$$j"; \

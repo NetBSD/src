@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 1996/08/15 22:36:59 jtc Exp $
+#	$NetBSD: Makefile,v 1.49 1996/10/18 05:45:01 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -90,7 +90,7 @@ tags: ${SRCS}
 	    >> tags; sort -o tags tags
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 tags \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 tags \
 		${DESTDIR}/var/db/libc.tags
 
 .include <bsd.lib.mk>

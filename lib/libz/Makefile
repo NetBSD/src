@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/09/13 00:29:51 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1996/10/18 05:45:06 thorpej Exp $
 
 LIB=	z
 SRCS=	adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
@@ -13,7 +13,7 @@ CLEANFILES+= minigzip
 includes:
 	-cd ${.CURDIR}; cmp -s zlib.h ${DESTDIR}/usr/include/zlib.h > \
 	    /dev/null 2>&1 || \
-	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 zlib.h \
+	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 zlib.h \
 	    ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>

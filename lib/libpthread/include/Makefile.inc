@@ -16,7 +16,7 @@ realinstall:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/pthread/$$i || \
-		    install -c -m 644 $$i ${DESTDIR}/usr/include/$$i; \
+		    ${INSTALL} -c -m 644 $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	rm -rf ${DESTDIR}/usr/include/pthread.h
 	ln -s /usr/include/pthread/pthread.h ${DESTDIR}/usr/include/pthread.h

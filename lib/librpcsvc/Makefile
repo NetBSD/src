@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1996/05/10 05:03:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.18 1996/10/18 05:45:05 thorpej Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -16,18 +16,18 @@ all:		${HDRS}
 beforedepend:	${HDRS}
 
 includes:	${HDRS}
-	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
 	    echo $$j; \
 	    eval "$$j"; \
 	done
 	@cd ${.CURDIR}; for i in $(RPCSRCS); do \
 	    j="cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
 	    echo $$j; \
 	    eval "$$j"; \

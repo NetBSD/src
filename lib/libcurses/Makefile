@@ -14,7 +14,7 @@ MAN=	curses.3
 includes:
 	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h > \
 	    /dev/null 2>&1 || \
-	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
+	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
 	    ${DESTDIR}/usr/include
 
 .if make(install)
