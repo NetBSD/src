@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.6 1994/10/30 21:48:25 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.7 1995/02/21 07:16:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -115,7 +115,7 @@ void	printf __P((const char *, ...));
 void	gets __P((char *));
 void	panic __P((const char *, ...));
 int	getchar __P((void));
-int	exec __P((char *, char *, int));
+void	exec __P((char *, char *, int));
 int	open __P((char *,int));
 int	close __P((int));
 int	read __P((int, void *, u_int));
@@ -135,6 +135,5 @@ int	null_stat __P((struct open_file *f, struct stat *sb));
 
 /* Machine dependent functions */
 void	machdep_start __P((char *, int, char *, char *, char *));
-int	machdep_exec __P((char *, char *, int));
 int	getchar __P((void));
 void	putchar __P((int));    
