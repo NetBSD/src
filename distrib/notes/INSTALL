@@ -406,6 +406,7 @@ Masaru Oki		<oki@NetBSD.ORG>		(x68k)
 Gordon Ross		<gwr@NetBSD.ORG>		(sun3)
 Jonathan Stone		<jonathan@NetBSD.ORG>		(pmax)
 Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
+Frank van der Linden	<fvdl@NetBSD.ORG>		(i386)
 Leo Weppelman		<leo@NetBSD.ORG>		(atari)
 
 Supporting cast:
@@ -429,10 +430,9 @@ Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Scott Reynolds		<scottr@edsi.org>
+Karl Schilke (rAT)	<rat@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
 Wolfgang Solfrank	<ws@tools.de>
-Ignatios Souvatzis	<is@NetBSD.ORG>
-Frank van der Linden	<fvdl@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----
