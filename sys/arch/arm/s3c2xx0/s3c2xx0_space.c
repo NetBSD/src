@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_space.c,v 1.2 2003/07/15 00:24:49 lukem Exp $ */
+/*	$NetBSD: s3c2xx0_space.c,v 1.3 2003/09/03 03:15:02 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.2 2003/07/15 00:24:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.3 2003/09/03 03:15:02 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct bus_space s3c2xx0_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	generic_armv4_bs_rr_2,
 	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -142,7 +142,7 @@ struct bus_space s3c2xx0_bs_tag = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
+	generic_bs_wr_1,
 	generic_armv4_bs_wr_2,
 	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
@@ -154,7 +154,7 @@ struct bus_space s3c2xx0_bs_tag = {
 	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
+	generic_bs_sr_1,
 	generic_armv4_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
