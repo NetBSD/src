@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.10 2003/10/10 22:42:39 jdolecek Exp $
+#	$NetBSD: majors.atari,v 1.11 2003/10/22 16:53:22 jdolecek Exp $
 #
 # Device majors for atari
 #
@@ -55,6 +55,7 @@ device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 16	cgd
 device-major	wskbd		char 55			wskbd
 device-major	ksyms		char 56			ksyms
+device-major	wsfont		char 57			wsfont
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
