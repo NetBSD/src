@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.37.6.1 1999/06/28 06:37:11 itojun Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.37.6.2 1999/07/06 11:03:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -61,9 +61,6 @@ struct socket {
 	short	so_linger;		/* time to linger while closing */
 	short	so_state;		/* internal state flags SS_*, below */
 	void	*so_pcb;		/* protocol control block */
-#ifdef MAPPED_ADDR_ENABLED
-	void	*so_pcb2;
-#endif /* MAPPED_ADDR_ENABLED */
 	struct	protosw *so_proto;	/* protocol handle */
 /*
  * Variables for connection queueing.

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.43.6.1 1999/06/28 06:37:11 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.43.6.2 1999/07/06 11:03:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -197,7 +197,7 @@ struct sockproto {
 
 #if 1
 /*
- * bsd-api-new-02a: protocol-independent placeholder for socket addresses
+ * RFC 2553: protocol-independent placeholder for socket addresses
  */
 #define _SS_MAXSIZE	128
 #define _SS_ALIGNSIZE	(sizeof(int64_t))
