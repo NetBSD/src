@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.19 2001/11/12 15:25:24 lukem Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.20 2001/12/11 18:15:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.19 2001/11/12 15:25:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.20 2001/12/11 18:15:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1674,7 +1674,7 @@ pipeclose(cpipe)
 	/*
 	 * free resources
 	 */
-#ifdef _FreeBSD__
+#ifdef __FreeBSD__
 	mtx_lock(&vm_mtx);
 	pipe_free_kmem(cpipe);
 	/* XXX: erm, doesn't zalloc already have its own locks and
