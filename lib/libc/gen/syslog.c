@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.9 1995/08/30 21:20:36 jtc Exp $	*/
+/*	$NetBSD: syslog.c,v 1.10 1995/08/31 16:28:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #else
-static char rcsid[] = "$NetBSD: syslog.c,v 1.9 1995/08/30 21:20:36 jtc Exp $";
+static char rcsid[] = "$NetBSD: syslog.c,v 1.10 1995/08/31 16:28:01 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,8 +104,10 @@ vsyslog(pri, fmt, ap)
 	register char ch, *p, *t;
 	time_t now;
 	int fd, saved_errno;
-	char *stdp, tbuf[2048], fmt_cpy[1024];
-	int tbuf_len, fmt_len, prlen;
+#define	TBUF_LEN	2048
+#define	FMT_LEN		1024
+	char *stdp, tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
+	int tbuf_left, fmt_left, prlen;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
@@ -127,7 +129,7 @@ vsyslog(pri, fmt, ap)
 
 	/* Build the message. */
 	
-        /*
+	/*
  	 * Although it's tempting, we can't ignore the possibility of
 	 * overflowing the buffer when assembling the "fixed" portion
 	 * of the message.  Strftime's "%h" directive expands to the
@@ -137,20 +139,21 @@ vsyslog(pri, fmt, ap)
 	 */
 	(void)time(&now);
 
-#define DEC()				        \
-	if (tbuf_len > prlen)			\
-		tbuf_len -= prlen;		\
-	else					\
-		tbuf_len = 0;			\
-	p = tbuf + sizeof(tbuf) - tbuf_len;
-
 	p = tbuf;  
-        tbuf_len = sizeof(tbuf);
+	tbuf_left = TBUF_LEN;
 	
-	prlen = sprintf(p, "<%d>", pri);
+#define	DEC()	\
+	do {					\
+		if (prlen >= tbuf_left)		\
+			prlen = tbuf_left - 1;	\
+		p += prlen;			\
+		tbuf_left -= prlen;		\
+	} while (0)
+
+	prlen = snprintf(p, tbuf_left, "<%d>", pri);
 	DEC();
 
-	prlen = strftime(p, tbuf_len, "%h %e %T ", localtime(&now));
+	prlen = strftime(p, tbuf_left, "%h %e %T ", localtime(&now));
 	DEC();
 
 	if (LogStat & LOG_PERROR)
@@ -158,21 +161,21 @@ vsyslog(pri, fmt, ap)
 	if (LogTag == NULL)
 		LogTag = __progname;
 	if (LogTag != NULL) {
-		prlen = snprintf(p, tbuf_len, "%s", LogTag);
+		prlen = snprintf(p, tbuf_left, "%s", LogTag);
 		DEC();
 	}
 	if (LogStat & LOG_PID) {
-		prlen = snprintf(p, tbuf_len, "[%d]", getpid());
+		prlen = snprintf(p, tbuf_left, "[%d]", getpid());
 		DEC();
 	}
 	if (LogTag != NULL) {
-		if (tbuf_len > 1) {
+		if (tbuf_left > 1) {
 			*p++ = ':';
-			tbuf_len--;
+			tbuf_left--;
 		}
-		if (tbuf_len > 1) {
+		if (tbuf_left > 1) {
 			*p++ = ' ';
-			tbuf_len--;
+			tbuf_left--;
 		}
 	}
 
@@ -180,43 +183,36 @@ vsyslog(pri, fmt, ap)
 	 * We wouldn't need this mess if printf handled %m, or if 
 	 * strerror() had been invented before syslog().
 	 */
-	for (t = fmt_cpy, fmt_len = sizeof(fmt_cpy); ch = *fmt; ++fmt) {
+	for (t = fmt_cpy, fmt_left = FMT_LEN; ch = *fmt; ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
 			++fmt;
-			prlen = snprintf(t, fmt_len, 
-					 "%s", strerror(saved_errno));
-			if (fmt_len > prlen) {
-				t += prlen;
-				fmt_len -= prlen;
-			} else {
-				t = fmt_cpy + sizeof(fmt_cpy) - 1;
-				break;
-			}
+			prlen = snprintf(t, fmt_left, "%s",
+			    strerror(saved_errno));
+			if (prlen >= fmt_left)
+				prlen = fmt_left - 1;
+			t += prlen;
+			fmt_left -= prlen;
 		} else {
-			if (fmt_len > 1) {
+			if (fmt_left > 1) {
 				*t++ = ch;
-				fmt_len--;
-			} else {
-				break;
+				fmt_left--;
 			}
 		}
 	}
 	*t = '\0';
 
-	prlen = vsnprintf(p, tbuf_len, fmt_cpy, ap);
+	prlen = vsnprintf(p, tbuf_left, fmt_cpy, ap);
 	DEC();
 	cnt = p - tbuf;
 
 	/* Output to stderr if requested. */
 	if (LogStat & LOG_PERROR) {
 		struct iovec iov[2];
-		register struct iovec *v = iov;
 
-		v->iov_base = stdp;
-		v->iov_len = cnt - (stdp - tbuf);
-		++v;
-		v->iov_base = "\n";
-		v->iov_len = 1;
+		iov[0].iov_base = stdp;
+		iov[0].iov_len = cnt - (stdp - tbuf);
+		iov[1].iov_base = "\n";
+		iov[1].iov_len = 1;
 		(void)writev(STDERR_FILENO, iov, 2);
 	}
 
@@ -234,14 +230,12 @@ vsyslog(pri, fmt, ap)
 	if (LogStat & LOG_CONS &&
 	    (fd = open(_PATH_CONSOLE, O_WRONLY, 0)) >= 0) {
 		struct iovec iov[2];
-		register struct iovec *v = iov;
 		
 		p = strchr(tbuf, '>') + 1;
-		v->iov_base = p;
-		v->iov_len = cnt - (p - tbuf);
-		++v;
-		v->iov_base = "\r\n";
-		v->iov_len = 2;
+		iov[0].iov_base = p;
+		iov[0].iov_len = cnt - (p - tbuf);
+		iov[1].iov_base = "\r\n";
+		iov[1].iov_len = 2;
 		(void)writev(fd, iov, 2);
 		(void)close(fd);
 	}
