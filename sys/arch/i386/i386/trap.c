@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126 1998/11/11 06:41:26 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.127 1999/02/10 07:10:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,11 +140,16 @@ extern struct emul emul_linux_elf32;
 #ifdef EXEC_ELF64
 extern struct emul emul_linux_elf64;
 #endif
-#endif /* !COMPAT_LINUX */
+#endif /* COMPAT_LINUX */
 
 #ifdef COMPAT_FREEBSD
-extern struct emul emul_freebsd;
-#endif
+#ifdef EXEC_AOUT
+extern struct emul emul_freebsd_aout;
+#endif /* EXEC_AOUT */
+#ifdef EXEC_ELF32
+extern struct emul emul_freebsd_elf32;
+#endif /* EXEC_ELF32 */
+#endif /* COMPAT_LINUX */
 
 #include "npx.h"
 
@@ -660,6 +665,9 @@ syscall(frame)
 #ifdef COMPAT_LINUX
 	int linux;
 #endif /* COMPAT_LINUX */
+#ifdef COMPAT_FREEBSD
+	int freebsd;
+#endif /* COMPAT_FREEBSD */
 
 #if defined(UVM)
 	uvmexp.syscalls++;
@@ -690,6 +698,18 @@ syscall(frame)
 # endif /* EXEC_ELF64 */
 	    ;
 #endif /* COMPAT_LINUX */
+
+#ifdef COMPAT_FREEBSD
+	freebsd = 0
+# ifdef EXEC_AOUT
+	    || (p->p_emul == &emul_freebsd_aout)
+# endif /* EXEC_AOUT */
+# ifdef EXEC_ELF32
+	    || (p->p_emul == &emul_freebsd_elf32)
+# endif /* EXEC_ELF32 */
+	    ;
+#endif /* COMPAT_FREEBSD */
+
 #ifdef COMPAT_IBCS2
 	if (p->p_emul == &emul_ibcs2_coff || p->p_emul == &emul_ibcs2_elf ||
 	    p->p_emul == &emul_ibcs2_xout)
@@ -729,7 +749,7 @@ syscall(frame)
 		 */
 #ifdef COMPAT_FREEBSD
 		/* FreeBSD has a same function in SYS___syscall */
-		if (callp != sysent && p->p_emul != &emul_freebsd)
+		if (callp != sysent && freebsd)
 			break;
 #else
 		if (callp != sysent)
