@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.151 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.152 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -386,3 +386,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	inet(3): align signatures of inet_addr(), inet_network(),
 		inet_makeaddr(), inet_lnaof(), and inet_netof() with XNS and
 		POSIX.  [bjh21 20030505]
+	build.sh: Provide defaults for DESTDIR and RELEASEDIR if not in
+		expert mode.  Display summary of operations performed at end.
+		[lukem 20030508]
