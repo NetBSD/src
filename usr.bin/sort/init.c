@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.10 2004/02/15 12:35:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.9 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.10 2004/02/15 12:35:26 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -80,7 +80,6 @@ __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 
 static void insertcol __P((struct field *));
 static const char *setcolumn __P((const char *, struct field *, int));
-int setfield __P((const char *, struct field *, int));
 
 u_char gweights[NBINS];
 
@@ -154,30 +153,26 @@ setcolumn(pos, cur_fld, gflag)
 	int gflag;
 {
 	struct column *col;
+	char *npos;
 	int tmp;
-	col = cur_fld->icol.num ? (&(*cur_fld).tcol) : (&(*cur_fld).icol);
-	pos += sscanf(pos, "%d", &(col->num));
-	while (isdigit(*pos))
-		pos++;
+	col = cur_fld->icol.num ? (&cur_fld->tcol) : (&cur_fld->icol);
+	col->num = (int) strtol(pos, &npos, 10);
+	pos = npos;
 	if (col->num <= 0 && !(col->num == 0 && col == &(cur_fld->tcol)))
 		errx(2, "field numbers must be positive");
 	if (*pos == '.') {
 		if (!col->num)
 			errx(2, "cannot indent end of line");
 		++pos;
-		pos += sscanf(pos, "%d", &(col->indent));
-		while (isdigit(*pos))
-			pos++;
+		col->indent = (int) strtol(pos, &npos, 10);
+		pos = npos;
 		if (&cur_fld->icol == col)
 			col->indent--;
 		if (col->indent < 0)
 			errx(2, "illegal offset");
 	}
-	if (optval(*pos, cur_fld->tcol.num))	
-		while ((tmp = optval(*pos, cur_fld->tcol.num))) {
-			cur_fld->flags |= tmp;
-			pos++;
-	}
+	for(; (tmp = optval(*pos, cur_fld->tcol.num)); pos++)
+		cur_fld->flags |= tmp;
 	if (cur_fld->icol.num == 0)
 		cur_fld->icol.num = 1;
 	return (pos);
