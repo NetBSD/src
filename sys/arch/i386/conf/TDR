@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.21 1993/12/03 05:31:03 deraadt Exp $
+#	$Id: TDR,v 1.22 1993/12/04 01:20:51 deraadt Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -45,6 +45,7 @@ device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
+device		ep0 at isa? port 0x350 net irq 10 vector epintr
 device		ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
 
 pseudo-device	loop
