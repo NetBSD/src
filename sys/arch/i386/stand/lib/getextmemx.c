@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.4 2003/04/16 15:03:59 dsl Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.5 2003/11/07 11:30:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -60,17 +60,19 @@ getextmemx()
 #endif
 
 #ifdef DEBUG_MEMSIZE
-	printf("extmem1: %x\n", extmem);
+	printf("extmem1: %xk\n", extmem);
 #endif
-	if (!getextmem2(buf) && buf[0] <= 15 * 1024) {
-		int help = buf[0];
-		if (help == 15 * 1024)
-			help += buf[1] * 64;
+	if (!getextmem2(buf)) {
 #ifdef DEBUG_MEMSIZE
-		printf("extmem2: %x\n", help);
+		printf("extmem2: %xk + %xk\n", buf[0], buf[1] * 64);
 #endif
-		if (extmem < help)
-			extmem = help;
+		if (buf[0] <= 15 * 1024) {
+			int help = buf[0];
+			if (help == 15 * 1024)
+				help += buf[1] * 64;
+			if (extmem < help)
+				extmem = help;
+		}
 	}
 
 	i = 0;
