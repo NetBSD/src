@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.2 1995/03/26 18:10:23 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.3 1995/04/08 20:46:23 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -258,26 +258,38 @@ int mrg_SetPtrSize()
 	return(memFullErr);	/* How would I handle this, anyway? */
 }
 
+int
+mrg_PostEvent()
+{
+	return 0;
+}
 
-	/* trap jump address tables (different per machine?) */
-	/* Can I just use the tables stored in the ROMs? */
-	/* *Is* there a table stored in the ROMs? */
-	/* (BTW, this table is initialized for Mac II.) */
+/*
+ * trap jump address tables (different per machine?)
+ * Can I just use the tables stored in the ROMs?
+ * *Is* there a table stored in the ROMs?
+ * (BTW, this table is initialized for Mac II.)
+ */
 caddr_t mrg_OStraps[256] = {
+#ifdef __GNUC__
 		/* God, I love gcc.  see GCC2 manual, section 2.17, */
 		/* "labeled elements in initializers." */
-	[0x1e] (caddr_t)mrg_NewPtr,
+	[0x1e]	(caddr_t)mrg_NewPtr,
 		(caddr_t)mrg_DisposPtr,
 		(caddr_t)mrg_SetPtrSize,
 		(caddr_t)mrg_GetPtrSize,
-	[0x77] (caddr_t)0x40807778,	/* CountADBs */
+	[0x2f]	(caddr_t)mrg_PostEvent,
+	[0x77]	(caddr_t)0x40807778,	/* CountADBs */
 		(caddr_t)0x40807792,	/* GetIndADB */
 		(caddr_t)0x408077be,	/* GetADBInfo */
 		(caddr_t)0x408077c4,	/* SetADBInfo */
 		(caddr_t)0x40807704,	/* ADBReInit */
 		(caddr_t)0x408072fa,	/* ADBOp */
-	[0x85] 0,			/* PMgrOp (not on II) */
-	[0x92] (caddr_t)0x40814800,	/* Egret */
+	[0x85]	0,			/* PMgrOp (not on II) */
+	[0x92]	(caddr_t)0x40814800,	/* Egret */
+#else
+#error "Using a GNU C extension."
+#endif
 };
 
 
@@ -612,7 +624,7 @@ void mrg_initadbintr()
 {
 	int i;
 
-	via_reg(VIA1, vIFR) = 0x4;
-	if(current_mac_model->class == MACH_CLASSII)
-		via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt on IIs. */
+	via_reg(VIA1, vIFR) = 0x4; /* XXX - why are we setting the flag?  */
+
+	via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt. */
 }
