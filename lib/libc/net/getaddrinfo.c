@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.51 2001/01/04 03:57:58 lukem Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.52 2001/01/24 15:05:48 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.51 2001/01/04 03:57:58 lukem Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.52 2001/01/24 15:05:48 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1322,23 +1322,27 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
 		/* prefer IPv6 */
+		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_AAAA;
 		q.answer = buf.buf;
 		q.anslen = sizeof(buf);
 		q.next = &q2;
+		q2.name = name;
 		q2.qclass = C_IN;
 		q2.qtype = T_A;
 		q2.answer = buf2.buf;
 		q2.anslen = sizeof(buf2);
 		break;
 	case AF_INET:
+		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_A;
 		q.answer = buf.buf;
 		q.anslen = sizeof(buf);
 		break;
 	case AF_INET6:
+		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_AAAA;
 		q.answer = buf.buf;
