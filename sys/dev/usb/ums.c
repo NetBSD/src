@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.49 2001/10/26 17:58:21 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.50 2001/10/28 17:16:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 /*
  * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
-
-/* XXX complete SPUR_UP change */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,6 +338,14 @@ USB_DETACH(ums)
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
 
+#ifdef DIAGNOSTIC
+	if (sc->sc_intrpipe != NULL) {
+		printf("ums_disable: intr pipe still open\n");
+		usbd_abort_pipe(sc->sc_intrpipe);
+		usbd_close_pipe(sc->sc_intrpipe);
+		sc->sc_intrpipe = NULL;
+	}
+#endif
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
