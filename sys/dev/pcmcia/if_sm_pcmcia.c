@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.7 1998/08/14 23:31:22 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.8 1998/08/15 06:46:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ sm_pcmcia_newmedia_ciscallback(tuple, arg)
 	u_int8_t *myla = arg;
 	int i;
 
-	if (tuple->code == 0x22) {	/* Func Extension */
+	if (tuple->code == PCMCIA_CISTPL_FUNCE) {
 		if (tuple->length < ETHER_ADDR_LEN)
 			return (0);
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
