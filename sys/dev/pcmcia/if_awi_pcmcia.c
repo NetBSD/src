@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.14 2000/03/22 22:33:47 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -147,6 +147,9 @@ static struct awi_pcmcia_product {
 
 	{ PCMCIA_VENDOR_ICOM,		PCMCIA_PRODUCT_ICOM_SL200,
 	  PCMCIA_CIS_ICOM_SL200,	PCMCIA_STR_ICOM_SL200 },
+
+	{ PCMCIA_VENDOR_NOKIA,		PCMCIA_PRODUCT_NOKIA_C020_WLAN,
+	  PCMCIA_CIS_NOKIA_C020_WLAN,	PCMCIA_STR_NOKIA_C020_WLAN },
 
 	{ 0,				0,
 	  { NULL, NULL, NULL, NULL },	NULL },
