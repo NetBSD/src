@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.96 2003/04/26 18:42:34 fvdl Exp $
+#	$NetBSD: build.sh,v 1.97 2003/05/08 12:49:45 christos Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,7 +91,7 @@ initdefaults()
 	# Some systems have a small ARG_MAX.  -X prevents make(1) from
 	# exporting variables in the environment redundantly.
 	case "${uname_s}" in
-	Darwin | FreeBSD)
+	Darwin | FreeBSD | CYGWIN*)
 		MAKEFLAGS=-X
 		;;
 	*)
@@ -701,7 +701,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.96 2003/04/26 18:42:34 fvdl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.97 2003/05/08 12:49:45 christos Exp $
 #
 
 EOF
