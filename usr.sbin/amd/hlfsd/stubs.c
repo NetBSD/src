@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: stubs.c,v 1.1.1.1 1997/07/24 21:22:42 christos Exp $
+ * $Id: stubs.c,v 1.1.1.2 1997/09/22 21:12:37 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -60,17 +60,34 @@ static nfsfattr slinkfattr = {NFLNK, 0120777, 1, 0, 0, NFS_MAXPATHLEN, 512, 0,
 			      (NFS_MAXPATHLEN + 1) / 512, 0, SLINKID};
 				/* user name file attributes */
 static nfsfattr un_fattr = {NFLNK, 0120777, 1, 0, 0, NFS_MAXPATHLEN, 512, 0,
-			    (NFS_MAXPATHLEN + 1) / 512, 0, -3};
+			    (NFS_MAXPATHLEN + 1) / 512, 0, INVALIDID};
 static int getcreds(struct svc_req *, uid_t *, int *);
 static int started;
-static am_nfs_fh slink =	{{SLINKID}};
-static am_nfs_fh un_fhandle =	{{-3}};
+static am_nfs_fh slink;
+static am_nfs_fh un_fhandle;
 
 /*
  * GLOBALS:
  */
-am_nfs_fh root =		{{ROOTID}};
+am_nfs_fh root;
 am_nfs_fh *root_fhp =		&root;
+
+
+/* initialize NFS file handles for hlfsd */
+void
+hlfsd_init_filehandles(void)
+{
+  u_int ui;
+
+  ui = ROOTID;
+  memcpy(root.fh_data, &ui, sizeof(ui));
+
+  ui = SLINKID;
+  memcpy(slink.fh_data, &ui, sizeof(ui));
+
+  ui = INVALIDID;
+  memcpy(un_fhandle.fh_data, &ui, sizeof(ui));
+}
 
 
 voidp
@@ -94,8 +111,8 @@ nfsattrstat *
 nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 {
   static nfsattrstat res;
-  uid_t uid = -3;
-  int gid = -3;
+  uid_t uid = INVALIDID;
+  int gid = INVALIDID;
 
   if (!started) {
     started++;
@@ -175,8 +192,8 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 {
   static nfsdiropres res;
   int idx;
-  uid_t uid = -3;
-  int gid = -3;
+  uid_t uid = INVALIDID;
+  int gid = INVALIDID;
 
   if (!started) {
     started++;
@@ -261,14 +278,14 @@ getcreds(struct svc_req *rp, uid_t *u, int *g)
 #ifdef HAVE_RPC_AUTH_DES_H
   case AUTH_DES:
     adp = (struct authdes_cred *) rp->rq_clntcred;
-    *g = -3;			/* some unknown group id */
+    *g = INVALIDID;		/* some unknown group id */
     if (sscanf(adp->adc_fullname.name, "unix.%lu@", u) == 1)
         break;
     /* fall through */
 #endif /* HAVE_RPC_AUTH_DES_H */
 
   default:
-    *u = *g = -3;		/* just in case */
+    *u = *g = INVALIDID;	/* just in case */
     svcerr_weakauth(nfsxprt);
     return -1;
   }
@@ -281,7 +298,7 @@ nfsreadlinkres *
 nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 {
   static nfsreadlinkres res;
-  uid_t userid = -3;
+  uid_t userid = INVALIDID;
   int groupid = hlfs_gid + 1;	/* anything not hlfs_gid */
   int retval = 0;
   char *path_val = (char *) NULL;
@@ -324,10 +341,8 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     }
   }
 
-#ifdef DEBUG
-  dlog("nfs_readlink: mailbox for uid=%d, gid=%d is %s",
+  plog(XLOG_USER, "mailbox for uid=%d, gid=%d is %s",
        userid, groupid, (char *) res.rlr_u.rlr_data_u);
-#endif /* DEBUG */
 
   /* I don't think will pass this if -D nofork */
   if (serverpid == getpid())
@@ -497,7 +512,11 @@ nfsproc_statfs_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 
   res.sfr_u.sfr_reply_u.sfrok_tsize = 1024;
   res.sfr_u.sfr_reply_u.sfrok_bsize = 1024;
-				/* set to 1 if want non-empty automounts */
+
+  /*
+   * Some "df" programs automatically assume that file systems
+   * with zero blocks are meta-filesystems served by automounters.
+   */
   res.sfr_u.sfr_reply_u.sfrok_blocks = 0;
   res.sfr_u.sfr_reply_u.sfrok_bfree = 0;
   res.sfr_u.sfr_reply_u.sfrok_bavail = 0;

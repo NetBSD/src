@@ -1,9 +1,50 @@
-.\" $Id: fixmount.8,v 1.1.1.1 1997/07/24 21:24:12 christos Exp $
+.\"
+.\" Copyright (c) 1997 Erez Zadok
+.\" Copyright (c) 1990 Jan-Simon Pendry
+.\" Copyright (c) 1990 Imperial College of Science, Technology & Medicine
+.\" Copyright (c) 1990 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Jan-Simon Pendry at Imperial College, London.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgment:
+.\"      This product includes software developed by the University of
+.\"      California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	%W% (Berkeley) %G%
+.\"
+.\" $Id: fixmount.8,v 1.1.1.2 1997/09/22 21:13:12 christos Exp $
+.\"
 .TH FIXMOUNT 8L "26 Feb 1993"
 .SH NAME
 fixmount \- fix remote mount entries
 .SH SYNOPSIS
-.B /usr/local/etc/fixmount
+.B fixmount
 [
 .B \-adervq
 ]
@@ -26,12 +67,9 @@ The actions specified by the options are performed for each
 .I host
 in turn.
 .SH OPTIONS
-The
-.BR \-a ,
-.BR \-d ,
-and
-.B \-e
-options work as in
+.TP
+.B \-a \-d \-e
+These options work as in
 .BR showmount (8)
 except that only entries pertaining to the local host are printed.
 .TP
@@ -82,10 +120,10 @@ List of current mounts.
 Backup file for remote mount entries on NFS server.
 .PD
 .SH "SEE ALSO"
-showmount(8),
-mtab(5),
-rmtab(5),
-mountd(8C)
+.BR showmount (8),
+.BR mtab (5),
+.BR rmtab (5),
+.BR mountd (8C).
 .SH BUGS
 No attempt is made to verify the information in
 .B /etc/mtab

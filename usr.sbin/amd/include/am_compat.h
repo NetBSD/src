@@ -11,6 +11,7 @@
  */
 
 #ifndef _AM_COMPAT_H
+# define _AM_COMPAT_H
 
 /*
  * incomplete mount options definitions (sunos4, irix6, linux, etc.)
@@ -47,9 +48,12 @@
 # define MNTTAB_OPT_NOAC "noac"
 #endif /* defined(MNT2_NFS_OPT_NOAC) && !defined(MNTTAB_OPT_NOAC) */
 
-#if defined(MNT2_NFS_OPT_OVERLAY) && !defined(MNTTAB_OPT_OVERLAY)
-# define MNTTAB_OPT_OVERLAY "overlay"
-#endif /* defined(MNT2_NFS_OPT_OVERLAY) && !defined(MNTTAB_OPT_OVERLAY) */
+#if defined(MNT2_NFS_OPT_NOCONN) && !defined(MNTTAB_OPT_NOCONN)
+# define MNTTAB_OPT_NOCONN "noconn"
+# ifndef MNTTAB_OPT_CONN
+#  define MNTTAB_OPT_CONN "conn"
+# endif /* MNTTAB_OPT_CONN */
+#endif /* defined(MNT2_NFS_OPT_NOCONN) && !defined(MNTTAB_OPT_NOCONN) */
 
 #if defined(MNT2_NFS_OPT_RETRANS) && !defined(MNTTAB_OPT_RETRANS)
 # define MNTTAB_OPT_RETRANS "retrans"
@@ -82,6 +86,10 @@
 #if defined(MNT2_GEN_OPT_NOSUID) && !defined(MNTTAB_OPT_NOSUID)
 # define MNTTAB_OPT_NOSUID "nosuid"
 #endif /* defined(MNT2_GEN_OPT_NOSUID) && !defined(MNTTAB_OPT_NOSUID) */
+
+#if defined(MNT2_GEN_OPT_OVERLAY) && !defined(MNTTAB_OPT_OVERLAY)
+# define MNTTAB_OPT_OVERLAY "overlay"
+#endif /* defined(MNT2_GEN_OPT_OVERLAY) && !defined(MNTTAB_OPT_OVERLAY) */
 
 
 /*
@@ -154,13 +162,13 @@
 
 
 /*
- * Incomplete filesystem definitions (sunos4, irix6)
+ * Incomplete filesystem definitions (sunos4, irix6, solaris2)
  */
 #if defined(HAVE_FS_CDFS) && defined(MOUNT_TYPE_CDFS) && !defined(MNTTYPE_CDFS)
 # define MNTTYPE_CDFS "hsfs"
 #endif /* defined(HAVE_FS_CDFS) && defined(MOUNT_TYPE_CDFS) && !defined(MNTTYPE_CDFS) */
-#ifndef cdfs_args_t
 
+#ifndef cdfs_args_t
 /*
  * Solaris has an HSFS filesystem, but does not define hsfs_args.
  * XXX: the definition here for solaris is wrong, since under solaris,
@@ -189,6 +197,8 @@ struct hsfs_args {
 # define ufs_args_t u_int
 #endif /* defined(HAVE_FS_UFS) && !defined(ufs_args_t) */
 
+#if defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS)
+# define MNTTYPE_AUTOFS "autofs"
+#endif /* defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS) */
 
-#define _AM_COMPAT_H
 #endif /* not _AM_COMPAT_H */

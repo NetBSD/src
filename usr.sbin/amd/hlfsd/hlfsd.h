@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hlfsd.h,v 1.1.1.1 1997/07/24 21:22:42 christos Exp $
+ * $Id: hlfsd.h,v 1.1.1.2 1997/09/22 21:12:39 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -55,9 +55,18 @@
 #define HLFSD_VERSION	"hlfsd 1.1 (March 4, 1997)"
 #define PERS_SPOOLMODE	0755
 #define OPEN_SPOOLMODE	01777
-#define ROOTID		-1	/* don't change this from being -1 */
-#define SLINKID		-2	/* don't change this from being -2 */
 #define DOTSTRING	"."
+
+/*
+ * ROOTID and SLINKID are the fixed "faked" node IDs (inodes) for
+ * the '.' (also '..') and the one symlink within the hlfs.
+ * They must always be unique, and should never match what a UID
+ * could be.
+ * They used to be -1 and -2, respectively.
+ */
+#define ROOTID		((uid_t) ((unsigned int) ~0) - 1)
+#define SLINKID		((uid_t) ((unsigned int) ~0) - 2)
+#define INVALIDID	((uid_t) ((unsigned int) ~0) - 3)
 
 #define DOTCOOKIE	1
 #define DOTDOTCOOKIE	2
@@ -75,7 +84,7 @@
 #ifdef MNT2_NFS_OPT_SYMTTL
 # define SYMTTL_ATTR_CACHE_VALUE  0
 #else /* MNT2_NFS_OPT_SYMTTL */
-# define SYMTTL_ATTR_CACHE_VALUE  1
+# define SYMTTL_ATTR_CACHE_VALUE  1	/* was 1, but why? */
 #endif /* MNT2_NFS_OPT_SYMTTL */
 
 #ifdef HAVE_SYSLOG
@@ -139,6 +148,7 @@ extern uid2home_t *plt_search(int);
 extern username2uid_t *untab;	/* user name table */
 extern void fatal(char *);
 extern void init_homedir(void);
+extern void hlfsd_init_filehandles(void);
 
 #if defined(DEBUG) || defined(DEBUG_PRINT)
 extern void plt_dump(uid2home_t *, pid_t);
