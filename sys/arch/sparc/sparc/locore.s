@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.152 2002/01/23 15:46:03 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.153 2002/02/04 08:36:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3407,28 +3407,30 @@ dostart:
 	 * we have to be sure to use only pc-relative addressing.
 	 */
 
-#ifdef DDB
 	/*
 	 * We now use the bootinfo method to pass arguments, and the new
-	 * magic number indicates that. A pointer to esym is passed in
-	 * %o4[0] and the bootinfo structure is passed in %o4[1].
+	 * magic number indicates that. A pointer to the kernel top, i.e.
+	 * the first address after the load kernel image (including DDB
+	 * symbols, if any) is passed in %o4[0] and the bootinfo structure
+	 * is passed in %o4[1].
+	 *
+	 * A magic number is passed in %o5 to allow for bootloaders
+	 * that know nothing about the bootinfo structure or previous
+	 * DDB symbol loading conventions.
 	 *
 	 * For compatibility with older versions, we check for DDB arguments
-	 * if the older magic number is there. The loader passes `esym' in
-	 * %o4.
-	 * A DDB magic number is passed in %o5 to allow for bootloaders
-	 * that know nothing about DDB symbol loading conventions.
+	 * if the older magic number is there. The loader passes `kernel_top'
+	 * (previously known as `esym') in %o4.
+	 *
 	 * Note: we don't touch %o1-%o3; SunOS bootloaders seem to use them
 	 * for their own mirky business.
 	 *
-	 * Pre-NetBSD 1.3 bootblocks had KERNBASE compiled in, and used
-	 * it to compute the value of `esym'. In order to successfully
-	 * boot a kernel built with a different value for KERNBASE using
-	 * old bootblocks, we fixup `esym' here by the difference between
-	 * KERNBASE and the old value (known to be 0xf8000000) compiled
-	 * into pre-1.3 bootblocks.
-	 * We use the magic number passed as the sixth argument to
-	 * distinguish bootblock versions.
+	 * Pre-NetBSD 1.3 bootblocks had KERNBASE compiled in, and used it
+	 * to compute the value of `kernel_top' (previously known as `esym').
+	 * In order to successfully boot a kernel built with a different value
+	 * for KERNBASE using old bootblocks, we fixup `kernel_top' here by
+	 * the difference between KERNBASE and the old value (known to be
+	 * 0xf8000000) compiled into pre-1.3 bootblocks.
 	 */
 	set	KERNBASE, %l4
 
@@ -3438,27 +3440,28 @@ dostart:
 	 nop
 
 	/* The loader has passed to us a `bootinfo' structure */
-	ld	[%o4], %l3		! 1st word is esym
-	add	%l3, %l4, %o5		! relocate
-	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
-	st	%o5, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
+	ld	[%o4], %l3		! 1st word is kernel_top
+	add	%l3, %l4, %o5		! relocate: + KERNBASE
+	sethi	%hi(_C_LABEL(kernel_top) - KERNBASE), %l3 ! and store it
+	st	%o5, [%l3 + %lo(_C_LABEL(kernel_top) - KERNBASE)]
 
 	ld	[%o4 + 4], %l3		! 2nd word is bootinfo
 	add	%l3, %l4, %o5		! relocate
 	sethi	%hi(_C_LABEL(bootinfo) - KERNBASE), %l3	! store bootinfo
 	st	%o5, [%l3 + %lo(_C_LABEL(bootinfo) - KERNBASE)]
-	b,a	3f
+	b,a	4f
 
 1:
+#ifdef DDB
 	/* Check for old-style DDB loader magic */
-	set	0x44444231, %l3		! ddb magic
+	set	0x44444231, %l3		! Is it DDB_MAGIC1?
 	cmp	%o5, %l3
 	be,a	2f
 	 clr	%l4			! if DDB_MAGIC1, clear %l4
 
-	set	0x44444230, %l3		! compat magic
-	cmp	%o5, %l3
-	bne	3f
+	set	0x44444230, %l3		! Is it DDB_MAGIC0?
+	cmp	%o5, %l3		! if so, need to relocate %o4
+	bne	3f			! if not, there's no bootloader info
 
 					! note: %l4 set to KERNBASE above.
 	set	0xf8000000, %l5		! compute correction term:
@@ -3468,10 +3471,21 @@ dostart:
 	tst	%o4			! do we have the symbols?
 	bz	3f
 	 sub	%o4, %l4, %o4		! apply compat correction
-	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
-	st	%o4, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
+	sethi	%hi(_C_LABEL(kernel_top) - KERNBASE), %l3 ! and store it
+	st	%o4, [%l3 + %lo(_C_LABEL(kernel_top) - KERNBASE)]
+	b,a	4f
 3:
 #endif
+	/*
+	 * The boot loader did not pass in a value for `kernel_top';
+	 * let it default to `end'.
+	 */
+	set	end, %o4
+	sethi	%hi(_C_LABEL(kernel_top) - KERNBASE), %l3 ! store kernel_top
+	st	%o4, [%l3 + %lo(_C_LABEL(kernel_top) - KERNBASE)]
+
+4:
+
 	/*
 	 * Sun4 passes in the `load address'.  Although possible, its highly
 	 * unlikely that OpenBoot would place the prom vector there.
@@ -3621,17 +3635,12 @@ start_havetype:
 	 */
 	clr	%l0			! lowva
 	set	KERNBASE, %l1		! highva
-	set	_end + (2 << 18), %l2	! last va that must be remapped
-#ifdef DDB
-	sethi	%hi(_C_LABEL(esym) - KERNBASE), %o1
-	ld	[%o1+%lo(_C_LABEL(esym) - KERNBASE)], %o1
-	tst	%o1
-	bz	1f
-	 nop
-	set	(2 << 18), %l2
-	add	%l2, %o1, %l2		! last va that must be remapped
-1:
-#endif
+
+	sethi	%hi(_C_LABEL(kernel_top) - KERNBASE), %o0
+	ld	[%o0 + %lo(_C_LABEL(kernel_top) - KERNBASE)], %o1
+	set	(2 << 18), %o2		! add slack for sun4c MMU
+	add	%o1, %o2, %l2		! last va that must be remapped
+
 	/*
 	 * Need different initial mapping functions for different
 	 * types of machines.
@@ -6203,11 +6212,9 @@ Llongjmpbotch:
 	 mov	%g6, %o0
 
 	.data
-#ifdef DDB
-	.globl	_C_LABEL(esym)
-_C_LABEL(esym):
+	.globl	_C_LABEL(kernel_top)
+_C_LABEL(kernel_top):
 	.word	0
-#endif
 	.globl	_C_LABEL(bootinfo)
 _C_LABEL(bootinfo):
 	.word	0
