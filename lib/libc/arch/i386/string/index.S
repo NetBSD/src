@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: index.S,v 1.9 1999/08/23 08:45:10 kleink Exp $")
+	RCSID("$NetBSD: index.S,v 1.10 2000/08/07 14:46:52 ad Exp $")
 #endif
 
 #ifdef STRCHR
@@ -14,18 +14,16 @@ ENTRY(strchr)
 #else
 ENTRY(index)
 #endif
-	pushl	%ebx
-	movl	8(%esp),%eax
-	movb	12(%esp),%cl
+	movl	4(%esp),%eax
+	movb	8(%esp),%cl
 	_ALIGN_TEXT,0x90
 L1:
-	movb	(%eax),%bl
-	cmpb	%bl,%cl			/* found char??? */
+	movb	(%eax),%dl
+	cmpb	%dl,%cl			/* found char??? */
 	je 	L2
 	incl	%eax
-	testb	%bl,%bl			/* null terminator??? */
+	testb	%dl,%dl			/* null terminator??? */
 	jnz	L1
 	xorl	%eax,%eax
 L2:
-	popl	%ebx
 	ret
