@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.1.1.1 1995/06/01 20:38:07 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.2 1995/06/02 16:44:20 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,6 +73,9 @@ exec_sun(file, addr)
 		addr += sizeof(struct exec);
 		entry = (void (*)())addr;
 	}
+
+	/* Leave a copy of the exec header just before the text. */
+	bcopy(&x, addr - sizeof(x), sizeof(x));
 
 	if (read(io, (char *)addr, x.a_text) != x.a_text)
 		goto shread;
