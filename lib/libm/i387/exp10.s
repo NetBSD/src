@@ -34,10 +34,21 @@
  */
 
 #include <machine/asm.h>
+#include "errno.h"
 
 /* 10^x = 2^(x * log2(10)) */
 ENTRY(exp10)
 	fldl	4(%ebp)
+#ifdef notyet
+	fxam
+	fstsw	%ax
+	testw	$0x0100,%ax		/* Nan */
+	jne	Lnan
+	testw	$0x0500,%ax		/* Inf */
+	jne	Linf
+	testw	$0x????,%ax		/* Zero */
+	jne	Lzero
+#endif
 	fldl2t
 	fmulp				/* x * log2(10) */
 	fstl	%st(1)
@@ -49,3 +60,24 @@ ENTRY(exp10)
 	faddp				/* 2^(fract(x * log2(10))) */
 	fscale				/* 10^x */
 	ret
+
+#ifdef notyet
+Lnan:
+	movl	EDOM,_errno
+	ret
+Linf:					/* +-Inf */
+	movl	ERANGE,_errno
+	ftst
+	fstsw	%ax
+	testw	$0x0100,%ax
+	jne	Lminf
+	ret
+Lminf:					/* -Inf */
+	fldz				
+	fstpl	st,st(%1)
+	ret
+Lzero:
+	fld1
+	fstpl	st,st(%1)
+	ret
+#endif
