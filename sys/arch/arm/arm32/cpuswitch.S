@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28.2.5 2002/10/19 13:30:43 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.28.2.6 2002/10/19 15:13:23 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -125,6 +125,23 @@ _C_LABEL(curpcb):
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
+#ifdef MULTIPROCESSOR
+	/* Switch to the idle PCB unless we're already running on it. */
+	cmp	r8, #0			/* old process was exiting? */
+	beq	1f
+
+	/* Get the user structure for the old process. */
+	ldr	r0, [r8, #(P_ADDR)]
+
+	/* Save the remaining registers in the old process's pcb */
+	add	r0, r0, #(PCB_R11)
+	stmia	r0, {r11-r13}
+1:
+	ldr	r0, [r9, #(CI_IDLEPCB)]
+	add	r0, r0, #(PCB_R11)
+	ldmia	r0, {r11-r13}
+	mov	r8, #0			/* old process is irrelevant now */
+#endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
@@ -387,6 +404,8 @@ ENTRY(cpu_switch)
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
+	 *
+	 * We also take this path if we're switching from the idle PCB.
 	 */
 	teq	r8, #0x00000000
 	beq	.Lswitch_exited
