@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.49 2003/12/24 23:22:22 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.50 2003/12/28 13:28:39 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.49 2003/12/24 23:22:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.50 2003/12/28 13:28:39 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -387,7 +387,7 @@ mach_e_proc_exit(p)
 	 * exception handler.
 	 */
 	if (lockstatus(&med->med_exclock) != 0)
-		lockmgr(&med->med_exclock, LK_RELEASE, NULL);
+		wakeup(&med->med_exclock);
 
 	/* 
 	 * If the kernel and host port are still referenced, remove
