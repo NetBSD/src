@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.47 1999/09/15 10:25:31 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.48 1999/09/16 19:20:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1197,6 +1197,13 @@ usb_disconnect_port(up)
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n", 
 		    up, dev, up->portno));
+
+#ifdef DIAGNOSTIC
+	if (!dev) {
+		printf("usb_disconnect_port: no device\n");
+		return;
+	}
+#endif
 
 	if (!dev->cdesc) {
 		/* Partially attached device, just drop it. */
