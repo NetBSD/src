@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.3 2000/03/16 03:06:51 enami Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.4 2001/09/29 01:52:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ int	ahc_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	ahc_cardbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ahc_cardbus_ca = {
-	sizeof(struct ahc_softc), ahc_cardbus_match, ahc_cardbus_attach,
+	sizeof(struct ahc_cardbus_softc), ahc_cardbus_match, ahc_cardbus_attach,
 };
 
 int
