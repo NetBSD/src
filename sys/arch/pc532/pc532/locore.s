@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1996/12/23 08:36:05 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1997/02/08 09:34:01 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -82,12 +82,11 @@
 	.data
 
 	.globl	_cold, _esym, _bootdev, _boothowto, __have_fpu
-	.globl	_proc0paddr, _PTDpaddr
+	.globl	_proc0paddr
 _cold:		.long	1	/* cold till we are not */
 _esym:		.long	0	/* pointer to end of symbols */
 __have_fpu:	.long	0	/* Have we an FPU installed? */
 _proc0paddr:	.long	0
-_PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 
 	.globl	_kernel_text
 	.set	_kernel_text,(KERNBASE + 0x2000)
