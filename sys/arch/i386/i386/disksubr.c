@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23.8.2 1998/11/23 07:57:27 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23.8.3 1998/11/30 01:28:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -100,7 +100,7 @@ mbr_findslice(dp, bp)
 		for (i = 0; i < NDOSPART; i++) {
 			if (dp[i].dp_typ == DOSPTYP_386BSD) {
 				ourdp = &dp[i];
-				printf("WARNING: disk appears to be old-NetbSD or FreeBSD. See installboot(8).\n");
+				printf("WARNING: Disk appears to be old-NetBSD or FreeBSD.  See installboot(8).\n");
 				break;
 			}
 		}
