@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.44 1998/07/13 14:24:24 mrg Exp $	*/
+/*	$NetBSD: mountd.c,v 1.45 1998/10/07 14:50:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.44 1998/07/13 14:24:24 mrg Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.45 1998/10/07 14:50:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: mountd.c,v 1.44 1998/07/13 14:24:24 mrg Exp $");
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
+#include <rpcsvc/mount.h>
 #ifdef ISO
 #include <netiso/iso.h>
 #endif
@@ -94,6 +95,10 @@ __RCSID("$NetBSD: mountd.c,v 1.44 1998/07/13 14:24:24 mrg Exp $");
 #include <string.h>
 #include <unistd.h>
 #include "pathnames.h"
+#ifdef KERBEROS
+#include <kerberosIV/krb.h>
+#include "kuid.h"
+#endif
 
 #include <stdarg.h>
 
@@ -189,7 +194,7 @@ void	free_dir __P((struct dirlist *));
 void	free_exp __P((struct exportlist *));
 void	free_grp __P((struct grouplist *));
 void	free_host __P((struct hostlist *));
-void	get_exportlist __P((void));
+void	get_exportlist __P((int));
 int	get_host __P((const char *, struct grouplist *));
 int	get_num __P((char *));
 struct hostlist *get_ht __P((void));
@@ -207,7 +212,7 @@ void	out_of_mem __P((void));
 void	parsecred __P((char *, struct ucred *));
 int	put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
 int	scan_tree __P((struct dirlist *, u_int32_t));
-void	send_umntall __P((void));
+void	send_umntall __P((int));
 int	umntall_each __P((caddr_t, struct sockaddr_in *));
 int	xdr_dir __P((XDR *, char *));
 int	xdr_explist __P((XDR *, caddr_t));
@@ -239,6 +244,7 @@ int opt_flags;
 
 int debug = 0;
 void	SYSLOG __P((int, const char *, ...));
+int	main __P((int, char *[]));
 
 /*
  * Mountd server for NFS mount protocol as described in:
@@ -282,7 +288,7 @@ main(argc, argv)
 	openlog("mountd", LOG_PID, LOG_DAEMON);
 	if (debug)
 		fprintf(stderr, "Getting export list.\n");
-	get_exportlist();
+	get_exportlist(0);
 	if (debug)
 		fprintf(stderr, "Getting mount list.\n");
 	get_mountlist();
@@ -293,8 +299,8 @@ main(argc, argv)
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
 	}
-	signal(SIGHUP, (void (*) __P((int))) get_exportlist);
-	signal(SIGTERM, (void (*) __P((int))) send_umntall);
+	(void)signal(SIGHUP, get_exportlist);
+	(void)signal(SIGTERM, send_umntall);
 	pidfile = fopen(_PATH_MOUNTDPID, "w");
 	if (pidfile != NULL) {
 		fprintf(pidfile, "%d\n", getpid());
@@ -318,6 +324,10 @@ main(argc, argv)
 		syslog(LOG_ERR, "Can't register mount");
 		exit(1);
 	}
+
+#ifdef KERBEROS
+	kuidinit();
+#endif
 	svc_run();
 	syslog(LOG_ERR, "Mountd died");
 	exit(1);
@@ -349,13 +359,16 @@ mntsrv(rqstp, transp)
 	saddr = transp->xp_raddr.sin_addr;
 	sport = ntohs(transp->xp_raddr.sin_port);
 	hp = (struct hostent *)NULL;
+#ifdef KERBEROS
+	kuidreset();
+#endif
 	ret = 0;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
 		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
-	case RPCMNT_MOUNT:
+	case MOUNTPROC_MNT:
 		if (!svc_getargs(transp, xdr_dir, rpcpath)) {
 			svcerr_decode(transp);
 			return;
@@ -428,11 +441,11 @@ mntsrv(rqstp, transp)
 out:
 		sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
 		return;
-	case RPCMNT_DUMP:
+	case MOUNTPROC_DUMP:
 		if (!svc_sendreply(transp, xdr_mlist, (caddr_t)NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
-	case RPCMNT_UMOUNT:
+	case MOUNTPROC_UMNT:
 		if (!svc_getargs(transp, xdr_dir, dirpath)) {
 			svcerr_decode(transp);
 			return;
@@ -450,7 +463,7 @@ out:
 		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
-	case RPCMNT_UMNTALL:
+	case MOUNTPROC_UMNTALL:
 		hp = gethostbyaddr((caddr_t)&saddr, sizeof(saddr), AF_INET);
 		if (hp)
 			ret = del_mlist(hp->h_name, (char *)NULL,
@@ -466,10 +479,21 @@ out:
 		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
-	case RPCMNT_EXPORT:
+	case MOUNTPROC_EXPORT:
+	case MOUNTPROC_EXPORTALL:
 		if (!svc_sendreply(transp, xdr_explist, (caddr_t)NULL))
 			syslog(LOG_ERR, "Can't send reply");
 		return;
+
+#ifdef KERBEROS
+	case MOUNTPROC_KUIDMAP:
+	case MOUNTPROC_KUIDUMAP:
+	case MOUNTPROC_KUIDPURGE:
+	case MOUNTPROC_KUIDUPURGE:
+		kuidops(rqstp, transp);
+		return;
+#endif
+
 	default:
 		svcerr_noproc(transp);
 		return;
@@ -657,8 +681,10 @@ FILE *exp_file;
 /*
  * Get the export list
  */
+/*ARGSUSED*/
 void
-get_exportlist()
+get_exportlist(n)
+	int n;
 {
 	struct exportlist *ep, *ep2;
 	struct grouplist *grp, *tgrp;
@@ -850,8 +876,9 @@ get_exportlist()
 				    grp = grp->gr_next;
 				}
 				if (netgrp) {
-				    if (get_host(hst, grp)) {
-					syslog(LOG_ERR, "Bad netgroup %s", cp);
+				    if (hst == NULL || get_host(hst, grp)) {
+					syslog(LOG_ERR, "%s netgroup %s",
+					    hst ? "Bad" : "No host in", cp);
 					getexp_err(ep, tgrp);
 					endnetgrent();
 					goto nextline;
@@ -1147,18 +1174,18 @@ add_dlist(dpp, newdp, grp, flags)
  * Search for a dirpath on the export point.
  */
 struct dirlist *
-dirp_search(dp, dirpath)
+dirp_search(dp, dirp)
 	struct dirlist *dp;
-	char *dirpath;
+	char *dirp;
 {
 	int cmp;
 
 	if (dp) {
-		cmp = strcmp(dp->dp_dirp, dirpath);
+		cmp = strcmp(dp->dp_dirp, dirp);
 		if (cmp > 0)
-			return (dirp_search(dp->dp_left, dirpath));
+			return (dirp_search(dp->dp_left, dirp));
 		else if (cmp < 0)
-			return (dirp_search(dp->dp_right, dirpath));
+			return (dirp_search(dp->dp_right, dirp));
 		else
 			return (dp);
 	}
@@ -2009,8 +2036,10 @@ add_mlist(hostp, dirp, flags)
  * This function is called via. SIGTERM when the system is going down.
  * It sends a broadcast RPCMNT_UMNTALL.
  */
+/*ARGSUSED*/
 void
-send_umntall()
+send_umntall(n)
+	int n;
 {
 	(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
 		xdr_void, (caddr_t)0, xdr_void, (caddr_t)0, umntall_each);
