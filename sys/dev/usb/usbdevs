@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.210 2001/12/15 00:07:45 augustss Exp $
+$NetBSD: usbdevs,v 1.211 2001/12/15 00:15:01 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -954,6 +954,7 @@ product SANDISK SDDR12		0x0100	ImageMate SDDR-12
 product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 
 /* ScanLogic products */
+product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
 /* Shark products */
