@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.347 2002/08/29 01:30:46 lukem Exp $
+# $NetBSD: mi,v 1.348 2002/09/01 19:52:32 atatat Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -851,6 +851,7 @@
 ./usr/sbin/pkg_create		base-pkgutil-bin
 ./usr/sbin/pkg_delete		base-pkgutil-bin
 ./usr/sbin/pkg_info		base-pkgutil-bin
+./usr/sbin/pmap			base-sysutil-bin
 ./usr/sbin/postalias		base-postfix-bin
 ./usr/sbin/postcat		base-postfix-bin
 ./usr/sbin/postconf		base-postfix-bin
