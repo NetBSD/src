@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.10 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.11 2000/07/03 03:56:22 matt Exp $	*/
 /*	$KAME: pfkey.c,v 1.31 2000/06/10 14:17:43 sakane Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 		_SADB_SPIRANGE(p)->sadb_spirange_exttype = SADB_EXT_SPIRANGE;
 		_SADB_SPIRANGE(p)->sadb_spirange_min = min;
 		_SADB_SPIRANGE(p)->sadb_spirange_max = max;
-#undef _SADB_SPIRANGE(p)
+#undef _SADB_SPIRANGE
 		p += _len;
 	}
 
