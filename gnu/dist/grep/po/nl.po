@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU grep 2.0\n"
-"POT-Creation-Date: 1999-02-03 13:09-0500\n"
+"POT-Creation-Date: 1999-02-14 12:08-0500\n"
 "PO-Revision-Date: 1996-08-18 11:24 EDT\n"
 "Last-Translator: Erick Branderhorst <branderh@debian.org>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
 
-#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:858
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:861
 #, fuzzy
 msgid "Memory exhausted"
 msgstr "geen geheugen meer beschikbaar"
@@ -161,49 +161,49 @@ msgstr ""
 msgid "non-option ARGV-elements: "
 msgstr ""
 
-#: src/grep.c:169 src/grep.c:186 src/grep.c:288 src/grep.c:344 src/kwset.c:184
+#: src/grep.c:172 src/grep.c:189 src/grep.c:291 src/grep.c:347 src/kwset.c:184
 #: src/kwset.c:190
 msgid "memory exhausted"
 msgstr "geen geheugen meer beschikbaar"
 
-#: src/grep.c:372 src/grep.c:843
+#: src/grep.c:375 src/grep.c:846
 #, c-format
 msgid "%s: warning: %s: %s\n"
 msgstr "%s: let op: %s: %s\n"
 
-#: src/grep.c:497 src/grep.c:1318
+#: src/grep.c:500 src/grep.c:1321
 msgid "writing output"
 msgstr "schrijven van uitvoer"
 
-#: src/grep.c:726
+#: src/grep.c:729
 #, c-format
 msgid "Binary file %s matches\n"
 msgstr ""
 
-#: src/grep.c:742
+#: src/grep.c:745
 msgid "(standard input)"
 msgstr "(standaardinvoer)"
 
-#: src/grep.c:844
+#: src/grep.c:847
 msgid "recursive directory loop"
 msgstr ""
 
-#: src/grep.c:895
+#: src/grep.c:898
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
 msgstr ""
 
-#: src/grep.c:896
+#: src/grep.c:899
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr ""
 
-#: src/grep.c:900
+#: src/grep.c:903
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
 msgstr ""
 
-#: src/grep.c:901
+#: src/grep.c:904
 msgid ""
 "Search for PATTERN in each FILE or standard input.\n"
 "\n"
@@ -218,7 +218,7 @@ msgid ""
 "  -x, --line-regexp         force PATTERN to match only whole lines\n"
 msgstr ""
 
-#: src/grep.c:913
+#: src/grep.c:916
 msgid ""
 "\n"
 "Miscellaneous:\n"
@@ -228,7 +228,7 @@ msgid ""
 "      --help                display this help and exit\n"
 msgstr ""
 
-#: src/grep.c:920
+#: src/grep.c:923
 msgid ""
 "\n"
 "Output control:\n"
@@ -246,7 +246,7 @@ msgid ""
 "  -c, --count               only print a count of matching lines per FILE\n"
 msgstr ""
 
-#: src/grep.c:935
+#: src/grep.c:938
 msgid ""
 "\n"
 "Context control:\n"
@@ -264,17 +264,17 @@ msgid ""
 "Exit with 2 if syntax errors or system errors.\n"
 msgstr ""
 
-#: src/grep.c:950
+#: src/grep.c:953
 msgid ""
 "\n"
 "Report bugs to <bug-gnu-utils@gnu.org>.\n"
 msgstr ""
 
-#: src/grep.c:1093 src/grep.c:1100 src/grep.c:1109
+#: src/grep.c:1096 src/grep.c:1103 src/grep.c:1112
 msgid "invalid context length argument"
 msgstr ""
 
-#: src/grep.c:1116 src/grep.c:1121 src/grep.c:1126
+#: src/grep.c:1119 src/grep.c:1124 src/grep.c:1129
 msgid "you may specify only one of -E, -F, or -G"
 msgstr "alleen de volgende opties zijn toegestaan: -E, -F, of -G"
 
@@ -286,24 +286,24 @@ msgstr "alleen de volgende opties zijn toegestaan: -E, -F, of -G"
 #  grep --help ->
 #  usage: grep [-[[AB] ]<num>] [-[CEFGVchilnqsvwx]] [-[ef]] <expr> [<files...>]
 #  La opcisn -X es a la que corresponde esta lmnea.
-#: src/grep.c:1145
+#: src/grep.c:1148
 msgid "matcher already specified"
 msgstr "overeenkomer (matcher FIXME) al gespecificeerd"
 
-#: src/grep.c:1166
+#: src/grep.c:1169
 msgid "unknown directories method"
 msgstr ""
 
-#: src/grep.c:1252
+#: src/grep.c:1255
 #, c-format
 msgid "grep (GNU grep) %s\n"
 msgstr ""
 
-#: src/grep.c:1254
-msgid "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
+#: src/grep.c:1257
+msgid "Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n"
 msgstr ""
 
-#: src/grep.c:1256
+#: src/grep.c:1259
 msgid ""
 "This is free software; see the source for copying conditions. There is NO\n"
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
@@ -314,8 +314,8 @@ msgstr ""
 msgid "memory exhausted\n"
 msgstr "geen geheugen meer beschikbaar"
 
-#~ msgid "(standard input)\n"
-#~ msgstr "(standaardinvoer)\n"
-
 #~ msgid "GNU grep version 2.0"
 #~ msgstr "(FIXME) GNU grep version 2.0"
+
+#~ msgid "(standard input)\n"
+#~ msgstr "(standaardinvoer)\n"
