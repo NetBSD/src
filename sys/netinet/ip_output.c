@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.110 2003/08/18 22:23:22 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.111 2003/08/19 00:17:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.110 2003/08/18 22:23:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.111 2003/08/19 00:17:38 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -1464,7 +1464,7 @@ ip_multicast_if(a, ifindexp)
 	int *ifindexp;
 {
 	int ifindex;
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;
 	struct in_ifaddr *ia;
 
 	if (ifindexp)
@@ -1479,8 +1479,10 @@ ip_multicast_if(a, ifindexp)
 	} else {
 		LIST_FOREACH(ia, &IN_IFADDR_HASH(a->s_addr), ia_hash) {
 			if (in_hosteq(ia->ia_addr.sin_addr, *a) &&
-			    (ia->ia_ifp->if_flags & IFF_MULTICAST) != 0)
+			    (ia->ia_ifp->if_flags & IFF_MULTICAST) != 0) {
+				ifp = ia->ia_ifp;
 				break;
+			}
 		}
 	}
 	return ifp;
