@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.72 2004/08/23 16:03:57 wiz Exp $
+.\"	$NetBSD: sysinst,v 1.73 2004/11/14 04:54:25 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1945,6 +1945,42 @@ Now you need to mount your destination root partition:
 .Dl # Ic "sh MAKEDEV all"
 .Dl # Ic "cd /"
 .Dl # Ic "umount /mnt"
+.Dl # Ic "exit"
+.\}
+.if \n[sparc64] \{\
+.It
+.To 2 "Ensure you have the correct kernel installed"
+.Em "Ensure you have the correct kernel installed"
+.Pp
+If you are installing from the 32-bit sparc distribution set, make sure
+that you installed the correct kernel.  The \*M installation tools do not 
+by default copy the correct 32-bit kernel.  Unless you prepared ahead of 
+time by renaming the
+.Pa kern-GENERIC_SUN4U.tgz
+to
+.Pa kern-GENERIC.tgz
+then you will need to follow the next few instructions.
+.Pp
+Go to the main installation menu, and select
+.Me "Utility menu"
+and then select the
+.Me "Run /bin/sh"
+option, which will give you a shell prompt.
+You may need to type one of the following commands to get your delete key
+to work properly, depending on your keyboard:
+.Dl # Ic "stty erase '^h'"
+.Dl # Ic "stty erase '^?'"
+.Pp
+Type the following command (replacing
+.Pa wd0a
+with the partition name of your destination root partition):
+.Dl # Ic "mount /dev/wd0a /mnt"
+.Dl # Ic "cd /mnt"
+Now you ned to mount the location of your distribution sets:
+.Dl # Ic "mount /dev/cd0a /mnt2"
+.Dl # Ic "tar xpzvf /mnt2/sparc/binary/kernel/kern-GENERIC_SUN4U.tgz"
+.Dl # Ic "umount /mnt"
+.Dl # Ic "umount /mnt2"
 .Dl # Ic "exit"
 .\}
 .It
