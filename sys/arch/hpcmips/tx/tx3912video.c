@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.13 2000/05/10 23:57:13 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.14 2000/05/12 18:09:55 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -230,7 +230,8 @@ tx3912video_hpcfbinit(sc)
 		fb->hf_pixels_per_pack = 4;
 		fb->hf_pixel_width = 2;
 		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
-		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
+		/* reserved for future use */
+		fb->hf_u.hf_gray.hf_flags = 0;
 		break;
 	case 8:
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
@@ -239,7 +240,8 @@ tx3912video_hpcfbinit(sc)
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 8;
 		fb->hf_class_data_length = sizeof(struct hf_indexed_tag);
-		fb->hf_u.hf_indexed.hf_flags = 0; /* reserved for future use */
+		/* reserved for future use */
+		fb->hf_u.hf_indexed.hf_flags = 0;
 		break;
 	}
 }
@@ -326,8 +328,8 @@ tx3912video_framebuffer_alloc(chip, fb_start, fb_end)
 		return (1);
 
 	/* Allocate V-RAM area */
-	error = extent_alloc_subregion(ex, fb_start, fb_start + size, size, 
-				       TX3912_FRAMEBUFFER_ALIGNMENT,
+	error = extent_alloc_subregion(ex, fb_start, fb_start + size - 1,
+				       size, TX3912_FRAMEBUFFER_ALIGNMENT,
 				       TX3912_FRAMEBUFFER_BOUNDARY,
 				       EX_FAST|EX_NOWAIT, &addr);
 	extent_destroy(ex);
@@ -510,7 +512,7 @@ tx3912video_ioctl(v, cmd, data, flag, p)
 		/*
 		 * TX3912 can't change CLUT index. R:G:B = 3:3:2
 		 */
-		return (EINVAL);
+		return (0);
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
@@ -656,8 +658,8 @@ tx3912video_clut_get(sc, rgb, beg, cnt)
 	KASSERT(LEGAL_CLUT_INDEX(beg));
 	KASSERT(LEGAL_CLUT_INDEX(beg + cnt - 1));
 	
-	for (i = 0; i < cnt; i++) {
-		rgb[i] =  RGB24(__get_color8((i >> 5) & 0x7),
+	for (i = beg; i < beg + cnt; i++) {
+		*rgb++ =  RGB24(__get_color8((i >> 5) & 0x7),
 				__get_color8((i >> 2) & 0x7),
 				__get_color4(i & 0x3));
 	}
@@ -761,6 +763,8 @@ tx3912video_clut_init(sc)
 		      (dither_level4[2] << 8) |
 		      (dither_level4[1] << 4) |
 		      (dither_level4[0] << 0));
+
+	tx3912video_reset(sc->sc_chip);
 }
 
 /*
