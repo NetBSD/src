@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.1 2001/04/05 12:21:30 leo Exp $
+#	$NetBSD: HADES.in,v 1.2 2001/04/06 21:53:40 leo Exp $
 #
 # Medusa-Hades
 #
@@ -18,6 +18,7 @@ scsibus0	at ncrscsi0	# SCSI bus
 zs0		at mainbus0	# Serial support through 8530
 nvr0		at mainbus0	# nvram driver
 lp0		at mainbus0	# centronics printer
+ser0		at mainbus0	# UART on first 68901 (ttyB0)
 grfbus0		at mainbus0	# bitmapped display's
 grfet0		at grfbus0	# et4000/et6000/et6100 consoles
 ite0		at grfet0
@@ -51,4 +52,14 @@ ch* 	at scsibus? target ? lun ?	# SCSI autochangers
 ss* 	at scsibus? target ? lun ?	# SCSI scanners
 se* 	at scsibus? target ? lun ?	# SCSI ethernet
 uk* 	at scsibus? target ? lun ?	# SCSI unknown
+#endif
+
+#ifndef INSTALL_KERNEL
+# Networking...
+ne0	at isa0 port 0x300 irq 5	# NE2000 ethernet
+ep*	at pci0 dev ? function 0	# 3Com 3c59x/3c90x Ethernet
+
+# Sound...
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+audio*	at eso?
 #endif
