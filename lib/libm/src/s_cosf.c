@@ -15,16 +15,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cosf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_cosf.c,v 1.7 2002/04/09 01:55:48 thorpej Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
+#if 0
 #ifdef __STDC__
 static const float one=1.0;
 #else
 static float one=1.0;
+#endif
 #endif
 
 #ifdef __STDC__
