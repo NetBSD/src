@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.4 2001/05/22 17:25:16 toshii Exp $	*/
+/* 	$NetBSD: intr.h,v 1.5 2001/06/20 02:26:30 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -40,17 +40,20 @@
 
 /* Hardware Interrupt Priority Levels are not mutually exclusive. */
 
-#define IPL_BIO		0	/* block I/O */
-#define IPL_NET		1	/* network */
-#define IPL_TTY		2	/* terminal */
-#define IPL_IMP		3	/* memory allocation */
-#define IPL_AUDIO	4	/* audio */
-#define IPL_CLOCK	5	/* clock */
-#define IPL_HIGH	6	/*  */
-#define IPL_SERIAL	7	/* serial */
-#define IPL_NONE	8
+#define IPL_SOFTCLOCK	0
+#define IPL_SOFTNET	1
+#define IPL_BIO		2	/* block I/O */
+#define IPL_NET		3	/* network */
+#define IPL_SOFTSERIAL	4
+#define IPL_TTY		5	/* terminal */
+#define IPL_IMP		6	/* memory allocation */
+#define IPL_AUDIO	7	/* audio */
+#define IPL_CLOCK	8	/* clock */
+#define IPL_HIGH	9	/*  */
+#define IPL_SERIAL	10	/* serial */
+#define IPL_NONE	11
 
-#define NIPL		9
+#define NIPL		12
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -70,7 +73,7 @@
 #include <machine/psl.h>
 
 #ifndef _LOCORE
-void *softintr_establish(int, int (*)(void *), void *);
+void *softintr_establish(int, void (*)(void *), void *);
 void softintr_disestablish(void *);
 void softintr_schedule(void *);
 #endif
