@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1996/11/30 02:49:05 jtc Exp $ */
+/*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -98,5 +98,7 @@
 
 
 #define ASMSTR			.asciz
+
+#define RCSID(name)		.asciz name
 
 #endif /* _ASM_H_ */
