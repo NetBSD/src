@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.6 1996/12/22 10:40:30 cgd Exp $	*/
+/*	$NetBSD: truncate.c,v 1.7 1996/12/23 03:00:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: truncate.c,v 1.6 1996/12/22 10:40:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: truncate.c,v 1.7 1996/12/23 03:00:28 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,14 @@ truncate(path, length)
 	const char *path;
 	off_t length;
 {
+	quad_t q;
+	int rv;
 
-	return((int)__syscall((quad_t)SYS_truncate, path, 0, length));
+	q = __syscall((quad_t)SYS_truncate, path, 0, length);
+	if (sizeof (quad_t) == sizeof (register_t) ||
+	    BYTE_ORDER == LITTLE_ENDIAN)
+		rv = (int)q;
+	else
+		rv = (int)(q >> 32);
+	return rv;
 }
