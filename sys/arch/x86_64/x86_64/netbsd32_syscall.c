@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.2 2002/05/28 23:11:39 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.3 2002/06/04 11:12:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -171,6 +171,10 @@ netbsd32_syscall_fancy(frame)
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
+#ifdef KTRACE
+	int i;
+	register_t args64[8];
+#endif
 
 	uvmexp.syscalls++;
 	p = curproc;
@@ -212,8 +216,11 @@ netbsd32_syscall_fancy(frame)
 	scdebug_call(p, code, args);
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		for (i = 0; i < (argsize >> 2); i++)
+			args64[i] = args[i];
+		ktrsyscall(p, code, argsize, args64);
+	}
 #endif /* KTRACE */
 
 	rval[0] = 0;
