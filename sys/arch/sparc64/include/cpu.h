@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.29 2001/09/03 13:07:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -222,7 +222,7 @@ struct intrhand {
 	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
 	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
 };
-extern struct intrhand *intrhand[15];
+extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish __P((int level, struct intrhand *));
