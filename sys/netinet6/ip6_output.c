@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.82 2004/03/23 18:21:38 martti Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.83 2004/06/11 04:10:10 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.82 2004/03/23 18:21:38 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.83 2004/06/11 04:10:10 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1348,6 +1348,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
+			case IPV6_USE_MIN_MTU:
 				if (!m || m->m_len != sizeof(int)) {
 					error = EINVAL;
 					break;
@@ -1405,6 +1406,10 @@ do { \
 
 				case IPV6_FAITH:
 					OPTSET(IN6P_FAITH);
+					break;
+
+				case IPV6_USE_MIN_MTU:
+					OPTSET(IN6P_MINMTU);
 					break;
 
 				case IPV6_V6ONLY:
@@ -1527,6 +1532,7 @@ do { \
 			case IPV6_RTHDR:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
+			case IPV6_USE_MIN_MTU:
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
 				m->m_len = sizeof(int);
 				switch (optname) {
@@ -1588,6 +1594,10 @@ do { \
 
 				case IPV6_V6ONLY:
 					optval = OPTBIT(IN6P_IPV6_V6ONLY);
+					break;
+
+				case IPV6_USE_MIN_MTU:
+					optval = OPTBIT(IN6P_MINMTU);
 					break;
 				}
 				*mtod(m, int *) = optval;
