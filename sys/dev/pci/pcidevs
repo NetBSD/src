@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.547 2003/07/06 17:07:38 simonb Exp $
+$NetBSD: pcidevs,v 1.548 2003/07/06 17:11:32 simonb Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -48,7 +48,7 @@ $NetBSD: pcidevs,v 1.547 2003/07/06 17:07:38 simonb Exp $
  */
 
 vendor PEAK		0x001c	Peak System Technik
-vendor MARTINMARIETTA	0x003d	Martin-Marietta Corporation 
+vendor MARTINMARIETTA	0x003d	Martin-Marietta Corporation
 vendor HAUPPAUGE	0x0070	Hauppauge Computer Works
 vendor DYNALINK		0x0675	Dynalink
 vendor COMPAQ		0x0e11	Compaq
@@ -491,7 +491,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor O2MICRO		0x1217  O2 Micro, Inc.
+vendor O2MICRO		0x1217	O2 Micro, Inc.
 vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor HEURICON		0x1223	Heurikon/Computer Products
@@ -533,7 +533,7 @@ vendor NETGEAR		0x1385	Netgear
 vendor LEVELONE		0x1394	Level One
 vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hi/Fn
-vendor 3WARE		0x13c1  3ware
+vendor 3WARE		0x13c1	3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics, Inc.
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
@@ -545,8 +545,8 @@ vendor ASKEY		0x144f	Askey Computer Corp.
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
-vendor TITAN		0x14d2  Titan Electronics, Inc.
-vendor AVLAB		0x14db  Avlab Technology, Inc.
+vendor TITAN		0x14d2	Titan Electronics, Inc.
+vendor AVLAB		0x14db	Avlab Technology, Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom Corporation
 vendor CONEXANT		0x14f1	Conexant Systems
@@ -668,11 +668,11 @@ product ACC 2051_HB 	0x2051	2051 PCI Single Chip Solution (host bridge)
 product ACC 2051_ISA 	0x5842	2051 PCI Single Chip Solution (ISA bridge)
 
 /* Acard products */
-product ACARD ATP850U	0x0005	ATP850U/UF UDMA IDE Controller 
-product ACARD ATP860	0x0006	ATP860 UDMA IDE Controller 
-product ACARD ATP860A	0x0007	ATP860-A UDMA IDE Controller 
-product ACARD ATP865	0x0008	ATP865 UDMA IDE Controller 
-product ACARD ATP865A	0x0009	ATP865-A UDMA IDE Controller 
+product ACARD ATP850U	0x0005	ATP850U/UF UDMA IDE Controller
+product ACARD ATP860	0x0006	ATP860 UDMA IDE Controller
+product ACARD ATP860A	0x0007	ATP860-A UDMA IDE Controller
+product ACARD ATP865	0x0008	ATP865 UDMA IDE Controller
+product ACARD ATP865A	0x0009	ATP865-A UDMA IDE Controller
 product ACARD AEC6710	0x8002	AEC6710 SCSI
 product ACARD AEC6712UW	0x8010	AEC6712UW SCSI
 product ACARD AEC6712U	0x8020	AEC6712U SCSI
@@ -711,7 +711,7 @@ product ADP AIC5900	0x5900	AIC-5900 ATM
 product ADP AIC5905	0x5905	AIC-5905 ATM
 product ADP AIC6915	0x6915	AIC-6915 10/100 Ethernet
 product ADP AIC7860	0x6078	AIC-7860
-product ADP APA1480	0x6075  APA-1480 Ultra
+product ADP APA1480	0x6075	APA-1480 Ultra
 product ADP 2940AU	0x6178	AHA-2940A Ultra
 product ADP AIC7870	0x7078	AIC-7870
 product ADP 2940	0x7178	AHA-2940
@@ -788,10 +788,10 @@ product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
 product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 
 /* AMD products */
-product AMD AMD64_HT	0x1100  AMD64 HyperTransport configuration
-product AMD AMD64_ADDR	0x1101  AMD64 Address Map configuration
-product AMD AMD64_DRAM	0x1102  AMD64 DRAM configuration
-product AMD AMD64_MISC	0x1103  AMD64 Miscellaneous configuration
+product AMD AMD64_HT	0x1100	AMD64 HyperTransport configuration
+product AMD AMD64_ADDR	0x1101	AMD64 Address Map configuration
+product AMD AMD64_DRAM	0x1102	AMD64 DRAM configuration
+product AMD AMD64_MISC	0x1103	AMD64 Miscellaneous configuration
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
@@ -811,8 +811,8 @@ product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
 product AMD PBC768_ISA	0x7440	AMD768 PCI to ISA/LPC Bridge
-product AMD PBC768_IDE  0x7441	AMD768 EIDE Controller
-product AMD PBC768_PMC  0x7443	AMD768 Power Management Controller
+product AMD PBC768_IDE	0x7441	AMD768 EIDE Controller
+product AMD PBC768_PMC	0x7443	AMD768 Power Management Controller
 product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
 product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
 product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
@@ -883,21 +883,21 @@ product ATI RADEON_IGP_320M	0x4336	Radeon IGP 320M
 product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
-product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP) 
+product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP)
 product ATI RAGE_PRO_AGP1X	0x4744	3D Rage Pro (AGP 1x)
-product ATI RAGE_PRO_PCI_B	0x4749	3D Rage Pro Turbo	
+product ATI RAGE_PRO_PCI_B	0x4749	3D Rage Pro Turbo
 product ATI RAGE_XC_PCI66	0x474c	Rage XC (PCI66)
 product ATI RAGE_XL_AGP		0x474d	Rage XL (AGP)
 product ATI RAGE_XC_AGP		0x474e	Rage XC (AGP)
 product ATI RAGE_XL_PCI66	0x474f	Rage XL (PCI66)
-product ATI RAGE_PRO_PCI_P	0x4750 	3D Rage Pro	
+product ATI RAGE_PRO_PCI_P	0x4750 	3D Rage Pro
 product ATI RAGE_PRO_PCI_L	0x4751 	3D Rage Pro (limited 3D)
 product ATI RAGE_XL_PCI		0x4752	Rage XL
 product ATI RAGE_XC_PCI		0x4753	Rage XC
-product ATI RAGE_II		0x4754	3D Rage I/II 
+product ATI RAGE_II		0x4754	3D Rage I/II
 product ATI RAGE_IIP		0x4755	3D Rage II+
-product ATI RAGE_IIC_PCI	0x4756	3D Rage IIC 
-product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP) 
+product ATI RAGE_IIC_PCI	0x4756	3D Rage IIC
+product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP)
 product ATI MACH64_GX		0x4758	Mach64 GX
 product ATI RAGE_IIC		0x4759	3D Rage IIC
 product ATI RAGE_IIC_AGP_P	0x475a	3D Rage IIC (AGP)
@@ -905,11 +905,11 @@ product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP 133MHz)
 product ATI RAGE_LT_PRO_AGP66	0x4c44	3D Rage LT Pro (AGP 66MHz)
 product ATI RAGE_MOB_M3_PCI	0x4c45	Rage Mobility M3
 product ATI RAGE_MOB_M3_AGP	0x4c46	Rage Mobility M3 (AGP)
-product ATI RAGE_LT		0x4c47	3D Rage LT	
+product ATI RAGE_LT		0x4c47	3D Rage LT
 product ATI RAGE_LT_PRO_PCI	0x4c49	3D Rage LT Pro
-product ATI RAGE_MOBILITY	0x4c4d	Rage Mobility	
-product ATI RAGE_L_MOBILITY	0x4c4e	Rage L Mobility	
-product ATI RAGE_LT_PRO		0x4c50	3D Rage LT Pro	
+product ATI RAGE_MOBILITY	0x4c4d	Rage Mobility
+product ATI RAGE_L_MOBILITY	0x4c4e	Rage L Mobility
+product ATI RAGE_LT_PRO		0x4c50	3D Rage LT Pro
 product ATI RAGE_LT_PRO2	0x4c51	3D Rage LT Pro
 product ATI RAGE_MOB_M1_PCI	0x4c52	Rage Mobility M1 (PCI)
 product ATI RAGE_L_MOB_M1_PCI	0x4c53	Rage L Mobility (PCI)
@@ -933,22 +933,22 @@ product ATI RAGE1AGP4X		0x5043	Rage 128 Pro AGP 4x
 product ATI RAGE1PCIT		0x5044	Rage 128 Pro PCI (TMDS)
 product ATI RAGE1AGP2XT		0x5045	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE1AGP4XT		0x5046	Rage Fury MAXX AGP 4x (TMDS)
-product ATI RAGE2PCI   		0x5047	Rage 128 Pro PCI
+product ATI RAGE2PCI		0x5047	Rage 128 Pro PCI
 product ATI RAGE2AGP2X 		0x5048	Rage 128 Pro AGP 2x
 product ATI RAGE2AGP4X 		0x5049	Rage 128 Pro AGP 4x
-product ATI RAGE2PCIT  		0x504a	Rage 128 Pro PCI (TMDS)
+product ATI RAGE2PCIT		0x504a	Rage 128 Pro PCI (TMDS)
 product ATI RAGE2AGP2XT		0x504b	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE2AGP4XT		0x504c	Rage 128 Pro AGP 4x (TMDS)
-product ATI RAGE3PCI   		0x504d	Rage 128 Pro PCI
+product ATI RAGE3PCI		0x504d	Rage 128 Pro PCI
 product ATI RAGE3AGP2X 		0x504e	Rage 128 Pro AGP 2x
 product ATI RAGE3AGP4X 		0x504f	Rage 128 Pro AGP 4x
-product ATI RAGE3PCIT  		0x5050	Rage 128 Pro PCI (TMDS)
+product ATI RAGE3PCIT		0x5050	Rage 128 Pro PCI (TMDS)
 product ATI RAGE3AGP2XT		0x5051	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE3AGP4XT		0x5052	Rage 128 Pro AGP 4x (TMDS)
-product ATI RAGE4PCI   		0x5053	Rage 128 Pro PCI
+product ATI RAGE4PCI		0x5053	Rage 128 Pro PCI
 product ATI RAGE4AGP2X 		0x5054	Rage 128 Pro AGP 2x
 product ATI RAGE4AGP4X 		0x5055	Rage 128 Pro AGP 4x
-product ATI RAGE4PCIT  		0x5056	Rage 128 Pro PCI (TMDS)
+product ATI RAGE4PCIT		0x5056	Rage 128 Pro PCI (TMDS)
 product ATI RAGE4AGP2XT		0x5057	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE4AGP4XT		0x5058	Rage 128 Pro AGP 4x (TMDS)
 product ATI RADEON_7200		0x5144	Radeon 7200
@@ -977,7 +977,7 @@ product ATI MACH64_VT4		0x5656	Mach64 VT4
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
 
 /* Aureal Semiconductor */
-product AUREAL AU8820		0x0001  AU8820 Vortex Digital Audio Processor
+product AUREAL AU8820		0x0001	AU8820 Vortex Digital Audio Processor
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
@@ -985,7 +985,7 @@ product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
 product AMCIRCUITS CAMAC	0x812d	FZJ/ZEL CAMAC controller
 product AMCIRCUITS VICBUS	0x812e	FZJ/ZEL VICBUS interface
 product AMCIRCUITS PCISYNC	0x812f	FZJ/ZEL Synchronisation module
-product AMCIRCUITS S5920	0x5920  S5920 PCI Target
+product AMCIRCUITS S5920	0x5920	S5920 PCI Target
 
 /* Atheros Communications, Inc. products */
 product ATHEROS AR5001 0x0012 AR5001 Wireless LAN Reference Card
@@ -1151,7 +1151,7 @@ product COMPEX NE2KETHER	0x1401	Ethernet
 product COMPEX RL100ATX		0x2011	RL100-ATX 10/100 Ethernet
 product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
 
-/* Conexant Systems products  */
+/* Conexant Systems products */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
 
@@ -1194,7 +1194,7 @@ product DAVICOM DM9102	0x9102	Davicom DM9102 10/100 Ethernet
 
 /* DEC products */
 product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
-product DEC 21040	0x0002  DECchip 21040 (\"Tulip\") Ethernet
+product DEC 21040	0x0002	DECchip 21040 (\"Tulip\") Ethernet
 product DEC 21030	0x0004	DECchip 21030 (\"TGA\")
 product DEC NVRAM	0x0007	Zephyr NV-RAM
 product DEC KZPSA	0x0008	KZPSA
@@ -1202,7 +1202,7 @@ product DEC 21140	0x0009	DECchip 21140 (\"FasterNet\") 10/100 Ethernet
 product DEC PBXGB	0x000d	TGA2
 product DEC DEFPA	0x000f	DEFPA
 /* product DEC ???	0x0010	??? VME Interface */
-product DEC 21041	0x0014  DECchip 21041 (\"Tulip Plus\") Ethernet
+product DEC 21041	0x0014	DECchip 21041 (\"Tulip Plus\") Ethernet
 product DEC DGLPB	0x0016	DGLPB (\"OPPO\")
 product DEC 21142	0x0019	DECchip 21142/21143 10/100 Ethernet
 product DEC 21052	0x0021	DECchip 21052 PCI-PCI Bridge
@@ -1458,7 +1458,7 @@ product INTEL PRO_100_VM_4	0x103c	PRO/100 VM Network Controller with 82562EM/EX 
 product INTEL PRO_100_VE_4	0x103d	PRO/100 VE (MOB) Network Controller
 product INTEL PRO_100_VM_5	0x103e	PRO/100 VM (MOB) Network Controller
 product INTEL PRO_WL_2100	0x1043	PRO/Wireless LAN 2100 3B Mini PCI Adapter
-product INTEL PRO_100_VM_6	0x1050  PRO/100 VM Network Controller with 82562ET PHY
+product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller with 82562ET PHY
 product INTEL PRO_100_M		0x1059	PRO/100 M Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
@@ -1570,7 +1570,7 @@ product INTEL 82860_PCI1	0x2533	82860 PCI-PCI
 product INTEL 82860_PCI2	0x2534	82860 PCI-PCI
 product INTEL 82860_PCI3	0x2535	82860 PCI-PCI
 product INTEL 82860_PCI4	0x2536	82860 PCI-PCI
-product INTEL E7500_HB		0x2540  E7500 MCH Host
+product INTEL E7500_HB		0x2540	E7500 MCH Host
 product INTEL E7500_DRAM	0x2541	E7500 MCH DRAM Controller
 product INTEL E7500_HI_B1	0x2543	E7500 MCH HI_B vppb 1
 product INTEL E7500_HI_B2	0x2544	E7500 MCH HI_B vppb 2
@@ -1589,8 +1589,8 @@ product INTEL 82845G_IGD	0x2562	82845G/GL Integrated Graphics Device
 product INTEL 82865_HB		0x2570	82865 Host
 product INTEL 82865_AGP		0x2571	82865 AGP
 product INTEL 82801EB_HPB	0x2573	82801EB Hub-to-PCI Bridge
-product INTEL 82875P_HB		0x2578  82875P Host
-product INTEL 82875P_AGP	0x2579  82875P AGP
+product INTEL 82875P_HB		0x2578	82875P Host
+product INTEL 82875P_AGP	0x2579	82875P AGP
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-to-AGP Bridge
@@ -1739,9 +1739,9 @@ product MATROX G100_AGP		0x1001	MGA G100 AGP
 product MEDIAQ MQ200		0x0200	MQ200
 
 /* Middle Digital, Inc. products */
-product MIDDLE_DIGITAL WEASEL_VGA     0x9050	Weasel Virtual VGA
-product MIDDLE_DIGITAL WEASEL_SERIAL  0x9051	Weasel Serial Port
-product MIDDLE_DIGITAL WEASEL_CONTROL 0x9052	Weasel Control
+product MIDDLE_DIGITAL WEASEL_VGA	0x9050	Weasel Virtual VGA
+product MIDDLE_DIGITAL WEASEL_SERIAL	0x9051	Weasel Serial Port
+product MIDDLE_DIGITAL WEASEL_CONTROL	0x9052	Weasel Control
 
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
@@ -2109,43 +2109,43 @@ product SIBYTE BCM1250_LDTHB	0x0002	BCM1250 LDT Host Bridge
 product SIGMA HOLLYWOODPLUS	0x8300	REALmagic Hollywood-Plus MPEG-2 Decoder
 
 /* SIIG Inc products */
-product SIIG CYBER10_S550	0x1000	Cyber10x Serial 16550 PCI        
-product SIIG CYBER10_S650	0x1001	Cyber10x Serial 16650 PCI        
-product SIIG CYBER10_S850	0x1002	Cyber10x Serial 16850 PCI        
-product SIIG CYBER10_IO550	0x1010	Cyber10x I/O 16550 PCI           
-product SIIG CYBER10_IO650	0x1011	Cyber10x I/O 16650 PCI           
-product SIIG CYBER10_IO850	0x1010	Cyber10x I/O 16850 PCI           
-product SIIG CYBER10_P		0x1020	Cyber10x Parallel PCI            
-product SIIG CYBER10_2P		0x1021	Cyber10x Parallel Dual PCI       
-product SIIG CYBER10_2S550	0x1030	Cyber10x Serial Dual 16550 PCI   
-product SIIG CYBER10_2S650	0x1031	Cyber10x Serial Dual 16650 PCI   
-product SIIG CYBER10_2S850	0x1032	Cyber10x Serial Dual 16850 PCI   
-product SIIG CYBER10_2S1P550	0x1034	Cyber10x 2S1P 16550 PCI          
-product SIIG CYBER10_2S1P650	0x1035	Cyber10x 2S1P 16650 PCI          
-product SIIG CYBER10_2S1P850	0x1036	Cyber10x 2S1P 16850 PCI          
-product SIIG CYBER10_4S550	0x1050	Cyber10x 4S 16550 PCI            
-product SIIG CYBER10_4S650	0x1051	Cyber10x 4S 16650 PCI            
-product SIIG CYBER10_4S850	0x1052	Cyber10x 4S 16850 PCI            
-product SIIG CYBER20_S550	0x2000	Cyber20x Serial 16550 PCI        
-product SIIG CYBER20_S650	0x2001	Cyber20x Serial 16650 PCI        
-product SIIG CYBER20_S850	0x2002	Cyber20x Serial 16850 PCI        
-product SIIG CYBER20_IO550	0x2010	Cyber20x I/O 16550 PCI           
-product SIIG CYBER20_IO650	0x2011	Cyber20x I/O 16650 PCI           
-product SIIG CYBER20_IO850	0x2010	Cyber20x I/O 16850 PCI           
-product SIIG CYBER20_P		0x2020	Cyber20x Parallel PCI            
-product SIIG CYBER20_2P		0x2021	Cyber20x Parallel Dual PCI       
-product SIIG CYBER20_2S550	0x2030	Cyber20x Serial Dual 16550 PCI   
-product SIIG CYBER20_2S650	0x2031	Cyber20x Serial Dual 16650 PCI   
-product SIIG CYBER20_2S850	0x2032	Cyber20x Serial Dual 16850 PCI   
-product SIIG CYBER20_2P1S550	0x2040	Cyber20x 2P1S 16550 PCI          
-product SIIG CYBER20_2P1S650	0x2041	Cyber20x 2P1S 16650 PCI          
-product SIIG CYBER20_2P1S850	0x2042	Cyber20x 2P1S 16850 PCI          
-product SIIG CYBER20_4S550	0x2050	Cyber20x 4S 16550 PCI            
-product SIIG CYBER20_4S650	0x2051	Cyber20x 4S 16650 PCI            
-product SIIG CYBER20_4S850	0x2052	Cyber20x 4S 16850 PCI            
-product SIIG CYBER20_2S1P550	0x2060	Cyber20x 2S1P 16550 PCI          
-product SIIG CYBER20_2S1P650	0x2061	Cyber20x 2S1P 16650 PCI          
-product SIIG CYBER20_2S1P850	0x2062	Cyber20x 2S1P 16850 PCI          
+product SIIG CYBER10_S550	0x1000	Cyber10x Serial 16550 PCI
+product SIIG CYBER10_S650	0x1001	Cyber10x Serial 16650 PCI
+product SIIG CYBER10_S850	0x1002	Cyber10x Serial 16850 PCI
+product SIIG CYBER10_IO550	0x1010	Cyber10x I/O 16550 PCI
+product SIIG CYBER10_IO650	0x1011	Cyber10x I/O 16650 PCI
+product SIIG CYBER10_IO850	0x1010	Cyber10x I/O 16850 PCI
+product SIIG CYBER10_P		0x1020	Cyber10x Parallel PCI
+product SIIG CYBER10_2P		0x1021	Cyber10x Parallel Dual PCI
+product SIIG CYBER10_2S550	0x1030	Cyber10x Serial Dual 16550 PCI
+product SIIG CYBER10_2S650	0x1031	Cyber10x Serial Dual 16650 PCI
+product SIIG CYBER10_2S850	0x1032	Cyber10x Serial Dual 16850 PCI
+product SIIG CYBER10_2S1P550	0x1034	Cyber10x 2S1P 16550 PCI
+product SIIG CYBER10_2S1P650	0x1035	Cyber10x 2S1P 16650 PCI
+product SIIG CYBER10_2S1P850	0x1036	Cyber10x 2S1P 16850 PCI
+product SIIG CYBER10_4S550	0x1050	Cyber10x 4S 16550 PCI
+product SIIG CYBER10_4S650	0x1051	Cyber10x 4S 16650 PCI
+product SIIG CYBER10_4S850	0x1052	Cyber10x 4S 16850 PCI
+product SIIG CYBER20_S550	0x2000	Cyber20x Serial 16550 PCI
+product SIIG CYBER20_S650	0x2001	Cyber20x Serial 16650 PCI
+product SIIG CYBER20_S850	0x2002	Cyber20x Serial 16850 PCI
+product SIIG CYBER20_IO550	0x2010	Cyber20x I/O 16550 PCI
+product SIIG CYBER20_IO650	0x2011	Cyber20x I/O 16650 PCI
+product SIIG CYBER20_IO850	0x2010	Cyber20x I/O 16850 PCI
+product SIIG CYBER20_P		0x2020	Cyber20x Parallel PCI
+product SIIG CYBER20_2P		0x2021	Cyber20x Parallel Dual PCI
+product SIIG CYBER20_2S550	0x2030	Cyber20x Serial Dual 16550 PCI
+product SIIG CYBER20_2S650	0x2031	Cyber20x Serial Dual 16650 PCI
+product SIIG CYBER20_2S850	0x2032	Cyber20x Serial Dual 16850 PCI
+product SIIG CYBER20_2P1S550	0x2040	Cyber20x 2P1S 16550 PCI
+product SIIG CYBER20_2P1S650	0x2041	Cyber20x 2P1S 16650 PCI
+product SIIG CYBER20_2P1S850	0x2042	Cyber20x 2P1S 16850 PCI
+product SIIG CYBER20_4S550	0x2050	Cyber20x 4S 16550 PCI
+product SIIG CYBER20_4S650	0x2051	Cyber20x 4S 16650 PCI
+product SIIG CYBER20_4S850	0x2052	Cyber20x 4S 16850 PCI
+product SIIG CYBER20_2S1P550	0x2060	Cyber20x 2S1P 16550 PCI
+product SIIG CYBER20_2S1P650	0x2061	Cyber20x 2S1P 16650 PCI
+product SIIG CYBER20_2S1P850	0x2062	Cyber20x 2S1P 16850 PCI
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201
@@ -2221,7 +2221,7 @@ product SOLIDUM PAXWARE1100	0x1100 PAX.ware 1100 dual Gb Classifier Engine
 
 /* Sony products */
 product SONY	CXD1947A	0x8009	CXD1947A IEEE 1394 Host Controller
-product SONY	CXD3222		0x8039  CXD3222 OHCI IEEE 1394 Host Controller
+product SONY	CXD3222		0x8039	CXD3222 OHCI IEEE 1394 Host Controller
 product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
 /* Sun Microsystems, Inc. products */
@@ -2335,9 +2335,9 @@ product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
 /* Toshiba products */
-product TOSHIBA2 PORTEGE	0x0001  Portege Notebook
-product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
-product TOSHIBA2 ISA		0x0602  ISA Bridge
+product TOSHIBA2 PORTEGE	0x0001	Portege Notebook
+product TOSHIBA2 HOST		0x0601	Host Bridge/Controller
+product TOSHIBA2 ISA		0x0602	ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
@@ -2370,9 +2370,9 @@ product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-product TRIONES HPT366		0x0004  HPT366/370 IDE Controller
-product TRIONES HPT372		0x0005  HPT372 IDE Controller
-product TRIONES HPT374		0x0008  HPT374 IDE Controller
+product TRIONES HPT366		0x0004	HPT366/370 IDE Controller
+product TRIONES HPT372		0x0005	HPT372 IDE Controller
+product TRIONES HPT374		0x0008	HPT374 IDE Controller
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
@@ -2420,7 +2420,7 @@ product VIATECH VT6305		0x0130	VT6305 OHCI IEEE 1394 Controller
 product VIATECH VT8363_HB	0x0305	VT8363 KT133 System Controller
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 MVP4 System Controller
-product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
+product VIATECH VT82C505	0x0505	VT82C505 (Pluto)
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C586A_IDE	0x0571	VT82C586A IDE Controller
 product VIATECH VT82C576	0x0576	VT82C576 3V
@@ -2570,7 +2570,7 @@ product WINBOND W83C553F_1	0x0105	W83C553F IDE Controller
 product WINBOND W89C840F	0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F	0x0940	W89C940F Ethernet
 product WINBOND W89C940F_1	0x5a5a	W89C940F Ethernet
-product WINBOND	W6692		0x6692	W6692 ISDN 
+product WINBOND	W6692		0x6692	W6692 ISDN
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
@@ -2582,9 +2582,9 @@ product XIRCOM WINGLOBAL	0x000c	WinGlobal Modem
 
 /* Yamaha products */
 product YAMAHA YMF724	0x0004	724 Audio
-product YAMAHA YMF740	0x000a  740 Audio
-product YAMAHA YMF740C	0x000c  740C (DS-1) Audio
-product YAMAHA YMF724F	0x000d  724F (DS-1) Audio
+product YAMAHA YMF740	0x000a	740 Audio
+product YAMAHA YMF740C	0x000c	740C (DS-1) Audio
+product YAMAHA YMF724F	0x000d	724F (DS-1) Audio
 product YAMAHA YMF744B	0x0010	744 (DS-1S) Audio
 product YAMAHA YMF754	0x0012	754 (DS-1E) Audio
 
