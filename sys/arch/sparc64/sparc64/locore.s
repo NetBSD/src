@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.191 2004/01/18 19:41:06 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.192 2004/01/19 10:39:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7663,19 +7663,14 @@ Lcopyfault:
  */
 
 /*
- * switchexit is called only from cpu_exit() before the current process
- * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curlwp is already NULL.)
+ * cpu_exit is called as the last action during exit, before the current
+ * process has freed its vmspace and kernel stack; we must schedule them
+ * to be freed.  (curlwp is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
-ENTRY(switchexit)
-	/*
-	 * Since we're exiting we don't need to save locals or ins, so
-	 * we won't need the next instruction.
-	 */
-!	save	%sp, -CC64FSZ, %sp
+ENTRY(cpu_exit)
 	flushw				! We don't have anything else to run, so why not
 #ifdef DEBUG
 	save	%sp, -CC64FSZ, %sp
