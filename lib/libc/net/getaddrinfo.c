@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.57 2002/06/27 10:22:07 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.58 2002/06/29 12:23:10 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.57 2002/06/27 10:22:07 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.58 2002/06/29 12:23:10 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -977,9 +977,10 @@ get_port(ai, servname, matchonly)
 	if (str_isnumber(servname)) {
 		if (!allownumeric)
 			return EAI_SERVICE;
-		port = htons(atoi(servname));
+		port = atoi(servname);
 		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
+		port = htons(port);
 	} else {
 		switch (ai->ai_socktype) {
 		case SOCK_DGRAM:
