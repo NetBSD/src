@@ -1,5 +1,4 @@
-.\"	$NetBSD: mstohz.9,v 1.1 2002/04/05 18:30:32 bouyer Exp $
-.\"
+.\"	$NetBSD: mstohz.9,v 1.2 2002/04/05 23:19:31 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Manuel Bouyer.
 .\"
@@ -36,7 +35,7 @@
 .Dt MSTOHZ 9
 .Os
 .Sh NAME
-.Nm mstohz ,
+.Nm mstohz
 .Nd convert milliseconds to system clock ticks
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/param.h\*[Gt]
@@ -44,24 +43,24 @@
 .Fn mstohz "int ms"
 .Sh DESCRIPTION
 .Nm
-can be used to convert time in millisecond to system clock ticks, as used
+can be used to convert time in milliseconds to system clock ticks, as used
 by the
 .Xr callout 9
-facility, in a integer-overflow safe way.
+facility, in an integer-overflow safe way.
 .Pp
-This function is implemented as a define in the 
+This function is implemented as a define in the
 .Em \*[Lt]sys/param.h\*[Gt]
-header. Individual ports can have a processor-specific, more efficient
-vesion implemented in their
+header.  Individual ports can have a processor-specific, more efficient
+version implemented in their
 .Em \*[Lt]machine/param.h\*[Gt]
 header as a define.
 .Sh RETURN VALUES
-The return value is the number of clock tick for the specifed value.
+The return value is the number of clock ticks for the specified value.
 .Sh SEE ALSO
-.Xr callout 9 ,
+.Xr callout 9
 .Sh BUGS
-The machine-independant
+The machine-independent
 .Fn
-function doesn't make use of expensive 64 bits integer arithmetic, so
-the result will be rounded down to a second if the parameter is larger
+function does not make use of expensive 64-bit integer arithmetic, so
+the result will be rounded down to one second if the parameter is larger
 than 131072 milliseconds.
