@@ -1,11 +1,12 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.29 1994/08/02 05:01:20 jtc Exp $
+#	$Id: Makefile.inc,v 1.30 1994/09/03 05:07:49 jtc Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
 
 SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
-	strftime.c strmode.c strsignal.c strtok.c strxfrm.c 
+	strftime.c strmode.c strsignal.c strtok.c strxfrm.c \
+	__strerror.c __strsignal.c
 
 .if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.S memset.S \
