@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 1999/02/05 20:38:01 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.11 1999/07/02 15:21:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.10 1999/02/05 20:38:01 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.11 1999/07/02 15:21:26 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -155,7 +155,7 @@ parse__escape(ptr)
 
     p = *ptr;
 
-    if (p[1] == 0) 
+    if (p[1] == 0)
 	return -1;
 
     if (*p == '\\') {
@@ -204,7 +204,7 @@ parse__escape(ptr)
 		    }
 		    c = (c << 3) | (ch - '0');
 		}
-		if ((c & 0xffffff00) != 0) 
+		if ((c & 0xffffff00) != 0)
 		    return -1;
 		--p;
 	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.11 1999/01/11 22:40:00 kleink Exp $	*/
+/*	$NetBSD: read.c,v 1.12 1999/07/02 15:21:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.11 1999/01/11 22:40:00 kleink Exp $");
+__RCSID("$NetBSD: read.c,v 1.12 1999/07/02 15:21:26 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -116,7 +116,7 @@ read__fixio(fd, e)
 
 	if (fcntl(fd, F_SETFL, e & ~O_NDELAY) == -1)
 	    return -1;
-	else 
+	else
 	    e = 1;
 # endif /* F_SETFL && O_NDELAY */
 
@@ -250,7 +250,7 @@ read_getcmd(el, cmdnum, ch)
 		break;
 	    }
 	}
-	if (el->el_map.alt == NULL) 
+	if (el->el_map.alt == NULL)
 	    el->el_map.current = el->el_map.key;
     }
     *cmdnum = cmd;
@@ -297,9 +297,9 @@ el_getc(el, cp)
 	    if (!read_preread(el))
 		break;
 	}
-	if (ma->level < 0) 
+	if (ma->level < 0)
 	    break;
-   
+
 	if (*ma->macro[ma->level] == 0) {
 	    ma->level--;
 	    continue;
@@ -396,7 +396,7 @@ el_gets(el, nread)
 
 	if (cmdnum >= el->el_map.nfunc) {	/* BUG CHECK command */
 #ifdef DEBUG_EDIT
-	    (void) fprintf(el->el_errfile, 
+	    (void) fprintf(el->el_errfile,
 			   "ERROR: illegal command from key 0%o\r\n", ch);
 #endif /* DEBUG_EDIT */
 	    continue;		/* try again */
@@ -460,7 +460,7 @@ el_gets(el, nread)
 	    break;
 
 	case CC_NEWLINE:	/* normal end of line */
-	    num = el->el_line.lastchar - el->el_line.buffer;	
+	    num = el->el_line.lastchar - el->el_line.buffer;
 	    break;
 
 	case CC_FATAL:		/* fatal error, reset to known state */

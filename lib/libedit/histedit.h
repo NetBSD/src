@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.11 1998/12/20 17:52:01 kleink Exp $	*/
+/*	$NetBSD: histedit.h,v 1.12 1999/07/02 15:21:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ void		 el_beep	__P((EditLine *));
  * High level function internals control
  * Parses argc, argv array and executes builtin editline commands
  */
-int		 el_parse	__P((EditLine *, int, char **)); 
+int		 el_parse	__P((EditLine *, int, char **));
 
 /*
  * Low level editline access functions

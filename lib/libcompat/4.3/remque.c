@@ -1,7 +1,7 @@
 /*
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -12,7 +12,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: remque.c,v 1.5 1997/10/09 10:20:54 lukem Exp $");
+__RCSID("$NetBSD: remque.c,v 1.6 1999/07/02 15:16:41 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <search.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.6 1998/05/20 01:01:28 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.7 1999/07/02 15:21:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,11 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.6 1998/05/20 01:01:28 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.7 1999/07/02 15:21:23 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
-/* 
+/*
  * emacs.c: Emacs functions
  */
 #include "sys.h"
@@ -97,7 +97,7 @@ em_delete_next_word(el, c)
     if (el->el_line.cursor == el->el_line.lastchar)
 	return CC_ERROR;
 
-    cp = c__next_word(el->el_line.cursor, el->el_line.lastchar, 
+    cp = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 		      el->el_state.argument, ce__isword);
 
     for (p = el->el_line.cursor, kp = el->el_chared.c_kill.buf; p < cp; p++)
@@ -127,8 +127,8 @@ em_yank(el, c)
     if (el->el_chared.c_kill.last == el->el_chared.c_kill.buf)
 	return CC_ERROR;
 
-    if (el->el_line.lastchar + 
-	(el->el_chared.c_kill.last - el->el_chared.c_kill.buf) >= 
+    if (el->el_line.lastchar +
+	(el->el_chared.c_kill.last - el->el_chared.c_kill.buf) >=
 	el->el_line.limit)
 	return CC_ERROR;
 
@@ -136,13 +136,13 @@ em_yank(el, c)
     cp = el->el_line.cursor;
 
     /* open the space, */
-    c_insert(el, el->el_chared.c_kill.last - el->el_chared.c_kill.buf);	
+    c_insert(el, el->el_chared.c_kill.last - el->el_chared.c_kill.buf);
     /* copy the chars */
-    for (kp = el->el_chared.c_kill.buf; kp < el->el_chared.c_kill.last; kp++)	
+    for (kp = el->el_chared.c_kill.buf; kp < el->el_chared.c_kill.last; kp++)
 	*cp++ = *kp;
 
     /* if an arg, cursor at beginning else cursor at end */
-    if (el->el_state.argument == 1)		
+    if (el->el_state.argument == 1)
 	el->el_line.cursor = cp;
 
     return CC_REFRESH;
@@ -258,7 +258,7 @@ em_gosmacs_traspose(el, c)
 	el->el_line.cursor[-1] = c;
 	return CC_REFRESH;
     }
-    else 
+    else
 	return CC_ERROR;
 }
 
@@ -276,11 +276,11 @@ em_next_word(el, c)
     if (el->el_line.cursor == el->el_line.lastchar)
 	return CC_ERROR;
 
-    el->el_line.cursor = c__next_word(el->el_line.cursor, el->el_line.lastchar, 
+    el->el_line.cursor = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 				      el->el_state.argument,
 				      ce__isword);
 
-    if (el->el_map.type == MAP_VI) 
+    if (el->el_map.type == MAP_VI)
 	if (el->el_chared.c_vcmd.action & DELETE) {
 	    cv_delfini(el);
 	    return CC_REFRESH;
@@ -301,7 +301,7 @@ em_upper_case(el, c)
 {
     char   *cp, *ep;
 
-    ep = c__next_word(el->el_line.cursor, el->el_line.lastchar, 
+    ep = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 		      el->el_state.argument, ce__isword);
 
     for (cp = el->el_line.cursor; cp < ep; cp++)
@@ -327,7 +327,7 @@ em_capitol_case(el, c)
 {
     char   *cp, *ep;
 
-    ep = c__next_word(el->el_line.cursor, el->el_line.lastchar, 
+    ep = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 		      el->el_state.argument, ce__isword);
 
     for (cp = el->el_line.cursor; cp < ep; cp++) {
@@ -360,7 +360,7 @@ em_lower_case(el, c)
 {
     char   *cp, *ep;
 
-    ep = c__next_word(el->el_line.cursor, el->el_line.lastchar, 
+    ep = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 		      el->el_state.argument, ce__isword);
 
     for (cp = el->el_line.cursor; cp < ep; cp++)
@@ -390,7 +390,7 @@ em_set_mark(el, c)
 
 
 /* em_exchange_mark():
- *	Exchange the cursor and mark 
+ *	Exchange the cursor and mark
  *	[^X^X]
  */
 protected el_action_t
@@ -434,7 +434,7 @@ em_meta_next(el, c)
     EditLine *el;
     int c;
 {
-    el->el_state.metanext = 1; 
+    el->el_state.metanext = 1;
     return CC_ARGHACK;
 }
 
@@ -448,7 +448,7 @@ em_toggle_overwrite(el, c)
     EditLine *el;
     int c;
 {
-    el->el_state.inputmode = 
+    el->el_state.inputmode =
 	(el->el_state.inputmode == MODE_INSERT) ? MODE_REPLACE : MODE_INSERT;
     return CC_NORM;
 }
@@ -470,8 +470,8 @@ em_copy_prev_word(el, c)
 
     oldc = el->el_line.cursor;
     /* does a bounds check */
-    cp = c__prev_word(el->el_line.cursor, el->el_line.buffer, 
-		      el->el_state.argument, ce__isword);	
+    cp = c__prev_word(el->el_line.cursor, el->el_line.buffer,
+		      el->el_state.argument, ce__isword);
 
     c_insert(el, oldc - cp);
     for (dp = oldc; cp < oldc && dp < el->el_line.lastchar; cp++)

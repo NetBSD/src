@@ -1,4 +1,4 @@
-.\"	$NetBSD: vtimes.3,v 1.6 1999/03/22 19:45:14 garbled Exp $
+.\"	$NetBSD: vtimes.3,v 1.7 1999/07/02 15:16:40 simonb Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Fn vtimes "struct vtimes *par_vm" "struct vtimes *ch_vm"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is obsoleted by 
+This interface is obsoleted by
 .Xr getrusage 2 .
 It is available from the compatibility library, libcompat.
 .Ef
@@ -58,7 +58,7 @@ returns accounting information for the current process and for
 the terminated child processes of the current
 process.  Either
 .Fa par_vm
-or 
+or
 .Fa ch_vm
 or both may be 0, in which case only the information for the pointers
 which are non-zero is returned.
@@ -103,7 +103,7 @@ pages over 1 cpu-second for its data and stack, then
 .Fa vm_idsrss
 would have the value 5*60, where
 .Fa vm_utime+vm_stime
-would be the 60.  
+would be the 60.
 The
 .Fa vm_idsrss
 argument
@@ -117,7 +117,7 @@ function
 reports the maximum instantaneous sum of the
 text+data+stack core-resident page count.
 .Pp
-The 
+The
 .Fa vm_majflt
 field gives the number of page faults which
 resulted in disk activity; the
@@ -142,5 +142,5 @@ to the first process to read or write the data.
 .Sh HISTORY
 The
 .Fn vtimes
-function appeared in 
+function appeared in
 .Bx 4.2 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.16 1999/03/22 19:45:15 garbled Exp $
+.\"	$NetBSD: editline.3,v 1.17 1999/07/02 15:21:23 simonb Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -249,7 +249,7 @@ Otherwise, the current signal handlers will be used.
 Perform the
 .Ic bind
 builtin command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_ECHOTC , Xo
@@ -260,7 +260,7 @@ for more information.
 Perform the
 .Ic echotc
 builtin command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_SETTC , Xo
@@ -271,7 +271,7 @@ for more information.
 Perform the
 .Ic settc
 builtin command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_SETTY , Xo
@@ -282,7 +282,7 @@ for more information.
 Perform the
 .Ic setty
 builtin command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_TELLTC , Xo
@@ -293,7 +293,7 @@ for more information.
 Perform the
 .Ic telltc
 builtin command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_ADDFN , Xo
@@ -397,7 +397,7 @@ Return non-zero if editing is enabled.
 .It Fn el_source
 Initialise
 .Nm
-by reading the contents of 
+by reading the contents of
 .Fa file .
 .Fn el_parse
 is called for each line in
@@ -527,7 +527,7 @@ to the last new element of the history.
 .It Dv H_ENTER , Fa "const char *str"
 Add
 .Fa str
-as a new element to the history, and, if necessary, 
+as a new element to the history, and, if necessary,
 removing the oldest entry to keep the list to the created size.
 .It Dv H_PREV_STR , Fa "const char *str"
 Return the closest previous event that starts with

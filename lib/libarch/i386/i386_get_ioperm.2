@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_get_ioperm.2,v 1.7 1999/03/22 19:44:34 garbled Exp $
+.\"	$NetBSD: i386_get_ioperm.2,v 1.8 1999/07/02 15:14:07 simonb Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ sets the I/O permission bitmap from the data pointed to by
 .Ar iomap .
 This call is restricted to the super-user.
 .Pp
-The permission bitmap contains 
+The permission bitmap contains
 1024
 bits in 32 longwords.
 If bit
@@ -102,7 +102,7 @@ allocation in a kernel structure.  If you need access to ports beyond
 use
 .Xr i386_iopl 2 .
 .Sh SEE ALSO
-.Xr i386_iopl 2 
+.Xr i386_iopl 2
 .Sh REFERENCES
 i386 Microprocessor Programmer's Reference Manual, Intel
 .Sh WARNING

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.5 1998/05/20 01:04:56 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.6 1999/07/02 15:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 #include <termios.h>
 
 /* Define our own since everyone gets it wrong! */
-#define CONTROL(A)	((A) & 037)	
+#define CONTROL(A)	((A) & 037)
 
 /*
  * Aix compatible names
@@ -451,7 +451,7 @@
 #define MD_CHAR	4
 #define MD_NN	5
 
-typedef struct { 
+typedef struct {
     char *t_name;
     u_int t_setmask;
     u_int t_clrmask;

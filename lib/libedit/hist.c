@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.4 1997/10/14 15:05:50 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.5 1999/07/02 15:21:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.4 1997/10/14 15:05:50 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.5 1999/07/02 15:21:25 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -108,7 +108,7 @@ hist_get(el)
 
     if (el->el_history.eventno == 0) {	/* if really the current line */
 	(void) strncpy(el->el_line.buffer, el->el_history.buf, EL_BUFSIZ);
-	el->el_line.lastchar = el->el_line.buffer + 
+	el->el_line.lastchar = el->el_line.buffer +
 		(el->el_history.last - el->el_history.buf);
 
 #ifdef KSHVI

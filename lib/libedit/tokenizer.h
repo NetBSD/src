@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.h,v 1.2 1997/01/11 06:48:16 lukem Exp $	*/
+/*	$NetBSD: tokenizer.h,v 1.3 1999/07/02 15:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@ typedef struct tokenizer Tokenizer;
 Tokenizer 	*tok_init	__P((const char *));
 void		 tok_reset	__P((Tokenizer *));
 void		 tok_end	__P((Tokenizer *));
-int		 tok_line	__P((Tokenizer *, const char *, 
+int		 tok_line	__P((Tokenizer *, const char *,
 				     int *, char ***));
 
 #endif /* _h_tokenizer */
