@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 1995/11/30 00:57:36 jtc Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 1995/11/30 21:52:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -498,7 +498,6 @@ _spurintr:
 	jra	rei
 
 	/* MFP timer A handler --- System clock --- */
-	/* Note: Reduce by factor 4 before handling  */
 mfp_tima:
 	moveml	d0-d1/a0-a1,sp@-	|  save scratch registers
 	lea	sp@(16),a1		|  get pointer to PS
@@ -509,7 +508,21 @@ mfp_tima:
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei			|  all done
-	
+
+#ifdef STATCLOCK
+	/* MFP timer C handler --- Stat/Prof clock --- */
+mfp_timc:
+	moveml	d0-d1/a0-a1,sp@-	|  save scratch registers
+	lea	sp@(16),a1		|  get pointer to PS
+	movl	a1,sp@-			|  push pointer to PS, PC
+	jbsr	_statintr		|  call statistics clock handler
+	addql	#4,sp			|  pop params
+	addql	#1,_intrcnt+36		|  add another stat clock interrupt
+	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
+	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+	jra	rei			|  all done
+#endif /* STATCLOCK */
+
 	/* MFP ACIA handler --- keyboard/midi --- */
 mfp_kbd:
 	addql	#1,_intrcnt+8		|  add another kbd/mouse interrupt
@@ -1947,8 +1960,9 @@ _intrnames:
 	.asciz	"5380-DMA"
 	.asciz	"nmi"
 	.asciz	"8530-SCC"
+	.asciz	"statclock"
 _eintrnames:
 	.even
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0
 _eintrcnt:
