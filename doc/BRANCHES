@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.8 2002/12/18 05:03:34 gmcgarry Exp $
+#	$NetBSD: BRANCHES,v 1.9 2003/01/19 20:06:22 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -344,7 +344,7 @@ Branch:		nathanw_sa
 Description:	Scheduler activations
 Status:		Active
 Start Date:	5 March 2001
-End Date:
+End Date:	18 January 2003
 Base Tag:	nathanw_sa_base
 Maintainer:	Nathan Williams <nathanw@netbsd.org>
 Scope:		kernel, libc, libkvm, libpthread, libpthread_dbg, include, 
@@ -370,6 +370,11 @@ Notes:		The idea of scheduler activations is described in the
 		to this branch.
 		Other tags starting with nathanw_sa reserved for
 		branch management and are not guaranteed to be stable.
+
+		Trunk tagged with "nathanw_sa_before_merge" prior to
+		merging branch down to trunk.  Branch tagged with
+		"nathanw_sa_end" to indicate the ending revision of
+		the branch.
 
 Branch:		newlock
 Description:	New locking primitives, based on Solaris's
