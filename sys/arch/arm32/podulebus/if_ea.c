@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.28 2001/03/18 01:30:30 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.29 2001/03/18 15:56:05 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -120,7 +120,6 @@
 
 struct ea_softc {
 	struct device sc_dev;
-	int sc_irq;			/* IRQ number */
 	struct evcnt sc_intrcnt;	/* IRQ count */
 	podule_t *sc_podule;		/* Our podule */
 	int sc_podule_number;		/* Our podule number */
@@ -130,7 +129,6 @@ struct ea_softc {
 	int sc_config1;			/* Current config1 bits */
 	int sc_config2;			/* Current config2 bits */
 	int sc_command;			/* Current command bits */
-	int sc_irqclaimed;		/* Whether we have an IRQ claimed */
 	int sc_rx_ptr;			/* Receive buffer pointer */
 	int sc_tx_ptr;			/* Transmit buffer pointer */
 };
@@ -328,16 +326,12 @@ eaattach(parent, self, aux)
 
 	printf(": SEEQ8005 address %s", ether_sprintf(myaddr));
 
-	sc->sc_irqclaimed = 0;
-
 /* Claim either a network slot interrupt or a podule interrupt */
-
-	sc->sc_irq = sc->sc_podule->interrupt;
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    self->dv_xname, "intr");
-	podulebus_irq_establish(parent, sc->sc_podule_number, IPL_NET, eaintr,
-	    sc, &sc->sc_intrcnt);
+	podulebus_irq_establish(pa->pa_ih, IPL_NET, eaintr, sc,
+	    &sc->sc_intrcnt);
 	
 	/* Stop the board. */
 
