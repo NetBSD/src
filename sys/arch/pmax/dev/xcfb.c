@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.19 1996/10/13 13:14:04 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.20 1996/10/14 01:39:57 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -202,7 +202,7 @@ xcfbattach(parent, self, aux)
 {
 	struct tc_attach_args *ta = aux;
 
-	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0));
+	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0))
 		return;
 
 	/* no interrupts for XCFB */
