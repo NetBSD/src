@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.12 1998/05/20 16:19:43 augustss Exp $
+#	$NetBSD: files.isapnp,v 1.13 1998/06/30 17:28:00 augustss Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -49,6 +49,10 @@ file	dev/isapnp/gus_isapnp.c			guspnp needs-flag
 # Yamaha OPL3-SA3 driver
 attach	ym at isapnp with ym_isapnp
 file	dev/isapnp/ym_isapnp.c			ym_isapnp
+
+# WSS compatibles
+attach  wss at isapnp with wss_isapnp
+file    dev/isapnp/wss_isapnp.c                 wss_isapnp
 
 #
 # ISAPnP SCSI Controller
