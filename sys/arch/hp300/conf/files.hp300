@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.55 2002/02/23 21:52:25 gmcgarry Exp $
+#	$NetBSD: files.hp300,v 1.55.8.1 2002/05/16 13:32:07 gehenna Exp $
 #
 # hp300-specific configuration info
 
@@ -243,3 +243,5 @@ include "compat/aout/files.aout"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include	"arch/hp300/conf/majors.hp300"

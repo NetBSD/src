@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.3 2002/04/16 20:50:19 thorpej Exp $
+#	$NetBSD: files.malta,v 1.3.2.1 2002/05/16 13:32:05 gehenna Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -109,3 +109,5 @@ major	{ fd = 0 }
 #
 attach	com at mainbus with com_mainbus
 file	arch/evbmips/malta/dev/com_mainbus.c	com_mainbus
+
+include "arch/evbmips/conf/majors.malta"

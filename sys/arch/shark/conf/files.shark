@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.4 2002/04/19 01:43:48 wiz Exp $
+#	$NetBSD: files.shark,v 1.4.2.1 2002/05/16 13:32:47 gehenna Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -146,3 +146,5 @@ file	arch/shark/shark/pccons.c		pc needs-flag
 device	scr: tty
 file	arch/shark/shark/scr.c			scr needs-flag
 attach	scr at ofisascr
+
+include "arch/shark/conf/majors.shark"

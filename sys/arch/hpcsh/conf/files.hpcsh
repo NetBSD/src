@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.27 2002/04/16 20:50:20 thorpej Exp $
+#	$NetBSD: files.hpcsh,v 1.27.2.1 2002/05/16 13:32:12 gehenna Exp $
 #
 maxpartitions 8
 
@@ -125,3 +125,5 @@ include	"dev/wscons/files.wscons"
 #
 device	fdc {drive = -1}	# files.pcmcia requires.
 include "dev/pcmcia/files.pcmcia"
+
+include "arch/hpcsh/conf/majors.hpcsh"

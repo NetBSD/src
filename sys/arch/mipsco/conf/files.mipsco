@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.8 2002/03/13 02:55:12 simonb Exp $
+#	$NetBSD: files.mipsco,v 1.8.4.1 2002/05/16 13:32:23 gehenna Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -79,3 +79,5 @@ major { st = 17 }
 device asc: scsi, ncr53c9x
 attach asc at obio
 file arch/mipsco/obio/asc.c		asc needs-count
+
+include "arch/mipsco/conf/majors.mipsco"

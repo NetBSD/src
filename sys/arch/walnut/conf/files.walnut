@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.5 2002/04/16 20:50:23 thorpej Exp $
+#	$NetBSD: files.walnut,v 1.5.2.1 2002/05/16 13:32:57 gehenna Exp $
 #
 # walnut-specific configuration info
 
@@ -87,3 +87,5 @@ file	arch/walnut/dev/ds1743.c		dsrtc
 include "dev/pckbc/files.pckbc"
 attach	pckbc at mainbus with pckbc_mainbus
 file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
+
+include "arch/walnut/conf/majors.walnut"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.7 2002/03/22 00:25:56 fredette Exp $
+#	$NetBSD: files.sun2,v 1.7.4.1 2002/05/16 13:32:52 gehenna Exp $
 
 #
 # sun2-specific configuration info
@@ -183,3 +183,5 @@ major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
 major	{md=13}	# Memory disk (for mini-kernel)
 major	{raid=25} # RAIDframe
+
+include "arch/sun2/conf/majors.sun2"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.105 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: files.mac68k,v 1.105.2.1 2002/05/16 13:32:17 gehenna Exp $
 
 # mac68k-specific configuration info
 
@@ -219,3 +219,5 @@ file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include	"arch/mac68k/conf/majors.mac68k"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.206 2002/04/18 12:54:12 wiz Exp $
+#	$NetBSD: files.i386,v 1.206.2.1 2002/05/16 13:32:14 gehenna Exp $
 #
 # new style config file for i386 architecture
 #
@@ -431,3 +431,5 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c	acpi
+
+include "arch/i386/conf/majors.i386"
