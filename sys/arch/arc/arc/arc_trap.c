@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.11 2000/03/04 05:21:20 nisimura Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.12 2000/04/15 22:01:14 soda Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -47,6 +47,11 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
+#include <mips/locore.h>
+
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
@@ -54,6 +59,9 @@
 #include <arc/pica/pica.h>
 #include <arc/pica/rd94.h>
 #include <arc/arc/arctype.h>
+
+int arc_hardware_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 #define	MIPS_INT_LEVELS	8
 
@@ -65,35 +73,32 @@ struct {
 int cpu_int_mask;	/* External cpu interrupt mask */
 
 int
-arc_hardware_intr(mask, pc, statusReg, causeReg)
-	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
+arc_hardware_intr(status, cause, pc, ipending)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;
 {
 	register int i;
 	struct clockframe cf;
 
 	cf.pc = pc;
-	cf.sr = statusReg;
-#if 0 /* remove this for merged mips trap code. (this member isn't used) */
-	cf.cr = causeReg;
-#endif
+	cf.sr = status;
 
 	/*
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
 	for(i = 0; i < MIPS_INT_LEVELS; i++) {
-		if(cpu_int_tab[i].int_mask & mask) {
-			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
+		if(cpu_int_tab[i].int_mask & ipending) {
+			cause &= (*cpu_int_tab[i].int_hand)(ipending, &cf);
 		}
 	}
 
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
-	return ((statusReg & ~causeReg & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	return ((status & ~cause & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
 /*
@@ -139,5 +144,58 @@ set_intr(mask, int_hand, prio)
 	case ALGOR_P4032:
 	case ALGOR_P5064:
 		break;
+	}
+}
+
+/*
+ * Handle an interrupt.
+ * N.B., curproc might be NULL.
+ */
+void
+cpu_intr(status, cause, pc, ipending)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;		/* pending interrupts & enable mask */
+{
+#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
+	if ((ipending & MIPS_INT_MASK_CLOCK) && CPUISMIPS3) {
+		/*
+		 *  Writing a value to the Compare register,
+		 *  as a side effect, clears the timer interrupt request.
+		 */
+		mips3_write_compare(mips3_cycle_count());
+	}
+#endif
+
+	uvmexp.intrs++;
+	/* real device interrupt */
+	if (ipending & INT_MASK_REAL_DEV) {
+		_splset(arc_hardware_intr(status, cause, pc, ipending));
+	}
+
+#if defined(MIPS1) && defined(INT_MASK_FPU)
+	if ((ipending & INT_MASK_FPU) && CPUISMIPS1) {
+		intrcnt[FPU_INTR]++;
+		if (!USERMODE(status))
+			panic("kernel used FPU: PC %x, CR %x, SR %x",
+			    pc, cause, status);
+		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+	}
+#endif
+
+	/* 'softnet' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_1) {
+		clearsoftnet();
+		uvmexp.softs++;
+		netintr();
+	}
+
+	/* 'softclock' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		clearsoftclock();
+		uvmexp.softs++;
+		intrcnt[SOFTCLOCK_INTR]++;
+		softclock();
 	}
 }
