@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66 1998/09/12 15:33:40 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.67 1998/09/14 10:37:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -105,6 +105,7 @@ struct cfattach cpu_ca = {
 
 static char *fsrtoname __P((int, int, int, char *));
 void cache_print __P((struct cpu_softc *));
+void cpu_setup __P((struct cpu_softc *));
 void cpu_spinup __P((struct cpu_softc *));
 void fpu_init __P((struct cpu_info *));
 
@@ -136,7 +137,10 @@ alloc_cpuinfo()
 		/* Assumes `c_totalsize' is power of two */
 		align = CACHEINFO.c_totalsize;
 
-	sz = (sizeof(struct cpu_info) + NBPG - 1) & -NBPG;
+	/* While we're here, allocate a pre-CPU kernel stack as well? */
+	sz = sizeof(struct cpu_info)/* + USPACE*/;
+
+	sz = (sz + NBPG - 1) & -NBPG;
 	esz = sz + align - NBPG;
 
 	if ((sva = uvm_km_valloc(kernel_map, esz)) == 0)
@@ -168,6 +172,9 @@ alloc_cpuinfo()
 	}
 
 	bzero((void *)sva, sizeof(struct cpu_info));
+#if 0
+	((struct cpu_info *)sva)->stack = sva + sz - USPACE;
+#endif
 	return ((struct cpu_info *)sva);
 }
 
@@ -237,8 +244,6 @@ static	struct cpu_softc *bootcpu;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct cpu_info *cip;
 	int node, mid;
-	char *fpuname;
-	char fpbuf[40];
 
 	ncpu++;	/* Another one */
 
@@ -265,25 +270,7 @@ static	struct cpu_softc *bootcpu;
 	getcpuinfo(cip, node);
 
 	if (cip->master) {
-		if (cip->hotfix)
-			cip->hotfix(cip);
-
-		fpu_init(cip);
-		fpuname = (cip->fpupresent)
-			? fsrtoname(cip->cpu_impl, cip->cpu_vers,
-				    cip->fpuvers, fpbuf)
-			: "no";
-
-		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
-			cip->cpu_name,
-			clockfreq(cip->hz), fpuname);
-		printf(": %s\n", cpu_model);
-
-		if (cip->cacheinfo.c_totalsize != 0)
-			cache_print(sc);
-
-		/* Enable the cache */
-		cip->cache_enable();
+		cpu_setup(sc);
 		return;
 	}
 
@@ -297,48 +284,61 @@ static	struct cpu_softc *bootcpu;
 #endif
 }
 
-void	cpu_setup __P((struct cpu_softc *));
 
 /* */
 void *cpu_hatchstack = 0;
 void *cpu_hatch_sc = 0;
 volatile int cpu_hatched = 0;
 
+/*
+ * Finish CPU attach.
+ * Must be run by the CPU which is being attached.
+ */
 void
 cpu_setup(sc)
 	struct cpu_softc *sc;
 {
-	struct cpu_info *cip = sc->sc_cpuinfo;
 	char *fpuname;
 	char fpbuf[40];
 
-#ifdef DEBUG
-printf("[cpu_setup: cip @ %p; mid %d] ", cip, cip->mid);
-#endif
-	if (cip->hotfix)
-		cip->hotfix(cip);
+	if (cpuinfo.hotfix)
+		(*cpuinfo.hotfix)(&cpuinfo);
 
 	/* Initialize FPU */
-	fpu_init(cip);
-	fpuname = (cip->fpupresent)
-		? fsrtoname(cip->cpu_impl, cip->cpu_vers, cip->fpuvers, fpbuf)
-		: "no";
+	fpu_init(&cpuinfo);
+	fpuname = cpuinfo.fpupresent
+			? fsrtoname(cpuinfo.cpu_impl, cpuinfo.cpu_vers,
+				    cpuinfo.fpuvers, fpbuf)
+			: "no";
 
-	printf("%s @ %s MHz, %s FPU\n", cip->cpu_name,
-		clockfreq(cip->hz), fpuname);
+	printf(": %s @ %s MHz, %s FPU\n", cpuinfo.cpu_name,
+		clockfreq(cpuinfo.hz), fpuname);
 
-	if (cip->cacheinfo.c_totalsize != 0)
+	if (cpuinfo.cacheinfo.c_totalsize != 0)
 		cache_print(sc);
+
 	/* Enable the cache */
-	cip->cache_enable();
+	cpuinfo.cache_enable();
+
+	if (cpuinfo.master) {
+		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+			cpuinfo.cpu_name,
+			clockfreq(cpuinfo.hz), fpuname);
+	}
+
 	cpu_hatched = 1;
+#if 0
 	/* Flush cache line */
 	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
+#endif
 }
 
 #include <machine/bsd_openprom.h> /*XXX*/
 extern struct promvec *promvec;   /*XXX-make library functions */
 
+/*
+ * Allocate per-CPU data, then start up this CPU using PROM.
+ */
 void
 cpu_spinup(sc)
 	struct cpu_softc *sc;
