@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.18 1997/04/02 12:50:25 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.19 1997/05/03 09:01:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$NetBSD: vfprintf.c,v 1.18 1997/04/02 12:50:25 kleink Exp $";
+static char *rcsid = "$NetBSD: vfprintf.c,v 1.19 1997/05/03 09:01:50 kleink Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,6 +49,7 @@ static char *rcsid = "$NetBSD: vfprintf.c,v 1.18 1997/04/02 12:50:25 kleink Exp 
 
 #include <sys/types.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -257,8 +258,10 @@ vfprintf(fp, fmt0, ap)
 	    (u_long)va_arg(ap, u_int))
 
 	/* sorry, fprintf(read_only_file, "") returns EOF, not 0 */
-	if (cantwrite(fp))
+	if (cantwrite(fp)) {
+		errno = EBADF;
 		return (EOF);
+	}
 
 	/* optimise fprintf(stderr) (and other unbuffered Unix files) */
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
