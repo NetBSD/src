@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.8 2004/01/26 10:39:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.8 2004/01/26 10:39:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,10 +442,11 @@ filecore_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
-	struct vnode *vp = bp->b_vp;
+	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip;
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.112 2004/01/26 10:02:31 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.113 2004/01/26 10:39:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.112 2004/01/26 10:02:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.113 2004/01/26 10:39:30 hannken Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1700,6 +1700,7 @@ int
 ufs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf	*bp;
@@ -1708,7 +1709,7 @@ ufs_strategy(void *v)
 	int		error;
 
 	bp = ap->a_bp;
-	vp = bp->b_vp;
+	vp = ap->a_vp;
 	ip = VTOI(vp);
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("ufs_strategy: spec");
