@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.6 1993/09/30 17:30:32 mycroft Exp $
+#	$Id: TEST,v 1.7 1993/09/30 20:15:25 mycroft Exp $
 #
 
 # standard options
@@ -23,6 +23,7 @@ options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
+options		LKM			# loadable kernel modules
 
 # compatibility options
 options		"COMPAT_NOMID"		# old zmagic executables
