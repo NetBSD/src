@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.32 1997/04/08 03:21:14 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.33 1997/04/08 06:16:07 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -1243,7 +1243,7 @@ mrg_fixupROMBase(obase, nbase)
 #endif
 }   
 
-#ifdef MRG_DEBUG
+#ifdef MRG_ADB
 void
 ADBAlternateInit(void)
 {
@@ -1261,4 +1261,4 @@ ADBAlternateInit(void)
 			: "a1", "a3");
 	}
 }
-#endif /* MRG_DEBUG */
+#endif /* MRG_ADB */
