@@ -60,7 +60,7 @@
  * Colin Plumb <colin@nyx10.cs.du.edu> */
 /* Removal of the inner if from from Wei Dai 24/4/96 */
 #define idea_mul(r,a,b,ul) \
-ul=(unsigned long)a*b; \
+ul=(IDEA_INT)a*b; \
 if (ul != 0) \
 	{ \
 	r=(ul&0xffff)-(ul>>16); \
@@ -74,7 +74,7 @@ else \
 if (a == 0) r=(0x10001-b)&0xffff; \
 else if (b == 0) r=(0x10001-a)&0xffff; \
 else	{ \
-	ul=(unsigned long)a*b; \
+	ul=(IDEA_INT)a*b; \
 	sl=(ul&0xffff)-(ul>>16); \
 	if (sl <= 0) sl+=0x10001; \
 	r=sl; \
@@ -96,14 +96,14 @@ else	{ \
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))    ; \
-			case 7: l2|=((unsigned long)(*(--(c))))<< 8; \
-			case 6: l2|=((unsigned long)(*(--(c))))<<16; \
-			case 5: l2|=((unsigned long)(*(--(c))))<<24; \
-			case 4: l1 =((unsigned long)(*(--(c))))    ; \
-			case 3: l1|=((unsigned long)(*(--(c))))<< 8; \
-			case 2: l1|=((unsigned long)(*(--(c))))<<16; \
-			case 1: l1|=((unsigned long)(*(--(c))))<<24; \
+			case 8: l2 =((IDEA_INT)(*(--(c))))    ; \
+			case 7: l2|=((IDEA_INT)(*(--(c))))<< 8; \
+			case 6: l2|=((IDEA_INT)(*(--(c))))<<16; \
+			case 5: l2|=((IDEA_INT)(*(--(c))))<<24; \
+			case 4: l1 =((IDEA_INT)(*(--(c))))    ; \
+			case 3: l1|=((IDEA_INT)(*(--(c))))<< 8; \
+			case 2: l1|=((IDEA_INT)(*(--(c))))<<16; \
+			case 1: l1|=((IDEA_INT)(*(--(c))))<<24; \
 				} \
 			}
 
@@ -123,10 +123,10 @@ else	{ \
 			}
 
 #undef n2l
-#define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24L, \
-                         l|=((unsigned long)(*((c)++)))<<16L, \
-                         l|=((unsigned long)(*((c)++)))<< 8L, \
-                         l|=((unsigned long)(*((c)++))))
+#define n2l(c,l)        (l =((IDEA_INT)(*((c)++)))<<24L, \
+                         l|=((IDEA_INT)(*((c)++)))<<16L, \
+                         l|=((IDEA_INT)(*((c)++)))<< 8L, \
+                         l|=((IDEA_INT)(*((c)++))))
 
 #undef l2n
 #define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
@@ -148,14 +148,14 @@ else	{ \
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))<<24; \
-			case 7: l2|=((unsigned long)(*(--(c))))<<16; \
-			case 6: l2|=((unsigned long)(*(--(c))))<< 8; \
-			case 5: l2|=((unsigned long)(*(--(c))));     \
-			case 4: l1 =((unsigned long)(*(--(c))))<<24; \
-			case 3: l1|=((unsigned long)(*(--(c))))<<16; \
-			case 2: l1|=((unsigned long)(*(--(c))))<< 8; \
-			case 1: l1|=((unsigned long)(*(--(c))));     \
+			case 8: l2 =((IDEA_INT)(*(--(c))))<<24; \
+			case 7: l2|=((IDEA_INT)(*(--(c))))<<16; \
+			case 6: l2|=((IDEA_INT)(*(--(c))))<< 8; \
+			case 5: l2|=((IDEA_INT)(*(--(c))));     \
+			case 4: l1 =((IDEA_INT)(*(--(c))))<<24; \
+			case 3: l1|=((IDEA_INT)(*(--(c))))<<16; \
+			case 2: l1|=((IDEA_INT)(*(--(c))))<< 8; \
+			case 1: l1|=((IDEA_INT)(*(--(c))));     \
 				} \
 			}
 
@@ -175,18 +175,18 @@ else	{ \
 			}
 
 #undef c2s
-#define c2s(c,l)	(l =((unsigned long)(*((c)++)))    , \
-			 l|=((unsigned long)(*((c)++)))<< 8L)
+#define c2s(c,l)	(l =((IDEA_INT)(*((c)++)))    , \
+			 l|=((IDEA_INT)(*((c)++)))<< 8L)
 
 #undef s2c
 #define s2c(l,c)	(*((c)++)=(unsigned char)(((l)     )&0xff), \
 			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff))
 
 #undef c2l
-#define c2l(c,l)	(l =((unsigned long)(*((c)++)))     , \
-			 l|=((unsigned long)(*((c)++)))<< 8L, \
-			 l|=((unsigned long)(*((c)++)))<<16L, \
-			 l|=((unsigned long)(*((c)++)))<<24L)
+#define c2l(c,l)	(l =((IDEA_INT)(*((c)++)))     , \
+			 l|=((IDEA_INT)(*((c)++)))<< 8L, \
+			 l|=((IDEA_INT)(*((c)++)))<<16L, \
+			 l|=((IDEA_INT)(*((c)++)))<<24L)
 
 #undef l2c
 #define l2c(l,c)	(*((c)++)=(unsigned char)(((l)     )&0xff), \
