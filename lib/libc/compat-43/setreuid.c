@@ -31,30 +31,26 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
- *	$Id: setreuid.c,v 1.1 1994/04/06 23:28:45 cgd Exp $
+ *	$Id: setreuid.c,v 1.2 1994/04/10 06:32:44 cgd Exp $
  */
 
 #include <sys/types.h>
-#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+extern int __setreuid __P((uid_t, uid_t));
 
 int
 setreuid(ruid, euid)
-	uid_t ruid, euid;
+	int ruid, euid;
 {
-	static uid_t svuid = -1;
-	
-	if (svuid == -1)
-		svuid = geteuid();
-	/*
-	 * we assume that the intent of setting ruid is to be able to get
-	 * back ruid priviledge. So we make sure that we will be able to
-	 * do so, but do not actually set the ruid.
-	 */
-	if (ruid != -1 && ruid != getuid() && ruid != svuid) {
-		errno = EPERM;
-		return (-1);
+	static int warned;
+	static char w[] =
+	    "warning: this program uses setreuid(), which is deprecated.\r\n";
+
+	if (!warned) {
+		(void) write(STDERR_FILENO, w, sizeof(w) - 1);
+		warned = 1;
 	}
-	if (euid != -1 && seteuid(euid) < 0)
-		return (-1);
-	return (0);
+	return (__setreuid(ruid, euid));
 }

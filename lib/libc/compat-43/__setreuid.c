@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1990, 1991 Regents of the University
+ * of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,32 +29,33 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
+ *	$Id: __setreuid.c,v 1.1 1994/04/10 06:32:40 cgd Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)setrgid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setrgid.c,v 1.2 1994/04/10 06:32:46 cgd Exp $";
-#endif /* LIBC_SCCS and not lint */
-
-#include <stdio.h>
+#include <sys/types.h>
+#include <errno.h>
 #include <unistd.h>
 
 int
-#ifdef __STDC__
-setrgid(gid_t rgid)
-#else
-setrgid(rgid)
-	int rgid;
-#endif
+__setreuid(ruid, euid)
+	uid_t ruid, euid;
 {
-	static int warned;
-	static char w[] =
-	    "warning: this program uses setrgid(), which is deprecated.\r\n";
-
-	if (!warned) {
-		(void) write(STDERR_FILENO, w, sizeof(w) - 1);
-		warned = 1;
+	static uid_t svuid = -1;
+	
+	if (svuid == -1)
+		svuid = geteuid();
+	/*
+	 * we assume that the intent of setting ruid is to be able to get
+	 * back ruid priviledge. So we make sure that we will be able to
+	 * do so, but do not actually set the ruid.
+	 */
+	if (ruid != -1 && ruid != getuid() && ruid != svuid) {
+		errno = EPERM;
+		return (-1);
 	}
-
-	return (__setregid(rgid, -1));
+	if (euid != -1 && seteuid(euid) < 0)
+		return (-1);
+	return (0);
 }

@@ -31,30 +31,26 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
- *	$Id: setregid.c,v 1.1 1994/04/06 23:28:41 cgd Exp $
+ *	$Id: setregid.c,v 1.2 1994/04/10 06:32:42 cgd Exp $
  */
 
 #include <sys/types.h>
-#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+extern int __setregid __P((gid_t, gid_t));
 
 int
 setregid(rgid, egid)
-	gid_t rgid, egid;
+	int rgid, egid;
 {
-	static gid_t svgid = -1;
-	
-	if (svgid == -1)
-		svgid = getegid();
-	/*
-	 * we assume that the intent of setting rgid is to be able to get
-	 * back rgid priviledge. So we make sure that we will be able to
-	 * do so, but do not actually set the rgid.
-	 */
-	if (rgid != -1 && rgid != getgid() && rgid != svgid) {
-		errno = EPERM;
-		return (-1);
+	static int warned;
+	static char w[] =
+	    "warning: this program uses setregid(), which is deprecated.\r\n";
+
+	if (!warned) {
+		(void) write(STDERR_FILENO, w, sizeof(w) - 1);
+		warned = 1;
 	}
-	if (egid != -1 && setegid(egid) < 0)
-		return (-1);
-	return (0);
+	return (__setregid(rgid, egid));
 }
