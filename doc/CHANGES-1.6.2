@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.102 2003/08/09 06:49:05 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.103 2003/08/12 18:30:03 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1155,4 +1155,16 @@ sys/dev/ic/dpt.c				1.38
 
 	Fix printf format warnings in previous.
 	[jmc, ticket #1403]
+
+build.sh					1.113 via patch
+distrib/cats/instkernel/Makefile		patch
+distrib/shark/instkernel/instkernel/Makefile	patch
+distrib/walnut/md-kernel/Makefile		patch
+sys/arch/cats/conf/Makefile.cats.inc		patch
+sys/arch/walnut/conf/Makefile.walnut.inc	patch
+tools/host-mkdep/Makefile			1.8 via patch
+
+	Fix 2 remaining places items are depending on execute permissions
+	coming out from a cvs checkout on scripts.
+	[jmc, ticket #1404]
 
