@@ -1,4 +1,3 @@
-
 /* @(#)e_acosh.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -9,8 +8,11 @@
  * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
- *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: e_acosh.c,v 1.3 1994/02/18 02:24:48 jtc Exp $";
+#endif
 
 /* __ieee754_acosh(x)
  * Method :

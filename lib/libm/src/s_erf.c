@@ -1,4 +1,3 @@
-
 /* @(#)s_erf.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_erf.c,v 1.3 1994/02/18 02:26:23 jtc Exp $";
+#endif
 
 /* double erf(double x)
  * double erfc(double x)

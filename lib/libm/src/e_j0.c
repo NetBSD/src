@@ -1,4 +1,3 @@
-
 /* @(#)e_j0.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: e_j0.c,v 1.3 1994/02/18 02:25:19 jtc Exp $";
+#endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
  * Bessel function of the first and second kinds of order zero.

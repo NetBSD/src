@@ -1,4 +1,3 @@
-
 /* @(#)e_sqrt.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: e_sqrt.c,v 1.3 1994/02/18 02:25:51 jtc Exp $";
+#endif
 
 /* __ieee754_sqrt(x)
  * Return correctly rounded sqrt.
