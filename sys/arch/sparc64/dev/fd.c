@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 1999/02/08 16:33:16 bouyer Exp $	*/
+/*	$NetBSD: fd.c,v 1.5.4.1 1999/06/21 01:02:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -310,7 +310,7 @@ fdcmatch(parent, match, aux)
 		return (0);
 
 	if (ca->ca_ra.ra_vaddr &&
-	    probeget(ca->ca_ra.ra_vaddr, 1) == -1) {
+	    probeget(ca->ca_ra.ra_vaddr, ASI_PRIMARY, 1) == -1) {
 		return (0);
 	}
 
@@ -393,14 +393,9 @@ fdcattach(parent, self, aux)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
-#ifdef FDC_C_HANDLER
 	fdc->sc_hih.ih_fun = (void *)fdchwintr;
 	fdc->sc_hih.ih_arg = fdc;
 	intr_establish(pri, &fdc->sc_hih);
-#else
-	fdciop = &fdc->sc_io;
-	intr_fasttrap(pri, fdchwintr);
-#endif
 	fdc->sc_sih.ih_fun = (void *)fdcswintr;
 	fdc->sc_sih.ih_arg = fdc;
 	intr_establish(PIL_FDSOFT, &fdc->sc_sih);

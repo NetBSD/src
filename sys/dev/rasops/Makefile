@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/04/13 00:17:57 ad Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 1999/06/21 01:18:59 thorpej Exp $
 
 INCSDIR= /usr/include/dev/rasops
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.19.2.1 1999/04/12 23:20:09 simonb Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.19.2.1.2.1 1999/06/21 01:48:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -148,12 +148,8 @@ typedef int	boolean_t;
 	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
 #define	trunc_page(x) \
 	((vaddr_t)(((vaddr_t)(x)) & ~PAGE_MASK))
-#define	num_pages(x) \
-	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
-extern paddr_t		first_addr;	/* first physical page */
-extern paddr_t		last_addr;	/* last physical page */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.1.2.1 1999/04/29 15:58:56 perry Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.1.2.1.2.1 1999/06/21 00:54:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.15.2.1 1999/04/19 04:41:34 cjs Exp $	*/
+/*	$NetBSD: mha.c,v 1.15.2.1.2.1 1999/06/21 01:04:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.

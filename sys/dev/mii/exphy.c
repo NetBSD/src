@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.15.6.1 1999/04/23 15:39:33 perry Exp $	*/
+/*	$NetBSD: exphy.c,v 1.15.6.1.2.1 1999/06/21 01:18:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

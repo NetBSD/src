@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.3.4.1 1999/04/16 20:26:52 augustss Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.3.4.1.2.1 1999/06/21 01:18:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.14 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.14.4.1 1999/06/21 01:31:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -315,6 +315,7 @@ struct lfs {
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 #endif
 	struct vnode *lfs_flushvp;      /* vnode being flushed */
+	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 };
 
 /*
@@ -485,6 +486,7 @@ struct segment {
 	struct buf	**cbpp;		/* pointer to next available bp */
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
 	struct buf	 *ibp;		/* buffer pointer to inode page */
+	struct dinode    *idp;          /* pointer to ifile dinode */
 	struct finfo	 *fip;		/* current fileinfo pointer */
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */

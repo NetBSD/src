@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1999/03/26 08:32:15 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.21.4.1 1999/06/21 01:01:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,8 +76,9 @@ trap(frame)
 	}
 
 	switch (type) {
-	case EXC_TRC|EXC_USER:		/* Temporarily!					XXX */
-		printf("TRC: %x\n", frame->srr0);
+	case EXC_TRC|EXC_USER:
+		frame->srr1 &= ~PSL_SE;
+		trapsignal(p, SIGTRAP, EXC_TRC);
 		break;
 	case EXC_DSI:
 		{

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_cvt_signal.c,v 1.1 1999/05/01 02:57:10 cgd Exp $	*/
+/*	$NetBSD: osf1_cvt_signal.c,v 1.1.2.1 1999/06/21 01:08:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

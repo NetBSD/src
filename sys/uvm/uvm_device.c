@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.15 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.15.4.1 1999/06/21 01:47:19 thorpej Exp $	*/
 
 /*
  *
@@ -164,7 +164,7 @@ udv_attach(arg, accessprot, off, size)
 	while (size != 0) {
 		if ((*mapfn)(device, off, accessprot) == -1)
 			return (NULL);
-		off += PAGE_SIZE, size -= PAGE_SIZE;
+		off += PAGE_SIZE; size -= PAGE_SIZE;
 	}
 
 	/*

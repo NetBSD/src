@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.27 1999/01/13 10:33:53 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.27.4.1 1999/06/21 01:19:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 /*
  * USB Open Host Controller driver.
  *
- * OHCI spec: http://www.intel.com/design/usb/ohci11d.pdf
- * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
+ * OHCI spec: ftp://ftp.compaq.com/pub/supportinformation/papers/hcir1_0a.exe
+ * USB spec: http://www.usb.org/developers/data/usb11.pdf
  */
 
 #include <sys/param.h>
@@ -192,6 +192,7 @@ struct ohci_pipe {
 		struct {
 			usb_dma_t datadma;
 			u_int length;
+			int isread;
 		} bulk;
 	} u;
 };
@@ -862,16 +863,19 @@ ohci_bulk_done(sc, reqh)
 	usbd_request_handle reqh;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
+	u_int len = opipe->u.bulk.length;
 	usb_dma_t *dma;
 
 
 	DPRINTFN(10,("ohci_bulk_done: reqh=%p, actlen=%d\n", 
 		     reqh, reqh->actlen));
 
-	dma = &opipe->u.bulk.datadma;
-	if (reqh->request.bmRequestType & UT_READ)
-		memcpy(reqh->buffer, KERNADDR(dma), reqh->actlen);
-	usb_freemem(sc->sc_dmatag, dma);
+	if (len != 0) {
+		dma = &opipe->u.bulk.datadma;
+		if (opipe->u.bulk.isread)
+			memcpy(reqh->buffer, KERNADDR(dma), len);
+		usb_freemem(sc->sc_dmatag, dma);
+	}
 	usb_untimeout(ohci_timeout, reqh, reqh->timo_handle);
 }
 
@@ -1481,6 +1485,7 @@ ohci_root_ctrl_start(reqh)
 				goto ret;
 			}
 			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
+			USETW(ohci_devd.idVendor, sc->sc_id_vendor);
 			memcpy(buf, &ohci_devd, l);
 			break;
 		case UDESC_CONFIG:
@@ -1911,6 +1916,7 @@ ohci_device_bulk_start(reqh)
 	isread = reqh->pipe->endpoint->edesc->bEndpointAddress & UE_IN;
 	sed = opipe->sed;
 
+	opipe->u.bulk.isread = isread;
 	opipe->u.bulk.length = len;
 
 	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
@@ -1952,6 +1958,7 @@ ohci_device_bulk_start(reqh)
 	ohci_hash_add_td(sc, xfer);
 	sed->ed->ed_tailp = LE(tail->physaddr);
 	opipe->tail = tail;
+	sed->ed->ed_flags &= LE(~OHCI_ED_SKIP); /* XXX why */
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (reqh->timeout && !sc->sc_bus.use_polling) {
                 usb_timeout(ohci_timeout, reqh,
@@ -2153,7 +2160,7 @@ ohci_device_intr_close(pipe)
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
-		--sc->sc_bws[pos * nslots + j];
+		--sc->sc_bws[(pos * nslots + j) % OHCI_NO_INTRS];
 
 	ohci_free_std(sc, opipe->tail);
 	ohci_free_sed(sc, opipe->sed);
@@ -2199,7 +2206,7 @@ ohci_device_setintr(sc, opipe, ival)
 	for (best = i = slow, bestbw = ~0; i < shigh; i++) {
 		bw = 0;
 		for (j = 0; j < nslots; j++)
-			bw += sc->sc_bws[i * nslots + j];
+			bw += sc->sc_bws[(i * nslots + j) % OHCI_NO_INTRS];
 		if (bw < bestbw) {
 			best = i;
 			bestbw = bw;
@@ -2217,7 +2224,7 @@ ohci_device_setintr(sc, opipe, ival)
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
-		++sc->sc_bws[best * nslots + j];
+		++sc->sc_bws[(best * nslots + j) % OHCI_NO_INTRS];
 	opipe->u.intr.nslots = nslots;
 	opipe->u.intr.pos = best;
 

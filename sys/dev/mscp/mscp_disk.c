@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.21 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.21.2.1 1999/06/21 01:18:26 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.

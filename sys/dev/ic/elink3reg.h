@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.19.6.1 1999/04/28 22:59:25 perry Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.19.6.1.2.1 1999/06/21 01:17:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>

@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.5 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.5.2.1 1999/06/21 00:59:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.5 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.5.2.1 1999/06/21 00:59:07 thorpej Exp $");
 
 /*
  * Motherboard memory error contoller used in both

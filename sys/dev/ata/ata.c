@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.7.2.1 1999/04/20 00:54:40 cjs Exp $      */
+/*      $NetBSD: ata.c,v 1.7.2.1.2.1 1999/06/21 01:17:38 thorpej Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *

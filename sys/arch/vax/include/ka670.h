@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.h,v 1.1 1999/06/06 14:23:46 ragge Exp $	*/
+/*	$NetBSD: ka670.h,v 1.1.2.1 1999/06/21 01:03:42 thorpej Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.15 1999/03/25 23:19:59 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.15.4.1 1999/06/21 01:17:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -708,7 +708,7 @@ epic_intr(arg)
 				continue;
 			}
 
-			len = rxd->er_buflength;
+			len = rxd->er_rxlength;
 			if (len < sizeof(struct ether_header)) {
 				m_freem(m);
 				continue;
@@ -736,9 +736,9 @@ epic_intr(arg)
 			}
 #endif /* NPBFILTER > 0 */
 			
-			/* Remove the Ethernet header and pass it on. */
-			m_adj(m, sizeof(struct ether_header));
-			ether_input(ifp, eh, m);
+			/* Pass it on. */
+			(*ifp->if_input)(ifp, m);
+			ifp->if_ipackets++;
 		}
 
 		/* Update the recieve pointer. */

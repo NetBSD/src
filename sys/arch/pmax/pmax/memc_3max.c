@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.8 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: memc_3max.c,v 1.8.2.1 1999/06/21 00:59:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.8 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.8.2.1 1999/06/21 00:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

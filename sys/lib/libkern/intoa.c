@@ -1,4 +1,4 @@
-/*	$NetBSD: intoa.c,v 1.1 1999/05/07 14:49:52 drochner Exp $	*/
+/*	$NetBSD: intoa.c,v 1.1.2.1 1999/06/21 01:25:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

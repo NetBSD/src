@@ -1,4 +1,4 @@
-# $NetBSD: gen_errno_tables.awk,v 1.1 1999/04/23 05:31:33 cgd Exp $
+# $NetBSD: gen_errno_tables.awk,v 1.1.2.1 1999/06/21 01:06:17 thorpej Exp $
 
 # Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 #

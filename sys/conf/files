@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.285.2.1.2.1 1999/06/07 04:25:28 chs Exp $
+#	$NetBSD: files,v 1.285.2.1.2.2 1999/06/21 01:12:22 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -28,7 +28,8 @@ defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 defopt	NFSSERVER
 
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
-defopt	opt_pool.h	POOL_DIAGNOSTIC POOL_LOGSIZE
+defopt	opt_pool.h	POOL_DIAGNOSTIC
+defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
 
@@ -82,6 +83,7 @@ defopt	opt_pmap_new.h	PMAP_NEW
 deffs	FFS EXT2FS
 deffs	fs_mfs.h MFS			# XXX
 deffs	fs_lfs.h LFS
+deffs	fs_ntfs.h NTFS
 deffs	CD9660
 deffs	ADOSFS
 deffs	MSDOSFS
@@ -96,9 +98,11 @@ deffs	fs_coda.h CODA
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI LIFFS
 
-# Not entirely MI, but present on multiple arch's
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
+
+
+# Not entirely MI, but present on multiple arch's
 
 # PC-style MBR handling
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
@@ -190,10 +194,6 @@ file	dev/ic/adv.c			adv
 device	adw: scsi
 file	dev/ic/adw.c			adw
 
-# AMD 7930 audio/ISDN codec
-device audioamd: audio
-file	dev/ic/am7930.c				audioamd
-
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 # (Must be declared before AHA to ensure bha probes before aha.
 #  Probing AHA first configures bhas as aha, via their AHA
@@ -234,6 +234,10 @@ define le32
 file	dev/ic/am7990.c			le24
 file	dev/ic/am79900.c		le32
 file	dev/ic/lance.c			le24 | le32
+
+# Sun HME Ethernet controllers
+#device	hme: arp, ether, ifnet
+#file	dev/ic/hme.c			hme
 
 # 8390-family Ethernet controllers
 define	dp8390nic
@@ -329,6 +333,14 @@ file	dev/ic/oplinstrs.c		opl
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
 file	dev/ic/ad1848.c			ad1848
+
+# AMD 7930 audio/ISDN codec
+device audioamd: audio
+file	dev/ic/am7930.c			audioamd
+
+# SPARC `SUNW,audiocs'
+device	audiocs: audio, auconv, ad1848
+file	dev/ic/cs4231.c			audiocs
 
 # LSI64854 DMA controller back-end
 define	lsi64854
@@ -533,6 +545,7 @@ file kern/exec_subr.c
 file kern/init_main.c
 file kern/init_sysent.c
 file kern/kern_acct.c
+file kern/kern_allocsys.c
 file kern/kern_clock.c
 file kern/kern_descrip.c
 file kern/kern_exec.c
@@ -787,6 +800,11 @@ file nfs/nfs_subs.c			nfsserver | nfs
 file nfs/nfs_syscalls.c			nfsserver | nfs
 file nfs/nfs_vfsops.c			nfs
 file nfs/nfs_vnops.c			nfs
+file ntfs/ntfs_compr.c			ntfs
+file ntfs/ntfs_ihash.c			ntfs
+file ntfs/ntfs_subr.c			ntfs
+file ntfs/ntfs_vfsops.c			ntfs
+file ntfs/ntfs_vnops.c			ntfs
 file ufs/ext2fs/ext2fs_alloc.c		ext2fs
 file ufs/ext2fs/ext2fs_balloc.c		ext2fs
 file ufs/ext2fs/ext2fs_bmap.c		ext2fs

@@ -1,21 +1,21 @@
-/*	$NetBSD: asic.c,v 1.34 1999/03/18 06:37:35 simonb Exp $	*/
+/*	$NetBSD: asic.c,v 1.34.4.1 1999/06/21 00:59:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou, Jonathan Stone
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -45,7 +45,6 @@
 
 #ifdef pmax
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/machdep.h>		/* XXX ioasic_init( */
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
@@ -213,14 +212,14 @@ ioasicattach(parent, self, aux)
 	} else
 #endif /*DEC_3000_300*/
 		printf(": fast mode\n");
-	
+
 	/* Decstations use hand-craft code to enable asic interrupts */
 	BUS_INTR_ESTABLISH(ta, asic_intr, sc);
 
 #endif 	/* Alpha AXP: select ASIC speed  */
 
 
-	/* 
+	/*
 	 * Try to configure each ioctl asic baseboard device.
 	 */
         ioasic_attach_devs(sc, ioasic_devs, ndevs);
@@ -263,36 +262,4 @@ ioasic_lance_dma_setup(v)
 	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
 	    IOASIC_CSR_DMAEN_LANCE;
 	tc_mb();
-}
-
-void ioasic_init(int flag);
-
-/*
- * Initialize the I/O asic
- */
-void
-ioasic_init(bogus)
-	int bogus; /* XXX */
-{
-	/* common across 3min, 3maxplus and maxine */
-        *(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-        *(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-
-#if 0
-        switch (systype) {
-        case DS_3MIN:
-        case DS_3MAXPLUS:
-        *(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-        *(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-        *(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
-                break;
-
-        case DS_MAXINE:
-        *(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-        *(volatile u_int *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
-        *(volatile u_int *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
-        *(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
-                break;
-        }
-#endif
 }

@@ -1,4 +1,4 @@
-# 	$NetBSD: files.rasops,v 1.4 1999/06/05 10:42:11 pk Exp $
+# 	$NetBSD: files.rasops,v 1.4.2.1 1999/06/21 01:18:59 thorpej Exp $
 
 define rasops1
 define rasops2

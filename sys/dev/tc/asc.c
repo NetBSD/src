@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.50.4.2 1999/04/12 21:27:09 pk Exp $	*/
+/*	$NetBSD: asc.c,v 1.50.4.2.2.1 1999/06/21 01:19:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -753,10 +753,6 @@ asc_startcmd(asc, target)
 		asc_logp = asc_log;
 #endif
 
-	/* preload the FIFO with the message to be sent */
-	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
-	tc_mb();
-
 	/* initialize the DMA */
 	len = (*asc->dma_start)(asc, state, scsicmd->cmd, ASCDMA_WRITE,
 	   len, 0);
@@ -776,6 +772,10 @@ asc_startcmd(asc, target)
 /*		printf("asc_startcmd: reselect in progress (before select)\n");*/
 		return;
 	}
+
+	/* preload the FIFO with the message to be sent */
+	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
+	tc_mb();
 
 	if (state->flags & TRY_SYNC)
 		regs->asc_cmd = len = ASC_CMD_SEL_ATN_STOP;
@@ -821,7 +821,7 @@ asc_intr(sc)
 {
 	register asc_softc_t asc = (asc_softc_t) sc;
 	register asc_regmap_t *regs = asc->regs;
-	register State *state;
+	register State *state = NULL;			/* XXX shut gcc up */
 	register script_t *scpt;
 	register int ss, ir, status;
 	register unsigned char cmd_was;
@@ -902,25 +902,26 @@ again:
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
 		case SCSI_PHASE_DATAI:
-			if ((asc->script - asc_scripts) == SCRIPT_DATA_IN + 1 ||
-			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_IN) {
+		case SCSI_PHASE_DATAO:
+			ASC_TC_GET(regs, len);
+			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
+			if (len != 0 && (
+			    (asc->script - asc_scripts) == SCRIPT_DATA_IN + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_IN ||
+			    (asc->script - asc_scripts) == SCRIPT_DATA_OUT + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_OUT)) {
 			    	/*
 			    	 * From the Mach driver:
-			    	 * After a reconnect and restart dma in, we
+			    	 * After a reconnect and restart dma in/out, we
 			    	 * seem to have gotten an interrupt even though
 			    	 * the DMA is running.  The Mach driver just
 			    	 * ignores this interrupt.
 			    	 */
-				ASC_TC_GET(regs, len);
-				fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 			    	printf("asc_intr: ignoring strange interrupt");
-			    	printf(" tc %d fifo residue %d\n", len, fifo);
+			    	printf(" tc %d fifo residue %d script %d\n",
+				    len, fifo, asc->script - asc_scripts);
 			    	goto done;
 			}
-			/* FALLTHROUGH */
-		case SCSI_PHASE_DATAO:
-			ASC_TC_GET(regs, len);
-			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 			printf("asc_intr: data overrun: buflen %d dmalen %d tc %d fifo %d\n",
 				state->buflen, state->dmalen, len, fifo);
 			goto abort;

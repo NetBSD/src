@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.16 1998/08/09 20:37:56 perry Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.16.8.1 1999/06/21 01:10:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -218,6 +218,7 @@ ultrix_sys_getmnt(p, v, retval)
 	long count, maxcount;
 	int error = 0;
 
+	nmp = NULL;	/* XXX keep gcc quiet */
 	path = NULL;
 	error = 0;
 	maxcount = SCARG(uap, bufsize) / sizeof(struct ultrix_fs_data);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 1999/02/02 18:37:20 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.4.1 1999/06/21 01:03:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -49,6 +49,7 @@
 #include <machine/ka750.h>
 #include <machine/ka650.h>
 #include <machine/clock.h>
+#include <machine/rpb.h>
 
 #include <vax/vax/gencons.h>
 
@@ -63,17 +64,6 @@ int	mastercpu;	/* chief of the system */
 struct device *booted_from;
 
 #define MAINBUS	0
-
-struct devnametobdevmaj vax_nam2blk[] = {
-	{ "hp",		0 },
-	{ "ra",		9 },
-	{ "rx",		12 },
-	{ "rd",		19 },
-	{ "sd",		20 },
-	{ "cd",		22 },
-	{ "md",		23 },
-	{ NULL,		0 },
-};
 
 void
 configure()
@@ -108,7 +98,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, vax_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 int	mainbus_print __P((void *, const char *));
@@ -399,3 +389,13 @@ struct	cfattach mem_mainbus_ca = {
 struct	cfattach mem_sbi_ca = {
 	sizeof(struct mem_softc), mem_match, mem_attach
 };
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	if ((B_TYPE(bootdev) == BDEV_QE) &&
+	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name))
+		booted_from = dev;
+}

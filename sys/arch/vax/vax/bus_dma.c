@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 1999/05/25 23:14:09 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2.2.1 1999/06/21 01:03:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.76.2.1 1999/04/16 16:26:01 chs Exp $	 */
+/* $NetBSD: machdep.c,v 1.76.2.1.2.1 1999/06/21 01:03:46 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -45,14 +45,12 @@
  * @(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,15 +73,6 @@
 #include <sys/ptrace.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -148,28 +137,6 @@ int		dumpsize = 0;
 #define	IOMAPSZ	100
 static	struct map iomap[IOMAPSZ];
 
-caddr_t allocsys __P((caddr_t));
-
-#define valloclim(name, type, num, lim) \
-		(name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-
-#ifdef BUFCACHE
-int		bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
-#else 
-int		bufcache = 0;		/* fallback to old algorithm */
-#endif  
-#ifdef	BUFPAGES
-int		bufpages = BUFPAGES;
-#else
-int		bufpages = 0;
-#endif
-int		nswbuf = 0;
-#ifdef	NBUF
-int		nbuf = NBUF;
-#else
-int		nbuf = 0;
-#endif
-
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
@@ -187,6 +154,7 @@ cpu_startup()
 	vm_offset_t	minaddr, maxaddr;
 	vm_size_t	size;
 	extern unsigned int avail_end;
+	char pbuf[9];
 
 	/*
 	 * Initialize error message buffer.
@@ -202,7 +170,8 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s\n%s\n", version, cpu_model);
-	printf("realmem = %d\n", avail_end);
+	format_bytes(pbuf, sizeof(pbuf), avail_end);
+	printf("total memory = %s\n", pbuf);
 	physmem = btoc(avail_end);
 	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
@@ -215,10 +184,10 @@ cpu_startup()
 	 * everything true virtual addresses.
 	 */
 
-	sz = (int) allocsys((caddr_t) 0);
+	sz = (int) allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
+	if (allocsys(v, NULL) - v != sz)
 		panic("startup: table size inconsistency");
 	/*
 	 * Now allocate buffers proper.	 They are different than the above in
@@ -273,20 +242,14 @@ cpu_startup()
 	 * the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16 * NCARGS, TRUE, FALSE, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
+				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 #if VAX410 || VAX43
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 #endif
 	/*
 	 * Initialize callouts
@@ -297,87 +260,16 @@ cpu_startup()
 		callout[i - 1].c_next = &callout[i];
 	callout[i - 1].c_next = NULL;
 
-	printf("avail mem = %d\n", (int)ptoa(uvmexp.free));
-	printf("Using %d buffers containing %d bytes of memory.\n",
-	       nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 
 	bufinit();
-}
-
-/*
- * Allocate space for system data structures.  We are given a starting
- * virtual address and we return a final virtual address; along the way we
- * set each data structure pointer.
- * 
- * We call allocsys() with 0 to find out how much space we want, allocate that
- * much and fill it with zeroes, and then call allocsys() again with the
- * correct base virtual address.
- */
-caddr_t
-allocsys(v)
-	register caddr_t v;
-{
-
-#define valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine how many buffers to allocate (enough to hold 5% of total
-	 * physical memory, but at least 16). Allocate 1/2 as many swap
-	 * buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0) {
-		if (bufcache == 0) {
-			if (physmem < btoc(2 * 1024 * 1024))
-				bufpages = physmem / 10;
-			else
-				bufpages = physmem / 20;
-		} else {
-			if (bufcache < 5 || bufcache > 95) {
-				printf(
-		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
-				    bufcache);
-				bufcache = 10;
-			}
-			bufpages = physmem / 100 * bufcache;
-		}
-	}
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;	/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-	return v;
 }
 
 long	dumplo = 0;
@@ -405,12 +297,6 @@ cpu_dumpconf()
 	 */
 	if (dumplo < btodb(CLBYTES))
 		dumplo = btodb(CLBYTES);
-}
-
-void
-cpu_initclocks()
-{
-	(*dep_call->cpu_clock) ();
 }
 
 int
@@ -460,6 +346,10 @@ consinit()
 //		ksym_init(&end, esym);
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#ifdef DEBUG
+	if (sizeof(struct user) > REDZONEADDR)
+		panic("struct user inside red zone");
+#endif
 #ifdef donotworkbyunknownreason
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -822,6 +712,8 @@ process_sstep(p, sstep)
  * uses resource maps when allocating space, which is allocated from 
  * the IOMAP submap. The implementation is similar to the uba resource
  * map handling. Size is given in pages.
+ * If the page requested is bigger than a logical page, space is
+ * allocated from the kernel map instead.
  *
  * It is known that the first page in the iospace area is unused; it may
  * be use by console device drivers (before the map system is inited).
@@ -840,13 +732,19 @@ vax_map_physmem(phys, size)
 	if (!iospace_inited)
 		panic("vax_map_physmem: called before rminit()?!?");
 #endif
-	pageno = rmalloc(iomap, size);
-	if (pageno == 0) {
-		if (warned++ == 0) /* Warn only once */
-			printf("vax_map_physmem: iomap too small\n");
-		return 0;
+	if (size >= LTOHPN) {
+		addr = uvm_km_valloc(kernel_map, size * VAX_NBPG);
+		if (addr == 0)
+			panic("vax_map_physmem: kernel map full");
+	} else {
+		pageno = rmalloc(iomap, size);
+		if (pageno == 0) {
+			if (warned++ == 0) /* Warn only once */
+				printf("vax_map_physmem: iomap too small");
+			return 0;
+		}
+		addr = iospace + (pageno * VAX_NBPG);
 	}
-	addr = iospace + (pageno * VAX_NBPG);
 	ioaccess(addr, phys, size);
 #ifdef PHYSMEMDEBUG
 	printf("vax_map_physmem: alloc'ed %d pages for paddr %lx, at %lx\n",
@@ -869,6 +767,9 @@ vax_unmap_physmem(addr, size)
 	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
 	    size, addr);
 #endif
-	rmfree(iomap, size, pageno);
 	iounaccess(addr, size);
+	if (size >= LTOHPN)
+		uvm_km_free(kernel_map, addr, size * VAX_NBPG);
+	else
+		rmfree(iomap, size, pageno);
 }

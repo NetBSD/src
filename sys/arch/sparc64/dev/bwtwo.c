@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.5 1998/09/05 23:57:24 eeh Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.5.8.1 1999/06/21 01:02:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -157,7 +157,7 @@ bwtwomatch(parent, cf, aux)
 	/*
 	 * Make sure there's hardware there.
 	 */
-	if (probeget(ra->ra_vaddr, 4) == -1)
+	if (probeget(ra->ra_vaddr, ASI_PRIMARY, 4) == -1)
 		return (0);
 
 #if defined(SUN4)
@@ -301,7 +301,7 @@ bwtwoattach(parent, self, args)
 #endif
 
 	if (CPU_ISSUN4COR4M)
-		isconsole = node == fbnode && fbconstty != NULL;
+		isconsole = (node == fbnode);
 
 	/*
 	 * When the ROM has mapped in a bwtwo display, the address

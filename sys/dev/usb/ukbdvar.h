@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdvar.h,v 1.1 1999/05/13 23:34:38 thorpej Exp $	*/
+/*	$NetBSD: ukbdvar.h,v 1.1.2.1 1999/06/21 01:19:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

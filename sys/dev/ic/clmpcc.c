@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.4.2.1 1999/04/05 17:36:38 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.4.2.1.2.1 1999/06/21 01:17:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

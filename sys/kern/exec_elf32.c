@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.43 1999/02/10 17:03:27 kleink Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.43.4.1 1999/06/21 01:23:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 #else
 	NULL,
 #endif
-	ELF_AUX_ENTRIES * sizeof(AuxInfo),
+	howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof (char *)),
 	ELFNAME(copyargs),
 	setregs,
 	sigcode,

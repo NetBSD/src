@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.2 1999/05/05 01:51:32 cgd Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.2.2.1 1999/06/21 01:08:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

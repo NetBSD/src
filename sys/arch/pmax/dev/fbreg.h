@@ -1,4 +1,4 @@
-/*	$NetBSD: fbreg.h,v 1.6 1996/09/21 03:25:20 jonathan Exp $	*/
+/*	$NetBSD: fbreg.h,v 1.6.26.1 1999/06/21 00:58:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 struct fbuaccess {
 	PM_Info		scrInfo;
-	pmEvent		events[PM_MAXEVQ];	
+	pmEvent		events[PM_MAXEVQ];
 	pmTimeCoord	tcs[MOTION_BUFFER_SIZE];
 };
 

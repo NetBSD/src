@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.20 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: esis.c,v 1.20.10.1 1999/06/21 01:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -1149,7 +1149,7 @@ isis_output(m, va_alist)
 	if (error) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISISOUTPUT]) {
-			printf("isis_output: error from ether_output is %d\n",
+			printf("isis_output: error from if_output is %d\n",
 			    error);
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66.2.1 1999/04/30 16:28:17 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.66.2.1.2.1 1999/06/21 01:03:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,6 +44,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 
 #include "assym.h"

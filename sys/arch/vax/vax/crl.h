@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.h,v 1.1.24.1 1999/04/12 21:27:06 pk Exp $	*/
+/*	$NetBSD: crl.h,v 1.1.24.1.2.1 1999/06/21 01:03:45 thorpej Exp $	*/
 /* 
  * @(#)crl.h	7.1 (Berkeley) 6/5/86
  */

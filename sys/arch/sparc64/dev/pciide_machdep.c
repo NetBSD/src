@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.1 1999/06/04 13:51:57 mrg Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.1.2.1 1999/06/21 01:02:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.1 1999/06/04 13:51:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.1.2.1 1999/06/21 01:02:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

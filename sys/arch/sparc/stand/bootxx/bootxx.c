@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 1999/02/15 18:59:36 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.4.4.1 1999/06/21 01:01:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,12 @@ main()
 	void (*entry)__P((void *)) = (void (*)__P((void *)))PROM_LOADADDR;
 	void	*arg;
 
+#ifdef HEAP_VARIABLE
+	{
+		extern char end[];
+		setheap((void *)ALIGN(end), (void *)0xffffffff);
+	}
+#endif
 	prom_init();
 	prom_bootdevice = prom_getbootpath();
 	io.f_flags = F_RAW;
@@ -84,10 +90,10 @@ main()
 			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
 	}
 
-	(void)loadboot(&io, PROM_LOADADDR);
+	(void)loadboot(&io, (caddr_t)PROM_LOADADDR);
 	(io.f_dev->dv_close)(&io);
 
-	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
+	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
 	(*entry)(arg);
 	_rtt();
 }

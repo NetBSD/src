@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.29 1999/03/18 12:08:43 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.29.4.1 1999/06/21 01:19:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,12 +110,10 @@ char *usbd_error_strs[] = {
 	"PENDING_REQUESTS",
 	"NOT_STARTED",
 	"INVAL",
-	"IS_IDLE",
 	"NOMEM",
 	"CANCELLED",
 	"BAD_ADDRESS",
 	"IN_USE",
-	"INTERFACE_NOT_ACTIVE",
 	"NO_ADDR",
 	"SET_ADDR_FAILED",
 	"NO_POWER",
@@ -125,6 +123,7 @@ char *usbd_error_strs[] = {
 	"TIMEOUT",
 	"SHORT_XFER",
 	"STALLED",
+	"INTERRUPTED",
 	"XXX",
 };
 #endif
@@ -459,14 +458,12 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 		goto bad;
 	found:
 		ifc->endpoints[endpt].edesc = ed;
-		ifc->endpoints[endpt].state = USBD_ENDPOINT_ACTIVE;
 		ifc->endpoints[endpt].refcnt = 0;
 		ifc->endpoints[endpt].toggle = 0;
 		p += ed->bLength;
 	}
 #undef ed
 	LIST_INIT(&ifc->pipes);
-	ifc->state = USBD_INTERFACE_ACTIVE;
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
@@ -528,7 +525,6 @@ usbd_set_config_index(dev, index, msg)
 	int msg;
 {
 	usb_status_t ds;
-	usb_hub_status_t hs;
 	usb_config_descriptor_t cd, *cdp;
 	usbd_status r;
 	int ifcidx, nifc, len, selfpowered, power;
@@ -547,7 +543,6 @@ usbd_set_config_index(dev, index, msg)
 		dev->ifaces = 0;
 		dev->cdesc = 0;
 		dev->config = 0;
-		dev->state = USBD_DEVICE_ADDRESSED;
 	}
 
 	/* Figure out what config number to use. */
@@ -572,18 +567,10 @@ usbd_set_config_index(dev, index, msg)
 		/* May be self powered. */
 		if (cdp->bmAttributes & UC_BUS_POWERED) {
 			/* Must ask device. */
-			if (dev->quirks->uq_flags & UQ_HUB_POWER) {
-				/* Buggy hub, use hub descriptor. */
-				r = usbd_get_hub_status(dev, &hs);
-				if (r == USBD_NORMAL_COMPLETION && 
-				    !(UGETW(hs.wHubStatus) & UHS_LOCAL_POWER))
-					selfpowered = 1;
-			} else {
-				r = usbd_get_device_status(dev, &ds);
-				if (r == USBD_NORMAL_COMPLETION && 
-				    (UGETW(ds.wStatus) & UDS_SELF_POWERED))
-					selfpowered = 1;
-			}
+			r = usbd_get_device_status(dev, &ds);
+			if (r == USBD_NORMAL_COMPLETION && 
+			    (UGETW(ds.wStatus) & UDS_SELF_POWERED))
+				selfpowered = 1;
 			DPRINTF(("usbd_set_config_index: status=0x%04x, "
 				 "error=%d(%s)\n",
 				 UGETW(ds.wStatus), r, usbd_error_strs[r]));
@@ -591,10 +578,9 @@ usbd_set_config_index(dev, index, msg)
 			selfpowered = 1;
 	}
 	DPRINTF(("usbd_set_config_index: (addr %d) attr=0x%02x, "
-		 "selfpowered=%d, power=%d, powerquirk=%x\n", 
+		 "selfpowered=%d, power=%d\n", 
 		 dev->address, cdp->bmAttributes, 
-		 selfpowered, cdp->bMaxPower * 2,
-		 dev->quirks->uq_flags & UQ_HUB_POWER));
+		 selfpowered, cdp->bMaxPower * 2));
 #ifdef USB_DEBUG
 	if (!dev->powersrc) {
 		printf("usbd_set_config_index: No power source?\n");
@@ -637,7 +623,6 @@ usbd_set_config_index(dev, index, msg)
 	DPRINTFN(5,("usbd_set_config_index: dev=%p cdesc=%p\n", dev, cdp));
 	dev->cdesc = cdp;
 	dev->config = cdp->bConfigurationValue;
-	dev->state = USBD_DEVICE_CONFIGURED;
 	for (ifcidx = 0; ifcidx < nifc; ifcidx++) {
 		r = usbd_fill_iface_data(dev, ifcidx, 0);
 		if (r != USBD_NORMAL_COMPLETION) {
@@ -673,7 +658,6 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 		return (USBD_NOMEM);
 	p->device = dev;
 	p->iface = iface;
-	p->state = USBD_PIPE_ACTIVE;
 	p->endpoint = ep;
 	ep->refcnt++;
 	p->refcnt = 1;
@@ -750,6 +734,9 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.port = port;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
+	uaa.vendor = UGETW(dd->idVendor);
+	uaa.product = UGETW(dd->idProduct);
+	uaa.release = UGETW(dd->bcdDevice);
 
 	/* First try with device specific drivers. */
 	if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch))
@@ -807,6 +794,9 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.usegeneric = 1;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
+	uaa.vendor = UHUB_UNK_VENDOR;
+	uaa.product = UHUB_UNK_PRODUCT;
+	uaa.release = UHUB_UNK_RELEASE;
 	if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch))
 		return (USBD_NORMAL_COMPLETION);
 
@@ -867,7 +857,6 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 
 	/* Set up default endpoint handle. */
 	dev->def_ep.edesc = &dev->def_ep_desc;
-	dev->def_ep.state = USBD_ENDPOINT_ACTIVE;
 
 	/* Set up default endpoint descriptor. */
 	dev->def_ep_desc.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE;
@@ -877,7 +866,6 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
 	dev->def_ep_desc.bInterval = 0;
 
-	dev->state = USBD_DEVICE_DEFAULT;
 	dev->quirks = &usbd_no_quirk;
 	dev->address = USB_START_ADDR;
 	dev->ddesc.bMaxPacketSize = 0;
@@ -950,7 +938,6 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 
 	dev->address = addr;	/* New device address now */
-	dev->state = USBD_DEVICE_ADDRESSED;
 	bus->devices[addr] = dev;
 
 	/* Assume 100mA bus powered for now. Changed when configured. */
@@ -1006,6 +993,19 @@ usbd_print(aux, pnp)
 		printf(" configuration %d", uaa->configno);
 	if (uaa->ifaceno != UHUB_UNK_INTERFACE)
 		printf(" interface %d", uaa->ifaceno);
+#if 0
+	/* 
+	 * It gets very crowded with these locators on the attach line.
+	 * They are not really needed since they are printed in the clear
+	 * by each driver.
+	 */
+	if (uaa->vendor != UHUB_UNK_VENDOR)
+		printf(" vendor 0x%04x", uaa->vendor);
+	if (uaa->product != UHUB_UNK_PRODUCT)
+		printf(" product 0x%04x", uaa->product);
+	if (uaa->release != UHUB_UNK_RELEASE)
+		printf(" release 0x%04x", uaa->release);
+#endif
 	return (UNCONF);
 }
 
@@ -1025,7 +1025,17 @@ usbd_submatch(parent, cf, aux)
 	     cf->uhubcf_configuration != uaa->configno) ||
 	    (uaa->ifaceno != UHUB_UNK_INTERFACE &&
 	     cf->uhubcf_interface != UHUB_UNK_INTERFACE &&
-	     cf->uhubcf_interface != uaa->ifaceno))
+	     cf->uhubcf_interface != uaa->ifaceno) ||
+	    (uaa->vendor != UHUB_UNK_VENDOR &&
+	     cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
+	     cf->uhubcf_vendor != uaa->vendor) ||
+	    (uaa->product != UHUB_UNK_PRODUCT &&
+	     cf->uhubcf_product != UHUB_UNK_PRODUCT &&
+	     cf->uhubcf_product != uaa->product) ||
+	    (uaa->release != UHUB_UNK_RELEASE &&
+	     cf->uhubcf_release != UHUB_UNK_RELEASE &&
+	     cf->uhubcf_release != uaa->release)
+	   )
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
@@ -1044,15 +1054,8 @@ usb_insert_transfer(reqh)
 	usbd_request_handle reqh;
 {
 	usbd_pipe_handle pipe = reqh->pipe;
-	usbd_interface_handle iface = pipe->iface;
 
-	if (pipe->state == USBD_PIPE_IDLE ||
-	    (iface && iface->state == USBD_INTERFACE_IDLE))
-		return (USBD_IS_IDLE);
 	SIMPLEQ_INSERT_TAIL(&pipe->queue, reqh, next);
-	if (pipe->state != USBD_PIPE_ACTIVE ||
-	    (iface && iface->state != USBD_INTERFACE_ACTIVE))
-		return (USBD_NOT_STARTED);
 	if (pipe->running)
 		return (USBD_IN_PROGRESS);
 	pipe->running = 1;
@@ -1066,7 +1069,17 @@ usb_start_next(pipe)
 	usbd_request_handle reqh;
 	usbd_status r;
 
+	DPRINTFN(10, ("usb_start_next: pipe=%p\n", pipe));
+	
 #ifdef DIAGNOSTIC
+	if (!pipe) {
+		printf("usb_start_next: pipe == 0\n");
+		return;
+	}
+	if (!pipe->methods || !pipe->methods->start) {
+		printf("usb_start_next:  no start method\n");
+		return;
+	}
 	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
 		printf("usb_start_next: empty\n");
 		return;
@@ -1075,10 +1088,6 @@ usb_start_next(pipe)
 
 	/* First remove remove old */
 	SIMPLEQ_REMOVE_HEAD(&pipe->queue, SIMPLEQ_FIRST(&pipe->queue), next);
-	if (pipe->state != USBD_PIPE_ACTIVE) {
-		pipe->running = 0;
-		return;
-	}
 	reqh = SIMPLEQ_FIRST(&pipe->queue);
 	DPRINTFN(5, ("usb_start_next: start reqh=%p\n", reqh));
 	if (!reqh)
@@ -1103,7 +1112,7 @@ usbd_fill_deviceinfo(dev, di)
 
 	di->config = dev->config;
 	usbd_devinfo_vp(dev, di->vendor, di->product);
-	usbd_printBCD(di->revision, UGETW(dev->ddesc.bcdDevice));
+	usbd_printBCD(di->release, UGETW(dev->ddesc.bcdDevice));
 	di->vendorNo = UGETW(dev->ddesc.idVendor);
 	di->productNo = UGETW(dev->ddesc.idProduct);
 	di->class = dev->ddesc.bDeviceClass;

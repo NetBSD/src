@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.29.2.1 1999/04/08 15:52:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.29.2.1.2.1 1999/06/21 01:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

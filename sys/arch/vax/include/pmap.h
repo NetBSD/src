@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.32 1999/03/24 05:51:16 mrg Exp $     */
+/*      $NetBSD: pmap.h,v 1.32.4.1 1999/06/21 01:03:43 thorpej Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -101,10 +101,16 @@ extern	struct pmap kernel_pmap_store;
 
 #endif	/* _KERNEL */
 
+/*
+ * Real nice (fast) routines to get the virtual address of a physical page
+ * (and vice versa).
+ */
+#define	PMAP_MAP_POOLPAGE(pa)	((pa) | KERNBASE)
+#define PMAP_UNMAP_POOLPAGE(va)	((va) & ~KERNBASE)
+
 /* Routines that are best to define as macros */
 #define	pmap_phys_address(phys) 	((u_int)(phys) << PGSHIFT)
-#define	pmap_pageable(a,b,c,d)		/* Dont do anything */
-#define pmap_change_wiring(pmap, v, w)  /* no need */
+#define pmap_unwire(pmap, v)		/* no need */
 #define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */
 #define	pmap_update()	mtpr(0,PR_TBIA)	/* Update buffes */
 #define	pmap_collect(pmap)		/* No need so far */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 1999/04/07 06:07:59 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49.4.1 1999/06/21 01:03:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -69,14 +69,17 @@ extern void proc_do_uret __P((void));
 extern void proc_trampoline __P((void));
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
+ * Finish a fork operation, with process p2 nearly set up.  Copy and
+ * update the kernel stack and pcb, making the child ready to run,  
+ * and marking it so that it can return differently than the parent.
+ * When scheduled, child p2 will start from proc_do_uret(). cpu_fork()
+ * returns once for forking parent p1. 
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *p1pcb = &p1->p_addr->u_pcb;
 	register struct pcb *p2pcb = &p2->p_addr->u_pcb;
@@ -120,6 +123,12 @@ cpu_fork(p1, p2)
 	p2tf = (struct trapframe *)((char*)p2pcb + USPACE-4) - 1;
 	p2->p_md.md_regs = (int *)p2tf;
 	bcopy(p1->p_md.md_regs, p2tf, sizeof(*p2tf));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		p2tf->tf_regs[15] = (u_int)stack + stacksize;
 
 	/*
 	 * Create a "switch frame" such that when cpu_switch returns,
@@ -327,11 +336,9 @@ pagemove(from, to, len)
 }
 
 /*
- * Map a user-space I/O request into kernel virtual address space.
- * NB: We have DVMA, and therefore need no separate phys_map.
- *
- * This routine has user context and can sleep
- * (called only by physio).
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
@@ -379,9 +386,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io mappings associated with this I/O operation.
- * The temporary I/O mappings were non-cached, so there is
- * no need to flush write-back cache here.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

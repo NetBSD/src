@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.2.2.1 1999/04/26 15:17:35 perry Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.2.2.1.2.1 1999/06/21 01:18:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.

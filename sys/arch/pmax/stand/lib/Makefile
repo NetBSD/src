@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/25 04:16:15 simonb Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 1999/06/21 00:59:10 thorpej Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -8,7 +8,7 @@ MKPROFILE=no
 
 CPPFLAGS= -I$S/lib/libsa ${PMAXCPPFLAGS} ${PMAXMISCCPPFLAGS}
 
-SRCS=	bootinfo.c callvec.c conf.c devopen.c loadfile.c putchar.c rz.c
+SRCS=	bootinfo.c callvec.c conf.c devopen.c putchar.c rz.c
 SRCS+=	bootinit.S bootread.S startprog.S
 
 .include <bsd.lib.mk>

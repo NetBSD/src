@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 1999/01/16 20:39:03 chuck Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16.4.1 1999/06/21 00:57:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,6 @@
 
 #ifndef _NS532_VMPARAM_H_
 #define _NS532_VMPARAM_H_
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_pmap_new.h"
-#endif
 
 /*
  * Machine dependent constants for 532.
@@ -155,7 +151,6 @@
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
@@ -169,16 +164,9 @@
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
-#if defined(PMAP_NEW)
 struct pmap_physseg {
 	struct pv_head *pvhead; 	/* pv_head array */
 	short *attrs;			/* attrs array */
 };
-#else
-struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv_entry array */
-	short *attrs;			/* attrs array */
-};
-#endif
 
 #endif

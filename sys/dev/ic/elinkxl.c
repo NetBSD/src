@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.7.2.3 1999/04/28 18:47:25 perry Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.7.2.3.2.1 1999/06/21 01:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1183,9 +1183,7 @@ ex_intr(arg)
 						goto rcvloop;
 					}
 					m->m_pkthdr.rcvif = ifp;
-					m->m_pkthdr.len = m->m_len =
-					    total_len -
-					    sizeof(struct ether_header);
+					m->m_pkthdr.len = m->m_len = total_len;
 					eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 					if (ifp->if_bpf) {
@@ -1209,9 +1207,7 @@ ex_intr(arg)
 						}
 					}
 #endif /* NBPFILTER > 0 */
-					m->m_data +=
-					    sizeof(struct ether_header);
-					ether_input(ifp, eh, m);
+					(*ifp->if_input)(ifp, m);
 				}
 				goto rcvloop;
 			}
@@ -1356,7 +1352,6 @@ ex_getstats(sc)
 	ifp->if_opackets += bus_space_read_1(iot, ioh, TX_FRAMES_OK);
 	ifp->if_opackets += (upperok & 0x30) << 4;
 	ifp->if_ierrors += bus_space_read_1(iot, ioh, RX_OVERRUNS);
-	ifp->if_oerrors += bus_space_read_1(iot, ioh, TX_DEFERRALS);
 	ifp->if_collisions += bus_space_read_1(iot, ioh, TX_COLLISIONS);
 	/*
 	 * There seems to be no way to get the exact number of collisions,
@@ -1370,6 +1365,7 @@ ex_getstats(sc)
 	/*
 	 * Clear the following to avoid stats overflow interrupts
 	 */
+	bus_space_read_1(iot, ioh, TX_DEFERRALS);
 	bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
 	bus_space_read_1(iot, ioh, TX_NO_SQE);
 	bus_space_read_1(iot, ioh, TX_CD_LOST);

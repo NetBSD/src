@@ -1,12 +1,11 @@
-#	$NetBSD: tc.options,v 1.7 1999/03/27 08:15:29 simonb Exp $
+#	$NetBSD: tc.options,v 1.7.4.1 1999/06/21 00:58:33 thorpej Exp $
 
 #########################################################################
 # Supported turbochannel option cards					#
 #########################################################################
-cfb0	at tc?
-mfb0	at tc?
-sfb0	at tc?
-#sfb1	at tc?
+cfb*	at tc?
+mfb*	at tc?
+sfb*	at tc?
 px0	at tc?
 
 

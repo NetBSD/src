@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.45 1998/12/16 11:01:01 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.45.4.1 1999/06/21 01:30:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -47,7 +47,6 @@
 #include <sys/select.h>		/* For struct selinfo. */
 #include <sys/queue.h>
 
-#ifndef REAL_CLISTS
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
  * exactly the same behaviour as in true clists.
@@ -65,17 +64,6 @@ struct clist {
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
 };
-#else
-/*
- * Clists are character lists, which is a variable length linked list
- * of cblocks, with a count of the number of characters in the list.
- */
-struct clist {
-	int	c_cc;		/* Number of characters in the clist. */
-	u_char	*c_cf;		/* Pointer to the first cblock. */
-	u_char	*c_cl;		/* Pointer to the last cblock. */
-};
-#endif /* !REAL_CLISTS */
 
 /*
  * Per-tty structure.
@@ -272,10 +260,11 @@ void	clfree __P((struct clist *));
 #include "opt_compat_sunos.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_43.h"
+#include "opt_compat_osf1.h"
 #endif
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_FREEBSD)
+    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1)
 # define COMPAT_OLDTTY
 int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif

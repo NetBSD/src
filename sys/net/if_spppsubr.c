@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.2.2.1.2.1 1999/06/21 01:27:36 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 1999/02/24 16:25:43 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.24.4.1 1999/06/21 01:25:32 thorpej Exp $
 
 SRCS+=  __main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -16,6 +16,7 @@ SRCS+=	mul.S umul.S saveregs.S
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
 SRCS+=	rem.S sdiv.S udiv.S urem.S
 CLEANFILES+=rem.S sdiv.S udiv.S urem.S
+.PATH.m4: ${KERNDIR}/arch/${MACHINE_ARCH}
 
 sdiv.S: divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/03/26 23:41:38 mycroft Exp $	   */
+/*	$NetBSD: pmap.c,v 1.61.4.1 1999/06/21 01:03:46 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,13 +60,7 @@
 
 /* QDSS console mapping hack */
 #include "qd.h"
-#if NQD > 0
-/* Pointer to virtual memory for for mapping QDSS */
-void *qvmem[NQD];
-/* Pointer to page tables for this virtual memory */
-struct pte *QVmap[NQD];
-extern void *qd_ubaio;
-#endif
+void	qdearly(void);
 
 #define ISTACK_SIZE NBPG
 vaddr_t	istack;
@@ -218,12 +212,7 @@ pmap_bootstrap()
 
         /* QDSS console mapping hack */
 #if NQD > 0
-        /*
-         * This allocates some kernel virtual address space.  qdcninit
-         * maps things here
-         */
-        MAPVIRT(qvmem[0], 64 * 1024 * NQD / VAX_NBPG);
-        MAPVIRT(qd_ubaio, 16);
+	qdearly();
 #endif
 
 	MAPVIRT(iospace, IOSPSZ); /* Device iospace mapping area */
@@ -477,7 +466,7 @@ pmap_kenter_pa(va, pa, prot)
 	ptp = (int *)kvtopte(va);
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
+	printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
 #endif
 	ptp[0] = PG_V | ((prot & VM_PROT_WRITE)? PG_KW : PG_KR) |
 	    PG_PFNUM(pa) | PG_SREF;
@@ -501,7 +490,7 @@ pmap_kremove(va, len)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
+	printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
 #endif
 
 	/*
@@ -532,7 +521,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
+	printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 #endif
 
 	/*
@@ -556,38 +545,44 @@ printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 }
 #endif
 
-void 
+/*
+ * pmap_enter() is the main routine that puts in mappings for pages, or
+ * upgrades mappings to more "rights". Note that:
+ * - "wired" isn't used. We don't loose mappings unless asked for.
+ * - "access_type" is set if the entering was caused by a fault.
+ */
+void
 pmap_enter(pmap, v, p, prot, wired, access_type)
-	register pmap_t pmap;
+	pmap_t	pmap;
 	vaddr_t	v;
 	paddr_t	p;
-	vm_prot_t	prot;
-	boolean_t	wired;
-	vm_prot_t	access_type;
+	vm_prot_t prot, access_type;
+	boolean_t wired;
 {
 	struct	pv_entry *pv, *tmp;
-	int	i, s, nypte, *patch;
-
+	int	i, s, newpte, oldpte, *patch;
 
 #ifdef PMAPDEBUG
-if(startpmapdebug)
-printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
-	pmap,v,p,prot, wired);
+if (startpmapdebug)
+	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
+		    pmap, v, p, prot, wired, access_type);
 #endif
+	/* Can this happen with UVM??? */
 	if (pmap == 0)
 		return;
 
-	if (v < 0x40000000) {
+	/* Find addess of correct pte */
+	if (v & KERNBASE) {
+		patch = (int *)Sysmap;
+		i = (v - KERNBASE) >> VAX_PGSHIFT;
+		newpte = (p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_KW:PG_KR);
+	} else if (v < 0x40000000) {
 		patch = (int *)pmap->pm_p0br;
 		i = (v >> VAX_PGSHIFT);
 		if (i >= (pmap->pm_p0lr & ~AST_MASK))
 			panic("P0 too small in pmap_enter");
 		patch = (int *)pmap->pm_p0br;
-		nypte = PG_V|(p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
-	} else if (v & KERNBASE) {
-		patch = (int *)Sysmap;
-		i = (v - KERNBASE) >> VAX_PGSHIFT;
-		nypte = PG_V|(p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_KW:PG_KR);
+		newpte = (p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
 	} else {
 		patch = (int *)pmap->pm_p1br;
 		i = (v - 0x40000000) >> VAX_PGSHIFT;
@@ -595,30 +590,29 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 			panic("pmap_enter: must expand P1");
 		if (v < pmap->pm_stack)
 			pmap->pm_stack = v;
-		nypte = PG_V|(p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
+		newpte = (p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
 	}
 
-	if ((patch[i] & ~PG_M) == nypte)
+	oldpte = patch[i] & ~(PG_V|PG_M);
+
+	/* No mapping change. Can this happen??? */
+	if (newpte == oldpte)
 		return;
 
-	if ((patch[i] & PG_FRAME) &&
-	    ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)))
-#ifdef PMAP_NEW
-		pmap_page_protect(PHYS_TO_VM_PAGE((patch[i] & PG_FRAME)
-		    << VAX_PGSHIFT), 0);
-#else
-		pmap_page_protect((patch[i] & PG_FRAME) << VAX_PGSHIFT, 0);
-#endif
+	pv = pv_table + (p >> PGSHIFT);
 
-	/*
-	 * If we map in a new physical page we also must add it
-	 * in the pv_table.
-	 */
-	if ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)) {
-		pv = pv_table + (p >> PGSHIFT);
+	/* Changing mapping? */
+	oldpte &= PG_FRAME;
+	if ((newpte & PG_FRAME) != oldpte) {
+
+		/* Mapped before? Remove it then. */
+		if (oldpte)
+			pmap_page_protect(PHYS_TO_VM_PAGE((oldpte
+			    << VAX_PGSHIFT)), 0);
+
 		s = splimp();
 		if (pv->pv_pte == 0) {
-			pv->pv_pte = (struct pte *)&patch[i];
+			pv->pv_pte = (struct pte *) & patch[i];
 			pv->pv_pmap = pmap;
 		} else {
 			MALLOC(tmp, struct pv_entry *, sizeof(struct pv_entry),
@@ -633,19 +627,27 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 			pv->pv_next = tmp;
 		}
 		splx(s);
+	} else {
+		/* No mapping change, just flush the TLB */
+		mtpr(0, PR_TBIA);
 	}
 	pmap->pm_stats.resident_count++;
 
-	patch[i] = nypte;
-	patch[i+1] = nypte+1;
-	patch[i+2] = nypte+2;
-	patch[i+3] = nypte+3;
-	patch[i+4] = nypte+4;
-	patch[i+5] = nypte+5;
-	patch[i+6] = nypte+6;
-	patch[i+7] = nypte+7;
+	if (access_type & VM_PROT_READ) {
+		pv->pv_attr |= PG_V;
+		newpte |= PG_V;
+	}
+	if (access_type & VM_PROT_WRITE)
+		pv->pv_attr |= PG_M;
 
-	mtpr(0, PR_TBIA);
+	patch[i] = newpte;
+	patch[i+1] = newpte+1;
+	patch[i+2] = newpte+2;
+	patch[i+3] = newpte+3;
+	patch[i+4] = newpte+4;
+	patch[i+5] = newpte+5;
+	patch[i+6] = newpte+6;
+	patch[i+7] = newpte+7;
 }
 
 void *
@@ -656,7 +658,7 @@ pmap_bootstrap_alloc(size)
 
 #ifdef PMAPDEBUG
 if(startpmapdebug)
-printf("pmap_bootstrap_alloc: size 0x %x\n",size);
+	printf("pmap_bootstrap_alloc: size 0x %x\n",size);
 #endif
 	size = round_page(size);
 	mem = (caddr_t)avail_start + KERNBASE;
@@ -703,7 +705,7 @@ pmap_extract(pmap, va)
 if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 #endif
 #ifdef DIAGNOSTIC
-	if (va & PGOFSET)
+	if (va & VAX_PGOFSET)
 		printf("Warning, pmap_extract va not aligned\n");
 #endif
 
@@ -811,35 +813,63 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 	mtpr(0,PR_TBIA);
 }
 
-#ifdef NEW_REF
+int pmap_simulref(int bits, int addr);
 /*
  * Called from interrupt vector routines if we get a page invalid fault.
  * Note: the save mask must be or'ed with 0x3f for this function.
  * Returns 0 if normal call, 1 if CVAX bug detected.
  */
 int
-pmap_simulref(bits, addr)
-	int	bits, addr;
+pmap_simulref(int bits, int addr)
 {
+	u_int	*pte;
+	struct  pv_entry *pv;
+	paddr_t	pa;
 
-
+#ifdef PMAPDEBUG
+if (startpmapdebug) 
+	printf("pmap_simulref: bits %x addr %x\n", bits, addr);
+#endif
 #ifdef DEBUG
 	if (bits & 1)
 		panic("pte trans len");
 #endif
+	/* Set addess on logical page boundary */
+	addr &= ~PGOFSET;
 	/* First decode userspace addr */
 	if (addr >= 0) {
 		if ((addr << 1) < 0)
-			pte = mfpr(PR_P1BR);
+			pte = (u_int *)mfpr(PR_P1BR);
 		else
-			pte = mfpr(PR_P0BR);
+			pte = (u_int *)mfpr(PR_P0BR);
+		pte += PG_PFNUM(addr);
 		if (bits & 2) { /* PTE reference */
-			
+			pte = (u_int *)TRUNC_PAGE(pte);
+			pte = (u_int *)kvtopte(pte);
+			if (pte[0] == 0) /* Check for CVAX bug */
+				return 1;	
+			pa = (u_int)pte & ~KERNBASE;
+		} else
+			pa = Sysmap[PG_PFNUM(pte)].pg_pfn << VAX_PGSHIFT;
+	} else {
+		pte = (u_int *)kvtopte(addr);
+		pa = (u_int)pte & ~KERNBASE;
+	}
+	pte[0] |= PG_V;
+	pte[1] |= PG_V;
+	pte[2] |= PG_V;
+	pte[3] |= PG_V;
+	pte[4] |= PG_V;
+	pte[5] |= PG_V;
+	pte[6] |= PG_V;
+	pte[7] |= PG_V;
+	pv = pv_table + (pa >> PGSHIFT);
+	pv->pv_attr |= PG_V; /* Referenced */
+	if (bits & 4)
+		pv->pv_attr |= PG_M; /* (will be) modified. XXX page tables  */
+	return 0;
+}
 
-
-
-
-#endif
 /*
  * Checks if page is referenced; returns true or false depending on result.
  */
@@ -866,29 +896,6 @@ pmap_is_referenced(pa)
 	if (pv->pv_attr & PG_V)
 		return 1;
 
-#ifndef NEW_REF
-	if (pv->pv_pte)
-		if ((pv->pv_pte[0].pg_v | pv->pv_pte[2].pg_v |
-		    pv->pv_pte[4].pg_v | pv->pv_pte[6].pg_v)) {
-#ifdef PMAPDEBUG
-			if (startpmapdebug) printf("Yes (1)\n");
-#endif
-			return 1;
-		}
-
-	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0].pg_v | pv->pv_pte[2].pg_v |
-		    pv->pv_pte[4].pg_v | pv->pv_pte[6].pg_v)) {
-#ifdef PMAPDEBUG
-			if (startpmapdebug) printf("Yes (2)\n");
-#endif
-			return 1;
-		}
-	}
-#ifdef PMAPDEBUG
-	if (startpmapdebug) printf("No pmap_is_referenced\n");
-#endif
-#endif
 	return 0;
 }
 

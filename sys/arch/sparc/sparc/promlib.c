@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.3.2.3 1999/05/03 12:59:52 perry Exp $ */
+/*	$NetBSD: promlib.c,v 1.3.2.3.2.1 1999/06/21 01:01:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

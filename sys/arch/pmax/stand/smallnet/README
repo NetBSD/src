@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 1999/05/13 08:40:08 simonb Exp $
+$NetBSD: README,v 1.2.2.1 1999/06/21 00:59:15 thorpej Exp $
 
 The smallnet network loader is meant to be a short term solution for
 machines that can't netboot full size kernels until a proper two stage

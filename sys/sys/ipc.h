@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.18.4.1 1999/04/19 04:29:22 cjs Exp $	*/
+/*	$NetBSD: ipc.h,v 1.18.4.1.2.1 1999/06/21 01:30:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

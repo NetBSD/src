@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.9.4.1 1999/04/29 21:09:40 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.9.4.1.2.1 1999/06/21 01:04:42 thorpej Exp $	*/
 
 /*
  * 
@@ -52,8 +52,11 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
- * Revision 1.9.4.1  1999/04/29 21:09:40  rvb
- * pullup 1.9->1.10 (rvb)
+ * Revision 1.9.4.1.2.1  1999/06/21 01:04:42  thorpej
+ * Sync w/ -current.
+ *
+ * Revision 1.10  1999/04/29 22:20:42  rvb
+ * Typo/braino?
  *
  * Revision 1.9  1998/11/11 19:22:08  rvb
  * Lookup now passes up an extra flag.  But old veni will

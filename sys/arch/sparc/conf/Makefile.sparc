@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.56 1999/02/14 20:04:26 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.56.4.1 1999/06/21 01:01:40 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -59,6 +59,8 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0004000 -e start
 .if ${OBJECT_FMT} != "ELF"
 LINKFLAGS+=	-N -p
+.else
+LINKFLAGS+=	-n
 .endif
 STRIPFLAGS=	-d
 
@@ -112,7 +114,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-S
+LINKFLAGS+=	-X
 .endif
 
 %LOAD

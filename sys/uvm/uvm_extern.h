@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.1 1999/06/07 04:25:35 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.2 1999/06/21 01:47:19 thorpej Exp $	*/
 
 /*
  *
@@ -303,14 +303,16 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
-void			uvm_fork __P((struct proc *, struct proc *, boolean_t));
+void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
+			    void *, size_t));
 void			uvm_exit __P((struct proc *));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
 __dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
 void			uvm_swapin __P((struct proc *));
 boolean_t		uvm_useracc __P((caddr_t, size_t, int));
-void			uvm_vslock __P((struct proc *, caddr_t, size_t));
+int			uvm_vslock __P((struct proc *, caddr_t, size_t,
+			    vm_prot_t));
 void			uvm_vsunlock __P((struct proc *, caddr_t, size_t));
 
 
@@ -329,7 +331,7 @@ void			uvm_km_free_wakeup __P((vm_map_t, vaddr_t,
 vaddr_t			uvm_km_kmemalloc __P((vm_map_t, struct uvm_object *,
 						vsize_t, int));
 struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
-				vaddr_t *, vsize_t, boolean_t,
+				vaddr_t *, vsize_t, int,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
@@ -345,7 +347,8 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
-				vaddr_t, boolean_t));
+				vaddr_t, boolean_t, boolean_t));
+int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
 int			uvm_map_protect __P((vm_map_t, vaddr_t, 
@@ -369,7 +372,7 @@ int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, vaddr_t));
+				caddr_t, vaddr_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,

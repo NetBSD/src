@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.17.2.1 1999/04/19 16:29:40 perry Exp $	*/
+/*	$NetBSD: ka650.c,v 1.17.2.1.2.1 1999/06/21 01:03:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,6 @@ static void ka650_reboot __P((int));
 
 struct	cpu_dep	ka650_calls = {
 	0, /* No special page stealing anymore */
-	no_nicr_clock,
 	uvaxIII_mchk,
 	uvaxIII_memerr,
 	uvaxIII_conf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.20.2.2 1999/05/05 22:39:04 perry Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.20.2.2.2.1 1999/06/21 01:19:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -704,6 +704,7 @@ again:
 	    WDSD_IBM | (xfer->drive << 4));
 	switch (drvp->state) {
 	case PIOMODE:
+piomode:
 		/* Don't try to set mode if controller can't be adjusted */
 		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
 			goto ready;
@@ -718,8 +719,14 @@ again:
 		errstring = "piomode";
 		if (wait_for_unbusy(chp, delay))
 			goto timeout;
-		if (chp->ch_status & WDCS_ERR)
-			goto error;
+		if (chp->ch_status & WDCS_ERR) {
+			if (drvp->PIO_mode < 3) {
+				drvp->PIO_mode = 3;
+				goto piomode;
+			} else {
+				goto error;
+			}
+		}
 	/* fall through */
 
 	case DMAMODE:

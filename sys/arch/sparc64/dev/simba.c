@@ -1,4 +1,4 @@
-/*	$NetBSD: simba.c,v 1.1 1999/06/04 13:42:15 mrg Exp $	*/
+/*	$NetBSD: simba.c,v 1.1.2.1 1999/06/21 01:02:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.30 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.30.2.1 1999/06/21 01:18:56 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.

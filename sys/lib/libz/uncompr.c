@@ -1,4 +1,4 @@
-/* $NetBSD: uncompr.c,v 1.1 1999/04/15 00:48:03 simonb Exp $ */
+/* $NetBSD: uncompr.c,v 1.1.2.1 1999/06/21 01:25:34 thorpej Exp $ */
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-1998 Jean-loup Gailly.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.2 1999/06/06 19:00:53 ragge Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.2.2.1 1999/06/21 01:03:44 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.11 1999/03/27 15:33:46 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.11.4.1 1999/06/21 01:03:47 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,8 +53,8 @@
 
 #include <machine/../vax/gencons.h>
 
-#include <vax/uba/dzreg.h>
-#include <vax/uba/dzvar.h>
+#include <dev/qbus/dzreg.h>
+#include <dev/qbus/dzvar.h>
 
 #include "ioconf.h"
 #include "lkc.h"
@@ -126,14 +126,20 @@ dz_vsbus_attach(parent, self, aux)
 	struct  dz_softc *sc = (void *)self;
 	struct vsbus_attach_args *va = aux;
 
-	sc->sc_dr.dr_csr = (void *)(dz_regs + 0);
-	sc->sc_dr.dr_rbuf = (void *)(dz_regs + 4);
-	sc->sc_dr.dr_dtr = (void *)(dz_regs + 9);
-	sc->sc_dr.dr_break = (void *)(dz_regs + 13);
-	sc->sc_dr.dr_tbuf = (void *)(dz_regs + 12);
-	sc->sc_dr.dr_tcr = (void *)(dz_regs + 8);
-	sc->sc_dr.dr_dcd = (void *)(dz_regs + 13);
-	sc->sc_dr.dr_ring = (void *)(dz_regs + 13);
+	/* 
+	 * XXX - This is evil and ugly, but...
+	 * due to the nature of how bus_space_* works on VAX, this will
+	 * be perfectly good until everything is converted.
+	 */
+	sc->sc_ioh = dz_regs;
+	sc->sc_dr.dr_csr = 0;
+	sc->sc_dr.dr_rbuf = 4;
+	sc->sc_dr.dr_dtr = 9;
+	sc->sc_dr.dr_break = 13;
+	sc->sc_dr.dr_tbuf = 12;
+	sc->sc_dr.dr_tcr = 8;
+	sc->sc_dr.dr_dcd = 13;
+	sc->sc_dr.dr_ring = 13;
 
 	sc->sc_type = DZ_DZV;
 
@@ -145,7 +151,8 @@ dz_vsbus_attach(parent, self, aux)
 
 	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
 	    (vax_boardtype == VAX_BTYP_48))
-		config_found(self, 0, dz_print);
+		if (cn_tab->cn_pri > CN_NORMAL) /* Passed cnsl detect */
+			config_found(self, 0, dz_print);
 }
 
 int

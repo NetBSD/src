@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.1.6.1 1999/04/23 15:39:00 perry Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.1.6.1.2.1 1999/06/21 01:18:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

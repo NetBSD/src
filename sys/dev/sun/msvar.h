@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.1 1999/05/14 07:07:16 mrg Exp $	*/
+/*	$NetBSD: msvar.h,v 1.1.2.1 1999/06/21 01:19:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

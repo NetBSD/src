@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.7.16.2 1999/04/12 21:27:08 pk Exp $	*/
+/*	$NetBSD: db_expr.c,v 1.7.16.2.2.1 1999/06/21 01:16:21 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
