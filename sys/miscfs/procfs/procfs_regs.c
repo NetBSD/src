@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_regs.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_regs.c,v 1.3 1994/01/28 07:03:28 cgd Exp $
+ *	$Id: procfs_regs.c,v 1.4 1994/04/12 02:55:52 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -90,6 +90,17 @@ pfs_doregs(curp, p, pfs, uio)
 #endif
 }
 
+int
+procfs_validregs(procp)
+	struct proc *procp;
+{
+#if defined(PT_SETREGS) || defined(PT_GETREGS)
+	return ((procp->p_flag & SSYS) == 0);
+#else
+	return (0);
+#endif
+}
+
 pfs_dofpregs(curp, p, pfs, uio)
 	struct proc *curp;
 	struct proc *p;
@@ -127,5 +138,16 @@ pfs_dofpregs(curp, p, pfs, uio)
 	return (error);
 #else
 	return EINVAL;
+#endif
+}
+
+int
+procfs_validfpregs(procp)
+	struct proc *procp;
+{
+#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+	return ((procp->p_flag & SSYS) == 0);
+#else
+	return (0);
 #endif
 }
