@@ -1,3 +1,5 @@
+/*	$NetBSD: memcpy.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $	*/
+
 /* 
  * Written by Matthias Pfaller, 1996
  * Public domain.
@@ -6,7 +8,13 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.1 1996/11/07 07:36:18 matthias Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.2 1998/02/22 09:08:35 mycroft Exp $")
+# if defined(BCOPY)
+	RCSID("$Masqueraded: as bcopy $")
+# endif
+# if defined(MEMMOVE)
+	RCSID("$Masqueraded: as memmove $")
+# endif
 #endif
 
 #if !defined(BCOPY) && !defined(MEMMOVE)
@@ -25,7 +33,7 @@ ENTRY(memcpy)
  *	s and d may overlap.
  */
 
-# ifdef _KERNEL
+# if defined(_KERNEL)
 ALTENTRY(ovbcopy,bcopy)
 # endif
 
