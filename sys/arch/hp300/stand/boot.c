@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1994/10/26 07:27:03 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1995/02/21 06:39:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -142,7 +142,7 @@ copyunix(howto, devtype, io)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
-	printf(" [%d+", x.a_syms);
+	printf("+[%d", x.a_syms);
 	if (read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
 	addr += x.a_syms;
@@ -158,7 +158,7 @@ copyunix(howto, devtype, io)
 		    goto shread;
 		addr += i;
 	}
-	printf("%d] ", i);
+	printf("+%d] ", i);
 
 #define	round_to_size(x) \
 	(((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
