@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.3 2001/03/03 13:54:22 garbled Exp $       */
+/*      $NetBSD: functions.c,v 1.4 2002/07/25 12:20:56 jdolecek Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -306,6 +306,9 @@ ftp_pkgcats(char *subdir)
 	nlines = 0;
 	while(fgets(buf, sizeof(buf), f)) {
 		list[nlines] = strdup(buf);
+		/* XXX jdolecek: is this right? strdup() and conditional
+		 * nlines++?
+		 */
 		if (list[nlines][strlen(list[nlines])-2] == '/') {
 			list[nlines][strlen(list[nlines])-2] = '\0';
 			nlines++;
