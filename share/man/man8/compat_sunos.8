@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.4 1994/11/30 19:36:22 jtc Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.5 1995/06/11 22:34:31 pk Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd setup procedure for m68k and sparc architectures
 .Sh DESCRIPTION
 NetBSD/sparc and some of the NetBSD/m68k architectures can run
-SunOS executables. Most executables will work.
+SunOS executables.  Most executables will work.
 .Pp
 The exceptions include programs that use the SunOS kvm library,
 and various system calls, ioctl()'s, or kernel semantics
@@ -58,36 +58,17 @@ have a right to use the required files on your machine.
 .It 1.
 On your NetBSD machine, do the following:
 .nf
-mkdir /sun
-mkdir /sun/lib
-mkdir /sun/5lib
-ln -s /sun/5lib /usr/5lib
+mkdir -p /emul/sunos/usr/lib /emul/sunos/usr/5lib
 .fi
 .Pp
 .It 2.
-cp
-.Pa SunOS:/usr/lib/lib*.so.*.*
-.Pa NetBSD:/sun/lib
+cp SunOS:/usr/lib/lib*.so.*.* NetBSD:/emul/sunos/usr/lib
 .Pp
 .It 3.
-cp
-.Pa SunOS:/usr/5lib/lib*.so.*.*
-.Pa NetBSD:/sun/5lib
+cp SunOS:/usr/5lib/lib*.so.*.* NetBSD:/emul/sunos/usr/5lib
 .Pp
 .It 4.
-cp 
-.Pa SunOS:/usr/lib/ld.so
-.Pa NetBSD:/usr/lib/ld.so
-.Pp
-.It 5.
-On your NetBSD machine, edit the
-.Pa ld.so
-binary using a binary editor.
-In the binary, change every occurance of a path that starts with
-.Pa /usr
-so that it starts with
-.Pa /sun .
-Note that the strings "/usr" and "/sun" are the same length.
+cp SunOS:/usr/lib/ld.so NetBSD:/emul/sunos/usr/lib/ld.so
 .Pp
 .It 6.
 If you ever expect to use YP, you will want to create a link:
@@ -96,10 +77,21 @@ ln -s /var/run/ypbind.lock /etc/ypbind.lock
 .fi
 .El
 .Pp
+Alternatively, you can use an NFS mount to accomplish the same
+effect.
+.Pp
+.Bl -tag -width 123 -compact
+.It 1.
+On your NetBSD machine, do the following:
+.nf
+mkdir -p /emul/sunos/usr
+mount SunOS:/usr /emul/sunos/usr
+.fi
+.El
+.Pp
 This will place the SunOS libraries on your NetBSD machine
-in a location where they do not conflict with the standard libraries,
-and also teach the SunOS dynamic linker to search for the SunOS
-dynamic libraries in that place.
+in a location where the SunOS compatibility code will look for
+first, where they do not conflict with the standard libraries.
 .Pp
 .Sh BUGS
 A list of things which fail to work in compatibility mode should
