@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.51.2.2 2004/07/02 20:01:38 he Exp $
+# $NetBSD: BOOTX,v 1.51.2.3 2004/07/15 20:41:35 he Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.33.2.2 2004/07/02 17:39:46 he Exp $
+#		NetBSD$
 
 #This configuration file is for a generic ATARI-Falcon
 
