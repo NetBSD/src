@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: trrt2netbsd,v 1.3 1999/02/26 22:43:03 christos Exp $
+#	$NetBSD: trrt2netbsd,v 1.4 1999/06/16 20:47:57 is Exp $
 #
 #  Perl script to convert a standard distribution directory for traceroute into
 #	a NetBSD source tree.
@@ -154,7 +154,7 @@ sub dumpsrcs {
 }
 
 #
-# Main progarm.
+# Main program.
 # 
 
 $srcdir = $ENV{'SRCDIR'};
