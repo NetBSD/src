@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.153 2000/12/19 15:51:47 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.154 2000/12/29 22:31:56 is Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -334,7 +334,7 @@ audio*		at melody?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ne*		at zbus0		# AriadneII
+ne*		at zbus0		# AriadneII, X-surf
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
