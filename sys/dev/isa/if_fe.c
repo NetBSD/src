@@ -58,7 +58,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #include <net/if_ether.h>
 

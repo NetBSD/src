@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.8.4.1 1997/02/20 18:46:01 is Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.8.4.2 1997/02/27 19:17:32 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
@@ -47,7 +47,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #include <net/if_ether.h>
 

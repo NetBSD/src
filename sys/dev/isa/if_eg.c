@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.32.4.1 1997/02/25 16:22:59 is Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.32.4.2 1997/02/27 19:17:31 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -52,10 +52,8 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #include <net/if_ether.h>
 
