@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.30 1998/03/07 01:26:04 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.31 1998/03/07 04:20:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 1998/03/07 01:26:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 1998/03/07 04:20:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,6 @@ cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
 	struct user *up = p2->p_addr;
-	pt_entry_t *ptep;
 	int i;
 	extern struct proc *fpcurproc;
 
@@ -158,15 +157,7 @@ cpu_fork(p1, p2)
 	 * Cache the physical address of the pcb, so we can
 	 * swap to it easily.
 	 */
-#ifndef NEW_PMAP
-	ptep = pmap_l3pte(pmap_kernel(), up);
-	p2->p_md.md_pcbpaddr =
-	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
-#else
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
-	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
-	    p2->p_pid, p2->p_md.md_pcbpaddr, p2->p_vmspace->vm_map.pmap);
-#endif
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -289,20 +280,13 @@ cpu_swapin(p)
 	register struct proc *p;
 {
 	struct user *up = p->p_addr;
-	pt_entry_t *ptep;
 	int i;
 
 	/*
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
-#ifndef NEW_PMAP
-	ptep = pmap_l3pte(pmap_kernel(), up);
-	p->p_md.md_pcbpaddr =
-	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
-#else
 	p->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
-#endif
 
 	/*
 	 * Simulate a write to the process's U-area pages,
