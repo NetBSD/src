@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/08/27 21:44:49 explorer Exp $
+#	$NetBSD: Makefile,v 1.4 1997/08/13 05:46:57 explorer Exp $
 
 .include "../Makefile.inc"
 
@@ -9,7 +9,7 @@ NOMAN=	yep
 KMOD=		procfs
 
 SRCS=	lkminit_vfs.c
-SRCS+=	procfs_vfsops.c procfs_vnops.c procfs_ctl.c procfs_note.c
-SRCS+=	procfs_status.c procfs_subr.c
+SRCS+=	procfs_ctl.c procfs_note.c procfs_status.c procfs_subr.c
+SRCS+=  procfs_vfsops.c procfs_vnops.c
 
 .include <bsd.kmod.mk>
