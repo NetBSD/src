@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.1 1999/05/20 05:59:52 lukem Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.2 1999/05/20 20:01:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@
 #  error BUFCACHE is not between 5 and 95
 # endif
 #else
+  /* Default to 10% of first 2MB and 5% of remaining. */
 # define BUFCACHE 0
 #endif
 
@@ -151,11 +152,25 @@ allocsys(v, mdcallback)
 
 	/*
 	 * Determine how many buffers to allocate.
-	 * We allocate bufcache % of memory for buffer space.
+	 *
+	 *	- If bufcache is specified, use that % of memory
+	 *	  for the buffer cache.
+	 *
+	 *	- Otherwise, we default to the traditional BSD
+	 *	  formula of 10% of the first 2MB and 5% of
+	 *	  the remaining.
 	 */
-
-	if (bufpages == 0)
-		bufpages = physmem / CLSIZE * bufcache / 100;
+	if (bufpages == 0) {
+		if (bufcache != 0)
+			bufpages = physmem / CLSIZE * bufcache / 100;
+		else {
+			if (physmem < btoc(2 * 1024 * 1024))
+				bufpages = physmem / (10 * CLSIZE);
+			else
+				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+				    (20 * CLSIZE);
+		}
+	}
 
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
