@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.17 2002/04/23 12:55:26 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.18 2002/04/23 17:33:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -113,13 +113,16 @@ struct siop_common_target {
 #define TARST_ASYNC	1 /* target needs sync/wide negotiation */
 #define TARST_WIDE_NEG	2 /* target is doing wide negotiation */
 #define TARST_SYNC_NEG	3 /* target is doing sync negotiation */
-#define TARST_OK	4 /* sync/wide agreement is valid */
+#define TARST_PPR_NEG	4 /* target is doing sync negotiation */
+#define TARST_OK	5 /* sync/wide agreement is valid */
 
 /* target flags */
 #define TARF_SYNC	0x01 /* target can do sync */
 #define TARF_WIDE	0x02 /* target can do wide */
 #define TARF_TAG	0x04 /* target can do tags */
-#define TARF_ISWIDE	0x08 /* target is wide */
+#define TARF_DT		0x08 /* target can do DT clocking */
+#define TARF_ISWIDE	0x10 /* target is wide */
+#define TARF_ISDT	0x20 /* target is doing DT clocking */
 
 /* Driver internal state */
 struct siop_common_softc {
@@ -132,8 +135,10 @@ struct siop_common_softc {
 	int maxoff;
 	int clock_div;			/* async. clock divider (scntl3) */
 	int clock_period;		/* clock period (ns * 10) */
-	int minsync;			/* min and max sync period, */
-	int maxsync;			/* as sent in SDTR message */
+	int st_minsync;			/* min and max sync period, */
+	int dt_minsync;
+	int st_maxsync;			/* as sent in or PPR messages */
+	int dt_maxsync;
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
 	bus_addr_t sc_raddr;		/* register adresses */
@@ -172,14 +177,17 @@ struct siop_common_softc {
 #define SF_PCI_CLS	0x08000000 /* PCI cache line size */
 #define SF_PCI_WRI	0x10000000 /* PCI write and invalidate */
 
+int	siop_common_attach __P((struct siop_common_softc *));
 void	siop_common_reset __P((struct siop_common_softc *));
 void	siop_setuptables __P((struct siop_common_cmd *));
 int	siop_modechange __P((struct siop_common_softc *));
 
 int	siop_wdtr_neg __P((struct siop_common_cmd *));
 int	siop_sdtr_neg __P((struct siop_common_cmd *));
+int	siop_ppr_neg __P((struct siop_common_cmd *));
 void	siop_sdtr_msg __P((struct siop_common_cmd *, int, int, int));
 void	siop_wdtr_msg __P((struct siop_common_cmd *, int, int));
+void	siop_ppr_msg __P((struct siop_common_cmd *, int, int, int));
 void	siop_update_xfer_mode __P((struct siop_common_softc *, int));
 /* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
