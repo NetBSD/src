@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.47.4.3 2001/11/25 20:07:35 he Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.47.4.4 2002/04/03 22:10:41 he Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -412,6 +412,8 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)psp->ps_sigcode;
