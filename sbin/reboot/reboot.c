@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.7 1995/03/18 16:11:54 cgd Exp $	*/
+/*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.7 1995/03/18 16:11:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ main(argc, argv)
 	} else
 		howto = 0;
 	lflag = nflag = qflag = 0;
-	while ((ch = getopt(argc, argv, "lnq")) != EOF)
+	while ((ch = getopt(argc, argv, "lnqd")) != EOF)
 		switch(ch) {
 		case 'l':		/* Undocumented; used by shutdown. */
 			lflag = 1;
@@ -89,6 +89,9 @@ main(argc, argv)
 			break;
 		case 'q':
 			qflag = 1;
+			break;
+		case 'd':
+			howto |= RB_DUMP;
 			break;
 		case '?':
 		default:
@@ -176,7 +179,7 @@ restart:
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: %s [-nq]\n", dohalt ? "halt" : "reboot");
+	(void)fprintf(stderr, "usage: %s [-nqd]\n", dohalt ? "halt" : "reboot");
 	exit(1);
 }
 
