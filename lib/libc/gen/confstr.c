@@ -28,14 +28,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$Id: confstr.c,v 1.2 1993/12/22 18:52:58 jtc Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h>
 #include <errno.h>
 #include <paths.h>
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: confstr.c,v 1.1 1993/11/17 18:15:35 jtc Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 static const char *cs_path = _PATH_DEFPATH;
 
