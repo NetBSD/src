@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.35 1998/05/17 18:58:07 ragge Exp $
+#       $NetBSD: files.vax,v 1.36 1998/05/22 09:59:55 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -311,7 +311,6 @@ file	arch/vax/vax/cfl.c		vax780
 file	arch/vax/vax/ka820.c		vax8200
 file	arch/vax/vax/ka860.c		vax8600
 file	arch/vax/vax/crl.c		vax8600
-file	arch/vax/vax/uvax.c		vax630 | vax410 | vax43
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43
