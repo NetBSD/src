@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.29 1994/08/12 03:49:24 cgd Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.30 1994/08/14 03:35:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -305,8 +305,19 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	args.hostname = ndmntp->ndm_host;
 	args.flags    = NFSMNT_RESVPORT;
 
+#ifdef	NFS_BOOT_RWSIZE
+	/*
+	 * Reduce rsize,wsize for interfaces that consistently
+	 * drop fragments of long UDP messages.  (i.e. wd8003).
+	 * You can always change these later via remount.
+	 */
+	args.flags   |= NFSMNT_WSIZE | NFSMNT_RSIZE;
+	args.wsize    = NFS_BOOT_RWSIZE;
+	args.rsize    = NFS_BOOT_RWSIZE;
+#endif
+
 	/* Get mbuf for server sockaddr. */
-	MGET(m, MT_SONAME, M_DONTWAIT);
+	m = m_get(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		panic("nfs_mountroot: mget soname for %s", mntname);
 	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
