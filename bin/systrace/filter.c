@@ -1,5 +1,5 @@
-/*	$NetBSD: filter.c,v 1.4 2002/08/08 13:24:12 soren Exp $	*/
-/*	$OpenBSD: filter.c,v 1.15 2002/07/19 14:38:57 itojun Exp $	*/
+/*	$NetBSD: filter.c,v 1.5 2002/08/28 03:52:44 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.4 2002/08/08 13:24:12 soren Exp $");
+__RCSID("$NetBSD: filter.c,v 1.5 2002/08/28 03:52:44 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -355,8 +355,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 	*pflags = 0;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
-		errx(1, "%s:%d: no policy %d", __func__, __LINE__,
-		    policynr);
+		errx(1, "%s:%d: no policy %d", __func__, __LINE__, policynr);
 
 	if (!allow)
 		printf("%s\n", output);
