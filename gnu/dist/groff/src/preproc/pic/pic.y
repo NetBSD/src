@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.y,v 1.1.1.1 2001/04/19 12:51:34 wiz Exp $	*/
+/*	$NetBSD: pic.y,v 1.1.1.1.2.1 2002/10/02 01:29:36 lukem Exp $	*/
 
 /* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
@@ -1747,23 +1747,7 @@ char *format_number(const char *form, double n)
 {
   if (form == 0)
     form = "%g";
-  else {
-    // this is a fairly feeble attempt at validation of the format
-    int nspecs = 0;
-    for (const char *p = form; *p != '\0'; p++)
-      if (*p == '%') {
-	if (p[1] == '%')
-	  p++;
-	else
-	  nspecs++;
-      }
-    if (nspecs > 1) {
-      lex_error("bad format `%1'", form);
-      return strsave(form);
-    }
-  }
-  sprintf(sprintf_buf, form, n);
-  return strsave(sprintf_buf);
+  return do_sprintf(form, &n, 1);
 }
 
 char *do_sprintf(const char *form, const double *v, int nv)
@@ -1785,18 +1769,20 @@ char *do_sprintf(const char *form, const double *v, int nv)
       if (*form == '%') {
 	one_format += *form++;
 	one_format += '\0';
-	sprintf(sprintf_buf, one_format.contents());
+	snprintf(sprintf_buf, sizeof(sprintf_buf),
+		 "%s", one_format.contents());
       }
       else {
 	if (i >= nv) {
-	  lex_error("too few arguments to sprintf");
+	  lex_error("too few arguments to snprintf");
 	  result += one_format;
 	  result += form;
 	  break;
 	}
 	one_format += *form++;
 	one_format += '\0';
-	sprintf(sprintf_buf, one_format.contents(), v[i++]);
+	snprintf(sprintf_buf, sizeof(sprintf_buf),
+		 one_format.contents(), v[i++]);
       }
       one_format.clear();
       result += sprintf_buf;
