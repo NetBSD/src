@@ -569,7 +569,7 @@ h# 5000 constant loader-base
    dup 0<> if  " to load-base init-program" evaluate then
 ;
 
-true to boot-debug?
+\ true to boot-debug?
 
 " /ofwboot.elf" do-boot
 
