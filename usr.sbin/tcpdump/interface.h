@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.5 1998/07/25 11:30:44 explorer Exp $	*/
+/*	$NetBSD: interface.h,v 1.6 1998/09/25 19:10:25 hwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -217,6 +217,7 @@ extern void isoclns_print(const u_char *, u_int, u_int, const u_char *,
 	const u_char *);
 extern void krb_print(const u_char *, u_int);
 extern void llap_print(const u_char *, u_int);
+extern void mobile_print(const u_char *, u_int);
 extern void netbios_print(struct p8022Hdr *, u_int);
 extern void nfsreply_print(const u_char *, u_int, const u_char *);
 extern void nfsreq_print(const u_char *, u_int, const u_char *);
