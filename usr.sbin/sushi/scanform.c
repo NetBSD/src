@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.40 2004/10/30 15:51:20 dsl Exp $       */
+/*      $NetBSD: scanform.c,v 1.41 2005/01/11 22:51:26 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -234,7 +234,8 @@ scan_formindex(struct cqForm *cqf, char *row)
 
 	while (*++t && isspace((unsigned char)*t));
 	if (strlen(t) > 50)
-		bailout(catgets(catalog, 1, 12, "description too long"));
+		bailout("'%s': %s", t,
+		    catgets(catalog, 1, 12, "description too long"));
 
 	snprintf(desc, sizeof(desc), "%s", t);
 	if (strcmp(desc, "BLANK") == 0)
