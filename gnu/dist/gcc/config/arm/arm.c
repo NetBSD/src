@@ -3466,7 +3466,7 @@ add_constant (x, mode, address_only)
   HOST_WIDE_INT offset;
 
   *address_only = 0;
-  if (mode == SImode && GET_CODE (x) == MEM && CONSTANT_P (XEXP (x, 0))
+  if (GET_CODE (x) == MEM && CONSTANT_P (XEXP (x, 0))
       && CONSTANT_POOL_ADDRESS_P (XEXP (x, 0)))
     x = get_pool_constant (XEXP (x, 0));
   else if (GET_CODE (x) == SYMBOL_REF && CONSTANT_POOL_ADDRESS_P(x))
@@ -3578,7 +3578,7 @@ fixit (src, mode, destreg)
     return 1;
 #endif
   else
-    return (mode == SImode && GET_CODE (src) == MEM
+    return (GET_CODE (src) == MEM
 	    && GET_CODE (XEXP (src, 0)) == SYMBOL_REF
 	    && CONSTANT_POOL_ADDRESS_P (XEXP (src, 0)));
 }
