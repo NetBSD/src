@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_io.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $ */
+/*	$NetBSD: ixp425_io.c,v 1.2 2003/06/01 21:42:26 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_io.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_io.c,v 1.2 2003/06/01 21:42:26 ichiro Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -137,18 +137,14 @@ struct bus_space ixp425_bs_tag = {
 };
 
 void
-ixp425_bs_init(bs, cookie)
-	bus_space_tag_t bs;
-	void *cookie;
+ixp425_bs_init(bus_space_tag_t bs, void *cookie)
 {
 	*bs = ixp425_bs_tag;
 	bs->bs_cookie = cookie;
 }
 
 void
-ixp425_io_bs_init(bs, cookie)
-	bus_space_tag_t bs;
-	void *cookie;
+ixp425_io_bs_init(bus_space_tag_t bs, void *cookie)
 {
 	*bs = ixp425_bs_tag;
 	bs->bs_cookie = cookie;
@@ -161,9 +157,7 @@ ixp425_io_bs_init(bs, cookie)
 	bs->bs_vaddr = ixp425_io_bs_vaddr;
 }
 void
-ixp425_mem_bs_init(bs, cookie)
-	bus_space_tag_t bs;
-	void *cookie;
+ixp425_mem_bs_init(bus_space_tag_t bs, void *cookie)
 {
 	*bs = ixp425_bs_tag;
 	bs->bs_cookie = cookie;
@@ -179,12 +173,8 @@ ixp425_mem_bs_init(bs, cookie)
 /* mem bus space functions */
 
 int
-ixp425_mem_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+ixp425_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	paddr_t pa, endpa;
 	vaddr_t va;
@@ -220,10 +210,7 @@ ixp425_mem_bs_map(t, bpa, size, cacheable, bshp)
 }
 
 void
-ixp425_mem_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixp425_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	vaddr_t startva, endva;
 
@@ -234,34 +221,21 @@ ixp425_mem_bs_unmap(t, bsh, size)
 }
 
 int
-ixp425_mem_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+ixp425_mem_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int cacheable,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("ixp425_mem_bs_alloc(): Help!");
 }
 
 void
-ixp425_mem_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixp425_mem_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ixp425_mem_bs_free(): Help!");
 }
 
 paddr_t
-ixp425_mem_bs_mmap(t, addr, off, prot, flags)
-	void *t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+ixp425_mem_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 {
 	/* Not supported. */
 	return (-1);
@@ -270,12 +244,8 @@ ixp425_mem_bs_mmap(t, addr, off, prot, flags)
 /* I/O bus space functions */
 
 int
-ixp425_io_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+ixp425_io_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	if ((bpa + size) >= IXP425_IO_VBASE)
 		return (EINVAL);
@@ -290,10 +260,7 @@ ixp425_io_bs_map(t, bpa, size, cacheable, bshp)
 }
 
 void
-ixp425_io_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixp425_io_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/*
 	 * Temporary implementation
@@ -301,31 +268,21 @@ ixp425_io_bs_unmap(t, bsh, size)
 }
 
 int
-ixp425_io_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+ixp425_io_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int cacheable,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("ixp425_io_bs_alloc(): Help!");
 }
 
 void    
-ixp425_io_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixp425_io_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ixp425_io_bs_free(): Help!");
 }
 
 void *
-ixp425_io_bs_vaddr(t, bsh)
-        void *t;
-        bus_space_handle_t bsh;
+ixp425_io_bs_vaddr(void *t, bus_space_handle_t bsh)
 {       
 	/* Not supported. */
 	return (NULL);
@@ -335,47 +292,31 @@ ixp425_io_bs_vaddr(t, bsh)
 /* Common routines */
 
 int
-ixp425_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+ixp425_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, bus_space_handle_t *nbshp)
 {
-
 	*nbshp = bsh + offset;
 	return (0);
 }
 
 void *
-ixp425_bs_vaddr(t, bsh)
-	void *t;
-	bus_space_handle_t bsh;
+ixp425_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 	return ((void *)bsh);
 }
 
 paddr_t
-ixp425_bs_mmap(t, addr, off, prot, flags)
-	void *t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+ixp425_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 {
 	/* Not supported. */
 	return (-1);
 }
 
 void
-ixp425_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+ixp425_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t len, int flags)
 {
 /* NULL */
 }	
-
-
 
 /* End of ixp425_io.c */

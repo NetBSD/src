@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.6 2003/06/01 01:49:56 ichiro Exp $ */
+/*	$NetBSD: ixp425_com.c,v 1.7 2003/06/01 21:35:39 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.6 2003/06/01 01:49:56 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.7 2003/06/01 21:35:39 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -614,10 +614,7 @@ ixp4xx_com_shutdown(struct ixp4xx_com_softc *sc)
 }
 
 int
-ixp4xx_comopen(dev, flag, mode, p)
-        dev_t dev;
-        int flag, mode;
-        struct proc *p;
+ixp4xx_comopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ixp4xx_com_softc *sc;
 	struct tty *tp;
@@ -762,10 +759,7 @@ bad:
 }
 
 int
-ixp4xx_comclose(dev, flag, mode, p)
-        dev_t dev;
-        int flag, mode;
-        struct proc *p;
+ixp4xx_comclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ixp4xx_com_softc *sc =
 		device_lookup(&ixpcom_cd, COMUNIT(dev));
@@ -794,10 +788,7 @@ ixp4xx_comclose(dev, flag, mode, p)
 }
 
 int
-ixp4xx_comread(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
-        int flag;
+ixp4xx_comread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ixp4xx_com_softc *sc =
 		device_lookup(&ixpcom_cd, COMUNIT(dev));
@@ -810,10 +801,7 @@ ixp4xx_comread(dev, uio, flag)
 }
 
 int
-ixp4xx_comwrite(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
-        int flag;
+ixp4xx_comwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ixp4xx_com_softc *sc =
 		device_lookup(&ixpcom_cd, COMUNIT(dev));
@@ -826,10 +814,7 @@ ixp4xx_comwrite(dev, uio, flag)
 }
 
 int
-ixp4xx_compoll(dev, events, p)
-        dev_t dev;
-        int events;
-        struct proc *p;
+ixp4xx_compoll(dev_t dev, int events, struct proc *p)
 {
 	struct ixp4xx_com_softc *sc =
 		device_lookup(&ixpcom_cd, COMUNIT(dev));
@@ -1399,9 +1384,7 @@ ixp4xx_comcnattach(bus_space_tag_t iot, const struct uart_info *config,
 }
 
 void
-ixp4xx_comcnputc(dev, c)
-        dev_t dev;
-        int c;
+ixp4xx_comcnputc(dev_t dev, int c)
 {
         bus_space_tag_t         iot = ixp4xx_comcn_sc.sc_iot;
 	bus_space_handle_t      ioh = ixp4xx_comcn_sc.sc_ioh;
@@ -1418,8 +1401,7 @@ ixp4xx_comcnputc(dev, c)
 }
 
 int
-ixp4xx_comcngetc(dev)
-        dev_t dev;
+ixp4xx_comcngetc(dev_t dev)
 {
 	int c,s;
         bus_space_tag_t         iot = ixp4xx_comcn_sc.sc_iot;
@@ -1438,15 +1420,12 @@ ixp4xx_comcngetc(dev)
 
 
 void
-ixp4xx_comcnprobe(cp)
-        struct consdev *cp;
+ixp4xx_comcnprobe(struct consdev *cp)
 {
         cp->cn_pri = CN_REMOTE;
 }
 
 void
-ixp4xx_comcnpollc(dev, on)
-        dev_t dev;
-        int on;
+ixp4xx_comcnpollc(dev_t dev, int on)
 {
 }
