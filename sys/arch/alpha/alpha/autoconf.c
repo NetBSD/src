@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1997/01/31 01:40:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1997/02/03 19:46:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,9 +70,8 @@ struct devnametobdevmaj alpha_nam2blk[] = {
 	{ "cd",		3 },
 	{ "md",		6 },
 	{ "sd",		8 },
-#if 0
-	{ "fd",		XXX },
-#endif
+	{ "fd",		0 },
+	{ "wd",		4 },
 	{ NULL,		0 },
 };
 
