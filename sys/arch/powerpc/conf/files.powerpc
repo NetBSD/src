@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.18 2001/06/06 17:36:01 matt Exp $
+#	$NetBSD: files.powerpc,v 1.19 2001/06/10 11:01:26 tsubai Exp $
 defopt	opt_altivec.h	ALTIVEC K_ALTIVEC
 defopt	OPENPIC
 defopt	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
@@ -17,6 +17,7 @@ file	netinet/in4_cksum.c				inet
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
+file	arch/powerpc/powerpc/pmap.c			!newpmap
 file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sig_machdep.c
@@ -35,7 +36,7 @@ file    arch/powerpc/powerpc/db_trace.c                 ddb
 
 # MPC (Motorola PowerPC) 6xx Family files (60x,74x,75x,74xx)
 #
-file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx
+file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx & newpmap
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c      compat_13
