@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 1996/06/11 02:52:54 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 1996/07/10 18:31:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,16 +128,21 @@ int	want_resched;	/* resched() was called */
 /*
  * simulated software interrupt register
  */
-extern unsigned char ssir;
+extern volatile unsigned char ssir;
 
 #define SIR_NET		0x1
 #define SIR_CLOCK	0x2
 #define SIR_SERIAL	0x4
 
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftserial()	ssir |= SIR_SERIAL
+#define siroff(x)	\
+	{ asm volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir)); }
+
+#define setsoftnet()	\
+	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_NET), "g" (ssir))
+#define setsoftclock()	\
+	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_CLOCK), "g" (ssir))
+#define setsoftserial()	\
+	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_SERIAL), "g" (ssir))
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2
