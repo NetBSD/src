@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 1999/03/29 07:15:06 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 1999/03/29 10:02:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -153,7 +153,6 @@ extern vm_offset_t physical_start;
 extern vm_offset_t physical_freestart;
 extern vm_offset_t physical_end;
 extern vm_offset_t physical_freeend;
-extern int physical_memoryblock;
 extern unsigned int free_pages;
 extern int max_processes;
 
