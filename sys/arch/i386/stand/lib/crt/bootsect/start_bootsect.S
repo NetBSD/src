@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.16 1999/08/23 08:24:37 kleink Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.17 2000/05/07 22:58:58 fvdl Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -231,7 +231,7 @@ found:
 
 	data32
 	addr32
-	movl	8(%esi),%ebx
+	movl	%es:8(%esi),%ebx
 	data32
 	addl	$LOADSZ+1, %ebx	/* ebx = maximum sector # we need */
 
@@ -411,7 +411,7 @@ done:
 
 eread:	.asciz		"Read err\r\n"
 enoboot: .asciz		"No NetBSD part\r\n"
-efail: .asciz		"Boot failed\r\n"
+efail: .asciz		"Boot fail\r\n"
 
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
