@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.136 2002/07/26 00:43:55 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.137 2002/08/04 01:41:25 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.136 2002/07/26 00:43:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.137 2002/08/04 01:41:25 gmcgarry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -137,21 +137,28 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.136 2002/07/26 00:43:55 simonb Ex
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
-
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <mips/cache.h>
 #include <mips/regnum.h>
+
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
+
+#ifdef __pmax__
+#include <machine/bootinfo.h>		/* XXX pmax only so far */
+#endif
 
 #if defined(MIPS32) || defined(MIPS64)
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
@@ -209,6 +216,11 @@ caddr_t	msgbufaddr;
 #ifdef MIPS3_4100			/* VR4100 core */
 int	default_pg_mask = 0x00001800;
 #endif
+
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	cpu_model[128];
 
 struct pridtab {
 	int	cpu_cid;
@@ -1081,6 +1093,52 @@ setregs(p, pack, stack)
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	p->p_md.md_ss_addr = 0;
 }
+
+/*
+ * Machine dependent system variables.
+ */
+int
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+#if defined(__pmax__)
+	struct btinfo_bootpath *bibp;
+#endif
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+#if defined(__pmax__)
+	case CPU_BOOTED_KERNEL:
+	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	        if(!bibp)
+			return (ENOENT); /* ??? */
+		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
+#endif
+	case CPU_ROOT_DEVICE:
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+
 
 struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
