@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2000/07/14 21:07:10 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.82 2000/07/18 05:18:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -928,7 +928,9 @@ dumpsys()
 			i += NBPG;
 			blkno += btodb(NBPG);
 		}
+#if 0
 printf("dumping segment at %llx\n", maddr);
+#endif
 
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
@@ -940,10 +942,14 @@ printf("dumping segment at %llx\n", maddr);
 				printf("%d ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+#if 0
 printf("calling dump of %llx\n", maddr);
+#endif
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
+#if 0
 printf("%llx done\n", maddr);
+#endif
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
 			if (error)
 				break;
