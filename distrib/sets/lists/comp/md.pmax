@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.33 1999/08/30 00:53:58 mrg Exp $
+# $NetBSD: md.pmax,v 1.34 1999/11/09 21:56:55 kleink Exp $
 ./usr/include/pmax
 ./usr/include/pmax/_G_config.h
 ./usr/include/pmax/ansi.h
@@ -15,7 +15,6 @@
 ./usr/include/pmax/dc7085cons.h
 ./usr/include/pmax/disklabel.h
 ./usr/include/pmax/ecoff_machdep.h
-./usr/include/pmax/elf.h
 ./usr/include/pmax/elf_machdep.h
 ./usr/include/pmax/endian.h
 ./usr/include/pmax/fbio.h
