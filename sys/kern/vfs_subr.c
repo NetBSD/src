@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.107 1999/08/14 06:23:59 ross Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.108 1999/08/19 13:54:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2095,7 +2095,14 @@ vfs_shutdown()
 		DELAY(40000 * iter);
 	}
 	if (nbusy) {
+#ifdef DEBUG
+		printf("giving up\nPrinting vnodes for busy buffers\n");
+		for (bp = &buf[nbuf]; --bp >= buf; )
+			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+				VOP_PRINT(bp->b_vp);
+#else
 		printf("giving up\n");
+#endif
 		return;
 	} else
 		printf("done\n");
