@@ -1,6 +1,6 @@
-/*	$NetBSD: compat.h,v 1.1.1.7 2001/05/15 15:02:27 itojun Exp $	*/
+/*	$NetBSD: compat.h,v 1.1.1.8 2001/09/27 02:00:42 itojun Exp $	*/
 /*
- * Copyright (c) 1999 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: compat.h,v 1.25 2001/04/30 15:50:46 markus Exp $"); */
+/* RCSID("$OpenBSD: compat.h,v 1.29 2001/09/20 13:50:40 markus Exp $"); */
 
 #ifndef COMPAT_H
 #define COMPAT_H
@@ -51,12 +51,14 @@
 #define SSH_BUG_HBSERVICE	0x00010000
 #define SSH_BUG_OPENFAILURE	0x00020000
 #define SSH_BUG_DERIVEKEY	0x00040000
+#define SSH_BUG_DUMMYCHAN	0x00100000
 
-void    enable_compat13(void);
-void    enable_compat20(void);
-void    compat_datafellows(const char *s);
-int	proto_spec(const char *spec);
-char	*compat_cipher_proposal(char *cipher_prop);
+void     enable_compat13(void);
+void     enable_compat20(void);
+void     compat_datafellows(const char *);
+int	 proto_spec(const char *);
+char	*compat_cipher_proposal(char *);
+
 extern int compat13;
 extern int compat20;
 extern int datafellows;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymodes.c,v 1.1.1.5 2001/05/15 15:02:40 itojun Exp $	*/
+/*	$NetBSD: ttymodes.c,v 1.1.1.6 2001/09/27 02:01:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ttymodes.c,v 1.13 2001/04/15 01:35:22 stevesk Exp $");
+RCSID("$OpenBSD: ttymodes.c,v 1.14 2001/06/24 17:18:31 markus Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -276,22 +276,22 @@ tty_make_modes(int fd, struct termios *tiop)
 
 	/* Store input and output baud rates. */
 	baud = speed_to_baud(cfgetospeed(&tio));
-	debug2("tty_make_modes: ospeed %d", baud);
+	debug3("tty_make_modes: ospeed %d", baud);
 	buffer_put_char(&buf, tty_op_ospeed);
 	buffer_put_int(&buf, baud);
 	baud = speed_to_baud(cfgetispeed(&tio));
-	debug2("tty_make_modes: ispeed %d", baud);
+	debug3("tty_make_modes: ispeed %d", baud);
 	buffer_put_char(&buf, tty_op_ispeed);
 	buffer_put_int(&buf, baud);
 
 	/* Store values of mode flags. */
 #define TTYCHAR(NAME, OP) \
-	debug2("tty_make_modes: %d %d", OP, tio.c_cc[NAME]); \
+	debug3("tty_make_modes: %d %d", OP, tio.c_cc[NAME]); \
 	buffer_put_char(&buf, OP); \
 	put_arg(&buf, tio.c_cc[NAME]);
 
 #define TTYMODE(NAME, FIELD, OP) \
-	debug2("tty_make_modes: %d %d", OP, ((tio.FIELD & NAME) != 0)); \
+	debug3("tty_make_modes: %d %d", OP, ((tio.FIELD & NAME) != 0)); \
 	buffer_put_char(&buf, OP); \
 	put_arg(&buf, ((tio.FIELD & NAME) != 0));
 
@@ -327,7 +327,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 
 	if (compat20) {
 		*n_bytes_ptr = packet_get_int();
-		debug2("tty_parse_modes: SSH2 n_bytes %d", *n_bytes_ptr);
+		debug3("tty_parse_modes: SSH2 n_bytes %d", *n_bytes_ptr);
 		if (*n_bytes_ptr == 0)
 			return;
 		get_arg = packet_get_int;
@@ -359,7 +359,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 		case TTY_OP_ISPEED_PROTO2:
 			n_bytes += 4;
 			baud = packet_get_int();
-			debug2("tty_parse_modes: ispeed %d", baud);
+			debug3("tty_parse_modes: ispeed %d", baud);
 			if (failure != -1 && cfsetispeed(&tio, baud_to_speed(baud)) == -1)
 				error("cfsetispeed failed for %d", baud);
 			break;
@@ -369,7 +369,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 		case TTY_OP_OSPEED_PROTO2:
 			n_bytes += 4;
 			baud = packet_get_int();
-			debug2("tty_parse_modes: ospeed %d", baud);
+			debug3("tty_parse_modes: ospeed %d", baud);
 			if (failure != -1 && cfsetospeed(&tio, baud_to_speed(baud)) == -1)
 				error("cfsetospeed failed for %d", baud);
 			break;
@@ -378,7 +378,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 	case OP: \
 	  n_bytes += arg_size; \
 	  tio.c_cc[NAME] = get_arg(); \
-	  debug2("tty_parse_modes: %d %d", OP, tio.c_cc[NAME]); \
+	  debug3("tty_parse_modes: %d %d", OP, tio.c_cc[NAME]); \
 	  break;
 #define TTYMODE(NAME, FIELD, OP) \
 	case OP: \
@@ -387,7 +387,7 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 	    tio.FIELD |= NAME; \
 	  else \
 	    tio.FIELD &= ~NAME;	\
-	  debug2("tty_parse_modes: %d %d", OP, arg); \
+	  debug3("tty_parse_modes: %d %d", OP, arg); \
 	  break;
 
 #include "ttymodes.h"

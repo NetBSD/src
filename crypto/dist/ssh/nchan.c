@@ -1,6 +1,6 @@
-/*	$NetBSD: nchan.c,v 1.1.1.7 2001/06/23 16:36:35 itojun Exp $	*/
+/*	$NetBSD: nchan.c,v 1.1.1.8 2001/09/27 02:00:45 itojun Exp $	*/
 /*
- * Copyright (c) 1999 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: nchan.c,v 1.29 2001/06/23 15:12:19 itojun Exp $");
+RCSID("$OpenBSD: nchan.c,v 1.31 2001/07/17 21:04:57 markus Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
@@ -519,11 +519,10 @@ chan_shutdown_write(Channel *c)
 			    "shutdown() failed for fd%d: %.100s",
 			    c->self, c->sock, strerror(errno));
 	} else {
-		if (close(c->wfd) < 0)
+		if (channel_close_fd(&c->wfd) < 0)
 			log("channel %d: chan_shutdown_write: "
 			    "close() failed for fd%d: %.100s",
 			    c->self, c->wfd, strerror(errno));
-		c->wfd = -1;
 	}
 }
 static void
@@ -539,10 +538,9 @@ chan_shutdown_read(Channel *c)
 			    c->self, c->sock, c->istate, c->ostate,
 			    strerror(errno));
 	} else {
-		if (close(c->rfd) < 0)
+		if (channel_close_fd(&c->rfd) < 0)
 			log("channel %d: chan_shutdown_read: "
 			    "close() failed for fd%d: %.100s",
 			    c->self, c->rfd, strerror(errno));
-		c->rfd = -1;
 	}
 }
