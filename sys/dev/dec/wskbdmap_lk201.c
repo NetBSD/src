@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdmap_lk201.c,v 1.1 1998/09/17 18:29:54 drochner Exp $ */
+/* $NetBSD: wskbdmap_lk201.c,v 1.2 1998/09/18 15:35:45 drochner Exp $ */
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -31,7 +31,7 @@ static const keysym_t zskbd_keydesc_us[] = {
     KC(131),			KS_f20,
     KC(138),			KS_Find,
     KC(139),			KS_Insert,
-    KC(140),			KS_Delete,
+    KC(140),			KS_KP_Delete,
     KC(141),			KS_Select,
     KC(142),			KS_Prior,
     KC(143),			KS_Next,
@@ -61,7 +61,7 @@ static const keysym_t zskbd_keydesc_us[] = {
     KC(175),	KS_Cmd1,	KS_Control_L,
     KC(176),			KS_Caps_Lock,
     KC(177),	KS_Cmd2,	KS_Multi_key, /* (left) compose */
-    KC(188),			KS_BackSpace,
+    KC(188),			KS_Delete,
     KC(189),			KS_Return,
     KC(190),			KS_Tab,
     KC(191),			KS_grave,	KS_asciitilde,
