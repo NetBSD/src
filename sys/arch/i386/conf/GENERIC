@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.582 2003/11/18 23:07:37 jonathan Exp $
+# $NetBSD: GENERIC,v 1.583 2003/11/20 13:32:41 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.582 $"
+#ident 		"GENERIC-$Revision: 1.583 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,6 +67,8 @@ options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
+#options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
+				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSTRACE	# system call vetting via systrace(1)
