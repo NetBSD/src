@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.22 2003/08/07 11:14:12 agc Exp $
+.\"	$NetBSD: kdump.1,v 1.23 2003/11/16 10:13:48 manu Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,12 +37,13 @@
 .Nd display kernel trace data
 .Sh SYNOPSIS
 .Nm
-.Op Fl dlNnRTx
+.Op Fl dlNnRT
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
+.Op Fl x Op Ar size
 .Op Ar file
 .Sh DESCRIPTION
 .Nm
@@ -103,10 +104,13 @@ See the
 .Fl t
 option of
 .Xr ktrace 1 .
-.It Fl x
+.It Fl x Op Ar size
 Display GIO data in hex and ascii instead of
 .Xr vis 3
-format.
+format. The optional
+.Ar size
+argument force byte groupping in the display. Supported values are 1 
+(byte per byte) and 4 (word per word). Default is 1.
 .El
 .Sh SEE ALSO
 .Xr ktrace 1
