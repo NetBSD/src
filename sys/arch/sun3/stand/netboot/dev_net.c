@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.2 1995/08/08 20:59:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -63,6 +63,7 @@
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
 u_int32_t myip, rootip, gateip, mask;
+u_char bcea[6] = BA;	/* for arp.c, rarp.c */
 char rootpath[FNAME_SIZE];
 
 int netdev_sock = -1;
