@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.22 1994/10/20 04:22:54 cgd Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.23 1994/11/17 20:27:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -192,7 +192,7 @@ donice(curp, chgp, n)
 	return (0);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
 /* ARGSUSED */
 compat_43_setrlimit(p, uap, retval)
 	struct proc *p;
@@ -236,7 +236,7 @@ compat_43_getrlimit(p, uap, retval)
 	return (copyout((caddr_t)&olim, (caddr_t)SCARG(uap, rlp),
 	    sizeof(olim)));
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 */
 
 /* ARGSUSED */
 setrlimit(p, uap, retval)
