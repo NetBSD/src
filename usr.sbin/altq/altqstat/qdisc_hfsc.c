@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_hfsc.c,v 1.3 2001/08/16 07:48:11 itojun Exp $	*/
+/*	$NetBSD: qdisc_hfsc.c,v 1.4 2003/01/06 15:23:11 christos Exp $	*/
 /*	$KAME: qdisc_hfsc.c,v 1.4 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -51,10 +51,10 @@
 void
 hfsc_stat_loop(int fd, const char *ifname, int count, int interval)
 {
-	struct class_stats	stats1[NCLASSES], stats2[NCLASSES];
+	struct hfsc_basic_class_stats	stats1[NCLASSES], stats2[NCLASSES];
 	char			clnames[NCLASSES][128];
 	struct hfsc_class_stats	get_stats;
-	struct class_stats	*sp, *lp, *new, *last, *tmp;
+	struct hfsc_basic_class_stats	*sp, *lp, *new, *last, *tmp;
 	struct timeval		cur_time, last_time;
 	int			i;
 	double			sec;
