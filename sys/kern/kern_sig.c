@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.164 2003/10/04 03:45:49 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.165 2003/10/07 00:23:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.164 2003/10/04 03:45:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.165 2003/10/07 00:23:17 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -952,18 +952,21 @@ child_psignal(struct proc *p, int dolock)
 void
 psignal1(struct proc *p, int signum, int dolock)
 {
-    ksiginfo_t ksi;
-    memset(&ksi, 0, sizeof(ksi));
-    ksi.ksi_signo = signum;
-    kpsignal2(p, &ksi, dolock);
+	ksiginfo_t ksi;
+
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = signum;
+	kpsignal2(p, &ksi, dolock);
 }
 
 void
 kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data, int dolock)
 {
+
 	if ((p->p_flag & P_WEXIT) == 0 && data) {
 		size_t fd;
 		struct filedesc *fdp = p->p_fd;
+
 		ksi->ksi_fd = -1;
 		for (fd = 0; fd < fdp->fd_nfiles; fd++) {
 			struct file *fp = fdp->fd_ofiles[fd];
