@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.61 2002/11/17 02:54:50 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.62 2002/11/23 11:11:16 blymn Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -104,6 +104,9 @@
 ./usr/share/doc/usd/13.ex/Makefile
 ./usr/share/doc/usd/13.ex/ex.rm
 ./usr/share/doc/usd/13.ex/ex.summary
+./usr/share/examples/verifiedexec_load
+./usr/share/examples/verifiedexec_load/gen_md5
+./usr/share/examples/verifiedexec_load/gen_sha1
 ./usr/share/lkm
 ./usr/share/lkm/README
 ./usr/share/lkm/misc
