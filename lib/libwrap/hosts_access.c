@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.11 2000/01/21 17:08:34 mycroft Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.12 2002/04/04 19:50:27 atatat Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.11 2000/01/21 17:08:34 mycroft Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.12 2002/04/04 19:50:27 atatat Exp $");
 #endif
 #endif
 
@@ -407,6 +407,10 @@ char   *string;
 	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
 	return (NO);				/* not tcpd_jump() */
     }
+
+    if ((net & ~mask) != 0)
+	tcpd_warn("host bits not all zero in %s/%s", net_tok, mask_tok);
+
     return ((addr & mask) == net);
 }
 
@@ -425,6 +429,7 @@ char   *string;
     int i;
     int maskoff;
     int netaf;
+    int dirty;
     const int sizoff64 = sizeof(struct in6_addr) - sizeof(struct in_addr);
 
     memset(&addr, 0, sizeof(addr));
@@ -470,8 +475,14 @@ char   *string;
 	return (NO);				/* not tcpd_jump() */
     }
 
-    for (i = 0; i < sizeof(addr); i++)
+    for (i = 0; i < sizeof(addr); i++) {
 	addr.s6_addr[i] &= mask.s6_addr[i];
+	dirty |= (net.s6_addr[i] & ~mask.s6_addr[i]);
+    }
+
+    if (dirty)
+	tcpd_warn("host bits not all zero in %s/%s", net_tok, mask_tok);
+
     return (memcmp(&addr, &net, sizeof(addr)) == 0);
 }
 #endif
