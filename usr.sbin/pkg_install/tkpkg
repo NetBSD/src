@@ -1,4 +1,4 @@
-#!/usr/local/bin/wish -f
+#!/usr/pkg/bin/wish -f
 # from FreeBSD Id: tkpkg,v 1.4 1997/02/22 16:09:13 peter Exp
 #
 set pkgname ""
