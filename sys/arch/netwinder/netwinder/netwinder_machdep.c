@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.31.4.1 2002/11/30 12:39:32 he Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.31.4.2 2003/02/14 22:27:07 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -600,7 +600,7 @@ initarm(void)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
