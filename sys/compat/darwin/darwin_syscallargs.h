@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.23 2003/04/20 00:10:20 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.24 2003/06/05 12:26:28 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -141,6 +141,12 @@ struct bsd_compat_12_sys_swapon_args {
 
 struct darwin_sys_sigreturn_args {
 	syscallarg(struct darwin_ucontext *) uctx;
+};
+
+struct bsd_sys_bind_args {
+	syscallarg(int) s;
+	syscallarg(const struct sockaddr *) name;
+	syscallarg(unsigned int) namelen;
 };
 
 struct bsd_sys_rename_args {
@@ -347,7 +353,7 @@ int	sys_getpriority(struct lwp *, void *, register_t *);
 int	compat_43_sys_send(struct lwp *, void *, register_t *);
 int	compat_43_sys_recv(struct lwp *, void *, register_t *);
 int	darwin_sys_sigreturn(struct lwp *, void *, register_t *);
-int	sys_bind(struct lwp *, void *, register_t *);
+int	bsd_sys_bind(struct lwp *, void *, register_t *);
 int	sys_setsockopt(struct lwp *, void *, register_t *);
 int	sys_listen(struct lwp *, void *, register_t *);
 int	compat_43_sys_sigvec(struct lwp *, void *, register_t *);
