@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.aout_so.1,v 1.2 2002/01/15 02:22:54 wiz Exp $
+.\"	$NetBSD: ld.aout_so.1,v 1.3 2002/02/07 03:15:07 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,7 +140,7 @@ library-name, major-version-number, minor-version-number
 recognises a number of environment variables that can be used to modify
 its behaviour as follows:
 .Pp
-.Bl -tag -width "LD_TRACE_LOADED_OBJECTS_PROGNAME"
+.Bl -tag -width LD_TRACE_LOADED_OBJECTS \" intentionally not the longest
 .It Ev LD_LIBRARY_PATH
 A colon separated list of directories, overriding the default search path
 for shared libraries.
@@ -173,7 +173,7 @@ option and allows
 .Xr ldd 1
 to be operated as a filter more conveniently.
 The following conversions can be used:
-.Bl -tag -indent "LD_TRACE_LOADED_OBJECTS_FMT1 " -width "xxxx"
+.Bl -tag -width xxxx
 .It \&%a
 The main program's name
 .Po also known as
