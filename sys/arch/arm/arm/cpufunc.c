@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.19 2001/11/29 02:24:58 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.20 2001/12/01 06:33:40 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -57,6 +57,10 @@
 #include <arch/arm/arm/disassem.h>
 
 #include <arm/cpufunc.h>
+
+#ifdef CPU_XSCALE
+#include <arm/xscale/i80200reg.h>
+#endif
 
 /* PRIMARY CACHE VARIABLES */
 int	arm_picache_size;
@@ -863,6 +867,15 @@ set_cpufuncs()
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
+		/*
+		 * XXX Disable ECC in the Bus Controller Unit; we
+		 * don't really support it, yet.  Clear any pending
+		 * error indications.
+		 */
+		__asm __volatile("mcr p13, 0, %0, c0, c1, 0"
+			:
+			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
+
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_writethrough_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
