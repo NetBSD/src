@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 2003/10/06 05:28:05 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 2004/04/30 08:11:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Matt Fredette
@@ -51,8 +51,8 @@ __asm("\n"
 "	.text				\n"
 "	.align	4			\n"
 "	.globl	_start			\n"
-"	.globl	_start			\n"
-"	.type	__start,@function	\n"
+"	.globl	__start			\n"
+"	.type	_start,@function	\n"
 "	.type	__start,@function	\n"
 "_start:				\n"
 "__start:				\n"
@@ -152,7 +152,7 @@ ___start(ps_strings, cleanup, obj, dp)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.4 2003/10/06 05:28:05 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5 2004/04/30 08:11:37 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
