@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.22 1998/08/28 14:45:46 matt Exp $	*/
+/*	$NetBSD: rrs.c,v 1.23 1998/09/03 19:17:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -725,6 +725,7 @@ consider_rrs_section_lengths()
 	if (number_of_gotslots > 1)
 		got_symbol->flags |= GS_REFERENCED;
 
+#if 0
 	if (number_of_jmpslots > 1) {
 		if (plt_symbol == NULL) {
 			plt_symbol = getsym(PLT_SYM);
@@ -732,7 +733,7 @@ consider_rrs_section_lengths()
 		}
 		plt_symbol->flags |= GS_REFERENCED;
 	}
-
+#endif
 
 	/* Next, allocate relocs, got and plt */
 	n = reserved_rrs_relocs * sizeof(struct relocation_info);
@@ -888,7 +889,10 @@ relocate_rrs_addresses()
 		got_symbol->value = rrs_sdt.sdt_got + got_origin;
 		rrs_sdt.sdt_plt = rrs_sdt.sdt_got +
 				  number_of_gotslots * sizeof(got_t);
-		got_symbol->value = rrs_sdt.sdt_plt;
+#if 0
+		if (plt_symbol != NULL)
+			plt_symbol->value = rrs_sdt.sdt_plt;
+#endif
 		return;
 	}
 
@@ -941,7 +945,9 @@ relocate_rrs_addresses()
 	 * The value `&__DYNAMIC' is in the GOT table at offset 0.
 	 */
 	got_symbol->value = rrs_sdt.sdt_got + got_origin;
+#if 0
 	plt_symbol->value = rrs_sdt.sdt_plt;
+#endif
 	*GOTP(0) = dynamic_symbol->value = rrs_data_start;
 
 }
