@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.62.6.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62.6.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,8 @@ pipespace(pipe, size)
 	 * Allocate pageable virtual address space. Physical memory is
 	 * allocated on demand.
 	 */
-	buffer = (caddr_t) uvm_km_valloc(kernel_map, round_page(size));
+	buffer = (caddr_t) uvm_km_alloc(kernel_map, round_page(size), 0,
+	    UVM_KMF_PAGEABLE);
 	if (buffer == NULL)
 		return (ENOMEM);
 
@@ -635,7 +636,8 @@ pipe_loan_alloc(wpipe, npages)
 	vsize_t len;
 
 	len = (vsize_t)npages << PAGE_SHIFT;
-	wpipe->pipe_map.kva = uvm_km_valloc_wait(kernel_map, len);
+	wpipe->pipe_map.kva = uvm_km_alloc(kernel_map, len, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (wpipe->pipe_map.kva == 0)
 		return (ENOMEM);
 
@@ -656,7 +658,7 @@ pipe_loan_free(wpipe)
 	vsize_t len;
 
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
-	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len);
+	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
 	wpipe->pipe_map.kva = 0;
 	amountpipekva -= len;
 	free(wpipe->pipe_map.pgs, M_PIPE);
@@ -1292,7 +1294,7 @@ pipe_free_kmem(pipe)
 		amountpipekva -= pipe->pipe_buffer.size;
 		uvm_km_free(kernel_map,
 			(vaddr_t)pipe->pipe_buffer.buffer,
-			pipe->pipe_buffer.size);
+			pipe->pipe_buffer.size, UVM_KMF_PAGEABLE);
 		pipe->pipe_buffer.buffer = NULL;
 	}
 #ifndef PIPE_NODIRECT

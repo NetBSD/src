@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.13 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.13.6.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.13 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.13.6.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -239,8 +239,8 @@ debug_malloc_allocate_free(int wait)
 	if (md == NULL)
 		return;
 
-	va = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE * 2,
-	    UVM_KMF_VALLOC | (wait ? UVM_KMF_NOWAIT : 0));
+	va = uvm_km_alloc(kmem_map, PAGE_SIZE * 2, 0,
+	    UVM_KMF_VAONLY | (wait ? UVM_KMF_NOWAIT : 0));
 	if (va == 0) {
 		pool_put(&debug_malloc_pool, md);
 		return;
@@ -258,7 +258,8 @@ debug_malloc_allocate_free(int wait)
 			break;
 
 		if (wait == 0) {
-			uvm_unmap(kmem_map, va, va + PAGE_SIZE * 2);
+			uvm_km_free(kmem_map, va, va + PAGE_SIZE * 2,
+			    UVM_KMF_VAONLY);
 			pool_put(&debug_malloc_pool, md);
 			return;
 		}

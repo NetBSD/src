@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.191 2004/10/01 16:30:52 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.191.6.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191.6.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -442,7 +442,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
+	argp = (char *) uvm_km_alloc(exec_map, NCARGS, 0,
+	    UVM_KMF_PAGEABLE|UVM_KMF_WAITVA);
 #ifdef DIAGNOSTIC
 	if (argp == (vaddr_t) 0)
 		panic("execve: argp == NULL");
@@ -762,7 +763,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	doexechooks(p);
 
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 
@@ -853,7 +854,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
  freehdr:
 	l->l_flag |= oldlwpflags;
@@ -881,7 +882,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 

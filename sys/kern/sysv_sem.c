@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.55 2004/10/07 05:34:09 briggs Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.55.6.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.55 2004/10/07 05:34:09 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.55.6.1 2005/01/25 12:59:35 yamt Exp $");
 
 #define SYSVSEM
 
@@ -89,7 +89,9 @@ seminit()
 	sz = seminfo.semmni * sizeof(struct semid_ds) +
 	    seminfo.semmns * sizeof(struct __sem) +
 	    seminfo.semmnu * seminfo.semusz;
-	if ((v = uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+	if (v == 0)
 		panic("sysv_sem: cannot allocate memory");
 	sema = (void *)v;
 	sem = (void *)(sema + seminfo.semmni);

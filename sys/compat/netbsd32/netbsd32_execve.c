@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.18 2004/02/25 18:15:45 drochner Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.18.10.1 2005/01/25 12:59:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.18 2004/02/25 18:15:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.18.10.1 2005/01/25 12:59:57 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -153,7 +153,8 @@ netbsd32_execve2(l, uap, retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
+	argp = (char *) uvm_km_alloc(exec_map, NCARGS, 0,
+	    UVM_KMF_PAGEABLE|UVM_KMF_WAITVA);
 #ifdef DIAGNOSTIC
 	if (argp == (vaddr_t) 0)
 		panic("netbsd32_execve: argp == NULL");
@@ -421,7 +422,7 @@ netbsd32_execve2(l, uap, retval)
 
 	doexechooks(p);
 
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
@@ -492,7 +493,7 @@ bad:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
 freehdr:
 #if defined(LKM) || defined(_LKM)
@@ -520,7 +521,7 @@ exec_abort:
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
-	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
