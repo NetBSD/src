@@ -20,8 +20,8 @@
 void	setroot __P((void));
 static	int getstr __P((char *, int));
 static	int findblkmajor __P((struct dkdevice *));
-static	struct device *getdisk __P((char *, int, int, dev_t *));
-static	struct device *parsedisk __P((char *, int, int, dev_t *));
+static	struct dkdevice *getdisk __P((char *, int, int, dev_t *));
+static	struct dkdevice *parsedisk __P((char *, int, int, dev_t *));
 
 /*
  * The following several variables are related to
@@ -61,47 +61,49 @@ swapconf()
 #define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 struct	device *bootdv;
+struct	dkdevice *bootdk;
 
 #define	PARTITIONMASK	0x7
 #define	PARTITIONSHIFT	3
 
 static int
-findblkmajor(dv)
-	register struct dkdevice *dv;
+findblkmajor(dk)
+	register struct dkdevice *dk;
 {
 	register int i;
 
 	for (i = 0; i < nblkdev; ++i)
 		if ((void (*)(struct buf *))bdevsw[i].d_strategy ==
-		    dv->dk_driver->d_strategy)
+		    dk->dk_driver->d_strategy)
 			return i;
 	return -1;
 }
 
-static struct device *
+static struct dkdevice *
 getdisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
 	dev_t *devp;
 {
-	register struct device *dv;
+	register struct dkdevice *dk;
 
-	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
+	dk = parsedisk(str, len, defpart, devp);
+	if (!dk) {
 		printf("use one of:");
-		for (dv = alldevs; dv != NULL; dv = dv->dv_next)
-			if (dv->dv_class == DV_DISK)
-				printf(" %s[a-h]", dv->dv_xname);
+		for (dk = dkhead; dk; dk = dk->dk_next)
+			printf(" %s[a-h]", dk->dk_device->dv_xname);
 		printf("\n");
 	}
-	return dv;
+	return dk;
 }
 
-static struct device *
+static struct dkdevice *
 parsedisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
 	dev_t *devp;
 {
+	register struct dkdevice *dk;
 	register struct device *dv;
 	register char *cp;
 	int majdev, mindev, part;
@@ -115,16 +117,17 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
-	for (dv = alldevs; dv != NULL; dv = dv->dv_next)
-		if (dv->dv_class == DV_DISK &&
-		    strcmp(str, dv->dv_xname) == 0) {
-			majdev = findblkmajor((struct dkdevice *)dv);
+	for (dk = dkhead; dk; dk = dk->dk_next) {
+		dv = dk->dk_device;
+		if (strcmp(str, dv->dv_xname) == 0) {
+			majdev = findblkmajor(dk);
 			if (majdev < 0)
 				panic("parsedisk");
 			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
 			*devp = makedev(majdev, mindev);
-			return (dv);
+			return (dk);
 		}
+	}
 
 	return (NULL);
 }
@@ -139,6 +142,7 @@ setroot()
 {
 	register struct swdevt *swp;
 	register struct device *dv;
+	register struct dkdevice *dk;
 	register int len, majdev, mindev, part;
 	dev_t nrootdev, nswapdev;
 	char buf[128];
@@ -154,7 +158,7 @@ setroot()
 			printf("root device");
 			if (bootdv)
 				printf(" (default %s%c)", bootdv->dv_xname,
-				       (minor(bootdev) & PARTITIONMASK) + 'a');
+					(minor(bootdev) & PARTITIONMASK) + 'a');
 			printf("? ");
 			len = getstr(buf, sizeof(buf));
 			if (bootdv && len == 0) {
@@ -164,17 +168,19 @@ setroot()
 #ifdef GENERIC
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
-				dv = getdisk(buf, len, 1, &nrootdev);
-				if (dv != NULL) {
-					bootdv = dv;
+				dk = getdisk(buf, len, 1, &nrootdev);
+				if (dk) {
+					bootdk = dk;
+					bootdv = dk->dk_device;
 					nswapdev = nrootdev;
 					goto gotswap;
 				}
 			}
 #endif
-			dv = getdisk(buf, len, 0, &nrootdev);
-			if (dv != NULL) {
+			dk = getdisk(buf, len, 0, &nrootdev);
+			if (dk) {
 				bootdv = dv;
+				bootdv = dk->dk_device;
 				break;
 			}
 		}
@@ -186,7 +192,7 @@ setroot()
 				    (minor(nrootdev) & ~ PARTITIONMASK) | 1);
 				break;
 			}
-			if (getdisk(buf, len, 1, &nswapdev) != NULL)
+			if (getdisk(buf, len, 1, &nswapdev))
 				break;
 		}
 #ifdef GENERIC
@@ -201,7 +207,7 @@ setroot()
 	}
 
 	/* XXX currently there's no way to set RB_DFLTROOT... */
-	if (boothowto & RB_DFLTROOT || bootdv == NULL)
+	if (boothowto & RB_DFLTROOT || !bootdv)
 		return;
 
 	switch (bootdv->dv_class) {
@@ -214,7 +220,7 @@ setroot()
 
 #if defined(FFS) || defined(LFS)
 	    case DV_DISK:
-		majdev = findblkmajor((struct dkdevice *)bootdv);
+		majdev = findblkmajor(bootdk);
 		if (majdev < 0)
 			return;
 		part = 0;
