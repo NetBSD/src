@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.6 2004/01/05 11:17:14 jmmv Exp $ */
+/* $NetBSD: selection.c,v 1.7 2004/01/05 12:01:52 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.6 2004/01/05 11:17:14 jmmv Exp $");
+__RCSID("$NetBSD: selection.c,v 1.7 2004/01/05 12:01:52 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: selection.c,v 1.6 2004/01/05 11:17:14 jmmv Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,7 +62,7 @@ __RCSID("$NetBSD: selection.c,v 1.6 2004/01/05 11:17:14 jmmv Exp $");
 int  selection_startup(struct mouse *m);
 int  selection_cleanup(void);
 void selection_wsmouse_event(struct wscons_event);
-void selection_wscons_event(struct wscons_event);
+void selection_wscons_event(struct wscons_event, bool);
 void selection_poll_timeout(void);
 
 struct mode_bootstrap Selection_Mode = {
@@ -309,21 +310,23 @@ selection_wsmouse_event(struct wscons_event evt)
 
 /* Parse wscons status events. */
 void
-selection_wscons_event(struct wscons_event evt)
+selection_wscons_event(struct wscons_event evt, bool preclose)
 {
 
 	switch (evt.type) {
 	case WSCONS_EVENT_SCREEN_SWITCH:
-		if (Selmouse.sm_selecting)
-			selarea_hide();
-		cursor_hide();
+		if (preclose) {
+			if (Selmouse.sm_selecting)
+				selarea_hide();
+			cursor_hide();
+		} else {
+			if (!Selmouse.sm_mouse->m_disabled)
+				open_tty(evt.value);
 
-		if (!Selmouse.sm_mouse->m_disabled)
-			open_tty(evt.value);
-
-		cursor_show();
-		if (Selmouse.sm_selecting)
-			selarea_show();
+			cursor_show();
+			if (Selmouse.sm_selecting)
+				selarea_show();
+		}
 
 		break;
 	}
