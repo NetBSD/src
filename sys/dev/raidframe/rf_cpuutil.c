@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cpuutil.c,v 1.2 1999/01/26 02:33:51 oster Exp $	*/
+/*	$NetBSD: rf_cpuutil.c,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,78 +39,82 @@
 #include "rf_sys.h"
 
 
-int rf_ConfigureCpuMonitor(listp)
-  RF_ShutdownList_t  **listp;
+int 
+rf_ConfigureCpuMonitor(listp)
+	RF_ShutdownList_t **listp;
 {
 #ifdef AIX
-  int rc;
+	int     rc;
 
-  rc = knlist(namelist, 1, sizeof(struct nlist));
-  if (rc) {
-    RF_ERRORMSG("Could not knlist() to config CPU monitor\n");
-    return(errno);
-  }
-  if (namelist[0].n_value == 0) {
-    RF_ERRORMSG("Got bogus results from knlist() for CPU monitor\n");
-    return(EIO);
-  }
-  sysinfo_offset = namelist[0].n_value;
-  kmem_fd = open("/dev/kmem", O_RDONLY);
-  if (kmem_fd < 0) {
-    perror("/dev/kmem");
-    return(errno);
-  }
-  rc = rf_ShutdownCreate(listp, rf_ShutdownCpuMonitor, NULL);
-  if (rc) {
-    RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-			__LINE__, rc);
-    rf_ShutdownCpuMonitor(NULL);
-    return(rc);
-  }
-#endif /* AIX */
-  return(0);
+	rc = knlist(namelist, 1, sizeof(struct nlist));
+	if (rc) {
+		RF_ERRORMSG("Could not knlist() to config CPU monitor\n");
+		return (errno);
+	}
+	if (namelist[0].n_value == 0) {
+		RF_ERRORMSG("Got bogus results from knlist() for CPU monitor\n");
+		return (EIO);
+	}
+	sysinfo_offset = namelist[0].n_value;
+	kmem_fd = open("/dev/kmem", O_RDONLY);
+	if (kmem_fd < 0) {
+		perror("/dev/kmem");
+		return (errno);
+	}
+	rc = rf_ShutdownCreate(listp, rf_ShutdownCpuMonitor, NULL);
+	if (rc) {
+		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
+		    __LINE__, rc);
+		rf_ShutdownCpuMonitor(NULL);
+		return (rc);
+	}
+#endif				/* AIX */
+	return (0);
 }
 
-void rf_start_cpu_monitor()
+void 
+rf_start_cpu_monitor()
 {
 #ifdef AIX
-  off_t off;
-  int rc;
+	off_t   off;
+	int     rc;
 
-  off = lseek(kmem_fd, sysinfo_offset, SEEK_SET);
-  RF_ASSERT(off == sysinfo_offset);
-  rc = read(kmem_fd, &sysinfo_start, sizeof(struct sysinfo));
-  if (rc != sizeof(struct sysinfo)) {
-    RF_ERRORMSG2("Starting CPU monitor: rc=%d != %d\n", rc,
-      sizeof(struct sysinfo));
-  }
-#endif /* AIX */
+	off = lseek(kmem_fd, sysinfo_offset, SEEK_SET);
+	RF_ASSERT(off == sysinfo_offset);
+	rc = read(kmem_fd, &sysinfo_start, sizeof(struct sysinfo));
+	if (rc != sizeof(struct sysinfo)) {
+		RF_ERRORMSG2("Starting CPU monitor: rc=%d != %d\n", rc,
+		    sizeof(struct sysinfo));
+	}
+#endif				/* AIX */
 }
 
-void rf_stop_cpu_monitor()
+void 
+rf_stop_cpu_monitor()
 {
 #ifdef AIX
-  off_t off;
-  int rc;
+	off_t   off;
+	int     rc;
 
-  off = lseek(kmem_fd, sysinfo_offset, SEEK_SET);
-  RF_ASSERT(off == sysinfo_offset);
-  rc = read(kmem_fd, &sysinfo_stop, sizeof(struct sysinfo));
-  if (rc != sizeof(struct sysinfo)) {
-    RF_ERRORMSG2("Stopping CPU monitor: rc=%d != %d\n", rc,
-      sizeof(struct sysinfo));
-  }
-#endif /* AIX */
+	off = lseek(kmem_fd, sysinfo_offset, SEEK_SET);
+	RF_ASSERT(off == sysinfo_offset);
+	rc = read(kmem_fd, &sysinfo_stop, sizeof(struct sysinfo));
+	if (rc != sizeof(struct sysinfo)) {
+		RF_ERRORMSG2("Stopping CPU monitor: rc=%d != %d\n", rc,
+		    sizeof(struct sysinfo));
+	}
+#endif				/* AIX */
 }
 
-void rf_print_cpu_util(s)
-  char  *s;
+void 
+rf_print_cpu_util(s)
+	char   *s;
 {
 #ifdef AIX
-  long idle;
+	long    idle;
 
-  /* XXX compute a percentage here */
-  idle = (long)(sysinfo_stop.cpu[CPU_IDLE] - sysinfo_start.cpu[CPU_IDLE]);
-  printf("%ld idle ticks during %s.\n", idle, s);
-#endif /* AIX */
+	/* XXX compute a percentage here */
+	idle = (long) (sysinfo_stop.cpu[CPU_IDLE] - sysinfo_start.cpu[CPU_IDLE]);
+	printf("%ld idle ticks during %s.\n", idle, s);
+#endif				/* AIX */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
+/*	$NetBSD: rf_options.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*
  * rf_options.h
  */
@@ -35,23 +35,23 @@
 #define RF_DEFAULT_LOCK_TABLE_SIZE 256
 
 typedef struct RF_DebugNames_s {
-	char  *name;
-	long  *ptr;
-} RF_DebugName_t;
+	char   *name;
+	long   *ptr;
+}       RF_DebugName_t;
 
 extern RF_DebugName_t rf_debugNames[];
 
 #ifdef RF_DBG_OPTION
 #undef RF_DBG_OPTION
-#endif /* RF_DBG_OPTION */
+#endif				/* RF_DBG_OPTION */
 
 #ifdef __STDC__
 #define RF_DBG_OPTION(_option_,_defval_) extern long rf_##_option_;
-#else /* __STDC__ */
+#else				/* __STDC__ */
 #define RF_DBG_OPTION(_option_,_defval_) extern long rf_/**/_option_;
-#endif /* __STDC__ */
+#endif				/* __STDC__ */
 #include "rf_optnames.h"
 
-void rf_ResetDebugOptions(void);
+void    rf_ResetDebugOptions(void);
 
-#endif /* !_RF__RF_OPTIONS_H_ */
+#endif				/* !_RF__RF_OPTIONS_H_ */

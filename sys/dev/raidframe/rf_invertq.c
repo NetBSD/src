@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_invertq.c,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
+/*	$NetBSD: rf_invertq.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,4 +29,3 @@
 #include "rf_archs.h"
 #include "rf_pqdeg.h"
 #include "rf_invertq.h"
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_hist.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
+/*	$NetBSD: rf_hist.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
 /*
  * rf_hist.h
  *
@@ -53,4 +53,4 @@ typedef RF_uint32 RF_Hist_t;
 		_hist_[(val - RF_HIST_MIN_VAL) / RF_HIST_RESOLUTION]++; \
 }
 
-#endif /* !_RF__RF_HIST_H_ */
+#endif				/* !_RF__RF_HIST_H_ */

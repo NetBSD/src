@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.2 1999/01/26 02:34:00 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,55 +57,55 @@
  *
  ****************************************************************************************/
 
-int rf_RewriteParity(raidPtr)
-  RF_Raid_t  *raidPtr;
+int 
+rf_RewriteParity(raidPtr)
+	RF_Raid_t *raidPtr;
 {
-  RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
-  RF_AccessStripeMapHeader_t *asm_h;
-  int old_pctg, new_pctg, rc;
-  RF_PhysDiskAddr_t pda;
-  RF_SectorNum_t i;
+	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
+	RF_AccessStripeMapHeader_t *asm_h;
+	int     old_pctg, new_pctg, rc;
+	RF_PhysDiskAddr_t pda;
+	RF_SectorNum_t i;
 
-  pda.startSector = 0;
-  pda.numSector   = raidPtr->Layout.sectorsPerStripeUnit;
-  old_pctg = -1;
+	pda.startSector = 0;
+	pda.numSector = raidPtr->Layout.sectorsPerStripeUnit;
+	old_pctg = -1;
 
 /* rf_verifyParityDebug=1; */
-  for (i=0; i<raidPtr->totalSectors; i+=layoutPtr->dataSectorsPerStripe) {
-    asm_h = rf_MapAccess(raidPtr, i, layoutPtr->dataSectorsPerStripe, NULL, RF_DONT_REMAP);
-    rc = rf_VerifyParity(raidPtr, asm_h->stripeMap, 1, 0);
-    /*     printf("Parity verified: rc=%d\n",rc); */
-    switch (rc) {
-      case RF_PARITY_OKAY:
-      case RF_PARITY_CORRECTED:
-        break;
-      case RF_PARITY_BAD:
-        printf("Parity bad during correction\n");
-        RF_PANIC();
-        break;
-      case RF_PARITY_COULD_NOT_CORRECT:
-        printf("Could not correct bad parity\n");
-        RF_PANIC();
-        break;
-      case RF_PARITY_COULD_NOT_VERIFY:
-        printf("Could not verify parity\n");
-        RF_PANIC();
-        break;
-      default:
-        printf("Bad rc=%d from VerifyParity in RewriteParity\n", rc);
-        RF_PANIC();
-    }
-    rf_FreeAccessStripeMap(asm_h);
-    new_pctg = i*1000/raidPtr->totalSectors;
-    if (new_pctg != old_pctg) {
-    }
-    old_pctg = new_pctg;
-  }
+	for (i = 0; i < raidPtr->totalSectors; i += layoutPtr->dataSectorsPerStripe) {
+		asm_h = rf_MapAccess(raidPtr, i, layoutPtr->dataSectorsPerStripe, NULL, RF_DONT_REMAP);
+		rc = rf_VerifyParity(raidPtr, asm_h->stripeMap, 1, 0);
+		/* printf("Parity verified: rc=%d\n",rc); */
+		switch (rc) {
+		case RF_PARITY_OKAY:
+		case RF_PARITY_CORRECTED:
+			break;
+		case RF_PARITY_BAD:
+			printf("Parity bad during correction\n");
+			RF_PANIC();
+			break;
+		case RF_PARITY_COULD_NOT_CORRECT:
+			printf("Could not correct bad parity\n");
+			RF_PANIC();
+			break;
+		case RF_PARITY_COULD_NOT_VERIFY:
+			printf("Could not verify parity\n");
+			RF_PANIC();
+			break;
+		default:
+			printf("Bad rc=%d from VerifyParity in RewriteParity\n", rc);
+			RF_PANIC();
+		}
+		rf_FreeAccessStripeMap(asm_h);
+		new_pctg = i * 1000 / raidPtr->totalSectors;
+		if (new_pctg != old_pctg) {
+		}
+		old_pctg = new_pctg;
+	}
 #if 1
-  return(0); /* XXX nothing was here.. GO */
+	return (0);		/* XXX nothing was here.. GO */
 #endif
 }
-
 /*****************************************************************************************
  *
  * verify that the parity in a particular stripe is correct.
@@ -115,211 +115,217 @@ int rf_RewriteParity(raidPtr)
  * region defined by the parityPDA.
  *
  ****************************************************************************************/
-int rf_VerifyParity(raidPtr, aasm, correct_it, flags)
-  RF_Raid_t             *raidPtr;
-  RF_AccessStripeMap_t  *aasm;
-  int                    correct_it;
-  RF_RaidAccessFlags_t   flags;
+int 
+rf_VerifyParity(raidPtr, aasm, correct_it, flags)
+	RF_Raid_t *raidPtr;
+	RF_AccessStripeMap_t *aasm;
+	int     correct_it;
+	RF_RaidAccessFlags_t flags;
 {
-  RF_PhysDiskAddr_t *parityPDA;
-  RF_AccessStripeMap_t *doasm;
-  RF_LayoutSW_t *lp;
-  int lrc, rc;
+	RF_PhysDiskAddr_t *parityPDA;
+	RF_AccessStripeMap_t *doasm;
+	RF_LayoutSW_t *lp;
+	int     lrc, rc;
 
-  lp = raidPtr->Layout.map;
-  if (lp->faultsTolerated == 0) {
-    /*
-     * There isn't any parity. Call it "okay."
-     */
-    return(RF_PARITY_OKAY);
-  }
-  rc = RF_PARITY_OKAY;
-  if (lp->VerifyParity) {
-    for(doasm=aasm;doasm;doasm=doasm->next) {
-      for(parityPDA=doasm->parityInfo;parityPDA;parityPDA=parityPDA->next) {
-        lrc = lp->VerifyParity(raidPtr, doasm->raidAddress, parityPDA,
-          correct_it, flags);
-        if (lrc > rc) {
-          /* see rf_parityscan.h for why this works */
-          rc = lrc;
-        }
-      }
-    }
-  }
-  else {
-    rc = RF_PARITY_COULD_NOT_VERIFY;
-  }
-  return(rc);
-}
-
-int rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
-  RF_Raid_t             *raidPtr;
-  RF_RaidAddr_t          raidAddr;
-  RF_PhysDiskAddr_t     *parityPDA;
-  int                    correct_it;
-  RF_RaidAccessFlags_t   flags;
-{
-  RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
-  RF_RaidAddr_t startAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, raidAddr);
-  RF_SectorCount_t numsector = parityPDA->numSector;
-  int numbytes  = rf_RaidAddressToByte(raidPtr, numsector);
-  int bytesPerStripe = numbytes * layoutPtr->numDataCol;
-  RF_DagHeader_t *rd_dag_h, *wr_dag_h;          /* read, write dag */
-  RF_DagNode_t *blockNode, *unblockNode, *wrBlock, *wrUnblock;
-  RF_AccessStripeMapHeader_t *asm_h;
-  RF_AccessStripeMap_t *asmap;
-  RF_AllocListElem_t *alloclist;
-  RF_PhysDiskAddr_t *pda;
-  char *pbuf, *buf, *end_p, *p;
-  int i, retcode;
-  RF_ReconUnitNum_t which_ru;
-  RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr, raidAddr, &which_ru);
-  int stripeWidth = layoutPtr->numDataCol + layoutPtr->numParityCol;
-  RF_AccTraceEntry_t tracerec;
-  RF_MCPair_t *mcpair;
-
-  retcode = RF_PARITY_OKAY;
-
-  mcpair = rf_AllocMCPair();
-  rf_MakeAllocList(alloclist);
-  RF_MallocAndAdd(buf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
-  RF_CallocAndAdd(pbuf, 1, numbytes, (char *), alloclist);     /* use calloc to make sure buffer is zeroed */
-  end_p = buf + bytesPerStripe;
-
-  rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
-			   "Rod", alloclist, flags, RF_IO_NORMAL_PRIORITY);
-  blockNode = rd_dag_h->succedents[0];
-  unblockNode = blockNode->succedents[0]->succedents[0];
-
-  /* map the stripe and fill in the PDAs in the dag */
-  asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe, buf, RF_DONT_REMAP);
-  asmap = asm_h->stripeMap;
-  
-  for (pda=asmap->physInfo,i=0; i<layoutPtr->numDataCol; i++,pda=pda->next) {
-    RF_ASSERT(pda);
-    rf_RangeRestrictPDA(raidPtr, parityPDA, pda, 0, 1);
-    RF_ASSERT(pda->numSector != 0);
-    if (rf_TryToRedirectPDA(raidPtr, pda, 0)) goto out;   /* no way to verify parity if disk is dead.  return w/ good status */
-    blockNode->succedents[i]->params[0].p = pda;
-    blockNode->succedents[i]->params[2].v = psID;
-    blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-  }
-
-  RF_ASSERT(!asmap->parityInfo->next);
-  rf_RangeRestrictPDA(raidPtr, parityPDA, asmap->parityInfo, 0, 1);
-  RF_ASSERT(asmap->parityInfo->numSector != 0);
-  if (rf_TryToRedirectPDA(raidPtr, asmap->parityInfo, 1))
-    goto out;
-  blockNode->succedents[layoutPtr->numDataCol]->params[0].p = asmap->parityInfo;
-
-  /* fire off the DAG */
-  bzero((char *)&tracerec,sizeof(tracerec));
-  rd_dag_h->tracerec = &tracerec;
-
-  if (rf_verifyParityDebug) {
-    printf("Parity verify read dag:\n");
-    rf_PrintDAGList(rd_dag_h);
-  }
-
-  RF_LOCK_MUTEX(mcpair->mutex);
-  mcpair->flag = 0;
-  rf_DispatchDAG(rd_dag_h, (void (*)(void *))rf_MCPairWakeupFunc, 
-		 (void *) mcpair);
-  while (!mcpair->flag) 
-	  RF_WAIT_COND(mcpair->cond, mcpair->mutex);
-  RF_UNLOCK_MUTEX(mcpair->mutex);
-  if (rd_dag_h->status != rf_enable) {
-    RF_ERRORMSG("Unable to verify parity:  can't read the stripe\n");
-    retcode = RF_PARITY_COULD_NOT_VERIFY;
-    goto out;
-  }
-
-  for (p=buf; p<end_p; p+=numbytes) {
-    rf_bxor(p, pbuf, numbytes, NULL);
-  }
-  for (i=0; i<numbytes; i++) {
-#if 0
-	  if (pbuf[i]!=0 || buf[bytesPerStripe+i]!=0) {
-	  printf("Bytes: %d %d %d\n",i,pbuf[i],buf[bytesPerStripe+i]);
-	  }
-#endif
-	  if (pbuf[i] != buf[bytesPerStripe+i]) {
-		  if (!correct_it) 
-			  RF_ERRORMSG3("Parity verify error: byte %d of parity is 0x%x should be 0x%x\n",
-			       i,(u_char) buf[bytesPerStripe+i],(u_char) pbuf[i]);
-		  retcode = RF_PARITY_BAD;
-		  break;
-	  }
-  }
-
-  if (retcode && correct_it) {
-    wr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, numbytes, pbuf, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
-			     "Wnp", alloclist, flags, RF_IO_NORMAL_PRIORITY);
-    wrBlock = wr_dag_h->succedents[0]; wrUnblock = wrBlock->succedents[0]->succedents[0];
-    wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
-    wrBlock->succedents[0]->params[2].v = psID;
-    wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-    bzero((char *)&tracerec,sizeof(tracerec));
-    wr_dag_h->tracerec = &tracerec;
-    if (rf_verifyParityDebug) {
-      printf("Parity verify write dag:\n");
-      rf_PrintDAGList(wr_dag_h);
-    }
-    RF_LOCK_MUTEX(mcpair->mutex);
-    mcpair->flag = 0;
-    rf_DispatchDAG(wr_dag_h, (void (*)(void *))rf_MCPairWakeupFunc, 
-		   (void *) mcpair);
-    while (!mcpair->flag)
-      RF_WAIT_COND(mcpair->cond, mcpair->mutex);
-    RF_UNLOCK_MUTEX(mcpair->mutex);
-    if (wr_dag_h->status != rf_enable) {
-      RF_ERRORMSG("Unable to correct parity in VerifyParity:  can't write the stripe\n");
-      retcode = RF_PARITY_COULD_NOT_CORRECT;
-    }
-    rf_FreeDAG(wr_dag_h);
-    if (retcode == RF_PARITY_BAD)
-      retcode = RF_PARITY_CORRECTED;
-  }
-
-out:
-  rf_FreeAccessStripeMap(asm_h);
-  rf_FreeAllocList(alloclist);
-  rf_FreeDAG(rd_dag_h);
-  rf_FreeMCPair(mcpair);
-  return(retcode);
-}
-
-int rf_TryToRedirectPDA(raidPtr, pda, parity)
-  RF_Raid_t          *raidPtr;
-  RF_PhysDiskAddr_t  *pda;
-  int                 parity;
-{
-  if (raidPtr->Disks[pda->row][pda->col].status == rf_ds_reconstructing) {
-    if (rf_CheckRUReconstructed(raidPtr->reconControl[pda->row]->reconMap, pda->startSector)) {
-      if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
-	RF_RowCol_t or = pda->row, oc = pda->col;
-	RF_SectorNum_t os = pda->startSector;
-	if (parity) {
-	  (raidPtr->Layout.map->MapParity)(raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
-	  if (rf_verifyParityDebug) printf("VerifyParity: Redir P r %d c %d sect %ld -> r %d c %d sect %ld\n",
-					or,oc,(long)os,pda->row,pda->col,(long)pda->startSector);
-	} else {
-	  (raidPtr->Layout.map->MapSector)(raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
-	  if (rf_verifyParityDebug) printf("VerifyParity: Redir D r %d c %d sect %ld -> r %d c %d sect %ld\n",
-					or,oc,(long)os,pda->row,pda->col,(long)pda->startSector);
+	lp = raidPtr->Layout.map;
+	if (lp->faultsTolerated == 0) {
+		/*
+	         * There isn't any parity. Call it "okay."
+	         */
+		return (RF_PARITY_OKAY);
 	}
-      } else {
-	RF_RowCol_t spRow = raidPtr->Disks[pda->row][pda->col].spareRow;
-	RF_RowCol_t spCol = raidPtr->Disks[pda->row][pda->col].spareCol;
-	pda->row = spRow;
-	pda->col = spCol;
-      }
-    }
-  }
-  if (RF_DEAD_DISK(raidPtr->Disks[pda->row][pda->col].status)) return(1);
-  return(0);
+	rc = RF_PARITY_OKAY;
+	if (lp->VerifyParity) {
+		for (doasm = aasm; doasm; doasm = doasm->next) {
+			for (parityPDA = doasm->parityInfo; parityPDA; parityPDA = parityPDA->next) {
+				lrc = lp->VerifyParity(raidPtr, doasm->raidAddress, parityPDA,
+				    correct_it, flags);
+				if (lrc > rc) {
+					/* see rf_parityscan.h for why this
+					 * works */
+					rc = lrc;
+				}
+			}
+		}
+	} else {
+		rc = RF_PARITY_COULD_NOT_VERIFY;
+	}
+	return (rc);
 }
 
+int 
+rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
+	RF_Raid_t *raidPtr;
+	RF_RaidAddr_t raidAddr;
+	RF_PhysDiskAddr_t *parityPDA;
+	int     correct_it;
+	RF_RaidAccessFlags_t flags;
+{
+	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
+	RF_RaidAddr_t startAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, raidAddr);
+	RF_SectorCount_t numsector = parityPDA->numSector;
+	int     numbytes = rf_RaidAddressToByte(raidPtr, numsector);
+	int     bytesPerStripe = numbytes * layoutPtr->numDataCol;
+	RF_DagHeader_t *rd_dag_h, *wr_dag_h;	/* read, write dag */
+	RF_DagNode_t *blockNode, *unblockNode, *wrBlock, *wrUnblock;
+	RF_AccessStripeMapHeader_t *asm_h;
+	RF_AccessStripeMap_t *asmap;
+	RF_AllocListElem_t *alloclist;
+	RF_PhysDiskAddr_t *pda;
+	char   *pbuf, *buf, *end_p, *p;
+	int     i, retcode;
+	RF_ReconUnitNum_t which_ru;
+	RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr, raidAddr, &which_ru);
+	int     stripeWidth = layoutPtr->numDataCol + layoutPtr->numParityCol;
+	RF_AccTraceEntry_t tracerec;
+	RF_MCPair_t *mcpair;
+
+	retcode = RF_PARITY_OKAY;
+
+	mcpair = rf_AllocMCPair();
+	rf_MakeAllocList(alloclist);
+	RF_MallocAndAdd(buf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
+	RF_CallocAndAdd(pbuf, 1, numbytes, (char *), alloclist);	/* use calloc to make
+									 * sure buffer is zeroed */
+	end_p = buf + bytesPerStripe;
+
+	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
+	    "Rod", alloclist, flags, RF_IO_NORMAL_PRIORITY);
+	blockNode = rd_dag_h->succedents[0];
+	unblockNode = blockNode->succedents[0]->succedents[0];
+
+	/* map the stripe and fill in the PDAs in the dag */
+	asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe, buf, RF_DONT_REMAP);
+	asmap = asm_h->stripeMap;
+
+	for (pda = asmap->physInfo, i = 0; i < layoutPtr->numDataCol; i++, pda = pda->next) {
+		RF_ASSERT(pda);
+		rf_RangeRestrictPDA(raidPtr, parityPDA, pda, 0, 1);
+		RF_ASSERT(pda->numSector != 0);
+		if (rf_TryToRedirectPDA(raidPtr, pda, 0))
+			goto out;	/* no way to verify parity if disk is
+					 * dead.  return w/ good status */
+		blockNode->succedents[i]->params[0].p = pda;
+		blockNode->succedents[i]->params[2].v = psID;
+		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+	}
+
+	RF_ASSERT(!asmap->parityInfo->next);
+	rf_RangeRestrictPDA(raidPtr, parityPDA, asmap->parityInfo, 0, 1);
+	RF_ASSERT(asmap->parityInfo->numSector != 0);
+	if (rf_TryToRedirectPDA(raidPtr, asmap->parityInfo, 1))
+		goto out;
+	blockNode->succedents[layoutPtr->numDataCol]->params[0].p = asmap->parityInfo;
+
+	/* fire off the DAG */
+	bzero((char *) &tracerec, sizeof(tracerec));
+	rd_dag_h->tracerec = &tracerec;
+
+	if (rf_verifyParityDebug) {
+		printf("Parity verify read dag:\n");
+		rf_PrintDAGList(rd_dag_h);
+	}
+	RF_LOCK_MUTEX(mcpair->mutex);
+	mcpair->flag = 0;
+	rf_DispatchDAG(rd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
+	    (void *) mcpair);
+	while (!mcpair->flag)
+		RF_WAIT_COND(mcpair->cond, mcpair->mutex);
+	RF_UNLOCK_MUTEX(mcpair->mutex);
+	if (rd_dag_h->status != rf_enable) {
+		RF_ERRORMSG("Unable to verify parity:  can't read the stripe\n");
+		retcode = RF_PARITY_COULD_NOT_VERIFY;
+		goto out;
+	}
+	for (p = buf; p < end_p; p += numbytes) {
+		rf_bxor(p, pbuf, numbytes, NULL);
+	}
+	for (i = 0; i < numbytes; i++) {
+#if 0
+		if (pbuf[i] != 0 || buf[bytesPerStripe + i] != 0) {
+			printf("Bytes: %d %d %d\n", i, pbuf[i], buf[bytesPerStripe + i]);
+		}
+#endif
+		if (pbuf[i] != buf[bytesPerStripe + i]) {
+			if (!correct_it)
+				RF_ERRORMSG3("Parity verify error: byte %d of parity is 0x%x should be 0x%x\n",
+				    i, (u_char) buf[bytesPerStripe + i], (u_char) pbuf[i]);
+			retcode = RF_PARITY_BAD;
+			break;
+		}
+	}
+
+	if (retcode && correct_it) {
+		wr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, numbytes, pbuf, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
+		    "Wnp", alloclist, flags, RF_IO_NORMAL_PRIORITY);
+		wrBlock = wr_dag_h->succedents[0];
+		wrUnblock = wrBlock->succedents[0]->succedents[0];
+		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
+		wrBlock->succedents[0]->params[2].v = psID;
+		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		bzero((char *) &tracerec, sizeof(tracerec));
+		wr_dag_h->tracerec = &tracerec;
+		if (rf_verifyParityDebug) {
+			printf("Parity verify write dag:\n");
+			rf_PrintDAGList(wr_dag_h);
+		}
+		RF_LOCK_MUTEX(mcpair->mutex);
+		mcpair->flag = 0;
+		rf_DispatchDAG(wr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
+		    (void *) mcpair);
+		while (!mcpair->flag)
+			RF_WAIT_COND(mcpair->cond, mcpair->mutex);
+		RF_UNLOCK_MUTEX(mcpair->mutex);
+		if (wr_dag_h->status != rf_enable) {
+			RF_ERRORMSG("Unable to correct parity in VerifyParity:  can't write the stripe\n");
+			retcode = RF_PARITY_COULD_NOT_CORRECT;
+		}
+		rf_FreeDAG(wr_dag_h);
+		if (retcode == RF_PARITY_BAD)
+			retcode = RF_PARITY_CORRECTED;
+	}
+out:
+	rf_FreeAccessStripeMap(asm_h);
+	rf_FreeAllocList(alloclist);
+	rf_FreeDAG(rd_dag_h);
+	rf_FreeMCPair(mcpair);
+	return (retcode);
+}
+
+int 
+rf_TryToRedirectPDA(raidPtr, pda, parity)
+	RF_Raid_t *raidPtr;
+	RF_PhysDiskAddr_t *pda;
+	int     parity;
+{
+	if (raidPtr->Disks[pda->row][pda->col].status == rf_ds_reconstructing) {
+		if (rf_CheckRUReconstructed(raidPtr->reconControl[pda->row]->reconMap, pda->startSector)) {
+			if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
+				RF_RowCol_t or = pda->row, oc = pda->col;
+				RF_SectorNum_t os = pda->startSector;
+				if (parity) {
+					(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+					if (rf_verifyParityDebug)
+						printf("VerifyParity: Redir P r %d c %d sect %ld -> r %d c %d sect %ld\n",
+						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+				} else {
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+					if (rf_verifyParityDebug)
+						printf("VerifyParity: Redir D r %d c %d sect %ld -> r %d c %d sect %ld\n",
+						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+				}
+			} else {
+				RF_RowCol_t spRow = raidPtr->Disks[pda->row][pda->col].spareRow;
+				RF_RowCol_t spCol = raidPtr->Disks[pda->row][pda->col].spareCol;
+				pda->row = spRow;
+				pda->col = spCol;
+			}
+		}
+	}
+	if (RF_DEAD_DISK(raidPtr->Disks[pda->row][pda->col].status))
+		return (1);
+	return (0);
+}
 /*****************************************************************************************
  *
  * currently a stub.
@@ -338,13 +344,13 @@ int rf_TryToRedirectPDA(raidPtr, pda, parity)
  * course not the case for the new parity.
  *
  ****************************************************************************************/
-int rf_VerifyDegrModeWrite(raidPtr, asmh)
-  RF_Raid_t                   *raidPtr;
-  RF_AccessStripeMapHeader_t  *asmh;
+int 
+rf_VerifyDegrModeWrite(raidPtr, asmh)
+	RF_Raid_t *raidPtr;
+	RF_AccessStripeMapHeader_t *asmh;
 {
-  return(0);
+	return (0);
 }
-
 /* creates a simple DAG with a header, a block-recon node at level 1,
  * nNodes nodes at level 2, an unblock-recon node at level 3, and
  * a terminator node at level 4.  The stripe address field in
@@ -354,56 +360,57 @@ int rf_VerifyDegrModeWrite(raidPtr, asmh)
  * commit point is established at unblock node - this means that any
  * failure during dag execution causes the dag to fail
  */
-RF_DagHeader_t *rf_MakeSimpleDAG(raidPtr, nNodes, bytesPerSU, databuf, doFunc, undoFunc, name, alloclist, flags, priority)
-  RF_Raid_t              *raidPtr;
-  int                     nNodes;
-  int                     bytesPerSU;
-  char                   *databuf;
-  int                   (*doFunc)(RF_DagNode_t *node);
-  int                   (*undoFunc)(RF_DagNode_t *node);
-  char                   *name;        /* node names at the second level */
-  RF_AllocListElem_t     *alloclist;
-  RF_RaidAccessFlags_t    flags;
-  int                     priority;
+RF_DagHeader_t *
+rf_MakeSimpleDAG(raidPtr, nNodes, bytesPerSU, databuf, doFunc, undoFunc, name, alloclist, flags, priority)
+	RF_Raid_t *raidPtr;
+	int     nNodes;
+	int     bytesPerSU;
+	char   *databuf;
+	int     (*doFunc) (RF_DagNode_t * node);
+	int     (*undoFunc) (RF_DagNode_t * node);
+	char   *name;		/* node names at the second level */
+	RF_AllocListElem_t *alloclist;
+	RF_RaidAccessFlags_t flags;
+	int     priority;
 {
-  RF_DagHeader_t *dag_h;
-  RF_DagNode_t *nodes, *termNode, *blockNode, *unblockNode;
-  int i;
-  
-  /* create the nodes, the block & unblock nodes, and the terminator node */
-  RF_CallocAndAdd(nodes, nNodes+3, sizeof(RF_DagNode_t), (RF_DagNode_t *), alloclist);
-  blockNode   = &nodes[nNodes];
-  unblockNode = blockNode+1;
-  termNode   = unblockNode+1;
+	RF_DagHeader_t *dag_h;
+	RF_DagNode_t *nodes, *termNode, *blockNode, *unblockNode;
+	int     i;
 
-  dag_h = rf_AllocDAGHeader();
-  dag_h->raidPtr = (void *) raidPtr;
-  dag_h->allocList = NULL;                               /* we won't use this alloc list */
-  dag_h->status = rf_enable;
-  dag_h->numSuccedents = 1;
-  dag_h->creator = "SimpleDAG";
+	/* create the nodes, the block & unblock nodes, and the terminator
+	 * node */
+	RF_CallocAndAdd(nodes, nNodes + 3, sizeof(RF_DagNode_t), (RF_DagNode_t *), alloclist);
+	blockNode = &nodes[nNodes];
+	unblockNode = blockNode + 1;
+	termNode = unblockNode + 1;
 
-  /* this dag can not commit until the unblock node is reached
-   * errors prior to the commit point imply the dag has failed
-   */
-  dag_h->numCommitNodes = 1;
-  dag_h->numCommits = 0;
+	dag_h = rf_AllocDAGHeader();
+	dag_h->raidPtr = (void *) raidPtr;
+	dag_h->allocList = NULL;/* we won't use this alloc list */
+	dag_h->status = rf_enable;
+	dag_h->numSuccedents = 1;
+	dag_h->creator = "SimpleDAG";
 
-  dag_h->succedents[0] = blockNode;
-  rf_InitNode(blockNode,   rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, nNodes, 0, 0, 0, dag_h, "Nil", alloclist);
-  rf_InitNode(unblockNode, rf_wait, RF_TRUE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, 1, nNodes, 0, 0, dag_h, "Nil", alloclist);
-  unblockNode->succedents[0] = termNode;
-  for (i=0; i<nNodes; i++) {
-    blockNode->succedents[i] = unblockNode->antecedents[i] = &nodes[i];
-    unblockNode->antType[i] = rf_control;
-    rf_InitNode(&nodes[i], rf_wait, RF_FALSE, doFunc, undoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, name, alloclist);
-    nodes[i].succedents[0] =  unblockNode;
-    nodes[i].antecedents[0] = blockNode;
-    nodes[i].antType[0] = rf_control;
-    nodes[i].params[1].p = (databuf + (i*bytesPerSU));
-  }
-  rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc, rf_TerminateUndoFunc, NULL, 0, 1, 0, 0, dag_h, "Trm", alloclist);
-  termNode->antecedents[0] = unblockNode;
-  termNode->antType[0] = rf_control;
-  return(dag_h);
+	/* this dag can not commit until the unblock node is reached errors
+	 * prior to the commit point imply the dag has failed */
+	dag_h->numCommitNodes = 1;
+	dag_h->numCommits = 0;
+
+	dag_h->succedents[0] = blockNode;
+	rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, nNodes, 0, 0, 0, dag_h, "Nil", alloclist);
+	rf_InitNode(unblockNode, rf_wait, RF_TRUE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, 1, nNodes, 0, 0, dag_h, "Nil", alloclist);
+	unblockNode->succedents[0] = termNode;
+	for (i = 0; i < nNodes; i++) {
+		blockNode->succedents[i] = unblockNode->antecedents[i] = &nodes[i];
+		unblockNode->antType[i] = rf_control;
+		rf_InitNode(&nodes[i], rf_wait, RF_FALSE, doFunc, undoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, name, alloclist);
+		nodes[i].succedents[0] = unblockNode;
+		nodes[i].antecedents[0] = blockNode;
+		nodes[i].antType[0] = rf_control;
+		nodes[i].params[1].p = (databuf + (i * bytesPerSU));
+	}
+	rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc, rf_TerminateUndoFunc, NULL, 0, 1, 0, 0, dag_h, "Trm", alloclist);
+	termNode->antecedents[0] = unblockNode;
+	termNode->antType[0] = rf_control;
+	return (dag_h);
 }
