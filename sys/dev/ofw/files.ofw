@@ -1,9 +1,11 @@
-#	$NetBSD: files.ofw,v 1.5 1998/01/12 09:33:30 thorpej Exp $
+#	$NetBSD: files.ofw,v 1.6 1998/01/26 21:47:35 cgd Exp $
 #
 # First cut on Openfirmware interface
 #
 
 define	openfirm {}
+
+file	dev/ofw/ofw_subr.c		openfirm
 
 # Generic disk support
 device	ofdisk class disk: disk
