@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.15.2.2 2000/04/30 11:11:45 he Exp $	*/
+/*	$NetBSD: man.c,v 1.15.2.3 2000/04/30 11:27:57 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,12 +44,13 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.15.2.2 2000/04/30 11:11:45 he Exp $");
+__RCSID("$NetBSD: man.c,v 1.15.2.3 2000/04/30 11:27:57 he Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/utsname.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -65,10 +66,6 @@ __RCSID("$NetBSD: man.c,v 1.15.2.2 2000/04/30 11:11:45 he Exp $");
 
 #include "config.h"
 #include "pathnames.h"
-
-#ifndef MACHINE
-#define MACHINE __ARCHITECTURE__
-#endif
 
 int f_all, f_where;
 
@@ -162,8 +159,15 @@ main(argc, argv)
 	config(conffile);
 
 	/* Get the machine type. */
-	if ((machine = getenv("MACHINE")) == NULL)
-		machine = MACHINE;
+	if ((machine = getenv("MACHINE")) == NULL) {
+		struct utsname utsname;
+
+		if (uname(&utsname) == -1) {
+			perror("uname");
+			exit(1);
+		}
+		machine = utsname.machine;
+	}
 
 	/* If there's no _default list, create an empty one. */
 	if ((defp = getlist("_default")) == NULL)
@@ -505,7 +509,8 @@ build_page(fmt, pathp)
 	TAG *intmpp;
 	int fd, n;
 	char *p, *b;
-	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[sizeof(_PATH_TMP)];
+	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
+	const char *tmpdir;
 
 	/* Let the user know this may take awhile. */
 	if (!warned) {
@@ -550,7 +555,9 @@ build_page(fmt, pathp)
 	 * Get a temporary file and build a version of the file
 	 * to display.  Replace the old file name with the new one.
 	 */
-	(void)strcpy(tpath, _PATH_TMP);
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(tpath, sizeof (tpath), "%s/%s", tmpdir, TMPFILE);
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
 		(void)cleanup();
@@ -712,9 +719,17 @@ static void
 onsig(signo)
 	int signo;
 {
+	sigset_t set;
+
 	(void)cleanup();
 
 	(void)signal(signo, SIG_DFL);
+
+	/* unblock the signal */
+	sigemptyset(&set);
+	sigaddset(&set, signo);
+	sigprocmask(SIG_UNBLOCK, &set, (sigset_t *) NULL);
+
 	(void)kill(getpid(), signo);
 
 	/* NOTREACHED */
