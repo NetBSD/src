@@ -420,9 +420,6 @@ elf32_m68k_print_private_bfd_data (abfd, ptr)
   if (elf_elfheader (abfd)->e_flags & EF_M68000)
     fprintf (file, _(" [m68000]"));
 
-  if (elf_elfheader (abfd)->e_flags & EF_M68000)
-    fprintf (file, _ (" [m68000]"));
-
   fputc ('\n', file);
 
   return true;
