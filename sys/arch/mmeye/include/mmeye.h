@@ -1,4 +1,4 @@
-/* $NetBSD: mmeye.h,v 1.3 1999/09/17 12:16:37 tsubai Exp $ */
+/* $NetBSD: mmeye.h,v 1.4 2002/03/24 18:21:23 uch Exp $ */
 
 /*
  * Brains mmEye specific register definition
@@ -16,11 +16,8 @@
 
 #define MMEYE_LED       (*(volatile unsigned short *)0xb0000008)
 
-/*
- * SCI bitrate
- * 9600bps, 11 = 3750000/(32*9600) -1, Pcyc = 3.75MHz
- */
-
-#define SCI_BITRATE 11
-
+#ifndef _LOCORE
+void *mmeye_intr_establish(int, int, int, int (*func)(void *), void *);
+void mmeye_intr_disestablish(void *);
+#endif /* !_LOCORE */
 #endif /* !_MMEYE_MMEYE_H_ */

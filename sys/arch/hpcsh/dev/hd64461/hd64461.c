@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.5 2002/02/17 21:01:16 uch Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.6 2002/03/24 18:21:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
 #include <sys/malloc.h>
 #include <sys/boot_flag.h>
 
+#include <sh3/exception.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <sh3/shbvar.h>
-
 #include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
@@ -107,7 +106,6 @@ int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	static int match;
-	struct shb_attach_args *ia = aux;
 
 	switch (cpu_product) {
 	default:
@@ -125,18 +123,12 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp("hd64461if", cf->cf_driver->cd_name))
 		return (0);
 
-	ia->ia_iobase = 0;
-	ia->ia_iosize = 0;
-	ia->ia_maddr = 0;
-	ia->ia_msize = 0;
-
 	return (1);
 }
 
 void
 hd64461_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct shb_attach_args *ia = aux;
 	struct hd64461_softc *sc = (struct hd64461_softc *)self;
 
 	printf("\n");
@@ -147,7 +139,8 @@ hd64461_attach(struct device *parent, struct device *self, void *aux)
 	/* mask all interrupt */
 	hd64461_reg_write_2(HD64461_INTCNIMR_REG16, 0xffff);
 
-	shb_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, hd64461_intr, sc);
+	intc_intr_establish(SH7709_INTEVT2_IRQ4, IST_EDGE, IPL_NET,
+	    hd64461_intr, sc);
 
 	hd64461_module_attach(sc);
 }
