@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2002/04/10 18:18:27 christos Exp $
+	$NetBSD: syscalls.master,v 1.11 2002/05/12 15:04:27 jdolecek Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -371,7 +371,7 @@
 218	UNIMPL		pivot_root
 219	UNIMPL		mincore
 220	UNIMPL		madvise
-221	UNIMPL		fcntl64
+221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 ; Fill until 256
 222	UNIMPL
 223	UNIMPL

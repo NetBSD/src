@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.12 2002/05/10 14:51:26 tron Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.13 2002/05/12 15:04:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.12 2002/05/10 14:51:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.13 2002/05/12 15:04:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ linux_sys_truncate64(p, v, retval)
 	return sys_truncate(p, uap, retval);
 }
 
-#if defined(__mips__) || defined(__i386__) /* powerpc could use it too */
+#if !defined(__m68k__)
 static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
     const struct flock *));
 static void linux_to_bsd_flock64 __P((struct flock *, 
@@ -278,6 +278,7 @@ linux_to_bsd_flock64(bfp, lfp)
 		break;
 	}
 }
+
 int
 linux_sys_fcntl64(p, v, retval)
 	struct proc *p;
@@ -336,6 +337,7 @@ linux_sys_fcntl64(p, v, retval)
 
 	return error;
 }
+#endif /* !m68k */
 
 /*
  * Linux 'readdir' call. This code is mostly taken from the
@@ -501,4 +503,3 @@ out1:
 	FILE_UNUSE(fp, p);
 	return error;
 }
-#endif /* __mips__ || __i386__ */
