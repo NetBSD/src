@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.34 1998/09/12 11:18:20 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.35 1998/09/13 02:14:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -50,7 +50,13 @@
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 #define NSIG _NSIG
+
+#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+/* Number of signals supported by old style signal mask. */
+#define	NSIG13		32
 #endif
+
+#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 #define	SIGHUP		1	/* hangup */
 #define	SIGINT		2	/* interrupt */
