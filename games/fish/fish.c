@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.4 1997/10/10 12:58:32 lukem Exp $	*/
+/*	$NetBSD: fish.c,v 1.5 1997/11/16 21:41:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,17 +46,20 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.4 1997/10/10 12:58:32 lukem Exp $");
+__RCSID("$NetBSD: fish.c,v 1.5 1997/11/16 21:41:53 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/errno.h>
+#include <sys/wait.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <err.h>
 #include "pathnames.h"
 
 #define	RANKS		13
@@ -446,7 +449,8 @@ void
 instructions()
 {
 	int input;
-	char buf[1024];
+	pid_t pid;
+	int status;
 
 	(void)printf("Would you like instructions (y or n)? ");
 	input = getchar();
@@ -454,8 +458,20 @@ instructions()
 	if (input != 'y')
 		return;
 
-	(void)sprintf(buf, "%s %s", _PATH_MORE, _PATH_INSTR);
-	(void)system(buf);
+	switch (pid = fork()) {
+	case 0: /* child */
+		(void)setuid(getuid());
+		(void)setgid(getgid());
+		(void)execl(_PATH_MORE, "more", _PATH_INSTR, NULL);
+		err(1, "%s %s", _PATH_MORE, _PATH_INSTR);
+		/*NOTREACHED*/
+	case -1:
+		err(1, "fork");
+		/*NOTREACHED*/
+	default:
+		(void)waitpid(pid, &status, 0);
+		break;
+	}
 	(void)printf("Hit return to continue...\n");
 	while ((input = getchar()) != EOF && input != '\n');
 }
