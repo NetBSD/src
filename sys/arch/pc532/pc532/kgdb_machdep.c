@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 1997/04/01 16:32:31 matthias Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 1997/04/21 16:17:39 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -35,6 +35,7 @@
 #include <sys/kgdb.h>
 #include <vm/vm.h>
 
+#include <machine/cpufunc.h>
 #include <machine/frame.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
@@ -173,7 +174,7 @@ kgdb_connect(verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	Debugger();
+	breakpoint();
 
 	if (verbose)
 		printf("connected.\n");
