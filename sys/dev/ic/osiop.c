@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.10 2003/02/18 16:36:58 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.11 2003/02/18 16:42:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.10 2003/02/18 16:36:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.11 2003/02/18 16:42:40 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -1808,11 +1808,6 @@ osiop_update_xfer_mode(sc, target)
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
 }
 
-/*
- * This is based on the Progressive Peripherals 33Mhz Zeus driver and will
- * not be correct for other 53c710 boards.
- *
- */
 void
 scsi_period_to_osiop(sc, target)
 	struct osiop_softc *sc;
