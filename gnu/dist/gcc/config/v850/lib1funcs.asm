@@ -89,10 +89,11 @@ ___mulsi3:
 	ble .L5
 
 	jmp [r31]			/* return */
-	.size __mulsi3,.-__mulsi3
+	.size ___mulsi3,.-___mulsi3
 #endif
 
 #ifdef L_udivsi3
+	.text
 	.global ___udivsi3
 ___udivsi3:
 	mov 1,r12
@@ -126,7 +127,7 @@ ___udivsi3:
 	bne .L9
 .L8:
 	jmp [r31]
-	.size __udivsi3,.-__udivsi3
+	.size ___udivsi3,.-___udivsi3
 #endif
 
 #ifdef L_divsi3
@@ -157,7 +158,7 @@ ___divsi3:
 	ld.w 4[sp],r31
 	add 8,sp
 	jmp [r31]
-	.size __divsi3,.-__divsi3
+	.size ___divsi3,.-___divsi3
 #endif
 
 #ifdef  L_umodsi3
@@ -178,7 +179,7 @@ ___umodsi3:
 	ld.w 8[sp],r31
 	add 12,sp
 	jmp [r31]
-	.size __umodsi3,.-__umodsi3
+	.size ___umodsi3,.-___umodsi3
 #endif /* L_umodsi3 */
 
 #ifdef  L_modsi3
@@ -199,7 +200,7 @@ ___modsi3:
 	ld.w 8[sp],r31
 	add 12,sp
 	jmp [r31]
-	.size __modsi3,.-__modsi3
+	.size ___modsi3,.-___modsi3
 #endif /* L_modsi3 */
 
 #ifdef	L_save_2
@@ -1172,7 +1173,7 @@ __save_interrupt:
 	.size	__save_interrupt,.-__save_interrupt
 
 	/* Restore saved registers, deallocate stack and return from the interrupt */
-	/* Called via:	jr __return_interupt */
+	/* Called via:	jr __return_interrupt */
 	.align	2
 	.globl	__return_interrupt
 	.type	__return_interrupt,@function
@@ -1180,8 +1181,8 @@ __return_interrupt:
 	ld.w	0[sp],ep
 	ld.w	4[sp],gp
 	ld.w	8[sp],r1
- 	ld.w	12[sp],r10
-	add	16,sp
+	ld.w	12[sp],r10
+	addi	16,sp,sp
 	reti
 	.size	__return_interrupt,.-__return_interrupt
 #endif /* L_save_interrupt */
