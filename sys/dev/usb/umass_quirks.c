@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.51 2003/09/09 01:35:47 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.52 2003/09/10 02:49:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.51 2003/09/09 01:35:47 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.52 2003/09/10 02:49:19 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ Static usbd_status umass_init_insystem(struct umass_softc *);
 Static usbd_status umass_init_shuttle(struct umass_softc *);
 
 Static void umass_fixup_sony(struct umass_softc *);
-Static void umass_fixup_yedata(struct umass_softc *);
 
 Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_FUJIPHOTO, USB_PRODUCT_FUJIPHOTO_MASS0100 },
@@ -142,36 +141,12 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, umass_fixup_sony
 	},
 
-	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_MSC_U03 },
-	  UMASS_WPROTO_CBI, UMASS_CPROTO_UFI,
-	  0,
-	  0,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, umass_fixup_sony
-	},
-
-	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_MSC },
-	  UMASS_WPROTO_CBI, UMASS_CPROTO_UFI,
-	  UMASS_QUIRK_FORCE_SHORT_INQUIRY | UMASS_QUIRK_RS_NO_CLEAR_UA,
-	  0,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, NULL
-	},
-
 	{ { USB_VENDOR_YANO, USB_PRODUCT_YANO_U640MO },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  UMASS_QUIRK_FORCE_SHORT_INQUIRY,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
-	},
-
-	{ { USB_VENDOR_YEDATA, USB_PRODUCT_YEDATA_FLASHBUSTERU },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
-	  UMASS_QUIRK_RS_NO_CLEAR_UA,
-	  0,
-	  UMATCH_VENDOR_PRODUCT_REV,
-	  NULL, umass_fixup_yedata
 	},
 
 	{ { USB_VENDOR_GENESYS,USB_PRODUCT_GENESYS_GL641USB },
@@ -231,27 +206,4 @@ umass_fixup_sony(struct umass_softc *sc)
 	if (id->bInterfaceSubClass == 0xff) {
 		sc->sc_cmd = UMASS_CPROTO_RBC;
 	}
-}
-
-Static void
-umass_fixup_yedata(struct umass_softc *sc)
-{
-	usb_device_descriptor_t *dd;
-
-	dd = usbd_get_device_descriptor(sc->sc_udev);
-
-	/*
-	 * Revisions < 1.28 do not handle the interrupt endpoint very well.
-	 */
-	if (UGETW(dd->bcdDevice) < 0x128)
-		sc->sc_wire = UMASS_WPROTO_CBI;
-	else
-		sc->sc_wire = UMASS_WPROTO_CBI_I;
-
-	/*
-	 * Revisions < 1.28 do not have the TEST UNIT READY command
-	 * Revisions == 1.28 have a broken TEST UNIT READY
-	 */
-	if (UGETW(dd->bcdDevice) <= 0x128)
-		sc->sc_busquirks |= PQUIRK_NOTUR;
 }

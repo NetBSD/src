@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.21 2003/09/10 02:49:19 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -176,10 +176,9 @@ struct umass_softc {
 #define UMASS_CPROTO_ISD_ATA	5
 
 	u_int32_t		sc_quirks;
-#define	UMASS_QUIRK_RS_NO_CLEAR_UA       0x00000001
-#define	UMASS_QUIRK_FORCE_SHORT_INQUIRY  0x00000002
-#define	UMASS_QUIRK_WRONG_CSWSIG         0x00000004
-#define	UMASS_QUIRK_WRONG_CSWTAG         0x00000008
+#define	UMASS_QUIRK_FORCE_SHORT_INQUIRY  0x00000001
+#define	UMASS_QUIRK_WRONG_CSWSIG         0x00000002
+#define	UMASS_QUIRK_WRONG_CSWTAG         0x00000004
 
 	u_int32_t		sc_busquirks;
 
@@ -262,6 +261,7 @@ struct umass_softc {
 	int			sc_xfer_flags;
 	char			sc_dying;
 	int			sc_refcnt;
+	int			sc_sense;
 
 	struct umassbus_softc	*bus;		 /* bus dependent data */
 };
