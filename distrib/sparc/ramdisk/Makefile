@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/01/23 01:36:24 jmc Exp $
+#	$NetBSD: Makefile,v 1.26 2001/05/10 13:21:58 pk Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -32,7 +32,7 @@ CRUNCHGEN?=	crunchgen
 SIZE=		1360
 #DISKTYPE=	instfs
 GEOM=		512/1/${SIZE}/1
-INO_BYTES=	2400
+INO_BYTES=	2752
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE}b count=1
