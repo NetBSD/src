@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.1.1.1.4.5 1996/08/26 01:54:57 thorpej Exp $
+#	$NetBSD: install.md,v 1.1.1.1.4.6 1996/08/26 15:45:09 gwr Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,18 +43,6 @@
 # Machine-dependent install sets
 MDSETS=""
 
-__mount_kernfs() {
-	#
-	# Mount root rw for convenience of the tester ;-)
-	# Force kern_fs to be mounted
-	#
-	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
-		mount /dev/rd0 / > /dev/null 2>&1
-		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
-	fi
-}
-
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
@@ -65,27 +53,50 @@ md_set_term() {
 	export TERM
 }
 
+__mount_kernfs() {
+	#
+	# Force kern_fs to be mounted
+	#
+	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
+		mkdir /kern > /dev/null 2>&1
+		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
+	fi
+}
+
+md_makerootwritable() {
+	# Mount root rw for convenience of the tester ;-)
+	if [ ! -e /tmp/.root_writable ]; then
+		__mount_kernfs
+		# XXX: Use /kern/rootdev instead?
+		mount /dev/rd0 / > /dev/null 2>&1
+		cp /dev/null /tmp/.root_writable
+	fi
+}
+
 md_get_diskdevs() {
-    # return available disk devices
-    __mount_kernfs
-    sed -e '/^sd[0-9] /!d' -e 's/^\(sd[0-9]\) .*/\1/' < /kern/msgbuf | sort -u
+	# return available disk devices
+	__mount_kernfs
+	sed -n -e '/^sd[0-9] /s/ .*//p' \
+		< /kern/msgbuf | sort -u
 }
 
 md_get_cddevs() {
-    # return available CDROM devices
-    __mount_kernfs
-    sed -e '/^cd[0-9] /!d' -e 's/^\(cd[0-9]\) .*/\1/' < /kern/msgbuf | sort -u
+	# return available CDROM devices
+	__mount_kernfs
+	sed -n -e '/^cd[0-9] /s/ .*//p' \
+		< /kern/msgbuf | sort -u
 }
 
 md_get_ifdevs() {
-    # return available network devices
-    __mount_kernfs
-    sed -e '/^[li]e[0-9] /!d' -e 's/^\([li]e[0-9]\) .*/\1/' < /kern/msgbuf |
-		sort -u
+	# return available network devices
+	__mount_kernfs
+	sed -n -e '/^ie[0-9] /s/ .*//p' \
+	       -e '/^le[0-9] /s/ .*//p' \
+		< /kern/msgbuf | sort -u
 }
 
 md_get_partition_range() {
-	# return an expression describing the valid partition id's on the Atari
+	# return an expression describing the valid partition id's
 	echo '[a-p]'
 }
 
