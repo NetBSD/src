@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.5 1998/03/30 06:45:37 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.6 1998/04/19 01:48:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.5 1998/03/30 06:45:37 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.6 1998/04/19 01:48:35 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -380,9 +380,16 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			kn02ba_errintr();
 	
 		if (intr & KMIN_INTR_CLOCK) {
+			extern u_int32_t mips3_cycle_count __P((void));
+
 			temp = c->regc;	/* XXX clear interrupt bits */
 			cf.pc = pc;
 			cf.sr = statusReg;
+#ifdef MIPS3
+			if (CPUISMIPS3) {
+				latched_cycle_cnt = mips3_cycle_count();
+			}
+#endif
 			hardclock(&cf);
 			intrcnt[HARDCLOCK]++;
 		}
