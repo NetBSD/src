@@ -1,4 +1,4 @@
-/*	$NetBSD: accton.c,v 1.5 1997/03/06 05:40:11 mikel Exp $	*/
+/*	$NetBSD: accton.c,v 1.6 1997/10/16 23:41:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)accton.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$NetBSD: accton.c,v 1.5 1997/03/06 05:40:11 mikel Exp $";
+#if 0
+static char sccsid[] = "@(#)accton.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: accton.c,v 1.6 1997/10/16 23:41:35 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +54,8 @@ static char *rcsid = "$NetBSD: accton.c,v 1.5 1997/03/06 05:40:11 mikel Exp $";
 #include <stdio.h>
 #include <string.h>
 
-void usage __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
