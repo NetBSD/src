@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/12 23:48:46 dean Exp $
+#	$NetBSD: Makefile,v 1.11 1999/02/14 02:56:19 dean Exp $
+
+# XXX: bsd.own.mk included so LDSTATIC can be overwridden
+.include <bsd.own.mk>
 
 BINDIR=	/usr/mdec
 PROG=	installboot
