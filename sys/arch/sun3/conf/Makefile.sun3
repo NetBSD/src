@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.44 1996/05/11 16:13:07 mycroft Exp $
+#	$NetBSD: Makefile.sun3,v 1.45 1996/06/18 16:18:34 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ AS?=	as
 CC?=	cc
 CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
@@ -32,10 +33,14 @@ TOUCH?=	touch -f -c
 S=	../../../..
 SUN3=	../..
 
-INCLUDES=	-I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
-CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+# Override CPP defaults entirely, so cross-compilation works.
+INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+DEFINES=	-undef -D__NetBSD__ -D_KERNEL -Dmc68020 -Dsun3
+CPPFLAGS=	${INCLUDES} ${DEFINES} ${IDENT}
+# Make it easy to override this on the command line...
+WFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS= 	${DEBUG} -O2 -msoft-float ${WFLAGS}
+APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 
 # What to use for libkern:
@@ -46,7 +51,7 @@ LIBKERN=	${KERNLIB}
 LIBKERN=	${KERNLIB_PROF}
 .endif
 
-### find out what to use for libcompat
+# What to use for libcompat:
 .include "$S/compat/common/Makefile.inc"
 .ifndef PROF
 LIBCOMPAT=	${COMPATLIB}
@@ -65,8 +70,12 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
+		${AS} -o $@ $*.s ; rm $*.s
+NORMAL_S_C=	${CPP} ${APPFLAGS} ${PARAM} $< > $*.s ;\
+		${AS} -o $@ $*.s ; rm $*.s
+
+# OBJS, CFILES, SFILES follow:
 
 %OBJS
 
@@ -146,13 +155,21 @@ links:
 
 SRCS=	${SUN3}/sun3/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
+
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${SUN3}/sun3/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
+	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
 
+# XXX - see below
+#	${MKDEP} -a ${APPFLAGS} ${SUN3}/sun3/locore.s
+#	${MKDEP} -a ${APPFLAGS} ${SFILES}
+#
+# For cross-compilation, the "gcc -M" mkdep script is convenient,
+# but that does not correctly make rules from *.s files.  The
+# easiest compromise is to just list those dependencies here.
+locore.o: assym.h machine/trap.h m68k/trap.h
+copy.o:   assym.h $S/sys/errno.h
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -166,8 +183,9 @@ genassym.o machdep.o: Makefile
 # depend on CPU configuration 
 db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
 
-
-locore.o: ${SUN3}/sun3/locore.s assym.h
+locore.o: ${SUN3}/sun3/locore.s
 	${NORMAL_S}
+
+# Rules follow
 
 %RULES
