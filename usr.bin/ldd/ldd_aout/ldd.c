@@ -1,3 +1,4 @@
+/*	$NetBSD: ldd.c,v 1.11 1995/10/09 00:09:40 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldd.c,v 1.10 1995/10/08 23:39:59 pk Exp $
  */
 
 #include <sys/types.h>
@@ -44,8 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 
-char	*fmt1, *fmt2;
-
 void
 usage()
 {
@@ -60,6 +58,7 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
+	char		*fmt1, *fmt2;
 	int		rval;
 	int		c;
 
