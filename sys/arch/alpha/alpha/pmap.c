@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.191 2002/03/08 20:48:28 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.192 2002/08/24 03:10:52 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2002/03/08 20:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2002/08/24 03:10:52 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1496,6 +1496,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				PMAP_INVALIDATE_TLB(pv->pv_pmap, pv->pv_va,
 				    pmap_pte_asm(pv->pv_pte),
 				    PMAP_ISACTIVE(pv->pv_pmap, cpu_id), cpu_id);
+				PMAP_TLB_SHOOTDOWN(pv->pv_pmap, pv->pv_va,
+				    pmap_pte_asm(pv->pv_pte));
 			}
 			PMAP_UNLOCK(pv->pv_pmap);
 		}
