@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.197 2001/11/06 12:59:17 augustss Exp $
+$NetBSD: usbdevs,v 1.198 2001/11/09 05:49:09 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ vendor DIGI2		0x04d0	Digi International
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing Technologies
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
+vendor IIYAMA		0x04e1	Iiyama
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor CHICONY		0x04f2	Chicony Electronics
@@ -628,6 +629,9 @@ product HP2 C500		0x6002	PhotoSmart C500
 
 /* IBM Corporation */
 product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
+
+/* Iiyama products */
+product IIYAMA HUB		0x0201	Hub
 
 /* Inside Out Networks products */
 product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
