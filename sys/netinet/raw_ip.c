@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.37 1997/10/14 00:52:54 matt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.38 1997/11/16 20:58:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -209,6 +209,10 @@ rip_output(m, va_alist)
 			return (EMSGSIZE);
 		}
 		ip = mtod(m, struct ip *);
+		if (m->m_pkthdr.len != ip->ip_len) {
+			m_freem(m);
+			return (EINVAL);
+		}
 		if (ip->ip_id == 0)
 			ip->ip_id = htons(ip_id++);
 		opts = NULL;
