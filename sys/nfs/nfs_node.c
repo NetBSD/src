@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.52 2002/03/08 20:48:45 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.53 2002/03/16 23:05:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.52 2002/03/08 20:48:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.53 2002/03/16 23:05:25 chs Exp $");
 
 #include "opt_nfs.h"
 
@@ -79,11 +79,12 @@ extern int prtactive;
 
 void nfs_gop_size(struct vnode *, off_t, off_t *);
 int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
 struct genfs_ops nfs_genfsops = {
 	nfs_gop_size,
 	nfs_gop_alloc,
-	genfs_gop_write,
+	nfs_gop_write,
 };
 
 /*
@@ -322,4 +323,15 @@ nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     struct ucred *cred)
 {
 	return 0;
+}
+
+int
+nfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+{
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		pmap_page_protect(pgs[i], VM_PROT_READ);
+	}
+	return genfs_gop_write(vp, pgs, npages, flags);
 }
