@@ -72,7 +72,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.4 1994/04/21 23:15:32 briggs Exp $
+ *	$Id: pte.h,v 1.5 1994/06/26 13:23:01 briggs Exp $
  */
 
 #ifndef _MACHINE_PTE_H_
@@ -135,7 +135,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
 #define	PG_CI		0x00000040
-#define	PG_CC		0x00000020
+#define	PG_CCB		0x00000020
 #define	PG_CIN		0x00000060
 #define	PG_FRAME	0xfffff000
 #define PG_SHIFT	12
