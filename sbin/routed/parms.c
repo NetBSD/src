@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.3 1996/09/24 16:24:17 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.4 1997/01/29 12:07:26 ws Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: parms.c,v 1.3 1996/09/24 16:24:17 christos Exp $";
+static char rcsid[] = "$NetBSD: parms.c,v 1.4 1997/01/29 12:07:26 ws Exp $";
 #endif
 
 #include "defs.h"
@@ -591,7 +591,8 @@ getnet(char *name,
 		mask = (naddr)strtoul(mname, &p, 0);
 		if (*p != '\0' || mask > 32)
 			return 0;
-		mask = HOST_MASK << (32-mask);
+		if (mask != 0)
+			mask = HOST_MASK << (32-mask);
 	}
 	if (mask != 0 && in.s_addr == RIP_DEFAULT)
 		return 0;
