@@ -554,9 +554,12 @@
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_linux.0
+./usr/share/man/cat8/compat_sco.0
+./usr/share/man/cat8/compat_solaris.0
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
 ./usr/share/man/cat8/compat_ultrix.0
+./usr/share/man/cat8/compat_xenix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/dev_mkdb.0
@@ -1608,9 +1611,12 @@
 ./usr/share/man/man8/clri.8
 ./usr/share/man/man8/compat_freebsd.8
 ./usr/share/man/man8/compat_linux.8
+./usr/share/man/man8/compat_sco.8
+./usr/share/man/man8/compat_solaris.8
 ./usr/share/man/man8/compat_sunos.8
 ./usr/share/man/man8/compat_svr4.8
 ./usr/share/man/man8/compat_ultrix.8
+./usr/share/man/man8/compat_xenix.8
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/cron.8
 ./usr/share/man/man8/dev_mkdb.8
