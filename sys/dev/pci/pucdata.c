@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.31 2002/08/02 10:40:30 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.32 2002/10/29 08:59:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.31 2002/08/02 10:40:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.32 2002/10/29 08:59:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,6 +649,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
 	    },
 	},
+
 	/*
 	 * VScom PCI-800H. Uses 8 16950 UART, behind a PCI chips that offers
 	 * 4 com port on PCI device 0 and 4 on PCI device 1. PCI device 0 has
@@ -877,6 +878,42 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/*
+	 * Boca Research Turbo Serial 654 (4 serial port) card.
+	 * Appears to be the same as Chase Research PLC PCI-FAST4
+	 * and Perle PCI-FAST4 Multi-Port serial cards.
+	 */
+	{   "Boca Research Turbo Serial 654",
+	    {   0x10b5, 0x9050, 0x12e0, 0x0031  },
+	    {   0xffff, 0xffff, 0xffff, 0xffff  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+	    }, 
+	},
+
+	/*
+	 * Boca Research Turbo Serial 658 (8 serial port) card.
+	 * Appears to be the same as Chase Research PLC PCI-FAST8
+	 * and Perle PCI-FAST8 Multi-Port serial cards.
+	 */
+	{   "Boca Research Turbo Serial 658",
+	    {   0x10b5, 0x9050, 0x12e0, 0x0021  },
+	    {   0xffff, 0xffff, 0xffff, 0xffff  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
 	    },
 	},
 
