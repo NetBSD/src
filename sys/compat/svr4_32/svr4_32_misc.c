@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.5 2001/05/06 04:32:08 ross Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.6 2001/05/11 19:19:44 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -761,8 +761,6 @@ svr4_32_sys_sysconfig(p, v, retval)
 	return 0;
 }
 
-
-diff
 
 /* ARGSUSED */
 int
