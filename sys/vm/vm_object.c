@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.44 1997/02/24 22:19:26 thorpej Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.45 1997/02/25 23:28:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -895,6 +895,11 @@ vm_object_shadow(object, offset, length)
 	register vm_object_t	result;
 
 	source = *object;
+
+#ifdef DIAGNOSTIC
+	if (source == NULL)
+		panic("vm_object_shadow: attempt to shadow null object");
+#endif
 
 	/*
 	 * Allocate a new object with the given length
