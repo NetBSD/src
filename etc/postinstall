@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.54 2003/02/22 23:46:46 lukem Exp $
+# $NetBSD: postinstall,v 1.55 2003/03/11 04:49:18 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -229,17 +229,19 @@ move_file()
 	return 0
 }
 
-# rcconf_is_set op name var --
+# rcconf_is_set op name var [verbose] --
 #	load the rcconf for name, and check if obsolete rc.conf(5) variable
 #	var is defined or not.
 #	returns 0 if defined (even to ""), otherwise 1.
+#	if verbose != "", print an obsolete warning if the var is defined.
 #
 rcconf_is_set()
 {
-	[ $# -eq 3 ] || err 2 "USAGE: rcconf_is_set op name var"
+	[ $# -ge 3 ] || err 2 "USAGE: rcconf_is_set op name var [verbose]"
 	_rcis_op=$1
 	_rcis_name=$2
 	_rcis_var=$3
+	_rcis_verbose=$4
 	_rcis_notfixed=""
 	if [ "${_rcis_op}" = "fix" ]; then
 		_rcis_notfixed=${NOT_FIXED}
@@ -252,8 +254,10 @@ rcconf_is_set()
 		done
 		if eval "[ -n \"\${${_rcis_var}}\" \
 			    -o \"\${${_rcis_var}-UNSET}\" != \"UNSET\" ]"; then
-			msg \
+			if [ -n "${_rcis_verbose}" ]; then
+				msg \
 	"Obsolete rc.conf(5) variable '\$${_rcis_var}' found.${_rcis_notfixed}"
+			fi
 			exit 0
 		else
 			exit 1
@@ -428,7 +432,7 @@ do_rc()
 		sysctl defcorename \
 		sysctl nfsiod_flags
 	while [ $# -gt 1 ]; do
-		if rcconf_is_set ${op} $1 $2; then
+		if rcconf_is_set ${op} $1 $2 1; then
 			failed=1
 		fi
 		shift 2
@@ -544,7 +548,7 @@ do_ssh()
 		failed=1
 	fi
 
-	if rcconf_is_set ${op} sshd sshd_conf_dir ; then
+	if rcconf_is_set ${op} sshd sshd_conf_dir 1; then
 		failed=1
 	fi
 
