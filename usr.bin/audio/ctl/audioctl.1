@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.13 1999/04/02 15:53:39 augustss Exp $
+.\" $NetBSD: audioctl.1,v 1.14 2001/10/17 22:13:04 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -54,13 +54,13 @@
 .Fl w
 .Ar name=value ...
 .Sh DESCRIPTION
-The 
+The
 .Nm
 command displays or sets various audio system driver variables.
 If a list of variables is present on the command line, then
 .Nm
 prints the current value of those variables for the specified device.
-If the 
+If the
 .Fl a
 flag is specified, all variables for the device are printed.
 If the
@@ -77,6 +77,20 @@ flag can be used to give an alternative audio control device, the default is
 The
 .Fl n
 flag suppresses printing of the variable name.
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIOCTLDEVICE
+.It Pa AUDIOCTLDEVICE
+the audio control device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/audioctl0 -compact
+.It Pa /dev/audio0
+audio I/O device (resets on open)
+.It Pa /dev/audioctl0
+audio control device
+.It Pa /dev/sound0
+audio I/O device (does not reset on open)
+.El
 .Sh EXAMPLES
 To set the playing sampling rate to 11025, you can use
 .Dl audioctl -w play.sample_rate=11025
@@ -90,20 +104,6 @@ are reset when
 is opened.  This can be circumvented by using
 .Pa /dev/sound0
 instead.
-.Sh FILES
-.Bl -tag -width /dev/audioctl0 -compact
-.It Pa /dev/audio0
-audio I/O device (resets on open)
-.It Pa /dev/audioctl0
-audio control device
-.It Pa /dev/sound0
-audio I/O device (does not reset on open)
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width AUDIOCTLDEVICE
-.It Pa AUDIOCTLDEVICE
-the audio control device to use.
-.El
 .Sh SEE ALSO
 .Xr audioplay 1 ,
 .Xr audiorecord 1 ,
