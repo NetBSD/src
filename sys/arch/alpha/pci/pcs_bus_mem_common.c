@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_mem_common.c,v 1.1.4.3 1996/06/09 23:58:22 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_mem_common.c,v 1.1.4.4 1996/06/13 18:17:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,6 +44,8 @@ int		__C(CHIP,_mem_map) __P((void *, bus_mem_addr_t, bus_mem_size_t,
 		    int, bus_mem_handle_t *));
 void		__C(CHIP,_mem_unmap) __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t));
+int		__C(CHIP,_mem_subregion) __P((void *, bus_mem_handle_t,
+		    bus_mem_size_t, bus_mem_size_t, bus_mem_handle_t *));
 u_int8_t	__C(CHIP,_mem_read_1) __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t));
 u_int16_t	__C(CHIP,_mem_read_2) __P((void *, bus_mem_handle_t,
@@ -74,6 +76,7 @@ __C(CHIP,_bus_mem_init)(bc, memv)
 
 	bc->bc_m_map = __C(CHIP,_mem_map);
 	bc->bc_m_unmap = __C(CHIP,_mem_unmap);
+	bc->bc_m_subregion = __C(CHIP,_mem_subregion);
 
 	bc->bc_mr1 = __C(CHIP,_mem_read_1);
 	bc->bc_mr2 = __C(CHIP,_mem_read_2);
@@ -99,49 +102,65 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
 {
 
 	if (cacheable) {
-		*memhp = phystok0seg(CHIP_D_MEM_BASE(v) +
-		    (memaddr & CHIP_D_MEM_MASK(v)));
-	} else
+#ifdef CHIP_D_MEM_W1_START
+                if (memaddr >= CHIP_D_MEM_W1_START(v) &&
+                    memaddr <= CHIP_D_MEM_W1_END(v)) {
+                        *memhp = phystok0seg(CHIP_D_MEM_W1_BASE(v)) +
+                            (memaddr & CHIP_D_MEM_W1_MASK(v));
+                } else
+#endif
+		{
+			printf("\n");
+#ifdef CHIP_D_MEM_W1_START
+			printf("%s: window[1]=0x%lx-0x%lx\n",
+			    __S(__C(CHIP,_mem_map)), CHIP_D_MEM_W1_START(v),
+			    CHIP_D_MEM_W1_END(v)-1);
+#endif
+			panic("%s: don't know how to map %lx cacheable\n",
+			    __S(__C(CHIP,_mem_map)), memaddr);
+		}
+	} else {
 #ifdef CHIP_S_MEM_W1_START
-	if (memaddr >= CHIP_S_MEM_W1_START(v) &&
-	    memaddr <= CHIP_S_MEM_W1_END(v)) {
-		*memhp = (phystok0seg(CHIP_S_MEM_W1_BASE(v)) >> 5) +
-		    (memaddr & CHIP_S_MEM_W1_MASK(v));
-	} else
+		if (memaddr >= CHIP_S_MEM_W1_START(v) &&
+		    memaddr <= CHIP_S_MEM_W1_END(v)) {
+			*memhp = (phystok0seg(CHIP_S_MEM_W1_BASE(v)) >> 5) +
+			    (memaddr & CHIP_S_MEM_W1_MASK(v));
+		} else
 #endif
 #ifdef CHIP_S_MEM_W2_START
-	if (memaddr >= CHIP_S_MEM_W2_START(v) &&
-	    memaddr <= CHIP_S_MEM_W2_END(v)) {
-		*memhp = (phystok0seg(CHIP_S_MEM_W2_BASE(v)) >> 5) +
-		    (memaddr & CHIP_S_MEM_W2_MASK(v));
-	} else
+		if (memaddr >= CHIP_S_MEM_W2_START(v) &&
+		    memaddr <= CHIP_S_MEM_W2_END(v)) {
+			*memhp = (phystok0seg(CHIP_S_MEM_W2_BASE(v)) >> 5) +
+			    (memaddr & CHIP_S_MEM_W2_MASK(v));
+		} else
 #endif
 #ifdef CHIP_S_MEM_W3_START
-	if (memaddr >= CHIP_S_MEM_W3_START(v) &&
-	    memaddr <= CHIP_S_MEM_W3_END(v)) {
-		*memhp = (phystok0seg(CHIP_S_MEM_W3_BASE(v)) >> 5) +
-		    (memaddr & CHIP_S_MEM_W3_MASK(v));
-	} else
+		if (memaddr >= CHIP_S_MEM_W3_START(v) &&
+		    memaddr <= CHIP_S_MEM_W3_END(v)) {
+			*memhp = (phystok0seg(CHIP_S_MEM_W3_BASE(v)) >> 5) +
+			    (memaddr & CHIP_S_MEM_W3_MASK(v));
+		} else
 #endif
-	{
-		printf("\n");
+		{
+			printf("\n");
 #ifdef CHIP_S_MEM_W1_START
-		printf("%s: window[1]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W1_START(v),
-		    CHIP_S_MEM_W1_END(v)-1);
+			printf("%s: window[1]=0x%lx-0x%lx\n",
+			    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W1_START(v),
+			    CHIP_S_MEM_W1_END(v)-1);
 #endif
 #ifdef CHIP_S_MEM_W2_START
-		printf("%s: window[2]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W2_START(v),
-		    CHIP_S_MEM_W2_END(v)-1);
+			printf("%s: window[2]=0x%lx-0x%lx\n",
+			    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W2_START(v),
+			    CHIP_S_MEM_W2_END(v)-1);
 #endif
 #ifdef CHIP_S_MEM_W3_START
-		printf("%s: window[3]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W3_START(v),
-		    CHIP_S_MEM_W3_END(v)-1);
+			printf("%s: window[3]=0x%lx-0x%lx\n",
+			    __S(__C(CHIP,_mem_map)), CHIP_S_MEM_W3_START(v),
+			    CHIP_S_MEM_W3_END(v)-1);
 #endif
-		panic("%s: don't know how to map %lx\n",
-		    __S(__C(CHIP,_mem_map)), memaddr);
+			panic("%s: don't know how to map %lx non-cacheable\n",
+			    __S(__C(CHIP,_mem_map)), memaddr);
+		}
 	}
 
 	return (0);
@@ -155,6 +174,17 @@ __C(CHIP,_mem_unmap)(v, memh, memsize)
 {
 
 	/* XXX nothing to do. */
+}
+
+int
+__C(CHIP,_mem_subregion)(v, memh, offset, size, nmemh)
+	void *v;
+	bus_mem_handle_t memh, *nmemh;
+	bus_mem_size_t offset, size;
+{
+
+	*nmemh = memh + offset;
+	return (0);
 }
 
 u_int8_t
