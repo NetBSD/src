@@ -2214,7 +2214,7 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
 #define TARGET_LITTLE_SYM		bfd_elf32_vax_vec
 #define TARGET_LITTLE_NAME		"elf32-vax"
 #define ELF_MACHINE_CODE		EM_VAX
-#define ELF_MAXPAGESIZE			0x1000
+#define ELF_MAXPAGESIZE			0x10000
 
 #define elf_backend_create_dynamic_sections \
 					_bfd_elf_create_dynamic_sections
