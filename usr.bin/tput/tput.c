@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.9 1997/10/14 01:46:38 lukem Exp $	*/
+/*	$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.9 1997/10/14 01:46:38 lukem Exp $");
+__RCSID("$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -72,7 +72,7 @@ main(argc, argv)
 	char *cptr, *p, *term, buf[1024], tbuf[1024];
 
 	term = NULL;
-	while ((ch = getopt(argc, argv, "T:")) != EOF)
+	while ((ch = getopt(argc, argv, "T:")) != -1)
 		switch(ch) {
 		case 'T':
 			term = optarg;
