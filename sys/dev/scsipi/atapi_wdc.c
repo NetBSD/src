@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.50 2002/04/05 18:27:56 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.51 2002/04/23 20:41:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.50 2002/04/05 18:27:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.51 2002/04/23 20:41:19 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
