@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.103 2004/08/19 18:33:24 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.104 2004/08/19 20:58:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.103 2004/08/19 18:33:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.104 2004/08/19 20:58:23 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.103 2004/08/19 18:33:24 christos Exp $");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/slip.h>
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
@@ -78,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.103 2004/08/19 18:33:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
+#include "sl.h"
+#include "strip.h"
 #endif
 
 #ifndef BPF_BUFSIZE
@@ -1285,6 +1288,101 @@ bpf_mtap(void *arg, struct mbuf *m)
 
 	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif);
 }
+
+/*
+ * We need to prepend the address family as
+ * a four byte field.  Cons up a dummy header
+ * to pacify bpf.  This is safe because bpf
+ * will only read from the mbuf (i.e., it won't
+ * try to free it or keep a pointer a to it).
+ */
+void
+bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
+{
+	struct mbuf m0;
+	
+	m0.m_flags = 0;
+	m0.m_next = m;
+	m0.m_len = 4;
+	m0.m_data = (char *)&af;
+
+	bpf_mtap(arg, &m0);
+}
+
+void
+bpf_mtap_et(void *arg, u_int16_t et, struct mbuf *m)
+{
+	struct mbuf m0;
+
+	m0.m_flags = 0;
+	m0.m_next = m;
+	m0.m_len = 14;
+	m0.m_data = m0.m_dat;
+
+	((u_int32_t *)m0.m_data)[0] = 0;
+	((u_int32_t *)m0.m_data)[1] = 0;
+	((u_int32_t *)m0.m_data)[2] = 0;
+	((u_int16_t *)m0.m_data)[6] = et;
+
+	bpf_mtap(arg, &m0);
+}
+
+#if NSL > 0 || NSTRIP > 0
+/*
+ * Put the SLIP pseudo-"link header" in place.
+ * Note this M_PREPEND() should never fail,
+ * swince we know we always have enough space
+ * in the input buffer.
+ */
+void
+bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
+{
+	int s;
+	u_char *hp;
+
+	M_PREPEND(*m, SLIP_HDRLEN, M_DONTWAIT);
+	if (*m == NULL)
+		return;
+
+	hp = mtod(*m, u_char *);
+	hp[SLX_DIR] = SLIPDIR_IN;
+	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+	s = splnet();
+	bpf_mtap(arg, *m);
+	splx(s);
+
+	m_adj(*m, SLIP_HDRLEN);
+}
+
+/*
+ * Put the SLIP pseudo-"link header" in
+ * place.  The compressed header is now
+ * at the beginning of the mbuf.
+ */
+void
+bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
+{
+	struct mbuf m0;
+	u_char *hp;
+	int s;
+
+	m0.m_flags = 0;
+	m0.m_next = m;
+	m0.m_data = m0.m_dat;
+	m0.m_len = SLIP_HDRLEN;
+
+	hp = mtod(&m0, u_char *);
+
+	hp[SLX_DIR] = SLIPDIR_OUT;
+	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+	s = splnet();
+	bpf_mtap(arg, &m0);
+	splx(s);
+	m_freem(m);
+}
+#endif
 
 /*
  * Move the packet data from interface memory (pkt) into the

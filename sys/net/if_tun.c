@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.71 2004/06/06 04:36:29 dyoung Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.72 2004/08/19 20:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.71 2004/06/06 04:36:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.72 2004/08/19 20:58:24 christos Exp $");
 
 #include "tun.h"
 
@@ -520,16 +520,8 @@ tun_output(ifp, m0, dst, rt)
 	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four-byte field.  Note that dst->sa_family
-		 * is not always a four-byte field.
-		 */
-		u_int32_t af = dst->sa_family;
-
-		bpf_mtap2(ifp->if_bpf, &af, sizeof(af), m0);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m0);
 #endif
 
 	switch(dst->sa_family) {
@@ -884,24 +876,8 @@ tunwrite(dev, uio, ioflag)
 	top->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer to it).
-		 */
-		struct mbuf m;
-		u_int32_t af = AF_INET;
-
-		m.m_flags = 0;
-		m.m_next = top;
-		m.m_len = sizeof(af);
-		m.m_data = (char *)&af;
-
-		bpf_mtap(ifp->if_bpf, &m);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, AF_INET, top);
 #endif
 
 	s = splnet();
