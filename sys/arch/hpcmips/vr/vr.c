@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.32 2001/11/18 08:19:41 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.33 2001/12/29 04:27:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -75,13 +75,20 @@
 #endif
 
 #include "com.h"
-#if NCOM > 0
+#include "sg2com_vrip.h"
+#if NCOM > 0 || NSG2COM_VRIP > 0
 #include <sys/termios.h>
 #include <sys/ttydefaults.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#if NCOM > 0
 #include <hpcmips/vr/siureg.h>
 #include <hpcmips/vr/com_vripvar.h>
+#endif
+#if NSG2COM_VRIP > 0
+#include <hpcmips/vr/sg2comreg.h>
+#include <hpcmips/vr/sg2com_vripvar.h>
+#endif
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
 #endif
@@ -292,7 +299,7 @@ vr_fb_init(caddr_t *kernend)
 void
 vr_cons_init()
 {
-#if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
+#if NCOM > 0 || NSG2COM_VRIP > 0 || NHPCFB > 0 || NVRKIU > 0
 	bus_space_tag_t iot = hpcmips_system_bus_space();
 #endif
 
@@ -312,11 +319,35 @@ vr_cons_init()
 			printf("%s(%d): can't init serial console",
 			    __FILE__, __LINE__);
 		} else {
+#if NSG2COM_VRIP == 0
 			return;
+#endif
 		}
 	}
 #endif /* KGDB */
 #endif /* NCOM > 0 */
+
+#if NSG2COM_VRIP > 0
+#ifdef KGDB
+	/* if KGDB is defined, always use the serial port for KGDB */
+	if (sg2com_vrip_cndb_attach(iot, SG2COM_VRIP_ADDR, 9600, SG2COM_FREQ,
+	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
+		printf("%s(%d): can't init kgdb's serial port",
+		    __FILE__, __LINE__);
+	}
+#else /* KGDB */
+	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
+		/* Serial console */
+		if (sg2com_vrip_cndb_attach(iot, SG2COM_ADDR, CONSPEED,
+		    SG2COM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)){
+			printf("%s(%d): can't init serial console",
+			    __FILE__, __LINE__);
+		} else {
+			return;
+		}
+	}
+#endif /* KGDB */
+#endif /* NSG2COM_VRIP > 0 */
 
 #if NHPCFB > 0
 	if (hpcfb_cnattach(NULL)) {
