@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.1 1995/02/13 21:49:14 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.2 1995/03/03 01:14:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -84,7 +84,15 @@ LnegB:
 	/* B is definitely negative, no matter how we got here. */
 	subq	zero, B, B
 Ldoit:
-')
+', `
+ifelse(WORDSIZE, `32', `
+	/*
+	 * Clear the top 32 bits of each operand, as the compiler may
+	 * have sign extended them, if the 31st bit was set.
+	 */
+	zap	A, 0xf0, A
+	zap	B, 0xf0, B
+')' )
 
 	/* kill the special cases. */
 	beq	B, Ldotrap			/* division by zero! XXX */
@@ -164,6 +172,9 @@ ifelse(S, `true',
 Ldotrap:
 	CONST(-2, a0)			/* This is the signal to SIGFPE! */
 	call_pal PAL_gentrap
+ifelse(OP, `div',
+`', `	mov	zero, A			/* so that zero will be returned */
+')
 	br	zero, Lret_result
 
 END(NAME)
