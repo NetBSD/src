@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.3 2003/07/14 15:47:12 lukem Exp $ */
+/* $NetBSD: mtd803.c,v 1.4 2003/09/23 19:37:39 martin Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.3 2003/07/14 15:47:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.4 2003/09/23 19:37:39 martin Exp $");
 
 #include "bpfilter.h"
 
@@ -216,8 +216,7 @@ mtd_init(ifp)
 	 */
 	MTD_WRITE_4(sc, MTD_BCR, MTD_BCR_BLEN16);
 
-	MTD_WRITE_4(sc, MTD_RXTXR, MTD_TX_STFWD | MTD_RX_BLEN | MTD_RX_512
-			| MTD_TX_FDPLX);
+	MTD_WRITE_4(sc, MTD_RXTXR, MTD_TX_STFWD | MTD_TX_FDPLX);
 
 	/* Promiscuous mode? */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -464,8 +463,8 @@ mtd_put(sc, index, m)
 			continue;
 		} else if (tlen > MTD_TXBUF_SIZE) {
 			/* XXX FIXME: No idea what to do here. */
-			printf("%s: packet too large!\n",
-				sc->dev.dv_xname);
+			printf("%s: packet too large! Size = %i\n",
+				sc->dev.dv_xname, tlen);
 			MFREE(m, n);
 			continue;
 		}
