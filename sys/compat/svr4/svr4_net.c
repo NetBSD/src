@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.33 2003/06/29 22:29:47 fvdl Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.34 2003/09/13 08:15:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.33 2003/06/29 22:29:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.34 2003/09/13 08:15:26 jdolecek Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -257,7 +257,7 @@ svr4_ptm_alloc(p)
 	 * Cycle through the names. If sys_open() returns ENOENT (or
 	 * ENXIO), short circuit the cycle and exit.
 	 */
-	static char ptyname[] = "/dev/ptyXX";
+	char ptyname[] = "/dev/ptyXX";
 	static const char ttyletters[] = "pqrstuvwxyzPQRST";
 	static const char ttynumbers[] = "0123456789abcdef";
 	caddr_t sg = stackgap_init(p, 0);
