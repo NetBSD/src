@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.24 1993/11/24 03:26:04 mycroft Exp $
+#	$Id: TEST,v 1.25 1993/11/25 08:01:13 mycroft Exp $
 #
 
 # standard options
@@ -114,8 +114,8 @@ aha1 at isa? port 0x334
 scsibus* at scsi?
 
 sd* at scsibus? target ? lun ?		# SCSI disks
-#st* at scsibus? target ? lun ?		# SCSI tapes
-#cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
+st* at scsibus? target ? lun ?		# SCSI tapes
+cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ch* at scsibus? target ? lun ?		# SCSI autochangers
 
 #ethernet
