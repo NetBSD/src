@@ -1,14 +1,35 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.7 2004/01/02 01:39:25 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.8 2004/01/15 08:46:31 pooka Exp $
 #
-# Indy
+# GENERIC32_IP2x machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+#
+#
+# Currently this config file supports Indigo R4k, Indigo2 and Indy
+# (IP20, IP22 and IP24, respectively).
+#
 
 include		"arch/sgimips/conf/std.sgimips"
 
-makeoptions	TEXTADDR=0x88069000	# Indy
+makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.7 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.8 $"
 
 maxusers	32
 
