@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.16 2001/10/21 21:13:11 thorpej Exp $
+#	$NetBSD: Makefile.powerpc,v 1.17 2001/10/23 18:57:33 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -45,12 +45,12 @@ TEXTADDR?=	0x100000
 .ifndef S
 S!=		cd ../../../..; pwd
 .endif
-THISPPC=	$S/arch/${TARGET_MACHINE}
+THISPPC=	$S/arch/${MACHINE}
 POWERPC=	$S/arch/powerpc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} \
-		-D_KERNEL -D_KERNEL_OPT -D${TARGET_MACHINE}
+		-D_KERNEL -D_KERNEL_OPT -D${MACHINE}
 CWARNFLAGS?=	-Werror -Wall -Wreturn-type -Wpointer-arith -Wno-main \
 		-Wmissing-prototypes -Wstrict-prototypes
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -61,8 +61,8 @@ AFLAGS=		-D_LOCORE ${AOPTS}
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e __start
 STRIPFLAGS=	--strip-debug
 
-.if exists(${THISPPC}/conf/Makefile.${TARGET_MACHINE}.inc)
-.include "${THISPPC}/conf/Makefile.${TARGET_MACHINE}.inc"
+.if exists(${THISPPC}/conf/Makefile.${MACHINE}.inc)
+.include "${THISPPC}/conf/Makefile.${MACHINE}.inc"
 .endif
 
 %INCLUDES
@@ -126,9 +126,9 @@ SYSTEM_LD_TAIL+=; \
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${THISPPC}/${TARGET_MACHINE}/genassym.cf
+assym.h: $S/kern/genassym.sh ${THISPPC}/${MACHINE}/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${THISPPC}/${TARGET_MACHINE}/genassym.cf > assym.h.tmp && \
+	    < ${THISPPC}/${MACHINE}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -159,7 +159,7 @@ cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${THISPPC}/${TARGET_MACHINE}/Locore.c ${CFILES} \
+	    ${THISPPC}/${MACHINE}/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
@@ -174,17 +174,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${THISPPC}/${TARGET_MACHINE}/locore.S \
+SRCS=	${THISPPC}/${MACHINE}/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${THISPPC}/${TARGET_MACHINE}/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${THISPPC}/${MACHINE}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} < ${THISPPC}/${TARGET_MACHINE}/genassym.cf
+	  ${CPPFLAGS} < ${THISPPC}/${MACHINE}/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -202,7 +202,7 @@ machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${THISPPC}/${TARGET_MACHINE}/locore.S assym.h
+locore.o: ${THISPPC}/${MACHINE}/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
