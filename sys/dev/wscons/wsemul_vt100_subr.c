@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.13 2003/04/02 17:48:59 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.14 2003/04/02 18:22:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.13 2003/04/02 17:48:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.14 2003/04/02 18:22:56 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.13 2003/04/02 17:48:59 droch
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wsemul_vt100var.h>
+
+#include "opt_wsemul.h"
 
 static int vt100_selectattribute(struct wsemul_vt100_emuldata *,
 				      int, int, int, long *, long *);
@@ -642,7 +644,14 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
 	    !(edp->scrcapabilities & WSSCREEN_HILIT)) {
 		flags &= ~WSATTR_HILIT;
 		if (edp->scrcapabilities & WSSCREEN_WSCOLORS) {
+#if defined(WSEMUL_VT100_HILIT_FG) && WSEMUL_VT100_HILIT_FG != -1
+			fgcol = WSEMUL_VT100_HILIT_FG;
+#elif !defined(WSEMUL_VT100_HILIT_FG)
 			fgcol = WSCOL_RED;
+#endif
+#if defined(WSEMUL_VT100_HILIT_BG) && WSEMUL_VT100_HILIT_BG != -1
+			bgcol = WSEMUL_VT100_HILIT_BG;
+#endif
 			flags |= WSATTR_WSCOLORS;
 		} else {
 #ifdef VT100_DEBUG
@@ -654,8 +663,14 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
 	    !(edp->scrcapabilities & WSSCREEN_UNDERLINE)) {
 		flags &= ~WSATTR_UNDERLINE;
 		if (edp->scrcapabilities & WSSCREEN_WSCOLORS) {
+#if defined(WSEMUL_VT100_UNDERLINE_FG) && WSEMUL_VT100_UNDERLINE_FG != -1
+			fgcol = WSEMUL_VT100_UNDERLINE_FG;
+#endif
+#if defined(WSEMUL_VT100_UNDERLINE_BG) && WSEMUL_VT100_UNDERLINE_BG != -1
+			bgcol = WSEMUL_VT100_UNDERLINE_BG;
+#elif !defined(WSEMUL_VT100_UNDERLINE_BG)
 			bgcol = WSCOL_BROWN;
-			flags &= ~WSATTR_UNDERLINE;
+#endif
 			flags |= WSATTR_WSCOLORS;
 		} else {
 #ifdef VT100_DEBUG
